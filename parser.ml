@@ -1425,17 +1425,18 @@ cexp_w:
                 | `ALLN; `OPAREN; lc=SELF; `COMMA; cl=SELF; `CPAREN    ->
 	            let f = cexp_to_pure2 (fun c1 c2-> P.ListAllN (c1, c2, (get_pos_camlp4 _loc 2))) lc cl  in
   set_slicing_utils_pure_double f false
-                | `PATH; `OPAREN; lc=SELF;`COMMA; `OSQUARE; cl = id_list; `CSQUARE; `CPAREN -> begin
+                | `PATH; `OPAREN; lc=SELF;`COMMA; `OSQUARE; cl = OPT id_list; `CSQUARE; `CPAREN -> begin
                     match lc with
                       | Pure_f (P.BForm ((pf, b), fol))->
                             let func t =
-                      if  String.contains t '\'' then 
-                        (* Remove the primed in the identifier *)
-				        (Str.global_replace (Str.regexp "[']") "" t,Primed)
-			          else (t,Unprimed)
-                    in
-                    let ls = List.map func cl in
-                            let npf = (IP.Path (pf, ls, get_pos_camlp4 _loc 2), b) in
+                              if  String.contains t '\'' then 
+                                (* Remove the primed in the identifier *)
+				(Str.global_replace (Str.regexp "[']") "" t,Primed)
+			      else (t,Unprimed)
+                            in
+                             let cl = un_option cl [] in
+                             let ls = List.map func cl in
+                             let npf = (IP.Path (pf, ls, get_pos_camlp4 _loc 2), b) in
                              Pure_f (P.BForm (npf, fol))
                       | _ -> report_error no_pos "parser.cexp_w"
                   end

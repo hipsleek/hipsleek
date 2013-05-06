@@ -5130,8 +5130,13 @@ and trans_pure_b_formula_x (b0 : IP.b_formula) stab : CP.b_formula =
 	       }
     | IP.Path(pf1, svl, pos) ->
           let c_pf = helper pf1 in
-          let trans_vp (v,p) = (trans_var (v,p) stab pos) in
-          CP.Path (c_pf, List.map trans_vp svl, pos)
+          let trans_vp ls (v,p) = 
+            try
+              let sv = (trans_var (v,p) stab pos) in
+              ls@[sv]
+            with _ -> ls
+          in
+          CP.Path (c_pf, List.fold_left trans_vp [] svl, pos)
   in
   let npf =  helper pf in
   (*let _ = print_string("\nC_B_Form: "^(Cprinter.string_of_b_formula (npf,None))) in*)
