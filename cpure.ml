@@ -8129,26 +8129,35 @@ let slice_ante_x ante svl need_path_deps=
   let path_deps_p =
     if need_path_deps then
        let path_depend_svl = List.fold_left (fun ls (_,svl) -> ls@svl) []  path_deps in
-       let path_deps_p = filter_var ante1 (remove_dups_svl path_depend_svl) in
-       path_deps_p
-    else mkTrue no_pos
+       if path_depend_svl = [] then None else
+         let path_deps_p = filter_var ante1 (remove_dups_svl path_depend_svl) in
+         (Some path_deps_p)
+    else None
   in
   (p2,path_deps_p)
 
 let slice_ante ante svl need_path_deps=
   let pr = !print_formula in
-  Debug.no_3 "slice_ante" pr !print_svl string_of_bool (pr_pair pr pr)
+  let pr1 op = match op with
+    | None -> "None"
+    | Some p -> pr p
+  in
+  Debug.no_3 "slice_ante" pr !print_svl string_of_bool (pr_pair pr pr1)
       (fun _ _ _ -> slice_ante_x ante svl need_path_deps) ante svl need_path_deps
 
-let filter_ante_x (ante : formula) (conseq : formula) need_path_deps: (formula*formula) =
+let filter_ante_x (ante : formula) (conseq : formula) need_path_deps: (formula*formula option) =
   let fvar = fv conseq in
   (* let new_ante = filter_var ante fvar in *)
   let new_ante,path_deps_p = slice_ante ante fvar need_path_deps in
   (new_ante,path_deps_p)
 
-let filter_ante (ante : formula) (conseq : formula) need_path_deps: (formula*formula) =
+let filter_ante (ante : formula) (conseq : formula) need_path_deps: (formula*formula option) =
   let pr = !print_formula in
-  Debug.no_3 "filter_ante" pr pr string_of_bool (pr_pair pr pr)
+  let pr1 op = match op with
+    | None -> "None"
+    | Some p -> pr p
+  in
+  Debug.no_3 "filter_ante" pr pr string_of_bool (pr_pair pr pr1)
       (fun _ _ _ -> filter_ante_x ante conseq need_path_deps) ante conseq need_path_deps
 
 let filter_ante_wo_rel (ante : formula) (conseq : formula) : (formula) =
@@ -8226,7 +8235,7 @@ let part_must_failures is_sat pairs = List.partition (fun (a,c,_) ->not(is_sat (
 
 let imply is_sat a c = not (is_sat (mkAnd a (mkNot c None no_pos) no_pos))
 
-let refine_one_must is_sat (ante,conseq,path) : (formula * formula * formula) list =
+let refine_one_must is_sat (ante,conseq,path) : (formula * formula * formula option) list =
   let cs = split_conjunctions conseq in
   let ml = List.filter (fun c ->
       let f = mkAnd ante c no_pos in
@@ -8234,18 +8243,22 @@ let refine_one_must is_sat (ante,conseq,path) : (formula * formula * formula) li
   if ml==[] then [(ante,conseq,path)]
   else List.map (fun f -> (ante,f,path)) ml
 
-let refine_one_must is_sat (ante,conseq,path) : (formula * formula * formula) list =
+let refine_one_must is_sat (ante,conseq,path) : (formula * formula * formula option) list =
 
   (* let _ = print_string ("refine_one_must: before is_sat" *)
   (*                       ^ "\n\n") in *)
 
   let pr = !print_formula in
-  let pr2 = pr_list (pr_triple pr pr pr) in
+  let pr1 op = match op with
+    | None -> "None"
+    | Some p -> pr p
+  in
+  let pr2 = pr_list (pr_triple pr pr pr1) in
   Debug.no_1 "refine_one_must" (pr_pair pr pr) pr2
       (fun  _ ->refine_one_must is_sat (ante, conseq,path)) (ante, conseq)
 
 
-let refine_must is_sat (pairs:(formula * formula * formula) list) : (formula * formula*formula) list =
+let refine_must is_sat (pairs:(formula * formula * formula option) list) : (formula * formula*formula option) list =
 
   (* let _ = print_string ("refine_must: before is_sat" *)
   (*                       ^ "\n\n") in *)
@@ -8301,7 +8314,11 @@ let find_all_failures is_sat ante cons =
 
 let find_all_failures is_sat  ante cons =
   let pr = !print_formula_w_loc in
-  let pr2 = pr_list (pr_triple pr pr pr) in
+  let pr1 op = match op with
+    | None -> "None"
+    | Some p -> pr p
+  in
+  let pr2 = pr_list (pr_triple pr pr pr1) in
   Debug.no_2 "find_all_failures" pr pr (pr_triple pr2 pr2 pr2)
       (fun _ _ -> find_all_failures is_sat ante cons) ante cons
 

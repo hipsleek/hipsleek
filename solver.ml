@@ -6469,15 +6469,19 @@ and xpure_imply_x (prog : prog_decl) (is_folding : bool)   lhs rhs_p timeout : b
   res
 
 (*maximising must bug with RAND (error information)*)
-and check_maymust_failure (ante:CP.formula) (cons:CP.formula): (CF.failure_kind*((CP.formula*CP.formula*CP.formula) list * (CP.formula*CP.formula*CP.formula) list * (CP.formula*CP.formula*CP.formula) list))=
+and check_maymust_failure (ante:CP.formula) (cons:CP.formula): (CF.failure_kind*((CP.formula*CP.formula*CP.formula option) list * (CP.formula*CP.formula*CP.formula option) list * (CP.formula*CP.formula*CP.formula option) list))=
   let pr1 = Cprinter.string_of_pure_formula in
-  let pr3 = pr_list (pr_triple pr1 pr1 pr1) in
+  let pr1a op = match op with
+    | None -> "None"
+    | Some p -> pr1 p
+  in
+  let pr3 = pr_list (pr_triple pr1 pr1 pr1a) in
   let pr2 = pr_pair (Cprinter.string_of_failure_kind) (pr_triple pr3 pr3 pr3) in
   Debug.no_2 "check_maymust_failure" pr1 pr1 pr2 (fun _ _ -> check_maymust_failure_x ante cons) ante cons
 
 (*maximising must bug with RAND (error information)*)
-and check_maymust_failure_x (ante:CP.formula) (cons:CP.formula): (CF.failure_kind*((CP.formula*CP.formula*CP.formula) list *
- (CP.formula*CP.formula*CP.formula) list * (CP.formula*CP.formula*CP.formula) list))=
+and check_maymust_failure_x (ante:CP.formula) (cons:CP.formula): (CF.failure_kind*((CP.formula*CP.formula*CP.formula option) list *
+ (CP.formula*CP.formula*CP.formula option) list * (CP.formula*CP.formula*CP.formula option) list))=
   if not !disable_failure_explaining then
     let r = ref (-9999) in
     let is_sat f = TP.is_sat_sub_no f r in
@@ -6502,15 +6506,19 @@ and check_maymust_failure_x (ante:CP.formula) (cons:CP.formula): (CF.failure_kin
         (CF.mk_failure_must_raw "", (r1, r2, r3))
       end
   else
-    (CF.mk_failure_may_raw "", ([], [], [(ante, cons, CP.mkTrue no_pos)]))
+    (CF.mk_failure_may_raw "", ([], [], [(ante, cons, None)]))
 
 and build_and_failures i (failure_code:string) (failure_name:string) ((contra_list, must_list, may_list)
-    :((CP.formula*CP.formula*CP.formula) list *
-        (CP.formula*CP.formula*CP.formula) list *
-        (CP.formula*CP.formula*CP.formula) list)) 
+    :((CP.formula*CP.formula*CP.formula option) list *
+        (CP.formula*CP.formula*CP.formula option) list *
+        (CP.formula*CP.formula*CP.formula option) list)) 
       (fail_ctx_template: fail_context): list_context=
   let pr1 = Cprinter.string_of_pure_formula_w_loc in
-  let pr3 = pr_list (pr_triple pr1 pr1 pr1) in
+  let pr2 op = match op with
+    | None -> "None"
+    | Some p -> pr1 p
+  in
+  let pr3 = pr_list (pr_triple pr1 pr1 pr2) in
   let pr4 = pr_triple pr3 pr3 pr3 in
   let pr2 = (fun _ -> "OUT") in
   Debug.no_1_num i "build_and_failures" pr4 pr2 
@@ -6519,47 +6527,55 @@ and build_and_failures i (failure_code:string) (failure_name:string) ((contra_li
 
 (*maximising must bug with AND (error information)*)
 (* to return fail_type with AND_reason *)
-and build_and_failures_x (failure_code:string) (failure_name:string) ((contra_list, must_list, may_list) :((CP.formula*CP.formula*CP.formula) list *
-    (CP.formula*CP.formula*CP.formula) list *(CP.formula*CP.formula*CP.formula) list))
+and build_and_failures_x (failure_code:string) (failure_name:string) ((contra_list, must_list, may_list) :((CP.formula*CP.formula*CP.formula option) list *
+    (CP.formula*CP.formula*CP.formula option) list *(CP.formula*CP.formula*CP.formula option) list))
       (fail_ctx_template: fail_context): list_context=
   if not !disable_failure_explaining then
-    let build_and_one_kind_failures (failure_string:string) (fk: CF.failure_kind) (failure_list:(CP.formula*CP.formula*CP.formula) list):CF.fail_type option=
+    let build_and_one_kind_failures (failure_string:string) (fk: CF.failure_kind) (failure_list:(CP.formula*CP.formula*CP.formula option) list):CF.fail_type option=
       (*build must/may msg*)
-      let build_failure_msg (ante, cons,path_deps) =
+      let build_failure_msg (ante, cons,opath_deps) =
         (* let _ = print_endline ("\nante: " ^ (Cprinter.string_of_pure_formula_w_loc ante)) in *)
         (* let _ = print_endline ("cons: " ^ (Cprinter.string_of_pure_formula_w_loc cons)) in *)
         let ll = (CP.list_pos_of_formula ante []) @ (CP.list_pos_of_formula cons []) in
         (*possible to eliminate unnecessary intermediate that are defined by equality.*)
         (*not sure it is better*)
         let ante = CP.elim_equi_ante ante cons in
-         (*path_deps*)
-        let path_ll = CP.list_pos_of_formula path_deps [] in
-        if not !Globals.show_col then
-          (* let _ = print_endline (Cprinter.string_of_list_loc ll) in *)
-          let lli = (* Gen.BList.remove_dups_eq (=) *) (CF.get_lines ll) in
-          let lli = List.sort (fun i1 i2 -> i1-i2) lli in
-          (* let pr1 = pr_list string_of_int in *)
-          (* let _ = print_endline (pr1 lli) in *)
-          (*path_deps*)
-          let path_lli = (* Gen.BList.remove_dups_eq (=) *) (CF.get_lines path_ll) in
-          let path_lli = List.sort (fun i1 i2 -> i1-i2) path_lli in
-          ((Cprinter.string_of_pure_formula ante) ^ " |- "^
-              (Cprinter.string_of_pure_formula cons) ^ ". LOCS:[" ^ (Cprinter.string_of_list_int lli) ^ "]\n        path dependency:" ^ (Cprinter.string_of_pure_formula path_deps) ^ ". LOCS:[" ^ (Cprinter.string_of_list_int path_lli) ^ "]" , ll)
-        else
-          let sort_fn (i1,c1) (i2,c2)=
-            let del1 = i1-i2 in
-            if del1 = 0 then c1-c2 else del1
-          in
-          let lli = (* Gen.BList.remove_dups_eq (fun (l1,c1) (l2,c2) -> *)
+         let sort_fn (i1,c1) (i2,c2)=
+           let del1 = i1-i2 in
+           if del1 = 0 then c1-c2 else del1
+         in
+        let pr_line_cols = pr_list (pr_pair string_of_int string_of_int) in
+        (*path_deps*)
+        let path_str, path_ll = match opath_deps with
+          | Some path_deps ->
+                let path_ll = CP.list_pos_of_formula path_deps [] in
+                if not !Globals.show_col then
+                  let path_lli = (* Gen.BList.remove_dups_eq (=) *) (CF.get_lines path_ll) in
+                  let path_lli = List.sort (fun i1 i2 -> i1-i2) path_lli in
+                  "\n        path dependency:" ^ (Cprinter.string_of_pure_formula path_deps) ^ ". LOCS:["
+                  ^ (Cprinter.string_of_list_int path_lli) ^ "]", path_ll
+                else
+                  let path_lli = (* Gen.BList.remove_dups_eq (fun (l1,c1) (l2,c2) -> *)
+                    (* l1=l2 && c1=c2) *) (CF.get_line_cols path_ll) in
+                  let path_lli = List.sort sort_fn path_lli in
+                  "\n        path dependency:" ^ (Cprinter.string_of_pure_formula path_deps) ^
+                      ". LOCS:[" ^ (pr_line_cols path_lli) ^ "]", path_ll
+          | None -> "",[]
+        in
+        let error_string =
+          if not !Globals.show_col then
+            let lli = (* Gen.BList.remove_dups_eq (=) *) (CF.get_lines ll) in
+            let lli = List.sort (fun i1 i2 -> i1-i2) lli in
+            (Cprinter.string_of_pure_formula ante) ^ " |- "^
+              (Cprinter.string_of_pure_formula cons) ^ ". LOCS:[" ^ (Cprinter.string_of_list_int lli) ^ "]"
+          else
+            let lli = (* Gen.BList.remove_dups_eq (fun (l1,c1) (l2,c2) -> *)
               (* l1=l2 && c1=c2) *) (CF.get_line_cols ll) in
-          let lli = List.sort sort_fn lli in
-          (*path_deps*)
-          let path_lli = (* Gen.BList.remove_dups_eq (fun (l1,c1) (l2,c2) -> *)
-              (* l1=l2 && c1=c2) *) (CF.get_line_cols path_ll) in
-          let path_lli = List.sort sort_fn path_lli in
-          let pr_line_cols = pr_list (pr_pair string_of_int string_of_int) in
-          ((Cprinter.string_of_pure_formula ante) ^ " |- "^
-              (Cprinter.string_of_pure_formula cons) ^ ". LOCS:[" ^ (pr_line_cols lli) ^ "]\n        path dependency:" ^ (Cprinter.string_of_pure_formula path_deps) ^ ". LOCS:[" ^ (pr_line_cols path_lli) ^ "]" , ll)
+            let lli = List.sort sort_fn lli in
+            (Cprinter.string_of_pure_formula ante) ^ " |- "^
+              (Cprinter.string_of_pure_formula cons) ^ ". LOCS:[" ^ (pr_line_cols lli) ^ "]\n"
+        in
+        (error_string^path_str, ll@path_ll)
       in
       match failure_list with
         | [] -> None

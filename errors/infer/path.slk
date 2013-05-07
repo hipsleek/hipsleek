@@ -8,6 +8,7 @@ checkentail
 // if path(x>0,"y"), we expect 4 also to be included
 
 */
+
 checkentail 
    y=3
    & path(x>0,[y])
@@ -20,12 +21,12 @@ Entail (1) : Fail.(must: ) cause: 0<x |-  x=0. LOCS:[13;14]
         path dependency: y=3. LOCS:[12] (must-bug)
 
 */
-
+/*
 checkentail 
    y=3
    & x>0
     |- x=0.
-
+*/
 /*
 Entail (2) : Fail.(must: ) cause: 0<x |-  x=0. LOCS:[26;27]
         path dependency: true. LOCS:[0] (must-bug)
