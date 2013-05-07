@@ -11,7 +11,7 @@ data node {
 /* view for a singly linked list */
 
 ll<n:bool> == self = null 
-       & n = 0 
+       & n = 0
 	or self::node<_, q> * q::ll<n-1> 
   inv n >= 0;
 

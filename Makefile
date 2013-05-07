@@ -28,8 +28,7 @@ XML = cd $(CURDIR)/xml; make all; make opt; cd ..
 
 all: byte decidez.vo 
 #gui
-byte: sleek.byte hip.byte
-
+byte: sleek.byte hip.byte 
 gbyte: sleek.gbyte hip.gbyte
  
 # hsprinter.byte
@@ -66,6 +65,7 @@ sleek.byte: xml
 	@ocamlbuild $(OBB_FLAGS) sleek.byte
 	cp -u _build/sleek.byte sleek
 	cp -u _build/sleek.byte b-sleek
+
 
 hip.native: xml
 	@ocamlbuild $(OBN_FLAGS) main.native

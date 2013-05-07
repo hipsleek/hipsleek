@@ -290,8 +290,29 @@ let cexp_to_pure2 fct f01 f02 =
                                     | _ -> (
                                         let typ1 = P.typ_of_exp f1 in 
                                         let typ2 = P.typ_of_exp f2 in
-                                         (* let _ = print_endline ("typ1:" ^ (string_of_typ typ1 )) in *)
+                                        (* let _ = print_endline ("typ1:" ^ (string_of_typ typ1 )) in *)
                                         (* let _ = print_endline ("typ2:" ^ (string_of_typ typ2 )) in *)
+																				 	let rec sub_type_check typ1 typ2 =  
+																					(if typ1 == typ2 then true else
+  																					match typ1,typ2 with  																									
+  																					(*Bag type*)												
+  																					| BagT _,BagT UNK 
+  																					| BagT UNK,BagT _ -> true
+  																					| BagT t1,BagT t2 -> sub_type_check t1 t2
+  																					(*List type*)
+  																					| List _,List UNK 
+  																					| List UNK,List _ -> true
+  																					| List t1,List t2 -> sub_type_check t1 t2
+  																					(*Pointer type*)
+  																					| Pointer _,Pointer UNK 
+  																					| Pointer UNK,Pointer _ -> true
+  																					| Pointer t1,Pointer t2 -> sub_type_check t1 t2
+  																					(*Array type*)
+  																					| Array (_,n1),Array (UNK,n2) 
+  																					| Array (UNK,n1),Array (_,n2) -> if(n1==n2) then true else false
+  																					| Array (t1,n1),Array (t2,n2) -> if(n1==n2) then sub_type_check t1 t2 else false																							
+  																					| _ ->false)
+																					in
                                          let arr_typ_check typ1 typ2 =
                                          ( match typ1 with
                                             | Array (t1,_) -> if t1== UNK || t1 == typ2 then true else
@@ -305,7 +326,7 @@ let cexp_to_pure2 fct f01 f02 =
                                             )
                                          )
                                         in
-                                        if (typ1 = typ2) || (typ1 == UNK) || (typ2 == UNK) || (arr_typ_check typ1 typ2) then 
+                                        if (typ1 = typ2) || (typ1 == UNK) || (typ2 == UNK) || (arr_typ_check typ1 typ2) || (sub_type_check typ1 typ2) then 
                                           Pure_f (P.BForm(((fct f1 f2), None), None))
                                         else
                                           report_error (get_pos 1) "with 2 convert expected the same cexp types, found different types"
