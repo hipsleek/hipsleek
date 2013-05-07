@@ -8128,7 +8128,14 @@ let slice_ante_x ante svl need_path_deps=
   (*path depen process*)
   let path_deps_p =
     if need_path_deps then
-       let path_depend_svl = List.fold_left (fun ls (_,svl) -> ls@svl) []  path_deps in
+       let path_depend_svl = List.fold_left (fun ls (p,svl) ->
+           let p_svl = fv p in
+           let inter_path_depend_svl = intersect_svl svl1 p_svl in
+           (* let _ = print_endline ("inter_path_depend_svl: " ^ (!print_svl inter_path_depend_svl) ) in *)
+           if inter_path_depend_svl = [] then ls else
+             ls@svl
+       )
+         []  path_deps in
        if path_depend_svl = [] then None else
          let path_deps_p = filter_var ante1 (remove_dups_svl path_depend_svl) in
          (Some path_deps_p)
