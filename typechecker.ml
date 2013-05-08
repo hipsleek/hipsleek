@@ -299,7 +299,7 @@ and check_bounded_term_x prog ctx post_pos =
       in
       let ctx = CF.Ctx es in
       let bnd_formula_l = List.map (fun e ->
-          CP.mkPure (CP.mkGte e (CP.mkIConst 0 m_pos) m_pos)) m in
+          CP.mkPure (CP.mkGte e (CP.mkIConst 0 m_pos) m_pos) m_pos) m in
       let bnd_formula = CF.formula_of_pure_formula
         (CP.join_conjunctions bnd_formula_l) m_pos in
       let rs, _ = heap_entail_one_context 12 prog false ctx bnd_formula None None None post_pos in
@@ -453,10 +453,10 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
                             let new_rel_post = CP.fresh_spec_var_rel () in
                             let new_rel_fml_pre = 
                               let tmp = List.map (fun v -> CP.mkVar v no_pos) (pre_args@pargs) in
-                              CP.BForm ((CP.RelForm (new_rel_pre, tmp, no_pos),None),None) in
+                              CP.BForm ((CP.RelForm (new_rel_pre, tmp, no_pos),None),None, []) in
                             let new_rel_fml_post =  
                               let tmp = List.map (fun v -> CP.mkVar v no_pos) (new_args@pargs) in
-                              CP.BForm ((CP.RelForm (new_rel_post, tmp, no_pos),None),None) in
+                              CP.BForm ((CP.RelForm (new_rel_post, tmp, no_pos),None),None, []) in
                             let new_spec = CF.add_pure new_formula_inf_continuation (Some new_rel_fml_pre) (Some new_rel_fml_post) in
                             Debug.tinfo_hprint (add_str "TEMP SPECS1" pr_spec) new_spec no_pos;
 (*                            pre_args@[new_rel_post],new_spec*)
@@ -469,7 +469,7 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
                             else 
                               let new_rel = CP.fresh_spec_var_rel () in
                               let tmp = List.map (fun v -> CP.mkVar v no_pos) (new_args@pargs) in
-                              let new_rel_fml = CP.BForm ((CP.RelForm (new_rel, tmp, no_pos),None),None) in
+                              let new_rel_fml = CP.BForm ((CP.RelForm (new_rel, tmp, no_pos),None),None, []) in
                               let new_spec = CF.add_pure new_formula_inf_continuation (Some new_rel_fml) None in
                               Debug.tinfo_hprint (add_str "TEMP SPECS2" pr_spec) new_spec no_pos;
                               [new_rel],new_spec
@@ -478,7 +478,7 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
                             if pflag then
                               let new_rel = CP.fresh_spec_var_rel () in
                               let tmp = List.map (fun v -> CP.mkVar v no_pos) (new_args@pargs) in
-                              let new_rel_fml = CP.BForm ((CP.RelForm (new_rel, tmp, no_pos),None),None) in
+                              let new_rel_fml = CP.BForm ((CP.RelForm (new_rel, tmp, no_pos),None),None, []) in
                               let new_spec = CF.add_pure new_formula_inf_continuation None (Some new_rel_fml) in
                               Debug.tinfo_hprint (add_str "TEMP SPECS3" pr_spec) new_spec no_pos;
                               [new_rel],new_spec
@@ -1337,7 +1337,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
           exp_bconst_pos = pos}) -> begin
 	    Gen.Profiling.push_time "[check_exp] BConst";
 	    let res_v = CP.mkRes bool_type in
-	    let tmp1 = CP.BForm ((CP.BVar (res_v, pos), None), None) in
+	    let tmp1 = CP.BForm ((CP.BVar (res_v, pos), None), None, [[pos]]) in
             (* TODO: Slicing - Can we mark a boolean constant as linking var                 *)
             (* let tmp1 =                                                                    *)
             (*   if !Globals.infer_lvar_slicing then                                         *)
@@ -1389,7 +1389,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 	            let vs_prim = List.map2 (fun v -> fun t -> CP.SpecVar (t, v, Primed)) vs field_types in
 	            let p = CP.fresh_spec_var v_prim in
 	            let link_pv = CF.formula_of_pure_N
-	              (CP.mkAnd (CP.mkEqVar v_prim p pos) (CP.BForm ((CP.mkNeq (CP.mkVar p pos) (CP.Null pos) pos, None), None)) pos) pos in
+	              (CP.mkAnd (CP.mkEqVar v_prim p pos) (CP.BForm ((CP.mkNeq (CP.mkVar p pos) (CP.Null pos) pos, None), None, [[pos]])) pos) pos in
 	            (* let _ = print_string ("[typechecker.ml, check__exp]: link_pv: " ^ Cprinter.string_of_formula link_pv ^ "\n") in*)
 	            (*	  let link_pv = CF.formula_of_pure (CP.mkEqVar v_prim p pos) pos in *)
 	            (* let _ = print_endline ("bind: unfolded context: after check_full_perm \n" ^ (Cprinter.string_of_list_failesc_context ctx)) in *)
@@ -1441,6 +1441,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                         CF.h_formula_data_label = None;
                         CF.h_formula_data_remaining_branches = None;
                         CF.h_formula_data_pruning_conditions = [];
+                        CF.h_formula_data_lbl = [[pos]];
                         CF.h_formula_data_pos = pos}) in
 	            let vheap = CF.formula_of_heap vdatanode pos in
                     let _ = DD.devel_hprint (add_str "vheap" (Cprinter.string_of_formula)) vheap pos in
@@ -1567,7 +1568,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
               let cond_op () =
                 begin
 	          let _ = proving_loc#set pos in
-	          let pure_cond = (CP.BForm ((CP.mkBVar v Primed pos, None), None)) in
+	          let pure_cond = (CP.BForm ((CP.mkBVar v Primed pos, None), None, [[pos]])) in
 	          (*let _ = print_string ("\nPure_Cond : "^(Cprinter.string_of_pure_formula pure_cond)) in*)
 	          let then_cond_prim = MCP.mix_of_pure pure_cond in
 		  (*let _ = print_string ("\nthen_cond_prim  : "^(Cprinter.string_of_mix_formula then_cond_prim )) in*)
@@ -1681,7 +1682,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                   let gt_f = CP.mkGtExp arg_var_exp (CP.IConst (0,pos)) pos in (* arg_var >0 *)
                   let ls_pvar = CP.mkLsVar Primed in
                   let ls_pvar_exp = CP.mkVar ls_pvar pos in
-                  let notin_ls_f = CP.BForm (((CP.mkBagNotIn res_var ls_pvar_exp pos),None),None) in (* res notin ls' *)
+                  let notin_ls_f = CP.BForm (((CP.mkBagNotIn res_var ls_pvar_exp pos),None),None, [[pos]]) in (* res notin ls' *)
                   let lsmu_exp = CP.mkVar (CP.mkLsmuVar Primed) pos in (*LSMU'*)
                   let notin_lsmu_f = CP.mkBagNotInExp arg_var lsmu_exp pos in (*arg_var notin LSMU'*)
                   let f1 = CP.And (eqn,gt_f,pos) in (* arg_var=level(res) & arg_var >0 *)
@@ -1698,15 +1699,15 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 		CF.h_formula_data_imm = CF.ConstAnn(Mutable);
                 CF.h_formula_data_param_imm = List.map (fun _ -> CF.ConstAnn(Mutable)) heap_args; 
                 (* (andreeac) to check: too weak *)	     
-		        CF.h_formula_data_perm = None; (*None means full permission*)
-			    CF.h_formula_data_origins = [];
-			    CF.h_formula_data_original = true;
-
+		CF.h_formula_data_perm = None; (*None means full permission*)
+		CF.h_formula_data_origins = [];
+		CF.h_formula_data_original = true;
                 CF.h_formula_data_arguments =(*type_var :: ext_var :: *) new_heap_args;
 		CF.h_formula_data_holes = []; (* An Hoa : Don't know what to do *)
                 CF.h_formula_data_remaining_branches = None;
                 CF.h_formula_data_pruning_conditions = [];
                 CF.h_formula_data_label = None;
+                CF.h_formula_data_lbl = [[pos]];
                 CF.h_formula_data_pos = pos}) in
 	    (*c let heap_form = CF.mkExists [ext_var] heap_node ext_null type_constr pos in*)
             (*If this is not a lock, level_f = true*)

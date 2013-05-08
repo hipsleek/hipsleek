@@ -436,7 +436,8 @@ let node2_to_node_x prog (h0 : IF.h_formula_heap2) : IF.h_formula_heap =
             IF.h_formula_heap_arguments = hargs;
             IF.h_formula_heap_pseudo_data = h0.IF.h_formula_heap2_pseudo_data;
             IF.h_formula_heap_pos = h0.IF.h_formula_heap2_pos;
-		    IF.h_formula_heap_label = h0.IF.h_formula_heap2_label;
+	    IF.h_formula_heap_label = h0.IF.h_formula_heap2_label;
+            IF.h_formula_heap_lbl = h0.IF.h_formula_heap2_lbl;
         }
       in h
   with
@@ -460,7 +461,8 @@ let node2_to_node_x prog (h0 : IF.h_formula_heap2) : IF.h_formula_heap =
               IF.h_formula_heap_perm = h0.IF.h_formula_heap2_perm;
               IF.h_formula_heap_pseudo_data = h0.IF.h_formula_heap2_pseudo_data;
               IF.h_formula_heap_pos = h0.IF.h_formula_heap2_pos;
-			  IF.h_formula_heap_label = h0.IF.h_formula_heap2_label;
+	      IF.h_formula_heap_label = h0.IF.h_formula_heap2_label;
+              IF.h_formula_heap_lbl = h0.IF.h_formula_heap2_lbl;
           }
         in h
 
@@ -1257,7 +1259,7 @@ and add_param_ann_constraints_to_pure (h_f: CF.h_formula) (p_f: MCP.mix_formula 
       | CF.Phase h -> create_mix_formula_with_ann_constr h.CF.h_formula_phase_rd h.CF.h_formula_phase_rw p_f 
       | CF.DataNode h -> let data_ann = h.CF.h_formula_data_imm in
                          let helper1 (param_imm: CF.ann) = 
-                           let f = CP.BForm((CP.Lte(CF.mkExpAnn data_ann no_pos, CF.mkExpAnn param_imm no_pos, no_pos), None), None) in
+                           let f = CP.BForm((CP.Lte(CF.mkExpAnn data_ann no_pos, CF.mkExpAnn param_imm no_pos, no_pos), None), None,[]) in
                            MCP.mix_of_pure f in
                          let p = match p_f with
                            | Some x -> List.fold_left (fun pf ann -> CF.add_mix_formula_to_mix_formula (helper1 ann) pf) x h.CF.h_formula_data_param_imm  
@@ -4751,6 +4753,7 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula)(stab : spec_var_
 		            CF.h_formula_data_label = pi;
 		            CF.h_formula_data_remaining_branches = None;
 		            CF.h_formula_data_pruning_conditions = [];
+                            CF.h_formula_data_lbl = [[pos]];
 		            CF.h_formula_data_pos = pos; } in
 		        (result_heap, CF.TypeTrue)
 	          else (* Not a field access, proceed with the original code *)
@@ -4776,20 +4779,21 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula)(stab : spec_var_
                   let new_h = CF.ViewNode {
                       CF.h_formula_view_node = new_v;
                       CF.h_formula_view_name = c;
-		              CF.h_formula_view_derv = dr;
-		              CF.h_formula_view_imm = Immutable.iformula_ann_to_cformula_ann imm;
-		              CF.h_formula_view_perm = permvar; (*LDK: TO CHECK*)
+		      CF.h_formula_view_derv = dr;
+		      CF.h_formula_view_imm = Immutable.iformula_ann_to_cformula_ann imm;
+		      CF.h_formula_view_perm = permvar; (*LDK: TO CHECK*)
                       CF.h_formula_view_arguments = hvars;
                       CF.h_formula_view_modes = vdef.I.view_modes;
                       CF.h_formula_view_coercible = true;
                       CF.h_formula_view_origins = [];
-		              CF.h_formula_view_original = true;
-		              (* CF.h_formula_view_orig_fold_num = !num_self_fold_search; *)
-		              CF.h_formula_view_lhs_case = true;
-		              CF.h_formula_view_unfold_num = 0;
+		      CF.h_formula_view_original = true;
+		      (* CF.h_formula_view_orig_fold_num = !num_self_fold_search; *)
+		      CF.h_formula_view_lhs_case = true;
+		      CF.h_formula_view_unfold_num = 0;
                       CF.h_formula_view_label = pi;
                       CF.h_formula_view_pruning_conditions = [];
                       CF.h_formula_view_remaining_branches = None;
+                      CF.h_formula_view_lbl = [[pos]];
                       CF.h_formula_view_pos = pos;}
                   in (new_h, CF.TypeTrue)
                 with
@@ -4816,17 +4820,18 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula)(stab : spec_var_
                         let new_h = CF.DataNode {
                             CF.h_formula_data_node = new_v;
                             CF.h_formula_data_name = c;
-		                    CF.h_formula_data_derv = dr;
-		                    CF.h_formula_data_imm = Immutable.iformula_ann_to_cformula_ann imm;
+		            CF.h_formula_data_derv = dr;
+		            CF.h_formula_data_imm = Immutable.iformula_ann_to_cformula_ann imm;
                             CF.h_formula_data_param_imm = Immutable.ann_opt_to_ann ann_param imm;
-		                    CF.h_formula_data_perm = permvar; (*LDK*)
+		            CF.h_formula_data_perm = permvar; (*LDK*)
                             CF.h_formula_data_origins = [];
-		                    CF.h_formula_data_original = true;
-		                    CF.h_formula_data_arguments = hvars;
-			                CF.h_formula_data_holes = holes; (* An Hoa : Set the hole *)
+		            CF.h_formula_data_original = true;
+		            CF.h_formula_data_arguments = hvars;
+			    CF.h_formula_data_holes = holes; (* An Hoa : Set the hole *)
                             CF.h_formula_data_label = pi;
                             CF.h_formula_data_remaining_branches = None;
                             CF.h_formula_data_pruning_conditions = [];
+                            CF.h_formula_data_lbl = [[pos]];
                             CF.h_formula_data_pos = pos;} 
                         in ( new_h, CF.TypeTrue))
         | IF.Star {
@@ -5015,7 +5020,7 @@ else ()
 and trans_pure_formula (f0 : IP.formula) stab : CP.formula =
   (*let  _ = print_string("\nIform: "^(Iprinter.string_of_pure_formula f0)) in*)
   match f0 with
-    | IP.BForm (bf,lbl) -> CP.BForm (trans_pure_b_formula bf stab , lbl) 
+    | IP.BForm (bf,lbl, llbl) -> CP.BForm (trans_pure_b_formula bf stab , lbl, llbl) 
     | IP.And (f1, f2, pos) ->
           let pf1 = trans_pure_formula f1 stab in
           let pf2 = trans_pure_formula f2 stab in CP.mkAnd pf1 pf2 pos
@@ -5617,7 +5622,7 @@ and gather_type_info_exp_x a0 stab et =
               
 and gather_type_info_pure_x prog (p0 : IP.formula) (stab : spec_var_table) : unit =
   match p0 with
-    | IP.BForm (b,_) -> gather_type_info_b_formula prog b stab
+    | IP.BForm (b,_,_) -> gather_type_info_b_formula prog b stab
     | IP.And (p1, p2, pos) | IP.Or (p1, p2, _, pos) ->
           (gather_type_info_pure prog p1 stab; gather_type_info_pure prog p2 stab)
     | IP.AndList b -> List.iter (fun (_,c)-> gather_type_info_pure prog c stab) b
@@ -7700,7 +7705,7 @@ and prune_inv_inference_formula_x (cp:C.prog_decl) (v_l : CP.spec_var list) (ini
   (*   | CF.Or o -> (get_or_list o.CF.formula_or_f1)@(get_or_list o.CF.formula_or_f2) in *)
   
   let rec get_pure_conj_list (f:CP.formula):(CP.formula * (bool*CP.b_formula) list) = match f with
-    | CP.BForm (l,_) -> (CP.mkTrue no_pos , [(true,l)])
+    | CP.BForm (l,_,_) -> (CP.mkTrue no_pos , [(true,l)])
     | CP.And (f1,f2,_ )-> 
           let l1,l2 = (get_pure_conj_list f1) in
           let r1,r2 = (get_pure_conj_list f2) in
@@ -7710,7 +7715,7 @@ and prune_inv_inference_formula_x (cp:C.prog_decl) (v_l : CP.spec_var list) (ini
 	      (CP.mkAndList l1, List.concat l2) 
     | CP.Or _ -> (f,[])
     | CP.Not (nf,_,_) -> (match nf with
-        |CP.BForm (l,_) ->(CP.mkTrue no_pos, [(false,l)]) 
+        |CP.BForm (l,_,_) ->(CP.mkTrue no_pos, [(false,l)]) 
         |_ ->(f,[]))
     | CP.Forall (_,ff,_,_) 
     | CP.Exists (_,ff,_,_) -> (f,[]) in
@@ -7792,8 +7797,8 @@ and prune_inv_inference_formula_x (cp:C.prog_decl) (v_l : CP.spec_var list) (ini
               (*     (List.fold_left (fun a c-> CP.mkAnd a (CP.BForm (c,None)) no_pos) (CP.mkTrue no_pos) l2r) None no_pos in *)
               (* Cristian's fixes which seem very slow *)
         | _,_ ->
-              let f1r = List.fold_left (fun a c-> CP.mkAnd a (CP.BForm (c,None)) no_pos) (CP.mkTrue no_pos) l1r in
-              let f2r = List.fold_left (fun a c-> CP.mkAnd a (CP.BForm (c,None)) no_pos) (CP.mkTrue no_pos) l2r in
+              let f1r = List.fold_left (fun a c-> CP.mkAnd a (CP.BForm (c,None,[])) no_pos) (CP.mkTrue no_pos) l1r in
+              let f2r = List.fold_left (fun a c-> CP.mkAnd a (CP.BForm (c,None,[])) no_pos) (CP.mkTrue no_pos) l2r in
               let tpi = fun f1 f2 -> TP.imply f1 f2 "" false None in
               if ((fun (c,_,_)-> c) (tpi f1r f2r)) then f2r
               else if ((fun (c,_,_)-> c) (tpi f2r f1r)) then f1r
@@ -7802,7 +7807,7 @@ and prune_inv_inference_formula_x (cp:C.prog_decl) (v_l : CP.spec_var list) (ini
       let lr = hull_invs v_l lr in
       (*let _ = print_string ("after hull: "^(String.concat " - " (List.map Cprinter.string_of_pure_formula lr))^"\n") in*)
       let lr = let rec r f = match f with
-        | CP.BForm (l, _) -> [l]
+        | CP.BForm (l, _,_) -> [l]
         | CP.And (f1,f2,_) -> (r f1)@(r f2)
         | _ -> [] in 
       List.concat (List.map r lr) in  
@@ -7917,7 +7922,7 @@ and prune_inv_inference_formula_x (cp:C.prog_decl) (v_l : CP.spec_var list) (ini
         : (formula_label * (CP.spec_var list * CP.b_formula list)) =  
     let n_c = List.fold_left (fun a (l,c)  ->  
         if (eq_formula_label l lbl) then a else 
-          let (b,_,_) = TP.imply f (CP.BForm (c,None)) "" false None in
+          let (b,_,_) = TP.imply f (CP.BForm (c,None,[])) "" false None in
           if b then c::a  else
             a) [] neg_br in
     let r = Gen.BList.remove_dups_eq CP.eq_b_formula_no_aset (pl@n_c) in 
@@ -7932,9 +7937,9 @@ and prune_inv_inference_formula_x (cp:C.prog_decl) (v_l : CP.spec_var list) (ini
   in
 
   let add_needed_inv uinvl (lbl,(_,rl)) =
-    let all_r = CP.join_conjunctions (List.map (fun c-> CP.BForm (c,None)) rl) in
+    let all_r = CP.join_conjunctions (List.map (fun c-> CP.BForm (c,None,[])) rl) in
     let uinv2 = List.filter (fun c->
-	    let r,_,_ = TP.imply all_r (CP.BForm (c,None)) "" false None in
+	    let r,_,_ = TP.imply all_r (CP.BForm (c,None,[])) "" false None in
 	    not r) uinvl in
     (lbl, uinv2)
   in
@@ -7992,7 +7997,7 @@ and prune_inv_inference_formula_x (cp:C.prog_decl) (v_l : CP.spec_var list) (ini
         | None -> false
         | Some bf ->
               begin
-                let bf = CP.BForm (bf,None) in
+                let bf = CP.BForm (bf,None,[]) in
                 let remain_ls = Gen.BList.difference_eq (fun (f,_) -> eq_formula_label f) orig_pf ls in
                 if remain_ls==[] then false
                 else List.for_all
@@ -8467,10 +8472,11 @@ and check_barrier_wf prog bd =
         CF.h_formula_data_label = None; 
         CF.h_formula_data_remaining_branches = None ;
         CF.h_formula_data_pruning_conditions = [] ;
-	    CF.h_formula_data_origins = [] ;
-	    CF.h_formula_data_original = true;
-	    CF.h_formula_data_holes =[];
-	    CF.h_formula_data_derv = false;
+	CF.h_formula_data_origins = [] ;
+	CF.h_formula_data_original = true;
+	CF.h_formula_data_holes =[];
+	CF.h_formula_data_derv = false;
+        CF.h_formula_data_lbl = [];
         CF.h_formula_data_pos = no_pos } in
     let p2 = CP.mkEqVarInt st_v st no_pos in
     let p = Mcpure.mix_of_pure (CP.mkAnd p2 perm no_pos) in
@@ -8480,7 +8486,7 @@ and check_barrier_wf prog bd =
   let f_gen_tot st = 
     let v = CP.fresh_perm_var () in
     let pf = CP.mkEq (CP.mkVar v no_pos) (CP.Tsconst (Tree_shares.Ts.top,no_pos)) no_pos  in
-    f_gen_base st v (CP.BForm ((pf,None),None)) in
+    f_gen_base st v (CP.BForm ((pf,None),None,[])) in
   
   let one_entail f1 f2 = 
     let ctx = CF.build_context (CF.empty_ctx (CF.mkTrueFlow ()) Lab2_List.unlabelled no_pos) f1 no_pos in

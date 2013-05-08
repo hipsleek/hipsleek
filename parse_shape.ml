@@ -67,7 +67,7 @@ GLOBAL: expression summaries summary fml pred preddef ptr lbl id;
   [ "pred" LEFTA
     [ x=lbl; ";"; y=preddef; LIST1 preddef -> 
       let typ,size = parse_lbl x in
-      let heap = mkViewNode y typ [] loc in
+      let heap = mkViewNode y typ [] [[loc]] loc in
       let pure = match size with
         | 1 -> mkNeqVar y (SpecVar (Named "", "null", Unprimed)) loc
         | _ -> mkTrue loc

@@ -25,7 +25,7 @@
       | Gte(e1,e2,p) -> trans_p_f_null (Lte (e2,e1,p))
       | _ -> pf in
     match b with
-      | BForm ((pf,il),l) -> BForm (((trans_p_f_null pf), il),l)
+      | BForm ((pf,il),l, llbl) -> BForm (((trans_p_f_null pf), il),l, llbl)
       | And (f1,f2,l) -> mkAnd (trans_null f1) (trans_null f2) l
       | Or (f1,f2,fl,l) -> mkOr (trans_null f1) (trans_null f2) fl l
       | Not (f,fl,l) -> Not ((trans_null f),fl,l)
@@ -181,8 +181,8 @@ bconstr: aexp_list LT aexp_list { (build_relation mkLt $1 $3 None (get_pos 2), S
 | aexp_list GTE aexp_list { (build_relation mkGte $1 $3 None (get_pos 2), Some $3) }
 | aexp_list EQ aexp_list { (build_relation mkEq $1 $3 None (get_pos 2), Some $3) }
 | aexp_list NEQ aexp_list { (build_relation mkNeq $1 $3 None (get_pos 2), Some $3) }
-| TRUE { (BForm ((BConst (true, get_pos 1), None), None), None) }
-| FALSE { (BForm ((BConst (false, get_pos 1), None), None), None) }
+| TRUE { (BForm ((BConst (true, get_pos 1), None), None, [[get_pos 1]]), None) }
+| FALSE { (BForm ((BConst (false, get_pos 1), None), None, [[get_pos 1]]), None) }
 ;
 
 aexp: cid {

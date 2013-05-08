@@ -141,7 +141,7 @@ let rec make_disj_constraints (exps: CP.exp list) (mpf : CF.mem_perm_formula) : 
 	| x::xs -> match x with
 		   | CP.Var(sv,ps) ->
                          let pos = List.hd ps in
-                         let svisin = CP.BForm((CP.BagNotIn(sv,mpf.CF.mem_formula_exp,pos),None),None)
+                         let svisin = CP.BForm((CP.BagNotIn(sv,mpf.CF.mem_formula_exp,pos),None),None,[ps])
 		   			in (CP.mkAnd svisin (make_disj_constraints xs mpf)  pos)
 		   | _ -> CP.mkTrue no_pos
 				
@@ -281,12 +281,12 @@ let rec xmem (f: CF.formula) (vl:C.view_decl list) (me: CF.mem_perm_formula): MC
 		  let mpform,disjform = (xmem_heap f vl) in
          	  let mfe1 = me.CF.mem_formula_exp in
 		  let mfe2 = mpform.CF.mem_formula_exp in
-		  let f1 = CP.BForm((CP.BagSub(mfe1,mfe2,pos),None),None) in
+		  let f1 = CP.BForm((CP.BagSub(mfe1,mfe2,pos),None),None,[[pos]]) in
 		  let _ = fl_subtyping mpform.CF.mem_formula_field_layout me.CF.mem_formula_field_layout pos in
 		  let _ = if (CF.is_empty_heap f) then ()
 		  	  else mem_guards_checking (MCP.pure_of_mix p) me.CF.mem_formula_guards pos in 
 		  let f = if me.CF.mem_formula_exact 
-		  	  then let f2 = CP.BForm((CP.BagSub(mfe2,mfe1,pos),None),None)
+		  	  then let f2 = CP.BForm((CP.BagSub(mfe2,mfe1,pos),None),None,[[pos]])
 		  		in let _ = fl_subtyping me.CF.mem_formula_field_layout mpform.CF.mem_formula_field_layout pos in
 		  		let _ =  if (CF.is_empty_heap f) then ()
 					 else mem_guards_checking_reverse me.CF.mem_formula_guards (MCP.pure_of_mix p) pos
@@ -300,12 +300,12 @@ let rec xmem (f: CF.formula) (vl:C.view_decl list) (me: CF.mem_perm_formula): MC
 		    let mpform,disjform = (xmem_heap f vl) in
 		    let mfe1 = me.CF.mem_formula_exp in
 		    let mfe2 = mpform.CF.mem_formula_exp in
-		    let f1 = CP.BForm((CP.BagSub(mfe1,mfe2,pos),None),None) in
+		    let f1 = CP.BForm((CP.BagSub(mfe1,mfe2,pos),None),None,[[pos]]) in
 		    let _ = fl_subtyping mpform.CF.mem_formula_field_layout me.CF.mem_formula_field_layout pos in
       		    let _ = if (CF.is_empty_heap f) then ()
 		    	    else mem_guards_checking (MCP.pure_of_mix p) me.CF.mem_formula_guards pos in 
 		    let f = if me.CF.mem_formula_exact 
-		            then let f2 = CP.BForm((CP.BagSub(mfe2,mfe1,pos),None),None)
+		            then let f2 = CP.BForm((CP.BagSub(mfe2,mfe1,pos),None),None,[[pos]])
 		    		 in let _ = fl_subtyping me.CF.mem_formula_field_layout mpform.CF.mem_formula_field_layout pos in
 		    		 let _ = if (CF.is_empty_heap f) then ()
 		    			 else mem_guards_checking_reverse me.CF.mem_formula_guards (MCP.pure_of_mix p) pos
@@ -338,7 +338,7 @@ let entail_mem_perm_formula (ante: CF.formula) (conseq: CF.formula) (vl: C.view_
 	let conseq_mem,conseq_mem_pure,conseq_qvars = xmem_perm conseq vl in
 	let mfe_ante = ante_mem.CF.mem_formula_exp in
 	let mfe_conseq = conseq_mem.CF.mem_formula_exp in
-	let subset_formula = CP.BForm((CP.BagSub(mfe_conseq,mfe_ante,pos),None),None) in
+	let subset_formula = CP.BForm((CP.BagSub(mfe_conseq,mfe_ante,pos),None),None,[[pos]]) in
 	let _ = fl_subtyping ante_mem.CF.mem_formula_field_layout conseq_mem.CF.mem_formula_field_layout pos in
 	let pure_formulas = MCP.merge_mems ante_mem_pure conseq_mem_pure true in
 	MCP.memo_pure_push_exists (ante_qvars@conseq_qvars) (MCP.merge_mems (MCP.mix_of_pure subset_formula) pure_formulas true)
@@ -399,7 +399,7 @@ let check_mem_formula (vdf : I.view_decl) (ddcl : I.data_decl list) =
 let add_mem_invariant (inv : IP.formula) (vmem : IF.mem_formula option) : IP.formula =
 	match vmem with
 	| Some a -> let new_var = ("Anon"^(fresh_trailer()),Unprimed) in 
-		let tmp_formula = IP.BForm((IP.BagNotIn(new_var, a.IF.mem_formula_exp,no_pos),None),None) in
+		let tmp_formula = IP.BForm((IP.BagNotIn(new_var, a.IF.mem_formula_exp,no_pos),None),None,[[]]) in
 		let tmp_formula2 = IP.mkNeqExp (IP.Var(new_var, no_pos)) (IP.Null(no_pos)) no_pos in
 		let add_formula = IP.mkOr tmp_formula tmp_formula2 None no_pos in
 		let mem_inv = IP.mkForall [new_var] add_formula None no_pos
@@ -1086,11 +1086,11 @@ let subtype_sv_ann_gen (impl_vars: CP.spec_var list) (l: CP.spec_var) (r: CP.spe
 : bool * (CP.formula option) * (CP.formula option) =
 	let l = CP.mkVar l no_pos in
 	let r = CP.mkVar r no_pos in
-	let c = CP.BForm ((CP.SubAnn(l,r,no_pos),None), None) in
+	let c = CP.BForm ((CP.SubAnn(l,r,no_pos),None), None,[]) in
         (* implicit instantiation of @v made stronger into an equality *)
         (* two examples in ann1.slk fail otherwise; unsound when we have *)
         (* multiple implicit being instantiated ; use explicit if needed *)
-        let lhs = CP.BForm ((CP.Eq(l,r,no_pos),None), None) in
+        let lhs = CP.BForm ((CP.Eq(l,r,no_pos),None), None, []) in
         (*let lhs = c in *)
         begin
           match r with
@@ -1507,7 +1507,7 @@ if (CF.is_data h) then
         let sst = List.combine args rargs in 
         let mpf = Gen.unsome vdef.C.view_mem in (* get the memory exp of the view *) 
         let mexp = CP.e_apply_subs sst mpf.CF.mem_formula_exp in
-        let p1 = CP.BForm((CP.BagNotIn((CF.get_node_var h),mexp,pos),None),None) in
+        let p1 = CP.BForm((CP.BagNotIn((CF.get_node_var h),mexp,pos),None),None,[[pos]]) in
         CP.mkAnd p1 p pos
 else if (CF.is_view h) then
 	let vdef = C.look_up_view_def_raw vl (CF.get_node_name h) in
@@ -1517,7 +1517,7 @@ else if (CF.is_view h) then
         let sst = List.combine args hargs in 
 	let mexp = CP.e_apply_subs sst mpf.CF.mem_formula_exp in	          
         if(CF.is_data r) then
-	let p1 = CP.BForm((CP.BagNotIn((CF.get_node_var r),mexp,pos),None),None) in
+	let p1 = CP.BForm((CP.BagNotIn((CF.get_node_var r),mexp,pos),None),None,[[pos]]) in
         CP.mkAnd p1 p pos
         else (* r is a view *) 
 	let vdef_r =  C.look_up_view_def_raw vl (CF.get_node_name r) in
@@ -1605,9 +1605,9 @@ match h with
         let mpf_fl = mpf.CF.mem_formula_field_layout in
         if List.exists (fun (id,_) -> String.compare id name == 0) mpf_fl then
         let first_case_h = CF.HEmp in (* h = r *)       
-     	let first_case_p = CP.BForm((CP.BagIn(dn,mpf_mexp,pos),None),None) in
+     	let first_case_p = CP.BForm((CP.BagIn(dn,mpf_mexp,pos),None),None,[[pos]]) in
      	let second_case_h = h in (* h != r *)
-    	let second_case_p = CP.BForm((CP.BagNotIn(dn,mpf_mexp,pos),None),None) in
+    	let second_case_p = CP.BForm((CP.BagNotIn(dn,mpf_mexp,pos),None),None,[[pos]]) in
      	let first_case_p = CP.mkAnd first_case_p p pos in
      	let second_case_p = CP.mkAnd second_case_p p rpos in
      	[(first_case_h,first_case_p)]@[(second_case_h,second_case_p)]
@@ -1632,9 +1632,9 @@ match h with
      	CF.h_formula_data_pos = rpos} -> 
      	if List.exists (fun (id,_) -> String.compare id rname == 0) mpf_fl then
      	let first_case_h = CF.mkStarMinusH h r pos 57 in (* Will need a matching lemma for a cyclic proof *)
-     	let first_case_p = CP.BForm((CP.BagIn(rdn,mpf_mexp,pos),None),None) in   
+     	let first_case_p = CP.BForm((CP.BagIn(rdn,mpf_mexp,pos),None),None,[[pos]]) in   
      	let second_case_h = h in (* h != r *)
-    	let second_case_p = CP.BForm((CP.BagNotIn(rdn,mpf_mexp,pos),None),None) in  	
+    	let second_case_p = CP.BForm((CP.BagNotIn(rdn,mpf_mexp,pos),None),None,[[pos]]) in  	
      	let first_case_p = CP.mkAnd first_case_p p pos in
      	let second_case_p = CP.mkAnd second_case_p p rpos in
      	[(first_case_h,first_case_p)]@[(second_case_h,second_case_p)]

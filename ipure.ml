@@ -141,7 +141,7 @@ let _ = let zero = IConst (0, no_pos)
 (* free variables *)
 
 let rec fv (f : formula) : (ident * primed) list = match f with 
-  | BForm (b,_) -> bfv b
+  | BForm (b,_,_) -> bfv b
   | And (p1, p2, _) -> combine_pvars p1 p2
   | AndList b -> Gen.BList.remove_dups_eq (=) (Gen.fold_l_snd fv b)
   | Or (p1, p2, _,_) -> combine_pvars p1 p2
@@ -303,11 +303,11 @@ and name_of_var (e : exp) : ident = match e with
   | _ -> failwith ("parameter to name_of_var is not a variable")
  
 and isConstTrue p = match p with
-  | BForm ((BConst (true, pos), _), _) -> true
+  | BForm ((BConst (true, pos), _), _, _) -> true
   | _ -> false
 
 and isConstFalse p = match p with
-  | BForm ((BConst (false, pos), _), _) -> true
+  | BForm ((BConst (false, pos), _), _,_) -> true
   | _ -> false
 
 (* smart constructor *)
@@ -389,11 +389,11 @@ and mkEq a1 a2 pos =
 	Eq (a1, a2, pos)
 
 and mkAnd f1 f2 pos = match f1 with
-  | BForm ((BConst (false, _), _), _) -> f1
-  | BForm ((BConst (true, _), _), _) -> f2
+  | BForm ((BConst (false, _), _), _, _) -> f1
+  | BForm ((BConst (true, _), _), _, _) -> f2
   | _ -> match f2 with
-      | BForm ((BConst (false, _), _), _) -> f2
-      | BForm ((BConst (true, _), _), _) -> f1
+      | BForm ((BConst (false, _), _), _,_) -> f2
+      | BForm ((BConst (true, _), _), _,_) -> f1
       | _ -> match f1,f2 with 
 		| AndList b1, AndList b2 -> mkAndList (Label_Pure.merge b1 b2)
 		| AndList b, f -> mkAndList (Label_Pure.merge b [(Lab_List.unlabelled,f)])
@@ -403,11 +403,11 @@ and mkAnd f1 f2 pos = match f1 with
 and mkAndList b = (*print_string "ipure_list_gen\n";*) AndList b
 		
 and mkOr f1 f2 lbl pos = match f1 with
-  | BForm ((BConst (false, _), _), _) -> f2
-  | BForm ((BConst (true, _), _), _) -> f1
+  | BForm ((BConst (false, _), _), _, _) -> f2
+  | BForm ((BConst (true, _), _), _, _) -> f1
   | _ -> match f2 with
-      | BForm ((BConst (false, _), _), _) -> f1
-      | BForm ((BConst (true, _), _), _) -> f2
+      | BForm ((BConst (false, _), _), _, _) -> f1
+      | BForm ((BConst (true, _), _), _, _) -> f2
       | _ -> Or (f1, f2, lbl, pos)
 
 and mkEqVarExp (v1 : (ident * primed)) (v2 : (ident * primed)) pos =
@@ -420,16 +420,16 @@ and mkEqExp (ae1 : exp) (ae2 : exp) pos = match (ae1, ae2) with
 	  if v1 = v2 then
 		mkTrue pos
 	  else
-		BForm ((Eq (ae1, ae2, pos), None), None)
-  | _ ->  BForm ((Eq (ae1, ae2, pos), None), None)
+		BForm ((Eq (ae1, ae2, pos), None), None, [[pos]])
+  | _ ->  BForm ((Eq (ae1, ae2, pos), None), None, [[pos]])
 
 and mkNeqExp (ae1 : exp) (ae2 : exp) pos = match (ae1, ae2) with
   | (Var v1, Var v2) ->
 	  if v1 = v2 then
 		mkFalse pos
 	  else
-		BForm ((Neq (ae1, ae2, pos), None), None)
-  | _ ->  BForm ((Neq (ae1, ae2, pos), None), None)
+		BForm ((Neq (ae1, ae2, pos), None), None, [[pos]])
+  | _ ->  BForm ((Neq (ae1, ae2, pos), None), None, [[pos]])
 
 and mkNot f lbl pos = Not (f, lbl, pos)
 
@@ -469,9 +469,9 @@ and mkNEqualVarInt (sv : spec_var) (i : int) =
   BForm (ANeq (AVar (force_to_svar sv), IConst i))
 *)
 
-and mkTrue pos = BForm ((BConst (true, pos), None), None)
+and mkTrue pos = BForm ((BConst (true, pos), None), None, [[pos]])
 
-and mkFalse pos = BForm ((BConst (false, pos), None) , None)
+and mkFalse pos = BForm ((BConst (false, pos), None) , None, [[pos]])
 
 and mkExists (vs : (ident * primed) list) (f : formula) lbl pos = match vs with
   | [] -> f
@@ -496,7 +496,7 @@ and build_relation relop alist10 alist20 pos =
   let rec helper1 ae alist = 
 	let a = List.hd alist in
 	let rest = List.tl alist in
-	let tmp = BForm ((relop ae a pos),None) in
+	let tmp = BForm ((relop ae a pos),None,[[pos]]) in
 	  if Gen.is_empty rest then
 		tmp
 	  else
@@ -521,7 +521,7 @@ and build_relation relop alist10 alist20 pos =
 
  (* An Hoa *)
 and pos_of_formula (f : formula) = match f with 
-	| BForm ((pf,_),_) -> begin match pf with
+	| BForm ((pf,_),_, _) -> begin match pf with
 		  | BConst (_,p) | BVar (_,p)
 		  | Lt (_,_,p) | Lte (_,_,p) | Gt (_,_,p) | Gte (_,_,p) | SubAnn (_,_,p) | Eq (_,_,p) | Neq (_,_,p)
 		  | EqMax (_,_,_,p) | EqMin (_,_,_,p) 
@@ -589,7 +589,7 @@ and subst sst (f : formula) = match sst with
   | [] -> f 
 
 and apply_one (fr, t) f = match f with
-  | BForm (bf,lbl) -> BForm (b_apply_one (fr, t) bf, lbl)
+  | BForm (bf,lbl, llbl) -> BForm (b_apply_one (fr, t) bf, lbl, llbl)
   | AndList b -> AndList (Gen.map_l_snd (apply_one (fr,t)) b)
   | And (p1, p2, pos) -> And (apply_one (fr, t) p1,
 							  apply_one (fr, t) p2, pos)
@@ -764,7 +764,7 @@ and look_for_anonymous_exp (arg : exp) : (ident * primed) list = match arg with
   | _ -> []
 
 and look_for_anonymous_pure_formula (f : formula) : (ident * primed) list = match f with
-  | BForm (b,_) -> look_for_anonymous_b_formula b
+  | BForm (b,_,_) -> look_for_anonymous_b_formula b
   | And (b1,b2,_) -> (look_for_anonymous_pure_formula b1)@ (look_for_anonymous_pure_formula b1)
   | AndList b -> Gen.fold_l_snd look_for_anonymous_pure_formula b 
   | Or  (b1,b2,_,_) -> (look_for_anonymous_pure_formula b1)@ (look_for_anonymous_pure_formula b1)
@@ -823,7 +823,7 @@ let merge_branches l1 l2 =
 
 let rec find_lexp_formula (f: formula) ls =
   match f with
-	| BForm (bf, _) -> find_lexp_b_formula bf ls
+	| BForm (bf, _, _) -> find_lexp_b_formula bf ls
 	| _ -> []
 	
 and find_lexp_b_formula (bf: b_formula) ls =
@@ -892,7 +892,7 @@ and find_lexp_exp (e: exp) ls =
 
 let rec break_pure_formula (f: formula) : b_formula list =
   match f with
-	| BForm (bf, _) -> [bf]
+	| BForm (bf, _, _) -> [bf]
 	| And (f1, f2, _) -> (break_pure_formula f1) @ (break_pure_formula f2)
 	| AndList b -> Gen.fold_l_snd break_pure_formula b
 	| Or (f1, f2, _, _) -> (break_pure_formula f1) @ (break_pure_formula f2)
@@ -941,7 +941,7 @@ let rec contain_vars_exp (expr : exp) : bool =
   | ArrayAt _ -> true 
   | InfConst _ -> Error.report_no_pattern ()
   
-and float_out_exp_min_max (e: exp): (exp * (formula * (string list) ) option) = match e with 
+and float_out_exp_min_max (e: exp) llbl : (exp * (formula * (string list) ) option) = match e with 
   | Null _ 
   | Var _ 
   | Level _ 
@@ -950,10 +950,10 @@ and float_out_exp_min_max (e: exp): (exp * (formula * (string list) ) option) = 
   | Tsconst _
   | InfConst _ 
   | FConst _ -> (e, None)
-  | Ann_Exp (e,_) -> float_out_exp_min_max e
+  | Ann_Exp (e,_) -> float_out_exp_min_max e llbl
   | Add (e1, e2, l) ->
-		let ne1, np1 = float_out_exp_min_max e1 in
-		let ne2, np2 = float_out_exp_min_max e2 in
+		let ne1, np1 = float_out_exp_min_max e1 llbl in
+		let ne2, np2 = float_out_exp_min_max e2 llbl in
 		let r = match (np1, np2) with
 		  | None, None -> None
 		  | Some p, None -> Some p
@@ -961,8 +961,8 @@ and float_out_exp_min_max (e: exp): (exp * (formula * (string list) ) option) = 
 		  | Some (p1, l1), Some (p2, l2) -> Some ((And (p1, p2, l)), (List.rev_append l1 l2))in
 		(Add (ne1, ne2, l), r) 
   | Subtract (e1, e2, l) ->
-		let ne1, np1 = float_out_exp_min_max e1 in
-		let ne2, np2 = float_out_exp_min_max e2 in
+		let ne1, np1 = float_out_exp_min_max e1 llbl in
+		let ne2, np2 = float_out_exp_min_max e2 llbl in
 		let r = match (np1, np2) with
 		  | None, None -> None
 		  | Some p, None -> Some p
@@ -970,8 +970,8 @@ and float_out_exp_min_max (e: exp): (exp * (formula * (string list) ) option) = 
 		  | Some (p1, l1), Some (p2, l2) -> Some ((And (p1, p2, l)), (List.rev_append l1 l2))in
 		(Subtract (ne1, ne2, l), r) 
   | Mult (e1, e2, l) ->
-        let ne1, np1 = float_out_exp_min_max e1 in
-        let ne2, np2 = float_out_exp_min_max e2 in
+        let ne1, np1 = float_out_exp_min_max e1 llbl in
+        let ne2, np2 = float_out_exp_min_max e2 llbl in
         let r = match np1, np2 with
           | None, None -> None
           | Some p, None -> Some p
@@ -979,8 +979,8 @@ and float_out_exp_min_max (e: exp): (exp * (formula * (string list) ) option) = 
           | Some (p1, l1), Some (p2, l2) -> Some ((And (p1, p2, l)), (List.rev_append l1 l2))
         in (Mult (ne1, ne2, l), r)
   | Div (e1, e2, l) ->
-        let ne1, np1 = float_out_exp_min_max e1 in
-        let ne2, np2 = float_out_exp_min_max e2 in
+        let ne1, np1 = float_out_exp_min_max e1 llbl in
+        let ne2, np2 = float_out_exp_min_max e2 llbl in
         let r = match np1, np2 with
           | None, None -> None
           | Some p, None -> Some p
@@ -988,12 +988,12 @@ and float_out_exp_min_max (e: exp): (exp * (formula * (string list) ) option) = 
           | Some (p1, l1), Some (p2, l2) -> Some ((And (p1, p2, l)), (List.rev_append l1 l2))
         in (Div (ne1, ne2, l), r)						 
   | Max (e1, e2, l) ->
-		let ne1, np1 = float_out_exp_min_max e1 in
-		let ne2, np2 = float_out_exp_min_max e2 in
+		let ne1, np1 = float_out_exp_min_max e1 llbl in
+		let ne2, np2 = float_out_exp_min_max e2 llbl in
 		let new_name = ("max"^(fresh_trailer())) in
 		let nv = Var((new_name, Unprimed), l) in
 		let lexp = find_lexp_exp e !linking_exp_list in (* find the linking exp inside Max *)
-		let t = BForm ((EqMax(nv, ne1, ne2, l), Some(false, Globals.fresh_int(), lexp)), None) in
+		let t = BForm ((EqMax(nv, ne1, ne2, l), Some(false, Globals.fresh_int(), lexp)), None, llbl) in
 		(* $ h = 1 + max(h1, h2) -> <$,_> h = 1 + max_1 & <_,_> max_1 = max(h1, h2) ==> h is still separated from h1, h2 *)
 		let r = match (np1, np2) with
 		  | None, None -> Some (t,[new_name])
@@ -1004,12 +1004,12 @@ and float_out_exp_min_max (e: exp): (exp * (formula * (string list) ) option) = 
 			
 			
   | Min (e1, e2, l) ->
-		let ne1, np1 = float_out_exp_min_max e1 in
-		let ne2, np2 = float_out_exp_min_max e2 in
+		let ne1, np1 = float_out_exp_min_max e1 llbl in
+		let ne2, np2 = float_out_exp_min_max e2 llbl in
 		let new_name = ("min"^(fresh_trailer())) in
 		let nv = Var((new_name, Unprimed), l) in
 		let lexp = find_lexp_exp e !linking_exp_list in (* find the linking exp inside Min *)
-		let t = BForm ((EqMin(nv, ne1, ne2, l), Some(false, Globals.fresh_int(), lexp)), None) in 
+		let t = BForm ((EqMin(nv, ne1, ne2, l), Some(false, Globals.fresh_int(), lexp)), None, llbl) in 
 		let r = match (np1, np2) with
 		  | None, None -> Some (t,[new_name])
 		  | Some (p1, l1), None -> Some ((And(p1, t, l)), (new_name:: l1))
@@ -1019,7 +1019,7 @@ and float_out_exp_min_max (e: exp): (exp * (formula * (string list) ) option) = 
 	        
   (* bag expressions *)
   | Bag (le, l) ->
-		let ne1, np1 = List.split (List.map float_out_exp_min_max le) in
+		let ne1, np1 = List.split (List.map (fun v -> float_out_exp_min_max v llbl) le) in
 		let r = List.fold_left (fun a c -> match (a, c)with
 		  | None, None -> None
 		  | Some p, None -> Some p
@@ -1027,7 +1027,7 @@ and float_out_exp_min_max (e: exp): (exp * (formula * (string list) ) option) = 
 		  | Some (p1, l1), Some (p2, l2) -> Some ((And (p1, p2, l)), (List.rev_append l1 l2))) None np1 in
 		(Bag (ne1, l), r)
   | BagUnion (le, l) ->
-		let ne1, np1 = List.split (List.map float_out_exp_min_max le) in
+		let ne1, np1 = List.split (List.map (fun v -> float_out_exp_min_max v llbl) le) in
 		let r = List.fold_left (fun a c -> match (a, c)with
 		  | None, None -> None
 		  | Some p, None -> Some p
@@ -1035,7 +1035,7 @@ and float_out_exp_min_max (e: exp): (exp * (formula * (string list) ) option) = 
 		  | Some (p1, l1), Some (p2, l2) -> Some ((And (p1, p2, l)), (List.rev_append l1 l2))) None np1 in
 		(BagUnion (ne1, l), r)
   | BagIntersect (le, l) ->
-		let ne1, np1 = List.split (List.map float_out_exp_min_max le) in
+		let ne1, np1 = List.split (List.map (fun v -> float_out_exp_min_max v llbl) le) in
 		let r = List.fold_left (fun a c -> match (a, c)with
 		  | None, None -> None
 		  | Some p, None -> Some p
@@ -1043,8 +1043,8 @@ and float_out_exp_min_max (e: exp): (exp * (formula * (string list) ) option) = 
 		  | Some (p1, l1), Some (p2, l2) -> Some ((And (p1, p2, l)), List.rev_append l1 l2)) None np1 in
 		(BagIntersect (ne1, l), r)
   | BagDiff (e1, e2, l) ->
-		let ne1, np1 = float_out_exp_min_max e1 in
-		let ne2, np2 = float_out_exp_min_max e2 in
+		let ne1, np1 = float_out_exp_min_max e1 llbl in
+		let ne2, np2 = float_out_exp_min_max e2 llbl in
 		let r = match (np1, np2) with
 		  | None, None -> None
 		  | Some p, None -> Some p
@@ -1053,7 +1053,7 @@ and float_out_exp_min_max (e: exp): (exp * (formula * (string list) ) option) = 
 		(BagDiff (ne1, ne2, l), r) 
 		    (* list expressions *)
   | List (le, l) ->
-		let ne1, np1 = List.split (List.map float_out_exp_min_max le) in
+		let ne1, np1 = List.split (List.map (fun v -> float_out_exp_min_max v llbl) le) in
 		let r = List.fold_left (fun a c -> match (a, c) with
 		  | None, None -> None
 		  | Some p, None -> Some p
@@ -1061,7 +1061,7 @@ and float_out_exp_min_max (e: exp): (exp * (formula * (string list) ) option) = 
 		  | Some (p1, l1), Some (p2, l2) -> Some ((And (p1, p2, l)), (List.rev_append l1 l2))) None np1 in
 		(List (ne1, l), r)
   | ListAppend (le, l) ->
-		let ne1, np1 = List.split (List.map float_out_exp_min_max le) in
+		let ne1, np1 = List.split (List.map (fun v -> float_out_exp_min_max v llbl) le) in
 		let r = List.fold_left (fun a c -> match (a, c) with
 		  | None, None -> None
 		  | Some p, None -> Some p
@@ -1069,8 +1069,8 @@ and float_out_exp_min_max (e: exp): (exp * (formula * (string list) ) option) = 
 		  | Some (p1, l1), Some (p2, l2) -> Some ((And (p1, p2, l)), (List.rev_append l1 l2))) None np1 in
 		(ListAppend (ne1, l), r)
   | ListCons (e1, e2, l) -> 
-		let ne1, np1 = float_out_exp_min_max e1 in
-		let ne2, np2 = float_out_exp_min_max e2 in
+		let ne1, np1 = float_out_exp_min_max e1 llbl in
+		let ne2, np2 = float_out_exp_min_max e2 llbl in
 		let r = match (np1, np2) with
 		  | None, None -> None
 		  | Some p, None -> Some p
@@ -1078,19 +1078,19 @@ and float_out_exp_min_max (e: exp): (exp * (formula * (string list) ) option) = 
 		  | Some (p1, l1), Some (p2, l2) -> Some ((And (p1, p2, l)), (List.rev_append l1 l2)) in
 		(ListCons (ne1, ne2, l), r) 
   | ListHead (e, l) -> 
-		let ne1, np1 = float_out_exp_min_max e in
+		let ne1, np1 = float_out_exp_min_max e llbl in
 		(ListHead (ne1, l), np1)
   | ListTail (e, l) -> 
-		let ne1, np1 = float_out_exp_min_max e in
+		let ne1, np1 = float_out_exp_min_max e llbl in
 		(ListTail (ne1, l), np1)
   | ListLength (e, l) -> 
-		let ne1, np1 = float_out_exp_min_max e in
+		let ne1, np1 = float_out_exp_min_max e llbl in
 		(ListLength (ne1, l), np1)
   | ListReverse (e, l) -> 
-		let ne1, np1 = float_out_exp_min_max e in
+		let ne1, np1 = float_out_exp_min_max e llbl in
 		(ListReverse (ne1, l), np1)
   | Func (a, i, l) ->
-    let ne1, np1 = List.split (List.map float_out_exp_min_max i) in
+    let ne1, np1 = List.split (List.map (fun v -> float_out_exp_min_max v llbl) i) in
     let r = List.fold_left (fun a c -> match (a, c) with
       | None, None -> None
       | Some p, None -> Some p
@@ -1099,7 +1099,7 @@ and float_out_exp_min_max (e: exp): (exp * (formula * (string list) ) option) = 
     (Func (a, ne1, l), r)
 	        (* An Hoa : get rid of min/max in a[i] *)
   | ArrayAt (a, i, l) ->
-  		let ne1, np1 = List.split (List.map float_out_exp_min_max i) in
+  		let ne1, np1 = List.split (List.map (fun v -> float_out_exp_min_max v llbl) i) in
 		let r = List.fold_left (fun a c -> match (a, c) with
 		  | None, None -> None
 		  | Some p, None -> Some p
@@ -1118,30 +1118,30 @@ and float_out_pure_min_max (p : formula) : formula =
 	  | Some (p1, ev1) -> (And(r, p1, l), (List.rev_append ev1 ev)) in 
 	List.fold_left (fun a c -> (Exists ((c, Unprimed), a, None,l))) r ev2 in
     
-  let rec float_out_b_formula_min_max (b: b_formula) lbl: formula =
+  let rec float_out_b_formula_min_max (b: b_formula) lbl llbl: formula =
     let (pf,il) = b in
     let rec helper pf0 = match pf0 with
       | BConst _ | BVar _ |XPure _ 
-      | LexVar _ -> BForm (b,lbl)
+      | LexVar _ -> BForm (b,lbl,llbl)
       | Lt (e1, e2, l) ->
-	    let ne1, np1 = float_out_exp_min_max e1 in
-	    let ne2, np2 = float_out_exp_min_max e2 in
-	    let t = BForm ((Lt (ne1, ne2, l), il), lbl) in
+	    let ne1, np1 = float_out_exp_min_max e1 llbl in
+	    let ne2, np2 = float_out_exp_min_max e2 llbl in
+	    let t = BForm ((Lt (ne1, ne2, l), il), lbl, llbl) in
 	    add_exists t np1 np2 l
       | Lte (e1, e2, l) ->
-	    let ne1, np1 = float_out_exp_min_max e1 in
-	    let ne2, np2 = float_out_exp_min_max e2 in
-	    let t = BForm ((Lte (ne1, ne2, l), il),lbl) in
+	    let ne1, np1 = float_out_exp_min_max e1 llbl in
+	    let ne2, np2 = float_out_exp_min_max e2 llbl in
+	    let t = BForm ((Lte (ne1, ne2, l), il),lbl, llbl) in
 	    add_exists t np1 np2 l
       | Gt (e1, e2, l) ->
-	    let ne1, np1 = float_out_exp_min_max e1 in
-	    let ne2, np2 = float_out_exp_min_max e2 in
-	    let t = BForm ((Gt (ne1, ne2, l), il), lbl) in
+	    let ne1, np1 = float_out_exp_min_max e1 llbl in
+	    let ne2, np2 = float_out_exp_min_max e2 llbl in
+	    let t = BForm ((Gt (ne1, ne2, l), il), lbl, llbl) in
 	    add_exists t np1 np2 l
       | Gte (e1, e2, l) ->
-	    let ne1, np1 = float_out_exp_min_max e1 in
-	    let ne2, np2 = float_out_exp_min_max e2 in
-	    let t = BForm ((Gte (ne1, ne2, l), il), lbl) in
+	    let ne1, np1 = float_out_exp_min_max e1 llbl in
+	    let ne2, np2 = float_out_exp_min_max e2 llbl in
+	    let t = BForm ((Gte (ne1, ne2, l), il), lbl, llbl) in
 	    add_exists t np1 np2 l
       | Eq (e1, e2, l) ->
             (* WN : why not change below to a method? *)
@@ -1153,14 +1153,14 @@ and float_out_pure_min_max (p : formula) : formula =
                   | AConst _
 		  | Tsconst _
 		  | Var _ ->
-			let ne1 , np1 = float_out_exp_min_max v1 in
-			let ne2 , np2 = float_out_exp_min_max v2 in
-			let t = BForm((EqMin(e2, ne1, ne2, l), il), lbl) in
+			let ne1 , np1 = float_out_exp_min_max v1 llbl in
+			let ne2 , np2 = float_out_exp_min_max v2 llbl in
+			let t = BForm((EqMin(e2, ne1, ne2, l), il), lbl, llbl) in
 			add_exists t np1 np2 l
 		  | _ -> 
-			let ne1, np1 = float_out_exp_min_max e1 in
-			let ne2, np2 = float_out_exp_min_max e2 in
-			let t = BForm ((Eq (ne1, ne2, l), il), lbl) in
+			let ne1, np1 = float_out_exp_min_max e1 llbl in
+			let ne2, np2 = float_out_exp_min_max e2 llbl in
+			let t = BForm ((Eq (ne1, ne2, l), il), lbl, llbl) in
 			add_exists t np1 np2 l  in r2
 	      | Max(v1, v2, v3) -> let r2 = match e2 with
 		  | Null _
@@ -1168,14 +1168,14 @@ and float_out_pure_min_max (p : formula) : formula =
                   | AConst _
 		  | Tsconst _
 		  | Var _ ->
-			let ne1 , np1 = float_out_exp_min_max v1 in
-			let ne2 , np2 = float_out_exp_min_max v2 in
-			let t = BForm ((EqMax(e2, ne1, ne2, l), il), lbl) in
+			let ne1 , np1 = float_out_exp_min_max v1 llbl in
+			let ne2 , np2 = float_out_exp_min_max v2 llbl in
+			let t = BForm ((EqMax(e2, ne1, ne2, l), il), lbl, llbl) in
 			add_exists t np1 np2 l
 		  | _ -> 
-			let ne1, np1 = float_out_exp_min_max e1 in
-			let ne2, np2 = float_out_exp_min_max e2 in
-			let t = BForm ((Eq (ne1, ne2, l), il), lbl) in
+			let ne1, np1 = float_out_exp_min_max e1 llbl in
+			let ne2, np2 = float_out_exp_min_max e2 llbl in
+			let t = BForm ((Eq (ne1, ne2, l), il), lbl, llbl) in
 			add_exists t np1 np2 l 
 		in r2
 	      | Null _
@@ -1185,107 +1185,107 @@ and float_out_pure_min_max (p : formula) : formula =
 	      | Tsconst _
 	      | Var _ -> let r2 = match e2 with
 		  | Min (v1, v2, v3) ->
-			let ne1 , np1 = float_out_exp_min_max v1 in
-			let ne2 , np2 = float_out_exp_min_max v2 in
-			let t = BForm ((EqMin(e1, ne1, ne2, l), il), lbl) in
+			let ne1 , np1 = float_out_exp_min_max v1 llbl in
+			let ne2 , np2 = float_out_exp_min_max v2 llbl in
+			let t = BForm ((EqMin(e1, ne1, ne2, l), il), lbl, llbl) in
 			add_exists t np1 np2 l
 		  | Max (v1, v2, v3) ->
-			let ne1 , np1 = float_out_exp_min_max v1 in
-			let ne2 , np2 = float_out_exp_min_max v2 in
-			let t = BForm ((EqMax(e1, ne1, ne2, l), il), lbl) in
+			let ne1 , np1 = float_out_exp_min_max v1 llbl in
+			let ne2 , np2 = float_out_exp_min_max v2 llbl in
+			let t = BForm ((EqMax(e1, ne1, ne2, l), il), lbl, llbl) in
 			add_exists t np1 np2 l
 		  | _ -> 
-			let ne1, np1 = float_out_exp_min_max e1 in
-			let ne2, np2 = float_out_exp_min_max e2 in
-			let t = BForm ((Eq (ne1, ne2, l), il), lbl) in
+			let ne1, np1 = float_out_exp_min_max e1 llbl in
+			let ne2, np2 = float_out_exp_min_max e2 llbl in
+			let t = BForm ((Eq (ne1, ne2, l), il), lbl, llbl) in
 			add_exists t np1 np2 l 
 		in r2
 	      | _ ->
-		    let ne1, np1 = float_out_exp_min_max e1 in
-		    let ne2, np2 = float_out_exp_min_max e2 in
-		    let t = BForm ((Eq (ne1, ne2, l), il), lbl) in
+		    let ne1, np1 = float_out_exp_min_max e1 llbl in
+		    let ne2, np2 = float_out_exp_min_max e2 llbl in
+		    let t = BForm ((Eq (ne1, ne2, l), il), lbl, llbl) in
 		    add_exists t np1 np2 l 
 	    in r
       | Neq (e1, e2, l) ->
-	    let ne1, np1 = float_out_exp_min_max e1 in
-	    let ne2, np2 = float_out_exp_min_max e2 in
-	    let t = BForm ((Neq (ne1, ne2, l), il), lbl) in
+	    let ne1, np1 = float_out_exp_min_max e1 llbl in
+	    let ne2, np2 = float_out_exp_min_max e2 llbl in
+	    let t = BForm ((Neq (ne1, ne2, l), il), lbl, llbl) in
 			add_exists t np1 np2 l
       | EqMax (e1, e2, e3, l) ->
-	    let ne1, np1 = float_out_exp_min_max e1 in
-	    let ne2, np2 = float_out_exp_min_max e2 in
-	    let ne3, np3 = float_out_exp_min_max e3 in
-	    let t = BForm ((EqMax (ne1, ne2, ne3, l), il), lbl) in
+	    let ne1, np1 = float_out_exp_min_max e1 llbl in
+	    let ne2, np2 = float_out_exp_min_max e2 llbl in
+	    let ne3, np3 = float_out_exp_min_max e3 llbl in
+	    let t = BForm ((EqMax (ne1, ne2, ne3, l), il), lbl, llbl) in
 	    let t = add_exists t np1 np2 l in
 	    let r = match np3 with 
 	      | None -> t
 	      | Some (p1, l1) -> List.fold_left (fun a c -> (Exists ((c, Unprimed), a, lbl, l))) (And(t, p1, l)) l1 in r
       | EqMin (e1, e2, e3, l) ->
-	    let ne1, np1 = float_out_exp_min_max e1 in
-	    let ne2, np2 = float_out_exp_min_max e2 in
-	    let ne3, np3 = float_out_exp_min_max e3 in
-	    let t = BForm ((EqMin (ne1, ne2, ne3, l), il), lbl) in
+	    let ne1, np1 = float_out_exp_min_max e1 llbl in
+	    let ne2, np2 = float_out_exp_min_max e2 llbl in
+	    let ne3, np3 = float_out_exp_min_max e3 llbl in
+	    let t = BForm ((EqMin (ne1, ne2, ne3, l), il), lbl, llbl) in
 	    let t = add_exists t np1 np2 l in
 	    let r = match np3 with 
 	      | None -> t
 	      | Some (p1, l1) -> List.fold_left (fun a c -> Exists ((c, Unprimed), a, lbl, l)) (And(t, p1, l)) l1 in r
       | BagIn (v, e, l) -> 
-	    let ne1, np1 = float_out_exp_min_max e in
+	    let ne1, np1 = float_out_exp_min_max e llbl in
 	    let r = match np1 with
-	      | None -> BForm ((BagIn(v, ne1, l), il), lbl)
-	      | Some (r, l1) -> List.fold_left (fun a c -> Exists ((c, Unprimed), a, lbl, l)) (And (BForm ((BagIn(v, ne1, l), il), lbl), r, l)) l1 in r 
+	      | None -> BForm ((BagIn(v, ne1, l), il), lbl, llbl)
+	      | Some (r, l1) -> List.fold_left (fun a c -> Exists ((c, Unprimed), a, lbl, l)) (And (BForm ((BagIn(v, ne1, l), il), lbl, llbl), r, l)) l1 in r 
       | BagNotIn (v, e, l) -> 
-	    let ne1, np1 = float_out_exp_min_max e in
+	    let ne1, np1 = float_out_exp_min_max e llbl in
 	    let r = match np1 with
-	      | None -> BForm ((BagNotIn(v, ne1, l), il), lbl)
-	      | Some (r, l1) -> List.fold_left (fun a c -> Exists ((c, Unprimed), a, lbl,  l)) (And (BForm ((BagIn(v, ne1, l), il), lbl), r, l)) l1 in r
+	      | None -> BForm ((BagNotIn(v, ne1, l), il), lbl, llbl)
+	      | Some (r, l1) -> List.fold_left (fun a c -> Exists ((c, Unprimed), a, lbl,  l)) (And (BForm ((BagIn(v, ne1, l), il), lbl, llbl), r, l)) l1 in r
       | BagSub (e1, e2, l) ->
-	    let ne1, np1 = float_out_exp_min_max e1 in
-	    let ne2, np2 = float_out_exp_min_max e2 in
-	    let t = BForm ((BagSub (ne1, ne2, l), il), lbl) in
+	    let ne1, np1 = float_out_exp_min_max e1 llbl in
+	    let ne2, np2 = float_out_exp_min_max e2 llbl in
+	    let t = BForm ((BagSub (ne1, ne2, l), il), lbl, llbl) in
 	    add_exists t np1 np2 l
       | SubAnn _
       | VarPerm _
       | BagMin _ 
-      | BagMax _ -> BForm (b,lbl)	
+      | BagMax _ -> BForm (b,lbl, llbl)
       | ListIn (e1, e2, l) -> 
-	    let ne1, np1 = float_out_exp_min_max e1 in
-	    let ne2, np2 = float_out_exp_min_max e2 in
-	    let t = BForm ((ListIn (ne1, ne2, l), il), lbl) in
+	    let ne1, np1 = float_out_exp_min_max e1 llbl in
+	    let ne2, np2 = float_out_exp_min_max e2 llbl in
+	    let t = BForm ((ListIn (ne1, ne2, l), il), lbl, llbl) in
 	    add_exists t np1 np2 l
       | ListNotIn (e1, e2, l) -> 
-	    let ne1, np1 = float_out_exp_min_max e1 in
-	    let ne2, np2 = float_out_exp_min_max e2 in
-	    let t = BForm ((ListNotIn (ne1, ne2, l), il), lbl) in
+	    let ne1, np1 = float_out_exp_min_max e1 llbl in
+	    let ne2, np2 = float_out_exp_min_max e2 llbl in
+	    let t = BForm ((ListNotIn (ne1, ne2, l), il), lbl, llbl) in
 	    add_exists t np1 np2 l
       | ListAllN (e1, e2, l) ->
-	    let ne1, np1 = float_out_exp_min_max e1 in
-	    let ne2, np2 = float_out_exp_min_max e2 in
-	    let t = BForm ((ListAllN (ne1, ne2, l), il), lbl) in
+	    let ne1, np1 = float_out_exp_min_max e1 llbl in
+	    let ne2, np2 = float_out_exp_min_max e2 llbl in
+	    let t = BForm ((ListAllN (ne1, ne2, l), il), lbl, llbl) in
 	    add_exists t np1 np2 l
       | ListPerm (e1, e2, l) ->
-	    let ne1, np1 = float_out_exp_min_max e1 in
-	    let ne2, np2 = float_out_exp_min_max e2 in
-	    let t = BForm ((ListPerm (ne1, ne2, l), il), lbl) in
+	    let ne1, np1 = float_out_exp_min_max e1 llbl in
+	    let ne2, np2 = float_out_exp_min_max e2 llbl in
+	    let t = BForm ((ListPerm (ne1, ne2, l), il), lbl, llbl) in
 	    add_exists t np1 np2 l
 		(* An Hoa : handle relation *)
 		(* TODO Have to add the existential before the formula! Add a add_exists with a list instead *)
       | RelForm (r, args, l) ->
-	    let nargs = List.map float_out_exp_min_max args in
+	    let nargs = List.map (fun v -> float_out_exp_min_max v llbl) args in
 	    let nargse = List.map fst nargs in
-	    let t = BForm ((RelForm (r, nargse, l), il), lbl) in
+	    let t = BForm ((RelForm (r, nargse, l), il), lbl, llbl) in
 	    t
       | Path (pf1, svl, l) -> begin
             let nf = helper pf1 in
             match nf with
-              | BForm ((npf1, _), _) -> BForm ((Path (npf1, svl, l), il), lbl)
+              | BForm ((npf1, _), _, _) -> BForm ((Path (npf1, svl, l), il), lbl, llbl)
               | _ -> report_error no_pos "ipure.float_out_formula_min_max; should design this method better"
         end
     in
     helper pf
   in
     match p with
-	| BForm (b,lbl) -> (float_out_b_formula_min_max b lbl)
+	| BForm (b,lbl, llbl) -> (float_out_b_formula_min_max b lbl llbl)
   	| And (f1, f2, l) -> And((float_out_pure_min_max f1), (float_out_pure_min_max f2), l)
 	| AndList b -> AndList (Gen.map_l_snd float_out_pure_min_max b)
   	| Or (f1, f2, lbl, l) -> Or((float_out_pure_min_max f1), (float_out_pure_min_max f2), lbl,l)
@@ -1295,7 +1295,7 @@ and float_out_pure_min_max (p : formula) : formula =
 
 let find_equal_var (p:formula) : ((ident*primed) * (ident*primed)) list =
   (match p with
-    | BForm ((p_f,_),_) ->
+    | BForm ((p_f,_),_, _) ->
         (match p_f with
           | Eq (e1,e2,pos) ->
               (match e1,e2 with
@@ -1325,8 +1325,8 @@ let find_closure (v:(ident*primed)) (vv:((ident*primed) * (ident*primed)) list) 
   helper [v] vv
 
 let rec find_p_val x v p = match p with 
-  | BForm (((Eq (Var (a,_),IConst (b,_),_)),_),_) 
-  | BForm (((Eq (IConst (b,_),Var (a,_),_)),_),_) -> a=v && b=x
+  | BForm (((Eq (Var (a,_),IConst (b,_),_)),_),_, _) 
+  | BForm (((Eq (IConst (b,_),Var (a,_),_)),_),_, _) -> a=v && b=x
   | BForm _ -> false
   | And (f1,f2,_) -> (find_p_val x v f1) || (find_p_val x v f2)
   | AndList l -> Gen.Basic.exists_l_snd (find_p_val x v) l 
@@ -1424,7 +1424,7 @@ let rec typ_of_exp (e: exp) : typ =
 (* Slicing Utils *)
 let rec set_il_formula f il =
   match f with
-    | BForm (bf, lbl) -> BForm (set_il_b_formula bf il, lbl)
+    | BForm (bf, lbl, llbl) -> BForm (set_il_b_formula bf il, lbl, llbl)
     | _ -> f
       
 and set_il_b_formula bf il =
@@ -1478,7 +1478,7 @@ and subst_var (fr, t) (o : (ident*primed)) = if (eq_var fr o) then t else o
 (*x'=x ==> x_new = x_old*)
 let trans_special_formula s (p:formula) vars =
   (match p with
-    | BForm ((p_f,sth1),sth2) ->
+    | BForm ((p_f,sth1),sth2, llbl) ->
         (match p_f with
           | Eq (e1,e2,pos) ->
               (match e1,e2 with
@@ -1502,7 +1502,7 @@ let trans_special_formula s (p:formula) vars =
                         let e1 = Var (new_v1,pos1) in
                         let e2 = Var (new_v2,pos2) in
                         let ee = Eq (e1,e2,pos) in
-                        BForm ((ee,sth1),sth2)
+                        BForm ((ee,sth1),sth2, llbl)
                       else p
                     else p
                 | _ -> p

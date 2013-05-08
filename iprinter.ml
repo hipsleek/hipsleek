@@ -280,7 +280,7 @@ let concat_string_list_string strings =
 		
 (* pretty printing for a pure formula *)
 let rec string_of_pure_formula = function 
-  | P.BForm (bf,lbl)                    -> string_of_b_formula bf 
+  | P.BForm (bf,lbl, llbl)                    -> string_of_b_formula bf 
   | P.And (f1, f2, l)             -> "(" ^ (string_of_pure_formula f1) ^ ") & (" ^ (string_of_pure_formula f2) ^ ")"  
   | P.AndList b -> List.fold_left  (fun a (l,c)-> 
 		let l_s = (string_of_spec_label l) ^": " in

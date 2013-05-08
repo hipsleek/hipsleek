@@ -36,7 +36,7 @@ and list_spec_var_subset l1 l2 =
 
 let is_eq_pointers p svs=
   match p with
-    | CP.BForm ((pf,_), _)->
+    | CP.BForm ((pf,_), _,_)->
         (
             match pf with
               | CP.Eq (CP.Var (sv1,_), CP.Var (sv2,_),_) ->

@@ -585,7 +585,7 @@ let pure_formula_wo_paren (e:P.formula) =
   match e with
     | P.Forall _ 
     | P.Exists _ | P.Not _ -> true
-    | P.BForm (e1,_) -> true (* b_formula_wo_paren e1 *)
+    | P.BForm (e1,_,_) -> true (* b_formula_wo_paren e1 *)
     | P.And _ -> false (*Bach: change from true to false*) 
     | _ -> false
 
@@ -983,7 +983,8 @@ let rec pr_pure_formula  (e:P.formula) =
   let f_b e =  pr_bracket pure_formula_wo_paren pr_pure_formula e 
   in
   match e with 
-    | P.BForm (bf,lbl) -> (*pr_formula_label_opt lbl;*) pr_b_formula bf
+    | P.BForm (bf,lbl,_) ->
+          (*pr_formula_label_opt lbl;*) pr_b_formula bf
     | P.And (f1, f2, l) ->  
           let arg1 = bin_op_to_list op_and_short pure_formula_assoc_op f1 in
           let arg2 = bin_op_to_list op_and_short pure_formula_assoc_op f2 in
@@ -1015,7 +1016,9 @@ let rec pr_pure_formula_w_loc  (e:P.formula) =
   let f_b e =  pr_bracket pure_formula_wo_paren pr_pure_formula_w_loc e 
   in
   match e with 
-    | P.BForm (bf,lbl) -> (* pr_formula_label_opt lbl; *) pr_b_formula_w_loc bf
+    | P.BForm (bf,lbl,llbl) ->  let pr = pr_list (pr_list line_number_of_pos) in
+          (* pr_formula_label_opt lbl; *) pr_b_formula_w_loc bf;
+      fmt_string (pr llbl)
     | P.And (f1, f2, l) ->  
           let arg1 = bin_op_to_list op_and_short pure_formula_assoc_op f1 in
           let arg2 = bin_op_to_list op_and_short pure_formula_assoc_op f2 in
@@ -3583,7 +3586,7 @@ let rec html_of_pure_b_formula f = match f with
 
 let rec html_of_pure_formula f =
 	match f with
-    | P.BForm ((bf,_),_) -> html_of_pure_b_formula bf
+    | P.BForm ((bf,_),_, _) -> html_of_pure_b_formula bf
     | P.And (f1, f2, l) -> 
 		let arg1 = bin_op_to_list op_and_short pure_formula_assoc_op f1 in
 		let arg2 = bin_op_to_list op_and_short pure_formula_assoc_op f2 in

@@ -1308,20 +1308,21 @@ let rec generate_extensions (subnode : F.h_formula_data) cdefs0 (pos:loc) : F.h_
 		(*09.05.2000 ---*)
 	  let sup_ext_var = P.SpecVar (Named ext_name, fn1, Unprimed) in
 	  let sup_h = F.DataNode ({F.h_formula_data_node = subnode.F.h_formula_data_node;
-							   F.h_formula_data_name = cdef1.data_name;
-							   F.h_formula_data_derv = subnode.F.h_formula_data_derv;
-							   F.h_formula_data_imm = subnode.F.h_formula_data_imm;
-                               F.h_formula_data_param_imm = subnode.F.h_formula_data_param_imm;
-							   F.h_formula_data_perm = subnode.F.h_formula_data_perm; (*LDK*)
-							   F.h_formula_data_origins = subnode.F.h_formula_data_origins;
-							   F.h_formula_data_original = subnode.F.h_formula_data_original;
-							   F.h_formula_data_arguments = sub_tvar :: sup_ext_var :: to_sup;
-	                           F.h_formula_data_holes = []; (* An Hoa : Don't know what to do! *)
-							   F.h_formula_data_label = subnode.F.h_formula_data_label;
-                 F.h_formula_data_remaining_branches = None;
-                 F.h_formula_data_pruning_conditions = [];
-							   F.h_formula_data_pos = pos}) in
-		(* generate extensions for the rest of the fields *)
+	  F.h_formula_data_name = cdef1.data_name;
+	  F.h_formula_data_derv = subnode.F.h_formula_data_derv;
+	  F.h_formula_data_imm = subnode.F.h_formula_data_imm;
+          F.h_formula_data_param_imm = subnode.F.h_formula_data_param_imm;
+	  F.h_formula_data_perm = subnode.F.h_formula_data_perm; (*LDK*)
+	  F.h_formula_data_origins = subnode.F.h_formula_data_origins;
+	  F.h_formula_data_original = subnode.F.h_formula_data_original;
+	  F.h_formula_data_arguments = sub_tvar :: sup_ext_var :: to_sup;
+	  F.h_formula_data_holes = []; (* An Hoa : Don't know what to do! *)
+	  F.h_formula_data_label = subnode.F.h_formula_data_label;
+          F.h_formula_data_remaining_branches = None;
+          F.h_formula_data_pruning_conditions = [];
+          F.h_formula_data_lbl = [[pos]];
+	  F.h_formula_data_pos = pos}) in
+	  (* generate extensions for the rest of the fields *)
 	  let rec gen_exts top_p link_p args cdefs : F.h_formula = match cdefs with
 		| cdef1 :: cdef2 :: rest -> begin
 			let i = List.length cdef2.data_fields in
@@ -1329,20 +1330,21 @@ let rec generate_extensions (subnode : F.h_formula_data) cdefs0 (pos:loc) : F.h_
 			let ext_name = gen_ext_name cdef1.data_name cdef2.data_name in
 			  if Gen.is_empty rest then
 				let ext_h = F.DataNode ({F.h_formula_data_node = top_p;
-										 F.h_formula_data_name = ext_name;
-										 F.h_formula_data_derv = subnode.F.h_formula_data_derv;
-										 F.h_formula_data_imm = subnode.F.h_formula_data_imm;
-                                         F.h_formula_data_param_imm = subnode.F.h_formula_data_param_imm;
-										 F.h_formula_data_perm = subnode.F.h_formula_data_perm; (*LDK*)
-							             F.h_formula_data_origins = subnode.F.h_formula_data_origins;
-							             F.h_formula_data_original = subnode.F.h_formula_data_original;
-										 F.h_formula_data_arguments = link_p :: to_ext;
-						F.h_formula_data_holes = []; (* An Hoa : Don't know what to do! *)
-										 F.h_formula_data_label = subnode.F.h_formula_data_label;
-                     F.h_formula_data_remaining_branches = None;
-                     F.h_formula_data_pruning_conditions = [];
-										 F.h_formula_data_pos = pos}) in
-				  ext_h
+				F.h_formula_data_name = ext_name;
+				F.h_formula_data_derv = subnode.F.h_formula_data_derv;
+				F.h_formula_data_imm = subnode.F.h_formula_data_imm;
+                                F.h_formula_data_param_imm = subnode.F.h_formula_data_param_imm;
+				F.h_formula_data_perm = subnode.F.h_formula_data_perm; (*LDK*)
+				F.h_formula_data_origins = subnode.F.h_formula_data_origins;
+				F.h_formula_data_original = subnode.F.h_formula_data_original;
+				F.h_formula_data_arguments = link_p :: to_ext;
+				F.h_formula_data_holes = []; (* An Hoa : Don't know what to do! *)
+				F.h_formula_data_label = subnode.F.h_formula_data_label;
+                                F.h_formula_data_remaining_branches = None;
+                                F.h_formula_data_pruning_conditions = [];
+                                F.h_formula_data_lbl = [[pos]];
+				F.h_formula_data_pos = pos}) in
+				ext_h
 			  else
 				let ext_link_name = gen_ext_name cdef2.data_name ((List.hd rest).data_name) in
 				(*--- 09.05.2000 *)
@@ -1351,19 +1353,20 @@ let rec generate_extensions (subnode : F.h_formula_data) cdefs0 (pos:loc) : F.h_
 				(*09.05.2000 ---*)
 				let ext_link_p = P.SpecVar (Named ext_link_name, fn2, Unprimed) in
 				let ext_h = F.DataNode ({F.h_formula_data_node = top_p;
-										 F.h_formula_data_name = ext_name;
-										 F.h_formula_data_derv = subnode.F.h_formula_data_derv;
-										 F.h_formula_data_imm = subnode.F.h_formula_data_imm;
-                                         F.h_formula_data_param_imm = subnode.F.h_formula_data_param_imm;
-										 F.h_formula_data_perm = subnode.F.h_formula_data_perm;
-							             F.h_formula_data_origins = subnode.F.h_formula_data_origins;
-							             F.h_formula_data_original = subnode.F.h_formula_data_original;
-										 F.h_formula_data_arguments = ext_link_p :: to_ext;
-								F.h_formula_data_holes = []; (* An Hoa : Don't know what to do! *)
-										 F.h_formula_data_label = subnode.F.h_formula_data_label;
-                     F.h_formula_data_remaining_branches = None;
-                     F.h_formula_data_pruning_conditions = [];
-										 F.h_formula_data_pos = pos}) in
+				F.h_formula_data_name = ext_name;
+				F.h_formula_data_derv = subnode.F.h_formula_data_derv;
+				F.h_formula_data_imm = subnode.F.h_formula_data_imm;
+                                F.h_formula_data_param_imm = subnode.F.h_formula_data_param_imm;
+				F.h_formula_data_perm = subnode.F.h_formula_data_perm;
+				F.h_formula_data_origins = subnode.F.h_formula_data_origins;
+				F.h_formula_data_original = subnode.F.h_formula_data_original;
+				F.h_formula_data_arguments = ext_link_p :: to_ext;
+				F.h_formula_data_holes = []; (* An Hoa : Don't know what to do! *)
+				F.h_formula_data_label = subnode.F.h_formula_data_label;
+                                F.h_formula_data_remaining_branches = None;
+                                F.h_formula_data_pruning_conditions = [];
+                                F.h_formula_data_lbl = [[pos]];
+				F.h_formula_data_pos = pos}) in
 				let rest_exts = gen_exts ext_link_p link_p rest_fields (cdef2 :: rest) in
 				let ext = F.mkStarH ext_h rest_exts pos in
 				  ext

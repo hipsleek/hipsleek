@@ -3678,7 +3678,7 @@ let match_one_hp_views (vdcls: CA.view_decl list) (_, hf, orf):(CP.spec_var* CF.
           if (List.length args) = ((List.length vdcl.CA.view_vars) + 1) then
             if (match_one_hp_one_view (hp, eargs, p) hp args def_fl vdcl) then
               let vnode = CF.mkViewNode (List.hd args) vdcl.CA.view_name
-                (List.tl args) no_pos in
+                (List.tl args) [] no_pos in
               [vnode]
             else []
           else []

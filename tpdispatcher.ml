@@ -988,8 +988,8 @@ let norm_var_name (e: CP.formula) : CP.formula =
         CP.mkOr nf1 nf2 lbl l
     | CP.Not (f1, lbl, l) ->
         CP.Not (simplify f1 vnames, lbl, l)
-    | CP.BForm (bf, lbl) ->
-        CP.BForm (CP.map_b_formula_arg bf vnames (f_bf, f_e) (idf2, idf2), lbl)
+    | CP.BForm (bf, lbl, llbl) ->
+        CP.BForm (CP.map_b_formula_arg bf vnames (f_bf, f_e) (idf2, idf2), lbl, llbl)
   in
   simplify e (Hashtbl.create 100)
 
@@ -1853,9 +1853,9 @@ let rec requant = function
 
 let rewrite_in_list list formula =
   match formula with
-  | CP.BForm ((CP.Eq (CP.Var (v1, _), CP.Var(v2, _), _), _), _) ->
+  | CP.BForm ((CP.Eq (CP.Var (v1, _), CP.Var(v2, _), _), _), _, _) ->
       List.map (fun x -> if x <> formula then CP.subst [v1, v2] x else x) list
-  | CP.BForm ((CP.Eq (CP.Var (v1, _), (CP.IConst(i, _) as term), _), _), _) ->
+  | CP.BForm ((CP.Eq (CP.Var (v1, _), (CP.IConst(i, _) as term), _), _), _, _) ->
       List.map (fun x -> if x <> formula then CP.subst_term [v1, term] x else x) list
   | x -> list
 ;;
@@ -1876,13 +1876,13 @@ let rec rewrite_in_and_tree bag_vars rid formula rform =
   | x ->
       let subst_fun =
         match rform with
-        | CP.BForm ((CP.Eq (CP.Var (v1, _), CP.Var(v2, _), _), _), _) ->
+        | CP.BForm ((CP.Eq (CP.Var (v1, _), CP.Var(v2, _), _), _), _, _) ->
             if (List.mem v1 bag_vars || (List.mem v2 bag_vars)) then  fun x -> x else
               CP.subst [v1, v2]
-        | CP.BForm ((CP.Eq (CP.Var (v1, _), (CP.IConst(i, _) as term), _), _), _) ->
+        | CP.BForm ((CP.Eq (CP.Var (v1, _), (CP.IConst(i, _) as term), _), _), _, _) ->
             if (List.mem v1 bag_vars) then  fun x -> x else
             CP.subst_term [v1, term]
-        | CP.BForm ((CP.Eq ((CP.IConst(i, _) as term), CP.Var (v1, _), _), _), _) ->
+        | CP.BForm ((CP.Eq ((CP.IConst(i, _) as term), CP.Var (v1, _), _), _), _, _) ->
             if (List.mem v1 bag_vars) then  fun x -> x else
             CP.subst_term [v1, term]
         | _ -> fun x -> x
@@ -1892,8 +1892,8 @@ let rec rewrite_in_and_tree bag_vars rid formula rform =
 ;;
 
 let is_irrelevant = function
-  | CP.BForm ((CP.Eq (CP.Var (v1, _), CP.Var(v2, _), _), _), _) -> v1 = v2
-  | CP.BForm ((CP.Eq (CP.IConst(i1, _), CP.IConst(i2, _), _), _), _) -> i1 = i2
+  | CP.BForm ((CP.Eq (CP.Var (v1, _), CP.Var(v2, _), _), _), _, _) -> v1 = v2
+  | CP.BForm ((CP.Eq (CP.IConst(i1, _), CP.IConst(i2, _), _), _), _, _) -> i1 = i2
   | _ -> false
 ;;
 
@@ -1968,11 +1968,11 @@ let simpl_pair rid (ante, conseq) =
   (* let _ = print_endline (" ### l1 = " ^ (Cprinter.string_of_spec_var_list l1)) in *)
   let antes = split_conjunctions ante in
   let fold_fun l_f_vars (ante, conseq)  = function
-    | CP.BForm ((CP.Eq (CP.Var (v1, _), CP.Var(v2, _), _), _), _) ->
+    | CP.BForm ((CP.Eq (CP.Var (v1, _), CP.Var(v2, _), _), _), _, _) ->
 		if (List.mem v1 l1 || (List.mem v2 l1)) then ((ante, conseq), fun x -> x) else
         ((CP.subst [v1, v2] ante, CP.subst [v1, v2] conseq), (CP.subst [v1, v2]))
-    | CP.BForm ((CP.Eq (CP.Var (v1, _), (CP.IConst(i, _) as term), _), _), _)
-    | CP.BForm ((CP.Eq ((CP.IConst(i, _) as term), CP.Var (v1, _), _), _), _) ->
+    | CP.BForm ((CP.Eq (CP.Var (v1, _), (CP.IConst(i, _) as term), _), _), _, _)
+    | CP.BForm ((CP.Eq ((CP.IConst(i, _) as term), CP.Var (v1, _), _), _), _, _) ->
 		if (List.mem v1 l1) then ((ante, conseq), fun x -> x)
 		 else ((CP.subst_term [v1, term] ante, CP.subst_term [v1, term] conseq), (CP.subst_term [v1, term]))
     | _ -> ((ante, conseq), fun x -> x)

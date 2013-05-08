@@ -20,7 +20,7 @@ module SAU = Sautility
 
 (************************************************)
 let keep_dist f = match f with
-  | BForm ((Eq(e1,e2,_),_),_) ->  not((eqExp_f eq_spec_var e1 e2) || (is_null e1 && (is_null_const_exp e2)) || ((is_null_const_exp e1) && is_null e2)) 
+  | BForm ((Eq(e1,e2,_),_),_,_) ->  not((eqExp_f eq_spec_var e1 e2) || (is_null e1 && (is_null_const_exp e2)) || ((is_null_const_exp e1) && is_null e2)) 
   | _ -> true
 
 let simplify_conjs f =
@@ -478,7 +478,7 @@ let filter_var f vars =
   Debug.no_2 "i.filter_var" pr !print_svl pr filter_var f vars 
 
 let simplify_helper f = match f with
-  | BForm ((Neq _,_),_) -> f
+  | BForm ((Neq _,_),_,_) -> f
   | Not _ -> f
   | _ -> TP.simplify_raw f
 

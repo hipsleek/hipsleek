@@ -138,7 +138,7 @@ and cvc3_of_sv_type sv = match sv with
   | _ -> "INT"
 
 and cvc3_of_formula f = match f with
-  | CP.BForm (b,_) -> 
+  | CP.BForm (b,_,_) -> 
         begin
           match (fst CP.drop_complex_ops) (fst b) with
             | None -> "(" ^ (cvc3_of_b_formula b) ^ ")"
@@ -150,7 +150,7 @@ and cvc3_of_formula f = match f with
   | CP.Not (p,_, _) ->
 	    begin
 		  match p with
-		    | CP.BForm ((CP.BVar (bv, _), _), _) -> (cvc3_of_spec_var bv) ^ " <= 0"
+		    | CP.BForm ((CP.BVar (bv, _), _), _,_) -> (cvc3_of_spec_var bv) ^ " <= 0"
 		    | _ -> "(NOT (" ^ (cvc3_of_formula p) ^ "))"
 	    end
   | CP.Forall (sv, p,_, _) ->
@@ -161,7 +161,7 @@ and cvc3_of_formula f = match f with
   		"(EXISTS (" ^ (cvc3_of_spec_var sv) ^ ": " ^ typ_str ^ "): " ^ (cvc3_of_formula p) ^ ")"
 		    
 and remove_quantif f quant_list  = match f with
-  | CP.BForm (b,_) -> 
+  | CP.BForm (b,_,_) -> 
 		(*let _ = print_string ("\n#### BForm: " ^ Cprinter.string_of_pure_formula f ) in*)
 		(f, quant_list)
   | CP.AndList _ -> Gen.report_error no_pos "cvc3.ml: encountered AndList, should have been already handled"

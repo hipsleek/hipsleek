@@ -201,7 +201,7 @@ let un_option s d = match s with
 let error_on_dups f l p = if (Gen.BList.check_dups_eq f l) then report_error p ("list contains duplicates") else l
 
 let label_formula f ofl = (match f with 
-          | P.BForm (b,_) -> P.BForm (b,ofl)
+          | P.BForm (b,_,llbl) -> P.BForm (b,ofl,llbl)
           | P.And _ -> f
 		  | P.AndList b -> f
           | P.Or  (b1,b2,_,l)  -> P.Or(b1,b2,ofl,l)
@@ -239,22 +239,34 @@ let apply_pure_form2 fct form1 form2 = match (form1,form2) with
   | Pure_f f1 ,Pure_f f2 -> Pure_f (fct f1 f2)
   | Pure_f f1 , Pure_c f2 
   | Pure_f f1 , Pure_t (f2, _)-> (match f2 with 
-                             | P.Var (v,_) -> Pure_f(fct f1 (P.BForm (((P.mkBVar v (get_pos 1)), None), None)))
+                             | P.Var (v,_) ->
+                                   let l = (get_pos 1) in
+                                   Pure_f(fct f1 (P.BForm (((P.mkBVar v l), None), None, [[l]])))
                              | _ -> report_error (get_pos 1) "with 2 expected pure_form, found cexp in var" )
   | Pure_c f1, Pure_f f2 
   | Pure_t (f1, _), Pure_f f2 -> (match f1 with 
-                             | P.Var (v,_) -> Pure_f(fct (P.BForm (((P.mkBVar v (get_pos 1)), None), None )) f2)
+                             | P.Var (v,_) ->
+                                   let l = (get_pos 1) in
+                                   Pure_f(fct (P.BForm (((P.mkBVar v l), None), None, [[l]] )) f2)
                              | _ -> report_error (get_pos 1) "with 2 expected pure_form in f1, found cexp")
   | Pure_c f1, Pure_c f2 -> (
       let bool_var1 = (
         match f1 with
-        | P.Var (v,_) -> P.BForm (((P.mkBVar v (get_pos 1)), None), None )
-        | P.Ann_Exp (P.Var (v, _), Bool) -> P.BForm (((P.mkBVar v (get_pos 1)), None), None)
+        | P.Var (v,_) ->
+              let l = (get_pos 1) in
+              P.BForm (((P.mkBVar v l), None), None, [[l]] )
+        | P.Ann_Exp (P.Var (v, _), Bool) ->
+              let l = (get_pos 1) in
+              P.BForm (((P.mkBVar v l), None), None, [[l]])
         | _ -> report_error (get_pos 1) "with 2 expected pure_form in f1, found cexp") in
       let bool_var2 = (
         match f2 with
-        | P.Var (v,_) -> P.BForm (((P.mkBVar v (get_pos 1)), None), None )
-        | P.Ann_Exp (P.Var (v, _), Bool) -> P.BForm (((P.mkBVar v (get_pos 1)), None), None)
+        | P.Var (v,_) ->
+              let l = (get_pos 1) in
+              P.BForm (((P.mkBVar v l), None), None, [[l]])
+        | P.Ann_Exp (P.Var (v, _), Bool) ->
+              let l = (get_pos 1) in
+              P.BForm (((P.mkBVar v l), None), None, [[l]])
         | _ -> report_error (get_pos 1) "with 2 expected pure_form in f2, found cexp") in
       Pure_f(fct bool_var1 bool_var2)
     )
@@ -272,33 +284,33 @@ let apply_cexp_form2 fct form1 form2 =
   DD.no_2 "Parser.apply_cexp_form2: " string_of_pure_double string_of_pure_double 
           (fun _ -> "") (apply_cexp_form2 fct) form1 form2
 
-let cexp_list_to_pure fct ls1 = Pure_f (P.BForm (((fct ls1), None), None))
+let cexp_list_to_pure fct ls1 l = Pure_f (P.BForm (((fct ls1), None), None, [[l]]))
 
-let cexp_to_pure1 fct f = 
+let cexp_to_pure1 fct f l = 
   match f with
   | Pure_t (f, _)
-  | Pure_c f -> Pure_f (P.BForm (((fct f), None), None))
+  | Pure_c f -> Pure_f (P.BForm (((fct f), None), None, [[l]]))
   | _ -> report_error (get_pos 1) "with 1 convert expected cexp, found pure_form"
 
-let cexp_to_pure_slicing fct f sl = match f with
+let cexp_to_pure_slicing fct f sl l = match f with
   | Pure_c f 
-  | Pure_t (f, _) -> Pure_f (P.BForm (((fct f), sl), None))
+  | Pure_t (f, _) -> Pure_f (P.BForm (((fct f), sl), None, [[l]]))
   | _ -> report_error (get_pos 1) "with 1 convert expected cexp, found pure_form"	
 
 let cexp_to_pure2 fct f01 f02 =
   match (f01,f02) with
   | Pure_c f1, Pure_c f2 
       -> (match f1 with
-        | P.List(explist,pos) -> let tmp = List.map (fun c -> P.BForm (((fct c f2), None), None)) explist
+        | P.List(explist,pos) -> let tmp = List.map (fun c -> P.BForm (((fct c f2), None), None, [[pos]])) explist
                                in let len =  List.length tmp
                                in let res =  if (len > 1) then List.fold_left (fun c1 c2 -> P.mkAnd c1 c2 (get_pos 2)) (List.hd tmp) (List.tl tmp)
-                                             else  P.BForm (((fct f1 f2), None), None)
+                                             else  P.BForm (((fct f1 f2), None), None, [[pos]])
                                in Pure_f(res) 
                              | _ -> (match f2 with
-                                    | P.List(explist,pos) -> let tmp = List.map (fun c -> P.BForm (((fct f1 c), None), None)) explist
+                                    | P.List(explist,pos) -> let tmp = List.map (fun c -> P.BForm (((fct f1 c), None), None, [[pos]])) explist
                                       in let len = List.length tmp
                                       in let res = if ( len > 1 ) then List.fold_left (fun c1 c2 -> P.mkAnd c1 c2 (get_pos 2)) (List.hd tmp) (List.tl tmp)
-                                                   else P.BForm (((fct f1 f2), None), None)
+                                                   else P.BForm (((fct f1 f2), None), None,[[pos]])
                                       in Pure_f(res) 
                                     | _ -> (
                                         let typ1 = P.typ_of_exp f1 in 
@@ -319,7 +331,7 @@ let cexp_to_pure2 fct f01 f02 =
                                          )
                                         in
                                         if (typ1 = typ2) || (typ1 == UNK) || (typ2 == UNK) || (arr_typ_check typ1 typ2) then 
-                                          Pure_f (P.BForm(((fct f1 f2), None), None))
+                                          Pure_f (P.BForm(((fct f1 f2), None), None, [[P.pos_of_exp f1]]))
                                         else
                                           report_error (get_pos 1) "with 2 convert expected the same cexp types, found different types"
                                       )
@@ -327,14 +339,14 @@ let cexp_to_pure2 fct f01 f02 =
                              )
   | Pure_f f1 , Pure_c f2 ->(
       match f1  with 
-      | P.BForm((pf,il),oe) -> (match pf with 
-                                | P.Lt (a1, a2, _) 
-                                | P.Lte (a1, a2, _) 
-                                | P.Gt (a1, a2, _) 
-                                | P.Gte (a1, a2, _)
-                                | P.Eq (a1, a2, _) 
-                                | P.Neq (a1, a2, _) ->
-                                    let tmp = P.BForm(((fct a2 f2), None),None) in
+      | P.BForm((pf,il),oe, lbl) -> (match pf with 
+                                | P.Lt (a1, a2, pos) 
+                                | P.Lte (a1, a2, pos) 
+                                | P.Gt (a1, a2, pos) 
+                                | P.Gte (a1, a2, pos)
+                                | P.Eq (a1, a2, pos) 
+                                | P.Neq (a1, a2, pos) ->
+                                    let tmp = P.BForm(((fct a2 f2), None),None,[[pos]]) in
                                     Pure_f (P.mkAnd f1 tmp (get_pos 2))
                                 | _ -> report_error (get_pos 1) "error should be an equality exp" )
       | _ -> report_error (get_pos 1) "error should be a binary exp" 
@@ -1306,8 +1318,12 @@ pure_constr:
   [[ peek_pure_out; t= cexp_w ->
        match t with
        | Pure_f f -> f
-       | Pure_c (P.Var (v,_)) ->  P.BForm ((P.mkBVar v (get_pos_camlp4 _loc 1), None), None)
-       | Pure_c (P.Ann_Exp (P.Var (v,_), Bool)) ->  P.BForm ((P.mkBVar v (get_pos_camlp4 _loc 1), None), None)
+       | Pure_c (P.Var (v,p)) ->
+             let l = (get_pos_camlp4 _loc 1) in
+             P.BForm ((P.mkBVar v l, None), None,[[l]])
+       | Pure_c (P.Ann_Exp (P.Var (v,_), Bool)) ->
+             let l = (get_pos_camlp4 _loc 1) in
+             P.BForm ((P.mkBVar v l, None), None, [[l]])
        | _ -> report_error (get_pos_camlp4 _loc 1) "expected pure_constr, found cexp"
   ]];
 
@@ -1387,23 +1403,25 @@ cexp_w:
 		          | Pure_c (P.Var (t, l)) -> (t, l)
 		          | _ -> report_error (get_pos_camlp4 _loc 1) "expected cid" in
 	            (*let f = cexp_to_pure1 (fun c2-> P.BagIn (lc,c2,(get_pos_camlp4 _loc 2))) cl in*)
-	            let f = cexp_to_pure1 (fun c2 -> P.BagIn (cid,c2,pos)) cl in
+	            let f = cexp_to_pure1 (fun c2 -> P.BagIn (cid,c2,pos)) cl pos in
 	            set_slicing_utils_pure_double f false
                 | (*peek_try;*) lc=SELF(*cid*); `NOTIN;  cl=SELF                      ->
 	            let cid, pos = match lc with
 		          | Pure_c (P.Var (t, l)) -> (t, l)
 		          | _ -> report_error (get_pos_camlp4 _loc 1) "expected cid" in
 	            (*let f = cexp_to_pure1 (fun c2-> P.BagIn (lc,c2,(get_pos_camlp4 _loc 2))) cl in*)
-	            let f = cexp_to_pure1 (fun c2 -> P.BagNotIn(cid,c2,pos)) cl in
+	            let f = cexp_to_pure1 (fun c2 -> P.BagNotIn(cid,c2,pos)) cl pos in
 	            set_slicing_utils_pure_double f false
 	            | lc=SELF; `SUBSET; cl=SELF                            ->
 	            let f = cexp_to_pure2 (fun c1 c2-> P.BagSub (c1, c2, (get_pos_camlp4 _loc 2))) lc cl in
 	            set_slicing_utils_pure_double f false
                 | `BAGMAX; `OPAREN; c1=cid; `COMMA; c2=cid; `CPAREN        ->
-	            let f = Pure_f (P.BForm ((P.BagMax (c1, c2, (get_pos_camlp4 _loc 2)), None), None)) in
+                      let l = (get_pos_camlp4 _loc 2) in
+	            let f = Pure_f (P.BForm ((P.BagMax (c1, c2, l), None), None, [[l]])) in
 	            set_slicing_utils_pure_double f false
                 | `BAGMIN; `OPAREN; c1=cid; `COMMA; c2=cid; `CPAREN        ->
-	            let f = Pure_f (P.BForm ((P.BagMin (c1, c2, (get_pos_camlp4 _loc 2)), None), None))  in
+                      let l = (get_pos_camlp4 _loc 2) in
+	            let f = Pure_f (P.BForm ((P.BagMin (c1, c2, l), None), None, [[l]]))  in
 	            set_slicing_utils_pure_double f false
                 | lc=SELF; `INLIST; cl=SELF                ->
 	            let f = cexp_to_pure2 (fun c1 c2-> P.ListIn (c1, c2, (get_pos_camlp4 _loc 2))) lc cl in
@@ -1420,14 +1438,15 @@ cexp_w:
 			          else (t,Unprimed)
                     in
                     let ls = List.map func ls in
-	                let f = cexp_list_to_pure (fun ls -> P.VarPerm(ct,ls,(get_pos_camlp4 _loc 1))) ls in
+                    let l = get_pos_camlp4 _loc 1 in
+	            let f = cexp_list_to_pure (fun ls -> P.VarPerm(ct,ls,l)) ls l in
 	                set_slicing_utils_pure_double f false
                 | `ALLN; `OPAREN; lc=SELF; `COMMA; cl=SELF; `CPAREN    ->
 	            let f = cexp_to_pure2 (fun c1 c2-> P.ListAllN (c1, c2, (get_pos_camlp4 _loc 2))) lc cl  in
   set_slicing_utils_pure_double f false
                 | `PATH; `OPAREN; lc=SELF;`COMMA; `OSQUARE; cl = OPT id_list; `CSQUARE; `CPAREN -> begin
                     match lc with
-                      | Pure_f (P.BForm ((pf, b), fol))->
+                      | Pure_f (P.BForm ((pf, b), fol,lbl))->
                             let func t =
                               if  String.contains t '\'' then 
                                 (* Remove the primed in the identifier *)
@@ -1437,7 +1456,7 @@ cexp_w:
                              let cl = un_option cl [] in
                              let ls = List.map func cl in
                              let npf = (IP.Path (pf, ls, get_pos_camlp4 _loc 2), b) in
-                             Pure_f (P.BForm (npf, fol))
+                             Pure_f (P.BForm (npf, fol, lbl))
                       | _ -> report_error no_pos "parser.cexp_w"
                   end
                 | `PERM; `OPAREN; lc=SELF; `COMMA; cl=SELF; `CPAREN    ->
@@ -1445,7 +1464,8 @@ cexp_w:
 	            set_slicing_utils_pure_double f false
                 | t_ann=ann_term; ls1=opt_measures_seq_sqr; ls2=opt_measures_seq
                             ->
-	                        let f = cexp_list_to_pure (fun ls1 -> P.LexVar(t_ann,ls1,ls2,(get_pos_camlp4 _loc 1))) ls1 in
+                                let l = (get_pos_camlp4 _loc 1) in
+	                        let f = cexp_list_to_pure (fun ls1 -> P.LexVar(t_ann,ls1,ls2,l)) ls1 l in
 	                        set_slicing_utils_pure_double f false
               ]
 	          
@@ -1500,12 +1520,13 @@ cexp_w:
 		  Pure_c (P.Var (("#" ^ (string_of_int !hash_count),Unprimed),(get_pos_camlp4 _loc 1)))
        | `IDENTIFIER id1;`OPAREN; `IDENTIFIER id; `OPAREN; cl = id_list; `CPAREN ; `CPAREN-> (* xpure *)
        (* print_string ("xpure"^id1^"("^id^"())!!!"); *)
-	  	  if hp_names # mem id then Pure_f(P.BForm ((P.mkXPure id cl (get_pos_camlp4 _loc 1), None), None))
+             let l = (get_pos_camlp4 _loc 1) in
+	  	  if hp_names # mem id then Pure_f(P.BForm ((P.mkXPure id cl l, None), None, [[l]]))
 	  	  else
 	  	    begin
 	  	      if not(rel_names # mem id) then print_endline ("WARNING1 : parsing problem "^id^" is neither a ranking function nor a relation nor a heap predicate (not in rel_names)")
 	  	      else  print_endline ("WARNING2 : parsing problem "^id^" is neither a ranking function nor a relation nor a heap predicate (in rel_names)") ;
-	  	      Pure_f(P.BForm ((P.mkXPure id cl (get_pos_camlp4 _loc 1), None), None))
+	  	      Pure_f(P.BForm ((P.mkXPure id cl l, None), None,[[l]]))
 	  	    end
        | `IDENTIFIER id; `OPAREN; cl = opt_cexp_list; `CPAREN -> (* print_string("here"); *)
       (* AnHoa: relation constraint, for instance, given the relation 
@@ -1515,12 +1536,13 @@ cexp_w:
        * in our formula.
        *)
 	  (* print_string ("rel: "^id^"!!!\n"); *)
-	  if func_names # mem id then Pure_c (P.Func (id, cl, get_pos_camlp4 _loc 1))
-          else if hp_names # mem id then Pure_f(P.BForm ((P.RelForm (id, cl, get_pos_camlp4 _loc 1), None), None))
+             let l = get_pos_camlp4 _loc 1 in
+	  if func_names # mem id then Pure_c (P.Func (id, cl, l))
+          else if hp_names # mem id then Pure_f(P.BForm ((P.RelForm (id, cl, l), None), None, [[l]]))
           else
             begin
               if not(rel_names # mem id) then print_endline ("WARNING : parsing problem "^id^" is neither a ranking function nor a relation nor a heap predicate");
-              Pure_f(P.BForm ((P.RelForm (id, cl, get_pos_camlp4 _loc 1), None), None))
+              Pure_f(P.BForm ((P.RelForm (id, cl, l), None), None,[[l]]))
             end
                 (* (try ( *)
                 (*   if (String.sub id 0 5) = "term_" then Pure_c (P.Func (id, cl, get_pos_camlp4 _loc 1)) *)
@@ -1571,8 +1593,13 @@ cexp_w:
                     -> apply_pure_form1 (fun c-> List.fold_left (fun f v ->P.mkExists [v] f None (get_pos_camlp4 _loc 1)) c ocl) pc
 		        | `FORALL; `OPAREN; ocl=opt_cid_list; `COLON; pc=SELF; `CPAREN 
                     -> apply_pure_form1 (fun c-> List.fold_left (fun f v-> P.mkForall [v] f None (get_pos_camlp4 _loc 1)) c ocl) pc
-		  | t=cid                             -> (* print_string ("pure_form:"^(fst t)^"\n"); *) Pure_f (P.BForm ((P.mkBVar t (get_pos_camlp4 _loc 1), None), None ))
-		        | `NOT; t=cid                       -> Pure_f (P.mkNot (P.BForm ((P.mkBVar t (get_pos_camlp4 _loc 2), None), None )) None (get_pos_camlp4 _loc 1))
+		        | t=cid -> (* print_string ("pure_form:"^(fst t)^"\n"); *)
+                              let l = (get_pos_camlp4 _loc 1) in
+                              Pure_f (P.BForm ((P.mkBVar t l, None), None, [[l]]))
+		        | `NOT; t=cid                       ->
+                              let l1 = (get_pos_camlp4 _loc 1) in
+                              let l2 = (get_pos_camlp4 _loc 2) in
+                              Pure_f (P.mkNot (P.BForm ((P.mkBVar t l2, None), None, [[l2]])) None l1)
 		        | `NOT; `OPAREN; c=pure_constr; `CPAREN     -> Pure_f (P.mkNot c None (get_pos_camlp4 _loc 1))  
 		        
                         (*| lc=cexp_w LEVEL "bconstr"    -> lc*)

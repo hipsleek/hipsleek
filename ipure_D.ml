@@ -35,7 +35,7 @@ type xpure_view = {
 }
 
 type formula = 
-  | BForm of (b_formula*(formula_label option))
+  | BForm of (b_formula*(formula_label option) * (loc list list))
   | And of (formula * formula * loc)
   | AndList of (spec_label * formula) list
   | Or of (formula * formula *(formula_label option) * loc)

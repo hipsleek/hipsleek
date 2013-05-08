@@ -334,8 +334,8 @@ let rec normalize_inf_formula (pf: CP.formula) : CP.formula =
   let _ = DD.vv_trace("in normalize_inf_formula: "^ (string_of_pure_formula pf)) in
   (*if not (contains_inf_or_inf_var pf) then pf else*)
   (match pf with 
-    | CP.BForm (b,fl) -> 
-          let b_norm = normalize_b_formula b in CP.BForm(b_norm,fl) 
+    | CP.BForm (b,fl, llbl) -> 
+          let b_norm = normalize_b_formula b in CP.BForm(b_norm,fl, llbl) 
     | CP.And (pf1,pf2,pos) -> 
         (*let _ = Gen.Profiling.push_time "INF-Normalize_And" in*)
         (*let _ = print_string("pf1: "^(string_of_pure_formula pf1)^"\n") in*)
@@ -403,7 +403,7 @@ Check if the formula contains any assignment to \inf
 *)
 let rec contains_inf_eq (pf:CP.formula) : bool  =
   match pf with
-    | CP.BForm (b,fl) -> contains_inf_eq_b_formula b 
+    | CP.BForm (b,fl, llbl) -> contains_inf_eq_b_formula b 
     | CP.And (pf1,pf2,pos) -> contains_inf_eq pf1 || contains_inf_eq pf2
     | CP.AndList pflst -> List.exists 
                             (fun (sl,pf) -> contains_inf_eq pf) pflst
@@ -595,9 +595,9 @@ substitute all variables in vl with \inf in f
 let rec sub_inf_list (f:CP.formula) (vl: CP.spec_var list) (is_neg: bool) : CP.formula = 
   let rec helper pf vl =
     match pf with
-      | CP.BForm (b,fl) -> 
+      | CP.BForm (b,fl, llbl) -> 
             let b_norm = sub_inf_list_b_formula b vl is_neg
-            in CP.BForm(b_norm,fl) 
+            in CP.BForm(b_norm,fl, llbl) 
       | CP.And (pf1,pf2,pos) -> 
             let pf1_norm = helper pf1 vl in
             let pf2_norm = helper pf2 vl in

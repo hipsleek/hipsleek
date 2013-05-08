@@ -149,19 +149,21 @@ and h_formula_heap = { h_formula_heap_node : (ident * primed);
 		       h_formula_heap_arguments : P.exp list;
 		       h_formula_heap_pseudo_data : bool;
 		       h_formula_heap_label : formula_label option;
+                       h_formula_heap_lbl: loc list list; (*for formula trace: (un)fold*)
 		       h_formula_heap_pos : loc }
 
 and h_formula_heap2 = { h_formula_heap2_node : (ident * primed);
 			h_formula_heap2_name : ident;
 			h_formula_heap2_derv : bool;
 			h_formula_heap2_imm : ann;
-		    h_formula_heap2_imm_param : ann option list;
+		        h_formula_heap2_imm_param : ann option list;
 			h_formula_heap2_full : bool;
 			h_formula_heap2_with_inv : bool;
-		    h_formula_heap2_perm : iperm; (*LDK: fractional permission*)
+		        h_formula_heap2_perm : iperm; (*LDK: fractional permission*)
 			h_formula_heap2_arguments : (ident * P.exp) list;
 			h_formula_heap2_pseudo_data : bool;
 			h_formula_heap2_label : formula_label option;
+                        h_formula_heap2_lbl: loc list list;
 			h_formula_heap2_pos : loc }
 
 let print_pure_formula = ref(fun (c:Ipure.formula) -> "printer not initialized")
@@ -468,6 +470,7 @@ and mkHeapNode_x c id dr i f inv pd perm hl hl_i ofl l=
                    h_formula_heap_perm = perm; (*LDK: perm from parser*)
                    h_formula_heap_arguments = hl;
                    h_formula_heap_label = ofl;
+                   h_formula_heap_lbl = [[l]];
                    h_formula_heap_pos = l }
 
 and mkHeapNode  c id dr i f inv pd perm hl hl_i ofl l= 
@@ -487,6 +490,7 @@ and mkHeapNode2 c id dr i f inv pd perm ohl hl_i ofl l =
                     h_formula_heap2_perm = perm; (*LDK: perm from parser*)
                     h_formula_heap2_arguments = ohl;
                     h_formula_heap2_label = ofl;
+                    h_formula_heap2_lbl = [[l]];
                     h_formula_heap2_pos = l}
 
 and pos_of_formula f0 = match f0 with
@@ -1048,6 +1052,7 @@ and h_apply_one ((fr, t) as s : ((ident*primed) * (ident*primed))) (f : h_formul
 	h_formula_heap_arguments = args;
 	h_formula_heap_pseudo_data = ps_data;
 	h_formula_heap_label = l;
+        h_formula_heap_lbl = lbl;
 	h_formula_heap_pos = pos}) -> 
       let imm = apply_one_imm s imm in
       let imm_p = List.map (fun x -> apply_one_opt_imm s x) imm_p in
@@ -1065,20 +1070,22 @@ and h_apply_one ((fr, t) as s : ((ident*primed) * (ident*primed))) (f : h_formul
 		h_formula_heap_arguments = List.map (Ipure.e_apply_one s) args;
 		h_formula_heap_pseudo_data = ps_data;
 		h_formula_heap_label = l;
+                h_formula_heap_lbl = lbl;
 		h_formula_heap_pos = pos})
   | HeapNode2 ({
-		h_formula_heap2_node = x;
-		h_formula_heap2_name = c;
-	    h_formula_heap2_derv = dr; 
-		h_formula_heap2_imm = imm;
-	    h_formula_heap2_imm_param = imm_p; 
-		h_formula_heap2_full = full;
-		h_formula_heap2_with_inv = winv;
-		h_formula_heap2_arguments = args;
-	    h_formula_heap2_perm = perm; (*LDK*)
-		h_formula_heap2_pseudo_data = ps_data;
-		h_formula_heap2_label = l;
-		h_formula_heap2_pos= pos}) -> 
+	h_formula_heap2_node = x;
+	h_formula_heap2_name = c;
+	h_formula_heap2_derv = dr; 
+	h_formula_heap2_imm = imm;
+	h_formula_heap2_imm_param = imm_p; 
+	h_formula_heap2_full = full;
+	h_formula_heap2_with_inv = winv;
+	h_formula_heap2_arguments = args;
+	h_formula_heap2_perm = perm; (*LDK*)
+	h_formula_heap2_pseudo_data = ps_data;
+	h_formula_heap2_label = l;
+        h_formula_heap2_lbl = lbl;
+	h_formula_heap2_pos= pos}) -> 
       let imm = apply_one_imm s imm in
       let imm_p = List.map (fun x -> apply_one_opt_imm s x) imm_p in
       let perm1 = match perm with
@@ -1086,18 +1093,19 @@ and h_apply_one ((fr, t) as s : ((ident*primed) * (ident*primed))) (f : h_formul
         | None -> None
       in
         HeapNode2 ({
-		    h_formula_heap2_node = subst_var s x;
-		    h_formula_heap2_name =c;
-	        h_formula_heap2_derv = dr; 
-		    h_formula_heap2_imm = imm;
-	        h_formula_heap2_imm_param = imm_p; 
-		    h_formula_heap2_full =full;
-		    h_formula_heap2_with_inv = winv;
-		    h_formula_heap2_perm = perm1; (*LDK*)
-		    h_formula_heap2_arguments = List.map (fun (c1,c2)-> (c1,(Ipure.e_apply_one s c2))) args;
-		    h_formula_heap2_pseudo_data =ps_data;
-		    h_formula_heap2_label = l;
-		    h_formula_heap2_pos = pos})
+	    h_formula_heap2_node = subst_var s x;
+	    h_formula_heap2_name =c;
+	    h_formula_heap2_derv = dr; 
+	    h_formula_heap2_imm = imm;
+	    h_formula_heap2_imm_param = imm_p; 
+	    h_formula_heap2_full =full;
+	    h_formula_heap2_with_inv = winv;
+	    h_formula_heap2_perm = perm1; (*LDK*)
+	    h_formula_heap2_arguments = List.map (fun (c1,c2)-> (c1,(Ipure.e_apply_one s c2))) args;
+	    h_formula_heap2_pseudo_data =ps_data;
+	    h_formula_heap2_label = l;
+            h_formula_heap2_lbl = lbl;
+	    h_formula_heap2_pos = pos})
   | HTrue -> f
   | HFalse -> f
   | HEmp -> f
@@ -1260,6 +1268,7 @@ and h_apply_one_w_data_name ((fr, t) as s : ((ident*primed) * (ident*primed))) (
 	               h_formula_heap_arguments = args;
 	               h_formula_heap_pseudo_data = ps_data;
 	               h_formula_heap_label = l;
+                       h_formula_heap_lbl = lbl;
 	               h_formula_heap_pos = pos}) ->
           let imm = apply_one_imm s imm in
           let perm1 = match perm with
@@ -1276,6 +1285,7 @@ and h_apply_one_w_data_name ((fr, t) as s : ((ident*primed) * (ident*primed))) (
 		                h_formula_heap_arguments = List.map (Ipure.e_apply_one s) args;
 		                h_formula_heap_pseudo_data = ps_data;
 		                h_formula_heap_label = l;
+                                h_formula_heap_lbl = lbl;
 		                h_formula_heap_pos = pos})
       | HeapNode2 ({
 		  h_formula_heap2_node = x;
@@ -1289,6 +1299,7 @@ and h_apply_one_w_data_name ((fr, t) as s : ((ident*primed) * (ident*primed))) (
 	      h_formula_heap2_perm = perm; (*LDK*)
 		  h_formula_heap2_pseudo_data = ps_data;
 		  h_formula_heap2_label = l;
+                  h_formula_heap2_lbl = lbl;
 		  h_formula_heap2_pos= pos}) ->
           let imm = apply_one_imm s imm in
           let perm1 = match perm with
@@ -1307,6 +1318,7 @@ and h_apply_one_w_data_name ((fr, t) as s : ((ident*primed) * (ident*primed))) (
 		      h_formula_heap2_arguments = List.map (fun (c1,c2)-> (c1,(Ipure.e_apply_one s c2))) args;
 		      h_formula_heap2_pseudo_data =ps_data;
 		      h_formula_heap2_label = l;
+                      h_formula_heap2_lbl = lbl;
 		      h_formula_heap2_pos = pos})
       | HTrue -> f
       | HFalse -> f
@@ -1440,8 +1452,8 @@ and float_out_exps_from_heap_x (f:formula ) (rel0: rel option) :formula =
 							try
 								let lexp = P.find_lexp_exp c !Ipure.linking_exp_list in
 								(* let _ = Hashtbl.remove !Ipure.linking_exp_list c in *)
-								Ipure.BForm ((Ipure.Eq (nv,c,b.h_formula_heap_pos), (Some (false, fresh_int(), lexp))), None)
-							with Not_found -> Ipure.BForm ((Ipure.Eq (nv,c,b.h_formula_heap_pos), None), None)
+								Ipure.BForm ((Ipure.Eq (nv,c,b.h_formula_heap_pos), (Some (false, fresh_int(), lexp))), None, b.h_formula_heap_lbl)
+							with Not_found -> Ipure.BForm ((Ipure.Eq (nv,c,b.h_formula_heap_pos), None), None, b.h_formula_heap_lbl)
             else 
                       let pf = if (*not(!Globals.allow_field_ann)*) (true) then Ipure.Eq (nv,c,b.h_formula_heap_pos) else
                             (*asankhs: What is rel0 supposed to be ? this function is always called with a None removing for now*)
@@ -1482,7 +1494,7 @@ and float_out_exps_from_heap_x (f:formula ) (rel0: rel option) :formula =
                                           | _ -> Ipure.Lte (nv,c,b.h_formula_heap_pos)
                                     end
                       in
-                      let nf = Ipure.BForm ((pf, None), None) in
+                      let nf = Ipure.BForm ((pf, None), None,b.h_formula_heap_lbl) in
                       nf
                   (* Slicing: TODO IL for linking exp *)
           in
@@ -1505,10 +1517,10 @@ and float_out_exps_from_heap_x (f:formula ) (rel0: rel option) :formula =
 			          try
 				          let lexp = P.find_lexp_exp (snd c) !Ipure.linking_exp_list in
 				  (*let _ = Hashtbl.remove !Ipure.linking_exp_list (snd c) in*)
-				          Ipure.BForm ((Ipure.Eq (nv,(snd c),b.h_formula_heap2_pos), (Some (false, fresh_int(), lexp))), None)
+				          Ipure.BForm ((Ipure.Eq (nv,(snd c),b.h_formula_heap2_pos), (Some (false, fresh_int(), lexp))), None, b.h_formula_heap2_lbl)
 			          with Not_found ->
-				          Ipure.BForm ((Ipure.Eq (nv,(snd c),b.h_formula_heap2_pos), None), None)
-			        else Ipure.BForm ((Ipure.Eq (nv,(snd c),b.h_formula_heap2_pos), None), None) in (* Slicing: TODO *)
+				          Ipure.BForm ((Ipure.Eq (nv,(snd c),b.h_formula_heap2_pos), None), None, b.h_formula_heap2_lbl)
+			        else Ipure.BForm ((Ipure.Eq (nv,(snd c),b.h_formula_heap2_pos), None), None, b.h_formula_heap2_lbl) in (* Slicing: TODO *)
 		          (((fst c),nv),[(nn,npf)])) b.h_formula_heap2_arguments) in
         (HeapNode2 ({b with h_formula_heap2_arguments = na;h_formula_heap2_perm = na_perm}),(List.concat (ls_perm :: ls)))
     | HRel (r, args, l) ->
@@ -1525,12 +1537,12 @@ and float_out_exps_from_heap_x (f:formula ) (rel0: rel option) :formula =
                       if not !Globals.dis_slc_ann then
                       try
                           let lexp = P.find_lexp_exp c !Ipure.linking_exp_list in
-                                (*let _ = Hashtbl.remove !Ipure.linking_exp_list c in*)
-						  Ipure.BForm ((Ipure.Eq (nv,c,l), (Some (false, fresh_int(), lexp))), None)
+                          (*let _ = Hashtbl.remove !Ipure.linking_exp_list c in*)
+			  Ipure.BForm ((Ipure.Eq (nv,c,l), (Some (false, fresh_int(), lexp))), None, [])
                       with Not_found ->
-						  Ipure.BForm ((Ipure.Eq (nv,c,l), None), None)
+			  Ipure.BForm ((Ipure.Eq (nv,c,l), None), None, [])
                     else
-                      Ipure.BForm ((Ipure.Eq (nv,c,l), None), None) 
+                      Ipure.BForm ((Ipure.Eq (nv,c,l), None), None, []) 
                         (* Slicing: TODO IL for linking exp *)
                   in
 				  (nv,[(nn,npf)])) args) in
@@ -1818,8 +1830,8 @@ match h with
 		                      let nv = Ipure.Var((new_name, Unprimed), l) in
 		                      (nv::a, let lexp = P.find_lexp_exp d !Ipure.linking_exp_list 
 				                      in match c with
-		                                | None -> Some (Ipure.float_out_pure_min_max (Ipure.BForm ((Ipure.Eq (nv, d, l), Some (false, fresh_int(), lexp)), None)))
-		                                | Some s -> Some (Ipure.And ((Ipure.float_out_pure_min_max (Ipure.BForm ((Ipure.Eq (nv, d, l), Some (false, fresh_int(), lexp)), None))), s, l)))) ([], new_p_perm) args in
+		                                | None -> Some (Ipure.float_out_pure_min_max (Ipure.BForm ((Ipure.Eq (nv, d, l), Some (false, fresh_int(), lexp)), None, h1.h_formula_heap_lbl)))
+		                                | Some s -> Some (Ipure.And ((Ipure.float_out_pure_min_max (Ipure.BForm ((Ipure.Eq (nv, d, l), Some (false, fresh_int(), lexp)), None, h1.h_formula_heap_lbl))), s, l)))) ([], new_p_perm) args in
               (( HeapNode { h1 with  h_formula_heap_arguments = (List.rev nl); h_formula_heap_perm = nl_perm}), new_p)
     |  HeapNode2 h1 ->
 	    let l = h1. h_formula_heap2_pos in
@@ -1840,12 +1852,12 @@ match h with
 			            ((d1,nv):: a, 
                          let lexp = P.find_lexp_exp d2 !Ipure.linking_exp_list in 
                          match c with
-			               | None -> Some (Ipure.float_out_pure_min_max (Ipure.BForm ((Ipure.Eq (nv, d2, l), Some (false, fresh_int(), lexp)), None)))
-			               | Some s -> Some (Ipure.And ((Ipure.float_out_pure_min_max (Ipure.BForm ((Ipure.Eq (nv, d2, l), Some (false, fresh_int(), lexp)), None)) ), s, l)))) ([], new_p_perm) args 
+			               | None -> Some (Ipure.float_out_pure_min_max (Ipure.BForm ((Ipure.Eq (nv, d2, l), Some (false, fresh_int(), lexp)), None, h1.h_formula_heap2_lbl)))
+			               | Some s -> Some (Ipure.And ((Ipure.float_out_pure_min_max (Ipure.BForm ((Ipure.Eq (nv, d2, l), Some (false, fresh_int(), lexp)), None,h1.h_formula_heap2_lbl)) ), s, l)))) ([], new_p_perm) args 
         in
         (( HeapNode2 { h1 with  h_formula_heap2_arguments = (List.rev nl);h_formula_heap2_perm = nl_perm;}), new_p)
     | HRel (r, args, l) ->
-        	let nargs = List.map Ipure.float_out_exp_min_max args in
+        	let nargs = List.map (fun v -> Ipure.float_out_exp_min_max v []) args in
 			let nargse = List.map fst nargs in
             (HRel (r, nargse, l),None)
     |  HTrue -> (h, None)
@@ -1992,7 +2004,7 @@ let float_out_thread_one_formula_x (f : one_formula) : one_formula =
   (*look for a formula with thread=id*)
   let helper (f:P.formula) =
     match f with
-      | P.BForm (bf, _) ->
+      | P.BForm (bf, _, _) ->
           let p,_ = bf in
           (match p with
             | P.Eq (e1,e2,pos) ->

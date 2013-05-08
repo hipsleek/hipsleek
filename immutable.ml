@@ -583,11 +583,11 @@ and subtype_ann_gen_x impl_vars (imm1 : ann) (imm2 : ann) : bool * (CP.formula o
   match op with
     | None -> (f,None,None)
     | Some (l,r) -> 
-          let c = CP.BForm ((CP.SubAnn(l,r,no_pos),None), None) in
+          let c = CP.BForm ((CP.SubAnn(l,r,no_pos),None), None, []) in
           (* implicit instantiation of @v made stronger into an equality *)
           (* two examples in ann1.slk fail otherwise; unsound when we have *)
           (* multiple implicit being instantiated ; use explicit if needed *)
-          let lhs = CP.BForm ((CP.Eq(l,r,no_pos),None), None) in
+          let lhs = CP.BForm ((CP.Eq(l,r,no_pos),None), None, []) in
           (* let lhs = c in *)
           begin
             match r with

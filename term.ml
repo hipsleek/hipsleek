@@ -305,7 +305,7 @@ let find_lexvar_b_formula (bf: CP.b_formula) : (term_ann * CP.exp list * CP.exp 
 
 let rec find_lexvar_formula (f: CP.formula) : (term_ann * CP.exp list * CP.exp list * loc) =
   match f with
-  | CP.BForm (bf, _) -> find_lexvar_b_formula bf
+  | CP.BForm (bf, _,_) -> find_lexvar_b_formula bf
   | CP.And (f1, f2, _) ->
       (try find_lexvar_formula f1
       with _ -> find_lexvar_formula f2)
@@ -418,8 +418,8 @@ let check_term_measures estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p src_lv dst_
           (* [(s1,d1),(s2,d2)] -> s1=d1 & s2>d2 *)
           let lex_formula measure = snd (List.fold_right (fun (s,d) (flag,res) ->
             let f = 
-              if flag then CP.BForm ((CP.mkGt s d pos, None), None) (* s>d *)
-              else CP.BForm ((CP.mkEq s d pos, None), None) in (* s=d *)
+              if flag then CP.BForm ((CP.mkGt s d pos, None), None,[[pos]]) (* s>d *)
+              else CP.BForm ((CP.mkEq s d pos, None), None,[[pos]]) in (* s=d *)
               (false, CP.mkAnd f res pos)) measure (true, CP.mkTrue pos)) in
           let rank_formula = List.fold_left (fun acc m ->
             CP.mkOr acc (lex_formula m) None pos) (CP.mkFalse pos) lst_measures in
@@ -724,7 +724,7 @@ let rec phase_constr_of_formula_list (fl: CP.formula list) : phase_constr list =
   
 and phase_constr_of_formula (f: CP.formula) : phase_constr option =
   match f with
-  | CP.BForm (bf, _) -> phase_constr_of_b_formula bf
+  | CP.BForm (bf, _, _) -> phase_constr_of_b_formula bf
   | _ -> None 
 
 and phase_constr_of_b_formula (bf: CP.b_formula) : phase_constr option =

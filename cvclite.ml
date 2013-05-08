@@ -172,7 +172,7 @@ and cvcl_of_sv_type sv = match sv with
   | _ -> "INT"
 
 and cvcl_of_formula f = match f with
-  | CP.BForm (b,_) -> "(" ^ (cvcl_of_b_formula b) ^ ")" 
+  | CP.BForm (b,_,_) -> "(" ^ (cvcl_of_b_formula b) ^ ")" 
   | CP.And (p1, p2, _) -> "(" ^ (cvcl_of_formula p1 ) ^ " AND " ^ (cvcl_of_formula p2 ) ^ ")"
   | CP.AndList _ -> Gen.report_error no_pos "cvclite.ml: encountered AndList, should have been already handled"
   | CP.Or (p1, p2,_, _) -> "(" ^ (cvcl_of_formula p1 ) ^ " OR " ^ (cvcl_of_formula p2 ) ^ ")"
@@ -180,7 +180,7 @@ and cvcl_of_formula f = match f with
 (*	  "(NOT (" ^ (cvcl_of_formula p) ^ "))" *)
 	  begin
 		match p with
-		  | CP.BForm ((CP.BVar (bv, _), _),_) -> (cvcl_of_spec_var bv) ^ " = 0" 
+		  | CP.BForm ((CP.BVar (bv, _), _),_,_) -> (cvcl_of_spec_var bv) ^ " = 0" 
 		  | _ -> "(NOT (" ^ (cvcl_of_formula p ) ^ "))"
 	  end
   | CP.Forall (sv, p,_, _) ->

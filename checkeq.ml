@@ -640,7 +640,7 @@ and checkeq_p_formula_x (hvars: ident list)(p1: CP.formula) (p2: CP.formula)(mtl
   let pf1,pf2 = CP.norm_form p1, CP.norm_form p2 in
   let _ = Debug.ninfo_pprint ("Case 2 formula") no_pos in 
   match pf1 with
-    | BForm (b1,_) -> match_equiv_bform hvars b1 pf2 mtl
+    | BForm (b1,_,_) -> match_equiv_bform hvars b1 pf2 mtl
     | And(f1,f2,_) ->  (
       let res, mtl1 = checkeq_p_formula hvars f1 pf2 mtl in
       if(res) then checkeq_p_formula hvars f2 pf2 mtl1 
@@ -669,7 +669,7 @@ and match_equiv_bform  hvars b1 pf2 mtl =
 
 and match_equiv_bform_x (hvars: ident list)(b1: CP.b_formula) (pf2: CP.formula)(mtl: map_table list): (bool * (map_table list)) =
   let rec match_equiv_bform_helper hvars b1 pf mt= match pf with
-    | BForm (b2,_) -> check_equiv_bform hvars b1 b2 mt
+    | BForm (b2,_,_) -> check_equiv_bform hvars b1 b2 mt
     | And(f1,f2,_) ->  (
       let res1, mtl1 = match_equiv_bform_helper hvars b1 f1 mt in
       let res2, mtl2 = match_equiv_bform_helper hvars b1 f2 mt in 
@@ -814,7 +814,7 @@ and check_equiv_bform_x (hvars: ident list)(b1: CP.b_formula) (b2: CP.b_formula)
 
 and match_equiv_orform (hvars: ident list) (of1: (formula * formula * (formula_label option) * loc)) (pf2: CP.formula)(mtl: map_table list): (bool * (map_table list)) =
   let rec match_equiv_bform_helper hvars of1 pf mt= match pf with
-    | BForm (b2,_) ->  (false, [mt])
+    | BForm (b2,_,_) ->  (false, [mt])
     | And(f1,f2,_) ->  (
       let res1, mtl1 = match_equiv_bform_helper hvars of1 f1 mt in
       let res2, mtl2 = match_equiv_bform_helper hvars of1 f2 mt in 
@@ -865,7 +865,7 @@ and match_equiv_notform  hvars b1 pf2 mtl =
 and match_equiv_notform_x  (hvars: ident list)(f1: CP.formula) (pf2: CP.formula)(mtl: map_table list): (bool * (map_table list)) =
   let rec match_equiv_notform_helper hvars f1 pf2 mt= 
     match pf2 with
-      | BForm (b1,_) -> (false,[mt])
+      | BForm (b1,_,_) -> (false,[mt])
       | And(pf1,pf2,_) ->  (
 	let res1, mtl1 = match_equiv_notform_helper hvars f1 pf1 mt in
 	let res2, mtl2 = match_equiv_notform_helper hvars f1 pf2 mt in 
@@ -1318,7 +1318,7 @@ and checkeq_p_formula_with_diff_x (hvars: ident list)(p1: CP.formula) (p2: CP.fo
   let _ = Debug.ninfo_pprint ("Case 2 formula") no_pos in 
   let modify mtl pf = List.map (fun mt -> (mt,pf)) mtl in
   match pf1 with
-    | BForm (b1,_) -> let (a,b) = match_equiv_bform hvars b1 pf2 mtl in 
+    | BForm (b1,_,_) -> let (a,b) = match_equiv_bform hvars b1 pf2 mtl in 
 		      if (a) then (a, modify b (CP.mkTrue no_pos)) else ( (a,modify b pf1)) 
     | And(f1,f2,_) ->  (
       let helper fl pf = List.map (fun f-> CP.mkAnd f pf no_pos) fl in

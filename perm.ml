@@ -129,11 +129,11 @@ struct
   let string_of_cperm (perm:cperm) : string = pr_opt !print_sv perm
   let apply_one_iperm = Ipure.e_apply_one
   let full_perm_var = (Cpure.SpecVar (cperm_typ, full_perm_name, Unprimed))
-  let mkFullPerm_pure  (f:cperm_var) : Cpure.formula = Cpure.BForm ((Cpure.Eq ( Cpure.Var (f,[no_pos]), Cpure.Var (full_perm_var,[no_pos]) , no_pos) ,None), None)
+  let mkFullPerm_pure  (f:cperm_var) : Cpure.formula = Cpure.BForm ((Cpure.Eq ( Cpure.Var (f,[no_pos]), Cpure.Var (full_perm_var,[no_pos]) , no_pos) ,None), None, [])
   let mkFullPerm_pure_from_ident id : Cpure.formula =   mkFullPerm_pure (Cpure.SpecVar (cperm_typ, id, Unprimed))
   let mkPermInv (f:cperm_var) : Cpure.formula = Cpure.mkTrue no_pos 
     
-  let mkPermWrite (f:cperm_var) : Cpure.formula = Cpure.BForm ((Cpure.Eq ( Cpure.Var (f,[no_pos]), Cpure.Tsconst(Tree_shares.Ts.top, no_pos),no_pos),None),None)
+  let mkPermWrite (f:cperm_var) : Cpure.formula = Cpure.BForm ((Cpure.Eq ( Cpure.Var (f,[no_pos]), Cpure.Tsconst(Tree_shares.Ts.top, no_pos),no_pos),None),None,[])
   let full_perm_constraint = Mcpure.OnePF (mkPermWrite full_perm_var)
   let float_out_iperm perm pos =  match perm with
       | None -> (None, [])
@@ -142,7 +142,7 @@ struct
 		    | _ ->
                 let nn_perm = ((perm_name^(string_of_int pos.start_pos.Lexing.pos_lnum)^(fresh_trailer ())),Unprimed) in
 			    let nv_perm = Ipure.Var (nn_perm,pos) in
-                let npf_perm = Ipure.BForm ((Ipure.Eq (nv_perm,f,pos), None), None) in (*TO CHECK: slicing for permissions*)
+                let npf_perm = Ipure.BForm ((Ipure.Eq (nv_perm,f,pos), None), None, []) in (*TO CHECK: slicing for permissions*)
                 (Some nv_perm,[(nn_perm,npf_perm)])
   let float_out_mix_max_iperm perm pos = match perm with
       | None -> (None, None)
@@ -151,7 +151,7 @@ struct
 		    | _ ->
 		        let new_name_perm = fresh_var_name "ptr" pos.start_pos.Lexing.pos_lnum in
 		        let nv_perm = Ipure.Var((new_name_perm, Unprimed), pos) in
-			    (Some nv_perm, Some (Ipure.float_out_pure_min_max (Ipure.BForm ((Ipure.Eq (nv_perm, f, pos), None), None))))
+			    (Some nv_perm, Some (Ipure.float_out_pure_min_max (Ipure.BForm ((Ipure.Eq (nv_perm, f, pos), None), None, []))))
   let fv_cperm perm = match perm with
       | None -> []
       | Some f -> [f]
@@ -192,7 +192,7 @@ struct
         (Cpure.Var (f,[no_pos])),
         (Cpure.Var (full_perm_var,[no_pos])),
         no_pos
-    )),None), None)
+    )),None), None,[])
   let mkFullPerm_pure_from_ident id : Cpure.formula = 
     let var = (Cpure.SpecVar (cperm_typ, id, Unprimed)) in
     mkFullPerm_pure var
@@ -203,12 +203,12 @@ struct
           (Cpure.Var (f,[no_pos])),
           (Cpure.FConst (1.0,no_pos)),
           no_pos
-      )), None),None) in
+      )), None),None, []) in
     let lower =  Cpure.BForm (((Cpure.Gt (
         (Cpure.Var (f,[no_pos])),
         (Cpure.FConst (0.0,no_pos)),
         no_pos
-    )), None),None) in
+    )), None),None, []) in
     let inv = 
       (Cpure.And (lower,upper,no_pos)) in
     inv
@@ -217,7 +217,7 @@ struct
         (Cpure.Var (f,[no_pos])),
         (Cpure.FConst (1.0,no_pos)),
         no_pos
-    )),None),None)
+    )),None),None, [])
   (*LDK: a constraint to indicate FULL permission = 1.0*)
   let full_perm_constraint = 
     Mcpure.OnePF (mkPermWrite full_perm_var)
@@ -229,7 +229,7 @@ struct
 		    | _ ->
                 let nn_perm = ((perm_name^(string_of_int pos.start_pos.Lexing.pos_lnum)^(fresh_trailer ())),Unprimed) in
 			    let nv_perm = Ipure.Var (nn_perm,pos) in
-                let npf_perm = Ipure.BForm ((Ipure.Eq (nv_perm,f,pos), None), None) in (*TO CHECK: slicing for permissions*)
+                let npf_perm = Ipure.BForm ((Ipure.Eq (nv_perm,f,pos), None), None, []) in (*TO CHECK: slicing for permissions*)
                 (Some nv_perm,[(nn_perm,npf_perm)])
   let float_out_mix_max_iperm perm pos =
     match perm with
@@ -242,7 +242,7 @@ struct
 		    | _ ->
 		        let new_name_perm = fresh_var_name "ptr" pos.start_pos.Lexing.pos_lnum in
 		        let nv_perm = Ipure.Var((new_name_perm, Unprimed), pos) in
-			    (Some nv_perm, Some (Ipure.float_out_pure_min_max (Ipure.BForm ((Ipure.Eq (nv_perm, f, pos), None), None))))
+			    (Some nv_perm, Some (Ipure.float_out_pure_min_max (Ipure.BForm ((Ipure.Eq (nv_perm, f, pos), None), None,[]))))
   let fv_cperm perm =
     match perm with
       | None -> []
@@ -288,7 +288,7 @@ struct
         (Cpure.Var (f,[no_pos])),
         (Cpure.Var (full_perm_var,[no_pos])),
         no_pos
-    )),None), None)
+    )),None), None,[])
   let mkFullPerm_pure_from_ident id : Cpure.formula = 
     let var = (Cpure.SpecVar (cperm_typ, id, Unprimed)) in
     mkFullPerm_pure var
@@ -296,13 +296,13 @@ struct
   let mkPermInv (f:Cpure.spec_var) : Cpure.formula =
     let p_f = Cpure.mkGte (Cpure.Var (f,[no_pos])) (Cpure.IConst (-1,no_pos)) no_pos in
     let b_f = (p_f,None) in
-    Cpure.BForm (b_f,None)
+    Cpure.BForm (b_f,None,[])
   let mkPermWrite (f:Cpure.spec_var) : Cpure.formula =
     Cpure.BForm (((Cpure.Eq (
         (Cpure.Var (f,[no_pos])),
         (Cpure.IConst (0,no_pos)),
         no_pos
-    )),None),None)
+    )),None),None, [])
   let full_perm_constraint = 
     Mcpure.OnePF (mkPermWrite full_perm_var)
 
@@ -314,7 +314,7 @@ struct
 		    | _ ->
                 let nn_perm = ((perm_name^(string_of_int pos.start_pos.Lexing.pos_lnum)^(fresh_trailer ())),Unprimed) in
 			    let nv_perm = Ipure.Var (nn_perm,pos) in
-                let npf_perm = Ipure.BForm ((Ipure.Eq (nv_perm,f,pos), None), None) in (*TO CHECK: slicing for permissions*)
+                let npf_perm = Ipure.BForm ((Ipure.Eq (nv_perm,f,pos), None), None,[]) in (*TO CHECK: slicing for permissions*)
                 (Some nv_perm,[(nn_perm,npf_perm)])
   let float_out_mix_max_iperm perm pos =
     match perm with
@@ -327,7 +327,7 @@ struct
 		    | _ ->
 		        let new_name_perm = fresh_var_name "ptr" pos.start_pos.Lexing.pos_lnum in
 		        let nv_perm = Ipure.Var((new_name_perm, Unprimed), pos) in
-			    (Some nv_perm, Some (Ipure.float_out_pure_min_max (Ipure.BForm ((Ipure.Eq (nv_perm, f, pos), None), None))))
+			    (Some nv_perm, Some (Ipure.float_out_pure_min_max (Ipure.BForm ((Ipure.Eq (nv_perm, f, pos), None), None,[]))))
   let fv_cperm perm =
     match perm with
       | None -> []
@@ -471,8 +471,8 @@ let string_of_cperm () = match !perm with
 let drop_tauto f = 
  let fv = full_perm_var () in
  let rec helper f = match f with 
-  | BForm ((Eq (Tsconst (t,_), Var (v,_),_),_),_) 
-  | BForm ((Eq (Var (v,_), Tsconst (t,_),_),_),_) -> if eq_spec_var v fv && Tree_shares.Ts.full t then mkTrue no_pos else f
+  | BForm ((Eq (Tsconst (t,_), Var (v,_),_),_),_,_) 
+  | BForm ((Eq (Var (v,_), Tsconst (t,_),_),_),_,_) -> if eq_spec_var v fv && Tree_shares.Ts.full t then mkTrue no_pos else f
   | BForm _ -> f
   | And (f1,f2,l) -> mkAnd (helper f1) (helper f2) l
   | AndList l -> AndList (map_l_snd helper l)

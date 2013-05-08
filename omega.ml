@@ -133,7 +133,7 @@ and omega_of_b_formula b =
 and omega_of_formula pr_w pr_s f  =
   let rec helper f = 
     match f with
-  | BForm ((b,_) as bf,_) -> 		
+  | BForm ((b,_) as bf,_,_) -> 		
         begin
           match (pr_w b) with
             | None -> "(" ^ (omega_of_b_formula bf) ^ ")"
