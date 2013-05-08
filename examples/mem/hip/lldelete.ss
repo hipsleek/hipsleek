@@ -23,14 +23,28 @@ sll<n, sm, lg, R> == self = null & n = 0 & sm <= lg & R = {}
 	inv n >= 0 & sm <= lg
 	mem R->(node<@L,@A,@M>);
 
-void overlaid_delete(node x, node s, int v)
-requires x::ll<n,R> &* s::sll<n,sm,lg,R>
-ensures x::ll<nres,R1> &* s::sll<nres,mi,ma,R1> & mi = min(v, sm) & ma = max(v, lg) & (R1 subset R | R1 = R) & n-1 <= nres <= n;
+void overlaid_delete1(node x, node s, node vn)
+requires vn::node<_@L,_,_> * x::ll<n,R> &* s::sll<n,sm,lg,R> & vn in R
+ensures x::ll<nxres,Rx> &* s::sll<nres, sres, lres, Rs> & sres >= xs & lres <= xl & n-1 <= nres <= n 
+	& n-1 <= nxres <= n & R = union(Rs,{vn}) & R  = union(Rx,{vn});
 {
-node c;
-if(s == null) return;
-//c = delete(s,v);
-s = c;
+delete2(x,vn);
+//dprint;
+delete3(s,vn);
+//dprint;
+}
+
+void delete3(node x, node vn)
+requires x::sll<n, xs, xl, R> * vn::node<v@L,_@A,_> & vn in R
+ensures x::sll<nres, sres, lres, R1> & sres >= xs & lres <= xl & n-1 <= nres <= n & R = union(R1,{vn});
+{
+	if(x != null){
+	if(x.snext == vn)
+	{
+		x.snext = vn.snext;
+		vn.snext = null;
+	}
+	else delete3(x.snext,vn);}
 }
 
 void delete2(node x, node vn)
@@ -47,12 +61,12 @@ ensures x::ll<nres,R1> & n - 1 <= nres <= n & R = union(R1,{vn});
 }
 
 /* delete a node from a sorted list */
-node delete(node x, node vn)
-requires x::sll<n, xs, xl, R> * vn::node<_@L,_@A,_> & vn in R & R != {}
-ensures res::sll<nres, sres, lres,R1> & sres >= xs & lres <= xl & n-1 <= nres <= n & R = union(R1,{vn});
+node delete(node x, node vn,int v)
+requires x::sll<n, xs, xl, R> * vn::node<v@L,_@A,_> & vn in R
+ensures res::sll<nres, sres, lres, R1> & sres >= xs & lres <= xl & n-1 <= nres <= n & R = union(R1,{vn});
 {
 	node tmp; 
-	int v = vn.val;
+//	int v = vn.val;
 	if (x != null)
 		if (v < x.val)
 			return x;
@@ -62,7 +76,7 @@ ensures res::sll<nres, sres, lres,R1> & sres >= xs & lres <= xl & n-1 <= nres <=
 			else
 			{
 				tmp = x.snext;
-				x.snext = delete(tmp, vn);
+				x.snext = delete(tmp, vn,v);
 				return tmp;
 			}
 	else
