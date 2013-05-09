@@ -98,7 +98,7 @@ Post condition cannot be derived:
 #loc2-bug2b.ss: should be LOCS:[6;7;3]: DONE
 *********************************************************************
 
-# ep.slk
+# ep.slk:
 
   why is post-cond included in LOCS?
 
@@ -117,7 +117,7 @@ Entail (2) : Fail.(must: ) cause: p=null |-  p!=null. LOCS:[14;16] (must-bug)
 */
 *********************************************************************
 
-# es1.slk
+# es1.slk:  lbl with xpure: DONE
 
  Why is there 0,1 below? Why isn't 11 included?
  I think nodes and precidates must also be labelled.
@@ -141,7 +141,7 @@ Entail (2) : Fail.(must: ) cause: p=null |-  p!=null. LOCS:[14;16] (must-bug)
  */
 
 *********************************************************************
-# eif.ss:
+# eif.ss: DONE
  - add path(exp, svl, loc): DONE
  - symbolic rule for path: DONE
  - subs rule for path: DONE
@@ -149,3 +149,22 @@ Entail (2) : Fail.(must: ) cause: p=null |-  p!=null. LOCS:[14;16] (must-bug)
 # eif.ss: support --eps
  - MCP.update_eq_lhs_sv_formula
 
+=====================================
+# es1.slk:  lbl with xpure with eps
+
+ mcp.insert_fst_lbl_formula
+ mcp.list_pos_of_mix_formula
+ mcp.subst_pos_lbl_mix_formula
+
+*********************************************************************
+#lbl1.slk: lbl with subst
+
+
+
+*********************************************************************
+  : label for unfold
+
+*********************************************************************
+# es1 : label for fold
+LOCS:[7;8;28;29]
+==> LOCS:[7;8;27;28;29]

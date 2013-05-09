@@ -2035,26 +2035,27 @@ and get_line_cols (ll: loc list): (int*int) list=
               l1=l2 && c1=c2) (List.map (fun p -> (p.start_pos.Lexing.pos_lnum,
   (p.start_pos.Lexing.pos_cnum-p.start_pos.Lexing.pos_bol) )) ll)
 
-and subst_pos_struc_formula (p:loc) (f:struc_formula): struc_formula=
-  match f with
+and subst_pos_lbl_struc_formula (p:loc) (f0:struc_formula): struc_formula=
+  let rec helper0 f= match f with
     | ECase b ->
-          let helper (pre, post)= (CP.subst_pos_formula p pre, subst_pos_struc_formula p post) in
+          let helper (pre, post)= (CP.subst_pos_lbl_formula p pre, helper0 post) in
           ECase {b with formula_case_branches = List.map helper b.formula_case_branches; formula_case_pos = p}
-    | EBase b-> EBase { b with formula_struc_base = subst_pos_formula p b.formula_struc_base;
-	  formula_struc_continuation = map_opt (subst_pos_struc_formula p) b.formula_struc_continuation;
+    | EBase b-> EBase { b with formula_struc_base = subst_pos_lbl_formula p b.formula_struc_base;
+	  formula_struc_continuation = map_opt helper0 b.formula_struc_continuation;
 	  formula_struc_pos = p}
     | EAssume b-> EAssume {b with
-	  formula_assume_simpl = subst_pos_formula p b.formula_assume_simpl;
-	  formula_assume_struc = subst_pos_struc_formula p b.formula_assume_struc;}
-    | EInfer ei -> EInfer {ei with formula_inf_continuation = subst_pos_struc_formula p ei.formula_inf_continuation; formula_inf_pos=p}
-    | EList b -> EList (map_l_snd (subst_pos_struc_formula p) b)
+	  formula_assume_simpl = subst_pos_lbl_formula p b.formula_assume_simpl;
+	  formula_assume_struc = helper0 b.formula_assume_struc;}
+    | EInfer ei -> EInfer {ei with formula_inf_continuation = helper0 ei.formula_inf_continuation; formula_inf_pos=p}
+    | EList b -> EList (map_l_snd helper0 b)
+  in helper0 f0
 
-and subst_pos_formula (p:loc) (f: formula): formula=
+and subst_pos_lbl_formula (p:loc) (f: formula): formula=
   match f with
-    | Base b -> Base {b with formula_base_pure = MCP.subst_pos_mix_formula p b.formula_base_pure;formula_base_pos = p }
-    | Or b -> Or {formula_or_f1 = subst_pos_formula p b.formula_or_f1;
-	                                     formula_or_f2 = subst_pos_formula p b.formula_or_f2;
-	                                     formula_or_pos = p}
+    | Base b -> Base {b with formula_base_pure = MCP.subst_pos_lbl_mix_formula p b.formula_base_pure;formula_base_pos = p }
+    | Or b -> Or {formula_or_f1 = subst_pos_lbl_formula p b.formula_or_f1;
+      formula_or_f2 = subst_pos_lbl_formula p b.formula_or_f2;
+      formula_or_pos = p}
     | Exists ef -> Exists {ef with formula_exists_pos =  p}
 
 and struc_fv (f: struc_formula) : CP.spec_var list = 

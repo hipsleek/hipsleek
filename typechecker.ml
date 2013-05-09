@@ -1239,12 +1239,14 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                         let vsv = CP.SpecVar (t, v, Primed) in (* rhs must be non-void *)
                         let tmp_vsv = CP.fresh_spec_var vsv in
                         let compose_es = CF.subst [(vsv, tmp_vsv); ((P.mkRes t), vsv)] c1.CF.es_formula in
+                        (* let _ = print_endline ("c1.CF.es_formula: " ^ (Cprinter.string_of_formula_w_loc c1.CF.es_formula)) in *)
+                        (* let _ = print_endline ("compose_es: " ^ (Cprinter.string_of_formula_w_loc compose_es)) in *)
                         let compose_es1 =
                           if path_vars = [] then compose_es else
                             CF.update_eq_lhs_sv_formula compose_es vsv path_vars
                         in
                         let compose_ctx = (CF.Ctx ({c1 with CF.es_formula = compose_es1})) in
-                        (* Debug.info_hprint (add_str "vsv " Cprinter.string_of_spec_var) vsv no_pos; *)
+                        (* let _ = print_endline ("compose_es1: " ^ (Cprinter.string_of_formula_w_loc compose_es1)) in *)
                         (* Debug.info_hprint (add_str "tmp_vsv: " Cprinter.string_of_spec_var) tmp_vsv no_pos; *)
                         (* print_endline ("ASSIGN CTX: " ^ (Cprinter.string_of_context compose_ctx)); *)
                         compose_ctx
@@ -1892,7 +1894,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                     ctx
                   else
                     (*let p = CF.pos_of_struc_formula  proc.proc_static_specs_with_pre in*)
-                    let pre_with_new_pos = CF.subst_pos_struc_formula pos (proc.proc_stk_of_static_specs#top) in
+                    let pre_with_new_pos = CF.subst_pos_lbl_struc_formula pos (proc.proc_stk_of_static_specs#top) in
                     check_pre_post pre_with_new_pos ctx scall_pre_cond_pushed
                   in
 		  let _ = if !print_proof then Prooftracer.add_pre e0 in

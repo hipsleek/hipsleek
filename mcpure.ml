@@ -2328,7 +2328,11 @@ let mkOr_mems (f1: mix_formula) (f2: mix_formula) : mix_formula = match f1,f2 wi
 let subst_avoid_capture_memo from t f = match f with
   | MemoF f -> MemoF (subst_avoid_capture_memo(*_debug*) from t f)
   | OnePF f -> OnePF (subst_avoid_capture from t f)
-  
+
+let insert_fst_lbl_formula lbl f0=  match f0 with
+  | MemoF f -> f0
+  | OnePF f -> OnePF (Cpure.insert_fst_lbl_formula lbl f)
+
 let memo_subst s f = match f with
   | MemoF f -> MemoF (memo_subst s f)
   | OnePF f -> OnePF (subst s f)  
@@ -2338,10 +2342,10 @@ let list_pos_of_mix_formula mf=
   | MemoF f -> []
   | OnePF f -> (Cpure.list_pos_of_formula f [])
 
-let subst_pos_mix_formula p mf=
+let subst_pos_lbl_mix_formula p mf=
  match mf with
   | MemoF f -> mf
-  | OnePF f -> OnePF (Cpure.subst_pos_formula p f)
+  | OnePF f -> OnePF (Cpure.subst_pos_lbl_formula p f)
 
 let elim_redundant sf f = match f with
   | MemoF f -> MemoF (elim_redundant sf f)

@@ -2843,14 +2843,61 @@ and subst_pos_pformula p pf= match pf with
 
 and  subst_pos_bformula p (pf, a) =  (subst_pos_pformula p pf, a)
 
-and subst_pos_formula p f = match f with
-  | BForm (bf, ofl, llbl) -> BForm (subst_pos_bformula p bf, ofl, llbl)
-  | And (f1, f2, _) ->  And (subst_pos_formula p f1, subst_pos_formula p f2, p)
-  | AndList b -> AndList (map_l_snd (subst_pos_formula p) b)
-  | Or (f1, f2, ofl, _) ->  Or (subst_pos_formula p f1, subst_pos_formula p f2, ofl, p)
-  | Not (f, ofl, _) ->  Not (subst_pos_formula p f, ofl, p)
-  | Forall (sv, f, ofl, _) -> Forall (sv,subst_pos_formula p f, ofl, p)
-  | Exists (sv, f, ofl, _) -> Exists (sv,subst_pos_formula p f, ofl, p)
+and subst_pos_lbl_formula p f0 =
+  let rec helper f = match f with
+    | BForm (bf, ofl, llbl) -> BForm (subst_pos_bformula p bf, ofl, [[p]])
+    | And (f1, f2, _) ->  And (helper f1, helper f2, p)
+    | AndList b -> AndList (map_l_snd (helper) b)
+    | Or (f1, f2, ofl, _) ->  Or (helper f1, helper f2, ofl, p)
+    | Not (f, ofl, _) ->  Not (helper f, ofl, p)
+    | Forall (sv, f, ofl, _) -> Forall (sv, helper f, ofl, p)
+    | Exists (sv, f, ofl, _) -> Exists (sv, helper f, ofl, p)
+  in
+  helper f0
+
+and subst_lbl_formula lbl f0 =
+  let rec helper f = match f with
+  | BForm (bf, ofl, _) -> BForm (bf, ofl, lbl)
+  | And (f1, f2, p) ->  And (helper f1, helper f2, p)
+  | AndList b -> AndList (map_l_snd helper b)
+  | Or (f1, f2, ofl, p) ->  Or (helper f1, helper f2, ofl, p)
+  | Not (f, ofl, p) ->  Not (helper f, ofl, p)
+  | Forall (sv, f, ofl, p) -> Forall (sv, helper f, ofl, p)
+  | Exists (sv, f, ofl, p) -> Exists (sv, helper f, ofl, p)
+  in
+  helper f0
+
+(*first list of pos is the live one*)
+and insert_fst_lbl_formula lbl f0 =
+  let fst,rest= match lbl with
+    | [] -> [],[]
+    | l::r -> l,r
+  in
+  let rec helper f = match f with
+    | BForm (bf, ofl, lbl1) -> BForm (bf, ofl, (fst@(List.concat lbl1))::rest)
+    | And (f1, f2, p) ->  And (helper f1, helper f2, p)
+    | AndList b -> AndList (map_l_snd helper b)
+    | Or (f1, f2, ofl, p) ->  Or (helper f1, helper f2, ofl, p)
+    | Not (f, ofl, p) ->  Not (helper f, ofl, p)
+    | Forall (sv, f, ofl, p) -> Forall (sv, helper f, ofl, p)
+    | Exists (sv, f, ofl, p) -> Exists (sv, helper f, ofl, p)
+  in
+  helper f0
+
+and get_lbl f0=
+  let rec helper f = match f with
+    | BForm (_, _, lbl1) -> lbl1
+    | And (f1, f2, p) -> (helper f1)@(helper f2)
+    | AndList b -> List.fold_left (fun ls (_, f1) -> ls@(helper f1)) [] b
+    | Or (f1, f2, _, _) -> (helper f1)@(helper f2)
+    | Not (f, _, _) ->  helper f
+    | Forall (_, f, _, _) -> helper f
+    | Exists (_, f, _, _) -> helper f
+  in
+  let lbl = helper f0 in
+  let eq_list_int ls1 ls2 = Gen.BList.difference_eq (=) ls1 ls2 = [] in
+  let lbl1 = Gen.BList.remove_dups_eq eq_list_int lbl in
+  Gen.BList.remove_dups_eq (=) (List.concat lbl1)
 
 (* pre : _<num> *)
 and fresh_old_name_x (s: string):string = 
@@ -8116,6 +8163,38 @@ let slice_eq_formulas_x ps0 svl0 pos=
   let n_svl,n_rele_ps,n_rem_ps = find_rele_eq_fix ps0 svl01 [] [] in
   (n_svl,n_rele_ps)
 
+(*remove x=x', subst x' by x to avoid capture the line of procedure *)
+let elim_init_para_x eqs=
+  let detect_init_form (rems, sst) p=
+     match p with
+       | BForm (bf,_,_) ->
+             (match bf with
+               | (Eq (e1,e2,_),_) ->begin
+                     match e1,e2 with
+                       | Var ((SpecVar (t1, id1, pr1) as sv1), _), Var ((SpecVar (t2, id2, pr2) as sv2), _) ->
+                             if t1 = t2 && String.compare id1 id2 = 0 then
+                               if(pr1 = Primed && pr2 = Unprimed) then
+                                 (rems, sst@[(sv2,sv1)])
+                               else
+                                 if (pr2 = Primed && pr1 = Unprimed) then
+                                   (rems, sst@[(sv1,sv2)])
+                                 else (rems@[p], sst)
+                             else (rems@[p], sst)
+                       | _ -> (rems@[p], sst)
+                 end
+               | _ -> (rems@[p], sst)
+             )
+       | _ -> (rems@[p], sst)
+  in
+  let rem,sst = List.fold_left detect_init_form ([],[]) eqs in
+  let rem1 = List.map (subst sst) rem in
+  rem1
+
+let elim_init_para eqs=
+  let pr = pr_list (!print_formula) in
+  Debug.no_1 "elim_init_para" pr pr
+      (fun _ -> elim_init_para_x eqs) eqs
+
 let slice_eq_formulas ps svl pos=
   let pr = pr_list (!print_formula) in
   Debug.no_2 "slice_eq_formulas" pr !print_svl (pr_pair !print_svl pr)
@@ -8131,9 +8210,10 @@ let slice_ante_x ante svl need_path_deps=
   let conjs = list_of_conjs ante1 in
   let eq_ps, non_eq_ps = List.partition is_eq_exp conjs in
   let svl1, eq_ps1 = slice_eq_formulas eq_ps svl pos in
+  let eq_ps2 = elim_init_para eq_ps1 in
   let p1 = conj_of_list non_eq_ps pos in
   let p11 = filter_var p1 svl1 in
-  let p2 = conj_of_list (p11::eq_ps1) pos in
+  let p2 = conj_of_list (p11::eq_ps2) pos in
   (*path depen process*)
   let path_deps_p =
     if need_path_deps then
@@ -8173,7 +8253,7 @@ let filter_ante (ante : formula) (conseq : formula) need_path_deps: (formula*for
     | None -> "None"
     | Some p -> pr p
   in
-  Debug.ho_3 "filter_ante" pr pr string_of_bool (pr_pair pr pr1)
+  Debug.no_3 "filter_ante" pr pr string_of_bool (pr_pair pr pr1)
       (fun _ _ _ -> filter_ante_x ante conseq need_path_deps) ante conseq need_path_deps
 
 let filter_ante_wo_rel (ante : formula) (conseq : formula) : (formula) =

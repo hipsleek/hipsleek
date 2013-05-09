@@ -10,6 +10,7 @@ int foo (int a, int b, int x)
   return x;
 }
 /*
+[3;4;5;7;8;10]
 filter_ante inp1 : a=a' & b=b' & x=x_762 & y_15=y_772 & a=0 & b+2=0 & x=1 & x_767=a'+x_762 & 
 x'=b'+x_767 & y_15'=a'+y_772 & res=x'
 filter_ante inp2 : 0<=res
