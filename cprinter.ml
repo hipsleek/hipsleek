@@ -2584,11 +2584,14 @@ let rec pr_context_w_loc (ctx: context) =
 
 let string_of_context (ctx: context): string =  poly_string_of_pr  pr_context ctx
 
-let string_of_context_w_loc (ctx: context): string =  poly_string_of_pr  pr_context_w_loc ctx
+let string_of_context_w_loc (ctx: context): string =  poly_string_of_pr pr_context_w_loc ctx
 
 let printer_of_context (fmt: Format.formatter) (ctx: context) : unit = poly_printer_of_pr fmt pr_context ctx
 
-let pr_context_list ctx =  pr_seq "" pr_context ctx    
+let pr_context_list ctx =  pr_seq "" pr_context ctx
+
+let pr_context_list_w_loc ctx =  pr_seq "" pr_context_w_loc ctx
+
 let string_of_context_list ctx : string =  poly_string_of_pr  pr_context_list ctx
 let printer_of_context_list (fmt: Format.formatter) (ctx: context list) : unit =  poly_printer_of_pr fmt pr_context_list ctx  
 
@@ -2640,6 +2643,20 @@ let pr_list_context (ctx:list_context) =
         if (get_must_error_from_ctx sc)==None then "Good Context: "
         else "Error Context: " in
       fmt_cut (); fmt_string str; pr_context_list sc; fmt_cut ()
+
+let pr_list_context_w_loc (ctx:list_context) =
+  match ctx with
+    | FailCtx ft -> fmt_cut ();fmt_string "MaybeErr Context: "; 
+        (* (match ft with *)
+        (*     | Basic_Reason (_, fe) -> (string_of_fail_explaining fe) (\*useful: MUST - OK*\) *)
+        (*     (\* TODO : to output must errors first *\) *)
+        (*     (\* | And_Reason (_, _, fe) -> (string_of_fail_explaining fe) *\) *)
+        (*     | _ -> fmt_string ""); *)
+        pr_fail_type ft; fmt_cut ()
+    | SuccCtx sc -> let str = 
+        if (get_must_error_from_ctx sc)==None then "Good Context: "
+        else "Error Context: " in
+      fmt_cut (); fmt_string str; pr_context_list_w_loc sc; fmt_cut ()
 
 let pr_context_short (ctx : context) = 
   let rec f xs = match xs with
@@ -2748,6 +2765,8 @@ let string_of_list_context_short (ctx:list_context): string =  poly_string_of_pr
 let string_of_context_list_short (ctx:context list): string =  poly_string_of_pr pr_context_list_short ctx
 
 let string_of_list_context (ctx:list_context): string =  poly_string_of_pr pr_list_context ctx
+
+let string_of_list_context_w_loc (ctx:list_context): string =  poly_string_of_pr pr_list_context_w_loc ctx
 
 let string_of_list_context_list (ctxl:list_context list): string =  List.fold_right (fun lctx str -> (string_of_list_context lctx) ^ str ^"\n") ctxl ""
 

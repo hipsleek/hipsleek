@@ -2029,9 +2029,13 @@ and mkTrue_p pos = BConst (true, pos)
 
 and mkTrue_b pos = (BConst (true, pos),None)
 
-and mkTrue pos =  BForm ((BConst (true, pos), None),None, [[pos]])
+and mkTrue pos =
+  let llbl = if pos = no_pos then [[]] else [[pos]] in
+  BForm ((BConst (true, pos), None),None, llbl)
 
-and mkFalse pos = BForm ((BConst (false, pos), None),None, [[pos]])
+and mkFalse pos =
+  let llbl = if pos = no_pos then [[]] else [[pos]] in
+  BForm ((BConst (false, pos), None),None, llbl)
 
 and mkExists_with_simpl simpl (vs : spec_var list) (f : formula) lbl pos = 
   Debug.no_2 "mkExists_with_simpl" !print_svl !print_formula !print_formula 

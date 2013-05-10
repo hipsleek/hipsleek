@@ -2613,7 +2613,7 @@ and fold_op p c vd v (rhs_p: MCP.mix_formula) u loc =
 (*LDK: add rhs_p*)
 and fold_op_x prog (ctx : context) (view : h_formula) vd (rhs_p: MCP.mix_formula) (use_case:CP.formula option) (pos : loc): (list_context * proof) =
   (* and fold_op_x prog (ctx : context) (view : h_formula) vd (* (p : CP.formula) *) (use_case:CP.formula option) (pos : loc): (list_context * proof) = *)
-  let pr (x,_) = Cprinter.string_of_list_context x in
+  let pr (x,_) = Cprinter.string_of_list_context_w_loc x in
   let id x = x in
   let ans = ((* ("use-case : "^string_of_bool use_case) *)
       (* ^ *)"\n context:"^(Cprinter.string_of_context ctx)
