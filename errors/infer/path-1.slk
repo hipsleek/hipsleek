@@ -4,7 +4,10 @@ checkentail
     |- z=0.
 
 /*
-Entail (1) : Fail.(may) cause: true |-  z=0. LOCS:[0;4]
-        path dependency: y=3. LOCS:[2] (may-bug)
+Starting Omega...oc
+
+Entail (1) : Fail.(may) cause: true |-  z=0. LOCS:[0;4] (may-bug)
+
+Why is there a 0?
 
 */
