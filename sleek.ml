@@ -160,7 +160,8 @@ let parse_file (parse) (source_file : string) =
   (* An Hoa : Parsing is completed. If there is undefined type, report error.
    * Otherwise, we perform second round checking!
    *)
-  let udefs = !Astsimp.undef_data_types in
+	let udefs = !Typeinfer.undef_data_types in
+  (* let udefs = !Astsimp.undef_data_types in *)
   let _ = match udefs with
     | [] ->	perform_second_parsing_stage ()
     | _ -> let udn,udp = List.hd (List.rev udefs) in
