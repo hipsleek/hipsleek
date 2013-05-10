@@ -68,6 +68,18 @@ type file_offset =
     line_start: int;
     byte_num: int;
   }
+let default_rel_id = "rel_id__"
+(* let tmp_rel_decl = ref (None : rel_decl option) *)
+
+(* let set_tmp_rel_decl (rd:rel_decl)= *)
+(*   match !tmp_rel_decl with *)
+(*     | None -> tmp_rel_decl := (Some rd) *)
+(*     | Some _ -> report_error no_pos "cparser.set_tmp_rel_decl: something wrong" *)
+
+(* let get_tmp_rel_decl ():rel_decl = *)
+(*   match !tmp_rel_decl with *)
+(*     | Some rd -> let _ = tmp_rel_decl := None in rd *)
+(*     | None -> report_error no_pos "cparser.set_tmp_rel_decl: something wrong" *)
 
 let macros = ref (Hashtbl.create 19)
 
@@ -80,6 +92,7 @@ let func_names = new Gen.stack (* list of names of ranking functions *)
 let rel_names = new Gen.stack (* list of names of relations declared *)
 let view_names = new Gen.stack (* list of names of views declared *)
 let hp_names = new Gen.stack (* list of names of heap preds declared *)
+(* let g_rel_defs = new Gen.stack (\* list of relations decl in views *\) *)
 
 let modifier_offset = ref {line_num = 1;
                         line_start = 1;
@@ -708,6 +721,7 @@ non_empty_command_dot: [[t=non_empty_command; `DOT -> t]];
 non_empty_command:
     [[  t=data_decl           -> DataDef t
       | `PRED;t= view_decl     -> PredDef t
+      | `PRED_EXT;t= view_decl_ext     -> PredDef t
 	    | `PRED_PRIM;t=prim_view_decl     -> PredDef t
       | t=barrier_decl        -> BarrierCheck t
       | t = func_decl         -> FuncDef t
@@ -759,35 +773,45 @@ data_body:
 (* field_list:[[ fl = LIST1 one_field SEP `SEMICOLON -> error_on_dups (fun n1 n2-> (snd (fst n1))==(snd (fst n2))) fl (get_pos_camlp4 _loc 1) *)
 (*            ]];  *)
 
+field_ann: [[
+     `REC -> Iast.REC
+  |  `VAL -> Iast.VAL
+]];
 
 field_list2:[[ 
-     t = typ; `IDENTIFIER n -> [((t,n),get_pos_camlp4 _loc 1,false)]
- 	|  t = typ; `OSQUARE; t2=typ; `CSQUARE; `IDENTIFIER n -> [((t,n), get_pos_camlp4 _loc 1,false)]
-  |   
-       t=typ; `IDENTIFIER n; peek_try; `SEMICOLON; fl = SELF ->(  
-			if List.mem n (List.map get_field_name fl) then
-				report_error (get_pos_camlp4 _loc 4) (n ^ " is duplicated")
-			else
-				((t, n), get_pos_camlp4 _loc 3, false) :: fl )
+     t = typ; `IDENTIFIER n -> [((t,n),get_pos_camlp4 _loc 1,false, F_NO_ANN)]
+  | t = typ; `IDENTIFIER n ; ann=field_ann -> [((t,n),get_pos_camlp4 _loc 1,false, ann)]
+  |  t = typ; `OSQUARE; t2=typ; `CSQUARE; `IDENTIFIER n -> [((t,n), get_pos_camlp4 _loc 1,false, F_NO_ANN)]
+  |  t=typ; `IDENTIFIER n; peek_try; `SEMICOLON; fl = SELF ->(  
+	  if List.mem n (List.map get_field_name fl) then
+		report_error (get_pos_camlp4 _loc 4) (n ^ " is duplicated")
+	  else
+		((t, n), get_pos_camlp4 _loc 3, false,F_NO_ANN) :: fl )
+  |  t=typ; `IDENTIFIER n; ann=field_ann ; peek_try; `SEMICOLON; fl = SELF ->(  
+	  if List.mem n (List.map get_field_name fl) then
+		report_error (get_pos_camlp4 _loc 4) (n ^ " is duplicated")
+	  else
+		((t, n), get_pos_camlp4 _loc 3, false,ann) :: fl )
   | t1= typ; `OSQUARE; t2=typ; `CSQUARE; `IDENTIFIER n; peek_try; `SEMICOLON; fl = SELF -> 
 			(if List.mem n (List.map get_field_name fl) then
 				report_error (get_pos_camlp4 _loc 4) (n ^ " is duplicated")
 			else
-				((t1, n), get_pos_camlp4 _loc 3, false) :: fl )]
+				((t1, n), get_pos_camlp4 _loc 3, false,F_NO_ANN) :: fl )
+   ]
 	(* An Hoa [22/08/2011] Inline fields extension*)
 	| "inline fields" [
-	`INLINE; t = typ; `IDENTIFIER n -> [((t,n),get_pos_camlp4 _loc 1,true)]
- 	| `INLINE; t = typ; `OSQUARE; t2=typ; `CSQUARE; `IDENTIFIER n -> [((t,n), get_pos_camlp4 _loc 1,true)]
-	| `INLINE; t=typ; `IDENTIFIER n; peek_try; `SEMICOLON; fl = SELF ->(  
+	`INLINE; t = typ; `IDENTIFIER n -> [((t,n),get_pos_camlp4 _loc 1,true,F_NO_ANN)]
+ 	| `INLINE; t = typ; `OSQUARE; t2=typ; `CSQUARE; `IDENTIFIER n -> [((t,n), get_pos_camlp4 _loc 1,true,F_NO_ANN)]
+	| `INLINE; t=typ; `IDENTIFIER n; peek_try; `SEMICOLON; fl = SELF ->(
 			if List.mem n (List.map get_field_name fl) then
 				report_error (get_pos_camlp4 _loc 4) (n ^ " is duplicated")
 			else
-				((t, n), get_pos_camlp4 _loc 3, true) :: fl )
+				((t, n), get_pos_camlp4 _loc 3, true,F_NO_ANN) :: fl )
 	| `INLINE; t1= typ; `OSQUARE; t2=typ; `CSQUARE; `IDENTIFIER n; peek_try; `SEMICOLON; fl = SELF -> 
 			(if List.mem n (List.map get_field_name fl) then
 				report_error (get_pos_camlp4 _loc 4) (n ^ " is duplicated")
 			else
-				((t1, n), get_pos_camlp4 _loc 3, true) :: fl )]];
+				((t1, n), get_pos_camlp4 _loc 3, true,F_NO_ANN) :: fl )]];
 
 (* one_field:   *)
 (*   [[ t=typ; `IDENTIFIER n -> ((t, n), get_pos_camlp4 _loc 1) *)
@@ -812,6 +836,7 @@ view_decl:
           view_invariant = oi; 
           view_mem = mpb;
           view_is_prim = false; 
+          view_kind = Iast.View_NORM; 
           view_inv_lock = li;
           try_case_inference = (snd vb) } ]];
 
@@ -820,9 +845,18 @@ prim_view_decl:
       -> { vh with 
           (* view_formula = None; *)
           view_invariant = oi; 
+          view_kind = Iast.View_PRIM; 
           view_is_prim = true; 
           view_inv_lock = li} ]];
-					
+
+view_decl_ext:
+  [[ vh= view_header_ext; `EQEQ; vb=view_body; oi= opt_inv; li= opt_inv_lock
+      -> { vh with view_formula = (fst vb);
+          view_invariant = oi; 
+          view_kind = Iast.View_EXTN;
+          view_inv_lock = li;
+          try_case_inference = (snd vb) } ]];
+
 opt_inv_lock: [[t=OPT inv_lock -> t]];
 
 inv_lock:
@@ -915,6 +949,7 @@ view_header:
   [[ `IDENTIFIER vn; `LT; l= opt_ann_cid_list; `GT ->
       let cids, anns = List.split l in
       let cids_t, br_labels = List.split cids in
+      (* DD.info_hprint (add_str "parser-view_header(cids_t)" (pr_list (pr_pair string_of_typ pr_id))) cids_t no_pos; *)
       let _, cids = List.split cids_t in
       (* if List.exists (fun x -> match snd x with | Primed -> true | Unprimed -> false) cids then *)
       (*   report_error (get_pos_camlp4 _loc 1) ("variables in view header are not allowed to be primed") *)
@@ -932,11 +967,42 @@ view_header:
           view_formula = F.mkETrue top_flow (get_pos_camlp4 _loc 1);
           view_inv_lock = None;
           view_is_prim = false;
+          view_kind = View_NORM;
+          view_prop_extns = [];
           view_invariant = P.mkTrue (get_pos_camlp4 _loc 1);
           view_mem = None;
           try_case_inference = false;
 			}]];
-      
+
+view_header_ext:
+  [[ `IDENTIFIER vn;`OSQUARE;sl= id_list;`CSQUARE; `LT; l= opt_ann_cid_list; `GT ->
+      let cids, anns = List.split l in
+      let cids_t, br_labels = List.split cids in
+      (* DD.info_hprint (add_str "parser-view_header(cids_t)" (pr_list (pr_pair string_of_typ pr_id))) cids_t no_pos; *)
+      let _, cids = List.split cids_t in
+      (* if List.exists (fun x -> match snd x with | Primed -> true | Unprimed -> false) cids then *)
+      (*   report_error (get_pos_camlp4 _loc 1) ("variables in view header are not allowed to be primed") *)
+      (* else *)
+      let modes = get_modes anns in
+      let _ = view_names # push vn in
+        { view_name = vn;
+          view_data_name = "";
+          view_vars = (* List.map fst *) cids;
+          (* view_frac_var = empty_iperm; *)
+          view_labels = br_labels;
+          view_modes = modes;
+          view_typed_vars = cids_t;
+          view_pt_by_self  = [];
+          view_formula = F.mkETrue top_flow (get_pos_camlp4 _loc 1);
+          view_inv_lock = None;
+          view_is_prim = false;
+          view_kind = View_EXTN;
+          view_prop_extns = sl;
+          view_invariant = P.mkTrue (get_pos_camlp4 _loc 1);
+          view_mem = None;
+          try_case_inference = false;
+			}]];
+
 (** An Hoa : Modify the rules to capture the extensional identifiers **)
 cid: 
   [[ 
@@ -983,13 +1049,28 @@ cid_list: [[t=LIST1 cid SEP `COMMA -> error_on_dups (fun n1 n2-> (fst n1)==(fst 
 opt_ann_cid_list: [[t=LIST0 ann_cid SEP `COMMA -> t]];
   
 c_typ:
-  [[ `COLON; t=typ -> t ]];
+ [[ `COLON; t=typ -> t
+ ]];
 
 cid_typ:
-  [[ `IDENTIFIER id ; t=OPT c_typ -> 
-      let ut = un_option t UNK in (ut,id) ]];
+  [[ `IDENTIFIER id ; t=OPT c_typ ->
+      let ut = un_option t UNK in
+      let _ =
+        (* WN : code below uses side-effects and may also result in relational name clashes *)
+        if is_RelT ut then
+          (* let _ = print_endline ("ll: " ^ id) in *)
+          let _ = rel_names # push id in
+          (* let rd = get_tmp_rel_decl () in *)
+         (*  let rd = {rd with rel_name = id} in *)
+        (* (\*push rd in the list*\) *)
+        (*   let _ = g_rel_defs # push rd in *)
+          ()
+        else ()
+      in
+        (ut,id)
+   ]];
 
-ann_cid:[[ ob=opt_branch; c=cid_typ; al=opt_ann_list ->((c, ob), al)]];
+ann_cid:[[ ob=opt_branch; c = cid_typ; al=opt_ann_list ->((c, ob), al)]];
 
 
 opt_ann_list: [[t=LIST0 ann -> t]];
@@ -1027,7 +1108,7 @@ extended_constr:
       F.ECase {
           F.formula_case_branches = il;
           F.formula_case_pos = (get_pos_camlp4 _loc 3) }
-	| sl=sq_clist; oc=disjunctive_constr; rc= OPT extended_l -> F.mkEBase sl [] [] oc rc true (get_pos_camlp4 _loc 2)]];	
+	| sl=sq_clist; oc=disjunctive_constr; rc= OPT extended_l -> F.mkEBase sl [] [] oc rc (get_pos_camlp4 _loc 2)]];	
   
 impl_list:[[t=LIST1 impl -> t]];
 
@@ -1625,7 +1706,10 @@ non_array_type:
    | `INFINT_TYPE        -> infint_type 
    | `BOOL               -> bool_type
    | `BAG                -> bag_type
-   | `IDENTIFIER id      -> Named id ]];  
+   | `IDENTIFIER id      -> Named id
+   | t=rel_header_view   ->
+       let tl,_ = List.split t.Iast.rel_typed_vars in
+       RelT tl ]];
 
 pointer_type:
   [[ t=non_array_type; r = star_list -> 
@@ -1736,6 +1820,10 @@ typed_id_list:[[ t = typ; `IDENTIFIER id ->  (t,id) ]];
 
 typed_id_list_opt: [[ t = LIST0 typed_id_list SEP `COMMA -> t ]];
 
+typed_default_id_list:[[ t = typ  ->  (t,default_rel_id) ]];
+
+typed_default_id_list_opt: [[ t = LIST0 typed_default_id_list SEP `COMMA -> t ]];
+
 rel_header:[[
 `REL; `IDENTIFIER id; `OPAREN; tl= typed_id_list_opt; (* opt_ann_cid_list *) `CPAREN  ->
     (* let cids, anns = List.split $4 in
@@ -1752,6 +1840,16 @@ rel_header:[[
 			rel_typed_vars = tl;
 			rel_formula = P.mkTrue (get_pos_camlp4 _loc 1); (* F.mkETrue top_flow (get_pos_camlp4 _loc 1); *)			
 			}
+]];
+
+rel_header_view:[[
+  `REL; `OPAREN; tl= typed_default_id_list_opt; (* opt_ann_cid_list *) `CPAREN  ->
+  let rd = { rel_name = "";
+			rel_typed_vars = tl;
+			rel_formula = P.mkTrue (get_pos_camlp4 _loc 1); (* F.mkETrue top_flow (get_pos_camlp4 _loc 1); *)			
+		 } in
+  (* let _ = set_tmp_rel_decl rd in *)
+  rd
 ]];
 
 rel_body:[[ (* formulas { 
@@ -1825,7 +1923,8 @@ hprogn:
                        data_invs = []; (* F.mkTrue no_pos; *)
                        data_is_template = false;
                        data_methods = [] } in
-    let rel_lst = rel_defs # get_stk in
+    (* let g_rel_lst = g_rel_defs # get_stk in *)
+    let rel_lst = ((rel_defs # get_stk)(* @(g_rel_lst) *)) in
     let hp_lst = hp_defs # get_stk in
     { prog_include_decls = !include_defs;
 			prog_data_decls = obj_def :: string_def :: !data_defs;
@@ -1835,8 +1934,10 @@ hprogn:
       (* prog_rel_decls = [];  TODO : new field for array parsing *)
       prog_view_decls = !view_defs;
       prog_func_decls = func_defs # get_stk ;
-      prog_rel_decls = rel_lst ; (* An Hoa *)
-      prog_rel_ids = List.map (fun x -> (RelT,x.rel_name)) rel_lst; (* WN *)
+      prog_rel_decls = rel_lst; (* An Hoa *)
+      prog_rel_ids = List.map (fun x ->
+          let tl,_ = List.split x.rel_typed_vars in
+          (RelT tl,x.rel_name)) (rel_lst); (* WN *)
       prog_hp_decls = hp_lst ;
       prog_hp_ids = List.map (fun x -> (HpT,x.hp_name)) hp_lst; (* l2 *)
       prog_axiom_decls = !axiom_defs; (* [4/10/2011] An Hoa *)
@@ -1869,7 +1970,7 @@ type_decl:
    | c=class_decl -> Data c
    | e=enum_decl  -> Enum e
    | v=view_decl; `SEMICOLON -> View v
-	 | `PRED_PRIM; v = prim_view_decl; `SEMICOLON    -> View v
+   | `PRED_PRIM; v = prim_view_decl; `SEMICOLON    -> View v
    | b=barrier_decl ; `SEMICOLON   -> Barrier b
    | h=hopred_decl-> Hopred h ]];
 
@@ -1888,7 +1989,7 @@ class_decl:
   [[ `CLASS; `IDENTIFIER id; par=OPT extends; ml=class_body ->
       let t1, t2, t3 = split_members ml in
 		(* An Hoa [22/08/2011] : blindly add the members as non-inline because we do not support inline fields in classes. TODO revise. *)
-		let t1 = List.map (fun (t, p) -> (t, p, false)) t1 in
+		let t1 = List.map (fun (t, p) -> (t, p, false,F_NO_ANN)) t1 in
       let cdef = { data_name = id;
                    data_parent_name = un_option par "Object";
                    data_fields = t1;
@@ -1989,32 +2090,25 @@ spec:
 	    	 F.formula_struc_continuation = Some sl (*if ((List.length sl)==0) then report_error (get_pos_camlp4 _loc 1) "spec must contain ensures"else sl*);
 	    	 F.formula_struc_pos = (get_pos_camlp4 _loc 1)}
             (* F.formula_ext_complete = false;*)
-   (*  | `REQUIRESC; cl= opt_sq_clist; dc= disjunctive_constr; s=SELF ->
-		 F.EBase {
-			 F.formula_ext_explicit_inst =cl;
-			 F.formula_ext_implicit_inst = [];
-			 F.formula_ext_exists = [];
-			 F.formula_ext_base = (F.subst_stub_flow n_flow dc);
-			 F.formula_ext_continuation = [s];
-             F.formula_ext_complete = false;
-			 F.formula_ext_pos = (get_pos_camlp4 _loc 1)}
-	 | `REQUIRESC; cl=opt_sq_clist; dc=disjunctive_constr; `OBRACE; sl=spec_list; `CBRACE ->
-	    	F.EBase {
-	    	 F.formula_ext_explicit_inst =cl;
-	    	 F.formula_ext_implicit_inst = [];
-	    	 F.formula_ext_exists = [];
-	    	 F.formula_ext_base =  (F.subst_stub_flow n_flow dc);
-	    	 F.formula_ext_continuation = if ((List.length sl)==0) then report_error (get_pos_camlp4 _loc 1) "spec must contain ensures"
-	    																					else sl;
-             F.formula_ext_complete = true;
-	    	 F.formula_ext_pos = (get_pos_camlp4 _loc 1)}
-  *)
 	 | `ENSURES; ol= opt_label; dc= disjunctive_constr; `SEMICOLON ->
-      F.EAssume ((F.subst_stub_flow n_flow dc),(fresh_formula_label ol), None)
-   | `ENSURES_EXACT; ol= opt_label; dc= disjunctive_constr; `SEMICOLON ->
-      F.EAssume ((F.subst_stub_flow n_flow dc),(fresh_formula_label ol), (Some true))
-   | `ENSURES_INEXACT; ol= opt_label; dc= disjunctive_constr; `SEMICOLON ->
-      F.EAssume ((F.subst_stub_flow n_flow dc),(fresh_formula_label ol), (Some false))
+			let f = F.subst_stub_flow n_flow dc in
+			let sf = F.mkEBase [] [] [] f None no_pos in		
+			F.mkEAssume f sf (fresh_formula_label ol) None
+	 
+	 | `ENSURES; ol= opt_label; dc= extended_constr; `SEMICOLON ->
+			let f = F.flatten_post_struc dc (get_pos_camlp4 _loc 1) in
+			F.mkEAssume (F.subst_stub_flow n_flow f) (F.subst_stub_flow_struc n_flow dc) (fresh_formula_label ol) None
+	  
+     | `ENSURES_EXACT; ol= opt_label; dc= disjunctive_constr; `SEMICOLON ->
+			let f = F.subst_stub_flow n_flow dc in	
+			let sf = F.mkEBase [] [] [] f None no_pos in		
+			F.mkEAssume f sf (fresh_formula_label ol) (Some true)
+	  
+     | `ENSURES_INEXACT; ol= opt_label; dc= disjunctive_constr; `SEMICOLON ->
+			let f = F.subst_stub_flow n_flow dc in
+			let sf = F.mkEBase [] [] [] f None no_pos in		
+			F.mkEAssume f sf (fresh_formula_label ol) (Some false)
+	  
 	 | `CASE; `OBRACE; bl= branch_list; `CBRACE ->F.ECase {F.formula_case_branches = bl; F.formula_case_pos = get_pos_camlp4 _loc 1; }
   ]];
 

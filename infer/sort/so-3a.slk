@@ -1,0 +1,50 @@
+data node {
+	int val; 
+	node next; 
+}.
+
+
+relation R(int a).
+
+pred llSP<n,R1:relation(int)> == self=null & n=0
+  or self::node<v,p> * p::llSP<n-1,R1> & R1(v)
+//inv self=null & n=0 | self!=null & n>0.
+inv n>=0.
+
+/*
+
+pred ll<n> == self=null & n=0
+  or self::node<v,p> * p::ll<n-1> 
+//inv self=null & n=0 | self!=null & n>0.
+inv n>=0.
+
+
+infer [n] x::ll<n> |- x::node<v1,q> .
+print residue.
+
+OK
+ <1>EXISTS(flted_16_110: q::ll<flted_16_110>@M[0][Orig]&n=flted_16_110+1&{FLOW,(19,20)=__norm})[]
+ inferred pure: [n!=0]
+*/
+
+/*
+infer [n,R] x::llSP<n,R> |- x::node<v1,q> .
+print residue.
+
+OK
+ <1>EXISTS(flted_10_74: q::llSP<flted_10_74,R>@M[0][Orig]&n=flted_10_74+1 & R(v1)&{FLOW,(19,20)=__norm})[]
+ inferred pure: [n!=0]
+*/
+
+infer [n,R] x::llSP<n,R> |- x::node<v1,q> & v1>=0 .
+print residue.
+/*
+ERROR!
+Last Proving Location: File "so-3a.slk",Line:16,Col:5
+
+ERROR: at _0_0 
+Message: merge_rel_ass: Not supported yet
+ 
+Entailment Failure (7) Failure("merge_rel_ass: Not supported yet")
+*/
+

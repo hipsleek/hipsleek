@@ -1,0 +1,32 @@
+
+relation R(int a).
+
+//(1)
+infer [R] v>=1  |- R(v).
+print residue.
+// <1>emp&1<=v&{FLOW,(19,20)=__norm}[]
+// inferred rel: [RELDEFN R: ( 1<=v) -->  R(v)]
+
+//(2)
+infer [R] v>=1 & R(w)  |- R(v).
+print residue.
+// <1>emp&1<=v & R(w)&{FLOW,(19,20)=__norm}[]
+// UNSOUND! expecting
+// [RELDEFN R: ( 1<=v) -->  R(v)]
+
+/*
+  Given 
+     D1 & R(w) |- R(v)
+  first check if D1 |- w=v
+
+  choose D2 = traverse(v,D1 & R(w)) |- R(v)
+  RELDEFN D2 --> R(v)
+  This definition may be recursive.
+
+  Note that traverse(v,1<=v & R(w) should return 1<=v
+  since it is disconnected from R(w).
+
+*/
+
+
+

@@ -1,0 +1,5 @@
+Post:={[x,res]:(res>=1 & res=x) | (x=0 & res=0)};
+PairWiseCheck Post;
+Pre:={[x,y]:(y<=(0-1) & 1<=x) | (1<=x & x<=y) | x=0};
+PairWiseCheck Pre;
+

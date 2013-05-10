@@ -87,7 +87,7 @@ let default_value (t :typ) pos : exp =
 	      failwith "default_value: bag can only be used for constraints"
     | List _ ->
           failwith "default_value: list can only be used for constraints"
-    | RelT ->
+    | RelT _ ->
           failwith "default_value: RelT can only be used for constraints"
     | Named c -> Null pos
     | Pointer ptr -> Null pos
@@ -95,6 +95,7 @@ let default_value (t :typ) pos : exp =
        failwith "default_value: Array not supported"
 	| HpT | Tree_sh ->
        failwith "default_value: (HpT|Tree_sh) not supported"
+	| INFInt -> Error.report_no_pattern ()
 
 (*similar to that in Astsimp.ml*)
 let get_type_name_for_mingling (prog : prog_decl) (t : typ) : ident =
@@ -1093,7 +1094,7 @@ and trans_exp_addr prog (e:exp) (vars: ident list) : exp =
             (new_e)
       | ConstDecl c ->
           (*Add variables into current scope*)
-          let org_t = c.exp_const_decl_type in
+          (*let org_t = c.exp_const_decl_type in*)
           let _ = List.map (fun (v,_,_) ->
               let alpha = E.alpha_name v in
               (E.add v (E.VarInfo{
@@ -1326,10 +1327,10 @@ and trans_exp_addr prog (e:exp) (vars: ident list) : exp =
           (* trans_exp_addr *)
           (try
               let proc = look_up_proc_def_raw prog.prog_proc_decls c.exp_call_nrecv_method in
-
+(*
               let pos = c.exp_call_nrecv_pos in
               let rvars = Hashtbl.find h proc.proc_name in
-              let args  =c.exp_call_nrecv_arguments in
+              let args  =c.exp_call_nrecv_arguments in*)
               (*
                 If there are some parameters that are not addressable
                 -> create auxiliary variables

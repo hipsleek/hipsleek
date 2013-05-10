@@ -168,6 +168,7 @@ and compute_fo_b_formula (bf0 : b_formula list) var_map : unit =
 				  | ListPerm _ -> failwith ("Lists are not supported in Mona")
 					| RelForm _ -> failwith ("Relations are not supported in Mona")
 					| LexVar _ -> failwith ("LexVar are not supported in Mona")
+					| XPure _ -> Error.report_no_pattern()
 
 			  end (* end of bf :: rest case *)
 			| [] ->
@@ -288,6 +289,7 @@ and compute_fo_exp (e0 : exp) order var_map : bool = match e0 with
   | ListReverse _ -> failwith ("Lists are not supported in Mona")
 	| Func _ -> failwith ("Functions are not supported in Mona") 
 	| ArrayAt _ -> failwith ("Arrays are not supported in Mona") 
+	| InfConst _ -> Error.report_no_pattern()
 
 (* 
    Transformations: 
@@ -369,6 +371,7 @@ and normalize_b_formula (bf0 : b_formula) lbl: formula =
 	  | ListPerm _ -> failwith ("Lists are not supported in Mona")
 	  | LexVar _ -> failwith ("LexVar are not supported in Mona")
 		| RelForm _ -> failwith ("Lists are not supported in Mona") (* An Hoa *)
+		| XPure _ -> Error.report_no_pattern()
 		  
 (*
   return value:

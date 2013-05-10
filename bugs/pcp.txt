@@ -1,0 +1,144 @@
+
+
+void loop$int~int(  int i,  int j) rec
+static  (,ECase case {
+          i<=0 -> (,EBase emp&Term[53,pv_762]&{FLOW,(22,23)=__norm}[]
+                            EAssume ref [i;j]
+                              emp&true&{FLOW,(22,23)=__norm}[]
+                              )
+          ;
+          0<i -> (,ECase case {
+                          j<=i -> (,EBase emp&Term[53,pv_763]&
+                                          {FLOW,(22,23)=__norm}[]
+                                            EAssume ref [i;j]
+                                              emp&true&
+                                              {FLOW,(22,23)=__norm}[]
+                                              )
+                          ;
+                          i<j -> (,EBase emp&Term[53,pv_764]&
+                                         {FLOW,(22,23)=__norm}[]
+                                           EAssume ref [i;j]
+                                             emp&true&{FLOW,(22,23)=__norm}[]
+                                             )
+                          
+                          })
+          
+          })
+dynamic  EBase hfalse&false&{FLOW,(22,23)=__norm}[]
+
+ref i, j
+{(boolean v_bool_11_761;
+(v_bool_11_761 = 
+  {((int v_int_11_726;
+   v_int_11_726 = 0);
+   gt___$int~int(i,v_int_11_726))};
+if (v_bool_11_761) [LABEL! 80,0: 
+  {((boolean v_bool_12_760;
+   (v_bool_12_760 = {gte___$int~int(i,j)};
+   if (v_bool_12_760) [LABEL! 81,0: {return}]
+   else [{(int v_int_12_759;
+     v_int_12_759 = LABEL! 81,1: {(boolean v_bool_16_758;
+     (v_bool_16_758 = {((boolean v_boolean_16_730;
+     (v_boolean_16_730 = {((int v_int_16_727;
+      v_int_16_727 = 0);
+      gt___$int~int(i,v_int_16_727))};
+  (boolean v_boolean_16_729;
+    v_boolean_16_729 = {((int v_int_16_728;
+    v_int_16_728 = 0);
+    lt___$int~int(j,v_int_16_728))})));
+    land___$boolean~boolean(v_boolean_16_730,v_boolean_16_729))};
+  if (v_bool_16_758) [{(int v_int_16_756;
+v_int_16_756 = LABEL! 82,0: {({(int v_int_17_743;
+v_int_17_743 = {((int v_int_17_731;
+v_int_17_731 = i);
+(i = {((int v_int_17_732;
+v_int_17_732 = 1);
+minus___$int~int(i,v_int_17_732))};
+v_int_17_731))})};
+(boolean v_bool_18_742;
+(v_bool_18_742 = {((int v_int_18_735;
+v_int_18_735 = {((int v_int_18_734;
+(v_int_18_734 = 0;
+(int v_int_18_733;
+v_int_18_733 = 1)));
+minus___$int~int(v_int_18_734,v_int_18_733))});
+lt___$int~int(j,v_int_18_735))};
+if (v_bool_18_742) [{(int v_int_18_740;
+v_int_18_740 = LABEL! 94,0: {{((int v_int_19_736;
+v_int_19_736 = j);
+(j = {((int v_int_19_737;
+v_int_19_737 = 1);
+add___$int~int(j,v_int_19_737))};
+v_int_19_736))}})}]
+else [{(int v_int_18_741;
+v_int_18_741 = LABEL! 94,1: {{((int v_int_21_738;
+v_int_21_738 = i);
+(i = {((int v_int_21_739;
+v_int_21_739 = 1);
+add___$int~int(i,v_int_21_739))};
+v_int_21_738))}})}]
+)))})}]
+else [{(int v_int_16_757;
+v_int_16_757 = LABEL! 82,1: {({(int v_int_24_755;
+v_int_24_755 = {((int v_int_24_744;
+v_int_24_744 = i);
+(i = {((int v_int_24_745;
+v_int_24_745 = 1);
+add___$int~int(i,v_int_24_745))};
+v_int_24_744))})};
+(boolean v_bool_25_754;
+(v_bool_25_754 = {((int v_int_25_747;
+v_int_25_747 = {((int v_int_25_746;
+v_int_25_746 = 2);
+mult___$int~int(j,v_int_25_746))});
+gt___$int~int(v_int_25_747,i))};
+if (v_bool_25_754) [{(int v_int_25_752;
+v_int_25_752 = LABEL! 85,0: {{((int v_int_26_748;
+v_int_26_748 = j);
+(j = {((int v_int_26_749;
+v_int_26_749 = 1);
+minus___$int~int(j,v_int_26_749))};
+v_int_26_748))}})}]
+else [{(int v_int_25_753;
+v_int_25_753 = LABEL! 85,1: {{((int v_int_28_750;
+v_int_28_750 = j);
+(j = {((int v_int_28_751;
+v_int_28_751 = 1);
+add___$int~int(j,v_int_28_751))};
+v_int_28_750))}})}]
+)))})}]
+))})}]
+));
+{loop$int~int(i,j) rec})}]
+else [LABEL! 80,1: ]
+))}
+
+{(2,0),(0,-1)}
+
+
+
+
+!!! >>>>>> HIP gather infer pre <<<<<<
+!!! Inferred Heap :[]
+!!! Inferred Pure :[ pv_763<pv_764, pv_763<pv_764]
+*************************************
+*******fixcalc of pure relation *******
+*************************************
+[]
+*************************************
+
+!!! Mutual Rec Group:[loop$int~int]
+!!! Phase Numbering:[(pv_764,1),(pv_763,0)]
+!!! var -> 0:pv_762
+Checking procedure loop$int~int... 
+Procedure loop$int~int SUCCESS
+
+Termination checking result:
+
+Stop Omega... 103 invocations 
+42 false contexts at: ( (11,1)  (32,2)  (28,5)  (28,5)  (27,11)  (26,5)  (26,5)  (25,17)  (25,4)  (25,10)  (25,8)  (25,8)  (24,4)  (24,4)  (24,4)  (23,10)  (21,5)  (21,5)  (20,11)  (19,5)  (19,5)  (18,16)  (18,4)  (18,13)  (18,12)  (18,8)  (17,4)  (17,4)  (17,4)  (16,23)  (16,3)  (16,20)  (16,16)  (16,11)  (16,7)  (16,7)  (15,9)  (12,2)  (13,3)  (12,14)  (12,6)  (11,12) )
+
+Total verification time: 0.43 second(s)
+	Time spent in main process: 0.4 second(s)
+	Time spent in child processes: 0.03 second(s)
+

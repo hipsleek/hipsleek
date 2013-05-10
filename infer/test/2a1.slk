@@ -1,0 +1,33 @@
+relation P3(int a1, int a2,int a3).
+relation P4(int a1, int a2,int a3).
+relation P5(int a1, int a2,int a3).
+
+infer [P3,P4,P5] emp &mi=min(v_616,mi2_618) & mx=max(v_616,mx2_619) 
+& mi2_618=mi_633 & 
+mx2_619=mx_634 
+& mi2_618<=mx2_619 
+& P3(m_658,mi_633,mx_634) & v_616<m_658 
+& v_616<m_658 
+& m=v_616 
+& m_658=v_742 & mi2=v_742 & mx2=v_742
+ |-  emp&P4(m,mi,mi2) & P5(m,mx,mx2) & mi2=v_742 & mx2=v_742.
+print residue.
+
+//& x=x_696 & p_617!=null & !(v_bool_53_575') 
+//& p_617!=null & !(v_bool_53_575') 
+//& p_617!=null 
+//& tmp_737=null 
+//& !(v_bool_58_574') 
+//& !(v_bool_58_574') & Anon_657=next_63_694 & res=x_696 
+//& Anon_17=p_617 
+
+/*
+For the above entailment, is it possible to have
+two relations rather than four but to use min/max expression
+on the LHS?
+
+ inferred rel: [RELDEFN P4: ( mi_633<=mx_634 & P3(mi2,mi_633,mx_634) & m=mi & mi<mi_633 & mi<mi2) -->  P4(m,mi,mi2); 
+                RELDEFN P4: ( P3(mi2,mi,mx_634) & mi<=m & m<mi2 & mi<=mx_634) -->  P4(m,mi,mi2); 
+                RELDEFN P5: ( mi_633<=mx_634 & P3(mx2,mi_633,mx_634) & m=mx & mx_634<=mx & mx<mx2) -->  P5(m,mx,mx2); 
+                RELDEFN P5: ( P3(mx2,mi_633,mx) & m<=(mx-1) & m<=(mx2-1) & mi_633<=mx) -->  P5(m,mx,mx2)]
+*/
