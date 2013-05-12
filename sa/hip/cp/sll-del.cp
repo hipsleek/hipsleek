@@ -18,3 +18,4 @@ hpdefs [H1,G1,G2][]:{
    HP_1(x) --> x=null or x::node2<_,p>*HP_1(p)
  }
 ]
+]

@@ -1998,9 +1998,9 @@ let infer_collect_hp_rel_x prog (es:entail_state) rhs rhs_rest (rhs_h_matched_se
         let _ =
           (* let pr_elem = Cpure.SV.string_of in *)
           (* let pr2 = pr_list (pr_pair pr_elem pr_elem) in *)
-          DD.tinfo_pprint ">>>>>> infer_hp_rel <<<<<<" pos;
-          DD.tinfo_pprint ("  es_heap: " ^ (Cprinter.string_of_h_formula es.CF.es_heap)) pos;
-          DD.tinfo_pprint ("  footprint: " ^ (let pr=pr_list_ln Cprinter.string_of_h_formula in pr es.CF.es_history)) pos;
+          DD.info_pprint ">>>>>> infer_hp_rel <<<<<<" pos;
+          DD.info_pprint ("  es_heap: " ^ (Cprinter.string_of_h_formula es.CF.es_heap)) pos;
+          DD.info_pprint ("  footprint: " ^ (let pr=pr_list_ln Cprinter.string_of_h_formula in pr es.CF.es_history)) pos;
           DD.info_pprint ("  lhs: " ^ (Cprinter.string_of_formula_base lhs_b)) pos;
           DD.info_pprint ("  rhs: " ^ (Cprinter.string_of_formula_base rhs_b)) pos;
           DD.info_pprint ("  unmatch: " ^ (Cprinter.string_of_h_formula rhs)) pos;
@@ -2133,7 +2133,7 @@ let infer_collect_hp_rel_x prog (es:entail_state) rhs rhs_rest (rhs_h_matched_se
               CF.es_infer_hp_unk_map = (es.CF.es_infer_hp_unk_map@unk_map);
               CF.es_infer_vars_sel_post_hp_rel = (es.CF.es_infer_vars_sel_post_hp_rel @ post_hps);
               CF.es_formula = new_es_formula1} in
-          DD.tinfo_pprint ("  new lhs: " ^ (Cprinter.string_of_formula new_es.CF.es_formula)) pos;
+          DD.info_pprint ("  new residue: " ^ (Cprinter.string_of_formula new_es.CF.es_formula)) pos;
           (true, new_es,new_rhs)
       end
 
