@@ -1167,8 +1167,9 @@ and compute_view_x_formula (prog : C.prog_decl) (vdef : C.view_decl) (n : int) =
 
 and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int) =
   let pos = CF.pos_of_struc_formula vdef.C.view_formula in
-  let inv_lbl = [[pos]] (* CP.get_lbl (MCP.pure_of_mix vdef.C.view_user_inv) *) in
-  (* let _ = print_endline ("compute_view_x_formula: pos: " ^ (line_number_of_pos pos)) in *)
+  let poss = CF.list_pos_of_struc_formula vdef.C.view_formula in
+  let inv_lbl = [poss] (* CP.get_lbl (MCP.pure_of_mix vdef.C.view_user_inv) *) in
+  (* let _ = print_endline ("compute_view_x_formula: pos: " ^ (let pr = pr_list line_number_of_pos in pr poss)) in *)
   let _=proving_loc # set pos in
   let rec helper n do_not_compute_flag =
   (* let compute_view_x_formula_x_op ()= *)

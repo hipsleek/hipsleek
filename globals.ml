@@ -106,6 +106,8 @@ type typ =
   (* | FuncT (\* function type *\) *)
   | Pointer of typ (* base type and dimension *)
 
+let compare_pos p1 p2= p1.Lexing.pos_lnum = p2.Lexing.pos_lnum && p1.Lexing.pos_bol = p2.Lexing.pos_bol && p1.Lexing.pos_cnum=p2.Lexing.pos_cnum
+
 let is_program_pointer (name:ident) = 
   let slen = (String.length name) in
   try  

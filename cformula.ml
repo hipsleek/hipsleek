@@ -1997,17 +1997,35 @@ and no_change (svars : CP.spec_var list) (pos : loc) : CP.formula = match svars 
 (*   List.fold_left (fun p1 p2 -> CP.mkAnd p1 p2 pos) (CP.mkTrue pos) fs *)
 
 and pos_of_struc_formula (f:struc_formula): loc =match f with
-	| ECase b -> b.formula_case_pos
-	| EBase b -> b.formula_struc_pos
-	| EAssume b-> pos_of_formula b.formula_assume_simpl
-    | EInfer b -> b.formula_inf_pos
-    | EList b-> match b with | x::_ -> pos_of_struc_formula (snd x) |_-> no_pos
+  | ECase b -> b.formula_case_pos
+  | EBase b -> b.formula_struc_pos
+  | EAssume b-> pos_of_formula b.formula_assume_simpl
+  | EInfer b -> b.formula_inf_pos
+  | EList b-> match b with | x::_ -> pos_of_struc_formula (snd x) |_-> no_pos
+
+and list_pos_of_struc_formula (f0:struc_formula): loc list =
+  let rec helper f =match f with
+  | ECase b ->
+        List.fold_left (fun ls (p,cf) ->
+        ls@(CP.list_pos_of_formula p []) @ (helper cf)) [] b.formula_case_branches
+  | EBase b -> list_pos_of_formula b.formula_struc_base
+  | EAssume b-> helper b.formula_assume_struc
+  | EInfer b -> helper b.formula_inf_continuation
+  | EList b-> 
+        List.fold_left (fun ls (_,cf) ->
+        ls@ helper cf) [] b
+  in
+  let ls_pos = helper f0 in
+  let ls_pos1 = List.filter (fun p -> not (p=no_pos)) ls_pos in
+  let ls_pos2 = Gen.BList.remove_dups_eq (fun p1 p2 -> compare_pos p1.start_pos p2.start_pos &&
+  compare_pos p1.mid_pos p2.mid_pos && compare_pos p1.end_pos p2.end_pos) ls_pos1 in
+  ls_pos2
 
 and pos_of_formula (f : formula) : loc = match f with
   | Base ({formula_base_pos = pos}) -> pos
-    | Or ({formula_or_f1 = f1;
-	  formula_or_f2 = f2;
-	  formula_or_pos = pos}) -> pos_of_formula f1
+  | Or ({formula_or_f1 = f1;
+    formula_or_f2 = f2;
+    formula_or_pos = pos}) -> pos_of_formula f1
   | Exists ({formula_exists_pos = pos}) -> pos
 
 and list_pos_of_formula (f : formula) : (loc list)= match f with

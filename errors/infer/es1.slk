@@ -17,30 +17,30 @@ checkentail
    & x=null
     |- n>0.
 
-
+print residue.
 /*
 Entail (1) : Fail.(may) cause: (1<=n & x!=null) | (n=0 & x=null) 
   |-  0<n. LOCS:[7;15;17] (may-bug)
  Why is 7 included? Why not 8?
 
  */
-
+/*
 //2.
 checkentail 
   x::node<_, p> *
   p::ll<n>  //
     |- x::ll<m> & m=0 .
-
+*/
 /*
 Entail (2) : Fail.(must: ) cause: 0<=n & m=n+1 
    |-  m=0. LOCS:[10;12;31;32] (must-bug)
 
 */
-
+/*
 checkentail 
   x=null
     |- x::ll<m> 
-       & m>0 .
+       & m>0 .*/
 /*
 Why do we have:
 Entail (3) : Fail.(must: ) cause: true 
