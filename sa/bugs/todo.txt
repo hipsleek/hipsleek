@@ -1,4 +1,4 @@
-# sll-2.slk
+# sll-2.slk: reset the set of inferred ass for each sleek proving: DONE
 
 
 Why 2nd sleek command did not infer. I suppose we need to treat
@@ -13,7 +13,7 @@ Entail (1) : Valid.
 Entail (2) : Valid. 
 
  <1>EXISTS(Anon_16,Anon_15: (HP_25(Anon_15,p)) * (HP_26(Anon_16,p))&true&{FLOW,(19,20)=__norm})[]
-
+===========================================================
 # sll-3.slk
 
 
@@ -28,7 +28,7 @@ Entail (1) : Valid.
  inferred hprel: [H1(c,p)&true --> c::node<Anon_11,Anon_12,Anon_13>@M * 
                    (HP_22(Anon_12,p)) * (HP_23(Anon_13,p))&true]
 
-
+===========================================================
 # sll-dll2.ss
 
 Error during shape inference ..
