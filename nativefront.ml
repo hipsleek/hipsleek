@@ -59,5 +59,9 @@ let list_parse (input_file) : command list =
   close_in org_in_chnl;
 	cmd
 
+let list_parse_string (input_string) : command list = 
+   Globals.input_file_name:= "stringInput";
+   Parser.parse_sleek "stringInput" (Stream.of_string input_string)
+	
 (* let list_parse (input_file) : command list = *)
 (*   Debug.loop_1_no "list_parse" (fun _ -> "?") (fun _ -> "?") list_parse input_file *)

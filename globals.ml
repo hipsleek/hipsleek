@@ -611,6 +611,8 @@ let level_data_typ = Int
 let ls_typ = BagT (Named ls_data_typ)
 let lsmu_typ = BagT (Int)
 
+let silence_output = ref false
+
 (*precluded files*)
 let header_file_list  = ref (["\"prelude.ss\""] : string list)
 let pragma_list = ref ([] : string list)
@@ -900,6 +902,7 @@ let log_filter = ref true
   
 (* Options for slicing *)
 let en_slc_ps = ref false
+let no_prune_all = ref true
 let override_slc_ps = ref false (*used to force disabling of en_slc_ps, for run-fast-tests testing of modular examples*)
 let dis_ps = ref false
 let dis_slc_ann = ref false

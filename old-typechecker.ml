@@ -14,7 +14,7 @@ module PTracer = Prooftracer
 module I = Iast
 module LP = Lemproving
 module Inf = Infer
-module AS = Astsimp
+(* module AS = Astsimp *)
 
 let log_spec = ref ""
   (* checking expression *)
@@ -1107,7 +1107,8 @@ and check_proc (prog : prog_decl) (proc : proc_decl) : bool =
                     if (pre_ctr # get> 0) 
                     then
                       begin
-                        let new_spec = AS.add_pre prog new_spec in
+                        (* let new_spec = AS.add_pre prog new_spec in *)
+												let new_spec = Typeinfer.add_pre prog new_spec in
                         let _ = proc.proc_stk_of_static_specs # push new_spec in
                         let old_sp = Cprinter.string_of_struc_formula proc.proc_static_specs in
                         let new_sp = Cprinter.string_of_struc_formula new_spec in
