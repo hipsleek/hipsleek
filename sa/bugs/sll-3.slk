@@ -6,6 +6,7 @@ data node{
 
 
 HeapPred H1(node a, node b).
+HeapPred H2(node a, node b).
 
 infer [H1] H1(c,p) |- c::node<_@A,_@M,_@A>.
 print residue.
@@ -21,7 +22,7 @@ Entail (1) : Valid.
 
 */
 
-checkentail c::node<_,_,_> |- c::node<_@A,_@M,_@A>.
+checkentail c::node<_,a,b>*H2(a,p)*H2(a,q) |- c::node<_@A,_@M,_@A>.
 print residue.
 
 
