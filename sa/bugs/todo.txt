@@ -1,0 +1,50 @@
+# sll-2.slk
+
+
+Why 2nd sleek command did not infer. I suppose we need to treat
+each sleek command afresh? That is reset the earlier inferred result.
+ 
+Entail (1) : Valid. 
+
+ <1>EXISTS(Anon_13,Anon_12: (HP_25(Anon_12,p)) * (HP_26(Anon_13,p))&true&{FLOW,(19,20)=__norm})[]
+ inferred hprel: [H1(c,p)&true --> c::node<Anon_11,Anon_12,Anon_13>@M * 
+                   (HP_25(Anon_12,p)) * (HP_26(Anon_13,p))&true]
+
+Entail (2) : Valid. 
+
+ <1>EXISTS(Anon_16,Anon_15: (HP_25(Anon_15,p)) * (HP_26(Anon_16,p))&true&{FLOW,(19,20)=__norm})[]
+
+# sll-3.slk
+
+
+Residue is wrong. It should contain c::node<@M,@A,@M>
+
+infer [H1] H1(c,p) |- c::node<_@A,_@M,_@A>.
+print residue.
+
+Entail (1) : Valid. 
+
+ <1>EXISTS(Anon_13,Anon_12: (HP_22(Anon_12,p)) * (HP_23(Anon_13,p))&true&{FLOW,(19,20)=__norm})[]
+ inferred hprel: [H1(c,p)&true --> c::node<Anon_11,Anon_12,Anon_13>@M * 
+                   (HP_22(Anon_12,p)) * (HP_23(Anon_13,p))&true]
+
+
+# sll-dll2.ss
+
+Error during shape inference ..
+
+************************************
+*******relational assumption ********
+*************************************
+[ H1(c,p)&c!=null --> c::node<Anon_11',pp',nn'>@M * (HP_771(pp',p)) * 
+  (HP_772(nn',p))&true,
+ (HP_772(nn',p)) * c'::node<Anon_11',p,nn'>@M&true --> H1(nn',c')&true,
+ (HP_771(pp_773,p)) * (G1(nn_784,c)) * c::node<Anon_783,p,nn_784>@M&
+  true --> G1(c,p)&true,
+ H1(c,p)&c=null --> G1(c,p)&true]
+*************************************
+
+Procedure paper_fix$node~node FAIL-2
+
+Exception Invalid_argument("List.combine") Occurred!
+(Program not linked with -g, cannot print stack backtrace)
