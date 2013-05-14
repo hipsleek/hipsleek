@@ -830,7 +830,7 @@ let string_of_iast_label_table table =
   in
   List.fold_right (fun row res -> (string_of_row row) ^ res) table ""
 
-
+let pr_int_label (i,s) = fmt_string (string_of_int i)
 let pr_formula_label_br l = fmt_string (string_of_formula_label_pr_br l "")
 let pr_formula_label l  = fmt_string (string_of_formula_label l "")
 let pr_formula_label_list l  = fmt_string ("{"^(String.concat "," (List.map (fun (i,_)-> (string_of_int i)) l))^"}")
@@ -1751,7 +1751,7 @@ let string_of_mix_formula_list l = "["^(string_of_mix_formula_list_noparen l)^"]
 
 let pr_case_guard c = 
   fmt_string "{";
-  pr_seq "\n" (fun (c1,c2)-> pr_b_formula c1 ;fmt_string "->"; pr_seq_nocut "," pr_formula_label c2) c;
+  pr_seq "\n" (fun (c1,c2)-> pr_b_formula c1 ;fmt_string "->"; pr_seq_nocut "," pr_int_label c2) c;
   fmt_string "}"
 
 let string_of_case_guard c = poly_string_of_pr pr_case_guard c
