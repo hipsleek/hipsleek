@@ -2407,4 +2407,4 @@ let rec struc_formula_drop_heap_node f0 hns =
 
 let struc_formula_drop_heap_node f hns =
 	let pr = !print_struc_formula in
-	Debug.ho_1 "struc_formula_drop_heap_node" pr pr (fun _ -> struc_formula_drop_heap_node f hns) f
+	Debug.no_1 "struc_formula_drop_heap_node" pr pr (fun _ -> struc_formula_drop_heap_node f hns) f
