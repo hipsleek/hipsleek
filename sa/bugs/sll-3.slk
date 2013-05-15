@@ -10,7 +10,7 @@ HeapPred H2(node a, node b).
 
 //infer [H1] H1(c,p) |- c::node<_@A,_@M,_@A>.
 //print residue.
-
+to      
 /*
 Residue is wrong. It should contain c::node<@M,@A,@M>
 
