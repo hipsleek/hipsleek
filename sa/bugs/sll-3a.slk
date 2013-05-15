@@ -16,6 +16,12 @@ print residue.
 checkentail c::node<_,a,b> |- c::node<_@A,x1@A,x2@L>@L.
 print residue.
 
+checkentail c::node<_,a,b> |- c::node<_,x1,x2>@L.
+print residue.
+
+checkentail c::node<_,a,b> |- c::node<_@L,x1@L,x2@L>.
+print residue.
+
 
 //checkentail c::node<_,a@A,b>*H2(a,p)*H2(a,q) |- c::node<_@A,_@M,_@A>.
 
