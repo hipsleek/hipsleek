@@ -17,16 +17,19 @@ Entail (2) : Valid.
 # sll-3.slk
 
 
-Residue is wrong. It should contain c::node<@M,@A,@M>
-
-infer [H1] H1(c,p) |- c::node<_@A,_@M,_@A>.
+infer [H1] H1(c,p) |- c::node<_@A,x1@M,x2@M>.
 print residue.
 
-Entail (1) : Valid. 
+/*
 
- <1>EXISTS(Anon_13,Anon_12: (HP_22(Anon_12,p)) * (HP_23(Anon_13,p))&true&{FLOW,(19,20)=__norm})[]
- inferred hprel: [H1(c,p)&true --> c::node<Anon_11,Anon_12,Anon_13>@M * 
-                   (HP_22(Anon_12,p)) * (HP_23(Anon_13,p))&true]
+Isn't x1,x2 instantiated? We should not use EXISTS wrapper.
+
+
+ <1>EXISTS(x2,x1,Anon_14: c::node<Anon_14@M,x1@A,x2@A>@M[Orig] * (HP_37(x1,p)) * (HP_38(x2,p))&true&{FLOW,(19,20)=__norm})[]
+ inferred hprel: [H1(c,p)&true --> c::node<Anon_14,x1,x2>@M * 
+                   (HP_37(x1,p)) * (HP_38(x2,p))&true]
+
+*/
 
 ===========================================================
 # sll-dll2.ss
