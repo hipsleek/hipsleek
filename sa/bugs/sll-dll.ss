@@ -17,9 +17,10 @@ node paper_fix (node c, node p)
 	if (c!=null) 
 	{
 		c.prev=p;
-        dprint;
+                dprint;
         node d = c.next;
-		paper_fix(d,c);	
+        dprint;
+	paper_fix(d,c);	
 	}
 	return c;
 }
@@ -73,7 +74,7 @@ void remove (node c)
  
 //ll2<n,S> == self = null & n=0 & S={}  or self::node<v, _ , q> * q::ll2<n-1,S1> & S=union(S1,{v});
 //dll2<p,n,S> == self = null & n=0 & S={} or self::node<v, p , q> * q::dll2<self,n-1,S1> &  S=union(S1,{v});
-
+/*
 node verif_fix (node c, node p)
 	requires c::ll<>	ensures c::dll<p>;
 //requires c::ll2<n,S> ensures c::dll2<p,n,S> ;
@@ -85,3 +86,4 @@ node verif_fix (node c, node p)
 	}
 	return c;
 }
+*/

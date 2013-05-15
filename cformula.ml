@@ -12059,23 +12059,30 @@ let convert_hf_to_mut f =
               DataNode 
                   {d with 
                       h_formula_data_param_imm = 
-                          List.map (fun _ -> ConstAnn Mutable) d.h_formula_data_param_imm})
+                          List.map (fun _ -> ConstAnn Mutable) d.h_formula_data_param_imm;
+                      (* h_formula_data_arguments = CP.fresh_spec_vars d.h_formula_data_arguments; *)
+                  })
     | _ -> None in
   transform_h_formula h_tr f
+let convert_hf_to_mut f = 
+  let pr = !print_h_formula in
+  Debug.no_1 "convert_to_mut" pr pr convert_hf_to_mut f
 
 (* this method must convert all the fields to @M annotation *)
-let convert_to_mut f = 
+let convert_to_mut f =
   let h_tr f = match f with
-    | DataNode d -> 
+    | DataNode d ->
           Some (
-              DataNode 
-                  {d with 
-                      h_formula_data_param_imm = 
-                          List.map (fun _ -> ConstAnn Mutable) d.h_formula_data_param_imm})
+              DataNode
+                  {d with
+                      h_formula_data_param_imm =
+                          List.map (fun _ -> ConstAnn Mutable) d.h_formula_data_param_imm;
+                      h_formula_data_arguments = CP.fresh_spec_vars d.h_formula_data_arguments;
+                  })
     | _ -> None in
 {f with formula_base_heap = transform_h_formula h_tr f.formula_base_heap}
 
-let convert_to_mut f = 
+let convert_to_mut f =
   let pr = !print_formula_base in
   Debug.no_1 "convert_to_mut" pr pr convert_to_mut f
   

@@ -325,7 +325,7 @@ and choose_context prog es lhs_h lhs_p rhs_p posib_r_aliases rhs_node rhs_rest p
   let pr3 = Cprinter.string_of_mix_formula in
   (*let pr4 = pr_list Cprinter.string_of_spec_var in*)
   (*let pr2 (m,svl,_) = (Cprinter.string_of_spec_var_list svl) ^ ";"^ (Cprinter.string_of_mix_formula m) in*)
-  Debug.ho_5 "choose_context" 
+  Debug.no_5 "choose_context" 
       (add_str "LHS node" pr1) 
       (add_str "RHS node" pr1) 
       (add_str "LHS pure" pr3) 
@@ -1286,7 +1286,7 @@ and compute_actions prog es (* list of right aliases *)
   let pr1 x = pr_list (fun (c1,_)-> Cprinter.string_of_h_formula c1) x in
   (* let pr4 = pr_list Cprinter.string_of_spec_var in *)
   let pr2 = string_of_action_res_simpl in
-  Debug.ho_3 "compute_actions" 
+  Debug.no_3 "compute_actions" 
       (add_str "EQ ptr" pr0) 
       (add_str "LHS heap" pr) 
       (* (add_str "LHS pure" pr3)  *)
