@@ -487,7 +487,7 @@ and spatial_ctx_extract_x prog (f0 : h_formula) (aset : CP.spec_var list) (imm :
         if ((CP.mem p1 aset) (* && (subtyp) *)) then 
 	(* let field_ann = false in *)
 	      
-            if produces_hole imm then (* not consuming the node *)
+            if ( (not !Globals.allow_field_ann) && produces_hole imm) then (* not consuming the node *)
 	          let hole_no = Globals.fresh_int() in 
 	          [((Hole hole_no), f, [(f, hole_no)], Root)]
             else
