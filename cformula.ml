@@ -1340,7 +1340,7 @@ and combine_and_pure (f1:formula)(p:MCP.mix_formula)(f2:MCP.mix_formula):MCP.mix
 
 (*and combine_and_pure (f1:formula)(p:MCP.mix_formula)(f2:MCP.mix_formula):MCP.mix_formula*bool = 
 	let pr = pr_pair !print_mix_formula  (string_of_bool) in
-	Debug.ho_3 "combine_and_pure" (!print_formula) (!print_mix_formula) (!print_mix_formula) pr 
+	Debug.no_3 "combine_and_pure" (!print_formula) (!print_mix_formula) (!print_mix_formula) pr 
 	combine_and_pure_x f1 p f2 *)
 
 and sintactic_search (f:formula)(p:Cpure.formula):bool = match f with
@@ -4042,7 +4042,7 @@ let check_imm_mis rhs_mis rhs0=
 
 let check_imm_mis rhs_mis rhs0 =
   let pr = !print_h_formula in
-  Debug.ho_2 "check_imm_mis" pr pr pr check_imm_mis rhs_mis rhs0
+  Debug.no_2 "check_imm_mis" pr pr pr check_imm_mis rhs_mis rhs0
 
 
 let rec get_hp_rel_formula (f:formula) =
@@ -12052,6 +12052,17 @@ let elim_prm e =
         | HEmp -> Some e in
 	 transform_formula (f_e_f,f_f,f_h_f,(f_m,f_a,f_p_f,f_b,f_e)) e
 
+let convert_hf_to_mut f = 
+  let h_tr f = match f with
+    | DataNode d -> 
+          Some (
+              DataNode 
+                  {d with 
+                      h_formula_data_param_imm = 
+                          List.map (fun _ -> ConstAnn Mutable) d.h_formula_data_param_imm})
+    | _ -> None in
+  transform_h_formula h_tr f
+
 (* this method must convert all the fields to @M annotation *)
 let convert_to_mut f = 
   let h_tr f = match f with
@@ -12066,6 +12077,6 @@ let convert_to_mut f =
 
 let convert_to_mut f = 
   let pr = !print_formula_base in
-  Debug.ho_1 "convert_to_mut" pr pr convert_to_mut f
+  Debug.no_1 "convert_to_mut" pr pr convert_to_mut f
   
 

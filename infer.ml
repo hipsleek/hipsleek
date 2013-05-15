@@ -2040,6 +2040,7 @@ let infer_collect_hp_rel_x prog (es:entail_state) rhs rhs_rest (rhs_h_matched_se
                   end
           in
           let rhs_b = CF.convert_to_mut rhs_b in
+          let new_lhs = rhs_b in
           let new_rhs_b,rvhp_rels,new_hrels,r_new_hfs =
             List.fold_left update_fb (rhs_b,[],[],[]) ls_unknown_ptrs in
           (*add roots from history*)
@@ -2137,14 +2138,15 @@ let infer_collect_hp_rel_x prog (es:entail_state) rhs rhs_rest (rhs_h_matched_se
               CF.es_infer_vars_sel_post_hp_rel = (es.CF.es_infer_vars_sel_post_hp_rel @ post_hps);
               CF.es_formula = new_es_formula1} in
           DD.tinfo_pprint ("  new residue: " ^ (Cprinter.string_of_formula new_es.CF.es_formula)) pos;
-          (true, new_es,new_rhs)
+          let new_lhs = CF.convert_hf_to_mut new_rhs in
+          (true, new_es,new_lhs)
       end
 
 let infer_collect_hp_rel i prog (es:entail_state) rhs rhs_rest (rhs_h_matched_set:CP.spec_var list) lhs_b rhs_b pos =
   let pr1 = Cprinter.string_of_formula_base in
   let pr4 = Cprinter.string_of_estate_infer_hp in
   let pr5 =  pr_triple string_of_bool pr4 Cprinter.string_of_h_formula in
-  Debug.to_2_num i "infer_collect_hp_rel" pr1 pr1 pr5
+  Debug.no_2_num i "infer_collect_hp_rel" pr1 pr1 pr5
 ( fun _ _ -> infer_collect_hp_rel_x prog es rhs rhs_rest rhs_h_matched_set lhs_b rhs_b pos) lhs_b rhs_b
 
 (*=*****************************************************************=*)
