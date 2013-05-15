@@ -9,7 +9,7 @@ HeapPred H1(node a, node b).
 HeapPred H2(node a, node b).
 
 
-checkentail c::node<_,a,b> |- c::node<_@A,x1@A,x2@L>@M.
+checkentail c::node<_,a,b> |- c::node<x0@A,x1@M,x2@L>@M.
 print residue.
 
 
