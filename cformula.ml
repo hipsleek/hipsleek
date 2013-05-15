@@ -4040,6 +4040,11 @@ let check_imm_mis rhs_mis rhs0=
           helper rhs0
     | _ -> rhs0
 
+let check_imm_mis rhs_mis rhs0 =
+  let pr = !print_h_formula in
+  Debug.ho_2 "check_imm_mis" pr pr pr check_imm_mis rhs_mis rhs0
+
+
 let rec get_hp_rel_formula (f:formula) =
   match f with
     | Base  ({formula_base_heap = h1;
@@ -12046,3 +12051,21 @@ let elim_prm e =
 	    | HFalse 
         | HEmp -> Some e in
 	 transform_formula (f_e_f,f_f,f_h_f,(f_m,f_a,f_p_f,f_b,f_e)) e
+
+(* this method must convert all the fields to @M annotation *)
+let convert_to_mut f = 
+  let h_tr f = match f with
+    | DataNode d -> 
+          Some (
+              DataNode 
+                  {d with 
+                      h_formula_data_param_imm = 
+                          List.map (fun _ -> ConstAnn Mutable) d.h_formula_data_param_imm})
+    | _ -> None in
+{f with formula_base_heap = transform_h_formula h_tr f.formula_base_heap}
+
+let convert_to_mut f = 
+  let pr = !print_formula_base in
+  Debug.ho_1 "convert_to_mut" pr pr convert_to_mut f
+  
+
