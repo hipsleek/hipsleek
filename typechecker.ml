@@ -2351,19 +2351,7 @@ and check_proc (prog : prog_decl) (proc : proc_decl) cout_option (mutual_grp : p
                     let rels = List.map (fun (_,a2,a3)-> (a2,a3)) rels in
                     (* let hprels = List.map (fun (_,a2,a3)-> (a2,a3)) hprels in *)
                     (* let hp_lst_assume = List.map (fun (_,a2,a3)-> (a2,a3)) hp_lst_assume in *)
-		    (* let hp_lst_simplified_assume = Sa2.simplify_lst_constrs hp_lst_assume in *)
-                    let new_stk = Gen.Basic.remove_dups (Infer.infer_rel_stk # get_stk) in
-                    let _ = Infer.infer_rel_stk # reset in
-                    let _ = Infer.infer_rel_stk # push_list new_stk in
-                    if not(Infer.infer_rel_stk# is_empty) then
-                      begin
-                        print_endline "\n*************************************";
-                        print_endline "*******pure relation assumption ******";
-                        print_endline "*************************************";
-                        print_endline (Infer.infer_rel_stk # string_of_reverse);
-                        print_endline "*************************************";
-(*                        Infer.infer_rel_stk # reset;*)
-                      end;                    
+                    (* let hp_lst_simplified_assume = Sa2.simplify_lst_constrs hp_lst_assume in *)
                     if not(Infer.rel_ass_stk# is_empty) then
                       begin
                         print_endline ""; 
@@ -2698,6 +2686,15 @@ and check_proc (prog : prog_decl) (proc : proc_decl) cout_option (mutual_grp : p
                                   let _ = DD.devel_pprint ">>>>>> do_compute_bottom_up_fixpoint <<<<<<" no_pos in
                                   let rels = Infer.infer_rel_stk # get_stk in
                                   let _ = Infer.infer_rel_stk # reset in
+                                  let rels = Gen.Basic.remove_dups rels in
+                                  if rels!=[] then
+                                    begin
+                                      print_endline "\n*************************************";
+                                      print_endline "*******pure relation assumption ******";
+                                      print_endline "*************************************";
+                                      print_endline (Gen.Basic.pr_list_ln (CP.string_of_infer_rel) (List.rev rels));
+                                      print_endline "*************************************";
+                                    end;
                                   let reloblgs, reldefns = List.partition (fun (rt,_,_) -> CP.is_rel_assume rt) rels in
                                   let reldefns = List.map (fun (_,f1,f2) -> (f1,f2)) reldefns in
                                   let is_post_rel fml pvars =
