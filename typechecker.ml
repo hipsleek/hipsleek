@@ -496,10 +496,10 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
             let (vars_rel,vars_inf) = List.partition (fun v -> is_RelT(CP.type_of_spec_var v) ) vars in
             let _ = Debug.ninfo_hprint (add_str "vars_rel" !print_svl) vars_rel no_pos in
             let _ = 
-              if old_vars=[] then 
-                Debug.info_hprint (add_str "TRANSLATED SPECS" pr_spec) einfer no_pos 
-              else
-                let _ = Debug.info_hprint (add_str "TRANSLATED SPECS" pr_spec) einfer no_pos in
+(*              if old_vars=[] then *)
+(*                Debug.info_hprint (add_str "TRANSLATED SPECS" pr_spec) einfer no_pos *)
+(*              else*)
+(*                let _ = Debug.info_hprint (add_str "TRANSLATED SPECS" pr_spec) einfer no_pos in*)
                 let proc_args_vars = List.map (fun (t,i) -> CP.SpecVar(t,i,Unprimed) ) proc.proc_args in
                 let pre_post_vars = CP.remove_dups_svl (pre_vars @ post_vars @ new_fml_fv @ proc_args_vars) in
                 let _ = Debug.ninfo_hprint (add_str "all vars" !print_svl) pre_post_vars no_pos in
@@ -613,11 +613,8 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
                       let lh = Inf.collect_pre_heap_list_partial_context res_ctx in
                       let lp = Inf.collect_pre_pure_list_partial_context res_ctx in
                       let lr = Inf.collect_rel_list_partial_context res_ctx in
-                      let rel_stk = Infer.infer_rel_stk # get_stk in
-                      let rel_ass = List.filter (fun (rt,_,_) -> CP.is_rel_assume rt) lr in
-                      let rel_ass = List.filter (fun r -> not(List.mem r rel_stk)) rel_ass in
-                      let _ = Infer.infer_rel_stk # push_list rel_ass in
-                      let _ = Log.current_infer_rel_stk # push_list rel_ass in
+                      let _ = Infer.infer_rel_stk # push_list lr in
+                      let _ = Log.current_infer_rel_stk # push_list lr in
                       let post_iv = Inf.collect_infer_vars_list_partial_context res_ctx in
                       (* Why? Bug cll-count-base.ss *)
                       (* no abductive inference for post-condition *)
@@ -638,8 +635,8 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
                               DD.devel_pprint ("New Post Cond :"^(Cprinter.string_of_formula new_post)) pos
                             end;
 						  if (Gen.BList.list_setequal_eq  CP.eq_spec_var_ident impl_struc impl_vs) then
-						   (print_string "check 1 ok\n";
-                          (impl_vs,new_post,new_post_struc))
+(*						   (print_string "check 1 ok\n";*)
+                          (impl_vs,new_post,new_post_struc)
 						  else report_error pos "Assume struc impl error" 
                         else ([],post_cond,post_struc) in
                       stk_evars # push_list impl_vs;
@@ -2355,6 +2352,9 @@ and check_proc (prog : prog_decl) (proc : proc_decl) cout_option (mutual_grp : p
                     (* let hprels = List.map (fun (_,a2,a3)-> (a2,a3)) hprels in *)
                     (* let hp_lst_assume = List.map (fun (_,a2,a3)-> (a2,a3)) hp_lst_assume in *)
 		    (* let hp_lst_simplified_assume = Sa2.simplify_lst_constrs hp_lst_assume in *)
+                    let new_stk = Gen.Basic.remove_dups (Infer.infer_rel_stk # get_stk) in
+                    let _ = Infer.infer_rel_stk # reset in
+                    let _ = Infer.infer_rel_stk # push_list new_stk in
                     if not(Infer.infer_rel_stk# is_empty) then
                       begin
                         print_endline "\n*************************************";
@@ -2688,7 +2688,6 @@ and check_proc (prog : prog_decl) (proc : proc_decl) cout_option (mutual_grp : p
                           try 
                             begin
                               let _ = DD.devel_pprint ">>>>>> do_compute_fixpoint <<<<<<" no_pos in
-                              (* type: (Fixbag.CP.formula * Fixbag.CP.Label_Pure.exp_ty) list *)
                               let pr = Cprinter.string_of_pure_formula in
                               Debug.tinfo_hprint (add_str "rels" (pr_list (pr_pair pr pr))) rels no_pos;
                               Debug.tinfo_hprint (add_str "mutual grp" (pr_list (fun x -> x.proc_name))) mutual_grp no_pos;

@@ -618,11 +618,11 @@ let infer_lhs_contra_estate estate lhs_xpure pos msg =
                             [RelAssume vs_rel,CP.conj_of_list lhs_conjs pos,x]
                           else []
                         ) (CP.list_of_conjs neg_lhs)) in
-                      if rel_ass = [] then (None,[])
-                      else
-                        let _ = DD.devel_hprint (add_str "rel_ass_final(unsat) : " (pr_list print_lhs_rhs)) rel_ass pos in
-                        let new_estate = CF.false_es_with_orig_ante estate estate.es_formula pos in
-                        (None, [(new_estate,rel_ass,true)])
+                    if rel_ass = [] then (None,[])
+                    else
+                      let _ = DD.devel_hprint (add_str "rel_ass_final(unsat) : " (pr_list print_lhs_rhs)) rel_ass pos in
+                      let new_estate = CF.false_es_with_orig_ante estate estate.es_formula pos in
+                      (None, [(new_estate,rel_ass,true)])
                 end
             | None -> (None,[])
           end
@@ -921,7 +921,7 @@ let rec infer_pure_m_x estate lhs_rels lhs_xpure_orig lhs_xpure0 lhs_wo_heap_ori
                       let _ = infer_rel_stk # push_list rel_ass in
                       let _ = Log.current_infer_rel_stk # push_list rel_ass in
                       (None,None,[(new_estate,rel_ass,false)])
-                  end
+              end
 (*                  DD.devel_pprint ">>>>>> infer_pure_m <<<<<<" pos;*)
 (*                  DD.devel_pprint "Add relational assumption" pos;*)
 (*                  DD.devel_hprint (add_str "new pure: " !CP.print_formula) new_p pos;*)
