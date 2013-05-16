@@ -155,7 +155,7 @@ let process_pred_def pdef =
         (* temporarily add pdef to view_decls *)
 		iprog.I.prog_view_decls <- pdef :: curr_view_decls;
 		let wf,_ = AS.case_normalize_struc_formula 10 iprog h p pdef.Iast.view_formula false 
-          false (*allow_post_vars*) false [] None in
+          false (*allow_post_vars*) false [] in
 		let new_pdef = {pdef with Iast.view_formula = wf} in
 		let tmp_views = AS.order_views (new_pdef :: curr_view_decls) in
 		iprog.I.prog_view_decls <- List.rev tmp_views;
@@ -206,7 +206,7 @@ let process_pred_def_4_iast pdef =
         (* temporarily add pdef to view_decls *)
 		iprog.I.prog_view_decls <- pdef :: curr_view_decls;
 		let wf,_ = AS.case_normalize_struc_formula 11 iprog h p pdef.Iast.view_formula false 
-          false (*allow_post_vars*) false [] None in
+          false (*allow_post_vars*) false [] in
         let inv_lock = pdef.I.view_inv_lock in
         let inv_lock =
           (match inv_lock with
@@ -415,7 +415,7 @@ let rec meta_to_struc_formula (mf0 : meta_formula) quant fv_idents (rel0: rel op
       let h = List.map (fun c-> (c,Unprimed)) fv_idents in
       let p = List.map (fun c-> (c,Primed)) fv_idents in
       let wf,_ = AS.case_normalize_struc_formula 12 iprog h p (Iformula.formula_to_struc_formula mf) true 
-        true (*allow_post_vars*) true [] rel0 in
+        true (*allow_post_vars*) true [] in
       AS.trans_I2C_struc_formula 8 iprog quant fv_idents wf stab false (*(Cpure.Prim Void) []*) false (*check_pre*) 
   | MetaVar mvar -> 
       begin
@@ -440,7 +440,7 @@ let rec meta_to_struc_formula (mf0 : meta_formula) quant fv_idents (rel0: rel op
       let h = List.map (fun c-> (c,Unprimed)) fv_idents in
       let p = List.map (fun c-> (c,Primed)) fv_idents in
       let wf,_ = AS.case_normalize_struc_formula 13 iprog h p b true (* allow_primes *) 
-        true (*allow_post_vars*) true [] rel0 in
+        true (*allow_post_vars*) true [] in
       let res = AS.trans_I2C_struc_formula 9 iprog quant fv_idents wf stab false 
         false (*check_pre*) (*(Cpure.Prim Void) [] *) in
       (* let _ = print_string ("\n1 before meta: " ^(Iprinter.string_of_struc_formula b)^"\n") in *)

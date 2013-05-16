@@ -5,6 +5,7 @@ open Lexing
 open Gen
 
 module H = Hashtbl
+(*module AS = Astsimp*)
 
 let loc = no_pos;;
 
