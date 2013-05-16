@@ -2736,6 +2736,7 @@ and check_proc (prog : prog_decl) (proc : proc_decl) cout_option (mutual_grp : p
                                 print_endline (Infer.fixcalc_rel_stk # string_of_reverse);
                                 print_endline "*************************************"
                               end;
+                              Infer.fixcalc_rel_stk # reset;
 
                               let tuples = List.map (fun (rel_post,post,rel_pre,pre) ->
                                   let pre_new = if CP.isConstTrue rel_pre then
