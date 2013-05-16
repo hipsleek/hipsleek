@@ -175,13 +175,13 @@ let find_formula_proof_res pno =
 			
 let proof_log_to_file () = 
 	let out_chn = 
-		(try Unix.mkdir "logs" 0o750 with _ -> ());
-		open_out ("logs/proof_log_" ^ (Globals.norm_file_name (List.hd !Globals.source_files))) in
+		(try Unix.mkdir Globals.logs_name 0o750 with _ -> ());
+		open_out (Globals.logs_name ^ "/" ^ "proof_log_" ^ (Globals.norm_file_name (List.hd !Globals.source_files))) in
 	 output_value out_chn proof_log_tbl 
 	
 let file_to_proof_log () =
 	try 
-		let in_chn = open_in ("logs/proof_log_" ^ (Globals.norm_file_name (List.hd !Globals.source_files))) in
+		let in_chn = open_in (Globals.logs_name ^ "/" ^ "proof_log_" ^ (Globals.norm_file_name (List.hd !Globals.source_files))) in
 		let tbl = input_value in_chn in
 		Hashtbl.iter (fun k log -> Hashtbl.add proof_log_tbl k log) tbl
 	with _ -> report_error no_pos "File of proof logging cannot be opened."
@@ -237,9 +237,9 @@ let proof_log_to_text_file (src_files) =
   if !Globals.proof_logging_txt then
     let tstartlog = Gen.Profiling.get_time () in
     let oc = 
-      (try Unix.mkdir "logs" 0o750 with _ -> ());
+      (try Unix.mkdir Globals.logs_name 0o750 with _ -> ());
       let with_option = if !Globals.en_slc_ps then "eps" else "no_eps" in
-      open_out ("logs/"^with_option^"_proof_log_" ^ (Globals.norm_file_name (List.hd src_files)) ^".txt") in
+      open_out (Globals.logs_name ^ "/" ^with_option^"_proof_log_" ^ (Globals.norm_file_name (List.hd src_files)) ^".txt") in
     let string_of_log_type lt =
       match lt with
 	|IMPLY (ante, conseq) -> "Imply: ante:" ^(string_of_pure_formula ante) ^"\n\t     conseq: " ^(string_of_pure_formula conseq)
@@ -268,12 +268,12 @@ let z3_proofs_list_to_file (src_files) =
 	if !Globals.proof_logging_txt then
 		let tstartlog = Gen.Profiling.get_time () in
 		let oc = 
-		(try Unix.mkdir "logs" 0o750 with _ -> ());
+		(try Unix.mkdir Globals.logs_name 0o750 with _ -> ());
 		(* let with_option= if(!Globals.do_slicing) then "slice" else "noslice" in *)
 		let with_option = if(!Globals.en_slc_ps) then "eps" else "no_eps" in
 		let with_option= with_option^"_"^if(!Globals.split_rhs_flag) then "rhs" else "norhs" in
     let with_option= with_option^"_"^if(not !Globals.elim_exists_ff) then "noee" else "ee" in
-		open_out ("logs/"^with_option^"_"^(Globals.norm_file_name (List.hd src_files)) ^".z3") in
+		open_out (Globals.logs_name ^ "/" ^with_option^"_"^(Globals.norm_file_name (List.hd src_files)) ^".z3") in
 		let _= List.map (fun ix-> let _=fprintf oc "%s" ix in ()) !z3_proof_log_list in
 		let tstoplog = Gen.Profiling.get_time () in
 	  let _= Globals.proof_logging_time := !Globals.proof_logging_time +. (tstoplog -. tstartlog) in 
@@ -284,12 +284,12 @@ let proof_greater_5secs_to_file (src_files) =
 	if !Globals.proof_logging_txt then
 		let tstartlog = Gen.Profiling.get_time () in
 		let oc = 
-		(try Unix.mkdir "logs" 0o750 with _ -> ());
+		(try Unix.mkdir Globals.logs_name 0o750 with _ -> ());
 		(* let with_option= if(!Globals.do_slicing) then "slice" else "noslice" in *)
 		let with_option = if(!Globals.en_slc_ps) then "eps" else "no_eps" in
 		let with_option= with_option^"_"^if(!Globals.split_rhs_flag) then "rhs" else "norhs" in
     let with_option= with_option^"_"^if(not !Globals.elim_exists_ff) then "noee" else "ee" in
-		open_out ("logs/greater_5sec_"^with_option^"_"^(Globals.norm_file_name (List.hd src_files)) ^".log5") in
+		open_out (Globals.logs_name ^ "/" ^ "greater_5sec_"^with_option^"_"^(Globals.norm_file_name (List.hd src_files)) ^".log5") in
 		let _= List.map (fun ix-> let _=fprintf oc "%s" ix in ()) !proof_gt5_log_list in
 		let tstoplog = Gen.Profiling.get_time () in
 	  let _= Globals.proof_logging_time := !Globals.proof_logging_time +. (tstoplog -. tstartlog) in 
@@ -312,10 +312,10 @@ let wrap_calculate_time exec_func src_file args =
 (* 	if !Globals.proof_logging_txt then                                                               *)
 (* 		let tstartlog = Gen.Profiling.get_time () in                                                   *)
 (* 		let oc =                                                                                       *)
-(* 		(try Unix.mkdir "logs" 0o750 with _ -> ());                                                    *)
+(* 		(try Unix.mkdir Globals.logs_name 0o750 with _ -> ());                                                    *)
 (* 		let with_option= if(!Globals.do_slicing) then "sleek_slice" else "sleek_noslice" in            *)
 (* 		(* let with_option= with_option^"_"^if(!Globals.split_rhs_flag) then "rhs" else "norhs" in *)  *)
-(* 		open_out ("logs/"^with_option^(Globals.norm_file_name (List.hd source_files)) ^".z3") in       *)
+(* 		open_out (Globals.logs_name ^ "/" ^ with_option^(Globals.norm_file_name (List.hd source_files)) ^".z3") in       *)
 (* 		let _= List.map (fun ix-> let _=fprintf oc "%s" ix in ()) !z3_proof_log_list in                *)
 (* 		let tstoplog = Gen.Profiling.get_time () in                                                    *)
 (* 	  let _= Globals.proof_logging_time := !Globals.proof_logging_time +. (tstoplog -. tstartlog) in *)
@@ -325,9 +325,9 @@ let wrap_calculate_time exec_func src_file args =
 let sleek_log_to_text_file (src_files) =
     (* let tstartlog = Gen.Profiling.get_time () in *)
     let oc =
-      (try Unix.mkdir "logs" 0o750 with _ -> ());
+      (try Unix.mkdir Globals.logs_name 0o750 with _ -> ());
       (* let with_option = if !Globals.en_slc_ps then "eps" else "no_eps" in *)
-      open_out ("logs/sleek_log_" ^ (Globals.norm_file_name (List.hd src_files)) ^".txt")
+      open_out (Globals.logs_name ^ "/" ^ "sleek_log_" ^ (Globals.norm_file_name (List.hd src_files)) ^".txt")
     in
     let str = 
       if (!Globals.sleek_log_filter)
@@ -346,9 +346,9 @@ let process_proof_logging ()=
         let tstartlog = Gen.Profiling.get_time () in
         let _= proof_log_to_file () in
         let with_option = if(!Globals.en_slc_ps) then "eps" else "no_eps" in
-        let fname = "logs/"^with_option^"_proof_log_" ^ (Globals.norm_file_name (List.hd !Globals.source_files)) ^".txt"  in
-        let fz3name= ("logs/"^with_option^"_z3_proof_log_"^ (Globals.norm_file_name (List.hd !Globals.source_files)) ^".txt") in
-        let slfn = "logs/sleek_log_" ^ (Globals.norm_file_name (List.hd !Globals.source_files)) ^".txt" in
+        let fname = Globals.logs_name ^ "/" ^with_option^"_proof_log_" ^ (Globals.norm_file_name (List.hd !Globals.source_files)) ^".txt"  in
+        let fz3name= (Globals.logs_name ^ "/" ^ with_option^"_z3_proof_log_"^ (Globals.norm_file_name (List.hd !Globals.source_files)) ^".txt") in
+        let slfn = Globals.logs_name ^ "/" ^ "sleek_log_" ^ (Globals.norm_file_name (List.hd !Globals.source_files)) ^".txt" in
         let _= if (!Globals.proof_logging_txt) 
         then 
           begin
@@ -358,7 +358,7 @@ let process_proof_logging ()=
             z3_proofs_list_to_file !Globals.source_files
           end
         else try Sys.remove fname 
-          (* ("logs/proof_log_" ^ (Globals.norm_file_name (List.hd !Globals.source_files))^".txt") *)
+          (* (Globals.logs_name ^ "/" ^ "proof_log_" ^ (Globals.norm_file_name (List.hd !Globals.source_files))^".txt") *)
         with _ -> ()
         in
         let _= if (!Globals.sleek_logging_txt) 
@@ -368,7 +368,7 @@ let process_proof_logging ()=
             sleek_log_to_text_file !Globals.source_files;
           end
         else try Sys.remove slfn 
-          (* ("logs/proof_log_" ^ (Globals.norm_file_name (List.hd !Globals.source_files))^".txt") *)
+          (* (Globals.logs_name ^ "/" ^ "proof_log_" ^ (Globals.norm_file_name (List.hd !Globals.source_files))^".txt") *)
         with _ -> ()
         in
         let tstoplog = Gen.Profiling.get_time () in

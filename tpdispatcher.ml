@@ -391,20 +391,20 @@ let set_tp tp_str =
   else if tp_str = "isabelle" then
 	(tp := Isabelle; prover_str := "isabelle-process"::!prover_str;)
   else if tp_str = "mona" then
-	(tp := Mona; prover_str := "mona"::!prover_str;)
+	(tp := Mona; prover_str := "mona_inter"::!prover_str;)
   else if tp_str = "monah" then
-	(tp := MonaH; prover_str := "mona"::!prover_str;)
+	(tp := MonaH; prover_str := "mona_inter"::!prover_str;)
   else if tp_str = "om" then
 	(tp := OM; prover_str := "oc"::!prover_str;
-     prover_str := "mona"::!prover_str;)
+     prover_str := "mona_inter"::!prover_str;)
   else if tp_str = "oi" then
 	(tp := OI; prover_str := "oc"::!prover_str;
      prover_str := "isabelle-process"::!prover_str;)
   else if tp_str = "set" then
-    (tp := SetMONA; prover_str := "mona"::!prover_str;)
+    (tp := SetMONA; prover_str := "mona_inter"::!prover_str;)
   else if tp_str = "cm" then
 	(tp := CM; prover_str := "cvc3"::!prover_str;
-     prover_str := "mona"::!prover_str;)
+     prover_str := "mona_inter"::!prover_str;)
   else if tp_str = "coq" then
 	(tp := Coq; prover_str := "coqtop"::!prover_str;)
   (*else if tp_str = "z3" then 
@@ -420,11 +420,11 @@ let set_tp tp_str =
   else if tp_str = "zm" then
     (tp := ZM; 
     prover_str := "z3"::!prover_str;
-    prover_str := "mona"::!prover_str;)
+    prover_str := "mona_inter"::!prover_str;)
   else if tp_str = "auto" then
 	(tp := AUTO; prover_str := "oc"::!prover_str;
      prover_str := "z3"::!prover_str;
-     prover_str := "mona"::!prover_str;
+     prover_str := "mona_inter"::!prover_str;
      prover_str := "coqtop"::!prover_str;
     )
   else if tp_str = "oz" then

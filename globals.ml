@@ -14,6 +14,15 @@ type constant_flow = string
 
 exception Illegal_Prover_Format of string
 
+(*Initialize the generator with a random seed
+  to ensure different random numbers in different runs.
+  Consider using it if you need unique naming for each run.
+*)
+let _ = Random.self_init ()
+let global_random_numer = Random.int 1000000
+(* let logs_name = "logs_" ^ (string_of_int global_random_numer) *)
+let logs_name = "logs"
+
 let reverify_flag = ref false
 let ineq_opt_flag = ref false
 

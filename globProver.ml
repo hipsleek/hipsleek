@@ -42,7 +42,7 @@ end
 
 let open_log_out s = 
  (try
-	Unix.mkdir "logs" 0o750
+	Unix.mkdir Globals.logs_name 0o750
  with _ -> ());
- open_out ("logs/"^s)
+ open_out (Globals.logs_name ^ "/" ^ s)
 

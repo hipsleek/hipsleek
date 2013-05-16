@@ -810,7 +810,7 @@ let rec get_answer chn : string =
   let chr = input_char chn in
       match chr with
         |'\n' ->  ""
-        | 'a'..'z' | 'A'..'Z' | ' ' -> (Char.escaped chr) ^ get_answer chn (*save only alpha characters*)
+        | 'a'..'z' | 'A'..'Z' | '_' | '0'..'9' | ' ' -> (Char.escaped chr) ^ get_answer chn (*save only alpha characters*)
         | _ -> "" ^ get_answer chn
 
 let get_answer chn =
@@ -1113,7 +1113,7 @@ let imply_sat_helper_x (is_sat_b: bool) (fv: CP.spec_var list) (f: CP.formula) (
   if not (Gen.is_empty part1) then
     cmd_to_send := first_order_var_decls  ^ (!cmd_to_send) ;
   cmd_to_send := !cmd_to_send ^ ";\n";
-  let content = ("include mona_predicates.mona;\n" ^ !cmd_to_send) in
+  let content = ("include \"mona_predicates.mona\";\n" ^ !cmd_to_send) in
   try
     begin
       let _ = maybe_restart_mona () in
