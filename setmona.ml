@@ -169,7 +169,7 @@ and compute_fo_b_formula (bf0 : b_formula list) var_map : unit =
 				  | RelForm _ -> failwith ("Relations are not supported in Mona")
 				  | LexVar _ -> failwith ("LexVar are not supported in Mona")
 				  | XPure _ -> Error.report_no_pattern()
-                                  | Path (pf1, _, _) -> helper pf1
+                                  | PathCond (pf1, _, _) -> helper pf1
                           in
                           helper pf
 
@@ -375,7 +375,7 @@ and normalize_b_formula (bf0 : b_formula) lbl llbl: formula =
     | LexVar _ -> failwith ("LexVar are not supported in Mona")
     | RelForm _ -> failwith ("Lists are not supported in Mona") (* An Hoa *)
     | XPure _ -> Error.report_no_pattern()
-    | Path (pf1, _, _) -> helper pf1
+    | PathCond (pf1, _, _) -> helper pf1
   in
   helper pf
 

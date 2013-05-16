@@ -1455,7 +1455,7 @@ cexp_w:
                             in
                              let cl = un_option cl [] in
                              let ls = List.map func cl in
-                             let npf = (IP.Path (pf, ls, get_pos_camlp4 _loc 2), b) in
+                             let npf = (IP.PathCond (pf, ls, get_pos_camlp4 _loc 2), b) in
                              Pure_f (P.BForm (npf, fol, lbl))
                       | _ -> report_error no_pos "parser.cexp_w"
                   end

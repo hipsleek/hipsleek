@@ -125,7 +125,7 @@ and omega_of_b_formula b =
   | VarPerm _ -> illegal_format ("Omega.omega_of_exp: VarPerm constraint")
   | RelForm _ -> illegal_format ("Omega.omega_of_exp: RelForm")
   | LexVar _ -> illegal_format ("Omega.omega_of_exp: LexVar 3")
-  | Path(pf1, _, _) -> helper pf1
+  | PathCond(pf1, _, _) -> helper pf1
   | _ -> illegal_format ("Omega.omega_of_exp: bag or list constraint")
   in
   helper pf

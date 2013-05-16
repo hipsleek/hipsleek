@@ -868,7 +868,7 @@ let rec pr_b_formula (e:P.b_formula) =
 	  | arg_first::arg_rest -> let _ = pr_formula_exp arg_first in 
 	    let _ = List.map (fun x -> fmt_string (","); pr_formula_exp x) arg_rest in fmt_string ")" (* An Hoa *)
       end
-    | P.Path (pf1, svl, l) ->
+    | P.PathCond (pf1, svl, l) ->
            fmt_string "path(" ; helper pf1;  fmt_string ("," ^ (string_of_spec_var_list svl) ^ ")")
   in
   helper pf
@@ -939,7 +939,7 @@ let rec pr_b_formula_w_loc (e:P.b_formula) =
 	  let _ = List.map (fun x -> fmt_string (","); pr_formula_exp x) arg_rest in fmt_string ")" (* An Hoa *) 
           ;fmt_string (" (" ^ (line_number_of_pos l)^ ")" )
       end
-    | P.Path (pf1, svl, l) ->
+    | P.PathCond (pf1, svl, l) ->
           fmt_string "path("; helper pf1; fmt_string ("," ^ (string_of_spec_var_list svl) ^ "," ^ (line_number_of_pos l)^ ")")
   in
   helper pf
@@ -3736,7 +3736,7 @@ let rec html_of_pure_b_formula f = match f with
     | P.ListAllN (e1, e2, l) ->  (html_of_formula_exp e1) ^ " <allN> " ^ (html_of_formula_exp e2)
     | P.ListPerm (e1, e2, l) -> (html_of_formula_exp e1) ^ " <perm> " ^ (html_of_formula_exp e2)
     | P.RelForm (r, args, l) -> (html_of_spec_var r) ^ "(" ^ (String.concat "," (List.map html_of_formula_exp args)) ^ ")"
-    | P.Path (pf1, svl, l) -> "<b> path(" ^ (html_of_pure_b_formula pf1) ^  ("," ^ (string_of_spec_var_list svl) ^ ")</b>")
+    | P.PathCond (pf1, svl, l) -> "<b> path(" ^ (html_of_pure_b_formula pf1) ^  ("," ^ (string_of_spec_var_list svl) ^ ")</b>")
 
 let rec html_of_pure_formula f =
 	match f with

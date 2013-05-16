@@ -128,7 +128,7 @@ and cvc3_of_b_formula b =
     | CP.SubAnn _ -> failwith ("SubAnn not supported in cvc3")
     | CP.LexVar _ -> failwith ("LexVar not supported in cvc3")
     | CP.XPure _  -> Error.report_no_pattern ()
-    | CP.Path (pf1, _, _) -> helper pf1
+    | CP.PathCond (pf1, _, _) -> helper pf1
   in
   helper pf
 

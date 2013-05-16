@@ -700,7 +700,7 @@ and mona_of_b_formula_x b f vs =
           | CP.LexVar _ -> failwith ("LexVar is not supported in Mona")
 	  | CP.VarPerm _ -> failwith ("VarPerm is not supported in Mona")
 	  | CP.RelForm _ -> failwith ("Relations are not supported in Mona") (* An Hoa *)
-          | CP.Path(pf1, _, _) -> helper pf1
+          | CP.PathCond(pf1, _, _) -> helper pf1
         in
         helper pf
         in
@@ -806,7 +806,7 @@ and print_b_formula b f = match b with
   | CP.VarPerm _ -> failwith ("VarPerm not suported in Mona")
   | CP.RelForm _ -> failwith ("Arrays are not supported in Mona") (* An Hoa *)
   | CP.XPure _ -> failwith ("XPure are not supported in Mona")
-  | CP.Path(pf1,_,_) -> print_b_formula pf1 f
+  | CP.PathCond(pf1,_,_) -> print_b_formula pf1 f
 
 let rec get_answer chn : string =
   let chr = input_char chn in

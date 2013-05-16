@@ -216,7 +216,7 @@ and bfv (bf : b_formula) =
     | LexVar (_, args1, args2, _) ->
       let args_fv = List.concat (List.map afv (args1@args2)) in
       Gen.BList.remove_dups_eq (=) args_fv
-    | Path (pf1, _, _ ) -> helper pf1
+    | PathCond (pf1, _, _ ) -> helper pf1
   in
   helper pf
 
@@ -528,7 +528,7 @@ and pos_of_formula (f : formula) = match f with
 			| BagIn (_,_,p) | BagNotIn (_,_,p) | BagSub (_,_,p) | BagMin (_,_,p) | BagMax (_,_,p)	
 		  | ListIn (_,_,p) | ListNotIn (_,_,p) | ListAllN (_,_,p) | ListPerm (_,_,p)
 		  | RelForm (_,_,p)  | LexVar (_,_,_,p) -> p
-		  | VarPerm (_,_,p) -> p | Path (_, _, p ) -> p
+		  | VarPerm (_,_,p) -> p | PathCond (_, _, p ) -> p
           | XPure xp ->  xp.xpure_view_pos
 	end
   | And (_,_,p) | Or (_,_,_,p) | Not (_,_,p)
@@ -671,9 +671,9 @@ and b_apply_one (fr, t) bf =
         let args1 = List.map (fun x -> e_apply_one (fr, t) x) args1 in
         let args2 = List.map (fun x -> e_apply_one (fr, t) x) args2 in
           LexVar (t_ann, args1,args2,pos)
-  | Path (pf1, svl, p ) ->
+  | PathCond (pf1, svl, p ) ->
         let subst_sv sv =(if eq_var sv fr then t else sv) in
-        Path ( helper pf1, List.map subst_sv svl, p )
+        PathCond ( helper pf1, List.map subst_sv svl, p )
   in
   let npf = helper pf in (npf,il)
 
@@ -804,7 +804,7 @@ and look_for_anonymous_b_formula (f : b_formula) : (ident * primed) list =
   | RelForm (_,args,_) -> 
         let vs = List.concat (List.map look_for_anonymous_exp (args)) in
         vs
-  | Path (pf1, _, _) -> helper pf1
+  | PathCond (pf1, _, _) -> helper pf1
   in
   helper pf
 
@@ -852,7 +852,7 @@ and find_lexp_b_formula (bf: b_formula) ls =
     | ListPerm (e1, e2, _) -> find_lexp_exp e1 ls @ find_lexp_exp e2 ls
     | RelForm (_, el, _) -> List.fold_left (fun acc e -> acc @ find_lexp_exp e ls) [] el
     | LexVar (_,e1, e2, _) -> List.fold_left (fun acc e -> acc @ find_lexp_exp e ls) [] (e1@e2)
-    | Path (pf1, _, _) -> helper pf1
+    | PathCond (pf1, _, _) -> helper pf1
   in
   helper pf
 
@@ -1275,10 +1275,10 @@ and float_out_pure_min_max (p : formula) : formula =
 	    let nargse = List.map fst nargs in
 	    let t = BForm ((RelForm (r, nargse, l), il), lbl, llbl) in
 	    t
-      | Path (pf1, svl, l) -> begin
+      | PathCond (pf1, svl, l) -> begin
             let nf = helper pf1 in
             match nf with
-              | BForm ((npf1, _), _, _) -> BForm ((Path (npf1, svl, l), il), lbl, llbl)
+              | BForm ((npf1, _), _, _) -> BForm ((PathCond (npf1, svl, l), il), lbl, llbl)
               | _ -> report_error no_pos "ipure.float_out_formula_min_max; should design this method better"
         end
     in

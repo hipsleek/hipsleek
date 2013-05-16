@@ -395,7 +395,7 @@ let rec contains_inf_eq_b_formula (bf: CP.b_formula) : bool =
     | CP.BagMax _
     | CP.VarPerm _
     | CP.RelForm _ -> false
-    | CP.Path(pf1, _, _) -> helper pf1
+    | CP.PathCond(pf1, _, _) -> helper pf1
   in
   helper p_f
 (*
@@ -584,7 +584,7 @@ let rec sub_inf_list_b_formula (bf:CP.b_formula) (vl: CP.spec_var list) (is_neg:
       | CP.BagMax _
       | CP.VarPerm _
       | CP.RelForm _ -> p_f
-      | CP.Path(pf1,_,_) -> helper pf1
+      | CP.PathCond(pf1,_,_) -> helper pf1
   in
   helper p_f in
   (p_f_conv,bf_ann)

@@ -738,7 +738,7 @@ let is_array_b_formula (pf,_) =
         -> Some false
     | CP.RelForm _ -> Some true
     | CP.VarPerm _ -> Some false
-    | CP.Path(pf1, _, _) -> helper pf1
+    | CP.PathCond(pf1, _, _) -> helper pf1
   in
   helper pf
 

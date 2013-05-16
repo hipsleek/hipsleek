@@ -162,7 +162,7 @@ and cvcl_of_b_formula b =
   | CP.RelForm _ -> failwith ("Relations are not supported in cvclite") 
   | CP.LexVar _ -> failwith ("LexVar are not supported in cvclite") 
   | CP.SubAnn _ -> failwith ("SubAnn are not supported in cvclite") 
-  | CP.Path (pf1, _, _) -> helper pf1
+  | CP.PathCond (pf1, _, _) -> helper pf1
   in
   helper pf
 

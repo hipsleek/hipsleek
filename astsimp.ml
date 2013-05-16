@@ -5136,7 +5136,7 @@ and trans_pure_b_formula_x (b0 : IP.b_formula) stab : CP.b_formula =
 		CP.xpure_view_remaining_branches = brs;
 		CP.xpure_view_pos = pos
 	       }
-    | IP.Path(pf1, svl, pos) ->
+    | IP.PathCond(pf1, svl, pos) ->
           let c_pf = helper pf1 in
           let trans_vp ls (v,p) = 
             try
@@ -5144,7 +5144,7 @@ and trans_pure_b_formula_x (b0 : IP.b_formula) stab : CP.b_formula =
               ls@[sv]
             with _ -> ls
           in
-          CP.Path (c_pf, List.fold_left trans_vp [] svl, pos)
+          CP.PathCond (c_pf, List.fold_left trans_vp [] svl, pos)
   in
   let npf =  helper pf in
   (*let _ = print_string("\nC_B_Form: "^(Cprinter.string_of_b_formula (npf,None))) in*)
@@ -5983,7 +5983,7 @@ and gather_type_info_b_formula_x prog b0 stab =
 	 | Not_found ->    failwith ("gather_type_info_b_formula: relation "^r^" cannot be found")
          | _ -> print_endline ("gather_type_info_b_formula: relation " ^ r)
       )
-    | IP.Path (pf, vps, pos) -> helper pf
+    | IP.PathCond (pf, vps, pos) -> helper pf
   in
   helper pf
 

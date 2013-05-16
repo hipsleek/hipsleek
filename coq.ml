@@ -184,7 +184,7 @@ and coq_of_b_formula b =
     | CP.LexVar _ -> illegal_format "coq_of_exp : lexvar cannot be handled"
     | CP.VarPerm _ ->
 	  illegal_format "coq_of_exp : VarPerm cannot be handled"
-    | CP.Path (pf1, _, _) -> helper pf1
+    | CP.PathCond (pf1, _, _) -> helper pf1
   in
   helper pf
 

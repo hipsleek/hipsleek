@@ -201,7 +201,7 @@ let rec smt_of_b_formula b =
 	  else
 	    "(" ^ (CP.name_of_spec_var r) ^ " " ^ (String.concat " " smt_args) ^ ")"
     | CP.XPure _ -> Error.report_no_pattern ()
-    | CP.Path (pf1, _ ,_) -> helper pf1
+    | CP.PathCond (pf1, _ ,_) -> helper pf1
   in
   helper pf
 
@@ -308,7 +308,7 @@ and collect_bformula_info b = match b with
 		let args_infos = List.map collect_exp_info args in
 		combine_formula_info_list (rinfo :: args_infos) (* check if there are axioms then change the quantifier free part *)
   | CP.XPure _ -> Error.report_no_pattern ()
-  | CP.Path (pf1, _, _) ->  collect_bformula_info pf1
+  | CP.PathCond (pf1, _, _) ->  collect_bformula_info pf1
 
 and collect_exp_info e = match e with
   | CP.Level _

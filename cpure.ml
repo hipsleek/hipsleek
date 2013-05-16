@@ -158,7 +158,7 @@ and p_formula =
   | RelForm of (spec_var * (exp list) * loc)
   (* | RelForm of (SpecVar * (exp list) * loc)             *)
   (* An Hoa: Relational formula to capture relations, for instance, s(a,b,c) or t(x+1,y+2,z+3), etc. *)
-  | Path of (p_formula * spec_var list * loc)
+  | PathCond of (p_formula * spec_var list * loc)
 
 (* Expression *)
 and exp =
@@ -1010,7 +1010,7 @@ and bfv (bf : b_formula) =
       | VarPerm (t,ls,_) -> ls
       | LexVar l_info ->
             List.concat (List.map afv (l_info.lex_exp @ l_info.lex_tmp))
-      | Path (pf1, _, _) -> helper pf1
+      | PathCond (pf1, _, _) -> helper pf1
   in
   helper pf0
 
@@ -1621,7 +1621,7 @@ and is_b_form_arith (b: b_formula) :bool =
               (* list formulas *)
       | ListIn _ | ListNotIn _ | ListAllN _ | ListPerm _
       | RelForm _ -> false (* An Hoa *)
-      | Path (pf1, _, _) -> helper pf1
+      | PathCond (pf1, _, _) -> helper pf1
   in
   helper pf0
 
@@ -2596,7 +2596,7 @@ and pos_of_b_formula (b: b_formula) =
     | ListPerm (_, _, p) -> p
     | RelForm (_, _, p) -> p
     | VarPerm (_,_,p) -> p
-    | Path (_, _, p) -> p
+    | PathCond (_, _, p) -> p
 
 and pos_of_formula (f: formula) =
   match f with
@@ -2673,7 +2673,7 @@ and list_pos_of_b_formula (b: b_formula) =
     | ListPerm (_, _, p) -> [p]
     | RelForm (_, _, p) -> [p]
     | VarPerm (_,_,p) -> [p]
-    | Path (_, _, p) -> [p]
+    | PathCond (_, _, p) -> [p]
  
 and list_pos_of_formula f rs: loc list=
   match f with
@@ -2759,7 +2759,7 @@ and get_var_locs_b_formula (b: b_formula) v =
     | ListPerm (_, _, p) -> []
     | RelForm (_, _, p) -> []
     | VarPerm (_,_,p) -> []
-    | Path (pf, _, _) -> helper pf
+    | PathCond (pf, _, _) -> helper pf
   in
   helper p0
 
@@ -2843,7 +2843,7 @@ and subst_pos_pformula p pf= match pf with
   | ListPerm (e1, e2, _) -> ListPerm (e1, e2, p)
   | RelForm (id, el, _) -> RelForm (id, el, p)
   | VarPerm (t,ls,_) -> VarPerm (t,ls,p)
-  | Path (pf1, svl, _) -> Path (subst_pos_pformula p pf1, svl, p)
+  | PathCond (pf1, svl, _) -> PathCond (subst_pos_pformula p pf1, svl, p)
 
 and  subst_pos_bformula p (pf, a) =  (subst_pos_pformula p pf, a)
 
@@ -3192,7 +3192,7 @@ and b_apply_subs_x sst bf =
         LexVar { t_info with
 				  lex_exp = e_apply_subs_list sst t_info.lex_exp;
 					lex_tmp = e_apply_subs_list sst t_info.lex_tmp; }
-    | Path (pf1, svl, pos) -> Path (helper pf1, List.map (subs_one sst) svl, pos)
+    | PathCond (pf1, svl, pos) -> PathCond (helper pf1, List.map (subs_one sst) svl, pos)
   in
   let npf = helper pf in
   (* Slicing: Add the inferred linking variables into sl field *)
@@ -3327,7 +3327,7 @@ and b_apply_subs_w_locs_x sst bf =
         LexVar { t_info with
 	    lex_exp = e_apply_subs_list_w_locs sst t_info.lex_exp;
 	    lex_tmp = e_apply_subs_list_w_locs sst t_info.lex_tmp; } 
-    | Path (pf1, svl, pos) -> Path (helper pf1, List.map (fun sv -> fst (subs_one_w_locs sst sv)) svl, pos)
+    | PathCond (pf1, svl, pos) -> PathCond (helper pf1, List.map (fun sv -> fst (subs_one_w_locs sst sv)) svl, pos)
   in
   let npf = helper pf in
   (* Slicing: Add the inferred linking variables into sl field *)
@@ -3625,7 +3625,7 @@ and b_apply_par_term (sst : (spec_var * exp) list) bf =
           LexVar { t_info with 
 	      lex_exp = a_apply_par_term_list sst t_info.lex_exp;
 	      lex_tmp = a_apply_par_term_list sst t_info.lex_tmp; } 
-    | Path (pf1, svl, pos) -> Path (helper pf1, svl, pos)
+    | PathCond (pf1, svl, pos) -> PathCond (helper pf1, svl, pos)
   in
   let npf = helper pf in
   (npf,il)
@@ -3749,7 +3749,7 @@ and b_apply_one_term ((fr, t) : (spec_var * exp)) bf =
           LexVar { t_info with
 	      lex_exp = List.map (a_apply_one_term (fr, t)) t_info.lex_exp; 
 	      lex_tmp = List.map (a_apply_one_term (fr, t)) t_info.lex_tmp; } 
-    | Path (pf1, svl, pos) -> Path (helper pf1, List.map subst_sv svl, pos)
+    | PathCond (pf1, svl, pos) -> PathCond (helper pf1, List.map subst_sv svl, pos)
   in
   let npf = helper pf in
   (npf,il)
@@ -4975,7 +4975,7 @@ and b_apply_one_exp (fr, t) bf =
       LexVar { t_info with
 			  lex_exp = e_apply_one_list_exp (fr, t) t_info.lex_exp; 
 				lex_tmp = e_apply_one_list_exp (fr, t) t_info.lex_tmp; }
-  | Path (pf1, svl, pos) -> Path (helper pf1, List.map subst_sv svl, pos)
+  | PathCond (pf1, svl, pos) -> PathCond (helper pf1, List.map subst_sv svl, pos)
   in
   let npf = helper pf in
   (npf,il)
@@ -5821,7 +5821,7 @@ and b_form_simplify_x (b:b_formula) :b_formula =
     |  RelForm (v,exs,p) ->  
            let new_exs = List.map (fun e -> purge_mult (simp_mult e)) exs in
            RelForm (v,new_exs,p)
-    | Path (pf1, svl, pos) -> Path (helper pf1,svl, pos)
+    | PathCond (pf1, svl, pos) -> PathCond (helper pf1,svl, pos)
   in
   let npf = helper pf in (npf,il)
            
@@ -6128,8 +6128,8 @@ let foldr_b_formula (e:b_formula) (arg:'a) f f_args f_comb
                 (LexVar { t_info with 
 		    lex_exp = n_lex_exp; lex_tmp = n_lex_tmp;
 		}, f_comb rs)
-          | Path (pf1, svl, pos) -> let npf1, opts1 = helper3 pf1 in
-            (Path (npf1,svl,pos), opts1)
+          | PathCond (pf1, svl, pos) -> let npf1, opts1 = helper3 pf1 in
+            (PathCond (npf1,svl,pos), opts1)
         in
         let (npf, opt2) = helper3 pf in
 	((npf, nannot), f_comb [opt1; opt2])
@@ -6228,7 +6228,7 @@ let transform_b_formula f (e:b_formula) :b_formula =
 		  let nle = List.map (transform_exp f_exp) t_info.lex_exp in
 		  let nlt = List.map (transform_exp f_exp) t_info.lex_tmp in
 		  LexVar { t_info with lex_exp = nle; lex_tmp = nlt; }
-            | Path (pf1, svl, l) -> Path (helper pf1, svl, l)
+            | PathCond (pf1, svl, l) -> PathCond (helper pf1, svl, l)
           in
           let npf = helper pf in (npf,il)
 
@@ -6580,7 +6580,7 @@ let norm_bform_a (bf:b_formula) : b_formula =
               let nle = List.map norm_exp t_info.lex_exp in
               let nlt = List.map norm_exp t_info.lex_tmp in
               LexVar { t_info with lex_exp = nle; lex_tmp = nlt; }
-        | Path (pf1, svl, l) -> Path (helper pf1, svl, l)
+        | PathCond (pf1, svl, l) -> PathCond (helper pf1, svl, l)
     in
     let npf = helper pf in (npf, il)
 
@@ -7513,7 +7513,7 @@ let norm_bform_b (bf:b_formula) : b_formula =
     | XPure _ | BConst _ | BVar _ | EqMax _ 
     | EqMin _ |  BagSub _ | BagMin _ 
     | BagMax _ | ListAllN _ | ListPerm _ -> pf
-    | Path (pf1, svl, l) ->  Path (helper pf1, svl, l)
+    | PathCond (pf1, svl, l) ->  PathCond (helper pf1, svl, l)
   in
   let npf = helper pf in (npf, il)
 
@@ -8059,7 +8059,7 @@ let update_eq_lhs_sv_formula_x p0 lhs_sv path_vars=
           match orhs with
             | None -> false,p
             | Some (pf, l1) ->
-                  let path_pf = Path (pf, path_svl, l1) in
+                  let path_pf = PathCond (pf, path_svl, l1) in
                   true, BForm((path_pf,il),l, llbl)
         end
       | And (p1,p2,l) ->
@@ -8096,7 +8096,7 @@ let update_eq_lhs_sv_formula p lhs_sv path_vars=
 
 let extract_path_deps_pformula pf il l0 llbl=
   match pf with
-    | Path (pf1, svl, l) ->
+    | PathCond (pf1, svl, l) ->
           let np =  BForm ((pf1,il),l0, llbl) in
           (np, [(np,svl)])
     | _ -> let np =  BForm ((pf,il),l0, llbl) in
@@ -10618,7 +10618,7 @@ let level_vars_b_formula bf =
     | VarPerm _
     | XPure _
     | BagMax _ -> []
-    | Path (pf1, _,_) -> helper pf1
+    | PathCond (pf1, _,_) -> helper pf1
   in
   helper pf
 
@@ -11143,7 +11143,7 @@ and contain_level_b_formula bf =
     | VarPerm _
     | XPure _
     | BagMax _ -> false
-    | Path (pf1, _, _) -> helper pf1
+    | PathCond (pf1, _, _) -> helper pf1
   in
   helper pf
 
@@ -11262,3 +11262,26 @@ let find_closure_pure_formula (v:spec_var) (f:formula) : spec_var list =
       !print_formula
       !print_svl
       find_closure_pure_formula_x v f
+
+(* below is an attempt to generalize pathcond *)
+(* but it may lead to mutual recursive modules? *)
+
+type ren = (spec_var * spec_var) list
+
+module type ExprType = sig
+  type t
+  val and_op : t -> t -> t
+  val rename : ren -> t -> t
+  val string_of : t -> string
+end;;
+
+module Path = functor (Guard:ExprType) -> functor (Expr: ExprType) ->
+   struct
+     type t = (Guard.t * Expr.t) 
+     let add_guard (x:Guard.t) ((g,e):t) =
+       (Guard.and_op x g, e)
+     let drop_guard ((g,e):t) = e
+     let rename (r:ren) ((g,e):t) = (Guard.rename r g, Expr.rename r e)
+     let string_of ((g,e):t) 
+           = "PathCond("^(Guard.string_of g)^","^(Expr.string_of e)^")"
+end;;
