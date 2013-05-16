@@ -64,28 +64,17 @@ Printing very indented:
                                                                    flted_0_115,
                                                                    flted_0_116: 
 
-# graph2.txt: DONE
+## ann-bugs1a.slk
 
-Why do two equivalent expression below give different result!
+(i) why are ante0,ante1 false for
+  x::node<Anon_11@v>@M[Orig]&0<=v & v=@A & Anon_11=Anon_12&
+  {FLOW,(19,20)=__norm}[]
 
-checkentail
-x4::ls<x5>
-* x3::node<x4>
-* x4::ls<x7>
-* x4::node<q>
-* q::ls<x6> & x4!=x6
-& x5!=x7
-& x1=x2 & x2=x3
-|- false.
+!!!ann-bugs1a.slk:15: 35: ante0 : : false
+!!!ann-bugs1a.slk:15: 35: ante1 : : false
 
+(ii) need to carry v<=w_22 into the next conseq
 
-checkentail
-x3::node<x4>
-* x4::ls<x5>
-* x4::ls<x7>
-* x4::node<q>
-* q::ls<x6> & x4!=x6
-& x5!=x7
-& x1=x2 & x2=x3
-|- false.
-
+!!!ann-bugs1a.slk:15: 35: heap_entail_empty_heap: rhs:
+ 0<=w_22 & w_22=@L
+!!!ann-bugs1a.slk:15: 35: rhs_p : : 0<=w_22 & w_22=@L
