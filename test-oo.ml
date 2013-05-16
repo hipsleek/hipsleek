@@ -95,7 +95,7 @@ let process_source_full source =
 	  let t1 = ptime1.Unix.tms_utime +. ptime1.Unix.tms_cutime in
 	  let _ = print_string ("Translating to core language...") in
 	  (* let cprog = Astsimp.trans_prog prog in *)
-		let cprog = Typeinfer.trans_prog prog in
+		let cprog = Astsimp.trans_prog prog in
 	  let pstr2 = Cprinter.string_of_program cprog in
 		print_string ("Core program:\n\n" ^ pstr2 ^ "\n")		
 (*

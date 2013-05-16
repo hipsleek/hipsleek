@@ -254,7 +254,7 @@ let process_source_full source =
        let t1 = ptime1.Unix.tms_utime +. ptime1.Unix.tms_cutime in *)
     let _ = Gen.Profiling.push_time "Translating to Core" in
 (*    let _ = print_string ("Translating to core language...\n"); flush stdout in *)
-    let cprog = Typeinfer.trans_prog intermediate_prog (*iprims*) in
+    let cprog = Astsimp.trans_prog intermediate_prog (*iprims*) in
 		(* let cprog = Astsimp.trans_prog intermediate_prog (*iprims*) in *)
     (* let _ = print_string ("Translating to core language...\n"); flush stdout in *)
     (*let cprog = Astsimp.trans_prog intermediate_prog (*iprims*) in*)
@@ -455,7 +455,7 @@ let process_source_full_after_parser source (prog, prims_list) =
         ()
   in
   (**************************************)
- let cprog = Typeinfer.trans_prog intermediate_prog (*iprims*) in
+ let cprog = Astsimp.trans_prog intermediate_prog (*iprims*) in
  	(* let cprog = Astsimp.trans_prog intermediate_prog (*iprims*) in *)
    
 
