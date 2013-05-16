@@ -1,0 +1,5 @@
+data node { int val ; node next }.
+
+pred ll<> == self=null
+	or self::node<_, q> * q::ll<>
+	inv true.
