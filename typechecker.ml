@@ -17,7 +17,7 @@ module PTracer = Prooftracer
 module I = Iast
 module LP = Lemproving
 module Inf = Infer
-(* module AS = Astsimp *)
+module AS = Astsimp
 module CEQ = Checkeq
 module M = Lexer.Make(Token.Token)
 module H = Hashtbl
@@ -2233,7 +2233,7 @@ and check_post_x_x (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_
           begin
             Debug.print_info ("("^(Cprinter.string_of_label_list_partial_context rs)^") ")
                 ("Postcondition cannot be derived from context\n") pos;
-	    			Debug.print_info ("(Cause of PostCond Failure)")
+	    Debug.print_info ("(Cause of PostCond Failure)")
                 (Cprinter.string_of_failure_list_partial_context rs) pos;
             Err.report_error {
                 Err.error_loc = pos;
@@ -2665,8 +2665,7 @@ and check_proc (prog : prog_decl) (proc : proc_decl) cout_option (mutual_grp : p
 
                     Debug.trace_hprint (add_str "SPECS (before add_pre)" pr_spec) new_spec no_pos;
                     Debug.tinfo_hprint (add_str "NEW SPECS(B4)" pr_spec) new_spec no_pos;
-                    (* let new_spec = AS.add_pre prog new_spec in *)
-										let new_spec = Typeinfer.add_pre prog new_spec in
+                    let new_spec = AS.add_pre prog new_spec in
                     Debug.tinfo_hprint (add_str "NEW SPECS(AF)" pr_spec) new_spec no_pos;
 
                     if (pre_ctr # get> 0) 
@@ -3031,8 +3030,7 @@ let check_prog (prog : prog_decl) =
   let proc_prim, proc_main = List.partition Cast.is_primitive_proc l_proc in
   let sorted_proc_main = Cast.sort_proc_decls proc_main in
   let _ = Debug.ninfo_hprint (add_str "sorted_proc_main"
-      (* (pr_list Astsimp.pr_proc_call_order) *)
-			(pr_list Typeinfer.pr_proc_call_order)
+      (pr_list Astsimp.pr_proc_call_order)
   ) sorted_proc_main no_pos in
   (* this computes a list of scc mutual-recursive methods for processing *)
   let proc_scc = List.fold_left (fun a x -> match a with
@@ -3043,8 +3041,7 @@ let check_prog (prog : prog_decl) =
           else [x]::a
   ) [] sorted_proc_main in
   let proc_scc = List.rev proc_scc in
-  (* let () = Debug.tinfo_hprint (add_str "SCC" (pr_list (pr_list (Astsimp.pr_proc_call_order)))) proc_scc no_pos in *)
-	let () = Debug.tinfo_hprint (add_str "SCC" (pr_list (pr_list (Typeinfer.pr_proc_call_order)))) proc_scc no_pos in
+  let () = Debug.tinfo_hprint (add_str "SCC" (pr_list (pr_list (Astsimp.pr_proc_call_order)))) proc_scc no_pos in
   (* flag to determine if can skip phase inference step *)
   let skip_pre_phase = (!Globals.dis_phase_num || !Globals.dis_term_chk) in
   let prog = List.fold_left (fun prog scc -> 
