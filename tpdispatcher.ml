@@ -495,16 +495,16 @@ let name_of_tp tp = match tp with
   | LOG -> "LOG"
 
 let log_file_of_tp tp = match tp with
-  | OmegaCalc -> "allinput.oc"
-  | Cvc3 -> "allinput.cvc3"
-  | Isabelle -> "allinput.thy"
-  | Mona -> "allinput.mona"
-  | Coq -> "allinput.v"
-  | Redlog -> "allinput.rl"
-  | Z3 -> "allinput.z3"
+  | OmegaCalc -> Omega.log_file_name
+  | Cvc3 -> Cvc3.log_file_name
+  | Isabelle -> Isabelle.log_file_name
+  | Mona -> Mona.log_file_name
+  | Coq -> Coq.log_file_name
+  | Redlog -> Redlog.log_file_name
+  | Z3 -> Smtsolver.log_file_name
   | AUTO -> "allinput.auto"
   | OZ -> "allinput.oz"
-  | SPASS -> "allinput.spass"
+  | SPASS -> Spass.log_file_name
   | _ -> ""
 
 let get_current_tp_name () = name_of_tp !tp
@@ -2802,3 +2802,28 @@ let check_diff xp0 xp1 =
 let check_diff xp0 xp1 =
   let pr1 = Cprinter.string_of_mix_formula in
   Debug.no_2 "check_diff" pr1 pr1 string_of_bool check_diff xp0 xp1
+
+(* Clean up all log files that are not needed*)
+let cleanup_logs () =
+  (*List of logs to remove*)
+  let logs = ref [] in
+  if not (!Minisat.log_all_flag) then logs := Minisat.log_file_name::!logs;
+  if not (!Mona.log_all_flag) then logs := Mona.log_file_name::!logs;
+  if not (!Omega.log_all_flag) then logs := Omega.log_file_name::!logs;
+  if not (!Redlog.is_log_all) then logs := Redlog.log_file_name::!logs;
+  if not (!Setmona.log_all_flag) then logs := Setmona.log_file_name::!logs;
+  if not (!Spass.log_all_flag) then logs := Spass.log_file_name:: !logs;
+  if not (!Isabelle.log_all_flag) then logs := Isabelle.log_file_name::!logs;
+  if not (!Coq.log_all_flag) then logs := Coq.log_file_name:: !logs;
+  if not (!Smtsolver.log_all_flag) then logs := Smtsolver.log_file_name::!logs;
+  if not (!Cvc3.log_cvc3_formula) then logs := Cvc3.log_file_name::!logs;
+  List.map (fun log ->
+      let path_to_log = Globals.logs_name ^ "/" ^ log in
+      if (Sys.file_exists path_to_log) then Sys.remove path_to_log else ()
+  ) !logs;
+  try
+      (*attempt to delete the log file. If it is not empty
+      or due to other reasons, just leave it there*)
+      Unix.rmdir Globals.logs_name
+  with _ -> ()
+(* END of cleanup*)

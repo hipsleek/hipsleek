@@ -19,7 +19,8 @@ let test_number = ref 0
 let last_test_number = ref 0
 let log_all_flag = ref false
 let omega_restart_interval = ref (-1)
-let log_all = open_log_out ("allinput.oc" (* ^ (string_of_int (Unix.getpid ())) *) )
+let log_file_name = "allinput.oc"
+let log_all = open_log_out (log_file_name (* ^ (string_of_int (Unix.getpid ())) *) )
 
 (* currently not used --should be removed*)
 let infilename = ref (!tmp_files_path ^ "input.oc." ^ (string_of_int (Unix.getpid ())))

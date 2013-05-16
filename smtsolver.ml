@@ -553,7 +553,8 @@ let test_number = ref 0
 let last_test_number = ref 0
 let log_all_flag = ref false
 let z3_restart_interval = ref (-1)
-let log_all = open_log_out ("allinput.z3")
+let log_file_name = "allinput.z3"
+let log_all = open_log_out (log_file_name)
 
 let path_to_z3 = "z3" (*"z3"*)
 let smtsolver_name = ref ("z3": string)

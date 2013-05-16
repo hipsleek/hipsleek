@@ -112,7 +112,8 @@ end
 module Pipe = struct
 	let pipe_prove_in = ref "" (**named pipe for reading requests*)
 	let pipe_prove_out = ref "" (**named pipe for sending back results*)
-	let open_in = open_in_gen [Open_binary; Open_rdonly] 0o600 
+	let open_in = open_in_gen [Open_binary; Open_rdonly] 0o600
+    (* Overwrite: open file for writing only, empty the file if it already exists*)
 	let open_out = open_out_gen [Open_binary; Open_wronly; Open_trunc] 0o600
 	
 	(** [make_pipes ()] creates a pair of named pipes for two processes on the same machine to communicate. 

@@ -11,6 +11,7 @@ let cvc3_log = ref stdout
 let infilename = !tmp_files_path ^ "input.cvc3." ^ (string_of_int (Unix.getpid ()))
 let resultfilename = !tmp_files_path ^ "result.txt." ^ (string_of_int (Unix.getpid()))
 let cvc3_command = "cvc3 " ^ infilename ^ " > " ^ resultfilename
+let log_file_name = "allinput.cvc3"
 
 let print_pure = ref (fun (c:CP.formula)-> " printing not initialized")
 let test_number = ref 0
@@ -29,7 +30,7 @@ let test_number = ref 0
 
 let set_log_file () :  unit=
   log_cvc3_formula := true;
-  cvc3_log := open_log_out "allinput.cvc3"
+  cvc3_log := open_log_out log_file_name
 
 let run_cvc3 (input : string) : unit =
   begin

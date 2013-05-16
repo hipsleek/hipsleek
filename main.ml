@@ -600,7 +600,7 @@ let pre_main () =
     let _ = Printexc.record_backtrace !Globals.trace_failure in
     if List.length (!Globals.source_files) = 0 then
       print_string "Source file(s) not specified\n";
-		List.map ( fun x-> let _= print_endline ("SOURCE: "^x) in process_source_full_parse_only x) !Globals.source_files
+	List.map ( fun x-> let _= print_endline ("SOURCE: "^x) in process_source_full_parse_only x) !Globals.source_files
 
 let loop_cmd parsed_content = 
   let _ = List.map2 (fun s t -> process_source_full_after_parser s t) !Globals.source_files parsed_content in
@@ -626,7 +626,8 @@ let old_main =
     print_string ("\nError(s) detected at main \n");
   end
 
-let _ = 
+let _ =
+  begin
   if not(!Globals.do_infer_inc) then old_main
   else
     let res = pre_main () in
@@ -652,7 +653,10 @@ let _ =
           print_string ("\nException occurred: " ^ (Printexc.to_string e));
           print_string ("\nError(s) detected at main \n");
         end
-    done
+    done;
+  end;
+  (*after all, clean up temporarily log files*)
+ Tpdispatcher.cleanup_logs ();
 
 
   

@@ -21,7 +21,8 @@ let pasf = ref false
 
 (* logging *)
 let is_log_all = ref false
-let log_file = open_log_out "allinput.rl"
+let log_file_name = "allinput.rl"
+let log_file = open_log_out log_file_name
 
 (* process management *)
 let is_reduce_running = ref false

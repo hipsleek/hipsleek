@@ -289,6 +289,7 @@ let sleek_proof_log_Z3 src_files =
 			end
 		
 let _ =
+  begin (*for cleanup logs*)
   wrap_exists_implicit_explicit := false ;
   process_cmd_line ();
   Scriptarguments.check_option_consistency ();
@@ -343,3 +344,6 @@ let _ =
         ( Gen.Profiling.print_info (); print_string (Gen.Profiling.string_of_counters ())) in
     print_string "\n"
   )
+ end; (*for cleanup logs*)
+ (*after all, clean up temporarily log files*)
+ Tpdispatcher.cleanup_logs ()

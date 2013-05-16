@@ -15,7 +15,8 @@ type constant_flow = string
 exception Illegal_Prover_Format of string
 
 (*Initialize the generator with a random seed
-  to ensure different random numbers in different runs.
+  to ensure different random numbers in different runs
+  (e.g. combination of current time and process ID).
   Consider using it if you need unique naming for each run.
 *)
 let _ = Random.self_init ()

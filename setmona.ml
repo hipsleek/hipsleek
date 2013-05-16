@@ -19,8 +19,9 @@ let infilename = "input.mona." ^ (string_of_int (Unix.getpid ()))
 let resultfilename = "result.mona." ^ (string_of_int (Unix.getpid()))
 *)
 
-let log_all_flag = ref true
-let log_all = open_log_out ("allinput.set" (* ^ (string_of_int (Unix.getpid ())) *) )
+let log_all_flag = ref false
+let log_file_name = "allinput.set"
+let log_all = open_log_out (log_file_name (* ^ (string_of_int (Unix.getpid ())) *) )
 
 (*************************************************************)
 (*************************************************************)

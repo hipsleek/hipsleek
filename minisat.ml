@@ -18,7 +18,8 @@ let log_all_flag = ref false
 let is_minisat_running = ref false
 let in_timeout = ref 15.0 (* default timeout is 15 seconds *)
 let minisat_call_count: int ref = ref 0
-let log_file = open_log_out ("allinput.minisat")
+let log_file_name = "allinput.minisat"
+let log_file = open_log_out log_file_name
 let minisat_input_mode = "file"    (* valid value is: "file" or "stdin" *) 
 
 (*minisat*)
