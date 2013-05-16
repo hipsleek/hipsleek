@@ -22,7 +22,6 @@ x4::ls<x5>
 |- false.
 
 
-/*
 checkentail
 x3::node<x4>
 * x4::ls<x5>
@@ -32,7 +31,7 @@ x3::node<x4>
 & x5!=x7
 & x1=x2 & x2=x3
 |- false.
-*/
+
 
 /*
 

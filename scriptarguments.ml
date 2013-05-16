@@ -331,7 +331,6 @@ let common_arguments = [
 
   (* Slicing *)
   ("--eps", Arg.Set Globals.en_slc_ps, "Enable slicing with predicate specialization");
-  ("--dpall", Arg.Clear Globals.no_prune_all, "Disable specialization all the way");  
   ("--overeps", Arg.Set Globals.override_slc_ps, "Override --eps, for run-fast-tests testing of modular examples");
   ("--dis-ps", Arg.Set Globals.dis_ps, "Disable predicate specialization");
   ("--dis-ann", Arg.Set Globals.dis_slc_ann, "Disable aggressive slicing with annotation scheme (not default)");
@@ -454,6 +453,5 @@ let check_option_consistency () =
   (*   Gen.Basic.report_error Globals.no_pos "immutability and permission options cannot be turned on at the same time" *)
   (* end *)
   ;; (*Clean warning*)
-  (* Astsimp.inter_hoa := !inter_hoa;; *)
-	Typeinfer.inter_hoa := !inter_hoa;;
+  Astsimp.inter_hoa := !inter_hoa;;
 
