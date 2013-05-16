@@ -5,6 +5,7 @@ open Lexing
 open Gen
 module H = Hashtbl
 module AS = Astsimp
+module TI = Typeinfer
 
 (******************************************************************************)
 
@@ -29,8 +30,8 @@ let get_var var tlist =
   if is_substr "PRI" var 
   then 
     let var = String.sub var 3 (String.length var - 3) in
-    AS.get_spec_var_ident tlist var Primed
-  else AS.get_spec_var_ident tlist var Unprimed
+    TI.get_spec_var_ident tlist var Primed
+  else TI.get_spec_var_ident tlist var Unprimed
 
 let add_prefix var prefix = match var with
   | SpecVar (t,id,p) -> SpecVar (t,prefix ^ id,p)

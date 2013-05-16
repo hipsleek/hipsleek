@@ -3,6 +3,7 @@ open Cpure
 open Globals
 open Lexing
 open Gen
+module TI = Typeinfer
 
 module H = Hashtbl
 (* module AS = Astsimp *)
@@ -24,8 +25,8 @@ let exp = Gram.Entry.mk "exp";;
 let specvar = Gram.Entry.mk "specvar";;
 
 let get_var var tl = if is_substr "PRI" var 
-  then Astsimp.get_spec_var_ident tl (String.sub var 3 (String.length var - 3)) Primed
-  else Astsimp.get_spec_var_ident tl var Unprimed
+  then TI.get_spec_var_ident tl (String.sub var 3 (String.length var - 3)) Primed
+  else TI.get_spec_var_ident tl var Unprimed
 
 (*let change_name var name = match var with*)
 (*  | SpecVar (t,id,p) -> SpecVar (t,name ^ id,p)*)

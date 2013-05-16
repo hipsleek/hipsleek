@@ -24,6 +24,7 @@ module DD = Debug
 module XF = Xmlfront
 module NF = Nativefront
 module CEQ = Checkeq
+module TI = Typeinfer
 
 let sleek_proof_counter = new Gen.counter 0
 
@@ -399,9 +400,9 @@ let perform_second_parsing_stage () =
 	let cddefs = List.map (AS.trans_data iprog) iprog.I.prog_data_decls in
 		!cprog.C.prog_data_decls <- cddefs
 	
-let rec meta_to_struc_formula (mf0 : meta_formula) quant fv_idents (rel0: rel option) (tlist:AS.spec_var_type_list) 
-	: (AS.spec_var_type_list*CF.struc_formula) = 
-  let rec helper (mf0 : meta_formula) quant fv_idents tl : (AS.spec_var_type_list*CF.struc_formula) = 
+let rec meta_to_struc_formula (mf0 : meta_formula) quant fv_idents (rel0: rel option) (tlist:TI.spec_var_type_list) 
+	: (TI.spec_var_type_list*CF.struc_formula) = 
+  let rec helper (mf0 : meta_formula) quant fv_idents tl : (TI.spec_var_type_list*CF.struc_formula) = 
     match mf0 with
     | MetaFormCF mf -> 
         (tl,(Cformula.formula_to_struc_formula mf))
@@ -428,7 +429,7 @@ let rec meta_to_struc_formula (mf0 : meta_formula) quant fv_idents (rel0: rel op
         begin
         let (n_tl,cf1) = helper mf1 quant fv_idents tl in
         let (n_tl,cf2) = helper mf2 quant fv_idents n_tl in
-        let svs = List.map (fun v -> AS.get_spec_var_type_list v n_tl no_pos) vs in
+        let svs = List.map (fun v -> TI.get_spec_var_type_list v n_tl no_pos) vs in
         let res = Solver.compose_struc_formula cf1 cf2 svs no_pos in
         (n_tl,res)
       end
@@ -447,13 +448,13 @@ let rec meta_to_struc_formula (mf0 : meta_formula) quant fv_idents (rel0: rel op
   in helper mf0 quant fv_idents tlist 
 
 
-let meta_to_struc_formula (mf0 : meta_formula) quant fv_idents (rel0: rel option) (tlist:AS.spec_var_type_list) 
-	: (AS.spec_var_type_list*CF.struc_formula) 
+let meta_to_struc_formula (mf0 : meta_formula) quant fv_idents (rel0: rel option) (tlist:TI.spec_var_type_list) 
+	: (TI.spec_var_type_list*CF.struc_formula) 
 	= Debug.no_4 "meta_to_struc_formula"
   string_of_meta_formula
   string_of_bool
   string_of_ident_list
-  AS.string_of_tlist
+  TI.string_of_tlist
   Cprinter.string_of_struc_formula
   (fun _ _ _ _  ->  meta_to_struc_formula mf0 quant fv_idents rel0 tlist )mf0 quant fv_idents tlist
 
@@ -464,8 +465,8 @@ AS.trans_formula iprog quant
 IN THE FUNCTION GIVE AN EXCEPTION
 TODO Check the 3 functions above!!!
 *)
-let rec meta_to_formula (mf0 : meta_formula) quant fv_idents (tlist:AS.spec_var_type_list) 
-  : (AS.spec_var_type_list*CF.formula) = 
+let rec meta_to_formula (mf0 : meta_formula) quant fv_idents (tlist:TI.spec_var_type_list) 
+  : (TI.spec_var_type_list*CF.formula) = 
 	match mf0 with
   | MetaFormCF mf -> (tlist,mf)
   | MetaFormLCF mf ->	(tlist,(List.hd mf))
@@ -473,7 +474,7 @@ let rec meta_to_formula (mf0 : meta_formula) quant fv_idents (tlist:AS.spec_var_
       let h = List.map (fun c-> (c,Unprimed)) fv_idents in
       (* let _ = print_string (" before norm: " ^(Iprinter.string_of_formula mf)^"\n") in *)
       let wf = AS.case_normalize_formula iprog h mf None in
-      let n_tl = AS.gather_type_info_formula iprog wf tlist false in
+      let n_tl = TI.gather_type_info_formula iprog wf tlist false in
       let (n_tl,r) = AS.trans_formula iprog quant fv_idents false wf n_tl false in
       (* let _ = print_string (" before sf: " ^(Iprinter.string_of_formula wf)^"\n") in *)
       (* let _ = print_string (" after sf: " ^(Cprinter.string_of_formula r)^"\n") in *)
@@ -491,20 +492,20 @@ let rec meta_to_formula (mf0 : meta_formula) quant fv_idents (tlist:AS.spec_var_
   | MetaCompose (vs, mf1, mf2) -> begin
       let (n_tl,cf1) = meta_to_formula mf1 quant fv_idents tlist in
       let (n_tl,cf2) = meta_to_formula mf2 quant fv_idents n_tl in
-      let svs = List.map (fun v -> AS.get_spec_var_type_list v n_tl no_pos) vs in
+      let svs = List.map (fun v -> TI.get_spec_var_type_list v n_tl no_pos) vs in
       let res = Cformula.compose_formula cf1 cf2 svs Cformula.Flow_combine no_pos in
 			(n_tl,res)
     end
   | MetaEForm _ | MetaEFormCF _ -> report_error no_pos ("cannot have structured formula in antecedent")
 
-let meta_to_formula (mf0 : meta_formula) quant fv_idents (tlist:AS.spec_var_type_list) : (AS.spec_var_type_list*CF.formula) = 
+let meta_to_formula (mf0 : meta_formula) quant fv_idents (tlist:TI.spec_var_type_list) : (TI.spec_var_type_list*CF.formula) = 
   let pr_meta = string_of_meta_formula in
   let pr_f = Cprinter.string_of_formula in
   Debug.no_1 "Sleekengine.meta_to_formual" pr_meta pr_f
              (fun mf -> meta_to_formula mf quant fv_idents tlist) mf0
 
-let rec meta_to_formula_not_rename (mf0 : meta_formula) quant fv_idents (tlist:AS.spec_var_type_list)
-	: (AS.spec_var_type_list*CF.formula) = 
+let rec meta_to_formula_not_rename (mf0 : meta_formula) quant fv_idents (tlist:TI.spec_var_type_list)
+	: (TI.spec_var_type_list*CF.formula) = 
 	match mf0 with
   | MetaFormCF mf -> (tlist,mf)
   | MetaFormLCF mf -> (tlist,(List.hd mf))
@@ -512,7 +513,7 @@ let rec meta_to_formula_not_rename (mf0 : meta_formula) quant fv_idents (tlist:A
       let h = List.map (fun c-> (c,Unprimed)) fv_idents in
       let wf = AS.case_normalize_formula_not_rename iprog h mf in
      
-      let n_tl = AS.gather_type_info_formula iprog wf tlist false in
+      let n_tl = TI.gather_type_info_formula iprog wf tlist false in
       (*let _ = print_endline ("WF: " ^ Iprinter.string_of_formula wf ) in *)
       let (n_tl,r) = AS.trans_formula iprog quant fv_idents false wf n_tl false in
       (* let _ = print_string (" before sf: " ^(Iprinter.string_of_formula wf)^"\n") in *)
@@ -531,7 +532,7 @@ let rec meta_to_formula_not_rename (mf0 : meta_formula) quant fv_idents (tlist:A
   | MetaCompose (vs, mf1, mf2) -> begin
       let (n_tl,cf1) = meta_to_formula_not_rename mf1 quant fv_idents tlist in
       let (n_tl,cf2) = meta_to_formula_not_rename mf2 quant fv_idents n_tl in
-      let svs = List.map (fun v -> AS.get_spec_var_type_list v n_tl no_pos) vs in
+      let svs = List.map (fun v -> TI.get_spec_var_type_list v n_tl no_pos) vs in
       let res = Cformula.compose_formula cf1 cf2 svs Cformula.Flow_combine no_pos in
 			(n_tl,res)
     end
@@ -555,8 +556,8 @@ let run_infer_one_pass (ivars: ident list) (iante0 : meta_formula) (iconseq0 : m
     else ante
   in
   (* let ante = AS.add_param_ann_constraints_formula ante in *)
-  let vk = AS.fresh_proc_var_kind n_tl Float in
-  let n_tl = AS.type_list_add  (full_perm_name ()) vk n_tl in
+  let vk = TI.fresh_proc_var_kind n_tl Float in
+  let n_tl = TI.type_list_add  (full_perm_name ()) vk n_tl in
 (*  let _ = flush stdout in*)
   (* let csq_extra = meta_to_formula iconseq0 false [] stab in *)
   (* let conseq_fvs = CF.fv csq_extra in *)
@@ -592,7 +593,7 @@ let run_infer_one_pass (ivars: ident list) (iante0 : meta_formula) (iconseq0 : m
   (* List of vars appearing in original formula *)
   let orig_vars = CF.fv ante @ CF.struc_fv conseq in
   (* List of vars needed for abduction process *)
-  let vars = List.map (fun v -> AS.get_spec_var_type_list_infer v orig_vars no_pos) ivars in
+  let vars = List.map (fun v -> TI.get_spec_var_type_list_infer v orig_vars no_pos) ivars in
   (* Init context with infer_vars and orig_vars *)
   let (vrel,iv) = List.partition (fun v -> is_RelT (CP.type_of_spec_var v)(*  ||  *)
               (* CP.type_of_spec_var v == FuncT *)) vars in
