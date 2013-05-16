@@ -5,12 +5,12 @@ open Lexing
 open Gen
 
 module H = Hashtbl
-(* module AS = Astsimp *)
+module AS = Astsimp
 
 let loc = no_pos;;
 
-(* let stab = ref (H.create 103) *)
-let tlist=[]
+let stab = ref (H.create 103)
+
 let expression = Gram.Entry.mk "expression";;
 
 let or_formula = Gram.Entry.mk "or_formula";;
@@ -23,9 +23,9 @@ let exp = Gram.Entry.mk "exp";;
 
 let specvar = Gram.Entry.mk "specvar";;
 
-let get_var var tl = if is_substr "PRI" var 
-  then Typeinfer.get_spec_var_ident tl (String.sub var 3 (String.length var - 3)) Primed
-  else Typeinfer.get_spec_var_ident tl var Unprimed
+let get_var var stab = if is_substr "PRI" var 
+  then AS.get_spec_var_ident stab (String.sub var 3 (String.length var - 3)) Primed
+  else AS.get_spec_var_ident stab var Unprimed
 
 (*let change_name var name = match var with*)
 (*  | SpecVar (t,id,p) -> SpecVar (t,name ^ id,p)*)
@@ -137,8 +137,8 @@ GLOBAL: expression or_formula formula pformula exp specvar;
 		
   specvar:
   [ "specvar" NONA
-    [ x = UIDENT -> get_var x tlist
-    | x = LIDENT -> get_var x tlist
+    [ x = UIDENT -> get_var x !stab
+    | x = LIDENT -> get_var x !stab
     ]
   ]; 
 

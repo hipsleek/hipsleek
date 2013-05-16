@@ -1368,7 +1368,7 @@ let rec typ_of_exp (e: exp) : typ =
   (* bag expressions *)
   | Bag (ex_list, _)
   | BagUnion (ex_list, _)
-  | BagIntersect (ex_list, _) -> let ty_list = List.map typ_of_exp ex_list in 																	
+  | BagIntersect (ex_list, _) -> let ty_list = List.map typ_of_exp ex_list in 
                                  let ty = List.fold_left merge_types UNK ty_list in
                                  Globals.BagT ty
   | BagDiff (ex1, ex2, _)     -> let ty1 = typ_of_exp ex1 in
