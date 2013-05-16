@@ -2115,12 +2115,21 @@ let infer_collect_hp_rel_x prog (es:entail_state) rhs rhs_rest (rhs_h_matched_se
           let well_defined_svl = List.concat (List.map (fun (hp,args,_) -> hp::args) defined_hps) in
           let root_vars_ls2 = SAU.find_close root_vars_ls1 leqs in
           let new_es_formula = SAU.drop_data_view_hrel_nodes_from_root prog new_es_formula hds hvs leqs root_vars_ls2 well_defined_svl in
-          (* DD.info_pprint ("  before: " ^ (Cprinter.string_of_formula new_es_formula)) pos; *)
+          (* DD.info_pprint ("  after: " ^ (Cprinter.string_of_formula new_es_formula)) pos; *)
           (*CF.drop_hrel_f new_es_formula lhrs in *)
           (*add mismatched heap into the entail states if @L*)
           let check_consumed_node h f=
             match h with
-              | DataNode hd -> if not(CF.isLend (hd.CF.h_formula_data_imm)) then (f,h) else
+              | DataNode hd -> 
+                    if (!Globals.allow_field_ann) then
+                      (* let n_param_imm = List.map (fun _ -> CF.ConstAnn Mutable) hd.CF.h_formula_data_param_imm in *)
+                      (* let new_h = DataNode {hd with *)
+                      (*     CF.h_formula_data_imm = (CF.ConstAnn(Mutable)); *)
+                      (*     CF.h_formula_data_param_imm = n_param_imm} in *)
+	              (* let f = Context.imm_f_split_lhs_node f new_h h in *)
+                      (f,h)
+                    else 
+                    if  not(CF.isLend (hd.CF.h_formula_data_imm)) then (f,h) else
                   (* let _ = DD.info_pprint ("  hd: " ^ (Cprinter.string_of_h_formula (h ))) pos in *)
                   (* let ss = List.combine hd.CF.h_formula_data_arguments hd.CF.h_formula_data_param_imm in *)
                   (* let n_param_imm = List.map (fun (sv,imm) -> if CP.is_node_typ sv then CF.ConstAnn Mutable else imm) ss in *)

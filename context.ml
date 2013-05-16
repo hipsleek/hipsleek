@@ -463,13 +463,15 @@ and update_ann_x (f : h_formula) (pimm1 : ann list) (pimm : ann list) : h_formul
   updated_f
 
 
-and imm_split_lhs_node estate l_node r_node = match l_node, r_node with
+and imm_split_lhs_node estate l_node r_node = {estate with es_formula = imm_f_split_lhs_node estate.es_formula l_node r_node}
+
+and imm_f_split_lhs_node f l_node r_node = match l_node, r_node with
 	| DataNode dl, DataNode dr ->
 		if (!Globals.allow_field_ann) then 
 		 let n_f = update_ann l_node dl.h_formula_data_param_imm dr.h_formula_data_param_imm in
-		 {estate with es_formula = mkStar (formula_of_heap n_f no_pos) estate.es_formula Flow_combine no_pos}
-        else estate
-	| _ -> estate 
+		 mkStar (formula_of_heap n_f no_pos) f Flow_combine no_pos
+        else f
+	| _ -> f 
   
 and spatial_ctx_extract_x prog (f0 : h_formula) (aset : CP.spec_var list) (imm : ann) (pimm : ann list) rhs_node rhs_rest : match_res list  =
   let rec helper f = match f with

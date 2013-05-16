@@ -8,7 +8,6 @@ data node{
 HeapPred H1(node a, node b).
 HeapPred H2(node a, node b).
 
-
 infer [H1] H1(c,p) |- c::node<x0@A,x1@A,x2@L>@M.
 print residue.
 
