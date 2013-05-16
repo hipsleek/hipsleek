@@ -51,9 +51,9 @@ node copy(node x)
     return null;
 }
 
-void free(node x)
+void free(ref node x)
   requires x::node<_,_>
-  ensures x=null;
+  ensures x'=null;
 
 /* Delete the i_th node in a singly linked list */
 /* Similar to zip example, 
@@ -67,9 +67,9 @@ void del_index(node x, int i)
 {
   if (i == 1)
   {
-/*    node tmp = x.next;*/
+    node tmp = x.next;
     x.next = x.next.next;
-/*    free(tmp);*/
+    free(tmp);
   }
   else
   {
@@ -90,7 +90,7 @@ node del_val(node x, int a)
     if (x.val == a)
     {
       node tmp = x.next;
-/*      free(x);*/
+      free(x);
       return tmp;
     }
     else
