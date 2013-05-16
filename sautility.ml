@@ -1807,6 +1807,12 @@ let is_trivial f (hp,args)=
   let b1 = List.exists (fun hpargs1 -> check_hp_arg_eq (hp,args) hpargs1) hpargs in
   b1||(is_empty_f f)
 
+let is_inconsistent_heap f =
+  let ( hf,mix_f,_,_,_) = CF.split_components f in
+  let eqNulls = CP.remove_dups_svl ( MCP.get_null_ptrs mix_f) in
+  let ptrs = CF. get_ptrs hf in
+  if CP.intersect_svl eqNulls ptrs <> [] then true else false
+
 let simplify_one_formula prog args f=
   let f1 = elim_irr_eq_exps prog args f in
   (* let f1 = filter_var prog args f in *)
@@ -2176,14 +2182,14 @@ let process_one_f_x prog org_args args next_roots hp_subst sh_ldns com_eqNulls c
           (*base case has at least one node?*)
           let hds= get_hdnodes_hf n_hf in
           if hds=[] then (nf5,n_hf) else
-            let _ = DD.ninfo_pprint ("       next_roots: " ^ (Cprinter.string_of_spec_var_list next_roots)) no_pos in
+            let _ = DD.info_pprint ("       next_roots: " ^ (Cprinter.string_of_spec_var_list next_roots)) no_pos in
             let hds1= get_hdnodes nf5 in
             let last_svl = look_up_closed_ptr_args prog hds1 [] next_roots in
             let _ = DD.ninfo_pprint ("      last_svl: " ^ (Cprinter.string_of_spec_var_list last_svl)) no_pos in
             let _ = DD.ninfo_pprint ("      args3: " ^ (Cprinter.string_of_spec_var_list args3)) no_pos in
             (*is recursive?*)
             let inter = CP.intersect_svl last_svl args3 in
-             let _ = DD.ninfo_pprint ("       inter: " ^ (Cprinter.string_of_spec_var_list inter)) no_pos in
+             let _ = DD.info_pprint ("       inter: " ^ (Cprinter.string_of_spec_var_list inter)) no_pos in
             if  inter <> [] then
               let ss1 = List.combine inter next_roots in
               (*find commond pattern: even/odd. testcase: sll-del*)
@@ -2944,7 +2950,9 @@ let succ_susbt_x prog nrec_grps unk_hps allow_rec_subst (hp,args,f,unk_svl)=
           DD.ninfo_pprint ("       succ_susbt lsf_cmb:" ^ (let pr = pr_list_ln (Cprinter.prtt_string_of_formula)
                                                           in pr lsf_cmb)) no_pos;
           let lsf_cmb1 = List.map (simplify_one_formula prog args) lsf_cmb in
-          let lsf_cmb2 = List.filter (fun f ->  not (is_trivial f (hp,args)) ) lsf_cmb1 in
+          let lsf_cmb2 = List.filter (fun f ->  not (is_trivial f (hp,args))
+              (* && not (is_inconsistent_heap f) *)
+          ) lsf_cmb1 in
         (*remove f which has common prefix*)
           let lsf_cmb3 = remove_longer_common_prefix lsf_cmb2 in
           DD.ninfo_pprint ("       succ_susbt lsf_cmb 1:" ^ (let pr = pr_list_ln (Cprinter.prtt_string_of_formula)
@@ -3528,7 +3536,7 @@ let transform_unk_hps_to_pure_x hp_defs unk_hp_frargs =
     (* let _ = DD.info_pprint ("       f: " ^ (!CF.print_formula f)) no_pos in *)
     let ls_used_hp_args = CF.get_HRels_f f in
     let ls_xpures =  CF.get_xpure_view f in
-    let ls_used_hp_args0 = Gen.BList.remove_dups_eq (fun (hp1,_) (hp2,_) -> CP.eq_spec_var hp1 hp2) (ls_used_hp_args@ls_xpures) in
+    (* let ls_used_hp_args0 = Gen.BList.remove_dups_eq (fun (hp1,_) (hp2,_) -> CP.eq_spec_var hp1 hp2) (ls_used_hp_args@ls_xpures) in *)
     (*look up*)
     let r1 = List.map (look_up_get_eqs_ss args0 ls_unk_hpargs_fr) ls_used_hp_args in
     let r2 = List.map (look_up_get_eqs_ss args0 ls_unk_hpargs_fr) ls_xpures in

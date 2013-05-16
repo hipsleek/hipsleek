@@ -77,6 +77,8 @@ let cprog = ref { C.prog_data_decls = [];
 
 let residues =  ref (None : (CF.list_context * bool) option)    (* parameter 'bool' is used for printing *)
 
+let hp_assumes = ref ([]: CF.hprel list)
+
 let clear_iprog () =
   iprog.I.prog_data_decls <- [iobj_def];
   iprog.I.prog_view_decls <- [];
@@ -641,6 +643,19 @@ let run_infer_one_pass ivars (iante0 : meta_formula) (iconseq0 : meta_formula) =
   let pr1 = pr_list pr_id in
   let pr_2 = pr_triple string_of_bool Cprinter.string_of_list_context !CP.print_svl in
   Debug.no_3 "run_infer_one_pass" pr1 pr pr pr_2 run_infer_one_pass ivars iante0 iconseq0
+
+let process_rel_assume hp_id (ilhs : meta_formula) (irhs: meta_formula)=
+  let stab = H.create 103 in
+  let lhs = meta_to_formula ilhs false [] stab in
+  let fvs = CF.fv lhs in
+  let fv_idents = (List.map CP.name_of_spec_var fvs)@[hp_id] in
+  let rhs = meta_to_formula irhs false fv_idents stab in
+  let orig_vars = CF.fv lhs @ CF.fv rhs in
+  let hp = AS.get_spec_var_stab_infer hp_id orig_vars no_pos in
+  let _ =  print_endline ("LHS = " ^ (Cprinter.string_of_formula lhs)) in
+  let _ =  print_endline ("RHS = " ^ (Cprinter.string_of_formula rhs)) in
+(*hp_assumes*)
+  ()
 
 (* the value of flag "exact" decides the type of entailment checking              *)
 (*   None       -->  forbid residue in RHS when the option --classic is turned on *)

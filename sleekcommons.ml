@@ -43,6 +43,7 @@ type command =
   | LemmaDef of I.coercion_decl
   | LetDef of (ident * meta_formula)
   | EntailCheck of (meta_formula * meta_formula * entail_type)
+  | RelAssume of (ident * meta_formula * meta_formula)
   | EqCheck of (ident list * meta_formula * meta_formula)
   | BarrierCheck of I.barrier_decl
   | Infer of (ident list * meta_formula * meta_formula)
@@ -87,6 +88,7 @@ let string_of_command c = match c with
   | LemmaDef  _ -> "LemmaDef"
   | LetDef  _ -> "LetDef"   
   | EntailCheck _ -> "EntailCheck"
+  | RelAssume _ -> "RelAssume"
   | EqCheck _ -> "EqCheck"
   | BarrierCheck _ -> "BarrierCheck"
   | Infer _ -> "Infer"

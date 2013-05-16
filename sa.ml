@@ -1142,7 +1142,7 @@ and collect_par_defs_one_side_one_hp_aux prog f (hrel, args) def_ptrs
   let pr1 = pr_pair !CP.print_sv !CP.print_svl in
   let pr2 = Cprinter.prtt_string_of_formula in
   let pr3 = pr_list_ln SAU.string_of_par_def_w_name in
-   Debug.no_2 "collect_par_defs_one_side_one_hp_rhs" pr1 pr2 pr3
+   Debug.ho_2 "collect_par_defs_one_side_one_hp_rhs" pr1 pr2 pr3
        (fun _ _ -> collect_par_defs_one_side_one_hp_aux_x prog f (hrel, args)
            def_ptrs eqs hd_nodes hv_nodes unk_hps unk_svl predef expl_ptrs)
        (hrel, args) f
@@ -1179,9 +1179,11 @@ and collect_par_defs_one_side_one_hp_rhs prog lhs rhs (hrel, args) def_ptrs
 and collect_par_defs_one_side_one_hp_x prog lhs rhs (hrel, args) ldef_ptrs rdef_ptrs
       rhrels eqs hd_nodes hv_nodes unk_hps unk_svl predef expl_ptrs=
   begin
-      let _ = Debug.ninfo_pprint ("   collect pardef for lhs hps: ") no_pos in
+      let _ = Debug.info_pprint ("   collect pardef for lhs hps: " ^ (!CP.print_sv hrel) ^
+      (!CP.print_svl args) ) no_pos in
+      let _ = Debug.info_pprint (" unk_svl: "^ (!CP.print_svl unk_svl)) no_pos in
       let lprocess_helper def_ptrs=
-        let _ =  DD.ninfo_pprint ("       def ---> hp: \n" ) no_pos in
+        let _ =  DD.info_pprint ("       def ---> hp: \n" ) no_pos in
         collect_par_defs_one_side_one_hp_aux_x prog lhs (hrel, args) ldef_ptrs
             eqs hd_nodes hv_nodes unk_hps unk_svl predef expl_ptrs
       in
@@ -1223,7 +1225,7 @@ and collect_par_defs_one_side_one_hp_x prog lhs rhs (hrel, args) ldef_ptrs rdef_
                 Some lhs
             in
             let l_r = (hrel, args, (* CP.intersect_svl args *) unk_svl, r, l1 , Some r) in
-            let _ =  DD.ninfo_pprint ("       hp ---> def: \n" ^
+            let _ =  DD.info_pprint ("       hp ---> def: \n" ^
                                              (let pr =  SAU.string_of_par_def_w_name in pr l_r) ) no_pos in
             [l_r]
           else
@@ -1353,7 +1355,7 @@ and collect_par_defs_two_side_one_hp prog lhs rhs (hrel, args) predef rhs_hrels 
   let pr2 =  pr_list_ln pr1 in
   let pr3 = pr_list_ln SAU.string_of_par_def_w_name in
   let pr4 = pr_pair pr3 Cprinter.prtt_string_of_formula in
-  Debug.no_2 "collect_par_defs_two_side_one_hp" pr1 pr2 pr4
+  Debug.ho_2 "collect_par_defs_two_side_one_hp" pr1 pr2 pr4
       (fun _ _ -> collect_par_defs_two_side_one_hp_x prog lhs rhs (hrel, args) predef
           rhs_hrels hd_nodes hv_nodes unk_hps)
       (hrel, args) rhs_hrels

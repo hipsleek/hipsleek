@@ -19,7 +19,7 @@ node paper_fix (node c, node p)
 	{
       bind c to (_,pp,nn) in {
 		pp=p;
-        dprint;
+        //dprint;
 		paper_fix(nn,c);	
       }
 	}

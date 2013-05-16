@@ -711,6 +711,7 @@ non_empty_command:
       | t=let_decl            -> t
       | t=checkeq_cmd         -> EqCheck t
       | t=checkentail_cmd     -> EntailCheck t
+      | t=relassume_cmd     -> RelAssume t
       | t=infer_cmd           -> Infer t  
       | t=captureresidue_cmd  -> CaptureResidue t
       | t=print_cmd           -> PrintCmd t
@@ -1611,6 +1612,10 @@ checkentail_cmd:
   [[ `CHECKENTAIL; t=meta_constr; `DERIVE; b=extended_meta_constr -> (t, b, None)
    | `CHECKENTAIL_EXACT; t=meta_constr; `DERIVE; b=extended_meta_constr -> (t, b, Some true)
    | `CHECKENTAIL_INEXACT; t=meta_constr; `DERIVE; b=extended_meta_constr -> (t, b, Some false)]];
+
+relassume_cmd:
+   [[ `RELASSUME; `IDENTIFIER id; l=meta_constr; `CONSTR;r=meta_constr -> (id, l, r)
+   ]];
 
 infer_cmd:
   [[ `INFER; `OSQUARE; il=OPT id_list; `CSQUARE; t=meta_constr; `DERIVE; b=extended_meta_constr -> 
