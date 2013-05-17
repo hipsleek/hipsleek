@@ -99,5 +99,28 @@ Post
 
 which should further simplify to:
 
+# dll-4a.ss
+
+relAssume H1
+ H1(c)&c!=null --> c::node<_,prev_19_765',next_19_766'>@M * 
+  HP_795(prev_19_765') * HP_796(next_19_766')&true.
+relAssume H1
+ HP_796(n)&true --> H1(n)&true.
+relAssume H1
+ H1(c)&c=null --> emp&true.
+
+Why did we go into a loop?
 
 
+# dll-4b.ss
+
+relAssume G1
+ c::node<_,p,n>@M * G1(n,c)&true 
+  --> G1(c,p)&true.
+relAssume G1
+ emp&c=null --> G1(c,p)&true.
+
+Why did we have the following base case only?
+
+
+[ G1(c_23,p_24) ::= emp&c_23=null]
