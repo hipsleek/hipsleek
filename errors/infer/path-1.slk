@@ -1,7 +1,7 @@
 checkentail 
    y=3
    & path(x>0,[y])
-    |- z=0.
+    |- x=0.
 
 /*
 Starting Omega...oc

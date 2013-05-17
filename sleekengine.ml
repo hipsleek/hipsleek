@@ -818,6 +818,27 @@ let print_exc (check_id: string) =
   dummy_exception() ; 
   print_string ("exception caught " ^ check_id ^ " check\n")
 
+let process_infer_interpolant (iante0:meta_formula) (iconseq0:meta_formula):bool = 
+  let stab = H.create 103 in
+  let _ = if (!Globals.print_input || !Globals.print_input_all) then print_endline ("INPUT: \n ### ante = " ^ (string_of_meta_formula iante0) ^"\n ### conseq = " ^ (string_of_meta_formula iconseq0)) else () in
+  let ante = meta_to_formula iante0 false [] stab in
+  let ante = Solver.prune_preds !cprog true ante in
+  let ante = (*important for permissions*)
+    if (Perm.allow_perm ()) then
+      CF.add_mix_formula_to_formula (Perm.full_perm_constraint ()) ante
+    else ante
+  in
+  let fvs = CF.fv ante in
+  let fv_idents = (List.map CP.name_of_spec_var fvs)@[] in
+  let conseq = if (!Globals.allow_field_ann) then meta_to_struc_formula iconseq0 false fv_idents (Some Globals.RSubAnn) stab
+    else meta_to_struc_formula iconseq0 false fv_idents None stab in
+  let conseq = Solver.prune_pred_struc !cprog true conseq in
+  let pure_ante = CF.extract_pure ante in
+  let pure_conseq =  CF.extract_pure (CF.struc_to_formula conseq) in
+  (* let _ = Printf.printf "ante = %s\n" (Cprinter.string_of_pure_formula pure_ante) in *)
+  (* let _ = Printf.printf "conseq = %s\n" (Cprinter.string_of_pure_formula pure_conseq) in *)
+  Intplt_solver.gen_interpolant pure_ante pure_conseq
+
 (* the value of flag "exact" decides the type of entailment checking              *)
 (*   None       -->  forbid residue in RHS when the option --classic is turned on *)
 (*   Some true  -->  always check entailment exactly (no residue in RHS)          *)

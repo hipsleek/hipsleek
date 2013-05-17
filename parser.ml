@@ -723,6 +723,7 @@ non_empty_command:
       | t=let_decl            -> t
       | t=checkeq_cmd         -> EqCheck t
       | t=checkentail_cmd     -> EntailCheck t
+      | t=infer_interpolant_cmd -> InferInterpolant t
       | t=neg_cmd             -> Neg t
       | t=checksat_cmd        -> SatCheck t
       | t=pinfer_cmd          -> PInfer t
@@ -1651,6 +1652,9 @@ checkeq_cmd:
   [[ `CHECKEQ; `OSQUARE; il=OPT id_list; `CSQUARE; t=meta_constr; `EQV; b=meta_constr -> 
     let il = un_option il [] in (il,t,b)
   ]];
+
+infer_interpolant_cmd:
+  [[`INFER_INTERPOLANT; t=meta_constr; `DERIVE; b=extended_meta_constr -> (t,b)]];
 
 checkentail_cmd:
   [[ `CHECKENTAIL; t=meta_constr; `DERIVE; b=extended_meta_constr -> (t, b, None)

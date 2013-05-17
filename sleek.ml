@@ -94,6 +94,7 @@ let proc_gen_cmd cmd =
     | HpDef hpdef -> process_hp_def hpdef
     | AxiomDef adef -> process_axiom_def adef
     | EntailCheck (iante, iconseq, etype) -> (process_entail_check iante iconseq etype;())
+    | InferInterpolant (iante, iconseq) -> (process_infer_interpolant iante iconseq; ());
     | SatCheck iante -> process_sat_check iante
     | Neg iform -> process_neg iform
     | PInfer (puniv, ph) -> process_pinfer puniv ph
@@ -129,7 +130,7 @@ let parse_file (parse) (source_file : string) =
       | HpDef hpdef -> process_hp_def hpdef
       | AxiomDef adef -> process_axiom_def adef  (* An Hoa *)
             (* | Infer (ivars, iante, iconseq) -> process_infer ivars iante iconseq *)
-      | LemmaDef _ | Infer _ | CaptureResidue _ | LetDef _ | EntailCheck _ | EqCheck _ | PrintCmd _ | CmpCmd _ 
+      | LemmaDef _ | Infer _ | CaptureResidue _ | LetDef _ | EntailCheck _ | InferInterpolant _ | EqCheck _ | PrintCmd _ | CmpCmd _ 
         | SatCheck _ | Neg _ | PInfer _
       | Time _ | EmptyCmd -> () 
   in
@@ -140,11 +141,12 @@ let parse_file (parse) (source_file : string) =
     match c with
       | LemmaDef ldef -> process_lemma ldef
       | DataDef _ | PredDef _ | BarrierCheck _ | FuncDef _ | RelDef _ | HpDef _ | AxiomDef _ (* An Hoa *)
-      | CaptureResidue _ | LetDef _ | EntailCheck _ | EqCheck _ | Infer _ | PrintCmd _  | CmpCmd _| Time _ | EmptyCmd |
+      | CaptureResidue _ | LetDef _ | EntailCheck _ | InferInterpolant _ | EqCheck _ | Infer _ | PrintCmd _  | CmpCmd _| Time _ | EmptyCmd |
          SatCheck _ | Neg _ | PInfer _
        -> () in
   let proc_one_cmd c = 
     match c with
+      | InferInterpolant (iante, iconseq) -> (process_infer_interpolant iante iconseq; ())
       | EntailCheck (iante, iconseq, etype) -> (process_entail_check iante iconseq etype; ())
             (* let pr_op () = process_entail_check_common iante iconseq in  *)
             (* Log.wrap_calculate_time pr_op !source_files ()               *)

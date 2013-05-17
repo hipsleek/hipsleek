@@ -124,6 +124,7 @@ module Make (Token : SleekTokenS)
 	 ("case",CASE);
    ("catch", CATCH);
    ("checkeq", CHECKEQ);
+   ("infer_interpolant", INFER_INTERPOLANT);
 	 ("checkentail", CHECKENTAIL);
    ("checkentail_exact", CHECKENTAIL_EXACT);
    ("checkentail_inexact", CHECKENTAIL_INEXACT);

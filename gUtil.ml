@@ -310,6 +310,9 @@ module SleekHelper = struct
     | SC.PredDef pdef -> 
         log "processing pred def";
         SE.process_pred_def pdef; None
+    | SC.InferInterpolant (iante, iconseq) ->
+        log "pricessing infer interpolant";
+        SE.process_infer_interpolant iante iconseq; None
     | SC.EntailCheck (iante, iconseq, etype) -> 
         log "processing entail check";
         Some (SE.run_entail_check iante iconseq etype)
