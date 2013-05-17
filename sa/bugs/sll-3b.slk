@@ -11,7 +11,7 @@ HeapPred H2(node a, node b).
 infer [H1] H1(c,p) |- c::node<x0@A,x1@A,x2@L>@M.
 print residue.
 
-infer [H1] H1(c,p) |- c::node<x0@A,x1@A,x2@L>@L.
+infer [H1] H1(c,p) |- c::node<x0@A,x1@A,x2@M>@L.
 print residue.
 
 /*

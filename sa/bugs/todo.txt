@@ -55,17 +55,35 @@ Exception Invalid_argument("List.combine") Occurred!
 
 # dll-3b.slk
 
-Got below which seems wrong..
+/*
 
-H1(c_51,p_52) ::= c_51::node<Anon_11,prev_19_766',next_19>@M * 
-      HP_53(prev_19_766',next_19,p_52))&true,
-G1(c_59,p_60) ::= c_59::node<Anon_11,prev_19_766',next_19>@M * 
-      HP_53(prev_19_766',next_19,p_60))&c_59=null,
-HP_53(prev_19_766',next_19,p_58) ::= 
-      next_19::node<Anon_11,prev_19_54,next_55>@M * 
-       (HP_53(prev_19_54,next_55,c'))&true]
+Below seems wrong still...
+
+[ H1(c_51,p_53) ::= 
+ (H1(next_19,c')) * c_51::node<Anon_11,prev_19_766',next_19>@M&true
+ or c_51::node<Anon_11,prev_19_766',next_19>@M * 
+    (HP_796(prev_19_766',p_52)) * (H1(next_19,c'))&true
+ or emp&c_51=null
+ ,
+ G1(c_54,p_55) ::= emp&c_54=null,
+ HP_796(prev_19_46,p) ::= (H1(c_44,p)) * (H1(next_19,c')) * (HP_796(prev_19_46,p))&true]
+
+
+*************************************
 
 Why did we not get below:
+
+ H1(c,p) ::= 
+   c::node<_,prev_19_766',next_19>@M * (H1(next_19,p))&c!=null
+   or c=null & emp
+
+ G1(c,p) := c=null
+      or c::node<_,p,next_19_767'> * G1(next_19_806,c)
+
+Note that 2nd paramter of of H1 is useless.
+
+This came from :
+
 
 Pre
 ---
@@ -81,10 +99,5 @@ Post
 
 which should further simplify to:
 
- H1(c,p) ::= 
-   c::node<_,prev_19_766',next_19>@M * (H1(next_19,p))&c!=null
-   or c=null --> emp
- G1(c,p) := c=null
-      or c::node<_,p,next_19_767'> * G1(next_19_806,c)
 
-Note that 2nd paramter of p is useless.
+
