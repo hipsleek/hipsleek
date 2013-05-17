@@ -5,17 +5,28 @@ use File::Basename;
 use Getopt::Long;
 use Sys::Hostname;
 use File::NCopy;
+use File::Copy;
 use File::Path 'rmtree';
 use Cwd;
 use lib '/usr/local/share/perl/5.10.0';
 use Spreadsheet::ParseExcel;
 use Spreadsheet::ParseExcel::SaveParser;
+use Net::Ping;
+use threads;
+use Thread::Queue;
+use Time::HiRes;
+use IO::Handle;
 
 GetOptions( "stop"  => \$stop,
 			"help" => \$help,
 			"root=s" => \$root,
 			"tp=s" => \$prover,
 			"flags=s" => \$flags,
+			"host=s" => \$hostfile, # the hostfile containing running configuration for distributed runs, default is nil (using all known hosts)
+			"dssh" => \$dssh, # disable the reuse ssh connections. By default, with -dist, ssh connections are resused.
+			"local" => \$local, # run each task in a cluster node (distributed)
+			"debug" => \$debug, # debugging mode (currently only used in distributed runs)
+			"v" => \$verbose, # verbosity (currently only used in distributed runs)
 			"copy-to-home21" => \$home21,
             "log-timings" => \$timings,
             "log-string=s" => \$str_log,
@@ -23,16 +34,258 @@ GetOptions( "stop"  => \$stop,
             "term" => \$term,
             "lists" => \$lists
 			);
+
+##### Identify hostname to execute ####>
+my $mirror_path = "";
+my $current_hostname = hostname; #get hostname of the current machine
+if($debug){
+    print "\nRunning on $current_hostname!\n";
+}
+
+if(!$local){
+    # if the running machine is loris-7 or loris-82
+    # run it in distributed manners with suitable shared NFS.
+    # Otherwise, run sequentially in the current machine.
+    if ($current_hostname eq "loris-7"){
+        $mirror_path = "/mirror7/";
+    }elsif ($current_hostname eq "loris-82"){
+        $mirror_path = "/mirror/";
+    }else{
+        $local = "yes";
+    }
+}
+################<<
+
+(my $Second, my $Minute, $Hour, $Day, $Month, $Year, $WeekDay, $DayOfYear, $IsDST) = localtime(time);
+$Year += 1900;
+$Month++;
+$pid = "$$"; #process id of this script
+
+# NOTE: this random string is unique across runs.
+# Use it if you need something unique
+# (such as logfiles' names )
+$randomstr = "$Year-$Month-$Day-$Hour-$Minute-$Second-$pid"; #date-pid is unique
+$ssh_ctl_path = "~/.ssh/control:$randomstr:%r@%h:%p";
+my $reusecmd = "";
+if (!$dssh){
+    # flag to REUSE ssh connection
+    $reusecmd = "-o ControlPath=$ssh_ctl_path";
+}
+
+###########DISTRIBUTED>>#################
+my $dist_init_time=0;
+my $dist_processing_time=0;
+my $dist_output_time=0;
+my $dist_finalize_time=0;
+# List of known host names, used as default without specifying hostfile
+@hostnames = ("loris-84","loris-86","loris-88");
+# List of default number of processing nodes in the corresponding host
+# This is empirically the best combination
+@hostnums =  (    12    ,     12    ,     12    );
+#List of (possibly duplicated) computing nodes
+my @nodes : shared;
+#TOTAL number of computing nodes in all hosts
+my $numnodes = 0;
+if(!$local){
+    my $start_run = Time::HiRes::gettimeofday();
+
+    if ($hostfile) {
+	if($debug){
+	    print "\nReading \"$hostfile\"\n";
+	}
+    	@hostnames = ();
+    	@hostnums = ();
+        open(HOSTFILE, "< $hostfile") || die ("Could not open $hostfile.\n");
+    	while (<HOSTFILE>){
+    	    chomp;
+    	    ($host, $num) = split(" ");
+            if($debug){
+                print "\n host = $host ; num= $num";
+            }
+    	    if ($host eq "" && $num eq ""){
+    		#ignore
+    	    }elsif ($host eq "" || $num eq "") {
+    		die ("\n$hostfile : wrong format.\n");
+    	    }else{
+    		# Add the host and num processing nodes
+    		push(@hostnames,$host);
+    		push(@hostnums,$num);
+    	    }
+    	}
+        close(HOSTFILE);
+    }
+
+    my $len = scalar @hostnames;
+
+    #CHECK NODE REACHABILITY
+    $p = Net::Ping->new();
+    for(my $i = 0; $i < $len; $i++) {
+        if ($hostnums[$i]!=0){
+            #Check node reachability
+            my $host = $hostnames[$i];
+            if ($p->ping($host)){
+                print "$host is alive.\n" ;
+            } else {
+                print "$host is unreachable (hence omitted).\n" ;
+                $hostnums[$i] = 0;
+            }
+        }
+    }
+    $p->close();
+    #END REACHABILITY TEST
+
+    if($verbose){
+	print "\nConfigurations for distributed run:\n";
+	for(my $i = 0; $i < $len; $i++) {
+	    print "host = $hostnames[$i], numTasks = $hostnums[$i]\n";
+	}
+    }
+
+    #Create a list of computing nodes and count the number of them
+    @nodes = ();
+    for(my $i = 0; $i < $len; $i++) {
+	$numnodes = $numnodes + $hostnums[$i];
+    }
+
+    # # Distribute hosts in round robin
+    # # This is sometimes more efficient but non-deterministic
+    # my $count  = $numnodes;
+    # my @tmp = @hostnums; #scalar values -> safe to copy this way
+    # my $counter=0;
+    # while ($count>0){
+    # 	#Find non-zero num for assignment
+    # 	while ($tmp[$counter]==0){
+    # 	    $counter = ($counter+1) % $len;
+    # 	}
+    # 	push(@nodes,$hostnames[$counter]);
+    # 	$tmp[$counter]--;
+    # 	$counter = ($counter+1) % $len;
+    # 	$count--; #this ensures termination
+    # }
+
+    # Distribute first host first
+    # This is sometimes less efficient but more deterministic
+    for(my $i = 0; $i < $len; $i++) {
+    	for($j = 0; $j < $hostnums[$i]; $j++) {
+    	    push(@nodes,$hostnames[$i]);
+    	}
+    }
+
+    # Sure that name clash never happens
+    $TMPFDR = "tmp-$randomstr";
+
+    $FULLPATH = "$TMPFDR/";
+    print "CREATE a temporary for log files at $FULLPATH\n";
+    unless(mkdir $FULLPATH) {
+        die "Unable to create directory $FULLPATH\n";
+    }    
+
+    $HIP = "../../hip";
+    $SLEEK = "../../sleek";
+    $PRELUDE = "../../prelude.ss";
+    $MONA = "mona_predicates.mona";
+
+    # =============================================>
+    # =============================================>
+    # ATTEMPT to COPY to exectable to all machines
+    # This is very slow if run sequetially like this (e.g. 2.33s for 21MB hip)
+    # Even if we use a shared ssh ($dssh), it is still slow (e.g. 1.91 for 21MB hip)
+    # $HIPEXEC = "~/hipexec";
+    # $SLEEKEXEC = "~/sleekexec";
+    # $PRELUDEEXEC = "~/prelude.ss";
+    # $MONAEXEC = "~/mona_predicates.mona";
+    # print "Copy hip,sleek,prelude.ss to nodes: ";
+    # for(my $i = 0; $i < $len; $i++) {
+    # 	if ($hostnums[$i]!=0){
+    # 	    my $mynode = $hostnames[$i];
+    # 	    my $cmd = "scp $HIP hipuser\@$mynode:$HIPEXEC && scp $SLEEK hipuser\@$mynode:$SLEEKEXEC && scp $PRELUDE hipuser\@$mynode:$PRELUDEEXEC && scp $HIP hipuser\@$mynode:$HIPEXEC";
+    #         ####DEBUG####
+    #         if($debug){
+    # 		print "\n$cmd"
+    # 	    }else{
+    # 		print "$mynode ";
+    # 	    }		
+    # 	    $result = `$cmd`;
+    # 	}
+    # }
+    # <=============================================
+    # <=============================================
+
+    # =============================================>
+    # =============================================>
+    # ATTEMPT to COPY to NFS instead to speed up
+    $NFSFDR = "NFS-$randomstr";
+    # # INITIALIZE SETUPS
+    $NFSPATH = "$mirror_path/$NFSFDR/";
+    print "CREATE and COPY the executables to NFS shared folder $NFSPATH\n";
+    unless(mkdir $NFSPATH) {
+        die "Unable to create directory $NFSPATH\n";
+    }
+    chmod 0777, $NFSPATH; # make sure it is writable
+
+    $HIPEXEC = "$NFSPATH/hipexec";
+    $SLEEKEXEC = "$NFSPATH/sleekexec";
+    $PRELUDEEXEC = "$NFSPATH/prelude.ss";
+    $MONAEXEC = "$NFSPATH/mona_predicates.mona";
+    # $MPIEXEC = "$mirror_path/$TMPFDR/command-line-mpi";
+
+    # Copy hip,sleek,prelude.ss for execution
+    copy($HIP,$HIPEXEC) or die "Unable to copy $HIP to $HIPEXEC\n";
+    copy($SLEEK,$SLEEKEXEC) or die "Unable to copy $SLEEK to $SLEEKEXEC\n";
+    copy($PRELUDE,$PRELUDEEXEC) or die "Unable to copy $PRELUDE to $PRELUDEEXEC\n";
+    copy($MONA,$MONAEXEC) or die "Unable to copy $MONA to $MONAEXEC\n";
+
+    # # Recursively copy all tests (NOT NEEDED, currently copy on demand)
+    # 	my $cp = File::NCopy->new(recursive => 1);
+    # $cp->copy("*", $FULLPATH) or die "Could not perform rcopy of * to $FULLPATH: $!";
+
+    # make sure the executables are executable
+    chmod 0755, $HIPEXEC; # make sure it is executable
+    chmod 0755, $SLEEKEXEC; # make sure it is executable
+    # chmod 0755, $MPIEXEC;
+
+    # =============================================>
+    # =============================================>
+    if (!$dssh){
+	# CREATE share ssh connection for each node
+	for(my $i = 0; $i < $len; $i++) {
+	    if ($hostnums[$i]!=0){
+		my $mynode = $hostnames[$i];
+		my $cmd = "ssh $reusecmd -o ControlMaster=auto -f -N hipuser\@$mynode 2>/dev/null 1>&2";
+		####DEBUG####
+		if($debug){
+		    print "\nStart the ssh control master process in node $mynode ";
+		    print "\n$cmd"
+		}		
+		$result = `$cmd`;
+	    }
+	}
+    }
+    # <=============================================
+    # <=============================================
+
+
+    my $end_run = Time::HiRes::gettimeofday();
+
+    $dist_init_time = $end_run - $start_run;
+
+    if($debug){
+        print "Distributed nodes (numnodes = $numnodes ) : @nodes\n";
+        print "Temporary folder in NFS : $TMPFDR\n";
+    }
+}
+###########<<DISTRIBUTED#################
+
 @param_list = @ARGV;
 if(($help) || (@param_list == ""))
 {
-	print "./run-fast-tests.pl [-help] [-root path_to_sleek] [-tp name_of_prover] [-log-timings] [-log-string string_to_be_added_to_the_log] [-copy-to-home21] hip_tr|hip|imm|imm-filed|sleek|parahip|hip_vperm|sleek_vperm|sleek_fracperm|infinity|mem [-flags \"arguments to be transmited to hip/sleek \"]\n";
+	print "./run-fast-tests.pl [-help] [-dist] [-dssh] [-v] [-host path-to-host-file] [-root path_to_sleek] [-tp name_of_prover] [-log-timings] [-log-string string_to_be_added_to_the_log] [-copy-to-home21] hip_tr|hip|imm|imm-filed|sleek|parahip|hip_vperm|sleek_vperm|sleek_fracperm|infinity|mem [-flags \"arguments to be transmited to hip/sleek \"]\n";
 	exit(0);
 }
 
 if($root){
-	$exempl_path = "$root/examples/working";
-	$exec_path = "$root";
+        $exempl_path = "$root/examples/working";
+        $exec_path = "$root";
 }
 else
 	{
@@ -172,11 +425,21 @@ if($timings){
 @excl_files = ();
 $error_count = 0;
 $error_files = "";
-$hip = "$exec_path/hip ";
-# TODO : check if hip is n-hip, as b-hip is too slow
-# please use make native
-$sleek = "$exec_path/sleek ";
-$output_file = "log";
+
+if(!$local){
+    $hip = $HIPEXEC;
+    $sleek = $SLEEKEXEC;
+    # $output_file = "log-$randomstr";
+    $output_file = "log";
+} else {
+    $hip = "$exec_path/hip ";
+    # TODO : check if hip is n-hip, as b-hip is too slow
+    # please use make native
+    $sleek = "$exec_path/sleek ";
+    # $output_file = "log-$randomstr";
+    $output_file = "log";
+}
+
 # list of file, nr of functions, function name, output, function name, output......
 # files are searched in the subdirectory with the same name as the list name, in examples/working/hip directory (ex. hip/array for "array" list)
 %hip_files=(
@@ -543,10 +806,11 @@ $output_file = "log";
 				["../../modular_examples/selection-modular.ss",3, "--overeps", 
 					"delete_min", "SUCCESS", "find_min", "SUCCESS", "selection_sort", "SUCCESS"],
 				["../../modular_examples/qsort-modular.ss",3, "--overeps", 
-					"append_bll", "SUCCESS", "partition", "SUCCESS", "qsort", "SUCCESS"],				
-				#["../../modular_examples/2-3trees-modular.ss",5, "--overeps", 
-				#	"insert_left", "SUCCESS", "height", "SUCCESS", "minim", "SUCCESS",
-				#	"min_height", "SUCCESS", "insert", "SUCCESS"],
+					"append_bll", "SUCCESS", "partition", "SUCCESS", "qsort", "SUCCESS"],	
+	    #Temporarily disable 2-3trees-modular.ss because it takes very long to finish
+				# ["../../modular_examples/2-3trees-modular.ss",5, "--overeps", 
+				# 	"insert_left", "SUCCESS", "height", "SUCCESS", "minim", "SUCCESS",
+				# 	"min_height", "SUCCESS", "insert", "SUCCESS"],
 				],	
 	"hip_long_mod" => [["../../modular_examples/sorted_list_modular.ss",8, "--overeps -tp om", 
 					"insert_first", "SUCCESS", "copy", "SUCCESS", "delete", "SUCCESS",
@@ -1274,8 +1538,15 @@ $output_file = "log";
 # }
 
 open(LOGFILE, "> $output_file") || die ("Could not open $output_file.\n");
-sleek_process_file();
-hip_process_file();
+
+if(!$local){
+    sleek_process_file_dist();
+    hip_process_file_dist();
+} else {
+    sleek_process_file();
+    hip_process_file();
+}
+
 close(LOGFILE);
 
 if ($error_count > 0) {
@@ -1292,7 +1563,48 @@ printf "Total verification time: %.2f second\n", $totalSum;
 printf "\tTime spent in main process: %.2f second\n", $mainSum;
 printf "\tTime spent in child processes: %.2f second\n", $childSum;
 printf "\tNumber of false contexts: %d\n", $falseContextSum; 
- 
+
+if(!$local && (!$dssh)){
+    my $start_run = Time::HiRes::gettimeofday();
+    # =============================================>
+    # =============================================>
+    # Delete share ssh connection for each node
+    if (!$dssh){
+        my $len = scalar @hostnames;
+        for(my $i = 0; $i < $len; $i++) {
+            if ($hostnums[$i]!=0){
+                my $mynode = $hostnames[$i];
+                my $cmd = "ssh $reusecmd -O exit hipuser\@$mynode 2>/dev/null 1>&2";
+                ####DEBUG####
+                if($debug){
+                    print "\nDelete the ssh control master process in node $mynode ";
+                    print "\n$cmd"
+                }		
+                $result = `$cmd`;
+            }
+        }
+    }
+    # <=============================================
+    # <=============================================
+    # Delete temporary folders
+    if(!$debug){
+        print "Delete all files in NFS shared folder $FULLPATH and $NFSPATH\n";
+        system("rm -rf $FULLPATH");
+        system("rm -rf $NFSPATH");
+    }
+    my $end_run = Time::HiRes::gettimeofday();
+    $dist_finalize_time = $end_run - $start_run;
+}
+
+if (!$local){
+    my $total = $dist_init_time + $dist_processing_time + $dist_output_time;
+    print "\n==================================\n";
+    printf "Total wall-clock time for running tasks in distributed cluster: %.2f second \n", $total;
+    printf "\tTime spent in initialization : %.2f seconds \n", $dist_init_time;
+    printf "\tTime spent in running distributed tasks : %.2f seconds \n", $dist_processing_time;
+    printf "\tTime spent in processing output : %.2f seconds \n", $dist_output_time;
+    printf "\tTime spent in finalization : %.2f seconds \n", $dist_finalize_time;
+}
 
 if($timings){
     #do the last computations and close the timings log worksheet
@@ -1374,21 +1686,79 @@ sub sum_of_timings {
  }
 }
 
+# $_[0] is the output file
+# $_[1] is the test item
+sub hip_process_output  {
+    $output = $_[0];
+    $test = $_[1];
+
+    $limit = $test->[1]*2+2;
+    # print "\nbegin"."$output"."end\n";
+    # my @lines = split /\n/, $output;
+    # @results = [];
+    # foreach my $line (@lines) {
+    # 	for($i = 3; $i<$limit;$i+=2)
+    # 	{
+    # 	    #print $line . "\n";
+    # 	    if($line =~ /$procedure $test->[$i]/ && $line =~ m/SUCCESS/){
+    # 		@results[$i] = "SUCCESS";
+    # 	    }
+    # 	    elsif($line =~ /$procedure $test->[$i]/  && $line =~ m/FAIL/ ){
+    # 		@results[$i] = "FAIL";
+    # 	    }
+    # 	}
+    # }
+    # for ($i = 3; $i<$limit;$i+=2) {
+    # 	#print $test->[$i] ."\n";
+    # 	#print @results[$i] ."\n";
+    # 	#print $test->[$i+1] ."\n";
+    # 	if(@results[$i] ne $test->[$i+1])
+
+    for(my $i = 3; $i<$limit;$i+=2)
+    {
+	if($output !~ /$procedure $test->[$i]\$.* $test->[$i+1]/)
+	{
+	    $error_count++;
+	    $error_files=$error_files."error at: $test->[0] $test->[$i]\n";
+	    print "error at: $test->[0] $test->[$i]\n";
+	}
+    }
+    #Termination checking result
+    if ($output !~ "ERR:") {}
+    else {
+	$error_count++;
+	$error_files=$error_files."term error at: $test->[0] $test->[$i]\n";
+	print "term error at: $test->[0] $test->[$i]\n";
+    }
+    if($timings) {
+        log_one_line_of_timings ($test->[0],$output);
+    }
+    sum_of_timings ($output);
+}
+
+sub hip_process_file_preprocess {
+    $param = $_[0];
+    my $procedure = "Procedure"; # assume the lemma checking is disabled by default; 
+    if ("$param" =~ "lemmas") {	$procedure = "Entailing lemma";}
+    
+    if ("$param" =~ "hip") {
+        $exempl_path_full = "$exempl_path/hip";
+        print "Starting hip tests:\n";
+    } else {
+        $exempl_path_full = "$exempl_path/hip/$param";
+        print "Starting hip-$param tests:\n";
+    }
+}
+
 # string-pattern for collecting hip answer after the verification of a procedure:
 #   "Procedure proc_name$ignored_string RESULT", where proc_name is the name of the procedure to be 
 #                                                  verified, and RESULT can be either SUCCESS or FAIL
+# Process sleek file normally (in one process)
 sub hip_process_file {
     foreach $param (@param_list)
     {
-        my $procedure = "Procedure"; # assume the lemma checking is disabled by default; 
-        if ("$param" =~ "lemmas") { $procedure = "Entailing lemma"; }
-        if ("$param" =~ "hip") {
-            $exempl_path_full = "$exempl_path/hip";
-            print "Starting hip tests:\n";
-        } else {
-            $exempl_path_full = "$exempl_path/hip/$param";
-            print "Starting hip-$param tests:\n";
-        }
+        hip_process_file_preprocess $param; #this will update the variable $exempl_path_full
+
 		$t_list = $hip_files{$param};
 		foreach $test (@{$t_list})
 		{
@@ -1402,129 +1772,346 @@ sub hip_process_file {
 			$output = `$hip $script_arguments $extra_options $exempl_path_full/$test->[0] 2>&1`;
 			print LOGFILE "\n======================================\n";
 			print LOGFILE "$output";
-			$limit = $test->[1]*2+2;
-			#print "\nbegin"."$output"."end\n";
-#            my @lines = split /\n/, $output;
-#            @results = [];
-#            foreach my $line (@lines) {
-#                for($i = 3; $i<$limit;$i+=2)
-#                {
-#                    #print $line . "\n";
-#                    if($line =~ /$procedure $test->[$i]/ && $line =~ m/SUCCESS/){
-#                        @results[$i] = "SUCCESS";
-#                    }
-#                    elsif($line =~ /$procedure $test->[$i]/  && $line =~ m/FAIL/ ){
-#                        @results[$i] = "FAIL";
-#                    }
-#                }
-#            }
-#            for ($i = 3; $i<$limit;$i+=2) {
-#                #print $test->[$i] ."\n";
-#                #print @results[$i] ."\n";
-#                #print $test->[$i+1] ."\n";
-#                if(@results[$i] ne $test->[$i+1])
-
-			for($i = 3; $i<$limit;$i+=2)
-			{
-				if($output !~ /$procedure $test->[$i]\$.* $test->[$i+1]/)
-				{
-			 		$error_count++;
-					$error_files=$error_files."error at: $test->[0] $test->[$i]\n";
-					print "error at: $test->[0] $test->[$i]\n";
-				}
-			}
-			#Termination checking result
-      if ($output !~ "ERR:") {}
-			else {
-				$error_count++;
-				$error_files=$error_files."term error at: $test->[0] $test->[$i]\n";
-				print "term error at: $test->[0] $test->[$i]\n";
-			}
-      if($timings) {
-        log_one_line_of_timings ($test->[0],$output);
-      }
-      sum_of_timings ($output);
+            hip_process_output($output, $test);
+        }
     }
-  }
 }
 
 
+#process each file in distributed manner
+sub process_file_dist {
+    my $start_processing_run = Time::HiRes::gettimeofday();
+    #shared input and output
+    my @t_list : shared; #from 0 to numtask-1
+    my @output_list : shared;
+    @output_list = ();
 
+    $t_list = $_[0];
+    $executable = $_[1];
+    $type = $_[2]; # "hip" or "sleek"
+
+    $numtasks = scalar(@{$t_list});
+
+    print "\n================================== ";
+    print "\n========== START RUNNING ========= ";
+    print "\n================================== \n";
+
+    # One worker spawns one job in one node each time
+    sub worker {
+        my $tid = threads->tid;
+        # because test such as sleek and hip will run
+        # on different threads (whose id are different).
+        # Note that we clean up after each test (see below).
+        my $nodeid = ($tid-1) % $numnodes;
+        my $mynode = $nodes[$nodeid];
+
+        ####DEBUG####
+        if($debug){
+            print "\n tid = $tid in $mynode";
+        }
+
+        my( $Qwork, $Qresults ) = @_;
+        while( my $work = $Qwork->dequeue ) {
+            my $taskid = $work-1;
+            my $result;
+
+	    my $start_task = Time::HiRes::gettimeofday();
+
+	    # file to process
+	    $task_file = "$exempl_path_full/@{$t_list}[$taskid]->[0]";
+
+            ### Store each output file in NFS $mirror_path
+            $task_output_file = "$FULLPATH/log.$taskid.txt";
+
+	    # Identify file extension
+	    # ../abc/def.ss
+	    my @parts = split(/\//, $task_file); 
+	    # .. ; abc; def.ss
+	    my $len = scalar @parts;
+	    # def ; ss
+	    my @words = split(/\./, $parts[$len-1]); 	    
+	    $len = scalar @words;
+	    my $local_input_file = "~/input.$taskid.$words[$len-1]";
+
+            # identify "sleek" or "hip" command
+            # hip or sleek
+            if ("$type" =~ "sleek") {
+                $extra_options = @{$t_list}[$taskid]->[1];
+            }elsif ("$type" =~ "hip") {
+                $extra_options = @{$t_list}[$taskid]->[2];
+            } else {
+                die "Unexpected type $type";
+            }
+
+	    # EXECUTE commands on remote machine, get output directly from stout
+            $cmd = "$executable $script_arguments $extra_options $local_input_file";
+	    my $local_task_output_file = "~/log.$taskid.txt";
+	    my $task_output_file = "$FULLPATH/log.$taskid.txt";
+	    $copytocmd = "scp $reusecmd $task_file hipuser\@$mynode:$local_input_file";
+            $execcmd = "ssh $reusecmd hipuser\@$mynode \"$cmd\" > $task_output_file 2>&1";
+	    $removecmd = "ssh $reusecmd hipuser\@$mynode \"rm $local_input_file\"";
+	    $ remotecmd = "$copytocmd && $execcmd && $removecmd";
+
+            ####DEBUG####
+            if($debug){
+                print "\n tid = $tid is running $taskid (@{$t_list}[$taskid]->[0]) on $mynode : $remotecmd";
+            } elsif ($verbose){
+		print "\nRunning task @{$t_list}[$taskid]->[0] on $mynode ...";
+	    }
+
+            # Execute, write to output file, and remove taskfile from remove machine
+            ## Spawn remote job
+            $result = `$remotecmd`;
+
+	    my $end_task = Time::HiRes::gettimeofday();
+	    ####DEBUG####
+	    if($debug){
+		my $time = $end_task - $start_task;
+		print "\n tid = $tid is FINISHING $taskid in $time seconds\n";
+	    } elsif ($verbose){
+		print "\n[Done] Task @{$t_list}[$taskid]->[0] on $mynode has finished!";
+	    }
+        }
+
+        ####DEBUG####
+        if($debug){
+            print "\n tid = $tid is TERMINATING \n";
+        }
+
+        $Qresults->enqueue( undef ); ## Signal this thread is finished #NOT USED at the moment
+    }
+
+    our $THREADS = 0;
+    if ($numtasks<=$numnodes){
+	$THREADS = $numtasks;
+    }else{
+	$THREADS = $numnodes;
+    }
+    my $Qwork = new Thread::Queue;
+    my $Qresults = new Thread::Queue; #currently not used
+
+    ## Get the work items (which is taskid+1)
+    ## and queue them up for the workers
+    for($i = 1; $i <= $numtasks; $i++){
+        $Qwork->enqueue( $i ); #from 1 to numtasks
+    }
+
+    ## Tell the workers there are no more work items
+    $Qwork->enqueue( (undef) x $THREADS );
+
+    ## Create the pool of workers
+    my @pool = map{
+        threads->create( \&worker, $Qwork, $Qresults )
+    } 1 .. $THREADS;
+
+
+    STDOUT->autoflush(1);
+    while (scalar (threads->list(threads::joinable)) < $THREADS) {
+	sleep(1);
+	print "."; # print our waiting dots
+    };
+
+    ##  Wait for all threads in workpool to finish
+    # $_->join for @pool; #shortcut
+    foreach $thr (@pool)
+    {
+	####DEBUG####
+	my $tid = $thr->tid();
+	if($debug){
+	    print "\n Waiting for tid $tid to terminate ...\n";
+	}
+	$thr->join();
+    }
+
+    my $end_processing_run = Time::HiRes::gettimeofday();
+    $dist_processing_time = $dist_processing_time + $end_processing_run - $start_processing_run;
+
+    print "\n================================== ";
+    print "\n========== RESULTS =============== ";
+    print "\n================================== \n";
+
+    my $start_output_run = Time::HiRes::gettimeofday();
+
+    for($i = 0; $i < $numtasks; $i++){
+        $taskid = $i;
+
+        #identify arguments
+        if ("$type" =~ "sleek") {
+            $extra_options = @{$t_list}[$taskid]->[1];
+        }elsif ("$type" =~ "hip") {
+            $extra_options = @{$t_list}[$taskid]->[2];
+        } else {
+            die "Unexpected type $type";
+        }
+        if ("$extra_options" eq "") {
+            print "Checking @{$t_list}[$taskid]->[0]\n";
+        } else {
+            print "Checking @{$t_list}[$taskid]->[0] (runs with extra options: $extra_options)\n";
+        }
+
+        # Read from output
+        $task_output_file = "$FULLPATH/log.$taskid.txt";
+	my $output = "";
+        if (open(LOGTASK, "< $task_output_file")!=0){
+	    $output = do { local $/; <LOGTASK> };
+	    close(LOGTASK);
+	}else{
+	    $output = ("Could not open $task_output_file.\n");
+	}
+        print LOGFILE "\n======================================\n";
+        print LOGFILE "$output";
+
+        # hip or sleek
+        if ("$type" =~ "sleek") {
+            sleek_process_output($output, @{$t_list}[$taskid]);
+        }elsif ("$type" =~ "hip") {
+            hip_process_output($output,  @{$t_list}[$taskid]);
+        } else {
+            die "Unexpected type $type";
+        }
+    }
+
+    my $end_output_run = Time::HiRes::gettimeofday();
+    $dist_output_time = $dist_output_time + $end_output_run - $start_output_run;
+}
+
+# string-pattern for collecting hip answer after the verification of a procedure:
+#   "Procedure proc_name$ignored_string RESULT", where proc_name is the name of the procedure to be 
+#                                                  verified, and RESULT can be either SUCCESS or FAIL
+
+# Process sleek file in distributed manners (loris's cluster)
+sub hip_process_file_dist {
+    foreach $param (@param_list)
+    {
+        hip_process_file_preprocess $param; #this will update the variable $exempl_path_full
+
+		$t_list = $hip_files{$param};
+        if ($t_list){
+            process_file_dist($t_list,$hip,"hip");
+        }
+
+    }
+}
+
+# $_[0] is the output file
+# $_[1] is the test item
+sub sleek_process_output  {
+    $output = $_[0];
+    $test = $_[1];
+    my $lemmas_results = "";
+    my $entail_results = "";
+    my $barrier_results = "";
+    # print $output;
+    my @lines = split /\n/, $output; 
+    foreach my $line (@lines) { 
+        if($line =~ m/Entailing lemma/){
+            if($line =~ m/Valid/) { $lemmas_results = $lemmas_results ."Valid."; }
+            elsif($line =~ m/Fail/)  { $lemmas_results = $lemmas_results ."Fail.";}
+        }elsif($line =~ m/Barrrier/){
+            $barrier_results = $barrier_results .$line .".";
+        }elsif($line =~ m/Entail/){
+            if( $err == 1) {
+                my $i = index($line, "Valid. (bot)",0);
+                my $h = index($line, "Valid.",0);
+                my $j = index($line, "Fail.(must)",0);
+                my $k = index($line, "Fail.(may)",0);
+                #  print "i=".$i ." h=". $h . " j=" .$j . " k=".$k ."\n";
+                if($i >= 0) { $r = $r ."bot."; }
+                elsif($h >= 0) { $r = $r ."Valid."; }
+                elsif($j >= 0)  { $r = $r ."must.";} #$line =~ m/Fail.(must)/
+                elsif($k >= 0)  { $r = $r ."may.";}
+            }
+            else {
+                if($line =~ m/Valid/) { $entail_results = $entail_results ."Valid."; }
+                elsif($line =~ m/Fail/)  { $entail_results = $entail_results ."Fail.";}
+            }
+        }
+    }
+
+    # NOTE: specifiy new expected outcome in a new line
+    # If !(expected) then Unexpected
+    if (!(
+	((($lem==0) && ($barr==0) && ($err==0) && ($entail_results =~ /^$test->[3]$/)) || 
+        (($lem == 1)  && ($lemmas_results =~ /^$test->[2]$/)) ||
+        (($err == 1)  && ($entail_results =~ /^$test->[2]$/)) || 
+        ($barr==1 && ($barrier_results eq $test->[2])))
+	))
+    {
+        print "Unexpected result with : $test->[0]\n";
+	print LOGFILE "Unexpected result with : $test->[0]\n";
+        $error_count++;
+        $error_files = $error_files . " " . $test->[0];
+    }	
+    if($timings) {
+        # log_one_line_of_timings ($test->[0],$output);
+    }
+    sum_of_timings ($output);
+}
+
+sub sleek_process_file_preprocess {
+    $param = $_[0];
+    my $lem = 0; # assume the lemma checking is disabled by default; make $lem=1 if lemma checking will be enabled by default and uncomment elsif
+    my $err = 0;
+    my $barr = 0;
+
+    if (("$param" =~ "lemmas") ||  ($script_arguments=~"--elp")) {  $lem = 1; }
+    if ("$param" =~ "sleek_barr"){ $barr=1;}
+#      elsif ($script_arguments=~"--dlp"){ $lem = 0; }
+
+    if ("$param" =~ "musterr") {
+        print "Starting sleek must/may errors tests:\n";
+        $exempl_path_full = "$exec_path/errors";
+        $err = 1;
+    } elsif ("$param" =~ "sleek") {
+        print "Starting sleek tests:\n";
+        $exempl_path_full = "$exempl_path/sleek";
+    }else {
+        # $exempl_path_full = "$exempl_path_full/$param"; #this not true for lemmas
+        $exempl_path_full = "$exempl_path/sleek/$param";
+        print "Starting sleek-$param tests:\n";
+    }
+
+}
+
+
+# Process sleek file normally (in one process)
 sub sleek_process_file  {
   foreach $param (@param_list)
   {
-      my $lem = 0; # assume the lemma checking is disabled by default; make $lem=1 if lemma checking will be enabled by default and uncomment elsif
-      my $err = 0;
-	  my $barr = 0;
-      if ("$param" =~ "musterr") {
-          print "Starting sleek must/may errors tests:\n";
-          $exempl_path_full = "$exec_path/errors";
-          $err = 1;
-      }
-      if (("$param" =~ "lemmas") ||  ($script_arguments=~"--elp")) {  $lem = 1; }
-	  if ("$param" =~ "sleek_barr"){ $barr=1;}
-#      elsif ($script_arguments=~"--dlp"){ $lem = 0; }
-      
-      if ("$param" =~ "sleek") {
-          print "Starting sleek tests:\n";
-          $exempl_path_full = "$exempl_path/sleek";
-      }else {
-          $exempl_path_full = "$exempl_path_full/$param";
-          print "Starting sleek-$param tests:\n";
-      }
+
+      sleek_process_file_preprocess $param; #this will update the variable $exempl_path_full
+
       $t_list = $sleek_files{$param};
+
       foreach $test (@{$t_list})
-			{
-            my $extra_options = $test->[1];
-            if ("$extra_options" eq "") {
-                print "Checking $test->[0]\n";
-            } else {
-                print "Checking $test->[0] (runs with extra options: $extra_options)\n";
-            }
-            $script_args = $script_arguments." ".$extra_options;
-			$output = `$sleek $script_args $exempl_path_full/$test->[0] 2>&1`;
-			print LOGFILE "\n======================================\n";
-	        print LOGFILE "$output";
-            my $lemmas_results = "";
-            my $entail_results = "";
-			my $barrier_results = "";
-            my @lines = split /\n/, $output; 
-            foreach my $line (@lines) { 
-                if($line =~ m/Entailing lemma/){
-                    if($line =~ m/Valid/) { $lemmas_results = $lemmas_results ."Valid."; }
-                    elsif($line =~ m/Fail/)  { $lemmas_results = $lemmas_results ."Fail.";}
-                }elsif($line =~ m/Barrrier/){
-					 $barrier_results = $barrier_results .$line .".";
-				}elsif($line =~ m/Entail/){
-                    if( $err == 1) {
-                        $i = index($line, "Valid. (bot)",0);
-                        $h = index($line, "Valid.",0);
-                        $j = index($line, "Fail.(must)",0);
-                        $k = index($line, "Fail.(may)",0);
-                        #  print "i=".$i ." h=". $h . " j=" .$j . " k=".$k ."\n";
-                        if($i >= 0) { $r = $r ."bot."; }
-                        elsif($h >= 0) { $r = $r ."Valid."; }
-                        elsif($j >= 0)  { $r = $r ."must.";} #$line =~ m/Fail.(must)/
-                        elsif($k >= 0)  { $r = $r ."may.";}
-                    }
-                    else {
-                        if($line =~ m/Valid/) { $entail_results = $entail_results ."Valid."; }
-                        elsif($line =~ m/Fail/)  { $entail_results = $entail_results ."Fail.";}
-                    }
-                }
-            }
-			if ((($lem==0) && ($barr==0) && ($entail_results !~ /^$test->[3]$/)) || 
-				(($lem == 1)  && ($lemmas_results !~ /^$test->[2]$/)) || 
-				($barr==1 && ($barrier_results ne $test->[2])))
-			{
-				print "Unexpected result with : $test->[0]\n";
-				$error_count++;
-				$error_files = $error_files . " " . $test->[0];
-			}	
-			if($timings) {
-				# log_one_line_of_timings ($test->[0],$output);
-			}
-			sum_of_timings ($output);
-		}
-	}
+      {
+	  my $extra_options = $test->[1];
+	  if ("$extra_options" eq "") {
+	      print "Checking $test->[0]\n";
+	  } else {
+	      print "Checking $test->[0] (runs with extra options: $extra_options)\n";
+	  }
+
+	  $script_args = $script_arguments." ".$extra_options;
+	  $output = `$sleek $script_args $exempl_path_full/$test->[0] 2>&1`;
+	  print LOGFILE "\n======================================\n";
+	  print LOGFILE "Checking $test->[0]\n";
+	  print LOGFILE "$output";
+	  sleek_process_output $output, $test;
+      }
+  }
+}
+
+# Process sleek file in distributed manners (loris's cluster)
+sub sleek_process_file_dist  {
+  foreach $param (@param_list)
+  {
+      sleek_process_file_preprocess $param; #this will update the variable $exempl_path_full
+
+      $t_list = $sleek_files{$param};
+
+      if ($t_list){
+          process_file_dist($t_list,$sleek,"sleek");
+      }
+  }
 }
