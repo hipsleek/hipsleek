@@ -7,9 +7,9 @@ open Perm
 open Mcpure_D
 open Mcpure
 open Label_only
-
-module E = Env
+  
 module C = Cast
+module E = Env
 module Err = Error
 module I = Iast
 module IF = Iformula
@@ -21,17 +21,23 @@ module H = Hashtbl
 module TP = Tpdispatcher
 module Chk = Checks
 
-type spec_var_kind = typ
+type spec_var_info = { mutable sv_info_kind : spec_var_kind;
+                       id: int; }
 
-and spec_var_info = { mutable sv_info_kind : spec_var_kind;
-                      id: int; }
+and spec_var_kind = typ
 
-and spec_var_type_list_element= (ident * spec_var_info)
+type spec_var_type_list_element= (ident*spec_var_info)
 
 and spec_var_type_list = (( ident*spec_var_info)  list)
 
-let check_shallow_var = ref false (* true *) (*LDK: test*)
+let type_list_add v en (tlist:spec_var_type_list) = 
+  let  n_tl = List.remove_assoc v tlist in
+  (v,en)::n_tl
 
+
+(************************************************************
+Primitives handling stuff
+************************************************************)
 let string_of_tlist (tlist:spec_var_type_list) =    
   let rec aux t_l = (
     match t_l with
@@ -49,38 +55,16 @@ let string_of_tlist_type (tl,t)=
 let string_of_tlist_type_option (tl,t) = 
   (string_of_tlist tl)^", "^(pr_option string_of_typ t)
 
-let type_list_add v en (tlist:spec_var_type_list) = 
-  let  n_tl = List.remove_assoc v tlist in
-  (v,en)::n_tl
-
-(* TODO WN : NEED to re-check this function *)
-and get_var_kind (var : ident) (tlist : spec_var_type_list) =
-  try 
-    let r = snd(List.find (fun (v,en) -> v=var) tlist) in
-    r.sv_info_kind 
-  with Not_found -> UNK
-
-and set_var_kind (var : ident) (k : spec_var_kind) (tlist : spec_var_type_list) =
-  try 
-    let n_tl = (List.filter (fun (v,en)->v<>var) tlist) in
-    let r = snd(List.find (fun (v,en)->v=var) tlist) in
-    let n_el = (var,{id=r.id; sv_info_kind=k}) in
-    (n_el::n_tl, {id=r.id; sv_info_kind=k})
-  with Not_found -> 
-    let n_tl = (var,{ sv_info_kind = k;id = (fresh_int ()) })::tlist in
-    let typ = snd(List.find (fun (v,en)->v=var) n_tl) in
-    (n_tl,typ)  
-
 let res_retrieve tlist clean_res fl =
-    if clean_res then  
-        try 
-            let r = Some (snd((List.find (fun (v,en)-> v=res_name) tlist))) in
-            (if (CF.subsume_flow !raisable_flow_int (exlist # get_hash fl)) then 
-              let n_tl = List.filter (fun (v,en)->(v<>res_name)) tlist in
-              (n_tl, r)
-            else (tlist, r));
-        with Not_found -> (tlist, None)
-    else (tlist, None)
+  if clean_res then  
+      try 
+          let r = Some (snd((List.find (fun (v,en)-> v=res_name) tlist))) in
+          (if (CF.subsume_flow !raisable_flow_int (exlist # get_hash fl)) then 
+            let n_tl = List.filter (fun (v,en)->(v<>res_name)) tlist in
+            (n_tl, r)
+          else (tlist, r));
+      with Not_found -> (tlist, None)
+  else (tlist, None)
 
 let res_retrieve tlist clean_res fl =
   let pr = pr_id in
@@ -102,6 +86,8 @@ let res_replace tlist rl clean_res fl =
   Debug.no_eff_2 "res_replace" [true]
                  string_of_tlist pr pr_no
                  (fun _ _ -> res_replace tlist rl clean_res fl) tlist fl
+
+let check_shallow_var = ref false (* true *) (*LDK: test*)
 
 let node2_to_node_x prog (h0 : IF.h_formula_heap2) : IF.h_formula_heap =
   (* match named arguments with formal parameters to generate a list of    *)
@@ -181,80 +167,276 @@ let node2_to_node i prog (h0 : IF.h_formula_heap2) : IF.h_formula_heap =
       (fun f -> Iprinter.string_of_h_formula (IF.HeapNode f))
       (fun _ -> node2_to_node_x prog h0) h0
 
-(* TODO WN : this is not doing anything *)
-let fill_view_param_types (vdef : I.view_decl) =
-  if (String.length vdef.I.view_data_name) = 0 then report_error no_pos ("fill_view_param_types error!")
-  else ()
+let rec dim_unify d1 d2 = if (d1 = d2) then Some d1 else None
 
-(* ident, args, table *)
-let rec try_unify_view_type_args prog c vdef v ies tlist pos =
-  let dname = vdef.I.view_data_name in
-  let n_tl = (
-    if not (dname = "") then 
-      let (n_tl,_) = gather_type_info_var v tlist ( (Named dname)) pos in
-      n_tl
-    else tlist
+and must_unify (k1 : typ) (k2 : typ) tlist pos : (spec_var_type_list * typ) =
+  let pr = string_of_typ in
+  Debug.no_2 "must_unify" pr pr pr (fun _ _ -> must_unify_x k1 k2 tlist pos) k1 k2
+
+and must_unify_x (k1 : typ) (k2 : typ) tlist pos : (spec_var_type_list * typ) =
+  let (n_tlist,k) = unify_type k1 k2 tlist in
+  match k with
+    | Some r -> (n_tlist,r)
+    | None -> report_error pos ("UNIFICATION ERROR : at location "^(string_of_full_loc pos)
+      ^" types "^(string_of_typ (get_type_entire tlist k1))
+      ^" and "^(string_of_typ (get_type_entire tlist k2))^" are inconsistent")
+
+and must_unify_expect (k1 : typ) (k2 : typ) tlist pos : (spec_var_type_list * typ)  =
+  let pr = string_of_typ in
+  Debug.no_2 "must_unify_expect" pr pr pr (fun _ _ -> must_unify_expect_x k1 k2 tlist pos) k1 k2
+
+and must_unify_expect_x (k1 : typ) (k2 : typ) tlist pos : (spec_var_type_list * typ) =
+  let (n_tl,k) = unify_expect k1 k2 tlist in
+  match k with
+    | Some r -> (n_tl,r)
+    | None -> report_error pos ("TYPE ERROR 1 : Found "
+      ^(string_of_typ (get_type_entire tlist k1))
+      ^" but expecting "^(string_of_typ (get_type_entire  tlist k2)))
+
+and unify_type (k1 : spec_var_kind) (k2 : spec_var_kind)  tlist : (spec_var_type_list * (typ option)) =
+  let pr = string_of_spec_var_kind in
+  let pr2 = pr_option pr in
+  Debug.no_2 "unify_type" pr pr pr2 (fun _ _ -> unify_type_x k1 k2 tlist) k1 k2
+
+and unify_type_x (k1 : spec_var_kind) (k2 : spec_var_kind) tlist : (spec_var_type_list * (typ option)) =
+  unify_type_modify true k1 k2 tlist
+
+and unify_type_modify (modify_flag:bool) (k1 : spec_var_kind) (k2 : spec_var_kind) tlist : (spec_var_type_list*(typ option)) =
+  let rec repl_tlist i k tl = repl_tvar_in unify modify_flag tl i k 
+  and unify k1 k2 tl =
+    match k1,k2 with
+      | UNK, _ -> (tl,Some k2)
+      | _, UNK -> (tl,Some k1)
+      | Int, NUM -> (tl,Some Int) (* HACK here : give refined type *)
+      | Float, NUM -> (tl,Some Float) (* give refined type *)
+      | NUM, Int -> (tl,Some Int)
+      | NUM, Float -> (tl,Some Float)
+      | Int, Float -> (tl,Some Float) (*LDK: support floating point*)
+      | Float, Int -> (tl,Some Float) (*LDK*)
+      | Tree_sh, Tree_sh -> (tl,Some Tree_sh)
+      | t1, t2  -> 
+          if sub_type t1 t2 then (tlist, Some k2)  (* found t1, but expecting t2 *)
+          else if sub_type t2 t1 then (tlist,Some k1)
+          else 
+            begin
+              match t1,t2 with
+              | TVar i1,_ -> repl_tlist i1 k2 tl
+              | _,TVar i2 -> repl_tlist i2 k1 tl
+              | BagT x1,BagT x2 -> 
+                  (match (unify x1 x2 tl) with
+                  | (n_tl,Some t) -> (n_tl,Some (BagT t))
+                  | (n_tl,None) -> (n_tl,None))
+              | List x1,List x2 -> 
+                  (match (unify x1 x2 tl) with
+                  | (n_tl,Some t) -> (n_tl,Some (List t))
+                  | (n_tl,None) -> (n_tl,None))
+              | Array (x1,d1),Array (x2,d2) -> 
+                  (match (dim_unify d1 d2), (unify x1 x2 tl) with
+                  | Some d, (n_tl,Some t)  -> (n_tl,Some (Array (t,d)))
+                  | _,(n_tl,_) -> (n_tl,None))
+              | _,_ -> (tl,None)
+            end
+  in unify k1 k2 tlist
+
+(* k2 is expected type *)
+and unify_expect (k1 : spec_var_kind) (k2 : spec_var_kind) tlist : (spec_var_type_list*(typ option)) =
+  unify_expect_modify true k1 k2 tlist
+
+and must_unify_expect_test k1 k2 tlist pos = 
+  let (_,k) = unify_expect_modify false k1 k2 tlist  in
+  match k with
+    | Some r -> r
+    | None -> report_error pos ("TYPE ERROR 2 : Found "
+      ^(string_of_typ (k1))
+      ^" but expecting "^(string_of_typ (k2)))
+
+and must_unify_expect_test_2 k1 k2 k3 tlist pos = 
+  let (_, k) = unify_expect_modify false k1 k2 tlist in
+  match k with
+    | Some r -> r
+    | None -> must_unify_expect_test k1 k3 tlist pos 
+          
+and subtype_expect_test _ _ = true
+
+and unify_expect_modify (modify_flag:bool) (k1 : spec_var_kind) (k2 : spec_var_kind) tlist : (spec_var_type_list*(typ option)) =
+  let pr = string_of_typ in
+  Debug.no_2 "unify_expect_modify" pr pr string_of_tlist_type_option (fun _ _ -> unify_expect_modify_x modify_flag k1 k2 tlist) k1 k2
+
+(* k2 is expected type *)
+and unify_expect_modify_x (modify_flag:bool) (k1 : spec_var_kind) (k2 : spec_var_kind) tlist : (spec_var_type_list*(typ option)) =
+  let bal_unify k1 k2 tl= unify_type_modify modify_flag k1 k2 tl in
+  let repl_tlist i k tl = repl_tvar_in bal_unify modify_flag tl i k in
+  let rec unify k1 k2 tl =
+    match k1,k2 with
+    | UNK, _ -> (tl ,Some k2)
+    | _, UNK -> (tl,Some k1)
+    | Int, NUM -> (tl,Some Int) (* give refined type *)
+    | Float, NUM -> (tl,Some Float) (* give refined type *)
+    | Int , Float -> (tl,Some Float) (*LDK*)
+    | Float , Int -> (tl,Some Float) (*LDK*)
+    | t1, t2  -> 
+        if sub_type t1 t2 then (tl,Some k2)  (* found t1, but expecting t2 *)
+          (* else if sub_type t2 t1 then Some k1 *)
+        else 
+          begin
+            match t1,t2 with
+            | TVar i1,_ -> repl_tlist i1 k2 tl
+            | _,TVar i2 -> repl_tlist i2 k1 tl
+            | BagT x1,BagT x2 -> (
+                match (unify x1 x2 tl) with
+                | (n_tl,Some t) -> (n_tl,Some (BagT t))
+                | (n_tl,None) -> (n_tl,None)
+              )
+            | List x1,List x2 -> (
+                match (unify x1 x2 tl) with
+                | (n_tl,Some t) -> (n_tl,Some (List t))
+                | (n_tl,None) -> (n_tl,None)
+              )
+            | Array (x1,d1),Array (x2,d2) -> (
+                match (dim_unify d1 d2), (unify x1 x2 tl) with
+                | Some d, (n_tl,Some t)  -> (n_tl,Some (Array (t,d)))
+                | _,(n_tl,_)-> (n_tl,None)
+              )
+            | _,_ -> (tlist,None)
+          end
+  in unify k1 k2 tlist  
+
+and repl_tvar_in unify flag tlist i k =
+  Debug.no_eff_4 "repl_tvar_in" [false;false;false;true]
+    string_of_bool string_of_int string_of_typ string_of_tlist string_of_tlist_type_option
+    (fun _ _ _ _ -> repl_tvar_in_x unify flag tlist i k) flag i k tlist
+
+(* TODO : should TVar j be updated to point to i *)
+and repl_tvar_in_x unify flag tlist i k =
+  let test x = (
+    let i2 = x.id in 
+    match k with 
+    | TVar j -> i2=i || i2=j 
+    | _ -> i2=i 
   ) in
-  let _ = if (String.length vdef.I.view_data_name) = 0  then fill_view_param_types vdef in
-  let vt = vdef.I.view_typed_vars in
-  let rec helper exps tvars =
-    match (exps, tvars) with
-      | ([], []) -> []
-      | (e :: rest1, t :: rest2) ->
-            let tmp = helper rest1 rest2
-            in
-            (match e with
-              | IP.Var ((v, p), pos) -> 
-                    let ty = fst t in (ty, v) :: tmp
-              | _ -> tmp)
-      | _ ->
-            Err.report_error
-                {
-                    Err.error_loc = pos;
-                    Err.error_text =
-                        "number of arguments for view " ^
-                            (c ^ " does not match");
-                } in
-  let tmp_r = helper ies vt in
-  let (vt_u,tmp_r) = List.partition (fun (ty,_) -> ty==UNK) tmp_r in
-  if (Gen.is_empty vt_u)
-  then
-    let n_tl = (List.fold_left (fun tl (t, n) -> fst(gather_type_info_var n tl (t) pos)) n_tl tmp_r) in
-    n_tl
-  else begin
-    (* below seems wrong to unify against previous var names *)
-    (try 
-      let n_tl = (List.fold_left (fun tl (t, n) -> fst(gather_type_info_var n tl (t) pos))n_tl tmp_r) in
-      let f tl arg lhs_v = 
-        (let et = get_var_kind lhs_v tl  in 
-        let (n_tl,new_t) = gather_type_info_exp arg tl et in
-        let (n_tl,typ) = set_var_kind lhs_v new_t n_tl in n_tl ) 
-      in (List.fold_left2 f n_tl ies vdef.I.view_vars)
-    with | Invalid_argument _ -> report_error pos ("number of arguments for view " ^ c ^ " does not match")
-    )
-  end
+  let new_k = (
+    match k with 
+    | TVar _ -> UNK
+    | _ -> k
+  ) in
+  let res_t = List.fold_right (fun (v,en) (_tl,et) ->
+    match et with
+    | None -> (_tl,et)
+    | Some t1 -> 
+        if not(test en) then (_tl,et)
+        else 
+          match en.sv_info_kind with
+          | TVar _ -> (_tl,et)
+          | t -> (unify t t1 _tl) 
+  ) tlist (tlist, Some new_k) in
+  match res_t with 
+  | (n_tl,None) -> (n_tl,None)
+  | (n_tl,Some ut) ->
+      let ut = match ut with
+        | UNK -> k 
+        | _ -> ut in
+      (* TVar i --> ut *)
+      if flag then (
+        let rec aux t_l = (
+          match t_l with 
+          | [] -> []
+          | (v,en)::tail ->
+              if test en then 
+                let n_en = { sv_info_kind = ut; id = en.id} in
+                let n_el = (v,n_en) in
+                n_el::(aux tail)
+              else 
+                let nt = subs_tvar_in_typ en.sv_info_kind i ut in
+                let n_en = { sv_info_kind = nt; id = en.id} in
+                let n_el = (v,n_en) in
+                n_el::(aux tail) 
+        ) in
+        let n_tlist = aux n_tl in
+        (n_tlist,Some ut)
+      ) else (n_tl,Some ut) 
 
 
-and try_unify_data_type_args prog c ddef v ies tlist pos =
-  (* An Hoa : problem detected - have to expand the inline fields as well, fix in look_up_all_fields. *)
-  let (n_tl,_) = gather_type_info_var v tlist ((Named c)) pos in
-  let fields = I.look_up_all_fields prog ddef
-  in 
-  (try 
-    let f tl arg ((ty,_),_,_,_)=
-      (let (n_tl,_) = gather_type_info_exp arg tl ty in n_tl)
-    in (List.fold_left2 f n_tl ies fields)
-  with | Invalid_argument _ ->
-      Err.report_error
-          {
-              Err.error_loc = pos;
-              Err.error_text =
-                  "number of arguments for data " ^
-                      c ^ " does not match"^(pr_list (fun c->c)(List.map Iprinter.string_of_formula_exp ies));
-          }
-  )
 
-and gather_type_info_var (var : ident) tlist (ex_t : typ) pos : (spec_var_type_list * typ) =
+and get_type_entire tlist t =
+  let rec helper t = match t with
+    | TVar j -> get_type tlist j
+    | BagT et -> BagT (helper et)
+    | List et -> List (helper et)
+    | Array (et,d) -> Array (helper et,d)
+    | _ -> t
+  in helper t
+         
+and get_type tlist i = 
+  let key = "TVar__"^(string_of_int i) in
+  ( try 
+    let (v,en) = List.find (fun (var,bk) -> var=key) tlist in
+    en.sv_info_kind 
+  with _ -> report_error no_pos ("UNEXPECTED : Type Var "^key^" cannot be found in tlist"))
+
+and string_of_spec_var_kind (k : spec_var_kind) =
+  string_of_typ k
+
+and fresh_proc_var_kind tlist et = 
+  match et with
+  | TVar i -> { sv_info_kind = et; id = i}
+  | _ -> { sv_info_kind = et; id = fresh_int ()}
+
+(* should create entry in tlist *)
+and fresh_tvar_rec tlist = 
+  let i = fresh_int() in
+  let key = "TVar__"^(string_of_int i) in
+  let t2 = TVar i in
+  let en={ sv_info_kind = t2; id = i} in
+  (en, (key,en)::tlist)
+
+and fresh_tvar tlist = 
+  let (en, n_tlist) = fresh_tvar_rec tlist in
+  (en.sv_info_kind,n_tlist)
+
+(* TODO WN : NEED to re-check this function *)
+and trans_type (prog : I.prog_decl) (t : typ) (pos : loc) : typ =
+  match t with
+    | Named c ->
+          (try
+            let _ = I.look_up_data_def_raw prog.I.prog_data_decls c
+            in Named c
+          with
+            | Not_found ->
+                  (try
+                    let _ = I.look_up_enum_def_raw prog.I.prog_enum_decls c
+                    in Int
+                  with
+                    | Not_found -> (* An Hoa : cannot find the type, just keep the name. *)
+                          if CF.view_prim_lst # mem c then Named c
+                          else
+                          (* if !inter then*)
+                          Err.report_error
+                              {
+                                  Err.error_loc = pos;
+                                  Err.error_text = c ^ " is neither data, enum type, nor prim pred";
+                              }
+                              (*else let _ = report_warning pos ("Type " ^ c ^ " is not yet defined!") in
+                                let _ = undef_data_types := (c, pos) :: !undef_data_types in
+                                Named c (* Store this temporarily *)*)
+                  ))
+    | Array (et, r) -> Array (trans_type prog et pos, r) (* An Hoa *)
+    | p -> p
+
+and trans_type_back (te : typ) : typ =
+  match te with 
+    | Named n -> Named n 
+    | Array (t, d) -> Array (trans_type_back t, d) (* An Hoa *) 
+    | p -> p 
+
+and sub_type_x (t1 : typ) (t2 : typ) =
+  let it1 = trans_type_back t1 in
+  let it2 = trans_type_back t2 in I.sub_type it1 it2
+
+and sub_type (t1 : typ) (t2 : typ) =
+  let pr = string_of_typ in
+  Debug.no_2 "sub_type" pr pr string_of_bool sub_type_x t1 t2 
+
+and gather_type_info_var (var : ident) tlist (ex_t : typ) pos : (spec_var_type_list*typ) =
   let pr = string_of_typ in
   Debug.no_eff_3 "gather_type_info_var" [false;true] (fun x -> ("ident: "^x)) string_of_tlist pr string_of_tlist_type 
                  (fun _ _ _ -> gather_type_info_var_x var tlist ex_t pos) var tlist ex_t
@@ -567,6 +749,39 @@ and gather_type_info_b_formula_x prog b0 tlist =
         | _ -> print_endline ("gather_type_info_b_formula: relation " ^ r);tlist
     )
 
+and guess_type_of_exp_arith a0 tlist =
+  match a0 with
+    | IP.Null _ -> (tlist,UNK)
+    | IP.Var ((sv, sp), pos) ->
+          begin
+            try
+              let info = snd(List.find (fun (v,en) -> v=sv) tlist) in
+              (tlist,info.sv_info_kind)
+            with Not_found -> (tlist,UNK)
+          end
+    | IP.Add (e1, e2, pos) | IP.Subtract (e1, e2, pos) | IP.Mult (e1, e2, pos)
+    | IP.Max (e1, e2, pos) | IP.Min (e1, e2, pos) | IP.Div (e1, e2, pos) ->
+          let (n_tl,t1) = guess_type_of_exp_arith e1 tlist in
+          let (n_tl,t2) = guess_type_of_exp_arith e2 n_tl in
+          begin
+            match t1, t2 with
+              | _, UNK -> (n_tl,t1)
+              | UNK, _ -> (n_tl,t2)
+              | Float, Float -> (n_tl,t1)
+              | Int, Int -> (n_tl,t1)
+              | Int, Float | Float, Int  -> 
+                    Err.report_error
+                        {
+                            Err.error_loc = pos;
+                            Err.error_text = "int<>float: type-mismatch in expression: " ^ (Iprinter.string_of_formula_exp a0);
+                        }
+              | _ -> (n_tl,UNK)
+          end
+              (* | IP.Div _ -> Known (Float) *)
+    | IP.IConst _ -> (tlist,Int)
+    | IP.FConst _ -> (tlist,Float)
+    | IP.Ann_Exp (_,t) -> (tlist,t)
+    | _ -> (tlist,UNK)
 
 and gather_type_info_pointer (e0 : IP.exp) (k : spec_var_kind) (tlist:spec_var_type_list) : (spec_var_type_list*typ) =
   match e0 with
@@ -574,8 +789,6 @@ and gather_type_info_pointer (e0 : IP.exp) (k : spec_var_kind) (tlist:spec_var_t
   | IP.Var ((sv, sp), pos) -> gather_type_info_var sv tlist k pos
   | _ -> Err.report_error { Err.error_loc = IP.pos_of_exp e0;
                             Err.error_text = "arithmetic is not allowed in pointer term"; }
-
-
 
 and gather_type_info_formula prog f0 tlist filter_res:spec_var_type_list = 
   Debug.no_eff_3 "gather_type_info_formula" [false;true]
@@ -655,6 +868,140 @@ and gather_type_info_struc_f_x prog (f0:IF.struc_formula) tlist =
     (* inner_collector f0; *)
     (* check_shallow_var := true *)
   end
+
+and try_unify_data_type_args prog c ddef v ies tlist pos =
+  (* An Hoa : problem detected - have to expand the inline fields as well, fix in look_up_all_fields. *)
+  let (n_tl,_) = gather_type_info_var v tlist ((Named c)) pos in
+  let fields = I.look_up_all_fields prog ddef
+  in 
+  (try 
+    let f tl arg ((ty,_),_,_,_)=
+      (let (n_tl,_) = gather_type_info_exp arg tl ty in n_tl)
+    in (List.fold_left2 f n_tl ies fields)
+  with | Invalid_argument _ ->
+      Err.report_error
+          {
+              Err.error_loc = pos;
+              Err.error_text =
+                  "number of arguments for data " ^
+                      c ^ " does not match"^(pr_list (fun c->c)(List.map Iprinter.string_of_formula_exp ies));
+          }
+  )
+
+(* TODO WN : this is not doing anything *)
+and fill_view_param_types (vdef : I.view_decl) =
+  if (String.length vdef.I.view_data_name) = 0 then report_error no_pos ("fill_view_param_types error!")
+  else ()
+
+(* ident, args, table *)
+and try_unify_view_type_args prog c vdef v ies tlist pos =
+  let dname = vdef.I.view_data_name in
+  let n_tl = (
+    if not (dname = "") then 
+      let (n_tl,_) = gather_type_info_var v tlist ( (Named dname)) pos in
+      n_tl
+    else tlist
+  ) in
+  let _ = if (String.length vdef.I.view_data_name) = 0  then fill_view_param_types vdef in
+  let vt = vdef.I.view_typed_vars in
+  let rec helper exps tvars =
+    match (exps, tvars) with
+      | ([], []) -> []
+      | (e :: rest1, t :: rest2) ->
+            let tmp = helper rest1 rest2
+            in
+            (match e with
+              | IP.Var ((v, p), pos) -> 
+                    let ty = fst t in (ty, v) :: tmp
+              | _ -> tmp)
+      | _ ->
+            Err.report_error
+                {
+                    Err.error_loc = pos;
+                    Err.error_text =
+                        "number of arguments for view " ^
+                            (c ^ " does not match");
+                } in
+  let tmp_r = helper ies vt in
+  let (vt_u,tmp_r) = List.partition (fun (ty,_) -> ty==UNK) tmp_r in
+  if (Gen.is_empty vt_u)
+  then
+    let n_tl = (List.fold_left (fun tl (t, n) -> fst(gather_type_info_var n tl (t) pos)) n_tl tmp_r) in
+    n_tl
+  else begin
+    (* below seems wrong to unify against previous var names *)
+    (try 
+      let n_tl = (List.fold_left (fun tl (t, n) -> fst(gather_type_info_var n tl (t) pos))n_tl tmp_r) in
+      let f tl arg lhs_v = 
+        (let et = get_var_kind lhs_v tl  in 
+        let (n_tl,new_t) = gather_type_info_exp arg tl et in
+        let (n_tl,typ) = set_var_kind lhs_v new_t n_tl in n_tl ) 
+      in (List.fold_left2 f n_tl ies vdef.I.view_vars)
+    with | Invalid_argument _ -> report_error pos ("number of arguments for view " ^ c ^ " does not match")
+    )
+  end
+
+(* TODO WN : NEED to re-check this function *)
+and get_var_kind (var : ident) (tlist : spec_var_type_list) =
+  try 
+    let r = snd(List.find (fun (v,en) -> v=var) tlist) in
+    r.sv_info_kind 
+  with Not_found -> UNK
+
+and set_var_kind (var : ident) (k : spec_var_kind) (tlist : spec_var_type_list) =
+  try 
+    let n_tl = (List.filter (fun (v,en)->v<>var) tlist) in
+    let r = snd(List.find (fun (v,en)->v=var) tlist) in
+    let n_el = (var,{id=r.id; sv_info_kind=k}) in
+    (n_el::n_tl, {id=r.id; sv_info_kind=k})
+  with Not_found -> 
+    let n_tl = (var,{ sv_info_kind = k;id = (fresh_int ()) })::tlist in
+    let typ = snd(List.find (fun (v,en)->v=var) n_tl) in
+    (n_tl,typ)  
+
+and get_spec_var_ident (tlist:spec_var_type_list) (var : ident) p =
+  try
+    let k = snd(List.find (fun (v,en)->v=var) tlist) in
+    CP.SpecVar(k.sv_info_kind,var,p)
+  with 
+    | Not_found -> CP.SpecVar(UNK,var,p)
+          
+
+and get_spec_var_type_list (v : ident) tlist pos =
+  try
+    let v_info = snd(List.find (fun (tv,en) -> tv=v) tlist) in
+    match v_info.sv_info_kind with
+    | UNK -> Err.report_error { Err.error_loc = pos;
+                                Err.error_text = v ^ " is undefined"; }
+    | t -> let sv = CP.SpecVar (t, v, Unprimed) in sv
+  with
+    | Not_found -> Err.report_error { Err.error_loc = pos;
+                                      Err.error_text = v ^ " is undefined"; }
+
+and get_spec_var_type_list_infer (v : ident) fvs pos =
+  let pr_sv = Cprinter.string_of_spec_var in
+  Debug.no_2 "get_spec_var_type_list_infer" 
+    pr_id (pr_list pr_sv) pr_sv
+    (fun _ _ -> get_spec_var_type_list_infer_x v fvs pos) v fvs
+
+and get_spec_var_type_list_infer_x (v : ident) fvs pos =
+  let get_var_type v fv_list: (typ * bool) = 
+    let res_list = CP.remove_dups_svl (List.filter (fun c -> v = CP.name_of_spec_var c) fv_list) in
+    match res_list with
+    | [] -> (Void,false)
+    | [sv] -> (CP.type_of_spec_var sv,true)
+    | _ -> Err.report_error { Err.error_loc = pos;
+                              Err.error_text = "could not find a coherent "^v^" type"}
+  in
+  let vtyp, check = get_var_type v fvs in
+  if check = false then
+    Err.report_error { Err.error_loc = pos;
+                       Err.error_text = v ^ " is not found in both sides"; }
+  else
+    match vtyp with
+    | UNK -> Err.report_error { Err.error_loc = pos;
+                                Err.error_text = v ^ " is undefined"; }
+    | t -> CP.SpecVar (t, v, Unprimed)
 
 and gather_type_info_heap prog (h0 : IF.h_formula) tlist =
   Debug.no_eff_2 "gather_type_info_heap" [false;true]
@@ -820,300 +1167,3 @@ and gather_type_info_heap_x prog (h0 : IF.h_formula) tlist =
       | _ -> print_endline ("gather_type_info_heap: relation " ^ r);tlist
       )
     | IF.HTrue | IF.HFalse | IF.HEmp -> tlist
-
-
-and must_unify (k1 : typ) (k2 : typ) tlist pos : (spec_var_type_list * typ) =
-  let pr = string_of_typ in
-  Debug.no_2 "must_unify" pr pr pr (fun _ _ -> must_unify_x k1 k2 tlist pos) k1 k2
-
-and must_unify_x (k1 : typ) (k2 : typ) tlist pos : (spec_var_type_list * typ) =
-  let (n_tlist,k) = unify_type k1 k2 tlist in
-  match k with
-    | Some r -> (n_tlist,r)
-    | None -> report_error pos ("UNIFICATION ERROR : at location "^(string_of_full_loc pos)
-      ^" types "^(string_of_typ (get_type_entire tlist k1))
-      ^" and "^(string_of_typ (get_type_entire tlist k2))^" are inconsistent")
-
-and must_unify_expect (k1 : typ) (k2 : typ) tlist pos : (spec_var_type_list * typ)  =
-  let pr = string_of_typ in
-  Debug.no_2 "must_unify_expect" pr pr pr (fun _ _ -> must_unify_expect_x k1 k2 tlist pos) k1 k2
-
-and must_unify_expect_x (k1 : typ) (k2 : typ) tlist pos : (spec_var_type_list * typ) =
-  let (n_tl,k) = unify_expect k1 k2 tlist in
-  match k with
-    | Some r -> (n_tl,r)
-    | None -> report_error pos ("TYPE ERROR 1 : Found "
-      ^(string_of_typ (get_type_entire tlist k1))
-      ^" but expecting "^(string_of_typ (get_type_entire  tlist k2)))
-
-and unify_type (k1 : spec_var_kind) (k2 : spec_var_kind)  tlist : (spec_var_type_list * (typ option)) =
-  let pr = string_of_spec_var_kind in
-  let pr2 = pr_option pr in
-  Debug.no_2 "unify_type" pr pr pr2 (fun _ _ -> unify_type_x k1 k2 tlist) k1 k2
-
-and unify_type_x (k1 : spec_var_kind) (k2 : spec_var_kind) tlist : (spec_var_type_list * (typ option)) =
-  unify_type_modify true k1 k2 tlist
-
-and unify_type_modify (modify_flag:bool) (k1 : spec_var_kind) (k2 : spec_var_kind) tlist : (spec_var_type_list*(typ option)) =
-  let rec repl_tlist i k tl = repl_tvar_in unify modify_flag tl i k 
-  and unify k1 k2 tl =
-    match k1,k2 with
-      | UNK, _ -> (tl,Some k2)
-      | _, UNK -> (tl,Some k1)
-      | Int, NUM -> (tl,Some Int) (* HACK here : give refined type *)
-      | Float, NUM -> (tl,Some Float) (* give refined type *)
-      | NUM, Int -> (tl,Some Int)
-      | NUM, Float -> (tl,Some Float)
-      | Int, Float -> (tl,Some Float) (*LDK: support floating point*)
-      | Float, Int -> (tl,Some Float) (*LDK*)
-      | Tree_sh, Tree_sh -> (tl,Some Tree_sh)
-      | t1, t2  -> 
-          if sub_type t1 t2 then (tlist, Some k2)  (* found t1, but expecting t2 *)
-          else if sub_type t2 t1 then (tlist,Some k1)
-          else 
-            begin
-              match t1,t2 with
-              | TVar i1,_ -> repl_tlist i1 k2 tl
-              | _,TVar i2 -> repl_tlist i2 k1 tl
-              | BagT x1,BagT x2 -> 
-                  (match (unify x1 x2 tl) with
-                  | (n_tl,Some t) -> (n_tl,Some (BagT t))
-                  | (n_tl,None) -> (n_tl,None))
-              | List x1,List x2 -> 
-                  (match (unify x1 x2 tl) with
-                  | (n_tl,Some t) -> (n_tl,Some (List t))
-                  | (n_tl,None) -> (n_tl,None))
-              | Array (x1,d1),Array (x2,d2) -> 
-                  (match (dim_unify d1 d2), (unify x1 x2 tl) with
-                  | Some d, (n_tl,Some t)  -> (n_tl,Some (Array (t,d)))
-                  | _,(n_tl,_) -> (n_tl,None))
-              | _,_ -> (tl,None)
-            end
-  in unify k1 k2 tlist
-
-(* k2 is expected type *)
-and unify_expect (k1 : spec_var_kind) (k2 : spec_var_kind) tlist : (spec_var_type_list*(typ option)) =
-  unify_expect_modify true k1 k2 tlist
-
-and must_unify_expect_test k1 k2 tlist pos = 
-  let (_,k) = unify_expect_modify false k1 k2 tlist  in
-  match k with
-    | Some r -> r
-    | None -> report_error pos ("TYPE ERROR 2 : Found "
-      ^(string_of_typ (k1))
-      ^" but expecting "^(string_of_typ (k2)))
-
-and must_unify_expect_test_2 k1 k2 k3 tlist pos = 
-  let (_, k) = unify_expect_modify false k1 k2 tlist in
-  match k with
-    | Some r -> r
-    | None -> must_unify_expect_test k1 k3 tlist pos 
-          
-and subtype_expect_test _ _ = true
-
-and unify_expect_modify (modify_flag:bool) (k1 : spec_var_kind) (k2 : spec_var_kind) tlist : (spec_var_type_list*(typ option)) =
-  let pr = string_of_typ in
-  Debug.no_2 "unify_expect_modify" pr pr string_of_tlist_type_option (fun _ _ -> unify_expect_modify_x modify_flag k1 k2 tlist) k1 k2
-
-(* k2 is expected type *)
-and unify_expect_modify_x (modify_flag:bool) (k1 : spec_var_kind) (k2 : spec_var_kind) tlist : (spec_var_type_list*(typ option)) =
-  let bal_unify k1 k2 tl= unify_type_modify modify_flag k1 k2 tl in
-  let repl_tlist i k tl = repl_tvar_in bal_unify modify_flag tl i k in
-  let rec unify k1 k2 tl =
-    match k1,k2 with
-    | UNK, _ -> (tl ,Some k2)
-    | _, UNK -> (tl,Some k1)
-    | Int, NUM -> (tl,Some Int) (* give refined type *)
-    | Float, NUM -> (tl,Some Float) (* give refined type *)
-    | Int , Float -> (tl,Some Float) (*LDK*)
-    | Float , Int -> (tl,Some Float) (*LDK*)
-    | t1, t2  -> 
-        if sub_type t1 t2 then (tl,Some k2)  (* found t1, but expecting t2 *)
-          (* else if sub_type t2 t1 then Some k1 *)
-        else 
-          begin
-            match t1,t2 with
-            | TVar i1,_ -> repl_tlist i1 k2 tl
-            | _,TVar i2 -> repl_tlist i2 k1 tl
-            | BagT x1,BagT x2 -> (
-                match (unify x1 x2 tl) with
-                | (n_tl,Some t) -> (n_tl,Some (BagT t))
-                | (n_tl,None) -> (n_tl,None)
-              )
-            | List x1,List x2 -> (
-                match (unify x1 x2 tl) with
-                | (n_tl,Some t) -> (n_tl,Some (List t))
-                | (n_tl,None) -> (n_tl,None)
-              )
-            | Array (x1,d1),Array (x2,d2) -> (
-                match (dim_unify d1 d2), (unify x1 x2 tl) with
-                | Some d, (n_tl,Some t)  -> (n_tl,Some (Array (t,d)))
-                | _,(n_tl,_)-> (n_tl,None)
-              )
-            | _,_ -> (tlist,None)
-          end
-  in unify k1 k2 tlist  
-
-and repl_tvar_in unify flag tlist i k =
-  Debug.no_eff_4 "repl_tvar_in" [false;false;false;true]
-    string_of_bool string_of_int string_of_typ string_of_tlist string_of_tlist_type_option
-    (fun _ _ _ _ -> repl_tvar_in_x unify flag tlist i k) flag i k tlist
-
-(* TODO : should TVar j be updated to point to i *)
-and repl_tvar_in_x unify flag tlist i k =
-  let test x = (
-    let i2 = x.id in 
-    match k with 
-    | TVar j -> i2=i || i2=j 
-    | _ -> i2=i 
-  ) in
-  let new_k = (
-    match k with 
-    | TVar _ -> UNK
-    | _ -> k
-  ) in
-  let res_t = List.fold_right (fun (v,en) (_tl,et) ->
-    match et with
-    | None -> (_tl,et)
-    | Some t1 -> 
-        if not(test en) then (_tl,et)
-        else 
-          match en.sv_info_kind with
-          | TVar _ -> (_tl,et)
-          | t -> (unify t t1 _tl) 
-  ) tlist (tlist, Some new_k) in
-  match res_t with 
-  | (n_tl,None) -> (n_tl,None)
-  | (n_tl,Some ut) ->
-      let ut = match ut with
-        | UNK -> k 
-        | _ -> ut in
-      (* TVar i --> ut *)
-      if flag then (
-        let rec aux t_l = (
-          match t_l with 
-          | [] -> []
-          | (v,en)::tail ->
-              if test en then 
-                let n_en = { sv_info_kind = ut; id = en.id} in
-                let n_el = (v,n_en) in
-                n_el::(aux tail)
-              else 
-                let nt = subs_tvar_in_typ en.sv_info_kind i ut in
-                let n_en = { sv_info_kind = nt; id = en.id} in
-                let n_el = (v,n_en) in
-                n_el::(aux tail) 
-        ) in
-        let n_tlist = aux n_tl in
-        (n_tlist,Some ut)
-      ) else (n_tl,Some ut) 
-
-and fresh_proc_var_kind tlist et = 
-  match et with
-  | TVar i -> { sv_info_kind = et; id = i}
-  | _ -> { sv_info_kind = et; id = fresh_int ()}
-
-(* should create entry in tlist *)
-and fresh_tvar_rec tlist = 
-  let i = fresh_int() in
-  let key = "TVar__"^(string_of_int i) in
-  let t2 = TVar i in
-  let en={ sv_info_kind = t2; id = i} in
-  (en, (key,en)::tlist)
-
-and fresh_tvar tlist = 
-  let (en, n_tlist) = fresh_tvar_rec tlist in
-  (en.sv_info_kind,n_tlist)
-
-(* TODO WN : NEED to re-check this function *)
-and trans_type (prog : I.prog_decl) (t : typ) (pos : loc) : typ =
-  match t with
-    | Named c ->
-          (try
-            let _ = I.look_up_data_def_raw prog.I.prog_data_decls c
-            in Named c
-          with
-            | Not_found ->
-                  (try
-                    let _ = I.look_up_enum_def_raw prog.I.prog_enum_decls c
-                    in Int
-                  with
-                    | Not_found -> (* An Hoa : cannot find the type, just keep the name. *)
-                          if CF.view_prim_lst # mem c then Named c
-                          else
-                          (* if !inter then*)
-                          Err.report_error
-                              {
-                                  Err.error_loc = pos;
-                                  Err.error_text = c ^ " is neither data, enum type, nor prim pred";
-                              }
-                              (*else let _ = report_warning pos ("Type " ^ c ^ " is not yet defined!") in
-                                let _ = undef_data_types := (c, pos) :: !undef_data_types in
-                                Named c (* Store this temporarily *)*)
-                  ))
-    | Array (et, r) -> Array (trans_type prog et pos, r) (* An Hoa *)
-    | p -> p
-
-and get_spec_var_type_list (v : ident) tlist pos =
-  try
-    let v_info = snd(List.find (fun (tv,en) -> tv=v) tlist) in
-    match v_info.sv_info_kind with
-    | UNK -> Err.report_error { Err.error_loc = pos;
-                                Err.error_text = v ^ " is undefined"; }
-    | t -> let sv = CP.SpecVar (t, v, Unprimed) in sv
-  with
-    | Not_found -> Err.report_error { Err.error_loc = pos;
-                                      Err.error_text = v ^ " is undefined"; }
-
-and get_spec_var_type_list_infer (v : ident) fvs pos =
-  let pr_sv = Cprinter.string_of_spec_var in
-  Debug.no_2 "get_spec_var_type_list_infer" 
-    pr_id (pr_list pr_sv) pr_sv
-    (fun _ _ -> get_spec_var_type_list_infer_x v fvs pos) v fvs
-
-and get_spec_var_type_list_infer_x (v : ident) fvs pos =
-  let get_var_type v fv_list: (typ * bool) = 
-    let res_list = CP.remove_dups_svl (List.filter (fun c -> v = CP.name_of_spec_var c) fv_list) in
-    match res_list with
-    | [] -> (Void,false)
-    | [sv] -> (CP.type_of_spec_var sv,true)
-    | _ -> Err.report_error { Err.error_loc = pos;
-                              Err.error_text = "could not find a coherent "^v^" type"}
-  in
-  let vtyp, check = get_var_type v fvs in
-  if check = false then
-    Err.report_error { Err.error_loc = pos;
-                       Err.error_text = v ^ " is not found in both sides"; }
-  else
-    match vtyp with
-    | UNK -> Err.report_error { Err.error_loc = pos;
-                                Err.error_text = v ^ " is undefined"; }
-    | t -> CP.SpecVar (t, v, Unprimed)
-
-and get_type_entire tlist t =
-  let rec helper t = match t with
-    | TVar j -> get_type tlist j
-    | BagT et -> BagT (helper et)
-    | List et -> List (helper et)
-    | Array (et,d) -> Array (helper et,d)
-    | _ -> t
-  in helper t
-
-and get_type tlist i = 
-  let key = "TVar__"^(string_of_int i) in
-  ( try 
-    let (v,en) = List.find (fun (var,bk) -> var=key) tlist in
-    en.sv_info_kind 
-  with _ -> report_error no_pos ("UNEXPECTED : Type Var "^key^" cannot be found in tlist"))
-
-and string_of_spec_var_kind (k : spec_var_kind) =
-  string_of_typ k
-
-and dim_unify d1 d2 = if (d1 = d2) then Some d1 else None
-
-and get_spec_var_ident (tlist:spec_var_type_list) (var : ident) p =
-  try
-    let k = snd(List.find (fun (v,en)->v=var) tlist) in
-    CP.SpecVar(k.sv_info_kind,var,p)
-  with 
-    | Not_found -> CP.SpecVar(UNK,var,p)

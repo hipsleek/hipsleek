@@ -10,8 +10,8 @@ open Mcpure
 open Label_only
 open Typeinfer
   
-module E = Env
 module C = Cast
+module E = Env
 module Err = Error
 module I = Iast
 module IF = Iformula
@@ -25,26 +25,8 @@ module TP = Tpdispatcher
 module Chk = Checks
 
 
-(* module VG = View_generator *)
-
-(*
-module VHD = struct
-        type t = ident
-    let compare c1 c2 = String.compare c1 c2
-    let hash c = Hashtbl.hash c
-    let equal c1 c2 = (String.compare c1 c2) = 0
-end
-module VH = Graph.Persistent.Digraph.Concrete(VHD)
-module SVH = Graph.Components.Make(VH)          
-*)
-
 type trans_exp_type =
   (C.exp * typ)
-
-
-
-
-
 
 let pr_v_decls l = pr_list (fun v -> v.I.view_name) l
 
@@ -76,12 +58,6 @@ let inter_hoa = ref false
 Primitives handling stuff
 ************************************************************)
 (* Add a primitive function update___. Note: it is supposed to be dynamically inserted depending on the available types. *)
-
-and string_of_var_kind k = string_of_typ k
-  (* (match k with  *)
-  (*    | Unknown -> "unknown"  *)
-  (*    | Known d->  *)
-  (*   ("known "^(string_of_typ d)) ) *)
 
 let prim_buffer = Buffer.create 1024
 
@@ -193,7 +169,6 @@ let assign_op_to_bin_op_map =
 let bin_op_of_assign_op (aop : I.assign_op) =
   List.assoc aop assign_op_to_bin_op_map
 
- 
 (************************************************************
 AST translation
 ************************************************************)
@@ -2247,8 +2222,7 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_exp
       (pr_pair Cprinter.string_of_exp string_of_typ) 
       (fun _ -> trans_exp_x prog proc ie) ie 
 
-and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
-      trans_exp_type =
+and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_exp_type =
   (* let _ = print_endline ("[trans_exp] input = { " ^ (Iprinter.string_of_exp ie) ^ " }") in *)
   let rec helper ie =
     match ie with
@@ -3672,14 +3646,6 @@ and default_value (t :typ) pos : C.exp =
           C.exp_emparray_dim = d; 
           C.exp_emparray_pos = pos}
 
-and sub_type_x (t1 : typ) (t2 : typ) =
-  let it1 = trans_type_back t1 in
-  let it2 = trans_type_back t2 in I.sub_type it1 it2
-
-and sub_type (t1 : typ) (t2 : typ) =
-  let pr = string_of_typ in
-  Debug.no_2 "sub_type" pr pr string_of_bool sub_type_x t1 t2 
-
 (* and flatten_to_bind prog proc b r rhs_o pid imm read_only pos  = *)
 (*   Debug.no_3 "flatten_to_bind "  *)
 (*     (Iprinter.string_of_exp)  *)
@@ -3820,105 +3786,6 @@ and flatten_to_bind prog proc (base : I.exp) (rev_fs : ident list)
                  C.exp_block_pos = pos;}),bind_type)
            else (seq2, bind_type))
     | [] -> trans_exp prog proc base
-(*
-and convert_to_bind prog (v : ident) (dname : ident) (fs : ident list)
-      (rhs : C.exp option) pid imm read_only pos : trans_exp_type =
-  let pid_s = match pid with | None -> fresh_strict_branch_point_id "" | Some s -> s in
-  match fs with
-    | f :: rest ->
-          (try
-            let ddef = I.look_up_data_def_raw prog.I.prog_data_decls dname in
-            let rec gen_names (fn : ident) (flist : I.typed_ident list) :
-                  ((I.typed_ident option) * (ident list)) =
-              match flist with
-                | [] -> (None, [])
-                | f :: rest ->
-                      let fn = fresh_name () in
-                      let fresh_fn = (snd f)^(string_of_int pos.start_pos.Lexing.pos_lnum) ^ fn in
-                      let (tmp, new_rest) = gen_names fn rest
-                      in
-                      if (snd f) = fn
-                      then ((Some (fst f, fresh_fn)), (fresh_fn :: new_rest))
-                      else (tmp, (fresh_fn :: new_rest)) in
-            let field_types =
-              List.map (fun f -> trans_type prog (I.get_field_typ f) pos)
-                  ddef.I.data_fields in
-            let (tmp1, fresh_names) =
-              gen_names f (List.map I.get_field_typed_id ddef.I.data_fields)
-            in
-            if not (Gen.is_some tmp1)
-            then
-              Err.report_error
-                  {
-                      Err.error_loc = pos;
-                      Err.error_text = "can't follow field " ^ f;
-                  }
-            else
-              (let (vt, fresh_v) = Gen.unsome tmp1 in
-              let ct = trans_type prog vt pos in
-              let (bind_body, bind_type) =
-                if Gen.is_empty rest
-                then
-                  (match rhs with
-                    | None ->
-                          ((C.Var
-                              {
-                                  C.exp_var_type = ct;
-                                  C.exp_var_name = fresh_v;
-                                  C.exp_var_pos = pos;
-                              }),
-                          ct)
-                    | Some rhs_e ->
-                          let rhs_t = C.type_of_exp rhs_e
-                          in
-                          if
-                            (Gen.is_some rhs_t) &&
-                                (sub_type (Gen.unsome rhs_t) ct)
-                          then
-                            ((C.Assign
-                                {
-                                    C.exp_assign_lhs = fresh_v;
-                                    C.exp_assign_rhs = rhs_e;
-                                    C.exp_assign_pos = pos;
-                                }),
-                            C.void_type)
-                          else
-                            Err.report_error
-                                {
-                                    Err.error_loc = pos;
-                                    Err.error_text = "lhs and rhs do not match";
-                                })
-                else
-                  convert_to_bind prog fresh_v (string_of_typ vt) rest rhs pid imm read_only
-                      pos
-              in
-              ((C.Bind
-                  {
-                      C.exp_bind_type = bind_type;
-                      C.exp_bind_bound_var = ((Named dname), v);
-                      C.exp_bind_fields =
-                          List.combine field_types fresh_names;
-                      C.exp_bind_body = bind_body;
-                      C.exp_bind_path_id = pid_s;
-                      C.exp_bind_imm = imm;
-                      C.exp_bind_read_only = read_only;
-                      C.exp_bind_pos = pos;
-                  }),
-              bind_type))
-          with
-            | Not_found ->
-                  Err.report_error
-                      {
-                          Err.error_loc = pos;
-                          Err.error_text = "can't follow field " ^ f;
-                      })
-    | [] -> failwith "convert_to_bind: empty field list"
-      *)
-and trans_type_back (te : typ) : typ =
-  match te with 
-    | Named n -> Named n 
-    | Array (t, d) -> Array (trans_type_back t, d) (* An Hoa *) 
-    | p -> p 
 
 and trans_args (args : (C.exp * typ * loc) list) :
       ((C.typed_ident list) * C.exp * (ident list)) =
@@ -5016,6 +4883,8 @@ and trans_pure_exp_list (elist : IP.exp list) (tlist:spec_var_type_list) : CP.ex
   match elist with
     | [] -> []
     | e :: rest -> (trans_pure_exp e tlist) :: (trans_pure_exp_list rest tlist)
+
+
 
 and case_normalize_pure_formula hp b f = f
 
@@ -6528,9 +6397,6 @@ and barrier_prune_inv_inference cp bd =
   let pr = Cprinter.string_of_barrier_decl in
   Debug.no_1 "barrier_prune_inv_inference" pr pr (barrier_prune_inv_inference_x cp) bd
 
-
-      
-      
 and coerc_spec prog is_l c = 
   (* if not !Globals.allow_pred_spec then [c] *)
   if !Globals.dis_ps then [c]
