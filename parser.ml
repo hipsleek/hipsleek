@@ -712,6 +712,7 @@ non_empty_command:
       | t=checkeq_cmd         -> EqCheck t
       | t=checkentail_cmd     -> EntailCheck t
       | t=relassume_cmd     -> RelAssume t
+      | t=shapeinfer_cmd     -> ShapeInfer t
       | t=infer_cmd           -> Infer t  
       | t=captureresidue_cmd  -> CaptureResidue t
       | t=print_cmd           -> PrintCmd t
@@ -1615,6 +1616,13 @@ checkentail_cmd:
 
 relassume_cmd:
    [[ `RELASSUME; `IDENTIFIER id; l=meta_constr; `CONSTR;r=meta_constr -> (id, l, r)
+   ]];
+
+shapeinfer_cmd:
+   [[ `SHAPE_INFER; `OSQUARE;il1=OPT id_list;`CSQUARE; `OSQUARE; il2=OPT id_list;`CSQUARE ->
+   let il1 = un_option il1 [] in
+   let il2 = un_option il2 [] in
+   (il1,il2)
    ]];
 
 infer_cmd:

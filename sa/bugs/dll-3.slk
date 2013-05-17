@@ -32,7 +32,7 @@ relAssume H2
 relAssume G1
  H1(c,p)&c=null --> G1(c,p)&true.
 
-/*
-shape_infer [H1,H2].
-*/
+
+shape_infer [H1][G1].//[pre_hps][post_hps]
+
 

@@ -77,7 +77,7 @@ let cprog = ref { C.prog_data_decls = [];
 
 let residues =  ref (None : (CF.list_context * bool) option)    (* parameter 'bool' is used for printing *)
 
-let hp_assumes = ref ([]: CF.hprel list)
+let hp_rel_assumes = ref ([]: CF.hprel list)
 
 let clear_iprog () =
   iprog.I.prog_data_decls <- [iobj_def];
@@ -652,9 +652,52 @@ let process_rel_assume hp_id (ilhs : meta_formula) (irhs: meta_formula)=
   let rhs = meta_to_formula irhs false fv_idents stab in
   let orig_vars = CF.fv lhs @ CF.fv rhs in
   let hp = AS.get_spec_var_stab_infer hp_id orig_vars no_pos in
-  let _ =  print_endline ("LHS = " ^ (Cprinter.string_of_formula lhs)) in
-  let _ =  print_endline ("RHS = " ^ (Cprinter.string_of_formula rhs)) in
-(*hp_assumes*)
+  (* let _ =  print_endline ("LHS = " ^ (Cprinter.string_of_formula lhs)) in *)
+  (* let _ =  print_endline ("RHS = " ^ (Cprinter.string_of_formula rhs)) in *)
+  let new_rel_ass = {
+      CF.hprel_kind = CP.RelAssume [hp];
+      unk_svl = [];(*inferred from norm*)
+      unk_hps = [];
+      predef_svl = [];
+      hprel_lhs = lhs;
+      hprel_rhs = rhs;
+  } in
+  (*hp_assumes*)
+  let _ = hp_rel_assumes := !hp_rel_assumes@[new_rel_ass] in
+  ()
+
+let process_shape_infer pre_hps post_hps=
+  let get_hps all_hps ass = match ass.CF.hprel_kind with
+    | CP.RelAssume hps -> all_hps@hps
+    | _ -> all_hps
+  in
+  let filter_hp id_ls all_hps =List.filter (fun hp ->
+      let hp_name = CP.name_of_spec_var hp in
+      List.exists (fun id -> String.compare hp_name id = 0) id_ls
+      ) all_hps in
+  let hp_lst_assume = !hp_rel_assumes in
+  let hp_rel_unkmap = [] in
+  let hps2 = List.fold_left  get_hps [] hp_lst_assume in
+  let hps20 = CP.remove_dups_svl hps2 in
+  let sel_pre_hps = filter_hp pre_hps hps20 in
+  let sel_post_hps = filter_hp post_hps hps20 in
+  let sel_hps = sel_pre_hps@sel_post_hps in
+  let ls_hprel, ls_inferred_hps, dropped_hps =
+    Sa.infer_hps !cprog "" hp_lst_assume
+        sel_hps sel_post_hps
+        (Gen.BList.remove_dups_eq
+             (fun (hp1,_) (hp2,_) -> CP.eq_spec_var hp1 hp2)
+             hp_rel_unkmap)
+  in
+  if not(Sa.rel_def_stk# is_empty) then
+    begin
+		print_endline ""; 
+		print_endline "*************************************";
+		print_endline "*******relational definition ********";
+		print_endline "*************************************";
+        print_endline (Sa.rel_def_stk # string_of_reverse);
+		print_endline "*************************************"
+    end;
   ()
 
 (* the value of flag "exact" decides the type of entailment checking              *)
