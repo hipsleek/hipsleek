@@ -10,14 +10,14 @@ HeapPred HP_796(node a, node b).
 HeapPred HP_797(node a, node b).
 
 relAssume H1
-  H1(c,p)&c!=null --> c::node<val_19_765',prev_19_766',next_19_767'>@M *
-    HP_796(prev_19_766',p) * HP_797(next_19_767',p)&true.
+  H1(c,p)&c!=null --> c::node<_,prev_19_766',next_19>@M *
+    HP_796(prev_19_766',p) * HP_797(next_19,p)&true.
 
 relAssume H1
-  HP_797(next_19_806,p) & true --> H1(next_19_806,c')&true.
+  HP_797(next_19,p) & true --> H1(next_19,c')&true.
 
 relAssume G1
- G1(next_19_806,c) * c::node<val_19_765',p,next_19_767'>@M &
+ G1(next_19,c) * c::node<_,p,next_19>@M &
   true --> G1(c,p)&true.
 
 relAssume G1
@@ -26,14 +26,43 @@ relAssume G1
 shape_infer [H1][G1].//[pre_hps][post_hps]
 
 /*
-************************************
-*******relational definition ********
+
+Below seems very wrong...
+
+H1(c_51,p_52) ::= c_51::node<Anon_11,prev_19_766',next_19>@M * 
+      HP_53(prev_19_766',next_19,p_52))&true,
+G1(c_59,p_60) ::= c_59::node<Anon_11,prev_19_766',next_19>@M * 
+      HP_53(prev_19_766',next_19,p_60))&c_59=null,
+HP_53(prev_19_766',next_19,p_58) ::= 
+      next_19::node<Anon_11,prev_19_54,next_55>@M * 
+       (HP_53(prev_19_54,next_55,c'))&true]
+
 *************************************
-[ H1(c_50,p_51) ::= c_50::node<val_19_765',prev_19_766',next_19_767'>@M * 
-(HP_52(prev_19_766',next_19_767',p_51))&true,
- G1(c_58,p_59) ::= c_58::node<val_19_765',prev_19_766',next_19_767'>@M * 
-(HP_52(prev_19_766',next_19_767',p_59))&c_58=null,
- HP_52(prev_19_766',next_19_767',p_57) ::= next_19_767'::node<val_19_765',prev_19_53,next_19_54>@M * 
-(HP_52(prev_19_53,next_19_54,c'))&true]
-*************************************
+
+Why did we not get below:
+
+Pre
+---
+ H1(c,p) ::= 
+   c::node<_,prev_19_766',next_19_767'>@M * (HP_797(next_19_767',p))&c!=null
+   or c=null --> emp
+ HP_797(n,p) & true --> H1(n,c')&true.
+
+Post
+----
+ G1(c,p) := c=null
+      or c::node<_,p,next_19_767'> * G1(next_19_806,c)
+
+which should further simplify to:
+
+ H1(c,p) ::= 
+   c::node<_,prev_19_766',next_19>@M * (H1(next_19,p))&c!=null
+   or c=null --> emp
+ G1(c,p) := c=null
+      or c::node<_,p,next_19_767'> * G1(next_19_806,c)
+
+Note that 2nd paramter of p is useless.
+
+
+
 */
