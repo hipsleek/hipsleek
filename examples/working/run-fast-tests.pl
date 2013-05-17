@@ -1197,7 +1197,7 @@ $output_file = "log";
                       ["infer/infer13.slk", "", "", "Valid.Valid.Valid.Valid.Valid."],
                       ["infer/infer14.slk", "", "", "Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid."],
                       ["infer/infer15.slk", "", "", "Valid.Valid.Valid.Valid.Valid.Valid.Valid."],
-                      ["ann1.slk", " --imm ", "", "Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Fail.Valid.Fail.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Fail.Valid.Fail.Fail.Valid.Valid.Valid.Fail.Valid.Valid.Fail."],
+                      ["ann1.slk", " --imm ", "", "Valid.Valid.Valid.Valid.Fail.Valid.Valid.Fail.Fail.Valid.Fail.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Fail.Valid.Fail.Fail.Valid.Valid.Valid.Fail.Valid.Valid.Fail."],
                       ["imm/imm1.slk", "--imm --dis-field-ann", "", "Fail.Valid.Valid.Valid.Valid.Valid."],
                       ["imm/imm2.slk", "--imm --dis-field-ann", "", "Fail.Valid.Fail.Valid.Fail."],
                       ["imm/imm3.slk", "--imm --dis-field-ann", "", "Fail.Fail.Valid.Valid.Valid.Valid."],
