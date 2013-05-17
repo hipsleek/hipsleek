@@ -5,12 +5,11 @@ open Lexing
 open Gen
 
 module H = Hashtbl
-(*module AS = Astsimp*)
+(* module AS = Astsimp *)
 
 let loc = no_pos;;
 
-(*asankhs: Nothing is added to this table why is it used ? *)
-let stab = ref (H.create 103)
+let tlist=[]
 
 let expression = Gram.Entry.mk "expression";;
 
@@ -24,20 +23,13 @@ let exp = Gram.Entry.mk "exp";;
 
 let specvar = Gram.Entry.mk "specvar";;
 
-let  get_spec_var_ident stab (var : ident) p =
-  try
-    let k = H.find stab var in
-    SpecVar(k,var,p)
-  with 
-    | Not_found -> SpecVar(UNK,var,p)
-
-let get_var var stab = 
+let get_var var tl = 
   if String.contains_from var 0 '_' then 
     let sv = String.sub var 1 (String.length var - 1) in
-    get_spec_var_ident stab sv Unprimed
+    Typeinfer.get_spec_var_ident tl sv Unprimed
   else if is_substr "PRI" var 
-  then get_spec_var_ident stab (String.sub var 3 (String.length var - 3)) Primed
-  else get_spec_var_ident stab var Unprimed
+  then Typeinfer.get_spec_var_ident tl (String.sub var 3 (String.length var - 3)) Primed
+  else Typeinfer.get_spec_var_ident tl var Unprimed
 
 let is_node var = match var with 
   | Var (SpecVar (_,id,_), _) -> is_substr "NOD" id || id=self
@@ -48,6 +40,7 @@ let get_node var = match var with
     if id=self then id else 
       String.sub id 3 (String.length id - 3)
   | _ -> report_error no_pos "Expected a pointer variable"
+
 (*let change_name var name = match var with*)
 (*  | SpecVar (t,id,p) -> SpecVar (t,name ^ id,p)*)
 (*  | _ -> report_error no_pos "Error in change_name"*)
@@ -98,17 +91,17 @@ GLOBAL: expression or_formula formula pformula exp specvar;
     [ x = exp; "<="; y = exp -> 
     begin
       if is_res_var x && is_zero y then 
-        Not (BForm ((BVar (get_var "res" !stab, loc), None), None), None, loc) 
+        Not (BForm ((BVar (get_var "res" tlist, loc), None), None), None, loc) 
       else if is_res_var y && is_one x then 
-        BForm ((BVar (get_var "res" !stab, loc), None), None) 
+        BForm ((BVar (get_var "res" tlist, loc), None), None) 
       else
         let tmp = 
           if is_node x & is_zero y then 
-            BForm((Eq (Var(get_var (get_node x) !stab, loc), Null loc, loc),None),None)
+            BForm((Eq (Var(get_var (get_node x) tlist, loc), Null loc, loc),None),None)
           else if is_node y & is_one x then 
-            BForm((Neq (Var(get_var (get_node y) !stab, loc), Null loc, loc),None),None)
+            BForm((Neq (Var(get_var (get_node y) tlist, loc), Null loc, loc),None),None)
           else if is_self_var x then 
-            BForm((Eq (Var(get_var "self" !stab, loc), Null loc, loc) ,None),None)
+            BForm((Eq (Var(get_var "self" tlist, loc), Null loc, loc) ,None),None)
       else 
       match (x,y) with
         | (Var _, Var _) -> BForm ((BagSub (x, y, loc), None), None)
@@ -119,20 +112,20 @@ GLOBAL: expression or_formula formula pformula exp specvar;
     | x = exp; ">="; y = exp -> 
     begin
       if is_res_var y && is_zero x then 
-        Not (BForm ((BVar (get_var "res" !stab, loc), None), None), None, loc) 
+        Not (BForm ((BVar (get_var "res" tlist, loc), None), None), None, loc) 
       else
       if is_res_var x && is_one y then 
-        BForm ((BVar (get_var "res" !stab, loc), None), None) 
+        BForm ((BVar (get_var "res" tlist, loc), None), None) 
       else
         let tmp = 
           if is_node y & is_zero x then 
-            BForm((Eq (Var(get_var (get_node y) !stab, loc), Null loc, loc),None),None)
+            BForm((Eq (Var(get_var (get_node y) tlist, loc), Null loc, loc),None),None)
           else
           if is_node x & is_one y then 
-            BForm((Neq (Var(get_var (get_node x) !stab, loc), Null loc, loc),None),None)
+            BForm((Neq (Var(get_var (get_node x) tlist, loc), Null loc, loc),None),None)
           else
           if is_self_var y then 
-            BForm((Eq (Var(get_var "self" !stab, loc), Null loc, loc),None),None)
+            BForm((Eq (Var(get_var "self" tlist, loc), Null loc, loc),None),None)
       else 
       match (x,y) with
         | (Var _, Var _) -> BForm ((BagSub (y, x, loc), None), None)
@@ -189,8 +182,8 @@ GLOBAL: expression or_formula formula pformula exp specvar;
 		
   specvar:
   [ "specvar" NONA
-    [ x = UIDENT -> get_var x !stab
-    | x = LIDENT -> get_var x !stab
+    [ x = UIDENT -> get_var x tlist
+    | x = LIDENT -> get_var x tlist
     ]
   ]; 
 
