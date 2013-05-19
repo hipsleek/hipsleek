@@ -97,7 +97,11 @@ Strengthen H1 pre:
 
 Step 8
 ======
-Drop redundant parameter:
+Drop redundant parameter. 
+
+A parameter p is redundant in a predicate if it is never
+used in the body of the predicate.
+
  H1(c,p) <--> H1x(c)
  H1(c)   <--> c::node<_,prev_19_765',next_19_766'>@M * H1x(next_19).
               \/ c=null & emp &true
