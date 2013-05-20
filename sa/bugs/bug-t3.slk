@@ -1,0 +1,45 @@
+data node{
+	int val;
+	node prev;
+	node next;
+}.
+
+//(1)
+checkentail c::node<_,_,c@M>  |- c::node<_@A,_@A,y@I>.
+print residue.
+
+//(2)
+checkentail c::node<_,_,c@M>  |- c::node<_@A,_@A,y@L>.
+print residue.
+
+//(3)
+checkentail c::node<_,_,c@M>  |- c::node<_@A,_@A,y@A>.
+print residue.
+
+//(4)
+checkentail c::node<_,_,c@v>  |- c::node<_@A,_@A,y@A>.
+print residue.
+// should succeed 
+
+//(5)
+checkentail c::node<_,_,c@v>  |- c::node<_@A,_@A,y@L>.
+print residue.
+// should fail since v can be @A
+
+//(6)
+checkentail c::node<_,_,c@v>  |- c::node<_@A,_@A,y@M>.
+print residue.
+// should fail
+
+//(7)
+checkentail c::node<_,_,c@M>  |- c::node<_@A,_@A,y@v>.
+print residue.
+// instantiate v to @M and succeed
+// should succeed?
+// if v=@M,@I, consume & c=y
+// if v=@L, keep & c=y
+// if v=@A, keep
+
+//(8)
+checkentail c::node<_,_,c@v1>  |- c::node<_@A,_@A,y@v2>.
+print residue.
