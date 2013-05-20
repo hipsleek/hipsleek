@@ -37,17 +37,25 @@ pred lk<> ==
 //lemma self::ll<> <- self::lk<>.
 
 //lemma self::ln<> <- self::node<_,q>*q::ll<>.
-//lemma self::ln<> -> self::node<_,q>*q::ll<>.
-lemma self::ln<> <- self::ll<> & self!=null.
+lemma self::ln<> -> self::node<_,q>*q::ll<>.
+//lemma self::ln<> <- self::ll<> & self!=null.
 // lemma x::node<_,q>*q::ll<> |- x::ln<>.
 
 
+/*
 checkentail self::node<_,q>*q::ll<>
                  |- [] self::node<_,q1> 
                      case {
                        q1=null -> [] q1=null;
                        q1!=null -> [] q1::ln<> ;
                        } .
+*/
+
+//checkentail x::node<_,q1> & q1=null |- x::node<_,q>*q::ll<>.
+
+checkentail self::node<_,q1> * q1::ln<> & q1!=null |- self::node<_,q>*q::ll<>.
+
+checkentail xxx::node<_,q1> * q1::ln<> & q1!=null |- xxx::node<_,q>*q::ll<>.
 
 /*
 checkentail self::node<_,q1> & q1=null |- self::node<_,q>*q::ll<>.

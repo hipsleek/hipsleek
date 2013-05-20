@@ -128,7 +128,7 @@ let proof_gt5_log_list = ref [] (*Logging proofs require more than 5 secs to be 
 (* wrong order number indicates recursive invocations *)
 let add_new_sleek_logging_entry classic_flag caller avoid hec slk_no ante conseq 
       consumed_heap evars (result:CF.list_context) pos=
-  let _ = Debug.info_pprint ("avoid: "^(string_of_bool avoid)) no_pos in
+  (* let _ = Debug.info_pprint ("avoid: "^(string_of_bool avoid)) no_pos in *)
   if !Globals.sleek_logging_txt then
     (* let _ = Debug.info_pprint "logging .." no_pos in *)
     let sleek_log_entry = {
