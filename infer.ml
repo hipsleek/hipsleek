@@ -704,7 +704,7 @@ let rec infer_pure_m_x unk_heaps estate lhs_rels lhs_xpure_orig lhs_xpure0 lhs_w
   (* Debug.info_hprint (add_str "unk_heaps" (pr_list !CF.print_h_formula)) unk_heaps no_pos;  *)
   if (iv_orig)==[] && unk_heaps==[] && ((no_infer_all_all estate) || (lhs_rels==None)) 
   then 
-    let _ = Debug.info_pprint "exit" no_pos in
+    (* let _ = Debug.info_pprint "exit" no_pos in *)
     (None,None,[])
   else
     if not (TP.is_sat_raw rhs_xpure_orig) then 
@@ -718,6 +718,13 @@ let rec infer_pure_m_x unk_heaps estate lhs_rels lhs_xpure_orig lhs_xpure0 lhs_w
       (* below will help greatly reduce the redundant information inferred from state *)
       (* let lhs_xpure = CP.filter_ante lhs_xpure rhs_xpure in *)
       let rhs_xpure = MCP.pure_of_mix rhs_xpure_orig in 
+      let lhs_xpure = MCP.pure_of_mix lhs_xpure0 in 
+      let split_rhs = CP.split_conjunctions rhs_xpure in
+      let rem_rhs = List.filter (fun c -> not(TP.imply_raw lhs_xpure c)) split_rhs in
+      let rhs_xpure = CP.join_conjunctions rem_rhs in
+      let _ = DD.info_hprint (add_str "lhs_xpure: " (!CP.print_formula)) lhs_xpure pos in
+      let _ = DD.info_hprint (add_str "split_rhs: " (pr_list !CP.print_formula)) split_rhs pos in
+      let _ = DD.info_hprint (add_str "rem_rhs: " (pr_list !CP.print_formula)) rem_rhs pos in
       let _ = DD.trace_hprint (add_str "lhs(orig): " !CP.print_formula) lhs_xpure_orig pos in
       let _ = DD.trace_hprint (add_str "lhs0(orig): " !print_mix_formula) lhs_xpure0 pos in
       let _ = DD.trace_hprint (add_str "rhs(orig): " !CP.print_formula) rhs_xpure pos in
@@ -858,7 +865,13 @@ let rec infer_pure_m_x unk_heaps estate lhs_rels lhs_xpure_orig lhs_xpure0 lhs_w
                           DD.info_hprint (add_str "unk_heaps" (pr_list !CF.print_h_formula)) unk_heaps pos;
                           DD.info_hprint (add_str "lhs_xpure" (!CP.print_formula)) lhs_xpure pos;
                           DD.info_hprint (add_str "rhs_xpure" (!CP.print_formula)) rhs_xpure pos;
-                          (None,None,[])
+                          let vs = CP.fv rhs_xpure in
+                          let choose_unk_h = List.filter (fun h -> (Gen.BList.difference_eq CP.eq_spec_var vs (CF.h_fv h)) == []) unk_heaps in
+                          DD.info_hprint (add_str "choose_unk_h" (pr_list !CF.print_h_formula)) choose_unk_h pos;
+                          if choose_unk_h==[] then (None,None,[])
+                          else 
+                            (*Loc : need to add (choose_unk_h --> rhs_xpure) heap assumption*)
+                            (None,None,[]) 
                         end
                 | Some f ->
                       DD.devel_pprint ">>>>>> infer_pure_m <<<<<<" pos;
