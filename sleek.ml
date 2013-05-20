@@ -36,10 +36,10 @@ module NF = Nativefront
 
 let usage_msg = Sys.argv.(0) ^ " [options] <source files>"
 
-let source_files = ref ([] : string list)
+(* let source_files = ref ([] : string list) *)
 
 let set_source_file arg = 
-  source_files := arg :: !source_files 
+  Globals.source_files := arg :: !Globals.source_files 
 
 let print_version () =
   print_endline ("SLEEK: A Separation Logic Entailment Checker");
@@ -146,7 +146,7 @@ let parse_file (parse) (source_file : string) =
     match c with
       | EntailCheck (iante, iconseq, etype) -> process_entail_check iante iconseq etype
             (* let pr_op () = process_entail_check_common iante iconseq in  *)
-            (* Log.wrap_calculate_time pr_op !source_files ()               *)
+            (* Log.wrap_calculate_time pr_op !Globals.source_files ()               *)
       | RelAssume (id, ilhs, irhs) -> process_rel_assume id ilhs irhs
       | ShapeInfer (pre_hps, post_hps) -> process_shape_infer pre_hps post_hps
       | EqCheck (lv, if1, if2) -> 
@@ -257,7 +257,7 @@ let main () =
         begin
       (* let _ = print_endline "Prior to parse_file" in *)
             Debug.tinfo_pprint "sleek : batch processing" no_pos;
-            let _ = List.map (parse_file NF.list_parse) !source_files in ()
+            let _ = List.map (parse_file NF.list_parse) !Globals.source_files in ()
         end
   with
     | End_of_file -> 
@@ -269,31 +269,34 @@ let main () =
 (* let main () =  *)
 (*   Debug.loop_1_no "main" (fun () -> "?") (fun () -> "?") main () *)
 let sleek_proof_log_Z3 src_files =
- if !Globals.proof_logging || !Globals.proof_logging_txt then 
-      begin
-	let _=sleek_src_files := src_files in			
-	let tstartlog = Gen.Profiling.get_time ()in	
-	(* let _= Log.proof_log_to_file () in *)
-  let with_option = if(!Globals.en_slc_ps) then "sleek_eps" else "sleek_no_eps" in
-  let with_option_logtxt = if(!Globals.en_slc_ps) then "eps" else "no_eps" in
-  let fname = "logs/"^with_option_logtxt^"_proof_log_" ^ (Globals.norm_file_name (List.hd src_files)) ^".txt"  in
-	let fz3name= ("logs/"^with_option^(Globals.norm_file_name (List.hd src_files)) ^".z3")  in
-	let fnamegt5 = "logs/greater_5sec_"^with_option_logtxt^"_proof_log_" ^ (Globals.norm_file_name (List.hd src_files)) ^".txt"  in
-	let _= if (!Globals.proof_logging_txt) 
-        then 
-          begin
-            Debug.info_pprint ("Logging "^fname^"\n") no_pos;
-						Debug.info_pprint ("Logging "^fz3name^"\n") no_pos;
-						Debug.info_pprint ("Logging "^fnamegt5^"\n") no_pos;
-            Log.proof_log_to_text_file !source_files;
-						Log.z3_proofs_list_to_file !source_files;
-						Log.proof_greater_5secs_to_file !source_files;
-          end
-	in
-			let tstoplog = Gen.Profiling.get_time () in
-			let _= Globals.proof_logging_time := !Globals.proof_logging_time +. (tstoplog -. tstartlog) in ()
-			(* let _=print_endline ("Time for logging: "^(string_of_float (!Globals.proof_logging_time))) in	() *)
-			end
+  let _ = Log.process_proof_logging src_files in  
+  if !Globals.proof_logging || !Globals.proof_logging_txt   then 
+    begin
+      (* let _=sleek_src_files := src_files in *)
+      Debug.info_hprint (add_str "src_files" (pr_list pr_id)) src_files no_pos;
+      let tstartlog = Gen.Profiling.get_time ()in	
+      (* let _= Log.proof_log_to_file () in *)
+      let with_option = if(!Globals.en_slc_ps) then "sleek_eps" else "sleek_no_eps" in
+      let with_option_logtxt = if(!Globals.en_slc_ps) then "eps" else "no_eps" in
+      let fname = "logs/"^with_option_logtxt^"_proof_log_" ^ (Globals.norm_file_name (List.hd src_files)) ^".txt"  in
+      let fz3name= ("logs/"^with_option^(Globals.norm_file_name (List.hd src_files)) ^".z3")  in
+      let fnamegt5 = "logs/greater_5sec_"^with_option_logtxt^"_proof_log_" ^ (Globals.norm_file_name (List.hd src_files)) ^".txt"  in
+      let _= if (!Globals.proof_logging_txt) 
+      then 
+        begin
+          Debug.info_pprint ("Logging "^fname^"\n") no_pos;
+	  Debug.info_pprint ("Logging "^fz3name^"\n") no_pos;
+	  Debug.info_pprint ("Logging "^fnamegt5^"\n") no_pos;
+          Log.proof_log_to_text_file !Globals.source_files;
+	  Log.z3_proofs_list_to_file !Globals.source_files;
+	  Log.proof_greater_5secs_to_file !Globals.source_files;
+        end
+      in
+      let tstoplog = Gen.Profiling.get_time () in
+      let _= Globals.proof_logging_time := !Globals.proof_logging_time +. (tstoplog -. tstartlog) 
+        (* let _=print_endline ("Time for logging: "^(string_of_float (!Globals.proof_logging_time))) in	() *)
+      in ()
+    end
 		
 let _ =
   wrap_exists_implicit_explicit := false ;
@@ -344,7 +347,7 @@ let _ =
     ^ "\tTime spent in child processes: " 
     ^ (string_of_float (ptime4.Unix.tms_cutime +. ptime4.Unix.tms_cstime)) ^ " second(s)\n")
     in
-    let _= sleek_proof_log_Z3 !source_files in
+    let _= sleek_proof_log_Z3 !Globals.source_files in
     let _ = 
       if (!Globals.profiling && not !inter) then 
         ( Gen.Profiling.print_info (); print_string (Gen.Profiling.string_of_counters ())) in

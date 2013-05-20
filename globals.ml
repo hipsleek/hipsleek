@@ -300,7 +300,7 @@ let string_of_loc_by_char_num (l : loc) =
 let proof_logging = ref false
 let proof_logging_txt = ref false
 let proof_logging_time = ref 0.000
-let sleek_src_files = ref ([]: string list)
+(* let sleek_src_files = ref ([]: string list) *)
 
 (*sleek logging*)
 let sleek_logging_txt = ref false

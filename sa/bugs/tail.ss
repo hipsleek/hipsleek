@@ -5,10 +5,12 @@ data node{
 }
 
 HeapPred H1(node a).
-  HeapPred G1(node a, node b).
+HeapPred G1(node a, node b).
 
-void tail (node c)
-  infer[H1,G1] requires H1(c) ensures G1(res,c);
+node foo (node c)
+  infer[H1,G1] 
+  requires H1(c) 
+  ensures G1(res,c);
 {
     return c.next;
 }

@@ -344,7 +344,7 @@ let process_source_full source =
     in
     
     (* Proof Logging *)
-    let _ = Log.process_proof_logging ()
+    let _ = Log.process_proof_logging !Globals.source_files
     (*  if !Globals.proof_logging || !Globals.proof_logging_txt then  *)
       (* begin *)
       (*   let tstartlog = Gen.Profiling.get_time () in *)

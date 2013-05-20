@@ -8,9 +8,8 @@ HeapPred HP_6(node a).
 HeapPred G1(node a, node b).
 HeapPred K(int a).
 
-pred ln<> ==
-    self::node<_,q> & q=null
-  or self::node<_,q> * q::ln<> & q!=null
+pred ln<> == self::node<_,q> & q=null
+          or self::node<_,q> * q::ln<> & q!=null
  inv self!=null.
 
 pred ll<> ==
@@ -18,7 +17,7 @@ pred ll<> ==
   or self::node<_,q> * q::ll<> 
  inv true.
 
-// lemma x::node<_,q>*q::ll<> |- x::ln<>.
+lemma self::node<_,q>*q::ll<> -> self::ln<>.
 
 infer [H2] x::ln<> |- x::node<_,q>*H2(q) .
 print residue.

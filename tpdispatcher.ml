@@ -538,7 +538,7 @@ let start_prover () =
   | DP -> Smtsolver.start();
   | Z3 -> Smtsolver.start();
   | SPASS -> Spass.start();
-  | LOG -> file_to_proof_log ()
+  | LOG -> file_to_proof_log !Globals.source_files
   | MINISAT -> Minisat.start ()
   | _ -> Omega.start()
 
