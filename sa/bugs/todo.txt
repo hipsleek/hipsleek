@@ -124,3 +124,30 @@ Why did we have the following base case only?
 
 
 [ G1(c_23,p_24) ::= emp&c_23=null]
+
+# bug-app1.slk
+
+pred ln<> ==
+    self::node<_,q> & q=null
+  or self::node<_,q> * q::ln<> & q!=null
+ inv self!=null.
+
+infer [H2] H2(x) |- x=null.
+print residue.
+/*
+Entail (1) : Fail.
+
+
+Last Proving Location: 1 File "bug-app1.slk",Line:10,Col:5
+*/
+
+infer [H2] H2(r)   |- r::ln<>.
+print residue.
+/*
+RROR: at _0:0_0:0 
+Message: infer.find_undefined_selective_pointers
+ caught
+(Program not linked with -g, cannot print stack backtrace)
+
+Entailment Failure (2) Failure("infer.find_undefined_selective_pointers")
+*/

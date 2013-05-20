@@ -20,17 +20,23 @@ pred ll<> ==
 
 // lemma x::node<_,q>*q::ll<> |- x::ln<>.
 
-//infer [H2] x::ln<> |- x::node<_,q>*H2(q) .
-//print residue.
+infer [H2] x::ln<> |- x::node<_,q>*H2(q) .
+print residue.
 /*
 inferred hprel: [
           emp&q=null --> H2(q)&true; 
        q_51::ln<> & q_51!=null --> H2(q_51)&true]
 
+x::node<_,null> |- x::node<_,q>*H2(q)
+    q=null --> H2(q)
+
+x::node<_,q>*q::ll<> |- x::node<_,q>*H2(q)
+    q::ll<> --> H2(q)
+    x::node<_,q>*H2(q) --> H2(q)
+
+
 */
 
-//infer [H2] x::node<_,q>*H2(q) |- x::node<_,r> & r=null .
-//print residue.
 
 //infer [H2] x::node<_,q>*H2(q) |- x::ln<>.
 
@@ -40,9 +46,15 @@ Message: infer.find_undefined_selective_pointers
  caught
 
 */
-//infer [H2] x::node<_,q>*H2(q) |- x::node<_,r> * r::ln<>.
-//print residue.
 
-//infer [H2] H2(q) & q=r |- r::ln<>.
-infer [H2] H2(r) & r!=null  |- r::ln<>.
-print residue.
+infer [H2]  x::node<_,q>*H2(q) |- x::ln<> .
+
+infer [H2]  x::node<_,q>*H2(q) |- x::ln<> .
+
+x::node<_,q>*H2(q) |- x::node<_,null>
+
+  H2(q) & q=null --> null
+
+x::node<_,q>*H2(q)  |- x::node<_,q>*q::ln<> 
+
+  H2(q) & q!=null --> q::ln<>
