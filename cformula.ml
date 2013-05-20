@@ -3665,6 +3665,7 @@ and normalize_keep_flow_join (f1 : formula) (f2 : formula) flow_tr (pos : loc) =
 			let qvars2, base2 = split_quantifiers f2 in
 			let new_base = mkStar_combine base1 base2 flow_tr pos in
 			let new_h, new_p, new_fl, new_t, new_a = split_components new_base in
+                        (* let new_h = Immutable.normalize_field_ann_heap_node new_h in *)
 			let resform = mkExists (qvars1 @ qvars2) new_h new_p new_t new_fl new_a pos in (* qvars[1|2] are fresh vars, hence no duplications *)
 			resform
 		  end

@@ -528,11 +528,11 @@ let extract_var_from_id (id,p) =
 		(var,p)
 ;;
 
-let rec ann_opt_to_ann (ann_opt_lst: ann option list) (default_ann: ann): ann list = 
+let rec ann_opt_to_ann_lst (ann_opt_lst: ann option list) (default_ann: ann): ann list = 
   match ann_opt_lst with
     | [] -> []
-    | (Some ann0) :: t ->  ann0 :: (ann_opt_to_ann t default_ann)
-    | (None) :: t      ->  default_ann :: (ann_opt_to_ann t default_ann) 
+    | (Some ann0) :: t ->  ann0 :: (ann_opt_to_ann_lst t default_ann)
+    | (None) :: t      ->  default_ann :: (ann_opt_to_ann_lst t default_ann) 
 
 let fv_imm ann = match ann with
   | ConstAnn _ -> []
@@ -569,7 +569,7 @@ let rec h_fv (f:h_formula):(ident*primed) list = match f with
               h_formula_heap_arguments = b} ->
      let perm_vars = (fv_iperm ()) perm in
      let imm_vars =  fv_imm imm in
-     let prm_ann =  List.flatten (List.map fv_imm  (ann_opt_to_ann ann_param imm)) in
+     let prm_ann =  List.flatten (List.map fv_imm  (ann_opt_to_ann_lst ann_param imm)) in
      let imm_vars = if (!Globals.allow_field_ann) then imm_vars@prm_ann else imm_vars in
      Gen.BList.remove_dups_eq (=) (imm_vars@perm_vars@((extract_var_from_id name):: (List.concat (List.map Ipure.afv b))))
   | HeapNode2 { h_formula_heap2_node = name ;

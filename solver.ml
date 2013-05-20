@@ -2110,35 +2110,43 @@ and unfold_nth(*_debug*) (n:int) (prog:prog_or_branches) (f : formula) (v : CP.s
   Debug.no_4_loop_num n "unfold" string_of_bool prs pr pr2 pr 
       (fun _ _ _ _ -> unfold_x prog f v already_unsat uf pos) already_unsat v f prog
 
-and unfold_x (prog:prog_or_branches) (f : formula) (v : CP.spec_var) (already_unsat:bool) (uf:int) (pos : loc) : formula = match f with
-  | Base ({ formula_base_heap = h;
-    formula_base_pure = p;
-    formula_base_flow = fl;
-    formula_base_and = a;
-    formula_base_pos = pos}) ->  
-	let new_f = add_formula_and a (unfold_baref prog h p fl v pos [] already_unsat uf) in
-	let tmp_es = CF.empty_es (CF.mkTrueFlow ()) (None,[]) no_pos in
-	let uf = normalize_formula_w_coers 1 (fst prog) tmp_es new_f (fst prog).prog_left_coercions in
-        uf
+and unfold_x (prog:prog_or_branches) (f : formula) (v : CP.spec_var) (already_unsat:bool) (uf:int) (pos : loc) : formula = 
+  let rec aux f v  uf pos = 
+    match f with
+      | Base ({ formula_base_heap = h;
+        formula_base_pure = p;
+        formula_base_flow = fl;
+        formula_base_and = a;
+        formula_base_pos = pos}) ->  
+	    let new_f = add_formula_and a (unfold_baref prog h p fl v pos [] already_unsat uf) in
+	    let tmp_es = CF.empty_es (CF.mkTrueFlow ()) (None,[]) no_pos in
+	    let uf = normalize_formula_w_coers 1 (fst prog) tmp_es new_f (fst prog).prog_left_coercions in
+            uf
 
-  | Exists _ -> (*report_error pos ("malfunction: trying to unfold in an existentially quantified formula!!!")*)
-        let rf,l = rename_bound_vars_with_subst f in
-	let v = CP.subst_var_par l v in
-        let qvars, baref = split_quantifiers rf in
-        let h, p, fl, t, a = split_components baref in
-        (*let _ = print_string ("\n memo before unfold: "^(Cprinter.string_of_memoised_list mem)^"\n")in*)
-        let uf = unfold_baref prog h p fl v pos qvars already_unsat uf in
-        let uf = add_formula_and a uf in (*preserve a*)
-	let tmp_es = CF.empty_es (CF.mkTrueFlow ()) (None,[]) no_pos in
-	let uf = normalize_formula_w_coers 2 (fst prog) tmp_es uf (fst prog).prog_left_coercions in
-        uf
-  | Or ({formula_or_f1 = f1;
-    formula_or_f2 = f2;
-    formula_or_pos = pos}) ->
-        let uf1 = unfold_x prog f1 v already_unsat uf pos in
-        let uf2 = unfold_x prog f2 v already_unsat uf pos in
-        let resform = mkOr uf1 uf2 pos in
-        resform
+      | Exists _ -> (*report_error pos ("malfunction: trying to unfold in an existentially quantified formula!!!")*)
+            let rf,l = rename_bound_vars_with_subst f in
+	    let v = CP.subst_var_par l v in
+            let qvars, baref = split_quantifiers rf in
+            let h, p, fl, t, a = split_components baref in
+            (*let _ = print_string ("\n memo before unfold: "^(Cprinter.string_of_memoised_list mem)^"\n")in*)
+            let uf = unfold_baref prog h p fl v pos qvars already_unsat uf in
+            let uf = add_formula_and a uf in (*preserve a*)
+	    let tmp_es = CF.empty_es (CF.mkTrueFlow ()) (None,[]) no_pos in
+	    let uf = normalize_formula_w_coers 2 (fst prog) tmp_es uf (fst prog).prog_left_coercions in
+            uf
+      | Or ({formula_or_f1 = f1;
+        formula_or_f2 = f2;
+        formula_or_pos = pos}) ->
+            let uf1 = aux f1 v uf pos in
+            let uf2 = aux f2 v uf pos in
+            let resform = mkOr uf1 uf2 pos in
+            resform
+  in 
+  let new_f = aux f v uf pos in
+  let new_f = Immutable.normalize_field_ann_formula new_f in
+  new_f
+
+
 
 and unfold_baref prog (h : h_formula) (p : MCP.mix_formula) (fl:flow_formula) (v : CP.spec_var) pos qvars already_unsat (uf:int) : formula =
   let asets = Context.alias_nth 6 (MCP.ptr_equations_with_null p) in
@@ -3647,8 +3655,9 @@ and sem_imply_add_x prog is_folding  ctx (p:CP.formula) only_syn:(context*bool) 
 	        let b = (xpure_imply prog is_folding  c p !Globals.imply_timeout_limit) in
 	        if b then 
               (* let _ = print_endline "xpure true!" in *)
+                  let new_es_formula = (mkAnd_pure c.es_formula (MCP.memoise_add_pure_N (MCP.mkMTrue no_pos) p) no_pos) in
               ((Ctx {c with 
-                  es_formula =(mkAnd_pure c.es_formula (MCP.memoise_add_pure_N (MCP.mkMTrue no_pos) p) no_pos)}),true)
+                  es_formula =  new_es_formula }),true)
 	        else (ctx,false)
 
 
@@ -9015,6 +9024,7 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
                 let lhs_h_list = split_star_conjunctions lhs_h in
                 let init_pures = List.concat (List.map (fun l -> init_para l rhs_node lhs_aset prog pos) lhs_h_list) in
                 let init_pure = CP.conj_of_list init_pures pos in
+                let new_es_formula = CF.normalize 1 estate.es_formula (CF.formula_of_pure_formula init_pure pos) pos in
                 {estate with es_formula = CF.normalize 1 estate.es_formula (CF.formula_of_pure_formula init_pure pos) pos}
             in
             let ans = do_base_case_unfold_only prog estate.es_formula conseq estate lhs_node rhs_node is_folding pos rhs_b in
