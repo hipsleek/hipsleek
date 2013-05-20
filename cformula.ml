@@ -8650,6 +8650,13 @@ let fold_h_formula_args (e:h_formula) (init_a:'a) (f:'a -> h_formula-> 'b option
 let fold_h_formula (e:h_formula) (f:h_formula-> 'b option) (comb_f: 'b list->'b) : 'b =
   fold_h_formula_args e () (fun _ e-> f e) voidf2 comb_f 
 
+let keep_hrel e =
+  let f hf = match hf with
+    | HRel _ -> Some [hf]
+    | _ -> None
+  in 
+  fold_h_formula e f List.concat
+
 (* transform heap formula *)
 let rec transform_h_formula (f:h_formula -> h_formula option) (e:h_formula):h_formula = 
   let r =  f e in 

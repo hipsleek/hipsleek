@@ -151,3 +151,19 @@ Message: infer.find_undefined_selective_pointers
 
 Entailment Failure (2) Failure("infer.find_undefined_selective_pointers")
 */
+
+# bugs-app2.slk
+
+HeapPred H2(node a).
+
+infer [H2] H2(x) & n>0 |- x=null & n>=0.
+print residue.
+
+Below needs to be have a relational assumption added.
+
+!!! >>>>>> infer_pure_m <<<<<<
+!!! Adding heap assumption?
+!!! unk_heaps:[ H2(x)]
+!!! lhs_xpure: 0<n
+!!! rhs_xpure: x=null & 0<=n
+Entail (1) : Fail.
