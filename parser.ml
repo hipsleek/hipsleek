@@ -1072,7 +1072,7 @@ ann:
 sq_clist: [[`OSQUARE; l= opt_cid_list; `CSQUARE -> l ]];
 
 formulas:
-  [[ ec=extended_l     ->(ec,false)
+  [[ ec= extended_l     ->(ec,false)
 	 | dc=disjunctive_constr  -> ((F.formula_to_struc_formula dc),true)]];
    
 extended_l:
