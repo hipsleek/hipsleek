@@ -111,6 +111,7 @@ relAssume H1
 
 Why did we go into a loop?
 
+*************************************
 
 # dll-4b.ss
 
@@ -124,7 +125,7 @@ Why did we have the following base case only?
 
 
 [ G1(c_23,p_24) ::= emp&c_23=null]
-
+*************************************
 # bug-app1.slk
 
 pred ln<> ==

@@ -871,7 +871,18 @@ let rec infer_pure_m_x unk_heaps estate lhs_rels lhs_xpure_orig lhs_xpure0 lhs_w
                           if choose_unk_h==[] then (None,None,[])
                           else 
                             (*Loc : need to add (choose_unk_h --> rhs_xpure) heap assumption*)
-                            (None,None,[]) 
+                            let hp_rel = {
+                                CF.hprel_kind = CP.RelAssume vs;
+                                unk_svl = [];
+                                unk_hps = [];
+                                predef_svl = [];
+                                hprel_lhs = CF.formula_of_heap (List.fold_left (fun h1 h2 -> CF.mkStarH h1 h2 pos) (List.hd choose_unk_h) (List.tl choose_unk_h)) pos;
+                                hprel_rhs = CF.formula_of_pure_formula rhs_xpure pos;
+                            }
+                            in
+                            let _ = rel_ass_stk # push_list ([hp_rel]) in
+                            let new_es = {estate with CF.es_infer_hp_rel = estate.CF.es_infer_hp_rel @ [hp_rel];} in
+                            (Some (new_es, CP.mkTrue pos),None,[])
                         end
                 | Some f ->
                       DD.devel_pprint ">>>>>> infer_pure_m <<<<<<" pos;
@@ -2165,11 +2176,11 @@ let infer_collect_hp_rel_x prog (es:entail_state) rhs rhs_rest (rhs_h_matched_se
                       (* let new_h = DataNode {hd with *)
                       (*     CF.h_formula_data_imm = (CF.ConstAnn(Mutable)); *)
                       (*     CF.h_formula_data_param_imm = n_param_imm} in *)
-	              (* let f = Context.imm_f_split_lhs_node f new_h h in *)
+	                  (* let f = Context.imm_f_split_lhs_node f new_h h in *)
                       (f,h)
                     else 
                     if  not(CF.isLend (hd.CF.h_formula_data_imm)) then (f,h) else
-                  (* let _ = DD.info_pprint ("  hd: " ^ (Cprinter.string_of_h_formula (h ))) pos in *)
+                      (* let _ = DD.info_pprint ("  hd: " ^ (Cprinter.string_of_h_formula (h ))) pos in *)
                   (* let ss = List.combine hd.CF.h_formula_data_arguments hd.CF.h_formula_data_param_imm in *)
                   (* let n_param_imm = List.map (fun (sv,imm) -> if CP.is_node_typ sv then CF.ConstAnn Mutable else imm) ss in *)
                   let n_param_imm = List.map (fun _ -> CF.ConstAnn Mutable) hd.CF.h_formula_data_param_imm in

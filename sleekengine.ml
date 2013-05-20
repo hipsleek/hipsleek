@@ -645,6 +645,7 @@ let run_infer_one_pass ivars (iante0 : meta_formula) (iconseq0 : meta_formula) =
   Debug.no_3 "run_infer_one_pass" pr1 pr pr pr_2 run_infer_one_pass ivars iante0 iconseq0
 
 let process_rel_assume hp_id (ilhs : meta_formula) (irhs: meta_formula)=
+  (* let _ = DD.info_pprint "process_rel_assume" no_pos in *)
   let stab = H.create 103 in
   let lhs = meta_to_formula ilhs false [] stab in
   let fvs = CF.fv lhs in
@@ -667,6 +668,7 @@ let process_rel_assume hp_id (ilhs : meta_formula) (irhs: meta_formula)=
   ()
 
 let process_shape_infer pre_hps post_hps=
+  (* let _ = DD.info_pprint "process_shape_infer" no_pos in *)
   let get_hps all_hps ass = match ass.CF.hprel_kind with
     | CP.RelAssume hps -> all_hps@hps
     | _ -> all_hps

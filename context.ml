@@ -463,7 +463,8 @@ and update_ann_x (f : h_formula) (pimm1 : ann list) (pimm : ann list) : h_formul
   updated_f
 
 
-and imm_split_lhs_node estate l_node r_node = {estate with es_formula = imm_f_split_lhs_node estate.es_formula l_node r_node}
+and imm_split_lhs_node estate l_node r_node =
+  {estate with es_formula = imm_f_split_lhs_node estate.es_formula l_node r_node}
 
 and imm_f_split_lhs_node f l_node r_node = match l_node, r_node with
 	| DataNode dl, DataNode dr ->

@@ -1110,7 +1110,7 @@ let rec collect_par_defs_one_side_one_hp_aux_x prog f (hrel, args) def_ptrs
       let args_neqNull_svl = refine_neq_null (CF.get_neqNull f) in
       let undef_args2 = CP.diff_svl undef_args1 args_neqNull_svl in
       let defined_args, _, _, _, _ = SAU.find_defined_pointers prog f def_ptrs1 in
-      let test1= (List.length undef_args2) = 0  || (defined_args <> [])in
+      let test1= (List.length undef_args2) = 0  || (defined_args <> []) in
         (*case 1*)
         (*this hp is well defined, synthesize partial def*)
       if test1 then
@@ -1223,7 +1223,7 @@ and collect_par_defs_one_side_one_hp_x prog lhs rhs (hrel, args) ldef_ptrs rdef_
                 Some lhs
             in
             let l_r = (hrel, args, (* CP.intersect_svl args *) unk_svl, r, l1 , Some r) in
-            let _ =  DD.info_pprint ("       hp ---> def: \n" ^
+            let _ =  DD.ninfo_pprint ("       hp ---> def: \n" ^
                                              (let pr =  SAU.string_of_par_def_w_name in pr l_r) ) no_pos in
             [l_r]
           else
@@ -2732,7 +2732,7 @@ let pardef_subst_fix_x prog unk_hps groups=
 and lib based predicates*)
 let pardef_subst_fix prog unk_hps groups=
   let pr1 = pr_list_ln (pr_list_ln SAU.string_of_par_def_w_name_short) in
-  Debug.no_1 "pardef_subst_fix" pr1 pr1
+  Debug.ho_1 "pardef_subst_fix" pr1 pr1
       (fun _ -> pardef_subst_fix_x prog unk_hps groups) groups
 
 (*=========SUBST DEF FIX==========*)

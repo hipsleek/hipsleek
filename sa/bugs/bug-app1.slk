@@ -19,8 +19,8 @@ Entail (1) : Fail.
 Last Proving Location: 1 File "bug-app1.slk",Line:10,Col:5
 */
 
-infer [H2] H2(r)   |- r::ln<>.
-print residue.
+//infer [H2] H2(r)   |- r::ln<>.
+//print residue.
 /*
 Entailment Failure (1) Failure("infer.find_undefined_selective_pointers")
 : no residue 
