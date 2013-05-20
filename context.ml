@@ -724,7 +724,10 @@ and norm_search_action ls = match ls with
 and process_one_match_x prog is_normalizing (c:match_res) :action_wt =
   let rhs_node = c.match_res_rhs_node in
   let lhs_node = c.match_res_lhs_node in
-  let filter_norm_lemmas l = List.filter (fun c-> match c.coercion_case with | Normalize b-> if b || !use_split_match then false else true | _ -> true) l in
+  let filter_norm_lemmas l = 
+    List.filter (fun c-> match c.coercion_case with 
+      | Normalize b-> if b || !use_split_match then false else true 
+      | _ -> true) l in
   let r = match c.match_res_type with 
     | Root ->
           let view_decls = prog.prog_view_decls in
@@ -735,7 +738,6 @@ and process_one_match_x prog is_normalizing (c:match_res) :action_wt =
                   let dr_data_orig = dr.h_formula_data_original in
                   let dl_data_derv = dl.h_formula_data_derv in
                   let dr_data_derv = dr.h_formula_data_derv in
-                  
                   let dl_flag, dr_flag = 
                     if !ann_derv then
                       (not(dl_data_derv)),(not(dr_data_derv))

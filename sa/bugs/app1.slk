@@ -8,13 +8,12 @@ HeapPred HP_6(node a).
 HeapPred G1(node a, node b).
 HeapPred K(int a).
 
-/*
 pred ln<> ==
     self::node<_,q> & q=null
   or self::node<_,q> * q::ln<> & q!=null
  inv self!=null.
-*/
 
+/*
 pred ln<> ==
     [] self::node<_,q> 
     case {
@@ -22,18 +21,21 @@ pred ln<> ==
       q!=null -> [] q::ln<>;
     }
  inv self!=null.
+*/
 
 pred ll<> ==
     self=null
   or self::node<_,q> * q::ll<> 
  inv true.
 
+/*
 pred lk<> ==
     self=null
   or self::node<_,q> * q::lk<> 
  inv true.
 
-//lemma self::ll<> -> self::lk<>.
+lemma self::ll<> -> self::lk<>.
+*/
 //lemma self::ll<> <- self::lk<>.
 
 //lemma self::ln<> <- self::node<_,q>*q::ll<>.
@@ -51,9 +53,11 @@ checkentail self::node<_,q>*q::ll<>
                        } .
 */
 
+//checkentail x::node<_,q>*q::ll<> |- x::lk<>.
+
 //checkentail x::node<_,q1> & q1=null |- x::node<_,q>*q::ll<>.
 
-checkentail self::node<_,q1> * q1::ln<> & q1!=null |- self::node<_,q>*q::ll<>.
+//checkentail self::node<_,q1> * q1::ln<> & q1!=null |- self::node<_,q>*q::ll<>.
 
 checkentail xxx::node<_,q1> * q1::ln<> & q1!=null |- xxx::node<_,q>*q::ll<>.
 

@@ -1586,7 +1586,6 @@ and set_materialized_prop cdef =
 and find_m_prop_heap params eq_f h = 
   let pr = Cprinter.string_of_h_formula in
   let prr x = string_of_int (List.length x) in
-  find_node_vars eq_f h;
   Debug.no_1 "find_m_prop_heap" pr prr (fun _ -> find_m_prop_heap_x params eq_f h) h
       
 and find_m_prop_heap_x params eq_f h = 
@@ -1615,6 +1614,37 @@ and find_m_prop_heap_x params eq_f h =
       | CF.HEmp -> [] in
   helper h
 
+and find_trans_view_name_x ff self pos =
+  let params = [self] in
+  let is_member (aset :(CP.spec_var list * CP.spec_var)list) v = 
+    let l = List.filter (fun (l,_) -> List.exists (CP.eq_spec_var v) l) aset in
+    snd (List.split l) in
+  let find_m_prop_heap_aux params pf hf =
+    let rec cycle p acc_p v_p =
+      if p==[] then v_p
+      else
+        let has = param_alias_sets pf p in
+        let eq_f = (is_member has) in
+        let (ls,vs) = find_node_vars eq_f hf in
+        let rs = Gen.BList.difference_eq CP.eq_spec_var ls acc_p in
+        cycle rs (rs@p@acc_p) (vs@v_p)
+    in cycle params [] [] in
+  let find_m_one f = match f with
+    | CF.Base b ->    
+          find_m_prop_heap_aux params b.CF.formula_base_pure b.CF.formula_base_heap
+    | CF.Exists b->
+          find_m_prop_heap_aux params b.CF.formula_exists_pure b.CF.formula_exists_heap      
+    | _ -> Error.report_error 
+          {Error.error_loc = no_pos; Error.error_text = "find_materialized_prop: unexpected disjunction"} in
+  let lm = find_m_one ff in
+  lm
+
+and find_trans_view_name ff self pos =
+  let pr1 = Cprinter.string_of_formula in
+  let pr2 = Cprinter.string_of_spec_var in
+  Debug.no_2 "find_trans_view_name" pr1 pr2 (pr_list pr_id) (fun _ _ -> find_trans_view_name_x ff self pos) ff self
+
+
 and find_node_vars eq_f h =
   let join (a,b) (c,d) = (a@c,b@d) in
   let rec helper h =  match h with
@@ -1627,7 +1657,7 @@ and find_node_vars eq_f h =
         let l = eq_f h.CF.h_formula_view_node in
         Debug.tinfo_hprint (add_str "view:l" (Cprinter.string_of_spec_var_list)) l no_pos;
         if l==[] then ([],[])
-        else ([],[h.CF.h_formula_view_node])
+        else ([],[h.CF.h_formula_view_name])
     | CF.Star h -> join (helper  h.CF.h_formula_star_h1) (helper  h.CF.h_formula_star_h2)
     | CF.StarMinus h -> join (helper  h.CF.h_formula_starminus_h1) (helper  h.CF.h_formula_starminus_h2)
     | CF.Conj h -> join (helper  h.CF.h_formula_conj_h1) (helper  h.CF.h_formula_conj_h2)
@@ -1639,11 +1669,11 @@ and find_node_vars eq_f h =
     | CF.HFalse 
     | CF.HRel _
     | CF.HEmp -> ([],[]) in
-  let helper h = 
-    let pr1 = Cprinter.string_of_h_formula in
-    let pr2 = Cprinter.string_of_spec_var_list in
-    Debug.no_1 "find_node_vars" pr1 (pr_pair pr2 pr2) helper h 
-  in helper h
+  (* let helper h =  *)
+  (*   let pr1 = Cprinter.string_of_h_formula in *)
+  (*   let pr2 = Cprinter.string_of_spec_var_list in *)
+  (*   Debug.no_1 "find_node_vars" pr1 (pr_pair pr2 pr_id) helper h  in *)
+  helper h
 
 
 and param_alias_sets p params = 
@@ -1665,14 +1695,15 @@ and find_materialized_prop_x params (f0 : CF.formula) : C.mater_property list =
     snd (List.split l) in
   let find_m_prop_heap_aux params pf hf =
     let rec cycle p acc_p v_p =
-      if p==[] then
-        find_m_prop_heap params (is_member (param_alias_sets pf v_p)) hf
-      else
-        let has = param_alias_sets pf p in
-        let eq_f = (is_member has) in
-        let (ls,vs) = find_node_vars eq_f hf in
-        let rs = Gen.BList.difference_eq CP.eq_spec_var ls acc_p in
-        cycle rs (rs@p@acc_p) (vs@v_p)
+        find_m_prop_heap params (is_member (param_alias_sets pf p)) hf
+      (* if p==[] then *)
+      (*   find_m_prop_heap params (is_member (param_alias_sets pf v_p)) hf *)
+      (* else *)
+      (*   let has = param_alias_sets pf p in *)
+      (*   let eq_f = (is_member has) in *)
+      (*   let (ls,vs) = find_node_vars eq_f hf in *)
+      (*   let rs = Gen.BList.difference_eq CP.eq_spec_var ls acc_p in *)
+      (*   cycle rs (rs@p@acc_p) (vs@v_p) *)
     in cycle params [] [] in
   let find_m_one f = match f with
     | CF.Base b ->    
@@ -2281,8 +2312,11 @@ and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
   (* wrap exists for RHS - no implicit instantiation*)
   let c_rhs = CF.push_exists ex_vars c_rhs in
   let lhs_name = find_view_name c_lhs self (IF.pos_of_formula coer.I.coercion_head) in
+  let sv = CP.SpecVar (UNK,self,Unprimed) in
+  let xx = find_trans_view_name c_rhs sv no_pos in
   let rhs_name =
-    try find_view_name c_rhs self (IF.pos_of_formula coer.I.coercion_body)
+    try (List.hd xx)
+      (* find_view_name c_rhs self (IF.pos_of_formula coer.I.coercion_body) *)
     with | _ -> "" in
   if lhs_name = "" then
     Error.report_error

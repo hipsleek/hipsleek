@@ -346,7 +346,7 @@ let sleek_log_to_text_file (src_files) =
   Debug.no_1 "sleek_log_to_text_file" pr pr_none sleek_log_to_text_file (src_files)
 
 let process_proof_logging src_files  =
-  Debug.info_pprint ("process_proof_logging\n") no_pos;
+  (* Debug.info_pprint ("process_proof_logging\n") no_pos; *)
   if !Globals.proof_logging || !Globals.proof_logging_txt || !Globals.sleek_logging_txt then 
     begin
       let tstartlog = Gen.Profiling.get_time () in
