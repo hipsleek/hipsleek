@@ -256,6 +256,7 @@ let clear_entailment_history_es (es :entail_state) :context =
 (*;
 	es_var_ctx_rhs = es.es_var_ctx_rhs;
 	es_var_subst = es.es_var_subst*)
+
 let fail_ctx_stk = ref ([]:fail_type list)
 let previous_failure () = not(Gen.is_empty !fail_ctx_stk)
 
@@ -2102,6 +2103,108 @@ and unfold_failesc_context_x (prog:prog_or_branches) (ctx : list_failesc_context
       else res in 
   transform_list_failesc_context (idf,idf,fct) ctx
 
+and unfold_struc_nth (n:int) (prog:prog_or_branches) (f : struc_formula) (v : CP.spec_var) (already_unsat:bool) (uf:int) (pos : loc) : struc_formula =
+  let pr = Cprinter.string_of_struc_formula in
+  let pr2 = Cprinter.string_of_prog_or_branches in
+  let prs = Cprinter.string_of_spec_var in
+  Debug.ho_4_loop_num n "struc_unfold" string_of_bool prs pr pr2 pr 
+      (fun _ _ _ _ -> unfold_struc_x prog f v already_unsat uf pos) already_unsat v f prog
+	  
+and unfold_struc_x (prog:prog_or_branches) (f : struc_formula) (v : CP.spec_var) (already_unsat:bool) (uf:int) (pos : loc) : struc_formula = 
+
+	let struc_unfold_baref prog (h : h_formula) (p : MCP.mix_formula) a (fl:flow_formula) (v : CP.spec_var) pos 
+		qvars ee ei ii already_unsat (uf:int) : struc_formula option=
+	  let asets = Context.alias_nth 6 (MCP.ptr_equations_with_null p) in
+	  let aset' = Context.get_aset asets v in
+	  let aset = if CP.mem v aset' then aset' else v :: aset' in
+	  let h_rest, unfolded_f = struc_unfold_heap prog h aset v uf pos in
+	  match unfolded_f with
+		| None -> None
+		| Some s ->
+			let rem_f = mkEBase_w_vars ee ei ii (mkBase h_rest p TypeTrue fl a pos) None pos in
+			Some (combine_struc rem_f s) in
+	  
+	let f_helper ee ei ii f = 
+		let nf = match f with
+			| Or _ -> report_error no_pos "[solver.ml] unfold_struc, struc formula should have been normalized. Did not expect Or"
+			| Base {
+				formula_base_heap = h;
+				formula_base_pure = p;
+				formula_base_and = a;
+				formula_base_flow = fl;
+				formula_base_pos = pos;}-> 
+					struc_unfold_baref prog h p a fl v pos []  ee ei ii already_unsat uf
+			| Exists _ ->
+				let rf,l = rename_bound_vars_with_subst f in
+				let v = CP.subst_var_par l v in	
+				let qvars, baref = split_quantifiers rf in
+				let h, p, fl, t, a = split_components baref in
+				struc_unfold_baref prog h p a fl v pos qvars ee ei ii already_unsat uf in
+		match nf with 
+		| None -> None 
+		| Some s -> 
+			let tmp_es = CF.empty_es (CF.mkTrueFlow ()) (None,[]) no_pos in
+			Some (normalize_struc_formula_w_coers (fst prog) tmp_es s (fst prog).prog_left_coercions) in
+		
+	let rec struc_helper f = match f with
+	  | ECase b -> ECase {b with formula_case_branches = map_l_snd struc_helper b.formula_case_branches}	 
+	  | EList b -> EList (map_l_snd struc_helper b)
+	  | EAssume b -> EAssume { b with 
+				formula_assume_simpl = unfold_x prog b.formula_assume_simpl v already_unsat uf pos; 
+				formula_assume_struc = struc_helper b.formula_assume_struc;}
+	  | EInfer b -> EInfer {b with formula_inf_continuation = struc_helper b.formula_inf_continuation;}
+	  | EBase {
+		formula_struc_exists = ee;
+		formula_struc_explicit_inst = ei;
+		formula_struc_implicit_inst = ii;
+		formula_struc_continuation = cont;
+		formula_struc_base = base;} -> 
+			match f_helper ee ei ii base with
+				| None -> f 
+				| Some s -> match map_opt struc_helper cont  with 
+					| None -> s
+					| Some f -> combine_struc f s in
+	struc_helper f		
+			
+  
+and struc_unfold_heap (prog:Cast.prog_or_branches) (f : h_formula) (aset : CP.spec_var list) (v : CP.spec_var) (uf:int) pos:
+	h_formula *(struc_formula option)= 
+	let (f,r) = pick_view_node f aset in
+	let n_struc = match r with
+	 | None -> None
+	 | Some { h_formula_view_node = p;
+		  h_formula_view_imm = imm;       
+		  h_formula_view_name = lhs_name;
+		  h_formula_view_origins = origs;
+		  h_formula_view_unfold_num = old_uf;
+		  h_formula_view_label = v_lbl;
+		  h_formula_view_remaining_branches = brs;
+		  h_formula_view_perm = perm;
+		  h_formula_view_arguments = vs} -> 
+		    let uf = old_uf+uf in
+			let vdef = Cast.look_up_view_def pos (fst prog).prog_view_decls lhs_name in
+			let forms = match brs with 
+                      | None -> vdef.view_formula
+                      | Some s -> 
+						let joiner f = formula_of_disjuncts (fst (List.split f)) in
+						let f = joiner (List.filter (fun (_,l)-> List.mem l s) vdef.view_un_struc_formula) in
+						struc_formula_of_formula f  pos in         
+            let renamed_view_formula = add_struc_unfold_num (rename_struc_bound_vars forms) uf in
+		    let renamed_view_formula = propagate_imm_struc_formula renamed_view_formula imm in
+            let renamed_view_formula = 
+                  if (Perm.allow_perm ()) then
+                        (match perm with 
+                          | None -> renamed_view_formula
+                          | Some f -> Cformula.propagate_perm_struc_formula renamed_view_formula f) 
+                      else renamed_view_formula in
+            let fr_vars = (CP.SpecVar (Named vdef.view_data_name, self, Unprimed))::  vdef.view_vars in
+            let to_rels,to_rem = (List.partition CP.is_rel_typ vs) in
+	        let res_form = subst_struc_avoid_capture fr_vars (v::vs) renamed_view_formula in
+			let res_form = struc_formula_set_lhs_case false (add_struc_origins origs res_form ) in (* no LHS case analysis after unfold *)
+	        Some (CF.replace_struc_formula_label v_lbl res_form) in
+	(f,n_struc)
+
+ 
 and unfold_nth(*_debug*) (n:int) (prog:prog_or_branches) (f : formula) (v : CP.spec_var) (already_unsat:bool) (uf:int) (pos : loc) : formula =
   (* unfold_x prog f v already_unsat pos *)
   let pr = Cprinter.string_of_formula in
@@ -2114,26 +2217,23 @@ and unfold_x (prog:prog_or_branches) (f : formula) (v : CP.spec_var) (already_un
   let rec aux f v  uf pos = 
     match f with
       | Base ({ formula_base_heap = h;
-        formula_base_pure = p;
-        formula_base_flow = fl;
-        formula_base_and = a;
-        formula_base_pos = pos}) ->  
-	    let new_f = add_formula_and a (unfold_baref prog h p fl v pos [] already_unsat uf) in
-	    let tmp_es = CF.empty_es (CF.mkTrueFlow ()) (None,[]) no_pos in
-	    let uf = normalize_formula_w_coers 1 (fst prog) tmp_es new_f (fst prog).prog_left_coercions in
-            uf
+		formula_base_pure = p;
+		formula_base_flow = fl;
+		formula_base_and = a;
+		formula_base_pos = pos}) ->  
+		let new_f = unfold_baref prog h p a fl v pos [] already_unsat uf in
+		let tmp_es = CF.empty_es (CF.mkTrueFlow ()) (None,[]) no_pos in
+		normalize_formula_w_coers 1 (fst prog) tmp_es new_f (fst prog).prog_left_coercions 
 
       | Exists _ -> (*report_error pos ("malfunction: trying to unfold in an existentially quantified formula!!!")*)
             let rf,l = rename_bound_vars_with_subst f in
-	    let v = CP.subst_var_par l v in
+		let v = CP.subst_var_par l v in
             let qvars, baref = split_quantifiers rf in
             let h, p, fl, t, a = split_components baref in
             (*let _ = print_string ("\n memo before unfold: "^(Cprinter.string_of_memoised_list mem)^"\n")in*)
-            let uf = unfold_baref prog h p fl v pos qvars already_unsat uf in
-            let uf = add_formula_and a uf in (*preserve a*)
-	    let tmp_es = CF.empty_es (CF.mkTrueFlow ()) (None,[]) no_pos in
-	    let uf = normalize_formula_w_coers 2 (fst prog) tmp_es uf (fst prog).prog_left_coercions in
-            uf
+        let uf = unfold_baref prog h p a fl v pos qvars already_unsat uf in
+		let tmp_es = CF.empty_es (CF.mkTrueFlow ()) (None,[]) no_pos in
+		normalize_formula_w_coers 2 (fst prog) tmp_es uf (fst prog).prog_left_coercions
       | Or ({formula_or_f1 = f1;
         formula_or_f2 = f2;
         formula_or_pos = pos}) ->
@@ -2148,7 +2248,7 @@ and unfold_x (prog:prog_or_branches) (f : formula) (v : CP.spec_var) (already_un
 
 
 
-and unfold_baref prog (h : h_formula) (p : MCP.mix_formula) (fl:flow_formula) (v : CP.spec_var) pos qvars already_unsat (uf:int) : formula =
+and unfold_baref prog (h : h_formula) (p : MCP.mix_formula) a (fl:flow_formula) (v : CP.spec_var) pos qvars already_unsat (uf:int) =
   let asets = Context.alias_nth 6 (MCP.ptr_equations_with_null p) in
   let aset' = Context.get_aset asets v in
   let aset = if CP.mem v aset' then aset' else v :: aset' in
@@ -2157,6 +2257,7 @@ and unfold_baref prog (h : h_formula) (p : MCP.mix_formula) (fl:flow_formula) (v
   let pure_f = mkBase HEmp p TypeTrue (mkTrueFlow ()) [] pos in
   let tmp_form_norm = normalize_combine unfolded_h pure_f pos in
   let tmp_form = Cformula.set_flow_in_formula_override fl tmp_form_norm in
+  let tmp_form = add_formula_and a tmp_form in
   let resform = if (List.length qvars) >0 then push_exists qvars tmp_form else tmp_form in
   (*let res_form = elim_unsat prog resform in*)
   if already_unsat then match (snd prog) with 
@@ -2180,7 +2281,7 @@ and unfold_heap (prog:Cast.prog_or_branches) (f : h_formula) (aset : CP.spec_var
       pr_out
       (fun _ _ _ _ -> unfold_heap_x prog f aset v fl uf pos) f v aset uf
 
-and unfold_heap_x (prog:Cast.prog_or_branches) (f : h_formula) (aset : CP.spec_var list) (v : CP.spec_var) fl (uf:int) pos : formula = 
+and unfold_heap_x (prog:Cast.prog_or_branches) (f : h_formula) (aset : CP.spec_var list) (v : CP.spec_var) fl (uf:int) pos: formula = 
   (*  let _ = print_string("unfold heap " ^ (Cprinter.string_of_h_formula f) ^ "\n\n") in*)
   match f with
     | ViewNode ({h_formula_view_node = p;
@@ -2195,7 +2296,7 @@ and unfold_heap_x (prog:Cast.prog_or_branches) (f : h_formula) (aset : CP.spec_v
       h_formula_view_arguments = vs}) ->(*!!Attention: there might be several nodes pointed to by the same pointer as long as they are empty*)
           let uf = old_uf+uf in
           if CP.mem p aset then
-	    match (snd prog) with
+		  match (snd prog) with
 	      | None ->
                     let prog = fst prog in
 	            let vdef = Cast.look_up_view_def pos prog.prog_view_decls lhs_name in
@@ -2234,7 +2335,7 @@ and unfold_heap_x (prog:Cast.prog_or_branches) (f : h_formula) (aset : CP.spec_v
 		    (* let res_form = add_original res_form original in*)
 		    let res_form = set_lhs_case res_form false in (* no LHS case analysis after unfold *)
 		    (*let res_form = struc_to_formula res_form in*)
-	            CF.replace_formula_label v_lbl res_form
+	           CF.replace_formula_label v_lbl res_form
 	      | Some (base , (pred_id,to_vars)) -> (* base case unfold *)
                     (* ensures that only view with a specific pred and arg are base-case unfolded *)
 		    let flag = if (pred_id=lhs_name) 
@@ -2250,43 +2351,40 @@ and unfold_heap_x (prog:Cast.prog_or_branches) (f : h_formula) (aset : CP.spec_v
                       )
                     else false 
                     in
-	            if flag 
-	            then  
-                      (* perform base-case unfold *)
-                      CF.replace_formula_label v_lbl  (CF.formula_of_mix_formula_with_fl base fl [] no_pos)
+	            if flag then  (* perform base-case unfold *)
+                     CF.replace_formula_label v_lbl  (CF.formula_of_mix_formula_with_fl base fl [] no_pos)
 	            else formula_of_heap f pos
-          else
-	    formula_of_heap_fl f fl pos
+          else formula_of_heap_fl f fl pos
     | Star ({h_formula_star_h1 = f1;
       h_formula_star_h2 = f2}) ->
           let uf1 = unfold_heap_x prog f1 aset v fl uf pos in
           let uf2 = unfold_heap_x prog f2 aset v fl uf pos in
-          normalize_combine_star uf1 uf2 pos (*TO CHECK*)
+		  normalize_combine_star uf1 uf2 pos
     | StarMinus ({h_formula_starminus_h1 = f1;
       h_formula_starminus_h2 = f2}) ->
           let uf1 = unfold_heap_x prog f1 aset v fl uf pos in
           let uf2 = unfold_heap_x prog f2 aset v fl uf pos in
-          normalize_combine_starminus uf1 uf2 pos (*TO CHECK*)
+		  normalize_combine_starminus uf1 uf2 pos
     | Conj ({h_formula_conj_h1 = f1;
       h_formula_conj_h2 = f2}) ->
           let uf1 = unfold_heap_x prog f1 aset v fl uf pos in
           let uf2 = unfold_heap_x prog f2 aset v fl uf pos in
-          normalize_combine_conj uf1 uf2 pos
+		  normalize_combine_conj uf1 uf2 pos
     | ConjConj ({h_formula_conjconj_h1 = f1;
       h_formula_conjconj_h2 = f2}) ->
           let uf1 = unfold_heap_x prog f1 aset v fl uf pos in
           let uf2 = unfold_heap_x prog f2 aset v fl uf pos in
-          normalize_combine_conjconj uf1 uf2 pos
+		  normalize_combine_conjconj uf1 uf2 pos
     | ConjStar ({h_formula_conjstar_h1 = f1;
       h_formula_conjstar_h2 = f2}) ->
           let uf1 = unfold_heap_x prog f1 aset v fl uf pos in
           let uf2 = unfold_heap_x prog f2 aset v fl uf pos in
-          normalize_combine_conjstar uf1 uf2 pos                    
+		  normalize_combine_conjstar uf1 uf2 pos
     | Phase ({h_formula_phase_rd = f1;
       h_formula_phase_rw = f2}) ->
           let uf1 = unfold_heap_x prog f1 aset v fl uf pos in
           let uf2 = unfold_heap_x prog f2 aset v fl uf pos in
-          normalize_combine_phase uf1 uf2 pos
+		  normalize_combine_phase uf1 uf2 pos
     | _ -> formula_of_heap_fl f fl pos
 
 (*
@@ -9129,10 +9227,10 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
             (* CF.mk_failure_bot ("infer_heap .. "))), NoAlias) *)
             (* let _ =  Debug.info_pprint ">>>>>> Inf.infer_collect_hp_rel 1: infer_heap <<<<<<" pos in *)
             let (res,new_estate, n_lhs) = Inf.infer_collect_hp_rel 1 prog estate rhs rhs_rest rhs_h_matched_set lhs_b rhs_b pos in
-            Debug.tinfo_hprint (add_str "n_lhs" (Cprinter.string_of_h_formula)) n_lhs pos;
+            Debug.info_hprint (add_str "n_lhs" (Cprinter.string_of_h_formula)) n_lhs pos;
             if (not res) then r else
               let n_rhs_b = Base {rhs_b with formula_base_heap = rhs_rest} in
-              Debug.tinfo_hprint (add_str "new_estate(M_infer_heap)" (Cprinter.string_of_entail_state)) new_estate pos;
+              Debug.info_hprint (add_str "new_estate(M_infer_heap)" (Cprinter.string_of_entail_state)) new_estate pos;
               let res_es0, prf0 = do_match prog new_estate n_lhs rhs n_rhs_b rhs_h_matched_set is_folding pos in
               (* let res_ctx = Ctx new_estate  in *)
               (* (SuccCtx[res_ctx], NoAlias) *)

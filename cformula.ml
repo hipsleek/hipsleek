@@ -628,7 +628,15 @@ and struc_formula_of_heap h pos = EBase {
 	formula_struc_base = formula_of_heap h pos;
 	formula_struc_continuation = None;
 	formula_struc_pos = pos}
-
+	
+and struc_formula_of_heap_fl h fl pos = EBase { 
+	formula_struc_explicit_inst = [];	 
+	formula_struc_implicit_inst = []; 
+	formula_struc_exists = [];
+	formula_struc_base = formula_of_heap_fl h fl pos;
+	formula_struc_continuation = None;
+	formula_struc_pos = pos}
+	
 and struc_formula_of_formula f pos = EBase { 
 	formula_struc_explicit_inst = [];	 
     formula_struc_implicit_inst = []; 
@@ -649,6 +657,14 @@ and formula_of_pure_formula (p:CP.formula) (pos:loc) :formula =
 
 and mkBase_simp (h : h_formula) (p : MCP.mix_formula) : formula=  mkBase_w_lbl h p TypeTrue (mkNormalFlow()) [] no_pos None
 
+and mkEBase_w_vars ee ei ii f ct pos = EBase{
+      formula_struc_explicit_inst = ei;
+      formula_struc_implicit_inst = ii;
+      formula_struc_exists =ee;
+      formula_struc_base = f;
+      formula_struc_continuation = ct;
+      formula_struc_pos = pos;
+  }
 and mkBase_rec f ct pos = {
       formula_struc_explicit_inst =[];
       formula_struc_implicit_inst =[];
@@ -1999,7 +2015,7 @@ and add_unfold_num (f : formula) uf =
     | Base b -> Base ({b with formula_base_heap = h_add_unfold_num b.formula_base_heap uf})
     | Exists e -> Exists ({e with formula_exists_heap = h_add_unfold_num e.formula_exists_heap uf})
   in helper f
-
+  
 and add_struc_origins origs (f:struc_formula) = match f with
 	  | ECase b -> ECase {b with formula_case_branches = map_l_snd (add_struc_origins origs) b.formula_case_branches;}
 	  | EBase b -> EBase {b with formula_struc_base = add_origins b.formula_struc_base origs ; 
@@ -12103,3 +12119,20 @@ let convert_to_mut f =
   Debug.no_1 "convert_to_mut" pr pr convert_to_mut f
   
 
+
+let add_struc_unfold_num (f : struc_formula) uf = 
+  let ff f = Some (add_unfold_num f uf) in
+  transform_struc_formula  (*(f_e_f,f_f,f_h_f,(f_memo,f_aset, f_formula, f_b_formula, f_exp))*)
+ ((fun _->None),ff,(fun e->Some e),((fun e->Some e),(fun e->Some e),(fun e->Some e),(fun _->None),(fun _->None))) f
+ 
+ 
+ let rec pick_view_node h aset = match h with
+	| ViewNode v -> if CP.mem v.h_formula_view_node aset then (HEmp,Some v) else (h,None)
+	| Star s -> 
+		let (h,r) = pick_view_node s.h_formula_star_h1 aset in 
+		(match r with 
+			| Some _ -> (mkStarH h s.h_formula_star_h2 no_pos, r)
+			| None -> 
+				let (h,r) = pick_view_node s.h_formula_star_h2 aset in 
+				(mkStarH h s.h_formula_star_h1 no_pos, r))
+	| _ -> (h, None)

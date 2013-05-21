@@ -83,12 +83,12 @@ let process_coercion_check iante0 iconseq0 iexact(lemma_name: string)  (cprog: C
    - sets lhs and rhs original-derived flag to original in order to be able to inductively apply the current lemma in its proving
    - resets lhs & rhs view origins (originis = [])
    - renames self to self_<lemma_name>
-*)
+*)(*
 let check_coercion coer lhs rhs  (cprog: C.prog_decl) =
   let pos = CF.pos_of_formula coer.C.coercion_head in
   let lhs = Solver.unfold_nth 9 (cprog,None) lhs (CP.SpecVar (Named "", self, Unprimed)) true 0 pos in
   (* unfolding RHS need to use unflattened body to preserve case-spec *)
-  let rhs = Solver.unfold_nth 9 (cprog,None) rhs (CP.SpecVar (Named "", self, Unprimed)) true 0 pos in
+  let rhs = Solver.unfold_struc_nth 9 (cprog,None) rhs (CP.SpecVar (Named "", self, Unprimed)) true 0 pos in
   (*let _ = print_string("lhs_unfoldfed: "^(Cprinter.string_of_formula lhs)^"\n") in*)
   let lhs = if(coer.C.coercion_case == C.Ramify) then 
     Mem.ramify_unfolded_formula lhs cprog.C.prog_view_decls 
@@ -108,13 +108,14 @@ let check_coercion coer lhs rhs  (cprog: C.prog_decl) =
 let check_coercion coer lhs rhs  (cprog: C.prog_decl) =
   let pr1 = Cprinter.string_of_coercion in
   let pr2 = Cprinter.string_of_formula in
-  Debug.no_3 "check_coercion" pr1 pr2 pr2 (fun (valid,rs) -> string_of_bool valid) (fun _ _ _ -> check_coercion coer lhs rhs cprog ) coer lhs rhs
+  Debug.no_3 "check_coercion" pr1 pr2 pr2 (fun (valid,rs) -> string_of_bool valid) (fun _ _ _ -> check_coercion coer lhs rhs cprog ) coer lhs rhs*)
 
 (* same effect as check_coercion with the difference that the rhs is a struc_formula *)
 let check_coercion_struc coer lhs rhs (cprog: C.prog_decl) =
     let pos = CF.pos_of_formula coer.C.coercion_head in
     let lhs = Solver.unfold_nth 9 (cprog,None) lhs (CP.SpecVar (Named "", self, Unprimed)) true 0 pos in
     (*let _ = print_string("lhs_unfoldfed_struc: "^(Cprinter.string_of_formula lhs)^"\n") in*)
+	let rhs = Solver.unfold_struc_nth 9 (cprog,None) rhs (CP.SpecVar (Named "", self, Unprimed)) true 0 pos in
     let lhs = if(coer.C.coercion_case == C.Ramify) then 
     	Mem.ramify_unfolded_formula lhs cprog.C.prog_view_decls 
     	else lhs
@@ -150,9 +151,9 @@ let check_left_coercion coer cprog  =
 (* sets the lhs & rhs of the entailment when proving r2l lemma (coercion), where the rhs (coercion head) is normalized  *)
 let check_right_coercion coer (cprog: C.prog_decl) =
   (* let _ = print_string ("\nCoercion name: " ^ coer.C.coercion_name) in *)
-  let ent_rhs = coer.C.coercion_head_norm in
+  let ent_rhs = CF.struc_formula_of_formula coer.C.coercion_head_norm no_pos in
   let ent_lhs = coer.C.coercion_body in
-  check_coercion coer ent_lhs ent_rhs cprog 
+  check_coercion_struc coer ent_lhs ent_rhs cprog 
 
 let check_right_coercion coer (cprog: C.prog_decl) =
   let pr = Cprinter.string_of_coercion in
@@ -221,4 +222,3 @@ let verify_lemma (l2r: C.coercion_decl option) (r2l: C.coercion_decl option) (cp
     | None -> ""
   in
   Debug.no_3 "verify_lemma" pr pr (fun x -> x) (fun _ -> "Unit") (fun _ _ _ -> verify_lemma l2r r2l cprog coerc_name coerc_type) l2r r2l coerc_name
-

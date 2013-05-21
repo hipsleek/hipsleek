@@ -8,20 +8,21 @@ HeapPred HP_6(node a).
 HeapPred G1(node a, node b).
 HeapPred K(int a).
 
+
 pred ln<> ==
     self::node<_,q> & q=null
   or self::node<_,q> * q::ln<> & q!=null
  inv self!=null.
 
-/*
-pred ln<> ==
+
+pred ln1<> ==
     [] self::node<_,q> 
     case {
       q=null -> [] q=null;
-      q!=null -> [] q::ln<>;
+      q!=null -> [] q::ln1<>;
     }
  inv self!=null.
-*/
+
 
 pred ll<> ==
     self=null
@@ -40,7 +41,7 @@ lemma self::ll<> -> self::lk<>.
 
 //lemma self::ln<> <- self::node<_,q>*q::ll<>.
 lemma self::ln<> -> self::node<_,q>*q::ll<>.
-//lemma self::ln<> <- self::ll<> & self!=null.
+lemma self::ln1<> <- self::ll<> & self!=null.
 // lemma x::node<_,q>*q::ll<> |- x::ln<>.
 
 
