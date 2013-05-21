@@ -11,7 +11,8 @@ HeapPred HP_6(node a).
 
 relAssume H1
  H1(c)&c!=null --> c::node<_,prev_19_765',next_19_766'>@M * 
-  //HP_5(prev_19_765') * 
+  //HP_5(prev_19_765') *
+  // above triggers infinite loop
   HP_6(next_19_766')&true.
 
 relAssume H1
@@ -23,4 +24,14 @@ relAssume H1
 
 shape_infer [H1][].//[pre_hps][post_hps]
 
+/*
 
+Why did we get emp?
+
+*************************************
+*******relational definition ********
+*************************************
+[ H1(c_28) ::= emp&c_28=null]
+*************************************
+
+*/

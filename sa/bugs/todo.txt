@@ -251,3 +251,16 @@ void foo (node c, node y)
       c.next=y;
    }
 }
+
+# dll-4a1.slk
+
+why did we get emp?
+
+/*
+*************************************
+*******relational definition ********
+*************************************
+[ H1(c_35) ::= emp&c_35=null,
+ G1(c_36,p_37) ::= emp&c_36=null]
+************************
+*/
