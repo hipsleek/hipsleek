@@ -10,9 +10,7 @@ HeapPred HP_5(node a).
 HeapPred HP_6(node a).
 
 relAssume H1
- H1(c)&c!=null --> c::node<_,prev_19_765',next_19_766'>@M * 
-  //HP_5(prev_19_765') * 
-  HP_6(next_19_766')&true.
+ H1(c)&c!=null --> c::node<_,prev_19_765',next_19_766'>@M * HP_6(next_19_766')&true.
 
 relAssume H1
  HP_6(n)&true --> H1(n)&true.
@@ -21,6 +19,14 @@ relAssume H1
  H1(c)&c=null --> emp&true.
 
 
-shape_infer [H1][].//[pre_hps][post_hps]
+relAssume G1
+ c::node<_,p,n>@M * G1(n,c)&true 
+  --> G1(c,p)&true.
+
+relAssume G1
+ c=null --> G1(c,p)&true.
+
+
+shape_infer [H1][G1].//[pre_hps][post_hps]
 
 

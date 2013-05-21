@@ -99,7 +99,7 @@ Post
 
 which should further simplify to:
 
-# dll-4a.ss
+# dll-4a.slk
 
 relAssume H1
  H1(c)&c!=null --> c::node<_,prev_19_765',next_19_766'>@M * 
