@@ -1,5 +1,6 @@
 data node{
 	int val;
+	node prev;
 	node next;
 }
 
@@ -11,10 +12,12 @@ node foo (node c, node y)
    return c.next;
 }
 
+
+/*
   ll<n,a1,a2> == self=null & n=0
   or self::node<_@a1,q@a2>*q::ll<n-1,a1,a2>
   inv n>=0;
-
+*/
 
 
 /*

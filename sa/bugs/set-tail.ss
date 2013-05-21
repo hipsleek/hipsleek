@@ -24,5 +24,15 @@ HeapPred H1(node a,node b).
  c::node<val_16_771,prev_16_772,y>@M * HP_766(prev_16_772,y) * 
   HP_767(next_16_768,y) & true --> G1(c,y)&true
 
+
+H1(c_773,y_774) ::= c_773::node<val_16_745',prev_16_746',next_16_747'>@M * 
+(HP_766(prev_16_746',y_774)) * (HP_767(next_16_747',y_774))&true,
+ 
+G1(c_775,y_776) ::= (HP_766(prev_16_772,y_776)) 
+      * (HP_767(next_16_768,y_776)) 
+      * c_775::node<val_16_771,prev_16_772,y_776>@M&true,
+
+
+
 */
 
