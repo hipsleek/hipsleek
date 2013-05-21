@@ -41,6 +41,7 @@ lemma self::ll<> -> self::lk<>.
 
 //lemma self::ln<> <- self::node<_,q>*q::ll<>.
 lemma self::ln<> -> self::node<_,q>*q::ll<>.
+lemma self::ln<> <- self::node<_,q>*q::ll<>.
 lemma self::ln1<> <- self::ll<> & self!=null.
 // lemma x::node<_,q>*q::ll<> |- x::ln<>.
 

@@ -2107,7 +2107,7 @@ and unfold_struc_nth (n:int) (prog:prog_or_branches) (f : struc_formula) (v : CP
   let pr = Cprinter.string_of_struc_formula in
   let pr2 = Cprinter.string_of_prog_or_branches in
   let prs = Cprinter.string_of_spec_var in
-  Debug.ho_4_loop_num n "struc_unfold" string_of_bool prs pr pr2 pr 
+  Debug.no_4_loop_num n "struc_unfold" string_of_bool prs pr pr2 pr 
       (fun _ _ _ _ -> unfold_struc_x prog f v already_unsat uf pos) already_unsat v f prog
 	  
 and unfold_struc_x (prog:prog_or_branches) (f : struc_formula) (v : CP.spec_var) (already_unsat:bool) (uf:int) (pos : loc) : struc_formula = 
