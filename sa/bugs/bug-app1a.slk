@@ -4,6 +4,7 @@ data node{
 }.
 
 HeapPred H2(node a).
+HeapPred H3(node a).
 
 pred ln<> ==
     self::node<_,q> & q=null
@@ -30,3 +31,5 @@ print residue.
 //infer [H2] H2(r)   |- r::node<_,p> & p=null.
 
 
+infer [H2,H3] H2(r)*H3(q)   |- r::lseg<null>*q::ln<>.
+print residue.

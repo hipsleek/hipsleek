@@ -182,3 +182,21 @@ Expecting relational assumption : H(r) --> r::lseg<q> * q::ln<>
 *******************************************************
 # bug-app3.slk
 
+# bug-app1b.slk
+
+infer [H2] H2(r)*H2(q)   |- r::lseg<null>*q::ln<>.
+print residue.
+
+/*
+
+ es_trace:  COND ==>  InferHeap ==> 
+ es_infer_vars_hp_rel: [H2; HP_42]
+ es_infer_hp_rel: [(H2(r)) * (H2(q))&
+                    true --> r::lseg<flted_20_41>@M[LHSCase] * 
+                    (HP_42(flted_20_41))&true]
+ es_unsat_flag: false
+!!! n_lhs: q::ln@M[0][Orig][LHSCase]
+!!! n_lhs: q::ln@M[0][Orig][LHSCase]
+Entail (1) : Fail.
+
+*/
