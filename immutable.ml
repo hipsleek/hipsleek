@@ -181,24 +181,18 @@ and is_lend_h_formula (f : h_formula) : bool =  match f with
   | _ -> false
 
 
-and contains_phase_debug (f : h_formula) : bool =  
-  Debug.no_1 "contains_phase"
-      (!print_h_formula) 
-      (string_of_bool)
-      (contains_phase)
-      f
+(* and contains_phase_debug (f : h_formula) : bool =   *)
+(*   Debug.no_1 "contains_phase" *)
+(*       (!print_h_formula)  *)
+(*       (string_of_bool) *)
+(*       (contains_phase) *)
+(*       f *)
 
 (* normalization for iformula *)
 (* normalization of the heap formula *)
 (* emp & emp * K == K *)
 (* KR: check there is only @L *)
 (* KR & KR ==> KR ; (KR ; true) *)
-
-let rec iformula_ann_to_cformula_ann (iann : IF.ann) : CF.ann = 
-  match iann with
-    | IF.ConstAnn(x) -> CF.ConstAnn(x)
-    | IF.PolyAnn((id,p), l) -> 
-          CF.PolyAnn(CP.SpecVar (AnnT, id, p))
 
 and normalize_h_formula (h : IF.h_formula) (wr_phase : bool) : IF.h_formula =
   Debug.no_1 "normalize_h_formula"
@@ -207,6 +201,11 @@ and normalize_h_formula (h : IF.h_formula) (wr_phase : bool) : IF.h_formula =
       (fun _ -> normalize_h_formula_x h wr_phase) h
 
 and normalize_h_formula_x (h : IF.h_formula) (wr_phase : bool) : IF.h_formula =
+  let h = normalize_h_formula_phase h wr_phase in
+  (* let h = normalize_field_ann_heap_node h in *)
+  h
+
+and normalize_h_formula_phase (h : IF.h_formula) (wr_phase : bool) : IF.h_formula =
   let get_imm (h : IF.h_formula) : ann = 
     let iann =
       match h with
@@ -221,25 +220,20 @@ and normalize_h_formula_x (h : IF.h_formula) (wr_phase : bool) : IF.h_formula =
     | IF.Star ({IF.h_formula_star_h1 = h1;
       IF.h_formula_star_h2 = h2;
       IF.h_formula_star_pos = pos
-      }) -> 
-          let r11, r12 = extract_inner_phase h1 in 
-          let r21, r22 = extract_inner_phase h2 in 
-          (IF.mkStar r11 r21 pos, IF.mkStar r12 r22 pos) 
-    | _ -> (f,IF.HEmp) 
+      }) ->
+          let r11, r12 = extract_inner_phase h1 in
+          let r21, r22 = extract_inner_phase h2 in
+          (IF.mkStar r11 r21 pos, IF.mkStar r12 r22 pos)
+    | _ -> (f,IF.HEmp)
   in
+  let rec aux h wr_phase = 
   match h with
     | IF.Phase({IF.h_formula_phase_rd = h1;
       IF.h_formula_phase_rw = h2;
       IF.h_formula_phase_pos = pos
       }) ->
-          (* conj in read phase -> split into two separate read phases *)
-          if not(validate_rd_phase h1) then
-            Error.report_error
-                {Error.error_loc = pos;
-                Error.error_text =  ("Invalid read phase h = " ^ (Iprinter.string_of_h_formula h) ^ "\n")}
-          else
             let rd_phase = normalize_h_formula_rd_phase h1 in
-            let wr_phase = normalize_h_formula_x h2 true in 
+            let wr_phase = aux h2 true in 
             let res = insert_wr_phase rd_phase wr_phase in
             res
     | IF.Star({IF.h_formula_star_h1 = h1;
@@ -249,13 +243,13 @@ and normalize_h_formula_x (h : IF.h_formula) (wr_phase : bool) : IF.h_formula =
           let r1, r2 = extract_inner_phase h2 in
           if (r1 == IF.HEmp) || (r2 == IF.HEmp) then 
             IF.Star({IF.h_formula_star_h1 = h1;
-            IF.h_formula_star_h2 = normalize_h_formula_x h2 false;
+            IF.h_formula_star_h2 = aux h2 false;
             IF.h_formula_star_pos = pos
             }) 
           else
             (* isolate the inner phase *)
             IF.Star({IF.h_formula_star_h1 = IF.mkStar h1 r1 pos;
-            IF.h_formula_star_h2 = normalize_h_formula_x r2 false;
+            IF.h_formula_star_h2 = aux r2 false;
             IF.h_formula_star_pos = pos
             }) 
     | IF.Conj({IF.h_formula_conj_h1 = h1;
@@ -270,12 +264,12 @@ and normalize_h_formula_x (h : IF.h_formula) (wr_phase : bool) : IF.h_formula =
       IF.h_formula_conjconj_h2 = h2;
       IF.h_formula_conjconj_pos = pos
       })               ->
-          if (wr_phase) && (!Globals.allow_mem) then h else     
-            normalize_h_formula_rd_phase h 
+          if (wr_phase) && (!Globals.allow_mem) then h else
+            normalize_h_formula_rd_phase h
     | IF.HeapNode2 hf -> 
           (let annv = get_imm h in
           match annv with
-            | ConstAnn(Lend) -> h
+            | ConstAnn(Lend)  | ConstAnn(Imm)  | ConstAnn(Accs) -> h
             | _ ->
                   begin
                     (* write phase *)
@@ -289,7 +283,7 @@ and normalize_h_formula_x (h : IF.h_formula) (wr_phase : bool) : IF.h_formula =
     | IF.HeapNode hf ->
           (let annv = get_imm h in
           match annv with
-            | ConstAnn(Lend) -> h
+            | ConstAnn(Lend) | ConstAnn(Imm)  | ConstAnn(Accs) -> h
             | _ ->
                   begin
                     (* write phase *)
@@ -303,6 +297,7 @@ and normalize_h_formula_x (h : IF.h_formula) (wr_phase : bool) : IF.h_formula =
     | _ ->  IF.Phase { IF.h_formula_phase_rd = IF.HEmp;
       IF.h_formula_phase_rw = h;
       IF.h_formula_phase_pos = no_pos }
+  in aux h wr_phase
 
 and contains_phase (h : IF.h_formula) : bool = match h with
   | IF.Phase _ -> true
@@ -1013,12 +1008,6 @@ and get_imm (f : h_formula) : ann =  match f with
   | ViewNode (h1) -> h1.h_formula_view_imm
   | _ -> ConstAnn(Mutable) (* we shouldn't get here *)
 
-and ann_opt_to_ann (ann_opt_lst: IF.ann option list) (default_ann: IF.ann) = 
-  match ann_opt_lst with
-    | [] -> []
-    | (Some ann0) :: t -> (iformula_ann_to_cformula_ann ann0) :: (ann_opt_to_ann t default_ann)
-    | (None) :: t      -> (iformula_ann_to_cformula_ann default_ann) :: (ann_opt_to_ann t default_ann) 
-
 (* muatble or immutable annotations on the RHS consume the match on the LHS  *)
 and consumes (a: ann): bool = 
   if isMutable a || isImm a then true
@@ -1030,3 +1019,119 @@ and consumes (a: ann): bool =
 and produces_hole (a: ann): bool = 
   if isLend a || isAccs  a || isPoly a then true
   else false
+
+and iformula_ann_to_cformula_ann (iann : IF.ann) : CF.ann = 
+  match iann with
+    | IF.ConstAnn(x) -> CF.ConstAnn(x)
+    | IF.PolyAnn((id,p), l) -> 
+          CF.PolyAnn(CP.SpecVar (AnnT, id, p))
+
+and iformula_ann_to_cformula_ann_lst (iann_lst : IF.ann list) : CF.ann list = 
+  List.map iformula_ann_to_cformula_ann iann_lst
+
+and iformula_ann_opt_to_cformula_ann_lst (iann_lst : IF.ann option list) : CF.ann list = 
+  List.map iformula_ann_to_cformula_ann (ann_opt_to_ann_lst iann_lst  (IF.ConstAnn(Mutable)))
+
+and ann_opt_to_ann_lst (ann_opt_lst: IF.ann option list) (default_ann: IF.ann): IF.ann list = 
+  match ann_opt_lst with
+    | [] -> []
+    | ann0 :: t -> (ann_opt_to_ann ann0 default_ann) :: (ann_opt_to_ann_lst t default_ann)
+
+and ann_opt_to_ann (ann_opt: IF.ann option) (default_ann: IF.ann): IF.ann = 
+  match ann_opt with
+    | Some ann0 -> ann0
+    | None      -> default_ann
+
+and normalize_formula_dn aux_f (f : formula): formula = match f with
+  | Or ({formula_or_f1 = f1; formula_or_f2 = f2; formula_or_pos = pos}) ->
+	let rf1 = normalize_formula_dn aux_f f1 in
+	let rf2 = normalize_formula_dn aux_f f2 in
+	let resform = mkOr rf1 rf2 pos in
+	resform
+  | Base f1 ->
+        let f1_heap = normalize_h_formula_dn aux_f f1.formula_base_heap in
+        Base({f1 with formula_base_heap = f1_heap})
+  | Exists f1 ->
+        let f1_heap = normalize_h_formula_dn aux_f f1.formula_exists_heap in
+        Exists({f1 with formula_exists_heap = f1_heap})
+
+and normalize_h_formula_dn auxf (h : CF.h_formula) : CF.h_formula = 
+  match h with
+    | CF.Star({CF.h_formula_star_h1 = h1;
+      CF.h_formula_star_h2 = h2;
+      CF.h_formula_star_pos = pos}) ->
+	  let nh1 = normalize_h_formula_dn auxf h1 in
+	  let nh2 = normalize_h_formula_dn auxf h2 in
+	  CF.Star({CF.h_formula_star_h1 = nh1;
+	  CF.h_formula_star_h2 = nh2;
+	  CF.h_formula_star_pos = pos})
+    | CF.Conj({CF.h_formula_conj_h1 = h1;
+      CF.h_formula_conj_h2 = h2;
+      CF.h_formula_conj_pos = pos}) ->
+	  let nh1 = normalize_h_formula_dn auxf h1 in
+	  let nh2 = normalize_h_formula_dn auxf h2 in
+	  CF.Conj({CF.h_formula_conj_h1 = nh1;
+	  CF.h_formula_conj_h2 = nh2;
+	  CF.h_formula_conj_pos = pos})
+    | CF.ConjStar({CF.h_formula_conjstar_h1 = h1;
+      CF.h_formula_conjstar_h2 = h2;
+      CF.h_formula_conjstar_pos = pos}) ->
+	  let nh1 = normalize_h_formula_dn auxf h1 in
+	  let nh2 = normalize_h_formula_dn auxf h2 in
+	  CF.ConjStar({CF.h_formula_conjstar_h1 = nh1;
+	  CF.h_formula_conjstar_h2 = nh2;
+	  CF.h_formula_conjstar_pos = pos})
+    | CF.ConjConj({CF.h_formula_conjconj_h1 = h1;
+      CF.h_formula_conjconj_h2 = h2;
+      CF.h_formula_conjconj_pos = pos}) ->
+	  let nh1 = normalize_h_formula_dn auxf h1 in
+	  let nh2 = normalize_h_formula_dn auxf h2 in
+	  CF.ConjConj({CF.h_formula_conjconj_h1 = nh1;
+	  CF.h_formula_conjconj_h2 = nh2;
+	  CF.h_formula_conjconj_pos = pos})
+    | CF.Phase({CF.h_formula_phase_rd = h1;
+      CF.h_formula_phase_rw = h2;
+      CF.h_formula_phase_pos = pos}) ->
+	  let nh1 = normalize_h_formula_dn auxf h1 in
+	  let nh2 = normalize_h_formula_dn auxf h2 in
+	  CF.Phase({CF.h_formula_phase_rd = nh1;
+	  CF.h_formula_phase_rw = nh2;
+	  CF.h_formula_phase_pos = pos})
+    | CF.DataNode hn -> auxf h 
+    | _ -> h
+
+and push_node_imm_to_field_imm_x (h: CF.h_formula):  CF.h_formula =
+  match h with
+    | CF.DataNode dn -> 
+          let ann_node = dn.CF.h_formula_data_imm in
+          let new_ann_param = List.map (fun p_ann ->
+              match ann_node with
+	        | CF.ConstAnn(Mutable) -> p_ann
+                | CF.ConstAnn(Accs)    -> CF.ConstAnn(Accs)
+                | ann_n -> if (subtype_ann  ann_n  p_ann ) then p_ann else  ann_node ) dn.CF.h_formula_data_param_imm in  
+          let new_ann_node =  if (List.length  dn.CF.h_formula_data_param_imm > 0) then CF.ConstAnn(Mutable) else ann_node in
+          CF.DataNode{dn with  CF.h_formula_data_imm = new_ann_node;
+ 	      CF.h_formula_data_param_imm = new_ann_param;}
+    | _ -> h
+
+and push_node_imm_to_field_imm (h:CF.h_formula) : CF.h_formula =
+  let pr = Cprinter.string_of_h_formula in
+  Debug.no_1 "push_node_imm_to_field_imm" pr pr push_node_imm_to_field_imm_x h 
+
+and normalize_field_ann_heap_node_x (h:CF.h_formula): CF.h_formula =
+  if (!Globals.allow_field_ann) then
+    normalize_h_formula_dn push_node_imm_to_field_imm h
+  else h
+
+and normalize_field_ann_heap_node (h:CF.h_formula): CF.h_formula =
+  let pr = Cprinter.string_of_h_formula in
+  Debug.no_1 "normalize_field_ann_data_node" pr pr normalize_field_ann_heap_node_x h
+
+and normalize_field_ann_formula_x (h:CF.formula): CF.formula =
+  if (!Globals.allow_field_ann) then
+    normalize_formula_dn push_node_imm_to_field_imm h
+  else h
+
+and normalize_field_ann_formula (h:CF.formula): CF.formula =
+  let pr = Cprinter.string_of_formula in
+  Debug.no_1 "normalize_field_ann_formula" pr pr normalize_field_ann_formula_x h

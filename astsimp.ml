@@ -4454,7 +4454,7 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
                     CF.h_formula_data_name = rootptr_type_name;
                     CF.h_formula_data_derv = dr;
                     CF.h_formula_data_imm = Immutable.iformula_ann_to_cformula_ann imm;
-                    CF.h_formula_data_param_imm = Immutable.ann_opt_to_ann ann_param imm;
+                    CF.h_formula_data_param_imm = Immutable.iformula_ann_opt_to_cformula_ann_lst ann_param;
                     CF.h_formula_data_perm = permvar; (*??? TO CHECK: temporarily*)
                     CF.h_formula_data_origins = []; (*??? temporarily*)
                     CF.h_formula_data_original = true; (*??? temporarily*)
@@ -4464,6 +4464,7 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
                     CF.h_formula_data_remaining_branches = None;
                     CF.h_formula_data_pruning_conditions = [];
                     CF.h_formula_data_pos = pos; } in
+                let result_heap = Immutable.normalize_field_ann_heap_node result_heap in
                 (result_heap, CF.TypeTrue)
               else (* Not a field access, proceed with the original code *)
                 (try
@@ -4530,7 +4531,7 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
                             CF.h_formula_data_name = c;
                             CF.h_formula_data_derv = dr;
                             CF.h_formula_data_imm = Immutable.iformula_ann_to_cformula_ann imm;
-                            CF.h_formula_data_param_imm = Immutable.ann_opt_to_ann ann_param imm;
+                            CF.h_formula_data_param_imm = Immutable.iformula_ann_opt_to_cformula_ann_lst ann_param;
                             CF.h_formula_data_perm = permvar; (*LDK*)
                             CF.h_formula_data_origins = [];
                             CF.h_formula_data_original = true;
@@ -4539,8 +4540,9 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
                             CF.h_formula_data_label = pi;
                             CF.h_formula_data_remaining_branches = None;
                             CF.h_formula_data_pruning_conditions = [];
-                            CF.h_formula_data_pos = pos;} 
-                        in ( new_h, CF.TypeTrue))
+                            CF.h_formula_data_pos = pos;} in
+                let new_h = Immutable.normalize_field_ann_heap_node new_h in
+                ( new_h, CF.TypeTrue))
         | IF.Star {
               IF.h_formula_star_h1 = f1;
               IF.h_formula_star_h2 = f2;
