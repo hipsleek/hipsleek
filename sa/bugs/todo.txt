@@ -264,3 +264,7 @@ why did we get emp?
  G1(c_36,p_37) ::= emp&c_36=null]
 ************************
 */
+
+# bug-t3.slk
+
+@v annotation problematic

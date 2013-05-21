@@ -10,7 +10,7 @@ For example:
 
 This way, we will still support node level
 reasoning when it is feasible to do so.
-
+x
 However, during the entailment process,
 we may have a mismatch of the form:
 
