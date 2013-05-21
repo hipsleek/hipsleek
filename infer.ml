@@ -1196,7 +1196,7 @@ let infer_pure_m i unk_heaps estate lhs_xpure lhs_xpure0 lhs_wo_heap rhs_xpure p
   (* let pr2a = !print_entail_state in  *)
   let pr_p = !CP.print_formula in
   let pr_res_lst = pr_list (fun (es,r,b) -> pr_pair pr2 (pr_list CP.print_lhs_rhs) (es,r)) in
-  let pr_len = fun l -> (string_of_int (List.length l)) in
+  (* let pr_len = fun l -> (string_of_int (List.length l)) in *)
   let pr_res = pr_triple (pr_option (pr_pair pr2 !print_pure_f)) (pr_option pr_p) pr_res_lst in
   let pr0 es = pr_pair pr2 !CP.print_svl (es,es.es_infer_vars) in
   Debug.no_4_num i "infer_pure_m_2" 
@@ -1593,8 +1593,8 @@ let generate_linking_svl drop_hpargs total_unk_map=
 3.  x::<_,p> * H (p,p1) --> G(x): p and p1 are NOT forwarded
 3a. z::node2<_,l,r> * HP_577(l) * G1(r) --> G1(z) : l,r are NOT forwarded
 *)
-let find_undefined_selective_pointers_x prog lfb rfb lmix_f rmix_f unmatched rhs_rest rhs_h_matched_set leqs reqs pos total_unk_map=
-  let get_rhs_unfold_fwd_svl hd def_svl lhs_hpargs=
+let find_undefined_selective_pointers_x prog lfb lmix_f unmatched rhs_rest rhs_h_matched_set leqs reqs pos total_unk_map=
+  let get_rhs_unfold_fwd_svl h_node h_args def_svl lhs_hpargs=
     let rec parition_helper node_name hpargs=
       match hpargs with
         | [] -> (false,[])
@@ -1605,11 +1605,10 @@ let find_undefined_selective_pointers_x prog lfb rfb lmix_f rmix_f unmatched rhs
             if inter = [] then parition_helper node_name tl
             else (true,rem)
     in
-    (* if List.exists (fun (_,args) -> CP.mem_svl hd.CF.h_formula_data_node args) lhs_hpargs then *)
-    let res,not_in_used_svl = parition_helper hd.CF.h_formula_data_node lhs_hpargs in
+    let res,not_in_used_svl = parition_helper h_node lhs_hpargs in
     if res then
-      let args = List.filter CP.is_node_typ hd.CF.h_formula_data_arguments in
-      let args1 = CP.remove_dups_svl (CP.diff_svl args def_svl) in
+      let args1 = CP.remove_dups_svl (CP.diff_svl h_args def_svl) in
+      (* let _ = Debug.info_pprint ("     h_args:" ^(!CP.print_svl args1)) no_pos in *)
       (*old: args1@not_in_used_svl*)
       List.map (fun sv -> sv::not_in_used_svl) args1
     else []
@@ -1618,17 +1617,11 @@ let find_undefined_selective_pointers_x prog lfb rfb lmix_f rmix_f unmatched rhs
     let rec find_pt_new cur_hds svl res hd_rest=
       match cur_hds with
         | [] -> res,hd_rest
-        | hd::tl -> let ptr_args = List.filter CP.is_node_typ hd.CF.h_formula_data_arguments in
-                    (* let ptr_args1 = SAU.look_up_closed_ptr_args prog lhs_hds lhs_hvs ptr_args in *)
-                    (* let _ = Debug.info_pprint ("    svl res:" ^(!CP.print_svl (svl@res))) no_pos in *)
-                    (* let _ = Debug.info_pprint ("    ptr_args:" ^(!CP.print_svl ptr_args)) no_pos in *)
-                    (* if ((List.length svl = List.length ptr_args) && CP.diff_svl svl (ptr_args) = []) then *)
-                     if ( CP.intersect_svl ptr_args (svl@res) <> []) then
-                      find_pt_new tl svl (res@[hd.CF.h_formula_data_node]) hd_rest
-                    (* else *)
-                    (*   if (CP.diff_svl svl (ptr_args1) = []) then *)
-                    (*     ([hd.CF.h_formula_data_node]@ptr_args1) *)
-                    else find_pt_new tl svl res (hd_rest@[hd])
+        | hd::tl ->
+            let ptr_args = List.filter CP.is_node_typ hd.CF.h_formula_data_arguments in
+            if ( CP.intersect_svl ptr_args (svl@res) <> []) then
+              find_pt_new tl svl (res@[hd.CF.h_formula_data_node]) hd_rest
+            else find_pt_new tl svl res (hd_rest@[hd])
     in
     let rec loop_helper hds svl r=
       let r1,rest = find_pt_new hds svl r [] in
@@ -1699,23 +1692,20 @@ let find_undefined_selective_pointers_x prog lfb rfb lmix_f rmix_f unmatched rhs
   in
   (* DD.info_pprint ">>>>>> find_undefined_selective_pointers <<<<<<" pos; *)
   let lfb = CF.subst_b leqs lfb in
-  let rfb = CF.subst_b leqs rfb in
+  (* let rfb = CF.subst_b leqs rfb in *)
+  let n_unmatched = CF.h_subst leqs unmatched in
   let lhds, lhvs, lhrs = CF.get_hp_rel_bformula lfb in
   let leqNulls = MCP.get_null_ptrs lmix_f in
-  let rhds, rhvs, rhrs = CF.get_hp_rel_bformula rfb in
-  let reqNulls = MCP.get_null_ptrs rmix_f in
+  let rhds, rhvs, rhrs = CF.get_hp_rel_h_formula n_unmatched in
+  let reqNulls = [] (* MCP.get_null_ptrs rmix_f *) in
   (* let hrs = (lhrs @ rhrs) in *)
   let hds = (lhds @ rhds) in
   let hvs = (lhvs @ rhvs) in
   let eqs = (leqs@reqs) in
    (*defined vars=  null + data + view + match nodes*)
-  let def_vs = (leqNulls@reqNulls) @ (List.map (fun hd -> hd.CF.h_formula_data_node) hds)
-   @ (List.map (fun hv -> hv.CF.h_formula_view_node) hvs) (* @ rhs_h_matched_set *) in
-  (*find closed defined pointers set*)
-  (* let def_vs = CP.remove_dups_svl (List.fold_left SAU.close_def def_vs (eqs)) in *)
-  let def_vs = CP.remove_dups_svl (SAU.find_close def_vs (eqs)) in
+  let r_def_vs = reqNulls @ (List.map (fun hd -> hd.CF.h_formula_data_node) rhds)
+   @ (List.map (fun hv -> hv.CF.h_formula_view_node) rhvs) in
   (*selective*)
-  let n_unmatched = CF.h_subst leqs unmatched in
   (*START debugging*)
   let _ = DD.ninfo_pprint (" n_lfb: " ^ (Cprinter.string_of_formula_base lfb)) pos in
   let _ = DD.ninfo_pprint (" n_unmatched: " ^ (Cprinter.string_of_h_formula n_unmatched)) pos in
@@ -1724,10 +1714,16 @@ let find_undefined_selective_pointers_x prog lfb rfb lmix_f rmix_f unmatched rhs
   (**********get well-defined hp in lhs*)
   let helper (hp,eargs,_)=(hp,List.concat (List.map CP.afv eargs)) in
   let ls_lhp_args = (List.map helper lhrs) in
-  let ls_defined_hps,rems = List.split (List.map (fun hpargs -> find_well_defined_hp hds hvs hpargs def_vs lfb) ls_lhp_args) in
+  let l_def_vs = leqNulls @ (List.map (fun hd -> hd.CF.h_formula_data_node) lhds)
+   @ (List.map (fun hv -> hv.CF.h_formula_view_node) lhvs) in
+  let l_def_vs = CP.remove_dups_svl (SAU.find_close l_def_vs (eqs)) in
+  let ls_defined_hps,rems = List.split (List.map (fun hpargs -> find_well_defined_hp lhds lhvs hpargs l_def_vs lfb) ls_lhp_args) in
   let defined_hps = List.concat ls_defined_hps in
   let rem_lhpargs = List.concat rems in
   (*END************get well-defined hp in lhs*)
+  let def_vs = l_def_vs@r_def_vs in
+  (*find closed defined pointers set*)
+  let def_vs = CP.remove_dups_svl (SAU.find_close def_vs (eqs)) in
   (*remove*)
   let unmatched_svl = SAU.get_ptrs unmatched in
   let unmatched_svl = (SAU.find_close (unmatched_svl) (eqs)) in
@@ -1747,9 +1743,6 @@ let find_undefined_selective_pointers_x prog lfb rfb lmix_f rmix_f unmatched rhs
   let rest_svl = CF.get_hp_rel_vars_h_formula rhs_rest in
   let rest_svl1 = SAU.find_close rest_svl leqs in
   let select_helper svl (hp,args)=
-    (* let inter = CP.intersect_svl args svl in *)
-    (* if inter = [] then [] *)
-    (* else [(hp,inter)] *)
     if CP.diff_svl args svl = [] then [(hp,args)]
     else []
   in
@@ -1777,27 +1770,29 @@ let find_undefined_selective_pointers_x prog lfb rfb lmix_f rmix_f unmatched rhs
       let runk_map =lookup_eq_linking_svl rhs_hpargs total_unk_map selected_hp_args in
       ([svl],[fst rhs_hpargs], runk_map)
     else
-      let hds = SAU.get_hdnodes_hf n_unmatched in
-      let hd =
-        match hds with
-          | [hd] -> hd
-          | _ -> 
-                begin
-                  (* Loc : please fix this *)
-                  (* n_umatched is a predicate *)
-                  Debug.info_pprint "Loc : add heap assumption H(..) -> p(..).. " no_pos;
-                  Debug.info_pprint "========================================== " no_pos;
-                  Debug.info_hprint (add_str "n_unmatched" Cprinter.string_of_h_formula) n_unmatched no_pos;
-                  Debug.info_hprint (add_str "lfb" Cprinter.string_of_formula_base) lfb no_pos;
-                  Debug.info_hprint (add_str "rfb" Cprinter.string_of_formula_base) rfb no_pos;
-                  report_error no_pos "infer.find_undefined_selective_pointers"
-                end
+      let h_node, h_args = SAU.get_h_node_args_hf n_unmatched in
+      let h_args1 = List.filter CP.is_node_typ h_args in
+      (* let hds = SAU.get_hdnodes_hf n_unmatched in *)
+      (* let hd = *)
+      (*   match hds with *)
+      (*     | [hd] -> hd *)
+      (*     | _ ->  *)
+      (*           begin *)
+      (*             (\* Loc : please fix this *\) *)
+      (*             (\* n_umatched is a predicate *\) *)
+      (*             Debug.info_pprint "Loc : add heap assumption H(..) -> p(..).. " no_pos; *)
+      (*             Debug.info_pprint "========================================== " no_pos; *)
+      (*             Debug.info_hprint (add_str "n_unmatched" Cprinter.string_of_h_formula) n_unmatched no_pos; *)
+      (*             Debug.info_hprint (add_str "lfb" Cprinter.string_of_formula_base) lfb no_pos; *)
+      (*             Debug.info_hprint (add_str "rfb" Cprinter.string_of_formula_base) rfb no_pos; *)
+      (*             report_error no_pos "infer.find_undefined_selective_pointers" *)
+      (*           end *)
 
-      in
+      (* in *)
       let hrel_args1 = List.concat hrel_args in
   (*should include their closed ptrs*)
       let hrel_args2 = CP.remove_dups_svl (List.fold_left SAU.close_def hrel_args1 (eqs)) in
-      let ls_unfold_fwd_svl = get_rhs_unfold_fwd_svl hd (def_vs@hrel_args2) ls_lhp_args in
+      let ls_unfold_fwd_svl = get_rhs_unfold_fwd_svl h_node h_args1 (def_vs@hrel_args2) ls_lhp_args in
       (ls_unfold_fwd_svl(* @lundefs_args *),[],[])
   in
   let ls_undef =  List.map CP.remove_dups_svl (ls_fwd_svl) in
@@ -1805,22 +1800,22 @@ let find_undefined_selective_pointers_x prog lfb rfb lmix_f rmix_f unmatched rhs
   ((* undefs1@lundefs_args *) ls_undef,hds,hvs,lhrs,rhrs,leqNulls@reqNulls,selected_hps,rh_sel_hps, defined_hps,
   unk_svl,ps,unk_map@rhs_unk_map)
 
-let find_undefined_selective_pointers prog lfb rfb lmix_f rmix_f unmatched rhs_rest rhs_h_matched_set leqs reqs pos total_unk_map=
+let find_undefined_selective_pointers prog lfb lmix_f unmatched rhs_rest rhs_h_matched_set leqs reqs pos total_unk_map=
   let pr1 = Cprinter.string_of_formula_base in
   let pr2 = Cprinter.prtt_string_of_h_formula in
-  (* let pr2 = !print_svl in *)
+  let pr3 = !print_svl in
   (* let pr3 =  pr_pair string_of_typ !print_sv in *)
   let pr4 = pr_list !CP.print_svl in
   let pr6 = pr_list_ln (pr_triple !CP.print_sv !CP.print_svl Cprinter.string_of_formula_base) in
-  let pr5 = fun (undefs,_,_,_,_,_,_,_,defined_hps,_,_,_) -> let pr = pr_pair pr4 pr6 in pr (undefs,defined_hps) in
-  Debug.no_4 "find_undefined_selective_pointers" 
+  let pr5 = fun (undefs,_,_,_,_,_,selected_hps,_,defined_hps,_,_,_) ->
+      let pr = pr_triple pr4 pr3 pr6 in pr (undefs,selected_hps, defined_hps) in
+  Debug.no_3 "find_undefined_selective_pointers" 
       (add_str "unmatched" pr2) 
       (add_str "rhs_h_matched_set" !print_svl) 
       (add_str "lfb" pr1)
-      (add_str "rfb" pr1)
       pr5
-      ( fun _ _ _ _-> find_undefined_selective_pointers_x prog lfb rfb lmix_f rmix_f unmatched rhs_rest
-    rhs_h_matched_set leqs reqs pos total_unk_map) unmatched rhs_h_matched_set lfb rfb
+      ( fun _ _ _ -> find_undefined_selective_pointers_x prog lfb lmix_f unmatched rhs_rest
+    rhs_h_matched_set leqs reqs pos total_unk_map) unmatched rhs_h_matched_set lfb
 
 
 (*
@@ -1916,8 +1911,6 @@ let simplify_lhs_rhs prog lhs_b rhs_b leqs reqs hds hvs lhrs rhrs lhs_selected_h
   let lhp_args,l_rem_hp_args = (List.partition (filter_non_selected_hp lhs_selected_hps) l_hpargs) in
   let lkeep_hrels,lhs_keep_rootvars = List.split lhp_args in
   let lhs_keep_rootvars = List.concat lhs_keep_rootvars in
-  (* let back_keep_svl = SAU.look_up_backward_closed_ptr_args prog hds hvs lhs_keep_rootvars in *)
-  (* let back_lkeep_hrels = List.fold_left (fun ls (hp,args) -> if CP.diff_svl args back_keep_svl = [] then ls@[hp] else ls) [] l_rem_hp_args in *)
   let lhs_keep_first_rootvars = (List.map look_up_lhs_root_first_var lhp_args) in
   (*rhs*)
   let r_hpargs = CF.get_HRels rhs_b.CF.formula_base_heap in
@@ -2058,7 +2051,7 @@ let infer_collect_hp_rel_x prog (es:entail_state) rhs rhs_rest (rhs_h_matched_se
         (* DD.info_pprint "  hp_rel found" pos; *)
         (*which pointers are defined and which arguments of data nodes are pointer*)
         let ( _,mix_lf,_,_,_) = CF.split_components (CF.Base lhs_b) in
-        let (_,mix_rf,_,_,_) = CF.split_components (CF.Base rhs_b) in
+        (* let (_,mix_rf,_,_,_) = CF.split_components (CF.Base rhs_b) in *)
         let leqs = (MCP.ptr_equations_without_null mix_lf) (* @ (MCP.ptr_equations_with_null mix_lf) *) in
         let reqs = es.CF.es_rhs_eqset (* @ (MCP.ptr_equations_with_null mix_rf) *) in
         let _ =
@@ -2090,8 +2083,9 @@ let infer_collect_hp_rel_x prog (es:entail_state) rhs rhs_rest (rhs_h_matched_se
         else
           let his_ptrs = List.concat (List.map SAU.get_ptrs es.CF.es_history) in
           let ls_unknown_ptrs,hds,hvs,lhras,rhras,eqNull,lselected_hps,rselected_hps,defined_hps,unk_svl,unk_pure,unk_map =
-            find_undefined_selective_pointers prog lhs_b rhs_b  mix_lf mix_rf rhs rhs_rest
+            find_undefined_selective_pointers prog lhs_b mix_lf rhs rhs_rest
                 (rhs_h_matched_set@his_ptrs) leqs reqs pos es.CF.es_infer_hp_unk_map in
+          let rhs_b = CF.formula_base_of_heap rhs pos in
           let update_fb (fb,r_hprels,hps,hfs) unknown_ptrs =
             match unknown_ptrs with
               | [] -> (fb,r_hprels,hps,hfs)
@@ -2113,18 +2107,18 @@ let infer_collect_hp_rel_x prog (es:entail_state) rhs rhs_rest (rhs_h_matched_se
 	  let matched_svl = CF.get_ptrs es.CF.es_heap in
 	  let matched_svl1 = (List.fold_left SAU.close_def matched_svl (leqs@reqs)) in
 	  let sel_his = List.concat (List.map (fun hf -> match hf with
-            | CF.DataNode hd -> if CP.mem_svl hd.CF.h_formula_data_node matched_svl1 then [] else [hf]
+        | CF.DataNode hd -> if CP.mem_svl hd.CF.h_formula_data_node matched_svl1 then [] else [hf]
 	    | _ -> [hf]
 	  ) es.CF.es_history) in
-          DD.tinfo_pprint ("  new_rhs_b: " ^ (Cprinter.string_of_formula_base new_rhs_b)) pos;
-          let lhs_b0 = CF.mkAnd_base_pure lhs_b (MCP.mix_of_pure unk_pure) pos in
-          let group_unk_svl = List.concat (List.map (fun ass -> ass.CF.unk_svl) Log.current_hprel_ass_stk # get_stk) in
-          let total_unk_svl = CP.remove_dups_svl (group_unk_svl@unk_svl) in
-          let post_hps,prog_vars = get_prog_vars es.CF.es_infer_vars_sel_hp_rel rhs proving_kind#string_of
+      DD.tinfo_pprint ("  new_rhs_b: " ^ (Cprinter.string_of_formula_base new_rhs_b)) pos;
+      let lhs_b0 = CF.mkAnd_base_pure lhs_b (MCP.mix_of_pure unk_pure) pos in
+      let group_unk_svl = List.concat (List.map (fun ass -> ass.CF.unk_svl) Log.current_hprel_ass_stk # get_stk) in
+      let total_unk_svl = CP.remove_dups_svl (group_unk_svl@unk_svl) in
+      let post_hps,prog_vars = get_prog_vars es.CF.es_infer_vars_sel_hp_rel rhs proving_kind#string_of
             (* !Log.sleek_proving_kind *) in
-          let new_rhs_b0 = {new_rhs_b with 
-              CF.formula_base_heap =  CF.check_imm_mis rhs new_rhs_b.CF.formula_base_heap} in
-          let (new_lhs_b,new_rhs_b) = simplify_lhs_rhs prog lhs_b0 new_rhs_b0 leqs reqs hds hvs lhras (rhras@new_hrels)
+      let new_rhs_b0 = {new_rhs_b with 
+          CF.formula_base_heap =  CF.check_imm_mis rhs new_rhs_b.CF.formula_base_heap} in
+      let (new_lhs_b,new_rhs_b) = simplify_lhs_rhs prog lhs_b0 new_rhs_b0 leqs reqs hds hvs lhras (rhras@new_hrels)
             (lselected_hps) (rselected_hps@(List.map (fun (hp,_,_) -> hp) new_hrels)) es.CF.es_crt_holes ((* es.CF.es_heap:: *)(*es.CF.es_history*) sel_his) total_unk_svl prog_vars in
           (*simply add constraints: *)
           let hprel_def = List.concat (List.map CF.get_ptrs (es.CF.es_history@(CF.get_hnodes es.CF.es_heap))) in
@@ -2181,7 +2175,7 @@ let infer_collect_hp_rel_x prog (es:entail_state) rhs rhs_rest (rhs_h_matched_se
           let well_defined_svl = List.concat (List.map (fun (hp,args,_) -> hp::args) defined_hps) in
           let root_vars_ls2 = SAU.find_close root_vars_ls1 leqs in
           let new_es_formula = SAU.drop_data_view_hrel_nodes_from_root prog new_es_formula hds hvs leqs root_vars_ls2 well_defined_svl in
-          (* DD.info_pprint ("  after: " ^ (Cprinter.string_of_formula new_es_formula)) pos; *)
+          let _ = DD.ninfo_pprint ("  after: " ^ (Cprinter.string_of_formula new_es_formula)) pos in
           (*CF.drop_hrel_f new_es_formula lhrs in *)
           (*add mismatched heap into the entail states if @L*)
           let check_consumed_node h f=

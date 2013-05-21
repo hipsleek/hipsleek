@@ -1,0 +1,14 @@
+data node{
+	int val;
+	node next;
+}.
+
+HeapPred H2(node a).
+
+pred lseg<p> ==
+    self::node<_,p> 
+  or self::node<_,q> * q::lseg<p> 
+ inv true.
+
+infer [H2] H2(r)   |- r::lseg<null>.
+print residue.

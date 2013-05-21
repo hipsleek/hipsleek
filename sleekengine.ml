@@ -77,7 +77,7 @@ let cprog = ref { C.prog_data_decls = [];
 
 let residues =  ref (None : (CF.list_context * bool) option)    (* parameter 'bool' is used for printing *)
 
-let hp_rel_assumes = ref ([]: CF.hprel list)
+let sleek_hprel_assumes = ref ([]: CF.hprel list)
 
 let clear_iprog () =
   iprog.I.prog_data_decls <- [iobj_def];
@@ -664,7 +664,7 @@ let process_rel_assume hp_id (ilhs : meta_formula) (irhs: meta_formula)=
       hprel_rhs = rhs;
   } in
   (*hp_assumes*)
-  let _ = hp_rel_assumes := !hp_rel_assumes@[new_rel_ass] in
+  let _ = sleek_hprel_assumes := !sleek_hprel_assumes@[new_rel_ass] in
   ()
 
 let process_shape_infer pre_hps post_hps=
@@ -677,7 +677,7 @@ let process_shape_infer pre_hps post_hps=
       let hp_name = CP.name_of_spec_var hp in
       List.exists (fun id -> String.compare hp_name id = 0) id_ls
       ) all_hps in
-  let hp_lst_assume = !hp_rel_assumes in
+  let hp_lst_assume = !sleek_hprel_assumes in
   let hp_rel_unkmap = [] in
   let hps2 = List.fold_left  get_hps [] hp_lst_assume in
   let hps20 = CP.remove_dups_svl hps2 in

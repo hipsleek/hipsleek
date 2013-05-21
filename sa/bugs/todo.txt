@@ -152,8 +152,8 @@ Message: infer.find_undefined_selective_pointers
 
 Entailment Failure (2) Failure("infer.find_undefined_selective_pointers")
 */
-
-# bugs-app2.slk
+************************************************
+# bugs-app2.slk: DONE
 
 HeapPred H2(node a).
 
@@ -168,8 +168,8 @@ Below needs to be have a relational assumption added.
 !!! lhs_xpure: 0<n
 !!! rhs_xpure: x=null & 0<=n
 Entail (1) : Fail.
-
-# bug-app1.slk
+*******************************************************
+# bug-app1.slk: DONE
 
 Expecting relational assumption : H(r) --> r::lseg<q> * q::ln<>
 
@@ -179,5 +179,6 @@ Expecting relational assumption : H(r) --> r::lseg<q> * q::ln<>
 @5! lfb: H2(r)&true&{FLOW,(19,20)=__norm}[]
 @5! rfb: r::lseg<q>@M[0][Orig][LHSCase] * q::ln@M[0][Orig][LHSCase]&true&
 {FLOW,(19,20)=__norm}[]
-
+*******************************************************
+# bug-app3.slk
 

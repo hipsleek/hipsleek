@@ -609,6 +609,14 @@ let generate_disj_pairs_from_memf (mf:mem_formula):(CP.spec_var * CP.spec_var) l
 
 let rec formula_of_heap h pos = mkBase h (MCP.mkMTrue pos) TypeTrue (mkTrueFlow ()) [] pos
 
+and formula_base_of_heap h pos = {formula_base_heap = h; 
+	                              formula_base_pure = (MCP.mkMTrue pos); 
+	                              formula_base_type = TypeTrue;
+	                              formula_base_flow = (mkTrueFlow ());
+                                  formula_base_and = [];
+                                  formula_base_label = None;
+	                              formula_base_pos = pos}
+
 and formula_of_heap_w_normal_flow h pos = mkBase h (MCP.mkMTrue pos) TypeTrue (mkNormalFlow ()) [] pos
 
 and formula_of_heap_fl h fl pos = mkBase h (MCP.mkMTrue pos) TypeTrue fl [] pos

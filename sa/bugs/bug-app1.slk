@@ -21,9 +21,13 @@ print residue.
 
 
 */
-
+//infer [H2] H2(r)   |- r::lseg<p> & p=null.
+//print residue.
 infer [H2] H2(r)   |- r::lseg<q>*q::ln<>.
 print residue.
+//infer [H2] H2(r)   |- r::node<_,q>*q::ln<>.
+//print residue.
+//infer [H2] H2(r)   |- r::node<_,p> & p=null.
 /*
 Entailment Failure (1) Failure("infer.find_undefined_selective_pointers")
 : no residue 
