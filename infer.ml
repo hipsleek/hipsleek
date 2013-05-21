@@ -1781,7 +1781,18 @@ let find_undefined_selective_pointers_x prog lfb rfb lmix_f rmix_f unmatched rhs
       let hd =
         match hds with
           | [hd] -> hd
-          | _ -> report_error no_pos "infer.find_undefined_selective_pointers"
+          | _ -> 
+                begin
+                  (* Loc : please fix this *)
+                  (* n_umatched is a predicate *)
+                  Debug.info_pprint "Loc : add heap assumption H(..) -> p(..).. " no_pos;
+                  Debug.info_pprint "========================================== " no_pos;
+                  Debug.info_hprint (add_str "n_unmatched" Cprinter.string_of_h_formula) n_unmatched no_pos;
+                  Debug.info_hprint (add_str "lfb" Cprinter.string_of_formula_base) lfb no_pos;
+                  Debug.info_hprint (add_str "rfb" Cprinter.string_of_formula_base) rfb no_pos;
+                  report_error no_pos "infer.find_undefined_selective_pointers"
+                end
+
       in
       let hrel_args1 = List.concat hrel_args in
   (*should include their closed ptrs*)
@@ -1802,8 +1813,13 @@ let find_undefined_selective_pointers prog lfb rfb lmix_f rmix_f unmatched rhs_r
   let pr4 = pr_list !CP.print_svl in
   let pr6 = pr_list_ln (pr_triple !CP.print_sv !CP.print_svl Cprinter.string_of_formula_base) in
   let pr5 = fun (undefs,_,_,_,_,_,_,_,defined_hps,_,_,_) -> let pr = pr_pair pr4 pr6 in pr (undefs,defined_hps) in
-  Debug.no_4 "find_undefined_selective_pointers" pr2 !print_svl pr1 pr1 pr5
-( fun _ _ _ _-> find_undefined_selective_pointers_x prog lfb rfb lmix_f rmix_f unmatched rhs_rest
+  Debug.no_4 "find_undefined_selective_pointers" 
+      (add_str "unmatched" pr2) 
+      (add_str "rhs_h_matched_set" !print_svl) 
+      (add_str "lfb" pr1)
+      (add_str "rfb" pr1)
+      pr5
+      ( fun _ _ _ _-> find_undefined_selective_pointers_x prog lfb rfb lmix_f rmix_f unmatched rhs_rest
     rhs_h_matched_set leqs reqs pos total_unk_map) unmatched rhs_h_matched_set lfb rfb
 
 

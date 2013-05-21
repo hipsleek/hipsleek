@@ -168,3 +168,16 @@ Below needs to be have a relational assumption added.
 !!! lhs_xpure: 0<n
 !!! rhs_xpure: x=null & 0<=n
 Entail (1) : Fail.
+
+# bug-app1.slk
+
+Expecting relational assumption : H(r) --> r::lseg<q> * q::ln<>
+
+@5! Loc : add heap assumption H(..) -> p(..).. 
+@5! ========================================== 
+@5! n_unmatched: r::lseg<q>@M[0][Orig][LHSCase]
+@5! lfb: H2(r)&true&{FLOW,(19,20)=__norm}[]
+@5! rfb: r::lseg<q>@M[0][Orig][LHSCase] * q::ln@M[0][Orig][LHSCase]&true&
+{FLOW,(19,20)=__norm}[]
+
+

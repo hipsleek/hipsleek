@@ -275,7 +275,11 @@ let rec get_hdnodes (f: CF.formula)=
         get_hdnodes_hf fe.CF.formula_exists_heap
     | _ -> report_error no_pos "SAU. get_hdnodes: not handle yet"
 
-and get_hdnodes_hf (hf: CF.h_formula) = match hf with
+and get_hdnodes_hf (hf: CF.h_formula) =
+  let pr = Cprinter.string_of_h_formula in 
+  Debug.no_1 "get_hdnodes_hf" pr (pr_list pr_none) get_hdnodes_hf_x hf
+
+and get_hdnodes_hf_x (hf: CF.h_formula) = match hf with
   | CF.DataNode hd -> [hd]
   | CF.Conj {CF.h_formula_conj_h1 = h1; CF.h_formula_conj_h2 = h2} 
   | CF.Star {CF.h_formula_star_h1 = h1; CF.h_formula_star_h2 = h2} 
