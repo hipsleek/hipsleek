@@ -2843,7 +2843,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                                     C.exp_bind_bound_var = (vt, v);
                                     C.exp_bind_fields = List.combine vs_types vs;
                                     C.exp_bind_body = ce;
-                                    C.exp_bind_imm = CF.ConstAnn(Mutable); (* can it be true? *) (*andreeac REVERT to Lend*)
+                                    C.exp_bind_imm = CF.ConstAnn(Lend); (* can it be true? *) (*andreeac REVERT to Lend*)
 				                    C.exp_bind_param_imm = List.map (fun _ -> CF.ConstAnn(Lend)) vs ; 
                                     C.exp_bind_read_only = false; (*conservative. May use read/write analysis to figure out*)
 				                    C.exp_bind_pos = pos;
@@ -4005,7 +4005,7 @@ and compact_field_access_sequence prog root_type field_seq =
 and compute_ann_list all_fields (diff_fields : ident list) (default_ann : CF.ann) : CF.ann list =
   let pr1 ls = 
     let helper i = match i with
-    | ((_,h), _, _) -> h
+    | ((_,h), _, _, _) -> h
     in
     List.fold_left (fun res id -> res ^ ", " ^ (helper id)) "" ls in
   let pr2 ls = List.fold_left (fun res id -> res ^ ", " ^ id ) "" ls in

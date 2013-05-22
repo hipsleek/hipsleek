@@ -1469,6 +1469,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                         vheap
                     in
                     (* let _ = print_endline ( "vheap 2: " ^ (Cprinter.string_of_formula vheap) ) in *)
+                    let vheap = Immutable.normalize_field_ann_formula vheap in
 	            let vheap = prune_preds prog false vheap in
                     let _ = DD.devel_hprint (add_str "vheap2" (Cprinter.string_of_formula)) vheap pos in
                     let struc_vheap = CF.EBase { 
@@ -1478,7 +1479,6 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 	                CF.formula_struc_base = vheap;
 	                CF.formula_struc_continuation = None;
 	                CF.formula_struc_pos = pos} in
-	            (* let _ = print_string ("\n(andreeac)struc_vheap: " ^ (Cprinter.string_of_struc_formula struc_vheap) ) in *)
 	            let to_print = "Proving binding in method " ^ proc.proc_name ^ " for spec " ^ !log_spec ^ "\n" in
 	            Debug.devel_pprint to_print pos;
 
