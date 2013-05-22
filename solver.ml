@@ -9227,10 +9227,10 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
             (* CF.mk_failure_bot ("infer_heap .. "))), NoAlias) *)
             (* let _ =  Debug.info_pprint ">>>>>> Inf.infer_collect_hp_rel 1: infer_heap <<<<<<" pos in *)
             let (res,new_estate, n_lhs) = Inf.infer_collect_hp_rel 1 prog estate rhs rhs_rest rhs_h_matched_set lhs_b rhs_b pos in
-            Debug.info_hprint (add_str "n_lhs" (Cprinter.string_of_h_formula)) n_lhs pos;
+            (* Debug.info_hprint (add_str "DD: n_lhs" (Cprinter.string_of_h_formula)) n_lhs pos; *)
             if (not res) then r else
               let n_rhs_b = Base {rhs_b with formula_base_heap = rhs_rest} in
-              Debug.info_hprint (add_str "new_estate(M_infer_heap)" (Cprinter.string_of_entail_state)) new_estate pos;
+              (* Debug.info_hprint (add_str "DD: new_estate(M_infer_heap)" (Cprinter.string_of_entail_state)) new_estate pos; *)
               let res_es0, prf0 = do_match prog new_estate n_lhs rhs n_rhs_b rhs_h_matched_set is_folding pos in
               (* let res_ctx = Ctx new_estate  in *)
               (* (SuccCtx[res_ctx], NoAlias) *)
