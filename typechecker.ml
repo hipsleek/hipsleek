@@ -1487,9 +1487,9 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 		      let _ = consume_all := true in
               (* let _ = DD.info_pprint ("       sleek-logging (binding):" ^ (to_print)) pos in *)
                       (* let _ = Log.update_sleek_proving_kind Log.BINDING in *)
-                      let _ = Debug.info_pprint ("Andreea : we need to normalise struc_vheap") no_pos in
-                      let _ = Debug.info_pprint ("==========================================") no_pos in
-                      let _ = Debug.info_hprint (add_str "struc_vheap" Cprinter.string_of_struc_formula) struc_vheap no_pos in
+                      (* let _ = Debug.info_pprint ("Andreea : we need to normalise struc_vheap") no_pos in *)
+                      (* let _ = Debug.info_pprint ("==========================================") no_pos in *)
+                      (* let _ = Debug.info_hprint (add_str "struc_vheap" Cprinter.string_of_struc_formula) struc_vheap no_pos in *)
 	                  let rs_prim, prf = heap_entail_struc_list_failesc_context_init prog false  true unfolded struc_vheap None None None pos (Some pid) in
 		      let _ = consume_all := false in
                       let _ = CF.must_consistent_list_failesc_context "bind 3" rs_prim  in

@@ -201,7 +201,7 @@ Entail (1) : Fail.
 
 */
 
-# ltail.ss --field-ann
+# ltail.ss --field-ann DONE (by Andreea)
 
 Checking procedure foo$node... 
 !!! Andreea : we need to normalise struc_vheap
