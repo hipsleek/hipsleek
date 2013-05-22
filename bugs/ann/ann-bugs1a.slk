@@ -9,6 +9,8 @@ pred cell<v,a> == self::node<v>@a
    inv self!=null.
 */
 
+checkentail x::node<_@v> & v=@A|- x::node<_@w>.
+
 //checkentail x::node<_@A>|- x::node<_@L>.
 //checkentail x::node<_>@M|- x::node<_>@A.
 /*

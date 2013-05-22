@@ -605,7 +605,7 @@ and subtype_ann_gen impl_vars evars (imm1 : ann) (imm2 : ann) : bool * (CP.formu
   let pr2a = pr_option !CP.print_formula in
   let prlst =  (pr_pair (pr_list Cprinter.string_of_spec_var) (pr_list Cprinter.string_of_spec_var)) in
   let pr3 = pr_quad string_of_bool pr2a pr2a pr2a  in
-  Debug.no_4 "subtype_ann_gen" pr1 pr1 pr2 pr2 pr3 subtype_ann_gen_x impl_vars evars (imm1 : ann) (imm2 : ann) 
+  Debug.ho_4 "subtype_ann_gen" pr1 pr1 pr2 pr2 pr3 subtype_ann_gen_x impl_vars evars (imm1 : ann) (imm2 : ann) 
 
 and mkAndOpt (old_f: CP.formula option) (to_add: CP.formula option): CP.formula option =
   match (old_f, to_add) with
@@ -1108,7 +1108,12 @@ and push_node_imm_to_field_imm_x (h: CF.h_formula):  CF.h_formula =
               match ann_node with
 	        | CF.ConstAnn(Mutable) -> p_ann
                 | CF.ConstAnn(Accs)    -> CF.ConstAnn(Accs)
-                | ann_n -> if (subtype_ann  ann_n  p_ann ) then p_ann else  ann_node ) dn.CF.h_formula_data_param_imm in  
+                | ann_n -> if (subtype_ann  ann_n  p_ann ) then p_ann 
+                  else let _ = report_warning dn.CF.h_formula_data_pos 
+                    (" Ignoring: imm field ann <: imm node ann (" ^ (Cprinter.string_of_imm p_ann) ^
+                        " <: " ^  (Cprinter.string_of_imm ann_n) ^") during normalization.") in
+                  ann_node
+          ) dn.CF.h_formula_data_param_imm in  
           let new_ann_node =  if (List.length  dn.CF.h_formula_data_param_imm > 0) then CF.ConstAnn(Mutable) else ann_node in
           CF.DataNode{dn with  CF.h_formula_data_imm = new_ann_node;
  	      CF.h_formula_data_param_imm = new_ann_param;}

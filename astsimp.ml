@@ -2559,13 +2559,12 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
                                 let vt = trans_type prog vi.E.var_type pos in
                                 let (ce, te) = helper e in
                                 let _ = E.pop_scope ()in
-                                (* let _ = print_string ("\n(andreeac)astsimp.ml trans_exp Bind, vs to become lend ann: " ^ (List.fold_left (fun x y -> x ^ " " ^ y) "" vs)) in *)
                                 ((C.Bind {
                                     C.exp_bind_type = te;
                                     C.exp_bind_bound_var = (vt, v);
                                     C.exp_bind_fields = List.combine vs_types vs;
                                     C.exp_bind_body = ce;
-                                    C.exp_bind_imm = CF.ConstAnn(Mutable); (* can it be true? *) (*andreeac REVERT to Lend*)
+                                    C.exp_bind_imm = CF.ConstAnn(Lend);
                                     C.exp_bind_param_imm = List.map (fun _ -> CF.ConstAnn(Lend)) vs ; 
                                     C.exp_bind_read_only = false; (*conservative. May use read/write analysis to figure out*)
                                     C.exp_bind_pos = pos;
@@ -4025,7 +4024,7 @@ and add_pre_x (prog :C.prog_decl) (f:CF.struc_formula):CF.struc_formula =
       
 and add_pre prog f =
   let pr = Cprinter.string_of_struc_formula in
-  Debug.no_1 "add_pre"  pr pr (add_pre_x prog) f 
+  Debug.ho_1 "add_pre"  pr pr (add_pre_x prog) f 
       
 and trans_I2C_struc_formula i (prog : I.prog_decl) (quantify : bool) (fvars : ident list) (f0 : IF.struc_formula) 
       (tlist:spec_var_type_list) (check_self_sp:bool) (*disallow self in sp*) (check_pre:bool) : (spec_var_type_list*CF.struc_formula) = 
