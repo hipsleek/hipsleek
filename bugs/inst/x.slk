@@ -6,11 +6,11 @@ data node{
 
 pred dll<p,q> == self = null 
           or self::node<p, q> * q::dll<r,_> & r=self 
-//          or self::node<p, q> * q::dll<self,_>  
+//         or self::node<p, q> * q::dll<self,_>  
   inv true.
 
-checkentail c::node<p,q> * q::dll<c,A2>  
-  |-     c::dll<_,A5>. 
+checkentail c::node<_,q> * q::dll<c,_>  
+  |-     c::dll<_,_>. 
 
 /*
  view dll<p:node,q:node>= 
