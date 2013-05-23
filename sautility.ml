@@ -1012,7 +1012,7 @@ let simplify_one_constr_b_x prog unk_hps lhs_b rhs_b=
   let lsvl = List.map (fun hd -> hd.CF.h_formula_data_node) l_hds in
   let rsvl = List.map (fun hd -> hd.CF.h_formula_data_node) r_hds in
   let lhs_nmf2 = CF.remove_neqNull_redundant_hnodes lsvl (MCP.pure_of_mix lhs_b1.CF.formula_base_pure) in
-  let rhs_nmf2 = CF.remove_neqNull_redundant_hnodes (lsvl@rsvl) (MCP.pure_of_mix rhs_b.CF.formula_base_pure) in
+  let rhs_nmf2 = CF.remove_neqNull_redundant_hnodes (lsvl@rsvl)(MCP.pure_of_mix rhs_b.CF.formula_base_pure) in
   let rhs_nmf3 = if ss=[] then rhs_nmf2 else CP.subst ss rhs_nmf2 in
   (* Debug.info_pprint ("    lmf: " ^ (!CP.print_formula lhs_nmf2)) no_pos; *)
   let lhs_b2 = {lhs_b1 with CF.formula_base_heap = lhs_nhf2;

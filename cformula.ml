@@ -3835,6 +3835,49 @@ let extract_unk_hprel (f0:formula) =
   Debug.no_1 "extract_unk_hprel" pr1 pr2
       (fun _ ->  extract_unk_hprel_x f0) f0
 
+let extract_hrel_head_x (f0:formula) =
+  let rec helper f=
+  match f with
+    | Base ({ formula_base_pure = p1;
+        formula_base_heap = h1;})
+    | Exists ({ formula_exists_pure = p1;
+        formula_exists_heap = h1;}) ->
+        (
+            let p2 = (MCP.pure_of_mix p1) in
+            if (CP.isConstTrue p2 || CP.is_xpure p2) then
+              match h1 with
+                | HRel (hp, _, _ ) -> Some hp
+                | _ -> None
+            else
+              None
+        )
+    | Or _ -> report_error no_pos "CF.extract_hrel_head"
+  in
+  helper f0
+
+let extract_hrel_head (f0:formula) =
+  let pr1 = !print_formula in
+  let pr2 = !CP.print_svl in
+  Debug.no_1 "extract_hrel_head" pr1 pr2
+      (fun _ ->  extract_hrel_head_x f0) f0
+
+let extract_hprel_pure (f0:formula) =
+  let rec helper f=
+  match f with
+    | Base ({ formula_base_pure = p1;
+        formula_base_heap = h1;})
+    | Exists ({ formula_exists_pure = p1;
+        formula_exists_heap = h1;}) ->
+        (
+            let p2 = (MCP.pure_of_mix p1) in
+            match h1 with
+              | HRel (hp, eargs, _ ) -> Some (hp, List.concat (List.map CP.afv eargs), p2)
+              | _ -> None
+        )
+    | Or _ -> report_error no_pos "CF.extract_hprel_pure 1"
+  in
+  helper f0
+
 let get_xpure_view (f0:formula) =
   let rec helper f=
   match f with
