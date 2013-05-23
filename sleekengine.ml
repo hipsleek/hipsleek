@@ -685,7 +685,7 @@ let process_shape_infer pre_hps post_hps=
   let sel_post_hps = filter_hp post_hps hps20 in
   let sel_hps = sel_pre_hps@sel_post_hps in
   let ls_hprel, ls_inferred_hps, dropped_hps =
-    if not !Globals.sa_old then
+    if not (!Globals.sa_old) then
     Sa3.infer_shapes !cprog "" hp_lst_assume
         sel_hps sel_post_hps
         (Gen.BList.remove_dups_eq
@@ -698,26 +698,26 @@ let process_shape_infer pre_hps post_hps=
              (fun (hp1,_) (hp2,_) -> CP.eq_spec_var hp1 hp2)
              hp_rel_unkmap)
   in
-  let _ = if not !Globals.sa_old then
-        if not(Sa3.rel_def_stk# is_empty) then
+  let _ = if not (!Globals.sa_old) then
+        begin
+            if not(Sa3.rel_def_stk# is_empty) then
+          	  print_endline ""; 
+		    print_endline "*************************************";
+		    print_endline "*******relational definition ********";
+		    print_endline "*************************************";
+            print_endline (Sa3.rel_def_stk # string_of_reverse);
+		    print_endline "*************************************"
+        end
+      else
+        if not(Sa.rel_def_stk# is_empty) then
           begin
 		      print_endline ""; 
 		      print_endline "*************************************";
 		      print_endline "*******relational definition ********";
 		      print_endline "*************************************";
-              print_endline (Sa3.rel_def_stk # string_of_reverse);
+              print_endline (Sa.rel_def_stk # string_of_reverse);
 		      print_endline "*************************************"
           end
-        else
-          if not(Sa.rel_def_stk# is_empty) then
-            begin
-		        print_endline ""; 
-		        print_endline "*************************************";
-		        print_endline "*******relational definition ********";
-		        print_endline "*************************************";
-                print_endline (Sa.rel_def_stk # string_of_reverse);
-		        print_endline "*************************************"
-            end
   in
   ()
 
