@@ -18,7 +18,7 @@ pred dll<p> == self = null
    succeeds with x=null -> R(x)
 */
 
-infer [R] emp |-  R(x).
+infer [R] true |-  R(x).
 
 /*
  why above fails?
