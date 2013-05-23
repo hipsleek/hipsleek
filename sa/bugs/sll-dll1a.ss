@@ -12,15 +12,17 @@ HeapPred H1(node a, node b).
 HeapPred G1(node a, node b).
 
 node paper_fix (node c, node p)
-  infer[H1,G1] requires H1(c,p) ensures G1(c,p);
+  requires c::ll<>
+  ensures c::dll<p>;
+//  infer[H1,G1] requires H1(c,p) ensures G1(c,p);
 {
 	if (c!=null) 
 	{
-        //c.prev=p;
+          c.prev=p;
           dprint;
         node d = c.next;
         dprint;
-	paper_fix(d,p);
+	paper_fix(d,c);
         dprint;
 	}
 	return c;
