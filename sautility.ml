@@ -109,7 +109,7 @@ let combine_length_neq ls1 ls2 res=
  let get_hpdef_name hpdef=
    match hpdef with
      | CP.HPRelDefn hp -> hp
-     | _ -> report_error no_pos "sau.get_hp_name"
+     | _ -> report_error no_pos "sau.get_hpdef_name"
 
 
 let rec is_empty_f f=

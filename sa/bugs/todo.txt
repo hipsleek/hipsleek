@@ -200,7 +200,7 @@ print residue.
 Entail (1) : Fail.
 
 */
-
+=================================*===============
 # ltail.ss --field-ann DONE (by Andreea)
 
 Checking procedure foo$node... 
@@ -208,7 +208,7 @@ Checking procedure foo$node...
 !!! ==========================================
 !!! struc_vheap: EBase c'::node<val_11_764'@A,prev_11_765'@A,next_11_766'@L>@L[Orig]&true&
        {FLOW,(1,25)=__flow}[]
-
+=================================*===============
 # i-app.ss
 
 Problems:
@@ -251,7 +251,7 @@ void foo (node c, node y)
       c.next=y;
    }
 }
-
+=================================*===============
 # dll-4a1.slk
 
 why did we get emp?
@@ -264,7 +264,7 @@ why did we get emp?
  G1(c_36,p_37) ::= emp&c_36=null]
 ************************
 */
-
+=================================*===============
 # bug-t3.slk (to be fixed in ann-1 branch)
 
 @v annotation problematic

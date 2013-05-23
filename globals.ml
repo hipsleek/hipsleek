@@ -643,6 +643,8 @@ let dis_show_diff = ref false
 
 let sa_print_inter = ref false
 
+let sa_old = ref false
+
 let sa_en_norm = ref true
 
 let sa_en_split = ref false

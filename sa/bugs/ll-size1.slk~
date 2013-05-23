@@ -1,0 +1,12 @@
+//pre only
+data node{
+	int val;
+	node next;
+}.
+HeapPred H(node a).
+
+relAssume H
+ H(x)&x'!=null --> x::node<_,p> * H(p).
+
+relAssume H
+   HP_1c(x') & x'=null --> emp&true.
