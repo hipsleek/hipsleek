@@ -15,7 +15,7 @@ module CEQ = Checkeq
 exception SA_NO_BASE_CASE of (CP.spec_var * (CP.spec_var list) * (CF.formula list)) (*hp without base case*)
 
 (*hp_name * args * unk_args * condition * lhs * rhs *)
-type par_def_w_name =  CP.spec_var * CP.spec_var list * CP.spec_var list * CF.formula * (CF.formula option) *
+type par_def_w_name =  CP.spec_var * CP.spec_var list * CP.spec_var list * CP.formula * (CF.formula option) *
       (CF.formula option)
 
 
@@ -32,11 +32,12 @@ let string_of_par_def_w_name pd=
   let pr1 = !CP.print_sv in
   let pr4 = !CP.print_svl in
   let pr2 = Cprinter.prtt_string_of_formula in
+  let pr5 = !CP.print_formula in
   let pr3 = fun x -> match x with
     | None -> "None"
     | Some f -> pr2 f
   in
-  let pr = pr_hexa pr1 pr4 pr4 pr2 pr3 pr3 in
+  let pr = pr_hexa pr1 pr4 pr4 pr5 pr3 pr3 in
   pr pd
 
 

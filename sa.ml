@@ -1131,7 +1131,7 @@ let rec collect_par_defs_one_side_one_hp_aux_x prog f (hrel, args) def_ptrs
                 add_xpure_dling l unk_hps inter_unk_svl
             else l
           in
-          let l_r = (hrel, args, (* CP.intersect_svl args *) unk_svl, lhs, Some lhs, None) in
+          let l_r = (hrel, args, (* CP.intersect_svl args *) unk_svl, CF.get_pure lhs, Some lhs, None) in
           let _ =  DD.ninfo_pprint ("  partial defs: \n" ^
                                           (let pr =  SAU.string_of_par_def_w_name in pr l_r) ) no_pos in
           [l_r]
@@ -1222,7 +1222,7 @@ and collect_par_defs_one_side_one_hp_x prog lhs rhs (hrel, args) ldef_ptrs rdef_
                 in
                 Some lhs
             in
-            let l_r = (hrel, args, (* CP.intersect_svl args *) unk_svl, r, l1 , Some r) in
+            let l_r = (hrel, args, (* CP.intersect_svl args *) unk_svl,CF.get_pure r, l1 , Some r) in
             let _ =  DD.ninfo_pprint ("       hp ---> def: \n" ^
                                              (let pr =  SAU.string_of_par_def_w_name in pr l_r) ) no_pos in
             [l_r]
@@ -1327,12 +1327,12 @@ and collect_par_defs_two_side_one_hp_x prog lhs rhs (hrel, args)
               let pdef = CF.drop_data_view_hrel_nodes lhs0 SAU.check_nbelongsto_dnode SAU.check_nbelongsto_vnode SAU.check_neq_hrelnode keep_ptrs keep_ptrs (keep_unk_hps@[hrel]) in
               let r_svl = CF.fv pdef in
               if CP.diff_svl r_args r_svl = [] then
-                [(r_hp, r_args, unk_svl,  pdef_cond , Some pdef, None)]
+                [(r_hp, r_args, unk_svl, CF.get_pure pdef_cond , Some pdef, None)]
               else []
             else
               let r_svl = CF.fv bf in
               if CP.diff_svl args r_svl = [] then
-                [(hrel, args, unk_svl, pdef_cond , None, Some bf)]
+                [(hrel, args, unk_svl, CF.get_pure pdef_cond , None, Some bf)]
               else []
       in
       (pdefs,lhs)
@@ -1428,10 +1428,10 @@ let collect_par_defs_recursive_hp_x prog lhs rhs (hrel, args) rec_args other_sid
            let ptrs2 = SAU.find_close ptrs1 eqs in
            let _ = Debug.ninfo_pprint ("ptrs2: " ^ (!CP.print_svl ptrs2)) no_pos in
            if CP.intersect_svl args ptrs2 <> [] then
-             [(hrel , args, (* CP.intersect_svl args *) unk_svl ,plhs, Some plhs1, Some prhs1)]
+             [(hrel , args, (* CP.intersect_svl args *) unk_svl, CF.get_pure plhs, Some plhs1, Some prhs1)]
              (* (hrel , args, CP.intersect_svl args unk_svl ,plhs, Some prhs, Some plhs) *)
            else if CP.mem_svl (List.hd rec_args) ptrs1 then
-             [(hrel , rec_args, (* CP.intersect_svl rec_args *) unk_svl ,plhs, Some plhs1, Some prhs1)]
+             [(hrel , rec_args, (* CP.intersect_svl rec_args *) unk_svl , CF.get_pure plhs, Some plhs1, Some prhs1)]
            else []
        end
      else
@@ -1439,9 +1439,9 @@ let collect_par_defs_recursive_hp_x prog lhs rhs (hrel, args) rec_args other_sid
        let ptrs2 = SAU.find_close ptrs1 eqs in
        let _ = Debug.ninfo_pprint ("ptrs2: " ^ (!CP.print_svl ptrs2)) no_pos in
        if CP.intersect_svl args ptrs2 <> [] then
-         [(hrel , args, (* CP.intersect_svl args *) unk_svl ,plhs, Some plhs1, Some prhs1)]
+         [(hrel , args, (* CP.intersect_svl args *) unk_svl , CF.get_pure plhs, Some plhs1, Some prhs1)]
        else if CP.mem_svl (List.hd rec_args) ptrs1 then
-         [(hrel , rec_args, (* CP.intersect_svl args *) unk_svl ,plhs, Some plhs1, Some prhs1)]
+         [(hrel , rec_args, (* CP.intersect_svl args *) unk_svl ,CF.get_pure plhs, Some plhs1, Some prhs1)]
          (* (hrel , rec_args, CP.intersect_svl rec_args unk_svl ,plhs, Some prhs, Some plhs) *)
        else []
   in
@@ -1491,7 +1491,7 @@ let collect_par_defs_unk_hps_x lhs rhs lunk_hp_arg runk_hp_arg=
         let build_par_def ((lhp,largs),(rhp,rargs))=
           let plhs = CF.formula_of_heap (SAU.mkHRel lhp largs no_pos) no_pos in
           let prhs = CF.formula_of_heap (SAU.mkHRel rhp rargs no_pos) no_pos in
-          ([(lhp,largs,largs ,plhs, None, Some prhs)],lhp,rhp)
+          ([(lhp,largs,largs, CF.get_pure plhs, None, Some prhs)],lhp,rhp)
         in
         let tr3 = List.map build_par_def ls_matched in
         let pdefs,lhps,rhps = split3 tr3 in
