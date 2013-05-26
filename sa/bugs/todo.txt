@@ -127,7 +127,7 @@ Why did we have the following base case only?
 
 [ G1(c_23,p_24) ::= emp&c_23=null]
 *************************************
-# bug-app1.slk
+# bug-app1.slk: FIXED
 
 pred ln<> ==
     self::node<_,q> & q=null
@@ -215,6 +215,11 @@ Checking procedure foo$node...
 !!! ==========================================
 !!! struc_vheap: EBase c'::node<val_11_764'@A,prev_11_765'@A,next_11_766'@L>@L[Orig]&true&
        {FLOW,(1,25)=__flow}[]
+=================================*===============
+# ll-size4: H(x) & x=null --> H1(x)&true.
+
+break into two constraints
+
 =================================*===============
 # i-app.ss
 

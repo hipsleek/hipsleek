@@ -438,14 +438,20 @@ let apply_transitive_impl_fix prog callee_hps hp_rel_unkmap unk_hps (constrs: CF
 ****************************************************************)
 
 let elim_unused_preds_x post_hps constrs=
-  let get_preds (lhs_preds, rhs_preds) cs=
+  let get_preds (lhs_heads, rhs_preds) cs=
     let lhs_hps = CF.get_hp_rel_name_formula cs.CF.hprel_lhs in
     let rhs_hps = CF.get_hp_rel_name_formula cs.CF.hprel_rhs in
-    (lhs_preds@lhs_hps, rhs_preds@rhs_hps)
+    (*lhs should be one pred + pure*)
+    let n_lhs_heads = match List.length lhs_hps  with
+      | 1 -> lhs_heads@lhs_hps
+      | _ -> lhs_heads
+    in
+    (n_lhs_heads, rhs_preds@rhs_hps)
   in
   let do_elim_unused_pre unused_hps cs=
+    let new_lhs, _ = CF.drop_hrel_f cs.CF.hprel_lhs unused_hps in
     let new_rhs, _ = CF.drop_hrel_f cs.CF.hprel_rhs unused_hps in
-    {cs with CF.hprel_rhs = new_rhs}
+    {cs with CF.hprel_lhs = new_lhs; CF.hprel_rhs = new_rhs}
   in
   let lhs_preds, rhs_preds = List.fold_left get_preds ([],[]) constrs in
   let lhs_preds1 = CP.remove_dups_svl lhs_preds in
@@ -1164,7 +1170,6 @@ let infer_shapes_init_pre_x prog (constrs0: CF.hprel list) callee_hps non_ptr_un
   let _ = DD.info_pprint ">>>>>> pre-predicates: step 5: combine<<<<<<" no_pos in
   let par_defs, rem_constrs2 = combine_pdefs_pre pr_par_defs in
   let _ = DD.info_pprint ">>>>>> pre-predicates: step 6: remove redundant x!=null<<<<<<" no_pos in
-
   let _ = DD.info_pprint ">>>>>> pre-predicates: step 7: strengthen<<<<<<" no_pos in
   let rem_constrs3, hp_defs = generalize_hps prog callee_hps unk_hps sel_post_hps constrs0 par_defs in
  (* generalize_hps_par_def prog non_ptr_unk_hps unk_hps sel_post_hps par_defs in *)
