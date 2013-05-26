@@ -288,7 +288,11 @@ why did we get emp?
 # bind2.ss
 
 ERROR : why did bind not temporarily remove a node?
-It seems we still use @L annotation on node..
+It seems we still use @L annotation on node & field regardless..
+
+@2! vheap: c'::node<Anon_12'@L,nn'@L>@L[Orig]&true&{FLOW,(1,25)=__flow}[]
+@2! vheap 2: c'::node<Anon_12'@L,nn'@L>@L[Orig]&true&{FLOW,(1,25)=__flow}[]
+
 
 [
  Label: 

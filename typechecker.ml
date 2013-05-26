@@ -1447,7 +1447,6 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                         CF.h_formula_data_pruning_conditions = [];
                         CF.h_formula_data_pos = pos}) in
 	            let vheap = CF.formula_of_heap vdatanode pos in
-                (* let _ = print_endline ( "vheap 1: " ^ (Cprinter.string_of_formula vheap) ) in *)
                     let _ = DD.tinfo_hprint (add_str "vheap" (Cprinter.string_of_formula)) vheap pos in
                     (*Test whether fresh_frac is full permission or not
                       writable -> fresh_frac = full_perm => normally
@@ -2090,7 +2089,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 	      failwith ((Cprinter.string_of_exp e0) ^ " is not supported yet")  in
     let check_exp1 (ctx : CF.list_failesc_context) : CF.list_failesc_context =
       let pr = Cprinter.string_of_list_failesc_context in
-      Debug.to_1 "check_exp1" pr pr check_exp1 ctx in
+      Debug.no_1 "check_exp1" pr pr check_exp1 ctx in
     let check_exp1 (ctx : CF.list_failesc_context) : CF.list_failesc_context =
       Gen.Profiling.do_1 "check_exp1" check_exp1 ctx in
 
