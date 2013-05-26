@@ -2844,9 +2844,9 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                                     C.exp_bind_fields = List.combine vs_types vs;
                                     C.exp_bind_body = ce;
                                     C.exp_bind_imm = CF.ConstAnn(Lend); (* can it be true? *) (*andreeac REVERT to Lend*)
-				                    C.exp_bind_param_imm = List.map (fun _ -> CF.ConstAnn(Lend)) vs ; 
+				    C.exp_bind_param_imm = List.map (fun _ -> CF.ConstAnn(Lend)) vs ; 
                                     C.exp_bind_read_only = false; (*conservative. May use read/write analysis to figure out*)
-				                    C.exp_bind_pos = pos;
+				    C.exp_bind_pos = pos;
                                     C.exp_bind_path_id = pid; }), te)))
                         | Array _ -> Err.report_error { Err.error_loc = pos; Err.error_text = v ^ " is not a data type";}
                         | _ -> Err.report_error { Err.error_loc = pos; Err.error_text = v ^ " is not a data type"; }
@@ -4090,11 +4090,11 @@ and flatten_to_bind prog proc (base : I.exp) (rev_fs : ident list)
                C.exp_bind_bound_var = ((Named dname), fn);
                C.exp_bind_fields = List.combine field_types fresh_names;
                C.exp_bind_body = bind_body;
-		       C.exp_bind_imm = imm;
-		       C.exp_bind_param_imm = ann_list;
+	       C.exp_bind_imm = imm;
+	       C.exp_bind_param_imm = ann_list;
                C.exp_bind_read_only = read_only;
                C.exp_bind_pos = pos;
-                C.exp_bind_path_id = pid_s;} in
+               C.exp_bind_path_id = pid_s;} in
            let seq1 = C.mkSeq bind_type init_fn bind_e pos in
            let seq2 = C.mkSeq bind_type fn_decl seq1 pos in
            if new_var then

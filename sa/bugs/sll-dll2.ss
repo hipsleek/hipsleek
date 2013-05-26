@@ -19,7 +19,7 @@ node paper_fix (node c, node p)
 	{
       bind c to (_,pp,nn) in {
 		pp=p;
-        //dprint;
+                dprint;
 		paper_fix(nn,c);	
       }
 	}
@@ -27,6 +27,14 @@ node paper_fix (node c, node p)
 }
 
   /*
+
+[ H1(c,p)&c!=null --> c::node<Anon_11',pp',nn'>@M * (HP_771(pp',p)) * 
+  (HP_772(nn',p))&true,
+ c'::node<Anon_11',pp_773,nn'>@M * (HP_771(pp_773,p)) * (HP_772(nn',p))&
+  true --> H1(nn',c')&true,
+ (G1(nn_782,c)) * c::node<Anon_11',p,nn'>@M&true --> G1(c,p)&true,
+ H1(c,p)&c=null --> G1(c,p)&true]
+
 void remove (node c)
 	
 	//verbose:

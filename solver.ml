@@ -10884,7 +10884,7 @@ let heap_entail_struc_list_failesc_context_init (prog : prog_decl) (is_folding :
 	(cl : list_failesc_context) (conseq:struc_formula) (tid: CP.spec_var option) (delayed_f: MCP.mix_formula option) (join_id: CP.spec_var option) pos (pid:control_path_id) : (list_failesc_context * proof) =
   let slk_entail cl conseq = heap_entail_struc_list_failesc_context_init prog is_folding has_post cl conseq tid delayed_f join_id pos pid
   in
-  Debug.no_2 "heap_entail_struc_list_failesc_context_init"
+  Debug.ho_2 "heap_entail_struc_list_failesc_context_init"
 	Cprinter.string_of_list_failesc_context
 	Cprinter.string_of_struc_formula
 	(fun (cl, _) -> Cprinter.string_of_list_failesc_context cl)

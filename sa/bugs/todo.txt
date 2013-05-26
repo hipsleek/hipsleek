@@ -58,28 +58,32 @@ NOTE:  use --sa-useless to elim unused parameters in H1
 
 /*
 
-Below seems wrong still...
-
-[ H1(c_51,p_53) ::= 
- (H1(next_19,c')) * c_51::node<Anon_11,prev_19_766',next_19>@M&true
- or c_51::node<Anon_11,prev_19_766',next_19>@M * 
-    (HP_796(prev_19_766',p_52)) * (H1(next_19,c'))&true
- or emp&c_51=null
+[ H1(c_44,p_46) ::= 
+ emp&c_44=null
+ or (H1(next_19,c')) * c_44::node<Anon_40,prev_19_41,next_19>@M&true
  ,
- G1(c_54,p_55) ::= emp&c_54=null,
- HP_796(prev_19_46,p) ::= (H1(c_44,p)) * (H1(next_19,c')) * (HP_796(prev_19_46,p))&true]
+ G1(c_47,p_48) ::= 
+ emp&c_47=null
+ or (G1(next_19,c_47)) * c_47::node<Anon_12,p_48,next_19>@M&true
+ ]
 
+with --sa-useless
 
-*************************************
+ [ H1(c_44) ::= 
+ emp&c_44=null
+ or (H1(next_19)) * c_44::node<Anon_40,prev_19_41,next_19>@M&true
+ ,
+ G1(c_46,p_47) ::= 
+ emp&c_46=null
+ or (G1(next_19,c_46)) * c_46::node<Anon_12,p_47,next_19>@M&true
+ ]
 
-Why did we not get below:
+I think we should have instead:
+  H1(c,p) ::= H1x(c)
+  H1x(c_44) ::= 
+      emp&c_44=null
+      or (H1x(next_19)) * c_44::node<Anon_40,prev_19_41,next_19>@M&true
 
- H1(c,p) ::= 
-   c::node<_,prev_19_766',next_19>@M * (H1(next_19,p))&c!=null
-   or c=null & emp
-
- G1(c,p) := c=null
-      or c::node<_,p,next_19_767'> * G1(next_19_806,c)
 
 Note that 2nd paramter of of H1 is useless.
 
@@ -280,3 +284,16 @@ why did we get emp?
 # bug-t3.slk (to be fixed in ann-1 branch)
 
 @v annotation problematic
+
+# bind2.ss
+
+ERROR : why did bind not temporarily remove a node?
+It seems we still use @L annotation on node..
+
+[
+ Label: 
+ State:c::node<Anon_11,p>@M[Orig]&c=c' & Anon_11=Anon_12' & nn'=p&{FLOW,(22,23)=__norm}[]
+       es_var_measures: MayLoop
+       es_trace: empty
+
+ ]
