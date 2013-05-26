@@ -52,7 +52,7 @@ Procedure paper_fix$node~node FAIL-2
 Exception Invalid_argument("List.combine") Occurred!
 (Program not linked with -g, cannot print stack backtrace)
 
-
+*************************************
 # dll-3b.slk
 
 /*
@@ -98,7 +98,7 @@ Post
       or c::node<_,p,next_19_767'> * G1(next_19_806,c)
 
 which should further simplify to:
-
+*************************************
 # dll-4a.slk
 
 relAssume H1
@@ -252,7 +252,7 @@ void foo (node c, node y)
    }
 }
 =================================*===============
-# dll-4a1.slk
+# dll-4a1.slk: FIXED
 
 why did we get emp?
 

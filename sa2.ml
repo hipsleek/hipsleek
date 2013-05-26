@@ -433,6 +433,37 @@ let apply_transitive_impl_fix prog callee_hps hp_rel_unkmap unk_hps (constrs: CF
 (***************************************************************
                       END APPLY TRANS IMPL
 ****************************************************************)
+(***************************************************************
+                      CONSTR: ELIM UNUSED PREDS
+****************************************************************)
+
+let elim_unused_preds_x post_hps constrs=
+  let get_preds (lhs_preds, rhs_preds) cs=
+    let lhs_hps = CF.get_hp_rel_name_formula cs.CF.hprel_lhs in
+    let rhs_hps = CF.get_hp_rel_name_formula cs.CF.hprel_rhs in
+    (lhs_preds@lhs_hps, rhs_preds@rhs_hps)
+  in
+  let do_elim_unused_pre unused_hps cs=
+    let new_rhs, _ = CF.drop_hrel_f cs.CF.hprel_rhs unused_hps in
+    {cs with CF.hprel_rhs = new_rhs}
+  in
+  let lhs_preds, rhs_preds = List.fold_left get_preds ([],[]) constrs in
+  let lhs_preds1 = CP.remove_dups_svl lhs_preds in
+  let rhs_preds1 = CP.remove_dups_svl rhs_preds in
+  (*unused pre preds are preds in rhs but do not appear in any lhs*)
+  let unused_pre_preds = CP.diff_svl rhs_preds1 lhs_preds1 in
+  (*and they are post*)
+  let unused_pre_preds0 = CP.diff_svl unused_pre_preds post_hps in
+  List.map (do_elim_unused_pre unused_pre_preds0) constrs
+
+let elim_unused_preds post_hps constrs=
+  let pr1 = pr_list_ln Cprinter.string_of_hprel in
+  Debug.no_1 "elim_unused_preds" pr1 pr1
+      (fun _ -> elim_unused_preds_x post_hps constrs) constrs
+
+(***************************************************************
+                      END. CONSTR: ELIM UNUSED PREDS
+****************************************************************)
 
 (***************************************************************
                       PARTIAL DEFS
@@ -1172,10 +1203,11 @@ let infer_shapes_core prog proc_name (constrs0: CF.hprel list) callee_hps sel_hp
   let _ = DD.info_pprint ">>>>>> step 1: apply transitive impilication<<<<<<" no_pos in
   let constrs1, non_unk_hps = apply_transitive_impl_fix prog callee_hps hp_rel_unkmap
     (List.map fst unk_hps) constrs0 in
-  let _ = DD.info_pprint ">>>>>> step 2: remove unused predicates: not yet<<<<<<" no_pos in
+  let _ = DD.info_pprint ">>>>>> step 2: remove unused predicates<<<<<<" no_pos in
+  let constrs2 = elim_unused_preds sel_post_hps constrs1 in
   (*TODO: process constrs like H(x) & x = null --> G(x): separate into 2 constraints*)
   (*partition constraints into 2 groups: pre-predicates, post-predicates*)
-  let post_constrs, pre_constrs = partition_constrs constrs1 sel_post_hps in
+  let post_constrs, pre_constrs = partition_constrs constrs2 sel_post_hps in
   (*find inital sol*)
   let _ = DD.info_pprint ">>>>>> pre-predicates<<<<<<" no_pos in
   let pre_hps, pre_defs = infer_shapes_init_pre prog pre_constrs callee_hps [] sel_post_hps hp_rel_unkmap in
