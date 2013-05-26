@@ -53,7 +53,8 @@ Exception Invalid_argument("List.combine") Occurred!
 (Program not linked with -g, cannot print stack backtrace)
 
 *************************************
-# dll-3b.slk
+# dll-3b.slk: FIXED.
+NOTE:  use --sa-useless to elim unused parameters in H1
 
 /*
 
@@ -99,7 +100,7 @@ Post
 
 which should further simplify to:
 *************************************
-# dll-4a.slk
+# dll-4a.slk: FIXED
 
 relAssume H1
  H1(c)&c!=null --> c::node<_,prev_19_765',next_19_766'>@M * 
@@ -113,7 +114,7 @@ Why did we go into a loop?
 
 *************************************
 
-# dll-4b.ss
+# dll-4b.ss: FIXED
 
 relAssume G1
  c::node<_,p,n>@M * G1(n,c)&true 
@@ -180,8 +181,14 @@ Expecting relational assumption : H(r) --> r::lseg<q> * q::ln<>
 @5! rfb: r::lseg<q>@M[0][Orig][LHSCase] * q::ln@M[0][Orig][LHSCase]&true&
 {FLOW,(19,20)=__norm}[]
 *******************************************************
-# bug-app3.slk
+# bug-app3.slk:
 
+loss: flted_13_30 = null
+
+inferred hprel: [H2(r)&true --> r::lseg<flted_13_30>@M[LHSCase] * 
+                   (HP_31(flted_13_30))&true]
+
+*******************************************************
 # bug-app1b.slk
 
 infer [H2] H2(r)*H2(q)   |- r::lseg<null>*q::ln<>.

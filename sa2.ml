@@ -410,7 +410,7 @@ let apply_transitive_impl_fix prog callee_hps hp_rel_unkmap unk_hps (constrs: CF
   let rec helper_x (constrs: CF.hprel list) new_cs non_unk_hps=
     DD.ninfo_pprint ">>>>>> step 1a: simplification <<<<<<" no_pos;
     let new_cs1 = (* simplify_constrs prog unk_hps *) new_cs in
-     Debug.info_hprint (add_str "apply_transitive_imp LOOP: " (pr_list_ln Cprinter.string_of_hprel)) constrs no_pos;
+     Debug.ninfo_hprint (add_str "apply_transitive_imp LOOP: " (pr_list_ln Cprinter.string_of_hprel)) constrs no_pos;
     begin
         DD.ninfo_pprint ">>>>>> step 1b: do apply_transitive_imp <<<<<<" no_pos;
         let constrs2, new_cs2, new_non_unk_hps = subst_cs prog dang_hps constrs new_cs1 in
@@ -908,17 +908,16 @@ let generalize_hps_par_def_x prog non_ptr_unk_hps unk_hpargs post_hps par_defs=
   in
   let unk_hps = (List.map fst unk_hpargs) in
   let par_defs1 = List.concat (List.map (get_pdef_body unk_hps post_hps) par_defs) in
-  let par_defs2 = List.filter is_valid_pardef par_defs1 in
+  let par_defs2 = (* List.filter is_valid_pardef *) par_defs1 in
   let groups = partition_pdefs_by_hp_name par_defs2 [] in
   (*remove dups in each group*)
-  let groups1 = List.map SAU.remove_dups_pardefs_w_neqNull groups in
+  let groups1 = (* List.map SAU.remove_dups_pardefs_w_neqNull *) groups in
   (*
     subst such that each partial def does not contain other hps
     dont subst recursively search_largest_matching between two formulas
   *)
   (* let pr1 = pr_list_ln (pr_list_ln (pr_quad !CP.print_sv !CP.print_svl Cprinter.prtt_string_of_formula !CP.print_svl)) in *)
-  (* let _ = DD.info_pprint ("      groups1: " ^ (pr1 groups1)) no_pos in *)
-
+  (* let _ = DD.info_pprint ("      groups: " ^ (pr1 groups)) no_pos in *)
   let groups2 = pardef_subst_fix prog unk_hps groups1 in
   (* let _ = Debug.info_pprint ("     END: " ) no_pos in *)
   (*remove empty*)
@@ -1141,7 +1140,7 @@ let match_hps_views (hp_defs: CF.hp_rel_def list) (vdcls: CA.view_decl list):
                      END LIB MATCHING
 ****************************************************************)
 
-let infer_shapes_init_post prog (constrs0: CF.hprel list) non_ptr_unk_hps sel_post_hps hp_rel_unkmap :(CP.spec_var list * CF.hp_rel_def list) =
+let infer_shapes_init_post_x prog (constrs0: CF.hprel list) non_ptr_unk_hps sel_post_hps hp_rel_unkmap :(CP.spec_var list * CF.hp_rel_def list) =
   let unk_hps = [] in
   let par_defs = get_par_defs_post constrs0 in
   let _ = DD.info_pprint ">>>>>> post-predicates: step 3: remove redundant x!=null<<<<<<" no_pos in
@@ -1150,6 +1149,13 @@ let infer_shapes_init_post prog (constrs0: CF.hprel list) non_ptr_unk_hps sel_po
   let pair_names_defs = generalize_hps_par_def prog non_ptr_unk_hps unk_hps sel_post_hps par_defs in
   let hp_names,hp_defs = List.split pair_names_defs in
   (hp_names,hp_defs)
+
+let infer_shapes_init_post prog (constrs0: CF.hprel list) non_ptr_unk_hps sel_post_hps hp_rel_unkmap :(CP.spec_var list * CF.hp_rel_def list) =
+  let pr1 = pr_list_ln Cprinter.string_of_hprel in
+  let pr2 = !CP.print_svl in
+  let pr3 = pr_list_ln Cprinter.string_of_hp_rel_def in
+  Debug.no_1 "infer_shapes_init_post" pr1 (pr_pair pr2 pr3)
+      (fun _ -> infer_shapes_init_post_x prog constrs0 non_ptr_unk_hps sel_post_hps hp_rel_unkmap) constrs0
 
 let infer_shapes_init_pre_x prog (constrs0: CF.hprel list) callee_hps non_ptr_unk_hps sel_post_hps hp_rel_unkmap :(CP.spec_var list * CF.hp_rel_def list) =
   let unk_hps = [] in
