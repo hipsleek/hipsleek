@@ -53,8 +53,8 @@ Exception Invalid_argument("List.combine") Occurred!
 (Program not linked with -g, cannot print stack backtrace)
 
 *************************************
-# dll-3b.slk: FIXED.
-NOTE:  use --sa-useless to elim unused parameters in H1
+# dll-3b.slk:
+TODO:  enhance --sa-useless to elim unused parameters in H1
 
 /*
 
@@ -220,12 +220,12 @@ Checking procedure foo$node...
 !!! struc_vheap: EBase c'::node<val_11_764'@A,prev_11_765'@A,next_11_766'@L>@L[Orig]&true&
        {FLOW,(1,25)=__flow}[]
 =================================*===============
-# ll-size4: H(x) & x=null --> H1(x)&true.
+# ll-size4: H(x) & x=null --> H1(x)&true. DONE
 
 break into two constraints
 
 =================================*===============
-# i-app.ss
+# i-app.ss: FIXED
 
 Problems:
  (i) Need to get rid of redundant prev fields..

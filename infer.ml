@@ -1647,23 +1647,6 @@ let find_undefined_selective_pointers_x prog lfb lmix_f unmatched rhs_rest rhs_h
     (*should separate list of list *)
     CP.remove_dups_svl (List.concat ls_not_fwd_svl)
   in
-  let find_well_defined_hp_x hds hvs (hp,args) def_ptrs lhsb=
-    let closed_args = SAU.look_up_closed_ptr_args prog hds hvs args in
-    let undef_args = SAU.lookup_undef_args closed_args [] def_ptrs in
-    if undef_args = [] then
-      let f = SAU.keep_data_view_hrel_nodes_fb prog lhsb hds hvs args [hp] in
-      ([(hp,args,f)],[])
-    else
-    ([],[(hp,args)])
-  in
-  let find_well_defined_hp hds hvs (hp,args) def_ptrs lhsb=
-    let pr1 = !CP.print_sv in
-    let pr2 = !CP.print_svl in
-    let pr3 = pr_triple pr1 pr2 Cprinter.string_of_formula_base in
-    let pr4 = (pr_pair pr1 pr2) in
-    Debug.no_2 "find_well_defined_hp" pr4 pr2 (pr_pair (pr_list_ln pr3) (pr_list pr4))
-        (fun _ _ -> find_well_defined_hp_x hds hvs (hp,args) def_ptrs lhsb) (hp,args) def_ptrs
-  in
   let lookup_eq_linking_svl (hp0,args0) total_unk_map lhs_hpargs=
     let rec lookup_xpure_view hp rem_map=
       match rem_map with
@@ -1717,7 +1700,7 @@ let find_undefined_selective_pointers_x prog lfb lmix_f unmatched rhs_rest rhs_h
   let l_def_vs = leqNulls @ (List.map (fun hd -> hd.CF.h_formula_data_node) lhds)
    @ (List.map (fun hv -> hv.CF.h_formula_view_node) lhvs) in
   let l_def_vs = CP.remove_dups_svl (SAU.find_close l_def_vs (eqs)) in
-  let ls_defined_hps,rems = List.split (List.map (fun hpargs -> find_well_defined_hp lhds lhvs hpargs l_def_vs lfb) ls_lhp_args) in
+  let ls_defined_hps,rems = List.split (List.map (fun hpargs -> SAU.find_well_defined_hp prog lhds lhvs hpargs l_def_vs lfb) ls_lhp_args) in
   let defined_hps = List.concat ls_defined_hps in
   let rem_lhpargs = List.concat rems in
   (*END************get well-defined hp in lhs*)
@@ -2011,16 +1994,6 @@ type: Cast.prog_decl ->
   CF.formula_base -> CF.formula_base -> Globals.loc -> bool * CF.entail_st
 *)
 let infer_collect_hp_rel_x prog (es:entail_state) rhs rhs_rest (rhs_h_matched_set:CP.spec_var list) lhs_b rhs_b pos =
-  let generate_hp_ass pred rf (hp,args,lfb) =
-    {
-        CF.hprel_kind = CP.RelAssume [hp];
-        unk_svl = [];(*inferred from norm*)
-        unk_hps = [];
-        predef_svl = pred;
-        hprel_lhs = CF.Base lfb;
-        hprel_rhs = rf;
-    }
-  in
   (*for debugging*)
   (* DD.info_pprint ("  es: " ^ (Cprinter.string_of_formula es.CF.es_formula)) pos; *)
   let _ = Debug.ninfo_pprint ("es_infer_vars_hp_rel: " ^ (!CP.print_svl  es.es_infer_vars_hp_rel)) no_pos in
@@ -2127,7 +2100,7 @@ let infer_collect_hp_rel_x prog (es:entail_state) rhs rhs_rest (rhs_h_matched_se
             (hds@(List.concat (List.map get_h_formula_data_fr_hnode es.CF.es_history)))
             hvs (lhras@rhras@new_hrels) (leqs@reqs) eqNull [] in
           let rf = CF.mkTrue (CF.mkTrueFlow()) pos in
-          let defined_hprels = List.map (generate_hp_ass (closed_hprel_args_def@total_unk_svl) rf) defined_hps in
+          let defined_hprels = List.map (SAU.generate_hp_ass (closed_hprel_args_def@total_unk_svl) rf) defined_hps in
           (*lookup to check redundant*)
           let new_lhs = CF.Base new_lhs_b in
           let new_rhs = CF.Base new_rhs_b in
