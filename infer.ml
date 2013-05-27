@@ -722,9 +722,9 @@ let rec infer_pure_m_x unk_heaps estate lhs_rels lhs_xpure_orig lhs_xpure0 lhs_w
       let split_rhs = CP.split_conjunctions rhs_xpure in
       let rem_rhs = List.filter (fun c -> not(TP.imply_raw lhs_xpure c)) split_rhs in
       let rhs_xpure = CP.join_conjunctions rem_rhs in
-      let _ = DD.info_hprint (add_str "lhs_xpure: " (!CP.print_formula)) lhs_xpure pos in
-      let _ = DD.info_hprint (add_str "split_rhs: " (pr_list !CP.print_formula)) split_rhs pos in
-      let _ = DD.info_hprint (add_str "rem_rhs: " (pr_list !CP.print_formula)) rem_rhs pos in
+      let _ = DD.tinfo_hprint (add_str "lhs_xpure: " (!CP.print_formula)) lhs_xpure pos in
+      let _ = DD.tinfo_hprint (add_str "split_rhs: " (pr_list !CP.print_formula)) split_rhs pos in
+      let _ = DD.tinfo_hprint (add_str "rem_rhs: " (pr_list !CP.print_formula)) rem_rhs pos in
       let _ = DD.trace_hprint (add_str "lhs(orig): " !CP.print_formula) lhs_xpure_orig pos in
       let _ = DD.trace_hprint (add_str "lhs0(orig): " !print_mix_formula) lhs_xpure0 pos in
       let _ = DD.trace_hprint (add_str "rhs(orig): " !CP.print_formula) rhs_xpure pos in

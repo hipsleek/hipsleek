@@ -1,0 +1,135 @@
+Latest on sleek
+===============
+Total number of errors: 15 in files:
+  infer/infer1.slk infer/infer2.slk infer/infer5.slk infer/infer6.slk infer/infer7.slk infer/infer8.slk infer/infer13.slk infer/infer14.slk infer/infer15.slk ann1.slk imm/imm1.slk imm/imm3.slk 
+imm/imm4.slk 
+imm/imm-hard.slk
+imm-field/sleek02.slk.
+
+before merge sleek 
+===================
+Total number of errors: 13 in files:
+  infer/infer1.slk infer/infer2.slk infer/infer5.slk infer/infer6.slk infer/infer7.slk infer/infer8.slk infer/infer13.slk infer/infer14.slk infer/infer15.slk ann1.slk imm/imm1.slk imm/imm3.slk 
+imm-field/sleek02.slk.
+
+default (imm4.slk)
+=======
+ <1>EXISTS(flted_3_54: (y::node<Anon_11@L,Anon_12@L>@L[Orig] * Anon_12::ll<flted_3_54>@L[0][Orig] ; x::ll<m>@M[0][Orig][LHSCase] * ((t::ll<a>@L[0][Orig][LHSCase] ; z::ll<m>@M[0][Orig][LHSCase])))&0<=0 & n=flted_3_54+1 & 0<n&{FLOW,(19,20)=__norm})[]
+
+Latest: (imm4.slk)
+=======
+ failed
+
+Latest: (imm4.slk with field-ann)
+=======
+ <1>EXISTS(flted_3_53: (y::node<Anon_11@L,Anon_12@L>@M[Orig] * Anon_12::ll<flted_3_53>@L[0][Orig] ; x::ll<m>@M[0][Orig][LHSCase] * ((t::ll<a>@L[0][Orig][LHSCase] ; z::ll<m>@M[0][Orig][LHSCase])))&n=flted_3_53+1 & 0<n&{FLOW,(19,20)=__norm})[]
+
+Before merge (imm4.slk --field-ann)
+============
+ <1>EXISTS(flted_3_52: (y::node<Anon_11@L,Anon_12@L>@M[Orig] * Anon_12::ll<flted_3_52>@L[0][Orig] ; x::ll<m>@M[0][Orig][LHSCase] * ((t::ll<a>@L[0][Orig][LHSCase] ; z::ll<m>@M[0][Orig][LHSCase])))&n=flted_3_52+1 & 0<n&{FLOW,(19,20)=__norm})[]
+
+
+Before merge (imm4.slk)
+============
+ <1>EXISTS(flted_3_53: (y::node<Anon_11,Anon_12>@L[Orig] * Anon_12::ll<flted_3_53>@L[0][Orig] ; x::ll<m>@M[0][Orig][LHSCase] * ((t::ll<a>@L[0][Orig][LHSCase] ; z::ll<m>@M[0][Orig][LHSCase])))&n=flted_3_53+1 & 0<n&{FLOW,(19,20)=__norm})[]
+
+before merge sleek --field-ann
+==============================
+Total number of errors: 13 in files:
+  infer/infer1.slk infer/infer2.slk infer/infer5.slk infer/infer6.slk infer/infer7.slk infer/infer8.slk infer/infer13.slk infer/infer14.slk infer/infer15.slk ann1.slk imm/imm1.slk imm/imm3.slk imm-field/sleek02.slk.
+
+Lastest with sleek --field-ann
+==============================
+Total number of errors: 13 in files:
+  infer/infer1.slk infer/infer2.slk infer/infer5.slk infer/infer6.slk infer/infer7.slk infer/infer8.slk infer/infer13.slk infer/infer14.slk infer/infer15.slk ann1.slk imm/imm1.slk imm/imm3.slk imm-field/sleek02.slk.
+
+default with sleek --field-ann
+==============================
+Total number of errors: 4 in files:
+  ann1.slk imm/imm1.slk imm/imm3.slk imm-field/sleek02.slk.
+Total verification time: 3.37 second
+	Time spent in main process: 1.22 second
+	Time spent in child processes: 2.15 second
+	Number of false contexts: 0
+
+default with sleek --dis-field-ann
+==============================
+Total number of errors: 5 in files:
+  ann1.slk imm/imm1.slk imm/imm3.slk imm/imm-hard.slk imm-field/sleek02.slk.
+
+default hip --eps
+=======
+All test results were as expected.
+Total verification time: 86.71 second
+	Time spent in main process: 42.18 second
+	Time spent in child processes: 44.53 second
+	Number of false contexts: 455
+default hip --eps --dis-field-ann
+=======
+All test results were as expected.
+Total verification time: 86.71 second
+	Time spent in main process: 42.18 second
+	Time spent in child processes: 44.53 second
+	Number of false contexts: 455
+
+Latest  hip --eps 
+======
+Total number of errors: 11 in files:
+ error at: heaps.ss deleteoneel
+error at: merge.ss split_func
+error at: qsort.ss partition
+error at: qsort.ss qsort
+error at: qsort-tail.ss partition1
+error at: selection.ss delete_min
+error at: trees.ss remove_min
+error at: trees.ss delete
+error at: ../../modular_examples/selection-modular.ss delete_min
+error at: ../../modular_examples/qsort-modular.ss partition
+error at: ../../modular_examples/qsort-modular.ss qsort
+
+Before merge hip --eps
+============
+Total number of errors: 11 in files:
+ error at: heaps.ss deleteoneel
+error at: merge.ss split_func
+error at: qsort.ss partition
+error at: qsort.ss qsort
+error at: qsort-tail.ss partition1
+error at: selection.ss delete_min
+error at: trees.ss remove_min
+error at: trees.ss delete
+error at: ../../modular_examples/selection-modular.ss delete_min
+error at: ../../modular_examples/qsort-modular.ss partition
+error at: ../../modular_examples/qsort-modular.ss qsort
+
+Latest  hip --eps --field-ann
+======
+Total number of errors: 12 in files:
+ error at: heaps.ss deleteoneel
+error at: merge.ss split_func
+error at: qsort.ss partition
+error at: qsort.ss qsort
+error at: qsort-tail.ss qsort
+error at: qsort-tail.ss partition1
+error at: selection.ss delete_min
+error at: trees.ss remove_min
+error at: trees.ss delete
+error at: ../../modular_examples/selection-modular.ss delete_min
+error at: ../../modular_examples/qsort-modular.ss partition
+
+Before merge hip --eps --field-ann
+============
+Total number of errors: 12 in files:
+ error at: heaps.ss deleteoneel
+error at: merge.ss split_func
+error at: qsort.ss partition
+error at: qsort.ss qsort
+error at: qsort-tail.ss qsort
+error at: qsort-tail.ss partition1
+error at: selection.ss delete_min
+error at: trees.ss remove_min
+error at: trees.ss delete
+error at: ../../modular_examples/selection-modular.ss delete_min
+error at: ../../modular_examples/qsort-modular.ss partition
+error at: ../../modular_examples/qsort-modular.ss qsort
+
