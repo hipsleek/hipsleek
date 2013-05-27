@@ -127,7 +127,7 @@ Successful States:
  Label: 
  State:hfalse&false&{FLOW,(22,23)=__norm}[]
 
-# bind2b1.ss (vs bind2b.ss)
+# bind2b1.ss (vs bind2b.ss)  TEMP FIXED fields-->@M
 
 node paper_fix (node c)
   requires c::node<_,p>
@@ -184,3 +184,25 @@ File "bind2b2.ss", line 15, characters 8-9
 
 
 */
+
+# bind2e.ss
+
+ bind node lost during exception!
+
+bind node not released by exception!
+  1. restore
+  2. use try-catch for bind?
+
+dprint: bind2e.ss:17: ctx:  List of Failesc Context: [FEC(0, 1, 0 )]
+Escaped States:
+[
+ 
+ Try-Block:0::
+ [
+  Path: 
+  State:emp&c=c' & 0<=0 & Anon_11=Anon_36' & nn_37'=p & nn_37'=res&{FLOW,(16,17)=__Return}[]
+        es_var_measures: MayLoop
+        es_trace: empty
+
+  ]
+ ]

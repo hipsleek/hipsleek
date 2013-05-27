@@ -1373,7 +1373,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                   DD.tinfo_pprint ">>>>>> bind type-checker <<<<<<" pos;
                   DD.tinfo_hprint (add_str "node" (fun x -> x)) v pos;               
                   DD.tinfo_hprint (add_str "fields" (pr_list (fun (_,x) -> x))) lvars pos;               
-                  DD.tinfo_hprint (add_str "node ann" Cprinter.string_of_imm) imm_node pos;               
+                  DD.tinfo_hprint (add_str "imm_node" Cprinter.string_of_imm) imm_node pos;               
                   DD.tinfo_hprint (add_str "fields ann" (pr_list Cprinter.string_of_imm)) pimm pos;               
                   DD.tinfo_hprint (add_str "read-only" string_of_bool) read_only pos;               
                   let b,res = (if !Globals.ann_vp then
@@ -1471,7 +1471,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                     let _ = DD.tinfo_hprint (add_str "vheap 2" Cprinter.string_of_formula) vheap no_pos in
                     let vheap = Immutable.normalize_field_ann_formula vheap in
 	            let vheap = prune_preds prog false vheap in
-                    let _ = DD.devel_hprint (add_str "vheap2" (Cprinter.string_of_formula)) vheap pos in
+                    let _ = DD.tinfo_hprint (add_str "vheap2" (Cprinter.string_of_formula)) vheap pos in
                     let struc_vheap = CF.EBase { 
 	                CF.formula_struc_explicit_inst = [];	 
                         CF.formula_struc_implicit_inst = if (Perm.allow_perm ()) then [fresh_frac] else [];  (*need to instantiate f*)
@@ -2089,7 +2089,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 	      failwith ((Cprinter.string_of_exp e0) ^ " is not supported yet")  in
     let check_exp1 (ctx : CF.list_failesc_context) : CF.list_failesc_context =
       let pr = Cprinter.string_of_list_failesc_context in
-      Debug.to_1 "check_exp1" pr pr check_exp1 ctx in
+      Debug.no_1 "check_exp1" pr pr check_exp1 ctx in
     let check_exp1 (ctx : CF.list_failesc_context) : CF.list_failesc_context =
       Gen.Profiling.do_1 "check_exp1" check_exp1 ctx in
 

@@ -2660,8 +2660,8 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
                                     C.exp_bind_bound_var = (vt, v);
                                     C.exp_bind_fields = List.combine vs_types vs;
                                     C.exp_bind_body = ce;
-                                    C.exp_bind_imm = CF.ConstAnn(Lend); (* can it be true? *) (*andreeac REVERT to Lend*)
-				    C.exp_bind_param_imm = List.map (fun _ -> CF.ConstAnn(Lend)) vs ; 
+                                    C.exp_bind_imm = CF.ConstAnn(Mutable); (* can it be true? *) (*WN : conservatively @M *)
+                                    C.exp_bind_param_imm = List.map (fun _ -> CF.ConstAnn(Mutable)) vs ; 
                                     C.exp_bind_read_only = false; (*conservative. May use read/write analysis to figure out*)
 				    C.exp_bind_pos = pos;
                                     C.exp_bind_path_id = pid; }), te)))
@@ -6123,7 +6123,7 @@ and case_normalize_barrier prog bd =
       
 (* AN HOA : WHAT IS THIS FUNCTION SUPPOSED TO DO ? *)
 and case_normalize_program (prog: Iast.prog_decl):Iast.prog_decl =
-  Debug.ho_1 "case_normalize_program" (Iprinter.string_of_program) (Iprinter.string_of_program) case_normalize_program_x prog
+  Debug.no_1 "case_normalize_program" (Iprinter.string_of_program) (Iprinter.string_of_program) case_normalize_program_x prog
       
 and case_normalize_program_x (prog: Iast.prog_decl):Iast.prog_decl=
   let tmp_views = (* order_views *) prog.I.prog_view_decls in

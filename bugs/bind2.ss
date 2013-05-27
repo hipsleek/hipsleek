@@ -4,9 +4,6 @@ data node{
 }
 
 
-HeapPred H1(node a, node b).
-HeapPred G1(node a, node b).
-
 node paper_fix (node c)
   requires c::node<_,p>
   ensures res=p;
