@@ -287,56 +287,63 @@ let cexp_to_pure_slicing fct f sl = match f with
 
 let cexp_to_pure2 fct f01 f02 =
   match (f01,f02) with
-  | Pure_c f1, Pure_c f2 
-      -> (match f1 with
-                             | P.List(explist,pos) -> let tmp = List.map (fun c -> P.BForm (((fct c f2), None), None)) explist
-                               in let len =  List.length tmp
-                               in let res =  if (len > 1) then List.fold_left (fun c1 c2 -> P.mkAnd c1 c2 (get_pos 2)) (List.hd tmp) (List.tl tmp)
-                                             else  P.BForm (((fct f1 f2), None), None)
-                               in Pure_f(res) 
-                             | _ -> (match f2 with
-                                    | P.List(explist,pos) -> let tmp = List.map (fun c -> P.BForm (((fct f1 c), None), None)) explist
-                                      in let len = List.length tmp
-                                      in let res = if ( len > 1 ) then List.fold_left (fun c1 c2 -> P.mkAnd c1 c2 (get_pos 2)) (List.hd tmp) (List.tl tmp)
-                                                   else P.BForm (((fct f1 f2), None), None)
-                                      in Pure_f(res) 
-                                    | _ -> (
-                                        let typ1 = P.typ_of_exp f1 in 
-                                        let typ2 = P.typ_of_exp f2 in
-                                         (* let _ = print_endline ("typ1:" ^ (string_of_typ typ1 )) in *)
-                                        (* let _ = print_endline ("typ2:" ^ (string_of_typ typ2 )) in *)
-                                         let arr_typ_check typ1 typ2 =
-                                         ( match typ1 with
-                                            | Array (t1,_) -> if t1== UNK || t1 == typ2 then true else
-                                                  ( match typ2 with
-                                                    | Array (t2,_) -> if t2== UNK || t1==t2 then true else false
-                                                    | _ -> false
-                                                  )
-                                            | _ -> ( match typ2 with
-                                                  | Array (t,_) -> if t== UNK then true else false
-                                                  | _ -> false
-                                            )
-                                         )
-                                        in
-                                        if (typ1 = typ2) || (typ1 == UNK) || (typ2 == UNK) || (arr_typ_check typ1 typ2) then 
-                                          Pure_f (P.BForm(((fct f1 f2), None), None))
-                                        else
-                                          report_error (get_pos 1) "with 2 convert expected the same cexp types, found different types"
-                                      )
-                                    )
-                             )
-  | Pure_f f1 , Pure_c f2 ->(
+  | Pure_c f1, Pure_c f2 -> (
+      match f1 with
+      | P.List(explist,pos) ->
+          let tmp = List.map (fun c -> P.BForm (((fct c f2), None), None)) explist in
+          let len =  List.length tmp in
+          let res = 
+            if (len > 1) then List.fold_left (fun c1 c2 -> P.mkAnd c1 c2 (get_pos 2)) (List.hd tmp) (List.tl tmp)
+            else  P.BForm (((fct f1 f2), None), None) in
+          Pure_f(res) 
+      | _ -> (
+          match f2 with
+          | P.List(explist,pos) ->
+              let tmp = List.map (fun c -> P.BForm (((fct f1 c), None), None)) explist in
+              let len = List.length tmp in
+              let res =
+                if ( len > 1 ) then List.fold_left (fun c1 c2 -> P.mkAnd c1 c2 (get_pos 2)) (List.hd tmp) (List.tl tmp)
+                else P.BForm (((fct f1 f2), None), None) in
+              Pure_f(res) 
+          | _ -> (
+              let typ1 = P.typ_of_exp f1 in 
+              let typ2 = P.typ_of_exp f2 in
+              let arr_typ_check typ1 typ2 = (
+                match typ1 with
+                | Array (t1,_) ->
+                    if t1== UNK || t1 == typ2 then true
+                    else (
+                      match typ2 with
+                      | Array (t2,_) -> if t2== UNK || t1==t2 then true else false
+                      | _ -> false
+                    )
+                | _ -> (
+                    match typ2 with
+                    | Array (t,_) -> if t== UNK then true else false
+                    | _ -> false
+                  )
+              ) in
+              if (typ1 = typ2) || (typ1 == UNK) || (typ2 == UNK) || (arr_typ_check typ1 typ2) then 
+                Pure_f (P.BForm(((fct f1 f2), None), None))
+              else
+                report_error (get_pos 1) "with 2 convert expected the same cexp types, found different types"
+            )
+        )
+    )
+  | Pure_f f1 , Pure_c f2 -> (
       match f1  with 
-      | P.BForm((pf,il),oe) -> (match pf with 
-                                | P.Lt (a1, a2, _) 
-                                | P.Lte (a1, a2, _) 
-                                | P.Gt (a1, a2, _) 
-                                | P.Gte (a1, a2, _)
-                                | P.Eq (a1, a2, _) 
-                                | P.Neq (a1, a2, _) ->
-                                    let tmp = P.BForm(((fct a2 f2), None),None) in
-                                    Pure_f (P.mkAnd f1 tmp (get_pos 2))
-                                | _ -> report_error (get_pos 1) "error should be an equality exp" )
+      | P.BForm((pf,il),oe) -> (
+          match pf with 
+          | P.Lt (a1, a2, _) 
+          | P.Lte (a1, a2, _) 
+          | P.Gt (a1, a2, _) 
+          | P.Gte (a1, a2, _)
+          | P.Eq (a1, a2, _) 
+          | P.Neq (a1, a2, _) ->
+              let tmp = P.BForm(((fct a2 f2), None),None) in
+              Pure_f (P.mkAnd f1 tmp (get_pos 2))
+          | _ -> report_error (get_pos 1) "error should be an equality exp"
+        )
       | _ -> report_error (get_pos 1) "error should be a binary exp" 
     )
   | _ -> report_error (get_pos 1) "with 2 convert expected cexp, found pure_form" 
@@ -1444,14 +1451,12 @@ cexp_w:
 	            | `UNION; `OPAREN; c=opt_cexp_list; `CPAREN                     -> Pure_c (P.BagUnion (c, get_pos_camlp4 _loc 1))
 	            | `INTERSECT; `OPAREN; c=opt_cexp_list; `CPAREN                 -> Pure_c (P.BagIntersect (c, get_pos_camlp4 _loc 1)) 
 	            | `DIFF; `OPAREN; c1=SELF; `COMMA; c2=SELF; `CPAREN             -> apply_cexp_form2 (fun c1 c2-> P.BagDiff (c1, c2, get_pos_camlp4 _loc 1) ) c1 c2
-	            
-
 	            | `OLIST; c1 = opt_cexp_list; `CLIST                              -> Pure_c (P.List (c1, get_pos_camlp4 _loc 1)) 
 	            |  c1=SELF; `COLONCOLONCOLON; c2=SELF -> apply_cexp_form2 (fun c1 c2-> P.ListCons (c1, c2, get_pos_camlp4 _loc 2)) c1 c2 
 	            | `TAIL; `OPAREN; c1=SELF; `CPAREN                -> apply_cexp_form1 (fun c1-> P.ListTail (c1, get_pos_camlp4 _loc 1)) c1 
 	            | `APPEND; `OPAREN; c1= opt_cexp_list; `CPAREN                   -> Pure_c (P.ListAppend (c1, get_pos_camlp4 _loc 1))
 	            | `HEAD; `OPAREN; c=SELF; `CPAREN         -> apply_cexp_form1 (fun c -> P.ListHead (c, get_pos_camlp4 _loc 1)) c
-	            | `LENGTH; `OPAREN; c=SELF; `CPAREN       -> (* print_string("herel"); *)apply_cexp_form1 (fun c -> P.ListLength (c, get_pos_camlp4 _loc 1)) c
+	            | `LENGTH; `OPAREN; c=SELF; `CPAREN -> apply_cexp_form1 (fun c -> P.ListLength (c, get_pos_camlp4 _loc 1)) c
 	            | `REVERSE; `OPAREN; c1=SELF; `CPAREN             -> apply_cexp_form1 (fun c1-> P.ListReverse (c1, get_pos_camlp4 _loc 1)) c1 
    (* | t=cexp_w LEVEL "addit" -> t *) ]
 	          
@@ -2285,7 +2290,15 @@ dprint_statement:
    | `DPRINT; `STRING(_,id)  -> Dprint ({exp_dprint_string = id;  exp_dprint_pos = (get_pos_camlp4 _loc 1)})]];
    
 bind_statement:
-  [[ `BIND; `IDENTIFIER id; `TO; `OPAREN; il = id_list_opt; `CPAREN; `IN_T; b=block ->
+  [[ `BIND; `IDENTIFIER id; `TO; `OPAREN; il = id_list_opt; `CPAREN; `IN_T; b= block ->
+      Bind { exp_bind_bound_var = id;
+             exp_bind_fields = il;
+             exp_bind_body = b;
+             exp_bind_path_id = None ;
+             exp_bind_pos = get_pos_camlp4 _loc 1 }]];
+
+bind_expression:
+  [[ `BIND; `IDENTIFIER id; `TO; `OPAREN; il = id_list_opt; `CPAREN; `IN_T; b= expression ->
       Bind { exp_bind_bound_var = id;
              exp_bind_fields = il;
              exp_bind_body = b;
@@ -2454,6 +2467,7 @@ argument: [[t=expression -> t]];
 
 expression:
   [[ t=conditional_expression -> t
+   | t= bind_expression -> t
    | t=assignment_expression -> t]];
 
 constant_expression: [[t=expression -> t]];

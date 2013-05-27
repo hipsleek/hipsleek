@@ -427,11 +427,16 @@ and h_formula_2_mem_x (f : h_formula) (evars : CP.spec_var list) prog : CF.mem_f
             | CF.Star {CF.h_formula_star_h1 = h11;
 			           CF.h_formula_star_h2 = h12} ->
                 Debug.tinfo_hprint (add_str "h1" (fun f -> "#Star#" ^ Cprinter.string_of_h_formula f)) h1 pos;
+                let mset_h2 = helper h2 in
+                if CF.is_data h2 then 
                 let mset_h11 = helper (CF.mkStarH h11 h2 no_pos) in
                 let mset_h12 = helper  (CF.mkStarH h12 h2 no_pos) in
-                let mset_h1 = helper h1 in
                 let m = CP.DisjSetSV.merge_disj_set mset_h11.mem_formula_mset mset_h12.mem_formula_mset in
-                let mset2 = CP.DisjSetSV.merge_disj_set m mset_h1.mem_formula_mset in
+                let mset2 = CP.DisjSetSV.merge_disj_set m mset_h2.mem_formula_mset in
+                {mem_formula_mset = mset2}
+                else 
+                let mset_h1 = helper h1 in
+                let mset2 = CP.DisjSetSV.merge_disj_set mset_h1.mem_formula_mset mset_h2.mem_formula_mset in
                 {mem_formula_mset = mset2}
             (*| CF.StarMinus {CF.h_formula_starminus_h1 = h11;
 			                 CF.h_formula_starminus_h2 = h12}*)                 
@@ -1638,7 +1643,7 @@ and heap_prune_preds_x prog (hp:h_formula) (old_mem: memo_pure) ba_crt : (h_form
           let (rem_br, prun_cond, first_prune, chg) =  
             match v.h_formula_view_remaining_branches with
               | Some l -> 
-                    let c = if (List.length l)<=1 then false else true in
+                    let c = if ((List.length l)<=1)&&(!no_prune_all) then false else true in
                     if !no_incremental then
                       let new_cond = List.map (fun (c1,c2)-> (CP.b_subst zip c1,c2)) v_def.view_prune_conditions in         
                       (v_def.view_prune_branches,new_cond ,true,c)
@@ -1647,13 +1652,12 @@ and heap_prune_preds_x prog (hp:h_formula) (old_mem: memo_pure) ba_crt : (h_form
                     let new_cond = List.map (fun (c1,c2)-> (CP.b_subst zip c1,c2)) v_def.view_prune_conditions in         
                     (v_def.view_prune_branches,new_cond ,true,true) in                   
           if (not chg) then
-            
             (ViewNode{v with h_formula_view_remaining_branches = Some rem_br; h_formula_view_pruning_conditions = [];}, old_mem,false)
           else
             (*decide which prunes can be activated and drop the ones that are implied while keeping the old unknowns*)
             let l_prune,l_no_prune, new_mem2 = filter_prun_cond old_mem prun_cond rem_br in        
             let l_prune' = 
-              let aliases = MCP.memo_get_asets ba_crt new_mem2 in
+              let aliases= MCP.memo_get_asets ba_crt new_mem2 in
               let ba_crt = ba_crt@(List.concat(List.map (fun c->CP.EMapSV.find_equiv_all c aliases ) ba_crt)) in
               let n_l = List.filter (fun c-> 
                   let c_ba,_ = List.find (fun (_,d)-> c=d) v_def.view_prune_conditions_baga in
@@ -4855,6 +4859,12 @@ and heap_entail_conjunct_lhs_x prog is_folding  (ctx:context) (conseq:CF.formula
         | Context.M_Nothing_to_do _ -> false
         | _ -> let _ = num_unfold_on_dup := !num_unfold_on_dup + 1 in 
 	  true)
+  in
+  let process_entail_state (es : entail_state) =
+    Debug.no_1 " process_entail_state"  Cprinter.string_of_entail_state
+        (pr_pair (fun (b,_) -> Cprinter.string_of_list_context b) string_of_bool)
+        (* (fun (_,b) -> string_of_bool b)  *)
+        process_entail_state es
     in (* End of process_entail_state *)
     let process_entail_state (es : entail_state) =
       Debug.no_1 " process_entail_state"  Cprinter.string_of_entail_state

@@ -93,11 +93,11 @@ let proc_gen_cmd cmd =
     | RelDef rdef -> process_rel_def rdef
     | HpDef hpdef -> process_hp_def hpdef
     | AxiomDef adef -> process_axiom_def adef
-    | EntailCheck (iante, iconseq, etype) -> process_entail_check iante iconseq etype
+    | EntailCheck (iante, iconseq, etype) -> (process_entail_check iante iconseq etype;())
     | RelAssume (id, ilhs, irhs) -> process_rel_assume id ilhs irhs
     | ShapeInfer (pre_hps, post_hps) -> process_shape_infer pre_hps post_hps
     | EqCheck (lv, if1, if2) -> process_eq_check lv if1 if2
-    | Infer (ivars, iante, iconseq) -> process_infer ivars iante iconseq
+    | Infer (ivars, iante, iconseq) -> (process_infer ivars iante iconseq;())
     | CaptureResidue lvar -> process_capture_residue lvar
     | LemmaDef ldef ->   process_lemma ldef
     | PrintCmd pcmd -> process_print_command pcmd
@@ -144,7 +144,7 @@ let parse_file (parse) (source_file : string) =
       | CmpCmd _| Time _ | EmptyCmd -> () in
   let proc_one_cmd c = 
     match c with
-      | EntailCheck (iante, iconseq, etype) -> process_entail_check iante iconseq etype
+      | EntailCheck (iante, iconseq, etype) -> (process_entail_check iante iconseq etype; ())
             (* let pr_op () = process_entail_check_common iante iconseq in  *)
             (* Log.wrap_calculate_time pr_op !Globals.source_files ()               *)
       | RelAssume (id, ilhs, irhs) -> process_rel_assume id ilhs irhs
@@ -152,7 +152,7 @@ let parse_file (parse) (source_file : string) =
       | EqCheck (lv, if1, if2) -> 
             (* let _ = print_endline ("proc_one_cmd: xxx_after parse \n") in *)
             process_eq_check lv if1 if2
-      | Infer (ivars, iante, iconseq) -> process_infer ivars iante iconseq
+      | Infer (ivars, iante, iconseq) -> (process_infer ivars iante iconseq;())	
       | CaptureResidue lvar -> process_capture_residue lvar
       | PrintCmd pcmd -> process_print_command pcmd
       | CmpCmd ccmd -> process_cmp_command ccmd
@@ -340,7 +340,7 @@ let _ =
     in
     let ptime4 = Unix.times () in
     let t4 = ptime4.Unix.tms_utime +. ptime4.Unix.tms_cutime +. ptime4.Unix.tms_stime +. ptime4.Unix.tms_cstime in
-    let _ = print_string ("\nTotal verification time: " 
+    let _ = silenced_print print_string ("\nTotal verification time: " 
     ^ (string_of_float t4) ^ " second(s)\n"
     ^ "\tTime spent in main process: " 
     ^ (string_of_float (ptime4.Unix.tms_utime+.ptime4.Unix.tms_stime)) ^ " second(s)\n"

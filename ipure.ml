@@ -1383,10 +1383,10 @@ let rec typ_of_exp (e: exp) : typ =
                                  let ty2 = typ_of_exp ex2 in
                                  let ty = merge_types ty1 ty2 in
                                  Globals.List ty
-  | ListHead (ex, _) 
-  | ListTail (ex, _)
-  | ListLength (ex, _)        -> let ty = typ_of_exp ex in
+  | ListHead (ex, _)          -> typ_of_exp ex
+  | ListTail (ex, _)          -> let ty = typ_of_exp ex in
                                  Globals.List ty
+  | ListLength (ex, _)        -> Globals.Int
   | ListAppend (ex_list, _)   -> let ty_list = List.map typ_of_exp ex_list in 
                                  let ty = List.fold_left merge_types UNK ty_list in
                                  Globals.List ty

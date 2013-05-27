@@ -105,3 +105,82 @@ Why is there an EXIST q wrapper for explicit instantiation?
 
 
 */
+@2! vheap: c'::node<Anon_12'@L,nn'@L>@L[Orig]&true&{FLOW,(1,25)=__flow}[]
+@2! vheap 2: c'::node<Anon_12'@L,nn'@L>@L[Orig]&true&{FLOW,(1,25)=__flow}[]
+
+
+dprint: bind2.ss:16: ctx:  List of Failesc Context: [FEC(0, 0, 1  )]
+
+Successful States:
+[
+ Label: 
+ State:c::node<Anon_11@M,p@M>@M[Orig]&c=c' & 0<=0 & Anon_11=Anon_33' & nn_34'=p&{FLOW,(22,23)=__norm}[]
+       es_var_measures: MayLoop
+       es_trace: empty
+
+ ]
+
+dprint: bind2.ss:20: ctx:  List of Failesc Context: [FEC(0, 0, 1  )]
+
+Successful States:
+[
+ Label: 
+ State:hfalse&false&{FLOW,(22,23)=__norm}[]
+
+# bind2b1.ss (vs bind2b.ss)
+
+node paper_fix (node c)
+  requires c::node<_,p>
+  ensures res=p;
+{
+      node t;
+      bind c to (vv,nn) in { t = nn; };
+      dprint;
+      return t;
+}
+
+/*
+
+Why is this bind inferred as @M?
+@7! >>>>>> bind type-checker <<<<<<
+@7! node:c
+@7! fields:[vv_32,nn_33]
+@7! node ann:@M
+@7! fields ann:[@L,@L]
+@7! read-only:false
+
+It should be @L; as in bind2b.ss with
+@7! >>>>>> bind type-checker <<<<<<
+@7! node:c
+@7! fields:[val_15_762,next_15_763]
+@7! node ann:@L
+@7! fields ann:[@A,@L]
+@7! read-only:true
+@7!bind2b.ss:15: 10: bind: unfolded context:
+
+
+
+*/
+
+
+# bind2b2.ss   DONE
+
+node paper_fix (node c)
+  requires c::node<_,p>
+  ensures res=p;
+{
+      node t;
+      t = bind c to (vv,nn) in nn ;
+      dprint;
+      return t;
+}
+
+/*
+
+Why is there a parsing error for bind in the RHS of assignment?
+
+File "bind2b2.ss", line 15, characters 8-9
+ --error: Stream.Error("[expression] expected after EQ (in [assignment_expression])")
+
+
+*/
