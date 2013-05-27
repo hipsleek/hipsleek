@@ -7,12 +7,13 @@ data node{
 HeapPred H1(node a, node b).
 HeapPred G1(node a, node b).
 
-node paper_fix (node c)
+  node paper_fix (node c, node b)
   requires c::node<_,p>
   ensures res=p;
 {
-      node t;
+  node t;
       c.next = null;
+      b.val = 0;
       dprint;
       return t;
 }
