@@ -53,7 +53,7 @@ Exception Invalid_argument("List.combine") Occurred!
 (Program not linked with -g, cannot print stack backtrace)
 
 *************************************
-# dll-3b.slk:
+# dll-3b.slk: DONE
 TODO:  enhance --sa-useless to elim unused parameters in H1
 
 /*
@@ -78,7 +78,7 @@ with --sa-useless
  or (G1(next_19,c_46)) * c_46::node<Anon_12,p_47,next_19>@M&true
  ]
 
-I think we should have instead:
+I think we should have instead: DONE
   H1(c,p) ::= H1x(c)
   H1x(c_44) ::= 
       emp&c_44=null
