@@ -756,6 +756,8 @@ let use_coercion = ref true
 
 let case_split = ref false
 
+let simplified_case_normalize = ref true
+
 let use_set = ref true
 
 let consistency_checking = ref false

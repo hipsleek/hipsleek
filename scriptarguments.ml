@@ -238,6 +238,8 @@ let common_arguments = [
    "enable all statistics");
   ("--sbc", Arg.Set Globals.enable_syn_base_case,
    "use only syntactic base case detection");
+  ("--dis-simpl-view-norm" , Arg.Clear Globals.simplified_case_normalize, 
+	"disable simplified view def normalization");
   ("--eci", Arg.Set Globals.enable_case_inference,
    "enable struct formula inference");
   ("--pcp", Arg.Set Globals.print_core,

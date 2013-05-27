@@ -301,3 +301,42 @@ It seems we still use @L annotation on node & field regardless..
        es_trace: empty
 
  ]
+
+# i-app3.slk 
+
+(i)  bug with useless elim below.
+(ii) can we add sa-useless as a SLEEK command
+    that can transform predicates?
+
+[ G1(c_25,y_26) ::= c_25::node<Anon_11,p,t>@M * (HP_27(p,t,y_26))&true,
+ HP_27(p,t,y_26) ::= 
+ emp&t=y_26
+ or t::node<Anon_11,p_28,t_29>@M * (HP_27(p_28,t_29,y_26))&true
+ ]
+
+--sa-useless
+
+BUG with useless elim. 
+should be HP_27(t_20,y_26)
+
+[ G1(c_25,y_26) ::= c_25::node<Anon_11,p,t>@M * (HP_27(y_26,y_26))&true,
+ HP_27(t,y_26) ::= 
+ emp&t=y_26
+ or t::node<Anon_11,p_28,t_29>@M * (HP_27(y_26,y_26))&true
+                                         ^^^^^ t_29
+ ]
+
+# use3.slk
+
+type inference problem. (see use2.slk)
+
+ERROR: at use3.slk_9:16_9:22 
+Message: couldn't infer type for p in ; (p Unknown); (pp node); (qq node); (pp_15 node); (y node); (self node); (Anon_12 int); (tt node); (TVar__18 node); (y_16 node); (TVar__26 node); (TVar__27 node)
+
+ Fatal error: exception Failure("couldn't infer type for p in ; (p Unknown); (pp node); (qq node); (pp_15 node); (y node); (self node); (Anon_12 int); (tt node); (TVar__18 node); (y_16 node); (TVar__26 node); (TVar__27 node)
+")
+
+# use1.slk; use2.slk
+
+ to add shape_elim_useless command
+ to eliminate useless parameter of existing predicates.

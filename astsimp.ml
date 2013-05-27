@@ -7044,6 +7044,7 @@ and case_normalize_struc_formula i prog (h:(ident*primed) list)(p:(ident*primed)
   let pr2 (x,_) = pr1 x in
   Debug.no_3_num i "case_normalize_struc_formula" pr0 pr0 pr1 pr2 (fun _ _ _ -> case_normalize_struc_formula_x prog h p f allow_primes allow_post_vars lax_implicit strad_vs) h p f
       
+	  
 and case_normalize_struc_formula_x prog (h_vars:(ident*primed) list)(p_vars:(ident*primed) list)(f:IF.struc_formula) 
 	allow_primes allow_post_vars (lax_implicit:bool) strad_vs :IF.struc_formula* ((ident*primed)list) = 	
   
@@ -7174,7 +7175,77 @@ and case_normalize_struc_formula_x prog (h_vars:(ident*primed) list)(p_vars:(ide
 			^"\n strad_vs: "^(prl strad_vs)^"\n" in
 	Debug.no_1_loop "case_normalize_helper2" pr (pr_pair !IF.print_struc_formula (fun _ -> "")) (helper h_vars strad_vs [])  nf in
   helper2 h_vars p_vars nf allow_primes allow_post_vars lax_implicit strad_vs
-      
+ 
+
+
+     
+and simpl_case_normalize_struc_formula id prog (h_vars:(ident*primed) list)(f:IF.struc_formula) 
+				:IF.struc_formula = 	
+  let diff = Gen.BList.difference_eq (=) in
+  let rdups = Gen.BList.remove_dups_eq (=) in
+  let inters = Gen.BList.intersect_eq (=)  in
+  let pr_l_v = pr_list (pr_pair pr_id string_of_primed) in
+  let pos = IF.pos_of_struc_formula f in
+				
+  let nf = convert_struc2 prog f in
+  let nf = IF.float_out_thread_struc_formula nf None in 
+  let nf = IF.float_out_exps_from_heap_struc nf None in 
+  let nf = IF.float_out_struc_min_max nf in
+  let nf = IF.rename_bound_var_struc_formula nf in
+  
+  let rec helper_x (hv:(ident*primed) list)(f0:IF.struc_formula) : IF.struc_formula = 
+		match f0 with
+		  | IF.EAssume _
+		  | IF.EInfer _ -> Gen.report_error pos "View defs should not have postconditions or infer stages"  
+		  | IF.ECase b-> IF.ECase {b with IF.formula_case_branches = 
+				map_l_snd (helper hv) b.IF.formula_case_branches}
+		  | IF.EBase {
+				IF.formula_struc_explicit_inst = init_expl;
+				IF.formula_struc_continuation = cont;
+				IF.formula_struc_base = base; } as b->		
+				if (List.length (inters hv init_expl))>0 then 
+				  Gen.report_error pos  "the late instantiation variables collide with the used vars" 
+				else 
+				let onb = convert_anonym_to_exist base in
+				let nb,h3,new_expl = case_normalize_renamed_formula prog hv [] onb in
+				let all_expl = rdups (new_expl @ init_expl) in
+				let v_no_inst = rdups (hv@all_expl) in 
+				let nb_fv = IF.heap_fv nb in
+				let impl_var = diff (inters nb_fv (fold_opt IF.struc_case_fv cont))
+								 v_no_inst in
+				let new_v_no_inst = rdups (impl_var@v_no_inst) in
+				let _ = Debug.tinfo_hprint (add_str "new_expl" pr_l_v)  new_expl pos in
+				let _ = Debug.tinfo_hprint (add_str "h3" pr_l_v)  h3 pos in
+				let _ = Debug.tinfo_hprint (add_str "v_no_inst" pr_l_v)  v_no_inst pos in
+				let _ = Debug.tinfo_hprint (add_str "nb_fv" pr_l_v)  nb_fv pos in
+				let _ = Debug.tinfo_hprint (add_str "new_v_no_inst" pr_l_v)  new_v_no_inst pos in
+				let _ = Debug.tinfo_hprint (add_str "impl_var" pr_l_v)  impl_var pos in
+				let extra_exists = IF.push_exists (diff nb_fv new_v_no_inst) nb in
+				IF.EBase {
+					IF.formula_struc_base = extra_exists;
+					IF.formula_struc_implicit_inst =hack_filter_global_rel prog impl_var;		
+					IF.formula_struc_explicit_inst = all_expl;
+					IF.formula_struc_exists = [];
+					IF.formula_struc_continuation = map_opt (helper new_v_no_inst) cont;
+					IF.formula_struc_pos = pos}
+		  | IF.EList b -> IF.EList (map_l_snd (helper hv) b)
+				
+	and	 helper (h_vars:(ident*primed) list)(nf:IF.struc_formula) =   
+		let pr l= "h_vars: "^(pr_list !IP.print_id l) in
+		let pr2 = Iprinter.string_of_struc_formula in
+		Debug.no_2_loop "case_normalize_helper" pr pr2 pr2 helper_x h_vars  nf in
+	helper h_vars nf
+ 
+and case_normalize_struc_formula_view i prog (h:(ident*primed) list)(p:(ident*primed) list)(f:IF.struc_formula) allow_primes allow_post_vars  (lax_implicit:bool) strad_vs :IF.struc_formula= 
+	if (!Globals.simplified_case_normalize) then 
+		let r2 = simpl_case_normalize_struc_formula i prog h f in
+		(*let r1 = fst (case_normalize_struc_formula i prog h p f allow_primes allow_post_vars lax_implicit strad_vs) in
+		let _ = print_string ("\n simpl: "^(Iprinter.string_of_struc_formula r2)^"\n prev: "^ 
+				  (Iprinter.string_of_struc_formula r1)^"\n") in
+		*) 
+		r2
+	else fst (case_normalize_struc_formula i prog h p f allow_primes allow_post_vars lax_implicit strad_vs)
+	
 and case_normalize_coerc prog (cd: Iast.coercion_decl):Iast.coercion_decl = 
   let nch = case_normalize_formula prog [] cd.Iast.coercion_head None in
   let ncb = case_normalize_formula prog [] cd.Iast.coercion_body None in
@@ -7715,7 +7786,7 @@ and case_normalize_barrier prog bd =
       
 (* AN HOA : WHAT IS THIS FUNCTION SUPPOSED TO DO ? *)
 and case_normalize_program (prog: Iast.prog_decl):Iast.prog_decl =
-  Debug.no_1 "case_normalize_program" (Iprinter.string_of_program) (Iprinter.string_of_program) case_normalize_program_x prog
+  Debug.ho_1 "case_normalize_program" (Iprinter.string_of_program) (Iprinter.string_of_program) case_normalize_program_x prog
       
 and case_normalize_program_x (prog: Iast.prog_decl):Iast.prog_decl=
   let tmp_views = (* order_views *) prog.I.prog_view_decls in
@@ -7724,7 +7795,7 @@ and case_normalize_program_x (prog: Iast.prog_decl):Iast.prog_decl=
   let tmp_views = List.map (fun c-> 
       let h = (self,Unprimed)::(eres_name,Unprimed)::(res_name,Unprimed)::(List.map (fun c-> (c,Unprimed)) c.Iast.view_vars ) in
       let p = (self,Primed)::(eres_name,Primed)::(res_name,Primed)::(List.map (fun c-> (c,Primed)) c.Iast.view_vars ) in
-      let wf,_ = case_normalize_struc_formula 8 prog h p c.Iast.view_formula false 
+      let wf = case_normalize_struc_formula_view 8 prog h p c.Iast.view_formula false 
         false (*allow_post_vars*) false [] in
       let inv_lock = c.Iast.view_inv_lock in
       let inv_lock =

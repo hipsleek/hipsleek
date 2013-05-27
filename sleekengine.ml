@@ -156,7 +156,7 @@ let process_pred_def pdef =
 		let p = (self,Primed)::(res_name,Primed)::(List.map (fun c-> (c,Primed)) pdef.Iast.view_vars ) in
         (* temporarily add pdef to view_decls *)
 		iprog.I.prog_view_decls <- pdef :: curr_view_decls;
-		let wf,_ = AS.case_normalize_struc_formula 10 iprog h p pdef.Iast.view_formula false 
+		let wf = AS.case_normalize_struc_formula_view 10 iprog h p pdef.Iast.view_formula false 
           false (*allow_post_vars*) false [] in
 		let new_pdef = {pdef with Iast.view_formula = wf} in
 		let tmp_views = AS.order_views (new_pdef :: curr_view_decls) in
@@ -207,7 +207,7 @@ let process_pred_def_4_iast pdef =
 		let p = (self,Primed)::(res_name,Primed)::(List.map (fun c-> (c,Primed)) pdef.Iast.view_vars ) in
         (* temporarily add pdef to view_decls *)
 		iprog.I.prog_view_decls <- pdef :: curr_view_decls;
-		let wf,_ = AS.case_normalize_struc_formula 11 iprog h p pdef.Iast.view_formula false 
+		let wf = AS.case_normalize_struc_formula_view 11 iprog h p pdef.Iast.view_formula false 
           false (*allow_post_vars*) false [] in
         let inv_lock = pdef.I.view_inv_lock in
         let inv_lock =
@@ -281,7 +281,7 @@ let process_rel_def rdef =
 	  try
 		(*let h = (self,Unprimed)::(res,Unprimed)::(List.map (fun c-> (c,Unprimed)) rdef.Iast.view_vars ) in
 		let p = (self,Primed)::(res,Primed)::(List.map (fun c-> (c,Primed)) rdef.Iast.view_vars ) in
-		let wf,_ = AS.case_normalize_struc_formula iprog h p rdef.Iast.view_formula false false [] in
+		let wf,_ = AS.case_normalize_struc_formulas iprog h p rdef.Iast.view_formula false false [] in
 		let new_rdef = {rdef with Iast.view_formula = wf} in
 		iprog.I.prog_view_decls <- ( new_rdef :: iprog.I.prog_view_decls);
 		let crdef = AS.trans_view iprog new_rdef in

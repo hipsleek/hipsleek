@@ -587,19 +587,11 @@ let rec h_fv (f:h_formula):(ident*primed) list = match f with
   | HEmp -> [] 
 ;;
 
-let rec struc_hp_fv (f:struc_formula): (ident*primed) list =  match f with
-	| EBase b-> Gen.BList.difference_eq (=) ((Gen.fold_opt struc_hp_fv b.formula_struc_continuation)@(heap_fv b.formula_struc_base)) 
-					(b.formula_struc_explicit_inst@b.formula_struc_implicit_inst)
-	| ECase b-> Gen.fold_l_snd struc_hp_fv b.formula_case_branches
-	| EAssume b-> heap_fv b.formula_assume_simpl
-    | EInfer b -> struc_hp_fv b.formula_inf_continuation
-	| EList b -> Gen.BList.remove_dups_eq (=) (Gen.fold_l_snd struc_hp_fv b)
-							
-and heap_fv_one_formula (f:one_formula):(ident*primed) list = 
-  (h_fv f.formula_heap)
+
+let heap_fv_one_formula (f:one_formula):(ident*primed) list =  (h_fv f.formula_heap);;
 
 (*TO CHECK: how about formula_and*)
-and heap_fv (f:formula):(ident*primed) list = match f with
+let rec heap_fv (f:formula):(ident*primed) list = match f with
 	| Base b-> 
         let avars = List.concat (List.map heap_fv_one_formula b.formula_base_and) in
         let hvars = h_fv b.formula_base_heap in
@@ -609,6 +601,25 @@ and heap_fv (f:formula):(ident*primed) list = match f with
         let hvars = h_fv b.formula_exists_heap in
         Gen.BList.difference_eq (=) (Gen.BList.remove_dups_eq (=) hvars@avars) b.formula_exists_qvars 
 	| Or b-> Gen.BList.remove_dups_eq (=) ((heap_fv b.formula_or_f1)@(heap_fv b.formula_or_f2))
+	;;
+
+let rec struc_hp_fv (f:struc_formula): (ident*primed) list =  match f with
+	| EBase b-> Gen.BList.difference_eq (=) ((Gen.fold_opt struc_hp_fv b.formula_struc_continuation)@(heap_fv b.formula_struc_base)) 
+					(b.formula_struc_explicit_inst@b.formula_struc_implicit_inst)
+	| ECase b-> Gen.fold_l_snd struc_hp_fv b.formula_case_branches
+	| EAssume b-> heap_fv b.formula_assume_simpl
+    | EInfer b -> struc_hp_fv b.formula_inf_continuation
+	| EList b -> Gen.BList.remove_dups_eq (=) (Gen.fold_l_snd struc_hp_fv b)
+
+let rec struc_case_fv (f:struc_formula): (ident*primed) list =  match f with
+	| EBase b-> Gen.BList.difference_eq (=)(Gen.fold_opt struc_case_fv b.formula_struc_continuation)
+					(b.formula_struc_explicit_inst@b.formula_struc_implicit_inst)
+	| ECase b-> List.fold_left (fun a (c1,c2)-> (P.fv c1)@(struc_case_fv c2)@a)
+					[] b.formula_case_branches
+	| EAssume b-> []
+    | EInfer b -> struc_case_fv b.formula_inf_continuation
+	| EList b -> Gen.BList.remove_dups_eq (=) (Gen.fold_l_snd struc_case_fv b)
+
 	
 (*TO CHECK: how about formula_and*)	
 and unbound_heap_fv (f:formula):(ident*primed) list = match f with
