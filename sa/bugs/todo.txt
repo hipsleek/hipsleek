@@ -301,3 +301,28 @@ It seems we still use @L annotation on node & field regardless..
        es_trace: empty
 
  ]
+
+# i-app3.slk 
+
+(i)  bug with useless elim below.
+(ii) can we add sa-useless as a SLEEK command
+    that can transform predicates?
+
+[ G1(c_25,y_26) ::= c_25::node<Anon_11,p,t>@M * (HP_27(p,t,y_26))&true,
+ HP_27(p,t,y_26) ::= 
+ emp&t=y_26
+ or t::node<Anon_11,p_28,t_29>@M * (HP_27(p_28,t_29,y_26))&true
+ ]
+
+--sa-useless
+
+BUG with useless elim. 
+should be HP_27(t_20,y_26)
+
+[ G1(c_25,y_26) ::= c_25::node<Anon_11,p,t>@M * (HP_27(y_26,y_26))&true,
+ HP_27(t,y_26) ::= 
+ emp&t=y_26
+ or t::node<Anon_11,p_28,t_29>@M * (HP_27(y_26,y_26))&true
+                                         ^^^^^ t_29
+ ]
+
