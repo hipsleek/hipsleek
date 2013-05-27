@@ -285,7 +285,7 @@ why did we get emp?
 
 @v annotation problematic
 
-# bind2.ss
+# bind2.ss (to fix at default branch)
 
 ERROR : why did bind not temporarily remove a node?
 It seems we still use @L annotation on node & field regardless..
@@ -304,7 +304,7 @@ It seems we still use @L annotation on node & field regardless..
 
 # i-app3.slk 
 
-(i)  bug with useless elim below.
+(i)  bug with useless elim below. # DONE
 (ii) can we add sa-useless as a SLEEK command
     that can transform predicates?
 

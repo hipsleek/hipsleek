@@ -10,3 +10,10 @@ Why is infer_heap action invoked?
 
 Why is infer_heap invoked? should check if R[..] present first.
 
+# fold-c.slk  #DONE by Cristian
+
+Minimise implicit var in pred defn to only case 
+construct, e.g. fold-b.slk
+
+This help minimise intermediate vars and lead to better
+completeness

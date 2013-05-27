@@ -16,7 +16,7 @@ data cell{
 */
 
 
-pred foo<p> == self ::n= null 
+pred foo<p> == self= null 
             or (exists q,r: self::cell<p,q>*q::foo<r> & r=self)
   inv true.
 
