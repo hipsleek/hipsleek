@@ -124,7 +124,11 @@ if(!$local){
         if ($hostnums[$i]!=0){
             #Check node reachability
             my $host = $hostnames[$i];
-            if ($p->ping($host)){
+            if (($current_hostname eq "loris-82") && ($host eq "loris-84")) {
+                # Binaries compiled in loris-82 is incompatible with loris-84,
+                # disable loris-84
+                $hostnums[$i] = 0;
+            }esif ($p->ping($host)){
                 print "$host is alive.\n" ;
             } else {
                 print "$host is unreachable (hence omitted).\n" ;
