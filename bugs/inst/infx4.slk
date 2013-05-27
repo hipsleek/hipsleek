@@ -9,9 +9,6 @@ pred dll<p> == self = null
           or self::node<p, q> * q::dll<r> & r=self 
   inv true.
 
-//infer [R] R(x) |-  x::dll<_>. 
-//infer [R] R(x) |-  x::node<_,_>.
-
 
 //infer [R] x=null |-  R(x).
 /* 
