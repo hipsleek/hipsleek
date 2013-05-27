@@ -2662,8 +2662,8 @@ let rec string_of_exp = function
                   if (Cformula.equal_flow_interval f.formula_flow_interval !ret_flow_int) 
                   then
 	                (match eo with 
-		              |Sharp_var e -> "return " ^ (snd e)
-		              | _ -> "return")
+		              |Sharp_var e -> "ret# " ^ (snd e)
+		              | _ -> "ret#")
 	              else  (match eo with 
 		            | Sharp_var e -> "throw " ^ (snd e)^":"^(string_of_sharp st)
 		            | Sharp_flow e -> "throw " ^ e ^":"^(string_of_sharp st)
