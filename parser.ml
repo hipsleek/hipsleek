@@ -2264,7 +2264,15 @@ dprint_statement:
    | `DPRINT; `STRING(_,id)  -> Dprint ({exp_dprint_string = id;  exp_dprint_pos = (get_pos_camlp4 _loc 1)})]];
    
 bind_statement:
-  [[ `BIND; `IDENTIFIER id; `TO; `OPAREN; il = id_list_opt; `CPAREN; `IN_T; b=block ->
+  [[ `BIND; `IDENTIFIER id; `TO; `OPAREN; il = id_list_opt; `CPAREN; `IN_T; b= block ->
+      Bind { exp_bind_bound_var = id;
+             exp_bind_fields = il;
+             exp_bind_body = b;
+             exp_bind_path_id = None ;
+             exp_bind_pos = get_pos_camlp4 _loc 1 }]];
+
+bind_expression:
+  [[ `BIND; `IDENTIFIER id; `TO; `OPAREN; il = id_list_opt; `CPAREN; `IN_T; b= expression ->
       Bind { exp_bind_bound_var = id;
              exp_bind_fields = il;
              exp_bind_body = b;
@@ -2433,6 +2441,7 @@ argument: [[t=expression -> t]];
 
 expression:
   [[ t=conditional_expression -> t
+   | t= bind_expression -> t
    | t=assignment_expression -> t]];
 
 constant_expression: [[t=expression -> t]];

@@ -161,14 +161,14 @@ It should be @L; as in bind2b.ss with
 */
 
 
-# bind2b2.ss
+# bind2b2.ss   DONE
 
 node paper_fix (node c)
   requires c::node<_,p>
   ensures res=p;
 {
       node t;
-      t = bind c to (vv,nn) in { nn; };
+      t = bind c to (vv,nn) in nn ;
       dprint;
       return t;
 }
