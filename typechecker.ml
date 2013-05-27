@@ -1360,7 +1360,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
           exp_bind_bound_var = (v_t, v); (* node to bind *)
           exp_bind_fields = lvars; (* fields of bound node *)
           exp_bind_body = body;
-          exp_bind_imm = imm; (* imm annotation for the node *)
+          exp_bind_imm = imm_node; (* imm annotation for the node *)
           exp_bind_param_imm = pimm; (* imm annotation for each field *)
           exp_bind_read_only = read_only;
 	  exp_bind_path_id = pid;
@@ -1370,11 +1370,12 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
               let ctx = CF.transform_list_failesc_context (idf,(fun c-> CF.push_esc_level c pid),(fun x-> CF.Ctx x)) ctx in
               let bind_op () =
                 begin
-                  DD.devel_pprint ">>>>>> bind type-checker <<<<<<" pos;
-                  DD.devel_hprint (add_str "node" (fun x -> x)) v pos;               
-                  DD.devel_hprint (add_str "fields" (pr_list (fun (_,x) -> x))) lvars pos;               
-                  DD.devel_hprint (add_str "node ann" Cprinter.string_of_imm) imm pos;               
-                  DD.devel_hprint (add_str "fields ann" (pr_list Cprinter.string_of_imm)) pimm pos;               
+                  DD.tinfo_pprint ">>>>>> bind type-checker <<<<<<" pos;
+                  DD.tinfo_hprint (add_str "node" (fun x -> x)) v pos;               
+                  DD.tinfo_hprint (add_str "fields" (pr_list (fun (_,x) -> x))) lvars pos;               
+                  DD.tinfo_hprint (add_str "node ann" Cprinter.string_of_imm) imm_node pos;               
+                  DD.tinfo_hprint (add_str "fields ann" (pr_list Cprinter.string_of_imm)) pimm pos;               
+                  DD.tinfo_hprint (add_str "read-only" string_of_bool) read_only pos;               
                   let b,res = (if !Globals.ann_vp then
                     (*check for access permissions*)
                     let var = (CP.SpecVar (v_t, v, Primed)) in
@@ -1433,7 +1434,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                         CF.h_formula_data_node = (if !Globals.large_bind then p else v_prim);
                         CF.h_formula_data_name = c;
 		        CF.h_formula_data_derv = false; (*TO CHECK: assume false*)
-		        CF.h_formula_data_imm = imm;
+		        CF.h_formula_data_imm = imm_node;
                         CF.h_formula_data_param_imm = pimm;
                         CF.h_formula_data_perm = if (Perm.allow_perm ()) then Some fresh_frac else None; (*LDK: belong to HIP, deal later ???*)
 
@@ -1446,8 +1447,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                         CF.h_formula_data_pruning_conditions = [];
                         CF.h_formula_data_pos = pos}) in
 	            let vheap = CF.formula_of_heap vdatanode pos in
-                (* let _ = print_endline ( "vheap 1: " ^ (Cprinter.string_of_formula vheap) ) in *)
-                    let _ = DD.devel_hprint (add_str "vheap" (Cprinter.string_of_formula)) vheap pos in
+                    let _ = DD.tinfo_hprint (add_str "vheap" (Cprinter.string_of_formula)) vheap pos in
                     (*Test whether fresh_frac is full permission or not
                       writable -> fresh_frac = full_perm => normally
                       read-only -> fresh_frac != full_perm => in order to 
@@ -1468,7 +1468,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                       else
                         vheap
                     in
-                    (* let _ = print_endline ( "vheap 2: " ^ (Cprinter.string_of_formula vheap) ) in *)
+                    let _ = DD.tinfo_hprint (add_str "vheap 2" Cprinter.string_of_formula) vheap no_pos in
                     let vheap = Immutable.normalize_field_ann_formula vheap in
 	            let vheap = prune_preds prog false vheap in
                     let _ = DD.devel_hprint (add_str "vheap2" (Cprinter.string_of_formula)) vheap pos in
@@ -1480,7 +1480,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 	                CF.formula_struc_continuation = None;
 	                CF.formula_struc_pos = pos} in
 	            let to_print = "Proving binding in method " ^ proc.proc_name ^ " for spec " ^ !log_spec ^ "\n" in
-	            Debug.devel_pprint to_print pos;
+	            Debug.tinfo_pprint to_print pos;
 
 	            if (Gen.is_empty unfolded) then unfolded
 	            else
@@ -1514,7 +1514,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                           let _ = CF.must_consistent_list_failesc_context "bind 5" tmp_res1  in
                           (* let f_esc = proc_esc_stack pid in *)
                           let tmp_res2 = 
-		            if not(CF.isLend imm) && not(CF.isAccs imm) (*&& not(!Globals.allow_field_ann)*)then 
+		            if not(CF.isLend imm_node) && not(CF.isAccs imm_node) (*&& not(!Globals.allow_field_ann)*)then 
 		              CF.normalize_max_renaming_list_failesc_context vheap pos true tmp_res1 
     			          (* for Lend, Accs and field level annotations it should not be added back *)
 		            else tmp_res1 

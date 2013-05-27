@@ -943,6 +943,7 @@ and drop_data_view_hrel_nodes_hf_from_root prog hf hd_nodes hv_nodes eqs drop_ro
   let _ = Debug.ninfo_pprint ("nhf: " ^ (Cprinter.string_of_h_formula nhf)) no_pos in
   nhf
 
+
 (***********)
 let simplify_one_constr_b_x prog unk_hps lhs_b rhs_b=
   (*return subst of args and add in lhs*)
@@ -1030,6 +1031,33 @@ let simplify_one_constr_b prog unk_hps lhs_b rhs_b=
   let pr = Cprinter.prtt_string_of_formula_base in
   Debug.no_2 "simplify_one_constr_b" pr pr (pr_triple pr pr !CP.print_svl)
       (fun _ _ -> simplify_one_constr_b_x prog unk_hps lhs_b rhs_b) lhs_b rhs_b
+
+let find_well_defined_hp_x prog hds hvs (hp,args) def_ptrs lhsb=
+  let closed_args = look_up_closed_ptr_args prog hds hvs args in
+  let undef_args = lookup_undef_args closed_args [] def_ptrs in
+  if (* undef_args = [] || *)  List.length undef_args < List.length args then
+    let f = keep_data_view_hrel_nodes_fb prog lhsb hds hvs args [hp] in
+    ([(hp,args,f)],[])
+  else
+    ([],[(hp,args)])
+
+let find_well_defined_hp prog hds hvs (hp,args) def_ptrs lhsb=
+  let pr1 = !CP.print_sv in
+  let pr2 = !CP.print_svl in
+  let pr3 = pr_triple pr1 pr2 Cprinter.string_of_formula_base in
+  let pr4 = (pr_pair pr1 pr2) in
+  Debug.no_2 "find_well_defined_hp" pr4 pr2 (pr_pair (pr_list_ln pr3) (pr_list pr4))
+      (fun _ _ -> find_well_defined_hp_x prog hds hvs (hp,args) def_ptrs lhsb) (hp,args) def_ptrs
+
+let generate_hp_ass unk_svl rf (hp,args,lfb) =
+  {
+      CF.hprel_kind = CP.RelAssume [hp];
+      unk_svl = [];(*inferred from norm*)
+      unk_hps = [];
+      predef_svl = unk_svl;
+      hprel_lhs = CF.Base lfb;
+      hprel_rhs = rf;
+  }
 
 (************************************************)
 (**aux2.slk**)
@@ -2209,14 +2237,14 @@ let process_one_f_x prog org_args args next_roots hp_subst sh_ldns com_eqNulls c
             let inter = CP.intersect_svl last_svl args3 in
              let _ = DD.ninfo_pprint ("       inter: " ^ (Cprinter.string_of_spec_var_list inter)) no_pos in
             if  inter <> [] then
-              let ss1 = List.combine inter next_roots in
               (*find commond pattern: even/odd. testcase: sll-del*)
               (*todo: should have better refinement*)
               let hds2 = get_hdnodes_hf n_hf in
               let n1 = List.length hds1 in
               if (n1 = 0) || ((List.length hds2) mod 2 = n1 mod 2) then
                 let nf5b = CF.drop_hnodes_f nf5 last_svl in
-                let nf5b0 = CF.subst ss1 nf5b in
+                (* let ss1 = List.combine inter next_roots in *)
+                let nf5b0 = (* CF.subst ss1 *) nf5b in
                 (nf5b0,n_hf)
               else
                 (* let nf5b0 = CF.subst ss1 nf5 in *)
