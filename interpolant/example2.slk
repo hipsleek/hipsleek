@@ -1,0 +1,6 @@
+infer_interpolant 
+(input<42) &
+(x = 1) &
+(y = input - 42) &
+((!(y<0)) | (xp=0))
+|- (xp!=0).
