@@ -140,16 +140,16 @@ if(!$local){
     #END REACHABILITY TEST
 
     if($verbose){
-	print "\nConfigurations for distributed run:\n";
-	for(my $i = 0; $i < $len; $i++) {
-	    print "host = $hostnames[$i], numTasks = $hostnums[$i]\n";
-	}
+        print "\nConfigurations for distributed run:\n";
+        for(my $i = 0; $i < $len; $i++) {
+            print "host = $hostnames[$i], numTasks = $hostnums[$i]\n";
+        }
     }
 
     #Create a list of computing nodes and count the number of them
     @nodes = ();
     for(my $i = 0; $i < $len; $i++) {
-	$numnodes = $numnodes + $hostnums[$i];
+        $numnodes = $numnodes + $hostnums[$i];
     }
 
     # # Distribute hosts in round robin
