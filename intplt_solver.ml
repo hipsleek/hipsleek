@@ -155,7 +155,7 @@ let gen_interpolant (ante:C.formula) (conseq:C.formula) : bool =
   let intplt_str = "(get-interpolants "^ (String.concat " " ips)^")" in
   let formula_list = List.append formula_list ["(check-sat)"; intplt_str] in
   let _ = write_interpolant "interpolant.input" formula_list in
-  let _ = Unix.system "java -jar smtinterpol.jar interpolant.input > interpolant.out" in
+  let _ = Unix.system "java -jar /usr/java/smtinterpol.jar interpolant.input > interpolant.out" in
   let result = read_interpolant "interpolant.out" in
   let last_line = List.hd (List.rev result) in
   (* let last_line = "((<= input 41) (<= y 5) (<= y (- 5)))" in *)
