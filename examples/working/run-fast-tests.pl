@@ -128,7 +128,7 @@ if(!$local){
                 # Binaries compiled in loris-82 is incompatible with loris-84,
                 # disable loris-84
                 $hostnums[$i] = 0;
-            }esif ($p->ping($host)){
+            }elsif ($p->ping($host)){
                 print "$host is alive.\n" ;
             } else {
                 print "$host is unreachable (hence omitted).\n" ;
