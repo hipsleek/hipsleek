@@ -60,76 +60,57 @@ Total number of errors: 5 in files:
 default hip --eps
 =======
 All test results were as expected.
-Total verification time: 86.71 second
-	Time spent in main process: 42.18 second
-	Time spent in child processes: 44.53 second
-	Number of false contexts: 455
+Total verification time: 81.20 second
+	Time spent in main process: 33.61 second
+	Time spent in child processes: 47.59 second
+	Number of false contexts: 423
+
 default hip --eps --dis-field-ann
 =======
 All test results were as expected.
-Total verification time: 86.71 second
-	Time spent in main process: 42.18 second
-	Time spent in child processes: 44.53 second
-	Number of false contexts: 455
+Total verification time: 78.76 second
+	Time spent in main process: 39.51 second
+	Time spent in child processes: 39.25 second
+	Number of false contexts: 423
 
 Latest  hip --eps 
 ======
-Total number of errors: 11 in files:
- error at: heaps.ss deleteoneel
-error at: merge.ss split_func
-error at: qsort.ss partition
-error at: qsort.ss qsort
-error at: qsort-tail.ss partition1
-error at: selection.ss delete_min
-error at: trees.ss remove_min
-error at: trees.ss delete
-error at: ../../modular_examples/selection-modular.ss delete_min
-error at: ../../modular_examples/qsort-modular.ss partition
-error at: ../../modular_examples/qsort-modular.ss qsort
+All test results were as expected.
+Total verification time: 101.81 second
+	Time spent in main process: 45.49 second
+	Time spent in child processes: 56.31 second
+	Number of false contexts: 423
 
-Before merge hip --eps
-============
-Total number of errors: 11 in files:
- error at: heaps.ss deleteoneel
-error at: merge.ss split_func
-error at: qsort.ss partition
-error at: qsort.ss qsort
-error at: qsort-tail.ss partition1
-error at: selection.ss delete_min
-error at: trees.ss remove_min
-error at: trees.ss delete
-error at: ../../modular_examples/selection-modular.ss delete_min
-error at: ../../modular_examples/qsort-modular.ss partition
-error at: ../../modular_examples/qsort-modular.ss qsort
+.
 
 Latest  hip --eps --field-ann
 ======
-Total number of errors: 12 in files:
- error at: heaps.ss deleteoneel
-error at: merge.ss split_func
-error at: qsort.ss partition
-error at: qsort.ss qsort
-error at: qsort-tail.ss qsort
-error at: qsort-tail.ss partition1
-error at: selection.ss delete_min
-error at: trees.ss remove_min
-error at: trees.ss delete
-error at: ../../modular_examples/selection-modular.ss delete_min
-error at: ../../modular_examples/qsort-modular.ss partition
+Total number of errors: 1 in files:
+ error at: qsort-tail.ss qsort
+.
+Total verification time: 56.82 second
+	Time spent in main process: 16.81 second
+	Time spent in child processes: 40.01 second
+	Number of false contexts: 422
 
-Before merge hip --eps --field-ann
-============
-Total number of errors: 12 in files:
- error at: heaps.ss deleteoneel
-error at: merge.ss split_func
-error at: qsort.ss partition
-error at: qsort.ss qsort
-error at: qsort-tail.ss qsort
-error at: qsort-tail.ss partition1
-error at: selection.ss delete_min
-error at: trees.ss remove_min
-error at: trees.ss delete
-error at: ../../modular_examples/selection-modular.ss delete_min
-error at: ../../modular_examples/qsort-modular.ss partition
-error at: ../../modular_examples/qsort-modular.ss qsort
+--eps
 
+Procedure qsort$node~node SUCCESS
+Termination checking result:
+Stop Omega... 17016 invocations 
+1 false contexts at: ( (67,16) )
+Total verification time: 56.071503 second(s)
+	Time spent in main process: 28.937808 second(s)
+	Time spent in child processes: 27.133695 second(s)
+
+../../hip hip/qsort-tail.ss -p qsort --eps --field-ann 
+--eps --field-ann
+
+Procedure qsort$node~node FAIL-2
+Exception Failure("Buffer.add: cannot grow buffer") Occurred!
+Error(s) detected when checking procedure qsort$node~node
+ExceptionFailure("Buffer.add: cannot grow buffer")Occurred!
+Error(s) detected at main 
+Stop Omega... 11971 invocations caught
+Exception occurred: Failure("Buffer.add: cannot grow buffer")
+Error(s) detected at main 
