@@ -115,11 +115,25 @@ and convert_term (term:S.term):C.formula =
       S.TermQualIdTerm (_, s,(_, sub_terms)) -> convert_to_pure (get_qualidentifier s) sub_terms
     | S.TermSpecConst _ -> illegal_format "S.TermSpecConst not supported yet\n"
     | S.TermQualIdentifier (_, S.QualIdentifierId(_, S.IdSymbol (_, S.Symbol(_, x)))) -> convert_identifier x
-    | S.TermLetTerm _ -> illegal_format "S.TermLetTerm not supported yet\n"
+    | S.TermLetTerm (_,(_, varbinding),sub_term )-> combine_binding_term (convert_bindings varbinding) (convert_term sub_term)
     | S.TermForAllTerm _ -> illegal_format "S.TermForAllTerm not supported yet\n"
     | S.TermExistsTerm _ -> illegal_format "S.TermExistsTerm not supported yet\n"
     | S.TermExclimationPt _ -> illegal_format "S.TermExclimationPt not supported yet\n" 
     | _ -> illegal_format "Not supported"
+
+and convert_bindings bindings:C.formula =
+  match (List.length bindings) with
+    1 -> convert_binding (List.hd bindings)
+  | 2 -> C.And (convert_binding (List.hd bindings), convert_binding (List.hd (List.tl bindings)), no_pos)
+  | _ -> C.AndList (List.map (fun x -> ([],convert_binding x)) bindings)
+
+and convert_binding binding:C.formula = 
+  match binding with
+    S.VarBindingSymTerm (_, (S.Symbol (_,s)), term) -> C.BForm ((C.Eq(C.Var(C.SpecVar(Int,s,Unprimed),[]), convert_exp term,no_pos),None), None, [[]])
+  | _ -> illegal_format "SymbolWithOr not supported"
+
+and combine_binding_term (binding_formula:C.formula) (term_formula:C.formula) : C.formula = 
+  C.And (binding_formula, term_formula, no_pos)
 
 let convert_interpolant (cmd:S.term) : (C.formula list) = 
   match cmd with
