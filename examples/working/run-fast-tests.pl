@@ -71,7 +71,8 @@ if (!$dssh){
     # flag to REUSE ssh connection
     $reusecmd = "-o ControlPath=$ssh_ctl_path";
 }
-
+#directory to temporarily store input files in the remote machines
+my $local_input_dir = "~/input-$randomstr";
 ###########DISTRIBUTED>>#################
 my $dist_init_time=0;
 my $dist_processing_time=0;
@@ -247,23 +248,41 @@ if(!$local){
     # =============================================>
     # =============================================>
     if (!$dssh){
-	# CREATE share ssh connection for each node
-	for(my $i = 0; $i < $len; $i++) {
-	    if ($hostnums[$i]!=0){
-		my $mynode = $hostnames[$i];
-		my $cmd = "ssh $reusecmd -o ControlMaster=auto -f -N hipuser\@$mynode 2>/dev/null 1>&2";
-		####DEBUG####
-		if($debug){
-		    print "\nStart the ssh control master process in node $mynode ";
-		    print "\n$cmd"
-		}		
-		$result = `$cmd`;
-	    }
-	}
+        # CREATE share ssh connection for each node
+        for(my $i = 0; $i < $len; $i++) {
+            if ($hostnums[$i]!=0){
+                my $mynode = $hostnames[$i];
+                my $cmd = "ssh $reusecmd -o ControlMaster=auto -f -N hipuser\@$mynode 2>/dev/null 1>&2";
+                ####DEBUG####
+                if($debug){
+                    print "\nStart the ssh control master process in node $mynode ";
+                    print "\n$cmd"
+                }
+                $result = `$cmd`;
+            }
+        }
     }
     # <=============================================
     # <=============================================
 
+
+    # =============================================>
+    # =============================================>
+    # CREATE a tmp folder for input files in remote machines
+    for(my $i = 0; $i < $len; $i++) {
+        if ($hostnums[$i]!=0){
+            my $mynode = $hostnames[$i];
+            my $cmd = "ssh $reusecmd hipuser\@$mynode \"mkdir $local_input_dir\"";
+            ####DEBUG####
+            if($debug){
+                print "\nCreate a temporary folder storing input files in node $mynode ";
+                print "\n$cmd"
+            }
+            $result = `$cmd`;
+        }
+    }
+    # <=============================================
+    # <=============================================
 
     my $end_run = Time::HiRes::gettimeofday();
 
@@ -1564,6 +1583,27 @@ printf "\tTime spent in main process: %.2f second\n", $mainSum;
 printf "\tTime spent in child processes: %.2f second\n", $childSum;
 printf "\tNumber of false contexts: %d\n", $falseContextSum; 
 
+if (!$local){
+    # =============================================>
+    # =============================================>
+    # Remove the tmp folder for input files in remote machines
+    my $len = scalar @hostnames;
+    for(my $i = 0; $i < $len; $i++) {
+        if ($hostnums[$i]!=0){
+            my $mynode = $hostnames[$i];
+            my $cmd = "ssh $reusecmd hipuser\@$mynode \"rm -r $local_input_dir\"";
+            ####DEBUG####
+            if($debug){
+                print "\nCreate a temporary folder storing input files in node $mynode ";
+                print "\n$cmd"
+            }
+            $result = `$cmd`;
+        }
+    }
+    # <=============================================
+    # <=============================================
+}
+
 if(!$local && (!$dssh)){
     my $start_run = Time::HiRes::gettimeofday();
     # =============================================>
@@ -1831,7 +1871,7 @@ sub process_file_dist {
 	    # def ; ss
 	    my @words = split(/\./, $parts[$len-1]); 	    
 	    $len = scalar @words;
-	    my $local_input_file = "~/input.$taskid.$words[$len-1]";
+	    my $local_input_file = "$local_input_dir/input.$taskid.$words[$len-1]";
 
             # identify "sleek" or "hip" command
             # hip or sleek
@@ -1845,7 +1885,7 @@ sub process_file_dist {
 
 	    # EXECUTE commands on remote machine, get output directly from stout
             $cmd = "$executable $script_arguments $extra_options $local_input_file";
-	    my $local_task_output_file = "~/log.$taskid.txt";
+	    # my $local_task_output_file = "~/log.$taskid.txt";
 	    my $task_output_file = "$FULLPATH/log.$taskid.txt";
 	    $copytocmd = "scp $reusecmd $task_file hipuser\@$mynode:$local_input_file";
             $execcmd = "ssh $reusecmd hipuser\@$mynode \"$cmd\" > $task_output_file 2>&1";
