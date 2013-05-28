@@ -237,9 +237,14 @@ let convert_pred_to_cast () =
   iprog.I.prog_view_decls <- tmp_views;
   let cviews = List.map (AS.trans_view iprog) tmp_views in
   Debug.tinfo_pprint "after trans_view" no_pos;
+  let cviews =
+    if !Globals.norm_elim_useless then
+      Norm.norm_elim_useless cviews (List.map (fun vdef -> vdef.C.view_name) cviews)
+    else cviews
+  in
   let _ = !cprog.C.prog_view_decls <- cviews in
   let cviews1 =
-    if !Globals. norm_extract then
+    if !Globals.norm_extract then
       Norm.norm_extract_common !cprog cviews
     else cviews
   in
@@ -726,6 +731,13 @@ let process_shape_infer pre_hps post_hps=
 		      print_endline "*************************************"
           end
   in
+  ()
+
+let process_shape_elim_useless sel_vnames=
+  let view_defs = Norm.norm_elim_useless !cprog.Cast.prog_view_decls sel_vnames in
+  let _ = !cprog.Cast.prog_view_decls <- view_defs in
+  let pr = pr_list_ln Cprinter.string_of_view_decl in
+  let _ = Debug.info_pprint ("views after ELIM: \n" ^ (pr view_defs)) no_pos in
   ()
 
 (* the value of flag "exact" decides the type of entailment checking              *)

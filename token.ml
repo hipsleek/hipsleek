@@ -15,7 +15,7 @@ type sleek_token =
   | BIND | BOOL | BREAK | BAGMAX | BAGMIN | BAG | BARRIER 
   | CASE | CHECKEQ | CHECKENTAIL | CHECKENTAIL_EXACT | CHECKENTAIL_INEXACT | CAPTURERESIDUE | CLASS (* | COERCION *) | COMPOSE | CONST | CONTINUE
 	| DATA | DDEBUG | DIFF | DYNAMIC 
-  | RELASSUME | SHAPE_INFER
+  | RELASSUME | SHAPE_INFER | SHAPE_ELIM_USELESS
   | DTIME
   | ELSE_TT
   | EMPTY
@@ -75,7 +75,7 @@ module Token = struct
     | BIND -> "bind"| BOOL -> "bool" | BREAK ->"break" | BAGMAX ->"bagmax" | BAGMIN->"bagmin" | BAG->"bag" | BARRIER ->"barrier"
     | CASE ->"case" | CHECKEQ -> "checkeq" | CHECKENTAIL ->"checkentail" | CAPTURERESIDUE ->"capture_residue" | CLASS ->"class" | CLIST -> "|]" (* | COERCION ->"coercion" *)
     | CHECKENTAIL_EXACT -> "checkentail_exact" | CHECKENTAIL_INEXACT -> "checkentail_inexact"
-    | RELASSUME -> "relAssume" |  SHAPE_INFER -> "shape_infer"
+    | RELASSUME -> "relAssume" |  SHAPE_INFER -> "shape_infer" | SHAPE_ELIM_USELESS -> "shape_elim_useless"
     | COMPOSE ->"compose" | CONST ->"const" | CONTINUE ->"continue"	| DATA ->"data" | DDEBUG ->"debug" | DIFF ->"diff"| DYNAMIC ->"dynamic"
     | DTIME ->"time" | ELSE_TT ->"else" | EMPTY -> "emp"| ENSURES ->"ensures" | ENSURES_EXACT ->"ensures_exact" | ENSURES_INEXACT ->"ensures_inexact" | ENUM ->"enum"| EXISTS ->"ex" | EXTENDS ->"extends"
     | FALSE ->"false"| FLOAT ->"float" | FORALL ->"forall" | FUNC -> "ranking"

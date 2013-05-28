@@ -12,40 +12,75 @@ module SAU = Sautility
 
 (***********************************************)
 (*****ELIM unused parameters of view **********)
-let norm_elim_useless_para_x cprog view_name sf args=
+let norm_elim_useless_para_x view_name sf args=
   let extract_svl f=
     let f1 = CF.elim_exists f in
     let new_f = CF.drop_view_formula f1 [view_name] in
     (* let _ = Debug.info_pprint (" new_f:" ^ (Cprinter.prtt_string_of_formula new_f) ) no_pos in *)
      (CF.fv new_f)
   in
-  let rec build_keep_pos_list args res index all=
-    match args with
+  let rec build_keep_pos_list rem_args res index all=
+    match rem_args with
       | [] -> res
       | a::ass -> if (CP.mem_svl a all) then
-            build_keep_pos_list ass res (index+1) all
-          else build_keep_pos_list ass (res@[index]) (index+1) all
+            build_keep_pos_list ass (res@[index]) (index+1) all
+          else build_keep_pos_list ass (res) (index+1) all
    in
-  if args = [] then (args,sf) else
+  if args = [] then (args, []) else
     let svl = extract_svl (CF.struc_to_formula sf) in
     (* let _ = Debug.info_pprint (" svl:" ^ (!CP.print_svl svl) ) no_pos in *)
     (* let _ = Debug.info_pprint (" args:" ^ (!CP.print_svl args) ) no_pos in *)
     let new_args = CP.intersect_svl args svl in
     (* let _ = Debug.info_pprint (" new_args:" ^ (!CP.print_svl new_args) ) no_pos in *)
     if List.length args > List.length new_args then
-      let keep_pos = build_keep_pos_list new_args [] 0 args in
-      let n_sf = CF.drop_view_paras_struc_formula sf [(view_name,keep_pos)] in
+      let keep_pos = build_keep_pos_list args [] 0 new_args in
+      let ss = [(view_name,keep_pos)] in
+      (* let n_sf = CF.drop_view_paras_struc_formula sf ss in *)
+      (* let n_ufs = List.map ( fun (uf, ufl) -> (CF.drop_view_paras_formula uf ss, ufl)) ufs in *)
       let dropped_args = CP.diff_svl args svl in
       let _ = Debug.info_pprint ("  ELIMINATE parameters:" ^ (!CP.print_svl dropped_args) ^ " of view " ^ view_name ^ "\n" ) no_pos in
-      (new_args,n_sf)
+      (new_args, ss)
     else
-      (args,sf)
+      (args, [])
 
-let norm_elim_useless_para cprog view_name sf args=
+let norm_elim_useless_para view_name sf args=
   let pr1 = Cprinter.string_of_struc_formula in
-  Debug.no_2 "norm_elim_useless_para" pr1 !CP.print_svl (pr_pair !CP.print_svl pr1)
-      (fun _ _ -> norm_elim_useless_para_x cprog view_name sf args) sf args
+  let pr2 = pr_pair !CP.print_svl (pr_list (pr_pair pr_id (pr_list string_of_int))) in
+  Debug.no_2 "norm_elim_useless_para" pr1 !CP.print_svl pr2
+      (fun _ _ -> norm_elim_useless_para_x view_name sf args) sf args
 
+(*assume views are sorted*)
+let norm_elim_useless_x vdefs sel_vns=
+  let elim_vdef ss vdef= { vdef with
+      Cast.view_formula = CF.drop_view_paras_struc_formula vdef.Cast.view_formula ss;
+      Cast.view_un_struc_formula =  List.map ( fun (uf, ufl) -> (CF.drop_view_paras_formula uf ss, ufl)) vdef.Cast.view_un_struc_formula;
+    }
+  in
+  let process_one_view vdef rem_vdefs=
+    if List.exists (fun vn -> String.compare vn vdef.Cast.view_name = 0) sel_vns then
+      (*update vdef*)
+      let view_sv_vars, ss = norm_elim_useless_para vdef.Cast.view_name vdef.Cast.view_formula  vdef.Cast.view_vars in
+      (*push it back*)
+      if ss = [] then (vdef,rem_vdefs) else
+        let new_def = {vdef with Cast.view_vars = view_sv_vars;} in
+        (*update rem_vdefs*)
+        (elim_vdef ss new_def, List.map (elim_vdef ss) rem_vdefs)
+    else
+      (vdef,rem_vdefs)
+  in
+  let rec interate_helper rem_vdefs done_vdefs=
+    match rem_vdefs with
+      | [] -> done_vdefs
+      | vdef::rest -> let new_def,new_rest = process_one_view vdef rest in
+        interate_helper new_rest (done_vdefs@[new_def])
+  in
+  interate_helper vdefs []
+
+let norm_elim_useless vdefs sel_vns=
+  let pr1 = pr_list pr_id in
+  let pr2 = pr_list_ln Cprinter.string_of_view_decl in
+  Debug.no_2 "norm_elim_useless" pr2 pr1 pr2
+      (fun _ _ -> norm_elim_useless_x vdefs sel_vns) vdefs sel_vns
 (***********************************************)
    (********EXTRACT common pattern **********)
 (***********************************************)

@@ -804,6 +804,11 @@ let rec trans_prog (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_decl
 	  let _ = Iast.set_check_fixpt prog.I.prog_data_decls tmp_views in
 	  (* let _ = print_string "trans_prog :: going to trans_view \n" in *)
 	  let cviews = List.map (trans_view prog) tmp_views in
+          let cviews =
+            if !Globals.norm_elim_useless then
+              Norm.norm_elim_useless cviews (List.map (fun vdef -> vdef.C.view_name) cviews)
+            else cviews
+          in
 	  (* let _ = print_string "trans_prog :: trans_view PASSED\n" in *)
 	  let crels = List.map (trans_rel prog) prog.I.prog_rel_decls in (* An Hoa *)
           let _ = prog.I.prog_rel_ids <- List.map (fun rd -> (RelT[],rd.I.rel_name)) prog.I.prog_rel_decls in
@@ -1209,11 +1214,6 @@ and trans_view_x (prog : I.prog_decl) (vdef : I.view_decl) : C.view_decl =
   else(
       let pos = IF.pos_of_struc_formula view_formula1 in
       let view_sv_vars = List.map (fun c-> trans_var (c,Unprimed) n_tl pos) vdef.I.view_vars in
-      let view_sv_vars,cf =
-        if !Globals.norm_elim_useless then
-          Norm.norm_elim_useless_para prog vdef.I.view_name cf view_sv_vars
-        else (view_sv_vars,cf)
-      in
       let self_c_var = Cpure.SpecVar ((Named data_name), self, Unprimed) in
       let _ = 
         let vs1 = (CF.struc_fv cf) in
