@@ -58,7 +58,7 @@ infer [n] x::ll<n> |- x::node<_,y>*y::node<_,p> .
 print residue.
 
 //(13)
-infer [H1] H1(p)* x::node<1,x2>*x2::node<3,p> |- x::ll<n> & n=4 .
+infer [H1] H1(p)* x::node<1,x2>*x2::node<3,p> |- x::ll<n> . // currently no shape and size & n=4 .
 print residue.
 
 //(14)
@@ -74,11 +74,11 @@ infer [H1] H1(p)* x::node<1,p> |- x::node<1,x2>*x2::node<3,q> & q=null.
 print residue.
 
 //(17)
-infer [H1] H1(p)* x::node<1,p> |- x::node<1,x2>*x2::ll<m> & m>3.
+infer [H1] H1(p)* x::node<1,p> |- x::node<1,x2>*x2::ll<m> . //no shape&size: & m>3.
 print residue.
 
 //(18)
-infer [H1] H1(p)* x::node<1,r>*r::node<a,p> |- x::node<1,x2>*x2::ll<m> & m>3.
+infer [H1] H1(p)* x::node<1,r>*r::node<a,p> |- x::node<1,x2>*x2::ll<m>. // no shape&size: & m>3.
 print residue.
 
 //(19)
