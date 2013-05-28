@@ -328,7 +328,7 @@ should be HP_27(t_20,y_26)
 
 # use3.slk
 
-type inference problem. (see use2.slk)
+type inference problem. (see use1.slk)
 
 ERROR: at use3.slk_9:16_9:22 
 Message: couldn't infer type for p in ; (p Unknown); (pp node); (qq node); (pp_15 node); (y node); (self node); (Anon_12 int); (tt node); (TVar__18 node); (y_16 node); (TVar__26 node); (TVar__27 node)
