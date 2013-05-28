@@ -1233,7 +1233,7 @@ and heap_baga (prog : prog_decl) (h0 : h_formula): CP.spec_var list =
     | ConjStar ({ h_formula_conjstar_h1 = h1;h_formula_conjstar_h2 = h2;})    
     | ConjConj ({ h_formula_conjconj_h1 = h1;h_formula_conjconj_h2 = h2;}) -> (helper h1) @ (helper h2)
     | Hole _ | HTrue | HFalse | HEmp | StarMinus _-> []
-    | HRel _ -> Error.report_no_pattern ()	in
+    | HRel _ -> [] (*Error.report_no_pattern ()*)	in
   helper h0
 
 and smart_same_flag = ref true 

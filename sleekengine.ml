@@ -859,14 +859,14 @@ let print_exc (check_id: string) =
 let process_entail_check_x (iante : meta_formula) (iconseq : meta_formula) (etype : entail_type):bool =
   let nn = "("^(string_of_int (sleek_proof_counter#inc_and_get))^") " in
   let num_id = "\nEntail "^nn in
-  try 
-    let valid, rs, _(*sel_hps*) = 
-      wrap_proving_kind ("SLEEK_ENT"^nn) (run_entail_check iante iconseq) etype in
-    print_entail_result [] (*sel_hps*) valid rs num_id
-  with ex ->
-      print_string "caught\n"; Printexc.print_backtrace stdout;
-      let _ = print_string ("\nEntailment Failure "^nn^(Printexc.to_string ex)^"\n") 
-      in false
+    try 
+      let valid, rs, _(*sel_hps*) = 
+        wrap_proving_kind ("SLEEK_ENT"^nn) (run_entail_check iante iconseq) etype in
+      print_entail_result [] (*sel_hps*) valid rs num_id
+    with ex ->
+        print_string "caught\n"; Printexc.print_backtrace stdout;
+        let _ = print_string ("\nEntailment Failure "^nn^(Printexc.to_string ex)^"\n") 
+        in false
   (* with e -> print_exc num_id *)
 
 (* the value of flag "exact" decides the type of entailment checking              *)
@@ -919,14 +919,14 @@ let process_eq_check (ivars: ident list)(if1 : meta_formula) (if2 : meta_formula
 let process_infer (ivars: ident list) (iante0 : meta_formula) (iconseq0 : meta_formula) =
   let nn = "("^(string_of_int (sleek_proof_counter#inc_and_get))^") " in
   let num_id = "\nEntail "^nn in
-  try 
-    let valid, rs, sel_hps = run_infer_one_pass ivars iante0 iconseq0 in
-    print_entail_result sel_hps valid rs num_id
-  with ex -> 
-      (* print_exc num_id *)
-      print_string "caught\n"; Printexc.print_backtrace stdout;
-      let _ = print_string ("\nEntailment Failure "^nn^(Printexc.to_string ex)^"\n") 
-      in false
+    try 
+      let valid, rs, sel_hps = run_infer_one_pass ivars iante0 iconseq0 in
+      print_entail_result sel_hps valid rs num_id
+    with ex -> 
+        (* print_exc num_id *)
+        print_string "caught\n"; Printexc.print_backtrace stdout;
+        let _ = print_string ("\nEntailment Failure "^nn^(Printexc.to_string ex)^"\n") 
+        in false
 
 let process_capture_residue (lvar : ident) = 
 	let flist = match !residues with 
