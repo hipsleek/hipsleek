@@ -340,3 +340,24 @@ Message: couldn't infer type for p in ; (p Unknown); (pp node); (qq node); (pp_1
 
  to add shape_elim_useless command
  to eliminate useless parameter of existing predicates.
+
+
+# i-app3a.slk 
+
+/*
+
+Problem : Post-predicate HP_3 is redundant and could be eliminated
+see steps-i-app3a.txt
+
+*************************************
+*******relational definition ********
+*************************************
+[ G1(c_31,y_32) ::= c_31::node<Anon_11,p,t>@M * (HP_33(p,t,y_32)) * (HP_3(p,y_32))&true,
+ HP_33(p,t,y_32) ::= 
+ emp&t=y_32
+ or t::node<Anon_11,p_34,t_35>@M * (HP_33(p_34,t_35,y_32)) * 
+    (HP_3(p_34,y_32))&true
+ ]
+*************************************
+
+*/
