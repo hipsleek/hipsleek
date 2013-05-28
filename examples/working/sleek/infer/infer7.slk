@@ -50,6 +50,7 @@ infer [] x::ll<n> & n>0 |- x=null.
 print residue.
 
 // (10)
-infer [x] true |- x::node<a,q>*q::node<b,c>.
+HeapPred H1(node x).
+infer [H1] H1(x) |- x::node<a,q>*q::node<b,c>.
 print residue.
 

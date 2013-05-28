@@ -25,8 +25,10 @@ Inferred Heap:[ x::node<inf_Anon_74,inf_b_75>[Orig], y::node<inf_Anon_78,inf_flt
 Inferred Pure:[ inf_b_75=b & inf_flted_20_79=null]
 */
 
+HeapPred H1(node x).
+HeapPred H2(node x).
 //(4)
-infer [x,y,b] b::node<1,y>   |- x::node<_,b>*b::node<_,y>*y::node<_,null>.
+infer [H1,H2] H1(x)* H2(y) * b::node<1,y>   |- x::node<_,b>*b::node<_,y>*y::node<_,null>.
 print residue.
 
 //(5)
