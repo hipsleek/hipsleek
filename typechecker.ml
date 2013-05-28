@@ -1499,16 +1499,17 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                           stk_vars # pop_list lsv;
                           let _ = CF.must_consistent_list_failesc_context "bind 5" tmp_res1  in
                           (* let f_esc = proc_esc_stack pid in *)
+                          (* TODO WN : Does this work for field level access? *)
                           let tmp_res2 = 
 		            if not(CF.isLend imm_node) && not(CF.isAccs imm_node) (*&& not(!Globals.allow_field_ann)*)then 
-		              CF.normalize_max_renaming_list_failesc_context vheap pos true tmp_res1 
+		              CF.normalize_max_renaming_list_failesc_context_4_bind pid vheap pos true tmp_res1 
     			          (* for Lend, Accs and field level annotations it should not be added back *)
 		            else tmp_res1 
 		          in 
-                          (* TODO WN : need to add vheap to exception too *)
-                          (* Debug.info_hprint (add_str "bind:vheap" Cprinter.string_of_formula) vheap no_pos; *)
-                          (* Debug.info_hprint (add_str "bind:tmp_res1" (pr_list Cprinter.string_of_failesc_context)) tmp_res1 no_pos; *)
-                          (* Debug.info_hprint (add_str "bind:tmp_res2" (pr_list Cprinter.string_of_failesc_context)) tmp_res2 no_pos; *)
+                          Debug.tinfo_pprint "WN : adding vheap to exception too" no_pos;
+                          Debug.tinfo_hprint (add_str "bind:vheap" Cprinter.string_of_formula) vheap no_pos;
+                          Debug.tinfo_hprint (add_str "bind:tmp_res1" (pr_list Cprinter.string_of_failesc_context)) tmp_res1 no_pos;
+                          Debug.info_hprint (add_str "bind:tmp_res2" (pr_list Cprinter.string_of_failesc_context)) tmp_res2 no_pos;
                           let _ = CF.must_consistent_list_failesc_context "bind 6" tmp_res2  in
                           let tmp_res2 = 
                             if(!Globals.allow_field_ann) then

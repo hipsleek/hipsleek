@@ -204,3 +204,37 @@ Escaped States:
 
   ]
  ]
+
+
+# bind2{e3,e4}.ss  DONE 
+     (via CF.normalize_max_renaming_list_failesc_context_4_bind)
+
+dprint: bind2e4.ss:18: ctx:  List of Failesc Context: [FEC(0, 1, 0 )]
+!!! bind:tmp_res1:[ Escaped States:
+ [
+  
+  Try-Block:62::
+  [
+   Path: 
+   State:emp&c=c' & 0<=0 & Anon_11=Anon_36' & nn_37'=p & nn_37'=res&{FLOW,(16,17)=__Return}[]
+         es_var_measures: MayLoop
+         es_trace: empty
+
+   ];
+  
+  ]]
+
+bind2e3.ss
+
+!!! bind:tmp_res1:[ 
+ Successful States:
+ [
+  Label: 
+  State:emp&c=c' & 0<=0 & Anon_11=Anon_36' & nn_37'=p & nn_37'=res&{FLOW,(16,17)=__Return}[]
+        es_var_measures: MayLoop
+        es_trace: empty
+
+  ]]
+
+
+# TODO how about field level access for bind2{e3,e4}.ss
