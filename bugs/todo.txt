@@ -89,3 +89,152 @@ x3::node<x4>
 & x1=x2 & x2=x3
 |- false.
 
+# bind2.ss
+
+dynamic  EBase hfalse&false&{FLOW,(22,23)=__norm}[]
+{(((node t_32;
+bind c to (Anon_33,nn_34) [write] in 
+{(dprint;
+t_32 = nn_34)});
+dprint);
+return t_32)}
+
+ERROR : why did bind not temporarily remove a node?
+It seems we still use @L annotation on node & field regardless.
+Note how 2nd dprint has become false.
+
+@2! vheap: c'::node<Anon_12'@L,nn'@L>@L[Orig]&true&{FLOW,(1,25)=__flow}[]
+@2! vheap 2: c'::node<Anon_12'@L,nn'@L>@L[Orig]&true&{FLOW,(1,25)=__flow}[]
+
+
+dprint: bind2.ss:16: ctx:  List of Failesc Context: [FEC(0, 0, 1  )]
+
+Successful States:
+[
+ Label: 
+ State:c::node<Anon_11@M,p@M>@M[Orig]&c=c' & 0<=0 & Anon_11=Anon_33' & nn_34'=p&{FLOW,(22,23)=__norm}[]
+       es_var_measures: MayLoop
+       es_trace: empty
+
+ ]
+
+dprint: bind2.ss:20: ctx:  List of Failesc Context: [FEC(0, 0, 1  )]
+
+Successful States:
+[
+ Label: 
+ State:hfalse&false&{FLOW,(22,23)=__norm}[]
+
+# bind2b1.ss (vs bind2b.ss)  TEMP FIXED fields-->@M
+
+node paper_fix (node c)
+  requires c::node<_,p>
+  ensures res=p;
+{
+      node t;
+      bind c to (vv,nn) in { t = nn; };
+      dprint;
+      return t;
+}
+
+/*
+
+Why is this bind inferred as @M?
+@7! >>>>>> bind type-checker <<<<<<
+@7! node:c
+@7! fields:[vv_32,nn_33]
+@7! node ann:@M
+@7! fields ann:[@L,@L]
+@7! read-only:false
+
+It should be @L; as in bind2b.ss with
+@7! >>>>>> bind type-checker <<<<<<
+@7! node:c
+@7! fields:[val_15_762,next_15_763]
+@7! node ann:@L
+@7! fields ann:[@A,@L]
+@7! read-only:true
+@7!bind2b.ss:15: 10: bind: unfolded context:
+
+
+
+*/
+
+
+# bind2b2.ss   DONE
+
+node paper_fix (node c)
+  requires c::node<_,p>
+  ensures res=p;
+{
+      node t;
+      t = bind c to (vv,nn) in nn ;
+      dprint;
+      return t;
+}
+
+/*
+
+Why is there a parsing error for bind in the RHS of assignment?
+
+File "bind2b2.ss", line 15, characters 8-9
+ --error: Stream.Error("[expression] expected after EQ (in [assignment_expression])")
+
+
+*/
+
+# bind2e.ss
+
+ bind node lost during exception!
+
+bind node not released by exception!
+  1. restore
+  2. use try-catch for bind?
+
+dprint: bind2e.ss:17: ctx:  List of Failesc Context: [FEC(0, 1, 0 )]
+Escaped States:
+[
+ 
+ Try-Block:0::
+ [
+  Path: 
+  State:emp&c=c' & 0<=0 & Anon_11=Anon_36' & nn_37'=p & nn_37'=res&{FLOW,(16,17)=__Return}[]
+        es_var_measures: MayLoop
+        es_trace: empty
+
+  ]
+ ]
+
+
+# bind2{e3,e4}.ss  DONE 
+     (via CF.normalize_max_renaming_list_failesc_context_4_bind)
+
+dprint: bind2e4.ss:18: ctx:  List of Failesc Context: [FEC(0, 1, 0 )]
+!!! bind:tmp_res1:[ Escaped States:
+ [
+  
+  Try-Block:62::
+  [
+   Path: 
+   State:emp&c=c' & 0<=0 & Anon_11=Anon_36' & nn_37'=p & nn_37'=res&{FLOW,(16,17)=__Return}[]
+         es_var_measures: MayLoop
+         es_trace: empty
+
+   ];
+  
+  ]]
+
+bind2e3.ss
+
+!!! bind:tmp_res1:[ 
+ Successful States:
+ [
+  Label: 
+  State:emp&c=c' & 0<=0 & Anon_11=Anon_36' & nn_37'=p & nn_37'=res&{FLOW,(16,17)=__Return}[]
+        es_var_measures: MayLoop
+        es_trace: empty
+
+  ]]
+
+
+# TODO how about field level access for bind2{e3,e4}.ss

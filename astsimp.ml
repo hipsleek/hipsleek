@@ -2563,7 +2563,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
                                     C.exp_bind_fields = List.combine vs_types vs;
                                     C.exp_bind_body = ce;
                                     C.exp_bind_imm = CF.ConstAnn(Mutable); (* can it be true? *) (*andreeac REVERT to Lend*)
-                                    C.exp_bind_param_imm = List.map (fun _ -> CF.ConstAnn(Lend)) vs ; 
+                                    C.exp_bind_param_imm = List.map (fun _ -> CF.ConstAnn(Mutable)) vs ; 
                                     C.exp_bind_read_only = false; (*conservative. May use read/write analysis to figure out*)
                                     C.exp_bind_pos = pos;
                                     C.exp_bind_path_id = pid; }), te)))
