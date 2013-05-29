@@ -476,7 +476,7 @@ let split_constr prog constrs =
       (fun _ -> split_constr_x prog constrs) constrs
 
 let elim_unused_preds_x post_hps constrs=
-  let get_preds (lhs_heads, rhs_preds) cs=
+  let get_preds (lhs_preds, lhs_heads, rhs_preds,rhs_heads) cs=
     (* let pr1 = Cprinter.string_of_hprel_short in *)
     (* let _ = print_endline ( "cs: " ^ (pr1 cs)) in *)
     let lhs_hps = CF.get_hp_rel_name_formula cs.CF.hprel_lhs in
@@ -486,14 +486,19 @@ let elim_unused_preds_x post_hps constrs=
       | 1 -> lhs_heads@lhs_hps
       | _ -> lhs_heads
     in
-    (n_lhs_heads, rhs_preds@rhs_hps)
+    (*rhs pred should be one pred + heap + pure*)
+    let n_rhs_heads = match List.length rhs_hps  with
+      | 1 -> rhs_heads@rhs_hps
+      | _ -> rhs_heads
+    in
+    (lhs_preds@lhs_hps, n_lhs_heads, rhs_preds@rhs_hps,n_rhs_heads)
   in
   let do_elim_unused_pre unused_hps cs=
     let new_lhs, _ = CF.drop_hrel_f cs.CF.hprel_lhs unused_hps in
     let new_rhs, _ = CF.drop_hrel_f cs.CF.hprel_rhs unused_hps in
     {cs with CF.hprel_lhs = new_lhs; CF.hprel_rhs = new_rhs}
   in
-  let lhs_preds, rhs_preds = List.fold_left get_preds ([],[]) constrs in
+  let lhs_preds, lhs_heads, rhs_preds,rhs_heads = List.fold_left get_preds ([],[],[],[]) constrs in
   let lhs_preds1 = CP.remove_dups_svl lhs_preds in
   let rhs_preds1 = CP.remove_dups_svl rhs_preds in
   (* let _ = print_endline ("lhs_preds1: " ^ (!CP.print_svl lhs_preds1)) in *)
@@ -502,7 +507,13 @@ let elim_unused_preds_x post_hps constrs=
   let unused_pre_preds = CP.diff_svl rhs_preds1 lhs_preds1 in
   (*and they are NOT post*)
   let unused_pre_preds0 = CP.diff_svl unused_pre_preds post_hps in
-  List.map (do_elim_unused_pre unused_pre_preds0) constrs
+  (* let constrs1 = List.map (do_elim_unused_pre unused_pre_preds0) constrs in *)
+  (*post-preds*)
+  (*unused post preds are preds in lhs but do not appear in any rhs*)
+  let unused_post_preds = CP.diff_svl lhs_preds1 rhs_preds1 in
+  (*and they are NOT pre*)
+  (* let unused_post_preds0 = CP.diff_svl unused_post_preds lhs_heads in *)
+  List.map (do_elim_unused_pre (unused_pre_preds0@unused_post_preds)) constrs
 
 let elim_unused_preds post_hps constrs=
   let pr1 = pr_list_ln Cprinter.string_of_hprel in
