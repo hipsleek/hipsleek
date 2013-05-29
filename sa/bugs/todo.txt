@@ -284,7 +284,7 @@ why did we get emp?
 # bug-t3.slk (to be fixed in ann-1 branch)
 
 @v annotation problematic
-
+=================================*===============
 # bind2.ss (to fix at default branch)
 
 ERROR : why did bind not temporarily remove a node?
@@ -301,8 +301,8 @@ It seems we still use @L annotation on node & field regardless..
        es_trace: empty
 
  ]
-
-# i-app3.slk 
+=================================*===============
+# i-app3.slk : DONE
 
 (i)  bug with useless elim below. # DONE
 (ii) can we add sa-useless as a SLEEK command
@@ -325,7 +325,7 @@ should be HP_27(t_20,y_26)
  or t::node<Anon_11,p_28,t_29>@M * (HP_27(y_26,y_26))&true
                                          ^^^^^ t_29
  ]
-
+=================================*===============
 # use3.slk
 
 type inference problem. (see use1.slk)
@@ -335,14 +335,14 @@ Message: couldn't infer type for p in ; (p Unknown); (pp node); (qq node); (pp_1
 
  Fatal error: exception Failure("couldn't infer type for p in ; (p Unknown); (pp node); (qq node); (pp_15 node); (y node); (self node); (Anon_12 int); (tt node); (TVar__18 node); (y_16 node); (TVar__26 node); (TVar__27 node)
 ")
-
-# use1.slk; use2.slk
+=================================*===============
+# use1.slk; use2.slk: DONE
 
  to add shape_elim_useless command
  to eliminate useless parameter of existing predicates.
 
-
-# i-app3a.slk 
+=================================*===============
+# i-app3a.slk : DONE
 
 /*
 
