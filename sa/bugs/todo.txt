@@ -336,10 +336,16 @@ Message: couldn't infer type for p in ; (p Unknown); (pp node); (qq node); (pp_1
  Fatal error: exception Failure("couldn't infer type for p in ; (p Unknown); (pp node); (qq node); (pp_15 node); (y node); (self node); (Anon_12 int); (tt node); (TVar__18 node); (y_16 node); (TVar__26 node); (TVar__27 node)
 ")
 =================================*===============
-# use1.slk; use2.slk: DONE
+# use1.slk; use2.slk: 
 
- to add shape_elim_useless command
- to eliminate useless parameter of existing predicates.
+Instead of:
+ self::G2(y) = ...
+
+Should you not have generated another intermediate
+predicate to capture the eliminated paras.
+
+ self::G2(p,y) = self::G2x(y)
+ self::G2x(y)  = ....
 
 =================================*===============
 # i-app3a.slk : DONE
@@ -361,3 +367,20 @@ see steps-i-app3a.txt
 *************************************
 
 */
+
+# sll-dll3.ss
+
+Above generates:
+
+ H1(c)&c!=null --> c::node<val_20_777',prev_20_778',next_20_779'>@M * 
+  (HP_808(prev_20_778')) * (HP_809(next_20_779'))&true,
+ HP_809(next_20_818)&true --> H1(next_20_818)&true,
+ H1(c)&c=null --> emp&true,
+ c::node<val_20_817,p,next_20_818>@M * (G1(next_20_818,c))&true --> G1(c,p)&
+  true,
+ emp&c=null --> G1(c,p)&true]
+
+BUT goes into a loop afterwards during predicate synthesis?
+
+This is in contrast to shape infer
+done by sll-dll3.slk which terminates.

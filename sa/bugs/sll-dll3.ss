@@ -12,7 +12,8 @@ HeapPred H1(node a).
 HeapPred G1(node a, node b).
 
 node paper_fix (node c, node p)
-  infer[H1,G1] requires H1(c) ensures G1(c,p);
+  infer[H1,G1] requires H1(c) 
+  ensures G1(c,p);
 {
 	if (c!=null) 
 	{
@@ -47,27 +48,6 @@ void remove (node c)
   
   
   */
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
   
   
   

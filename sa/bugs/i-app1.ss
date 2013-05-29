@@ -5,12 +5,12 @@ data node{
 
 ll<> == self = null  or self::node<_, q> * q::ll<>;
 
-HeapPred H1(node a, node b).
+HeapPred H1(node a).
 HeapPred G1(node a, node b).
 
 void foo (node c, node y)
   infer [H1,G1]
-  requires H1(c,y)
+  requires H1(c)
   ensures  G1(c,y);
 {
    node t = c.next;
