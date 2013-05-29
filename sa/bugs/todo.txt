@@ -386,7 +386,7 @@ see steps-i-app3a.txt
 
 */
 
-# sll-dll3.ss
+# sll-dll3.ss  DONE
 
 Above generates:
 
@@ -403,7 +403,7 @@ BUT goes into a loop afterwards during predicate synthesis?
 This is in contrast to shape infer
 done by sll-dll3.slk which terminates.
 
-# i-app-r.slk  
+# i-app-r.slk  DONE
 
  Result below has spuriuous HP_P predicate.
 
@@ -512,6 +512,28 @@ The inferred rule below is not good:
                    t_32'!=null --> (H1(t_32',y')) * (HP_34(prev_17_803))&true]
 as it has both complex LHS and complex RHS.
 
+# sll-dll2.ss
 
+On sleek logging of sll-dll2.ss, we got:
 
+ checkentail (HP_784(pp_786,p)) * (HP_785(nn',p))&c=c' & p=p' & c'!=null & 
+v_bool_18_760' & c'!=null & v_bool_18_760' & p'=pp'&{FLOW,(22,23)=__norm}[]
+ |-  H1(nn',c')&true&{FLOW,(22,23)=__norm}[]. 
+hprel_ass: [ (HP_785(nn',p)) * c'::node<Anon_11',p,nn'>@M&true --> H1(nn',c')&true]
+res:  [
+  HP_784(pp_786,p)&c=c' & p=p' & c'!=null & v_bool_18_760' & c'!=null & v_bool_18_760' & p'=pp'&{FLOW,(22,23)=__norm}[]
+  ]
 
+However, when I test on sleek sll-dll2-i.slk, it seems to have behaved
+properly. Why?
+
+infer [H1,HP_4,HP_5] HP_4(pp_786,p) * HP_5(nn',p) & c=c' & p=p' & c'!=null & 
+v_bool_18_760' & c'!=null & v_bool_18_760' & p'=pp'
+ |-  H1(nn',c') . 
+print residue.
+
+/*
+We derived:
+
+<1>HP_4(pp_786,p)&c=c' & p=p' & c'!=null & v_bool_18_760' & c'!=null & v_bool_18_760' & p'=pp'&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [HP_5(nn',pp')&c'!=null --> H1(nn',c')&true]

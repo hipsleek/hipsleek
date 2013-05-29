@@ -28,6 +28,30 @@ node paper_fix (node c, node p)
 
   /*
 
+[ 
+H1(c,p)&c!=null --> c::node<Anon_11',pp',nn'>@M * (HP_784(pp',p)) * 
+  (HP_785(nn',p))&true,
+ (HP_785(nn',p)) * c'::node<Anon_11',p,nn'>@M&true --> H1(nn',c')&true,
+ (HP_784(pp_786,p)) * (G1(nn_797,c)) * c::node<Anon_796,p,nn_797>@M&
+  true --> G1(c,p)&true,
+ H1(c,p)&c=null --> emp&true,
+ emp&c=null --> G1(c,p)&true]
+
+
+[ H1(c,p)&c!=null --> c::node<Anon_11',pp',nn'>@M * (HP_784(pp',p)) * 
+  (HP_785(nn',p))&true,
+
+ (HP_785(nn',p)) * c'::node<Anon_11',p,nn'>@M&true --> H1(nn',c')&true,
+  ^^^^^ wrong ^^^^
+
+ (HP_784(pp_786,p)) * (G1(nn_797,c)) * c::node<Anon_796,p,nn_797>@M&
+  true --> G1(c,p)&true,
+
+ H1(c,p)&c=null --> emp&true,
+
+ emp&c=null --> G1(c,p)&true]
+
+
 [ H1(c,p)&c!=null --> c::node<Anon_11',pp',nn'>@M * (HP_771(pp',p)) * 
   (HP_772(nn',p))&true,
  c'::node<Anon_11',pp_773,nn'>@M * (HP_771(pp_773,p)) * (HP_772(nn',p))&
