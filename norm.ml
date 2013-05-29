@@ -402,15 +402,20 @@ let norm_extract_common_one_view cprog cviews vdecl=
   Debug.no_1 "norm_extract_common_one_view" pr1 (pr_list_ln pr1)
       (fun _ -> norm_extract_common_one_view_x cprog cviews vdecl) vdecl
 
-let norm_extract_common cprog cviews=
+let norm_extract_common cprog cviews sel_vns=
   let rec process_helper rem_vs done_vs=
     match rem_vs with
       | [] -> done_vs
       | vdecl::rest ->
-          let n_vdecls = norm_extract_common_one_view cprog (done_vs@rest) vdecl in
+          let n_vdecls =
+            if List.exists (fun vn -> String.compare vn vdecl.Cast.view_name = 0) sel_vns then
+              norm_extract_common_one_view cprog (done_vs@rest) vdecl
+            else [vdecl]
+          in
           process_helper rest (done_vs@n_vdecls)
   in
   process_helper cviews []
+
 
 (*****************************************************************)
    (********END EXTRACT common pattern **********)

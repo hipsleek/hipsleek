@@ -97,6 +97,7 @@ let proc_gen_cmd cmd =
     | RelAssume (id, ilhs, irhs) -> process_rel_assume id ilhs irhs
     | ShapeInfer (pre_hps, post_hps) -> process_shape_infer pre_hps post_hps
     | ShapeElim (view_names) -> process_shape_elim_useless view_names
+    | ShapeExtract (view_names) -> process_shape_extract view_names
     | EqCheck (lv, if1, if2) -> process_eq_check lv if1 if2
     | Infer (ivars, iante, iconseq) -> (process_infer ivars iante iconseq;())
     | CaptureResidue lvar -> process_capture_residue lvar
@@ -130,7 +131,7 @@ let parse_file (parse) (source_file : string) =
       | AxiomDef adef -> process_axiom_def adef  (* An Hoa *)
             (* | Infer (ivars, iante, iconseq) -> process_infer ivars iante iconseq *)
       | LemmaDef _ | Infer _ | CaptureResidue _ | LetDef _ | EntailCheck _ | EqCheck _ | PrintCmd _ | CmpCmd _ 
-      | RelAssume _ | ShapeInfer _ | ShapeElim _
+      | RelAssume _ | ShapeInfer _ | ShapeElim _ | ShapeExtract _
       | Time _ | EmptyCmd -> () 
   in
   let proc_one_def c =
@@ -141,7 +142,7 @@ let parse_file (parse) (source_file : string) =
       | LemmaDef ldef -> process_lemma ldef
       | DataDef _ | PredDef _ | BarrierCheck _ | FuncDef _ | RelDef _ | HpDef _ | AxiomDef _ (* An Hoa *)
       | CaptureResidue _ | LetDef _ | EntailCheck _ | EqCheck _ | Infer _ | PrintCmd _ 
-      | RelAssume _ | ShapeInfer _ | ShapeElim _
+      | RelAssume _ | ShapeInfer _ | ShapeElim _ | ShapeExtract _
       | CmpCmd _| Time _ | EmptyCmd -> () in
   let proc_one_cmd c = 
     match c with
@@ -151,6 +152,7 @@ let parse_file (parse) (source_file : string) =
       | RelAssume (id, ilhs, irhs) -> process_rel_assume id ilhs irhs
       | ShapeInfer (pre_hps, post_hps) -> process_shape_infer pre_hps post_hps
       | ShapeElim (view_names) -> process_shape_elim_useless view_names
+      | ShapeExtract (view_names) -> process_shape_extract view_names
       | EqCheck (lv, if1, if2) -> 
             (* let _ = print_endline ("proc_one_cmd: xxx_after parse \n") in *)
             process_eq_check lv if1 if2

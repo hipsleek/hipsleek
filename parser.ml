@@ -721,6 +721,7 @@ non_empty_command:
       | t=relassume_cmd     -> RelAssume t
       | t=shapeinfer_cmd     -> ShapeInfer t
       | t=shapeElim_cmd     -> ShapeElim t
+      | t=shapeExtract_cmd     -> ShapeExtract t
       | t=infer_cmd           -> Infer t  
       | t=captureresidue_cmd  -> CaptureResidue t
       | t=print_cmd           -> PrintCmd t
@@ -1633,6 +1634,12 @@ shapeinfer_cmd:
 
 shapeElim_cmd:
    [[ `SHAPE_ELIM_USELESS; `OSQUARE;il1=OPT id_list;`CSQUARE ->
+   let il1 = un_option il1 [] in
+   (il1)
+   ]];
+
+shapeExtract_cmd:
+   [[ `SHAPE_EXTRACT; `OSQUARE;il1=OPT id_list;`CSQUARE ->
    let il1 = un_option il1 [] in
    (il1)
    ]];
