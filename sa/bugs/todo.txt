@@ -442,3 +442,39 @@ eliminated.
     (HP_2(next_17_768',y_40))&true
  ]
 
+# i-app.ss
+
+This generated below. The 2nd relational assumption seems wrong.
+
+[ H1(c,y)&true --> c::node<val_17_766',prev_17_767',next_17_768'>@M * 
+     (HP_791(prev_17_767',y)) * (HP_792(next_17_768',y))&true,
+
+ (HP_791(prev_17_803,y)) * (HP_792(t_32',y))&t_32'!=null 
+      --> (H1(t_32',y)) * (HP_810(prev_17_803))&true,
+
+ c::node<val_17_802,prev_17_803,t_815>@M * (HP_810(prev_17_803)) * 
+  (G1(t_815,y))&t_815!=null --> G1(c,y)&true,
+
+ HP_792(next_22_813,y)&next_22_813=null --> emp&true,
+
+ (HP_791(prev_17_799,y)) * c::node<val_17_798,prev_17_799,y>@M&
+  true --> G1(c,y)&true]
+
+# i-app-w.slk
+  
+infer [H1] HP_p(prev_17_803,y) * HP_2(t_32',y) * 
+c'::node<val_17_802,prev_17_803,t_32'> &c=c' & y=y' & t_32'!=null & 
+v_bool_18_772' & t_32'!=null & v_bool_18_772'
+ |-  H1(t_32',y'). 
+print residue.
+
+/*
+
+Why did we generate HP_34 below?
+
+ <1>c'::node<val_17_802,prev_17_803,t_32'>@M[Orig] * (HP_34(prev_17_803))&c=c' & y=y' & t_32'!=null & v_bool_18_772' & t_32'!=null & v_bool_18_772'&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [(HP_p(prev_17_803,y')) * (HP_2(t_32',y'))&
+                   t_32'!=null --> (H1(t_32',y')) * (HP_34(prev_17_803))&true]
+
+*/
+
