@@ -507,12 +507,14 @@ let elim_unused_preds_x post_hps constrs=
   let unused_pre_preds = CP.diff_svl rhs_preds1 lhs_preds1 in
   (*and they are NOT post*)
   let unused_pre_preds0 = CP.diff_svl unused_pre_preds post_hps in
+  let _ = DD.binfo_pprint ("pre-preds: "  ^ (!CP.print_svl unused_pre_preds0) ^" are removed") no_pos in
   (* let constrs1 = List.map (do_elim_unused_pre unused_pre_preds0) constrs in *)
   (*post-preds*)
   (*unused post preds are preds in lhs but do not appear in any rhs*)
   let unused_post_preds = CP.diff_svl lhs_preds1 rhs_preds1 in
   (*and they are NOT pre*)
   (* let unused_post_preds0 = CP.diff_svl unused_post_preds lhs_heads in *)
+  let _ = DD.binfo_pprint ("post-preds: "  ^ (!CP.print_svl unused_post_preds) ^" are removed") no_pos in
   List.map (do_elim_unused_pre (unused_pre_preds0@unused_post_preds)) constrs
 
 let elim_unused_preds post_hps constrs=
