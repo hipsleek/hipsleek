@@ -476,6 +476,8 @@ Why did we generate HP_34 below?
  inferred hprel: [(HP_p(prev_17_803,y')) * (HP_2(t_32',y'))&
                    t_32'!=null --> (H1(t_32',y')) * (HP_34(prev_17_803))&true]
 
+Solution
+========
 
     H(x) |- x::node<...>
  =================================
@@ -485,7 +487,16 @@ Why did we generate HP_34 below?
      H(x,p)   |- x::lseg<q>
  ==================================
    H(x,p) --> x::lseg<q>*Hg<q,p>
- 
+
+Given:
+  x::lseg<q>
+We have:
+  x is root parameter
+  q is continuation parameter
+For HeapPred
+ (i) by default, first parameter is the root
+ (ii) unless named as "self"
+
 
 */
 
@@ -522,6 +533,7 @@ The inferred rule below is not good:
  inferred hprel: [(HP_p(prev_17_803,y')) * (HP_2(t_32',y'))&
                    t_32'!=null --> (H1(t_32',y')) * (HP_34(prev_17_803))&true]
 as it has both complex LHS and complex RHS.
+
 
 # sll-dll2.ss
 
