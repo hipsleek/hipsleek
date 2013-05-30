@@ -6478,13 +6478,13 @@ and heap_entail_build_mix_formula_check_a (evars : CP.spec_var list) (ante : MCP
   let conseq = if !no_RHS_prop_drop then conseq else  MCP.mix_cons_filter conseq MCP.isImplT in
   let tmp1 = elim_exists_mix_formula inner_vars conseq no_pos in
   let tmp2 = MCP.memo_pure_push_exists outer_vars tmp1 in
-  (*let _ = print_string ("outer_vars: "^(pr_list Cprinter.string_of_spec_var outer_vars)^"\n inner_vars: "^(pr_list Cprinter.string_of_spec_var inner_vars)^"\n conseq: "^(Cprinter.string_of_mix_formula conseq)
-    ^"\n added inner: "^(Cprinter.string_of_mix_formula tmp1)^"\n added outer: "^(Cprinter.string_of_mix_formula tmp2)^"\n") in*)
+  (* let _ = print_string ("outer_vars: "^(pr_list Cprinter.string_of_spec_var outer_vars)^"\n inner_vars: "^(pr_list Cprinter.string_of_spec_var inner_vars)^"\n conseq: "^(Cprinter.string_of_mix_formula conseq) *)
+  (*   ^"\n added inner: "^(Cprinter.string_of_mix_formula tmp1)^"\n added outer: "^(Cprinter.string_of_mix_formula tmp2)^"\n") in *)
   (ante,tmp2)
 
 and heap_entail_build_mix_formula_check i (evars : CP.spec_var list) (ante : MCP.mix_formula) (conseq : MCP.mix_formula) pos : (MCP.mix_formula * MCP.mix_formula) =
   let pr = Cprinter.string_of_mix_formula in
-  Debug.ho_3_num i "heap_entail_build_mix_formula_check"  
+  Debug.no_3_num i "heap_entail_build_mix_formula_check"  
       (add_str "evars" (fun l -> Cprinter.string_of_spec_var_list l)) 
       (add_str "ante" pr) (add_str "conseq" pr) (pr_pair pr pr)
       ( fun c1 ante c2 -> heap_entail_build_mix_formula_check_a c1 ante c2 pos) evars ante conseq       
@@ -9232,17 +9232,19 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
                  and then restore M_unmatched_rhs to previous code without
                  any inference *)
       | Context.M_infer_heap (rhs,rhs_rest) ->
-          (* let _ =  Debug.info_pprint ("rhs_b 1: " ^ (Cprinter.string_of_formula_base rhs_b)) pos in *)
+            (* let _ =  Debug.info_pprint ("rhs_b 1: " ^ (Cprinter.string_of_formula_base rhs_b)) pos in *)
             let r = do_infer_heap rhs rhs_rest caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:CP.spec_var list) is_folding pos in
             (* (CF.mkFailCtx_in (Basic_Reason (mkFailContext "infer_heap not yet implemented" estate (Base rhs_b) None pos, *)
             (* CF.mk_failure_bot ("infer_heap .. "))), NoAlias) *)
             (* let _ =  Debug.info_pprint ">>>>>> Inf.infer_collect_hp_rel 1: infer_heap <<<<<<" pos in *)
-            let (res,new_estate, n_lhs) = Inf.infer_collect_hp_rel 1 prog estate rhs rhs_rest rhs_h_matched_set lhs_b rhs_b pos in
+            let (res,new_estate, n_lhs, n_rhs_b) = Inf.infer_collect_hp_rel 1 prog estate rhs rhs_rest rhs_h_matched_set lhs_b rhs_b pos in
             (* Debug.info_hprint (add_str "DD: n_lhs" (Cprinter.string_of_h_formula)) n_lhs pos; *)
             if (not res) then r else
-              let n_rhs_b = Base {rhs_b with formula_base_heap = rhs_rest} in
-              (* Debug.info_hprint (add_str "DD: new_estate(M_infer_heap)" (Cprinter.string_of_entail_state)) new_estate pos; *)
-              let res_es0, prf0 = do_match prog new_estate n_lhs rhs n_rhs_b rhs_h_matched_set is_folding pos in
+               (* let n_rhs_b = Base {rhs_b with formula_base_heap = rhs_rest} in *)
+               (* Debug.info_hprint (add_str "DD: new_estate 1" (Cprinter.string_of_entail_state)) new_estate pos; *)
+              (* let res_es0, prf0 = do_match prog new_estate n_lhs rhs n_rhs_b rhs_h_matched_set is_folding pos in *)
+               let res_es0, prf0 = do_match prog new_estate n_lhs rhs n_rhs_b rhs_h_matched_set is_folding pos in
+               (* Debug.info_hprint (add_str "DD: new_estate 2" (Cprinter.string_of_list_context)) res_es0 pos; *)
               (* let res_ctx = Ctx new_estate  in *)
               (* (SuccCtx[res_ctx], NoAlias) *)
               (res_es0,prf0)
@@ -9297,7 +9299,7 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
                     match relass with
                       | [] -> 
                           (* let _ =  Debug.info_pprint ">>>>>> M_unmatched_rhs_data_node <<<<<<" pos in *)
-                      let (res,new_estate,n_lhs) = Inf.infer_collect_hp_rel 2 prog estate rhs rhs_rest rhs_h_matched_set lhs_b rhs_b pos in
+                      let (res,new_estate,n_lhs, n_rhs_b) = Inf.infer_collect_hp_rel 2 prog estate rhs rhs_rest rhs_h_matched_set lhs_b rhs_b pos in
                         if (not res) then
                           let s = "15.5 no match for rhs data node: " ^
                             (CP.string_of_spec_var (let _ , ptr = CF.get_ptr_from_data_w_hrel rhs in ptr)) ^ " (must-bug)."in
@@ -9309,8 +9311,8 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
                             (rhs_h_matched_set:CP.spec_var list) is_folding pos in
                           (CF.mkFailCtx_in (Or_Reason (res_lc, unmatched_lhs)), prf)
                         else
-                          let n_rhs_b = Base {rhs_b with formula_base_heap = rhs_rest} in
-                          Debug.tinfo_hprint (add_str "new_estate(M_unmatched_rhs_data_node)" (Cprinter.string_of_entail_state)) new_estate pos;
+                          (* let n_rhs_b = Base {rhs_b with formula_base_heap = rhs_rest} in *)
+                          let _ = Debug.tinfo_hprint (add_str "new_estate(M_unmatched_rhs_data_node)" (Cprinter.string_of_entail_state)) new_estate pos in
                           let res_es0, prf0 = do_match prog new_estate n_lhs rhs n_rhs_b rhs_h_matched_set is_folding pos in
                           (* let res_ctx = Ctx new_estate  in *)
                           (* (SuccCtx[res_ctx], NoAlias) *)
