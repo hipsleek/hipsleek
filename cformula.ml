@@ -9272,6 +9272,14 @@ let normalize_max_renaming_list_failesc_context f pos b ctx =
   (* let _ = print_string("cris: normalize 12\n") in *)
     if !max_renaming then transform_list_failesc_context (idf,idf,(normalize_es f pos b)) ctx
       else transform_list_failesc_context (idf,idf,(normalize_clash_es f pos b)) ctx
+
+let normalize_max_renaming_list_failesc_context f pos b ctx =
+  let pr_f = !print_formula in
+  let pr_ctx = pr_list !print_failesc_context in
+  Debug.no_2 "normalize_max_renaming_list_failesc_context" 
+      pr_f pr_ctx pr_ctx
+      (fun _ _ -> normalize_max_renaming_list_failesc_context f pos b ctx) f ctx
+
 let normalize_max_renaming_list_failesc_context f pos b ctx =
   (* let _ = print_string("cris: normalize 13\n") in *)
   Gen.Profiling.do_2 "normalize_max_renaming_list_failesc_context" (normalize_max_renaming_list_failesc_context f pos) b ctx
