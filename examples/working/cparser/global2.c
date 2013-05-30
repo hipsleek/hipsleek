@@ -11,4 +11,5 @@ void increase()
 // writes k; read n
 {
 	k = k+n;
+  //@ dprint;
 }

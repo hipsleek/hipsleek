@@ -205,6 +205,7 @@ and global =
   | GText of string                     (** Some text (printed verbatim) at 
                                             top level. E.g., this way you can 
                                             put comments in the output.  *)
+  | GView of Iast.view_decl * location  (** HIP/SLEEK *)
 
 
 (** The various types available. Every type is associated with a list of 
