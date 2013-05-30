@@ -1591,8 +1591,8 @@ let rec match_unk_preds lhs_hpargs rhs_args=
   match lhs_hpargs with
     | [] -> false
     | (_,args)::rest ->
-          let _ = Debug.info_pprint ("    args:" ^(!CP.print_svl args)) no_pos in
-          if  List.length rhs_args = List.length args && CP.diff_svl rhs_args args = [] then true
+          if  List.length rhs_args = List.length args && CP.diff_svl rhs_args args = []
+          then true
           else match_unk_preds rest rhs_args
 
 (*
@@ -2157,8 +2157,8 @@ let infer_collect_hp_rel_x prog (es:entail_state) rhs rhs_rest (rhs_h_matched_se
                     else 
                     if  not(CF.isLend (hd.CF.h_formula_data_imm)) then (f,h) else
                       (* let _ = DD.info_pprint ("  hd: " ^ (Cprinter.string_of_h_formula (h ))) pos in *)
-                  (* let ss = List.combine hd.CF.h_formula_data_arguments hd.CF.h_formula_data_param_imm in *)
-                  (* let n_param_imm = List.map (fun (sv,imm) -> if CP.is_node_typ sv then CF.ConstAnn Mutable else imm) ss in *)
+                      (* let ss = List.combine hd.CF.h_formula_data_arguments hd.CF.h_formula_data_param_imm in *)
+                      (* let n_param_imm = List.map (fun (sv,imm) -> if CP.is_node_typ sv then CF.ConstAnn Mutable else imm) ss in *)
                   let n_param_imm = List.map (fun _ -> CF.ConstAnn Mutable) hd.CF.h_formula_data_param_imm in
                   let new_h = DataNode {hd with CF.h_formula_data_imm = (CF.ConstAnn(Mutable));
                       CF.h_formula_data_param_imm = n_param_imm} in

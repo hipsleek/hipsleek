@@ -15,15 +15,15 @@ HeapPred G1(node a, node b).
 node paper_fix (node c, node p)
   infer[H1,G1] requires H1(c,p) ensures G1(c,p);
 {
-	if (c!=null) 
-	{
+  if (c!=null) 
+    {
       bind c to (_,pp,nn) in {
-		pp=p;
-                dprint;
-		paper_fix(nn,c);	
+        pp=p;
+        dprint;
+        paper_fix(nn,c);
       }
-	}
-	return c;
+    }
+  return c;
 }
 
   /*
