@@ -6484,7 +6484,7 @@ and heap_entail_build_mix_formula_check_a (evars : CP.spec_var list) (ante : MCP
 
 and heap_entail_build_mix_formula_check i (evars : CP.spec_var list) (ante : MCP.mix_formula) (conseq : MCP.mix_formula) pos : (MCP.mix_formula * MCP.mix_formula) =
   let pr = Cprinter.string_of_mix_formula in
-  Debug.ho_3_num i "heap_entail_build_mix_formula_check"  
+  Debug.no_3_num i "heap_entail_build_mix_formula_check"  
       (add_str "evars" (fun l -> Cprinter.string_of_spec_var_list l)) 
       (add_str "ante" pr) (add_str "conseq" pr) (pr_pair pr pr)
       ( fun c1 ante c2 -> heap_entail_build_mix_formula_check_a c1 ante c2 pos) evars ante conseq       
