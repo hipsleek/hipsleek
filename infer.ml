@@ -2049,6 +2049,9 @@ let infer_collect_hp_rel_x prog (es:entail_state) rhs rhs_rest (rhs_h_matched_se
         let v_rhs = (CF.h_fv (rhs)) in
         let v_hp_rel = es.CF.es_infer_vars_hp_rel in
         let v_2_rename = Gen.BList.difference_eq CP.eq_spec_var v_rhs (v_lhs@v_hp_rel) in
+        let fr_svl = CP.fresh_spec_vars v_2_rename in
+        let sst0 = List.combine v_2_rename fr_svl in
+        let rhs = CF.h_subst sst0 rhs in
         let _ = DD.info_hprint (add_str "lhs(vars)" pr_svl) v_lhs no_pos in
         let _ = DD.info_hprint (add_str "rhs(vars)" pr_svl) v_rhs no_pos in
         let _ = DD.info_hprint (add_str "vars_sel_hp_rel" pr_svl) es.CF.es_infer_vars_sel_hp_rel no_pos in
@@ -2076,8 +2079,12 @@ let infer_collect_hp_rel_x prog (es:entail_state) rhs rhs_rest (rhs_h_matched_se
           let ls_unknown_ptrs,hds,hvs,lhras,rhras,eqNull,lselected_hps,rselected_hps,defined_hps,unk_svl,unk_pure,unk_map =
             find_undefined_selective_pointers prog lhs_b mix_lf rhs rhs_rest
                 (rhs_h_matched_set@his_ptrs) leqs reqs pos es.CF.es_infer_hp_unk_map in
-          let (_,mix_rf,_,_,_) = CF.split_components (CF.Base rhs_b) in
-          let reqNulls = MCP.get_null_ptrs mix_rf in
+          let reqNulls = if !Globals.allow_imm then
+            MCP.get_null_ptrs (MCP.mix_of_pure es.CF.es_aux_conseq)
+          else
+            let (_,mix_rf,_,_,_) = CF.split_components (CF.Base rhs_b) in
+            MCP.get_null_ptrs mix_rf
+          in
           let rhs_b1 = CF.formula_base_of_heap rhs pos in
           let update_fb (fb,r_hprels,hps,hfs) unknown_ptrs =
             match unknown_ptrs with
@@ -2101,7 +2108,7 @@ let infer_collect_hp_rel_x prog (es:entail_state) rhs rhs_rest (rhs_h_matched_se
           ) [] ls_unknown_ptrs in
           let unk_eqNulls1 = CP.remove_dups_svl unk_eqNulls in
           let fr_svl =  CP.fresh_spec_vars unk_eqNulls1 in
-          let sst = List.combine unk_eqNulls1 fr_svl in
+          let sst = (* List.combine unk_eqNulls1 fr_svl *) [] in
           let new_rhs_b = ({new_rhs_b with CF.formula_base_heap = CF.h_subst sst new_rhs_b.CF.formula_base_heap; 
 	      CF.formula_base_pure =MCP.regroup_memo_group (MCP.m_apply_par sst new_rhs_b.CF.formula_base_pure); 
               CF.formula_base_and = (List.map (fun f -> CF.one_formula_subst sst f) new_rhs_b.CF.formula_base_and);})
@@ -2211,7 +2218,7 @@ let infer_collect_hp_rel_x prog (es:entail_state) rhs rhs_rest (rhs_h_matched_se
                 (* DD.info_pprint ("  new residue: " ^ (Cprinter.string_of_formula new_es.CF.es_formula)) pos; *)
                 (* DD.info_pprint ("  new_lhs: " ^ (Cprinter.string_of_h_formula new_lhs)) pos; *)
                 let new_rhs = CF.drop_hnodes_f (CF.Base rhs_b) [hd.CF.h_formula_data_node] in
-                (true, new_es,new_lhs , Some new_rhs)
+                (true, new_es,new_lhs , None(* Some new_rhs *))
               end
             | _ -> begin
                 let new_es_formula =  List.fold_left update_es_f es.CF.es_formula r_new_hfs in

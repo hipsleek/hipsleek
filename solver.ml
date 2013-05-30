@@ -5303,6 +5303,7 @@ and heap_entail_split_rhs_phases_x (prog : prog_decl) (is_folding : bool) (ctx_0
 	          match conseq with  
 	            | Base(bf) -> 
 	                  let h, p, fl, t, a = CF.split_components conseq in
+                          (* let _ =  Debug.info_pprint ("XXXX 2 p: " ^ (Cprinter.string_of_mix_formula p)) no_pos in *)
 	                  helper ctx_with_rhs (* ctx_0 *) h p (fun xh xp -> CF.mkBase xh xp t fl a pos)
 	            | Exists ({formula_exists_qvars = qvars;
 		          formula_exists_heap = qh;
@@ -5313,7 +5314,7 @@ and heap_entail_split_rhs_phases_x (prog : prog_decl) (is_folding : bool) (ctx_0
 		          formula_exists_pos = pos}) ->
 	                  (* quantifiers on the RHS. Keep them for later processing *)
 	                (* let rel_args = CP.get_rel_args (MCP.pure_of_mix qp) in *)
-                    (* let _ =  Debug.info_pprint ("XXXX rel_args: " ^ (!CP.print_svl rel_args)) no_pos in *)
+                    (* let _ =  Debug.info_pprint ("XXXX qp: " ^ (Cprinter.string_of_mix_formula qp)) no_pos in *)
                     (* let qvars1 = CP.diff_svl qvars rel_args in *)
                     let ws = CP.fresh_spec_vars qvars in
                       let st = List.combine qvars ws in
@@ -9250,7 +9251,7 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
                  and then restore M_unmatched_rhs to previous code without
                  any inference *)
       | Context.M_infer_heap (rhs,rhs_rest) ->
-            (* let _ =  Debug.info_pprint ("rhs_b 1: " ^ (Cprinter.string_of_formula_base rhs_b)) pos in *)
+            (* let _ =  Debug.info_pprint ("conseq 1: " ^ (Cprinter.string_of_formula conseq)) pos in *)
             let r = do_infer_heap rhs rhs_rest caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:CP.spec_var list) is_folding pos in
             (* (CF.mkFailCtx_in (Basic_Reason (mkFailContext "infer_heap not yet implemented" estate (Base rhs_b) None pos, *)
             (* CF.mk_failure_bot ("infer_heap .. "))), NoAlias) *)

@@ -16,7 +16,7 @@ pred lseg<p> ==
 
 infer [H2] H2(r)   |- r::node<_,null> .
 print residue.
-//checkentail r::node<_,_>   |- r::node<_,null> .
+//checkentail (exists p: r::node<_,p> & p!=null)   |- r::node<_,null> .
 //print residue.
 //infer [H2] H2(r)   |- r::node<_,p> & p=null .
 //print residue.

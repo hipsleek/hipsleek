@@ -8,7 +8,7 @@ HeapPred H2x(node a).
 //infer [H2] H2(r)   |- (exists p: r::node<p> & p!=null).
 //print residue.
 
-infer [H2x] r::node<q> * H2x(q)   |- (exists p: r::node<p> & p!=null).
+infer [H2x] r::node<q> * H2x(q)   |- (exists p: r::node<p> & p=null).
 print residue.
 
 
