@@ -6482,9 +6482,9 @@ and heap_entail_build_mix_formula_check_a (evars : CP.spec_var list) (ante : MCP
     ^"\n added inner: "^(Cprinter.string_of_mix_formula tmp1)^"\n added outer: "^(Cprinter.string_of_mix_formula tmp2)^"\n") in*)
   (ante,tmp2)
 
-and heap_entail_build_mix_formula_check (evars : CP.spec_var list) (ante : MCP.mix_formula) (conseq : MCP.mix_formula) pos : (MCP.mix_formula * MCP.mix_formula) =
+and heap_entail_build_mix_formula_check i (evars : CP.spec_var list) (ante : MCP.mix_formula) (conseq : MCP.mix_formula) pos : (MCP.mix_formula * MCP.mix_formula) =
   let pr = Cprinter.string_of_mix_formula in
-  Debug.ho_3 "heap_entail_build_mix_formula_check"  
+  Debug.ho_3_num i "heap_entail_build_mix_formula_check"  
       (add_str "evars" (fun l -> Cprinter.string_of_spec_var_list l)) 
       (add_str "ante" pr) (add_str "conseq" pr) (pr_pair pr pr)
       ( fun c1 ante c2 -> heap_entail_build_mix_formula_check_a c1 ante c2 pos) evars ante conseq       
@@ -6518,7 +6518,7 @@ and xpure_imply_x (prog : prog_decl) (is_folding : bool)   lhs rhs_p timeout : b
   let _ = reset_int2 () in
   let xpure_lhs_h, _, memset = xpure_heap 8 prog (mkStarH lhs_h estate.es_heap pos) lhs_p 1 in
   let tmp1 = MCP.merge_mems lhs_p xpure_lhs_h true in
-  let new_ante, new_conseq = heap_entail_build_mix_formula_check (estate.es_evars@estate.es_gen_expl_vars@estate.es_gen_impl_vars@estate.es_ivars) tmp1 
+  let new_ante, new_conseq = heap_entail_build_mix_formula_check 1 (estate.es_evars@estate.es_gen_expl_vars@estate.es_gen_impl_vars@estate.es_ivars) tmp1 
     (MCP.memoise_add_pure_N (MCP.mkMTrue pos) rhs_p) pos in
   let (res,_,_) = imply_mix_formula_no_memo new_ante new_conseq !imp_no !imp_subno (Some timeout) memset in
   imp_subno := !imp_subno+1;  
@@ -6958,9 +6958,9 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
         else tmp3
       in
       let exist_vars = estate.es_evars@estate.es_gen_expl_vars@estate.es_ivars (* @estate.es_gen_impl_vars *) in
-      let (split_ante1, new_conseq1) as xx = heap_entail_build_mix_formula_check exist_vars tmp3 rhs_p pos in
+      let (split_ante1, new_conseq1) as xx = heap_entail_build_mix_formula_check 2 exist_vars tmp3 rhs_p pos in
       let split_ante0, new_conseq0 = 
-        if (!Globals.super_smart_xpure) then heap_entail_build_mix_formula_check exist_vars tmp2 rhs_p pos
+        if (!Globals.super_smart_xpure) then heap_entail_build_mix_formula_check 3 exist_vars tmp2 rhs_p pos
         else xx
       in
       (* let _ = print_string ("An Hoa :: heap_entail_empty_rhs_heap :: After heap_entail_build_mix_formula_check\n" ^ *)
@@ -8984,7 +8984,7 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
                       else MCP.find_rel_constraints (rhs_b.formula_base_pure) vars in
 		          let xpure_lhs, _, memset = xpure prog (Base lhs_b) in
                   let lhs_frac = MCP.memoise_add_pure_N  xpure_lhs perm_f in
-                  let split_ante,split_conseq = heap_entail_build_mix_formula_check exists_vars lhs_frac rhs_frac pos in
+                  let split_ante,split_conseq = heap_entail_build_mix_formula_check 4 exists_vars lhs_frac rhs_frac pos in
                   let flag_conseq_true = MCP.isConstMTrue split_conseq in
                   let imp_subno = ref 0 in
                   (*if xpure(lhs) & f1=f2 |- frac(rhs_p) *)
