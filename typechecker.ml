@@ -1515,7 +1515,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                           (* let f_esc = proc_esc_stack pid in *)
                           (* TODO WN : Does this work for field level access? *)
                           let tmp_res2 = 
-		            if not(CF.isLend imm_node) && not(CF.isAccs imm_node) (*&& not(!Globals.allow_field_ann)*)then 
+		            if not(CF.isLend imm_node) && not(CF.isAccs imm_node) && not(!Globals.allow_field_ann) then 
 		              CF.normalize_max_renaming_list_failesc_context_4_bind pid vheap pos true tmp_res1 
     			          (* for Lend, Accs and field level annotations it should not be added back *)
 		            else tmp_res1 
