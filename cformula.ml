@@ -9835,6 +9835,7 @@ and disable_imm_last_phase lctx =
       let new_cl = List.map (fun c -> disable_imm_last_phase_ctx c) cl
       in SuccCtx(new_cl))
 
+
 and add_to_subst lctx r_subst l_subst =
   match lctx with
     | FailCtx _ -> lctx
@@ -9848,6 +9849,13 @@ and add_to_subst lctx r_subst l_subst =
     		})) c) cl
       in SuccCtx(new_cl)
 
+let add_to_subst lctx r_subst l_subst =
+  let pr = !print_svl in
+  Debug.ho_2 "add_to_subst" pr pr pr_none (fun _ _ -> add_to_subst lctx r_subst l_subst) r_subst l_subst
+
+let enable_imm_last_phase lctx =
+  let pr = !print_list_context in
+  Debug.ho_1 "enable_imm_last_phase" pr pr (fun _ -> enable_imm_last_phase lctx) lctx 
 
 let reset_original (f : formula) : formula = add_original f true 
 let reset_original_es x = {x with es_formula = (reset_original x.es_formula)} 

@@ -582,3 +582,72 @@ relAssume G1
  emp&c=null --> G1(c,p) .
 shape_infer [][G1].//[pre_hps][post_hps]
 
+
+# bug-app3.slk
+
+When generating:
+ es_infer_hp_rel: [H2(r)&true --> r::node<Anon_13,flted_17_34>@M * 
+                    (HP_35(flted_17_34))&true]
+We used the RHS variables:
+ r::node<Anon_13,flted_17_34>@M 
+
+But the RHS vars may be bound and this causes a
+name clash. Thus, it seem necessary to generate
+a fresh set of names, such as:
+ r::node<Anon_98,flted_17_99>@M 
+and then generate:
+ H2(r)&true --> r::node<Anon_98,flted_17_99>@M * 
+                    (HP_35(flted_17_34))&true]
+
+I have found one place to perform this change as shown below:
+
+!!! >>>>>> infer_hp_rel <<<<<<
+!!!   lhs:  H2(r)&true&{FLOW,(19,20)=__norm}[]
+!!!   rhs:  r::node<Anon_13,flted_17_34>@M[Orig]&true&{FLOW,(19,20)=__norm}[]
+!!!   unmatch:  r::node<Anon_13,flted_17_34>@M[Orig]
+!!! ==========================
+!!! LOC : renaming needed here
+!!! ==========================
+!!! lhs: H2(r)&true&{FLOW,(19,20)=__norm}[]
+!!! rhs: r::node<Anon_13,flted_17_34>@M[Orig]
+!!! lhs(vars):[H2,r]
+!!! rhs(vars):[r,Anon_13,flted_17_34]
+!!! VARS ro rename in RHS:[Anon_13,flted_17_34]
+
+
+
+bug-app3.slk:
+
+add_to_subst@5@3@2@1
+add_to_subst inp1 :[flted_17_34]
+add_to_subst inp2 :[flted_17_34]
+add_to_subst@5 EXIT out :?
+
+a:604:heap_entail_split_rhs_phases@2@1
+a:605:heap_entail_split_rhs_phases inp1 : es_formula: H2(r)&true&{FLOW,(19,20)=__norm}[]
+a:617:heap_entail_split_rhs_phases inp2 : r::node<Anon_13,flted_17_34>@M[Orig]&flted_17_34=null&
+a:619:heap_entail_split_rhs_phases@2 EXIT out : 
+a:642:heap_entail_split_rhs_phases@1
+a:643:heap_entail_split_rhs_phases inp1 : es_formula: H2(r)&true&{FLOW,(19,20)=__norm}[]
+a:654:heap_entail_split_rhs_phases inp2 : EXISTS(flted_17_30: r::node<Anon_13,flted_17_30>@M[Orig]&flted_17_30=null&
+a:656:heap_entail_split_rhs_phases@1 EXIT out : 
+
+bug-imm.slk:
+
+add_to_subst@5@3@2@1
+add_to_subst inp1 :[nnn_36]
+add_to_subst inp2 :[xxx]
+add_to_subst@5 EXIT out :?
+
+a:142:!!!:0: 0: heap_entail_conjunct_lhs: invoking heap_entail_split_rhs_phases
+a:144:@1!:0: 0: heap_entail_split_rhs_phases: 
+a:161:@2!bug-imm.slk:17: 38: heap_entail_split_rhs_phases: 
+a:549:heap_entail_split_rhs_phases@2@1
+a:550:heap_entail_split_rhs_phases inp1 : es_formula: r::node<xxx,Anon_13>@M[Orig]&xxx=6&{FLOW,(19,20)=__norm}[]
+a:561:heap_entail_split_rhs_phases inp2 : r::node<nnn_36,Anon_14>@M[Orig]&4<nnn_36&{FLOW,(19,20)=__norm}[]
+a:562:heap_entail_split_rhs_phases@2 EXIT out : 
+a:580:heap_entail_split_rhs_phases@1
+a:581:heap_entail_split_rhs_phases inp1 : es_formula: r::node<xxx,Anon_13>@M[Orig]&xxx=6&{FLOW,(19,20)=__norm}[]
+a:591:heap_entail_split_rhs_phases inp2 : EXISTS(nnn_32: r::node<nnn_32,Anon_14>@M[Orig]&4<nnn_32&
+a:593:heap_entail_split_rhs_phases@1 EXIT out : 
+
