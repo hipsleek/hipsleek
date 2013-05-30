@@ -7928,7 +7928,7 @@ and normalize_es (f : formula) (pos : loc) (result_is_sat:bool) (es : entail_sta
   let pr = !print_formula in
   let pr_e = !print_entail_state in
   let pr_c = !print_context in
-  Debug.ho_2 "normalize_es" pr pr_e pr_c (fun _ _ -> normalize_es_x  f pos  result_is_sat es) f es
+  Debug.no_2 "normalize_es" pr pr_e pr_c (fun _ _ -> normalize_es_x  f pos  result_is_sat es) f es
 
 
 and normalize_es_x (f : formula) (pos : loc) (result_is_sat:bool) (es : entail_state): context = 
@@ -7978,7 +7978,7 @@ and normalize_clash_es (f : formula) (pos : loc) (result_is_sat:bool)(es:entail_
   let pr = !print_formula in
   let pr_e = !print_entail_state in
   let pr_c = !print_context in
-  Debug.ho_2 "normalize_clash_es" pr pr_e pr_c (fun _ _ -> normalize_clash_es_x  f pos  result_is_sat es) f es
+  Debug.no_2 "normalize_clash_es" pr pr_e pr_c (fun _ _ -> normalize_clash_es_x  f pos  result_is_sat es) f es
 
 and normalize_clash_es_x (f : formula) (pos : loc) (result_is_sat:bool)(es:entail_state): context =
   (* let _ = print_string ("\nCformula.ml: normalize_clash_es") in *)
@@ -9264,7 +9264,7 @@ let normalize_max_renaming_list_failesc_context_4_bind pid f pos b ctx =
 let normalize_max_renaming_list_failesc_context_4_bind pid f pos b ctx =
   let pr_f = !print_formula in
   let pr_ctx = pr_list !print_failesc_context in
-  Debug.ho_2 "normalize_max_renaming_list_failesc_context_4_bind" 
+  Debug.no_2 "normalize_max_renaming_list_failesc_context_4_bind" 
       pr_f pr_ctx pr_ctx
       (fun _ _ -> normalize_max_renaming_list_failesc_context_4_bind pid f pos b ctx) f ctx
 

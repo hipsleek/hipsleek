@@ -8742,7 +8742,7 @@ and process_unfold_x prog estate conseq a is_folding pos has_post pid =
 and do_infer_heap rhs rhs_rest caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:CP.spec_var list) is_folding pos =
   let pr1 = Cprinter.string_of_h_formula in
   let pr2 = Cprinter.string_of_formula in
-  let pr3 = "???" in
+  let pr3 = (fun (c,_) -> Cprinter.string_of_list_context c) in
   Debug.no_5 " do_infer_heap" pr1 pr1 pr2 pr2 pr2 pr3 (fun _ _ _ _ _-> do_infer_heap_x rhs rhs_rest caller prog estate conseq lhs_b rhs_b a rhs_h_matched_set is_folding pos) rhs rhs_rest conseq (Base lhs_b) (Base rhs_b)
 
 and do_infer_heap_x rhs rhs_rest caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:CP.spec_var list) is_folding pos = 
@@ -8758,6 +8758,7 @@ and do_infer_heap_x rhs rhs_rest caller prog estate conseq lhs_b rhs_b a (rhs_h_
     (*    let fml = CP.mkAnd lhs_xpure rhs_xpure pos in*)
     let fml = MCP.merge_mems lhs_xpure rhs_xpure true in
     let check_sat = TP.is_sat_raw fml in
+    let _ = DD.tinfo_hprint (add_str "check_sat" string_of_bool) check_sat no_pos in
     (* check if there is a contraction with the RHS heap *)
     let r = 
       if check_sat then Inf.infer_heap_nodes estate rhs rhs_rest conseq pos
@@ -8765,7 +8766,8 @@ and do_infer_heap_x rhs rhs_rest caller prog estate conseq lhs_b rhs_b a (rhs_h_
     begin
       match r with
         | Some (new_iv,new_rn,dead_iv) -> 
-              let new_estate = 
+              let new_estate =
+                let _ = DD.tinfo_hprint (add_str "new_rn" Cprinter.string_of_h_formula) new_rn no_pos in
                 {estate with 
                     es_infer_vars = new_iv; 
                     es_infer_vars_dead = dead_iv@estate.es_infer_vars_dead; 
