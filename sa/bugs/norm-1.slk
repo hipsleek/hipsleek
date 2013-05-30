@@ -1,0 +1,23 @@
+data node {
+  int val;
+  node next;
+}.
+/*
+
+pred ll<> == self=null
+  or self::node<_,q>*q::ll<>
+  inv true.
+
+pred lseg<p> == self=p
+  or self::node<_,q>*q::lseg<p>
+  inv true.
+*/
+pred l2<y> == self::node<a,p> & y=p//self::node<a,null> & y=self
+  or self::node<_,q>*q::l2<y>
+  inv true.
+  //inv y!=null.
+  // l2<y> can be transformed to self::node<_,q>*q::lseg<>
+  // say under option --sa-extract
+
+
+shape_extract [l2].

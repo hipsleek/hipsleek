@@ -1,0 +1,35 @@
+data node{
+	int val;
+	node prev;
+	node next;
+}.
+
+HeapPred H1(node a).
+HeapPred G1(node a, node b).
+HeapPred HP_5(node a).
+HeapPred HP_6(node a).
+
+relAssume H1
+ H1(c)&c!=null --> c::node<_,_,n>@M * 
+  //HP_5(prev_19_765') *
+  // above triggers infinite loop
+  HP_6(n)&true.
+
+relAssume H1 HP_6(n)&true --> H1(n)&true.
+
+relAssume H1 H1(c)&c=null --> emp&true.
+
+
+shape_infer [H1][].//[pre_hps][post_hps]
+
+/*
+
+Why did we get emp?
+
+*************************************
+*******relational definition ********
+*************************************
+[ H1(c_28) ::= emp&c_28=null]
+*************************************
+
+*/

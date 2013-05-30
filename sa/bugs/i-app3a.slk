@@ -1,0 +1,39 @@
+data node{
+	int val;
+        node prev;
+	node next;
+}.
+
+HeapPred G1(node a, node b).
+HeapPred HP_3(node a, node b).
+
+
+relAssume G1
+ c::node<_,p,t>@M *  G1(t,y) * HP_3(p,y) & t!=null 
+ --> G1(c,y)&true.
+
+relAssume G1
+  c::node<_,p,y>@M * HP_3(p,y) --> G1(c,y)&true.
+
+shape_infer [][G1].
+
+/*
+
+Problem : Post-predicate HP_3 is redundant and could be eliminated
+see steps-i-app3a.txt
+
+*************************************
+*******relational definition ********
+*************************************
+[ G1(c_31,y_32) ::= c_31::node<Anon_11,p,t>@M * (HP_33(p,t,y_32)) * (HP_3(p,y_32))&true,
+ HP_33(p,t,y_32) ::= 
+ emp&t=y_32
+ or t::node<Anon_11,p_34,t_35>@M * (HP_33(p_34,t_35,y_32)) * 
+    (HP_3(p_34,y_32))&true
+ ]
+*************************************
+
+
+
+*/
+

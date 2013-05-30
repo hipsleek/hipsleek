@@ -1,0 +1,15 @@
+data node {
+  int val;
+  node next;
+}.
+
+//relation H2(node a).
+HeapPred H2(node a).
+
+infer [H2] H2(x) & n>0 |- x=null & n>=0.
+print residue.
+
+/*
+infer [H2] x=null |- H2(x).
+print residue.
+*/

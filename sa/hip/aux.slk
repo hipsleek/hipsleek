@@ -1,0 +1,54 @@
+data node {
+	int val; 
+	node next;	
+}.
+
+HeapPred K(node a).
+HeapPred G2(node a, node b).
+HeapPred G(node a, node b).
+
+/*
+infer [G2] x::node<_,y> * K(y) |- x::node<_,p>*G2(p,y)*K(y).
+print residue.
+
+infer [G2] x::node<_,p> * p::node<_,p2>*G2(p2,y)*K(y) & p!=null 
+    |- x::node<_,p>*G2(p,y)*K(y).
+print residue.
+*/
+
+infer [G2] x::node<_,p> * p::node<_,p2>*G2(p2,y)*K(y) & p!=null 
+    |- x::node<_,p>*G2(p,y)*K(y).
+print residue.
+/*
+FAIL but later appear as in next entailment!
+ p::node<Anon_12,p2>@M * G2(p2,y)& XPURE(K(y)) --> G2(p,y)&true,
+ p::node<Anon_12,p2>@M * G2(p2,y)& XPURE(K(y)) --> G2(p,y)&true,
+*/
+
+infer [G2] x::node<_,y> |- x::node<_,p>*G2(p,y).
+print residue.
+/* Good
+[ emp&p=y --> G2(p,y)&true]
+*/
+
+infer [G2] x::node<_,y> * K(y) |- x::node<_,p>*G2(p,y)*K(y).
+print residue.
+/* Fail
+ Expecting y=p & XPURE(K(y)) ==> G2(p,y) which
+ seems to have been collected by yet FAILs.
+  emp&p=y &  XPURE(K(y)) --> G2(p,y)&true,
+ */
+
+
+infer [G2] x::node<_,y> |- x::node<_,p>*G2(p,y).
+print residue.
+/*
+Why did we get below. I suppose we forgot to clear the
+pass results.
+
+[ emp&p=y &  XPURE(K(y)) --> G2(p,y)&true,
+ emp&p=y &  XPURE(K(y)) --> G2(p,y)&true,
+ emp&p=y --> G2(p,y)&true]
+
+*/
+

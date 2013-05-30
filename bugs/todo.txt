@@ -29,6 +29,8 @@ and n3=1 occurs when n2=0 presumably.
 
 #
 
+
+
 added memo_Pure re-patch;
       should do it more selectively
 
@@ -89,20 +91,20 @@ x3::node<x4>
 & x1=x2 & x2=x3
 |- false.
 
-# bind2.ss
+# test-5a.slk
 
-dynamic  EBase hfalse&false&{FLOW,(22,23)=__norm}[]
-{(((node t_32;
-bind c to (Anon_33,nn_34) [write] in 
-{(dprint;
-t_32 = nn_34)});
-dprint);
-return t_32)}
+How come explicit instantiation still have "exist" wrapper?
 
-ERROR : why did bind not temporarily remove a node?
-It seems we still use @L annotation on node & field regardless.
-Note how 2nd dprint has become false.
+ checkentail x::sll<n> & n>2 |- [q] x::node<_,q>.
 
+/*
+
+Why is there an EXIST q wrapper for explicit instantiation?
+
+ <1>EXISTS(q,flted_8_243: q::sll<flted_8_243>@M[0][Orig]&n=flted_8_243+1 & 2<n & q=q&{FLOW,(19,20)=__norm})[]
+
+
+*/
 @2! vheap: c'::node<Anon_12'@L,nn'@L>@L[Orig]&true&{FLOW,(1,25)=__flow}[]
 @2! vheap 2: c'::node<Anon_12'@L,nn'@L>@L[Orig]&true&{FLOW,(1,25)=__flow}[]
 
