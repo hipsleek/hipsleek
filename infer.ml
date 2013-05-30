@@ -1975,9 +1975,9 @@ let constant_checking prog rhs lhs_b rhs_b es=
   let r,new_lhs = SAU.simp_matching prog (CF.Base lhs_b) (CF.Base rhs_b) in
   if r then
     let new_es = {es with CF.es_formula = new_lhs} in
-    (true, new_es, rhs, (CF.Base rhs_b))
+    (true, new_es, rhs, None)
   else
-    (false, es, rhs,(CF.Base rhs_b))
+    (false, es, rhs, None)
 
 (*
 type: Cast.prog_decl ->
@@ -2023,14 +2023,14 @@ let infer_collect_hp_rel_x prog (es:entail_state) rhs rhs_rest (rhs_h_matched_se
         let _ =
           (* let pr_elem = Cpure.SV.string_of in *)
           (* let pr2 = pr_list (pr_pair pr_elem pr_elem) in *)
-          DD.tinfo_pprint ">>>>>> infer_hp_rel <<<<<<" pos;
+          DD.info_pprint ">>>>>> infer_hp_rel <<<<<<" pos;
           DD.tinfo_pprint ("  es_heap: " ^ (Cprinter.string_of_h_formula es.CF.es_heap)) pos;
           DD.tinfo_pprint ("  footprint: " ^ (let pr=pr_list_ln Cprinter.string_of_h_formula in pr es.CF.es_history)) pos;
-          DD.tinfo_pprint ("  lhs: " ^ (Cprinter.string_of_formula_base lhs_b)) pos;
+          DD.info_pprint ("  lhs: " ^ (Cprinter.string_of_formula_base lhs_b)) pos;
           DD.info_pprint ("  rhs: " ^ (Cprinter.string_of_formula_base rhs_b)) pos;
           DD.tinfo_pprint ("  unmatch: " ^ (Cprinter.string_of_h_formula rhs)) pos;
           (* DD.info_pprint ("  lhs aliases: " ^  (pr2 leqs)) pos; (\* aliases from LHS *\) *)
-          (* DD.info_pprint ("  rhs aliases: " ^  (pr2 reqs)) pos;  (\* aliases from LHS *\) *)
+          (* DD.info_pprint ("  rhs aliases: " ^  (pr2 reqs)) pos;  (\* aliases from RHS *\) *)
         in
         let mis_nodes =  match rhs with
           | DataNode n -> [n.h_formula_data_node]
@@ -2090,15 +2090,15 @@ let infer_collect_hp_rel_x prog (es:entail_state) rhs rhs_rest (rhs_h_matched_se
             | CF.DataNode hd -> if CP.mem_svl hd.CF.h_formula_data_node matched_svl1 then [] else [hf]
 	    | _ -> [hf]
 	  ) es.CF.es_history) in
-      DD.info_pprint ("  new_rhs_b: " ^ (Cprinter.string_of_formula_base new_rhs_b)) pos;
-      let lhs_b0 = CF.mkAnd_base_pure lhs_b (MCP.mix_of_pure unk_pure) pos in
-      let group_unk_svl = List.concat (List.map (fun ass -> ass.CF.unk_svl) Log.current_hprel_ass_stk # get_stk) in
-      let total_unk_svl = CP.remove_dups_svl (group_unk_svl@unk_svl) in
-      let post_hps,prog_vars = get_prog_vars es.CF.es_infer_vars_sel_hp_rel rhs proving_kind#string_of
+          DD.ninfo_pprint ("  new_rhs_b: " ^ (Cprinter.string_of_formula_base new_rhs_b)) pos;
+          let lhs_b0 = CF.mkAnd_base_pure lhs_b (MCP.mix_of_pure unk_pure) pos in
+          let group_unk_svl = List.concat (List.map (fun ass -> ass.CF.unk_svl) Log.current_hprel_ass_stk # get_stk) in
+          let total_unk_svl = CP.remove_dups_svl (group_unk_svl@unk_svl) in
+          let post_hps,prog_vars = get_prog_vars es.CF.es_infer_vars_sel_hp_rel rhs proving_kind#string_of
             (* !Log.sleek_proving_kind *) in
-      let new_rhs_b0 = {new_rhs_b with 
-          CF.formula_base_heap =  CF.check_imm_mis rhs new_rhs_b.CF.formula_base_heap} in
-      let (new_lhs_b,new_rhs_b) = simplify_lhs_rhs prog lhs_b0 new_rhs_b0 leqs reqs hds hvs lhras (rhras@new_hrels)
+          let new_rhs_b0 = {new_rhs_b with 
+              CF.formula_base_heap =  CF.check_imm_mis rhs new_rhs_b.CF.formula_base_heap} in
+          let (new_lhs_b,new_rhs_b) = simplify_lhs_rhs prog lhs_b0 new_rhs_b0 leqs reqs hds hvs lhras (rhras@new_hrels)
             (lselected_hps) (rselected_hps@(List.map (fun (hp,_,_) -> hp) new_hrels)) es.CF.es_crt_holes ((* es.CF.es_heap:: *)(*es.CF.es_history*) sel_his) total_unk_svl prog_vars in
           (*simply add constraints: *)
           let hprel_def = List.concat (List.map CF.get_ptrs (es.CF.es_history@(CF.get_hnodes es.CF.es_heap))) in
@@ -2131,7 +2131,7 @@ let infer_collect_hp_rel_x prog (es:entail_state) rhs rhs_rest (rhs_h_matched_se
           let hp_rel_list = hp_rels@defined_hprels in
           let _ = rel_ass_stk # push_list (hp_rel_list) in
           let _ = Log.current_hprel_ass_stk # push_list (hp_rel_list) in
-          DD.info_pprint ("  hp_rels: " ^ (let pr = pr_list_ln Cprinter.string_of_hprel in pr hp_rel_list)) pos;
+          DD.tinfo_pprint ("  hp_rels: " ^ (let pr = pr_list_ln Cprinter.string_of_hprel in pr hp_rel_list)) pos;
           let update_es_f f new_hf=
             (CF.mkAnd_f_hf f (CF.h_subst leqs new_hf) pos)
           in
@@ -2156,7 +2156,7 @@ let infer_collect_hp_rel_x prog (es:entail_state) rhs rhs_rest (rhs_h_matched_se
                 let well_defined_svl = List.concat (List.map (fun (hp,args,_) -> hp::args) defined_hps) in
                 let root_vars_ls2 = SAU.find_close root_vars_ls1 leqs in
                 let new_es_formula = SAU.drop_data_view_hrel_nodes_from_root prog new_es_formula hds hvs leqs root_vars_ls2 well_defined_svl in
-                let _ = DD.info_pprint ("  after: " ^ (Cprinter.string_of_formula new_es_formula)) pos in
+                let _ = DD.ninfo_pprint ("  after: " ^ (Cprinter.string_of_formula new_es_formula)) pos in
                 (*CF.drop_hrel_f new_es_formula lhrs in *)
                 (*add mismatched heap into the entail states if @L*)
                 let check_consumed_node h f=
@@ -2180,10 +2180,10 @@ let infer_collect_hp_rel_x prog (es:entail_state) rhs rhs_rest (rhs_h_matched_se
                     CF.es_infer_hp_unk_map = (es.CF.es_infer_hp_unk_map@unk_map);
                     CF.es_infer_vars_sel_post_hp_rel = (es.CF.es_infer_vars_sel_post_hp_rel @ post_hps);
                     CF.es_formula = (* CF.mkAnd_f_hf *) new_es_formula1 (* new_lhs pos *)} in
-                DD.info_pprint ("  new residue: " ^ (Cprinter.string_of_formula new_es.CF.es_formula)) pos;
-                DD.info_pprint ("  new_lhs: " ^ (Cprinter.string_of_h_formula new_lhs)) pos;
+                (* DD.info_pprint ("  new residue: " ^ (Cprinter.string_of_formula new_es.CF.es_formula)) pos; *)
+                (* DD.info_pprint ("  new_lhs: " ^ (Cprinter.string_of_h_formula new_lhs)) pos; *)
                 let new_rhs = CF.drop_hnodes_f (CF.Base rhs_b) [hd.CF.h_formula_data_node] in
-                (true, new_es,new_lhs ,new_rhs)
+                (true, new_es,new_lhs , Some new_rhs)
               end
             | _ -> begin
                 let new_es_formula =  List.fold_left update_es_f es.CF.es_formula r_new_hfs in
@@ -2205,7 +2205,7 @@ let infer_collect_hp_rel_x prog (es:entail_state) rhs rhs_rest (rhs_h_matched_se
                 let well_defined_svl = List.concat (List.map (fun (hp,args,_) -> hp::args) defined_hps) in
                 let root_vars_ls2 = SAU.find_close root_vars_ls1 leqs in
                 let new_es_formula = SAU.drop_data_view_hrel_nodes_from_root prog new_es_formula hds hvs leqs root_vars_ls2 well_defined_svl in
-                let _ = DD.info_pprint ("  after: " ^ (Cprinter.string_of_formula new_es_formula)) pos in
+                let _ = DD.ninfo_pprint ("  after: " ^ (Cprinter.string_of_formula new_es_formula)) pos in
                 (*CF.drop_hrel_f new_es_formula lhrs in *)
                 (*add mismatched heap into the entail states if @L*)
                 let check_consumed_node h f=
@@ -2228,9 +2228,9 @@ let infer_collect_hp_rel_x prog (es:entail_state) rhs rhs_rest (rhs_h_matched_se
                     CF.es_infer_hp_unk_map = (es.CF.es_infer_hp_unk_map@unk_map);
                     CF.es_infer_vars_sel_post_hp_rel = (es.CF.es_infer_vars_sel_post_hp_rel @ post_hps);
                     CF.es_formula = new_es_formula1} in
-                DD.info_pprint ("  new residue: " ^ (Cprinter.string_of_formula new_es.CF.es_formula)) pos;
+                DD.tinfo_pprint ("  new residue: " ^ (Cprinter.string_of_formula new_es.CF.es_formula)) pos;
                 let new_lhs = CF.convert_hf_to_mut new_rhs in
-                (true, new_es,new_lhs,(CF.Base rhs_b))
+                (true, new_es,new_lhs, None)
               end
       end
 
