@@ -2025,7 +2025,7 @@ let infer_collect_hp_rel_x prog (es:entail_state) rhs rhs_rest (rhs_h_matched_se
           (* let pr2 = pr_list (pr_pair pr_elem pr_elem) in *)
           DD.info_pprint ">>>>>> infer_hp_rel <<<<<<" pos;
           DD.tinfo_pprint ("  es_heap: " ^ (Cprinter.string_of_h_formula es.CF.es_heap)) pos;
-          DD.tinfo_pprint ("  footprint: " ^ (let pr=pr_list_ln Cprinter.string_of_h_formula in pr es.CF.es_history)) pos;
+          DD.tinfo_pprint ("  es_history: " ^ (let pr=pr_list_ln Cprinter.string_of_h_formula in pr es.CF.es_history)) pos;
           DD.info_pprint ("  lhs: " ^ (Cprinter.string_of_formula_base lhs_b)) pos;
           DD.info_pprint ("  rhs: " ^ (Cprinter.string_of_formula_base rhs_b)) pos;
           DD.tinfo_pprint ("  unmatch: " ^ (Cprinter.string_of_h_formula rhs)) pos;
@@ -2047,7 +2047,9 @@ let infer_collect_hp_rel_x prog (es:entail_state) rhs rhs_rest (rhs_h_matched_se
                   (* (false,es) *)
           )
         else
-          let his_ptrs = List.concat (List.map SAU.get_ptrs es.CF.es_history) in
+          let no_es_history = [] in (* replacing es.CF.es_history *)
+          (* let no_es_history = es.CF.es_history in *)
+          let his_ptrs = List.concat (List.map SAU.get_ptrs no_es_history) in
           let ls_unknown_ptrs,hds,hvs,lhras,rhras,eqNull,lselected_hps,rselected_hps,defined_hps,unk_svl,unk_pure,unk_map =
             find_undefined_selective_pointers prog lhs_b mix_lf rhs rhs_rest
                 (rhs_h_matched_set@his_ptrs) leqs reqs pos es.CF.es_infer_hp_unk_map in
@@ -2089,7 +2091,7 @@ let infer_collect_hp_rel_x prog (es:entail_state) rhs rhs_rest (rhs_h_matched_se
 	  let sel_his = List.concat (List.map (fun hf -> match hf with
             | CF.DataNode hd -> if CP.mem_svl hd.CF.h_formula_data_node matched_svl1 then [] else [hf]
 	    | _ -> [hf]
-	  ) es.CF.es_history) in
+	  ) no_es_history) in
           DD.ninfo_pprint ("  new_rhs_b: " ^ (Cprinter.string_of_formula_base new_rhs_b)) pos;
           let lhs_b0 = CF.mkAnd_base_pure lhs_b (MCP.mix_of_pure unk_pure) pos in
           let group_unk_svl = List.concat (List.map (fun ass -> ass.CF.unk_svl) Log.current_hprel_ass_stk # get_stk) in
@@ -2099,12 +2101,12 @@ let infer_collect_hp_rel_x prog (es:entail_state) rhs rhs_rest (rhs_h_matched_se
           let new_rhs_b0 = {new_rhs_b with 
               CF.formula_base_heap =  CF.check_imm_mis rhs new_rhs_b.CF.formula_base_heap} in
           let (new_lhs_b,new_rhs_b) = simplify_lhs_rhs prog lhs_b0 new_rhs_b0 leqs reqs hds hvs lhras (rhras@new_hrels)
-            (lselected_hps) (rselected_hps@(List.map (fun (hp,_,_) -> hp) new_hrels)) es.CF.es_crt_holes ((* es.CF.es_heap:: *)(*es.CF.es_history*) sel_his) total_unk_svl prog_vars in
+            (lselected_hps) (rselected_hps@(List.map (fun (hp,_,_) -> hp) new_hrels)) es.CF.es_crt_holes ((* es.CF.es_heap:: *)(*no_es_history*) sel_his) total_unk_svl prog_vars in
           (*simply add constraints: *)
-          let hprel_def = List.concat (List.map CF.get_ptrs (es.CF.es_history@(CF.get_hnodes es.CF.es_heap))) in
+          let hprel_def = List.concat (List.map CF.get_ptrs (no_es_history@(CF.get_hnodes es.CF.es_heap))) in
           let closed_hprel_def = CP.subst_var_list (leqs@reqs) hprel_def in
           let closed_hprel_args_def,_,_,_,_ = SAU.find_defined_pointers_after_preprocess prog closed_hprel_def
-            (hds@(List.concat (List.map get_h_formula_data_fr_hnode es.CF.es_history)))
+            (hds@(List.concat (List.map get_h_formula_data_fr_hnode no_es_history)))
             hvs (lhras@rhras@new_hrels) (leqs@reqs) eqNull [] in
           let rf = CF.mkTrue (CF.mkTrueFlow()) pos in
           let defined_hprels = List.map (SAU.generate_hp_ass (closed_hprel_args_def@total_unk_svl) rf) defined_hps in

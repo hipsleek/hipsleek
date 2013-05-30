@@ -7924,7 +7924,14 @@ and compose_context_formula (ctx : context) (phi : formula) (x : CP.spec_var lis
 (* 	if (allFalseCtx ctx) then ctx (\* (false_ctx (mkFalseFlow) no_pos) *\) *)
 (* 								else  ctx *)
 		
-and normalize_es (f : formula) (pos : loc) (result_is_sat:bool) (es : entail_state): context = 
+and normalize_es (f : formula) (pos : loc) (result_is_sat:bool) (es : entail_state): context =
+  let pr = !print_formula in
+  let pr_e = !print_entail_state in
+  let pr_c = !print_context in
+  Debug.no_2 "normalize_es" pr pr_e pr_c (fun _ _ -> normalize_es_x  f pos  result_is_sat es) f es
+
+
+and normalize_es_x (f : formula) (pos : loc) (result_is_sat:bool) (es : entail_state): context = 
 	Ctx {es with es_formula = normalize 3 es.es_formula f pos; es_unsat_flag = es.es_unsat_flag&&result_is_sat} 
 
 and normalize_es_combine (f : formula) (result_is_sat:bool)(pos : loc) (es : entail_state): context =
@@ -7968,6 +7975,12 @@ match ctx with
 		
 (* -- 17.05.2008 *)
 and normalize_clash_es (f : formula) (pos : loc) (result_is_sat:bool)(es:entail_state): context =
+  let pr = !print_formula in
+  let pr_e = !print_entail_state in
+  let pr_c = !print_context in
+  Debug.no_2 "normalize_clash_es" pr pr_e pr_c (fun _ _ -> normalize_clash_es_x  f pos  result_is_sat es) f es
+
+and normalize_clash_es_x (f : formula) (pos : loc) (result_is_sat:bool)(es:entail_state): context =
   (* let _ = print_string ("\nCformula.ml: normalize_clash_es") in *)
   match f with
 	| Or ({formula_or_f1 = phi1; formula_or_f2 =  phi2; formula_or_pos = _}) ->
@@ -9259,6 +9272,14 @@ let normalize_max_renaming_list_failesc_context f pos b ctx =
   (* let _ = print_string("cris: normalize 12\n") in *)
     if !max_renaming then transform_list_failesc_context (idf,idf,(normalize_es f pos b)) ctx
       else transform_list_failesc_context (idf,idf,(normalize_clash_es f pos b)) ctx
+
+let normalize_max_renaming_list_failesc_context f pos b ctx =
+  let pr_f = !print_formula in
+  let pr_ctx = pr_list !print_failesc_context in
+  Debug.no_2 "normalize_max_renaming_list_failesc_context" 
+      pr_f pr_ctx pr_ctx
+      (fun _ _ -> normalize_max_renaming_list_failesc_context f pos b ctx) f ctx
+
 let normalize_max_renaming_list_failesc_context f pos b ctx =
   (* let _ = print_string("cris: normalize 13\n") in *)
   Gen.Profiling.do_2 "normalize_max_renaming_list_failesc_context" (normalize_max_renaming_list_failesc_context f pos) b ctx

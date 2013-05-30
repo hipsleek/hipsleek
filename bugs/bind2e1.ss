@@ -14,10 +14,7 @@ node paper_fix (node c)
       node t;
       bool b;
       bind c to (_,nn) in {
-        if (b) {
-           t=nn;
-        }
-        else return nn;
+        return nn;
       }
       dprint;
       return t;
