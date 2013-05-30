@@ -2079,12 +2079,12 @@ let infer_collect_hp_rel_x prog (es:entail_state) rhs rhs_rest (rhs_h_matched_se
           let ls_unknown_ptrs,hds,hvs,lhras,rhras,eqNull,lselected_hps,rselected_hps,defined_hps,unk_svl,unk_pure,unk_map =
             find_undefined_selective_pointers prog lhs_b mix_lf rhs rhs_rest
                 (rhs_h_matched_set@his_ptrs) leqs reqs pos es.CF.es_infer_hp_unk_map in
-          let reqNulls = if !Globals.allow_imm then
-            MCP.get_null_ptrs (MCP.mix_of_pure es.CF.es_aux_conseq)
-          else
-            let (_,mix_rf,_,_,_) = CF.split_components (CF.Base rhs_b) in
-            MCP.get_null_ptrs mix_rf
-          in
+          (* let reqNulls = if !Globals.allow_imm then *)
+          (*   MCP.get_null_ptrs (MCP.mix_of_pure es.CF.es_aux_conseq) *)
+          (* else *)
+          (*   let (_,mix_rf,_,_,_) = CF.split_components (CF.Base rhs_b) in *)
+          (*   MCP.get_null_ptrs mix_rf *)
+          (* in *)
           let rhs_b1 = CF.formula_base_of_heap rhs pos in
           let update_fb (fb,r_hprels,hps,hfs) unknown_ptrs =
             match unknown_ptrs with
@@ -2103,18 +2103,18 @@ let infer_collect_hp_rel_x prog (es:entail_state) rhs rhs_rest (rhs_h_matched_se
           let new_lhs = rhs_b1 in
           let new_rhs_b,rvhp_rels,new_hrels,r_new_hfs =
             List.fold_left update_fb (rhs_b1,[],[],[]) ls_unknown_ptrs in
-          let unk_eqNulls = List.fold_left (fun ls unk_svl ->
-              ls@(List.filter (fun sv -> CP.mem_svl sv reqNulls) unk_svl)
-          ) [] ls_unknown_ptrs in
-          let unk_eqNulls1 = CP.remove_dups_svl unk_eqNulls in
-          let fr_svl =  CP.fresh_spec_vars unk_eqNulls1 in
-          let sst = (* List.combine unk_eqNulls1 fr_svl *) [] in
-          let new_rhs_b = ({new_rhs_b with CF.formula_base_heap = CF.h_subst sst new_rhs_b.CF.formula_base_heap; 
-	      CF.formula_base_pure =MCP.regroup_memo_group (MCP.m_apply_par sst new_rhs_b.CF.formula_base_pure); 
-              CF.formula_base_and = (List.map (fun f -> CF.one_formula_subst sst f) new_rhs_b.CF.formula_base_and);})
-          in
-          let r_new_hfs = List.map (CF.h_subst sst) r_new_hfs in
-          let rhs = CF.h_subst sst rhs in
+          (* let unk_eqNulls = List.fold_left (fun ls unk_svl -> *)
+          (*     ls@(List.filter (fun sv -> CP.mem_svl sv reqNulls) unk_svl) *)
+          (* ) [] ls_unknown_ptrs in *)
+          (* let unk_eqNulls1 = CP.remove_dups_svl unk_eqNulls in *)
+          (* let fr_svl =  CP.fresh_spec_vars unk_eqNulls1 in *)
+          (* let sst = (\* List.combine unk_eqNulls1 fr_svl *\) [] in *)
+          (* let new_rhs_b = ({new_rhs_b with CF.formula_base_heap = CF.h_subst sst new_rhs_b.CF.formula_base_heap;  *)
+	  (*     CF.formula_base_pure =MCP.regroup_memo_group (MCP.m_apply_par sst new_rhs_b.CF.formula_base_pure);  *)
+          (*     CF.formula_base_and = (List.map (fun f -> CF.one_formula_subst sst f) new_rhs_b.CF.formula_base_and);}) *)
+          (* in *)
+          (* let r_new_hfs = List.map (CF.h_subst sst) r_new_hfs in *)
+          (* let rhs = CF.h_subst sst rhs in *)
           (*add roots from history*)
 	  let matched_svl = CF.get_ptrs es.CF.es_heap in
 	  let matched_svl1 = (List.fold_left SAU.close_def matched_svl (leqs@reqs)) in
