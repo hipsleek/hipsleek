@@ -1,0 +1,17 @@
+/*
+  mona_of_formula requires parenthesis to be correct
+  These buggy examples are fixed
+*/
+
+checkentail ls'=diff(diff(union(diff({2,3,1},{2}),{4}),{1}),{3}) |-  ls'={4}.
+//bug [fixed]
+//should valid
+
+checkentail ls'=union(diff({2},{2}),{4}) |-  ls'={4}. //correct
+//should valid
+
+checkentail ls'= diff(union(diff({2,1},{2}),{4}),{1}) |-  ls'={4}. //bug, [fixed]
+//should valid
+
+checkentail ls'= diff(union({1},{4}),{1}) |-  ls'={4}. //bug, [fixed]
+//should valid

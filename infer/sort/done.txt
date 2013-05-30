@@ -1,0 +1,337 @@
+## zip-n-2.ss #DONE
+
+Please print the infer pre/post formed, e.g.
+ infer [P,R]
+ requires x::llN<a>*y::ll<b> & P(a,b)
+ ensures res::ll<r> & R(r,a,b)
+
+Also, why isn't a summary of pre/post
+printed after fixcalc. Did it call fixcalc?
+
+## n-z-1d-1.ss #DONE
+
+Why do we infer P when it is not in the selected var list.
+
+## n-z-1d.ss #DONE
+
+!!! REL POST :  R(res,x,y)
+!!! POST:  x>=0 & y>=x & res=x
+!!! REL PRE :  P(x,y)
+!!! PRE :  0<=x & x<=y
+
+PROBLEM : can we gist x>=0 away
+ from both pre/post
+
+## zip-n.ss #DONE
+
+For below:
+ RELASS [P]: ( P(a,b)) -->  (b!=0 | 2>a) & (b!=0 | a!=1),
+Why did we not derived below instead:
+ RELASS [P]: ( P(a,b)) -->  (b!=0 | a<=0)
+
+## zip-n-3.ss  #DONE
+
+!!! REL PRE :  P(a,b)
+!!! PRE :  (b<=(a-1) & b<=(0-1)) | a<=b
+Can filter a disjunct to:
+!!! PRE :  a<=b
+
+## n-ins-3c.ss #DONE
+
+!!! REL POST :  R2(b,v2_671)
+!!! POST:  true
+!!! REL PRE :  true
+!!! PRE :  true
+
+PROBLEM
+=======
+
+We need a stronger post-condition.
+
+Algorithm
+=========
+(i) For each 
+     X & Pre(..) --> Post(...)
+    determine if X -> Post(..) reduces to true --> Post(...)
+    and remove it if so, for pre-condition obligation later
+(ii) Form a definition for Post(..) to compute least fix-point.
+(iii) Extract pre from Post and form an assumption
+          Pre(..) -> Y_i
+(iv) For each obligation of form:
+       X & Pre(..) --> ..
+     determine relational assumptions of the form:
+       Pre(..) --> Y_j
+(v) Form an initial Precondition
+      Pre(..) -> Y wher Y=Y1 & ... & Yn
+   Check if current pre satisfies all the obligation
+      ... & Pre(..) --> Pre(..)
+(vi) If not, perform a top-down fix-point using 
+      ... & Pre(..) --> Pre(..)
+    to ensure it satisfies 
+      Pre(..) --> Y
+    for all recursive invocations.
+
+## n-z-1d-2.ss #DONE
+
+relation R(int a,int b,int c).
+relation P(int a,int b).
+
+int zip(int x, int y)
+  infer [R]
+  requires x>=0 & y>=0 & P(x,y)
+  ensures  R(res,x,y);
+
+Sound we have a WARNING that unknown P is not
+in the inferred list?
+
+## zip-i-2.ss; zip-i-def.ss #DONE
+
+ WHY is printing below different with NEW SPECS
+
+  infer [a,b,R]
+  requires x::llN<a> * y::llN<b>
+  ensures  res::llN<r> & R(a,b,r);
+
+
+!!! REL POST :  R(a,b,r)
+!!! POST:  a=r & 0<=r & r<=b
+!!! REL PRE :  true
+!!! PRE :  true
+!!! NEW SPECS: ((None,[]),EBase exists (Expl)(Impl)[a; 
+                  b](ex)x::llN<a>@M[0][Orig][LHSCase] * 
+                  y::llN<b>@M[0][Orig][LHSCase]&true&{FLOW,(22,23)=__norm}[]
+                    EBase emp&(1<=b | b<=(0-1) | a<=0) & MayLoop&
+                          {FLOW,(1,25)=__flow}[]
+                            EAssume 66::
+                              EXISTS(r: res::llN<r>@M[0][Orig][LHSCase]&
+                              a=r & 0<=r & r<=b&{FLOW,(22,23)=__norm})[])
+
+## n-sort-2.ss #DONE
+ 
+   WHY no error messages on missing R0; R1
+   node sort(node x)
+     infer [R0,R1]
+     requires x::ls<a>
+     ensures  res::sortA<b> & b<=a ;
+
+## n-sort-2c.ss #DONE
+
+Why false inferred?
+
+*************************************
+[RELASS [R0]: ( R0(r_643,a_644)) -->  r_643<=a_644,
+RELDEFN R0: ( r_643<=a_644 & r_673<=a_674 & R0(r_643,a_644)) 
+                -->  R0(r_673,a_674)]
+*************************************
+
+!!! REL POST :  R0(r_673,a_674)
+!!! POST:  false
+!!! REL PRE :  true
+!!! PRE :  true
+Procedure sort$node SUCCESS
+
+## n-id.ss #DONE
+
+node id(node x)
+  infer [R1,R2]
+  requires x::sortHO<a,R1>
+  ensures  res::sortHO<a,R2> & res=x;
+
+Checking procedure id$node... 
+*************************************
+*******pure relation assumption ******
+*************************************
+[RELDEFN R2: ( a=a_30 & v2_590=v2_622 & R1(a,v2_590)) -->  R2(a_30,v2_622)]
+*************************************
+fixcalc: Parse error on line 2 rest of line: ;
+
+PROBLEM : should use 1=0 rather than false
+
+/*
+  # R1(a,b)-->R2(a,b)
+
+  RELDEFN R2: ( a=a_30 & v2_590=v2_622 & R1(a,v2_590)) -->  R2(a_30,v2_622)]
+
+*/
+{
+
+## err-9-m-app.ss #DONE
+
+node append(node x, node y)
+  infer [R1,P2]
+  requires x::sortHO<a,R1,mi,mx> * y::node<b,null> &  P2(mx,b)
+  ensures  res::sortHO<a,R2,mi2,mx2> & mi2=min(mi,b) & mx2=max(mx,b) & res=x;
+/*
+
+Need sanity checks on what is being inferred
+so inconsistency are detected early.
+
+In the above case it caused "simplify to have a problem".
+
+Checking procedure append$node~node... Timeout when checking #simplify  Restarting Omega after ... 104 invocations Stop Omega... 104 invocations Starting Omega...oc
+
+Solution 
+  (i) fix Omega (done)
+ (ii) provide sanity checks.
+
+*/
+
+## n-sort-2c.ss #DONE
+
+  added filter_ante_wo_rel to avoid treating relation
+  as variables
+
+node sort(node x)
+     infer [R0]
+     requires x::ls<a>
+     ensures  res::sortHO<b,R0> & b<=a ;
+/*
+
+We derived:
+
+Checking procedure sort$node... 
+*************************************
+*******pure relation assumption ******
+*************************************
+[RELASS [R0]: ( R0(r_643,a_644)) -->  r_643<=a_644,
+RELDEFN R0: ( r_643<=a_644 & r_673<=a_674 & R0(r_643,a_644)) 
+                -->  R0(r_673,a_674)]
+However  R0(r_643,a_644) is not really connected to
+the output on RHS. Actually, we should have obtained
+below instead if we only traverse the connected
+formula on the LHS.
+
+// --dis-pre-residue gives
+*************************************
+*******pure relation assumption ******
+*************************************
+[RELASS [R0]: ( R0(r_643,a_644)) -->  r_643<=a_644,
+RELDEFN R0: ( r_673<=a_674) -->  R0(r_673,a_674)]
+*************************************
+*/
+
+## n-sort-2e.ss # DONE (solved  due to error in fixcalc)
+
+node sort(node x)
+     infer [R0,P]
+     requires x::ls<a>
+     ensures  res::sortHO<b,R0> & P(b,a);
+     //b<=a ;
+/*
+
+WHY did we have superfluous vars r_674,a_675?
+Weren't they quantified in the fixcalc input?
+If so, they should NOT be present in the final answer.
+
+!!! REL POST :  P(b,a)
+!!! POST:  a=b | (b<a & r_674<=a_675)
+
+P:={[a] -> [b] -> []: (b=a ||  (exists (a_631: (exists (b_642: (exists (a_645: (exists (r_644:((((b=a && (a<=b_642 && r_644<=a_645)) || (b_642=a && (a<b && r_644<=a_645))) && R0(r_644,a_645)) && P(b_642,a_631)))) )) )) )) )
+};
+R0:={[] -> [r_674,a_675] -> []: r_674<=a_675
+};
+bottomupgen([P,R0], [2,2], SimHeur);
+
+Above is not mutually recursive. First R0 is non-recursive, so we
+first determine that 
+    R0(r,a) -> r<=a
+Later, we inline R0(..) in the defintion of P(..). Actually,
+we have already done the inlining with of --en-pre-residue.
+
+With that, we perform a fix-point of just P(..)
+*/
+
+## n-ins-4a.ss  @DONE
+
+fixed fold_context_left (removal of false with pre)
+
+Above fails with:
+     infer [R,P]
+     requires x::llMM<mi> * y::node<a,null> & R(a,mi)
+     ensures  res::llMM<mi2> & P(a,mi,mi2);
+
+Last Proving Location: File "n-ins-4a.ss",Line:28,Col:8
+ERROR: at _0_0 
+Message: folding empty context list 
+
+However, if I drop R(a,mi). I got a successful post-condition
+using n-ins-4a1.ss
+
+node insert(node x, node y)
+     infer [P]
+     requires x::llMM<mi> * y::node<a,null>
+     ensures  res::llMM<mi2> & P(a,mi,mi2);
+
+!!! REL POST :  P(a,mi,mi2)
+!!! POST:  (a=mi2 & a<=mi) | (mi=mi2 & mi2<=a)
+!!! REL PRE :  true
+!!! PRE :  true
+
+Why is this so? Why can't it infer R(..) to
+be just true.
+
+## n-ins-4a.ss  
+
+!!! REL POST :  P(a,mi,mi2)
+!!! POST:  (a=mi2 & a<=mi) | (mi=mi2 & mi2<=a)
+!!! REL PRE :  R(a,mi)
+!!! PRE :  mi<=a | a<=mi
+
+PROBLEM : why isn't PRE simplified to false?
+Invoking PairWiseCheck would help simplify PRE
+
+R:={[m,a]:m<=a | a<=m};
+#{[m,a]: m <= a} union {[m,a]: a <= m}
+
+PairWiseCheck R;
+#{[m,a]}
+
+## n-sel-1.ss
+
+@ why did we get false as post-condition?
+@ will relational simplification help?
+
+
+llMM<mi> == self::node<v,null> & mi=v  
+  or self::node<v, p> * p::llMM<mi2> & mi=min(v,mi2) 
+  //& v<=mi2
+inv self!=null;
+
+relation P1(int a1, int a2).
+relation P2(int a1, int a2,int a3).
+relation P5(int a1, int a2,int a3).
+relation P6(int a1, int a2,int a3).
+
+node sel(ref node x)
+     infer [P1,P2]
+     requires x::llMM<mi> 
+     ensures  res::node<m,_> & x'=null & P1(m,mi2)
+           or res::node<m,_> * x'::llMM<mi2> & P2(m,mi,mi2)
+     ;
+/*
+[RELDEFN P1: ( true) -->  P1(m,mi2),
+RELDEFN P1: ( P1(m_646,mi2_647) & m=m_646) -->  P1(m,mi2),
+RELDEFN P2: ( P1(m_646,mi2_647) & m=m_646 & mi<=mi2 & m_646<=mi2) -->  P2(m,mi,mi2),
+RELDEFN P1: ( P2(m_653,mi_621,mi2_654) & m=m_653) -->  P1(m,mi2),
+RELDEFN P2: ( P2(m_653,mi_621,mi2_654) & ((mi=mi2 & m=m_653 & m<=mi & mi<=(mi2_654-1) & 
+mi<=(mi_621-1)) | (mi=mi_621 & m=m_653 & mi<=mi2 & m<=mi2 & mi2<mi2_654) | 
+(mi2=mi2_654 & m=m_653 & m<=mi & mi2_654<=mi & mi<mi_621) | (mi=mi_621 & 
+mi2=mi2_654 & m=m_653))) -->  P2(m,mi,mi2),
+RELDEFN P1: ( P1(m_646,mi2_647) & m<m_646) -->  P1(m,mi2),
+RELDEFN P2: ( P1(m_646,mi2_647) & m_646=mi2 & mi<=m & m<mi2) -->  P2(m,mi,mi2),
+RELDEFN P1: ( P2(m_653,mi_621,mi2_654) & m<m_653) -->  P1(m,mi2),
+RELDEFN P2: ( P2(m_653,mi_621,mi2_654) & ((m=mi & m_653=mi2 & mi<mi2 & mi2<mi2_654 & 
+
+[( P2(m,mi,mi2), false, true, true),
+( P1(m,mi2), false, true, true)]
+*************************************
+
+!!! REL POST :  P1(m,mi2)
+!!! POST:  false
+!!! REL PRE :  true
+!!! PRE :  false
+!!! REL POST :  P2(m,mi,mi2)
+!!! POST:  false
+!!! REL PRE :  true
+!!! PRE :  false
+*/

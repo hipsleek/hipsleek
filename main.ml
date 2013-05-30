@@ -14,7 +14,10 @@ let usage_msg = Sys.argv.(0) ^ " [options] <source files>"
 let set_source_file arg = 
   Globals.source_files := arg :: !Globals.source_files
 
-let process_cmd_line () = Arg.parse Scriptarguments.hip_arguments set_source_file usage_msg
+let process_cmd_line () = 
+	Arg.parse Scriptarguments.hip_arguments set_source_file usage_msg;
+	if !Globals.override_slc_ps then Globals.en_slc_ps:=false
+	else ()
 
 let print_version () =
   print_endline ("HIP: A Verifier for Heap Manipulating Programs");
@@ -187,6 +190,7 @@ let process_lib_file prog =
       Iast.prog_view_decls = prog.Iast.prog_view_decls @ vdecls;}
 
 (***************end process compare file*****************)
+(*Working*)
 let process_source_full source =
   Debug.info_pprint ("Full processing file \"" ^ source ^ "\"\n") no_pos;
   flush stdout;
@@ -205,7 +209,7 @@ let process_source_full source =
   let header_files = Gen.BList.remove_dups_eq (=) !Globals.header_file_list in (*prelude.ss*)
   let new_h_files = process_header_with_pragma header_files !Globals.pragma_list in
   let prims_list = process_primitives new_h_files in (*list of primitives in header files*)
-	let prims_incls = process_include_files prog.Iast.prog_include_decls source in
+  let prims_incls = process_include_files prog.Iast.prog_include_decls source in
   if !to_java then begin
     print_string ("Converting to Java..."); flush stdout;
     let tmp = Filename.chop_extension (Filename.basename source) in
@@ -259,9 +263,12 @@ let process_source_full source =
     (* let ptime1 = Unix.times () in
        let t1 = ptime1.Unix.tms_utime +. ptime1.Unix.tms_cutime in *)
     let _ = Gen.Profiling.push_time "Translating to Core" in
-    (* let _ = print_string ("Translating to core language...\n"); flush stdout in *)
+(*    let _ = print_string ("Translating to core language...\n"); flush stdout in *)
     (* let _ = print_endline (Iprinter.string_of_program intermediate_prog) in *)
     let cprog = Astsimp.trans_prog intermediate_prog (*iprims*) in
+		(* let cprog = Astsimp.trans_prog intermediate_prog (*iprims*) in *)
+    (* let _ = print_string ("Translating to core language...\n"); flush stdout in *)
+    (*let cprog = Astsimp.trans_prog intermediate_prog (*iprims*) in*)
     (* Forward axioms and relations declarations to SMT solver module *)
     let _ = List.map (fun crdef -> 
         Smtsolver.add_relation crdef.Cast.rel_name crdef.Cast.rel_vars crdef.Cast.rel_formula) (List.rev cprog.Cast.prog_rel_decls) in
@@ -412,16 +419,19 @@ let process_source_full_after_parser source (prog, prims_list) =
   if (!Tpdispatcher.tp_batch_mode) then Tpdispatcher.start_prover ();
   (* Global variables translating *)
   let _ = Gen.Profiling.push_time "Translating global var" in
-  let _ = print_string ("Translating global variables to procedure parameters...\n"); flush stdout in
-
+  (* let _ = print_string ("Translating global variables to procedure parameters...\n"); flush stdout in *)
   (* Append all primitives in list into one only *)
   let iprims_list = process_intermediate_prims prims_list in
   let iprims = Iast.append_iprims_list_head iprims_list in
 	(* let _= List.map (fun x-> print_endline ("Bachle: iprims "^x.Iast.proc_name)) iprims in *)
   (* let _ = print_endline ("process_source_full: before Globalvars.trans_global_to_param") in *)
+    (* let _ = print_endline (Iprinter.string_of_program prog) in *)
   let intermediate_prog = Globalvars.trans_global_to_param prog in
   (* let _ = print_endline ("process_source_full: before pre_process_of_iprog") in *)
+    (* let _ = print_endline (Iprinter.string_of_program intermediate_prog) in *)
   let intermediate_prog =IastUtil.pre_process_of_iprog iprims intermediate_prog in
+    (* let _ = print_endline ("process_source_full: before label_procs_prog") in *)
+    (* let _ = print_endline (Iprinter.string_of_program intermediate_prog) in *)
   let intermediate_prog = Iast.label_procs_prog intermediate_prog true in
   (* let _ = print_endline ("process_source_full: before --pip") in *)
   let _ = if (!Globals.print_input_all) then print_string (Iprinter.string_of_program intermediate_prog) 
@@ -435,7 +445,30 @@ let process_source_full_after_parser source (prog, prims_list) =
      let t1 = ptime1.Unix.tms_utime +. ptime1.Unix.tms_cutime in *)
   let _ = Gen.Profiling.push_time "Translating to Core" in
   (* let _ = print_string ("Translating to core language...\n"); flush stdout in *)
-  let cprog = Astsimp.trans_prog intermediate_prog (*iprims*) in
+
+        (**************************************)
+    (*Simple heuristic for ParaHIP website*)
+    (*Heuristic: check if waitlevel and locklevels have been used for verification
+      If not detect waitlevel or locklevel -> set allow_locklevel==faslse
+      Note: this is used in ParaHIP website for demonstration only.
+      We could use the run-time flag "--dis-locklevel" to disable the use of locklevels
+      and waitlevel.
+    *)
+    let search_for_locklevel proc =
+      if (not !Globals.allow_locklevel) then
+        let struc_fv = Iformula.struc_free_vars false proc.Iast.proc_static_specs in
+        let b = List.exists (fun (id,_) -> (id = Globals.waitlevel_name)) struc_fv in
+        if b then
+         Globals.allow_locklevel := true
+  in
+  let _ = if !Globals.web_compile_flag then
+        let _ = List.map search_for_locklevel prog.Iast.prog_proc_decls in
+        ()
+  in
+  (**************************************)
+ let cprog = Astsimp.trans_prog intermediate_prog (*iprims*) in
+ 	(* let cprog = Astsimp.trans_prog intermediate_prog (*iprims*) in *)
+   
 
   (* Forward axioms and relations declarations to SMT solver module *)
   let _ = List.map (fun crdef -> 
@@ -509,7 +542,6 @@ let process_source_full_after_parser source (prog, prims_list) =
   
   (* print mapping table control path id and loc *)
   (*let _ = print_endline (Cprinter.string_of_iast_label_table !Globals.iast_label_table) in*)
-  
   let ptime4 = Unix.times () in
   let t4 = ptime4.Unix.tms_utime +. ptime4.Unix.tms_cutime +. ptime4.Unix.tms_stime +. ptime4.Unix.tms_cstime   in
   print_string ("\n"^(string_of_int (List.length !Globals.false_ctx_line_list))^" false contexts at: ("^
@@ -521,6 +553,9 @@ let process_source_full_after_parser source (prog, prims_list) =
   ^ (string_of_float (ptime4.Unix.tms_utime+.ptime4.Unix.tms_stime)) ^ " second(s)\n"
   ^ "\tTime spent in child processes: " 
   ^ (string_of_float (ptime4.Unix.tms_cutime +. ptime4.Unix.tms_cstime)) ^ " second(s)\n")
+	(*;print_string ("\nTotal Entailments : " 
+	^ (string_of_int !Globals.total_entailments) ^ "\n" 
+	^ "Ramification Entailments : "^ (string_of_int !Globals.ramification_entailments) ^"\n")*)
 
 let main1 () =
   (* Cprinter.fmt_set_margin 40; *)

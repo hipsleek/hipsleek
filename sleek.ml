@@ -83,66 +83,89 @@ module M = Lexer.Make(Token.Token)
 (*       (print_string ((Camlp4.PreCast.Loc.to_string l)^"\n error: "^(Printexc.to_string t)^"\n at:"^(Printexc.get_backtrace ())); *)
 (*       raise t) *)
 
+let proc_gen_cmd cmd =
+  match cmd with
+    | DataDef ddef -> process_data_def ddef
+    | PredDef pdef -> process_pred_def_4_iast pdef
+    | BarrierCheck bdef -> (process_data_def (I.b_data_constr bdef.I.barrier_name bdef.I.barrier_shared_vars) 
+                             ; process_barrier_def bdef)
+    | FuncDef fdef -> process_func_def fdef
+    | RelDef rdef -> process_rel_def rdef
+    | HpDef hpdef -> process_hp_def hpdef
+    | AxiomDef adef -> process_axiom_def adef
+    | EntailCheck (iante, iconseq, etype) -> (process_entail_check iante iconseq etype;())
+    | EqCheck (lv, if1, if2) -> process_eq_check lv if1 if2
+    | Infer (ivars, iante, iconseq) -> (process_infer ivars iante iconseq;())
+    | CaptureResidue lvar -> process_capture_residue lvar
+    | LemmaDef ldef ->   process_lemma ldef
+    | PrintCmd pcmd -> process_print_command pcmd
+    | CmpCmd pcmd -> process_cmp_command pcmd
+    | LetDef (lvar, lbody) -> put_var lvar lbody
+    | Time (b,s,_) -> if b then Gen.Profiling.push_time s else Gen.Profiling.pop_time s
+    | EmptyCmd -> ()
+
 let parse_file (parse) (source_file : string) =
   let rec parse_first (cmds:command list) : (command list)  =
     try 
-        parse source_file 
-	with
-	  | End_of_file -> List.rev cmds
+      parse source_file 
+    with
+      | End_of_file -> List.rev cmds
       | M.Loc.Exc_located (l,t)-> 
-          (print_string ((Camlp4.PreCast.Loc.to_string l)^"\n error: "^(Printexc.to_string t)^"\n at:"^(Printexc.get_backtrace ()));
-           raise t) in
+            (print_string ((Camlp4.PreCast.Loc.to_string l)^"\n error: "^(Printexc.to_string t)^"\n at:"^(Printexc.get_backtrace ()));
+            raise t) in
   let parse_first (cmds:command list) : (command list)  =
     let pr = pr_list string_of_command in
     Debug.no_1 "parse_first" pr pr parse_first cmds in
   let proc_one_def c = 
     match c with
-	  | DataDef ddef -> process_data_def ddef
-	  | PredDef pdef -> process_pred_def_4_iast pdef
-	  | BarrierCheck bdef -> process_data_def (I.b_data_constr bdef.I.barrier_name bdef.I.barrier_shared_vars)
-	  | FuncDef fdef -> process_func_def fdef
+      | DataDef ddef -> process_data_def ddef
+      | PredDef pdef -> process_pred_def_4_iast pdef
+      | BarrierCheck bdef -> process_data_def (I.b_data_constr bdef.I.barrier_name bdef.I.barrier_shared_vars)
+      | FuncDef fdef -> process_func_def fdef
       | RelDef rdef -> process_rel_def rdef
       | HpDef hpdef -> process_hp_def hpdef
       | AxiomDef adef -> process_axiom_def adef  (* An Hoa *)
-      (* | Infer (ivars, iante, iconseq) -> process_infer ivars iante iconseq *)
-	  | LemmaDef _ | Infer _ | CaptureResidue _ | LetDef _ | EntailCheck _ | EqCheck _ | PrintCmd _ | CmpCmd _ 
-      | Time _ | EmptyCmd -> () in
+            (* | Infer (ivars, iante, iconseq) -> process_infer ivars iante iconseq *)
+      | LemmaDef _ | Infer _ | CaptureResidue _ | LetDef _ | EntailCheck _ | EqCheck _ | PrintCmd _ | CmpCmd _ 
+      | Time _ | EmptyCmd -> () 
+  in
   let proc_one_def c =
-    Debug.no_1 "proc_one_def" string_of_command pr_none proc_one_def c in
+    Debug.no_1 "proc_one_def" string_of_command pr_none proc_one_def c 
+  in
   let proc_one_lemma c = 
     match c with
-	  | LemmaDef ldef -> process_lemma ldef
-	  | DataDef _ | PredDef _ | BarrierCheck _ | FuncDef _ | RelDef _ | HpDef _ | AxiomDef _ (* An Hoa *)
-	  | CaptureResidue _ | LetDef _ | EntailCheck _ | EqCheck _ | Infer _ | PrintCmd _  | CmpCmd _| Time _ | EmptyCmd -> () in
+      | LemmaDef ldef -> process_lemma ldef
+      | DataDef _ | PredDef _ | BarrierCheck _ | FuncDef _ | RelDef _ | HpDef _ | AxiomDef _ (* An Hoa *)
+      | CaptureResidue _ | LetDef _ | EntailCheck _ | EqCheck _ | Infer _ | PrintCmd _  | CmpCmd _| Time _ | EmptyCmd -> () in
   let proc_one_cmd c = 
     match c with
-      | EntailCheck (iante, iconseq, etype) -> process_entail_check iante iconseq etype
-      (* let pr_op () = process_entail_check_common iante iconseq in  *)
-      (* Log.wrap_calculate_time pr_op !source_files ()               *)
-	  | EqCheck (lv, if1, if2) -> 
-          (* let _ = print_endline ("proc_one_cmd: xxx_after parse \n") in *)
-          process_eq_check lv if1 if2
-      | Infer (ivars, iante, iconseq) -> process_infer ivars iante iconseq
+      | EntailCheck (iante, iconseq, etype) -> (process_entail_check iante iconseq etype; ())
+            (* let pr_op () = process_entail_check_common iante iconseq in  *)
+            (* Log.wrap_calculate_time pr_op !source_files ()               *)
+      | EqCheck (lv, if1, if2) -> 
+            (* let _ = print_endline ("proc_one_cmd: xxx_after parse \n") in *)
+            process_eq_check lv if1 if2
+      | Infer (ivars, iante, iconseq) -> (process_infer ivars iante iconseq;())	
       | CaptureResidue lvar -> process_capture_residue lvar
       | PrintCmd pcmd -> process_print_command pcmd
-	  | CmpCmd ccmd -> process_cmp_command ccmd
+      | CmpCmd ccmd -> process_cmp_command ccmd
       | LetDef (lvar, lbody) -> put_var lvar lbody
       | BarrierCheck bdef -> process_barrier_def bdef
       | Time (b,s,_) -> 
-          if b then Gen.Profiling.push_time s 
-          else Gen.Profiling.pop_time s
-	  | DataDef _ | PredDef _ | FuncDef _ | RelDef _ | HpDef _ | AxiomDef _ (* An Hoa *) | LemmaDef _ | EmptyCmd -> () in
+            if b then Gen.Profiling.push_time s 
+            else Gen.Profiling.pop_time s
+      | DataDef _ | PredDef _ | FuncDef _ | RelDef _ | HpDef _ | AxiomDef _ (* An Hoa *) | LemmaDef _ | EmptyCmd -> () in
   let cmds = parse_first [] in
   List.iter proc_one_def cmds;
-	(* An Hoa : Parsing is completed. If there is undefined type, report error.
-	 * Otherwise, we perform second round checking!
-	 *)
+  (* An Hoa : Parsing is completed. If there is undefined type, report error.
+   * Otherwise, we perform second round checking!
+   *)
   let udefs = !Astsimp.undef_data_types in
   let _ = match udefs with
-	| [] ->	perform_second_parsing_stage ()
-	| _ -> let udn,udp = List.hd (List.rev udefs) in
-		   Error.report_error { Error.error_loc  = udp;
-								Error.error_text = "Data type " ^ udn ^ " is undefined!" }
+    | [] ->	perform_second_parsing_stage ()
+    | _ -> let udn,udp = List.hd (List.rev udefs) in
+      Error.report_error { Error.error_loc  = udp;
+      Error.error_text = "Data type " ^ udn ^ " is undefined!" }
   in ();
   Debug.tinfo_pprint "sleek : after 2nd parsing" no_pos;
   convert_pred_to_cast ();
@@ -156,7 +179,8 @@ let parse_file (parse) (source_file : string) =
   List.iter proc_one_cmd cmds 
 
 
-let main () = 
+let main () =
+  let _ = Printexc.record_backtrace !Globals.trace_failure in
   let iprog = { I.prog_include_decls =[];
 		            I.prog_data_decls = [iobj_def];
                 I.prog_global_var_decls = [];
@@ -205,25 +229,7 @@ let main () =
                           if cts = "quit" || cts = "quit\n" then quit := true
                           else try
                                    let cmd = parse cts in
-                                   (match cmd with
-                                     | DataDef ddef -> process_data_def ddef
-                                     | PredDef pdef -> process_pred_def pdef
-                                     | BarrierCheck bdef -> 
-                                         (process_data_def (I.b_data_constr bdef.I.barrier_name bdef.I.barrier_shared_vars) ; process_barrier_def bdef)
-                                     | FuncDef fdef -> process_func_def fdef
-                                     | RelDef rdef -> process_rel_def rdef
-                                     | HpDef hpdef -> process_hp_def hpdef
-                                     | AxiomDef adef -> process_axiom_def adef
-                                     | EntailCheck (iante, iconseq, etype) -> process_entail_check iante iconseq etype
-		                             | EqCheck (lv, if1, if2) -> process_eq_check lv if1 if2
-                                     | Infer (ivars, iante, iconseq) -> process_infer ivars iante iconseq
-                                     | CaptureResidue lvar -> process_capture_residue lvar
-                                     | LemmaDef ldef ->   process_lemma ldef
-                                     | PrintCmd pcmd -> process_print_command pcmd
-		                             | CmpCmd pcmd -> process_cmp_command pcmd
-                                     | LetDef (lvar, lbody) -> put_var lvar lbody
-                                     | Time (b,s,_) -> if b then Gen.Profiling.push_time s else Gen.Profiling.pop_time s
-                                     | EmptyCmd -> ());
+                                   proc_gen_cmd cmd;
                                    Buffer.clear buffer;
                                    if !inter then
                                      prompt := "SLEEK> "
@@ -324,7 +330,7 @@ let _ =
     in
     let ptime4 = Unix.times () in
     let t4 = ptime4.Unix.tms_utime +. ptime4.Unix.tms_cutime +. ptime4.Unix.tms_stime +. ptime4.Unix.tms_cstime in
-    let _ = print_string ("\nTotal verification time: " 
+    let _ = silenced_print print_string ("\nTotal verification time: " 
     ^ (string_of_float t4) ^ " second(s)\n"
     ^ "\tTime spent in main process: " 
     ^ (string_of_float (ptime4.Unix.tms_utime+.ptime4.Unix.tms_stime)) ^ " second(s)\n"

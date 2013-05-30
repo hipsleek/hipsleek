@@ -7,6 +7,10 @@ data node2 {
 	node2 next;	
 }
 
+dll1<p> == self = null
+  or self::node2<_ ,p , q> * q::dll1<self> 
+  inv true;
+
 /* view for a doubly linked list with size */
 dll<p,n> == self = null & n = 0 
   or self::node2<_ ,p , q> * q::dll<self, n-1> // = q1 

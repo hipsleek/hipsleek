@@ -1117,6 +1117,7 @@ let get_globalLoc (g : global) =
   | GVar(_,_,l) -> (l)
   | GAsm(_,l) -> (l)
   | GPragma(_,l) -> (l) 
+  | GView (_, l) -> (l)
   | GText(_) -> locUnknown
 
 let rec get_stmtLoc (statement : stmtkind) =
@@ -4058,6 +4059,8 @@ class defaultCilPrinterClass : cilPrinter = object (self)
         else
           nil
 
+    | GView _ -> nil
+
 
    method dGlobal (out: out_channel) (g: global) : unit = 
      (* For all except functions and variable with initializers, use the 
@@ -4503,6 +4506,7 @@ let d_shortglobal () = function
   | GFun(fd, _) -> dprintf "definition of %s" fd.svar.vname
   | GText _ -> text "GText"
   | GAsm _ -> text "GAsm"
+  | GView _ -> text "GView"
 
 (** Some string conversation functions *)
 let string_of_exp (e: exp) = Pretty.sprint 10 (d_exp () e)

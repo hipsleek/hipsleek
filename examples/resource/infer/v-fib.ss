@@ -31,11 +31,11 @@ void g()
 relation R(int a,int b,int c).
 
 int fib(int n)
- infer []
+ infer [R]
  requires stk::RS<m> & n>=0
  ensures stk::RS<m> * mx::RS_mark<h> & res>=1
-//   & R(h,m,n);
-     & h=m+max(2,2*n);
+   & R(h,m,n);
+//    & h=m+max(2,2*n);
      //& m+max(2*n,2)<=h<=m+max(2,2*n);
  { int r;
    add_stk(2);

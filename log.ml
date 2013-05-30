@@ -272,7 +272,7 @@ let z3_proofs_list_to_file (src_files) =
 		(* let with_option= if(!Globals.do_slicing) then "slice" else "noslice" in *)
 		let with_option = if(!Globals.en_slc_ps) then "eps" else "no_eps" in
 		let with_option= with_option^"_"^if(!Globals.split_rhs_flag) then "rhs" else "norhs" in
-    let with_option= with_option^"_"^if(not !Globals.elim_exists) then "noee" else "ee" in
+    let with_option= with_option^"_"^if(not !Globals.elim_exists_ff) then "noee" else "ee" in
 		open_out ("logs/"^with_option^"_"^(Globals.norm_file_name (List.hd src_files)) ^".z3") in
 		let _= List.map (fun ix-> let _=fprintf oc "%s" ix in ()) !z3_proof_log_list in
 		let tstoplog = Gen.Profiling.get_time () in
@@ -288,7 +288,7 @@ let proof_greater_5secs_to_file (src_files) =
 		(* let with_option= if(!Globals.do_slicing) then "slice" else "noslice" in *)
 		let with_option = if(!Globals.en_slc_ps) then "eps" else "no_eps" in
 		let with_option= with_option^"_"^if(!Globals.split_rhs_flag) then "rhs" else "norhs" in
-    let with_option= with_option^"_"^if(not !Globals.elim_exists) then "noee" else "ee" in
+    let with_option= with_option^"_"^if(not !Globals.elim_exists_ff) then "noee" else "ee" in
 		open_out ("logs/greater_5sec_"^with_option^"_"^(Globals.norm_file_name (List.hd src_files)) ^".log5") in
 		let _= List.map (fun ix-> let _=fprintf oc "%s" ix in ()) !proof_gt5_log_list in
 		let tstoplog = Gen.Profiling.get_time () in

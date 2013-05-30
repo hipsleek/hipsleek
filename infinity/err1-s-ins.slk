@@ -1,0 +1,25 @@
+
+
+
+//(1)
+checkentail true |- v=max(v,-\inf).
+/*
+normalize_inf_formula inp1 : (ZInfinity)+v=max((ZInfinity)+v,0)
+normalize_inf_formula@2 EXIT out : v=v
+*/
+
+//(2)
+checkentail true |- v=max(w,-\inf).
+print residue.
+/*
+
+normalize_inf_formula inp1 : (ZInfinity)+v=max((ZInfinity)+w,0)
+normalize_inf_formula@4 EXIT out : v=w
+
+*/
+
+//(3)
+checkentail true |- v=max(v,0-\inf).
+print residue.
+
+

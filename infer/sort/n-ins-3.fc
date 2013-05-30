@@ -1,0 +1,19 @@
+R:={[a,v] -> [b] -> []:
+(
+(v<=a && b=v)
+||
+(v>a && b=a)
+||
+(exists (an,bn:
+(
+a<=an && b=a && v>a 
+&& (an<=bn && bn<=(v-2) || v<=(bn+1))
+&& R(an,v,bn) 
+)))
+)
+};
+[T1]:=bottomupgen([R], [2], SimHeur);
+fixtestPost([R],[T1]);
+# T1:=((v >= 1 + b && b = a) || (a >= b && b = v))
+
+

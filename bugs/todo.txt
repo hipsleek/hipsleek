@@ -1,3 +1,33 @@
+# test3.slk # DONE 
+
+Inference has three basic problems in above file/
+
+//(4).
+infer[n] x::ll<n> |- x::node<_,null>.
+print residue.
+/*
+This is WRONG! Previously, we got n=1 as inferred constraint.
+
+Entail (4) : Fail.
+*/
+
+//(10).
+infer[Q] x::node<_,y> * y::ll<n2> & 
+Q(n1-1, n2, n3) & n1>0 |- x::ll<n3> & Q(n1,n2,n3).
+print residue.
+/*
+The RELASS are wrong here. n3=n2+1 should have been instantiated
+and n3=1 occurs when n2=0 presumably.
+
+ <1>emp&Q(-1+n1,n2,n3) & 0<n1 & Anon_183=Anon_21 & r_184=y & n3=n2+1 & n3=1&{FLOW,(19,20)=__norm}[]
+ inferred rel: [RELASS [Q]: ( Q(-1+n1,n2,n3)) -->  n3=n2+1; 
+                RELASS [Q]: ( Q(-1+n1,n2,n3)) -->  n3=1; 
+                RELDEFN Q: ( 1<=n1 & 0<=n2 & Q(-1+n1,n2,n3)) -->  Q(n1,n2,n3)]
+*/
+
+
+
+#
 
 added memo_Pure re-patch;
       should do it more selectively
@@ -33,3 +63,178 @@ Printing very indented:
                                                                    flted_0_114,
                                                                    flted_0_115,
                                                                    flted_0_116: 
+
+# graph2.txt: DONE
+
+Why do two equivalent expression below give different result!
+
+checkentail
+x4::ls<x5>
+* x3::node<x4>
+* x4::ls<x7>
+* x4::node<q>
+* q::ls<x6> & x4!=x6
+& x5!=x7
+& x1=x2 & x2=x3
+|- false.
+
+
+checkentail
+x3::node<x4>
+* x4::ls<x5>
+* x4::ls<x7>
+* x4::node<q>
+* q::ls<x6> & x4!=x6
+& x5!=x7
+& x1=x2 & x2=x3
+|- false.
+
+# bind2.ss
+
+dynamic  EBase hfalse&false&{FLOW,(22,23)=__norm}[]
+{(((node t_32;
+bind c to (Anon_33,nn_34) [write] in 
+{(dprint;
+t_32 = nn_34)});
+dprint);
+return t_32)}
+
+ERROR : why did bind not temporarily remove a node?
+It seems we still use @L annotation on node & field regardless.
+Note how 2nd dprint has become false.
+
+@2! vheap: c'::node<Anon_12'@L,nn'@L>@L[Orig]&true&{FLOW,(1,25)=__flow}[]
+@2! vheap 2: c'::node<Anon_12'@L,nn'@L>@L[Orig]&true&{FLOW,(1,25)=__flow}[]
+
+
+dprint: bind2.ss:16: ctx:  List of Failesc Context: [FEC(0, 0, 1  )]
+
+Successful States:
+[
+ Label: 
+ State:c::node<Anon_11@M,p@M>@M[Orig]&c=c' & 0<=0 & Anon_11=Anon_33' & nn_34'=p&{FLOW,(22,23)=__norm}[]
+       es_var_measures: MayLoop
+       es_trace: empty
+
+ ]
+
+dprint: bind2.ss:20: ctx:  List of Failesc Context: [FEC(0, 0, 1  )]
+
+Successful States:
+[
+ Label: 
+ State:hfalse&false&{FLOW,(22,23)=__norm}[]
+
+# bind2b1.ss (vs bind2b.ss)  TEMP FIXED fields-->@M
+
+node paper_fix (node c)
+  requires c::node<_,p>
+  ensures res=p;
+{
+      node t;
+      bind c to (vv,nn) in { t = nn; };
+      dprint;
+      return t;
+}
+
+/*
+
+Why is this bind inferred as @M?
+@7! >>>>>> bind type-checker <<<<<<
+@7! node:c
+@7! fields:[vv_32,nn_33]
+@7! node ann:@M
+@7! fields ann:[@L,@L]
+@7! read-only:false
+
+It should be @L; as in bind2b.ss with
+@7! >>>>>> bind type-checker <<<<<<
+@7! node:c
+@7! fields:[val_15_762,next_15_763]
+@7! node ann:@L
+@7! fields ann:[@A,@L]
+@7! read-only:true
+@7!bind2b.ss:15: 10: bind: unfolded context:
+
+
+
+*/
+
+
+# bind2b2.ss   DONE
+
+node paper_fix (node c)
+  requires c::node<_,p>
+  ensures res=p;
+{
+      node t;
+      t = bind c to (vv,nn) in nn ;
+      dprint;
+      return t;
+}
+
+/*
+
+Why is there a parsing error for bind in the RHS of assignment?
+
+File "bind2b2.ss", line 15, characters 8-9
+ --error: Stream.Error("[expression] expected after EQ (in [assignment_expression])")
+
+
+*/
+
+# bind2e.ss
+
+ bind node lost during exception!
+
+bind node not released by exception!
+  1. restore
+  2. use try-catch for bind?
+
+dprint: bind2e.ss:17: ctx:  List of Failesc Context: [FEC(0, 1, 0 )]
+Escaped States:
+[
+ 
+ Try-Block:0::
+ [
+  Path: 
+  State:emp&c=c' & 0<=0 & Anon_11=Anon_36' & nn_37'=p & nn_37'=res&{FLOW,(16,17)=__Return}[]
+        es_var_measures: MayLoop
+        es_trace: empty
+
+  ]
+ ]
+
+
+# bind2{e3,e4}.ss  DONE 
+     (via CF.normalize_max_renaming_list_failesc_context_4_bind)
+
+dprint: bind2e4.ss:18: ctx:  List of Failesc Context: [FEC(0, 1, 0 )]
+!!! bind:tmp_res1:[ Escaped States:
+ [
+  
+  Try-Block:62::
+  [
+   Path: 
+   State:emp&c=c' & 0<=0 & Anon_11=Anon_36' & nn_37'=p & nn_37'=res&{FLOW,(16,17)=__Return}[]
+         es_var_measures: MayLoop
+         es_trace: empty
+
+   ];
+  
+  ]]
+
+bind2e3.ss
+
+!!! bind:tmp_res1:[ 
+ Successful States:
+ [
+  Label: 
+  State:emp&c=c' & 0<=0 & Anon_11=Anon_36' & nn_37'=p & nn_37'=res&{FLOW,(16,17)=__Return}[]
+        es_var_measures: MayLoop
+        es_trace: empty
+
+  ]]
+
+
+# TODO how about field level access for bind2{e3,e4}.ss

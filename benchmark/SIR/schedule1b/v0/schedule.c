@@ -497,7 +497,7 @@ void add_process(int prio, ref int alloc_proc_num, ref int num_processes, ref no
     prio = 3 -> ensures  pq1'::ll<n1> * pq2'::ll<n2> * pq3'::ll<n3+1> & (num_processes'= num_processes+1) &
              (alloc_proc_num' = alloc_proc_num+1);
     prio <= 0 | prio >3 -> ensures pq1'=pq1 & pq2'=pq2 & pq3'=pq3 & (num_processes'= num_processes) &
-             (alloc_proc_num' = alloc_proc_num) & flow __error;
+             (alloc_proc_num' = alloc_proc_num) & flow __Error;
  }
 {
     node proc;

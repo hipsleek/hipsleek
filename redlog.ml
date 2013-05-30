@@ -123,8 +123,10 @@ let start () =
       in
       rl_current_mode := OFSF;
       let set_process proc = process := proc in
-      let _ = Procutils.PrvComms.start !is_log_all log_file ("redlog", "redcsl",  [|"-w"; "-b";"-l reduce.log"|] ) set_process prelude in
-      print_endline "Starting Reduce... "; flush stdout
+      let rl_bin = if !Globals.web_compile_flag then "/usr/local/etc/reduce/bin/redcsl" else "redcsl" in
+      let _ = Procutils.PrvComms.start !is_log_all log_file ("redlog", rl_bin,  [|"-w"; "-b";"-l reduce.log"|] ) set_process prelude in
+      (* print_endline "Starting Reduce... "; *)
+      flush stdout
   end
 
 (* stop Reduce system *)

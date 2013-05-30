@@ -1,0 +1,12 @@
+//(1) Valid
+checkentail v=-\inf |- v<\inf.
+
+//(2) Valid
+checkentail true |- -\inf<\inf.
+
+
+//(3) Valid
+checkentail v=-\inf & w!=-\inf |- v<w.
+
+//(4) Valid
+checkentail v=\inf & w!=\inf |- v>w.

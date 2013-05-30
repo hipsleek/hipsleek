@@ -427,7 +427,7 @@ let rec translate_typ (t: Cil.typ) : Globals.typ =
                 let data_type = Globals.Named data_name in
                 Hashtbl.add tbl_data_type ty data_type;
                 let data_decl = {Iast.data_name = data_name;
-                                 Iast.data_fields = [((ftype, fname), no_pos, false)];
+                                 Iast.data_fields = [((ftype, fname), no_pos, false, Iast.F_NO_ANN)];
                                  Iast.data_parent_name = "Object";
                                  Iast.data_invs = [];
                                  Iast.data_is_template = false;
@@ -443,7 +443,7 @@ let rec translate_typ (t: Cil.typ) : Globals.typ =
                 let data_type = Globals.Named data_name in
                 Hashtbl.add tbl_data_type ty data_type;
                 let data_decl = {Iast.data_name = data_name;
-                                 Iast.data_fields = [((ftype, fname), no_pos, false)];
+                                 Iast.data_fields = [((ftype, fname), no_pos, false, Iast.F_NO_ANN)];
                                  Iast.data_parent_name = "Object";
                                  Iast.data_invs = [];
                                  Iast.data_is_template = false;
@@ -515,19 +515,19 @@ let translate_constant (c: Cil.constant) (lopt: Cil.location option) : Iast.exp 
 (* translate a field of a struct                       *)
 (*     return: field type * location * inline property *)
 let translate_fieldinfo (field: Cil.fieldinfo) (lopt: Cil.location option) 
-                        : (Iast.typed_ident * loc * bool) =
+                        : (Iast.typed_ident * loc * bool * Iast.data_field_ann) =
   let pos = match lopt with None -> no_pos | Some l -> translate_location l in
   let name = field.Cil.fname in
   match field.Cil.ftype with
   | Cil.TComp (comp, _) ->
       let ty = Globals.Named comp.Cil.cname in
-      ((ty, name), pos, false)
+      ((ty, name), pos, false, Iast.F_NO_ANN)
   | Cil.TPtr _ ->
       let ty = translate_typ field.Cil.ftype in
-      ((ty, name), pos, false)
+      ((ty, name), pos, false, Iast.F_NO_ANN)
   | _ ->
       let ty = translate_typ field.Cil.ftype in
-      ((ty, name), pos, false)
+      ((ty, name), pos, false, Iast.F_NO_ANN)
 
 
 let translate_compinfo (comp: Cil.compinfo) (lopt: Cil.location option)
@@ -749,7 +749,7 @@ and translate_exp (e: Cil.exp) : Iast.exp =
               let data_type = Globals.Named data_name in
               Hashtbl.add tbl_data_type ty data_type;
               let data_decl = {Iast.data_name = data_name;
-                               Iast.data_fields = [((ftype, fname), no_pos, false)];
+                               Iast.data_fields = [((ftype, fname), no_pos, false, Iast.F_NO_ANN)];
                                Iast.data_parent_name = "Object";
                                Iast.data_invs = [];
                                Iast.data_is_template = false;
@@ -903,6 +903,7 @@ let rec translate_stmt (s: Cil.stmt) : Iast.exp =
                                  Iast.exp_bool_lit_pos = pos} in
         let infinite_loop = Iast.While {Iast.exp_while_condition = cond;
                                         Iast.exp_while_body = Iast.Empty pos;
+                                        Iast.exp_while_addr_vars = [];
                                         Iast.exp_while_specs = Iast.mkSpecTrue n_flow pos;
                                         Iast.exp_while_jump_label = Iast.NoJumpLabel;
                                         Iast.exp_while_path_id = None ;
@@ -943,6 +944,7 @@ let rec translate_stmt (s: Cil.stmt) : Iast.exp =
       let body = translate_block blk in
       let newexp = Iast.While {Iast.exp_while_condition = cond;
                                Iast.exp_while_body = body;
+                               Iast.exp_while_addr_vars = [];
                                Iast.exp_while_specs = hspecs;
                                Iast.exp_while_jump_label = Iast.NoJumpLabel;
                                Iast.exp_while_path_id = None ;
@@ -1178,6 +1180,10 @@ let translate_file (file: Cil.file) : Iast.prog_decl =
         report_error_msg "TRUNG TODO: Handle Cil.GPragma later!"
     | Cil.GText _ ->
         let _ = print_endline ("== gl GText = " ^ (string_of_cil_global gl)) in
+        ()
+        (* report_error_msg "TRUNG TODO: Handle Cil.GText later!" *)
+    | Cil.GView _ ->
+        let _ = print_endline ("== gl GView = " ^ (string_of_cil_global gl)) in
         ()
         (* report_error_msg "TRUNG TODO: Handle Cil.GText later!" *)
   ) globals;

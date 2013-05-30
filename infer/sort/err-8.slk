@@ -1,0 +1,70 @@
+data node {
+	int val; 
+	node next; 
+}.
+
+relation R(int a).
+
+//(1)
+infer [R] x::node<a,null> & R(a) |- x::node<v1,null> .
+print residue.
+// valid
+
+//(2)
+infer [R] x::node<a,null> & R(a) |- x::node<v1,null> & v1>=0 .
+/*
+ expecting just R(a) --> 0<=a
+*/
+print residue.
+
+// (3)
+infer [R] a=v1 & b=null & R(a) |- b=null & v1>=0 .
+print residue.
+/*
+ <1>emp&a=v1 & b=null & R(a)&{FLOW,(19,20)=__norm}[]
+ inferred rel: [RELASS [R]: ( R(a)) -->  b=null & 0<=a]
+ why different from below : --> duplicated codes.
+*/
+
+//(4)
+infer [a] a=v1 & b=null |- b=null & v1>=0 .
+print residue.
+// inferred pure: [0<=a]
+
+//(5)
+infer [b,z] a>b |- a>z.
+print residue.
+// inferred pure: [z<=b]
+
+relation R2(int a, int b).
+
+//(6)
+infer [R2] a>b & R2(b,z) |- a>z.
+print residue.
+//inferred rel: [RELASS [R2]: ( R2(b,z)) -->  z<=b]
+
+
+relation R2(int a, int b).
+//(7)
+infer [b,z] a>=b |- a>z.
+print residue.
+//inferred pure: [(1+z)<=b]
+
+//(8)
+infer [R2] a>=b & R2(b,z) |- a>z.
+print residue.
+// inferred rel: [RELASS [R2]: ( R2(b,z)) -->  z<b]
+// why different from above? This indicates that
+// there are two similar (duplicated codes)
+
+relation R3(int a, int b, int c).
+//(9)
+infer [b,z,a] a>=b |- a>z.
+print residue.
+//inferred pure: [(1+z)<=b]
+
+//(10)
+infer [R3] a>=b & R3(b,z,a) |- a>z.
+print residue.
+// inferred rel: [RELASS [R3]: ( R3(b,z,a)) -->  z<b]
+
