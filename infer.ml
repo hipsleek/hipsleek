@@ -2047,9 +2047,12 @@ let infer_collect_hp_rel_x prog (es:entail_state) rhs rhs_rest (rhs_h_matched_se
         let _ = DD.info_hprint (add_str "rhs" pr_h) rhs no_pos in
         let v_lhs = (CF.fv (CF.Base lhs_b)) in
         let v_rhs = (CF.h_fv (rhs)) in
-        let v_2_rename = Gen.BList.difference_eq CP.eq_spec_var v_rhs v_lhs in
+        let v_hp_rel = es.CF.es_infer_vars_hp_rel in
+        let v_2_rename = Gen.BList.difference_eq CP.eq_spec_var v_rhs (v_lhs@v_hp_rel) in
         let _ = DD.info_hprint (add_str "lhs(vars)" pr_svl) v_lhs no_pos in
         let _ = DD.info_hprint (add_str "rhs(vars)" pr_svl) v_rhs no_pos in
+        let _ = DD.info_hprint (add_str "vars_sel_hp_rel" pr_svl) es.CF.es_infer_vars_sel_hp_rel no_pos in
+        let _ = DD.info_hprint (add_str "vars_hp_rel" pr_svl) v_hp_rel no_pos in
         let _ = DD.info_hprint (add_str "VARS ro rename in RHS" pr_svl) v_2_rename no_pos in
         (* v_2_rename vars in new_rhs_b0 needs needs to be renamed *)
         let mis_nodes =  match rhs with
