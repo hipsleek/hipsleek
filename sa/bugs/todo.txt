@@ -737,3 +737,42 @@ For HeapPred
  (i) by default, first parameter is the root
  (ii) unless named as "self"
 
+# i-cll.ss
+
+hip generated the following rel assumption:
+
+ H1(rest,h)&h!=rest --> rest::node<val_31_824,next_31_825>@M * 
+  HP_8(next_31_825,h).
+
+ HP_8(next_31_825,h)&h!=rest -->
+  H1(next_31_825,h)&true.
+
+ H1(rest,h)&h=rest --> G1(rest,h).
+
+ rest::node<val_31_824,next_31_825>@M * G1(next_31_825,h) &
+  h!=rest --> G1(rest,h).
+
+
+There are two problems
+(i) Guard must be captured exclusively
+    by nodes/predicates from both LHS and RHS
+      HP_8(next,h)&h!=rest -->
+            H1(next,h)&true.
+  The LHS & RHS vars are {next,h}
+ but guard h!=rest contains an unknown var h!=rest which
+ should not be included.
+ Thus, we should have genrated"
+      HP_8(next,h) --> H1(next,h)&true.
+
+ (ii) The assumption contains both
+  pre-pred and post-pred. We should split them 
+  as follows:
+
+ H1(rest,h)&h=rest --> G1(rest,h).
+
+ split to:
+
+ (i)  H1(rest,h)&h=rest --> emp.
+ (ii) h=rest --> G1(rest,h).
+
+
