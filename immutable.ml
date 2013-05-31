@@ -649,14 +649,14 @@ and remaining_ann_x (ann_l: ann) (ann_r: ann) : ann =
 
 and remaining_ann (ann_l: ann) (ann_r: ann) : ann =
   let pr = Cprinter.string_of_imm in
-  Debug.no_2 "remaining_ann" pr pr pr (fun _ _-> remaining_ann_x ann_l ann_r) ann_l ann_r
+  Debug.ho_2 "remaining_ann" pr pr pr (fun _ _-> remaining_ann_x ann_l ann_r) ann_l ann_r
 
 (* during matching - for residue*)
 and replace_list_ann_x (ann_lst_l: ann list) (ann_lst_r: ann list): ann list =
   match (ann_lst_l, ann_lst_r) with
     | ([], []) -> []
     | (ann_l :: tl, ann_r :: tr ) -> (remaining_ann ann_l ann_r) :: (replace_list_ann_x tl tr)
-    | (_, _) -> ann_lst_l (* report_error no_pos ("[immutable.ml] : nodes should have same no. of fields \n") *)
+    | (_, _) -> (* ann_lst_l *) report_error no_pos ("[immutable.ml] : nodes should have same no. of fields \n")
 
 and replace_list_ann (ann_lst_l: ann list) (ann_lst_r: ann list): ann list =
   let pr lst = "[" ^ (List.fold_left (fun y x-> (Cprinter.string_of_imm x) ^ ", " ^ y) "" lst) ^ "]; " in
@@ -688,7 +688,7 @@ and consumed_list_ann_x (ann_lst_l: ann list) (ann_lst_r: ann list): ann list =
 
 and consumed_list_ann (ann_lst_l: ann list) (ann_lst_r: ann list): ann list =
   let pr lst = "[" ^ (List.fold_left (fun y x-> (Cprinter.string_of_imm x) ^ ", " ^ y) "" lst) ^ "]; " in
-  Debug.no_2 "consumed_list_ann" pr pr pr (fun _ _-> consumed_list_ann_x ann_lst_l ann_lst_r) ann_lst_l ann_lst_r
+  Debug.ho_2 "consumed_list_ann" pr pr pr (fun _ _-> consumed_list_ann_x ann_lst_l ann_lst_r) ann_lst_l ann_lst_r
 
 
 and merge_ann_formula_list(conjs: CP.formula list): heap_ann option = 
@@ -749,7 +749,7 @@ and restore_tmp_res_ann_x (annl: ann) (annr: ann) (pure0: MCP.mix_formula): ann 
 
 and restore_tmp_res_ann (annl: ann) (annr: ann) (pure0: MCP.mix_formula): ann =
   let pr = Cprinter.string_of_imm in
-  Debug.no_3 "restore_tmp_res_ann" pr pr Cprinter.string_of_mix_formula pr restore_tmp_res_ann_x annl annr pure0
+  Debug.to_3 "restore_tmp_res_ann" pr pr Cprinter.string_of_mix_formula pr restore_tmp_res_ann_x annl annr pure0
 
 
 and restore_tmp_ann_x (ann_lst: ann list) (pure0: MCP.mix_formula): ann list =
@@ -758,7 +758,9 @@ and restore_tmp_ann_x (ann_lst: ann list) (pure0: MCP.mix_formula): ann list =
     | ann_l::tl ->
           begin
 	    match ann_l with 
-	      | TempAnn(t)     -> t :: (restore_tmp_ann_x tl pure0)
+	      | TempAnn(t)     -> 
+                    let ann_l = restore_tmp_res_ann t t pure0 in
+                    ann_l :: (restore_tmp_ann_x tl pure0)
               | TempRes(al,ar) -> 
                     Debug.tinfo_hprint (add_str "TempRes:" (Cprinter.string_of_imm)) ann_l no_pos;
                     Debug.tinfo_hprint (add_str "pure0:" (Cprinter.string_of_mix_formula)) pure0 no_pos;
@@ -769,7 +771,7 @@ and restore_tmp_ann_x (ann_lst: ann list) (pure0: MCP.mix_formula): ann list =
 
 and restore_tmp_ann (ann_lst: ann list) (pure0: MCP.mix_formula): ann list =
   let pr = pr_list Cprinter.string_of_imm in 
-  Debug.no_2 "restore_tmp_ann" pr  (Cprinter.string_of_mix_formula) pr restore_tmp_ann_x ann_lst pure0
+  Debug.to_2 "restore_tmp_ann" pr  (Cprinter.string_of_mix_formula) pr restore_tmp_ann_x ann_lst pure0
 
 and update_field_ann (f : h_formula) (pimm1 : ann list) (pimm : ann list) : h_formula = 
   let pr lst = "[" ^ (List.fold_left (fun y x-> (Cprinter.string_of_imm x) ^ ", " ^ y) "" lst) ^ "]; " in
@@ -992,7 +994,7 @@ and apply_subs_h_formula crt_holes (h : h_formula) : h_formula =
 	  let nh2 = apply_subs_h_formula crt_holes h2 in
 	  ConjConj({h_formula_conjconj_h1 = nh1;
 	  h_formula_conjconj_h2 = nh2;
-	  h_formula_conjconj_pos = pos})	      	      
+	  h_formula_conjconj_pos = pos})
     | Phase({h_formula_phase_rd = h1;
       h_formula_phase_rw = h2;
       h_formula_phase_pos = pos}) ->
@@ -1125,18 +1127,20 @@ and push_node_imm_to_field_imm (h:CF.h_formula) : CF.h_formula =
 
 and normalize_field_ann_heap_node_x (h:CF.h_formula): CF.h_formula =
   if (!Globals.allow_field_ann) then
+  (* if (false) then *)
     normalize_h_formula_dn push_node_imm_to_field_imm h
   else h
 
 and normalize_field_ann_heap_node (h:CF.h_formula): CF.h_formula =
   let pr = Cprinter.string_of_h_formula in
-  Debug.no_1 "normalize_field_ann_data_node" pr pr normalize_field_ann_heap_node_x h
+  Debug.ho_1 "normalize_field_ann_data_node" pr pr normalize_field_ann_heap_node_x h
 
 and normalize_field_ann_formula_x (h:CF.formula): CF.formula =
   if (!Globals.allow_field_ann) then
+  (* if (false) then *)
     normalize_formula_dn push_node_imm_to_field_imm h
   else h
 
 and normalize_field_ann_formula (h:CF.formula): CF.formula =
   let pr = Cprinter.string_of_formula in
-  Debug.no_1 "normalize_field_ann_formula" pr pr normalize_field_ann_formula_x h
+  Debug.ho_1 "normalize_field_ann_formula" pr pr normalize_field_ann_formula_x h
