@@ -741,7 +741,7 @@ For HeapPred
  (ii) unless named as "self"
 
  =========================================================
-# i-cll.ss
+# i-cll.ss: DONE
 
 hip generated the following rel assumption:
 
