@@ -1182,8 +1182,8 @@ let translate_file (file: Cil.file) : Iast.prog_decl =
         let _ = print_endline ("== gl GText = " ^ (string_of_cil_global gl)) in
         ()
         (* report_error_msg "TRUNG TODO: Handle Cil.GText later!" *)
-    | Cil.GView _ ->
-        let _ = print_endline ("== gl GView = " ^ (string_of_cil_global gl)) in
+    | Cil.GHipSleek _ ->
+        let _ = print_endline ("== gl GHipSleek = " ^ (string_of_cil_global gl)) in
         ()
         (* report_error_msg "TRUNG TODO: Handle Cil.GText later!" *)
   ) globals;

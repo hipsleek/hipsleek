@@ -205,7 +205,7 @@ and global =
   | GText of string                     (** Some text (printed verbatim) at 
                                             top level. E.g., this way you can 
                                             put comments in the output.  *)
-  | GView of Iast.view_decl * location  (** HIP/SLEEK *)
+  | GHipSleek of Iast.proc_decl * location  (** HIP/SLEEK *)
 
 
 (** The various types available. Every type is associated with a list of 
@@ -1117,7 +1117,7 @@ let get_globalLoc (g : global) =
   | GVar(_,_,l) -> (l)
   | GAsm(_,l) -> (l)
   | GPragma(_,l) -> (l) 
-  | GView (_, l) -> (l)
+  | GHipSleek (_, l) -> (l)
   | GText(_) -> locUnknown
 
 let rec get_stmtLoc (statement : stmtkind) =
@@ -4059,7 +4059,7 @@ class defaultCilPrinterClass : cilPrinter = object (self)
         else
           nil
 
-    | GView _ -> nil
+    | GHipSleek _ -> nil
 
 
    method dGlobal (out: out_channel) (g: global) : unit = 
@@ -4506,7 +4506,7 @@ let d_shortglobal () = function
   | GFun(fd, _) -> dprintf "definition of %s" fd.svar.vname
   | GText _ -> text "GText"
   | GAsm _ -> text "GAsm"
-  | GView _ -> text "GView"
+  | GHipSleek _ -> text "GHipSleek"
 
 (** Some string conversation functions *)
 let string_of_exp (e: exp) = Pretty.sprint 10 (d_exp () e)

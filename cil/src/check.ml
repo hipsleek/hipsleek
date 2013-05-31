@@ -862,7 +862,7 @@ let rec checkGlobal = function
     GAsm _ -> ()
   | GPragma _ -> ()
   | GText _ -> ()
-  | GView _ -> ()
+  | GHipSleek _ -> ()
   | GType (ti, l) -> 
       currentLoc := l;
       E.withContext (fun _ -> dprintf "GType(%s)" ti.tname)

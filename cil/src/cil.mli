@@ -160,7 +160,7 @@ and global =
   | GText of string                     (** Some text (printed verbatim) at 
                                             top level. E.g., this way you can 
                                             put comments in the output.  *)
-  | GView of Iast.view_decl * location  (** HIP/SLEEK *)
+  | GHipSleek of Iast.proc_decl * location  (** HIP/SLEEK *)
 
 (** {b Types}. A C type is represented in CIL using the type {!Cil.typ}. 
  * Among types we differentiate the integral types (with different kinds 

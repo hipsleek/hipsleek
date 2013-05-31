@@ -606,7 +606,7 @@ and apply_one (fr, t) f = match f with
         Exists (fresh_v, apply_one (fr, t) (apply_one (v, fresh_v) qf), lbl, pos)
 	  else Exists (v, apply_one (fr, t) qf, lbl, pos)
   
-and b_apply_one (fr, t) bf =
+and b_apply_one ((fr, t) as p) bf =
   let (pf,il) = bf in
   let npf = match pf with
     | XPure ({xpure_view_node = vn ;
@@ -624,7 +624,7 @@ and b_apply_one (fr, t) bf =
         XPure ({ xp with xpure_view_node = new_vn ;
 		    xpure_view_arguments = new_args})
   | BConst _ -> pf
-  | BVar (bv, pos) -> BVar ((if eq_var bv fr then t else bv), pos)
+  | BVar (bv, pos) -> BVar (v_apply_one p bv, pos)
   | Lt (a1, a2, pos) -> Lt (e_apply_one (fr, t) a1,
 							e_apply_one (fr, t) a2, pos)
   | Lte (a1, a2, pos) -> Lte (e_apply_one (fr, t) a1,
@@ -645,16 +645,14 @@ and b_apply_one (fr, t) bf =
   | EqMin (a1, a2, a3, pos) -> EqMin (e_apply_one (fr, t) a1,
 									  e_apply_one (fr, t) a2,
 									  e_apply_one (fr, t) a3, pos)
-  | BagIn (v, a1, pos) -> BagIn ((if eq_var v fr then t else v), e_apply_one (fr, t) a1, pos)
-  | BagNotIn (v, a1, pos) -> BagNotIn ((if eq_var v fr then t else v), e_apply_one (fr, t) a1, pos)
+  | BagIn (v, a1, pos) -> BagIn (v_apply_one p v, e_apply_one (fr, t) a1, pos)
+  | BagNotIn (v, a1, pos) -> BagNotIn (v_apply_one p v, e_apply_one (fr, t) a1, pos)
 	(* is it ok?... can i have a set of boolean values?... don't think so... *)
   | BagSub (a1, a2, pos) -> BagSub (e_apply_one (fr, t) a1, e_apply_one (fr, t) a2, pos)
-  | BagMax (v1, v2, pos) -> BagMax ((if eq_var v1 fr then t else v1), (if eq_var v2 fr then t else v2), pos)
-  | BagMin (v1, v2, pos) -> BagMin ((if eq_var v1 fr then t else v1), (if eq_var v2 fr then t else v2), pos)
+  | BagMax (v1, v2, pos) -> BagMax (v_apply_one p v1, v_apply_one p v2, pos)
+  | BagMin (v1, v2, pos) -> BagMin (v_apply_one p v1, v_apply_one p v2, pos)
   | VarPerm (ct,ls,pos) -> (*TO CHECK*)
-      let func v =
-        (if eq_var v fr then t else v)
-      in
+      let func v = v_apply_one p v in
       let ls1 = List.map func ls in
       VarPerm (ct,ls1,pos)
   | ListIn (a1, a2, pos) -> ListIn (e_apply_one (fr, t) a1, e_apply_one (fr, t) a2, pos)
@@ -678,8 +676,8 @@ and e_apply_one ((fr, t) as p) e = match e with
   | InfConst _
   | AConst _ -> e
   | Ann_Exp (e,ty) -> Ann_Exp ((e_apply_one p e), ty)
-  | Var (sv, pos) -> Var ((if eq_var sv fr then t else sv), pos)
-  | Level (sv, pos) -> Level ((if eq_var sv fr then t else sv), pos)
+  | Var (sv, pos) -> Var (v_apply_one p sv, pos)
+  | Level (sv, pos) -> Level (v_apply_one p sv, pos)
   | Add (a1, a2, pos) -> Add (e_apply_one p a1,
 							  e_apply_one p a2, pos)
   | Subtract (a1, a2, pos) -> Subtract (e_apply_one p a1,
@@ -706,7 +704,9 @@ and e_apply_one ((fr, t) as p) e = match e with
   | ListLength (a1, pos) -> ListLength (e_apply_one p a1, pos)
   | ListReverse (a1, pos) -> ListReverse (e_apply_one p a1, pos)
   | Func (a, ind, pos) -> Func (a, (e_apply_one_list p ind), pos)
-  | ArrayAt (a, ind, pos) -> ArrayAt (a, (e_apply_one_list p ind), pos) (* An Hoa *)
+  | ArrayAt (a, ind, pos) -> ArrayAt (v_apply_one p a, (e_apply_one_list p ind), pos) (* An Hoa *)
+
+and v_apply_one ((fr, t) as p) v = (if eq_var v fr then t else v)
 
 and e_apply_one_list ((fr, t) as p) alist = match alist with
   |[] -> []

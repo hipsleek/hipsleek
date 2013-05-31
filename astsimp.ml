@@ -1905,7 +1905,7 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
       let ffv = Gen.BList.difference_eq cmp (*(CF.struc_fv_infer final_static_specs_list)*) struc_fv (lock_vars@((cret_type,res_name)::(Named raisable_class,eres_name)::args2)) in
         if (ffv!=[]) then 
           Error.report_error { 
-              Err.error_loc = no_pos; 
+              Err.error_loc = no_pos;
               Err.error_text = "error 3: free variables "^(Cprinter.string_of_spec_var_list ffv)^" in proc "^proc.I.proc_name^" "} in
       let cproc ={
           C.proc_name = proc.I.proc_mingled_name;
