@@ -1949,7 +1949,7 @@ let simplify_lhs_rhs prog lhs_b rhs_b leqs reqs hds hvs lhrs rhrs lhs_selected_h
   (*args of one hp must be diff --
        inside SAU.keep_data_view_hrel_nodes_two_fbs*)
   (* let lhs_b4,rhs_b4 = SAU.rename_hp_args lhs_b3 rhs_b3 in *)
-  (lhs_b3,rhs_b3)
+  (CF.prune_irr_neq_formula lhs_b3 rhs_b,rhs_b3)
 
 let simplify_lhs_rhs prog lhs_b rhs_b leqs reqs hds hvs lhrs rhrs lhs_selected_hps rhs_selected_hps crt_holes history unk_svl prog_vars =
   let pr = Cprinter.string_of_formula_base in
