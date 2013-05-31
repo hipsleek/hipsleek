@@ -486,11 +486,10 @@ print residue.
  inferred hprel: [(HP_p(prev_17_803,y')) * (HP_2(t_32',y'))&
                    t_32'!=null --> H1(t_32',y')&true]
 
-
 */
 
 I think it would be good to have the following notion of parameters:
-    (i) head
+    (i) head (self)
    (ii) continuation
   (iii) don't know
 Let us assume that head is always the first paramter,
@@ -546,6 +545,17 @@ as it has both complex LHS and complex RHS.
 
 # sll-dll2.ss     DONE (by not using es_history)
 
+
+
+ checkentail (HP_787(pp_785,p)) * (HP_788(nn_786,p))&c=c' & p=p' & c'!=null & 
+v_bool_18_760' & c'!=null & v_bool_18_760' & Anon_11'=Anon_784 & 
+pp_785=pp_789 & nn'=nn_786 & p'=pp'&{FLOW,(22,23)=__norm}[]
+ |-  H1(nn',c')&true&{FLOW,(22,23)=__norm}[]. 
+hprel_ass: [ HP_788(nn_786,p)&c'!=null --> H1(nn_786,c')&true]
+res:  [
+  HP_787(pp_785,p)&c=c' & p=p' & c'!=null & v_bool_18_760' & c'!=null & v_bool_18_760' & Anon_11'=Anon_784 & pp_785=pp_789 & nn'=nn_786 & p'=pp'&{FLOW,(22,23)=__norm}[]
+  ]
+
 On sleek logging of sll-dll2.ss, we got:
 
  checkentail (HP_784(pp_786,p)) * (HP_785(nn',p))&c=c' & p=p' & c'!=null & 
@@ -580,7 +590,7 @@ relAssume G1
 shape_infer [][G1].//[pre_hps][post_hps]
 
 
-# bug-app3.slk
+# bug-app3.slk   DONE (by renaming vars)
 
 When generating:
  es_infer_hp_rel: [H2(r)&true --> r::node<Anon_13,flted_17_34>@M * 
@@ -671,7 +681,7 @@ Entail (1) : Fail.
 */
 
 
-# bug-app3n.slk
+# bug-app3s1.slk
 
 p parameter of pred is a continuation if
 it is unchanged parameter that is defined for every branch.

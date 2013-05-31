@@ -13,8 +13,8 @@ pred lseg<p> ==
 //infer [H2] H2(r)   |- (exists p: r::node<_,p> & p =null).
 //print residue.
 //infer [y] r::node<_,y>   |- r::node<_,null> .
-//infer [H2] H2(r)   |- r::node<_,null> .
-infer [H2] H2(r)   |- r::node<n,q> & n>0 .
+infer [H2] H2(r)   |- r::node<_,null> .
+//infer [H2] H2(r)   |- r::node<n,q> & n>0 .
 print residue.
 //checkentail (exists p: r::node<_,p> & p!=null)   |- r::node<_,null> .
 //print residue.
