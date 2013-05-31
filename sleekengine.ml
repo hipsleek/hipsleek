@@ -248,7 +248,8 @@ let convert_pred_to_cast () =
       Norm.norm_extract_common !cprog cviews (List.map (fun vdef -> vdef.C.view_name) cviews)
     else cviews
   in
-  let _ = !cprog.C.prog_view_decls <- cviews1 in
+  let cviews2 = Norm.cont_para_analysis !cprog cviews1 in
+  let _ = !cprog.C.prog_view_decls <- cviews2 in
   let _ =  (List.map (fun vdef -> AS.compute_view_x_formula !cprog vdef !Globals.n_xpure) cviews1) in
   Debug.tinfo_pprint "after compute_view" no_pos;
   let _ = (List.map (fun vdef -> AS.set_materialized_prop vdef) cviews1) in

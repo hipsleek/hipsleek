@@ -420,3 +420,55 @@ let norm_extract_common cprog cviews sel_vns=
 (*****************************************************************)
    (********END EXTRACT common pattern **********)
 (*****************************************************************)
+let cont_para_analysis_view cprog vdef other_vds=
+  let process_branch vname args f=
+    let _, vns, _ = CF.get_hp_rel_formula f in
+    if vns = [] then args else
+      let ( _,mix_f,_,_,_) = CF.split_components f in
+      let eqs = (MCP.ptr_equations_without_null mix_f) in
+      let rec_vns, other_vns = List.partition (fun vn -> String.compare vn.CF.h_formula_view_name vname = 0) vns in
+      (*cont paras are para not changed, just forwarded*)
+      let cont_paras = List.fold_left (fun cur_cont_paras vn ->
+          let closed_rec_args = SAU.find_close vn.CF.h_formula_view_arguments eqs in
+          CP.intersect_svl cur_cont_paras closed_rec_args
+      ) args rec_vns
+      in
+      (* process other_vns*)
+      let cont_paras1 = List.fold_left (fun cur_cont_paras vn ->
+          let cont_args = Cast.look_up_cont_args vn.CF.h_formula_view_arguments vn.CF.h_formula_view_name other_vds in
+          let closed_rec_args = SAU.find_close cont_args eqs in
+          CP.intersect_svl cur_cont_paras closed_rec_args
+      ) cont_paras other_vns
+      in
+      cont_paras1
+  in
+  let vname = vdef.Cast.view_name in
+  let args = vdef.Cast.view_vars in
+  let cont_paras = List.fold_left (fun cur_cont_paras (f,_) ->
+      let br_cont_paras = process_branch vname args f in
+          CP.intersect_svl cur_cont_paras br_cont_paras
+      ) args vdef.Cast.view_un_struc_formula
+  in
+  {vdef with Cast.view_cont_vars = cont_paras}
+
+(*assume cviews are sorted*)
+let cont_para_analysis_x cprog cviews=
+  let rec loop_helper rem_cviews done_cviews=
+    match rem_cviews with
+      | [] -> done_cviews
+      | vdef::rest ->
+            let new_vdef = cont_para_analysis_view cprog vdef done_cviews in
+            loop_helper rest (done_cviews@[new_vdef])
+  in
+  loop_helper cviews []
+
+let cont_para_analysis cprog cviews=
+  (* let pr0 = pr_list_ln Cprinter.string_of_view_decl in *)
+  let pr1 = pr_pair pr_id !CP.print_svl in
+  let pr2 vdef = pr1 (vdef.Cast.view_name, vdef.Cast.view_cont_vars) in
+  let pr3 = pr_list pr2 in
+  Debug.no_1 "cont_para_analysis" pr3 pr3
+      (fun _ -> cont_para_analysis_x cprog cviews) cviews
+(*****************************************************************)
+   (********END PARA CONTINUATION ANALYSIS **********)
+(*****************************************************************)

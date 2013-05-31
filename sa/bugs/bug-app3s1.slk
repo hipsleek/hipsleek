@@ -22,14 +22,14 @@ pred dll<p> ==
   or self::node<_,p,q> * q::dll<self> 
  inv true.
 
-/*
+
 infer [H2] H2(r)   |- r::lseg<q> .
 print residue.
-*/
 
+/*
 infer [H2] H2(r)   |- r::dll<q> .
 print residue.
-
+*/
 /*
 
 Entail (1) : Valid. 

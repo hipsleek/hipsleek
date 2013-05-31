@@ -302,6 +302,13 @@ and get_h_node_args_hf (hf: CF.h_formula) = match hf with
   | CF.ViewNode hv -> hv.CF.h_formula_view_node, hv.CF.h_formula_view_arguments
   | _ -> report_error no_pos "get_h_node_args_hf: unmatch rhs should be a node or a view only"
 
+and get_h_node_cont_args_hf cprog (hf: CF.h_formula) = match hf with
+  | CF.DataNode hd -> hd.CF.h_formula_data_node, hd.CF.h_formula_data_arguments
+  | CF.ViewNode hv ->
+        hv.CF.h_formula_view_node, Cast.look_up_cont_args hv.CF.h_formula_view_arguments hv.CF.h_formula_view_name
+            cprog.Cast.prog_view_decls
+  | _ -> report_error no_pos "get_h_node_args_hf: unmatch rhs should be a node or a view only"
+
 let rec get_data_view_hrel_vars_formula f=
   let rec helper f0=
     match f0 with

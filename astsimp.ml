@@ -804,11 +804,12 @@ let rec trans_prog (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_decl
 	  let _ = Iast.set_check_fixpt prog.I.prog_data_decls tmp_views in
 	  (* let _ = print_string "trans_prog :: going to trans_view \n" in *)
 	  let cviews = List.map (trans_view prog) tmp_views in
-          let cviews =
+          let cviews1 =
             if !Globals.norm_elim_useless then
               Norm.norm_elim_useless cviews (List.map (fun vdef -> vdef.C.view_name) cviews)
             else cviews
           in
+          let cviews2 = Norm.cont_para_analysis prog cviews1 in
 	  (* let _ = print_string "trans_prog :: trans_view PASSED\n" in *)
 	  let crels = List.map (trans_rel prog) prog.I.prog_rel_decls in (* An Hoa *)
           let _ = prog.I.prog_rel_ids <- List.map (fun rd -> (RelT[],rd.I.rel_name)) prog.I.prog_rel_decls in
@@ -828,7 +829,7 @@ let rec trans_prog (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_decl
 	  let bdecls = List.map (trans_bdecl prog) prog.I.prog_barrier_decls in
 	  let cprog = {
 	      C.prog_data_decls = cdata;
-	      C.prog_view_decls = cviews;
+	      C.prog_view_decls = cviews2;
 	      C.prog_barrier_decls = bdecls;
 	      C.prog_logical_vars = log_vars;
 	      C.prog_rel_decls = crels; (* An Hoa *)
@@ -1264,6 +1265,7 @@ and trans_view_x (prog : I.prog_decl) (vdef : I.view_decl) : C.view_decl =
           C.view_is_prim = is_prim_v;
           C.view_kind = view_kind;
           C.view_vars = view_sv_vars;
+          C.view_cont_vars = [];
           C.view_uni_vars = [];
           C.view_labels = vdef.I.view_labels;
           C.view_modes = vdef.I.view_modes;

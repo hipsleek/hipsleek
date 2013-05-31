@@ -1765,7 +1765,7 @@ let find_undefined_selective_pointers_x prog lfb lmix_f unmatched rhs_rest rhs_h
       let runk_map =lookup_eq_linking_svl rhs_hpargs total_unk_map selected_hp_args in
       ([svl],[fst rhs_hpargs], runk_map,selected_hps0)
     else
-      let h_node, h_args = SAU.get_h_node_args_hf n_unmatched in
+      let h_node, h_args = SAU.get_h_node_cont_args_hf prog n_unmatched in
       let h_args1 = List.filter CP.is_node_typ h_args in
       let hrel_args1 = List.concat hrel_args in
       (*should include their closed ptrs*)

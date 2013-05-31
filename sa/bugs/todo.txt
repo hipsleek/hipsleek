@@ -684,7 +684,7 @@ Entail (1) : Fail.
 
 
 ******************************************************
-# bug-app3s1.slk
+# bug-app3s1.slk: DONE
 
 p parameter of pred is a continuation if
 it is unchanged parameter that is defined for every branch.
