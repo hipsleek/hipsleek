@@ -11,6 +11,7 @@ module CP=Cpure
 module MCP=Mcpure
 module C = Cast
 module CEQ = Checkeq
+module TP = Tpdispatcher
 
 exception SA_NO_BASE_CASE of (CP.spec_var * (CP.spec_var list) * (CF.formula list)) (*hp without base case*)
 
@@ -1486,6 +1487,247 @@ let check_com_pre_eq_formula f1 f2=
 (************************************************************)
       (******************END CHECKEQ**********************)
 (************************************************************)
+let rec get_closed_ptrs_one rdn ldns rdns rcur_match ss=
+  (* let _ =  DD.info_pprint ("    rdn: " ^ (!CP.print_sv rdn) ) no_pos in *)
+  let rec find_args_subst largs rargs lm rm=
+    match largs, rargs with
+      | [],[] -> (lm,rm)
+      | la::ls,ra::rs -> if CP.mem_svl ra rcur_match then
+            (*find all matched previously. one lhs can match many rhs*)
+            let l_ss = fst (List.split (List.filter (fun (_,r) -> CP.eq_spec_var r ra) ss)) in
+            let _ =  DD.ninfo_pprint ("    l_ss: " ^ (!CP.print_svl l_ss) ) no_pos in
+            if CP.mem_svl la l_ss then
+               let _ =  DD.ninfo_pprint ("    la: " ^ (!CP.print_sv la) ) no_pos in
+               let _ =  DD.ninfo_pprint ("    ra: " ^ (!CP.print_sv ra) ) no_pos in
+              find_args_subst ls rs lm rm (*matched already*)
+            else find_args_subst ls rs (lm@[la]) (rm@[ra])
+          else find_args_subst ls rs (lm@[la]) (rm@[ra])
+      | _ -> report_error no_pos "sa.get_closed_ptrs: 1"
+  in
+  let rec look_up_rdn m_dn rdns res=
+    match rdns with
+      | [] -> res
+      | (data_name,node_name,args)::rest ->
+          let r=
+            if CP.mem_svl m_dn (node_name::args) then
+              [(data_name,node_name,args)]
+            else []
+          in
+          look_up_rdn m_dn rest (res@r)
+  in
+  if ldns = [] || rdns = [] then
+    ([],[]) (*either lhs1 or rhs2 does not have any node*)
+  else
+    begin
+        (* let (ld_name, lsv, largs) = List.hd ldn_match in *)
+        (* let (rd_name, rsv, rargs) = List.hd rdn_match in *)
+        let rec helper1 (ld_name, lsv, largs) rdn_m =
+          match rdn_m with
+            | [] -> []
+            | (rd_name, rsv, rargs)::rs ->
+                let _ =  DD.ninfo_pprint ("    lsv: " ^ (!CP.print_sv lsv)) no_pos in
+                let _ =  DD.ninfo_pprint ("    rsv: " ^ (!CP.print_sv rsv)) no_pos in
+                if (String.compare ld_name rd_name=0) && ((CP.eq_spec_var lsv rsv) || CP.intersect_svl rargs largs <> [])then
+                  rsv::rargs
+                else helper1 (ld_name, lsv, largs) rs
+        in
+        let rec helper2 ldn_m=
+          match ldn_m with
+            | [] -> ([],[]) (*all node intersected are diff in type*)
+            | (ld_name, lsv, largs):: ls ->
+                let lsv1 = CP.subs_one ss lsv in
+                (* if CP.mem_svl lsv1 rcur_match then helper2 ls *)
+                (* else *)
+                  begin
+                      let largs1 = List.map (CP.subs_one ss) largs in
+                      (*look_up rdn in rdns*)
+                      let cur_rdns = look_up_rdn rdn rdns [] in
+                      let rargs = helper1 (ld_name, lsv1, largs1) cur_rdns in
+                      if rargs = [] then helper2 ls
+                      else
+                        let _ =  DD.ninfo_pprint ("    largs: " ^ (!CP.print_svl (lsv::largs))) no_pos in
+                        let _ =  DD.ninfo_pprint ("    largs1: " ^ (!CP.print_svl (lsv1::largs1))) no_pos in
+                        let _ =  DD.ninfo_pprint ("    rargs: " ^ (!CP.print_svl (rargs))) no_pos in
+                        find_args_subst (lsv::largs) rargs [] []
+                  end
+        in
+        let lm,rm = helper2 ldns in
+        let _ =  DD.ninfo_pprint ("    lm " ^ (!CP.print_svl (lm))) no_pos in
+        let _ =  DD.ninfo_pprint ("    rm " ^ (!CP.print_svl (rm))) no_pos in
+        if lm = [] then ([],[]) (*all node intersected are diff in type*)
+        else (rm, List.combine lm rm)
+    end
+
+and get_closed_matched_ptrs ldns rdns rcur_match ss=
+  let rec helper old_m old_ss inc_m=
+    let _ =  DD.ninfo_pprint ("    old_m " ^ (!CP.print_svl old_m)) no_pos in
+    (*find matching ldns and rdns*)
+    let r = List.map (fun m -> get_closed_ptrs_one m ldns rdns old_m old_ss) inc_m in
+    let incr_match, incr_ss = List.split r in
+    if incr_match = [] then
+      old_m, old_ss
+    else
+      let n_incr_m = (List.concat incr_match) in
+      helper (CP.remove_dups_svl (old_m@n_incr_m)) (old_ss@(List.concat incr_ss)) n_incr_m
+  in
+  helper rcur_match ss rcur_match
+
+(*
+step 1: apply transitive implication
+        B |= C ---> E
+  ---------------------------------
+  c1 = A |- B ;c2 = C |- D ===> c3=A |- D * E
+*)
+let rec find_imply prog lunk_hps runk_hps lhs1 rhs1 lhs2 rhs2=
+  let sort_hps_x hps = List.sort (fun (CP.SpecVar (_, id1,_),_)
+      (CP.SpecVar (_, id2, _),_)-> String.compare id1 id2) hps
+  in
+  let sort_hps hps=
+    let pr1 = pr_list_ln (pr_pair !CP.print_sv !CP.print_svl) in
+    Debug.no_1 "sort_hps" pr1 pr1
+        (fun _ ->  sort_hps_x hps) hps
+  in
+ (*precondition: ls1 and ls2 are sorted*)
+  (*we may enhance here, ls1, ls2 are not necessary the same: ls2 >= ls1*)
+  let rec check_hrels_imply ls1 ls2 ldns rdns lhs_hps subst matched args res_rename=
+    match ls1,ls2 with
+      | [],[] -> (subst,matched,args,res_rename)
+      | (id1, args1)::ss1,(id2, args2)::ss2 ->
+          if CP.eq_spec_var id1 id2 then
+            begin
+                (* if CP.mem_svl id1 lunk_hps && CP.mem_svl id2 runk_hps && *)
+                (*   !Globals.sa_equiv_chain && not(check_equiv_chains args1 args2 ldns rdns) then *)
+                (*   check_hrels_imply ls1 ss2 ldns rdns lhs_hps *)
+                (*     (subst) (matched) (args) res_rename *)
+                (* else *)
+                  check_hrels_imply ss1 ss2 ldns rdns lhs_hps
+                    (subst@(List.combine args1 args2)) (matched@[id2]) (args@args2) res_rename
+            end
+          else (* begin *)
+              (* (\*unk hps*\) *)
+              (* if CP.mem_svl id1 lunk_hps && CP.mem_svl id2 runk_hps && *)
+              (*   List.length args1 = List.length args2 && not (List.mem id2 lhs_hps) then *)
+              (*   check_hrels_imply ss1 ss2 lhs_hps (subst@(List.combine args1 args2)) *)
+              (*       (matched@[id1]) (args@args2) (res_rename@[(id1,(id2,args2))]) *)
+              (* else *)
+            check_hrels_imply ls1 ss2 ldns rdns lhs_hps subst matched args res_rename
+          (* end *)
+      | [], _ -> (subst,matched,args,res_rename)
+      | _ -> ([],[],[],[])
+  in
+  let transform_hrel (hp,eargs,_)= (hp, List.concat (List.map CP.afv eargs)) in
+  let transform_dn dn= (dn.CF.h_formula_data_name, dn.CF.h_formula_data_node,
+                        List.filter (fun (CP.SpecVar (t,_,_)) -> is_pointer t ) dn.CF. h_formula_data_arguments) in
+  let rec is_inconsistent_x ss done_ss=
+    match ss with
+      | [] -> false
+      | (sv1,sv2)::rest->
+          try
+              let sv22 = List.assoc sv1 (rest@done_ss) in
+              if CP.eq_spec_var sv2 sv22 then
+                is_inconsistent_x rest (done_ss@[(sv1,sv2)])
+              else true
+          with Not_found -> is_inconsistent_x rest (done_ss@[(sv1,sv2)])
+  in
+  let rec is_inconsistent ss done_ss=
+    let pr1= pr_list (pr_pair !CP.print_sv !CP.print_sv) in
+    Debug.no_1 "is_inconsistent" pr1 string_of_bool
+        (fun _ -> is_inconsistent_x ss done_ss) ss
+  in
+  (*matching hprels and return subst*)
+  (*renaming vars of the second constraint*)
+  let rsvl2 = CF.fv (CF.Base rhs2) in
+  let lsvl2 = CF.fv lhs2 in
+  let svl2 = CP.remove_dups_svl (rsvl2@lsvl2) in
+  let hp_names = CP.remove_dups_svl ((CF.get_hp_rel_name_formula lhs2)@(CF.get_hp_rel_name_bformula rhs2)) in
+  (*remove hp name*)
+  let svl21 = CP.diff_svl svl2 hp_names in
+  let fr_svl2 = CP.fresh_spec_vars svl21 in
+  let sst = List.combine svl21 fr_svl2 in
+  let rhs2 = CF.subst_b sst rhs2 in
+  let lhs2 = CF.subst sst lhs2 in
+  (*END*)
+  let ldns,lvns,lhrels = CF.get_hp_rel_bformula lhs1 in
+  let rdns,_,rhrels = CF.get_hp_rel_bformula rhs2 in
+  let l_rhrels = sort_hps (List.map transform_hrel lhrels) in
+  let r_rhrels = sort_hps (List.map transform_hrel rhrels) in
+  (*m_args2: matched svl of rhs2*)
+  let subst,matched_hps, m_args2,rhs_hps_rename = check_hrels_imply l_rhrels r_rhrels ldns rdns (List.map fst l_rhrels) [] [] [] [] in
+  let r=
+    if matched_hps = [] then None
+    else
+      begin
+          (*for debugging*)
+          (* let _ = Debug.ninfo_pprint ("     m_args2: " ^ (!CP.print_svl  m_args2)) no_pos in *)
+          (* let pr_ss = pr_list (pr_pair !CP.print_sv !CP.print_sv) in *)
+          (* let _ =  Debug.ninfo_pprint ("     subst: " ^ (pr_ss subst)) no_pos in *)
+          (*END for debugging*)
+          (*matching hnodes (in matched_hps) and return subst*)
+          let lhns1 = List.map transform_dn ldns in
+          let rhns1 = List.map transform_dn rdns in
+          (*all_matched_svl2: all matched slv of rhs2*)
+          let all_matched_svl2,subst1 = get_closed_matched_ptrs lhns1 rhns1 m_args2 subst in
+          (* let _ = Debug.ninfo_pprint ("    all matched: " ^ (!CP.print_svl all_matched_svl2)) no_pos in *)
+          (* let _ =  Debug.ninfo_pprint ("     subst1: " ^ (pr_ss subst1)) no_pos in *)
+          if  (is_inconsistent subst1 []) then None else
+            let n_lhs1 = CF.subst_b subst1 lhs1 in
+            (*check pure implication*)
+            let nldns,nlvns,_ = CF.get_hp_rel_bformula n_lhs1 in
+            let lmf = CP.filter_var_new (MCP.pure_of_mix n_lhs1.CF.formula_base_pure)
+              (look_up_closed_ptr_args prog nldns nlvns all_matched_svl2) in
+            let rmf = (MCP.pure_of_mix rhs2.CF.formula_base_pure) in
+            let _ = Debug.ninfo_pprint ("    n_lhs1: " ^ (Cprinter.string_of_formula_base n_lhs1)) no_pos in
+            let _ = Debug.ninfo_pprint ("    lmf: " ^ (!CP.print_formula lmf)) no_pos in
+            let _ = Debug.ninfo_pprint ("    rmf: " ^ (!CP.print_formula rmf)) no_pos in
+            let b,_,_ = TP.imply rmf lmf "sa:check_hrels_imply" true None in
+            let lpos = (CF.pos_of_formula lhs2) in
+            if b then
+              let l_res = {n_lhs1 with
+                  CF.formula_base_heap = CF.drop_data_view_hrel_nodes_hf
+                      n_lhs1.CF.formula_base_heap select_dnode
+                      select_vnode select_hrel  all_matched_svl2  all_matched_svl2 matched_hps}
+              in
+              (*drop hps and matched svl in n_rhs2*)
+              let r_res = {rhs2 with
+                  CF.formula_base_heap = CF.drop_data_view_hrel_nodes_hf
+                      rhs2.CF.formula_base_heap select_dnode
+                      select_vnode select_hrel all_matched_svl2 all_matched_svl2 matched_hps;
+                  CF.formula_base_pure = MCP.mix_of_pure
+                      (CP.filter_var_new
+                          (MCP.pure_of_mix rhs2.CF.formula_base_pure) all_matched_svl2)}
+              in
+              (*avoid clashing --> should refresh remain svl of lhs2*)
+              (* let slv2 = CP.remove_dups_svl ((CF.fv lhs2)@ *)
+              (*     (CF.fv (CF.Base rhs2))) in *)
+              (* (\*do not rename HP names*\) *)
+              (* let hp_names = CP.remove_dups_svl ((CF.get_hp_rel_name_formula lhs2)@(CF.get_hp_rel_name_bformula rhs2)) in *)
+              (* (\*remove hp name*\) *)
+              (* let diff1 = Gen.BList.difference_eq CP.eq_spec_var slv2 hp_names in *)
+              (* let _ = Debug.info_pprint ("    diff1: " ^ (!CP.print_svl diff1)) no_pos in *)
+              (* (\*elim matched svl*\) *)
+              (* let diff2 = Gen.BList.difference_eq CP.eq_spec_var diff1 all_matched_svl2 in *)
+              (* let _ = Debug.info_pprint ("    diff2: " ^ (!CP.print_svl diff2)) no_pos in *)
+              (* (\*refresh it*\) *)
+              (* let fresh_diff2 = CP.fresh_spec_vars diff2 in *)
+              (* let ss2 = List.combine diff2 fresh_diff2 in *)
+              let n_lhs2 = (* CF.subst ss2 *) lhs2 in
+              (*end refresh*)
+              (*combine l_res into lhs2*)
+              let l =  CF.mkStar n_lhs2 (CF.Base l_res) CF.Flow_combine lpos in
+              let n_rhs1 = CF.subst subst1 rhs1 in
+              (*avoid clashing --> should refresh remain svl of r_res*)
+              let r_res1 = (* CF.subst ss2 *) (CF.Base r_res) in
+              (*elim duplicate hprel in r_res1 and n_rhs1*)
+              let nr_hprel = CF.get_HRels_f n_rhs1 in
+              let nrest_hprel = CF.get_HRels_f r_res1 in
+              let diff3 = Gen.BList.intersect_eq check_hp_arg_eq nr_hprel nrest_hprel in
+              let r_res2,_ = CF.drop_hrel_f r_res1 (List.map (fun (hp,_) -> hp) diff3) in
+              let r = CF.mkStar n_rhs1 r_res2 CF.Flow_combine (CF.pos_of_formula n_rhs1) in
+              (Some (l, r,subst1, sst))
+            else None
+      end
+  in
+  r
 
 
 (******************************************************************)

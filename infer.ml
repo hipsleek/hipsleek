@@ -2028,23 +2028,23 @@ let infer_collect_hp_rel_x prog (es:entail_state) rhs rhs_rest (rhs_h_matched_se
         let _ =
           (* let pr_elem = Cpure.SV.string_of in *)
           (* let pr2 = pr_list (pr_pair pr_elem pr_elem) in *)
-          DD.info_pprint ">>>>>> infer_hp_rel <<<<<<" pos;
+          DD.tinfo_pprint ">>>>>> infer_hp_rel <<<<<<" pos;
           DD.tinfo_pprint ("  es_heap: " ^ (Cprinter.string_of_h_formula es.CF.es_heap)) pos;
           DD.tinfo_pprint ("  es_history: " ^ (let pr=pr_list_ln Cprinter.string_of_h_formula in pr es.CF.es_history)) pos;
-          DD.info_pprint ("  lhs: " ^ (Cprinter.string_of_formula_base lhs_b)) pos;
-          DD.info_pprint ("  rhs: " ^ (Cprinter.string_of_formula_base rhs_b)) pos;
-          DD.info_pprint ("  unmatch: " ^ (Cprinter.string_of_h_formula rhs)) pos
+          DD.tinfo_pprint ("  lhs: " ^ (Cprinter.string_of_formula_base lhs_b)) pos;
+          DD.tinfo_pprint ("  rhs: " ^ (Cprinter.string_of_formula_base rhs_b)) pos;
+          DD.tinfo_pprint ("  unmatch: " ^ (Cprinter.string_of_h_formula rhs)) pos
           (* DD.info_pprint ("  lhs aliases: " ^  (pr2 leqs)) pos; (\* aliases from LHS *\) *)
           (* DD.info_pprint ("  rhs aliases: " ^  (pr2 reqs)) pos;  (\* aliases from RHS *\) *)
         in
-        let prb = Cprinter.string_of_formula_base in
-        let pr_h = Cprinter.string_of_h_formula in
-        let pr_svl = Cprinter.string_of_spec_var_list in
-        let _ = DD.info_pprint "==========================" no_pos in
-        let _ = DD.info_pprint "LOC : renaming needed here" no_pos in
-        let _ = DD.info_pprint "==========================" no_pos in
-        let _ = DD.info_hprint (add_str "lhs" prb) lhs_b no_pos in
-        let _ = DD.info_hprint (add_str "rhs" pr_h) rhs no_pos in
+        (* let prb = Cprinter.string_of_formula_base in *)
+        (* let pr_h = Cprinter.string_of_h_formula in *)
+        (* let pr_svl = Cprinter.string_of_spec_var_list in *)
+        (* let _ = DD.info_pprint "==========================" no_pos in *)
+        (* let _ = DD.info_pprint "LOC : renaming needed here" no_pos in *)
+        (* let _ = DD.info_pprint "==========================" no_pos in *)
+        (* let _ = DD.info_hprint (add_str "lhs" prb) lhs_b no_pos in *)
+        (* let _ = DD.info_hprint (add_str "rhs" pr_h) rhs no_pos in *)
         let v_lhs = (CF.fv (CF.Base lhs_b)) in
         let v_rhs = (CF.h_fv (rhs)) in
         let v_hp_rel = es.CF.es_infer_vars_hp_rel in
@@ -2052,11 +2052,15 @@ let infer_collect_hp_rel_x prog (es:entail_state) rhs rhs_rest (rhs_h_matched_se
         let fr_svl = CP.fresh_spec_vars v_2_rename in
         let sst0 = List.combine v_2_rename fr_svl in
         let rhs = CF.h_subst sst0 rhs in
-        let _ = DD.info_hprint (add_str "lhs(vars)" pr_svl) v_lhs no_pos in
-        let _ = DD.info_hprint (add_str "rhs(vars)" pr_svl) v_rhs no_pos in
-        let _ = DD.info_hprint (add_str "vars_sel_hp_rel" pr_svl) es.CF.es_infer_vars_sel_hp_rel no_pos in
-        let _ = DD.info_hprint (add_str "vars_hp_rel" pr_svl) v_hp_rel no_pos in
-        let _ = DD.info_hprint (add_str "VARS ro rename in RHS" pr_svl) v_2_rename no_pos in
+        let rhs_b = ({rhs_b with CF.formula_base_heap = CF.h_subst sst0 rhs_b.CF.formula_base_heap;
+            CF.formula_base_pure =MCP.regroup_memo_group (MCP.m_apply_par sst0 rhs_b.CF.formula_base_pure);
+              CF.formula_base_and = (List.map (fun f -> CF.one_formula_subst sst0 f) rhs_b.CF.formula_base_and);})
+        in
+        (* let _ = DD.info_hprint (add_str "lhs(vars)" pr_svl) v_lhs no_pos in *)
+        (* let _ = DD.info_hprint (add_str "rhs(vars)" pr_svl) v_rhs no_pos in *)
+        (* let _ = DD.info_hprint (add_str "vars_sel_hp_rel" pr_svl) es.CF.es_infer_vars_sel_hp_rel no_pos in *)
+        (* let _ = DD.info_hprint (add_str "vars_hp_rel" pr_svl) v_hp_rel no_pos in *)
+        (* let _ = DD.info_hprint (add_str "VARS ro rename in RHS" pr_svl) v_2_rename no_pos in *)
         (* v_2_rename vars in new_rhs_b0 needs needs to be renamed *)
         let mis_nodes =  match rhs with
           | DataNode n -> [n.h_formula_data_node]
@@ -2065,15 +2069,15 @@ let infer_collect_hp_rel_x prog (es:entail_state) rhs rhs_rest (rhs_h_matched_se
           | _ -> report_error pos "Expect a node or a hrel"
                 (* CF.get_ptr_from_data_w_hrel *)
         in
-        let lhs_sel_vars = (CF.fv (CF.Base lhs_b)) in
-        if (CP.intersect mis_nodes (List.fold_left SAU.close_def lhs_sel_vars leqs)) = [] then
+        (* let lhs_sel_vars = (CF.fv (CF.Base lhs_b)) in *)
+        if (CP.intersect mis_nodes (List.fold_left SAU.close_def v_lhs leqs)) = [] then
           (
               let _ = Debug.tinfo_pprint ">>>>>> mismatch ptr is not a selective variable <<<<<<" pos in
               constant_checking prog rhs lhs_b rhs_b es
                   (* (false,es) *)
           )
         else
-          let no_es_history = [] in (* replacing es.CF.es_history *)
+          let no_es_history =  [] (* replacing es.CF.es_history *) in
           (* let no_es_history = es.CF.es_history in *)
           let his_ptrs = List.concat (List.map SAU.get_ptrs no_es_history) in
           let ls_unknown_ptrs,hds,hvs,lhras,rhras,eqNull,lselected_hps,rselected_hps,defined_hps,unk_svl,unk_pure,unk_map =
@@ -2143,8 +2147,8 @@ let infer_collect_hp_rel_x prog (es:entail_state) rhs rhs_rest (rhs_h_matched_se
           (*lookup to check redundant*)
           let new_lhs = CF.Base new_lhs_b in
           let new_rhs = CF.Base new_rhs_b in
-          DD.info_hprint (add_str "new_lhs" Cprinter.string_of_formula) new_lhs no_pos;
-          DD.info_hprint (add_str "new_rhs" Cprinter.string_of_formula) new_rhs no_pos;
+          DD.ninfo_hprint (add_str "new_lhs" Cprinter.string_of_formula) new_lhs no_pos;
+          DD.ninfo_hprint (add_str "new_rhs" Cprinter.string_of_formula) new_rhs no_pos;
           let b,m = if rvhp_rels = [] then (false,[]) else
             let ass = if rel_ass_stk # is_empty then [] else
               [(rel_ass_stk # top)]
@@ -2165,8 +2169,8 @@ let infer_collect_hp_rel_x prog (es:entail_state) rhs rhs_rest (rhs_h_matched_se
           let hp_rel_list = hp_rels@defined_hprels in
           let _ = rel_ass_stk # push_list (hp_rel_list) in
           let _ = Log.current_hprel_ass_stk # push_list (hp_rel_list) in
-          DD.info_pprint ("  hp_rels: " ^ (let pr = pr_list_ln Cprinter.string_of_hprel in pr hp_rels)) pos;
-          DD.info_pprint ("  hp_rel_list: " ^ (let pr = pr_list_ln Cprinter.string_of_hprel in pr hp_rel_list)) pos;
+          DD.tinfo_pprint ("  hp_rels: " ^ (let pr = pr_list_ln Cprinter.string_of_hprel in pr hp_rels)) pos;
+          DD.tinfo_pprint ("  hp_rel_list: " ^ (let pr = pr_list_ln Cprinter.string_of_hprel in pr hp_rel_list)) pos;
           let update_es_f f new_hf=
             (CF.mkAnd_f_hf f (CF.h_subst leqs new_hf) pos)
           in

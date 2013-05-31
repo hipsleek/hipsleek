@@ -5200,12 +5200,12 @@ and heap_entail_split_rhs_phases_x (prog : prog_decl) (is_folding : bool) (ctx_0
       (drop_read_phase : bool) pos : (list_context * proof) =
   let ctx_with_rhs =  
     let h, rhs_pure, fl, t, a  = CF.split_components conseq in
-    let _ = DD.info_hprint (add_str "rhs_pure" Cprinter.string_of_mix_formula) rhs_pure no_pos in
+    let _ = DD.ninfo_hprint (add_str "rhs_pure" Cprinter.string_of_mix_formula) rhs_pure no_pos in
     let eqns = (MCP.ptr_equations_without_null rhs_pure) in
     CF.set_context (fun es -> {es with es_rhs_eqset=(es.es_rhs_eqset@eqns);}) ctx_0 in
   let helper ctx_00 h p (func : CF.h_formula -> MCP.mix_formula -> CF.formula) =
-    let _ = DD.info_hprint (add_str "heap(helper)" Cprinter.string_of_h_formula) h no_pos in
-    let _ = DD.info_hprint (add_str "pure(helper)" Cprinter.string_of_mix_formula) p no_pos in
+    let _ = DD.ninfo_hprint (add_str "heap(helper)" Cprinter.string_of_h_formula) h no_pos in
+    let _ = DD.ninfo_hprint (add_str "pure(helper)" Cprinter.string_of_mix_formula) p no_pos in
     let h1, h2, h3 = split_phase 1 h in
     if(is_empty_heap h1) && (is_empty_heap h2) && (is_empty_heap h3) then (* no heap on the RHS *)
       heap_entail_conjunct 2 prog is_folding ctx_00 conseq [] pos
