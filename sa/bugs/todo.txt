@@ -765,7 +765,7 @@ There are two problems
   The LHS & RHS vars are {next,h}
  but guard h!=rest contains an unknown var h!=rest which
  should not be included.
- Thus, we should have genrated"
+ Thus, we should have generated"
       HP_8(next,h) --> H1(next,h)&true.
 
  (ii) The assumption contains both

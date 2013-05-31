@@ -1710,6 +1710,10 @@ let find_undefined_selective_pointers_x prog lfb lmix_f unmatched rhs_rest rhs_h
   let l_def_vs = CP.remove_dups_svl (SAU.find_close l_def_vs (eqs)) in
   let ls_defined_hps,rems = List.split (List.map (fun hpargs -> SAU.find_well_defined_hp prog lhds lhvs hpargs l_def_vs lfb) ls_lhp_args) in
   let defined_hps = List.concat ls_defined_hps in
+  (* let defined_hps,rem_lhpargs = List.fold_left (fun (defined_preds,rems) hpargs -> *)
+  (*     let new_defs,new_rems = (SAU.find_well_eq_defined_hp prog lhds lhvs lfb leqs hpargs) in *)
+  (*     (defined_preds@new_defs, rems@new_rems) *)
+  (*   ) (defined_hps,[]) (List.concat rems) in *)
   let rem_lhpargs = List.concat rems in
   (*END************get well-defined hp in lhs*)
   let def_vs = l_def_vs@r_def_vs in

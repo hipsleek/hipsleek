@@ -1057,6 +1057,17 @@ let find_well_defined_hp prog hds hvs (hp,args) def_ptrs lhsb=
   Debug.no_2 "find_well_defined_hp" pr4 pr2 (pr_pair (pr_list_ln pr3) (pr_list pr4))
       (fun _ _ -> find_well_defined_hp_x prog hds hvs (hp,args) def_ptrs lhsb) (hp,args) def_ptrs
 
+let find_well_eq_defined_hp prog hds hvs lhsb eqs (hp,args)=
+  let rec loop_helper rem_eqs=
+    match rem_eqs with
+      | [] -> ([], [(hp,args)])
+      | (sv1,sv2)::rest -> if CP.mem_svl sv1 args && CP.mem_svl sv2 args then
+          let f = keep_data_view_hrel_nodes_fb prog lhsb hds hvs args [hp] in
+          ([(hp,args, f)],[])
+        else loop_helper rest
+  in
+  if List.length args = 2 then loop_helper eqs else ([], [(hp,args)])
+
 let generate_hp_ass unk_svl rf (hp,args,lfb) =
   {
       CF.hprel_kind = CP.RelAssume [hp];

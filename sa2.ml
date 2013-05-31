@@ -217,27 +217,31 @@ let split_constr_x prog constrs =
     in
     let lhds, lhvs, lhrs = CF.get_hp_rel_bformula lfb in
     let leqNulls = MCP.get_null_ptrs mix_lf in
+    let leqs = (MCP.ptr_equations_without_null mix_lf) in
     let l_def_vs = leqNulls @ (List.map (fun hd -> hd.CF.h_formula_data_node) lhds)
       @ (List.map (fun hv -> hv.CF.h_formula_view_node) lhvs) in
     let helper (hp,eargs,_)=(hp,List.concat (List.map CP.afv eargs)) in
     let ls_lhp_args = (List.map helper lhrs) in
     let ls_defined_hps,rems = List.split (List.map (fun hpargs -> SAU.find_well_defined_hp prog lhds lhvs hpargs l_def_vs lfb) ls_lhp_args) in
     let defined_preds = List.concat ls_defined_hps in
-    let new_constrs = match defined_preds with
+    let defined_preds0 = List.fold_left (fun defined_preds hpargs ->
+        defined_preds@(fst (SAU.find_well_eq_defined_hp prog lhds lhvs lfb leqs hpargs))
+    ) (defined_preds) (List.concat rems) in
+    let new_constrs = match defined_preds0 with
       | [] -> [cs]
       | _ ->
           (*prune defined hps in lhs*)
-          let new_lhs, _ = CF.drop_hrel_f cs.CF.hprel_lhs (List.map (fun (a, _, _) -> a) defined_preds) in
+          let new_lhs, _ = CF.drop_hrel_f cs.CF.hprel_lhs (List.map (fun (a, _, _) -> a) defined_preds0) in
           let new_cs = {cs with CF.hprel_lhs = new_lhs} in
           let rf = CF.mkTrue (CF.mkTrueFlow()) no_pos in
           (*unk_svl: missing parameters*)
           let unk_svl = [] in
-          let defined_hprels = List.map (SAU.generate_hp_ass unk_svl rf) defined_preds in
+          let defined_hprels = List.map (SAU.generate_hp_ass unk_svl rf) defined_preds0 in
           new_cs::defined_hprels
     in
     new_constrs
   in
-   (*END. internal method*)
+  (*END. internal method*)
   List.fold_left (fun r_constrs cs -> r_constrs@(split_one cs)) [] constrs
 
 let split_constr prog constrs =
