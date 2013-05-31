@@ -1,0 +1,26 @@
+data node{
+	int val;
+	node prev;
+	node next;
+}.
+
+HeapPred H2(node a).
+
+pred lseg<p> ==
+    self=p
+  or self::node<_,_,q> * q::lseg<p> 
+ inv true.
+
+infer [H2] H2(r)   |- r::lseg<q> .
+print residue.
+
+/*
+
+Entail (1) : Valid. 
+
+ <1>HP_30(q_29)&q=q_29&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [H2(r)&true --> r::lseg<q_29>@M[LHSCase] * (HP_30(q_29))&
+                   true]
+
+
+*/

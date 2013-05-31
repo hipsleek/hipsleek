@@ -482,35 +482,32 @@ print residue.
 
 /*
 
-Why did we generate HP_34 below?
-
- <1>c'::node<val_17_802,prev_17_803,t_32'>@M[Orig] * (HP_34(prev_17_803))&c=c' & y=y' & t_32'!=null & v_bool_18_772' & t_32'!=null & v_bool_18_772'&{FLOW,(19,20)=__norm}[]
+<1>c'::node<val_17_802,prev_17_803,t_32'>@M[Orig]&c=c' & y=y' & t_32'!=null & v_bool_18_772' & t_32'!=null & v_bool_18_772'&{FLOW,(19,20)=__norm}[]
  inferred hprel: [(HP_p(prev_17_803,y')) * (HP_2(t_32',y'))&
-                   t_32'!=null --> (H1(t_32',y')) * (HP_34(prev_17_803))&true]
-
-Solution
-========
-
-    H(x) |- x::node<...>
- =================================
- H(x,p) --> x::node<.,q>* Hg<q,p>
-
-
-     H(x,p)   |- x::lseg<q>
- ==================================
-   H(x,p) --> x::lseg<q>*Hg<q,p>
-
-Given:
-  x::lseg<q>
-We have:
-  x is root parameter
-  q is continuation parameter
-For HeapPred
- (i) by default, first parameter is the root
- (ii) unless named as "self"
+                   t_32'!=null --> H1(t_32',y')&true]
 
 
 */
+
+I think it would be good to have the following notion of parameters:
+    (i) head
+   (ii) continuation
+  (iii) don't know
+Let us assume that head is always the first paramter,
+and continuation parameter are marked by *.
+
+     x::node<_,p#,q#> * H1(p) * H2(q)  |- H(x,..,p#)
+
+     x::lseg<_,p#> * H1(p)             |- H(x,..,p#)
+
+ From
+     c'::node<val_17_802,p,t_32'>@M[Orig] *
+      HP_p(p,y') * (HP_2(t_32',y')) & t_32'!=null & .. |- H1(t_32',y')     
+
+ Pick only:
+     (HP_2(t_32',y')) & t_32'!=null |- H1(t_32',y')
+ with residue:
+     c'::node<val_17_802,p,t_32'>@M[Orig] * HP_p(p,y') & ...
 
 We have:
 
@@ -547,7 +544,7 @@ The inferred rule below is not good:
 as it has both complex LHS and complex RHS.
 
 
-# sll-dll2.ss
+# sll-dll2.ss     DONE (by not using es_history)
 
 On sleek logging of sll-dll2.ss, we got:
 
@@ -650,4 +647,83 @@ a:580:heap_entail_split_rhs_phases@1
 a:581:heap_entail_split_rhs_phases inp1 : es_formula: r::node<xxx,Anon_13>@M[Orig]&xxx=6&{FLOW,(19,20)=__norm}[]
 a:591:heap_entail_split_rhs_phases inp2 : EXISTS(nnn_32: r::node<nnn_32,Anon_14>@M[Orig]&4<nnn_32&
 a:593:heap_entail_split_rhs_phases@1 EXIT out : 
+
+
+# bug-app3n.slk
+
+Must shape and pure be combined?
+
+infer [H2] H2(r)   |- r::node<n,q> & n>0 .
+print residue.
+
+/*
+Can we support pure inference within shape?
+Can shape be done independently of pure property?
+
+!!! >>>>>> infer_pure_m <<<<<<
+!!! Adding heap assumption?
+!!! unk_heaps:[ HP_33(q_32)]
+!!! lhs_xpure: n=n_31
+!!! rhs_xpure: 0<n
+!!! choose_unk_h:[]
+Entail (1) : Fail.
+
+*/
+
+
+# bug-app3n.slk
+
+p parameter of pred is a continuation if
+it is unchanged parameter that is defined for every branch.
+In the 
+
+pred lseg<p> ==
+    self=p
+  or self::node<_,_,q> * q::lseg<p> 
+ inv true.
+
+pred ls<p> ==
+    self::node<_,_,p>
+  or self::node<_,_,q> * q::ls<p> 
+ inv true.
+
+The parameter below is not a continuation:
+
+pred dll<p> ==
+    self=null
+  or self::node<_,p,q> * q::dll<self> 
+ inv true.
+
+
+Below is wrong:
+
+infer [H2] H2(r)   |- r::dll<q> .
+Entail (1) : Valid. 
+ <1>HP_40(q_39)&q=q_39&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [H2(r)&true --> r::dll<q_39>@M[LHSCase] * (HP_40(q_39))&true]
+
+We should just have:
+
+ [H2(r)&true --> r::dll<q_39>@M[LHSCase] 
+
+Solution
+========
+
+    H(x) |- x::node<...>
+ =================================
+ H(x,p) --> x::node<.,q>* Hg<q,p>
+
+
+     H(x,p)   |- x::lseg<q>
+ ==================================
+   H(x,p) --> x::lseg<q>*Hg<q,p>
+
+Given:
+  x::lseg<q>
+We have:
+  x is root parameter
+  q is continuation parameter
+For HeapPred
+ (i) by default, first parameter is the root
+ (ii) unless named as "self"
 
