@@ -32,6 +32,23 @@ Isn't x1,x2 instantiated? We should not use EXISTS wrapper.
 */
 
 ===========================================================
+# sll-dll2a1.slk
+
+infer [H1,G1]
+ H1(c,p)&c=null & !(v_bool_18_760') & c=null & !(v_bool_18_760') & c=res
+ |-  G1(c,p).
+
+Below is wrong:
+ inferred hprel: [H1(c,p)&c=null --> G1(c,p)&true; 
+                  H1(res,p)&res=null --> emp&true]
+WE should just have:
+ H1(c,p)&c=null --> G1(c,p)
+which will later be base-case spitted separately 
+into pre-pred and post-pred:
+ H1(c,p)&c=null --> emp
+ c=null --> G1(c,p)
+
+
 # sll-dll2.ss
 
 Error during shape inference ..
@@ -473,7 +490,7 @@ This generated below. The 2nd relational assumption seems wrong.
   true --> G1(c,y)&true]
 
 ***************************************************************************
-# i-app-w.slk
+# i-app-w.slk DONE (by recognizing root/cont parameters)
   
 infer [H1] HP_p(prev_17_803,y) * HP_2(t_32',y) * 
 c'::node<val_17_802,prev_17_803,t_32'> &c=c' & y=y' & t_32'!=null & 

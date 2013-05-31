@@ -28,7 +28,25 @@ node paper_fix (node c, node p)
 
   /*
 
-[ 
+[
+
+H1(c,p)&c!=null --> c::node<Anon_784,pp_785,nn_786>@M * 
+  (HP_787(pp_785,p)) * (HP_788(nn_786,p))&true,
+ HP_788(nn_786,p)&c'!=null --> H1(nn_786,c')&true,
+ (HP_787(pp_785,p)) * (G1(nn_786,c)) * c::node<Anon_784,p,nn_786>@M&
+  true --> G1(c,p)&true,
+ H1(c,p)&c=null --> emp&true,
+ H1(c,p)&c=null --> G1(c,p)&true]
+ ^^^^^^^ to remove
+ 
+
+ checkentail H1(c,p)&c=null & !(v_bool_18_760') & c=null & !(v_bool_18_760') & c=res&
+{FLOW,(22,23)=__norm}[]
+ |-  G1(c,p)&true&{FLOW,(22,23)=__norm}[]. 
+hprel_ass: [ H1(c,p)&c=null --> G1(c,p)&true,
+ H1(c,p)&c=null --> emp&true]
+
+
 H1(c,p)&c!=null --> c::node<Anon_11',pp',nn'>@M * (HP_784(pp',p)) * 
   (HP_785(nn',p))&true,
  (HP_785(nn',p)) * c'::node<Anon_11',p,nn'>@M&true --> H1(nn',c')&true,
@@ -36,6 +54,8 @@ H1(c,p)&c!=null --> c::node<Anon_11',pp',nn'>@M * (HP_784(pp',p)) *
   true --> G1(c,p)&true,
  H1(c,p)&c=null --> emp&true,
  emp&c=null --> G1(c,p)&true]
+
+ 
 
 
 [ H1(c,p)&c!=null --> c::node<Anon_11',pp',nn'>@M * (HP_784(pp',p)) * 
