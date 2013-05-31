@@ -1779,7 +1779,9 @@ let find_undefined_selective_pointers_x prog lfb lmix_f unmatched rhs_rest rhs_h
   in
   let ls_undef =  List.map CP.remove_dups_svl (ls_fwd_svl) in
   DD.ninfo_pprint ("selected_hps: " ^ (!CP.print_svl (selected_hps))) pos;
-  ((* undefs1@lundefs_args *) ls_undef,hds,hvs,lhrs,rhrs,leqNulls@reqNulls, lhs_selected_hps,rh_sel_hps, defined_hps,
+  let ls_defined_hp = List.map fst3 defined_hps in
+  let lhs_selected_hps0 = CP.diff_svl lhs_selected_hps ls_defined_hp in
+  ((* undefs1@lundefs_args *) ls_undef,hds,hvs,lhrs,rhrs,leqNulls@reqNulls, lhs_selected_hps0,rh_sel_hps, defined_hps,
   unk_svl,ps,unk_map@rhs_unk_map)
 
 let find_undefined_selective_pointers prog lfb lmix_f unmatched rhs_rest rhs_h_matched_set leqs reqs pos total_unk_map=
