@@ -3765,29 +3765,6 @@ and disj_count (f0 : formula) = match f0 with
   | _ -> 1
 
 (*=========for sa==========*)
-and get_ptrs_w_args (f: h_formula): CP.spec_var list = match f with
-  | DataNode {h_formula_data_node = c;
-             h_formula_data_arguments = args}
-  | ViewNode {h_formula_view_node = c;
-             h_formula_view_arguments = args} -> [c]@(List.filter CP.is_node_typ args)
-  | Conj {h_formula_conj_h1 = h1; h_formula_conj_h2 = h2}
-  | Star {h_formula_star_h1 = h1; h_formula_star_h2 = h2}
-  | Phase {h_formula_phase_rd = h1; h_formula_phase_rw = h2}
-      -> (get_ptrs_w_args h1)@(get_ptrs_w_args h2)
-  | HRel (_,eargs,_) -> (List.fold_left List.append [] (List.map CP.afv eargs))
-  | _ -> []
-
-let prune_irr_neq_formula lhs_b rhs_b =
-  let r_svl = fv (Base rhs_b) in
-  let rec helper fb=
-    let ptrs = get_ptrs_w_args fb.formula_base_heap in
-    let _,np2 = CP.prune_irr_neq (MCP.pure_of_mix fb.formula_base_pure) [(CP.remove_dups_svl (ptrs@r_svl))] in
-    let np= MCP.mix_of_pure np2 in
-    {fb with
-        formula_base_pure =  np;
-    }
-  in
-  helper lhs_b
 
 let is_HRel hf=
   match hf with
@@ -4064,6 +4041,17 @@ and get_hnodes (f: h_formula) = match f with
       -> (get_hnodes h1)@(get_hnodes h2)
   | _ -> []
 
+let prune_irr_neq_formula lhs_b rhs_b =
+  let r_svl = fv (Base rhs_b) in
+  let rec helper fb=
+    let ptrs = get_ptrs_w_args fb.formula_base_heap in
+    let _,np2 = CP.prune_irr_neq (MCP.pure_of_mix fb.formula_base_pure) [(CP.remove_dups_svl (ptrs@r_svl))] in
+    let np= MCP.mix_of_pure np2 in
+    {fb with
+        formula_base_pure =  np;
+    }
+  in
+  helper lhs_b
 
 let rec get_h_size_f (f: formula)=
   match f with
