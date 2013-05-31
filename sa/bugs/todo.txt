@@ -543,9 +543,8 @@ The inferred rule below is not good:
 as it has both complex LHS and complex RHS.
 
 
+******************************************************
 # sll-dll2.ss     DONE (by not using es_history)
-
-
 
  checkentail (HP_787(pp_785,p)) * (HP_788(nn_786,p))&c=c' & p=p' & c'!=null & 
 v_bool_18_760' & c'!=null & v_bool_18_760' & Anon_11'=Anon_784 & 
@@ -579,7 +578,7 @@ We derived:
 
 <1>HP_4(pp_786,p)&c=c' & p=p' & c'!=null & v_bool_18_760' & c'!=null & v_bool_18_760' & p'=pp'&{FLOW,(19,20)=__norm}[]
  inferred hprel: [HP_5(nn',pp')&c'!=null --> H1(nn',c')&true]
-
+******************************************************
 # sll-dll2b.slk
 
 Given:
@@ -589,7 +588,7 @@ relAssume G1
  emp&c=null --> G1(c,p) .
 shape_infer [][G1].//[pre_hps][post_hps]
 
-
+******************************************************
 # bug-app3.slk   DONE (by renaming vars)
 
 When generating:
@@ -622,7 +621,6 @@ I have found one place to perform this change as shown below:
 !!! VARS ro rename in RHS:[Anon_13,flted_17_34]
 
 
-
 bug-app3.slk:
 
 add_to_subst@5@3@2@1
@@ -639,6 +637,8 @@ a:643:heap_entail_split_rhs_phases inp1 : es_formula: H2(r)&true&{FLOW,(19,20)=_
 a:654:heap_entail_split_rhs_phases inp2 : EXISTS(flted_17_30: r::node<Anon_13,flted_17_30>@M[Orig]&flted_17_30=null&
 a:656:heap_entail_split_rhs_phases@1 EXIT out : 
 
+
+******************************************************
 bug-imm.slk:
 
 add_to_subst@5@3@2@1
@@ -659,6 +659,7 @@ a:591:heap_entail_split_rhs_phases inp2 : EXISTS(nnn_32: r::node<nnn_32,Anon_14>
 a:593:heap_entail_split_rhs_phases@1 EXIT out : 
 
 
+******************************************************
 # bug-app3n.slk
 
 Must shape and pure be combined?
@@ -681,6 +682,7 @@ Entail (1) : Fail.
 */
 
 
+******************************************************
 # bug-app3s1.slk
 
 p parameter of pred is a continuation if

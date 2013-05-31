@@ -731,6 +731,9 @@ let process_shape_infer pre_hps post_hps=
 		      print_endline "*************************************"
           end
   in
+  (* let _ = if(!Globals.cp_test || !Globals.cp_prefile) then *)
+  (*    CEQ.cp_test !cprog hp_lst_assume ls_inferred_hps sel_hps *)
+  (* in *)
   ()
 
 let process_shape_elim_useless sel_vnames=
