@@ -53,6 +53,18 @@ into pre-pred and post-pred:
 
 Error during shape inference ..
 
+[ H1(c,p)&c!=null --> c::node<Anon_784,pp_785,nn_786>@M * 
+  (HP_787(pp_785,p)) * (HP_788(nn_786,p))&true,
+ HP_788(nn_786,p)&c'!=null --> H1(nn_786,c')&true,
+ (HP_787(pp_785,p)) * (G1(nn_786,c)) * c::node<Anon_784,p,nn_786>@M&
+  true --> G1(c,p)&true,
+ H1(c,p)&c=null --> emp&true,
+ H1(c,p)&c=null --> G1(c,p)&true]
+
+Problem with:
+ H1(c,p)&c=null --> emp&true,
+ H1(c,p)&c=null --> G1(c,p)&true]
+
 ************************************
 *******relational assumption ********
 *************************************
@@ -597,7 +609,7 @@ We derived:
 <1>HP_4(pp_786,p)&c=c' & p=p' & c'!=null & v_bool_18_760' & c'!=null & v_bool_18_760' & p'=pp'&{FLOW,(19,20)=__norm}[]
  inferred hprel: [HP_5(nn',pp')&c'!=null --> H1(nn',c')&true]
 ******************************************************
-# sll-dll2b.slk
+# sll-dll2b.slk OK
 
 Given:
 relAssume G1
@@ -606,6 +618,13 @@ relAssume G1
  emp&c=null --> G1(c,p) .
 shape_infer [][G1].//[pre_hps][post_hps]
 
+Answer seems correct below:
+
+ G1(c_27,p_28) ::= 
+ emp&c_27=null
+ or c_27::node<Anon_796,p_28,nn_797>@M * (G1(nn_797,c_27))&true
+ ]
+*
 ******************************************************
 # bug-app3.slk   DONE (by renaming vars)
 
