@@ -750,7 +750,7 @@ let process_shape_extract sel_vnames=
   let view_defs = Norm.norm_extract_common !cprog !cprog.Cast.prog_view_decls sel_vnames in
   let _ = !cprog.Cast.prog_view_decls <- view_defs in
   let pr = pr_list_ln Cprinter.string_of_view_decl in
-  let _ = Debug.info_pprint ("views after EXTRACTION: \n" ^ (pr view_defs)) no_pos in
+  let _ = Debug.tinfo_pprint ("views after EXTRACTION: \n" ^ (pr view_defs)) no_pos in
   ()
 
 (* the value of flag "exact" decides the type of entailment checking              *)

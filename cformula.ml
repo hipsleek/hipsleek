@@ -4775,9 +4775,9 @@ let drop_view_paras_h_formula hf0 ls_view_pos=
   let rec lookup_view vn args ls=
     match ls with
       | [] -> None
-      | (vn1,ls_pos)::rest ->
+      | (vn1,n_vn1, ls_pos)::rest ->
           if String.compare vn vn1 = 0 then
-            Some (retrieve_args_from_locs args ls_pos)
+            Some (retrieve_args_from_locs args ls_pos,n_vn1)
           else
             lookup_view vn args rest
   in
@@ -4819,7 +4819,9 @@ let drop_view_paras_h_formula hf0 ls_view_pos=
           let on_args = lookup_view hv.h_formula_view_name hv.h_formula_view_arguments ls_view_pos in
             match on_args with
               | None -> hf
-              | Some n_args -> ViewNode {hv with h_formula_view_arguments = n_args}
+              | Some (n_args, n_vn) -> ViewNode {hv with
+                    h_formula_view_name = n_vn;
+                    h_formula_view_arguments = n_args}
       end
       | HRel _
       | Hole _
@@ -4842,7 +4844,7 @@ let drop_view_paras_formula_x (f0:formula) ls_view_pos : formula=
   helper f1
 
 let drop_view_paras_formula (f2_f:formula) ls_view_pos: formula =
-  let pr2 = pr_list(pr_pair pr_id (pr_list string_of_int)) in
+  let pr2 = pr_list(pr_triple pr_id pr_id (pr_list string_of_int)) in
   Debug.no_2 "drop_view_paras_formula" !print_formula pr2
       !print_formula
       drop_view_paras_formula_x f2_f ls_view_pos
@@ -4864,7 +4866,7 @@ let drop_view_paras_struc_formula_x (f0 : struc_formula) ls_view_pos: struc_form
 
 let drop_view_paras_struc_formula (f : struc_formula) ls_view_pos: struc_formula =
   let pr1 = !print_struc_formula in
-  let pr2 = pr_list (pr_pair pr_id (pr_list string_of_int)) in
+  let pr2 = pr_list (pr_triple pr_id pr_id (pr_list string_of_int)) in
   Debug.no_2 " drop_view_paras_struc_formula" pr1 pr2 pr1
       (fun _ _ -> drop_view_paras_struc_formula_x f ls_view_pos) f ls_view_pos
 (*******************************************)
