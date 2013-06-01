@@ -32,11 +32,14 @@ Isn't x1,x2 instantiated? We should not use EXISTS wrapper.
 */
 
 ===========================================================
-# sll-dll2a1.slk
+# sll-dll2a1.slk  DONE
 
 infer [H1,G1]
  H1(c,p)&c=null & !(v_bool_18_760') & c=null & !(v_bool_18_760') & c=res
  |-  G1(c,p).
+
+ inferred hprel: [emp&c=null --> G1(c,p)&true; 
+                  H1(res,p)&res=null --> emp&true]
 
 Below is wrong:
  inferred hprel: [H1(c,p)&c=null --> G1(c,p)&true; 
@@ -49,7 +52,18 @@ into pre-pred and post-pred:
  c=null --> G1(c,p)
 
 
-# sll-dll2.ss
+# sll-dll2.ss   DONE
+
+FIXED :
+
+[ H1(c,p)&c!=null --> c::node<Anon_784,pp_785,nn_786>@M * 
+  (HP_787(pp_785,p)) * (HP_788(nn_786,p))&true,
+ HP_788(nn_786,p)&c'!=null --> H1(nn_786,c')&true,
+ (HP_787(pp_785,p)) * (G1(nn_786,c)) * c::node<Anon_784,p,nn_786>@M&
+  true --> G1(c,p)&true,
+ H1(c,p)&c=null --> emp&true,
+ emp&c=null --> G1(c,p)&true]
+
 
 Error during shape inference ..
 
@@ -226,8 +240,15 @@ Expecting relational assumption : H(r) --> r::lseg<q> * q::ln<>
 @5! rfb: r::lseg<q>@M[0][Orig][LHSCase] * q::ln@M[0][Orig][LHSCase]&true&
 {FLOW,(19,20)=__norm}[]
 *******************************************************
-# bug-app3.slk:
+# bug-app3.slk:  TODO
 
+Why is there a inferred pre of "true"?
+
+ <1>HP_37(flted_16_36)&Anon_13=Anon_35&{FLOW,(19,20)=__norm}[]
+ inferred pure: [true]
+ inferred hprel: [H2(r)&true --> r::node<Anon_35,flted_16_36>@M * 
+                   (HP_37(flted_16_36))&true; 
+  
 loss: flted_13_30 = null
 
 inferred hprel: [H2(r)&true --> r::lseg<flted_13_30>@M[LHSCase] * 
@@ -280,11 +301,11 @@ why did we get emp?
 ************************
 */
 =================================*===============
-# bug-t3.slk (to be fixed in ann-1 branch)
+# bug-t3.slk (TODO to be fixed in ann-1 branch)
 
 @v annotation problematic
 =================================*===============
-# bind2.ss (to fix at default branch)
+# bind2.ss (TODO to fix at default branch)
 
 ERROR : why did bind not temporarily remove a node?
 It seems we still use @L annotation on node & field regardless..
@@ -325,7 +346,7 @@ should be HP_27(t_20,y_26)
                                          ^^^^^ t_29
  ]
 =================================*===============
-# use3.slk
+# use3.slk  TODO (type inference)
 
 type inference problem. (see use1.slk)
 
@@ -335,7 +356,7 @@ Message: couldn't infer type for p in ; (p Unknown); (pp node); (qq node); (pp_1
  Fatal error: exception Failure("couldn't infer type for p in ; (p Unknown); (pp node); (qq node); (pp_15 node); (y node); (self node); (Anon_12 int); (tt node); (TVar__18 node); (y_16 node); (TVar__26 node); (TVar__27 node)
 ")
 =================================*===============
-# use1.slk; use2.slk: 
+# use1.slk; use2.slk: TODO
 
 Instead of:
  self::G2(y) = ...
