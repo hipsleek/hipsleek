@@ -849,3 +849,17 @@ relAssume H1
  H1(c,y) & y@F --> c::node<v,prev_19_765',next_19_766'>@M * 
    HP_5(prev_19_765',y) * HP_6(next_19_766',y)&true.
 
+
+# i-app-r.slk
+
+
+do_elim_unused inp1 :[HP_p]
+do_elim_unused inp2 : RELASS [G1] unknown svl: ;  unknown hps: ;  predefined: ; (HP_p(p,y)) * 
+  c::node<Anon_12,p,y>@M&true --> G1(c,y)&true
+do_elim_unused@9 EXIT out : RELASS [G1] unknown svl: ;  unknown hps: ;  predefined: ; c::node<Anon_12,p,y>@M&
+  true --> G1(c,y)&true
+
+Rename unused dangling uniquely
+  HP_p(p,..) --> _uu_HP_p_uu
+
+ c::node<Anon_12,_uu_HP_p_uu,y>@M & true --> G1(c,y)&true

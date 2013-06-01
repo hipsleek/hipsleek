@@ -273,8 +273,13 @@ let do_elim_unused unused_hps cs=
   let new_rhs, _ = CF.drop_hrel_f cs.CF.hprel_rhs unused_hps in
   {cs with CF.hprel_lhs = new_lhs; CF.hprel_rhs = new_rhs}
 
+let do_elim_unused unused_hps cs=
+  let pr1 = Cprinter.string_of_spec_var_list in
+  let pr2 = Cprinter.string_of_hprel in
+  Debug.ho_2 "do_elim_unused" pr1 pr2 pr2 do_elim_unused  unused_hps cs
 
-let elim_unused_pre_preds_x post_hps constrs=
+
+let elim_unused_pre_preds post_hps constrs=
   let lhs_preds, lhs_heads, rhs_preds,rhs_heads = List.fold_left get_preds ([],[],[],[]) constrs in
   (* let lhs_preds1 = CP.remove_dups_svl lhs_preds in *)
   let rhs_preds1 = CP.remove_dups_svl rhs_preds in
@@ -289,10 +294,10 @@ let elim_unused_pre_preds_x post_hps constrs=
 
 let elim_unused_pre_preds post_hps constrs=
   let pr1 = pr_list_ln Cprinter.string_of_hprel in
-  Debug.no_1 "elim_unused_pre_preds" pr1 pr1
-      (fun _ -> elim_unused_pre_preds_x post_hps constrs) constrs
+  Debug.ho_1 "elim_unused_pre_preds" pr1 pr1
+      (fun _ -> elim_unused_pre_preds post_hps constrs) constrs
 
-let elim_unused_post_preds_x post_hps constrs=
+let elim_unused_post_preds post_hps constrs=
   let lhs_preds, lhs_heads, rhs_preds,rhs_heads = List.fold_left get_preds ([],[],[],[]) constrs in
   let lhs_preds1 = CP.remove_dups_svl lhs_preds in
   (* let rhs_preds1 = CP.remove_dups_svl rhs_preds in *)
@@ -309,9 +314,14 @@ let elim_unused_post_preds_x post_hps constrs=
 
 let elim_unused_post_preds post_hps constrs=
   let pr1 = pr_list_ln Cprinter.string_of_hprel in
-  Debug.no_1 "elim_unused_post_preds" pr1 pr1
-      (fun _ -> elim_unused_post_preds_x post_hps constrs) constrs
+  Debug.ho_1 "elim_unused_post_preds" pr1 pr1
+      (fun _ -> elim_unused_post_preds post_hps constrs) constrs
 
+(* let elim_unused_post_preds post_hps constrs= *)
+(*   constrs *)
+
+(* let elim_unused_pre_preds post_hps constrs= *)
+(*   constrs *)
 
 (***************************************************************
                       END. CONSTR: ELIM UNUSED PREDS

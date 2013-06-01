@@ -2041,6 +2041,19 @@ let trans_memo_group (e: memoised_group) (arg: 'a) f f_arg f_comb : (memoised_gr
         memo_group_slice = new_slice;
         memo_group_aset = new_aset;}, f_comb (new_rc@new_ra@new_rs@new_rv))
   
+
+(*
+type: Mcpure_D.memo_pure ->
+  'a ->
+  ('a -> Mcpure_D.memoised_group -> (Mcpure_D.memoised_group * 'b) option) *
+  (Mcpure_D.memoised_constraint -> 'c -> Mcpure_D.memoised_constraint * 'b) *
+  ('c -> Mcpure_D.var_aset -> Mcpure_D.var_aset * 'b list) *
+  (Cpure.formula -> 'c -> Cpure.formula * 'b) *
+  (Cpure.spec_var -> 'c -> Cpure.spec_var * 'b) ->
+  ('a -> Mcpure_D.memoised_group -> 'c) ->
+  ('b list -> 'b) -> Mcpure_D.memo_pure * 'b
+*)
+
 let trans_memo_formula (e: memo_pure) (arg: 'a) f f_arg f_comb : (memo_pure * 'b) = 
   let trans_memo_gr e = trans_memo_group e arg f f_arg f_comb in
   let ne, vals = List.split (List.map trans_memo_gr e) in

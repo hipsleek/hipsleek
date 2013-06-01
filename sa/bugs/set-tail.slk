@@ -21,11 +21,11 @@ relAssume G1
 
 */
 relAssume H1
- H1(c,y) --> c::node<v,prev_19_765',next_19_766'>@M * 
-   HP_5(prev_19_765',y) * HP_6(next_19_766',y)&true.
+ H1(c,y) --> c::node<v,prev,next>@M * 
+   HP_5(prev,y) * HP_6(next,y)&true.
 
 relAssume G1
- c::node<v,prev_14_771,y>@M * HP_5(prev_14_771,y) *
+ c::node<v,prev7,y>@M * HP_5(prev7,y) *
   HP_6(next_16_768,y)&true --> G1(c,y)&true.
 
 shape_infer [H1][G1].

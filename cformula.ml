@@ -5163,6 +5163,13 @@ and drop_hrel_hf hf hp_names=
     | HFalse
     | HEmp -> (hf,[])
 
+(* formula -> CP.spec_var list -> formula * CP.exp list list *)
+let drop_hrel_f f0 hp_names =
+  let pr1 = !print_formula in
+  let pr2 = !print_svl in
+  let pr3 = pr_pair !print_formula (pr_list (pr_list !CP.print_exp)) in
+  Debug.ho_2 "drop_hrel_f" pr1 pr2 pr3 drop_hrel_f f0 hp_names
+
 let drop_unk_hrel f0 hp_names=
   let rec helper f=
     match f with
@@ -8810,6 +8817,25 @@ let rec foldheap_struc_formula (h:h_formula -> 'a) (f_comb: 'a list -> 'a)  (e:s
 	  | EInfer b -> foldheap_struc_formula h f_comb b.formula_inf_continuation
 	  | EList b ->  f_comb (fold_l_snd h_f b)
 
+(* 
+  type: formula ->
+  'a ->
+  'c * ('a -> formula -> (formula * 'b) option) *
+  ('a -> h_formula -> (h_formula * 'b) option) *
+  (('a -> Cpure.formula -> (Cpure.formula * 'b) option) *
+   ('a -> Cpure.b_formula -> (Cpure.b_formula * 'b) option) *
+   ('a -> Cpure.exp -> (Cpure.exp * 'b) option)) *
+  (('a -> Mcpure_D.memoised_group -> (Mcpure_D.memoised_group * 'b) option) *
+   (Mcpure_D.memoised_constraint -> 'd -> Mcpure_D.memoised_constraint * 'b) *
+   ('d -> Mcpure_D.var_aset -> Mcpure_D.var_aset * 'b list) *
+   (Cpure.formula -> 'd -> Cpure.formula * 'b) *
+   (Cpure.spec_var -> 'd -> Cpure.spec_var * 'b)) ->
+  'e * ('a -> formula -> 'a) * ('a -> h_formula -> 'a) *
+  (('a -> Cpure.formula -> 'a) * ('a -> Cpure.b_formula -> 'a) *
+   ('a -> Cpure.exp -> 'a)) *
+  ('a -> Mcpure_D.memoised_group -> 'd) -> ('b list -> 'b) -> formula * 'b
+*)
+
 let trans_formula (e: formula) (arg: 'a) f f_arg f_comb: (formula * 'b) =
   let f_struc_f, f_f, f_heap_f, f_pure, f_memo = f in
   let f_struc_f_arg, f_f_arg, f_heap_f_arg, f_pure_arg, f_memo_arg = f_arg in
@@ -8849,6 +8875,20 @@ let trans_formula (e: formula) (arg: 'a) f f_arg f_comb: (formula * 'b) =
             (new_exists, f_comb [v1; v2])
   in
   trans_f e arg
+
+(* let map_formula (e: formula) f f_comb: (formula * 'b) = *)
+(*   let f_struc_f, f_f, f_heap_f, f_pure, f_memo = f in *)
+(*   let n_f_struc_f _ e = f_struc_f e in *)
+(*   let n_f_f _ e = f_f e in *)
+(*   let n_f_heap_f _ e = f_heap_f e in *)
+(*   let (f_pure_1,f_pure_2,f_pure_3) = f_pure in *)
+(*   let n_f_pure =  (fun _ e -> f_pure_1 e,fun _ e -> f_pure_3 e,fun _ e -> f_pure_3 e) in *)
+(*   let (f_memo_1,f_memo_2,f_memo_3,f_memo_4,f_memo_5) = f_memo  in *)
+(*   let n_f_memo =  (fun _ e -> f_memo_1 e,fun e _ -> f_memo_2 e,fun _ e -> f_memo_3 e,fun e _ -> f_memo_4 e,fun e _ -> f_memo_5 e) in *)
+(*   let new_f = (n_f_struc_f, n_f_f, n_f_heap_f, n_f_pure, n_f_memo) in *)
+(*   let no_f _ _ = () in *)
+(*   let new_f_arg = (no_f,no_f,no_f,(no_f,no_f,no_f),no_f) in *)
+(*   trans_formula e () new_f new_f_arg f_comb *)
 
 let rec transform_struc_formula f (e:struc_formula) :struc_formula = 
   let (f_e_f, f_f, f_h_f, f_p_t) = f in
