@@ -795,5 +795,15 @@ There are two problems
 
  (i)  H1(rest,h)&h=rest --> emp.
  (ii) h=rest --> G1(rest,h).
+=========================================================
+# set-tail.slk:
 
+relAssume H1
+ H1(c,y) --> c::node<v,prev_19_765',next_19_766'>@M * 
+   HP_5(prev_19_765',y) * HP_6(next_19_766',y)&true.
+
+====>
+relAssume H1
+ H1(c,y) & y@F --> c::node<v,prev_19_765',next_19_766'>@M * 
+   HP_5(prev_19_765',y) * HP_6(next_19_766',y)&true.
 
