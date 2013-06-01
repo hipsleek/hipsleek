@@ -838,6 +838,8 @@ There are two problems
 =========================================================
 # set-tail.slk:
 
+TODO: improve
+
 relAssume H1
  H1(c,y) --> c::node<v,prev_19_765',next_19_766'>@M * 
    HP_5(prev_19_765',y) * HP_6(next_19_766',y)&true.

@@ -182,7 +182,7 @@ let convert_prim_to_obj (t:typ) : typ =
 
 (*for heap predicate*)
 let hp_default_prefix_name = "HP_"
-let dang_hp_default_prefix_name = "DLING_"
+let dang_hp_default_prefix_name = "DLING"
 (*
   Data types for code gen
 *)

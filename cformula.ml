@@ -4465,8 +4465,8 @@ let generate_xpure_view_x drop_hpargs total_unk_map=
   let rec lookup_xpure_view hp rem_map=
     match rem_map with
       | [] -> []
-      | (hp0,xpv)::tl ->
-          if CP.eq_spec_var hp0 hp then
+      | (hps,xpv)::tl ->
+          if CP.mem_svl hp hps then
             [xpv]
           else lookup_xpure_view hp tl
   in
@@ -4495,8 +4495,8 @@ let generate_xpure_view_x drop_hpargs total_unk_map=
             }
             in
             let p = CP.mkFormulaFromXP xpv in
-          (p,args,[(hp,xpv)])
-        | _ -> report_error no_pos "infer.generate_xpure_view: not possible"
+          (p,args,[([hp],xpv)])
+        | _ -> report_error no_pos "cformula.generate_xpure_view: impossible"
     in
     (p,unk_svl,unk_map)
   in
@@ -4506,7 +4506,7 @@ let generate_xpure_view_x drop_hpargs total_unk_map=
 let generate_xpure_view drop_hpargs total_unk_map=
   let pr1 = pr_list (pr_pair !CP.print_sv !CP.print_svl) in
   let pr2 = pr_triple !CP.print_svl !CP.print_formula
-    (pr_list (pr_pair !CP.print_sv CP.string_of_xpure_view)) in
+    (pr_list (pr_pair !CP.print_svl CP.string_of_xpure_view)) in
   Debug.no_1 "generate_xpure_view" pr1 pr2
       (fun _ -> generate_xpure_view_x drop_hpargs total_unk_map) drop_hpargs
 
@@ -5581,67 +5581,6 @@ and subst_hrel_hf hf hprel_subst=
     | HFalse
     | HEmp -> hf
 
-(* let rec rename_hrel ss f= *)
-(*   match f with *)
-(*     | Base fb -> Base {fb with formula_base_heap =  rename_hrel_hf ss fb.formula_base_heap;} *)
-(*     | Or orf -> Or {orf with formula_or_f1 = rename_hrel ss orf.formula_or_f1; *)
-(*                 formula_or_f2 = rename_hrel ss orf.formula_or_f2;} *)
-(*     | Exists fe -> Exists {fe with formula_exists_heap = rename_hrel_hf ss fe.formula_exists_heap;} *)
-
-(* and rename_hrel_hf ss hf0= *)
-(*   let rec eq_spec_var_order_list l1 l2= *)
-(*   match l1,l2 with *)
-(*     |[],[] -> true *)
-(*     | v1::ls1,v2::ls2 -> *)
-(*         if CP.eq_spec_var v1 v2 then *)
-(*           eq_spec_var_order_list ls1 ls2 *)
-(*         else false *)
-(*     | _ -> false *)
-(*   in *)
-(*   let find_and_rename (hp1,eargs,p) (hp0,(hp2, args2))= *)
-(*     if CP.eq_spec_var hp1 hp2 then *)
-(*       (\*should specvar subst*\) *)
-(*        let args1 = (List.fold_left List.append [] (List.map CP.afv eargs)) in *)
-(*        if eq_spec_var_order_list args1 args2 then *)
-(*          (hp0,eargs,p) *)
-(*        else (hp1,eargs,p) *)
-(*     else (hp1,eargs,p) *)
-(*   in *)
-(*   let rec helper hf= *)
-(*   match hf with *)
-(*     | Star {h_formula_star_h1 = hf1; *)
-(*             h_formula_star_h2 = hf2; *)
-(*             h_formula_star_pos = pos} -> *)
-(*         let n_hf1 = helper hf1 in *)
-(*         let n_hf2 = helper hf2 in *)
-(*         Star {h_formula_star_h1 = n_hf1; *)
-(*               h_formula_star_h2 = n_hf2; *)
-(*               h_formula_star_pos = pos} *)
-(*     | Conj { h_formula_conj_h1 = hf1; *)
-(*              h_formula_conj_h2 = hf2; *)
-(*              h_formula_conj_pos = pos} -> *)
-(*         let n_hf1 = helper hf1 in *)
-(*         let n_hf2 = helper hf2 in *)
-(*         Conj { h_formula_conj_h1 = n_hf1; *)
-(*                h_formula_conj_h2 = n_hf2; *)
-(*                h_formula_conj_pos = pos} *)
-(*     | Phase { h_formula_phase_rd = hf1; *)
-(*               h_formula_phase_rw = hf2; *)
-(*               h_formula_phase_pos = pos} -> *)
-(*         let n_hf1 = helper hf1 in *)
-(*         let n_hf2 = helper hf2 in *)
-(*         Phase { h_formula_phase_rd = n_hf1; *)
-(*               h_formula_phase_rw = n_hf2; *)
-(*               h_formula_phase_pos = pos} *)
-(*     | DataNode hd -> hf *)
-(*     | ViewNode hv -> hf *)
-(*     | HRel h -> HRel (find_and_rename h ss) *)
-(*     | Hole _ *)
-(*     | HTrue *)
-(*     | HFalse *)
-(*     | HEmp -> hf *)
-(*   in *)
-(*   helper hf0 *)
 
 let rec subst_hrel_hview_f f subst=
   match f with
@@ -5849,7 +5788,7 @@ think it is used to instantiate when folding.
   es_infer_vars_rel : CP.spec_var list;
   es_infer_vars_sel_hp_rel: CP.spec_var list;
   es_infer_vars_sel_post_hp_rel: CP.spec_var list;
-  es_infer_hp_unk_map: (CP.spec_var*CP.xpure_view) list ;(*(CP.spec_var * CP.spec_var list) list;*)
+  es_infer_hp_unk_map: (CP.spec_var list * CP.xpure_view) list ;
   es_infer_vars_hp_rel : CP.spec_var list;
   (* input vars to denote vars already instantiated *)
   es_infer_vars_dead : CP.spec_var list; 

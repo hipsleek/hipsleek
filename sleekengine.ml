@@ -702,14 +702,16 @@ let process_shape_infer pre_hps post_hps=
     Sa2.infer_shapes !cprog "" hp_lst_assume
         sel_hps sel_post_hps
         (Gen.BList.remove_dups_eq
-             (fun (hp1,_) (hp2,_) -> CP.eq_spec_var hp1 hp2)
+             (fun (hps1,_) (hps2,_) -> (List.length hps1 = List.length hps2)
+                                    && (CP.diff_svl hps1 hps2 = []))
              hp_rel_unkmap)
   else
     Sa.infer_hps !cprog "" hp_lst_assume
         sel_hps sel_post_hps
         (Gen.BList.remove_dups_eq
-             (fun (hp1,_) (hp2,_) -> CP.eq_spec_var hp1 hp2)
-             hp_rel_unkmap)
+            (fun (hps1,_) (hps2,_) -> (List.length hps1 = List.length hps2)
+                                    && (CP.diff_svl hps1 hps2 = []))
+            hp_rel_unkmap)
   in
   let _ = if not (!Globals.sa_old) then
         begin

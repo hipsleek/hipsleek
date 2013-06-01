@@ -1659,8 +1659,8 @@ let find_undefined_selective_pointers_x prog lfb lmix_f unmatched rhs_rest rhs_h
     let rec lookup_xpure_view hp rem_map=
       match rem_map with
         | [] -> None
-        | (hp1,xpv)::tl ->
-            if CP.eq_spec_var hp1 hp then
+        | (hps,xpv)::tl ->
+            if CP.mem_svl hp hps then
               Some xpv
             else lookup_xpure_view hp tl
     in
@@ -1678,7 +1678,7 @@ let find_undefined_selective_pointers_x prog lfb lmix_f unmatched rhs_rest rhs_h
           let o_xpv = lookup_xpure_view eq_hp total_unk_map in
           match o_xpv with
             | None -> []
-            | Some xpv -> [(hp0,{xpv with CP.xpure_view_name = CP.name_of_spec_var hp0})]
+            | Some xpv -> [([hp0],{xpv with CP.xpure_view_name = CP.name_of_spec_var hp0})]
       end
   in
   (* DD.info_pprint ">>>>>> find_undefined_selective_pointers <<<<<<" pos; *)
@@ -1750,14 +1750,14 @@ let find_undefined_selective_pointers_x prog lfb lmix_f unmatched rhs_rest rhs_h
   (*========*)
   (*find undefined ptrs of all hrel args*)
   (*two cases: rhs unfold (mis-match is a node) and lhs fold (mis-match is a unk hp)*)
-  let ls_fwd_svl,rh_sel_hps,rhs_unk_map,lhs_selected_hps =
+  let ls_fwd_svl,rh_sel_hps,rhs_unk_map,lhs_selected_hps, unchanged_svl =
     if CF.is_HRel n_unmatched then
       let rhs_hpargs = CF.extract_HRel n_unmatched in
       (*depend on the purpose of geting framing spec*)
       (*svl: framing heap*)
+      let rhs_args = (snd rhs_hpargs) in
       let svl,selected_hps0 = (* if proving_kind#string_of = "POST" then [] else *)
       (*since h_subst is not as expected we use closed set*)
-        let rhs_args = (snd rhs_hpargs) in
         match match_unk_preds ls_lhp_args rhs_args with
           | Some hp -> ([], [hp])
           | None ->
@@ -1767,7 +1767,9 @@ let find_undefined_selective_pointers_x prog lfb lmix_f unmatched rhs_rest rhs_h
        (* let closed_svl = SAU.find_close svl leqs in *)
        DD.ninfo_pprint ("svl: " ^ (!CP.print_svl svl)) pos;
       let runk_map =lookup_eq_linking_svl rhs_hpargs total_unk_map selected_hp_args in
-      ([svl],[fst rhs_hpargs], runk_map,selected_hps0)
+      let unchanged_svl = List.fold_left (fun unk_svl (_,args) ->
+          unk_svl@(CP.intersect_svl (SAU.find_close args eqs) rhs_args)) [] ls_lhp_args in
+      ([svl],[fst rhs_hpargs], runk_map,selected_hps0, unchanged_svl)
     else
       let h_node, h_args = SAU.get_h_node_cont_args_hf prog n_unmatched in
       let h_args1 = List.filter CP.is_node_typ h_args in
@@ -1775,14 +1777,14 @@ let find_undefined_selective_pointers_x prog lfb lmix_f unmatched rhs_rest rhs_h
       (*should include their closed ptrs*)
       let hrel_args2 = CP.remove_dups_svl (List.fold_left SAU.close_def hrel_args1 (eqs)) in
       let ls_unfold_fwd_svl = get_rhs_unfold_fwd_svl h_node h_args1 (def_vs@hrel_args2) ls_lhp_args in
-      (ls_unfold_fwd_svl(* @lundefs_args *),[],[],selected_hps)
+      (ls_unfold_fwd_svl(* @lundefs_args *),[],[],selected_hps, [])
   in
   let ls_undef =  List.map CP.remove_dups_svl (ls_fwd_svl) in
   DD.ninfo_pprint ("selected_hps: " ^ (!CP.print_svl (selected_hps))) pos;
   let ls_defined_hp = List.map fst3 defined_hps in
   let lhs_selected_hps0 = CP.diff_svl lhs_selected_hps ls_defined_hp in
   ((* undefs1@lundefs_args *) ls_undef,hds,hvs,lhrs,rhrs,leqNulls@reqNulls, lhs_selected_hps0,rh_sel_hps, defined_hps,
-  unk_svl,ps,unk_map@rhs_unk_map)
+  CP.remove_dups_svl (unk_svl@unchanged_svl),ps,unk_map@rhs_unk_map)
 
 let find_undefined_selective_pointers prog lfb lmix_f unmatched rhs_rest rhs_h_matched_set leqs reqs pos total_unk_map=
   let pr1 = Cprinter.string_of_formula_base in
