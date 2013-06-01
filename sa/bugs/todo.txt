@@ -844,6 +844,11 @@ relAssume H1
  H1(c,y) --> c::node<v,prev_19_765',next_19_766'>@M * 
    HP_5(prev_19_765',y) * HP_6(next_19_766',y)&true.
 
+How about renaming root parameter of unused pred to
+a unique dangling name?
+
+  prev_19_765' to _uu_HP_5_uu
+
 ====>
 relAssume H1
  H1(c,y) & y@F --> c::node<v,prev_19_765',next_19_766'>@M * 
