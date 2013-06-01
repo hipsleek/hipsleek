@@ -7089,7 +7089,7 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
                       begin
                         match relass with
                           | [] -> 
-                                (stk_inf_pure # push p;
+                                (let _ = if not (CP.isConstTrue p) then stk_inf_pure # push p in
                                 let _ = 
                                   if entail_states = [] then 
                                     report_error pos "Expecting a non-empty list of entail states"

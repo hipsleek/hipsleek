@@ -240,7 +240,7 @@ Expecting relational assumption : H(r) --> r::lseg<q> * q::ln<>
 @5! rfb: r::lseg<q>@M[0][Orig][LHSCase] * q::ln@M[0][Orig][LHSCase]&true&
 {FLOW,(19,20)=__norm}[]
 *******************************************************
-# bug-app3.slk:  TODO
+# bug-app3.slk:  DONE
 
 Why is there a inferred pre of "true"?
 
