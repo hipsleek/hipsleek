@@ -20,3 +20,29 @@ INPUT:
        {FLOW,(19,20)=__norm}[]
 
 */
+
+# cll-d1.slk
+
+infer [HP_6,x] HP_6(n) & n=v & v!=null & x!=n
+    |-  v::node<_,_> .
+print residue.
+
+/*
+This currently generates:
+ <1>HP_28(Anon_27)&n=v & v!=null & n!=x & Anon_11=Anon_26 & Anon_12=Anon_27&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [HP_6(v)&v!=null --> v::node<Anon_26,Anon_27>@M * 
+                   (HP_28(Anon_27))&true]
+
+I wonder if we can add a constraint v!=x and generate instead:
+
+ inferred hprel: [HP_6(v)&v!=null & v!=x --> v::node<Anon_26,Anon_27>@M * 
+                   (HP_28(Anon_27))&true]
+
+This is to allow parameter expansion, later to:
+
+ HP_6(v) --> HP_6e(v,n)
+ inferred hprel: [HP_6(v,n)&v!=null & v!=x --> v::node<Anon_26,Anon_27>@M * 
+                   (HP_28(Anon_27))&true]
+
+
+*/
