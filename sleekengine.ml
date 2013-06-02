@@ -469,7 +469,7 @@ let meta_to_struc_formula (mf0 : meta_formula) quant fv_idents (rel0: rel option
   string_of_bool
   string_of_ident_list
   TI.string_of_tlist
-  Cprinter.string_of_struc_formula
+  (pr_pair pr_none Cprinter.string_of_struc_formula)
   (fun _ _ _ _  ->  meta_to_struc_formula mf0 quant fv_idents rel0 tlist )mf0 quant fv_idents tlist
 
 (* An Hoa : DETECT THAT EITHER OF 
@@ -556,7 +556,7 @@ let run_infer_one_pass (ivars: ident list) (iante0 : meta_formula) (iconseq0 : m
   let _ = residues := None in
   let _ = Infer.rel_ass_stk # reset in
   let _ = if (!Globals.print_input || !Globals.print_input_all) then print_endline ("INPUT: \n ### 1 ante = " ^ (string_of_meta_formula iante0) ^"\n ### conseq = " ^ (string_of_meta_formula iconseq0)) else () in
-  let _ = Debug.devel_pprint ("\nrun_entail_check:"
+  let _ = Debug.devel_pprint ("\nrun_entail_check 1:"
                               ^ "\n ### iante0 = "^(string_of_meta_formula iante0)
                               ^ "\n ### iconseq0 = "^(string_of_meta_formula iconseq0)
                               ^"\n\n") no_pos in
@@ -584,14 +584,22 @@ let run_infer_one_pass (ivars: ident list) (iante0 : meta_formula) (iconseq0 : m
   let fv_idents = (List.map CP.name_of_spec_var fvs)@ivars in
   (* need to make ivars be global *)
   (* let conseq = if (!Globals.allow_field_ann) then meta_to_struc_formula iconseq0 false fv_idents None stab  *)
-  let (n_tl,conseq) = if (!Globals.allow_field_ann) then meta_to_struc_formula iconseq0 false fv_idents (Some Globals.RSubAnn) n_tl
-      else meta_to_struc_formula iconseq0 false fv_idents None n_tl in
+  let (n_tl,conseq) =
+    if (!Globals.allow_field_ann) 
+    then meta_to_struc_formula iconseq0 false fv_idents (Some Globals.RSubAnn) n_tl
+    else meta_to_struc_formula iconseq0 false fv_idents None n_tl in
   (* let _ = print_endline ("conseq: " ^ (Cprinter.string_of_struc_formula conseq)) in *)
   (* let conseq1 = meta_to_struc_formula iconseq0 false fv_idents stab in *)
+  let pr = Cprinter.string_of_struc_formula in
+  let _ = DD.tinfo_hprint (add_str "conseq(after meta-)" pr) conseq no_pos in 
   let conseq = Solver.prune_pred_struc !cprog true conseq in
-	let conseq = AS.add_param_ann_constraints_struc conseq in
+  let _ = DD.tinfo_hprint (add_str "conseq(after prune)" pr) conseq no_pos in 
+  let _ = DD.info_pprint "Andreea : false introduced by add_param_ann_constraints_struc" no_pos in
+  let _ = DD.info_pprint "=============================================================" no_pos in
+  let conseq = AS.add_param_ann_constraints_struc conseq in
+  let _ = DD.tinfo_hprint (add_str "conseq(after add param)" pr) conseq no_pos in 
   (* let conseq = AS.add_param_ann_constraints_struc conseq in  *)
-  let _ = Debug.devel_zprint (lazy ("\nrun_entail_check:"
+  let _ = Debug.devel_zprint (lazy ("\nrun_entail_check 2:"
                         ^"\n ### ivars = "^(pr_list pr_id ivars)
                         ^ "\n ### ante = "^(Cprinter.string_of_formula ante)
                         ^ "\n ### conseq = "^(Cprinter.string_of_struc_formula conseq)
@@ -599,7 +607,7 @@ let run_infer_one_pass (ivars: ident list) (iante0 : meta_formula) (iconseq0 : m
   let es = CF.empty_es (CF.mkTrueFlow ()) Lab2_List.unlabelled no_pos in
   let ante = Solver.normalize_formula_w_coers 11 !cprog es ante !cprog.C.prog_left_coercions in
   let _ = if (!Globals.print_core || !Globals.print_core_all) then print_endline ("INPUT: \n ### ante = " ^ (Cprinter.string_of_formula ante) ^"\n ### conseq = " ^ (Cprinter.string_of_struc_formula conseq)) else () in
-  let _ = Debug.devel_zprint (lazy ("\nrun_entail_check: after normalization"
+  let _ = Debug.devel_zprint (lazy ("\nrun_entail_check 3: after normalization"
                         ^ "\n ### ante = "^(Cprinter.string_of_formula ante)
                         ^ "\n ### conseq = "^(Cprinter.string_of_struc_formula conseq)
                         ^"\n\n")) no_pos in
