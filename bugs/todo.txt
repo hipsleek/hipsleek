@@ -240,3 +240,18 @@ bind2e3.ss
 
 
 # TODO how about field level access for bind2{e3,e4}.ss
+
+Trung:
+
+Could you try fix the type problem below 
+at default branch? If possible, please also
+support type annotation at the infer parameter
+list by changing the parser, e.g:
+  infer [(x:int)] x=3 & x=x' |-  x>4.
+
+# bugs/cll-type.slk
+
+// why "could not find coherent-type below" ?
+// x & x' has the same int type
+infer [x] x=3 & x=x'
+ |-  x>4.
