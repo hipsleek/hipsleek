@@ -868,3 +868,16 @@ Rename unused dangling uniquely
   HP_p(p,..) --> _uu_HP_p_uu
 
  c::node<Anon_12,_uu_HP_p_uu,y>@M & true --> G1(c,y)&true
+
+# set-tail.slk
+
+/*
+ What happen to HP_5 & HP_6?
+ They seem to have been renamed to HP_36,HP_37?
+ Why is there a H1_38?
+
+[ H1(c_49,y_50) ::= c_49::node<v,prev,next>@M& 
+     XPURE(HP_36(prev)) &  XPURE(HP_37(next)) & XPURE(H1_38(y_50)),
+ G1(c_51,y_52) ::= c_51::node<v,prev7,y_52>@M
+     & XPURE(HP_36(prev7)) &  XPURE(H1_38(y_52))]
+*/
