@@ -4475,11 +4475,10 @@ let generate_xpure_view_x drop_hpargs total_unk_map=
     let p,unk_svl,unk_map =
       let xpvs = lookup_xpure_view hp total_unk_map in
       match xpvs with
-        | [xp] ->
-            let xp_r, xp_args = match xp.CP.xpure_view_node with
+        | [xp] -> let xp_r, xp_args = match xp.CP.xpure_view_node with
               | None -> None, xp.CP.xpure_view_arguments
               |Some _ -> Some (List.hd args), (List.tl args)
-            in
+          in
           let new_xpv = {xp with CP.xpure_view_node =  xp_r;
               xpure_view_arguments =  xp_args
                         }
@@ -4487,15 +4486,15 @@ let generate_xpure_view_x drop_hpargs total_unk_map=
           let p = CP.mkFormulaFromXP new_xpv in
           (p,args,[])
         | [] ->
-            let xpv = { CP.xpure_view_node = None;
-                       CP.xpure_view_name = hp_name;
-                       CP.xpure_view_arguments = args;
-                       CP.xpure_view_remaining_branches= None;
-                       CP.xpure_view_pos = no_pos;
-            }
-            in
-            let p = CP.mkFormulaFromXP xpv in
-          (p,args,[([hp],xpv)])
+              let xpv = { CP.xpure_view_node = None;
+              CP.xpure_view_name = hp_name;
+              CP.xpure_view_arguments = args;
+              CP.xpure_view_remaining_branches= None;
+              CP.xpure_view_pos = no_pos;
+              }
+              in
+              let p = CP.mkFormulaFromXP xpv in
+              (p,args,[([hp],xpv)])
         | _ -> report_error no_pos "cformula.generate_xpure_view: impossible"
     in
     (p,unk_svl,unk_map)
@@ -4509,6 +4508,7 @@ let generate_xpure_view drop_hpargs total_unk_map=
     (pr_list (pr_pair !CP.print_svl CP.string_of_xpure_view)) in
   Debug.no_1 "generate_xpure_view" pr1 pr2
       (fun _ -> generate_xpure_view_x drop_hpargs total_unk_map) drop_hpargs
+
 
 let annotate_dl_hf hf0 unk_hps=
   let rec helper hf=
@@ -5168,7 +5168,7 @@ let drop_hrel_f f0 hp_names =
   let pr1 = !print_formula in
   let pr2 = !print_svl in
   let pr3 = pr_pair !print_formula (pr_list (pr_list !CP.print_exp)) in
-  Debug.ho_2 "drop_hrel_f" pr1 pr2 pr3 drop_hrel_f f0 hp_names
+  Debug.no_2 "drop_hrel_f" pr1 pr2 pr3 drop_hrel_f f0 hp_names
 
 let drop_unk_hrel f0 hp_names=
   let rec helper f=
@@ -5797,7 +5797,7 @@ think it is used to instantiate when folding.
   es_infer_vars_rel : CP.spec_var list;
   es_infer_vars_sel_hp_rel: CP.spec_var list;
   es_infer_vars_sel_post_hp_rel: CP.spec_var list;
-  es_infer_hp_unk_map: (CP.spec_var list * CP.xpure_view) list ;
+  es_infer_hp_unk_map: ((CP.spec_var * int) list * CP.xpure_view) list ;
   es_infer_vars_hp_rel : CP.spec_var list;
   (* input vars to denote vars already instantiated *)
   es_infer_vars_dead : CP.spec_var list; 

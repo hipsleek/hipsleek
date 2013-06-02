@@ -698,41 +698,34 @@ let process_shape_infer pre_hps post_hps=
   let sel_post_hps = filter_hp post_hps hps20 in
   let sel_hps = sel_pre_hps@sel_post_hps in
   let ls_hprel, ls_inferred_hps, dropped_hps =
-    if not (!Globals.sa_old) then
-    Sa2.infer_shapes !cprog "" hp_lst_assume
+    let infer_shape_fnc =  if not (!Globals.sa_old) then
+      Sa2.infer_shapes
+    else Sa.infer_hps
+    in
+    infer_shape_fnc !cprog "" hp_lst_assume
         sel_hps sel_post_hps
         (Gen.BList.remove_dups_eq
-             (fun (hps1,_) (hps2,_) -> (List.length hps1 = List.length hps2)
-                                    && (CP.diff_svl hps1 hps2 = []))
-             hp_rel_unkmap)
-  else
-    Sa.infer_hps !cprog "" hp_lst_assume
-        sel_hps sel_post_hps
-        (Gen.BList.remove_dups_eq
-            (fun (hps1,_) (hps2,_) -> (List.length hps1 = List.length hps2)
-                                    && (CP.diff_svl hps1 hps2 = []))
+            (fun (hps1,_) (hps2,_) ->
+                let hps1 = List.map fst hps1 in
+                let hps2 = List.map fst hps2 in
+                (List.length hps1 = List.length hps2)
+                && (CP.diff_svl hps1 hps2 = []))
             hp_rel_unkmap)
   in
   let _ = if not (!Globals.sa_old) then
-        begin
-            if not(Sa2.rel_def_stk# is_empty) then
-          	  print_endline ""; 
-		    print_endline "*************************************";
-		    print_endline "*******relational definition ********";
-		    print_endline "*************************************";
-            print_endline (Sa2.rel_def_stk # string_of_reverse);
-		    print_endline "*************************************"
-        end
-      else
-        if not(Sa.rel_def_stk# is_empty) then
-          begin
-		      print_endline ""; 
-		      print_endline "*************************************";
-		      print_endline "*******relational definition ********";
-		      print_endline "*************************************";
-              print_endline (Sa.rel_def_stk # string_of_reverse);
-		      print_endline "*************************************"
-          end
+    begin
+      let rel_defs = if not (!Globals.sa_old) then
+        Sa2.rel_def_stk
+      else Sa.rel_def_stk
+      in
+      if not(rel_defs# is_empty) then
+        print_endline ""; 
+      print_endline "*************************************";
+      print_endline "*******relational definition ********";
+      print_endline "*************************************";
+      print_endline (Sa2.rel_def_stk # string_of_reverse);
+      print_endline "*************************************"
+    end
   in
   (* let _ = if(!Globals.cp_test || !Globals.cp_prefile) then *)
   (*    CEQ.cp_test !cprog hp_lst_assume ls_inferred_hps sel_hps *)

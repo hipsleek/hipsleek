@@ -9,6 +9,7 @@ module CF = Cformula
 module MCP = Mcpure
 module CEQ = Checkeq
 module TP = Tpdispatcher
+module SAC = Sacore
 module SAU = Sautility
 
 let rel_def_stk : CF.hprel_def Gen.stack_pr = new Gen.stack_pr
@@ -276,8 +277,7 @@ let do_elim_unused unused_hps cs=
 let do_elim_unused unused_hps cs=
   let pr1 = Cprinter.string_of_spec_var_list in
   let pr2 = Cprinter.string_of_hprel in
-  Debug.ho_2 "do_elim_unused" pr1 pr2 pr2 do_elim_unused  unused_hps cs
-
+  Debug.no_2 "do_elim_unused" pr1 pr2 pr2 do_elim_unused  unused_hps cs
 
 let elim_unused_pre_preds post_hps constrs=
   let lhs_preds, lhs_heads, rhs_preds,rhs_heads = List.fold_left get_preds ([],[],[],[]) constrs in
@@ -294,7 +294,7 @@ let elim_unused_pre_preds post_hps constrs=
 
 let elim_unused_pre_preds post_hps constrs=
   let pr1 = pr_list_ln Cprinter.string_of_hprel in
-  Debug.ho_1 "elim_unused_pre_preds" pr1 pr1
+  Debug.no_1 "elim_unused_pre_preds" pr1 pr1
       (fun _ -> elim_unused_pre_preds post_hps constrs) constrs
 
 let elim_unused_post_preds post_hps constrs=
@@ -314,7 +314,7 @@ let elim_unused_post_preds post_hps constrs=
 
 let elim_unused_post_preds post_hps constrs=
   let pr1 = pr_list_ln Cprinter.string_of_hprel in
-  Debug.ho_1 "elim_unused_post_preds" pr1 pr1
+  Debug.no_1 "elim_unused_post_preds" pr1 pr1
       (fun _ -> elim_unused_post_preds post_hps constrs) constrs
 
 (* let elim_unused_post_preds post_hps constrs= *)
@@ -476,6 +476,7 @@ let generalize_one_hp_x prog hpdefs non_ptr_unk_hps unk_hps par_defs=
     let f2 =
       if !Globals.sa_dangling then
         CF.annotate_dl f1 (List.filter (fun hp1 -> not (CP.eq_spec_var hp hp1)) unk_hps)
+        (* fst (CF.drop_hrel_f f1 unk_hps) *)
       else f1
     in
     let unk_args1 = List.map (CP.subs_one subst) unk_args in
@@ -485,30 +486,30 @@ let generalize_one_hp_x prog hpdefs non_ptr_unk_hps unk_hps par_defs=
   DD.binfo_pprint ">>>>>> generalize_one_hp: <<<<<<" no_pos;
   if par_defs = [] then ([],[]) else
     begin
-        let hp, args, _,_ = (List.hd par_defs) in
-        (*find the root: ins2,ins3: root is the second, not the first*)
-        let args0 = List.map (CP.fresh_spec_var) args in
-    (* DD.ninfo_pprint ((!CP.print_sv hp)^"(" ^(!CP.print_svl args) ^ ")") no_pos; *)
-        let defs,ls_unk_args = List.split (List.map (obtain_and_norm_def hp args0) par_defs) in
-        let r,non_r_args = SAU.find_root args0 defs in
-        (*make explicit root*)
-        let defs0 = List.map (SAU.mk_expl_root r) defs in
-        let unk_svl = CP.remove_dups_svl (List.concat (ls_unk_args)) in
-  (*normalize linked ptrs*)
-        let defs1 = SAU.norm_hnodes args0 defs0 in
-        (*remove unkhp of non-node*)
-        let defs2 = (* List.map remove_non_ptr_unk_hp *) defs1 in
-  (*remove duplicate*)
-        let defs3 = Gen.BList.remove_dups_eq (fun f1 f2 -> SAU.check_relaxeq_formula f1 f2) defs2 in
+        let hp, args, f1,_ = (List.hd par_defs) in
         if CP.mem_svl hp unk_hps then
-          (SAU.mk_unk_hprel_def hp args0 defs3 no_pos,[])
+          (SAU.mk_unk_hprel_def hp args [f1] no_pos,[])
         else
+          (*find the root: ins2,ins3: root is the second, not the first*)
+          let args0 = List.map (CP.fresh_spec_var) args in
+          (* DD.ninfo_pprint ((!CP.print_sv hp)^"(" ^(!CP.print_svl args) ^ ")") no_pos; *)
+          let defs,ls_unk_args = List.split (List.map (obtain_and_norm_def hp args0) par_defs) in
+          let r,non_r_args = SAU.find_root args0 defs in
+          (*make explicit root*)
+          let defs0 = List.map (SAU.mk_expl_root r) defs in
+          let unk_svl = CP.remove_dups_svl (List.concat (ls_unk_args)) in
+          (*normalize linked ptrs*)
+          let defs1 = SAU.norm_hnodes args0 defs0 in
+          (*remove unkhp of non-node*)
+          let defs2 = (* List.map remove_non_ptr_unk_hp *) defs1 in
+          (*remove duplicate*)
+          let defs3 = Gen.BList.remove_dups_eq (fun f1 f2 -> SAU.check_relaxeq_formula f1 f2) defs2 in
           let defs4 = SAU.remove_equiv_wo_unkhps hp unk_hps defs3 in
-   (*remove duplicate with self-recursive*)
-        (* let base_case_exist,defs4 = SAU.remove_dups_recursive hp args0 unk_hps defs3 in *)
-  (*find longest hnodes common for more than 2 formulas*)
-  (*each hds of hdss is def of a next_root*)
-           (* let defs5 = List.filter (fun f -> have_roots args0 f) defs4 in *)
+          (*remove duplicate with self-recursive*)
+          (* let base_case_exist,defs4 = SAU.remove_dups_recursive hp args0 unk_hps defs3 in *)
+          (*find longest hnodes common for more than 2 formulas*)
+          (*each hds of hdss is def of a next_root*)
+          (* let defs5 = List.filter (fun f -> have_roots args0 f) defs4 in *)
           let defs,elim_ss = SAU.get_longest_common_hnodes_list prog hpdefs unk_hps unk_svl hp r non_r_args args0 defs4 in
           if defs <> [] then (defs,elim_ss) else
             report_error no_pos "shape analysis: FAIL"
@@ -518,8 +519,8 @@ let generalize_one_hp prog defs non_ptr_unk_hps unk_hps par_defs=
   let pr1 = pr_list_ln SAU.string_of_par_def_w_name_short in
   let pr2 = pr_list_ln (pr_pair !CP.print_sv Cprinter.string_of_hp_rel_def) in
   let pr3 = pr_list (pr_pair Cprinter.prtt_string_of_h_formula Cprinter.prtt_string_of_h_formula) in
-  Debug.no_1 "generalize_one_hp" pr1 (pr_pair pr2 pr3)
-      (fun _ -> generalize_one_hp_x prog defs non_ptr_unk_hps unk_hps par_defs) par_defs
+  Debug.no_2 "generalize_one_hp" pr1 !CP.print_svl (pr_pair pr2 pr3)
+      (fun _ _ -> generalize_one_hp_x prog defs non_ptr_unk_hps unk_hps par_defs) par_defs unk_hps
 
 let get_pdef_body_x unk_hps post_hps (a1,args,unk_args,a3,olf,orf)=
   let exchane_unk_post hp1 args f unk_args=
@@ -1002,8 +1003,7 @@ let match_hps_views (hp_defs: CF.hp_rel_def list) (vdcls: CA.view_decl list):
                      END LIB MATCHING
 ****************************************************************)
 
-let infer_shapes_init_post_x prog (constrs0: CF.hprel list) non_ptr_unk_hps sel_post_hps hp_rel_unkmap :(CP.spec_var list * CF.hp_rel_def list) =
-  let unk_hps = [] in
+let infer_shapes_init_post_x prog (constrs0: CF.hprel list) non_ptr_unk_hps sel_post_hps unk_hps hp_rel_unkmap :(CP.spec_var list * CF.hp_rel_def list) =
   let _ = DD.binfo_pprint ">>>>>> step 2: remove unused predicates<<<<<<" no_pos in
   let constrs0 = elim_unused_post_preds sel_post_hps constrs0 in
   let par_defs = get_par_defs_post constrs0 in
@@ -1014,15 +1014,15 @@ let infer_shapes_init_post_x prog (constrs0: CF.hprel list) non_ptr_unk_hps sel_
   let hp_names,hp_defs = List.split pair_names_defs in
   (hp_names,hp_defs)
 
-let infer_shapes_init_post prog (constrs0: CF.hprel list) non_ptr_unk_hps sel_post_hps hp_rel_unkmap :(CP.spec_var list * CF.hp_rel_def list) =
+let infer_shapes_init_post prog (constrs0: CF.hprel list) non_ptr_unk_hps sel_post_hps unk_hps
+      hp_rel_unkmap :(CP.spec_var list * CF.hp_rel_def list) =
   let pr1 = pr_list_ln Cprinter.string_of_hprel in
   let pr2 = !CP.print_svl in
   let pr3 = pr_list_ln Cprinter.string_of_hp_rel_def in
   Debug.no_1 "infer_shapes_init_post" pr1 (pr_pair pr2 pr3)
-      (fun _ -> infer_shapes_init_post_x prog constrs0 non_ptr_unk_hps sel_post_hps hp_rel_unkmap) constrs0
+      (fun _ -> infer_shapes_init_post_x prog constrs0 non_ptr_unk_hps sel_post_hps unk_hps hp_rel_unkmap) constrs0
 
-let infer_shapes_init_pre_x prog (constrs0: CF.hprel list) callee_hps non_ptr_unk_hps sel_post_hps hp_rel_unkmap :(CP.spec_var list * CF.hp_rel_def list) =
-  let unk_hps = [] in
+let infer_shapes_init_pre_x prog (constrs0: CF.hprel list) callee_hps non_ptr_unk_hps sel_post_hps unk_hps hp_rel_unkmap :(CP.spec_var list * CF.hp_rel_def list) =
   let _ = DD.binfo_pprint ">>>>>> step 3: remove unused predicates<<<<<<" no_pos in
   let constrs0 = elim_unused_pre_preds sel_post_hps constrs0 in
   let _ = DD.binfo_pprint ">>>>>> pre-predicates: step 4: group & simpl impl<<<<<<" no_pos in
@@ -1037,12 +1037,13 @@ let infer_shapes_init_pre_x prog (constrs0: CF.hprel list) callee_hps non_ptr_un
   (*TODO: check consistency of the solution against rem_constraints: LOOP*)
   ([],hp_defs)
 
-let infer_shapes_init_pre prog (constrs0: CF.hprel list) callee_hps non_ptr_unk_hps sel_post_hps hp_rel_unkmap :(CP.spec_var list * CF.hp_rel_def list) =
+let infer_shapes_init_pre prog (constrs0: CF.hprel list) callee_hps non_ptr_unk_hps sel_post_hps unk_hps
+      hp_rel_unkmap :(CP.spec_var list * CF.hp_rel_def list) =
   let pr1 = pr_list_ln Cprinter.string_of_hprel in
   let pr2 = !CP.print_svl in
   let pr3 = pr_list_ln Cprinter.string_of_hp_rel_def in
   Debug.no_1 "infer_shapes_init_pre" pr1 (pr_pair pr2 pr3)
-      (fun _ -> infer_shapes_init_pre_x prog constrs0 callee_hps non_ptr_unk_hps sel_post_hps hp_rel_unkmap) constrs0
+      (fun _ -> infer_shapes_init_pre_x prog constrs0 callee_hps non_ptr_unk_hps sel_post_hps unk_hps hp_rel_unkmap) constrs0
 
 let partition_constrs_x constrs post_hps=
   let is_post_cs cs =
@@ -1069,29 +1070,34 @@ let infer_shapes_core prog proc_name (constrs0: CF.hprel list) callee_hps sel_hp
   let callee_hps = [] in
   (********************************)
   (*unk analysis*)
-  (* let constrs1c,unk_hps,hp_defs_split = analize_unk prog hp_rel_unkmap constrs1b in*)
-  let unk_hps = [] in (*todo: total_unk_map + analize_unk*)
   let _ = DD.binfo_pprint ">>>>>> step 1: find dangling ptrs that link pre and post-preds<<<<<<" no_pos in 
-  let constrs1, unk_map = SAU.analize_unk prog constrs0 hp_rel_unkmap in
+  let constrs1, unk_hpargs, unk_map = SAC.analize_unk prog constrs0 hp_rel_unkmap in
+  let unk_hps = List.map fst unk_hpargs in (*todo: total_unk_map + analize_unk*)
   let _ = DD.binfo_pprint ">>>>>> step 2: apply transitive implication<<<<<<" no_pos in
   let constrs2, non_unk_hps = apply_transitive_impl_fix prog callee_hps unk_map
-    (List.map fst unk_hps) constrs1 in
+     unk_hps constrs1 in
   (*split constrs like H(x) & x = null --> G(x): separate into 2 constraints*)
   let constrs3 = split_constr prog constrs2  in
   (*partition constraints into 2 groups: pre-predicates, post-predicates*)
   let post_constrs, pre_constrs = partition_constrs constrs3 sel_post_hps in
   (*find inital sol*)
   let _ = DD.binfo_pprint ">>>>>> pre-predicates<<<<<<" no_pos in
-  let pre_hps, pre_defs = infer_shapes_init_pre prog pre_constrs callee_hps [] sel_post_hps unk_map in
+  let pre_hps, pre_defs = infer_shapes_init_pre prog pre_constrs callee_hps [] sel_post_hps unk_hpargs unk_map in
   let _ = DD.binfo_pprint ">>>>>> post-predicates<<<<<<" no_pos in
-  let post_hps, post_defs = infer_shapes_init_post prog post_constrs [] sel_post_hps unk_map in
+  let post_hps, post_defs = infer_shapes_init_post prog post_constrs [] sel_post_hps unk_hpargs unk_map in
   let defs1 = (pre_defs@post_defs) in
-  let defs2 = if !Globals.sa_inlining then
-    let defs12 = SAU.transform_xpure_to_pure defs1 unk_map in
-    defs12
-  else defs1
+  let defs2,unk_rel_hpdefs, unk_hp_defs,unk_hp_frargs,unk_rels3 = SAU.generate_hp_def_from_unk_hps (pre_hps@post_hps)
+    unk_hpargs defs1 sel_post_hps [] in
+  let unk_hpdefs_from_rel = SAU.rel_helper sel_post_hps unk_rels3 unk_hp_frargs in
+  let all_unk_hpdefs = SAU.combine_hpdefs (unk_hp_defs@unk_hpdefs_from_rel) in
+  let defs3 = defs2@all_unk_hpdefs in
+  let defs4 = if !Globals.sa_inlining then
+    (* SAU.transform_unk_hps_to_pure (defs3b) unk_hp_frargs *)
+    let defs4a = SAU.transform_xpure_to_pure defs3 unk_map in
+    defs4a
+  else defs3
   in
-  (constrs1, defs2,[])
+  (constrs1, defs4,[])
 
 let infer_shapes_x prog proc_name (constrs0: CF.hprel list) sel_hps sel_post_hps hp_rel_unkmap :(CF.hprel list * CF.hp_rel_def list* (CP.spec_var*CP.exp list * CP.exp list) list) =
   (*move to outer func*)
@@ -1115,6 +1121,6 @@ let infer_shapes prog proc_name (hp_constrs: CF.hprel list) sel_hp_rels sel_post
   let pr1 = pr_list_ln Cprinter.string_of_hprel in
   let pr2 = pr_list_ln Cprinter.string_of_hp_rel_def in
   let pr3 = pr_list (pr_triple !CP.print_sv pr0 pr0) in
-  let pr4 = pr_list (pr_pair !CP.print_svl CP.string_of_xpure_view) in
+  let pr4 = pr_list (pr_pair (pr_list (pr_pair !CP.print_sv string_of_int)) CP.string_of_xpure_view) in
   Debug.no_4 "infer_shapes" pr_id pr1 !CP.print_svl pr4 (pr_triple pr1 pr2 pr3)
       (fun _ _ _ _ -> infer_shapes_x prog proc_name hp_constrs sel_hp_rels sel_post_hp_rels hp_rel_unkmap) proc_name hp_constrs sel_post_hp_rels hp_rel_unkmap
