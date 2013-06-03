@@ -836,9 +836,7 @@ There are two problems
  (i)  H1(rest,h)&h=rest --> emp.
  (ii) h=rest --> G1(rest,h).
 =========================================================
-# set-tail.slk:
-
-TODO: improve
+# set-tail.slk: DONE (with --sa-inlining)
 
 relAssume H1
  H1(c,y) --> c::node<v,prev_19_765',next_19_766'>@M * 
@@ -854,8 +852,8 @@ relAssume H1
  H1(c,y) & y@F --> c::node<v,prev_19_765',next_19_766'>@M * 
    HP_5(prev_19_765',y) * HP_6(next_19_766',y)&true.
 
-
-# i-app-r.slk
+=========================================================
+# i-app-r.slk: DONE (with --sa-inlining)
 
 
 do_elim_unused inp1 :[HP_p]
@@ -869,6 +867,7 @@ Rename unused dangling uniquely
 
  c::node<Anon_12,_uu_HP_p_uu,y>@M & true --> G1(c,y)&true
 
+=========================================================
 # set-tail.slk
 
 /*

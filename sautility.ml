@@ -749,8 +749,8 @@ let get_raw_defined_w_pure_x prog predef lhs rhs=
 let get_raw_defined_w_pure prog predef lhs rhs=
   let pr1 = Cprinter.prtt_string_of_formula in
   let pr2 = !CP.print_svl in
-  Debug.no_2 "get_raw_defined_w_pure" pr1 pr1 pr2
-      (fun _ _ -> get_raw_defined_w_pure_x prog predef lhs rhs) lhs rhs
+  Debug.no_3 "get_raw_defined_w_pure" pr2 pr1 pr1 pr2
+      (fun _ _ _ -> get_raw_defined_w_pure_x prog predef lhs rhs) predef lhs rhs
 
 let keep_data_view_hrel_nodes prog f hd_nodes hv_nodes keep_rootvars keep_hrels=
   let keep_ptrs = look_up_closed_ptr_args prog hd_nodes hv_nodes keep_rootvars in
@@ -3935,23 +3935,6 @@ let transform_unk_hps_to_pure hp_defs unk_hpargs =
   let pr2 = pr_list_ln (pr_pair !CP.print_sv !CP.print_svl) in
   Debug.no_2 "transform_unk_hps_to_pure" pr1 pr2 pr1
       (fun _ _ -> transform_unk_hps_to_pure_x hp_defs unk_hpargs) hp_defs unk_hpargs
-
-let transform_xpure_to_pure_x hp_defs unk_map=
-  let fr_map = List.map (fun (hps, xp) ->
-      let args = match xp.CP.xpure_view_node with
-        | None -> xp.CP.xpure_view_arguments
-        | Some sv -> sv::xp.CP.xpure_view_arguments
-      in
-      let (CP.SpecVar (t, _, p)),_ = List.hd hps in
-      (CP.SpecVar(t, xp.CP.xpure_view_name, p),
-      List.map (CP.fresh_spec_var_prefix dang_hp_default_prefix_name) args)) unk_map
-  in
-  transform_unk_hps_to_pure hp_defs fr_map
-
-let transform_xpure_to_pure hp_defs unk_map =
-  let pr1 = pr_list_ln Cprinter.string_of_hp_rel_def in
-  Debug.no_1 "transform_xpure_to_pure" pr1 pr1
-      (fun _ -> transform_xpure_to_pure_x hp_defs unk_map) hp_defs
 
 let rel_helper post_hps unk_rels unk_map=
   let generate_p_formual args pos fr_args=

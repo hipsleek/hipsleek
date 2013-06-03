@@ -28,7 +28,7 @@ relAssume G1
  c::node<v,prev7,y>@M * HP_5(prev7,y) *
   HP_6(next_16_768,y)&true --> G1(c,y)&true.
 
-shape_infer [H1][G1].
+shape_infer [H1,HP_6,HP_5][G1].
 
 /*
  What happen to HP_5 & HP_6?
