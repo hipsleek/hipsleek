@@ -1661,7 +1661,8 @@ let find_undefined_selective_pointers_x prog lfb lmix_f unmatched rhs_rest rhs_h
     if post_hpargs = [] then ([], CP.mkTrue pos, unk_map) else
       let lhs_hpargs1 = List.map (fun (hp,args) -> (hp, CP.subst_var_list ss args)) lhs_hpargs in
       let post_hpargs1 = List.map (fun (hp,args) -> (hp, CP.subst_var_list ss args)) post_hpargs in
-      SAC.generate_map lhs_hpargs1 post_hpargs1 unk_map pos
+      let lhs_hpargs2 = List.filter (fun (hp, _) -> not(CP.mem_svl hp post_hps)) lhs_hpargs1 in
+      SAC.generate_map lhs_hpargs2 post_hpargs1 unk_map pos
   in
   (* DD.info_pprint ">>>>>> find_undefined_selective_pointers <<<<<<" pos; *)
   let lfb = CF.subst_b leqs lfb in
@@ -1904,14 +1905,14 @@ let simplify_lhs_rhs prog lhs_b rhs_b leqs reqs hds hvs lhrs rhrs lhs_selected_h
   (* let _ = Debug.info_pprint ("    prog_vars:" ^(!CP.print_svl prog_vars)) no_pos in *)
   let lhs_b1,rhs_b1 = SAU.keep_data_view_hrel_nodes_two_fbs prog lhs_b rhs_b
     (hds@filter_his) hvs (lhp_args@rhp_args) leqs reqs [] (svl@keep_root_hrels) (lhs_keep_rootvars@keep_root_hrels)
-   lhp_args rhp_args unk_svl (prog_vars) in
+   lhp_args rhp_args unk_svl (CP.remove_dups_svl (es_infer_vars@prog_vars)) in
   (***************************)
   (*subst holes*)
   let lhs_b1 = {lhs_b1 with CF.formula_base_heap = IMM.apply_subs_h_formula crt_holes lhs_b1.CF.formula_base_heap} in
   let rhs_b1 = {rhs_b1 with CF.formula_base_heap = IMM.apply_subs_h_formula crt_holes rhs_b1.CF.formula_base_heap} in
-  let lhs_b2 = CF.subst_b (leqs) lhs_b1 in (*m_apply_par*)
-  let rhs_b2 = CF.subst_b (leqs@reqs) rhs_b1 in
-  let _ = Debug.ninfo_pprint ("lhs_b2: " ^ (Cprinter.string_of_formula_base lhs_b2)) no_pos in
+  let lhs_b2 = (* CF.subst_b (leqs) *) lhs_b1 in (*m_apply_par*)
+  let rhs_b2 = (* CF.subst_b (leqs@reqs) *) rhs_b1 in
+  let _ = Debug.ninfo_pprint ("lhs_b1: " ^ (Cprinter.string_of_formula_base lhs_b1)) no_pos in
   let _ = Debug.ninfo_pprint ("rhs_b2: " ^ (Cprinter.string_of_formula_base rhs_b2)) no_pos in
   (*remove redundant: x=x*)
   let lhs_b3 = {lhs_b2 with CF.formula_base_pure = MCP.mix_of_pure

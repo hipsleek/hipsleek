@@ -42,7 +42,7 @@ This is to allow parameter expansion, later to:
 
 */
 
-# cll-d2a.slk
+# cll-d2a.slk: FIXED
 
 infer [HP_6,x]
 HP_6(v) * xp::node<val_35_804,v> & n!=x & n=v & x=xp

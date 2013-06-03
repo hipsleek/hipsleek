@@ -4041,17 +4041,23 @@ and get_hnodes (f: h_formula) = match f with
       -> (get_hnodes h1)@(get_hnodes h2)
   | _ -> []
 
-let prune_irr_neq_formula must_kept_svl lhs_b rhs_b =
+let prune_irr_neq_formula_x must_kept_svl lhs_b rhs_b =
   let r_svl = fv (Base rhs_b) in
   let rec helper fb=
     let ptrs = get_ptrs_w_args fb.formula_base_heap in
-    let _,np2 = CP.prune_irr_neq (MCP.pure_of_mix fb.formula_base_pure) [(CP.remove_dups_svl (ptrs@r_svl@must_kept_svl))] in
+    let _,np2 = CP.prune_irr_neq (MCP.pure_of_mix fb.formula_base_pure) (CP.remove_dups_svl (ptrs@r_svl@must_kept_svl)) in
     let np= MCP.mix_of_pure np2 in
     {fb with
         formula_base_pure =  np;
     }
   in
   helper lhs_b
+
+let prune_irr_neq_formula must_kept_svl lhs_b rhs_b=
+  let pr1 = !print_formula_base in
+  Debug.no_3 "prune_irr_neq_formula" !CP.print_svl pr1 pr1 pr1
+      (fun _ _ _ -> prune_irr_neq_formula_x must_kept_svl lhs_b rhs_b)
+      must_kept_svl lhs_b rhs_b
 
 let rec get_h_size_f (f: formula)=
   match f with

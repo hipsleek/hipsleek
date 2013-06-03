@@ -10597,38 +10597,24 @@ let find_closure_pure_formula (v:spec_var) (f:formula) : spec_var list =
       find_closure_pure_formula_x v f
 
 (*s2*)
-let prune_irr_neq_b_form b irr_svl comps=
-  let rec test sv1 sv2 comps=
-    match comps with
-      | [] -> false
-      | [x] -> false
-      | comp::rest -> begin
-          let b1 = mem_svl sv1 comp in
-          let b2 = mem_svl sv2 comp in
-          match b1,b2 with
-            | true,true -> false
-            | true,false -> true
-            | false,true -> true
-            | false,false -> test sv1 sv2 rest
-        end
-  in
+let prune_irr_neq_b_form b irr_svl=
   let (pf,c) = b in
   match pf with
     | Neq (a1, a2, pos)
     | Eq (a1, a2, pos) -> begin
         match a1,a2 with
           | Var (sv1,pos1), Var (sv2,pos2) ->
-                if (List.exists (fun sv -> (eq_spec_var sv sv1) || (eq_spec_var sv sv2)) irr_svl) || (test sv1 sv2 comps) then
+                if (List.exists (fun sv -> (eq_spec_var sv sv1) || (eq_spec_var sv sv2)) irr_svl) then
                   (true,  (BConst (true,pos),c))
                 else (false,b)
           | _ -> (false,b)
       end
     | _ -> (false,b)
 
-let prune_irr_neq_x p0 irr_svl comps=
+let prune_irr_neq_x p0 irr_svl=
   let rec helper p=
     match p with
-      | BForm (bf,a) -> let b,nbf = prune_irr_neq_b_form bf irr_svl comps in
+      | BForm (bf,a) -> let b,nbf = prune_irr_neq_b_form bf irr_svl in
         if b then b, mkTrue no_pos else
           false, BForm (nbf,a)
       | And (p1,p2,pos) -> begin
@@ -10658,10 +10644,9 @@ let prune_irr_neq_x p0 irr_svl comps=
   in
   helper p0
 
-let prune_irr_neq p0 comps=
-  let svl = List.concat comps in
+let prune_irr_neq p0 svl=
   let irr_svl = diff_svl (remove_dups_svl (fv p0)) svl in
   let pr1= !print_formula in
   let pr2 = !print_svl in
-  Debug.no_3 "prune_irr_neq" pr1 pr2 (pr_list pr2) (pr_pair string_of_bool pr1)
-      (fun _ _ _ -> prune_irr_neq_x p0 irr_svl comps) p0 irr_svl comps
+  Debug.no_2 "prune_irr_neq" pr1 pr2 (pr_pair string_of_bool pr1)
+      (fun _ _ -> prune_irr_neq_x p0 irr_svl ) p0 irr_svl
