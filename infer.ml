@@ -1755,7 +1755,7 @@ let find_undefined_selective_pointers_x prog lfb lmix_f unmatched rhs_rest rhs_h
       (ls_unfold_fwd_svl(* @lundefs_args *),[],selected_hpargs)
   in
   let ls_undef =  List.map CP.remove_dups_svl (ls_fwd_svl) in
-  DD.info_pprint ("selected_hpargs: " ^ (let pr = pr_list (pr_pair !CP.print_sv !CP.print_svl) in pr (selected_hpargs))) pos;
+  (* DD.info_pprint ("selected_hpargs: " ^ (let pr = pr_list (pr_pair !CP.print_sv !CP.print_svl) in pr (selected_hpargs))) pos; *)
   let ls_defined_hp = List.map fst3 defined_hps in
   let lhs_selected_hpargs0 =  List.filter (fun (hp,_) -> not (CP.mem_svl hp ls_defined_hp)) lhs_selected_hpargs in
   ((* undefs1@lundefs_args *) ls_undef,hds,hvs,lhrs,rhrs,leqNulls@reqNulls, lhs_selected_hpargs0,rh_sel_hpargs, defined_hps,
@@ -2273,7 +2273,7 @@ let infer_collect_hp_rel_x prog (es:entail_state) rhs rhs_rest (rhs_h_matched_se
                 let well_defined_svl = List.concat (List.map (fun (hp,args,_) -> hp::args) defined_hps) in
                 let root_vars_ls2 = SAU.find_close root_vars_ls1 leqs in
                 let new_es_formula = SAU.drop_data_view_hrel_nodes_from_root prog new_es_formula hds hvs leqs root_vars_ls2 well_defined_svl lselected_hpargs in
-                let _ = DD.info_pprint ("  after: " ^ (Cprinter.string_of_formula new_es_formula)) pos in
+                let _ = DD.ninfo_pprint ("  after: " ^ (Cprinter.string_of_formula new_es_formula)) pos in
                 (*CF.drop_hrel_f new_es_formula lhrs in *)
                 (*add mismatched heap into the entail states if @L*)
                 let check_consumed_node h f=
