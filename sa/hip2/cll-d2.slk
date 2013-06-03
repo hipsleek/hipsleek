@@ -7,10 +7,12 @@ HeapPred H(node a).
 HeapPred HP_6(node a).
 HeapPred HP_6e(node a, node a).
 
+/*
 infer [HP_6,x]
 HP_6(v) * xp::node<val_35_804,n> & x=xp & n!=x & n=v 
  |-  v::node<_,_> .
 print residue.
+*/
 
 infer [HP_6,x]
 HP_6(n) * xp::node<val_35_804,n> & x=xp & n!=x & n=v 

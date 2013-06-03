@@ -2270,13 +2270,13 @@ let infer_collect_hp_rel_x prog (es:entail_state) rhs rhs_rest (rhs_h_matched_se
                   if CP.diff_svl args svl = [] then [hp] else []
                 in
                 let keep_hps =  List.concat (List.map (check_full_inter rest_svl1) new_hp_args) in
-                (* let _ = DD.info_pprint ("  rest_svl1: " ^ (!CP.print_svl rest_svl1)) pos in *)
-                (* let _ = DD.info_pprint ("  keep_hps: " ^ (!CP.print_svl keep_hps)) pos in *)
+                let _ = DD.tinfo_pprint ("  rest_svl1: " ^ (!CP.print_svl rest_svl1)) pos in
+                let _ = DD.tinfo_pprint ("  keep_hps: " ^ (!CP.print_svl keep_hps)) pos in
                 let root_vars_ls1 = CP.diff_svl root_vars_ls keep_hps in
                 let well_defined_svl = List.concat (List.map (fun (hp,args,_) -> hp::args) defined_hps) in
                 let root_vars_ls2 = SAU.find_close root_vars_ls1 leqs in
                 let new_es_formula = SAU.drop_data_view_hrel_nodes_from_root prog new_es_formula hds hvs leqs root_vars_ls2 well_defined_svl lselected_hpargs in
-                let _ = DD.ninfo_pprint ("  after: " ^ (Cprinter.string_of_formula new_es_formula)) pos in
+                let _ = DD.tinfo_pprint ("  after: " ^ (Cprinter.string_of_formula new_es_formula)) pos in
                 (*CF.drop_hrel_f new_es_formula lhrs in *)
                 (*add mismatched heap into the entail states if @L*)
                 let check_consumed_node h f=
@@ -2308,8 +2308,8 @@ let infer_collect_hp_rel_x prog (es:entail_state) rhs rhs_rest (rhs_h_matched_se
 let infer_collect_hp_rel i prog (es:entail_state) rhs rhs_rest (rhs_h_matched_set:CP.spec_var list) lhs_b rhs_b pos =
   let pr1 = Cprinter.string_of_formula_base in
   let pr4 = Cprinter.string_of_estate_infer_hp in
-  let pr5 =  pr_quad string_of_bool pr4 Cprinter.string_of_h_formula Cprinter.string_of_formula in
-  Debug.no_2_num i "infer_collect_hp_rel" pr1 pr1 pr5
+  let pr5 =  pr_quad string_of_bool pr4 Cprinter.string_of_h_formula (pr_option Cprinter.string_of_formula) in
+  Debug.to_2_num i "infer_collect_hp_rel" pr1 pr1 pr5
 ( fun _ _ -> infer_collect_hp_rel_x prog es rhs rhs_rest rhs_h_matched_set lhs_b rhs_b pos) lhs_b rhs_b
 
 (*=*****************************************************************=*)
