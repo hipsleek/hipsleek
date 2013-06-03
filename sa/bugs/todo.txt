@@ -868,7 +868,7 @@ Rename unused dangling uniquely
  c::node<Anon_12,_uu_HP_p_uu,y>@M & true --> G1(c,y)&true
 
 =========================================================
-# set-tail.slk
+# set-tail.slk: DONE
 
 /*
  What happen to HP_5 & HP_6?

@@ -691,7 +691,10 @@ let process_rel_assume hp_id (ilhs : meta_formula) (irhs: meta_formula)=
 let process_shape_infer pre_hps post_hps=
   (* let _ = DD.info_pprint "process_shape_infer" no_pos in *)
   let get_hps all_hps ass = match ass.CF.hprel_kind with
-    | CP.RelAssume hps -> all_hps@hps
+    | CP.RelAssume hps ->
+          let body_hps = (CF.get_hp_rel_name_formula ass.CF.hprel_lhs)@
+            ( CF.get_hp_rel_name_formula ass.CF.hprel_rhs) in
+          all_hps@hps@body_hps
     | _ -> all_hps
   in
   let filter_hp id_ls all_hps =List.filter (fun hp ->
