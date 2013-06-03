@@ -1,12 +1,6 @@
-Andreea:
-
- Please help fix problem be below
- which is in both default and sa_logging.
-
-# cll-imm.slk
+# cll-imm.slk   DONE (fixed by Andreea)
 
   false when @L is used
-
 
 infer [] x::node<_,_> |-  x::node<a,b>@L. 
 print residue.
@@ -21,6 +15,7 @@ INPUT:
 
 */
 (**************************************)
+
 # cll-d1.slk: FIXED
 
 infer [HP_6,x] HP_6(n) & n=v & v!=null & x!=n
