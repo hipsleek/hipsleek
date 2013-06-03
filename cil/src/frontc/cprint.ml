@@ -896,6 +896,10 @@ and print_def def =
       print " }";
       force_new_line()
 
+  | HIPPROG (prog, loc) ->
+      setLoc(loc);
+      print "@hipProg { is going to be printed }";
+      force_new_line()
 
 (* sm: print a comment if the printComments flag is set *)
 and comprint (str : string) : unit =

@@ -66,6 +66,7 @@ let get_definitionloc (d : definition) : cabsloc =
   | TRANSFORMER(_, _, l) -> l
   | EXPRTRANSFORMER(_, _, l) -> l
   | LINKAGE (_, l, _) -> l
+  | HIPPROG (_, l) -> l
 
 let get_statementloc (s : statement) : cabsloc =
 begin

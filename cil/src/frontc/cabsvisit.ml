@@ -337,6 +337,7 @@ and childrenDefinition vis d =
       
   | TRANSFORMER _ -> d
   | EXPRTRANSFORMER _ -> d
+  | HIPPROG _ -> d
         
 and visitCabsBlock vis (b: block) : block = 
   doVisit vis vis#vblock childrenBlock b

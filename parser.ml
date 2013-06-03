@@ -2761,7 +2761,7 @@ let parse_proc_string n s =
 let parse_specs_list s =
   SHGram.parse_string opt_spec_list_file (PreCast.Loc.mk "spec string") s
 
-let parse_specs_string (fname: string) (moffset: file_offset) (spec: string) : F.struc_formula =
+let parse_cfunction_spec (fname: string) (moffset: file_offset) (spec: string) : F.struc_formula =
   (* store the current modifier_offset and assign new value to it *)
   let save = !modifier_offset in
   modifier_offset := moffset;
@@ -2772,12 +2772,23 @@ let parse_specs_string (fname: string) (moffset: file_offset) (spec: string) : F
   (* return *)
   res
 
-let parse_statement (fname: string) (s: string) (begin_offset: file_offset) =
+let parse_cprogram_spec (fname: string) (moffset: file_offset) (spec: string) : Iast.prog_decl =
+  (* store the current modifier_offset and assign new value to it *)
+  let save = !modifier_offset in
+  modifier_offset := moffset;
+  (* parse *)
+  let res = SHGram.parse_string hprog (PreCast.Loc.mk fname) spec in
+  (* restore the old value of modifier_offset *)
+  modifier_offset := save;
+  (* return *)
+  res
+
+let parse_cstatement_spec (fname: string) (moffset: file_offset) (spec: string) =
   (* store the current modifier_offset and assign new value to it *)
   let store_offset = !modifier_offset in
-  modifier_offset := begin_offset;
+  modifier_offset := moffset;
   (* parse *)
-  let res = SHGram.parse_string statement (PreCast.Loc.mk fname) s in
+  let res = SHGram.parse_string statement (PreCast.Loc.mk fname) spec in
   (* restore the old value of modifier_offset *)
   modifier_offset := store_offset;
   (* return *)

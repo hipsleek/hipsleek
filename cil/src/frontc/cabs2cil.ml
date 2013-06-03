@@ -6196,6 +6196,11 @@ and doDecl (isglobal: bool) : A.definition -> chunk = function
         dl;
       empty
 
+  | HIPPROG (prog, loc) ->
+      currentLoc := convLoc loc;
+      cabsPushGlobal (GHipProg (prog, !currentLoc));
+      empty
+
   | _ -> E.s (error "unexpected form of declaration")
 
 and doTypedef ((specs, nl): A.name_group) = 

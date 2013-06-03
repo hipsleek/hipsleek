@@ -178,6 +178,7 @@ and definition =
  | TRANSFORMER of definition * definition list * cabsloc
  (* expression transformer: source and destination *)
  | EXPRTRANSFORMER of expression * expression * cabsloc
+ | HIPPROG of Iast.prog_decl * cabsloc
 
 (* specification for each function, used by hip/sleek *)
 and hipspecs = Iformula.struc_formula
