@@ -774,7 +774,7 @@ let filter_var prog svl f=
 
 let keep_data_view_hrel_nodes_fb prog fb hd_nodes hv_nodes keep_rootvars keep_hrels=
   let keep_ptrs = look_up_closed_ptr_args prog hd_nodes hv_nodes keep_rootvars in
-  CF.drop_data_view_hrel_nodes_fb fb check_nbelongsto_dnode check_nbelongsto_vnode
+  CF.drop_data_view_hpargs_nodes_fb fb check_nbelongsto_dnode check_nbelongsto_vnode
     check_neq_hpargs keep_ptrs keep_ptrs keep_hrels keep_ptrs
 
 let keep_data_view_hrel_nodes_two_f prog lhs rhs hd_nodes hv_nodes eqs lhs_hpargs rhs_keep_rootvars rhs_keep_hrels=
@@ -786,7 +786,7 @@ let keep_data_view_hrel_nodes_two_f prog lhs rhs hd_nodes hv_nodes eqs lhs_hparg
   (nf1,nf2)
 
 let keep_data_view_hrel_nodes_two_fbs prog f1 f2 hd_nodes hv_nodes hpargs leqs reqs his_ss keep_rootvars
-      lrootvars (* lback_keep_ptrs *) lkeep_hpargs rkeep_hpargs
+      lrootvars (* lback_keep_ptrs *) lkeep_hpargs rkeep_hps
       unk_svl prog_vars =
   let filter_eqs keep_svl eqs0=
     let rec helper eqs res=
@@ -859,10 +859,10 @@ let keep_data_view_hrel_nodes_two_fbs prog f1 f2 hd_nodes hv_nodes hpargs leqs r
   (*may be alisas between lhs and rhs*)
   let _ = Debug.ninfo_pprint ("keep_vars: " ^ (!CP.print_svl keep_vars)) no_pos in
   let _ = Debug.ninfo_pprint ("lhs keep_vars: " ^ (!CP.print_svl lkeep_vars)) no_pos in
-  let nf1 = CF.drop_data_view_hrel_nodes_fb f1 check_nbelongsto_dnode check_nbelongsto_vnode check_neq_hpargs
+  let nf1 = CF.drop_data_view_hpargs_nodes_fb f1 check_nbelongsto_dnode check_nbelongsto_vnode check_neq_hpargs
     (keep_vars(* @closed_lback_keep_ptrs *)) (keep_vars(* @closed_lback_keep_ptrs *)) lkeep_hpargs (keep_vars@lkeep_vars) in
-  let nf2 = CF.drop_data_view_hrel_nodes_fb f2 check_nbelongsto_dnode check_nbelongsto_vnode check_neq_hpargs
-    keep_vars keep_vars rkeep_hpargs keep_vars in
+  let nf2 = CF.drop_data_view_hrel_nodes_fb f2 check_nbelongsto_dnode check_nbelongsto_vnode check_neq_hrelnode
+    keep_vars keep_vars rkeep_hps keep_vars in
   let _ = Debug.ninfo_pprint ("nf1: " ^ (Cprinter.string_of_formula_base nf1)) no_pos in
   let _ = Debug.ninfo_pprint ("nf2: " ^ (Cprinter.string_of_formula_base nf2)) no_pos in
   (*make explicit null ptrs*)

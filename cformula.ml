@@ -5388,11 +5388,25 @@ and drop_data_view_hrel_nodes f fn_data_select fn_view_select fn_hrel_select dno
              }
     | _ -> report_error no_pos "cformula.drop_data_view_hrel_nodes"
 
-and drop_data_view_hrel_nodes_fb fb fn_data_select fn_view_select fn_hrel_select matched_data_nodes
+and drop_data_view_hpargs_nodes_fb fb fn_data_select fn_view_select fn_hrel_select matched_data_nodes
       matched_view_nodes matched_hpargs_nodes keep_pure_vars=
   let new_hf = drop_data_view_hpargs_nodes_hf
           fb.formula_base_heap fn_data_select fn_view_select fn_hrel_select
           matched_data_nodes matched_view_nodes matched_hpargs_nodes in
+   (*assume keep vars = dnodes*)
+  let new_p = CP.filter_var_new (MCP.pure_of_mix fb.formula_base_pure) keep_pure_vars in
+  let new_p1 = remove_neqNull_redundant_hnodes_hf new_hf new_p in
+  (* DD.info_pprint ("  keep" ^ (!CP.print_svl keep_pure_vars)) no_pos; *)
+  (* DD.info_pprint ("  new_p" ^ (!CP.print_formula new_p)) no_pos; *)
+  {fb with formula_base_heap = new_hf;
+      formula_base_pure = MCP.mix_of_pure new_p1;}
+
+and drop_data_view_hrel_nodes_fb fb fn_data_select fn_view_select fn_hrel_select matched_data_nodes
+      matched_view_nodes matched_hrel_nodes keep_pure_vars=
+  let _ = DD.ninfo_pprint ("  matched_hrel_nodes:" ^ (!CP.print_svl matched_hrel_nodes)) no_pos in
+  let new_hf = drop_data_view_hrel_nodes_hf
+          fb.formula_base_heap fn_data_select fn_view_select fn_hrel_select
+          matched_data_nodes matched_view_nodes matched_hrel_nodes in
    (*assume keep vars = dnodes*)
   let new_p = CP.filter_var_new (MCP.pure_of_mix fb.formula_base_pure) keep_pure_vars in
   let new_p1 = remove_neqNull_redundant_hnodes_hf new_hf new_p in
