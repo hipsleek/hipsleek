@@ -568,6 +568,9 @@ let check_nbelongsto_vnode vn vn_names=
 let check_neq_hrelnode id ls=
       not (CP.mem_svl id ls)
 
+let check_neq_hpargs id ls=
+      not (Gen.BList.mem_eq check_hp_arg_eq id ls)
+
 (*check a data node belongs to a list of data node names*)
 let select_dnode dn1 dn_names=
   List.exists (CP.eq_spec_var dn1.CF.h_formula_data_node) dn_names
@@ -578,6 +581,8 @@ let select_vnode vn1 vn_names=
   List.exists (CP.eq_spec_var vn1.CF.h_formula_view_node) vn_names
 
 let select_hrel =  CP.mem_svl
+
+let select_hpargs id ls= (Gen.BList.mem_eq check_hp_arg_eq id ls)
 
 let rec look_up_ptr_args_data_node_x hd=
   List.filter CP.is_node_typ hd.CF.h_formula_data_arguments
@@ -770,7 +775,7 @@ let filter_var prog svl f=
 let keep_data_view_hrel_nodes_fb prog fb hd_nodes hv_nodes keep_rootvars keep_hrels=
   let keep_ptrs = look_up_closed_ptr_args prog hd_nodes hv_nodes keep_rootvars in
   CF.drop_data_view_hrel_nodes_fb fb check_nbelongsto_dnode check_nbelongsto_vnode
-    check_neq_hrelnode keep_ptrs keep_ptrs keep_hrels keep_ptrs
+    check_neq_hpargs keep_ptrs keep_ptrs keep_hrels keep_ptrs
 
 let keep_data_view_hrel_nodes_two_f prog lhs rhs hd_nodes hv_nodes eqs lhs_hpargs rhs_keep_rootvars rhs_keep_hrels=
   let keep_ptrs = look_up_closed_ptr_args prog hd_nodes hv_nodes rhs_keep_rootvars in
@@ -780,7 +785,8 @@ let keep_data_view_hrel_nodes_two_f prog lhs rhs hd_nodes hv_nodes eqs lhs_hparg
   let nf2 = CF.drop_data_view_hrel_nodes rhs check_nbelongsto_dnode check_nbelongsto_vnode check_neq_hrelnode keep_ptrs closed_keep_ptrs rhs_keep_hrels in
   (nf1,nf2)
 
-let keep_data_view_hrel_nodes_two_fbs prog f1 f2 hd_nodes hv_nodes hpargs leqs reqs his_ss keep_rootvars lrootvars (* lback_keep_ptrs *) lkeep_hrels rkeep_hrels
+let keep_data_view_hrel_nodes_two_fbs prog f1 f2 hd_nodes hv_nodes hpargs leqs reqs his_ss keep_rootvars
+      lrootvars (* lback_keep_ptrs *) lkeep_hpargs rkeep_hpargs
       unk_svl prog_vars =
   let filter_eqs keep_svl eqs0=
     let rec helper eqs res=
@@ -853,8 +859,10 @@ let keep_data_view_hrel_nodes_two_fbs prog f1 f2 hd_nodes hv_nodes hpargs leqs r
   (*may be alisas between lhs and rhs*)
   let _ = Debug.ninfo_pprint ("keep_vars: " ^ (!CP.print_svl keep_vars)) no_pos in
   let _ = Debug.ninfo_pprint ("lhs keep_vars: " ^ (!CP.print_svl lkeep_vars)) no_pos in
-  let nf1 = CF.drop_data_view_hrel_nodes_fb f1 check_nbelongsto_dnode check_nbelongsto_vnode check_neq_hrelnode (keep_vars(* @closed_lback_keep_ptrs *)) (keep_vars(* @closed_lback_keep_ptrs *)) lkeep_hrels (keep_vars@lkeep_vars) in
-  let nf2 = CF.drop_data_view_hrel_nodes_fb f2 check_nbelongsto_dnode check_nbelongsto_vnode check_neq_hrelnode keep_vars keep_vars rkeep_hrels keep_vars in
+  let nf1 = CF.drop_data_view_hrel_nodes_fb f1 check_nbelongsto_dnode check_nbelongsto_vnode check_neq_hpargs
+    (keep_vars(* @closed_lback_keep_ptrs *)) (keep_vars(* @closed_lback_keep_ptrs *)) lkeep_hpargs (keep_vars@lkeep_vars) in
+  let nf2 = CF.drop_data_view_hrel_nodes_fb f2 check_nbelongsto_dnode check_nbelongsto_vnode check_neq_hpargs
+    keep_vars keep_vars rkeep_hpargs keep_vars in
   let _ = Debug.ninfo_pprint ("nf1: " ^ (Cprinter.string_of_formula_base nf1)) no_pos in
   let _ = Debug.ninfo_pprint ("nf2: " ^ (Cprinter.string_of_formula_base nf2)) no_pos in
   (*make explicit null ptrs*)
@@ -897,7 +905,7 @@ let keep_data_view_hrel_nodes_two_fbs prog f1 f2 hd_nodes hv_nodes hpargs leqs r
   let rhs_b2 = CF.subst_b (nleqs3@nreqs2) new_nf2 in
   (lhs_b2,rhs_b2)
 
-let rec drop_data_view_hrel_nodes_from_root prog f0 hd_nodes hv_nodes eqs drop_rootvars well_defined_svl=
+let rec drop_data_view_hrel_nodes_from_root prog f0 hd_nodes hv_nodes eqs drop_rootvars well_defined_svl defined_hps=
   let rec helper f =
   match f with
     | CF.Base fb ->
@@ -914,42 +922,29 @@ let rec drop_data_view_hrel_nodes_from_root prog f0 hd_nodes hv_nodes eqs drop_r
         CF.Base { fb with
             CF.formula_base_heap = drop_data_view_hrel_nodes_hf_from_root
                 prog fb.CF.formula_base_heap
-                hd_nodes hv_nodes eqs (drop_rootvars@well_defined_svl1);
+                hd_nodes hv_nodes eqs (drop_rootvars@well_defined_svl1) defined_hps;
             CF.formula_base_pure = new_p
     }
     | CF.Exists fe ->
         let qvars, base1 = CF.split_quantifiers f in
         let nf = helper base1 in
         CF.add_quantifiers qvars nf
-        (* let hd_names = List.fold_left (fun ls hd -> ls@[hd.CF.h_formula_data_node]) [] hd_nodes in *)
-        (* let keep_hds = CP.diff_svl hd_names drop_rootvars in *)
-        (* let closed_keep_svl = look_up_closed_ptr_args prog hd_nodes hv_nodes keep_hds in *)
-        (* let well_defined_svl1 = CP.diff_svl well_defined_svl closed_keep_svl in *)
-        (* let new_p= *)
-        (*   if well_defined_svl1 = [] then fe.CF.formula_exists_pure else *)
-        (*     let pure_keep_svl = CP.diff_svl (CF.fv f) well_defined_svl1 in *)
-        (*     MCP.mix_of_pure (CP.filter_var_new *)
-        (*           (MCP.pure_of_mix fe.CF.formula_exists_pure) pure_keep_svl) *)
-        (* in *)
-        (* CF.Exists { fe with *)
-        (*     CF.formula_exists_heap = drop_data_view_hrel_nodes_hf_from_root *)
-        (*         prog fe.CF.formula_exists_heap *)
-        (*         hd_nodes hv_nodes eqs (drop_rootvars@well_defined_svl1); *)
-        (*     CF.formula_exists_pure = new_p *)
-        (* } *)
     | _ -> report_error no_pos "sau.drop_data_view_hrel_nodes"
   in
   helper f0
 
-and drop_data_view_hrel_nodes_hf_from_root prog hf hd_nodes hv_nodes eqs drop_rootvars=
+and drop_data_view_hrel_nodes_hf_from_root prog hf hd_nodes hv_nodes eqs drop_rootvars drop_hps=
   let _ = Debug.ninfo_pprint ("drop_vars root: " ^ (!CP.print_svl drop_rootvars)) no_pos in
   (* let drop_closed_rootvars = CP.remove_dups_svl (List.fold_left close_def drop_rootvars eqs) in *)
   let _ = Debug.ninfo_pprint ("close drop_rootvars: " ^ (!CP.print_svl drop_rootvars)) no_pos in
   let drop_vars = look_up_closed_ptr_args prog hd_nodes hv_nodes drop_rootvars in
   (*may be alisas between lhs and rhs*)
-  let _ = Debug.ninfo_pprint ("drop_vars: " ^ (!CP.print_svl drop_vars)) no_pos in
-  let nhf = CF.drop_data_view_hrel_nodes_hf hf select_dnode select_vnode select_hrel drop_vars drop_vars drop_vars in
-  let _ = Debug.ninfo_pprint ("nhf: " ^ (Cprinter.string_of_h_formula nhf)) no_pos in
+  (* let _ = Debug.info_pprint ("drop_vars: " ^ (!CP.print_svl drop_vars)) no_pos in *)
+  (* let _ = Debug.info_pprint ("drop_hps: " ^ (let pr = pr_list (pr_pair !CP.print_sv !CP.print_svl) in *)
+  (* pr drop_hps)) no_pos in *)
+  (* let _ = Debug.info_pprint ("hf: " ^ (Cprinter.string_of_h_formula hf)) no_pos in *)
+  let nhf = CF.drop_data_view_hpargs_nodes_hf hf select_dnode select_vnode select_hpargs drop_vars drop_vars drop_hps in
+  (* let _ = Debug.info_pprint ("nhf: " ^ (Cprinter.string_of_h_formula nhf)) no_pos in *)
   nhf
 
 
@@ -991,7 +986,9 @@ let simplify_one_constr_b_x prog unk_hps lhs_b rhs_b=
   (*drop unused pointers in LHS*)
   DD.ninfo_pprint "  drop not-in-used pointers" no_pos;
   let keep_hrels,keep_ptrs = List.split (List.map
-    (fun (hrel, eargs, _) -> (hrel, List.concat (List.map CP.afv eargs)))
+    (fun (hrel, eargs, _) ->
+        let args = List.concat (List.map CP.afv eargs) in
+        ((hrel, args), args))
     (l_hrs@r_hrs) )
   in
   let lhs_b1 = keep_data_view_hrel_nodes_fb prog lhs_b (l_hds@r_hds) (l_hvs@r_hvs)
@@ -1045,7 +1042,7 @@ let find_well_defined_hp_x prog hds hvs (hp,args) def_ptrs lhsb=
   let closed_args = look_up_closed_ptr_args prog hds hvs args in
   let undef_args = lookup_undef_args closed_args [] def_ptrs in
   if (* undef_args = [] || *)  List.length undef_args < List.length args then
-    let f = keep_data_view_hrel_nodes_fb prog lhsb hds hvs args [hp] in
+    let f = keep_data_view_hrel_nodes_fb prog lhsb hds hvs args [(hp,args)] in
     ([(hp,args,f)],[])
   else
     ([],[(hp,args)])
@@ -1063,7 +1060,7 @@ let find_well_eq_defined_hp prog hds hvs lhsb eqs (hp,args)=
     match rem_eqs with
       | [] -> ([], [(hp,args)])
       | (sv1,sv2)::rest -> if CP.mem_svl sv1 args && CP.mem_svl sv2 args then
-          let f = keep_data_view_hrel_nodes_fb prog lhsb hds hvs args [hp] in
+          let f = keep_data_view_hrel_nodes_fb prog lhsb hds hvs args [(hp,args)] in
           ([(hp,args, f)],[])
         else loop_helper rest
   in

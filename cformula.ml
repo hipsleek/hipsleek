@@ -5382,10 +5382,11 @@ and drop_data_view_hrel_nodes f fn_data_select fn_view_select fn_hrel_select dno
              }
     | _ -> report_error no_pos "cformula.drop_data_view_hrel_nodes"
 
-and drop_data_view_hrel_nodes_fb fb fn_data_select fn_view_select fn_hrel_select matched_data_nodes matched_view_nodes matched_hrel_nodes keep_pure_vars=
-  let new_hf = drop_data_view_hrel_nodes_hf
+and drop_data_view_hrel_nodes_fb fb fn_data_select fn_view_select fn_hrel_select matched_data_nodes
+      matched_view_nodes matched_hpargs_nodes keep_pure_vars=
+  let new_hf = drop_data_view_hpargs_nodes_hf
           fb.formula_base_heap fn_data_select fn_view_select fn_hrel_select
-          matched_data_nodes matched_view_nodes matched_hrel_nodes in
+          matched_data_nodes matched_view_nodes matched_hpargs_nodes in
    (*assume keep vars = dnodes*)
   let new_p = CP.filter_var_new (MCP.pure_of_mix fb.formula_base_pure) keep_pure_vars in
   let new_p1 = remove_neqNull_redundant_hnodes_hf new_hf new_p in
@@ -5394,78 +5395,151 @@ and drop_data_view_hrel_nodes_fb fb fn_data_select fn_view_select fn_hrel_select
   {fb with formula_base_heap = new_hf;
       formula_base_pure = MCP.mix_of_pure new_p1;}
 
-and drop_data_view_hrel_nodes_hf hf fn_data_select fn_view_select fn_hrel_select
-      data_nodes view_nodes hrel_nodes=
-  match hf with
+and drop_data_view_hrel_nodes_hf hf0 fn_data_select fn_view_select fn_hrel_select
+      data_nodes view_nodes hpargs_nodes=
+  let rec helper hf= match hf with
     | Star {h_formula_star_h1 = hf1;
-            h_formula_star_h2 = hf2;
-            h_formula_star_pos = pos} ->
-        let n_hf1 = drop_data_view_hrel_nodes_hf hf1 fn_data_select fn_view_select fn_hrel_select data_nodes view_nodes hrel_nodes in
-        let n_hf2 = drop_data_view_hrel_nodes_hf hf2 fn_data_select fn_view_select fn_hrel_select data_nodes view_nodes hrel_nodes in
-        Debug.ninfo_hprint (add_str "nhf1: " !print_h_formula) n_hf1 no_pos;
-        Debug.ninfo_hprint (add_str "nhf2: " !print_h_formula) n_hf2 no_pos;
-        let res=
-        if (n_hf1 = HEmp) then n_hf2
-        else if (n_hf2 = HEmp) then n_hf1
-        else
-          Star {h_formula_star_h1 = n_hf1;
-                h_formula_star_h2 = n_hf2;
-                h_formula_star_pos = pos}
-        in
-        Debug.ninfo_hprint (add_str "nhf1*nhf2: " !print_h_formula) res no_pos;
-        res
-     | StarMinus { h_formula_starminus_h1 = hf1;
-             h_formula_starminus_h2 = hf2;
-             h_formula_starminus_pos = pos} ->
-        let n_hf1 = drop_data_view_hrel_nodes_hf hf1 fn_data_select fn_view_select fn_hrel_select data_nodes view_nodes hrel_nodes in
-        let n_hf2 = drop_data_view_hrel_nodes_hf hf2 fn_data_select fn_view_select fn_hrel_select data_nodes view_nodes hrel_nodes in
-        StarMinus { h_formula_starminus_h1 = n_hf1;
-               h_formula_starminus_h2 = n_hf2;
-               h_formula_starminus_pos = pos}       
+      h_formula_star_h2 = hf2;
+      h_formula_star_pos = pos} ->
+          let n_hf1 = helper hf1 in
+          let n_hf2 = helper hf2 in
+          Debug.ninfo_hprint (add_str "nhf1: " !print_h_formula) n_hf1 no_pos;
+          Debug.ninfo_hprint (add_str "nhf2: " !print_h_formula) n_hf2 no_pos;
+          let res=
+            if (n_hf1 = HEmp) then n_hf2
+            else if (n_hf2 = HEmp) then n_hf1
+            else
+              Star {h_formula_star_h1 = n_hf1;
+              h_formula_star_h2 = n_hf2;
+              h_formula_star_pos = pos}
+          in
+          Debug.ninfo_hprint (add_str "nhf1*nhf2: " !print_h_formula) res no_pos;
+          res
+    | StarMinus { h_formula_starminus_h1 = hf1;
+      h_formula_starminus_h2 = hf2;
+      h_formula_starminus_pos = pos} ->
+          let n_hf1 = helper hf1 in
+          let n_hf2 = helper hf2 in
+          StarMinus { h_formula_starminus_h1 = n_hf1;
+          h_formula_starminus_h2 = n_hf2;
+          h_formula_starminus_pos = pos}
     | Conj { h_formula_conj_h1 = hf1;
-             h_formula_conj_h2 = hf2;
-             h_formula_conj_pos = pos} ->
-        let n_hf1 = drop_data_view_hrel_nodes_hf hf1 fn_data_select fn_view_select fn_hrel_select data_nodes view_nodes hrel_nodes in
-        let n_hf2 = drop_data_view_hrel_nodes_hf hf2 fn_data_select fn_view_select fn_hrel_select data_nodes view_nodes hrel_nodes in
-        Conj { h_formula_conj_h1 = n_hf1;
-               h_formula_conj_h2 = n_hf2;
-               h_formula_conj_pos = pos}
+      h_formula_conj_h2 = hf2;
+      h_formula_conj_pos = pos} ->
+          let n_hf1 = helper hf1 in
+          let n_hf2 = helper hf2 in
+          Conj { h_formula_conj_h1 = n_hf1;
+          h_formula_conj_h2 = n_hf2;
+          h_formula_conj_pos = pos}
     | ConjStar { h_formula_conjstar_h1 = hf1;
-             h_formula_conjstar_h2 = hf2;
-             h_formula_conjstar_pos = pos} ->
-        let n_hf1 = drop_data_view_hrel_nodes_hf hf1 fn_data_select fn_view_select fn_hrel_select data_nodes view_nodes hrel_nodes in
-        let n_hf2 = drop_data_view_hrel_nodes_hf hf2 fn_data_select fn_view_select fn_hrel_select data_nodes view_nodes hrel_nodes in
-        ConjStar { h_formula_conjstar_h1 = n_hf1;
-               h_formula_conjstar_h2 = n_hf2;
-               h_formula_conjstar_pos = pos}
+      h_formula_conjstar_h2 = hf2;
+      h_formula_conjstar_pos = pos} ->
+          let n_hf1 = helper hf1 in
+          let n_hf2 = helper hf2 in
+          ConjStar { h_formula_conjstar_h1 = n_hf1;
+          h_formula_conjstar_h2 = n_hf2;
+          h_formula_conjstar_pos = pos}
     | ConjConj { h_formula_conjconj_h1 = hf1;
-             h_formula_conjconj_h2 = hf2;
-             h_formula_conjconj_pos = pos} ->
-        let n_hf1 = drop_data_view_hrel_nodes_hf hf1 fn_data_select fn_view_select fn_hrel_select data_nodes view_nodes hrel_nodes in
-        let n_hf2 = drop_data_view_hrel_nodes_hf hf2 fn_data_select fn_view_select fn_hrel_select data_nodes view_nodes hrel_nodes in
-        ConjConj { h_formula_conjconj_h1 = n_hf1;
-               h_formula_conjconj_h2 = n_hf2;
-               h_formula_conjconj_pos = pos}                              
+      h_formula_conjconj_h2 = hf2;
+      h_formula_conjconj_pos = pos} ->
+          let n_hf1 = helper hf1 in
+          let n_hf2 = helper hf2 in
+          ConjConj { h_formula_conjconj_h1 = n_hf1;
+          h_formula_conjconj_h2 = n_hf2;
+          h_formula_conjconj_pos = pos}
     | Phase { h_formula_phase_rd = hf1;
-              h_formula_phase_rw = hf2;
-              h_formula_phase_pos = pos} ->
-        let n_hf1 = drop_data_view_hrel_nodes_hf hf1 fn_data_select fn_view_select fn_hrel_select data_nodes view_nodes hrel_nodes in
-        let n_hf2 = drop_data_view_hrel_nodes_hf hf2 fn_data_select fn_view_select fn_hrel_select data_nodes view_nodes hrel_nodes in
-        Phase { h_formula_phase_rd = n_hf1;
-              h_formula_phase_rw = n_hf2;
-              h_formula_phase_pos = pos}
+      h_formula_phase_rw = hf2;
+      h_formula_phase_pos = pos} ->
+          let n_hf1 = helper hf1 in let n_hf2 = helper hf2 in
+          Phase { h_formula_phase_rd = n_hf1; h_formula_phase_rw = n_hf2;
+          h_formula_phase_pos = pos}
     | DataNode hd -> if fn_data_select hd data_nodes then HEmp
-        else hf
+      else hf
     | ViewNode hv -> if fn_view_select hv view_nodes then HEmp
-        else hf
+      else hf
     | HRel (id,_,_) ->
-        Debug.ninfo_hprint (add_str "HRel: " !CP.print_sv) id no_pos;
-        if (*CP.mem_svl*)fn_hrel_select id hrel_nodes then HEmp
-        else hf
+          Debug.ninfo_hprint (add_str "HRel: " !CP.print_sv) id no_pos;
+          if fn_hrel_select id hpargs_nodes then HEmp
+          else hf
     | Hole _
     | HTrue
     | HFalse
     | HEmp -> hf
+  in
+  helper hf0
+
+and drop_data_view_hpargs_nodes_hf hf0 fn_data_select fn_view_select fn_hrel_select
+      data_nodes view_nodes hpargs_nodes=
+  let rec helper hf= match hf with
+    | Star {h_formula_star_h1 = hf1;
+      h_formula_star_h2 = hf2;
+      h_formula_star_pos = pos} ->
+          let n_hf1 = helper hf1 in
+          let n_hf2 = helper hf2 in
+          Debug.ninfo_hprint (add_str "nhf1: " !print_h_formula) n_hf1 no_pos;
+          Debug.ninfo_hprint (add_str "nhf2: " !print_h_formula) n_hf2 no_pos;
+          let res=
+            if (n_hf1 = HEmp) then n_hf2
+            else if (n_hf2 = HEmp) then n_hf1
+            else
+              Star {h_formula_star_h1 = n_hf1;
+              h_formula_star_h2 = n_hf2;
+              h_formula_star_pos = pos}
+          in
+          Debug.ninfo_hprint (add_str "nhf1*nhf2: " !print_h_formula) res no_pos;
+          res
+    | StarMinus { h_formula_starminus_h1 = hf1;
+      h_formula_starminus_h2 = hf2;
+      h_formula_starminus_pos = pos} ->
+          let n_hf1 = helper hf1 in
+          let n_hf2 = helper hf2 in
+          StarMinus { h_formula_starminus_h1 = n_hf1;
+          h_formula_starminus_h2 = n_hf2;
+          h_formula_starminus_pos = pos}
+    | Conj { h_formula_conj_h1 = hf1;
+      h_formula_conj_h2 = hf2;
+      h_formula_conj_pos = pos} ->
+          let n_hf1 = helper hf1 in
+          let n_hf2 = helper hf2 in
+          Conj { h_formula_conj_h1 = n_hf1;
+          h_formula_conj_h2 = n_hf2;
+          h_formula_conj_pos = pos}
+    | ConjStar { h_formula_conjstar_h1 = hf1;
+      h_formula_conjstar_h2 = hf2;
+      h_formula_conjstar_pos = pos} ->
+          let n_hf1 = helper hf1 in
+          let n_hf2 = helper hf2 in
+          ConjStar { h_formula_conjstar_h1 = n_hf1;
+          h_formula_conjstar_h2 = n_hf2;
+          h_formula_conjstar_pos = pos}
+    | ConjConj { h_formula_conjconj_h1 = hf1;
+      h_formula_conjconj_h2 = hf2;
+      h_formula_conjconj_pos = pos} ->
+          let n_hf1 = helper hf1 in
+          let n_hf2 = helper hf2 in
+          ConjConj { h_formula_conjconj_h1 = n_hf1;
+          h_formula_conjconj_h2 = n_hf2;
+          h_formula_conjconj_pos = pos}
+    | Phase { h_formula_phase_rd = hf1;
+      h_formula_phase_rw = hf2;
+      h_formula_phase_pos = pos} ->
+          let n_hf1 = helper hf1 in let n_hf2 = helper hf2 in
+          Phase { h_formula_phase_rd = n_hf1; h_formula_phase_rw = n_hf2;
+          h_formula_phase_pos = pos}
+    | DataNode hd -> if fn_data_select hd data_nodes then HEmp
+      else hf
+    | ViewNode hv -> if fn_view_select hv view_nodes then HEmp
+      else hf
+    | HRel (id,eargs,_) ->
+          Debug.ninfo_hprint (add_str "HRel: " !CP.print_sv) id no_pos;
+          if fn_hrel_select (id, List.concat (List.map CP.afv eargs)) hpargs_nodes then HEmp
+          else hf
+    | Hole _
+    | HTrue
+    | HFalse
+    | HEmp -> hf
+  in
+  helper hf0
 
 and mkAnd_f_hf f hf pos=
   match f with
