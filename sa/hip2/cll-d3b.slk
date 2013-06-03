@@ -1,0 +1,47 @@
+data node{
+ int val;
+ node next;
+}.
+
+HeapPred H(node a).
+HeapPred HP_6(node a).
+HeapPred HP_6e(node a, node a).
+HeapPred G(node a, node a).
+
+infer [HP_6] HP_6(x) * x::node<_,x> & xp=null
+ |-  G(x,xp). 
+print residue.
+// expecting a failure since G(..) is not to be inferred
+
+infer [G] HP_6(x) * x::node<_,x> & xp=null
+ |-  G(x,xp). 
+print residue.
+/*
+ expecting
+   x::node<_,x> & xp=null --> G(x,xp)
+  since HP_6 is not tp be inferred
+*/
+
+infer [G,HP_6] HP_6(x) * x::node<_,x> & xp=null
+ |-  G(x,xp). 
+print residue.
+/*
+ expecting
+   HP_6(x) & x::node<_,x> & xp=null --> G(x,xp)
+ which is later base-splitted into:
+   HP_6(x) --> emp
+   x::node<_,x> & xp=null --> G(x,xp)
+
+*/
+
+infer [G,HP_6,x] HP_6(x) * x::node<_,x> & xp=null
+ |-  G(x,xp). 
+print residue.
+/*
+ expecting
+   HP_6(x) & x::node<_,x> & xp=null --> G(x,xp)
+ which is later base-splitted into:
+   HP_6(v) & v=x --> emp
+   x::node<_,x> & xp=null --> G(x,xp)
+
+*/
