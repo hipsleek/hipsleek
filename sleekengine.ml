@@ -594,8 +594,8 @@ let run_infer_one_pass (ivars: ident list) (iante0 : meta_formula) (iconseq0 : m
   let _ = DD.tinfo_hprint (add_str "conseq(after meta-)" pr) conseq no_pos in 
   let conseq = Solver.prune_pred_struc !cprog true conseq in
   let _ = DD.tinfo_hprint (add_str "conseq(after prune)" pr) conseq no_pos in 
-  let _ = DD.info_pprint "Andreea : false introduced by add_param_ann_constraints_struc" no_pos in
-  let _ = DD.info_pprint "=============================================================" no_pos in
+  (* let _ = DD.info_pprint "Andreea : false introduced by add_param_ann_constraints_struc" no_pos in *)
+  (* let _ = DD.info_pprint "=============================================================" no_pos in *)
   let conseq = AS.add_param_ann_constraints_struc conseq in
   let _ = DD.tinfo_hprint (add_str "conseq(after add param)" pr) conseq no_pos in 
   (* let conseq = AS.add_param_ann_constraints_struc conseq in  *)
