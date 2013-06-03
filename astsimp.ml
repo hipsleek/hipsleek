@@ -1091,7 +1091,7 @@ and create_mix_formula_with_ann_constr (h1: CF.h_formula) (h2: CF.h_formula) (p_
     | Some x -> CF.add_mix_formula_to_mix_formula p x
     | None -> p)
 
-and add_param_ann_constraints_to_pure_x (h_f: CF.h_formula) (p_f: MCP.mix_formula option): MCP.mix_formula = 
+and add_param_ann_constraints_to_pure (h_f: CF.h_formula) (p_f: MCP.mix_formula option): MCP.mix_formula = 
   let mix_f = 
     match h_f with
       | CF.Star h  -> create_mix_formula_with_ann_constr h.CF.h_formula_star_h1 h.CF.h_formula_star_h2 p_f 
@@ -1117,33 +1117,6 @@ and add_param_ann_constraints_to_pure_x (h_f: CF.h_formula) (p_f: MCP.mix_formul
                           match helper1 h1 with
                             | None    -> helper2 t
                             | Some mf -> CF.add_mix_formula_to_mix_formula mf (helper2 t) in
-                helper2 h.CF.h_formula_data_param_imm in
-        p
-      | _          -> match p_f with
-          | Some x -> x
-          | None   -> MCP.mkMTrue no_pos 
-  in MCP.remove_dupl_conj_mix_formula mix_f
-
-and add_param_ann_constraints_to_pure (h_f: CF.h_formula) (p_f: MCP.mix_formula option): MCP.mix_formula = 
-  let mix_f = 
-    match h_f with
-      | CF.Star h  -> create_mix_formula_with_ann_constr h.CF.h_formula_star_h1 h.CF.h_formula_star_h2 p_f 
-      | CF.Conj h  -> create_mix_formula_with_ann_constr h.CF.h_formula_conj_h1 h.CF.h_formula_conj_h2 p_f 
-      | CF.ConjStar h  -> create_mix_formula_with_ann_constr h.CF.h_formula_conjstar_h1 h.CF.h_formula_conjstar_h2 p_f 
-      | CF.ConjConj h  -> create_mix_formula_with_ann_constr h.CF.h_formula_conjconj_h1 h.CF.h_formula_conjconj_h2 p_f             
-      | CF.Phase h -> create_mix_formula_with_ann_constr h.CF.h_formula_phase_rd h.CF.h_formula_phase_rw p_f 
-      | CF.DataNode h -> let data_ann = h.CF.h_formula_data_imm in
-        let helper1 (param_imm: CF.ann) = 
-	  match (CF.mkExpAnn data_ann no_pos), (CF.mkExpAnn param_imm no_pos) with
-	    | CP.IConst i1, CP.IConst i2 -> if i1<=i2 then mkMTrue  no_pos else mkMFalse no_pos 
-	    | (_ as n), (_ as f) -> MCP.mix_of_pure(CP.BForm((CP.Lte(n, f, no_pos), None), None)) in
-        let p = match p_f with
-          | Some x -> List.fold_left (fun pf ann ->  CF.add_mix_formula_to_mix_formula (helper1 ann) pf) x h.CF.h_formula_data_param_imm  
-          | None   -> 
-                let rec helper2 ann_lst = 
-                  match ann_lst with 
-                    | [] -> MCP.mkMTrue no_pos
-                    | h1 :: t  -> CF.add_mix_formula_to_mix_formula  (helper1 h1) (helper2 t) in
                 helper2 h.CF.h_formula_data_param_imm in
         p
       | _          -> match p_f with
