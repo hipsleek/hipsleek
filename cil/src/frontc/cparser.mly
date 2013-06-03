@@ -231,6 +231,16 @@ let transformOffsetOf (speclist, dtype) member loc =
   let resultExpr = CAST (sizeofType, SINGLE_INIT addrExpr, loc) in
   resultExpr
 
+let parse_hip_function_specs (spec_opt: string option) loc : Iformula.struc_formula = 
+  match spec_opt with
+  | None -> Iformula.EList []
+  | Some spec -> 
+      let modified_offset = {Parser.line_num = loc.start_pos.lineno;
+                             Parser.line_start = loc.start_pos.linestart;
+                             Parser.byte_num = loc.start_pos.byteno} in
+      let fname = loc.start_pos.filename in
+      Parser.parse_specs_string fname modified_offset spec
+
 %}
 
 %token <string * Cabs.cabsloc> IDENT
@@ -925,13 +935,16 @@ statement:
                                           (SWITCH (smooth_expression (fst $2) (snd $2), fst $3, loc), loc) }
 | WHILE paren_comma_expression hipspecs_opt statement
                                         { let loc = makeLoc (startPos $1) (endPos (snd $4)) in
-                                          (WHILE (smooth_expression (fst $2) (snd $2), fst $4, fst $3, loc), loc) }
+                                          let hipspec = parse_hip_function_specs (fst $3) (snd $3) in
+                                          (WHILE (smooth_expression (fst $2) (snd $2), fst $4, hipspec, loc), loc) }
 | DO hipspecs_opt statement WHILE paren_comma_expression SEMICOLON
                                         { let loc = makeLoc (startPos $1) (endPos $6) in
-                                          (DOWHILE (smooth_expression (fst $5) (snd $5), fst $3, fst $2, loc), loc) }
+                                          let hipspec = parse_hip_function_specs (fst $2) (snd $2) in
+                                          (DOWHILE (smooth_expression (fst $5) (snd $5), fst $3, hipspec, loc), loc) }
 | FOR LPAREN for_clause opt_expression SEMICOLON opt_expression RPAREN hipspecs_opt statement
                                         { let loc = makeLoc (startPos $1) (endPos (snd $9)) in
-                                          (FOR (fst $3, fst $4, fst $6, fst $9, fst $8, loc), loc) }
+                                          let hipspec = parse_hip_function_specs (fst $8) (snd $8) in
+                                          (FOR (fst $3, fst $4, fst $6, fst $9, hipspec, loc), loc) }
 | IDENT COLON attribute_nocv_list statement
                                         { (* The only attribute that should appear here
                                           is "unused". For now, we drop this on the
@@ -1337,17 +1350,19 @@ function_def:  /* (* ISO 6.9.1 *) */
                                           let loc = makeLoc (startPos l1) (endPos (snd $3)) in
                                           currentFunctionName := "<__FUNCTION__ used outside any functions>";
                                           !Lexerhack.pop_context (); (* The context pushed by announceFunctionName *)
-                                          (doFunctionDef loc specs decl (fst $2) (fst $3), loc) }
+                                          let hipspec = parse_hip_function_specs (fst $2) (snd $2) in
+                                          (doFunctionDef loc specs decl hipspec (fst $3), loc) }
 | function_def_start hipspecs_opt SEMICOLON
                                         { let (specs, decl, l1) = $1 in
                                           let loc = makeLoc (startPos l1) (endPos $3) in
                                           currentFunctionName := "<__FUNCTION__ used outside any functions>";
                                           !Lexerhack.pop_context (); (* The context pushed by announceFunctionName *)
+                                          let hipspec = parse_hip_function_specs (fst $2) (snd $2) in
                                           let emptyblock = {blabels = [];
                                                             battrs  = [];
                                                             bstmts  = [];
                                                             bloc = $3} in
-                                          (doFunctionDef loc specs decl (fst $2) emptyblock, loc) }
+                                          (doFunctionDef loc specs decl hipspec emptyblock, loc) }
 ;
 
 function_def_start:  /* (* ISO 6.9.1 *) */
@@ -1741,13 +1756,10 @@ asmcloberlst_ne:
 
 /** hip specification */
 hipspecs_opt:
-  /* empty */                           { Iformula.EList [] , currentLoc ()}
-| HIPSPECS                              { let s, loc = $1 in
-                                          let begin_offset = {Parser.line_num = loc.start_pos.lineno;
-                                                              Parser.line_start = loc.start_pos.linestart;
-                                                              Parser.byte_num = loc.start_pos.byteno} in
-                                          let hspecs = Parser.parse_specs_string loc.start_pos.filename s begin_offset in
-                                          hspecs, loc }
+  /* empty */                           { None , currentLoc ()}
+| HIPSPECS                              { let spec, loc = $1 in
+                                          Some spec, loc }
+
 
 %%
 
