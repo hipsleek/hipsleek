@@ -608,7 +608,7 @@ let run_infer_one_pass (ivars: ident list) (iante0 : meta_formula) (iconseq0 : m
   (* List of vars appearing in original formula *)
   let orig_vars = CF.fv ante @ CF.struc_fv conseq in
   (* List of vars needed for abduction process *)
-  let vars = List.map (fun v -> TI.get_spec_var_type_list_infer v orig_vars no_pos) ivars in
+  let vars = List.map (fun v -> TI.get_spec_var_type_list_infer (v, Primed) orig_vars no_pos) ivars in
   (* Init context with infer_vars and orig_vars *)
   let (vrel,iv) = List.partition (fun v -> is_RelT (CP.type_of_spec_var v)(*  ||  *)
               (* CP.type_of_spec_var v == FuncT *)) vars in
@@ -664,7 +664,7 @@ let process_rel_assume hp_id (ilhs : meta_formula) (irhs: meta_formula)=
   let fv_idents = (List.map CP.name_of_spec_var fvs)@[hp_id] in
   let (stab,rhs) = meta_to_formula irhs false fv_idents stab in
   let orig_vars = CF.fv lhs @ CF.fv rhs in
-  let hp = TI.get_spec_var_type_list_infer hp_id orig_vars no_pos in
+  let hp = TI.get_spec_var_type_list_infer (hp_id, Primed) orig_vars no_pos in
   (* let _ =  print_endline ("LHS = " ^ (Cprinter.string_of_formula lhs)) in *)
   (* let _ =  print_endline ("RHS = " ^ (Cprinter.string_of_formula rhs)) in *)
   let new_rel_ass = {
