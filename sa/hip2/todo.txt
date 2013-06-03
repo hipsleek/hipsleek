@@ -74,3 +74,45 @@ infer [HP_6,x]
 HP_6(n) * xp::node<val_35_804,n> & x=xp & n!=x & n=v 
  |-  v::node<_,_> .
 print residue.
+
+# cll-d3a.slk
+
+infer [HP_6] HP_6(n) * x_814::node<_,n> & x=x_814 & n=x_814 & xp=null
+ |-  G(x,xp). 
+print residue.
+/*
+ Should we first obtain:
+   HP_6(n) * x::node<_,n> & x=n & xp=null --> G(x,xp)
+
+ After that, we can split to:
+   HP_6(n) & x=n --> emp
+   x::node<_,n> & x=n & xp=null --> G(x,xp)
+
+ This split should be organized as a procedure that is
+ invoked as --en-split-base
+
+ Why is x_814::node<..> duplicated in your split-base operation?
+
+ <1>HP_6(n)&x=x_814 & n=x_814 & xp=null&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [x_814::node<Anon_11,x_814>@M&xp=null --> G_28(x_814,xp)&
+                   true; 
+                  (HP_6(x_814)) * x_814::node<Anon_11,x_814>@M&true --> emp&
+                   true]
+*/
+
+infer [HP_6,x] HP_6(n) * x_814::node<_,n> & x=x_814 & n=x_814 & xp=null
+ |-  G(x,xp). 
+print residue.
+
+/*
+  Why did we not capture  x!=x_814 below?
+  Remember that this is always for pre-pred implication.
+
+  HP_6(x_814) * x_814::node<Anon_12,x_814> & x!=x_814 --> emp
+
+ <1>HP_6(n)&x=x_814 & n=x_814 & xp=null&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [x::node<Anon_12,x>@M&xp=null --> G_39(x,xp)&true; 
+                  (HP_6(x_814)) * x_814::node<Anon_12,x_814>@M&true --> emp&
+                   true]
+
+*/
