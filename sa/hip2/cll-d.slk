@@ -28,11 +28,11 @@ This is to allow parameter expansion later to:
 
 
 */
-
+/*
 infer [HP_6e] HP_6e(n,x) & n=v & v!=null & x!=n
     |-  v::node<_,_> .
 print residue.
-
+*/
 /* 
 Alternatively, we use the LHS state to determine
 parameter expansion during unfold generation

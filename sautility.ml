@@ -839,7 +839,7 @@ let keep_data_view_hrel_nodes_two_fbs prog f1 f2 hd_nodes hv_nodes hpargs leqs r
           keep_prog_vars_helper tl (res@new_eq)
   in
   let eqs = (leqs@reqs@his_ss) in
-  let _ = Debug.tinfo_pprint ("keep_vars root: " ^ (!CP.print_svl keep_rootvars)) no_pos in
+  let _ = Debug.ninfo_pprint ("keep_vars root: " ^ (!CP.print_svl keep_rootvars)) no_pos in
   let keep_closed_rootvars =  (List.fold_left close_def keep_rootvars eqs) in
   let _ = Debug.tinfo_pprint ("keep_vars 1: " ^ (!CP.print_svl keep_closed_rootvars)) no_pos in
   let keep_vars = look_up_closed_ptr_args prog hd_nodes hv_nodes (CP.remove_dups_svl (keep_closed_rootvars)) in
@@ -880,6 +880,7 @@ let keep_data_view_hrel_nodes_two_fbs prog f1 f2 hd_nodes hv_nodes hpargs leqs r
   let new_ps11 = List.filter (filter_fn eqNulls2) new_ps10 in
   let new_ps12 = new_ps11@null_ps  in
   let new_ps13 = CP.remove_redundant_helper new_ps12 [] in
+  let _ = Debug.ninfo_pprint ("new_ps13: " ^ (let pr = pr_list !CP.print_formula in pr new_ps13)) no_pos in
   let new_p13 = CP.conj_of_list new_ps13 no_pos in
   let nf11 = {nf1a with CF.formula_base_pure = MCP.mix_of_pure new_p13} in
   (*rhs - nf2: not handle yet*)

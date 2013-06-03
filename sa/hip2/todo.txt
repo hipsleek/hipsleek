@@ -20,8 +20,8 @@ INPUT:
        {FLOW,(19,20)=__norm}[]
 
 */
-
-# cll-d1.slk
+(**************************************)
+# cll-d1.slk: FIXED
 
 infer [HP_6,x] HP_6(n) & n=v & v!=null & x!=n
     |-  v::node<_,_> .

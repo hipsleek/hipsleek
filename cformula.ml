@@ -4041,11 +4041,11 @@ and get_hnodes (f: h_formula) = match f with
       -> (get_hnodes h1)@(get_hnodes h2)
   | _ -> []
 
-let prune_irr_neq_formula lhs_b rhs_b =
+let prune_irr_neq_formula must_kept_svl lhs_b rhs_b =
   let r_svl = fv (Base rhs_b) in
   let rec helper fb=
     let ptrs = get_ptrs_w_args fb.formula_base_heap in
-    let _,np2 = CP.prune_irr_neq (MCP.pure_of_mix fb.formula_base_pure) [(CP.remove_dups_svl (ptrs@r_svl))] in
+    let _,np2 = CP.prune_irr_neq (MCP.pure_of_mix fb.formula_base_pure) [(CP.remove_dups_svl (ptrs@r_svl@must_kept_svl))] in
     let np= MCP.mix_of_pure np2 in
     {fb with
         formula_base_pure =  np;
