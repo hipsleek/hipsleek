@@ -256,7 +256,7 @@ list by changing the parser, e.g:
 infer [x] x=3 & x=x'
  |-  x>4.
 
-# cll-t2.slk
+# cll-t2.slk  FIXED by Trung
 
 infer [x] x::node<val_35_804,next_35_805> & y=null
  |-  y!=null.
