@@ -16,6 +16,8 @@ module Err = Error
 module TP = Tpdispatcher
 module IF = Iformula
 module IP = Iprinter
+module C  = Cast
+
 
 
 
@@ -866,6 +868,24 @@ and produces_hole (a: ann): bool =
   if isLend a || isAccs  a || isPoly a then true
   else false
 
+and compute_ann_list all_fields (diff_fields : ident list) (default_ann : CF.ann) : CF.ann list =
+  let pr1 ls =
+    let helper i = match i with
+    | ((_,h), _, _, _) -> h
+    in
+    List.fold_left (fun res id -> res ^ ", " ^ (helper id)) "" ls in
+  let pr2 ls = List.fold_left (fun res id -> res ^ ", " ^ id ) "" ls in
+  let pr_out ls = List.fold_left (fun res id ->  res ^ ", " ^ (Cprinter.string_of_imm id) ) "" ls in
+  Debug.no_3 "compute_ann_list" pr1 pr2 (Cprinter.string_of_imm) pr_out
+  (fun _ _ _ -> compute_ann_list_x all_fields diff_fields default_ann ) all_fields diff_fields default_ann
+
+and compute_ann_list_x all_fields (diff_fields : ident list) (default_ann : CF.ann) : CF.ann list =
+  match all_fields with
+    | ((_,h),_,_,_) :: r ->
+      if (List.mem h diff_fields) then default_ann :: (compute_ann_list_x r diff_fields default_ann)
+      else let ann = if(!Globals.allow_field_ann) then (CF.ConstAnn(Accs)) else default_ann in ann:: (compute_ann_list_x r diff_fields default_ann)
+    | [] -> []
+
 and iformula_ann_to_cformula_ann (iann : IF.ann) : CF.ann = 
   match iann with
     | IF.ConstAnn(x) -> CF.ConstAnn(x)
@@ -981,3 +1001,85 @@ and normalize_field_ann_formula_x (h:CF.formula): CF.formula =
 and normalize_field_ann_formula (h:CF.formula): CF.formula =
   let pr = Cprinter.string_of_formula in
   Debug.no_1 "normalize_field_ann_formula" pr pr normalize_field_ann_formula_x h
+
+
+let get_strongest_imm  (ann_lst: CF.ann list): CF.ann = 
+  let rec helper ann ann_lst = 
+    match ann_lst with
+      | []   -> ann
+      | (ConstAnn(Mutable)) :: t -> (ConstAnn(Mutable))
+      | x::t -> if subtype_ann x ann then helper x t else helper ann t
+  in helper (ConstAnn(Accs)) ann_lst
+
+let get_weakest_imm  (ann_lst: CF.ann list): CF.ann = 
+  let rec helper ann ann_lst = 
+    match ann_lst with
+      | []   -> ann
+      | (ConstAnn(Accs)) :: t -> (ConstAnn(Accs))
+      | x::t -> if subtype_ann ann x then helper x t else helper ann t
+  in helper (ConstAnn(Mutable)) ann_lst
+
+let update_read_write_ann (ann_from: CF.ann) (ann_to: CF.ann): CF.ann  =
+  match ann_from with
+    | ConstAnn(Mutable)	-> ann_from
+    | ConstAnn(Accs)    -> ann_to
+    | ConstAnn(Imm)
+    | ConstAnn(Lend)
+    | TempAnn _
+    | PolyAnn(_)        -> if subtype_ann ann_from ann_to then ann_from else ann_to
+
+let read_write_exp_analysis (ex: C.exp)  (field_ann_lst: (ident * CF.ann) list) =
+  let rec helper ex field_ann_lst  =
+    match ex with
+      | C.Block {C.exp_block_body = e} 
+      | C.Catch { C.exp_catch_body = e} (* ->         helper cb field_ann_lst *)
+      | C.Cast {C.exp_cast_body = e }
+      | C.Label {C.exp_label_exp = e}  (* > helper e field_ann_lst *)
+          -> helper e field_ann_lst
+      | C.Assert {
+            C.exp_assert_asserted_formula = assert_f_o;
+            C.exp_assert_assumed_formula = assume_f_o } ->
+            (* check assert_f_o and assume_f_o *)
+            field_ann_lst
+      | C.Assign  {
+            C.exp_assign_lhs = lhs;
+            C.exp_assign_rhs = rhs  } ->
+            let field_ann_lst = 
+              List.map (fun (f, ann) -> if (lhs == f) then (f, update_read_write_ann ann (ConstAnn(Mutable))) else (f,ann) ) field_ann_lst in
+            helper rhs field_ann_lst
+      | C.Bind {
+            C.exp_bind_bound_var = v;
+            C.exp_bind_fields = vs;
+            C.exp_bind_body = e } ->
+            (* andreeac TODO: nested binds ---> is it supported? *)
+            field_ann_lst
+      | C.ICall {
+            C.exp_icall_arguments = args } ->
+            List.map (fun (f, ann) -> if (List.mem f args) then (f, update_read_write_ann ann (ConstAnn(Lend))) else (f,ann) ) field_ann_lst
+      | C.SCall {
+            C.exp_scall_arguments = args } ->
+            List.map (fun (f, ann) -> if (List.mem f args) then (f, update_read_write_ann ann (ConstAnn(Lend))) else (f,ann) ) field_ann_lst
+      | C.Cond {
+            C.exp_cond_condition = cond;
+            C.exp_cond_then_arm = e1;
+            C.exp_cond_else_arm = e2 } ->
+            let field_ann_lst = List.map (fun (f, ann) -> if (f == cond) then (f, update_read_write_ann ann (ConstAnn(Lend))) else (f,ann) ) field_ann_lst in
+            let field_ann_lst = helper e1 field_ann_lst in
+            helper e2 field_ann_lst
+      | C.New { C.exp_new_arguments = args } ->
+            let args = List.map (fun (t, v) -> v) args in
+            List.map (fun (f, ann) -> if (List.mem f args) then (f, update_read_write_ann ann (ConstAnn(Lend))) else (f,ann) ) field_ann_lst
+      | C.Try { C.exp_try_body = e1; C.exp_catch_clause = e2}
+      | C.Seq { C.exp_seq_exp1 = e1; C.exp_seq_exp2 = e2 }->
+            let field_ann_lst = helper e1 field_ann_lst in
+            helper e2 field_ann_lst
+      | C.Var { C.exp_var_name = v } ->
+            List.map (fun (f, ann) -> if (f == v) then (f, update_read_write_ann ann (ConstAnn(Lend))) else (f,ann) ) field_ann_lst
+      | C.While{
+            C.exp_while_condition = cond;
+            C.exp_while_body = body } ->
+            let field_ann_lst = List.map (fun (f, ann) -> if (f == cond) then (f, update_read_write_ann ann (ConstAnn(Lend))) else (f,ann) ) field_ann_lst in
+            helper body field_ann_lst
+      | _  -> field_ann_lst
+    
+  in helper ex field_ann_lst

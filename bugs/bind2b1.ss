@@ -12,7 +12,9 @@ node paper_fix (node c)
   ensures res=p;
 {
       node t;
-      bind c to (vv,nn) in { t = nn; };
+      int x = c.val;
+      c.val = 1;
+      bind c to (vv,nn) in { t = nn; vv = 0; };
       dprint;
       return t;
 }

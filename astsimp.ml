@@ -2640,6 +2640,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
             I.exp_bind_body = e;
             I.exp_bind_pos = pos;
             I.exp_bind_path_id = pid;} ->
+            let ipid = pid in
             let pid = match pid with | None -> fresh_strict_branch_point_id "" | Some s -> s in
             (try
               let vinfo_tmp = E.look_up v in
@@ -2665,8 +2666,11 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
                                 let vt = trans_type prog vi.E.var_type pos in
                                 let (ce, te) = helper e in
                                 let _ = E.pop_scope ()in
-                                (* let _ = print_string ("\n(andreeac)astsimp.ml trans_exp Bind, vs to become lend ann: " ^ (List.fold_left (fun x y -> x ^ " " ^ y) "" vs)) in *)
-                                ((C.Bind {
+                                let initial_ann_lst =  (List.map (fun f -> (f, (CF.ConstAnn(Accs)))) vs) in
+                                let ann_lst = Immutable.read_write_exp_analysis ce initial_ann_lst in 
+                                let _,ann_lst = List.split ann_lst in
+                                (* let bind_e =  create_bind_exp te (vt, v) (List.combine vs_types vs) ce false pos pid in *)
+                                let bind_e = (C.Bind {
                                     C.exp_bind_type = te;
                                     C.exp_bind_bound_var = (vt, v);
                                     C.exp_bind_fields = List.combine vs_types vs;
@@ -2675,7 +2679,8 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
                                     C.exp_bind_param_imm = List.map (fun _ -> CF.ConstAnn(Mutable)) vs ; 
                                     C.exp_bind_read_only = false; (*conservative. May use read/write analysis to figure out*)
 				    C.exp_bind_pos = pos;
-                                    C.exp_bind_path_id = pid; }), te)))
+                                    C.exp_bind_path_id = pid; }) in
+                                (bind_e, te)))
                         | Array _ -> Err.report_error { Err.error_loc = pos; Err.error_text = v ^ " is not a data type";}
                         | _ -> Err.report_error { Err.error_loc = pos; Err.error_text = v ^ " is not a data type"; }
                       )
@@ -3041,9 +3046,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
             I.exp_member_fields = fs;
             I.exp_member_path_id = pid;
             I.exp_member_pos = pos } -> 
-    (*let id_string f = List.fold_left (fun x y -> x ^ ";" ^ y) "" f in*)
-    (* let _ = print_string("[Cris]: Member field: " ^ (id_string fs) ^ "\n") in *)
-    (* let _ = print_string("[Cris]: Member base: " ^ (Iprinter.string_of_exp e) ^ "\n") in *)
+    let id_string f = List.fold_left (fun x y -> x ^ ";" ^ y) "" f in
             (* An Hoa : compact the field access sequence *)
             let et = snd (helper e) in
             let fs,rem,_ = compact_field_access_sequence prog et fs in
@@ -3793,23 +3796,23 @@ and compact_field_access_sequence prog root_type field_seq =
   (* let _ = print_endline ("[compact_field_access_sequence] output = { " ^ (String.concat " ; " res) ^ " }") in *)
   res
 
-and compute_ann_list all_fields (diff_fields : ident list) (default_ann : CF.ann) : CF.ann list =
-  let pr1 ls = 
-    let helper i = match i with
-    | ((_,h), _, _, _) -> h
-    in
-    List.fold_left (fun res id -> res ^ ", " ^ (helper id)) "" ls in
-  let pr2 ls = List.fold_left (fun res id -> res ^ ", " ^ id ) "" ls in
-  let pr_out ls = List.fold_left (fun res id ->  res ^ ", " ^ (Cprinter.string_of_imm id) ) "" ls in
-  Debug.no_3 "compute_ann_list" pr1 pr2 (Cprinter.string_of_imm) pr_out 
-  (fun _ _ _ -> compute_ann_list_x all_fields diff_fields default_ann ) all_fields diff_fields default_ann
-
-and compute_ann_list_x all_fields (diff_fields : ident list) (default_ann : CF.ann) : CF.ann list =
-  match all_fields with
-    | ((_,h),_,_,_) :: r ->
-      if (List.mem h diff_fields) then default_ann :: (compute_ann_list_x r diff_fields default_ann)
-      else let ann = if(!Globals.allow_field_ann) then (CF.ConstAnn(Accs)) else default_ann in ann:: (compute_ann_list_x r diff_fields default_ann)
-    | [] -> []
+and create_bind_exp typ bound_v fields body read_only pos pid =
+  let _, vs = List.split fields in
+  let initial_ann_lst =  (List.map (fun f -> (f, (CF.ConstAnn(Accs)))) vs) in
+  let ann_lst = Immutable.read_write_exp_analysis body initial_ann_lst in 
+  let _,ann_lst = List.split ann_lst in
+  let ann = Immutable.get_strongest_imm ann_lst in
+  C.Bind {
+      C.exp_bind_type = typ;
+      C.exp_bind_bound_var = bound_v;
+      C.exp_bind_fields = fields;
+      C.exp_bind_body = body;
+      C.exp_bind_imm = CF.ConstAnn(Mutable); 
+      C.exp_bind_param_imm = ann_lst;
+      C.exp_bind_read_only = read_only;
+      C.exp_bind_pos = pos;
+      C.exp_bind_path_id = pid; 
+  }
 
 and flatten_to_bind prog proc (base : I.exp) (rev_fs : ident list)
       (rhs_o : C.exp option) (pid:control_path_id) imm (read_only : bool) pos =
@@ -3846,11 +3849,11 @@ and flatten_to_bind prog proc (base : I.exp) (rev_fs : ident list)
                 if (snd f) = fn then ((Some (fst f, fresh_fn)), (fresh_fn :: new_rest))
                 else (tmp, (fresh_fn :: new_rest))) in
         let all_fields = I.look_up_all_fields prog ddef in
-        let ann_list = compute_ann_list all_fields rev_fs imm in
-       (*  let id_string lst = List.fold_left (fun x (a1,a2,b,c) -> x ^ "," ^ (snd a1)) "" lst in *)
-       (*     let _ = print_string ("\n(andreeac) rev_fs: " ^ (List.fold_left (fun x str -> x ^ "," ^ str) "" rev_fs) ) in *)
-	   (* let _ = print_string ("\n Bound Ann" ^(String.concat "," (List.map Cprinter.string_of_imm ann_list))) in *)
-       (*     let _ = print_string ("\n(andreeac) all_fields: " ^ (id_string all_fields) ) in  *)
+        let ann_list = Immutable.compute_ann_list all_fields rev_fs imm in
+        let id_string lst = List.fold_left (fun x (a,b,c,d) -> x ^ "," ^ (snd a)) "" lst in
+        Debug.tinfo_hprint (add_str "\nrev_fs: " (List.fold_left (fun x str -> x ^ "," ^ str) "")) rev_fs no_pos;
+        Debug.tinfo_hprint (add_str "\nBound Ann"  (String.concat "," )) (List.map Cprinter.string_of_imm  ann_list) no_pos;
+        Debug.tinfo_hprint (add_str "\nall_fields: " id_string) all_fields no_pos;
         let field_types = List.map (fun f -> trans_type prog (I.get_field_typ f) pos) all_fields in
         let (tmp1, fresh_names) = gen_names f (List.map I.get_field_typed_id all_fields) in
         if not (Gen.is_some tmp1) then
@@ -3876,7 +3879,9 @@ and flatten_to_bind prog proc (base : I.exp) (rev_fs : ident list)
                      Err.error_loc = pos;
                      Err.error_text = "lhs and rhs do not match"; } in
             (* let _ = print_string ("\n(andreeac)astsimp.ml flatten_to_bind_x, vs to become lent ann: " ^ (List.fold_left (fun x y -> x ^ " " ^ y) "" fresh_names) ^ ("\n   annf: " ^ (List.fold_left (fun x y -> x ^ (Cprinter.string_of_imm y)  ) ""  ann_list))) in *)
-           let bind_e = C.Bind {
+            let bind_fields =  List.combine field_types fresh_names in
+            (* let bind_e = create_bind_exp bind_type ((Named dname), fn)  bind_fields  bind_body read_only pos pid_s in *)
+                       let bind_e = C.Bind {
                C.exp_bind_type = bind_type;
                C.exp_bind_bound_var = ((Named dname), fn);
                C.exp_bind_fields = List.combine field_types fresh_names;

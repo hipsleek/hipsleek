@@ -13,6 +13,7 @@ node paper_fix (node c)
 {
       node t;
       t = c.next;
+      c.val = 0;
       dprint;
       return t;
 }

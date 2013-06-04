@@ -240,3 +240,47 @@ bind2e3.ss
 
 
 # TODO how about field level access for bind2{e3,e4}.ss
+
+Trung:
+
+Could you try fix the type problem below 
+at default branch? If possible, please also
+support type annotation at the infer parameter
+list by changing the parser, e.g:
+  infer [(x:int)] x=3 & x=x' |-  x>4.
+
+# bugs/cll-type.slk
+
+// why "could not find coherent-type below" ?
+// x & x' has the same int type
+infer [x] x=3 & x=x'
+ |-  x>4.
+
+# cll-t2.slk  FIXED by Trung
+
+infer [x] x::node<val_35_804,next_35_805> & y=null
+ |-  y!=null.
+
+/*
+Got error which is not present in sa_logging branch.
+
+ERROR: at _0:0_0:0 
+Message: x is not found in both sides
+ caught
+
+It is not necessary for x to be on both sides;
+just one side is sufficient.
+*/
+
+infer [x] x::node<val_35_804,next_35_805> & x=y
+ |-  x!=null.
+
+/*
+Got error which is not present in sa_logging branch.
+
+ERROR: at _0:0_0:0 
+Message: x is not found in both sides
+ caught
+
+But x ia already on both sides!
+*/
