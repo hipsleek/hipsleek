@@ -182,7 +182,15 @@ Exception Failure("The postcondition cannot contain @L heap predicates/data node
 
 # ll-d1.slk
 
-Not sure if bug below due to type_infer fix that I made!
+
+relAssume  H
+ H(x) --> x::node<_,nn> .
+relAssume  G
+ x::node<_,null> &  x'=null  --> G(x,x').
+relAssume  G
+ x::node<_,null> &  x'=nn --> G(x,x').
+
+This bug occurs before merging with default too.
 
 /*
 !! >>>>>> step 1: find dangling ptrs that link pre and post-preds<<<<<<
