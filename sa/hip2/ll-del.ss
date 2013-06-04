@@ -16,17 +16,25 @@ HeapPred G(node a,node a).
 
 /* function to delete the node after the head in a circular list */
 void delete(ref node x)
-/*
+
 	requires x::ll<> & x!=null
 	ensures x'::ll<> * x::node<_,null>;
 	requires x::node<_,null>
 	ensures x::node<_,null> & x'=null;
 	requires x::node<_,q> & q!=null
 	ensures x::node<_,null> & x'=q;
-*/
+        requires x::node<_,q>
+        case {
+              q=null -> ensures x::node<_,null> & x'=null;
+              q!=null ->  ensures x::node<_,null> & x'=q;
+        }
+        requires x::node<_,q>
+        ensures x::node<_,null> & (q=null & x'=null | q!=null & x'=q);
+/*
 infer [H,G] 
 requires H(x)
 ensures G(x,x');
+*/
 /*
  H(x)&true --> x::node<val_33_789,next_33_790>@M * (HP_791(next_33_790))&true,
  HP_791(next_33_790)&next_33_790=null --> emp&true,

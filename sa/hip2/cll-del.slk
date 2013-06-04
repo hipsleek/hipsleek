@@ -11,9 +11,9 @@ HeapPred G(node a, node a).
 
 relAssume  H
  H(x) --> x::node<_,n> * HP_6e(n,x).
-relAssume  H6e
+relAssume  HP_6e
  HP_6e(n,x) & n!=x --> n::node<_,q> * HP_7(q,x).
-relAssume  H6e
+relAssume  HP_6e
  HP_6e(n,x) & n=x --> emp.
 relAssume  G
  x::node<_,n> & n=x & x'=null --> G(x,x').
