@@ -160,3 +160,22 @@ print residue.
    HP_6(v) & v=x --> emp
    x::node<_,x> & xp=null --> G(x,xp)
 */
+
+# bug-imm.ss (Andreea to fix)
+
+/* function to delete the node after the head in a circular list */
+void delete(ref node x)
+
+	requires x::ll<> & x!=null
+	ensures x'::ll<> & x::node<_,null>;
+
+/*
+
+Post-cond has a "conjunction" but this result in
+wrong message below:
+
+Exception Failure("The postcondition cannot contain @L heap predicates/data nodes/field annotations\n") Occurred!
+(Program not linked with -g, cannot print stack backtrace)
+
+
+*/
