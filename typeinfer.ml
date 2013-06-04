@@ -999,10 +999,11 @@ and get_spec_var_type_list_infer_x ((v, p) : ident * primed) fvs pos =
            }
   in
   let vtyp, check = get_var_type v fvs in
-  if check = false then
-    Err.report_error { Err.error_loc = pos;
-                       Err.error_text = v ^ " is not found in both sides"; }
-  else
+ (* WN TODO : this is a quick patch to type infer problem *)
+  (* if check = false then *)
+  (*   Err.report_error { Err.error_loc = pos; *)
+  (*                      Err.error_text = v ^ " is not found in both sides"; } *)
+  (* else *)
     match vtyp with
     | UNK -> Err.report_error { Err.error_loc = pos;
                                 Err.error_text = v ^ " is undefined"; }

@@ -8,11 +8,11 @@ HeapPred HP_6(node a).
 HeapPred HP_6e(node a, node a).
 HeapPred G(node a, node a).
 
-infer [HP_6] HP_6(n) * x_814::node<_,n> & x=x_814 & n=x_814 & xp=null
+infer [HP_6,G] HP_6(n) * x_814::node<_,n> & x=x_814 & n=x_814 & xp=null
  |-  G(x,xp). 
 print residue.
 
-infer [HP_6,x] HP_6(n) * x_814::node<_,n> & x=x_814 & n=x_814 & xp=null
+infer [HP_6,G,x] HP_6(n) * x_814::node<_,n> & x=x_814 & n=x_814 & xp=null
  |-  G(x,xp). 
 print residue.
 

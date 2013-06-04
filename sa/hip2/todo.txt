@@ -100,20 +100,23 @@ print residue.
                    true]
 */
 
-infer [HP_6,x] HP_6(n) * x_814::node<_,n> & x=x_814 & n=x_814 & xp=null
+infer [HP_6,x,G] HP_6(n) * x_814::node<_,n> & x=x_814 & n=x_814 & xp=null
  |-  G(x,xp). 
 print residue.
 
 /*
-  Why did we not capture  x!=x_814 below?
-  Remember that this is always for pre-pred implication.
-
-  HP_6(x_814) * x_814::node<Anon_12,x_814> & x!=x_814 --> emp
+  Obtained:
 
  <1>HP_6(n)&x=x_814 & n=x_814 & xp=null&{FLOW,(19,20)=__norm}[]
  inferred hprel: [x::node<Anon_12,x>@M&xp=null --> G_39(x,xp)&true; 
                   (HP_6(x_814)) * x_814::node<Anon_12,x_814>@M&true --> emp&
                    true]
+
+  Why did we not capture  x!=x_814 below?
+  Remember that this is always for pre-pred implication.
+
+  HP_6(x_814) & x=x_814 --> emp
+  x::node<_,n> & n=x & xp=null -> G(x,xp).
 
 */
 
@@ -133,7 +136,7 @@ print residue.
 /*
  expecting
    x::node<_,x> & xp=null --> G(x,xp)
-  since HP_6 is not tp be inferred
+  since HP_6 is not to be inferred
 */
 
 infer [G,HP_6] HP_6(x) * x::node<_,x> & xp=null
@@ -145,7 +148,6 @@ print residue.
  which is later base-splitted into:
    HP_6(x) --> emp
    x::node<_,x> & xp=null --> G(x,xp)
-
 */
 
 infer [G,HP_6,x] HP_6(x) * x::node<_,x> & xp=null
@@ -157,5 +159,4 @@ print residue.
  which is later base-splitted into:
    HP_6(v) & v=x --> emp
    x::node<_,x> & xp=null --> G(x,xp)
-
 */
