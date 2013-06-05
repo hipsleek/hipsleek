@@ -309,3 +309,30 @@ Simplify :
   HP_6(n) & n=x  --> emp  (using exists x_814)
   x_814::node<Anon_11,n>@M& n=x_814 & 
                    xp=null --> G(x_814,xp)&true (using exists x)
+
+# post-condition extraction of pre-pred for hip
+
+Towards the end of proving, we will need to extract
+pre-pred from the residue hip state during post-condition
+proving; if pre-pred  are being inferred.
+
+# ll-d2.slk
+
+relAssume  G
+ x::node<_,null> &  xp=null  --> G(x,xp).
+relAssume  G
+ x::node<_,null> &  xp!=null --> G(x,xp).
+
+shape_infer [][G].
+
+/*
+Got:
+ G(x_37,xp_38) ::= x_37::node<Anon_11,flted_10_16>@M * (HP_39(flted_10_16,xp_38))&true,
+ HP_39(flted_10_16,xp_38) ::= emp&flted_10_16=null & xp_38=null]
+
+However, expecting:
+ G(x_37,xp_38) ::= 
+     x_37::node<Anon_11,null>@M *& xp_38=null
+  or x_37::node<Anon_12,null>@M *& xp_38!=null
+
+*/
