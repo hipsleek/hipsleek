@@ -1653,7 +1653,9 @@ and collect_partial_definitions prog callee_hps constrs: (CF.hprel list * SAU.pa
 let rec simplify_one_constr prog unk_hps constr=
   begin
       let (lhs, rhs) = constr.CF.hprel_lhs,constr.CF.hprel_rhs in
-      match lhs,rhs with
+      let qvars1, f1 = CF.split_quantifiers lhs in
+      let qvars2, f2 = CF.split_quantifiers rhs in
+      match f1,f2 with
         | CF.Base lhs_b, CF.Base rhs_b ->
             begin
                 let l,r,matched = SAU.simplify_one_constr_b prog unk_hps lhs_b rhs_b in

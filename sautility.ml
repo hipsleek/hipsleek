@@ -889,7 +889,8 @@ let smart_subst_x nf1 nf2 hpargs eqs0 reqs unk_svl prog_vars=
   let new_nf2 = CF.subst_b (new_eqs1@reqs) nf2 in
   (*subst again*)
   let nleqs0 = (MCP.ptr_equations_without_null nf11.CF.formula_base_pure) in
-  let nleqs = List.filter (fun (sv1,sv2) -> not (List.exists (fun svl -> CP.mem sv1 svl && CP.mem_svl sv2 svl) ptrs_group)) nleqs0 in
+  let ptrs_group1 = (CF.get_ptrs_group_hf nf1.CF.formula_base_heap)@(CF.get_ptrs_group_hf nf11.CF.formula_base_heap) in
+  let nleqs = List.filter (fun (sv1,sv2) -> not (List.exists (fun svl -> CP.mem sv1 svl && CP.mem_svl sv2 svl) ptrs_group1)) nleqs0 in
   let _ = DD.ninfo_pprint ("      nleqs: " ^ (let pr = pr_list(pr_pair !CP.print_sv !CP.print_sv) in pr nleqs)) no_pos in
   let nreqs = (MCP.ptr_equations_without_null new_nf2.CF.formula_base_pure) in
   let nleqs1 = List.filter (fun (sv1,sv2) -> not (CP.mem_svl sv1 eqNulls2 && CP.mem_svl sv2 eqNulls2)) nleqs in
@@ -1107,7 +1108,7 @@ let simplify_one_constr_b prog unk_hps lhs_b rhs_b=
   Debug.no_2 "simplify_one_constr_b" pr pr (pr_triple pr pr !CP.print_svl)
       (fun _ _ -> simplify_one_constr_b_x prog unk_hps lhs_b rhs_b) lhs_b rhs_b
 
-let find_well_defined_hp_x prog hds hvs r_hps (hp,args) def_ptrs lhsb=
+let find_well_defined_hp_x prog hds hvs r_hps prog_vars (hp,args) def_ptrs lhsb=
   (*check hp is recursive?*)
   if (CP.mem hp r_hps) then ([],[(hp,args)]) else
     let closed_args = look_up_closed_ptr_args prog hds hvs args in
@@ -1117,18 +1118,27 @@ let find_well_defined_hp_x prog hds hvs r_hps (hp,args) def_ptrs lhsb=
       (*we do NOT want to keep heap in LHS*)
       let hf1 = CF.drop_hnodes_hf f.CF.formula_base_heap args in
       let f1 = {f with CF.formula_base_heap = hf1;} in
-      ([(hp,args,f1)],[])
+      let leqs = (MCP.ptr_equations_without_null f1.CF.formula_base_pure) in
+      let f3 = if leqs =[] then f1 else
+        let svl = prog_vars@args in
+        let new_leqs = List.filter (fun (sv1,sv2) -> not (CP.mem sv1 svl && CP.mem_svl sv2 svl) ) leqs in
+        (* let new_leqs = filter_eqs args prog_vars leqs in *)
+        let f2 = CF.subst_b new_leqs f1 in
+        {f2 with CF.formula_base_pure = MCP.mix_of_pure
+              (CP.remove_redundant (MCP.pure_of_mix f2.CF.formula_base_pure))}
+      in
+      ([(hp,args,f3)],[])
     else
       ([],[(hp,args)])
 
-let find_well_defined_hp prog hds hvs ls_r_hpargs (hp,args) def_ptrs lhsb=
+let find_well_defined_hp prog hds hvs ls_r_hpargs prog_vars (hp,args) def_ptrs lhsb=
   let pr1 = !CP.print_sv in
   let pr2 = !CP.print_svl in
   let pr3 = pr_triple pr1 pr2 Cprinter.string_of_formula_base in
   let pr4 = (pr_pair pr1 pr2) in
-  Debug.no_2 "find_well_defined_hp" pr4 pr2 (pr_pair (pr_list_ln pr3) (pr_list pr4))
-      (fun _ _ -> find_well_defined_hp_x prog hds hvs ls_r_hpargs (hp,args) def_ptrs lhsb)
-      (hp,args) def_ptrs
+  Debug.no_4 "find_well_defined_hp" Cprinter.string_of_formula_base pr4 pr2 pr2 (pr_pair (pr_list_ln pr3) (pr_list pr4))
+      (fun _ _  _ _ -> find_well_defined_hp_x prog hds hvs ls_r_hpargs prog_vars (hp,args) def_ptrs lhsb)
+      lhsb (hp,args) def_ptrs prog_vars
 
 let find_well_eq_defined_hp prog hds hvs lhsb eqs (hp,args)=
   let rec loop_helper rem_eqs=

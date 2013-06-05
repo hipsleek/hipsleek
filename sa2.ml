@@ -211,6 +211,7 @@ let apply_transitive_impl_fix prog callee_hps hp_rel_unkmap unk_hps (constrs: CF
 ****************************************************************)
 (*split constrs like H(x) & x = null --> G(x): separate into 2 constraints*)
 let split_constr_x prog constrs=
+  let prog_vars = [] in
   (*internal method*)
   let split_one cs=
     let (_ ,mix_lf,_,_,_) = CF.split_components cs.CF.hprel_lhs in
@@ -228,7 +229,7 @@ let split_constr_x prog constrs=
     let helper (hp,eargs,_)=(hp,List.concat (List.map CP.afv eargs)) in
     let ls_lhp_args = (List.map helper lhrs) in
     let ls_defined_hps,rems = List.split (List.map (fun hpargs ->
-        SAU.find_well_defined_hp prog lhds lhvs r_hps hpargs l_def_vs lfb) ls_lhp_args)
+        SAU.find_well_defined_hp prog lhds lhvs r_hps prog_vars hpargs l_def_vs lfb) ls_lhp_args)
     in
     let defined_preds = List.concat ls_defined_hps in
     let defined_preds0 = List.fold_left (fun defined_preds hpargs ->

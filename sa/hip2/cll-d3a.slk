@@ -8,9 +8,11 @@ HeapPred HP_6(node a).
 HeapPred HP_6e(node a, node a).
 HeapPred G(node a, node a).
 
+
 infer [HP_6,G] HP_6(n) * x_814::node<_,n> & x=x_814 & n=x_814 & xp=null
  |-  G(x,xp). 
 print residue.
+
 /*
 Got:
  <1>HP_6(n)&x=x_814 & n=x_814 & xp=null & x=x_814&{FLOW,(19,20)=__norm}[]
@@ -29,6 +31,7 @@ Problems :
 infer [HP_6,G,x] HP_6(n) * x_814::node<_,n> & x=x_814 & n=x_814 & xp=null
  |-  G(x,xp). 
 print residue.
+
 /*
 Got:
  <1>HP_6(n)&x=x_814 & n=x_814 & xp=null&{FLOW,(19,20)=__norm}[]
