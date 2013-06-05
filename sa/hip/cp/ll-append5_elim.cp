@@ -7,7 +7,8 @@ HeapPred HP_1(node a).
 append:SUCCESS[
 ass [H2,G2][]:{
         x::node<_,b> * G2(b,y)&b!=null --> G2(x,y);
-        HP_2b(a,y) * x::node<_,y>&a=null --> G2(x,y);
+        HP_2b(a,y) &a=null & XPURE(HP_906(y)) --> emp & true;
+         x::node<_,y> & XPURE(HP_906(y)) & a=null --> G2(x,y);
         HP_2b(v,y)&v!=null --> H2(v,y);
         H2(x,y) --> x::node<_,b> * HP_2b(b,y)
 	}

@@ -3,18 +3,24 @@ data node{
 	node next;
 }
 
+bool randB() 
+  requires true
+  ensures res or !res;
 
 node paper_fix (node c)
   requires c::node<_,p>
   ensures c::node<_,p> & res=p;
 {
       node t;
+      bool b;
       bind c to (_,nn) in {
-                dprint;
-                return nn;
-                dprint;
+        if (b) {
+           t=nn;
+        }
+        else return nn;
       }
       dprint;
+      return t;
 }
 
 /*

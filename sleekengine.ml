@@ -237,13 +237,19 @@ let convert_pred_to_cast () =
   iprog.I.prog_view_decls <- tmp_views;
   let cviews = List.map (AS.trans_view iprog) tmp_views in
   Debug.tinfo_pprint "after trans_view" no_pos;
-  let _ = !cprog.C.prog_view_decls <- cviews in
-  let cviews1 =
-    if !Globals. norm_extract then
-      Norm.norm_extract_common !cprog cviews
+  let cviews =
+    if !Globals.norm_elim_useless then
+      Norm.norm_elim_useless cviews (List.map (fun vdef -> vdef.C.view_name) cviews)
     else cviews
   in
-  let _ = !cprog.C.prog_view_decls <- cviews1 in
+  let _ = !cprog.C.prog_view_decls <- cviews in
+  let cviews1 =
+    if !Globals.norm_extract then
+      Norm.norm_extract_common !cprog cviews (List.map (fun vdef -> vdef.C.view_name) cviews)
+    else cviews
+  in
+  let cviews2 = Norm.cont_para_analysis !cprog cviews1 in
+  let _ = !cprog.C.prog_view_decls <- cviews2 in
   let _ =  (List.map (fun vdef -> AS.compute_view_x_formula !cprog vdef !Globals.n_xpure) cviews1) in
   Debug.tinfo_pprint "after compute_view" no_pos;
   let _ = (List.map (fun vdef -> AS.set_materialized_prop vdef) cviews1) in
@@ -463,7 +469,7 @@ let meta_to_struc_formula (mf0 : meta_formula) quant fv_idents (rel0: rel option
   string_of_bool
   string_of_ident_list
   TI.string_of_tlist
-  Cprinter.string_of_struc_formula
+  (pr_pair pr_none Cprinter.string_of_struc_formula)
   (fun _ _ _ _  ->  meta_to_struc_formula mf0 quant fv_idents rel0 tlist )mf0 quant fv_idents tlist
 
 (* An Hoa : DETECT THAT EITHER OF 
@@ -550,7 +556,7 @@ let run_infer_one_pass (ivars: ident list) (iante0 : meta_formula) (iconseq0 : m
   let _ = residues := None in
   let _ = Infer.rel_ass_stk # reset in
   let _ = if (!Globals.print_input || !Globals.print_input_all) then print_endline ("INPUT: \n ### 1 ante = " ^ (string_of_meta_formula iante0) ^"\n ### conseq = " ^ (string_of_meta_formula iconseq0)) else () in
-  let _ = Debug.devel_pprint ("\nrun_entail_check:"
+  let _ = Debug.devel_pprint ("\nrun_entail_check 1:"
                               ^ "\n ### iante0 = "^(string_of_meta_formula iante0)
                               ^ "\n ### iconseq0 = "^(string_of_meta_formula iconseq0)
                               ^"\n\n") no_pos in
@@ -578,14 +584,22 @@ let run_infer_one_pass (ivars: ident list) (iante0 : meta_formula) (iconseq0 : m
   let fv_idents = (List.map CP.name_of_spec_var fvs)@ivars in
   (* need to make ivars be global *)
   (* let conseq = if (!Globals.allow_field_ann) then meta_to_struc_formula iconseq0 false fv_idents None stab  *)
-  let (n_tl,conseq) = if (!Globals.allow_field_ann) then meta_to_struc_formula iconseq0 false fv_idents (Some Globals.RSubAnn) n_tl
-      else meta_to_struc_formula iconseq0 false fv_idents None n_tl in
+  let (n_tl,conseq) =
+    if (!Globals.allow_field_ann) 
+    then meta_to_struc_formula iconseq0 false fv_idents (Some Globals.RSubAnn) n_tl
+    else meta_to_struc_formula iconseq0 false fv_idents None n_tl in
   (* let _ = print_endline ("conseq: " ^ (Cprinter.string_of_struc_formula conseq)) in *)
   (* let conseq1 = meta_to_struc_formula iconseq0 false fv_idents stab in *)
+  let pr = Cprinter.string_of_struc_formula in
+  let _ = DD.tinfo_hprint (add_str "conseq(after meta-)" pr) conseq no_pos in 
   let conseq = Solver.prune_pred_struc !cprog true conseq in
-	let conseq = AS.add_param_ann_constraints_struc conseq in
+  let _ = DD.tinfo_hprint (add_str "conseq(after prune)" pr) conseq no_pos in 
+  (* let _ = DD.info_pprint "Andreea : false introduced by add_param_ann_constraints_struc" no_pos in *)
+  (* let _ = DD.info_pprint "=============================================================" no_pos in *)
+  let conseq = AS.add_param_ann_constraints_struc conseq in
+  let _ = DD.tinfo_hprint (add_str "conseq(after add param)" pr) conseq no_pos in 
   (* let conseq = AS.add_param_ann_constraints_struc conseq in  *)
-  let _ = Debug.devel_zprint (lazy ("\nrun_entail_check:"
+  let _ = Debug.devel_zprint (lazy ("\nrun_entail_check 2:"
                         ^"\n ### ivars = "^(pr_list pr_id ivars)
                         ^ "\n ### ante = "^(Cprinter.string_of_formula ante)
                         ^ "\n ### conseq = "^(Cprinter.string_of_struc_formula conseq)
@@ -593,7 +607,7 @@ let run_infer_one_pass (ivars: ident list) (iante0 : meta_formula) (iconseq0 : m
   let es = CF.empty_es (CF.mkTrueFlow ()) Lab2_List.unlabelled no_pos in
   let ante = Solver.normalize_formula_w_coers 11 !cprog es ante !cprog.C.prog_left_coercions in
   let _ = if (!Globals.print_core || !Globals.print_core_all) then print_endline ("INPUT: \n ### ante = " ^ (Cprinter.string_of_formula ante) ^"\n ### conseq = " ^ (Cprinter.string_of_struc_formula conseq)) else () in
-  let _ = Debug.devel_zprint (lazy ("\nrun_entail_check: after normalization"
+  let _ = Debug.devel_zprint (lazy ("\nrun_entail_check 3: after normalization"
                         ^ "\n ### ante = "^(Cprinter.string_of_formula ante)
                         ^ "\n ### conseq = "^(Cprinter.string_of_struc_formula conseq)
                         ^"\n\n")) no_pos in
@@ -603,7 +617,7 @@ let run_infer_one_pass (ivars: ident list) (iante0 : meta_formula) (iconseq0 : m
   (* List of vars appearing in original formula *)
   let orig_vars = CF.fv ante @ CF.struc_fv conseq in
   (* List of vars needed for abduction process *)
-  let vars = List.map (fun v -> TI.get_spec_var_type_list_infer v orig_vars no_pos) ivars in
+  let vars = List.map (fun v -> TI.get_spec_var_type_list_infer (v, Unprimed) orig_vars no_pos) ivars in
   (* Init context with infer_vars and orig_vars *)
   let (vrel,iv) = List.partition (fun v -> is_RelT (CP.type_of_spec_var v)(*  ||  *)
               (* CP.type_of_spec_var v == FuncT *)) vars in
@@ -659,7 +673,7 @@ let process_rel_assume hp_id (ilhs : meta_formula) (irhs: meta_formula)=
   let fv_idents = (List.map CP.name_of_spec_var fvs)@[hp_id] in
   let (stab,rhs) = meta_to_formula irhs false fv_idents stab in
   let orig_vars = CF.fv lhs @ CF.fv rhs in
-  let hp = TI.get_spec_var_type_list_infer hp_id orig_vars no_pos in
+  let hp = TI.get_spec_var_type_list_infer (hp_id, Unprimed) orig_vars no_pos in
   (* let _ =  print_endline ("LHS = " ^ (Cprinter.string_of_formula lhs)) in *)
   (* let _ =  print_endline ("RHS = " ^ (Cprinter.string_of_formula rhs)) in *)
   let new_rel_ass = {
@@ -677,7 +691,10 @@ let process_rel_assume hp_id (ilhs : meta_formula) (irhs: meta_formula)=
 let process_shape_infer pre_hps post_hps=
   (* let _ = DD.info_pprint "process_shape_infer" no_pos in *)
   let get_hps all_hps ass = match ass.CF.hprel_kind with
-    | CP.RelAssume hps -> all_hps@hps
+    | CP.RelAssume hps ->
+          let body_hps = (CF.get_hp_rel_name_formula ass.CF.hprel_lhs)@
+            ( CF.get_hp_rel_name_formula ass.CF.hprel_rhs) in
+          all_hps@hps@body_hps
     | _ -> all_hps
   in
   let filter_hp id_ls all_hps =List.filter (fun hp ->
@@ -692,40 +709,81 @@ let process_shape_infer pre_hps post_hps=
   let sel_post_hps = filter_hp post_hps hps20 in
   let sel_hps = sel_pre_hps@sel_post_hps in
   let ls_hprel, ls_inferred_hps, dropped_hps =
-    if not (!Globals.sa_old) then
-    Sa2.infer_shapes !cprog "" hp_lst_assume
+    let infer_shape_fnc =  if not (!Globals.sa_old) then
+      Sa2.infer_shapes
+    else Sa.infer_hps
+    in
+    infer_shape_fnc !cprog "" hp_lst_assume
         sel_hps sel_post_hps
         (Gen.BList.remove_dups_eq
-             (fun (hp1,_) (hp2,_) -> CP.eq_spec_var hp1 hp2)
-             hp_rel_unkmap)
-  else
-    Sa.infer_hps !cprog "" hp_lst_assume
-        sel_hps sel_post_hps
-        (Gen.BList.remove_dups_eq
-             (fun (hp1,_) (hp2,_) -> CP.eq_spec_var hp1 hp2)
-             hp_rel_unkmap)
+            (fun (hps1,_) (hps2,_) ->
+                let hps1 = List.map fst hps1 in
+                let hps2 = List.map fst hps2 in
+                (List.length hps1 = List.length hps2)
+                && (CP.diff_svl hps1 hps2 = []))
+            hp_rel_unkmap)
   in
   let _ = if not (!Globals.sa_old) then
-        begin
-            if not(Sa2.rel_def_stk# is_empty) then
-          	  print_endline ""; 
-		    print_endline "*************************************";
-		    print_endline "*******relational definition ********";
-		    print_endline "*************************************";
-            print_endline (Sa2.rel_def_stk # string_of_reverse);
-		    print_endline "*************************************"
-        end
-      else
-        if not(Sa.rel_def_stk# is_empty) then
-          begin
-		      print_endline ""; 
-		      print_endline "*************************************";
-		      print_endline "*******relational definition ********";
-		      print_endline "*************************************";
-              print_endline (Sa.rel_def_stk # string_of_reverse);
-		      print_endline "*************************************"
-          end
+    begin
+      let rel_defs = if not (!Globals.sa_old) then
+        Sa2.rel_def_stk
+      else Sa.rel_def_stk
+      in
+      if not(rel_defs# is_empty) then
+        print_endline ""; 
+      print_endline "*************************************";
+      print_endline "*******relational definition ********";
+      print_endline "*************************************";
+      print_endline (Sa2.rel_def_stk # string_of_reverse);
+      print_endline "*************************************"
+    end
   in
+  (* let _ = if(!Globals.cp_test || !Globals.cp_prefile) then *)
+  (*    CEQ.cp_test !cprog hp_lst_assume ls_inferred_hps sel_hps *)
+  (* in *)
+  ()
+
+let process_shape_split pre_hps post_hps=
+   let get_hps all_hps ass = match ass.CF.hprel_kind with
+    | CP.RelAssume hps ->
+          let body_hps = (CF.get_hp_rel_name_formula ass.CF.hprel_lhs)@
+            ( CF.get_hp_rel_name_formula ass.CF.hprel_rhs) in
+          all_hps@hps@body_hps
+    | _ -> all_hps
+  in
+  let filter_hp id_ls all_hps =List.filter (fun hp ->
+      let hp_name = CP.name_of_spec_var hp in
+      List.exists (fun id -> String.compare hp_name id = 0) id_ls
+      ) all_hps in
+  let hp_lst_assume = !sleek_hprel_assumes in
+  let hps2 = List.fold_left get_hps [] hp_lst_assume in
+  let hps20 = CP.remove_dups_svl hps2 in
+  let sel_pre_hps = filter_hp pre_hps hps20 in
+  let sel_post_hps = filter_hp post_hps hps20 in
+  let sel_hps = sel_pre_hps@sel_post_hps in
+  let new_constrs = Sa2.split_constr !cprog hp_lst_assume in
+  let pr1 = pr_list_ln Cprinter.string_of_hprel in
+  begin
+    print_endline "*************************************";
+    print_endline "*******relational assumption ********";
+    print_endline "*************************************";
+    print_endline (pr1 new_constrs);
+    print_endline "*************************************";
+  end;
+  ()
+
+let process_shape_elim_useless sel_vnames=
+  let view_defs = Norm.norm_elim_useless !cprog.Cast.prog_view_decls sel_vnames in
+  let _ = !cprog.Cast.prog_view_decls <- view_defs in
+  let pr = pr_list_ln Cprinter.string_of_view_decl in
+  let _ = Debug.info_pprint ("views after ELIM: \n" ^ (pr view_defs)) no_pos in
+  ()
+
+let process_shape_extract sel_vnames=
+  let view_defs = Norm.norm_extract_common !cprog !cprog.Cast.prog_view_decls sel_vnames in
+  let _ = !cprog.Cast.prog_view_decls <- view_defs in
+  let pr = pr_list_ln Cprinter.string_of_view_decl in
+  let _ = Debug.tinfo_pprint ("views after EXTRACTION: \n" ^ (pr view_defs)) no_pos in
   ()
 
 (* the value of flag "exact" decides the type of entailment checking              *)

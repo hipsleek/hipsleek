@@ -1,0 +1,46 @@
+data node{
+ int val;
+ node next;
+}.
+
+HeapPred HP_6(node a).
+HeapPred G(node a, node a). 
+
+/*
+infer [H,G] (HP_6(n)) * x_814::node<Anon_11,n>@M&n=x_814 & 
+                   xp=null & x=x_814 --> G(x_814,xp)&true
+ |-  G(x_814,xp). 
+print residue.
+*/
+
+relAssume G
+   HP_6(n) * x_814::node<_,n>@M & n=x_814 & xp=null & x=x_814 --> G(x_814,xp) &true.
+
+shape_split_base [H][G].
+
+/*
+ <1>emp&xp=null&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [(H(n)) * x::node<Anon_11,n>@M&xp=null --> G(x,xp)&true]
+
+At the sleek level, we do not know if H is a pre-pred or a post-pred.
+Hence, it is not useful to invoke --sa-split-base
+
+This must instead be done by shape_infer; after redundant pred has
+been identified and removed. For relAssume with both pre/post pred,
+we attempt to do a base-case split.
+
+To test it, we could support the following in sleek:
+
+relAssume 
+   (H(n)) * x::node<Anon_11,n>@M&xp=null --> G(x,xp)&true.
+split_base [H][G].
+
+Alternatively, we could use:
+ infer [H@pre,G@post] H(n) * x::node<_,n>  & xp=null
+   |-  G(x,xp). 
+ print residue.
+and then use the pre/post annotation to support
+base-case-split
+
+*/
+

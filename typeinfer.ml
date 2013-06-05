@@ -978,26 +978,32 @@ and get_spec_var_type_list (v : ident) tlist pos =
     | Not_found -> Err.report_error { Err.error_loc = pos;
                                       Err.error_text = v ^ " is undefined"; }
 
-and get_spec_var_type_list_infer (v : ident) fvs pos =
+and get_spec_var_type_list_infer (v : ident * primed) fvs pos =
   let pr_sv = Cprinter.string_of_spec_var in
   Debug.no_2 "get_spec_var_type_list_infer" 
     pr_id (pr_list pr_sv) pr_sv
     (fun _ _ -> get_spec_var_type_list_infer_x v fvs pos) v fvs
 
-and get_spec_var_type_list_infer_x (v : ident) fvs pos =
+and get_spec_var_type_list_infer_x ((v, p) : ident * primed) fvs pos =
   let get_var_type v fv_list: (typ * bool) = 
-    let res_list = CP.remove_dups_svl (List.filter (fun c -> v = CP.name_of_spec_var c) fv_list) in
+    let res_list = 
+      CP.remove_dups_svl (List.filter (
+        fun c -> (v = CP.name_of_spec_var c) && (p = CP.primed_of_spec_var c)
+      ) fv_list ) in
     match res_list with
     | [] -> (Void,false)
     | [sv] -> (CP.type_of_spec_var sv,true)
-    | _ -> Err.report_error { Err.error_loc = pos;
-                              Err.error_text = "could not find a coherent "^v^" type"}
+    | _ -> Err.report_error {
+             Err.error_loc = pos;
+             Err.error_text = "could not find a coherent " ^ v ^ " type";
+           }
   in
   let vtyp, check = get_var_type v fvs in
-  if check = false then
-    Err.report_error { Err.error_loc = pos;
-                       Err.error_text = v ^ " is not found in both sides"; }
-  else
+ (* WN TODO : this is a quick patch to type infer problem *)
+  (* if check = false then *)
+  (*   Err.report_error { Err.error_loc = pos; *)
+  (*                      Err.error_text = v ^ " is not found in both sides"; } *)
+  (* else *)
     match vtyp with
     | UNK -> Err.report_error { Err.error_loc = pos;
                                 Err.error_text = v ^ " is undefined"; }

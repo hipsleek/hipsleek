@@ -77,6 +77,7 @@ and view_kind =
 and view_decl = { 
     view_name : ident; 
     view_vars : P.spec_var list;
+    view_cont_vars : P.spec_var list;
     view_case_vars : P.spec_var list; (* predicate parameters that are bound to guard of case, but excluding self; subset of view_vars*)
     view_uni_vars : P.spec_var list; (*predicate parameters that may become universal variables of universal lemmas*)
     view_labels : Label_only.spec_label list;
@@ -1941,3 +1942,13 @@ and add_term_nums_proc (proc: proc_decl) log_vars add_call add_phase =
 let collect_hp_rels prog= Hashtbl.fold (fun i p acc-> 
 	let name = unmingle_name p.proc_name in
 	(List.map (fun c-> name,c) p.proc_hpdefs)@acc) prog.new_proc_decls []
+
+let look_up_cont_args_x a_args vname cviews=
+  let vdef = look_up_view_def_raw cviews vname in
+  let pr_args = List.combine vdef.view_vars a_args in
+  List.fold_left (fun ls cont_sv -> ls@[List.assoc cont_sv pr_args]) [] vdef.view_cont_vars
+
+let look_up_cont_args a_args vname cviews=
+  let pr1 = !Cpure.print_svl in
+  Debug.no_2 "look_up_cont_args" pr1 pr_id pr1
+      (fun _ _ -> look_up_cont_args_x a_args vname cviews) a_args vname

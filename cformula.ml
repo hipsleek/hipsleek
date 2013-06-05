@@ -3765,6 +3765,7 @@ and disj_count (f0 : formula) = match f0 with
   | _ -> 1
 
 (*=========for sa==========*)
+
 let is_HRel hf=
   match hf with
     | HRel _ -> true
@@ -4040,6 +4041,23 @@ and get_hnodes (f: h_formula) = match f with
       -> (get_hnodes h1)@(get_hnodes h2)
   | _ -> []
 
+let prune_irr_neq_formula_x must_kept_svl lhs_b rhs_b =
+  let r_svl = fv (Base rhs_b) in
+  let rec helper fb=
+    let ptrs = get_ptrs_w_args fb.formula_base_heap in
+    let _,np2 = CP.prune_irr_neq (MCP.pure_of_mix fb.formula_base_pure) (CP.remove_dups_svl (ptrs@r_svl@must_kept_svl)) in
+    let np= MCP.mix_of_pure np2 in
+    {fb with
+        formula_base_pure =  np;
+    }
+  in
+  helper lhs_b
+
+let prune_irr_neq_formula must_kept_svl lhs_b rhs_b=
+  let pr1 = !print_formula_base in
+  Debug.no_3 "prune_irr_neq_formula" !CP.print_svl pr1 pr1 pr1
+      (fun _ _ _ -> prune_irr_neq_formula_x must_kept_svl lhs_b rhs_b)
+      must_kept_svl lhs_b rhs_b
 
 let rec get_h_size_f (f: formula)=
   match f with
@@ -4112,6 +4130,31 @@ let check_imm_mis rhs_mis rhs0 =
   let pr = !print_h_formula in
   Debug.no_2 "check_imm_mis" pr pr pr check_imm_mis rhs_mis rhs0
 
+(*node + args is one group*)
+let get_ptrs_group_hf hf0=
+  let rec helper hf=
+    match hf with
+      | Star {h_formula_star_h1 = hf1;
+        h_formula_star_h2 = hf2;}
+      | StarMinus { h_formula_starminus_h1 = hf1;
+        h_formula_starminus_h2 = hf2;}
+      | Conj { h_formula_conj_h1 = hf1;
+        h_formula_conj_h2 = hf2;}
+      | ConjStar { h_formula_conjstar_h1 = hf1;
+        h_formula_conjstar_h2 = hf2;}
+      | ConjConj { h_formula_conjconj_h1 = hf1;
+        h_formula_conjconj_h2 = hf2;}
+      | Phase { h_formula_phase_rd = hf1;
+        h_formula_phase_rw = hf2;} ->
+         (helper hf1)@(helper hf2)
+      | DataNode hd -> [hd.h_formula_data_node::hd.h_formula_data_arguments]
+      | ViewNode hv -> [hv.h_formula_view_node::hv.h_formula_view_arguments]
+      | HRel _
+      | Hole _
+      | HTrue
+      | HFalse
+      | HEmp ->[]
+  in helper hf0
 
 let rec get_hp_rel_formula (f:formula) =
   match f with
@@ -4453,8 +4496,8 @@ let generate_xpure_view_x drop_hpargs total_unk_map=
   let rec lookup_xpure_view hp rem_map=
     match rem_map with
       | [] -> []
-      | (hp0,xpv)::tl ->
-          if CP.eq_spec_var hp0 hp then
+      | (hps,xpv)::tl ->
+          if CP.mem_svl hp hps then
             [xpv]
           else lookup_xpure_view hp tl
   in
@@ -4463,11 +4506,10 @@ let generate_xpure_view_x drop_hpargs total_unk_map=
     let p,unk_svl,unk_map =
       let xpvs = lookup_xpure_view hp total_unk_map in
       match xpvs with
-        | [xp] ->
-            let xp_r, xp_args = match xp.CP.xpure_view_node with
+        | [xp] -> let xp_r, xp_args = match xp.CP.xpure_view_node with
               | None -> None, xp.CP.xpure_view_arguments
               |Some _ -> Some (List.hd args), (List.tl args)
-            in
+          in
           let new_xpv = {xp with CP.xpure_view_node =  xp_r;
               xpure_view_arguments =  xp_args
                         }
@@ -4475,16 +4517,16 @@ let generate_xpure_view_x drop_hpargs total_unk_map=
           let p = CP.mkFormulaFromXP new_xpv in
           (p,args,[])
         | [] ->
-            let xpv = { CP.xpure_view_node = None;
-                       CP.xpure_view_name = hp_name;
-                       CP.xpure_view_arguments = args;
-                       CP.xpure_view_remaining_branches= None;
-                       CP.xpure_view_pos = no_pos;
-            }
-            in
-            let p = CP.mkFormulaFromXP xpv in
-          (p,args,[(hp,xpv)])
-        | _ -> report_error no_pos "infer.generate_xpure_view: not possible"
+              let xpv = { CP.xpure_view_node = None;
+              CP.xpure_view_name = hp_name;
+              CP.xpure_view_arguments = args;
+              CP.xpure_view_remaining_branches= None;
+              CP.xpure_view_pos = no_pos;
+              }
+              in
+              let p = CP.mkFormulaFromXP xpv in
+              (p,args,[([hp],xpv)])
+        | _ -> report_error no_pos "cformula.generate_xpure_view: impossible"
     in
     (p,unk_svl,unk_map)
   in
@@ -4494,9 +4536,10 @@ let generate_xpure_view_x drop_hpargs total_unk_map=
 let generate_xpure_view drop_hpargs total_unk_map=
   let pr1 = pr_list (pr_pair !CP.print_sv !CP.print_svl) in
   let pr2 = pr_triple !CP.print_svl !CP.print_formula
-    (pr_list (pr_pair !CP.print_sv CP.string_of_xpure_view)) in
+    (pr_list (pr_pair !CP.print_svl CP.string_of_xpure_view)) in
   Debug.no_1 "generate_xpure_view" pr1 pr2
       (fun _ -> generate_xpure_view_x drop_hpargs total_unk_map) drop_hpargs
+
 
 let annotate_dl_hf hf0 unk_hps=
   let rec helper hf=
@@ -4763,9 +4806,9 @@ let drop_view_paras_h_formula hf0 ls_view_pos=
   let rec lookup_view vn args ls=
     match ls with
       | [] -> None
-      | (vn1,ls_pos)::rest ->
+      | (vn1,n_vn1, ls_pos)::rest ->
           if String.compare vn vn1 = 0 then
-            Some (retrieve_args_from_locs args ls_pos)
+            Some (retrieve_args_from_locs args ls_pos,n_vn1)
           else
             lookup_view vn args rest
   in
@@ -4807,7 +4850,9 @@ let drop_view_paras_h_formula hf0 ls_view_pos=
           let on_args = lookup_view hv.h_formula_view_name hv.h_formula_view_arguments ls_view_pos in
             match on_args with
               | None -> hf
-              | Some n_args -> ViewNode {hv with h_formula_view_arguments = n_args}
+              | Some (n_args, n_vn) -> ViewNode {hv with
+                    h_formula_view_name = n_vn;
+                    h_formula_view_arguments = n_args}
       end
       | HRel _
       | Hole _
@@ -4830,7 +4875,7 @@ let drop_view_paras_formula_x (f0:formula) ls_view_pos : formula=
   helper f1
 
 let drop_view_paras_formula (f2_f:formula) ls_view_pos: formula =
-  let pr2 = pr_list(pr_pair pr_id (pr_list string_of_int)) in
+  let pr2 = pr_list(pr_triple pr_id pr_id (pr_list string_of_int)) in
   Debug.no_2 "drop_view_paras_formula" !print_formula pr2
       !print_formula
       drop_view_paras_formula_x f2_f ls_view_pos
@@ -4852,7 +4897,7 @@ let drop_view_paras_struc_formula_x (f0 : struc_formula) ls_view_pos: struc_form
 
 let drop_view_paras_struc_formula (f : struc_formula) ls_view_pos: struc_formula =
   let pr1 = !print_struc_formula in
-  let pr2 = pr_list (pr_pair pr_id (pr_list string_of_int)) in
+  let pr2 = pr_list (pr_triple pr_id pr_id (pr_list string_of_int)) in
   Debug.no_2 " drop_view_paras_struc_formula" pr1 pr2 pr1
       (fun _ _ -> drop_view_paras_struc_formula_x f ls_view_pos) f ls_view_pos
 (*******************************************)
@@ -5149,6 +5194,13 @@ and drop_hrel_hf hf hp_names=
     | HFalse
     | HEmp -> (hf,[])
 
+(* formula -> CP.spec_var list -> formula * CP.exp list list *)
+let drop_hrel_f f0 hp_names =
+  let pr1 = !print_formula in
+  let pr2 = !print_svl in
+  let pr3 = pr_pair !print_formula (pr_list (pr_list !CP.print_exp)) in
+  Debug.no_2 "drop_hrel_f" pr1 pr2 pr3 drop_hrel_f f0 hp_names
+
 let drop_unk_hrel f0 hp_names=
   let rec helper f=
     match f with
@@ -5293,20 +5345,20 @@ and drop_hnodes_hf hf0 hn_names=
              h_formula_conjconj_pos = pos} ->
         let n_hf1 = helper hf1 in
         let n_hf2 = helper hf2 in
-        (ConjConj { h_formula_conjconj_h1 = n_hf1;
-               h_formula_conjconj_h2 = n_hf2;
-               h_formula_conjconj_pos = pos})                              
+        (ConjConj { h_formula_conjconj_h1 = n_hf1; h_formula_conjconj_h2 = n_hf2;
+        h_formula_conjconj_pos = pos})
     | Phase { h_formula_phase_rd = hf1;
               h_formula_phase_rw = hf2;
               h_formula_phase_pos = pos} ->
-        let n_hf1 = helper hf1 in
-        let n_hf2 = helper hf2 in
-        (Phase { h_formula_phase_rd = n_hf1;
-              h_formula_phase_rw = n_hf2;
-              h_formula_phase_pos = pos})
+          let n_hf1 = helper hf1 in
+          let n_hf2 = helper hf2 in
+          (Phase { h_formula_phase_rd = n_hf1;
+          h_formula_phase_rw = n_hf2;
+          h_formula_phase_pos = pos})
     | DataNode hd ->  if CP.mem_svl hd.h_formula_data_node hn_names then HEmp
-        else hf
-    | ViewNode _
+      else hf
+    | ViewNode hv -> if CP.mem_svl hv.h_formula_view_node hn_names then HEmp
+      else hf
     | HRel _
     | Hole _
     | HTrue
@@ -5361,7 +5413,22 @@ and drop_data_view_hrel_nodes f fn_data_select fn_view_select fn_hrel_select dno
              }
     | _ -> report_error no_pos "cformula.drop_data_view_hrel_nodes"
 
-and drop_data_view_hrel_nodes_fb fb fn_data_select fn_view_select fn_hrel_select matched_data_nodes matched_view_nodes matched_hrel_nodes keep_pure_vars=
+and drop_data_view_hpargs_nodes_fb fb fn_data_select fn_view_select fn_hrel_select matched_data_nodes
+      matched_view_nodes matched_hpargs_nodes keep_pure_vars=
+  let new_hf = drop_data_view_hpargs_nodes_hf
+          fb.formula_base_heap fn_data_select fn_view_select fn_hrel_select
+          matched_data_nodes matched_view_nodes matched_hpargs_nodes in
+   (*assume keep vars = dnodes*)
+  let new_p = CP.filter_var_new (MCP.pure_of_mix fb.formula_base_pure) keep_pure_vars in
+  let new_p1 = remove_neqNull_redundant_hnodes_hf new_hf new_p in
+  (* DD.info_pprint ("  keep" ^ (!CP.print_svl keep_pure_vars)) no_pos; *)
+  (* DD.info_pprint ("  new_p" ^ (!CP.print_formula new_p)) no_pos; *)
+  {fb with formula_base_heap = new_hf;
+      formula_base_pure = MCP.mix_of_pure new_p1;}
+
+and drop_data_view_hrel_nodes_fb fb fn_data_select fn_view_select fn_hrel_select matched_data_nodes
+      matched_view_nodes matched_hrel_nodes keep_pure_vars=
+  let _ = DD.ninfo_pprint ("  matched_hrel_nodes:" ^ (!CP.print_svl matched_hrel_nodes)) no_pos in
   let new_hf = drop_data_view_hrel_nodes_hf
           fb.formula_base_heap fn_data_select fn_view_select fn_hrel_select
           matched_data_nodes matched_view_nodes matched_hrel_nodes in
@@ -5373,78 +5440,151 @@ and drop_data_view_hrel_nodes_fb fb fn_data_select fn_view_select fn_hrel_select
   {fb with formula_base_heap = new_hf;
       formula_base_pure = MCP.mix_of_pure new_p1;}
 
-and drop_data_view_hrel_nodes_hf hf fn_data_select fn_view_select fn_hrel_select
-      data_nodes view_nodes hrel_nodes=
-  match hf with
+and drop_data_view_hrel_nodes_hf hf0 fn_data_select fn_view_select fn_hrel_select
+      data_nodes view_nodes hpargs_nodes=
+  let rec helper hf= match hf with
     | Star {h_formula_star_h1 = hf1;
-            h_formula_star_h2 = hf2;
-            h_formula_star_pos = pos} ->
-        let n_hf1 = drop_data_view_hrel_nodes_hf hf1 fn_data_select fn_view_select fn_hrel_select data_nodes view_nodes hrel_nodes in
-        let n_hf2 = drop_data_view_hrel_nodes_hf hf2 fn_data_select fn_view_select fn_hrel_select data_nodes view_nodes hrel_nodes in
-        Debug.ninfo_hprint (add_str "nhf1: " !print_h_formula) n_hf1 no_pos;
-        Debug.ninfo_hprint (add_str "nhf2: " !print_h_formula) n_hf2 no_pos;
-        let res=
-        if (n_hf1 = HEmp) then n_hf2
-        else if (n_hf2 = HEmp) then n_hf1
-        else
-          Star {h_formula_star_h1 = n_hf1;
-                h_formula_star_h2 = n_hf2;
-                h_formula_star_pos = pos}
-        in
-        Debug.ninfo_hprint (add_str "nhf1*nhf2: " !print_h_formula) res no_pos;
-        res
-     | StarMinus { h_formula_starminus_h1 = hf1;
-             h_formula_starminus_h2 = hf2;
-             h_formula_starminus_pos = pos} ->
-        let n_hf1 = drop_data_view_hrel_nodes_hf hf1 fn_data_select fn_view_select fn_hrel_select data_nodes view_nodes hrel_nodes in
-        let n_hf2 = drop_data_view_hrel_nodes_hf hf2 fn_data_select fn_view_select fn_hrel_select data_nodes view_nodes hrel_nodes in
-        StarMinus { h_formula_starminus_h1 = n_hf1;
-               h_formula_starminus_h2 = n_hf2;
-               h_formula_starminus_pos = pos}       
+      h_formula_star_h2 = hf2;
+      h_formula_star_pos = pos} ->
+          let n_hf1 = helper hf1 in
+          let n_hf2 = helper hf2 in
+          Debug.ninfo_hprint (add_str "nhf1: " !print_h_formula) n_hf1 no_pos;
+          Debug.ninfo_hprint (add_str "nhf2: " !print_h_formula) n_hf2 no_pos;
+          let res=
+            if (n_hf1 = HEmp) then n_hf2
+            else if (n_hf2 = HEmp) then n_hf1
+            else
+              Star {h_formula_star_h1 = n_hf1;
+              h_formula_star_h2 = n_hf2;
+              h_formula_star_pos = pos}
+          in
+          Debug.ninfo_hprint (add_str "nhf1*nhf2: " !print_h_formula) res no_pos;
+          res
+    | StarMinus { h_formula_starminus_h1 = hf1;
+      h_formula_starminus_h2 = hf2;
+      h_formula_starminus_pos = pos} ->
+          let n_hf1 = helper hf1 in
+          let n_hf2 = helper hf2 in
+          StarMinus { h_formula_starminus_h1 = n_hf1;
+          h_formula_starminus_h2 = n_hf2;
+          h_formula_starminus_pos = pos}
     | Conj { h_formula_conj_h1 = hf1;
-             h_formula_conj_h2 = hf2;
-             h_formula_conj_pos = pos} ->
-        let n_hf1 = drop_data_view_hrel_nodes_hf hf1 fn_data_select fn_view_select fn_hrel_select data_nodes view_nodes hrel_nodes in
-        let n_hf2 = drop_data_view_hrel_nodes_hf hf2 fn_data_select fn_view_select fn_hrel_select data_nodes view_nodes hrel_nodes in
-        Conj { h_formula_conj_h1 = n_hf1;
-               h_formula_conj_h2 = n_hf2;
-               h_formula_conj_pos = pos}
+      h_formula_conj_h2 = hf2;
+      h_formula_conj_pos = pos} ->
+          let n_hf1 = helper hf1 in
+          let n_hf2 = helper hf2 in
+          Conj { h_formula_conj_h1 = n_hf1;
+          h_formula_conj_h2 = n_hf2;
+          h_formula_conj_pos = pos}
     | ConjStar { h_formula_conjstar_h1 = hf1;
-             h_formula_conjstar_h2 = hf2;
-             h_formula_conjstar_pos = pos} ->
-        let n_hf1 = drop_data_view_hrel_nodes_hf hf1 fn_data_select fn_view_select fn_hrel_select data_nodes view_nodes hrel_nodes in
-        let n_hf2 = drop_data_view_hrel_nodes_hf hf2 fn_data_select fn_view_select fn_hrel_select data_nodes view_nodes hrel_nodes in
-        ConjStar { h_formula_conjstar_h1 = n_hf1;
-               h_formula_conjstar_h2 = n_hf2;
-               h_formula_conjstar_pos = pos}
+      h_formula_conjstar_h2 = hf2;
+      h_formula_conjstar_pos = pos} ->
+          let n_hf1 = helper hf1 in
+          let n_hf2 = helper hf2 in
+          ConjStar { h_formula_conjstar_h1 = n_hf1;
+          h_formula_conjstar_h2 = n_hf2;
+          h_formula_conjstar_pos = pos}
     | ConjConj { h_formula_conjconj_h1 = hf1;
-             h_formula_conjconj_h2 = hf2;
-             h_formula_conjconj_pos = pos} ->
-        let n_hf1 = drop_data_view_hrel_nodes_hf hf1 fn_data_select fn_view_select fn_hrel_select data_nodes view_nodes hrel_nodes in
-        let n_hf2 = drop_data_view_hrel_nodes_hf hf2 fn_data_select fn_view_select fn_hrel_select data_nodes view_nodes hrel_nodes in
-        ConjConj { h_formula_conjconj_h1 = n_hf1;
-               h_formula_conjconj_h2 = n_hf2;
-               h_formula_conjconj_pos = pos}                              
+      h_formula_conjconj_h2 = hf2;
+      h_formula_conjconj_pos = pos} ->
+          let n_hf1 = helper hf1 in
+          let n_hf2 = helper hf2 in
+          ConjConj { h_formula_conjconj_h1 = n_hf1;
+          h_formula_conjconj_h2 = n_hf2;
+          h_formula_conjconj_pos = pos}
     | Phase { h_formula_phase_rd = hf1;
-              h_formula_phase_rw = hf2;
-              h_formula_phase_pos = pos} ->
-        let n_hf1 = drop_data_view_hrel_nodes_hf hf1 fn_data_select fn_view_select fn_hrel_select data_nodes view_nodes hrel_nodes in
-        let n_hf2 = drop_data_view_hrel_nodes_hf hf2 fn_data_select fn_view_select fn_hrel_select data_nodes view_nodes hrel_nodes in
-        Phase { h_formula_phase_rd = n_hf1;
-              h_formula_phase_rw = n_hf2;
-              h_formula_phase_pos = pos}
+      h_formula_phase_rw = hf2;
+      h_formula_phase_pos = pos} ->
+          let n_hf1 = helper hf1 in let n_hf2 = helper hf2 in
+          Phase { h_formula_phase_rd = n_hf1; h_formula_phase_rw = n_hf2;
+          h_formula_phase_pos = pos}
     | DataNode hd -> if fn_data_select hd data_nodes then HEmp
-        else hf
+      else hf
     | ViewNode hv -> if fn_view_select hv view_nodes then HEmp
-        else hf
+      else hf
     | HRel (id,_,_) ->
-        Debug.ninfo_hprint (add_str "HRel: " !CP.print_sv) id no_pos;
-        if (*CP.mem_svl*)fn_hrel_select id hrel_nodes then HEmp
-        else hf
+          Debug.ninfo_hprint (add_str "HRel: " !CP.print_sv) id no_pos;
+          if fn_hrel_select id hpargs_nodes then HEmp
+          else hf
     | Hole _
     | HTrue
     | HFalse
     | HEmp -> hf
+  in
+  helper hf0
+
+and drop_data_view_hpargs_nodes_hf hf0 fn_data_select fn_view_select fn_hrel_select
+      data_nodes view_nodes hpargs_nodes=
+  let rec helper hf= match hf with
+    | Star {h_formula_star_h1 = hf1;
+      h_formula_star_h2 = hf2;
+      h_formula_star_pos = pos} ->
+          let n_hf1 = helper hf1 in
+          let n_hf2 = helper hf2 in
+          Debug.ninfo_hprint (add_str "nhf1: " !print_h_formula) n_hf1 no_pos;
+          Debug.ninfo_hprint (add_str "nhf2: " !print_h_formula) n_hf2 no_pos;
+          let res=
+            if (n_hf1 = HEmp) then n_hf2
+            else if (n_hf2 = HEmp) then n_hf1
+            else
+              Star {h_formula_star_h1 = n_hf1;
+              h_formula_star_h2 = n_hf2;
+              h_formula_star_pos = pos}
+          in
+          Debug.ninfo_hprint (add_str "nhf1*nhf2: " !print_h_formula) res no_pos;
+          res
+    | StarMinus { h_formula_starminus_h1 = hf1;
+      h_formula_starminus_h2 = hf2;
+      h_formula_starminus_pos = pos} ->
+          let n_hf1 = helper hf1 in
+          let n_hf2 = helper hf2 in
+          StarMinus { h_formula_starminus_h1 = n_hf1;
+          h_formula_starminus_h2 = n_hf2;
+          h_formula_starminus_pos = pos}
+    | Conj { h_formula_conj_h1 = hf1;
+      h_formula_conj_h2 = hf2;
+      h_formula_conj_pos = pos} ->
+          let n_hf1 = helper hf1 in
+          let n_hf2 = helper hf2 in
+          Conj { h_formula_conj_h1 = n_hf1;
+          h_formula_conj_h2 = n_hf2;
+          h_formula_conj_pos = pos}
+    | ConjStar { h_formula_conjstar_h1 = hf1;
+      h_formula_conjstar_h2 = hf2;
+      h_formula_conjstar_pos = pos} ->
+          let n_hf1 = helper hf1 in
+          let n_hf2 = helper hf2 in
+          ConjStar { h_formula_conjstar_h1 = n_hf1;
+          h_formula_conjstar_h2 = n_hf2;
+          h_formula_conjstar_pos = pos}
+    | ConjConj { h_formula_conjconj_h1 = hf1;
+      h_formula_conjconj_h2 = hf2;
+      h_formula_conjconj_pos = pos} ->
+          let n_hf1 = helper hf1 in
+          let n_hf2 = helper hf2 in
+          ConjConj { h_formula_conjconj_h1 = n_hf1;
+          h_formula_conjconj_h2 = n_hf2;
+          h_formula_conjconj_pos = pos}
+    | Phase { h_formula_phase_rd = hf1;
+      h_formula_phase_rw = hf2;
+      h_formula_phase_pos = pos} ->
+          let n_hf1 = helper hf1 in let n_hf2 = helper hf2 in
+          Phase { h_formula_phase_rd = n_hf1; h_formula_phase_rw = n_hf2;
+          h_formula_phase_pos = pos}
+    | DataNode hd -> if fn_data_select hd data_nodes then HEmp
+      else hf
+    | ViewNode hv -> if fn_view_select hv view_nodes then HEmp
+      else hf
+    | HRel (id,eargs,_) ->
+          Debug.ninfo_hprint (add_str "HRel: " !CP.print_sv) id no_pos;
+          if fn_hrel_select (id, List.concat (List.map CP.afv eargs)) hpargs_nodes then HEmp
+          else hf
+    | Hole _
+    | HTrue
+    | HFalse
+    | HEmp -> hf
+  in
+  helper hf0
 
 and mkAnd_f_hf f hf pos=
   match f with
@@ -5569,67 +5709,6 @@ and subst_hrel_hf hf hprel_subst=
     | HFalse
     | HEmp -> hf
 
-(* let rec rename_hrel ss f= *)
-(*   match f with *)
-(*     | Base fb -> Base {fb with formula_base_heap =  rename_hrel_hf ss fb.formula_base_heap;} *)
-(*     | Or orf -> Or {orf with formula_or_f1 = rename_hrel ss orf.formula_or_f1; *)
-(*                 formula_or_f2 = rename_hrel ss orf.formula_or_f2;} *)
-(*     | Exists fe -> Exists {fe with formula_exists_heap = rename_hrel_hf ss fe.formula_exists_heap;} *)
-
-(* and rename_hrel_hf ss hf0= *)
-(*   let rec eq_spec_var_order_list l1 l2= *)
-(*   match l1,l2 with *)
-(*     |[],[] -> true *)
-(*     | v1::ls1,v2::ls2 -> *)
-(*         if CP.eq_spec_var v1 v2 then *)
-(*           eq_spec_var_order_list ls1 ls2 *)
-(*         else false *)
-(*     | _ -> false *)
-(*   in *)
-(*   let find_and_rename (hp1,eargs,p) (hp0,(hp2, args2))= *)
-(*     if CP.eq_spec_var hp1 hp2 then *)
-(*       (\*should specvar subst*\) *)
-(*        let args1 = (List.fold_left List.append [] (List.map CP.afv eargs)) in *)
-(*        if eq_spec_var_order_list args1 args2 then *)
-(*          (hp0,eargs,p) *)
-(*        else (hp1,eargs,p) *)
-(*     else (hp1,eargs,p) *)
-(*   in *)
-(*   let rec helper hf= *)
-(*   match hf with *)
-(*     | Star {h_formula_star_h1 = hf1; *)
-(*             h_formula_star_h2 = hf2; *)
-(*             h_formula_star_pos = pos} -> *)
-(*         let n_hf1 = helper hf1 in *)
-(*         let n_hf2 = helper hf2 in *)
-(*         Star {h_formula_star_h1 = n_hf1; *)
-(*               h_formula_star_h2 = n_hf2; *)
-(*               h_formula_star_pos = pos} *)
-(*     | Conj { h_formula_conj_h1 = hf1; *)
-(*              h_formula_conj_h2 = hf2; *)
-(*              h_formula_conj_pos = pos} -> *)
-(*         let n_hf1 = helper hf1 in *)
-(*         let n_hf2 = helper hf2 in *)
-(*         Conj { h_formula_conj_h1 = n_hf1; *)
-(*                h_formula_conj_h2 = n_hf2; *)
-(*                h_formula_conj_pos = pos} *)
-(*     | Phase { h_formula_phase_rd = hf1; *)
-(*               h_formula_phase_rw = hf2; *)
-(*               h_formula_phase_pos = pos} -> *)
-(*         let n_hf1 = helper hf1 in *)
-(*         let n_hf2 = helper hf2 in *)
-(*         Phase { h_formula_phase_rd = n_hf1; *)
-(*               h_formula_phase_rw = n_hf2; *)
-(*               h_formula_phase_pos = pos} *)
-(*     | DataNode hd -> hf *)
-(*     | ViewNode hv -> hf *)
-(*     | HRel h -> HRel (find_and_rename h ss) *)
-(*     | Hole _ *)
-(*     | HTrue *)
-(*     | HFalse *)
-(*     | HEmp -> hf *)
-(*   in *)
-(*   helper hf0 *)
 
 let rec subst_hrel_hview_f f subst=
   match f with
@@ -5837,7 +5916,7 @@ think it is used to instantiate when folding.
   es_infer_vars_rel : CP.spec_var list;
   es_infer_vars_sel_hp_rel: CP.spec_var list;
   es_infer_vars_sel_post_hp_rel: CP.spec_var list;
-  es_infer_hp_unk_map: (CP.spec_var*CP.xpure_view) list ;(*(CP.spec_var * CP.spec_var list) list;*)
+  es_infer_hp_unk_map: ((CP.spec_var * int) list * CP.xpure_view) list ;
   es_infer_vars_hp_rel : CP.spec_var list;
   (* input vars to denote vars already instantiated *)
   es_infer_vars_dead : CP.spec_var list; 
@@ -7924,7 +8003,14 @@ and compose_context_formula (ctx : context) (phi : formula) (x : CP.spec_var lis
 (* 	if (allFalseCtx ctx) then ctx (\* (false_ctx (mkFalseFlow) no_pos) *\) *)
 (* 								else  ctx *)
 		
-and normalize_es (f : formula) (pos : loc) (result_is_sat:bool) (es : entail_state): context = 
+and normalize_es (f : formula) (pos : loc) (result_is_sat:bool) (es : entail_state): context =
+  let pr = !print_formula in
+  let pr_e = !print_entail_state in
+  let pr_c = !print_context in
+  Debug.no_2 "normalize_es" pr pr_e pr_c (fun _ _ -> normalize_es_x  f pos  result_is_sat es) f es
+
+
+and normalize_es_x (f : formula) (pos : loc) (result_is_sat:bool) (es : entail_state): context = 
 	Ctx {es with es_formula = normalize 3 es.es_formula f pos; es_unsat_flag = es.es_unsat_flag&&result_is_sat} 
 
 and normalize_es_combine (f : formula) (result_is_sat:bool)(pos : loc) (es : entail_state): context =
@@ -7968,6 +8054,12 @@ match ctx with
 		
 (* -- 17.05.2008 *)
 and normalize_clash_es (f : formula) (pos : loc) (result_is_sat:bool)(es:entail_state): context =
+  let pr = !print_formula in
+  let pr_e = !print_entail_state in
+  let pr_c = !print_context in
+  Debug.no_2 "normalize_clash_es" pr pr_e pr_c (fun _ _ -> normalize_clash_es_x  f pos  result_is_sat es) f es
+
+and normalize_clash_es_x (f : formula) (pos : loc) (result_is_sat:bool)(es:entail_state): context =
   (* let _ = print_string ("\nCformula.ml: normalize_clash_es") in *)
   match f with
 	| Or ({formula_or_f1 = phi1; formula_or_f2 =  phi2; formula_or_pos = _}) ->
@@ -8844,6 +8936,25 @@ let rec foldheap_struc_formula (h:h_formula -> 'a) (f_comb: 'a list -> 'a)  (e:s
 	  | EInfer b -> foldheap_struc_formula h f_comb b.formula_inf_continuation
 	  | EList b ->  f_comb (fold_l_snd h_f b)
 
+(* 
+  type: formula ->
+  'a ->
+  'c * ('a -> formula -> (formula * 'b) option) *
+  ('a -> h_formula -> (h_formula * 'b) option) *
+  (('a -> Cpure.formula -> (Cpure.formula * 'b) option) *
+   ('a -> Cpure.b_formula -> (Cpure.b_formula * 'b) option) *
+   ('a -> Cpure.exp -> (Cpure.exp * 'b) option)) *
+  (('a -> Mcpure_D.memoised_group -> (Mcpure_D.memoised_group * 'b) option) *
+   (Mcpure_D.memoised_constraint -> 'd -> Mcpure_D.memoised_constraint * 'b) *
+   ('d -> Mcpure_D.var_aset -> Mcpure_D.var_aset * 'b list) *
+   (Cpure.formula -> 'd -> Cpure.formula * 'b) *
+   (Cpure.spec_var -> 'd -> Cpure.spec_var * 'b)) ->
+  'e * ('a -> formula -> 'a) * ('a -> h_formula -> 'a) *
+  (('a -> Cpure.formula -> 'a) * ('a -> Cpure.b_formula -> 'a) *
+   ('a -> Cpure.exp -> 'a)) *
+  ('a -> Mcpure_D.memoised_group -> 'd) -> ('b list -> 'b) -> formula * 'b
+*)
+
 let trans_formula (e: formula) (arg: 'a) f f_arg f_comb: (formula * 'b) =
   let f_struc_f, f_f, f_heap_f, f_pure, f_memo = f in
   let f_struc_f_arg, f_f_arg, f_heap_f_arg, f_pure_arg, f_memo_arg = f_arg in
@@ -8883,6 +8994,20 @@ let trans_formula (e: formula) (arg: 'a) f f_arg f_comb: (formula * 'b) =
             (new_exists, f_comb [v1; v2])
   in
   trans_f e arg
+
+(* let map_formula (e: formula) f f_comb: (formula * 'b) = *)
+(*   let f_struc_f, f_f, f_heap_f, f_pure, f_memo = f in *)
+(*   let n_f_struc_f _ e = f_struc_f e in *)
+(*   let n_f_f _ e = f_f e in *)
+(*   let n_f_heap_f _ e = f_heap_f e in *)
+(*   let (f_pure_1,f_pure_2,f_pure_3) = f_pure in *)
+(*   let n_f_pure =  (fun _ e -> f_pure_1 e,fun _ e -> f_pure_3 e,fun _ e -> f_pure_3 e) in *)
+(*   let (f_memo_1,f_memo_2,f_memo_3,f_memo_4,f_memo_5) = f_memo  in *)
+(*   let n_f_memo =  (fun _ e -> f_memo_1 e,fun e _ -> f_memo_2 e,fun _ e -> f_memo_3 e,fun e _ -> f_memo_4 e,fun e _ -> f_memo_5 e) in *)
+(*   let new_f = (n_f_struc_f, n_f_f, n_f_heap_f, n_f_pure, n_f_memo) in *)
+(*   let no_f _ _ = () in *)
+(*   let new_f_arg = (no_f,no_f,no_f,(no_f,no_f,no_f),no_f) in *)
+(*   trans_formula e () new_f new_f_arg f_comb *)
 
 let rec transform_struc_formula f (e:struc_formula) :struc_formula = 
   let (f_e_f, f_f, f_h_f, f_p_t) = f in
@@ -9259,6 +9384,14 @@ let normalize_max_renaming_list_failesc_context f pos b ctx =
   (* let _ = print_string("cris: normalize 12\n") in *)
     if !max_renaming then transform_list_failesc_context (idf,idf,(normalize_es f pos b)) ctx
       else transform_list_failesc_context (idf,idf,(normalize_clash_es f pos b)) ctx
+
+let normalize_max_renaming_list_failesc_context f pos b ctx =
+  let pr_f = !print_formula in
+  let pr_ctx = pr_list !print_failesc_context in
+  Debug.no_2 "normalize_max_renaming_list_failesc_context" 
+      pr_f pr_ctx pr_ctx
+      (fun _ _ -> normalize_max_renaming_list_failesc_context f pos b ctx) f ctx
+
 let normalize_max_renaming_list_failesc_context f pos b ctx =
   (* let _ = print_string("cris: normalize 13\n") in *)
   Gen.Profiling.do_2 "normalize_max_renaming_list_failesc_context" (normalize_max_renaming_list_failesc_context f pos) b ctx
@@ -9814,6 +9947,7 @@ and disable_imm_last_phase lctx =
       let new_cl = List.map (fun c -> disable_imm_last_phase_ctx c) cl
       in SuccCtx(new_cl))
 
+
 and add_to_subst lctx r_subst l_subst =
   match lctx with
     | FailCtx _ -> lctx
@@ -9827,6 +9961,13 @@ and add_to_subst lctx r_subst l_subst =
     		})) c) cl
       in SuccCtx(new_cl)
 
+let add_to_subst lctx r_subst l_subst =
+  let pr = !print_svl in
+  Debug.no_2 "add_to_subst" pr pr pr_none (fun _ _ -> add_to_subst lctx r_subst l_subst) r_subst l_subst
+
+let enable_imm_last_phase lctx =
+  let pr = !print_list_context in
+  Debug.no_1 "enable_imm_last_phase" pr pr (fun _ -> enable_imm_last_phase lctx) lctx 
 
 let reset_original (f : formula) : formula = add_original f true 
 let reset_original_es x = {x with es_formula = (reset_original x.es_formula)} 

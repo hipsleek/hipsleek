@@ -42,6 +42,10 @@ A pre-predicate p(..) is unused if it never appears on
 the LHS. Correspondingly, a post-predicate p(..) is unused
 if it never appears on the RHS
 
+Given:
+ H1(c) --> c!=null -> c::node<_,prev_19_765',next_19_766'>@M *  HP_795(prev_19_765') *
+           H1(next_19_766') .
+Derive:
  H1(c)&c!=null --> c::node<_,prev_19_765',next_19_766'>@M * H1(next_19_766')&true.
 
 

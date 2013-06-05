@@ -15,18 +15,62 @@ HeapPred G1(node a, node b).
 node paper_fix (node c, node p)
   infer[H1,G1] requires H1(c,p) ensures G1(c,p);
 {
-	if (c!=null) 
-	{
+  if (c!=null) 
+    {
       bind c to (_,pp,nn) in {
-		pp=p;
-                dprint;
-		paper_fix(nn,c);	
+        pp=p;
+        dprint;
+        paper_fix(nn,c);
       }
-	}
-	return c;
+    }
+  return c;
 }
 
   /*
+
+[
+
+H1(c,p)&c!=null --> c::node<Anon_784,pp_785,nn_786>@M * 
+  (HP_787(pp_785,p)) * (HP_788(nn_786,p))&true,
+ HP_788(nn_786,p)&c'!=null --> H1(nn_786,c')&true,
+ (HP_787(pp_785,p)) * (G1(nn_786,c)) * c::node<Anon_784,p,nn_786>@M&
+  true --> G1(c,p)&true,
+ H1(c,p)&c=null --> emp&true,
+ H1(c,p)&c=null --> G1(c,p)&true]
+ ^^^^^^^ to remove
+ 
+
+ checkentail H1(c,p)&c=null & !(v_bool_18_760') & c=null & !(v_bool_18_760') & c=res&
+{FLOW,(22,23)=__norm}[]
+ |-  G1(c,p)&true&{FLOW,(22,23)=__norm}[]. 
+hprel_ass: [ H1(c,p)&c=null --> G1(c,p)&true,
+ H1(c,p)&c=null --> emp&true]
+
+
+H1(c,p)&c!=null --> c::node<Anon_11',pp',nn'>@M * (HP_784(pp',p)) * 
+  (HP_785(nn',p))&true,
+ (HP_785(nn',p)) * c'::node<Anon_11',p,nn'>@M&true --> H1(nn',c')&true,
+ (HP_784(pp_786,p)) * (G1(nn_797,c)) * c::node<Anon_796,p,nn_797>@M&
+  true --> G1(c,p)&true,
+ H1(c,p)&c=null --> emp&true,
+ emp&c=null --> G1(c,p)&true]
+
+ 
+
+
+[ H1(c,p)&c!=null --> c::node<Anon_11',pp',nn'>@M * (HP_784(pp',p)) * 
+  (HP_785(nn',p))&true,
+
+ (HP_785(nn',p)) * c'::node<Anon_11',p,nn'>@M&true --> H1(nn',c')&true,
+  ^^^^^ wrong ^^^^
+
+ (HP_784(pp_786,p)) * (G1(nn_797,c)) * c::node<Anon_796,p,nn_797>@M&
+  true --> G1(c,p)&true,
+
+ H1(c,p)&c=null --> emp&true,
+
+ emp&c=null --> G1(c,p)&true]
+
 
 [ H1(c,p)&c!=null --> c::node<Anon_11',pp',nn'>@M * (HP_771(pp',p)) * 
   (HP_772(nn',p))&true,

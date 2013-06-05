@@ -1,0 +1,378 @@
+# cll-imm.slk   DONE (fixed by Andreea)
+
+  false when @L is used
+
+infer [] x::node<_,_> |-  x::node<a,b>@L. 
+print residue.
+
+/*
+Why is there a false on conseq?
+
+INPUT: 
+ ### ante =  x::node<Anon_11,Anon_12>@M[Orig]&true&{FLOW,(19,20)=__norm}[]
+ ### conseq =  EBase exists (Expl)(Impl)[a; b](ex)x::node<a,b>@L[Orig]&false&
+       {FLOW,(19,20)=__norm}[]
+
+*/
+(**************************************)
+
+# cll-d1.slk: FIXED
+
+infer [HP_6,x] HP_6(n) & n=v & v!=null & x!=n
+    |-  v::node<_,_> .
+print residue.
+
+/*
+This currently generates:
+ <1>HP_28(Anon_27)&n=v & v!=null & n!=x & Anon_11=Anon_26 & Anon_12=Anon_27&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [HP_6(v)&v!=null --> v::node<Anon_26,Anon_27>@M * 
+                   (HP_28(Anon_27))&true]
+
+I wonder if we can add a constraint v!=x and generate instead:
+
+ inferred hprel: [HP_6(v)&v!=null & v!=x --> v::node<Anon_26,Anon_27>@M * 
+                   (HP_28(Anon_27))&true]
+
+This is to allow parameter expansion, later to:
+
+ HP_6(v) --> HP_6e(v,n)
+ inferred hprel: [HP_6(v,n)&v!=null & v!=x --> v::node<Anon_26,Anon_27>@M * 
+                   (HP_28(Anon_27))&true]
+
+
+*/
+***************************************************
+# cll-d2a.slk: FIXED
+
+infer [HP_6,x]
+HP_6(v) * xp::node<val_35_804,v> & n!=x & n=v & x=xp
+ |-  v::node<_,_> .
+print residue.
+
+/*
+Why isn't x!=v captured here? just because of an extra x=xp?
+
+ inferred hprel: [HP_6(v)&true --> v::node<Anon_47,Anon_48>@M * 
+                   (HP_49(Anon_48))&true]
+*/
+
+***************************************************
+
+# cll-d2a.slk: : FIXED
+
+Why did the 2nd version below dropped HP_6 pred on
+the LHS?
+
+ <1>(HP_6(n)) * xp::node<val_35_804,n>@M[Orig] * (HP_51(Anon_50))&x=xp & n!=x & n=v & Anon_13=Anon_49 & Anon_14=Anon_50&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [emp&v!=x --> v::node<Anon_49,Anon_50>@M * (HP_51(Anon_50))&
+                   true]
+
+infer [HP_6,x]
+HP_6(v) * xp::node<val_35_804,n> & x=xp & n!=x & n=v 
+ |-  v::node<_,_> .
+print residue.
+
+infer [HP_6,x]
+HP_6(n) * xp::node<val_35_804,n> & x=xp & n!=x & n=v 
+ |-  v::node<_,_> .
+print residue.
+
+***************************************************
+# cll-d3a.slk: DONE (--sa-split-base)
+
+infer [HP_6] HP_6(n) * x_814::node<_,n> & x=x_814 & n=x_814 & xp=null
+ |-  G(x,xp). 
+print residue.
+/*
+ Should we first obtain:
+   HP_6(n) * x::node<_,n> & x=n & xp=null --> G(x,xp)
+
+ After that, we can split to:
+   HP_6(n) & x=n --> emp
+   x::node<_,n> & x=n & xp=null --> G(x,xp)
+
+ This split should be organized as a procedure that is
+ invoked as --en-split-base ==> --sa-split-base
+
+ Why is x_814::node<..> duplicated in your split-base operation?
+
+ <1>HP_6(n)&x=x_814 & n=x_814 & xp=null&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [x_814::node<Anon_11,x_814>@M&xp=null --> G_28(x_814,xp)&
+                   true; 
+                  (HP_6(x_814)) * x_814::node<Anon_11,x_814>@M&true --> emp&
+                   true]
+*/
+
+infer [HP_6,x,G] HP_6(n) * x_814::node<_,n> & x=x_814 & n=x_814 & xp=null
+ |-  G(x,xp). 
+print residue.
+
+/*
+  Obtained:
+
+ <1>HP_6(n)&x=x_814 & n=x_814 & xp=null&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [x::node<Anon_12,x>@M&xp=null --> G_39(x,xp)&true; 
+                  (HP_6(x_814)) * x_814::node<Anon_12,x_814>@M&true --> emp&
+                   true]
+
+  Why did we not capture  x!=x_814 below?
+  Remember that this is always for pre-pred implication.
+
+  HP_6(x_814) & x=x_814 --> emp
+  x::node<_,n> & n=x & xp=null -> G(x,xp).
+
+*/
+
+***************************************************
+# cll-d3b.slk: FIXED
+
+some scenarios for inferences
+
+//sol: check infer_vars_hp in rhs only
+infer [HP_6] HP_6(x) * x::node<_,x> & xp=null
+ |-  G(x,xp).
+print residue.
+// expecting a failure since G(..) is not to be inferred
+
+infer [G] HP_6(x) * x::node<_,x> & xp=null
+ |-  G(x,xp). 
+print residue.
+/*
+ expecting
+   x::node<_,x> & xp=null --> G(x,xp)
+  since HP_6 is not to be inferred
+*/
+
+infer [G,HP_6] HP_6(x) * x::node<_,x> & xp=null
+ |-  G(x,xp). 
+print residue.
+/*
+ expecting
+   HP_6(x) & x::node<_,x> & xp=null --> G(x,xp)
+ which is later base-splitted into:
+   HP_6(x) --> emp
+   x::node<_,x> & xp=null --> G(x,xp)
+*/
+
+infer [G,HP_6,x] HP_6(x) * x::node<_,x> & xp=null
+ |-  G(x,xp). 
+print residue.
+/*
+ expecting
+   HP_6(x) & x::node<_,x> & xp=null --> G(x,xp)
+ which is later base-splitted into:
+   HP_6(v) & v=x --> emp
+   x::node<_,x> & xp=null --> G(x,xp)
+*/
+***********************************************
+# bug-imm.ss (TODO Andreea to fix)
+
+/* function to delete the node after the head in a circular list */
+void delete(ref node x)
+
+	requires x::ll<> & x!=null
+	ensures x'::ll<> & x::node<_,null>;
+
+/*
+
+Post-cond has a "conjunction" but this result in
+wrong message below:
+
+Exception Failure("The postcondition cannot contain @L heap predicates/data nodes/field annotations\n") Occurred!
+(Program not linked with -g, cannot print stack backtrace)
+
+
+*/
+***********************************************
+# ll-d1.slk: FIXED
+
+
+relAssume  H
+ H(x) --> x::node<_,nn> .
+relAssume  G
+ x::node<_,null> &  x'=null  --> G(x,x').
+relAssume  G
+ x::node<_,null> &  x'=nn --> G(x,x').
+
+This bug occurs before merging with default too.
+
+/*
+!! >>>>>> step 1: find dangling ptrs that link pre and post-preds<<<<<<
+ERROR: at _0:0_0:0 
+Message: SAU.drop_get_hrel: not handle yet
+ Fatal error: exception Failure("SAU.drop_get_hrel: not handle yet")
+
+*/
+
+*****************************************************
+# cll-d3a.slk (without --sa-split-base)  OK
+
+infer [HP_6,G] HP_6(n) * x_814::node<_,n> & x=x_814 & n=x_814 & xp=null
+ |-  G(x,xp). 
+print residue.
+/*
+Got:
+ <1>emp&x=x_814 & n=x_814 & xp=null & x=x_814&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [(HP_6(n)) * x_814::node<Anon_11,n>@M&n=x_814 & 
+                   xp=null --> G(x_814,xp)&true]
+Expecting:
+  (HP_6(n)) * x_814::node<Anon_11,n>@M&n=x_814 & 
+                   xp=null & x=x_814 --> G(x_814,xp)&true]
+
+Look at RHS G(x_814,xp). Extract connected heap predicate for x_815
+and all pure predicates linked from there and x_418,xp.
+
+*/
+
+infer [HP_6,G,x] HP_6(n) * x_814::node<_,n> & x=x_814 & n=x_814 & xp=null
+ |-  G(x,xp). 
+print residue.
+/*
+
+Got:
+<1>HP_6(n)&x=x_814 & n=x_814 & xp=null&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [(HP_6(x)) * x::node<Anon_12,x>@M&xp=null --> G(x,xp)&true]
+
+Expecting:
+<1> emp &x=x_814 & n=x_814 & xp=null&{FLOW,(19,20)=__norm}[]
+  (HP_6(n)) * x_814::node<Anon_11,n>@M&n=x_814 & 
+                   xp=null & x=x_814 --> G(x_814,xp)&true]
+
+Look at RHS G(x_814,xp). Extract connected heap predicate for x_815
+and all pure predicates linked from there and x_418,xp.
+
+*/
+***********************************************************************
+# cll-d3a.slk --sa-split-base  OK
+
+infer [HP_6,G] HP_6(n) * x_814::node<_,n> & x=x_814 & n=x_814 & xp=null
+ |-  G(x,xp). 
+print residue.
+/*
+Got:
+ <1>HP_6(n)&x=x_814 & n=x_814 & xp=null & x=x_814&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [x_814::node<Anon_11,n>@M&n=x_814 & xp=null --> G(x_814,xp)&
+                   true; 
+                  HP_6(n)&n=x_814 --> emp&true]
+Problems :
+  (i) why is HP_6(n) present in the residue?
+       <1>HP_6(n)&x=x_814 & n=x_814 & xp=null & x=x_814&{FLOW,(19,20)=__norm}[]
+
+ (ii) For pre-predicate on the LHS, we should just have:
+                  HP_6(n) --> emp
+
+Solution:
+=========
+Assuming:
+  (HP_6(n)) * x_814::node<Anon_11,n>@M&n=x_814 & 
+                   xp=null & x=x_814 --> G(x_814,xp)&true]
+Split:
+  (HP_6(n)) & n=x_814 & x=x_814 --> emp
+  x_814::node<Anon_11,n>@M& n=x_814 & 
+                   xp=null & x=x_814 --> G(x_814,xp)&true]
+
+Simplify :
+  HP_6(n)  --> emp  (using exists x_814,x)
+  x_814::node<Anon_11,n>@M& n=x_814 & 
+                   xp=null --> G(x_814,xp)&true (using exists x)
+
+*/
+
+infer [HP_6,G,x] HP_6(n) * x_814::node<_,n> & x=x_814 & n=x_814 & xp=null
+ |-  G(x,xp). 
+print residue.
+/*
+Got:
+ <1>HP_6(n)&x=x_814 & n=x_814 & xp=null&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [x::node<Anon_12,x>@M&xp=null --> G(x,xp)&true; 
+                  HP_6(x)&true --> emp
+
+  (i) why is HP_6(n) present in the residue?
+       <1>HP_6(n)&x=x_814 & n=x_814 & xp=null & x=x_814&{FLOW,(19,20)=__norm}[]
+
+ (ii) For pre-pred on the LHS, we should keep var x and n
+      separately, and generate instead:
+                  HP_6(n) & n=x --> emp
+
+*/
+Solution:
+=========
+Assuming:
+  (HP_6(n)) * x_814::node<Anon_11,n>@M&n=x_814 & 
+                   xp=null & x=x_814 --> G(x_814,xp)&true]
+Split:
+  (HP_6(n)) & n=x_814 & x=x_814 --> emp
+  x_814::node<Anon_11,n>@M& n=x_814 & 
+                   xp=null & x=x_814 --> G(x_814,xp)&true]
+
+Simplify :
+  HP_6(n) & n=x  --> emp  (using exists x_814)
+  x_814::node<Anon_11,n>@M& n=x_814 & 
+                   xp=null --> G(x_814,xp)&true (using exists x)
+**********************************************************
+# TODO post-condition extraction of pre-pred for hip
+
+Towards the end of proving, we will need to extract
+pre-pred from the residue hip state during post-condition
+proving; if pre-pred  are being inferred.
+**********************************************************
+# ll-d2.slk  TODO
+
+relAssume  G
+ x::node<_,null> &  xp=null  --> G(x,xp).
+relAssume  G
+ x::node<_,null> &  xp!=null --> G(x,xp).
+
+shape_infer [][G].
+
+/*
+Got:
+ G(x_37,xp_38) ::= x_37::node<Anon_11,flted_10_16>@M * (HP_39(flted_10_16,xp_38))&true,
+ HP_39(flted_10_16,xp_38) ::= emp&flted_10_16=null & xp_38=null]
+
+However, expecting:
+ G(x_37,xp_38) ::= 
+     x_37::node<Anon_11,null>@M *& xp_38=null
+  or x_37::node<Anon_12,null>@M *& xp_38!=null
+
+*/
+**********************************************************
+# cll-d3a2.slk  TODO
+
+infer [H,G] H(n) * x::node<_,n>  & xp=null
+ |-  G(x,xp). 
+print residue.
+/*
+ <1>emp&xp=null&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [(H(n)) * x::node<Anon_11,n>@M&xp=null --> G(x,xp)&true]
+
+At the sleek level, we do not know if H is a pre-pred or a post-pred.
+Hence, it is not useful to invoke --sa-split-base
+
+This must instead be done by shape_infer; after redundant pred has
+been identified and removed. For relAssume with both pre/post pred,
+we attempt to do a base-case split.
+
+To test it, we could support the following in sleek:
+
+relAssume 
+   (H(n)) * x::node<Anon_11,n>@M&xp=null --> G(x,xp)&true.
+shape_split_base [H][G].
+
+Alternatively, we could use:
+ infer [H@pre,G@post] H(n) * x::node<_,n>  & xp=null
+   |-  G(x,xp). 
+ print residue.
+and then use the pre/post annotation to support
+base-case-split
+
+*/
+
+# ll-del-1.slk
+
+Why is the following basic thing failing?
+
+infer [H] H(x) |-  x::node<_,_>.
+print residue.
+
+//Entail (1) : Fail.

@@ -1,0 +1,28 @@
+data node{
+ int val;
+ node next;
+}.
+
+
+HeapPred H(node a).
+HeapPred HP_6(node a).
+HeapPred HP_7(node a).
+HeapPred G(node a, node a).
+
+relAssume  H
+ H(x) --> x::node<_,nn> .
+relAssume  G
+ x::node<_,null> &  xp=null  --> G(x,xp).
+relAssume  G
+ x::node<_,null> &  xp!=null --> G(x,xp).
+
+
+shape_infer [H][G].
+
+/*
+!! >>>>>> step 1: find dangling ptrs that link pre and post-preds<<<<<<
+ERROR: at _0:0_0:0 
+Message: SAU.drop_get_hrel: not handle yet
+ Fatal error: exception Failure("SAU.drop_get_hrel: not handle yet")
+
+*/

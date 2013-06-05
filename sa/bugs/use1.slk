@@ -7,7 +7,7 @@ data node{
 pred G1<y> == self::node<_,p,t> * t::G2<p,y>.
 
 pred G2<p:node,y> == self=y
-  or self::node<_,pp,tt> * qq::G2<pp,y>.
+  or self::node<_,pp,tt> * tt::G2<pp,y>.
 
 
 shape_elim_useless [G1,G2].

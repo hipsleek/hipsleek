@@ -28,6 +28,6 @@ relAssume G1
  emp&c=null --> G1(c,p)&true.
 */
 
-shape_infer [H1][G1].//[pre_hps][post_hps]
+shape_infer [H1][].//[pre_hps][post_hps]
 
 

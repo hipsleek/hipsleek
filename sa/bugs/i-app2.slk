@@ -18,7 +18,6 @@ relAssume H1
 relAssume HP_4
   HP_4(n,y) & n=null --> emp.
 
-
 shape_infer [H1,HP_4][].
 
 /*

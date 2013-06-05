@@ -1,0 +1,28 @@
+data node{
+	int val;
+	node next;
+}.
+
+HeapPred H2(node a).
+
+pred lseg<p> ==
+    self::node<_,p> 
+  or self::node<_,q> * q::lseg<p> 
+ inv true.
+
+infer [H2] H2(r)   |- r::node<n,q> & n>0 .
+print residue.
+
+/*
+Can we support pure inference within shape?
+Can shape be done independently of pure property?
+
+!!! >>>>>> infer_pure_m <<<<<<
+!!! Adding heap assumption?
+!!! unk_heaps:[ HP_33(q_32)]
+!!! lhs_xpure: n=n_31
+!!! rhs_xpure: 0<n
+!!! choose_unk_h:[]
+Entail (1) : Fail.
+
+*/

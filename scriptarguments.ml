@@ -99,6 +99,10 @@ let common_arguments = [
    "Sleek Log Filter Flag");
   ("--elp", Arg.Set Globals.check_coercions,
    "Enable Lemma Proving");
+  ("--trace", Arg.Set Debug.trace_on,
+   "Turn on brief tracing");
+  ("--dis-trace", Arg.Clear Debug.trace_on,
+   "Turn off brief tracing");
   ("-dd", Arg.Set Debug.devel_debug_on,
    "Turn on devel_debug");
   ("-dd-print-orig-conseq", Arg.Unit Debug.enable_dd_and_orig_conseq_printing,
@@ -113,7 +117,7 @@ let common_arguments = [
    "Timeout for imply checking");
   ("--sleek-timeout", Arg.Set_float Globals.sleek_timeout_limit,
    "Timeout for SLEEK entailment");
-  ("--dis-provers-timeout", Arg.Set Globals.dis_provers_timeout,
+  ("--ds-provers-timeout", Arg.Set Globals.dis_provers_timeout,
    "Disable timeout on provers");
   ("--log-proof", Arg.String Prooftracer.set_proof_file,
    "Log (failed) proof to file");
@@ -381,6 +385,7 @@ let common_arguments = [
   ("--sa-useless", Arg.Set Globals.sa_elim_useless, "elim useless parameter from HP predicate");
   ("--sa-refine-dang", Arg.Set Globals.sa_refine_dang, "refine dangling among branches of one hprels def");
   ("--sa-inlining", Arg.Set Globals.sa_inlining, "inline dangling HP/pointers");
+  ("--sa-split-base", Arg.Set Globals.sa_split_base, "split constraints with base case");
   ("--sa-split", Arg.Set Globals.sa_en_split, "splitting hp args into multiple hp if possible");
   ("--sa-unify-dangling", Arg.Set Globals.sa_unify_dangling, "unify branches of definition to instantiate dangling predicate");
   ("--sa-tree-simp", Arg.Set Globals.sa_tree_simp, "simplify a tree branches of definition");

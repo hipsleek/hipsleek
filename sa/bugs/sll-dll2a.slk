@@ -1,0 +1,34 @@
+data node{
+	int val;
+	node prev;
+	node next;
+}.
+
+HeapPred H1(node a, node b).
+HeapPred G1(node a, node b).
+HeapPred HP_4(node a, node b).
+HeapPred HP_5(node a, node b).
+
+relAssume H1
+  H1(c,p)&c!=null --> c::node<_,pp',nn'> * HP_4(pp',p) * 
+  HP_5(nn',p).
+
+relAssume H1
+ HP_5(nn',p)&c'!=null --> H1(nn',c').
+
+relAssume H1
+ H1(c,p)&c=null --> emp .
+
+relAssume G1
+ HP_4(pp_786,p) * G1(nn_797,c) * c::node<Anon_796,p,nn_797>
+    --> G1(c,p).
+
+relAssume G1
+ emp&c=null --> G1(c,p) .
+
+shape_infer [H1][G1].//[pre_hps][post_hps]
+
+/*
+[ 
+
+*/
