@@ -496,7 +496,7 @@ let generalize_one_hp_x prog hpdefs non_ptr_unk_hps unk_hps par_defs=
     (* (\*root = p && p:: node<_,_> ==> root = p& root::node<_,_> & *\) *)
     (f2,unk_args1)
   in
-  DD.binfo_pprint ">>>>>> generalize_one_hp: <<<<<<" no_pos;
+  DD.tinfo_pprint ">>>>>> generalize_one_hp: <<<<<<" no_pos;
   if par_defs = [] then ([],[]) else
     begin
         let hp, args, _,_ = (List.hd par_defs) in
@@ -784,6 +784,7 @@ let generalize_hps_par_def_x prog non_ptr_unk_hps unk_hpargs post_hps par_defs=
           let part,remains= List.partition (fun (hp_name,_,_,_) -> CP.eq_spec_var a1 hp_name) xs in
           partition_pdefs_by_hp_name remains (parts@[[(a1,a2,a3,a4)]@part])
   in
+  let pr1 = pr_list_ln (pr_list_ln (pr_quad !CP.print_sv !CP.print_svl Cprinter.prtt_string_of_formula !CP.print_svl)) in
   let unk_hps = (List.map fst unk_hpargs) in
   let par_defs1 = List.concat (List.map (get_pdef_body unk_hps post_hps) par_defs) in
   let par_defs2 = (* List.filter is_valid_pardef *) par_defs1 in
@@ -794,18 +795,24 @@ let generalize_hps_par_def_x prog non_ptr_unk_hps unk_hpargs post_hps par_defs=
     subst such that each partial def does not contain other hps
     dont subst recursively search_largest_matching between two formulas
   *)
-  (* let pr1 = pr_list_ln (pr_list_ln (pr_quad !CP.print_sv !CP.print_svl Cprinter.prtt_string_of_formula !CP.print_svl)) in *)
-  (* let _ = DD.info_pprint ("      groups: " ^ (pr1 groups)) no_pos in *)
+  let _ = DD.tinfo_pprint ("      groups1: " ^ (pr1 groups)) no_pos in
   let groups2 = pardef_subst_fix prog unk_hps groups1 in
-  (* let _ = Debug.info_pprint ("     END: " ) no_pos in *)
+  let _ = Debug.info_pprint ("     END: " ) no_pos in
   (*remove empty*)
+  let _ = DD.tinfo_pprint ("      groups2: " ^ (pr1 groups2)) no_pos in
   let groups3 = List.filter (fun grp -> grp <> []) groups2 in
+  let _ = DD.binfo_hprint (add_str "before remove redundant" pr1) groups2 no_pos in
   (*each group, do union partial definition*)
   let hpdefs,elim_ss = List.fold_left (fun (hpdefs,elim_ss) pdefs->
       let new_defs,ss = generalize_one_hp prog hpdefs non_ptr_unk_hps unk_hps pdefs in
       ((hpdefs@new_defs), elim_ss@ss)
   ) ([],[]) groups3
   in
+  let prh = Cprinter.string_of_h_formula in
+  let _ = DD.tinfo_hprint (add_str "elim_ss" (pr_list (pr_pair prh prh))) elim_ss no_pos in
+  let pr2 = Cprinter.string_of_hp_rel_def in
+  let pr_hpd = pr_list (fun (_,a)-> pr2 a) in
+  let _ = DD.binfo_hprint (add_str "after remove redundant" pr_hpd) hpdefs no_pos in
   let hpdefs1 =
     if !Globals.sa_elim_useless then
       List.map (fun (hp,(a,b,def)) ->
@@ -816,7 +823,7 @@ let generalize_hps_par_def_x prog non_ptr_unk_hps unk_hpargs post_hps par_defs=
   hpdefs1
 
 let generalize_hps_par_def prog non_ptr_unk_hps unk_hpargs post_hps par_defs=
-  let pr1 = pr_list_ln SAU.string_of_par_def_w_name in
+ let pr1 = pr_list_ln SAU.string_of_par_def_w_name in
   let pr2 = Cprinter.string_of_hp_rel_def in
   let pr3 = fun (_,a)-> pr2 a in
   Debug.no_2 "generalize_hps_par_def" !CP.print_svl pr1 (pr_list_ln pr3)

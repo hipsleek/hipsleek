@@ -205,7 +205,7 @@ Message: SAU.drop_get_hrel: not handle yet
 */
 
 *****************************************************
-# cll-d3a.slk (without --sa-split-base)
+# cll-d3a.slk (without --sa-split-base)  OK
 
 infer [HP_6,G] HP_6(n) * x_814::node<_,n> & x=x_814 & n=x_814 & xp=null
  |-  G(x,xp). 
@@ -243,7 +243,7 @@ and all pure predicates linked from there and x_418,xp.
 
 */
 ***********************************************************************
-# cll-d3a.slk --sa-split-base
+# cll-d3a.slk --sa-split-base  OK
 
 infer [HP_6,G] HP_6(n) * x_814::node<_,n> & x=x_814 & n=x_814 & xp=null
  |-  G(x,xp). 
