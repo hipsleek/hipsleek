@@ -203,7 +203,46 @@ Message: SAU.drop_get_hrel: not handle yet
 
 */
 
-# cll-d3a.slk
+
+# cll-d3a.slk (without --sa-split-base)
+
+infer [HP_6,G] HP_6(n) * x_814::node<_,n> & x=x_814 & n=x_814 & xp=null
+ |-  G(x,xp). 
+print residue.
+/*
+Got:
+ <1>emp&x=x_814 & n=x_814 & xp=null & x=x_814&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [(HP_6(n)) * x_814::node<Anon_11,n>@M&n=x_814 & 
+                   xp=null --> G(x_814,xp)&true]
+Expecting:
+  (HP_6(n)) * x_814::node<Anon_11,n>@M&n=x_814 & 
+                   xp=null & x=x_814 --> G(x_814,xp)&true]
+
+Look at RHS G(x_814,xp). Extract connected heap predicate for x_815
+and all pure predicates linked from there and x_418,xp.
+
+*/
+
+infer [HP_6,G,x] HP_6(n) * x_814::node<_,n> & x=x_814 & n=x_814 & xp=null
+ |-  G(x,xp). 
+print residue.
+/*
+
+Got:
+<1>HP_6(n)&x=x_814 & n=x_814 & xp=null&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [(HP_6(x)) * x::node<Anon_12,x>@M&xp=null --> G(x,xp)&true]
+
+Expecting:
+<1> emp &x=x_814 & n=x_814 & xp=null&{FLOW,(19,20)=__norm}[]
+  (HP_6(n)) * x_814::node<Anon_11,n>@M&n=x_814 & 
+                   xp=null & x=x_814 --> G(x_814,xp)&true]
+
+Look at RHS G(x_814,xp). Extract connected heap predicate for x_815
+and all pure predicates linked from there and x_418,xp.
+
+*/
+
+# cll-d3a.slk --sa-split-base
 
 infer [HP_6,G] HP_6(n) * x_814::node<_,n> & x=x_814 & n=x_814 & xp=null
  |-  G(x,xp). 
@@ -220,6 +259,21 @@ Problems :
 
  (ii) For pre-predicate on the LHS, we should just have:
                   HP_6(n) --> emp
+
+Solution:
+=========
+Assuming:
+  (HP_6(n)) * x_814::node<Anon_11,n>@M&n=x_814 & 
+                   xp=null & x=x_814 --> G(x_814,xp)&true]
+Split:
+  (HP_6(n)) & n=x_814 & x=x_814 --> emp
+  x_814::node<Anon_11,n>@M& n=x_814 & 
+                   xp=null & x=x_814 --> G(x_814,xp)&true]
+
+Simplify :
+  HP_6(n)  --> emp  (using exists x_814,x)
+  x_814::node<Anon_11,n>@M& n=x_814 & 
+                   xp=null --> G(x_814,xp)&true (using exists x)
 
 */
 
@@ -240,3 +294,17 @@ Got:
                   HP_6(n) & n=x --> emp
 
 */
+Solution:
+=========
+Assuming:
+  (HP_6(n)) * x_814::node<Anon_11,n>@M&n=x_814 & 
+                   xp=null & x=x_814 --> G(x_814,xp)&true]
+Split:
+  (HP_6(n)) & n=x_814 & x=x_814 --> emp
+  x_814::node<Anon_11,n>@M& n=x_814 & 
+                   xp=null & x=x_814 --> G(x_814,xp)&true]
+
+Simplify :
+  HP_6(n) & n=x  --> emp  (using exists x_814)
+  x_814::node<Anon_11,n>@M& n=x_814 & 
+                   xp=null --> G(x_814,xp)&true (using exists x)
