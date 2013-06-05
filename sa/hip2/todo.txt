@@ -165,7 +165,7 @@ print residue.
    x::node<_,x> & xp=null --> G(x,xp)
 */
 ***********************************************
-# bug-imm.ss (Andreea to fix)
+# bug-imm.ss (TODO Andreea to fix)
 
 /* function to delete the node after the head in a circular list */
 void delete(ref node x)
@@ -310,13 +310,13 @@ Simplify :
   x_814::node<Anon_11,n>@M& n=x_814 & 
                    xp=null --> G(x_814,xp)&true (using exists x)
 
-# post-condition extraction of pre-pred for hip
+# TODO post-condition extraction of pre-pred for hip
 
 Towards the end of proving, we will need to extract
 pre-pred from the residue hip state during post-condition
 proving; if pre-pred  are being inferred.
 
-# ll-d2.slk
+# ll-d2.slk  TODO
 
 relAssume  G
  x::node<_,null> &  xp=null  --> G(x,xp).
@@ -337,7 +337,7 @@ However, expecting:
 
 */
 
-# cll-d3a2.slk
+# cll-d3a2.slk  TODO
 
 infer [H,G] H(n) * x::node<_,n>  & xp=null
  |-  G(x,xp). 
@@ -367,3 +367,12 @@ and then use the pre/post annotation to support
 base-case-split
 
 */
+
+# ll-del-1.slk
+
+Why is the following basic thing failing?
+
+infer [H] H(x) |-  x::node<_,_>.
+print residue.
+
+//Entail (1) : Fail.
