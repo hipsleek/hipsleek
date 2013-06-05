@@ -430,4 +430,62 @@ res:  [
   es_infer_vars/rel: [x]
   ]
 
+# ll-getnext2.ss -dd
 
+es_history is redundant and also duplicated es_heap,
+as trace below show.
+
+ es_heap: x::node<Anon_11,v_null_25_806>@M[Orig]
+ es_history: [x::node<Anon_11,q>@M[Orig]]
+
+# ll-getnext2a.ss
+
+Why presence of a spurious XPURE(HP_795)?
+
+ H(x)&true --> x::node<val_26_784,next_26_785>@M * (HP_786(next_26_785))&true,
+ HP_786(res) * x::node<val_26_784,v_null_27_793>@M&
+   XPURE(HP_795(next_26_785)) & v_null_27_793=null --> G(x,res)&true]
+
+During shape infer, what happened to HP_786? Should you
+not have UU_HP_786_UU generated?
+
+ H(x_812) ::= x_812::node<val_26_784,next_26_785>@M& 
+          XPURE(HP_795(next_26_785)),
+ G(x,res) ::= x::node<val_26_784,v_null_27_793>@M& 
+          XPURE(HP_795(next_26_785)) & 
+          v_null_27_793=null &  XPURE(HP_795(res))]
+
+
+# ll-getnext2.slk
+
+ Why dangling introduction for shape_infer not working?
+
+relAssume H
+  H(x)&true --> x::node<val_26_784,next_26_785>@M * HP_6(next_26_785).
+ 
+relAssume G
+  HP_6(res) * x::node<val_26_784,v_null_27_793> 
+   & v_null_27_793=null --> G(x,res).
+
+shape_infer [H][G].
+
+/*
+
+H(x_42) ::= x_42::node<val_26_784,next_26_785>@M& XPURE(HP_27(next_26_785)),
+ G(x,res) ::= x::node<val_26_784,v_null_27_793>@M&v_null_27_793=null &  XPURE(HP_27(res))]
+
+Tried --sa-dangling, --sa-refine-dang, --sa-unify-dangling
+What are these different options anyway?
+
+How come we did not get:
+
+ H(x_42) ::= x_42::node<val_26_784,next_26_785>@M& 
+     UU_HP_27_UU=next_26_785),
+ G(x,res) ::= x::node<val_26_784,v_null_27_793>@M&v_null_27_793=null 
+     &  UU_HP_27_UU=res
+
+Solution: This could be done by replacing
+
+   XPure(P(v)) ==> UU_P_UU=v
+
+*/
