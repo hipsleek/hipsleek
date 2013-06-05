@@ -4130,6 +4130,31 @@ let check_imm_mis rhs_mis rhs0 =
   let pr = !print_h_formula in
   Debug.no_2 "check_imm_mis" pr pr pr check_imm_mis rhs_mis rhs0
 
+(*node + args is one group*)
+let get_ptrs_group_hf hf0=
+  let rec helper hf=
+    match hf with
+      | Star {h_formula_star_h1 = hf1;
+        h_formula_star_h2 = hf2;}
+      | StarMinus { h_formula_starminus_h1 = hf1;
+        h_formula_starminus_h2 = hf2;}
+      | Conj { h_formula_conj_h1 = hf1;
+        h_formula_conj_h2 = hf2;}
+      | ConjStar { h_formula_conjstar_h1 = hf1;
+        h_formula_conjstar_h2 = hf2;}
+      | ConjConj { h_formula_conjconj_h1 = hf1;
+        h_formula_conjconj_h2 = hf2;}
+      | Phase { h_formula_phase_rd = hf1;
+        h_formula_phase_rw = hf2;} ->
+         (helper hf1)@(helper hf2)
+      | DataNode hd -> [hd.h_formula_data_node::hd.h_formula_data_arguments]
+      | ViewNode hv -> [hv.h_formula_view_node::hv.h_formula_view_arguments]
+      | HRel _
+      | Hole _
+      | HTrue
+      | HFalse
+      | HEmp ->[]
+  in helper hf0
 
 let rec get_hp_rel_formula (f:formula) =
   match f with
@@ -5320,20 +5345,20 @@ and drop_hnodes_hf hf0 hn_names=
              h_formula_conjconj_pos = pos} ->
         let n_hf1 = helper hf1 in
         let n_hf2 = helper hf2 in
-        (ConjConj { h_formula_conjconj_h1 = n_hf1;
-               h_formula_conjconj_h2 = n_hf2;
-               h_formula_conjconj_pos = pos})                              
+        (ConjConj { h_formula_conjconj_h1 = n_hf1; h_formula_conjconj_h2 = n_hf2;
+        h_formula_conjconj_pos = pos})
     | Phase { h_formula_phase_rd = hf1;
               h_formula_phase_rw = hf2;
               h_formula_phase_pos = pos} ->
-        let n_hf1 = helper hf1 in
-        let n_hf2 = helper hf2 in
-        (Phase { h_formula_phase_rd = n_hf1;
-              h_formula_phase_rw = n_hf2;
-              h_formula_phase_pos = pos})
+          let n_hf1 = helper hf1 in
+          let n_hf2 = helper hf2 in
+          (Phase { h_formula_phase_rd = n_hf1;
+          h_formula_phase_rw = n_hf2;
+          h_formula_phase_pos = pos})
     | DataNode hd ->  if CP.mem_svl hd.h_formula_data_node hn_names then HEmp
-        else hf
-    | ViewNode _
+      else hf
+    | ViewNode hv -> if CP.mem_svl hv.h_formula_view_node hn_names then HEmp
+      else hf
     | HRel _
     | Hole _
     | HTrue

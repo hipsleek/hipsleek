@@ -56,6 +56,8 @@ Why isn't x!=v captured here? just because of an extra x=xp?
                    (HP_49(Anon_48))&true]
 */
 
+***************************************************
+
 # cll-d2a.slk: 
 
 Why did the 2nd version below dropped HP_6 pred on
@@ -75,6 +77,7 @@ HP_6(n) * xp::node<val_35_804,n> & x=xp & n!=x & n=v
  |-  v::node<_,_> .
 print residue.
 
+***************************************************
 # cll-d3a.slk
 
 infer [HP_6] HP_6(n) * x_814::node<_,n> & x=x_814 & n=x_814 & xp=null
@@ -89,7 +92,7 @@ print residue.
    x::node<_,n> & x=n & xp=null --> G(x,xp)
 
  This split should be organized as a procedure that is
- invoked as --en-split-base
+ invoked as --en-split-base ==> --sa-split-base
 
  Why is x_814::node<..> duplicated in your split-base operation?
 
@@ -120,7 +123,7 @@ print residue.
 
 */
 
-
+***************************************************
 # cll-d3b.slk
 
 some scenarios for inferences
@@ -160,7 +163,7 @@ print residue.
    HP_6(v) & v=x --> emp
    x::node<_,x> & xp=null --> G(x,xp)
 */
-
+***********************************************
 # bug-imm.ss (Andreea to fix)
 
 /* function to delete the node after the head in a circular list */
@@ -179,7 +182,7 @@ Exception Failure("The postcondition cannot contain @L heap predicates/data node
 
 
 */
-
+***********************************************
 # ll-d1.slk
 
 

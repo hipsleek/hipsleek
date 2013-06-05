@@ -219,12 +219,13 @@ let split_constr_x prog constrs=
     let lhds, lhvs, lhrs = CF.get_hp_rel_bformula lfb in
     let leqNulls = MCP.get_null_ptrs mix_lf in
     let leqs = (MCP.ptr_equations_without_null mix_lf) in
+    let r_hps = CF.get_hp_rel_name_formula cs.CF.hprel_rhs in
     let l_def_vs = leqNulls @ (List.map (fun hd -> hd.CF.h_formula_data_node) lhds)
       @ (List.map (fun hv -> hv.CF.h_formula_view_node) lhvs) in
     let helper (hp,eargs,_)=(hp,List.concat (List.map CP.afv eargs)) in
     let ls_lhp_args = (List.map helper lhrs) in
     let ls_defined_hps,rems = List.split (List.map (fun hpargs ->
-        SAU.find_well_defined_hp prog lhds lhvs hpargs l_def_vs lfb) ls_lhp_args)
+        SAU.find_well_defined_hp prog lhds lhvs r_hps hpargs l_def_vs lfb) ls_lhp_args)
     in
     let defined_preds = List.concat ls_defined_hps in
     let defined_preds0 = List.fold_left (fun defined_preds hpargs ->

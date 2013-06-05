@@ -659,6 +659,8 @@ let sa_elim_useless = ref false
 
 let sa_inlining = ref false
 
+let sa_split_base = ref false
+
 let sa_unify_dangling = ref false
 
 let sa_tree_simp = ref false
