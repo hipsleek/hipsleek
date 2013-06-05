@@ -25,6 +25,7 @@ module XF = Xmlfront
 module NF = Nativefront
 module CEQ = Checkeq
 module TI = Typeinfer
+module SAU = Sautility
 
 let sleek_proof_counter = new Gen.counter 0
 
@@ -690,24 +691,9 @@ let process_rel_assume hp_id (ilhs : meta_formula) (irhs: meta_formula)=
 
 let process_shape_infer pre_hps post_hps=
   (* let _ = DD.info_pprint "process_shape_infer" no_pos in *)
-  let get_hps all_hps ass = match ass.CF.hprel_kind with
-    | CP.RelAssume hps ->
-          let body_hps = (CF.get_hp_rel_name_formula ass.CF.hprel_lhs)@
-            ( CF.get_hp_rel_name_formula ass.CF.hprel_rhs) in
-          all_hps@hps@body_hps
-    | _ -> all_hps
-  in
-  let filter_hp id_ls all_hps =List.filter (fun hp ->
-      let hp_name = CP.name_of_spec_var hp in
-      List.exists (fun id -> String.compare hp_name id = 0) id_ls
-      ) all_hps in
   let hp_lst_assume = !sleek_hprel_assumes in
   let hp_rel_unkmap = [] in
-  let hps2 = List.fold_left  get_hps [] hp_lst_assume in
-  let hps20 = CP.remove_dups_svl hps2 in
-  let sel_pre_hps = filter_hp pre_hps hps20 in
-  let sel_post_hps = filter_hp post_hps hps20 in
-  let sel_hps = sel_pre_hps@sel_post_hps in
+  let sel_hps, sel_post_hps = SAU.get_pre_post pre_hps post_hps hp_lst_assume in
   let ls_hprel, ls_inferred_hps, dropped_hps =
     let infer_shape_fnc =  if not (!Globals.sa_old) then
       Sa2.infer_shapes
@@ -744,24 +730,8 @@ let process_shape_infer pre_hps post_hps=
   ()
 
 let process_shape_split pre_hps post_hps=
-   let get_hps all_hps ass = match ass.CF.hprel_kind with
-    | CP.RelAssume hps ->
-          let body_hps = (CF.get_hp_rel_name_formula ass.CF.hprel_lhs)@
-            ( CF.get_hp_rel_name_formula ass.CF.hprel_rhs) in
-          all_hps@hps@body_hps
-    | _ -> all_hps
-  in
-  let filter_hp id_ls all_hps =List.filter (fun hp ->
-      let hp_name = CP.name_of_spec_var hp in
-      List.exists (fun id -> String.compare hp_name id = 0) id_ls
-      ) all_hps in
-  let hp_lst_assume = !sleek_hprel_assumes in
-  let hps2 = List.fold_left get_hps [] hp_lst_assume in
-  let hps20 = CP.remove_dups_svl hps2 in
-  let sel_pre_hps = filter_hp pre_hps hps20 in
-  let sel_post_hps = filter_hp post_hps hps20 in
-  let sel_hps = sel_pre_hps@sel_post_hps in
-  let new_constrs = Sa2.split_constr !cprog hp_lst_assume in
+  let _, sel_post_hps = SAU.get_pre_post pre_hps post_hps !sleek_hprel_assumes in
+  let new_constrs = Sa2.split_constr !cprog !sleek_hprel_assumes sel_post_hps in
   let pr1 = pr_list_ln Cprinter.string_of_hprel in
   begin
     print_endline "*************************************";

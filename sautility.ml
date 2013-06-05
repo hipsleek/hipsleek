@@ -4328,3 +4328,25 @@ let ann_unk_svl prog par_defs=
 (************************************************************)
     (****************(*ENDcurrently we dont use*)*****************)
 (************************************************************)
+
+(*SLEEK*)
+let get_pre_post pre_hps post_hps constrs=
+  let get_hps all_hps ass = match ass.CF.hprel_kind with
+    | CP.RelAssume hps ->
+          let body_hps = (CF.get_hp_rel_name_formula ass.CF.hprel_lhs)@
+            ( CF.get_hp_rel_name_formula ass.CF.hprel_rhs) in
+          all_hps@hps@body_hps
+    | _ -> all_hps
+  in
+  let filter_hp id_ls all_hps =List.filter (fun hp ->
+      let hp_name = CP.name_of_spec_var hp in
+      List.exists (fun id -> String.compare hp_name id = 0) id_ls
+      ) all_hps in
+  let hps2 = List.fold_left get_hps [] constrs in
+  let hps20 = CP.remove_dups_svl hps2 in
+  let sel_pre_hps = filter_hp pre_hps hps20 in
+  let sel_post_hps = filter_hp post_hps hps20 in
+  let sel_hps = sel_pre_hps@sel_post_hps in
+  (sel_hps, sel_post_hps)
+
+(*SLEEK*)

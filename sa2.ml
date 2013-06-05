@@ -210,7 +210,7 @@ let apply_transitive_impl_fix prog callee_hps hp_rel_unkmap unk_hps (constrs: CF
                       CONSTR: ELIM UNUSED PREDS
 ****************************************************************)
 (*split constrs like H(x) & x = null --> G(x): separate into 2 constraints*)
-let split_constr_x prog constrs=
+let split_constr_x prog constrs post_hps=
   let prog_vars = [] in
   (*internal method*)
   let split_one cs=
@@ -219,64 +219,68 @@ let split_constr_x prog constrs=
     let r_qvars, rhs = CF.split_quantifiers cs.CF.hprel_rhs in
     let l_hpargs = CF.get_HRels_f lhs in
     let r_hpargs = CF.get_HRels_f rhs in
-    let leqs = (MCP.ptr_equations_without_null mix_lf) in
-    let lhs_b = match lhs with
-      | CF.Base fb -> fb
-      | _ -> report_error no_pos "sa2.split_constr: lhs should be a Base Formula"
-    in
-    let rhs_b = match rhs with
-      | CF.Base fb -> fb
-      | _ -> report_error no_pos "sa2.split_constr: lhs should be a Base Formula"
-    in
-    (**smart subst**)
-    let lhs_b1, rhs_b1, subst_prog_vars = SAU.smart_subst lhs_b rhs_b (l_hpargs@r_hpargs)
-      leqs [] [] []
-    in
-    (* let lfb = match lhs_b1 with *)
-    (*   | CF.Base fb -> fb *)
-    (*   | _ -> report_error no_pos "sa2.split_constr: lhs should be a Base Formula" *)
-    (* in *)
-    let lfb = lhs_b1 in
-    let lhds, lhvs, lhrs = CF.get_hp_rel_bformula lfb in
-    let leqNulls = MCP.get_null_ptrs mix_lf in
-    let leqs = (MCP.ptr_equations_without_null mix_lf) in
-    let r_hps = CF.get_hp_rel_name_formula cs.CF.hprel_rhs in
-    let l_def_vs = leqNulls @ (List.map (fun hd -> hd.CF.h_formula_data_node) lhds)
-      @ (List.map (fun hv -> hv.CF.h_formula_view_node) lhvs) in
-    let l_def_vs = CP.remove_dups_svl (SAU.find_close l_def_vs (leqs)) in
-    let helper (hp,eargs,_)=(hp,List.concat (List.map CP.afv eargs)) in
-    let ls_lhp_args = (List.map helper lhrs) in
-    let ls_defined_hps,rems = List.split (List.map (fun hpargs ->
-        SAU.find_well_defined_hp prog lhds lhvs r_hps prog_vars hpargs l_def_vs lfb) ls_lhp_args)
-    in
-    let defined_preds = List.concat ls_defined_hps in
-    let defined_preds0 = List.fold_left (fun defined_preds hpargs ->
-        defined_preds@(fst (SAU.find_well_eq_defined_hp prog lhds lhvs lfb leqs hpargs))
-    ) (defined_preds) (List.concat rems) in
-    let new_constrs = match defined_preds0 with
-      | [] -> [cs]
-      | _ ->
-          (*prune defined hps in lhs*)
-          let new_lhs, _ = CF.drop_hrel_f cs.CF.hprel_lhs (List.map (fun (a, _, _) -> a) defined_preds0) in
-          let new_lhs1 = CF.add_quantifiers l_qvars new_lhs in
-          let new_cs = {cs with CF.hprel_lhs = new_lhs1;
-              CF.hprel_rhs = (CF.add_quantifiers r_qvars (CF.Base rhs_b1));
-          } in
-          let unk_svl = new_cs.CF.unk_svl in
-          let rf = CF.mkTrue (CF.mkTrueFlow()) no_pos in
-          let defined_hprels = List.map (SAU.generate_hp_ass unk_svl rf) defined_preds0 in
-          new_cs::defined_hprels
-    in
-    (new_constrs)
+    if (List.exists (fun (hp,_) -> CP.mem_svl hp post_hps) r_hpargs) &&
+      (List.length l_hpargs > 0) then
+        let leqs = (MCP.ptr_equations_without_null mix_lf) in
+        let lhs_b = match lhs with
+          | CF.Base fb -> fb
+          | _ -> report_error no_pos "sa2.split_constr: lhs should be a Base Formula"
+        in
+        let rhs_b = match rhs with
+          | CF.Base fb -> fb
+          | _ -> report_error no_pos "sa2.split_constr: lhs should be a Base Formula"
+        in
+        (**smart subst**)
+        let lhs_b1, rhs_b1, subst_prog_vars = SAU.smart_subst lhs_b rhs_b (l_hpargs@r_hpargs)
+          leqs [] [] []
+        in
+        (* let lfb = match lhs_b1 with *)
+        (*   | CF.Base fb -> fb *)
+        (*   | _ -> report_error no_pos "sa2.split_constr: lhs should be a Base Formula" *)
+        (* in *)
+        let lfb = lhs_b1 in
+        let lhds, lhvs, lhrs = CF.get_hp_rel_bformula lfb in
+        let leqNulls = MCP.get_null_ptrs mix_lf in
+        let leqs = (MCP.ptr_equations_without_null mix_lf) in
+        let r_hps = CF.get_hp_rel_name_formula cs.CF.hprel_rhs in
+        let l_def_vs = leqNulls @ (List.map (fun hd -> hd.CF.h_formula_data_node) lhds)
+          @ (List.map (fun hv -> hv.CF.h_formula_view_node) lhvs) in
+        let l_def_vs = CP.remove_dups_svl (SAU.find_close l_def_vs (leqs)) in
+        let helper (hp,eargs,_)=(hp,List.concat (List.map CP.afv eargs)) in
+        let ls_lhp_args = (List.map helper lhrs) in
+        let ls_defined_hps,rems = List.split (List.map (fun hpargs ->
+            SAU.find_well_defined_hp prog lhds lhvs r_hps prog_vars hpargs l_def_vs lfb) ls_lhp_args)
+        in
+        let defined_preds = List.concat ls_defined_hps in
+        let defined_preds0 = List.fold_left (fun defined_preds hpargs ->
+            defined_preds@(fst (SAU.find_well_eq_defined_hp prog lhds lhvs lfb leqs hpargs))
+        ) (defined_preds) (List.concat rems) in
+        let new_constrs = match defined_preds0 with
+          | [] -> [cs]
+          | _ ->
+                (*prune defined hps in lhs*)
+                let new_lhs, _ = CF.drop_hrel_f cs.CF.hprel_lhs (List.map (fun (a, _, _) -> a) defined_preds0) in
+                let new_lhs1 = CF.add_quantifiers l_qvars new_lhs in
+                let new_cs = {cs with CF.hprel_lhs = new_lhs1;
+                    CF.hprel_rhs = (CF.add_quantifiers r_qvars (CF.Base rhs_b1));
+                } in
+                let unk_svl = new_cs.CF.unk_svl in
+                let rf = CF.mkTrue (CF.mkTrueFlow()) no_pos in
+                let defined_hprels = List.map (SAU.generate_hp_ass unk_svl rf) defined_preds0 in
+                new_cs::defined_hprels
+        in
+        (new_constrs)
+    else
+      [cs]
   in
   (*END. internal method*)
   List.fold_left (fun r_constrs cs -> let new_constrs = split_one cs in
       r_constrs@new_constrs) [] constrs
 
-let split_constr prog constrs=
+let split_constr prog constrs post_hps=
   let pr1 = pr_list_ln Cprinter.string_of_hprel in
   Debug.no_1 "split_constr" pr1 pr1
-      (fun _ -> split_constr_x prog constrs) constrs
+      (fun _ -> split_constr_x prog constrs post_hps) constrs
 
 let get_preds (lhs_preds, lhs_heads, rhs_preds,rhs_heads) cs=
   (* let pr1 = Cprinter.string_of_hprel_short in *)
@@ -1126,7 +1130,7 @@ let infer_shapes_core prog proc_name (constrs0: CF.hprel list) callee_hps sel_hp
   let constrs2, non_unk_hps = apply_transitive_impl_fix prog callee_hps unk_map
      unk_hps constrs1 in
   (*split constrs like H(x) & x = null --> G(x): separate into 2 constraints*)
-  let constrs3 = split_constr prog constrs2  in
+  let constrs3 = split_constr prog constrs2 sel_post_hps in
   (*partition constraints into 2 groups: pre-predicates, post-predicates*)
   let post_constrs, pre_constrs = partition_constrs constrs3 sel_post_hps in
   (*find inital sol*)
