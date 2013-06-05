@@ -2148,7 +2148,7 @@ let infer_collect_hp_rel_x prog (es:entail_state) rhs rhs_rest (rhs_h_matched_se
         (* DD.info_pprint "  hp_rel found" pos; *)
         (*which pointers are defined and which arguments of data nodes are pointer*)
         let ( _,mix_lf,_,_,_) = CF.split_components (CF.Base lhs_b) in
-        let (_,mix_rf,_,_,_) = CF.split_components (CF.Base rhs_b) in
+        (* let (_,mix_rf,_,_,_) = CF.split_components (CF.Base rhs_b) in *)
         let leqs = (MCP.ptr_equations_without_null mix_lf) in
         let rls1,rls2  = List.split es.CF.es_rhs_eqset in
         let reqs = List.combine (CP.subst_var_list sst0 rls1) (CP.subst_var_list sst0 rls2)

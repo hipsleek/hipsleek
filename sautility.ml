@@ -344,12 +344,22 @@ and get_data_view_hrel_vars_h_formula hf=
   in
   helper hf
 
-let rec drop_get_hrel f=
+let rec drop_get_hrel_x f=
   match f with
     | CF.Base fb ->
         let new_hf, hrels = drop_get_hrel_h_formula fb.CF.formula_base_heap in
         (CF.Base {fb with CF.formula_base_heap= new_hf}, hrels)
-    | _ -> report_error no_pos "SAU.drop_get_hrel: not handle yet"
+    | CF.Exists fe ->
+          let qvars, base1 = CF.split_quantifiers f in
+          let nf,r = drop_get_hrel_x base1 in
+          (CF.add_quantifiers qvars nf,r)
+    | _ -> report_error no_pos "SAU.drop_get_hrel: SHOULD NOT OR"
+
+and drop_get_hrel f=
+  let pr1 = Cprinter.prtt_string_of_formula in
+  let pr2 = pr_list (pr_pair !CP.print_sv !CP.print_svl) in
+  Debug.no_1 "drop_get_hrel" pr1 (pr_pair pr1 pr2)
+      (fun _ -> drop_get_hrel_x f) f
 
 (* and drop_get_hrel_bformula bf= *)
 (*   drop_get_hrel_h_formula bf.CF.formula_base_heap *)
@@ -494,7 +504,7 @@ let rec drop_hrel_match_args f args=
                 CF.formula_or_f2 = nf2;})
     | CF.Exists fe ->
         let qvars, base1 = CF.split_quantifiers f in
-        let nf = drop_hrel_match_args f args in
+        let nf = drop_hrel_match_args base1 args in
         CF.add_quantifiers qvars nf
         (* (CF.Exists {fe with CF.formula_exists_heap = nfe ;}) *)
 
@@ -734,12 +744,17 @@ and find_defined_pointers prog f predef_ptrs=
       (fun _ _ -> find_defined_pointers_x prog f predef_ptrs) f predef_ptrs
 
 let get_raw_defined_w_pure_x prog predef lhs rhs=
-  let helper f eqs=
+  let rec helper f eqs=
     match f with
       | CF.Base fb ->
           let def_raw,_,_,_,leqs,eqNulls = find_defined_pointers_raw prog f in
           let def_raw1 = CP.remove_dups_svl (def_raw@eqNulls) in
           (def_raw1,leqs)
+      | CF.Exists _ ->
+            let qvars, base1 = CF.split_quantifiers f in
+            let svl = helper base1 [] in
+            (* (CF.add_quantifiers qvars nf) *)
+            svl
       | _ -> report_error no_pos "sau.get_raw_defined_w_pure: not handle yet"
   in
   let lsvl,leqs = helper lhs [] in
@@ -1851,7 +1866,7 @@ let mk_expl_root r f0=
             find_r_subst tl (res@[(sv1,sv2)])
           else find_r_subst tl (res)
   in
-  let helper f=
+  let rec helper f=
     match f with
     | CF.Base fb ->
         let eqs = (MCP.ptr_equations_without_null fb.CF.formula_base_pure) in
@@ -1861,7 +1876,11 @@ let mk_expl_root r f0=
             CF.h_subst r_ss fb.CF.formula_base_heap
         in
         CF.Base {fb with CF.formula_base_heap = new_h1}
-    | _ -> report_error no_pos "cformula.mk_expl_root: not handle yet"
+    | CF.Exists _ ->
+          let qvars, base1 = CF.split_quantifiers f in
+          let nf = helper base1 in
+          CF.add_quantifiers qvars nf
+    | _ -> report_error no_pos "sau.mk_expl_root: not handle yet"
   in
   helper f0
 

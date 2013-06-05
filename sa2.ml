@@ -90,7 +90,9 @@ let rec find_imply_subst_x prog constrs new_cs=
   in
   let find_imply_one cs1 cs2=
     let _ = Debug.ninfo_pprint ("    rhs: " ^ (Cprinter.string_of_hprel cs2)) no_pos in
-    match cs1.CF.hprel_lhs,cs2.CF.hprel_rhs with
+    let qvars1, f1 = CF.split_quantifiers cs1.CF.hprel_lhs in
+    let qvars2, f2 = CF.split_quantifiers cs2.CF.hprel_rhs in
+    match f1,f2 with
       | CF.Base lhs1, CF.Base rhs2 ->
           let r = SAU.find_imply prog (List.map fst cs1.CF.unk_hps) (List.map fst cs2.CF.unk_hps) lhs1 cs1.CF.hprel_rhs cs2.CF.hprel_lhs rhs2 in
           begin
@@ -119,7 +121,7 @@ let rec find_imply_subst_x prog constrs new_cs=
                       end
                 | None -> []
           end
-      | _ -> report_error no_pos "sa.find_imply_one"
+      | _ -> report_error no_pos "sa2.find_imply_one"
   in
   (*new_cs: one x one*)
   let rec helper_new_only don rest res=
@@ -212,7 +214,8 @@ let split_constr_x prog constrs=
   (*internal method*)
   let split_one cs=
     let (_ ,mix_lf,_,_,_) = CF.split_components cs.CF.hprel_lhs in
-    let lfb = match cs.CF.hprel_lhs with
+    let l_qvars, base1 = CF.split_quantifiers cs.CF.hprel_lhs in
+    let lfb = match base1 with
       | CF.Base fb -> fb
       | _ -> report_error no_pos "sa2.split_constr: lhs should be a Base Formula"
     in
@@ -236,7 +239,8 @@ let split_constr_x prog constrs=
       | _ ->
           (*prune defined hps in lhs*)
           let new_lhs, _ = CF.drop_hrel_f cs.CF.hprel_lhs (List.map (fun (a, _, _) -> a) defined_preds0) in
-          let new_cs = {cs with CF.hprel_lhs = new_lhs;} in
+          let new_lhs1 = CF.add_quantifiers l_qvars new_lhs in
+          let new_cs = {cs with CF.hprel_lhs = new_lhs1;} in
           let unk_svl = new_cs.CF.unk_svl in
           let rf = CF.mkTrue (CF.mkTrueFlow()) no_pos in
           let defined_hprels = List.map (SAU.generate_hp_ass unk_svl rf) defined_preds0 in

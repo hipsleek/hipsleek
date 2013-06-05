@@ -2515,7 +2515,7 @@ and check_proc (prog : prog_decl) (proc : proc_decl) cout_option (mutual_grp : p
 
                               let tuples = List.map (fun (rel_post,post,rel_pre,pre) ->
                                   let pre_new = if CP.isConstTrue rel_pre then
-                                      let inf_pre_vars = List.filter (fun x -> List.mem x pre_vars) inf_vars in
+                                      (* let inf_pre_vars = List.filter (fun x -> List.mem x pre_vars) inf_vars in *)
                                       let exist_vars = CP.diff_svl (CP.fv_wo_rel rel_post) inf_vars in
                                       TP.simplify_exists_raw exist_vars post 
                                     else pre in
