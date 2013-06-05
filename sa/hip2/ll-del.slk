@@ -10,19 +10,24 @@ HeapPred HP_7(node a).
 HeapPred G(node a, node a).
 
 relAssume  H
- H(x) --> x::node<_,nn> .
+ H(x) --> x::node<_,nn> * HP_6(nn) .
 relAssume  G
- x::node<_,null> & nn=null & x'=null  --> G(x,x').
+ x::node<_,nn> * HP_6(nn) & nn=null & x'=null  --> G(x,x').
 relAssume  G
- x::node<_,null> & nn!=null & x'=nn --> G(x,x').
+ x::node<_,null> * HP_6(nn) & nn!=null & x'=nn --> G(x,x').
 
-
-shape_infer [H][G].
+shape_infer [H,x][G].
 
 /*
-!! >>>>>> step 1: find dangling ptrs that link pre and post-preds<<<<<<
-ERROR: at _0:0_0:0 
-Message: SAU.drop_get_hrel: not handle yet
- Fatal error: exception Failure("SAU.drop_get_hrel: not handle yet")
+[ H(x_65) ::= x_65::node<Anon_11,nn>@M&nn=null,
+ G(x_66,x_67) ::= x_66::node<Anon_12,nn>@M * (HP_69(nn,x_67))&true,
+ HP_69(nn,x_67) ::= 
+ emp&nn=null & x_67=null
+ or emp&nn=null & x_67!=null
+ ]
+
+Two problems:
+ (i) why do we have nn=null in defn of H
+ (ii) how come dangling reference UU_HP_6_UU is missing
 
 */

@@ -31,33 +31,29 @@ void delete(ref node x)
         requires x::node<_,q>
         ensures x::node<_,null> & (q=null & x'=null | q!=null & x'=q);
 */
-infer [H,G] 
+infer [H,x,G] 
 requires H(x)
 ensures G(x,x');
 
 /*
- H(x)&true --> x::node<val_33_789,next_33_790>@M * (HP_791(next_33_790))&true,
- HP_791(next_33_790)&next_33_790=null --> emp&true,
- x::node<val_33_789,next_33_790>@M&next_33_790=null & x'=null --> G(x,x')&
-  true,
- (HP_791(next_33_790)) * x::node<val_33_789,v_null_39_808>@M&
-  v_null_39_808=null & next_33_790!=null & next_33_790=x' & 
-   XPURE(HP_809(next_33_790)) --> G(x,x')&true]
+Got:
 
-
-[ H(x_850) ::= x_850::node<val_33_789,next_33_790>@M&next_33_790=null,
- G(x_851,x_852) ::= x_851::node<val_33_789,next_33_790>@M * (HP_854(next_33_790,x_852))&
-next_33_790=null,
- HP_854(next_33_790,x_852) ::= 
- emp& XPURE(HP_809(x_852)) & x_852!=null
- or emp&x_852=null
+[ H(x_835) ::= x_835::node<val_61_789,next_61_790>@M&next_61_790=null,
+ G(x_836,x_837) ::= x_836::node<val_61_789,next_61_790>@M * (HP_839(next_61_790,x_837))&
+next_61_790=null,
+ HP_839(next_61_790,x_837) ::= 
+ emp&x_837=null
+ or emp&x_837!=null
  ]
+
+but expecting:
+        requires x::node<_,q>
+        ensures x::node<_,null> & (q=null & x'=null | q!=null & x'=q);
 
 */
 
 {
 	node tmp;
-        dprint;
 	if (x.next == null) {
 		x = null;
         }
@@ -70,25 +66,49 @@ next_33_790=null,
 }
 
 /*
+For hip ll-del.ss, I got:
 
- H(x)&true --> x::node<val_35_804,next_35_805>@M 
-     * (HP_806(next_35_805))&true,
- 
- HP_806(next)&true -->   // x!=next?
-   next::node<val_39_821,next_39_822>@M * 
-      (HP_823(next_39_822))&true,
+[ H(x)&true --> x::node<val_57_793,next_57_794>@M * (HP_795(next_57_794))&true,
+ (HP_795(next_57_794)) * x::node<val_57_793,next_57_794>@M&
+  next_57_794=null & x'=null --> G(x,x')&true,
 
- HP_806(x_814)&x=x_814 --> emp&true, // where is x?
+ (HP_795(x')) * x::node<val_57_793,v_null_63_813>@M&
+   XPURE(HP_815(next_57_794)) & x'!=null & v_null_63_813=null --> G(x,x')&
+  true
+]
+The last one is wrong, and should be:
+ (HP_795(x')) * x::node<val_57_793,null>@M&
+   & x'!=null & tmp=x'  --> G(x,x')
 
+From sleek, proof log I got:
 
- x_814::node<val_35_804,x_814>@M&x'=null & x=x_814 --> G(x,x')&true,
+ id: 19; caller: []; line: 64; classic: false; kind: POST; hec_num: 5; evars: []; c_heap: emp
+ checkentail (HP_795(next_57_794)) * x_810::node<val_57_793,v_null_63_813>@M[Orig]&
+x=x_810 & next_57_794!=null & !(v_bool_57_770') & next_57_794!=null & 
+!(v_bool_57_770') & v_null_63_813=null & next_57_794=next_63_809 & 
+next_57_794=x'&{FLOW,(22,23)=__norm}[]
+ |-  G(x,x')&true&{FLOW,(22,23)=__norm}[]. 
+hprel_ass: [ (HP_795(x')) * x::node<val_57_793,v_null_63_813>@M&
+   XPURE(HP_815(next_57_794)) & x'!=null & v_null_63_813=null --> G(x,x')&
+  true]
+res:  [
+  HP_795(next_57_794)&x=x_810 & next_57_794!=null & !(v_bool_57_770') & next_57_794!=null & !(v_bool_57_770') & v_null_63_813=null & next_57_794=next_63_809 & next_57_794=x'&{FLOW,(22,23)=__norm}[]
+  es_infer_vars/rel: [x]
+  ]
 
- (HP_823(next_39_822)) * x'::node<val_35_804,next_39_822>@M&x=x' 
-     --> G(x,x') & true]
+This problem seem to have been triggered by some side-effects,
+as when I cut it out for sleek (ll-del2.slk); I got the correct answer:
 
+ <1>emp&x=x_810 & next_57_794!=null & !(v_bool_57_770') & next_57_794!=null & !(v_bool_57_770') & v_null_63_813=null & next_57_794=next_63_809 & next_57_794=x' & x=x_810 & next_57_794=x'&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [(HP_6(next_57_794)) * 
+                   x_810::node<val_57_793,v_null_63_813>@M&
+                   next_57_794!=null & 
+                   v_null_63_813=null --> G(x_810,next_57_794)&true]
+
+There seems a problem with es_history!
+       es_history: [x::node<val_57_793,next_57_794>@M[Orig]]
 
 */
-
 
 
 
