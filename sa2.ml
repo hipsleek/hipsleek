@@ -279,7 +279,7 @@ let split_constr_x prog constrs post_hps=
 
 let split_constr prog constrs post_hps=
   let pr1 = pr_list_ln Cprinter.string_of_hprel in
-  Debug.no_1 "split_constr" pr1 pr1
+  Debug.ho_1 "split_constr" pr1 pr1
       (fun _ -> split_constr_x prog constrs post_hps) constrs
 
 let get_preds (lhs_preds, lhs_heads, rhs_preds,rhs_heads) cs=

@@ -1696,12 +1696,11 @@ let find_undefined_selective_pointers_x prog lfb lmix_f unmatched rhs_rest rhs_h
   let l_def_vs = CP.remove_dups_svl (SAU.find_close l_def_vs (eqs)) in
   let unk_svl, unk_xpure, unk_map1 = generate_linking total_unk_map ls_lhp_args ls_rhp_args eqs in
   let lfb1 = CF.mkAnd_base_pure lfb (MCP.mix_of_pure unk_xpure) pos in
-  let defined_hps,rem_lhpargs = if !Globals.sa_split_base then
+  let defined_hps,rem_lhpargs =
     List.fold_left (fun (ls_defined,ls_rem) hpargs ->
         let r_def,r_mem = SAU.find_well_defined_hp prog lhds lhvs r_hps prog_vars hpargs l_def_vs lfb1 in
         (ls_defined@r_def,ls_rem@r_mem)
     ) ([],[]) ls_lhp_args
-  else ([], ls_lhp_args)
   in
   (*END************get well-defined hp in lhs*)
   let def_vs = l_def_vs@r_def_vs in
@@ -1764,7 +1763,11 @@ let find_undefined_selective_pointers_x prog lfb lmix_f unmatched rhs_rest rhs_h
   let ls_undef =  List.map CP.remove_dups_svl (ls_fwd_svl) in
   (* DD.info_pprint ("selected_hpargs: " ^ (let pr = pr_list (pr_pair !CP.print_sv !CP.print_svl) in pr (selected_hpargs))) pos; *)
   let ls_defined_hp = List.map fst3 defined_hps in
-  let lhs_selected_hpargs0 =  List.filter (fun (hp,_) -> not (CP.mem_svl hp ls_defined_hp)) lhs_selected_hpargs in
+  let lhs_selected_hpargs0,defined_hps =  if !Globals.sa_split_base then
+    List.filter (fun (hp,_) -> not (CP.mem_svl hp ls_defined_hp)) lhs_selected_hpargs, defined_hps
+  else
+    ( lhs_selected_hpargs@(List.map (fun (a,b,_) -> (a,b)) defined_hps),[])
+  in
   ((* undefs1@lundefs_args *) ls_undef,hds,hvs,lhrs,rhrs,leqNulls@reqNulls, lhs_selected_hpargs0,rhs_sel_hpargs, defined_hps,
   CP.remove_dups_svl (unk_svl),unk_xpure,unk_map1)
 
