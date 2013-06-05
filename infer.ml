@@ -2130,8 +2130,10 @@ let infer_collect_hp_rel_x prog (es:entail_state) rhs rhs_rest (rhs_h_matched_se
   else
     let ivs = es.es_infer_vars_hp_rel in
     (*check whether LHS/RHS contains hp_rel*)
+    (*ll-del-1*)
+    let lhrs = CF.get_hp_rel_name_bformula lhs_b in
     let rhrs = CF.get_hp_rel_name_bformula rhs_b in
-    if CP.intersect ivs (rhrs) = [] then
+    if CP.intersect ivs (lhrs@rhrs) = [] then
       begin
         (* DD.info_pprint ">>>>>> infer_hp_rel <<<<<<" pos; *)
         let _ = DD.tinfo_pprint " no hp_rel found" pos in
@@ -2192,7 +2194,6 @@ let infer_collect_hp_rel_x prog (es:entail_state) rhs rhs_rest (rhs_h_matched_se
           let post_hps,prog_vars = get_prog_vars es.CF.es_infer_vars_sel_hp_rel rhs proving_kind#string_of in
           (********** BASIC INFO LHS, RHS **********)
           let l_hpargs = CF.get_HRels lhs_b.CF.formula_base_heap in
-          let lhrs = List.map fst l_hpargs in
           let l_non_infer_hps = CP.diff_svl lhrs ivs in
           let r_hpargs = CF.get_HRels rhs in
           (**smart subst**)
