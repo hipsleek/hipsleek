@@ -720,6 +720,7 @@ non_empty_command:
       | t=checkentail_cmd     -> EntailCheck t
       | t=relassume_cmd     -> RelAssume t
       | t=shapeinfer_cmd     -> ShapeInfer t
+      | t=shapesplit_base_cmd     -> ShapeSplitBase t
       | t=shapeElim_cmd     -> ShapeElim t
       | t=shapeExtract_cmd     -> ShapeExtract t
       | t=infer_cmd           -> Infer t  
@@ -1627,6 +1628,13 @@ relassume_cmd:
 
 shapeinfer_cmd:
    [[ `SHAPE_INFER; `OSQUARE;il1=OPT id_list;`CSQUARE; `OSQUARE; il2=OPT id_list;`CSQUARE ->
+   let il1 = un_option il1 [] in
+   let il2 = un_option il2 [] in
+   (il1,il2)
+   ]];
+
+shapesplit_base_cmd:
+   [[ `SHAPE_SPLIT_BASE; `OSQUARE;il1=OPT id_list;`CSQUARE; `OSQUARE; il2=OPT id_list;`CSQUARE ->
    let il1 = un_option il1 [] in
    let il2 = un_option il2 [] in
    (il1,il2)

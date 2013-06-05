@@ -215,17 +215,35 @@ let split_constr_x prog constrs=
   (*internal method*)
   let split_one cs=
     let (_ ,mix_lf,_,_,_) = CF.split_components cs.CF.hprel_lhs in
-    let l_qvars, base1 = CF.split_quantifiers cs.CF.hprel_lhs in
-    let lfb = match base1 with
+    let l_qvars, lhs = CF.split_quantifiers cs.CF.hprel_lhs in
+    let r_qvars, rhs = CF.split_quantifiers cs.CF.hprel_rhs in
+    let l_hpargs = CF.get_HRels_f lhs in
+    let r_hpargs = CF.get_HRels_f rhs in
+    let leqs = (MCP.ptr_equations_without_null mix_lf) in
+    let lhs_b = match lhs with
       | CF.Base fb -> fb
       | _ -> report_error no_pos "sa2.split_constr: lhs should be a Base Formula"
     in
+    let rhs_b = match rhs with
+      | CF.Base fb -> fb
+      | _ -> report_error no_pos "sa2.split_constr: lhs should be a Base Formula"
+    in
+    (**smart subst**)
+    let lhs_b1, rhs_b1, subst_prog_vars = SAU.smart_subst lhs_b rhs_b (l_hpargs@r_hpargs)
+      leqs [] [] []
+    in
+    (* let lfb = match lhs_b1 with *)
+    (*   | CF.Base fb -> fb *)
+    (*   | _ -> report_error no_pos "sa2.split_constr: lhs should be a Base Formula" *)
+    (* in *)
+    let lfb = lhs_b1 in
     let lhds, lhvs, lhrs = CF.get_hp_rel_bformula lfb in
     let leqNulls = MCP.get_null_ptrs mix_lf in
     let leqs = (MCP.ptr_equations_without_null mix_lf) in
     let r_hps = CF.get_hp_rel_name_formula cs.CF.hprel_rhs in
     let l_def_vs = leqNulls @ (List.map (fun hd -> hd.CF.h_formula_data_node) lhds)
       @ (List.map (fun hv -> hv.CF.h_formula_view_node) lhvs) in
+    let l_def_vs = CP.remove_dups_svl (SAU.find_close l_def_vs (leqs)) in
     let helper (hp,eargs,_)=(hp,List.concat (List.map CP.afv eargs)) in
     let ls_lhp_args = (List.map helper lhrs) in
     let ls_defined_hps,rems = List.split (List.map (fun hpargs ->
@@ -241,7 +259,9 @@ let split_constr_x prog constrs=
           (*prune defined hps in lhs*)
           let new_lhs, _ = CF.drop_hrel_f cs.CF.hprel_lhs (List.map (fun (a, _, _) -> a) defined_preds0) in
           let new_lhs1 = CF.add_quantifiers l_qvars new_lhs in
-          let new_cs = {cs with CF.hprel_lhs = new_lhs1;} in
+          let new_cs = {cs with CF.hprel_lhs = new_lhs1;
+              CF.hprel_rhs = (CF.add_quantifiers r_qvars (CF.Base rhs_b1));
+          } in
           let unk_svl = new_cs.CF.unk_svl in
           let rf = CF.mkTrue (CF.mkTrueFlow()) no_pos in
           let defined_hprels = List.map (SAU.generate_hp_ass unk_svl rf) defined_preds0 in

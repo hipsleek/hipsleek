@@ -743,6 +743,35 @@ let process_shape_infer pre_hps post_hps=
   (* in *)
   ()
 
+let process_shape_split pre_hps post_hps=
+   let get_hps all_hps ass = match ass.CF.hprel_kind with
+    | CP.RelAssume hps ->
+          let body_hps = (CF.get_hp_rel_name_formula ass.CF.hprel_lhs)@
+            ( CF.get_hp_rel_name_formula ass.CF.hprel_rhs) in
+          all_hps@hps@body_hps
+    | _ -> all_hps
+  in
+  let filter_hp id_ls all_hps =List.filter (fun hp ->
+      let hp_name = CP.name_of_spec_var hp in
+      List.exists (fun id -> String.compare hp_name id = 0) id_ls
+      ) all_hps in
+  let hp_lst_assume = !sleek_hprel_assumes in
+  let hps2 = List.fold_left get_hps [] hp_lst_assume in
+  let hps20 = CP.remove_dups_svl hps2 in
+  let sel_pre_hps = filter_hp pre_hps hps20 in
+  let sel_post_hps = filter_hp post_hps hps20 in
+  let sel_hps = sel_pre_hps@sel_post_hps in
+  let new_constrs = Sa2.split_constr !cprog hp_lst_assume in
+  let pr1 = pr_list_ln Cprinter.string_of_hprel in
+  begin
+    print_endline "*************************************";
+    print_endline "*******relational assumption ********";
+    print_endline "*************************************";
+    print_endline (pr1 new_constrs);
+    print_endline "*************************************";
+  end;
+  ()
+
 let process_shape_elim_useless sel_vnames=
   let view_defs = Norm.norm_elim_useless !cprog.Cast.prog_view_decls sel_vnames in
   let _ = !cprog.Cast.prog_view_decls <- view_defs in

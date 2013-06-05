@@ -3,13 +3,21 @@ data node{
  node next;
 }.
 
-HeapPred H(node a).
+HeapPred HP_6(node a).
 HeapPred G(node a, node a). 
 
-
-infer [H,G] H(n) * x::node<_,n>  & xp=null
- |-  G(x,xp). 
+/*
+infer [H,G] (HP_6(n)) * x_814::node<Anon_11,n>@M&n=x_814 & 
+                   xp=null & x=x_814 --> G(x_814,xp)&true
+ |-  G(x_814,xp). 
 print residue.
+*/
+
+relAssume G
+   HP_6(n) * x_814::node<_,n>@M & n=x_814 & xp=null & x=x_814 --> G(x_814,xp) &true.
+
+shape_split_base [H][G].
+
 /*
  <1>emp&xp=null&{FLOW,(19,20)=__norm}[]
  inferred hprel: [(H(n)) * x::node<Anon_11,n>@M&xp=null --> G(x,xp)&true]

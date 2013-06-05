@@ -2195,7 +2195,7 @@ let infer_collect_hp_rel_x prog (es:entail_state) rhs rhs_rest (rhs_h_matched_se
           let lhrs = List.map fst l_hpargs in
           let l_non_infer_hps = CP.diff_svl lhrs ivs in
           let r_hpargs = CF.get_HRels rhs in
-           (**smart subst**)
+          (**smart subst**)
           let lhs_b1, rhs_b1, subst_prog_vars = SAU.smart_subst lhs_b (formula_base_of_heap rhs pos) (l_hpargs@r_hpargs)
              (leqs@reqs) reqs [] (prog_vars@es.es_infer_vars)
             in

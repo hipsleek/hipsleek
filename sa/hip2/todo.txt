@@ -309,13 +309,13 @@ Simplify :
   HP_6(n) & n=x  --> emp  (using exists x_814)
   x_814::node<Anon_11,n>@M& n=x_814 & 
                    xp=null --> G(x_814,xp)&true (using exists x)
-
+**********************************************************
 # TODO post-condition extraction of pre-pred for hip
 
 Towards the end of proving, we will need to extract
 pre-pred from the residue hip state during post-condition
 proving; if pre-pred  are being inferred.
-
+**********************************************************
 # ll-d2.slk  TODO
 
 relAssume  G
@@ -336,7 +336,7 @@ However, expecting:
   or x_37::node<Anon_12,null>@M *& xp_38!=null
 
 */
-
+**********************************************************
 # cll-d3a2.slk  TODO
 
 infer [H,G] H(n) * x::node<_,n>  & xp=null
@@ -357,7 +357,7 @@ To test it, we could support the following in sleek:
 
 relAssume 
    (H(n)) * x::node<Anon_11,n>@M&xp=null --> G(x,xp)&true.
-split_base [H][G].
+shape_split_base [H][G].
 
 Alternatively, we could use:
  infer [H@pre,G@post] H(n) * x::node<_,n>  & xp=null
