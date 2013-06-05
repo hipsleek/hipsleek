@@ -7,24 +7,32 @@ HeapPred H(node a).
 HeapPred HP_6(node a).
 HeapPred HP_6e(node a, node a).
 HeapPred G(node a, node a).
-
+/*
 infer [HP_6] HP_6(x) * x::node<_,x> & xp=null
  |-  G(x,xp). 
 print residue.
+*/
 // expecting a failure since G(..) is not to be inferred
-
+/*
 infer [G] HP_6(x) * x::node<_,x> & xp=null
  |-  G(x,xp). 
 print residue.
+*/
 /*
  expecting
    x::node<_,x> & xp=null --> G(x,xp)
   since HP_6 is not tp be inferred
 */
-
+/*
 infer [G,HP_6] HP_6(x) * x::node<_,x> & xp=null
  |-  G(x,xp). 
 print residue.
+*/
+
+infer [G,HP_6] HP_6(v) * x::node<_,v> & v=x & xp=null
+ |-  G(x,xp). 
+print residue.
+
 /*
  expecting
    HP_6(x) & x::node<_,x> & xp=null --> G(x,xp)
@@ -33,10 +41,11 @@ print residue.
    x::node<_,x> & xp=null --> G(x,xp)
 
 */
-
-infer [G,HP_6,x] HP_6(x) * x::node<_,x> & xp=null
+/*
+infer [G,HP_6,x] HP_6(v) * x::node<_,v> & v=x& xp=null
  |-  G(x,xp). 
 print residue.
+*/
 /*
  expecting
    HP_6(x) & x::node<_,x> & xp=null --> G(x,xp)

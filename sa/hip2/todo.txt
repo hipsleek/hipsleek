@@ -128,8 +128,9 @@ print residue.
 
 some scenarios for inferences
 
+//sol: check infer_vars_hp in rhs only
 infer [HP_6] HP_6(x) * x::node<_,x> & xp=null
- |-  G(x,xp). 
+ |-  G(x,xp).
 print residue.
 // expecting a failure since G(..) is not to be inferred
 
