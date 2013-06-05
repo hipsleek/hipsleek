@@ -522,9 +522,6 @@ let translate_fieldinfo (field: Cil.fieldinfo) (lopt: Cil.location option)
   | Cil.TComp (comp, _) ->
       let ty = Globals.Named comp.Cil.cname in
       ((ty, name), pos, false, Iast.F_NO_ANN)
-  | Cil.TPtr _ ->
-      let ty = translate_typ field.Cil.ftype in
-      ((ty, name), pos, false, Iast.F_NO_ANN)
   | _ ->
       let ty = translate_typ field.Cil.ftype in
       ((ty, name), pos, false, Iast.F_NO_ANN)
@@ -639,17 +636,27 @@ let rec translate_lval (lv: Cil.lval) : Iast.exp =
                                     Iast.exp_member_pos = pos} in
           newexp
       | Cil.Mem e, Cil.Index _ ->
-          let base = translate_exp e  in
-          let index = collect_index offset in
-          let newexp = Iast.ArrayAt {Iast.exp_arrayat_array_base = base;
-                                     Iast.exp_arrayat_index = index;
+          let data_base = translate_exp e  in
+          let data_fields = ["pdata"] in
+          let array_base = Iast.Member {Iast.exp_member_base = data_base;
+                                        Iast.exp_member_fields = data_fields;
+                                        Iast.exp_member_path_id = None;
+                                        Iast.exp_member_pos = pos} in
+          let array_index = collect_index offset in
+          let newexp = Iast.ArrayAt {Iast.exp_arrayat_array_base = array_base;
+                                     Iast.exp_arrayat_index = array_index;
                                      Iast.exp_arrayat_pos = pos} in
           newexp
       | Cil.Mem e, Cil.Field _ ->
-          let base = translate_exp e in
-          let fields = collect_field offset in
-          let newexp = Iast.Member {Iast.exp_member_base = base;
-                                    Iast.exp_member_fields = fields;
+          let data_base = translate_exp e  in
+          let data_fields = ["pdata"] in
+          let member_base = Iast.Member {Iast.exp_member_base = data_base;
+                                         Iast.exp_member_fields = data_fields;
+                                         Iast.exp_member_path_id = None;
+                                         Iast.exp_member_pos = pos} in
+          let member_fields = collect_field offset in
+          let newexp = Iast.Member {Iast.exp_member_base = member_base;
+                                    Iast.exp_member_fields = member_fields;
                                     Iast.exp_member_path_id = None;
                                     Iast.exp_member_pos = pos} in
           newexp
