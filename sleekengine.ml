@@ -78,6 +78,8 @@ let cprog = ref { C.prog_data_decls = [];
 
 let residues =  ref (None : (CF.list_context * bool) option)    (* parameter 'bool' is used for printing *)
 
+let sleek_hprel_assumes = ref ([]: CF.hprel list)
+
 let clear_iprog () =
   iprog.I.prog_data_decls <- [iobj_def];
   iprog.I.prog_view_decls <- [];
@@ -142,7 +144,8 @@ let check_data_pred_name name :bool =
   let pr2 = string_of_bool in 
   Debug.no_1 "check_data_pred_name" pr1 pr2 (fun _ -> check_data_pred_name name) name
     
-
+let silenced_print f s = if !Globals.silence_output then () else f s 
+	
 let process_pred_def pdef = 
   (* TODO : how come this method not called? *)
   (* let _ = print_string ("process_pred_def:" *)
@@ -154,7 +157,7 @@ let process_pred_def pdef =
 		let h = (self,Unprimed)::(res_name,Unprimed)::(List.map (fun c-> (c,Unprimed)) pdef.Iast.view_vars ) in
 		let p = (self,Primed)::(res_name,Primed)::(List.map (fun c-> (c,Primed)) pdef.Iast.view_vars ) in
 		iprog.I.prog_view_decls <- pdef :: curr_view_decls;
-		let wf,_ = AS.case_normalize_struc_formula 10 iprog h p pdef.Iast.view_formula false 		
+		let wf = AS.case_normalize_struc_formula_view 10 iprog h p pdef.Iast.view_formula false 
           false (*allow_post_vars*) false [] in
 		let new_pdef = {pdef with Iast.view_formula = wf} in
 		let tmp_views = AS.order_views (new_pdef :: iprog.I.prog_view_decls) in
@@ -204,7 +207,7 @@ let process_pred_def_4_iast pdef =
 		let h = (self,Unprimed)::(res_name,Unprimed)::(List.map (fun c-> (c,Unprimed)) pdef.Iast.view_vars ) in
 		let p = (self,Primed)::(res_name,Primed)::(List.map (fun c-> (c,Primed)) pdef.Iast.view_vars ) in
 		iprog.I.prog_view_decls <- pdef :: curr_view_decls;
-		let wf,_ = AS.case_normalize_struc_formula 11 iprog h p pdef.Iast.view_formula false 		
+		let wf = AS.case_normalize_struc_formula_view 11 iprog h p pdef.Iast.view_formula false 
           false (*allow_post_vars*) false [] in
         let inv_lock = pdef.I.view_inv_lock in
         let inv_lock =
@@ -234,10 +237,21 @@ let convert_pred_to_cast () =
   iprog.I.prog_view_decls <- tmp_views;
   let cviews = List.map (AS.trans_view iprog) tmp_views in
   Debug.tinfo_pprint "after trans_view" no_pos;
+  let cviews =
+    if !Globals.norm_elim_useless then
+      Norm.norm_elim_useless cviews (List.map (fun vdef -> vdef.C.view_name) cviews)
+    else cviews
+  in
   let _ = !cprog.C.prog_view_decls <- cviews in
-  let _ =  (List.map (fun vdef -> AS.compute_view_x_formula !cprog vdef !Globals.n_xpure) cviews) in
+  let cviews1 =
+    if !Globals.norm_extract then
+      Norm.norm_extract_common !cprog cviews (List.map (fun vdef -> vdef.C.view_name) cviews)
+    else cviews
+  in
+  let _ = !cprog.C.prog_view_decls <- cviews1 in
+  let _ =  (List.map (fun vdef -> AS.compute_view_x_formula !cprog vdef !Globals.n_xpure) cviews1) in
   Debug.tinfo_pprint "after compute_view" no_pos;
-  let _ = (List.map (fun vdef -> AS.set_materialized_prop vdef) cviews) in
+  let _ = (List.map (fun vdef -> AS.set_materialized_prop vdef) cviews1) in
   Debug.tinfo_pprint "after materialzed_prop" no_pos;
   let cprog1 = AS.fill_base_case !cprog in
   let cprog2 = AS.sat_warnings cprog1 in        
@@ -246,7 +260,7 @@ let convert_pred_to_cast () =
   let cprog4 = (AS.add_pre_to_cprog cprog3) in
   let cprog5 = (*if !Globals.enable_case_inference then AS.case_inference iprog cprog4 else*) cprog4 in
   let _ = if (!Globals.print_input || !Globals.print_input_all) then print_string (Iprinter.string_of_program iprog) else () in
-  (*let _ = if (!Globals.print_core || !Globals.print_core_all) then print_string (Cprinter.string_of_program cprog5) else () in*)
+  let _ = if (!Globals.print_core || !Globals.print_core_all) then print_string (Cprinter.string_of_program cprog5) else () in
   cprog := cprog5
 
 let convert_pred_to_cast () = 
@@ -272,7 +286,7 @@ let process_rel_def rdef =
 	  try
 		(*let h = (self,Unprimed)::(res,Unprimed)::(List.map (fun c-> (c,Unprimed)) rdef.Iast.view_vars ) in
 		let p = (self,Primed)::(res,Primed)::(List.map (fun c-> (c,Primed)) rdef.Iast.view_vars ) in
-		let wf,_ = AS.case_normalize_struc_formula iprog h p rdef.Iast.view_formula false false [] in
+		let wf,_ = AS.case_normalize_struc_formulas iprog h p rdef.Iast.view_formula false false [] in
 		let new_rdef = {rdef with Iast.view_formula = wf} in
 		iprog.I.prog_view_decls <- ( new_rdef :: iprog.I.prog_view_decls);
 		let crdef = AS.trans_view iprog new_rdef in
@@ -450,11 +464,11 @@ let rec meta_to_struc_formula (mf0 : meta_formula) quant fv_idents (tlist:TI.spe
 let meta_to_struc_formula (mf0 : meta_formula) quant fv_idents (tlist:TI.spec_var_type_list) 
 	: (TI.spec_var_type_list*CF.struc_formula) 
 	= Debug.no_4 "meta_to_struc_formula"
-      string_of_meta_formula
-      string_of_bool
-      string_of_ident_list
+  string_of_meta_formula
+  string_of_bool
+  string_of_ident_list
   TI.string_of_tlist
-      Cprinter.string_of_struc_formula
+  Cprinter.string_of_struc_formula
   (fun _ _ _ _  ->  meta_to_struc_formula mf0 quant fv_idents tlist )mf0 quant fv_idents tlist
 
 (* An Hoa : DETECT THAT EITHER OF 
@@ -539,7 +553,8 @@ let rec meta_to_formula_not_rename (mf0 : meta_formula) quant fv_idents (tlist:T
 
 let run_infer_one_pass (ivars: ident list) (iante0 : meta_formula) (iconseq0 : meta_formula) =
   let _ = residues := None in
-  let _ = if (!Globals.print_input || !Globals.print_input_all) then print_endline ("INPUT: \n ### ante = " ^ (string_of_meta_formula iante0) ^"\n ### conseq = " ^ (string_of_meta_formula iconseq0)) else () in
+  let _ = Infer.rel_ass_stk # reset in
+  let _ = if (!Globals.print_input || !Globals.print_input_all) then print_endline ("INPUT: \n ### 1 ante = " ^ (string_of_meta_formula iante0) ^"\n ### conseq = " ^ (string_of_meta_formula iconseq0)) else () in
   let _ = Debug.devel_pprint ("\nrun_entail_check:"
                               ^ "\n ### iante0 = "^(string_of_meta_formula iante0)
                               ^ "\n ### iconseq0 = "^(string_of_meta_formula iconseq0)
@@ -570,6 +585,7 @@ let run_infer_one_pass (ivars: ident list) (iante0 : meta_formula) (iconseq0 : m
   (* let conseq = if (!Globals.allow_field_ann) then meta_to_struc_formula iconseq0 false fv_idents None stab  *)
   let (n_tl,conseq) = if (!Globals.allow_field_ann) then meta_to_struc_formula iconseq0 false fv_idents n_tl
       else meta_to_struc_formula iconseq0 false fv_idents  n_tl in
+  (* let _ = print_endline ("conseq: " ^ (Cprinter.string_of_struc_formula conseq)) in *)
   (* let conseq1 = meta_to_struc_formula iconseq0 false fv_idents stab in *)
   let conseq = Solver.prune_pred_struc !cprog true conseq in
 	let conseq = AS.add_param_ann_constraints_struc conseq in
@@ -592,7 +608,7 @@ let run_infer_one_pass (ivars: ident list) (iante0 : meta_formula) (iconseq0 : m
   (* List of vars appearing in original formula *)
   let orig_vars = CF.fv ante @ CF.struc_fv conseq in
   (* List of vars needed for abduction process *)
-  let vars = List.map (fun v -> TI.get_spec_var_type_list_infer v orig_vars no_pos) ivars in
+  let vars = List.map (fun v -> TI.get_spec_var_type_list_infer (v, Unprimed) orig_vars no_pos) ivars in
   (* Init context with infer_vars and orig_vars *)
   let (vrel,iv) = List.partition (fun v -> is_RelT (CP.type_of_spec_var v)(*  ||  *)
               (* CP.type_of_spec_var v == FuncT *)) vars in
@@ -631,13 +647,105 @@ let run_infer_one_pass (ivars: ident list) (iante0 : meta_formula) (iconseq0 : m
     if not !Globals.disable_failure_explaining then ((not (CF.isFailCtx_gen rs)))
     else ((not (CF.isFailCtx rs))) in
   residues := Some (rs, res);
-  (res, rs)
+  (res, rs,v_hp_rel)
 
 let run_infer_one_pass ivars (iante0 : meta_formula) (iconseq0 : meta_formula) =
   let pr = string_of_meta_formula in
   let pr1 = pr_list pr_id in
-  let pr_2 = pr_pair string_of_bool Cprinter.string_of_list_context in
+  let pr_2 = pr_triple string_of_bool Cprinter.string_of_list_context !CP.print_svl in
   Debug.no_3 "run_infer_one_pass" pr1 pr pr pr_2 run_infer_one_pass ivars iante0 iconseq0
+
+let process_rel_assume hp_id (ilhs : meta_formula) (irhs: meta_formula)=
+  (* let _ = DD.info_pprint "process_rel_assume" no_pos in *)
+  (* let stab = H.create 103 in *)
+  let stab = [] in
+  let (stab,lhs) = meta_to_formula ilhs false [] stab in
+  let fvs = CF.fv lhs in
+  let fv_idents = (List.map CP.name_of_spec_var fvs)@[hp_id] in
+  let (stab,rhs) = meta_to_formula irhs false fv_idents stab in
+  let orig_vars = CF.fv lhs @ CF.fv rhs in
+  let hp = TI.get_spec_var_type_list_infer (hp_id, Unprimed) orig_vars no_pos in
+  (* let _ =  print_endline ("LHS = " ^ (Cprinter.string_of_formula lhs)) in *)
+  (* let _ =  print_endline ("RHS = " ^ (Cprinter.string_of_formula rhs)) in *)
+  let new_rel_ass = {
+      CF.hprel_kind = CP.RelAssume [hp];
+      unk_svl = [];(*inferred from norm*)
+      unk_hps = [];
+      predef_svl = [];
+      hprel_lhs = lhs;
+      hprel_rhs = rhs;
+  } in
+  (*hp_assumes*)
+  let _ = sleek_hprel_assumes := !sleek_hprel_assumes@[new_rel_ass] in
+  ()
+
+let process_shape_infer pre_hps post_hps=
+  (* let _ = DD.info_pprint "process_shape_infer" no_pos in *)
+  let get_hps all_hps ass = match ass.CF.hprel_kind with
+    | CP.RelAssume hps -> all_hps@hps
+    | _ -> all_hps
+  in
+  let filter_hp id_ls all_hps =List.filter (fun hp ->
+      let hp_name = CP.name_of_spec_var hp in
+      List.exists (fun id -> String.compare hp_name id = 0) id_ls
+      ) all_hps in
+  let hp_lst_assume = !sleek_hprel_assumes in
+  let hp_rel_unkmap = [] in
+  let hps2 = List.fold_left  get_hps [] hp_lst_assume in
+  let hps20 = CP.remove_dups_svl hps2 in
+  let sel_pre_hps = filter_hp pre_hps hps20 in
+  let sel_post_hps = filter_hp post_hps hps20 in
+  let sel_hps = sel_pre_hps@sel_post_hps in
+  let ls_hprel, ls_inferred_hps, dropped_hps =
+    if not (!Globals.sa_old) then
+    Sa2.infer_shapes !cprog "" hp_lst_assume
+        sel_hps sel_post_hps
+        (Gen.BList.remove_dups_eq
+             (fun (hp1,_) (hp2,_) -> CP.eq_spec_var hp1 hp2)
+             hp_rel_unkmap)
+  else
+    Sa.infer_hps !cprog "" hp_lst_assume
+        sel_hps sel_post_hps
+        (Gen.BList.remove_dups_eq
+             (fun (hp1,_) (hp2,_) -> CP.eq_spec_var hp1 hp2)
+             hp_rel_unkmap)
+  in
+  let _ = if not (!Globals.sa_old) then
+        begin
+            if not(Sa2.rel_def_stk# is_empty) then
+          	  print_endline ""; 
+		    print_endline "*************************************";
+		    print_endline "*******relational definition ********";
+		    print_endline "*************************************";
+            print_endline (Sa2.rel_def_stk # string_of_reverse);
+		    print_endline "*************************************"
+        end
+      else
+        if not(Sa.rel_def_stk# is_empty) then
+          begin
+		      print_endline ""; 
+		      print_endline "*************************************";
+		      print_endline "*******relational definition ********";
+		      print_endline "*************************************";
+              print_endline (Sa.rel_def_stk # string_of_reverse);
+		      print_endline "*************************************"
+          end
+  in
+  ()
+
+let process_shape_elim_useless sel_vnames=
+  let view_defs = Norm.norm_elim_useless !cprog.Cast.prog_view_decls sel_vnames in
+  let _ = !cprog.Cast.prog_view_decls <- view_defs in
+  let pr = pr_list_ln Cprinter.string_of_view_decl in
+  let _ = Debug.info_pprint ("views after ELIM: \n" ^ (pr view_defs)) no_pos in
+  ()
+
+let process_shape_extract sel_vnames=
+  let view_defs = Norm.norm_extract_common !cprog !cprog.Cast.prog_view_decls sel_vnames in
+  let _ = !cprog.Cast.prog_view_decls <- view_defs in
+  let pr = pr_list_ln Cprinter.string_of_view_decl in
+  let _ = Debug.info_pprint ("views after EXTRACTION: \n" ^ (pr view_defs)) no_pos in
+  ()
 
 (* the value of flag "exact" decides the type of entailment checking              *)
 (*   None       -->  forbid residue in RHS when the option --classic is turned on *)
@@ -650,16 +758,16 @@ let run_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) (etype: e
   let with_timeout = 
     let fctx = CF.mkFailCtx_in (CF.Trivial_Reason
       (CF.mk_failure_may "timeout" Globals.timeout_error)) in
-    (false, fctx) in
+    (false, fctx,[]) in
   Procutils.PrvComms.maybe_raise_and_catch_timeout_sleek
     (run_entail_check iante0 iconseq0) etype with_timeout
 
 let run_entail_check (iante : meta_formula) (iconseq : meta_formula) (etype: entail_type) =
   let pr = string_of_meta_formula in
-  let pr_2 = pr_pair string_of_bool Cprinter.string_of_list_context in
+  let pr_2 = pr_triple string_of_bool Cprinter.string_of_list_context !CP.print_svl in
   Debug.no_2 "run_entail_check" pr pr pr_2 (fun _ _ -> run_entail_check iante iconseq etype) iante iconseq
 
-let print_entail_result (valid: bool) (residue: CF.list_context) (num_id: string) =
+let print_entail_result sel_hps (valid: bool) (residue: CF.list_context) (num_id: string):bool =
   DD.ninfo_hprint (add_str "residue: " !CF.print_list_context) residue no_pos;
   (* Termination: SLEEK result printing *)
   let term_res = CF.collect_term_ann_and_msg_list_context residue in
@@ -692,12 +800,14 @@ let print_entail_result (valid: bool) (residue: CF.list_context) (num_id: string
             | _ -> ""
         else ""
       in
-      print_string (num_id^": Fail."^timeout^s^"\n"^term_output^"\n"); flush stdout;
+      silenced_print print_string (num_id^": Fail."^timeout^s^"\n"^term_output^"\n"); flush stdout;
+	  false
       (*if !Globals.print_err_sleek then *)
       (* ;print_string ("printing here: "^(Cprinter.string_of_list_context rs)) *)
     end
   else
     begin
+         (* let sel_hp_rels = CF.get_infer_vars_sel_hp_list_ctx residue in *)
       let s =
         if not !Globals.disable_failure_explaining then
           match CF.list_context_is_eq_flow residue false_flow_int with
@@ -705,17 +815,35 @@ let print_entail_result (valid: bool) (residue: CF.list_context) (num_id: string
             | false -> (*expect normal (OK) here*) ""
         else ""
       in
-      if t_valid then print_string (num_id^": Valid. "^s^"\n"^term_output^"\n")
-      else print_string (num_id^": Fail. "^s^"\n"^term_output^"\n");
-      if not(Infer.rel_ass_stk# is_empty) then
-        begin
-          print_endline "*************************************";
-          print_endline "*******relational assumption ********";
-          print_endline "*************************************";
-          print_endline (Infer.rel_ass_stk # string_of_reverse);
-          print_endline "*************************************";
-          Infer.rel_ass_stk # reset
-        end;
+      if t_valid then (silenced_print print_string (num_id^": Valid. "^s^"\n"^term_output^"\n"); true)
+      else (silenced_print print_string (num_id^": Fail. "^s^"\n"^term_output^"\n");false)
+      (* let hp_lst_assume = Infer.rel_ass_stk # get_stk in *)
+      (* if not(Infer.rel_ass_stk# is_empty) then *)
+      (*   begin *)
+      (*     print_endline "*************************************"; *)
+      (*     print_endline "*******relational assumption ********"; *)
+      (*     print_endline "*************************************"; *)
+      (*     (\* print_endline (Infer.rel_ass_stk # string_of_reverse); *\) *)
+      (*     print_endline "*************************************"; *)
+      (*     Infer.rel_ass_stk # reset *)
+      (*   end; *)
+      (* (\* let _ = Debug.info_pprint (" sel_hps:" ^ (!CP.print_svl sel_hps)) no_pos in *\) *)
+      (* let ls_hprel, _(\* ls_inferred_hps *\), _ (\* dropped_hps *\) = *)
+      (*   if !Globals.sa_en_norm && (hp_lst_assume <> []) then *)
+      (*     Sa.infer_hps !cprog num_id hp_lst_assume *)
+      (*         sel_hps [] [] *)
+      (*   else [],[],[] *)
+      (* in *)
+      (* if not(Sa.rel_def_stk# is_empty) then *)
+      (*   begin *)
+	  (*       print_endline "";  *)
+	  (*       print_endline "*************************************"; *)
+	  (*       print_endline "*******relational definition ********"; *)
+	  (*       print_endline "*************************************"; *)
+      (*       (\* print_endline (Sa.rel_def_stk # string_of_reverse); *\) *)
+	  (*       print_endline "*************************************"; *)
+      (*         Sa.rel_def_stk #reset; *)
+      (*   end; *)
       (* already printed in the result *)
       (* if not(Infer.infer_rel_stk# is_empty) then *)
       (*   begin *)
@@ -731,11 +859,11 @@ let print_entail_result (valid: bool) (residue: CF.list_context) (num_id: string
   (* with e -> *)
   (*     let _ =  Error.process_exct(e)in *)
 
-let print_entail_result (valid: bool) (residue: CF.list_context) (num_id: string) =
+let print_entail_result sel_hps (valid: bool) (residue: CF.list_context) (num_id: string):bool =
   let pr0 = string_of_bool in
   let pr = !CF.print_list_context in
   DD.no_2 "print_entail_result" pr0 pr (fun _ -> "") 
-    (fun _ _ -> print_entail_result valid residue num_id) valid residue
+    (fun _ _ -> print_entail_result sel_hps valid residue num_id) valid residue
 
 
 let print_exc (check_id: string) =
@@ -747,23 +875,24 @@ let print_exc (check_id: string) =
 (*   None       -->  forbid residue in RHS when the option --classic is turned on *)
 (*   Some true  -->  always check entailment exactly (no residue in RHS)          *)
 (*   Some false -->  always check entailment inexactly (allow residue in RHS)     *)
-let process_entail_check_x (iante : meta_formula) (iconseq : meta_formula) (etype : entail_type) =
+let process_entail_check_x (iante : meta_formula) (iconseq : meta_formula) (etype : entail_type):bool =
   let nn = "("^(string_of_int (sleek_proof_counter#inc_and_get))^") " in
   let num_id = "\nEntail "^nn in
-  try 
-    let valid, rs = 
-      wrap_proving_kind ("SLEEK_ENT"^nn) (run_entail_check iante iconseq) etype in
-    print_entail_result valid rs num_id
-  with ex -> 
-    let _ = print_string ("\nEntailment Failure "^nn^(Printexc.to_string ex)^"\n") 
-    in ()
+    try 
+      let valid, rs, _(*sel_hps*) = 
+        wrap_proving_kind ("SLEEK_ENT"^nn) (run_entail_check iante iconseq) etype in
+      print_entail_result [] (*sel_hps*) valid rs num_id
+    with ex ->
+        print_string "caught\n"; Printexc.print_backtrace stdout;
+        let _ = print_string ("\nEntailment Failure "^nn^(Printexc.to_string ex)^"\n") 
+        in false
   (* with e -> print_exc num_id *)
 
 (* the value of flag "exact" decides the type of entailment checking              *)
 (*   None       -->  forbid residue in RHS when the option --classic is turned on *)
 (*   Some true  -->  always check entailment exactly (no residue in RHS)          *)
 (*   Some false -->  always check entailment inexactly (allow residue in RHS)     *)
-let process_entail_check (iante : meta_formula) (iconseq : meta_formula) (etype: entail_type) =
+let process_entail_check (iante : meta_formula) (iconseq : meta_formula) (etype: entail_type):bool =
   let pr = string_of_meta_formula in
   Debug.no_2 "process_entail_check_helper" pr pr (fun _ -> "?") process_entail_check_x iante iconseq etype
 
@@ -783,7 +912,7 @@ let process_eq_check (ivars: ident list)(if1 : meta_formula) (if2 : meta_formula
   let _ = if (!Globals.print_core || !Globals.print_core_all) then print_endline ("INPUT: \n ### formula 1= " ^ (Cprinter.string_of_formula f1) ^"\n ### formula 2= " ^ (Cprinter.string_of_formula f2)) else () in
 
   (*let f2 = Solver.prune_preds !cprog true f2 in *)
-  if(!Globals.show_diff) then( 
+  if(not !Globals.dis_show_diff) then(
     let (res, mt_list) = CEQ.checkeq_formulas_with_diff ivars f1 f2 in
     let _ = if(res) then(
       print_string (num_id^": Valid.")
@@ -809,13 +938,14 @@ let process_eq_check (ivars: ident list)(if1 : meta_formula) (if2 : meta_formula
 let process_infer (ivars: ident list) (iante0 : meta_formula) (iconseq0 : meta_formula) =
   let nn = "("^(string_of_int (sleek_proof_counter#inc_and_get))^") " in
   let num_id = "\nEntail "^nn in
-  try 
-    let valid, rs = run_infer_one_pass ivars iante0 iconseq0 in
-    print_entail_result valid rs num_id
-  with ex -> 
-      (* print_exc num_id *)
-         let _ = print_string ("\nEntailment Failure "^nn^(Printexc.to_string ex)^"\n") 
-         in ()
+    try 
+      let valid, rs, sel_hps = run_infer_one_pass ivars iante0 iconseq0 in
+      print_entail_result sel_hps valid rs num_id
+    with ex -> 
+        (* print_exc num_id *)
+        print_string "caught\n"; Printexc.print_backtrace stdout;
+        let _ = print_string ("\nEntailment Failure "^nn^(Printexc.to_string ex)^"\n") 
+        in false
 
 let process_capture_residue (lvar : ident) = 
 	let flist = match !residues with 

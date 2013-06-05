@@ -7,6 +7,9 @@ pred ll<n> == self = null & n = 0
 	or self::node<_, q> * q::ll<n-1> 
   inv n >= 0.
 
+HeapPred H1(node q).
+HeapPred H2(node q, int n).
+
 //(1)
 infer [q] q=null |- q::ll<n> .
 print residue.
@@ -25,7 +28,7 @@ print residue.
 //Infer  (4): Fail.(may) cause:15.4 no match for rhs data node: q (may-bug).
 
 //(5)
-infer [q] n=0 |- q::ll<n> .
+infer [H2] H2(q,n)& n=0 |- q::ll<n> .
 print residue.
 
 //(6)

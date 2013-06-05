@@ -1,0 +1,797 @@
+
+!!! Full processing file "bind2b1.ss"
+Parsing file "bind2b1.ss" by default parser...
+
+!!!  processing primitives "["prelude.ss"]
+Starting Omega...oc
+
+look_up_all_fields@2@1
+look_up_all_fields inp1 :Object
+look_up_all_fields@2 EXIT out :[]
+
+look_up_all_fields@1
+look_up_all_fields inp1 :int_ptr_ptr
+look_up_all_fields@1 EXIT out :[(int_ptr,val)]
+
+look_up_all_fields@4@3
+look_up_all_fields inp1 :Object
+look_up_all_fields@4 EXIT out :[]
+
+look_up_all_fields@3
+look_up_all_fields inp1 :int_ptr
+look_up_all_fields@3 EXIT out :[(int,val)]
+
+look_up_all_fields@6@5
+look_up_all_fields inp1 :Object
+look_up_all_fields@6 EXIT out :[]
+
+look_up_all_fields@5
+look_up_all_fields inp1 :node
+look_up_all_fields@5 EXIT out :[(int,val),(node,next)]
+
+trans_exp@11@10@9@8@7
+trans_exp inp1 :node t_31<loc_vardecl:14:6-14:12>
+trans_exp@11 EXIT out :(node t_31,void)
+
+trans_exp@13@12@10@9@8@7
+trans_exp inp1 :t_31<loc_var:15:29-15:30>
+trans_exp@13 EXIT out :(t_31,node)
+
+trans_exp@14@12@10@9@8@7
+trans_exp inp1 :nn_33<loc_var:15:33-15:35>
+trans_exp@14 EXIT out :(nn_33,node)
+
+look_up_all_fields@16@15@12@10@9@8@7
+look_up_all_fields inp1 :Object
+look_up_all_fields@16 EXIT out :[]
+
+look_up_all_fields@15@12@10@9@8@7
+look_up_all_fields inp1 :node
+look_up_all_fields@15 EXIT out :[(int,val),(node,next)]
+
+compute_ann_list@17@12@10@9@8@7
+compute_ann_list inp1 :, val, next
+compute_ann_list inp2 :, vv_32, nn_33
+compute_ann_list inp3 :@M
+compute_ann_list@17 EXIT out :, @A, @A
+
+(andreeac)astsimp.ml trans_exp Bind, vs to become lend ann:  vv_32 nn_33 in {t_31<loc_var:15:29-15:30> = nn_33<loc_var:15:33-15:35><loc_assign:15:29-15:35>}<loc_block:15:27-15:38>
+trans_exp@12@10@9@8@7
+trans_exp inp1 :(63, ):bind c to (vv_32, nn_33) in
+{t_31<loc_var:15:29-15:30> = nn_33<loc_var:15:33-15:35><loc_assign:15:29-15:35>}<loc_block:15:27-15:38><loc_bind:15:6-15:38>
+trans_exp@12 EXIT out :(bind c to (vv_32,nn_33) [write] in 
+{t_31 = nn_33},void)
+
+trans_exp@10@9@8@7
+trans_exp inp1 :node t_31<loc_vardecl:14:6-14:12>;
+(63, ):bind c to (vv_32, nn_33) in
+{t_31<loc_var:15:29-15:30> = nn_33<loc_var:15:33-15:35><loc_assign:15:29-15:35>}<loc_block:15:27-15:38><loc_bind:15:6-15:38><loc_seq:14:6-15:38>
+trans_exp@10 EXIT out :((node t_31;
+bind c to (vv_32,nn_33) [write] in 
+{t_31 = nn_33}),void)
+
+trans_exp@18@9@8@7
+trans_exp inp1 :<loc_empty:15:38-15:39>
+trans_exp@18 EXIT out :(,void)
+
+trans_exp@9@8@7
+trans_exp inp1 :node t_31<loc_vardecl:14:6-14:12>;
+(63, ):bind c to (vv_32, nn_33) in
+{t_31<loc_var:15:29-15:30> = nn_33<loc_var:15:33-15:35><loc_assign:15:29-15:35>}<loc_block:15:27-15:38><loc_bind:15:6-15:38><loc_seq:14:6-15:38>;
+<loc_empty:15:38-15:39><loc_seq:14:6-15:39>
+trans_exp@9 EXIT out :(((node t_31;
+bind c to (vv_32,nn_33) [write] in 
+{t_31 = nn_33});
+),void)
+
+trans_exp@19@8@7
+trans_exp inp1 :dprint<loc_dprint:16:6-16:12>
+trans_exp@19 EXIT out :(dprint,void)
+
+trans_exp@8@7
+trans_exp inp1 :node t_31<loc_vardecl:14:6-14:12>;
+(63, ):bind c to (vv_32, nn_33) in
+{t_31<loc_var:15:29-15:30> = nn_33<loc_var:15:33-15:35><loc_assign:15:29-15:35>}<loc_block:15:27-15:38><loc_bind:15:6-15:38><loc_seq:14:6-15:38>;
+<loc_empty:15:38-15:39><loc_seq:14:6-15:39>;
+dprint<loc_dprint:16:6-16:12><loc_seq:14:6-16:13>
+trans_exp@8 EXIT out :((((node t_31;
+bind c to (vv_32,nn_33) [write] in 
+{t_31 = nn_33});
+);
+dprint),void)
+
+trans_exp@20@7
+trans_exp inp1 :(65, ):return t_31<loc_var:17:13-17:14><loc_return:17:6-17:14>
+trans_exp@20 EXIT out :(ret# t_31,void)
+
+trans_exp@7
+trans_exp inp1 :{local: node t
+node t_31<loc_vardecl:14:6-14:12>;
+(63, ):bind c to (vv_32, nn_33) in
+{t_31<loc_var:15:29-15:30> = nn_33<loc_var:15:33-15:35><loc_assign:15:29-15:35>}<loc_block:15:27-15:38><loc_bind:15:6-15:38><loc_seq:14:6-15:38>;
+<loc_empty:15:38-15:39><loc_seq:14:6-15:39>;
+dprint<loc_dprint:16:6-16:12><loc_seq:14:6-16:13>;
+(65, ):return t_31<loc_var:17:13-17:14><loc_return:17:6-17:14><loc_seq:14:6-17:15>}<loc_block:13:0-18:1>
+trans_exp@7 EXIT out :({((((node t_31;
+bind c to (vv_32,nn_33) [write] in 
+{t_31 = nn_33});
+);
+dprint);
+ret# t_31)},void)
+
+Checking procedure paper_fix$node... 
+check_exp1@32@31@30@29@28@27@26@25@24@23@22@21
+check_exp1 inp1 : List of Failesc Context: [FEC(0, 0, 1  )]
+
+Successful States:
+[
+ Label: 
+ State:c::node<Anon_11@M,p@M>@M[Orig]&c=c' & 0<=0&{FLOW,(22,23)=__norm}[]
+       es_var_measures: MayLoop
+       es_trace: empty
+
+ ]
+check_exp1@32 EXIT out : List of Failesc Context: [FEC(0, 0, 1  )]
+
+Successful States:
+[
+ Label: 
+ State:c::node<Anon_11@M,p@M>@M[Orig]&c=c' & 0<=0&{FLOW,(22,23)=__norm}[]
+       es_var_measures: MayLoop
+       es_trace: empty
+
+ ]
+
+check_exp@31@30@29@28@27@26@25@24@23@22@21
+check_exp inp1 : List of Failesc Context: [FEC(0, 0, 1  )]
+
+Successful States:
+[
+ Label: 
+ State:c::node<Anon_11@M,p@M>@M[Orig]&c=c' & 0<=0&{FLOW,(22,23)=__norm}[]
+       es_var_measures: MayLoop
+       es_trace: empty
+
+ ]
+check_exp inp2 :node t_31
+check_exp@31 EXIT out : List of Failesc Context: [FEC(0, 0, 1  )]
+
+Successful States:
+[
+ Label: 
+ State:c::node<Anon_11@M,p@M>@M[Orig]&c=c' & 0<=0&{FLOW,(22,23)=__norm}[]
+       es_var_measures: MayLoop
+       es_trace: empty
+
+ ]
+
+@34! >>>>>> bind type-checker <<<<<<
+@34! node:c
+@34! fields:[vv_32,nn_33]
+@34! node ann:@M
+@34! fields ann:[@A,@L]
+@34! read-only:false
+@34!bind2b1.ss:15: 6: bind: unfolded context:
+ List of Failesc Context: [FEC(0, 0, 1  )]
+
+Successful States:
+[
+ Label: 
+ State:c::node<Anon_11@M,p@M>@M[Orig]&c=c' & 0<=0&{FLOW,(22,23)=__norm}[]
+       es_var_measures: MayLoop
+       es_trace: empty
+
+ ]
+
+@34! vheap: c'::node<vv_32'@A,nn_33'@L>@M[Orig]&true&{FLOW,(1,25)=__flow}[]
+@34!bind2b1.ss:15: 6: vheap2: c'::node<vv_32'@A,nn_33'@L>@M[Orig]&true&{FLOW,(1,25)=__flow}[]
+@34! Proving binding in method paper_fix$node for spec  EAssume 
+   emp&p=res&{FLOW,(22,23)=__norm}[]
+   , Line 12
+
+check_exp1@41@40@39@38@37@36@35@34@33@30@29@28@27@26@25@24@23@22@21
+check_exp1 inp1 : List of Failesc Context: [FEC(0, 0, 1  )]
+
+Successful States:
+[
+ Label: 
+ State:c::node<Anon_11@M,p@M>@M[Orig]&c=c' & 0<=0 & nn_33'=p&{FLOW,(22,23)=__norm}[]
+       es_var_measures: MayLoop
+       es_trace: empty
+
+ ]
+check_exp1@41 EXIT out : List of Failesc Context: [FEC(0, 0, 1  )]
+
+Successful States:
+[
+ Label: 
+ State:c::node<Anon_11@M,p@M>@M[Orig]&c=c' & 0<=0 & nn_33'=p & nn_33'=res&{FLOW,(22,23)=__norm}[]
+       es_var_measures: MayLoop
+       es_trace: empty
+
+ ]
+
+check_exp@40@39@38@37@36@35@34@33@30@29@28@27@26@25@24@23@22@21
+check_exp inp1 : List of Failesc Context: [FEC(0, 0, 1  )]
+
+Successful States:
+[
+ Label: 
+ State:c::node<Anon_11@M,p@M>@M[Orig]&c=c' & 0<=0 & nn_33'=p&{FLOW,(22,23)=__norm}[]
+       es_var_measures: MayLoop
+       es_trace: empty
+
+ ]
+check_exp inp2 :nn_33
+check_exp@40 EXIT out : List of Failesc Context: [FEC(0, 0, 1  )]
+
+Successful States:
+[
+ Label: 
+ State:c::node<Anon_11@M,p@M>@M[Orig]&c=c' & 0<=0 & nn_33'=p & nn_33'=res&{FLOW,(22,23)=__norm}[]
+       es_var_measures: MayLoop
+       es_trace: empty
+
+ ]
+
+check Assign (rhs)@39@38@37@36@35@34@33@30@29@28@27@26@25@24@23@22@21
+check Assign (rhs) inp1 :nn_33
+check Assign (rhs)@39 EXIT out :void
+
+check_exp1@38@37@36@35@34@33@30@29@28@27@26@25@24@23@22@21
+check_exp1 inp1 : List of Failesc Context: [FEC(0, 0, 1  )]
+
+Successful States:
+[
+ Label: 
+ State:c::node<Anon_11@M,p@M>@M[Orig]&c=c' & 0<=0 & nn_33'=p&{FLOW,(22,23)=__norm}[]
+       es_var_measures: MayLoop
+       es_trace: empty
+
+ ]
+check_exp1@38 EXIT out : List of Failesc Context: [FEC(0, 0, 1  )]
+
+Successful States:
+[
+ Label: 
+ State:c::node<Anon_11@M,p@M>@M[Orig]&c=c' & 0<=0 & nn_33'=p & nn_33'=t_31'&{FLOW,(22,23)=__norm}[]
+       es_var_measures: MayLoop
+       es_trace: empty
+
+ ]
+
+check_exp@37@36@35@34@33@30@29@28@27@26@25@24@23@22@21
+check_exp inp1 : List of Failesc Context: [FEC(0, 0, 1  )]
+
+Successful States:
+[
+ Label: 
+ State:c::node<Anon_11@M,p@M>@M[Orig]&c=c' & 0<=0 & nn_33'=p&{FLOW,(22,23)=__norm}[]
+       es_var_measures: MayLoop
+       es_trace: empty
+
+ ]
+check_exp inp2 :t_31 = nn_33
+check_exp@37 EXIT out : List of Failesc Context: [FEC(0, 0, 1  )]
+
+Successful States:
+[
+ Label: 
+ State:c::node<Anon_11@M,p@M>@M[Orig]&c=c' & 0<=0 & nn_33'=p & nn_33'=t_31'&{FLOW,(22,23)=__norm}[]
+       es_var_measures: MayLoop
+       es_trace: empty
+
+ ]
+
+check_exp1@36@35@34@33@30@29@28@27@26@25@24@23@22@21
+check_exp1 inp1 : List of Failesc Context: [FEC(0, 0, 1  )]
+
+Successful States:
+[
+ Label: 
+ State:c::node<Anon_11@M,p@M>@M[Orig]&c=c' & 0<=0 & nn_33'=p&{FLOW,(22,23)=__norm}[]
+       es_var_measures: MayLoop
+       es_trace: empty
+
+ ]
+check_exp1@36 EXIT out : List of Failesc Context: [FEC(0, 0, 1  )]
+
+Successful States:
+[
+ Label: 
+ State:c::node<Anon_11@M,p@M>@M[Orig]&c=c' & 0<=0 & nn_33'=p & nn_33'=t_31'&{FLOW,(22,23)=__norm}[]
+       es_var_measures: MayLoop
+       es_trace: empty
+
+ ]
+
+check_exp@35@34@33@30@29@28@27@26@25@24@23@22@21
+check_exp inp1 : List of Failesc Context: [FEC(0, 0, 1  )]
+
+Successful States:
+[
+ Label: 
+ State:c::node<Anon_11@M,p@M>@M[Orig]&c=c' & 0<=0 & nn_33'=p&{FLOW,(22,23)=__norm}[]
+       es_var_measures: MayLoop
+       es_trace: empty
+
+ ]
+check_exp inp2 :{t_31 = nn_33}
+check_exp@35 EXIT out : List of Failesc Context: [FEC(0, 0, 1  )]
+
+Successful States:
+[
+ Label: 
+ State:c::node<Anon_11@M,p@M>@M[Orig]&c=c' & 0<=0 & nn_33'=p & nn_33'=t_31'&{FLOW,(22,23)=__norm}[]
+       es_var_measures: MayLoop
+       es_trace: empty
+
+ ]
+
+@34! WN : adding vheap to exception too
+@34! bind:vheap: c'::node<vv_32'@A,nn_33'@L>@M[Orig]&true&{FLOW,(1,25)=__flow}[]
+@34! bind:tmp_res1:[ 
+ Successful States:
+ [
+  Label: 
+  State:c::node<Anon_11@M,p@M>@M[Orig]&c=c' & 0<=0 & nn_33'=p & nn_33'=t_31'&{FLOW,(22,23)=__norm}[]
+        es_var_measures: MayLoop
+        es_trace: empty
+
+  ]]
+@34! bind:tmp_res2:[ 
+ Successful States:
+ [
+  Label: 
+  State:c::node<Anon_11@M,p@M>@M[Orig] * c'::node<vv_32'@A,nn_33'@L>@M[Orig]&c=c' & 0<=0 & nn_33'=p & nn_33'=t_31'&{FLOW,(22,23)=__norm}[]
+        es_var_measures: MayLoop
+        es_trace: empty
+
+  ]]
+check_exp1@34@33@30@29@28@27@26@25@24@23@22@21
+check_exp1 inp1 : List of Failesc Context: [FEC(0, 0, 1  )]
+
+Successful States:
+[
+ Label: 
+ State:c::node<Anon_11@M,p@M>@M[Orig]&c=c' & 0<=0&{FLOW,(22,23)=__norm}[]
+       es_var_measures: MayLoop
+       es_trace: empty
+
+ ]
+check_exp1@34 EXIT out : List of Failesc Context: [FEC(0, 0, 1  )]
+
+Successful States:
+[
+ Label: 
+ State:hfalse&false&{FLOW,(22,23)=__norm}[]
+       es_var_measures: MayLoop
+       es_trace: empty
+
+ ]
+
+check_exp@33@30@29@28@27@26@25@24@23@22@21
+check_exp inp1 : List of Failesc Context: [FEC(0, 0, 1  )]
+
+Successful States:
+[
+ Label: 
+ State:c::node<Anon_11@M,p@M>@M[Orig]&c=c' & 0<=0&{FLOW,(22,23)=__norm}[]
+       es_var_measures: MayLoop
+       es_trace: empty
+
+ ]
+check_exp inp2 :bind c to (vv_32,nn_33) [write] in 
+{t_31 = nn_33}
+check_exp@33 EXIT out : List of Failesc Context: [FEC(0, 0, 1  )]
+
+Successful States:
+[
+ Label: 
+ State:hfalse&false&{FLOW,(22,23)=__norm}[]
+       es_var_measures: MayLoop
+       es_trace: empty
+
+ ]
+
+check_exp1@30@29@28@27@26@25@24@23@22@21
+check_exp1 inp1 : List of Failesc Context: [FEC(0, 0, 1  )]
+
+Successful States:
+[
+ Label: 
+ State:c::node<Anon_11@M,p@M>@M[Orig]&c=c' & 0<=0&{FLOW,(22,23)=__norm}[]
+       es_var_measures: MayLoop
+       es_trace: empty
+
+ ]
+check_exp1@30 EXIT out : List of Failesc Context: [FEC(0, 0, 1  )]
+
+Successful States:
+[
+ Label: 
+ State:hfalse&false&{FLOW,(22,23)=__norm}[]
+       es_var_measures: MayLoop
+       es_trace: empty
+
+ ]
+
+check_exp@29@28@27@26@25@24@23@22@21
+check_exp inp1 : List of Failesc Context: [FEC(0, 0, 1  )]
+
+Successful States:
+[
+ Label: 
+ State:c::node<Anon_11@M,p@M>@M[Orig]&c=c' & 0<=0&{FLOW,(22,23)=__norm}[]
+       es_var_measures: MayLoop
+       es_trace: empty
+
+ ]
+check_exp inp2 :(node t_31;
+bind c to (vv_32,nn_33) [write] in 
+{t_31 = nn_33})
+check_exp@29 EXIT out : List of Failesc Context: [FEC(0, 0, 1  )]
+
+Successful States:
+[
+ Label: 
+ State:hfalse&false&{FLOW,(22,23)=__norm}[]
+       es_var_measures: MayLoop
+       es_trace: empty
+
+ ]
+
+check_exp1@43@42@28@27@26@25@24@23@22@21
+check_exp1 inp1 : List of Failesc Context: [FEC(0, 0, 1  )]
+
+Successful States:
+[
+ Label: 
+ State:hfalse&false&{FLOW,(22,23)=__norm}[]
+       es_var_measures: MayLoop
+       es_trace: empty
+
+ ]
+check_exp1@43 EXIT out : List of Failesc Context: [FEC(0, 0, 1  )]
+
+Successful States:
+[
+ Label: 
+ State:hfalse&false&{FLOW,(22,23)=__norm}[]
+       es_var_measures: MayLoop
+       es_trace: empty
+
+ ]
+
+check_exp@42@28@27@26@25@24@23@22@21
+check_exp inp1 : List of Failesc Context: [FEC(0, 0, 1  )]
+
+Successful States:
+[
+ Label: 
+ State:hfalse&false&{FLOW,(22,23)=__norm}[]
+       es_var_measures: MayLoop
+       es_trace: empty
+
+ ]
+check_exp inp2 :
+check_exp@42 EXIT out : List of Failesc Context: [FEC(0, 0, 1  )]
+
+Successful States:
+[
+ Label: 
+ State:hfalse&false&{FLOW,(22,23)=__norm}[]
+       es_var_measures: MayLoop
+       es_trace: empty
+
+ ]
+
+check_exp1@28@27@26@25@24@23@22@21
+check_exp1 inp1 : List of Failesc Context: [FEC(0, 0, 1  )]
+
+Successful States:
+[
+ Label: 
+ State:c::node<Anon_11@M,p@M>@M[Orig]&c=c' & 0<=0&{FLOW,(22,23)=__norm}[]
+       es_var_measures: MayLoop
+       es_trace: empty
+
+ ]
+check_exp1@28 EXIT out : List of Failesc Context: [FEC(0, 0, 1  )]
+
+Successful States:
+[
+ Label: 
+ State:hfalse&false&{FLOW,(22,23)=__norm}[]
+       es_var_measures: MayLoop
+       es_trace: empty
+
+ ]
+
+check_exp@27@26@25@24@23@22@21
+check_exp inp1 : List of Failesc Context: [FEC(0, 0, 1  )]
+
+Successful States:
+[
+ Label: 
+ State:c::node<Anon_11@M,p@M>@M[Orig]&c=c' & 0<=0&{FLOW,(22,23)=__norm}[]
+       es_var_measures: MayLoop
+       es_trace: empty
+
+ ]
+check_exp inp2 :((node t_31;
+bind c to (vv_32,nn_33) [write] in 
+{t_31 = nn_33});
+)
+check_exp@27 EXIT out : List of Failesc Context: [FEC(0, 0, 1  )]
+
+Successful States:
+[
+ Label: 
+ State:hfalse&false&{FLOW,(22,23)=__norm}[]
+       es_var_measures: MayLoop
+       es_trace: empty
+
+ ]
+
+dprint: bind2b1.ss:16: ctx:  List of Failesc Context: [FEC(0, 0, 1  )]
+
+Successful States:
+[
+ Label: 
+ State:hfalse&false&{FLOW,(22,23)=__norm}[]
+       es_var_measures: MayLoop
+       es_trace: empty
+
+ ]
+
+check_exp1@45@44@26@25@24@23@22@21
+check_exp1 inp1 : List of Failesc Context: [FEC(0, 0, 1  )]
+
+Successful States:
+[
+ Label: 
+ State:hfalse&false&{FLOW,(22,23)=__norm}[]
+       es_var_measures: MayLoop
+       es_trace: empty
+
+ ]
+check_exp1@45 EXIT out : List of Failesc Context: [FEC(0, 0, 1  )]
+
+Successful States:
+[
+ Label: 
+ State:hfalse&false&{FLOW,(22,23)=__norm}[]
+       es_var_measures: MayLoop
+       es_trace: empty
+
+ ]
+
+check_exp@44@26@25@24@23@22@21
+check_exp inp1 : List of Failesc Context: [FEC(0, 0, 1  )]
+
+Successful States:
+[
+ Label: 
+ State:hfalse&false&{FLOW,(22,23)=__norm}[]
+       es_var_measures: MayLoop
+       es_trace: empty
+
+ ]
+check_exp inp2 :dprint
+check_exp@44 EXIT out : List of Failesc Context: [FEC(0, 0, 1  )]
+
+Successful States:
+[
+ Label: 
+ State:hfalse&false&{FLOW,(22,23)=__norm}[]
+       es_var_measures: MayLoop
+       es_trace: empty
+
+ ]
+
+check_exp1@26@25@24@23@22@21
+check_exp1 inp1 : List of Failesc Context: [FEC(0, 0, 1  )]
+
+Successful States:
+[
+ Label: 
+ State:c::node<Anon_11@M,p@M>@M[Orig]&c=c' & 0<=0&{FLOW,(22,23)=__norm}[]
+       es_var_measures: MayLoop
+       es_trace: empty
+
+ ]
+check_exp1@26 EXIT out : List of Failesc Context: [FEC(0, 0, 1  )]
+
+Successful States:
+[
+ Label: 
+ State:hfalse&false&{FLOW,(22,23)=__norm}[]
+       es_var_measures: MayLoop
+       es_trace: empty
+
+ ]
+
+check_exp@25@24@23@22@21
+check_exp inp1 : List of Failesc Context: [FEC(0, 0, 1  )]
+
+Successful States:
+[
+ Label: 
+ State:c::node<Anon_11@M,p@M>@M[Orig]&c=c' & 0<=0&{FLOW,(22,23)=__norm}[]
+       es_var_measures: MayLoop
+       es_trace: empty
+
+ ]
+check_exp inp2 :(((node t_31;
+bind c to (vv_32,nn_33) [write] in 
+{t_31 = nn_33});
+);
+dprint)
+check_exp@25 EXIT out : List of Failesc Context: [FEC(0, 0, 1  )]
+
+Successful States:
+[
+ Label: 
+ State:hfalse&false&{FLOW,(22,23)=__norm}[]
+       es_var_measures: MayLoop
+       es_trace: empty
+
+ ]
+
+check_exp1@47@46@24@23@22@21
+check_exp1 inp1 : List of Failesc Context: [FEC(0, 0, 1  )]
+
+Successful States:
+[
+ Label: 
+ State:hfalse&false&{FLOW,(22,23)=__norm}[]
+       es_var_measures: MayLoop
+       es_trace: empty
+
+ ]
+check_exp1@47 EXIT out : List of Failesc Context: [FEC(0, 0, 1  )]
+
+Successful States:
+[
+ Label: 
+ State:hfalse&false&{FLOW,(16,17)=__Return}[]
+       es_var_measures: MayLoop
+       es_trace: empty
+
+ ]
+
+check_exp@46@24@23@22@21
+check_exp inp1 : List of Failesc Context: [FEC(0, 0, 1  )]
+
+Successful States:
+[
+ Label: 
+ State:hfalse&false&{FLOW,(22,23)=__norm}[]
+       es_var_measures: MayLoop
+       es_trace: empty
+
+ ]
+check_exp inp2 :ret# t_31
+check_exp@46 EXIT out : List of Failesc Context: [FEC(0, 0, 1  )]
+
+Successful States:
+[
+ Label: 
+ State:hfalse&false&{FLOW,(16,17)=__Return}[]
+       es_var_measures: MayLoop
+       es_trace: empty
+
+ ]
+
+check_exp1@24@23@22@21
+check_exp1 inp1 : List of Failesc Context: [FEC(0, 0, 1  )]
+
+Successful States:
+[
+ Label: 
+ State:c::node<Anon_11@M,p@M>@M[Orig]&c=c' & 0<=0&{FLOW,(22,23)=__norm}[]
+       es_var_measures: MayLoop
+       es_trace: empty
+
+ ]
+check_exp1@24 EXIT out : List of Failesc Context: [FEC(0, 0, 1  )]
+
+Successful States:
+[
+ Label: 
+ State:hfalse&false&{FLOW,(16,17)=__Return}[]
+       es_var_measures: MayLoop
+       es_trace: empty
+
+ ]
+
+check_exp@23@22@21
+check_exp inp1 : List of Failesc Context: [FEC(0, 0, 1  )]
+
+Successful States:
+[
+ Label: 
+ State:c::node<Anon_11@M,p@M>@M[Orig]&c=c' & 0<=0&{FLOW,(22,23)=__norm}[]
+       es_var_measures: MayLoop
+       es_trace: empty
+
+ ]
+check_exp inp2 :((((node t_31;
+bind c to (vv_32,nn_33) [write] in 
+{t_31 = nn_33});
+);
+dprint);
+ret# t_31)
+check_exp@23 EXIT out : List of Failesc Context: [FEC(0, 0, 1  )]
+
+Successful States:
+[
+ Label: 
+ State:hfalse&false&{FLOW,(16,17)=__Return}[]
+       es_var_measures: MayLoop
+       es_trace: empty
+
+ ]
+
+check_exp1@22@21
+check_exp1 inp1 : List of Failesc Context: [FEC(0, 0, 1  )]
+
+Successful States:
+[
+ Label: 
+ State:c::node<Anon_11@M,p@M>@M[Orig]&c=c' & 0<=0&{FLOW,(22,23)=__norm}[]
+       es_var_measures: MayLoop
+       es_trace: empty
+
+ ]
+check_exp1@22 EXIT out : List of Failesc Context: [FEC(0, 0, 1  )]
+
+Successful States:
+[
+ Label: 
+ State:hfalse&false&{FLOW,(16,17)=__Return}[]
+       es_var_measures: MayLoop
+       es_trace: empty
+
+ ]
+
+check_exp@21
+check_exp inp1 : List of Failesc Context: [FEC(0, 0, 1  )]
+
+Successful States:
+[
+ Label: 
+ State:c::node<Anon_11@M,p@M>@M[Orig]&c=c' & 0<=0&{FLOW,(22,23)=__norm}[]
+       es_var_measures: MayLoop
+       es_trace: empty
+
+ ]
+check_exp inp2 :{((((node t_31;
+bind c to (vv_32,nn_33) [write] in 
+{t_31 = nn_33});
+);
+dprint);
+ret# t_31)}
+check_exp@21 EXIT out : List of Failesc Context: [FEC(0, 0, 1  )]
+
+Successful States:
+[
+ Label: 
+ State:hfalse&false&{FLOW,(16,17)=__Return}[]
+       es_var_measures: MayLoop
+       es_trace: empty
+
+ ]
+
+Procedure paper_fix$node SUCCESS
+
+Termination checking result:
+
+Stop Omega... 26 invocations 
+1 false contexts at: ( (17,6) )
+
+Total verification time: 0.21 second(s)
+	Time spent in main process: 0.2 second(s)
+	Time spent in child processes: 0.01 second(s)
+

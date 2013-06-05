@@ -831,7 +831,7 @@ let string_of_iast_label_table table =
   in
   List.fold_right (fun row res -> (string_of_row row) ^ res) table ""
 
-
+let pr_int_label (i,s) = fmt_string (string_of_int i)
 let pr_formula_label_br l = fmt_string (string_of_formula_label_pr_br l "")
 let pr_formula_label l  = fmt_string (string_of_formula_label l "")
 let pr_formula_label_list l  = fmt_string ("{"^(String.concat "," (List.map (fun (i,_)-> (string_of_int i)) l))^"}")
@@ -1683,6 +1683,7 @@ let rec pr_numbered_list_formula_trace_ho (e:(context * (formula*formula_trace))
           let lh = collect_pre_heap ctx in
           let lp = collect_pre_pure ctx in
           let lrel = collect_rel ctx in
+          let hprel = collect_hp_rel ctx in
           let term_err = collect_term_err ctx in
           fmt_open_vbox 0;
           pr_wrap (fun _ -> fmt_string ("<" ^ (string_of_int count) ^ ">"); pr_formula a) ();
@@ -1690,6 +1691,7 @@ let rec pr_numbered_list_formula_trace_ho (e:(context * (formula*formula_trace))
           pr_wrap_test "inferred heap: " Gen.is_empty  (pr_seq "" pr_h_formula) (lh); 
           pr_wrap_test "inferred pure: " Gen.is_empty  (pr_seq "" pr_pure_formula) (lp); 
           pr_wrap_test "inferred rel: " Gen.is_empty  (pr_seq "" pr_lhs_rhs) (lrel); 
+          pr_wrap_test "inferred hprel: " Gen.is_empty  (pr_seq "" pr_hprel_short) (hprel); 
           f b;
           fmt_print_newline ();
           fmt_close_box ();
@@ -1752,7 +1754,7 @@ let string_of_mix_formula_list l = "["^(string_of_mix_formula_list_noparen l)^"]
 
 let pr_case_guard c = 
   fmt_string "{";
-  pr_seq "\n" (fun (c1,c2)-> pr_b_formula c1 ;fmt_string "->"; pr_seq_nocut "," pr_formula_label c2) c;
+  pr_seq "\n" (fun (c1,c2)-> pr_b_formula c1 ;fmt_string "->"; pr_seq_nocut "," pr_int_label c2) c;
   fmt_string "}"
 
 let string_of_case_guard c = poly_string_of_pr pr_case_guard c
@@ -1937,6 +1939,7 @@ let pr_estate (es : entail_state) =
   pr_vwrap "es_heap: " pr_h_formula es.es_heap;
   pr_wrap_test "es_history: " Gen.is_empty (pr_seq "" pr_h_formula) es.es_history;
   (*pr_wrap_test "es_prior_steps: "  Gen.is_empty (fun x -> fmt_string (string_of_prior_steps x)) es.es_prior_steps;*)
+  pr_wrap_test "es_ante_evars: " Gen.is_empty (pr_seq "" pr_spec_var) es.es_ante_evars;
   pr_wrap_test "es_ivars: "  Gen.is_empty (pr_seq "" pr_spec_var) es.es_ivars;
   (* pr_wrap_test "es_expl_vars: " Gen.is_empty (pr_seq "" pr_spec_var) es.es_expl_vars; *)
   pr_wrap_test "es_evars: " Gen.is_empty (pr_seq "" pr_spec_var) es.es_evars;
@@ -2663,8 +2666,8 @@ let rec string_of_exp = function
                   if (Cformula.equal_flow_interval f.formula_flow_interval !ret_flow_int) 
                   then
 	                (match eo with 
-		              |Sharp_var e -> "return " ^ (snd e)
-		              | _ -> "return")
+		              |Sharp_var e -> "ret# " ^ (snd e)
+		              | _ -> "ret#")
 	              else  (match eo with 
 		            | Sharp_var e -> "throw " ^ (snd e)^":"^(string_of_sharp st)
 		            | Sharp_flow e -> "throw " ^ e ^":"^(string_of_sharp st)
@@ -3332,6 +3335,7 @@ Cpure.print_sv := string_of_spec_var;;
 Cformula.print_mem_formula := string_of_mem_formula;;
 Cformula.print_formula := string_of_formula;;
 Cformula.print_one_formula := string_of_one_formula;;
+Cformula.print_formula_base := string_of_formula_base;;
 Cformula.print_pure_f := string_of_pure_formula;;
 Cformula.print_h_formula := string_of_h_formula;;
 Cformula.print_h_formula_for_spec := string_of_h_formula_for_spec;;

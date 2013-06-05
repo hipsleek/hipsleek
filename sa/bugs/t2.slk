@@ -1,0 +1,18 @@
+data node{
+	int val;
+	node prev;
+	node next;
+}.
+
+checkentail c::node<a,b,c> |- c::node<_,r,y>@L.
+print residue.
+
+checkentail c::node<a,b,c@v>@L |- c::node<_,r,y>@L.
+print residue.
+
+checkentail c::node<a,b,c@v> & v<:@I |- c::node<_,r,y>@L.
+print residue.
+
+checkentail c::node<a@L,b@L,c@v> & v=@A |- c::node<_@L,r@L,y@L>.
+print residue.
+

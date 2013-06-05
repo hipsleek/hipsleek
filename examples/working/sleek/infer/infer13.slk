@@ -11,23 +11,29 @@ pred ll<n> == self = null & n = 0
 pred lseg<p> == self = p 
 	or self::node<q> * q::lseg<p> & self!=p 
   inv true.
-
+  
 // (1) 
 //checkentail x::node<null>  |- x::ll<n>.
 //print residue.
 
-infer [y] x::node<null>  |- x::ll<n> * y::ll<m>.
+HeapPred H1(node y).
+//(1)
+infer [H1] H1(y)*x::node<null>  |- x::ll<n> * y::ll<m>.
 print residue.
 
-infer [y] x::node<null>*z::node<null>  |- x::ll<n> * y::ll<m>.
+//(2)
+infer [H1] H1(y)*x::node<null>*z::node<null>  |- x::ll<n> * y::ll<m>.
 print residue.
 
-infer [y] x::node<y>  |- x::node<a> * a::lseg<null> .
+//(3)
+infer [H1] H1(y)* x::node<y>  |- x::node<a> * a::lseg<null> .
 print residue.
 
-infer [y] x::node<y>  |- x::node<a> * a::ll<n> .
+//(4)
+infer [H1] H1(y)* x::node<y>  |- x::node<a> * a::ll<n> .
 print residue.
 
-infer [z,y] x::node<z>  |- x::lseg<z> * y::lseg<null> .
+//(5)
+infer [z,H1] H1(y)*x::node<z>  |- x::lseg<z> * y::lseg<null> .
 print residue.
 

@@ -287,56 +287,63 @@ let cexp_to_pure_slicing fct f sl = match f with
 
 let cexp_to_pure2 fct f01 f02 =
   match (f01,f02) with
-  | Pure_c f1, Pure_c f2 
-      -> (match f1 with
-                             | P.List(explist,pos) -> let tmp = List.map (fun c -> P.BForm (((fct c f2), None), None)) explist
-                               in let len =  List.length tmp
-                               in let res =  if (len > 1) then List.fold_left (fun c1 c2 -> P.mkAnd c1 c2 (get_pos 2)) (List.hd tmp) (List.tl tmp)
-                                             else  P.BForm (((fct f1 f2), None), None)
-                               in Pure_f(res) 
-                             | _ -> (match f2 with
-                                    | P.List(explist,pos) -> let tmp = List.map (fun c -> P.BForm (((fct f1 c), None), None)) explist
-                                      in let len = List.length tmp
-                                      in let res = if ( len > 1 ) then List.fold_left (fun c1 c2 -> P.mkAnd c1 c2 (get_pos 2)) (List.hd tmp) (List.tl tmp)
-                                                   else P.BForm (((fct f1 f2), None), None)
-                                      in Pure_f(res) 
-                                    | _ -> (
-                                        let typ1 = P.typ_of_exp f1 in 
-                                        let typ2 = P.typ_of_exp f2 in
-                                         (* let _ = print_endline ("typ1:" ^ (string_of_typ typ1 )) in *)
-                                        (* let _ = print_endline ("typ2:" ^ (string_of_typ typ2 )) in *)
-                                         let arr_typ_check typ1 typ2 =
-                                         ( match typ1 with
-                                            | Array (t1,_) -> if t1== UNK || t1 == typ2 then true else
-                                                  ( match typ2 with
-                                                    | Array (t2,_) -> if t2== UNK || t1==t2 then true else false
-                                                    | _ -> false
-                                                  )
-                                            | _ -> ( match typ2 with
-                                                  | Array (t,_) -> if t== UNK then true else false
-                                                  | _ -> false
-                                            )
-                                         )
-                                        in
-                                        if (typ1 = typ2) || (typ1 == UNK) || (typ2 == UNK) || (arr_typ_check typ1 typ2) then 
-                                          Pure_f (P.BForm(((fct f1 f2), None), None))
-                                        else
-                                          report_error (get_pos 1) "with 2 convert expected the same cexp types, found different types"
-                                      )
-                                    )
-                             )
-  | Pure_f f1 , Pure_c f2 ->(
+  | Pure_c f1, Pure_c f2 -> (
+      match f1 with
+      | P.List(explist,pos) ->
+          let tmp = List.map (fun c -> P.BForm (((fct c f2), None), None)) explist in
+          let len =  List.length tmp in
+          let res = 
+            if (len > 1) then List.fold_left (fun c1 c2 -> P.mkAnd c1 c2 (get_pos 2)) (List.hd tmp) (List.tl tmp)
+            else  P.BForm (((fct f1 f2), None), None) in
+          Pure_f(res) 
+      | _ -> (
+          match f2 with
+          | P.List(explist,pos) ->
+              let tmp = List.map (fun c -> P.BForm (((fct f1 c), None), None)) explist in
+              let len = List.length tmp in
+              let res =
+                if ( len > 1 ) then List.fold_left (fun c1 c2 -> P.mkAnd c1 c2 (get_pos 2)) (List.hd tmp) (List.tl tmp)
+                else P.BForm (((fct f1 f2), None), None) in
+              Pure_f(res) 
+          | _ -> (
+              let typ1 = P.typ_of_exp f1 in 
+              let typ2 = P.typ_of_exp f2 in
+              let arr_typ_check typ1 typ2 = (
+                match typ1 with
+                | Array (t1,_) ->
+                    if t1== UNK || t1 == typ2 then true
+                    else (
+                      match typ2 with
+                      | Array (t2,_) -> if t2== UNK || t1==t2 then true else false
+                      | _ -> false
+                    )
+                | _ -> (
+                    match typ2 with
+                    | Array (t,_) -> if t== UNK then true else false
+                    | _ -> false
+                  )
+              ) in
+              if (typ1 = typ2) || (typ1 == UNK) || (typ2 == UNK) || (arr_typ_check typ1 typ2) then 
+                Pure_f (P.BForm(((fct f1 f2), None), None))
+              else
+                report_error (get_pos 1) "with 2 convert expected the same cexp types, found different types"
+            )
+        )
+    )
+  | Pure_f f1 , Pure_c f2 -> (
       match f1  with 
-      | P.BForm((pf,il),oe) -> (match pf with 
-                                | P.Lt (a1, a2, _) 
-                                | P.Lte (a1, a2, _) 
-                                | P.Gt (a1, a2, _) 
-                                | P.Gte (a1, a2, _)
-                                | P.Eq (a1, a2, _) 
-                                | P.Neq (a1, a2, _) ->
-                                    let tmp = P.BForm(((fct a2 f2), None),None) in
-                                    Pure_f (P.mkAnd f1 tmp (get_pos 2))
-                                | _ -> report_error (get_pos 1) "error should be an equality exp" )
+      | P.BForm((pf,il),oe) -> (
+          match pf with 
+          | P.Lt (a1, a2, _) 
+          | P.Lte (a1, a2, _) 
+          | P.Gt (a1, a2, _) 
+          | P.Gte (a1, a2, _)
+          | P.Eq (a1, a2, _) 
+          | P.Neq (a1, a2, _) ->
+              let tmp = P.BForm(((fct a2 f2), None),None) in
+              Pure_f (P.mkAnd f1 tmp (get_pos 2))
+          | _ -> report_error (get_pos 1) "error should be an equality exp"
+        )
       | _ -> report_error (get_pos 1) "error should be a binary exp" 
     )
   | _ -> report_error (get_pos 1) "with 2 convert expected cexp, found pure_form" 
@@ -706,11 +713,15 @@ non_empty_command:
       | t = func_decl         -> FuncDef t
       | t = rel_decl          -> RelDef t
       | t = hp_decl          -> HpDef t
-      | `LEMMA;t= coercion_decl -> LemmaDef t
+      | `LEMMA lex;t= coercion_decl -> LemmaDef {t with coercion_exact = lex}
       | t= axiom_decl -> AxiomDef t (* [4/10/2011] An Hoa : axiom declarations *)
       | t=let_decl            -> t
       | t=checkeq_cmd         -> EqCheck t
       | t=checkentail_cmd     -> EntailCheck t
+      | t=relassume_cmd     -> RelAssume t
+      | t=shapeinfer_cmd     -> ShapeInfer t
+      | t=shapeElim_cmd     -> ShapeElim t
+      | t=shapeExtract_cmd     -> ShapeExtract t
       | t=infer_cmd           -> Infer t  
       | t=captureresidue_cmd  -> CaptureResidue t
       | t=print_cmd           -> PrintCmd t
@@ -1070,7 +1081,7 @@ ann:
 sq_clist: [[`OSQUARE; l= opt_cid_list; `CSQUARE -> l ]];
 
 formulas:
-  [[ ec=extended_l     ->(ec,false)
+  [[ ec= extended_l     ->(ec,false)
 	 | dc=disjunctive_constr  -> ((F.formula_to_struc_formula dc),true)]];
    
 extended_l:
@@ -1442,14 +1453,12 @@ cexp_w:
 	            | `UNION; `OPAREN; c=opt_cexp_list; `CPAREN                     -> Pure_c (P.BagUnion (c, get_pos_camlp4 _loc 1))
 	            | `INTERSECT; `OPAREN; c=opt_cexp_list; `CPAREN                 -> Pure_c (P.BagIntersect (c, get_pos_camlp4 _loc 1)) 
 	            | `DIFF; `OPAREN; c1=SELF; `COMMA; c2=SELF; `CPAREN             -> apply_cexp_form2 (fun c1 c2-> P.BagDiff (c1, c2, get_pos_camlp4 _loc 1) ) c1 c2
-	            
-
 	            | `OLIST; c1 = opt_cexp_list; `CLIST                              -> Pure_c (P.List (c1, get_pos_camlp4 _loc 1)) 
 	            |  c1=SELF; `COLONCOLONCOLON; c2=SELF -> apply_cexp_form2 (fun c1 c2-> P.ListCons (c1, c2, get_pos_camlp4 _loc 2)) c1 c2 
 	            | `TAIL; `OPAREN; c1=SELF; `CPAREN                -> apply_cexp_form1 (fun c1-> P.ListTail (c1, get_pos_camlp4 _loc 1)) c1 
 	            | `APPEND; `OPAREN; c1= opt_cexp_list; `CPAREN                   -> Pure_c (P.ListAppend (c1, get_pos_camlp4 _loc 1))
 	            | `HEAD; `OPAREN; c=SELF; `CPAREN         -> apply_cexp_form1 (fun c -> P.ListHead (c, get_pos_camlp4 _loc 1)) c
-	            | `LENGTH; `OPAREN; c=SELF; `CPAREN       -> (* print_string("herel"); *)apply_cexp_form1 (fun c -> P.ListLength (c, get_pos_camlp4 _loc 1)) c
+	            | `LENGTH; `OPAREN; c=SELF; `CPAREN -> apply_cexp_form1 (fun c -> P.ListLength (c, get_pos_camlp4 _loc 1)) c
 	            | `REVERSE; `OPAREN; c1=SELF; `CPAREN             -> apply_cexp_form1 (fun c1-> P.ListReverse (c1, get_pos_camlp4 _loc 1)) c1 
    (* | t=cexp_w LEVEL "addit" -> t *) ]
 	          
@@ -1612,6 +1621,29 @@ checkentail_cmd:
    | `CHECKENTAIL_EXACT; t=meta_constr; `DERIVE; b=extended_meta_constr -> (t, b, Some true)
    | `CHECKENTAIL_INEXACT; t=meta_constr; `DERIVE; b=extended_meta_constr -> (t, b, Some false)]];
 
+relassume_cmd:
+   [[ `RELASSUME; `IDENTIFIER id; l=meta_constr; `CONSTR;r=meta_constr -> (id, l, r)
+   ]];
+
+shapeinfer_cmd:
+   [[ `SHAPE_INFER; `OSQUARE;il1=OPT id_list;`CSQUARE; `OSQUARE; il2=OPT id_list;`CSQUARE ->
+   let il1 = un_option il1 [] in
+   let il2 = un_option il2 [] in
+   (il1,il2)
+   ]];
+
+shapeElim_cmd:
+   [[ `SHAPE_ELIM_USELESS; `OSQUARE;il1=OPT id_list;`CSQUARE ->
+   let il1 = un_option il1 [] in
+   (il1)
+   ]];
+
+shapeExtract_cmd:
+   [[ `SHAPE_EXTRACT; `OSQUARE;il1=OPT id_list;`CSQUARE ->
+   let il1 = un_option il1 [] in
+   (il1)
+   ]];
+
 infer_cmd:
   [[ `INFER; `OSQUARE; il=OPT id_list; `CSQUARE; t=meta_constr; `DERIVE; b=extended_meta_constr -> 
     let il = un_option il [] in (il,t,b)
@@ -1652,6 +1684,7 @@ meta_constr:
 coercion_decl:
   [[ on=opt_name; dc1=disjunctive_constr; cd=coercion_direction; dc2=disjunctive_constr ->
       { coercion_type = cd;
+		coercion_exact = false;
         coercion_name = (* on; *)
         (let v=on in (if (String.compare v "")==0 then (fresh_any_name "lem") else v));
         (* coercion_head = dc1; *)
@@ -1941,7 +1974,7 @@ decl:
   |  g=global_var_decl            -> Global_var g
   |  l=logical_var_decl -> Logical_var l
   |  p=proc_decl                  -> Proc p
-  | `LEMMA; c= coercion_decl; `SEMICOLON    -> Coercion c]];
+  | `LEMMA lex; c= coercion_decl; `SEMICOLON    -> Coercion {c with coercion_exact = lex}]];
 
 type_decl: 
   [[ t= data_decl  -> Data t
@@ -2102,29 +2135,40 @@ spec_branch: [[ pc=pure_constr; `LEFTARROW; sl= spec_list -> (pc,sl)]];
 
 opt_throws: [[ t = OPT throws -> un_option t []]];
 throws: [[ `THROWS; l=cid_list -> List.map fst l]];
+flag_arg : [[
+	`IDENTIFIER t -> Flag_str t
+	| `INT_LITER (i,_)-> Flag_int i
+	| `FLOAT_LIT (f,_)-> Flag_float f]]; 
+
+flag: [[`MINUS; `IDENTIFIER t ; args = OPT flag_arg-> ("-",t, args)
+		| `OP_DEC; `IDENTIFIER t ; args = OPT flag_arg-> ("--",t, args)]];
+		
+flag_list:[[`ATATSQ; t=LIST1 flag;`CSQUARE -> t]];
+
+opt_flag_list:[[t=OPT flag_list -> un_option t []]];
 
 proc_decl: 
-  [[ h=proc_header; b=proc_body -> { h with proc_body = Some b ; proc_loc = {(h.proc_loc) with end_pos = Parsing.symbol_end_pos()} }
-   | h=proc_header -> h]];
+  [[ h=proc_header; flgs=opt_flag_list;b=proc_body -> { h with proc_flags=flgs; proc_body = Some b ; proc_loc = {(h.proc_loc) with end_pos = Parsing.symbol_end_pos()} }
+   | h=proc_header; _=opt_flag_list-> h]];
   
 proc_header:
   [[ t=typ; `IDENTIFIER id; `OPAREN; fpl= opt_formal_parameter_list; `CPAREN; ot=opt_throws; osl= opt_spec_list ->
     (*let static_specs, dynamic_specs = split_specs osl in*)
-     mkProc "source_file" id "" None false ot fpl t osl (F.mkEFalseF ()) (get_pos_camlp4 _loc 1) None
+     mkProc "source_file" id [] "" None false ot fpl t osl (F.mkEFalseF ()) (get_pos_camlp4 _loc 1) None
      
   | `VOID; `IDENTIFIER id; `OPAREN; fpl=opt_formal_parameter_list; `CPAREN; ot=opt_throws; osl=opt_spec_list ->
     (*let static_specs, dynamic_specs = split_specs $6 in*)
-    mkProc "source_file" id "" None false ot fpl void_type osl (F.mkEFalseF ()) (get_pos_camlp4 _loc 1) None]];
+    mkProc "source_file" id [] "" None false ot fpl void_type osl (F.mkEFalseF ()) (get_pos_camlp4 _loc 1) None]];
 
 constructor_decl: 
   [[ h=constructor_header; b=proc_body -> {h with proc_body = Some b}
    | h=constructor_header -> h]];
 
 constructor_header:
-  [[ `IDENTIFIER id; `OPAREN; fpl=opt_formal_parameter_list; `CPAREN; ot=opt_throws; osl=opt_spec_list ->
+  [[ `IDENTIFIER id; `OPAREN; fpl=opt_formal_parameter_list; `CPAREN; ot=opt_throws; osl=opt_spec_list ; flgs=opt_flag_list->
     (*let static_specs, dynamic_specs = split_specs $5 in*)
 		(*if Util.empty dynamic_specs then*)
-      mkProc "source_file" id "" None true ot fpl (Named id) osl (F.mkEFalseF ()) (get_pos_camlp4 _loc 1) None
+      mkProc "source_file" id flgs "" None true ot fpl (Named id) osl (F.mkEFalseF ()) (get_pos_camlp4 _loc 1) None
     (*	else
 		  report_error (get_pos_camlp4 _loc 1) ("constructors have only static speficiations");*) ]];
 	
@@ -2259,7 +2303,15 @@ dprint_statement:
    | `DPRINT; `STRING(_,id)  -> Dprint ({exp_dprint_string = id;  exp_dprint_pos = (get_pos_camlp4 _loc 1)})]];
    
 bind_statement:
-  [[ `BIND; `IDENTIFIER id; `TO; `OPAREN; il = id_list_opt; `CPAREN; `IN_T; b=block ->
+  [[ `BIND; `IDENTIFIER id; `TO; `OPAREN; il = id_list_opt; `CPAREN; `IN_T; b= block ->
+      Bind { exp_bind_bound_var = id;
+             exp_bind_fields = il;
+             exp_bind_body = b;
+             exp_bind_path_id = None ;
+             exp_bind_pos = get_pos_camlp4 _loc 1 }]];
+
+bind_expression:
+  [[ `BIND; `IDENTIFIER id; `TO; `OPAREN; il = id_list_opt; `CPAREN; `IN_T; b= expression ->
       Bind { exp_bind_bound_var = id;
              exp_bind_fields = il;
              exp_bind_body = b;
@@ -2428,6 +2480,7 @@ argument: [[t=expression -> t]];
 
 expression:
   [[ t=conditional_expression -> t
+   | t= bind_expression -> t
    | t=assignment_expression -> t]];
 
 constant_expression: [[t=expression -> t]];

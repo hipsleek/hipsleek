@@ -1,0 +1,34 @@
+data node{
+	int val;
+        node prev;
+	node next;
+}.
+
+HeapPred H1(node a, node b).
+HeapPred HP_p(node a, node b).
+HeapPred HP_2(node a, node b).
+HeapPred G1(node a, node b).
+HeapPred K(int a).
+
+relAssume G1
+ c::node<_,p,t> * HP_p(p,y) * G1(t,y) &t!=null 
+ --> G1(c,y)&true.
+
+relAssume G1
+  HP_p(p,y) * c::node<_,p,y>@M --> G1(c,y)&true.
+
+shape_infer [][G1].
+
+/*
+
+[ G1(c_36,y_37) ::= c_36::node<Anon_11,p,t>@M * (HP_38(p,t,y_37))&true,
+ HP_38(p,t,y_37) ::= 
+ emp&t=y_37
+ or t::node<Anon_11,p_39,t_40>@M * (HP_38(p_39,t_40,y_37))&true
+ ]
+
+
+
+
+*/
+

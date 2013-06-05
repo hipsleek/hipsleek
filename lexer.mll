@@ -124,7 +124,11 @@ module Make (Token : SleekTokenS)
 	 ("case",CASE);
    ("catch", CATCH);
    ("checkeq", CHECKEQ);
-	 ("checkentail", CHECKENTAIL);
+   ("checkentail", CHECKENTAIL);
+   ("relAssume", RELASSUME);
+   ("shape_infer", SHAPE_INFER );
+   ("shape_elim_useless", SHAPE_ELIM_USELESS );
+   ("shape_extract", SHAPE_EXTRACT );
    ("checkentail_exact", CHECKENTAIL_EXACT);
    ("checkentail_inexact", CHECKENTAIL_INEXACT);
 	 ("capture_residue", CAPTURERESIDUE);
@@ -170,7 +174,8 @@ module Make (Token : SleekTokenS)
 	 ("inv", INV);
 	 ("inv_lock", INVLOCK);
    ("joinpred", JOIN); (*Changed by 28/12/2011*)
-	 ("lemma", LEMMA);
+	 ("lemma", LEMMA false);
+	 ("lemma_exact", LEMMA true);
    ("len", LENGTH);
 	 ("let", LET);
 	 ("max", MAX);
@@ -193,7 +198,7 @@ module Make (Token : SleekTokenS)
      ("mem", MEM);
      ("memE", MEME);
 	 ("dprint", DPRINT);
-	 ("compare", CMP);
+	 ("sleek_compare", CMP);
    ("raise", RAISE);
 	 ("ref", REF);
 ("relation", REL);
@@ -293,6 +298,7 @@ rule tokenizer file_name = parse
   | "*-" { STARMINUS }
   | "@" { AT }
   | "@@" { ATAT }
+  | "@@[" { ATATSQ }
   | "@I" {IMM}
   | "@L" {LEND}
   | "@A" {ACCS}

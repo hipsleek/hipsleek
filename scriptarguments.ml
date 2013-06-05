@@ -99,6 +99,10 @@ let common_arguments = [
    "Sleek Log Filter Flag");
   ("--elp", Arg.Set Globals.check_coercions,
    "Enable Lemma Proving");
+  ("--trace", Arg.Set Debug.trace_on,
+   "Turn on brief tracing");
+  ("--dis-trace", Arg.Clear Debug.trace_on,
+   "Turn off brief tracing");
   ("-dd", Arg.Set Debug.devel_debug_on,
    "Turn on devel_debug");
   ("-dd-print-orig-conseq", Arg.Unit Debug.enable_dd_and_orig_conseq_printing,
@@ -113,7 +117,7 @@ let common_arguments = [
    "Timeout for imply checking");
   ("--sleek-timeout", Arg.Set_float Globals.sleek_timeout_limit,
    "Timeout for SLEEK entailment");
-  ("--dis-provers-timeout", Arg.Set Globals.dis_provers_timeout,
+  ("--ds-provers-timeout", Arg.Set Globals.dis_provers_timeout,
    "Disable timeout on provers");
   ("--log-proof", Arg.String Prooftracer.set_proof_file,
    "Log (failed) proof to file");
@@ -157,6 +161,7 @@ let common_arguments = [
 	("--dis-mem", Arg.Clear Globals.allow_mem,"Disable the use of Memory Specifications");
 	("--ramify", Arg.Clear Solver.unfold_duplicated_pointers,"Use Ramification (turns off unfold on dup pointers)");
   ("--reverify", Arg.Set Globals.reverify_flag,"enable re-verification after specification inference");
+	("--reverify-all", Arg.Set Globals.reverify_all_flag,"enable re-verification after heap specification inference");
   ("--dis-imm", Arg.Clear Globals.allow_imm,"disable the use of immutability annotations");
   ("--dis-inf", Arg.Clear Globals.allow_inf,"disable support for infinity ");
   ("--dsd", Arg.Set Globals.deep_split_disjuncts,"enable deep splitting of disjunctions");
@@ -237,6 +242,8 @@ let common_arguments = [
    "enable all statistics");
   ("--sbc", Arg.Set Globals.enable_syn_base_case,
    "use only syntactic base case detection");
+  ("--dis-simpl-view-norm" , Arg.Clear Globals.simplified_case_normalize, 
+	"disable simplified view def normalization");
   ("--eci", Arg.Set Globals.enable_case_inference,
    "enable struct formula inference");
   ("--pcp", Arg.Set Globals.print_core,
@@ -330,6 +337,7 @@ let common_arguments = [
 
   (* Slicing *)
   ("--eps", Arg.Set Globals.en_slc_ps, "Enable slicing with predicate specialization");
+  ("--dpall", Arg.Clear Globals.no_prune_all, "Disable specialization all the way");  
   ("--overeps", Arg.Set Globals.override_slc_ps, "Override --eps, for run-fast-tests testing of modular examples");
   ("--dis-ps", Arg.Set Globals.dis_ps, "Disable predicate specialization");
   ("--dis-ann", Arg.Set Globals.dis_slc_ann, "Disable aggressive slicing with annotation scheme (not default)");
@@ -369,16 +377,20 @@ let common_arguments = [
   
   ("--dis-split", Arg.Set Globals.use_split_match, "Disable permission splitting lemma (use split match instead)");
   ("--en-lemma-s", Arg.Set Globals.enable_split_lemma_gen, "Enable automatic generation of splitting lemmas");
-  ("--show-diff", Arg.Set Globals.show_diff, "Show differences between formulae");
+  ("--dis-show-diff", Arg.Set Globals.dis_show_diff, "Show differences between formulae");
   ("--dis-sem", Arg.Set Globals.dis_sem, "Show differences between formulae");
-  ("--show-diff-constrs", Arg.Set Globals.show_diff_constrs, "Show differences between list of constraint");
   ("--sa-print-inter", Arg.Set Globals.sa_print_inter, "Print intermediate results of normalization");
+  ("--sa-old", Arg.Set Globals.sa_old, "old algorithm of normalization");
   ("--sa-dis-norm", Arg.Clear Globals.sa_en_norm, "do normalization");
-  ("--sa-dangling", Arg.Set Globals.sa_elim_dangling, "elim dangling HP/pointers");
+  ("--sa-dangling", Arg.Set Globals.sa_dangling, "elim dangling HP/pointers");
   ("--sa-useless", Arg.Set Globals.sa_elim_useless, "elim useless parameter from HP predicate");
+  ("--sa-refine-dang", Arg.Set Globals.sa_refine_dang, "refine dangling among branches of one hprels def");
   ("--sa-inlining", Arg.Set Globals.sa_inlining, "inline dangling HP/pointers");
   ("--sa-split", Arg.Set Globals.sa_en_split, "splitting hp args into multiple hp if possible");
   ("--sa-unify-dangling", Arg.Set Globals.sa_unify_dangling, "unify branches of definition to instantiate dangling predicate");
+  ("--sa-tree-simp", Arg.Set Globals.sa_tree_simp, "simplify a tree branches of definition");
+  ("--norm-useless", Arg.Set Globals.norm_elim_useless, "elim useless parameters of user-defined predicates (view)");
+  ("--norm-extract", Arg.Set Globals.norm_extract, "extract common pattern among branches of user-defined predicates (view)");
   ]
 
 (* arguments/flags used only by hip *)	
@@ -410,6 +422,7 @@ let hip_specific_arguments = [ ("-cp", Arg.String set_pred,
    "compare set of constraints");
   ("-lib", Arg.String set_lib_file,
    "lib");
+  ("--sa-subsume", Arg.Set Globals.sa_subsume, "use subsume when comparing definitions after infering");
   ] 
 
 (* arguments/flags used only by sleek *)	
@@ -454,3 +467,30 @@ let check_option_consistency () =
   ;; (*Clean warning*)
   Astsimp.inter_hoa := !inter_hoa;;
 
+Typechecker.save_flags  := fun ()->() ;;
+Typechecker.restore_flags := fun ()-> ();;
+Typechecker.parse_flags := fun (sl:(string*(Globals.flags option)) list)-> 
+	List.iter(fun (s1,s2)-> 
+		try 
+			let _,f,_=List.find(fun (a,_,_)-> (String.compare a s1) ==0) hip_arguments in
+			let rec process_arg s1 s2 f : unit= match f with 
+				|	Arg.Unit f -> f () 
+				|   Arg.Rest _ 
+				|	Arg.Bool _-> ()
+				|	Arg.Set b -> b:=true
+				|	Arg.Clear b -> b:=false
+				|	Arg.Set_string b-> (match s2 with Some (Globals.Flag_str i)-> b:=i | _ -> failwith ("invalid flag argument for "^s1))
+				|	Arg.String f -> (match s2 with | Some (Globals.Flag_str s)-> f s | _ -> failwith ("invalid flag argument for "^s1))
+				|	Arg.Set_int b-> (match s2 with Some (Globals.Flag_int i)-> b:=i | _ -> failwith ("invalid flag argument for "^s1))
+				|   Arg.Int f -> (match s2 with Some (Globals.Flag_int i)-> f i | _ -> failwith ("invalid flag argument for "^s1))
+				|	Arg.Set_float b-> (match s2 with Some (Globals.Flag_float i)-> b:=i | _ -> failwith ("invalid flag argument for "^s1))
+				|   Arg.Float f-> (match s2 with | Some (Globals.Flag_float s)-> f s | _ -> failwith ("invalid flag argument for "^s1))
+				|	Arg.Tuple l -> List.iter (process_arg s1 s2) l
+				|	Arg.Symbol (sl, f) -> 
+					 try 
+						(match s2 with 
+							| Some (Globals.Flag_str s)-> f (List.find(fun a-> (String.compare a s) ==0) sl)
+							| _ -> failwith ("invalid flag argument for "^s1))
+					with  Not_found -> failwith ("invalid flag "^s1) in
+			process_arg s1 s2 f			
+		with Not_found -> failwith ("invalid flag "^s1)) sl;;

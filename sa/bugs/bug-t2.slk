@@ -4,9 +4,8 @@ data node{
 	node next;
 }.
 
-/*
 checkentail c::node<_,_,c@A> |- c::node<_,_,y@L>.
-print residue.*/
+print residue.
 // fail
 
 checkentail c::node<_,_,c@v> & v=@A |- c::node<_,_,y@L>.
@@ -14,7 +13,7 @@ print residue.
 // valid (should have failed)
 
 
-/*
+
 
 checkentail v=@M |- v<:@A.
 checkentail v=@A |- v<:@M.
@@ -33,4 +32,3 @@ print residue.
 
 checkentail c::node<_,_,c@v>  |- c::node<_@A,_@A,y@M>.
 print residue.
-*/

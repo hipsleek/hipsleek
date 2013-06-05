@@ -128,6 +128,7 @@ and proc_decl = {
     proc_args : typed_ident list;
     proc_source : ident; (* source file *)
     proc_return : typ;
+	proc_flags : (ident*ident*(flags option)) list;
     mutable proc_important_vars : P.spec_var list; (* An Hoa : pre-computed list of important variables; namely the program parameters & logical variables in the specification that need to be retained during the process of verification i.e. such variables should not be removed when we perform simplification. Remark - all primed variables are important. *)
     proc_static_specs : Cformula.struc_formula;
     (* proc_static_specs_with_pre : Cformula.struc_formula; *)
@@ -136,6 +137,10 @@ and proc_decl = {
     (*proc_dynamic_specs_with_pre : Cformula.struc_formula;*)
     (* stack of static specs inferred *)
     proc_stk_of_static_specs : Cformula.struc_formula Gen.stack;
+    mutable proc_hpdefs: Cformula.hp_rel_def list;(*set of heap predicate constraints derived from this method*)
+    mutable proc_callee_hpdefs: Cformula.hp_rel_def list;
+		(*set of heap predicate constraints derived from calls in this method*)
+		(*due to the bottom up inference they are always just copyed from the proc_hpdefs of called methods*)
     proc_by_name_params : P.spec_var list;
     proc_body : exp option;
     (* Termination: Set of logical variables of the proc's scc group *)
@@ -170,6 +175,7 @@ and coercion_case =
 
 and coercion_decl = { 
     coercion_type : coercion_type;
+	coercion_exact : bool;
     coercion_name : ident;
     coercion_head : F.formula;
     coercion_head_norm : F.formula;
@@ -757,7 +763,7 @@ let mkEAssume pos =
  
 let mkEAssume_norm pos = 
 	let f = Cformula.mkTrue (Cformula.mkNormalFlow ()) pos in
-	let sf = Cformula.mkEBase f None no_pos in
+	(* let sf = Cformula.mkEBase f None no_pos in *)
 	Cformula.mkEAssume [] f (Cformula.mkEBase f None no_pos) (stub_branch_point_id "") None
 	
 let mkSeq t e1 e2 pos = match e1 with
@@ -996,6 +1002,43 @@ let rec look_up_proc_def pos (procs : (ident, proc_decl) Hashtbl.t) (name : stri
 	with Not_found -> Error.report_error {
     Error.error_loc = pos;
     Error.error_text = "Procedure " ^ name ^ " is not found."}
+let look_up_hpdefs_proc (procs : (ident, proc_decl) Hashtbl.t) (name : string) = 
+  try
+      let proc = Hashtbl.find procs name in
+      proc.proc_hpdefs
+  with Not_found -> Error.report_error {
+      Error.error_loc = no_pos;
+      Error.error_text = "Procedure " ^ name ^ " is not found."}
+
+let update_hpdefs_proc (procs : (ident, proc_decl) Hashtbl.t) hpdefs (name : string) = 
+  try
+      let proc = Hashtbl.find procs name in
+      (* let new_proc = {proc with proc_hpdefs = proc.proc_hpdefs@hpdefs} in *)
+      let _ = proc.proc_hpdefs <- proc.proc_hpdefs@hpdefs in ()
+      (* Hashtbl.replace procs name proc *)
+  with Not_found -> Error.report_error {
+      Error.error_loc = no_pos;
+      Error.error_text = "Procedure " ^ name ^ " is not found."}
+
+let look_up_callee_hpdefs_proc (procs : (ident, proc_decl) Hashtbl.t) (name : string) = 
+  try
+      let proc = Hashtbl.find procs name in
+      proc.proc_callee_hpdefs
+  with Not_found -> []
+(* Error.report_error { *)
+      (* Error.error_loc = no_pos; *)
+      (* Error.error_text = "Procedure " ^ name ^ " is not found."} *)
+
+let update_callee_hpdefs_proc (procs : (ident, proc_decl) Hashtbl.t) caller_name (callee_name : string) = 
+  try
+      let hpdefs = look_up_hpdefs_proc procs callee_name in
+      let proc = Hashtbl.find procs caller_name in
+      (* let new_proc = {proc with proc_callee_hpdefs = proc.proc_callee_hpdefs@hpdefs} in *)
+      let _ = proc.proc_callee_hpdefs <- proc.proc_callee_hpdefs@hpdefs in ()
+      (* Hashtbl.replace procs name new_proc *)
+  with Not_found -> Error.report_error {
+      Error.error_loc = no_pos;
+      Error.error_text = "Procedure " ^ caller_name ^ " is not found."}
 
 (* Replaced by the new function with Hashtbl *)
 (*
@@ -1894,3 +1937,6 @@ and add_term_nums_proc (proc: proc_decl) log_vars add_call add_phase =
     }, pvl1 @ pvl2)
 
 
+let collect_hp_rels prog= Hashtbl.fold (fun i p acc-> 
+	let name = unmingle_name p.proc_name in
+	(List.map (fun c-> name,c) p.proc_hpdefs)@acc) prog.new_proc_decls []

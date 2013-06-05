@@ -1,4 +1,4 @@
-HeapPred HP_1(node a).
+        HeapPred HP_1(node a).
 HeapPred HP_2a(node b, node c).
 
 set_next:SUCCESS[

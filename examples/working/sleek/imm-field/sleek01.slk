@@ -25,7 +25,7 @@ print residue.
 checkentail x::node<p@I,q@L>@M |- x::node<a@I,b@L>@M.
 print residue.
 
-// (4) valid ( false on lhs )
+// (4) fail
 checkentail x::node<p@L,q@A>@A |- x::node<_@L,_@A>.
 print residue.
 

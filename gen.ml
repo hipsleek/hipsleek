@@ -642,7 +642,7 @@ struct
   let string_of (e: emap) : string =
     let f = string_of_elem in
     let ll=partition e in 
-    "[@"^ (String.concat " \n " (List.map (fun cl -> "{"^(String.concat ", "(List.map f cl))^"}") ll))^"]"
+    "emap["^ (String.concat " \n " (List.map (fun cl -> "{"^(String.concat ", "(List.map f cl))^"}") ll))^"]"
 
   let un_partition (ll:epart) : emap =
     let flat xs y = 
