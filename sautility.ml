@@ -1519,11 +1519,13 @@ and checkeq_formula_list fs1 fs2=
   Debug.no_2 "checkeq_formula_list" pr1 pr1 string_of_bool
       (fun _ _ -> checkeq_formula_list_x fs1 fs2) fs1 fs2
 
-let remove_subsumed_pure_formula_x ps=
+let remove_subsumed_pure_formula_x args ps=
   (*check ps01 <<= ps02*)
   let check_subsume (ps01,null_svl1) (ps02,null_svl2)=
-    (* Gen.BList.difference_eq CP.equalFormula ps01 ps02 = [] *)
-    (List.length null_svl1>0) && (CP.diff_svl null_svl1 null_svl2 = [])
+    (List.length null_svl1 = List.length null_svl2) &&
+        (CP.diff_svl null_svl1 null_svl2 = []) &&
+        CP.equalFormula (CP.filter_var ps01 (CP.diff_svl args null_svl1))
+        (CP.filter_var ps02 (CP.diff_svl args null_svl1))
   in
   let sort_fn (ps01,null_svl1) (ps02,null_svl2)=
     (* (List.length ps01) - (List.length ps02) *)
@@ -1535,13 +1537,13 @@ let remove_subsumed_pure_formula_x ps=
   (* List.map (fun (ps,_) -> CP.join_conjunctions ps) ls_ps2 *)
   List.map fst ls_ps2
 
-let remove_subsumed_pure_formula ps=
+let remove_subsumed_pure_formula args ps=
   let pr1=pr_list_ln (pr_pair !CP.print_formula !CP.print_svl) in
   let pr2= pr_list_ln (!CP.print_formula) in
   Debug.no_1 "remove_subsumed_pure_formula" pr1 pr2
-      (fun _ -> remove_subsumed_pure_formula_x ps) ps
+      (fun _ -> remove_subsumed_pure_formula_x args ps) ps
 
-let remove_subsumed_pure_formula fs=
+let remove_subsumed_pure_formula args fs=
   let helper f pos p=
     CF.mkAnd_pure f (MCP.mix_of_pure p) pos
   in
@@ -1552,10 +1554,11 @@ let remove_subsumed_pure_formula fs=
           let mf = MCP.mix_of_pure p in
           let eqs = (MCP.ptr_equations_without_null mf) in
           let null_svl = MCP.get_null_ptrs (mf) in
-          (p,find_close null_svl eqs)
+          let null_svl1 = find_close null_svl eqs in
+          (p, null_svl1)
       ) fs
     in
-    let ps1= remove_subsumed_pure_formula ps in
+    let ps1= remove_subsumed_pure_formula args ps in
     let emp_f = CF.mkTrue_nf no_pos in
     List.map (helper emp_f no_pos) ps1
 
@@ -2998,13 +3001,14 @@ let simplify_set_of_formulas_x prog cdefs hp args unk_hps unk_svl defs=
   let helper f=
     let f1 = filter_var prog args f in
     let f2 = elim_irr_eq_exps prog (CP.remove_dups_svl (args@unk_svl)) f1 in
-    if is_empty_f f2 || (is_trivial f2 (hp,args)) || is_self_rec f2 then [] else [f2]
+    (* let _ = Debug.info_pprint ("  f2: "^ (Cprinter.prtt_string_of_formula f2)) no_pos in *)
+    if (* is_empty_f f2 || *) (is_trivial f2 (hp,args)) || is_self_rec f2 then [] else [f2]
   in
   let base_case_exist,defs1 = remove_dups_recursive cdefs hp args unk_hps unk_svl defs in
   let defs2 = List.concat (List.map helper defs1) in
   let b_defs3,r_defs3=List.partition is_empty_heap_f defs2 in
   (*remove duplicate for base cases*)
-  let b_defs4 = remove_subsumed_pure_formula b_defs3 in
+  let b_defs4 = (* remove_subsumed_pure_formula args *) b_defs3 in
   (*remove duplicate for recursive cases*)
   let r_defs4 = Gen.BList.remove_dups_eq check_relaxeq_formula r_defs3 in
     (*  if base_case_exist then *)

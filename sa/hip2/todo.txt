@@ -316,7 +316,7 @@ Towards the end of proving, we will need to extract
 pre-pred from the residue hip state during post-condition
 proving; if pre-pred  are being inferred.
 **********************************************************
-# ll-d2.slk  TODO
+# ll-d2.slk  TO improve
 
 relAssume  G
  x::node<_,null> &  xp=null  --> G(x,xp).
@@ -337,7 +337,7 @@ However, expecting:
 
 */
 **********************************************************
-# cll-d3a2.slk  TODO
+# cll-d3a2.slk : DONE
 
 infer [H,G] H(n) * x::node<_,n>  & xp=null
  |-  G(x,xp). 
@@ -367,12 +367,20 @@ and then use the pre/post annotation to support
 base-case-split
 
 */
-
-# ll-del-1.slk
+===========================================
+# ll-del-1.slk vs.: FIXED
+the first example of cll-d3b.slk
 
 Why is the following basic thing failing?
 
-infer [H] H(x) |-  x::node<_,_>.
+infer [H] H(x) |-  x::node<_,_>. OK
 print residue.
 
+
+infer [HP_6] HP_6(x) * x::node<_,x> & xp=null
+ |-  G(x,xp).    FAIL???
+
+
 //Entail (1) : Fail.
+
+===========================================
