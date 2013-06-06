@@ -473,9 +473,19 @@ as trace below show.
  es_history: [x::node<Anon_11,q>@M[Orig]]
 
 =============================================
-# ll-getnext2a.ss: FIXED
+# ll-getnext2a.ss: 
 
-Why presence of a spurious XPURE(HP_795)?
+You have now generated:
+
+[ H(x)&true --> x::node<val_26_784,next_26_785>@M * (HP_786(next_26_785))&true,
+ (HP_786(res)) * x::node<val_26_784,v_null_27_793>@M& XPURE(HP_795(res)) 
+                                                      ^^^^^^^^^^^^^^^^^^
+  & v_null_27_793=null --> G(x,res)&true]
+*
+
+But spurious XPURE(HP_795) is still present. Also,
+XPURE(..) has been introduced even though we have not
+called split-base?
 
  H(x)&true --> x::node<val_26_784,next_26_785>@M * (HP_786(next_26_785))&true,
  HP_786(res) * x::node<val_26_784,v_null_27_793>@M&
