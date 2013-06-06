@@ -451,6 +451,11 @@ let is_RelT x =
     | RelT _ -> true
     | _ -> false
 ;;
+let is_HpT x =
+  match x with
+    | HpT -> true
+    | _ -> false
+;;
 
 (* aphanumeric name *)
 let rec string_of_typ_alpha = function 

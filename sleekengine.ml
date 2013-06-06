@@ -737,7 +737,7 @@ let process_shape_split pre_hps post_hps=
   let vars1 = (CP.remove_dups_svl vars) in
   let infer_vars = List.filter (fun sv ->
       let t = CP.type_of_spec_var sv in
-      not (is_RelT t || t== HpT )) vars1 in
+      not (is_RelT t || is_HpT t )) vars1 in
   (*END*)
   let new_constrs = Sa2.split_constr !cprog !sleek_hprel_assumes sel_post_hps infer_vars in
   let pr1 = pr_list_ln Cprinter.string_of_hprel in
