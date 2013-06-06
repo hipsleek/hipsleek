@@ -12,6 +12,14 @@ infer [H,G] HP_6(n) * x_814::node<Anon_11,n> & n=x_814 &
 print residue.
 
 /*
+relAssume G
+   HP_6(n) * x_814::node<Anon_11,n> & n=x_814 & 
+                   xp=null & x=x_814 
+ -->  G(x_814,xp). 
+
+shape_split_base [H][G].
+*/
+/*
 We obtained:
 <1>HP_6(n)&n=x_814 & xp=null & x=x_814&{FLOW,(19,20)=__norm}[]
  inferred hprel: [x_814::node<Anon_11,n>@M&n=x_814 & xp=null --> G(x_814,xp)&
