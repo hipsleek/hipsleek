@@ -731,7 +731,15 @@ let process_shape_infer pre_hps post_hps=
 
 let process_shape_split pre_hps post_hps=
   let _, sel_post_hps = SAU.get_pre_post pre_hps post_hps !sleek_hprel_assumes in
-  let new_constrs = Sa2.split_constr !cprog !sleek_hprel_assumes sel_post_hps in
+  (*get infer_vars*)
+  let orig_vars = List.fold_left (fun ls cs-> ls@(CF.fv cs.CF.hprel_lhs)@(CF.fv cs.CF.hprel_rhs)) [] !sleek_hprel_assumes in
+  let vars = List.map (fun v -> TI.get_spec_var_type_list_infer (v, Unprimed) orig_vars no_pos) (pre_hps@post_hps) in
+  let vars1 = (CP.remove_dups_svl vars) in
+  let infer_vars = List.filter (fun sv ->
+      let t = CP.type_of_spec_var sv in
+      not (is_RelT t || t== HpT )) vars1 in
+  (*END*)
+  let new_constrs = Sa2.split_constr !cprog !sleek_hprel_assumes sel_post_hps infer_vars in
   let pr1 = pr_list_ln Cprinter.string_of_hprel in
   begin
     print_endline "*************************************";

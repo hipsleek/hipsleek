@@ -210,8 +210,7 @@ let apply_transitive_impl_fix prog callee_hps hp_rel_unkmap unk_hps (constrs: CF
                       CONSTR: ELIM UNUSED PREDS
 ****************************************************************)
 (*split constrs like H(x) & x = null --> G(x): separate into 2 constraints*)
-let split_constr_x prog constrs post_hps=
-  let prog_vars = [] in
+let split_constr_x prog constrs post_hps prog_vars=
   (*internal method*)
   let split_one cs=
     let (_ ,mix_lf,_,_,_) = CF.split_components cs.CF.hprel_lhs in
@@ -232,7 +231,7 @@ let split_constr_x prog constrs post_hps=
         in
         (**smart subst**)
         let lhs_b1, rhs_b1, subst_prog_vars = SAU.smart_subst lhs_b rhs_b (l_hpargs@r_hpargs)
-          leqs [] [] []
+          leqs [] [] prog_vars
         in
         (* let lfb = match lhs_b1 with *)
         (*   | CF.Base fb -> fb *)
@@ -277,10 +276,10 @@ let split_constr_x prog constrs post_hps=
   List.fold_left (fun r_constrs cs -> let new_constrs = split_one cs in
       r_constrs@new_constrs) [] constrs
 
-let split_constr prog constrs post_hps=
+let split_constr prog constrs post_hps prog_vars=
   let pr1 = pr_list_ln Cprinter.string_of_hprel in
   Debug.no_1 "split_constr" pr1 pr1
-      (fun _ -> split_constr_x prog constrs post_hps) constrs
+      (fun _ -> split_constr_x prog constrs post_hps prog_vars) constrs
 
 let get_preds (lhs_preds, lhs_heads, rhs_preds,rhs_heads) cs=
   (* let pr1 = Cprinter.string_of_hprel_short in *)
@@ -1121,6 +1120,7 @@ let partition_constrs constrs post_hps=
 let infer_shapes_core prog proc_name (constrs0: CF.hprel list) callee_hps sel_hp_rels sel_post_hps hp_rel_unkmap : (CF.hprel list * CF.hp_rel_def list* (CP.spec_var*CP.exp list * CP.exp list) list * (CP.spec_var * CP.spec_var list) list)=
   (*move to outer func*)
   let callee_hps = [] in
+  let prog_vars = [] in (*TODO: improve for hip*)
   (********************************)
   (*unk analysis*)
   let _ = DD.binfo_pprint ">>>>>> step 1: find dangling ptrs that link pre and post-preds<<<<<<" no_pos in 
@@ -1130,7 +1130,7 @@ let infer_shapes_core prog proc_name (constrs0: CF.hprel list) callee_hps sel_hp
   let constrs2, non_unk_hps = apply_transitive_impl_fix prog callee_hps unk_map
      unk_hps constrs1 in
   (*split constrs like H(x) & x = null --> G(x): separate into 2 constraints*)
-  let constrs3 = split_constr prog constrs2 sel_post_hps in
+  let constrs3 = split_constr prog constrs2 sel_post_hps prog_vars in
   (*partition constraints into 2 groups: pre-predicates, post-predicates*)
   let post_constrs, pre_constrs = partition_constrs constrs3 sel_post_hps in
   (*find inital sol*)
