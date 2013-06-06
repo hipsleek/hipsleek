@@ -316,6 +316,7 @@ Towards the end of proving, we will need to extract
 pre-pred from the residue hip state during post-condition
 proving; if pre-pred  are being inferred.
 **********************************************************
+
 # ll-d2.slk  DONE
 
 relAssume  G
@@ -337,7 +338,7 @@ However, expecting:
 
 */
 **********************************************************
-# cll-d3a2.slk :
+# cll-d3a2.slk :  OK
 
 Given :
 
@@ -436,7 +437,7 @@ SOLN:
 
 */
 ===============================================
-# ll-getnext.ss: 
+# ll-getnext.ss: DONE
 
 Why disjunct in post-pred?
 
@@ -575,3 +576,123 @@ Why did we have a disjunction?
 */
 =================================================
 # ll-append9-10.ss: wo. --sa-split-base
+
+# ll-del1a.slk
+
+ Why was XPURE(HP_6(..)) dropped?
+
+relAssume  G
+ x::node<_,nn> * HP_6(nn) & nn=null & x'=null  --> G(x,x').
+relAssume  G
+ x::node<_,null> * HP_6(nn) & nn!=null & x'=nn --> G(x,x').
+
+shape_infer [][G].
+
+/*
+ Obtained:
+
+[ G(x_44,x_45) ::= 
+ x_44::node<Anon_11,nn>@M&nn=null & x_45=null
+ or EXISTS(flted_14_25: x_44::node<Anon_11,flted_14_25>@M&flted_14_25=null & 
+    x_45!=null&[]
+ ]
+
+*/
+
+# ll-del.slk
+
+relAssume  H
+ H(x) --> x::node<_,nn> * HP_6(nn) .
+relAssume  G
+ x::node<_,nn> * HP_6(nn) & nn=null & x'=null  --> G(x,x').
+relAssume  G
+ x::node<_,null> * HP_6(nn) & nn!=null & x'=nn --> G(x,x').
+
+shape_infer [H,x][G].
+
+/*
+
+ H(x_65) ::= x_65::node<Anon_11,nn>@M&nn=null,
+ G(x_66,x_67) ::= 
+ x_66::node<Anon_12,nn>@M&nn=null & x_67=null
+ or EXISTS(flted_17_32: x_66::node<Anon_12,flted_17_32>@M&flted_17_32=null & 
+    x_67!=null&[]
+ ]
+
+How come HP_6 has been dropped?
+Why do we have nn=null in H(..) pred?
+
+Should it not have been:
+
+ H(x_65) ::= x_65::node<Anon_11,nn>@M& XPure(HP_6(nn))
+ G(x,x') ::= x::node<_,nn> * GH(nn,x') & HP_6(nn)
+ GH(nn,x') ::=  nn=null & x'=null or nn!=null & x'=nn
+
+
+# ll-del1b.slk
+
+HeapPred HP_6(node a).
+HeapPred G(node a, node a).
+
+relAssume  G
+ x::node<_,nn> * HP_6(nn) & nn=null & x'=null  --> G(x,x').
+
+shape_infer [][G].
+
+/*
+ Obtained:
+
+  G(x_23,x_24) ::= x_23::node<Anon_11,nn>@M&nn=null & x_24=null]
+
+ Why was XPURE(HP_6(..)) dropped?
+
+*/
+
+# ll-del1c.slk
+
+relAssume  G
+ x::node<_,null> * HP_6(nn) & nn!=null & x'=nn --> G(x,x').
+
+shape_infer [][G].
+
+/*
+ Obtained:
+
+[ G(x_28,x_29) ::= EXISTS(flted_11_16: x_28::node<Anon_11,flted_11_16>@M&flted_11_16=null & 
+nn=x_29 &  XPURE(HP_26(nn)) &  XPURE(G_27(x_29)) & nn!=null&[]]
+*
+ but where did HP_26 and G_27 came from?
+ and what happen to HP_6.
+
+*/
+
+# ll-del1b1.slk vs ll-del1b.slk
+
+Seems OK below:
+
+!!! >>>>>> step 6: generalization <<<<<<
+!!! before remove redundant:[]
+!!! after remove redundant:[]
+
+!!! before remove redundant:[[(G,[x,x'], x::node<Anon_11,nn>@M&x'=null &  XPURE(HP_21(nn)),[nn])]]
+!!! after remove redundant:[HP_RELDEFN G:  G(x_22,x_23) ::=  x_22::node<Anon_11,nn>@M&x_23=null &  XPURE(HP_21(nn))]
+*************************************
+*******relational definition ********
+*************************************
+[ G(x_22,x_23) ::= x_22::node<Anon_11,nn>@M&x_23=null &  XPURE(HP_21(nn))]
+
+In ll-del1b.slk, we obtained instead below where there is
+an extra generalization step which removed HP_6!
+Why is there such an extra generalization step?
+
+!!! >>>>>> step 6: generalization <<<<<<
+!!! before remove redundant:[[(HP_6,[nn], emp&nn=null,[])]]
+!!! after remove redundant:[HP_RELDEFN HP_6:  HP_6(nn_22) ::=  emp&nn_22=null
+
+*************************************
+*******relational definition ********
+*************************************
+[ G(x_23,x_24) ::= x_23::node<Anon_11,nn>@M&nn=null & x_24=null]
+*************************************
+
+*/

@@ -7,9 +7,11 @@ data node {
 }
 
 /* view for singly linked circular lists */
+/*
 ll<> == self = null
 	or self::node<_, r> * r::ll<> 
 	inv true;
+*/
 
 HeapPred H(node a).
 HeapPred G(node a,node a).
@@ -68,17 +70,13 @@ but expecting:
 /*
 For hip ll-del.ss, I got:
 
-[ H(x)&true --> x::node<val_57_793,next_57_794>@M * (HP_795(next_57_794))&true,
+  H(x)&true --> x::node<val_57_793,next_57_794>@M * (HP_795(next_57_794))&true,
  (HP_795(next_57_794)) * x::node<val_57_793,next_57_794>@M&
   next_57_794=null & x'=null --> G(x,x')&true,
+ (HP_795(x')) * x::node<val_57_793,v_null_63_813>@M&x'!=null & 
+  v_null_63_813=null --> G(x,x')&true]
+*************************************
 
- (HP_795(x')) * x::node<val_57_793,v_null_63_813>@M&
-   XPURE(HP_815(next_57_794)) & x'!=null & v_null_63_813=null --> G(x,x')&
-  true
-]
-The last one is wrong, and should be:
- (HP_795(x')) * x::node<val_57_793,null>@M&
-   & x'!=null & tmp=x'  --> G(x,x')
 
 From sleek, proof log I got:
 

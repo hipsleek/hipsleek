@@ -10,12 +10,8 @@ HeapPred G(node a, node a).
 
 relAssume  H
  H(x) --> x::node<_,nn> * HP_6(nn) .
-relAssume  G
- x::node<_,nn> * HP_6(nn) & nn=null & x'=null  --> G(x,x').
-relAssume  G
- x::node<_,null> * HP_6(nn) & nn!=null & x'=nn --> G(x,x').
 
-shape_infer [H,x][G].
+shape_infer [H,x][].
 
 /*
 
@@ -27,8 +23,6 @@ shape_infer [H,x][G].
  ]
 
 How come HP_6 has been dropped?
-Why do we have nn=null in H(..) pred?
-
 Should it not have been:
 
  H(x_65) ::= x_65::node<Anon_11,nn>@M& XPure(HP_6(nn))
