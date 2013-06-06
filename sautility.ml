@@ -594,6 +594,10 @@ let select_hrel =  CP.mem_svl
 
 let select_hpargs id ls= (Gen.BList.mem_eq check_hp_arg_eq id ls)
 
+let select_subsumehpargs (hp0,args0) ls= (List.exists (fun (hp1,args1) ->
+    CP.eq_spec_var hp0 hp1 && CP.diff_svl args0 args1 = [])
+    ls)
+
 let rec look_up_ptr_args_data_node_x hd=
   List.filter CP.is_node_typ hd.CF.h_formula_data_arguments
   (*data nodes*)
@@ -1013,7 +1017,7 @@ and drop_data_view_hrel_nodes_hf_from_root prog hf hd_nodes hv_nodes eqs drop_ro
   (* let _ = Debug.info_pprint ("drop_hps: " ^ (let pr = pr_list (pr_pair !CP.print_sv !CP.print_svl) in *)
   (* pr drop_hps)) no_pos in *)
   (* let _ = Debug.info_pprint ("hf: " ^ (Cprinter.string_of_h_formula hf)) no_pos in *)
-  let nhf = CF.drop_data_view_hpargs_nodes_hf hf select_dnode select_vnode select_hpargs drop_vars drop_vars drop_hps in
+  let nhf = CF.drop_data_view_hpargs_nodes_hf hf select_dnode select_vnode select_subsumehpargs drop_vars drop_vars drop_hps in
   (* let _ = Debug.info_pprint ("nhf: " ^ (Cprinter.string_of_h_formula nhf)) no_pos in *)
   nhf
 
