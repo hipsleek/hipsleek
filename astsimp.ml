@@ -1911,7 +1911,7 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
       let _ = Cast.check_proper_return cret_type exc_list static_specs_list in 
       (* let _ = print_string "trans_proc :: Cast.check_proper_return PASSED \n" in *)
       (* let _ = print_endline "WN : removing result here" in *)
-      let n_tl = List.remove_assoc res_name n_tl in
+      (* let n_tl = List.remove_assoc res_name n_tl in *)
       let body =match proc.I.proc_body with
 	| None -> None
 	| Some e -> (* let _ = print_string ("trans_proc :: Translate body " ^ Iprinter.string_of_exp e ^ "\n") in *) Some (fst (trans_exp prog proc e)) in
