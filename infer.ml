@@ -1657,14 +1657,6 @@ let find_undefined_selective_pointers_x prog lfb lmix_f unmatched rhs_rest rhs_h
     (*should separate list of list *)
     CP.remove_dups_svl (List.concat ls_not_fwd_svl)
   in
-  let generate_linking unk_map lhs_hpargs rhs_hpargs ss=
-    let post_hpargs = List.filter (fun (hp, _) -> CP.mem_svl hp post_hps) rhs_hpargs in
-    if post_hpargs = [] then ([], CP.mkTrue pos, unk_map) else
-      let lhs_hpargs1 = List.map (fun (hp,args) -> (hp, CP.subst_var_list ss args)) lhs_hpargs in
-      let post_hpargs1 = List.map (fun (hp,args) -> (hp, CP.subst_var_list ss args)) post_hpargs in
-      let lhs_hpargs2 = List.filter (fun (hp, _) -> not(CP.mem_svl hp post_hps)) lhs_hpargs1 in
-      SAC.generate_map lhs_hpargs2 post_hpargs1 unk_map pos
-  in
   (* DD.info_pprint ">>>>>> find_undefined_selective_pointers <<<<<<" pos; *)
   (* let lfb = CF.subst_b leqs lfb in *)
   (* let rfb = CF.subst_b leqs rfb in *)
@@ -1694,9 +1686,10 @@ let find_undefined_selective_pointers_x prog lfb lmix_f unmatched rhs_rest rhs_h
   let l_def_vs = leqNulls @ (List.map (fun hd -> hd.CF.h_formula_data_node) lhds)
    @ (List.map (fun hv -> hv.CF.h_formula_view_node) lhvs) in
   let l_def_vs = CP.remove_dups_svl (SAU.find_close l_def_vs (eqs)) in
-  let unk_svl, unk_xpure, unk_map1 = if !Globals.sa_split_base then
-    generate_linking total_unk_map ls_lhp_args ls_rhp_args eqs
-  else ([], CP.mkTrue pos,total_unk_map)
+  (*ll-append9-10: if not generate linking here, we can not obtain it later*)
+  let unk_svl, unk_xpure, unk_map1 = (* if !Globals.sa_split_base then *)
+    SAC.generate_linking total_unk_map ls_lhp_args ls_rhp_args eqs post_hps pos
+  (* else ([], CP.mkTrue pos,total_unk_map) *)
   in
   let lfb1 = CF.mkAnd_base_pure lfb (MCP.mix_of_pure unk_xpure) pos in
   let defined_hps,rem_lhpargs =

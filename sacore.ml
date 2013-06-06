@@ -64,14 +64,14 @@ let rec find_pos n sv res (hp,args)=
       else
         find_pos (n+1) sv res (hp,rest)
 
-let generate_linking ls_hpargs sv=
+let generate_unk_svl_map ls_hpargs sv=
   (List.fold_left (find_pos 0 sv) [] ls_hpargs,sv)
 
 let generate_map_x l_hpargs r_hpargs unk_map pos=
   let l_args = List.fold_left (fun ls (_, args) -> ls@args) [] l_hpargs in
   let r_args = List.fold_left (fun ls (_, args) -> ls@args) [] r_hpargs in
   let unk_svl1 = CP.remove_dups_svl (CP.intersect_svl l_args r_args) in
-  let ls_hp_pos_sv = List.map (generate_linking (l_hpargs@r_hpargs)) unk_svl1 in
+  let ls_hp_pos_sv = List.map (generate_unk_svl_map (l_hpargs@r_hpargs)) unk_svl1 in
   let unk_pure,new_map = generate_xpure_view_w_pos ls_hp_pos_sv unk_map pos in
   (unk_svl1, unk_pure, new_map)
 
@@ -82,6 +82,15 @@ let generate_map unk_l_hpargs r_hpargs unk_map pos=
   Debug.no_3 "generate_map" pr3 pr3 pr1 (pr_triple !CP.print_svl pr2 pr1)
       (fun _ _ _ -> generate_map_x unk_l_hpargs r_hpargs unk_map pos)
       unk_l_hpargs r_hpargs unk_map
+
+let generate_linking unk_map lhs_hpargs rhs_hpargs ss post_hps pos=
+  let post_hpargs = List.filter (fun (hp, _) -> CP.mem_svl hp post_hps) rhs_hpargs in
+  if post_hpargs = [] then ([], CP.mkTrue pos, unk_map) else
+    let lhs_hpargs1 = List.map (fun (hp,args) -> (hp, CP.subst_var_list ss args)) lhs_hpargs in
+    let post_hpargs1 = List.map (fun (hp,args) -> (hp, CP.subst_var_list ss args)) post_hpargs in
+    let lhs_hpargs2 = List.filter (fun (hp, _) -> not(CP.mem_svl hp post_hps)) lhs_hpargs1 in
+    generate_map lhs_hpargs2 post_hpargs1 unk_map pos
+
 
 let analize_unk_new_x prog constrs total_unk_map=
   let dalnging_analysis (constrs1,unk_map) cs =
@@ -99,7 +108,7 @@ let analize_unk_new_x prog constrs total_unk_map=
       CP.remove_dups_svl (CP.diff_svl (unk_svl) cs.CF.unk_svl)
     in
     let pos = CF.pos_of_formula cs.CF.hprel_lhs in
-    let ls_hp_pos_sv = List.map (generate_linking (l_hpargs@r_hpargs)) unk_svl in
+    let ls_hp_pos_sv = List.map (generate_unk_svl_map (l_hpargs@r_hpargs)) unk_svl in
     let unk_pure,new_map = generate_xpure_view_w_pos ls_hp_pos_sv unk_map pos in
     let unk_svl1 = cs.CF.unk_svl@unk_svl in
     let new_lhs = CF.mkAnd_pure cs.CF.hprel_lhs (MCP.mix_of_pure unk_pure) pos in
@@ -261,7 +270,7 @@ and update_unk_one_constr_x prog unk_hp_locs unk_map cs=
     if unk_svl1 = [] then (cs, [], unk_map) else
       (*for each unk sv: generate linking*)
       let pos = CF.pos_of_formula cs.CF.hprel_lhs in
-      let ls_hp_pos_sv = List.map (generate_linking hp_args) unk_svl1 in
+      let ls_hp_pos_sv = List.map (generate_unk_svl_map hp_args) unk_svl1 in
       let unk_pure,new_map = generate_xpure_view_w_pos ls_hp_pos_sv unk_map pos in
       let unk_svl2 = cs.CF.unk_svl@unk_svl1 in
       let new_lhs = CF.mkAnd_pure cs.CF.hprel_lhs (MCP.mix_of_pure unk_pure) pos in

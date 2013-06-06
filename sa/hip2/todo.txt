@@ -338,7 +338,7 @@ However, expecting:
 
 */
 **********************************************************
-# cll-d3a2.slk :  OK
+# cll-d3a2.slk :
 
 Given :
 
@@ -575,8 +575,9 @@ Why did we have a disjunction?
 
 */
 =================================================
-# ll-append9-10.ss: wo. --sa-split-base
+# ll-append9-10.ss: wo. --sa-split-base: OK
 
+=================================================
 # ll-del1a.slk
 
  Why was XPURE(HP_6(..)) dropped?
@@ -598,7 +599,7 @@ shape_infer [][G].
  ]
 
 */
-
+=================================================
 # ll-del.slk
 
 relAssume  H
@@ -628,7 +629,7 @@ Should it not have been:
  G(x,x') ::= x::node<_,nn> * GH(nn,x') & HP_6(nn)
  GH(nn,x') ::=  nn=null & x'=null or nn!=null & x'=nn
 
-
+=================================================
 # ll-del1b.slk
 
 HeapPred HP_6(node a).
@@ -647,7 +648,7 @@ shape_infer [][G].
  Why was XPURE(HP_6(..)) dropped?
 
 */
-
+=================================================
 # ll-del1c.slk
 
 relAssume  G
@@ -665,7 +666,7 @@ nn=x_29 &  XPURE(HP_26(nn)) &  XPURE(G_27(x_29)) & nn!=null&[]]
  and what happen to HP_6.
 
 */
-
+=================================================
 # ll-del1b1.slk vs ll-del1b.slk
 
 Seems OK below:
