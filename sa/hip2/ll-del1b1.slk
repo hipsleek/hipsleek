@@ -1,0 +1,43 @@
+data node{
+ int val;
+ node next;
+}.
+
+
+HeapPred HP_6(node a).
+HeapPred G(node a, node a).
+
+relAssume  G
+ x::node<_,nn> * HP_6(nn) & x'=null  --> G(x,x').
+
+shape_infer [][G].
+
+/*
+Seems OK below:
+
+!!! >>>>>> step 6: generalization <<<<<<
+!!! before remove redundant:[]
+!!! after remove redundant:[]
+
+!!! before remove redundant:[[(G,[x,x'], x::node<Anon_11,nn>@M&x'=null &  XPURE(HP_21(nn)),[nn])]]
+!!! after remove redundant:[HP_RELDEFN G:  G(x_22,x_23) ::=  x_22::node<Anon_11,nn>@M&x_23=null &  XPURE(HP_21(nn))]
+*************************************
+*******relational definition ********
+*************************************
+[ G(x_22,x_23) ::= x_22::node<Anon_11,nn>@M&x_23=null &  XPURE(HP_21(nn))]
+
+In ll-del1b.slk, we obtained instead below where there is
+an extra generalization step which removed HP_6!
+Why is there such an extra generalization step?
+
+!!! >>>>>> step 6: generalization <<<<<<
+!!! before remove redundant:[[(HP_6,[nn], emp&nn=null,[])]]
+!!! after remove redundant:[HP_RELDEFN HP_6:  HP_6(nn_22) ::=  emp&nn_22=null
+
+*************************************
+*******relational definition ********
+*************************************
+[ G(x_23,x_24) ::= x_23::node<Anon_11,nn>@M&nn=null & x_24=null]
+*************************************
+
+*/
