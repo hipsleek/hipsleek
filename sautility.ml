@@ -2092,10 +2092,10 @@ let remove_longer_common_prefix_w_unk unk_hps fs=
     match cur with
       | [] -> res
       | f::ss ->
-          let f1 = CF.drop_unk_hrel (*CF.subst_unk_hps_f*) f unk_hps in
+          let f1,_ = CF.drop_unk_hrel (*CF.subst_unk_hps_f*) f unk_hps in
           if List.exists
             (fun f2 ->
-                let f21 = CF.drop_unk_hrel (*CF.subst_unk_hps_f*) f2 unk_hps in
+                let f21,_ = CF.drop_unk_hrel (*CF.subst_unk_hps_f*) f2 unk_hps in
                 check_com_pre_eq_formula f1 f21)
             res then
             helper ss res
@@ -2108,8 +2108,8 @@ let remove_equiv_wo_unkhps_x hp unk_hps fs=
     match cur with
       | [] -> res_unkhp_fs,res_elim_unkhp_fs,rems
       | f::ss ->
-          let newf,args = CF.drop_hrel_f f unk_hps in
-          if args = [] then
+          let newf,b = CF.drop_unk_hrel f unk_hps in
+          if not b then
             partition_helper ss res_unkhp_fs res_elim_unkhp_fs (rems@[f])
           else
             begin
@@ -2924,7 +2924,7 @@ let remove_dups_recursive_x cdefs hp args unk_hps unk_svl defs=
     (* let _ = DD.info_pprint ("       base_fs1:" ^ (pr1 base_fs1)) no_pos in *)
     let process_helper (f,residue) =
       (* let _ = DD.info_pprint ("       residue:" ^ (Cprinter.prtt_string_of_formula residue)) no_pos in *)
-      let residue1 = CF.drop_unk_hrel residue unk_hps in
+      let residue1,_ = CF.drop_unk_hrel residue unk_hps in
       let residue2 = CF.remove_neqNulls_f residue1 in
       (* let _ = DD.info_pprint ("       residue2:" ^ (Cprinter.prtt_string_of_formula residue2)) no_pos in *)
       let drop = if is_empty_f residue2 then
@@ -4010,7 +4010,7 @@ let transform_unk_hps_to_pure_x hp_defs unk_hp_frargs =
     (* let _ = DD.info_pprint ("       eqs: " ^ (pr1 eqs)) no_pos in *)
     let ss = List.concat ls_ss in
     (*remove unkhps*)
-    let f1 =  CF.drop_unk_hrel (* CF.drop_hrel_f*) f used_unk_hps in
+    let f1,_ =  CF.drop_unk_hrel (* CF.drop_hrel_f*) f used_unk_hps in
     (*subst*)
     let f2 = CF.subst ss f1 in
     (*add pure eqs*)

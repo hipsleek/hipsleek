@@ -389,6 +389,7 @@ let common_arguments = [
   ("--sa-split", Arg.Set Globals.sa_en_split, "splitting hp args into multiple hp if possible");
   ("--sa-unify-dangling", Arg.Set Globals.sa_unify_dangling, "unify branches of definition to instantiate dangling predicate");
   ("--sa-tree-simp", Arg.Set Globals.sa_tree_simp, "simplify a tree branches of definition");
+  ("--sa-subsume", Arg.Set Globals.sa_subsume, "use subsume when comparing definitions after infering");
   ("--norm-useless", Arg.Set Globals.norm_elim_useless, "elim useless parameters of user-defined predicates (view)");
   ("--norm-extract", Arg.Set Globals.norm_extract, "extract common pattern among branches of user-defined predicates (view)");
   ]
@@ -422,7 +423,6 @@ let hip_specific_arguments = [ ("-cp", Arg.String set_pred,
    "compare set of constraints");
   ("-lib", Arg.String set_lib_file,
    "lib");
-  ("--sa-subsume", Arg.Set Globals.sa_subsume, "use subsume when comparing definitions after infering");
   ] 
 
 (* arguments/flags used only by sleek *)	

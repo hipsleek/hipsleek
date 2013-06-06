@@ -495,7 +495,7 @@ let transform_unk_hps_to_pure_x hp_defs unk_hp_frargs =
     (* let _ = DD.info_pprint ("       eqs: " ^ (pr1 eqs)) no_pos in *)
     let ss = List.concat ls_ss in
     (*remove unkhps*)
-    let f1 =  CF.drop_unk_hrel (* CF.drop_hrel_f*) f used_unk_hps in
+    let f1,_ =  CF.drop_unk_hrel (* CF.drop_hrel_f*) f used_unk_hps in
     (*subst*)
     let f2 = CF.subst ss f1 in
     (*add pure eqs*)

@@ -5204,18 +5204,23 @@ let drop_hrel_f f0 hp_names =
 let drop_unk_hrel f0 hp_names=
   let rec helper f=
     match f with
-      | Base fb -> let nfb,_ = drop_hrel_hf fb.formula_base_heap hp_names in
+      | Base fb -> let nfb,args = drop_hrel_hf fb.formula_base_heap hp_names in
+        let p = (MCP.pure_of_mix fb.formula_base_pure) in
+        let unk_hp_args = CP.get_xpure p in
+        let n_p,n_b = if unk_hp_args = [] then (p, List.length args > 0) else
+          (CP.drop_xpure p, true)
+        in
         (Base {fb with formula_base_heap =  nfb;
-            formula_base_pure = MCP.mix_of_pure (CP.drop_xpure (MCP.pure_of_mix fb.formula_base_pure));
-        })
-      | Or orf -> let nf1 = helper orf.formula_or_f1 in
-        let nf2 = helper orf.formula_or_f2 in
+            formula_base_pure = MCP.mix_of_pure n_p;
+        }, n_b)
+      | Or orf -> let nf1,b1 = helper orf.formula_or_f1 in
+        let nf2,b2 = helper orf.formula_or_f2 in
         ( Or {orf with formula_or_f1 = nf1;
-            formula_or_f2 = nf2;})
+            formula_or_f2 = nf2;}, b1||b2)
       | Exists fe ->
             let qvars, base1 = split_quantifiers f in
-            let nf = helper base1 in
-            add_quantifiers qvars nf
+            let nf,b = helper base1 in
+            (add_quantifiers qvars nf, b)
   in
   helper f0
 

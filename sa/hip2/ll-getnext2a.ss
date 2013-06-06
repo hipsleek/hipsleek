@@ -25,7 +25,7 @@ ensures G(x,res);
 	node tmp;
 	tmp = x.next;
         x.next=null;
-        dprint;
+        //dprint;
         return tmp;
 }
 /*
