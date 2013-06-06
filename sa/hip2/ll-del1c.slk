@@ -1,0 +1,24 @@
+data node{
+ int val;
+ node next;
+}.
+
+
+HeapPred HP_6(node a).
+HeapPred G(node a, node a).
+
+relAssume  G
+ x::node<_,null> * HP_6(nn) & nn!=null & x'=nn --> G(x,x').
+
+shape_infer [][G].
+
+/*
+ Obtained:
+
+[ G(x_28,x_29) ::= EXISTS(flted_11_16: x_28::node<Anon_11,flted_11_16>@M&flted_11_16=null & 
+nn=x_29 &  XPURE(HP_26(nn)) &  XPURE(G_27(x_29)) & nn!=null&[]]
+*
+ but where did HP_26 and G_27 came from?
+ and what happen to HP_6.
+
+*/

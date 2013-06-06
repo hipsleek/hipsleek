@@ -9,8 +9,8 @@ HeapPred G(node a, node a).
 
 relAssume  G
  x::node<_,nn> * HP_6(nn) & nn=null & x'=null  --> G(x,x').
-relAssume  G
- x::node<_,null> * HP_6(nn) & nn!=null & x'=nn --> G(x,x').
+//relAssume  G
+// x::node<_,null> * HP_6(nn) & nn!=null & x'=nn --> G(x,x').
 
 shape_infer [][G].
 
