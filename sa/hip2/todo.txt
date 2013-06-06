@@ -478,7 +478,7 @@ and then generated below via --sa-inling:
 To avoid problem with naming, I suggest using instead the name
 of the predicates. That is:
 
-  UU_HP_27_UU
+  UU_HP_27_UU: DONE
 
 rather than:
 

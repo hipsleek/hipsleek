@@ -542,7 +542,10 @@ let transform_xpure_to_pure_x hp_defs unk_map=
       in
       let (CP.SpecVar (t, _, p)),_ = List.hd hps in
       (CP.SpecVar(t, xp.CP.xpure_view_name, p),
-      List.map (CP.fresh_spec_var_prefix dang_hp_default_prefix_name) args)) unk_map
+      (* List.map (CP.fresh_spec_var_prefix dang_hp_default_prefix_name) args)) unk_map *)
+      let dang_name = dang_hp_default_prefix_name ^ "_" ^ xp.CP.xpure_view_name ^ "_" ^dang_hp_default_prefix_name  in
+      List.map (fun (CP.SpecVar (t, _, p)) -> CP.SpecVar (t, dang_name, p)) args)
+  ) unk_map
   in
   transform_unk_hps_to_pure hp_defs fr_map
 

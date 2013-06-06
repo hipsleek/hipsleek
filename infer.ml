@@ -1694,7 +1694,10 @@ let find_undefined_selective_pointers_x prog lfb lmix_f unmatched rhs_rest rhs_h
   let l_def_vs = leqNulls @ (List.map (fun hd -> hd.CF.h_formula_data_node) lhds)
    @ (List.map (fun hv -> hv.CF.h_formula_view_node) lhvs) in
   let l_def_vs = CP.remove_dups_svl (SAU.find_close l_def_vs (eqs)) in
-  let unk_svl, unk_xpure, unk_map1 = generate_linking total_unk_map ls_lhp_args ls_rhp_args eqs in
+  let unk_svl, unk_xpure, unk_map1 = if !Globals.sa_split_base then
+    generate_linking total_unk_map ls_lhp_args ls_rhp_args eqs
+  else ([], CP.mkTrue pos,total_unk_map)
+  in
   let lfb1 = CF.mkAnd_base_pure lfb (MCP.mix_of_pure unk_xpure) pos in
   let defined_hps,rem_lhpargs =
     List.fold_left (fun (ls_defined,ls_rem) hpargs ->
