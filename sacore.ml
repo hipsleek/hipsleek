@@ -400,7 +400,7 @@ let analize_unk prog constrs total_unk_map =
   let pr2 = (pr_list (pr_pair (pr_list (pr_pair !CP.print_sv string_of_int)) CP.string_of_xpure_view)) in
   let pr3 = pr_list (pr_pair !CP.print_sv !CP.print_svl) in
   let pr4 = pr_triple pr1 pr3 pr2 in
-  Debug.ho_2 "analize_unk" pr1 pr2 pr4
+  Debug.no_2 "analize_unk" pr1 pr2 pr4
       (fun _ _ -> analize_unk_x prog constrs total_unk_map)
       constrs total_unk_map
 

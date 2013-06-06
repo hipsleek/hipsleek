@@ -346,7 +346,7 @@ let elim_unused_pre_preds post_hps constrs unk_map=
   let pr1 = pr_list_ln Cprinter.string_of_hprel in
   let pr2 = pr_list (pr_pair !CP.print_sv !CP.print_svl) in
   let pr3= (pr_list (pr_pair (pr_list (pr_pair !CP.print_sv string_of_int)) CP.string_of_xpure_view)) in
-  Debug.ho_2 "elim_unused_pre_preds" pr1 pr3 (pr_triple pr2 pr1 pr3)
+  Debug.no_2 "elim_unused_pre_preds" pr1 pr3 (pr_triple pr2 pr1 pr3)
       (fun _ _ -> elim_unused_pre_preds post_hps constrs unk_map)
       constrs unk_map
 

@@ -841,3 +841,39 @@ OBTAINED:
 
 
 */
+
+# loc-1.slk -dd
+
+The -dd tracing for shape_infer is almost absent at the moment.
+This makes it difficult to trace the detailed steps of shape analysis.
+I think we need to add print out on meaningful steps taken
+using:
+
+  Debug.dinfo_pprint "..." pos
+  Debug.dinfo_hprint "..." pos
+
+!!!:0: 0: >>>>>> step 1: find dangling ptrs that link pre and post-preds<<<<<<
+!!!:0: 0: >>>>>> step 2: apply transitive implication<<<<<<
+!!!:0: 0: >>>>>> step 1a: simplification <<<<<<
+!!!:0: 0: >>>>>> step 1b: do apply_transitive_imp <<<<<<
+!!!:0: 0: IMP #1
+!!!:0: 0: imply_timeout: ante:  true
+!!!:0: 0: imply_timeout: conseq:  next_49=null &  XPURE(H(y_52))
+!!!:0: 0: ante 1: : true
+!!!:0: 0: ante 3: : true
+!!!:0: 0: ante 4: : true
+!!!:0: 0: res: :false
+!!!:0: 0: >>>>>> pre-predicates<<<<<<
+!!!:0: 0: res: :false
+!!!:0: 0: >>>>>> pre-predicates<<<<<<
+!!!:0: 0: >>>>>> step 3: remove unused predicates<<<<<<
+!!!:0: 0: pre-preds: [HP_1] are removed
+!!!:0: 0: >>>>>> pre-predicates: step 4: group & simpl impl<<<<<<
+!!!:0: 0: >>>>>> pre-predicates: step 5: combine<<<<<<
+!!!:0: 0: SAT #2
+!!!:0: 0:  next!=null &  XPURE(HP_1(prev)) &  XPURE(H(y)) & next=null &  XPURE(H(y))
+!!!:0: 0: SAT #3
+!!!:0: 0:  next=null &  XPURE(H(y)) & next!=null &  XPURE(HP_1(prev)) &  XPURE(H(y))
+!!!:0: 0: >>>>>> pre-predicates: step 6: remove redundant x!=null<<<<<<
+!!!:0: 0: >>>>>> pre-predicates: step 7: strengthen<<<<<<
+!!!:0: 0: >>>>>> step 6: generalization <<<<<<
