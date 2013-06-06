@@ -465,6 +465,27 @@ not have UU_HP_786_UU generated?
 =============================================
 # ll-getnext2.slk: use --sa-inlining
 
+WE got:
+
+H(x_42) ::= x_42::node<val_26_784,next_26_785>@M& XPURE(HP_27(next_26_785)),
+ G(x,res) ::= x::node<val_26_784,v_null_27_793>@M&v_null_27_793=null &  XPURE(HP_27(res))]
+
+and then generated below via --sa-inling:
+
+ H(x_42) ::= x_42::node<val_26_784,UU_next_26_43>@M&true,
+ G(x,res) ::= x::node<val_26_784,v_null_27_793>@M&v_null_27_793=null & UU_next_26_43=res]
+
+To avoid problem with naming, I suggest using instead the name
+of the predicates. That is:
+
+  UU_HP_27_UU
+
+rather than:
+
+  UU_next_26_4
+
+The above is more stable and not affected by variable renaming.
+
  Why dangling introduction for shape_infer not working?
 
 relAssume H
@@ -494,5 +515,6 @@ How come we did not get:
 Solution: This could be done by replacing
 
    XPure(P(v)) ==> UU_P_UU=v
+
 
 */
