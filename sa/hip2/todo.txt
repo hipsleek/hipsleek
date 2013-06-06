@@ -724,3 +724,24 @@ GOT:
 
 But we should not split-base on HP_6 which is a
 redundant predicate that will be used as a dangling reference
+
+# ll-getnext2a.slk
+
+relAssume  H
+ H(x)  --> x::node<_,nn>@M * HP_6(nn).
+
+relAssume  H
+ HP_6(res) * x::node<_,vv> & vv=null --> G(x,res).
+
+shape_infer [H][G].
+
+/*
+I obtained below. But why did we rename HP_6 to HP_29.
+I think we should never rename heap predicate. Can
+you check which part of renaming does that; as it breaks
+our inference to rename heap predicate.
+
+[ H(x_44) ::= x_44::node<Anon_11,nn>@M& XPURE(HP_29(nn)),
+ G(x,res) ::= x::node<Anon_12,vv>@M&vv=null &  XPURE(HP_29(res))]
+*
+*/
