@@ -31,7 +31,11 @@ let generate_xpure_view_w_pos_x ls_hp_pos_sv total_unk_map pos=
               let p = CP.mkFormulaFromXP new_xpv in
               (p,new_map)
         | None ->
-              let hp_name = CP.fresh_old_name (CP.name_of_spec_var (fst (List.hd ls_hp_pos))) in
+              let hp_name = (* CP.fresh_old_name *)
+                (* (CP.name_of_spec_var (fst (List.hd ls_hp_pos)))  *)
+                let name,_ = List.hd ls_hp_pos in
+                (CP.name_of_spec_var name) (* ^ "_" ^ (string_of_int p) *)
+              in
               let xpv = { CP.xpure_view_node = None;
               CP.xpure_view_name = hp_name;
               CP.xpure_view_arguments = [sv];
@@ -396,7 +400,7 @@ let analize_unk prog constrs total_unk_map =
   let pr2 = (pr_list (pr_pair (pr_list (pr_pair !CP.print_sv string_of_int)) CP.string_of_xpure_view)) in
   let pr3 = pr_list (pr_pair !CP.print_sv !CP.print_svl) in
   let pr4 = pr_triple pr1 pr3 pr2 in
-  Debug.no_2 "analize_unk" pr1 pr2 pr4
+  Debug.ho_2 "analize_unk" pr1 pr2 pr4
       (fun _ _ -> analize_unk_x prog constrs total_unk_map)
       constrs total_unk_map
 
