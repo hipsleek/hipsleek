@@ -3190,10 +3190,28 @@ let elim_not_in_used_args prog orig_fs fs hp args=
   Debug.no_2 "elim_not_in_used_args" pr1 pr2 pr3
       (fun _ _ -> elim_not_in_used_args_x prog orig_fs fs hp args) hp args
 
+let check_and_elim_not_in_used_args prog cdefs unk_hps unk_svl orig_fs fs hp args=
+  let n_hp, n_args, n_fs,elim_ss, link_defs =
+    if !Globals.sa_elim_useless || !Globals.norm_elim_useless then
+      let _,n_args,n_fs,ss,link_defs,n_hp = elim_not_in_used_args prog (CF.mkHTrue_nf no_pos) fs hp args in
+      (n_hp, n_args,n_fs,ss, link_defs)
+    else (hp, args, fs, [],[])
+  in
+  let hpdef = mk_hprel_def prog cdefs unk_hps unk_svl n_hp n_args n_fs no_pos in
+  (link_defs@hpdef,elim_ss)
+
+let is_base_cases_only fs=
+  let is_non_root f=
+    let hps = CF.get_hp_rel_name_formula f in
+    (hps = [])
+  in
+  List.for_all is_non_root fs
+
 let get_longest_common_hnodes_list_x prog cdefs unk_hps unk_svl hp r non_r_args args fs=
- if List.length fs <= 1 then
-   let hpdef = mk_hprel_def prog cdefs unk_hps unk_svl hp args fs no_pos in
-   (hpdef,[])
+ if List.length fs <= 1 || (is_base_cases_only fs) then
+   (* let hpdef = mk_hprel_def prog cdefs unk_hps unk_svl hp args fs no_pos in *)
+   (* (hpdef,[]) *)
+   check_and_elim_not_in_used_args prog cdefs unk_hps unk_svl (CF.mkHTrue_nf no_pos) fs hp args
  else begin
    let lldns = List.map (fun f -> (get_hdnodes f, f)) fs in
    let min,sh_ldns,eqNulls,eqPures,hprels = get_min_common prog args unk_hps lldns in
@@ -3201,14 +3219,15 @@ let get_longest_common_hnodes_list_x prog cdefs unk_hps unk_svl hp r non_r_args 
    let hprels1 = List.filter (fun (hp1,_,_) -> not(CP.eq_spec_var hp hp1)) hprels in
    if min = 0 && eqNulls = [] && eqPures= [] then
      (*mk_hprel_def*)
-      let n_hp, n_args, n_fs,elim_ss, link_defs =
-        if !Globals.sa_elim_useless || !Globals.norm_elim_useless then
-          let _,n_args,n_fs,ss,link_defs,n_hp = elim_not_in_used_args prog (CF.mkHTrue_nf no_pos) fs hp args in
-          (n_hp, n_args,n_fs,ss, link_defs)
-        else (hp, args, fs, [],[])
-      in
-     let hpdef = mk_hprel_def prog cdefs unk_hps unk_svl n_hp n_args n_fs no_pos in
-     (link_defs@hpdef,elim_ss)
+      (* let n_hp, n_args, n_fs,elim_ss, link_defs = *)
+     (*    if !Globals.sa_elim_useless || !Globals.norm_elim_useless then *)
+     (*      let _,n_args,n_fs,ss,link_defs,n_hp = elim_not_in_used_args prog (CF.mkHTrue_nf no_pos) fs hp args in *)
+     (*      (n_hp, n_args,n_fs,ss, link_defs) *)
+     (*    else (hp, args, fs, [],[]) *)
+     (*  in *)
+     (* let hpdef = mk_hprel_def prog cdefs unk_hps unk_svl n_hp n_args n_fs no_pos in *)
+     (* (link_defs@hpdef,elim_ss) *)
+     check_and_elim_not_in_used_args prog cdefs unk_hps unk_svl (CF.mkHTrue_nf no_pos) fs hp args
    else
      (*get shortest list of hnodes*)
      (* let sh_ldns, _ = get_shortest_lnds lldns min in *)

@@ -246,13 +246,13 @@ and all pure predicates linked from there and x_418,xp.
 # cll-d3a.slk --sa-split-base  OK
 
 infer [HP_6,G] HP_6(n) * x_814::node<_,n> & x=x_814 & n=x_814 & xp=null
- |-  G(x,xp). 
+ |-  G(x,xp).
 print residue.
 /*
 Got:
  <1>HP_6(n)&x=x_814 & n=x_814 & xp=null & x=x_814&{FLOW,(19,20)=__norm}[]
  inferred hprel: [x_814::node<Anon_11,n>@M&n=x_814 & xp=null --> G(x_814,xp)&
-                   true; 
+                   true;
                   HP_6(n)&n=x_814 --> emp&true]
 Problems :
   (i) why is HP_6(n) present in the residue?
@@ -264,7 +264,7 @@ Problems :
 Solution:
 =========
 Assuming:
-  (HP_6(n)) * x_814::node<Anon_11,n>@M&n=x_814 & 
+  (HP_6(n)) * x_814::node<Anon_11,n>@M&n=x_814 &
                    xp=null & x=x_814 --> G(x_814,xp)&true]
 Split:
   (HP_6(n)) & n=x_814 & x=x_814 --> emp
@@ -316,7 +316,7 @@ Towards the end of proving, we will need to extract
 pre-pred from the residue hip state during post-condition
 proving; if pre-pred  are being inferred.
 **********************************************************
-# ll-d2.slk  TO improve
+# ll-d2.slk  DONE
 
 relAssume  G
  x::node<_,null> &  xp=null  --> G(x,xp).
@@ -337,7 +337,7 @@ However, expecting:
 
 */
 **********************************************************
-# cll-d3a2.slk : DONE
+# cll-d3a2.slk :
 
 infer [H,G] H(n) * x::node<_,n>  & xp=null
  |-  G(x,xp). 
@@ -354,11 +354,12 @@ been identified and removed. For relAssume with both pre/post pred,
 we attempt to do a base-case split.
 
 To test it, we could support the following in sleek:
-
+DONE
 relAssume 
    (H(n)) * x::node<Anon_11,n>@M&xp=null --> G(x,xp)&true.
 shape_split_base [H][G].
 
+TODO:
 Alternatively, we could use:
  infer [H@pre,G@post] H(n) * x::node<_,n>  & xp=null
    |-  G(x,xp). 
