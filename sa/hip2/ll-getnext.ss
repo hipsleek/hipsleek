@@ -13,11 +13,30 @@ HeapPred G(node a,node a).
 node get_next(node x)
 /*
    requires x::node<_,q>
-   ensures res=q;
+   ensures x::node<_,q> & res=q;
 */
 infer [H,x,G] 
 requires H(x)
 ensures G(x,res);
+/*
+[ H(x)&true --> x::node<val_26_781,next_26_782>@M * (HP_783(next_26_782))&true,
+ (HP_783(res)) * x::node<val_26_781,res>@M&true --> G(x,res)&true]
+
+
+Why did we have:
+
+ [ H(x_799) ::= x_799::node<val_26_781,next_26_782>@M& XPURE(HP_786(next_26_782)),
+ G(x_800,res_801) ::= 
+ emp& XPURE(HP_786(res_801))
+ or x_800::node<val_26_781,res_801>@M& XPURE(HP_786(res_801))
+ ]
+
+Should it not be:
+
+ G(x_800,res_801) ::= 
+    x_800::node<val_26_781,res_801>@M& XPURE(HP_786(res_801))
+
+*/
 {
 	node tmp;
 	tmp = x.next;
