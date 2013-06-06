@@ -2667,17 +2667,17 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
                                 let initial_ann_lst =  (List.map (fun f -> (f, (CF.ConstAnn(Accs)))) vs) in
                                 let ann_lst = Immutable.read_write_exp_analysis ce initial_ann_lst in 
                                 let _,ann_lst = List.split ann_lst in
-                                (* let bind_e =  create_bind_exp te (vt, v) (List.combine vs_types vs) ce false pos pid in *)
-                                let bind_e = (C.Bind {
-                                    C.exp_bind_type = te;
-                                    C.exp_bind_bound_var = (vt, v);
-                                    C.exp_bind_fields = List.combine vs_types vs;
-                                    C.exp_bind_body = ce;
-                                    C.exp_bind_imm = CF.ConstAnn(Mutable); (* can it be true? *) (*WN : conservatively @M *)
-                                    C.exp_bind_param_imm = List.map (fun _ -> CF.ConstAnn(Mutable)) vs ; 
-                                    C.exp_bind_read_only = false; (*conservative. May use read/write analysis to figure out*)
-				    C.exp_bind_pos = pos;
-                                    C.exp_bind_path_id = pid; }) in
+                                let bind_e =  create_bind_exp te (vt, v) (List.combine vs_types vs) ce false pos pid in
+                                (* let bind_e = (C.Bind { *)
+                                (*     C.exp_bind_type = te; *)
+                                (*     C.exp_bind_bound_var = (vt, v); *)
+                                (*     C.exp_bind_fields = List.combine vs_types vs; *)
+                                (*     C.exp_bind_body = ce; *)
+                                (*     C.exp_bind_imm = CF.ConstAnn(Mutable); (\* can it be true? *\) (\*WN : conservatively @M *\) *)
+                                (*     C.exp_bind_param_imm = List.map (fun _ -> CF.ConstAnn(Mutable)) vs ; *)
+                                (*     C.exp_bind_read_only = false; (\*conservative. May use read/write analysis to figure out*\) *)
+				(*     C.exp_bind_pos = pos; *)
+                                (*     C.exp_bind_path_id = pid; }) in *)
                                 (bind_e, te)))
                         | Array _ -> Err.report_error { Err.error_loc = pos; Err.error_text = v ^ " is not a data type";}
                         | _ -> Err.report_error { Err.error_loc = pos; Err.error_text = v ^ " is not a data type"; }

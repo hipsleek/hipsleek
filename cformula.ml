@@ -9353,6 +9353,12 @@ let clear_entailment_history_es_es (es :entail_state) : entail_state =
       es_heap = HEmp;
   }
 
+let clear_entailment_history_es_es (es :entail_state) : entail_state = 
+  let pr_es  = !print_entail_state in
+  let pr_ctx = !print_context in
+  Debug.no_1 "clear_entailment_history_es_es"
+      pr_es pr_es clear_entailment_history_es_es es
+
 (*
   to be used in the type-checker. After every entailment, the history of consumed nodes
   must be cleared.
@@ -9372,6 +9378,7 @@ let clear_entailment_history_es xp (es :entail_state) :context =
       (* es with es_heap=HTrue;} *)
       (empty_es (mkTrueFlow ()) es.es_group_lbl no_pos) with
           es_formula = es_f;
+          (* es_heap = hf; *)
           es_history = old_history;
           es_path_label = es.es_path_label;
           es_prior_steps = es.es_prior_steps;
@@ -9394,9 +9401,22 @@ let clear_entailment_history_es xp (es :entail_state) :context =
           es_var_zero_perm = es.es_var_zero_perm;
   }
 
+let  clear_entailment_history_es xp (es :entail_state) :context =
+  let pr_es  = !print_entail_state in
+  let pr_ctx = !print_context in
+  Debug.no_1 "clear_entailment_history_es"
+      pr_es pr_ctx
+      (fun _ -> clear_entailment_history_es xp es) es
+
 let clear_entailment_history xp (ctx : context) : context =  
   transform_context (clear_entailment_history_es xp) ctx
-  
+
+let clear_entailment_history xp (ctx : context) : context =  
+  let pr_ctx = !print_context in
+  Debug.no_1 "clear_entailment_history"
+      pr_ctx pr_ctx
+      (fun _ -> clear_entailment_history xp ctx) ctx
+
 let clear_entailment_history_list xp (ctx : list_context) : list_context = 
   transform_list_context (clear_entailment_history_es xp,(fun c->c)) ctx 
 

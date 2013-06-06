@@ -607,7 +607,7 @@ and subtype_ann_gen impl_vars evars (imm1 : ann) (imm2 : ann) : bool * (CP.formu
   let pr2a = pr_option !CP.print_formula in
   let prlst =  (pr_pair (pr_list Cprinter.string_of_spec_var) (pr_list Cprinter.string_of_spec_var)) in
   let pr3 = pr_quad string_of_bool pr2a pr2a pr2a  in
-  Debug.ho_4 "subtype_ann_gen" pr1 pr1 pr2 pr2 pr3 subtype_ann_gen_x impl_vars evars (imm1 : ann) (imm2 : ann) 
+  Debug.no_4 "subtype_ann_gen" pr1 pr1 pr2 pr2 pr3 subtype_ann_gen_x impl_vars evars (imm1 : ann) (imm2 : ann) 
 
 and mkAndOpt (old_f: CP.formula option) (to_add: CP.formula option): CP.formula option =
   match (old_f, to_add) with
@@ -651,7 +651,7 @@ and remaining_ann_x (ann_l: ann) (ann_r: ann) : ann =
 
 and remaining_ann (ann_l: ann) (ann_r: ann) : ann =
   let pr = Cprinter.string_of_imm in
-  Debug.ho_2 "remaining_ann" pr pr pr (fun _ _-> remaining_ann_x ann_l ann_r) ann_l ann_r
+  Debug.no_2 "remaining_ann" pr pr pr (fun _ _-> remaining_ann_x ann_l ann_r) ann_l ann_r
 
 (* during matching - for residue*)
 and replace_list_ann_x (ann_lst_l: ann list) (ann_lst_r: ann list): ann list =
@@ -690,7 +690,7 @@ and consumed_list_ann_x (ann_lst_l: ann list) (ann_lst_r: ann list): ann list =
 
 and consumed_list_ann (ann_lst_l: ann list) (ann_lst_r: ann list): ann list =
   let pr lst = "[" ^ (List.fold_left (fun y x-> (Cprinter.string_of_imm x) ^ ", " ^ y) "" lst) ^ "]; " in
-  Debug.ho_2 "consumed_list_ann" pr pr pr (fun _ _-> consumed_list_ann_x ann_lst_l ann_lst_r) ann_lst_l ann_lst_r
+  Debug.no_2 "consumed_list_ann" pr pr pr (fun _ _-> consumed_list_ann_x ann_lst_l ann_lst_r) ann_lst_l ann_lst_r
 
 
 and merge_ann_formula_list(conjs: CP.formula list): heap_ann option = 
@@ -751,7 +751,7 @@ and restore_tmp_res_ann_x (annl: ann) (annr: ann) (pure0: MCP.mix_formula): ann 
 
 and restore_tmp_res_ann (annl: ann) (annr: ann) (pure0: MCP.mix_formula): ann =
   let pr = Cprinter.string_of_imm in
-  Debug.to_3 "restore_tmp_res_ann" pr pr Cprinter.string_of_mix_formula pr restore_tmp_res_ann_x annl annr pure0
+  Debug.no_3 "restore_tmp_res_ann" pr pr Cprinter.string_of_mix_formula pr restore_tmp_res_ann_x annl annr pure0
 
 
 and restore_tmp_ann_x (ann_lst: ann list) (pure0: MCP.mix_formula): ann list =
@@ -761,7 +761,7 @@ and restore_tmp_ann_x (ann_lst: ann list) (pure0: MCP.mix_formula): ann list =
           begin
 	    match ann_l with 
 	      | TempAnn(t)     -> 
-                    let ann_l = restore_tmp_res_ann t t pure0 in
+                    let ann_l = restore_tmp_res_ann t (ConstAnn(Accs))(* t *) pure0 in
                     ann_l :: (restore_tmp_ann_x tl pure0)
               | TempRes(al,ar) -> 
                     Debug.tinfo_hprint (add_str "TempRes:" (Cprinter.string_of_imm)) ann_l no_pos;
@@ -773,7 +773,7 @@ and restore_tmp_ann_x (ann_lst: ann list) (pure0: MCP.mix_formula): ann list =
 
 and restore_tmp_ann (ann_lst: ann list) (pure0: MCP.mix_formula): ann list =
   let pr = pr_list Cprinter.string_of_imm in 
-  Debug.to_2 "restore_tmp_ann" pr  (Cprinter.string_of_mix_formula) pr restore_tmp_ann_x ann_lst pure0
+  Debug.no_2 "restore_tmp_ann" pr  (Cprinter.string_of_mix_formula) pr restore_tmp_ann_x ann_lst pure0
 
 and update_field_ann (f : h_formula) (pimm1 : ann list) (pimm : ann list) : h_formula = 
   let pr lst = "[" ^ (List.fold_left (fun y x-> (Cprinter.string_of_imm x) ^ ", " ^ y) "" lst) ^ "]; " in

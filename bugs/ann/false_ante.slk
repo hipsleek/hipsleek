@@ -1,0 +1,9 @@
+data node{
+ int val;
+ node next;
+}.
+
+infer [] x::node<_,_> |-  x::node<a,b>@L. 
+print residue.
+
+

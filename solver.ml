@@ -4132,6 +4132,7 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
                                             (*donot rename lockset variable when fork*)
                                             let new_ref_vars = List.filter (fun v -> CP.name_of_spec_var v <> Globals.ls_name && CP.name_of_spec_var v <> Globals.lsmu_name) ref_vars in
                                             let rs2 = compose_context_formula_and rs1 new_post df id new_ref_vars pos in
+                                            DD.tinfo_pprint ("rs2: " ^ (Cprinter.string_of_context rs2)) pos; 
 				            let rs3 = add_path_id rs2 (pid,i) in
                                             let rs4 = prune_ctx prog rs3 in
 	                                    ((SuccCtx [rs4]),TrueConseq)
@@ -4140,7 +4141,9 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
                                               (*check reachable or not*)
                                               (*let ctx1,_= heap_entail_one_context prog is_folding ctx11 (mkTrue_nf pos) pos in*)
                                               (* DD.info_pprint ("  before consume post ctx11: " ^ (Cprinter.string_of_context ctx11)) pos; *)
-	                                      let rs = clear_entailment_history (fun x -> Some (xpure_heap_symbolic 6 prog x 0)) ctx11 in
+                                              DD.tinfo_pprint ("ctx1: " ^ (Cprinter.string_of_context ctx11)) pos; 
+	                                      let rs = clear_entailment_history (fun x -> Some (xpure_heap_symbolic 6 prog x 0)) ctx11 in 
+                                              DD.tinfo_pprint ("rs: " ^ (Cprinter.string_of_context rs)) pos; 
                                               (* print_endline ("CTX11: " ^ (!print_context ctx11)); *)
                                               (* print_endline ("RS CTX: " ^ (!print_context rs));   *)
                                               (*************Compose variable permissions >>> ******************)
@@ -6883,9 +6886,12 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
   Debug.tinfo_hprint (add_str "lhs_h" (Cprinter.string_of_h_formula)) lhs_h pos;
   Debug.tinfo_hprint (add_str "estate_orig.es_heap" (Cprinter.string_of_h_formula)) estate_orig.es_heap pos;
   let curr_lhs_h = (mkStarH lhs_h estate_orig.es_heap pos) in
+  (* let curr_lhs_h, new_lhs_p = Mem.compact_nodes_with_same_name_in_h_formula curr_lhs_h [[]] in (\*andreeac TODO check more on this*\) *)
+  (* let lhs_p = MCP.mix_of_pure (CP.mkAnd (MCP.pure_of_mix lhs_p) new_lhs_p no_pos) in (\* andreeac temp *\) *)
   Debug.tinfo_hprint (add_str "curr_lhs_h" (Cprinter.string_of_h_formula)) curr_lhs_h pos;
   Debug.tinfo_hprint (add_str "lhs_p" !Cast.print_mix_formula) lhs_p no_pos;
   let curr_lhs_h, lhs_p = normalize_frac_heap prog curr_lhs_h lhs_p in  
+  Debug.tinfo_hprint (add_str "curr_lhs_h0" (Cprinter.string_of_h_formula)) curr_lhs_h pos;
   let unk_heaps = CF.keep_hrel curr_lhs_h in
   (* Debug.info_hprint (add_str "curr_lhs_h" Cprinter.string_of_h_formula) curr_lhs_h no_pos; *)
   (* Debug.info_hprint (add_str "unk_heaps" (pr_list Cprinter.string_of_h_formula)) unk_heaps no_pos; *)
@@ -7194,9 +7200,17 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
       (SuccCtx[ctx1],UnsatAnte)
     else
       let estate = Gen.unsome_safe !smart_unsat_estate estate in
-      let (lhs_h,lhs_p) = if (CF.isAnyConstFalse estate.es_formula)
-        then (HFalse,MCP.mkMFalse no_pos) 
-        else (lhs_h,lhs_p) in
+      let (estate, lhs_h,lhs_p) = if (CF.isAnyConstFalse estate.es_formula)
+        then (estate, HFalse,MCP.mkMFalse no_pos) 
+        else 
+          (* if (!Globals.allow_field_ann) then (\* andreeac TODO: check if thsi is correct *\) *)
+          (*   let estate = {estate with es_heap = HEmp; *)
+          (*       es_formula = Mem.compact_nodes_with_same_name_in_formula estate.CF.es_formula} in *)
+          (*   (estate, curr_lhs_h,lhs_p)  *)
+          (* else  *)
+            (estate, lhs_h,lhs_p) 
+      in
+      (* else (lhs_h,lhs_p) in *)
       let inf_p = stk_inf_pure # get_stk in
       let inf_relass = stk_rel_ass # get_stk in
       let estate = add_infer_pure_to_estate inf_p estate in
@@ -8311,19 +8325,22 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
 	          (* An Hoa : TODO fix the consumption here - THIS CAUSES THE CONTRADICTION ON LEFT HAND SIDE! *)
               (* only add the consumed node if the node matched on the rhs is mutable *)
               let consumed_h =  (match rem_l_node with
-		          HRel _ | HTrue | HFalse | HEmp -> 
-                      (* match l_node with *)
-                      (*   | DataNode dnl -> *)
-                      (*       let _ = Debug.tinfo_hprint (add_str "l_node inside consumed_h" (Cprinter.string_of_h_formula)) l_node pos in *)
-                      (*       let param_ann = Immutable.consumed_list_ann l_param_ann r_param_ann in *)
-                      (*       let consumed_data =  DataNode {dnl with h_formula_data_param_imm = param_ann; } in *)
-                      (*       consumed_data *)
-                      (*   | _-> *)
-                              l_node
+		  HRel _ | HTrue | HFalse | HEmp -> 
+                      (match l_node with
+                        | DataNode dnl ->
+                              if (!Globals.allow_field_ann) then 
+                                let _ = Debug.tinfo_hprint (add_str "l_node inside consumed_h" (Cprinter.string_of_h_formula)) l_node pos in
+                                let param_ann = Immutable.consumed_list_ann l_param_ann r_param_ann in
+                                let consumed_data =  DataNode {dnl with h_formula_data_param_imm = param_ann; } in
+                                consumed_data
+                              else
+                                l_node
+                        | _->
+                              l_node)
                 | _ -> 
                       (*TO DO: this may not be correct because we may also
                         have to update the holes*)
-                    subst_one_by_one_h rho_0 r_node)
+                      subst_one_by_one_h rho_0 r_node)
               in
           (* let poly_consumes = isPoly r_ann && (isMutable l_ann || isImm l_ann) in *)
               Debug.tinfo_hprint (add_str "r_ann" (Cprinter.string_of_imm)) r_ann pos;
