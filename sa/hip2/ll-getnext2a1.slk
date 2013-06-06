@@ -8,8 +8,6 @@ HeapPred H(node a).
 HeapPred HP_6(node a).
 HeapPred G(node a, node b).
 
-# ll-getnext2a1.slk
-
 relAssume  H
  H(vv) * x::node<_,vv> * HP_6(vv) --> G(x,res).
 
