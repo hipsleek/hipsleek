@@ -443,7 +443,8 @@ as trace below show.
  es_heap: x::node<Anon_11,v_null_25_806>@M[Orig]
  es_history: [x::node<Anon_11,q>@M[Orig]]
 
-# ll-getnext2a.ss
+=============================================
+# ll-getnext2a.ss: FIXED
 
 Why presence of a spurious XPURE(HP_795)?
 
@@ -460,8 +461,8 @@ not have UU_HP_786_UU generated?
           XPURE(HP_795(next_26_785)) & 
           v_null_27_793=null &  XPURE(HP_795(res))]
 
-
-# ll-getnext2.slk
+=============================================
+# ll-getnext2.slk: use --sa-inlining
 
  Why dangling introduction for shape_infer not working?
 
