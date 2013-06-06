@@ -17,12 +17,13 @@ relAssume  H
 shape_infer [H][G].
 
 /*
-I obtained below. But why did we rename HP_6 to HP_29.
-I think we should never rename heap predicate. Can
-you check which part of renaming does that; as it breaks
-our inference to rename heap predicate.
 
-[ H(x_44) ::= x_44::node<Anon_11,nn>@M& XPURE(HP_29(nn)),
- G(x,res) ::= x::node<Anon_12,vv>@M&vv=null &  XPURE(HP_29(res))]
-*
+[ H(x_43) ::= x_43::node<Anon_11,nn>@M& XPURE(HP_6(nn)),
+ G(x,res) ::= x::node<Anon_12,vv>@M&vv=null &  XPURE(HP_6(res))]
+
+--sa-inlining
+
+[ H(x_43) ::= x_43::node<Anon_11,UU_HP_6_UU>@M&true,
+ G(x,res) ::= x::node<Anon_12,vv>@M&vv=null & UU_HP_6_UU=res]
+
 */

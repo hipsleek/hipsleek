@@ -398,11 +398,27 @@ print residue.
 
 # cll-d3a2.slk 
 
-infer [HP_6] HP_6(x) * x::node<_,x> & xp=null
- |-  G(x,xp).    FAIL???
+infer [H,G] HP_6(n) * x_814::node<Anon_11,n> & n=x_814 & 
+                   xp=null & x=x_814 
+ |-  G(x_814,xp). 
+print residue.
 
+/*
+We obtained:
+<1>HP_6(n)&n=x_814 & xp=null & x=x_814&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [x_814::node<Anon_11,n>@M&n=x_814 & xp=null --> G(x_814,xp)&
+                   true]
 
-//Entail (1) : Fail.
+How come we did not include HP_6(n)? I think at the very
+least, we should try to include XPURE(HP_6(n)):
+
+<1>HP_6(n)&n=x_814 & xp=null & x=x_814&{FLOW,(19,20)=__norm}[]
+ inferred hprel: 
+   x_814::node<Anon_11,n>@M&n=x_814 & xp=null & XPURE(HP_6(n)) 
+     --> G(x_814,xp)& true]
+
+*/
+
 
 ===========================================
 
@@ -477,28 +493,13 @@ as trace below show.
 
 You have now generated:
 
-[ H(x)&true --> x::node<val_26_784,next_26_785>@M * (HP_786(next_26_785))&true,
- (HP_786(res)) * x::node<val_26_784,v_null_27_793>@M& XPURE(HP_795(res)) 
-                                                      ^^^^^^^^^^^^^^^^^^
-  & v_null_27_793=null --> G(x,res)&true]
-*
+[ H(x_809) ::= x_809::node<val_26_784,next_26_785>@M& XPURE(HP_786(next_26_785)),
+ G(x,res) ::= x::node<val_26_784,v_null_27_793>@M&v_null_27_793=null & 
+ XPURE(HP_786(res)) &  XPURE(HP_786(res))]
 
-But spurious XPURE(HP_795) is still present. Also,
-XPURE(..) has been introduced even though we have not
-called split-base?
-
- H(x)&true --> x::node<val_26_784,next_26_785>@M * (HP_786(next_26_785))&true,
- HP_786(res) * x::node<val_26_784,v_null_27_793>@M&
-   XPURE(HP_795(next_26_785)) & v_null_27_793=null --> G(x,res)&true]
-
-During shape infer, what happened to HP_786? Should you
-not have UU_HP_786_UU generated?
-
- H(x_812) ::= x_812::node<val_26_784,next_26_785>@M& 
-          XPURE(HP_795(next_26_785)),
- G(x,res) ::= x::node<val_26_784,v_null_27_793>@M& 
-          XPURE(HP_795(next_26_785)) & 
-          v_null_27_793=null &  XPURE(HP_795(res))]
+This is good. Not sure why XPURE(HP_786(res)) 
+was duplicated though. We can try to remove such
+a redundant step later.
 
 =============================================
 # ll-getnext2.slk: use --sa-inlining DONE
@@ -725,7 +726,7 @@ GOT:
 But we should not split-base on HP_6 which is a
 redundant predicate that will be used as a dangling reference
 
-# ll-getnext2a.slk
+# ll-getnext2a.slk  FIXED
 
 relAssume  H
  H(x)  --> x::node<_,nn>@M * HP_6(nn).
@@ -743,7 +744,21 @@ our inference to rename heap predicate.
 
 [ H(x_44) ::= x_44::node<Anon_11,nn>@M& XPURE(HP_29(nn)),
  G(x,res) ::= x::node<Anon_12,vv>@M&vv=null &  XPURE(HP_29(res))]
-*
+
+The renaming of HP_6--> HP_29 seems to occur early in
+SA2.split_constr. Please investigate.
+
+split_constr@2@1
+split_constr inp1 :[ RELASS [H] unknown svl: ;  unknown hps: ;  predefined: ; H(x)&
+  true --> x::node<Anon_11,nn>@M * (HP_6(nn))&true,
+ RELASS [H] unknown svl: ;  unknown hps: ;  predefined: ; (HP_6(res)) * 
+  x::node<Anon_12,vv>@M&vv=null --> G(x,res)&true]
+split_constr inp2 :[]
+split_constr@2 EXIT out :([ RELASS [H] unknown svl: ;  unknown hps: ;  predefined: ; H(x)&
+  true --> x::node<Anon_11,nn>@M * (HP_6(nn))&true,
+ RELASS [H] unknown svl: [res];  unknown hps: ;  predefined: ; (HP_6(res)) * 
+  x::node<Anon_12,vv>@M&vv=null &  XPURE(HP_29(res)) --> G(x,res)&true],[([(HP_6,0),(G,1)],XPURE(HP_29(res)))])
+
 */
 
 

@@ -6,17 +6,33 @@ data node{
 HeapPred HP_6(node a).
 HeapPred G(node a, node a). 
 
-/*
-infer [H,G] (HP_6(n)) * x_814::node<Anon_11,n>@M&n=x_814 & 
-                   xp=null & x=x_814 --> G(x_814,xp)&true
+infer [H,G] HP_6(n) * x_814::node<Anon_11,n> & n=x_814 & 
+                   xp=null & x=x_814 
  |-  G(x_814,xp). 
 print residue.
+
+/*
+We obtained:
+<1>HP_6(n)&n=x_814 & xp=null & x=x_814&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [x_814::node<Anon_11,n>@M&n=x_814 & xp=null --> G(x_814,xp)&
+                   true]
+
+How come we did not include HP_6(n)? I think at the very
+least, we should try to include XPURE(HP_6(n)):
+
+<1>HP_6(n)&n=x_814 & xp=null & x=x_814&{FLOW,(19,20)=__norm}[]
+ inferred hprel: 
+   x_814::node<Anon_11,n>@M&n=x_814 & xp=null & XPURE(HP_6(n)) 
+     --> G(x_814,xp)& true]
+
 */
 
+/*
 relAssume G
    HP_6(n) * x_814::node<_,n>@M & n=x_814 & xp=null & x=x_814 --> G(x_814,xp) &true.
 
 shape_split_base [H,x][G].
+*/
 /*
 
  Shouldn't splitted HP_6 be:
