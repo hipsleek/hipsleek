@@ -853,9 +853,22 @@ using:
   Debug.dinfo_hprint "..." pos
 
 !!!:0: 0: >>>>>> step 1: find dangling ptrs that link pre and post-preds<<<<<<
+
+   ##### Found HP_1,.. dangling ptrs
+
 !!!:0: 0: >>>>>> step 2: apply transitive implication<<<<<<
+
+  ##### Given:
+          HP_2(next,y) & next!=null --> H(next,y)
+  ##### Unfold H(..) to derive:
+          HP_2(next,y) & next!=null 
+          --> next::node<_,prev, nn> * HP_1(prev, y) * HP_2(nn,y).
+
 !!!:0: 0: >>>>>> step 1a: simplification <<<<<<
 !!!:0: 0: >>>>>> step 1b: do apply_transitive_imp <<<<<<
+
+   #### how is this different from Step 2?
+
 !!!:0: 0: IMP #1
 !!!:0: 0: imply_timeout: ante:  true
 !!!:0: 0: imply_timeout: conseq:  next_49=null &  XPURE(H(y_52))
@@ -868,6 +881,12 @@ using:
 !!!:0: 0: >>>>>> pre-predicates<<<<<<
 !!!:0: 0: >>>>>> step 3: remove unused predicates<<<<<<
 !!!:0: 0: pre-preds: [HP_1] are removed
+
+ ##### After removing HP_1, derived:
+    H(x,y) --> x::node<_,prev, next> * HP_2(next,y) & XPURE(HP_1(prev, y)).
+    HP_2(next,y) & next!=null 
+          --> next::node<_,prev, nn> * HP_2(nn,y) & XPURE(HP_1(prev, y)) .
+
 !!!:0: 0: >>>>>> pre-predicates: step 4: group & simpl impl<<<<<<
 !!!:0: 0: >>>>>> pre-predicates: step 5: combine<<<<<<
 !!!:0: 0: SAT #2
@@ -877,3 +896,6 @@ using:
 !!!:0: 0: >>>>>> pre-predicates: step 6: remove redundant x!=null<<<<<<
 !!!:0: 0: >>>>>> pre-predicates: step 7: strengthen<<<<<<
 !!!:0: 0: >>>>>> step 6: generalization <<<<<<
+
+
+
