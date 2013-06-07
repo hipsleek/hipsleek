@@ -1044,6 +1044,53 @@ refined implications:
 After this, we can subject this list of refined implications
 to our proper shape_infer procedure?
 
+*/
 
+# loc-1d.slk (vs loc-1e.slk)
+
+relAssume  H // (1)
+ H(x,y) --> x::node<_,next> * HP_2(next,y).
+relAssume  HP_2 // (2)
+  HP_2(next,y) & next!=null --> H(next,y).
+relAssume  HP_2 // (3)
+  HP_2(next,y) & next=null --> emp.
+
+shape_infer [H,HP_2][].
+
+/*
+ Obtained:
+
+[ H(x_57,y_58) ::= x_57::node<Anon_11,next>@M * (HP_2(next,y_58))
+    & XPURE(H(y_58)),
+      ^^^^^^^^^^^^^^
+ HP_2(next_59,y_60) ::= HP_61(next_59,y_60)& XPURE(H(y_60)),
+                                             ^^^^^^^^^^^^^^
+ HP_61(next_59,y_60) ::= 
+ emp&next_59=null
+ or next_59::node<Anon_11,next>@M * (HP_61(next,y_60))&true
+ ]
+
+Why did we have spurious XPURE(...)?
+Why did we have an extra HP_61(..)?
+Please compare this with loc-1e.slk which did not have this problem.
+
+SOLUTION
+========
+(i) no dangling predicate detected; hence do not ever introduce
+    XPURE(..)
+(ii)
+   H(x,y) --> x::node<_,next> * HP_2(next,y) (1)
+   HP_2(next,y) & next!=null --> H(next,y)    (2)
+   HP_2(next,y) & next=null --> emp    (3)
+
+ From (2), unfold H(..) to obtain:
+   HP_2(next,y) & next!=null --> next::node<_,nn> * HP_2(nn,y)   (2a)
+
+ From (3) and (2a), derive:
+   HP_2(next,y) == next::node<_,nn> * HP_2(nn,y) & next!=null
+     or next=null
+
+ From (1), derive:
+   H(x,y) == x::node<_,next> * HP_2(next,y) 
 
 */
