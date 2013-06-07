@@ -898,5 +898,32 @@ using:
 !!!:0: 0: >>>>>> pre-predicates: step 7: strengthen<<<<<<
 !!!:0: 0: >>>>>> step 6: generalization <<<<<<
 
+# ll-del1b.slk
+
+relAssume  G
+ x::node<_,nn> * HP_6(nn) & nn=null & x'=null  --> G(x,x').
+shape_infer [][G].
+
+For shape_infer, any heap predicate not declared
+as pre or post will automatically be classified as dangling.
+
+Thus, for this example, once we have identified HP_6 to be dangling,
+we will immediately convert from:
+ x::node<_,nn> * HP_6(nn) & nn=null & x'=null  --> G(x,x').
+to:
+ x::node<_,nn> & nn=null & x'=null & XPURE(HP_6(nn))  --> G(x,x').
+
+The presence of HP_6 would allow us to link with the dangling
+reference (named as UU_HP_6_UU) in pre-condition; despite
+any substitution that may occur; such as:
+
+ x::node<_,null> & x'=null & XPURE(HP_6(null))  --> G(x,x').
+
+This would not cause a problem, as we can use --sa-inlining
+to obtain below:
+
+ x::node<_,null> & x'=null & UU_HP_6_UU=null  --> G(x,x').
+
+where UU_HP_6_UU would have been a logical variable from pre-condition.
 
 
