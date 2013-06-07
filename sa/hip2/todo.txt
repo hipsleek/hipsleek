@@ -897,8 +897,8 @@ using:
 !!!:0: 0: >>>>>> pre-predicates: step 6: remove redundant x!=null<<<<<<
 !!!:0: 0: >>>>>> pre-predicates: step 7: strengthen<<<<<<
 !!!:0: 0: >>>>>> step 6: generalization <<<<<<
-
-# ll-del1b.slk
+========================================================
+# ll-del1b.slk: DONE
 
 relAssume  G
  x::node<_,nn> * HP_6(nn) & nn=null & x'=null  --> G(x,x').

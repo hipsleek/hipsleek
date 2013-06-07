@@ -1158,9 +1158,9 @@ let find_well_eq_defined_hp prog hds hvs lhsb eqs (hp,args)=
 let generate_hp_ass unk_svl rf (hp,args,lfb) =
   let new_cs = {
       CF.hprel_kind = CP.RelAssume [hp];
-      unk_svl = [];(*inferred from norm*)
+      unk_svl = unk_svl;(*inferred from norm*)
       unk_hps = [];
-      predef_svl = unk_svl;
+      predef_svl = [];
       hprel_lhs = CF.Base lfb;
       hprel_rhs = rf;
   }

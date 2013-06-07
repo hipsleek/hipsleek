@@ -26,6 +26,7 @@ module NF = Nativefront
 module CEQ = Checkeq
 module TI = Typeinfer
 module SAU = Sautility
+module SAC = Sacore
 
 let sleek_proof_counter = new Gen.counter 0
 
@@ -692,22 +693,15 @@ let process_rel_assume hp_id (ilhs : meta_formula) (irhs: meta_formula)=
 let process_shape_infer pre_hps post_hps=
   (* let _ = DD.info_pprint "process_shape_infer" no_pos in *)
   let hp_lst_assume = !sleek_hprel_assumes in
-  let hp_rel_unkmap = [] in
   let sel_hps, sel_post_hps = SAU.get_pre_post pre_hps post_hps hp_lst_assume in
+  let new_constrs, unk_map, unk_hps = SAC.detect_dangling_pred hp_lst_assume sel_hps in
   let ls_hprel, ls_inferred_hps, dropped_hps =
     let infer_shape_fnc =  if not (!Globals.sa_old) then
       Sa2.infer_shapes
     else Sa.infer_hps
     in
-    infer_shape_fnc !cprog "" hp_lst_assume
-        sel_hps sel_post_hps
-        (Gen.BList.remove_dups_eq
-            (fun (hps1,_) (hps2,_) ->
-                let hps1 = List.map fst hps1 in
-                let hps2 = List.map fst hps2 in
-                (List.length hps1 = List.length hps2)
-                && (CP.diff_svl hps1 hps2 = []))
-            hp_rel_unkmap)
+    infer_shape_fnc !cprog "" new_constrs
+        sel_hps sel_post_hps unk_map
   in
   let _ = if not (!Globals.sa_old) then
     begin

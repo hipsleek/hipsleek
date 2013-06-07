@@ -250,7 +250,7 @@ let split_constr_x prog constrs post_hps prog_vars unk_map=
         let l_def_vs = CP.remove_dups_svl (SAU.find_close l_def_vs (leqs)) in
         let helper (hp,eargs,_)=(hp,List.concat (List.map CP.afv eargs)) in
         let ls_lhp_args = (List.map helper lhrs) in
-        (*linking*)
+        (*generate linking*)
         let unk_svl, unk_xpure, unk_map1 =  SAC.generate_linking total_unk_map ls_lhp_args ls_rhp_args leqs post_hps no_pos in
         let lfb1 = CF.mkAnd_base_pure lfb (MCP.mix_of_pure unk_xpure) no_pos in
         let ls_defined_hps,rems = List.split (List.map (fun hpargs ->

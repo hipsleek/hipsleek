@@ -223,6 +223,8 @@ and double_check_unk prog unk_hp_locs unk_hps cs=
           (* ) *)
     in
     let poss_unk_svl_hps = CP.remove_dups_svl unk_svl_hps in
+    let _ = Debug.ninfo_pprint ("  poss_unk_svl_hps: " ^ (!CP.print_svl poss_unk_svl_hps)) no_pos in
+    let _ = Debug.ninfo_pprint ("  cs_non_unk_svl1: " ^ (!CP.print_svl cs_non_unk_svl1)) no_pos in
     (*actually unk = poss unk - non-unk*)
     let real_unk_svl_hps = Gen.BList.difference_eq CP.eq_spec_var poss_unk_svl_hps
       cs_non_unk_svl1 in
@@ -231,6 +233,7 @@ and double_check_unk prog unk_hp_locs unk_hps cs=
     in
     (List.concat ls_unk_hps_locs, List.concat ls_unk_hps_args_locs)
   in
+   let _ = Debug.ninfo_pprint ("  cs: " ^ (Cprinter.string_of_hprel cs)) no_pos in
   double_check_one_constr unk_hp_locs (cs_hprels)
 
 (*
@@ -266,10 +269,12 @@ and update_unk_one_constr_x prog unk_hp_locs unk_map cs=
 
   (*get unk svl*)
   let unk_svl0 = get_unk_svl hp_args unk_hp_locs [] in
+  (* let _ = Debug.info_pprint ("  unk_svl0: " ^ (!CP.print_svl unk_svl0)) no_pos in *)
   (*diff from present ones, we may find them prior to*)
   let ls_xpures =  CF.get_xpure_view cs.CF.hprel_lhs in
   let existing_svl = List.fold_left (fun ls (_, svl) -> ls@svl) [] ls_xpures in
   let unk_svl1 = CP.diff_svl unk_svl0 (cs.CF.unk_svl@ existing_svl) in
+  (* let _ = Debug.info_pprint ("  unk_svl1: " ^ (!CP.print_svl unk_svl1)) no_pos in *)
   let new_constr, unk_hps1, new_map=
     if unk_svl1 = [] then (cs, [], unk_map) else
       (*for each unk sv: generate linking*)
@@ -348,7 +353,7 @@ and analize_unk_x prog constrs total_unk_map =
   let ls_unk_cands,ls_full_unk_cands_w_args = List.split (List.map (analize_unk_one prog unk_hps) constrs) in
   let unk_hp_args01,_ = helper (ls_unk_cands,ls_full_unk_cands_w_args) in
   (*for debugging*)
-  let _ = Debug.ninfo_pprint ("  unks 1: " ^ (let pr = pr_list (pr_pair !CP.print_sv (pr_list string_of_int))
+  let _ = Debug.info_pprint ("  unks 1: " ^ (let pr = pr_list (pr_pair !CP.print_sv (pr_list string_of_int))
                                              in pr unk_hp_args01)) no_pos
   in
   (*END for debugging*)
@@ -373,7 +378,7 @@ and analize_unk_x prog constrs total_unk_map =
      ((hp,locs), [(hp, args)])
    in
    (*for debugging*)
-   let _ = Debug.ninfo_pprint ("  unks 2: " ^ (let pr = pr_list (pr_pair !CP.print_sv (pr_list string_of_int))
+   let _ = Debug.info_pprint ("  unks 2: " ^ (let pr = pr_list (pr_pair !CP.print_sv (pr_list string_of_int))
                                               in pr unk_hp_args02)) no_pos
    in
    let _ = Debug.dinfo_pprint ("  unused ptrs: " ^ (let pr = pr_list (pr_pair !CP.print_sv (pr_list string_of_int))
@@ -570,6 +575,45 @@ let transform_xpure_to_pure hp_defs unk_map =
   Debug.no_1 "transform_xpure_to_pure" pr1 pr1
       (fun _ -> transform_xpure_to_pure_x hp_defs unk_map) hp_defs
 
+let detect_dangling_pred_x constrs sel_hps=
+  let update_constr cs unk_hps map=
+    let ls_hpargs1 = (CF.get_HRels_f cs.CF.hprel_lhs)@(CF.get_HRels_f cs.CF.hprel_rhs) in
+    let ls_hpargs2 = Gen.BList.remove_dups_eq (fun (hp1,_) (hp2,_) -> CP.eq_spec_var hp1 hp2) ls_hpargs1 in
+    let unk_hpargs = List.filter (fun (hp,_) -> CP.mem_svl hp unk_hps) ls_hpargs2 in
+    if unk_hpargs = [] then (cs, map) else
+      let unk_svl = List.fold_left (fun ls (_, args) -> ls@args) [] unk_hpargs in
+      let unk_svl1 = CP.remove_dups_svl unk_svl in
+      let ls_hp_pos_sv = List.map (generate_unk_svl_map unk_hpargs) unk_svl1 in
+      let unk_pure,new_map = generate_xpure_view_w_pos ls_hp_pos_sv map no_pos in
+      let cs_unk_hps = (List.map fst  unk_hpargs) in
+      let new_lhs,_ = CF.drop_hrel_f cs.CF.hprel_lhs cs_unk_hps in
+      let new_cs = {cs with CF.hprel_lhs = CF.mkAnd_pure new_lhs (MCP.mix_of_pure unk_pure) no_pos;
+          CF.unk_svl = unk_svl1 ;
+          CF.unk_hps = unk_hpargs;
+      }
+      in
+      (new_cs, new_map)
+  in
+  let all_hps = List.fold_left (fun ls cs ->
+      ls@(CF.get_hp_rel_name_formula cs.CF.hprel_lhs)@(CF.get_hp_rel_name_formula cs.CF.hprel_rhs)
+  ) [] constrs in
+  let unk_hps = CP.diff_svl (CP.remove_dups_svl all_hps) sel_hps in
+  let new_constr, unk_map=
+    if unk_hps = [] then (constrs,[])
+    else
+      List.fold_left (fun (constrs0, unk_map) cs ->
+          let new_cs,new_map = update_constr cs unk_hps unk_map in
+          (constrs0@[new_cs], new_map)
+      ) ([],[]) constrs
+  in
+  (new_constr, unk_map, unk_hps)
+
+let detect_dangling_pred constrs sel_hps=
+  let pr1 =  pr_list_ln Cprinter.string_of_hprel in
+  let pr2 = (pr_list (pr_pair (pr_list (pr_pair !CP.print_sv string_of_int)) CP.string_of_xpure_view)) in
+  Debug.no_2 "detect_dangling_pred" pr1 !CP.print_svl (pr_triple pr1 pr2 !CP.print_svl)
+      (fun _ _ -> detect_dangling_pred_x constrs sel_hps)
+      constrs sel_hps
 
 (*=============**************************================*)
 (*=============END UNKOWN================*)
