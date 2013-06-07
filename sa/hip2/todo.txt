@@ -1094,3 +1094,90 @@ SOLUTION
    H(x,y) == x::node<_,next> * HP_2(next,y) 
 
 */
+
+# loc-1b.slk
+
+relAssume  H // (1)
+ H(x,y) --> x::node<_,prev, next> * HP_2(next,y) & XPURE(HP_1(prev, y)).
+relAssume  HP_2 // (2)
+  HP_2(next,y) & next!=null --> H(next,y).
+relAssume  HP_2 // (3)
+ HP_2(next,y) & next=null --> emp.
+relAssume  G // (3)
+ next=null --> G(next,y).
+
+shape_infer_proper [H,HP_2][G].
+
+/*
+I think we need to introduce a new instruction
+without shape pre-processing
+
+  shape_infer_proper [H,HP_2][G].
+
+Expecting:
+  (i) no dangling predicate detected since it is already on XPURE(...)
+      found_set computed as {H,HP_2,G}
+ (ii) no base-case split detected
+ (iii) shape_infer_proper[H,HP_2][G] would then generate:
+
+   H(x,y) == x::node2<_,prev, next> * HP_2(next,y) 
+              & XPURE(HP_1(prev, y)).
+   HP_2(next,y) == emp & next=null
+     or next::node2<_,prev,post> * HP_2(next,y) & XPURE(HP_1(prev, y)).
+   G(next,y) == next=null 
+
+
+*/
+
+# loc-1c.slk
+
+relAssume  H // (1)
+ H(x,y) --> x::node<_,prev, next> * HP_2(next,y).
+relAssume  HP_2 // (2)
+  HP_2(next,y) & next!=null --> H(next,y).
+relAssume  HP_2 // (3)
+  HP_2(next,y) & next=null --> emp.
+
+shape_infer [H,HP_2][].
+
+/*
+Two problems above
+  (i) no dangling predicate used bit
+      we still have two XPURE(..) below
+ (ii) why did we have a new HP_68 pred?
+      Can we not use just HP_2 itself.
+
+[ H(x_64,y_65) ::= x_64::node<Anon_11,prev,next>@M * (HP_2(next,y_65))
+    & XPURE(H(y_65)),
+      ^^^^^^^^^^^^^^
+ HP_2(next_66,y_67) ::= HP_68(next_66,y_67)& XPURE(H(y_67)),
+                                             ^^^^^^^^^^^^^^
+ HP_68(next_66,y_67) ::= 
+ emp&next_66=null
+ or next_66::node<Anon_11,prev,next>@M * (HP_68(next,y_67))&true
+ ]
+
+
+*/
+
+# loc-1c2.slk
+
+relAssume  G // (3)
+ next=null --> G(next,y).
+
+shape_infer [][G].
+
+/*
+
+OBTAINED:
+
+ G(next_16,y_17) ::= emp&next_16=null &  XPURE(G(y_17))]
+
+Why is G considered redundant and a dangling predicate?
+Correct answer should just be:
+
+ G(next_16,y_17) ::= emp&next_16=null 
+
+
+*/
+

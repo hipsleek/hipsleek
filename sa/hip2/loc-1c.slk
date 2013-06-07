@@ -21,10 +21,10 @@ shape_infer [H,HP_2][].
 
 /*
 Two problems above
-  (i) no dangling predicate used bit
+  (i) no dangling predicate used but
       we still have two XPURE(..) below
  (ii) why did we have a new HP_68 pred?
-      Can we not use just HP_2 itself.
+      Can we not use just re-use HP_2 itself.
 
 [ H(x_64,y_65) ::= x_64::node<Anon_11,prev,next>@M * (HP_2(next,y_65))
     & XPURE(H(y_65)),
@@ -36,5 +36,21 @@ Two problems above
  or next_66::node<Anon_11,prev,next>@M * (HP_68(next,y_67))&true
  ]
 
-
+Solution for reusing HP_2 itself
+================================
+  H(x,y) --> x::node<_,prev, next> * HP_2(next,y).  (1)
+  HP_2(next,y) & next!=null --> H(next,y).          (2)
+  HP_2(next,y) & next=null --> emp.                 (3)
+From (2), unfold H
+  HP_2(next,y) & next!=null --> next::node<_,prev, nn> * HP_2(nn,y) (2a)
+From (2a,3), derive below:
+  HP_2(next,y) --> next=null -> emp.                 (3a)
+  HP_2(next,y) --> next!=null -> next::node<_,prev, nn> * HP_2(nn,y) (2b)
+From (3a,2b,3), derive below:
+  HP_2(next,y) --> next=null -> emp.                 
+           /\ next!=null -> next::node<_,prev, nn> * HP_2(nn,y) (2c)
+  HP_2(next,y) --> next=null & emp.                 
+           \/ next::node<_,prev, nn> * HP_2(nn,y) & next!=null (2d)
+  HP_2(next,y) <-> next=null & emp.                 
+           \/ next::node<_,prev, nn> * HP_2(nn,y) & next!=null (2d)
 */
