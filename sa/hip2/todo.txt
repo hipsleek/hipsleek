@@ -926,4 +926,124 @@ to obtain below:
 
 where UU_HP_6_UU would have been a logical variable from pre-condition.
 
+# loc-2a.slk
 
+relAssume  H // (1)
+ H(x,y) --> x::node<_,prev, next> * HP_1(prev,y) *  HP_2(next,y) .
+relAssume  HP_2 // (2)
+  HP_2(next,y) & next!=null --> H(next,y).
+relAssume  HP_2 // (3a)
+  HP_2(next,y) & next=null  --> emp & true.
+relAssume G // (3b)
+ next=null  --> G(next,y).
+
+shape_infer [H,HP_2][G].
+
+/*
+Output for this example need to be corrected.
+   (i) use XPURE(HP_1(prev,y_98)) which can be
+       --sa-inlined to UU_HP_1_UU=prev
+  (ii) do not generate non dangling predicate, such as:
+         G(y_94) which is a post-pred.
+
+ H(x_88,y_89) ::= x_88::node<Anon_11,prev,next>@M * (HP_2(next,y_89))
+   & XPURE(HP_1(y_89)) & XPURE(HP_1(prev)),
+  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^ should just be XPURE(HP_1(prev,y_89) ^^^^
+
+ HP_2(next_90,y_91) ::= HP_92(next_90,y_91)& XPURE(HP_1(y_91)),
+                                             ^^^^^^^^^ should not be there
+ G(next_93,y_94) ::= emp&next_93=null &  XPURE(G(y_94)),
+                                             ^^^^^^^^^ should not be there
+ HP_92(next_90,y_91) ::= 
+ emp&next_90=null
+ or next_90::node<Anon_11,prev,next>@M * (HP_92(next,y_91))&
+     XPURE(HP_1(prev))
+     ^^^^^^^^^ be just HP_1(prev,y_91)
+
+
+SOLUTION:
+ From the instruction.
+    shape_infer [H,HP_2][G].
+
+ Step 1: we will first compute heap pred sets
+    pre_set={H,HP_2}
+    post_set={G}
+    all_set={H,HP_2,G}.
+
+ Step 2: We will then gather four relAssume with 
+   for shape inference from all_set; 
+
+ Step 3: We will find all heap predicates H_set ={H,HP_1,H_2,G}
+   in the 4 relAssume; and then compute
+     dangling_set=H_set-all_set
+                 = {HP_1}
+
+ Step 4: With dangling_set, we need only transform the first relAssume
+ to:
+    H(x,y) --> x::node<_,prev, next> *  HP_2(next,y) & XPURE(HP_1(prev,y)).
+
+ After this shape preprocessing, we can proceed with shape inference
+
+*/
+
+# loc-1a.slk
+
+relAssume  H // (1)
+ H(x,y) --> x::node<_,prev, next> * HP_1(prev, y) * HP_2(next,y).
+relAssume  HP_2 // (2)
+  HP_2(next,y) & next!=null --> H(next,y).
+relAssume  HP_2 // (3)
+ HP_2(next,y) & next=null --> G<next,y>                             (3)
+
+shape_infer [H,HP_2][G].
+
+/*
+
+Say we managed to infer below from HIP
+
+ H(x,y) --> x::node2<_,prev, next> * HP_1(prev, y) * HP_2(next,y).  (1)
+ HP_2(next,y) & next!=null --> H(next,y)                            (2)
+ HP_2(next,y) & next=null --> G<next,y>                             (3)
+
+I think our shape_infer has to be performed in two steps:
+   (i) shape pre-processing
+   (ii) pre/post shape inference
+
+Shape pre-processing would have to perform the following
+steps
+  (i) note the pre/post predicates e.g. [H,HP_2][G]
+  (ii) identify dangling predicates, e.g. [HP_1]
+       and convert to XPURE(HP_1(..)) form
+ (iii) perform base-case split.
+
+Thus. given:
+  shape_infer [H,HP_2,x][G].
+
+It would indicate two things:
+  (i) HP_1 is dangling predicate
+ (ii) the 3rd implication needs to be
+      subjected to a base-case-split
+
+Hence, (1) would be changed to:
+
+ H(x,y) --> x::node2<_,prev, next> * HP_2(next,y) & XPURE(HP_1(prev, y)).
+
+and (3) would be base-case-split into:
+
+ HP_2(next,y) & next=null --> emp  (3a)
+ next=null --> G<next,y>           (3b)
+
+With this shape pre-processing, we would now have the following
+refined implications:
+
+ H(x,y) --> x::node2<_,prev, next> * HP_2(next,y) & XPURE(HP_1(prev, y)).
+ HP_2(next,y) & next!=null --> H(next,y)
+ HP_2(next,y) & next=null --> emp
+ next=null --> G<next,y> 
+
+After this, we can subject this list of refined implications
+to our proper shape_infer procedure?
+
+
+
+*/
