@@ -708,7 +708,7 @@ Why is there such an extra generalization step?
 *************************************
 
 */
-
+=================================================
 # ll-del1b2.slk 
 
 relAssume  G
@@ -726,6 +726,7 @@ GOT:
 But we should not split-base on HP_6 which is a
 redundant predicate that will be used as a dangling reference
 
+=================================================
 # ll-getnext2a.slk  FIXED
 
 relAssume  H
@@ -761,7 +762,7 @@ split_constr@2 EXIT out :([ RELASS [H] unknown svl: ;  unknown hps: ;  predefine
 
 */
 
-
+=================================================
 # ll-getnext2a1.slk
 
 relAssume  H
@@ -794,7 +795,7 @@ SOLUTION:
        take care not to include any post-pred G(..).
 
 */
-
+=================================================
 # loc-1.slk
 
 HeapPred H(node a,node b).
@@ -841,7 +842,7 @@ OBTAINED:
 
 
 */
-
+=================================================
 # loc-1.slk -dd
 
 The -dd tracing for shape_infer is almost absent at the moment.

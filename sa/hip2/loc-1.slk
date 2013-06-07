@@ -14,15 +14,15 @@ relAssume  H // (1)
  H(x,y) --> x::node<_,prev, next> * HP_1(prev, y) * HP_2(next,y).
 
 relAssume  HP_2 // (2)
-  HP_2(next,y) & next!=null --> H(next,y)
+  HP_2(next,y) & next!=null --> H(next,y).
 // HP_2(next,y) & next!=null 
 // --> next::node<_,prev, nn> * HP_1(prev, y) * HP_2(nn,y).
 
 relAssume  HP_2 // (3)
-  HP_2(next,y) & next=null --> emp.
+  HP_2(next,y) & next=null  --> emp& true.
 
-relAssume  G // (3)
-  next=null --> G(next,y).
+relAssume G //(3)
+next=null  --> G(next,y).
 
 shape_infer [H,HP_2][G].
 

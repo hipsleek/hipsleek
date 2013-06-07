@@ -376,6 +376,8 @@ and analize_unk_x prog constrs total_unk_map =
    let _ = Debug.ninfo_pprint ("  unks 2: " ^ (let pr = pr_list (pr_pair !CP.print_sv (pr_list string_of_int))
                                               in pr unk_hp_args02)) no_pos
    in
+   let _ = Debug.dinfo_pprint ("  unused ptrs: " ^ (let pr = pr_list (pr_pair !CP.print_sv (pr_list string_of_int))
+                                              in pr unk_hp_args02)) no_pos in
    (* let pr1 =  pr_list_ln (pr_pair (pr_pair !CP.print_sv (pr_list string_of_int)) *)
    (*                            (pr_list (pr_pair !CP.print_sv !CP.print_svl))) in *)
    (* let _ = Debug.info_pprint ("  equivs0: " ^ (pr1 equivs0) ) no_pos in *)
@@ -393,6 +395,7 @@ and analize_unk_x prog constrs total_unk_map =
      (constrs, [], [])
      else update_helper constrs total_unk_map [] []
    in
+   let _ = Debug.dinfo_pprint ("map after: " ^ (let pr = (pr_list (pr_pair (pr_list (pr_pair !CP.print_sv string_of_int)) CP.string_of_xpure_view)) in pr new_map)) no_pos in
    (new_cs, SAU.elim_eq_shorter_hpargs unk_hps, new_map)
 
 let analize_unk prog constrs total_unk_map =
