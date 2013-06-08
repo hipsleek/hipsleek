@@ -427,7 +427,9 @@ let generate_hp_def_from_unk_hps_x hpdefs unk_hpargs defined_hps post_hps unk_ma
         end
   in
   let mk_unkdef pos (hp,args)=
-    let ps = obtain_xpure args 0 hp [] in
+    (* let ps = obtain_xpure args 0 hp [] in *)
+    (*NOW, NO LONGER SUPPORT UNK_SVL. WE JUST RETURN THE FIRST ONE !!!!*)
+    let ps = obtain_xpure [(List.hd args)] 0 hp [] in
     let p = CP.conj_of_list ps pos in
     let def = CF.formula_of_pure_formula p pos in
     let _ = DD.ninfo_pprint ((!CP.print_sv hp)^"(" ^
@@ -493,7 +495,9 @@ let transform_unk_hps_to_pure_x hp_defs unk_hp_frargs =
   let look_up_get_eqs_ss args0 ls_unk_hpargs_fr (used_hp,used_args)=
     try
         let _,fr_args = List.find (fun (hp,_) -> CP.eq_spec_var hp used_hp) ls_unk_hpargs_fr in
-        let ss = List.combine used_args fr_args in
+        (* let ss = List.combine used_args fr_args in *)
+        (*NOW, NO LONGER SUPPORT UNK_SVL. WE JUST RETURN THE FIRST ONE !!!!*)
+        let ss = List.combine [(List.hd used_args)] fr_args in
         let rs1,rs2 = List.partition (fun (sv1,_) -> CP.mem_svl sv1 args0) ss in
         if List.length rs1 = List.length args0 then
           ([used_hp],[([(used_hp,used_args)],[])],rs2)
@@ -563,9 +567,9 @@ let transform_xpure_to_pure_x hp_defs unk_map=
       in
       let (CP.SpecVar (t, _, p)),_ = List.hd hps in
       (CP.SpecVar(t, xp.CP.xpure_view_name, p),
-      (* List.map (CP.fresh_spec_var_prefix dang_hp_default_prefix_name) args)) unk_map *)
       let dang_name = dang_hp_default_prefix_name ^ "_" ^ xp.CP.xpure_view_name ^ "_" ^dang_hp_default_prefix_name  in
-      List.map (fun (CP.SpecVar (t, _, p)) -> CP.SpecVar (t, dang_name, p)) args)
+      let (CP.SpecVar (t, _, p)) = List.hd args in
+      [CP.SpecVar (t, dang_name, p)])
   ) unk_map
   in
   transform_unk_hps_to_pure hp_defs fr_map
@@ -575,6 +579,7 @@ let transform_xpure_to_pure hp_defs unk_map =
   Debug.no_1 "transform_xpure_to_pure" pr1 pr1
       (fun _ -> transform_xpure_to_pure_x hp_defs unk_map) hp_defs
 
+
 let detect_dangling_pred_x constrs sel_hps=
   let update_constr cs unk_hps map=
     let ls_hpargs1 = (CF.get_HRels_f cs.CF.hprel_lhs)@(CF.get_HRels_f cs.CF.hprel_rhs) in
@@ -583,8 +588,7 @@ let detect_dangling_pred_x constrs sel_hps=
     if unk_hpargs = [] then (cs, map) else
       let unk_svl = List.fold_left (fun ls (_, args) -> ls@args) [] unk_hpargs in
       let unk_svl1 = CP.remove_dups_svl unk_svl in
-      let ls_hp_pos_sv = List.map (generate_unk_svl_map unk_hpargs) unk_svl1 in
-      let unk_pure,new_map = generate_xpure_view_w_pos ls_hp_pos_sv map no_pos in
+      let _, unk_pure, new_map = CF.generate_xpure_view_first unk_hpargs map in
       let cs_unk_hps = (List.map fst  unk_hpargs) in
       let new_lhs,_ = CF.drop_hrel_f cs.CF.hprel_lhs cs_unk_hps in
       let new_cs = {cs with CF.hprel_lhs = CF.mkAnd_pure new_lhs (MCP.mix_of_pure unk_pure) no_pos;
@@ -602,7 +606,7 @@ let detect_dangling_pred_x constrs sel_hps=
     if unk_hps = [] then (constrs,[])
     else
       List.fold_left (fun (constrs0, unk_map) cs ->
-          let new_cs,new_map = update_constr cs unk_hps unk_map in
+          let new_cs, new_map = update_constr cs unk_hps unk_map in
           (constrs0@[new_cs], new_map)
       ) ([],[]) constrs
   in

@@ -15,7 +15,7 @@ relAssume  H // (1)
 relAssume  HP_2 // (2)
   HP_2(next,y) & next!=null --> H(next,y).
 relAssume  HP_2 // (3)
- HP_2(next,y) & next=null --> G<next,y>                             (3)
+ HP_2(next,y) & next=null --> G(next,y).
 
 shape_infer [H,HP_2][G].
 

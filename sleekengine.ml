@@ -710,7 +710,7 @@ let process_shape_infer pre_hps post_hps=
       else Sa.rel_def_stk
       in
       if not(rel_defs# is_empty) then
-        print_endline ""; 
+        print_endline "";
       print_endline "*************************************";
       print_endline "*******relational definition ********";
       print_endline "*************************************";
@@ -733,7 +733,7 @@ let process_shape_split pre_hps post_hps=
       let t = CP.type_of_spec_var sv in
       not (is_RelT t || is_HpT t )) vars1 in
   (*END*)
-  let new_constrs,_ = Sa2.split_constr !cprog !sleek_hprel_assumes sel_post_hps infer_vars [] in
+  let new_constrs,_ = Sa2.split_constr !cprog !sleek_hprel_assumes sel_post_hps infer_vars false [] in
   let pr1 = pr_list_ln Cprinter.string_of_hprel in
   begin
     print_endline "*************************************";

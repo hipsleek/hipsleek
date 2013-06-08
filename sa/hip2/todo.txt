@@ -925,8 +925,8 @@ to obtain below:
  x::node<_,null> & x'=null & UU_HP_6_UU=null  --> G(x,x').
 
 where UU_HP_6_UU would have been a logical variable from pre-condition.
-
-# loc-2a.slk
+===========================================================
+# loc-2a.slk: FIXED
 
 relAssume  H // (1)
  H(x,y) --> x::node<_,prev, next> * HP_1(prev,y) *  HP_2(next,y) .
@@ -985,8 +985,8 @@ SOLUTION:
  After this shape preprocessing, we can proceed with shape inference
 
 */
-
-# loc-1a.slk
+===========================================================
+# loc-1a.slk: FIXED
 
 relAssume  H // (1)
  H(x,y) --> x::node<_,prev, next> * HP_1(prev, y) * HP_2(next,y).
@@ -1045,8 +1045,8 @@ After this, we can subject this list of refined implications
 to our proper shape_infer procedure?
 
 */
-
-# loc-1d.slk (vs loc-1e.slk)
+===========================================================
+# loc-1d.slk (vs loc-1e.slk): FIXED
 
 relAssume  H // (1)
  H(x,y) --> x::node<_,next> * HP_2(next,y).
@@ -1094,7 +1094,7 @@ SOLUTION
    H(x,y) == x::node<_,next> * HP_2(next,y) 
 
 */
-
+===========================================================
 # loc-1b.slk
 
 relAssume  H // (1)
@@ -1128,8 +1128,8 @@ Expecting:
 
 
 */
-
-# loc-1c.slk
+===========================================================
+# loc-1c.slk:FIXED
 
 relAssume  H // (1)
  H(x,y) --> x::node<_,prev, next> * HP_2(next,y).
@@ -1159,8 +1159,8 @@ Two problems above
 
 
 */
-
-# loc-1c2.slk
+===========================================================
+# loc-1c2.slk: FIXED
 
 relAssume  G // (3)
  next=null --> G(next,y).

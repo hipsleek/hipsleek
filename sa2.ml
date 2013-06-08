@@ -211,7 +211,7 @@ let apply_transitive_impl_fix prog callee_hps hp_rel_unkmap unk_hps (constrs: CF
                       CONSTR: ELIM UNUSED PREDS
 ****************************************************************)
 (*split constrs like H(x) & x = null --> G(x): separate into 2 constraints*)
-let split_constr_x prog constrs post_hps prog_vars unk_map=
+let split_constr_x prog constrs post_hps prog_vars is_unk_analized unk_map=
   (*internal method*)
   let split_one cs total_unk_map=
     let (_ ,mix_lf,_,_,_) = CF.split_components cs.CF.hprel_lhs in
@@ -251,8 +251,12 @@ let split_constr_x prog constrs post_hps prog_vars unk_map=
         let helper (hp,eargs,_)=(hp,List.concat (List.map CP.afv eargs)) in
         let ls_lhp_args = (List.map helper lhrs) in
         (*generate linking*)
-        let unk_svl, unk_xpure, unk_map1 =  SAC.generate_linking total_unk_map ls_lhp_args ls_rhp_args leqs post_hps no_pos in
-        let lfb1 = CF.mkAnd_base_pure lfb (MCP.mix_of_pure unk_xpure) no_pos in
+        let unk_svl, lfb1, unk_map1 = if is_unk_analized then
+          let unk_svl, unk_xpure, unk_map1 = SAC.generate_linking total_unk_map ls_lhp_args ls_rhp_args leqs post_hps no_pos in
+          let lfb1 = CF.mkAnd_base_pure lfb (MCP.mix_of_pure unk_xpure) no_pos in
+          (unk_svl, lfb1, unk_map1)
+        else ([], lfb, total_unk_map)
+        in
         let ls_defined_hps,rems = List.split (List.map (fun hpargs ->
             SAU.find_well_defined_hp prog lhds lhvs r_hps prog_vars hpargs l_def_vs lfb1) ls_lhp_args)
         in
@@ -293,11 +297,11 @@ let split_constr_x prog constrs post_hps prog_vars unk_map=
   let _ = Debug.dinfo_pprint ("map after split: " ^ (let pr = (pr_list (pr_pair (pr_list (pr_pair !CP.print_sv string_of_int)) CP.string_of_xpure_view)) in pr new_map)) no_pos in
   (new_constrs, new_map)
 
-let split_constr prog constrs post_hps prog_vars unk_map=
+let split_constr prog constrs post_hps prog_vars is_unk_analized unk_map=
   let pr1 = pr_list_ln Cprinter.string_of_hprel in
   let pr2 = (pr_list (pr_pair (pr_list (pr_pair !CP.print_sv string_of_int)) CP.string_of_xpure_view)) in
   Debug.no_2 "split_constr" pr1 pr2 (pr_pair pr1 pr2)
-      (fun _ _ -> split_constr_x prog constrs post_hps prog_vars unk_map)
+      (fun _ _ -> split_constr_x prog constrs post_hps prog_vars is_unk_analized unk_map)
       constrs unk_map
 
 let get_preds (lhs_preds, lhs_heads, rhs_preds,rhs_heads) cs=
@@ -1163,11 +1167,15 @@ let infer_shapes_core prog proc_name (constrs0: CF.hprel list) callee_hps sel_hp
   (********************************)
   let _ = DD.binfo_pprint ">>>>>> step 1: split constraints based on pre and post-preds<<<<<<" no_pos in
   (*split constrs like H(x) & x = null --> G(x): separate into 2 constraints*)
-  let constrs1, unk_map1 = split_constr prog constrs0 sel_post_hps prog_vars hp_rel_unkmap in
+  let constrs1, unk_map1 = split_constr prog constrs0 sel_post_hps prog_vars false hp_rel_unkmap in
   (*unk analysis*)
-  let _ = DD.binfo_pprint ">>>>>> step 2: find dangling ptrs that link pre and post-preds<<<<<<" no_pos in
-  let constrs2, unk_hpargs, unk_map2 = SAC.analize_unk prog constrs1 unk_map1 in
-  let unk_hps = List.map fst unk_hpargs in (*todo: total_unk_map + analize_unk*)
+  (* let _ = DD.binfo_pprint ">>>>>> step 2: find dangling ptrs that link pre and post-preds<<<<<<" no_pos in *)
+  (* let constrs2, unk_hpargs, unk_map2 = SAC.analize_unk prog constrs1 unk_map1 in *)
+  let unk_map2 = unk_map1 in
+  let constrs2 = constrs1 in
+  (* let unk_hps = List.map fst unk_hpargs in *) (*todo: total_unk_map + analize_unk*)
+  let unk_hps = CP.remove_dups_svl (List.fold_left (fun ls (ls_hp_loc, _) -> ls@(List.map fst ls_hp_loc)) [] unk_map1) in
+  let unk_hpargs = List.map (fun hp -> (hp,[])) unk_hps in
   let _ = DD.binfo_pprint ">>>>>> step 3: apply transitive implication<<<<<<" no_pos in
   let constrs3, non_unk_hps = apply_transitive_impl_fix prog callee_hps unk_map2
      unk_hps constrs2 in
