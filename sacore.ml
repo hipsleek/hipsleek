@@ -582,21 +582,27 @@ let transform_xpure_to_pure hp_defs unk_map =
 
 let detect_dangling_pred_x constrs sel_hps=
   let update_constr cs unk_hps map=
-    let ls_hpargs1 = (CF.get_HRels_f cs.CF.hprel_lhs)@(CF.get_HRels_f cs.CF.hprel_rhs) in
-    let ls_hpargs2 = Gen.BList.remove_dups_eq (fun (hp1,_) (hp2,_) -> CP.eq_spec_var hp1 hp2) ls_hpargs1 in
+    let ls_l_hpargs1 = (CF.get_HRels_f cs.CF.hprel_lhs) in
+    let ls_r_hpargs1 = (CF.get_HRels_f cs.CF.hprel_rhs) in
+    let ls_l_hpargs2 = Gen.BList.remove_dups_eq (fun (hp1,_) (hp2,_) -> CP.eq_spec_var hp1 hp2) ls_l_hpargs1 in
+    let ls_r_hpargs2 = Gen.BList.remove_dups_eq (fun (hp1,_) (hp2,_) -> CP.eq_spec_var hp1 hp2) ls_r_hpargs1 in
+    let ls_hpargs2 = Gen.BList.remove_dups_eq (fun (hp1,_) (hp2,_) -> CP.eq_spec_var hp1 hp2) (ls_l_hpargs2@ls_r_hpargs2) in
     let unk_hpargs = List.filter (fun (hp,_) -> CP.mem_svl hp unk_hps) ls_hpargs2 in
     if unk_hpargs = [] then (cs, map) else
-      let unk_svl = List.fold_left (fun ls (_, args) -> ls@args) [] unk_hpargs in
+      let unk_svl = List.fold_left (fun ls (_, args) -> ls@args) []  unk_hpargs in
       let unk_svl1 = CP.remove_dups_svl unk_svl in
-      let _, unk_pure, new_map = CF.generate_xpure_view_first unk_hpargs map in
+      let _, l_unk_pure, new_map1 = CF.generate_xpure_view_first  ls_l_hpargs2 map in
+      let _, r_unk_pure, new_map2 = CF.generate_xpure_view_first  ls_l_hpargs2 new_map1 in
       let cs_unk_hps = (List.map fst  unk_hpargs) in
       let new_lhs,_ = CF.drop_hrel_f cs.CF.hprel_lhs cs_unk_hps in
-      let new_cs = {cs with CF.hprel_lhs = CF.mkAnd_pure new_lhs (MCP.mix_of_pure unk_pure) no_pos;
+      let new_rhs,_ = CF.drop_hrel_f cs.CF.hprel_rhs cs_unk_hps in
+      let new_cs = {cs with CF.hprel_lhs = CF.mkAnd_pure new_lhs (MCP.mix_of_pure l_unk_pure) no_pos;
+          CF.hprel_rhs = CF.mkAnd_pure new_rhs (MCP.mix_of_pure r_unk_pure) no_pos;
           CF.unk_svl = unk_svl1 ;
           CF.unk_hps = unk_hpargs;
       }
       in
-      (new_cs, new_map)
+      (new_cs, new_map2)
   in
   let all_hps = List.fold_left (fun ls cs ->
       ls@(CF.get_hp_rel_name_formula cs.CF.hprel_lhs)@(CF.get_hp_rel_name_formula cs.CF.hprel_rhs)
