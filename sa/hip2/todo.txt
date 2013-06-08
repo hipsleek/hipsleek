@@ -1202,8 +1202,26 @@ Can this error be fixed.
  File "ll-getnext2-1.slk", line 17, characters 38-39
  error: Stream.Error("[id_list] expected after OPAREN (in [cexp_w])")
 
+
+
+# ll-getnext2-1.slk --sa-inlining
+
+How come --sa-inlining did not have UU_HP_6_UU?
+
 relAssume G
   x::node<_,vv> & vv=null & XPURE(HP_6(res)) 
    --> G(x,res).
-
 shape_infer [][G].
+[ G(x_23,r_24) ::= x_23::node<Anon_11,vv>@M&vv=null]
+
+
+However, below works fine instead!
+
+ll-getnext2a2.slk --sa-inlining
+
+
+relAssume  G
+ HP_6(res) * x::node<_,vv> & vv=null --> G(x,res).
+shape_infer [][G].
+
+[ G(x_23,res_24) ::= x_23::node<Anon_11,vv>@M&vv=null & UU_HP_6_UU=res_24]
