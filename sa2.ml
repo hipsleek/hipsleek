@@ -1173,9 +1173,17 @@ let infer_shapes_core prog proc_name (constrs0: CF.hprel list) callee_hps sel_hp
   (* let constrs2, unk_hpargs, unk_map2 = SAC.analize_unk prog constrs1 unk_map1 in *)
   let unk_map2 = unk_map1 in
   let constrs2 = constrs1 in
-  (* let unk_hps = List.map fst unk_hpargs in *) (*todo: total_unk_map + analize_unk*)
-  let unk_hps = CP.remove_dups_svl (List.fold_left (fun ls (ls_hp_loc, _) -> ls@(List.map fst ls_hp_loc)) [] unk_map1) in
-  let unk_hpargs = List.map (fun hp -> (hp,[])) unk_hps in
+  let unk_hpargs = Gen.BList.remove_dups_eq (fun (hp1,_) (hp2,_) -> CP.eq_spec_var hp1 hp2)
+    (List.fold_left (fun ls (ls_hp_loc, xp) ->
+      let hp,_ = List.hd ls_hp_loc in
+      let args = match xp.CP.xpure_view_node with
+        | Some sv -> sv::xp.CP.xpure_view_arguments
+        | None -> xp.CP.xpure_view_arguments
+      in
+      ls@[(hp, args)]
+      )
+      [] unk_map1) in
+  let unk_hps = List.map fst unk_hpargs in (*todo: total_unk_map + analize_unk*)
   let _ = DD.binfo_pprint ">>>>>> step 3: apply transitive implication<<<<<<" no_pos in
   let constrs3, non_unk_hps = apply_transitive_impl_fix prog callee_hps unk_map2
      unk_hps constrs2 in
