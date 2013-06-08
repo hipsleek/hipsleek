@@ -14,8 +14,9 @@ relAssume H
 */
  
 relAssume G
-  x::node<_,vv> & vv=null & XPURE(HP_6(res)) 
-   --> G(x,res).
+  x::node<_,vv> & vv=null &
+   XPURE(HP_6(r))
+   --> G(x,r).
 
 shape_infer [][G].
 

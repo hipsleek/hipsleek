@@ -192,7 +192,7 @@ module Make (Token : SleekTokenS)
 	 ("and", ANDWORD);
 	 ("macro",PMACRO);
      ("perm",PERM);
-	 ("pred", PRED);
+     ("pred", PRED);
 	 ("pred_prim", PRED_PRIM);
      ("pred_extn", PRED_EXT);
 	 ("hip_include", HIP_INCLUDE);
@@ -312,6 +312,7 @@ rule tokenizer file_name = parse
   | "@xpre" { XPRE }
   | "@post" { POST }
   | "@xpost" { XPOST }
+(*  | "XPURE" {XPURE}*)
   | "@zero" {PZERO}
   | "@full" {PFULL}
   | "@value" {PVALUE}
