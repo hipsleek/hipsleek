@@ -17,9 +17,9 @@ relAssume  HP_2 // (2)
 relAssume  HP_2 // (3)
  HP_2(next,y) & next=null --> emp.
 relAssume  G // (3)
- next=null --> G(next,y).
+ next=null & XPURE(HP_1(prev, y)) --> G(next,y).
 
-shape_infer_proper [H,HP_2][G].
+shape_infer [H,HP_2][G].
 
 /*
 I think we need to introduce a new instruction

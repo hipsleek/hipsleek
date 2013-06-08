@@ -6,17 +6,18 @@ data node{
 
 
 HeapPred H(node a,node b).
-HeapPred HP_6(node a,node b).
+HeapPred HP_1(node a,node b).
+HeapPred HP_2(node a,node b).
 HeapPred G(node a, node a).
 
 relAssume  H // (1)
- H(x,y) --> x::node2<_,prev, next> * HP_1(prev, y) * HP_2(next,y).
-relAssume  G // (2)
- HP_2(next,y) & next!=null --> H(next,y)
+ H(x,y) --> x::node<_,prev, next> * HP_1(prev, y) * HP_2(next,y).
+relAssume  H // (2)
+ HP_2(next,y) & next!=null --> H(next,y).
 relAssume  G // (3)
- HP_2(next,y) * next=null --> G<next,y>
+ HP_2(next,y) & next=null --> G(next,y).
 
-shape_infer [H,x][G].
+shape_infer [H,HP_2,x][G].
 
 /*
 

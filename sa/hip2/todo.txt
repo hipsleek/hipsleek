@@ -726,41 +726,6 @@ GOT:
 But we should not split-base on HP_6 which is a
 redundant predicate that will be used as a dangling reference
 
-=================================================
-# ll-getnext2a.slk  FIXED
-
-relAssume  H
- H(x)  --> x::node<_,nn>@M * HP_6(nn).
-
-relAssume  H
- HP_6(res) * x::node<_,vv> & vv=null --> G(x,res).
-
-shape_infer [H][G].
-
-/*
-I obtained below. But why did we rename HP_6 to HP_29.
-I think we should never rename heap predicate. Can
-you check which part of renaming does that; as it breaks
-our inference to rename heap predicate.
-
-[ H(x_44) ::= x_44::node<Anon_11,nn>@M& XPURE(HP_29(nn)),
- G(x,res) ::= x::node<Anon_12,vv>@M&vv=null &  XPURE(HP_29(res))]
-
-The renaming of HP_6--> HP_29 seems to occur early in
-SA2.split_constr. Please investigate.
-
-split_constr@2@1
-split_constr inp1 :[ RELASS [H] unknown svl: ;  unknown hps: ;  predefined: ; H(x)&
-  true --> x::node<Anon_11,nn>@M * (HP_6(nn))&true,
- RELASS [H] unknown svl: ;  unknown hps: ;  predefined: ; (HP_6(res)) * 
-  x::node<Anon_12,vv>@M&vv=null --> G(x,res)&true]
-split_constr inp2 :[]
-split_constr@2 EXIT out :([ RELASS [H] unknown svl: ;  unknown hps: ;  predefined: ; H(x)&
-  true --> x::node<Anon_11,nn>@M * (HP_6(nn))&true,
- RELASS [H] unknown svl: [res];  unknown hps: ;  predefined: ; (HP_6(res)) * 
-  x::node<Anon_12,vv>@M&vv=null &  XPURE(HP_29(res)) --> G(x,res)&true],[([(HP_6,0),(G,1)],XPURE(HP_29(res)))])
-
-*/
 
 =================================================
 # ll-getnext2a1.slk
@@ -796,7 +761,7 @@ SOLUTION:
 
 */
 =================================================
-# loc-1.slk
+# loc-1.slk  OK
 
 HeapPred H(node a,node b).
 HeapPred HP_1(node a,node b).
@@ -1179,7 +1144,7 @@ Correct answer should just be:
  G(next_16,y_17) ::= emp&next_16=null 
 
 
-# loc-1a.slk
+# loc-1a.slk OK
 
 OBTAINED
 ========
@@ -1195,3 +1160,31 @@ OBTAINED
 Instead of XPURE(H(x_86,y_87)), it should have been
           XPURE(HP_1(x_86,y_87))
 since HP_1 is the dangling predicate..
+
+
+=================================================
+# ll-getnext2a.slk  
+
+relAssume  H
+ H(x)  --> x::node<_,nn>@M * HP_6(nn).
+
+relAssume  H
+ HP_6(res) * x::node<_,vv> & vv=null --> G(x,res).
+
+shape_infer [H][G].
+
+Obtained:
+
+ H(x_37) ::= x_37::node<Anon_11,nn>@M& XPURE(HP_6(nn)),
+ G(x_38,res_39) ::= x_38::node<Anon_12,vv>@M&vv=null]
+
+What happened to XPURE(HP_6(res)) in post-pred G?
+
+Also, test with --sa-inlining gave:
+
+ H(x_37) ::= x_37::node<Anon_11,nn>@M& XPURE(HP_6(nn)),
+ G(x_38,res_39) ::= x_38::node<Anon_12,vv>@M&vv=null]
+
+Where is the linking/dangling ptr?
+
+

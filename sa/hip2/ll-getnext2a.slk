@@ -18,6 +18,22 @@ shape_infer [H][G].
 
 /*
 
+Obtained:
+
+ H(x_37) ::= x_37::node<Anon_11,nn>@M& XPURE(HP_6(nn)),
+ G(x_38,res_39) ::= x_38::node<Anon_12,vv>@M&vv=null]
+
+What happened to XPURE(HP_6(res)) in post-pred G?
+
+Also, test with --sa-inlining gave:
+
+ H(x_37) ::= x_37::node<Anon_11,nn>@M& XPURE(HP_6(nn)),
+ G(x_38,res_39) ::= x_38::node<Anon_12,vv>@M&vv=null]
+
+Where is the linking/dangling ptr?
+
+======
+
 [ H(x_43) ::= x_43::node<Anon_11,nn>@M& XPURE(HP_6(nn)),
  G(x,res) ::= x::node<Anon_12,vv>@M&vv=null &  XPURE(HP_6(res))]
 
