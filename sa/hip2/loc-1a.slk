@@ -20,6 +20,20 @@ relAssume  HP_2 // (3)
 shape_infer [H,HP_2][G].
 
 /*
+OBTAINED
+========
+[ H(x_86,y_87) ::= x_86::node<Anon_11,prev,next>@M * (HP_2(next,y_87))
+      & XPURE(H(x_86,y_87)),
+        ^^^^^^^^^^^^^^^^^^^
+ HP_2(next_88,y_89) ::= 
+ emp&next_88=null
+ or next_88::node<Anon_11,prev,next>@M * (HP_2(next,y_89))&
+     XPURE(H(next_88,y_89))
+     ^^^^^^^^^^^^^^^^^^^^^^
+ 
+Instead of XPURE(H(x_86,y_87)), it should have been
+          XPURE(HP_1(x_86,y_87))
+since HP_1 is the dangling predicate..
 
 Say we managed to infer below from HIP
 
