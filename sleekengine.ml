@@ -694,14 +694,14 @@ let process_shape_infer pre_hps post_hps=
   (* let _ = DD.info_pprint "process_shape_infer" no_pos in *)
   let hp_lst_assume = !sleek_hprel_assumes in
   let sel_hps, sel_post_hps = SAU.get_pre_post pre_hps post_hps hp_lst_assume in
-  let new_constrs, unk_map, unk_hps = SAC.detect_dangling_pred hp_lst_assume sel_hps in
+  (* let new_constrs, unk_map, unk_hps = SAC.detect_dangling_pred hp_lst_assume sel_hps in *)
   let ls_hprel, ls_inferred_hps, dropped_hps =
     let infer_shape_fnc =  if not (!Globals.sa_old) then
       Sa2.infer_shapes
     else Sa.infer_hps
     in
-    infer_shape_fnc !cprog "" new_constrs
-        sel_hps sel_post_hps unk_map
+    infer_shape_fnc !cprog "" hp_lst_assume
+        sel_hps sel_post_hps [] true
   in
   let _ = if not (!Globals.sa_old) then
     begin
@@ -709,6 +709,36 @@ let process_shape_infer pre_hps post_hps=
         Sa2.rel_def_stk
       else Sa.rel_def_stk
       in
+      if not(rel_defs# is_empty) then
+        print_endline "";
+      print_endline "*************************************";
+      print_endline "*******relational definition ********";
+      print_endline "*************************************";
+      print_endline (Sa2.rel_def_stk # string_of_reverse);
+      print_endline "*************************************"
+    end
+  in
+  (* let _ = if(!Globals.cp_test || !Globals.cp_prefile) then *)
+  (*    CEQ.cp_test !cprog hp_lst_assume ls_inferred_hps sel_hps *)
+  (* in *)
+  ()
+
+let process_shape_infer_prop pre_hps post_hps=
+  (* let _ = DD.info_pprint "process_shape_infer_prop" no_pos in *)
+  let hp_lst_assume = !sleek_hprel_assumes in
+  let sel_hps, sel_post_hps = SAU.get_pre_post pre_hps post_hps hp_lst_assume in
+  (* let new_constrs, unk_map, unk_hps = SAC.detect_dangling_pred hp_lst_assume sel_hps in *)
+  let ls_hprel, ls_inferred_hps, dropped_hps =
+    let infer_shape_fnc =  if not (!Globals.sa_old) then
+      Sa2.infer_shapes
+    else Sa.infer_hps
+    in
+    infer_shape_fnc !cprog "" hp_lst_assume
+        sel_hps sel_post_hps [] false
+  in
+  let _ = if not (!Globals.sa_old) then
+    begin
+      let rel_defs =  Sa2.rel_def_stk in
       if not(rel_defs# is_empty) then
         print_endline "";
       print_endline "*************************************";

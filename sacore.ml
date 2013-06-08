@@ -580,7 +580,7 @@ let transform_xpure_to_pure hp_defs unk_map =
       (fun _ -> transform_xpure_to_pure_x hp_defs unk_map) hp_defs
 
 
-let detect_dangling_pred_x constrs sel_hps=
+let detect_dangling_pred_x constrs sel_hps unk_map=
   let update_constr cs unk_hps map=
     let ls_l_hpargs1 = (CF.get_HRels_f cs.CF.hprel_lhs) in
     let ls_r_hpargs1 = (CF.get_HRels_f cs.CF.hprel_rhs) in
@@ -589,7 +589,7 @@ let detect_dangling_pred_x constrs sel_hps=
     let l_unk_hpargs = List.filter (fun (hp,_) -> CP.mem_svl hp unk_hps) ls_l_hpargs2 in
     let r_unk_hpargs = List.filter (fun (hp,_) -> CP.mem_svl hp unk_hps) ls_r_hpargs2 in
     let unk_hpargs = Gen.BList.remove_dups_eq (fun (hp1,_) (hp2,_) -> CP.eq_spec_var hp1 hp2) (l_unk_hpargs@r_unk_hpargs) in
-    if unk_hpargs = [] then (cs, map) else
+    if unk_hpargs = [] then (cs, map,[]) else
       let unk_svl = List.fold_left (fun ls (_, args) -> ls@args) []  unk_hpargs in
       let unk_svl1 = CP.remove_dups_svl unk_svl in
       let cs_unk_hps = (List.map fst unk_hpargs) in
@@ -609,28 +609,29 @@ let detect_dangling_pred_x constrs sel_hps=
           CF.unk_hps = unk_hpargs;
       }
       in
-      (new_cs, new_map2)
+      (new_cs, new_map2, unk_hpargs)
   in
   let all_hps = List.fold_left (fun ls cs ->
       ls@(CF.get_hp_rel_name_formula cs.CF.hprel_lhs)@(CF.get_hp_rel_name_formula cs.CF.hprel_rhs)
   ) [] constrs in
   let unk_hps = CP.diff_svl (CP.remove_dups_svl all_hps) sel_hps in
   (* let _ = DD.info_pprint ("unk_hps: " ^ (!CP.print_svl unk_hps)) no_pos in *)
-  let new_constr, unk_map=
-    if unk_hps = [] then (constrs,[])
+  let new_constr, unk_map, unk_hgargs=
+    if unk_hps = [] then (constrs,[], [])
     else
-      List.fold_left (fun (constrs0, unk_map) cs ->
-          let new_cs, new_map = update_constr cs unk_hps unk_map in
-          (constrs0@[new_cs], new_map)
-      ) ([],[]) constrs
+      List.fold_left (fun (constrs0, unk_map, unk_hgargs) cs ->
+          let new_cs, new_map, new_unk_hpargs = update_constr cs unk_hps unk_map in
+          (constrs0@[new_cs], new_map, unk_hgargs@new_unk_hpargs)
+      ) ([],unk_map, []) constrs
   in
-  (new_constr, unk_map, unk_hps)
+  (new_constr, unk_map, Gen.BList.remove_dups_eq (fun (hp1, _) (hp2,_) -> CP.eq_spec_var hp1 hp2) unk_hgargs)
 
-let detect_dangling_pred constrs sel_hps=
+let detect_dangling_pred constrs sel_hps unk_map=
   let pr1 =  pr_list_ln Cprinter.string_of_hprel in
   let pr2 = (pr_list (pr_pair (pr_list (pr_pair !CP.print_sv string_of_int)) CP.string_of_xpure_view)) in
-  Debug.no_2 "detect_dangling_pred" pr1 !CP.print_svl (pr_triple pr1 pr2 !CP.print_svl)
-      (fun _ _ -> detect_dangling_pred_x constrs sel_hps)
+  let pr3 = pr_list (pr_pair !CP.print_sv !CP.print_svl) in
+  Debug.no_2 "detect_dangling_pred" pr1 !CP.print_svl (pr_triple pr1 pr2 pr3)
+      (fun _ _ -> detect_dangling_pred_x constrs sel_hps unk_map)
       constrs sel_hps
 
 (*=============**************************================*)

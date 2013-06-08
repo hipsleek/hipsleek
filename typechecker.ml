@@ -2406,7 +2406,7 @@ and check_proc (prog : prog_decl) (proc : proc_decl) cout_option (mutual_grp : p
                                     let hps1 = List.map fst hps1 in
                                     let hps2 = List.map fst hps2 in
                                     (List.length hps1 = List.length hps2)
-                                    && (CP.diff_svl hps1 hps2 = [])) hp_rel_unkmap)
+                                    && (CP.diff_svl hps1 hps2 = [])) hp_rel_unkmap) true
                       else [],[],[]
                     in
                     (**update hpdefs for func call*)

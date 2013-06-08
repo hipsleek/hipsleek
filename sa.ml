@@ -3678,7 +3678,7 @@ let prtt_string_of_par_def_w_name (a1,args,unk_args,a3,olf,orf)=
   output: definitions: (formula * formula) list
 *)
 let infer_hps_x prog proc_name (hp_constrs: CF.hprel list) sel_hp_rels sel_post_hps
-      (hp_rel_unkmap: ((CP.spec_var * int) list * CP.xpure_view) list) :
+      (hp_rel_unkmap: ((CP.spec_var * int) list * CP.xpure_view) list) preprocess:
       (CF.hprel list * CF.hp_rel_def list* (CP.spec_var*CP.exp list * CP.exp list) list) =
   DD.ninfo_pprint "\n\n>>>>>> norm_hp_rel <<<<<<" no_pos;
   DD.ninfo_pprint ">>>>>> step 1a: drop arguments<<<<<<" no_pos;
@@ -3863,7 +3863,7 @@ let infer_hps_x prog proc_name (hp_constrs: CF.hprel list) sel_hp_rels sel_post_
 
 (*(pr_pair Cprinter.prtt_string_of_formula Cprinter.prtt_string_of_formula)*)
 let infer_hps prog proc_name (hp_constrs: CF.hprel list) sel_hp_rels sel_post_hp_rels 
-      (hp_rel_unkmap: ((CP.spec_var * int) list * CP.xpure_view) list):
+      (hp_rel_unkmap: ((CP.spec_var * int) list * CP.xpure_view) list) preprocess:
  (CF.hprel list * CF.hp_rel_def list*(CP.spec_var*CP.exp list * CP.exp list) list) =
   let pr0 = pr_list !CP.print_exp in
   let pr1 = pr_list_ln Cprinter.string_of_hprel in
@@ -3871,7 +3871,7 @@ let infer_hps prog proc_name (hp_constrs: CF.hprel list) sel_hp_rels sel_post_hp
   let pr3 = pr_list (pr_triple !CP.print_sv pr0 pr0) in
   let pr4 = pr_list (pr_pair (pr_list (pr_pair !CP.print_sv string_of_int)) CP.string_of_xpure_view) in
   Debug.no_4 "infer_hps" pr_id pr1 !CP.print_svl pr4 (pr_triple pr1 pr2 pr3)
-      (fun _ _ _ _ -> infer_hps_x prog proc_name hp_constrs sel_hp_rels sel_post_hp_rels hp_rel_unkmap)
+      (fun _ _ _ _ -> infer_hps_x prog proc_name hp_constrs sel_hp_rels sel_post_hp_rels hp_rel_unkmap preprocess)
       proc_name hp_constrs sel_post_hp_rels hp_rel_unkmap
 
 (**===============**********************==============**)
