@@ -1,0 +1,48 @@
+data node{
+ int val;
+ node prev;
+ node next;
+}.
+
+
+HeapPred H(node a,node b).
+HeapPred HP_1(node a,node b).
+HeapPred HP_2(node a,node b).
+HeapPred G(node a, node a).
+
+relAssume  H // (1)
+ H(x,y) --> x::node<_,prev, next> * HP_2(next,y) * HP_1(prev, y).
+
+/*
+relAssume  HP_2 // (2)
+  HP_2(next,y) & next!=null --> H(next,y).
+relAssume  HP_2 // (3)
+  HP_2(next,y) & next=null --> emp.
+*/
+
+relAssume  G // (3)
+  HP_1(prev, y) & next=null --> G(next,y).
+
+shape_infer [H,HP_2][G].
+
+/*
+# loc-1b1.slk --sa-inlining
+
+Why isn't UU_HP_1_UU not being generated?
+
+ H(x_93,y_94) ::= x_93::node<Anon_11,prev,next>@M * (HP_2(next,y_94))&true,
+ HP_2(next_95,y_96) ::= 
+ next_95::node<Anon_11,prev,next>@M * (HP_2(next,y_96))&true
+ or emp&next_95=null
+
+# loc-1b1.slk (looks OK)
+
+ H(x_93,y_94) ::= x_93::node<Anon_11,prev,next>@M * (HP_2(next,y_94))& XPURE(HP_1(prev,y_94)),
+ HP_2(next_95,y_96) ::= 
+ emp&next_95=null
+ or next_95::node<Anon_11,prev,next>@M * (HP_2(next,y_96))&
+     XPURE(HP_1(prev,y_96))
+ ,
+ G(next_97,y_98) ::= emp&next_97=null &  XPURE(HP_1(prev,y_98))]
+
+*/
