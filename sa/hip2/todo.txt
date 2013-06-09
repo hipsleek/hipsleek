@@ -1203,6 +1203,7 @@ Can this error be fixed.
  error: Stream.Error("[id_list] expected after OPAREN (in [cexp_w])")
 
 
+===========================================================
 
 # ll-getnext2-1.slk --sa-inlining
 
@@ -1225,3 +1226,13 @@ relAssume  G
 shape_infer [][G].
 
 [ G(x_23,res_24) ::= x_23::node<Anon_11,vv>@M&vv=null & UU_HP_6_UU=res_24]
+
+===========================================================
+
+# loc-4a2.slk 
+
+BUT why did we get: so many "emp" below!
+========================================
+[ HP_2(next,y) ::= (emp) & (emp)&next=null,
+ G(x_40,y_41) ::= EXISTS(flted_14_22: (emp) & x_40::node<Anon_11,Anon_12,flted_14_22>@M&
+flted_14_22=null&[]]
