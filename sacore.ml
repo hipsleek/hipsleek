@@ -21,6 +21,13 @@ let rec lookup_xpure_view hp_pos0 rem_map done_map=
             Some xpv,done_map@[(new_hp_pos,xpv)]@tl
           else lookup_xpure_view hp_pos0 tl (done_map@[(hp_pos1,xpv)])
 
+(*
+  priority of xpure name:
+  - unk_hps in lhs
+  - unk_hps in rhs
+  - partial unk_hps in lhs
+  - partial unk_hps in rhs
+*)
 let generate_xpure_view_w_pos_x ls_hp_pos_sv total_unk_map pos=
   let generate_xpure_view_one_sv unk_map (ls_hp_pos,sv)=
     let p,unk_map =
@@ -58,7 +65,7 @@ let generate_xpure_view_w_pos ls_hp_pos_sv total_unk_map pos=
   let pr1 = pr_list (pr_pair (pr_list (pr_pair !CP.print_sv string_of_int)) !CP.print_sv) in
   let pr2 = pr_pair !CP.print_formula
     (pr_list (pr_pair (pr_list (pr_pair !CP.print_sv string_of_int)) CP.string_of_xpure_view)) in
-  Debug.no_1 "generate_xpure_view_w_pos" pr1 pr2
+  Debug.ho_1 "generate_xpure_view_w_pos" pr1 pr2
       (fun _ -> generate_xpure_view_w_pos_x ls_hp_pos_sv total_unk_map pos) ls_hp_pos_sv
 
 let rec find_pos n sv res (hp,args)=

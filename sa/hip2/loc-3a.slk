@@ -1,0 +1,30 @@
+data node{
+ int val;
+ node prev;
+ node next;
+}.
+
+
+HeapPred H(node a,node b).
+HeapPred HP_1(node a,node b).
+HeapPred HP_2(node a,node b).
+HeapPred G(node a, node a).
+
+relAssume  H // (1)
+ H(x,y) --> x::node<_,prev, next> * HP_1(prev,y) *  HP_2(next,y) .
+relAssume  HP_2 // (2)
+  HP_2(next,y) & next!=null --> H(next,y).
+relAssume  HP_2 // (3)
+  HP_2(next,y) & next=null  -->  G(next,y).
+
+shape_infer [H,HP_2][G].
+
+/*
+Expecting:
+
+After pre-process (dangling predicate detecting, spliting):
+
+
+Final solution:
+
+*/

@@ -24,7 +24,7 @@ void to_list(node2 x, node2 p)
                 x.p1 = x.p2;
         }
 }
-}
+
 
 
 int foo(node2 x)
