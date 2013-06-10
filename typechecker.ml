@@ -487,10 +487,10 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
             let (vars_rel,vars_inf) = List.partition (fun v -> is_RelT(CP.type_of_spec_var v) ) vars in
             let _ = Debug.ninfo_hprint (add_str "vars_rel" !print_svl) vars_rel no_pos in
             let _ = 
-              if old_vars=[] then 
-                Debug.info_hprint (add_str "TRANSLATED SPECS" pr_spec) einfer no_pos 
-              else
-                let _ = Debug.info_hprint (add_str "TRANSLATED SPECS" pr_spec) einfer no_pos in
+(*              if old_vars=[] then *)
+(*                Debug.info_hprint (add_str "TRANSLATED SPECS" pr_spec) einfer no_pos *)
+(*              else*)
+(*                let _ = Debug.info_hprint (add_str "TRANSLATED SPECS" pr_spec) einfer no_pos in*)
                 let pre_post_vars = CP.remove_dups_svl (pre_vars @ post_vars @ new_fml_fv) in
                 let _ = Debug.ninfo_hprint (add_str "all vars" !print_svl) pre_post_vars no_pos in
                 let _ = Debug.ninfo_hprint (add_str "inf vars" !print_svl) vars no_pos in
@@ -525,7 +525,35 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
                     CF.es_infer_vars_sel_hp_rel = es.CF.es_infer_vars_sel_hp_rel@vars_hp_rel;
                     CF.es_infer_vars_sel_post_hp_rel = es.CF.es_infer_vars_sel_post_hp_rel;
                     CF.es_infer_post = es.CF.es_infer_post || postf}) ctx in
-            let (c,pre,rel,hprel, _, post_hps ,unk_map,f) = helper nctx new_formula_inf_continuation in
+            let nctx_sc, pr_rel, po_rel, new_formula_inf_continuation_sc =
+              if !TP.tp == TP.Z3 & proc.proc_is_recursive then
+                let tmp_rel1, tmp_rel2, tmp_fml = CF.remove_rel new_formula_inf_continuation in
+                let _ = proc.proc_stk_of_static_specs # push tmp_fml in
+                CF.transform_context (fun es -> CF.Ctx {es with CF.es_infer_vars_rel = []}) ctx,tmp_rel1,tmp_rel2,tmp_fml
+              else nctx,[],[],new_formula_inf_continuation
+            in
+(*            let _ = print_endline ("debug1: " ^ Cprinter.string_of_context nctx_sc) in*)
+(*            let _ = if !TP.tp == TP.Z3 & proc.proc_is_recursive then *)
+(*                print_endline ("debug2: " ^ Cprinter.string_of_struc_formula new_formula_inf_continuation_sc) *)
+(*              else () in*)
+            let (c,pre,rel,hprel, x, post_hps ,unk_map,f) = helper nctx_sc new_formula_inf_continuation_sc in
+            let (c,pre,rel,hprel, x, post_hps ,unk_map,f) = 
+              if f then
+                let _ = if !TP.tp == TP.Z3 & proc.proc_is_recursive then
+                  let tr = CP.mkTrue no_pos in
+                  let pr_rel = Gen.BList.remove_dups_eq (CP.equalFormula) pr_rel in
+                  let po_rel = Gen.BList.remove_dups_eq (CP.equalFormula) po_rel in
+                  let rec fold_x list1 list2 = match list1, list2 with
+                    | [],[] -> []
+                    | [],ls -> List.map (fun l -> (tr,tr,l,tr)) ls
+                    | ls,[] -> List.map (fun l -> (l,tr,tr,tr)) ls
+                    | l1::ls1,l2::ls2 -> (l1,tr,l2,tr) :: fold_x ls1 ls2
+                  in
+                  let tuples = fold_x pr_rel po_rel in
+                  Infer.fixcalc_rel_stk # push_list tuples;
+                else () in
+                (c,pre,rel,hprel, x, post_hps ,unk_map,f)
+              else helper nctx new_formula_inf_continuation in
             let new_c = if pre=[] then c else
               match c with
                 | CF.EAssume _ -> CF.EBase {
@@ -2587,7 +2615,7 @@ and check_proc (prog : prog_decl) (proc : proc_decl) cout_option (mutual_grp : p
                                 print_endline (Infer.fixcalc_rel_stk # string_of_reverse);
                                 print_endline "*************************************"
                               end;
-
+                              Infer.fixcalc_rel_stk # reset;
                               let tuples = List.map (fun (rel_post,post,rel_pre,pre) ->
                                   let pre_new = if CP.isConstTrue rel_pre then
                                       let inf_pre_vars = List.filter (fun x -> List.mem x pre_vars) inf_vars in

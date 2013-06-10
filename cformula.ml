@@ -9827,11 +9827,60 @@ let rec add_pure (sp:struc_formula) rel_fml_pre rel_fml_post = match sp with
   | EAssume(svl,f,fl,t) -> (match rel_fml_post with
       | None -> sp
       | Some fml -> EAssume(svl,add_pure_fml f fml,fl,t))
-  | EInfer b -> EInfer {b with formula_inf_continuation = add_pure b.formula_inf_continuation rel_fml_pre rel_fml_post}
+  | EInfer b -> EInfer {b with formula_inf_continuation = 
+    add_pure b.formula_inf_continuation rel_fml_pre rel_fml_post}
   | EList b -> EList (List.map (fun (l,e) ->(l,add_pure e rel_fml_pre rel_fml_post)) b)
   | EOr b -> EOr {b with formula_struc_or_f1 = add_pure b.formula_struc_or_f1 rel_fml_pre rel_fml_post;
                          formula_struc_or_f2 = add_pure b.formula_struc_or_f2 rel_fml_pre rel_fml_post}
 
+let rec remove_rel_fml fml = match fml with
+  | Or {formula_or_f1 = f1;
+        formula_or_f2 = f2;
+        formula_or_pos = p} ->
+    let rel1, fml1 = remove_rel_fml f1 in
+    let rel2, fml2 = remove_rel_fml f2 in
+    rel1@rel2, mkOr fml1 fml2 p
+  | Base b ->
+    let _, p, _, _, _ = split_components fml in
+    let rels = CP.get_RelForm (MCP.pure_of_mix p) in
+    rels, Base {b with formula_base_pure = MCP.mix_drop_rel p}
+  | Exists e ->
+    let _, p, _, _, _ = split_components fml in
+    let rels = CP.get_RelForm (MCP.pure_of_mix p) in
+    rels, Exists {e with formula_exists_pure = MCP.mix_drop_rel p}
+
+let rec remove_rel (sp:struc_formula) = match sp with
+  | ECase b ->
+    let res = List.map (fun (p,c) -> 
+      let pr_rel, po_rel, struc = remove_rel c in
+      pr_rel, po_rel, [(p, struc)]) b.formula_case_branches in
+    let res = List.fold_left (fun (a1,a2,a3) (b1,b2,b3) -> (a1@b1,a2@b2,a3@b3)) ([],[],[]) res in
+    (fun (a1,a2,a3) -> (a1,a2,ECase {b with formula_case_branches = a3})) res
+  | EBase b -> 
+    let pr_rel, pr_fml = remove_rel_fml b.formula_struc_base in
+    let pr_rel2, po_rel, struc = match b.formula_struc_continuation with
+      | None -> [],[],None
+      | Some f -> (fun (a1,a2,a3) -> (a1,a2,Some a3)) (remove_rel f) in
+    pr_rel@pr_rel2, po_rel, EBase {b with 
+      formula_struc_base = pr_fml;
+      formula_struc_continuation = struc}
+  | EAssume(svl,f,fl,t) -> 
+    let po_rel, po_fml = remove_rel_fml f in
+    [],po_rel, EAssume(svl,po_fml,fl,t)
+  | EInfer b -> 
+    let pr_rel, po_rel, struc = remove_rel b.formula_inf_continuation in
+    pr_rel, po_rel, EInfer {b with formula_inf_continuation = struc}
+  | EList b -> 
+    let res = List.map (fun (l,e) -> 
+      let pr_rel, po_rel, struc = remove_rel e in
+      pr_rel, po_rel, [(l,struc)]) b in
+    let res = List.fold_left (fun (a1,a2,a3) (b1,b2,b3) -> (a1@b1,a2@b2,a3@b3)) ([],[],[]) res in
+    (fun (a,b,c) -> (a,b,EList c)) res
+  | EOr b -> 
+    let pr_rel1, po_rel1, struc1 = remove_rel b.formula_struc_or_f1 in
+    let pr_rel2, po_rel2, struc2 = remove_rel b.formula_struc_or_f2 in
+    pr_rel1@pr_rel2, po_rel1@po_rel2, EOr {b with formula_struc_or_f1 = struc1;
+                                                  formula_struc_or_f2 = struc2}
 
 
 let rec ctx_no_heap c = match c with 
