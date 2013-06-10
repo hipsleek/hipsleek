@@ -292,6 +292,7 @@ let split_constr_x prog constrs post_hps prog_vars unk_map unk_hps=
   in
   (*END. internal method*)
   let _ = Debug.dinfo_pprint ("before split: " ) no_pos in
+  let _ = Debug.dinfo_pprint ("  constrs: " ^ (let pr = pr_list_ln Cprinter.string_of_hprel_short in pr constrs)) no_pos in
   let _ = Debug.dinfo_pprint ("map: " ^ (let pr = (pr_list (pr_pair (pr_pair !CP.print_sv (pr_list string_of_int)) CP.string_of_xpure_view)) in pr unk_map)) no_pos in
   let new_constrs, new_map = List.fold_left (fun (r_constrs,unk_map) cs ->
       let new_constrs, new_map = split_one cs unk_map in
@@ -299,6 +300,7 @@ let split_constr_x prog constrs post_hps prog_vars unk_map unk_hps=
   ) ([], unk_map) constrs
   in
   let _ = Debug.dinfo_pprint ("after split: " ) no_pos in
+  let _ = Debug.dinfo_pprint ("  constrs: " ^ (let pr = pr_list_ln Cprinter.string_of_hprel_short in pr new_constrs)) no_pos in
   let _ = Debug.dinfo_pprint ("map: " ^ (let pr = (pr_list (pr_pair (pr_pair !CP.print_sv (pr_list string_of_int)) CP.string_of_xpure_view)) in pr new_map)) no_pos in
   (new_constrs, new_map)
 
