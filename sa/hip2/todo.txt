@@ -1349,3 +1349,23 @@ Expecting:
  G(next_43,y_44) ::= emp&next_43=null & prev=UU_HP_1_UU
                                         ^^^^^^^^^^^^^^^
 ===========================================================
+
+# pre-2.slk
+
+relAssume  H // (1)
+ H(x) & x=null --> emp.
+relAssume  HP // (2)
+ H(x) --> x::node<_,next> * HP_2(next) .
+
+shape_infer [H][].
+
+/*
+
+GOT:
+[ H(x) ::= x::node<Anon_11,next>@M& XPURE(HP_2(next))
+        or emp&x=null
+ ]
+
+EXPECTING:
+[ H(x) ::= x::node<Anon_11,next>@M& XPURE(HP_2(next))
+]
