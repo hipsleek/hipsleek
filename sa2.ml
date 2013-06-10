@@ -323,18 +323,18 @@ let get_preds (lhs_preds, lhs_heads, rhs_preds,rhs_heads) cs=
   in
   (lhs_preds@lhs_hps, n_lhs_heads, rhs_preds@rhs_hps,n_rhs_heads)
 
-let do_elim_unused unused_hps cs map=
-  let new_lhs, _ = CF.drop_hrel_f cs.CF.hprel_lhs unused_hps in
-  let new_rhs, _ = CF.drop_hrel_f cs.CF.hprel_rhs unused_hps in
-  ({cs with CF.hprel_lhs = new_lhs; CF.hprel_rhs = new_rhs}, map)
+(* let do_elim_unused unused_hps cs map= *)
+(*   let new_lhs, _ = CF.drop_hrel_f cs.CF.hprel_lhs unused_hps in *)
+(*   let new_rhs, _ = CF.drop_hrel_f cs.CF.hprel_rhs unused_hps in *)
+(*   ({cs with CF.hprel_lhs = new_lhs; CF.hprel_rhs = new_rhs}, map) *)
 
-let do_elim_unused unused_hps cs map=
-  let pr1 = Cprinter.string_of_spec_var_list in
-  let pr2 = Cprinter.string_of_hprel in
-  (* let pr3= (pr_list (pr_pair (pr_list (pr_pair !CP.print_sv string_of_int)) CP.string_of_xpure_view)) in *)
-  let pr3 = (pr_list (pr_pair (pr_pair !CP.print_sv (pr_list string_of_int)) CP.string_of_xpure_view)) in
-  Debug.no_3 "do_elim_unused" pr1 pr2 pr3 (pr_pair pr2 pr3)
-      do_elim_unused unused_hps cs map
+(* let do_elim_unused unused_hps cs map= *)
+(*   let pr1 = !CP.print_svl in *)
+(*   let pr2 = Cprinter.string_of_hprel in *)
+(*   (\* let pr3= (pr_list (pr_pair (pr_list (pr_pair !CP.print_sv string_of_int)) CP.string_of_xpure_view)) in *\) *)
+(*   let pr3 = (pr_list (pr_pair (pr_pair !CP.print_sv (pr_list string_of_int)) CP.string_of_xpure_view)) in *)
+(*   Debug.no_3 "do_elim_unused" pr1 pr2 pr3 (pr_pair pr2 pr3) *)
+(*       do_elim_unused unused_hps cs map *)
 
 let cmp_hpargs_fn (hp1, _) (hp2, _) = CP.eq_spec_var hp1 hp2
 
@@ -351,7 +351,7 @@ let elim_unused_pre_preds post_hps constrs unk_map=
   let unused_pre = (List.map fst unused_pre_preds0) in
   let _ = DD.binfo_pprint ("pre-preds: "  ^ (!CP.print_svl unused_pre) ^" are removed") no_pos in
   let new_constrs,new_map = List.fold_left (fun (ls_cs,map) cs ->
-      let new_cs, n_map = do_elim_unused unused_pre cs map in
+      let new_cs, n_map,_ = SAC.do_elim_unused cs unused_pre map in
       (ls_cs@[new_cs], n_map)
   ) ([], unk_map) constrs in
   let _ = DD.dinfo_pprint ("   After removing, derived:\n" ^ (let pr = pr_list_ln Cprinter.string_of_hprel_short in pr new_constrs)) no_pos in
@@ -382,7 +382,7 @@ let elim_unused_post_preds post_hps constrs unk_map=
   let unused_post = (List.map fst unused_post_preds0) in
   let _ = DD.binfo_pprint ("post-preds: "  ^ (!CP.print_svl unused_post) ^" are removed") no_pos in
   let new_constrs,new_map = List.fold_left (fun (ls_cs,map) cs ->
-      let new_cs, n_map = do_elim_unused unused_post cs map in
+      let new_cs, n_map,_ = SAC.do_elim_unused cs unused_post map in
       (ls_cs@[new_cs], n_map)
   ) ([], unk_map) constrs in
   let _ = DD.dinfo_pprint ("   After removing, derived:\n" ^ (let pr = pr_list_ln Cprinter.string_of_hprel_short in pr new_constrs)) no_pos in

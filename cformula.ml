@@ -5112,7 +5112,7 @@ let remove_com_pures f0 nullPtrs com_eqPures=
       f0 nullPtrs com_eqPures
 
 (*drop HRel in the set hp_names and return corresponding subst of their args*)
-let rec drop_hrel_f f0 hp_names=
+let rec drop_hrel_f_x f0 hp_names=
   let rec helper f=
   match f with
     | Base fb -> let nfb,argsl = drop_hrel_hf fb.formula_base_heap hp_names in
@@ -5126,6 +5126,14 @@ let rec drop_hrel_f f0 hp_names=
       (add_quantifiers qvars nf,argsl)
   in
   helper f0
+
+and drop_hrel_f f0 hp_names=
+  let pr1 = !print_formula in
+  let pr2 = !CP.print_svl in
+  let pr3 (f,_) = pr1 f in
+  Debug.no_2 "drop_hrel_f" pr1 pr2 pr3
+      (fun _ _ -> drop_hrel_f_x f0 hp_names)
+      f0 hp_names
 
 and drop_hrel_hf hf hp_names=
   match hf with
@@ -5149,41 +5157,62 @@ and drop_hrel_hf hf hp_names=
              h_formula_starminus_pos = pos} ->
         let n_hf1,argsl1 = drop_hrel_hf hf1 hp_names in
         let n_hf2,argsl2 = drop_hrel_hf hf2 hp_names in
-        (StarMinus { h_formula_starminus_h1 = n_hf1;
-               h_formula_starminus_h2 = n_hf2;
-               h_formula_starminus_pos = pos}, argsl1@argsl2)        
+        let newf =
+          (match n_hf1,n_hf2 with
+            | (HEmp,HEmp) -> HEmp
+            | (HEmp,_) -> n_hf2
+            | (_,HEmp) -> n_hf1
+            | _ -> (StarMinus { h_formula_starminus_h1 = n_hf1;
+              h_formula_starminus_h2 = n_hf2;
+              h_formula_starminus_pos = pos})
+          ) in
+        (newf, argsl1@argsl2)
     | Conj { h_formula_conj_h1 = hf1;
-             h_formula_conj_h2 = hf2;
-             h_formula_conj_pos = pos} ->
-        let n_hf1,argsl1 = drop_hrel_hf hf1 hp_names in
-        let n_hf2,argsl2 = drop_hrel_hf hf2 hp_names in
-        (Conj { h_formula_conj_h1 = n_hf1;
-               h_formula_conj_h2 = n_hf2;
-               h_formula_conj_pos = pos}, argsl1@argsl2)
+      h_formula_conj_h2 = hf2;
+      h_formula_conj_pos = pos} ->
+          let n_hf1,argsl1 = drop_hrel_hf hf1 hp_names in
+          let n_hf2,argsl2 = drop_hrel_hf hf2 hp_names in
+          let newf =
+            (match n_hf1,n_hf2 with
+              | (HEmp,HEmp) -> HEmp
+              | (HEmp,_) -> n_hf2
+              | (_,HEmp) -> n_hf1
+              | _ -> (Conj { h_formula_conj_h1 = n_hf1;
+                h_formula_conj_h2 = n_hf2;
+                h_formula_conj_pos = pos})
+            ) in
+          (newf, argsl1@argsl2)
     | ConjStar { h_formula_conjstar_h1 = hf1;
-             h_formula_conjstar_h2 = hf2;
-             h_formula_conjstar_pos = pos} ->
-        let n_hf1,argsl1 = drop_hrel_hf hf1 hp_names in
-        let n_hf2,argsl2 = drop_hrel_hf hf2 hp_names in
-        (ConjStar { h_formula_conjstar_h1 = n_hf1;
-               h_formula_conjstar_h2 = n_hf2;
-               h_formula_conjstar_pos = pos}, argsl1@argsl2)
+      h_formula_conjstar_h2 = hf2;
+      h_formula_conjstar_pos = pos} ->
+          let n_hf1,argsl1 = drop_hrel_hf hf1 hp_names in
+          let n_hf2,argsl2 = drop_hrel_hf hf2 hp_names in
+          let newf =
+            (match n_hf1,n_hf2 with
+              | (HEmp,HEmp) -> HEmp
+              | (HEmp,_) -> n_hf2
+              | (_,HEmp) -> n_hf1
+              | _ -> (ConjStar { h_formula_conjstar_h1 = n_hf1;
+                h_formula_conjstar_h2 = n_hf2;
+                h_formula_conjstar_pos = pos})
+            ) in
+          (newf, argsl1@argsl2)
     | ConjConj { h_formula_conjconj_h1 = hf1;
-             h_formula_conjconj_h2 = hf2;
-             h_formula_conjconj_pos = pos} ->
-        let n_hf1,argsl1 = drop_hrel_hf hf1 hp_names in
-        let n_hf2,argsl2 = drop_hrel_hf hf2 hp_names in
-        (ConjConj { h_formula_conjconj_h1 = n_hf1;
-               h_formula_conjconj_h2 = n_hf2;
-               h_formula_conjconj_pos = pos}, argsl1@argsl2)
+      h_formula_conjconj_h2 = hf2;
+      h_formula_conjconj_pos = pos} ->
+          let n_hf1,argsl1 = drop_hrel_hf hf1 hp_names in
+          let n_hf2,argsl2 = drop_hrel_hf hf2 hp_names in
+          (ConjConj { h_formula_conjconj_h1 = n_hf1;
+          h_formula_conjconj_h2 = n_hf2;
+          h_formula_conjconj_pos = pos}, argsl1@argsl2)
     | Phase { h_formula_phase_rd = hf1;
-              h_formula_phase_rw = hf2;
-              h_formula_phase_pos = pos} ->
-        let n_hf1,argsl1 = drop_hrel_hf hf1 hp_names in
-        let n_hf2,argsl2 = drop_hrel_hf hf2 hp_names in
-        (Phase { h_formula_phase_rd = n_hf1;
-              h_formula_phase_rw = n_hf2;
-              h_formula_phase_pos = pos},argsl1@argsl2) 
+      h_formula_phase_rw = hf2;
+      h_formula_phase_pos = pos} ->
+          let n_hf1,argsl1 = drop_hrel_hf hf1 hp_names in
+          let n_hf2,argsl2 = drop_hrel_hf hf2 hp_names in
+          (Phase { h_formula_phase_rd = n_hf1;
+          h_formula_phase_rw = n_hf2;
+          h_formula_phase_pos = pos},argsl1@argsl2) 
     | DataNode hd -> (hf,[])
     | ViewNode hv -> (hf,[])
     | HRel (id,args,_) -> if CP.mem_svl id hp_names then (HEmp, [args])

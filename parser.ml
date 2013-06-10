@@ -1050,14 +1050,14 @@ cid_typ:
       let _ =
         (* WN : code below uses side-effects and may also result in relational name clashes *)
         if is_RelT ut then
-          (* let _ = print_endline ("ll: " ^ id) in *)
+          (* let _ = print_endline ("ll 1: " ^ id) in *)
           let _ = rel_names # push id in
           (* let rd = get_tmp_rel_decl () in *)
          (*  let rd = {rd with rel_name = id} in *)
         (* (\*push rd in the list*\) *)
         (*   let _ = g_rel_defs # push rd in *)
           ()
-        else ()
+        else (* let _ = print_endline ("ll: " ^ id)  in *) ()
       in
         (ut,id)
    ]];
@@ -1273,7 +1273,10 @@ simple_heap_constr:
       (match hal with
         | ([],t) -> F.mkHeapNode2 c generic_pointer_type_name dr (F.ConstAnn(Mutable)) false false false frac t [] ofl (get_pos_camlp4 _loc 2)
         | (t,_)  -> F.mkHeapNode c generic_pointer_type_name dr (F.ConstAnn(Mutable)) false false false frac t [] ofl (get_pos_camlp4 _loc 2))
-   | `IDENTIFIER id; `OPAREN; cl = opt_cexp_list; `CPAREN -> F.HRel(id, cl, (get_pos_camlp4 _loc 2))
+   | `IDENTIFIER id; `OPAREN; cl = opt_cexp_list; `CPAREN ->
+         (* if hp_names # mem id then *)
+           F.HRel(id, cl, (get_pos_camlp4 _loc 2))
+         (* else report_error (get_pos 1) ("should be a heap pred, not pure a relation here") *)
    | `HTRUE -> F.HTrue
    | `EMPTY -> F.HEmp
     ]];
@@ -1509,7 +1512,8 @@ cexp_w:
        *)
 	  (* print_string ("rel: "^id^"!!!\n"); *)
 	  if func_names # mem id then Pure_c (P.Func (id, cl, get_pos_camlp4 _loc 1))
-          else if hp_names # mem id then Pure_f(P.BForm ((P.RelForm (id, cl, get_pos_camlp4 _loc 1), None), None))
+          else if hp_names # mem id then (* Pure_f(P.BForm ((P.RelForm (id, cl, get_pos_camlp4 _loc 1), None), None)) *)
+            report_error (get_pos 1) ("should be a heap pred, not pure a relation here")
           else
             begin
               if not(rel_names # mem id) then print_endline ("WARNING : parsing problem "^id^" is neither a ranking function nor a relation nor a heap predicate");

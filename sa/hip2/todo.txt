@@ -1163,7 +1163,7 @@ since HP_1 is the dangling predicate..
 
 
 =================================================
-# ll-getnext2a.slk  
+# ll-getnext2a.slk : FIXED
 
 relAssume  H
  H(x)  --> x::node<_,nn>@M * HP_6(nn).
@@ -1192,8 +1192,8 @@ However, separately pre/post inference for
   post-pred H in ll-getnext2a2.slk
   pre-pred H in  ll-getnext2a3.slk
 seems to work OK.
-
-# ll-getnext2-1.slk  
+======================================================
+# ll-getnext2-1.slk: FIXED
 
 parser error here:
 XPURE(..) can be used in RHS but not LHS, as below.
@@ -1205,7 +1205,7 @@ Can this error be fixed.
 
 ===========================================================
 
-# ll-getnext2-1.slk --sa-inlining
+# ll-getnext2-1.slk --sa-inlining: FIXED
 
 How come --sa-inlining did not have UU_HP_6_UU?
 
@@ -1229,7 +1229,7 @@ shape_infer [][G].
 
 ===========================================================
 
-# loc-4a2.slk 
+# loc-4a2.slk: FIXED
 
 BUT why did we get: so many "emp" below!
 ========================================
@@ -1261,7 +1261,7 @@ However, loc-1b1.slk (looks OK)
 
 ===========================================================
 
-# loc-1b2.slk 
+# loc-1b2.slk: FIXED
 
 !!! after remove redundant:[HP_RELDEFN G:  G(next_43,y_44) ::=  emp&next_43=null &  XPURE(HP_1(prev,y_44))]
 ERROR: at _0:0_0:0 
