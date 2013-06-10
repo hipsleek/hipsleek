@@ -711,7 +711,7 @@ let process_shape_infer pre_hps post_hps=
       in
       if not(rel_defs# is_empty) then
         print_endline "";
-      print_endline "*************************************";
+      print_endline "\n*************************************";
       print_endline "*******relational definition ********";
       print_endline "*************************************";
       print_endline (Sa2.rel_def_stk # string_of_reverse);
@@ -742,7 +742,7 @@ let process_shape_infer_prop pre_hps post_hps=
       let rel_defs =  Sa2.rel_def_stk in
       if not(rel_defs# is_empty) then
         print_endline "";
-      print_endline "*************************************";
+      print_endline "\n*************************************";
       print_endline "*******relational definition ********";
       print_endline "*************************************";
       print_endline (Sa2.rel_def_stk # string_of_reverse);
@@ -773,10 +773,10 @@ let process_shape_split pre_hps post_hps=
   let sel_hp_rels = pre_hp_rels@post_hp_rels in
   let constrs1, unk_map, unk_hpargs = SAC.detect_dangling_pred !sleek_hprel_assumes sel_hp_rels [] in
   let new_constrs,_ = Sa2.split_constr !cprog constrs1 post_hp_rels infer_vars unk_map (List.map fst unk_hpargs) in
-  let pr1 = pr_list_ln Cprinter.string_of_hprel in
+  let pr1 = pr_list_ln Cprinter.string_of_hprel_short in
   begin
-    print_endline "*************************************";
-    print_endline "*******relational assumption ********";
+    print_endline "\n*************************************";
+    print_endline "*******relational assumptions (1) ********";
     print_endline "*************************************";
     print_endline (pr1 new_constrs);
     print_endline "*************************************";

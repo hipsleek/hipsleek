@@ -2389,7 +2389,7 @@ and check_proc (prog : prog_decl) (proc : proc_decl) cout_option (mutual_grp : p
                       begin
                         print_endline ""; 
                         print_endline "*************************************";
-                        print_endline "*******relational assumption ********";
+                        print_endline "*******relational assumptions (4) ********";
                         print_endline "*************************************";
                         print_endline (Infer.rel_ass_stk # string_of_reverse);
                         print_endline "*************************************" 

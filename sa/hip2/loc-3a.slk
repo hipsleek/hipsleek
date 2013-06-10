@@ -20,7 +20,7 @@ relAssume  HP_2 // (3)
 shape_infer [H,HP_2][G].
 
 /*
-SOLUTION:
+SOLUTION for shape_infer:
 (1) determine dangling predicates
     and convert to using XPURE(..)
 (2) split pre/post predicate for base cases

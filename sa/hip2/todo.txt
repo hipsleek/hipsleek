@@ -1305,6 +1305,19 @@ Problems:
 ===========================================================
 # loc-1b1.slk 
 
+How come we now have below? where did next=null and  XPURE(G(next,y)) 
+come from? It seems the detection of dangling predicate is having
+problem again
+
+[ HP_2(next_37,y_40) ::= emp& XPURE(HP_2(next_37,y_40)),
+ H(x,y) ::= 
+ x::node<Anon_11,prev,next>@M& XPURE(HP_1(prev,y)) &  XPURE(HP_2(next,y))
+ or x::node<Anon_36,prev_38,next_37>@M&next=null &  XPURE(HP_2(next_37,y)) & 
+     XPURE(G(next,y))
+ ,
+ G(next,y) ::= emp&next=null &  XPURE(HP_1(prev,y))]
+
+
 You generated:
  HP_2(next,y) ::= emp& XPURE(HP_2(next,y)),
  H(x_41,y_42) ::= x_41::node<Anon_11,prev,next>@M& XPURE(HP_1(prev,y_42)) & 

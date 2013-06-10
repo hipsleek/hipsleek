@@ -3716,7 +3716,7 @@ let infer_hps_x prog proc_name (hp_constrs: CF.hprel list) sel_hp_rels sel_post_
   let constrs2 = constrs1d in
   let _ =
     if !Globals.sa_print_inter then
-      let _ = print_string "\n\n*******relational assumptions ********" in
+      let _ = print_string "\n\n*******relational assumptions (2) ********" in
       let _ = DD.info_pprint
         ((let pr = pr_list_ln Cprinter.string_of_hprel in pr constrs2) ) no_pos in
       ()
@@ -3738,7 +3738,7 @@ let infer_hps_x prog proc_name (hp_constrs: CF.hprel list) sel_hp_rels sel_post_
   let unk_hpargs0 = List.filter (fun (hp,_) -> not (CP.mem_svl hp non_unk_hps)) unk_hps in
   let _ =
     if !Globals.sa_print_inter then
-      let _ = print_string "\n\n*******relational assumptions ********\n" in
+      let _ = print_string "\n\n*******relational assumptions (3) ********\n" in
       let _ = DD.info_pprint
         ((let pr = pr_list_ln Cprinter.string_of_hprel_short in pr cs) ) no_pos in
       let _ = print_endline "\n\n*******partial definitions ********" in
