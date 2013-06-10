@@ -472,6 +472,11 @@ let get_var_opt (e:exp) =
     | Var (v,_) -> Some v
     | _ -> None
 
+let filter_vars lv = 
+	List.fold_left (fun a c -> match c with 
+		| Var (v,_)-> v::a
+		| _ -> a) [] lv
+		
 let rec exp_contains_spec_var (e : exp) : bool =
   match e with
   | Var (SpecVar (t, _, _), _) -> true

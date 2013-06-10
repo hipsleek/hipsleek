@@ -9261,7 +9261,11 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
 				let lhs_xpure,_,_ = xpure prog estate.es_formula in
 					(*if CP.intersect rhs_als estate.es_infer_vars = [] && List.exists CP.is_node_typ estate.es_infer_vars then None,[] else*) 
 				let msg = "M_infer_heap :"^(Cprinter.string_of_h_formula rhs) in
+				let h_inf_args = get_heap_inf_args estate in
+				let h_inf_args_add = Gen.BList.difference_eq CP.eq_spec_var h_inf_args estate.es_infer_vars in
+				let estate = {estate with es_infer_vars = estate.es_infer_vars@h_inf_args_add} in
 				let r_inf_contr,relass = Inf.infer_lhs_contra_estate estate lhs_xpure pos msg in
+				let estate = {estate with es_infer_vars = Gen.BList.difference_eq CP.eq_spec_var estate.es_infer_vars h_inf_args_add} in
                 begin 
 				 match r_inf_contr with
                   | Some (new_estate,pf) -> (* if successful, should skip infer_collect_hp_rel below *)
@@ -9276,6 +9280,7 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
 						  | _ -> r1 in
 						(r1,prf)
                   | None ->
+						  
                          let (res,new_estate, n_lhs, orhs_b) = Inf.infer_collect_hp_rel 1 prog estate rhs rhs_rest rhs_h_matched_set lhs_b rhs_b pos in
 						(* Debug.info_hprint (add_str "DD: n_lhs" (Cprinter.string_of_h_formula)) n_lhs pos; *)
 						if (not res) then r 

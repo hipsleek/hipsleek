@@ -12416,3 +12416,24 @@ let add_struc_unfold_num (f : struc_formula) uf =
 				let (h,r) = pick_view_node s.h_formula_star_h2 aset in 
 				(mkStarH h s.h_formula_star_h1 no_pos, r))
 	| _ -> (h, None)
+
+let f_fst l ( _ :'a) = l
+	
+let rec find_nodes e l=
+	 let f_heap_f l h  = match h with
+	  | HRel (p,vl, _) ->
+			let vl = if (List.exists (CP.eq_spec_var p) l) then CP.filter_vars vl else [] in
+			Some(h,vl)
+	  | _ -> None in 
+	 let f_memo = (fun _ a-> Some (a,[])),(fun a _->(a,[])),(fun _ a-> (a,[[]])),(fun a _ -> (a,[])),(fun a _ -> (a,[])) in
+	 let f_pure = (fun _ a -> Some (a,[])),(fun _ a -> Some (a,[])),(fun _ a -> Some (a,[])) in
+	 let f = (fun _ -> None), (fun _ _-> None), f_heap_f, f_pure, f_memo in
+	 let f_arg = l, f_fst, f_fst, (f_fst, f_fst, f_fst), f_fst in
+	trans_formula e l f f_arg (fun l1 -> List.concat l1)
+
+let rec get_heap_inf_args estate = 
+  let _, get_nodes = find_nodes estate.es_formula estate.es_infer_vars_hp_rel in
+   get_nodes
+
+
+
