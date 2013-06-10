@@ -18,5 +18,5 @@ relAssume G
    XPURE(HP_6(r))
    --> G(x,r).
 
-shape_infer [][G].
+shape_infer_proper [][G].
 

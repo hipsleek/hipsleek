@@ -15,7 +15,9 @@ relAssume  H // (1)
 relAssume  HP_2 // (2)
   HP_2(next,y) & next!=null --> H(next,y).
 relAssume  HP_2 // (3)
-  HP_2(next,y) & next=null  -->  G(next,y).
+  HP_2(next,y) & next=null  -->  emp.
+relAssume  G // (3)
+  x::node<_,_, null>  -->  G(x,y).
 
 shape_infer [H,HP_2][G].
 
@@ -23,21 +25,16 @@ shape_infer [H,HP_2][G].
 Expecting:
 
 After pre-process (dangling predicate detecting, spliting):
-
-  H(x,y) --> x::node<_,prev, next> *  HP_2(next,y) & XPURE(HP_1(prev,y) .
+ H(x,y) --> x::node<_,prev, next> * HP_1(prev,y) *  HP_2(next,y) .
   HP_2(next,y) & next!=null --> H(next,y).
-  HP_2(next,y) & next=null  -->  emp
-  next=null --> G(next,y).
 
 
 Final solution:
-
-[ H(x_86,y_87) ::= x_86::node<Anon_11,prev,next>@M 
-                * (HP_2(next,y_87))& XPURE(HP_1(prev,y_87)),
- HP_2(next_88,y_89) ::= 
- emp&next_88=null
- or next_88::node<Anon_11,prev,next>@M * (HP_2(next,y_89))&
-     XPURE(HP_1(prev,y_89))
- ,
- G(next_90,y_91) ::= emp&next_90=null]
+[ H(x_104,y_105) ::= x_104::node<Anon_11,prev,next>@M * (HP_2(next,y_105))&
+ XPURE(HP_1(prev,y_105)),
+ HP_2(next_106,y_107) ::= next_106::node<Anon_11,prev,next>@M * (HP_2(next,y_107))&
+ XPURE(HP_1(prev,y_107)),
+ G(x_108,y_109) ::= EXISTS(flted_18_36: (emp) & x_108::node<Anon_12,Anon_13,flted_18_36>@M&
+flted_18_36=null&[]]
+*
 */
