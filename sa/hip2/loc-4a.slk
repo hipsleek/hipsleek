@@ -30,8 +30,6 @@ After pre-process (dangling predicate detecting, spliting):
   x::node<_,_, null>  -->  G(x,y).
 
 
-Final solution:
-
 GOT:
 [ H(x_104,y_105) ::= x_104::node<Anon_11,prev,next>@M * (HP_2(next,y_105))&
  XPURE(HP_1(prev,y_105)),
@@ -50,6 +48,8 @@ EXPECTING (same as loc-4a1.slk):
  ,
  G(x_106,y_107) ::= EXISTS(flted_20_40: x_106::node<_,_,flted_20_40>@M&
 flted_20_40=null&[]]
+
+I think there is a problem with split_base (see loc-4a3.slk)
 
 
 */

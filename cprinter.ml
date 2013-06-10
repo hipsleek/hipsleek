@@ -128,6 +128,7 @@ let op_star_short = "*"
 let op_starminus_short = "*-" 
 let op_phase_short = ";"  
 let op_conj_short = "&"  
+let op_conjsep_short = "/&\\"  
 let op_conjstar_short = "&*" 
 let op_conjconj_short = "&&" 
 let op_f_or_short = "or"  
@@ -1112,10 +1113,10 @@ let rec prtt_pr_h_formula h =
           let args = arg1@arg2 in
           fmt_string "("; pr_list_op op_phase f_b args; fmt_string ")" 
     | Conj ({h_formula_conj_h1 = h1; h_formula_conj_h2 = h2; h_formula_conj_pos = pos}) -> 
-	      let arg1 = bin_op_to_list op_conj_short h_formula_assoc_op h1 in
-          let arg2 = bin_op_to_list op_conj_short h_formula_assoc_op h2 in
+	      let arg1 = bin_op_to_list op_conjsep_short h_formula_assoc_op h1 in
+          let arg2 = bin_op_to_list op_conjsep_short h_formula_assoc_op h2 in
           let args = arg1@arg2 in
-          pr_list_op op_conj f_b args
+          pr_list_op op_conjsep_short f_b args
     | DataNode ({h_formula_data_node = sv;
       h_formula_data_name = c;
 	  h_formula_data_derv = dr;

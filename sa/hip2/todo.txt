@@ -1268,3 +1268,69 @@ ERROR: at _0:0_0:0
 Message: sac.obtain_xpure
  Fatal error: exception Failure("sac.obtain_xpure")
 
+===========================================================
+
+# loc-4a3.slk
+
+1. split-base caused problem with loc-4a.slk
+
+2. please print input/output of split-base in -dd
+   so that we can visualize its effects without
+   having to write another sleek file.
+
+relAssume  G // (3)
+  HP_2(next,y) & x::node<_,_, null>  & next=null  -->  G(x,y).
+
+shape_split_base [HP_2][G].
+
+/*
+GOT:
+
+[ RELASS [G] unknown svl: ;  unknown hps: ;  predefined: ; 
+   EXISTS(flted_14_22: 
+   x::node<Anon_11,Anon_12,flted_14_22>@M&next=null & flted_14_22=null&
+   [] --> G(x,y)&true,
+ RELASS [HP_2] unknown svl: ;  unknown hps: ;  predefined: ; 
+   HP_2(next,y)/&\(emp)&next=null --> emp&true
+
+Expecting:
+   x::node<Anon_11,Anon_12,flted_14_22>@M 
+      & flted_14_22=null --> G(x,y)&true,
+   HP_2(next,y) & next=null --> emp&true]
+
+Problems:
+   (i)   next=null should not be in the first --> G(..)
+   (ii) /&\emp should not be present in 2nd -->
+*/
+
+# loc-1b1.slk 
+
+You generated:
+ HP_2(next,y) ::= emp& XPURE(HP_2(next,y)),
+ H(x_41,y_42) ::= x_41::node<Anon_11,prev,next>@M& XPURE(HP_1(prev,y_42)) & 
+ XPURE(HP_2(next,y_42)),
+ G(next_43,y_44) ::= emp&next_43=null &  XPURE(HP_1(prev,y_44))]
+which seems to have identified HP_2 as a dangling predicate.
+
+However, I think there is no necessity to provide a definition
+for it:
+ HP_2(next,y) ::= emp& XPURE(HP_2(next,y)),
+
+I think it is probably more deterministic to just generate:
+ H(x_41,y_42) ::= x_41::node<Anon_11,prev,next>@M *
+                    HP_2(next,y_42) & XPURE(HP_1(prev,y_42))
+ G(next_43,y_44) ::= emp&next_43=null &  XPURE(HP_1(prev,y_44))]
+
+--sa-inlining gave:
+
+ HP_2(next,y) ::= emp&UU_HP_2_UU=next,
+ H(x_41,y_42) ::= x_41::node<Anon_11,UU_HP_1_UU,UU_HP_2_UU>@M&true,
+ G(next_43,y_44) ::= emp&next_43=null]
+
+Expecting:
+
+ H(x_41,y_42) ::= x_41::node<Anon_11,UU_HP_1_UU,next) 
+     * HP_2(next,y_42) &true,
+       ^^^^^^^^^^^^^^^
+ G(next_43,y_44) ::= emp&next_43=null & prev=UU_HP_1_UU
+                                        ^^^^^^^^^^^^^^^
