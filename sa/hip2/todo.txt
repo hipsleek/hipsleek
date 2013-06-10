@@ -1435,7 +1435,7 @@ is at this step or the one before??
 */
 
 ===================================================
-# pre-2c.slk 
+# pre-2c.slk: FIXED
 
 relAssume  H // (1)
  H(x) --> x=null.
@@ -1461,7 +1461,7 @@ relAssume  HP // (2)
  H(x) --> x::node<_,next> * next::node<_,_>.
 
 ===================================================
-# pre-2d.slk 
+# pre-2d.slk: FIXED
 
 relAssume  H // (1)
  H(x) --> x::node<_,next> & next=null.
@@ -1481,7 +1481,7 @@ EXPECT
       --> x::node<_,next> & (next=null /\ XPURE(HP_2(next)) 
 
 ===================================================
-# pre-2e.slk 
+# pre-2e.slk: FIXED
 
 relAssume  H // (1)
  H(x) --> x::node<_,next> .
@@ -1507,7 +1507,7 @@ EXPECT
 
 */
 ===================================================
-# pre-2f.slk 
+# pre-2f.slk: FIXED
 
 /*
 

@@ -465,7 +465,7 @@ let get_par_defs_pre constrs0 =
   )
       ([], []) constrs0
 
-let combine_pdefs_pre_x pr_pdefs=
+let combine_pdefs_pre_x prog unk_hps pr_pdefs=
   let rec partition_pdefs_by_hp_name pdefs parts=
     match pdefs with
       | [] -> parts
@@ -482,12 +482,14 @@ let combine_pdefs_pre_x pr_pdefs=
             [(hp,args,unk_svl, cond, lhs, Some nf)]
       | None -> report_error no_pos "sa2.combine_pdefs_pre: should not None 1"
   in
-  let mkAnd_w_opt ss of1 of2=
+  let mkAnd_w_opt args ss of1 of2=
     match of1,of2 with
       | Some f1, Some f2 ->
+            let pos = CF.pos_of_formula f1 in
             let new_f2 = CF.subst ss f2 in
-            let f = (CF.mkConj_combine f1 new_f2 CF.Flow_combine no_pos) in
-        if SAU.is_unsat f then
+            let f = SAU.norm_and_heap prog args unk_hps [] f1 new_f2 pos in
+            (* let f = (CF.mkConj_combine f1 new_f2 CF.Flow_combine no_pos) in *)
+        if CF.isAnyConstFalse f || SAU.is_unsat f then
           false, Some f
         else true, Some f
       | None, None -> true, None
@@ -511,8 +513,8 @@ let combine_pdefs_pre_x pr_pdefs=
     let norm_cond_disj3 = CP.mkAnd norm_cond2 norm_cond1 no_pos in
     let pdef3 = if (TP.is_sat_raw (MCP.mix_of_pure norm_cond_disj3)) then
       let ss = List.combine args2 args1 in
-      let is_sat1, n_orhs = mkAnd_w_opt ss orhs1 orhs2 in
-      let is_sat2, n_olhs = mkAnd_w_opt ss olhs1 olhs2 in
+      let is_sat1, n_orhs = mkAnd_w_opt args1 ss orhs1 orhs2 in
+      let is_sat2, n_olhs = mkAnd_w_opt args1 ss olhs1 olhs2 in
       let npdef3 = if is_sat1 && is_sat2 then
         do_combine (hp1,args1,unk_svl1,CP.mkAnd norm_cond1 norm_cond2 no_pos, n_olhs, n_orhs)
       else [(hp1,args1,unk_svl1,CP.mkAnd norm_cond1 norm_cond2 no_pos, olhs1, Some (CF.mkFalse_nf no_pos))]
@@ -601,12 +603,12 @@ let combine_pdefs_pre_x pr_pdefs=
   ) ([],[]) ls_pr_pdefs
 (*retain depended constraints*)
 
-let combine_pdefs_pre pr_pdefs=
+let combine_pdefs_pre prog unk_hps pr_pdefs=
   let pr1= pr_list_ln Cprinter.string_of_hprel_short in
   let pr2 = SAU.string_of_par_def_w_name in
   let pr3 (pdef, _) = pr2 pdef in
   Debug.no_1 "combine_pdefs_pre" (pr_list_ln pr3) (pr_pair (pr_list_ln pr2) pr1)
-      (fun _ -> combine_pdefs_pre_x pr_pdefs) pr_pdefs
+      (fun _ -> combine_pdefs_pre_x prog unk_hps pr_pdefs) pr_pdefs
 (***************************************************************
                       END PARTIAL DEFS
 ****************************************************************)
@@ -1202,7 +1204,7 @@ let infer_shapes_init_pre_x prog (constrs0: CF.hprel list) callee_hps non_ptr_un
   let _ = DD.binfo_pprint ">>>>>> pre-predicates: step pre-5: group & simpl impl<<<<<<" no_pos in
   let pr_par_defs,rem_constr1 = get_par_defs_pre constrs0 in
   let _ = DD.binfo_pprint ">>>>>> pre-predicates: step pre-6: combine<<<<<<" no_pos in
-  let par_defs, rem_constrs2 = combine_pdefs_pre pr_par_defs in
+  let par_defs, rem_constrs2 = combine_pdefs_pre prog (List.map fst unk_hps1) pr_par_defs in
   let _ = DD.binfo_pprint ">>>>>> pre-predicates: step pre-7: remove redundant x!=null: not implemented yet<<<<<<" no_pos in
   let _ = DD.binfo_pprint ">>>>>> pre-predicates: step pre-8: strengthen<<<<<<" no_pos in
   let rem_constrs3, hp_defs, defined_hps = generalize_hps prog callee_hps unk_hps1 sel_post_hps constrs0 par_defs in
