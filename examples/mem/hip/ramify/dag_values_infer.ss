@@ -6,20 +6,20 @@ data node {
 
 
 dag<v,M> == self = null //& M = {}
-	or self::node<0,l,r> * l::dag<0,Ml> & r::dag<0,Mr> & v=0 
+	or self::node<0,l,r> * l::dag<0,Ml> U* r::dag<0,Mr> & v=0 
 	// & M = union(Ml,Mr,{self}) 
-	or self::node<0,l,r> * l::dag<_,Ml> & r::dag<_,Mr> & v=1
+	or self::node<0,l,r> * l::dag<_,Ml> U* r::dag<_,Mr> & v=1
 	// & M = union(Ml,Mr,{self}) 
-	or self::node<1,l,r> * l::dag<2,Ml> & r::dag<2,Mr> & v=2
+	or self::node<1,l,r> * l::dag<2,Ml> U* r::dag<2,Mr> & v=2
 	// & M = union(Ml,Mr,{self}) 
 	inv true
         memE M->();
 	//memE M->(node<@M,@M,@M> & v != 2 ; node<1@M,@M,@M> & v = 2);
 	
 dag2<v,M> == self = null //& M = {}
-	or self::node<0,l,r> * l::dag2<_,Ml> & r::dag2<_,Mr> & v = 0
+	or self::node<0,l,r> * l::dag2<_,Ml> U* r::dag2<_,Mr> & v = 0
 	// & M = union(Ml,Mr,{self}) 
-	or self::node<1,l,r> * l::dag2<1,Ml> & r::dag2<1,Mr> & v = 1
+	or self::node<1,l,r> * l::dag2<1,Ml> U* r::dag2<1,Mr> & v = 1
 	// & M = union(Ml,Mr,{self}) 
 	inv true
 	memE M->();

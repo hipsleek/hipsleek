@@ -7,8 +7,8 @@ data node {
 
 
 graph<v,M> == self = null & M = {}
-	or self::node<0,_@A,l,r> * l::graph<_,Ml> & r::graph<_,Mr> & M = union(Ml,Mr,{self}) & v = 0
-	or self::node<1,_@A,l,r> * l::graph<1,Ml> & r::graph<1,Mr> & M = union(Ml,Mr,{self}) & v = 1
+	or self::node<0,_@A,l,r> U* (l::graph<_,Ml> U* r::graph<_,Mr>) & M = union(Ml,Mr,{self}) & v = 0
+	or self::node<1,_@A,l,r> U* (l::graph<1,Ml> U* r::graph<1,Mr>) & M = union(Ml,Mr,{self}) & v = 1
 	inv true
 	memE M->(node<@M,@A,@M,@M> & v = 0 ; node<1@M,@A,@M,@M> & v != 0);
 
@@ -36,8 +36,8 @@ mark(r);
 }
 
 void sweep(ref node free, node x, ref node p)
-  requires free::ll<0,Mf> * (x::graph<1,M> & p::ll<_,Mp>)
-  ensures free'::ll<0,Mf2> * (x::graph<1,M> & p'::ll<_,Mp2>);
+  requires free::ll<0,Mf> * (x::graph<1,M> U* p::ll<_,Mp>)
+  ensures free'::ll<0,Mf2> * (x::graph<1,M> U* p'::ll<_,Mp2>);
 {
 //mark(x);
 if(p == null) return;
@@ -57,8 +57,8 @@ requires free::ll<0,Mf> * p::node<_,q,_@A,_@A> * q::ll<_,Mq>
 ensures p::node<0,free,_@A,_@A> * free::ll<0,Mf> * q::ll<_,Mq> & p' = q & free' = p; 
 
 void collect(ref node alloted, node x, ref node free)
-  requires free::ll<0,Mf> * (x::graph<_,M> & alloted::ll<_,Mp>)
-  ensures free'::ll<0,Mf2> * (x::graph<1,M> & alloted'::ll<_,Mp2>);
+  requires free::ll<0,Mf> * (x::graph<_,M> U* alloted::ll<_,Mp>)
+  ensures free'::ll<0,Mf2> * (x::graph<1,M> U* alloted'::ll<_,Mp2>);
 {
 mark(x);
 sweep(free,x,alloted);

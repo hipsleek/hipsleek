@@ -6,20 +6,20 @@ data node {
 
 
 graph<v,M> == self = null // & M = {} 
-	or self::node<0,l,r> & (l::graph<0,Ml> & r::graph<0,Mr>) & v=0
+	or self::node<0,l,r> U* (l::graph<0,Ml> U* r::graph<0,Mr>) & v=0
 	// & M = union(Ml,Mr,{self}) 
-	or self::node<0,l,r> & (l::graph<_,Ml> & r::graph<_,Mr>) & v=1
+	or self::node<0,l,r> U* (l::graph<_,Ml> U* r::graph<_,Mr>) & v=1
 	// & M = union(Ml,Mr,{self}) 
-	or self::node<1,l,r> & (l::graph<2,Ml> & r::graph<2,Mr>) & v=2
+	or self::node<1,l,r> U* (l::graph<2,Ml> U* r::graph<2,Mr>) & v=2
 	// & M = union(Ml,Mr,{self}) 
 	inv true
 	memE M->();
 	//memE M->(node<@M,@M,@M> & v!=2 ; node<1@M,@M,@M> & v = 2);
 	
 graph2<v,M> == self = null // & M = {}
-	or self::node<0,l,r> * l::graph2<_,Ml> & r::graph2<_,Mr> & v = 0
+	or self::node<0,l,r> U* (l::graph2<_,Ml> U* r::graph2<_,Mr>) & v = 0
 	//& M = union(Ml,Mr,{self}) 
-	or self::node<1,l,r> * l::graph2<1,Ml> & r::graph2<1,Mr> & v = 1
+	or self::node<1,l,r> U* (l::graph2<1,Ml> U* r::graph2<1,Mr>) & v = 1
 	//& M = union(Ml,Mr,{self}) 
 	inv true
 	memE M->();

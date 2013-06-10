@@ -19,13 +19,13 @@ lseg<R,p> == self = p //& R = {}
 	memE R->();
 	//memE R->(node<@M,@M>);
 
-lemma self::ll<R> *- x::node<_,p> & x in R -> self::lseg<R1,x> * p::ll<R2> & R = union(R1,R2,{x});
+lemma x::node<_,p> -* self::ll<R>  & x in R -> self::lseg<R1,x> * p::ll<R2> & R = union(R1,R2,{x});
 
 global node cached;
 global node q;
 
 void delete_cache(ref node cached, node q)
-requires  cached::node<_,p> & q::ll<M> & cached in M
+requires  cached::node<_,p> U* q::ll<M> & cached in M
 ensures q::lseg<M1,cached> * p::ll<M2> & M = union(M1,M2,{cached}) & cached' = null; 
 {
 	delete(cached);
@@ -65,8 +65,8 @@ void add_in(int key, ref node cached, node q)
 requires cached::node<_,_> & q::ll<R> 
 ensures  cached'::node<_,_> & q::ll<R>;
 */
-requires cached::node<_,_> & q::ll<R> 
-ensures  cached'::node<key,_> & q::ll<R1>;
+requires cached::node<_,_> U* q::ll<R> 
+ensures  cached'::node<key,_> U* q::ll<R1>;
 {
   node x,tmp;
   //tmp = find_L(q,key);
@@ -86,14 +86,14 @@ requires q::ll<Rq> & cached::node<_,_>
 ensures  q::lseg<R1,res> * res::node<key,q2> * q2::ll<R2> & cached'::node<key,_> & Rq = union(R1,R2,{res});
 */
 
-requires q::ll<Rq> & cached::node<k,_> & key = k
-ensures  q::ll<Rq> & cached::node<k,_> & res = cached;
+requires q::ll<Rq> U* cached::node<k,_> & key = k
+ensures  q::ll<Rq> U* cached::node<k,_> & res = cached;
 
-requires q::ll<Rq> & cached::node<k,_> & key != k & flag != 1
-ensures res::node<key,_> * q::ll<Rq> & cached'::node<_,_>;
+requires q::ll<Rq> U* cached::node<k,_> & key != k & flag != 1
+ensures res::node<key,_> * q::ll<Rq> U* cached'::node<_,_>;
 
-requires q::ll<Rq> & cached::node<k,_> & key != k & flag = 1
-ensures res::node<key,_> * q::ll<Rq> & cached'::node<_,_> ;
+requires q::ll<Rq> U* cached::node<k,_> & key != k & flag = 1
+ensures res::node<key,_> * q::ll<Rq> U* cached'::node<_,_> ;
 
 /*
 requires q::ll<Rq> & cached::node<k,_> & key != k
