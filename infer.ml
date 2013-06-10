@@ -641,7 +641,7 @@ let infer_lhs_contra_estate e f pos msg =
   let pr0 = !print_entail_state_short in
   let pr = !print_mix_formula in
   let pr_res = pr_pair (pr_option (pr_pair pr0 !CP.print_formula)) (fun l -> (string_of_int (List.length l))) in
-  Debug.to_2 "infer_lhs_contra_estate" pr0 pr pr_res (fun _ _ -> infer_lhs_contra_estate e f pos msg) e f
+  Debug.no_2 "infer_lhs_contra_estate" pr0 pr pr_res (fun _ _ -> infer_lhs_contra_estate e f pos msg) e f
 
 (*
    should this be done by ivars?
