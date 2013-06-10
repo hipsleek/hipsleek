@@ -696,7 +696,7 @@ let present_in (orig_ls:CP.formula list) (new_pre:CP.formula) : bool =
   (* List.exists (fun a -> List.exists (CP.equalFormula a) disj_p) orig_ls *)
   List.exists (fun fml -> TP.imply_raw fml new_pre) orig_ls
 
-let detect_lhs_rhs_contra  lhs_xpure lhs_xpure_orig rhs_xpure pos =
+let detect_lhs_rhs_contra_x (*lhs_xpure*) lhs_xpure_orig rhs_xpure pos =
       (* let lhs_xpure = MCP.pure_of_mix lhs_xpure_orig in *)
       (* let rhs_vars = CP.fv rhs_xpure in *)
       (* below will help greatly reduce the redundant information inferred from state *)
@@ -704,9 +704,9 @@ let detect_lhs_rhs_contra  lhs_xpure lhs_xpure_orig rhs_xpure pos =
       (* let rhs_xpure = MCP.pure_of_mix rhs_xpure_orig in  *)
       (* let lhs_xpure = MCP.pure_of_mix lhs_xpure0 in  *)
       let split_rhs = CP.split_conjunctions rhs_xpure in
-      let rem_rhs = List.filter (fun c -> not(TP.imply_raw lhs_xpure c)) split_rhs in
+      let rem_rhs = List.filter (fun c -> not(TP.imply_raw lhs_xpure_orig c)) split_rhs in
       let rhs_xpure = CP.join_conjunctions rem_rhs in
-      let _ = DD.tinfo_hprint (add_str "lhs_xpure: " (!CP.print_formula)) lhs_xpure pos in
+      (*let _ = DD.tinfo_hprint (add_str "lhs_xpure: " (!CP.print_formula)) lhs_xpure pos in*)
       let _ = DD.tinfo_hprint (add_str "split_rhs: " (pr_list !CP.print_formula)) split_rhs pos in
       let _ = DD.tinfo_hprint (add_str "rem_rhs: " (pr_list !CP.print_formula)) rem_rhs pos in
       let _ = DD.trace_hprint (add_str "lhs(orig): " !CP.print_formula) lhs_xpure_orig pos in
@@ -727,6 +727,11 @@ let detect_lhs_rhs_contra  lhs_xpure lhs_xpure_orig rhs_xpure pos =
       let check_sat = TP.is_sat_raw (MCP.mix_of_pure fml) in
       check_sat,fml
 
+let detect_lhs_rhs_contra lhs rhs pos =
+	let pr = !CP.print_formula in
+	Debug.ho_2 "detect_lhs_rhs_contra" pr pr (pr_pair string_of_bool (fun _->"")) 
+		(fun _ _ -> detect_lhs_rhs_contra_x lhs rhs pos) lhs rhs
+	  
 (* let infer_h prog estate conseq lhs_b rhs_b lhs_rels*)
 
 (* lhs_rel denotes rel on LHS where rel assumption be inferred *)
@@ -748,7 +753,7 @@ let rec infer_pure_m_x unk_heaps estate lhs_rels lhs_xpure_orig lhs_xpure0 lhs_w
       let iv = iv_orig(* @iv_lhs_rel *) in
       let lhs_xpure = MCP.pure_of_mix lhs_xpure0 in 
       let rhs_xpure = MCP.pure_of_mix rhs_xpure_orig in 
-      let check_sat,fml = detect_lhs_rhs_contra lhs_xpure lhs_xpure_orig rhs_xpure pos in
+      let check_sat,fml = detect_lhs_rhs_contra (*lhs_xpure*) lhs_xpure_orig rhs_xpure pos in
       (* let check_sat = TP.is_sat_raw (MCP.mix_of_pure fml) in *)
       if not(check_sat) then
         let _ = DD.devel_pprint "LHS-RHS contradiction" pos in

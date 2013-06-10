@@ -1,4 +1,4 @@
-
+ 
 (*
 26.11.2008
 todo: disable the default logging for omega
@@ -9256,19 +9256,24 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
             (* (CF.mkFailCtx_in (Basic_Reason (mkFailContext "infer_heap not yet implemented" estate (Base rhs_b) None pos, *)
             (* CF.mk_failure_bot ("infer_heap .. "))), NoAlias) *)
             (* let _ =  Debug.info_pprint ">>>>>> Inf.infer_collect_hp_rel 1: infer_heap <<<<<<" pos in *)
-            let _ = DD.binfo_start "TODO : Check for LHS Contradiction here?" in
+            (*let _ = DD.binfo_start "TODO : Check for LHS Contradiction here?" in*)
+			let lhs_xpure,_,_ = xpure prog estate.es_formula in
             (* call infer_lhs_contra *)
-            let lhs_rhs_contra_flag = true (* Cristian : detect_lhs_rhs_contra *) in
+            let lhs_rhs_contra_flag = 
+				let rhs_xpure,_,_ = xpure prog conseq in              
+				let p_lhs_xpure = MCP.pure_of_mix lhs_xpure in
+				let p_rhs_xpure = MCP.pure_of_mix rhs_xpure in
+				let contr, _ = Infer.detect_lhs_rhs_contra  p_lhs_xpure p_rhs_xpure no_pos in 
+				contr in (* Cristian : to detect_lhs_rhs_contra *) 
 	    let h_inf_args, hinf_args_map = get_heap_inf_args estate in
             let r_inf_contr,relass = 
               if lhs_rhs_contra_flag then (None,[])
               else
                 begin
-	          let lhs_xpure,_,_ = xpure prog estate.es_formula in
 		  (*if CP.intersect rhs_als estate.es_infer_vars = [] && List.exists CP.is_node_typ estate.es_infer_vars then None,[] else*) 
 	          let msg = "M_infer_heap :"^(Cprinter.string_of_h_formula rhs) in
-	          (* let h_inf_args_add = Gen.BList.difference_eq CP.eq_spec_var h_inf_args estate.es_infer_vars in *)
-	          (* let estate = {estate with es_infer_vars = estate.es_infer_vars@h_inf_args_add} in *)
+	          let h_inf_args_add = Gen.BList.difference_eq CP.eq_spec_var h_inf_args estate.es_infer_vars in
+	          let estate = {estate with es_infer_vars = estate.es_infer_vars@h_inf_args_add} in
 	          Inf.infer_lhs_contra_estate estate lhs_xpure pos msg 
                 end
             in
@@ -9349,8 +9354,13 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
                 if CP.intersect rhs_als estate.es_infer_vars = []
                   && List.exists CP.is_node_typ estate.es_infer_vars then None,[]
                 else 
-                  let lhs_rhs_contra_flag = true in (* Cristian : to detect_lhs_rhs_contra *) 
-                  if true then (None,[])
+                  let lhs_rhs_contra_flag = 
+					let rhs_xpure,_,_ = xpure prog conseq in      
+					let p_lhs_xpure = MCP.pure_of_mix lhs_xpure in
+					let p_rhs_xpure = MCP.pure_of_mix rhs_xpure in
+					let contr, _ = Infer.detect_lhs_rhs_contra  p_lhs_xpure p_rhs_xpure no_pos in 
+					contr in (* Cristian : to detect_lhs_rhs_contra *) 
+                  if lhs_rhs_contra_flag then (None,[])
                   else Inf.infer_lhs_contra_estate estate lhs_xpure pos msg 
               in
               begin
