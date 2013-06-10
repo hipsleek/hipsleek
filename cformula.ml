@@ -345,6 +345,15 @@ let mkETrue flowt pos = EBase({
 	formula_struc_continuation = None;
 	formula_struc_pos = pos})
 
+let mkHprel  knd u_svl u_hps pd_svl hprel_l hprel_r =  
+ {  hprel_kind = knd;
+    unk_svl = u_svl;
+    unk_hps = u_hps ; 
+    predef_svl = pd_svl;
+    hprel_lhs = hprel_l;
+    hprel_rhs = hprel_r;
+ }
+	
 let isAnyConstFalse f = match f with
   | Exists ({formula_exists_heap = h;
     formula_exists_pure = p;
@@ -7139,7 +7148,7 @@ let add_infer_pure_to_list_context cp (l : list_context) : list_context  =
   match l with
     | FailCtx _-> l
     | SuccCtx sc -> SuccCtx (List.map (add_infer_pure_to_ctx cp) sc)
-
+	 
 let add_infer_pure_to_list_context cp (l : list_context) : list_context  = 
   let pr = !print_list_context_short in
   Debug.no_2 "add_infer_pure_to_list_context"
@@ -9345,6 +9354,27 @@ let rec erase_propagated f =
 	let f_exp e = Some e in			
   transform_struc_formula (f_e_f,f_f,f_h_f,(f_memo,f_aset, f_formula, f_b_formula, f_exp)) f
 
+  
+
+
+and add_infer_hp_contr_to_list_context h_arg_map cp (l:list_context) : list_context option= 
+	 let new_cp = List.concat (List.map CP.split_conjunctions cp) in
+	 let new_cp = List.map CP.arith_simplify_new new_cp in
+	 try
+		 let new_rels = List.map (fun c->
+			let fv = CP.fv c in
+			let new_hd = List.filter (fun (_,vl)-> Gen.BList.overlap_eq CP.eq_spec_var fv vl) h_arg_map in
+			match new_hd with
+			 | [((h,hf),h_args)] -> 
+				if (Gen.BList.list_setequal_eq CP.eq_spec_var fv (List.concat (snd (List.split new_hd)))) then
+				mkHprel (CP.HPRelDefn h) h_args [] []  (formula_of_heap hf no_pos) (formula_of_pure_N c no_pos)  				
+				else raise Not_found
+			| _ -> raise Not_found ) new_cp in
+		 let scc_f es = Ctx {es with es_infer_hp_rel = new_rels@es.es_infer_hp_rel;} in
+		 Some (transform_list_context (scc_f, (fun a -> a)) l)
+	 with Not_found -> None
+  
+  
 and pop_expl_impl_context (expvars : CP.spec_var list) (impvars : CP.spec_var list) (ctx : list_context)  : list_context = 
   transform_list_context ((fun es -> Ctx{es with 
 				es_gen_expl_vars = Gen.BList.difference_eq CP.eq_spec_var es.es_gen_expl_vars expvars; 
@@ -12422,18 +12452,19 @@ let f_fst l ( _ :'a) = l
 let rec find_nodes e l=
 	 let f_heap_f l h  = match h with
 	  | HRel (p,vl, _) ->
-			let vl = if (List.exists (CP.eq_spec_var p) l) then CP.filter_vars vl else [] in
+			let vl = if (List.exists (CP.eq_spec_var p) l) then [((p,h),CP.filter_vars vl)] else [] in
 			Some(h,vl)
 	  | _ -> None in 
 	 let f_memo = (fun _ a-> Some (a,[])),(fun a _->(a,[])),(fun _ a-> (a,[[]])),(fun a _ -> (a,[])),(fun a _ -> (a,[])) in
 	 let f_pure = (fun _ a -> Some (a,[])),(fun _ a -> Some (a,[])),(fun _ a -> Some (a,[])) in
 	 let f = (fun _ -> None), (fun _ _-> None), f_heap_f, f_pure, f_memo in
 	 let f_arg = l, f_fst, f_fst, (f_fst, f_fst, f_fst), f_fst in
-	trans_formula e l f f_arg (fun l1 -> List.concat l1)
+	snd (trans_formula e l f f_arg (fun l1 -> List.concat l1))
 
 let rec get_heap_inf_args estate = 
-  let _, get_nodes = find_nodes estate.es_formula estate.es_infer_vars_hp_rel in
-   get_nodes
+    let node_arg_map = find_nodes estate.es_formula estate.es_infer_vars_hp_rel in
+   let args = List.concat (snd (List.split node_arg_map)) in
+   args,node_arg_map
 
 
 

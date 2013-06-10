@@ -9261,7 +9261,7 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
 				let lhs_xpure,_,_ = xpure prog estate.es_formula in
 					(*if CP.intersect rhs_als estate.es_infer_vars = [] && List.exists CP.is_node_typ estate.es_infer_vars then None,[] else*) 
 				let msg = "M_infer_heap :"^(Cprinter.string_of_h_formula rhs) in
-				let h_inf_args = get_heap_inf_args estate in
+				let h_inf_args, hinf_args_map = get_heap_inf_args estate in
 				let h_inf_args_add = Gen.BList.difference_eq CP.eq_spec_var h_inf_args estate.es_infer_vars in
 				let estate = {estate with es_infer_vars = estate.es_infer_vars@h_inf_args_add} in
 				let r_inf_contr,relass = Inf.infer_lhs_contra_estate estate lhs_xpure pos msg in
@@ -9274,11 +9274,32 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
 					 else
 						 let ctx1 = (elim_unsat_es_now 6 prog (ref 1) new_estate) in
 						 let r1, prf = heap_entail_one_context 9 prog is_folding ctx1 conseq None None None pos in
-						 let r1 = add_infer_pure_to_list_context [pf] r1 in
-						 let r1 = match relass with
-						  | [(_,h,_)] -> add_infer_rel_to_list_context h r1 
-						  | _ -> r1 in
-						(r1,prf)
+ 						 let r1 = add_infer_hp_contr_to_list_context hinf_args_map [pf] r1 in
+						 begin 
+						 (*r1 might be None if the inferred contradiction might span several predicates or if it includes non heap pred arguments*)
+							match r1 with 
+							 | Some r1 ->
+								 let r1 = match relass with
+								  | [(_,h,_)] -> add_infer_rel_to_list_context h r1 
+								  | _ -> r1 in
+								(r1,prf)
+							| None ->
+								let (res,new_estate, n_lhs, orhs_b) = Inf.infer_collect_hp_rel 1 prog estate rhs rhs_rest rhs_h_matched_set lhs_b rhs_b pos in
+								(* Debug.info_hprint (add_str "DD: n_lhs" (Cprinter.string_of_h_formula)) n_lhs pos; *)
+								if (not res) then r 
+								else
+								   let n_rhs_b = match orhs_b with
+									 | Some f -> f
+									 | None -> Base {rhs_b with formula_base_heap = rhs_rest}
+								   in
+								   (* Debug.info_hprint (add_str "DD: new_estate 1" (Cprinter.string_of_entail_state)) new_estate pos; *)
+								  (* let res_es0, prf0 = do_match prog new_estate n_lhs rhs n_rhs_b rhs_h_matched_set is_folding pos in *)
+								   let res_es0, prf0 = do_match prog new_estate n_lhs rhs n_rhs_b rhs_h_matched_set is_folding pos in
+								   (* Debug.info_hprint (add_str "DD: new_estate 2" (Cprinter.string_of_list_context)) res_es0 pos; *)
+								  (* let res_ctx = Ctx new_estate  in *)
+								  (* (SuccCtx[res_ctx], NoAlias) *)
+								  (res_es0,prf0)
+						end
                   | None ->
 						  
                          let (res,new_estate, n_lhs, orhs_b) = Inf.infer_collect_hp_rel 1 prog estate rhs rhs_rest rhs_h_matched_set lhs_b rhs_b pos in
