@@ -4001,7 +4001,9 @@ and get_ptrs (f: h_formula): CP.spec_var list = match f with
 and get_ptrs_w_args_f (f: formula)=
   match f with
     | Base fb ->
-        CP.remove_dups_svl (get_ptrs_w_args fb.formula_base_heap)
+          CP.remove_dups_svl (get_ptrs_w_args fb.formula_base_heap)
+    | Exists fe ->
+          CP.remove_dups_svl (get_ptrs_w_args fe.formula_exists_heap)
     | _ -> report_error no_pos "SAU.is_empty_f: not handle yet"
 
 and get_ptrs_w_args (f: h_formula): CP.spec_var list = match f with
@@ -4040,6 +4042,30 @@ and get_hnodes (f: h_formula) = match f with
   | Phase {h_formula_phase_rd = h1; h_formula_phase_rw = h2}
       -> (get_hnodes h1)@(get_hnodes h2)
   | _ -> []
+
+
+let elim_unused_pure_x (f0:formula) rhs =
+  let rhs_ptrs = get_ptrs_w_args_f rhs in
+  let rec helper f=
+    match f with
+      | Base b->
+            let lhs_ptrs= get_ptrs_w_args b.formula_base_heap in
+            Base {b with formula_base_pure = MCP.mix_of_pure
+                    (CP.filter_var (MCP.pure_of_mix b.formula_base_pure)
+                        (CP.remove_dups_svl (lhs_ptrs@rhs_ptrs))
+                    );}
+      | Exists e -> let qvars, base_f = split_quantifiers f in
+        let nf = helper base_f in
+        (add_quantifiers qvars nf)
+      | Or orf -> Or {orf with formula_or_f1 = helper orf.formula_or_f1;
+          formula_or_f2 = helper orf.formula_or_f2}
+  in
+  helper f0
+
+let elim_unused_pure (f0:formula) =
+  let pr= !print_formula in
+  Debug.no_1 " elim_unused_pure" pr pr
+      (fun _ -> elim_unused_pure_x f0) f0
 
 let prune_irr_neq_formula_x must_kept_svl lhs_b rhs_b =
   let r_svl = fv (Base rhs_b) in
@@ -5345,49 +5371,85 @@ and drop_hnodes_hf hf0 hn_names=
           | (HEmp,_) -> n_hf2
           | (_,HEmp) -> n_hf1
           | _ -> (Star {h_formula_star_h1 = n_hf1;
-                       h_formula_star_h2 = n_hf2;
-                       h_formula_star_pos = pos})
+            h_formula_star_h2 = n_hf2;
+            h_formula_star_pos = pos})
         ) in
         (newf)
     | StarMinus { h_formula_starminus_h1 = hf1;
-             h_formula_starminus_h2 = hf2;
-             h_formula_starminus_pos = pos} ->
-        let n_hf1 = helper hf1 in
-        let n_hf2 = helper hf2 in
-        (StarMinus { h_formula_starminus_h1 = n_hf1;
-               h_formula_starminus_h2 = n_hf2;
-               h_formula_starminus_pos = pos})        
+      h_formula_starminus_h2 = hf2;
+      h_formula_starminus_pos = pos} ->
+          let n_hf1 = helper hf1 in
+          let n_hf2 = helper hf2 in
+          let newf =
+            (match n_hf1,n_hf2 with
+              | (HEmp,HEmp) -> HEmp
+              | (HEmp,_) -> n_hf2
+              | (_,HEmp) -> n_hf1
+              | _ -> StarMinus { h_formula_starminus_h1 = n_hf1;
+                h_formula_starminus_h2 = n_hf2;
+                h_formula_starminus_pos = pos}
+            ) in
+          (newf)
     | Conj { h_formula_conj_h1 = hf1;
-             h_formula_conj_h2 = hf2;
-             h_formula_conj_pos = pos} ->
-        let n_hf1 = helper hf1 in
-        let n_hf2 = helper hf2 in
-        (Conj { h_formula_conj_h1 = n_hf1;
-               h_formula_conj_h2 = n_hf2;
-               h_formula_conj_pos = pos})
+      h_formula_conj_h2 = hf2;
+      h_formula_conj_pos = pos} ->
+          let n_hf1 = helper hf1 in
+          let n_hf2 = helper hf2 in
+          let newf =
+            (match n_hf1,n_hf2 with
+              | (HEmp,HEmp) -> HEmp
+              | (HEmp,_) -> n_hf2
+              | (_,HEmp) -> n_hf1
+              | _ -> (Conj { h_formula_conj_h1 = n_hf1;
+                h_formula_conj_h2 = n_hf2;
+                h_formula_conj_pos = pos})
+            ) in
+           (newf)
     | ConjStar { h_formula_conjstar_h1 = hf1;
-             h_formula_conjstar_h2 = hf2;
-             h_formula_conjstar_pos = pos} ->
-        let n_hf1 = helper hf1 in
-        let n_hf2 = helper hf2 in
-        (ConjStar { h_formula_conjstar_h1 = n_hf1;
+      h_formula_conjstar_h2 = hf2;
+      h_formula_conjstar_pos = pos} ->
+          let n_hf1 = helper hf1 in
+          let n_hf2 = helper hf2 in
+          let newf =
+            (match n_hf1,n_hf2 with
+              | (HEmp,HEmp) -> HEmp
+              | (HEmp,_) -> n_hf2
+              | (_,HEmp) -> n_hf1
+              | _ -> (ConjStar { h_formula_conjstar_h1 = n_hf1;
                h_formula_conjstar_h2 = n_hf2;
                h_formula_conjstar_pos = pos})
+            ) in
+           (newf)
     | ConjConj { h_formula_conjconj_h1 = hf1;
              h_formula_conjconj_h2 = hf2;
              h_formula_conjconj_pos = pos} ->
         let n_hf1 = helper hf1 in
         let n_hf2 = helper hf2 in
-        (ConjConj { h_formula_conjconj_h1 = n_hf1; h_formula_conjconj_h2 = n_hf2;
-        h_formula_conjconj_pos = pos})
+        let newf =
+            (match n_hf1,n_hf2 with
+              | (HEmp,HEmp) -> HEmp
+              | (HEmp,_) -> n_hf2
+              | (_,HEmp) -> n_hf1
+              | _ -> (ConjConj { h_formula_conjconj_h1 = n_hf1;
+                h_formula_conjconj_h2 = n_hf2;
+                 h_formula_conjconj_pos = pos})
+            ) in
+           (newf)
     | Phase { h_formula_phase_rd = hf1;
-              h_formula_phase_rw = hf2;
-              h_formula_phase_pos = pos} ->
+      h_formula_phase_rw = hf2;
+      h_formula_phase_pos = pos} ->
           let n_hf1 = helper hf1 in
           let n_hf2 = helper hf2 in
-          (Phase { h_formula_phase_rd = n_hf1;
-          h_formula_phase_rw = n_hf2;
-          h_formula_phase_pos = pos})
+          let newf =
+            (match n_hf1,n_hf2 with
+              | (HEmp,HEmp) -> HEmp
+              | (HEmp,_) -> n_hf2
+              | (_,HEmp) -> n_hf1
+              | _ -> (Phase { h_formula_phase_rd = n_hf1;
+                h_formula_phase_rw = n_hf2;
+                h_formula_phase_pos = pos})
+            ) in
+           (newf)
     | DataNode hd ->  if CP.mem_svl hd.h_formula_data_node hn_names then HEmp
       else hf
     | ViewNode hv -> if CP.mem_svl hv.h_formula_view_node hn_names then HEmp

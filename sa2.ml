@@ -214,6 +214,7 @@ let apply_transitive_impl_fix prog callee_hps hp_rel_unkmap unk_hps (constrs: CF
 let split_constr_x prog constrs post_hps prog_vars unk_map unk_hps=
   (*internal method*)
   let split_one cs total_unk_map=
+    let _ = Debug.dinfo_pprint ("  cs: " ^ (Cprinter.string_of_hprel_short cs)) no_pos in
     let (_ ,mix_lf,_,_,_) = CF.split_components cs.CF.hprel_lhs in
     let l_qvars, lhs = CF.split_quantifiers cs.CF.hprel_lhs in
     let r_qvars, rhs = CF.split_quantifiers cs.CF.hprel_rhs in
@@ -277,9 +278,11 @@ let split_constr_x prog constrs post_hps prog_vars unk_map unk_hps=
                 (*prune defined hps in lhs*)
                 let new_lhs, _ = CF.drop_hrel_f new_cs.CF.hprel_lhs (List.map (fun (a, _, _) -> a) defined_preds0) in
                 let new_lhs1 = CF.add_quantifiers l_qvars new_lhs in
-                let new_cs = {new_cs with CF.hprel_lhs = new_lhs1;} in
-                let _ = Debug.dinfo_pprint ("  new cs: " ^ (Cprinter.string_of_hprel_short new_cs)) no_pos in
+                let new_lhs2 = CF.elim_unused_pure new_lhs1 new_cs.CF.hprel_rhs in
+                let new_cs = {new_cs with CF.hprel_lhs = new_lhs2;} in
+                let _ = Debug.dinfo_pprint ("  refined cs: " ^ (Cprinter.string_of_hprel_short new_cs)) no_pos in
                 let rf = CF.mkTrue (CF.mkTrueFlow()) no_pos in
+                let _ = Debug.dinfo_pprint ("  generate pre-preds-based constraints: " ) no_pos in
                 let defined_hprels = List.map (SAU.generate_hp_ass unk_svl1 rf) defined_preds0 in
                 new_cs::defined_hprels
         in
@@ -288,13 +291,15 @@ let split_constr_x prog constrs post_hps prog_vars unk_map unk_hps=
       ([cs],total_unk_map)
   in
   (*END. internal method*)
-  let _ = Debug.dinfo_pprint ("map before split: " ^ (let pr = (pr_list (pr_pair (pr_pair !CP.print_sv (pr_list string_of_int)) CP.string_of_xpure_view)) in pr unk_map)) no_pos in
+  let _ = Debug.dinfo_pprint ("before split: " ) no_pos in
+  let _ = Debug.dinfo_pprint ("map: " ^ (let pr = (pr_list (pr_pair (pr_pair !CP.print_sv (pr_list string_of_int)) CP.string_of_xpure_view)) in pr unk_map)) no_pos in
   let new_constrs, new_map = List.fold_left (fun (r_constrs,unk_map) cs ->
       let new_constrs, new_map = split_one cs unk_map in
       (r_constrs@new_constrs, new_map)
   ) ([], unk_map) constrs
   in
-  let _ = Debug.dinfo_pprint ("map after split: " ^ (let pr = (pr_list (pr_pair (pr_pair !CP.print_sv (pr_list string_of_int)) CP.string_of_xpure_view)) in pr new_map)) no_pos in
+  let _ = Debug.dinfo_pprint ("after split: " ) no_pos in
+  let _ = Debug.dinfo_pprint ("map: " ^ (let pr = (pr_list (pr_pair (pr_pair !CP.print_sv (pr_list string_of_int)) CP.string_of_xpure_view)) in pr new_map)) no_pos in
   (new_constrs, new_map)
 
 let split_constr prog constrs post_hps prog_vars unk_map unk_hps=
