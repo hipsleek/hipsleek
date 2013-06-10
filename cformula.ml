@@ -4540,55 +4540,6 @@ let generate_xpure_view drop_hpargs total_unk_map=
   Debug.no_1 "generate_xpure_view" pr1 pr2
       (fun _ -> generate_xpure_view_x drop_hpargs total_unk_map) drop_hpargs
 
-let generate_xpure_view_first_x drop_hpargs total_unk_map=
-  let rec lookup_xpure_view hp rem_map=
-    match rem_map with
-      | [] -> []
-      | (ls_hp_loc,xpv)::tl ->
-          if List.exists (fun (hp1,_) -> CP.eq_spec_var hp hp1) ls_hp_loc then
-            [xpv]
-          else lookup_xpure_view hp tl
-  in
-  let generate_xpure_view_one_hp pos (hp,args)=
-    let hp_name = CP.name_of_spec_var hp in
-    let p,unk_svl,unk_map =
-      let xpvs = lookup_xpure_view hp total_unk_map in
-      match xpvs with
-        | [xp] -> let xp_r, xp_args = match xp.CP.xpure_view_node with
-              | None -> None, xp.CP.xpure_view_arguments
-              |Some _ -> Some (List.hd args), (List.tl args)
-          in
-          let new_xpv = {xp with CP.xpure_view_node =  xp_r;
-              xpure_view_arguments =  xp_args
-          }
-          in
-          let p = CP.mkFormulaFromXP new_xpv in
-          (p,args,[])
-        | [] ->
-              let xpv = { CP.xpure_view_node = None;
-              CP.xpure_view_name = hp_name;
-              CP.xpure_view_arguments = args;
-              CP.xpure_view_remaining_branches= None;
-              CP.xpure_view_pos = no_pos;
-              }
-              in
-              let p = CP.mkFormulaFromXP xpv in
-              (p,args,[([(hp,0)],xpv)])
-        | _ -> report_error no_pos "cformula.generate_xpure_view: impossible"
-    in
-    (p,unk_svl,unk_map)
-  in
-  let ps,ls_fr_svl,ls_unk_map = split3 (List.map (generate_xpure_view_one_hp no_pos) drop_hpargs) in
-  (List.concat ls_fr_svl,CP.conj_of_list ps no_pos,List.concat ls_unk_map)
-
-let generate_xpure_view_first drop_hpargs total_unk_map=
-  let pr1 = pr_list (pr_pair !CP.print_sv !CP.print_svl) in
-  let pr3 = (pr_list (pr_pair (pr_list (pr_pair !CP.print_sv string_of_int)) CP.string_of_xpure_view)) in
-  let pr2 = pr_triple !CP.print_svl !CP.print_formula pr3 in
-  Debug.no_1 "generate_xpure_viewfirst" pr1 pr2
-      (fun _ -> generate_xpure_view_first_x drop_hpargs total_unk_map) drop_hpargs
-
-
 let annotate_dl_hf hf0 unk_hps=
   let rec helper hf=
     match hf with
@@ -5969,7 +5920,7 @@ think it is used to instantiate when folding.
   es_infer_vars_rel : CP.spec_var list;
   es_infer_vars_sel_hp_rel: CP.spec_var list;
   es_infer_vars_sel_post_hp_rel: CP.spec_var list;
-  es_infer_hp_unk_map: ((CP.spec_var * int) list * CP.xpure_view) list ;
+  es_infer_hp_unk_map: ((CP.spec_var * int list)  * CP.xpure_view) list ;
   es_infer_vars_hp_rel : CP.spec_var list;
   (* input vars to denote vars already instantiated *)
   es_infer_vars_dead : CP.spec_var list; 

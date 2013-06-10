@@ -698,7 +698,7 @@ let process_shape_infer pre_hps post_hps=
   let ls_hprel, ls_inferred_hps, dropped_hps =
     let infer_shape_fnc =  if not (!Globals.sa_old) then
       Sa2.infer_shapes
-    else Sa.infer_hps
+    else Sa2.infer_shapes (* Sa.infer_hps *)
     in
     infer_shape_fnc !cprog "" hp_lst_assume
         sel_hps sel_post_hps [] true
@@ -731,7 +731,7 @@ let process_shape_infer_prop pre_hps post_hps=
   let ls_hprel, ls_inferred_hps, dropped_hps =
     let infer_shape_fnc =  if not (!Globals.sa_old) then
       Sa2.infer_shapes
-    else Sa.infer_hps
+    else Sa2.infer_shapes (* Sa.infer_hps *)
     in
     infer_shape_fnc !cprog "" hp_lst_assume
         sel_hps sel_post_hps [] false
@@ -754,16 +754,24 @@ let process_shape_infer_prop pre_hps post_hps=
   ()
 
 let process_shape_split pre_hps post_hps=
-  let _, sel_post_hps = SAU.get_pre_post pre_hps post_hps !sleek_hprel_assumes in
+  (* let _, sel_post_hps = SAU.get_pre_post pre_hps post_hps !sleek_hprel_assumes in *)
   (*get infer_vars*)
   let orig_vars = List.fold_left (fun ls cs-> ls@(CF.fv cs.CF.hprel_lhs)@(CF.fv cs.CF.hprel_rhs)) [] !sleek_hprel_assumes in
-  let vars = List.map (fun v -> TI.get_spec_var_type_list_infer (v, Unprimed) orig_vars no_pos) (pre_hps@post_hps) in
-  let vars1 = (CP.remove_dups_svl vars) in
-  let infer_vars = List.filter (fun sv ->
+  let pre_vars = List.map (fun v -> TI.get_spec_var_type_list_infer (v, Unprimed) orig_vars no_pos) (pre_hps) in
+  let post_vars = List.map (fun v -> TI.get_spec_var_type_list_infer (v, Unprimed) orig_vars no_pos) (post_hps) in
+  let pre_vars1 = (CP.remove_dups_svl pre_vars) in
+  let post_vars1 = (CP.remove_dups_svl post_vars) in
+  let infer_pre_vars,pre_hp_rels  = List.partition (fun sv ->
       let t = CP.type_of_spec_var sv in
-      not (is_RelT t || is_HpT t )) vars1 in
+      not ((* is_RelT t || *) is_HpT t )) pre_vars1 in
+  let infer_post_vars,post_hp_rels  = List.partition (fun sv ->
+      let t = CP.type_of_spec_var sv in
+      not ((* is_RelT t || *) is_HpT t )) post_vars1 in
   (*END*)
-  let new_constrs,_ = Sa2.split_constr !cprog !sleek_hprel_assumes sel_post_hps infer_vars false [] in
+  let infer_vars = infer_pre_vars@infer_post_vars in
+  let sel_hp_rels = pre_hp_rels@post_hp_rels in
+  let constrs1, unk_map, unk_hpargs = SAC.detect_dangling_pred !sleek_hprel_assumes sel_hp_rels [] in
+  let new_constrs,_ = Sa2.split_constr !cprog constrs1 post_hp_rels infer_vars unk_map (List.map fst unk_hpargs) in
   let pr1 = pr_list_ln Cprinter.string_of_hprel in
   begin
     print_endline "*************************************";

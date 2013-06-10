@@ -1774,7 +1774,8 @@ let find_undefined_selective_pointers prog lfb lmix_f unmatched rhs_rest rhs_h_m
   let pr3 = pr_list (pr_pair !CP.print_sv !print_svl) in
   let pr4 = pr_list !CP.print_svl in
   let pr6 = pr_list_ln (pr_triple !CP.print_sv !CP.print_svl Cprinter.string_of_formula_base) in
-  let pr7 = pr_list (pr_pair (pr_list (pr_pair !CP.print_sv string_of_int)) CP.string_of_xpure_view) in
+  (* let pr7 = pr_list (pr_pair (pr_list (pr_pair !CP.print_sv string_of_int)) CP.string_of_xpure_view) in *)
+  let pr7 = (pr_list (pr_pair (pr_pair !CP.print_sv (pr_list string_of_int)) CP.string_of_xpure_view)) in
   let pr5 = fun (undefs,_,_,_,_,_,selected_hpargs, rhs_sel_hpargs,defined_hps,_,_,unk_map) ->
       let pr = pr_penta pr4 pr3 pr3 pr6 pr7 in pr (undefs,selected_hpargs,rhs_sel_hpargs, defined_hps, unk_map) in
   Debug.no_3 "find_undefined_selective_pointers" 

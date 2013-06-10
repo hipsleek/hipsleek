@@ -395,7 +395,7 @@ Why is the following basic thing failing?
 infer [H] H(x) |-  x::node<_,_>. OK
 print residue.
 
-
+===========================================
 # cll-d3a2.slk 
 
 infer [H,G] HP_6(n) * x_814::node<Anon_11,n> & n=x_814 & 
@@ -709,7 +709,7 @@ Why is there such an extra generalization step?
 
 */
 =================================================
-# ll-del1b2.slk 
+# ll-del1b2.slk: FIXED
 
 relAssume  G
  x::node<_,nn> * HP_6(nn) & x'=null & nn=null  --> G(x,x').
@@ -728,7 +728,7 @@ redundant predicate that will be used as a dangling reference
 
 
 =================================================
-# ll-getnext2a1.slk
+# ll-getnext2a1.slk: FIXED
 
 relAssume  H
  H(vv) * x::node<_,vv> * HP_6(vv) --> G(x,res).

@@ -12,6 +12,17 @@ module TP = Tpdispatcher
 module SAU = Sautility
 
 let cmp_hp_pos (hp1,pos1) (hp2,pos2)= (CP.eq_spec_var hp1 hp2) && pos1=pos2
+
+let rec build_unk_locs args n unk_svl res=
+  match args with
+    | [] -> res
+    | sv::rest -> let new_res=
+        if CP.mem_svl sv unk_svl then
+        (res@[n])
+        else res
+      in
+      build_unk_locs rest (n+1) unk_svl new_res
+
 let rec lookup_xpure_view hp_pos0 rem_map done_map=
   match rem_map with
     | [] -> None,done_map
@@ -65,7 +76,7 @@ let generate_xpure_view_w_pos ls_hp_pos_sv total_unk_map pos=
   let pr1 = pr_list (pr_pair (pr_list (pr_pair !CP.print_sv string_of_int)) !CP.print_sv) in
   let pr2 = pr_pair !CP.print_formula
     (pr_list (pr_pair (pr_list (pr_pair !CP.print_sv string_of_int)) CP.string_of_xpure_view)) in
-  Debug.ho_1 "generate_xpure_view_w_pos" pr1 pr2
+  Debug.no_1 "generate_xpure_view_w_pos" pr1 pr2
       (fun _ -> generate_xpure_view_w_pos_x ls_hp_pos_sv total_unk_map pos) ls_hp_pos_sv
 
 let rec find_pos n sv res (hp,args)=
@@ -94,14 +105,108 @@ let generate_map unk_l_hpargs r_hpargs unk_map pos=
       (fun _ _ _ -> generate_map_x unk_l_hpargs r_hpargs unk_map pos)
       unk_l_hpargs r_hpargs unk_map
 
-let generate_linking unk_map lhs_hpargs rhs_hpargs ss post_hps pos=
+let generate_xpure_view_hp_x drop_hpargs total_unk_map=
+  let rec lookup_xpure_view hp rem_map=
+    match rem_map with
+      | [] -> []
+      | ((hp1,_),xpv)::tl ->
+          if CP.eq_spec_var hp hp1 then
+            [xpv]
+          else lookup_xpure_view hp tl
+  in
+  let generate_xpure_view_one_hp pos unk_map (hp,args, locs)=
+    let hp_name = CP.name_of_spec_var hp in
+    let p,unk_svl,unk_map =
+      let xpvs = lookup_xpure_view hp unk_map in
+      match xpvs with
+        | [xp] -> (* let xp_r, xp_args = match xp.CP.xpure_view_node with *)
+          (*     | None -> None, xp.CP.xpure_view_arguments *)
+          (*     |Some _ -> Some (List.hd args), (List.tl args) *)
+          (* in *)
+          let new_args = SAU.retrieve_args_from_locs args locs in
+          let new_xpv = {xp with (* CP.xpure_view_node =  List.hd new_args; *)
+              CP.xpure_view_arguments =  new_args
+          }
+          in
+          let p = CP.mkFormulaFromXP new_xpv in
+          (p,args,unk_map)
+        | [] ->
+              let xpv = { CP.xpure_view_node = None;
+              CP.xpure_view_name = hp_name;
+              CP.xpure_view_arguments = args;
+              CP.xpure_view_remaining_branches= None;
+              CP.xpure_view_pos = no_pos;
+              }
+              in
+              let p = CP.mkFormulaFromXP xpv in
+              (p,args, unk_map@[((hp,locs),xpv)])
+        | _ -> report_error no_pos "cformula.generate_xpure_view: impossible"
+    in
+    (p,unk_svl,unk_map)
+  in
+  let ps,ls_fr_svl,ls_unk_map = List.fold_left ( fun (ps, unk_svl, unk_map) hp_args_locs ->
+      let p, new_unk_svl, new_map = generate_xpure_view_one_hp no_pos unk_map hp_args_locs in
+      (ps@[p], unk_svl@new_unk_svl, new_map)
+  ) ([], [], total_unk_map) drop_hpargs in
+  (CP.remove_dups_svl ls_fr_svl, CP.conj_of_list ps no_pos, ls_unk_map)
+
+let generate_xpure_view_hp drop_hpargs total_unk_map=
+  let pr1 = pr_list (pr_triple !CP.print_sv !CP.print_svl (pr_list string_of_int)) in
+  (* let pr3 = (pr_list (pr_pair (pr_list (pr_pair !CP.print_sv string_of_int)) CP.string_of_xpure_view)) in *)
+  let pr3 = (pr_list (pr_pair (pr_pair !CP.print_sv (pr_list string_of_int)) CP.string_of_xpure_view)) in
+  let pr2 = pr_triple !CP.print_svl !CP.print_formula pr3 in
+  Debug.no_1 "generate_xpure_view_hp" pr1 pr2
+      (fun _ -> generate_xpure_view_hp_x drop_hpargs total_unk_map) drop_hpargs
+
+let generate_unk_svl_pos cs_unk_svl (hp,args)=
+  let hp_unk_svl = CP.intersect_svl args cs_unk_svl in
+  let locs = build_unk_locs args 0 hp_unk_svl [] in
+  (hp, hp_unk_svl, locs)
+
+let generate_map_unk_hp_x l_hpargs r_hpargs unk_map pos=
+  let l_args = List.fold_left (fun ls (_, args) -> ls@args) [] l_hpargs in
+  let r_args = List.fold_left (fun ls (_, args) -> ls@args) [] r_hpargs in
+  let unk_svl1 = CP.remove_dups_svl (CP.intersect_svl l_args r_args) in
+  if unk_svl1 = [] then ([], CP.mkTrue pos, unk_map) else
+  let ls_hp_args_pos = List.map (generate_unk_svl_pos unk_svl1) (l_hpargs@r_hpargs) in
+  let _,unk_pure,new_map = generate_xpure_view_hp ls_hp_args_pos unk_map in
+  (unk_svl1, unk_pure, new_map)
+
+let generate_map_unk_hp unk_l_hpargs r_hpargs unk_map pos=
+  (* let pr1= (pr_list (pr_pair (pr_list (pr_pair !CP.print_sv string_of_int)) CP.string_of_xpure_view)) in *)
+  let pr1 = (pr_list (pr_pair (pr_pair !CP.print_sv (pr_list string_of_int)) CP.string_of_xpure_view)) in
+  let pr2 = !CP.print_formula in
+  let pr3 = pr_list (pr_pair !CP.print_sv !CP.print_svl) in
+  Debug.no_3 "generate_map_unk_hp" pr3 pr3 pr1 (pr_triple !CP.print_svl pr2 pr1)
+      (fun _ _ _ -> generate_map_unk_hp_x unk_l_hpargs r_hpargs unk_map pos)
+      unk_l_hpargs r_hpargs unk_map
+
+let generate_linking_full_hp_x unk_map unk_hps lhs_hpargs rhs_hpargs ss post_hps pos=
   let post_hpargs = List.filter (fun (hp, _) -> CP.mem_svl hp post_hps) rhs_hpargs in
   if post_hpargs = [] then ([], CP.mkTrue pos, unk_map) else
     let lhs_hpargs1 = List.map (fun (hp,args) -> (hp, CP.subst_var_list ss args)) lhs_hpargs in
     let post_hpargs1 = List.map (fun (hp,args) -> (hp, CP.subst_var_list ss args)) post_hpargs in
-    let lhs_hpargs2 = List.filter (fun (hp, _) -> not(CP.mem_svl hp post_hps)) lhs_hpargs1 in
-    generate_map lhs_hpargs2 post_hpargs1 unk_map pos
+    let lhs_hpargs2 = List.filter (fun (hp, _) -> not(CP.mem_svl hp post_hps) && CP.mem_svl hp unk_hps) lhs_hpargs1 in
+    generate_map_unk_hp lhs_hpargs2 post_hpargs1 unk_map pos
 
+let generate_linking_full_hp unk_map unk_hps lhs_hpargs rhs_hpargs ss post_hps pos=
+  let pr1 = (pr_list (pr_pair (pr_pair !CP.print_sv (pr_list string_of_int)) CP.string_of_xpure_view)) in
+  let pr2 = !CP.print_svl in
+  let pr3 = pr_list (pr_pair !CP.print_sv !CP.print_svl) in
+  let pr4 = !CP.print_formula in
+  let pr5 = pr_triple pr2 pr4 pr1 in
+  Debug.no_5 "generate_linking_full_hp" pr1 pr2 pr3 pr3 pr2 pr5
+      (fun _ _ _ _ _ -> generate_linking_full_hp_x unk_map unk_hps lhs_hpargs rhs_hpargs ss post_hps pos)
+      unk_map unk_hps lhs_hpargs rhs_hpargs post_hps
+
+let generate_linking unk_map lhs_hpargs rhs_hpargs ss post_hps pos=
+  (* let post_hpargs = List.filter (fun (hp, _) -> CP.mem_svl hp post_hps) rhs_hpargs in *)
+  (* if post_hpargs = [] then ([], CP.mkTrue pos, unk_map) else *)
+  (*   let lhs_hpargs1 = List.map (fun (hp,args) -> (hp, CP.subst_var_list ss args)) lhs_hpargs in *)
+  (*   let post_hpargs1 = List.map (fun (hp,args) -> (hp, CP.subst_var_list ss args)) post_hpargs in *)
+  (*   let lhs_hpargs2 = List.filter (fun (hp, _) -> not(CP.mem_svl hp post_hps)) lhs_hpargs1 in *)
+  (*   generate_map lhs_hpargs2 post_hpargs1 unk_map pos *)
+   generate_linking_full_hp unk_map [] (*TODO: infer unk_hps*) lhs_hpargs rhs_hpargs ss post_hps pos
 
 let analize_unk_new_x prog constrs total_unk_map=
   let dalnging_analysis (constrs1,unk_map) cs =
@@ -421,23 +526,36 @@ let analize_unk prog constrs total_unk_map =
 
 
 let generate_hp_def_from_unk_hps_x hpdefs unk_hpargs defined_hps post_hps unk_map=
-  let rec obtain_xpure rem_args n hp res=
-    match rem_args with
-      | [] -> res
-      | sv::rest -> begin
-            let oxpv,_ = lookup_xpure_view [(hp,n)] unk_map [] in
-            match oxpv with
-              | Some xp -> let new_xpv = {xp with CP.xpure_view_arguments = [sv];} in
+  (* let rec obtain_xpure rem_args n hp res= *)
+  (*   match rem_args with *)
+  (*     | [] -> res *)
+  (*     | sv::rest -> begin *)
+  (*           let oxpv,_ = lookup_xpure_view [(hp,n)] unk_map [] in *)
+  (*           match oxpv with *)
+  (*             | Some xp -> let new_xpv = {xp with CP.xpure_view_arguments = [sv];} in *)
+  (*               let p = CP.mkFormulaFromXP new_xpv in *)
+  (*               obtain_xpure rest (n+1) hp (res@[p]) *)
+  (*             | None -> report_error no_pos "sac.obtain_xpure" *)
+  (*       end *)
+  (* in *)
+  let rec obtain_xpure_new rem_map hp args=
+    match rem_map with
+      | [] -> report_error no_pos "sac.obtain_xpure"
+      | ((hp1, locs), xp)::rest -> begin
+          if CP.eq_spec_var hp hp1 then
+            let unk_args = SAU.retrieve_args_from_locs args locs in
+            let new_xpv = {xp with CP.xpure_view_arguments = unk_args;} in
                 let p = CP.mkFormulaFromXP new_xpv in
-                obtain_xpure rest (n+1) hp (res@[p])
-              | None -> report_error no_pos "sac.obtain_xpure"
+                p
+          else
+            obtain_xpure_new rest hp args
         end
   in
   let mk_unkdef pos (hp,args)=
     (* let ps = obtain_xpure args 0 hp [] in *)
-    (*NOW, NO LONGER SUPPORT UNK_SVL. WE JUST RETURN THE FIRST ONE !!!!*)
-    let ps = obtain_xpure [(List.hd args)] 0 hp [] in
-    let p = CP.conj_of_list ps pos in
+    (* let ps = obtain_xpure [(List.hd args)] 0 hp [] in *)
+    (* let p = CP.conj_of_list ps pos in *)
+    let p = obtain_xpure_new unk_map hp args in
     let def = CF.formula_of_pure_formula p pos in
     let _ = DD.ninfo_pprint ((!CP.print_sv hp)^"(" ^
                                     (!CP.print_svl args) ^ ")=" ^
@@ -465,7 +583,8 @@ let generate_hp_def_from_unk_hps_x hpdefs unk_hpargs defined_hps post_hps unk_ma
 let generate_hp_def_from_unk_hps hpdefs unk_hpargs defined_hps post_hps unk_map=
   let pr1 = pr_list_ln Cprinter.string_of_hp_rel_def in
   let pr2 = pr_list (pr_pair !CP.print_sv !CP.print_svl) in
-  let pr4 = (pr_list (pr_pair (pr_list (pr_pair !CP.print_sv string_of_int)) CP.string_of_xpure_view)) in
+  (* let pr4 = (pr_list (pr_pair (pr_list (pr_pair !CP.print_sv string_of_int)) CP.string_of_xpure_view)) in *)
+  let pr4 = (pr_list (pr_pair (pr_pair !CP.print_sv (pr_list string_of_int)) CP.string_of_xpure_view)) in
   Debug.no_4 "generate_hp_def_from_unk_hps" pr2 pr1 !CP.print_svl pr4 pr1
       (fun _ _ _ _ -> generate_hp_def_from_unk_hps_x hpdefs unk_hpargs defined_hps post_hps unk_map)
       unk_hpargs hpdefs defined_hps unk_map
@@ -514,7 +633,7 @@ let transform_unk_hps_to_pure_x hp_defs unk_hp_frargs =
       | Not_found -> ([],[],[])
   in
   let subst_pure_hp_unk args0 ls_unk_hpargs_fr f=
-    (* let _ = DD.info_pprint ("       f: " ^ (!CF.print_formula f)) no_pos in *)
+    let _ = DD.info_pprint ("       f: " ^ (!CF.print_formula f)) no_pos in
     let ls_used_hp_args = CF.get_HRels_f f in
     let ls_xpures =  CF.get_xpure_view f in
     (*look up*)
@@ -523,8 +642,8 @@ let transform_unk_hps_to_pure_x hp_defs unk_hp_frargs =
     let ls_used_unk_hps,ls_eqs, ls_ss = split3 (r1@r2) in
     let used_unk_hps = List.concat ls_used_unk_hps in
     let unk_need_subst, eqs = List.fold_left (fun (ls1,ls2) (a1,a2) -> (ls1@a1,ls2@a2)) ([],[]) (List.concat ls_eqs) in
-    (* let pr1 = pr_list (pr_pair !CP.print_sv !CP.print_sv) in *)
-    (* let _ = DD.info_pprint ("       eqs: " ^ (pr1 eqs)) no_pos in *)
+    let pr1 = pr_list (pr_pair !CP.print_sv !CP.print_sv) in
+    let _ = DD.info_pprint ("       eqs: " ^ (pr1 eqs)) no_pos in
     let ss = List.concat ls_ss in
     (*remove unkhps*)
     let f1,_ =  CF.drop_unk_hrel (* CF.drop_hrel_f*) f used_unk_hps in
@@ -567,12 +686,12 @@ let transform_unk_hps_to_pure hp_defs unk_hpargs =
       (fun _ _ -> transform_unk_hps_to_pure_x hp_defs unk_hpargs) hp_defs unk_hpargs
 
 let transform_xpure_to_pure_x hp_defs unk_map=
-  let fr_map = List.map (fun (hps, xp) ->
+  let fr_map = List.map (fun ((hp,_), xp) ->
       let args = match xp.CP.xpure_view_node with
         | None -> xp.CP.xpure_view_arguments
         | Some sv -> sv::xp.CP.xpure_view_arguments
       in
-      let (CP.SpecVar (t, _, p)),_ = List.hd hps in
+      let (CP.SpecVar (t, _, p)) = hp in
       (CP.SpecVar(t, xp.CP.xpure_view_name, p),
       let dang_name = dang_hp_default_prefix_name ^ "_" ^ xp.CP.xpure_view_name ^ "_" ^dang_hp_default_prefix_name  in
       let (CP.SpecVar (t, _, p)) = List.hd args in
@@ -581,13 +700,22 @@ let transform_xpure_to_pure_x hp_defs unk_map=
   in
   transform_unk_hps_to_pure hp_defs fr_map
 
-let transform_xpure_to_pure hp_defs unk_map =
+let transform_xpure_to_pure hp_defs (unk_map:((CP.spec_var * int list) * CP.xpure_view) list) =
   let pr1 = pr_list_ln Cprinter.string_of_hp_rel_def in
   Debug.no_1 "transform_xpure_to_pure" pr1 pr1
       (fun _ -> transform_xpure_to_pure_x hp_defs unk_map) hp_defs
 
 
 let detect_dangling_pred_x constrs sel_hps unk_map=
+  let rec gen_full_pos args n res=
+    match args with
+      | [] -> res
+      | _::rest -> gen_full_pos rest (n+1) (res@[n])
+  in
+  let build_args_locs (hp, args)=
+    let locs = gen_full_pos args 0 [] in
+    (hp, args, locs)
+  in
   let update_constr cs unk_hps map=
     let ls_l_hpargs1 = (CF.get_HRels_f cs.CF.hprel_lhs) in
     let ls_r_hpargs1 = (CF.get_HRels_f cs.CF.hprel_rhs) in
@@ -601,12 +729,12 @@ let detect_dangling_pred_x constrs sel_hps unk_map=
       let unk_svl1 = CP.remove_dups_svl unk_svl in
       let cs_unk_hps = (List.map fst unk_hpargs) in
       let new_lhs, new_map1 = if l_unk_hpargs =[] then (cs.CF.hprel_lhs, map) else
-        let _, l_unk_pure, new_map = CF.generate_xpure_view_first l_unk_hpargs map in
+        let _, l_unk_pure, new_map = generate_xpure_view_hp (List.map build_args_locs l_unk_hpargs) map in
         let new_lhs,_ = CF.drop_hrel_f cs.CF.hprel_lhs cs_unk_hps in
         (CF.mkAnd_pure new_lhs (MCP.mix_of_pure l_unk_pure) no_pos, new_map)
       in
       let new_rhs, new_map2 = if r_unk_hpargs =[] then (cs.CF.hprel_rhs, new_map1) else
-        let _, r_unk_pure, new_map = CF.generate_xpure_view_first r_unk_hpargs new_map1 in
+        let _, r_unk_pure, new_map = generate_xpure_view_hp (List.map build_args_locs r_unk_hpargs) new_map1 in
         let new_rhs,_ = CF.drop_hrel_f cs.CF.hprel_rhs cs_unk_hps in
         (CF.mkAnd_pure new_rhs (MCP.mix_of_pure r_unk_pure) no_pos, new_map)
       in
@@ -635,11 +763,13 @@ let detect_dangling_pred_x constrs sel_hps unk_map=
 
 let detect_dangling_pred constrs sel_hps unk_map=
   let pr1 =  pr_list_ln Cprinter.string_of_hprel in
-  let pr2 = (pr_list (pr_pair (pr_list (pr_pair !CP.print_sv string_of_int)) CP.string_of_xpure_view)) in
+  let pr2 = (pr_list (pr_pair (pr_pair !CP.print_sv (pr_list string_of_int)) CP.string_of_xpure_view)) in
   let pr3 = pr_list (pr_pair !CP.print_sv !CP.print_svl) in
-  Debug.no_2 "detect_dangling_pred" pr1 !CP.print_svl (pr_triple pr1 pr2 pr3)
-      (fun _ _ -> detect_dangling_pred_x constrs sel_hps unk_map)
-      constrs sel_hps
+  Debug.no_3 "detect_dangling_pred" pr1 !CP.print_svl pr2 (pr_triple pr1 pr2 pr3)
+      (fun _ _ _ -> detect_dangling_pred_x constrs sel_hps unk_map)
+      constrs sel_hps unk_map
+
+(* let get_dangling_pred constrs= *)
 
 (*=============**************************================*)
 (*=============END UNKOWN================*)

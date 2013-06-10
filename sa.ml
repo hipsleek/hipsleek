@@ -3869,7 +3869,7 @@ let infer_hps prog proc_name (hp_constrs: CF.hprel list) sel_hp_rels sel_post_hp
   let pr1 = pr_list_ln Cprinter.string_of_hprel in
   let pr2 = pr_list_ln Cprinter.string_of_hp_rel_def in
   let pr3 = pr_list (pr_triple !CP.print_sv pr0 pr0) in
-  let pr4 = pr_list (pr_pair (pr_list (pr_pair !CP.print_sv string_of_int)) CP.string_of_xpure_view) in
+  let pr4 = pr_list (pr_pair  (pr_list (pr_pair !CP.print_sv string_of_int)) CP.string_of_xpure_view) in
   Debug.no_4 "infer_hps" pr_id pr1 !CP.print_svl pr4 (pr_triple pr1 pr2 pr3)
       (fun _ _ _ _ -> infer_hps_x prog proc_name hp_constrs sel_hp_rels sel_post_hp_rels hp_rel_unkmap preprocess)
       proc_name hp_constrs sel_post_hp_rels hp_rel_unkmap

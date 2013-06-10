@@ -3011,18 +3011,19 @@ let simplify_set_of_formulas_x prog cdefs hp args unk_hps unk_svl defs=
     (* let _ = Debug.info_pprint ("  f2: "^ (Cprinter.prtt_string_of_formula f2)) no_pos in *)
     if (* is_empty_f f2 || *) (is_trivial f2 (hp,args)) || is_self_rec f2 then [] else [f2]
   in
-  let base_case_exist,defs1 = remove_dups_recursive cdefs hp args unk_hps unk_svl defs in
-  let defs2 = List.concat (List.map helper defs1) in
-  let b_defs3,r_defs3=List.partition is_empty_heap_f defs2 in
-  (*remove duplicate for base cases*)
-  let b_defs4 = (* remove_subsumed_pure_formula args *) b_defs3 in
-  (*remove duplicate for recursive cases*)
-  let r_defs4 = Gen.BList.remove_dups_eq check_relaxeq_formula r_defs3 in
+  if List.length defs < 2 then (false, defs) else
+    let base_case_exist,defs1 = remove_dups_recursive cdefs hp args unk_hps unk_svl defs in
+    let defs2 = List.concat (List.map helper defs1) in
+    let b_defs3,r_defs3=List.partition is_empty_heap_f defs2 in
+    (*remove duplicate for base cases*)
+    let b_defs4 = (* remove_subsumed_pure_formula args *) b_defs3 in
+    (*remove duplicate for recursive cases*)
+    let r_defs4 = Gen.BList.remove_dups_eq check_relaxeq_formula r_defs3 in
     (*  if base_case_exist then *)
-  (*      List.concat (List.map helper defs1) *)
-  (*    else defs1 *)
-  (* in *)
-  (base_case_exist,b_defs4@r_defs4)
+    (*      List.concat (List.map helper defs1) *)
+    (*    else defs1 *)
+    (* in *)
+    (base_case_exist,b_defs4@r_defs4)
 
 let simplify_set_of_formulas prog cdefs hp args unk_hps unk_svl defs=
    let pr1 = pr_list_ln Cprinter.prtt_string_of_formula in
@@ -3032,22 +3033,31 @@ let simplify_set_of_formulas prog cdefs hp args unk_hps unk_svl defs=
 
 (**********************)
 let mk_hprel_def prog cdefs unk_hps unk_svl hp args defs pos=
-  if defs = [] then [] else begin
-    let _ = DD.ninfo_pprint ((!CP.print_sv hp)^"(" ^(!CP.print_svl args) ^ ")") pos in
-    let new_args,defs1 =
-      if CP.mem_svl hp unk_hps then (args,defs) else (* (args,defs) *)
-        drop_hp_arguments prog hp args defs
-    in
-    let base_case_exist,defs2 = simplify_set_of_formulas prog cdefs hp new_args unk_hps unk_svl defs1 in
-    if defs2 = [] (* || not base_case_exist *) then [] else
-    (* let defs1 = List.map CF.remove_neqNull_redundant_hnodes_f defs in *)
-      (*make disjunction*)
-      let def = List.fold_left (fun f1 f2 -> CF.mkOr f1 f2 (CF.pos_of_formula f1))
-        (List.hd defs2) (List.tl defs2) in
-      DD.ninfo_pprint (" =: " ^ (Cprinter.prtt_string_of_formula def) ) pos;
-      let def = (hp, (CP.HPRelDefn hp, (CF.HRel (hp, List.map (fun x -> CP.mkVar x no_pos) new_args, pos)), def)) in
-      [def]
- end
+  match defs with
+    | [] -> []
+    (* | [f] -> *)
+    (*       let new_args,defs1 = *)
+    (*         if CP.mem_svl hp unk_hps then (args,defs) else (\* (args,defs) *\) *)
+    (*           drop_hp_arguments prog hp args defs *)
+    (*       in *)
+    (*       let def = (hp, (CP.HPRelDefn hp, (CF.HRel (hp, List.map (fun x -> CP.mkVar x no_pos) new_args, pos)), defs1)) in *)
+    (*       [def] *)
+    | _ -> begin
+        let _ = DD.ninfo_pprint ((!CP.print_sv hp)^"(" ^(!CP.print_svl args) ^ ")") pos in
+        let new_args,defs1 =
+          if CP.mem_svl hp unk_hps then (args,defs) else (* (args,defs) *)
+            drop_hp_arguments prog hp args defs
+        in
+        let base_case_exist,defs2 = simplify_set_of_formulas prog cdefs hp new_args unk_hps unk_svl defs1 in
+        if defs2 = [] (* || not base_case_exist *) then [] else
+          (* let defs1 = List.map CF.remove_neqNull_redundant_hnodes_f defs in *)
+          (*make disjunction*)
+          let def = List.fold_left (fun f1 f2 -> CF.mkOr f1 f2 (CF.pos_of_formula f1))
+            (List.hd defs2) (List.tl defs2) in
+          DD.ninfo_pprint (" =: " ^ (Cprinter.prtt_string_of_formula def) ) pos;
+          let def = (hp, (CP.HPRelDefn hp, (CF.HRel (hp, List.map (fun x -> CP.mkVar x no_pos) new_args, pos)), def)) in
+          [def]
+      end
 
 let mk_unk_hprel_def hp args defs pos=
   let def = List.fold_left (fun f1 f2 -> CF.mkOr f1 f2 (CF.pos_of_formula f1))
