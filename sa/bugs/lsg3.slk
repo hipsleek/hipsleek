@@ -10,10 +10,10 @@ H(x)
  |-  x::node<n>. 
 print residue.
 
-/*
+
 infer[l,H] 
 H(l) & l=null 
  |-  l::node<n>@L. 
 print residue.
 
-*/
+
