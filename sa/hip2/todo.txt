@@ -1270,7 +1270,7 @@ Message: sac.obtain_xpure
 
 ===========================================================
 
-# loc-4a3.slk
+# loc-4a3.slk: FIXED
 
 1. split-base caused problem with loc-4a.slk
 
@@ -1302,7 +1302,7 @@ Problems:
    (i)   next=null should not be in the first --> G(..)
    (ii) /&\emp should not be present in 2nd -->
 */
-
+===========================================================
 # loc-1b1.slk 
 
 You generated:
@@ -1329,8 +1329,10 @@ I think it is probably more deterministic to just generate:
 
 Expecting:
 
+ (HP_2 is selected, we should keep it)
  H(x_41,y_42) ::= x_41::node<Anon_11,UU_HP_1_UU,next) 
      * HP_2(next,y_42) &true,
        ^^^^^^^^^^^^^^^
  G(next_43,y_44) ::= emp&next_43=null & prev=UU_HP_1_UU
                                         ^^^^^^^^^^^^^^^
+===========================================================
