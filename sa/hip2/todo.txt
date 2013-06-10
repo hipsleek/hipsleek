@@ -489,7 +489,7 @@ as trace below show.
  es_history: [x::node<Anon_11,q>@M[Orig]]
 
 =============================================
-# ll-getnext2a.ss: 
+# ll-getnext2a.ss: FIXED
 
 You have now generated:
 
@@ -1303,7 +1303,7 @@ Problems:
    (ii) /&\emp should not be present in 2nd -->
 */
 ===========================================================
-# loc-1b1.slk 
+# loc-1b1.slk: FIXED
 
 How come we now have below? where did next=null and  XPURE(G(next,y)) 
 come from? It seems the detection of dangling predicate is having
