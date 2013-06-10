@@ -5,11 +5,33 @@ data node{
 
 HeapPred H(node a).
 
-infer[H] 
-H(l) 
- & l=null 
- |-  l::node<n>@L. 
+infer[H,x] 
+H(x) 
+ & x=null 
+ |-  x::node<n>@L. 
 print residue.
+// OK
+// <1>hfalse&false&{FLOW,(19,20)=__norm}[]
+// inferred pure: [x!=null]
+
+infer[x] 
+H(x) 
+ & x=null 
+ |-  x::node<n>@L. 
+print residue.
+// OK
+// <1>hfalse&false&{FLOW,(19,20)=__norm}[]
+// inferred pure: [x!=null]
+
+infer[H] 
+H(x) 
+ & x=null 
+ |-  x::node<n>@L. 
+print residue.
+// WRONG (see below)
+// <1>hfalse&false&{FLOW,(19,20)=__norm}[]
+// inferred pure: [x!=null]
+
 
 /*
 INCORRECT:

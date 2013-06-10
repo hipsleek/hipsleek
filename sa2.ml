@@ -487,7 +487,7 @@ let combine_pdefs_pre_x prog unk_hps pr_pdefs=
       | Some f1, Some f2 ->
             let pos = CF.pos_of_formula f1 in
             let new_f2 = CF.subst ss f2 in
-            let f = SAU.norm_and_heap prog args unk_hps [] f1 new_f2 pos in
+            let f = SAU.mkConjH_and_norm prog args unk_hps [] f1 new_f2 pos in
             (* let f = (CF.mkConj_combine f1 new_f2 CF.Flow_combine no_pos) in *)
         if CF.isAnyConstFalse f || SAU.is_unsat f then
           false, Some f
