@@ -880,3 +880,14 @@ Rename unused dangling uniquely
  G1(c_51,y_52) ::= c_51::node<v,prev7,y_52>@M
      & XPURE(HP_36(prev7)) &  XPURE(H1_38(y_52))]
 */
+
+# lsg.ss
+
+ SLSEG(l,e)&l'=null & e!=l' & l=null --> emp&true,
+
+ SLSEG(l,e)&e!=l & l!=null --> l::node2<n_13_794,s_13_795>@M * 
+      (HP_796(n_13_794,e)) * (HP_797(s_13_795,e))&true,
+
+ emp&l'=null --> SLSEG(n_13_792,e')&true,
+ 
+ HP_796(n_13_794,e)&true --> SLSEG(n_13_794,e)&true]
