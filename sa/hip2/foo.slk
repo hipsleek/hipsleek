@@ -13,19 +13,31 @@ relAssume  H // (1)
 relAssume  G // (2)
  HP_7(res) * x::node<val_31_786,res>@M&true --> G(x,res).
 relAssume  G // (3)
- H(x)&res=x --> G(x,res).
+ H(x)&res=x 
+   //& x=null 
+ --> G(x,res).
 
 shape_infer [H][G].
 
 /*
-  Was there a split?
 
-[
-  HP_7(res) ::= emp& XPURE(HP_7(res)),
-  H(x_55) ::= x_55::node<val_31_786,next_31_787>@M& XPURE(HP_7(next_31_787)),
-  G(x_56,res_57) ::= 
-    emp&res_57=x_56 &  XPURE(H(x_56))
-  or x_56::node<val_31_786,res_57>@M& XPURE(HP_7(res_57))
+
+[ H(x_45) ::= x_45::node<val_31_786,next_31_787>@M& XPURE(HP_7(next_31_787)),
+ G(x_46,res_47) ::= 
+ emp&res_47=x_46 &  XPURE(H(x_46))
+ or x_46::node<val_31_786,res_47>@M& XPURE(HP_7(res_47))
  ]
+
+
+P -> Q
+Q & K --> G
+-----------
+P & K --> G
+
+P -> Q
+Q -> K -> G
+-----------
+P -> K -> G
+
 
 */

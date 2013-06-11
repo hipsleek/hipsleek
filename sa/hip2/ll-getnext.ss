@@ -7,7 +7,7 @@ data node {
 }
 
 HeapPred H(node a).
-HeapPred G(node a,node a).
+HeapPred G(node a,node b).
 
 /* function to delete the node after the head in a circular list */
 node get_next(node x)

@@ -21,7 +21,10 @@ relAssume  HP_2 // (3)
 */
 
 relAssume  G // (3)
-  HP_1(prev, y) & next=null --> G(next,y).
+  HP_1(prev, y) 
+   & next=null 
+   //& prev=null 
+  --> G(next,y).
 
 shape_infer_proper [H,HP_2][G].
 
