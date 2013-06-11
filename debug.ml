@@ -98,7 +98,7 @@ let binfo_zprint msg (pos:loc) =
 
 let binfo_start (msg:string) =
         binfo_pprint "**********************************" no_pos;
-        binfo_pprint ("**** "^msg^" detected ****") no_pos;
+        binfo_pprint ("**** "^msg^" ****") no_pos;
         binfo_pprint "**********************************" no_pos
 
 let binfo_end (msg:string) =
