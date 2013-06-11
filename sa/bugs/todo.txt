@@ -881,6 +881,8 @@ Rename unused dangling uniquely
      & XPURE(HP_36(prev7)) &  XPURE(H1_38(y_52))]
 */
 
+================================================================
+
 # lsg.ss
 
  SLSEG(l,e)&l'=null & e!=l' & l=null --> emp&true,
@@ -891,3 +893,40 @@ Rename unused dangling uniquely
  emp&l'=null --> SLSEG(n_13_792,e')&true,
  
  HP_796(n_13_794,e)&true --> SLSEG(n_13_794,e)&true]
+
+================================================================
+
+# lsg2.ss
+
+HeapPred H(node a).
+relation P(node a).
+
+infer[H] 
+H(l) & l=null 
+ |-  l::node<n>@L. 
+print residue.
+
+infer[P] 
+P(l) & l=null 
+ |-  l::node<n>@L. 
+print residue.
+/*
+GOT:
+
+Entail (1) : Valid. 
+
+ <1>(HP_19(n_18)) * l::node<n_18>@M[Orig]&l=null & n=n_18&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [H(l)&l=null --> l::node<n_18>@M * (HP_19(n_18))&true]
+
+
+Entail (2) : Valid. 
+
+ <1>hfalse&false&{FLOW,(19,20)=__norm}[]
+ inferred rel: [RELASS [P]: ( P(l)) -->  l!=null]
+
+Relation P is doing the correct thing by going for LHS
+contradiction. Can we introduce a LHS contradiction step
+prior to infer_collect_hp_rel, in a similar way to how
+pure relation is being handled.
+
+*/

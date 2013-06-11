@@ -568,7 +568,7 @@ let infer_lhs_contra pre_thus lhs_xpure ivars pos msg =
 let infer_lhs_contra pre_thus f ivars pos msg =
   let pr = !print_mix_formula in
   let pr2 = !print_pure_f in
-  Debug.no_2 "infer_lhs_contra" pr !print_svl (pr_option pr2) 
+  Debug.ho_2 "infer_lhs_contra" pr !print_svl (pr_option pr2) 
       (fun _ _ -> infer_lhs_contra pre_thus f ivars pos msg) f ivars
 
 let infer_lhs_contra_estate estate lhs_xpure pos msg =
@@ -1550,7 +1550,7 @@ let infer_collect_rel is_sat estate lhs_h_mix lhs_mix rhs_mix pos =
   let pr_neg_lhs = pr_option (pr_pair pr2 !CP.print_formula) in
   let pr2 (es,l,r,p,a) = 
     pr_penta pr1 pr1 (pr_list CP.print_lhs_rhs) pr_neg_lhs pr_rel_ass (l,r,es.es_infer_rel,p,a) in
-  Debug.no_4 "infer_collect_rel" pr0 pr1 pr1 pr1 pr2
+  Debug.to_4 "infer_collect_rel" pr0 pr1 pr1 pr1 pr2
     (fun _ _ _ _ -> 
       infer_collect_rel is_sat estate lhs_h_mix lhs_mix rhs_mix pos) 
     estate.es_infer_vars_rel lhs_h_mix lhs_mix rhs_mix
@@ -2233,7 +2233,7 @@ let infer_collect_hp_rel i prog (es:entail_state) rhs rhs_rest (rhs_h_matched_se
   let pr1 = Cprinter.string_of_formula_base in
   let pr4 = Cprinter.string_of_estate_infer_hp in
   let pr5 =  pr_quad string_of_bool pr4 Cprinter.string_of_h_formula (pr_option Cprinter.string_of_formula) in
-  Debug.no_2_num i "infer_collect_hp_rel" pr1 pr1 pr5
+  Debug.to_2_num i "infer_collect_hp_rel" pr1 pr1 pr5
 ( fun _ _ -> infer_collect_hp_rel_x prog es rhs rhs_rest rhs_h_matched_set lhs_b rhs_b pos) lhs_b rhs_b
 
 (*=*****************************************************************=*)
