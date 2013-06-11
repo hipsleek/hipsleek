@@ -1595,6 +1595,49 @@ let check_com_pre_eq_formula f1 f2=
   Debug.no_2 "check_com_pre_eq_formula" pr1 pr1 string_of_bool
       (fun _ _ -> check_com_pre_eq_formula_x f1 f2) f1 f2
 
+
+let rec is_unsat_x f0=
+  let rec helper f=
+    match f with
+      | CF.Base fb -> check_inconsistency fb.CF.formula_base_heap fb.CF.formula_base_pure
+      | CF.Or orf -> (helper orf.CF.formula_or_f1) || (helper orf.CF.formula_or_f2)
+      | CF.Exists fe ->
+        (*may not correct*)
+          check_inconsistency fe.CF.formula_exists_heap fe.CF.formula_exists_pure
+  in
+  helper f0
+
+and is_unsat f=
+  let pr1 = Cprinter.prtt_string_of_formula in
+  let pr2 = string_of_bool in
+  Debug.no_1 "is_unsat" pr1 pr2
+      (fun _ -> is_unsat_x f) f
+
+and check_inconsistency hf mixf=
+  let new_mf = CF.xpure_for_hnodes hf in
+  let cmb_mf = MCP.merge_mems mixf new_mf true in
+  not (TP.is_sat_raw cmb_mf)
+
+let check_heap_inconsistency unk_hpargs f0=
+  let do_check hf=
+    let hpargs = CF.get_HRels hf in
+    (*remove dangling*)
+    let hpargs1 = List.filter
+      (fun (hp0,args0) ->
+          not(Gen.BList.mem_eq check_hp_arg_eq (hp0,args0) unk_hpargs))
+      hpargs
+    in
+    Gen.BList.check_dups_eq eq_spec_var_order_list (List.map snd hpargs1)
+  in
+  let rec helper f=
+    match f with
+      | CF.Base fb -> do_check fb.CF.formula_base_heap
+      | CF.Or orf -> (helper orf.CF.formula_or_f1) || (helper orf.CF.formula_or_f2)
+      | CF.Exists fe ->
+        (*may not correct*)
+          do_check fe.CF.formula_exists_heap
+  in
+  helper f0
 (************************************************************)
       (******************END CHECKEQ**********************)
 (************************************************************)

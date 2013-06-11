@@ -476,18 +476,61 @@ let combine_pdefs_pre_x pr_pdefs=
   in
   let do_combine (hp,args,unk_svl, cond, lhs, orhs)=
     match orhs with
-      | Some rhs -> (hp,args,unk_svl, cond, lhs, Some (CF.mkAnd_pure rhs (MCP.mix_of_pure cond) (CF.pos_of_formula rhs)))
+      | Some rhs ->
+            let nf = (CF.mkAnd_pure rhs (MCP.mix_of_pure cond) (CF.pos_of_formula rhs)) in
+            if SAU.is_unsat nf then [] else
+            [(hp,args,unk_svl, cond, lhs, Some nf)]
       | None -> report_error no_pos "sa2.combine_pdefs_pre: should not None 1"
+  in
+  let mkAnd_w_opt ss of1 of2=
+    match of1,of2 with
+      | Some f1, Some f2 ->
+            let new_f2 = CF.subst ss f2 in
+            let f = (CF.mkStar f1 new_f2 CF.Flow_combine no_pos) in
+        if SAU.is_unsat f then
+          false, Some f
+        else true, Some f
+      | None, None -> true, None
+      | None, Some f2 -> true, (Some ( CF.subst ss f2))
+      | Some f1, None -> true, of1
+  in
+  (*nav code. to improve*)
+  let combine_helper2 ((hp1,args1,unk_svl1, cond1, norm_cond1, olhs1, orhs1), cs1) ((hp2,args2,unk_svl2, cond2, norm_cond2, olhs2, orhs2), cs2)=
+    let norm_cond_disj1 = CP.mkAnd norm_cond1 (CP.mkNot norm_cond2 None no_pos) no_pos in
+    let pdef1 = if (TP.is_sat_raw (MCP.mix_of_pure norm_cond_disj1)) then
+      let npdef1 = do_combine (hp1,args1,unk_svl1,CP.mkAnd cond1 (CP.mkNot cond2 None no_pos) no_pos, olhs1, orhs1) in
+      npdef1
+    else []
+    in
+    let norm_cond_disj2 = CP.mkAnd norm_cond2 (CP.mkNot norm_cond1 None no_pos) no_pos in
+    let pdef2 = if (TP.is_sat_raw (MCP.mix_of_pure norm_cond_disj2)) then
+      let npdef2 = do_combine (hp2,args2,unk_svl2,CP.mkAnd cond2 (CP.mkNot cond1 None no_pos) no_pos, olhs2, orhs2) in
+      npdef2
+    else []
+    in
+    let norm_cond_disj3 = CP.mkAnd norm_cond2 norm_cond1 no_pos in
+    let pdef3 = if (TP.is_sat_raw (MCP.mix_of_pure norm_cond_disj3)) then
+      let ss = List.combine args2 args1 in
+      let is_sat1, n_orhs = mkAnd_w_opt ss orhs1 orhs2 in
+      let is_sat2, n_olhs = mkAnd_w_opt ss olhs1 olhs2 in
+      let npdef3 = if is_sat1 && is_sat2 then
+        do_combine (hp1,args1,unk_svl1,CP.mkAnd norm_cond1 norm_cond2 no_pos, n_olhs, n_orhs)
+      else []
+      in
+      npdef3
+    else []
+    in
+    pdef1@pdef2@pdef3
   in
   let rec refine_cond rem_pr_par_defs ((hp,args,unk_svl, cond, norm_cond, olhs, orhs), cs)=
     match rem_pr_par_defs with
       | [] -> begin
           let new_pdef = do_combine (hp,args,unk_svl,cond, olhs, orhs) in
-          ([new_pdef],[])
+          (new_pdef,[])
       end
       | ((_,_,_,_, norm_cond1,_,_),_)::rest ->
-          (* let _ = print_endline ("cond: " ^ ( !CP.print_formula cond)) in *)
-          (* let _ = print_endline ("cond1: " ^ ( !CP.print_formula cond1)) in *)
+          let _ = print_endline ("cond: " ^ ( !CP.print_formula norm_cond)) in
+          let _ = print_endline ("cond1: " ^ ( !CP.print_formula norm_cond1)) in
           if not (TP.is_sat_raw (MCP.mix_of_pure (CP.mkAnd norm_cond norm_cond1 no_pos))) then
             refine_cond rest ((hp,args,unk_svl, cond, norm_cond, olhs, orhs), cs)
           else
@@ -522,7 +565,7 @@ let combine_pdefs_pre_x pr_pdefs=
       | [] -> ([],[])
       | [(hp,args,unk_svl, cond, lhs, orhs), _] ->
           let new_pdef = do_combine (hp,args,unk_svl, cond, lhs, orhs) in
-          ([new_pdef],[])
+          (new_pdef,[])
       | _ -> begin
           (*each group, filter depended constraints*)
           let rem_pr_defs, depend_cs = List.fold_left filter_depend_pardef ([],[]) pr_pdefs in
@@ -538,9 +581,13 @@ let combine_pdefs_pre_x pr_pdefs=
           let pdefs,rem_constrs0 =
             match cs,rem_pr_defs1 with
               | [],[] -> [],[]
-              | [(pdef, _)],[] -> [(do_combine pdef)],[]
-              | _ -> let pdefs, rem_constrs = combine_helper rem_pr_defs1 [] [] [] in
-                     (pdefs,rem_constrs)
+              | [(pdef, _)],[] -> (do_combine pdef),[]
+              | [],[pr1;pr2] -> (*try with 2 first. to improve*)
+                    let npdefs = combine_helper2 pr1 pr2 in
+                npdefs,[]
+              | _ -> let pdefs, rem_constrs =
+                  combine_helper rem_pr_defs1 [] [] [] in
+                (pdefs,rem_constrs)
           in
           (pdefs, depend_cs@rem_constrs0)
       end
