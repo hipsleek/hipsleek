@@ -9326,17 +9326,19 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
                     match relass with
                       | [] -> 
                           (* let _ =  Debug.info_pprint ">>>>>> M_unmatched_rhs_data_node <<<<<<" pos in *)
-                      let (res,new_estate,n_lhs, orhs_b) = Inf.infer_collect_hp_rel 2 prog estate rhs rhs_rest rhs_h_matched_set lhs_b rhs_b pos in
+                            let r = do_infer_heap rhs rhs_rest caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:CP.spec_var list) is_folding pos in
+                            let (res,new_estate,n_lhs, orhs_b) = Inf.infer_collect_hp_rel 2 prog estate rhs rhs_rest rhs_h_matched_set lhs_b rhs_b pos in
                         if (not res) then
-                          let s = "15.5 no match for rhs data node: " ^
-                            (CP.string_of_spec_var (let _ , ptr = CF.get_ptr_from_data_w_hrel rhs in ptr)) ^ " (must-bug)."in
-                          let new_estate = {estate  with CF.es_formula = CF.substitute_flow_into_f
-                                  !error_flow_int estate.CF.es_formula} in
-                          let unmatched_lhs = Basic_Reason (mkFailContext s new_estate (Base rhs_b) None pos,
-                          CF.mk_failure_must s Globals.sl_error) in
-                          let (res_lc, prf) = do_unmatched_rhs rhs rhs_rest caller prog estate conseq lhs_b rhs_b a
-                            (rhs_h_matched_set:CP.spec_var list) is_folding pos in
-                          (CF.mkFailCtx_in (Or_Reason (res_lc, unmatched_lhs)), prf)
+                          r
+                          (* let s = "15.5 no match for rhs data node: " ^ *)
+                          (*   (CP.string_of_spec_var (let _ , ptr = CF.get_ptr_from_data_w_hrel rhs in ptr)) ^ " (must-bug)."in *)
+                          (* let new_estate = {estate  with CF.es_formula = CF.substitute_flow_into_f *)
+                          (*         !error_flow_int estate.CF.es_formula} in *)
+                          (* let unmatched_lhs = Basic_Reason (mkFailContext s new_estate (Base rhs_b) None pos, *)
+                          (* CF.mk_failure_must s Globals.sl_error) in *)
+                          (* let (res_lc, prf) = do_unmatched_rhs rhs rhs_rest caller prog estate conseq lhs_b rhs_b a *)
+                          (*   (rhs_h_matched_set:CP.spec_var list) is_folding pos in *)
+                          (* (CF.mkFailCtx_in (Or_Reason (res_lc, unmatched_lhs)), prf) *)
                         else
                           let n_rhs_b = match orhs_b with
                             | Some f -> f
