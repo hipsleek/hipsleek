@@ -12,8 +12,8 @@ HeapPred SLL(node2 a).
 HeapPred SLSEG(node2 a,node2 b).
 
 bool skip1(node2 l)
-//infer[SLL] requires SLL(l) ensures res;
-requires l::skipll<> ensures res;
+infer[SLL] requires SLL(l) ensures true; // res
+//requires l::skipll<> ensures res;
 
 {
 	if (l==null) return true;
@@ -21,8 +21,8 @@ requires l::skipll<> ensures res;
 }
 
 bool skip0(node2 l, node2 e) 
-//infer[SLSEG] requires SLSEG(l,e) ensures res;
-requires l::lseg<e> ensures res;
+infer[SLSEG] requires SLSEG(l,e) ensures true;// res
+//requires l::lseg<e> ensures res;
 {
 	if (l == e) return true;
 	else return l != null && skip0(l.n, e) && l.s == null
