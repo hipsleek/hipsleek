@@ -68,6 +68,7 @@ type file_offset =
     line_start: int;
     byte_num: int;
   }
+
 let default_rel_id = "rel_id__"
 (* let tmp_rel_decl = ref (None : rel_decl option) *)
 
@@ -2755,11 +2756,26 @@ let parse_hip_string n s =
   let pr x = x in
   let pr_no x = "?" in DD.no_2 "parse_hip_string" pr pr pr_no parse_hip_string n s
 
-let parse_proc_string n s =
-  SHGram.parse_string hproc (PreCast.Loc.mk n) s
-
 let parse_specs_list s =
   SHGram.parse_string opt_spec_list_file (PreCast.Loc.mk "spec string") s
+
+let parse_spec s = SHGram.parse_string opt_spec_list_file (PreCast.Loc.mk "spec string") s
+
+let parse_cpfile n s = SHGram.parse cp_file (PreCast.Loc.mk n) s
+
+(*****************************************************************)
+(******** The function below will be used by CIL parser **********)
+
+let parse_aux_proc (fname: string) (moffset: file_offset) (proc: string) =
+  (* store the current modifier_offset and assign new value to it *)
+  let save = !modifier_offset in
+  modifier_offset := moffset;
+  (* parse *)
+  let res = SHGram.parse_string hproc (PreCast.Loc.mk fname) proc in
+  (* restore the old value of modifier_offset *)
+  modifier_offset := save;
+  (* return *)
+  res
 
 let parse_cfunction_spec (fname: string) (moffset: file_offset) (spec: string) : F.struc_formula =
   (* store the current modifier_offset and assign new value to it *)
@@ -2794,6 +2810,5 @@ let parse_cstatement_spec (fname: string) (moffset: file_offset) (spec: string) 
   (* return *)
   res
 
-let parse_spec s = SHGram.parse_string opt_spec_list_file (PreCast.Loc.mk "spec string") s
-
-let parse_cpfile n s = SHGram.parse cp_file (PreCast.Loc.mk n) s
+(***************** End of CIL parser's functions *****************)
+(*****************************************************************)

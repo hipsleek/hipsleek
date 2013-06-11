@@ -340,39 +340,45 @@ let travel_file (file: Cil.file) : unit =
 (* translation functions from Cil -> Iast   *)
 (* ---------------------------------------- *)
 
-let create_data_cast_proc (input_typ: Globals.typ) (output_typ: Globals.typ)
-                          : Iast.proc_decl option =
-  match input_typ, output_typ with
-  | Globals.Named input_typ_name, Globals.Named output_typ_name -> (
-      try
-        Some (Hashtbl.find tbl_cast_procs (input_typ, output_typ))
-      with Not_found -> (
-        let proc_name = "cast_" ^ input_typ_name ^ "_to_" ^ output_typ_name in
-        let output_typ_param = ( 
-          let data_decl = (
-            try Hashtbl.find tbl_data_decl output_typ
-            with Not_found -> report_error_msg "Error: Unknown ouput_typ"
-          ) in
-          match data_decl.Iast.data_fields with
-          | []   -> report_error_msg "Error: Invalid data_decl fields"
-          | [hd] -> "<_>"
-          | hd::tl -> "<" ^ (List.fold_left (fun s _ -> s ^ ", _") "_" tl) ^ ">"
-        ) in
-        let cast_proc = (
-          output_typ_name ^ " " ^ proc_name ^ " (" ^ input_typ_name ^ " param)\n" ^
-          "  case { \n" ^
-          "    param =  null -> requires true ensures res = null; \n" ^
-          "    param != null -> requires true ensures res::" ^ output_typ_name ^ output_typ_param ^ "; \n" ^
-          "  }\n"
-        ) in
-        let proc_decl = Parser.parse_proc_string "inter_cast_proc" cast_proc in
-        (* update *)
-        Hashtbl.add tbl_cast_procs (input_typ, output_typ) proc_decl;
-        (* return *)
-        Some proc_decl
-      )
-    )
-  | _, _ -> None
+(* let create_pointer_casting_proc (input_typ: Globals.typ) (output_typ: Globals.typ) (loc: Globals.loc)             *)
+(*                                 : Iast.proc_decl option =                                                         *)
+(*   match input_typ, output_typ with                                                                                *)
+(*   | Globals.Named input_typ_name, Globals.Named output_typ_name -> (                                              *)
+(*       (* Further checking can consider 2 string input_typ_name *)                                                 *)
+(*       (* and output_typ_name end with "__star"                 *)                                                 *)
+(*       try                                                                                                         *)
+(*         Some (Hashtbl.find tbl_cast_procs (input_typ, output_typ))                                                *)
+(*       with Not_found -> (                                                                                         *)
+(*         let proc_name = "cast_pointer_from_" ^ input_typ_name ^ "_to_" ^ output_typ_name in                       *)
+(*         let output_typ_param = (                                                                                  *)
+(*           let data_decl = (                                                                                       *)
+(*             try Hashtbl.find tbl_data_decl output_typ                                                             *)
+(*             with Not_found -> report_error_msg "Error: Unknown ouput_typ"                                         *)
+(*           ) in                                                                                                    *)
+(*           match data_decl.Iast.data_fields with                                                                   *)
+(*           | []   -> report_error_msg "Error: Invalid data_decl fields"                                            *)
+(*           | [hd] -> "<_>"                                                                                         *)
+(*           | hd::tl -> "<" ^ (List.fold_left (fun s _ -> s ^ ", _") "_" tl) ^ ">"                                  *)
+(*         ) in                                                                                                      *)
+(*         let cast_proc = (                                                                                         *)
+(*           output_typ_name ^ " " ^ proc_name ^ " (" ^ input_typ_name ^ " param)\n" ^                               *)
+(*           "  case { \n" ^                                                                                         *)
+(*           "    param =  null -> requires true ensures res = null; \n" ^                                           *)
+(*           "    param != null -> requires true ensures res::" ^ output_typ_name ^ output_typ_param ^ "; \n" ^      *)
+(*           (* "    param != null -> requires true ensures res::" ^ output_typ_name ^ "<p> * p::node<_,_>; \n" ^ *) *)
+(*           "  }\n"                                                                                                 *)
+(*         ) in                                                                                                      *)
+(*         let modified_offset = {Parser.line_num = loc.Globals.start_pos.Lexing.pos_lnum;                           *)
+(*                                Parser.line_start = loc.Globals.start_pos.Lexing.pos_lnum;                         *)
+(*                                Parser.byte_num = loc.Globals.start_pos.Lexing.pos_cnum; } in                      *)
+(*         let proc_decl = Parser.parse_aux_proc "inter_cast_proc" modified_offset cast_proc in                      *)
+(*         (* update *)                                                                                              *)
+(*         Hashtbl.add tbl_cast_procs (input_typ, output_typ) proc_decl;                                             *)
+(*         (* return *)                                                                                              *)
+(*         Some proc_decl                                                                                            *)
+(*       )                                                                                                           *)
+(*     )                                                                                                             *)
+(*   | _, _ -> None                                                                                                  *)
 
 let create_negation_proc (input_typ: Globals.typ) : Iast.proc_decl =
   match input_typ with
@@ -382,7 +388,10 @@ let create_negation_proc (input_typ: Globals.typ) : Iast.proc_decl =
         "  case { param =  null -> ensures res;\n" ^
         "         param != null -> ensures !res; }\n"
       ) in
-      let proc_decl = Parser.parse_proc_string "inter_neg_proc" neg_proc in
+      let modified_offset = {Parser.line_num = 0;
+                             Parser.line_start = 0;
+                             Parser.byte_num = 0} in
+      let proc_decl = Parser.parse_aux_proc "inter_neg_proc" modified_offset neg_proc in
       proc_decl
     )
   | _ -> report_error_msg "Error: Invalid"
@@ -711,26 +720,27 @@ and translate_exp (e: Cil.exp) : Iast.exp =
                               Iast.exp_cond_path_id = None;
                               Iast.exp_cond_pos = pos} in
       newexp
-  | Cil.CastE (ty, exp, l) ->
+  | Cil.CastE (ty, exp, l) -> (
       let pos = translate_location l in
-      let cast_typ = translate_typ ty in
+      let output_typ = translate_typ ty in
       let input_exp = translate_exp exp in
-      let input_typ = translate_typ (typ_of_cil_exp exp) in
-      let cast_proc = create_data_cast_proc input_typ cast_typ in
-      let newexp = (
-        match cast_proc with
-        | None -> input_exp
-        | Some proc -> (
-            Iast.CallNRecv {
-              Iast.exp_call_nrecv_method = proc.Iast.proc_name;
-              Iast.exp_call_nrecv_lock = None;
-              Iast.exp_call_nrecv_arguments = [input_exp];
-              Iast.exp_call_nrecv_path_id = None;
-              Iast.exp_call_nrecv_pos = pos
-            }
-          )
-      ) in
-      newexp
+      match input_exp with
+      | Iast.Null _ -> input_exp
+      | _ -> (
+          let input_typ = translate_typ (typ_of_cil_exp exp) in
+          match input_typ, output_typ with
+          | Globals.Named "void__star", Globals.Named output_typ_name ->
+              let casting_proc_name = "cast_general_pointer_to_" ^ output_typ_name in
+              Iast.CallNRecv {
+                Iast.exp_call_nrecv_method = casting_proc_name;
+                Iast.exp_call_nrecv_lock = None;
+                Iast.exp_call_nrecv_arguments = [input_exp];
+                Iast.exp_call_nrecv_path_id = None;
+                Iast.exp_call_nrecv_pos = pos
+              }
+          | _ -> input_exp
+        )
+    )
   | Cil.AddrOf (lval, l) ->
       (* create a new Iast.data_decl that has 1 inline field is lval *)
       let newexp = (
@@ -843,27 +853,7 @@ let translate_instr (instr: Cil.instr) : Iast.exp =
         | None -> callee;
         | Some lv -> (
             let le = translate_lval lv in
-            let re = (
-              (* if the callee is "malloc, alloc...", then we need to cast *)
-              (* its type to the target's type *)
-              match fname with
-              | "malloc" -> (
-                  (* let new_typ = translate_typ (typ_of_cil_lval lv) in                          *)
-                  (* let _ = print_endline ("== new_typ = " ^ (Globals.string_of_typ new_typ)) in *)
-                  (* let cast_proc = create_memory_cast_proc new_typ in                           *)
-                  (* let casted_callee =                                                          *)
-                  (*   Iast.CallNRecv {                                                           *)
-                  (*     Iast.exp_call_nrecv_method = cast_proc.Iast.proc_name;                   *)
-                  (*     Iast.exp_call_nrecv_lock = None;                                         *)
-                  (*     Iast.exp_call_nrecv_arguments = [callee];                                *)
-                  (*     Iast.exp_call_nrecv_path_id = None;                                      *)
-                  (*     Iast.exp_call_nrecv_pos = pos                                            *)
-                  (*   } in                                                                       *)
-                  (* casted_callee                                                                *)
-                  callee
-                )
-              | _ -> callee
-            ) in
+            let re = callee in
             let lv_loc = Cil.get_lvalLoc lv in
             let asgn_loc = Cil.makeLoc (Cil.startPos lv_loc) (Cil.endPos l) in
             let asgn_pos = translate_location asgn_loc in
