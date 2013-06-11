@@ -1784,8 +1784,10 @@ let rec find_imply prog lunk_hps runk_hps lhs1 rhs1 lhs2 rhs2=
             let n_lhs1 = CF.subst_b subst1 lhs1 in
             (*check pure implication*)
             let nldns,nlvns,_ = CF.get_hp_rel_bformula n_lhs1 in
-            let lmf = CP.filter_var_new (MCP.pure_of_mix n_lhs1.CF.formula_base_pure)
-              (look_up_closed_ptr_args prog nldns nlvns all_matched_svl2) in
+            (*loc-1b1.slk*)
+            (* let lmf = CP.filter_var_new (MCP.pure_of_mix n_lhs1.CF.formula_base_pure)
+              (look_up_closed_ptr_args prog nldns nlvns all_matched_svl2) in *)
+            let lmf = (MCP.pure_of_mix n_lhs1.CF.formula_base_pure) in
             let rmf = (MCP.pure_of_mix rhs2.CF.formula_base_pure) in
             let _ = Debug.ninfo_pprint ("    n_lhs1: " ^ (Cprinter.string_of_formula_base n_lhs1)) no_pos in
             let _ = Debug.ninfo_pprint ("    lmf: " ^ (!CP.print_formula lmf)) no_pos in

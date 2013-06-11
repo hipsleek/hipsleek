@@ -375,7 +375,7 @@ let elim_unused_pre_preds post_hps constrs unk_map=
   (*unused pre preds are preds in rhs but do not appear in any lhs*)
   let unused_pre_preds = Gen.BList.difference_eq cmp_hpargs_fn rhs_preds1 lhs_heads in
   (*and they are NOT post*)
-  let unused_pre_preds0 = unused_pre_preds(* CP.diff_svl unused_pre_preds post_hps *) in
+  let unused_pre_preds0 = List.filter (fun (hp,_) -> not (CP.mem_svl hp post_hps)) unused_pre_preds in
   let unused_pre = (List.map fst unused_pre_preds0) in
   let _ = DD.binfo_pprint ("pre-preds: "  ^ (!CP.print_svl unused_pre) ^" are removed") no_pos in
   let new_constrs,new_map = List.fold_left (fun (ls_cs,map) cs ->
