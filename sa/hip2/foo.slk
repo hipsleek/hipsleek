@@ -1,0 +1,31 @@
+data node{
+ int val;
+ node next;
+}.
+
+
+HeapPred H(node a).
+HeapPred HP_7(node a).
+HeapPred G(node a, node a).
+
+relAssume  H // (1)
+ H(x) --> x::node<val_31_786,next_31_787>@M * HP_7(next_31_787).
+relAssume  G // (2)
+ HP_7(res) * x::node<val_31_786,res>@M&true --> G(x,res).
+relAssume  G // (3)
+ H(x)&res=x --> G(x,res).
+
+shape_infer [H][G].
+
+/*
+  Was there a split?
+
+[
+  HP_7(res) ::= emp& XPURE(HP_7(res)),
+  H(x_55) ::= x_55::node<val_31_786,next_31_787>@M& XPURE(HP_7(next_31_787)),
+  G(x_56,res_57) ::= 
+    emp&res_57=x_56 &  XPURE(H(x_56))
+  or x_56::node<val_31_786,res_57>@M& XPURE(HP_7(res_57))
+ ]
+
+*/
