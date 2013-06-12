@@ -6,7 +6,8 @@ data node{
 HeapPred H(node a).
 
 infer[H] 
-H(l) & l=null 
+H(l) 
+ & l=null 
  |-  l::node<n>@L. 
 print residue.
 
@@ -14,18 +15,18 @@ print residue.
 INCORRECT:
 ==========
 
-Entail (2) : Valid. 
+ <1>hfalse&false&{FLOW,(19,20)=__norm}[]
+ inferred pure: [l!=null]
 
- <1>(HP_26(n_25)) * l::node<n_25>@M[Orig]&l=null & n=n_25&{FLOW,(19,20)=__norm}[]
- inferred hprel: [H(l)&l=null --> l::node<n_25>@M * (HP_26(n_25))&true]
+We must not add l!=null to
+  es_infer_pure : CP.formula list; 
+
+We must instead add: 
+ inferred hprel: [H(l) --> l!=null]
+which is kept at:
+  es_infer_hp_rel : hprel list; (*(CP.rel_cat * formula * formula) list;*)
 
 
-EXPECTING:
-==========
-
- <1> false
-
- inferred hprel: [H(l) -> l!=null]
 
 
 */
