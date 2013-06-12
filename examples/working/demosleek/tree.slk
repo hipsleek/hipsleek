@@ -11,5 +11,9 @@ pred tree<> == self = null
 checkentail x::node<null,b>*b::node<null,null> |- x::tree<> & x!=null.
 print residue.
 
+
+checkentail x::node<null,b>*b::node<null,null> |- x::tree<> & x!=null.
+print residue.
+
 checkentail x::tree<> & x!=null |- x::node<a,b>.
 print residue.

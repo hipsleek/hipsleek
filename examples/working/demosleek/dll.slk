@@ -22,3 +22,17 @@ print residue.
 
 checkentail x::dll<p,tl> & x!=tl |- x::node<a,b>.
 print residue.
+
+
+pred dll_size<n,p,tl> == self = tl & n=1
+	or self::node<p,x> * x::dll_size<n-1,self,tl>
+inv n>=0.
+
+checkentail x::dll_size<n,p,tl> & n>3 |- x::node<a,b> * b::node<c,d>.
+print residue.
+// valid
+
+checkentail x::dll_size<n,p,tl> & n>1 |- x::node<a,b> * b::node<c,d>.
+print residue.
+// fail
+
