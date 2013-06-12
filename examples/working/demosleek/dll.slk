@@ -1,10 +1,24 @@
 /* representation of a node */
 data node{
-	node next;
 	node prev;
+	node next;
 }.
 
 /* predicate for a doubly linked list */
-pred dll<p,tl> == self = null & self = tl
-	or self::node<x,p> * x::dll<self,tl>.
+pred dll<p,tl> == self = tl
+	or self::node<p,x> * x::dll<self,tl>.
 
+
+checkentail x::node<a,b>*b::node<x,q> |- x::dll<p,q>.
+print residue.
+// residue is empty since entire list is consumed
+
+
+checkentail x::node<a,b>*b::node<x,q> |- x::dll<p,q>@L.
+print residue.
+// residue is not empty since we used @L lend annotation;
+// so list is matched but not is consumed
+// note the instantiation of p=a
+
+checkentail x::dll<p,tl> & x!=tl |- x::node<a,b>.
+print residue.
