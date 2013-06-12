@@ -68,12 +68,31 @@ int foo2()
   ensures  res=1;
 */
 {
+  struct pair* p;
+  {
+    struct pair v;
+    v.x = 1;
+    v.y = 2;
+    p = &v;
+    int r = v.x;
+  }
+  //p->y
+  return r;
+}
+
+
+int foo3()
+/*@
+  requires true
+  ensures  res=1;
+*/
+{
+  int z = 1;
   struct pair v;
   v.x = 1;
   v.y = 2;
-  return v.x;
+  return z;
 }
-
 
 
 /*
