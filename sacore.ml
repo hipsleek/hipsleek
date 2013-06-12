@@ -801,5 +801,78 @@ let get_dangling_pred constrs=
   (List.map gen_map ls_unk_hpargs1,ls_unk_hpargs1)
 
 (*=============**************************================*)
-(*=============END UNKOWN================*)
+       (*=============END UNKOWN================*)
+(*=============**************************================*)
+
+(*=============**************************================*)
+       (*=============CONSTR CLOSURE================*)
+(*=============**************************================*)
+let do_streng_cons prog constrs new_cs=
+  let rec check_constr_duplicate (lhs,rhs) constrs=
+    match constrs with
+      | [] -> false
+      | cs::ss -> if SAU.checkeq_pair_formula (lhs,rhs)
+            (cs.CF.hprel_lhs,cs.CF.hprel_rhs) then
+            true
+          else check_constr_duplicate (lhs,rhs) ss
+  in
+  let find_imply_one cs1 cs2=
+    let _ = Debug.ninfo_pprint ("    rhs: " ^ (Cprinter.string_of_hprel cs2)) no_pos in
+    let qvars1, f1 = CF.split_quantifiers cs1.CF.hprel_lhs in
+    let qvars2, f2 = CF.split_quantifiers cs2.CF.hprel_rhs in
+    match f1,f2 with
+      | CF.Base lhs1, CF.Base rhs2 ->
+          let r = SAU.find_imply prog (List.map fst cs1.CF.unk_hps) (List.map fst cs2.CF.unk_hps) lhs1 cs1.CF.hprel_rhs cs2.CF.hprel_lhs rhs2 in
+          begin
+              match r with
+                | Some (l,r,lhs_ss, rhs_ss) ->
+                    (*check duplicate*)
+                    if check_constr_duplicate (l,r) constrs then []
+                    else
+                      begin
+                          let new_cs = {cs2 with
+                              CF.predef_svl = CP.remove_dups_svl
+                                  ((CP.subst_var_list lhs_ss cs1.CF.predef_svl)@
+                                          (CP.subst_var_list rhs_ss cs2.CF.predef_svl));
+                              CF.unk_svl = CP.remove_dups_svl
+                                  ((CP.subst_var_list lhs_ss cs1.CF.unk_svl)@
+                                          (CP.subst_var_list rhs_ss cs2.CF.unk_svl));
+                              CF.unk_hps = Gen.BList.remove_dups_eq SAU.check_hp_arg_eq
+                                  ((List.map (fun (hp,args) -> (hp,CP.subst_var_list lhs_ss args)) cs1.CF.unk_hps)@
+                                          (List.map (fun (hp,args) -> (hp,CP.subst_var_list rhs_ss args)) cs2.CF.unk_hps));
+                              CF.hprel_lhs = l;
+                              CF.hprel_rhs = r;
+                          }
+                          in
+                          let _ = Debug.ninfo_pprint ("    new cs: " ^ (Cprinter.string_of_hprel new_cs)) no_pos in
+                          [new_cs]
+                      end
+                | None -> []
+          end
+      | _ -> report_error no_pos "sa2.find_imply_one"
+  in
+  (*new_cs: one x one*)
+  let rec helper_new_only don rest res=
+    match rest with
+      | [] -> res
+      | cs::ss ->
+          let _ = Debug.ninfo_pprint ("    lhs: " ^ (Cprinter.string_of_hprel cs)) no_pos in
+          let r = List.concat (List.map (find_imply_one cs) (don@ss@res)) in
+          (helper_new_only (don@[cs]) ss (res@r))
+  in
+  (*new_cs x constr*)
+  let rec helper_old_new rest res=
+    match rest with
+      | [] -> res
+      | cs::ss ->
+          let r = List.fold_left ( fun ls cs1 -> ls@(find_imply_one cs cs1)) res constrs in
+           helper_old_new ss r
+  in
+  let new_cs1 = if List.length new_cs < 1 then [] else helper_new_only [] new_cs [] in
+  let new_cs2 = helper_old_new new_cs [] in
+  (new_cs1@new_cs2)
+
+
+(*=============**************************================*)
+       (*=============END CONSTR CLOSURE================*)
 (*=============**************************================*)

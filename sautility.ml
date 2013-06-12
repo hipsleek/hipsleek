@@ -3344,7 +3344,7 @@ let get_longest_common_hnodes_list prog cdefs unk_hps unk_svl hp r non_r_args ar
       (fun _ _ _ _ _-> get_longest_common_hnodes_list_x prog cdefs unk_hps unk_svl hp r non_r_args args fs)
       hp args unk_hps unk_svl fs
 
-let norm_and_f_x prog org_args args next_roots sh_ldns com_eqNulls com_eqPures com_hps (ldns, f)=
+let norm_conjH_f_x prog org_args args next_roots sh_ldns com_eqNulls com_eqPures com_hps (ldns, f)=
   (* let _ =  DD.info_pprint ("       new args: " ^ (!CP.print_svl args)) no_pos in *)
   (* let pr2 = pr_list Cprinter.string_of_h_formula in *)
   (* let _ = DD.info_pprint ("      sh_ldns:" ^ (pr2 (List.map (fun hd -> CF.DataNode hd) sh_ldns))) no_pos in *)
@@ -3392,14 +3392,14 @@ let norm_and_f_x prog org_args args next_roots sh_ldns com_eqNulls com_eqPures c
   let _ =  DD.ninfo_pprint ("       nf7: " ^ (Cprinter.prtt_string_of_formula nf7)) no_pos in
   nf7
 
-let norm_and_f prog org_args args next_roots sh_ldns com_eqNulls com_eqPures com_hps (ldns, f)=
+let norm_conjH_f prog org_args args next_roots sh_ldns com_eqNulls com_eqPures com_hps (ldns, f)=
   let pr1 = !CP.print_svl in
   let pr2 = Cprinter.prtt_string_of_formula in
   let pr3 (a,b,_) = let pr = pr_pair !CP.print_sv (pr_list !CP.print_exp) in
   pr (a,b)
   in
-  Debug.no_5 "norm_and_f" pr1 pr1 pr2 (pr_list !CP.print_formula) (pr_list pr3) pr2
-      (fun _ _ _ _ _-> norm_and_f_x prog org_args args next_roots sh_ldns com_eqNulls com_eqPures com_hps (ldns, f))
+  Debug.no_5 "norm_conjH_f" pr1 pr1 pr2 (pr_list !CP.print_formula) (pr_list pr3) pr2
+      (fun _ _ _ _ _-> norm_conjH_f_x prog org_args args next_roots sh_ldns com_eqNulls com_eqPures com_hps (ldns, f))
       org_args args f com_eqPures com_hps
 
 let get_sharing_x prog unk_hps r other_args args sh_ldns eqNulls eqPures hprels unk_svl=
@@ -3486,7 +3486,7 @@ let get_sharing prog unk_hps r other_args args sh_ldns eqNulls eqPures hprels un
       unk_hps args sh_ldns eqNulls eqPures hprels
 
 
-let norm_and_heap_x prog args unk_hps unk_svl f1 f2 pos=
+let mkConjH_and_norm_x prog args unk_hps unk_svl f1 f2 pos=
   let fs = [f1;f2] in
   let r,non_r_args = find_root args fs in
   let lldns = List.map (fun f -> (get_hdnodes f, f)) fs in
@@ -3495,11 +3495,11 @@ let norm_and_heap_x prog args unk_hps unk_svl f1 f2 pos=
     (CF.mkConj_combine f1 f2 CF.Flow_combine pos)
   else
     let sharing_f, n_args , sh_ldns2,next_roots = get_sharing prog unk_hps r non_r_args args sh_ldns eqNulls eqPures hprels unk_svl in
-    let n_fs = List.map (norm_and_f prog args n_args next_roots sh_ldns2 eqNulls eqPures hprels) lldns in
-    let n_fs1 = List.filter (fun f -> not ((is_empty_f f) || (CF.is_only_neqNull n_args [] f))) n_fs in
-    match n_fs1 with
+    let n_fs = List.map (norm_conjH_f prog args n_args next_roots sh_ldns2 eqNulls eqPures hprels) lldns in
+    (* let n_fs1 = List.filter (fun f -> not ((is_empty_f f) || (CF.is_only_neqNull n_args [] f))) n_fs in *)
+    match n_fs with
       | [] -> CF.mkFalse_nf pos
-      | [f] -> f
+      | [f] -> CF.mkStar sharing_f f CF.Flow_combine pos
       | [nf1;nf2] -> begin
     (*check pure*)
             let b1 = is_empty_heap_f nf1 in
@@ -3518,10 +3518,10 @@ let norm_and_heap_x prog args unk_hps unk_svl f1 f2 pos=
         end
       | _ -> report_error no_pos "sau.norm_and_heap: should be no more than two formulas"
 
-let norm_and_heap prog args unk_hps unk_svl f1 f2 pos=
+let mkConjH_and_norm prog args unk_hps unk_svl f1 f2 pos=
   let pr1 = Cprinter.prtt_string_of_formula in
-  Debug.no_2 "norm_and_heap" pr1 pr1 pr1
-      (fun _ _ -> norm_and_heap_x prog args unk_hps unk_svl f1 f2 pos) f1 f2
+  Debug.no_2 "mkConjH_and_norm" pr1 pr1 pr1
+      (fun _ _ -> mkConjH_and_norm_x prog args unk_hps unk_svl f1 f2 pos) f1 f2
 
 (************************************************************)
       (******************END FORM HP DEF*********************)

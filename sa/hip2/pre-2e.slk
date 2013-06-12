@@ -29,7 +29,7 @@ BUT this is incorrect.
 EXPECT
 ======
 
- H(x) --> x::node<_,next> & next=null /\ x::node<_,next> * HP_2(next) 
+ H(x) --> x::node<_,next> & next=null /\ x::node<_,next>
       --> x::node<_,next> * next::node<_,null>
 
 
