@@ -9267,8 +9267,10 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
 	          let lhs_xpure,_,_ = xpure prog estate.es_formula in
 		  (*if CP.intersect rhs_als estate.es_infer_vars = [] && List.exists CP.is_node_typ estate.es_infer_vars then None,[] else*) 
 	          let msg = "M_infer_heap :"^(Cprinter.string_of_h_formula rhs) in
-	          (* let h_inf_args_add = Gen.BList.difference_eq CP.eq_spec_var h_inf_args estate.es_infer_vars in *)
-	          (* let estate = {estate with es_infer_vars = estate.es_infer_vars@h_inf_args_add} in *)
+	          let h_inf_args_add = Gen.BList.difference_eq CP.eq_spec_var h_inf_args estate.es_infer_vars in
+	          let estate = {estate with es_infer_vars = estate.es_infer_vars@h_inf_args_add} in
+                  let _ = DD.binfo_hprint (add_str "es_infer_vars" Cprinter.string_of_spec_var_list) estate.es_infer_vars no_pos in
+                  let _ = DD.binfo_hprint (add_str "h_inf_args_add" Cprinter.string_of_spec_var_list) h_inf_args_add no_pos in
 	          Inf.infer_lhs_contra_estate estate lhs_xpure pos msg 
                 end
             in
