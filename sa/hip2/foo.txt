@@ -116,6 +116,10 @@ An example is:
 
 
 
+
+#################################################################
+
+
 [ H(x_45) ::= x_45::node<val_31_786,next_31_787>@M& XPURE(HP_7(next_31_787)),
  G(x_46,res_47) ::= 
  emp&res_47=x_46 &  XPURE(H(x_46))
@@ -133,7 +137,7 @@ both a pre-pred (H) and a post-pred (G).
 If we have an unconditional defn:
  H(x) --> Y
 
-We shall immediately apply modus-ponen
+We shall immediately apply abduction synthesis
 to give:
  Y & A --> G(x,..)
 
@@ -143,11 +147,9 @@ with a base-case-split thru:
  H(x) & pre(x) --> emp
  A --> G(x,..)
 
-
 We can perform a base-case split, if detect
 on the LHS, a property such as:
  H(x) & pre(x)
-
 
 
 Given
@@ -158,7 +160,6 @@ Q & K --> G
 ===============
 P(x) -> Q
 P(x) & K --> G
-
 
  H(x) --> x::node<val_31_786,next_31_787>@M * HP_7(next_31_787).
  x::node<val_31_786,next_31_787>@M * HP_7(next_31_787)
