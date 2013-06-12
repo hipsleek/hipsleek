@@ -515,7 +515,7 @@ let combine_pdefs_pre_x pr_pdefs=
       let is_sat2, n_olhs = mkAnd_w_opt ss olhs1 olhs2 in
       let npdef3 = if is_sat1 && is_sat2 then
         do_combine (hp1,args1,unk_svl1,CP.mkAnd norm_cond1 norm_cond2 no_pos, n_olhs, n_orhs)
-      else []
+      else [(hp1,args1,unk_svl1,CP.mkAnd norm_cond1 norm_cond2 no_pos, olhs1, Some (CF.mkFalse_nf no_pos))]
       in
       npdef3
     else []
@@ -529,8 +529,8 @@ let combine_pdefs_pre_x pr_pdefs=
           (new_pdef,[])
       end
       | ((_,_,_,_, norm_cond1,_,_),_)::rest ->
-          let _ = print_endline ("cond: " ^ ( !CP.print_formula norm_cond)) in
-          let _ = print_endline ("cond1: " ^ ( !CP.print_formula norm_cond1)) in
+          (* let _ = print_endline ("cond: " ^ ( !CP.print_formula norm_cond)) in *)
+          (* let _ = print_endline ("cond1: " ^ ( !CP.print_formula norm_cond1)) in *)
           if not (TP.is_sat_raw (MCP.mix_of_pure (CP.mkAnd norm_cond norm_cond1 no_pos))) then
             refine_cond rest ((hp,args,unk_svl, cond, norm_cond, olhs, orhs), cs)
           else
@@ -971,7 +971,7 @@ let generalize_hps_par_def prog non_ptr_unk_hps unk_hpargs post_hps par_defs=
  let pr1 = pr_list_ln SAU.string_of_par_def_w_name in
   let pr2 = Cprinter.string_of_hp_rel_def in
   let pr3 = fun (_,a)-> pr2 a in
-  Debug.no_2 "generalize_hps_par_def" !CP.print_svl pr1 (pr_list_ln pr3)
+  Debug.ho_2 "generalize_hps_par_def" !CP.print_svl pr1 (pr_list_ln pr3)
       (fun _ _ -> generalize_hps_par_def_x prog non_ptr_unk_hps unk_hpargs post_hps par_defs) post_hps par_defs
 
 (**********get more definition from cs once, by right should loop************)

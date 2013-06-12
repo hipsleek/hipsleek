@@ -1610,7 +1610,7 @@ let rec is_unsat_x f0=
 and is_unsat f=
   let pr1 = Cprinter.prtt_string_of_formula in
   let pr2 = string_of_bool in
-  Debug.no_1 "is_unsat" pr1 pr2
+  Debug.ho_1 "is_unsat" pr1 pr2
       (fun _ -> is_unsat_x f) f
 
 and check_inconsistency hf mixf=
