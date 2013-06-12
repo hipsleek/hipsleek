@@ -883,19 +883,6 @@ Rename unused dangling uniquely
 
 ================================================================
 
-# lsg.ss
-
- SLSEG(l,e)&l'=null & e!=l' & l=null --> emp&true,
-
- SLSEG(l,e)&e!=l & l!=null --> l::node2<n_13_794,s_13_795>@M * 
-      (HP_796(n_13_794,e)) * (HP_797(s_13_795,e))&true,
-
- emp&l'=null --> SLSEG(n_13_792,e')&true,
- 
- HP_796(n_13_794,e)&true --> SLSEG(n_13_794,e)&true]
-
-================================================================
-
 # lsg2.slk FIXED
 
 HeapPred H(node a).
@@ -967,7 +954,83 @@ EXPECTING:
 
 
 */
+=================================================================
 
-# lsg3d.slk  
+# lsg3d.slk  (FIXED)
 
   to add detect_lhs_rhs_contra
+
+=================================================================
+# lsg3d.slk  
+
+infer[x] 
+P(x) & x!=null
+ |-  x::node<n>@L. 
+print residue.
+
+/*
+Problem for Thai:
+  pre seems verbose..
+
+ <1>x::node<inf_n_26>@inf_ann_25[Orig]&P(x) & x!=null & inf_n_26=n & (inf_ann_25<=2 | (inf_n_26<n & x!=null) | (n<inf_n_26 & x!=null) | x=null)&{FLOW,(19,20)=__norm}[]
+ inferred heap: [x::node<inf_n_26>@inf_ann_25[Orig]]
+ inferred pure: [inf_ann_25<=2 | (inf_n_26<n & x!=null) | (n<inf_n_26 & 
+                 x!=null) | x=null]
+*/
+
+=================================================================
+# lsg1.slk
+
+infer[SLSEG] 
+SLSEG(l,e) & l=lp 
+ & e!=lp
+ & l=null 
+ |-  lp::node2<n,s>@L. 
+print residue.
+
+/*
+GOT
+===
+Entail (1) : Valid. 
+
+ <1>hfalse&false&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [SLSEG(l,e)&true --> emp&l!=null | l>(e-1); 
+                  SLSEG(l,e)&true --> emp&e>=l | l!=null]
+
+Why did we pick twice? Can
+we just generate one?
+
+
+*/
+
+================================================================
+# lsg.ss
+
+What happen to our contradiction lemma?
+It seems not to have been collected in hp_rel!
+
+[ SLSEG(l,e)&e!=l & l!=null --> l::node2<n_13_792,s_13_793>@M * 
+  (HP_794(n_13_792,e)) * (HP_795(s_13_793,e))&true,
+  HP_794(n_13_792,e)&true --> SLSEG(n_13_792,e)&true]
+
+This is from sleek trace..
+
+ id: 8; caller: []; line: 13; classic: false; kind: BIND; hec_num: 5; evars: []; c_heap: emp
+ checkentail SLSEG(l,e)&l=l' & e=e' & e'!=l' & !(v_bool_12_762') & e'!=l' & 
+!(v_bool_12_762') & l'=null & !(v_boolean_13_760') & l'=null&
+{FLOW,(22,23)=__norm}[]
+ |-  l'::node2<n_13_756',s_13_757'>@L[Orig]&true&{FLOW,(1,25)=__flow}[]. 
+res:  [
+  hfalse&false&{FLOW,(22,23)=__norm}[]
+  es_infer_vars/rel: [e; l]
+  ]
+
+
+
+ SLSEG(l,e)&l'=null & e!=l' & l=null --> emp&true,
+ SLSEG(l,e)&e!=l & l!=null --> l::node2<n_13_794,s_13_795>@M * 
+      (HP_796(n_13_794,e)) * (HP_797(s_13_795,e))&true,
+ emp&l'=null --> SLSEG(n_13_792,e')&true,
+  HP_796(n_13_794,e)&true --> SLSEG(n_13_794,e)&true]
+
+

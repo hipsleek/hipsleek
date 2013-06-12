@@ -10,7 +10,7 @@ HeapPred HP_2(node a).
 // pre-2e.slk
 
 relAssume  H // (1)
- H(x) --> x::node<_,next> .
+ H(x) --> x::node<_,nn> .
 relAssume  HP // (2)
  H(x) --> x::node<_,next> * next::node<_,null>.
 

@@ -10,7 +10,7 @@ HeapPred HP_2(node a).
 relAssume  H // (1)
  H(x) --> x::node<_,next> & next=null.
 relAssume  HP // (2)
- H(x) --> x::node<_,next> * HP_2(next) .
+ H(xx) --> xx::node<_,nn> * HP_2(nn) .
 
 shape_infer [H][].
 
