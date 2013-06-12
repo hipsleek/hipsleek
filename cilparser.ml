@@ -910,9 +910,11 @@ let rec translate_stmt (s: Cil.stmt) : Iast.exp =
       (*   infinite_loop                                                                      *)
       (* )                                                                                    *)
       (* else                                                                                 *)
+        let _ = print_endline ("== sid = " ^ (string_of_int (!sref.Cil.sid))) in
         let _ = print_endline ("== Goto sucs length = " ^ (string_of_int (List.length !sref.Cil.succs))) in
         let _ = print_endline ("== Goto labels length = " ^ (string_of_int (List.length !sref.Cil.labels))) in
         let _ = print_endline ("== label = " ^ (string_of_cil_label (List.hd !sref.Cil.labels))) in
+        let _ = print_endline ("== sref = " ^ (string_of_cil_stmt !sref)) in
         translate_stmt !sref
   | Cil.Break l ->
       let pos = translate_location l in
