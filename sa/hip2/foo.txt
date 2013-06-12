@@ -115,6 +115,62 @@ post-predicates.
 An example is:
 
 
+Pre-Pred Synthesis
+==================
+We would be collecting a set of implications
+for pre-predicate of the form:
+
+  Pre(..) & p1 --> C1
+  Pre(..) & p2 --> C2
+
+Each pair can be combined by the following rule:
+
+ Pre(..) --> P1 -> C1
+ Pre(..) --> P2 -> C2  P1/\P2=false
+--------------------------------------
+ Pre(..) --> P1 \/ P2 -> C1 & P1 \/ C2 & P2
+
+ Pre(..) --> P1 -> C1
+ Pre(..) --> P2 -> C2  P1/\P2!=false
+------------------------------
+ Pre(..) --> P1\/P2 ->
+                C1 & P1 & not(P2) 
+             \/ C2 & P2 & not(P1)
+             \/ (C1 /\ C2) & P1 & P2 // most tricky
+
+
+Post-Pred Synthesis
+===================
+We would be collecting a set of implications
+for pre-predicate of the form:
+
+  A1 --> Post(..)
+  A2 --> Post(..)
+
+Each pair can be combined by the following rule:
+
+  A1 --> Post(..)
+  A2 --> Post(..)
+--------------------------------------
+ A1 \/ A2 --> Post(..)
+
+
+
+Abduction Synthesis (Strengthening pre/post preds)
+=========================================
+
+We will also allow pre-pred to be strengthened and
+post-pred to be weakened. This occurs when we have the
+following scenario:
+
+  Pre(..) --> B1 \/ B2 .. \/ Bn
+  B1 \/ B2 .. \/ Bn --> Post(...)
+
+They can be synthesized to:
+  Pre(..) <--> B1 \/ B2 .. \/ Bn
+  B1 \/ B2 .. \/ Bn <--> Post(...)
+
+
 
 
 #################################################################
