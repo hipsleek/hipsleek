@@ -930,3 +930,33 @@ prior to infer_collect_hp_rel, in a similar way to how
 pure relation is being handled.
 
 */
+
+
+================================================================
+
+# lsg3c.ss
+
+infer[H] 
+H(l) & l=null 
+ |-  l::node<n>@L. 
+print residue.
+
+/*
+INCORRECT:
+==========
+
+Entail (2) : Valid. 
+
+ <1>(HP_26(n_25)) * l::node<n_25>@M[Orig]&l=null & n=n_25&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [H(l)&l=null --> l::node<n_25>@M * (HP_26(n_25))&true]
+
+
+EXPECTING:
+==========
+
+ <1> false
+
+ inferred hprel: [H(l) -> l!=null]
+
+
+*/

@@ -137,6 +137,8 @@ Each pair can be combined by the following rule:
                 C1 & P1 & not(P2) 
              \/ C2 & P2 & not(P1)
              \/ (C1 /\ C2) & P1 & P2 // most tricky
+              // to be treated like intuitionistic && for merger
+              // if fail; to throw exception?
 
 
 Post-Pred Synthesis

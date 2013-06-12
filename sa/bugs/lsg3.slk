@@ -11,7 +11,7 @@ H(x)
 print residue.
 
 
-infer[l,H] 
+infer[H] 
 H(l) & l=null 
  |-  l::node<n>@L. 
 print residue.

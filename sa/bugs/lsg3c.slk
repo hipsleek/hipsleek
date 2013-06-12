@@ -1,0 +1,33 @@
+
+data node{
+    node s;
+}.
+
+HeapPred H(node a).
+
+infer[H] 
+H(l) & l=null 
+ |-  l::node<n>@L. 
+print residue.
+
+/*
+INCORRECT:
+==========
+
+Entail (2) : Valid. 
+
+ <1>(HP_26(n_25)) * l::node<n_25>@M[Orig]&l=null & n=n_25&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [H(l)&l=null --> l::node<n_25>@M * (HP_26(n_25))&true]
+
+
+EXPECTING:
+==========
+
+ <1> false
+
+ inferred hprel: [H(l) -> l!=null]
+
+
+*/
+
+
