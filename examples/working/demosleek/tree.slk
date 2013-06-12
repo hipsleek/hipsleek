@@ -1,0 +1,10 @@
+/* representation of a node */
+data node{
+	node left;
+	node right;
+}.
+
+/* predicate for a tree */
+pred tree<> == self = null
+	or self::node<l,r> * l::tree<> * r::tree<>.
+

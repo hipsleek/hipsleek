@@ -1,0 +1,10 @@
+/* representation of a node */
+data node{
+	node next;
+	node prev;
+}.
+
+/* predicate for a doubly linked list */
+pred dll<p,tl> == self = null & self = tl
+	or self::node<x,p> * x::dll<self,tl>.
+

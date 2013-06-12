@@ -1,0 +1,9 @@
+/* representation of a node */
+data node{
+	node next;
+}.
+
+/* predicate for a list */
+pred list<tl> == self = null & self = tl
+	or self::node<x> * x::list<tl>.
+
