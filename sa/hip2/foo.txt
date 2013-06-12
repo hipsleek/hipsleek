@@ -60,7 +60,7 @@ would allow the following:
  (i)  antecedent to be weakened
  (ii) consequent to be strengthened
 
-Abduction Synthesis (weaken antecedent)
+Abduction Synthesis WEAK-A (weaken antecedent)
 =======================================
 
  Given :
@@ -80,8 +80,8 @@ An example is:
  H(x) --> x::node<val_31_786,next_31_787>@M * HP_7(next_31_787).
  H(x)&res=x --> G(x,res).
 
-Abduction Synthesis (strengthen antecedent)
-=========================================
+Abduction Synthesis STRONG-C (strengthen consequent)
+==================================================
 
  Given :
   C <-- D
@@ -100,7 +100,7 @@ An example is:
  HP_2(next,y) & next!=null 
       --> H(next,y).
 
-Abduction Synthesis (split implication)
+Abduction Synthesis SPLIT (split implication)
 =========================================
 
 We may also use abduction synthesis to split
@@ -112,11 +112,17 @@ post-predicates.
   A   --> C
   B   --> D
 
-An example is:
+Examples are:
+
+  HP_2(next,y) & x::node<_,_, null>  & next=null  -->  G(x,y).
+  ============================================================
+  x::node<Anon_11,Anon_12,flted_14_22>@M&flted_14_22=null 
+          --> G(x,y)&true,
+  HP_2(next,y)&next=null --> emp&true
 
 
-Pre-Pred Synthesis
-==================
+Abduction Synthesis (CombinePre)
+=================================
 We would be collecting a set of implications
 for pre-predicate of the form:
 
@@ -141,8 +147,8 @@ Each pair can be combined by the following rule:
               // if fail; to throw exception?
 
 
-Post-Pred Synthesis
-===================
+Abduction Synthesis (CombinePost)
+=================================
 We would be collecting a set of implications
 for pre-predicate of the form:
 
@@ -157,19 +163,31 @@ Each pair can be combined by the following rule:
  A1 \/ A2 --> Post(..)
 
 
+Abduction Synthesis (EqualPre/EqualPost)
+========================================
 
-Abduction Synthesis (Strengthening pre/post preds)
-=========================================
+We ae interested in a pre-pred that is as weak
+as possible and post-pred that is as strong as
+possible. When we have successfully simplified our
+predicates, we can proceed to chose the current
+pre-pred and post-pred as the inferred definitions.
 
-We will also allow pre-pred to be strengthened and
-post-pred to be weakened. This occurs when we have the
-following scenario:
+This would allow us to reach a fix-point for
+our synthesis. We refer to this process as
+equality assertions for pre/post predicates.
 
+As an example, EqualPre is defined, as follows:
+
+Given:
   Pre(..) --> B1 \/ B2 .. \/ Bn
+
+We can equalize a pre-predicate by:
+  Pre(..) <--> B1 \/ B2 .. \/ Bn
+
+Given:
   B1 \/ B2 .. \/ Bn --> Post(...)
 
-They can be synthesized to:
-  Pre(..) <--> B1 \/ B2 .. \/ Bn
+We can equalize a post-predicate by:
   B1 \/ B2 .. \/ Bn <--> Post(...)
 
 
