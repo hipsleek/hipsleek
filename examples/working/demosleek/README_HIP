@@ -38,6 +38,10 @@ To produce a proof for the verification, please use:
 The proof is in a html file with the name:
        <source_file>_proof.html
 
+To produce a proof for the verification with sleek logging, please use:
+       ./hip <source_file> --en-sleek-logging-txt
+
+The logged file is in logs subdirectory.
 
 ---------------------------
 Input format description:

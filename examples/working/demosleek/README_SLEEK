@@ -4,5 +4,31 @@ SLEEK entailment prover.
 --------------------------
 Overview:
 --------------------------
-HIP relies on the SLEEK prover in order to discharge the verification conditions. SLEEK is a fully automatic prover for separation logic with frame inferring capability. It takes as input two heap states represented by separation formulae, and checks if one formula (the antecedent) entails the other (the consequent). The antecedent may cover more heap states than the consequent, so a residual heap state which represents the frame condition can be returned by the prover. This residual heap state will include the pure state of the antecedent. SLEEK also supports instantiation of logical variables that appear during the entailment as existential variables in the consequent. As part of the implication check, SLEEK discharges the heap obligations, the obligations pertaining to the shape of data structures and translates the remaining pure obligations to pure constraints that can be discharged by theorem provers. The list of possible pure provers includes Omega , MONA , CVC Lite, Z3, and Isabelle.
+HIP relies on the SLEEK prover in order to discharge the verification 
+conditions. SLEEK is a fully automatic prover for separation logic with
+frame inferring capability. It takes as input two heap states represented
+by separation formulae, and checks if one formula (the antecedent) entails
+the other (the consequent). The antecedent may cover more heap states than
+the consequent, so a residual heap state which represents the frame condition
+can be returned by the prover. This residual heap state will include the
+pure state of the antecedent. SLEEK also supports instantiation of
+logical variables that appear during the entailment as existential variables
+in the consequent. 
 
+As part of the implication check, SLEEK discharges the heap obligations, the
+obligations pertaining to the shape of data structures and translates the
+remaining pure obligations to pure constraints that can be discharged by
+theorem provers. The list of possible pure provers includes Omega, MONA ,
+CVC Lite, Z3, and Isabelle.
+
+Command Line Execution of sleek files:
+
+  # default using Omega prover
+  ./sleek dll.slk 
+
+  # using z3 prover
+  ./sleek dll.slk -tp z3 
+
+  # using omega/mona combination with a set of
+  # low-level proof logging
+  ./sleek dll.slk -tp om --en-logging-txt
