@@ -1,0 +1,31 @@
+
+data node{
+    node s;
+}.
+
+HeapPred H(node a).
+relation P(node a).
+
+infer[H] 
+H(x) & x!=null
+ |-  x::node<n>@L. 
+print residue.
+
+/*
+!!! **********************************
+!!! **** TODO : Check for LHS Contradiction here? ****
+!!! **********************************
+!!! inferred contradiction : : x=null
+Entail (7) : Valid. 
+
+ <1>hfalse&false&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [H(x)&true --> emp&x=null]
+
+There isn't any contradiction here
+
+*/
+
+infer[P] 
+P(x) & x!=null
+ |-  x::node<n>@L. 
+print residue.

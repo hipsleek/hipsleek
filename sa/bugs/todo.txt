@@ -896,7 +896,7 @@ Rename unused dangling uniquely
 
 ================================================================
 
-# lsg2.ss
+# lsg2.slk FIXED
 
 HeapPred H(node a).
 relation P(node a).
@@ -934,7 +934,7 @@ pure relation is being handled.
 
 ================================================================
 
-# lsg3c.slk
+# lsg3c.slk  FIXED (by Cristian)
 
 infer[H] 
 H(l) & l=null 
@@ -967,3 +967,7 @@ EXPECTING:
 
 
 */
+
+# lsg3d.slk  
+
+  to add detect_lhs_rhs_contra

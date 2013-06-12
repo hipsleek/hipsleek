@@ -568,7 +568,7 @@ let infer_lhs_contra pre_thus lhs_xpure ivars pos msg =
 let infer_lhs_contra pre_thus f ivars pos msg =
   let pr = !print_mix_formula in
   let pr2 = !print_pure_f in
-  Debug.ho_2 "infer_lhs_contra" pr !print_svl (pr_option pr2) 
+  Debug.no_2 "infer_lhs_contra" pr !print_svl (pr_option pr2) 
       (fun _ _ -> infer_lhs_contra pre_thus f ivars pos msg) f ivars
 
 let infer_lhs_contra_estate estate lhs_xpure pos msg =
@@ -641,7 +641,7 @@ let infer_lhs_contra_estate e f pos msg =
   let pr0 = !print_entail_state_short in
   let pr = !print_mix_formula in
   let pr_res = pr_pair (pr_option (pr_pair pr0 !CP.print_formula)) (fun l -> (string_of_int (List.length l))) in
-  Debug.no_2 "infer_lhs_contra_estate" pr0 pr pr_res (fun _ _ -> infer_lhs_contra_estate e f pos msg) e f
+  Debug.to_2 "infer_lhs_contra_estate" pr0 pr pr_res (fun _ _ -> infer_lhs_contra_estate e f pos msg) e f
 
 (*
    should this be done by ivars?
@@ -696,6 +696,37 @@ let present_in (orig_ls:CP.formula list) (new_pre:CP.formula) : bool =
   (* List.exists (fun a -> List.exists (CP.equalFormula a) disj_p) orig_ls *)
   List.exists (fun fml -> TP.imply_raw fml new_pre) orig_ls
 
+let detect_lhs_rhs_contra  lhs_xpure lhs_xpure_orig rhs_xpure pos =
+      (* let lhs_xpure = MCP.pure_of_mix lhs_xpure_orig in *)
+      (* let rhs_vars = CP.fv rhs_xpure in *)
+      (* below will help greatly reduce the redundant information inferred from state *)
+      (* let lhs_xpure = CP.filter_ante lhs_xpure rhs_xpure in *)
+      (* let rhs_xpure = MCP.pure_of_mix rhs_xpure_orig in  *)
+      (* let lhs_xpure = MCP.pure_of_mix lhs_xpure0 in  *)
+      let split_rhs = CP.split_conjunctions rhs_xpure in
+      let rem_rhs = List.filter (fun c -> not(TP.imply_raw lhs_xpure c)) split_rhs in
+      let rhs_xpure = CP.join_conjunctions rem_rhs in
+      let _ = DD.tinfo_hprint (add_str "lhs_xpure: " (!CP.print_formula)) lhs_xpure pos in
+      let _ = DD.tinfo_hprint (add_str "split_rhs: " (pr_list !CP.print_formula)) split_rhs pos in
+      let _ = DD.tinfo_hprint (add_str "rem_rhs: " (pr_list !CP.print_formula)) rem_rhs pos in
+      let _ = DD.trace_hprint (add_str "lhs(orig): " !CP.print_formula) lhs_xpure_orig pos in
+      (* let _ = DD.trace_hprint (add_str "lhs0(orig): " !print_mix_formula) lhs_xpure0 pos in *)
+      let _ = DD.trace_hprint (add_str "rhs(orig): " !CP.print_formula) rhs_xpure pos in
+      let lhs_xpure = CP.filter_ante lhs_xpure_orig rhs_xpure in
+      let _ = DD.trace_hprint (add_str "lhs (after filter_ante): " !CP.print_formula) lhs_xpure pos in
+      let fml = CP.mkAnd lhs_xpure rhs_xpure pos in
+      let fml = CP.drop_rel_formula fml in
+      (*      let iv_orig = estate.es_infer_vars in*)
+      (* let iv_lhs_rel = match lhs_rels with *)
+      (*   | None -> [] *)
+      (*   | Some f -> List.filter (fun x -> not(is_rel_var x)) (CP.fv f) in *)
+      (* Debug.trace_hprint (add_str "iv_orig" !CP.print_svl) iv_orig no_pos; *)
+      (* Debug.trace_hprint (add_str "iv_lhs_rel" !CP.print_svl) iv_lhs_rel no_pos; *)
+      (* let iv = iv_orig(\* @iv_lhs_rel *\) in *)
+      let _ = DD.trace_hprint (add_str "fml: " !CP.print_formula) fml pos in
+      let check_sat = TP.is_sat_raw (MCP.mix_of_pure fml) in
+      check_sat,fml
+
 (* let infer_h prog estate conseq lhs_b rhs_b lhs_rels*)
 
 (* lhs_rel denotes rel on LHS where rel assumption be inferred *)
@@ -714,39 +745,16 @@ let rec infer_pure_m_x unk_heaps estate lhs_rels lhs_xpure_orig lhs_xpure0 lhs_w
       let p, rel_ass = infer_lhs_contra_estate estate lhs_xpure0 pos "rhs contradiction" in
       (p,None,rel_ass)
     else
-      (* let lhs_xpure = MCP.pure_of_mix lhs_xpure_orig in *)
-      (* let rhs_vars = CP.fv rhs_xpure in *)
-      (* below will help greatly reduce the redundant information inferred from state *)
-      (* let lhs_xpure = CP.filter_ante lhs_xpure rhs_xpure in *)
-      let rhs_xpure = MCP.pure_of_mix rhs_xpure_orig in 
-      let lhs_xpure = MCP.pure_of_mix lhs_xpure0 in 
-      let split_rhs = CP.split_conjunctions rhs_xpure in
-      let rem_rhs = List.filter (fun c -> not(TP.imply_raw lhs_xpure c)) split_rhs in
-      let rhs_xpure = CP.join_conjunctions rem_rhs in
-      let _ = DD.tinfo_hprint (add_str "lhs_xpure: " (!CP.print_formula)) lhs_xpure pos in
-      let _ = DD.tinfo_hprint (add_str "split_rhs: " (pr_list !CP.print_formula)) split_rhs pos in
-      let _ = DD.tinfo_hprint (add_str "rem_rhs: " (pr_list !CP.print_formula)) rem_rhs pos in
-      let _ = DD.trace_hprint (add_str "lhs(orig): " !CP.print_formula) lhs_xpure_orig pos in
-      let _ = DD.trace_hprint (add_str "lhs0(orig): " !print_mix_formula) lhs_xpure0 pos in
-      let _ = DD.trace_hprint (add_str "rhs(orig): " !CP.print_formula) rhs_xpure pos in
-      let lhs_xpure = CP.filter_ante lhs_xpure_orig rhs_xpure in
-      let _ = DD.trace_hprint (add_str "lhs (after filter_ante): " !CP.print_formula) lhs_xpure pos in
-      let fml = CP.mkAnd lhs_xpure rhs_xpure pos in
-      let fml = CP.drop_rel_formula fml in
-      (*      let iv_orig = estate.es_infer_vars in*)
-      (* let iv_lhs_rel = match lhs_rels with *)
-      (*   | None -> [] *)
-      (*   | Some f -> List.filter (fun x -> not(is_rel_var x)) (CP.fv f) in *)
-      (* Debug.trace_hprint (add_str "iv_orig" !CP.print_svl) iv_orig no_pos; *)
-      (* Debug.trace_hprint (add_str "iv_lhs_rel" !CP.print_svl) iv_lhs_rel no_pos; *)
       let iv = iv_orig(* @iv_lhs_rel *) in
-      let _ = DD.trace_hprint (add_str "fml: " !CP.print_formula) fml pos in
-      let check_sat = TP.is_sat_raw (MCP.mix_of_pure fml) in
+      let lhs_xpure = MCP.pure_of_mix lhs_xpure0 in 
+      let rhs_xpure = MCP.pure_of_mix rhs_xpure_orig in 
+      let check_sat,fml = detect_lhs_rhs_contra lhs_xpure lhs_xpure_orig rhs_xpure pos in
+      (* let check_sat = TP.is_sat_raw (MCP.mix_of_pure fml) in *)
       if not(check_sat) then
         let _ = DD.devel_pprint "LHS-RHS contradiction" pos in
         (* let lhs_xpure0 = MCP.pure_of_mix lhs_xpure0 in *)
         let _ = DD.trace_hprint (add_str "lhs0: " !print_mix_formula) lhs_xpure0 pos in
-        let _ = DD.trace_hprint (add_str "rhs: " !CP.print_formula) rhs_xpure pos in
+        (* let _ = DD.trace_hprint (add_str "rhs: " !CP.print_formula) rhs_xpure pos in *)
         (* let lhs_xpure0 = CP.filter_ante lhs_xpure0 rhs_xpure in *)
         (* let _ = DD.trace_hprint (add_str "lhs0 (after filter_ante): " !CP.print_formula) lhs_xpure0 pos in *)
         let p, rel_ass = infer_lhs_contra_estate estate lhs_xpure0 pos "ante contradict with conseq" in
@@ -1316,6 +1324,48 @@ let check_rank_const rank_fml lhs_cond = match rank_fml with
   let rank_const = List.map (fun r -> check_rank_const r lhs_cond) rank_const in
   CP.join_conjunctions (rank_dec@rank_const@others) *)
 
+let detect_lhs_rhs_contra2 ivs lhs_c rhs_mix pos =
+  let rhs_p = MCP.pure_of_mix rhs_mix in
+  let pairs = List.map
+    (fun pure -> let rhs_ls = CP.split_conjunctions pure in
+      let rels, others = List.partition
+        (fun p -> CP.is_rel_in_vars ivs p(* || CP.has_func p*)) rhs_ls in
+      (rels, others))
+    (CP.list_of_disjs rhs_p)
+  in
+  let rel_rhs_ls, other_rhs_ls = List.split pairs in
+  (* let rel_rhs = List.concat rel_rhs_ls in *)
+  (* let other_rhs = List.concat other_rhs_ls in *)
+  (* let pr = Cprinter.string_of_pure_formula_list in *)
+  (* DD.tinfo_hprint (add_str "rel_rhs" pr) rel_rhs pos;  *)
+  (* DD.tinfo_hprint (add_str "other_rhs" pr) other_rhs pos;  *)
+  let rhs_p_new = CP.disj_of_list 
+    ((List.map (fun x -> CP.join_conjunctions x)
+        other_rhs_ls)(*@other_disjs*)) no_pos in
+  (* let lhs_p = MCP.pure_of_mix lhs_mix in *)
+  (* let lhs_h_p = MCP.pure_of_mix lhs_h_mix in *)
+  (* let lhs_c = CP.mkAnd lhs_p lhs_h_p pos in *)
+  let fml = CP.mkAnd lhs_c rhs_p_new pos in
+  let fml = CP.drop_rel_formula fml in
+  let check_sat = TP.is_sat_raw (MCP.mix_of_pure fml) in
+  check_sat,rhs_p_new
+
+(*type: CP.spec_var list ->
+  CP.Label_Pure.exp_ty ->
+  MCP.mix_formula -> Globals.loc -> bool * CP.Label_Pure.exp_ty
+               *)
+
+let detect_lhs_rhs_contra2 ivs lhs_c rhs_mix pos =
+     let pr1 = Cprinter.string_of_spec_var_list in
+     let pr2 = Cprinter.string_of_pure_formula in
+     let pr3 = Cprinter.string_of_mix_formula in
+     let pr = pr_pair string_of_bool pr2 in
+     Debug.no_3 "detect_lhs_rhs_contra2" (add_str "ivs" pr1) 
+     (add_str "lhs" pr2) 
+     (add_str "rhs" pr3) 
+     (add_str "(res,new_rhs)" pr)
+     (fun _ _ _ -> detect_lhs_rhs_contra2 ivs lhs_c rhs_mix pos) ivs lhs_c rhs_mix 
+
 let infer_collect_rel is_sat estate lhs_h_mix lhs_mix rhs_mix pos =
   (* TODO : need to handle pure_branches in future ? *)
   if no_infer_rel estate (* && no_infer_hp_rel estate *) then (estate,lhs_mix,rhs_mix,None,[]) 
@@ -1357,23 +1407,24 @@ let infer_collect_rel is_sat estate lhs_h_mix lhs_mix rhs_mix pos =
     let other_rhs = List.concat other_rhs_ls in
     let pr = Cprinter.string_of_pure_formula_list in
     DD.tinfo_hprint (add_str "rel_rhs" pr) rel_rhs pos; 
-    DD.tinfo_hprint (add_str "other_rhs" pr) other_rhs pos; 
+     DD.tinfo_hprint (add_str "other_rhs" pr) other_rhs pos; 
     if rel_rhs==[] then (
         DD.tinfo_pprint ">>>>>> infer_collect_rel <<<<<<" pos; 
         DD.tinfo_pprint "no relation in rhs" pos; 
         (estate,lhs_mix,rhs_mix,None,[])
     )
     else 
-      let rhs_p_new = CP.disj_of_list 
-        ((List.map (fun x -> CP.join_conjunctions x)
-            other_rhs_ls)(*@other_disjs*)) no_pos in
+      (* let rhs_p_new = CP.disj_of_list  *)
+      (*   ((List.map (fun x -> CP.join_conjunctions x) *)
+      (*       other_rhs_ls)(\*@other_disjs*\)) no_pos in *)
       let lhs_p = MCP.pure_of_mix lhs_mix in
       let lhs_h_p = MCP.pure_of_mix lhs_h_mix in
       let lhs_c = CP.mkAnd lhs_p lhs_h_p pos in
-      let fml = CP.mkAnd lhs_c rhs_p_new pos in
-      let fml = CP.drop_rel_formula fml in
+      (* let fml = CP.mkAnd lhs_c rhs_p_new pos in *)
+      (* let fml = CP.drop_rel_formula fml in *)
+      (* let check_sat = TP.is_sat_raw (MCP.mix_of_pure fml) in *)
+      let check_sat,rhs_p_new = detect_lhs_rhs_contra2 ivs lhs_c rhs_mix pos in 
       let rhs_mix_new = MCP.mix_of_pure rhs_p_new in
-      let check_sat = TP.is_sat_raw (MCP.mix_of_pure fml) in
       if not(check_sat) then
         begin
           let p, rel_ass = infer_lhs_contra_estate estate lhs_mix pos "infer_collect_rel: ante contradict with conseq" in
@@ -1550,7 +1601,7 @@ let infer_collect_rel is_sat estate lhs_h_mix lhs_mix rhs_mix pos =
   let pr_neg_lhs = pr_option (pr_pair pr2 !CP.print_formula) in
   let pr2 (es,l,r,p,a) = 
     pr_penta pr1 pr1 (pr_list CP.print_lhs_rhs) pr_neg_lhs pr_rel_ass (l,r,es.es_infer_rel,p,a) in
-  Debug.to_4 "infer_collect_rel" pr0 pr1 pr1 pr1 pr2
+  Debug.no_4 "infer_collect_rel" pr0 pr1 pr1 pr1 pr2
     (fun _ _ _ _ -> 
       infer_collect_rel is_sat estate lhs_h_mix lhs_mix rhs_mix pos) 
     estate.es_infer_vars_rel lhs_h_mix lhs_mix rhs_mix
@@ -2233,7 +2284,7 @@ let infer_collect_hp_rel i prog (es:entail_state) rhs rhs_rest (rhs_h_matched_se
   let pr1 = Cprinter.string_of_formula_base in
   let pr4 = Cprinter.string_of_estate_infer_hp in
   let pr5 =  pr_quad string_of_bool pr4 Cprinter.string_of_h_formula (pr_option Cprinter.string_of_formula) in
-  Debug.to_2_num i "infer_collect_hp_rel" pr1 pr1 pr5
+  Debug.no_2_num i "infer_collect_hp_rel" pr1 pr1 pr5
 ( fun _ _ -> infer_collect_hp_rel_x prog es rhs rhs_rest rhs_h_matched_set lhs_b rhs_b pos) lhs_b rhs_b
 
 (*=*****************************************************************=*)

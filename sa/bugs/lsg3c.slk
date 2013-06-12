@@ -14,6 +14,7 @@ print residue.
 // <1>hfalse&false&{FLOW,(19,20)=__norm}[]
 // inferred pure: [x!=null]
 
+
 infer[x] 
 H(x) 
  & x=null 
@@ -28,29 +29,27 @@ H(x)
  & x=null 
  |-  x::node<n>@L. 
 print residue.
-// WRONG (see below)
+// OK
 // <1>hfalse&false&{FLOW,(19,20)=__norm}[]
-// inferred pure: [x!=null]
+// inferred hprel: [H(x)&true --> emp&x!=null]
 
 
-/*
-INCORRECT:
-==========
+infer[H,x] 
+H(x) 
+ |-  x::node<n>@L. 
+print residue.
 
- <1>hfalse&false&{FLOW,(19,20)=__norm}[]
- inferred pure: [l!=null]
+infer[x] 
+H(x) 
+ |-  x::node<n>@L. 
+print residue.
 
-We must not add l!=null to
-  es_infer_pure : CP.formula list; 
+infer[H] 
+H(x) 
+ |-  x::node<n>@L. 
+print residue.
 
-We must instead add: 
- inferred hprel: [H(l) --> l!=null]
-which is kept at:
-  es_infer_hp_rel : hprel list; (*(CP.rel_cat * formula * formula) list;*)
-
-
-
-
-*/
-
-
+infer[H] 
+H(x) & x!=null
+ |-  x::node<n>@L. 
+print residue.
