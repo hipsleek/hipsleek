@@ -94,7 +94,7 @@ Abduction Synthesis (strengthen antecedent)
 An example is:
  H(x,y) <--> x::node<_,prev, next> * HP_1(prev,y) *  HP_2(next,y) .
  HP_2(next,y) & next!=null --> 
-      x::node<_,prev, next> * HP_1(prev,y) *  HP_2(next,y)
+      next::node<_,prev, next_p> * HP_1(prev,y) *  HP_2(next_p,y)
 ==================================================================
  H(x,y) <--> x::node<_,prev, next> * HP_1(prev,y) *  HP_2(next,y) .
  HP_2(next,y) & next!=null 

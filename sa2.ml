@@ -486,7 +486,7 @@ let combine_pdefs_pre_x pr_pdefs=
     match of1,of2 with
       | Some f1, Some f2 ->
             let new_f2 = CF.subst ss f2 in
-            let f = (CF.mkStar f1 new_f2 CF.Flow_combine no_pos) in
+            let f = (CF.mkConj_combine f1 new_f2 CF.Flow_combine no_pos) in
         if SAU.is_unsat f then
           false, Some f
         else true, Some f
@@ -971,7 +971,7 @@ let generalize_hps_par_def prog non_ptr_unk_hps unk_hpargs post_hps par_defs=
  let pr1 = pr_list_ln SAU.string_of_par_def_w_name in
   let pr2 = Cprinter.string_of_hp_rel_def in
   let pr3 = fun (_,a)-> pr2 a in
-  Debug.ho_2 "generalize_hps_par_def" !CP.print_svl pr1 (pr_list_ln pr3)
+  Debug.no_2 "generalize_hps_par_def" !CP.print_svl pr1 (pr_list_ln pr3)
       (fun _ _ -> generalize_hps_par_def_x prog non_ptr_unk_hps unk_hpargs post_hps par_defs) post_hps par_defs
 
 (**********get more definition from cs once, by right should loop************)

@@ -1353,6 +1353,7 @@ and mkStar (f1 : formula) (f2 : formula) flow_tr (pos : loc) =
   let a = a1@a2 in (*assuming merging a1 and a2*)
   mkBase h p t fl a pos (*TO CHECK: how about a1,a2: DONE*)
 
+
 and combine_and_pure (f1:formula)(p:MCP.mix_formula)(f2:MCP.mix_formula):MCP.mix_formula*bool = 
   if (isAnyConstFalse f1) then (MCP.mkMFalse no_pos,false)
   else if (isAnyConstTrue f1) then (f2,true)
