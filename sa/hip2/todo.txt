@@ -1350,7 +1350,7 @@ Expecting:
                                         ^^^^^^^^^^^^^^^
 ===========================================================
 
-# pre-2.slk
+# pre-2.slk  FIXED
 
 relAssume  H // (1)
  H(x) & x=null --> emp.
@@ -1433,3 +1433,25 @@ is at this step or the one before??
   x_39::node<Anon_37,next_38>@M&true]
 
 */
+
+===================================================
+# pre-2c.slk 
+
+relAssume  H // (1)
+ H(x) --> x=null.
+relAssume  HP // (2)
+ H(x) --> x::node<_,next> * HP_2(next) .
+
+
+/*
+
+GOT:
+[ H(x) ::= 
+ x::node<Anon_11,next>@M& XPURE(HP_2(next))
+ or emp&x=null
+ ]
+
+EXPECTING:
+  H(x) == false
+
+
