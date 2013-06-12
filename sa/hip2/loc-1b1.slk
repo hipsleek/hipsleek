@@ -23,47 +23,17 @@ relAssume  HP_2 // (3)
 relAssume  G // (3)
   HP_1(prev, y) 
    & next=null 
-   & prev!=null 
+   //& prev!=null 
   --> G(next,y).
 
 shape_infer_proper [H,HP_2][G].
 
 /*
 
-How come we now have below? where did next=null and  XPURE(G(next,y)) 
-came from? It seems the detection of dangling predicate is having
-problem again
+--sa-inlining
 
-[ HP_2(next_37,y_40) ::= emp& XPURE(HP_2(next_37,y_40)),
- H(x,y) ::= 
- x::node<Anon_11,prev,next>@M& XPURE(HP_1(prev,y)) &  XPURE(HP_2(next,y))
- or x::node<Anon_36,prev_38,next_37>@M&next=null &  XPURE(HP_2(next_37,y)) & 
-     XPURE(G(next,y))
- ,
- G(next,y) ::= emp&next=null &  XPURE(HP_1(prev,y))]
+--UU for G defn disappeared..
 
-
-You generated:
- HP_2(next,y) ::= emp& XPURE(HP_2(next,y)),
- H(x_41,y_42) ::= x_41::node<Anon_11,prev,next>@M& XPURE(HP_1(prev,y_42)) & 
- XPURE(HP_2(next,y_42)),
- G(next_43,y_44) ::= emp&next_43=null &  XPURE(HP_1(prev,y_44))]
-which seems to have identified HP_2 as a dangling predicate.
-
-However, I think there is no necessity to provide a definition
-for it:
- HP_2(next,y) ::= emp& XPURE(HP_2(next,y)),
-
-I think it is probably more deterministic to just generate:
- H(x_41,y_42) ::= x_41::node<Anon_11,prev,next>@M *
-                    HP_2(next,y_42) & XPURE(HP_1(prev,y_42))
- G(next_43,y_44) ::= emp&next_43=null &  XPURE(HP_1(prev,y_44))]
-
---sa-inlining gave:
-
- HP_2(next,y) ::= emp&UU_HP_2_UU=next,
- H(x_41,y_42) ::= x_41::node<Anon_11,UU_HP_1_UU,UU_HP_2_UU>@M&true,
- G(next_43,y_44) ::= emp&next_43=null]
 
 Expecting:
 
