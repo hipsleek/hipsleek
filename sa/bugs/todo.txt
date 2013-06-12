@@ -1006,7 +1006,7 @@ we just generate one?
 ================================================================
 # lsg.ss
 
-What happen to our contradiction lemma?
+What happen to our contradiction relass?
 It seems not to have been collected in hp_rel!
 
 [ SLSEG(l,e)&e!=l & l!=null --> l::node2<n_13_792,s_13_793>@M * 
