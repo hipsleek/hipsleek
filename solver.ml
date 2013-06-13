@@ -6116,6 +6116,9 @@ and heap_entail_conjunct hec_num (prog : prog_decl) (is_folding : bool)  (ctx0 :
     let _ = hec_stack # pop in
     let (lc,_) = r in
     let _ = Log.add_new_sleek_logging_entry !Globals.do_classic_frame_rule caller avoid hec_num slk_no ante conseq consumed_heap evars lc pos in
+    let _ = Debug.ninfo_hprint (add_str "avoid" string_of_bool) avoid no_pos in
+    let _ = Debug.ninfo_hprint (add_str "slk no" string_of_int) slk_no no_pos in
+    let _ = Debug.ninfo_hprint (add_str "lc" Cprinter.string_of_list_context) lc no_pos in
     r
   in
   Debug.no_3_num hec_num "heap_entail_conjunct" string_of_bool Cprinter.string_of_context Cprinter.string_of_formula
@@ -9266,6 +9269,7 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
 				let contr, _ = Infer.detect_lhs_rhs_contra  p_lhs_xpure p_rhs_xpure no_pos in 
 				contr in (* Cristian : to detect_lhs_rhs_contra *) 
 	    let h_inf_args, hinf_args_map = get_heap_inf_args estate in
+            let esv = estate.es_infer_vars in
             let r_inf_contr,relass = 
               if lhs_rhs_contra_flag then (None,[])
               else
@@ -9273,21 +9277,22 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
 		  (*if CP.intersect rhs_als estate.es_infer_vars = [] && List.exists CP.is_node_typ estate.es_infer_vars then None,[] else*) 
 	          let msg = "M_infer_heap :"^(Cprinter.string_of_h_formula rhs) in
 	          let h_inf_args_add = Gen.BList.difference_eq CP.eq_spec_var h_inf_args estate.es_infer_vars in
-	          let estate = {estate with es_infer_vars = estate.es_infer_vars@h_inf_args_add} in
-                  let _ = DD.tinfo_hprint (add_str "es_infer_vars" Cprinter.string_of_spec_var_list) estate.es_infer_vars no_pos in
+	          let estate = {estate with es_infer_vars = h_inf_args_add} in
+                  let _ = DD.tinfo_hprint (add_str "es_infer_vars" Cprinter.string_of_spec_var_list) esv no_pos in
                   let _ = DD.tinfo_hprint (add_str "h_inf_args_add" Cprinter.string_of_spec_var_list) h_inf_args_add no_pos in
-	          Inf.infer_lhs_contra_estate estate lhs_xpure pos msg 
+	          Inf.infer_lhs_contra_estate 4 estate lhs_xpure pos msg 
                 end
             in
             begin 
 	      match r_inf_contr with
                 | Some (new_estate,pf) -> (* if successful, should skip infer_collect_hp_rel below *)
-		      let _ = Debug.ninfo_hprint (add_str "inferred contradiction : " Cprinter.string_of_pure_formula) pf pos in
+                      let new_estate = {new_estate with es_infer_vars = esv} in
+		      let _ = Debug.tinfo_hprint (add_str "inferred contradiction : " Cprinter.string_of_pure_formula) pf pos in
 		      if (List.length relass)>1 then report_error pos "Length of relational assumption list > 1"
 		      else
 			let ctx1 = (elim_unsat_es_now 6 prog (ref 1) new_estate) in
 			let r1, prf = heap_entail_one_context 9 prog is_folding ctx1 conseq None None None pos in
- 			let r1 = add_infer_hp_contr_to_list_context hinf_args_map [pf] r1 in
+ 			let r1 = Infer.add_infer_hp_contr_to_list_context hinf_args_map [pf] r1 in
 			begin 
 			  (*r1 might be None if the inferred contradiction might span several predicates or if it includes non heap pred arguments*)
 			  match r1 with 
@@ -9363,7 +9368,7 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
 					let contr, _ = Infer.detect_lhs_rhs_contra  p_lhs_xpure p_rhs_xpure no_pos in 
 					contr in (* Cristian : to detect_lhs_rhs_contra *) 
                   if lhs_rhs_contra_flag then (None,[])
-                  else Inf.infer_lhs_contra_estate estate lhs_xpure pos msg 
+                  else Inf.infer_lhs_contra_estate 5 estate lhs_xpure pos msg 
               in
               begin
                 match r with

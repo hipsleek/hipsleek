@@ -979,7 +979,7 @@ Problem for Thai:
 */
 
 =================================================================
-# lsg1.slk
+# lsg1.slk      FIXED
 
 infer[SLSEG] 
 SLSEG(l,e) & l=lp 
@@ -1004,7 +1004,17 @@ we just generate one?
 */
 
 ================================================================
-# lsg.ss
+# lsg.ss  DONE
+
+FIXED by explicitly adding to
+    let _ = rel_ass_stk # push_list (new_rels) in
+    let _ = Log.current_hprel_ass_stk # push_list (new_rels) in
+
+
+[ SLSEG(l,e)&true --> emp&((e+1)>l | l!=null) & (l!=null | l>(e-1)),
+ SLSEG(l,e)&e!=l & l!=null --> l::node2<n_13_792,s_13_793>@M * 
+  (HP_794(n_13_792,e)) * (HP_795(s_13_793,e))&true,
+ HP_794(n_13_792,e)&true --> SLSEG(n_13_792,e)&true]
 
 What happen to our contradiction relass?
 It seems not to have been collected in hp_rel!

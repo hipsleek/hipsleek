@@ -7470,20 +7470,20 @@ let repl_label_list_partial_context (lab:path_trace) (cl:list_partial_context) :
 
 (* let anyPreInCtx c = is_inferred_pre_ctx c *)
 
-let proc_left t1 t2 =
-    match t1 with
-      | [] -> Some t2
-      | [c1] ->
-            if isAnyFalseCtx c1 then
-              (* let _ = print_endline ("FalseCtx") in *)
-              if is_inferred_pre_ctx c1 then 
-                (* let _ = print_endline ("Inferred") in *)
-                Some t2 (* drop FalseCtx with Pre *)
-              else 
-                (* let _ = print_endline ("NOT Inferred") in *)
-                Some t1 (* keep FalseCtx wo Pre *)
-            else None
-      | _ -> None
+(* let proc_left t1 t2 = *)
+(*     match t1 with *)
+(*       | [] -> Some t2 *)
+(*       | [c1] -> *)
+(*             if isAnyFalseCtx c1 then *)
+(*               (\* let _ = print_endline ("FalseCtx") in *\) *)
+(*               if is_inferred_pre_ctx c1 then  *)
+(*                 (\* let _ = print_endline ("Inferred") in *\) *)
+(*                 Some t2 (\* drop FalseCtx with Pre *\) *)
+(*               else  *)
+(*                 (\* let _ = print_endline ("NOT Inferred") in *\) *)
+(*                 Some t1 (\* keep FalseCtx wo Pre *\) *)
+(*             else None *)
+(*       | _ -> None *)
 
 let isAnyFalseCtx (ctx:context) : bool = match ctx with
   | Ctx es -> isAnyConstFalse es.es_formula
@@ -7498,23 +7498,29 @@ let merge_false es1 es2 =
         es_infer_hp_rel = es1.es_infer_hp_rel@es2.es_infer_hp_rel
      }
 
-(* let proc_left t1 t2 = *)
-(*     match t1 with *)
-(*       | [] -> Some t2 *)
-(*       | [c1] ->  *)
-(*             if isAnyFalseCtx c1 then *)
-(*               if is_inferred_pre_ctx c1 then  *)
-(*                 match t2 with *)
-(*                   | [c2] -> *)
-(*                         if isAnyFalseCtx c2  *)
-(*                           && is_inferred_pre_ctx c2  *)
-(*                         (\* both t1 and t2 are FalseCtx with Pre *\) *)
-(*                         then Some [merge_false c1 c2] *)
-(*                         else Some t1 (\* only t1 is FalseCtx with Pre *\) *)
-(*                   | _ -> Some t1 (\* only t1 is FalseCtx with Pre *\) *)
-(*               else Some t1 (\* keep FalseCtx wo Pre *\) *)
-(*             else None *)
-(*       | _ -> None  *)
+let merge_false_ctx c1 c2 =
+  match c1,c2 with
+    | Ctx e1, Ctx e2 -> Ctx (merge_false e1 e2)
+    | _,_ -> (Debug.info_pprint "warning on merge_false" no_pos; c1)
+
+
+let proc_left t1 t2 =
+    match t1 with
+      | [] -> Some t2
+      | [c1] ->
+            if isAnyFalseCtx c1 then
+              if is_inferred_pre_ctx c1 then
+                match t2 with
+                  | [c2] ->
+                        if isAnyFalseCtx c2
+                          && is_inferred_pre_ctx c2
+                        (* both t1 and t2 are FalseCtx with Pre *)
+                        then Some [merge_false_ctx c1 c2]
+                        else Some t1 (* only t1 is FalseCtx with Pre *)
+                  | _ -> Some t1 (* only t1 is FalseCtx with Pre *)
+              else Some t1 (* keep FalseCtx wo Pre *)
+            else None
+      | _ -> None
 
 (* remove false with precondition *)
 let simplify_ctx_elim_false_dupl t1 t2 =
@@ -9356,23 +9362,34 @@ let rec erase_propagated f =
 
   
 
+(* type: ((CP.spec_var * h_formula) * CP.spec_var list) list -> *)
+(*   CP.formula list -> list_context -> list_context option *)
 
-and add_infer_hp_contr_to_list_context h_arg_map cp (l:list_context) : list_context option= 
-	 let new_cp = List.concat (List.map CP.split_conjunctions cp) in
-	 let new_cp = List.map CP.arith_simplify_new new_cp in
-	 try
-		 let new_rels = List.map (fun c->
-			let fv = CP.fv c in
-			let new_hd = List.filter (fun (_,vl)-> Gen.BList.overlap_eq CP.eq_spec_var fv vl) h_arg_map in
-			match new_hd with
-			 | [((h,hf),h_args)] -> 
-				if (Gen.BList.list_setequal_eq CP.eq_spec_var fv (List.concat (snd (List.split new_hd)))) then
-				mkHprel (CP.HPRelDefn h) h_args [] []  (formula_of_heap hf no_pos) (formula_of_pure_N c no_pos)  				
-				else raise Not_found
-			| _ -> raise Not_found ) new_cp in
-		 let scc_f es = Ctx {es with es_infer_hp_rel = new_rels@es.es_infer_hp_rel;} in
-		 Some (transform_list_context (scc_f, (fun a -> a)) l)
-	 with Not_found -> None
+(* and add_infer_hp_contr_to_list_context h_arg_map cp (l:list_context) : list_context option = *)
+(*   let pr1 = pr_list pr_none in *)
+(*   let pr2 = pr_list !CP.print_formula in *)
+(*   let pr3 = !print_list_context in *)
+(*   Debug.no_3 "add_infer_hp_contr_to_list_context" pr1 pr2 pr3 (pr_option pr3) *)
+(*       add_infer_hp_contr_to_list_context_x h_arg_map cp l *)
+
+(* and add_infer_hp_contr_to_list_context_x h_arg_map cp (l:list_context) : list_context option=  *)
+(* 	 (\* let new_cp = List.concat (List.map CP.split_conjunctions cp) in *\) *)
+(* 	 let new_cp = List.map CP.arith_simplify_new cp in *)
+(* 	 try *)
+(* 		 let new_rels = List.map (fun c-> *)
+(* 			let fv = CP.fv c in *)
+(* 			let new_hd = List.filter (fun (_,vl)-> Gen.BList.overlap_eq CP.eq_spec_var fv vl) h_arg_map in *)
+(* 			match new_hd with *)
+(* 			 | [((h,hf),h_args)] ->  *)
+(* 				if (Gen.BList.list_setequal_eq CP.eq_spec_var fv (List.concat (snd (List.split new_hd)))) then *)
+(* 				mkHprel (CP.HPRelDefn h) h_args [] []  (formula_of_heap hf no_pos) (formula_of_pure_N c no_pos)  				 *)
+(* 				else raise Not_found *)
+(* 			| _ -> raise Not_found ) new_cp in *)
+(*                  (\* let _ = rel_ass_stk # push_list (new_rels) in *\) *)
+(*                  (\* let _ = Log.current_hprel_ass_stk # push_list (new_rels) in *\) *)
+(* 		 let scc_f es = Ctx {es with es_infer_hp_rel = new_rels@es.es_infer_hp_rel;} in *)
+(* 		 Some (transform_list_context (scc_f, (fun a -> a)) l) *)
+(* 	 with Not_found -> None *)
   
   
 and pop_expl_impl_context (expvars : CP.spec_var list) (impvars : CP.spec_var list) (ctx : list_context)  : list_context = 

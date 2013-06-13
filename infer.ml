@@ -637,11 +637,13 @@ let infer_lhs_contra_estate estate lhs_xpure pos msg =
             let new_estate = CF.false_es_with_orig_ante estate estate.es_formula pos in
             (Some (new_estate,pf),[])
 
-let infer_lhs_contra_estate e f pos msg =
+let infer_lhs_contra_estate i e f pos msg =
   let pr0 = !print_entail_state_short in
   let pr = !print_mix_formula in
-  let pr_res = pr_pair (pr_option (pr_pair pr0 !CP.print_formula)) (fun l -> (string_of_int (List.length l))) in
-  Debug.no_2 "infer_lhs_contra_estate" pr0 pr pr_res (fun _ _ -> infer_lhs_contra_estate e f pos msg) e f
+  let pr2 = fun (_,r,_) -> pr_list pr_none r in
+  let pr_res = pr_pair (pr_option (pr_pair pr0 !CP.print_formula)) (pr_list pr2) in
+    (* (fun l -> (string_of_int (List.length l))) *)
+  Debug.no_2_num i "infer_lhs_contra_estate" pr0 pr pr_res (fun _ _ -> infer_lhs_contra_estate e f pos msg) e f
 
 (*
    should this be done by ivars?
@@ -747,7 +749,7 @@ let rec infer_pure_m_x unk_heaps estate lhs_rels lhs_xpure_orig lhs_xpure0 lhs_w
     if not (TP.is_sat_raw rhs_xpure_orig) then 
       (* (DD.devel_pprint "Cannot infer a precondition: RHS contradiction" pos; *)
       (* (None,None,[])) *)
-      let p, rel_ass = infer_lhs_contra_estate estate lhs_xpure0 pos "rhs contradiction" in
+      let p, rel_ass = infer_lhs_contra_estate 1 estate lhs_xpure0 pos "rhs contradiction" in
       (p,None,rel_ass)
     else
       let iv = iv_orig(* @iv_lhs_rel *) in
@@ -762,7 +764,7 @@ let rec infer_pure_m_x unk_heaps estate lhs_rels lhs_xpure_orig lhs_xpure0 lhs_w
         (* let _ = DD.trace_hprint (add_str "rhs: " !CP.print_formula) rhs_xpure pos in *)
         (* let lhs_xpure0 = CP.filter_ante lhs_xpure0 rhs_xpure in *)
         (* let _ = DD.trace_hprint (add_str "lhs0 (after filter_ante): " !CP.print_formula) lhs_xpure0 pos in *)
-        let p, rel_ass = infer_lhs_contra_estate estate lhs_xpure0 pos "ante contradict with conseq" in
+        let p, rel_ass = infer_lhs_contra_estate 2 estate lhs_xpure0 pos "ante contradict with conseq" in
         (p,None,rel_ass)
       else
         (*let invariants = List.fold_left (fun p1 p2 -> CP.mkAnd p1 p2 pos) (CP.mkTrue pos) estate.es_infer_invs in*)
@@ -1432,7 +1434,7 @@ let infer_collect_rel is_sat estate lhs_h_mix lhs_mix rhs_mix pos =
       let rhs_mix_new = MCP.mix_of_pure rhs_p_new in
       if not(check_sat) then
         begin
-          let p, rel_ass = infer_lhs_contra_estate estate lhs_mix pos "infer_collect_rel: ante contradict with conseq" in
+          let p, rel_ass = infer_lhs_contra_estate 3 estate lhs_mix pos "infer_collect_rel: ante contradict with conseq" in
           DD.dinfo_pprint ">>>>>> infer_collect_rel <<<<<<" pos;
           DD.dinfo_pprint "LHS and RHS Contradiction detected for:" pos; 
           DD.dinfo_hprint (add_str "lhs" Cprinter.string_of_pure_formula) lhs_c no_pos;
@@ -2529,3 +2531,32 @@ let get_spec_from_file prog =
 (*       | _ -> estate.es_infer_invs *)
 (*     in {estate with es_infer_invs = inv}  *)
 
+(* type: ((CP.spec_var * h_formula) * CP.spec_var list) list -> *)
+(*   CP.formula list -> list_context -> list_context option *)
+
+
+let add_infer_hp_contr_to_list_context h_arg_map cp (l:list_context) : list_context option= 
+	 (* let new_cp = List.concat (List.map CP.split_conjunctions cp) in *)
+	 let new_cp = List.map CP.arith_simplify_new cp in
+	 try
+		 let new_rels = List.map (fun c->
+			let fv = CP.fv c in
+			let new_hd = List.filter (fun (_,vl)-> Gen.BList.overlap_eq CP.eq_spec_var fv vl) h_arg_map in
+			match new_hd with
+			 | [((h,hf),h_args)] -> 
+				if (Gen.BList.list_setequal_eq CP.eq_spec_var fv (List.concat (snd (List.split new_hd)))) then
+				mkHprel (CP.HPRelDefn h) h_args [] []  (formula_of_heap hf no_pos) (formula_of_pure_N c no_pos)  				
+				else raise Not_found
+			| _ -> raise Not_found ) new_cp in
+                 let _ = rel_ass_stk # push_list (new_rels) in
+                 let _ = Log.current_hprel_ass_stk # push_list (new_rels) in
+		 let scc_f es = Ctx {es with es_infer_hp_rel = new_rels@es.es_infer_hp_rel;} in
+		 Some (transform_list_context (scc_f, (fun a -> a)) l)
+	 with Not_found -> None
+
+let add_infer_hp_contr_to_list_context h_arg_map cp (l:list_context) : list_context option =
+  let pr1 = pr_list pr_none in
+  let pr2 = pr_list !CP.print_formula in
+  let pr3 = !print_list_context in
+  Debug.no_3 "add_infer_hp_contr_to_list_context" pr1 pr2 pr3 (pr_option pr3)
+      add_infer_hp_contr_to_list_context h_arg_map cp l
