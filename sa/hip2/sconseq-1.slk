@@ -19,3 +19,13 @@ relAssume  H
       --> H(next,y).
 
 shape_strengthen_conseq [H,HP_2][].
+
+/*
+Looks Correct:
+
+[ x::node<Anon_11,prev,next>@M * (HP_1(prev,y)) * (HP_2(next,y))&
+  true --> H(x,y)&true,
+ HP_2(next_32,y_31)&next_32!=null --> next_32::node<Anon_11,prev,next>@M * 
+  (HP_1(prev,y_31)) * (HP_2(next,y_31))&true]
+
+*/

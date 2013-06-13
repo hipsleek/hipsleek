@@ -1648,7 +1648,7 @@ shape_sconseq_cmd:
    ]];
 
 shape_sante_cmd:
-   [[ `SHAPE_STRENGTHEN_ANTE; `OSQUARE;il1=OPT id_list;`CSQUARE; `OSQUARE; il2=OPT id_list;`CSQUARE ->
+   [[ `SHAPE_WEAKEN_ANTE; `OSQUARE;il1=OPT id_list;`CSQUARE; `OSQUARE; il2=OPT id_list;`CSQUARE ->
    let il1 = un_option il1 [] in
    let il2 = un_option il2 [] in
    (il1,il2)
