@@ -194,16 +194,25 @@ We can equalize a post-predicate by:
 
 Dangling Predicate
 ==================
-How to identify them?
-How to introduce them?
+ How to identify them?
+ How to introduce them? 
+ How to link them?
 
 Second-Order Entailment
 =======================
 
 
-Transformation
+Normalization
 ==============
+. eliminate parameter
+. reuse predicate
+   - equivalent
+   - subsumption
+       - stronger pre-pred
+       - weaker post-pred
+. 
 
+ 
 
 
 
