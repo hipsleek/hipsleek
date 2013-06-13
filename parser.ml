@@ -629,12 +629,6 @@ let peek_pointer_type =
              |[_;STAR,_] -> (* let _ = print_endline "Pointer found!" in *) ()
              | _ -> raise Stream.Failure)
 
-let fst3 (result, _, _) = result
-
-let snd3 (_, result, _) = result
-
-let trd3 (_, _, result) = result
-
 let get_heap_id_info (cid: ident * primed) (heap_id : (ident * int * int * Camlp4.PreCast.Loc.t)) =
   let (base_heap_id, ref_level, deref_level, l) = heap_id in
   if ((ref_level < 0) || (deref_level < 0)) then
@@ -665,7 +659,6 @@ let get_heap_id_info (cid: ident * primed) (heap_id : (ident * int * int * Camlp
     done;
     s := !s ^ "__star";
     let e = F.P.Var (!p1, (get_pos 1)) in
-    let _ = print_endline ("!p1 = " ^ fst (!p1)) in
     let h =  F.mkHeapNode cid !s false (F.ConstAnn(Mutable)) false false false None [e] [None] None (get_pos_camlp4 l 1) in
     heaps := !heaps @ [h];
     (p, base_heap_id, !heaps)
