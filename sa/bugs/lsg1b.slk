@@ -7,25 +7,28 @@ data node2{
 HeapPred SLSEG(node2 a,node2 b).
 
 // lsg1.slk
-
+/*
 infer[SLSEG] 
 SLSEG(l,e) 
  & e!=null
  & l=null 
  |-  l::node2<n,s>@L. 
+*/
+
+infer[l,e] 
+ e!=null
+ & l=null 
+ |-  l!=null.
+
 print residue.
 
 /*
-GOT
-===
-Entail (1) : Valid. 
+
+Should it be as weak as possible? Or should
+we use interpolant to get simpler LHS?
 
  <1>hfalse&false&{FLOW,(19,20)=__norm}[]
- inferred hprel: [SLSEG(l,e)&true --> emp&l!=null | l>(e-1); 
-                  SLSEG(l,e)&true --> emp&e>=l | l!=null]
-
-Why did we pick twice? Can
-we just generate one?
+ inferred hprel: [SLSEG(l,e)&true --> emp&l!=null | e=null]
 
 
 */
