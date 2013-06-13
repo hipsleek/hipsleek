@@ -1043,4 +1043,26 @@ res:  [
  emp&l'=null --> SLSEG(n_13_792,e')&true,
   HP_796(n_13_794,e)&true --> SLSEG(n_13_794,e)&true]
 
+================================================================
+# lsg.ss
+
+OBTAINED :
+========
+
+relAssume SLSEG
+  SLSEG(l,e)&e!=l & l!=null --> l::node2<n_16_793,s_16_794>@M * 
+  HP_5(n_16_793,e) * HP_6(s_16_794,e) .
+relAssume SLSEG
+  HP_5(n_16_793,e)&true --> SLSEG(n_16_793,e).
+
+Still missing on some base-case equation for pre-pred!
+
+MISSING
+=======
+
+relAssume SLSEG
+  SLSEG(l,e) & e!=l & l=null --> emp.
+
+relAssume SLSEG
+  SLSEG(l,e) & e=l --> emp.
 
