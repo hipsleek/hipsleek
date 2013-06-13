@@ -18,4 +18,4 @@ relAssume  H
  HP_2(next,y) & next!=null 
       --> H(next,y).
 
-shape_strengthen_post [H,HP_2][].
+shape_strengthen_conseq [H,HP_2][].

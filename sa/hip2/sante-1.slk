@@ -1,0 +1,20 @@
+data node{
+ int val;
+ node next;
+}.
+
+
+HeapPred H(node a).
+HeapPred HP_7(node a).
+HeapPred G(node a, node b).
+
+
+relAssume  H
+ H(x) -->
+  x::node<val_31_786,next_31_787>@M * HP_7(next_31_787).
+
+relAssume G
+ H(x)&res=x
+      --> G(x,res).
+
+shape_strengthen_ante [H,G][].

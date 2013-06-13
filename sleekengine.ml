@@ -723,11 +723,31 @@ let process_shape_infer pre_hps post_hps=
   (* in *)
   ()
 
-let process_shape_spost pre_hps post_hps=
+let process_shape_sconseq pre_hps post_hps=
   (* let _ = DD.info_pprint "process_shape_infer" no_pos in *)
   let hp_lst_assume = !sleek_hprel_assumes in
   let sel_hps, sel_post_hps = SAU.get_pre_post pre_hps post_hps hp_lst_assume in
   let constrs1 = SAC.do_strengthen_conseq !cprog [] hp_lst_assume in
+  let pr1 = pr_list_ln Cprinter.string_of_hprel_short in
+  let _ =
+  begin
+    print_endline "\n*************************************";
+    print_endline "*******relational assumptions (1) ********";
+    print_endline "*************************************";
+    print_endline (pr1 constrs1);
+    print_endline "*************************************";
+  end;
+  in
+  (* let _ = if(!Globals.cp_test || !Globals.cp_prefile) then *)
+  (*    CEQ.cp_test !cprog hp_lst_assume ls_inferred_hps sel_hps *)
+  (* in *)
+  ()
+
+let process_shape_sante pre_hps post_hps=
+  (* let _ = DD.info_pprint "process_shape_infer" no_pos in *)
+  let hp_lst_assume = !sleek_hprel_assumes in
+  let sel_hps, sel_post_hps = SAU.get_pre_post pre_hps post_hps hp_lst_assume in
+  let constrs1 = SAC.do_strengthen_ante !cprog [] hp_lst_assume in
   let pr1 = pr_list_ln Cprinter.string_of_hprel_short in
   let _ =
   begin

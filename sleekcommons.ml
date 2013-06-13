@@ -49,7 +49,8 @@ type command =
   | ShapeSplitBase of (ident list * ident list)
   | ShapeElim of (ident list)
   | ShapeExtract of (ident list)
-  | ShapeSPost of (ident list * ident list)
+  | ShapeSConseq of (ident list * ident list)
+  | ShapeSAnte of (ident list * ident list)
   | EqCheck of (ident list * meta_formula * meta_formula)
   | BarrierCheck of I.barrier_decl
   | Infer of (ident list * meta_formula * meta_formula)
@@ -100,7 +101,8 @@ let string_of_command c = match c with
   | ShapeSplitBase _ -> "ShapeSplitbase"
   | ShapeElim _ -> "ShapeElim"
   | ShapeExtract _ -> "ShapeExtract"
-  | ShapeSPost _ -> "ShapeSPost"
+  | ShapeSConseq _ -> "ShapeSConseq"
+  | ShapeSAnte _ -> "ShapeSAnte"
   | EqCheck _ -> "EqCheck"
   | BarrierCheck _ -> "BarrierCheck"
   | Infer _ -> "Infer"

@@ -954,6 +954,13 @@ let strengthen_conseq_comb l_res subst1 f1 f2 pos =
   (* let r = CF.mkStar n_f2 r_res2 CF.Flow_combine (CF.pos_of_formula n_f2) in *)
   (nf1, nf2)
 
+let strengthen_ante_comb res ss1 f pos =
+  (*subst*)
+  let nf1 = CF.subst ss1 f in
+  (*combine res into f1*)
+  let nf2 =  CF.mkStar nf1 (CF.Base res) CF.Flow_combine pos in
+  nf2
+
 (*
 a1: lhs1 --> rhs1
 a2: lhs2 --> rhs2
@@ -999,7 +1006,7 @@ let check_apply_strengthen_conseq prog cs1 cs2=
   in
   n_cs2
 
-let do_strengthen_conseq prog constrs new_cs=
+let do_strengthen prog constrs new_cs check_apply_fnc=
   let rec check_constr_duplicate (lhs,rhs) constrs=
     match constrs with
       | [] -> false
@@ -1015,7 +1022,7 @@ let do_strengthen_conseq prog constrs new_cs=
       | cs1::rest ->
           let _ = Debug.ninfo_pprint ("    cs1: " ^ (Cprinter.string_of_hprel cs1)) no_pos in
           let new_rest = List.fold_left ( fun ls cs2 ->
-              let on_cs2 = check_apply_strengthen_conseq prog cs1 cs2 in
+              let on_cs2 = check_apply_fnc prog cs1 cs2 in
               match on_cs2 with
                 | None -> ls@[cs2]
                 | Some n_cs2 -> (* if check_constr_duplicate (n_cs2.CF.hprel_lhs, n_cs2.CF.hprel_rhs) (constrs@new_cs) then ls@[cs2] else *) ls@[n_cs2]
@@ -1028,7 +1035,7 @@ let do_strengthen_conseq prog constrs new_cs=
       | [] -> res
       | cs1::ss ->
           let r = List.fold_left ( fun ls cs2 ->
-              let  on_cs2 = check_apply_strengthen_conseq prog cs1 cs2 in
+              let  on_cs2 = check_apply_fnc prog cs1 cs2 in
               match on_cs2 with
                 | None -> ls@[cs2]
                 | Some n_cs2 ->
@@ -1040,15 +1047,56 @@ let do_strengthen_conseq prog constrs new_cs=
   let new_cs2 = helper_old_new new_cs [] in
   (new_cs1)
 
+let do_strengthen_conseq prog constrs new_cs=
+  do_strengthen prog constrs new_cs check_apply_strengthen_conseq
+
 (*
 a1: lhs1 --> rhs1
 a2: lhs2 --> rhs2
-lhs2 |- lhs11 * R
+lhs2 |- lhs1 * R
 ===============
 replace a2 by
 rhs1 * R --> rhs2
 *)
 
+let check_apply_strengthen_ante prog cs1 cs2=
+  let _ = Debug.ninfo_pprint ("    cs2: " ^ (Cprinter.string_of_hprel cs2)) no_pos in
+  let qvars1, f1 = CF.split_quantifiers cs1.CF.hprel_lhs in
+  let qvars2, f2 = CF.split_quantifiers cs2.CF.hprel_lhs in
+  let n_cs2=
+  match f1,f2 with
+      | CF.Base lhs1_b, CF.Base lhs2_b ->
+          let r, nlhs2_b, ss2 = rename_var_clash cs2.CF.hprel_rhs lhs2_b in
+          let ores = check_imply prog nlhs2_b lhs1_b in
+          begin
+            match ores with
+              | Some (res, ss1) -> begin
+                    let l = strengthen_ante_comb res ss1 cs1.CF.hprel_rhs no_pos in
+                    let new_cs = {cs2 with
+                        CF.predef_svl = CP.remove_dups_svl
+                            ((CP.subst_var_list ss1 cs1.CF.predef_svl)@
+                                (CP.subst_var_list ss2 cs2.CF.predef_svl));
+                        CF.unk_svl = CP.remove_dups_svl
+                            ((CP.subst_var_list ss1 cs1.CF.unk_svl)@
+                                (CP.subst_var_list ss2 cs2.CF.unk_svl));
+                        CF.unk_hps = Gen.BList.remove_dups_eq SAU.check_hp_arg_eq
+                            ((List.map (fun (hp,args) -> (hp,CP.subst_var_list ss1 args)) cs1.CF.unk_hps)@
+                                (List.map (fun (hp,args) -> (hp,CP.subst_var_list ss2 args)) cs2.CF.unk_hps));
+                        CF.hprel_lhs = l;
+                        CF.hprel_rhs = r;
+                    }
+                    in
+                    let _ = Debug.ninfo_pprint ("    new cs2: " ^ (Cprinter.string_of_hprel new_cs)) no_pos in
+                    Some new_cs
+                end
+              | None -> None
+          end
+      | _ -> report_error no_pos "sac.do_strengthen_conseq"
+  in
+  n_cs2
+
+let do_strengthen_ante prog constrs new_cs=
+  do_strengthen prog constrs new_cs check_apply_strengthen_ante
 
 
 (*=============**************************================*)

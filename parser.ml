@@ -724,7 +724,8 @@ non_empty_command:
       | t=shapesplit_base_cmd     -> ShapeSplitBase t
       | t=shapeElim_cmd     -> ShapeElim t
       | t=shapeExtract_cmd     -> ShapeExtract t
-      | t=shape_spost_cmd     -> ShapeSPost t
+      | t=shape_sconseq_cmd     -> ShapeSConseq t
+      | t=shape_sante_cmd     -> ShapeSAnte t
       | t=infer_cmd           -> Infer t  
       | t=captureresidue_cmd  -> CaptureResidue t
       | t=print_cmd           -> PrintCmd t
@@ -1639,8 +1640,15 @@ shapeinfer_cmd:
    (il1,il2)
    ]];
 
-shape_spost_cmd:
-   [[ `SHAPE_STRENGTHEN_POST; `OSQUARE;il1=OPT id_list;`CSQUARE; `OSQUARE; il2=OPT id_list;`CSQUARE ->
+shape_sconseq_cmd:
+   [[ `SHAPE_STRENGTHEN_CONSEQ; `OSQUARE;il1=OPT id_list;`CSQUARE; `OSQUARE; il2=OPT id_list;`CSQUARE ->
+   let il1 = un_option il1 [] in
+   let il2 = un_option il2 [] in
+   (il1,il2)
+   ]];
+
+shape_sante_cmd:
+   [[ `SHAPE_STRENGTHEN_ANTE; `OSQUARE;il1=OPT id_list;`CSQUARE; `OSQUARE; il2=OPT id_list;`CSQUARE ->
    let il1 = un_option il1 [] in
    let il2 = un_option il2 [] in
    (il1,il2)
