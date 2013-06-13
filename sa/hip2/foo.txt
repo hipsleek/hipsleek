@@ -169,12 +169,13 @@ Abduction Synthesis (EqualPre/EqualPost)
 We ae interested in a pre-pred that is as weak
 as possible and post-pred that is as strong as
 possible. When we have successfully simplified our
-predicates, we can proceed to chose the current
-pre-pred and post-pred as the inferred definitions.
+predicates, we can proceed to confirm the current
+synthesized pre-pred and post-pred as the 
+inferred definitions.
 
 This would allow us to reach a fix-point for
-our synthesis. We refer to this process as
-equality assertions for pre/post predicates.
+our synthesis pr. We refer to this process as
+equality confirmation for pre/post predicates.
 
 As an example, EqualPre is defined, as follows:
 
@@ -189,6 +190,19 @@ Given:
 
 We can equalize a post-predicate by:
   B1 \/ B2 .. \/ Bn <--> Post(...)
+
+
+Dangling Predicate
+==================
+How to identify them?
+How to introduce them?
+
+Second-Order Entailment
+=======================
+
+
+Transformation
+==============
 
 
 
