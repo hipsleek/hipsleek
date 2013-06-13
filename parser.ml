@@ -724,6 +724,7 @@ non_empty_command:
       | t=shapesplit_base_cmd     -> ShapeSplitBase t
       | t=shapeElim_cmd     -> ShapeElim t
       | t=shapeExtract_cmd     -> ShapeExtract t
+      | t=shape_spost_cmd     -> ShapeSPost t
       | t=infer_cmd           -> Infer t  
       | t=captureresidue_cmd  -> CaptureResidue t
       | t=print_cmd           -> PrintCmd t
@@ -1633,6 +1634,13 @@ relassume_cmd:
 
 shapeinfer_cmd:
    [[ `SHAPE_INFER; `OSQUARE;il1=OPT id_list;`CSQUARE; `OSQUARE; il2=OPT id_list;`CSQUARE ->
+   let il1 = un_option il1 [] in
+   let il2 = un_option il2 [] in
+   (il1,il2)
+   ]];
+
+shape_spost_cmd:
+   [[ `SHAPE_STRENGTHEN_POST; `OSQUARE;il1=OPT id_list;`CSQUARE; `OSQUARE; il2=OPT id_list;`CSQUARE ->
    let il1 = un_option il1 [] in
    let il2 = un_option il2 [] in
    (il1,il2)

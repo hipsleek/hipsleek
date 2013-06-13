@@ -16,6 +16,7 @@ type sleek_token =
   | CASE | CHECKEQ | CHECKENTAIL | CHECKENTAIL_EXACT | CHECKENTAIL_INEXACT | CAPTURERESIDUE | CLASS (* | COERCION *) | COMPOSE | CONST | CONTINUE
 	| DATA | DDEBUG | DIFF | DYNAMIC 
   | RELASSUME | SHAPE_INFER | SHAPE_INFER_PROP | SHAPE_SPLIT_BASE | SHAPE_ELIM_USELESS | SHAPE_EXTRACT
+  | SHAPE_STRENGTHEN_POST
   | DTIME
   | ELSE_TT
   | EMPTY
@@ -77,6 +78,7 @@ module Token = struct
     | CHECKENTAIL_EXACT -> "checkentail_exact" | CHECKENTAIL_INEXACT -> "checkentail_inexact"
     | RELASSUME -> "relAssume" |  SHAPE_INFER -> "shape_infer" |  SHAPE_INFER_PROP -> "shape_infer_proper"
     | SHAPE_SPLIT_BASE -> "shape_split_base" | SHAPE_ELIM_USELESS -> "shape_elim_useless" | SHAPE_EXTRACT -> "shape_extract"
+    | SHAPE_STRENGTHEN_POST -> "shape_strengthen_post"
     | COMPOSE ->"compose" | CONST ->"const" | CONTINUE ->"continue"	| DATA ->"data" | DDEBUG ->"debug" | DIFF ->"diff"| DYNAMIC ->"dynamic"
     | DTIME ->"time" | ELSE_TT ->"else" | EMPTY -> "emp"| ENSURES ->"ensures" | ENSURES_EXACT ->"ensures_exact" | ENSURES_INEXACT ->"ensures_inexact" | ENUM ->"enum"| EXISTS ->"ex" | EXTENDS ->"extends"
     | FALSE ->"false"| FLOAT ->"float" | FORALL ->"forall" | FUNC -> "ranking"

@@ -807,7 +807,8 @@ let get_dangling_pred constrs=
 (*=============**************************================*)
        (*=============CONSTR CLOSURE================*)
 (*=============**************************================*)
-let do_streng_cons prog constrs new_cs=
+
+let do_strengthen_cons prog constrs new_cs=
   let rec check_constr_duplicate (lhs,rhs) constrs=
     match constrs with
       | [] -> false
@@ -818,11 +819,11 @@ let do_streng_cons prog constrs new_cs=
   in
   let find_imply_one cs1 cs2=
     let _ = Debug.ninfo_pprint ("    rhs: " ^ (Cprinter.string_of_hprel cs2)) no_pos in
-    let qvars1, f1 = CF.split_quantifiers cs1.CF.hprel_lhs in
+    let qvars1, f1 = CF.split_quantifiers cs1.CF.hprel_rhs in
     let qvars2, f2 = CF.split_quantifiers cs2.CF.hprel_rhs in
     match f1,f2 with
-      | CF.Base lhs1, CF.Base rhs2 ->
-          let r = SAU.find_imply prog (List.map fst cs1.CF.unk_hps) (List.map fst cs2.CF.unk_hps) lhs1 cs1.CF.hprel_rhs cs2.CF.hprel_lhs rhs2 in
+      | CF.Base rhs1, CF.Base rhs2 ->
+          let r = SAU.find_imply prog (List.map fst cs1.CF.unk_hps) (List.map fst cs2.CF.unk_hps) rhs1 cs1.CF.hprel_lhs cs2.CF.hprel_lhs rhs2 in
           begin
               match r with
                 | Some (l,r,lhs_ss, rhs_ss) ->

@@ -131,9 +131,10 @@ module Make (Token : SleekTokenS)
    ( "shape_split_base", SHAPE_SPLIT_BASE);
    ("shape_elim_useless", SHAPE_ELIM_USELESS );
    ("shape_extract", SHAPE_EXTRACT );
+   ("shape_strengthen_post", SHAPE_STRENGTHEN_POST );
    ("checkentail_exact", CHECKENTAIL_EXACT);
    ("checkentail_inexact", CHECKENTAIL_INEXACT);
-	 ("capture_residue", CAPTURERESIDUE);
+   ("capture_residue", CAPTURERESIDUE);
 	 ("class", CLASS);
 	 (* ("coercion", COERCION); *)
 	 ("compose", COMPOSE);

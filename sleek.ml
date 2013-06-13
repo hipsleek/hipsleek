@@ -100,6 +100,7 @@ let proc_gen_cmd cmd =
     | ShapeSplitBase (pre_hps, post_hps) -> process_shape_split pre_hps post_hps
     | ShapeElim (view_names) -> process_shape_elim_useless view_names
     | ShapeExtract (view_names) -> process_shape_extract view_names
+    | ShapeSPost (pre_hps, post_hps) -> process_shape_spost pre_hps post_hps
     | EqCheck (lv, if1, if2) -> process_eq_check lv if1 if2
     | Infer (ivars, iante, iconseq) -> (process_infer ivars iante iconseq;())
     | CaptureResidue lvar -> process_capture_residue lvar
@@ -134,6 +135,7 @@ let parse_file (parse) (source_file : string) =
             (* | Infer (ivars, iante, iconseq) -> process_infer ivars iante iconseq *)
       | LemmaDef _ | Infer _ | CaptureResidue _ | LetDef _ | EntailCheck _ | EqCheck _ | PrintCmd _ | CmpCmd _ 
       | RelAssume _ | ShapeInfer _ | ShapeInferProp _ | ShapeSplitBase _ | ShapeElim _ | ShapeExtract _
+      | ShapeSPost _
       | Time _ | EmptyCmd -> () 
   in
   let proc_one_def c =
@@ -145,6 +147,7 @@ let parse_file (parse) (source_file : string) =
       | DataDef _ | PredDef _ | BarrierCheck _ | FuncDef _ | RelDef _ | HpDef _ | AxiomDef _ (* An Hoa *)
       | CaptureResidue _ | LetDef _ | EntailCheck _ | EqCheck _ | Infer _ | PrintCmd _ 
       | RelAssume _ | ShapeInfer _ | ShapeInferProp _ | ShapeSplitBase _ | ShapeElim _ | ShapeExtract _
+      | ShapeSPost _
       | CmpCmd _| Time _ | EmptyCmd -> () in
   let proc_one_cmd c = 
     match c with
@@ -157,6 +160,7 @@ let parse_file (parse) (source_file : string) =
       | ShapeSplitBase (pre_hps, post_hps) -> process_shape_split pre_hps post_hps
       | ShapeElim (view_names) -> process_shape_elim_useless view_names
       | ShapeExtract (view_names) -> process_shape_extract view_names
+      | ShapeSPost (pre_hps, post_hps) -> process_shape_spost pre_hps post_hps
       | EqCheck (lv, if1, if2) -> 
             (* let _ = print_endline ("proc_one_cmd: xxx_after parse \n") in *)
             process_eq_check lv if1 if2
