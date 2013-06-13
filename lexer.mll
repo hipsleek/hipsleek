@@ -308,6 +308,7 @@ rule tokenizer file_name = parse
   | "@full" {PFULL}
   | "@value" {PVALUE}
   (* | "@p_ref" {PREF} *)
+  | '^' { CARET }
   | '}' { CBRACE }
   | "|]" {CLIST}
   | ':' { COLON }
