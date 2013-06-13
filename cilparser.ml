@@ -483,10 +483,51 @@ let translate_var_decl (vinfo: Cil.varinfo) : Iast.exp =
   let pos = translate_location vinfo.Cil.vdecl in
   let ty = translate_typ vinfo.Cil.vtype in
   let name = vinfo.Cil.vname in
-  let decl = [(name, None, pos)] in
-  let newexp = Iast.VarDecl {Iast.exp_var_decl_type = ty;
-                             Iast.exp_var_decl_decls = decl;
-                             Iast.exp_var_decl_pos = pos} in
+  let newexp = (
+    match ty with
+    | Globals.Int
+    | Globals.Bool
+    | Globals.Float
+    | Globals.Array _ -> (
+        Iast.VarDecl { Iast.exp_var_decl_type = ty;
+                       Iast.exp_var_decl_decls = [(name, None, pos)];
+                       Iast.exp_var_decl_pos = pos }
+      )
+    | Globals.Named typ_name -> (
+        (* look for the corresponding data structure *)
+        let data_decl = (
+          try Hashtbl.find tbl_struct_data_decl ty
+          with Not_found -> (
+            try Hashtbl.find tbl_pointer_data_decl ty
+            with Not_found -> report_error_msg ("Unfound typ: " ^ (Globals.string_of_typ ty))
+          )
+        ) in
+        (* create and initiate a new object *)
+        let init_param = List.fold_left (
+          fun params field ->
+            let ((ftyp, _), _, _, _) = field in
+            let exp = (
+              match ftyp with
+              | Globals.Int -> Iast.IntLit { Iast.exp_int_lit_val = 0;
+                                             Iast.exp_int_lit_pos = no_pos }
+              | Globals.Bool -> Iast.BoolLit { Iast.exp_bool_lit_val = true;
+                                               Iast.exp_bool_lit_pos = no_pos }
+              | Globals.Float -> Iast.FloatLit { Iast.exp_float_lit_val = 0.;
+                                                 Iast.exp_float_lit_pos = no_pos }
+              | Globals.Named _ -> Iast.Null no_pos
+              | _ -> report_error_msg ("Unexpected typ: " ^ (Globals.string_of_typ ftyp))
+            ) in
+            params @ [exp]
+        ) [] data_decl.Iast.data_fields in
+        let init_data = Iast.New { Iast.exp_new_class_name = typ_name;
+                                   Iast.exp_new_arguments = init_param;
+                                   Iast.exp_new_pos = no_pos } in
+        Iast.VarDecl { Iast.exp_var_decl_type = ty;
+                       Iast.exp_var_decl_decls = [(name, Some init_data, pos)];
+                       Iast.exp_var_decl_pos = pos }
+      )
+    | _ -> report_error_msg ("Unexpected typ: " ^ (Globals.string_of_typ ty))
+  ) in
   newexp
 
 
