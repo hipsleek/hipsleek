@@ -808,7 +808,198 @@ let get_dangling_pred constrs=
        (*=============CONSTR CLOSURE================*)
 (*=============**************************================*)
 
-let do_strengthen_cons prog constrs new_cs=
+(*always rename for the clash var of the second constraint
+  before doing check_imply
+- {f1, f2_b} \subset {lhs; rhs} of a constraint
+*)
+let rename_var_clash f1 f2_b=
+   (*renaming vars of the lhs-based constraint*)
+  let rsvl2 = CF.fv (CF.Base f2_b) in
+  let lsvl2 = CF.fv f1 in
+  let svl2 = CP.remove_dups_svl (rsvl2@lsvl2) in
+  let hp_names = CP.remove_dups_svl ((CF.get_hp_rel_name_formula f1)@
+      (CF.get_hp_rel_name_bformula f2_b)) in
+  (*remove hp name*)
+  let svl21 = CP.diff_svl svl2 hp_names in
+  let fr_svl2 = CP.fresh_spec_vars svl21 in
+  let sst = List.combine svl21 fr_svl2 in
+  let nf2_b = CF.subst_b sst f2_b in
+  let nf1 = CF.subst sst f1 in
+  (nf1, nf2_b, sst)
+
+(*
+ perform lhs |- rhs * R (syntactic version)
+*)
+let check_imply prog lhs_b rhs_b=
+  (************************************)
+     (*         INTERNAL             *)
+  (************************************)
+  let sort_hps_x hps = List.sort (fun (CP.SpecVar (_, id1,_),_)
+      (CP.SpecVar (_, id2, _),_)-> String.compare id1 id2) hps
+  in
+  let sort_hps hps=
+    let pr1 = pr_list_ln (pr_pair !CP.print_sv !CP.print_svl) in
+    Debug.no_1 "sort_hps" pr1 pr1
+        (fun _ ->  sort_hps_x hps) hps
+  in
+  (*precondition: ls1 and ls2 are sorted*)
+  (*we may enhance here, ls1, ls2 are not necessary the same: ls2 >= ls1*)
+  let rec check_hrels_imply ls1 ls2 ldns rdns lhs_hps subst matched args res_rename=
+    match ls1,ls2 with
+      | [],[] -> (subst,matched,args,res_rename)
+      | (id1, args1)::ss1,(id2, args2)::ss2 ->
+          if CP.eq_spec_var id1 id2 then
+            begin
+              check_hrels_imply ss1 ss2 ldns rdns lhs_hps
+                  (subst@(List.combine args1 args2)) (matched@[id2]) (args@args2) res_rename
+            end
+          else
+            check_hrels_imply ls1 ss2 ldns rdns lhs_hps subst matched args res_rename
+          (* end *)
+      | [], _ -> (subst,matched,args,res_rename)
+      | _ -> ([],[],[],[])
+  in
+  let transform_hrel (hp,eargs,_)= (hp, List.concat (List.map CP.afv eargs)) in
+  let transform_dn dn= (dn.CF.h_formula_data_name, dn.CF.h_formula_data_node,
+                        List.filter (fun (CP.SpecVar (t,_,_)) -> is_pointer t ) dn.CF. h_formula_data_arguments) in
+  let rec is_inconsistent_x ss done_ss=
+    match ss with
+      | [] -> false
+      | (sv1,sv2)::rest->
+          try
+              let sv22 = List.assoc sv1 (rest@done_ss) in
+              if CP.eq_spec_var sv2 sv22 then
+                is_inconsistent_x rest (done_ss@[(sv1,sv2)])
+              else true
+          with Not_found -> is_inconsistent_x rest (done_ss@[(sv1,sv2)])
+  in
+  let rec is_inconsistent ss done_ss=
+    let pr1= pr_list (pr_pair !CP.print_sv !CP.print_sv) in
+    Debug.no_1 "is_inconsistent" pr1 string_of_bool
+        (fun _ -> is_inconsistent_x ss done_ss) ss
+  in
+  (************************************)
+  (*         END INTERNAL             *)
+  (************************************)
+  let rdns,rvns,rhrels = CF.get_hp_rel_bformula rhs_b in
+  let ldns,_,lhrels = CF.get_hp_rel_bformula lhs_b in
+  let r_rhrels = sort_hps (List.map transform_hrel rhrels) in
+  let l_rhrels = sort_hps (List.map transform_hrel lhrels) in
+  (*m_args2: matched svl of lhs_b*)
+  (*matching hprels and return subst*)
+  let subst,matched_hps, m_args2,lhs_hps_rename = check_hrels_imply r_rhrels l_rhrels rdns ldns (List.map fst r_rhrels) [] [] [] [] in
+  let r=
+    if matched_hps = [] then None
+    else
+      begin
+        (*for debugging*)
+        (* let _ = Debug.ninfo_pprint ("     m_args2: " ^ (!CP.print_svl  m_args2)) no_pos in *)
+        (* let pr_ss = pr_list (pr_pair !CP.print_sv !CP.print_sv) in *)
+        (* let _ =  Debug.ninfo_pprint ("     subst: " ^ (pr_ss subst)) no_pos in *)
+        (*END for debugging*)
+        (*matching hnodes (in matched_hps) and return subst*)
+        let rhns1 = List.map transform_dn rdns in
+        let lhns1 = List.map transform_dn ldns in
+        (*all_matched_svl2: all matched slv of rhs2*)
+        let all_matched_svl2,subst1 = SAU.get_closed_matched_ptrs rhns1 lhns1 m_args2 subst in
+        (* let _ = Debug.ninfo_pprint ("    all matched: " ^ (!CP.print_svl all_matched_svl2)) no_pos in *)
+        (* let _ =  Debug.ninfo_pprint ("     subst1: " ^ (pr_ss subst1)) no_pos in *)
+        if  (is_inconsistent subst1 []) then None else
+          let n_rhs_b = CF.subst_b subst1 rhs_b in
+          (*check pure implication*)
+          (* let nrdns,nrvns,_ = CF.get_hp_rel_bformula n_rhs_b in *)
+          (*loc-1b1.slk*)
+          (* let lmf = CP.filter_var_new (MCP.pure_of_mix n_lhs1.CF.formula_base_pure)
+             (look_up_closed_ptr_args prog nrdns nrvns all_matched_svl2) in *)
+          let rmf = (MCP.pure_of_mix n_rhs_b.CF.formula_base_pure) in
+          let lmf = (MCP.pure_of_mix lhs_b.CF.formula_base_pure) in
+          let _ = Debug.ninfo_pprint ("    n_rhs_b: " ^ (Cprinter.string_of_formula_base n_rhs_b)) no_pos in
+          let _ = Debug.ninfo_pprint ("    rmf: " ^ (!CP.print_formula rmf)) no_pos in
+          let _ = Debug.ninfo_pprint ("    lmf: " ^ (!CP.print_formula lmf)) no_pos in
+          let b,_,_ = TP.imply lmf rmf "sa:check_hrels_imply" true None in
+          if b then
+            let r_res = {n_rhs_b with
+                CF.formula_base_heap = CF.drop_data_view_hrel_nodes_hf
+                    n_rhs_b.CF.formula_base_heap SAU.select_dnode
+                    SAU.select_vnode SAU.select_hrel all_matched_svl2  all_matched_svl2 matched_hps}
+            in
+            (*drop hps and matched svl in n_rhs2*)
+            let l_res = {lhs_b with
+                CF.formula_base_heap = CF.drop_data_view_hrel_nodes_hf
+                    lhs_b.CF.formula_base_heap SAU.select_dnode
+                    SAU.select_vnode SAU.select_hrel all_matched_svl2 all_matched_svl2 matched_hps;
+                CF.formula_base_pure = MCP.mix_of_pure
+                    (CP.filter_var_new
+                        (MCP.pure_of_mix lhs_b.CF.formula_base_pure) all_matched_svl2)}
+            in
+            if SAU.is_empty_base r_res then
+              Some (l_res, subst1)
+            else None
+          else
+            None
+      end
+  in r
+
+let strengthen_conseq_comb l_res subst1 f1 f2 pos =
+  (*combine res into f1*)
+  let nf1 =  CF.mkStar f1 (CF.Base l_res) CF.Flow_combine pos in
+  let nf2 = CF.subst subst1 f2 in
+  (*avoid clashing --> should refresh remain svl of r_res*)
+  (* let r_res1 = (CF.Base r_res) in *)
+  (* (\*elim duplicate hprel in r_res1 and n_rhs1*\) *)
+  (* let nr_hprel = CF.get_HRels_f n_f2 in *)
+  (* let nrest_hprel = CF.get_HRels_f r_res1 in *)
+  (* let diff3 = Gen.BList.intersect_eq check_hp_arg_eq nr_hprel nrest_hprel in *)
+  (* let r_res2,_ = CF.drop_hrel_f r_res1 (List.map (fun (hp,_) -> hp) diff3) in *)
+  (* let r = CF.mkStar n_f2 r_res2 CF.Flow_combine (CF.pos_of_formula n_f2) in *)
+  (nf1, nf2)
+
+(*
+a1: lhs1 --> rhs1
+a2: lhs2 --> rhs2
+rhs |- rhs1 * R
+===============
+replace a2 by
+lhs2 --> lhs1 * R
+*)
+
+let check_apply_strengthen_conseq prog cs1 cs2=
+  let _ = Debug.ninfo_pprint ("    cs2: " ^ (Cprinter.string_of_hprel cs2)) no_pos in
+  let qvars1, f1 = CF.split_quantifiers cs1.CF.hprel_rhs in
+  let qvars2, f2 = CF.split_quantifiers cs2.CF.hprel_rhs in
+  let n_cs2=
+  match f1,f2 with
+      | CF.Base rhs1_b, CF.Base rhs2_b ->
+          let nlhs2, nrhs2_b, ss2 = rename_var_clash cs2.CF.hprel_lhs rhs2_b in
+          let r = check_imply prog nrhs2_b rhs1_b in
+          begin
+            match r with
+              | Some (l_res, ss1) -> begin
+                    let l,r = strengthen_conseq_comb l_res ss1 nlhs2 cs1.CF.hprel_lhs no_pos in
+                    let new_cs = {cs2 with
+                        CF.predef_svl = CP.remove_dups_svl
+                            ((CP.subst_var_list ss1 cs1.CF.predef_svl)@
+                                (CP.subst_var_list ss2 cs2.CF.predef_svl));
+                        CF.unk_svl = CP.remove_dups_svl
+                            ((CP.subst_var_list ss1 cs1.CF.unk_svl)@
+                                (CP.subst_var_list ss2 cs2.CF.unk_svl));
+                        CF.unk_hps = Gen.BList.remove_dups_eq SAU.check_hp_arg_eq
+                            ((List.map (fun (hp,args) -> (hp,CP.subst_var_list ss1 args)) cs1.CF.unk_hps)@
+                                (List.map (fun (hp,args) -> (hp,CP.subst_var_list ss2 args)) cs2.CF.unk_hps));
+                        CF.hprel_lhs = l;
+                        CF.hprel_rhs = r;
+                    }
+                    in
+                    let _ = Debug.ninfo_pprint ("    new cs2: " ^ (Cprinter.string_of_hprel new_cs)) no_pos in
+                    Some new_cs
+                end
+              | None -> None
+          end
+      | _ -> report_error no_pos "sac.do_strengthen_conseq"
+  in
+  n_cs2
+
+let do_strengthen_conseq prog constrs new_cs=
   let rec check_constr_duplicate (lhs,rhs) constrs=
     match constrs with
       | [] -> false
@@ -817,61 +1008,47 @@ let do_strengthen_cons prog constrs new_cs=
             true
           else check_constr_duplicate (lhs,rhs) ss
   in
-  let find_imply_one cs1 cs2=
-    let _ = Debug.ninfo_pprint ("    rhs: " ^ (Cprinter.string_of_hprel cs2)) no_pos in
-    let qvars1, f1 = CF.split_quantifiers cs1.CF.hprel_rhs in
-    let qvars2, f2 = CF.split_quantifiers cs2.CF.hprel_rhs in
-    match f1,f2 with
-      | CF.Base rhs1, CF.Base rhs2 ->
-          let r = SAU.find_imply prog (List.map fst cs1.CF.unk_hps) (List.map fst cs2.CF.unk_hps) rhs1 cs1.CF.hprel_lhs cs2.CF.hprel_lhs rhs2 in
-          begin
-              match r with
-                | Some (l,r,lhs_ss, rhs_ss) ->
-                    (*check duplicate*)
-                    if check_constr_duplicate (l,r) constrs then []
-                    else
-                      begin
-                          let new_cs = {cs2 with
-                              CF.predef_svl = CP.remove_dups_svl
-                                  ((CP.subst_var_list lhs_ss cs1.CF.predef_svl)@
-                                          (CP.subst_var_list rhs_ss cs2.CF.predef_svl));
-                              CF.unk_svl = CP.remove_dups_svl
-                                  ((CP.subst_var_list lhs_ss cs1.CF.unk_svl)@
-                                          (CP.subst_var_list rhs_ss cs2.CF.unk_svl));
-                              CF.unk_hps = Gen.BList.remove_dups_eq SAU.check_hp_arg_eq
-                                  ((List.map (fun (hp,args) -> (hp,CP.subst_var_list lhs_ss args)) cs1.CF.unk_hps)@
-                                          (List.map (fun (hp,args) -> (hp,CP.subst_var_list rhs_ss args)) cs2.CF.unk_hps));
-                              CF.hprel_lhs = l;
-                              CF.hprel_rhs = r;
-                          }
-                          in
-                          let _ = Debug.ninfo_pprint ("    new cs: " ^ (Cprinter.string_of_hprel new_cs)) no_pos in
-                          [new_cs]
-                      end
-                | None -> []
-          end
-      | _ -> report_error no_pos "sa2.find_imply_one"
-  in
   (*new_cs: one x one*)
-  let rec helper_new_only don rest res=
+  let rec helper_new_only don rest=
     match rest with
-      | [] -> res
-      | cs::ss ->
-          let _ = Debug.ninfo_pprint ("    lhs: " ^ (Cprinter.string_of_hprel cs)) no_pos in
-          let r = List.concat (List.map (find_imply_one cs) (don@ss@res)) in
-          (helper_new_only (don@[cs]) ss (res@r))
+      | [] -> don
+      | cs1::rest ->
+          let _ = Debug.ninfo_pprint ("    cs1: " ^ (Cprinter.string_of_hprel cs1)) no_pos in
+          let new_rest = List.fold_left ( fun ls cs2 ->
+              let on_cs2 = check_apply_strengthen_conseq prog cs1 cs2 in
+              match on_cs2 with
+                | None -> ls@[cs2]
+                | Some n_cs2 -> (* if check_constr_duplicate (n_cs2.CF.hprel_lhs, n_cs2.CF.hprel_rhs) (constrs@new_cs) then ls@[cs2] else *) ls@[n_cs2]
+          ) [] rest in
+          helper_new_only (don@[cs1]) new_rest
   in
   (*new_cs x constr*)
   let rec helper_old_new rest res=
     match rest with
       | [] -> res
-      | cs::ss ->
-          let r = List.fold_left ( fun ls cs1 -> ls@(find_imply_one cs cs1)) res constrs in
+      | cs1::ss ->
+          let r = List.fold_left ( fun ls cs2 ->
+              let  on_cs2 = check_apply_strengthen_conseq prog cs1 cs2 in
+              match on_cs2 with
+                | None -> ls@[cs2]
+                | Some n_cs2 ->
+                      ls@[n_cs2]
+          ) res constrs in
            helper_old_new ss r
   in
-  let new_cs1 = if List.length new_cs < 1 then [] else helper_new_only [] new_cs [] in
+  let new_cs1 = if List.length new_cs < 1 then [] else helper_new_only [] new_cs in
   let new_cs2 = helper_old_new new_cs [] in
-  (new_cs1@new_cs2)
+  (new_cs1)
+
+(*
+a1: lhs1 --> rhs1
+a2: lhs2 --> rhs2
+lhs2 |- lhs11 * R
+===============
+replace a2 by
+rhs1 * R --> rhs2
+*)
+
 
 
 (*=============**************************================*)

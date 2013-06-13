@@ -123,6 +123,10 @@ let rec is_empty_f f=
                      is_empty_f base_f
     | _ -> report_error no_pos "SAU.is_empty_f: not handle yet"
 
+let is_empty_base fb=
+  (CF.is_empty_heap fb.CF.formula_base_heap) &&
+            (CP.isConstTrue (MCP.pure_of_mix fb.CF.formula_base_pure))
+
 let rec is_empty_heap_f f0=
   let rec helper f=
     match f with
@@ -1864,20 +1868,6 @@ let rec find_imply prog lunk_hps runk_hps lhs1 rhs1 lhs2 rhs2=
                       (CP.filter_var_new
                           (MCP.pure_of_mix rhs2.CF.formula_base_pure) all_matched_svl2)}
               in
-              (*avoid clashing --> should refresh remain svl of lhs2*)
-              (* let slv2 = CP.remove_dups_svl ((CF.fv lhs2)@ *)
-              (*     (CF.fv (CF.Base rhs2))) in *)
-              (* (\*do not rename HP names*\) *)
-              (* let hp_names = CP.remove_dups_svl ((CF.get_hp_rel_name_formula lhs2)@(CF.get_hp_rel_name_bformula rhs2)) in *)
-              (* (\*remove hp name*\) *)
-              (* let diff1 = Gen.BList.difference_eq CP.eq_spec_var slv2 hp_names in *)
-              (* let _ = Debug.info_pprint ("    diff1: " ^ (!CP.print_svl diff1)) no_pos in *)
-              (* (\*elim matched svl*\) *)
-              (* let diff2 = Gen.BList.difference_eq CP.eq_spec_var diff1 all_matched_svl2 in *)
-              (* let _ = Debug.info_pprint ("    diff2: " ^ (!CP.print_svl diff2)) no_pos in *)
-              (* (\*refresh it*\) *)
-              (* let fresh_diff2 = CP.fresh_spec_vars diff2 in *)
-              (* let ss2 = List.combine diff2 fresh_diff2 in *)
               let n_lhs2 = (* CF.subst ss2 *) lhs2 in
               (*end refresh*)
               (*combine l_res into lhs2*)

@@ -727,7 +727,7 @@ let process_shape_spost pre_hps post_hps=
   (* let _ = DD.info_pprint "process_shape_infer" no_pos in *)
   let hp_lst_assume = !sleek_hprel_assumes in
   let sel_hps, sel_post_hps = SAU.get_pre_post pre_hps post_hps hp_lst_assume in
-  let constrs1 = SAC.do_strengthen_cons !cprog [] hp_lst_assume in
+  let constrs1 = SAC.do_strengthen_conseq !cprog [] hp_lst_assume in
   let pr1 = pr_list_ln Cprinter.string_of_hprel_short in
   let _ =
   begin
