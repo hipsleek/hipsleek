@@ -6,19 +6,14 @@ open Exc.GTable
 (* Global variables      *)
 (* --------------------- *)
 
-(* TRUNG: use stack to store type and variables *)
-
-(* intermediate casting procs generated during the translation *)
-let tbl_cast_procs : (Globals.typ * Globals.typ, Iast.proc_decl) Hashtbl.t = Hashtbl.create 3
-
-(* intermediate negation procs generated during the translation *)
-let tbl_neg_procs : (Globals.typ, Iast.proc_decl) Hashtbl.t = Hashtbl.create 3
-
 (* hash table contains Globals.typ structures that are used to represent Cil.typ pointers *)
-let tbl_data_type : (Cil.typ, Globals.typ) Hashtbl.t = Hashtbl.create 3
+let tbl_pointer_typ : (Cil.typ, Globals.typ) Hashtbl.t = Hashtbl.create 3
 
 (* hash table contains Iast.data_decl structures that are used to represent pointer types *)
-let tbl_data_decl : (Globals.typ, Iast.data_decl) Hashtbl.t = Hashtbl.create 3
+let tbl_pointer_data_decl : (Globals.typ, Iast.data_decl) Hashtbl.t = Hashtbl.create 3
+
+(* hash table contains Iast.data_decl structures that are used to represent pointer types *)
+let tbl_struct_data_decl : (Globals.typ, Iast.data_decl) Hashtbl.t = Hashtbl.create 1
 
 (* address of global vars *)
 let gl_addressof_data : (Cil.lval, Iast.exp) Hashtbl.t = Hashtbl.create 3
@@ -32,8 +27,8 @@ let supplement_exp : Iast.exp list ref = ref []
 
 (* reset all global vars for the next use *)
 let reset_global_vars () =
-  Hashtbl.clear tbl_data_type;
-  Hashtbl.clear tbl_data_decl
+  Hashtbl.clear tbl_pointer_typ;
+  Hashtbl.clear tbl_pointer_data_decl
 
 (* ---------------------------------------- *)
 (* string conversion functions for CIL      *)
@@ -340,45 +335,40 @@ let travel_file (file: Cil.file) : unit =
 (* translation functions from Cil -> Iast   *)
 (* ---------------------------------------- *)
 
-(* let create_pointer_casting_proc (input_typ: Globals.typ) (output_typ: Globals.typ) (loc: Globals.loc)             *)
-(*                                 : Iast.proc_decl option =                                                         *)
-(*   match input_typ, output_typ with                                                                                *)
-(*   | Globals.Named input_typ_name, Globals.Named output_typ_name -> (                                              *)
-(*       (* Further checking can consider 2 string input_typ_name *)                                                 *)
-(*       (* and output_typ_name end with "__star"                 *)                                                 *)
-(*       try                                                                                                         *)
-(*         Some (Hashtbl.find tbl_cast_procs (input_typ, output_typ))                                                *)
-(*       with Not_found -> (                                                                                         *)
-(*         let proc_name = "cast_pointer_from_" ^ input_typ_name ^ "_to_" ^ output_typ_name in                       *)
-(*         let output_typ_param = (                                                                                  *)
-(*           let data_decl = (                                                                                       *)
-(*             try Hashtbl.find tbl_data_decl output_typ                                                             *)
-(*             with Not_found -> report_error_msg "Error: Unknown ouput_typ"                                         *)
-(*           ) in                                                                                                    *)
-(*           match data_decl.Iast.data_fields with                                                                   *)
-(*           | []   -> report_error_msg "Error: Invalid data_decl fields"                                            *)
-(*           | [hd] -> "<_>"                                                                                         *)
-(*           | hd::tl -> "<" ^ (List.fold_left (fun s _ -> s ^ ", _") "_" tl) ^ ">"                                  *)
-(*         ) in                                                                                                      *)
-(*         let cast_proc = (                                                                                         *)
-(*           output_typ_name ^ " " ^ proc_name ^ " (" ^ input_typ_name ^ " param)\n" ^                               *)
-(*           "  case { \n" ^                                                                                         *)
-(*           "    param =  null -> requires true ensures res = null; \n" ^                                           *)
-(*           "    param != null -> requires true ensures res::" ^ output_typ_name ^ output_typ_param ^ "; \n" ^      *)
-(*           (* "    param != null -> requires true ensures res::" ^ output_typ_name ^ "<p> * p::node<_,_>; \n" ^ *) *)
-(*           "  }\n"                                                                                                 *)
-(*         ) in                                                                                                      *)
-(*         let modified_offset = {Parser.line_num = loc.Globals.start_pos.Lexing.pos_lnum;                           *)
-(*                                Parser.line_start = loc.Globals.start_pos.Lexing.pos_lnum;                         *)
-(*                                Parser.byte_num = loc.Globals.start_pos.Lexing.pos_cnum; } in                      *)
-(*         let proc_decl = Parser.parse_aux_proc "inter_cast_proc" modified_offset cast_proc in                      *)
-(*         (* update *)                                                                                              *)
-(*         Hashtbl.add tbl_cast_procs (input_typ, output_typ) proc_decl;                                             *)
-(*         (* return *)                                                                                              *)
-(*         Some proc_decl                                                                                            *)
-(*       )                                                                                                           *)
-(*     )                                                                                                             *)
-(*   | _, _ -> None                                                                                                  *)
+let create_pointer_casting_proc (pointer_typ: Globals.typ) : Iast.proc_decl option =
+  match pointer_typ with
+  | Globals.Named "void__star" -> None
+  | Globals.Named typ_name -> (
+      let re = Str.regexp "\(__star\)" in
+      try (
+        let _ = Str.search_forward re typ_name 0 in
+        let proc_name = "cast_void_pointer_to_" ^ typ_name in
+        let data_name = Str.global_replace re "^" typ_name in
+        let param = (
+          let base_data = Str.global_replace re "" typ_name in
+          let data_decl = (
+            try Hashtbl.find tbl_struct_data_decl (Globals.Named base_data)
+            with Not_found -> report_error_msg ("Error: Unknown data type: " ^ base_data)
+          ) in
+          match data_decl.Iast.data_fields with
+          | []   -> report_error_msg "Error: Invalid data_decl fields"
+          | [hd] -> "<_>"
+          | hd::tl -> "<" ^ (List.fold_left (fun s _ -> s ^ ",_") "_" tl) ^ ">"
+        ) in
+        let cast_proc = (
+          typ_name ^ " " ^ proc_name ^ " (void__star p)\n" ^
+          "  case { \n" ^
+          "    p =  null -> requires true ensures res = null; \n" ^
+          "    p != null -> requires true ensures res::" ^ data_name ^ param ^ "; \n" ^
+          "  }\n"
+        ) in
+        let proc_decl = Parser.parse_aux_proc "inter_pointer_casting_proc" cast_proc in
+        (* return *)
+        Some proc_decl
+      )
+      with Not_found -> None
+    )
+  | _ -> None
 
 let create_negation_proc (input_typ: Globals.typ) : Iast.proc_decl =
   match input_typ with
@@ -388,13 +378,10 @@ let create_negation_proc (input_typ: Globals.typ) : Iast.proc_decl =
         "  case { param =  null -> ensures res;\n" ^
         "         param != null -> ensures !res; }\n"
       ) in
-      let modified_offset = {Parser.line_num = 0;
-                             Parser.line_start = 0;
-                             Parser.byte_num = 0} in
-      let proc_decl = Parser.parse_aux_proc "inter_neg_proc" modified_offset neg_proc in
+      let proc_decl = Parser.parse_aux_proc "inter_negation_proc" neg_proc in
       proc_decl
     )
-  | _ -> report_error_msg "Error: Invalid"
+  | _ -> report_error_msg "Error: Invalid type"
 
 let translate_location (loc: Cil.location) : Globals.loc =
   let cilsp = loc.Cil.start_pos in
@@ -425,7 +412,7 @@ let rec translate_typ (t: Cil.typ) : Globals.typ =
         let newt = (
           (* find if this pointer was handled before or not *)
           try 
-            Hashtbl.find tbl_data_type ty
+            Hashtbl.find tbl_pointer_typ ty
           with Not_found -> (
             match ty with
             | Cil.TNamed (tname, _) -> (
@@ -434,14 +421,14 @@ let rec translate_typ (t: Cil.typ) : Globals.typ =
                 let fname = "pdata" in
                 let data_name = tname.Cil.tname ^ "__star" in
                 let data_type = Globals.Named data_name in
-                Hashtbl.add tbl_data_type ty data_type;
+                Hashtbl.add tbl_pointer_typ ty data_type;
                 let data_decl = {Iast.data_name = data_name;
                                  Iast.data_fields = [((ftype, fname), no_pos, false, Iast.F_NO_ANN)];
                                  Iast.data_parent_name = "Object";
                                  Iast.data_invs = [];
                                  Iast.data_is_template = false;
                                  Iast.data_methods = [];} in
-                Hashtbl.add tbl_data_decl data_type data_decl;
+                Hashtbl.add tbl_pointer_data_decl data_type data_decl;
                 data_type
               )
             | _ -> (
@@ -450,14 +437,14 @@ let rec translate_typ (t: Cil.typ) : Globals.typ =
                 let fname = "pdata" in
                 let data_name = (Globals.string_of_typ ftype) ^ "__star" in
                 let data_type = Globals.Named data_name in
-                Hashtbl.add tbl_data_type ty data_type;
+                Hashtbl.add tbl_pointer_typ ty data_type;
                 let data_decl = {Iast.data_name = data_name;
                                  Iast.data_fields = [((ftype, fname), no_pos, false, Iast.F_NO_ANN)];
                                  Iast.data_parent_name = "Object";
                                  Iast.data_invs = [];
                                  Iast.data_is_template = false;
                                  Iast.data_methods = [];} in
-                Hashtbl.add tbl_data_decl data_type data_decl;
+                Hashtbl.add tbl_pointer_data_decl data_type data_decl;
                 (* return new type*)
                 data_type
               )
@@ -546,6 +533,7 @@ let translate_compinfo (comp: Cil.compinfo) (lopt: Cil.location option)
                   Iast.data_invs = [];
                   Iast.data_is_template = false;
                   Iast.data_methods = [];} in
+  Hashtbl.add tbl_struct_data_decl (Globals.Named name) datadecl;
   datadecl
 
 
@@ -729,15 +717,16 @@ and translate_exp (e: Cil.exp) : Iast.exp =
       | _ -> (
           let input_typ = translate_typ (typ_of_cil_exp exp) in
           match input_typ, output_typ with
-          | Globals.Named "void__star", Globals.Named output_typ_name ->
-              let casting_proc_name = "cast_general_pointer_to_" ^ output_typ_name in
+          | Globals.Named "void__star", Globals.Named output_typ_name -> (
+              let cast_proc_name = "cast_void_pointer_to_" ^ output_typ_name in
               Iast.CallNRecv {
-                Iast.exp_call_nrecv_method = casting_proc_name;
+                Iast.exp_call_nrecv_method = cast_proc_name;
                 Iast.exp_call_nrecv_lock = None;
                 Iast.exp_call_nrecv_arguments = [input_exp];
                 Iast.exp_call_nrecv_path_id = None;
                 Iast.exp_call_nrecv_pos = pos
               }
+            )
           | _ -> input_exp
         )
     )
@@ -753,7 +742,7 @@ and translate_exp (e: Cil.exp) : Iast.exp =
           let pos = translate_location l in
           let (newty, tyname) = (
             try 
-              let t = Hashtbl.find tbl_data_type ty in
+              let t = Hashtbl.find tbl_pointer_typ ty in
               let n = match t with
                 | Globals.Named s -> s
                 | _ -> report_error_msg "Error!!! translate_exp: invalid type!" in
@@ -764,14 +753,14 @@ and translate_exp (e: Cil.exp) : Iast.exp =
               let fname = "pdata" in
               let data_name = (Globals.string_of_typ ftype) ^ "__star" in
               let data_type = Globals.Named data_name in
-              Hashtbl.add tbl_data_type ty data_type;
+              Hashtbl.add tbl_pointer_typ ty data_type;
               let data_decl = {Iast.data_name = data_name;
                                Iast.data_fields = [((ftype, fname), no_pos, false, Iast.F_NO_ANN)];
                                Iast.data_parent_name = "Object";
                                Iast.data_invs = [];
                                Iast.data_is_template = false;
                                Iast.data_methods = [];} in
-              Hashtbl.add tbl_data_decl data_type data_decl;
+              Hashtbl.add tbl_pointer_data_decl data_type data_decl;
               (data_type, data_name)
             )
           ) in
@@ -1238,17 +1227,22 @@ let translate_file (file: Cil.file) : Iast.prog_decl =
                     Iast.data_is_template = false;
                     Iast.data_methods = []} in
   (* update some global settings *)
-  Hashtbl.iter (fun _ data -> data_decls := !data_decls @ [data]) tbl_data_decl;
+  Hashtbl.iter (fun _ data -> data_decls := !data_decls @ [data]) tbl_pointer_data_decl;
   Hashtbl.iter (fun _ var ->
     match var with
     | Iast.VarDecl vdecl -> global_var_decls := !global_var_decls @ [vdecl]
     | _ -> report_error_msg "Error!!! v has to be in form of (Iast.VarDecl _)."
   ) gl_addressof_data;
-  Hashtbl.iter (fun _ proc -> proc_decls := !proc_decls @ [proc]) tbl_cast_procs;
+  (* create negation & casting procs for data structure *)
   Hashtbl.iter (fun typ _ ->
     let neg_proc = create_negation_proc typ in
-    proc_decls := !proc_decls @ [neg_proc]
-  ) tbl_data_decl;
+    let cast_procs = (
+      match create_pointer_casting_proc typ with
+      | None -> []
+      | Some proc -> [proc]
+    ) in
+    proc_decls := !proc_decls @ [neg_proc] @ cast_procs
+  ) tbl_pointer_data_decl;
   (* return *)
   let newprog : Iast.prog_decl = {
     Iast.prog_data_decls = obj_def :: string_def :: !data_decls;

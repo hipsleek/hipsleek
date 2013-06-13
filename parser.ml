@@ -2851,14 +2851,9 @@ let parse_cpfile n s = SHGram.parse cp_file (PreCast.Loc.mk n) s
 (*****************************************************************)
 (******** The function below will be used by CIL parser **********)
 
-let parse_aux_proc (fname: string) (moffset: file_offset) (proc: string) =
-  (* store the current modifier_offset and assign new value to it *)
-  let save = !modifier_offset in
-  modifier_offset := moffset;
+let parse_aux_proc (fname: string) (proc: string) =
   (* parse *)
   let res = SHGram.parse_string hproc (PreCast.Loc.mk fname) proc in
-  (* restore the old value of modifier_offset *)
-  modifier_offset := save;
   (* return *)
   res
 
