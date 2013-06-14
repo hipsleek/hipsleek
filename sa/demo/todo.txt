@@ -56,3 +56,60 @@ Expecting:
    HP_3(nn,p) --> H1(nn,c)
    residue: HP_2(pp,p) * c::node<_,p,nn>@M
 
+
+=====================================================================
+# tree.slk
+
+/* 
+
+Why got two definitions for H?
+Got: 
+[ H(x) ::= x::node<l,r>@M& XPURE(HP_2(r)) &  XPURE(HP_1(l)),
+ H(l_48) ::= l_48::node<l,r>@M * (H(l)) * (H(r))&true]
+
+
+Expecting: [ H(x_119) ::= 
+ emp&x_119=null
+ or (H(r_63)) * (H(l_62)) * x_119::node<l_62,r_63>@M&true ]
+
+*/
+
+
+=====================================================================
+# dll-append2.slk
+
+
+ /* error durign shape inference
+ 
+ !!! >>>>>> pre-predicates: step pre-6: combine<<<<<<Fatal error: exception Failure("tl")
+
+*/
+
+similarly obtained for dll-append and dll_append2 and simpl-tree-trav
+
+
+
+
+=====================================================================
+# tll.ss
+
+Why got two definitions for G?
+
+got: 
+[ H(x_980,r_981) ::= x_980::node<l,r,n>@M * HP_849(r,r_981)
+
+
+ G(r,rr,l_47') ::=  H(l,l_47') & r!=null
+ or HP_849(r,l_47') & r!=null
+ 
+ G(x_984,r_985,res_986) ::= x_984::node<l,r,r_987> * HP_988(l,r,r_987,r_985,res_986)
+
+
+ HP_849(r2,r_983) ::=  emp&r2=null
+ or r2::node<l,r,n>@M * HP_849(r,r_983) & r!=null
+
+
+
+ HP_988(l,r,r_987,r_995,res_986) ::= emp & r=null
+ or l::node<l1,r2,r_991>@M * HP_988(l1,r2,r_991,l_879,res_986) & r!=null ]
+
