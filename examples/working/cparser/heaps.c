@@ -86,6 +86,7 @@ struct node* insert(struct node* t, int v)
 }
 
 
+
 /* function to delete a leaf */
 int deleteoneel(struct node* t)
 /*@
@@ -104,7 +105,7 @@ int deleteoneel(struct node* t)
   else 
   {
     int tmp;
-/*
+
     int* tnleft = malloc(sizeof(int));
     int* tnright = malloc(sizeof(int));
     struct node* tleft = malloc(sizeof(struct node*));
@@ -116,7 +117,7 @@ int deleteoneel(struct node* t)
     tright = t->right;
     
     tmp = deleteone(tnleft, tnright, tleft, tright);
-    */
+
     return tmp;
   }
 }
@@ -220,7 +221,7 @@ int deletemax(struct node* t)
     int* tval = malloc(sizeof(int));
     int* tnleft = malloc(sizeof(int));
     int* tnright = malloc(sizeof(int));
-/*
+
     struct node* tleft = malloc(sizeof(struct node));
     struct node* tright = malloc(sizeof(struct node));
     
@@ -233,7 +234,7 @@ int deletemax(struct node* t)
     v = deleteone(tnleft, tnright, tleft, tright);
     tmp = *tval;
     ripple(tval, v, *tnleft, *tnright, tleft, tright);
-    */
+
     return tmp;
   }
   

@@ -2628,7 +2628,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
               else
                 (let parg_types = List.map (fun p -> trans_type prog p.I.param_type p.I.param_loc) pdef.I.proc_args in
                 if List.exists2 (fun t1 t2 -> not (sub_type t1 t2)) cts parg_types then
-                  Err.report_error{ Err.error_loc = pos;Err.error_text = "argument types do not match";}
+                  Err.report_error{ Err.error_loc = pos;Err.error_text = "argument types do not match 1";}
                 else
                   (let ret_ct = trans_type prog pdef.I.proc_return pdef.I.proc_loc in
                   let positions = List.map I.get_exp_pos args in
@@ -2703,7 +2703,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
                     else
                       (let parg_types = List.map (fun p -> trans_type prog p.I.param_type p.I.param_loc) pdef.I.proc_args in
                       if List.exists2 (fun t1 t2 -> not (sub_type t1 t2)) cts parg_types then
-                        Err.report_error { Err.error_loc = pos; Err.error_text = "argument types do not match"; }
+                        Err.report_error { Err.error_loc = pos; Err.error_text = "argument types do not match 2"; }
                       else if Inliner.is_inlined mn then (let inlined_exp = Inliner.inline prog pdef ie in helper inlined_exp)
                       else 
                         (let ret_ct  = Globals.thread_typ in (*return a thread _type*) 
@@ -2788,7 +2788,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
               else
                 (let parg_types = List.map (fun p -> trans_type prog p.I.param_type p.I.param_loc) pdef.I.proc_args in
                 if List.exists2 (fun t1 t2 -> not (sub_type t1 t2)) cts parg_types then
-                  Err.report_error { Err.error_loc = pos; Err.error_text = "argument types do not match"; }
+                  Err.report_error { Err.error_loc = pos; Err.error_text = "argument types do not match 3"; }
                 else if Inliner.is_inlined mn then (let inlined_exp = Inliner.inline prog pdef ie in helper inlined_exp)
                 else 
                   (let ret_ct = trans_type prog pdef.I.proc_return pdef.I.proc_loc in
@@ -3023,7 +3023,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
               let (cargs, cts) = List.split tmp in
               let parg_types = List.map (fun ft -> trans_type prog ft pos) field_types in
               if List.exists2 (fun t1 t2 -> not (sub_type t1 t2)) cts parg_types then
-                Err.report_error { Err.error_loc = pos; Err.error_text = "argument types do not match";}
+                Err.report_error { Err.error_loc = pos; Err.error_text = "argument types do not match 4";}
               else ( let positions = Gen.repeat pos nargs in
               let (local_vars, init_seq, arg_vars) = trans_args (Gen.combine3 cargs cts positions) in
               let new_e = C.New {

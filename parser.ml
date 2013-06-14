@@ -645,23 +645,56 @@ let get_heap_id_info (cid: ident * primed) (heap_id : (ident * int * int * Camlp
   )
   else if ((ref_level = 0) && (deref_level > 0)) then (
     (* dereference case *)
-    let s = ref base_heap_id in
-    let p = (fresh_name (), Unprimed) in
-    let p1 = ref p in
-    let p2 = ref (F.P.Var (("", Unprimed), no_pos)) in
-    let heaps = ref [] in
-    for i = 2 to deref_level do
-      p2 := F.P.Var (!p1, (get_pos 1));
-      p1 := (fresh_name (), Unprimed);
-      s := !s ^ "__star";
-      let h = F.mkHeapNode !p1 !s false (F.ConstAnn(Mutable)) false false false None [!p2] [None] None (get_pos_camlp4 l 1) in
-      heaps := !heaps @ [h];
-    done;
-    s := !s ^ "__star";
-    let e = F.P.Var (!p1, (get_pos 1)) in
-    let h =  F.mkHeapNode cid !s false (F.ConstAnn(Mutable)) false false false None [e] [None] None (get_pos_camlp4 l 1) in
-    heaps := !heaps @ [h];
-    (p, base_heap_id, !heaps)
+    match base_heap_id with
+    | "int"
+    | "bool"
+    | "float"
+    | "void" -> (
+        (* dereference to a basic type *)
+        if (deref_level = 1) then (
+          (cid, base_heap_id ^ "__star", [])
+        ) 
+        else (
+          let base_heap_id = base_heap_id ^ "__star" in
+          let s = ref base_heap_id in
+          let p = (fresh_name (), Unprimed) in
+          let p1 = ref p in
+          let p2 = ref (F.P.Var (("", Unprimed), no_pos)) in
+          let heaps = ref [] in
+          for i = 3 to deref_level do
+            p2 := F.P.Var (!p1, (get_pos 1));
+            p1 := (fresh_name (), Unprimed);
+            s := !s ^ "__star";
+            let h = F.mkHeapNode !p1 !s false (F.ConstAnn(Mutable)) false false false None [!p2] [None] None (get_pos_camlp4 l 1) in
+            heaps := !heaps @ [h];
+          done;
+          s := !s ^ "__star";
+          let e = F.P.Var (!p1, (get_pos 1)) in
+          let h =  F.mkHeapNode cid !s false (F.ConstAnn(Mutable)) false false false None [e] [None] None (get_pos_camlp4 l 1) in
+          heaps := !heaps @ [h];
+          (p, base_heap_id, !heaps)
+        )
+      )
+    | _ -> (
+        (* dereference to a data structure *)
+        let s = ref base_heap_id in
+        let p = (fresh_name (), Unprimed) in
+        let p1 = ref p in
+        let p2 = ref (F.P.Var (("", Unprimed), no_pos)) in
+        let heaps = ref [] in
+        for i = 2 to deref_level do
+          p2 := F.P.Var (!p1, (get_pos 1));
+          p1 := (fresh_name (), Unprimed);
+          s := !s ^ "__star";
+          let h = F.mkHeapNode !p1 !s false (F.ConstAnn(Mutable)) false false false None [!p2] [None] None (get_pos_camlp4 l 1) in
+          heaps := !heaps @ [h];
+        done;
+        s := !s ^ "__star";
+        let e = F.P.Var (!p1, (get_pos 1)) in
+        let h =  F.mkHeapNode cid !s false (F.ConstAnn(Mutable)) false false false None [e] [None] None (get_pos_camlp4 l 1) in
+        heaps := !heaps @ [h];
+        (p, base_heap_id, !heaps)
+      )
   )
   else
     (cid, base_heap_id, [])

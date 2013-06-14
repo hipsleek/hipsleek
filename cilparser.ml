@@ -347,7 +347,6 @@ let create_pointer_casting_proc (pointer_typ: Globals.typ) : Iast.proc_decl opti
       try (
         let _ = Str.search_forward re typ_name 0 in
         let proc_name = "cast_void_pointer_to_" ^ typ_name in
-        let _ = print_endline ("== proc_name = " ^ proc_name) in
         let data_name = Str.global_replace re "^" typ_name in
         let param = (
           let base_data = Str.global_replace re "" typ_name in
@@ -499,7 +498,8 @@ let translate_var_decl (vinfo: Cil.varinfo) : Iast.exp =
     | Globals.Int
     | Globals.Bool
     | Globals.Float
-    | Globals.Array _ -> (
+    | Globals.Array _
+    | Globals.Named "void__star" -> (
         Iast.VarDecl { Iast.exp_var_decl_type = ty;
                        Iast.exp_var_decl_decls = [(name, None, pos)];
                        Iast.exp_var_decl_pos = pos }
@@ -513,7 +513,6 @@ let translate_var_decl (vinfo: Cil.varinfo) : Iast.exp =
             with Not_found -> report_error_msg ("Unfound typ: " ^ (Globals.string_of_typ ty))
           )
         ) in
-        let _ = print_endline ("== data_decl = " ^ (Iprinter.string_of_data_decl data_decl)) in
         (* create and initiate a new object *)
         let init_params = List.fold_left (
           fun params field ->
@@ -526,7 +525,6 @@ let translate_var_decl (vinfo: Cil.varinfo) : Iast.exp =
                                                Iast.exp_bool_lit_pos = no_pos }
               | Globals.Float -> Iast.FloatLit { Iast.exp_float_lit_val = 0.;
                                                  Iast.exp_float_lit_pos = no_pos }
-              | Globals.Void -> Iast.Null no_pos
               | Globals.Named _ -> Iast.Null no_pos
               | _ -> report_error_msg ("Unexpected typ 1: " ^ (Globals.string_of_typ ftyp))
             ) in
@@ -1076,7 +1074,6 @@ let rec translate_init (init: Cil.init) (lopt: Cil.location option)
                                                    Iast.exp_bool_lit_pos = pos }
                   | Globals.Float -> Iast.FloatLit { Iast.exp_float_lit_val = 0.;
                                                      Iast.exp_float_lit_pos = pos }
-                  | Globals.Void -> Iast.Null no_pos
                   | Globals.Named _ -> Iast.Null pos
                   | _ -> report_error_msg ("Unexpected typ 3: " ^ (Globals.string_of_typ ftyp))
                 )

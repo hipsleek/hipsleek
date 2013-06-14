@@ -4,6 +4,7 @@ struct pair {
 };
 
 struct pair q;
+int a;
 
 int global_struct()
 /*@
@@ -11,6 +12,7 @@ int global_struct()
   ensures  q'::pair<1,3> & res=1 & q'=q;
 */
 {
+  a = 3;
   q.x = 1;
   q.y = 3;
   return q.x;
