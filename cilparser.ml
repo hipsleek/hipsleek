@@ -503,7 +503,7 @@ let translate_var_decl (vinfo: Cil.varinfo) : Iast.exp =
           )
         ) in
         (* create and initiate a new object *)
-        let init_param = List.fold_left (
+        let init_params = List.fold_left (
           fun params field ->
             let ((ftyp, _), _, _, _) = field in
             let exp = (
@@ -520,7 +520,7 @@ let translate_var_decl (vinfo: Cil.varinfo) : Iast.exp =
             params @ [exp]
         ) [] data_decl.Iast.data_fields in
         let init_data = Iast.New { Iast.exp_new_class_name = typ_name;
-                                   Iast.exp_new_arguments = init_param;
+                                   Iast.exp_new_arguments = init_params;
                                    Iast.exp_new_pos = no_pos } in
         Iast.VarDecl { Iast.exp_var_decl_type = ty;
                        Iast.exp_var_decl_decls = [(name, Some init_data, pos)];
@@ -1032,33 +1032,63 @@ and translate_block (blk: Cil.block): Iast.exp =
     )
 
 
-let translate_init (vname: ident) (init: Cil.init) (lopt: Cil.location option)
-                   : (ident * Iast.exp option * loc) list =
-  let pos = match lopt with None -> no_pos | Some l -> translate_location l in
-  (* let _ = print_endline ("== init loc start lnum = " ^ (string_of_int pos.Globals.start_pos.Lexing.pos_lnum)) in *)
-  (* let _ = print_endline ("== init loc start cnum = " ^ (string_of_int pos.Globals.start_pos.Lexing.pos_cnum)) in *)
-  (* let _ = print_endline ("== init loc start bol = " ^ (string_of_int pos.Globals.start_pos.Lexing.pos_bol)) in   *)
+let rec translate_init (init: Cil.init) (lopt: Cil.location option)
+                   : Iast.exp =
+  let pos = match lopt with
+    | None -> no_pos
+    | Some l -> translate_location l in
   match init with
-  | Cil.SingleInit exp ->
-      let e = translate_exp exp in
-      [(vname, Some e, pos)]
-  | Cil.CompoundInit (_, offset_init_list) -> (
-      List.map (fun x ->
-        let off, ini = x in
-        let name = match off with
-          | Cil.NoOffset -> report_error_msg "TRUNG TODO: translate_init: handle Cil.NoOffset later!"
-          | Cil.Field ((f, _), o, _) -> (
-              match o with
-              | Cil.NoOffset -> f.Cil.fname
-              | Cil.Field _ -> report_error_msg "TRUNG TODO: translate_init: handle Cil.Field later!"
-              | Cil.Index _ -> report_error_msg "TRUNG TODO: translate_init: handle Cil.Index later! 1"
+  | Cil.SingleInit exp -> translate_exp exp
+  | Cil.CompoundInit (typ, offset_init_list) -> (
+      let typ1 = translate_typ typ in
+      match typ1 with
+      (* translate data structure *)
+      | Globals.Named typ1_name ->
+          (* collect init fields and store in a hashtbl *)
+          let tbl_fields_init = Hashtbl.create 1 in
+          List.iter (fun x ->
+            let off, init2 = x in
+            let fname = match off with
+              | Cil.NoOffset -> report_error_msg "translate_init: handle Cil.NoOffset later!"
+              | Cil.Field ((f, _), Cil.NoOffset, _) -> f.Cil.fname
+              | Cil.Field ((f, _), (Cil.Field _), _) -> report_error_msg "translate_init: handle Cil.Field later!"
+              | Cil.Field ((f, _), (Cil.Index _), _) -> report_error_msg "translate_init: handle Cil.Index later!"
+              | Cil.Index _ -> report_error_msg "translate_init: handle Cil.Index later!" in
+            let fexp = translate_init init2 lopt in
+            Hashtbl.add tbl_fields_init fname fexp;
+          ) offset_init_list;
+          (* init all fields of *)
+          let data_decl = (
+            try Hashtbl.find tbl_struct_data_decl typ1
+            with Not_found -> (
+              try Hashtbl.find tbl_pointer_data_decl typ1
+              with Not_found -> report_error_msg ("translate_init: couldn't find typ - " ^ typ1_name)
             )
-          | Cil.Index _ -> report_error_msg "TRUNG TODO:  translate_init: handle Cil.Index later! 2" in
-        let exp = match ini with
-          | Cil.SingleInit e -> translate_exp e
-          | Cil.CompoundInit _ -> report_error_msg "TRUNG TODO:  translate_init: handle Cil.CompoundInit later!" in
-        (name, Some exp, pos)
-      ) offset_init_list
+          ) in
+          let init_params = List.fold_left (
+            fun params field ->
+              let ((ftyp, fid), _, _, _) = field in
+              let finit = (
+                try Hashtbl.find tbl_fields_init fid
+                with Not_found -> (
+                  match ftyp with
+                  | Globals.Int -> Iast.IntLit { Iast.exp_int_lit_val = 0;
+                                                 Iast.exp_int_lit_pos = pos }
+                  | Globals.Bool -> Iast.BoolLit { Iast.exp_bool_lit_val = true;
+                                                   Iast.exp_bool_lit_pos = pos }
+                  | Globals.Float -> Iast.FloatLit { Iast.exp_float_lit_val = 0.;
+                                                     Iast.exp_float_lit_pos = pos }
+                  | Globals.Named _ -> Iast.Null pos
+                  | _ -> report_error_msg ("Unexpected typ: " ^ (Globals.string_of_typ ftyp))
+                )
+              ) in
+              params @ [finit]
+          ) [] data_decl.Iast.data_fields in
+          let init_exp = Iast.New { Iast.exp_new_class_name = typ1_name;
+                                    Iast.exp_new_arguments = init_params;
+                                    Iast.exp_new_pos = pos } in
+          init_exp
+      | _ -> report_error_msg ("translate_init: handle other type later - " ^ (Globals.string_of_typ typ1))
     )
 
 
@@ -1067,9 +1097,13 @@ let translate_global_var (vinfo: Cil.varinfo) (iinfo: Cil.initinfo) (lopt: Cil.l
   let pos = match lopt with None -> no_pos | Some l -> translate_location l in
   let ty = translate_typ vinfo.Cil.vtype in
   let name = vinfo.Cil.vname in
-  let decl = match iinfo.Cil.init with
+  let decl = (
+    match iinfo.Cil.init with
     | None -> [(name, None, pos)]
-    | Some init -> translate_init name init lopt in
+    | Some init ->
+        let init_exp = translate_init init lopt in
+        [(name, Some init_exp, pos)]
+  ) in
   let vardecl = {Iast.exp_var_decl_type = ty;
                  Iast.exp_var_decl_decls = decl;
                  Iast.exp_var_decl_pos = pos} in

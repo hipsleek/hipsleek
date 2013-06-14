@@ -21,15 +21,6 @@ void* malloc(int size) __attribute__ ((noreturn))
   }
 */;
 
-/*
-node__star cast_general_pointer_to_node__star(void__star p)
-  case {
-    p = null  -> ensures res = null;
-    p != null -> ensures res::node__star<q> * q::node<_,_>;
-  }
-*/
-
-
 /* global vars */
 int n;
 struct node* p;

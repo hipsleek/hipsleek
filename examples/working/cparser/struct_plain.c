@@ -7,8 +7,8 @@ struct pair q;
 
 int global_struct()
 /*@
-  requires true
-  ensures  res=1;
+  requires q::pair<_,_>
+  ensures  q'::pair<1,3> & res=1 & q'=q;
 */
 {
   q.x = 1;
