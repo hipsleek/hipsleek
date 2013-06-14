@@ -12,7 +12,9 @@ HeapPred H1(node a, node b).
 HeapPred G1(node a, node b).
 
 node paper_fix (node c, node p)
-  infer[H1,G1] requires H1(c,p) ensures G1(c,p);
+  //requires c::ll<> ensures  c::dll<p>;
+
+  infer[H1,G1] requires H1(c,p)  ensures G1(c,p);
 {
 	if (c!=null) 
 	{
@@ -24,6 +26,26 @@ node paper_fix (node c, node p)
 	}
 	return c;
 }
+/*
+[ 
+
+ H1(c,p)&c!=null --> c::node<val_19_809,prev_19_810,next_19_811>@M * 
+  (HP_812(prev_19_810,p)) * (HP_813(next_19_811,p))&true,
+ (HP_812(prev_19_810,p)) * (HP_813(next_19_811,p)) * 
+  c'::node<val_19_809,p,next_19_811>@M&true --> H1(next_19_811,c')&true,
+ G1(next_19_811,c)&c!=null --> G1(c,p_826)&true,
+ H1(c,p)&c=null --> G1(c,p)&true]
+
+==========================
+
+[ H1(c_869,p_870) ::= 
+ emp&c_869=null
+ or c_869::node<val_19_809,prev_19_810,next_19_811>@M&
+     XPURE(HP_812(prev_19_810,p_870)) &  XPURE(HP_813(next_19_811,p_870))
+ ,
+ G1(c_873,p_872) ::= G1(next_19_811,c_871)&c_871!=null]
+
+*/
 
   /*
 void remove (node c)
