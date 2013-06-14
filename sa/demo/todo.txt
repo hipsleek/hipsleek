@@ -37,3 +37,22 @@ How come hip did not invoke shape_infer correctly?
  or t::node<Anon_11,t_94>@M * (HP_93(t_94,y_92))&true
  ]
 
+===================================================================
+# sll-dll-bug2.slk
+
+infer [H1,HP_2,HP_3,G1]
+ HP_2(pp,p) * HP_3(nn,p) * c::node<_,p,nn>@M 
+  |-  H1(nn,c).
+
+print residue.
+/*
+GOT:
+====
+ <1>emp&true&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [(HP_2(pp,p)) * (HP_3(nn,p)) * c::node<Anon_11,p,nn>@M&
+                   true --> H1(nn,c)&true]
+Expecting:
+==========
+   HP_3(nn,p) --> H1(nn,c)
+   residue: HP_2(pp,p) * c::node<_,p,nn>@M
+
