@@ -6,7 +6,7 @@ data node{
 
 
 ll<> == self = null  or self::node<_, _ , q> * q::ll<>;
-dll<p> == self = null or self::node<_, p , q> * q::dll<self>;   // p stores the prev node
+//dll<p> == self = null or self::node<_, p , q> * q::dll<self>;   // p stores the prev node
 
 HeapPred H1(node a, node b).
 HeapPred G1(node a, node b).
@@ -25,43 +25,39 @@ void paper_fix (node c, node p)
 //# sll-dll.ss
 
 /*
-GOT
-===
-[ H1(c,p)&c!=null --> c::node<val_20_807,prev_20_808,next_20_809>@M * 
-  (HP_810(prev_20_808,p)) * (HP_811(next_20_809,p))&true,
+[ H1(c_871,p_873) ::= 
+ emp&c_871=null
+ or (H1(next_20_830,c')) * c_871::node<val_20_828,prev_20_829,next_20_830>@M&
+     XPURE(HP_810(prev_20_829,p_872))
+ ,
+ G1(c_874,p_875) ::= 
+ emp&c_874=null
+ or c_874::node<val_20_807,p_875,next_20_809>@M * (G1(next_20_809,c_874))&
+     XPURE(HP_810(prev_20_808,p_875))
+ ]
 
- HP_811(next_20_809,p)&true --> H1(next_20_809,c')&true,
+--sa-inlining
 
- (HP_810(prev_20_808,p)) * c::node<val_20_807,p,next_20_809>@M * 
-  (G1(next_20_809,c))&true --> G1(c,p)&true,
+[ H1(c_859,p_861) ::= 
+ (H1(next_20_818,c')) * c_859::node<val_20_816,UU_HP_798_UU,next_20_818>@M&
+ true
+ or emp&c_859=null
+ ,
+ G1(c_862,p_863) ::= 
+ c_862::node<val_20_795,p_863,next_20_797>@M * (G1(next_20_797,c_862))&true
+ or emp&c_862=null
+ ]
 
- H1(c,p)& XPURE(H1(c,p)) & c=null --> G1(c,p)&true]
-         ^^^^^^^^^^^^^^^
-EXPECT:
-=======
- H1(c,p)&c!=null --> c::node<val_21_809,prev_21_810,next_21_811>@M * 
-  HP_2(prev_21_810,p) * HP_3(next_21_811,p)&true.
-relAssume H1
- HP_3(next_20_809,p)&true --> H1(next_20_809,c')&true.
-relAssume G1
- HP_2(prev_20_808,p) * c::node<val_20_807,p,next_20_809>@M * 
-  G1(next_20_809,c)&true --> G1(c,p).
-relAssume G1
- H1(c,p) & c=null --> G1(c,p).
+--sa-inlining
 
---en-sleek-logging-txt
+[ H1(c_871,p_873) ::= 
+ (H1(next_20_830,c')) * c_871::node<val_20_828,UU_HP_810_UU,next_20_830>@M&
+ true
+ or emp&c_871=null
+ ,
+ G1(c_874,p_875) ::= c_874::dll<p_875>@M[LHSCase]&true]
 
- checkentail H1(c,p)&c=null & !(v_bool_18_784') & c=null & !(v_bool_18_784')&
-{FLOW,(22,23)=__norm}[]
- |-  G1(c,p)&true&{FLOW,(22,23)=__norm}[]. 
-hprel_ass: [ H1(c,p)& XPURE(H1(c,p)) & c=null --> G1(c,p)&true]
-                      ^^^^^^^^^^^^^^
-res:  [
-  emp&c=null & !(v_bool_18_784') & c=null & !(v_bool_18_784')&{FLOW,(22,23)=__norm}[]
-  ]
 
-This problem seems to be caused in "hip" as I was not
-able to reproduce the same bug in sll-dll-bug3.slk.
 
 */
 

@@ -4,8 +4,10 @@ data node{
 }
 
 /* predicate for a tree */
+
 tree<> == self = null
 	or self::node<l,r> * l::tree<> * r::tree<>;
+
 
 HeapPred H(node a).
 HeapPred G(node a).
@@ -27,17 +29,12 @@ infer [H,G] requires H(x) ensures G(x);
 /*
 # tree.ss
 
-infer [H,G] requires H(x) ensures G(x);
+equivalence detection needs fixing
 
-PROBLEM with spurious XPURE
----------------------------
-[ H(x)&x!=null --> x::node<left_24_795,right_24_796>@M * 
-  (HP_797(left_24_795)) * (HP_798(right_24_796))&true,
- HP_797(left_24_795)&true --> H(left_24_795)&true,
- HP_798(right_24_796)&true --> H(right_24_796)&true,
- H(x)& XPURE(H(x)) & x=null --> G(x)&true,
-       ^^^^^^^^^^^
- x::node<left_24_795,right_24_796>@M * (G(left_24_795)) * (G(right_24_796))&
-  true --> G(x)&true]
-
+[ H(x_858) ::= 
+ emp&x_858=null
+ or (H(right_26_854)) * (H(left_26_853)) * 
+    x_858::node<left_26_853,right_26_854>@M&true
+ ,
+ G(x_859) ::= x_859::tree@M[LHSCase]&true]
 */
