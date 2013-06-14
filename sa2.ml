@@ -252,11 +252,10 @@ let split_constr_x prog constrs post_hps prog_vars unk_map unk_hps=
         let helper (hp,eargs,_)=(hp,List.concat (List.map CP.afv eargs)) in
         let ls_lhp_args = (List.map helper lhrs) in
         (*generate linking*)
-        let unk_svl, lfb1, unk_map1 =
-          let unk_svl, unk_xpure, unk_map1 = SAC.generate_linking_full_hp total_unk_map unk_hps ls_lhp_args ls_rhp_args
-            leqs post_hps no_pos in
-          let lfb1 = CF.mkAnd_base_pure lfb (MCP.mix_of_pure unk_xpure) no_pos in
-          (unk_svl, lfb1, unk_map1)
+        let unk_svl, lfb1, unk_map1 = ([], lfb, total_unk_map)
+          (* let unk_svl, unk_xpure, unk_map1 = SAC.generate_map ls_lhp_args ls_rhp_args total_unk_map no_pos in *)
+          (* let lfb1 = CF.mkAnd_base_pure lfb (MCP.mix_of_pure unk_xpure) no_pos in *)
+          (* ([], lfb1, unk_map1) *)
         in
         let unk_svl1 = CP.remove_dups_svl (cs.CF.unk_svl@unk_svl) in
         let ls_defined_hps,rems = List.split (List.map (fun hpargs ->
@@ -1283,17 +1282,22 @@ let infer_shapes_core prog proc_name (constrs0: CF.hprel list) callee_hps sel_hp
       else ls
   ) [] hp_rel_unkmap in
   let unk_hpargs = Gen.BList.remove_dups_eq (fun (hp1, _) (hp2,_) -> CP.eq_spec_var hp1 hp2) unk_hpargs0 in
+  let unk_hps = (List.map fst unk_hpargs) in
+  let constrs = List.map (fun cs ->
+      let new_cs, _, _ = SAC.do_elim_unused cs unk_hps hp_rel_unkmap in
+      new_cs
+  ) constrs0 in
   let constrs1,unk_map = if need_preprocess then
     (* let constrs1, unk_map, unk_hpargs = SAC.detect_dangling_pred constrs0 sel_hp_rels hp_rel_unkmap in *)
     let _ = DD.binfo_pprint ">>>>>> step 1: split constraints based on pre and post-preds<<<<<<" no_pos in
     (*split constrs like H(x) & x = null --> G(x): separate into 2 constraints*)
-    let constrs2, unk_map1 = split_constr prog constrs0 sel_post_hps prog_vars hp_rel_unkmap (List.map fst unk_hpargs) in
+    let constrs2, unk_map1 = split_constr prog constrs sel_post_hps prog_vars hp_rel_unkmap unk_hps in
     (*unk analysis*)
     (* let _ = DD.binfo_pprint ">>>>>> step 2: find dangling ptrs that link pre and post-preds<<<<<<" no_pos in *)
     (* let constrs2, unk_hpargs, unk_map2 = SAC.analize_unk prog constrs1 unk_map1 in *)
     (* let unk_map2 = unk_map1 in *)
     (constrs2, unk_map1)
-  else (constrs0, hp_rel_unkmap)
+  else (constrs, hp_rel_unkmap)
   in
   infer_shapes_proper prog proc_name constrs1 callee_hps sel_hp_rels sel_post_hps unk_map prog_vars unk_hpargs
 
