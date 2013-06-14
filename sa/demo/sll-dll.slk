@@ -40,16 +40,28 @@ shape_infer [H1,HP_3][G1].
 
 /*
 
-[ H1(c_87,y_88) ::= c_87::node<val_16_751',next_16_752'>@M * (HP_4(next_16_752',y_88))&true,
- HP_4(next_16_89,y_90) ::= 
- emp&next_16_89=null
- or next_16_89::node<val_16_751',next_16_752'>@M * (HP_4(next_16_752',y_90))&
-    true
+ HP_3(next_20_93,p_94) ::= H1(next_20_93,c')&true,
+ H1(c_95,p_97) ::= 
+ emp&c_95=null
+ or (H1(next_21_54,c')) * c_95::node<val_21_52,prev_21_53,next_21_54>@M&
+     XPURE(HP_2(prev_21_53,p_96))
  ,
- G1(c_91,y_92) ::= c_91::node<Anon_11,t>@M * (HP_93(t,y_92))&true,
- HP_93(t,y_92) ::= 
- emp&t=y_92
- or t::node<Anon_11,t_94>@M * (HP_93(t_94,y_92))&true
+ G1(c_98,p_99) ::= 
+ emp&c_98=null
+ or c_98::node<val_20_807,p_99,next_20_809>@M * (G1(next_20_809,c_98))&
+     XPURE(HP_2(prev_20_808,p_99))
+ ]
+
+--sa-inlining
+
+[ HP_3(next_20_93,p_94) ::= H1(next_20_93,c')&true,
+ H1(c_95,p_97) ::= 
+ (H1(next_21_54,c')) * c_95::node<val_21_52,UU_HP_2_UU,next_21_54>@M&true
+ or emp&c_95=null
+ ,
+ G1(c_98,p_99) ::= 
+ c_98::node<val_20_807,p_99,next_20_809>@M * (G1(next_20_809,c_98))&true
+ or emp&c_98=null
  ]
 
 */

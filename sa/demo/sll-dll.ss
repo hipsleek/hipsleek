@@ -23,6 +23,7 @@ void paper_fix (node c, node p)
 }
 
 /*
+# sll-dll.ss
 
 GOT
 ===
@@ -47,6 +48,20 @@ relAssume G1
   G1(next_20_809,c)&true --> G1(c,p).
 relAssume G1
  H1(c,p) & c=null --> G1(c,p).
+
+--en-sleek-logging-txt
+
+ checkentail H1(c,p)&c=null & !(v_bool_18_784') & c=null & !(v_bool_18_784')&
+{FLOW,(22,23)=__norm}[]
+ |-  G1(c,p)&true&{FLOW,(22,23)=__norm}[]. 
+hprel_ass: [ H1(c,p)& XPURE(H1(c,p)) & c=null --> G1(c,p)&true]
+                      ^^^^^^^^^^^^^^
+res:  [
+  emp&c=null & !(v_bool_18_784') & c=null & !(v_bool_18_784')&{FLOW,(22,23)=__norm}[]
+  ]
+
+This problem seems to be caused in "hip" as I was not
+able to reproduce the same bug in sll-dll-bug3.slk.
 
 */
 
