@@ -39,7 +39,7 @@ type sleek_token =
   | VOID 
   | WHILE | FLOW of string
   (*operators*)  
-  | ACCS | AND | ANDSTAR | ANDAND | STARMINUS | AT | ATATSQ | ATAT | LEND | IMM | MUT | DERV | CBRACE | CLIST | COLON | COLONCOLON | COLONCOLONCOLON | COMMA | CPAREN | CSQUARE | DOLLAR  | VAL | REC
+  | ACCS | AND | ANDSTAR | ANDAND | STARMINUS | AT | ATATSQ | ATAT | LEND | IMM | MUT | MAT | DERV | CBRACE | CLIST | COLON | COLONCOLON | COLONCOLONCOLON | COMMA | CPAREN | CSQUARE | DOLLAR  | VAL | REC
   | DOT | DOUBLEQUOTE | EQ | EQEQ | RIGHTARROW | EQUIV | GT | GTE | HASH  | HEAD | INLIST | LEFTARROW | LENGTH
   | LT | LTE | MINUS | MEM | MEME | NEQ | NOT | NOTINLIST | OBRACE |OLIST | OPAREN | OP_ADD_ASSIGN | OP_DEC | OP_DIV_ASSIGN 
   | OP_INC | OP_MOD_ASSIGN | OP_MULT_ASSIGN | OP_SUB_ASSIGN | OR | OROR | PERM | DERIVE | EQV | CONSTR | OSQUARE  | REVERSE | SET | TAIL 
@@ -101,7 +101,7 @@ module Token = struct
     | HPRED -> "ho_pred" | ESCAPE -> "escape" | VARIANCE -> "variance" | GLOBAL -> "global" | TAIL -> "tail" | SET -> "set" | REVERSE -> "reverse"
     | PERM -> "perm" | NOTINLIST -> "notinlist" | CATCH -> "catch" | TRY -> "try" | FINALIZE -> "finalizes" | LENGTH -> "len" | INLIST -> "inlist" | HEAD -> "head"
     | MEM -> "mem" | MEME -> "memE"
-    | INFER -> "infer" | PRE -> "@pre" | XPRE -> "@xpre" | MUT -> "@M" | POST -> "@post" | XPOST -> "@xpost" | SUBANN -> "<:"
+    | INFER -> "infer" | PRE -> "@pre" | XPRE -> "@xpre" | MUT -> "@M" | MAT -> "@R" | POST -> "@post" | XPOST -> "@xpost" | SUBANN -> "<:"
     (* | PREF -> "@p_ref" *) | PVALUE -> "@value" | PFULL -> "@full" | PZERO -> "@zero"
     | INVLOCK->"inv_lock"
     | LOGICAL -> "logical"

@@ -61,6 +61,7 @@ type spec_qualifier =
 type ann =
   | AnnMode of mode
   | AnnType of typ
+  | AnnMater
 
 type file_offset =
   {
@@ -132,6 +133,8 @@ let get_pos_camlp4 l x =
     mid_pos = new_mp;
   }
 
+let get_mater_vars l = List.fold_left (fun a (((_,v),_),al)-> if (List.exists (fun c-> c=AnnMater) al) then v::a else a) [] l
+  
 let rec get_mode (anns : ann list) : mode = match anns with
 	| ann :: rest -> begin
 		match ann with
@@ -382,6 +385,7 @@ let peek_try =
          | [GT,_;ACCS,_] -> raise Stream.Failure 
          | [GT,_;AT,_] -> raise Stream.Failure 
          | [GT,_;MUT,_] -> raise Stream.Failure 
+		 | [GT,_;MAT,_] -> raise Stream.Failure 
          | [GT,_;DERV,_] -> raise Stream.Failure 
          | [GT,_;LEND,_] -> raise Stream.Failure 
          | [GT,_;CASE,_] -> raise Stream.Failure 
@@ -965,6 +969,7 @@ view_header:
           view_prop_extns = [];
           view_invariant = P.mkTrue (get_pos_camlp4 _loc 1);
           view_mem = None;
+		  view_materialized_vars = get_mater_vars l;
           try_case_inference = false;
 			}]];
 
@@ -994,6 +999,7 @@ view_header_ext:
           view_prop_extns = sl;
           view_invariant = P.mkTrue (get_pos_camlp4 _loc 1);
           view_mem = None;
+		  view_materialized_vars = get_mater_vars l;
           try_case_inference = false;
 			}]];
 
@@ -1080,7 +1086,8 @@ ann:
   [[ `AT; `IDENTIFIER id -> begin
       if id = "out" then AnnMode ModeOut
       else report_error (get_pos_camlp4 _loc 2) ("unrecognized mode: " ^ id) end
-   | `AT ; `IN_T       -> AnnMode ModeIn]];
+   | `AT ; `IN_T       -> AnnMode ModeIn
+   | `MAT -> AnnMater  ]];
       
 sq_clist: [[`OSQUARE; l= opt_cid_list; `CSQUARE -> l ]];
 

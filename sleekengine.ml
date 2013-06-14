@@ -166,7 +166,7 @@ let process_pred_def pdef =
 		iprog.I.prog_view_decls <- List.rev tmp_views;
 (* ( new_pdef :: iprog.I.prog_view_decls); *)
 		(*let _ = print_string ("\n------ "^(Iprinter.string_of_struc_formula "\t" pdef.Iast.view_formula)^"\n normalized:"^(Iprinter.string_of_struc_formula "\t" wf)^"\n") in*)
-		let cpdef = AS.trans_view iprog new_pdef in
+		let cpdef = AS.trans_view iprog new_pdef in 
 		let old_vdec = !cprog.C.prog_view_decls in
 		!cprog.C.prog_view_decls <- (cpdef :: !cprog.C.prog_view_decls);
 (* added 07.04.2008	*)	
@@ -181,6 +181,7 @@ let process_pred_def pdef =
 		ignore (AS.compute_view_x_formula !cprog cpdef !Globals.n_xpure);
         ignore (AS.set_materialized_prop cpdef);
 	let cpdef = AS.fill_one_base_case !cprog cpdef in 
+	(*let _ = print_string ("going gaga: "^(Cprinter.string_of_view_decl cpdef)^"\n") in*)
     (*let cpdef =  if !Globals.enable_case_inference then AS.view_case_inference !cprog iprog.I.prog_view_decls cpdef else cpdef in*)
 	let n_cpdef = AS.view_prune_inv_inference !cprog cpdef in
     !cprog.C.prog_view_decls <- (n_cpdef :: old_vdec);
@@ -254,7 +255,7 @@ let convert_pred_to_cast () =
   let _ = !cprog.C.prog_view_decls <- cviews2 in
   let _ =  (List.map (fun vdef -> AS.compute_view_x_formula !cprog vdef !Globals.n_xpure) cviews1) in
   Debug.tinfo_pprint "after compute_view" no_pos;
-  let _ = (List.map (fun vdef -> AS.set_materialized_prop vdef) cviews1) in
+  let _ = (List.map (fun vdef -> AS.set_materialized_prop vdef) !cprog.C.prog_view_decls) in
   Debug.tinfo_pprint "after materialzed_prop" no_pos;
   let cprog1 = AS.fill_base_case !cprog in
   let cprog2 = AS.sat_warnings cprog1 in        

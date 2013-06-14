@@ -3536,7 +3536,7 @@ let mkConjH_and_norm_x prog args unk_hps unk_svl f1 f2 pos=
 
 let mkConjH_and_norm prog args unk_hps unk_svl f1 f2 pos=
   let pr1 = Cprinter.prtt_string_of_formula in
-  Debug.ho_2 "mkConjH_and_norm" pr1 pr1 pr1
+  Debug.no_2 "mkConjH_and_norm" pr1 pr1 pr1
       (fun _ _ -> mkConjH_and_norm_x prog args unk_hps unk_svl f1 f2 pos) f1 f2
 
 (************************************************************)

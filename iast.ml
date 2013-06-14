@@ -78,7 +78,8 @@ view_formula : Iformula.struc_formula;
 view_inv_lock : F.formula option;
 mutable view_pt_by_self : ident list; (* list of views pointed by self *)
 (* view_targets : ident list;  *)(* list of views pointed within declaration *)
-try_case_inference: bool }
+try_case_inference: bool;
+view_materialized_vars: ident list; }
 
 and func_decl = { func_name : ident; 
 func_typed_vars : (typ * ident) list;}

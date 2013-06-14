@@ -844,7 +844,7 @@ let rec trans_prog (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_decl
               C.new_proc_decls = C.proc_decls_map substitute_seq cprog.C.new_proc_decls; 
 	      C.prog_data_decls = List.map (fun c-> {c with C.data_methods = List.map substitute_seq c.C.data_methods;}) cprog.C.prog_data_decls; } in  
           (ignore (List.map (fun vdef ->  ( compute_view_x_formula cprog vdef !Globals.n_xpure )) cviews);
-          ignore (List.map (fun vdef ->  set_materialized_prop vdef ) cviews);
+          ignore (List.map (fun vdef ->  set_materialized_prop vdef ) cprog1.C.prog_view_decls);
           ignore (C.build_hierarchy cprog1);
 	  let cprog1 = fill_base_case cprog1 in
           let cprog2 = sat_warnings cprog1 in   
@@ -1237,7 +1237,9 @@ and trans_view_x (prog : I.prog_decl) (vdef : I.view_decl) : C.view_decl =
         if (ffv!=[]) then report_error no_pos ("error 1: free variables "^(Cprinter.string_of_spec_var_list ffv)^" in view def "^vdef.I.view_name^" ") in
       let typed_vars = List.map ( fun (Cpure.SpecVar (c1,c2,c3))-> (c1,c2)) view_sv_vars in
       let _ = vdef.I.view_typed_vars <- typed_vars in
-      let mvars = [] in
+      let mvars =  List.filter 
+			(fun c-> List.exists (fun v-> String.compare v (CP.name_of_spec_var c) = 0) vdef.I.view_materialized_vars) view_sv_vars in
+	  let mvars = List.map (fun v -> C.mk_mater_prop v false []) mvars in
       let cf = CF.label_view cf in
       let n_un_str =  CF.get_view_branches cf in   
       let rec f_tr_base f = 
@@ -1419,15 +1421,20 @@ and compute_base_case_x prog cf vars = (*flatten_base_case cf s self_c_var *)
   in
   wrap_proving_kind "COMPUTE_BASE_CASE_X" compute_base_case_x_op ()
       
-and set_materialized_prop cdef =
+and set_materialized_prop_x cdef =
   let args = (CP.SpecVar (Named "", self, Unprimed))::cdef.C.view_vars in
-  let mvars = find_materialized_prop args (C.formula_of_unstruc_view_f cdef) in
+  let mvars = find_materialized_prop args cdef.C.view_materialized_vars (C.formula_of_unstruc_view_f cdef) in
   (cdef.C.view_materialized_vars <- mvars; cdef)
       
+and set_materialized_prop cdef = 
+	let pr1 = Cprinter.string_of_view_decl in
+	Debug.no_1 "set_materialized_prop" pr1 pr1 set_materialized_prop_x cdef
+	  
 and find_m_prop_heap params eq_f h = 
   let pr = Cprinter.string_of_h_formula in
-  let prr x = string_of_int (List.length x) in
-  Debug.no_1 "find_m_prop_heap" pr prr (fun _ -> find_m_prop_heap_x params eq_f h) h
+  let pr1 = Cprinter.string_of_spec_var_list in
+  let prr x = Cprinter.string_of_mater_prop_list x in (*string_of_int (List.length x) in*)
+  Debug.no_2 "find_m_prop_heap" pr pr1 prr (fun _ _ -> find_m_prop_heap_x params eq_f h) h params
       
 and find_m_prop_heap_x params eq_f h = 
   let rec helper h =
@@ -1523,7 +1530,7 @@ and param_alias_sets p params =
   let aset_get x = x:: (Context.get_aset asets x) in
   List.map (fun c-> ( aset_get c,c)) params
 
-and find_materialized_prop params (f0 : CF.formula) : C.mater_property list =
+and find_materialized_prop params forced_vars (f0 : CF.formula) : C.mater_property list =
   let pr1 = Cprinter.string_of_spec_var_list in
   let pr2 = Cprinter.string_of_formula in
   let pr3 = pr_list Cprinter.string_of_mater_property in
@@ -1534,8 +1541,8 @@ and find_materialized_prop_x params (f0 : CF.formula) : C.mater_property list =
   let is_member (aset :(CP.spec_var list * CP.spec_var)list) v = 
     let l = List.filter (fun (l,_) -> List.exists (CP.eq_spec_var v) l) aset in
     snd (List.split l) in
-  let find_m_prop_heap_aux params pf hf =
-    let rec cycle p acc_p v_p =
+  let find_m_prop_heap_aux params pf hf = find_m_prop_heap params (is_member (param_alias_sets pf params)) hf in
+    (*let rec cycle p acc_p v_p =
         find_m_prop_heap params (is_member (param_alias_sets pf p)) hf
       (* if p==[] then *)
       (*   find_m_prop_heap params (is_member (param_alias_sets pf v_p)) hf *)
@@ -1545,7 +1552,8 @@ and find_materialized_prop_x params (f0 : CF.formula) : C.mater_property list =
       (*   let (ls,vs) = find_node_vars eq_f hf in *)
       (*   let rs = Gen.BList.difference_eq CP.eq_spec_var ls acc_p in *)
       (*   cycle rs (rs@p@acc_p) (vs@v_p) *)
-    in cycle params [] [] in
+    in cycle params [] [] in*)
+	
   let find_m_one f = match f with
     | CF.Base b ->    
           find_m_prop_heap_aux params b.CF.formula_base_pure b.CF.formula_base_heap
@@ -2166,7 +2174,7 @@ and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
   else
     (  
         let args = CF.fv_simple_formula c_lhs in 
-        let m_vars = find_materialized_prop args c_rhs in
+        let m_vars = find_materialized_prop args [] c_rhs in
         let c_coer ={ C.coercion_type = coer.I.coercion_type;
 		C.coercion_exact= coer.I.coercion_exact;
         C.coercion_name = coer.I.coercion_name;
@@ -7384,6 +7392,7 @@ let transform_hp_rels_to_iviews (hp_rels:(ident* CF.hp_rel_def) list):(ident*ide
 						I.view_is_prim = false;
 						I.view_invariant = IP.mkTrue no_pos;
                         I.view_mem = None;
+						I.view_materialized_vars = [];
 						I.try_case_inference = false; })::acc
 		| _ -> acc) [] hp_rels
   

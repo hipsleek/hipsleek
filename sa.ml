@@ -3951,7 +3951,8 @@ let build_horm_view_x templ_view_decls horm_dd=
 	  Iast.view_formula = n_view_formula;
       Iast.view_inv_lock = n_view_inv_lock;
 	  Iast.view_pt_by_self = view.Iast.view_pt_by_self;
-	  Iast.try_case_inference = view.Iast.try_case_inference
+	  Iast.try_case_inference = view.Iast.try_case_inference;
+	  Iast.view_materialized_vars = view.Iast.view_materialized_vars;
     }
   in
   let (tmp_data_name,tmp_data_fields),(data_name,data_fields) = horm_dd in
