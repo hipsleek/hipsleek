@@ -1770,7 +1770,7 @@ let find_undefined_selective_pointers_x prog lfb lmix_f unmatched rhs_rest rhs_h
   let l_def_vs = CP.remove_dups_svl (SAU.find_close l_def_vs (eqs)) in
   (*ll-append9-10: if not generate linking here, we can not obtain it later*)
   let unk_svl, unk_xpure, unk_map1 = (* if !Globals.sa_split_base then *)
-    SAC.generate_linking total_unk_map ls_lhp_args ls_rhp_args eqs post_hps pos
+    SAC.generate_linking total_unk_map ls_lhp_args ls_rhp_args (*eqs*) post_hps pos
   (* else ([], CP.mkTrue pos,total_unk_map) *)
   in
   let lfb1 = CF.mkAnd_base_pure lfb (MCP.mix_of_pure unk_xpure) pos in

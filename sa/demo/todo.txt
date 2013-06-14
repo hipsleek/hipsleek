@@ -79,7 +79,7 @@ Expecting: [ H(x_119) ::=
 # dll-append2.slk
 
 
- /* error durign shape inference
+ /* error during shape inference
  
  !!! >>>>>> pre-predicates: step pre-6: combine<<<<<<Fatal error: exception Failure("tl")
 
@@ -114,7 +114,7 @@ got:
  or l::node<l1,r2,r_991>@M * HP_988(l1,r2,r_991,l_879,res_986) & r!=null ]
 
 =========================================================================
-# sll-dll.ss
+# sll-dll.ss FIXED (test with hip/ll-append10.ss)
 
 GOT
 ===
@@ -182,7 +182,7 @@ FINAL expected:
 
 
 =========================================================================
-# tree.ss
+# tree.ss FIXED (test with hip/ll-append10.ss)
 
 infer [H,G] requires H(x) ensures G(x);
 

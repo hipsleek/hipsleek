@@ -2274,6 +2274,13 @@ let is_trivial f (hp,args)=
   let b1 = List.exists (fun hpargs1 -> check_hp_arg_eq (hp,args) hpargs1) hpargs in
   b1||(is_empty_f f)
 
+let is_trivial_constr cs=
+  let l_ohp = CF.extract_hrel_head cs.CF.hprel_lhs in
+  let r_ohp = CF.extract_hrel_head cs.CF.hprel_rhs in
+  match l_ohp,r_ohp with
+    | Some hp1, Some hp2 -> CP.eq_spec_var hp1 hp2
+    | _ -> false
+
 let is_inconsistent_heap f =
   let ( hf,mix_f,_,_,_) = CF.split_components f in
   let eqNulls = CP.remove_dups_svl ( MCP.get_null_ptrs mix_f) in
@@ -3072,7 +3079,7 @@ let simplify_set_of_formulas_x prog cdefs hp args unk_hps unk_svl defs=
   let helper f=
     let f1 = filter_var prog args f in
     let f2 = elim_irr_eq_exps prog (CP.remove_dups_svl (args@unk_svl)) f1 in
-    (* let _ = Debug.info_pprint ("  f2: "^ (Cprinter.prtt_string_of_formula f2)) no_pos in *)
+    let _ = Debug.ninfo_pprint ("  f2: "^ (Cprinter.prtt_string_of_formula f2)) no_pos in
     if (* is_empty_f f2 || *) (is_trivial f2 (hp,args)) || is_self_rec f2 then [] else [f2]
   in
   if List.length defs < 2 then (false, defs) else
@@ -3296,7 +3303,8 @@ let get_longest_common_hnodes_list_x prog cdefs unk_hps unk_svl hp r non_r_args 
    let hprels1 = List.filter (fun (hp1,_,_) -> not(CP.eq_spec_var hp hp1)) hprels in
    if min = 0 && eqNulls = [] && eqPures= [] then
      (*mk_hprel_def*)
-      (* let n_hp, n_args, n_fs,elim_ss, link_defs = *)
+
+     (* let n_hp, n_args, n_fs,elim_ss, link_defs = *)
      (*    if !Globals.sa_elim_useless || !Globals.norm_elim_useless then *)
      (*      let _,n_args,n_fs,ss,link_defs,n_hp = elim_not_in_used_args prog (CF.mkHTrue_nf no_pos) fs hp args in *)
      (*      (n_hp, n_args,n_fs,ss, link_defs) *)
@@ -3304,6 +3312,7 @@ let get_longest_common_hnodes_list_x prog cdefs unk_hps unk_svl hp r non_r_args 
      (*  in *)
      (* let hpdef = mk_hprel_def prog cdefs unk_hps unk_svl n_hp n_args n_fs no_pos in *)
      (* (link_defs@hpdef,elim_ss) *)
+
      check_and_elim_not_in_used_args prog cdefs unk_hps unk_svl (CF.mkHTrue_nf no_pos) fs hp args
    else
      (*get shortest list of hnodes*)
@@ -3527,7 +3536,7 @@ let mkConjH_and_norm_x prog args unk_hps unk_svl f1 f2 pos=
 
 let mkConjH_and_norm prog args unk_hps unk_svl f1 f2 pos=
   let pr1 = Cprinter.prtt_string_of_formula in
-  Debug.no_2 "mkConjH_and_norm" pr1 pr1 pr1
+  Debug.ho_2 "mkConjH_and_norm" pr1 pr1 pr1
       (fun _ _ -> mkConjH_and_norm_x prog args unk_hps unk_svl f1 f2 pos) f1 f2
 
 (************************************************************)

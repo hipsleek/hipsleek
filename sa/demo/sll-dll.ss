@@ -22,9 +22,9 @@ void paper_fix (node c, node p)
         }
 }
 
-/*
-# sll-dll.ss
+//# sll-dll.ss
 
+/*
 GOT
 ===
 [ H1(c,p)&c!=null --> c::node<val_20_807,prev_20_808,next_20_809>@M * 

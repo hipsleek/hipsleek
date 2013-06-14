@@ -105,24 +105,6 @@ let generate_map unk_l_hpargs r_hpargs unk_map pos=
       (fun _ _ _ -> generate_map_x unk_l_hpargs r_hpargs unk_map pos)
       unk_l_hpargs r_hpargs unk_map
 
-(* let generate_map_new_x l_hpargs r_hpargs unk_map unk_hps post_hps unk_svl pos= *)
-(*   let l_args = List.fold_left (fun ls (_, args) -> ls@args) [] l_hpargs in *)
-(*   let r_args = List.fold_left (fun ls (_, args) -> ls@args) [] r_hpargs in *)
-(*   let unk_svl1 = CP.remove_dups_svl (CP.intersect_svl l_args r_args) in *)
-(*   let ls_hp_pos_sv = List.map (generate_unk_svl_map (l_hpargs@r_hpargs)) unk_svl1 in *)
-(*   let unk_pure,new_map = generate_xpure_view_w_pos ls_hp_pos_sv unk_map pos in *)
-(*   (unk_svl1, unk_pure, new_map) *)
-
-(* let generate_map_new unk_l_hpargs r_hpargs unk_map unk_hps post_hps unk_svl pos= *)
-(*   let pr1= (pr_list (pr_pair (pr_list (pr_pair !CP.print_sv string_of_int)) CP.string_of_xpure_view)) in *)
-(*   let pr2 = !CP.print_formula in *)
-(*   let pr3 = pr_list (pr_pair !CP.print_sv !CP.print_svl) in *)
-(*   Debug.ho_5 "generate_map_new" pr3 pr3 pr1 !CP.print_svl !CP.print_svl (pr_triple !CP.print_svl pr2 pr1) *)
-(*       (fun _ _ _ _ _ -> generate_map_new_x unk_l_hpargs r_hpargs unk_map *)
-(*           unk_hps post_hps unk_svl pos) *)
-(*       unk_l_hpargs r_hpargs unk_map unk_hps unk_svl *)
-
-
 let generate_xpure_view_hp_x drop_hpargs total_unk_map=
   let rec lookup_xpure_view hp rem_map=
     match rem_map with
@@ -218,7 +200,7 @@ let generate_linking_full_hp unk_map unk_hps lhs_hpargs rhs_hpargs ss post_hps p
       (fun _ _ _ _ _ -> generate_linking_full_hp_x unk_map unk_hps lhs_hpargs rhs_hpargs ss post_hps pos)
       unk_map unk_hps lhs_hpargs rhs_hpargs post_hps
 
-let generate_linking unk_map lhs_hpargs rhs_hpargs ss post_hps pos=
+let generate_linking unk_map lhs_hpargs rhs_hpargs post_hps pos=
   let rec lookup_xpure_view hp rem_map=
     match rem_map with
       | [] -> None
@@ -247,19 +229,20 @@ let generate_linking unk_map lhs_hpargs rhs_hpargs ss post_hps pos=
               let p = CP.mkFormulaFromXP new_xpv in
               (p,args,unk_map@new_maps)
         | None ->
-              let hp_name = CP.name_of_spec_var pre_hp in
-              let xpv = { CP.xpure_view_node = None;
-              CP.xpure_view_name = hp_name;
-              CP.xpure_view_arguments = args;
-              CP.xpure_view_remaining_branches= None;
-              CP.xpure_view_pos = no_pos;
-              }
-              in
-              let locs = build_full_locs args 0 [] in
-              let new_maps = List.map (fun hp ->
-                  ((hp, locs), xpv)) (pre_hp::post_hps1) in
-              let p = CP.mkFormulaFromXP xpv in
-              (p,args, unk_map@new_maps)
+              (* let hp_name = CP.name_of_spec_var pre_hp in *)
+              (* let xpv = { CP.xpure_view_node = None; *)
+              (* CP.xpure_view_name = hp_name; *)
+              (* CP.xpure_view_arguments = args; *)
+              (* CP.xpure_view_remaining_branches= None; *)
+              (* CP.xpure_view_pos = no_pos; *)
+              (* } *)
+              (* in *)
+              (* let locs = build_full_locs args 0 [] in *)
+              (* let new_maps = List.map (fun hp -> *)
+              (*     ((hp, locs), xpv)) (pre_hp::post_hps1) in *)
+              (* let p = CP.mkFormulaFromXP xpv in *)
+              (* (p ,args, unk_map@new_maps) *)
+              (CP.mkTrue pos, [], unk_map)
     in
     (p,unk_svl,unk_map)
   in
@@ -798,34 +781,35 @@ let build_args_locs (hp, args)=
   (hp, args, locs)
 
 let do_elim_unused_x cs unk_hps map=
-  let ls_l_hpargs1 = (CF.get_HRels_f cs.CF.hprel_lhs) in
-  let ls_r_hpargs1 = (CF.get_HRels_f cs.CF.hprel_rhs) in
-  let ls_l_hpargs2 = Gen.BList.remove_dups_eq (fun (hp1,_) (hp2,_) -> CP.eq_spec_var hp1 hp2) ls_l_hpargs1 in
-  let ls_r_hpargs2 = Gen.BList.remove_dups_eq (fun (hp1,_) (hp2,_) -> CP.eq_spec_var hp1 hp2) ls_r_hpargs1 in
-  let l_unk_hpargs = List.filter (fun (hp,_) -> CP.mem_svl hp unk_hps) ls_l_hpargs2 in
-  let r_unk_hpargs = List.filter (fun (hp,_) -> CP.mem_svl hp unk_hps) ls_r_hpargs2 in
-  let unk_hpargs = Gen.BList.remove_dups_eq (fun (hp1,_) (hp2,_) -> CP.eq_spec_var hp1 hp2) (l_unk_hpargs@r_unk_hpargs) in
-  if unk_hpargs = [] then (cs, map,[]) else
-    let unk_svl = List.fold_left (fun ls (_, args) -> ls@args) []  unk_hpargs in
-    let unk_svl1 = CP.remove_dups_svl unk_svl in
-    let cs_unk_hps = (List.map fst unk_hpargs) in
-    let new_lhs, new_map1 = if l_unk_hpargs =[] then (cs.CF.hprel_lhs, map) else
-      let _, l_unk_pure, new_map = generate_xpure_view_hp (List.map build_args_locs l_unk_hpargs) map in
-      let new_lhs,_ = CF.drop_hrel_f cs.CF.hprel_lhs cs_unk_hps in
-      (CF.mkAnd_pure new_lhs (MCP.mix_of_pure l_unk_pure) no_pos, new_map)
-    in
-    let new_rhs, new_map2 = if r_unk_hpargs =[] then (cs.CF.hprel_rhs, new_map1) else
-      let _, r_unk_pure, new_map = generate_xpure_view_hp (List.map build_args_locs r_unk_hpargs) new_map1 in
-      let new_rhs,_ = CF.drop_hrel_f cs.CF.hprel_rhs cs_unk_hps in
-      (CF.mkAnd_pure new_rhs (MCP.mix_of_pure r_unk_pure) no_pos, new_map)
-    in
-    let new_cs = {cs with CF.hprel_lhs = new_lhs;
-        CF.hprel_rhs = new_rhs;
-        CF.unk_svl = unk_svl1 ;
-        CF.unk_hps = unk_hpargs;
+  if unk_hps = [] then (cs, map, []) else
+    let ls_l_hpargs1 = (CF.get_HRels_f cs.CF.hprel_lhs) in
+    let ls_r_hpargs1 = (CF.get_HRels_f cs.CF.hprel_rhs) in
+    let ls_l_hpargs2 = Gen.BList.remove_dups_eq (fun (hp1,_) (hp2,_) -> CP.eq_spec_var hp1 hp2) ls_l_hpargs1 in
+    let ls_r_hpargs2 = Gen.BList.remove_dups_eq (fun (hp1,_) (hp2,_) -> CP.eq_spec_var hp1 hp2) ls_r_hpargs1 in
+    let l_unk_hpargs = List.filter (fun (hp,_) -> CP.mem_svl hp unk_hps) ls_l_hpargs2 in
+    let r_unk_hpargs = List.filter (fun (hp,_) -> CP.mem_svl hp unk_hps) ls_r_hpargs2 in
+    let unk_hpargs = Gen.BList.remove_dups_eq (fun (hp1,_) (hp2,_) -> CP.eq_spec_var hp1 hp2) (l_unk_hpargs@r_unk_hpargs) in
+    if unk_hpargs = [] then (cs, map,[]) else
+      let unk_svl = List.fold_left (fun ls (_, args) -> ls@args) []  unk_hpargs in
+      let unk_svl1 = CP.remove_dups_svl unk_svl in
+      let cs_unk_hps = (List.map fst unk_hpargs) in
+      let new_lhs, new_map1 = if l_unk_hpargs =[] then (cs.CF.hprel_lhs, map) else
+        let _, l_unk_pure, new_map = generate_xpure_view_hp (List.map build_args_locs l_unk_hpargs) map in
+        let new_lhs,_ = CF.drop_hrel_f cs.CF.hprel_lhs cs_unk_hps in
+        (CF.mkAnd_pure new_lhs (MCP.mix_of_pure l_unk_pure) no_pos, new_map)
+      in
+      let new_rhs, new_map2 = if r_unk_hpargs =[] then (cs.CF.hprel_rhs, new_map1) else
+        let _, r_unk_pure, new_map = generate_xpure_view_hp (List.map build_args_locs r_unk_hpargs) new_map1 in
+        let new_rhs,_ = CF.drop_hrel_f cs.CF.hprel_rhs cs_unk_hps in
+        (CF.mkAnd_pure new_rhs (MCP.mix_of_pure r_unk_pure) no_pos, new_map)
+      in
+      let new_cs = {cs with CF.hprel_lhs = new_lhs;
+          CF.hprel_rhs = new_rhs;
+          CF.unk_svl = unk_svl1 ;
+          CF.unk_hps = unk_hpargs;
       }
-    in
-    (new_cs, new_map2, unk_hpargs)
+      in
+      (new_cs, new_map2, unk_hpargs)
 
 let do_elim_unused cs unused_hps map=
   let pr1 = !CP.print_svl in
@@ -835,7 +819,6 @@ let do_elim_unused cs unused_hps map=
   let pr4 = pr_list (pr_pair !CP.print_sv !CP.print_svl) in
   Debug.no_3 "do_elim_unused" pr1 pr2 pr3 (pr_triple pr2 pr3 pr4)
       (fun _ _ _ -> do_elim_unused_x cs unused_hps map) unused_hps cs map
-
 
 let detect_dangling_pred_x constrs sel_hps unk_map=
   let all_hps = List.fold_left (fun ls cs ->
@@ -884,6 +867,42 @@ let get_dangling_pred constrs=
   let ls_unk_hpargs1 = Gen.BList.remove_dups_eq (fun (hp1,_) (hp2,_) -> CP.eq_spec_var hp1 hp2) ls_unk_hpargs in
   (List.map gen_map ls_unk_hpargs1,ls_unk_hpargs1)
 
+
+let syn_unk constrs0 unk_map0 post_hps pos=
+  let unk_hpargs0 = List.fold_left (fun ls ((hp,locs),xpure) ->
+      let args = match xpure.CP.xpure_view_node with
+        | None -> xpure.CP.xpure_view_arguments
+        | Some sv -> sv::xpure.CP.xpure_view_arguments
+      in
+      if List.length locs = List.length args then
+        ls@[(hp,args)]
+      else ls
+  ) [] unk_map0 in
+  let unk_hpargs = Gen.BList.remove_dups_eq (fun (hp1, _) (hp2,_) -> CP.eq_spec_var hp1 hp2) unk_hpargs0 in
+  let constrs, unk_map0, unk_hpargs = List.fold_left (fun (ls,cur_map, cur_unk) (cs) ->
+      let rhs_hpargs = CF.get_HRels_f cs.CF.hprel_rhs in
+      let new_unk, new_cs, new_map = if rhs_hpargs <> [] then
+        let lhs_hpargs = CF.get_HRels_f cs.CF.hprel_lhs in
+        let lhs_unk_hpargs = List.filter (fun (hp, _) ->
+            List.exists (fun (hp1,_) -> CP.eq_spec_var hp hp1) cur_unk)
+          lhs_hpargs
+        in
+        let rhs_unk_hp_args = List.filter (fun (r_hp,r_args) ->
+            not (  List.exists (fun (hp1,_) -> CP.eq_spec_var r_hp hp1) cur_unk) &&
+                List.exists (fun (_,l_args) -> List.length l_args = List.length r_args && CP.diff_svl l_args r_args = []) lhs_unk_hpargs
+          ) rhs_hpargs
+        in
+        let _, xpure, new_map =  generate_linking cur_map lhs_unk_hpargs rhs_hpargs post_hps pos in
+        let new_cs = {cs with CF.hprel_lhs = CF.mkAnd_pure cs.CF.hprel_lhs (MCP.mix_of_pure xpure) pos} in
+        (cur_unk@rhs_unk_hp_args, new_cs, new_map)
+      else (cur_unk, cs, cur_map)
+      in
+      let new_cs1, new_map1, _ = do_elim_unused new_cs
+        (List.map fst new_unk) new_map in
+      ls@[new_cs1],new_map1,new_unk
+  ) ([], unk_map0 ,unk_hpargs) constrs0
+  in
+  (constrs, unk_map0, unk_hpargs)
 (*=============**************************================*)
        (*=============END UNKOWN================*)
 (*=============**************************================*)

@@ -499,13 +499,15 @@ let combine_pdefs_pre_x prog unk_hps pr_pdefs=
   let combine_helper2 ((hp1,args1,unk_svl1, cond1, norm_cond1, olhs1, orhs1), cs1) ((hp2,args2,unk_svl2, cond2, norm_cond2, olhs2, orhs2), cs2)=
     let norm_cond_disj1 = CP.mkAnd norm_cond1 (CP.mkNot norm_cond2 None no_pos) no_pos in
     let pdef1 = if (TP.is_sat_raw (MCP.mix_of_pure norm_cond_disj1)) then
-      let npdef1 = do_combine (hp1,args1,unk_svl1,CP.mkAnd cond1 (CP.mkNot cond2 None no_pos) no_pos, olhs1, orhs1) in
+      let npdef1 = do_combine (hp1,args1,unk_svl1, CP.remove_redundant norm_cond_disj1 , olhs1, orhs1) in
       npdef1
     else []
     in
     let norm_cond_disj2 = CP.mkAnd norm_cond2 (CP.mkNot norm_cond1 None no_pos) no_pos in
     let pdef2 = if (TP.is_sat_raw (MCP.mix_of_pure norm_cond_disj2)) then
-      let npdef2 = do_combine (hp2,args2,unk_svl2,CP.mkAnd cond2 (CP.mkNot cond1 None no_pos) no_pos, olhs2, orhs2) in
+      let ss1 = List.combine args1 args2 in
+      let n_cond = CP.remove_redundant (CP.mkAnd cond2 (CP.mkNot (CP.subst ss1 cond1) None no_pos) no_pos) in
+      let npdef2 = do_combine (hp2,args2,unk_svl2, n_cond, olhs2, orhs2) in
       npdef2
     else []
     in
@@ -515,8 +517,8 @@ let combine_pdefs_pre_x prog unk_hps pr_pdefs=
       let is_sat1, n_orhs = mkAnd_w_opt args1 ss orhs1 orhs2 in
       let is_sat2, n_olhs = mkAnd_w_opt args1 ss olhs1 olhs2 in
       let npdef3 = if is_sat1 && is_sat2 then
-        do_combine (hp1,args1,unk_svl1,CP.mkAnd norm_cond1 norm_cond2 no_pos, n_olhs, n_orhs)
-      else [(hp1,args1,unk_svl1,CP.mkAnd norm_cond1 norm_cond2 no_pos, olhs1, Some (CF.mkFalse_nf no_pos))]
+        do_combine (hp1,args1,unk_svl1,  norm_cond_disj3, n_olhs, n_orhs)
+      else [(hp1,args1,unk_svl1,  norm_cond_disj3, olhs1, Some (CF.mkFalse_nf no_pos))]
       in
       npdef3
     else []
@@ -1272,26 +1274,13 @@ let infer_shapes_core prog proc_name (constrs0: CF.hprel list) callee_hps sel_hp
   (*move to outer func*)
   let prog_vars = [] in (*TODO: improve for hip*)
   (********************************)
-  let unk_hpargs0 = List.fold_left (fun ls ((hp,locs),xpure) ->
-      let args = match xpure.CP.xpure_view_node with
-        | None -> xpure.CP.xpure_view_arguments
-        | Some sv -> sv::xpure.CP.xpure_view_arguments
-      in
-      if List.length locs = List.length args then
-        ls@[(hp,args)]
-      else ls
-  ) [] hp_rel_unkmap in
-  let unk_hpargs = Gen.BList.remove_dups_eq (fun (hp1, _) (hp2,_) -> CP.eq_spec_var hp1 hp2) unk_hpargs0 in
+  let constrs, unk_map0, unk_hpargs = SAC.syn_unk constrs0 hp_rel_unkmap sel_post_hps no_pos in
   let unk_hps = (List.map fst unk_hpargs) in
-  let constrs = List.map (fun cs ->
-      let new_cs, _, _ = SAC.do_elim_unused cs unk_hps hp_rel_unkmap in
-      new_cs
-  ) constrs0 in
   let constrs1,unk_map = if need_preprocess then
     (* let constrs1, unk_map, unk_hpargs = SAC.detect_dangling_pred constrs0 sel_hp_rels hp_rel_unkmap in *)
     let _ = DD.binfo_pprint ">>>>>> step 1: split constraints based on pre and post-preds<<<<<<" no_pos in
     (*split constrs like H(x) & x = null --> G(x): separate into 2 constraints*)
-    let constrs2, unk_map1 = split_constr prog constrs sel_post_hps prog_vars hp_rel_unkmap unk_hps in
+    let constrs2, unk_map1 = split_constr prog constrs sel_post_hps prog_vars unk_map0 unk_hps in
     (*unk analysis*)
     (* let _ = DD.binfo_pprint ">>>>>> step 2: find dangling ptrs that link pre and post-preds<<<<<<" no_pos in *)
     (* let constrs2, unk_hpargs, unk_map2 = SAC.analize_unk prog constrs1 unk_map1 in *)
@@ -1311,7 +1300,9 @@ let infer_shapes_x prog proc_name (constrs0: CF.hprel list) sel_hps sel_post_hps
   (* let callee_hps = List.map (fun (hpname,_,_) -> SAU.get_hpdef_name hpname) callee_hpdefs in *)
   let callee_hps = [] in
   (* let _ = DD.info_pprint ("  sel_hps:" ^ !CP.print_svl sel_hps) no_pos in *)
-  let constr, hp_defs, c, unk_hpargs2 = infer_shapes_core prog proc_name constrs0 callee_hps sel_hps sel_post_hps hp_rel_unkmap need_preprocess in
+  (*remove hp(x) --> hp(x)*)
+  let constrs1 = List.filter (fun cs -> not(SAU.is_trivial_constr cs)) constrs0 in
+  let constr, hp_defs, c, unk_hpargs2 = infer_shapes_core prog proc_name constrs1 callee_hps sel_hps sel_post_hps hp_rel_unkmap need_preprocess in
   let m = match_hps_views hp_defs prog.CA.prog_view_decls in
   let sel_hp_defs = collect_sel_hp_def hp_defs sel_hps unk_hpargs2 m in
   let _ = List.iter (fun hp_def -> rel_def_stk # push hp_def) sel_hp_defs in
