@@ -1,4 +1,4 @@
-# app.ss
+# app.ss: FIXED
 
 Problem with hip invoking shape_infer...
 
@@ -38,7 +38,7 @@ How come hip did not invoke shape_infer correctly?
  ]
 
 ===================================================================
-# sll-dll-bug2.slk
+# sll-dll-bug2.slk: FIXED
 
 infer [H1,HP_2,HP_3,G1]
  HP_2(pp,p) * HP_3(nn,p) * c::node<_,p,nn>@M 
