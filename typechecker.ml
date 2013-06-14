@@ -2122,7 +2122,7 @@ and check_post (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_cont
   (* let _ = Log.update_sleek_proving_kind Log.POST in *)
   (* let _ = Debug.info_pprint "CG dont trust" pos; flush(stdout) in *)
   let f = wrap_proving_kind "POST" (check_post_x prog proc ctx posts pos pid) in
-  Debug.ho_2(* _loop *) "check_post" pr pr1 pr (fun _ _ -> f etype) ctx posts 
+  Debug.no_2(* _loop *) "check_post" pr pr1 pr (fun _ _ -> f etype) ctx posts 
 
 and check_post_x (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_context) (posts : CF.formula*CF.struc_formula) pos (pid:formula_label) (etype: ensures_type) : CF.list_partial_context  =
   wrap_classic etype (check_post_x_x prog proc ctx posts pos) pid

@@ -4596,7 +4596,7 @@ let ann_unk_svl prog par_defs=
 (************************************************************)
 
 (*SLEEK*)
-let get_pre_post pre_hps post_hps constrs=
+let get_pre_post_x pre_hps post_hps constrs=
   let get_hps all_hps ass = match ass.CF.hprel_kind with
     | CP.RelAssume hps ->
           let body_hps = (CF.get_hp_rel_name_formula ass.CF.hprel_lhs)@
@@ -4614,5 +4614,11 @@ let get_pre_post pre_hps post_hps constrs=
   let sel_post_hps = filter_hp post_hps hps20 in
   let sel_hps = sel_pre_hps@sel_post_hps in
   (sel_hps, sel_post_hps)
+
+let get_pre_post pre_hps post_hps constrs=
+  let pr1 = !CP.print_svl in
+  let pr2 = pr_list_ln Cprinter.string_of_hprel_short in
+  Debug.no_1 "get_pre_post" pr2 (pr_pair pr1 pr1)
+      (fun _ -> get_pre_post_x pre_hps post_hps constrs) constrs
 
 (*SLEEK*)

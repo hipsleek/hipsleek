@@ -1529,7 +1529,7 @@ EXPECT
 
 
 ===================================================
-# s_conseq-1.slk
+# s_conseq-1.slk: FIXED
 
 relAssume  H
  x::node<_,prev, next> * HP_1(prev,y) *  HP_2(next,y) -->

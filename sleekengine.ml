@@ -811,6 +811,7 @@ let process_shape_split pre_hps post_hps=
   (*END*)
   let infer_vars = infer_pre_vars@infer_post_vars in
   let sel_hp_rels = pre_hp_rels@post_hp_rels in
+  (*sleek level: depend on user annotation. with hip, this information is detected automatically*)
   let constrs1, unk_map, unk_hpargs = SAC.detect_dangling_pred !sleek_hprel_assumes sel_hp_rels [] in
   let new_constrs,_ = Sa2.split_constr !cprog constrs1 post_hp_rels infer_vars unk_map (List.map fst unk_hpargs) in
   let pr1 = pr_list_ln Cprinter.string_of_hprel_short in
