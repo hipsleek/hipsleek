@@ -498,6 +498,23 @@ let get_ptrs hf0=
   in
   helper hf0
 
+let get_root_ptrs hf0=
+  let rec helper hf=
+    match hf with
+      | CF.Star {CF.h_formula_star_h1 = hf1;
+                 CF.h_formula_star_h2 = hf2;}
+      | CF.Conj { CF.h_formula_conj_h1 = hf1;
+		          CF.h_formula_conj_h2 = hf2;}
+      | CF.Phase { CF.h_formula_phase_rd = hf1;
+		           CF.h_formula_phase_rw = hf2;} ->
+          (helper hf1)@(helper hf2)
+      | CF.DataNode hd ->[hd.CF.h_formula_data_node]
+      | CF.ViewNode hv -> [hv.CF.h_formula_view_node]
+      | CF.HRel (_, eargs, _) -> CP.afv (List.hd eargs)
+      | _ -> []
+  in
+  helper hf0
+
 let rec drop_hrel_match_args f args=
   match f with
     | CF.Base fb -> let nfb = drop_hrel_match_args_hf fb.CF.formula_base_heap args in

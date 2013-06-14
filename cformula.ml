@@ -196,7 +196,7 @@ and h_formula = (* heap formula *)
   | ViewNode of h_formula_view
   | Hole of int
   (* | TempHole of int * h_formula *)
-  | HRel of (CP.spec_var * (CP.exp list) * loc) (*placeholder for heap predicates*)
+  | HRel of (CP.spec_var * (CP.exp list) * loc) (*placeh older for heap predicates*)
   | HTrue
   | HFalse
   | HEmp (* emp for classical logic *)

@@ -1704,13 +1704,14 @@ let find_undefined_selective_pointers_x prog lfb lmix_f unmatched rhs_rest rhs_h
       (List.map (fun sv -> sv::not_in_used_svl) args1)
     else []
   in
-  let get_lhs_fold_fwd_svl selected_hps def_vs rhs_args lhs_hds lhs_hvs ls_lhs_hpargs=
+  let get_lhs_fold_fwd_svl selected_hps def_vs rhs_args lhs_hds
+        lhs_hvs ls_lhs_hpargs=
     let rec find_pt_new cur_hds svl res hd_rest=
       match cur_hds with
         | [] -> res,hd_rest
         | hd::tl ->
             let ptr_args = List.filter CP.is_node_typ hd.CF.h_formula_data_arguments in
-            if ( CP.intersect_svl ptr_args (svl@res) <> []) then
+            if (CP.intersect_svl ptr_args (svl@res) <> []) then
               find_pt_new tl svl (res@[hd.CF.h_formula_data_node]) hd_rest
             else find_pt_new tl svl res (hd_rest@[hd])
     in
@@ -1784,7 +1785,8 @@ let find_undefined_selective_pointers_x prog lfb lmix_f unmatched rhs_rest rhs_h
   (*find closed defined pointers set*)
   let def_vs = CP.remove_dups_svl (SAU.find_close def_vs (eqs)) in
   (*remove*)
-  let unmatched_svl = SAU.get_ptrs unmatched in
+  (* let unmatched_svl = (SAU.get_ptrs unmatched) in *)
+  let unmatched_svl = (SAU.get_root_ptrs unmatched) in
   let unmatched_svl = (SAU.find_close (unmatched_svl) (eqs)) in
   let closed_unmatched_svl0 = SAU.look_up_closed_ptr_args prog hds hvs unmatched_svl
      (* List.concat (List.map (SAU.look_up_ptr_args_one_node prog hds hvs) unmatched_svl) *)
@@ -1969,9 +1971,11 @@ let simplify_lhs_rhs prog lhs_b rhs_b leqs reqs hds hvs lhrs rhrs lhs_selected_h
   let rhs_selected_hps = List.map fst rhs_selected_hpargs in
   let r_hpargs = CF.get_HRels rhs_b.CF.formula_base_heap in
   let rhp_args,r_rem_hp_args = (List.partition (filter_non_selected_hp_rhs rhs_selected_hps) r_hpargs) in
-  let rkeep_hrels, keep_rootvars = List.split rhp_args in
-  (* let keep_hrels = (\* (lkeep_hrels@rkeep_hrels(\\* @back_lkeep_hrels *\\)) *\) lhp_args@rhp_args in *)
-  let rhs_keep_rootvars = List.concat keep_rootvars in
+  (*root of hprel is the first args*)
+  let rkeep_hrels, keep_rootvars = List.fold_left (fun (hps,r_args) (hp,args) ->
+      (hps@[hp], r_args@[(List.hd args)])
+  ) ([],[]) rhp_args in
+  let rhs_keep_rootvars = keep_rootvars in
   (***************************)
   (*w history*)
   let svl = (CP.remove_dups_svl (lhs_keep_first_rootvars@rhs_keep_rootvars)) in
