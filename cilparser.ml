@@ -923,29 +923,7 @@ let rec translate_stmt (s: Cil.stmt) : Iast.exp =
                                 Iast.exp_return_pos = pos} in
       newexp
   | Cil.Goto (sref, l) ->
-      (* detect a infinite loop in Goto statement *)
-      (* if (!sref.Cil.sid = s.Cil.sid) then (                                                *)
-      (*   let pos = translate_location l in                                                  *)
-      (*   let cond = Iast.BoolLit {Iast.exp_bool_lit_val = true;                             *)
-      (*                            Iast.exp_bool_lit_pos = pos} in                           *)
-      (*   let infinite_loop = Iast.While {Iast.exp_while_condition = cond;                   *)
-      (*                                   Iast.exp_while_body = Iast.Empty pos;              *)
-      (*                                   Iast.exp_while_addr_vars = [];                     *)
-      (*                                   Iast.exp_while_specs = Iast.mkSpecTrue n_flow pos; *)
-      (*                                   Iast.exp_while_jump_label = Iast.NoJumpLabel;      *)
-      (*                                   Iast.exp_while_path_id = None ;                    *)
-      (*                                   Iast.exp_while_f_name = "";                        *)
-      (*                                   Iast.exp_while_wrappings = None;                   *)
-      (*                                   Iast.exp_while_pos = pos} in                       *)
-      (*   infinite_loop                                                                      *)
-      (* )                                                                                    *)
-      (* else                                                                                 *)
-        let _ = print_endline ("== sid = " ^ (string_of_int (!sref.Cil.sid))) in
-        let _ = print_endline ("== Goto sucs length = " ^ (string_of_int (List.length !sref.Cil.succs))) in
-        let _ = print_endline ("== Goto labels length = " ^ (string_of_int (List.length !sref.Cil.labels))) in
-        let _ = print_endline ("== label = " ^ (string_of_cil_label (List.hd !sref.Cil.labels))) in
-        let _ = print_endline ("== sref = " ^ (string_of_cil_stmt !sref)) in
-        translate_stmt !sref
+      translate_stmt !sref
   | Cil.Break l ->
       let pos = translate_location l in
       let newexp = Iast.Break {Iast.exp_break_jump_label = Iast.NoJumpLabel;

@@ -903,13 +903,14 @@ module BlockChunk =
           (fun s -> 
             if s.labels != [] then 
               raise (Failure "cannot duplicate: has labels");
-            (match s.skind with 
-              If _ | Switch _ | Loop _ | Block _ -> 
-                raise (Failure "cannot duplicate: complex stmt")
-            | Instr il -> 
-                pCount := !pCount + List.length il
-            | _ -> incr pCount);
-            if !pCount > 5 then raise (Failure ("cannot duplicate: too many instr"));
+            (* TRUNG: comment bellow code to allow duplicateChunk                        *)
+            (* (match s.skind with                                                       *)
+            (*   If _ | Switch _ | Loop _ | Block _ ->                                   *)
+            (*     raise (Failure "cannot duplicate: complex stmt")                      *)
+            (* | Instr il ->                                                             *)
+            (*     pCount := !pCount + List.length il                                    *)
+            (* | _ -> incr pCount);                                                      *)
+            (* if !pCount > 5 then raise (Failure ("cannot duplicate: too many instr")); *)
             (* We can just copy it because there is nothing to share here. 
              * Except maybe for the ref cell in Goto but it is Ok to share 
              * that, I think *)
