@@ -24,6 +24,10 @@ let lc_addressof_data : (Cil.lval, Iast.exp) Hashtbl.t = Hashtbl.create 3
 
 let supplement_exp : Iast.exp list ref = ref []
 
+let need_pointer_casting_proc : bool ref = ref false
+
+let need_not_operator_proc : bool ref = ref false
+
 
 (* reset all global vars for the next use *)
 let reset_global_vars () =
@@ -343,17 +347,24 @@ let create_pointer_casting_proc (pointer_typ: Globals.typ) : Iast.proc_decl opti
       try (
         let _ = Str.search_forward re typ_name 0 in
         let proc_name = "cast_void_pointer_to_" ^ typ_name in
+        let _ = print_endline ("== proc_name = " ^ proc_name) in
         let data_name = Str.global_replace re "^" typ_name in
         let param = (
           let base_data = Str.global_replace re "" typ_name in
-          let data_decl = (
-            try Hashtbl.find tbl_struct_data_decl (Globals.Named base_data)
-            with Not_found -> report_error_msg ("Error: Unknown data type: " ^ base_data)
-          ) in
-          match data_decl.Iast.data_fields with
-          | []   -> report_error_msg "Error: Invalid data_decl fields"
-          | [hd] -> "<_>"
-          | hd::tl -> "<" ^ (List.fold_left (fun s _ -> s ^ ",_") "_" tl) ^ ">"
+          match base_data with
+          | "int" -> "<_>"
+          | "bool" -> "<_>"
+          | "float" -> "<_>"
+          | "void" -> "<_>"
+          | _ -> (
+              try 
+                let data_decl = Hashtbl.find tbl_struct_data_decl (Globals.Named base_data) in
+                match data_decl.Iast.data_fields with
+                | []   -> report_error_msg "Error: Invalid data_decl fields"
+                | [hd] -> "<_>"
+                | hd::tl -> "<" ^ (List.fold_left (fun s _ -> s ^ ",_") "_" tl) ^ ">"
+              with Not_found -> report_error_msg ("Error: Unknown data type: " ^ base_data)
+            ) 
         ) in
         let cast_proc = (
           typ_name ^ " " ^ proc_name ^ " (void__star p)\n" ^
@@ -370,7 +381,7 @@ let create_pointer_casting_proc (pointer_typ: Globals.typ) : Iast.proc_decl opti
     )
   | _ -> None
 
-let create_negation_proc (input_typ: Globals.typ) : Iast.proc_decl =
+let create_not_operator_proc (input_typ: Globals.typ) : Iast.proc_decl =
   match input_typ with
   | Globals.Named input_typ_name -> (
       let neg_proc = (
@@ -378,7 +389,7 @@ let create_negation_proc (input_typ: Globals.typ) : Iast.proc_decl =
         "  case { param =  null -> ensures res;\n" ^
         "         param != null -> ensures !res; }\n"
       ) in
-      let proc_decl = Parser.parse_aux_proc "inter_negation_proc" neg_proc in
+      let proc_decl = Parser.parse_aux_proc "inter_negation_data_proc" neg_proc in
       proc_decl
     )
   | _ -> report_error_msg "Error: Invalid type"
@@ -502,6 +513,7 @@ let translate_var_decl (vinfo: Cil.varinfo) : Iast.exp =
             with Not_found -> report_error_msg ("Unfound typ: " ^ (Globals.string_of_typ ty))
           )
         ) in
+        let _ = print_endline ("== data_decl = " ^ (Iprinter.string_of_data_decl data_decl)) in
         (* create and initiate a new object *)
         let init_params = List.fold_left (
           fun params field ->
@@ -514,8 +526,9 @@ let translate_var_decl (vinfo: Cil.varinfo) : Iast.exp =
                                                Iast.exp_bool_lit_pos = no_pos }
               | Globals.Float -> Iast.FloatLit { Iast.exp_float_lit_val = 0.;
                                                  Iast.exp_float_lit_pos = no_pos }
+              | Globals.Void -> Iast.Null no_pos
               | Globals.Named _ -> Iast.Null no_pos
-              | _ -> report_error_msg ("Unexpected typ: " ^ (Globals.string_of_typ ftyp))
+              | _ -> report_error_msg ("Unexpected typ 1: " ^ (Globals.string_of_typ ftyp))
             ) in
             params @ [exp]
         ) [] data_decl.Iast.data_fields in
@@ -526,7 +539,7 @@ let translate_var_decl (vinfo: Cil.varinfo) : Iast.exp =
                        Iast.exp_var_decl_decls = [(name, Some init_data, pos)];
                        Iast.exp_var_decl_pos = pos }
       )
-    | _ -> report_error_msg ("Unexpected typ: " ^ (Globals.string_of_typ ty))
+    | _ -> report_error_msg ("Unexpected typ 2: " ^ (Globals.string_of_typ ty))
   ) in
   newexp
 
@@ -721,6 +734,12 @@ and translate_exp (e: Cil.exp) : Iast.exp =
   | Cil.UnOp (op, exp, ty, l) ->
       let e = translate_exp exp in
       let o = translate_unary_operator op in
+      let t = translate_typ ty in
+      if (o = Iast.OpNot) then (
+        match t with
+        | Globals.Named _ -> need_not_operator_proc := true;
+        | _ -> ();
+      );
       let pos = translate_location l in
       let newexp = Iast.Unary {Iast.exp_unary_op = o;
                                Iast.exp_unary_exp = e;
@@ -759,6 +778,7 @@ and translate_exp (e: Cil.exp) : Iast.exp =
           let input_typ = translate_typ (typ_of_cil_exp exp) in
           match input_typ, output_typ with
           | Globals.Named "void__star", Globals.Named output_typ_name -> (
+              need_pointer_casting_proc := true;
               let cast_proc_name = "cast_void_pointer_to_" ^ output_typ_name in
               Iast.CallNRecv {
                 Iast.exp_call_nrecv_method = cast_proc_name;
@@ -1056,8 +1076,9 @@ let rec translate_init (init: Cil.init) (lopt: Cil.location option)
                                                    Iast.exp_bool_lit_pos = pos }
                   | Globals.Float -> Iast.FloatLit { Iast.exp_float_lit_val = 0.;
                                                      Iast.exp_float_lit_pos = pos }
+                  | Globals.Void -> Iast.Null no_pos
                   | Globals.Named _ -> Iast.Null pos
-                  | _ -> report_error_msg ("Unexpected typ: " ^ (Globals.string_of_typ ftyp))
+                  | _ -> report_error_msg ("Unexpected typ 3: " ^ (Globals.string_of_typ ftyp))
                 )
               ) in
               params @ [finit]
@@ -1288,13 +1309,18 @@ let translate_file (file: Cil.file) : Iast.prog_decl =
   ) gl_addressof_data;
   (* create negation & casting procs for data structure *)
   Hashtbl.iter (fun typ _ ->
-    let neg_proc = create_negation_proc typ in
-    let cast_procs = (
-      match create_pointer_casting_proc typ with
-      | None -> []
-      | Some proc -> [proc]
-    ) in
-    proc_decls := !proc_decls @ [neg_proc] @ cast_procs
+    if (!need_not_operator_proc) then (
+      let neg_proc = create_not_operator_proc typ in
+      proc_decls := !proc_decls @ [neg_proc];
+    );
+    if (!need_pointer_casting_proc) then (
+      let cast_procs = (
+        match create_pointer_casting_proc typ with
+        | None -> []
+        | Some proc -> [proc]
+      ) in
+      proc_decls := !proc_decls @ cast_procs
+    )
   ) tbl_pointer_data_decl;
   (* return *)
   let newprog : Iast.prog_decl = {

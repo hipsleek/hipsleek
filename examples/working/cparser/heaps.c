@@ -11,7 +11,7 @@ struct node {
 
 /*@
 pq<n, mx> == self = null & n = 0 & mx = 0 
-  or (exists m3: self::node*<p> * p::node<d, m1, m2, l, r> * l::pq<m1, mx1> * r::pq<m2, mx2>
+  or (exists m3: self::node^<d, m1, m2, l, r> * l::pq<m1, mx1> * r::pq<m2, mx2>
   & n = 1 + m1 + m2 & d >= 0 &  d >= mx1 & d >= mx2 & mx >= d & m3 = m1-m2 & m3 >= 0 & m3 <= 1) //0 <= n1 - n2 & n1 - n2 <= 1
   inv n >= 0 & mx >= 0;
 */
@@ -23,21 +23,6 @@ void* malloc(int size) __attribute__ ((noreturn))
     size >  0 -> requires true ensures res != null;
   }
 */;
-
-/*@
-node__star cast_general_pointer_to_node__star(void__star p)
-  case {
-    p = null  -> ensures res = null;
-    p != null -> ensures res::node__star<q> * q::node<_,_,_,_,_>;
-  }
-
-int__star cast_general_pointer_to_int__star(void__star p)
-  case {
-    p = null  -> ensures res = null;
-    p != null -> ensures res::int__star<i>;
-  }
-*/
-
 
 /* function to insert an element in a priority queue */
 struct node* insert(struct node* t, int v)
