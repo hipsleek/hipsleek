@@ -22,21 +22,31 @@ void paper_fix (node c, node p)
         }
 }
 
- H1(c,p)&c!=null --> c::node<val_19_809,prev_19_810,next_19_811>@M * 
-  (HP_812(prev_19_810,p)) * (HP_813(next_19_811,p))&true,
- (HP_812(prev_19_810,p)) * (HP_813(next_19_811,p)) * 
-  c'::node<val_19_809,p,next_19_811>@M&true --> H1(next_19_811,c')&true,
- G1(next_19_811,c)&c!=null --> G1(c,p_826)&true,
- H1(c,p)&c=null --> G1(c,p)&true]
+/*
 
-==========================
+GOT
+===
+[ H1(c,p)&c!=null --> c::node<val_20_807,prev_20_808,next_20_809>@M * 
+  (HP_810(prev_20_808,p)) * (HP_811(next_20_809,p))&true,
 
-[ H1(c_869,p_870) ::= 
- emp&c_869=null
- or c_869::node<val_19_809,prev_19_810,next_19_811>@M&
-     XPURE(HP_812(prev_19_810,p_870)) &  XPURE(HP_813(next_19_811,p_870))
- ,
- G1(c_873,p_872) ::= G1(next_19_811,c_871)&c_871!=null]
+ HP_811(next_20_809,p)&true --> H1(next_20_809,c')&true,
+
+ (HP_810(prev_20_808,p)) * c::node<val_20_807,p,next_20_809>@M * 
+  (G1(next_20_809,c))&true --> G1(c,p)&true,
+
+ H1(c,p)& XPURE(H1(c,p)) & c=null --> G1(c,p)&true]
+         ^^^^^^^^^^^^^^^
+EXPECT:
+=======
+ H1(c,p)&c!=null --> c::node<val_21_809,prev_21_810,next_21_811>@M * 
+  HP_2(prev_21_810,p) * HP_3(next_21_811,p)&true.
+relAssume H1
+ HP_3(next_20_809,p)&true --> H1(next_20_809,c')&true.
+relAssume G1
+ HP_2(prev_20_808,p) * c::node<val_20_807,p,next_20_809>@M * 
+  G1(next_20_809,c)&true --> G1(c,p).
+relAssume G1
+ H1(c,p) & c=null --> G1(c,p).
 
 */
 
@@ -62,31 +72,6 @@ void remove (node c)
   
   
   */
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
- 
 //ll2<n,S> == self = null & n=0 & S={}  or self::node<v, _ , q> * q::ll2<n-1,S1> & S=union(S1,{v});
 //dll2<p,n,S> == self = null & n=0 & S={} or self::node<v, p , q> * q::dll2<self,n-1,S1> &  S=union(S1,{v});
 /*

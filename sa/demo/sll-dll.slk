@@ -14,14 +14,16 @@ relAssume H1
   HP_2(prev_21_810,p) * HP_3(next_21_811,p)&true.
 
 relAssume H1
- HP_2(prev_21_810,p) * HP_3(next_21_811,p) * 
-  c'::node<val_21_809,p,next_21_811>@M&true --> H1(next_21_811,c')&true.
+ HP_3(next_20_809,p)&true --> H1(next_20_809,c')&true.
 
 relAssume G1
- G1(next_21_811,c)&c!=null --> G1(c,p_826)&true.
+ HP_2(prev_20_808,p) * c::node<val_20_807,p,next_20_809>@M * 
+  G1(next_20_809,c)&true --> G1(c,p).
 
 relAssume G1
- H1(c,p)&c=null --> G1(c,p).
+ H1(c,p) & c=null --> G1(c,p).
+// H1(c,p) & XPURE(H1(c,p)) & c=null --> G1(c,p).
+
 
 /*
 relAssume HP_4

@@ -113,3 +113,69 @@ got:
  HP_988(l,r,r_987,r_995,res_986) ::= emp & r=null
  or l::node<l1,r2,r_991>@M * HP_988(l1,r2,r_991,l_879,res_986) & r!=null ]
 
+=========================================================================
+# sll-dll.ss
+
+GOT
+===
+[ H1(c,p)&c!=null --> c::node<val_20_807,prev_20_808,next_20_809>@M * 
+  (HP_810(prev_20_808,p)) * (HP_811(next_20_809,p))&true,
+
+ HP_811(next_20_809,p)&true --> H1(next_20_809,c')&true,
+
+ (HP_810(prev_20_808,p)) * c::node<val_20_807,p,next_20_809>@M * 
+  (G1(next_20_809,c))&true --> G1(c,p)&true,
+
+ H1(c,p)& XPURE(H1(c,p)) & c=null --> G1(c,p)&true]
+         ^^^^^^^^^^^^^^^
+EXPECT:
+=======
+ H1(c,p)&c!=null --> c::node<val_21_809,prev_21_810,next_21_811>@M * 
+  HP_2(prev_21_810,p) * HP_3(next_21_811,p)&true.
+relAssume H1
+ HP_3(next_20_809,p)&true --> H1(next_20_809,c')&true.
+relAssume G1
+ HP_2(prev_20_808,p) * c::node<val_20_807,p,next_20_809>@M * 
+  G1(next_20_809,c)&true --> G1(c,p).
+relAssume G1
+ H1(c,p) & c=null --> G1(c,p).
+
+--en-sleek-logging-txt
+
+ checkentail H1(c,p)&c=null & !(v_bool_18_784') & c=null & !(v_bool_18_784')&
+{FLOW,(22,23)=__norm}[]
+ |-  G1(c,p)&true&{FLOW,(22,23)=__norm}[]. 
+hprel_ass: [ H1(c,p)& XPURE(H1(c,p)) & c=null --> G1(c,p)&true]
+                      ^^^^^^^^^^^^^^
+res:  [
+  emp&c=null & !(v_bool_18_784') & c=null & !(v_bool_18_784')&{FLOW,(22,23)=__norm}[]
+  ]
+
+This problem seems to be caused in "hip" as I was not
+able to reproduce the same bug in sll-dll-bug3.slk.
+
+FINAL expected:
+===============
+ HP_3(next_20_93,p_94) ::= H1(next_20_93,c')&true,
+ H1(c_95,p_97) ::= 
+ emp&c_95=null
+ or (H1(next_21_54,c')) * c_95::node<val_21_52,prev_21_53,next_21_54>@M&
+     XPURE(HP_2(prev_21_53,p_96))
+ ,
+ G1(c_98,p_99) ::= 
+ emp&c_98=null
+ or c_98::node<val_20_807,p_99,next_20_809>@M * (G1(next_20_809,c_98))&
+     XPURE(HP_2(prev_20_808,p_99))
+ ]
+
+--sa-inlining
+
+[ HP_3(next_20_93,p_94) ::= H1(next_20_93,c')&true,
+ H1(c_95,p_97) ::= 
+ (H1(next_21_54,c')) * c_95::node<val_21_52,UU_HP_2_UU,next_21_54>@M&true
+ or emp&c_95=null
+ ,
+ G1(c_98,p_99) ::= 
+ c_98::node<val_20_807,p_99,next_20_809>@M * (G1(next_20_809,c_98))&true
+ or emp&c_98=null
+ ]
