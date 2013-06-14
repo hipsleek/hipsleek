@@ -36,3 +36,9 @@ checkentail
  & res=null
  |-  res::ll<> * y::ll<>.
 */
+
+
+checkentail x::ltwo<y_820> &y=y_820 & x=null & v_bool_23_800' &
+x=null & v_bool_23_800' & v_null_23_781'=null & res=v_null_23_781'
+//& res=x 
+|-  res::ll<> * y::ll<>.

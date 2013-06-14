@@ -181,7 +181,6 @@ let process_pred_def pdef =
 		ignore (AS.compute_view_x_formula !cprog cpdef !Globals.n_xpure);
         ignore (AS.set_materialized_prop cpdef);
 	let cpdef = AS.fill_one_base_case !cprog cpdef in 
-	(*let _ = print_string ("going gaga: "^(Cprinter.string_of_view_decl cpdef)^"\n") in*)
     (*let cpdef =  if !Globals.enable_case_inference then AS.view_case_inference !cprog iprog.I.prog_view_decls cpdef else cpdef in*)
 	let n_cpdef = AS.view_prune_inv_inference !cprog cpdef in
     !cprog.C.prog_view_decls <- (n_cpdef :: old_vdec);

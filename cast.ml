@@ -533,6 +533,8 @@ let re_proc_mutual_from_prog cp : (proc_decl list * ((proc_decl list) list) ) =
   let lst = list_of_procs cp
   in re_proc_mutual lst
 
+let mater_prop_var a = a.mater_var 
+let mater_prop_cmp_var a c = P.eq_spec_var_ident a.mater_var c.mater_var 
 let mk_mater_prop v ff tv = {mater_var=v; mater_full_flag = ff; mater_target_view = tv}
 let mater_prop_cmp c1 c2 = P.spec_var_cmp c1.mater_var c2.mater_var
 let merge_mater_views v1 v2 = match v1,v2 with

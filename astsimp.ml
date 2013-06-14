@@ -1534,9 +1534,9 @@ and find_materialized_prop params forced_vars (f0 : CF.formula) : C.mater_proper
   let pr1 = Cprinter.string_of_spec_var_list in
   let pr2 = Cprinter.string_of_formula in
   let pr3 = pr_list Cprinter.string_of_mater_property in
-  Debug.no_2 "find_materialized_prop" pr1 pr2 pr3 find_materialized_prop_x params (f0 : CF.formula)
+  Debug.no_2 "find_materialized_prop" pr1 pr2 pr3 (fun _ _ -> find_materialized_prop_x params forced_vars f0) params f0
 
-and find_materialized_prop_x params (f0 : CF.formula) : C.mater_property list = 
+and find_materialized_prop_x params forced_vars (f0 : CF.formula) : C.mater_property list = 
   let f_l = CF.list_of_disjuncts f0 in
   let is_member (aset :(CP.spec_var list * CP.spec_var)list) v = 
     let l = List.filter (fun (l,_) -> List.exists (CP.eq_spec_var v) l) aset in
@@ -1579,9 +1579,10 @@ and find_materialized_prop_x params (f0 : CF.formula) : C.mater_property list =
           if r<0 then {x with C.mater_full_flag = false} ::(merge_mater_lists t1 l2)
           else if r>0 then {y with C.mater_full_flag = false}:: (merge_mater_lists l1 t2)
           else (C.merge_mater_props x y)::(merge_mater_lists t1 t2) in
-  if  (List.length lm ==0) then []
-  else 
-    List.fold_left (fun a c -> merge_mater_lists a c)(List.hd lm) (List.tl lm)
+  let res = if  (List.length lm ==0) then []
+  else List.fold_left (fun a c -> merge_mater_lists a c)(List.hd lm) (List.tl lm) in
+  if (Gen.BList.subset_eq C.mater_prop_cmp_var forced_vars res) then res
+  else Error.report_error {Error.error_loc = no_pos; Error.error_text = "find_materialized_prop: the view body does not ensure that all the @R annotated variables would be materialized"}
         
 (*
   and set_materialized_vars prog cdef =

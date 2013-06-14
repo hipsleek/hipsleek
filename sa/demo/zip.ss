@@ -7,7 +7,8 @@ ll<> == self = null  or self::node<_, q> * q::ll<>;
 
 ltwo<p:node> == p::ll<> & self = null  or 
    self::node<_, q> * p::node<_,r> * q::ltwo<r>;
-
+   
+   
 HeapPred H1(node a, node b).
 HeapPred G1(node a, node b).
 
@@ -22,6 +23,7 @@ node zip (node x, node y)
 {
    if (x==null) return null;
    else {
+	//assume false;
      int n1=x.val;
      int n2=y.val;
      x.val = n1+n2;

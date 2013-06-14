@@ -1032,7 +1032,9 @@ and process_matches prog estate lhs_h is_normalizing ((l:match_res list),(rhs_no
   let pr1 = pr_list string_of_match_res in
   let pr2 x = (fun (l1, (c1,c2)) -> "(" ^ (pr1 l1) ^ ",(" ^ (pr c1) ^ "," ^ (pr c2) ^ "))" ) x in
   let pr3 = string_of_action_wt_res0 in
-  Debug.no_2 "process_matches" pr pr2 pr3 (fun _ _-> process_matches_x prog estate lhs_h is_normalizing (l, (rhs_node,rhs_rest))) lhs_h (l, (rhs_node,rhs_rest))
+  Debug.ho_2 "process_matches" pr pr2 pr3 
+	(fun _ _-> process_matches_x prog estate lhs_h is_normalizing (l, (rhs_node,rhs_rest))) 
+	lhs_h (l, (rhs_node,rhs_rest))
 
 and process_matches_x prog estate lhs_h is_normalizing ((l:match_res list),(rhs_node,rhs_rest)) = 
     let _ = Debug.tinfo_pprint "**** sel_hp_rel **********************" no_pos in
