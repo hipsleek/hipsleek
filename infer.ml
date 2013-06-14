@@ -755,8 +755,29 @@ let rec infer_pure_m_x unk_heaps estate lhs_rels lhs_xpure_orig lhs_xpure0 lhs_w
       let iv = iv_orig(* @iv_lhs_rel *) in
       let lhs_xpure = MCP.pure_of_mix lhs_xpure0 in 
       let rhs_xpure = MCP.pure_of_mix rhs_xpure_orig in 
-      let check_sat,fml = detect_lhs_rhs_contra (*lhs_xpure*) lhs_xpure_orig rhs_xpure pos in
-      (* let check_sat = TP.is_sat_raw (MCP.mix_of_pure fml) in *)
+      let split_rhs = CP.split_conjunctions rhs_xpure in
+      let rem_rhs = List.filter (fun c -> not(TP.imply_raw lhs_xpure c)) split_rhs in
+      let rhs_xpure = CP.join_conjunctions rem_rhs in
+      let _ = DD.tinfo_hprint (add_str "lhs_xpure: " (!CP.print_formula)) lhs_xpure pos in
+      let _ = DD.tinfo_hprint (add_str "split_rhs: " (pr_list !CP.print_formula)) split_rhs pos in
+      let _ = DD.tinfo_hprint (add_str "rem_rhs: " (pr_list !CP.print_formula)) rem_rhs pos in
+      let _ = DD.trace_hprint (add_str "lhs(orig): " !CP.print_formula) lhs_xpure_orig pos in
+      let _ = DD.trace_hprint (add_str "lhs0(orig): " !print_mix_formula) lhs_xpure0 pos in
+      let _ = DD.trace_hprint (add_str "rhs(orig): " !CP.print_formula) rhs_xpure pos in
+      let lhs_xpure = CP.filter_ante lhs_xpure_orig rhs_xpure in
+      let _ = DD.trace_hprint (add_str "lhs (after filter_ante): " !CP.print_formula) lhs_xpure pos in
+      let fml = CP.mkAnd lhs_xpure rhs_xpure pos in
+      let fml = CP.drop_rel_formula fml in
+      (*      let iv_orig = estate.es_infer_vars in*)
+      (* let iv_lhs_rel = match lhs_rels with *)
+      (*   | None -> [] *)
+      (*   | Some f -> List.filter (fun x -> not(is_rel_var x)) (CP.fv f) in *)
+      (* Debug.trace_hprint (add_str "iv_orig" !CP.print_svl) iv_orig no_pos; *)
+      (* Debug.trace_hprint (add_str "iv_lhs_rel" !CP.print_svl) iv_lhs_rel no_pos; *)
+      let iv = iv_orig(* @iv_lhs_rel *) in
+      let _ = DD.trace_hprint (add_str "fml: " !CP.print_formula) fml pos in
+      (* let check_sat,fml = detect_lhs_rhs_contra (\*lhs_xpure*\) lhs_xpure_orig rhs_xpure pos in *)
+      let check_sat = TP.is_sat_raw (MCP.mix_of_pure fml) in
       if not(check_sat) then
         let _ = DD.devel_pprint "LHS-RHS contradiction" pos in
         (* let lhs_xpure0 = MCP.pure_of_mix lhs_xpure0 in *)
@@ -819,7 +840,6 @@ let rec infer_pure_m_x unk_heaps estate lhs_rels lhs_xpure_orig lhs_xpure0 lhs_w
                   (CP.mkOr (CP.mkNot_s lhs_xpure_ann) rhs_xpure None pos) None pos) in
             (*          let fml2 = TP.simplify_raw (CP.mkExists quan_var_new fml None no_pos) in*)
             let new_p_for_assume = new_p in
-            let _ = DD.devel_hprint (add_str "new_p_assume: " !CP.print_formula) new_p pos in
             (*          let new_p2 = TP.simplify_raw (CP.mkAnd new_p fml2 no_pos) in*)
             let _ = DD.trace_hprint (add_str "rhs_xpure: " !CP.print_formula) rhs_xpure pos  in
             (*          let _ = DD.trace_hprint (add_str "fml2: " !CP.print_formula) fml2 pos in*)
@@ -851,6 +871,8 @@ let rec infer_pure_m_x unk_heaps estate lhs_rels lhs_xpure_orig lhs_xpure0 lhs_w
           (* else *)
           simplify new_p iv
         in
+        let _ = DD.tinfo_hprint (add_str "new_p: " !CP.print_formula) new_p pos in
+        let _ = DD.tinfo_hprint (add_str "new_p_ass: " !CP.print_formula) new_p_ass pos in
         (* abstract common terms from disj into conjunctive form *)
         if (CP.isConstTrue new_p || CP.isConstFalse new_p) then 
           begin
@@ -1204,7 +1226,10 @@ let infer_pure_m unk_heaps estate lhs_mix lhs_mix_0 lhs_wo_heap rhs_mix pos =
     Debug.tinfo_hprint (add_str "lhs_mix_0" !print_mix_formula) lhs_mix_0 no_pos;
     Debug.tinfo_hprint (add_str "lhs_rels" (pr_opt !CP.print_formula)) lhs_rels no_pos;
     Debug.tinfo_hprint (add_str "xp" !CP.print_formula) xp no_pos;
-    infer_pure_m unk_heaps estate lhs_rels xp lhs_mix_0 lhs_wo_heap rhs_mix estate.es_infer_vars pos
+    Debug.ninfo_hprint (add_str "infer_vars_rel" !CP.print_svl) estate.es_infer_vars_rel no_pos;
+    Debug.ninfo_hprint (add_str "infer_vars_hp_rel" !CP.print_svl) estate.es_infer_vars_hp_rel  no_pos;
+    let infer_vars = estate.es_infer_vars@estate.es_infer_vars_hp_rel in 
+    infer_pure_m unk_heaps estate lhs_rels xp lhs_mix_0 lhs_wo_heap rhs_mix infer_vars pos
 
 let infer_pure_m i unk_heaps estate lhs_xpure lhs_xpure0 lhs_wo_heap rhs_xpure pos =
   let pr1 = !print_mix_formula in 

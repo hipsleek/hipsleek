@@ -8,24 +8,20 @@ HeapPred SLSEG(node2 a,node2 b).
 
 // lsg1.slk
 
-infer[SLSEG] 
+infer[l,e] 
 SLSEG(l,e) 
- & e!=null
- & l=null 
+ & e!=l
+ & l=null
+ & k>0
  |-  l::node2<n,s>@L. 
 print residue.
 
 /*
-GOT
-===
-Entail (1) : Valid. 
+
 
  <1>hfalse&false&{FLOW,(19,20)=__norm}[]
- inferred hprel: [SLSEG(l,e)&true --> emp&l!=null | l>(e-1); 
-                  SLSEG(l,e)&true --> emp&e>=l | l!=null]
+ inferred hprel: [SLSEG(l,e)&true --> emp&l!=null | e=null]
 
-Why did we pick twice? Can
-we just generate one?
 
 
 */

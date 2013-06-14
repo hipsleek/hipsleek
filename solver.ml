@@ -6097,11 +6097,12 @@ and heap_entail_conjunct hec_num (prog : prog_decl) (is_folding : bool)  (ctx0 :
       (rhs_h_matched_set:CP.spec_var list) pos : (list_context * proof) =
   let hec  is_folding ctx0 c = heap_entail_conjunct_x prog is_folding ctx0 c rhs_h_matched_set pos in
   let hec a b c =
-    let (ante,consumed_heap,evars) =
+    let (ante,consumed_heap,evars,infer_vars) =
       match ctx0 with
         | OCtx _ -> (CF.mkTrue (CF.mkTrueFlow ()) pos (* impossible *),
-          CF.HEmp, [])
-        | Ctx estate -> (estate.es_formula,estate.es_heap,estate.es_evars)
+          CF.HEmp, [],[])
+        | Ctx estate -> (estate.es_formula,estate.es_heap,estate.es_evars,
+          (estate.es_infer_vars@estate.es_infer_vars_rel@estate.es_infer_vars_hp_rel))
     in
     (* WN : what if evars not used in the conseq? *)
     (* let _ = DD.info_pprint ("  ctx0: " ^ (Cprinter.string_of_context ctx0)) pos in *)
@@ -6115,7 +6116,7 @@ and heap_entail_conjunct hec_num (prog : prog_decl) (is_folding : bool)  (ctx0 :
     let r = hec a b c in
     let _ = hec_stack # pop in
     let (lc,_) = r in
-    let _ = Log.add_new_sleek_logging_entry !Globals.do_classic_frame_rule caller avoid hec_num slk_no ante conseq consumed_heap evars lc pos in
+    let _ = Log.add_new_sleek_logging_entry infer_vars !Globals.do_classic_frame_rule caller avoid hec_num slk_no ante conseq consumed_heap evars lc pos in
     let _ = Debug.ninfo_hprint (add_str "avoid" string_of_bool) avoid no_pos in
     let _ = Debug.ninfo_hprint (add_str "slk no" string_of_int) slk_no no_pos in
     let _ = Debug.ninfo_hprint (add_str "lc" Cprinter.string_of_list_context) lc no_pos in
