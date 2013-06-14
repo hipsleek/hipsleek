@@ -23,7 +23,7 @@ node zip (node x, node y)
 {
    if (x==null) return null;
    else {
-	//assume false;
+	assume false;
      int n1=x.val;
      int n2=y.val;
      x.val = n1+n2;

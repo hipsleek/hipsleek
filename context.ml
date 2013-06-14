@@ -1100,16 +1100,20 @@ and choose_closest a ys =
     | M_match m -> find m ys
     | _ -> None
           
-and choose_match f ys =
+and choose_match_x f ys =
   match f with
     | None -> None
     | Some a -> choose_closest a ys
 
+and choose_match f ys = 
+	let pr = pr_list_num string_of_action_wt_res in
+	let pr2 = pr_option string_of_action_res in
+	Debug.ho_1 "choose_match" pr pr2 (choose_match_x f) ys
 
 and sort_wt (ys: action_wt list) : action_wt list =
   let pr = pr_list string_of_action_wt_res_simpl in
   (* let pr2 = pr_list string_of_action_res in *)
-  Debug.no_1 "sort_wt" pr pr sort_wt_x ys
+  Debug.ho_1 "sort_wt" pr pr sort_wt_x ys
 
 and sort_wt_x (ys: action_wt list) : action_wt list =
   let rec recalibrate_wt (w,a) = match a with

@@ -8674,7 +8674,7 @@ and do_base_fold_x prog estate conseq rhs_node rhs_rest rhs_b is_folding pos=
 
 and do_base_fold prog estate conseq rhs_node rhs_rest rhs_b is_folding pos=
   let pr2 x = Cprinter.string_of_list_context_short (fst x) in
-  Debug.no_2 "do_base_fold" 
+  Debug.ho_2 "do_base_fold" 
       Cprinter.string_of_entail_state Cprinter.string_of_formula pr2
       (fun _ _ -> do_base_fold_x prog estate conseq rhs_node rhs_rest rhs_b is_folding pos) estate conseq
 
@@ -8914,7 +8914,7 @@ and do_unmatched_rhs rhs rhs_rest caller prog estate conseq lhs_b rhs_b a (rhs_h
   let pr1 =  Cprinter.string_of_entail_state in
   let pr2 (x,_) = Cprinter.string_of_fail_type x in
   (*let pr3 = Cprinter.string_of_spec_var_list in*)
-  Debug.no_2 "do_unmatched_rhs" Cprinter.string_of_h_formula pr1 pr2
+  Debug.ho_2 "do_unmatched_rhs" Cprinter.string_of_h_formula pr1 pr2
       (fun _ _ ->
           do_unmatched_rhs_x rhs rhs_rest caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:CP.spec_var list)
               is_folding pos) rhs estate
