@@ -1281,8 +1281,8 @@ and compute_actions_x prog estate es lhs_h lhs_p rhs_p posib_r_alias rhs_lst is_
               (string_of_action_wt_res_simpl))) r no_pos in
           let ys = sort_wt_match opt r in 
           let _ = DD.binfo_hprint (add_str "sorted action" (pr_list_num string_of_action_wt_res_simpl)) ys no_pos in
-          let ys = snd (List.split ys) in
-          List.hd (ys)
+          let ys2 = snd (List.split ys) in
+ 		  Cond_action  ys (*List.hd (ys2)*)
               (*  match ys with
                   | [(_, act)] -> act
                   | ys -> (Cond_action ys) *)
