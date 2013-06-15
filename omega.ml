@@ -576,7 +576,7 @@ let imply_ops pr_weak pr_strong (ante : formula) (conseq : formula) (imp_no : st
 
 let imply_ops pr_weak pr_strong (ante : formula) (conseq : formula) (imp_no : string) timeout : bool =
   let pr = !print_formula in
-  Debug.no_2 "[omega.ml]imply_ops_1" pr pr string_of_bool
+  Debug.ho_2 "[omega.ml]imply_ops_1" pr pr string_of_bool
   (fun _ _ -> imply_ops pr_weak pr_strong ante conseq imp_no timeout) ante conseq
 
 let imply (ante : formula) (conseq : formula) (imp_no : string) timeout : bool =

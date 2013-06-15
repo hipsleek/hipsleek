@@ -1737,6 +1737,20 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
   r
 
 let tp_imply_no_cache ante conseq imp_no timeout process =
+	(*wrapper for capturing equalities due to transitive equality with null*)
+	let f_e _ e = match e with 
+		| CP.Null p -> Some (CP.Var (CP.SpecVar(Void,"NULLV",Unprimed),p), true)
+		| _ -> None in
+	let transformer_fct = (fun _ _ -> None),(fun _ _ -> None),f_e in
+	let tr_arg = (fun _ _->()),(fun _ _->()),(fun _ _->()) in
+	let ante,did = trans_formula ante ()  transformer_fct tr_arg (fun x -> List.exists (fun x->x) x) in
+	let ante = if did then  And(ante, (CP.mkNull (CP.SpecVar(Void,"NULLV",Unprimed)) no_pos) ,no_pos) 
+			   else ante in
+	tp_imply_no_cache ante conseq imp_no timeout process
+
+  
+  
+let tp_imply_no_cache ante conseq imp_no timeout process =
   let pr = Cprinter.string_of_pure_formula in
   Debug.no_3_loop "tp_imply_no_cache" pr pr (fun s -> s) string_of_bool
   (fun _ _ _ -> tp_imply_no_cache ante conseq imp_no timeout process) ante conseq imp_no
