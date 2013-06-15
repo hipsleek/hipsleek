@@ -1,0 +1,97 @@
+data node{
+	int val;
+	node next;
+}.
+
+HeapPred H2(node a).
+HeapPred HP_6(node a).
+HeapPred G1(node a, node b).
+HeapPred K(int a).
+
+/*
+pred ln<> ==
+    self::node<_,q> & q=null
+  or self::node<_,q> * q::ln<> & q!=null
+ inv self!=null.
+
+pred ln<> ==
+    [] self::node<_,q> 
+    case {
+      q=null -> [] q=null;
+      q!=null -> [] q::ln<>;
+    }
+ inv self!=null.
+*/
+
+pred ll<> ==
+    self=null
+  or self::node<_,q> * q::ll<> 
+ inv true.
+
+pred lk<> ==
+    self=null
+  or self::node<_,q> * q::lk<> 
+ inv true.
+
+lemma self::ll<> -> self::lk<>.
+//lemma self::ll<> <- self::lk<>.
+
+//lemma self::ln<> <- self::node<_,q>*q::ll<>.
+//lemma self::ln<> -> self::node<_,q>*q::ll<>.
+//lemma self::ln<> <- self::ll<> & self!=null.
+// lemma x::node<_,q>*q::ll<> |- x::ln<>.
+
+
+/*
+checkentail self::node<_,q>*q::ll<>
+                 |- [] self::node<_,q1> 
+                     case {
+                       q1=null -> [] q1=null;
+                       q1!=null -> [] q1::ln<> ;
+                       } .
+*/
+
+checkentail x::node<_,q>*q::ll<> |- x::lk<>.
+
+//checkentail x::node<_,q1> & q1=null |- x::node<_,q>*q::ll<>.
+
+//checkentail self::node<_,q1> * q1::ln<> & q1!=null |- self::node<_,q>*q::ll<>.
+
+//checkentail xxx::node<_,q1> * q1::ln<> & q1!=null |- xxx::node<_,q>*q::ll<>.
+
+/*
+checkentail self::node<_,q1> & q1=null |- self::node<_,q>*q::ll<>.
+
+checkentail self::node<_,q1> * q1::ln<> & q1!=null 
+    |- self::node<_,q>*q::ll<>.
+
+checkentail q1::node<_,q>*q::ll<> & q1!=null 
+    |- q1::ll<>.
+*/
+
+//infer [H2] x::ln<> |- x::node<_,q>*H2(q) .
+//print residue.
+/*
+inferred hprel: [
+          emp&q=null --> H2(q)&true; 
+       q_51::ln<> & q_51!=null --> H2(q_51)&true]
+
+*/
+
+//infer [H2] x::node<_,q>*H2(q) |- x::node<_,r> & r=null .
+//print residue.
+
+//infer [H2] x::node<_,q>*H2(q) |- x::ln<>.
+
+/*
+ERROR: at _0:0_0:0 
+Message: infer.find_undefined_selective_pointers
+ caught
+
+*/
+//infer [H2] x::node<_,q>*H2(q) |- x::node<_,r> * r::ln<>.
+//print residue.
+
+//infer [H2] H2(q) & q=r |- r::ln<>.
+//infer [H2] H2(r) & r!=null  |- r::ln<>.
+//print residue.

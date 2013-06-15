@@ -9,7 +9,7 @@ ass [H1,H2,H3,G1,G2,G3][]:{
  H3(z)&true --> H2(z)&true;
  H2(y)&true --> H3(y)&true;
  HP_538(next_119_550)&next_119_550=null --> emp&true;
- x'::node<val_117_543,y>@M& true/*XPURE(H2(y))*/ --> G1(x')&true;
+ x'::node<val_117_543,y>@M& XPURE(H2(y)) --> G1(x')&true;
  H2(y)&true --> G2(y)&true;
  H3(z)&true --> G3(z)&true;
  G1(t_565) * x'::node<val_117_545,t_565>@M&true --> G1(x')&true;

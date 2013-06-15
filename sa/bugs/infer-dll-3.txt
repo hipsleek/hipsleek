@@ -1,0 +1,47 @@
+
+relAssume inference also needs to be improved.
+We will need to mark parameters as inductive or otherwise.
+
+Below is OK
+===========
+relAssume H1
+ H1(c,p)&c!=null --> c::node<val_19_765',prev_19_766',next_19_767'>@M * 
+  HP_796(prev_19_766',p) * HP_797(next_19_767',p)&true.
+and will have marked the first parameter as inductive parameter of H1,
+HP_796 and HP_797.
+
+Below is problematic
+====================
+relAssume H1
+ c'::node<val_19_805,p,next_19_806>@M * HP_796(prev_19_798,p) * 
+  HP_797(next_19_806,p) &true |- H1(next_19_806,c')&true.
+
+We should recognize that c-para of H1 is inductive but not p.
+Based on this, we would only pick a chain of predicate the
+comes from inductive predicate on RHS, with:
+  HP_797(next_19_806,p) &true --> H1(next_19_806,c')&true.
+with residue:
+ c'::node<val_19_805,p,next_19_806>@M * HP_796(prev_19_798,p) 
+
+Furthermore, we will then have:
+ c::node<val_19_805,p,next_19_806>@M * HP_796(prev_19_798,p) * 
+   G1(next_19_806,c) |- G1(c,p).
+
+This should result in:
+ c::node<val_19_805,p,next_19_806>@M * 
+   G1(next_19_806,c) --> G1(c,p).
+
+with a residue that was not picked as it is not
+in the inductive chain:
+  HP_796(prev_19_798,p)
+
+We also have:
+
+ H1(c,p)&c=null |- G1(c,p)&true.
+
+As the inductive parameter on LHS is empty, we propose to split 
+pre-predicate H1 and post-predicate G1 to obtain:
+
+ H1(c,p)&c=null --> emp & true
+ emp & c=null --> G1(c,p)&true.
+

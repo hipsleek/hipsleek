@@ -1,0 +1,79 @@
+data node{
+	int val;
+	node prev;
+	node next;
+}.
+
+HeapPred H1(node a, node b).
+HeapPred G1(node a, node b).
+HeapPred HP_796(node a, node b).
+HeapPred HP_797(node a, node b).
+
+relAssume H1
+  H1(c,p)&c!=null --> c::node<_,prev_19_766',next_19>@M *
+    HP_796(prev_19_766',p) * HP_797(next_19,p)&true.
+
+relAssume H1
+  HP_797(next_19,p) & true --> H1(next_19,c')&true.
+
+relAssume H1
+  H1(c,p)&c=null --> emp.
+
+relAssume G1
+ G1(next_19,c) * c::node<_,p,next_19>@M &
+  true --> G1(c,p)&true.
+
+relAssume G1
+ emp & c=null --> G1(c,p).
+
+shape_infer [H1][G1].//[pre_hps][post_hps]
+
+/*
+
+Below seems wrong still...
+
+ H1(c_42,p_43) ::= 
+ emp&c_42=null
+ or c_42::node<Anon_11,prev_19_766',next_19>@M * 
+    (HP_796(prev_19_766',p_43)) * (HP_797(next_19,p_43))&true
+ ,
+ G1(c_44,p_45) ::= emp&c_44=null,
+ HP_797(next_19,p) ::= htrue&true,
+ HP_796(c') ::= htrue&true]
+
+*************************************
+
+Why did we not get below:
+
+ H1(c,p) ::= 
+   c::node<_,prev_19_766',next_19>@M * (H1(next_19,p))&c!=null
+   or c=null & emp
+
+ G1(c,p) := c=null
+      or c::node<_,p,next_19_767'> * G1(next_19_806,c)
+
+Note that 2nd paramter of of H1 is useless.
+
+This came from :
+
+
+Pre
+---
+ H1(c,p) ::= 
+   c::node<_,prev_19_766',next_19_767'>@M * (HP_797(next_19_767',p))&c!=null
+   or c=null --> emp
+ HP_797(n,p) & true --> H1(n,c')&true.
+
+Post
+----
+ G1(c,p) := c=null
+      or c::node<_,p,next_19_767'> * G1(next_19_806,c)
+
+which should further simplify to:
+
+
+
+
+
+
+*/

@@ -1,0 +1,48 @@
+data node{
+  node prev;
+  node next;
+}.
+
+HeapPred R(node a).
+
+pred dll<p> == self = null 
+          or self::node<p, q> * q::dll<r> & r=self 
+  inv true.
+
+//infer [R] R(x) |-  x::dll<_>. 
+//infer [R] R(x) |-  x::node<_,_>.
+
+
+checkentail emp |-  x::node<_,_>. 
+
+print residue.
+
+/*
+
+   Why is InferHeap carried out here? -dd
+
+
+conseq:
+ x::node<Anon_11,Anon_12>@M[Orig]&true&{FLOW,(19,20)=__norm}[]
+!!!:0: 0: process_action :
+ ### action =  InferHeap: ( x::node<Anon_11,Anon_12>@M[Orig], emp)
+ ### estate =  emp&true&{FLOW,(19,20)=__norm}[]
+ ### conseq =  x::node<Anon_11,Anon_12>@M[Orig]&true&{FLOW,(19,20)=__norm}[]
+
+
+!!!:0: 0: process_action :
+ ### action =  UnmatchedRHSData:  x::node<Anon_11,Anon_12>@M[Orig]
+ ### estate =  emp&true&{FLOW,(19,20)=__norm}[]
+ ### conseq =  x::node<Anon_11,Anon_12>@M[Orig]&true&{FLOW,(19,20)=__norm}[]
+
+
+What are scenarios for infer_heap
+
+   x::R<..> |- x::pred<..>
+   x::R<..> |- x::node<..>
+   ..       |- x::node<..>
+   ..       |- x::pred<..>
+
+
+
+*/

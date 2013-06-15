@@ -1145,7 +1145,7 @@ type featureDescr = {
 
 (** Comparison function for position.
  ** Compares first by filename, then line, then byte *)
-val compareLoc: position -> position -> int
+(* val compareLoc: position -> position -> int *)
 
 (** Comparison function for locations.
  ** Compares first by start_pos, then end_pos *)

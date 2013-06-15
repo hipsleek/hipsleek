@@ -518,7 +518,7 @@ let eq_spec_var_ident (sv1 : spec_var) (sv2 : spec_var) = match (sv1, sv2) with
 	    (* We need only to compare names  of permission variables*)
 	    v1 = v2
 
-let eq_xpure_view xp1 xp2=
+let eq_xpure_view_x xp1 xp2=
   let rec check_eq_order_spec_var_list svl1 svl2=
     match svl1,svl2 with
       | [],[] -> true
@@ -528,12 +528,17 @@ let eq_xpure_view xp1 xp2=
           else false
       | _ -> false
   in
-  if xp1.xpure_view_name = xp1.xpure_view_name then
+  if String.compare xp1.xpure_view_name xp1.xpure_view_name = 0 then
     match xp1.xpure_view_node,xp1.xpure_view_node with
       | None,None -> check_eq_order_spec_var_list xp1.xpure_view_arguments xp2.xpure_view_arguments
       | Some r1,Some r2 -> check_eq_order_spec_var_list (r1::xp1.xpure_view_arguments) (r2::xp2.xpure_view_arguments)
       | _ -> false
   else false
+
+let eq_xpure_view xp1 xp2=
+  let pr1=string_of_xpure_view in
+  Debug.no_2 "eq_xpure_view" pr1 pr1 string_of_bool
+      (fun _ _ -> eq_xpure_view_x xp1 xp2) xp1 xp2
 
 let remove_dups_svl vl = Gen.BList.remove_dups_eq eq_spec_var vl
 
@@ -2083,19 +2088,47 @@ and is_disjunct f : bool =
     | _ -> false
 
 (*limited, should use equal_formula, equal_b_formula, eq_exp instead*)  
-and equalFormula_f (eq:spec_var -> spec_var -> bool) (f1:formula)(f2:formula):bool = 
+and equalFormula_f (eq:spec_var -> spec_var -> bool) (f01:formula)(f02:formula):bool =
+  let rec helper f1 f2=
   match (f1,f2) with
     | ((BForm (b1,_)),(BForm (b2,_))) -> equalBFormula_f eq  b1 b2
-    | ((Not (b1,_,_)),(Not (b2,_,_))) -> equalFormula_f eq b1 b2
+    | ((Not (b1,_,_)),(Not (b2,_,_))) -> helper b1 b2
     | (Or(f1, f2, _,_), Or(f3, f4, _,_))
-    | (And(f1, f2, _), And(f3, f4, _)) ->  (equalFormula_f eq f1 f3) & (equalFormula_f eq f2 f4)
+    | (And(f1, f2, _), And(f3, f4, _)) -> ((helper f1 f3) & (helper f2 f4))
+        || ((helper f1 f4) & (helper f2 f3))
     | AndList b1, AndList b2 -> 
 	  if (List.length b1)= List.length b2 
-	  then List.for_all2 (fun (l1,c1)(l2,c2)-> Lab_List.compare l1 l2 = 0 && equalFormula_f eq c1 c2) b1 b2 
+	  then List.for_all2 (fun (l1,c1)(l2,c2)-> Lab_List.compare l1 l2 = 0 && helper c1 c2) b1 b2 
 	  else false
     | (Exists(sv1, f1, _,_), Exists(sv2, f2, _,_))
-    | (Forall(sv1, f1,_, _), Forall(sv2, f2, _,_)) -> (eq sv1 sv2) & (equalFormula_f eq f1 f2)
+    | (Forall(sv1, f1,_, _), Forall(sv2, f2, _,_)) -> (eq sv1 sv2) & (helper f1 f2)
     | _ -> false
+  in
+  let ps1 = list_of_conjs f01 in
+  let ps2 = list_of_conjs f02 in
+  let l1 = List.length ps1 in
+  if l1 == List.length ps2 then
+    if l1<=2 then
+      helper f01 f02
+    else
+      let xps1,rems1=List.partition is_xpure ps1 in
+      let xps2,rems2=List.partition is_xpure ps2 in
+      try
+          if List.for_all2 helper rems1 rems2 then
+            let get_xp f=
+              match f with
+                | BForm ((XPure xp1,_),_) -> xp1
+                | _ -> report_error no_pos "cpure.equalFormula_f: should be xpure_view"
+            in
+            (*simple sort*)
+            let sort_fn xp1 xp2 = String.compare xp1.xpure_view_name xp2.xpure_view_name in
+            let xps11 = List.sort sort_fn (List.map get_xp xps1) in
+            let xps21 = List.sort sort_fn (List.map get_xp xps2) in
+             List.for_all2 eq_xpure_view xps11 xps21
+          else false
+      with _ -> false
+  else false
+
 
 and equalBFormula_f (eq:spec_var -> spec_var -> bool) (f1:b_formula)(f2:b_formula):bool =
   let (pf1,_) = f1 in
@@ -6932,6 +6965,19 @@ let norm_bform_b (bf:b_formula) : b_formula =
     | BagMax _ | ListAllN _ | ListPerm _ -> pf
   in (npf, il)
 
+let filter_disj_x disj_ps ps=
+  let filter_one_disj p=
+    let disjs = split_disjunctions p in
+    let rem_disjs = List.filter (fun p1 -> (List.exists (equalFormula p1) ps)) disjs in
+    join_disjunctions rem_disjs
+  in
+  let filtered_disj_ps = List.map filter_one_disj disj_ps in
+  filtered_disj_ps
+
+let filter_disj disj_ps ps=
+  let pr1 = pr_list !print_formula in
+  Debug.no_2 "filter_disj" pr1 pr1 pr1
+      (fun _ _ -> filter_disj_x disj_ps ps) disj_ps ps
 
 let rec extract_xpure p=
 match p with
@@ -6947,6 +6993,57 @@ match pf with
                 in
                 (hp,args)
   | _ -> report_error no_pos "cpure.extract_xpure"
+
+let rec get_xpure p0=
+  let rec helper p=
+    match p with
+      | BForm (b,_) -> get_xpure_b_form_xpure b
+      | And (b1,b2,_) -> (helper b1)@(helper b2)
+      | AndList b-> List.fold_left (fun ls (_,b1) -> ls@(helper b1)) [] b
+      | Or (b1,b2,_,_) -> (helper b1)@(helper b2)
+      | Not (b,_,_) -> helper b
+      | Forall (_,b,_,_)-> 	helper b
+      | Exists (q,b,lbl,l)-> helper b
+  in
+  helper p0
+
+and get_xpure_b_form_xpure (b: b_formula) = let (pf,_) = b in
+match pf with
+  | XPure xp -> let hp = SpecVar (HpT, xp.xpure_view_name,Unprimed) in
+                let args= match xp.xpure_view_node with
+                  | None -> xp.xpure_view_arguments
+                  | Some r -> r::xp.xpure_view_arguments
+                in
+                [(hp,args)]
+  | _ -> []
+
+and drop_xpure_pformula pf= match pf with
+  | XPure xp -> BConst (true, xp.xpure_view_pos)
+  | _ -> pf
+
+and drop_xpure_bformula (pf, a) =  (drop_xpure_pformula pf, a)
+
+and drop_xpure f0 =
+  let rec helper f=
+    match f with
+      | BForm (bf, ofl) -> BForm (drop_xpure_bformula bf, ofl)
+      | And (f1, f2, p) -> begin
+            let nf1 = helper f1 in
+            let nf2 = helper f2 in
+            match isConstTrue nf1, isConstTrue nf2 with
+              | true, true -> mkTrue p
+              | true, false -> nf2
+              | false, true -> nf1
+              | false,false -> And (nf1, nf2, p)
+        end
+      | AndList b -> AndList (map_l_snd helper b)
+      | Or (f1, f2, ofl, p) ->  Or (helper f1, helper f2, ofl, p)
+      | Not (f, ofl, p) ->  Not (helper f, ofl, p)
+      | Forall (sv, f, ofl, p) -> Forall (sv, helper f, ofl, p)
+      | Exists (sv, f, ofl, p) -> Exists (sv, helper f, ofl, p)
+  in
+  helper f0
+
 
 (***********************************
  * aggressive simplify and normalize
@@ -7567,9 +7664,10 @@ let rec remove_redundant_helper ls rs=
     | f::fs -> if List.exists (equalFormula f) fs then
           remove_redundant_helper fs rs
         else (match f with
-          | BForm ((Eq(e1, e2, _), _) ,_) -> if (eq_exp_no_aset e1 e2) then
+          | BForm ((Eq(e1, e2, _), _) ,_) -> if (eq_exp_no_aset e1 e2) || (is_null_const_exp e1 || is_null_const_exp e2) then
                 remove_redundant_helper fs rs
               else remove_redundant_helper fs rs@[f]
+          | BForm ((Lte(IConst (0,_), IConst (0,_), _), _) ,_) -> remove_redundant_helper fs rs
           | _ -> remove_redundant_helper fs rs@[f]
         )
 
@@ -8242,6 +8340,33 @@ let is_neq_null_exp (f:formula)=
   let pr1 = !print_formula in
   Debug.no_1 "is_neq_null_exp" pr1 string_of_bool
       (fun _ -> is_neq_null_exp_x f) f
+
+let rec get_neq_null_svl_x (f:formula) =
+  let helper (bf:b_formula) =
+    match bf with
+      | (Neq (sv1,sv2,_),_) -> begin
+          match sv1,sv2 with
+            | Var (v,_), Null _ -> [v]
+            | Null _, Var (v,_) -> [v]
+            | _ -> []
+      end
+      | _ -> []
+  in
+  match f with
+	| BForm (b,_)-> helper b
+	| And (b1,b2,_) -> (get_neq_null_svl_x b1)@(get_neq_null_svl_x b2)
+	| AndList b -> List.fold_left (fun svl (_,c)->
+        let svl1 = get_neq_null_svl_x c in
+        svl@svl1) [] b
+	| Or _ -> report_error no_pos "cpure.get_neq_null_svl: ?"
+	| Not (b,_,_)-> get_neq_null_svl_x b
+	| Forall (_,f,_,_) -> get_neq_null_svl_x f
+	| Exists (_,f,_,_) -> get_neq_null_svl_x f
+
+let get_neq_null_svl (f:formula)=
+  let pr1 = !print_formula in
+  Debug.no_1 "get_neq_null_svl" pr1 !print_svl
+      (fun _ -> get_neq_null_svl_x f) f
 
 let check_dang_or_null_exp_x root (f:formula) = match f with
   | BForm (bf,_) ->

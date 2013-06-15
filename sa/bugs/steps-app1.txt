@@ -1,0 +1,59 @@
+data node{
+	int val;
+	node next;
+}.
+
+HeapPred H2(node a).
+HeapPred HP_6(node a).
+HeapPred G1(node a, node b).
+HeapPred K(int a).
+
+pred ln<> == self::node<_,q> & q=null
+          or self::node<_,q> * q::ln<> & q!=null
+ inv self!=null.
+
+pred ll<> ==
+    self=null
+  or self::node<_,q> * q::ll<> 
+ inv true.
+
+lemma self::node<_,q>*q::ll<> -> self::ln<>.
+
+infer [H2] x::ln<> |- x::node<_,q>*H2(q) .
+print residue.
+/*
+inferred hprel: [
+          emp&q=null --> H2(q)&true; 
+       q_51::ln<> & q_51!=null --> H2(q_51)&true]
+
+x::node<_,null> |- x::node<_,q>*H2(q)
+    q=null --> H2(q)
+
+x::node<_,q>*q::ll<> |- x::node<_,q>*H2(q)
+    q::ll<> --> H2(q)
+    x::node<_,q>*H2(q) --> H2(q)
+
+
+*/
+
+
+//infer [H2] x::node<_,q>*H2(q) |- x::ln<>.
+
+/*
+ERROR: at _0:0_0:0 
+Message: infer.find_undefined_selective_pointers
+ caught
+
+*/
+
+infer [H2]  x::node<_,q>*H2(q) |- x::ln<> .
+
+infer [H2]  x::node<_,q>*H2(q) |- x::ln<> .
+
+x::node<_,q>*H2(q) |- x::node<_,null>
+
+  H2(q) & q=null --> null
+
+x::node<_,q>*H2(q)  |- x::node<_,q>*q::ln<> 
+
+  H2(q) & q!=null --> q::ln<>

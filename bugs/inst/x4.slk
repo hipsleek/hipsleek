@@ -1,0 +1,37 @@
+data node{
+  node prev;
+  node next;
+}.
+
+
+pred dll<p> == self = null 
+          or self::node<p, q> * q::dll<r> & r=self 
+//          or self::node<p, q> * q::dll<self,_>  
+  inv true.
+
+checkentail c::node<p,q> * q::dll<c>  
+  |-     c::dll<_>. 
+
+/*
+ view dll<p:node,q:node>= 
+  (,EBase {1}->emp&self=null&{FLOW,(1,22)=__flow}[])
+  || (,EBase exists (Expl)(Impl)[r; Anon_11](ex){2}->EXISTS(p_13,
+             q_14: self::node<p_13@M,q_14@M>@M[Orig] * 
+             q::dll<r,Anon_11>@M[0][Orig]&0<=0 & r=self & p=p_13 & q=q_14&
+             {FLOW,(1,22)=__flow})[])
+
+
+ view dll<p:node,q:node>= 
+  (,EBase {1}->emp&self=null&{FLOW,(1,22)=__flow}[])
+  || (,EBase exists (Expl)(Impl)[Anon_11](ex){2}->EXISTS(p_13,q_14,
+             self_15: self::node<p_13,q_14>@M[Orig] * 
+             q::dll<self_15,Anon_11>@M[0][Orig]&p=p_13 & q=q_14 & 
+             self=self_15&{FLOW,(1,22)=__flow})[])
+
+ view dll<p:node>= 
+  (,EBase {1}->emp&self=null&{FLOW,(1,22)=__flow}[])
+  || (,EBase exists (Expl)(Impl)[q; 
+             r](ex){2}->EXISTS(p_12: self::node<p_12,q>@M[Orig] * 
+             q::dll<r>@M[0][Orig]&r=self & p=p_12&{FLOW,(1,22)=__flow})[])
+
+*/

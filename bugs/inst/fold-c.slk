@@ -1,0 +1,36 @@
+data cell{
+  cell prev;
+  cell next;
+}.
+
+/*
+ Cristian:
+
+ For predicate definition
+    it better to use existential rather than implicit 
+     instantiation; this can help reduce presence of
+    intermediate vars
+    implicit however may be used to support case-analysis
+
+ What do you think?
+*/
+
+
+pred foo<p> == self= null 
+            or (exists q,r: self::cell<p,q>*q::foo<r> & r=self)
+  inv true.
+
+pred fooI<p> == self = null 
+            or self::cell<p,q>*q::fooI<r> & r=self
+  inv true.
+
+checkentail c::cell<p,q1>*q1::foo<c> 
+  |-     c::foo<r>. 
+print residue.
+// <1>emp&p=r&{FLOW,(19,20)=__norm}[]
+
+checkentail c::cell<p,q1>*q1::fooI<c> 
+  |-     c::fooI<r>. 
+print residue.
+// <1>emp&q1=q_58 & c=r_59 & p=r&{FLOW,(19,20)=__norm}[]
+

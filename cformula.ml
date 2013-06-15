@@ -108,6 +108,9 @@ and formula =
   | Exists of formula_exists
 
 
+(*(*intermediary structure for heap predicate inference, stores a constraint on heap predicates*)
+(*    used in the context fields: es_infer_hp_rel and returned by various methods in particular*)
+(*	check_specs_infer*)*)
 and hprel= {
     hprel_kind: CP.rel_cat;
     unk_svl: CP.spec_var list;
@@ -117,12 +120,20 @@ and hprel= {
     hprel_rhs: formula
 }
 
+
+(*seems to be finished inferred relations, used in the rel_def_stk structure*)
+(*although that stack seems more internal to the inference than anything else, *)
+ (*the results are never picked from the stack, rather they are returned by the inference method*)
 and hprel_def= {
     hprel_def_kind: CP.rel_cat;
     hprel_def_hrel: h_formula;
     hprel_def_body: formula option;
     hprel_def_body_lib: formula option;
 }
+
+(*temporal: name * hrel * definition body*)
+(*actually used to store the constraints on heap predicates inference*)
+and hp_rel_def = CP.rel_cat * h_formula * formula
 
 (* and infer_rel_type =  (CP.rel_cat * CP.formula * CP.formula) *)
 
@@ -185,7 +196,7 @@ and h_formula = (* heap formula *)
   | ViewNode of h_formula_view
   | Hole of int
   (* | TempHole of int * h_formula *)
-  | HRel of (CP.spec_var * (CP.exp list) * loc)
+  | HRel of (CP.spec_var * (CP.exp list) * loc) (*placeholder for heap predicates*)
   | HTrue
   | HFalse
   | HEmp (* emp for classical logic *)
@@ -598,6 +609,14 @@ let generate_disj_pairs_from_memf (mf:mem_formula):(CP.spec_var * CP.spec_var) l
 
 let rec formula_of_heap h pos = mkBase h (MCP.mkMTrue pos) TypeTrue (mkTrueFlow ()) [] pos
 
+and formula_base_of_heap h pos = {formula_base_heap = h; 
+	                              formula_base_pure = (MCP.mkMTrue pos); 
+	                              formula_base_type = TypeTrue;
+	                              formula_base_flow = (mkTrueFlow ());
+                                  formula_base_and = [];
+                                  formula_base_label = None;
+	                              formula_base_pos = pos}
+
 and formula_of_heap_w_normal_flow h pos = mkBase h (MCP.mkMTrue pos) TypeTrue (mkNormalFlow ()) [] pos
 
 and formula_of_heap_fl h fl pos = mkBase h (MCP.mkMTrue pos) TypeTrue fl [] pos
@@ -609,7 +628,15 @@ and struc_formula_of_heap h pos = EBase {
 	formula_struc_base = formula_of_heap h pos;
 	formula_struc_continuation = None;
 	formula_struc_pos = pos}
-
+	
+and struc_formula_of_heap_fl h fl pos = EBase { 
+	formula_struc_explicit_inst = [];	 
+	formula_struc_implicit_inst = []; 
+	formula_struc_exists = [];
+	formula_struc_base = formula_of_heap_fl h fl pos;
+	formula_struc_continuation = None;
+	formula_struc_pos = pos}
+	
 and struc_formula_of_formula f pos = EBase { 
 	formula_struc_explicit_inst = [];	 
     formula_struc_implicit_inst = []; 
@@ -630,6 +657,14 @@ and formula_of_pure_formula (p:CP.formula) (pos:loc) :formula =
 
 and mkBase_simp (h : h_formula) (p : MCP.mix_formula) : formula=  mkBase_w_lbl h p TypeTrue (mkNormalFlow()) [] no_pos None
 
+and mkEBase_w_vars ee ei ii f ct pos = EBase{
+      formula_struc_explicit_inst = ei;
+      formula_struc_implicit_inst = ii;
+      formula_struc_exists =ee;
+      formula_struc_base = f;
+      formula_struc_continuation = ct;
+      formula_struc_pos = pos;
+  }
 and mkBase_rec f ct pos = {
       formula_struc_explicit_inst =[];
       formula_struc_implicit_inst =[];
@@ -1141,8 +1176,23 @@ and get_case_guard_list lbl (lst:(Cpure.b_formula * formula_label list) list) : 
 (* TRUNG TODO: should change name to mkEmp_b ? *)
 
 and mkTrue_b_nf pos = mkTrue_b (mkTrueFlow ()) pos
-	  
+
 and mkTrue_nf pos = Base (mkTrue_b_nf pos)
+
+and mkHTrue_b (flowt:flow_formula) pos = {
+		formula_base_heap = HTrue;
+		formula_base_pure = MCP.mkMTrue pos;
+		formula_base_type = TypeTrue;
+        formula_base_and = [];
+		formula_base_flow = flowt (*(mkTrueFlow ())*);
+		formula_base_label = None;
+		formula_base_pos = pos}
+
+and mkHTrue_b_nf pos = mkHTrue_b (mkTrueFlow ()) pos
+
+and mkHTrue (flowt: flow_formula) pos = Base (mkHTrue_b flowt pos)
+
+and mkHTrue_nf pos = Base (mkHTrue_b_nf pos)
 
 and mkFalse_nf pos = mkFalse (mkTrueFlow ()) pos
 
@@ -1480,7 +1530,7 @@ and is_empty_heap (h : h_formula) = match h with
   | HFalse -> true
   | _ -> false
 
-and is_unkown_heap (h : h_formula) = match h with
+and is_unknown_heap (h : h_formula) = match h with
   | HTrue -> true
   | _ -> false
 
@@ -1965,7 +2015,7 @@ and add_unfold_num (f : formula) uf =
     | Base b -> Base ({b with formula_base_heap = h_add_unfold_num b.formula_base_heap uf})
     | Exists e -> Exists ({e with formula_exists_heap = h_add_unfold_num e.formula_exists_heap uf})
   in helper f
-
+  
 and add_struc_origins origs (f:struc_formula) = match f with
 	  | ECase b -> ECase {b with formula_case_branches = map_l_snd (add_struc_origins origs) b.formula_case_branches;}
 	  | EBase b -> EBase {b with formula_struc_base = add_origins b.formula_struc_base origs ; 
@@ -3639,6 +3689,7 @@ and normalize_keep_flow_join (f1 : formula) (f2 : formula) flow_tr (pos : loc) =
 			let qvars2, base2 = split_quantifiers f2 in
 			let new_base = mkStar_combine base1 base2 flow_tr pos in
 			let new_h, new_p, new_fl, new_t, new_a = split_components new_base in
+                        (* let new_h = Immutable.normalize_field_ann_heap_node new_h in *)
 			let resform = mkExists (qvars1 @ qvars2) new_h new_p new_t new_fl new_a pos in (* qvars[1|2] are fresh vars, hence no duplications *)
 			resform
 		  end
@@ -3762,12 +3813,15 @@ let extract_unk_hprel_x (f0:formula) =
     | Exists ({ formula_exists_pure = p1;
         formula_exists_heap = h1;}) ->
         (
-            if (CP.isConstTrue (MCP.pure_of_mix p1)) then
-              match h1 with
-                | HRel (hp, _, _ ) -> [hp]
-                | _ -> report_error no_pos "CF.extract_HRel"
-            else
-              report_error no_pos "extract_unk_hprel_f"
+            if  not (is_unknown_heap h1) then
+              let p2 = (MCP.pure_of_mix p1) in
+              if (CP.isConstTrue p2 || CP.is_xpure p2) then
+                match h1 with
+                  | HRel (hp, _, _ ) -> [hp]
+                  | _ -> report_error no_pos "CF.extract_unk_hprel_f: 1"
+              else
+                report_error no_pos "CF.extract_unk_hprel_f: 2"
+            else []
         )
     | Or {formula_or_f1 = f1;
           formula_or_f2 = f2} ->
@@ -3780,6 +3834,78 @@ let extract_unk_hprel (f0:formula) =
   let pr2 = !CP.print_svl in
   Debug.no_1 "extract_unk_hprel" pr1 pr2
       (fun _ ->  extract_unk_hprel_x f0) f0
+
+let extract_hrel_head_x (f0:formula) =
+  let rec helper f=
+  match f with
+    | Base ({ formula_base_pure = p1;
+        formula_base_heap = h1;})
+    | Exists ({ formula_exists_pure = p1;
+        formula_exists_heap = h1;}) ->
+        (
+            let p2 = (MCP.pure_of_mix p1) in
+            if (CP.isConstTrue p2 || CP.is_xpure p2) then
+              match h1 with
+                | HRel (hp, _, _ ) -> Some hp
+                | _ -> None
+            else
+              None
+        )
+    | Or _ -> report_error no_pos "CF.extract_hrel_head"
+  in
+  helper f0
+
+let extract_hrel_head (f0:formula) =
+  let pr1 = !print_formula in
+  let pr2 = !CP.print_svl in
+  Debug.no_1 "extract_hrel_head" pr1 pr2
+      (fun _ ->  extract_hrel_head_x f0) f0
+
+let extract_hprel_pure (f0:formula) =
+  let rec helper f=
+  match f with
+    | Base ({ formula_base_pure = p1;
+        formula_base_heap = h1;})
+    | Exists ({ formula_exists_pure = p1;
+        formula_exists_heap = h1;}) ->
+        (
+            let p2 = (MCP.pure_of_mix p1) in
+            match h1 with
+              | HRel (hp, eargs, _ ) -> Some (hp, List.concat (List.map CP.afv eargs), p2)
+              | _ -> None
+        )
+    | Or _ -> report_error no_pos "CF.extract_hprel_pure 1"
+  in
+  helper f0
+
+let get_xpure_view (f0:formula) =
+  let rec helper f=
+  match f with
+    | Base ({ formula_base_pure = p1;})
+    | Exists ({ formula_exists_pure = p1;}) ->
+        (
+            CP.get_xpure (MCP.pure_of_mix p1)
+        )
+    | Or {formula_or_f1 = f1;
+          formula_or_f2 = f2} ->
+        (helper f1) @ (helper f2)
+  in
+  helper f0
+
+let simplify_pure_f_x (f0:formula) =
+  let rec helper f=
+    match f with
+      | Base b-> Base {b with formula_base_pure = MCP.mix_of_pure (CP.remove_redundant (MCP.pure_of_mix b.formula_base_pure));}
+      | Exists e -> Exists {e with formula_exists_pure = MCP.mix_of_pure (CP.remove_redundant (MCP.pure_of_mix e.formula_exists_pure));}
+      | Or orf -> Or {orf with formula_or_f1 = helper orf.formula_or_f1;
+          formula_or_f2 = helper orf.formula_or_f2}
+  in
+  helper f0
+
+let simplify_pure_f (f0:formula) =
+  let pr= !print_formula in
+  Debug.no_1 "simplify_pure_f" pr pr
+      (fun _ -> simplify_pure_f_x f0) f0
 
 let extract_HRel_orig hf=
   match hf with
@@ -3853,6 +3979,13 @@ and get_ptrs_f (f: formula)=
         get_ptrs fb.formula_base_heap
     | _ -> report_error no_pos "SAU.is_empty_f: not handle yet"
 
+and get_pure (f: formula)=
+  match f with
+    | Base fb ->
+        MCP.pure_of_mix fb.formula_base_pure
+    | Exists fe -> MCP.pure_of_mix fe.formula_exists_pure
+    | _ -> report_error no_pos "SAU.is_empty_f: not handle yet"
+
 and get_ptrs (f: h_formula): CP.spec_var list = match f with
   | DataNode {h_formula_data_node = c}
   | ViewNode {h_formula_view_node = c} -> [c]
@@ -3912,7 +4045,9 @@ let rec get_h_size_f (f: formula)=
   match f with
     | Base fb ->
         (get_h_size fb.formula_base_heap)
-    | _ -> report_error no_pos "SAU.is_empty_f: not handle yet"
+    | Exists fe ->
+        (get_h_size fe.formula_exists_heap)
+    | _ -> report_error no_pos "CF.get_h_size_f: not handle yet"
 
 and get_h_size (f0: h_formula) =
  let rec helper f=
@@ -3972,6 +4107,11 @@ let check_imm_mis rhs_mis rhs0=
           in
           helper rhs0
     | _ -> rhs0
+
+let check_imm_mis rhs_mis rhs0 =
+  let pr = !print_h_formula in
+  Debug.no_2 "check_imm_mis" pr pr pr check_imm_mis rhs_mis rhs0
+
 
 let rec get_hp_rel_formula (f:formula) =
   match f with
@@ -4071,8 +4211,29 @@ and get_hprel_h_formula hf0=
   helper hf0
 
 
+and eq_svl ls1 ls2=
+  match ls1,ls2 with
+    | [],[] -> true
+    | sv1::rest1,sv2::rest2 -> if CP.eq_spec_var sv1 sv2 then
+        eq_svl rest1 rest2
+      else false
+    | _ -> false
+
+and eq_hpargs (hp1,args1) (hp2,args2)=
+  if (CP.eq_spec_var hp1 hp2) then
+   (* let args1 = (List.fold_left List.append [] (List.map CP.afv eargs1)) in *)
+   (* let args2 = (List.fold_left List.append [] (List.map CP.afv eargs2)) in *)
+   eq_svl args1 args2
+  else
+    false
+
 and eq_hprel (hp1,eargs1,_) (hp2,eargs2,_)=
-  CP.eq_spec_var hp1 hp2
+  if (CP.eq_spec_var hp1 hp2) then
+   let args1 = (List.fold_left List.append [] (List.map CP.afv eargs1)) in
+   let args2 = (List.fold_left List.append [] (List.map CP.afv eargs2)) in
+   eq_svl args1 args2
+  else
+    false
 
 and get_hp_rel_name_formula (f: formula) =
   match f with
@@ -4288,6 +4449,131 @@ and filter_vars_hf hf rvs=
     | HFalse
     | HEmp -> hf
 
+let generate_xpure_view_x drop_hpargs total_unk_map=
+  let rec lookup_xpure_view hp rem_map=
+    match rem_map with
+      | [] -> []
+      | (hp0,xpv)::tl ->
+          if CP.eq_spec_var hp0 hp then
+            [xpv]
+          else lookup_xpure_view hp tl
+  in
+  let generate_xpure_view_one_hp pos (hp,args)=
+    let hp_name = CP.name_of_spec_var hp in
+    let p,unk_svl,unk_map =
+      let xpvs = lookup_xpure_view hp total_unk_map in
+      match xpvs with
+        | [xp] ->
+            let xp_r, xp_args = match xp.CP.xpure_view_node with
+              | None -> None, xp.CP.xpure_view_arguments
+              |Some _ -> Some (List.hd args), (List.tl args)
+            in
+          let new_xpv = {xp with CP.xpure_view_node =  xp_r;
+              xpure_view_arguments =  xp_args
+                        }
+          in
+          let p = CP.mkFormulaFromXP new_xpv in
+          (p,args,[])
+        | [] ->
+            let xpv = { CP.xpure_view_node = None;
+                       CP.xpure_view_name = hp_name;
+                       CP.xpure_view_arguments = args;
+                       CP.xpure_view_remaining_branches= None;
+                       CP.xpure_view_pos = no_pos;
+            }
+            in
+            let p = CP.mkFormulaFromXP xpv in
+          (p,args,[(hp,xpv)])
+        | _ -> report_error no_pos "infer.generate_xpure_view: not possible"
+    in
+    (p,unk_svl,unk_map)
+  in
+  let ps,ls_fr_svl,ls_unk_map = split3 (List.map (generate_xpure_view_one_hp no_pos) drop_hpargs) in
+  (List.concat ls_fr_svl,CP.conj_of_list ps no_pos,List.concat ls_unk_map)
+
+let generate_xpure_view drop_hpargs total_unk_map=
+  let pr1 = pr_list (pr_pair !CP.print_sv !CP.print_svl) in
+  let pr2 = pr_triple !CP.print_svl !CP.print_formula
+    (pr_list (pr_pair !CP.print_sv CP.string_of_xpure_view)) in
+  Debug.no_1 "generate_xpure_view" pr1 pr2
+      (fun _ -> generate_xpure_view_x drop_hpargs total_unk_map) drop_hpargs
+
+let annotate_dl_hf hf0 unk_hps=
+  let rec helper hf=
+    match hf with
+      | Star {h_formula_star_h1 = hf1;
+              h_formula_star_h2 = hf2;
+              h_formula_star_pos = pos} ->
+          let n_hf1,ps1 = helper hf1 in
+          let n_hf2,ps2 = helper hf2 in
+          let new_hf=
+            match n_hf1,n_hf2 with
+              | (HEmp,HEmp) -> HEmp
+              | (HEmp,_) -> n_hf2
+              | (_,HEmp) -> n_hf1
+              | _ -> (Star {h_formula_star_h1 = n_hf1;
+                            h_formula_star_h2 = n_hf2;
+                            h_formula_star_pos = pos})
+          in
+          (new_hf, ps1@ps2)
+      | Conj { h_formula_conj_h1 = hf1;
+               h_formula_conj_h2 = hf2;
+               h_formula_conj_pos = pos} ->
+          let n_hf1,ps1 = helper hf1 in
+          let n_hf2,ps2 = helper hf2 in
+          (Conj { h_formula_conj_h1 = n_hf1;
+                 h_formula_conj_h2 = n_hf2;
+                 h_formula_conj_pos = pos}, ps1@ps2)
+      | Phase { h_formula_phase_rd = hf1;
+                h_formula_phase_rw = hf2;
+                h_formula_phase_pos = pos} ->
+          let n_hf1,ps1 = helper hf1 in
+          let n_hf2,ps2 = helper hf2 in
+          (Phase { h_formula_phase_rd = n_hf1;
+                  h_formula_phase_rw = n_hf2;
+                  h_formula_phase_pos = pos}, ps1@ps2)
+      | DataNode hd -> (hf,[])
+      | ViewNode hv -> (hf,[])
+      | HRel (hp, eargs, _) -> if CP.mem_svl hp unk_hps then
+            let args = (List.fold_left List.append [] (List.map CP.afv eargs)) in
+            let _,p,_ = generate_xpure_view [(hp,args)] [] in
+            (* (HEmp,[p]) *) (hf,[p])
+          else (hf,[])
+      | Hole _
+      | HTrue
+      | HFalse
+      | HEmp -> (hf,[])
+      | StarMinus _ | ConjStar _ | ConjConj _ -> report_error no_pos "CF.annotate_dl_hf: not handle yet"
+
+  in
+  helper hf0
+
+let annotate_dl_x (f0: formula) unk_hps =
+  let rec helper f=
+    match f with
+      | Base  b ->
+          let new_h,ps = annotate_dl_hf b.formula_base_heap unk_hps in
+          let new_p = MCP.mix_of_pure (CP.mkAnd (MCP.pure_of_mix b.formula_base_pure) (CP.conj_of_list ps no_pos) no_pos)
+          in
+          Base {b with (* formula_base_heap = new_h; *)
+              formula_base_pure = new_p;
+               }
+      | Exists e ->
+          let new_h,ps = annotate_dl_hf e.formula_exists_heap unk_hps in
+          let new_p = MCP.mix_of_pure (CP.mkAnd (MCP.pure_of_mix e.formula_exists_pure) (CP.conj_of_list ps no_pos) no_pos) in
+          Exists {e with (* formula_exists_heap = new_h; *)
+		          formula_exists_pure = new_p;}
+      | Or orf  -> Or {orf with formula_or_f1 = helper orf.formula_or_f1;
+          formula_or_f2 = helper orf.formula_or_f2}
+  in
+  if unk_hps=[] then f0 else helper f0
+
+let annotate_dl (f0: formula) unk_hps =
+  let pr1 = !print_formula in
+  let pr2 = !CP.print_svl in
+  Debug.no_2 "annotate_dl" pr1 pr2 pr1
+      (fun _ _ ->  annotate_dl_x f0 unk_hps) f0 unk_hps
+
 let rec extract_pure (f0: formula)=
   let rec helper f=
    match f with
@@ -4374,6 +4660,203 @@ and subst_hprel_hf hf0 from_hps to_hp=
   in
   helper hf0
 
+and add_pure_formula_to_formula (f1_pure: CP.formula) (f2_f:formula)  : formula = add_mix_formula_to_formula (MCP.mix_of_pure f1_pure) f2_f
+
+let drop_views_h_formula hf0 views=
+  let rec helper hf=
+    match hf with
+      | Star {h_formula_star_h1 = hf1;
+              h_formula_star_h2 = hf2;
+              h_formula_star_pos = pos} ->
+          let n_hf1 = helper hf1 in
+          let n_hf2 = helper hf2 in
+          let new_hf=
+            match n_hf1,n_hf2 with
+              | (HEmp,HEmp) -> HEmp
+              | (HEmp,_) -> n_hf2
+              | (_,HEmp) -> n_hf1
+              | _ -> (Star {h_formula_star_h1 = n_hf1;
+                            h_formula_star_h2 = n_hf2;
+                            h_formula_star_pos = pos})
+          in
+          (new_hf)
+      | Conj { h_formula_conj_h1 = hf1;
+               h_formula_conj_h2 = hf2;
+               h_formula_conj_pos = pos} ->
+          let n_hf1 = helper hf1 in
+          let n_hf2 = helper hf2 in
+          (Conj { h_formula_conj_h1 = n_hf1;
+                 h_formula_conj_h2 = n_hf2;
+                 h_formula_conj_pos = pos})
+      | Phase { h_formula_phase_rd = hf1;
+                h_formula_phase_rw = hf2;
+                h_formula_phase_pos = pos} ->
+          let n_hf1 = helper hf1 in
+          let n_hf2 = helper hf2 in
+          (Phase { h_formula_phase_rd = n_hf1;
+                  h_formula_phase_rw = n_hf2;
+                  h_formula_phase_pos = pos})
+      | DataNode hd -> (hf)
+      | ViewNode hv ->
+          if List.exists (fun view -> String.compare view hv.h_formula_view_name = 0) views then
+            HEmp
+          else hf
+      | HRel _
+      | Hole _
+      | HTrue
+      | HFalse
+      | HEmp -> hf
+      | StarMinus _ | ConjStar _ | ConjConj _ -> report_error no_pos "CF.drop_views_h_formula: not handle yet"
+  in
+  helper hf0
+
+let drop_views_formula_x (f0:formula) views : formula=
+  let rec helper f2_f=
+    match f2_f with
+      | Or ({formula_or_f1 = f1; formula_or_f2 = f2; formula_or_pos = pos}) ->
+          Or ({formula_or_f1 = helper f1 ; formula_or_f2 =  helper f2 ; formula_or_pos = pos})
+      | Base b -> Base { b with formula_base_heap = drop_views_h_formula b.formula_base_heap views;}
+      | Exists b -> Exists {b with formula_exists_heap = drop_views_h_formula b.formula_exists_heap views;}
+  in
+  helper f0
+
+let drop_view_formula (f2_f:formula) views: formula =
+  let pr2 x= String.concat ";" x in
+  Debug.no_2 "drop_view_formula" !print_formula pr2
+      !print_formula
+      drop_views_formula_x f2_f views
+
+let drop_view_struc_formula_x (f0 : struc_formula) views: struc_formula =
+  let rec helper f=
+    match f with
+	  | ECase b -> report_error no_pos "CF.drop_view_struc_formula: not handle yet"
+	  | EBase b -> EBase {b with  formula_struc_base = drop_view_formula b.formula_struc_base views;
+		  formula_struc_continuation = map_opt (helper) b.formula_struc_continuation;}
+	  | EAssume _ -> f
+	  | EInfer b -> EInfer { b with formula_inf_continuation = helper b.formula_inf_continuation;}
+      (* | EOr b -> EOr {b with  *)
+	  (*     formula_struc_or_f1 = helper b.formula_struc_or_f1;  *)
+	  (*     formula_struc_or_f2 = helper b.formula_struc_or_f2; } *)
+	  | EList b -> EList (map_l_snd (helper) b)
+  in
+  helper f0
+
+let drop_view_struc_formula (f : struc_formula) views: struc_formula =
+  let pr1 = !print_struc_formula in
+  let pr2 x= String.concat ";" x in
+  Debug.no_2 " drop_view_struc_formula" pr1 pr2 pr1
+      (fun _ _ -> drop_view_struc_formula_x f views) f views
+
+(*******************************************)
+
+let drop_view_paras_h_formula hf0 ls_view_pos=
+  let retrieve_args_from_locs args locs=
+    let rec retrieve_args_from_locs_helper args locs index res=
+      match args with
+        | [] -> res
+        | a::ss -> if List.mem index locs then
+              retrieve_args_from_locs_helper ss locs (index+1) (res@[a])
+            else retrieve_args_from_locs_helper ss locs (index+1) res
+    in
+    retrieve_args_from_locs_helper args locs 0 []
+  in
+  let rec lookup_view vn args ls=
+    match ls with
+      | [] -> None
+      | (vn1,ls_pos)::rest ->
+          if String.compare vn vn1 = 0 then
+            Some (retrieve_args_from_locs args ls_pos)
+          else
+            lookup_view vn args rest
+  in
+  let rec helper hf=
+    match hf with
+      | Star {h_formula_star_h1 = hf1;
+              h_formula_star_h2 = hf2;
+              h_formula_star_pos = pos} ->
+          let n_hf1 = helper hf1 in
+          let n_hf2 = helper hf2 in
+          let new_hf=
+            match n_hf1,n_hf2 with
+              | (HEmp,HEmp) -> HEmp
+              | (HEmp,_) -> n_hf2
+              | (_,HEmp) -> n_hf1
+              | _ -> (Star {h_formula_star_h1 = n_hf1;
+                            h_formula_star_h2 = n_hf2;
+                            h_formula_star_pos = pos})
+          in
+          (new_hf)
+      | Conj { h_formula_conj_h1 = hf1;
+               h_formula_conj_h2 = hf2;
+               h_formula_conj_pos = pos} ->
+          let n_hf1 = helper hf1 in
+          let n_hf2 = helper hf2 in
+          (Conj { h_formula_conj_h1 = n_hf1;
+                 h_formula_conj_h2 = n_hf2;
+                 h_formula_conj_pos = pos})
+      | Phase { h_formula_phase_rd = hf1;
+                h_formula_phase_rw = hf2;
+                h_formula_phase_pos = pos} ->
+          let n_hf1 = helper hf1 in
+          let n_hf2 = helper hf2 in
+          (Phase { h_formula_phase_rd = n_hf1;
+                  h_formula_phase_rw = n_hf2;
+                  h_formula_phase_pos = pos})
+      | DataNode hd -> (hf)
+      | ViewNode hv -> begin
+          let on_args = lookup_view hv.h_formula_view_name hv.h_formula_view_arguments ls_view_pos in
+            match on_args with
+              | None -> hf
+              | Some n_args -> ViewNode {hv with h_formula_view_arguments = n_args}
+      end
+      | HRel _
+      | Hole _
+      | HTrue
+      | HFalse
+      | HEmp -> hf
+      | StarMinus _ | ConjStar _ | ConjConj _ -> report_error no_pos "CF.drop_view_paras_h_formula: not handle yet"
+  in
+  helper hf0
+
+let drop_view_paras_formula_x (f0:formula) ls_view_pos : formula=
+  let rec helper f2_f=
+    match f2_f with
+      | Or ({formula_or_f1 = f1; formula_or_f2 = f2; formula_or_pos = pos}) ->
+          Or ({formula_or_f1 = helper f1 ; formula_or_f2 =  helper f2 ; formula_or_pos = pos})
+      | Base b -> Base { b with formula_base_heap = drop_view_paras_h_formula b.formula_base_heap ls_view_pos;}
+      | Exists b -> Exists {b with formula_exists_heap = drop_view_paras_h_formula b.formula_exists_heap ls_view_pos;}
+  in
+  let f1 = elim_exists f0 in
+  helper f1
+
+let drop_view_paras_formula (f2_f:formula) ls_view_pos: formula =
+  let pr2 = pr_list(pr_pair pr_id (pr_list string_of_int)) in
+  Debug.no_2 "drop_view_paras_formula" !print_formula pr2
+      !print_formula
+      drop_view_paras_formula_x f2_f ls_view_pos
+
+let drop_view_paras_struc_formula_x (f0 : struc_formula) ls_view_pos: struc_formula =
+  let rec helper f=
+    match f with
+	  | ECase b -> report_error no_pos "CF.drop_view_struc_formula: not handle yet"
+	  | EBase b -> EBase {b with  formula_struc_base = drop_view_paras_formula b.formula_struc_base ls_view_pos;
+		  formula_struc_continuation = map_opt (helper) b.formula_struc_continuation;}
+	  | EAssume _-> f
+	  | EInfer b -> EInfer { b with formula_inf_continuation = helper b.formula_inf_continuation;}
+      (* | EOr b -> EOr {b with *)
+	  (*     formula_struc_or_f1 = helper b.formula_struc_or_f1; *)
+	  (*     formula_struc_or_f2 = helper b.formula_struc_or_f2; } *)
+	  | EList b -> EList (map_l_snd (helper) b)
+  in
+  helper f0
+
+let drop_view_paras_struc_formula (f : struc_formula) ls_view_pos: struc_formula =
+  let pr1 = !print_struc_formula in
+  let pr2 = pr_list (pr_pair pr_id (pr_list string_of_int)) in
+  Debug.no_2 " drop_view_paras_struc_formula" pr1 pr2 pr1
+      (fun _ _ -> drop_view_paras_struc_formula_x f ls_view_pos) f ls_view_pos
+(*******************************************)
+
 let xpure_for_hnodes hf=
 let hds, _, _ (*hvs, hrs*) =  get_hp_rel_h_formula hf in
   (*currently we just work with data nodes*)
@@ -4423,6 +4906,49 @@ let is_only_neqNull args unk_hps f0=
   Debug.no_2 "is_only_neqNull" !CP.print_svl pr1 string_of_bool
       (fun _ _ -> is_only_neqNull_x args unk_hps f0) args f0
 
+let get_args_neqNull_x args expl_ptrs f0=
+  (* let non_root_svl = List.concat *)
+  (*   (List.map (fun hd -> List.filter CP.is_node_typ hd.h_formula_data_arguments) hds) in *)
+  (* let non_root_args = CP.diff_svl args non_root_svl in *)
+  let helper1 p=
+    let neqNull_svl = CP.get_neq_null_svl p in
+    let neqNull_svl1 = CP.diff_svl neqNull_svl expl_ptrs in
+    CP.intersect_svl neqNull_svl1 args
+  in
+  let rec helper f=
+    match f with
+      | Base fb ->
+           helper1 (MCP.pure_of_mix fb.formula_base_pure)
+      | Exists fe ->
+          helper1 (MCP.pure_of_mix fe.formula_exists_pure)
+      | Or orf -> CP.remove_dups_svl ((helper orf.formula_or_f1) @ (helper orf.formula_or_f2))
+  in
+  helper f0
+
+let get_args_neqNull args expl_svl f0=
+  let pr1 = !print_formula in
+  Debug.no_1 "get_args_neqNull" pr1 !CP.print_svl
+      (fun _ -> get_args_neqNull_x args expl_svl f0) f0
+
+let get_neqNull_x f0=
+  let helper1 p=
+    CP.get_neq_null_svl p
+  in
+  let rec helper f=
+    match f with
+      | Base fb ->
+           helper1 (MCP.pure_of_mix fb.formula_base_pure)
+      | Exists fe ->
+          helper1 (MCP.pure_of_mix fe.formula_exists_pure)
+      | Or orf -> CP.remove_dups_svl ((helper orf.formula_or_f1) @ (helper orf.formula_or_f2))
+  in
+  helper f0
+
+let get_neqNull f0=
+  let pr1 = !print_formula in
+  Debug.no_1 "get_neqNull" pr1 !CP.print_svl
+      (fun _ -> get_neqNull_x f0) f0
+
 let remove_neqNulls p=
   let ps = (CP.split_conjunctions p) in
   let ps1 = CP.remove_redundant_helper ps [] in
@@ -4450,9 +4976,9 @@ let remove_neqNulls_f f0=
 
 
 (*elim redundant x!=null in p*)
-let remove_neqNull_redundant_hnodes hds p=
+let remove_neqNull_redundant_hnodes svl p=
   (*currently we just work with data nodes*)
-  let neqNulls = List.map (fun dn -> CP.mkNeqNull dn.h_formula_data_node dn.h_formula_data_pos) hds in
+  let neqNulls = List.map (fun sv -> CP.mkNeqNull sv no_pos) svl in
   let ps = (CP.split_conjunctions p) in
   let ps1 = CP.remove_redundant_helper ps [] in
   let new_ps = Gen.BList.difference_eq CP.equalFormula ps1 neqNulls in
@@ -4461,7 +4987,8 @@ let remove_neqNull_redundant_hnodes hds p=
 (*elim redundant x!=null in p*)
 let remove_neqNull_redundant_hnodes_hf hf p=
   let hds, _, _ (*hvs, hrs*) =  get_hp_rel_h_formula hf in
-  remove_neqNull_redundant_hnodes hds p
+  let svl = List.map (fun dn -> dn.h_formula_data_node) hds in
+  remove_neqNull_redundant_hnodes svl p
 
 let remove_neqNull_redundant_hnodes_f f0=
   let rec helper f=
@@ -4473,13 +5000,30 @@ let remove_neqNull_redundant_hnodes_f f0=
                   let nf2 = helper orf.formula_or_f2 in
                   ( Or {orf with formula_or_f1 = nf1;
                       formula_or_f2 = nf2;})
-		      | Exists fe -> let np = remove_neqNull_redundant_hnodes_hf fe.formula_exists_heap
+	  | Exists fe -> let np = remove_neqNull_redundant_hnodes_hf fe.formula_exists_heap
                        (MCP.pure_of_mix fe.formula_exists_pure) in
                      (Exists {fe with formula_exists_pure = MCP.mix_of_pure np;})
   in
   helper f0
 
-let remove_com_pures f0 nullPtrs com_eqPures=
+let remove_neqNull_svl svl f0=
+  let rec helper f=
+    match f with
+      | Base fb -> let np = remove_neqNull_redundant_hnodes svl
+                     (MCP.pure_of_mix fb.formula_base_pure) in
+                   (Base {fb with formula_base_pure = MCP.mix_of_pure np})
+      | Or orf -> let nf1 = helper orf.formula_or_f1 in
+                  let nf2 = helper orf.formula_or_f2 in
+                  ( Or {orf with formula_or_f1 = nf1;
+                      formula_or_f2 = nf2;})
+		      | Exists fe -> let np = remove_neqNull_redundant_hnodes svl
+                       (MCP.pure_of_mix fe.formula_exists_pure) in
+                     (Exists {fe with formula_exists_pure = MCP.mix_of_pure np;})
+  in
+  helper f0
+
+
+let remove_com_pures_x f0 nullPtrs com_eqPures=
   let remove p elim_svl=
     if elim_svl = [] then p else
 	begin
@@ -4505,23 +5049,39 @@ let remove_com_pures f0 nullPtrs com_eqPures=
                   let nf2 = helper orf.formula_or_f2 in
                   ( Or {orf with formula_or_f1 = nf1;
                       formula_or_f2 = nf2;})
-      | Exists fe -> let new_p = remove (MCP.pure_of_mix fe.formula_exists_pure) nullPtrs in
-                     let new_p1 = remove_com_pures new_p com_eqPures in
-                     (Exists {fe with formula_exists_pure = MCP.mix_of_pure new_p1;})
+    | Exists fe ->
+        let qvars, base1 = split_quantifiers f in
+        let nf = helper base1 in
+        add_quantifiers qvars nf
+        (* let new_p = remove (MCP.pure_of_mix fe.formula_exists_pure) nullPtrs in *)
+        (*            let new_p1 = remove_com_pures new_p com_eqPures in *)
+        (*            (Exists {fe with formula_exists_pure = MCP.mix_of_pure new_p1;}) *)
   in
   helper f0
 
+let remove_com_pures f0 nullPtrs com_eqPures=
+  let pr1 = !print_formula in
+  let pr2 = !CP.print_svl in
+  let pr3 = pr_list !CP.print_formula in
+  Debug.no_3 "remove_com_pures" pr1 pr2 pr3 pr1
+      (fun _ _ _ -> remove_com_pures_x f0 nullPtrs com_eqPures)
+      f0 nullPtrs com_eqPures
+
 (*drop HRel in the set hp_names and return corresponding subst of their args*)
-let rec drop_hrel_f f hp_names=
+let rec drop_hrel_f f0 hp_names=
+  let rec helper f=
   match f with
     | Base fb -> let nfb,argsl = drop_hrel_hf fb.formula_base_heap hp_names in
         (Base {fb with formula_base_heap =  nfb;}, argsl)
-    | Or orf -> let nf1,argsl1 =  drop_hrel_f orf.formula_or_f1 hp_names in
-                let nf2,argsl2 =  drop_hrel_f orf.formula_or_f2 hp_names in
-       ( Or {orf with formula_or_f1 = nf1;
-                formula_or_f2 = nf2;}, argsl1@argsl2)
-    | Exists fe -> let nfe,argsl = drop_hrel_hf fe.formula_exists_heap hp_names in
-        (Exists {fe with formula_exists_heap = nfe ;}, argsl)
+    | Or orf -> let nf1,argsl1 =  helper orf.formula_or_f1 in
+      let nf2,argsl2 = helper orf.formula_or_f2 in
+      ( Or {orf with formula_or_f1 = nf1;
+          formula_or_f2 = nf2;}, argsl1@argsl2)
+    | Exists fe ->let qvars, base1 = split_quantifiers f in
+      let nf,argsl = helper base1 in
+      (add_quantifiers qvars nf,argsl)
+  in
+  helper f0
 
 and drop_hrel_hf hf hp_names=
   match hf with
@@ -4571,7 +5131,7 @@ and drop_hrel_hf hf hp_names=
         let n_hf2,argsl2 = drop_hrel_hf hf2 hp_names in
         (ConjConj { h_formula_conjconj_h1 = n_hf1;
                h_formula_conjconj_h2 = n_hf2;
-               h_formula_conjconj_pos = pos}, argsl1@argsl2)                              
+               h_formula_conjconj_pos = pos}, argsl1@argsl2)
     | Phase { h_formula_phase_rd = hf1;
               h_formula_phase_rw = hf2;
               h_formula_phase_pos = pos} ->
@@ -4588,6 +5148,90 @@ and drop_hrel_hf hf hp_names=
     | HTrue
     | HFalse
     | HEmp -> (hf,[])
+
+let drop_unk_hrel f0 hp_names=
+  let rec helper f=
+    match f with
+      | Base fb -> let nfb,_ = drop_hrel_hf fb.formula_base_heap hp_names in
+        (Base {fb with formula_base_heap =  nfb;
+            formula_base_pure = MCP.mix_of_pure (CP.drop_xpure (MCP.pure_of_mix fb.formula_base_pure));
+        })
+      | Or orf -> let nf1 = helper orf.formula_or_f1 in
+        let nf2 = helper orf.formula_or_f2 in
+        ( Or {orf with formula_or_f1 = nf1;
+            formula_or_f2 = nf2;})
+      | Exists fe ->
+            let qvars, base1 = split_quantifiers f in
+            let nf = helper base1 in
+            add_quantifiers qvars nf
+  in
+  helper f0
+
+(*drop HRel in the set hp_namesxeargs*)
+let rec drop_exact_hrel_f f0 hprels com_eqPures=
+  let hpargs = List.map (fun (hp,eargs,_) -> (hp, (List.fold_left List.append [] (List.map CP.afv eargs)))) hprels in
+  let xpures = List.fold_left (fun ls p -> ls@(CP.get_xpure p)) [] com_eqPures in
+  let total_unk_hpargs = hpargs@xpures in
+  let rec helper f=
+    match f with
+      | Base fb -> let nfb = drop_exact_hrel_hf fb.formula_base_heap total_unk_hpargs in
+        (Base {fb with formula_base_heap =  nfb;})
+      | Or orf -> let nf1 = helper orf.formula_or_f1 in
+        let nf2 = helper orf.formula_or_f2 in
+        ( Or {orf with formula_or_f1 = nf1;
+            formula_or_f2 = nf2;})
+      | Exists fe -> let nfe = drop_exact_hrel_hf fe.formula_exists_heap total_unk_hpargs in
+        (Exists {fe with formula_exists_heap = nfe ;})
+  in
+  helper f0
+
+and drop_exact_hrel_hf hf0 unk_hpargs=
+  let rec helper hf=
+    match hf with
+      | Star {h_formula_star_h1 = hf1;
+              h_formula_star_h2 = hf2;
+              h_formula_star_pos = pos} ->
+          let n_hf1 = helper hf1 in
+          let n_hf2 = helper hf2 in
+          let newf =
+            (match n_hf1,n_hf2 with
+              | (HEmp,HEmp) -> HEmp
+              | (HEmp,_) -> n_hf2
+              | (_,HEmp) -> n_hf1
+              | _ -> (Star {h_formula_star_h1 = n_hf1;
+                            h_formula_star_h2 = n_hf2;
+                            h_formula_star_pos = pos})
+            ) in
+          (newf)
+      | Conj { h_formula_conj_h1 = hf1;
+               h_formula_conj_h2 = hf2;
+               h_formula_conj_pos = pos} ->
+          let n_hf1= helper hf1 in
+          let n_hf2 = helper hf2 in
+          (Conj { h_formula_conj_h1 = n_hf1;
+                  h_formula_conj_h2 = n_hf2;
+                  h_formula_conj_pos = pos})
+      | Phase { h_formula_phase_rd = hf1;
+                h_formula_phase_rw = hf2;
+                h_formula_phase_pos = pos} ->
+          let n_hf1 = helper hf1 in
+          let n_hf2 = helper hf2 in
+          (Phase { h_formula_phase_rd = n_hf1;
+                   h_formula_phase_rw = n_hf2;
+                   h_formula_phase_pos = pos})
+      | DataNode hd -> (hf)
+      | ViewNode hv -> (hf)
+      | HRel (hp,eargs,_) ->
+            let args = (List.fold_left List.append [] (List.map CP.afv eargs)) in
+            if Gen.BList.mem_eq eq_hpargs (hp,args) unk_hpargs then (HEmp)
+            else (hf)
+      | Hole _
+      | HTrue
+      | HFalse
+      | HEmp -> (hf)
+      | StarMinus _ | ConjStar _ | ConjConj _ -> report_error no_pos "CF.drop_exact_hrel_hf: not handle yet"
+  in
+  helper hf0
 
 and drop_hnodes_f f hn_names=
   match f with
@@ -4702,7 +5346,19 @@ and drop_data_view_hrel_nodes f fn_data_select fn_view_select fn_hrel_select dno
         (* let new_p1 = remove_neqNulls new_p in *)
         Base {fb with formula_base_heap = new_hf;
             formula_base_pure = MCP.mix_of_pure new_p1;
-                }
+             }
+    | Exists fe ->
+        let new_hf = drop_data_view_hrel_nodes_hf
+          fe.formula_exists_heap fn_data_select fn_view_select fn_hrel_select
+          dnodes vnodes relnodes in
+        (*assume keep vars = dnodes*)
+        let new_p = CP.filter_var_new (MCP.pure_of_mix fe.formula_exists_pure) dnodes in
+        (*currently we drop all neqnull*)
+        let new_p1 = remove_neqNull_redundant_hnodes_hf new_hf new_p in
+        (* let new_p1 = remove_neqNulls new_p in *)
+        Exists {fe with formula_exists_heap = new_hf;
+            formula_exists_pure = MCP.mix_of_pure new_p1;
+             }
     | _ -> report_error no_pos "cformula.drop_data_view_hrel_nodes"
 
 and drop_data_view_hrel_nodes_fb fb fn_data_select fn_view_select fn_hrel_select matched_data_nodes matched_view_nodes matched_hrel_nodes keep_pure_vars=
@@ -4811,12 +5467,29 @@ and mkAnd_fb_hf fb hf pos=
   } in
   {fb with formula_base_heap = new_hf}
 
-let rec subst_hrel_f f hprel_subst=
-  match f with
-    | Base fb -> Base {fb with formula_base_heap =  subst_hrel_hf fb.formula_base_heap hprel_subst;}
-    | Or orf -> Or {orf with formula_or_f1 = subst_hrel_f orf.formula_or_f1 hprel_subst;
-                formula_or_f2 = subst_hrel_f orf.formula_or_f2 hprel_subst;}
-    | Exists fe -> Exists {fe with formula_exists_heap =  subst_hrel_hf fe.formula_exists_heap hprel_subst;}
+(*List.combine but ls1 >= ls2*)
+let rec combine_length_geq_x ls1 ls2 res=
+  match ls1,ls2 with
+    | [],[] -> res
+    | sv1::_,[] -> res
+    | sv1::tl1,sv2::tl2 -> combine_length_geq_x tl1 tl2 (res@[sv1,sv2])
+    | _ -> report_error no_pos "sau.combine_length_geq"
+
+let combine_length_geq ls1 ls2 res=
+  let pr1= !CP.print_svl in
+  let pr2 = pr_list (pr_pair !CP.print_sv !CP.print_sv) in
+  Debug.no_2 "combine_length_geq" pr1 pr1 pr2
+      (fun _ _ -> combine_length_geq_x ls1 ls2 res) ls1 ls2
+
+let rec subst_hrel_f f0 hprel_subst=
+  let rec helper f=
+    match f with
+      | Base fb -> Base {fb with formula_base_heap =  subst_hrel_hf fb.formula_base_heap hprel_subst;}
+      | Or orf -> Or {orf with formula_or_f1 = helper orf.formula_or_f1;
+          formula_or_f2 = helper orf.formula_or_f2;}
+      | Exists fe -> Exists {fe with formula_exists_heap = subst_hrel_hf fe.formula_exists_heap hprel_subst;}
+  in
+  if hprel_subst = [] then f0 else helper f0
 
 and subst_hrel_hf hf hprel_subst=
   (* let helper (HRel (id,el,p)) (HRel (id1,el1,_), hf)= *)
@@ -4827,16 +5500,15 @@ and subst_hrel_hf hf hprel_subst=
       (*should specvar subst*)
       let svl1 = (List.fold_left List.append [] (List.map CP.afv el1)) in
       let svl2 = (List.fold_left List.append [] (List.map CP.afv el2)) in
-      let f = h_subst (List.combine svl2 svl1) hf in
+      let f = h_subst ((*List.combine*) combine_length_geq svl2 svl1 []) hf in
       (true, f)
     else (false, hrel1)
   in
-  let rec find_and_subst (* (HRel (id,el,p)) *) hrel subst =
-    (* List.fold_left helper (HRel (id,el,p)) subst *)
+  let rec find_and_subst hrel subst =
     match subst with
-      | [] -> (* (HRel (id,el,p)) *) hrel
-      | ((*HRel (id1,el1,p1) *) hrel1, hf)::ss ->
-          let stop,f = helper (* (HRel (id,el,p)) *) hrel (hrel1, hf) in
+      | [] -> hrel
+      | (hrel1, hf)::ss ->
+          let stop,f = helper hrel (hrel1, hf) in
           if stop then f
           else find_and_subst hrel ss
   in
@@ -4897,6 +5569,67 @@ and subst_hrel_hf hf hprel_subst=
     | HFalse
     | HEmp -> hf
 
+(* let rec rename_hrel ss f= *)
+(*   match f with *)
+(*     | Base fb -> Base {fb with formula_base_heap =  rename_hrel_hf ss fb.formula_base_heap;} *)
+(*     | Or orf -> Or {orf with formula_or_f1 = rename_hrel ss orf.formula_or_f1; *)
+(*                 formula_or_f2 = rename_hrel ss orf.formula_or_f2;} *)
+(*     | Exists fe -> Exists {fe with formula_exists_heap = rename_hrel_hf ss fe.formula_exists_heap;} *)
+
+(* and rename_hrel_hf ss hf0= *)
+(*   let rec eq_spec_var_order_list l1 l2= *)
+(*   match l1,l2 with *)
+(*     |[],[] -> true *)
+(*     | v1::ls1,v2::ls2 -> *)
+(*         if CP.eq_spec_var v1 v2 then *)
+(*           eq_spec_var_order_list ls1 ls2 *)
+(*         else false *)
+(*     | _ -> false *)
+(*   in *)
+(*   let find_and_rename (hp1,eargs,p) (hp0,(hp2, args2))= *)
+(*     if CP.eq_spec_var hp1 hp2 then *)
+(*       (\*should specvar subst*\) *)
+(*        let args1 = (List.fold_left List.append [] (List.map CP.afv eargs)) in *)
+(*        if eq_spec_var_order_list args1 args2 then *)
+(*          (hp0,eargs,p) *)
+(*        else (hp1,eargs,p) *)
+(*     else (hp1,eargs,p) *)
+(*   in *)
+(*   let rec helper hf= *)
+(*   match hf with *)
+(*     | Star {h_formula_star_h1 = hf1; *)
+(*             h_formula_star_h2 = hf2; *)
+(*             h_formula_star_pos = pos} -> *)
+(*         let n_hf1 = helper hf1 in *)
+(*         let n_hf2 = helper hf2 in *)
+(*         Star {h_formula_star_h1 = n_hf1; *)
+(*               h_formula_star_h2 = n_hf2; *)
+(*               h_formula_star_pos = pos} *)
+(*     | Conj { h_formula_conj_h1 = hf1; *)
+(*              h_formula_conj_h2 = hf2; *)
+(*              h_formula_conj_pos = pos} -> *)
+(*         let n_hf1 = helper hf1 in *)
+(*         let n_hf2 = helper hf2 in *)
+(*         Conj { h_formula_conj_h1 = n_hf1; *)
+(*                h_formula_conj_h2 = n_hf2; *)
+(*                h_formula_conj_pos = pos} *)
+(*     | Phase { h_formula_phase_rd = hf1; *)
+(*               h_formula_phase_rw = hf2; *)
+(*               h_formula_phase_pos = pos} -> *)
+(*         let n_hf1 = helper hf1 in *)
+(*         let n_hf2 = helper hf2 in *)
+(*         Phase { h_formula_phase_rd = n_hf1; *)
+(*               h_formula_phase_rw = n_hf2; *)
+(*               h_formula_phase_pos = pos} *)
+(*     | DataNode hd -> hf *)
+(*     | ViewNode hv -> hf *)
+(*     | HRel h -> HRel (find_and_rename h ss) *)
+(*     | Hole _ *)
+(*     | HTrue *)
+(*     | HFalse *)
+(*     | HEmp -> hf *)
+(*   in *)
+(*   helper hf0 *)
 
 let rec subst_hrel_hview_f f subst=
   match f with
@@ -4990,83 +5723,26 @@ and subst_hrel_hview_hf hf0 subst=
   in
   helper2 hf0
 
-let rec subst_unk_hps_f f hp_names=
-  match f with
-    | Base fb -> let nfb = subst_unk_hps_hf fb.formula_base_heap hp_names in
-        (Base {fb with formula_base_heap =  nfb;})
-    | Or orf -> let nf1 =  subst_unk_hps_f orf.formula_or_f1 hp_names in
-                let nf2 =  subst_unk_hps_f orf.formula_or_f2 hp_names in
-       ( Or {orf with formula_or_f1 = nf1;
-                formula_or_f2 = nf2;})
-    | Exists fe -> let nfe = subst_unk_hps_hf fe.formula_exists_heap hp_names in
-        (Exists {fe with formula_exists_heap = nfe ;})
+let ins_x ss f0=
+  let rec helper f=
+    match f with
+      | Or ({formula_or_f1 = f1; formula_or_f2 = f2; formula_or_pos = pos}) -> 
+          Or ({formula_or_f1 = helper f1; formula_or_f2 =  helper f2; formula_or_pos = pos})
+      | Base _-> subst ss f
+      | Exists fe ->
+          let qvars, base1 = split_quantifiers f in
+          let nf = subst ss base1 in
+          let ins_svl = fst (List.split ss) in
+          let n_qvars = List.filter (fun sv -> not (CP.mem_svl sv ins_svl)) qvars in
+          add_quantifiers n_qvars nf
+  in
+  helper f0
 
-and subst_unk_hps_hf hf0 hp_names=
-  let rec helper hf=
-  match hf with
-    | Star {h_formula_star_h1 = hf1;
-            h_formula_star_h2 = hf2;
-            h_formula_star_pos = pos} ->
-        let n_hf1 = helper hf1 in
-        let n_hf2 = helper hf2 in
-        let newf =
-        (match n_hf1,n_hf2 with
-          | (HTrue,HTrue) -> HTrue
-          | _ -> (Star {h_formula_star_h1 = n_hf1;
-                       h_formula_star_h2 = n_hf2;
-                       h_formula_star_pos = pos})
-        ) in
-        (newf)
-    | StarMinus { h_formula_starminus_h1 = hf1;
-             h_formula_starminus_h2 = hf2;
-             h_formula_starminus_pos = pos} ->
-        let n_hf1 = helper hf1 in
-        let n_hf2 = helper hf2 in
-        (StarMinus { h_formula_starminus_h1 = n_hf1;
-               h_formula_starminus_h2 = n_hf2;
-               h_formula_starminus_pos = pos})        
-    | Conj { h_formula_conj_h1 = hf1;
-             h_formula_conj_h2 = hf2;
-             h_formula_conj_pos = pos} ->
-        let n_hf1 = helper hf1 in
-        let n_hf2 = helper hf2 in
-        (Conj { h_formula_conj_h1 = n_hf1;
-               h_formula_conj_h2 = n_hf2;
-               h_formula_conj_pos = pos})
-    | ConjStar { h_formula_conjstar_h1 = hf1;
-             h_formula_conjstar_h2 = hf2;
-             h_formula_conjstar_pos = pos} ->
-        let n_hf1 = helper hf1 in
-        let n_hf2 = helper hf2 in
-        (ConjStar { h_formula_conjstar_h1 = n_hf1;
-               h_formula_conjstar_h2 = n_hf2;
-               h_formula_conjstar_pos = pos})
-    | ConjConj { h_formula_conjconj_h1 = hf1;
-             h_formula_conjconj_h2 = hf2;
-             h_formula_conjconj_pos = pos} ->
-        let n_hf1 = helper hf1 in
-        let n_hf2 = helper hf2 in
-        (ConjConj { h_formula_conjconj_h1 = n_hf1;
-               h_formula_conjconj_h2 = n_hf2;
-               h_formula_conjconj_pos = pos})                              
-    | Phase { h_formula_phase_rd = hf1;
-              h_formula_phase_rw = hf2;
-              h_formula_phase_pos = pos} ->
-        let n_hf1 = helper hf1 in
-        let n_hf2 = helper hf2 in
-        (Phase { h_formula_phase_rd = n_hf1;
-              h_formula_phase_rw = n_hf2;
-              h_formula_phase_pos = pos})
-    | HRel (id,_,_) -> if CP.mem_svl id hp_names then HTrue
-        else hf
-    | DataNode _
-    | ViewNode _
-    | Hole _
-    | HTrue
-    | HFalse
-    | HEmp -> hf
-  in helper hf0
-
+let ins ss f0=
+  let pr1 = !print_formula in
+  let pr2 = pr_list (pr_pair !CP.print_sv !CP.print_sv) in
+  Debug.no_2 "ins" pr2 pr1 pr1
+      (fun _ _ -> ins_x ss f0) ss f0
 
 (*end for sa*)
  (* context functions *)
@@ -5291,9 +5967,17 @@ let get_infer_vars_sel_hp_ctx ctx0=
   let rec helper ctx=
     match ctx with
       | Ctx es -> es.es_infer_vars_sel_hp_rel
-      | OCtx (ctx1,_) -> helper ctx1
+      | OCtx (ctx1,ctx2) -> (* CP.remove_dups_svl *) ((helper ctx1)(* @(helper ctx2) *))
   in
   helper ctx0
+
+let get_infer_vars_sel_hp_list_ctx lc=
+  match lc with
+    | FailCtx _ -> []
+    | SuccCtx cl -> List.fold_left (fun rs ctx->
+        let r = get_infer_vars_sel_hp_ctx ctx in
+        (rs@r)
+    ) [] cl
 
 let get_infer_vars_sel_post_hp_ctx ctx0=
   let rec helper ctx=
@@ -7240,7 +7924,14 @@ and compose_context_formula (ctx : context) (phi : formula) (x : CP.spec_var lis
 (* 	if (allFalseCtx ctx) then ctx (\* (false_ctx (mkFalseFlow) no_pos) *\) *)
 (* 								else  ctx *)
 		
-and normalize_es (f : formula) (pos : loc) (result_is_sat:bool) (es : entail_state): context = 
+and normalize_es (f : formula) (pos : loc) (result_is_sat:bool) (es : entail_state): context =
+  let pr = !print_formula in
+  let pr_e = !print_entail_state in
+  let pr_c = !print_context in
+  Debug.no_2 "normalize_es" pr pr_e pr_c (fun _ _ -> normalize_es_x  f pos  result_is_sat es) f es
+
+
+and normalize_es_x (f : formula) (pos : loc) (result_is_sat:bool) (es : entail_state): context = 
 	Ctx {es with es_formula = normalize 3 es.es_formula f pos; es_unsat_flag = es.es_unsat_flag&&result_is_sat} 
 
 and normalize_es_combine (f : formula) (result_is_sat:bool)(pos : loc) (es : entail_state): context =
@@ -7284,6 +7975,12 @@ match ctx with
 		
 (* -- 17.05.2008 *)
 and normalize_clash_es (f : formula) (pos : loc) (result_is_sat:bool)(es:entail_state): context =
+  let pr = !print_formula in
+  let pr_e = !print_entail_state in
+  let pr_c = !print_context in
+  Debug.no_2 "normalize_clash_es" pr pr_e pr_c (fun _ _ -> normalize_clash_es_x  f pos  result_is_sat es) f es
+
+and normalize_clash_es_x (f : formula) (pos : loc) (result_is_sat:bool)(es:entail_state): context =
   (* let _ = print_string ("\nCformula.ml: normalize_clash_es") in *)
   match f with
 	| Or ({formula_or_f1 = phi1; formula_or_f2 =  phi2; formula_or_pos = _}) ->
@@ -8032,6 +8729,13 @@ let fold_h_formula_args (e:h_formula) (init_a:'a) (f:'a -> h_formula-> 'b option
   (*this computes a result from expression without passing an argument*)
 let fold_h_formula (e:h_formula) (f:h_formula-> 'b option) (comb_f: 'b list->'b) : 'b =
   fold_h_formula_args e () (fun _ e-> f e) voidf2 comb_f 
+
+let keep_hrel e =
+  let f hf = match hf with
+    | HRel _ -> Some [hf]
+    | _ -> None
+  in 
+  fold_h_formula e f List.concat
 
 (* transform heap formula *)
 let rec transform_h_formula (f:h_formula -> h_formula option) (e:h_formula):h_formula = 
@@ -11392,3 +12096,107 @@ let is_emp_term f = match f with
 let is_emp_term f = 
   Debug.no_1 "is_emp_term" !print_formula string_of_bool is_emp_term f
 
+
+let elim_prm e =	
+	let nv v = match v with | CP.SpecVar (t,n,Primed) -> CP.SpecVar(t,n^"PRM",Unprimed) | _ -> v in
+    let f_e_f e = None in
+	let f_f e = None in
+    let f_m e = None in
+    let f_a e = None in
+	let f_b e = None in
+	let f_p_f e = None in
+	let f_e e = match e with 
+		| CP.Null _ 
+	    | CP.IConst _
+	    | CP.AConst _
+		| CP.Tsconst _
+	    | CP.FConst _ 
+		| CP.Func _
+		| CP.ArrayAt _ -> Some e 
+		| CP.Var (v,p)-> Some (CP.Var (nv v, p))
+		| CP.Add _ 
+	    | CP.Subtract _ 
+	    | CP.Mult _
+	    | CP.Div _
+	    | CP.Max _
+	    | CP.Min _
+	    | CP.Bag _ 
+	    | CP.BagUnion _
+	    | CP.BagIntersect _
+	    | CP.BagDiff _
+        | CP.List _
+        | CP.ListCons _
+        | CP.ListHead _
+        | CP.ListTail _
+        | CP.ListLength _
+        | CP.ListAppend _
+        | CP.ListReverse _ -> None
+        | CP.Level _| CP.InfConst _ -> report_error no_pos "CF.elim_prm: not handle yet"
+    in
+		
+	let rec f_h_f e = match e with 
+		| Star s -> None
+		| Conj s -> None
+		| Phase s -> None	
+  	    | DataNode d -> Some (DataNode {d with h_formula_data_arguments = List.map nv d.h_formula_data_arguments; h_formula_data_node = nv d.h_formula_data_node})
+	    | ViewNode v -> Some (ViewNode {v with h_formula_view_arguments = List.map nv v.h_formula_view_arguments; h_formula_view_node = nv v.h_formula_view_node})
+        | HRel (b1,b2,b3) -> Some (HRel (nv b1,(List.map (CP.transform_exp f_e) b2),b3))
+        | StarMinus _ | ConjStar _ | ConjConj _ -> report_error no_pos "CF.f_h_f: not handle yet"
+	    | Hole _
+	    | HTrue
+	    | HFalse 
+        | HEmp -> Some e in
+	 transform_formula (f_e_f,f_f,f_h_f,(f_m,f_a,f_p_f,f_b,f_e)) e
+
+let convert_hf_to_mut f = 
+  let h_tr f = match f with
+    | DataNode d -> 
+          Some (
+              DataNode 
+                  {d with 
+                      h_formula_data_param_imm = 
+                          List.map (fun _ -> ConstAnn Mutable) d.h_formula_data_param_imm;
+                      (* h_formula_data_arguments = CP.fresh_spec_vars d.h_formula_data_arguments; *)
+                  })
+    | _ -> None in
+  transform_h_formula h_tr f
+let convert_hf_to_mut f = 
+  let pr = !print_h_formula in
+  Debug.no_1 "convert_to_mut" pr pr convert_hf_to_mut f
+
+(* this method must convert all the fields to @M annotation *)
+let convert_to_mut f =
+  let h_tr f = match f with
+    | DataNode d ->
+          Some (
+              DataNode
+                  {d with
+                      h_formula_data_param_imm =
+                          List.map (fun _ -> ConstAnn Mutable) d.h_formula_data_param_imm;
+                      h_formula_data_arguments = CP.fresh_spec_vars d.h_formula_data_arguments;
+                  })
+    | _ -> None in
+{f with formula_base_heap = transform_h_formula h_tr f.formula_base_heap}
+
+let convert_to_mut f =
+  let pr = !print_formula_base in
+  Debug.no_1 "convert_to_mut" pr pr convert_to_mut f
+  
+
+
+let add_struc_unfold_num (f : struc_formula) uf = 
+  let ff f = Some (add_unfold_num f uf) in
+  transform_struc_formula  (*(f_e_f,f_f,f_h_f,(f_memo,f_aset, f_formula, f_b_formula, f_exp))*)
+ ((fun _->None),ff,(fun e->Some e),((fun e->Some e),(fun e->Some e),(fun e->Some e),(fun _->None),(fun _->None))) f
+ 
+ 
+ let rec pick_view_node h aset = match h with
+	| ViewNode v -> if CP.mem v.h_formula_view_node aset then (HEmp,Some v) else (h,None)
+	| Star s -> 
+		let (h,r) = pick_view_node s.h_formula_star_h1 aset in 
+		(match r with 
+			| Some _ -> (mkStarH h s.h_formula_star_h2 no_pos, r)
+			| None -> 
+				let (h,r) = pick_view_node s.h_formula_star_h2 aset in 
+				(mkStarH h s.h_formula_star_h1 no_pos, r))
+	| _ -> (h, None)

@@ -1,0 +1,121 @@
+data node{
+	int val;
+	node next;
+}.
+
+HeapPred H1(node a).
+HeapPred HP_6(node a).
+HeapPred G1(node a, node b).
+HeapPred K(int a).
+
+relAssume H1
+ H1(x)&true --> x::node<val_29_747',next_29_748'>@M * 
+  HP_6(next_29_748')&true.
+
+relAssume H1
+ HP_6(tmp_30')&tmp_30'!=null --> H1(tmp_30')&true.
+
+relAssume HP_6
+ HP_6(tmp_30')&tmp_30'=null --> emp.
+
+
+shape_infer [H1,HP_6][G1].
+
+/*
+[ 
+ H1(x_32) ::= x_32::node<val_29_747',next_29_748'>@M * (HP_6(next_29_748'))&true,
+ G1(x_34,y_35) ::= x_34::node<val_29_747',n>@M * (HP_36(n,y_35))&true,
+ HP_6(tmp_33) ::= 
+ emp&tmp_33=null
+ or tmp_33::node<val_29_747',next_29_748'>@M * (HP_6(next_29_748'))&true
+ ,
+ HP_36(n,y_35) ::= 
+ emp&n=y_35
+ or n::node<val_29_747',n_37>@M * (HP_36(n_37,y_35))&true
+ ]
+
+*/
+
+Step
+======
+Simplify LHS using
+  H & p -> R  ===> H --> p -> R
+We may need to support p -> R notation.
+
+ HP_6(tmp_30') --> tmp_30'!=null -> H1(tmp_30')&true.
+ HP_6(tmp_30') --> tmp_30'=null -> emp.
+
+Step 
+======
+Combine two pre-implications:
+  H -> R1
+  H -> R2
+===>
+  H -> R1 /\ R2
+
+ HP_6(tmp_30') --> tmp_30=null or H1(tmp_30')&tmp_30'!=null.
+
+Step 
+======
+Apply transitive implication:
+
+  P -> Q & Q -> R
+==>
+  P -> R
+
+ H1(x) --> x::node<val_29_747',n>@M * 
+  (n=null or H1(n)) & n!=null.
+
+normalize:
+
+ H1(x) --> x::node<val_29_747',n>@M & n=null
+       or x::node<val_29_747',n>@M * H1(n) & n!=null.
+
+Step 7
+======
+
+Strengthen H1 pre:
+
+ H1(x) <--> x::node<val_29_747',n>@M & n=null
+       or x::node<val_29_747',n>@M * H1(n) & n!=null.
+
+Norm
+======
+
+ infer [H2]  x::node<_,q>*H2(q) |- H1(n)
+
+
+=========================================================
+
+relAssume G1
+ x::node<val_29_747',n> * G1(n,y) --> G1(x,y).
+
+relAssume G1
+ x::node<val_29_747',y> --> G1(x,y).
+
+
+Step 1
+======
+Combining post-implication L -> p(..):
+
+Convert to disjunction on LHS
+
+  L1 -> R /\ L2 --> R
+===>
+  L1 \/ L2 --> R
+
+ x::node<val_29_747',n> * G1(n,y) 
+ or x::node<val_29_747',y>  --> G1(x,y).
+
+Step 2
+======
+Strengthen post-condition p(..):
+  L --> p(..)
+===>
+  p(..) <--> L
+
+G1(x,y) <--> 
+    x::node<val_29_747',n> * G1(n,y) 
+    or x::node<val_29_747',y> .
+
+ infer [G2]  G1(x,y) |- x::node<_,q>*G2(q,y) 
