@@ -31,44 +31,22 @@ node zip (node x, node y)
 }
 
 /*
-# app.ss
 
-Problem with hip invoking shape_infer...
+Why did we have this error in hip but when transferred to
+SLEEK, it went through?
 
-[ H1(c,y)&true --> c::node<val_16_787,next_16_788>@M * 
-  (HP_789(next_16_788,y))&true,
- HP_789(next_16_788,y)&next_16_788!=null --> H1(next_16_788,y)&true,
- c::node<val_16_787,next_16_788>@M * (G1(next_16_788,y))&
-  next_16_788!=null --> G1(c,y)&true,
- (HP_789(next_16_788,y)) * c::node<val_16_787,y>@M&
-  next_16_788=null --> G1(c,y)&true]
+checkentail x::ltwo<y_818>@M[0][Orig][LHSCase]&y=y_818 & x=null & v_bool_23_798' & 
+x=null & v_bool_23_798' & v_null_23_781'=null & res=v_null_23_781'&
+{FLOW,(22,23)=__norm}[]
+ |-  res::ll@M[0][Orig][LHSCase] * y::ll@M[0][Orig][LHSCase]&true&
+{FLOW,(22,23)=__norm}[]. 
+res:  failctx
+         fe_kind: MAY
+         fe_name: separation entailment
+         fe_locs: {
+                   fc_message: mis-matched LHS:ltwo and RHS: ll
+                   fc_current_lhs_flow: {FLOW,(22,23)=__norm}}
 
-Dangling predicate derived is wrong...
-
-[ H1(c_836,y_837) ::= c_836::node<val_16_787,next_16_788>@M
-    & XPURE(HP_789(next_16_788,y_837)),
-      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
- G1(c_838,y_839) ::= c_838::node<val_16_787,y_840>@M * (HP_841(y_840,y_839))&true,
- HP_841(y_840,y_839) ::= 
- emp& XPURE(HP_789(next_16_788,y_839)) & y_839=y_840 & next_16_788=null
- or y_840::node<val_16_787,y_842>@M * (HP_841(y_842,y_839))&true
- ]
-
-However, app.slk is OK it produced the correct result.
-How come hip did not invoke shape_infer correctly?
-
-
-[ H1(c_87,y_88) ::= c_87::node<val_16_751',next_16_752'>@M * (HP_4(next_16_752',y_88))&true,
- HP_4(next_16_89,y_90) ::= 
- emp&next_16_89=null
- or next_16_89::node<val_16_751',next_16_752'>@M * (HP_4(next_16_752',y_90))&
-    true
- ,
- G1(c_91,y_92) ::= c_91::node<Anon_11,t>@M * (HP_93(t,y_92))&true,
- HP_93(t,y_92) ::= 
- emp&t=y_92
- or t::node<Anon_11,t_94>@M * (HP_93(t_94,y_92))&true
- ]
 
 */
 
