@@ -66,13 +66,22 @@ struct
   let pr_penta_ln f1 f2 f3 f4 f5 (x,y,z,z2,z3) = "("^(f1 x)^"\n,2:"^(f2 y)^"\n,3:"^(f3 z)^"\n,4:"^(f4 z2)^"\n,5:"^(f5 z3)^")"
   let pr_hexa_ln f1 f2 f3 f4 f5 f6 (x,y,z,z2,z3,z4) = "("^(f1 x)^"\n,2:"^(f2 y)^"\n,3:"^(f3 z)^"\n,4:"^(f4 z2)^"\n,5:"^(f5 z3)^"\n,6:"^(f6 z4)^")"
 
+  let pr_add_num f xs =
+    let rec aux n xs = 
+      match xs with
+        | [] -> []
+        | x::xs -> ("("^(string_of_int n)^"):"^(f x))::(aux (n+1) xs)
+    in aux 1 xs
+ 
   let pr_lst s f xs = String.concat s (List.map f xs)
+  let pr_lst_num s f xs = String.concat s (pr_add_num f xs)
 
  let pr_list_brk open_b close_b f xs  = open_b ^(pr_lst "," f xs)^close_b
  let pr_list f xs = pr_list_brk "[" "]" f xs
  let pr_list_angle f xs = pr_list_brk "<" ">" f xs
  let pr_list_round f xs = pr_list_brk "(" ")" f xs
  let pr_list_ln f xs = "["^(pr_lst ",\n" f xs)^"]"
+ let pr_list_num f xs = "["^(pr_lst_num ",\n" f xs)^"]"
 
  let pr_list_mln f xs = (pr_lst "\n--------------\n" f xs)
 

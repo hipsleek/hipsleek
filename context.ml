@@ -1271,8 +1271,10 @@ and compute_actions_x prog estate es lhs_h lhs_p rhs_p posib_r_alias rhs_lst is_
     | [] -> M_Nothing_to_do "no nodes on RHS"
     | xs -> 
           (*  imm/imm1.slk imm/imm3.slk fails if sort_wt not done *)
+          let _ = DD.binfo_hprint (add_str "weighted action" (pr_list_num 
+              (string_of_action_wt_res_simpl))) r no_pos in
           let ys = sort_wt_match opt r in 
-          let _ = DD.binfo_hprint (add_str "sorted action" (pr_list string_of_action_res_simpl)) ys no_pos in
+          let _ = DD.binfo_hprint (add_str "sorted action" (pr_list_num string_of_action_res_simpl)) ys no_pos in
           List.hd (ys)
               (*  match ys with
                   | [(_, act)] -> act
