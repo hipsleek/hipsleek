@@ -10,16 +10,16 @@ ltwo<p:node> == p::ll<> & self = null  or
    
    
 HeapPred H1(node a, node b).
-HeapPred G1(node a, node b).
+HeapPred G1(node a).//, node b).
 
 node zip (node x, node y)
-/*
+
   infer [H1,G1]
-  requires H1(c,y)
-  ensures  G1(c,y);
-*/
-  requires x::ltwo<y>
-  ensures res::ll<> * y::ll<> & res=x;
+  requires H1(x,y)
+  ensures  G1(x) *G1(y);
+
+//  requires x::ltwo<y>
+//  ensures res::ll<> * y::ll<> & res=x;
 {
    if (x==null) return null;
    else {

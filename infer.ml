@@ -2587,13 +2587,16 @@ let get_spec_from_file prog =
 let add_infer_hp_contr_to_list_context h_arg_map cp (l:list_context) : list_context option= 
 	 (* let new_cp = List.concat (List.map CP.split_conjunctions cp) in *)
 	 let new_cp = List.map CP.arith_simplify_new cp in
+	 (*let _ = print_string ("\n new_cp: "^(!CP.print_formula (List.hd new_cp))^"\n") in*)
 	 try
 		 let new_rels = List.map (fun c->
 			let fv = CP.fv c in
 			let new_hd = List.filter (fun (_,vl)-> Gen.BList.overlap_eq CP.eq_spec_var fv vl) h_arg_map in
+			(*let _ = print_string ("\n matching rels: "^(string_of_int (List.length new_hd))^"\n") in*)
+			(*let _ = print_string ("\n new_cp fv: "^(!print_svl fv)^"\n") in*)
 			match new_hd with
 			 | [((h,hf),h_args)] -> 
-				if (Gen.BList.list_setequal_eq CP.eq_spec_var fv (List.concat (snd (List.split new_hd)))) then
+				if (Gen.BList.subset_eq CP.eq_spec_var fv h_args (*(List.concat (snd (List.split new_hd)))*)) then
 				mkHprel (CP.HPRelDefn h) h_args [] []  (formula_of_heap hf no_pos) (formula_of_pure_N c no_pos)  				
 				else raise Not_found
 			| _ -> raise Not_found ) new_cp in
@@ -2604,7 +2607,7 @@ let add_infer_hp_contr_to_list_context h_arg_map cp (l:list_context) : list_cont
 	 with Not_found -> None
 
 let add_infer_hp_contr_to_list_context h_arg_map cp (l:list_context) : list_context option =
-  let pr1 = pr_list pr_none in
+  let pr1 = pr_list (pr_pair (pr_pair !print_sv pr_none) !print_svl) in 
   let pr2 = pr_list !CP.print_formula in
   let pr3 = !print_list_context in
   Debug.no_3 "add_infer_hp_contr_to_list_context" pr1 pr2 pr3 (pr_option pr3)
