@@ -1738,10 +1738,12 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
 
 let tp_imply_no_cache ante conseq imp_no timeout process =
 	(*wrapper for capturing equalities due to transitive equality with null*)
-	let f_e _ e = match e with 
-		| CP.Null p -> Some (CP.Var (CP.SpecVar(Void,"NULLV",Unprimed),p), true)
+	let enull = CP.Var (CP.SpecVar(Void,"NULLV",Unprimed),no_pos) in
+	let f_e _ (e,r) = match e with 
+		| CP.Eq(CP.Null _,CP.Var v,p2) -> Some ( (CP.Eq(enull, CP.Var v,p2),r), true)
+		| CP.Eq(CP.Var v,CP.Null _,p2) -> Some ( (CP.Eq(CP.Var v, enull,p2),r), true)
 		| _ -> None in
-	let transformer_fct = (fun _ _ -> None),(fun _ _ -> None),f_e in
+	let transformer_fct = (fun _ _ -> None),f_e,(fun _ _ -> None) in
 	let tr_arg = (fun _ _->()),(fun _ _->()),(fun _ _->()) in
 	let ante,did = trans_formula ante ()  transformer_fct tr_arg (fun x -> List.exists (fun x->x) x) in
 	let ante = if did then  And(ante, (CP.mkNull (CP.SpecVar(Void,"NULLV",Unprimed)) no_pos) ,no_pos) 
