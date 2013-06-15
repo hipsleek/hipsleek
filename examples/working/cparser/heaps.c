@@ -12,7 +12,7 @@ struct node {
 /*@
 pq<n, mx> == self = null & n = 0 & mx = 0 
   or (exists m3: self::node^<d, m1, m2, l, r> * l::pq<m1, mx1> * r::pq<m2, mx2>
-  & n = 1 + m1 + m2 & d >= 0 &  d >= mx1 & d >= mx2 & mx >= d & m3 = m1-m2 & m3 >= 0 & m3 <= 1) //0 <= n1 - n2 & n1 - n2 <= 1
+  & n = 1 + m1 + m2 & d >= 0 &  d >= mx1 & d >= mx2 & mx >= d & m3 = m1-m2 & m3 >= 0 & m3 <= 1)
   inv n >= 0 & mx >= 0;
 */
 
@@ -108,8 +108,8 @@ int deleteoneel(struct node* t)
 
     int* tnleft = malloc(sizeof(int));
     int* tnright = malloc(sizeof(int));
-    struct node* tleft = malloc(sizeof(struct node*));
-    struct node* tright = malloc(sizeof(struct node*));
+    struct node* tleft = malloc(sizeof(struct node));
+    struct node* tright = malloc(sizeof(struct node));
     
     *tnleft = t->nleft;
     *tnright = t->nright;
@@ -123,10 +123,10 @@ int deleteoneel(struct node* t)
 }
 
 /* function to delete one element */
-int deleteone(int* m1, int*  m2, struct node* l, struct node* r)
+int deleteone(int* m1, int* m2, struct node* l, struct node* r)
 /*@
-  requires m1::int*<im1> * m2::int*<im2> * l::pq<im1, mx1> * r::pq<im2, mx2> & im1 + im2 > 0 & 0 <= im1 - im2 <=1
-  ensures m1::int*<am1> * m2::int*<am2>  * l::pq<am1, mx3> * r::pq<am2, mx4> & am1 + am2 + 1 = im1 + im2 & 0 <= am1 - am2<= 1 
+  requires m1::int^<im1> * m2::int^<im2> * l::pq<im1, mx1> * r::pq<im2, mx2> & im1 + im2 > 0 & 0 <= im1 - im2 <=1
+  ensures m1::int^<am1> * m2::int^<am2>  * l::pq<am1, mx3> * r::pq<am2, mx4> & am1 + am2 + 1 = im1 + im2 & 0 <= am1 - am2<= 1 
     & mx3 <= mx1 & mx4 <= mx2 & maxi = max(mx1, mx2) & 0 <= res <= maxi;
 */
 {
@@ -145,8 +145,8 @@ int deleteone(int* m1, int*  m2, struct node* l, struct node* r)
 /* function to restore the heap property */
 void ripple(int* d, int v, int m1, int m2, struct node* l, struct node* r)
 /*@
-  requires l::pq<m1, mx1> * r::pq<m2, mx2> * d::int*<id> & 0 <= m1 - m2 <= 1 & id >= mx1, mx2 & 0 <= v <= id
-  ensures l::pq<m1, mx3> * r::pq<m2, mx4> * d::int*<ad> & mx3 <= mx1 & mx4 <= mx2 & 
+  requires l::pq<m1, mx1> * r::pq<m2, mx2> * d::int^<id> & 0 <= m1 - m2 <= 1 & id >= mx1, mx2 & 0 <= v <= id
+  ensures l::pq<m1, mx3> * r::pq<m2, mx4> * d::int^<ad> & mx3 <= mx1 & mx4 <= mx2 & 
   max1 = max(mx1, v) & max2 = max(mx2, max1) &  
     ad <= max2 & ad >= mx3, mx4, 0;
 */
@@ -181,7 +181,7 @@ void ripple(int* d, int v, int m1, int m2, struct node* l, struct node* r)
         else 
         {   //assume false;
           *d = l->val;
-          ripple(&(l->val), v, l->nleft, l->nright, l->left, l->right);
+          ripple(d, v, l->nleft, l->nright, l->left, l->right);
         }
       }
       else
@@ -192,7 +192,7 @@ void ripple(int* d, int v, int m1, int m2, struct node* l, struct node* r)
         {  //assume false;
           //dprint;
           *d = r->val;
-          ripple(&(r->val), v, r->nleft, r->nright, r->left, r->right);
+          ripple(d, v, r->nleft, r->nright, r->left, r->right);
         }
       }
     }
