@@ -1104,12 +1104,12 @@ and choose_match f ys =
     | Some a -> choose_closest a ys
 
 
-and sort_wt (ys: action_wt list) : action list =
+and sort_wt (ys: action_wt list) : action_wt list =
   let pr = pr_list string_of_action_wt_res_simpl in
-  let pr2 = pr_list string_of_action_res in
-  Debug.no_1 "sort_wt" pr pr2 sort_wt_x ys
+  (* let pr2 = pr_list string_of_action_res in *)
+  Debug.no_1 "sort_wt" pr pr sort_wt_x ys
 
-and sort_wt_x (ys: action_wt list) : action list =
+and sort_wt_x (ys: action_wt list) : action_wt list =
   let rec recalibrate_wt (w,a) = match a with
     | Search_action l ->
           let l = List.map recalibrate_wt l in
@@ -1134,7 +1134,7 @@ and sort_wt_x (ys: action_wt list) : action list =
     | _ -> if (w == -1) then (0,a) else (w,a) in
   let ls = List.map recalibrate_wt ys in
   let sl = List.sort (fun (w1,_) (w2,_) -> if w1<w2 then -1 else if w1>w2 then 1 else 0 ) ls in
-  (snd (List.split sl))
+  sl
 
 and drop_unmatched_action l=
   let rec helper acs rs=
@@ -1152,12 +1152,12 @@ and drop_unmatched_action l=
     | _ -> helper l []
   )
 
-and sort_wt_match opt (ys: action_wt list) : action list =
+and sort_wt_match opt (ys: action_wt list) : action_wt list =
   match (choose_match opt ys) with
     | None -> sort_wt ys
     | Some a -> 
           (* let _ = print_endline "WN : Found a must_action_stk match" in  *)
-          [a]
+          [(0,a)]
 
 and sort_wt_new (ys: action_wt list) : action_wt list =
   let pr = pr_list string_of_action_wt_res_simpl in
@@ -1274,7 +1274,8 @@ and compute_actions_x prog estate es lhs_h lhs_p rhs_p posib_r_alias rhs_lst is_
           let _ = DD.binfo_hprint (add_str "weighted action" (pr_list_num 
               (string_of_action_wt_res_simpl))) r no_pos in
           let ys = sort_wt_match opt r in 
-          let _ = DD.binfo_hprint (add_str "sorted action" (pr_list_num string_of_action_res_simpl)) ys no_pos in
+          let _ = DD.binfo_hprint (add_str "sorted action" (pr_list_num string_of_action_wt_res_simpl)) ys no_pos in
+          let ys = snd (List.split ys) in
           List.hd (ys)
               (*  match ys with
                   | [(_, act)] -> act
