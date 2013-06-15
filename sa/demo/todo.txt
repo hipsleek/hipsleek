@@ -266,5 +266,31 @@ res:  failctx
                    fc_message: failed in entailing pure formula(s) in conseq
                    fc_current_lhs_flow: {FLOW,(22,23)=__norm}}
 
+# zip-bug1c.slk
+
+checkentail  x=null & res=null
+ |-  res=x. 
+
+/*
+ above currently fails due to our translation:
+    x=null --> x<=0
+ I guess the solution to this problem is to explicitly
+ add x=res is to collect the set of vars {x,res} which are
+ v=null and then to explicitly add their equality
+ using x=res on the LHS.
+
+ For example, if we have:
+ x=null & res=null & y=null
+ |-  x=y. 
+
+ We should transform antecedent to:
+ x=null & res=null & y=null & x=res & res=y
+ and then prove:
+
+ x=null & res=null & y=null & x=res & res=y
+ |- x=y
+
+
+*/
 
 
