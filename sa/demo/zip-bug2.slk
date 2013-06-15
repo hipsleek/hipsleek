@@ -1,0 +1,31 @@
+data node{
+	int val;
+	node next;
+}.
+
+pred ll<> == self = null  or self::node<_, q> * q::ll<>.
+
+pred ltwo<p:node> == 
+   p::node<_,null> & self = null  or 
+   self::node<_, q> * p::node<_,r> * q::ltwo<r>.
+
+/*
+  why isn't p a materialized var?
+  materialized vars: 
+  addr vars: 
+*/
+
+
+checkentail 
+ x::ltwo<y>
+ & x=null 
+ |-  y::ll<>.
+print residue.
+
+/*
+ why did the above fail? why didn't
+ we unfold x::ltwo<y>? when we detect some materialized var?
+*/
+
+
+
