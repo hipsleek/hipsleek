@@ -36,20 +36,19 @@ node zip (node x, node y)
 
 # zip.ss
 
-Why did we have this error in hip but when transferred to
-SLEEK (zip-bug3.slk), it succeeded?
+weird bug here..
 
-checkentail x::ltwo<y_818>@M[0][Orig][LHSCase]&y=y_818 & x=null & v_bool_23_798' & 
-x=null & v_bool_23_798' & v_null_23_781'=null & res=v_null_23_781'&
-{FLOW,(22,23)=__norm}[]
- |-  res::ll@M[0][Orig][LHSCase] * y::ll@M[0][Orig][LHSCase]&true&
-{FLOW,(22,23)=__norm}[]. 
+ id: 10; caller: []; line: 22; classic: false; kind: POST; hec_num: 4; evars: []; infer_vars: []; c_heap: y_820::ll@M[1][Orig]
+ checkentail emp&x=null & y=y_820 & x=null & v_bool_24_800' & x=null & v_bool_24_800' & 
+v_null_24_781'=null & res=v_null_24_781'&{FLOW,(22,23)=__norm}[]
+ |-  emp&res=x&{FLOW,(22,23)=__norm}[]. 
 res:  failctx
          fe_kind: MAY
-         fe_name: separation entailment
+         fe_name: logical bug
          fe_locs: {
-                   fc_message: mis-matched LHS:ltwo and RHS: ll
+                   fc_message: failed in entailing pure formula(s) in conseq
                    fc_current_lhs_flow: {FLOW,(22,23)=__norm}}
+
 
 
 */

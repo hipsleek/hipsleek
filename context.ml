@@ -325,7 +325,7 @@ and choose_context prog es lhs_h lhs_p rhs_p posib_r_aliases rhs_node rhs_rest p
   let pr3 = Cprinter.string_of_mix_formula in
   (*let pr4 = pr_list Cprinter.string_of_spec_var in*)
   (*let pr2 (m,svl,_) = (Cprinter.string_of_spec_var_list svl) ^ ";"^ (Cprinter.string_of_mix_formula m) in*)
-  Debug.to_5 "choose_context" 
+  Debug.no_5 "choose_context" 
       (add_str "LHS node" pr1) 
       (add_str "RHS node" pr1) 
       (add_str "LHS pure" pr3) 
@@ -1032,7 +1032,7 @@ and process_matches prog estate lhs_h is_normalizing ((l:match_res list),(rhs_no
   let pr1 = pr_list string_of_match_res in
   let pr2 x = (fun (l1, (c1,c2)) -> "(" ^ (pr1 l1) ^ ",(" ^ (pr c1) ^ "," ^ (pr c2) ^ "))" ) x in
   let pr3 = string_of_action_wt_res0 in
-  Debug.ho_2 "process_matches" pr pr2 pr3 
+  Debug.no_2 "process_matches" pr pr2 pr3 
 	(fun _ _-> process_matches_x prog estate lhs_h is_normalizing (l, (rhs_node,rhs_rest))) 
 	lhs_h (l, (rhs_node,rhs_rest))
 
@@ -1108,12 +1108,12 @@ and choose_match_x f ys =
 and choose_match f ys = 
 	let pr = pr_list_num string_of_action_wt_res in
 	let pr2 = pr_option string_of_action_res in
-	Debug.ho_1 "choose_match" pr pr2 (choose_match_x f) ys
+	Debug.no_1 "choose_match" pr pr2 (choose_match_x f) ys
 
 and sort_wt (ys: action_wt list) : action_wt list =
   let pr = pr_list string_of_action_wt_res_simpl in
   (* let pr2 = pr_list string_of_action_res in *)
-  Debug.ho_1 "sort_wt" pr pr sort_wt_x ys
+  Debug.no_1 "sort_wt" pr pr sort_wt_x ys
 
 and sort_wt_x (ys: action_wt list) : action_wt list =
   let rec uncertain (_,a) = match a with 
@@ -1297,11 +1297,12 @@ and compute_actions_x prog estate es lhs_h lhs_p rhs_p posib_r_alias rhs_lst is_
     | [] -> M_Nothing_to_do "no nodes on RHS"
     | xs -> 
           (*  imm/imm1.slk imm/imm3.slk fails if sort_wt not done *)
-          let _ = DD.binfo_hprint (add_str "weighted action" (pr_list_num 
+          let _ = DD.tinfo_hprint (add_str "weighted action" (pr_list_num 
               (string_of_action_wt_res_simpl))) r no_pos in
           let ys = sort_wt_match opt r in 
-          let _ = DD.binfo_hprint (add_str "sorted action" (pr_list_num string_of_action_wt_res_simpl)) ys no_pos in
-          let ys2 = snd (List.split ys) in
+          let _ = DD.tinfo_hprint (add_str "sorted action" (pr_list_num string_of_action_wt_res_simpl)) ys no_pos in
+          let ys2 = drop_low ys in
+          (* let ys2 = snd (List.split ys) in *)
  		  (*Cond_action  ys *)
 		  (*above would be required for entailments in which an available match has no solution unless another one is performed first*)
 		  (*it could be expensive and trip the inference therefore a current solution delays matches with miss-match and unmatched actions*)
@@ -1313,6 +1314,19 @@ and compute_actions_x prog estate es lhs_h lhs_p rhs_p posib_r_alias rhs_lst is_
               (* time for runfast hip --eps --imm - 42s *)
               (* Cond_action (r) *)
               (* time for runfast hip --eps --imm - 43s *)
+
+and drop_low ys =
+  let rec aux a ys = 
+    match ys with
+      | [] -> []
+      | (b,x)::ys -> 
+            if a==b then x::(aux a ys)
+            else [] 
+  in
+  match ys with
+    | [] -> []
+    | ((a,w) as y)::_ -> aux a ys 
+
 
 and compute_actions prog estate es (* list of right aliases *)
       lhs_h (*lhs heap *) 
@@ -1330,7 +1344,7 @@ and compute_actions prog estate es (* list of right aliases *)
   let pr1 x = pr_list (fun (c1,_)-> Cprinter.string_of_h_formula c1) x in
   let pr4 = pr_list Cprinter.string_of_spec_var in
   let pr2 = string_of_action_res_simpl in
-  Debug.to_5 "compute_actions" 
+  Debug.no_5 "compute_actions" 
       (add_str "EQ ptr" pr0) 
       (add_str "LHS heap" pr) 
       (add_str "LHS pure" pr3)
