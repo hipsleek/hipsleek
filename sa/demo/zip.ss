@@ -32,8 +32,10 @@ node zip (node x, node y)
 
 /*
 
+# zip.ss
+
 Why did we have this error in hip but when transferred to
-SLEEK, it went through?
+SLEEK (zip-bug3.slk), it succeeded?
 
 checkentail x::ltwo<y_818>@M[0][Orig][LHSCase]&y=y_818 & x=null & v_bool_23_798' & 
 x=null & v_bool_23_798' & v_null_23_781'=null & res=v_null_23_781'&

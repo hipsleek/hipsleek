@@ -325,7 +325,7 @@ and choose_context prog es lhs_h lhs_p rhs_p posib_r_aliases rhs_node rhs_rest p
   let pr3 = Cprinter.string_of_mix_formula in
   (*let pr4 = pr_list Cprinter.string_of_spec_var in*)
   (*let pr2 (m,svl,_) = (Cprinter.string_of_spec_var_list svl) ^ ";"^ (Cprinter.string_of_mix_formula m) in*)
-  Debug.no_5 "choose_context" 
+  Debug.to_5 "choose_context" 
       (add_str "LHS node" pr1) 
       (add_str "RHS node" pr1) 
       (add_str "LHS pure" pr3) 
@@ -1272,6 +1272,7 @@ and compute_actions_x prog estate es lhs_h lhs_p rhs_p posib_r_alias rhs_lst is_
     | xs -> 
           (*  imm/imm1.slk imm/imm3.slk fails if sort_wt not done *)
           let ys = sort_wt_match opt r in 
+          let _ = DD.binfo_hprint (add_str "sorted action" (pr_list string_of_action_res_simpl)) ys no_pos in
           List.hd (ys)
               (*  match ys with
                   | [(_, act)] -> act
@@ -1293,18 +1294,18 @@ and compute_actions prog estate es (* list of right aliases *)
   (* let pr_rhs_lst = pr_list (pr_pair Cprinter.string_of_h_formula Cprinter.string_of_h_formula) in *)
   let pr = Cprinter.string_of_h_formula   in
   (* let pr1 x = String.concat ";\n" (List.map (fun (c1,c2)-> "("^(Cprinter.string_of_h_formula c1)^" *** "^(Cprinter.string_of_h_formula c2)^")") x) in *)
-  (* let pr3 = Cprinter.string_of_mix_formula in *)
+  let pr3 = Cprinter.string_of_mix_formula in
   let pr1 x = pr_list (fun (c1,_)-> Cprinter.string_of_h_formula c1) x in
-  (* let pr4 = pr_list Cprinter.string_of_spec_var in *)
+  let pr4 = pr_list Cprinter.string_of_spec_var in
   let pr2 = string_of_action_res_simpl in
-  Debug.no_3 "compute_actions" 
+  Debug.to_5 "compute_actions" 
       (add_str "EQ ptr" pr0) 
       (add_str "LHS heap" pr) 
-      (* (add_str "LHS pure" pr3)  *)
+      (add_str "LHS pure" pr3)
       (add_str "RHS cand" pr1)
-      (* (add_str "right alias" pr4) *)
+      (add_str "right alias" pr4)
       pr2
-      (fun _ _ _-> compute_actions_x prog estate es lhs_h lhs_p rhs_p posib_r_alias rhs_lst is_normalizing pos) es lhs_h (* lhs_p *) rhs_lst  (* posib_r_alias *)
+      (fun _ _ _ _ _ -> compute_actions_x prog estate es lhs_h lhs_p rhs_p posib_r_alias rhs_lst is_normalizing pos) es lhs_h lhs_p rhs_lst  posib_r_alias 
 
 and input_formula_in2_frame (frame, id_hole) (to_input : formula) : formula =
   match to_input with

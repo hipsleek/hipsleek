@@ -13,7 +13,7 @@ checkentail
  x::ltwo<y>
  & x=null 
  & res=null
- //& x=res
+ & x=res
  |-  res::ll<> * y::ll<>.
 print residue.
 
@@ -22,17 +22,3 @@ print residue.
  we unfold x::ltwo<y>?
 */
 
-/*
-checkentail 
- x::ltwo<y>
- & x=null 
- |-  y::ll<>.
-print residue.
-*/
-/*
-checkentail 
- y::ll<>
- & x=null 
- & res=null
- |-  res::ll<> * y::ll<>.
-*/
