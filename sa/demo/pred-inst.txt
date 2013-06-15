@@ -34,7 +34,7 @@ the idea.
 
 dll-app-bug1d.slk contain some examples:
 
-HeapPred HP_7(node# a,node b).
+HeapPred HP_7(node@NI a,node b).
 HeapPred HP_9(node a,node b).
 
 infer [HP_7] // (1)
@@ -59,6 +59,22 @@ HP_9(x,l2) & x!=null |-  l2::node<_,_>@M.
 print residue.
 // should succeed
 // HP_9(x,l2) --> l2::node<p,q>*HP_10(p,x#)*HP_11(q,x#)
+
+=======
+Another simpler idea is perhaps to have just the first parameter
+as the instantiating parameter; and to write two unknown predicate
+instead.
+
+void dll_append(node l1, node l2)
+// infer [H1,H2,G] requires H1(l1)*H2(l2) ensures G(l1);
+infer [H3a,H3b,G3] 
+  requires H3a(l1,l2) * H3b(l2,l2)
+  ensures G3(l1,l2);
+
+However, this makes the template spec looks complicated; and
+place an extra assumption on "*" on precondition. It also may
+trigger other problems in post-condition resolution.
+
 
 
  
