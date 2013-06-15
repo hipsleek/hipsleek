@@ -1116,6 +1116,24 @@ and sort_wt (ys: action_wt list) : action_wt list =
   Debug.ho_1 "sort_wt" pr pr sort_wt_x ys
 
 and sort_wt_x (ys: action_wt list) : action_wt list =
+  let rec uncertain (_,a) = match a with 
+     | M_infer_heap _
+	 | M_base_case_fold _
+     | M_rd_lemma _
+     | M_lemma  _
+	 | M_base_case_unfold _ 
+	 | M_unfold _
+	 | M_fold _
+	 | M_split_match _ 
+	 | M_match _ 
+	 | M_lhs_case _ -> false
+	 | M_Nothing_to_do _ 
+	 | Undefined_action _ 
+	 | M_unmatched_rhs_data_node _ -> true
+	 | Search_action l
+	 | Seq_action l
+	 | Cond_action l -> List.exists uncertain l  in	
+ 
   let rec recalibrate_wt (w,a) = match a with
     | Search_action l ->
           let l = List.map recalibrate_wt l in
@@ -1140,6 +1158,8 @@ and sort_wt_x (ys: action_wt list) : action_wt list =
     | _ -> if (w == -1) then (0,a) else (w,a) in
   let ls = List.map recalibrate_wt ys in
   let sl = List.sort (fun (w1,_) (w2,_) -> if w1<w2 then -1 else if w1>w2 then 1 else 0 ) ls in
+  let ucert, cert = List.partition uncertain sl in (*delay uncertain*)
+  let sl = cert@ucert in
   sl
 
 and drop_unmatched_action l=
@@ -1282,7 +1302,10 @@ and compute_actions_x prog estate es lhs_h lhs_p rhs_p posib_r_alias rhs_lst is_
           let ys = sort_wt_match opt r in 
           let _ = DD.binfo_hprint (add_str "sorted action" (pr_list_num string_of_action_wt_res_simpl)) ys no_pos in
           let ys2 = snd (List.split ys) in
- 		  Cond_action  ys (*List.hd (ys2)*)
+ 		  (*Cond_action  ys *)
+		  (*above would be required for entailments in which an available match has no solution unless another one is performed first*)
+		  (*it could be expensive and trip the inference therefore a current solution delays matches with miss-match and unmatched actions*)
+		  List.hd (ys2)
               (*  match ys with
                   | [(_, act)] -> act
                   | ys -> (Cond_action ys) *)
