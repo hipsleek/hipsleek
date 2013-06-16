@@ -735,8 +735,8 @@ and gather_type_info_b_formula_x prog b0 tlist =
               IP.xpure_view_pos = pos}) -> (
       try
         let hpdef = I.look_up_hp_def_raw prog.I.prog_hp_decls r in
-        if (List.length args) == (List.length hpdef.I.hp_typed_vars) then
-          let args_ctypes = List.map (fun (t,n) -> trans_type prog t pos) hpdef.I.hp_typed_vars in
+        if (List.length args) == (List.length hpdef.I.hp_typed_inst_vars) then
+          let args_ctypes = List.map (fun (t,n, i) -> trans_type prog t pos) hpdef.I.hp_typed_inst_vars in
           let args_exp_types = List.map (fun t -> (t)) args_ctypes in
           let (n_tl,_) = gather_type_info_var r tlist HpT pos in (*Need to consider about pos*)
           let tmp_list = List.combine args args_exp_types in
@@ -1158,8 +1158,8 @@ and gather_type_info_heap_x prog (h0 : IF.h_formula) tlist =
     | IF.HRel (r, args, pos) ->
       (try
         let hpdef = I.look_up_hp_def_raw prog.I.prog_hp_decls r in
-        if (List.length args) == (List.length hpdef.I.hp_typed_vars) then
-          let args_ctypes = List.map (fun (t,n) -> trans_type prog t pos) hpdef.I.hp_typed_vars in
+        if (List.length args) == (List.length hpdef.I.hp_typed_inst_vars) then
+          let args_ctypes = List.map (fun (t,n,i) -> trans_type prog t pos) hpdef.I.hp_typed_inst_vars in
           let args_exp_types = List.map (fun t -> (t)) args_ctypes in
           let (n_tl,_) = gather_type_info_var r tlist HpT pos in (*Need to consider about  pos*)
           let args_expt = List.combine args args_exp_types in

@@ -115,7 +115,7 @@ and rel_decl = {
 
 and hp_decl = { 
     hp_name : ident; 
-    hp_vars : P.spec_var list;
+    hp_vars_inst : (P.spec_var * Globals.hp_arg_kind) list;
     hp_formula : F.formula;}
 
 (** An Hoa : axiom *)
@@ -129,7 +129,7 @@ and proc_decl = {
     proc_args : typed_ident list;
     proc_source : ident; (* source file *)
     proc_return : typ;
-	proc_flags : (ident*ident*(flags option)) list;
+    proc_flags : (ident*ident*(flags option)) list;
     mutable proc_important_vars : P.spec_var list; (* An Hoa : pre-computed list of important variables; namely the program parameters & logical variables in the specification that need to be retained during the process of verification i.e. such variables should not be removed when we perform simplification. Remark - all primed variables are important. *)
     proc_static_specs : Cformula.struc_formula;
     (* proc_static_specs_with_pre : Cformula.struc_formula; *)
@@ -898,6 +898,10 @@ let look_up_view_def_raw (defs : view_decl list) (name : ident) =
 (* An Hoa *)
 let rec look_up_rel_def_raw (defs : rel_decl list) (name : ident) = match defs with
   | d :: rest -> if d.rel_name = name then d else look_up_rel_def_raw rest name
+  | [] -> raise Not_found
+
+let rec look_up_hp_def_raw (defs : hp_decl list) (name : ident) = match defs with
+  | d :: rest -> if d.hp_name = name then d else look_up_hp_def_raw rest name
   | [] -> raise Not_found
 
 let rec look_up_view_def (pos : loc) (defs : view_decl list) (name : ident) = match defs with

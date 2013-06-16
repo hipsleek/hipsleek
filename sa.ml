@@ -314,7 +314,8 @@ let check_split_global_x prog cands =
   in
   (*each partition, create new hp and its corresponding HRel formula*)
   let helper1 pos args =
-    let hf,new_hp_sv = SAU.add_raw_hp_rel prog args pos in
+    let args1 = List.map (fun sv -> (sv,I)) args in
+    let hf,new_hp_sv = SAU.add_raw_hp_rel prog args1 pos in
     ((new_hp_sv,args), hf)
   in
   (*for each grp*)
@@ -763,7 +764,8 @@ and update_unk_one_constr_x prog unk_hp_locs cur_full_unk_hps equivs0 constr=
     (*generate new unk annotation and create corr. equivs*)
     let gen_unk_hp hp_unk_svl_locs=
       let hp_unk_svl = fst (List.split hp_unk_svl_locs) in
-      let unk_hf, sunk_hp = SAU.add_raw_hp_rel prog hp_unk_svl no_pos in
+      let hp_unk_svl_inst = List.map (fun sv -> (sv,NI)) hp_unk_svl in
+      let unk_hf, sunk_hp = SAU.add_raw_hp_rel prog hp_unk_svl_inst no_pos in
       (*generate all matching: hp with similar unk_svl*)
       let new_equivs = gen_eqv equivs hp hp_unk_svl_locs cs_unk_svl [(sunk_hp, hp_unk_svl)] cs_unk_hps in
       (* let pr3 =  pr_list_ln (pr_pair (pr_pair !CP.print_sv (pr_list string_of_int)) *)

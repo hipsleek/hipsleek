@@ -79,6 +79,14 @@ and term_fail =
 
 and rel = REq | RNeq | RGt | RGte | RLt | RLte | RSubAnn
 
+type hp_arg_kind=
+  | I
+  | NI
+
+let print_arg_kind i= match i with
+  | I -> ""
+  | NI -> "#"
+
 (* and prim_type =  *)
 (*   | TVar of int *)
 (*   | Bool *)

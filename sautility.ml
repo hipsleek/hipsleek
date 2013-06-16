@@ -266,7 +266,7 @@ let refine_full_unk partial_hp_locs poss_full_hp_args_locs=
   helper poss_full_hp_args_locs []
 
 let mkHRel hp args pos=
-  let eargs = List.map (fun x -> CP.mkVar x pos) args in
+  let eargs = List.map (fun x -> (CP.mkVar x pos)) args in
    ( CF.HRel (hp, eargs, pos))
 
 let mkHRel_f hp args pos=
@@ -498,7 +498,7 @@ let get_ptrs hf0=
   in
   helper hf0
 
-let get_root_ptrs hf0=
+let get_root_ptrs prog hf0=
   let rec helper hf=
     match hf with
       | CF.Star {CF.h_formula_star_h1 = hf1;
@@ -510,7 +510,12 @@ let get_root_ptrs hf0=
           (helper hf1)@(helper hf2)
       | CF.DataNode hd ->[hd.CF.h_formula_data_node]
       | CF.ViewNode hv -> [hv.CF.h_formula_view_node]
-      | CF.HRel (_, eargs, _) -> CP.afv (List.hd eargs)
+      | CF.HRel (hp, eargs, _) ->
+            let hp_name= CP.name_of_spec_var hp in
+            let hprel = Cast.look_up_hp_def_raw prog.C.prog_hp_decls hp_name in
+            let ss = List.combine eargs hprel.C.hp_vars_inst in
+            let root_eargs = List.fold_left (fun ls (e,(_,i)) -> if i = I then ls@[e] else ls ) [] ss in
+            List.fold_left (fun ls e -> ls@(CP.afv e)) [] root_eargs
       | _ -> []
   in
   helper hf0
@@ -1232,8 +1237,8 @@ let update_hp_args hf renamed_hps=
     match ls_hp_args with
       | [] -> false,[]
       | (hp1,old_args1,new_args1)::hs ->
-          if CP.eq_spec_var hp0 hp1 && (eq_spec_var_order_list args0 old_args1)  then (true, new_args1)
-          else look_up_helper hp0 args0 hs
+            if CP.eq_spec_var hp0 hp1 && (eq_spec_var_order_list args0 old_args1)  then (true, new_args1)
+            else look_up_helper hp0 args0 hs
   in
   let rec helper hf0=
     match hf0 with
@@ -2776,14 +2781,15 @@ let add_raw_hp_rel_x prog unknown_ptrs pos=
   if (List.length unknown_ptrs > 0) then
     let hp_decl =
       { Cast.hp_name = Globals.hp_default_prefix_name ^ (string_of_int (Globals.fresh_int()));
-        Cast.hp_vars =  CP.remove_dups_svl unknown_ptrs;
+        Cast.hp_vars_inst =  unknown_ptrs;
         Cast.hp_formula = CF.mkBase CF.HEmp (MCP.mkMTrue pos) CF.TypeTrue (CF.mkTrueFlow()) [] pos;}
     in
+    let unk_args = (fst (List.split hp_decl.Cast.hp_vars_inst)) in
     prog.Cast.prog_hp_decls <- (hp_decl :: prog.Cast.prog_hp_decls);
-    Smtsolver.add_hp_relation hp_decl.Cast.hp_name hp_decl.Cast.hp_vars hp_decl.Cast.hp_formula;
+    Smtsolver.add_hp_relation hp_decl.Cast.hp_name unk_args hp_decl.Cast.hp_formula;
     let hf =
       CF.HRel (CP.SpecVar (HpT,hp_decl.Cast.hp_name, Unprimed), 
-               List.map (fun sv -> CP.mkVar sv pos) hp_decl.Cast.hp_vars,
+               List.map (fun sv -> CP.mkVar sv pos) unk_args,
       pos)
     in
     DD.ninfo_pprint ("       gen hp_rel: " ^ (Cprinter.string_of_h_formula hf)) pos;
@@ -3199,8 +3205,9 @@ let mk_orig_hprel_def_x prog cdefs unk_hps hp r other_args args sh_ldns eqNulls 
      | [] -> report_error no_pos "sau.generalize_one_hp: sth wrong"
      | _ ->  let _ = DD.ninfo_pprint ("      last root:" ^ (Cprinter.string_of_spec_var_list  next_roots)) no_pos in
          (*generate new hp*)
-       let n_args = (next_roots@other_args) in
-       let n_hprel,n_hp =  add_raw_hp_rel prog n_args no_pos in
+       let n_args_inst = (List.map (fun sv -> (sv,I)) next_roots)@(List.map (fun sv -> (sv,NI)) other_args) in
+       let n_args = next_roots@other_args in
+       let n_hprel,n_hp =  add_raw_hp_rel prog n_args_inst no_pos in
          (*first rel def for the orig*)
          let rest =  (hdss@[n_hprel]@(List.map (fun hprel -> CF.HRel hprel) hprels)) in
          let orig_defs_h = List.fold_left (fun hf1 hf2 -> CF.mkStarH hf1 hf2 no_pos) (List.hd rest) (List.tl rest) in
@@ -3253,7 +3260,7 @@ let elim_not_in_used_args_x prog orig_fs fs hp args=
     if List.length args = List.length new_args then (orig_fs,fs,[],[],hp)
     else
       let old_hrel = mkHRel hp args no_pos in
-      let new_hrel,n_hp = add_raw_hp_rel prog new_args no_pos in
+      let new_hrel,n_hp = add_raw_hp_rel prog (List.map (fun sv -> (sv,I)) new_args) no_pos in
       (*let new_hrel = mkHRel hp new_args no_pos in *)
       (*linking defs*)
       let link_f = CF.formula_of_heap old_hrel no_pos in
@@ -4605,7 +4612,8 @@ let ann_unk_svl prog par_defs=
   let process_one_group par_defs=
     let (hp,args0,unk_args0,cond0,olhs0,orhs0) = List.hd par_defs in
     let _ = Debug.ninfo_pprint ("     partial unk hp: " ^ (!CP.print_sv hp)) no_pos in
-    let unk_hf, unk_hps = add_raw_hp_rel_x prog unk_args0 no_pos in
+    let unk_args0_w_inst = List.map (fun sv -> (sv, NI)) unk_args0 in
+    let unk_hf, unk_hps = add_raw_hp_rel_x prog unk_args0_w_inst no_pos in
     let new_par_def0= (hp,args0,unk_args0,cond0,add_unk_hp_f unk_hf olhs0, add_unk_hp_f unk_hf orhs0) in
     let tl_par_defs = List.map (add_unk_hp_pdef unk_hf unk_args0) (List.tl par_defs) in
     ((unk_hps,unk_args0), new_par_def0::tl_par_defs)

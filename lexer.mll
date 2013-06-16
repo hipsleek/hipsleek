@@ -311,6 +311,7 @@ rule tokenizer file_name = parse
   | "@R" { MAT }
   | "@VAL" {VAL}
   | "@REC" {REC}
+  | "@NI" {NI}
   | "@pre" { PRE }
   | "@xpre" { XPRE }
   | "@post" { POST }

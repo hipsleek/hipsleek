@@ -1334,13 +1334,14 @@ and trans_rel (prog : I.prog_decl) (rdef : I.rel_decl) : C.rel_decl =
 
 and trans_hp (prog : I.prog_decl) (hpdef : I.hp_decl) : C.hp_decl =
   let pos = IF.pos_of_formula hpdef.I.hp_formula in
-  let hp_sv_vars = List.map (fun (var_type, var_name) -> CP.SpecVar (trans_type prog var_type pos, var_name, Unprimed)) hpdef.I.hp_typed_vars in
-  let n_tl = List.map (fun (var_type, var_name) -> (var_name,{ sv_info_kind = (trans_type prog var_type pos);id = fresh_int () })) hpdef.I.hp_typed_vars in
+  let hp_sv_vars = List.map (fun (var_type, var_name, i) -> (CP.SpecVar (trans_type prog var_type pos, var_name, Unprimed), i))
+    hpdef.I.hp_typed_inst_vars in
+  let n_tl = List.map (fun (var_type, var_name, i) -> (var_name,{ sv_info_kind = (trans_type prog var_type pos);id = fresh_int () })) hpdef.I.hp_typed_inst_vars in
   (* Need to collect the type information before translating the formula *)
   let n_tl = gather_type_info_formula prog hpdef.I.hp_formula n_tl false in
   let (n_tl,crf) = trans_formula  prog false [] false hpdef.I.hp_formula n_tl false in
   {C.hp_name = hpdef.I.hp_name; 
-  C.hp_vars = hp_sv_vars;
+  C.hp_vars_inst = hp_sv_vars;
   C.hp_formula = crf; }
 
 and trans_axiom (prog : I.prog_decl) (adef : I.axiom_decl) : C.axiom_decl =

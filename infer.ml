@@ -1701,7 +1701,10 @@ let find_undefined_selective_pointers_x prog lfb lmix_f unmatched rhs_rest rhs_h
       let args1 = CP.remove_dups_svl (CP.diff_svl h_args def_svl) in
       (* let _ = Debug.info_pprint ("     h_args:" ^(!CP.print_svl args1)) no_pos in *)
       (*old: args1@not_in_used_svl*)
-      (List.map (fun sv -> sv::not_in_used_svl) args1)
+      (*not_in_used_svl: NI*)
+      let not_in_used_svl_inst = List.map (fun sv -> (sv, NI)) not_in_used_svl in
+      let args11 = List.map (fun sv -> (sv, I)) args1 in
+      (List.map (fun sv -> sv::not_in_used_svl_inst) args11)
     else []
   in
   let get_lhs_fold_fwd_svl selected_hps def_vs rhs_args lhs_hds
@@ -1737,7 +1740,10 @@ let find_undefined_selective_pointers_x prog lfb lmix_f unmatched rhs_rest rhs_h
     in
     let ls_not_fwd_svl = List.map process_one ls_lhs_hpargs in
     (*should separate list of list *)
-    CP.remove_dups_svl (List.concat ls_not_fwd_svl)
+    let ls_not_fwd_svl1 = CP.remove_dups_svl (List.concat ls_not_fwd_svl) in
+    (*TODO: *)
+    let ls_not_fwd_svl1_inst = List.map (fun sv -> (sv, I)) ls_not_fwd_svl1 in
+    ls_not_fwd_svl1_inst
   in
   (* DD.info_pprint ">>>>>> find_undefined_selective_pointers <<<<<<" pos; *)
   (* let lfb = CF.subst_b leqs lfb in *)
@@ -1786,7 +1792,7 @@ let find_undefined_selective_pointers_x prog lfb lmix_f unmatched rhs_rest rhs_h
   let def_vs = CP.remove_dups_svl (SAU.find_close def_vs (eqs)) in
   (*remove*)
   (* let unmatched_svl = (SAU.get_ptrs unmatched) in *)
-  let unmatched_svl = (SAU.get_root_ptrs unmatched) in
+  let unmatched_svl = (SAU.get_root_ptrs prog unmatched) in
   let unmatched_svl = (SAU.find_close (unmatched_svl) (eqs)) in
   let closed_unmatched_svl0 = SAU.look_up_closed_ptr_args prog hds hvs unmatched_svl
      (* List.concat (List.map (SAU.look_up_ptr_args_one_node prog hds hvs) unmatched_svl) *)
@@ -1828,7 +1834,7 @@ let find_undefined_selective_pointers_x prog lfb lmix_f unmatched rhs_rest rhs_h
                 selected_hpargs)
       in
        (* let closed_svl = SAU.find_close svl leqs in *)
-       DD.ninfo_pprint ("svl: " ^ (!CP.print_svl svl)) pos;
+       DD.ninfo_pprint ("svl: " ^ ((pr_list (pr_pair !CP.print_sv print_arg_kind)) svl)) pos;
       (*let unk_svl, unk_xpure, unk_map1 =*)
       ([svl],[(rhs_hp, rhs_args)],selected_hpargs0)
     else
@@ -1840,7 +1846,7 @@ let find_undefined_selective_pointers_x prog lfb lmix_f unmatched rhs_rest rhs_h
       let ls_unfold_fwd_svl = get_rhs_unfold_fwd_svl h_node h_args1 (def_vs@hrel_args2) ls_lhp_args in
       (ls_unfold_fwd_svl(* @lundefs_args *),[],selected_hpargs)
   in
-  let ls_undef =  List.map CP.remove_dups_svl (ls_fwd_svl) in
+  let ls_undef =  (* List.map CP.remove_dups_svl *) (ls_fwd_svl) in
   (* DD.info_pprint ("selected_hpargs: " ^ (let pr = pr_list (pr_pair !CP.print_sv !CP.print_svl) in pr (selected_hpargs))) pos; *)
   let ls_defined_hp = List.map fst3 defined_hps in
   let lhs_selected_hpargs0,defined_hps =  if !Globals.sa_split_base then
@@ -1856,13 +1862,13 @@ let find_undefined_selective_pointers prog lfb lmix_f unmatched rhs_rest rhs_h_m
   let pr1 = Cprinter.string_of_formula_base in
   let pr2 = Cprinter.prtt_string_of_h_formula in
   let pr3 = pr_list (pr_pair !CP.print_sv !print_svl) in
-  let pr4 = pr_list !CP.print_svl in
+  let pr4 = pr_list (pr_list (pr_pair !CP.print_sv print_arg_kind)) in
   let pr6 = pr_list_ln (pr_triple !CP.print_sv !CP.print_svl Cprinter.string_of_formula_base) in
   (* let pr7 = pr_list (pr_pair (pr_list (pr_pair !CP.print_sv string_of_int)) CP.string_of_xpure_view) in *)
   let pr7 = (pr_list (pr_pair (pr_pair !CP.print_sv (pr_list string_of_int)) CP.string_of_xpure_view)) in
   let pr5 = fun (undefs,_,_,_,_,_,selected_hpargs, rhs_sel_hpargs,defined_hps,_,_,unk_map) ->
       let pr = pr_penta pr4 pr3 pr3 pr6 pr7 in pr (undefs,selected_hpargs,rhs_sel_hpargs, defined_hps, unk_map) in
-  Debug.no_3 "find_undefined_selective_pointers" 
+  Debug.ho_3 "find_undefined_selective_pointers" 
       (add_str "unmatched" pr2) 
       (add_str "rhs_h_matched_set" !print_svl) 
       (add_str "lfb" pr1)

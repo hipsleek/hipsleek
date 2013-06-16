@@ -23,8 +23,8 @@ HeapPred H(node a, node b).
 HeapPred G(node a, node b, node c).
 
 node set_right (node x, node r)
-	//infer [H,G] requires H(x,r) ensures G(x,r,res);
-	requires x::tree<> ensures x::tll<res,r>;
+//infer [H,G] requires H(x,r) ensures G(x,r,res);
+requires x::tree<> ensures x::tll<res,r>;
 {
   if (x.right==null) 
   	{

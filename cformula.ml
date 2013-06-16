@@ -180,7 +180,7 @@ and one_formula = {
     formula_label : formula_label option;
     formula_pos : loc
 }
-	
+
 and flow_treatment = 
   | Flow_combine
   | Flow_replace
@@ -196,7 +196,7 @@ and h_formula = (* heap formula *)
   | ViewNode of h_formula_view
   | Hole of int
   (* | TempHole of int * h_formula *)
-  | HRel of (CP.spec_var * (CP.exp list) * loc) (*placeh older for heap predicates*)
+  | HRel of (CP.spec_var * ((CP.exp) list) * loc) (*placeh older for heap predicates*)
   | HTrue
   | HFalse
   | HEmp (* emp for classical logic *)
@@ -2724,7 +2724,7 @@ and h_subst sst (f : h_formula) =
 							h_formula_data_pruning_conditions = List.map (fun (c,c2)-> (CP.b_apply_subs sst c,c2)) pcond;
 							h_formula_data_pos = pos})
   | HRel (r, args, pos) ->
-      HRel (CP.subst_var_par sst r, CP.e_apply_subs_list sst args, pos)
+      HRel (CP.subst_var_par sst r, List.map (CP.e_apply_subs sst) args, pos)
   | HTrue -> f
   | HFalse -> f
   | HEmp -> f
@@ -2941,7 +2941,7 @@ and h_apply_one ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : h_formula) = m
         h_formula_data_remaining_branches = ann;
         h_formula_data_pruning_conditions = List.map (fun (c,c2)-> (CP.b_apply_one s c,c2)) pcond;
 		h_formula_data_pos = pos})
-  | HRel (r, args, pos) -> HRel (r, List.map (CP.e_apply_one s) args, pos)
+  | HRel (r, args, pos) -> HRel (r, List.map (CP.e_apply_one s ) args, pos)
   | HTrue -> f
   | HFalse -> f
   | HEmp -> f
@@ -3974,15 +3974,17 @@ let rec check_eq_hrel_node  (rl1, args1 ,_)  (rl2, args2,_)=
     let rec helper l1 l2=
       match l1,l2 with
         | [],[] -> true
-        | v1::vs1,v2::vs2 ->
-            if CP.eq_spec_var v1 v2 then helper vs1 vs2
-            else false
+        | (e1)::vs1,(e2)::vs2 ->
+              let sv1 = CP.afv e1 in
+              let sv2 = CP.afv e2 in
+              if CP.diff_svl sv1 sv2 = [] then helper vs1 vs2
+              else false
         | _ -> false
     in
     (*hp1 = hp2 and args1 = arg2*)
-    let svs1 = List.concat (List.map CP.afv args1) in
-    let svs2 = List.concat (List.map CP.afv args2) in
-    (CP.eq_spec_var rl1 rl2) && (helper svs1 svs2)
+    (* let svs1 = List.concat (List.map CP.afv args1) in *)
+    (* let svs2 = List.concat (List.map CP.afv args2) in *)
+    (CP.eq_spec_var rl1 rl2) && (helper args1 args2)
 
 and get_ptrs_f (f: formula)=
   match f with
@@ -12401,15 +12403,15 @@ let elim_prm e =
 		| Star s -> None
 		| Conj s -> None
 		| Phase s -> None	
-  	    | DataNode d -> Some (DataNode {d with h_formula_data_arguments = List.map nv d.h_formula_data_arguments; h_formula_data_node = nv d.h_formula_data_node})
-	    | ViewNode v -> Some (ViewNode {v with h_formula_view_arguments = List.map nv v.h_formula_view_arguments; h_formula_view_node = nv v.h_formula_view_node})
-        | HRel (b1,b2,b3) -> Some (HRel (nv b1,(List.map (CP.transform_exp f_e) b2),b3))
-        | StarMinus _ | ConjStar _ | ConjConj _ -> report_error no_pos "CF.f_h_f: not handle yet"
-	    | Hole _
-	    | HTrue
-	    | HFalse 
-        | HEmp -> Some e in
-	 transform_formula (f_e_f,f_f,f_h_f,(f_m,f_a,f_p_f,f_b,f_e)) e
+  	        | DataNode d -> Some (DataNode {d with h_formula_data_arguments = List.map nv d.h_formula_data_arguments; h_formula_data_node = nv d.h_formula_data_node})
+	        | ViewNode v -> Some (ViewNode {v with h_formula_view_arguments = List.map nv v.h_formula_view_arguments; h_formula_view_node = nv v.h_formula_view_node})
+                | HRel (b1,b2,b3) -> Some (HRel (nv b1,(List.map (CP.transform_exp f_e ) b2),b3))
+                | StarMinus _ | ConjStar _ | ConjConj _ -> report_error no_pos "CF.f_h_f: not handle yet"
+	        | Hole _
+	        | HTrue
+	        | HFalse 
+                | HEmp -> Some e in
+	transform_formula (f_e_f,f_f,f_h_f,(f_m,f_a,f_p_f,f_b,f_e)) e
 
 let convert_hf_to_mut f = 
   let h_tr f = match f with
@@ -12469,9 +12471,9 @@ let f_fst l ( _ :'a) = l
 let rec find_nodes e l=
 	 let f_heap_f l h  = match h with
 	  | HRel (p,vl, _) ->
-			let vl = if (List.exists (CP.eq_spec_var p) l) then [((p,h),CP.filter_vars vl)] else [] in
-			Some(h,vl)
-	  | _ -> None in 
+                let vl = if (List.exists (CP.eq_spec_var p) l) then [((p,h),CP.filter_vars vl)] else [] in
+		Some(h,vl)
+	  | _ -> None in
 	 let f_memo = (fun _ a-> Some (a,[])),(fun a _->(a,[])),(fun _ a-> (a,[[]])),(fun a _ -> (a,[])),(fun a _ -> (a,[])) in
 	 let f_pure = (fun _ a -> Some (a,[])),(fun _ a -> Some (a,[])),(fun _ a -> Some (a,[])) in
 	 let f = (fun _ -> None), (fun _ _-> None), f_heap_f, f_pure, f_memo in

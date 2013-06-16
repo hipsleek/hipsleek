@@ -701,6 +701,8 @@ let rec pr_formula_exp (e:P.exp) =
 		in fmt_string  ("]") (* An Hoa *)
 ;;
 
+let pr_formula_exp_w_ins (e,i) = pr_formula_exp e; if i = NI then fmt_string "#" else ()
+
 let pr_slicing_label sl =
   match sl with
 	| None -> fmt_string ""

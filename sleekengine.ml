@@ -323,7 +323,8 @@ let process_hp_def hpdef =
           iprog.I.prog_hp_decls <- ( hpdef :: iprog.I.prog_hp_decls);
 		  let chpdef = AS.trans_hp iprog hpdef in !cprog.C.prog_hp_decls <- (chpdef :: !cprog.C.prog_hp_decls);
 			(* Forward the relation to the smt solver. *)
-		  Smtsolver.add_hp_relation chpdef.C.hp_name chpdef.C.hp_vars chpdef.C.hp_formula;
+                  let args = fst (List.split chpdef.C.hp_vars_inst) in
+		  Smtsolver.add_hp_relation chpdef.C.hp_name args chpdef.C.hp_formula;
 	  with
 		| _ ->  dummy_exception() ; iprog.I.prog_hp_decls <- tmp
   else
