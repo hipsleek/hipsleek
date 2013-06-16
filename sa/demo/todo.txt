@@ -374,4 +374,25 @@ Can you print it as:
          HP_24(Anon_22,x@NI) * HP_25(Anon_23,x@NI)
 
 */
+============================================================
+# pair2-bug1.slk
+
+HeapPred H1(cell a, cell b).
+
+infer [H1] H1(x,y) |- x::cell<a>.
+print residue.
+
+/*
+
+
+GOT
+===
+ <1>emp&a=a_18&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [H1(x,y)&true --> x::cell<a_18>@M&true]
+
+SHOULD BE
+=========
+ H1(x,y)&true --> x::cell<a_18>@M * HP_2(y,x@NI)
+
+*/
 
