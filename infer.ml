@@ -1688,23 +1688,31 @@ let find_undefined_selective_pointers_x prog lfb lmix_f unmatched rhs_rest rhs_h
   let get_rhs_unfold_fwd_svl h_node h_args def_svl lhs_hpargs=
     let rec parition_helper node_name hpargs=
       match hpargs with
-        | [] -> (false,[])
+        | [] -> (false,[],[])
         | (hp,args)::tl ->
               let i_args, ni_args = SAU.partition_hp_args prog hp args in
               let inter,rem = List.partition
                 (fun (sv,_) -> CP.eq_spec_var node_name sv) i_args
               in
               if inter = [] then parition_helper node_name tl
-              else (true,rem@ni_args)
+              else (true,rem, (ni_args))
     in
-    let res,not_in_used_svl_inst = parition_helper h_node lhs_hpargs in
+    let res,niu_svl_i, niu_svl_ni = parition_helper h_node lhs_hpargs in
     if res then
       let args1 = CP.remove_dups_svl (CP.diff_svl h_args def_svl) in
       (* let _ = Debug.info_pprint ("     h_args:" ^(!CP.print_svl args1)) no_pos in *)
       (*old: args1@not_in_used_svl*)
       (*not_in_used_svl: NI*)
       let args11 = List.map (fun sv -> (sv, I)) args1 in
-      (true,(List.map (fun sv -> sv::not_in_used_svl_inst) args11))
+      let niu_svl_i_ni = List.map (fun (sv,_) -> (sv, NI)) niu_svl_i in
+      let niu_svl_ni_total = niu_svl_i_ni@niu_svl_ni in
+      let ls_fwd_svl = (List.map (fun sv -> sv::niu_svl_ni_total) args11) in
+      (*generate extra hp for cll*)
+      let extra_clls = if niu_svl_i = [] then []
+      else
+        [(niu_svl_i@[(h_node, NI)])]
+      in
+      (true,ls_fwd_svl@extra_clls)
     else (false, [])
   in
   let get_lhs_fold_fwd_svl selected_hps def_vs rhs_args lhs_hds

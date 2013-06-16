@@ -328,7 +328,7 @@ BUI instantiation is WRONG. Should have been:
 */
 
 ============================================================
-# dll-app-bug1d1.slk
+# dll-app-bug1d1.slk: FIXED
 
 HeapPred HP_9(node a,node b).
 
@@ -353,7 +353,7 @@ Please use the above instead of:
 */
 
 ============================================================
-# dll-app-bug1d2.slk
+# dll-app-bug1d2.slk: FIXED
 HeapPred HP_7(node@NI a,node b).
 
 infer [HP_7] //(2)
