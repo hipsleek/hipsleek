@@ -8,6 +8,12 @@ data node{
 checkentail  x=null & res=null
  |-  res=x. 
 
+checkentail  x=res & res=null
+ |-  x=null. 
+
+checkentail  x=res & res=null
+ |-  x!=null. 
+
 /*
  above currently fails due to our translation:
     x=null --> x<=0

@@ -99,8 +99,14 @@ and omega_of_b_formula b =
   | SubAnn (a1, a2, _) -> (omega_of_exp a1) ^ " <= " ^ (omega_of_exp a2)
   (* | LexVar (_, a1, a2, _) -> "(0=0)" *)
   | Eq (a1, a2, _) -> begin
-        if is_null a2 then	(omega_of_exp a1)^ " < 1"
-        else if is_null a1 then (omega_of_exp a2) ^ " < 1"
+        if is_null a2 then
+          let v= omega_of_exp a1 in
+          ("("^v^" < 1)")
+          (* ("("^v^" < 1 && "^v^" = xxxnull)") *)
+        else if is_null a1 then 
+          let v= omega_of_exp a2 in
+          ("("^v^" < 1)")
+          (* ("("^v^ " < 1 && "^v^" = xxxnull)") *)
         else (omega_of_exp a1) ^ " = " ^ (omega_of_exp a2)
   end
   | Neq (a1, a2, _) -> begin
