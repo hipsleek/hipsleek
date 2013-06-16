@@ -9288,7 +9288,7 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
 	      match r_inf_contr with
                 | Some (new_estate,pf) -> (* if successful, should skip infer_collect_hp_rel below *)
                       let new_estate = {new_estate with es_infer_vars = esv} in
-		      let _ = Debug.info_hprint (add_str "inferred contradiction : " Cprinter.string_of_pure_formula) pf pos in
+		      let _ = Debug.tinfo_hprint (add_str "inferred contradiction : " Cprinter.string_of_pure_formula) pf pos in
 		      if (List.length relass)>1 then report_error pos "Length of relational assumption list > 1"
 		      else
 			let ctx1 = (elim_unsat_es_now 6 prog (ref 1) new_estate) in

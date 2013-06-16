@@ -465,7 +465,7 @@ print residue.
 /*
 
 ============================================================
-# dll-app-bug1d3.slk
+# dll-app-bug1d3.slk    FIXED (by Cristian)
 
 GOT
 ==
