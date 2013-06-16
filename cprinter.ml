@@ -1564,6 +1564,19 @@ let string_of_hp_rel_def_short hp_rel =
  let str_of_hp_rel (_,f1, f2) = ((string_of_h_formula f1) ^ " ::= "  ^(prtt_string_of_formula f2)) in
   (str_of_hp_rel hp_rel)
 
+let string_of_hp_decl hpdecl =
+  let name = hpdecl.Cast.hp_name in
+  let pr_arg arg = 
+    let t = CP.type_of_spec_var arg in 
+    let arg_name = string_of_spec_var arg in
+    let arg_name = if(String.compare arg_name "res" == 0) then fresh_name () else arg_name in
+    (CP.name_of_type t) ^ " " ^ arg_name
+  in
+  let pr_inst (sv, i) = (pr_arg sv) ^ (if i=NI then "@NI" else "") in
+  let args = pr_lst ", " pr_inst hpdecl.Cast.hp_vars_inst in
+  "HeapPred "^ name ^ "(" ^ args ^ ").\n"
+
+
 let string_of_hp_rels (e) : string =
   (* CP.print_only_lhs_rhs e *)
   poly_string_of_pr pr_hp_rel e
