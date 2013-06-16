@@ -520,6 +520,16 @@ let get_root_ptrs prog hf0=
   in
   helper hf0
 
+let partition_hp_args prog hp args=
+  let hp_name= CP.name_of_spec_var hp in
+  let hprel = Cast.look_up_hp_def_raw prog.C.prog_hp_decls hp_name in
+  let ss = List.combine args hprel.C.hp_vars_inst in
+  let i_args, ni_args = List.fold_left (fun (ls1,ls2) (sv,(_,i)) ->
+      if i = I then (ls1@[(sv,I)],ls2) else (ls1,ls2@[(sv,NI)])
+  ) ([],[]) ss
+  in
+  (i_args, ni_args)
+
 let rec drop_hrel_match_args f args=
   match f with
     | CF.Base fb -> let nfb = drop_hrel_match_args_hf fb.CF.formula_base_heap args in
