@@ -3,14 +3,14 @@ data node{
 	node next;
 }.
 
-HeapPred HP_7(node# a,node b).
+HeapPred HP_7(node@NI a,node b).
 HeapPred HP_9(node a,node b).
 
 infer [HP_7] // (1)
 HP_7(x,l2) & x!=null |-  x::node<_,_>@M.
 print residue.
 // should fail
-
+/*
 infer [HP_7] //(2)
 HP_7(x,l2) & x!=null |-  l2::node<_,_>@M.
 print residue.
@@ -28,3 +28,4 @@ HP_9(x,l2) & x!=null |-  l2::node<_,_>@M.
 print residue.
 // should succeed
 // HP_9(x,l2) --> l2::node<p,q>*HP_10(p,x#)*HP_11(q,x#)
+*/

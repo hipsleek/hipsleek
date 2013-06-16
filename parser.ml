@@ -1873,13 +1873,13 @@ rel_decl:[[ rh=rel_header; `EQEQ; rb=rel_body (* opt_inv *) ->
 
 typed_id_list:[[ t = typ; `IDENTIFIER id ->  (t,id) ]];
 
-typed_id_ins_list:[[ t = typ; `IDENTIFIER id ->  (t,id, Globals.I)
-  |  t = typ; `IDENTIFIER id ; `NI->  (t,id, Globals.NI)
+typed_id_inst_list:[[ t = typ; `IDENTIFIER id ->  (t,id, Globals.I)
+  |  t = typ; `NI; `IDENTIFIER id->  (t,id, Globals.NI)
  ]];
 
 typed_id_list_opt: [[ t = LIST0 typed_id_list SEP `COMMA -> t ]];
 
-typed_id_ins_list_opt: [[ t = LIST0 typed_id_ins_list SEP `COMMA -> t ]];
+typed_id_inst_list_opt: [[ t = LIST0 typed_id_inst_list SEP `COMMA -> t ]];
 
 typed_default_id_list:[[ t = typ  ->  (t,default_rel_id) ]];
 
@@ -1926,7 +1926,7 @@ axiom_decl:[[
 ]];
 
 hp_decl:[[
-`HP; `IDENTIFIER id; `OPAREN; tl= typed_id_ins_list_opt; (* opt_ann_cid_list *) `CPAREN  ->
+`HP; `IDENTIFIER id; `OPAREN; tl= typed_id_inst_list_opt; (* opt_ann_cid_list *) `CPAREN  ->
     let _ = hp_names # push id in
     { hp_name = id;
     hp_typed_inst_vars = tl;
