@@ -2802,7 +2802,7 @@ let add_raw_hp_rel_x prog unknown_ptrs pos=
                List.map (fun sv -> CP.mkVar sv pos) unk_args,
       pos)
     in
-    let _ = Debug.binfo_hprint (add_str "add new hprel decl: " Cprinter.string_of_hp_decl) hp_decl pos in
+    let _ = Debug.binfo_hprint (add_str "define: " Cprinter.string_of_hp_decl) hp_decl pos in
     DD.ninfo_pprint ("       gen hp_rel: " ^ (Cprinter.string_of_h_formula hf)) pos;
     (hf, CP.SpecVar (HpT,hp_decl.Cast.hp_name, Unprimed))
   else report_error pos "sau.add_raw_hp_rel: args should be not empty"

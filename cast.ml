@@ -449,6 +449,7 @@ let print_mater_prop_list = ref (fun (c:mater_property list) -> "cast printer ha
 (*single node -> simple (true), otherwise -> complex (false*)
 (* let is_simple_formula x = true *)
 let print_view_decl = ref (fun (c:view_decl) -> "cast printer has not been initialized")
+let print_hp_decl = ref (fun (c:hp_decl) -> "cast printer has not been initialized")
 let print_coercion = ref (fun (c:coercion_decl) -> "cast printer has not been initialized")
 let print_coerc_decl_list = ref (fun (c:coercion_decl list) -> "cast printer has not been initialized")
 let print_mater_prop_list = ref (fun (c:mater_property list) -> "cast printer has not been initialized")
@@ -900,9 +901,14 @@ let rec look_up_rel_def_raw (defs : rel_decl list) (name : ident) = match defs w
   | d :: rest -> if d.rel_name = name then d else look_up_rel_def_raw rest name
   | [] -> raise Not_found
 
-let rec look_up_hp_def_raw (defs : hp_decl list) (name : ident) = match defs with
-  | d :: rest -> if d.hp_name = name then d else look_up_hp_def_raw rest name
+let rec look_up_hp_def_raw_x (defs : hp_decl list) (name : ident) = match defs with
+  | d :: rest -> if d.hp_name = name then d else look_up_hp_def_raw_x rest name
   | [] -> raise Not_found
+
+let look_up_hp_def_raw defs name=
+  let pr1 = !print_hp_decl in
+  Debug.no_1 "look_up_hp_def_raw" pr_id pr1
+      (fun _ -> look_up_hp_def_raw_x defs name) name
 
 let rec look_up_view_def (pos : loc) (defs : view_decl list) (name : ident) = match defs with
   | d :: rest -> 
