@@ -7,6 +7,7 @@ ll<> == self = null  or self::node<_, q> * q::ll<>;
 
 
 HeapPred H(node a).
+HeapPred G1(node a).
 HeapPred G(node a, node r).
 
 node foo(node x)
@@ -16,12 +17,12 @@ node foo(node x)
 */ 
   infer [H,G]
   requires H(x)
-  ensures G(x,r);
+     ensures G(x,r);
 
 {
   if (x.next != null)
     x.next = foo(x.next);
-  dprint;
+  //  dprint;
  return x;
 }
 

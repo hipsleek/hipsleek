@@ -10606,7 +10606,7 @@ let prune_irr_neq_b_form b irr_svl=
   let (pf,c) = b in
   match pf with
     | Neq (a1, a2, pos)
-    | Eq (a1, a2, pos) -> begin
+    (* | Eq (a1, a2, pos) *) -> begin
         match a1,a2 with
           | Var (sv1,pos1), Var (sv2,pos2) ->
                 if (List.exists (fun sv -> (eq_spec_var sv sv1) || (eq_spec_var sv sv2)) irr_svl) then

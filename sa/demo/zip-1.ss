@@ -14,12 +14,13 @@ HeapPred H2(node a).
 HeapPred H3(node a).
 HeapPred G1(node a).//, node b).
 HeapPred G2(node a).
+ HeapPred G3(node a, node b).
 
 node zip (node x, node y)
 
-  infer [H2,H3,G1,G2]
-  requires H2(x) * H3(y)
-  ensures  G1(x) *G2(y);
+  infer [H1, G3]
+  requires H1(x,y)
+     ensures  G3(x,y);
 
 //  requires x::ltwo<y>
 //  ensures res::ll<> * y::ll<> & res=x;

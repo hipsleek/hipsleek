@@ -13,14 +13,15 @@ HeapPred G(node a, node r).
 
   Need to include res=x below!
 */
-
-infer [G] G(next_22_793,r_812) * x::node<val_22_792,next_22_793>&
+/*
+infer [G,x] G(next_22_793,r_812) * x::node<val_22_792,next_22_793>&
 next_22_793!=null 
 //& v_bool_22_771' & next_22_793!=null & v_bool_22_771' 
 //& next_22_793=next_22_793 
 & res=x
  |-  G(x,r). 
 print residue.
+*/
 /*
  <1>emp&next_22_793!=null & res=x & r=r_24&{FLOW,(19,20)=__norm}[]
  inferred hprel: [(G(next_22_793,r_812)) * x::node<val_22_792,next_22_793>@M&
@@ -36,6 +37,7 @@ next_22_793=null
  |-  G(x,r). 
 
 print residue.
+
 /*
  <1>emp&next_22_793=null & res=x & r=r_34&{FLOW,(19,20)=__norm}[]
  inferred hprel: [(H4(next_22_793)) * x::node<val_22_792,next_22_793>@M&

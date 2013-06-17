@@ -701,7 +701,7 @@ let rec pr_formula_exp (e:P.exp) =
 		in fmt_string  ("]") (* An Hoa *)
 ;;
 
-let pr_formula_exp_w_ins (e,i) = pr_formula_exp e; if i = Globals.NI then fmt_string "#" else ()
+let pr_formula_exp_w_ins (e,i) = pr_formula_exp e; if i = Globals.NI then fmt_string "@NI" else ()
 
 let pr_slicing_label sl =
   match sl with
@@ -1800,6 +1800,9 @@ let pr_hprel_def_lib hpd=
 let string_of_hprel hp = poly_string_of_pr pr_hprel hp
 
 let string_of_hprel_short hp = poly_string_of_pr pr_hprel_short hp
+
+let string_of_hprel_short_inst prog hp =
+  poly_string_of_pr (pr_hprel_short_inst prog) hp
 
 let string_of_hprel_def hp = poly_string_of_pr pr_hprel_def hp
 

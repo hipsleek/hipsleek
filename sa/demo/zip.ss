@@ -31,21 +31,32 @@ node zip (node x, node y)
 
 /*
 
+===============================================================
 # zip.ss
 
-weird bug here..
+Problems, 
+ (i) why ins't @NI printing?
+ (ii) Why did we have:
+            H1(x,y) x=null?
 
- id: 10; caller: []; line: 22; classic: false; kind: POST; hec_num: 4; evars: []; infer_vars: []; c_heap: y_820::ll@M[1][Orig]
- checkentail emp&x=null & y=y_820 & x=null & v_bool_24_800' & x=null & v_bool_24_800' & 
-v_null_24_781'=null & res=v_null_24_781'&{FLOW,(22,23)=__norm}[]
- |-  emp&res=x&{FLOW,(22,23)=__norm}[]. 
-res:  failctx
-         fe_kind: MAY
-         fe_name: logical bug
-         fe_locs: {
-                   fc_message: failed in entailing pure formula(s) in conseq
-                   fc_current_lhs_flow: {FLOW,(22,23)=__norm}}
 
+[ H1(x,y)&x!=null --> x::node<val_24_819,next_24_820>@M * 
+  (HP_821(next_24_820,y)) * (HP_822(y,x))&true,
+ (HP_821(next_24_820,y)) * (HP_822(y,x))&
+  true --> y::node<val_25_826,next_25_827>@M * (HP_828(next_25_827,x))&true,
+ HP_828(next_25_827,x)&true --> H1(next_24_820,next_25_827)&true,
+ H1(x,y)&x=null & res=null --> G1(x,y,res)&true,
+ y::node<val_25_826,next_25_827>@M * x::node<val_24_819,next_24_820>@M&
+  res=x --> G1(x,y,res)&true]
+
+======>
+
+[ H1(x_1059,y_1060) ::= emp&x_1059=null,
+ G1(x_1061,y_1062,res_1063) ::= 
+ emp&res_1063=null & x_1061=null
+ or y_1062::node<val_25_826,next_25_827>@M * 
+    x_1061::node<val_24_819,next_24_820>@M&res_1063=x_1061
+ ]
 
 
 */

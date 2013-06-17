@@ -2397,7 +2397,10 @@ and check_proc (prog : prog_decl) (proc : proc_decl) cout_option (mutual_grp : p
                         print_endline "*************************************";
                         print_endline "*******relational assumptions (4) ********";
                         print_endline "*************************************";
-                        print_endline (Infer.rel_ass_stk # string_of_reverse);
+                        let pr = pr_list_ln (fun x -> Cprinter.string_of_hprel_short_inst prog x) in
+                        let _ = Infer.rel_ass_stk # reverse in
+                        print_endline (pr (Infer.rel_ass_stk # get_stk));
+                        (* print_endline (Infer.rel_ass_stk # string_of_reverse); *)
                         print_endline "*************************************" 
                       end;
 		    let ls_hprel, ls_inferred_hps, dropped_hps =

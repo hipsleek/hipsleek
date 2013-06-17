@@ -1732,6 +1732,7 @@ let find_undefined_selective_pointers_x prog lfb lmix_f unmatched rhs_rest rhs_h
         loop_helper rest svl r1
     in
     let process_one (hp,args)=
+      (* let _ = Debug.info_pprint ("  hp: " ^ (!CP.print_sv hp)) no_pos in *)
       if CP.mem_svl hp selected_hps then
         let opto = loop_helper (*find_pt_new*) lhs_hds args [] in
         (match opto with
@@ -1823,7 +1824,9 @@ let find_undefined_selective_pointers_x prog lfb lmix_f unmatched rhs_rest rhs_h
   in
   let drop_hpargs =  List.concat (List.map (select_helper rest_svl1) rem_lhpargs) in
   let drop_hps =  (List.map fst drop_hpargs) in
-  let selected_hpargs = List.filter (fun (hp,_) -> not (CP.mem_svl hp drop_hps)) selected_hp_args in
+  let selected_hpargs =
+    List.filter (fun (hp,_) -> not (CP.mem_svl hp drop_hps)) selected_hp_args
+  in
   (*========*)
   (*find undefined ptrs of all hrel args*)
   (*two cases: rhs unfold (mis-match is a node) and lhs fold (mis-match is a unk hp)*)
@@ -1835,7 +1838,8 @@ let find_undefined_selective_pointers_x prog lfb lmix_f unmatched rhs_rest rhs_h
       let svl,selected_hpargs0 = (* if proving_kind#string_of = "POST" then [] else *)
       (*since h_subst is not as expected we use closed set*)
         match match_unk_preds ls_lhp_args rhs_args with
-          | Some hp -> ([], [(hp,rhs_args)])
+          | Some hp ->
+                ([], [(hp,rhs_args)])
           | None ->
                 let closed_rhs_hpargs = SAU.find_close rhs_args leqs in
                 (get_lhs_fold_fwd_svl (List.map fst selected_hpargs) def_vs closed_rhs_hpargs lhds lhvs ls_lhp_args,
