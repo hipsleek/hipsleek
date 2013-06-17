@@ -1,0 +1,121 @@
+ id: 0; caller: []; line: 12; classic: false; kind: PRE-2; hec_num: 2; evars: []; c_heap: emp
+ checkentail SLSEG(l,e)&l=l' & e=e' & e'=l'&{FLOW,(22,23)=__norm}[]
+ |-  emp&true&{FLOW,(22,23)=__norm}[]. 
+res:  [
+  SLSEG(l,e)&l=l' & e=e' & e'=l'&{FLOW,(22,23)=__norm}[]
+  ]
+--------------
+ id: 2; caller: []; line: 12; classic: false; kind: PRE-2; hec_num: 2; evars: []; c_heap: emp
+ checkentail SLSEG(l,e)&l=l' & e=e' & e'!=l'&{FLOW,(22,23)=__norm}[]
+ |-  emp&true&{FLOW,(22,23)=__norm}[]. 
+res:  [
+  SLSEG(l,e)&l=l' & e=e' & e'!=l'&{FLOW,(22,23)=__norm}[]
+  ]
+--------------
+ id: 4; caller: []; line: 13; classic: false; kind: PRE-2; hec_num: 2; evars: []; c_heap: emp
+ checkentail SLSEG(l,e)&l=l' & e=e' & e'!=l' & !(v_bool_12_762') & e'!=l' & 
+!(v_bool_12_762') & l'=null&{FLOW,(22,23)=__norm}[]
+ |-  emp&true&{FLOW,(22,23)=__norm}[]. 
+res:  [
+  SLSEG(l,e)&l=l' & e=e' & e'!=l' & !(v_bool_12_762') & e'!=l' & !(v_bool_12_762') & l'=null&{FLOW,(22,23)=__norm}[]
+  ]
+--------------
+ id: 6; caller: []; line: 13; classic: false; kind: PRE-2; hec_num: 2; evars: []; c_heap: emp
+ checkentail SLSEG(l,e)&l=l' & e=e' & e'!=l' & !(v_bool_12_762') & e'!=l' & 
+!(v_bool_12_762') & l'!=null&{FLOW,(22,23)=__norm}[]
+ |-  emp&true&{FLOW,(22,23)=__norm}[]. 
+res:  [
+  SLSEG(l,e)&l=l' & e=e' & e'!=l' & !(v_bool_12_762') & e'!=l' & !(v_bool_12_762') & l'!=null&{FLOW,(22,23)=__norm}[]
+  ]
+--------------
+ id: 8; caller: []; line: 13; classic: false; kind: BIND; hec_num: 5; evars: []; c_heap: emp
+ checkentail SLSEG(l,e)&l=l' & e=e' & e'!=l' & !(v_bool_12_762') & e'!=l' & 
+!(v_bool_12_762') & l'=null & !(v_boolean_13_760') & l'=null&
+{FLOW,(22,23)=__norm}[]
+ |-  l'::node2<n_13_756',s_13_757'>@L[Orig]&true&{FLOW,(1,25)=__flow}[]. 
+res:  [
+  hfalse&false&{FLOW,(22,23)=__norm}[]
+  es_infer_vars/rel: [e; l]
+  ]
+--------------
+ id: 9; caller: []; line: 13; classic: false; kind: BIND; hec_num: 4; evars: []; c_heap: emp
+ checkentail hfalse&false&{FLOW,(22,23)=__norm}[]
+ |-  emp&true&{FLOW,(1,25)=__flow}[]. 
+res:  [
+  hfalse&false&{FLOW,(22,23)=__norm}[]
+  es_infer_vars/rel: [e; l]
+  ]
+--------------
+ id: 10; caller: []; line: 13; classic: false; kind: BIND; hec_num: 5; evars: []; c_heap: emp
+ checkentail SLSEG(l,e)&l=l' & e=e' & e'!=l' & !(v_bool_12_762') & e'!=l' & 
+!(v_bool_12_762') & l'!=null & v_boolean_13_760' & l'!=null&
+{FLOW,(22,23)=__norm}[]
+ |-  l'::node2<n_13_756',s_13_757'>@L[Orig]&true&{FLOW,(1,25)=__flow}[]. 
+hprel_ass: [ SLSEG(l,e)&e!=l & l!=null --> l::node2<n_13_792,s_13_793>@M * 
+  (HP_794(n_13_792,e)) * (HP_795(s_13_793,e))&true]
+res:  [
+  (HP_794(n_13_792,e)) * (HP_795(s_13_793,e)) * l::node2<n_13_792,s_13_793>@M[Orig]&l=l' & e=e' & e'!=l' & !(v_bool_12_762') & e'!=l' & !(v_bool_12_762') & l'!=null & v_boolean_13_760' & l'!=null & n_13_756'=n_13_792 & s_13_757'=s_13_793&{FLOW,(22,23)=__norm}[]
+  ]
+--------------
+ id: 12; caller: []; line: 13; classic: false; kind: BIND; hec_num: 4; evars: []; c_heap: emp
+ checkentail (HP_794(n_13_792,e)) * (HP_795(s_13_793,e)) * 
+l::node2<n_13_792,s_13_793>@M[Orig]&l=l' & e=e' & e'!=l' & 
+!(v_bool_12_762') & e'!=l' & !(v_bool_12_762') & l'!=null & 
+v_boolean_13_760' & l'!=null & n_13_756'=n_13_792 & s_13_757'=s_13_793&
+{FLOW,(22,23)=__norm}[]
+ |-  emp&true&{FLOW,(1,25)=__flow}[]. 
+res:  [
+  (HP_794(n_13_792,e)) * (HP_795(s_13_793,e)) * l::node2<n_13_792,s_13_793>@M[Orig]&l=l' & e=e' & e'!=l' & !(v_bool_12_762') & e'!=l' & !(v_bool_12_762') & l'!=null & v_boolean_13_760' & l'!=null & n_13_756'=n_13_792 & s_13_757'=s_13_793&{FLOW,(22,23)=__norm}[]
+  ]
+--------------
+ id: 13; caller: []; line: 13; classic: false; kind: PRE-2; hec_num: 5; evars: []; c_heap: emp
+ checkentail (HP_794(n_13_792,e)) * (HP_795(s_13_793,e)) * 
+l::node2<n_13_792,s_13_793>@M[Orig]&l=l' & e=e' & e'!=l' & 
+!(v_bool_12_762') & e'!=l' & !(v_bool_12_762') & l'!=null & 
+v_boolean_13_760' & l'!=null & n_13_792=v_node2_13_758'&
+{FLOW,(22,23)=__norm}[]
+ |-  SLSEG(v_node2_13_758',e')&true&{FLOW,(22,23)=__norm}[]. 
+hprel_ass: [ HP_794(n_13_792,e)&true --> SLSEG(n_13_792,e)&true]
+res:  [
+  (HP_795(s_13_793,e)) * l::node2<n_13_792,s_13_793>@M[Orig]&l=l' & e=e' & e'!=l' & !(v_bool_12_762') & e'!=l' & !(v_bool_12_762') & l'!=null & v_boolean_13_760' & l'!=null & n_13_792=v_node2_13_758' & n_13_792=v_node2_13_758' & e=e'&{FLOW,(22,23)=__norm}[]
+  ]
+--------------
+ id: 15; caller: []; line: 13; classic: false; kind: PRE-2; hec_num: 4; evars: []; c_heap: SLSEG(n_13_792,e)
+ checkentail (HP_795(s_13_793,e)) * l::node2<n_13_792,s_13_793>@M[Orig]&l=l' & e=e' & 
+e'!=l' & !(v_bool_12_762') & e'!=l' & !(v_bool_12_762') & l'!=null & 
+v_boolean_13_760' & l'!=null & n_13_792=v_node2_13_758' & 
+n_13_792=v_node2_13_758' & e=e'&{FLOW,(22,23)=__norm}[]
+ |-  emp&true&{FLOW,(22,23)=__norm}[]. 
+res:  [
+  (HP_795(s_13_793,e)) * l::node2<n_13_792,s_13_793>@M[Orig]&l=l' & e=e' & e'!=l' & !(v_bool_12_762') & e'!=l' & !(v_bool_12_762') & l'!=null & v_boolean_13_760' & l'!=null & n_13_792=v_node2_13_758' & n_13_792=v_node2_13_758' & e=e'&{FLOW,(22,23)=__norm}[]
+  ]
+--------------
+ id: 19; caller: []; line: 10; classic: false; kind: POST; hec_num: 2; evars: []; c_heap: emp
+ checkentail SLSEG(l,e)&e=l & v_bool_12_762' & e=l & v_bool_12_762' & 
+v_boolean_12_755' & res=v_boolean_12_755'&{FLOW,(22,23)=__norm}[]
+ |-  emp&true&{FLOW,(22,23)=__norm}[]. 
+res:  [
+  SLSEG(l,e)&e=l & v_bool_12_762' & e=l & v_bool_12_762' & v_boolean_12_755' & res=v_boolean_12_755'&{FLOW,(22,23)=__norm}[]
+  ]
+--------------
+ id: 20; caller: []; line: 13; classic: false; kind: POST; hec_num: 2; evars: []; c_heap: emp
+ checkentail (HP_795(s_13_793,e)) * l::node2<n_13_792,s_13_793>@M[Orig]&e!=l & 
+!(v_bool_12_762') & e!=l & !(v_bool_12_762') & l!=null & v_boolean_13_810 & 
+l!=null & n_13_792=n_13_792 & e=e & v_boolean_13_811 & v_boolean_13_761' & 
+v_boolean_13_811 & v_boolean_13_810 & res=v_boolean_13_761'&
+{FLOW,(22,23)=__norm}[]
+ |-  emp&true&{FLOW,(22,23)=__norm}[]. 
+res:  [
+  (HP_795(s_13_793,e)) * l::node2<n_13_792,s_13_793>@M[Orig]&e!=l & !(v_bool_12_762') & e!=l & !(v_bool_12_762') & l!=null & v_boolean_13_810 & l!=null & n_13_792=n_13_792 & e=e & v_boolean_13_811 & v_boolean_13_761' & v_boolean_13_811 & v_boolean_13_810 & res=v_boolean_13_761'&{FLOW,(22,23)=__norm}[]
+  ]
+--------------
+ id: 21; caller: []; line: 13; classic: false; kind: POST; hec_num: 2; evars: []; c_heap: emp
+ checkentail (HP_795(s_13_793,e)) * l::node2<n_13_792,s_13_793>@M[Orig]&e!=l & 
+!(v_bool_12_762') & e!=l & !(v_bool_12_762') & l!=null & v_boolean_13_814 & 
+l!=null & n_13_792=n_13_792 & e=e & !(v_boolean_13_815) & 
+!(v_boolean_13_761') & !(v_boolean_13_815) & v_boolean_13_814 & 
+res=v_boolean_13_761'&{FLOW,(22,23)=__norm}[]
+ |-  emp&true&{FLOW,(22,23)=__norm}[]. 
+res:  [
+  (HP_795(s_13_793,e)) * l::node2<n_13_792,s_13_793>@M[Orig]&e!=l & !(v_bool_12_762') & e!=l & !(v_bool_12_762') & l!=null & v_boolean_13_814 & l!=null & n_13_792=n_13_792 & e=e & !(v_boolean_13_815) & !(v_boolean_13_761') & !(v_boolean_13_815) & v_boolean_13_814 & res=v_boolean_13_761'&{FLOW,(22,23)=__norm}[]
+  ]

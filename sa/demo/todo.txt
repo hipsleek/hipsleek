@@ -406,7 +406,7 @@ SHOULD BE
 */
 
 ============================================================
-# pair2.ss
+# pair2.ss FIXED
 
 
 [ H1(x,y)&true --> x::cell<val_20_783>@M * (HP_784(y,x))&true,
@@ -425,7 +425,7 @@ EXPECTING:
 
 
 ============================================================
-# pair2-bug2.slk
+# pair2-bug2.slk FIXED
 
 relAssume H1
  H1(x,y) --> x::cell<val_20_783> * HP_4(y,x).
@@ -506,9 +506,55 @@ EXPECTED:
                                        ^^^^^^^^^^^^^^^^
  (HP_790(next_19_789)) * x::node<val_19_788,next_19_789>@M&
   next_19_789=null --> G(x)&true]
+
+When G has two parameters:
+===========================
+[ H(x)&true --> x::node<val_22_792,next_22_793>@M * (HP_794(next_22_793))&true,
+ HP_794(next_22_793)&next_22_793!=null --> H(next_22_793)&true,
+ (G(next_22_793,r_812)) * x::node<val_22_792,next_22_793>@M&
+  next_22_793!=null --> G(x,r_814)&true,
+ (HP_794(next_22_793)) * x::node<val_22_792,next_22_793>@M&
+  next_22_793=null --> G(x,r_815)&true]
+
 ============================================================
 #zip-bug4.slk
 
 
 ============================================================
 # zip-1.ss
+-that were not previously defined; thus violating
+
+============================================================
+# foo.slk
+
+  Need to include res=x below!
+*/
+
+infer [G] G(next_22_793,r_812) * x::node<val_22_792,next_22_793>&
+next_22_793!=null 
+//& v_bool_22_771' & next_22_793!=null & v_bool_22_771' 
+//& next_22_793=next_22_793 
+& res=x
+ |-  G(x,r). 
+print residue.
+/*
+ <1>emp&next_22_793!=null & res=x & r=r_24&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [(G(next_22_793,r_812)) * x::node<val_22_792,next_22_793>@M&
+                   next_22_793!=null --> G(x,r_24)&true]
+*/
+
+
+
+infer [G,H4] H4(next_22_793) * x::node<val_22_792,next_22_793> &
+next_22_793=null 
+//& !(v_bool_22_771') & next_22_793=null & !(v_bool_22_771') 
+& res=x
+ |-  G(x,r). 
+
+print residue.
+/*
+ <1>emp&next_22_793=null & res=x & r=r_34&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [(H4(next_22_793)) * x::node<val_22_792,next_22_793>@M&
+                   next_22_793=null --> G(x,r_34)&true]
+*/
+

@@ -1,0 +1,152 @@
+Starting Omega...oc
+
+choose_context@2@1
+choose_context inp1 :LHS node: x::ltwo<y>@M[0][Orig][LHSCase]
+choose_context inp2 :RHS node: res::ll@M[0][Orig][LHSCase]
+choose_context inp3 :LHS pure: x=null & res=null
+choose_context inp4 :RHS pure: true
+choose_context inp5 :right aliase:[]
+choose_context@2 EXIT out :[]
+
+choose_context@3@1
+choose_context inp1 :LHS node: x::ltwo<y>@M[0][Orig][LHSCase]
+choose_context inp2 :RHS node: y::ll@M[0][Orig][LHSCase]
+choose_context inp3 :LHS pure: x=null & res=null
+choose_context inp4 :RHS pure: true
+choose_context inp5 :right aliase:[]
+choose_context@3 EXIT out :[ 
+  Type: MaterializedArg (y,partial,) view_defn_mater
+  LHS: x::ltwo<y>@M[0][Orig][LHSCase]
+  RHS: y::ll@M[0][Orig][LHSCase]
+ lhs_rest: htrue
+ rhs_rest: res::ll@M[0][Orig][LHSCase]]
+
+@1! weighted action:
+[(1): Prio:-1COND =>[Prio:2BaseCaseFold =>
+                                      LHS: emp
+                                      RHS: res::ll@M[0][Orig][LHSCase];Prio:2UnmatchedRHSData =>  res::ll@M[0][Orig][LHSCase]],
+(2): Prio:-1SEARCH =>[
+         Prio:1Unfold 1 =>
+                           LHS: x::ltwo<y>@M[0][Orig][LHSCase]
+                           RHS: y::ll@M[0][Orig][LHSCase];
+         Prio:1BaseCaseUnfold =>
+                                 LHS: x::ltwo<y>@M[0][Orig][LHSCase]
+                                 RHS: y::ll@M[0][Orig][LHSCase]
+         ]]
+@1! sorted action:[(1): SEARCH =>[
+  Prio:1Unfold 1 =>
+                    LHS: x::ltwo<y>@M[0][Orig][LHSCase]
+                    RHS: y::ll@M[0][Orig][LHSCase];
+  Prio:1BaseCaseUnfold =>
+                          LHS: x::ltwo<y>@M[0][Orig][LHSCase]
+                          RHS: y::ll@M[0][Orig][LHSCase]
+  ],
+(2): COND =>[Prio:2BaseCaseFold =>
+                               LHS: emp
+                               RHS: res::ll@M[0][Orig][LHSCase];Prio:2UnmatchedRHSData =>  res::ll@M[0][Orig][LHSCase]]]
+compute_actions@1
+compute_actions inp1 :EQ ptr:[]
+compute_actions inp2 :LHS heap: x::ltwo<y>@M[0][Orig][LHSCase]
+compute_actions inp3 :LHS pure: x=null & res=null
+compute_actions inp4 :RHS cand:[ res::ll@M[0][Orig][LHSCase], y::ll@M[0][Orig][LHSCase]]
+compute_actions inp5 :right alias:[]
+compute_actions@1 EXIT out : SEARCH =>[
+  Prio:1Unfold 1 =>
+                    LHS: x::ltwo<y>@M[0][Orig][LHSCase]
+                    RHS: y::ll@M[0][Orig][LHSCase];
+  Prio:1BaseCaseUnfold =>
+                          LHS: x::ltwo<y>@M[0][Orig][LHSCase]
+                          RHS: y::ll@M[0][Orig][LHSCase]
+  ]
+
+choose_context@5@4
+choose_context inp1 :LHS node: y::ll@M[1][Orig]
+choose_context inp2 :RHS node: res::ll@M[0][Orig][LHSCase]
+choose_context inp3 :LHS pure: x=null & x=null & res=null
+choose_context inp4 :RHS pure: true
+choose_context inp5 :right aliase:[]
+choose_context@5 EXIT out :[]
+
+choose_context@6@4
+choose_context inp1 :LHS node: y::ll@M[1][Orig]
+choose_context inp2 :RHS node: y::ll@M[0][Orig][LHSCase]
+choose_context inp3 :LHS pure: x=null & x=null & res=null
+choose_context inp4 :RHS pure: true
+choose_context inp5 :right aliase:[]
+choose_context@6 EXIT out :[ 
+  Type: Root
+  LHS: y::ll@M[1][Orig]
+  RHS: y::ll@M[0][Orig][LHSCase]
+ lhs_rest: emp
+ rhs_rest: res::ll@M[0][Orig][LHSCase]]
+
+@4! weighted action:[(1): Prio:-1COND =>[Prio:2BaseCaseFold =>
+                                      LHS: emp
+                                      RHS: res::ll@M[0][Orig][LHSCase];Prio:2UnmatchedRHSData =>  res::ll@M[0][Orig][LHSCase]],
+(2): Prio:-1COND =>[Prio:1BaseCaseUnfold =>
+                                        LHS: y::ll@M[1][Orig]
+                                        RHS: y::ll@M[0][Orig][LHSCase];Prio:1Match =>
+
+ LHS: y::ll@M[1][Orig]
+ RHS: y::ll@M[0][Orig][LHSCase]]]
+@4! sorted action:[(1): COND =>[Prio:1BaseCaseUnfold =>
+                                 LHS: y::ll@M[1][Orig]
+                                 RHS: y::ll@M[0][Orig][LHSCase];Prio:1Match =>
+
+ LHS: y::ll@M[1][Orig]
+ RHS: y::ll@M[0][Orig][LHSCase]],
+(2): COND =>[Prio:2BaseCaseFold =>
+                               LHS: emp
+                               RHS: res::ll@M[0][Orig][LHSCase];Prio:2UnmatchedRHSData =>  res::ll@M[0][Orig][LHSCase]]]
+compute_actions@4
+compute_actions inp1 :EQ ptr:[]
+compute_actions inp2 :LHS heap: y::ll@M[1][Orig]
+compute_actions inp3 :LHS pure: x=null & x=null & res=null
+compute_actions inp4 :RHS cand:[ res::ll@M[0][Orig][LHSCase], y::ll@M[0][Orig][LHSCase]]
+compute_actions inp5 :right alias:[]
+compute_actions@4 EXIT out : COND =>[Prio:1BaseCaseUnfold =>
+                                 LHS: y::ll@M[1][Orig]
+                                 RHS: y::ll@M[0][Orig][LHSCase];Prio:1Match =>
+
+ LHS: y::ll@M[1][Orig]
+ RHS: y::ll@M[0][Orig][LHSCase]]
+
+choose_context@8@7
+choose_context inp1 :LHS node: emp
+choose_context inp2 :RHS node: res::ll@M[0][Orig][LHSCase]
+choose_context inp3 :LHS pure: x=null & x=null & res=null
+choose_context inp4 :RHS pure: true
+choose_context inp5 :right aliase:[]
+choose_context@8 EXIT out :[]
+
+@7! weighted action:[(1): Prio:-1COND =>[Prio:2BaseCaseFold =>
+                                      LHS: emp
+                                      RHS: res::ll@M[0][Orig][LHSCase];Prio:2UnmatchedRHSData =>  res::ll@M[0][Orig][LHSCase]]]
+@7! sorted action:[(1): COND =>[Prio:2BaseCaseFold =>
+                               LHS: emp
+                               RHS: res::ll@M[0][Orig][LHSCase];Prio:2UnmatchedRHSData =>  res::ll@M[0][Orig][LHSCase]]]
+compute_actions@7
+compute_actions inp1 :EQ ptr:[]
+compute_actions inp2 :LHS heap: emp
+compute_actions inp3 :LHS pure: x=null & x=null & res=null
+compute_actions inp4 :RHS cand:[ res::ll@M[0][Orig][LHSCase]]
+compute_actions inp5 :right alias:[]
+compute_actions@7 EXIT out : COND =>[Prio:2BaseCaseFold =>
+                               LHS: emp
+                               RHS: res::ll@M[0][Orig][LHSCase];Prio:2UnmatchedRHSData =>  res::ll@M[0][Orig][LHSCase]]
+
+Entail (1) : Valid. 
+
+ <1>emp&x=null & x=null & res=null&{FLOW,(19,20)=__norm}[]
+
+Stop Omega... 13 invocations 
+SAT Count   : 14
+SAT % Hit   : 50.%
+IMPLY Count : 4
+IMPLY % Hit : 0.%
+Time(cache overhead) : 0.004001 (seconds)
+
+Total verification time: 0.084005 second(s)
+	Time spent in main process: 0.064004 second(s)
+	Time spent in child processes: 0.020001 second(s)
+

@@ -1,0 +1,206 @@
+ id: 0; caller: []; line: 24; classic: false; kind: BIND; hec_num: 5; evars: []; infer_vars: [H3,G3]; c_heap: emp
+ checkentail H3(l1,l2)&l1=l1' & l2=l2'&{FLOW,(22,23)=__norm}[]
+ |-  l1'::node<next_24_785',prev_24_786'>@L[Orig]&true&{FLOW,(1,25)=__flow}[]. 
+hprel_ass: [ H3(l1,l2)&true --> l1::node<next_24_815,prev_24_816>@M * 
+  (HP_817(next_24_815,l2)) * (HP_818(prev_24_816,l2))&true]
+res:  [
+  (HP_817(next_24_815,l2)) * (HP_818(prev_24_816,l2)) * l1::node<next_24_815,prev_24_816>@M[Orig]&l1=l1' & l2=l2' & next_24_785'=next_24_815 & prev_24_786'=prev_24_816&{FLOW,(22,23)=__norm}[]
+  ]
+--------------
+ id: 2; caller: []; line: 24; classic: false; kind: BIND; hec_num: 4; evars: []; infer_vars: [H3,G3,HP_817,HP_818]; c_heap: emp
+ checkentail (HP_817(next_24_815,l2)) * (HP_818(prev_24_816,l2)) * 
+l1::node<next_24_815,prev_24_816>@M[Orig]&l1=l1' & l2=l2' & 
+next_24_785'=next_24_815 & prev_24_786'=prev_24_816&{FLOW,(22,23)=__norm}[]
+ |-  emp&true&{FLOW,(1,25)=__flow}[]. 
+res:  [
+  (HP_817(next_24_815,l2)) * (HP_818(prev_24_816,l2)) * l1::node<next_24_815,prev_24_816>@M[Orig]&l1=l1' & l2=l2' & next_24_785'=next_24_815 & prev_24_786'=prev_24_816&{FLOW,(22,23)=__norm}[]
+  ]
+--------------
+ id: 3; caller: []; line: 24; classic: false; kind: PRE-2; hec_num: 2; evars: []; infer_vars: [H3,G3,HP_817,HP_818]; c_heap: emp
+ checkentail (HP_817(next_24_815,l2)) * (HP_818(prev_24_816,l2)) * 
+l1::node<next_24_815,prev_24_816>@M[Orig]&l1=l1' & l2=l2' & 
+next_24_815=v_node_24_787' & v_node_24_787'=null&{FLOW,(22,23)=__norm}[]
+ |-  emp&true&{FLOW,(22,23)=__norm}[]. 
+res:  [
+  (HP_817(next_24_815,l2)) * (HP_818(prev_24_816,l2)) * l1::node<next_24_815,prev_24_816>@M[Orig]&l1=l1' & l2=l2' & next_24_815=v_node_24_787' & v_node_24_787'=null&{FLOW,(22,23)=__norm}[]
+  ]
+--------------
+ id: 5; caller: []; line: 24; classic: false; kind: PRE-2; hec_num: 2; evars: []; infer_vars: [H3,G3,HP_817,HP_818]; c_heap: emp
+ checkentail (HP_817(next_24_815,l2)) * (HP_818(prev_24_816,l2)) * 
+l1::node<next_24_815,prev_24_816>@M[Orig]&l1=l1' & l2=l2' & 
+next_24_815=v_node_24_787' & v_node_24_787'!=null&{FLOW,(22,23)=__norm}[]
+ |-  emp&true&{FLOW,(22,23)=__norm}[]. 
+res:  [
+  (HP_817(next_24_815,l2)) * (HP_818(prev_24_816,l2)) * l1::node<next_24_815,prev_24_816>@M[Orig]&l1=l1' & l2=l2' & next_24_815=v_node_24_787' & v_node_24_787'!=null&{FLOW,(22,23)=__norm}[]
+  ]
+--------------
+ id: 7; caller: []; line: 25; classic: false; kind: BIND; hec_num: 5; evars: []; infer_vars: [H3,G3,HP_817,HP_818]; c_heap: emp
+ checkentail (HP_817(next_24_815,l2)) * (HP_818(prev_24_816,l2)) * 
+l1::node<next_24_815,prev_24_816>@M[Orig]&l1=l1' & l2=l2' & 
+next_24_815!=null & v_bool_24_796' & next_24_815!=null & v_bool_24_796'&
+{FLOW,(22,23)=__norm}[]
+ |-  l1'::node<next_25_788',prev_25_789'>@L[Orig]&true&{FLOW,(1,25)=__flow}[]. 
+res:  [
+  (HP_817(next_24_815,l2)) * (HP_818(prev_24_816,l2)) * (Hole[826])&l1=l1' & l2=l2' & next_24_815!=null & v_bool_24_796' & next_24_815!=null & v_bool_24_796' & next_24_815=next_25_788' & prev_24_816=prev_25_789'&{FLOW,(22,23)=__norm}[]
+  ]
+--------------
+ id: 9; caller: []; line: 25; classic: false; kind: BIND; hec_num: 4; evars: []; infer_vars: [H3,G3,HP_817,HP_818]; c_heap: emp
+ checkentail (HP_817(next_24_815,l2)) * (HP_818(prev_24_816,l2)) * 
+l1::node<next_24_815,prev_24_816>@M[Orig]&l1=l1' & l2=l2' & 
+next_24_815!=null & v_bool_24_796' & next_24_815!=null & v_bool_24_796' & 
+next_24_815=next_25_788' & prev_24_816=prev_25_789'&{FLOW,(22,23)=__norm}[]
+ |-  emp&true&{FLOW,(1,25)=__flow}[]. 
+res:  [
+  (HP_817(next_24_815,l2)) * (HP_818(prev_24_816,l2)) * l1::node<next_24_815,prev_24_816>@M[Orig]&l1=l1' & l2=l2' & next_24_815!=null & v_bool_24_796' & next_24_815!=null & v_bool_24_796' & next_24_815=next_25_788' & prev_24_816=prev_25_789'&{FLOW,(22,23)=__norm}[]
+  ]
+--------------
+ id: 10; caller: []; line: 25; classic: false; kind: PRE-2; hec_num: 5; evars: []; infer_vars: [H3,G3,HP_817,HP_818]; c_heap: emp
+ checkentail (HP_817(next_24_815,l2)) * (HP_818(prev_24_816,l2)) * 
+l1::node<next_24_815,prev_24_816>@M[Orig]&l1=l1' & l2=l2' & 
+next_24_815!=null & v_bool_24_796' & next_24_815!=null & v_bool_24_796' & 
+next_24_815=v_node_25_790'&{FLOW,(22,23)=__norm}[]
+ |-  H3(v_node_25_790',l2')&true&{FLOW,(22,23)=__norm}[]. 
+hprel_ass: [ HP_817(next_24_815,l2)&next_24_815!=null --> H3(next_24_815,l2)&true]
+res:  [
+  (HP_818(prev_24_816,l2)) * l1::node<next_24_815,prev_24_816>@M[Orig]&l1=l1' & l2=l2' & next_24_815!=null & v_bool_24_796' & next_24_815!=null & v_bool_24_796' & next_24_815=v_node_25_790' & next_24_815=v_node_25_790' & l2=l2'&{FLOW,(22,23)=__norm}[]
+  ]
+--------------
+ id: 12; caller: []; line: 25; classic: false; kind: PRE-2; hec_num: 4; evars: []; infer_vars: [H3,G3,HP_817,HP_818]; c_heap: H3(next_24_815,l2)
+ checkentail (HP_818(prev_24_816,l2)) * l1::node<next_24_815,prev_24_816>@M[Orig]&
+l1=l1' & l2=l2' & next_24_815!=null & v_bool_24_796' & next_24_815!=null & 
+v_bool_24_796' & next_24_815=v_node_25_790' & next_24_815=v_node_25_790' & 
+l2=l2'&{FLOW,(22,23)=__norm}[]
+ |-  emp&true&{FLOW,(22,23)=__norm}[]. 
+res:  [
+  (HP_818(prev_24_816,l2)) * l1::node<next_24_815,prev_24_816>@M[Orig]&l1=l1' & l2=l2' & next_24_815!=null & v_bool_24_796' & next_24_815!=null & v_bool_24_796' & next_24_815=v_node_25_790' & next_24_815=v_node_25_790' & l2=l2'&{FLOW,(22,23)=__norm}[]
+  ]
+--------------
+ id: 14; caller: []; line: 28; classic: false; kind: BIND; hec_num: 5; evars: []; infer_vars: [H3,G3,HP_817,HP_818]; c_heap: emp
+ checkentail (HP_817(next_24_815,l2)) * (HP_818(prev_24_816,l2)) * 
+l1::node<next_24_815,prev_24_816>@M[Orig]&l1=l1' & l2=l2' & 
+next_24_815=null & !(v_bool_24_796') & next_24_815=null & !(v_bool_24_796')&
+{FLOW,(22,23)=__norm}[]
+ |-  l1'::node<next_28_791',prev_28_792'>@M[Orig]&true&{FLOW,(1,25)=__flow}[]. 
+res:  [
+  (HP_817(next_24_815,l2)) * (HP_818(prev_24_816,l2))&l1=l1' & l2=l2' & next_24_815=null & !(v_bool_24_796') & next_24_815=null & !(v_bool_24_796') & next_24_815=next_28_791' & prev_24_816=prev_28_792'&{FLOW,(22,23)=__norm}[]
+  ]
+--------------
+ id: 16; caller: []; line: 28; classic: false; kind: BIND; hec_num: 4; evars: []; infer_vars: [H3,G3,HP_817,HP_818]; c_heap: l1::node<next_24_815,prev_24_816>@M[Orig]
+ checkentail (HP_817(next_24_815,l2)) * (HP_818(prev_24_816,l2))&l1=l1' & l2=l2' & 
+next_24_815=null & !(v_bool_24_796') & next_24_815=null & 
+!(v_bool_24_796') & next_24_815=next_28_791' & prev_24_816=prev_28_792'&
+{FLOW,(22,23)=__norm}[]
+ |-  emp&true&{FLOW,(1,25)=__flow}[]. 
+res:  [
+  (HP_817(next_24_815,l2)) * (HP_818(prev_24_816,l2))&l1=l1' & l2=l2' & next_24_815=null & !(v_bool_24_796') & next_24_815=null & !(v_bool_24_796') & next_24_815=next_28_791' & prev_24_816=prev_28_792'&{FLOW,(22,23)=__norm}[]
+  ]
+--------------
+ id: 17; caller: []; line: 29; classic: false; kind: PRE-2; hec_num: 2; evars: []; infer_vars: [H3,G3,HP_817,HP_818]; c_heap: emp
+ checkentail (HP_817(next_24_815,l2)) * (HP_818(prev_24_816,l2)) * 
+l1'::node<l2',prev_24_816>@M[Orig]&l1=l1' & l2=l2' & next_24_815=null & 
+!(v_bool_24_796') & next_24_815=null & !(v_bool_24_796') & 
+next_24_815=next_28_834 & l2'=null&{FLOW,(22,23)=__norm}[]
+ |-  emp&true&{FLOW,(22,23)=__norm}[]. 
+res:  [
+  (HP_817(next_24_815,l2)) * (HP_818(prev_24_816,l2)) * l1'::node<l2',prev_24_816>@M[Orig]&l1=l1' & l2=l2' & next_24_815=null & !(v_bool_24_796') & next_24_815=null & !(v_bool_24_796') & next_24_815=next_28_834 & l2'=null&{FLOW,(22,23)=__norm}[]
+  ]
+--------------
+ id: 19; caller: []; line: 29; classic: false; kind: PRE-2; hec_num: 2; evars: []; infer_vars: [H3,G3,HP_817,HP_818]; c_heap: emp
+ checkentail (HP_817(next_24_815,l2)) * (HP_818(prev_24_816,l2)) * 
+l1'::node<l2',prev_24_816>@M[Orig]&l1=l1' & l2=l2' & next_24_815=null & 
+!(v_bool_24_796') & next_24_815=null & !(v_bool_24_796') & 
+next_24_815=next_28_834 & l2'!=null&{FLOW,(22,23)=__norm}[]
+ |-  emp&true&{FLOW,(22,23)=__norm}[]. 
+res:  [
+  (HP_817(next_24_815,l2)) * (HP_818(prev_24_816,l2)) * l1'::node<l2',prev_24_816>@M[Orig]&l1=l1' & l2=l2' & next_24_815=null & !(v_bool_24_796') & next_24_815=null & !(v_bool_24_796') & next_24_815=next_28_834 & l2'!=null&{FLOW,(22,23)=__norm}[]
+  ]
+--------------
+ id: 21; caller: []; line: 29; classic: false; kind: BIND; hec_num: 5; evars: []; infer_vars: [H3,G3,HP_817,HP_818]; c_heap: emp
+ checkentail (HP_817(next_24_815,l2)) * (HP_818(prev_24_816,l2)) * 
+l1'::node<l2',prev_24_816>@M[Orig]&l1=l1' & l2=l2' & next_24_815=null & 
+!(v_bool_24_796') & next_24_815=null & !(v_bool_24_796') & 
+next_24_815=next_28_834 & l2'!=null & v_bool_29_795' & l2'!=null & 
+v_bool_29_795'&{FLOW,(22,23)=__norm}[]
+ |-  l2'::node<next_29_793',prev_29_794'>@M[Orig]&true&{FLOW,(1,25)=__flow}[]. 
+hprel_ass: [ (HP_817(next_24_815,l2)) * (HP_818(prev_24_816,l2))&l2!=null & 
+  next_24_815=null --> (HP_843(next_29_841,next_24_815)) * 
+  (HP_844(prev_29_842,next_24_815))&true]
+res:  [
+  l1'::node<l2',prev_24_816>@M[Orig] * (HP_843(next_29_841,next_24_815)) * (HP_844(prev_29_842,next_24_815))&l1=l1' & l2=l2' & next_24_815=null & !(v_bool_24_796') & next_24_815=null & !(v_bool_24_796') & next_24_815=next_28_834 & l2'!=null & v_bool_29_795' & l2'!=null & v_bool_29_795' & next_29_793'=next_29_841 & prev_29_794'=prev_29_842&{FLOW,(22,23)=__norm}[]
+  ]
+--------------
+ id: 23; caller: []; line: 29; classic: false; kind: BIND; hec_num: 4; evars: []; infer_vars: [H3,G3,HP_817,HP_818,HP_843,HP_844]; c_heap: l2::node<next_29_841,prev_29_842>@M[Orig]
+ checkentail l1'::node<l2',prev_24_816>@M[Orig] * (HP_843(next_29_841,next_24_815)) * 
+(HP_844(prev_29_842,next_24_815))&l1=l1' & l2=l2' & next_24_815=null & 
+!(v_bool_24_796') & next_24_815=null & !(v_bool_24_796') & 
+next_24_815=next_28_834 & l2'!=null & v_bool_29_795' & l2'!=null & 
+v_bool_29_795' & next_29_793'=next_29_841 & prev_29_794'=prev_29_842&
+{FLOW,(22,23)=__norm}[]
+ |-  emp&true&{FLOW,(1,25)=__flow}[]. 
+res:  [
+  l1'::node<l2',prev_24_816>@M[Orig] * (HP_843(next_29_841,next_24_815)) * (HP_844(prev_29_842,next_24_815))&l1=l1' & l2=l2' & next_24_815=null & !(v_bool_24_796') & next_24_815=null & !(v_bool_24_796') & next_24_815=next_28_834 & l2'!=null & v_bool_29_795' & l2'!=null & v_bool_29_795' & next_29_793'=next_29_841 & prev_29_794'=prev_29_842&{FLOW,(22,23)=__norm}[]
+  ]
+--------------
+ id: 24; caller: []; line: 18; classic: false; kind: POST; hec_num: 5; evars: []; infer_vars: [H3,G3,HP_817,HP_818]; c_heap: emp
+ checkentail (HP_818(prev_24_816,l2)) * l1::node<next_24_815,prev_24_816>@M[Orig] * 
+(G3(next_24_815,l2))&next_24_815!=null & v_bool_24_796' & 
+next_24_815!=null & v_bool_24_796' & next_24_815=next_24_815 & l2=l2&
+{FLOW,(22,23)=__norm}[]
+ |-  G3(l1,l2)&true&{FLOW,(22,23)=__norm}[]. 
+hprel_ass: [ (HP_818(prev_24_816,l2)) * l1::node<next_24_815,prev_24_816>@M * 
+  (G3(next_24_815,l2))&next_24_815!=null --> G3(l1,l2)&true]
+res:  [
+  emp&next_24_815!=null & v_bool_24_796' & next_24_815!=null & v_bool_24_796' & next_24_815=next_24_815 & l2=l2&{FLOW,(22,23)=__norm}[]
+  ]
+--------------
+ id: 26; caller: []; line: 18; classic: false; kind: POST; hec_num: 4; evars: []; infer_vars: [H3,G3,HP_817,HP_818]; c_heap: G3(l1,l2)
+ checkentail emp&next_24_815!=null & v_bool_24_796' & next_24_815!=null & 
+v_bool_24_796' & next_24_815=next_24_815 & l2=l2&{FLOW,(22,23)=__norm}[]
+ |-  emp&true&{FLOW,(22,23)=__norm}[]. 
+res:  [
+  emp&next_24_815!=null & v_bool_24_796' & next_24_815!=null & v_bool_24_796' & next_24_815=next_24_815 & l2=l2&{FLOW,(22,23)=__norm}[]
+  ]
+--------------
+ id: 27; caller: []; line: 18; classic: false; kind: POST; hec_num: 5; evars: []; infer_vars: [H3,G3,HP_817,HP_818,HP_843,HP_844]; c_heap: emp
+ checkentail l1::node<l2,prev_24_816>@M[Orig] * (HP_843(next_29_841,next_24_815)) * 
+(HP_844(prev_29_842,next_24_815)) * l2::node<next_29_841,l1>@M[Orig]&
+next_24_815=null & !(v_bool_24_796') & next_24_815=null & 
+!(v_bool_24_796') & next_24_815=next_28_834 & l2!=null & v_bool_29_795' & 
+l2!=null & v_bool_29_795' & prev_29_842=prev_29_845&{FLOW,(22,23)=__norm}[]
+ |-  G3(l1,l2)&true&{FLOW,(22,23)=__norm}[]. 
+hprel_ass: [ l1::node<l2,prev_24_816>@M * (HP_843(next_29_841,next_24_815)) * 
+  (HP_844(prev_29_842,next_24_815)) * l2::node<next_29_841,l1>@M&
+  next_24_815=null --> G3(l1,l2)&true]
+res:  [
+  emp&next_24_815=null & !(v_bool_24_796') & next_24_815=null & !(v_bool_24_796') & next_24_815=next_28_834 & l2!=null & v_bool_29_795' & l2!=null & v_bool_29_795' & prev_29_842=prev_29_845&{FLOW,(22,23)=__norm}[]
+  ]
+--------------
+ id: 29; caller: []; line: 18; classic: false; kind: POST; hec_num: 4; evars: []; infer_vars: [H3,G3,HP_817,HP_818,HP_843,HP_844]; c_heap: G3(l1,l2)
+ checkentail emp&next_24_815=null & !(v_bool_24_796') & next_24_815=null & 
+!(v_bool_24_796') & next_24_815=next_28_834 & l2!=null & v_bool_29_795' & 
+l2!=null & v_bool_29_795' & prev_29_842=prev_29_845&{FLOW,(22,23)=__norm}[]
+ |-  emp&true&{FLOW,(22,23)=__norm}[]. 
+res:  [
+  emp&next_24_815=null & !(v_bool_24_796') & next_24_815=null & !(v_bool_24_796') & next_24_815=next_28_834 & l2!=null & v_bool_29_795' & l2!=null & v_bool_29_795' & prev_29_842=prev_29_845&{FLOW,(22,23)=__norm}[]
+  ]
+--------------
+ id: 30; caller: []; line: 18; classic: false; kind: POST; hec_num: 5; evars: []; infer_vars: [H3,G3,HP_817,HP_818]; c_heap: emp
+ checkentail (HP_817(next_24_815,l2)) * (HP_818(prev_24_816,l2)) * 
+l1::node<l2,prev_24_816>@M[Orig]&next_24_815=null & !(v_bool_24_796') & 
+next_24_815=null & !(v_bool_24_796') & next_24_815=next_28_834 & l2=null & 
+!(v_bool_29_795') & l2=null & !(v_bool_29_795')&{FLOW,(22,23)=__norm}[]
+ |-  G3(l1,l2)&true&{FLOW,(22,23)=__norm}[]. 
+hprel_ass: [ (HP_817(next_24_815,l2)) * (HP_818(prev_24_816,l2)) * 
+  l1::node<l2,prev_24_816>@M&next_24_815=null & l2=null --> G3(l1,l2)&true]
+res:  [
+  emp&next_24_815=null & !(v_bool_24_796') & next_24_815=null & !(v_bool_24_796') & next_24_815=next_28_834 & l2=null & !(v_bool_29_795') & l2=null & !(v_bool_29_795')&{FLOW,(22,23)=__norm}[]
+  ]
+--------------
+ id: 32; caller: []; line: 18; classic: false; kind: POST; hec_num: 4; evars: []; infer_vars: [H3,G3,HP_817,HP_818]; c_heap: G3(l1,l2)
+ checkentail emp&next_24_815=null & !(v_bool_24_796') & next_24_815=null & 
+!(v_bool_24_796') & next_24_815=next_28_834 & l2=null & !(v_bool_29_795') & 
+l2=null & !(v_bool_29_795')&{FLOW,(22,23)=__norm}[]
+ |-  emp&true&{FLOW,(22,23)=__norm}[]. 
+res:  [
+  emp&next_24_815=null & !(v_bool_24_796') & next_24_815=null & !(v_bool_24_796') & next_24_815=next_28_834 & l2=null & !(v_bool_29_795') & l2=null & !(v_bool_29_795')&{FLOW,(22,23)=__norm}[]
+  ]

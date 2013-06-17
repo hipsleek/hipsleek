@@ -1,0 +1,29 @@
+
+data node2{
+    node2 n;
+    node2 s;
+}.
+
+HeapPred SLSEG(node2 a,node2 b).
+
+// lsg1.slk
+
+infer[SLSEG] 
+SLSEG(l,e) & l=lp 
+ & e!=lp
+ & l=null 
+ |-  lp::node2<n,s>@L. 
+print residue.
+
+/*
+GOT
+===
+ <1>hfalse&false&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [SLSEG(l,e)&true --> emp&l!=null | l>(e-1); 
+                  SLSEG(l,e)&true --> emp&e>=l | l!=null]
+
+Why did we pick hprel twice? Can
+we just generate one?
+
+
+*/

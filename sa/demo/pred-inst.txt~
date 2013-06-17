@@ -1,0 +1,34 @@
+Given:
+
+HeapPred HP_7(node a,node b).
+
+infer [HP_7] 
+HP_7(x,l2) & x!=null
+ |-  x::node<_,_>@M.
+
+We currently obtained:
+ inferred hprel: [HP_7(x,l2)&x!=null --> x::node<Anon_25,Anon_26>@M * 
+                   (HP_27(Anon_25,l2)) * (HP_28(Anon_26,l2))&true]
+
+which seems to lose the ability to instantiate l2. I would like
+to suggest that we support a more general instantiation of the form:
+
+ HP_7(x,l2)&x!=null --> x::node<Anon_25,Anon_26>@M * 
+            HP_27(Anon_25,l2#) * HP_28(Anon_26,l2#) * HP_29(l2,x#).
+
+which creates an extra predicate HP_29(l2,x#) which allows l2 to
+be instantiated. Since each pointer can be isntantiated once,
+we will use the notation l2# to denote the fact that the location
+cannot be instantiated. This can be done at the heap predicate
+level. We may wish to declare the following for a predicate:
+
+HeapPred HP_7(node a,node# b).
+
+to indicate that only the first parameter of HP_7 can be instantiated.
+Parameters that cannot be instantiated could either become useless or
+serve as dangling reference. Parameter that has been instantiated
+will serve as the self parameter.
+
+With these changes, I expect it to be able to handle dll-append.ss
+example.
+

@@ -26,20 +26,6 @@ node foo(node x)
 }
 
 /*
-
-
-[ H(x)&true --> x::node<val_22_792,next_22_793>@M 
-        * (HP_794(next_22_793))&true,
-
- HP_794(next_22_793)&next_22_793!=null --> H(next_22_793)&true,
-
- (G(next_22_793,r_812)) * x::node<val_22_792,next_22_793>@M&
-  next_22_793!=null --> G(x,r_814)&true,
-
- (HP_794(next_22_793)) * x::node<val_22_792,next_22_793>@M&
-  next_22_793=null --> G(x,r_815)&true]
-
-
  H(x_849) ::= x_849::node<val_22_792,next_22_793>@M * next_22_793::ll@M[LHSCase]&true,
  G(x_851,r_852) ::= x_851::node<val_22_792,next_22_793>@M * (HP_853(next_22_793,r_852))&true,
        MISSING x=r? can capture?

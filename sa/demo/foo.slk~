@@ -1,0 +1,32 @@
+data node{
+	int val;
+	node next;
+}.
+
+HeapPred H(node a).
+HeapPred H4(node a).
+HeapPred G(node a, node r).
+
+/*
+
+# foo.slk
+
+  Need to include res=x below!
+*/
+
+infer [G] G(next_22_793,r_812) * x::node<val_22_792,next_22_793>&
+next_22_793!=null 
+//& v_bool_22_771' & next_22_793!=null & v_bool_22_771' 
+//& next_22_793=next_22_793 
+& res=x
+ |-  G(x,r). 
+print residue.
+
+
+infer [G,H4] H4(next_22_793) * x::node<val_22_792,next_22_793> &
+next_22_793=null 
+//& !(v_bool_22_771') & next_22_793=null & !(v_bool_22_771') 
+& res=x
+ |-  G(x,r). 
+
+print residue.

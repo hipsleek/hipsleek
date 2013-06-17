@@ -1,0 +1,40 @@
+
+data node2{
+    node2 n;
+    node2 s;
+}.
+
+HeapPred SLSEG(node2 a,node2 b).
+
+infer[SLSEG] 
+SLSEG(l,e) & l=lp 
+ & e!=lp
+ & l=null 
+ |-  lp::node2<n,s>@L. 
+print residue.
+
+/*
+GOT
+===
+ inferred hprel: [SLSEG(l,e)&l=null --> emp&true]
+
+Expecting
+=========
+(i) there is a contradiction between LHS/RHS
+(ii) Hence, we should be providing a contradiction
+     rule, namely:
+        SLSEG(l,e) --> not(forall(lp: l=lp & e!=lp & l=null))
+           --> not(e!=l & l=null)
+           --> e=l or l!=null
+
+
+infer[SLSEG] 
+SLSEG(l,e) & l=l' & e!=l' & l=null 
+ |-  l::node2<n,s>@L. 
+print residue.
+
+infer[SLSEG] 
+SLSEG(l,e) & e!=l & l=null 
+ |-  l::node2<n_13_756',s_13_757'>@L. 
+print residue.
+*/

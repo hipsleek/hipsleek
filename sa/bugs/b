@@ -1,0 +1,262 @@
+Starting Omega...oc
+H is defined.
+
+@1!:0: 0: process_action :
+ ### action =  NothingToDo => No duplicated nodes!
+ ### estate =  emp&true&{FLOW,(19,20)=__norm}[]
+  es_infer_vars: [x]
+ ### conseq =  x::node<n>@M[Orig]&true&{FLOW,(19,20)=__norm}[]
+
+
+process_action@1
+process_action inp1 :0
+process_action inp2 : NothingToDo => No duplicated nodes!
+process_action inp3 : es_formula: emp&true&{FLOW,(19,20)=__norm}[]
+ es_pure: true
+ es_orig_ante: None
+ es_heap: emp
+ es_gen_impl_vars: [n]
+ es_aux_conseq: true
+ es_must_error: None
+ es_var_measures: None
+ es_term_err: None
+ es_infer_vars: [x]
+ es_unsat_flag: true
+process_action inp4 : x::node<n>@M[Orig]&true&{FLOW,(19,20)=__norm}[]
+process_action inp5 : emp&true&{FLOW,(1,22)=__flow}[]
+process_action inp6 : emp&true&{FLOW,(1,22)=__flow}[]
+process_action@1 EXIT out :
+ctx length:0 
+ Context: failctx
+         fe_kind: MAY
+         fe_name: separation entailment
+         fe_locs: {
+                   fc_message: No duplicated nodes!
+                   fc_current_lhs_flow: {FLOW,(19,20)=__norm}}
+
+@3!:0: 0: process_action :
+ ### action =  UnmatchedRHSData =>  x::node<n>@M[Orig]
+ ### estate =  emp&true&{FLOW,(19,20)=__norm}[]
+  es_infer_vars: [x]
+ ### conseq =  x::node<n>@M[Orig]&true&{FLOW,(19,20)=__norm}[]
+
+
+@3! rhs_als:[x]
+infer_lhs_contra@4@3@2
+infer_lhs_contra inp1 : true
+infer_lhs_contra inp2 :[x]
+infer_lhs_contra@4 EXIT out :None
+
+@5! check_sat:true
+@5! new_rn: x::node<inf_n_16>@inf_ann_15[Orig]
+@6!:0: 0: process_action :
+ ### action =  NothingToDo => No duplicated nodes!
+ ### estate =  x::node<inf_n_16>@inf_ann_15[Orig]&true&{FLOW,(19,20)=__norm}[]
+  es_infer_vars: [inf_ann_15; inf_n_16; x]
+  es_infer_heap: [x::node<inf_n_16>@inf_ann_15[Orig]]
+ ### conseq =  x::node<n>@M[Orig]&true&{FLOW,(19,20)=__norm}[]
+
+
+process_action@6@5@3@2
+process_action inp1 :0
+process_action inp2 : NothingToDo => No duplicated nodes!
+process_action inp3 : es_formula: x::node<inf_n_16>@inf_ann_15[Orig]&true&{FLOW,(19,20)=__norm}[]
+ es_pure: true
+ es_orig_ante: None
+ es_heap: emp
+ es_gen_impl_vars: [n]
+ es_aux_conseq: true
+ es_must_error: None
+ es_var_measures: None
+ es_term_err: None
+ es_trace:  COND ==>  UnmatchedRHSData ==> 
+ es_infer_vars: [inf_ann_15; inf_n_16; x]
+ es_infer_heap: [x::node<inf_n_16>@inf_ann_15[Orig]]
+ es_unsat_flag: true
+process_action inp4 : x::node<n>@M[Orig]&true&{FLOW,(19,20)=__norm}[]
+process_action inp5 : emp&true&{FLOW,(1,22)=__flow}[]
+process_action inp6 : emp&true&{FLOW,(1,22)=__flow}[]
+process_action@6 EXIT out :
+ctx length:0 
+ Context: failctx
+         fe_kind: MAY
+         fe_name: separation entailment
+         fe_locs: {
+                   fc_message: No duplicated nodes!
+                   fc_current_lhs_flow: {FLOW,(19,20)=__norm}}
+
+@7!:0: 0: process_action :
+ ### action =  Match =>
+          Type: Root
+          LHS: x::node<inf_n_16>@inf_ann_15[Orig]
+          RHS: x::node<n>@M[Orig]
+ lhs_rest: emp
+ rhs_rest: emp
+ ### estate =  x::node<inf_n_16>@inf_ann_15[Orig]&true&{FLOW,(19,20)=__norm}[]
+  es_infer_vars: [inf_ann_15; inf_n_16; x]
+  es_infer_heap: [x::node<inf_n_16>@inf_ann_15[Orig]]
+ ### conseq =  x::node<n>@M[Orig]&true&{FLOW,(19,20)=__norm}[]
+
+
+@7! new_estate(M_match): es_formula: emp&true&{FLOW,(19,20)=__norm}[]
+ es_pure: true
+ es_orig_ante: None
+ es_heap: emp
+ es_gen_impl_vars: [n]
+ es_aux_conseq: true
+ es_must_error: None
+ es_var_measures: None
+ es_term_err: None
+ es_trace:  COND ==>  UnmatchedRHSData ==>  Match ==> 
+ es_infer_vars: [inf_ann_15; inf_n_16; x]
+ es_infer_heap: [x::node<inf_n_16>@inf_ann_15[Orig]]
+ es_unsat_flag: false
+infer_collect_rel@8@7@5@3@2
+infer_collect_rel inp1 :[]
+infer_collect_rel inp2 : x!=null
+infer_collect_rel inp3 : inf_n_16=n
+infer_collect_rel inp4 : inf_ann_15<:@M
+infer_collect_rel@8 EXIT out :( inf_n_16=n,2: inf_ann_15<:@M,3:[],4:None,5:[])
+
+process_action@7@5@3@2
+process_action inp1 :1
+process_action inp2 : Match =>
+          LHS: x::node<inf_n_16>@inf_ann_15[Orig]
+          RHS: x::node<n>@M[Orig]
+process_action inp3 : es_formula: x::node<inf_n_16>@inf_ann_15[Orig]&true&{FLOW,(19,20)=__norm}[]
+ es_pure: true
+ es_orig_ante: None
+ es_heap: emp
+ es_gen_impl_vars: [n]
+ es_aux_conseq: true
+ es_must_error: None
+ es_var_measures: None
+ es_term_err: None
+ es_trace:  COND ==>  UnmatchedRHSData ==> 
+ es_infer_vars: [inf_ann_15; inf_n_16; x]
+ es_infer_heap: [x::node<inf_n_16>@inf_ann_15[Orig]]
+ es_unsat_flag: false
+process_action inp4 : x::node<n>@M[Orig]&true&{FLOW,(19,20)=__norm}[]
+process_action inp5 : x::node<inf_n_16>@inf_ann_15[Orig]&true&{FLOW,(19,20)=__norm}[]
+process_action inp6 : x::node<n>@M[Orig]&true&{FLOW,(19,20)=__norm}[]
+process_action@7 EXIT out :
+ctx length:1 
+ Context: [
+  emp&inf_n_16=n & inf_ann_15<=0&{FLOW,(19,20)=__norm}[]
+  es_infer_vars/rel: [inf_ann_15; inf_n_16; x]
+  es_infer_heap: [x::node<inf_n_16>@inf_ann_15[Orig]]
+  es_infer_pure: [inf_ann_15<=0]
+  ]
+
+infer_collect_rel@9@5@3@2
+infer_collect_rel inp1 :[]
+infer_collect_rel inp2 : x!=null
+infer_collect_rel inp3 : inf_n_16=n & inf_ann_15<=0
+infer_collect_rel inp4 : true
+infer_collect_rel@9 EXIT out :( inf_n_16=n & inf_ann_15<=0,2: true,3:[],4:None,5:[])
+
+ do_infer_heap@5@3@2
+ do_infer_heap inp1 : x::node<n>@M[Orig]
+ do_infer_heap inp2 : emp
+ do_infer_heap inp3 : x::node<n>@M[Orig]&true&{FLOW,(19,20)=__norm}[]
+ do_infer_heap inp4 : emp&true&{FLOW,(19,20)=__norm}[]
+ do_infer_heap inp5 : x::node<n>@M[Orig]&true&{FLOW,(19,20)=__norm}[]
+ do_infer_heap@5 EXIT out : 
+Good Context: [es_formula: emp&inf_n_16=n & inf_ann_15<=0&{FLOW,(19,20)=__norm}[]
+               es_pure: true
+               es_orig_ante: None
+               es_heap: x::node<inf_n_16>@inf_ann_15[Orig]
+               es_aux_conseq: true
+               es_must_error: None
+               es_var_measures: None
+               es_term_err: None
+               es_trace:  COND ==>  UnmatchedRHSData ==>  Match ==> 
+               es_infer_vars: [inf_ann_15; inf_n_16; x]
+               es_infer_heap: [x::node<inf_n_16>@inf_ann_15[Orig]]
+               es_infer_pure: [inf_ann_15<=0]
+               es_unsat_flag: false]
+
+
+infer_collect_hp_rel#2@10@3@2
+infer_collect_hp_rel#2 inp1 : emp&true&{FLOW,(19,20)=__norm}[]
+infer_collect_hp_rel#2 inp2 : x::node<n>@M[Orig]&true&{FLOW,(19,20)=__norm}[]
+infer_collect_hp_rel#2@10 EXIT out :(false, es_formula: emp&true&{FLOW,(19,20)=__norm}[]
+ es_infer_vars: [x], x::node<n>@M[Orig],None)
+
+process_action@3@2
+process_action inp1 :130
+process_action inp2 : UnmatchedRHSData =>  x::node<n>@M[Orig]
+process_action inp3 : es_formula: emp&true&{FLOW,(19,20)=__norm}[]
+ es_pure: true
+ es_orig_ante: None
+ es_heap: emp
+ es_gen_impl_vars: [n]
+ es_aux_conseq: true
+ es_must_error: None
+ es_var_measures: None
+ es_term_err: None
+ es_trace:  COND ==> 
+ es_infer_vars: [x]
+ es_unsat_flag: false
+process_action inp4 : x::node<n>@M[Orig]&true&{FLOW,(19,20)=__norm}[]
+process_action inp5 : emp&true&{FLOW,(19,20)=__norm}[]
+process_action inp6 : x::node<n>@M[Orig]&true&{FLOW,(19,20)=__norm}[]
+process_action@3 EXIT out :
+ctx length:1 
+ Context: [
+  emp&inf_n_16=n & inf_ann_15<=0&{FLOW,(19,20)=__norm}[]
+  es_infer_vars/rel: [inf_ann_15; inf_n_16; x]
+  es_infer_heap: [x::node<inf_n_16>@inf_ann_15[Orig]]
+  es_infer_pure: [inf_ann_15<=0]
+  ]
+
+process_action@2
+process_action inp1 :1
+process_action inp2 : COND =>[Prio:2UnmatchedRHSData =>  x::node<n>@M[Orig]]
+process_action inp3 : es_formula: emp&true&{FLOW,(19,20)=__norm}[]
+ es_pure: true
+ es_orig_ante: None
+ es_heap: emp
+ es_gen_impl_vars: [n]
+ es_aux_conseq: true
+ es_must_error: None
+ es_var_measures: None
+ es_term_err: None
+ es_infer_vars: [x]
+ es_unsat_flag: false
+process_action inp4 : x::node<n>@M[Orig]&true&{FLOW,(19,20)=__norm}[]
+process_action inp5 : emp&true&{FLOW,(19,20)=__norm}[]
+process_action inp6 : x::node<n>@M[Orig]&true&{FLOW,(19,20)=__norm}[]
+process_action@2 EXIT out :
+ctx length:1 
+ Context: [
+  emp&inf_n_16=n & inf_ann_15<=0&{FLOW,(19,20)=__norm}[]
+  es_infer_vars/rel: [inf_ann_15; inf_n_16; x]
+  es_infer_heap: [x::node<inf_n_16>@inf_ann_15[Orig]]
+  es_infer_pure: [inf_ann_15<=0]
+  ]
+
+infer_collect_rel@11
+infer_collect_rel inp1 :[]
+infer_collect_rel inp2 : x!=null
+infer_collect_rel inp3 : inf_n_16=n & inf_ann_15<=0
+infer_collect_rel inp4 : true
+infer_collect_rel@11 EXIT out :( inf_n_16=n & inf_ann_15<=0,2: true,3:[],4:None,5:[])
+
+Entail (1) : Valid. 
+
+ <1>emp&inf_n_16=n & inf_ann_15<=0&{FLOW,(19,20)=__norm}[]
+ inferred heap: [x::node<inf_n_16>@inf_ann_15[Orig]]
+ inferred pure: [inf_ann_15<=0]
+
+Stop Omega... 12 invocations 
+SAT Count   : 5
+SAT % Hit   : 20.%
+IMPLY Count : 4
+IMPLY % Hit : 25.%
+Time(cache overhead) : 0. (seconds)
+
+Total verification time: 0.056002 second(s)
+	Time spent in main process: 0.040001 second(s)
+	Time spent in child processes: 0.016001 second(s)
+

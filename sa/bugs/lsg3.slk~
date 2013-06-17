@@ -1,0 +1,15 @@
+
+data node{
+    node s;
+}.
+
+relation H(node a).
+
+infer[H] 
+H(l) & l=null 
+ |-  l::node<n>@L. 
+print residue.
+/*n
+Pure relati
+
+*/
