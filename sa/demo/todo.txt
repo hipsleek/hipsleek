@@ -1,3 +1,8 @@
+# dll-app-bug3.ss
+
+  should not allow me to prove false, seems like a substitution problem
+
+
 # dll-app-bug2.slk
 
 problem with shape_infer:
