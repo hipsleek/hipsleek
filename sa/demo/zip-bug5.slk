@@ -1,0 +1,49 @@
+data node{
+	int val;
+	node next;
+}.
+
+HeapPred H1(node a, node b).
+HeapPred HP_1(node a, node@NI b).
+HeapPred HP_2(node a, node@NI b).
+HeapPred HP_8(node a, node b).
+HeapPred G1(node a, node b, node c).
+
+infer [HP_1,HP_2] HP_1(next_24_820,y) * HP_2(y,x) * 
+x::node<val_24_819,next_24_820> 
+& x!=null 
+ |-  y::node<val_25_781',next_25_782'>@L. 
+print residue.
+
+/*
+# zip-bug5.slk
+
+GOT below but HP_1(..) not needed: We need to traverse from
+y but we should not pick from HP_1 since it has y@NI
+
+ inferred hprel: [(HP_1(next_24_820,y@NI)) * (HP_2(y,x@NI))&
+                   true --> y::node<val_25_33,next_25_34>@M * 
+                   (HP_35(next_25_34,x#))&true]
+
+EXPECTING
+ inferred hprel: [(HP_2(y,x@NI))
+                   --> y::node<val_25_33,next_25_34>@M * 
+                   (HP_35(next_25_34,x#))&true]
+
+
+*/
+
+/*
+ checkentail (HP_821(next_24_820,y)) * (HP_822(y,x)) * 
+x::node<val_24_819,next_24_820>@M[Orig]&x=x' & y=y' & x'!=null & 
+!(v_bool_21_795') & x'!=null & !(v_bool_21_795') & n1_34'=val_24_819&
+{FLOW,(22,23)=__norm}[]
+ |-  y'::node<val_25_781',next_25_782'>@L[Orig]&true&{FLOW,(1,25)=__flow}[]. 
+hprel_ass: [ (HP_821(next_24_820,y)) * (HP_822(y,x))&x=x' & 
+  x'!=null --> y::node<val_25_826,next_25_827>@M * (HP_828(next_25_827,x))&
+  true]
+res:  [
+  x::node<val_24_819,next_24_820>@M[Orig] * (HP_828(next_25_827,x)) * y::node<val_25_826,next_25_827>@M[Orig]&x=x' & y=y' & x'!=null & !(v_bool_21_795') & x'!=null & !(v_bool_21_795') & n1_34'=val_24_819 & val_25_781'=val_25_826 & next_25_782'=next_25_827&{FLOW,(22,23)=__norm}[]
+  ]
+
+*/
