@@ -688,3 +688,29 @@ EXPECTING :
                    * G1(next_24_820,next_25_827,next_24_820) 
                    &res=x --> G1(x,y,res)&
                    true]
+===============================================================
+# conseq1.slk
+
+//(3)
+infer [H1] 
+x::node<_,n1> * y::node<_,n2> * H2(n1,_) |-  H1(x,y). 
+print residue.
+/*
+WRONG : missing H2(n1,_)
+
+ <1>H2(n1,Anon_18)&true&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [x::node<Anon_16,n1>@M * y::node<Anon_17,n2>@M&
+                   true --> H1(x,y)&true]
+*/
+
+//(4)
+infer [H1] 
+x::node<_,n1> * y::node<_,n2> * H2(n1,_) * H3(_,n2) |-  H1(x,y). 
+print residue.
+/*
+WRONG : missing H2(n1,_)*H3(_,n2)
+
+ <1>H2(n1,Anon_18)&true&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [x::node<Anon_16,n1>@M * y::node<Anon_17,n2>@M&
+                   true --> H1(x,y)&true]
+*/
