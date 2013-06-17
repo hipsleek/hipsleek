@@ -651,7 +651,7 @@ print residue.
 /*
 
 ===============================================================
-# zip-bug5a.slk
+# zip-bug5a.slk: FIXED
 
 GOT
  inferred hprel: [(HP_8(v_node_27_790',x@NI)) * (HP_1(v_node_27_791',y@NI))&
@@ -664,7 +664,7 @@ We can instantiate for FIELDS an for parameters that are not marked
 as @NI
 
 ===============================================================
-# zip-bug5b.slk
+# zip-bug5b.slk: FIXED
 
 infer [HP_1,HP_2,HP_8,H1,G1] 
 y::node<val_25_826,next_25_827> * 
