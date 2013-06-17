@@ -25,8 +25,13 @@ infer [H3,G3] requires H3(l1,l2) ensures G3(l1,l2);
 		dll_append(l1.next,l2);
 	else 
 		{
+			dprint;
 			l1.next = l2;
-			if (l2!=null) l2.prev = l1;
+			dprint;
+			if (l2!=null) {
+				dprint;
+				l2.prev = l1;
+				}
 		}
 }
 
