@@ -527,7 +527,19 @@ When G has two parameters:
 
 ============================================================
 # zip-1.ss
--that were not previously defined; thus violating
+
+going into a LOOP!
+
+!!! >>>>>> step 3b: do apply_transitive_imp <<<<<<
+!!! >>>>>> step 3a: simplification <<<<<<
+!!! >>>>>> step 3b: do apply_transitive_imp <<<<<<
+!!! >>>>>> step 3a: simplification <<<<<<
+!!! >>>>>> step 3b: do apply_transitive_imp <<<<<<
+!!! >>>>>> step 3a: simplification <<<<<<
+!!! >>>>>> step 3b: do apply_transitive_imp <<<<<<
+!!! >>>>>> step 3a: simplification <<<<<<
+!!! >>>>>> step 3b: do apply_transitive_imp <<<<<<^C
+l
 
 ============================================================
 # foo.slk
@@ -563,3 +575,33 @@ print residue.
                    next_22_793=null --> G(x,r_34)&true]
 */
 
+=============================================
+===============================================================
+# zip.ss
+
+Problems, 
+ (i) why ins't @NI printing?
+ (ii) Why did we have:
+            H1(x,y) x=null?
+
+
+[ H1(x,y)&x!=null --> x::node<val_24_819,next_24_820>@M * 
+  (HP_821(next_24_820,y)) * (HP_822(y,x))&true,
+ (HP_821(next_24_820,y)) * (HP_822(y,x))&
+  true --> y::node<val_25_826,next_25_827>@M * (HP_828(next_25_827,x))&true,
+ HP_828(next_25_827,x)&true --> H1(next_24_820,next_25_827)&true,
+ H1(x,y)&x=null & res=null --> G1(x,y,res)&true,
+ y::node<val_25_826,next_25_827>@M * x::node<val_24_819,next_24_820>@M&
+  res=x --> G1(x,y,res)&true]
+
+======>
+
+[ H1(x_1059,y_1060) ::= emp&x_1059=null,
+ G1(x_1061,y_1062,res_1063) ::= 
+ emp&res_1063=null & x_1061=null
+ or y_1062::node<val_25_826,next_25_827>@M * 
+    x_1061::node<val_24_819,next_24_820>@M&res_1063=x_1061
+ ]
+
+
+*/
