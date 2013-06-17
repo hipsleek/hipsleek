@@ -405,7 +405,7 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
             (*************************************************************)
             (*****<<<< Check permissions variables in pre-condition ******)
             (*************************************************************) 
-	    let nctx = 
+	    let nctx =
 	      if !Globals.max_renaming 
 	      then (CF.transform_context (CF.normalize_es ext_base b.CF.formula_struc_pos false) ctx) (*apply normalize_es into ctx.es_state*)
 	      else (CF.transform_context (CF.normalize_clash_es ext_base b.CF.formula_struc_pos false) ctx) in
@@ -1245,7 +1245,10 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                         let t = Gen.unsome (type_of_exp rhs) in
                         let vsv = CP.SpecVar (t, v, Primed) in (* rhs must be non-void *)
                         let tmp_vsv = CP.fresh_spec_var vsv in
-                        let compose_es = CF.subst [(vsv, tmp_vsv); ((P.mkRes t), vsv)] c1.CF.es_formula in
+                        let _ = DD.binfo_pprint "*************************************" no_pos in
+                        let _ = DD.binfo_pprint "LOC: I remove the first element of the subst, please check" no_pos in
+                        let _ = DD.binfo_pprint "*************************************" no_pos in
+                        let compose_es = CF.subst [(* (vsv, tmp_vsv); *) ((P.mkRes t), vsv)] c1.CF.es_formula in
                         let compose_ctx = (CF.Ctx ({c1 with CF.es_formula = compose_es})) in
                         (* Debug.info_hprint (add_str "vsv" Cprinter.string_of_spec_var) vsv no_pos; *)
                         (* Debug.info_hprint (add_str "tmp_vsv" Cprinter.string_of_spec_var) tmp_vsv no_pos; *)
@@ -1269,6 +1272,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                     in
                     (* let _ = Gen.Profiling.push_time "[check_exp] Assign: transform" in *)
                     let res = CF.transform_list_failesc_context (idf,idf,fct) ctx1 in
+                    (* let _ = print_endline ("res after: " ^ (Cprinter.string_of_list_failesc_context res)) in *)
                     (* let _ = Gen.Profiling.pop_time "[check_exp] Assign: transform" in *)
                     (* let _ = Gen.Profiling.push_time "[check_exp] Assign: consistent" in *)
                     let _ = CF.must_consistent_list_failesc_context "assign final" res  in
@@ -1351,7 +1355,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 	    let tmp2 =
 	      if b then tmp1
 	      else CP.Not (tmp1, None, pos) in
-	    let f = CF.formula_of_pure_N tmp2 pos in
+	    let f = CF.formula_of_pure_N tmp2 pos in  Debug.info_pprint "WN -1: adding vheap to exception too" no_pos;
 	    let res = CF.normalize_max_renaming_list_failesc_context f pos true ctx in
 	    Gen.Profiling.push_time "[check_exp] BConst";
 	    res
@@ -1472,7 +1476,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                     let _ = DD.tinfo_hprint (add_str "vheap 2" Cprinter.string_of_formula) vheap no_pos in
                     let vheap = Immutable.normalize_field_ann_formula vheap in
 	            let vheap = prune_preds prog false vheap in
-                    let _ = DD.tinfo_hprint (add_str "vheap2" (Cprinter.string_of_formula)) vheap pos in
+                    let _ = DD.tinfo_hprint (add_str "vheap 3" (Cprinter.string_of_formula)) vheap pos in
                     let struc_vheap = CF.EBase { 
 	                CF.formula_struc_explicit_inst = [];	 
                         CF.formula_struc_implicit_inst = if (Perm.allow_perm ()) then [fresh_frac] else [];  (*need to instantiate f*)
@@ -1491,12 +1495,13 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                       (* let _ = Debug.info_pprint ("Andreea : we need to normalise struc_vheap") no_pos in *)
                       (* let _ = Debug.info_pprint ("==========================================") no_pos in *)
                       (* let _ = Debug.info_hprint (add_str "struc_vheap" Cprinter.string_of_struc_formula) struc_vheap no_pos in *)
-	                  let rs_prim, prf = heap_entail_struc_list_failesc_context_init prog false  true unfolded struc_vheap None None None pos (Some pid) in
+                      let rs_prim, prf = heap_entail_struc_list_failesc_context_init prog false  true unfolded struc_vheap None None None pos (Some pid) in
 		      let _ = consume_all := false in
                       let _ = CF.must_consistent_list_failesc_context "bind 3" rs_prim  in
                       (* let _ = print_endline ("rs_prim:" ^(Cprinter.string_of_list_failesc_context rs_prim)) in *)
 	              let _ = PTracer.log_proof prf in
 	              let rs = CF.clear_entailment_history_failesc_list (fun x -> None) rs_prim in
+                      (* let _ = print_endline ("rs after clear:" ^(Cprinter.string_of_list_failesc_context rs)) in *)
                       let _ = CF.must_consistent_list_failesc_context "bind 4" rs  in
 	              if (CF.isSuccessListFailescCtx_new unfolded) && not(CF.isSuccessListFailescCtx_new rs) then
                         begin
@@ -1513,6 +1518,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                           let tmp_res1 = check_exp prog proc rs body post_start_label in 
                           stk_vars # pop_list lsv;
                           let _ = CF.must_consistent_list_failesc_context "bind 5" tmp_res1  in
+                          (* Debug.info_pprint "WN : adding vheap to exception too 1" no_pos; *)
                           (* let f_esc = proc_esc_stack pid in *)
                           (* TODO WN : Does this work for field level access? *)
                           let tmp_res2 = 
@@ -2029,7 +2035,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 	        (*   let _ = print_string ("sharp flow type: "^(Cprinter.string_of_sharp_flow ft)^"\n") in *)
             (* let _ = print_endline ("flow_store = " ^ (Cprinter.string_of_flow_store !flow_store)) in *)
 	      let nctx = match v with 
-	        | Sharp_var (t,v) ->
+	        | Sharp_var (t,v) -> 
                       let b,res = (if !Globals.ann_vp then
                         (*check for access permissions*)
                         let var = (CP.SpecVar (t, v, Primed)) in
@@ -2046,7 +2052,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 		        let tmp = CF.formula_of_mix_formula  (MCP.mix_of_pure (CP.mkEqVar vr (CP.SpecVar (t, v, Primed)) pos)) pos in
 		        let ctx1 = CF.normalize_max_renaming_list_failesc_context tmp pos true ctx in
 		        ctx1
-	        | Sharp_flow v -> 
+	        | Sharp_flow v ->
 		      let fct es = 
 		        let rest, b_rez = CF.get_var_type v es.CF.es_formula in
 		        if b_rez then

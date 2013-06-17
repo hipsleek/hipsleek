@@ -18,6 +18,6 @@ node foo(node x)
 {
   if (x.next != null)
     x.next = foo(x.next);
-
+  dprint;
  return x;
 }
