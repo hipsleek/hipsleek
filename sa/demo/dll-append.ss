@@ -14,7 +14,7 @@ HeapPred G3(node a,node b).
 HeapPred H3(node a,node b).
 
 void dll_append(node l1, node l2)
-// infer [H1,H2,G] requires H1(l1)*H2(l2) ensures G(l1);
+// infer [H1,H2,G] requires H1(l1)*H1(l2) ensures G(l1);
 infer [H3,G3] requires H3(l1,l2) ensures G3(l1,l2);
 //requires l1::dll<p> * l2::dll<_> & l1!=null  ensures l1::dll<p>;
 // requires l1::dllt<p,null> * l2::dll<_> & l1!=null  ensures l1::dll<p>;
