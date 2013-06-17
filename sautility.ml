@@ -1868,8 +1868,10 @@ let rec find_imply prog lunk_hps runk_hps lhs1 rhs1 lhs2 rhs2=
           let lhns1 = List.map transform_dn ldns in
           let rhns1 = List.map transform_dn rdns in
           (*all_matched_svl2: all matched slv of rhs2*)
-          let all_matched_svl2,subst1 = get_closed_matched_ptrs lhns1 rhns1 m_args2 subst in
-          (* let _ = Debug.ninfo_pprint ("    all matched: " ^ (!CP.print_svl all_matched_svl2)) no_pos in *)
+          let all_matched_svl1,subst1 = get_closed_matched_ptrs lhns1 rhns1 [] subst in
+          let all_matched_svl2 = all_matched_svl1 @ m_args2 in
+          (* let _ = Debug.ninfo_pprint ("    all matched 1: " ^ (!CP.print_svl all_matched_svl1)) no_pos in *)
+          (* let _ = Debug.ninfo_pprint ("    all matched 2: " ^ (!CP.print_svl all_matched_svl2)) no_pos in *)
           (* let _ =  Debug.ninfo_pprint ("     subst1: " ^ (pr_ss subst1)) no_pos in *)
           if  (is_inconsistent subst1 []) then None else
             let n_lhs1 = CF.subst_b subst1 lhs1 in
@@ -1889,13 +1891,13 @@ let rec find_imply prog lunk_hps runk_hps lhs1 rhs1 lhs2 rhs2=
               let l_res = {n_lhs1 with
                   CF.formula_base_heap = CF.drop_data_view_hrel_nodes_hf
                       n_lhs1.CF.formula_base_heap select_dnode
-                      select_vnode select_hrel  all_matched_svl2  all_matched_svl2 matched_hps}
+                      select_vnode select_hrel  all_matched_svl1 all_matched_svl1 matched_hps}
               in
               (*drop hps and matched svl in n_rhs2*)
               let r_res = {rhs2 with
                   CF.formula_base_heap = CF.drop_data_view_hrel_nodes_hf
                       rhs2.CF.formula_base_heap select_dnode
-                      select_vnode select_hrel all_matched_svl2 all_matched_svl2 matched_hps;
+                      select_vnode select_hrel all_matched_svl1 all_matched_svl1 matched_hps;
                   CF.formula_base_pure = MCP.mix_of_pure
                       (CP.filter_var_new
                           (MCP.pure_of_mix rhs2.CF.formula_base_pure) all_matched_svl2)}
@@ -1907,6 +1909,7 @@ let rec find_imply prog lunk_hps runk_hps lhs1 rhs1 lhs2 rhs2=
               let n_rhs1 = CF.subst subst1 rhs1 in
               (*avoid clashing --> should refresh remain svl of r_res*)
               let r_res1 = (* CF.subst ss2 *) (CF.Base r_res) in
+              let _ = Debug.ninfo_pprint ("    r_res1: " ^ (Cprinter.prtt_string_of_formula r_res1)) no_pos in
               (*elim duplicate hprel in r_res1 and n_rhs1*)
               let nr_hprel = CF.get_HRels_f n_rhs1 in
               let nrest_hprel = CF.get_HRels_f r_res1 in

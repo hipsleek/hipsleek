@@ -17,9 +17,9 @@ HeapPred G2(node a).
 
 node zip (node x, node y)
 
-  infer [H1,G1]
-  requires H1(x,y)
-  ensures  G1(x) *G1(y);
+  infer [H2,H3,G1,G2]
+  requires H2(x) * H3(y)
+  ensures  G1(x) *G2(y);
 
 //  requires x::ltwo<y>
 //  ensures res::ll<> * y::ll<> & res=x;

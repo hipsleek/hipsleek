@@ -60,6 +60,7 @@ Expecting:
 =====================================================================
 # tree.slk
 
+(H is both pre and post: not supported yet)
 /* 
 
 Why got two definitions for H?
@@ -479,4 +480,9 @@ It was working before.
 
   HP_7(x,l) --> x!=null
 
+============================================================
+#zip-bug4.slk
 
+
+============================================================
+# zip-1.ss
