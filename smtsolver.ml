@@ -998,15 +998,16 @@ and smt_imply_x pr_weak pr_strong (ante : Cpure.formula) (conseq : Cpure.formula
   (* let _ = print_endline ("#### [smt_imply] conseq = " ^ (!CP.print_formula conseq)) in *)
   let res, should_run_smt = (
     (* (false, true) in *)
-    if (has_exists conseq) then
-      let (pr_w,pr_s) = CP.drop_complex_ops in
-      try (
-        match (Omega.imply_with_check_ops pr_w pr_s ante conseq "" timeout) with
-        | None -> (false, true)
-        | Some r -> (r, false)
-      ) with 
-        | _ -> (false, true)
-    else (false, true) 
+    (* if (has_exists conseq) then                                                  *)
+    (*   let (pr_w,pr_s) = CP.drop_complex_ops in                                   *)
+    (*   try (                                                                      *)
+    (*     match (Omega.imply_with_check_ops pr_w pr_s ante conseq "" timeout) with *)
+    (*     | None -> (false, true)                                                  *)
+    (*     | Some r -> (r, false)                                                   *)
+    (*   ) with                                                                     *)
+    (*     | _ -> (false, true)                                                     *)
+    (* else                                                                         *)
+      (false, true) 
   ) in
   if (should_run_smt) then
     let input = to_smt pr_weak pr_strong ante (Some conseq) prover in
@@ -1085,17 +1086,17 @@ let smt_is_sat pr_weak pr_strong (f : Cpure.formula) (sat_no : string) (prover: 
   (* let _ = print_endline ("#### [smt_is_sat] f = " ^ (!CP.print_formula f)) in *)
   let res, should_run_smt = (
     (* (false, true) in *)
-    if (Cpure.contains_exists f) then
-      try
-        let (pr_w,pr_s) = CP.drop_complex_ops in
-        let optr = (Omega.is_sat_with_check_ops pr_w pr_s f sat_no) in (
-        match optr with
-          | Some r -> (r, false)
-          | None -> (true, false)
-        )
-      with 
-        | _ -> (true, false)
-    else
+    (* if (Cpure.contains_exists f) then                                    *)
+    (*   try                                                                *)
+    (*     let (pr_w,pr_s) = CP.drop_complex_ops in                         *)
+    (*     let optr = (Omega.is_sat_with_check_ops pr_w pr_s f sat_no) in ( *)
+    (*     match optr with                                                  *)
+    (*       | Some r -> (r, false)                                         *)
+    (*       | None -> (true, false)                                        *)
+    (*     )                                                                *)
+    (*   with                                                               *)
+    (*     | _ -> (true, false)                                             *)
+    (* else                                                                 *)
       (false, true)
   ) in
   if (should_run_smt) then

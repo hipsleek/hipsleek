@@ -88,18 +88,18 @@ struct node* insert(struct node* t, int v)
 
 
 /* function to delete a leaf */
-int deleteoneel(struct node* t)
+int deleteoneel(struct node** t)
 /*@
-  requires t::pq<n, mx> & n > 0
+  requires t::node**<p> * p::pq<n, mx> & n > 0
   ensures t::pq<n-1, mx2> & 0 <= res <= mx & mx2 <= mx;
 */
 {
   int v;
 
-  if ((t->nleft == 0) && (t->nright == 0))
+  if (((*t)->nleft == 0) && ((*t)->nright == 0))
   {
-    v = t->val; 
-    t = NULL;
+    v = (*t)->val; 
+    *t = NULL;
     return v;
   }
   else 
