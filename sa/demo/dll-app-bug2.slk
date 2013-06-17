@@ -1,0 +1,13 @@
+data node{
+	node prev;
+	node next; 
+}.
+
+HeapPred G3(node a,node b).
+HeapPred HP_844(node a,node b).
+HeapPred HP_845(node a,node b).
+
+relAssume G3
+ l1::node<l2,p> * HP_844(n3,l1) * HP_845(p,l1) * l2::node<n3,l1> --> G3(l1,l2).
+ 
+shape_infer [][G3].

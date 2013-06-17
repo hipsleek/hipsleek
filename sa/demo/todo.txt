@@ -1,3 +1,11 @@
+# dll-app-bug2.slk
+
+problem with shape_infer:
+ERROR: at _0:0_0:0
+Message: sau.find_root_x: dont have a root. what next?
+ Fatal error: exception Failure("sau.find_root_x: dont have a root. what next?")
+
+
 # app.ss: FIXED
 
 Problem with hip invoking shape_infer...
