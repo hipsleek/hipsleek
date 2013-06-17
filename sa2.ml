@@ -188,7 +188,7 @@ let apply_transitive_impl_fix prog callee_hps hp_rel_unkmap unk_hps (constrs: CF
         DD.binfo_pprint ">>>>>> step 3b: do apply_transitive_imp <<<<<<" no_pos;
         let constrs2, new_cs2, new_non_unk_hps = subst_cs prog dang_hps constrs new_cs1 in
         (*for debugging*)
-        let _ = DD.dinfo_pprint ("   new cs:" ^ (let pr = pr_list_ln Cprinter.string_of_hprel_short in pr new_cs2)) no_pos in
+        let _ = DD.ninfo_pprint ("   new cs:" ^ (let pr = pr_list_ln Cprinter.string_of_hprel_short in pr new_cs2)) no_pos in
         let helper (constrs: CF.hprel list) new_cs non_unk_hps=
           let pr = pr_list_ln Cprinter.string_of_hprel in
           Debug.no_1 "apply_transitive_imp_fix" pr (fun (cs,_) -> pr cs)
@@ -1193,7 +1193,9 @@ let infer_shapes_init_post prog (constrs0: CF.hprel list) non_ptr_unk_hps sel_po
 
 let infer_shapes_init_pre_x prog (constrs0: CF.hprel list) callee_hps non_ptr_unk_hps sel_post_hps unk_hps hp_rel_unkmap (* :(CP.spec_var list * CF.hp_rel_def list* (CP.spec_var * CP.spec_var list) list) *) =
   let _ = DD.binfo_pprint ">>>>>> step pre-4: remove unused predicates<<<<<<" no_pos in
-  let unused_pre_hps, constrs0, unk_map1 = elim_unused_pre_preds sel_post_hps constrs0 hp_rel_unkmap in
+  let constrs01 =(*  apply_transitive_impl_fix prog callee_hps hp_rel_unkmap *)
+     (* unk_hps *) constrs0 in
+  let unused_pre_hps, constrs0, unk_map1 = elim_unused_pre_preds sel_post_hps constrs01 hp_rel_unkmap in
   let unk_hps1 = Gen.BList.remove_dups_eq cmp_hpargs_fn (unk_hps@unused_pre_hps) in
   let _ = DD.binfo_pprint ">>>>>> pre-predicates: step pre-5: group & simpl impl<<<<<<" no_pos in
   let pr_par_defs,rem_constr1 = get_par_defs_pre constrs0 in
@@ -1242,7 +1244,7 @@ let infer_shapes_proper prog proc_name (constrs2: CF.hprel list) callee_hps sel_
       prog_vars unk_hpargs: (CF.hprel list * CF.hp_rel_def list* (CP.spec_var*CP.exp list * CP.exp list) list * (CP.spec_var * CP.spec_var list) list)=
   let unk_hps = List.map fst unk_hpargs in (*todo: total_unk_map + analize_unk*)
   let _ = DD.binfo_pprint ">>>>>> step 3: apply transitive implication<<<<<<" no_pos in
-  let constrs3, non_unk_hps = apply_transitive_impl_fix prog callee_hps unk_map2
+  let constrs3,_ = apply_transitive_impl_fix prog callee_hps unk_map2
      unk_hps constrs2 in
   (*partition constraints into 2 groups: pre-predicates, post-predicates*)
   let post_constrs, pre_constrs = partition_constrs constrs3 sel_post_hps in

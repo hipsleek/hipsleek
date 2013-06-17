@@ -840,7 +840,7 @@ let keep_data_view_hrel_nodes_two_f prog lhs rhs hd_nodes hv_nodes eqs lhs_hparg
   let nf2 = CF.drop_data_view_hrel_nodes rhs check_nbelongsto_dnode check_nbelongsto_vnode check_neq_hrelnode keep_ptrs closed_keep_ptrs rhs_keep_hrels in
   (nf1,nf2)
 
-let filter_eqs keep_svl prog_vars eqs0=
+let filter_eqs keep_svl prog_vars unique_eq_svl eqs0=
   let all_keel_svl = keep_svl@prog_vars in
   let rec helper eqs res=
     match eqs with
@@ -850,7 +850,8 @@ let filter_eqs keep_svl prog_vars eqs0=
             let b2 = CP.mem_svl sv2 all_keel_svl in
             let new_eq=
               match b1,b2 with
-                | true,false -> [((* CP.subs_one res *) sv2, (* CP.subs_one res *) sv1)] (*m_apply_par*)
+                | true,false -> if CP.mem_svl sv2 unique_eq_svl then [] else
+                    [((* CP.subs_one res *) sv2, (* CP.subs_one res *) sv1)] (*m_apply_par*)
                 | true,true -> begin
                     let c1 = CP.mem_svl sv1 prog_vars in
                     let c2 = CP.mem_svl sv2 prog_vars in
@@ -858,7 +859,8 @@ let filter_eqs keep_svl prog_vars eqs0=
                       | true,false -> [((* CP.subs_one res *) sv2, (* CP.subs_one res *) sv1)]
                       | _ -> [((* CP.subs_one res *) sv1, (* CP.subs_one res *) sv2)]
                 end
-                | false,true -> [((* CP.subs_one res *) sv1, (* CP.subs_one res *) sv2)]
+                | false,true -> if CP.mem_svl sv1 unique_eq_svl then [] else
+                      [((* CP.subs_one res *) sv1, (* CP.subs_one res *) sv2)]
                 | _ -> []
             in
             helper ss (res@new_eq)
@@ -897,6 +899,24 @@ let rec keep_prog_vars_helper prog_vars eqs res=
           in
           keep_prog_vars_helper prog_vars tl (res@new_eq)
 
+let rec get_uniqe_eq_svl svl res=
+  match svl with
+    | [] -> res
+    | sv::rest -> let grp,rem = List.partition (CP.eq_spec_var sv) rest in
+      let new_res = if grp = [] then (res@[sv]) else res in
+       get_uniqe_eq_svl rem new_res
+
+let get_uniqe_eq eqs=
+  let eq_svl = List.fold_left (fun ls (sv1,sv2)-> ls@[sv1;sv2]) [] eqs in
+  let uniqe_eq_svl = get_uniqe_eq_svl eq_svl [] in
+  uniqe_eq_svl
+
+let filter_uniqe_eq eqs=
+  let uniqe_eq_svl = get_uniqe_eq eqs in
+  let eqs1 = List.filter (fun (sv1,sv2) -> not (CP.mem sv1 uniqe_eq_svl || CP.mem_svl sv2 uniqe_eq_svl)) eqs in
+  let _ = DD.ninfo_pprint ("      eqs1: " ^ (let pr = pr_list(pr_pair !CP.print_sv !CP.print_sv) in pr eqs1)) no_pos in
+  eqs1
+
 let smart_subst_x nf1 nf2 hpargs eqs0 reqs unk_svl prog_vars=
   let largs= CF.h_fv nf1.CF.formula_base_heap in
   let rargs= CF.h_fv nf2.CF.formula_base_heap in
@@ -906,14 +926,15 @@ let smart_subst_x nf1 nf2 hpargs eqs0 reqs unk_svl prog_vars=
   (*cycle nodes: DO NOT subst*)
   let ptrs_group = (CF.get_ptrs_group_hf nf1.CF.formula_base_heap)@(CF.get_ptrs_group_hf nf2.CF.formula_base_heap) in
   let eqs = List.filter (fun (sv1,sv2) -> not (List.exists (fun svl -> CP.mem sv1 svl && CP.mem_svl sv2 svl) ptrs_group)) eqs0 in
-  let _ = DD.ninfo_pprint ("      eqs: " ^ (let pr = pr_list(pr_pair !CP.print_sv !CP.print_sv) in pr eqs)) no_pos in
+  let _ = DD.ninfo_pprint ("      eqs 1: " ^ (let pr = pr_list(pr_pair !CP.print_sv !CP.print_sv) in pr eqs)) no_pos in
+  (*******************)
   let eqNulls = CP.remove_dups_svl (MCP.get_null_ptrs nf1.CF.formula_base_pure) in
   let eqNulls1 = find_close eqNulls eqs in
   (* let _ = DD.info_pprint ("      eqNulls1: " ^ (!CP.print_svl eqNulls1)) no_pos in *)
   let eqNulls2 = List.filter (fun sv -> CP.mem_svl sv all_args) eqNulls1 in
   (* let _ = DD.info_pprint ("      eqNulls2: " ^ (!CP.print_svl eqNulls2)) no_pos in *)
   let null_ps = List.map (fun sv -> CP.mkNull sv no_pos) eqNulls2 in
-  let new_eqs = filter_eqs all_args prog_vars eqs in
+  let new_eqs = filter_eqs all_args prog_vars (get_uniqe_eq eqs) eqs in
   let new_eqs1 = List.filter (fun (sv1,sv2) -> not (CP.mem_svl sv1 eqNulls2 && CP.mem_svl sv2 eqNulls2)) new_eqs in
   let new_eqs1 = filter_eq_in_one_hp unk_svl new_eqs1 hpargs in
   let nf1a = CF.subst_b new_eqs1 nf1 in
@@ -938,10 +959,11 @@ let smart_subst_x nf1 nf2 hpargs eqs0 reqs unk_svl prog_vars=
   let nreqs1 = List.filter (fun (sv1,sv2) -> not (CP.mem_svl sv1 eqNulls2 && CP.mem_svl sv2 eqNulls2)) nreqs in
   let nreqs2 = filter_eq_in_one_hp unk_svl nreqs1 hpargs in
   let nleqs3 =  keep_prog_vars_helper prog_vars nleqs2 [] in
-  let lhs_b2 = CF.subst_b (nleqs3) nf11 in (*m_apply_par*)
-  let rhs_b2 = CF.subst_b (nleqs3@nreqs2) new_nf2 in
+  let nleqs4 = filter_uniqe_eq nleqs3 in
+  let lhs_b2 = CF.subst_b (nleqs4) nf11 in (*m_apply_par*)
+  let rhs_b2 = CF.subst_b (nleqs4@nreqs2) new_nf2 in
   (*prog_vars*)
-  let n_prog_vars = CP.subst_var_list (nleqs3@nreqs2) prog_vars in
+  let n_prog_vars = CP.subst_var_list (nleqs4@nreqs2) prog_vars in
   (lhs_b2,rhs_b2,n_prog_vars)
 
 let smart_subst nf1 nf2 hpargs eqs reqs unk_svl prog_vars=
