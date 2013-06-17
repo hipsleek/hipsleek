@@ -656,3 +656,35 @@ for parameters that has been marked as x@NI.
 We can instantiate for FIELDS an for parameters that are not marked
 as @NI
 
+===============================================================
+# zip-bug5b.slk
+
+infer [HP_1,HP_2,HP_8,H1,G1] 
+y::node<val_25_826,next_25_827> * 
+G1(next_24_820,next_25_827,next_24_820) * 
+x::node<val_24_819,next_24_820>@M
+&x!=null 
+//& !(v_bool_21_795') & x!=null & !(v_bool_21_795') 
+//& val_24_819=val_25_826+val_24_819 & next_24_820=next_24_820 & next_25_827=next_25_827 
+& res=x
+ |-  G1(x,y,res). 
+
+print residue.
+
+====
+
+GOT
+ inferred hprel: [y::node<val_25_826,next_25_827>@M * 
+                   x::node<val_24_819,next_24_820>@M&res=x --> G1(x,y,res)&
+                   true]
+
+Why isn't G1(next_24_820,next_25_827,next_24_820) 
+picked up?
+
+EXPECTING :
+
+ inferred hprel: [y::node<val_25_826,next_25_827>@M * 
+                   x::node<val_24_819,next_24_820>@M
+                   * G1(next_24_820,next_25_827,next_24_820) 
+                   &res=x --> G1(x,y,res)&
+                   true]
