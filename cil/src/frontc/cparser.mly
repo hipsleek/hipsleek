@@ -231,29 +231,29 @@ let transformOffsetOf (speclist, dtype) member loc =
   let resultExpr = CAST (sizeofType, SINGLE_INIT addrExpr, loc) in
   resultExpr
 
-let parse_cfunction_spec (spec_opt: string option) loc : Iformula.struc_formula = 
+let parse_c_function_spec (spec_opt: string option) loc : Iformula.struc_formula = 
   match spec_opt with
   | None -> Iformula.EList []
   | Some spec -> 
-      let modified_offset = {Parser.line_num = loc.start_pos.lineno;
-                             Parser.line_start = loc.start_pos.linestart;
-                             Parser.byte_num = loc.start_pos.byteno} in
+      let base_loc = {Parser.line_num = loc.start_pos.lineno;
+                      Parser.line_start = loc.start_pos.linestart;
+                      Parser.byte_num = loc.start_pos.byteno} in
       let fname = loc.start_pos.filename in
-      Parser.parse_cfunction_spec fname modified_offset spec
+      Parser.parse_c_function_spec fname spec base_loc
 
-let parse_cprogram_spec (spec: string) loc : Iast.prog_decl = 
-  let modified_offset = {Parser.line_num = loc.start_pos.lineno;
-                         Parser.line_start = loc.start_pos.linestart;
-                         Parser.byte_num = loc.start_pos.byteno} in
+let parse_c_program_spec (spec: string) loc : Iast.prog_decl = 
+  let base_loc = {Parser.line_num = loc.start_pos.lineno;
+                  Parser.line_start = loc.start_pos.linestart;
+                  Parser.byte_num = loc.start_pos.byteno} in
   let fname = loc.start_pos.filename in
-  Parser.parse_cprogram_spec fname modified_offset spec
+  Parser.parse_c_program_spec fname spec base_loc None
 
-let parse_cstatement_spec (spec: string) loc = 
-  let modified_offset = {Parser.line_num = loc.start_pos.lineno;
-                         Parser.line_start = loc.start_pos.linestart;
-                         Parser.byte_num = loc.start_pos.byteno} in
+let parse_c_statement_spec (spec: string) loc = 
+  let base_loc = {Parser.line_num = loc.start_pos.lineno;
+                  Parser.line_start = loc.start_pos.linestart;
+                  Parser.byte_num = loc.start_pos.byteno} in
   let fname = loc.start_pos.filename in
-  Parser.parse_cstatement_spec fname modified_offset spec
+  Parser.parse_c_statement_spec fname spec base_loc None
 
 %}
 
@@ -471,7 +471,7 @@ global:
                                           checkConnective(fst $5);
                                           (EXPRTRANSFORMER(fst $3, fst $7, $1), loc) }
 | HIPSPEC                               { let spec, loc = $1 in
-                                          let hprog = parse_cprogram_spec spec loc in
+                                          let hprog = parse_c_program_spec spec loc in
                                           (HIPPROG (hprog, loc), loc) }
 | position error position SEMICOLON     { let loc = makeLoc $1 (endPos $4) in
                                           let loc1 = makeLoc $1 $3 in
@@ -952,15 +952,15 @@ statement:
                                           (SWITCH (smooth_expression (fst $2) (snd $2), fst $3, loc), loc) }
 | WHILE paren_comma_expression opt_hip_function_spec statement
                                         { let loc = makeLoc (startPos $1) (endPos (snd $4)) in
-                                          let hipspec = parse_cfunction_spec (fst $3) (snd $3) in
+                                          let hipspec = parse_c_function_spec (fst $3) (snd $3) in
                                           (WHILE (smooth_expression (fst $2) (snd $2), fst $4, hipspec, loc), loc) }
 | DO opt_hip_function_spec statement WHILE paren_comma_expression SEMICOLON
                                         { let loc = makeLoc (startPos $1) (endPos $6) in
-                                          let hipspec = parse_cfunction_spec (fst $2) (snd $2) in
+                                          let hipspec = parse_c_function_spec (fst $2) (snd $2) in
                                           (DOWHILE (smooth_expression (fst $5) (snd $5), fst $3, hipspec, loc), loc) }
 | FOR LPAREN for_clause opt_expression SEMICOLON opt_expression RPAREN opt_hip_function_spec statement
                                         { let loc = makeLoc (startPos $1) (endPos (snd $9)) in
-                                          let hipspec = parse_cfunction_spec (fst $8) (snd $8) in
+                                          let hipspec = parse_c_function_spec (fst $8) (snd $8) in
                                           (FOR (fst $3, fst $4, fst $6, fst $9, hipspec, loc), loc) }
 | IDENT COLON attribute_nocv_list statement
                                         { (* The only attribute that should appear here
@@ -1008,7 +1008,7 @@ statement:
 | position error position SEMICOLON     { let loc = makeLoc $1 (endPos $4) in
                                           (NOP loc, loc) }
 | HIPSPEC                               { let spec, loc = $1 in
-                                          let stmt = parse_cstatement_spec spec loc in
+                                          let stmt = parse_c_statement_spec spec loc in
                                           (HIP_STMT (stmt, loc), loc) }
 ;
 
@@ -1365,14 +1365,14 @@ function_def:  /* (* ISO 6.9.1 *) */
                                           let loc = makeLoc (startPos l1) (endPos (snd $3)) in
                                           currentFunctionName := "<__FUNCTION__ used outside any functions>";
                                           !Lexerhack.pop_context (); (* The context pushed by announceFunctionName *)
-                                          let hipspec = parse_cfunction_spec (fst $2) (snd $2) in
+                                          let hipspec = parse_c_function_spec (fst $2) (snd $2) in
                                           (doFunctionDef loc specs decl hipspec (fst $3), loc) }
 | function_def_start opt_hip_function_spec SEMICOLON
                                         { let (specs, decl, l1) = $1 in
                                           let loc = makeLoc (startPos l1) (endPos $3) in
                                           currentFunctionName := "<__FUNCTION__ used outside any functions>";
                                           !Lexerhack.pop_context (); (* The context pushed by announceFunctionName *)
-                                          let hipspec = parse_cfunction_spec (fst $2) (snd $2) in
+                                          let hipspec = parse_c_function_spec (fst $2) (snd $2) in
                                           let emptyblock = {blabels = [];
                                                             battrs  = [];
                                                             bstmts  = [];

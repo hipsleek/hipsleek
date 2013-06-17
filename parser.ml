@@ -95,55 +95,70 @@ let view_names = new Gen.stack (* list of names of views declared *)
 let hp_names = new Gen.stack (* list of names of heap preds declared *)
 (* let g_rel_defs = new Gen.stack (\* list of relations decl in views *\) *)
 
-let modifier_offset = ref {line_num = 1;
+(****** global vars used by CIL parser *****)
+let is_cparser_mode = ref false
+
+let cparser_base_loc = ref {line_num = 1;
                            line_start = 1;
                            byte_num = 1;}
+
+let cparser_base_prog : (Iast.prog_decl option) ref = ref None
+
+(* ------ end of global vars for CIL ----- *)
 
 let get_pos x =
   try
     let sp = Parsing.symbol_start_pos () in
     let ep = Parsing. symbol_end_pos () in
-    let mp = Parsing.rhs_start_pos x; in
-    let new_sp = {sp with Lexing.pos_lnum = sp.Lexing.pos_lnum + !modifier_offset.line_num -1;
-                          Lexing.pos_bol = sp.Lexing.pos_bol + !modifier_offset.byte_num -1;
-                          Lexing.pos_cnum = sp.Lexing.pos_cnum + !modifier_offset.byte_num -1;} in
-    let new_ep = {ep with Lexing.pos_lnum = ep.Lexing.pos_lnum + !modifier_offset.line_num -1;
-                          Lexing.pos_bol = ep.Lexing.pos_bol + !modifier_offset.byte_num -1;
-                          Lexing.pos_cnum = ep.Lexing.pos_cnum + !modifier_offset.byte_num -1;} in
-    let new_mp = {mp with Lexing.pos_lnum = mp.Lexing.pos_lnum + !modifier_offset.line_num -1;
-                          Lexing.pos_bol = mp.Lexing.pos_bol + !modifier_offset.byte_num -1;
-                          Lexing.pos_cnum = mp.Lexing.pos_cnum + !modifier_offset.byte_num -1;} in
-    {
-      start_pos = new_sp;
-      end_pos = new_ep;
-      mid_pos = new_mp;
-    }
+    let mp = Parsing.rhs_start_pos x in
+    if (!is_cparser_mode) then (
+      let new_sp = {sp with Lexing.pos_lnum = sp.Lexing.pos_lnum + !cparser_base_loc.line_num -1;
+                            Lexing.pos_bol = sp.Lexing.pos_bol + !cparser_base_loc.byte_num -1;
+                            Lexing.pos_cnum = sp.Lexing.pos_cnum + !cparser_base_loc.byte_num -1;} in
+      let new_ep = {ep with Lexing.pos_lnum = ep.Lexing.pos_lnum + !cparser_base_loc.line_num -1;
+                            Lexing.pos_bol = ep.Lexing.pos_bol + !cparser_base_loc.byte_num -1;
+                            Lexing.pos_cnum = ep.Lexing.pos_cnum + !cparser_base_loc.byte_num -1;} in
+      let new_mp = {mp with Lexing.pos_lnum = mp.Lexing.pos_lnum + !cparser_base_loc.line_num -1;
+                            Lexing.pos_bol = mp.Lexing.pos_bol + !cparser_base_loc.byte_num -1;
+                            Lexing.pos_cnum = mp.Lexing.pos_cnum + !cparser_base_loc.byte_num -1;} in
+      { start_pos = new_sp;
+        end_pos = new_ep;
+        mid_pos = new_mp; }
+    )
+    else (
+      { start_pos = sp;
+        end_pos = ep;
+        mid_pos = mp; }
+    )
   with _ -> 
-    {
-      start_pos = Lexing.dummy_pos;
+    { start_pos = Lexing.dummy_pos;
       end_pos = Lexing.dummy_pos;
-      mid_pos = Lexing.dummy_pos;
-    }
+      mid_pos = Lexing.dummy_pos; }
 
 (* compute the position by adding the location return by camlp4 with starting_offset *)
 let get_pos_camlp4 l x =
   let sp = Camlp4.PreCast.Loc.start_pos l in
   let ep = Camlp4.PreCast.Loc.stop_pos l in
   let mp = Camlp4.PreCast.Loc.start_pos (Camlp4.PreCast.Loc.shift x l) in
-  let new_sp = {sp with Lexing.pos_lnum = sp.Lexing.pos_lnum + !modifier_offset.line_num - 1;
-                        Lexing.pos_bol = sp.Lexing.pos_bol + !modifier_offset.byte_num - 1;
-                        Lexing.pos_cnum = sp.Lexing.pos_cnum + !modifier_offset.byte_num - 1;} in
-  let new_ep = {ep with Lexing.pos_lnum = ep.Lexing.pos_lnum + !modifier_offset.line_num - 1;
-                        Lexing.pos_bol = ep.Lexing.pos_bol + !modifier_offset.byte_num - 1;
-                        Lexing.pos_cnum = ep.Lexing.pos_cnum + !modifier_offset.byte_num - 1;} in
-  let new_mp = {mp with Lexing.pos_lnum = mp.Lexing.pos_lnum + !modifier_offset.line_num - 1;
-                        Lexing.pos_bol = mp.Lexing.pos_bol + !modifier_offset.byte_num - 1;
-                        Lexing.pos_cnum = mp.Lexing.pos_cnum + !modifier_offset.byte_num - 1;} in
-  {
-    start_pos = new_sp;
-    end_pos = new_ep;
-    mid_pos = new_mp;
-  }
+  if (!is_cparser_mode) then (
+    let new_sp = {sp with Lexing.pos_lnum = sp.Lexing.pos_lnum + !cparser_base_loc.line_num - 1;
+                          Lexing.pos_bol = sp.Lexing.pos_bol + !cparser_base_loc.byte_num - 1;
+                          Lexing.pos_cnum = sp.Lexing.pos_cnum + !cparser_base_loc.byte_num - 1;} in
+    let new_ep = {ep with Lexing.pos_lnum = ep.Lexing.pos_lnum + !cparser_base_loc.line_num - 1;
+                          Lexing.pos_bol = ep.Lexing.pos_bol + !cparser_base_loc.byte_num - 1;
+                          Lexing.pos_cnum = ep.Lexing.pos_cnum + !cparser_base_loc.byte_num - 1;} in
+    let new_mp = {mp with Lexing.pos_lnum = mp.Lexing.pos_lnum + !cparser_base_loc.line_num - 1;
+                          Lexing.pos_bol = mp.Lexing.pos_bol + !cparser_base_loc.byte_num - 1;
+                          Lexing.pos_cnum = mp.Lexing.pos_cnum + !cparser_base_loc.byte_num - 1;} in
+    { start_pos = new_sp;
+      end_pos = new_ep;
+      mid_pos = new_mp; }
+  )
+  else (
+    { start_pos = sp;
+      end_pos = ep;
+      mid_pos = mp; }
+  )
 
 let rec get_mode (anns : ann list) : mode = match anns with
 	| ann :: rest -> begin
@@ -631,20 +646,18 @@ let peek_pointer_type =
 
 let get_heap_id_info (cid: ident * primed) (heap_id : (ident * int * int * Camlp4.PreCast.Loc.t)) =
   let (base_heap_id, ref_level, deref_level, l) = heap_id in
-  if ((ref_level < 0) || (deref_level < 0)) then
-    report_error (get_pos_camlp4 l 1) "unexpected heap_id"
-  else if ((ref_level > 0) && (deref_level > 0)) then
-    report_error (get_pos_camlp4 l 1) "unexpected heap_id"
-  else if ((ref_level > 0) && (deref_level = 0)) then (
-    (* reference case *)
+  if ((ref_level == 0) && (deref_level == 0)) then
+    (cid, base_heap_id, [])
+  else if ((ref_level > 0) && (deref_level = 0) && (!is_cparser_mode)) then (
+    (* reference case, used to parse specs in C programs *)
     let s = ref base_heap_id in
     for i = 1 to ref_level do
       s := !s ^ "__star";
     done;
     (cid, !s, [])
   )
-  else if ((ref_level = 0) && (deref_level > 0)) then (
-    (* dereference case *)
+  else if ((ref_level = 0) && (deref_level > 0) && (!is_cparser_mode)) then (
+    (* dereference case, used to parse specs in C programs *)
     match base_heap_id with
     | "int"
     | "bool"
@@ -697,7 +710,8 @@ let get_heap_id_info (cid: ident * primed) (heap_id : (ident * int * int * Camlp
       )
   )
   else
-    (cid, base_heap_id, [])
+    report_error (get_pos_camlp4 l 1) "unexpected heap_id"
+
 
 (* Determine whether an ineq e1!=e2 *)
 (* is a linking constraints         *)
@@ -2924,42 +2938,73 @@ let parse_cpfile n s = SHGram.parse cp_file (PreCast.Loc.mk n) s
 (*****************************************************************)
 (******** The function below will be used by CIL parser **********)
 
-let parse_aux_proc (fname: string) (proc: string) =
-  (* parse *)
+let parse_c_aux_proc (fname: string) (proc: string) (base_prog: Iast.prog_decl option) =
+  (* save states of current parser *)
+  let old_parser_mode = !is_cparser_mode in
+  let old_base_prog = !cparser_base_prog in
+  (* swith to cparser mode *)
+  is_cparser_mode := true;
+  cparser_base_prog := base_prog;
   let res = SHGram.parse_string hproc (PreCast.Loc.mk fname) proc in
+  (* restore states of previous parser *)
+  is_cparser_mode := old_parser_mode;
+  cparser_base_prog := old_base_prog;
   (* return *)
   res
 
-let parse_cfunction_spec (fname: string) (moffset: file_offset) (spec: string) : F.struc_formula =
-  (* store the current modifier_offset and assign new value to it *)
-  let save = !modifier_offset in
-  modifier_offset := moffset;
+let parse_c_function_spec (fname: string) (spec: string) (base_loc: file_offset)
+                          (base_prog: Iast.prog_decl option)
+                          : F.struc_formula =
+  (* save states of current parser *)
+  let old_parser_mode = !is_cparser_mode in
+  let old_base_loc = !cparser_base_loc in
+  let old_base_prog = !cparser_base_prog in
+  (* swith to cparser mode *)
+  cparser_base_loc := base_loc;
+  is_cparser_mode := true;
   (* parse *)
   let res = SHGram.parse_string opt_spec_list (PreCast.Loc.mk fname) spec in
-  (* restore the old value of modifier_offset *)
-  modifier_offset := save;
+  (* restore states of previous parser *)
+  is_cparser_mode := old_parser_mode;
+  cparser_base_loc := old_base_loc;
+  cparser_base_prog := old_base_prog;
   (* return *)
   res
 
-let parse_cprogram_spec (fname: string) (moffset: file_offset) (spec: string) : Iast.prog_decl =
-  (* store the current modifier_offset and assign new value to it *)
-  let save = !modifier_offset in
-  modifier_offset := moffset;
+let parse_c_program_spec (fname: string) (spec: string) (base_loc: file_offset)
+                         (base_prog: Iast.prog_decl option)
+                         : Iast.prog_decl =
+  (* save states of current parser *)
+  let old_parser_mode = !is_cparser_mode in
+  let old_base_loc = !cparser_base_loc in
+  let old_base_prog = !cparser_base_prog in
+  (* swith to cparser mode *)
+  cparser_base_loc := base_loc;
+  is_cparser_mode := true;
   (* parse *)
   let res = SHGram.parse_string hprog (PreCast.Loc.mk fname) spec in
-  (* restore the old value of modifier_offset *)
-  modifier_offset := save;
+  (* restore states of previous parser *)
+  is_cparser_mode := old_parser_mode;
+  cparser_base_loc := old_base_loc;
+  cparser_base_prog := old_base_prog;
   (* return *)
   res
 
-let parse_cstatement_spec (fname: string) (moffset: file_offset) (spec: string) =
-  (* store the current modifier_offset and assign new value to it *)
-  let store_offset = !modifier_offset in
-  modifier_offset := moffset;
+let parse_c_statement_spec (fname: string) (spec: string) (base_loc: file_offset)
+                           (base_prog: Iast.prog_decl option) =
+  (* save states of current parser *)
+  let old_parser_mode = !is_cparser_mode in
+  let old_base_loc = !cparser_base_loc in
+  let old_base_prog = !cparser_base_prog in
+  (* swith to cparser mode *)
+  cparser_base_loc := base_loc;
+  is_cparser_mode := true;
   (* parse *)
   let res = SHGram.parse_string statement (PreCast.Loc.mk fname) spec in
-  (* restore the old value of modifier_offset *)
-  modifier_offset := store_offset;
+  (* restore states of previous parser *)
+  is_cparser_mode := old_parser_mode;
+  cparser_base_loc := old_base_loc;
+  cparser_base_prog := old_base_prog;
   (* return *)
   res
 
