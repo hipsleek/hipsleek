@@ -1355,7 +1355,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 	    let tmp2 =
 	      if b then tmp1
 	      else CP.Not (tmp1, None, pos) in
-	    let f = CF.formula_of_pure_N tmp2 pos in  Debug.info_pprint "WN -1: adding vheap to exception too" no_pos;
+	    let f = CF.formula_of_pure_N tmp2 pos in
 	    let res = CF.normalize_max_renaming_list_failesc_context f pos true ctx in
 	    Gen.Profiling.push_time "[check_exp] BConst";
 	    res
