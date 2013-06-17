@@ -481,6 +481,24 @@ It was working before.
   HP_7(x,l) --> x!=null
 
 ============================================================
+#foo.ss
+
+GOT:
+  H(x)&true --> x::node<val_19_788,next_19_789>@M * (HP_790(next_19_789))&true,
+ HP_790(next_19_789)&next_19_789!=null --> H(next_19_789)&true,
+ x::node<val_19_788,v_node_20_807>@M&true --> G(x)&true,
+ (HP_790(next_19_789)) * x::node<val_19_788,next_19_789>@M&
+  next_19_789=null --> G(x)&true]
+
+EXPECTED:
+
+  H(x)&true --> x::node<val_19_788,next_19_789>@M * (HP_790(next_19_789))&true,
+ HP_790(next_19_789)&next_19_789!=null --> H(next_19_789)&true,
+ x::node<val_19_788,v_node_20_807>@M * G(v_node_20_807) &true --> G(x)&true,
+                                       ^^^^^^^^^^^^^^^^
+ (HP_790(next_19_789)) * x::node<val_19_788,next_19_789>@M&
+  next_19_789=null --> G(x)&true]
+============================================================
 #zip-bug4.slk
 
 
