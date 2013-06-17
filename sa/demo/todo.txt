@@ -1,3 +1,10 @@
+# dll-append3.ss
+
+fails during assumption collection, does not infer l2::node ....
+!!! >>>>>> mismatch ptr is not found (or inst) in the lhs <<<<<<
+( [(,1 ); (,1 )]) :dll-append3.ss:22: 3: bind: node  l2'::node<next_22_776',prev_22_777'>@M[Orig] cannot be derived from context
+ 
+
 # dll-app-bug3.ss
 
   should not allow me to prove false, seems like a substitution problem

@@ -1,19 +1,18 @@
 data node{
-	int val;
 	node prev;
 	node next;
 }
 
 
-HeapPred H1(node a,node b).
-  HeapPred G1(node a, node b).
+HeapPred H(node a,node b).
+  HeapPred G(node a, node b).
 
-  void set_tail (node c,node y)
-  infer[H1,G1] 
-  requires H1(c,y) 
-  ensures G1(c,y);
+  void set_tail (node l1,node l2)
+  infer[H,G] 
+  requires H(l1,l2) 
+  ensures G(l1,l2);
 {
-   c.next = y;
+   l1.next = l2;
 }
 
 /*
