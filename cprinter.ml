@@ -1801,6 +1801,9 @@ let string_of_hprel hp = poly_string_of_pr pr_hprel hp
 
 let string_of_hprel_short hp = poly_string_of_pr pr_hprel_short hp
 
+let string_of_hprel_short_inst prog hp =
+  poly_string_of_pr (pr_hprel_short_inst prog) hp
+
 let string_of_hprel_def hp = poly_string_of_pr pr_hprel_def hp
 
 let string_of_hprel_def_lib hp = poly_string_of_pr pr_hprel_def_lib hp
