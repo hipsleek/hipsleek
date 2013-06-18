@@ -714,3 +714,79 @@ WRONG : missing H2(n1,_)*H3(_,n2)
  inferred hprel: [x::node<Anon_16,n1>@M * y::node<Anon_17,n2>@M&
                    true --> H1(x,y)&true]
 */
+===============================================================
+# pre-2.slk
+
+relAssume P
+  P(x#I) --> x::node<q>*P2(q#?).
+
+relAssume P2
+  P2(x)  --> P(x).
+
+shape_infer[P,P2][].
+
+/*
+
+WRONG:
+[ P(x_28) ::= x_28::node<q_21>@M * (P(q_21)) * (P(q_23)) * q_21::node<q_23>@M&true,
+ P2(x_29) ::= x_29::node<q>@M * (P2(q))&true]
+
+STEPS
+=====
+first confirm P:
+  P(x) <--> x::node<q>*P2(q).
+  P2(x)  --> P(x).
+         --> x::node<q>*P2(q).
+confirm P2
+  P2(x)  <--> x::node<q>*P2(q).
+
+
+Confirm P2
+  P2(x)  --> P(x)
+         <--> P(x)
+  P(x) --> x::node<q>*P2(q).
+       --> x::node<q>*P(q).
+Confirm P
+  P(x) <--> x::node<q>*P(q).
+
+===============================================================
+# pre-2a.slk
+
+
+===============================================================
+# id.ss
+
+cell id (cell x)
+ infer [P,G]  requires P(x)  ensures  G(x,res);
+//requires true  ensures  x=res;
+{
+  return x;
+}
+
+/*
+
+A predicate is non-dangling if it is being used
+for a pre-pred definition.
+I suppose dangling classification may have to be
+done after base-case splitting.
+
+
+[ P(x)&res=x --> G(x,res)&true]
+
+====
+
+[ P(x) ::= emp& XPURE(P(x)),
+ G(x_773,res_774) ::= emp&res_774=x_773 &  XPURE(P(x_773))]
+
+====
+
+Sufficient to use:
+
+  P(x) --> emp
+  res=x --> G(x,res)
+
+====>
+  P(x)     <--> true
+  G(x,res) <--> res=x
+
+*/
