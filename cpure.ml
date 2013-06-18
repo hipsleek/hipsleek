@@ -3897,7 +3897,7 @@ and elim_exists_x (f0 : formula) : formula =
 	          let st, pp1 = get_subst_equation_formula with_qvars qvar false in
 	          if not (Gen.is_empty st) then
 	            let new_qf = subst_term st pp1 in
-		        let new_qf = prune_perm_bounds new_qf in
+		    let new_qf = prune_perm_bounds new_qf in
 	            let new_qf = mkExists qvars0 new_qf lbl pos in
 	            let tmp3 = helper new_qf in
 	            let tmp4 = mkAnd no_qvars tmp3 pos in

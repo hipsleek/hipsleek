@@ -1245,10 +1245,10 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                         let t = Gen.unsome (type_of_exp rhs) in
                         let vsv = CP.SpecVar (t, v, Primed) in (* rhs must be non-void *)
                         let tmp_vsv = CP.fresh_spec_var vsv in
-                        let _ = DD.binfo_pprint "*************************************" no_pos in
-                        let _ = DD.binfo_pprint "LOC: I remove the first element of the subst, please check" no_pos in
-                        let _ = DD.binfo_pprint "*************************************" no_pos in
-                        let compose_es = CF.subst [(* (vsv, tmp_vsv); *) ((P.mkRes t), vsv)] c1.CF.es_formula in
+                        (* let _ = DD.binfo_pprint "*************************************" no_pos in *)
+                        (* let _ = DD.binfo_pprint "LOC: I remove the first element of the subst, please check" no_pos in *)
+                        (* let _ = DD.binfo_pprint "*************************************" no_pos in *)
+                        let compose_es = CF.subst [(vsv, tmp_vsv); ((P.mkRes t), vsv)] c1.CF.es_formula in
                         let compose_ctx = (CF.Ctx ({c1 with CF.es_formula = compose_es})) in
                         (* Debug.info_hprint (add_str "vsv" Cprinter.string_of_spec_var) vsv no_pos; *)
                         (* Debug.info_hprint (add_str "tmp_vsv" Cprinter.string_of_spec_var) tmp_vsv no_pos; *)
