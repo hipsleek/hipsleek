@@ -4,6 +4,7 @@ data node{
 }
 
 void dll_append(node l1, node l2)
+//requires l1::node<_,null> & l2!=null  ensures false;
 requires l1::node<_,null> & l2!=null  ensures false;
 {
 	l1.next = null;

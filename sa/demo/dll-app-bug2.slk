@@ -4,10 +4,21 @@ data node{
 }.
 
 HeapPred G3(node a,node b).
-HeapPred HP_844(node a,node b).
-HeapPred HP_845(node a,node b).
+HeapPred HP_844(node a,node@NI b).
+HeapPred HP_845(node a,node@NI b).
 
 relAssume G3
  l1::node<l2,p> * HP_844(n3,l1) * HP_845(p,l1) * l2::node<n3,l1> --> G3(l1,l2).
  
-shape_infer [][G3].
+shape_infer [HP_844,HP_845][G3].
+
+/*
+# dll-app-bug2.slk
+
+The input is circular but
+WHY is there an exception??
+
+ERROR: at _0:0_0:0 
+Message: sau.find_root_x: dont have a root. what next?
+ Fatal error: exception Failure("sau.find_root_x: dont have a root. what next?")
+*/
