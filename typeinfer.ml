@@ -1041,6 +1041,7 @@ and gather_type_info_heap_x prog (h0 : IF.h_formula) tlist =
       let fh = IF.HeapNode h in 
       let n_tl = gather_type_info_heap_x prog fh tlist in 
       n_tl
+  | IF.HeapNodeDeref _ -> report_error no_pos ("gather_type_info_heap_x: HeapNodeDeref should not appear here.")
   | IF.HeapNode { IF.h_formula_heap_node = (v, p); (* ident, primed *)
                   IF.h_formula_heap_arguments = ies; (* arguments *)
                   IF.h_formula_heap_perm = perm;

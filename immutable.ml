@@ -206,6 +206,7 @@ and normalize_h_formula_phase (h : IF.h_formula) (wr_phase : bool) : IF.h_formul
       match h with
         | IF.HeapNode2 hf -> hf.IF.h_formula_heap2_imm
         | IF.HeapNode hf -> hf.IF.h_formula_heap_imm
+        | IF.HeapNodeDeref _ -> report_error no_pos ("normalize_h_formula_phase: HeapNodeDeref should not appear here.")
         | _ -> failwith ("Error in  normalize_h_formula\n")
     in
     (iformula_ann_to_cformula_ann iann)
@@ -289,6 +290,7 @@ and normalize_h_formula_phase (h : IF.h_formula) (wr_phase : bool) : IF.h_formul
                       IF.h_formula_phase_pos = no_pos;
                       })
                   end)
+    | IF.HeapNodeDeref _ -> report_error no_pos ("normalize_h_formula_phase: HeapNodeDeref should not appear here.")
     | _ ->  IF.Phase { IF.h_formula_phase_rd = IF.HEmp;
       IF.h_formula_phase_rw = h;
       IF.h_formula_phase_pos = no_pos }
@@ -353,6 +355,7 @@ and validate_rd_phase (h : IF.h_formula) : bool = match h with
   | IF.Phase _ -> false (* Shouldn't have phases inside the reading phase *)
   | IF.HeapNode2 hf -> (IF.isLend hf.IF.h_formula_heap2_imm) 
   | IF.HeapNode hf -> (IF.isLend hf.IF.h_formula_heap_imm)
+  | IF.HeapNodeDeref _ -> report_error no_pos ("validate_rd_phase: HeapNodeDeref should not appear here.")
   | _ -> true
 
 and insert_wr_phase_x (f : IF.h_formula) (wr_phase : IF.h_formula) : IF.h_formula = 

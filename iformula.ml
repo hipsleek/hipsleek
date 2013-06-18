@@ -106,6 +106,7 @@ and h_formula = (* heap formula *)
   | StarMinus of h_formula_starminus
   | HeapNode of h_formula_heap
   | HeapNode2 of h_formula_heap2
+  | HeapNodeDeref of h_formula_heap_deref
 	  (* Don't distinguish between view and data node for now, as that requires look up *)
 	  (*  | ArrayNode of ((ident * primed) * ident * P.exp list * loc) *)
 	  (* pointer * base type * list of dimensions *)
@@ -163,6 +164,20 @@ and h_formula_heap2 = { h_formula_heap2_node : (ident * primed);
 			h_formula_heap2_pseudo_data : bool;
 			h_formula_heap2_label : formula_label option;
 			h_formula_heap2_pos : loc }
+
+and h_formula_heap_deref = { h_formula_heap_deref_node : (ident * primed);
+                             h_formula_heap_deref_name : ident;
+                             h_formula_heap_deref_level : int;
+                             h_formula_heap_deref_derv : bool; 
+                             h_formula_heap_deref_imm : ann;
+                             h_formula_heap_deref_imm_param : ann option list;
+                             h_formula_heap_deref_full : bool;
+                             h_formula_heap_deref_with_inv : bool;
+                             h_formula_heap_deref_perm : iperm;
+                             h_formula_heap_deref_arguments : P.exp list;
+                             h_formula_heap_deref_pseudo_data : bool;
+                             h_formula_heap_deref_label : formula_label option;
+                             h_formula_heap_deref_pos : loc }
 
 let print_pure_formula = ref(fun (c:Ipure.formula) -> "printer not initialized")
 (* Interactive command line *)
@@ -489,6 +504,25 @@ and mkHeapNode2 c id dr i f inv pd perm ohl hl_i ofl l =
                     h_formula_heap2_label = ofl;
                     h_formula_heap2_pos = l}
 
+and mkHeapNodeDeref  c id dr i f inv pd perm hl hl_i ofl l= 
+   Debug.no_1 "mkHeapNodeDeref" (fun (name, _) -> name) !print_h_formula 
+      (fun _ -> mkHeapNodeDeref_x c id dr i f inv pd perm hl hl_i ofl l ) c
+
+and mkHeapNodeDeref_x c id lvl dr i f inv pd perm hl hl_i ofl l= 
+  HeapNodeDeref { h_formula_heap_deref_node = c;
+                  h_formula_heap_deref_name = id;
+                  h_formula_heap_deref_level = lvl;
+                  h_formula_heap_deref_derv = dr;
+                  h_formula_heap_deref_imm = i;
+                  h_formula_heap_deref_imm_param = hl_i;
+                  h_formula_heap_deref_full = f;
+                  h_formula_heap_deref_with_inv = inv;
+                  h_formula_heap_deref_pseudo_data = pd;
+                  h_formula_heap_deref_perm = perm; (*LDK: perm from parser*)
+                  h_formula_heap_deref_arguments = hl;
+                  h_formula_heap_deref_label = ofl;
+                  h_formula_heap_deref_pos = l }
+
 and pos_of_formula f0 = match f0 with
   | Base f -> f.formula_base_pos
   | Or f -> f.formula_or_pos
@@ -579,6 +613,7 @@ let rec h_fv (f:h_formula):(ident*primed) list = match f with
      let perm_vars =  (fv_iperm ()) perm in
      let imm_vars =  fv_imm imm in
       Gen.BList.remove_dups_eq (=)  (imm_vars@perm_vars@((extract_var_from_id name):: (List.concat (List.map (fun c-> (Ipure.afv (snd c))) b) )))
+  | HeapNodeDeref _ -> report_error no_pos "h_fv: HeapNodeDeref should not appear here!"
   | HRel (_, args, _)->
       let args_fv = List.concat (List.map Ipure.afv args) in
 	  Gen.BList.remove_dups_eq (=) args_fv
@@ -1007,7 +1042,8 @@ and h_apply_one_pointer ((fr, t) as s : ((ident*primed) * (ident*primed))) (f : 
       | HEmp
       | HTrue
       | HFalse -> (f,[])
-	  | ConjStar _ | ConjConj _ | StarMinus _ -> Error.report_no_pattern ()
+      | ConjStar _ | ConjConj _ | StarMinus _ -> Error.report_no_pattern ()
+      | HeapNodeDeref _ -> report_error no_pos "h_apply_one_pointer: HeapNodeDeref should not appear here!"
   in helper f
 
 
@@ -1109,6 +1145,7 @@ and h_apply_one ((fr, t) as s : ((ident*primed) * (ident*primed))) (f : h_formul
 		    h_formula_heap2_pseudo_data =ps_data;
 		    h_formula_heap2_label = l;
 		    h_formula_heap2_pos = pos})
+  | HeapNodeDeref _ -> report_error no_pos "h_apply_one: HeapNodeDeref should not appear here!"
   | HTrue -> f
   | HFalse -> f
   | HEmp -> f
@@ -1319,6 +1356,7 @@ and h_apply_one_w_data_name ((fr, t) as s : ((ident*primed) * (ident*primed))) (
 		      h_formula_heap2_pseudo_data =ps_data;
 		      h_formula_heap2_label = l;
 		      h_formula_heap2_pos = pos})
+      | HeapNodeDeref _ -> report_error no_pos "h_apply_one_w_data_name: HeapNodeDeref should not appear here!"
       | HTrue -> f
       | HFalse -> f
       | HEmp -> f
@@ -1546,6 +1584,7 @@ and float_out_exps_from_heap_x (f:formula ) (rel0: rel option) :formula =
                   in
 				  (nv,[(nn,npf)])) args) in
             (HRel (r, na, l),List.concat ls)
+    | HeapNodeDeref _ -> report_error no_pos "float_out_exps_from_heap_x: HeapNodeDeref should not appear here!"
     | HTrue -> (f,[])
     | HFalse -> (f,[]) 
     | HEmp -> (f,[]) in
@@ -1859,6 +1898,7 @@ match h with
         	let nargs = List.map Ipure.float_out_exp_min_max args in
 			let nargse = List.map fst nargs in
             (HRel (r, nargse, l),None)
+    | HeapNodeDeref _ -> report_error no_pos "float_out_heap_min_max: HeapNodeDeref should not appear here!"
     |  HTrue -> (h, None)
     |  HFalse -> (h, None)
     |  HEmp -> (h, None)
@@ -1889,6 +1929,7 @@ and view_node_types (f:formula):ident list =
 		| Star b -> Gen.BList.remove_dups_eq (=) ((helper b.h_formula_star_h1)@(helper b.h_formula_star_h2))
 		| HeapNode b -> [b.h_formula_heap_name]
 		| HeapNode2 b -> [b.h_formula_heap2_name]
+    | HeapNodeDeref _ -> report_error no_pos ("view_node_types: HeapNodeDeref should not appear here.")
 		| _ -> [] in
 	match f with
 	| Or b-> Gen.BList.remove_dups_eq (=) ((view_node_types b.formula_or_f1) @ (view_node_types b.formula_or_f2))
@@ -2237,6 +2278,7 @@ let find_barr_node bname (f:int) (t:int) struc :bool=
 					| _ -> Bar_wrong_state)
 			else Bar_not_found 
 		 | HeapNode2 h -> Gen.report_error no_pos "malfunction with convert to heap node"
+     | HeapNodeDeref _ -> report_error no_pos "find_barr_node: HeapNodeDeref should not appear here!"
 		 | HRel _ | HTrue | HEmp | HFalse -> Bar_not_found in
 	let rec find_node x f= match f with 
 		| Base {formula_base_heap = h; formula_base_pure = p} 
@@ -2333,6 +2375,7 @@ let rec heap_trans_heap_node fct f =
   | Conj b -> Conj {b with h_formula_conj_h2 = recf b.h_formula_conj_h2; h_formula_conj_h1 = recf b.h_formula_conj_h1}
   | Star b -> Star {b with h_formula_star_h2 = recf b.h_formula_star_h2; h_formula_star_h1 = recf b.h_formula_star_h1}
   | ConjStar _|ConjConj _|StarMinus _ -> report_error no_pos "IF.heap_trans_heap_node: not handle yet"
+  | HeapNodeDeref _ -> report_error no_pos "heap_trans_heap_node: HeapNodeDeref should not appear here!"
 
 
 let rec formula_trans_heap_node fct f =
@@ -2387,6 +2430,7 @@ let rec heap_drop_heap_node f0 hns=
             Star {b with h_formula_star_h2 = nh2; h_formula_star_h1 = nh1}
   end
   | ConjStar _|ConjConj _|StarMinus _ -> report_error no_pos "IF.heap_drop_heap_node: not handle yet"
+  | HeapNodeDeref _ -> report_error no_pos "heap_drop_heap_node: HeapNodeDeref should not appear here!"
   in
   helper f0
 

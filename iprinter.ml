@@ -378,6 +378,22 @@ let rec string_of_h_formula = function
       string_of_formula_label_opt pi
         ((string_of_id xid)
          ^ "::" ^ id ^perm_str ^  "<" ^ tmp2 ^ ">"  ^ (string_of_imm imm)^"[HeapNode2]")
+  | F.HeapNodeDeref ({F.h_formula_heap_deref_node = x;
+                      F.h_formula_heap_deref_name = id;
+                      F.h_formula_heap_deref_level = lvl;
+                      F.h_formula_heap_deref_perm = perm; (*LDK*)
+                      F.h_formula_heap_deref_arguments = pl;
+                      F.h_formula_heap_deref_imm = imm;
+                      F.h_formula_heap_deref_imm_param = ann_param;
+                      F.h_formula_heap_deref_label = pi;
+                      F.h_formula_heap_deref_pos = l}) ->
+      let perm_str = string_of_iperm perm in
+      let deref = ref "" in
+      for i = 1 to lvl do
+        deref := !deref ^ "^";
+      done;
+      ((string_of_id x) ^ "::" ^ id ^ !deref ^ perm_str 
+      ^ "<" ^ (string_of_data_param_list pl ann_param) ^ ">" ^ (string_of_imm imm)^"[HeapNode1]")
   | F.HRel (r, args, _) -> "HRel " ^ r ^ "(" ^ (String.concat "," (List.map string_of_formula_exp args)) ^ ")"
   | F.HTrue -> "htrue"
   | F.HFalse -> "hfalse"
