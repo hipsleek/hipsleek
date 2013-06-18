@@ -797,3 +797,48 @@ Sufficient to use:
   G(x,res) <--> res=x
 
 */
+
+===============================================================
+# zip-bug5c.slk   OK now
+
+infer [HP_1,HP_2]
+HP_1(next_24_820,y) * HP_2(y,x) * 
+x::node<val_24_819,next_24_820>@M & x!=null 
+ |-  y::node<_,next_25_782'>@L. 
+print residue.
+
+/*
+
+GOT
+ inferred hprel: [(HP_1(next_24_820,y@NI)) * (HP_2(y,x@NI))&
+                   true --> y::node<Anon_30,next_25_31>@M * 
+                   (HP_32(next_25_31,x@NI))&true]
+
+Why did you pick HP_1(..,y@NI)?
+
+EXPECT
+======
+ inferred hprel: [HP_2(y,x@NI) &
+                   true --> y::node<Anon_30,next_25_31>@M * 
+                   (HP_32(next_25_31,x@NI))&true]
+
+===============================================================
+# zip1.slk   
+
+shape_infer[H1,HP_2,HP_1,HP_8][G1].
+
+/*
+
+[ HP_8(next_25_827,x_77) ::= emp& XPURE(HP_8(next_25_827,x_77)),
+ HP_1(next_24_75,y_76) ::= emp& XPURE(HP_1(next_24_75,y_76)),
+ H1(x_176,y_177) ::= emp&x_176=null,
+ HP_2(y_178,x_179) ::= y_178::node<val_25_826,next_25_827>@M& XPURE(HP_8(next_25_827,x_179)),
+ G1(x_180,y_181,res_183) ::= 
+ emp&x_180=null
+ or y_181::node<val_25_826,next_25_827>@M * x_180::node<val_24_819,nn>@M * 
+    (G1(nn,next_25_827,nn))&true
+ ]
+
+WHY do we use XPURE(..) when I have specified all the predicates as non-dangling??
+
+*/
