@@ -530,6 +530,13 @@ let partition_hp_args prog hp args=
   in
   (i_args, ni_args)
 
+let get_hp_args_inst prog hp args=
+  let hp_name= CP.name_of_spec_var hp in
+  let hprel = Cast.look_up_hp_def_raw prog.C.prog_hp_decls hp_name in
+  let ss = List.combine args hprel.C.hp_vars_inst in
+  let args_inst = List.fold_left (fun ls (e,(_,i)) -> if i = I then ls@[e] else ls ) [] ss in
+  args_inst
+
 let rec cmp_inst ls1 ls2 =
   match ls1,ls2 with
     | [], [] -> true

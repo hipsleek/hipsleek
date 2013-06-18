@@ -1824,7 +1824,9 @@ let find_undefined_selective_pointers_x prog lfb lmix_f unmatched rhs_rest rhs_h
   (*END selective*)
   (*get all args of hp_rel to check whether they are fully embbed*)
   (* let unmatched_hp_args = CF.get_HRels n_unmatched in *)
-  let selected_hp_args = List.filter (fun (_, args) -> (CP.intersect_svl args closed_unmatched_svl) != []) rem_lhpargs in
+  let selected_hp_args = List.filter (fun (hp, args) ->
+      let args_inst = SAU.get_hp_args_inst prog hp args in
+      (CP.intersect_svl args_inst closed_unmatched_svl) != []) rem_lhpargs in
   let selected_hps0, hrel_args = List.split selected_hp_args in
   (*tricky here: do matching between two unk hps and we keep sth in rhs which not matched*)
   let rest_svl = CF.get_hp_rel_vars_h_formula rhs_rest in
@@ -1893,7 +1895,7 @@ let find_undefined_selective_pointers prog lfb lmix_f unmatched rhs_rest rhs_h_m
       let pr = pr_hexa string_of_bool pr4 pr3 pr3 pr6 pr7 in
       pr (is_found, undefs,selected_hpargs,rhs_sel_hpargs, defined_hps, unk_map)
   in
-  Debug.ho_3 "find_undefined_selective_pointers" 
+  Debug.no_3 "find_undefined_selective_pointers" 
       (add_str "unmatched" pr2) 
       (add_str "rhs_h_matched_set" !print_svl) 
       (add_str "lfb" pr1)
