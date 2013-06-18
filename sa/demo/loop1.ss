@@ -32,6 +32,8 @@ Obtained:
  G(x_801) ::= x_801::cell<val_17_780>@M&true]
 
 ===========
+PROBLEM : why G(..) twice, and why XPURE(P(x))?
+
 Should it be:
 
  P(x) <--> P(x)
