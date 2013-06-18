@@ -761,7 +761,7 @@ Confirm P
 
 
 ===============================================================
-# id.ss
+# id.ss: FIXED
 
 cell id (cell x)
  infer [P,G]  requires P(x)  ensures  G(x,res);

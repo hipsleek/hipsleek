@@ -6,7 +6,7 @@ HeapPred P(node x).
 HeapPred P2(node x).
 
 relAssume P
-  P(x#I) --> x::node<q>*P2(q#?).
+  P(x) --> x::node<q>*P2(q).
 
 relAssume P2
   P2(x)  --> P(x).
