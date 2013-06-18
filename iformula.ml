@@ -613,7 +613,16 @@ let rec h_fv (f:h_formula):(ident*primed) list = match f with
      let perm_vars =  (fv_iperm ()) perm in
      let imm_vars =  fv_imm imm in
       Gen.BList.remove_dups_eq (=)  (imm_vars@perm_vars@((extract_var_from_id name):: (List.concat (List.map (fun c-> (Ipure.afv (snd c))) b) )))
-  | HeapNodeDeref _ -> report_error no_pos "h_fv: HeapNodeDeref should not appear here!"
+  | HeapNodeDeref {h_formula_heap_deref_node = name ;
+                   h_formula_heap_deref_perm = perm;
+                   h_formula_heap_deref_imm = imm; 
+                   h_formula_heap_deref_imm_param = ann_param; 
+                   h_formula_heap_deref_arguments = b} ->
+     let perm_vars = (fv_iperm ()) perm in
+     let imm_vars =  fv_imm imm in
+     let prm_ann =  List.flatten (List.map fv_imm  (ann_opt_to_ann_lst ann_param imm)) in
+     let imm_vars = if (!Globals.allow_field_ann) then imm_vars@prm_ann else imm_vars in
+     Gen.BList.remove_dups_eq (=) (imm_vars@perm_vars@((extract_var_from_id name):: (List.concat (List.map Ipure.afv b))))
   | HRel (_, args, _)->
       let args_fv = List.concat (List.map Ipure.afv args) in
 	  Gen.BList.remove_dups_eq (=) args_fv
@@ -1037,13 +1046,13 @@ and h_apply_one_pointer ((fr, t) as s : ((ident*primed) * (ident*primed))) (f : 
               | _ ->
                   (node,[]))
       | HeapNode2 _
+      | HeapNodeDeref _
       | Phase _
       | HRel _ (*TO CHECK*)
       | HEmp
       | HTrue
       | HFalse -> (f,[])
       | ConjStar _ | ConjConj _ | StarMinus _ -> Error.report_no_pattern ()
-      | HeapNodeDeref _ -> report_error no_pos "h_apply_one_pointer: HeapNodeDeref should not appear here!"
   in helper f
 
 
@@ -1145,7 +1154,37 @@ and h_apply_one ((fr, t) as s : ((ident*primed) * (ident*primed))) (f : h_formul
 		    h_formula_heap2_pseudo_data =ps_data;
 		    h_formula_heap2_label = l;
 		    h_formula_heap2_pos = pos})
-  | HeapNodeDeref _ -> report_error no_pos "h_apply_one: HeapNodeDeref should not appear here!"
+  | HeapNodeDeref ({h_formula_heap_deref_node = x; 
+                    h_formula_heap_deref_name = c;
+                    h_formula_heap_deref_level = lvl;
+                    h_formula_heap_deref_derv = dr; 
+                    h_formula_heap_deref_imm = imm; 
+                    h_formula_heap_deref_imm_param = imm_p; 
+                    h_formula_heap_deref_full = full; 
+                    h_formula_heap_deref_with_inv = winv;
+                    h_formula_heap_deref_perm = perm; (*LDK*)
+                    h_formula_heap_deref_arguments = args;
+                    h_formula_heap_deref_pseudo_data = ps_data;
+                    h_formula_heap_deref_label = l;
+                    h_formula_heap_deref_pos = pos}) -> 
+      let imm = apply_one_imm s imm in
+      let imm_p = List.map (fun x -> apply_one_opt_imm s x) imm_p in
+      let perm1 = match perm with
+        | Some f -> Some (apply_one_iperm () s f)
+        | None -> None
+      in HeapNodeDeref ({h_formula_heap_deref_node = subst_var s x; 
+                         h_formula_heap_deref_name = c;
+                         h_formula_heap_deref_level = lvl;
+                         h_formula_heap_deref_derv = dr; 
+                         h_formula_heap_deref_imm = imm; 
+                         h_formula_heap_deref_imm_param = imm_p; 
+                         h_formula_heap_deref_full = full;
+                         h_formula_heap_deref_with_inv = winv;
+                         h_formula_heap_deref_perm = perm1 ;
+                         h_formula_heap_deref_arguments = List.map (Ipure.e_apply_one s) args;
+                         h_formula_heap_deref_pseudo_data = ps_data;
+                         h_formula_heap_deref_label = l;
+                         h_formula_heap_deref_pos = pos})
   | HTrue -> f
   | HFalse -> f
   | HEmp -> f
@@ -1356,7 +1395,36 @@ and h_apply_one_w_data_name ((fr, t) as s : ((ident*primed) * (ident*primed))) (
 		      h_formula_heap2_pseudo_data =ps_data;
 		      h_formula_heap2_label = l;
 		      h_formula_heap2_pos = pos})
-      | HeapNodeDeref _ -> report_error no_pos "h_apply_one_w_data_name: HeapNodeDeref should not appear here!"
+      | HeapNodeDeref ({h_formula_heap_deref_node = x;
+                        h_formula_heap_deref_name = c;
+                        h_formula_heap_deref_level = lvl;
+                        h_formula_heap_deref_derv = dr;
+                        h_formula_heap_deref_imm = imm;
+                        h_formula_heap_deref_imm_param = imm_p; 
+                        h_formula_heap_deref_full = full;
+                        h_formula_heap_deref_with_inv = winv;
+                        h_formula_heap_deref_perm = perm; (*LDK*)
+                        h_formula_heap_deref_arguments = args;
+                        h_formula_heap_deref_pseudo_data = ps_data;
+                        h_formula_heap_deref_label = l;
+                        h_formula_heap_deref_pos = pos}) ->
+          let imm = apply_one_imm s imm in
+          let perm1 = match perm with
+            | Some f -> Some (apply_one_iperm () s f)
+            | None -> None
+          in HeapNodeDeref ({h_formula_heap_deref_node = subst_var s x;
+                             h_formula_heap_deref_name = subst_data_name s c;
+                             h_formula_heap_deref_level = lvl;
+                             h_formula_heap_deref_derv = dr;
+                             h_formula_heap_deref_imm = imm;
+                             h_formula_heap_deref_imm_param = imm_p; 
+                             h_formula_heap_deref_full = full;
+                             h_formula_heap_deref_with_inv = winv;
+                             h_formula_heap_deref_perm = perm1 ; (*LDK*)
+                             h_formula_heap_deref_arguments = List.map (Ipure.e_apply_one s) args;
+                             h_formula_heap_deref_pseudo_data = ps_data;
+                             h_formula_heap_deref_label = l;
+                             h_formula_heap_deref_pos = pos})
       | HTrue -> f
       | HFalse -> f
       | HEmp -> f
@@ -1560,6 +1628,70 @@ and float_out_exps_from_heap_x (f:formula ) (rel0: rel option) :formula =
 			        else Ipure.BForm ((Ipure.Eq (nv,(snd c),b.h_formula_heap2_pos), None), None) in (* Slicing: TODO *)
 		          (((fst c),nv),[(nn,npf)])) b.h_formula_heap2_arguments) in
         (HeapNode2 ({b with h_formula_heap2_arguments = na;h_formula_heap2_perm = na_perm}),(List.concat (ls_perm :: ls)))
+    | HeapNodeDeref b->
+        (*LDK*)
+        let perm = b.h_formula_heap_deref_perm in
+        let na_perm, ls_perm = float_out_iperm () perm b.h_formula_heap_deref_pos in
+        let na,ls = List.split (List.map (fun c->
+          match c with
+          | Ipure.Var _ -> (c,[])
+          | _ ->
+              let nn = (("flted_"^(string_of_int b.h_formula_heap_deref_pos.start_pos.Lexing.pos_lnum)^(fresh_trailer ())),Unprimed) in
+              let nv = Ipure.Var (nn,b.h_formula_heap_deref_pos) in
+              let npf = 
+                (* if !Globals.do_slicing then *)
+                if not !Globals.dis_slc_ann then
+                  try
+                    let lexp = P.find_lexp_exp c !Ipure.linking_exp_list in
+                    (* let _ = Hashtbl.remove !Ipure.linking_exp_list c in *)
+                    Ipure.BForm ((Ipure.Eq (nv,c,b.h_formula_heap_deref_pos), (Some (false, fresh_int(), lexp))), None)
+                  with Not_found -> Ipure.BForm ((Ipure.Eq (nv,c,b.h_formula_heap_deref_pos), None), None)
+                else 
+                  let pf = if (*not(!Globals.allow_field_ann)*) (true) then Ipure.Eq (nv,c,b.h_formula_heap_deref_pos) else
+                    (*asankhs: What is rel0 supposed to be ? this function is always called with a None removing for now*)
+                    match rel0 with (* andreeac TODO what about heapnode2 ? *)
+                    | None -> Ipure.Eq (nv,c,b.h_formula_heap_deref_pos)
+                    | Some r ->
+                        match r with
+                          | REq  -> Ipure.Eq (nv,c,b.h_formula_heap_deref_pos)
+                          | RNeq -> Ipure.Neq (nv,c,b.h_formula_heap_deref_pos)
+                          | RGt  -> begin
+                              match c with
+                                | Ipure.Ann_Exp _
+                                | Ipure.AConst _ ->  Ipure.SubAnn (c,nv,b.h_formula_heap_deref_pos)
+                                | _ -> Ipure.Gt (nv,c,b.h_formula_heap_deref_pos)
+                          end
+                          | RGte -> begin
+                              match c with
+                                | Ipure.Ann_Exp _
+                                | Ipure.AConst _ ->  Ipure.SubAnn (c,nv,b.h_formula_heap_deref_pos)
+                                | _ -> Ipure.Gte (nv,c,b.h_formula_heap_deref_pos)
+                          end
+                          | RLt -> begin
+                              match c with
+                                | Ipure.Ann_Exp _
+                                | Ipure.AConst _ ->  Ipure.SubAnn (nv,c,b.h_formula_heap_deref_pos)
+                                | _ -> Ipure.Lt (nv,c,b.h_formula_heap_deref_pos)
+                          end
+                          | RLte -> begin
+                              match c with
+                                | Ipure.Ann_Exp _
+                                | Ipure.AConst _ ->  Ipure.SubAnn (nv, c, b.h_formula_heap_deref_pos)
+                                | _ -> Ipure.Lte (nv,c,b.h_formula_heap_deref_pos)
+                          end
+                          | RSubAnn -> begin
+                              match c with
+                                | Ipure.Ann_Exp _
+                                | Ipure.AConst _ ->  Ipure.SubAnn (nv, c, b.h_formula_heap_deref_pos)
+                                | _ -> Ipure.Lte (nv,c,b.h_formula_heap_deref_pos)
+                          end
+                  in
+                  let nf = Ipure.BForm ((pf, None), None) in
+                  nf
+                  (* Slicing: TODO IL for linking exp *)
+              in
+            (nv,[(nn,npf)])) b.h_formula_heap_deref_arguments) in
+        (HeapNodeDeref ({b with h_formula_heap_deref_arguments = na; h_formula_heap_deref_perm = na_perm}),(List.concat (ls_perm ::ls)))
     | HRel (r, args, l) ->
         	(* let nargs = List.map Ipure.float_out_exp_min_max args in *)
 			(* let nargse = List.map fst nargs in *)
@@ -1584,7 +1716,6 @@ and float_out_exps_from_heap_x (f:formula ) (rel0: rel option) :formula =
                   in
 				  (nv,[(nn,npf)])) args) in
             (HRel (r, na, l),List.concat ls)
-    | HeapNodeDeref _ -> report_error no_pos "float_out_exps_from_heap_x: HeapNodeDeref should not appear here!"
     | HTrue -> (f,[])
     | HFalse -> (f,[]) 
     | HEmp -> (f,[]) in
@@ -1894,11 +2025,30 @@ match h with
 			               | Some s -> Some (Ipure.And ((Ipure.float_out_pure_min_max (Ipure.BForm ((Ipure.Eq (nv, d2, l), Some (false, fresh_int(), lexp)), None)) ), s, l)))) ([], new_p_perm) args 
         in
         (( HeapNode2 { h1 with  h_formula_heap2_arguments = (List.rev nl);h_formula_heap2_perm = nl_perm;}), new_p)
+    |  HeapNodeDeref h1->
+        let l = h1. h_formula_heap_deref_pos in
+        let args = h1.h_formula_heap_deref_arguments in
+        let perm = h1.h_formula_heap_deref_perm in
+        let nl_perm, new_p_perm = float_out_mix_max_iperm () perm l in
+          let nl, new_p =
+            List.fold_left
+              (fun (a, c) d -> 
+                  match d with
+                    | Ipure.Null _ 
+                    | Ipure.IConst _
+                    | Ipure.Var _ -> (d::a, c)
+                    | _ -> 
+                        let new_name = fresh_var_name "ptr" l.start_pos.Lexing.pos_lnum in 
+                        let nv = Ipure.Var((new_name, Unprimed), l) in
+                        (nv::a, let lexp = P.find_lexp_exp d !Ipure.linking_exp_list 
+                                in match c with
+                                  | None -> Some (Ipure.float_out_pure_min_max (Ipure.BForm ((Ipure.Eq (nv, d, l), Some (false, fresh_int(), lexp)), None)))
+                                  | Some s -> Some (Ipure.And ((Ipure.float_out_pure_min_max (Ipure.BForm ((Ipure.Eq (nv, d, l), Some (false, fresh_int(), lexp)), None))), s, l)))) ([], new_p_perm) args in
+        (( HeapNodeDeref { h1 with  h_formula_heap_deref_arguments = (List.rev nl); h_formula_heap_deref_perm = nl_perm}), new_p)
     | HRel (r, args, l) ->
         	let nargs = List.map Ipure.float_out_exp_min_max args in
 			let nargse = List.map fst nargs in
             (HRel (r, nargse, l),None)
-    | HeapNodeDeref _ -> report_error no_pos "float_out_heap_min_max: HeapNodeDeref should not appear here!"
     |  HTrue -> (h, None)
     |  HFalse -> (h, None)
     |  HEmp -> (h, None)
@@ -1929,7 +2079,7 @@ and view_node_types (f:formula):ident list =
 		| Star b -> Gen.BList.remove_dups_eq (=) ((helper b.h_formula_star_h1)@(helper b.h_formula_star_h2))
 		| HeapNode b -> [b.h_formula_heap_name]
 		| HeapNode2 b -> [b.h_formula_heap2_name]
-    | HeapNodeDeref _ -> report_error no_pos ("view_node_types: HeapNodeDeref should not appear here.")
+    | HeapNodeDeref b ->  [b.h_formula_heap_deref_name]
 		| _ -> [] in
 	match f with
 	| Or b-> Gen.BList.remove_dups_eq (=) ((view_node_types b.formula_or_f1) @ (view_node_types b.formula_or_f2))
@@ -2277,8 +2427,8 @@ let find_barr_node bname (f:int) (t:int) struc :bool=
 					| (P.IConst (v,_))::_ -> if x=v then Bar_state_ok else Bar_wrong_state
 					| _ -> Bar_wrong_state)
 			else Bar_not_found 
-		 | HeapNode2 h -> Gen.report_error no_pos "malfunction with convert to heap node"
-     | HeapNodeDeref _ -> report_error no_pos "find_barr_node: HeapNodeDeref should not appear here!"
+		 | HeapNode2 h -> Gen.report_error no_pos "malfunction with convert heap2 to heap node"
+     | HeapNodeDeref h -> Gen.report_error no_pos "malfunction with convert heap_deref to heap node" 
 		 | HRel _ | HTrue | HEmp | HFalse -> Bar_not_found in
 	let rec find_node x f= match f with 
 		| Base {formula_base_heap = h; formula_base_pure = p} 
@@ -2370,12 +2520,11 @@ let rec heap_trans_heap_node fct f =
  let recf = heap_trans_heap_node fct in
  match f with
   | HRel b -> fct f
-  | HTrue  | HFalse | HEmp  | HeapNode _ | HeapNode2 _ -> f
+  | HTrue  | HFalse | HEmp  | HeapNode _ | HeapNode2 _ | HeapNodeDeref _ -> f
   | Phase b -> Phase {b with h_formula_phase_rd = recf b.h_formula_phase_rd; h_formula_phase_rw = recf b.h_formula_phase_rw}
   | Conj b -> Conj {b with h_formula_conj_h2 = recf b.h_formula_conj_h2; h_formula_conj_h1 = recf b.h_formula_conj_h1}
   | Star b -> Star {b with h_formula_star_h2 = recf b.h_formula_star_h2; h_formula_star_h1 = recf b.h_formula_star_h1}
   | ConjStar _|ConjConj _|StarMinus _ -> report_error no_pos "IF.heap_trans_heap_node: not handle yet"
-  | HeapNodeDeref _ -> report_error no_pos "heap_trans_heap_node: HeapNodeDeref should not appear here!"
 
 
 let rec formula_trans_heap_node fct f =
@@ -2417,6 +2566,10 @@ let rec heap_drop_heap_node f0 hns=
       if List.exists (fun s1 -> String.compare s1 hn2.h_formula_heap2_name =0) hns then
         HEmp
       else f
+  | HeapNodeDeref hn ->
+      if List.exists (fun s1 -> String.compare s1 hn.h_formula_heap_deref_name =0) hns then
+        HEmp
+      else f
   | Phase b -> Phase {b with h_formula_phase_rd = helper b.h_formula_phase_rd; h_formula_phase_rw = helper b.h_formula_phase_rw}
   | Conj b -> Conj {b with h_formula_conj_h2 = helper b.h_formula_conj_h2; h_formula_conj_h1 = helper b.h_formula_conj_h1}
   | Star b -> begin
@@ -2430,7 +2583,6 @@ let rec heap_drop_heap_node f0 hns=
             Star {b with h_formula_star_h2 = nh2; h_formula_star_h1 = nh1}
   end
   | ConjStar _|ConjConj _|StarMinus _ -> report_error no_pos "IF.heap_drop_heap_node: not handle yet"
-  | HeapNodeDeref _ -> report_error no_pos "heap_drop_heap_node: HeapNodeDeref should not appear here!"
   in
   helper f0
 
