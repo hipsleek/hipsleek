@@ -696,10 +696,10 @@ EXPECTING :
                    &res=x --> G1(x,y,res)&
                    true]
 ===============================================================
-# conseq1.slk
+# conseq1.slk: FIXED (the example, not code)
 
 //(3)
-infer [H1] 
+infer [H1,H2] //FIXED: add H2 as selected hp
 x::node<_,n1> * y::node<_,n2> * H2(n1,_) |-  H1(x,y). 
 print residue.
 /*
@@ -711,7 +711,7 @@ WRONG : missing H2(n1,_)
 */
 
 //(4)
-infer [H1] 
+infer [H1,H2,H3] FIXED
 x::node<_,n1> * y::node<_,n2> * H2(n1,_) * H3(_,n2) |-  H1(x,y). 
 print residue.
 /*
