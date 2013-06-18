@@ -2412,7 +2412,7 @@ and check_proc (prog : prog_decl) (proc : proc_decl) cout_option (mutual_grp : p
                          infer_shape_fnc prog proc.proc_name hp_lst_assume
                             sel_hp_rels sel_post_hp_rels (Gen.BList.remove_dups_eq
                                 (fun ((hp1,_),_) ((hp2, _),_) ->
-                                    (CP.eq_spec_var hp1 hp2 )) hp_rel_unkmap) true
+                                    (CP.eq_spec_var hp1 hp2 )) hp_rel_unkmap) true true
                       else [],[],[]
                     in
                     (**update hpdefs for func call*)

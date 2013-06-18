@@ -4,9 +4,9 @@ data node{
 }.
 
 HeapPred H1(node a, node b).
-HeapPred HP_1(node a, node b).
-HeapPred HP_2(node a, node b).
-HeapPred HP_8(node a, node b).
+HeapPred HP_1(node a, node@NI b).
+HeapPred HP_2(node a, node@NI b).
+HeapPred HP_8(node a, node@NI b).
 HeapPred G1(node a, node b, node c).
 
 relAssume H1
