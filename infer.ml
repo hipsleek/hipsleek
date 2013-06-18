@@ -1719,8 +1719,6 @@ let find_undefined_selective_pointers_x prog lfb lmix_f unmatched rhs_rest rhs_h
       else
         [(niu_svl_i@[(h_node, NI)])]
       in
-      (*tem remove for testing. TODO: put back*)
-      (* let extra_clls = [] in *)
       (true,ls_fwd_svl@extra_clls)
     else (false, [])
   in
@@ -1895,7 +1893,7 @@ let find_undefined_selective_pointers prog lfb lmix_f unmatched rhs_rest rhs_h_m
       let pr = pr_hexa string_of_bool pr4 pr3 pr3 pr6 pr7 in
       pr (is_found, undefs,selected_hpargs,rhs_sel_hpargs, defined_hps, unk_map)
   in
-  Debug.no_3 "find_undefined_selective_pointers" 
+  Debug.ho_3 "find_undefined_selective_pointers" 
       (add_str "unmatched" pr2) 
       (add_str "rhs_h_matched_set" !print_svl) 
       (add_str "lfb" pr1)

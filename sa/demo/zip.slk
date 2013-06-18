@@ -33,3 +33,4 @@ relAssume G1
   & res=x --> G1(x,y,res).
 
 
+shape_infer[H1][G1].

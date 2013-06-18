@@ -1178,6 +1178,40 @@ let find_well_defined_hp prog hds hvs ls_r_hpargs prog_vars (hp,args) def_ptrs l
       (fun _ _  _ _ -> find_well_defined_hp_x prog hds hvs ls_r_hpargs prog_vars (hp,args) def_ptrs lhsb)
       lhsb (hp,args) def_ptrs prog_vars
 
+let split_base_x prog hds hvs r_hps prog_vars (hp,args) def_ptrs lhsb=
+  (*check hp is recursive?*)
+  if (CP.mem hp r_hps) then ([],[(hp,args)]) else
+    (* let closed_args = look_up_closed_ptr_args prog hds hvs args in *)
+    (* let undef_args = lookup_undef_args closed_args [] def_ptrs in *)
+    let f = keep_data_view_hrel_nodes_fb prog lhsb hds hvs args [(hp,args)] in
+    (*we do NOT want to keep heap in LHS*)
+    let hf1 = CF.drop_hnodes_hf f.CF.formula_base_heap args in
+    let f1 = {f with CF.formula_base_heap = hf1;} in
+    let p = MCP.pure_of_mix f1.CF.formula_base_pure in
+    let diff_svl = CP.diff_svl (CP.fv p) args in
+    let p_w_quan = CP.mkExists_with_simpl Omega.simplify diff_svl p None no_pos in
+    let f3 = {f1 with CF.formula_base_pure = MCP.mix_of_pure p_w_quan} in
+    (* let leqs = (MCP.ptr_equations_without_null f1.CF.formula_base_pure) in *)
+    (* let f3 = if leqs =[] then f1 else *)
+    (*   let svl = prog_vars@args in *)
+    (*   let new_leqs = List.filter (fun (sv1,sv2) -> not (CP.mem sv1 svl && CP.mem_svl sv2 svl) ) leqs in *)
+    (*   (\* let new_leqs = filter_eqs args prog_vars leqs in *\) *)
+    (*   let f2 = CF.subst_b new_leqs f1 in *)
+    (*   {f2 with CF.formula_base_pure = MCP.mix_of_pure *)
+    (*           (CP.remove_redundant (MCP.pure_of_mix f2.CF.formula_base_pure))} *)
+    (* in *)
+    ([(hp,args,f3)],[])
+
+let split_base prog hds hvs ls_r_hpargs prog_vars (hp,args) def_ptrs lhsb=
+  let pr1 = !CP.print_sv in
+  let pr2 = !CP.print_svl in
+  let pr3 = pr_triple pr1 pr2 Cprinter.string_of_formula_base in
+  let pr4 = (pr_pair pr1 pr2) in
+  Debug.no_4 "split_base" Cprinter.string_of_formula_base pr4 pr2 pr2 (pr_pair (pr_list_ln pr3) (pr_list pr4))
+      (fun _ _  _ _ -> split_base_x prog hds hvs ls_r_hpargs prog_vars (hp,args) def_ptrs lhsb)
+      lhsb (hp,args) def_ptrs prog_vars
+
+
 let find_well_eq_defined_hp prog hds hvs lhsb eqs (hp,args)=
   let rec loop_helper rem_eqs=
     match rem_eqs with

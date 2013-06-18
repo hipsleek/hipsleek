@@ -840,7 +840,7 @@ let detect_dangling_pred constrs sel_hps unk_map=
   let pr1 =  pr_list_ln Cprinter.string_of_hprel in
   let pr2 = (pr_list (pr_pair (pr_pair !CP.print_sv (pr_list string_of_int)) CP.string_of_xpure_view)) in
   let pr3 = pr_list (pr_pair !CP.print_sv !CP.print_svl) in
-  Debug.no_3 "detect_dangling_pred" pr1 !CP.print_svl pr2 (pr_triple pr1 pr2 pr3)
+  Debug.ho_3 "detect_dangling_pred" pr1 !CP.print_svl pr2 (pr_triple pr1 pr2 pr3)
       (fun _ _ _ -> detect_dangling_pred_x constrs sel_hps unk_map)
       constrs sel_hps unk_map
 
