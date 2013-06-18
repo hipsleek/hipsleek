@@ -306,7 +306,7 @@ let travel_stmt (s: Cil.stmt) : unit =
   | Cil.Block blk -> ()
   | Cil.TryFinally (blk1, blk2, l) -> ()
   | Cil.TryExcept (blk1, (instrs, exp), blk2, l) -> ()
-  | Cil.HipStmt (iast_exp, l) -> ()
+  | Cil.HipStmtSpec (iast_exp, l) -> ()
 
 
 let travel_block (blk: Cil.block) : unit =
@@ -1003,7 +1003,7 @@ let rec translate_stmt (s: Cil.stmt) : Iast.exp =
                              Iast.exp_try_path_id = None;
                              Iast.exp_try_pos = p} in
       newexp
-  | Cil.HipStmt (iast_exp, l) -> iast_exp
+  | Cil.HipStmtSpec (iast_exp, l) -> iast_exp
 
 
 and translate_block (blk: Cil.block): Iast.exp =
@@ -1141,7 +1141,7 @@ let translate_fundec (fundec: Cil.fundec) (lopt: Cil.location option)
   let fheader = fundec.Cil.svar in
   let name = fheader.Cil.vname in
   let mingled_name = "" in (* TRUNG TODO: check mingled_name later *)
-  let static_specs = fundec.Cil.sspecs in
+  let static_specs = fundec.Cil.hipfuncspec in
   let return = translate_funtyp (fheader.Cil.vtype) in
   let args = collect_params fheader in
   let funbody = (
@@ -1283,7 +1283,7 @@ let translate_file (file: Cil.file) : Iast.prog_decl =
         let _ = print_endline ("== gl GText = " ^ (string_of_cil_global gl)) in
         ()
         (* report_error_msg "TRUNG TODO: Handle Cil.GText later!" *)
-    | Cil.GHipProg (hipprog, _) ->
+    | Cil.GHipProgSpec (hipprog, _) ->
         aux_progs := !aux_progs @ [hipprog]
   ) globals;
   let obj_def = {Iast.data_name = "Object";

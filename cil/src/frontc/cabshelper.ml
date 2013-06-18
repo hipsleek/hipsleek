@@ -66,7 +66,7 @@ let get_definitionloc (d : definition) : cabsloc =
   | TRANSFORMER(_, _, l) -> l
   | EXPRTRANSFORMER(_, _, l) -> l
   | LINKAGE (_, l, _) -> l
-  | HIPPROG (_, l) -> l
+  | HIP_PROG_SPEC (_, l) -> l
 
 let get_statementloc (s : statement) : cabsloc =
 begin
@@ -93,7 +93,7 @@ begin
   | ASM(_,_,_,loc) -> loc
   | TRY_EXCEPT(_, _, _, loc) -> loc
   | TRY_FINALLY(_, _, loc) -> loc
-  | HIP_STMT (_, loc) -> loc
+  | HIP_STMT_SPEC (_, loc) -> loc
 end
 
 

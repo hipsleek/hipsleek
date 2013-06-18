@@ -787,7 +787,7 @@ and checkStmt (s: stmt) =
           checkBlock h
 
       | Instr il -> List.iter checkInstr il
-      | HipStmt _ -> ())
+      | HipStmtSpec _ -> ())
     () (* argument of withContext *)
 
 and checkBlock (b: block) : unit = 
@@ -862,7 +862,7 @@ let rec checkGlobal = function
     GAsm _ -> ()
   | GPragma _ -> ()
   | GText _ -> ()
-  | GHipProg _ -> ()
+  | GHipProgSpec _ -> ()
   | GType (ti, l) -> 
       currentLoc := l;
       E.withContext (fun _ -> dprintf "GType(%s)" ti.tname)

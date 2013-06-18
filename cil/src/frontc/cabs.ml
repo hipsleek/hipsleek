@@ -166,7 +166,7 @@ and enum_item = string * expression * cabsloc
 ** Declaration definition (at toplevel)
 *)
 and definition =
-   FUNDEF of single_name * hipspecs * block * cabsloc
+   FUNDEF of single_name * hip_func_spec * block * cabsloc
  | DECDEF of init_name_group * cabsloc        (* global variable(s), or function prototype *)
  | TYPEDEF of name_group * cabsloc
  | ONLYTYPEDEF of specifier * cabsloc
@@ -178,10 +178,10 @@ and definition =
  | TRANSFORMER of definition * definition list * cabsloc
  (* expression transformer: source and destination *)
  | EXPRTRANSFORMER of expression * expression * cabsloc
- | HIPPROG of Iast.prog_decl * cabsloc
+ | HIP_PROG_SPEC of string * cabsloc
 
 (* specification for each function, used by hip/sleek *)
-and hipspecs = Iformula.struc_formula
+and hip_func_spec = (string * cabsloc) option
 
 (* the string is a file name, and then the list of toplevel forms *)
 and file = string * definition list
@@ -213,9 +213,9 @@ and statement =
  | BLOCK of block * cabsloc
  | SEQUENCE of statement * statement * cabsloc
  | IF of expression * statement * statement * cabsloc
- | WHILE of expression * statement * hipspecs * cabsloc
- | DOWHILE of expression * statement * hipspecs * cabsloc
- | FOR of for_clause * expression * expression * statement * hipspecs * cabsloc
+ | WHILE of expression * statement * hip_func_spec * cabsloc
+ | DOWHILE of expression * statement * hip_func_spec * cabsloc
+ | FOR of for_clause * expression * expression * statement * hip_func_spec * cabsloc
  | BREAK of cabsloc
  | CONTINUE of cabsloc
  | RETURN of expression * cabsloc
@@ -236,7 +236,7 @@ and statement =
    (** MS SEH *)
  | TRY_EXCEPT of block * expression * block * cabsloc
  | TRY_FINALLY of block * block * cabsloc
- | HIP_STMT of Iast.exp * cabsloc
+ | HIP_STMT_SPEC of string * cabsloc
 
  
 and for_clause = 

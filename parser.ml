@@ -176,10 +176,10 @@ let rec get_modes (anns : ann list list) : mode list =
   
 let rec split_specs specs = match specs with
 	| sp :: rest -> begin
-		let sspecs, dspecs = split_specs rest in
+		let hipfuncspec, dspecs = split_specs rest in
 		  match sp with
-			| (Static, pre, post) -> ((pre, post) :: sspecs, dspecs)
-			| (Dynamic, pre, post) -> (sspecs, (pre, post) :: dspecs)
+			| (Static, pre, post) -> ((pre, post) :: hipfuncspec, dspecs)
+			| (Dynamic, pre, post) -> (hipfuncspec, (pre, post) :: dspecs)
 	  end
 	| [] -> ([], [])
 
@@ -2941,6 +2941,7 @@ let parse_c_aux_proc (fname: string) (proc: string) =
   let old_parser_mode = !is_cparser_mode in
   (* swith to cparser mode *)
   is_cparser_mode := true;
+  (* parse *)
   let res = SHGram.parse_string hproc (PreCast.Loc.mk fname) proc in
   (* restore states of previous parser *)
   is_cparser_mode := old_parser_mode;
@@ -2948,6 +2949,7 @@ let parse_c_aux_proc (fname: string) (proc: string) =
   res
 
 let parse_c_function_spec (fname: string) (spec: string) (base_loc: file_offset)
+                          (* (env : (string, (Cabs2cil.envdata * Cil.location)) Hashtbl.t) *)
                           : F.struc_formula =
   (* save states of current parser *)
   let old_parser_mode = !is_cparser_mode in

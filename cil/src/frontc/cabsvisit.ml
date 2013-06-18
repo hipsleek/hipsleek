@@ -337,7 +337,7 @@ and childrenDefinition vis d =
       
   | TRANSFORMER _ -> d
   | EXPRTRANSFORMER _ -> d
-  | HIPPROG _ -> d
+  | HIP_PROG_SPEC _ -> d
         
 and visitCabsBlock vis (b: block) : block = 
   doVisit vis vis#vblock childrenBlock b
@@ -468,7 +468,7 @@ and childrenStatement vis s =
       let e' = visitCabsExpression vis e in
       let b2' = visitCabsBlock vis b2 in
       if b1' != b1 || e' != e || b2' != b2 then TRY_EXCEPT(b1', e', b2', l) else s
-  | HIP_STMT _ -> s
+  | HIP_STMT_SPEC _ -> s
           
 and visitCabsExpression vis (e: expression) : expression = 
   doVisit vis vis#vexpr childrenExpression e

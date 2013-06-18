@@ -721,10 +721,10 @@ and print_statement stat =
       printl ["__except";"("]; print_expression e; print ")";
       print_block h
 
-  | HIP_STMT (iast_exp, loc) ->
+  | HIP_STMT_SPEC (hspec, loc) ->
       setLoc loc;
       print "/*@ ";
-      print (Iprinter.string_of_exp iast_exp);
+      print hspec;
       print " */";
 
 and print_block blk = 
@@ -802,7 +802,7 @@ and print_defs defs =
 
 and print_def def =
   match def with
-    FUNDEF (proto, spec, body, loc) ->
+    FUNDEF (proto, hspec, body, loc) ->
       comprint "fundef";
       if !printCounters then begin
         try
@@ -817,7 +817,9 @@ and print_def def =
       end;
       setLoc(loc);
       print_single_name proto;
-      print (Iprinter.string_of_struc_formula spec); new_line ();
+      (match hspec with
+      | None -> ()
+      | Some (s, _) -> print s; new_line ());
       print_block body;
       force_new_line ();
 
@@ -896,9 +898,9 @@ and print_def def =
       print " }";
       force_new_line()
 
-  | HIPPROG (prog, loc) ->
+  | HIP_PROG_SPEC (hspec, loc) ->
       setLoc(loc);
-      print "@hipProg { is going to be printed }";
+      print hspec;
       force_new_line()
 
 (* sm: print a comment if the printComments flag is set *)
