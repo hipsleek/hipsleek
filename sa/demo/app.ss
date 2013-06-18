@@ -5,6 +5,8 @@ data node{
 
 ll<> == self = null  or self::node<_, q> * q::ll<>;
 
+//ls<p> == self = p  or self::node<_, q> * q::ls<p>;
+
 HeapPred H1(node a, node b).
 HeapPred G1(node a, node b).
 
@@ -12,6 +14,12 @@ void foo (node c, node y)
   infer [H1,G1]
   requires H1(c,y)
   ensures  G1(c,y);
+/*
+  requires c::ll<> * y::ll<> & c!=null
+  ensures  c::ll<>;
+  requires c::ll<> & c!=null
+  ensures  c::ls<y>;
+*/
 {
    node t = c.next;
    if (t!=null) {
