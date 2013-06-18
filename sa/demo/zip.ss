@@ -23,7 +23,7 @@ node zip (node l1, node l2)
   
 // requires x::ltwo<y>  ensures res::ll<> * y::ll<> & res=x;
 // requires x::ltwoA<y>  ensures res::ltwoA<y> & res=x;
-infer [HL] requires l1::ltwoB<l2>  ensures res::ltwoB<l2> & res=l1;
+requires l1::ltwoB<l2>  ensures res::ltwoB<l2> & res=l1;
 {
    if (l1==null) return null;
    else {
