@@ -32,7 +32,7 @@ for line in f:
         size_warning = True
 
 commit = True
-answ = "no"
+answ = "Continue"
 
 if (nof >= NOF_LIMIT):
     answ = raw_input ("Trying to commit more than " + str(nof) +  " files. Are you sure you want to continue this commit? Continue/no ")
