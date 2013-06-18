@@ -61,19 +61,38 @@ GOT
 
 PROBLEMS
 ========
-Why did we get:
+(1) Why did we get:
  HP_1(next_24_820,y) ::= (H1(x,y)) * (HP_2(y,x))&true,
  HP_8(next_25_827,x) ::= HP_2(y,x)&true,
 Expecting: (tupled definition for two pre-pred)
  (HP_1(next_24_820,y@NI)) * (HP_8(next_25_827,x@NI))&
   true <--> H1(next_24_820,next_25_827)&true,
 
+# zip1.slk
+
+(2) Also, for G, we seem to lose the relation x=r. Why is it missing??
+ EXPECTING:
+ G1(x_180,y_181,res_183) ::= 
+ emp&x_180=null  //& x=r
+ or y_181::node<val_25_826,next_25_827>@M * x_180::node<val_24_819,nn>@M * 
+    (G1(nn,next_25_827,nn))  //& x=r
+ ]
+
+(3) We had a split:
+relAssume G1
+ H1(x,y) & x=null & res=null --> G1(x,y,res).
+
+Since y is instantiating. Perhaps, we should have a special SPLIT
+that preserves its data using a special predicate HL(y).
+ H1(x,y)&x=null  --> HL(y)
+ HL(y) & x=null & res=null --> G1(x,y,res)
+
 
 ==========================
 
  H1(x,y)&x!=null --> x::node<val_24_819,next_24_820>@M * 
   (HP_821(next_24_820,y@NI)) * (HP_822(y,x@NI))&true,
-
+ 
  HP_822(y,x@NI)&true --> y::node<val_25_826,next_25_827>@M * 
   (HP_828(next_25_827,x@NI))&true,
 

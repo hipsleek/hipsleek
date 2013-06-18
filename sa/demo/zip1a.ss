@@ -3,25 +3,21 @@ data node{
 	node next;
 }
 
-ll<> == self = null  or self::node<_, q> * q::ll<>;
-
-ltwo<p:node> == p::ll<> & self = null  or 
-   self::node<_, q> * p::node<_,r> * q::ltwo<r>;
-
 HeapPred HL(node a).
 
 ltwoB<p:node> == HL(p) & self = null  or 
    self::node<_, q> * p::node<_,r> * q::ltwoB<r>;
 
-HeapPred H1(node a, node b).
-HeapPred G1(node a, node b, node c).
+/*
+# zip1a.ss
+
+ERROR: at _0:0_0:0 
+Message: error 1: free variables [HL] in view def ltwoB 
+ Stop Omega... 0 invocations caught
+(Program not linked with -g, cannot print stack backtrace)
+*/
 
 node zip (node x, node y)
-
-//  infer [H1,G1]  requires H1(x,y)  ensures  G1(x,y,res);
-  
-// requires x::ltwo<y>  ensures res::ll<> * y::ll<> & res=x;
-// requires x::ltwoA<y>  ensures res::ltwoA<y> & res=x;
 requires x::ltwoB<y>  ensures res::ltwoB<y> & res=x;
 {
    if (x==null) return null;
