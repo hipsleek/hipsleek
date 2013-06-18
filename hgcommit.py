@@ -6,41 +6,46 @@ import getopt
 
 
 SIZE_LIMIT = 1048576 # commit files of max 1MB, otherwise warn the user
-#number of files limit: 
-NOF_LIMIT = 10 # commit max 10 modified files without warning the user 
+NOF_LIMIT = 10 # number of files limit: commit max NOF_LIMIT modified/added files without warning the user 
 
 
 temp_file = "commit_temp"
-log_message = "x" # default commit message
-commit_command = "hg commit -m \"" + log_message + "\"" # the commit command
+log_message = "" 
 nof = 0 #number of modified/added files
 size_warning = False
-force_verif  = False 
+force_verif  = False
+commit_usage =  'usage: ./commit [-v] -m <commit message> '
 
 # parse command line arguments
-opts, args = getopt.getopt(sys.argv[1:],"hv",[])
+opts, args = getopt.getopt(sys.argv[1:],"hvm:",[])
 for opt, arg in opts:
     if opt == '-h':
-        print './hgcommit.py [-v] [<commit message>] '
+        print commit_usage
+        sys.exit(2)
     elif opt == '-v':
         force_verif = True
+    elif opt == "-m":
+        log_message = arg
 
-if len(args) > 0 :
-    log_message = args[0]
+if len(log_message) <= 0 :
+    print "Insufficient commit arguments: non-empty commit message mandatory \n" + commit_usage
+    sys.exit(2)
 
+commit_command = "hg commit -m \"" + log_message + "\"" # the commit command
 
 #check for modified files (size of modified files does not produce any warning)
-print "Checking hg stat for added/modified files... "
+print "Checking hg stat for added/modified/deleted files... "
 subprocess.call("hg stat -mn  > " + temp_file, executable="bash", shell=True)
 
 f = open(temp_file, 'r+')
 for line in f:
     nof += 1
-    print "M " + line.rstrip('\n')
-    # don't check modified files for size
-    # b = os.path.getsize(line.rstrip('\n'))
-    # if (b > SIZE_LIMIT):
-    #     size_warning = True
+    b = os.path.getsize(line.rstrip('\n'))
+    if (b > SIZE_LIMIT):
+        print "M " + line.rstrip('\n') + " (" + str(b) + " bytes)"
+        size_warning = True
+    else:
+        print "M " + line.rstrip('\n')
 
 
 #check for added files
@@ -53,12 +58,27 @@ for line in f:
     if (b > SIZE_LIMIT):
         size_warning = True
 
+#check for removed files
+subprocess.call("hg stat -rn  > " + temp_file, executable="bash", shell=True)
+f = open(temp_file, 'r+')
+for line in f:
+    nof += 1
+    print "R " + line.rstrip('\n')
+
+#check for deleted files
+subprocess.call("hg stat -dn  > " + temp_file, executable="bash", shell=True)
+f = open(temp_file, 'r+')
+for line in f:
+    nof += 1
+    print "D " + line.rstrip('\n')
 
 answ = "Continue"
 question = "Are you sure you want to continue with this commit? (Continue/no)"
 
-
-if (nof >= NOF_LIMIT):
+if (nof == 0):
+    print "Nothing changed"
+    answ = "no"
+elif (nof >= NOF_LIMIT):
     answ = raw_input ("WARNING: Trying to commit more than " + str(nof) +  " files.\n" + question)
 elif (size_warning):
     answ = raw_input ("WARNING: Trying to commit files larger than 1 MB. \n" + question)
