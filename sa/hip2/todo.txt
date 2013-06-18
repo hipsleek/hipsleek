@@ -1564,3 +1564,47 @@ Expecting
 
 
 */
+==========================================================
+# sb-4.slk
+
+relAssume  G // (3)
+  HP_1(next, y) & next=null --> G(next,y).
+
+shape_split_base [H,HP_1][G].
+
+/*
+
+GOT:
+[ emp&next=null --> G(next,y)&true,
+ HP_1(next,y)&next=null --> emp&true]
+
+However, if given option, --sa-inst-split
+can we generate instead:
+
+[ HL(y) &next=null --> G(next,y)&true,
+ HP_1(next,y)&next=null --> HL(y) &true]
+
+where HL(y) is a new unknown predicate with
+no definition. It can be considered a primitive predicate.
+
+==========================================================
+# sb-4a.slk
+
+HeapPred HP_1(node a,node@NI b).
+relAssume  G // (3)
+  HP_1(next, y) & next=null --> G(next,y).
+
+shape_split_base [H,HP_1][G].
+
+/*
+# sb-4a.slk
+--sa-inst-split is for a split that can
+instantiate its parameter.
+
+EXPECT below even with --sa-inst-split
+due to @NI for y.
+
+[ emp&next=null --> G(next,y)&true,
+ HP_1(next,y)&next=null --> emp&true]
+
+

@@ -13,7 +13,7 @@ HeapPred G(node a, node a).
 relAssume  G // (3)
   HP_1(prev, y) & next=null --> G(next,y).
 
-shape_split_base [H,HP_2][G].
+shape_split_base [H,HP_1][G].
 
 /*
 GOT:
