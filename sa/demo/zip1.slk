@@ -13,7 +13,7 @@ relAssume H1
  H1(x,y)&x!=null --> x::node<val_24_819,next_24_820>@M * 
   HP_1(next_24_820,y) * HP_2(y,x).
 
-relAssume H1
+relAssume HP_2
  HP_2(y,x)
    --> y::node<val_25_826,next_25_827> * HP_8(next_25_827,x).
 
@@ -36,6 +36,8 @@ shape_infer[H1,HP_2,HP_1,HP_8][G1].
 
 /*
 
+# zip1.slk
+
 [ HP_8(next_25_827,x_77) ::= emp& XPURE(HP_8(next_25_827,x_77)),
  HP_1(next_24_75,y_76) ::= emp& XPURE(HP_1(next_24_75,y_76)),
  H1(x_176,y_177) ::= emp&x_176=null,
@@ -46,51 +48,6 @@ shape_infer[H1,HP_2,HP_1,HP_8][G1].
     (G1(nn,next_25_827,nn))&true
  ]
 
-WHY is H1 empty?
-
-[ H1(x_176,y_177) ::= emp&x_176=null,
- HP_2(y_178,x_179) ::= y_178::node<val_25_826,next_25_827>@M& XPURE(HP_8(next_25_827,x_179)),
- G1(x_180,y_181,res_183) ::= 
- emp&x_180=null
- or y_181::node<val_25_826,next_25_827>@M * x_180::node<val_24_819,nn>@M * 
-    (G1(nn,next_25_827,nn))&true
- ]
-
-EXPECTING
-=========
-
-[ H1(x_176,y_177) ::= emp&x_176=null,
- G1(x_180,y_181,res_183) ::= 
- emp&x_180=null
- or y_181::node<val_25_826,next_25_827>@M * x_180::node<val_24_819,nn>@M * 
-    (G1(nn,next_25_827,nn))&true
- ]
-
-
-[ H1(x,y)&x!=null --> x::node<val_24_819,next_24_820>@M * 
-  (HP_821(next_24_820,y@NI)) * (HP_822(y,x@NI))&true,
- HP_822(y,x@NI)&true --> y::node<val_25_826,next_25_827>@M * 
-  (HP_828(next_25_827,x@NI))&true,
- (HP_821(next_24_820,y@NI)) * (HP_828(next_25_827,x@NI))&
-  true --> H1(next_24_820,next_25_827)&true,
- H1(x,y)&x=null --> emp&true,
- emp&x=null & res=null --> G1(x,y,res)&true,
-
-The naming below seems wrong??
-
- y::node<_,n>@M * 
-  (G1(next_24_820,n,v)) * 
-  x::node<_,v>@M&res=x --> G1(x,y,res)&true]
-
-We have:
-   x=res --> G1(x,y,res)
-   G1(..,n,v) & res=x --> G(x,y,res)
-Thus:
-   G1(x,y,res) --> res=x
-
- y::node<_,n>@M * 
-  (G1(nn,n,v)) * 
-  x::node<_,v>@M&res=x & nn=v  --> G1(x,y,res)&true]
-
+WHY do we use XPURE(..) when I have specified all the predicates as non-dangling??
 
 */
