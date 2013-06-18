@@ -885,3 +885,66 @@ EXPECTING: (tupled definition for two pre-pred)
  (HP_1(next_24_820,y@NI)) * (HP_8(next_25_827,x@NI))&
   true <--> H1(next_24_820,next_25_827)&true,
 
+======================================================
+
+# zip.ss
+
+Wrong answer:
+============
+[ H(x_934,y_935) ::= emp&x_934=null,
+ G1(x_941,y_939,res_940) ::= 
+ emp&res_940=null
+ or y_939::node<val_35_810,next_35_811>@M * 
+    (G1(next_34_804,next_35_811,v_node_37_842)) * 
+    res_940::node<v_int_36_826,v_node_37_842>@M&true
+ ]
+
+Relational assumption OK (except for G1) see zip1.slk
+=========================================
+[ H(x,y)&x!=null --> x::node<val_34_803,next_34_804>@M * 
+  (HP_805(next_34_804,y@NI)) * (HP_806(y,x@NI))&true,
+ HP_806(y,x@NI)&true --> y::node<val_35_810,next_35_811>@M * 
+  (HP_812(next_35_811,x@NI))&true,
+ (HP_805(next_34_804,y@NI)) * (HP_812(next_35_811,x@NI))&
+  true --> H(next_34_804,next_35_811)&true,
+ H(x,y)&x=null --> emp&true,
+ emp&x=null & res=null --> G1(x,y,res)&true,
+ y::node<val_35_810,next_35_811>@M * 
+  (G1(next_34_804,next_35_811,v_node_37_842)) * 
+  x::node<v_int_36_826,v_node_37_842>@M&res=x --> G1(x,y,res)&true]
+
+[ H(x,y)&x!=null --> x::node<val_34_803,next_34_804>@M * 
+  (HP_805(next_34_804,y@NI)) * (HP_806(y,x@NI))&true,
+ HP_806(y,x@NI)&true --> y::node<val_35_810,next_35_811>@M * 
+  (HP_812(next_35_811,x@NI))&true,
+ (HP_805(next_34_804,y@NI)) * (HP_812(next_35_811,x@NI))&
+  true --> H(next_34_804,next_35_811)&true,
+ H(x,y)&x=null --> emp&true,
+ emp&x=null & res=null --> G1(x,y,res)&true,
+ y::node<val_35_810,next_35_811>@M * 
+  (G1(next_34_804,next_35_811,v_node_37_842)) * 
+  x::node<v_int_36_826,v_node_37_842>@M&res=x --> G1(x,y,res)&true]
+*
+
+=============================================================
+# zip1b.slk
+
+When HL is non-dangling:
+It introduced HL(Y) :: emp. 
+Can we avoid this, as it has nullified uninterpreted predicates.
+
+
+[ HP_2(y_242,x_243) ::= y_242::node<val_25_826,next_25_827>@M * (HP_8(next_25_827,x_243))&true,
+ H1(x_244,y_245) ::= 
+ emp&x_244=null
+ or (H1(next_24_109,next_25_107)) * y_245::node<val_25_106,next_25_107>@M * 
+    x_244::node<val_24_108,next_24_109>@M&true
+ ,
+ HL(y_246) ::= emp&true,
+ HP_1(next_24_820,y) ::= (H1(x,y)) * (HP_2(y,x))&true,
+ HP_8(next_25_827,x) ::= HP_2(y,x)&true,
+ G1(x_247,y_248,res_250) ::= 
+ emp&x_247=null
+ or y_248::node<val_25_826,next_25_827>@M * x_247::node<val_24_819,nn>@M * 
+    (G1(nn,next_25_827,nn))&true
+ ]

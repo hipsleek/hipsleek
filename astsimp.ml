@@ -1234,7 +1234,7 @@ and trans_view_x (prog : I.prog_decl) (vdef : I.view_decl) : C.view_decl =
         let ffv = Gen.BList.difference_eq (CP.eq_spec_var) vs1 vs2 in
         (*filter out holes (#) *)
         let ffv = List.filter (fun v -> not (CP.is_hole_spec_var v)) ffv in
-		let ffv = List.filter (fun v -> not (CP.is_hprel_typ v)) ffv in
+	let ffv = List.filter (fun v -> not (CP.is_hprel_typ v)) ffv in
         if (ffv!=[]) then report_error no_pos ("error 1: free variables "^(Cprinter.string_of_spec_var_list ffv)^" in view def "^vdef.I.view_name^" ") in
       let typed_vars = List.map ( fun (Cpure.SpecVar (c1,c2,c3))-> (c1,c2)) view_sv_vars in
       let _ = vdef.I.view_typed_vars <- typed_vars in

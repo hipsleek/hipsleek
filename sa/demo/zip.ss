@@ -3,40 +3,46 @@ data node{
 	node next;
 }
 
-ll<> == self = null  or self::node<_, q> * q::ll<>;
+//ll<> == self = null  or self::node<_, q> * q::ll<>;
 
+/*
 ltwo<p:node> == p::ll<> & self = null  or 
    self::node<_, q> * p::node<_,r> * q::ltwo<r>;
+*/
 
 HeapPred HL(node a).
+HeapPred H(node a, node b).
+HeapPred G1(node a, node b, node c).
 
 ltwoB<p:node> == HL(p) & self = null  or 
    self::node<_, q> * p::node<_,r> * q::ltwoB<r>;
 
-HeapPred H(node a, node b).
-HeapPred G1(node a, node b, node c).
-HeapPred G(node a, node b).
-
-node zip (node l1, node l2)
-
- // infer [H,G]  requires H(l1,l2)  ensures  G(l1,l2);
-  
+node zip (node x, node y)
+//  infer [H,G1]  requires H(x,y)  ensures  G1(x,y,res);
 // requires x::ltwo<y>  ensures res::ll<> * y::ll<> & res=x;
 // requires x::ltwoA<y>  ensures res::ltwoA<y> & res=x;
-requires l1::ltwoB<l2>  ensures res::ltwoB<l2> & res=l1;
+//requires x::ltwoB<y>  ensures res::ltwoB<y> & res=x;
+//requires l1::ltwoB<l2>  ensures res::ltwoB<l2> & res=l1;
+infer [HL] requires x::ltwoB<y>  ensures res::ltwoB<y> & res=x;
 {
-   if (l1==null) return null;
+   if (x==null) return null;
    else {
 	//assume false;
-     int n1=l1.val;
-     int n2=l2.val;
-     l1.val = n1+n2;
-     l1.next = zip(l1.next,l2.next);
-     return l1;
+     int n1=x.val;
+     int n2=y.val;
+     x.val = n1+n2;
+     x.next = zip(x.next,y.next);
+     return x;
    }
 }
 
 /*
+
+verification fails.
+
+!! after remove redundant:[]
+Procedure zip$node~node result FAIL-1
+
 
 ===============================================================
 # zip.ss
