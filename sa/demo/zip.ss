@@ -13,25 +13,26 @@ HeapPred HL(node a).
 ltwoB<p:node> == HL(p) & self = null  or 
    self::node<_, q> * p::node<_,r> * q::ltwoB<r>;
 
-HeapPred H1(node a, node b).
+HeapPred H(node a, node b).
 HeapPred G1(node a, node b, node c).
+HeapPred G(node a, node b).
 
-node zip (node x, node y)
+node zip (node l1, node l2)
 
-//  infer [H1,G1]  requires H1(x,y)  ensures  G1(x,y,res);
+ // infer [H,G]  requires H(l1,l2)  ensures  G(l1,l2);
   
 // requires x::ltwo<y>  ensures res::ll<> * y::ll<> & res=x;
 // requires x::ltwoA<y>  ensures res::ltwoA<y> & res=x;
 requires x::ltwoB<y>  ensures res::ltwoB<y> & res=x;
 {
-   if (x==null) return null;
+   if (l1==null) return null;
    else {
 	//assume false;
-     int n1=x.val;
-     int n2=y.val;
-     x.val = n1+n2;
-     x.next = zip(x.next,y.next);
-     return x;
+     int n1=l1.val;
+     int n2=l2.val;
+     l1.val = n1+n2;
+     l1.next = zip(l1.next,l2.next);
+     return l1;
    }
 }
 
