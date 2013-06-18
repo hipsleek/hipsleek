@@ -1185,9 +1185,9 @@ let find_well_defined_hp prog hds hvs ls_r_hpargs prog_vars (hp,args) def_ptrs l
       (fun _ _  _ _ -> find_well_defined_hp_x prog hds hvs ls_r_hpargs prog_vars (hp,args) def_ptrs lhsb)
       lhsb (hp,args) def_ptrs prog_vars
 
-let split_base_x prog hds hvs r_hps prog_vars (hp,args) def_ptrs lhsb=
+let split_base_x prog hds hvs r_hps prog_vars post_hps (hp,args) def_ptrs lhsb=
   (*check hp is recursive?*)
-  if (CP.mem hp r_hps) then ([],[(hp,args)]) else
+  if (CP.mem_svl hp r_hps || CP.mem_svl hp post_hps) then ([],[(hp,args)]) else
     (* let closed_args = look_up_closed_ptr_args prog hds hvs args in *)
     (* let undef_args = lookup_undef_args closed_args [] def_ptrs in *)
     let f = keep_data_view_hrel_nodes_fb prog lhsb hds hvs args [(hp,args)] in
@@ -1209,13 +1209,13 @@ let split_base_x prog hds hvs r_hps prog_vars (hp,args) def_ptrs lhsb=
     (* in *)
     ([(hp,args,f3)],[])
 
-let split_base prog hds hvs ls_r_hpargs prog_vars (hp,args) def_ptrs lhsb=
+let split_base prog hds hvs ls_r_hpargs prog_vars post_hps (hp,args) def_ptrs lhsb=
   let pr1 = !CP.print_sv in
   let pr2 = !CP.print_svl in
   let pr3 = pr_triple pr1 pr2 Cprinter.string_of_formula_base in
   let pr4 = (pr_pair pr1 pr2) in
   Debug.no_4 "split_base" Cprinter.string_of_formula_base pr4 pr2 pr2 (pr_pair (pr_list_ln pr3) (pr_list pr4))
-      (fun _ _  _ _ -> split_base_x prog hds hvs ls_r_hpargs prog_vars (hp,args) def_ptrs lhsb)
+      (fun _ _  _ _ -> split_base_x prog hds hvs ls_r_hpargs prog_vars post_hps (hp,args) def_ptrs lhsb)
       lhsb (hp,args) def_ptrs prog_vars
 
 
@@ -2337,6 +2337,11 @@ let is_trivial_constr cs=
   match l_ohp,r_ohp with
     | Some hp1, Some hp2 -> CP.eq_spec_var hp1 hp2
     | _ -> false
+
+let weaken_trivial_constr_pre cs=
+  if is_trivial_constr cs then
+    {cs with CF.hprel_rhs = CF.mkTrue (CF.flow_formula_of_formula cs.CF.hprel_rhs) (CF.pos_of_formula cs.CF.hprel_rhs)}
+  else cs
 
 let is_inconsistent_heap f =
   let ( hf,mix_f,_,_,_) = CF.split_components f in
@@ -3567,7 +3572,7 @@ let mkConjH_and_norm_x prog args unk_hps unk_svl f1 f2 pos=
   let r,non_r_args = find_root args fs in
   let lldns = List.map (fun f -> (get_hdnodes f, f)) fs in
   let min,sh_ldns,eqNulls,eqPures,hprels = get_min_common prog args unk_hps lldns in
-  if min = 0 && eqNulls = [] && eqPures= [] then
+  if min = 0 (* && eqNulls = [] && eqPures= [] *) then
     (CF.mkConj_combine f1 f2 CF.Flow_combine pos)
   else
     let sharing_f, n_args , sh_ldns2,next_roots = get_sharing prog unk_hps r non_r_args args sh_ldns eqNulls eqPures hprels unk_svl in

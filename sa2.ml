@@ -259,7 +259,8 @@ let split_constr_x prog constrs post_hps prog_vars unk_map unk_hps=
         in
         let unk_svl1 = CP.remove_dups_svl (cs.CF.unk_svl@unk_svl) in
         let ls_defined_hps,rems = List.split (List.map (fun hpargs ->
-            SAU.split_base(*find_well_defined_hp*) prog lhds lhvs r_hps prog_vars hpargs (l_def_vs@unk_svl1) lfb1) ls_lhp_args)
+            SAU.split_base(*find_well_defined_hp*) prog lhds lhvs r_hps
+                prog_vars post_hps hpargs (l_def_vs@unk_svl1) lfb1) ls_lhp_args)
         in
         let defined_preds = List.concat ls_defined_hps in
         let defined_preds0 = List.fold_left (fun defined_preds hpargs ->
@@ -1195,9 +1196,10 @@ let infer_shapes_init_pre_x prog (constrs0: CF.hprel list) callee_hps non_ptr_un
   let _ = DD.binfo_pprint ">>>>>> step pre-4: remove unused predicates<<<<<<" no_pos in
   let constrs01 =(*  apply_transitive_impl_fix prog callee_hps hp_rel_unkmap *)
      (* unk_hps *) constrs0 in
+  let constrs02 = List.map SAU.weaken_trivial_constr_pre constrs01 in
   let unused_pre_hps, constrs0, unk_map1 =
-    if detect_dang then elim_unused_pre_preds sel_post_hps constrs01 hp_rel_unkmap
-    else ([], constrs01, hp_rel_unkmap)
+    if detect_dang then elim_unused_pre_preds sel_post_hps constrs02 hp_rel_unkmap
+    else ([], constrs02, hp_rel_unkmap)
   in
   let unk_hps1 = Gen.BList.remove_dups_eq cmp_hpargs_fn (unk_hps@unused_pre_hps) in
   let _ = DD.binfo_pprint ">>>>>> pre-predicates: step pre-5: group & simpl impl<<<<<<" no_pos in
@@ -1266,8 +1268,8 @@ let infer_shapes_proper prog proc_name (constrs2: CF.hprel list) callee_hps sel_
   in
   (constrs2, defs3,[], unk_hpargs2)
 
-let infer_shapes_core prog proc_name (constrs0: CF.hprel list) callee_hps sel_hp_rels sel_post_hps
-      hp_rel_unkmap need_preprocess detect_dang: (CF.hprel list * CF.hp_rel_def list *
+let infer_shapes_core prog proc_name (constrs0: CF.hprel list) callee_hps sel_hp_rels sel_post_hps hp_rel_unkmap unk_hpargs need_preprocess detect_dang:
+      (CF.hprel list * CF.hp_rel_def list *
           (CP.spec_var*CP.exp list * CP.exp list) list * (CP.spec_var * CP.spec_var list) list)=
   (*move to outer func*)
   let prog_vars = [] in (*TODO: improve for hip*)
@@ -1282,13 +1284,14 @@ let infer_shapes_core prog proc_name (constrs0: CF.hprel list) callee_hps sel_hp
     (* let constrs3, unk_map1, unk_hpargs = SAC.detect_dangling_pred constrs2 sel_hp_rels unk_map in *)
     (* let constrs2, unk_hpargs, unk_map2 = SAC.analize_unk prog constrs1 unk_map1 in *)
     (* let unk_map2 = unk_map1 in *)
-    (constrs2, unk_map,[])
-  else (constrs0, hp_rel_unkmap, [])
+    (constrs2, unk_map,unk_hpargs)
+  else (constrs0, hp_rel_unkmap, unk_hpargs)
   in
   let unk_hps = (List.map fst unk_hpargs) in
   infer_shapes_proper prog proc_name constrs1 callee_hps sel_hp_rels sel_post_hps unk_map prog_vars unk_hpargs detect_dang
 
-let infer_shapes_x prog proc_name (constrs0: CF.hprel list) sel_hps sel_post_hps hp_rel_unkmap need_preprocess detect_dang:(CF.hprel list * CF.hp_rel_def list* (CP.spec_var*CP.exp list * CP.exp list) list ) =
+let infer_shapes_x prog proc_name (constrs0: CF.hprel list) sel_hps sel_post_hps hp_rel_unkmap unk_hpargs need_preprocess detect_dang:
+      (CF.hprel list * CF.hp_rel_def list* (CP.spec_var*CP.exp list * CP.exp list) list ) =
   (*move to outer func*)
   (* let callee_hpdefs = *)
   (*   try *)
@@ -1300,13 +1303,13 @@ let infer_shapes_x prog proc_name (constrs0: CF.hprel list) sel_hps sel_post_hps
   (* let _ = DD.info_pprint ("  sel_hps:" ^ !CP.print_svl sel_hps) no_pos in *)
   (*remove hp(x) --> hp(x)*)
   (* let constrs1 = List.filter (fun cs -> not(SAU.is_trivial_constr cs)) constrs0 in *)
-  let constr, hp_defs, c, unk_hpargs2 = infer_shapes_core prog proc_name constrs0 callee_hps sel_hps sel_post_hps hp_rel_unkmap need_preprocess detect_dang in
+  let constr, hp_defs, c, unk_hpargs2 = infer_shapes_core prog proc_name constrs0 callee_hps sel_hps sel_post_hps hp_rel_unkmap unk_hpargs need_preprocess detect_dang in
   let m = match_hps_views hp_defs prog.CA.prog_view_decls in
   let sel_hp_defs = collect_sel_hp_def hp_defs sel_hps unk_hpargs2 m in
   let _ = List.iter (fun hp_def -> rel_def_stk # push hp_def) sel_hp_defs in
   (constr, hp_defs, c)
 
-let infer_shapes prog proc_name (hp_constrs: CF.hprel list) sel_hp_rels sel_post_hp_rels hp_rel_unkmap need_preprocess detect_dang:
+let infer_shapes prog proc_name (hp_constrs: CF.hprel list) sel_hp_rels sel_post_hp_rels hp_rel_unkmap unk_hpargs need_preprocess detect_dang:
  (CF.hprel list * CF.hp_rel_def list*(CP.spec_var*CP.exp list * CP.exp list) list) =
   let pr0 = pr_list !CP.print_exp in
   let pr1 = pr_list_ln Cprinter.string_of_hprel in
@@ -1315,4 +1318,6 @@ let infer_shapes prog proc_name (hp_constrs: CF.hprel list) sel_hp_rels sel_post
   (* let pr4 = pr_list (pr_pair (pr_list (pr_pair !CP.print_sv string_of_int)) CP.string_of_xpure_view) in *)
   let pr4 = (pr_list (pr_pair (pr_pair !CP.print_sv (pr_list string_of_int)) CP.string_of_xpure_view)) in
   Debug.no_4 "infer_shapes" pr_id pr1 !CP.print_svl pr4 (pr_triple pr1 pr2 pr3)
-      (fun _ _ _ _ -> infer_shapes_x prog proc_name hp_constrs sel_hp_rels sel_post_hp_rels hp_rel_unkmap need_preprocess detect_dang) proc_name hp_constrs sel_post_hp_rels hp_rel_unkmap
+      (fun _ _ _ _ -> infer_shapes_x prog proc_name hp_constrs sel_hp_rels
+          sel_post_hp_rels hp_rel_unkmap unk_hpargs need_preprocess detect_dang)
+      proc_name hp_constrs sel_post_hp_rels hp_rel_unkmap
