@@ -517,9 +517,9 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
                 let _ = Debug.ninfo_hprint (add_str "known_rel" !print_svl) known_rel no_pos in
                 let inf_pos = b.CF.formula_inf_pos in
                 let _ =
-                  if not(CP.subset vars pre_post_vars) then
+                  (*if not(CP.subset vars pre_post_vars) then
                     report_error inf_pos "Inferable vars include some external variables!"
-                  else
+                  else*)
                   if not(CP.subset unknown_rel vars_rel) then
                     report_error inf_pos "Inferable vars do not include some unknown relation!"
                   else
