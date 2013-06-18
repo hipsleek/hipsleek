@@ -1010,6 +1010,7 @@ let keep_data_view_hrel_nodes_two_fbs prog f1 f2 hd_nodes hv_nodes hpargs leqs r
   let _ = Debug.ninfo_pprint ("lhs keep_vars: " ^ (!CP.print_svl lkeep_vars)) no_pos in
   (* let pr1 = pr_list (pr_pair !CP.print_sv !CP.print_svl) in *)
   (* let _ = Debug.info_pprint ("lkeep_hpargs: " ^ (pr1 lkeep_hpargs)) no_pos in *)
+  (* let _ = Debug.info_pprint ("f1: " ^ (Cprinter.string_of_formula_base f1)) no_pos in *)
   let nf1 = CF.drop_data_view_hpargs_nodes_fb f1 check_nbelongsto_dnode check_nbelongsto_vnode check_neq_hpargs
     (keep_vars(* @closed_lback_keep_ptrs *)) (keep_vars(* @closed_lback_keep_ptrs *)) lkeep_hpargs (keep_vars@lkeep_vars) in
   let nf2 = CF.drop_data_view_hrel_nodes_fb f2 check_nbelongsto_dnode check_nbelongsto_vnode check_neq_hrelnode
