@@ -1720,7 +1720,7 @@ let find_undefined_selective_pointers_x prog lfb lmix_f unmatched rhs_rest rhs_h
         [(niu_svl_i@[(h_node, NI)])]
       in
       (*tem remove for testing. TODO: put back*)
-      let extra_clls = [] in
+      (* let extra_clls = [] in *)
       (true,ls_fwd_svl@extra_clls)
     else (false, [])
   in
