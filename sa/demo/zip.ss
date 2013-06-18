@@ -7,8 +7,10 @@ ll<> == self = null  or self::node<_, q> * q::ll<>;
 
 ltwo<p:node> == p::ll<> & self = null  or 
    self::node<_, q> * p::node<_,r> * q::ltwo<r>;
-   
-   
+
+ltwoA<p:node> == self = null  or 
+   self::node<_, q> * p::node<_,r> * q::ltwoA<r>;
+
 HeapPred H1(node a, node b).
 HeapPred G1(node a, node b, node c).
 
@@ -17,6 +19,7 @@ node zip (node x, node y)
   infer [H1,G1]  requires H1(x,y)  ensures  G1(x,y,res);
   
 // requires x::ltwo<y>  ensures res::ll<> * y::ll<> & res=x;
+// requires x::ltwoA<y>  ensures res::ltwoA<y> & res=x;
 {
    if (x==null) return null;
    else {

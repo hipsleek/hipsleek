@@ -5,7 +5,7 @@ fails during assumption collection, does not infer l2::node ....
 ( [(,1 ); (,1 )]) :dll-append3.ss:22: 3: bind: node  l2'::node<next_22_776',prev_22_777'>@M[Orig] cannot be derived from context
  
 
-# dll-app-bug3.ss
+# dll-app-bug3.ss  (WN : FIXED, I think)
 
   should not allow me to prove false, seems like a substitution problem
 
@@ -852,3 +852,36 @@ shape_infer[H1,HP_2,HP_1,HP_8][G1].
 WHY do we use XPURE(..) when I have specified all the predicates as non-dangling??
 
 */
+===============================================================
+# zip1.slk 
+
+GOT
+====
+
+[ HP_2(y_176,x_177) ::= y_176::node<val_25_826,next_25_827>@M * (HP_8(next_25_827,x_177))&true,
+
+ HP_1(next_24_820,y) ::= (H1(x,y)) * (HP_2(y,x))&true,
+ HP_8(next_25_827,x) ::= HP_2(y,x)&true,
+
+ H1(x_178,y_179) ::= 
+ emp&x_178=null
+ or (H1(next_24_103,next_25_101)) * y_179::node<val_25_100,next_25_101>@M * 
+    x_178::node<val_24_102,next_24_103>@M&true
+ ,
+
+ G1(x_180,y_181,res_183) ::= 
+ emp&x_180=null
+ or y_181::node<val_25_826,next_25_827>@M * x_180::node<val_24_819,nn>@M * 
+    (G1(nn,next_25_827,nn))&true
+ ]
+
+PROBLEMS
+========
+Why did we get:
+ HP_1(next_24_820,y) ::= (H1(x,y)) * (HP_2(y,x))&true,
+ HP_8(next_25_827,x) ::= HP_2(y,x)&true,
+
+EXPECTING: (tupled definition for two pre-pred)
+ (HP_1(next_24_820,y@NI)) * (HP_8(next_25_827,x@NI))&
+  true <--> H1(next_24_820,next_25_827)&true,
+
