@@ -184,7 +184,7 @@ and one_formula = {
 and flow_treatment = 
   | Flow_combine
   | Flow_replace
-		  
+
 and h_formula = (* heap formula *)
   | Star of h_formula_star
   | StarMinus of h_formula_starminus

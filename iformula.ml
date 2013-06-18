@@ -2409,43 +2409,51 @@ type find_bar_node =
 	| Bar_not_found
 	  
 let find_barr_node bname (f:int) (t:int) struc :bool= 
-	let rec find_h_node x h = match h with 
-		 | Phase {h_formula_phase_rd = h1; h_formula_phase_rw = h2}
-		 | Conj {h_formula_conj_h1 = h1; h_formula_conj_h2 = h2}
-		 | ConjStar {h_formula_conjstar_h1 = h1; h_formula_conjstar_h2 = h2}
-		 | ConjConj {h_formula_conjconj_h1 = h1; h_formula_conjconj_h2 = h2}	
-		 | StarMinus {h_formula_starminus_h1 = h1; h_formula_starminus_h2 = h2}	 		 
-		 | Star {h_formula_star_h1 = h1; h_formula_star_h2 = h2} -> 
-			(match find_h_node x h1 with 
-				| Bar_not_found -> find_h_node x h2 
-				| _ as x-> x)
-		 | HeapNode h -> 
-			if fst h.h_formula_heap_node = self && h.h_formula_heap_name=bname then 
-				(match  h.h_formula_heap_arguments with 
-					| [] -> Bar_wrong_state
-					| (P.Var (v,_))::_-> Bar_state_var v
-					| (P.IConst (v,_))::_ -> if x=v then Bar_state_ok else Bar_wrong_state
-					| _ -> Bar_wrong_state)
-			else Bar_not_found 
-		 | HeapNode2 h -> Gen.report_error no_pos "malfunction with convert heap2 to heap node"
-     | HeapNodeDeref h -> Gen.report_error no_pos "malfunction with convert heap_deref to heap node" 
-		 | HRel _ | HTrue | HEmp | HFalse -> Bar_not_found in
-	let rec find_node x f= match f with 
-		| Base {formula_base_heap = h; formula_base_pure = p} 
-		| Exists {formula_exists_heap = h; formula_exists_pure = p} -> 
-		  (match find_h_node x h with 
-			| Bar_wrong_state -> false
-		    | Bar_state_var v -> P.find_p_val x v p
-			| Bar_state_ok -> true
-			| Bar_not_found -> false)
-		| Or e -> find_node x e.formula_or_f1 && find_node x e.formula_or_f2 in
-	let rec helper b f0 = match f0 with
-		| EAssume e -> if b then find_node t e.formula_assume_simpl else false
-		| ECase e -> Gen.Basic.all_l_snd (helper b) e.formula_case_branches
-		| EBase e-> (match e.formula_struc_continuation with | None -> false | Some cont-> helper (if b then b else find_node f e.formula_struc_base) cont)
-		| EInfer e -> helper b e.formula_inf_continuation
-		| EList e -> Gen.Basic.all_l_snd (helper b) e in
-	helper false struc 
+  let rec find_h_node x h = match h with 
+    | Phase {h_formula_phase_rd = h1; h_formula_phase_rw = h2}
+    | Conj {h_formula_conj_h1 = h1; h_formula_conj_h2 = h2}
+    | ConjStar {h_formula_conjstar_h1 = h1; h_formula_conjstar_h2 = h2}
+    | ConjConj {h_formula_conjconj_h1 = h1; h_formula_conjconj_h2 = h2}  
+    | StarMinus {h_formula_starminus_h1 = h1; h_formula_starminus_h2 = h2}        
+    | Star {h_formula_star_h1 = h1; h_formula_star_h2 = h2} -> (
+        match find_h_node x h1 with 
+        | Bar_not_found -> find_h_node x h2 
+        | _ as x-> x
+      )
+    | HeapNode h -> 
+        if fst h.h_formula_heap_node = self && h.h_formula_heap_name=bname then 
+          (match  h.h_formula_heap_arguments with 
+            | [] -> Bar_wrong_state
+            | (P.Var (v,_))::_-> Bar_state_var v
+            | (P.IConst (v,_))::_ -> if x=v then Bar_state_ok else Bar_wrong_state
+            | _ -> Bar_wrong_state)
+        else Bar_not_found 
+    | HeapNode2 h -> Gen.report_error no_pos "malfunction with convert heap2 to heap node"
+    | HeapNodeDeref h -> 
+        if fst h.h_formula_heap_deref_node = self && h.h_formula_heap_deref_name=bname then 
+          (match  h.h_formula_heap_deref_arguments with 
+            | [] -> Bar_wrong_state
+            | (P.Var (v,_))::_-> Bar_state_var v
+            | (P.IConst (v,_))::_ -> if x=v then Bar_state_ok else Bar_wrong_state
+            | _ -> Bar_wrong_state)
+        else Bar_not_found 
+     | HRel _ | HTrue | HEmp | HFalse -> Bar_not_found in
+  let rec find_node x f= match f with 
+    | Base {formula_base_heap = h; formula_base_pure = p} 
+    | Exists {formula_exists_heap = h; formula_exists_pure = p} -> 
+      (match find_h_node x h with 
+      | Bar_wrong_state -> false
+        | Bar_state_var v -> P.find_p_val x v p
+      | Bar_state_ok -> true
+      | Bar_not_found -> false)
+    | Or e -> find_node x e.formula_or_f1 && find_node x e.formula_or_f2 in
+  let rec helper b f0 = match f0 with
+    | EAssume e -> if b then find_node t e.formula_assume_simpl else false
+    | ECase e -> Gen.Basic.all_l_snd (helper b) e.formula_case_branches
+    | EBase e-> (match e.formula_struc_continuation with | None -> false | Some cont-> helper (if b then b else find_node f e.formula_struc_base) cont)
+    | EInfer e -> helper b e.formula_inf_continuation
+    | EList e -> Gen.Basic.all_l_snd (helper b) e in
+  helper false struc 
 
 	
 let add_post_for_flow fl_names f = 
