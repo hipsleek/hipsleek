@@ -102,8 +102,6 @@ let cparser_base_loc = ref {line_num = 1;
                            line_start = 1;
                            byte_num = 1;}
 
-let cparser_base_prog : (Iast.prog_decl option) ref = ref None
-
 (* ------ end of global vars for CIL ----- *)
 
 let get_pos x =
@@ -2938,27 +2936,22 @@ let parse_cpfile n s = SHGram.parse cp_file (PreCast.Loc.mk n) s
 (*****************************************************************)
 (******** The function below will be used by CIL parser **********)
 
-let parse_c_aux_proc (fname: string) (proc: string) (base_prog: Iast.prog_decl option) =
+let parse_c_aux_proc (fname: string) (proc: string) =
   (* save states of current parser *)
   let old_parser_mode = !is_cparser_mode in
-  let old_base_prog = !cparser_base_prog in
   (* swith to cparser mode *)
   is_cparser_mode := true;
-  cparser_base_prog := base_prog;
   let res = SHGram.parse_string hproc (PreCast.Loc.mk fname) proc in
   (* restore states of previous parser *)
   is_cparser_mode := old_parser_mode;
-  cparser_base_prog := old_base_prog;
   (* return *)
   res
 
 let parse_c_function_spec (fname: string) (spec: string) (base_loc: file_offset)
-                          (base_prog: Iast.prog_decl option)
                           : F.struc_formula =
   (* save states of current parser *)
   let old_parser_mode = !is_cparser_mode in
   let old_base_loc = !cparser_base_loc in
-  let old_base_prog = !cparser_base_prog in
   (* swith to cparser mode *)
   cparser_base_loc := base_loc;
   is_cparser_mode := true;
@@ -2967,17 +2960,14 @@ let parse_c_function_spec (fname: string) (spec: string) (base_loc: file_offset)
   (* restore states of previous parser *)
   is_cparser_mode := old_parser_mode;
   cparser_base_loc := old_base_loc;
-  cparser_base_prog := old_base_prog;
   (* return *)
   res
 
-let parse_c_program_spec (fname: string) (spec: string) (base_loc: file_offset)
-                         (base_prog: Iast.prog_decl option)
+let parse_c_program_spec (fname: string) (spec: string) (base_loc: file_offset) 
                          : Iast.prog_decl =
   (* save states of current parser *)
   let old_parser_mode = !is_cparser_mode in
   let old_base_loc = !cparser_base_loc in
-  let old_base_prog = !cparser_base_prog in
   (* swith to cparser mode *)
   cparser_base_loc := base_loc;
   is_cparser_mode := true;
@@ -2986,16 +2976,13 @@ let parse_c_program_spec (fname: string) (spec: string) (base_loc: file_offset)
   (* restore states of previous parser *)
   is_cparser_mode := old_parser_mode;
   cparser_base_loc := old_base_loc;
-  cparser_base_prog := old_base_prog;
   (* return *)
   res
 
-let parse_c_statement_spec (fname: string) (spec: string) (base_loc: file_offset)
-                           (base_prog: Iast.prog_decl option) =
+let parse_c_statement_spec (fname: string) (spec: string) (base_loc: file_offset) =
   (* save states of current parser *)
   let old_parser_mode = !is_cparser_mode in
   let old_base_loc = !cparser_base_loc in
-  let old_base_prog = !cparser_base_prog in
   (* swith to cparser mode *)
   cparser_base_loc := base_loc;
   is_cparser_mode := true;
@@ -3004,7 +2991,6 @@ let parse_c_statement_spec (fname: string) (spec: string) (base_loc: file_offset
   (* restore states of previous parser *)
   is_cparser_mode := old_parser_mode;
   cparser_base_loc := old_base_loc;
-  cparser_base_prog := old_base_prog;
   (* return *)
   res
 

@@ -372,7 +372,7 @@ let create_pointer_casting_proc (pointer_typ: Globals.typ) : Iast.proc_decl opti
           "    p != null -> requires true ensures res::" ^ data_name ^ param ^ "; \n" ^
           "  }\n"
         ) in
-        let proc_decl = Parser.parse_c_aux_proc "inter_pointer_casting_proc" cast_proc None in
+        let proc_decl = Parser.parse_c_aux_proc "inter_pointer_casting_proc" cast_proc in
         (* return *)
         Some proc_decl
       )
@@ -388,7 +388,7 @@ let create_not_operator_proc (input_typ: Globals.typ) : Iast.proc_decl =
         "  case { param =  null -> ensures res;\n" ^
         "         param != null -> ensures !res; }\n"
       ) in
-      let proc_decl = Parser.parse_c_aux_proc "inter_negation_data_proc" neg_proc None in
+      let proc_decl = Parser.parse_c_aux_proc "inter_negation_data_proc" neg_proc in
       proc_decl
     )
   | _ -> report_error_msg "Error: Invalid type"

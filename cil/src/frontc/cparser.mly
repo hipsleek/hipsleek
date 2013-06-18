@@ -246,14 +246,14 @@ let parse_c_program_spec (spec: string) loc : Iast.prog_decl =
                   Parser.line_start = loc.start_pos.linestart;
                   Parser.byte_num = loc.start_pos.byteno} in
   let fname = loc.start_pos.filename in
-  Parser.parse_c_program_spec fname spec base_loc None
+  Parser.parse_c_program_spec fname spec base_loc
 
 let parse_c_statement_spec (spec: string) loc = 
   let base_loc = {Parser.line_num = loc.start_pos.lineno;
                   Parser.line_start = loc.start_pos.linestart;
                   Parser.byte_num = loc.start_pos.byteno} in
   let fname = loc.start_pos.filename in
-  Parser.parse_c_statement_spec fname spec base_loc None
+  Parser.parse_c_statement_spec fname spec base_loc
 
 %}
 
