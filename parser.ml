@@ -46,7 +46,7 @@ type decl =
   | Logical_var of exp_var_decl (* Globally logical vars *)
   | Proc of proc_decl
   | Coercion of coercion_decl
-		| Include of string
+  | Include of string
 		
 
 type member = 
@@ -1697,11 +1697,10 @@ non_array_type:
    | `FLOAT              -> float_type 
    | `INFINT_TYPE        -> infint_type 
    | `BOOL               -> bool_type
-   | `BAG                -> bag_type
+   | `BAG               -> bag_type
+   | `BAG; `OPAREN; t = non_array_type ; `CPAREN -> BagT t
    | `IDENTIFIER id      -> Named id
-   | t=rel_header_view   ->
-       let tl,_ = List.split t.Iast.rel_typed_vars in
-       RelT tl ]];
+   | t=rel_header_view   -> let tl,_ = List.split t.Iast.rel_typed_vars in RelT tl ]];
 
 pointer_type:
   [[ t=non_array_type; r = star_list -> 
