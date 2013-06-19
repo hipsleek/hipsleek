@@ -6,7 +6,7 @@ import getopt
 
 
 SIZE_LIMIT = 1048576 # commit files of max 1MB, otherwise warn the user
-NOF_LIMIT = 10 # number of files limit: commit max NOF_LIMIT modified/added files without warning the user 
+NOF_LIMIT = 10 # number of files limit: commit max NOF_LIMIT modified/added/deleted files without warning the user 
 
 
 temp_file = "commit_temp"
@@ -17,15 +17,20 @@ force_verif  = False
 commit_usage =  'usage: ./commit [-v] -m <commit message> '
 
 # parse command line arguments
-opts, args = getopt.getopt(sys.argv[1:],"hvm:",[])
-for opt, arg in opts:
-    if opt == '-h':
-        print commit_usage
-        sys.exit(2)
-    elif opt == '-v':
-        force_verif = True
-    elif opt == "-m":
-        log_message = arg
+try:
+    opts, args = getopt.getopt(sys.argv[1:],"hvm:",[])
+    for opt, arg in opts:
+        if opt == '-h':
+            print commit_usage
+            sys.exit(2)
+        elif opt == '-v':
+            force_verif = True
+        elif opt == "-m":
+            log_message = arg
+except getopt.GetoptError as e:
+    print (str(e))
+    print commit_usage
+    sys.exit(2)
 
 if len(log_message) <= 0 :
     print "Insufficient commit arguments: non-empty commit message mandatory \n" + commit_usage
