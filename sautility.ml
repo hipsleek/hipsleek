@@ -25,9 +25,15 @@ let is_rec_pardef (hp,_,f,_)=
   (CP.mem_svl hp hps)
 
 let string_of_hp_rel_def hp_rel =
- let str_of_hp_rel (r,f1, f2) = ( (CP.print_rel_cat r)^ ": " ^(Cprinter.string_of_h_formula f1) ^ ":: "
- ^(Cprinter.prtt_string_of_formula f2)) in
-  (str_of_hp_rel hp_rel)
+ let str_of_hp_rel (r,f1, f2) =
+   (* match r with *)
+   (*   | CP.HPRelNDefn _ -> ( (CP.print_rel_cat r)^ ": " ^(Cprinter.string_of_h_formula f1) ^ ":: " *)
+   (*     ^("NONE")) *)
+   (*   | _ -> *)
+           ( (CP.print_rel_cat r)^ ": " ^(Cprinter.string_of_h_formula f1) ^ ":: "
+           ^(Cprinter.prtt_string_of_formula f2))
+ in
+ (str_of_hp_rel hp_rel)
 
 let string_of_par_def_w_name pd=
   let pr1 = !CP.print_sv in
@@ -111,6 +117,7 @@ let combine_length_neq ls1 ls2 res=
  let get_hpdef_name hpdef=
    match hpdef with
      | CP.HPRelDefn hp -> hp
+     (* | CP.HPRelNDefn hp -> hp *)
      | _ -> report_error no_pos "sau.get_hpdef_name"
 
 
@@ -3265,6 +3272,18 @@ let mk_unk_hprel_def hp args defs pos=
   DD.ninfo_pprint (" ==: " ^ (Cprinter.prtt_string_of_formula def) ) pos;
   let def = (hp, (CP.HPRelDefn hp, (CF.HRel (hp, List.map (fun x -> CP.mkVar x no_pos) args, pos)), def)) in
   [def]
+
+let mk_link_hprel_def (hp,args)=
+  let f = CF.mkTrue (CF.mkTrueFlow()) no_pos in
+  let hf = (CF.HRel (hp, List.map (fun x -> CP.mkVar x no_pos) args, no_pos)) in
+  DD.ninfo_pprint (" ==: " ^ "NONE" ) no_pos;
+  let def= {
+      CF.hprel_def_kind = CP.HPRelDefn hp;
+      CF.hprel_def_hrel = hf;
+      CF.hprel_def_body = None;
+      CF.hprel_def_body_lib = None;
+  } in
+  def
 
 (*because root is moved to top*)
 let mk_orig_hprel_def_x prog cdefs unk_hps hp r other_args args sh_ldns eqNulls eqPures hprels unk_svl=
