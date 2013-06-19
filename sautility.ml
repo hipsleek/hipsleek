@@ -1240,20 +1240,22 @@ let find_well_defined_hp_x prog hds hvs r_hps prog_vars post_hps (hp,args) def_p
   if (CP.mem_svl hp r_hps || CP.mem_svl hp post_hps) then (lhsb, [], [(hp,args)], []) else
     let closed_args = look_up_closed_ptr_args prog hds hvs args in
     let undef_args = lookup_undef_args closed_args [] def_ptrs in
-    if undef_args = [] then
-      do_spit lhsb (CF.mkTrue (CF.mkTrueFlow()) pos) []
-    else
+    if (* undef_args=[] *) List.length undef_args < List.length args then
       let args_inst,_ =  partition_hp_args prog hp args in
       let undef_args_inst = List.filter (fun (sv,_) -> CP.mem_svl sv undef_args) args_inst in
-      if split_spatial && List.length undef_args < List.length args && undef_args_inst <> [] then
+      if undef_args_inst<>[] then
         begin
-          if !Globals.sa_s_split_base then
-            let new_hf, new_hp = add_raw_hp_rel_x prog undef_args_inst pos in
-            let nlhsb = CF.mkAnd_fb_hf lhsb new_hf pos in
-            do_spit nlhsb (CF.formula_of_heap new_hf pos) [(new_hf, (new_hp, List.map fst undef_args_inst))]
+          if split_spatial then
+            if !Globals.sa_s_split_base then
+              let new_hf, new_hp = add_raw_hp_rel_x prog undef_args_inst pos in
+              let nlhsb = CF.mkAnd_fb_hf lhsb new_hf pos in
+              do_spit nlhsb (CF.formula_of_heap new_hf pos) [(new_hf, (new_hp, List.map fst undef_args_inst))]
+            else
+              do_spit lhsb (CF.mkTrue (CF.mkTrueFlow()) pos) []
           else
-            do_spit lhsb (CF.mkTrue (CF.mkTrueFlow()) pos) []
+            (lhsb, [],[(hp,args)], [])
         end
+      else do_spit lhsb (CF.mkTrue (CF.mkTrueFlow()) pos) []
     else
       (lhsb, [],[(hp,args)], [])
 
