@@ -354,7 +354,7 @@ let rec convert_heap2_heap prog (h0 : IF.h_formula) : IF.h_formula =
             IF.h_formula_phase_rw = tmp2; }
     | IF.HeapNode2 h2 -> IF.HeapNode (node2_to_node 1 prog h2)
     | IF.HRel _
-    | IF.HTrue | IF.HFalse | IF.HEmp | IF.HeapNode _ | IF.HeapNodeDeref _ -> h0
+    | IF.HTrue | IF.HFalse | IF.HEmp | IF.HeapNode _ -> h0
 
 and convert_heap2 prog (f0 : IF.formula) : IF.formula =
   match f0 with
@@ -4500,8 +4500,7 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
   let rec linearize_heap (f : IF.h_formula) pos (tl:spec_var_type_list) : ( CF.h_formula * CF.t_formula) = 
     let res = (*let _ = print_string("H_formula: "^(Iprinter.string_of_h_formula f)^"\n") in*)
       match f with
-        | IF.HeapNode2 h2 -> report_error (IF.pos_of_formula f0) "malfunction with convert heap2 to heap node"
-        | IF.HeapNodeDeref _ -> report_error (IF.pos_of_formula f0) "TRUNG TODO: code here"
+        | IF.HeapNode2 h2 -> report_error (IF.pos_of_formula f0) "malfunction with convert to heap node"
         | IF.HeapNode{
               IF.h_formula_heap_node = (v, p);
               IF.h_formula_heap_name = c;
@@ -5170,7 +5169,6 @@ and case_normalize_renamed_formula_x prog (avail_vars:(ident*primed) list) posib
   let rec linearize_heap (used_names:((ident*primed) list)) (f : IF.h_formula): ((ident*primed) list) * ((ident*primed) list) * IF.h_formula * Ipure.formula =
     match f with
       | IF.HeapNode2 b -> report_error b.IF.h_formula_heap2_pos "malfunction: heap node 2 still present"
-      | IF.HeapNodeDeref b -> report_error b.IF.h_formula_heap_deref_pos "TRUNG TODO: code here" 
       | IF.HeapNode b ->
             let pos = b.IF.h_formula_heap_pos in
             (*flag to check whether the heap node representing an invariant or not*)
