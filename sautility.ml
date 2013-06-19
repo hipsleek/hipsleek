@@ -1256,7 +1256,7 @@ let find_well_defined_hp_x prog hds hvs r_hps prog_vars post_hps (hp,args) def_p
             if !Globals.sa_s_split_base then
               let new_hf, new_hp = add_raw_hp_rel_x prog undef_args_inst pos in
               let nlhsb = CF.mkAnd_fb_hf lhsb new_hf pos in
-              do_spit nlhsb (CF.formula_of_heap new_hf pos) [(new_hf, (new_hp, List.map fst undef_args_inst))]
+              do_spit nlhsb (CF.formula_of_heap new_hf pos) [(new_hf,(new_hp, List.map fst undef_args_inst))]
             else
               do_spit lhsb (CF.mkTrue (CF.mkTrueFlow()) pos) []
           else
@@ -1282,6 +1282,36 @@ let find_well_defined_hp prog hds hvs ls_r_hpargs prog_vars post_hps
       (fun _ _  _ _ -> find_well_defined_hp_x prog hds hvs ls_r_hpargs
           prog_vars post_hps (hp,args) def_ptrs lhsb split_spatial pos)
       lhsb (hp,args) def_ptrs prog_vars
+
+let delect_link_hp_x prog hds hvs r_hp r_args post_hps lhs_hpargs def_ptrs=
+  let rec process_helper ls_hpargs=
+    match ls_hpargs with
+      | [] -> []
+      | (hp,args)::rest ->
+            if CP.eq_spec_var hp r_hp then process_helper rest else
+              let closed_args = look_up_closed_ptr_args prog hds hvs args in
+              let undef_args = lookup_undef_args closed_args [] def_ptrs in
+              if undef_args <> [] then
+                let args_inst,_ =  partition_hp_args prog hp args in
+                let undef_args_inst = List.filter (fun (sv,_) -> CP.mem_svl sv undef_args) args_inst in
+                if undef_args_inst<>[] then
+                  let undef_args1 = List.map fst undef_args_inst in
+                  (*undef ini in lhs = rhs*)
+                  if List.length undef_args1 = List.length r_args && CP.diff_svl undef_args1 r_args = [] then
+                    [(r_hp,r_args)]
+                  else process_helper rest
+                else process_helper rest
+              else process_helper rest
+  in
+  process_helper lhs_hpargs
+
+let delect_link_hp prog hds hvs r_hp r_args post_hps lhs_hpargs def_ptrs=
+  let pr1 = !CP.print_sv in
+  let pr2 = !CP.print_svl in
+  let pr3 = pr_list (pr_pair pr1 pr2) in
+  Debug.no_4 " delect_link_hp" pr1 pr2 pr3 pr2 pr3
+      (fun _ _ _ _ -> delect_link_hp_x prog hds hvs r_hp r_args post_hps lhs_hpargs def_ptrs)
+      r_hp r_args lhs_hpargs def_ptrs
 
 let split_base_x prog hds hvs r_hps prog_vars post_hps (hp,args) def_ptrs lhsb=
   (*check hp is recursive?*)
@@ -4718,7 +4748,7 @@ let match_one_hp_views (vdcls: C.view_decl list) (_, hf, orf):(CP.spec_var* CF.h
         in
         let eq_views = List.concat (List.map helper vdcls) in
         (hp,eq_views)
-    | _ -> report_error no_pos "sa. match_one_hp_views: should be a hp"
+    | _ -> report_error no_pos "sau.match_one_hp_views: should be a hp"
 
 
 (************************************************************)

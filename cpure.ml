@@ -68,7 +68,7 @@ let is_inf_sv sv = match sv with
 type rel_cat = 
   | RelDefn of spec_var
   | HPRelDefn of spec_var
-  (* | HPRelNDefn of spec_var *)
+  | HPRelLDefn of spec_var list
   | RelAssume of spec_var list
   | RankDecr of spec_var list
   | RankBnd of spec_var
@@ -244,7 +244,7 @@ let print_sv = ref (fun (c:spec_var) -> "cpure printer has not been initialized"
 let print_rel_cat rel_cat = match rel_cat with
   | RelDefn v -> "RELDEFN " ^ (!print_sv v)
   | HPRelDefn v -> "HP_RELDEFN " ^ (!print_sv v)
-  (* | HPRelNDefn v -> "HP_REL_NONE DEFN " ^ (!print_sv v) *)
+  | HPRelLDefn vs -> "HP_REL_L_DEFN " ^ (!print_svl vs)
   | RelAssume v -> "RELASS " ^ (!print_svl v)
   | RankDecr vs -> "RANKDEC " ^ (!print_svl vs)
   | RankBnd v -> "RANKBND " ^ (!print_sv v)
