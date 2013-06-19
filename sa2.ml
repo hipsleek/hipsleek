@@ -259,7 +259,7 @@ let split_constr_x prog constrs post_hps prog_vars unk_map unk_hps=
         in
         let unk_svl1 = CP.remove_dups_svl (cs.CF.unk_svl@unk_svl) in
         let ls_defined_hps,rems = List.split (List.map (fun hpargs ->
-            SAU.split_base(*find_well_defined_hp*) prog lhds lhvs r_hps
+            SAU.find_well_defined_hp (* split_base *) prog lhds lhvs r_hps
                 prog_vars post_hps hpargs (l_def_vs@unk_svl1) lfb1) ls_lhp_args)
         in
         let defined_preds = List.concat ls_defined_hps in

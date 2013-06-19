@@ -1154,9 +1154,9 @@ let simplify_one_constr_b prog unk_hps lhs_b rhs_b=
   Debug.no_2 "simplify_one_constr_b" pr pr (pr_triple pr pr !CP.print_svl)
       (fun _ _ -> simplify_one_constr_b_x prog unk_hps lhs_b rhs_b) lhs_b rhs_b
 
-let find_well_defined_hp_x prog hds hvs r_hps prog_vars (hp,args) def_ptrs lhsb=
-  (*check hp is recursive?*)
-  if (CP.mem hp r_hps) then ([],[(hp,args)]) else
+let find_well_defined_hp_x prog hds hvs r_hps prog_vars post_hps (hp,args) def_ptrs lhsb=
+  (*check hp is recursive or post_hp?*)
+  if (CP.mem_svl hp r_hps || CP.mem_svl hp post_hps) then ([],[(hp,args)]) else
     let closed_args = look_up_closed_ptr_args prog hds hvs args in
     let undef_args = lookup_undef_args closed_args [] def_ptrs in
     if (* undef_args = [] || *)  List.length undef_args < List.length args then
@@ -1177,13 +1177,15 @@ let find_well_defined_hp_x prog hds hvs r_hps prog_vars (hp,args) def_ptrs lhsb=
     else
       ([],[(hp,args)])
 
-let find_well_defined_hp prog hds hvs ls_r_hpargs prog_vars (hp,args) def_ptrs lhsb=
+let find_well_defined_hp prog hds hvs ls_r_hpargs prog_vars post_hps 
+      (hp,args) def_ptrs lhsb=
   let pr1 = !CP.print_sv in
   let pr2 = !CP.print_svl in
   let pr3 = pr_triple pr1 pr2 Cprinter.string_of_formula_base in
   let pr4 = (pr_pair pr1 pr2) in
   Debug.no_4 "find_well_defined_hp" Cprinter.string_of_formula_base pr4 pr2 pr2 (pr_pair (pr_list_ln pr3) (pr_list pr4))
-      (fun _ _  _ _ -> find_well_defined_hp_x prog hds hvs ls_r_hpargs prog_vars (hp,args) def_ptrs lhsb)
+      (fun _ _  _ _ -> find_well_defined_hp_x prog hds hvs ls_r_hpargs
+          prog_vars post_hps (hp,args) def_ptrs lhsb)
       lhsb (hp,args) def_ptrs prog_vars
 
 let split_base_x prog hds hvs r_hps prog_vars post_hps (hp,args) def_ptrs lhsb=
@@ -1986,7 +1988,9 @@ let find_root_x args fs=
     | _ -> begin
         let root_cands = List.filter (examine_one_arg fs) args in
         match root_cands with
-          | [] -> report_error no_pos "sau.find_root_x: dont have a root. what next?"
+          | [] -> (List.hd args, List.tl args)
+                (*circle: demo/dll-app-bug3.slk*)
+                (*report_error no_pos "sau.find_root_x: dont have a root. what next?" *)
           | r::_ -> (r,List.filter (fun sv -> not (CP.eq_spec_var r sv)) args)
     end
 
