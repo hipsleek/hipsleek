@@ -1206,7 +1206,7 @@ let find_well_defined_hp_x prog hds hvs r_hps prog_vars post_hps (hp,args) def_p
     let diff_svl = CP.diff_svl args undef_args in
     let args_inst,_ =  partition_hp_args prog hp args in
     let diff_svl_inst = List.filter (fun (sv,_) -> CP.mem_svl sv diff_svl) args_inst in
-    if  diff_svl_inst = [] then
+    if undef_args = [] then
       do_spit lhsb (CF.mkTrue (CF.mkTrueFlow()) pos)
     else if List.length diff_svl_inst > 0 then
      begin
