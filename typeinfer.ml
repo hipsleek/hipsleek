@@ -111,31 +111,28 @@ let node2_to_node_x prog (h0 : IF.h_formula_heap2) : IF.h_formula_heap =
       | [] -> []
   in
   try
-      let vdef =
-      I.look_up_view_def_raw 6 prog.I.prog_view_decls
-            h0.IF.h_formula_heap2_name in
-      let args = h0.IF.h_formula_heap2_arguments in
-      let hargs, hanns =
-        if args==[] then ([],[]) (* don't convert if empty *)
-        else
-          let args_ann = List.combine  h0.IF.h_formula_heap2_arguments h0.IF.h_formula_heap2_imm_param in
-          List.split (match_args vdef.I.view_vars args_ann) in
-      let h =
-        {
-            IF.h_formula_heap_node = h0.IF.h_formula_heap2_node;
-            IF.h_formula_heap_name = h0.IF.h_formula_heap2_name;
-            IF.h_formula_heap_derv = h0.IF.h_formula_heap2_derv;
-            IF.h_formula_heap_imm = h0.IF.h_formula_heap2_imm;
-            IF.h_formula_heap_imm_param = hanns;
-            IF.h_formula_heap_full = h0.IF.h_formula_heap2_full;
-            IF.h_formula_heap_with_inv = h0.IF.h_formula_heap2_with_inv;
-            IF.h_formula_heap_perm = h0.IF.h_formula_heap2_perm;
-            IF.h_formula_heap_arguments = hargs;
-            IF.h_formula_heap_pseudo_data = h0.IF.h_formula_heap2_pseudo_data;
-            IF.h_formula_heap_pos = h0.IF.h_formula_heap2_pos;
-            IF.h_formula_heap_label = h0.IF.h_formula_heap2_label;
-        }
-      in h
+    let vdef =
+    I.look_up_view_def_raw 6 prog.I.prog_view_decls h0.IF.h_formula_heap2_name in
+    let args = h0.IF.h_formula_heap2_arguments in
+    let hargs, hanns =
+      if args==[] then ([],[]) (* don't convert if empty *)
+      else
+        let args_ann = List.combine  h0.IF.h_formula_heap2_arguments h0.IF.h_formula_heap2_imm_param in
+        List.split (match_args vdef.I.view_vars args_ann) in
+    let h = { IF.h_formula_heap_node = h0.IF.h_formula_heap2_node;
+              IF.h_formula_heap_name = h0.IF.h_formula_heap2_name;
+              IF.h_formula_heap_deref = h0.IF.h_formula_heap2_deref;
+              IF.h_formula_heap_derv = h0.IF.h_formula_heap2_derv;
+              IF.h_formula_heap_imm = h0.IF.h_formula_heap2_imm;
+              IF.h_formula_heap_imm_param = hanns;
+              IF.h_formula_heap_full = h0.IF.h_formula_heap2_full;
+              IF.h_formula_heap_with_inv = h0.IF.h_formula_heap2_with_inv;
+              IF.h_formula_heap_perm = h0.IF.h_formula_heap2_perm;
+              IF.h_formula_heap_arguments = hargs;
+              IF.h_formula_heap_pseudo_data = h0.IF.h_formula_heap2_pseudo_data;
+              IF.h_formula_heap_pos = h0.IF.h_formula_heap2_pos;
+              IF.h_formula_heap_label = h0.IF.h_formula_heap2_label; } in
+    h
   with
     | Not_found ->
         let ddef =
@@ -144,22 +141,20 @@ let node2_to_node_x prog (h0 : IF.h_formula_heap2) : IF.h_formula_heap =
         let params = List.map I.get_field_name ddef.I.data_fields (* An Hoa : un-hard-code *) in
         let args_ann = List.combine  h0.IF.h_formula_heap2_arguments h0.IF.h_formula_heap2_imm_param in
         let hargs, hanns = List.split (match_args params args_ann) in
-        let h =
-          {
-              IF.h_formula_heap_node = h0.IF.h_formula_heap2_node;
-              IF.h_formula_heap_name = h0.IF.h_formula_heap2_name;
-              IF.h_formula_heap_derv = h0.IF.h_formula_heap2_derv;
-              IF.h_formula_heap_imm = h0.IF.h_formula_heap2_imm;
-              IF.h_formula_heap_imm_param = hanns;
-              IF.h_formula_heap_full = h0.IF.h_formula_heap2_full;
-              IF.h_formula_heap_with_inv = h0.IF.h_formula_heap2_with_inv;
-              IF.h_formula_heap_arguments = hargs;
-              IF.h_formula_heap_perm = h0.IF.h_formula_heap2_perm;
-              IF.h_formula_heap_pseudo_data = h0.IF.h_formula_heap2_pseudo_data;
-              IF.h_formula_heap_pos = h0.IF.h_formula_heap2_pos;
-              IF.h_formula_heap_label = h0.IF.h_formula_heap2_label;
-          }
-        in h
+        let h = { IF.h_formula_heap_node = h0.IF.h_formula_heap2_node;
+                  IF.h_formula_heap_name = h0.IF.h_formula_heap2_name;
+                  IF.h_formula_heap_deref = h0.IF.h_formula_heap2_deref;
+                  IF.h_formula_heap_derv = h0.IF.h_formula_heap2_derv;
+                  IF.h_formula_heap_imm = h0.IF.h_formula_heap2_imm;
+                  IF.h_formula_heap_imm_param = hanns;
+                  IF.h_formula_heap_full = h0.IF.h_formula_heap2_full;
+                  IF.h_formula_heap_with_inv = h0.IF.h_formula_heap2_with_inv;
+                  IF.h_formula_heap_arguments = hargs;
+                  IF.h_formula_heap_perm = h0.IF.h_formula_heap2_perm;
+                  IF.h_formula_heap_pseudo_data = h0.IF.h_formula_heap2_pseudo_data;
+                  IF.h_formula_heap_pos = h0.IF.h_formula_heap2_pos;
+                  IF.h_formula_heap_label = h0.IF.h_formula_heap2_label; } in
+        h
 
 let node2_to_node i prog (h0 : IF.h_formula_heap2) : IF.h_formula_heap =
   Debug.no_1_num i "node2_to_node"

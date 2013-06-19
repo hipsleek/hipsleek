@@ -4501,7 +4501,7 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
     let res = (*let _ = print_string("H_formula: "^(Iprinter.string_of_h_formula f)^"\n") in*)
       match f with
         | IF.HeapNode2 h2 -> report_error (IF.pos_of_formula f0) "malfunction with convert to heap node"
-        | IF.HeapNode{
+        | IF.HeapNode {
               IF.h_formula_heap_node = (v, p);
               IF.h_formula_heap_name = c;
               IF.h_formula_heap_derv = dr;
@@ -4575,7 +4575,7 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
                     CF.h_formula_data_pruning_conditions = [];
                     CF.h_formula_data_pos = pos; } in
                 let result_heap = Immutable.normalize_field_ann_heap_node result_heap in
-		(result_heap, CF.TypeTrue)
+                (result_heap, CF.TypeTrue)
               else (* Not a field access, proceed with the original code *)
                 (try
                   let vdef = I.look_up_view_def_raw 9 prog.I.prog_view_decls c in
@@ -4756,7 +4756,7 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
     let new_f = { CF.formula_heap = new_h;
     CF.formula_pure = mix_p;
     CF.formula_thread = id_var;
-                  CF.formula_delayed = MCP.mkMTrue pos; (*LDK: TO DO*)
+    CF.formula_delayed = MCP.mkMTrue pos; (*LDK: TO DO*)
     CF.formula_ref_vars = [];
     CF.formula_label = None;
     CF.formula_pos = pos} in
@@ -7313,18 +7313,22 @@ let rec rev_trans_heap f = match f with
   | CF.HTrue  -> IF.HTrue
   | CF.HFalse -> IF.HFalse
   | CF.HEmp   -> IF.HEmp  
-  | CF.DataNode b ->  IF.mkHeapNode (rev_trans_spec_var b.CF.h_formula_data_node) 
-						b.CF.h_formula_data_name 
-						b.CF.h_formula_data_derv 
-						(IF.ConstAnn(Mutable))
-						true false false None (List.map (fun c-> IP.Var ((rev_trans_spec_var c),no_pos)) b.CF.h_formula_data_arguments) []
-						None b.CF.h_formula_data_pos			   
-  | CF.ViewNode b ->  IF.mkHeapNode (rev_trans_spec_var b.CF.h_formula_view_node) 
-						b.CF.h_formula_view_name 
-						b.CF.h_formula_view_derv 
-						(IF.ConstAnn(Mutable))
-						true false false None (List.map (fun c-> IP.Var ((rev_trans_spec_var c),no_pos)) b.CF.h_formula_view_arguments) []
-						None b.CF.h_formula_view_pos
+  | CF.DataNode b ->
+      IF.mkHeapNode (rev_trans_spec_var b.CF.h_formula_data_node) 
+                    b.CF.h_formula_data_name
+                    0
+                    b.CF.h_formula_data_derv 
+                    (IF.ConstAnn(Mutable))
+                    true false false None (List.map (fun c-> IP.Var ((rev_trans_spec_var c),no_pos)) b.CF.h_formula_data_arguments) []
+                    None b.CF.h_formula_data_pos         
+  | CF.ViewNode b ->
+      IF.mkHeapNode (rev_trans_spec_var b.CF.h_formula_view_node) 
+                    b.CF.h_formula_view_name
+                    0
+                    b.CF.h_formula_view_derv 
+                    (IF.ConstAnn(Mutable))
+                    true false false None (List.map (fun c-> IP.Var ((rev_trans_spec_var c),no_pos)) b.CF.h_formula_view_arguments) []
+                    None b.CF.h_formula_view_pos
   | CF.Hole _ -> failwith "holes should not have been here"
   | CF.HRel  (sv,el,p)  -> IF.HRel (sv_n sv, List.map rev_trans_exp el, p)
   | CF.Phase b  -> IF.mkPhase (rev_trans_heap b.CF.h_formula_phase_rd) (rev_trans_heap b.CF.h_formula_phase_rw) b.CF.h_formula_phase_pos
@@ -7392,47 +7396,50 @@ let transform_hp_rels_to_iviews (hp_rels:(ident* CF.hp_rel_def) list):(ident*ide
 		| _ -> acc) [] hp_rels
   
 let transform_hp_rels_to_iviews hp_rels =
-	let pr1 = pr_list (pr_pair pr_id Cprinter.string_of_hp_rel_def) in
-	let pr2 = pr_list (pr_triple pr_id pr_id Iprinter.string_of_view_decl) in
-	Debug.no_1 "transform_hp_rels_to_iviews" pr1 pr2 transform_hp_rels_to_iviews hp_rels
+  let pr1 = pr_list (pr_pair pr_id Cprinter.string_of_hp_rel_def) in
+  let pr2 = pr_list (pr_triple pr_id pr_id Iprinter.string_of_view_decl) in
+  Debug.no_1 "transform_hp_rels_to_iviews" pr1 pr2 transform_hp_rels_to_iviews hp_rels
   
 let plugin_inferred_iviews views iprog =
-	let vnames = List.map (fun (p,n,_)-> p,n) views in
-	let hn_trans pname vnames hn = match hn with 
-		| IF.HRel (id,args, pos)-> 
-			if (List.exists (fun (_,n)-> (String.compare n id)==0) vnames) then 
-				let hvar,tl = match args with
-					| (IP.Var (v,_))::tl-> v,tl
-					| _ -> failwith "reverification failure due to too complex predicate arguments \n" in
-				IF.HeapNode { 
-				   IF.h_formula_heap_node = hvar;
-				   IF.h_formula_heap_name = id^"_"^pname;
-				   IF.h_formula_heap_derv = false;
-				   IF.h_formula_heap_imm = IF.ConstAnn(Mutable);
-                   IF.h_formula_heap_imm_param = [];
-				   IF.h_formula_heap_full = false;
-				   IF.h_formula_heap_with_inv = false;
-				   IF.h_formula_heap_perm = None;
-				   IF.h_formula_heap_arguments = tl;
-				   IF.h_formula_heap_pseudo_data = false;
-				   IF.h_formula_heap_label = None;
-				   IF.h_formula_heap_pos = pos}
-			else hn
-		| _ -> hn in
-	let vdecls = List.map (fun (pname,_,prd)-> { prd with 
-		 I.view_name = prd.I.view_name^"_"^pname;
-		 I.view_formula = IF.struc_formula_trans_heap_node (hn_trans pname vnames) prd.I.view_formula}) views in
-	let plug_views_proc proc = 
-	 let vnames = List.filter (fun (p,_)-> (String.compare p proc.I.proc_name)==0) vnames in
-	 let _ = print_string ("gugu: "^proc.I.proc_name^" "^(pr_list (pr_pair pr_id pr_id) vnames)^"\n") in
-	 let hn_trans = hn_trans proc.I.proc_name vnames in
-	 {proc with  I.proc_static_specs= IF.struc_formula_trans_heap_node hn_trans (IF.struc_formula_drop_infer proc.I.proc_static_specs);
-				 I.proc_dynamic_specs= IF.struc_formula_trans_heap_node hn_trans (IF.struc_formula_drop_infer proc.I.proc_dynamic_specs)} in
-	{iprog with 
-		I.prog_view_decls= iprog.I.prog_view_decls@vdecls; 
-		I.prog_proc_decls= List.map plug_views_proc iprog.I.prog_proc_decls;
-		I.prog_hp_ids = []; 
-		I.prog_hp_decls=[];} 
+  let vnames = List.map (fun (p,n,_)-> p,n) views in
+  let hn_trans pname vnames hn = match hn with 
+    | IF.HRel (id,args, pos)-> 
+        if (List.exists (fun (_,n)-> (String.compare n id)==0) vnames) then 
+          let hvar,tl = match args with
+            | (IP.Var (v,_))::tl-> v,tl
+            | _ -> failwith "reverification failure due to too complex predicate arguments \n" in
+          IF.HeapNode { 
+            IF.h_formula_heap_node = hvar;
+            IF.h_formula_heap_name = id^"_"^pname;
+            IF.h_formula_heap_deref = 0;
+            IF.h_formula_heap_derv = false;
+            IF.h_formula_heap_imm = IF.ConstAnn(Mutable);
+            IF.h_formula_heap_imm_param = [];
+            IF.h_formula_heap_full = false;
+            IF.h_formula_heap_with_inv = false;
+            IF.h_formula_heap_perm = None;
+            IF.h_formula_heap_arguments = tl;
+            IF.h_formula_heap_pseudo_data = false;
+            IF.h_formula_heap_label = None;
+            IF.h_formula_heap_pos = pos}
+        else hn
+    | _ -> hn in
+  let vdecls = List.map (fun (pname,_,prd)-> 
+    { prd with 
+        I.view_name = prd.I.view_name^"_"^pname;
+        I.view_formula = IF.struc_formula_trans_heap_node (hn_trans pname vnames) prd.I.view_formula}
+  ) views in
+  let plug_views_proc proc = 
+    let vnames = List.filter (fun (p,_)-> (String.compare p proc.I.proc_name)==0) vnames in
+    let _ = print_string ("gugu: "^proc.I.proc_name^" "^(pr_list (pr_pair pr_id pr_id) vnames)^"\n") in
+    let hn_trans = hn_trans proc.I.proc_name vnames in
+    {proc with  I.proc_static_specs= IF.struc_formula_trans_heap_node hn_trans (IF.struc_formula_drop_infer proc.I.proc_static_specs);
+                I.proc_dynamic_specs= IF.struc_formula_trans_heap_node hn_trans (IF.struc_formula_drop_infer proc.I.proc_dynamic_specs)} in
+  {iprog with 
+    I.prog_view_decls= iprog.I.prog_view_decls@vdecls; 
+    I.prog_proc_decls= List.map plug_views_proc iprog.I.prog_proc_decls;
+    I.prog_hp_ids = []; 
+    I.prog_hp_decls=[];} 
 
 let plugin_inferred_iviews views iprog =
 	let pr1 = pr_list (pr_triple pr_id pr_id pr_none) in

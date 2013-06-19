@@ -642,74 +642,91 @@ let peek_pointer_type =
              |[_;STAR,_] -> (* let _ = print_endline "Pointer found!" in *) ()
              | _ -> raise Stream.Failure)
 
+(* let get_heap_id_info (cid: ident * primed) (heap_id : (ident * int * int * Camlp4.PreCast.Loc.t)) =                                  *)
+(*   let (base_heap_id, ref_level, deref_level, l) = heap_id in                                                                         *)
+(*   if ((ref_level == 0) && (deref_level == 0)) then                                                                                   *)
+(*     (cid, base_heap_id, [])                                                                                                          *)
+(*   else if ((ref_level > 0) && (deref_level = 0) && (!is_cparser_mode)) then (                                                        *)
+(*     (* reference case, used to parse specs in C programs *)                                                                          *)
+(*     let s = ref base_heap_id in                                                                                                      *)
+(*     for i = 1 to ref_level do                                                                                                        *)
+(*       s := !s ^ "__star";                                                                                                            *)
+(*     done;                                                                                                                            *)
+(*     (cid, !s, [])                                                                                                                    *)
+(*   )                                                                                                                                  *)
+(*   else if ((ref_level = 0) && (deref_level > 0) && (!is_cparser_mode)) then (                                                        *)
+(*     (* dereference case, used to parse specs in C programs *)                                                                        *)
+(*     match base_heap_id with                                                                                                          *)
+(*     | "int"                                                                                                                          *)
+(*     | "bool"                                                                                                                         *)
+(*     | "float"                                                                                                                        *)
+(*     | "void" -> (                                                                                                                    *)
+(*         (* dereference to a basic type *)                                                                                            *)
+(*         if (deref_level = 1) then (                                                                                                  *)
+(*           (cid, base_heap_id ^ "__star", [])                                                                                         *)
+(*         )                                                                                                                            *)
+(*         else (                                                                                                                       *)
+(*           let base_heap_id = base_heap_id ^ "__star" in                                                                              *)
+(*           let s = ref base_heap_id in                                                                                                *)
+(*           let p = (fresh_name (), Unprimed) in                                                                                       *)
+(*           let p1 = ref p in                                                                                                          *)
+(*           let p2 = ref (F.P.Var (("", Unprimed), no_pos)) in                                                                         *)
+(*           let heaps = ref [] in                                                                                                      *)
+(*           for i = 3 to deref_level do                                                                                                *)
+(*             p2 := F.P.Var (!p1, (get_pos 1));                                                                                        *)
+(*             p1 := (fresh_name (), Unprimed);                                                                                         *)
+(*             s := !s ^ "__star";                                                                                                      *)
+(*             let h = F.mkHeapNode !p1 !s false (F.ConstAnn(Mutable)) false false false None [!p2] [None] None (get_pos_camlp4 l 1) in *)
+(*             heaps := !heaps @ [h];                                                                                                   *)
+(*           done;                                                                                                                      *)
+(*           s := !s ^ "__star";                                                                                                        *)
+(*           let e = F.P.Var (!p1, (get_pos 1)) in                                                                                      *)
+(*           let h =  F.mkHeapNode cid !s false (F.ConstAnn(Mutable)) false false false None [e] [None] None (get_pos_camlp4 l 1) in    *)
+(*           heaps := !heaps @ [h];                                                                                                     *)
+(*           (p, base_heap_id, !heaps)                                                                                                  *)
+(*         )                                                                                                                            *)
+(*       )                                                                                                                              *)
+(*     | _ -> (                                                                                                                         *)
+(*         (* dereference to a data structure *)                                                                                        *)
+(*         let s = ref base_heap_id in                                                                                                  *)
+(*         let p = (fresh_name (), Unprimed) in                                                                                         *)
+(*         let p1 = ref p in                                                                                                            *)
+(*         let p2 = ref (F.P.Var (("", Unprimed), no_pos)) in                                                                           *)
+(*         let heaps = ref [] in                                                                                                        *)
+(*         for i = 2 to deref_level do                                                                                                  *)
+(*           p2 := F.P.Var (!p1, (get_pos 1));                                                                                          *)
+(*           p1 := (fresh_name (), Unprimed);                                                                                           *)
+(*           s := !s ^ "__star";                                                                                                        *)
+(*           let h = F.mkHeapNode !p1 !s false (F.ConstAnn(Mutable)) false false false None [!p2] [None] None (get_pos_camlp4 l 1) in   *)
+(*           heaps := !heaps @ [h];                                                                                                     *)
+(*         done;                                                                                                                        *)
+(*         s := !s ^ "__star";                                                                                                          *)
+(*         let e = F.P.Var (!p1, (get_pos 1)) in                                                                                        *)
+(*         let h =  F.mkHeapNode cid !s false (F.ConstAnn(Mutable)) false false false None [e] [None] None (get_pos_camlp4 l 1) in      *)
+(*         heaps := !heaps @ [h];                                                                                                       *)
+(*         (p, base_heap_id, !heaps)                                                                                                    *)
+(*       )                                                                                                                              *)
+(*   )                                                                                                                                  *)
+(*   else                                                                                                                               *)
+(*     report_error (get_pos_camlp4 l 1) "unexpected heap_id"                                                                           *)
+
 let get_heap_id_info (cid: ident * primed) (heap_id : (ident * int * int * Camlp4.PreCast.Loc.t)) =
   let (base_heap_id, ref_level, deref_level, l) = heap_id in
   if ((ref_level == 0) && (deref_level == 0)) then
-    (cid, base_heap_id, [])
+    (cid, base_heap_id, 0)
   else if ((ref_level > 0) && (deref_level = 0) && (!is_cparser_mode)) then (
     (* reference case, used to parse specs in C programs *)
     let s = ref base_heap_id in
     for i = 1 to ref_level do
       s := !s ^ "__star";
     done;
-    (cid, !s, [])
+    (cid, !s, 0)
   )
-  else if ((ref_level = 0) && (deref_level > 0) && (!is_cparser_mode)) then (
+  else if ((ref_level = 0) && (deref_level > 0) && (!is_cparser_mode)) then
     (* dereference case, used to parse specs in C programs *)
-    match base_heap_id with
-    | "int"
-    | "bool"
-    | "float"
-    | "void" -> (
-        (* dereference to a basic type *)
-        if (deref_level = 1) then (
-          (cid, base_heap_id ^ "__star", [])
-        ) 
-        else (
-          let base_heap_id = base_heap_id ^ "__star" in
-          let s = ref base_heap_id in
-          let p = (fresh_name (), Unprimed) in
-          let p1 = ref p in
-          let p2 = ref (F.P.Var (("", Unprimed), no_pos)) in
-          let heaps = ref [] in
-          for i = 3 to deref_level do
-            p2 := F.P.Var (!p1, (get_pos 1));
-            p1 := (fresh_name (), Unprimed);
-            s := !s ^ "__star";
-            let h = F.mkHeapNode !p1 !s false (F.ConstAnn(Mutable)) false false false None [!p2] [None] None (get_pos_camlp4 l 1) in
-            heaps := !heaps @ [h];
-          done;
-          s := !s ^ "__star";
-          let e = F.P.Var (!p1, (get_pos 1)) in
-          let h =  F.mkHeapNode cid !s false (F.ConstAnn(Mutable)) false false false None [e] [None] None (get_pos_camlp4 l 1) in
-          heaps := !heaps @ [h];
-          (p, base_heap_id, !heaps)
-        )
-      )
-    | _ -> (
-        (* dereference to a data structure *)
-        let s = ref base_heap_id in
-        let p = (fresh_name (), Unprimed) in
-        let p1 = ref p in
-        let p2 = ref (F.P.Var (("", Unprimed), no_pos)) in
-        let heaps = ref [] in
-        for i = 2 to deref_level do
-          p2 := F.P.Var (!p1, (get_pos 1));
-          p1 := (fresh_name (), Unprimed);
-          s := !s ^ "__star";
-          let h = F.mkHeapNode !p1 !s false (F.ConstAnn(Mutable)) false false false None [!p2] [None] None (get_pos_camlp4 l 1) in
-          heaps := !heaps @ [h];
-        done;
-        s := !s ^ "__star";
-        let e = F.P.Var (!p1, (get_pos 1)) in
-        let h =  F.mkHeapNode cid !s false (F.ConstAnn(Mutable)) false false false None [e] [None] None (get_pos_camlp4 l 1) in
-        heaps := !heaps @ [h];
-        (p, base_heap_id, !heaps)
-      )
-  )
+    (cid, base_heap_id, deref_level)
   else
     report_error (get_pos_camlp4 l 1) "unexpected heap_id"
-
 
 (* Determine whether an ineq e1!=e2 *)
 (* is a linking constraints         *)
@@ -1332,19 +1349,16 @@ simple_heap_constr_imm:
   [[ peek_heap; c=cid; `COLONCOLON; hid = heap_id; frac = opt_perm; `LT; hl= opt_data_h_args; `GT; annl = ann_heap_list; dr= opt_derv; ofl= opt_formula_label ->
        let imm_opt = get_heap_ann annl in
        let frac = if (Perm.allow_perm ()) then frac else empty_iperm () in
-       let (c, hid, heaps) = get_heap_id_info c hid in
-       let h = (
-         match hl with
-         | ([],t) -> 
-             let t11, t12 = List.split t in
-             let t21, t22 = List.split t12 in
-             let t3 = List.combine t11 t21 in
-             F.mkHeapNode2 c hid dr imm_opt false false false frac t3 t22 ofl  (get_pos_camlp4 _loc 2)
-         | (t,_)  -> 
-             let t1, t2 = List.split t in 
-             F.mkHeapNode c hid dr imm_opt false false false frac t1 t2 ofl (get_pos_camlp4 _loc 2)
-       ) in
-       List.fold_left (fun x y -> F.mkStar x y (get_pos_camlp4 _loc 2)) h heaps
+       let (c, hid, deref) = get_heap_id_info c hid in
+       match hl with
+       | ([],t) -> 
+           let t11, t12 = List.split t in
+           let t21, t22 = List.split t12 in
+           let t3 = List.combine t11 t21 in
+           F.mkHeapNode2 c hid deref dr imm_opt false false false frac t3 t22 ofl  (get_pos_camlp4 _loc 2)
+       | (t,_)  -> 
+           let t1, t2 = List.split t in 
+           F.mkHeapNode c hid deref dr imm_opt false false false frac t1 t2 ofl (get_pos_camlp4 _loc 2)
   ]];
 
 (*LDK: add frac for fractional permission*)
@@ -1354,43 +1368,34 @@ simple_heap_constr:
        (*ignore permission if applicable*)
        let frac = if (Perm.allow_perm ())then frac else empty_iperm () in
        let imm_opt = get_heap_ann annl in
-       let (c, hid, heaps) = get_heap_id_info c hid in
-       let h = (
-         match hl with
-         (* WN : HeapNode2 is for d<field=v*> *)
-         (*  p<> can be either node or predicate *)
-         | ([],[]) -> F.mkHeapNode c hid dr imm_opt false false false frac [] [] ofl (get_pos_camlp4 _loc 2)
-         | ([],t) -> F.mkHeapNode2 c hid dr imm_opt false false false frac t [] ofl (get_pos_camlp4 _loc 2)
-         | (t,_)  -> F.mkHeapNode c hid dr imm_opt false false false frac t [] ofl (get_pos_camlp4 _loc 2)
-       ) in
-       List.fold_left (fun x y -> F.mkStar x y (get_pos_camlp4 _loc 2)) h heaps
+       let (c, hid, deref) = get_heap_id_info c hid in
+       match hl with
+       (* WN : HeapNode2 is for d<field=v*> *)
+       (*  p<> can be either node or predicate *)
+       | ([],[]) -> F.mkHeapNode c hid deref dr imm_opt false false false frac [] [] ofl (get_pos_camlp4 _loc 2)
+       | ([],t) -> F.mkHeapNode2 c hid deref dr imm_opt false false false frac t [] ofl (get_pos_camlp4 _loc 2)
+       | (t,_)  -> F.mkHeapNode c hid deref dr imm_opt false false false frac t [] ofl (get_pos_camlp4 _loc 2)
      )
    | peek_heap; c=cid; `COLONCOLON; hid = heap_id; simple2; frac= opt_perm; `LT; hl= opt_data_h_args; `GT;  annl = ann_heap_list; dr=opt_derv; ofl= opt_formula_label -> (
         (*ignore permission if applicable*)
         let frac = if (Perm.allow_perm ())then frac else empty_iperm () in
         let imm_opt = get_heap_ann annl in
-        let (c, hid, heaps) = get_heap_id_info c hid in
-        let h = (
-          match hl with
-          | ([], t) -> 
-              let t11, t12 = List.split t in  
-              let t21, t22 = List.split t12 in 
-              let t3 = List.combine t11 t21 in  
-              F.mkHeapNode2 c hid dr imm_opt false false false frac t3 t22 ofl (get_pos_camlp4 _loc 2)
-          | (t, _)  ->
-              let t1, t2 = List.split t in  
-              F.mkHeapNode c hid dr imm_opt false false false frac t1 t2 ofl (get_pos_camlp4 _loc 2)
-        ) in
-        List.fold_left (fun x y -> F.mkStar x y (get_pos_camlp4 _loc 2)) h heaps
+        let (c, hid, deref) = get_heap_id_info c hid in
+        match hl with
+        | ([], t) -> 
+            let t11, t12 = List.split t in  
+            let t21, t22 = List.split t12 in 
+            let t3 = List.combine t11 t21 in  
+            F.mkHeapNode2 c hid deref dr imm_opt false false false frac t3 t22 ofl (get_pos_camlp4 _loc 2)
+        | (t, _)  ->
+            let t1, t2 = List.split t in  
+            F.mkHeapNode c hid deref dr imm_opt false false false frac t1 t2 ofl (get_pos_camlp4 _loc 2)
      )
    | peek_heap; c=cid; `COLONCOLON; hid = heap_id; simple2; frac= opt_perm;`LT; hal=opt_general_h_args; `GT; dr=opt_derv; ofl = opt_formula_label -> (
-       let (c, hid, heaps) = get_heap_id_info c hid in
-       let h = (
-         match hal with
-         | ([],t) -> F.mkHeapNode2 c hid dr (F.ConstAnn(Mutable)) false false false frac t [] ofl (get_pos_camlp4 _loc 2)
-         | (t,_)  -> F.mkHeapNode c hid dr (F.ConstAnn(Mutable)) false false false frac t [] ofl (get_pos_camlp4 _loc 2)
-       ) in
-       List.fold_left (fun x y -> F.mkStar x y (get_pos_camlp4 _loc 2)) h heaps
+       let (c, hid, deref) = get_heap_id_info c hid in
+       match hal with
+       | ([],t) -> F.mkHeapNode2 c hid deref dr (F.ConstAnn(Mutable)) false false false frac t [] ofl (get_pos_camlp4 _loc 2)
+       | (t,_)  -> F.mkHeapNode c hid deref dr (F.ConstAnn(Mutable)) false false false frac t [] ofl (get_pos_camlp4 _loc 2)
      )
    | t = ho_fct_header -> (
        let frac = (
@@ -1399,20 +1404,20 @@ simple_heap_constr:
          else 
            empty_iperm ()
        ) in
-       F.mkHeapNode ("",Primed) "" false (*dr*) (F.ConstAnn(Mutable)) false false false frac [] [] None  (get_pos_camlp4 _loc 1)
+       F.mkHeapNode ("",Primed) "" 0 false (*dr*) (F.ConstAnn(Mutable)) false false false frac [] [] None  (get_pos_camlp4 _loc 1)
      )
      (* An Hoa : Abbreviated syntax. We translate into an empty type "" which will be filled up later. *)
    | peek_heap; c=cid; `COLONCOLON; simple2; frac= opt_perm; `LT; hl= opt_general_h_args; `GT;  annl = ann_heap_list; dr=opt_derv; ofl= opt_formula_label -> (
        let frac = if (Perm.allow_perm ()) then frac else empty_iperm () in
        let imm_opt = get_heap_ann annl in
        match hl with
-       | ([],t) -> F.mkHeapNode2 c generic_pointer_type_name dr imm_opt false false false frac t [] ofl (get_pos_camlp4 _loc 2)
-       | (t,_)  -> F.mkHeapNode c generic_pointer_type_name dr imm_opt false false false frac t [] ofl (get_pos_camlp4 _loc 2)
+       | ([],t) -> F.mkHeapNode2 c generic_pointer_type_name 0 dr imm_opt false false false frac t [] ofl (get_pos_camlp4 _loc 2)
+       | (t,_)  -> F.mkHeapNode c generic_pointer_type_name 0 dr imm_opt false false false frac t [] ofl (get_pos_camlp4 _loc 2)
      )
    | peek_heap; c=cid; `COLONCOLON; simple2; frac= opt_perm; `LT; hal=opt_general_h_args; `GT; dr=opt_derv; ofl = opt_formula_label -> (
        match hal with
-       | ([],t) -> F.mkHeapNode2 c generic_pointer_type_name dr (F.ConstAnn(Mutable)) false false false frac t [] ofl (get_pos_camlp4 _loc 2)
-       | (t,_)  -> F.mkHeapNode c generic_pointer_type_name dr (F.ConstAnn(Mutable)) false false false frac t [] ofl (get_pos_camlp4 _loc 2)
+       | ([],t) -> F.mkHeapNode2 c generic_pointer_type_name 0 dr (F.ConstAnn(Mutable)) false false false frac t [] ofl (get_pos_camlp4 _loc 2)
+       | (t,_)  -> F.mkHeapNode c generic_pointer_type_name 0 dr (F.ConstAnn(Mutable)) false false false frac t [] ofl (get_pos_camlp4 _loc 2)
      )
    | `IDENTIFIER id; `OPAREN; cl = opt_cexp_list; `CPAREN -> F.HRel(id, cl, (get_pos_camlp4 _loc 2))
    | `HTRUE -> F.HTrue

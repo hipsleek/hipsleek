@@ -356,28 +356,38 @@ let rec string_of_h_formula = function
         "(" ^ (string_of_h_formula f1) ^ ") ; (" ^ (string_of_h_formula f2) ^ ")"
   | F.HeapNode ({F.h_formula_heap_node = x;
                  F.h_formula_heap_name = id;
+                 F.h_formula_heap_deref = deref;
                  F.h_formula_heap_perm = perm; (*LDK*)
                  F.h_formula_heap_arguments = pl;
                  F.h_formula_heap_imm = imm;
-         F.h_formula_heap_imm_param = ann_param;
+                 F.h_formula_heap_imm_param = ann_param;
                  F.h_formula_heap_label = pi;
                  F.h_formula_heap_pos = l}) ->
       let perm_str = string_of_iperm perm in
-      ((string_of_id x)
-    ^ "::" ^ id ^ perm_str ^ "<" ^ (string_of_data_param_list pl ann_param) ^ ">" ^ (string_of_imm imm)^"[HeapNode1]")
+      let deref_str = ref "" in
+      for i = 1 to deref do
+        deref_str := !deref_str ^ "^";
+      done;
+      ((string_of_id x) ^ "::" ^ id ^ !deref_str ^ perm_str 
+      ^ "<" ^ (string_of_data_param_list pl ann_param) ^ ">" ^ (string_of_imm imm)^"[HeapNode1]")
   | F.HeapNode2 ({F.h_formula_heap2_node = xid;
                   F.h_formula_heap2_name = id;
+                  F.h_formula_heap2_deref = deref;
                   F.h_formula_heap2_label = pi;
                   F.h_formula_heap2_imm = imm;
-		  F.h_formula_heap2_imm_param = ann_param;
+                  F.h_formula_heap2_imm_param = ann_param;
                   F.h_formula_heap2_perm = perm; (*LDK*)
                   F.h_formula_heap2_arguments = args}) ->
       let tmp1 = List.map (fun (f, e) -> f ^ "=" ^ (string_of_formula_exp e)) args in
       let tmp2 = String.concat ", " tmp1 in
       let perm_str = string_of_iperm perm in
+      let deref_str = ref "" in
+      for i = 1 to deref do
+        deref_str := !deref_str ^ "^";
+      done;
       string_of_formula_label_opt pi
-        ((string_of_id xid)
-         ^ "::" ^ id ^perm_str ^  "<" ^ tmp2 ^ ">"  ^ (string_of_imm imm)^"[HeapNode2]")
+        ((string_of_id xid) ^ "::" ^ id ^ !deref_str ^ perm_str
+        ^ "<" ^ tmp2 ^ ">"  ^ (string_of_imm imm)^"[HeapNode2]")
   | F.HRel (r, args, _) -> "HRel " ^ r ^ "(" ^ (String.concat "," (List.map string_of_formula_exp args)) ^ ")"
   | F.HTrue -> "htrue"
   | F.HFalse -> "hfalse"
