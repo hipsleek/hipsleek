@@ -25,7 +25,7 @@ node zip (node x, node y)
 //requires l1::ltwoB<l2>  ensures res::ltwoB<l2> & res=l1;
 //infer [HL] requires x::ltwoB<y>  ensures res::ltwoB<y> & res=x;
 {
-   if (x==null) return null;
+   if (x==null) return x;
    else {
 	//assume false;
      int n1=x.val;

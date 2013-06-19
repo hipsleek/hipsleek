@@ -960,3 +960,15 @@ Since y is instantiating. Perhaps, we should have a special SPLIT
 that preserves its data using a special predicate HL(y).
  H1(x,y)&x=null  --> HL(y)
  HL(y) & x=null & res=null --> G1(x,y,res)
+
+=============================================================
+# zip1d.slk:
+
+(2) Also, for G, we seem to lose the relation x=r. Why is it missing??
+ EXPECTING:
+ G1(x_180,y_181,res_183) ::= 
+ emp&x_180=null  //& x=r
+ or y_181::node<val_25_826,next_25_827>@M * x_180::node<val_24_819,nn>@M * 
+    (G1(nn,next_25_827,nn))  //& x=r
+
+

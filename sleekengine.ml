@@ -697,12 +697,14 @@ let process_shape_infer pre_hps post_hps=
   let sel_hps, sel_post_hps = SAU.get_pre_post pre_hps post_hps hp_lst_assume in
   let new_constrs, unk_map, unk_hpargs = SAC.detect_dangling_pred hp_lst_assume sel_hps [] in
   let ls_hprel, ls_inferred_hps, dropped_hps =
-    let infer_shape_fnc =  if not (!Globals.sa_old) then
-      Sa2.infer_shapes
-    else Sa2.infer_shapes (* Sa.infer_hps *)
-    in
-    infer_shape_fnc !cprog "" new_constrs
-        sel_hps sel_post_hps unk_map unk_hpargs true false
+    if List.length sel_hps> 0 && List.length hp_lst_assume > 0 then
+      let infer_shape_fnc =  if not (!Globals.sa_old) then
+        Sa2.infer_shapes
+      else Sa2.infer_shapes (* Sa.infer_hps *)
+      in
+      infer_shape_fnc !cprog "" new_constrs
+          sel_hps sel_post_hps unk_map unk_hpargs true false
+    else [],[],[]
   in
   let _ = if not (!Globals.sa_old) then
     begin
