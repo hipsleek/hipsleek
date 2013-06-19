@@ -6,7 +6,8 @@ import getopt
 
 
 SIZE_LIMIT = 1048576 # commit files of max 1MB, otherwise warn the user
-NOF_LIMIT = 10 # number of files limit: commit max NOF_LIMIT modified/added/deleted files without warning the user 
+NOF_LIMIT = 10 # number of files limit: commit max NOF_LIMIT modified/added/deleted files without warning the user
+CONTINUE = "Cont"
 
 
 temp_file = "commit_temp"
@@ -38,7 +39,7 @@ if len(log_message) <= 0 :
 
 commit_command = "hg commit -m \"" + log_message + "\"" # the commit command
 
-#check for modified files (size of modified files does not produce any warning)
+#check for modified files 
 print "Checking hg stat for added/modified/deleted files... "
 subprocess.call("hg stat -mn  > " + temp_file, executable="bash", shell=True)
 
@@ -77,21 +78,21 @@ for line in f:
     nof += 1
     print "D " + line.rstrip('\n')
 
-answ = "Continue"
-question = "Are you sure you want to continue with this commit? (Continue/no)"
+answ = CONTINUE
+question = "\nAre you sure you want to continue with this commit? (" + CONTINUE + "/no)"
 
 if (nof == 0):
     print "Nothing changed"
     answ = "no"
 elif (nof >= NOF_LIMIT):
-    answ = raw_input ("WARNING: Trying to commit more than " + str(nof) +  " files.\n" + question)
+    answ = raw_input ("\nWARNING: Trying to commit more than " + str(nof) +  " files.\n" + question)
 elif (size_warning):
-    answ = raw_input ("WARNING: Trying to commit files larger than 1 MB. \n" + question)
+    answ = raw_input ("\nWARNING: Trying to commit files larger than 1 MB. \n(use \'hg revert <file-name>\' to cancel a pending addition or \'hg revert --all\' to revert the whole repo)\n" + question)
 elif (force_verif):
     answ = raw_input (question)
 
 
-if answ == "Continue":
+if answ == CONTINUE:
     subprocess.call( commit_command, executable="bash", shell=True)
 else:
     print "Commit aborted"
