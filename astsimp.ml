@@ -1224,7 +1224,7 @@ and trans_view_x (prog : I.prog_decl) (vdef : I.view_decl) : C.view_decl =
       let pos = IF.pos_of_struc_formula view_formula1 in
       let view_sv_vars = List.map (fun c-> trans_var (c,Unprimed) n_tl pos) vdef.I.view_vars in
       let self_c_var = Cpure.SpecVar ((Named data_name), self, Unprimed) in
-      let _ = 
+      let _ =
         let vs1 = (CF.struc_fv cf) in
         let vs2 = (self_c_var::view_sv_vars) in
         let vs1a = CP.fv inv_pf in
@@ -1994,6 +1994,8 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
         let lock_vars = [waitlevel_var;lsmu_var;ls_var] in
         (**************************)
         let ffv = Gen.BList.difference_eq cmp (*(CF.struc_fv_infer final_static_specs_list)*) struc_fv (lock_vars@((cret_type,res_name)::(Named raisable_class,eres_name)::args2)) in
+        (*filter out holes (#) *)
+        let ffv = List.filter (fun v -> not (CP.is_hole_spec_var v)) ffv in
         if (ffv!=[]) then 
           Error.report_error { 
               Err.error_loc = no_pos;
@@ -2433,7 +2435,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
                         let fs,remf,remt = compact_field_access_sequence prog lhst fl in
                         if (remf = "") then [] 
                         else I.look_up_all_fields prog (match remt with
-                          | Named c -> I.look_up_data_def_raw prog.I.prog_data_decls c
+                          | Named c -> I.look_up_data_def_raw prog.I.prog_data_decls c 0
                           | _ -> failwith "ERror!")
                   | _ -> failwith "expand_field_list: unexpected pattern"
               else if (is_member_exp rhs) then
@@ -2447,7 +2449,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
                         let fs,remf,remt = compact_field_access_sequence prog rhst fr in
                         if (remf = "") then []
                         else I.look_up_all_fields prog (match remt with
-                          | Named c -> I.look_up_data_def_raw prog.I.prog_data_decls c
+                          | Named c -> I.look_up_data_def_raw prog.I.prog_data_decls c 0
                           | _ -> failwith "ERror!")
                   | _ -> failwith "expand_field_list: unexpected pattern"
               else []
@@ -4489,247 +4491,341 @@ and linearize_formula (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_var_
 and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_var_type_list) : (spec_var_type_list * CF.formula) =
   let rec match_exp (hargs : (IP.exp * Label_only.spec_label) list) pos : (CP.spec_var list) =
     match hargs with
-      | (e, _) :: rest ->
-            let e_hvars = match e with
-              | IP.Var ((ve, pe), pos_e) -> trans_var_safe (ve, pe) UNK tlist pos_e
-              | _ -> report_error (IF.pos_of_formula f0)("malfunction with float out exp: "^(Iprinter.string_of_formula f0))in
-            let rest_hvars = match_exp rest pos in
-            let hvars = e_hvars :: rest_hvars in
-            hvars
-      | [] -> [] in
-  let rec linearize_heap (f : IF.h_formula) pos (tl:spec_var_type_list) : ( CF.h_formula * CF.t_formula) = 
-    let res = (*let _ = print_string("H_formula: "^(Iprinter.string_of_h_formula f)^"\n") in*)
+    | (e, _) :: rest ->
+        let e_hvars = match e with
+          | IP.Var ((ve, pe), pos_e) -> trans_var_safe (ve, pe) UNK tlist pos_e
+          | _ -> report_error (IF.pos_of_formula f0)("malfunction with float out exp: "^(Iprinter.string_of_formula f0))in
+        let rest_hvars = match_exp rest pos in
+        let hvars = e_hvars :: rest_hvars in
+        hvars
+    | [] -> [] in
+  let expand_dereference_node (f: IF.h_formula) pos : IF.h_formula = (
+    match f with
+    | IF.HeapNode {IF.h_formula_heap_node = n;
+                   IF.h_formula_heap_name = c;
+                   IF.h_formula_heap_deref = deref;
+                   IF.h_formula_heap_derv = dr;
+                   IF.h_formula_heap_imm = imm;
+                   IF.h_formula_heap_imm_param = ann_param;
+                   IF.h_formula_heap_perm = perm; (*LDK*)
+                   IF.h_formula_heap_arguments = exps;
+                   IF.h_formula_heap_full = full;
+                   IF.h_formula_heap_pseudo_data = pd;
+                   IF.h_formula_heap_with_inv = inv;
+                   IF.h_formula_heap_pos = l;
+                   IF.h_formula_heap_label = pi;} -> (
+        if (c = Parser.generic_pointer_type_name) then
+          report_error l "expand_dereference_node: unexpected generic pointer"
+        else if (deref > 0) then (
+          let base_heap_id = (
+            try
+              let vdef = I.look_up_view_def_raw 9 prog.I.prog_view_decls c in
+              if vdef.I.view_data_name = "" then 
+                (fill_view_param_types vdef; vdef.I.view_data_name)
+              else vdef.I.view_data_name
+            with _ -> c
+          ) in
+          let _ = print_endline ("== base_heap_id " ^ base_heap_id) in
+          let expanded_heap = (
+            match base_heap_id with
+            | "int"
+            | "bool"
+            | "float"
+            | "void" -> (
+                (* dereference to a basic type *)
+                if (deref = 1) then (
+                  let base_heap_id = base_heap_id ^ "__star" in
+                  IF.mkHeapNode n base_heap_id 0 dr imm full inv pd perm exps ann_param pi l
+                )
+                else (
+                  let base_heap_id = base_heap_id ^ "__star" in
+                  let s = ref base_heap_id in
+                  let fresh_var = ("#" ^ fresh_name ()) in
+                  let p = (fresh_var, Unprimed) in
+                  let p1 = ref p in
+                  let p2 = ref (IF.P.Var (("", Unprimed), l)) in
+                  let heaps = ref [] in
+                  for i = 3 to deref do
+                    p2 := IF.P.Var (!p1, l);
+                    let fresh_var = ("#" ^ fresh_name ()) in
+                    p1 := (fresh_var, Unprimed);
+                    s := !s ^ "__star";
+                    let h = IF.mkHeapNode !p1 !s 0 false (IF.ConstAnn(Mutable)) false false false None [!p2] [None] None l in
+                    heaps := !heaps @ [h];
+                  done;
+                  s := !s ^ "__star";
+                  let e = IF.P.Var (!p1, l) in
+                  let h1 = IF.mkHeapNode n !s 0 false (IF.ConstAnn(Mutable)) false false false None [e] [None] None l in
+                  let h2 = IF.mkHeapNode p base_heap_id 0 dr imm full inv pd perm exps ann_param pi l in
+                  List.fold_left (fun f1 f2 -> IF.mkStar f1 f2 l) h1 (!heaps @ [h2])
+                )
+              )
+            | _ -> (
+                (* dereference to a data structure *)
+                let s = ref base_heap_id in
+                let fresh_var = ("#" ^ fresh_name ()) in
+                let p = (fresh_var, Unprimed) in
+                let p1 = ref p in
+                let p2 = ref (IF.P.Var (("", Unprimed), l)) in
+                let heaps = ref [] in
+                for i = 2 to deref do
+                  p2 := IF.P.Var (!p1, l);
+                  let fresh_var = ("#" ^ fresh_name ()) in
+                  p1 := (fresh_var, Unprimed);
+                  s := !s ^ "__star";
+                  let h = IF.mkHeapNode !p1 !s 0 false (IF.ConstAnn(Mutable)) false false false None [!p2] [None] None l in
+                  heaps := !heaps @ [h];
+                done;
+                s := !s ^ "__star";
+                let e = IF.P.Var (!p1, l) in
+                let h1 = IF.mkHeapNode n !s 0 false (IF.ConstAnn(Mutable)) false false false None [e] [None] None l in
+                let h2 = IF.mkHeapNode p base_heap_id 0 dr imm full inv pd perm exps ann_param pi l in
+                List.fold_left (fun f1 f2 -> IF.mkStar f1 f2 l) h1 (!heaps @ [h2])
+              )
+          ) in
+          (* return *)
+          expanded_heap
+        )
+        else
+          report_error l "expand_dereference_node: expect a dereference HeapNode"
+      )
+    | _ -> report_error pos "expand_dereference_node: expect a HeapNode"
+  ) in
+  let rec linearize_heap (f : IF.h_formula) pos (tl:spec_var_type_list) : ( CF.h_formula * CF.t_formula) = ( 
+    let res = ( (*let _ = print_string("H_formula: "^(Iprinter.string_of_h_formula f)^"\n") in*)
       match f with
-        | IF.HeapNode2 h2 -> report_error (IF.pos_of_formula f0) "malfunction with convert to heap node"
-        | IF.HeapNode {
-              IF.h_formula_heap_node = (v, p);
-              IF.h_formula_heap_name = c;
-              IF.h_formula_heap_derv = dr;
-              IF.h_formula_heap_imm = imm;
-              IF.h_formula_heap_imm_param = ann_param;
-              IF.h_formula_heap_perm = perm; (*LDK*)
-              IF.h_formula_heap_arguments = exps;
-              IF.h_formula_heap_full = full;
-              IF.h_formula_heap_pos = pos;
-              IF.h_formula_heap_label = pi;} ->
-              (* An Hoa : Handle field access *)
-              (* ASSUMPTIONS detected: exps ARE ALL VARIABLES i.e. I.Var AFTER float_out_exp PRE-PROCESSING! *)
-              if (c = Parser.generic_pointer_type_name || String.contains v '.') then
-                let tokens = Str.split (Str.regexp "\\.") v in
-                let field_access_seq = List.filter (fun x -> I.is_not_data_type_identifier prog.I.prog_data_decls x) tokens in
-                let field_access_seq = List.tl field_access_seq in (* get rid of the root pointer as well *)
-                let rootptr = List.hd tokens in
-                let rpsi = snd(List.find(fun (v,en)->v=rootptr) tl) in
-                let rootptr_type = rpsi.sv_info_kind in
-                let rootptr_type_name = match rootptr_type with | Named c -> c | _ -> failwith ("[linearize_heap] " ^ rootptr ^ " must be a pointer.") in
-                let rootptr, p = let rl = String.length rootptr in
+      | IF.HeapNode2 h2 -> report_error (IF.pos_of_formula f0) "malfunction with convert to heap node"
+      | IF.HeapNode {IF.h_formula_heap_node = (v, p);
+                     IF.h_formula_heap_name = c;
+                     IF.h_formula_heap_deref = deref;
+                     IF.h_formula_heap_derv = dr;
+                     IF.h_formula_heap_imm = imm;
+                     IF.h_formula_heap_imm_param = ann_param;
+                     IF.h_formula_heap_perm = perm; (*LDK*)
+                     IF.h_formula_heap_arguments = exps;
+                     IF.h_formula_heap_full = full;
+                     IF.h_formula_heap_pos = pos;
+                     IF.h_formula_heap_label = pi;} ->
+          (* expand the dereference heap node first *)
+          if (deref > 0) then (
+            let f1 = expand_dereference_node f pos in
+            linearize_heap f1 pos tl
+          )
+          else (
+            (* An Hoa : Handle field access *)
+            (* ASSUMPTIONS detected: exps ARE ALL VARIABLES i.e. I.Var AFTER float_out_exp PRE-PROCESSING! *)
+            if (c = Parser.generic_pointer_type_name || String.contains v '.') then (
+              let tokens = Str.split (Str.regexp "\\.") v in
+              let field_access_seq = List.filter (fun x -> I.is_not_data_type_identifier prog.I.prog_data_decls x) tokens in
+              let field_access_seq = List.tl field_access_seq in (* get rid of the root pointer as well *)
+              let rootptr = List.hd tokens in
+              let rpsi = snd(List.find(fun (v,en)->v=rootptr) tl) in
+              let rootptr_type = rpsi.sv_info_kind in
+              let rootptr_type_name = match rootptr_type with | Named c -> c | _ -> failwith ("[linearize_heap] " ^ rootptr ^ " must be a pointer.") in
+              let rootptr, p = 
+                let rl = String.length rootptr in
                 if rootptr.[rl-1] = '\'' then
                   (String.sub rootptr 0 (rl - 1), Primed)
                 else
                   (rootptr, Unprimed) in 
-                let field_offset = I.compute_field_seq_offset prog.I.prog_data_decls rootptr_type_name field_access_seq in
-                let num_ptrs = I.get_typ_size prog.I.prog_data_decls rootptr_type in
-                (* An Hoa : The rest are copied from the original code with modification to account for the holes *)
-                let labels = List.map (fun _ -> Label_only.empty_spec_label) exps in
+              let field_offset = I.compute_field_seq_offset prog.I.prog_data_decls rootptr_type_name field_access_seq in
+              let num_ptrs = I.get_typ_size prog.I.prog_data_decls rootptr_type in
+              (* An Hoa : The rest are copied from the original code with modification to account for the holes *)
+              let labels = List.map (fun _ -> Label_only.empty_spec_label) exps in
+              let hvars = match_exp (List.combine exps labels) pos in
+              (* [Internal] Create a list [x,x+1,...,x+n-1] *)
+              let rec first_naturals n x = 
+                if n = 0 then [] 
+                else x :: (first_naturals (n-1) (x+1)) in
+              (* [Internal] Extends hvars with holes and collect the list of holes! *)
+              let rec extend_and_collect_holes vs offset num_ptrs = (
+                let temp = first_naturals num_ptrs 0 in
+                let numargs = List.length vs in
+                let holes = List.fold_left (fun l i ->
+                  let d = i - offset in
+                  if (d < 0 || d >= numargs) then List.append l [i] else l
+                ) [] temp in
+                let newvs = List.map (fun i ->
+                  if (List.mem i holes) then 
+                    CP.SpecVar (UNK,"#",Unprimed)
+                  else List.nth vs (i - offset)
+                ) temp in
+                (newvs,holes) 
+              ) in
+              (* [Internal] End of function <extend_and_collect_holes> *)
+              let hvars, holes = extend_and_collect_holes hvars field_offset num_ptrs in
+              (*TO CHECK: for correctness*)
+              (*LDK: linearize perm permission as a spec var*)
+              let permvar = (
+                match perm with
+                | None -> None
+                | Some f -> 
+                    let perms = [f] in
+                    let permlabels = List.map (fun _ -> Label_only.empty_spec_label) perms in
+                    let permvars = match_exp (List.combine perms permlabels) pos in
+                    Some (List.nth permvars 0) 
+              ) in
+              let result_heap = 
+                CF.DataNode {CF.h_formula_data_node = CP.SpecVar (rootptr_type,rootptr,p);
+                             CF.h_formula_data_name = rootptr_type_name;
+                             CF.h_formula_data_derv = dr;
+                             CF.h_formula_data_imm = Immutable.iformula_ann_to_cformula_ann imm;
+                             CF.h_formula_data_param_imm = Immutable.iformula_ann_opt_to_cformula_ann_lst ann_param;
+                             CF.h_formula_data_perm = permvar; (*??? TO CHECK: temporarily*)
+                             CF.h_formula_data_origins = []; (*??? temporarily*)
+                             CF.h_formula_data_original = true; (*??? temporarily*)
+                             CF.h_formula_data_arguments = hvars;
+                             CF.h_formula_data_holes = holes;
+                             CF.h_formula_data_label = pi;
+                             CF.h_formula_data_remaining_branches = None;
+                             CF.h_formula_data_pruning_conditions = [];
+                             CF.h_formula_data_pos = pos;} in
+              let result_heap = Immutable.normalize_field_ann_heap_node result_heap in
+              (result_heap, CF.TypeTrue)
+            )
+            else (
+              (* Not a field access, proceed with the original code *)
+              try (
+                let vdef = I.look_up_view_def_raw 9 prog.I.prog_view_decls c in
+                let labels = vdef.I.view_labels in
                 let hvars = match_exp (List.combine exps labels) pos in
-                (* [Internal] Create a list [x,x+1,...,x+n-1] *)
-                let rec first_naturals n x = 
-                  if n = 0 then [] 
-                  else x :: (first_naturals (n-1) (x+1)) in
-                (* [Internal] Extends hvars with holes and collect the list of holes! *)
-                let rec extend_and_collect_holes vs offset num_ptrs =
-                  let temp = first_naturals num_ptrs 0 in
-                  let numargs = List.length vs in
-                  let holes = List.fold_left (fun l i -> let d = i - offset in
-                  if (d < 0 || d >= numargs) then List.append l [i] else l)
-                    [] temp in
-                  let newvs = List.map (fun i -> if (List.mem i holes) then 
-                    CP.SpecVar (UNK,"#",Unprimed) 
-                  else List.nth vs (i - offset)) temp in
-                  (newvs,holes) in
-                (* [Internal] End of function <extend_and_collect_holes> *)
-                let hvars, holes = extend_and_collect_holes hvars field_offset num_ptrs in
-                (*TO CHECK: for correctness*)
+                let c0 =
+                  if vdef.I.view_data_name = "" then 
+                    (fill_view_param_types vdef;
+                    vdef.I.view_data_name)
+                  else vdef.I.view_data_name in
+                let new_v = CP.SpecVar (Named c0, v, p) in
                 (*LDK: linearize perm permission as a spec var*)
                 let permvar = (match perm with
                   | None -> None
                   | Some f -> 
-                        let perms = [f] in
-                        let permlabels = List.map (fun _ -> Label_only.empty_spec_label) perms in
-                        let permvars = match_exp (List.combine perms permlabels) pos in
-                        Some (List.nth permvars 0) )
+                      let perms = f :: [] in
+                      let permlabels = List.map (fun _ -> Label_only.empty_spec_label) perms in
+                      let permvars = match_exp (List.combine perms permlabels) pos in
+                      Some (List.nth permvars 0)
+                ) in
+                let new_h =
+                  CF.ViewNode {CF.h_formula_view_node = new_v;
+                               CF.h_formula_view_name = c;
+                               CF.h_formula_view_derv = dr;
+                               CF.h_formula_view_imm = Immutable.iformula_ann_to_cformula_ann imm;
+                               CF.h_formula_view_perm = permvar; (*LDK: TO CHECK*)
+                               CF.h_formula_view_arguments = hvars;
+                               CF.h_formula_view_modes = vdef.I.view_modes;
+                               CF.h_formula_view_coercible = true;
+                               CF.h_formula_view_origins = [];
+                               CF.h_formula_view_original = true;
+                               (* CF.h_formula_view_orig_fold_num = !num_self_fold_search; *)
+                               CF.h_formula_view_lhs_case = true;
+                               CF.h_formula_view_unfold_num = 0;
+                               CF.h_formula_view_label = pi;
+                               CF.h_formula_view_pruning_conditions = [];
+                               CF.h_formula_view_remaining_branches = None;
+                               CF.h_formula_view_pos = pos;} in
+                (new_h, CF.TypeTrue)
+              )
+              with Not_found ->
+                let labels = List.map (fun _ -> Label_only.empty_spec_label) exps in
+                let hvars = match_exp (List.combine exps labels) pos in
+                let new_v = CP.SpecVar (Named c, v, p) in
+                (* An Hoa : find the holes here! *)
+                let rec collect_holes vars n = (match vars with
+                  | [] -> []
+                  | x::t -> (
+                      let th = collect_holes t (n+1) in 
+                      match x with 
+                      | CP.SpecVar (_,vn,_) -> if (vn.[0] = '#') then n::th else th 
+                    )
+                ) in
+                (*LDK: linearize perm permission as a spec var*)
+                let permvar = match perm with 
+                  | None -> None
+                  | Some f -> 
+                      let perms = f :: [] in
+                      let permlabels = List.map (fun _ -> Label_only.empty_spec_label) perms in
+                      let permvars = match_exp (List.combine perms permlabels) pos in
+                      Some (List.nth permvars 0) 
                 in
-                let result_heap = CF.DataNode {
-                    CF.h_formula_data_node = CP.SpecVar (rootptr_type,rootptr,p);
-                    CF.h_formula_data_name = rootptr_type_name;
-                    CF.h_formula_data_derv = dr;
-                    CF.h_formula_data_imm = Immutable.iformula_ann_to_cformula_ann imm;
-                            CF.h_formula_data_param_imm = Immutable.iformula_ann_opt_to_cformula_ann_lst ann_param;
-                    CF.h_formula_data_perm = permvar; (*??? TO CHECK: temporarily*)
-                            CF.h_formula_data_origins = []; (*??? temporarily*)
-                    CF.h_formula_data_original = true; (*??? temporarily*)
-                    CF.h_formula_data_arguments = hvars;
-                    CF.h_formula_data_holes = holes;
-                    CF.h_formula_data_label = pi;
-                    CF.h_formula_data_remaining_branches = None;
-                    CF.h_formula_data_pruning_conditions = [];
-                    CF.h_formula_data_pos = pos; } in
-                let result_heap = Immutable.normalize_field_ann_heap_node result_heap in
-                (result_heap, CF.TypeTrue)
-              else (* Not a field access, proceed with the original code *)
-                (try
-                  let vdef = I.look_up_view_def_raw 9 prog.I.prog_view_decls c in
-                  let labels = vdef.I.view_labels in
-                  let hvars = match_exp (List.combine exps labels) pos in
-                  let c0 =
-                    if vdef.I.view_data_name = "" then 
-                      (fill_view_param_types vdef;
-                      vdef.I.view_data_name)
-                    else vdef.I.view_data_name in
-                  let new_v = CP.SpecVar (Named c0, v, p) in
-                  (*LDK: linearize perm permission as a spec var*)
-                  let permvar = (match perm with
-                    | None -> None
-                    | Some f -> 
-                          let perms = f :: [] in
-                          let permlabels = List.map (fun _ -> Label_only.empty_spec_label) perms in
-                          let permvars = match_exp (List.combine perms permlabels) pos in
-                          Some (List.nth permvars 0) )
-                  in
-                  let new_h = CF.ViewNode {
-                      CF.h_formula_view_node = new_v;
-                      CF.h_formula_view_name = c;
-                      CF.h_formula_view_derv = dr;
-                      CF.h_formula_view_imm = Immutable.iformula_ann_to_cformula_ann imm;
-                      CF.h_formula_view_perm = permvar; (*LDK: TO CHECK*)
-                      CF.h_formula_view_arguments = hvars;
-                      CF.h_formula_view_modes = vdef.I.view_modes;
-                      CF.h_formula_view_coercible = true;
-                      CF.h_formula_view_origins = [];
-                      CF.h_formula_view_original = true;
-                      (* CF.h_formula_view_orig_fold_num = !num_self_fold_search; *)
-                      CF.h_formula_view_lhs_case = true;
-                      CF.h_formula_view_unfold_num = 0;
-                      CF.h_formula_view_label = pi;
-                      CF.h_formula_view_pruning_conditions = [];
-                      CF.h_formula_view_remaining_branches = None;
-                      CF.h_formula_view_pos = pos;}
-                  in (new_h, CF.TypeTrue)
-                with
-                  | Not_found ->
-                        let labels = List.map (fun _ -> Label_only.empty_spec_label) exps in
-                        let hvars = match_exp (List.combine exps labels) pos in
-                        let new_v = CP.SpecVar (Named c, v, p) in
-                        (* An Hoa : find the holes here! *)
-                        let rec collect_holes vars n = match vars with
-                          | [] -> []
-                          | x::t -> let th = collect_holes t (n+1) in 
-                            (match x with 
-                              | CP.SpecVar (_,vn,_) -> if (vn.[0] = '#') then n::th else th ) in
-                        (*LDK: linearize perm permission as a spec var*)
-                        let permvar = match perm with 
-                          | None -> None
-                          | Some f -> 
-                                let perms = f :: [] in
-                                let permlabels = List.map (fun _ -> Label_only.empty_spec_label) perms in
-                                let permvars = match_exp (List.combine perms permlabels) pos in
-                                Some (List.nth permvars 0) 
-                        in
-                        let holes = collect_holes hvars 0 in
-                        let new_h = CF.DataNode {
-                            CF.h_formula_data_node = new_v;
-                            CF.h_formula_data_name = c;
-                            CF.h_formula_data_derv = dr;
-                            CF.h_formula_data_imm = Immutable.iformula_ann_to_cformula_ann imm;
-                                    CF.h_formula_data_param_imm = Immutable.iformula_ann_opt_to_cformula_ann_lst ann_param;
-                            CF.h_formula_data_perm = permvar; (*LDK*)
-                            CF.h_formula_data_origins = [];
-                            CF.h_formula_data_original = true;
-                            CF.h_formula_data_arguments = hvars;
-                            CF.h_formula_data_holes = holes; (* An Hoa : Set the hole *)
-                            CF.h_formula_data_label = pi;
-                            CF.h_formula_data_remaining_branches = None;
-                            CF.h_formula_data_pruning_conditions = [];
-                            CF.h_formula_data_pos = pos;} in
+                let holes = collect_holes hvars 0 in
+                let new_h =
+                  CF.DataNode {CF.h_formula_data_node = new_v;
+                               CF.h_formula_data_name = c;
+                               CF.h_formula_data_derv = dr;
+                               CF.h_formula_data_imm = Immutable.iformula_ann_to_cformula_ann imm;
+                               CF.h_formula_data_param_imm = Immutable.iformula_ann_opt_to_cformula_ann_lst ann_param;
+                               CF.h_formula_data_perm = permvar; (*LDK*)
+                               CF.h_formula_data_origins = [];
+                               CF.h_formula_data_original = true;
+                               CF.h_formula_data_arguments = hvars;
+                               CF.h_formula_data_holes = holes; (* An Hoa : Set the hole *)
+                               CF.h_formula_data_label = pi;
+                               CF.h_formula_data_remaining_branches = None;
+                               CF.h_formula_data_pruning_conditions = [];
+                               CF.h_formula_data_pos = pos;} in
                 let new_h = Immutable.normalize_field_ann_heap_node new_h in
-                ( new_h, CF.TypeTrue))
-        | IF.Star {
-              IF.h_formula_star_h1 = f1;
-              IF.h_formula_star_h2 = f2;
-              IF.h_formula_star_pos = pos
-          } ->
-              let (lf1, type1) = linearize_heap f1 pos tl in
-              let (lf2, type2) = linearize_heap f2 pos tl in
-              let tmp_h = CF.mkStarH lf1 lf2 pos in
-              let tmp_type = CF.mkAndType type1 type2 in 
-              (tmp_h, tmp_type)
-        | IF.StarMinus {
-              IF.h_formula_starminus_h1 = f1;
-              IF.h_formula_starminus_h2 = f2;
-              IF.h_formula_starminus_pos = pos
-          } ->
-              let (lf1, type1) = linearize_heap f1 pos tl in
-              let (lf2, type2) = linearize_heap f2 pos tl in
-              let tmp_h = CF.mkStarMinusH lf1 lf2 pos 1 in
-              let tmp_type = CF.mkAndType type1 type2 in 
-              (tmp_h, tmp_type)           
-        | IF.Phase
-                {
-                    IF.h_formula_phase_rd = f1;
-                    IF.h_formula_phase_rw = f2;
-                    IF.h_formula_phase_pos = pos
-                } ->
-              let (lf1, type1) = linearize_heap f1 pos tl in
-              let (lf2, type2) = linearize_heap f2 pos tl in
-              let tmp_h = CF.mkPhaseH lf1 lf2 pos in
-              let tmp_type = CF.mkAndType type1 type2 in 
-              (tmp_h, tmp_type)
-        | IF.Conj
-                {
-                    IF.h_formula_conj_h1 = f1;
-                    IF.h_formula_conj_h2 = f2;
-                    IF.h_formula_conj_pos = pos
-                } ->
-              let (lf1, type1) = linearize_heap f1 pos tl in
-              let (lf2, type2) = linearize_heap f2 pos tl in
-              let tmp_h = CF.mkConjH lf1 lf2 pos in
-              let tmp_type = CF.mkAndType type1 type2 in 
-              (tmp_h, tmp_type)
- | IF.HRel (r, args, pos) ->    
-              let nv = trans_var_safe (r,Unprimed) HpT tl pos in
-              (* Match types of arguments with relation signature *)
-              let cpargs = trans_pure_exp_list args tl in
-              (CF.HRel (nv, cpargs, pos), CF.TypeTrue)
-              
-        | IF.ConjStar
-                {
-                    IF.h_formula_conjstar_h1 = f1;
-                    IF.h_formula_conjstar_h2 = f2;
-                    IF.h_formula_conjstar_pos = pos
-                } ->
-              let (lf1, type1) = linearize_heap f1 pos tl in
-              let (lf2, type2) = linearize_heap f2 pos tl in
-              let tmp_h = CF.mkConjStarH lf1 lf2 pos in
-              let tmp_type = CF.mkAndType type1 type2 in 
-              (tmp_h, tmp_type)
-        | IF.ConjConj
-                {
-                    IF.h_formula_conjconj_h1 = f1;
-                    IF.h_formula_conjconj_h2 = f2;
-                    IF.h_formula_conjconj_pos = pos
-                } ->
-              let (lf1, type1) = linearize_heap f1 pos tl in
-              let (lf2, type2) = linearize_heap f2 pos tl in
-              let tmp_h = CF.mkConjConjH lf1 lf2 pos in
-              let tmp_type = CF.mkAndType type1 type2 in 
-              (tmp_h, tmp_type)                       
-        | IF.HTrue ->  (CF.HTrue, CF.TypeTrue)
-        | IF.HFalse -> (CF.HFalse, CF.TypeFalse) 
-        | IF.HEmp -> (CF.HEmp, CF.TypeTrue) in 
+                (new_h, CF.TypeTrue)
+          )
+        )
+      | IF.Star {IF.h_formula_star_h1 = f1;
+                 IF.h_formula_star_h2 = f2;
+                 IF.h_formula_star_pos = pos} ->
+          let (lf1, type1) = linearize_heap f1 pos tl in
+          let (lf2, type2) = linearize_heap f2 pos tl in
+          let tmp_h = CF.mkStarH lf1 lf2 pos in
+          let tmp_type = CF.mkAndType type1 type2 in 
+          (tmp_h, tmp_type)
+      | IF.StarMinus {IF.h_formula_starminus_h1 = f1;
+                      IF.h_formula_starminus_h2 = f2;
+                      IF.h_formula_starminus_pos = pos} ->
+          let (lf1, type1) = linearize_heap f1 pos tl in
+          let (lf2, type2) = linearize_heap f2 pos tl in
+          let tmp_h = CF.mkStarMinusH lf1 lf2 pos 1 in
+          let tmp_type = CF.mkAndType type1 type2 in 
+          (tmp_h, tmp_type)
+      | IF.Phase { IF.h_formula_phase_rd = f1;
+                   IF.h_formula_phase_rw = f2;
+                   IF.h_formula_phase_pos = pos } ->
+          let (lf1, type1) = linearize_heap f1 pos tl in
+          let (lf2, type2) = linearize_heap f2 pos tl in
+          let tmp_h = CF.mkPhaseH lf1 lf2 pos in
+          let tmp_type = CF.mkAndType type1 type2 in 
+          (tmp_h, tmp_type)
+      | IF.Conj {IF.h_formula_conj_h1 = f1;
+                 IF.h_formula_conj_h2 = f2;
+                 IF.h_formula_conj_pos = pos } ->
+          let (lf1, type1) = linearize_heap f1 pos tl in
+          let (lf2, type2) = linearize_heap f2 pos tl in
+          let tmp_h = CF.mkConjH lf1 lf2 pos in
+          let tmp_type = CF.mkAndType type1 type2 in 
+          (tmp_h, tmp_type)
+      | IF.HRel (r, args, pos) ->
+          let nv = trans_var_safe (r,Unprimed) HpT tl pos in
+          (* Match types of arguments with relation signature *)
+          let cpargs = trans_pure_exp_list args tl in
+          (CF.HRel (nv, cpargs, pos), CF.TypeTrue)
+      | IF.ConjStar {IF.h_formula_conjstar_h1 = f1;
+                     IF.h_formula_conjstar_h2 = f2;
+                     IF.h_formula_conjstar_pos = pos} ->
+          let (lf1, type1) = linearize_heap f1 pos tl in
+          let (lf2, type2) = linearize_heap f2 pos tl in
+          let tmp_h = CF.mkConjStarH lf1 lf2 pos in
+          let tmp_type = CF.mkAndType type1 type2 in 
+          (tmp_h, tmp_type)
+      | IF.ConjConj {IF.h_formula_conjconj_h1 = f1;
+                     IF.h_formula_conjconj_h2 = f2;
+                     IF.h_formula_conjconj_pos = pos} ->
+          let (lf1, type1) = linearize_heap f1 pos tl in
+          let (lf2, type2) = linearize_heap f2 pos tl in
+          let tmp_h = CF.mkConjConjH lf1 lf2 pos in
+          let tmp_type = CF.mkAndType type1 type2 in 
+          (tmp_h, tmp_type)
+      | IF.HTrue ->  (CF.HTrue, CF.TypeTrue)
+      | IF.HFalse -> (CF.HFalse, CF.TypeFalse) 
+      | IF.HEmp -> (CF.HEmp, CF.TypeTrue)
+    ) in 
     res
-
-  in
-  let linearize_one_formula_x f pos (tl:spec_var_type_list) =
+  ) in
+  let linearize_one_formula_x f pos (tl:spec_var_type_list) = (
     let h = f.IF.formula_heap in
     let p = f.IF.formula_pure in
     let id = f.IF.formula_thread in
@@ -4761,14 +4857,14 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
     CF.formula_label = None;
     CF.formula_pos = pos} in
     (new_f,type_f)
-  in
-  let linearize_one_formula f pos =
+  ) in
+  let linearize_one_formula f pos = (
     let pr (a,b) = Cprinter.string_of_one_formula a in
     Debug.no_1 "linearize_one_formula" 
         Iprinter.string_of_one_formula pr
         (fun _ -> linearize_one_formula_x f pos) f
-  in
-  let linearize_base base pos (tl:spec_var_type_list) =
+  ) in
+  let linearize_base base pos (tl:spec_var_type_list) = (
     let h = base.IF.formula_base_heap in
     let p = base.IF.formula_base_pure in
     let fl = base.IF.formula_base_flow in
@@ -4780,40 +4876,36 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
     let new_p = Cpure.arith_simplify 5 new_p in
     (*let _ = print_string("\nSimpleForm: "^(Cprinter.string_of_pure_formula new_p)) in*)
     let new_fl = trans_flow_formula fl pos in
-
     let new_a,_ = List.split (List.map (fun f -> linearize_one_formula f pos tl) a) in
-    (new_h, new_p, type_f, new_fl, new_a) in
+    (new_h, new_p, type_f, new_fl, new_a)
+  ) in
   match f0 with
-    | IF.Or {
-          IF.formula_or_f1 = f1;
-          IF.formula_or_f2 = f2;
-          IF.formula_or_pos = pos } ->
+  | IF.Or {IF.formula_or_f1 = f1;
+           IF.formula_or_f2 = f2;
+           IF.formula_or_pos = pos } ->
       let (n_tl,lf1) = linearize_formula prog f1 tlist in
       let (n_tl,lf2) = linearize_formula prog f2 n_tl in
-      let result = CF.mkOr lf1 lf2 pos in (n_tl,result)
-    | IF.Base base ->
-          let pos = base.IF.formula_base_pos in
-          let nh,np,nt,nfl, na = (linearize_base base pos tlist) in
-          let np = (memoise_add_pure_N (mkMTrue pos) np)  in
-          (tlist,CF.mkBase nh np nt nfl na pos)
-    | IF.Exists {
-          IF.formula_exists_heap = h; 
-          IF.formula_exists_pure = p;
-          IF.formula_exists_flow = fl;
-          IF.formula_exists_qvars = qvars;
-          IF.formula_exists_and = a;
-          IF.formula_exists_pos = pos} ->
-          let base ={
-              IF.formula_base_heap = h;
-              IF.formula_base_pure = p;
-              IF.formula_base_flow = fl;
-              IF.formula_base_and = a;
-              IF.formula_base_pos = pos;
-          } in 
-          let nh,np,nt,nfl,na = linearize_base base pos tlist in
-          let np = memoise_add_pure_N (mkMTrue pos) np in
-          (tlist, CF.mkExists (List.map (fun c-> trans_var_safe c UNK tlist pos) qvars) nh np nt nfl na pos)
-              
+      let result = CF.mkOr lf1 lf2 pos in
+      (n_tl,result)
+  | IF.Base base ->
+      let pos = base.IF.formula_base_pos in
+      let nh,np,nt,nfl, na = (linearize_base base pos tlist) in
+      let np = (memoise_add_pure_N (mkMTrue pos) np)  in
+      (tlist,CF.mkBase nh np nt nfl na pos)
+  | IF.Exists {IF.formula_exists_heap = h; 
+               IF.formula_exists_pure = p;
+               IF.formula_exists_flow = fl;
+               IF.formula_exists_qvars = qvars;
+               IF.formula_exists_and = a;
+               IF.formula_exists_pos = pos} ->
+      let base ={IF.formula_base_heap = h;
+                 IF.formula_base_pure = p;
+                 IF.formula_base_flow = fl;
+                 IF.formula_base_and = a;
+                 IF.formula_base_pos = pos;} in 
+      let nh,np,nt,nfl,na = linearize_base base pos tlist in
+      let np = memoise_add_pure_N (mkMTrue pos) np in
+      (tlist, CF.mkExists (List.map (fun c-> trans_var_safe c UNK tlist pos) qvars) nh np nt nfl na pos)
 
 and trans_flow_formula (f0:IF.flow_formula) pos : CF.flow_formula = 
   { CF.formula_flow_interval = exlist #  get_hash f0;

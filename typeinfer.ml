@@ -111,8 +111,7 @@ let node2_to_node_x prog (h0 : IF.h_formula_heap2) : IF.h_formula_heap =
       | [] -> []
   in
   try
-    let vdef =
-    I.look_up_view_def_raw 6 prog.I.prog_view_decls h0.IF.h_formula_heap2_name in
+    let vdef = I.look_up_view_def_raw 6 prog.I.prog_view_decls h0.IF.h_formula_heap2_name in
     let args = h0.IF.h_formula_heap2_arguments in
     let hargs, hanns =
       if args==[] then ([],[]) (* don't convert if empty *)
@@ -136,8 +135,8 @@ let node2_to_node_x prog (h0 : IF.h_formula_heap2) : IF.h_formula_heap =
   with
     | Not_found ->
         let ddef =
-            I.look_up_data_def 6 h0.IF.h_formula_heap2_pos prog.I.prog_data_decls
-              h0.IF.h_formula_heap2_name in
+          I.look_up_data_def 6 h0.IF.h_formula_heap2_pos prog.I.prog_data_decls
+            h0.IF.h_formula_heap2_name in
         let params = List.map I.get_field_name ddef.I.data_fields (* An Hoa : un-hard-code *) in
         let args_ann = List.combine  h0.IF.h_formula_heap2_arguments h0.IF.h_formula_heap2_imm_param in
         let hargs, hanns = List.split (match_args params args_ann) in
@@ -393,7 +392,7 @@ and trans_type (prog : I.prog_decl) (t : typ) (pos : loc) : typ =
   match t with
     | Named c ->
           (try
-            let _ = I.look_up_data_def_raw prog.I.prog_data_decls c
+            let _ = I.look_up_data_def_raw prog.I.prog_data_decls c 0
             in Named c
           with
             | Not_found ->
@@ -864,24 +863,27 @@ and gather_type_info_struc_f_x prog (f0:IF.struc_formula) tlist =
     (* check_shallow_var := true *)
   end
 
-and try_unify_data_type_args prog c ddef v ies tlist pos =
+and try_unify_data_type_args prog c ddef v deref ies tlist pos =
   (* An Hoa : problem detected - have to expand the inline fields as well, fix in look_up_all_fields. *)
+  let c = (  
+    let deref_str = ref "" in
+    for i = 1 to deref do
+      deref_str := !deref_str ^ "__star";
+    done;
+    c ^ !deref_str
+  ) in
   let (n_tl,_) = gather_type_info_var v tlist ((Named c)) pos in
-  let fields = I.look_up_all_fields prog ddef
-  in 
-  (try 
+  let fields = I.look_up_all_fields prog ddef in
+  try 
     let f tl arg ((ty,_),_,_,_)=
       (let (n_tl,_) = gather_type_info_exp arg tl ty in n_tl)
     in (List.fold_left2 f n_tl ies fields)
   with | Invalid_argument _ ->
-      Err.report_error
-          {
-              Err.error_loc = pos;
-              Err.error_text =
-                  "number of arguments for data " ^
-                      c ^ " does not match"^(pr_list (fun c->c)(List.map Iprinter.string_of_formula_exp ies));
-          }
-  )
+    Err.report_error {
+       Err.error_loc = pos;
+       Err.error_text = "number of arguments for data " ^ c 
+         ^ " does not match"^(pr_list (fun c->c)(List.map Iprinter.string_of_formula_exp ies));
+    }
 
 (* TODO WN : this is not doing anything *)
 and fill_view_param_types (vdef : I.view_decl) =
@@ -889,11 +891,18 @@ and fill_view_param_types (vdef : I.view_decl) =
   else ()
 
 (* ident, args, table *)
-and try_unify_view_type_args prog c vdef v ies tlist pos =
+and try_unify_view_type_args prog c vdef v deref ies tlist pos =
   let dname = vdef.I.view_data_name in
   let n_tl = (
-    if not (dname = "") then 
-      let (n_tl,_) = gather_type_info_var v tlist ( (Named dname)) pos in
+    if not (dname = "") then
+      let expect_dname = (
+        let s = ref "" in
+        for i = 1 to deref do
+          s := !s ^ "__star";
+        done;
+        dname ^ !s
+      ) in
+      let (n_tl,_) = gather_type_info_var v tlist ( (Named expect_dname)) pos in
       n_tl
     else tlist
   ) in
@@ -1038,6 +1047,7 @@ and gather_type_info_heap_x prog (h0 : IF.h_formula) tlist =
       n_tl
   | IF.HeapNode { IF.h_formula_heap_node = (v, p); (* ident, primed *)
                   IF.h_formula_heap_arguments = ies; (* arguments *)
+                  IF.h_formula_heap_deref = deref;
                   IF.h_formula_heap_perm = perm;
                   IF.h_formula_heap_name = c; (* data/pred name *)
                   IF.h_formula_heap_imm = ann; (* data/pred name *)
@@ -1089,7 +1099,7 @@ and gather_type_info_heap_x prog (h0 : IF.h_formula) tlist =
         let s = List.nth tokens 1 in
         let type_found,type_rootptr = try (* looking up in the list of data types *)
           (* Good user provides type for [rootptr] ==> done! *)
-          let ddef = I.look_up_data_def_raw prog.I.prog_data_decls s in 
+          let ddef = I.look_up_data_def_raw prog.I.prog_data_decls s 0 in 
           (* let _ = print_endline ("[gather_type_info_heap_x] root pointer type = " ^ ddef.I.data_name) in *)
           (true, Named ddef.I.data_name)
           with 
@@ -1133,13 +1143,20 @@ and gather_type_info_heap_x prog (h0 : IF.h_formula) tlist =
             let _ = if not (IF.is_param_ann_list_empty ann_param) then
           (* let _ = print_string ("\n(andreeac) searching for: "^(\* c^ *\)" got: "^vdef.I.view_data_name^"-"^vdef.I.view_name^" ann_param length:"^ (string_of_int (List.length ann_param))  ^"\n") in *)
             report_error pos (" predicate parameters are not allowed to have imm annotations") in
-            try_unify_view_type_args prog c vdef v ies n_tl pos 
+            try_unify_view_type_args prog c vdef v deref ies n_tl pos 
         with
         | Not_found ->
           (try
-            let ddef = I.look_up_data_def_raw prog.I.prog_data_decls c in 
-            let n_tl = try_unify_data_type_args prog c ddef v ies n_tl pos in 
-                            n_tl
+            (* let c = (                               *)
+            (*   let deref_str = ref "" in             *)
+            (*   for i = 1 to deref do                 *)
+            (*     deref_str := !deref_str ^ "__star"; *)
+            (*   done;                                 *)
+            (*   c ^ !deref_str                        *)
+            (* ) in                                    *)
+            let ddef = I.look_up_data_def_raw prog.I.prog_data_decls c deref in 
+            let n_tl = try_unify_data_type_args prog c ddef v deref ies n_tl pos in 
+            n_tl
           with
           | Not_found ->
             (*let _ = print_string (Iprinter.string_of_program prog) in*)

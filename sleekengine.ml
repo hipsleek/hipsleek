@@ -106,7 +106,7 @@ let clear_all () =
 
 let check_data_pred_name name : bool =
   try 
-	let _ = I.look_up_data_def_raw iprog.I.prog_data_decls name in
+	let _ = I.look_up_data_def_raw iprog.I.prog_data_decls name 0 in
 	  false
   with
 	| Not_found -> begin

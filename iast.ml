@@ -1009,8 +1009,16 @@ and look_up_parent_name pos ddefs name =
   let ddef = look_up_data_def 1 pos ddefs name in
   ddef.data_parent_name
 
-and look_up_data_def_raw (defs : data_decl list) (name : ident) = match defs with
-  | d :: rest -> if d.data_name = name then d else look_up_data_def_raw rest name
+and look_up_data_def_raw (defs : data_decl list) (name : ident) (deref: int) =
+  let expect_name = (
+    let deref_str = ref "" in
+    for i = 1 to deref do
+      deref_str := !deref_str ^ "__star"
+    done;
+    name ^ !deref_str
+  ) in
+  match defs with
+  | d :: rest -> if d.data_name = expect_name then d else look_up_data_def_raw rest name deref
   | [] -> raise Not_found
 
 and look_up_view_def_raw_x (defs : view_decl list) (name : ident) = match defs with
@@ -1091,7 +1099,7 @@ and expand_inline_fields ddefs fls =
 	  let fn  = get_field_name fld in
 	  let ft = get_field_typ fld in
 	  try
-		let ddef = look_up_data_def_raw ddefs (string_of_typ ft) in
+		let ddef = look_up_data_def_raw ddefs (string_of_typ ft) 0 in
 		let fld_fs = List.map (fun y -> augment_field_with_prefix y (fn ^ ".")) ddef.data_fields in
 		fld_fs
 	  with
@@ -1128,40 +1136,48 @@ and collect_struc (f:F.struc_formula):ident list =  match f with
   | F.EList b -> Gen.fold_l_snd collect_struc b
   
 and collect_formula (f0 : F.formula) : ident list = 
-  let rec helper (h0 : F.h_formula) = match h0 with
-	| F.HeapNode h -> 
-		  let (v, p), c = h.F.h_formula_heap_node, h.F.h_formula_heap_name in
-          (* let _ = print_endline ("v:" ^ v ^ "  c:" ^ c) in *)
-		  if v = self then [c] else []
-	| F.Star h -> 
+  let rec helper (h0 : F.h_formula) = (
+    match h0 with
+    | F.HeapNode h -> 
+        let (v, p), c = h.F.h_formula_heap_node, h.F.h_formula_heap_name in
+        if v = self then (
+          let deref_str = ref "" in
+          for i = 1 to h.F.h_formula_heap_deref do
+            deref_str := !deref_str ^ "__star"
+          done;
+          let view_data_name = c ^ !deref_str in
+          [view_data_name]
+        )
+        else []
+    | F.Star h -> 
         let h1, h2, pos = h.F.h_formula_star_h1, h.F.h_formula_star_h2, h.F.h_formula_star_pos in
-		  let n1 = helper h1 in
-		  let n2 = helper h2 in
-          let d1 = List.length n1 in
-          let d2 = List.length n2 in
-		  if d1>0 & d2>0 then
-			report_error pos ("Star:multiple occurrences of self as heap nodes in one branch are not allowed")
-		  else n1@n2
+        let n1 = helper h1 in
+        let n2 = helper h2 in
+        let d1 = List.length n1 in
+        let d2 = List.length n2 in
+        if d1>0 & d2>0 then
+          report_error pos ("Star:multiple occurrences of self as heap nodes in one branch are not allowed")
+        else n1@n2
     | F.Phase h -> 
         let h1, h2, pos = h.F. h_formula_phase_rd, h.F.h_formula_phase_rw, h.F.h_formula_phase_pos in
-		  let n1 = helper h1 in
-		  let n2 = helper h2 in
-          let d1 = List.length n1 in
-          let d2 = List.length n2 in
-		  if d1>0 & d2>0 then
-			report_error pos ("Phase: multiple occurrences of self as heap nodes in one branch are not allowed")
-		  else n1@n2
-	| F.Conj h ->
-		  let h1, h2, pos = h.F.h_formula_conj_h1, h.F.h_formula_conj_h2, h.F.h_formula_conj_pos in
-		  let n1 = helper h1 in
-		  let n2 = helper h2 in
-          let d1 = List.length n1 in
-          let d2 = List.length n2 in
-		  if d1>0 & d2>0 then
-			report_error pos ("multiple occurrences of self as heap nodes in one branch are not allowed")
-		  else n1@n2		  
-        | _ -> []
-	in
+        let n1 = helper h1 in
+        let n2 = helper h2 in
+        let d1 = List.length n1 in
+        let d2 = List.length n2 in
+        if d1>0 & d2>0 then
+          report_error pos ("Phase: multiple occurrences of self as heap nodes in one branch are not allowed")
+        else n1@n2
+    | F.Conj h ->
+        let h1, h2, pos = h.F.h_formula_conj_h1, h.F.h_formula_conj_h2, h.F.h_formula_conj_pos in
+        let n1 = helper h1 in
+        let n2 = helper h2 in
+        let d1 = List.length n1 in
+        let d2 = List.length n2 in
+        if d1>0 & d2>0 then
+          report_error pos ("multiple occurrences of self as heap nodes in one branch are not allowed")
+        else n1@n2      
+    | _ -> []
+  ) in
   match f0 with
     | F.Base f ->  helper f.F.formula_base_heap
     | F.Exists f ->  helper f.F.formula_exists_heap
@@ -1889,7 +1905,7 @@ let get_field_from_typ ddefs data_typ field_name = match data_typ with
 	| Named data_name -> 
        (* let _ = print_endline ("1: " ^ data_name) in *)
        (* let _ = print_endline ("2: " ^ field_name) in *)
-		let ddef = look_up_data_def_raw ddefs data_name in
+		let ddef = look_up_data_def_raw ddefs data_name 0 in
         (try
 		let field = List.find (fun x -> (get_field_name x = field_name)) ddef.data_fields in
        (* let _ = print_endline ("3: " ^ (snd (fst3 field))) in*)
@@ -1920,7 +1936,7 @@ let rec get_type_of_field_seq ddefs root_type field_seq =
 		| [] -> root_type
 		| f::t -> (match root_type with
 			| Named c -> (try
-					let ddef = look_up_data_def_raw ddefs c in
+					let ddef = look_up_data_def_raw ddefs c 0 in
 					let ft = get_type_of_field ddef f in
 						(match ft with
 							| UNK -> Err.report_error { Err.error_loc = no_pos; Err.error_text = "[get_type_of_field_seq] Compound type " ^ c ^ " has no field " ^ f ^ "!" }
@@ -1952,7 +1968,7 @@ let rec compute_typ_size ddefs t =
 	(* let _ = print_endline ("[compute_typ_size] input = " ^ (string_of_typ t)) in *)
 	let res = match t with
 		| Named data_name -> (try 
-				let ddef = look_up_data_def_raw ddefs data_name in
+				let ddef = look_up_data_def_raw ddefs data_name 0 in
 					List.fold_left (fun a f -> 
 						let fs = if (is_inline_field f) then 
 							compute_typ_size ddefs (get_field_typ f) 
@@ -1977,7 +1993,7 @@ let rec compute_field_offset ddefs data_name accessed_field =
 	try 
 		(* let _ = print_endline ("[compute_field_offset] input = { " ^ data_name ^ " , " ^ accessed_field ^ " }") in *)
 		let found = ref false in
-		let ddef = look_up_data_def_raw ddefs data_name in
+		let ddef = look_up_data_def_raw ddefs data_name 0 in
 		(* Accumulate the offset along the way *)
 		let offset = List.fold_left (fun a f -> 
 										if (!found) then a (* Once found, just keep constant*)
@@ -2011,7 +2027,7 @@ and compute_field_seq_offset ddefs data_name field_sequence =
 							let offset = compute_field_offset ddefs !dname field_name in
 							(* Update the dname to the data type of the field_name *)
 							try
-								let ddef = look_up_data_def_raw ddefs !dname in
+								let ddef = look_up_data_def_raw ddefs !dname 0 in
 								let field_type = get_type_of_field ddef field_name in
 								begin
 									dname := string_of_typ field_type;

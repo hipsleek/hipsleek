@@ -28,7 +28,7 @@ void* malloc(int size) __attribute__ ((noreturn))
 int deleteoneel(struct node** t)
 /*@
   requires t::pq^<n, mx> & n > 0
-  ensures t::pq^<n-1, mx2> & 0 <= res <= mx & mx2 <= mx;
+  ensures t::pq^<n1, mx2> & n1 = n-1 & 0 <= res <= mx & mx2 <= mx;
 */
 {
   int v;

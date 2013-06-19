@@ -28,13 +28,9 @@ void insert_last(node_star x, int a)
   }
 }
 
-
-void delete_last(node_star x)
-  requires x::ll<n> & n > 1
-  ensures x::ll<n-1>;
+void foo(node x)
+  requires x::node<_,_>
+  ensures x::node<1,_>;
 {
-  if (x.pdata.next.pdata.next == null)
-    x.pdata.next = x.pdata.next.pdata.next;
-  else
-    delete_last(x.pdata.next);
+  x.val = 1;
 }
