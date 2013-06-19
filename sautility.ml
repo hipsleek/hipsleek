@@ -194,6 +194,34 @@ let check_hp_locs_eq (hp1, locs1) (hp2, locs2)=
 let check_simp_hp_eq (hp1, _) (hp2, _)=
    (CP.eq_spec_var hp1 hp2)
 
+let add_raw_hp_rel_x prog unknown_ptrs pos=
+  if (List.length unknown_ptrs > 0) then
+    let hp_decl =
+      { Cast.hp_name = Globals.hp_default_prefix_name ^ (string_of_int (Globals.fresh_int()));
+        Cast.hp_vars_inst =  unknown_ptrs;
+        Cast.hp_formula = CF.mkBase CF.HEmp (MCP.mkMTrue pos) CF.TypeTrue (CF.mkTrueFlow()) [] pos;}
+    in
+    let unk_args = (fst (List.split hp_decl.Cast.hp_vars_inst)) in
+    prog.Cast.prog_hp_decls <- (hp_decl :: prog.Cast.prog_hp_decls);
+    Smtsolver.add_hp_relation hp_decl.Cast.hp_name unk_args hp_decl.Cast.hp_formula;
+    let hf =
+      CF.HRel (CP.SpecVar (HpT,hp_decl.Cast.hp_name, Unprimed), 
+               List.map (fun sv -> CP.mkVar sv pos) unk_args,
+      pos)
+    in
+    let _ = Debug.tinfo_hprint (add_str "define: " Cprinter.string_of_hp_decl) hp_decl pos in
+    DD.ninfo_pprint ("       gen hp_rel: " ^ (Cprinter.string_of_h_formula hf)) pos;
+    (hf, CP.SpecVar (HpT,hp_decl.Cast.hp_name, Unprimed))
+  else report_error pos "sau.add_raw_hp_rel: args should be not empty"
+
+let add_raw_hp_rel prog unknown_args pos=
+  let pr1 = !CP.print_svl in
+  let pr2 = Cprinter.string_of_h_formula in
+  let pr4 (hf,_) = pr2 hf in
+  Debug.no_1 "add_raw_hp_rel" pr1 pr4
+      (fun _ -> add_raw_hp_rel_x prog unknown_args pos) unknown_args
+
+
 let find_close_hpargs_x hpargs eqs0=
   let rec assoc_l ls hp=
     match ls with
@@ -1154,38 +1182,54 @@ let simplify_one_constr_b prog unk_hps lhs_b rhs_b=
   Debug.no_2 "simplify_one_constr_b" pr pr (pr_triple pr pr !CP.print_svl)
       (fun _ _ -> simplify_one_constr_b_x prog unk_hps lhs_b rhs_b) lhs_b rhs_b
 
-let find_well_defined_hp_x prog hds hvs r_hps prog_vars post_hps (hp,args) def_ptrs lhsb=
+let find_well_defined_hp_x prog hds hvs r_hps prog_vars post_hps (hp,args) def_ptrs lhsb pos=
+  let do_spit fb rhs=
+    let f = keep_data_view_hrel_nodes_fb prog fb hds hvs args [(hp,args)] in
+    (*we do NOT want to keep heap in LHS*)
+    let hf1 = CF.drop_hnodes_hf f.CF.formula_base_heap args in
+    let f1 = {f with CF.formula_base_heap = hf1;} in
+    let leqs = (MCP.ptr_equations_without_null f1.CF.formula_base_pure) in
+    let f3 = if leqs =[] then f1 else
+      let svl = prog_vars@args in
+      let new_leqs = List.filter (fun (sv1,sv2) -> not (CP.mem sv1 svl && CP.mem_svl sv2 svl) ) leqs in
+      (* let new_leqs = filter_eqs args prog_vars leqs in *)
+      let f2 = CF.subst_b new_leqs f1 in
+      {f2 with CF.formula_base_pure = MCP.mix_of_pure
+              (CP.remove_redundant (MCP.pure_of_mix f2.CF.formula_base_pure))}
+    in
+    (fb, [(hp,args,f3, rhs)],[])
+  in
   (*check hp is recursive or post_hp?*)
-  if (CP.mem_svl hp r_hps || CP.mem_svl hp post_hps) then ([],[(hp,args)]) else
+  if (CP.mem_svl hp r_hps || CP.mem_svl hp post_hps) then (lhsb, [], [(hp,args)]) else
     let closed_args = look_up_closed_ptr_args prog hds hvs args in
     let undef_args = lookup_undef_args closed_args [] def_ptrs in
-    if (* undef_args = [] || *)  List.length undef_args < List.length args then
-      let f = keep_data_view_hrel_nodes_fb prog lhsb hds hvs args [(hp,args)] in
-      (*we do NOT want to keep heap in LHS*)
-      let hf1 = CF.drop_hnodes_hf f.CF.formula_base_heap args in
-      let f1 = {f with CF.formula_base_heap = hf1;} in
-      let leqs = (MCP.ptr_equations_without_null f1.CF.formula_base_pure) in
-      let f3 = if leqs =[] then f1 else
-        let svl = prog_vars@args in
-        let new_leqs = List.filter (fun (sv1,sv2) -> not (CP.mem sv1 svl && CP.mem_svl sv2 svl) ) leqs in
-        (* let new_leqs = filter_eqs args prog_vars leqs in *)
-        let f2 = CF.subst_b new_leqs f1 in
-        {f2 with CF.formula_base_pure = MCP.mix_of_pure
-              (CP.remove_redundant (MCP.pure_of_mix f2.CF.formula_base_pure))}
-      in
-      ([(hp,args,f3)],[])
+    let diff_svl = CP.diff_svl args undef_args in
+    let args_inst,_ =  partition_hp_args prog hp args in
+    let diff_svl_inst = List.filter (fun (sv,_) -> CP.mem_svl sv diff_svl) args_inst in
+    if  diff_svl_inst = [] then
+      do_spit lhsb (CF.mkTrue (CF.mkTrueFlow()) pos)
+    else if List.length diff_svl_inst > 0 then
+     begin
+       if !Globals.sa_s_split_base then
+         let new_hf,_ = add_raw_hp_rel_x prog diff_svl_inst pos in
+         let nlhsb = CF.mkAnd_fb_hf lhsb new_hf pos in
+         do_spit nlhsb (CF.formula_of_heap new_hf pos)
+       else
+         do_spit lhsb (CF.mkTrue (CF.mkTrueFlow()) pos)
+     end
     else
-      ([],[(hp,args)])
+      (lhsb, [],[(hp,args)])
 
 let find_well_defined_hp prog hds hvs ls_r_hpargs prog_vars post_hps 
-      (hp,args) def_ptrs lhsb=
+      (hp,args) def_ptrs lhsb pos=
   let pr1 = !CP.print_sv in
   let pr2 = !CP.print_svl in
   let pr3 = pr_triple pr1 pr2 Cprinter.string_of_formula_base in
   let pr4 = (pr_pair pr1 pr2) in
-  Debug.no_4 "find_well_defined_hp" Cprinter.string_of_formula_base pr4 pr2 pr2 (pr_pair (pr_list_ln pr3) (pr_list pr4))
+  Debug.no_4 "find_well_defined_hp" Cprinter.string_of_formula_base pr4 pr2 pr2
+      (pr_triple pr3 (pr_list_ln pr3) (pr_list pr4))
       (fun _ _  _ _ -> find_well_defined_hp_x prog hds hvs ls_r_hpargs
-          prog_vars post_hps (hp,args) def_ptrs lhsb)
+          prog_vars post_hps (hp,args) def_ptrs lhsb pos)
       lhsb (hp,args) def_ptrs prog_vars
 
 let split_base_x prog hds hvs r_hps prog_vars post_hps (hp,args) def_ptrs lhsb=
@@ -1233,7 +1277,7 @@ let find_well_eq_defined_hp prog hds hvs lhsb eqs (hp,args)=
   in
   if List.length args = 2 then loop_helper eqs else ([], [(hp,args)])
 
-let generate_hp_ass unk_svl rf (hp,args,lfb) =
+let generate_hp_ass unk_svl (hp,args,lfb,rf) =
   let new_cs = {
       CF.hprel_kind = CP.RelAssume [hp];
       unk_svl = unk_svl;(*inferred from norm*)
@@ -2838,34 +2882,6 @@ let get_min_common prog args unk_hps ll_ldns=
   Debug.no_3 "get_min_common" pr1 pr1 (pr_list_ln pr7) pr6
       (fun _ _ _ -> get_min_common_x prog args unk_hps ll_ldns)
       args unk_hps ll_ldns
-
-let add_raw_hp_rel_x prog unknown_ptrs pos=
-  if (List.length unknown_ptrs > 0) then
-    let hp_decl =
-      { Cast.hp_name = Globals.hp_default_prefix_name ^ (string_of_int (Globals.fresh_int()));
-        Cast.hp_vars_inst =  unknown_ptrs;
-        Cast.hp_formula = CF.mkBase CF.HEmp (MCP.mkMTrue pos) CF.TypeTrue (CF.mkTrueFlow()) [] pos;}
-    in
-    let unk_args = (fst (List.split hp_decl.Cast.hp_vars_inst)) in
-    prog.Cast.prog_hp_decls <- (hp_decl :: prog.Cast.prog_hp_decls);
-    Smtsolver.add_hp_relation hp_decl.Cast.hp_name unk_args hp_decl.Cast.hp_formula;
-    let hf =
-      CF.HRel (CP.SpecVar (HpT,hp_decl.Cast.hp_name, Unprimed), 
-               List.map (fun sv -> CP.mkVar sv pos) unk_args,
-      pos)
-    in
-    let _ = Debug.tinfo_hprint (add_str "define: " Cprinter.string_of_hp_decl) hp_decl pos in
-    DD.ninfo_pprint ("       gen hp_rel: " ^ (Cprinter.string_of_h_formula hf)) pos;
-    (hf, CP.SpecVar (HpT,hp_decl.Cast.hp_name, Unprimed))
-  else report_error pos "sau.add_raw_hp_rel: args should be not empty"
-
-let add_raw_hp_rel prog unknown_args pos=
-  let pr1 = !CP.print_svl in
-  let pr2 = Cprinter.string_of_h_formula in
-  let pr4 (hf,_) = pr2 hf in
-  Debug.no_1 "add_raw_hp_rel" pr1 pr4
-      (fun _ -> add_raw_hp_rel_x prog unknown_args pos) unknown_args
-
 
 (**********************)
 (*check root: is_dangling (root=), is_null,is_not_null*)

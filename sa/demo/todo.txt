@@ -950,7 +950,7 @@ Can we avoid this, as it has nullified uninterpreted predicates.
  ]
 
 =============================================================
-# zip1c.slk
+# zip1c.slk: DONE with --sa-s-split
 
 3) We had a split:
 relAssume G1

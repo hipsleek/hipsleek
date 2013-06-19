@@ -258,15 +258,20 @@ let split_constr_x prog constrs post_hps prog_vars unk_map unk_hps=
           (* ([], lfb1, unk_map1) *)
         in
         let unk_svl1 = CP.remove_dups_svl (cs.CF.unk_svl@unk_svl) in
-        let ls_defined_hps,rems = List.split (List.map (fun hpargs ->
-            SAU.find_well_defined_hp (* split_base *) prog lhds lhvs r_hps
-                prog_vars post_hps hpargs (l_def_vs@unk_svl1) lfb1) ls_lhp_args)
+        let lfb2, defined_preds,rems_hpargs = List.fold_left (fun (lfb, r_defined_preds, r_rems) hpargs ->
+            let n_lfb,def_hps, rem_hps = SAU.find_well_defined_hp (* split_base *) prog lhds lhvs r_hps
+                prog_vars post_hps hpargs (l_def_vs@unk_svl1) lfb no_pos in
+            (n_lfb, r_defined_preds@def_hps, r_rems@rem_hps)
+        )
+          (lfb1, [], []) ls_lhp_args
         in
-        let defined_preds = List.concat ls_defined_hps in
-        let defined_preds0 = List.fold_left (fun defined_preds hpargs ->
-            defined_preds@(fst (SAU.find_well_eq_defined_hp prog lhds lhvs lfb1 leqs hpargs))
-        ) (defined_preds) (List.concat rems) in
-        let new_cs = {cs with CF.hprel_lhs = CF.add_quantifiers l_qvars (CF.Base lfb1);
+        (* let defined_preds = List.concat ls_defined_hps in *)
+        let rf = CF.mkTrue (CF.mkTrueFlow()) no_pos in
+        let defined_preds0 = List.fold_left (fun (defined_preds) hpargs ->
+            let def_hps, _ = (SAU.find_well_eq_defined_hp prog lhds lhvs lfb2 leqs hpargs) in
+            (defined_preds@(List.map (fun (a,b,c) -> (a,b,c,rf)) def_hps))
+        ) (defined_preds) rems_hpargs in
+        let new_cs = {cs with CF.hprel_lhs = CF.add_quantifiers l_qvars (CF.Base lfb2);
             CF.unk_svl = unk_svl1;
             CF.hprel_rhs = (CF.add_quantifiers r_qvars (CF.Base rhs_b1));
         } in
@@ -276,14 +281,14 @@ let split_constr_x prog constrs post_hps prog_vars unk_map unk_hps=
                 let _ = Debug.ninfo_pprint (Cprinter.string_of_hprel_short cs) no_pos in
                 let _ = Debug.ninfo_pprint ("  unused ptrs: " ^ (!CP.print_svl unk_svl)) no_pos in
                 (*prune defined hps in lhs*)
-                let new_lhs, _ = CF.drop_hrel_f new_cs.CF.hprel_lhs (List.map (fun (a, _, _) -> a) defined_preds0) in
+                let new_lhs, _ = CF.drop_hrel_f new_cs.CF.hprel_lhs (List.map (fun (a, _, _,_) -> a) defined_preds0) in
                 let new_lhs1 = CF.add_quantifiers l_qvars new_lhs in
                 let new_lhs2 = CF.elim_unused_pure new_lhs1 new_cs.CF.hprel_rhs in
                 let new_cs = {new_cs with CF.hprel_lhs = new_lhs2;} in
                 let _ = Debug.ninfo_pprint ("  refined cs: " ^ (Cprinter.string_of_hprel_short new_cs)) no_pos in
-                let rf = CF.mkTrue (CF.mkTrueFlow()) no_pos in
+                (* let rf = CF.mkTrue (CF.mkTrueFlow()) no_pos in *)
                 let _ = Debug.ninfo_pprint ("  generate pre-preds-based constraints: " ) no_pos in
-                let defined_hprels = List.map (SAU.generate_hp_ass unk_svl1 rf) defined_preds0 in
+                let defined_hprels = List.map (SAU.generate_hp_ass unk_svl1) defined_preds0 in
                 new_cs::defined_hprels
         in
         (new_constrs, unk_map1)

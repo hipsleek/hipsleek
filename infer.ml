@@ -1801,12 +1801,12 @@ let find_undefined_selective_pointers_x prog lfb lmix_f unmatched rhs_rest rhs_h
   let unk_xpure = CP.mkTrue pos in
   let unk_map1 = [] in
   (* let lfb1 = CF.mkAnd_base_pure lfb (MCP.mix_of_pure unk_xpure) pos in *)
-  let defined_hps,rem_lhpargs =
-    List.fold_left (fun (ls_defined,ls_rem) hpargs ->
-        let r_def,r_mem = SAU.find_well_defined_hp prog lhds lhvs r_hps
-          prog_vars [] hpargs l_def_vs lfb in
-        (ls_defined@r_def,ls_rem@r_mem)
-    ) ([],[]) ls_lhp_args
+  let lfb, defined_hps,rem_lhpargs =
+    List.fold_left (fun (lfb0,ls_defined,ls_rem) hpargs ->
+        let lfb1, r_def,r_mem = SAU.find_well_defined_hp prog lhds lhvs r_hps
+          prog_vars [] hpargs l_def_vs lfb0 pos in
+        (lfb1, ls_defined@r_def,ls_rem@r_mem)
+    ) (lfb, [],[]) ls_lhp_args
   in
   (*END************get well-defined hp in lhs*)
   let def_vs = l_def_vs@r_def_vs in
@@ -1889,7 +1889,7 @@ let find_undefined_selective_pointers prog lfb lmix_f unmatched rhs_rest rhs_h_m
   let pr2 = Cprinter.prtt_string_of_h_formula in
   let pr3 = pr_list (pr_pair !CP.print_sv !print_svl) in
   let pr4 = pr_list (pr_list (pr_pair !CP.print_sv print_arg_kind)) in
-  let pr6 = pr_list_ln (pr_triple !CP.print_sv !CP.print_svl Cprinter.string_of_formula_base) in
+  let pr6 = pr_list_ln (pr_quad !CP.print_sv !CP.print_svl pr1 Cprinter.prtt_string_of_formula) in
   (* let pr7 = pr_list (pr_pair (pr_list (pr_pair !CP.print_sv string_of_int)) CP.string_of_xpure_view) in *)
   let pr7 = (pr_list (pr_pair (pr_pair !CP.print_sv (pr_list string_of_int)) CP.string_of_xpure_view)) in
   let pr5 = fun (is_found, undefs,_,_,_,_,_,selected_hpargs, rhs_sel_hpargs,defined_hps,_,_,unk_map) ->
@@ -2140,7 +2140,7 @@ let generate_constraints prog es rhs lhs_b rhs_b1 defined_hps
   (*   hvs (lhras@rhras@new_hrels) (leqs@reqs) eqNull [] in *)
   (*split the constraints relating between pre- andxs post-preds*)
   let rf = CF.mkTrue (CF.mkTrueFlow()) pos in
-  let defined_hprels = List.map (SAU.generate_hp_ass [] (* (closed_hprel_args_def@total_unk_svl) *)  rf) defined_hps in
+  let defined_hprels = List.map (SAU.generate_hp_ass [] (* (closed_hprel_args_def@total_unk_svl) *) ) defined_hps in
   (*lookup to check redundant*)
   let new_lhs = CF.Base new_lhs_b in
   let new_rhs = CF.Base new_rhs_b in
@@ -2192,12 +2192,12 @@ let update_es prog es hds hvs new_lhs_b rhs rhs_rest r_new_hfs defined_hps lsele
      let _ = DD.tinfo_pprint ("  rest_svl1: " ^ (!CP.print_svl rest_svl1)) pos in
      let _ = DD.tinfo_pprint ("  keep_hps: " ^ (!CP.print_svl keep_hps)) pos in
      let root_vars_ls1 = CP.diff_svl root_vars_ls keep_hps in
-     let well_defined_svl = List.concat (List.map (fun (hp,args,_) -> hp::args) defined_hps) in
+     let well_defined_svl = List.concat (List.map (fun (hp,args,_,_) -> hp::args) defined_hps) in
      let root_vars_ls2 = SAU.find_close root_vars_ls1 leqs in
      let _ = DD.ninfo_pprint ("  lselected_hpargs0: " ^ (let pr = pr_list (pr_pair !CP.print_sv  !CP.print_svl) in
      pr lselected_hpargs0)) pos in
      (*lhs should remove defined hps + selected hps*)
-     let lselected_hpargs1 = lselected_hpargs0@(List.map (fun (a,b,_) -> (a,b)) defined_hps) in
+     let lselected_hpargs1 = lselected_hpargs0@(List.map (fun (a,b,_,_) -> (a,b)) defined_hps) in
      (*should consider closure of aliasing. since constraints are in normal form,
        but residue is not. and we want to drop exact matching of args*)
      let lselected_hpargs2 = List.map (fun (hp,args) -> (hp, SAU.find_close args leqs)) lselected_hpargs1 in
@@ -2343,7 +2343,7 @@ let infer_collect_hp_rel_x prog (es:entail_state) rhs rhs_rest (rhs_h_matched_se
              let rhs_b1 = CF.formula_base_of_heap rhs pos in
              (*remove all non_infer_hps*)
              let lselected_hpargs1 = List.filter (fun (hp,_) -> not (CP.mem_svl hp l_non_infer_hps)) lselected_hpargs in
-             let defined_hps1 =  List.filter (fun (hp,_,_) -> not (CP.mem_svl hp l_non_infer_hps)) defined_hps in
+             let defined_hps1 =  List.filter (fun (hp,_,_,_) -> not (CP.mem_svl hp l_non_infer_hps)) defined_hps in
              let r_new_hfs,new_lhs_b, m,rvhp_rels,hp_rel_list =
                generate_constraints prog es rhs lhs_b1 rhs_b1 defined_hps1
                    ls_unknown_ptrs unk_pure unk_svl no_es_history lselected_hpargs1 rselected_hpargs
