@@ -18,12 +18,12 @@ ltwoB<p:node> == HL(p) & self = null  or
    self::node<_, q> * p::node<_,r> * q::ltwoB<r>;
 
 node zip (node x, node y)
-//  infer [H,G1]  requires H(x,y)  ensures  G1(x,y,res);
+infer [H,G1]  requires H(x,y)  ensures  G1(x,y,res);
 // requires x::ltwo<y>  ensures res::ll<> * y::ll<> & res=x;
 // requires x::ltwoA<y>  ensures res::ltwoA<y> & res=x;
 //requires x::ltwoB<y>  ensures res::ltwoB<y> & res=x;
-//requires l1::ltwoB<l2>  ensures res::ltwoB<l2> & res=l1;
-infer [HL] requires x::ltwoB<y>  ensures res::ltwoB<y> & res=x;
+//infer [HL] requires x::ltwoB<y>  ensures res::ltwoB<y> & res=x;
+//requires x::ltwoB<y>  ensures res::ltwoB<y> & res=x;
 {
    if (x==null) return x;
    else {
@@ -38,37 +38,41 @@ infer [HL] requires x::ltwoB<y>  ensures res::ltwoB<y> & res=x;
 
 /*
 
-verification fails.
+WHY?
 
-!! after remove redundant:[]
-Procedure zip$node~node result FAIL-1
+[ H(x_945,y_946) ::= emp&x_945=null,
+ G1(x_949,y_950,res_951) ::= HP_952(x_949,y_950,res_951)&res_951=x_949,
+ HP_952(x_953,y_950,res_951) ::= 
+ emp&res_951=null
+ or y_950::node<val_32_821,next_32_822>@M * 
+    (HP_952(next_31_815,next_32_822,v_node_34_853))&true
+ ]
+
+ H(x,y)&x!=null --> x::node<val_31_814,next_31_815>@M * 
+  (HP_816(next_31_815,y@NI)) * (HP_817(y,x@NI))&true,
+ HP_817(y,x@NI)&true --> y::node<val_32_821,next_32_822>@M * 
+  (HP_823(next_32_822,x@NI))&true,
+ (HP_816(next_31_815,y@NI)) * (HP_823(next_32_822,x@NI))&
+  true --> H(next_31_815,next_32_822)&true,
+ H(x,y)&res=x & x=null & res=null --> G1(x,y,res)&true,
+ y::node<val_32_821,next_32_822>@M * 
+  (G1(next_31_815,next_32_822,v_node_34_853)) * 
+  x::node<v_int_33_837,v_node_34_853>@M&res=x --> G1(x,y,res)&true]
+
 
 
 ===============================================================
 # zip.ss
 
-Problems, 
- (i) why ins't @NI printing?
- (ii) Why did we have:
-            H1(x,y) x=null?
+How come below, when its relational assumption
+in zip1f.slk gives correct answer?
 
-
-[ H1(x,y)&x!=null --> x::node<val_24_819,next_24_820>@M * 
-  (HP_821(next_24_820,y)) * (HP_822(y,x))&true,
- (HP_821(next_24_820,y)) * (HP_822(y,x))&
-  true --> y::node<val_25_826,next_25_827>@M * (HP_828(next_25_827,x))&true,
- HP_828(next_25_827,x)&true --> H1(next_24_820,next_25_827)&true,
- H1(x,y)&x=null & res=null --> G1(x,y,res)&true,
- y::node<val_25_826,next_25_827>@M * x::node<val_24_819,next_24_820>@M&
-  res=x --> G1(x,y,res)&true]
-
-======>
-
-[ H1(x_1059,y_1060) ::= emp&x_1059=null,
- G1(x_1061,y_1062,res_1063) ::= 
- emp&res_1063=null & x_1061=null
- or y_1062::node<val_25_826,next_25_827>@M * 
-    x_1061::node<val_24_819,next_24_820>@M&res_1063=x_1061
+[ H(x_945,y_946) ::= emp&x_945=null,
+ G1(x_949,y_950,res_951) ::= HP_952(x_949,y_950,res_951)&res_951=x_949,
+ HP_952(x_953,y_950,res_951) ::= 
+ emp&res_951=null
+ or y_950::node<val_32_821,next_32_822>@M * 
+    (HP_952(next_31_815,next_32_822,v_node_34_853))&true
  ]
 
 

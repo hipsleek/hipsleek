@@ -1115,9 +1115,38 @@ Can we just have:
 */
 
 ============================================================
-# zip1b.slk
+# zip1b1.slk
 
-PROBLEMS
+GREAT!
+
+TWO small PROBLEMS
+(i)  x=res  not captured for G1.
+(ii) We can figure some predicates are redundant, namely:
+ HP_2(y_181,x_182) ::= y_181::node<val_25_826,next_25_827>@M * (HP_8(next_25_827,x_182))&true,
+ (HP_8(next_25_827,x)) * 
+  (HP_1(next_24_820,y)) ::= H1(next_24_820,next_25_827)&true,
+
+Also, for zip1b2.slk,zip1b.slk
+
+=====
+
+[ HP_2(y_177,x_178) ::= y_177::node<val_25_826,next_25_827>@M * (HP_8(next_25_827,x_178))&true,
+ H1(x_179,y_180) ::= 
+ emp&x_179=null
+ or (H1(next_24_104,next_25_102)) * y_180::node<val_25_101,next_25_102>@M * 
+    x_179::node<val_24_103,next_24_104>@M&true
+ ,
+ G1(x_181,y_182,res_184) ::= 
+ emp&x_181=null
+ or y_182::node<val_25_826,next_25_827>@M * x_181::node<val_24_819,nn>@M * 
+    (G1(nn,next_25_827,nn))&true
+ ,
+ (HP_8(next_25_827,x)) * 
+  (HP_1(next_24_820,y)) ::= H1(next_24_820,next_25_827)&true]
+
+======
+
+PROBLEMS DONE
  (i) where is base case for H1?
  H1(x_181,y_182) ::= (H1(next_24_106,next_25_104)) * y_182::node<val_25_103,next_25_104>@M * 
 x_181::node<val_24_105,next_24_106>@M&x_181!=null,
