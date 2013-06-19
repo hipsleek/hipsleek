@@ -1,0 +1,54 @@
+data node{
+	node next;
+	node prev;
+}.
+
+HeapPred G(node a,node b).
+HeapPred H(node a,node b).
+HeapPred HP_9(node a,node@NI b).
+HeapPred HP_0(node a,node@NI b).
+HeapPred HP_1(node a,node@NI b).
+HeapPred HP_2(node a,node@NI b).
+HeapPred HP_3(node a,node@NI b).
+
+
+infer [HP_9,HP_0,HP_1] 
+HP_9(next_16_7,l2) * HP_0(prev_16_8,l2) * HP_1(l2,l1) * 
+l1::node<l2,prev_16_8> 
+//& l1=l1' & l2=l2' 
+& next_16_7=null & 
+//!(v_bool_16_768') & next_16_7=null & !(v_bool_16_768') & 
+next_16_7=next_20_807
+ |-  l2::node<next_21_766',prev_21_767'>.
+
+print residue.
+
+
+/*
+# dll-app3a1.slk
+
+GOT
+===
+ inferred hprel: [HP_1(l2',l1'@NI)&
+                   true --> l2'::node<next_21_41,prev_21_42>@M * 
+                   (HP_43(next_21_41,l1'@NI)) * (HP_44(prev_21_42,l1'@NI))&
+                   true; 
+                  HP_9(next_16_7,l2'@NI)&next_16_7=null --> emp&true]
+PROBLEM
+=======
+Base-case equation for HP_9 (below) is not needed!
+Why was it generated?
+    HP_9(next_16_7,l2'@NI)&next_16_7=null --> emp&true]
+
+
+
+ checkentail (HP_789(next_16_787,l2)) * (HP_790(prev_16_788,l2)) * (HP_791(l2,l1)) * 
+l1'::node<l2',prev_16_788>@M[Orig]&l1=l1' & l2=l2' & next_16_787=null & 
+!(v_bool_16_768') & next_16_787=null & !(v_bool_16_768') & 
+next_16_787=next_20_807&{FLOW,(22,23)=__norm}[]
+ |-  l2'::node<next_21_766',prev_21_767'>@M[Orig]&true&{FLOW,(1,25)=__flow}[]. 
+hprel_ass: [ HP_791(l2,l1)&true --> l2::node<next_21_810,prev_21_811>@M * 
+  (HP_812(next_21_810,l1)) * (HP_813(prev_21_811,l1))&true,
+ HP_789(next_16_787,l2)&next_16_787=null --> emp&true]
+*/
+
