@@ -392,6 +392,10 @@ let common_arguments = [
   ("--sa-subsume", Arg.Set Globals.sa_subsume, "use subsume when comparing definitions after infering");
   ("--norm-useless", Arg.Set Globals.norm_elim_useless, "elim useless parameters of user-defined predicates (view)");
   ("--norm-extract", Arg.Set Globals.norm_extract, "extract common pattern among branches of user-defined predicates (view)");
+  ("--en-print-ann" , Arg.Set Globals.print_ann, "enable annotation printing (default)");
+  ("--dis-print-ann", Arg.Clear Globals.print_ann, "disable annotation printing");
+
+
   ]
 
 (* arguments/flags used only by hip *)	

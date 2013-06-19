@@ -504,7 +504,9 @@ let string_of_spec_var x =
 
 let string_of_subst stt = pr_list (pr_pair string_of_spec_var string_of_spec_var) stt
 
-let rec string_of_imm imm = match imm with
+let rec string_of_imm imm = 
+  if not !print_ann then ""
+  else match imm with
   | ConstAnn(Accs) -> "@A"
   | ConstAnn(Imm) -> "@I"
   | ConstAnn(Lend) -> "@L"
@@ -523,7 +525,8 @@ let string_of_cperm perm =
 
 
 let string_of_derv dr = 
-  if dr then "@D" else ""
+  if not !print_ann then ""
+  else if dr then "@D" else ""
 
 let pr_spec_var x = fmt_string (string_of_spec_var x)
 
@@ -605,7 +608,8 @@ let h_formula_wo_paren (e:h_formula) =
   match e with
     | DataNode _ 
     | ViewNode _ 
-    | Star _ -> true
+    | Star _ 
+	| HRel _ -> true
     | _ -> false
 
 
@@ -701,7 +705,9 @@ let rec pr_formula_exp (e:P.exp) =
 		in fmt_string  ("]") (* An Hoa *)
 ;;
 
-let pr_formula_exp_w_ins (e,i) = pr_formula_exp e; if i = Globals.NI then fmt_string "@NI" else ()
+let pr_formula_exp_w_ins (e,i) = pr_formula_exp e; 
+  if not !print_ann then ()
+  else if i = Globals.NI then fmt_string "@NI" else ()
 
 let pr_slicing_label sl =
   match sl with
@@ -1720,7 +1726,7 @@ let string_of_hp_decl hpdecl =
     let arg_name = if(String.compare arg_name "res" == 0) then fresh_name () else arg_name in
     (CP.name_of_type t) ^ " " ^ arg_name
   in
-  let pr_inst (sv, i) = (pr_arg sv) ^ (if i=NI then "@NI" else "") in
+  let pr_inst (sv, i) = (pr_arg sv) ^ (if not !print_ann then "" else if i=NI then "@NI" else "") in
   let args = pr_lst ", " pr_inst hpdecl.Cast.hp_vars_inst in
   "HeapPred "^ name ^ "(" ^ args ^ ").\n"
 
@@ -2915,7 +2921,8 @@ let rec string_of_exp = function
 ;;
 
 let string_of_field_ann ann=
-  match ann with
+  if not !print_ann then ""
+  else match ann with
     | VAL -> "@VAL"
     | REC -> "@REC"
     | F_NO_ANN -> ""
