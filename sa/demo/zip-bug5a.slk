@@ -8,9 +8,10 @@ HeapPred HP_1(node a, node@NI b).
 HeapPred HP_2(node a, node@NI b).
 HeapPred HP_8(node a, node@NI b).
 
+
 infer [HP_1,HP_2,HP_8,H1] 
 HP_8(next_25_827,x) * y::node<val_25_826,next_25_827> * 
-//x'::node<val_24_819,next_24_820> *
+x'::node<val_24_819,next_24_820> *
  HP_1(next_24_820,y)
 &x=x' & y=y' 
 & x'!=null 
