@@ -623,7 +623,7 @@ Problems,
 */
 
 ===============================================================
-# zip-bug5.slk
+# zip-bug5.slk: FIXED
 
 infer [HP_1,HP_2] HP_1(next_24_820,y) * HP_2(y,x) * 
 x::node<val_24_819,next_24_820> 
@@ -771,7 +771,7 @@ Confirm P
 
 
 ===============================================================
-# id.ss: FIXED
+# id.ss:
 
 cell id (cell x)
  infer [P,G]  requires P(x)  ensures  G(x,res);
@@ -833,7 +833,7 @@ EXPECT
                    (HP_32(next_25_31,x@NI))&true]
 
 ===============================================================
-# zip1.slk   
+# zip1.slk: FIXED
 
 shape_infer[H1,HP_2,HP_1,HP_8][G1].
 
@@ -948,3 +948,15 @@ Can we avoid this, as it has nullified uninterpreted predicates.
  or y_248::node<val_25_826,next_25_827>@M * x_247::node<val_24_819,nn>@M * 
     (G1(nn,next_25_827,nn))&true
  ]
+
+=============================================================
+# zip1c.slk
+
+3) We had a split:
+relAssume G1
+ H1(x,y) & x=null & res=null --> G1(x,y,res).
+
+Since y is instantiating. Perhaps, we should have a special SPLIT
+that preserves its data using a special predicate HL(y).
+ H1(x,y)&x=null  --> HL(y)
+ HL(y) & x=null & res=null --> G1(x,y,res)
