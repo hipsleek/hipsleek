@@ -38,13 +38,37 @@ relAssume G1
 shape_infer[H1,HP_2,HP_1,HP_8,HL][G1].
 
 /*
-
+============================================================
 # zip1b.slk
 
-When HL is non-dangling:
-It introduced HL(Y) :: emp. 
-Can we avoid this, as it has nullified uninterpreted predicates.
+PROBLEMS
+ (i) where is base case for H1?
+ H1(x_181,y_182) ::= (H1(next_24_106,next_25_104)) * y_182::node<val_25_103,next_25_104>@M * 
+x_181::node<val_24_105,next_24_106>@M&x_181!=null,
 
+(ii) Instead of:
+   HP_1(next_24_820,y) ::= (H1(x,y)) * (HP_2(y,x))&true,
+   HP_8(next_25_827,x) ::= HP_2(y,x)&true,
+Can we just have:
+  HP_8(next_25_827,x) * HP_1(next_24_820,y)  
+     <--> H1(next_24_820,next_25_827).
+
+[ HP_2(y_179,x_180) ::= y_179::node<val_25_826,next_25_827>@M * (HP_8(next_25_827,x_180))&true,
+
+ H1(x_181,y_182) ::= (H1(next_24_106,next_25_104)) * y_182::node<val_25_103,next_25_104>@M * 
+x_181::node<val_24_105,next_24_106>@M&x_181!=null,
+
+ HP_1(next_24_820,y) ::= (H1(x,y)) * (HP_2(y,x))&true,
+ HP_8(next_25_827,x) ::= HP_2(y,x)&true,
+ HL(y) ::= H1(x,y)&true,
+ G1(x_183,y_184,res_185) ::= HP_186(x_183,y_184,res_185)&res_185=x_183,
+ HP_186(x_183,y_184,res_185) ::= 
+ HL(y_184)&x_183=null & res_185=null
+ or y_184::node<val_25_826,next_25_827>@M * x_183::node<val_24_819,nn>@M * 
+    (HP_186(nn,next_25_827,nn))&true
+ ]
+
+============
 
 [ HP_2(y_242,x_243) ::= y_242::node<val_25_826,next_25_827>@M * (HP_8(next_25_827,x_243))&true,
  H1(x_244,y_245) ::= 

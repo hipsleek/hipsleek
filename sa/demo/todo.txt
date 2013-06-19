@@ -952,14 +952,45 @@ Can we avoid this, as it has nullified uninterpreted predicates.
 =============================================================
 # zip1c.slk: DONE with --sa-s-split
 
-3) We had a split:
-relAssume G1
- H1(x,y) & x=null & res=null --> G1(x,y,res).
 
-Since y is instantiating. Perhaps, we should have a special SPLIT
-that preserves its data using a special predicate HL(y).
- H1(x,y)&x=null  --> HL(y)
- HL(y) & x=null & res=null --> G1(x,y,res)
+[ HP_2(y_175,x_176) ::= y_175::node<val_25_826,next_25_827>@M * (HP_8(next_25_827,x_176))&true,
+ H1(x_177,y_178) ::= 
+ emp&x_177=null
+ or (H1(next_24_102,next_25_100)) * y_178::node<val_25_99,next_25_100>@M * 
+    x_177::node<val_24_101,next_24_102>@M&true
+ ,
+
+Problem below:
+=============
+ HP_1(next_24_820,y) ::= (H1(x,y)) * (HP_2(y,x))&true,
+ HP_8(next_25_827,x) ::= HP_2(y,x)&true,
+
+ G1(x_179,y_180,res_181) ::= HP_182(x_179,y_180,res_181)&res_181=x_179,
+ HP_182(x_179,y_180,res_183) ::= 
+ emp&x_179=null
+ or y_180::node<val_25_826,next_25_827>@M * x_179::node<val_24_819,nn>@M * 
+    (HP_182(nn,next_25_827,nn))&true
+ ]
+
+--sa-s-split
+
+PROBLEM : Base case for H1 disappeared..
+
+ HP_2(y_176,x_177) ::= y_176::node<val_25_826,next_25_827>@M * (HP_8(next_25_827,x_177))&true,
+
+ H1(x_178,y_179) ::= (H1(next_24_103,next_25_101)) * y_179::node<val_25_100,next_25_101>@M * 
+x_178::node<val_24_102,next_24_103>@M&x_178!=null,
+
+ HP_1(next_24_820,y) ::= (H1(x,y)) * (HP_2(y,x))&true,
+ HP_8(next_25_827,x) ::= HP_2(y,x)&true,
+
+ G1(x_180,y_181,res_182) ::= HP_183(x_180,y_181,res_182)&res_182=x_180,
+ HP_183(x_180,y_181,res_182) ::= 
+ HP_60(y_181)&x_180=null & res_182=null
+ or y_181::node<val_25_826,next_25_827>@M * x_180::node<val_24_819,nn>@M * 
+    (H
+
+
 
 =============================================================
 # zip1d.slk: FIXED (test zip.ss: check inferred rel_assumption of base cases)
@@ -973,7 +1004,7 @@ that preserves its data using a special predicate HL(y).
 
 
 ==========================================================
-# zip1c1.slk 
+# zip1c1.slk DONE
 
 relAssume G1
 H1(x,y) & x=null & res=null --> G1(x,y,res).
@@ -1009,3 +1040,106 @@ SHOULD BE:
 This is if y is instantiating. If not, do just the
 usual split.
 
+==========================================================
+# zip1c2.slk DONE
+
+HeapPred H1(node a, node@NI b).
+HeapPred G1(node a, node b, node c).
+
+relAssume G1
+H1(x,y) & x=null & res=null --> G1(x,y,res).
+ 
+shape_infer[H1][G1].
+
+
+GOT
+====
+
+[ G1(x_22,y_23,res_24) ::= H1(x_22,y_23)&x_22=null & res_24=null & res_24=x_22]
+
+WHY is it NOT splitting?
+EXPECTING
+=========
+
+H1(x,y) & x=null & res=null --> emp.
+emp & x=null & res=null --> G1(x,y,res).
+
+*/
+
+=================================================================
+# zip1b1.slk
+
+PROBLEMS
+ (i) where is base case for H1
+(ii) Instead of:
+   HP_1(next_24_820,y) ::= (H1(x,y)) * (HP_2(y,x))&true,
+   HP_8(next_25_827,x) ::= HP_2(y,x)&true,
+Can we just have:
+  HP_8(next_25_827,x) * HP_1(next_24_820,y)  
+     <--> H1(next_24_820,next_25_827).
+
+[ HP_2(y_177,x_178) ::= y_177::node<val_25_826,next_25_827>@M * (HP_8(next_25_827,x_178))&true,
+ H1(x_179,y_180) ::= 
+ emp&x_179=null
+ or (H1(next_24_104,next_25_102)) * y_180::node<val_25_101,next_25_102>@M * 
+    x_179::node<val_24_103,next_24_104>@M&true
+ ,
+ HP_1(next_24_820,y) ::= (H1(x,y)) * (HP_2(y,x))&true,
+ HP_8(next_25_827,x) ::= HP_2(y,x)&true,
+ G1(x_181,y_182,res_184) ::= 
+ emp&x_181=null
+ or y_182::node<val_25_826,next_25_827>@M * x_181::node<val_24_819,nn>@M * 
+    (G1(nn,next_25_827,nn))&true
+ ]
+
+ HL(y_184)&x_183=null & res_185=null
+ or y_184::node<val_25_826,next_25_827>@M * x_183::node<val_24_819,nn>@M * 
+    (HP_186(nn,next_25_827,nn))&true
+ ]
+
+============
+
+[ HP_2(y_242,x_243) ::= y_242::node<val_25_826,next_25_827>@M * (HP_8(next_25_827,x_243))&true,
+ H1(x_244,y_245) ::= 
+ emp&x_244=null
+ or (H1(next_24_109,next_25_107)) * y_245::node<val_25_106,next_25_107>@M * 
+    x_244::node<val_24_108,next_24_109>@M&true
+ ,
+ HL(y_246) ::= emp&true,
+ HP_1(next_24_820,y) ::= (H1(x,y)) * (HP_2(y,x))&true,
+ HP_8(next_25_827,x) ::= HP_2(y,x)&true,
+ G1(x_247,y_248,res_250) ::= 
+ emp&x_247=null
+ or y_248::node<val_25_826,next_25_827>@M * x_247::node<val_24_819,nn>@M * 
+
+*/
+
+============================================================
+# zip1b.slk
+
+PROBLEMS
+ (i) where is base case for H1?
+ H1(x_181,y_182) ::= (H1(next_24_106,next_25_104)) * y_182::node<val_25_103,next_25_104>@M * 
+x_181::node<val_24_105,next_24_106>@M&x_181!=null,
+
+(ii) Instead of:
+   HP_1(next_24_820,y) ::= (H1(x,y)) * (HP_2(y,x))&true,
+   HP_8(next_25_827,x) ::= HP_2(y,x)&true,
+Can we just have:
+  HP_8(next_25_827,x) * HP_1(next_24_820,y)  
+     <--> H1(next_24_820,next_25_827).
+
+[ HP_2(y_179,x_180) ::= y_179::node<val_25_826,next_25_827>@M * (HP_8(next_25_827,x_180))&true,
+
+ H1(x_181,y_182) ::= (H1(next_24_106,next_25_104)) * y_182::node<val_25_103,next_25_104>@M * 
+x_181::node<val_24_105,next_24_106>@M&x_181!=null,
+
+ HP_1(next_24_820,y) ::= (H1(x,y)) * (HP_2(y,x))&true,
+ HP_8(next_25_827,x) ::= HP_2(y,x)&true,
+ HL(y) ::= H1(x,y)&true,
+ G1(x_183,y_184,res_185) ::= HP_186(x_183,y_184,res_185)&res_185=x_183,
+ HP_186(x_183,y_184,res_185) ::= 
+ HL(y_184)&x_183=null & res_185=null
+ or y_184::node<val_25_826,next_25_827>@M * x_183::node<val_24_819,nn>@M * 
+    (HP_186(nn,next_25_827,nn))&true
+ ]
