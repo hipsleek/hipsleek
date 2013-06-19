@@ -962,7 +962,7 @@ that preserves its data using a special predicate HL(y).
  HL(y) & x=null & res=null --> G1(x,y,res)
 
 =============================================================
-# zip1d.slk:
+# zip1d.slk: FIXED (test zip.ss: check inferred rel_assumption of base cases)
 
 (2) Also, for G, we seem to lose the relation x=r. Why is it missing??
  EXPECTING:

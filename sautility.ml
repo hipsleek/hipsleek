@@ -548,7 +548,7 @@ let get_root_ptrs prog hf0=
   in
   helper hf0
 
-let partition_hp_args prog hp args=
+let partition_hp_args_x prog hp args=
   let hp_name= CP.name_of_spec_var hp in
   let hprel = Cast.look_up_hp_def_raw prog.C.prog_hp_decls hp_name in
   let ss = List.combine args hprel.C.hp_vars_inst in
@@ -557,6 +557,11 @@ let partition_hp_args prog hp args=
   ) ([],[]) ss
   in
   (i_args, ni_args)
+
+let partition_hp_args prog hp args=
+  let pr1 = (pr_list (pr_pair !CP.print_sv print_arg_kind)) in
+  Debug.no_2 "partition_hp_args" !CP.print_sv !CP.print_svl (pr_pair pr1 pr1)
+      (fun _ _ -> partition_hp_args_x prog hp args) hp args
 
 let get_hp_args_inst prog hp args=
   let hp_name= CP.name_of_spec_var hp in
@@ -964,6 +969,31 @@ let filter_uniqe_eq eqs=
   let _ = DD.ninfo_pprint ("      eqs1: " ^ (let pr = pr_list(pr_pair !CP.print_sv !CP.print_sv) in pr eqs1)) no_pos in
   eqs1
 
+let generate_closure_eq_null args eqNulls cur_eqs=
+  let rec find_exists ls_eqs sv res=
+    match ls_eqs with
+      | [] -> res
+      | (sv1,sv2)::rest -> let new_res =
+          if CP.eq_spec_var sv1 sv then
+            (res@[sv2])
+          else if CP.eq_spec_var sv2 sv then
+            (res@[sv1])
+          else res
+        in
+        find_exists rest sv new_res
+  in
+  let rec helper rem res=
+    match rem with
+      | [] -> res
+      | sv::rest ->
+            let eq_exist = find_exists cur_eqs sv [] in
+            let rest_eq_null1 = CP.diff_svl rest eq_exist in
+            let eqs = List.map (fun sv1 -> CP.mkEqVar sv sv1 no_pos) rest_eq_null1 in
+            helper rest (res@eqs)
+  in
+  let new_eq_ps = helper (CP.intersect_svl args eqNulls) [] in
+  CP.join_conjunctions new_eq_ps
+
 let smart_subst_x nf1 nf2 hpargs eqs0 reqs unk_svl prog_vars=
   let largs= CF.h_fv nf1.CF.formula_base_heap in
   let rargs= CF.h_fv nf2.CF.formula_base_heap in
@@ -987,12 +1017,15 @@ let smart_subst_x nf1 nf2 hpargs eqs0 reqs unk_svl prog_vars=
   let nf1a = CF.subst_b new_eqs1 nf1 in
   let _ = Debug.ninfo_pprint ("nf1a: " ^ (Cprinter.string_of_formula_base nf1a)) no_pos in
   let ps10 = CP.list_of_conjs (MCP.pure_of_mix nf1a.CF.formula_base_pure) in
-  let new_ps11 = List.filter (filter_fn eqNulls2) ps10 in
-  let new_ps12 = new_ps11@null_ps  in
+  let eqNulls3 = List.filter (fun sv -> not (CP.mem_svl sv rargs)) eqNulls2 in
+  let new_ps11 = List.filter (filter_fn eqNulls3) ps10 in
+  let new_p = generate_closure_eq_null (List.filter CP.is_node_typ rargs) eqNulls2 eqs in
+  let new_ps12 = new_ps11@null_ps@[new_p]  in
   let new_ps13 = CP.remove_redundant_helper new_ps12 [] in
   let _ = Debug.ninfo_pprint ("new_ps13: " ^ (let pr = pr_list !CP.print_formula in pr new_ps13)) no_pos in
   let new_p13 = CP.conj_of_list new_ps13 no_pos in
   let nf11 = {nf1a with CF.formula_base_pure = MCP.mix_of_pure new_p13} in
+  let _ = Debug.ninfo_pprint ("nf11: " ^ (Cprinter.string_of_formula_base nf11)) no_pos in
   (*rhs - nf2: not handle yet*)
   let new_nf2 = CF.subst_b (new_eqs1@reqs) nf2 in
   (*subst again*)
@@ -1016,7 +1049,7 @@ let smart_subst_x nf1 nf2 hpargs eqs0 reqs unk_svl prog_vars=
 let smart_subst nf1 nf2 hpargs eqs reqs unk_svl prog_vars=
   let pr1 = Cprinter.string_of_formula_base in
   let pr2 = !CP.print_svl in
-  Debug.ho_3 "smart_subst" pr1 pr1 pr2 (pr_triple pr1 pr1 pr2)
+  Debug.no_3 "smart_subst" pr1 pr1 pr2 (pr_triple pr1 pr1 pr2)
       (fun _ _ _ -> smart_subst_x nf1 nf2 hpargs eqs reqs unk_svl prog_vars) nf1 nf2 prog_vars
 
 let keep_data_view_hrel_nodes_two_fbs prog f1 f2 hd_nodes hv_nodes hpargs leqs reqs his_ss keep_rootvars
@@ -1049,7 +1082,7 @@ let keep_data_view_hrel_nodes_two_fbs prog f1 f2 hd_nodes hv_nodes hpargs leqs r
   let lhs_b2,rhs_b2 =  ( nf1, nf2)(* smart_subst nf1 nf2 hpargs eqs reqs unk_svl prog_vars *) in
   (lhs_b2,rhs_b2)
 
-let rec drop_data_view_hrel_nodes_from_root prog f0 hd_nodes hv_nodes eqs drop_rootvars well_defined_svl defined_hps=
+let rec drop_data_view_hrel_nodes_from_root prog f0 hd_nodes hv_nodes eqs drop_rootvars well_defined_svl rhs_svl defined_hps=
   let rec helper f =
   match f with
     | CF.Base fb ->
@@ -1061,7 +1094,7 @@ let rec drop_data_view_hrel_nodes_from_root prog f0 hd_nodes hv_nodes eqs drop_r
           if well_defined_svl1 = [] then fb.CF.formula_base_pure else
             let pure_keep_svl = CP.diff_svl (CF.fv f) well_defined_svl1 in
             MCP.mix_of_pure (CP.filter_var_new
-                  (MCP.pure_of_mix fb.CF.formula_base_pure) pure_keep_svl)
+                  (MCP.pure_of_mix fb.CF.formula_base_pure) (CP.remove_dups_svl (pure_keep_svl@rhs_svl)))
         in
         CF.Base { fb with
             CF.formula_base_heap = drop_data_view_hrel_nodes_hf_from_root
@@ -1187,7 +1220,11 @@ let find_well_defined_hp_x prog hds hvs r_hps prog_vars post_hps (hp,args) def_p
     let f = keep_data_view_hrel_nodes_fb prog fb hds hvs args [(hp,args)] in
     (*we do NOT want to keep heap in LHS*)
     let hf1 = CF.drop_hnodes_hf f.CF.formula_base_heap args in
-    let f1 = {f with CF.formula_base_heap = hf1;} in
+    let p = MCP.pure_of_mix f.CF.formula_base_pure in
+    let diff_svl = CP.diff_svl (CP.fv p) args in
+    let p_w_quan = CP.mkExists_with_simpl Omega.simplify diff_svl p None no_pos in
+    let f1 = {f with CF.formula_base_pure = MCP.mix_of_pure p_w_quan;
+        CF.formula_base_heap = hf1;} in
     let leqs = (MCP.ptr_equations_without_null f1.CF.formula_base_pure) in
     let f3 = if leqs =[] then f1 else
       let svl = prog_vars@args in
@@ -1203,20 +1240,20 @@ let find_well_defined_hp_x prog hds hvs r_hps prog_vars post_hps (hp,args) def_p
   if (CP.mem_svl hp r_hps || CP.mem_svl hp post_hps) then (lhsb, [], [(hp,args)], []) else
     let closed_args = look_up_closed_ptr_args prog hds hvs args in
     let undef_args = lookup_undef_args closed_args [] def_ptrs in
-    let diff_svl = CP.diff_svl args undef_args in
-    let args_inst,_ =  partition_hp_args prog hp args in
-    let diff_svl_inst = List.filter (fun (sv,_) -> CP.mem_svl sv diff_svl) args_inst in
     if undef_args = [] then
       do_spit lhsb (CF.mkTrue (CF.mkTrueFlow()) pos) []
-    else if List.length diff_svl_inst > 0 then
-     begin
-       if !Globals.sa_s_split_base then
-         let new_hf, new_hp = add_raw_hp_rel_x prog diff_svl_inst pos in
-         let nlhsb = CF.mkAnd_fb_hf lhsb new_hf pos in
-         do_spit nlhsb (CF.formula_of_heap new_hf pos) [(new_hf, (new_hp, diff_svl))]
-       else
-         do_spit lhsb (CF.mkTrue (CF.mkTrueFlow()) pos) []
-     end
+    else
+      let args_inst,_ =  partition_hp_args prog hp args in
+      let undef_args_inst = List.filter (fun (sv,_) -> CP.mem_svl sv undef_args) args_inst in
+      if List.length undef_args < List.length args && undef_args_inst <> [] then
+        begin
+          if !Globals.sa_s_split_base then
+            let new_hf, new_hp = add_raw_hp_rel_x prog undef_args_inst pos in
+            let nlhsb = CF.mkAnd_fb_hf lhsb new_hf pos in
+            do_spit nlhsb (CF.formula_of_heap new_hf pos) [(new_hf, (new_hp, List.map fst undef_args_inst))]
+          else
+            do_spit lhsb (CF.mkTrue (CF.mkTrueFlow()) pos) []
+        end
     else
       (lhsb, [],[(hp,args)], [])
 

@@ -2190,7 +2190,7 @@ let update_es prog es hds hvs new_lhs_b rhs rhs_rest r_new_hfs defined_hps lsele
        if CP.diff_svl args svl = [] then [hp] else []
      in
      let keep_hps =  List.concat (List.map (check_full_inter rest_svl1) new_hp_args) in
-     let _ = DD.tinfo_pprint ("  rest_svl1: " ^ (!CP.print_svl rest_svl1)) pos in
+     let _ = DD.ninfo_pprint ("  rest_svl: " ^ (!CP.print_svl rest_svl)) pos in
      let _ = DD.tinfo_pprint ("  keep_hps: " ^ (!CP.print_svl keep_hps)) pos in
      let root_vars_ls1 = CP.diff_svl root_vars_ls keep_hps in
      let well_defined_svl = List.concat (List.map (fun (hp,args,_,_) -> hp::args) defined_hps) in
@@ -2202,7 +2202,10 @@ let update_es prog es hds hvs new_lhs_b rhs rhs_rest r_new_hfs defined_hps lsele
      (*should consider closure of aliasing. since constraints are in normal form,
        but residue is not. and we want to drop exact matching of args*)
      let lselected_hpargs2 = List.map (fun (hp,args) -> (hp, SAU.find_close args leqs)) lselected_hpargs1 in
-     let new_es_formula = SAU.drop_data_view_hrel_nodes_from_root prog new_es_formula hds hvs leqs root_vars_ls2 well_defined_svl lselected_hpargs2 in
+     let _ = DD.ninfo_pprint ("  root_vars_ls2: " ^ (!CP.print_svl root_vars_ls2)) pos in
+     let _ = DD.ninfo_pprint ("  before: " ^ (Cprinter.string_of_formula new_es_formula)) pos in
+     let new_es_formula = SAU.drop_data_view_hrel_nodes_from_root prog new_es_formula hds hvs leqs root_vars_ls2
+       well_defined_svl (CF.h_fv rhs) lselected_hpargs2 in
      let _ = DD.ninfo_pprint ("  after: " ^ (Cprinter.string_of_formula new_es_formula)) pos in
      (*CF.drop_hrel_f new_es_formula lhrs in *)
      (*add mismatched heap into the entail states if @L*)
@@ -2291,8 +2294,8 @@ let infer_collect_hp_rel_x prog (es:entail_state) rhs rhs_rest (rhs_h_matched_se
           DD.tinfo_pprint ">>>>>> infer_hp_rel <<<<<<" pos;
           DD.tinfo_pprint ("  es_heap: " ^ (Cprinter.string_of_h_formula es.CF.es_heap)) pos;
           DD.tinfo_pprint ("  es_history: " ^ (let pr=pr_list_ln Cprinter.string_of_h_formula in pr es.CF.es_history)) pos;
-          DD.info_pprint ("  lhs: " ^ (Cprinter.string_of_formula_base lhs_b)) pos;
-          DD.info_pprint ("  rhs: " ^ (Cprinter.string_of_formula_base rhs_b)) pos;
+          DD.tinfo_pprint ("  lhs: " ^ (Cprinter.string_of_formula_base lhs_b)) pos;
+          DD.tinfo_pprint ("  rhs: " ^ (Cprinter.string_of_formula_base rhs_b)) pos;
           DD.tinfo_pprint ("  unmatch: " ^ (Cprinter.string_of_h_formula rhs)) pos
        (* DD.info_pprint ("  lhs aliases: " ^  (pr2 leqs)) pos; (\* aliases from LHS *\) *)
        (* DD.info_pprint ("  rhs aliases: " ^  (pr2 reqs)) pos;  (\* aliases from RHS *\) *)
@@ -2357,7 +2360,7 @@ let infer_collect_hp_rel_x prog (es:entail_state) rhs rhs_rest (rhs_h_matched_se
                    hds hvs lhras lhrs rhras rhrs leqs1 reqs1 eqNull subst_prog_vars pos in
              (*update residue*)
              let new_es, new_lhs = update_es prog es hds hvs new_lhs_b rhs rhs_rest r_new_hfs defined_hps1 lselected_hpargs2
-               rvhp_rels leqs m post_hps unk_map hp_rel_list pos in
+               rvhp_rels leqs1 m post_hps unk_map hp_rel_list pos in
              (true, new_es,new_lhs, None)
       end
 
