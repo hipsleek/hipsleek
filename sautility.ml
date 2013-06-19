@@ -1215,7 +1215,7 @@ let simplify_one_constr_b prog unk_hps lhs_b rhs_b=
   Debug.no_2 "simplify_one_constr_b" pr pr (pr_triple pr pr !CP.print_svl)
       (fun _ _ -> simplify_one_constr_b_x prog unk_hps lhs_b rhs_b) lhs_b rhs_b
 
-let find_well_defined_hp_x prog hds hvs r_hps prog_vars post_hps (hp,args) def_ptrs lhsb pos=
+let find_well_defined_hp_x prog hds hvs r_hps prog_vars post_hps (hp,args) def_ptrs lhsb split_spatial pos=
   let do_spit fb rhs new_hps=
     let f = keep_data_view_hrel_nodes_fb prog fb hds hvs args [(hp,args)] in
     (*we do NOT want to keep heap in LHS*)
@@ -1245,7 +1245,7 @@ let find_well_defined_hp_x prog hds hvs r_hps prog_vars post_hps (hp,args) def_p
     else
       let args_inst,_ =  partition_hp_args prog hp args in
       let undef_args_inst = List.filter (fun (sv,_) -> CP.mem_svl sv undef_args) args_inst in
-      if List.length undef_args < List.length args && undef_args_inst <> [] then
+      if split_spatial && List.length undef_args < List.length args && undef_args_inst <> [] then
         begin
           if !Globals.sa_s_split_base then
             let new_hf, new_hp = add_raw_hp_rel_x prog undef_args_inst pos in
@@ -1257,8 +1257,12 @@ let find_well_defined_hp_x prog hds hvs r_hps prog_vars post_hps (hp,args) def_p
     else
       (lhsb, [],[(hp,args)], [])
 
+(*
+  split_spatial: during assumption generating,
+ do not do split_spatial, we need capture link_hps
+*)
 let find_well_defined_hp prog hds hvs ls_r_hpargs prog_vars post_hps 
-      (hp,args) def_ptrs lhsb pos=
+      (hp,args) def_ptrs lhsb split_spatial pos=
   let pr1 = !CP.print_sv in
   let pr2 = !CP.print_svl in
   let pr3 = pr_triple pr1 pr2 Cprinter.string_of_formula_base in
@@ -1267,7 +1271,7 @@ let find_well_defined_hp prog hds hvs ls_r_hpargs prog_vars post_hps
   Debug.no_4 "find_well_defined_hp" Cprinter.string_of_formula_base pr4 pr2 pr2
       (pr_quad pr3 (pr_list_ln pr3) (pr_list pr4) pr5)
       (fun _ _  _ _ -> find_well_defined_hp_x prog hds hvs ls_r_hpargs
-          prog_vars post_hps (hp,args) def_ptrs lhsb pos)
+          prog_vars post_hps (hp,args) def_ptrs lhsb split_spatial pos)
       lhsb (hp,args) def_ptrs prog_vars
 
 let split_base_x prog hds hvs r_hps prog_vars post_hps (hp,args) def_ptrs lhsb=
