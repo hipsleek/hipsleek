@@ -226,6 +226,7 @@ module Make (Token : SleekTokenS)
    (*("variance", VARIANCE);*)
 	 ("while", WHILE);
    ("with", WITH);
+   ("XPURE",XPURE);
 	 (flow, FLOW flow);]
 }
   

@@ -485,8 +485,8 @@ SHGram.Entry.of_parser "peek_print"
              | [FORALL,_;OPAREN,_;_] -> ()
              | [EXISTS,_;OPAREN,_;_] -> ()
              | [UNION,_;OPAREN,_;_] -> ()
-	     (* | [XPURE,_;OPAREN,_;_] -> () *)
-             | [IDENTIFIER id,_;OPAREN,_;_] -> if hp_names # mem id then raise Stream.Failure else ()
+	         | [XPURE,_;OPAREN,_;IDENTIFIER id,_] -> ()
+             (*| [IDENTIFIER id,_;OPAREN,_;_] -> if hp_names # mem id then raise Stream.Failure else ()*)
              | [_;COLONCOLON,_;_] -> raise Stream.Failure
              | [_;PRIME,_;COLONCOLON,_] -> raise Stream.Failure
              | [OPAREN,_;_;COLONCOLON,_] -> raise Stream.Failure
@@ -1493,7 +1493,7 @@ cexp_w:
 	  (* An Hoa : Hole for partial structures, represented by the hash # character. *)
        | `HASH -> let _ = hash_count := !hash_count + 1 in 
 		  Pure_c (P.Var (("#" ^ (string_of_int !hash_count),Unprimed),(get_pos_camlp4 _loc 1)))
-       | `IDENTIFIER id1;`OPAREN; `IDENTIFIER id; `OPAREN; cl = id_list; `CPAREN ; `CPAREN-> (* xpure *)
+       | `XPURE;`OPAREN; `IDENTIFIER id; `OPAREN; cl = id_list; `CPAREN ; `CPAREN-> (* xpure *)
        (* print_string ("xpure"^id1^"("^id^"())!!!"); *)
 	  	  if hp_names # mem id then Pure_f(P.BForm ((P.mkXPure id cl (get_pos_camlp4 _loc 1), None), None))
 	  	  else
@@ -1509,7 +1509,7 @@ cexp_w:
        * s(x,1,x+1), s(x,y,x+y), ...
        * in our formula.
        *)
-	  (* print_string ("rel: "^id^"!!!\n"); *)
+	   (*print_string ("rel: "^id^"!!!\n"); *)
 	  if func_names # mem id then Pure_c (P.Func (id, cl, get_pos_camlp4 _loc 1))
           else if hp_names # mem id then Pure_f(P.BForm ((P.RelForm (id, cl, get_pos_camlp4 _loc 1), None), None))
           else
@@ -1522,9 +1522,9 @@ cexp_w:
                 (*   else Pure_f(P.BForm ((P.RelForm (id, cl, get_pos_camlp4 _loc 1), None), None))) *)
                 (* with Invalid_argument _ -> Pure_f(P.BForm ((P.RelForm (id, cl, get_pos_camlp4 _loc 1), None), None))) *)
       
-                | peek_cexp_list; ocl = opt_comma_list -> (* let tmp = List.map (fun c -> P.Var(c,get_pos_camlp4 _loc 1)) ocl in *) 
+         | peek_cexp_list; ocl = opt_comma_list -> (* let tmp = List.map (fun c -> P.Var(c,get_pos_camlp4 _loc 1)) ocl in *) 
                 Pure_c(P.List(ocl, get_pos_camlp4 _loc 1)) 
-                | t = cid                ->
+         | t = cid                ->
 
           let id,p = t in
           if String.contains id '.' then
