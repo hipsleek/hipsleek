@@ -1117,6 +1117,13 @@ Can we just have:
 ============================================================
 # zip1b1.slk:
 
+
+Could we have an option --sa-dis-elim-unused-pred 
+to keep the unused pred so that we know they are transformed
+correctly. That is the elim of unused pred is dis-enabled
+when the above option is turned on.
+
+
 GREAT!
 
 TWO small PROBLEMS

@@ -15,6 +15,23 @@ cell id (cell x)
 
 /*
 
+P(x) - pre-condition cannot be dangling
+  'cos x is from input
+
+P(x,y) --> x::node<_,q>*HP1(q,y@NI)*HP2(y,x@NI)
+  HP1(..) could be dangling pred
+  HP2(..) is non-dangling 'cos y is from input
+
+
+ requires P(x,y)
+ ensures  G(x,y,res)
+ 
+
+ P(x)&res=x --> G(x,res)&true]
+
+ P(x) --> emp
+ res=x --> G(x,res)
+
 A predicate is non-dangling if it is being used
 for a pre-pred definition.
 I suppose dangling classification may have to be
