@@ -1410,9 +1410,9 @@ let infer_shapes_core prog proc_name (constrs0: CF.hprel list) callee_hps sel_hp
   let unk_hps = (List.map fst unk_hpargs) in
   (*TODO: remove detect dangling at pre/post process*)
   (*TEMP*)
-  let detect_dang = false in
+  let user_detect_dang =  detect_dang && !Globals.sa_elim_unused_preds in
   infer_shapes_proper prog proc_name constrs1 callee_hps sel_hp_rels sel_post_hps unk_map prog_vars
-      unk_hpargs link_hpargs detect_dang
+      unk_hpargs link_hpargs user_detect_dang
 
 let infer_shapes_x prog proc_name (constrs0: CF.hprel list) sel_hps sel_post_hps hp_rel_unkmap unk_hpargs need_preprocess detect_dang:
       (CF.hprel list * CF.hp_rel_def list* (CP.spec_var*CP.exp list * CP.exp list) list ) =
