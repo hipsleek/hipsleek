@@ -2747,8 +2747,11 @@ let drop_hp_arguments_x prog hp args0 fs=
         if (is_empty_f f1) then []
         else [f1]
       in
-      let fs1 = List.concat (List.map (simplify_helper n_args) fs) in
-      (n_args,fs1)
+      if List.length n_args = List.length args0 then
+        (args0, fs)
+      else
+        let fs1 = List.concat (List.map (simplify_helper n_args) fs) in
+        (n_args,fs1)
   in
   (new_args,new_fs)
 
@@ -3302,7 +3305,6 @@ let mk_hprel_def prog cdefs unk_hps unk_svl hp args defs pos=
     (*       let def = (hp, (CP.HPRelDefn hp, (CF.HRel (hp, List.map (fun x -> CP.mkVar x no_pos) new_args, pos)), defs1)) in *)
     (*       [def] *)
     | _ -> begin
-        let _ = DD.ninfo_pprint ((!CP.print_sv hp)^"(" ^(!CP.print_svl args) ^ ")") pos in
         let new_args,defs1 =
           if CP.mem_svl hp unk_hps then (args,defs) else (* (args,defs) *)
             drop_hp_arguments prog hp args defs
@@ -3313,6 +3315,7 @@ let mk_hprel_def prog cdefs unk_hps unk_svl hp args defs pos=
           (*make disjunction*)
           let def = List.fold_left (fun f1 f2 -> CF.mkOr f1 f2 (CF.pos_of_formula f1))
             (List.hd defs2) (List.tl defs2) in
+          let _ = DD.ninfo_pprint ((!CP.print_sv hp)^"(" ^(!CP.print_svl new_args) ^ ")") pos in
           DD.ninfo_pprint (" =: " ^ (Cprinter.prtt_string_of_formula def) ) pos;
           let def = (hp, (CP.HPRelDefn hp, (CF.HRel (hp, List.map (fun x -> CP.mkVar x no_pos) new_args, pos)), def)) in
           [def]
@@ -3530,7 +3533,7 @@ let get_longest_common_hnodes_list_x prog cdefs unk_hps unk_svl hp r non_r_args 
            let n_fs1 = List.filter (fun f -> not ((is_empty_f f) || (CF.is_only_neqNull n_args [] f))) n_fs in
        (*for debugging*)
        (* let pr1 = pr_list_ln Cprinter.prtt_string_of_formula in *)
-       (* let _ = Debug.info_pprint ("  n_fs: "^ (pr1 n_fs)) no_pos in *)
+       (* let _ = Debug.info_pprint ("  n_args: "^ (!CP.print_svl n_args)) no_pos in *)
        (* let _ = Debug.info_pprint ("  n_fs1: "^ (pr1 n_fs1)) no_pos in *)
        (*END for debugging*)
            let n_fs2 = Gen.BList.remove_dups_eq (fun f1 f2 -> check_relaxeq_formula f1 f2) n_fs1 in

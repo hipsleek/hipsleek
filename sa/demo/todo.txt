@@ -1241,10 +1241,39 @@ relAssume G1
  x=null & res=null --> G1(x,y,res).
 
 =================================================================
-# zip1b4.slk
+# zip1b4.slk: FIXED
 
 relAssume G1
- y::node<val_25_826,next_25_827> * x::node<val_24_819,nn>
+ y::node<val_25_826,next_25_827> * x::node<val_24_819,rr>
   * G1(nn,next_25_827,rr) 
-//  & nn=rr
+  & nn=rr
+  & res=x --> G1(x,y,res).
+
+===>
+relAssume G1
+ y::node<val_25_826,next_25_827> * x::node<val_24_819,rr>
+  * G1(rr,next_25_827,rr) 
+      ^^^^
+  & nn=rr
+  & res=x --> G1(x,y,res).
+
+=================================================================
+# zip1b5.slk:
+
+relAssume G1
+ //res=x & 
+ x=null & res=null --> G1(x,y,res).
+
+relAssume G1
+ y::node<val_25_826,next_25_827> * x::node<val_24_819,rr>
+  * G1(nn,next_25_827,rr) 
+ // & nn=rr
+  & res=x --> G1(x,y,res).
+
+===>
+relAssume G1
+ y::node<val_25_826,next_25_827> * x::node<val_24_819,rr>
+  * G1(rr,next_25_827,rr) 
+  & nn=rr
+   ^^^^^^^
   & res=x --> G1(x,y,res).
