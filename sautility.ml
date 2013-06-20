@@ -1283,7 +1283,7 @@ let find_well_defined_hp prog hds hvs ls_r_hpargs prog_vars post_hps
           prog_vars post_hps (hp,args) def_ptrs lhsb split_spatial pos)
       lhsb (hp,args) def_ptrs prog_vars
 
-let delect_link_hp_x prog hds hvs r_hp r_args post_hps lhs_hpargs def_ptrs=
+let detect_link_hp_x prog hds hvs r_hp r_args post_hps lhs_hpargs def_ptrs=
   let rec process_helper ls_hpargs=
     match ls_hpargs with
       | [] -> []
@@ -1291,7 +1291,7 @@ let delect_link_hp_x prog hds hvs r_hp r_args post_hps lhs_hpargs def_ptrs=
             if CP.eq_spec_var hp r_hp then process_helper rest else
               let closed_args = look_up_closed_ptr_args prog hds hvs args in
               let undef_args = lookup_undef_args closed_args [] def_ptrs in
-              if undef_args <> [] then
+              if undef_args <> [] && List.length undef_args < List.length args then
                 let args_inst,_ =  partition_hp_args prog hp args in
                 let undef_args_inst = List.filter (fun (sv,_) -> CP.mem_svl sv undef_args) args_inst in
                 if undef_args_inst<>[] then
@@ -1305,12 +1305,12 @@ let delect_link_hp_x prog hds hvs r_hp r_args post_hps lhs_hpargs def_ptrs=
   in
   process_helper lhs_hpargs
 
-let delect_link_hp prog hds hvs r_hp r_args post_hps lhs_hpargs def_ptrs=
+let detect_link_hp prog hds hvs r_hp r_args post_hps lhs_hpargs def_ptrs=
   let pr1 = !CP.print_sv in
   let pr2 = !CP.print_svl in
   let pr3 = pr_list (pr_pair pr1 pr2) in
-  Debug.no_4 " delect_link_hp" pr1 pr2 pr3 pr2 pr3
-      (fun _ _ _ _ -> delect_link_hp_x prog hds hvs r_hp r_args post_hps lhs_hpargs def_ptrs)
+  Debug.no_4 " detect_link_hp" pr1 pr2 pr3 pr2 pr3
+      (fun _ _ _ _ -> detect_link_hp_x prog hds hvs r_hp r_args post_hps lhs_hpargs def_ptrs)
       r_hp r_args lhs_hpargs def_ptrs
 
 let split_base_x prog hds hvs r_hps prog_vars post_hps (hp,args) def_ptrs lhsb=

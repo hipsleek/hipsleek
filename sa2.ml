@@ -324,7 +324,7 @@ let split_constr_x prog constrs post_hps prog_vars unk_map unk_hps=
           | [(r_hp,r_args)] ->
                 if CP.mem_svl r_hp post_hps then
                   []
-                else SAU.delect_link_hp prog lhds lhvs r_hp r_args post_hps ls_lhp_args (l_def_vs)
+                else SAU.detect_link_hp prog lhds lhvs r_hp r_args post_hps ls_lhp_args (l_def_vs)
           | _ -> []
       in
       ([cs],total_unk_map,link_hpargs0)
