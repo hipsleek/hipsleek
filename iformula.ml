@@ -386,18 +386,16 @@ and mkBase (h : h_formula) (p : P.formula) flow (a: one_formula list) pos = matc
 and mkExists (qvars : (ident * primed) list) (h : h_formula) (p : P.formula) flow (a: one_formula list) pos = match h with
   | HFalse -> mkFalse flow pos
   | _ ->
-	  if P.isConstFalse p then
-		mkFalse flow pos
-	  else (
-      let _ = print_string ("\n== mkExists list = ") in
-      List.iter (fun v -> print_string (fst v)) qvars;
-      Exists { formula_exists_qvars = qvars;
-               formula_exists_heap = h;
-               formula_exists_pure = p;
-               formula_exists_flow = flow;
-               formula_exists_and = a;
-               formula_exists_pos = pos }
-    )
+      if P.isConstFalse p then
+        mkFalse flow pos
+      else (
+        Exists { formula_exists_qvars = qvars;
+                 formula_exists_heap = h;
+                 formula_exists_pure = p;
+                 formula_exists_flow = flow;
+                 formula_exists_and = a;
+                 formula_exists_pos = pos }
+      )
 
 and mkOneFormula (h : h_formula) (p : P.formula) id pos = 
   {formula_heap =h;

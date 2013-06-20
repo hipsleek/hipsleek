@@ -819,7 +819,6 @@ let rec trans_prog (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_decl
             else cviews
           in
 	  (* let _ = print_string "trans_prog :: trans_view PASSED\n" in *)
-    let _ = print_endline ("== trans_view passed") in
 	  let crels = List.map (trans_rel prog) prog.I.prog_rel_decls in (* An Hoa *)
           let _ = prog.I.prog_rel_ids <- List.map (fun rd -> (RelT[],rd.I.rel_name)) prog.I.prog_rel_decls in
           let chps = List.map (trans_hp prog) prog.I.prog_hp_decls in 
@@ -832,7 +831,6 @@ let rec trans_prog (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_decl
 	  let cprocs1 = List.map (trans_proc prog) prog.I.prog_proc_decls in
 	  (* let _ = print_string "trans_prog :: trans_proc PASSED\n" in *)
 	  (* Start calling is_sat,imply,simplify from trans_proc *)
-    let _ = print_endline ("== trans_proc passed") in
 	  let cprocs = !loop_procs @ cprocs1 in
 	  let (l2r_coers, r2l_coers) = trans_coercions prog in
 	  let log_vars = List.concat (List.map (trans_logical_vars) prog.I.prog_logical_var_decls) in 
@@ -849,7 +847,6 @@ let rec trans_prog (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_decl
 	      C.new_proc_decls = C.create_proc_decls_hashtbl cprocs;
 	      C.prog_left_coercions = l2r_coers;
 	      C.prog_right_coercions = r2l_coers;} in
-    let _ = print_endline ("== cprog 1 = " ^ (Cprinter.string_of_program cprog)) in
 	  let cprog1 = { cprog with			
 	      (* C.old_proc_decls = List.map substitute_seq cprog.C.old_proc_decls; *)
               C.new_proc_decls = C.proc_decls_map substitute_seq cprog.C.new_proc_decls; 
@@ -1999,21 +1996,12 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
         let cmp x (_,y) = (String.compare (CP.name_of_spec_var x) y) == 0 in
         
         let log_vars = List.concat (List.map (trans_logical_vars) prog.I.prog_logical_var_decls) in 
-        let _ = print_string ("\n== log_vars = ") in
-        List.iter (fun v -> print_string ("  " ^ (Cprinter.string_of_spec_var v) ^ "; ")) log_vars;
-        let _ = print_endline ("=== spec = " ^ (Cprinter.string_of_struc_formula final_static_specs_list)) in
         let struc_fv = CP.diff_svl (CF.struc_fv_infer final_static_specs_list) log_vars in
-        let _ = print_string ("\n== struc_fv = ") in
-        List.iter (fun v -> print_string ("  " ^ (Cprinter.string_of_spec_var v) ^ "; ")) struc_fv;
         (*LOCKSET variable*********)
         let ls_var = (ls_typ,ls_name) in
         let lsmu_var = (lsmu_typ,lsmu_name) in
         let waitlevel_var = (waitlevel_typ,waitlevel_name) in
         let lock_vars = [waitlevel_var;lsmu_var;ls_var] in
-        let _ = print_string ("\n== mix vars = ") in
-        List.iter (fun v -> print_string ("  " ^ (snd v) ^ "; ")) (lock_vars@((cret_type,res_name)::(Named raisable_class,eres_name)::args2));
-        let _ = print_endline ("\n== res_name = " ^ res_name) in
-        let _ = print_endline ("\n== eres_name = " ^ eres_name) in
         (**************************)
         let ffv = Gen.BList.difference_eq cmp (*(CF.struc_fv_infer final_static_specs_list)*) struc_fv (lock_vars@((cret_type,res_name)::(Named raisable_class,eres_name)::args2)) in
         if (ffv!=[]) then 
@@ -3071,7 +3059,6 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
             let et = snd (helper e) in
             let fs,rem,_ = compact_field_access_sequence prog et fs in
             if not (rem = "") then
-        let _ = print_endline ("== rem = " ^ rem) in
               failwith ("[trans_exp] expect non-inline field access but still got { " ^ rem ^ " }")
             else
               (* ... = o.f => read_only = true *)
@@ -4439,7 +4426,7 @@ and trans_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : ident list) 
                 gather_type_info_heap prog h n_tl
               else n_tl in
             let _ = List.map (fun x -> helper_one_formula x tl) a in
-            let (n_tl,ch) = linearize_formula prog f0 n_tl in
+            let (n_tl,ch, newvars) = linearize_formula prog f0 n_tl in
             let n_tlist = (
               if sep_collect then
                 if quantify then (
@@ -4476,10 +4463,11 @@ and trans_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : ident list) 
                 IF.formula_base_flow = fl;
                 IF.formula_base_and = a;
                 IF.formula_base_pos = pos; } in
-            let (n_tl,ch) = linearize_formula prog f1 n_tl in
+            let (n_tl,ch, newvars) = linearize_formula prog f1 n_tl in
             (*let _ = print_string ("Cform: "^(Cprinter.string_of_formula ch) ^"\n" ) in*)
             let qsvars = List.map (fun qv -> trans_var qv n_tl pos) qvars in
-            let ch = CF.push_exists qsvars ch in
+            let newvars = List.map (fun qv -> trans_var qv n_tl pos) newvars in
+            let ch = CF.push_exists (qsvars @ newvars) ch in
             let n_tlist = (
               if sep_collect && quantify then
                 let fvars = (List.map fst qvars) @ fvars in
@@ -4504,11 +4492,13 @@ and trans_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : ident list) 
   (*let _ = print_string ("\nafter ann: "^ Cprinter.string_of_formula cf) in*)
   (n_tl,cf)
 
-and linearize_formula (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_var_type_list) : (spec_var_type_list * CF.formula) =
+and linearize_formula (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_var_type_list) 
+                      : (spec_var_type_list * CF.formula * (Globals.ident * Globals.primed) list) =
   let pr1 prog = (add_str "view_decls" pr_v_decls) prog.I.prog_view_decls in
   Debug.no_3 "linearize_formula" pr1 Iprinter.string_of_formula string_of_tlist Cprinter.string_of_formula linearize_formula_x prog f0 tlist
 
-and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_var_type_list) : (spec_var_type_list * CF.formula) =
+and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_var_type_list) 
+                        : (spec_var_type_list * CF.formula * (Globals.ident * Globals.primed) list) =
   let rec match_exp (hargs : (IP.exp * Label_only.spec_label) list) pos : (CP.spec_var list) =
     match hargs with
     | (e, _) :: rest ->
@@ -4519,7 +4509,7 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
         let hvars = e_hvars :: rest_hvars in
         hvars
     | [] -> [] in
-  let expand_dereference_node (f: IF.h_formula) pos : IF.h_formula = (
+  let expand_dereference_node (f: IF.h_formula) pos : (IF.h_formula * (Globals.ident * Globals.primed) list) = (
     match f with
     | IF.HeapNode {IF.h_formula_heap_node = n;
                    IF.h_formula_heap_name = c;
@@ -4545,7 +4535,7 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
               else vdef.I.view_data_name
             with _ -> c
           ) in
-          let expanded_heap = (
+          let expanded_heap, newvars = (
             match base_heap_id with
             | "int"
             | "bool"
@@ -4554,12 +4544,15 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
                 (* dereference to a basic type *)
                 if (deref = 1) then (
                   let base_heap_id = base_heap_id ^ "__star" in
-                  IF.mkHeapNode n base_heap_id 0 dr imm full inv pd perm exps ann_param pi l
+                  let hf = IF.mkHeapNode n base_heap_id 0 dr imm full inv pd perm exps ann_param pi l in
+                  (hf, [])
                 )
                 else (
+                  let new_vars = ref [] in
                   let base_heap_id = base_heap_id ^ "__star" in
                   let s = ref base_heap_id in
                   let fresh_var = "deref_" ^ (fresh_name ()) in
+                  new_vars := !new_vars @ [(fresh_var, Unprimed)];
                   let p = (fresh_var, Unprimed) in
                   let p1 = ref p in
                   let p2 = ref (IF.P.Var (("", Unprimed), l)) in
@@ -4567,6 +4560,7 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
                   for i = 3 to deref do
                     p2 := IF.P.Var (!p1, l);
                     let fresh_var = "deref_" ^ (fresh_name ()) in
+                    new_vars := !new_vars @ [(fresh_var, Unprimed)];
                     p1 := (fresh_var, Unprimed);
                     s := !s ^ "__star";
                     let h = IF.mkHeapNode !p1 !s 0 false (IF.ConstAnn(Mutable)) false false false None [!p2] [None] None l in
@@ -4575,14 +4569,17 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
                   s := !s ^ "__star";
                   let e = IF.P.Var (!p1, l) in
                   let h1 = IF.mkHeapNode n !s 0 false (IF.ConstAnn(Mutable)) false false false None [e] [None] None l in
-                  let h2 = IF.mkHeapNode p base_heap_id 0 dr imm full inv pd perm exps ann_param pi l in
-                  List.fold_left (fun f1 f2 -> IF.mkStar f1 f2 l) h1 (!heaps @ [h2])
+                  let h2 = IF.mkHeapNode p c 0 dr imm full inv pd perm exps ann_param pi l in
+                  let hf = List.fold_left (fun f1 f2 -> IF.mkStar f1 f2 l) h1 (!heaps @ [h2]) in
+                  (hf, !new_vars)
                 )
               )
             | _ -> (
                 (* dereference to a data structure *)
+                let new_vars = ref [] in
                 let s = ref base_heap_id in
                 let fresh_var = "deref_" ^ (fresh_name ()) in
+                new_vars := !new_vars @ [(fresh_var, Unprimed)];
                 let p = (fresh_var, Unprimed) in
                 let p1 = ref p in
                 let p2 = ref (IF.P.Var (("", Unprimed), l)) in
@@ -4590,6 +4587,7 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
                 for i = 2 to deref do
                   p2 := IF.P.Var (!p1, l);
                   let fresh_var = "deref_" ^ (fresh_name ()) in
+                  new_vars := !new_vars @ [(fresh_var, Unprimed)];
                   p1 := (fresh_var, Unprimed);
                   s := !s ^ "__star";
                   let h = IF.mkHeapNode !p1 !s 0 false (IF.ConstAnn(Mutable)) false false false None [!p2] [None] None l in
@@ -4598,21 +4596,21 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
                 s := !s ^ "__star";
                 let e = IF.P.Var (!p1, l) in
                 let h1 = IF.mkHeapNode n !s 0 false (IF.ConstAnn(Mutable)) false false false None [e] [None] None l in
-                let h2 = IF.mkHeapNode p base_heap_id 0 dr imm full inv pd perm exps ann_param pi l in
-                List.fold_left (fun f1 f2 -> IF.mkStar f1 f2 l) h1 (!heaps @ [h2])
+                let h2 = IF.mkHeapNode p c 0 dr imm full inv pd perm exps ann_param pi l in
+                let hf = List.fold_left (fun f1 f2 -> IF.mkStar f1 f2 l) h1 (!heaps @ [h2]) in
+                (hf, !new_vars)
               )
           ) in
-          let _ = print_endline ("== ori heap f = " ^ (Iprinter.string_of_h_formula f)) in
-          let _ = print_endline ("== expanded_heap = " ^ (Iprinter.string_of_h_formula expanded_heap)) in
           (* return *)
-          expanded_heap
+          (expanded_heap, newvars)
         )
         else
           report_error l "expand_dereference_node: expect a dereference HeapNode"
       )
     | _ -> report_error pos "expand_dereference_node: expect a HeapNode"
   ) in
-  let rec linearize_heap (f : IF.h_formula) pos (tl:spec_var_type_list) : ( CF.h_formula * CF.t_formula) = ( 
+  let rec linearize_heap (f : IF.h_formula) pos (tl:spec_var_type_list)
+                         : ( CF.h_formula * CF.t_formula * (Globals.ident * Globals.primed) list * (spec_var_type_list)) = ( 
     let res = ( (*let _ = print_string("H_formula: "^(Iprinter.string_of_h_formula f)^"\n") in*)
       match f with
       | IF.HeapNode2 h2 -> report_error (IF.pos_of_formula f0) "malfunction with convert to heap node"
@@ -4629,8 +4627,10 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
                      IF.h_formula_heap_label = pi;} ->
           (* expand the dereference heap node first *)
           if (deref > 0) then (
-            let f1 = expand_dereference_node f pos in
-            linearize_heap f1 pos tl
+            let (f1, newvars1) = expand_dereference_node f pos in
+            let n_tl = gather_type_info_heap prog f1 tl in
+            let hf, tf, newvars2, n_tl = linearize_heap f1 pos n_tl in
+            (hf, tf, newvars1 @ newvars2, n_tl)
           )
           else (
             (* An Hoa : Handle field access *)
@@ -4702,7 +4702,7 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
                              CF.h_formula_data_pruning_conditions = [];
                              CF.h_formula_data_pos = pos;} in
               let result_heap = Immutable.normalize_field_ann_heap_node result_heap in
-              (result_heap, CF.TypeTrue)
+              (result_heap, CF.TypeTrue, [], tl)
             )
             else (
               (* Not a field access, proceed with the original code *)
@@ -4743,7 +4743,7 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
                                CF.h_formula_view_pruning_conditions = [];
                                CF.h_formula_view_remaining_branches = None;
                                CF.h_formula_view_pos = pos;} in
-                (new_h, CF.TypeTrue)
+                (new_h, CF.TypeTrue, [], tl)
               )
               with Not_found ->
                 let labels = List.map (fun _ -> Label_only.empty_spec_label) exps in
@@ -4784,65 +4784,65 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
                                CF.h_formula_data_pruning_conditions = [];
                                CF.h_formula_data_pos = pos;} in
                 let new_h = Immutable.normalize_field_ann_heap_node new_h in
-                (new_h, CF.TypeTrue)
+                (new_h, CF.TypeTrue, [], tl)
           )
         )
       | IF.Star {IF.h_formula_star_h1 = f1;
                  IF.h_formula_star_h2 = f2;
                  IF.h_formula_star_pos = pos} ->
-          let (lf1, type1) = linearize_heap f1 pos tl in
-          let (lf2, type2) = linearize_heap f2 pos tl in
+          let (lf1, type1, newvars1, n_tl) = linearize_heap f1 pos tl in
+          let (lf2, type2, newvars2, n_tl) = linearize_heap f2 pos n_tl in
           let tmp_h = CF.mkStarH lf1 lf2 pos in
           let tmp_type = CF.mkAndType type1 type2 in 
-          (tmp_h, tmp_type)
+          (tmp_h, tmp_type, newvars1 @ newvars2, n_tl)
       | IF.StarMinus {IF.h_formula_starminus_h1 = f1;
                       IF.h_formula_starminus_h2 = f2;
                       IF.h_formula_starminus_pos = pos} ->
-          let (lf1, type1) = linearize_heap f1 pos tl in
-          let (lf2, type2) = linearize_heap f2 pos tl in
+          let (lf1, type1, newvars1, n_tl) = linearize_heap f1 pos tl in
+          let (lf2, type2, newvars2, n_tl) = linearize_heap f2 pos n_tl in
           let tmp_h = CF.mkStarMinusH lf1 lf2 pos 1 in
           let tmp_type = CF.mkAndType type1 type2 in 
-          (tmp_h, tmp_type)
+          (tmp_h, tmp_type, newvars1 @ newvars2, n_tl)
       | IF.Phase { IF.h_formula_phase_rd = f1;
                    IF.h_formula_phase_rw = f2;
                    IF.h_formula_phase_pos = pos } ->
-          let (lf1, type1) = linearize_heap f1 pos tl in
-          let (lf2, type2) = linearize_heap f2 pos tl in
+          let (lf1, type1, newvars1, n_tl) = linearize_heap f1 pos tl in
+          let (lf2, type2, newvars2, n_tl) = linearize_heap f2 pos n_tl in
           let tmp_h = CF.mkPhaseH lf1 lf2 pos in
           let tmp_type = CF.mkAndType type1 type2 in 
-          (tmp_h, tmp_type)
+          (tmp_h, tmp_type, newvars1 @ newvars2, n_tl)
       | IF.Conj {IF.h_formula_conj_h1 = f1;
                  IF.h_formula_conj_h2 = f2;
                  IF.h_formula_conj_pos = pos } ->
-          let (lf1, type1) = linearize_heap f1 pos tl in
-          let (lf2, type2) = linearize_heap f2 pos tl in
+          let (lf1, type1, newvars1, n_tl) = linearize_heap f1 pos tl in
+          let (lf2, type2, newvars2, n_tl) = linearize_heap f2 pos n_tl in
           let tmp_h = CF.mkConjH lf1 lf2 pos in
           let tmp_type = CF.mkAndType type1 type2 in 
-          (tmp_h, tmp_type)
+          (tmp_h, tmp_type, newvars1 @ newvars2, n_tl)
       | IF.HRel (r, args, pos) ->
           let nv = trans_var_safe (r,Unprimed) HpT tl pos in
           (* Match types of arguments with relation signature *)
           let cpargs = trans_pure_exp_list args tl in
-          (CF.HRel (nv, cpargs, pos), CF.TypeTrue)
+          (CF.HRel (nv, cpargs, pos), CF.TypeTrue, [], tl)
       | IF.ConjStar {IF.h_formula_conjstar_h1 = f1;
                      IF.h_formula_conjstar_h2 = f2;
                      IF.h_formula_conjstar_pos = pos} ->
-          let (lf1, type1) = linearize_heap f1 pos tl in
-          let (lf2, type2) = linearize_heap f2 pos tl in
+          let (lf1, type1, newvars1, n_tl) = linearize_heap f1 pos tl in
+          let (lf2, type2, newvars2, n_tl) = linearize_heap f2 pos n_tl in
           let tmp_h = CF.mkConjStarH lf1 lf2 pos in
           let tmp_type = CF.mkAndType type1 type2 in 
-          (tmp_h, tmp_type)
+          (tmp_h, tmp_type, newvars1 @ newvars2, n_tl)
       | IF.ConjConj {IF.h_formula_conjconj_h1 = f1;
                      IF.h_formula_conjconj_h2 = f2;
                      IF.h_formula_conjconj_pos = pos} ->
-          let (lf1, type1) = linearize_heap f1 pos tl in
-          let (lf2, type2) = linearize_heap f2 pos tl in
+          let (lf1, type1, newvars1, n_tl) = linearize_heap f1 pos tl in
+          let (lf2, type2, newvars2, n_tl) = linearize_heap f2 pos n_tl in
           let tmp_h = CF.mkConjConjH lf1 lf2 pos in
           let tmp_type = CF.mkAndType type1 type2 in 
-          (tmp_h, tmp_type)
-      | IF.HTrue ->  (CF.HTrue, CF.TypeTrue)
-      | IF.HFalse -> (CF.HFalse, CF.TypeFalse) 
-      | IF.HEmp -> (CF.HEmp, CF.TypeTrue)
+          (tmp_h, tmp_type, newvars1 @ newvars2, n_tl)
+      | IF.HTrue ->  (CF.HTrue, CF.TypeTrue, [], tl)
+      | IF.HFalse -> (CF.HFalse, CF.TypeFalse, [], tl) 
+      | IF.HEmp -> (CF.HEmp, CF.TypeTrue, [], tl)
     ) in 
     res
   ) in
@@ -4851,9 +4851,9 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
     let p = f.IF.formula_pure in
     let id = f.IF.formula_thread in
     let pos = f.IF.formula_pos in
-    let (new_h, type_f) = linearize_heap h pos tl in
+    let (new_h, type_f, newvars, n_tl) = linearize_heap h pos tl in
     (*let _ = print_string("Heap: "^(Cprinter.string_of_h_formula new_h)^"\n") in*)
-    let new_p = trans_pure_formula p tl in
+    let new_p = trans_pure_formula p n_tl in
     let new_p = Cpure.arith_simplify 5 new_p in
     let mix_p = (MCP.memoise_add_pure_N (MCP.mkMTrue pos) new_p) in
     let id_var = (match id with
@@ -4868,7 +4868,7 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
             let vv1 = Gen.BList.difference_eq CP.eq_spec_var vv [thread_var] in
             if (vv1==[]) then Error.report_error {Error.error_loc = pos;Error.error_text = "linearize_one_formula: could not find thread id"}
             else List.hd vv1
-      | Some (ve,pe) -> (trans_var (ve, pe) tl pos))
+      | Some (ve,pe) -> (trans_var (ve, pe) n_tl pos))
     in
     let new_f = { CF.formula_heap = new_h;
     CF.formula_pure = mix_p;
@@ -4877,7 +4877,7 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
     CF.formula_ref_vars = [];
     CF.formula_label = None;
     CF.formula_pos = pos} in
-    (new_f,type_f)
+    (new_f,type_f, newvars, n_tl)
   ) in
   let linearize_one_formula f pos = (
     let pr (a,b) = Cprinter.string_of_one_formula a in
@@ -4891,28 +4891,36 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
     let fl = base.IF.formula_base_flow in
     let a = base.IF.formula_base_and in
     let pos = base.IF.formula_base_pos in
-    let (new_h, type_f) = linearize_heap h pos tl in
-    let new_p = trans_pure_formula p tl in
+    let (new_h, type_f, newvars1, n_tl) = linearize_heap h pos tl in
+    let new_p = trans_pure_formula p n_tl in
     (*let _ = print_string("\nForm: "^(Cprinter.string_of_pure_formula new_p)) in*)
     let new_p = Cpure.arith_simplify 5 new_p in
     (*let _ = print_string("\nSimpleForm: "^(Cprinter.string_of_pure_formula new_p)) in*)
     let new_fl = trans_flow_formula fl pos in
-    let new_a,_ = List.split (List.map (fun f -> linearize_one_formula f pos tl) a) in
-    (new_h, new_p, type_f, new_fl, new_a)
+    let new_a = ref [] in
+    let newvars2 = ref [] in
+    let new_tl = ref n_tl in
+    List.iter (fun f ->
+      let a1, _, nvs, new_tl1 = linearize_one_formula f pos !new_tl in
+      new_tl := new_tl1;
+      new_a := !new_a @ [a1];
+      newvars2 := !newvars2 @ nvs;
+    ) a;
+    (new_h, new_p, type_f, new_fl, !new_a, newvars1 @ !newvars2, n_tl)
   ) in
   match f0 with
   | IF.Or {IF.formula_or_f1 = f1;
            IF.formula_or_f2 = f2;
            IF.formula_or_pos = pos } ->
-      let (n_tl,lf1) = linearize_formula prog f1 tlist in
-      let (n_tl,lf2) = linearize_formula prog f2 n_tl in
+      let (n_tl,lf1, newvars1) = linearize_formula prog f1 tlist in
+      let (n_tl,lf2, newvars2) = linearize_formula prog f2 n_tl in
       let result = CF.mkOr lf1 lf2 pos in
-      (n_tl,result)
+      (n_tl,result, newvars1 @ newvars2)
   | IF.Base base ->
       let pos = base.IF.formula_base_pos in
-      let nh,np,nt,nfl, na = (linearize_base base pos tlist) in
+      let nh,np,nt,nfl,na,newvars,n_tl = (linearize_base base pos tlist) in
       let np = (memoise_add_pure_N (mkMTrue pos) np)  in
-      (tlist,CF.mkBase nh np nt nfl na pos)
+      (n_tl, CF.mkBase nh np nt nfl na pos, newvars)
   | IF.Exists {IF.formula_exists_heap = h; 
                IF.formula_exists_pure = p;
                IF.formula_exists_flow = fl;
@@ -4924,9 +4932,10 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
                  IF.formula_base_flow = fl;
                  IF.formula_base_and = a;
                  IF.formula_base_pos = pos;} in 
-      let nh,np,nt,nfl,na = linearize_base base pos tlist in
+      let nh,np,nt,nfl,na,newvars,n_tl = linearize_base base pos tlist in
       let np = memoise_add_pure_N (mkMTrue pos) np in
-      (tlist, CF.mkExists (List.map (fun c-> trans_var_safe c UNK tlist pos) qvars) nh np nt nfl na pos)
+      let qvars = qvars @ newvars in
+      (n_tl, CF.mkExists (List.map (fun c-> trans_var_safe c UNK tlist pos) qvars) nh np nt nfl na pos, [])
 
 and trans_flow_formula (f0:IF.flow_formula) pos : CF.flow_formula = 
   { CF.formula_flow_interval = exlist #  get_hash f0;

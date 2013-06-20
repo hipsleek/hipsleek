@@ -11,23 +11,6 @@ ll<n> == self = null & n = 0
   or self::node_star<p> * p::node<_,q> * q::ll<n1> & n = n1 + 1
   inv n >= 0;
 
-/* insert an item to the end of current list */
-void insert_last(node_star x, int a)
-  requires x::ll<n> & n > 0
-  ensures x::ll<n+1>;
-{
-  if (x.pdata.next == null)
-  {
-    node p = new node (a, null);
-    node_star y = new node_star(p);
-    x.pdata.next = y;
-  }
-  else
-  {
-    insert_last(x.pdata.next, a);
-  }
-}
-
 void foo(node x)
   requires x::node<_,_>
   ensures x::node<1,_>;
