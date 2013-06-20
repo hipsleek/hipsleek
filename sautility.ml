@@ -3580,9 +3580,50 @@ let find_closure_eq_null hp args f=
       hp args f
 
 let find_closure_eq_x hp args fs=
+  let rec get_pos ls n sv=
+    match ls with
+      | [] -> report_error no_pos "sau.find_closure_eq: impossible 1"
+      | sv1::rest -> if CP.eq_spec_var sv sv1 then n
+        else get_pos rest (n+1) sv
+  in
+  let extract_eq_pos f=
+    let (_ ,mf,_,_,_) = CF.split_components f in
+    let eqs = (MCP.ptr_equations_without_null mf) in
+    let eqs1 = List.filter (fun (sv1,sv2) -> CP.diff_svl [sv1;sv2] args = []) eqs in
+    if eqs1 = [] then raise Not_found else
+      let pos_eqs = List.map (fun (sv1,sv2) -> (get_pos args 0 sv1, get_pos args 0 sv2)) eqs1 in
+      pos_eqs
+  in
+  let insert_closure pos_eqs_comm f=
+    let hpargs = CF.get_HRels_f f in
+    let rec_hpargs = List.filter (fun (hp1,_) -> CP.eq_spec_var hp hp1) hpargs in
+    let ps = List.map (fun (_, r_args) ->
+        let ss = List.map (fun (p1, p2) ->
+            let svl = retrieve_args_from_locs r_args [p1;p2] in
+            match svl with
+              | [sv1;sv2] -> (sv1,sv2)
+              | _ -> report_error no_pos "sau.find_closure_eq: impossible 2"
+        ) pos_eqs_comm in
+        let ps1 = List.map (fun (sv1, sv2) -> CP.mkEqVar sv1 sv2 no_pos) ss in
+        CP.conj_of_list ps1 no_pos
+    ) rec_hpargs in
+    let n_p = CP.conj_of_list ps no_pos in
+    CF.mkAnd_pure f (MCP.mix_of_pure n_p) no_pos
+  in
+  let get_common_eqs cur_comms pos_eqs=
+    let new_comms = Gen.BList.intersect_eq (fun (p1,p2) (p3,p4) ->
+    (p1=p3 && p2=p4) || (p1=p4 && p2=p3)) cur_comms pos_eqs
+    in
+    if new_comms = [] then raise Not_found else new_comms
+  in
   if List.length args < 2 || List.length fs < 2 then fs else
     let fs1 = List.map (find_closure_eq_null hp args) fs in
-    fs1
+    try
+      let ls_pos_eqs = List.map extract_eq_pos fs1 in
+      let eq_comms = List.fold_left get_common_eqs (List.hd ls_pos_eqs) (List.tl ls_pos_eqs) in
+      let fs2 = List.map (insert_closure eq_comms) fs1 in
+      fs2
+    with Not_found -> fs1
 
 let find_closure_eq hp args fs=
   let pr1 = pr_list_ln Cprinter.prtt_string_of_formula in

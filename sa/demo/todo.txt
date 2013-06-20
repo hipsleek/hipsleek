@@ -887,7 +887,7 @@ EXPECTING: (tupled definition for two pre-pred)
 
 ======================================================
 
-# zip.ss
+# zip.ss: DONE
 
 Wrong answer:
 ============
@@ -1115,7 +1115,7 @@ Can we just have:
 */
 
 ============================================================
-# zip1b1.slk:
+# zip1b1.slk: DONE
 
 
 Could we have an option --sa-dis-elim-unused-pred 
@@ -1133,7 +1133,7 @@ TWO small PROBLEMS
  (HP_8(next_25_827,x)) * 
   (HP_1(next_24_820,y)) ::= H1(next_24_820,next_25_827)&true,
 
-Also, for zip1b2.slk,zip1b.slk
+Also, for zip1b2.slk,zip1b.slk DONE
 
 =====
 
@@ -1258,7 +1258,7 @@ relAssume G1
   & res=x --> G1(x,y,res).
 
 =================================================================
-# zip1b5.slk:
+# zip1b5.slk: DONE
 
 relAssume G1
  //res=x & 
