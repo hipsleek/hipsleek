@@ -32,4 +32,6 @@ PROBLEMS
 2.  nn=rr in recursive branch
 =====
 
+(2) requires fixpoint to compute.
+
 */
