@@ -144,7 +144,7 @@ let rec insert_bind (e:exp) (gamma:type_env) (defs : type_decl list) = match e w
     (* we look for the variable id in the environment; it is returned the name of the type of this variable, or NotFound exception is raised *)
     let typeV = look_up_raw id gamma in 
        (* we take the declaration of the type; Notfound exception is raised if the declaration  is not found *)
-       let data_decl = look_up_data_def_raw defs (get_type_name typeV) 0 in 
+       let data_decl = look_up_data_def_raw defs (get_type_name typeV) in 
          (* now we search the name of the field in the list of the fields of the data type *)
          let index_field = (index_element (function (_,y) -> y = List.hd idl) data_decl.fields) in 
 	    if index_field = (-1) then raise FieldNotFound

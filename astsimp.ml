@@ -819,6 +819,7 @@ let rec trans_prog (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_decl
             else cviews
           in
 	  (* let _ = print_string "trans_prog :: trans_view PASSED\n" in *)
+    let _ = print_endline ("== trans_view passed") in
 	  let crels = List.map (trans_rel prog) prog.I.prog_rel_decls in (* An Hoa *)
           let _ = prog.I.prog_rel_ids <- List.map (fun rd -> (RelT[],rd.I.rel_name)) prog.I.prog_rel_decls in
           let chps = List.map (trans_hp prog) prog.I.prog_hp_decls in 
@@ -831,6 +832,7 @@ let rec trans_prog (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_decl
 	  let cprocs1 = List.map (trans_proc prog) prog.I.prog_proc_decls in
 	  (* let _ = print_string "trans_prog :: trans_proc PASSED\n" in *)
 	  (* Start calling is_sat,imply,simplify from trans_proc *)
+    let _ = print_endline ("== trans_proc passed") in
 	  let cprocs = !loop_procs @ cprocs1 in
 	  let (l2r_coers, r2l_coers) = trans_coercions prog in
 	  let log_vars = List.concat (List.map (trans_logical_vars) prog.I.prog_logical_var_decls) in 
@@ -847,6 +849,7 @@ let rec trans_prog (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_decl
 	      C.new_proc_decls = C.create_proc_decls_hashtbl cprocs;
 	      C.prog_left_coercions = l2r_coers;
 	      C.prog_right_coercions = r2l_coers;} in
+    let _ = print_endline ("== cprog 1 = " ^ (Cprinter.string_of_program cprog)) in
 	  let cprog1 = { cprog with			
 	      (* C.old_proc_decls = List.map substitute_seq cprog.C.old_proc_decls; *)
               C.new_proc_decls = C.proc_decls_map substitute_seq cprog.C.new_proc_decls; 
@@ -1231,8 +1234,18 @@ and trans_view_x (prog : I.prog_decl) (vdef : I.view_decl) : C.view_decl =
         Debug.tinfo_hprint (add_str "vs1a" Cprinter.string_of_spec_var_list) vs1a no_pos;
         let vs1 = vs1@vs1a in
         let ffv = Gen.BList.difference_eq (CP.eq_spec_var) vs1 vs2 in
-        (*filter out holes (#) *)
+        (* filter out holes (#) *)
         let ffv = List.filter (fun v -> not (CP.is_hole_spec_var v)) ffv in
+        (* filter out intermediate dereference vars and update them to view vars *)
+        
+        let ffv = List.filter (fun v ->
+          let is_deref_var = CP.is_inter_deference_spec_var v in
+          if (is_deref_var) then (
+            match v with
+            | CP.SpecVar (_, n, _) -> vdef.I.view_vars <- vdef.I.view_vars @ [n];
+          );
+          not (is_deref_var)
+        ) ffv in
         if (ffv!=[]) then report_error no_pos ("error 1: free variables "^(Cprinter.string_of_spec_var_list ffv)^" in view def "^vdef.I.view_name^" ") in
       let typed_vars = List.map ( fun (Cpure.SpecVar (c1,c2,c3))-> (c1,c2)) view_sv_vars in
       let _ = vdef.I.view_typed_vars <- typed_vars in
@@ -1986,16 +1999,23 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
         let cmp x (_,y) = (String.compare (CP.name_of_spec_var x) y) == 0 in
         
         let log_vars = List.concat (List.map (trans_logical_vars) prog.I.prog_logical_var_decls) in 
+        let _ = print_string ("\n== log_vars = ") in
+        List.iter (fun v -> print_string ("  " ^ (Cprinter.string_of_spec_var v) ^ "; ")) log_vars;
+        let _ = print_endline ("=== spec = " ^ (Cprinter.string_of_struc_formula final_static_specs_list)) in
         let struc_fv = CP.diff_svl (CF.struc_fv_infer final_static_specs_list) log_vars in
+        let _ = print_string ("\n== struc_fv = ") in
+        List.iter (fun v -> print_string ("  " ^ (Cprinter.string_of_spec_var v) ^ "; ")) struc_fv;
         (*LOCKSET variable*********)
         let ls_var = (ls_typ,ls_name) in
         let lsmu_var = (lsmu_typ,lsmu_name) in
         let waitlevel_var = (waitlevel_typ,waitlevel_name) in
         let lock_vars = [waitlevel_var;lsmu_var;ls_var] in
+        let _ = print_string ("\n== mix vars = ") in
+        List.iter (fun v -> print_string ("  " ^ (snd v) ^ "; ")) (lock_vars@((cret_type,res_name)::(Named raisable_class,eres_name)::args2));
+        let _ = print_endline ("\n== res_name = " ^ res_name) in
+        let _ = print_endline ("\n== eres_name = " ^ eres_name) in
         (**************************)
         let ffv = Gen.BList.difference_eq cmp (*(CF.struc_fv_infer final_static_specs_list)*) struc_fv (lock_vars@((cret_type,res_name)::(Named raisable_class,eres_name)::args2)) in
-        (*filter out holes (#) *)
-        let ffv = List.filter (fun v -> not (CP.is_hole_spec_var v)) ffv in
         if (ffv!=[]) then 
           Error.report_error { 
               Err.error_loc = no_pos;
@@ -2003,10 +2023,10 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
       let cproc ={
           C.proc_name = proc.I.proc_mingled_name;
           C.proc_source = proc.I.proc_source;
-	  C.proc_flags = proc.I.proc_flags;
+          C.proc_flags = proc.I.proc_flags;
           C.proc_args = args;
           C.proc_return = trans_type prog proc.I.proc_return proc.I.proc_loc;
-	  C.proc_important_vars =  imp_vars(*(Gen.Basic.remove_dups (proc.I.proc_important_vars @imp_vars))*); (* An Hoa *)
+          C.proc_important_vars =  imp_vars(*(Gen.Basic.remove_dups (proc.I.proc_important_vars @imp_vars))*); (* An Hoa *)
           C.proc_static_specs = final_static_specs_list;
           C.proc_dynamic_specs = final_dynamic_specs_list;
           (* C.proc_static_specs_with_pre =  []; *)
@@ -2435,7 +2455,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
                         let fs,remf,remt = compact_field_access_sequence prog lhst fl in
                         if (remf = "") then [] 
                         else I.look_up_all_fields prog (match remt with
-                          | Named c -> I.look_up_data_def_raw prog.I.prog_data_decls c 0
+                          | Named c -> I.look_up_data_def_raw prog.I.prog_data_decls c
                           | _ -> failwith "ERror!")
                   | _ -> failwith "expand_field_list: unexpected pattern"
               else if (is_member_exp rhs) then
@@ -2449,7 +2469,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
                         let fs,remf,remt = compact_field_access_sequence prog rhst fr in
                         if (remf = "") then []
                         else I.look_up_all_fields prog (match remt with
-                          | Named c -> I.look_up_data_def_raw prog.I.prog_data_decls c 0
+                          | Named c -> I.look_up_data_def_raw prog.I.prog_data_decls c
                           | _ -> failwith "ERror!")
                   | _ -> failwith "expand_field_list: unexpected pattern"
               else []
@@ -4525,7 +4545,6 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
               else vdef.I.view_data_name
             with _ -> c
           ) in
-          let _ = print_endline ("== base_heap_id " ^ base_heap_id) in
           let expanded_heap = (
             match base_heap_id with
             | "int"
@@ -4540,14 +4559,14 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
                 else (
                   let base_heap_id = base_heap_id ^ "__star" in
                   let s = ref base_heap_id in
-                  let fresh_var = ("#" ^ fresh_name ()) in
+                  let fresh_var = "deref_" ^ (fresh_name ()) in
                   let p = (fresh_var, Unprimed) in
                   let p1 = ref p in
                   let p2 = ref (IF.P.Var (("", Unprimed), l)) in
                   let heaps = ref [] in
                   for i = 3 to deref do
                     p2 := IF.P.Var (!p1, l);
-                    let fresh_var = ("#" ^ fresh_name ()) in
+                    let fresh_var = "deref_" ^ (fresh_name ()) in
                     p1 := (fresh_var, Unprimed);
                     s := !s ^ "__star";
                     let h = IF.mkHeapNode !p1 !s 0 false (IF.ConstAnn(Mutable)) false false false None [!p2] [None] None l in
@@ -4563,14 +4582,14 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
             | _ -> (
                 (* dereference to a data structure *)
                 let s = ref base_heap_id in
-                let fresh_var = ("#" ^ fresh_name ()) in
+                let fresh_var = "deref_" ^ (fresh_name ()) in
                 let p = (fresh_var, Unprimed) in
                 let p1 = ref p in
                 let p2 = ref (IF.P.Var (("", Unprimed), l)) in
                 let heaps = ref [] in
                 for i = 2 to deref do
                   p2 := IF.P.Var (!p1, l);
-                  let fresh_var = ("#" ^ fresh_name ()) in
+                  let fresh_var = "deref_" ^ (fresh_name ()) in
                   p1 := (fresh_var, Unprimed);
                   s := !s ^ "__star";
                   let h = IF.mkHeapNode !p1 !s 0 false (IF.ConstAnn(Mutable)) false false false None [!p2] [None] None l in
@@ -4583,6 +4602,8 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
                 List.fold_left (fun f1 f2 -> IF.mkStar f1 f2 l) h1 (!heaps @ [h2])
               )
           ) in
+          let _ = print_endline ("== ori heap f = " ^ (Iprinter.string_of_h_formula f)) in
+          let _ = print_endline ("== expanded_heap = " ^ (Iprinter.string_of_h_formula expanded_heap)) in
           (* return *)
           expanded_heap
         )

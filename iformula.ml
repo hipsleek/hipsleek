@@ -388,13 +388,16 @@ and mkExists (qvars : (ident * primed) list) (h : h_formula) (p : P.formula) flo
   | _ ->
 	  if P.isConstFalse p then
 		mkFalse flow pos
-	  else
-		Exists { formula_exists_qvars = qvars;
-             formula_exists_heap = h;
-             formula_exists_pure = p;
-             formula_exists_flow = flow;
-             formula_exists_and = a;
-             formula_exists_pos = pos }
+	  else (
+      let _ = print_string ("\n== mkExists list = ") in
+      List.iter (fun v -> print_string (fst v)) qvars;
+      Exists { formula_exists_qvars = qvars;
+               formula_exists_heap = h;
+               formula_exists_pure = p;
+               formula_exists_flow = flow;
+               formula_exists_and = a;
+               formula_exists_pos = pos }
+    )
 
 and mkOneFormula (h : h_formula) (p : P.formula) id pos = 
   {formula_heap =h;
@@ -475,7 +478,7 @@ and mkHeapNode_x c id deref dr i f inv pd perm hl hl_i ofl l=
 and mkHeapNode  c id deref dr i f inv pd perm hl hl_i ofl l= 
    Debug.no_1 "mkHeapNode" (fun (name, _) -> name) !print_h_formula 
       (fun _ -> mkHeapNode_x c id deref dr i f inv pd perm hl hl_i ofl l ) c
-          
+
 and mkHeapNode2 c id deref dr i f inv pd perm ohl hl_i ofl l = 
   HeapNode2 { h_formula_heap2_node = c;
               h_formula_heap2_name = id;

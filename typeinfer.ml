@@ -392,7 +392,7 @@ and trans_type (prog : I.prog_decl) (t : typ) (pos : loc) : typ =
   match t with
     | Named c ->
           (try
-            let _ = I.look_up_data_def_raw prog.I.prog_data_decls c 0
+            let _ = I.look_up_data_def_raw prog.I.prog_data_decls c
             in Named c
           with
             | Not_found ->
@@ -865,13 +865,6 @@ and gather_type_info_struc_f_x prog (f0:IF.struc_formula) tlist =
 
 and try_unify_data_type_args prog c ddef v deref ies tlist pos =
   (* An Hoa : problem detected - have to expand the inline fields as well, fix in look_up_all_fields. *)
-  let c = (  
-    let deref_str = ref "" in
-    for i = 1 to deref do
-      deref_str := !deref_str ^ "__star";
-    done;
-    c ^ !deref_str
-  ) in
   let (n_tl,_) = gather_type_info_var v tlist ((Named c)) pos in
   let fields = I.look_up_all_fields prog ddef in
   try 
@@ -1099,7 +1092,7 @@ and gather_type_info_heap_x prog (h0 : IF.h_formula) tlist =
         let s = List.nth tokens 1 in
         let type_found,type_rootptr = try (* looking up in the list of data types *)
           (* Good user provides type for [rootptr] ==> done! *)
-          let ddef = I.look_up_data_def_raw prog.I.prog_data_decls s 0 in 
+          let ddef = I.look_up_data_def_raw prog.I.prog_data_decls s in 
           (* let _ = print_endline ("[gather_type_info_heap_x] root pointer type = " ^ ddef.I.data_name) in *)
           (true, Named ddef.I.data_name)
           with 
@@ -1147,16 +1140,34 @@ and gather_type_info_heap_x prog (h0 : IF.h_formula) tlist =
         with
         | Not_found ->
           (try
-            (* let c = (                               *)
-            (*   let deref_str = ref "" in             *)
-            (*   for i = 1 to deref do                 *)
-            (*     deref_str := !deref_str ^ "__star"; *)
-            (*   done;                                 *)
-            (*   c ^ !deref_str                        *)
-            (* ) in                                    *)
-            let ddef = I.look_up_data_def_raw prog.I.prog_data_decls c deref in 
-            let n_tl = try_unify_data_type_args prog c ddef v deref ies n_tl pos in 
-            n_tl
+            match c with
+            | "int"
+            | "float"
+            | "void"
+            | "bool" -> (
+                let c = (
+                  let deref_str = ref "" in
+                  for i = 1 to deref do
+                    deref_str := !deref_str ^ "__star";
+                  done;
+                  c ^ !deref_str
+                ) in
+                let ddef = I.look_up_data_def_raw prog.I.prog_data_decls c in 
+                let n_tl = try_unify_data_type_args prog c ddef v deref ies n_tl pos in 
+                n_tl
+              )
+            | _ -> (
+                let ddef = I.look_up_data_def_raw prog.I.prog_data_decls c in 
+                let c = (
+                  let deref_str = ref "" in
+                  for i = 1 to deref do
+                    deref_str := !deref_str ^ "__star";
+                  done;
+                  c ^ !deref_str
+                ) in
+                let n_tl = try_unify_data_type_args prog c ddef v deref ies n_tl pos in 
+                n_tl
+            )
           with
           | Not_found ->
             (*let _ = print_string (Iprinter.string_of_program prog) in*)

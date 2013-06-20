@@ -64,7 +64,7 @@ and view_kind =
 and view_decl = { view_name : ident; 
 mutable view_data_name : ident;
 (* view_frac_var : iperm; (\*LDK: frac perm ??? think about it later*\) *)
-view_vars : ident list;
+mutable view_vars : ident list;
 view_labels : Label_only.spec_label list;
 view_modes : mode list;
 mutable view_typed_vars : (typ * ident) list;
@@ -1009,16 +1009,9 @@ and look_up_parent_name pos ddefs name =
   let ddef = look_up_data_def 1 pos ddefs name in
   ddef.data_parent_name
 
-and look_up_data_def_raw (defs : data_decl list) (name : ident) (deref: int) =
-  let expect_name = (
-    let deref_str = ref "" in
-    for i = 1 to deref do
-      deref_str := !deref_str ^ "__star"
-    done;
-    name ^ !deref_str
-  ) in
+and look_up_data_def_raw (defs : data_decl list) (name : ident) =
   match defs with
-  | d :: rest -> if d.data_name = expect_name then d else look_up_data_def_raw rest name deref
+  | d :: rest -> if d.data_name = name then d else look_up_data_def_raw rest name
   | [] -> raise Not_found
 
 and look_up_view_def_raw_x (defs : view_decl list) (name : ident) = match defs with
@@ -1099,7 +1092,7 @@ and expand_inline_fields ddefs fls =
 	  let fn  = get_field_name fld in
 	  let ft = get_field_typ fld in
 	  try
-		let ddef = look_up_data_def_raw ddefs (string_of_typ ft) 0 in
+		let ddef = look_up_data_def_raw ddefs (string_of_typ ft) in
 		let fld_fs = List.map (fun y -> augment_field_with_prefix y (fn ^ ".")) ddef.data_fields in
 		fld_fs
 	  with
@@ -1905,7 +1898,7 @@ let get_field_from_typ ddefs data_typ field_name = match data_typ with
 	| Named data_name -> 
        (* let _ = print_endline ("1: " ^ data_name) in *)
        (* let _ = print_endline ("2: " ^ field_name) in *)
-		let ddef = look_up_data_def_raw ddefs data_name 0 in
+		let ddef = look_up_data_def_raw ddefs data_name in
         (try
 		let field = List.find (fun x -> (get_field_name x = field_name)) ddef.data_fields in
        (* let _ = print_endline ("3: " ^ (snd (fst3 field))) in*)
@@ -1936,7 +1929,7 @@ let rec get_type_of_field_seq ddefs root_type field_seq =
 		| [] -> root_type
 		| f::t -> (match root_type with
 			| Named c -> (try
-					let ddef = look_up_data_def_raw ddefs c 0 in
+					let ddef = look_up_data_def_raw ddefs c in
 					let ft = get_type_of_field ddef f in
 						(match ft with
 							| UNK -> Err.report_error { Err.error_loc = no_pos; Err.error_text = "[get_type_of_field_seq] Compound type " ^ c ^ " has no field " ^ f ^ "!" }
@@ -1968,7 +1961,7 @@ let rec compute_typ_size ddefs t =
 	(* let _ = print_endline ("[compute_typ_size] input = " ^ (string_of_typ t)) in *)
 	let res = match t with
 		| Named data_name -> (try 
-				let ddef = look_up_data_def_raw ddefs data_name 0 in
+				let ddef = look_up_data_def_raw ddefs data_name in
 					List.fold_left (fun a f -> 
 						let fs = if (is_inline_field f) then 
 							compute_typ_size ddefs (get_field_typ f) 
@@ -1993,7 +1986,7 @@ let rec compute_field_offset ddefs data_name accessed_field =
 	try 
 		(* let _ = print_endline ("[compute_field_offset] input = { " ^ data_name ^ " , " ^ accessed_field ^ " }") in *)
 		let found = ref false in
-		let ddef = look_up_data_def_raw ddefs data_name 0 in
+		let ddef = look_up_data_def_raw ddefs data_name in
 		(* Accumulate the offset along the way *)
 		let offset = List.fold_left (fun a f -> 
 										if (!found) then a (* Once found, just keep constant*)
@@ -2027,7 +2020,7 @@ and compute_field_seq_offset ddefs data_name field_sequence =
 							let offset = compute_field_offset ddefs !dname field_name in
 							(* Update the dname to the data type of the field_name *)
 							try
-								let ddef = look_up_data_def_raw ddefs !dname 0 in
+								let ddef = look_up_data_def_raw ddefs !dname in
 								let field_type = get_type_of_field ddef field_name in
 								begin
 									dname := string_of_typ field_type;

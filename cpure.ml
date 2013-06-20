@@ -24,6 +24,12 @@ let compare_sv (SpecVar (t1, id1, pr1)) (SpecVar (t2, id2, pr2))=
 let is_hole_spec_var sv = match sv with
 	| SpecVar (_,n,_) -> n.[0] = '#'
 
+let is_inter_deference_spec_var sv = match sv with
+    | SpecVar (_,n,_) -> (
+        let re = Str.regexp "^deref_f_r_" in
+        Str.string_match re n 0
+      )
+
 	(** An Hoa : Array whose elements are all of type typ.
       In principle, this is 1D array. To have higher 
 			dimensional array, but we need to use nested arrays.

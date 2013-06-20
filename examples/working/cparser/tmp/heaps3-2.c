@@ -25,40 +25,40 @@ void* malloc(int size) __attribute__ ((noreturn))
 */;
 
 /* function to delete a leaf */
-int deleteoneel(struct node** t)
+int deleteoneel(struct node** ttt)
 /*@
-  requires t::pq^<n, mx> & n > 0
-  ensures t::pq^<n1, mx2> & n1 = n-1 & 0 <= res <= mx & mx2 <= mx;
+  requires ttt::pq^<n, mx> & n > 0
+  ensures ttt::pq^<n1, mx2> & n1 = n-1 & 0 <= res <= mx & mx2 <= mx;
 */
 {
   int v;
 
-  if (((*t)->nleft == 0) && ((*t)->nright == 0))
+  if (((*ttt)->nleft == 0) && ((*ttt)->nright == 0))
   {
-    v = (*t)->val; 
-    *t = NULL;
+    v = (*ttt)->val; 
+    *ttt = NULL;
     return v;
   }
   else 
   {
     int tmp;
 
-    int* tnleft = malloc(sizeof(int));
-    int* tnright = malloc(sizeof(int));
-    struct node** tleft = malloc(sizeof(struct node*));
-    struct node** tright = malloc(sizeof(struct node*));
+    int* tttnleft = malloc(sizeof(int));
+    int* tttnright = malloc(sizeof(int));
+    struct node** tttleft = malloc(sizeof(struct node*));
+    struct node** tttright = malloc(sizeof(struct node*));
     
-    *tnleft = (*t)->nleft;
-    *tnright = (*t)->nright;
-    *tleft = (*t)->left;
-    *tright =(*t)->right;
+    *tttnleft = (*ttt)->nleft;
+    *tttnright = (*ttt)->nright;
+    *tttleft = (*ttt)->left;
+    *tttright =(*ttt)->right;
     
-    tmp = deleteone(tnleft, tnright, tleft, tright);
+    tmp = deleteone(tttnleft, tttnright, tttleft, tttright);
 
-    (*t)->nleft = *tnleft;
-    (*t)->nright = *tnright;
-    (*t)->left = *tleft;
-    (*t)->right = *tright;
+    (*ttt)->nleft = *tttnleft;
+    (*ttt)->nright = *tttnright;
+    (*ttt)->left = *tttleft;
+    (*ttt)->right = *tttright;
 
     return tmp;
   }
