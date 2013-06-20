@@ -159,7 +159,7 @@ void ripple(int* d, int v, int m1, int m2, struct node* l, struct node* r)
 
 {
   if (m1 == 0)
-  {
+      { //assume false;
     if (m2 == 0)
     {
       *d = v;
@@ -186,10 +186,8 @@ void ripple(int* d, int v, int m1, int m2, struct node* l, struct node* r)
         else 
         {
           *d = l->val;
-          int *tmp = malloc(sizeof(int));
-          *tmp = l->val;
-          ripple(tmp, v, l->nleft, l->nright, l->left, l->right);
-          l->val = *tmp;
+          // TRUNG: bug with address of operator (&)
+          ripple(&(l->val), v, l->nleft, l->nright, l->left, l->right);
         }
       }
       else
@@ -197,12 +195,10 @@ void ripple(int* d, int v, int m1, int m2, struct node* l, struct node* r)
         if (v >= r->val)
           *d = v;
         else
-        {
+        { 
           *d = r->val;
-          int *tmp = malloc(sizeof(int));
-          *tmp = r->val;
-          ripple(tmp, v, r->nleft, r->nright, r->left, r->right);
-          r->val = *tmp;
+          // TRUNG: bug with address of operator (&)
+          ripple(&(r->val), v, r->nleft, r->nright, r->left, r->right);
         }
       }
     }
