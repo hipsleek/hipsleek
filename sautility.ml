@@ -160,6 +160,17 @@ let rec is_unk_f f=
                      is_unk_f base1
     | _ -> report_error no_pos "SAU.is_unk_f: not handle yet"
 
+let rec is_only_xpure_f f=
+   match f with
+    | CF.Base fb ->
+          let p = (MCP.pure_of_mix fb.CF.formula_base_pure) in
+          let ps =CP.split_conjunctions p in
+          (CF.is_emp_heap fb.CF.formula_base_heap) &&
+            (CP.isConstTrue p || (List.for_all CP.is_xpure ps))
+    | CF.Exists _ -> let _, base1 = CF.split_quantifiers f in
+                     is_unk_f base1
+    | _ -> report_error no_pos "SAU.is_unk_f: not handle yet"
+
 (*for drop hp args*)
 let rec retrieve_args_from_locs_helper args locs index res=
   match args with
@@ -576,6 +587,17 @@ let get_hp_args_inst prog hp args=
   let ss = List.combine args hprel.C.hp_vars_inst in
   let args_inst = List.fold_left (fun ls (e,(_,i)) -> if i = I then ls@[e] else ls ) [] ss in
   args_inst
+
+let get_pos_of_hp_args_inst prog hp=
+  let rec get_pos rem_args n res=
+    match rem_args with
+      | [] -> res
+      | (sv,i)::rest -> let n_res = if i=I then (res@[n]) else res in
+        get_pos rest (n+1) n_res
+  in
+  let hp_name= CP.name_of_spec_var hp in
+  let hprel = Cast.look_up_hp_def_raw prog.C.prog_hp_decls hp_name in
+  get_pos hprel.C.hp_vars_inst 0 []
 
 let rec cmp_inst ls1 ls2 =
   match ls1,ls2 with

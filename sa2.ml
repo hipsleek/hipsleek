@@ -1398,14 +1398,19 @@ let infer_shapes_core prog proc_name (constrs0: CF.hprel list) callee_hps sel_hp
     (*split constrs like H(x) & x = null --> G(x): separate into 2 constraints*)
     let constrs2, unk_map, link_hpargs = split_constr prog constrs0 sel_post_hps prog_vars hp_rel_unkmap [] in
     (*unk analysis*)
-    (* let _ = DD.binfo_pprint ">>>>>> step 2: find dangling ptrs that link pre and post-preds<<<<<<" no_pos in *)
+    let _ = DD.binfo_pprint ">>>>>> step 2: find dangling ptrs, link pre and post-preds dangling preds<<<<<<" no_pos in
     (* let constrs3, unk_map1, unk_hpargs = SAC.detect_dangling_pred constrs2 sel_hp_rels unk_map in *)
-    (* let constrs2, unk_hpargs, unk_map2 = SAC.analize_unk prog constrs1 unk_map1 in *)
-    (* let unk_map2 = unk_map1 in *)
-    (constrs2, unk_map,unk_hpargs, link_hpargs)
+    let constrs3, unk_hpargs, unk_map2 = if detect_dang then
+      SAC.analize_unk prog constrs2 unk_map
+    else (constrs2, unk_hpargs,unk_map)
+    in
+    (constrs3, unk_map2,unk_hpargs, link_hpargs)
   else (constrs0, hp_rel_unkmap, unk_hpargs, [])
   in
   let unk_hps = (List.map fst unk_hpargs) in
+  (*TODO: remove detect dangling at pre/post process*)
+  (*TEMP*)
+  let detect_dang = false in
   infer_shapes_proper prog proc_name constrs1 callee_hps sel_hp_rels sel_post_hps unk_map prog_vars
       unk_hpargs link_hpargs detect_dang
 

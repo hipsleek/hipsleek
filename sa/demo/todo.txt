@@ -1217,3 +1217,7 @@ Why was it generated?
     HP_9(next_16_7,l2'@NI)&next_16_7=null --> emp&true]
 
 
+===============================================================
+# hip/ll-append5.ss
+
+simplify AND_STAR in post-pred G
