@@ -1228,3 +1228,23 @@ Why was it generated?
 # hip/ll-append5.ss
 
 simplify AND_STAR in post-pred G
+
+=================================================================
+# zip1b3.slk: DONE
+
+relAssume G1
+ //res=x & 
+ x=null & res=null --> G1(x,y,res).
+
+==> relAssume G1
+ res=x & 
+ x=null & res=null --> G1(x,y,res).
+
+=================================================================
+# zip1b4.slk
+
+relAssume G1
+ y::node<val_25_826,next_25_827> * x::node<val_24_819,nn>
+  * G1(nn,next_25_827,rr) 
+//  & nn=rr
+  & res=x --> G1(x,y,res).

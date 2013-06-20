@@ -3561,6 +3561,32 @@ let get_longest_common_hnodes_list prog cdefs unk_hps unk_svl hp r non_r_args ar
       (fun _ _ _ _ _-> get_longest_common_hnodes_list_x prog cdefs unk_hps unk_svl hp r non_r_args args fs)
       hp args unk_hps unk_svl fs
 
+let find_closure_eq_null_x hp args f=
+  let (_ ,mf,_,_,_) = CF.split_components f in
+  let eqNulls = MCP.get_null_ptrs mf in
+  let eqNulls1 = CP.intersect_svl args (CP.remove_dups_svl eqNulls) in
+  if List.length eqNulls1 < 2 then f else
+    let eqs = (MCP.ptr_equations_without_null mf) in
+    let n_pure_eqs = generate_closure_eq_null args eqNulls1 eqs in
+    CF.mkAnd_pure f (MCP.mix_of_pure n_pure_eqs) (CF.pos_of_formula f)
+
+let find_closure_eq_null hp args f=
+  let pr1 =  Cprinter.prtt_string_of_formula in
+  Debug.no_3 "find_closure_eq_null" !CP.print_sv !CP.print_svl pr1 pr1
+      (fun _ _ _ -> find_closure_eq_null_x hp args f)
+      hp args f
+
+let find_closure_eq_x hp args fs=
+  if List.length args < 2 || List.length fs < 2 then fs else
+    let fs1 = List.map (find_closure_eq_null hp args) fs in
+    fs1
+
+let find_closure_eq hp args fs=
+  let pr1 = pr_list_ln Cprinter.prtt_string_of_formula in
+  Debug.no_3 "find_closure_eq_null" !CP.print_sv !CP.print_svl pr1 pr1
+      (fun _ _ _ -> find_closure_eq_x hp args fs)
+      hp args fs
+
 let norm_conjH_f_x prog org_args args next_roots sh_ldns com_eqNulls com_eqPures com_hps (ldns, f)=
   (* let _ =  DD.info_pprint ("       new args: " ^ (!CP.print_svl args)) no_pos in *)
   (* let pr2 = pr_list Cprinter.string_of_h_formula in *)

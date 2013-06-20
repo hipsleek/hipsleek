@@ -701,6 +701,7 @@ let generalize_one_hp_x prog hpdefs non_ptr_unk_hps unk_hps par_defs=
           (*remove duplicate*)
           let defs3 = Gen.BList.remove_dups_eq (fun f1 f2 -> SAU.check_relaxeq_formula f1 f2) defs2 in
           let defs4 = SAU.remove_equiv_wo_unkhps hp unk_hps defs3 in
+          let defs5 = SAU.find_closure_eq hp args0 defs4 in
           (* let pr1 = pr_list_ln Cprinter.prtt_string_of_formula in *)
           (* let _ = DD.info_pprint ("defs4: " ^ (pr1 defs4)) no_pos in *)
           (*remove duplicate with self-recursive*)
@@ -708,7 +709,7 @@ let generalize_one_hp_x prog hpdefs non_ptr_unk_hps unk_hps par_defs=
           (*find longest hnodes common for more than 2 formulas*)
           (*each hds of hdss is def of a next_root*)
           (* let defs5 = List.filter (fun f -> have_roots args0 f) defs4 in *)
-          let defs,elim_ss = SAU.get_longest_common_hnodes_list prog hpdefs unk_hps unk_svl hp r non_r_args args0 defs4 in
+          let defs,elim_ss = SAU.get_longest_common_hnodes_list prog hpdefs unk_hps unk_svl hp r non_r_args args0 defs5 in
           if defs <> [] then (defs,elim_ss) else
             report_error no_pos "shape analysis: FAIL"
     end
