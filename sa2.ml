@@ -1429,10 +1429,8 @@ let infer_shapes_x prog proc_name (constrs0: CF.hprel list) sel_hps sel_post_hps
   (* let constrs1 = List.filter (fun cs -> not(SAU.is_trivial_constr cs)) constrs0 in *)
   let constr, hp_defs, c, unk_hpargs2, link_hpargs = infer_shapes_core prog proc_name constrs0 callee_hps sel_hps sel_post_hps hp_rel_unkmap unk_hpargs need_preprocess detect_dang in
   let link_hp_defs = List.map SAU.mk_link_hprel_def link_hpargs in
-  let hp_defs1,tupled_defs = List.partition (fun (def,_,_) -> match def with
-    | CP.HPRelDefn _ -> true
-    | _ -> false
-  ) hp_defs in
+  let hp_defs1,tupled_defs = SAU.partition_tupled hp_defs in
+  (*decide what to show: DO NOT SHOW hps relating to tupled defs*)
   let m = match_hps_views hp_defs1 prog.CA.prog_view_decls in
   let sel_hp_defs = collect_sel_hp_def hp_defs1 sel_hps unk_hpargs2 m in
   let tupled_defs1 = List.map (fun (a, hf, f) -> {
@@ -1442,7 +1440,7 @@ let infer_shapes_x prog proc_name (constrs0: CF.hprel list) sel_hps sel_post_hps
       CF.hprel_def_body_lib = Some f;
   }
   ) tupled_defs in
-  let _ = List.iter (fun hp_def -> rel_def_stk # push hp_def) (sel_hp_defs@tupled_defs1@link_hp_defs) in
+  let _ = List.iter (fun hp_def -> rel_def_stk # push hp_def) (sel_hp_defs@link_hp_defs) in
   (constr, hp_defs, c)
 
 let infer_shapes prog proc_name (hp_constrs: CF.hprel list) sel_hp_rels sel_post_hp_rels hp_rel_unkmap unk_hpargs need_preprocess detect_dang:

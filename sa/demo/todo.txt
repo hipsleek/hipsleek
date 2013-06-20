@@ -1115,13 +1115,13 @@ Can we just have:
 */
 
 ============================================================
-# zip1b1.slk
+# zip1b1.slk:
 
 GREAT!
 
 TWO small PROBLEMS
-(i)  x=res  not captured for G1.
-(ii) We can figure some predicates are redundant, namely:
+(i)  x=res  not captured for G1.by adding res=x in the assumption
+(ii) We can figure some predicates are redundant, namely: (DONE)
  HP_2(y_181,x_182) ::= y_181::node<val_25_826,next_25_827>@M * (HP_8(next_25_827,x_182))&true,
  (HP_8(next_25_827,x)) * 
   (HP_1(next_24_820,y)) ::= H1(next_24_820,next_25_827)&true,
@@ -1174,7 +1174,7 @@ x_181::node<val_24_105,next_24_106>@M&x_181!=null,
  ]
 
 ===============================================================
-# zip.ss
+# zip.ss: FIXED
 
 How come below, when its relational assumption
 in zip1f.slk gives correct answer?

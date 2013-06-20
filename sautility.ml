@@ -4570,6 +4570,31 @@ let rel_helper post_hps unk_rels unk_map=
   let unk_tmp_hpdefs =  subst_helper unk_rels [] in
   (List.map mk_def unk_tmp_hpdefs)
 
+
+let partition_tupled_x hpdefs=
+  let get_tupled_hps res (def,_,_)=
+    match def with
+    | CP.HPRelLDefn hps -> res@hps
+    | _ -> res
+  in
+  let is_dep_tupled tupled_hps (_,_,f)=
+    let hps = CF.get_hp_rel_name_formula f in
+    CP.intersect_svl hps tupled_hps <> []
+  in
+  let hpdefs1,tupled_defs = List.partition (fun (def,_,_) -> match def with
+    | CP.HPRelDefn _ -> true
+    | _ -> false
+  ) hpdefs
+  in
+  let tupled_hps = List.fold_left get_tupled_hps [] tupled_defs in
+  let hpdefs_tupled_dep,hpdefs2 = List.partition (is_dep_tupled tupled_hps) hpdefs1 in
+  (hpdefs2,tupled_defs@hpdefs_tupled_dep)
+
+let partition_tupled hpdefs=
+  let pr1 = pr_list_ln Cprinter.string_of_hp_rel_def in
+  Debug.no_1 "partition_tupled" pr1 (pr_pair pr1 pr1)
+      (fun _ -> partition_tupled_x hpdefs) hpdefs
+
 (************************************************************)
     (****************(*END UNK HPS*)*****************)
 (************************************************************)
