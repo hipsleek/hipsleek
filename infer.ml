@@ -1874,13 +1874,15 @@ let find_undefined_selective_pointers_x prog lfb lmix_f unmatched rhs_rest rhs_h
   in
   let ls_undef =  (* List.map CP.remove_dups_svl *) (ls_fwd_svl) in
   (* DD.info_pprint ("selected_hpargs: " ^ (let pr = pr_list (pr_pair !CP.print_sv !CP.print_svl) in pr (selected_hpargs))) pos; *)
-  (*let ls_defined_hp =  List.map fst3 defined_hps in *)
-  (* let lhs_selected_hpargs0,defined_hps =  if !Globals.sa_split_base then *)
-  (*   List.filter (fun (hp,_) -> not (CP.mem_svl hp ls_defined_hp)) lhs_selected_hpargs, defined_hps *)
+  let ls_defined_hpargs =  List.map (fun (hp,args,_,_) -> (hp,args)) defined_hps in
+  let lhs_selected_hpargs0 = List.filter (fun (hp,args) ->
+      not (Gen.BList.mem_eq SAU.check_hp_arg_eq (hp,args) ls_defined_hpargs)
+  ) lhs_selected_hpargs
+  in
   (* else *)
   (*   ( lhs_selected_hpargs@(List.map (fun (a,b,_) -> (a,b)) defined_hps),[]) *)
   (* in *)
-  (mis_match_found, (* undefs1@lundefs_args *) ls_undef,hds,hvs,lhrs,rhrs,leqNulls@reqNulls, lhs_selected_hpargs,rhs_sel_hpargs, defined_hps,
+  (mis_match_found, (* undefs1@lundefs_args *) ls_undef,hds,hvs,lhrs,rhrs,leqNulls@reqNulls, lhs_selected_hpargs0,rhs_sel_hpargs, defined_hps,
   CP.remove_dups_svl (unk_svl),unk_xpure,unk_map1,new_lhs_hps)
 
 let find_undefined_selective_pointers prog lfb lmix_f unmatched rhs_rest rhs_h_matched_set leqs reqs pos
