@@ -8,14 +8,18 @@ import getopt
 SIZE_LIMIT = 1048576 # commit files of max 1MB, otherwise warn the user
 NOF_LIMIT = 10 # number of files limit: commit max NOF_LIMIT modified/added/deleted files without warning the user
 CONTINUE = "Cont"
-cwd = os.getcwd()
 
 temp_file = "commit_temp"
 log_message = "" 
 nof = 0 #number of modified/added files
 size_warning = False
 force_verif  = False
-commit_usage =  'usage: ./commit [-v] -m <commit message> '
+commit_usage =  'usage: commit [-h] [-v] -m <commit message> '
+
+
+subprocess.call("hg root  > " + temp_file, executable="bash", shell=True)
+root_dir = open(temp_file).read().rstrip('\n')
+#print root_dir
 
 # parse command line arguments
 try:
@@ -46,7 +50,7 @@ subprocess.call("hg stat -mn  > " + temp_file, executable="bash", shell=True)
 f = open(temp_file, 'r+')
 for line in f:
     nof += 1
-    b = os.path.getsize((cwd + "/" + line).rstrip('\n'))
+    b = os.path.getsize((root_dir + "/" + line).rstrip('\n'))
     if (b > SIZE_LIMIT):
         print "M " + line.rstrip('\n') + " (" + str(b) + " bytes)"
         size_warning = True
@@ -59,7 +63,7 @@ subprocess.call("hg stat -an  > " + temp_file, executable="bash", shell=True)
 f = open(temp_file, 'r+')
 for line in f:
     nof += 1
-    b = os.path.getsize((cwd + "/" + line).rstrip('\n'))
+    b = os.path.getsize((root_dir + "/" + line).rstrip('\n'))
     print "A " + line.rstrip('\n') + " (" + str(b) + " bytes)"
     if (b > SIZE_LIMIT):
         size_warning = True
