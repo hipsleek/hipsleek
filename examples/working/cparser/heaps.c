@@ -90,8 +90,8 @@ struct node* insert(struct node* t, int v)
 /* function to delete a leaf */
 int deleteoneel(struct node** t)
 /*@
-  requires t::node**<p> * p::pq<n, mx> & n > 0
-  ensures t::pq<n-1, mx2> & 0 <= res <= mx & mx2 <= mx;
+  requires t::pq^<n, mx> & n > 0
+  ensures t::pq^<n-1, mx2> & 0 <= res <= mx & mx2 <= mx;
 */
 {
   int v;
@@ -108,25 +108,30 @@ int deleteoneel(struct node** t)
 
     int* tnleft = malloc(sizeof(int));
     int* tnright = malloc(sizeof(int));
-    struct node* tleft = malloc(sizeof(struct node));
-    struct node* tright = malloc(sizeof(struct node));
+    struct node** tleft = malloc(sizeof(struct node*));
+    struct node** tright = malloc(sizeof(struct node*));
     
-    *tnleft = t->nleft;
-    *tnright = t->nright;
-    tleft = t->left;
-    tright = t->right;
+    *tnleft = (*t)->nleft;
+    *tnright = (*t)->nright;
+    *tleft = (*t)->left;
+    *tright = (*t)->right;
     
     tmp = deleteone(tnleft, tnright, tleft, tright);
+
+    (*t)->nleft = *tnleft;
+    (*t)->nright = *tnright;
+    (*t)->left = *tleft;
+    (*t)->right = *tright;
 
     return tmp;
   }
 }
 
 /* function to delete one element */
-int deleteone(int* m1, int* m2, struct node* l, struct node* r)
+int deleteone(int* m1, int* m2, struct node** l, struct node** r)
 /*@
-  requires m1::int^<im1> * m2::int^<im2> * l::pq<im1, mx1> * r::pq<im2, mx2> & im1 + im2 > 0 & 0 <= im1 - im2 <=1
-  ensures m1::int^<am1> * m2::int^<am2>  * l::pq<am1, mx3> * r::pq<am2, mx4> & am1 + am2 + 1 = im1 + im2 & 0 <= am1 - am2<= 1 
+  requires m1::int^<im1> * m2::int^<im2> * l::pq^<im1, mx1> * r::pq^<im2, mx2> & im1 + im2 > 0 & 0 <= im1 - im2 <=1
+  ensures m1::int^<am1> * m2::int^<am2>  * l::pq^<am1, mx3> * r::pq^<am2, mx4> & am1 + am2 + 1 = im1 + im2 & 0 <= am1 - am2<= 1 
     & mx3 <= mx1 & mx4 <= mx2 & maxi = max(mx1, mx2) & 0 <= res <= maxi;
 */
 {
@@ -141,6 +146,7 @@ int deleteone(int* m1, int* m2, struct node* l, struct node* r)
     return deleteoneel(r);
   }
 }
+
 
 /* function to restore the heap property */
 void ripple(int* d, int v, int m1, int m2, struct node* l, struct node* r)
@@ -181,7 +187,10 @@ void ripple(int* d, int v, int m1, int m2, struct node* l, struct node* r)
         else 
         {   //assume false;
           *d = l->val;
-          ripple(d, v, l->nleft, l->nright, l->left, l->right);
+          int *tmp = malloc(sizeof(int));
+          *tmp = l->val;
+          ripple(tmp, v, l->nleft, l->nright, l->left, l->right);
+          l->val = *tmp;
         }
       }
       else
@@ -192,7 +201,10 @@ void ripple(int* d, int v, int m1, int m2, struct node* l, struct node* r)
         {  //assume false;
           //dprint;
           *d = r->val;
-          ripple(d, v, r->nleft, r->nright, r->left, r->right);
+          int *tmp = malloc(sizeof(int));
+          *tmp = r->val;
+          ripple(tmp, v, r->nleft, r->nright, r->left, r->right);
+          r->val = *tmp;
         }
       }
     }
@@ -201,18 +213,18 @@ void ripple(int* d, int v, int m1, int m2, struct node* l, struct node* r)
 
 
 /* function to delete the root of a heap tree */
-int deletemax(struct node* t)
+int deletemax(struct node** t)
 /*@
-  requires t::pq<n, mx> & n > 0 
-  ensures t::pq<n-1, mx2> & mx2 <= res <= mx;
+  requires t::pq^<n, mx> & n > 0 
+  ensures t::pq^<n-1, mx2> & mx2 <= res <= mx;
 */
 {
   int v, tmp;
 
-  if ((t->nleft == 0) && (t->nright == 0))
+  if (((*t)->nleft == 0) && ((*t)->nright == 0))
   {
-    tmp  = t->val;
-    t = NULL;
+    tmp  = (*t)->val;
+    (*t) = NULL;
     return tmp;
   }
   else
@@ -222,18 +234,25 @@ int deletemax(struct node* t)
     int* tnleft = malloc(sizeof(int));
     int* tnright = malloc(sizeof(int));
 
-    struct node* tleft = malloc(sizeof(struct node));
-    struct node* tright = malloc(sizeof(struct node));
+    struct node** tleft = malloc(sizeof(struct node*));
+    struct node** tright = malloc(sizeof(struct node*));
     
-    *tval = t->val;
-    *tnleft = t->nleft;
-    *tnright = t->nright;
-    tleft = t->left;
-    tright = t->right;
+    *tval = (*t)->val;
+    *tnleft = (*t)->nleft;
+    *tnright = (*t)->nright;
+    *tleft = (*t)->left;
+    *tright = (*t)->right;
     
     v = deleteone(tnleft, tnright, tleft, tright);
+
+    (*t)->nleft = *tnleft;
+    (*t)->nright = *tnright;
+    (*t)->left = *tleft;
+    (*t)->right = *tright;
+    
     tmp = *tval;
-    ripple(tval, v, *tnleft, *tnright, tleft, tright);
+    
+    ripple(tval, v, *tnleft, *tnright, *tleft, *tright);
 
     return tmp;
   }

@@ -11,7 +11,7 @@ struct node {
 
 /*@
 pq<n, mx> == self = null & n = 0 & mx = 0
-  or (exists m3: self::node^<d, m1, m2, l, r> * l::pq<m1, mx1> * r::pq<m2, mx2>
+  or (exists m3: self::node__star<p> * p::node<d, m1, m2, l, r> * l::pq<m1, mx1> * r::pq<m2, mx2>
   & n = 1 + m1 + m2 & d >= 0 &  d >= mx1 & d >= mx2 & mx >= d & m3 = m1-m2 & m3 >= 0 & m3 <= 1)
   inv n >= 0 & mx >= 0;
 */
@@ -67,8 +67,8 @@ int deleteoneel(struct node** ttt)
 /* function to delete one element */
 int deleteone(int* m1, int* m2, struct node** l, struct node** r)
 /*@
-  requires m1::int^<im1> * m2::int^<im2> * l::node**<l1> * l1::pq<im1, mx1> * r::node**<r1> * r1::pq<im2, mx2> & im1 + im2 > 0 & 0 <= im1 - im2 <=1
-  ensures m1::int^<am1> * m2::int^<am2>  * l::node**<l2> * l2::pq<am1, mx3> * r::node**<r2> * r2::pq<am2, mx4> & am1 + am2 + 1 = im1 + im2 & 0 <= am1 - am2<= 1 
+  requires m1::int*<im1> * m2::int*<im2> * l::node**<l1> * l1::pq<im1, mx1> * r::node**<r1> * r1::pq<im2, mx2> & im1 + im2 > 0 & 0 <= im1 - im2 <=1
+  ensures m1::int*<am1> * m2::int*<am2>  * l::node**<l2> * l2::pq<am1, mx3> * r::node**<r2> * r2::pq<am2, mx4> & am1 + am2 + 1 = im1 + im2 & 0 <= am1 - am2<= 1 
     & mx3 <= mx1 & mx4 <= mx2 & maxi = max(mx1, mx2) & 0 <= res <= maxi;
 */
 {
