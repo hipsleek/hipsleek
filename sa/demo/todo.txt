@@ -734,6 +734,11 @@ WRONG : missing H2(n1,_)*H3(_,n2)
 ===============================================================
 # pre-2.slk
 
+!!! >>>>>> generalize_one_cs_hp: <<<<<<
+ERROR: at _0:0_0:0 
+Message: sau.get_hpdef_name
+ Fatal error: exception Failure("sau.get_hpdef_name")
+
 relAssume P
   P(x#I) --> x::node<q>*P2(q#?).
 
@@ -820,17 +825,18 @@ print residue.
 /*
 
 GOT
- inferred hprel: [(HP_1(next_24_820,y@NI)) * (HP_2(y,x@NI))&
-                   true --> y::node<Anon_30,next_25_31>@M * 
+ inferred hprel: [HP_2(y,x@NI)&true --> y::node<Anon_30,next_25_31>@M * 
                    (HP_32(next_25_31,x@NI))&true]
 
-Why did you pick HP_1(..,y@NI)?
+Could we remove a spurious "("...")", for 
+(HP_32(next_25_31,x@NI))?
 
-EXPECT
-======
- inferred hprel: [HP_2(y,x@NI) &
-                   true --> y::node<Anon_30,next_25_31>@M * 
-                   (HP_32(next_25_31,x@NI))&true]
+Could we have an option for enabling/disabling the printing of 
+options; such as @NI, @M, [Orig]. For now, the default is
+to --en-print-ann; but we can use --dis-print-ann to have those
+removed; so that it will be easier to cut out sleek proofs.
+
+
 
 ===============================================================
 # zip1.slk: FIXED
@@ -1117,6 +1123,18 @@ Can we just have:
 ============================================================
 # zip1b1.slk: DONE
 
+Previously, you managed to eliminate:
+
+ HP_2(y_181,x_182) ::= y_181::node<val_25_826,next_25_827>@M * (HP_8(next_25_827,x_182))&true,
+ (HP_8(next_25_827,x)) * 
+  (HP_1(next_24_820,y)) ::= H1(next_24_820,next_25_827)&true,
+
+Can I have an option sa-dis-eup that would allow the above
+to be kept, rather than eliminated? This woul permit me to
+see what were the full set of predicates that were constructed,
+including those that may have been redundant subsequently.
+
+
 
 Could we have an option --sa-dis-elim-unused-pred 
 to keep the unused pred so that we know they are transformed
@@ -1129,9 +1147,8 @@ GREAT!
 TWO small PROBLEMS
 (i)  x=res  not captured for G1.by adding res=x in the assumption
 (ii) We can figure some predicates are redundant, namely: (DONE)
- HP_2(y_181,x_182) ::= y_181::node<val_25_826,next_25_827>@M * (HP_8(next_25_827,x_182))&true,
- (HP_8(next_25_827,x)) * 
-  (HP_1(next_24_820,y)) ::= H1(next_24_820,next_25_827)&true,
+
+
 
 Also, for zip1b2.slk,zip1b.slk DONE
 

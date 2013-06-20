@@ -998,7 +998,7 @@ let generalize_hps_par_def_x prog non_ptr_unk_hps unk_hpargs link_hps post_hps p
   ) ([],[]) groups3
   in
   let prh = Cprinter.string_of_h_formula in
-  let _ = DD.tinfo_hprint (add_str "elim_ss" (pr_list (pr_pair prh prh))) elim_ss no_pos in
+  let _ = DD.binfo_hprint (add_str "elim_ss" (pr_list (pr_pair prh prh))) elim_ss no_pos in
   let pr2 = Cprinter.string_of_hp_rel_def in
   let pr_hpd = pr_list (fun (_,a)-> pr2 a) in
   let _ = DD.binfo_hprint (add_str "after remove redundant" pr_hpd) hpdefs no_pos in
@@ -1291,7 +1291,7 @@ let infer_shapes_init_post_x prog (constrs0: CF.hprel list) non_ptr_unk_hps sel_
   let par_defs = get_par_defs_post constrs0 in
   let _ = DD.binfo_pprint ">>>>>> post-predicates: step post-5: remove redundant x!=null : not implemented yet<<<<<<" no_pos in
 
-  let _ = DD.binfo_pprint ">>>>>> post-predicates: step post-6: weaken<<<<<<" no_pos in
+  let _ = DD.binfo_pprint ">>>>>> post-predicates: step post-61: weaken<<<<<<" no_pos in
   let pair_names_defs = generalize_hps_par_def prog non_ptr_unk_hps unk_hps1 link_hps sel_post_hps par_defs in
   let hp_names,hp_defs = List.split pair_names_defs in
   (hp_names,hp_defs,unk_hps1,unk_map1)
