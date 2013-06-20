@@ -4221,13 +4221,14 @@ let combine_hpdefs_x hpdefs=
   let rec partition_hpdefs_by_hp_name defs parts=
     match defs with
       | [] -> parts
-      | (a1,a2,a3)::xs ->
+      | (a1,a2,a3)::xs -> begin
           let part,remains= List.partition (fun (a2,_,_) ->
               let hp1 = get_hpdef_name a1 in
               let hp2 = get_hpdef_name a2 in
               CP.eq_spec_var hp1 hp2) xs
           in
           partition_hpdefs_by_hp_name remains (parts@[[(a1,a2,a3)]@part])
+        end
   in
   let extract_def args0 (_, hprel, f)=
     let _,args = CF.extract_HRel hprel in
@@ -4249,8 +4250,13 @@ let combine_hpdefs_x hpdefs=
           in
           (hp0,hprel0, def)
   in
-  let hp_groups = partition_hpdefs_by_hp_name hpdefs [] in
-  (List.map combine_one_hpdef hp_groups)
+  let hpdefs1,tupled_defs = List.partition (fun (def,_,_) -> match def with
+    | CP.HPRelDefn _ -> true
+    | _ -> false
+  ) hpdefs in
+  let hp_groups = partition_hpdefs_by_hp_name hpdefs1 [] in
+  let hpdefs2 = List.map combine_one_hpdef hp_groups in
+  (hpdefs2@tupled_defs)
 
 let combine_hpdefs hpdefs=
   let pr1 = pr_list_ln Cprinter.string_of_hp_rel_def in

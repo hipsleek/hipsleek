@@ -1107,10 +1107,14 @@ let generalize_hps_cs_new_x prog callee_hps hpdefs unk_hps cs=
               let hps = List.map fst diff in
               let hfs = List.map (fun (hp,args) -> (CF.HRel (hp, List.map (fun x -> CP.mkVar x pos) args, pos))) diff in
               let hf = CF.join_star_conjunctions hfs in
+              let def_tit = match hps with
+                | [hp] -> CP.HPRelDefn hp
+                | _ -> CP.HPRelLDefn hps
+              in
               let _ = DD.ninfo_pprint ">>>>>> generalize_one_cs_hp: <<<<<<" pos in
               let _ = DD.ninfo_pprint ((let pr = pr_list (pr_pair !CP.print_sv !CP.print_svl) in pr diff) ^ "::=" ^
                   (Cprinter.prtt_string_of_formula r) ) pos in
-                  ([],[((CP.HPRelLDefn hps, hf , r))], hps)
+                  ([],[((def_tit, hf , r))], hps)
             else
               ([constr],[], [])
         end
