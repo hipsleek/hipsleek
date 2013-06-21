@@ -14,6 +14,24 @@ cell id (cell x)
 }
 
 /*
+# id.ss
+
+GOT:
+[ P(x)&res=x --> G(x,res)&true]
+
+WHY are both treated as UNKNOWN!
+
+[ P(a) ::=NONE,
+ G(a,r) ::=NONE]
+
+P/Q should be normal pre/post; and have
+defns:
+
+  P(a) ::= emp.
+ G(a,r) ::= a=res
+
+
+
 
 P(x) - pre-condition cannot be dangling
   'cos x is from input

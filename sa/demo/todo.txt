@@ -1296,3 +1296,21 @@ relAssume G1
   & res=x --> G1(x,y,res).
 
 ====================================================================
+# id.ss
+
+GOT:
+[ P(x)&res=x --> G(x,res)&true]
+
+WHY are both treated as UNKNOWN!
+
+[ P(a) ::=NONE,
+ G(a,r) ::=NONE]
+
+P/Q should be normal pre/post; and have
+defns:
+
+  P(a) ::= emp.
+ G(a,r) ::= a=res
+
+====================================================================
+# id.slk
