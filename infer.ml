@@ -1802,9 +1802,10 @@ let find_undefined_selective_pointers_x prog lfb lmix_f unmatched rhs_rest rhs_h
   let unk_map1 = [] in
   (* let lfb1 = CF.mkAnd_base_pure lfb (MCP.mix_of_pure unk_xpure) pos in *)
   let lfb, defined_hps,rem_lhpargs, new_lhs_hps =
+    if CP.diff_svl r_hps post_hps <> [] then (lfb, [], ls_lhp_args, []) else
     List.fold_left (fun (lfb0,ls_defined,ls_rem, ls_new_hps) hpargs ->
         let lfb1, r_def,r_mem, new_hps = SAU.find_well_defined_hp prog lhds lhvs r_hps
-          prog_vars [] hpargs l_def_vs lfb0 false pos in
+          prog_vars post_hps hpargs l_def_vs lfb0 false pos in
         (lfb1, ls_defined@r_def,ls_rem@r_mem, ls_new_hps@new_hps)
     ) (lfb, [],[], []) ls_lhp_args
   in

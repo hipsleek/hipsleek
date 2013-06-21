@@ -1158,7 +1158,7 @@ let generalize_hps prog callee_hps unk_hps link_hps sel_post_hps cs par_defs=
   let pr1 = pr_list_ln Cprinter.string_of_hprel in
   let pr2 = pr_list_ln SAU.string_of_par_def_w_name in
   let pr3 = pr_list Cprinter.string_of_hp_rel_def in
-  Debug.ho_4 "generalize_hp" !CP.print_svl !CP.print_svl pr1 pr2 (pr_triple pr1 pr3 !CP.print_svl)
+  Debug.no_4 "generalize_hp" !CP.print_svl !CP.print_svl pr1 pr2 (pr_triple pr1 pr3 !CP.print_svl)
       (fun _ _ _ _ -> generalize_hps_x prog callee_hps unk_hps link_hps sel_post_hps cs par_defs)
       callee_hps link_hps cs par_defs
 
@@ -1391,30 +1391,39 @@ let infer_shapes_proper prog proc_name (constrs2: CF.hprel list) callee_hps sel_
   (constrs2, defs3,[], unk_hpargs2, link_hpargs)
 
 let infer_shapes_core prog proc_name (constrs0: CF.hprel list) callee_hps sel_hp_rels sel_post_hps hp_rel_unkmap
-      unk_hpargs link_hpargs need_preprocess detect_dang:
+      unk_hpargs0a link_hpargs need_preprocess detect_dang:
       (CF.hprel list * CF.hp_rel_def list * (CP.spec_var*CP.exp list * CP.exp list) list *
           (CP.spec_var * CP.spec_var list) list * (CP.spec_var *CP.spec_var list) list)=
   (*move to outer func*)
   let prog_vars = [] in (*TODO: improve for hip*)
   (********************************)
-  let unk_hps1 = List.map fst unk_hpargs in
-  let link_hps1 = List.map fst link_hpargs in
+  let unk_hpargs0b = List.fold_left (fun ls ((hp,_),xpure) ->
+      let args = match xpure.CP.xpure_view_node with
+        | None -> xpure.CP.xpure_view_arguments
+        | Some r -> r::xpure.CP.xpure_view_arguments
+      in
+      ls@[(hp,args)]
+  ) [] hp_rel_unkmap
+  in
+  let unk_hpargs = Gen.BList.remove_dups_eq (fun (hp1,_) (hp2,_) -> CP.eq_spec_var hp1 hp2) (unk_hpargs0a@unk_hpargs0b) in
   (* let constrs, unk_map0, unk_hpargs = SAC.syn_unk constrs0 hp_rel_unkmap sel_post_hps no_pos in *)
   let constrs1,unk_map,unk_hpargs, link_hpargs3 =
     if need_preprocess then
-      let _ = DD.binfo_pprint ">>>>>> step 1: split constraints based on pre and post-preds<<<<<<" no_pos in
-      (*split constrs like H(x) & x = null --> G(x): separate into 2 constraints*)
-      let constrs2, unk_map, link_hpargs0 = split_constr prog constrs0 sel_post_hps prog_vars hp_rel_unkmap unk_hps1 link_hps1 in
-      (*unk analysis*)
-      let _ = DD.binfo_pprint ">>>>>> step 2: find dangling ptrs, link pre and post-preds dangling preds<<<<<<" no_pos in
+       (*unk analysis*)
+      let _ = DD.binfo_pprint ">>>>>> step 1: find dangling ptrs, link pre and post-preds dangling preds<<<<<<" no_pos in
       (* let constrs3, unk_map1, unk_hpargs = SAC.detect_dangling_pred constrs2 sel_hp_rels unk_map in *)
-      let link_hpargs01= link_hpargs@link_hpargs0 in
-      let constrs3, unk_hpargs, unk_map2, link_hpargs2 =
+      let constrs1, unk_hpargs1, unk_map1, link_hpargs1 =
         if detect_dang then
-          SAC.analize_unk prog sel_post_hps constrs2 unk_map link_hpargs01
-        else (constrs2, unk_hpargs,unk_map,link_hpargs01)
+          SAC.analize_unk prog sel_post_hps constrs0 hp_rel_unkmap unk_hpargs link_hpargs
+        else (constrs0, unk_hpargs,hp_rel_unkmap,link_hpargs)
       in
-      (constrs3, unk_map2,unk_hpargs, link_hpargs2)
+      let _ = DD.binfo_pprint ">>>>>> step 2: split constraints based on pre and post-preds<<<<<<" no_pos in
+      (*split constrs like H(x) & x = null --> G(x): separate into 2 constraints*)
+      let unk_hps1 = List.map fst unk_hpargs1 in
+      let link_hps1 = List.map fst link_hpargs1 in
+      let constrs2, unk_map2, link_hpargs2 = split_constr prog constrs1 sel_post_hps prog_vars unk_map1 unk_hps1 link_hps1 in
+      let link_hpargs3= link_hpargs1@link_hpargs2 in
+      (constrs2, unk_map2,unk_hpargs1, link_hpargs3)
     else
       (constrs0, hp_rel_unkmap, unk_hpargs, link_hpargs)
   in

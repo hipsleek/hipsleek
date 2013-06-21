@@ -662,11 +662,11 @@ let find_full_unk_hps_x prog post_hps full_hps unk_hp_args_locs=
   let link_hpargs1 = List.fold_left (fun ls (hp,args,locs) ->
       if is_full_unk_process (hp,locs) then (ls@[(hp,args)]) else ls
   ) [] part_hpargs1 in
-  let link_hpargs2, unk_hp_locs2= List.fold_left (fun (ls1,ls2) (hp,args,locs) ->
+  let (* link_hpargs2 *)_, unk_hp_locs2= List.fold_left (fun (ls1,ls2) (hp,args,locs) ->
       if CP.mem_svl hp post_hps then (ls1@[(hp,args)],ls2) else (ls1,ls2@[(hp,locs)])
-  ) (link_hpargs1, []) full_unk_locs
+  ) ([] (*link_hpargs1*), []) full_unk_locs
   in
-  (unk_hp_locs2, link_hpargs2)
+  (unk_hp_locs2, link_hpargs1)
 
 let find_full_unk_hps prog post_hps full_hps unk_hp_args_locs=
   let pr1 = !CP.print_svl in
@@ -683,7 +683,7 @@ should use higher-order when stab.
  - identify dangling and unknown preds
  - if one reachs to post hps, it can not be a dangling pred. it may be an unknown one
 *)
-let analize_unk_x prog post_hps constrs total_unk_map link_hpargs=
+let analize_unk_x prog post_hps constrs total_unk_map unk_hpargs link_hpargs=
   let rec partition_cands_by_hp_name unks parts=
     match unks with
       | [] -> parts
@@ -718,14 +718,6 @@ let analize_unk_x prog post_hps constrs total_unk_map link_hpargs=
       ((* List.concat *) ls_full_unk_cands_w_args) in
     (Gen.BList.remove_dups_eq (fun (hp1,_,_) (hp2,_,_) -> CP.eq_spec_var hp1 hp2) unk_hp_locs2,
      Gen.BList.remove_dups_eq (fun (hp1,_,_) (hp2,_,_) -> CP.eq_spec_var hp1 hp2) full_unk_hp_args2_locs)
-  in
-  let unk_hpargs = List.fold_left (fun ls ((hp,_),xpure) ->
-      let args = match xpure.CP.xpure_view_node with
-        | None -> xpure.CP.xpure_view_arguments
-        | Some r -> r::xpure.CP.xpure_view_arguments
-      in
-      ls@[(hp,args)]
-  ) [] total_unk_map
   in
   let unk_hps = List.map fst unk_hpargs in
   let ls_unk_cands,ls_full_unk_cands_w_args = List.fold_left (fun (ls1, ls2) cs ->
@@ -797,7 +789,7 @@ let analize_unk_x prog post_hps constrs total_unk_map link_hpargs=
                link_hps unk_map c in
            update_helper ss new_map (res_cs@new_cs) (res_unk_hps@new_unk_hps) (new_drop_links@res_drop_links)
    in
-   let new_cs, unk_hpargs, new_map, link_hpargs4 =
+   let new_cs, new_unk_hpargs, new_map, link_hpargs4 =
      if full_unk_hp_locs =[] then
        (constrs, unk_hpargs, total_unk_map, link_hpargs3)
      else
@@ -812,17 +804,17 @@ let analize_unk_x prog post_hps constrs total_unk_map link_hpargs=
    let _ = Debug.dinfo_pprint ("map after: " ^
        (let pr = (pr_list (pr_pair (pr_pair !CP.print_sv (pr_list string_of_int)) CP.string_of_xpure_view)) in
        pr new_map)) no_pos in
-   (new_cs, Gen.BList.remove_dups_eq (fun (hp1,_) (hp2,_) -> CP.eq_spec_var hp1 hp2) unk_hpargs, new_map,
+   (new_cs, Gen.BList.remove_dups_eq (fun (hp1,_) (hp2,_) -> CP.eq_spec_var hp1 hp2) (new_unk_hpargs@unk_hpargs), new_map,
    link_hpargs4)
 
-let analize_unk prog post_hps constrs total_unk_map link_hpargs =
+let analize_unk prog post_hps constrs total_unk_map unk_hpargs link_hpargs =
   let pr1 = pr_list_ln Cprinter.string_of_hprel in
   (* let pr2 = (pr_list (pr_pair (pr_list (pr_pair !CP.print_sv string_of_int)) CP.string_of_xpure_view)) in *)
   let pr2 = (pr_list (pr_pair (pr_pair !CP.print_sv (pr_list string_of_int)) CP.string_of_xpure_view)) in
   let pr3 = pr_list (pr_pair !CP.print_sv !CP.print_svl) in
   let pr4 = pr_quad pr1 pr3 pr2 pr3 in
   Debug.no_2 "analize_unk" pr1 pr2 pr4
-      (fun _ _ -> analize_unk_x prog post_hps constrs total_unk_map link_hpargs)
+      (fun _ _ -> analize_unk_x prog post_hps constrs total_unk_map unk_hpargs link_hpargs)
       constrs total_unk_map
 
 
