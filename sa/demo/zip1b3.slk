@@ -19,7 +19,8 @@ relAssume G1
  y::node<val_25_826,next_25_827> * x::node<val_24_819,nnn>
   * G1(nnn,next_25_827,rrr) 
 //  & nn=rr
-  & res=x --> G1(x,y,res).
+  & res=x 
+  --> G1(x,y,res).
 
 shape_infer[][G1].
 
@@ -35,11 +36,6 @@ GOT
  or y_37::node<val_25_826,next_25_827>@M * x_36::node<val_24_819,nnn>@M * 
     HP_39(nnn,next_25_827,nnn)&true
  ]
-
-UNSOUND
-=======
-How did we get HP_39(nnn,next_25_827,nnn)? I was expecting
-just HP_39(nnn,next_25_827,rrr)
 
 =====
 

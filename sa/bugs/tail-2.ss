@@ -32,13 +32,14 @@ HP_785 is an unknown pred from y paramter.
 [ H1(c,y)&true --> c::node<val_14_782,next_14_783>@M * 
   HP_784(next_14_783,y@NI) * HP_785(y,c@NI)&true,
 
-
+  
 EXPECT
 ======
 [ H1(c_799,y_800) ::= c_799::node<val_14_782,next_14_783>@M 
    * HP_785(y_800,?) &  XPURE(HP_784(next_14_783,y_800)),
- G1(res_801,c_802,y_803) ::= 
-   c_802::node<val_14_782,res_801>@M * * HP_785(y_800,?) &res_801=y_803]
+  G1(res_801,c_802,y_803) ::= 
+   c_802::node<val_14_782,res_801>@M * HP_785(y_800,?) &res_801=y_803
+  HP_785(y_800,?) ::= NONE
 
 */
 
