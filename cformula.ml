@@ -5267,6 +5267,14 @@ let drop_hrel_f f0 hp_names =
   let pr3 = pr_pair !print_formula (pr_list (pr_list !CP.print_exp)) in
   Debug.no_2 "drop_hrel_f" pr1 pr2 pr3 drop_hrel_f f0 hp_names
 
+let drop_hprel_constr cs drop_hps=
+  if drop_hps = [] then cs else
+    let nlhs,_ = drop_hrel_f cs.hprel_lhs drop_hps in
+    let nrhs,_ = drop_hrel_f cs.hprel_rhs drop_hps in
+    {cs with hprel_lhs = nlhs;
+        hprel_rhs = nrhs;
+    }
+
 let drop_unk_hrel f0 hp_names=
   let rec helper f=
     match f with

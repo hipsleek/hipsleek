@@ -1387,35 +1387,43 @@ let infer_shapes_proper prog proc_name (constrs2: CF.hprel list) callee_hps sel_
   in
   (constrs2, defs3,[], unk_hpargs2, link_hpargs)
 
-let infer_shapes_core prog proc_name (constrs0: CF.hprel list) callee_hps sel_hp_rels sel_post_hps hp_rel_unkmap unk_hpargs need_preprocess detect_dang:
+let infer_shapes_core prog proc_name (constrs0: CF.hprel list) callee_hps sel_hp_rels sel_post_hps hp_rel_unkmap
+      unk_hpargs need_preprocess detect_dang:
       (CF.hprel list * CF.hp_rel_def list * (CP.spec_var*CP.exp list * CP.exp list) list *
           (CP.spec_var * CP.spec_var list) list * (CP.spec_var *CP.spec_var list) list)=
   (*move to outer func*)
   let prog_vars = [] in (*TODO: improve for hip*)
   (********************************)
   (* let constrs, unk_map0, unk_hpargs = SAC.syn_unk constrs0 hp_rel_unkmap sel_post_hps no_pos in *)
-  let constrs1,unk_map,unk_hpargs, link_hpargs = if need_preprocess then
-    let _ = DD.binfo_pprint ">>>>>> step 1: split constraints based on pre and post-preds<<<<<<" no_pos in
-    (*split constrs like H(x) & x = null --> G(x): separate into 2 constraints*)
-    let constrs2, unk_map, link_hpargs = split_constr prog constrs0 sel_post_hps prog_vars hp_rel_unkmap [] in
-    (*unk analysis*)
-    let _ = DD.binfo_pprint ">>>>>> step 2: find dangling ptrs, link pre and post-preds dangling preds<<<<<<" no_pos in
-    (* let constrs3, unk_map1, unk_hpargs = SAC.detect_dangling_pred constrs2 sel_hp_rels unk_map in *)
-    let constrs3, unk_hpargs, unk_map2 = if detect_dang then
-      SAC.analize_unk prog constrs2 unk_map
-    else (constrs2, unk_hpargs,unk_map)
-    in
-    (constrs3, unk_map2,unk_hpargs, link_hpargs)
-  else (constrs0, hp_rel_unkmap, unk_hpargs, [])
+  let constrs1,unk_map,unk_hpargs, link_hpargs3 =
+    if need_preprocess then
+      let _ = DD.binfo_pprint ">>>>>> step 1: split constraints based on pre and post-preds<<<<<<" no_pos in
+      (*split constrs like H(x) & x = null --> G(x): separate into 2 constraints*)
+      let constrs2, unk_map, link_hpargs = split_constr prog constrs0 sel_post_hps prog_vars hp_rel_unkmap [] in
+      (*unk analysis*)
+      let _ = DD.binfo_pprint ">>>>>> step 2: find dangling ptrs, link pre and post-preds dangling preds<<<<<<" no_pos in
+      (* let constrs3, unk_map1, unk_hpargs = SAC.detect_dangling_pred constrs2 sel_hp_rels unk_map in *)
+      let constrs3, unk_hpargs, unk_map2, link_hpargs2 =
+        if detect_dang then
+          SAC.analize_unk prog sel_post_hps constrs2 unk_map (link_hpargs)
+        else (constrs2, unk_hpargs,unk_map,link_hpargs)
+      in
+      (constrs3, unk_map2,unk_hpargs, link_hpargs2)
+    else
+      (constrs0, hp_rel_unkmap, unk_hpargs, [])
   in
   let unk_hps = (List.map fst unk_hpargs) in
   (*TODO: remove detect dangling at pre/post process*)
   (*TEMP*)
   let user_detect_dang =  detect_dang && !Globals.sa_elim_unused_preds in
+  (* let _ = Debug.info_pprint ("  link_hpargs3: " ^ (let pr = pr_list (pr_pair !CP.print_sv !CP.print_svl) *)
+  (*                                             in pr link_hpargs3)) no_pos *)
+  (*  in *)
   infer_shapes_proper prog proc_name constrs1 callee_hps sel_hp_rels sel_post_hps unk_map prog_vars
-      unk_hpargs link_hpargs user_detect_dang
+      unk_hpargs link_hpargs3 user_detect_dang
 
-let infer_shapes_x prog proc_name (constrs0: CF.hprel list) sel_hps sel_post_hps hp_rel_unkmap unk_hpargs need_preprocess detect_dang:
+let infer_shapes_x prog proc_name (constrs0: CF.hprel list) sel_hps sel_post_hps hp_rel_unkmap unk_hpargs
+      need_preprocess detect_dang:
       (CF.hprel list * CF.hp_rel_def list* (CP.spec_var*CP.exp list * CP.exp list) list ) =
   (*move to outer func*)
   (* let callee_hpdefs = *)
@@ -1428,8 +1436,9 @@ let infer_shapes_x prog proc_name (constrs0: CF.hprel list) sel_hps sel_post_hps
   (* let _ = DD.info_pprint ("  sel_hps:" ^ !CP.print_svl sel_hps) no_pos in *)
   (*remove hp(x) --> hp(x)*)
   (* let constrs1 = List.filter (fun cs -> not(SAU.is_trivial_constr cs)) constrs0 in *)
-  let constr, hp_defs, c, unk_hpargs2, link_hpargs = infer_shapes_core prog proc_name constrs0 callee_hps sel_hps sel_post_hps hp_rel_unkmap unk_hpargs need_preprocess detect_dang in
-  let link_hp_defs = List.map SAU.mk_link_hprel_def link_hpargs in
+  let constr, hp_defs, c, unk_hpargs2, link_hpargs2 = infer_shapes_core prog proc_name constrs0 callee_hps sel_hps
+    sel_post_hps hp_rel_unkmap unk_hpargs need_preprocess detect_dang in
+  let link_hp_defs = List.map (SAU.mk_link_hprel_def prog) link_hpargs2 in
   let hp_defs1,tupled_defs = SAU.partition_tupled hp_defs in
   (*decide what to show: DO NOT SHOW hps relating to tupled defs*)
   let m = match_hps_views hp_defs1 prog.CA.prog_view_decls in
@@ -1444,7 +1453,8 @@ let infer_shapes_x prog proc_name (constrs0: CF.hprel list) sel_hps sel_post_hps
   let _ = List.iter (fun hp_def -> rel_def_stk # push hp_def) (sel_hp_defs@link_hp_defs) in
   (constr, hp_defs, c)
 
-let infer_shapes prog proc_name (hp_constrs: CF.hprel list) sel_hp_rels sel_post_hp_rels hp_rel_unkmap unk_hpargs need_preprocess detect_dang:
+let infer_shapes prog proc_name (hp_constrs: CF.hprel list) sel_hp_rels sel_post_hp_rels hp_rel_unkmap unk_hpargs
+      need_preprocess detect_dang:
  (CF.hprel list * CF.hp_rel_def list*(CP.spec_var*CP.exp list * CP.exp list) list) =
   let pr0 = pr_list !CP.print_exp in
   let pr1 = pr_list_ln Cprinter.string_of_hprel in

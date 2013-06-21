@@ -2142,7 +2142,7 @@ let generate_constraints prog es rhs lhs_b rhs_b1 defined_hps
   (*   (hds@(List.concat (List.map get_h_formula_data_fr_hnode no_es_history))) *)
   (*   hvs (lhras@rhras@new_hrels) (leqs@reqs) eqNull [] in *)
   (*split the constraints relating between pre- andxs post-preds*)
-  let rf = CF.mkTrue (CF.mkTrueFlow()) pos in
+  (* let rf = CF.mkTrue (CF.mkTrueFlow()) pos in *)
   let defined_hprels = List.map (SAU.generate_hp_ass [] (* (closed_hprel_args_def@total_unk_svl) *) ) defined_hps in
   (*lookup to check redundant*)
   let new_lhs = CF.Base new_lhs_b in

@@ -296,7 +296,8 @@ let elim_eq_shorter_hpargs ls=
   Debug.no_1 "elim_eq_shorter_hpargs" pr pr
       (fun _ -> elim_eq_shorter_hpargs_x ls) ls
 
-let refine_full_unk partial_hp_locs poss_full_hp_args_locs=
+let refine_full_unk partial_hp_args_locs poss_full_hp_args_locs=
+  let partial_hp_locs = List.map (fun (a,_,c) -> (a,c)) partial_hp_args_locs in
   let rec helper poss_full_ls res=
     match poss_full_ls with
       |[] -> res
@@ -310,6 +311,23 @@ let refine_full_unk partial_hp_locs poss_full_hp_args_locs=
               report_error no_pos "sau.refine_full_unk"
   in
   helper poss_full_hp_args_locs []
+
+(*OLD: todo remove*)
+let refine_full_unk2 partial_hp_locs poss_full_hp_args_locs=
+  let rec helper poss_full_ls res=
+    match poss_full_ls with
+      |[] -> res
+      | (hp,args,locs)::lss ->
+          try
+              let locs1 = List.assoc hp partial_hp_locs in
+              if (List.length locs1) = (List.length locs) then
+                helper lss (res@[(hp,args,locs)])
+              else helper lss res
+          with Not_found ->
+              report_error no_pos "sau.refine_full_unk"
+  in
+  helper poss_full_hp_args_locs []
+(***********************************)
 
 let mkHRel hp args pos=
   let eargs = List.map (fun x -> (CP.mkVar x pos)) args in
@@ -3328,8 +3346,10 @@ let mk_unk_hprel_def hp args defs pos=
   let def = (hp, (CP.HPRelDefn hp, (CF.HRel (hp, List.map (fun x -> CP.mkVar x no_pos) args, pos)), def)) in
   [def]
 
-let mk_link_hprel_def (hp,args)=
-  let f = CF.mkTrue (CF.mkTrueFlow()) no_pos in
+let mk_link_hprel_def prog (hp,_)=
+  let hp_name= CP.name_of_spec_var hp in
+  let hprel = Cast.look_up_hp_def_raw prog.C.prog_hp_decls hp_name in
+  let args = fst (List.split hprel.C.hp_vars_inst) in
   let hf = (CF.HRel (hp, List.map (fun x -> CP.mkVar x no_pos) args, no_pos)) in
   DD.ninfo_pprint (" ==: " ^ "NONE" ) no_pos;
   let def= {

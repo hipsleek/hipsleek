@@ -581,7 +581,7 @@ and analize_unk prog hp_rel_unkmap constrs =
    (* let ls_unk_cands,ls_full_unk_cands_w_args = double_check_unk_all unk_hp_args01 constrs in *)
    (* let unk_hp_args02,full_unk_hp_args2_locs = helper (ls_unk_cands,ls_full_unk_cands_w_args) in *)
    (*********END double check ****************)
-   let full_unk_hp_args2_locs = SAU.refine_full_unk unk_hp_args02 full_unk_hp_args2_locs in
+   let full_unk_hp_args2_locs = SAU.refine_full_unk2 unk_hp_args02 full_unk_hp_args2_locs in
    (*generate equivs mapping for all full unk hps*)
    let gen_equivs_from_full_unk_hps (hp,args,locs)=
      ((hp,locs), [(hp, args)])
