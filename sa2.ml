@@ -149,6 +149,9 @@ and find_imply_subst prog constrs new_cs=
   Debug.no_1 "find_imply_subst" pr1 pr1
       (fun _ -> find_imply_subst_x prog constrs new_cs) constrs
 
+and is_trivial cs= (SAU.is_empty_f cs.CF.hprel_rhs) ||
+  (SAU.is_empty_f cs.CF.hprel_lhs)
+
 and is_non_recursive_cs dang_hps constr=
   let lhrel_svl = CF.get_hp_rel_name_formula constr.CF.hprel_lhs in
   let rhrel_svl = CF.get_hp_rel_name_formula constr.CF.hprel_rhs in
@@ -156,8 +159,8 @@ and is_non_recursive_cs dang_hps constr=
 
 and subst_cs_w_other_cs_x prog dang_hps constrs new_cs=
   (*remove recursive cs*)
-  let constrs1 = List.filter (is_non_recursive_cs dang_hps) constrs in
-  let new_cs1 = List.filter (is_non_recursive_cs dang_hps) new_cs in
+  let constrs1 = List.filter (fun cs -> (is_non_recursive_cs dang_hps cs) && not (is_trivial cs)) constrs in
+  let new_cs1 = List.filter (fun cs -> (is_non_recursive_cs dang_hps cs) && not (is_trivial cs)) new_cs in
   find_imply_subst prog constrs1 new_cs1
 (*=========END============*)
 
@@ -299,38 +302,39 @@ let split_constr_x prog constrs post_hps prog_vars unk_map unk_hps link_hps=
         (new_constrs, unk_map1, link_hps)
     else
       (*detect link hps: move to outside of shape_infer??*)
-       let leqs = (MCP.ptr_equations_without_null mix_lf) in
-        let lhs_b = match lhs with
-          | CF.Base fb -> fb
-          | _ -> report_error no_pos "sa2.split_constr: lhs should be a Base Formula"
-        in
-        let rhs_b = match rhs with
-          | CF.Base fb -> fb
-          | _ -> report_error no_pos "sa2.split_constr: lhs should be a Base Formula"
-        in
-        (**smart subst**)
-        let lhs_b1, rhs_b1, subst_prog_vars = SAU.smart_subst lhs_b rhs_b (l_hpargs@r_hpargs)
-          leqs [] [] prog_vars
-        in
-        let lfb = lhs_b1 in
-        let lhds, lhvs, lhrs = CF.get_hp_rel_bformula lfb in
-        let (_ ,mix_lf,_,_,_) = CF.split_components (CF.Base lfb) in
-        let leqNulls = MCP.get_null_ptrs mix_lf in
-        let leqs = (MCP.ptr_equations_without_null mix_lf) in
-        let ls_rhp_args = CF.get_HRels_f (CF.Base rhs_b1) in
-        let l_def_vs = leqNulls @ (List.map (fun hd -> hd.CF.h_formula_data_node) lhds)
-          @ (List.map (fun hv -> hv.CF.h_formula_view_node) lhvs) in
-        let l_def_vs = CP.remove_dups_svl (SAU.find_close l_def_vs (leqs)) in
-        let helper (hp,eargs,_)=(hp,List.concat (List.map CP.afv eargs)) in
-        let ls_lhp_args = (List.map helper lhrs) in
-        let link_hpargs0 =  match ls_rhp_args with
-          | [(r_hp,r_args)] ->
-                if CP.mem_svl r_hp post_hps then
-                  []
-                else SAU.detect_link_hp prog lhds lhvs r_hp r_args post_hps ls_lhp_args (l_def_vs)
-          | _ -> []
-      in
-      ([cs],total_unk_map,link_hpargs0)
+      (*  let leqs = (MCP.ptr_equations_without_null mix_lf) in *)
+      (*   let lhs_b = match lhs with *)
+      (*     | CF.Base fb -> fb *)
+      (*     | _ -> report_error no_pos "sa2.split_constr: lhs should be a Base Formula" *)
+      (*   in *)
+      (*   let rhs_b = match rhs with *)
+      (*     | CF.Base fb -> fb *)
+      (*     | _ -> report_error no_pos "sa2.split_constr: lhs should be a Base Formula" *)
+      (*   in *)
+      (*   (\**smart subst**\) *)
+      (*   let lhs_b1, rhs_b1, subst_prog_vars = SAU.smart_subst lhs_b rhs_b (l_hpargs@r_hpargs) *)
+      (*     leqs [] [] prog_vars *)
+      (*   in *)
+      (*   let lfb = lhs_b1 in *)
+      (*   let lhds, lhvs, lhrs = CF.get_hp_rel_bformula lfb in *)
+      (*   let (_ ,mix_lf,_,_,_) = CF.split_components (CF.Base lfb) in *)
+      (*   let leqNulls = MCP.get_null_ptrs mix_lf in *)
+      (*   let leqs = (MCP.ptr_equations_without_null mix_lf) in *)
+      (*   let ls_rhp_args = CF.get_HRels_f (CF.Base rhs_b1) in *)
+      (*   let l_def_vs = leqNulls @ (List.map (fun hd -> hd.CF.h_formula_data_node) lhds) *)
+      (*     @ (List.map (fun hv -> hv.CF.h_formula_view_node) lhvs) in *)
+      (*   let l_def_vs = CP.remove_dups_svl (SAU.find_close l_def_vs (leqs)) in *)
+      (*   let helper (hp,eargs,_)=(hp,List.concat (List.map CP.afv eargs)) in *)
+      (*   let ls_lhp_args = (List.map helper lhrs) in *)
+      (*   let link_hpargs0 =  match ls_rhp_args with *)
+      (*     | [(r_hp,r_args)] -> *)
+      (*           if CP.mem_svl r_hp post_hps then *)
+      (*             [] *)
+      (*           else *)
+      (*             SAU.detect_link_hp prog lhds lhvs r_hp r_args post_hps ls_lhp_args (l_def_vs) *)
+      (*     | _ -> [] *)
+      (* in *)
+      ([cs],total_unk_map,[])
   in
   let split_one cs total_unk_map =
     let pr1 = Cprinter.string_of_hprel_short in
@@ -1423,7 +1427,7 @@ let infer_shapes_core prog proc_name (constrs0: CF.hprel list) callee_hps sel_hp
       let link_hps1 = List.map fst link_hpargs1 in
       let constrs2, unk_map2, link_hpargs2 = split_constr prog constrs1 sel_post_hps prog_vars unk_map1 unk_hps1 link_hps1 in
       let link_hpargs3= link_hpargs1@link_hpargs2 in
-      (constrs2, unk_map2,unk_hpargs1, link_hpargs3)
+       (constrs2, unk_map2,unk_hpargs1, link_hpargs3)
     else
       (constrs0, hp_rel_unkmap, unk_hpargs, link_hpargs)
   in
@@ -1437,8 +1441,7 @@ let infer_shapes_core prog proc_name (constrs0: CF.hprel list) callee_hps sel_hp
   infer_shapes_proper prog proc_name constrs1 callee_hps sel_hp_rels sel_post_hps unk_map prog_vars
       unk_hpargs link_hpargs3 user_detect_dang
 
-let infer_shapes_x prog proc_name (constrs0: CF.hprel list) sel_hps sel_post_hps hp_rel_unkmap unk_hpargs link_hpargs
-      need_preprocess detect_dang:
+let infer_shapes_x prog proc_name (constrs0: CF.hprel list) sel_hps sel_post_hps hp_rel_unkmap unk_hpargs link_hpargs need_preprocess detect_dang:
       (CF.hprel list * CF.hp_rel_def list* (CP.spec_var*CP.exp list * CP.exp list) list ) =
   (*move to outer func*)
   (* let callee_hpdefs = *)
@@ -1477,7 +1480,9 @@ let infer_shapes prog proc_name (hp_constrs: CF.hprel list) sel_hp_rels sel_post
   let pr3 = pr_list (pr_triple !CP.print_sv pr0 pr0) in
   (* let pr4 = pr_list (pr_pair (pr_list (pr_pair !CP.print_sv string_of_int)) CP.string_of_xpure_view) in *)
   let pr4 = (pr_list (pr_pair (pr_pair !CP.print_sv (pr_list string_of_int)) CP.string_of_xpure_view)) in
-  Debug.no_4 "infer_shapes" pr_id pr1 !CP.print_svl pr4 (pr_triple pr1 pr2 pr3)
-      (fun _ _ _ _ -> infer_shapes_x prog proc_name hp_constrs sel_hp_rels
-          sel_post_hp_rels hp_rel_unkmap unk_hpargs link_hpargs need_preprocess detect_dang)
-      proc_name hp_constrs sel_post_hp_rels hp_rel_unkmap
+  let pr5 = pr_list (pr_pair !CP.print_sv !CP.print_svl) in
+  Debug.no_6 "infer_shapes" pr_id pr1 !CP.print_svl pr4 pr5 pr5 (pr_triple pr1 pr2 pr3)
+      (fun _ _ _ _ _ _ -> infer_shapes_x prog proc_name hp_constrs sel_hp_rels
+          sel_post_hp_rels hp_rel_unkmap unk_hpargs link_hpargs
+          need_preprocess detect_dang)
+      proc_name hp_constrs sel_post_hp_rels hp_rel_unkmap unk_hpargs link_hpargs

@@ -701,7 +701,7 @@ let process_decl_hpdang hp_names =
     (hp,args)
   in
   let hpargs = List.map process hp_names in
-  let _ = Debug.binfo_pprint ("decale hp dangling: " ^
+  let _ = Debug.ninfo_pprint ("dangling: " ^
       (let pr = pr_list (pr_pair !Cpure.print_sv !Cpure.print_svl) in pr hpargs)) no_pos in
   let _ = sleek_hprel_dang := !sleek_hprel_dang@hpargs in
   ()
@@ -714,9 +714,9 @@ let process_decl_hpunknown hp_names =
     (hp,args)
   in
   let hpargs = List.map process hp_names in
-  let _ = Debug.binfo_pprint ("decale hp unknown: " ^
+  let _ = Debug.ninfo_pprint ("unknown: " ^
       (let pr = pr_list (pr_pair !Cpure.print_sv !Cpure.print_svl) in pr hpargs)) no_pos in
-  let _ = sleek_hprel_unknown := !sleek_hprel_dang@hpargs in
+  let _ = sleek_hprel_unknown := !sleek_hprel_unknown@hpargs in
   ()
 
 let shape_infer_pre_process constrs pre_hps post_hps=

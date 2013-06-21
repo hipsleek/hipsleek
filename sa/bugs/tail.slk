@@ -10,6 +10,9 @@ HeapPred HP_6(node a).
 HeapPred G1(node a, node b).
 HeapPred K(int a).
 
+Declare_Dangling [HP_5,HP_6].
+Declare_Unknown [].
+
 relAssume H1
  H1(c) --> c::node<v,prev_19_765',next_19_766'>@M * 
   K(v) * HP_5(prev_19_765') * HP_6(next_19_766')&true.
