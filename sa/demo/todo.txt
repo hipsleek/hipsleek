@@ -1121,7 +1121,7 @@ Can we just have:
 */
 
 ============================================================
-# zip1b1.slk: DONE
+# zip1b1.slk: 
 
 Previously, you managed to eliminate:
 
@@ -1129,14 +1129,17 @@ Previously, you managed to eliminate:
  (HP_8(next_25_827,x)) * 
   (HP_1(next_24_820,y)) ::= H1(next_24_820,next_25_827)&true,
 
+The --sa-dis-eup is on by default. However, the above
+useless predicates are still been eliminated.
+
 Can I have an option sa-dis-eup that would allow the above
 to be kept, rather than eliminated? This woul permit me to
 see what were the full set of predicates that were constructed,
 including those that may have been redundant subsequently.
 
+Could we implement --sa-en-eup and --sa-dis-eup properly
 
-
-Could we have an option --sa-dis-elim-unused-pred 
+have an option --sa-dis-elim-unused-pred 
 to keep the unused pred so that we know they are transformed
 correctly. That is the elim of unused pred is dis-enabled
 when the above option is turned on.
@@ -1249,9 +1252,12 @@ relAssume G1
  //res=x & 
  x=null & res=null --> G1(x,y,res).
 
-==> relAssume G1
- res=x & 
- x=null & res=null --> G1(x,y,res).
+[ G1(x_36,y_37,res_38) ::= HP_39(x_36,y_37,res_38)&res_38=x_36,
+ HP_39(x_36,y_37,res_38) ::= 
+ emp&x_36=null & res_38=null
+ or y_37::node<val_25_826,next_25_827>@M * x_36::node<val_24_819,nnn>@M * 
+    HP_39(nnn,next_25_827,nnn)&true
+ ]
 
 =================================================================
 # zip1b4.slk: FIXED
@@ -1310,3 +1316,21 @@ defns:
 
 ====================================================================
 # id.slk: fIXED
+
+HeapPred P(cell a).
+HeapPred G(cell a, cell r).
+
+Declare_Dangling [].
+Declare_Unknown [].
+
+relAssume G
+P(a) & a=res --> G(a,res).
+
+shape_infer [P][G].
+
+/*
+[ G(a_18,res_19) ::= P(a_18)&a_18=res_19]
+
+WHY is it not splitting?
+
+*/
