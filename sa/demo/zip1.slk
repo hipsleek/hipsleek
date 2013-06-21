@@ -40,7 +40,7 @@ shape_infer[H1,HP_2,HP_1,HP_8,HL][G1].
 
 /*
 
-# zip1.slk 
+# zip1.slk DONE
 
 GOT
 ====
@@ -126,10 +126,23 @@ STEPS
 
  H1(x,y) <--> x::node<val_24_819,nx>@M * y::node<val_25_826,ny>@M * H1(nx,ny)
              or x=null,
- 
- 
+
 *************************************
+# zip1.slk
 
+Why an intermediate HP_64?
 
-
+[ H1(x_243,y_244) ::= 
+ H1(next_24_110,next_25_108) * y_244::node<val_25_107,next_25_108>@M * 
+ x_243::node<val_24_109,next_24_110>@M&true
+ or HP_64(y_244)&x_243=null
+ ,
+ HL(y_247) ::= HP_64(y_247)&true,
+ G1(x_248,y_249,res_250) ::= HP_251(x_248,y_249,res_250)&res_250=x_248,
+ HP_251(x_248,y_249,res_250) ::= 
+ HP_64(y_249)&x_248=null & res_250=null
+ or y_249::node<val_25_826,next_25_827>@M * x_248::node<val_24_819,nn>@M * 
+    HP_251(nn,next_25_827,nn)&true
+ ,
+ HP_64(y) ::=NONE]
 */
