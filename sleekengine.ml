@@ -719,11 +719,26 @@ let process_decl_hpunknown hp_names =
   let _ = sleek_hprel_unknown := !sleek_hprel_dang@hpargs in
   ()
 
+let shape_infer_pre_process constrs pre_hps post_hps=
+  let unk_hpargs = !sleek_hprel_dang in
+  let link_hpargs = !sleek_hprel_unknown in
+  let sel_hps, sel_post_hps = SAU.get_pre_post pre_hps post_hps constrs in
+  (* let constrs2, unk_map, unk_hpargs = SAC.detect_dangling_pred hp_lst_assume sel_hps [] in *)
+  let constrs2,unk_map = if unk_hpargs = [] then (constrs ,[]) else
+    let unk_hps = List.map fst unk_hpargs in
+    List.fold_left (fun (ls_cs,map) cs ->
+      let new_cs, n_map,_ = SAC.do_elim_unused cs unk_hps map in
+      (ls_cs@[new_cs], n_map)
+  ) ([], []) constrs
+  in
+  (constrs2, sel_hps, sel_post_hps, unk_map, unk_hpargs, link_hpargs)
+
 let process_shape_infer pre_hps post_hps=
   (* let _ = DD.info_pprint "process_shape_infer" no_pos in *)
   let hp_lst_assume = !sleek_hprel_assumes in
-  let sel_hps, sel_post_hps = SAU.get_pre_post pre_hps post_hps hp_lst_assume in
-  let constrs2, unk_map, unk_hpargs = SAC.detect_dangling_pred hp_lst_assume sel_hps [] in
+  let constrs2, sel_hps, sel_post_hps, unk_map, unk_hpargs, link_hpargs=
+    shape_infer_pre_process hp_lst_assume pre_hps post_hps
+  in
   let ls_hprel, ls_inferred_hps, dropped_hps =
     if List.length sel_hps> 0 && List.length hp_lst_assume > 0 then
       let infer_shape_fnc =  if not (!Globals.sa_old) then
@@ -731,7 +746,7 @@ let process_shape_infer pre_hps post_hps=
       else Sa2.infer_shapes (* Sa.infer_hps *)
       in
       infer_shape_fnc !cprog "" constrs2
-          sel_hps sel_post_hps unk_map unk_hpargs true false
+          sel_hps sel_post_hps unk_map unk_hpargs link_hpargs true false
     else [],[],[]
   in
   let _ = if not (!Globals.sa_old) then
@@ -797,16 +812,17 @@ let process_shape_sante pre_hps post_hps=
 let process_shape_infer_prop pre_hps post_hps=
   (* let _ = DD.info_pprint "process_shape_infer_prop" no_pos in *)
   let hp_lst_assume = !sleek_hprel_assumes in
-  let sel_hps, sel_post_hps = SAU.get_pre_post pre_hps post_hps hp_lst_assume in
-  (* let new_constrs, unk_map, unk_hps = SAC.detect_dangling_pred hp_lst_assume sel_hps in *)
-  let unk_map, unk_hpargs = SAC.get_dangling_pred hp_lst_assume in
+  (*get_dangling_pred constrs*)
+  let constrs2, sel_hps, sel_post_hps, unk_map, unk_hpargs, link_hpargs=
+    shape_infer_pre_process hp_lst_assume pre_hps post_hps
+  in
   let ls_hprel, ls_inferred_hps, dropped_hps =
     let infer_shape_fnc =  if not (!Globals.sa_old) then
       Sa2.infer_shapes
     else Sa2.infer_shapes (* Sa.infer_hps *)
     in
     infer_shape_fnc !cprog "" hp_lst_assume
-        sel_hps sel_post_hps unk_map unk_hpargs false false
+        sel_hps sel_post_hps unk_map unk_hpargs link_hpargs false false
   in
   let _ = if not (!Globals.sa_old) then
     begin
@@ -844,7 +860,8 @@ let process_shape_split pre_hps post_hps=
   let sel_hp_rels = pre_hp_rels@post_hp_rels in
   (*sleek level: depend on user annotation. with hip, this information is detected automatically*)
   let constrs1, unk_map, unk_hpargs = SAC.detect_dangling_pred !sleek_hprel_assumes sel_hp_rels [] in
-  let new_constrs,_,_ = Sa2.split_constr !cprog constrs1 post_hp_rels infer_vars unk_map (List.map fst unk_hpargs) in
+   let link_hpargs = !sleek_hprel_unknown in
+  let new_constrs,_,_ = Sa2.split_constr !cprog constrs1 post_hp_rels infer_vars unk_map (List.map fst unk_hpargs) (List.map fst link_hpargs) in
   let pr1 = pr_list_ln Cprinter.string_of_hprel_short in
   begin
     print_endline "\n*************************************";
