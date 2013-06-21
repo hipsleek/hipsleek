@@ -4640,6 +4640,10 @@ let rel_helper post_hps unk_rels unk_map=
   let unk_tmp_hpdefs =  subst_helper unk_rels [] in
   (List.map mk_def unk_tmp_hpdefs)
 
+let is_tupled_hpdef (def, _, _)=
+  match def with
+    | CP.HPRelLDefn hps -> true
+    | _ -> false
 
 let partition_tupled_x hpdefs=
   let get_tupled_hps res (def,_,_)=

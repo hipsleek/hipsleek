@@ -915,7 +915,9 @@ let transform_xpure_to_pure_x hp_defs unk_map=
       [CP.SpecVar (t, dang_name, p)])
   ) unk_map
   in
-  transform_unk_hps_to_pure hp_defs fr_map
+  let tupled_defs,hp_defs1 = List.partition SAU.is_tupled_hpdef hp_defs in
+  let hp_defs2 = transform_unk_hps_to_pure hp_defs1 fr_map in
+  (hp_defs2@tupled_defs)
 
 let transform_xpure_to_pure hp_defs (unk_map:((CP.spec_var * int list) * CP.xpure_view) list) =
   let pr1 = pr_list_ln Cprinter.string_of_hp_rel_def in
