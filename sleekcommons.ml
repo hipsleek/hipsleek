@@ -49,6 +49,8 @@ type command =
   | ShapeSplitBase of (ident list * ident list)
   | ShapeElim of (ident list)
   | ShapeExtract of (ident list)
+  | ShapeDeclDang of (ident list)
+  | ShapeDeclUnknown of (ident list)
   | ShapeSConseq of (ident list * ident list)
   | ShapeSAnte of (ident list * ident list)
   | EqCheck of (ident list * meta_formula * meta_formula)
@@ -99,6 +101,8 @@ let string_of_command c = match c with
   | ShapeInfer _ -> "ShapeInfer"
   | ShapeInferProp _ -> "ShapeInferProper"
   | ShapeSplitBase _ -> "ShapeSplitbase"
+  | ShapeDeclDang _ -> "ShapeDeclDang"
+  | ShapeDeclUnknown _ -> "ShapeDeclUnknown"
   | ShapeElim _ -> "ShapeElim"
   | ShapeExtract _ -> "ShapeExtract"
   | ShapeSConseq _ -> "ShapeSConseq"

@@ -728,6 +728,8 @@ non_empty_command:
       | t=shapesplit_base_cmd     -> ShapeSplitBase t
       | t=shapeElim_cmd     -> ShapeElim t
       | t=shapeExtract_cmd     -> ShapeExtract t
+      | t=decl_dang_cmd        -> ShapeDeclDang t
+      | t=decl_unknown_cmd        -> ShapeDeclUnknown t
       | t=shape_sconseq_cmd     -> ShapeSConseq t
       | t=shape_sante_cmd     -> ShapeSAnte t
       | t=infer_cmd           -> Infer t  
@@ -1638,6 +1640,14 @@ checkentail_cmd:
 
 relassume_cmd:
    [[ `RELASSUME; `IDENTIFIER id; l=meta_constr; `CONSTR;r=meta_constr -> (id, l, r)
+   ]];
+
+decl_dang_cmd:
+   [[ `SHAPE_DECL_DANG; `OSQUARE; il1=OPT id_list ;`CSQUARE -> un_option il1 []
+   ]];
+
+decl_unknown_cmd:
+   [[ `SHAPE_DECL_UNKNOWN; `OSQUARE; il1= OPT id_list ;`CSQUARE   -> un_option il1 []
    ]];
 
 shapeinfer_cmd:

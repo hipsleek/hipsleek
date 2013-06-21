@@ -81,6 +81,8 @@ let cprog = ref { C.prog_data_decls = [];
 let residues =  ref (None : (CF.list_context * bool) option)    (* parameter 'bool' is used for printing *)
 
 let sleek_hprel_assumes = ref ([]: CF.hprel list)
+let sleek_hprel_unknown = ref ([]: (CP.spec_var * CP.spec_var list) list)
+let sleek_hprel_dang = ref ([]: (CP.spec_var *CP.spec_var list) list)
 
 let clear_iprog () =
   iprog.I.prog_data_decls <- [iobj_def];
@@ -689,6 +691,32 @@ let process_rel_assume hp_id (ilhs : meta_formula) (irhs: meta_formula)=
   } in
   (*hp_assumes*)
   let _ = sleek_hprel_assumes := !sleek_hprel_assumes@[new_rel_ass] in
+  ()
+
+let process_decl_hpdang hp_names =
+  let process hp_name=
+    let hp_def = Cast.look_up_hp_def_raw !cprog.Cast.prog_hp_decls hp_name in
+    let hp = Cpure.SpecVar (HpT , hp_name, Unprimed) in
+    let args = fst (List.split hp_def.Cast.hp_vars_inst) in
+    (hp,args)
+  in
+  let hpargs = List.map process hp_names in
+  let _ = Debug.binfo_pprint ("decale hp dangling: " ^
+      (let pr = pr_list (pr_pair !Cpure.print_sv !Cpure.print_svl) in pr hpargs)) no_pos in
+  let _ = sleek_hprel_dang := !sleek_hprel_dang@hpargs in
+  ()
+
+let process_decl_hpunknown hp_names =
+  let process hp_name=
+    let hp_def = Cast.look_up_hp_def_raw !cprog.Cast.prog_hp_decls hp_name in
+    let hp = Cpure.SpecVar (HpT , hp_name, Unprimed) in
+    let args = fst (List.split hp_def.Cast.hp_vars_inst) in
+    (hp,args)
+  in
+  let hpargs = List.map process hp_names in
+  let _ = Debug.binfo_pprint ("decale hp unknown: " ^
+      (let pr = pr_list (pr_pair !Cpure.print_sv !Cpure.print_svl) in pr hpargs)) no_pos in
+  let _ = sleek_hprel_unknown := !sleek_hprel_dang@hpargs in
   ()
 
 let process_shape_infer pre_hps post_hps=
