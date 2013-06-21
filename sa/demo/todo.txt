@@ -1212,7 +1212,7 @@ in zip1f.slk gives correct answer?
  ]
 
 ===============================================================
-# dll-app3a1.slk
+# dll-app3a1.slk: FIXED
 
 infer [HP_9,HP_0,HP_1] 
 HP_9(next_16_7,l2) * HP_0(prev_16_8,l2) * HP_1(l2,l1) * 
@@ -1242,11 +1242,7 @@ Why was it generated?
 
 
 ===============================================================
-# hip/ll-append5.ss
 
-simplify AND_STAR in post-pred G
-
-=================================================================
 # zip1b3.slk: DONE
 
 relAssume G1
@@ -1296,7 +1292,7 @@ relAssume G1
   & res=x --> G1(x,y,res).
 
 ====================================================================
-# id.ss
+# id.ss: FIXED
 
 GOT:
 [ P(x)&res=x --> G(x,res)&true]
@@ -1313,4 +1309,4 @@ defns:
  G(a,r) ::= a=res
 
 ====================================================================
-# id.slk
+# id.slk: fIXED
