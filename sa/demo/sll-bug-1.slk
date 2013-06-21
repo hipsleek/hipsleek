@@ -1,0 +1,49 @@
+data node{
+        int val;
+        node next;
+}.
+
+HeapPred H1(node a, node b).
+HeapPred H2(node a, node b).
+
+infer [H1,H2] x::node<_,q>*H2(q,r) |- H1(q,x).
+print residue.
+
+/*
+# sll-bug-1.slk
+
+GOT:
+ <1>emp&true&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [x::node<Anon_11,q>@M * H2(q,r)&true --> H1(q,x)&true]
+
+EXPECT:
+ <1>emp&true&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [H2(q,r)&true --> H1(q,x)&true]
+
+ALGORITM
+========
+
+   q match with H2(q,r) 
+   x match with x::node<_,q>*H2(q,r) 
+
+Since they overlap, we pick only q; and drop x matching.
+
+
+*/
+
+/*
+
+infer [H1,H2] x::node<_,_>*H2(q,r) |- H1(q,x).
+print residue.
+
+/*
+OK
+ <1>emp&true&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [x::node<Anon_12,Anon_13>@M * H2(q,r)&true --> H1(q,x)&true]
+
+No OVERLAP
+==========
+ q match with H2(q,r)
+ x match with x::node<_,_>
+
+*/

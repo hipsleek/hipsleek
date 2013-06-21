@@ -8,7 +8,8 @@ data node{
 ll<> == self = null  or self::node<_, _ , q> * q::ll<>;
 dll<p> == self = null or self::node<_, p , q> * q::dll<self>;   // p stores the prev node
 
-HeapPred H1(node a, node b).
+HeapPred H1(node a, node@NI b).
+// seems critical to have @NI
 HeapPred G1(node a, node b).
 
 void paper_fix (node c, node p)
@@ -22,9 +23,39 @@ void paper_fix (node c, node p)
         }
 }
 
-//# sll-dll.ss
-
 /*
+
+# sll-dll.ss
+
+HP_810 should be dangling as it was instantiated from a field
+but never accessed.
+
+Can we avoid @NI annotation for H1?
+
+[ H1(c_847,p_848) ::= 
+ emp&c_847=null
+ or H1(next_20_828,c') * c_847::node<val_20_826,prev_20_827,next_20_828>@M * 
+    HP_810(prev_20_827,p_848)&true
+ ,
+ G1(c_852,p_853) ::= 
+ emp&c_852=null
+ or c_852::node<val_20_807,p_853,next_20_809>@M * G1(next_20_809,c_852)&true
+ ,
+ HP_810(prev_20_808,p) ::=NONE]
+
+
+====================
+without @NI; ERROR in H1
+
+[ H1(c_850,p_851) ::= emp&c_850=null,
+ G1(c_852,p_853) ::= 
+ emp&c_852=null
+ or c_852::node<val_20_807,p_853,next_20_809>@M * G1(next_20_809,c_852)&true
+ ,
+ HP_810(prev_20_808,p) ::=NONE]
+
+
+
 [ H1(c_871,p_873) ::= 
  emp&c_871=null
  or (H1(next_20_830,c')) * c_871::node<val_20_828,prev_20_829,next_20_830>@M&

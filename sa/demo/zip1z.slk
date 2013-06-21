@@ -16,7 +16,7 @@ relAssume G1
 shape_infer [H1][G].
 
 /*
-Why isn't splittining invoked?
+Why isn't splitting invoked?
 
 [ H1(x_30,res_31) ::= G1(x_30,y,res_31)&res_31=null & x_30=null]
 
