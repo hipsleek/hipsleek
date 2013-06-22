@@ -1704,3 +1704,37 @@ EXPECT
      x::node<_,n>@M&n=null --> G2(x,y).
 
 */
+=================================================
+# id.ss
+
+cell id (cell x)
+ infer [P,G]  requires P(x)  ensures  G(x,res);
+//requires emp  ensures  emp & x=res;
+{
+  return x;
+}
+
+/*
+
+We obtained:
+
+[ P(x)&res=x --> G(x,res)&true]
+
+We should not do base-case split here.
+
+First, we consider pre-pred. There
+is only P but no definition. Hence,
+P is unknown. Thus, we have
+
+ P(x) ::= NONE
+
+Next, we consider the post-pred G.
+There is only one assumption:
+   P(x) & res=x --> G(x,res)
+
+We derive:
+   G(x,res) ::= P(x) & res=x
+
+Thus:
+   P(x) ::= NONE
+   G(x,res) ::= P(x) & res=x

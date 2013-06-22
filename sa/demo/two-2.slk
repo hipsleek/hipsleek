@@ -17,6 +17,13 @@ relAssume HP_6
 relAssume G2
   HP_5(n,y) * HP_6(y,x) * 
   x::node<_,n>@M&n=null --> G2(x,y).
+/*
+
+for scenarios that are not base-case split; we should allow
+pre-pred to be derived before we proceed with the derivation of 
+post-condition.
+
+*/
 
 Declare_Unknown [ HP_5, HP_9].
 shape_infer [HP_5,HP_6,HP_9][G2].

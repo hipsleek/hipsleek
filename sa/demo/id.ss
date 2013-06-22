@@ -16,8 +16,32 @@ cell id (cell x)
 /*
 # id.ss
 
-GOT:
+We obtained:
+
 [ P(x)&res=x --> G(x,res)&true]
+
+We should not do base-case split here.
+
+First, we consider pre-pred. There
+is only P but no definition. Hence,
+P is unknown. Thus, we have
+
+ P(x) ::= NONE
+
+Next, we consider the post-pred G.
+There is only one assumption:
+   P(x) & res=x --> G(x,res)
+
+We derive:
+   G(x,res) ::= P(x) & res=x
+
+Thus:
+   P(x) ::= NONE
+   G(x,res) ::= P(x) & res=x
+
+
+==============================
+
 
 WHY are both treated as UNKNOWN!
 
@@ -30,6 +54,10 @@ defns:
   P(a) ::= emp.
  G(a,r) ::= a=res
 
+=====
+
+ P(a) = NONE
+ G(a,res) ::= P(a) & s=res
 
 
 
