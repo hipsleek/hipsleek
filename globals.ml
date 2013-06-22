@@ -676,6 +676,8 @@ let sa_s_split_base = ref false
 
 let sa_elim_unused_preds = ref false
 
+let sa_keep_unused_preds = ref false
+
 let sa_unify_dangling = ref false
 
 let sa_tree_simp = ref false
