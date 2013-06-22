@@ -19,14 +19,14 @@ inv true;
 heapt<B:bag> == self = null & B={}
 	or self::node<k,p,q> * p::heapt<Bp> * q::heapt<Bq>
       & B = union(Bp,Bq,{k})
-     // & forall (l: l notin Bp | k >= l) & forall (r: r notin Bp | k >= r)
+      & forall (l: l notin Bp | k >= l) & forall (r: r notin Bp | k >= r)
 inv true;
 
 HeapPred H(node a).
 HeapPred G(node a).
 
 void heapify(node x) 
-requires x::node<v,p,q>*p::heapt<B1>*q::heapt<B2> 
+requires x::node<v,p,q>*p::heapt<B1>*q::heapt<B2> & forall (l: l notin B1 | v >= l) & forall (r: r notin B2 | v >= r)
 ensures x::heapt<B> & B=union(B1,B2,{v}) ;
 
 /*
