@@ -26,8 +26,8 @@ post-condition.
 */
 
 Declare_Unknown [ HP_5, HP_9].
-shape_infer [HP_5,HP_6,HP_9][G2].
-
+//shape_infer [HP_5,HP_6,HP_9][G2].
+shape_weaken_ante  [HP_5,HP_6,HP_9][G2].
 
 /*
 # two-2.slk
