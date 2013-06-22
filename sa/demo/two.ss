@@ -34,9 +34,7 @@ void two(node x, node y)
 [ H2(x,y)&true --> x::node<val_24_783,next_24_784>@M * 
      HP_785(next_24_784,y@NI) * HP_786(y,x@NI)&true,
  
- HP_786(y,x@NI)&next_24_784!=null --> y::node<val_27_794,next_27_795>@M *
-                ^^^^^^^^^^^^^^^^^ 
-  HP_796(next_27_795,x@NI)&true,
+ HP_786(y,x@NI)--> y::node<val_27_794,next_27_795>@M * HP_796(next_27_795,x@NI)&true,
 
  HP_785(next_24_784,y@NI) * HP_786(y,x@NI) * 
   x::node<val_24_783,next_24_784>@M&next_24_784=null --> G2(x,y)&true,
