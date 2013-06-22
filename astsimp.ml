@@ -1439,7 +1439,7 @@ and find_m_prop_heap_x params eq_f h =
             Debug.tinfo_hprint (add_str "view:l" (Cprinter.string_of_spec_var_list)) l no_pos;
             if l==[] then []
             else
-              List.map (fun v -> C.mk_mater_prop v true [ h.CF.h_formula_view_name]) params 
+              List.map (fun v -> C.mk_mater_prop v true [ h.CF.h_formula_view_name]) l 
       | CF.Star h -> (helper h.CF.h_formula_star_h1)@(helper h.CF.h_formula_star_h2)
       | CF.StarMinus h -> (helper h.CF.h_formula_starminus_h1)@(helper h.CF.h_formula_starminus_h2)
       | CF.Conj h -> (helper h.CF.h_formula_conj_h1)@(helper h.CF.h_formula_conj_h2)
@@ -1532,8 +1532,8 @@ and find_materialized_prop_x params (f0 : CF.formula) : C.mater_property list =
   let is_member (aset :(CP.spec_var list * CP.spec_var)list) v = 
     let l = List.filter (fun (l,_) -> List.exists (CP.eq_spec_var v) l) aset in
     snd (List.split l) in
-  let find_m_prop_heap_aux params pf hf =
-    let rec cycle p acc_p v_p =
+  let find_m_prop_heap_aux params pf hf = find_m_prop_heap params (is_member (param_alias_sets pf params)) hf in
+   (* let rec cycle p acc_p v_p =
         find_m_prop_heap params (is_member (param_alias_sets pf p)) hf
       (* if p==[] then *)
       (*   find_m_prop_heap params (is_member (param_alias_sets pf v_p)) hf *)
@@ -1543,7 +1543,7 @@ and find_materialized_prop_x params (f0 : CF.formula) : C.mater_property list =
       (*   let (ls,vs) = find_node_vars eq_f hf in *)
       (*   let rs = Gen.BList.difference_eq CP.eq_spec_var ls acc_p in *)
       (*   cycle rs (rs@p@acc_p) (vs@v_p) *)
-    in cycle params [] [] in
+    in cycle params [] [] in*)
   let find_m_one f = match f with
     | CF.Base b ->    
           find_m_prop_heap_aux params b.CF.formula_base_pure b.CF.formula_base_heap
