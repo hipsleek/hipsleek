@@ -8,24 +8,26 @@ data node {
 /*
 relation keys(node x, int k, bag B) == (x = null & B = {}) 
 	| x!=null & keys(l,kl,Bl) & keys(r,kr,Br) & B = union(Bl,Br,{k}).
-*/
 	
 tree<S,B> == self=null & S={} & B = {}
  or self::node<k,p,q>*p::tree<Sp,Bp>*q::tree<Sq,Bq> 
  & S = union(Sp,Sq,{self}) & B = union(Bp,Bq,{k})
  & forall (l: l notin Bp | k >= l) & forall (r: r notin Bp | k >= r)
 inv true;
-	
-heapt<k:int,B:bag> == self = null
-	or self::node<k,p,q> * p::heapt<kp,Bp> * q::heapt<kq,Bq>
+*/
+
+heapt<B:bag> == self = null & B={}
+	or self::node<k,p,q> * p::heapt<Bp> * q::heapt<Bq>
+      & B = union(Bp,Bq,{k})
+     // & forall (l: l notin Bp | k >= l) & forall (r: r notin Bp | k >= r)
 inv true;
 
 HeapPred H(node a).
 HeapPred G(node a).
 
 void heapify(node x) 
-requires x::heapt<k,B> & x!= null 
-ensures x::heapt<k,B> ;
+requires x::node<v,p,q>*p::heapt<B1>*q::heapt<B2> 
+ensures x::heapt<B> & B=union(B1,B2,{v}) ;
 
 /*
 
