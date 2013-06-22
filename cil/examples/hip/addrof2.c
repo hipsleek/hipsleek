@@ -1,5 +1,3 @@
-//#include<stdio.h>
-
 int a;
 
 int foo(int* x)
@@ -20,7 +18,5 @@ void main()
 */
 {
   a = 1;
-  
   a = foo(&a);
-  //printf("== a = %d", a);
 }

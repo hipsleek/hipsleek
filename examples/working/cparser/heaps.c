@@ -186,7 +186,6 @@ void ripple(int* d, int v, int m1, int m2, struct node* l, struct node* r)
         else 
         {
           *d = l->val;
-          // TRUNG: bug with address of operator (&)
           ripple(&(l->val), v, l->nleft, l->nright, l->left, l->right);
         }
       }
@@ -197,7 +196,6 @@ void ripple(int* d, int v, int m1, int m2, struct node* l, struct node* r)
         else
         { 
           *d = r->val;
-          // TRUNG: bug with address of operator (&)
           ripple(&(r->val), v, r->nleft, r->nright, r->left, r->right);
         }
       }

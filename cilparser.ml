@@ -19,7 +19,7 @@ let tbl_struct_data_decl : (Globals.typ, Iast.data_decl) Hashtbl.t = Hashtbl.cre
 let tbl_addrof_lval : (string, Iast.exp) Hashtbl.t = Hashtbl.create 3
 
 (* list of address-represented pointer declaration *)
-let ls_addr_pointer_vardecl : Iast.exp list ref = ref []
+let aux_local_vardecls : Iast.exp list ref = ref []
 
 let need_pointer_casting_proc : bool ref = ref false
 
@@ -213,81 +213,109 @@ let create_not_operator_proc (input_typ: Globals.typ) : Iast.proc_decl =
 (****** collect information about address-of operator *******)
 (************************************************************)
 
-let rec gather_addrof_info_stmt (stmt: Cil.stmt)  : unit =
+let rec gather_addrof_info_stmt (stmt: Cil.stmt)  : (Cil.lval * Iast.exp) list =
+  let eq_lval (lv1, _) (lv2, _) = (
+    let s1 = string_of_cil_lval lv1 in
+    let s2 = string_of_cil_lval lv2 in
+    s1 = s2
+  ) in
   let skind = stmt.Cil.skind in
   match skind with
-  | Cil.Instr ins -> List.iter gather_addrof_info_instr ins
+  | Cil.Instr ins ->
+      let r = List.concat (List.map gather_addrof_info_instr ins) in
+      Gen.BList.remove_dups_eq eq_lval r
   | Cil.Return (eopt, _) -> (
       match eopt with
-      | None -> ()
+      | None -> []
       | Some e -> gather_addrof_info_exp e
     )
   | Cil.Goto (sref, _) -> report_error_msg "gather_addrof_info_stmt: handle GOTO later!"
-  | Cil.Break _ -> ()
-  | Cil.Continue _ -> ()
+  | Cil.Break _ -> []
+  | Cil.Continue _ -> []
   | Cil.If (e, blk1, blk2, _) -> (
-      gather_addrof_info_exp e;
-      gather_addrof_info_block blk1;
-      gather_addrof_info_block blk2;
+      let r1 = gather_addrof_info_exp e in
+      let r2 = gather_addrof_info_block blk1 in
+      let r3 = gather_addrof_info_block blk2 in
+      Gen.BList.remove_dups_eq eq_lval (r1 @ r2 @ r3)
     )
   | Cil.Switch (e, blk, stmts, _) -> (
-      gather_addrof_info_exp e;
-      gather_addrof_info_block blk;
-      List.iter gather_addrof_info_stmt stmts;
+      let r1 = gather_addrof_info_exp e in
+      let r2 = gather_addrof_info_block blk in
+      let r = List.concat (List.map gather_addrof_info_stmt stmts) in
+      Gen.BList.remove_dups_eq eq_lval r
     )
   | Cil.Loop (blk, _, _, stmt_opt1, stmt_opt2) -> (
-      gather_addrof_info_block blk;
-      (match stmt_opt1 with
-        | None -> ()
-        | Some stmt -> gather_addrof_info_stmt stmt);
-      (match stmt_opt2 with
-        | None -> ()
-        | Some stmt -> gather_addrof_info_stmt stmt);
+      let r1 = gather_addrof_info_block blk in
+      let r2 = (match stmt_opt1 with
+        | None -> []
+        | Some stmt -> gather_addrof_info_stmt stmt
+      ) in
+      let r3 = (match stmt_opt2 with
+        | None -> []
+        | Some stmt -> gather_addrof_info_stmt stmt
+      ) in
+      Gen.BList.remove_dups_eq eq_lval (r1 @ r2 @ r3)
     )
   | Cil.Block blk -> gather_addrof_info_block blk
   | Cil.TryFinally (blk1, blk2, _) -> (
-      gather_addrof_info_block blk1;
-      gather_addrof_info_block blk2;
+      let r1 = gather_addrof_info_block blk1 in
+      let r2 = gather_addrof_info_block blk2 in
+      Gen.BList.remove_dups_eq eq_lval (r1 @ r2)
     )
   | Cil.TryExcept (blk1, (ins, e), blk2, l) -> (
-      gather_addrof_info_block blk1;
-      List.iter gather_addrof_info_instr ins;
-      gather_addrof_info_exp e;
-      gather_addrof_info_block blk2;
+      let r1 = gather_addrof_info_block blk1 in
+      let r2 = List.concat (List.map gather_addrof_info_instr ins) in
+      let r3 = gather_addrof_info_exp e in
+      let r4 = gather_addrof_info_block blk2 in
+      Gen.BList.remove_dups_eq eq_lval (r1 @ r2 @r3 @ r4)
     )
-  | Cil.HipStmtSpec (iast_exp, l) -> ()
+  | Cil.HipStmtSpec (iast_exp, l) -> []
 
 
-and gather_addrof_info_block (blk: Cil.block) : unit =
+and gather_addrof_info_block (blk: Cil.block) : (Cil.lval * Iast.exp) list =
+  let eq_lval (lv1, _) (lv2, _) = (
+    let s1 = string_of_cil_lval lv1 in
+    let s2 = string_of_cil_lval lv2 in
+    s1 = s2
+  ) in
   let stmts = blk.Cil.bstmts in
-  List.iter gather_addrof_info_stmt stmts;
+  let r = List.concat (List.map gather_addrof_info_stmt stmts) in
+  Gen.BList.remove_dups_eq eq_lval r
 
 
-and gather_addrof_info_exp (e: Cil.exp) : unit =
+and gather_addrof_info_exp (e: Cil.exp) : (Cil.lval * Iast.exp) list =
+  let eq_lval (lv1, _) (lv2, _) = (
+    let s1 = string_of_cil_lval lv1 in
+    let s2 = string_of_cil_lval lv2 in
+    s1 = s2
+  ) in
   match e with
-  | Cil.Const _ -> ()
-  | Cil.Lval (lv, _) -> ()
-  | Cil.SizeOf _ -> ()
-  | Cil.SizeOfE _ -> ()
-  | Cil.SizeOfStr _ -> ()
-  | Cil.AlignOf _ -> ()
-  | Cil.AlignOfE _ -> ()
+  | Cil.Const _ -> []
+  | Cil.Lval (lv, _) -> []
+  | Cil.SizeOf _ -> []
+  | Cil.SizeOfE _ -> []
+  | Cil.SizeOfStr _ -> []
+  | Cil.AlignOf _ -> []
+  | Cil.AlignOfE _ -> []
   | Cil.UnOp (_, e1, _, _) -> gather_addrof_info_exp e1
   | Cil.BinOp (_, e1, e2, _, _) -> (
-      gather_addrof_info_exp e1;
-      gather_addrof_info_exp e2;
+      let r1 = gather_addrof_info_exp e1 in
+      let r2 = gather_addrof_info_exp e2 in
+      Gen.BList.remove_dups_eq eq_lval (r1 @ r2)
     )
   | Cil.Question (e1, e2, e3, _, _) -> (
-      gather_addrof_info_exp e1;
-      gather_addrof_info_exp e2;
-      gather_addrof_info_exp e3;
+      let r1 = gather_addrof_info_exp e1 in
+      let r2 = gather_addrof_info_exp e2 in
+      let r3 = gather_addrof_info_exp e3 in
+      Gen.BList.remove_dups_eq eq_lval (r1 @ r2 @ r3)
     )
   | Cil.CastE (_, e, _) -> gather_addrof_info_exp e
   | Cil.AddrOf (lv, l) -> (
       let pos = translate_location l in
       let lv_str = string_of_cil_lval lv in
       try
-        let _ = Hashtbl.find tbl_addrof_lval lv_str in ()
+        let holder_var = Hashtbl.find tbl_addrof_lval lv_str in
+        [(lv, holder_var)]
       with Not_found -> (
         let lv_ty = typ_of_cil_lval lv in
         let (datatyp, dataname, datadecl) = (
@@ -318,7 +346,7 @@ and gather_addrof_info_exp (e: Cil.exp) : unit =
           )
         ) in
         (* define new pointer var px that will be used to represent x: {x, &x} --> {*px, px} *)
-        let vname = "addr_p_" ^ (string_of_int (Hashtbl.length tbl_addrof_lval)) in
+        let vname = "addrof_p_" ^ (string_of_int (Hashtbl.length tbl_addrof_lval)) in
         let init_params = List.fold_left (
           fun params field ->
             let ((ftyp, _), _, _, _) = field in
@@ -342,69 +370,38 @@ and gather_addrof_info_exp (e: Cil.exp) : unit =
         let vardecl = Iast.VarDecl {Iast.exp_var_decl_type = datatyp;
                                     Iast.exp_var_decl_decls = decl;
                                     Iast.exp_var_decl_pos = pos} in
-        ls_addr_pointer_vardecl := !ls_addr_pointer_vardecl @ [vardecl];
+        aux_local_vardecls := !aux_local_vardecls @ [vardecl];
         let holder_var = Iast.Var {Iast.exp_var_name = vname;
                                    Iast.exp_var_pos = pos} in
         Hashtbl.add tbl_addrof_lval lv_str holder_var;
+        [(lv, holder_var)]
       )
-    )
-  | Cil.StartOf (lv, _) -> ()
-
-
-and gather_addrof_info_instr (instr: Cil.instr) : unit =
-  match instr with
-  | Cil.Set (_, e, _) -> gather_addrof_info_exp e
-  | Cil.Call (_, _, es, _) -> List.iter gather_addrof_info_exp es;
-  | Cil.Asm _ -> ()
-
-
-and collect_addrof_exp (e: Cil.exp) : (Cil.lval * Iast.exp) list =
-  let eq_lval (lv1, _) (lv2, _) = (
-    let s1 = string_of_cil_lval lv1 in
-    let s2 = string_of_cil_lval lv2 in
-    s1 = s2
-  ) in
-  match e with
-  | Cil.Const _ -> []
-  | Cil.Lval _ -> []
-  | Cil.SizeOf _ -> []
-  | Cil.SizeOfE _ -> []
-  | Cil.SizeOfStr _ -> []
-  | Cil.AlignOf _ -> []
-  | Cil.AlignOfE _ -> []
-  | Cil.UnOp (_, e1, _, _) -> collect_addrof_exp e1
-  | Cil.BinOp (_, e1, e2, _, _) -> (
-      let r1 = collect_addrof_exp e1 in
-      let r2 = collect_addrof_exp e2 in
-      Gen.BList.remove_dups_eq eq_lval (r1 @ r2)
-    )
-  | Cil.Question (e1, e2, e3, _, _) -> (
-      let r1 = collect_addrof_exp e1 in
-      let r2 = collect_addrof_exp e2 in
-      let r3 = collect_addrof_exp e3 in
-      Gen.BList.remove_dups_eq eq_lval (r1 @ r2 @ r3)
-    )
-  | Cil.CastE (_, e, _) -> collect_addrof_exp e
-  | Cil.AddrOf (lv, _) -> (
-      let lv_str = string_of_cil_lval lv in
-      let lv_holder = (
-        try
-          Hashtbl.find tbl_addrof_lval lv_str
-        with Not_found ->
-          report_error_msg ("collect_addrof_exp: lval holder of '" ^ lv_str ^ "' is not found.")
-      ) in
-      [lv, lv_holder]
     )
   | Cil.StartOf (lv, _) -> []
 
-and collect_addrof_exp_list (exps: Cil.exp list) : (Cil.lval * Iast.exp) list =
+
+and gather_addrof_info_exp_list (exps: Cil.exp list) : (Cil.lval * Iast.exp) list =
   let eq_lval (lv1, _) (lv2, _) = (
     let s1 = string_of_cil_lval lv1 in
     let s2 = string_of_cil_lval lv2 in
     s1 = s2
   ) in
-  let r = List.concat (List.map collect_addrof_exp exps) in
+  let r = List.concat (List.map gather_addrof_info_exp exps) in
   Gen.BList.remove_dups_eq eq_lval r
+
+
+and gather_addrof_info_instr (instr: Cil.instr) : (Cil.lval * Iast.exp) list =
+  let eq_lval (lv1, _) (lv2, _) = (
+    let s1 = string_of_cil_lval lv1 in
+    let s2 = string_of_cil_lval lv2 in
+    s1 = s2
+  ) in
+  match instr with
+  | Cil.Set (_, e, _) -> gather_addrof_info_exp e
+  | Cil.Call (_, _, es, _) ->
+      let r = List.concat (List.map gather_addrof_info_exp es) in
+      Gen.BList.remove_dups_eq eq_lval r
+  | Cil.Asm _ -> []
 
 (************************************************************)
 (*************** main translation functions *****************)
@@ -808,7 +805,7 @@ and translate_instr (instr: Cil.instr) : Iast.exp =
   let new_exp = (match instr with
     | Cil.Set (lv, exp, l) -> (
         let pos = translate_location l in
-        let addrof_exp_info = collect_addrof_exp exp in
+        let addrof_exp_info = gather_addrof_info_exp exp in
         let aux_exps_before = List.map (
           fun e ->
             let lv, lv_holder = e in
@@ -854,45 +851,29 @@ and translate_instr (instr: Cil.instr) : Iast.exp =
           | Cil.Const (Cil.CStr s, _) -> s
           | Cil.Lval ((Cil.Var (v, _), _, _), _) -> v.Cil.vname
           | _ -> report_error_msg "translate_intstr: invalid callee's name!" in
-        let addrof_exp_info = collect_addrof_exp_list exps in
-        let aux_exps_before = List.map (
+        let addrof_info = gather_addrof_info_exp_list exps in
+        let aux_exps_before_call = List.map (
           fun e ->
             let lv, lv_holder = e in
-            let exp1 = Iast.Member {Iast.exp_member_base = lv_holder;
-                                    Iast.exp_member_fields = ["pdata"];
-                                    Iast.exp_member_path_id = None;
-                                    Iast.exp_member_pos = pos} in
-            let exp2 = translate_lval lv in
-            let exp3 = Iast.Assign {Iast.exp_assign_op = Iast.OpAssign;
-                                    Iast.exp_assign_lhs = exp1;
-                                    Iast.exp_assign_rhs = exp2;
+            let e1 = Iast.Member {Iast.exp_member_base = lv_holder;
+                                  Iast.exp_member_fields = ["pdata"];
+                                  Iast.exp_member_path_id = None;
+                                  Iast.exp_member_pos = pos} in
+            let e2 = translate_lval lv in
+            let e3 = Iast.Assign {Iast.exp_assign_op = Iast.OpAssign;
+                                    Iast.exp_assign_lhs = e1;
+                                    Iast.exp_assign_rhs = e2;
                                     Iast.exp_assign_path_id = None;
                                     Iast.exp_assign_pos = pos} in
-            exp3
-        ) addrof_exp_info in
+            e3
+        ) addrof_info in
         let args = List.map (fun x -> translate_exp x) exps in
         let callee = Iast.CallNRecv {Iast.exp_call_nrecv_method = fname;
                                      Iast.exp_call_nrecv_lock = None;
                                      Iast.exp_call_nrecv_arguments = args;
                                      Iast.exp_call_nrecv_path_id = None;
                                      Iast.exp_call_nrecv_pos = pos} in
-        let call_exp = (
-          match lv_opt with
-          | None -> callee;
-          | Some lv -> (
-              let le = translate_lval lv in
-              let re = callee in
-              let lv_loc = Cil.get_lvalLoc lv in
-              let asgn_loc = Cil.makeLoc (Cil.startPos lv_loc) (Cil.endPos l) in
-              let asgn_pos = translate_location asgn_loc in
-              Iast.Assign {Iast.exp_assign_op = Iast.OpAssign;
-                           Iast.exp_assign_lhs = le;
-                           Iast.exp_assign_rhs = re;
-                           Iast.exp_assign_path_id = None;
-                           Iast.exp_assign_pos = asgn_pos}
-            )
-        ) in
-        let aux_exps_after = List.map (
+        let aux_exps_after_call = List.map (
           fun e ->
             let lv, lv_holder = e in
             let exp1 = translate_lval lv in
@@ -906,8 +887,52 @@ and translate_instr (instr: Cil.instr) : Iast.exp =
                                     Iast.exp_assign_path_id = None;
                                     Iast.exp_assign_pos = pos} in
             exp3
-        ) addrof_exp_info in
-        merge_iast_exp (aux_exps_before @ [call_exp] @ aux_exps_after)
+        ) addrof_info in
+        let newexp = (
+          match lv_opt with
+          | None -> (
+              merge_iast_exp (aux_exps_before_call @ [callee] @ aux_exps_after_call)
+            )
+          | Some lv -> (
+              (* declare a temp var to store the value return by call *)
+              let tmp_var = (
+                let vty = translate_typ (typ_of_cil_lval lv) in
+                let vname = Globals.fresh_name () in
+                let vdecl = Iast.VarDecl {Iast.exp_var_decl_type = vty;
+                                            Iast.exp_var_decl_decls = [vname, None, pos];
+                                            Iast.exp_var_decl_pos = pos} in
+                aux_local_vardecls := !aux_local_vardecls @ [vdecl];
+                Iast.Var {Iast.exp_var_name = vname;
+                         Iast.exp_var_pos = pos}
+              ) in
+              let tmp_assign = (
+                let le = tmp_var in
+                let re = callee in
+                let lv_loc = Cil.get_lvalLoc lv in
+                let asgn_loc = Cil.makeLoc (Cil.startPos lv_loc) (Cil.endPos l) in
+                let asgn_pos = translate_location asgn_loc in
+                Iast.Assign {Iast.exp_assign_op = Iast.OpAssign;
+                             Iast.exp_assign_lhs = le;
+                             Iast.exp_assign_rhs = re;
+                             Iast.exp_assign_path_id = None;
+                             Iast.exp_assign_pos = asgn_pos}
+              ) in
+              let call_assign = (
+                let le = translate_lval lv in
+                let re = tmp_var in
+                let lv_loc = Cil.get_lvalLoc lv in
+                let asgn_loc = Cil.makeLoc (Cil.startPos lv_loc) (Cil.endPos l) in
+                let asgn_pos = translate_location asgn_loc in
+                Iast.Assign {Iast.exp_assign_op = Iast.OpAssign;
+                             Iast.exp_assign_lhs = le;
+                             Iast.exp_assign_rhs = re;
+                             Iast.exp_assign_path_id = None;
+                             Iast.exp_assign_pos = asgn_pos}
+              ) in
+              merge_iast_exp (aux_exps_before_call @ [tmp_assign] @ aux_exps_after_call @ [call_assign])
+            )
+        ) in
+        newexp
       )
     | Cil.Asm _ ->
         report_error_msg "TRUNG TODO: Handle Cil.Asm later!"
@@ -957,12 +982,12 @@ and translate_stmt (s: Cil.stmt) : Iast.exp =
       let econd = translate_exp exp in
       let e1 = translate_block blk1 in
       let e2 = translate_block blk2 in
-      let newexp = Iast.Cond {Iast.exp_cond_condition = econd;
+      let ifexp = Iast.Cond {Iast.exp_cond_condition = econd;
                               Iast.exp_cond_then_arm = e1;
                               Iast.exp_cond_else_arm = e2;
                               Iast.exp_cond_path_id = None;
                               Iast.exp_cond_pos = pos} in
-      newexp
+      ifexp
   | Cil.Switch _ -> report_error_msg "TRUNG TODO: Handle Cil.Switch later!"
   | Cil.Loop (blk, hspecs, l, stmt_opt1, stmt_opt2) ->
       let p = translate_location l in
@@ -1103,7 +1128,7 @@ and translate_global_var (vinfo: Cil.varinfo) (iinfo: Cil.initinfo)
 and translate_fundec (fundec: Cil.fundec) (lopt: Cil.location option) : Iast.proc_decl =
   (* reset some local setting *)
   Hashtbl.clear tbl_addrof_lval;
-  ls_addr_pointer_vardecl := [];
+  aux_local_vardecls := [];
   (* supporting functions *)
   let translate_funtyp (ty: Cil.typ) : Globals.typ = (
     match ty with
@@ -1144,15 +1169,26 @@ and translate_fundec (fundec: Cil.fundec) (lopt: Cil.location option) : Iast.pro
     | [] -> None
     | _ ->
         let slocals = List.map translate_var_decl fundec.Cil.slocals in
-        let _ = gather_addrof_info_block fundec.Cil.sbody in
+        let addrof_info = gather_addrof_info_block fundec.Cil.sbody in
         let sbody = translate_block fundec.Cil.sbody in
         (* collect intermediate information after translating body *) 
-        let aux_local_vars = (
-          let vars = ref [] in
-          List.iter (fun v -> vars := !vars @ [v]) !ls_addr_pointer_vardecl;
-          !vars;
-        ) in
-        let blkbody = merge_iast_exp (slocals @ aux_local_vars @ [sbody]) in
+        
+        let aux_addrof_exp = List.map (
+          fun (lv, lv_holder) ->
+            let e1 = Iast.Member {Iast.exp_member_base = lv_holder;
+                                  Iast.exp_member_fields = ["pdata"];
+                                  Iast.exp_member_path_id = None;
+                                  Iast.exp_member_pos = pos} in
+            let e2 = translate_lval lv in
+            let e3 = Iast.Assign {Iast.exp_assign_op = Iast.OpAssign;
+                                  Iast.exp_assign_lhs = e1;
+                                  Iast.exp_assign_rhs = e2;
+                                  Iast.exp_assign_path_id = None;
+                                  Iast.exp_assign_pos = pos} in
+            e3
+        ) addrof_info in
+
+        let blkbody = merge_iast_exp (slocals @ !aux_local_vardecls @ aux_addrof_exp @ [sbody]) in
         let blkpos = translate_location fundec.Cil.sbody.Cil.bloc in
         Some (Iast.Block {Iast.exp_block_body = blkbody;
                           Iast.exp_block_jump_label = Iast.NoJumpLabel;
