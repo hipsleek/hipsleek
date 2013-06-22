@@ -722,7 +722,23 @@ let process_decl_hpunknown hp_names =
 let shape_infer_pre_process constrs pre_hps post_hps=
   let unk_hpargs = !sleek_hprel_dang in
   let link_hpargs = !sleek_hprel_unknown in
-  let sel_hps, sel_post_hps = SAU.get_pre_post pre_hps post_hps constrs in
+  (*** BEGIN PRE/POST ***)
+  let orig_vars = List.fold_left (fun ls cs-> ls@(CF.fv cs.CF.hprel_lhs)@(CF.fv cs.CF.hprel_rhs)) [] !sleek_hprel_assumes in
+  let pre_vars = List.map (fun v -> TI.get_spec_var_type_list_infer (v, Unprimed) orig_vars no_pos) (pre_hps) in
+  let post_vars = List.map (fun v -> TI.get_spec_var_type_list_infer (v, Unprimed) orig_vars no_pos) (post_hps) in
+  let pre_vars1 = (CP.remove_dups_svl pre_vars) in
+  let post_vars1 = (CP.remove_dups_svl post_vars) in
+  let infer_pre_vars,pre_hp_rels  = List.partition (fun sv ->
+      let t = CP.type_of_spec_var sv in
+      not ((* is_RelT t || *) is_HpT t )) pre_vars1 in
+  let infer_post_vars,post_hp_rels  = List.partition (fun sv ->
+      let t = CP.type_of_spec_var sv in
+      not ((* is_RelT t || *) is_HpT t )) post_vars1 in
+  (*END*)
+  let infer_vars = infer_pre_vars@infer_post_vars in
+  let sel_hps = pre_hp_rels@post_hp_rels in
+  (* let sel_hps, sel_post_hps = SAU.get_pre_post pre_hps post_hps constrs in *)
+  (***END PRE/POST***)
   (* let constrs2, unk_map, unk_hpargs = SAC.detect_dangling_pred hp_lst_assume sel_hps [] in *)
   let constrs2,unk_map = if unk_hpargs = [] then (constrs ,[]) else
     let unk_hps = List.map fst unk_hpargs in
@@ -731,7 +747,7 @@ let shape_infer_pre_process constrs pre_hps post_hps=
       (ls_cs@[new_cs], n_map)
   ) ([], []) constrs
   in
-  (constrs2, sel_hps, sel_post_hps, unk_map, unk_hpargs, link_hpargs)
+  (constrs2, sel_hps, post_hp_rels, unk_map, unk_hpargs, link_hpargs)
 
 let process_shape_infer pre_hps post_hps=
   (* let _ = DD.info_pprint "process_shape_infer" no_pos in *)

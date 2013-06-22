@@ -13,7 +13,7 @@ relAssume G1
 // HL(x) & x=null & res=null --> G1(x,y,res).
  H1(x,res) & x=null & res=null --> G1(x,y,res).
 
-shape_infer [H1][G].
+shape_infer [H1][G1].
 
 /*
 Why isn't splitting invoked?

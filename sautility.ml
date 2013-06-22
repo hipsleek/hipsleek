@@ -1314,11 +1314,11 @@ let find_well_defined_hp prog hds hvs ls_r_hpargs prog_vars post_hps
       (hp,args) def_ptrs lhsb split_spatial pos=
   let pr1 = !CP.print_sv in
   let pr2 = !CP.print_svl in
-  let pr3 = pr_triple pr1 pr2 Cprinter.string_of_formula_base in
+  let pr3 = pr_quad pr1 pr2 Cprinter.string_of_formula_base  Cprinter.prtt_string_of_formula in
   let pr4 = (pr_pair pr1 pr2) in
-  let pr5 = pr_list (pr_pair Cprinter.prtt_string_of_h_formula pr1) in
+  let pr5 = pr_list (pr_pair Cprinter.prtt_string_of_h_formula pr4) in
   Debug.no_4 "find_well_defined_hp" Cprinter.string_of_formula_base pr4 pr2 pr2
-      (pr_quad pr3 (pr_list_ln pr3) (pr_list pr4) pr5)
+      (pr_quad Cprinter.string_of_formula_base (pr_list_ln pr3) (pr_list pr4) pr5)
       (fun _ _  _ _ -> find_well_defined_hp_x prog hds hvs ls_r_hpargs
           prog_vars post_hps (hp,args) def_ptrs lhsb split_spatial pos)
       lhsb (hp,args) def_ptrs prog_vars

@@ -264,6 +264,8 @@ let split_constr_x prog constrs post_hps prog_vars unk_map unk_hps link_hps=
         (*do not split unk_hps and link_hps*)
         let non_split_hps = unk_hps @ link_hps in
         let ls_lhp_args1 = List.filter (fun (hp,_) -> not(CP.mem_svl hp non_split_hps)) ls_lhp_args in
+        (* let _ = Debug.info_pprint ("  ls_lhp_args1: " ^ *)
+        (*     (let pr1 = pr_list (pr_pair !CP.print_sv !CP.print_svl) in pr1 ls_lhp_args1)) no_pos in *)
         let lfb2, defined_preds,rems_hpargs,link_hps =
           List.fold_left (fun (lfb, r_defined_preds, r_rems, r_link_hps) hpargs ->
               let n_lfb,def_hps, rem_hps, ls_link_hps=
@@ -369,9 +371,9 @@ let split_constr prog constrs post_hps prog_vars unk_map unk_hps link_hps=
   (* let pr2 = (pr_list (pr_pair (pr_list (pr_pair !CP.print_sv string_of_int)) CP.string_of_xpure_view)) in *)
   let pr2 = (pr_list (pr_pair (pr_pair !CP.print_sv (pr_list string_of_int)) CP.string_of_xpure_view)) in
   let pr3 = pr_list (pr_pair !CP.print_sv !CP.print_svl) in
-  Debug.no_3 "split_constr" pr1 pr2 !CP.print_svl (pr_triple pr1 pr2 pr3)
-      (fun _ _ _ -> split_constr_x prog constrs post_hps prog_vars unk_map
-          unk_hps link_hps) constrs unk_map unk_hps
+  Debug.no_4 "split_constr" pr1 pr2 !CP.print_svl !CP.print_svl (pr_triple pr1 pr2 pr3)
+      (fun _ _ _ _ -> split_constr_x prog constrs post_hps prog_vars unk_map
+          unk_hps link_hps) constrs unk_map unk_hps post_hps
 
 let get_preds (lhs_preds, lhs_heads, rhs_preds,rhs_heads) cs=
   (* let pr1 = Cprinter.string_of_hprel_short in *)
