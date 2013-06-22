@@ -1418,7 +1418,7 @@ Another ALGO:
 Since q already captured, we drop x from consideration. 
 
 ================================================
-# heap-bug-2.slk (URGENT)
+# heap-bug-2.slk (URGENT): FIXED
 
 infer [H,G,HP_0,HP_1] 
  HP_0(left_24_838) * HP_1(right_24_839) * 
