@@ -1411,3 +1411,32 @@ ALGORITM
 
 Since they overlap, we pick only q; and drop x matching.
 
+Another ALGO:
+   q match with H2(q,r) --> {q}{r}  // q is captured, r is continuation
+   x match with x::node<_,q> --> {x}{q} // x is captured, q is continuation
+
+Since q already captured, we drop x from consideration. 
+
+================================================
+# heap-bug-2.slk (URGENT)
+
+infer [H,G,HP_0,HP_1] 
+ HP_0(left_24_838) * HP_1(right_24_839) * 
+ x::node<key_24_837,left_24_838,right_24_839> &x=x' & 
+ left_24_838!=null 
+ & right_24_839=null 
+ & left_24_838=s_31' & s_31'!=null 
+ |-  s_31'::node<key_35_795',left_35_796',right_35_797'>.
+
+print residue.
+/*
+
+yields
+======
+ inferred hprel: [HP_0(s_31')&
+                   s_31'!=null --> s_31'::node<key_35_34,left_35_35,right_35_36>@M * 
+                   HP_37(left_35_35) * HP_38(right_35_36)&true; 
+                  HP_1(right_24_839)&right_24_839=null --> emp&true]
+
+WHY a spurious
+                  HP_1(right_24_839)&right_24_839=null --> emp&true]

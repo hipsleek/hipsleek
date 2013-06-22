@@ -23,11 +23,16 @@ EXPECT:
 ALGORITM
 ========
 
-   q match with H2(q,r) 
-   x match with x::node<_,q>*H2(q,r) 
+   q match with H2(q,r) --> 
+   x match with x::node<_,q>*H2(q,r) -->   
 
 Since they overlap, we pick only q; and drop x matching.
 
+Another ALGO:
+   q match with H2(q,r) --> {q}{r}  // q is captured, r is continuation
+   x match with x::node<_,q> --> {x}{q} // x is captured, q is continuation
+
+Since q already captured, we drop x from consideration. 
 
 */
 

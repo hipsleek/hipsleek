@@ -1,0 +1,40 @@
+data node {
+ int key;
+ node left;
+ node right;
+}.
+
+
+HeapPred H(node a).
+HeapPred G(node a).
+HeapPred HP_0(node a).
+HeapPred HP_1(node a).
+
+infer [H,G,HP_0,HP_1] HP_0(left_24_838) * HP_1(right_24_839) * 
+x::node<key_24_837,left_24_838,right_24_839>&left_24_838=null & 
+v_bool_24_818' & left_24_838=null & v_bool_24_818'
+ |-  G(x). 
+print residue.
+
+/*
+yields
+======
+ inferred hprel: [HP_0(left_24_838) * HP_1(right_24_839) * 
+                   x::node<key_24_837,left_24_838,right_24_839>@M&
+                   left_24_838=null --> G(x)&true]
+
+How come we have extra for hip?:
+ HP_0(left_24_838)&left_24_838=null --> emp&true]
+
+ id: 112; caller: []; line: 21; classic: false; kind: POST; hec_num: 5; evars: []; infer_vars: [H,G,HP_0,HP_1]; c_heap: emp
+ checkentail HP_0(left_24_838) * HP_1(right_24_839) * 
+x::node<key_24_837,left_24_838,right_24_839>@M[Orig]&left_24_838=null & 
+v_bool_24_818' & left_24_838=null & v_bool_24_818'&{FLOW,(22,23)=__norm}[]
+ |-  G(x)&true&{FLOW,(22,23)=__norm}[]. 
+hprel_ass: [ HP_1(right_24_839) * x::node<key_24_837,left_24_838,right_24_839>@M&
+  left_24_838=null --> G(x)&true,
+ HP_0(left_24_838)&left_24_838=null --> emp&true]
+res:  [
+  emp&v_bool_24_818' & v_bool_24_818'&{FLOW,(22,23)=__norm}[]
+  ]
+*/
