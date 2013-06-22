@@ -1,40 +1,48 @@
-data node{
-	node left;
-	node right;
+
+data node {
+ int key;
+ node left;
+ node right;
 }
-
-/* predicate for a tree */
-
-tree<> == self = null
-	or self::node<l,r> * l::tree<> * r::tree<>;
-
 
 HeapPred H(node a).
 HeapPred G(node a).
 
-int size (node x)
+tree<> == self=null
+ or self::node<_,p,q>*p::tree<>*q::node<>
+inv true;
 
-//infer [H] requires H(x) ensures H(x);
+void foo(node x) 
+ requires x::tree<> & x!=null
+ ensures x::tree<>;
 
-// below works 
-infer [H,G] requires H(x) ensures G(x);
+/*
+ infer [H,G] requires H(x)
+ ensures G(x);
 
-//infer [H] requires H(x) ensures true;
-//requires x::tree<> ensures x::tree<>;
+*/
 {
-	if (x==null) return 0;
-	else return size(x.left)+size(x.right)+1;
+  if (x.left==null) return;
+  else 
+  {
+   if (x.right==null) return;
+   else {
+    dprint;
+    foo(x.left);
+    foo(x.right);
+ }
+ }
 }
 
 /*
 # tree.ss
 
-equivalence detection needs fixing
+ State:
+x'::node<Anon_821,p_822,q_823>@M[Orig] * p_822::tree@M[0][Orig] 
+* q_823::node<Anon_824,Anon_825,Anon_826>@M[Orig]&x=x' 
+& x!=null & p_822!=null & !(v_bool_27_783') & p_822!=null 
+& !(v_bool_27_783') & q_823!=null & !(v_bool_30_782') & q_823!=null & !(v_bool_30_782')
 
-[ H(x_858) ::= 
- emp&x_858=null
- or (H(right_26_854)) * (H(left_26_853)) * 
-    x_858::node<left_26_853,right_26_854>@M&true
- ,
- G(x_859) ::= x_859::tree@M[LHSCase]&true]
+Why are not two Anons?
+
 */
