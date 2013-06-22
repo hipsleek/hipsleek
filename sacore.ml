@@ -776,7 +776,7 @@ let analize_unk_x prog post_hps constrs total_unk_map unk_hpargs link_hpargs=
    let full_hps = List.map (fun (hp, _, _) -> hp) full_unk_hp_args2_locs in
    (*find full unk_hps: I parameters + unk_svl*)
    let full_unk_hp_locs, link_hpargs2 = find_full_unk_hps prog closure_post_hps full_hps unk_hp_args1 in
-   let _ = Debug.ninfo_pprint ("  full_unk_hp_locs: " ^ (let pr = pr_list (pr_pair !CP.print_sv (pr_list string_of_int))
+   let _ = Debug.info_pprint ("  full_unk_hp_locs: " ^ (let pr = pr_list (pr_pair !CP.print_sv (pr_list string_of_int))
                                               in pr full_unk_hp_locs)) no_pos
    in
    let link_hpargs3 = Gen.BList.remove_dups_eq (fun (hp1,_) (hp2,_) -> CP.eq_spec_var hp1 hp2) (link_hpargs2@link_hpargs) in

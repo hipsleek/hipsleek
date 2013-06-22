@@ -7,8 +7,8 @@ HeapPred H1(node a).
 HeapPred HP_9(node a).
 HeapPred G1(node a, node r).
 
-Declare_Unknown [HP_9].
-//Declare_Dangling [HP_9].
+//Declare_Unknown [HP_9].
+Declare_Dangling [HP_9].
 
 relAssume H
  H1(c)&true --> c::node<val_14_777,next_14_778> * HP_9(next_14_778).
