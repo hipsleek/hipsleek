@@ -1798,7 +1798,7 @@ let pr_hprel_def_lib hpd=
   (* fmt_string (CP.print_rel_cat hpd.hprel_def_kind); *)
   (* fmt_string "\n"; *)
   (pr_h_formula hpd.hprel_def_hrel);
-  fmt_string " ::=";
+  fmt_string " ::= ";
   fmt_string (match hpd.hprel_def_body_lib with
     | None -> "NONE"
     | Some f -> prtt_string_of_formula f);

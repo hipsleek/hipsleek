@@ -662,11 +662,11 @@ let find_full_unk_hps_x prog post_hps full_hps unk_hp_args_locs=
   let link_hpargs1 = List.fold_left (fun ls (hp,args,locs) ->
       if is_full_unk_process (hp,locs) then (ls@[(hp,args)]) else ls
   ) [] part_hpargs1 in
-  let (* link_hpargs2 *)_, unk_hp_locs2= List.fold_left (fun (ls1,ls2) (hp,args,locs) ->
+  let  link_hpargs2 , unk_hp_locs2= List.fold_left (fun (ls1,ls2) (hp,args,locs) ->
       if CP.mem_svl hp post_hps then (ls1@[(hp,args)],ls2) else (ls1,ls2@[(hp,locs)])
-  ) ([] (*link_hpargs1*), []) full_unk_locs
+  ) ( (*[]*) link_hpargs1, []) full_unk_locs
   in
-  (unk_hp_locs2, link_hpargs1)
+  (unk_hp_locs2, link_hpargs2)
 
 let find_full_unk_hps prog post_hps full_hps unk_hp_args_locs=
   let pr1 = !CP.print_svl in
@@ -779,7 +779,9 @@ let analize_unk_x prog post_hps constrs total_unk_map unk_hpargs link_hpargs=
    let _ = Debug.ninfo_pprint ("  full_unk_hp_locs: " ^ (let pr = pr_list (pr_pair !CP.print_sv (pr_list string_of_int))
                                               in pr full_unk_hp_locs)) no_pos
    in
-   let link_hpargs3 = Gen.BList.remove_dups_eq (fun (hp1,_) (hp2,_) -> CP.eq_spec_var hp1 hp2) (link_hpargs2@link_hpargs) in
+   let link_hpargs3 = Gen.BList.remove_dups_eq (fun (hp1,_) (hp2,_) -> CP.eq_spec_var hp1 hp2) ((List.filter (fun (hp,_) -> not (CP.mem_svl hp post_hps)) link_hpargs2)@link_hpargs) in
+   let _ = Debug.ninfo_pprint ("  link_hpargs3: " ^ (let pr = pr_list (pr_pair !CP.print_sv !CP.print_svl) in pr link_hpargs3)) no_pos
+   in
    let link_hps = List.map fst link_hpargs3 in
    let rec update_helper cs unk_map res_cs res_unk_hps res_drop_links=
      match cs with
