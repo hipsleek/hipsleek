@@ -4510,6 +4510,7 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
         hvars
     | [] -> [] in
   let expand_dereference_node (f: IF.h_formula) pos : (IF.h_formula * (Globals.ident * Globals.primed) list) = (
+    let _ = print_endline ("== in expand_dereference_node") in
     match f with
     | IF.HeapNode {IF.h_formula_heap_node = n;
                    IF.h_formula_heap_name = c;
@@ -4601,6 +4602,8 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
                 (hf, !new_vars)
               )
           ) in
+          let _ = print_endline ("=== f = " ^ (Iprinter.string_of_h_formula f)) in
+          let _ = print_endline ("=== expanded_heap = " ^ (Iprinter.string_of_h_formula expanded_heap)) in
           (* return *)
           (expanded_heap, newvars)
         )

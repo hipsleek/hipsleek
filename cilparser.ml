@@ -265,6 +265,14 @@ let create_bool_casting_proc (typ: Globals.typ) : Iast.proc_decl =
       let procdecl = Parser.parse_c_aux_proc "inter_bool_casting_proc" proc in
       procdecl
     )
+  | Globals.Bool -> (
+      let proc = (
+        "bool bool_of___(bool param)\n" ^
+        "  ensures res = param;\n"
+      ) in
+      let procdecl = Parser.parse_c_aux_proc "inter_bool_casting_proc" proc in
+      procdecl
+    )
   | _ -> report_error_msg ("create_bool_casting_proc: Invalid type" ^ (Globals.string_of_typ typ))
 
 (************************************************************)
@@ -487,6 +495,7 @@ and translate_typ (t: Cil.typ) : Globals.typ =
   let newtype = 
     match t with
     | Cil.TVoid _ -> Globals.Void
+    | Cil.TInt (Cil.IBool, _) -> Globals.Bool
     | Cil.TInt _ -> Globals.Int
     | Cil.TFloat _ -> Globals.Float
     | Cil.TPtr (ty, _) -> (
@@ -1369,6 +1378,18 @@ and translate_file (file: Cil.file) : Iast.prog_decl =
   let barrier_decls : Iast.barrier_decl list ref = ref [] in
   let coercion_decls : Iast.coercion_decl list ref = ref [] in
   let aux_progs : Iast.prog_decl list ref = ref [] in
+  
+  (* reset & init global vars *)
+  Hashtbl.reset tbl_pointer_typ;
+  Hashtbl.reset tbl_pointer_data_decl;
+  Hashtbl.reset tbl_struct_data_decl;
+  Hashtbl.reset tbl_addrof_lval;
+  Hashtbl.reset tbl_bool_casting_proc;
+  Hashtbl.reset tbl_logical_not_proc;
+  aux_local_vardecls := [];
+  let proc = create_bool_casting_proc Globals.Bool in
+  Hashtbl.add tbl_bool_casting_proc Globals.Bool proc;
+
   (* begin to translate *)
   let globals = file.Cil.globals in
   List.iter (fun gl ->
