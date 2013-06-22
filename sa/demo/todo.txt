@@ -1491,4 +1491,26 @@ for base case split, we do need some base-case condition for
 G(x), such as x=null which does not seem to be present in
 this case.
 
+============================================================
+# two-bug-1.slk
+
+infer [HP_5,HP_6]
+ //HP_5(next_24_784,y) * 
+ HP_6(y,x) * x::node<val_24_783,next_24_784> 
+ & next_24_784!=null 
+ // &x=x' & y=y' 
+ //& !(v_bool_24_764') & next_24_784!=null & !(v_bool_24_764')
+ |-  y::node<val_27_762',next_27_763'>@L.
+
+print residue.
+
+
+
+/*
+
+WHY next_24_784!=null when not related to y,x.
+
+ inferred hprel: [HP_6(y,x@NI)&
+                   next_24_784!=null --> y::node<val_27_31,next_27_32>@M * 
+                   HP_33(next_27_32,x@NI)&true]
 
