@@ -23,15 +23,7 @@ void foo(node x)
 */
 {
   if (x.left==null) return;
-  else 
-  {
-   if (x.right==null) return;
-   else {
-    dprint;
-    foo(x.left);
-    foo(x.right);
- }
- }
+  foo(x.left);
 }
 
 /*
