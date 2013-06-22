@@ -5,6 +5,7 @@ data node {
  node right;
 }
 
+/*
 relation keys(node x, int k, bag B) == (x = null & B = {}) 
 	| x!=null & keys(l,kl,Bl) & keys(r,kr,Br) & B = union(Bl,Br,{k}).
 	
@@ -17,20 +18,22 @@ inv true;
 heapt<k:int,B:bag> == self = null
 	or self::node<k,p,q> * p::heapt<kp,Bp> * q::heapt<kq,Bq>
 inv true;
+*/
 
 HeapPred H(node a).
 HeapPred G(node a).
 
 void heapify(node x) 
-requires x::heapt<k,B> & x!= null & keys(x,k,B)
-ensures x::heapt<k,B> & keys(x,k,B);
+ infer [H,G] requires H(x)
+ ensures G(x);
 
 /*
  requires x::tree<S,B> & x!=null
  ensures x::tree<S,B>;
 
  infer [H,G] requires H(x)
- ensures G(x);*/
+ ensures G(x);
+*/
 {
   node s;
   if (x.left==null) s=x.right;

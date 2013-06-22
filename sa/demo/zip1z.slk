@@ -11,7 +11,7 @@ HeapPred G1(node a, node b, node c).
 relAssume G1
 // x=null & res=null --> G1(x,y,res).
 // HL(x) & x=null & res=null --> G1(x,y,res).
- H1(x,res) & x=null & res=null --> G1(x,y,res).
+// H1(x,res) & x=null & res=x --> G1(x,y,res).
 
 shape_infer [H1][G1].
 

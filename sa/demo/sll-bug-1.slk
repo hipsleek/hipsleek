@@ -35,13 +35,11 @@ Another ALGO:
 Since q already captured, we drop x from consideration. 
 
 */
-
 /*
 
 infer [H1,H2] x::node<_,_>*H2(q,r) |- H1(q,x).
 print residue.
 
-/*
 OK
  <1>emp&true&{FLOW,(19,20)=__norm}[]
  inferred hprel: [x::node<Anon_12,Anon_13>@M * H2(q,r)&true --> H1(q,x)&true]
