@@ -839,6 +839,7 @@ let seq_to_try = ref false
 let print_input = ref false
 let print_input_all = ref false
 
+let print_cil_input = ref false
 (* let pass_global_by_value = ref true *)
 
 (* let allow_pred_spec = ref false *)

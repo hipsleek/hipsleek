@@ -253,6 +253,8 @@ let common_arguments = [
    "print core representation");
   ("--pip", Arg.Set Globals.print_input,
    "print input representation");
+  ("--pcil", Arg.Set Globals.print_cil_input,
+   "print cil representation");
 	("--pcp-all", Arg.Set Globals.print_core_all,
 	"print core representation (including primitive library)");
 	("--pip-all", Arg.Set Globals.print_input_all,

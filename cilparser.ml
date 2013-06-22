@@ -21,10 +21,11 @@ let tbl_addrof_lval : (string, Iast.exp) Hashtbl.t = Hashtbl.create 3
 (* list of address-represented pointer declaration *)
 let aux_local_vardecls : Iast.exp list ref = ref []
 
+let tbl_bool_casting_proc: (Globals.typ, Iast.proc_decl) Hashtbl.t = Hashtbl.create 1
+
+let tbl_logical_not_proc:  (Globals.typ, Iast.proc_decl) Hashtbl.t = Hashtbl.create 1
+
 let need_pointer_casting_proc : bool ref = ref false
-
-let need_not_operator_proc : bool ref = ref false
-
 
 (* reset all global vars for the next use *)
 let reset_global_vars () =
@@ -36,6 +37,9 @@ let reset_global_vars () =
 (*******************************************************)
 let string_of_cil_exp (e: Cil.exp) : string =
   Pretty.sprint 10 (Cil.d_exp () e)
+
+let string_of_cil_unop (e: Cil.unop) : string =
+  Pretty.sprint 10 (Cil.d_unop () e)
 
 let string_of_cil_loc (l: Cil.location) : string =
   Pretty.sprint 10 (Cil.d_loc () l)
@@ -74,7 +78,12 @@ let string_of_cil_instr (i: Cil.instr) : string =
   Pretty.sprint 10 (Cil.d_instr () i)
 
 let string_of_cil_global (g: Cil.global) : string =
-  Pretty.sprint 10 (Cil.d_shortglobal () g)
+  Pretty.sprint 10 (Cil.d_global () g)
+
+let string_of_cil_file (f: Cil.file) : string =
+  let globals = f.Cil.globals in
+  String.concat "\n\n" (List.map (fun g -> string_of_cil_global g) globals)
+
 (* ---   end of string conversion   --- *) 
 
 
@@ -195,19 +204,68 @@ let create_pointer_casting_proc (pointer_typ: Globals.typ) : Iast.proc_decl opti
     )
   | _ -> None
 
-let create_not_operator_proc (input_typ: Globals.typ) : Iast.proc_decl =
-  match input_typ with
-  | Globals.Named input_typ_name -> (
-      let neg_proc = (
-        "bool not___(" ^ input_typ_name ^ " param)\n" ^
-        "  case { param =  null -> ensures res;\n" ^
-        "         param != null -> ensures !res; }\n"
+let create_logical_not_proc (typ: Globals.typ) : Iast.proc_decl =
+  match typ with
+  | Globals.Named typ_name -> (
+      let proc = (
+        typ_name ^ " not___(" ^ typ_name ^ " param)\n" ^
+        "  case { param =  null -> ensures res != null;\n" ^
+        "         param != null -> ensures res = null; }\n"
       ) in
-      let proc_decl = Parser.parse_c_aux_proc "inter_negation_data_proc" neg_proc in
-      proc_decl
+      let procdecl = Parser.parse_c_aux_proc "inter_logical_not_proc" proc in
+      procdecl
+    )
+  | Globals.Int -> (
+      let proc = (
+        "int not___(int param)\n" ^
+        "  case { param =  0 -> ensures res != 0;\n" ^
+        "         param != 0 -> ensures res = 0; }\n"
+      ) in
+      let procdecl = Parser.parse_c_aux_proc "inter_logical_not_proc" proc in
+      procdecl
+    )
+  | Globals.Float -> (
+      let proc = (
+        "float not___(float param)\n" ^
+        "  case { param =  0. -> ensures res != 0.;\n" ^
+        "         param != 0. -> ensures res = 0.; }\n"
+      ) in
+      let procdecl = Parser.parse_c_aux_proc "inter_logical_not_proc" proc in
+      procdecl
     )
   | _ -> report_error_msg "Error: Invalid type"
 
+
+let create_bool_casting_proc (typ: Globals.typ) : Iast.proc_decl =
+  match typ with
+  | Globals.Named typ_name -> (
+      let proc = (
+        "bool bool_of___(" ^ typ_name ^ " param)\n" ^
+        "  case { param =  null -> ensures res;\n" ^
+        "         param != null -> ensures !res; }\n"
+      ) in
+      let procdecl = Parser.parse_c_aux_proc "inter_bool_casting_proc" proc in
+      procdecl
+    )
+  | Globals.Int -> (
+      let proc = (
+        "bool bool_of___(int param)\n" ^
+        "  case { param != 0 -> ensures res;\n" ^
+        "         param = 0  -> ensures !res; }\n"
+      ) in
+      let procdecl = Parser.parse_c_aux_proc "inter_bool_casting_proc" proc in
+      procdecl
+    )
+  | Globals.Float -> (
+      let proc = (
+        "bool bool_of___(float param)\n" ^
+        "  case { param != 0. -> ensures res;\n" ^
+        "         param = 0.  -> ensures !res; }\n"
+      ) in
+      let procdecl = Parser.parse_c_aux_proc "inter_bool_casting_proc" proc in
+      procdecl
+    )
+  | _ -> report_error_msg ("create_bool_casting_proc: Invalid type" ^ (Globals.string_of_typ typ))
 
 (************************************************************)
 (****** collect information about address-of operator *******)
@@ -728,21 +786,39 @@ and translate_exp (e: Cil.exp) : Iast.exp =
                    Iast.exp_int_lit_pos = pos}
   | Cil.AlignOf _ -> report_error_msg "TRUNG TODO: Handle Cil.AlignOf later!"
   | Cil.AlignOfE _ -> report_error_msg "TRUNG TODO: Handle Cil.AlignOfE later!"
-  | Cil.UnOp (op, exp, ty, l) ->
-      let e = translate_exp exp in
-      let o = translate_unary_operator op in
-      let t = translate_typ ty in
-      if (o = Iast.OpNot) then (
-        match t with
-        | Globals.Named _ -> need_not_operator_proc := true;
-        | _ -> ();
-      );
+  | Cil.UnOp (op, exp, ty, l) -> (
       let pos = translate_location l in
-      let newexp = Iast.Unary {Iast.exp_unary_op = o;
-                               Iast.exp_unary_exp = e;
-                               Iast.exp_unary_path_id = None;
-                               Iast.exp_unary_pos = pos} in
+      let o = translate_unary_operator op in
+      let t = translate_typ (typ_of_cil_exp exp) in
+      let e = translate_exp exp in
+      let newexp = (
+        match t with
+        | Globals.Bool -> 
+            Iast.Unary {Iast.exp_unary_op = o;
+                        Iast.exp_unary_exp = e;
+                        Iast.exp_unary_path_id = None;
+                        Iast.exp_unary_pos = pos}
+        | _ -> (
+            let not_proc = (
+              try
+                Hashtbl.find tbl_logical_not_proc t
+              with Not_found -> (
+                let proc = create_logical_not_proc t in
+                Hashtbl.add tbl_logical_not_proc t proc;
+                proc
+              )
+            ) in
+            Iast.CallNRecv {
+              Iast.exp_call_nrecv_method = not_proc.Iast.proc_name;
+              Iast.exp_call_nrecv_lock = None;
+              Iast.exp_call_nrecv_arguments = [e];
+              Iast.exp_call_nrecv_path_id = None;
+              Iast.exp_call_nrecv_pos = pos
+            }
+          )
+      ) in
       newexp
+    )
   | Cil.BinOp (op, exp1, exp2, ty, l) ->
       let e1 = translate_exp exp1 in
       let e2 = translate_exp exp2 in
@@ -979,10 +1055,33 @@ and translate_stmt (s: Cil.stmt) : Iast.exp =
       newexp
   | Cil.If (exp, blk1, blk2, l) ->
       let pos = translate_location l in
-      let econd = translate_exp exp in
+      let ty = translate_typ (typ_of_cil_exp exp) in
+      let cond = (
+        match ty with
+        | Globals.Bool -> translate_exp exp
+        | _ -> (
+            let e = translate_exp exp in
+            let bool_of_proc = (
+              try 
+                Hashtbl.find tbl_bool_casting_proc ty
+              with Not_found -> (
+                let proc = create_bool_casting_proc ty in
+                Hashtbl.add tbl_bool_casting_proc ty proc;
+                proc
+              )
+            ) in
+            Iast.CallNRecv {
+              Iast.exp_call_nrecv_method = bool_of_proc.Iast.proc_name;
+              Iast.exp_call_nrecv_lock = None;
+              Iast.exp_call_nrecv_arguments = [e];
+              Iast.exp_call_nrecv_path_id = None;
+              Iast.exp_call_nrecv_pos = pos
+            }
+          )
+      ) in
       let e1 = translate_block blk1 in
       let e2 = translate_block blk2 in
-      let ifexp = Iast.Cond {Iast.exp_cond_condition = econd;
+      let ifexp = Iast.Cond {Iast.exp_cond_condition = cond;
                               Iast.exp_cond_then_arm = e1;
                               Iast.exp_cond_else_arm = e2;
                               Iast.exp_cond_path_id = None;
@@ -1333,10 +1432,6 @@ and translate_file (file: Cil.file) : Iast.prog_decl =
   Hashtbl.iter (fun _ data -> data_decls := !data_decls @ [data]) tbl_pointer_data_decl;
   (* create negation & casting procs for data structure *)
   Hashtbl.iter (fun typ _ ->
-    if (!need_not_operator_proc) then (
-      let neg_proc = create_not_operator_proc typ in
-      proc_decls := !proc_decls @ [neg_proc];
-    );
     if (!need_pointer_casting_proc) then (
       let cast_procs = (
         match create_pointer_casting_proc typ with
@@ -1346,6 +1441,14 @@ and translate_file (file: Cil.file) : Iast.prog_decl =
       proc_decls := !proc_decls @ cast_procs
     )
   ) tbl_pointer_data_decl;
+  (* bool_of procs *)
+  Hashtbl.iter (
+    fun _ p -> proc_decls := !proc_decls @ [p]
+  ) tbl_bool_casting_proc;
+  (* logical not procs *)
+  Hashtbl.iter (
+    fun _ p -> proc_decls := !proc_decls @ [p]
+  ) tbl_logical_not_proc;
   (* return *)
   let newprog : Iast.prog_decl = {
     Iast.prog_data_decls = obj_def :: string_def :: !data_decls;
@@ -1415,6 +1518,12 @@ let parse_hip (filename: string) : Iast.prog_decl =
                     ^^ "(see the warnings above).  This may be a bug "
                     ^^ "in CIL.\n")
     )
+  );
+  if (!Globals.print_cil_input) then (
+    print_endline ("***********************************");
+    print_endline ("********* input cil file **********");
+    print_endline (string_of_cil_file cil);
+    print_endline ("******** end of cil file **********");
   );
   let prog = translate_file cil in
   (* return *)
