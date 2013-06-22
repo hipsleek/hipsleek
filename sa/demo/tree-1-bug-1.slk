@@ -9,6 +9,7 @@ HeapPred HP_1(node a).
 HeapPred HP_2(node a).
 HeapPred G(node a).
 
+//Declare_Dangling [HP_2].
 Declare_Unknown [HP_2].
 
 relAssume H
