@@ -799,27 +799,56 @@ let look_up_closed_ptr_args prog hd_nodes hv_nodes node_names=
   in
   helper node_names node_names
 
-let look_up_backward_closed_ptr_args_x prog hd_nodes hv_nodes node_names=
-  let rec find_pt_new cur_hds svl res hd_rest=
-    match cur_hds with
-      | [] -> res,hd_rest
-      | hd::tl -> let ptr_args = List.filter CP.is_node_typ hd.CF.h_formula_data_arguments in
-                  if ( CP.intersect_svl ptr_args (svl@res) <> []) then
-                    find_pt_new tl svl (res@[hd.CF.h_formula_data_node]@ptr_args) hd_rest
-                  else find_pt_new tl svl res (hd_rest@[hd])
+let look_up_dups_node_x prog hd_nodes hv_nodes lhs_args all_keep_svl r_keep_svl=
+  let get_rel_lsvl sv=
+    let ptrs = look_up_ptr_args_one_node prog hd_nodes hv_nodes sv in
+    (sv, CP.intersect_svl (sv::ptrs) lhs_args, ptrs<>[])
   in
-  let rec loop_helper hds svl r=
-    let r1,rest = find_pt_new hds svl r [] in
-    if CP.diff_svl r1 r = [] || rest = [] then (CP.remove_dups_svl r1) else
-      loop_helper rest svl r1
+  let rec group_dups rem_pars grps=
+    match rem_pars with
+      | [] -> grps
+      | (sv, lhs_svl, is_node)::rest ->
+            let grp,rest1 = List.partition (fun (_,lhs_svl1,_) -> CP.intersect_svl lhs_svl lhs_svl1 <> []) rest in
+            group_dups rest1 (grps@[(sv, lhs_svl, is_node)::grp])
   in
-  loop_helper hd_nodes node_names []
+  let prs = List.map get_rel_lsvl r_keep_svl in
+  let prs1 = List.filter (fun (_,svl,_) -> svl <> []) prs in
+  let grps = group_dups prs1 [] in
+  let dups_svl = List.fold_left (fun res grp ->
+      if List.length grp <=1 then res else
+        List.fold_left (fun res1 (sv,_, is_node) -> if is_node then (res1@[sv]) else res1) [] grp
+  ) [] grps
+  in
+  CP.diff_svl all_keep_svl dups_svl
 
-let look_up_backward_closed_ptr_args prog hd_nodes hv_nodes node_names=
+(*remove sv in rhs: its arguments exists both in LHS pred and RHS pred*)
+let look_up_dups_node prog hd_nodes hv_nodes lhs_args all_keep_svl r_keep_svl=
   let pr1 = !CP.print_svl in
-  Debug.no_1 "look_up_backward_closed_ptr_args" pr1 pr1
-      (fun _ -> look_up_backward_closed_ptr_args_x prog hd_nodes hv_nodes node_names)
-      node_names
+  Debug.no_2 "look_up_dups_node" pr1 pr1 pr1
+      (fun _ _ -> look_up_dups_node_x prog hd_nodes hv_nodes lhs_args all_keep_svl r_keep_svl)
+      lhs_args r_keep_svl
+
+(* let look_up_backward_closed_ptr_args_x prog hd_nodes hv_nodes node_names= *)
+(*   let rec find_pt_new cur_hds svl res hd_rest= *)
+(*     match cur_hds with *)
+(*       | [] -> res,hd_rest *)
+(*       | hd::tl -> let ptr_args = List.filter CP.is_node_typ hd.CF.h_formula_data_arguments in *)
+(*                   if ( CP.intersect_svl ptr_args (svl@res) <> []) then *)
+(*                     find_pt_new tl svl (res@[hd.CF.h_formula_data_node]@ptr_args) hd_rest *)
+(*                   else find_pt_new tl svl res (hd_rest@[hd]) *)
+(*   in *)
+(*   let rec loop_helper hds svl r= *)
+(*     let r1,rest = find_pt_new hds svl r [] in *)
+(*     if CP.diff_svl r1 r = [] || rest = [] then (CP.remove_dups_svl r1) else *)
+(*       loop_helper rest svl r1 *)
+(*   in *)
+(*   loop_helper hd_nodes node_names [] *)
+
+(* let look_up_backward_closed_ptr_args prog hd_nodes hv_nodes node_names= *)
+(*   let pr1 = !CP.print_svl in *)
+(*   Debug.no_1 "look_up_backward_closed_ptr_args" pr1 pr1 *)
+(*       (fun _ -> look_up_backward_closed_ptr_args_x prog hd_nodes hv_nodes node_names) *)
+(*       node_names *)
 
 let rec lookup_undef_args args undef_args def_ptrs=
   match args with
@@ -1100,27 +1129,27 @@ let smart_subst nf1 nf2 hpargs eqs reqs unk_svl prog_vars=
       (fun _ _ _ -> smart_subst_x nf1 nf2 hpargs eqs reqs unk_svl prog_vars) nf1 nf2 prog_vars
 
 let keep_data_view_hrel_nodes_two_fbs prog f1 f2 hd_nodes hv_nodes hpargs leqs reqs his_ss keep_rootvars
-      lrootvars (* lback_keep_ptrs *) lkeep_hpargs rkeep_hps unk_svl prog_vars =
+      lhs_hpargs (* lback_keep_ptrs *) lkeep_hpargs rkeep_hps rhs_svl unk_svl prog_vars =
   let eqs = (leqs@reqs@his_ss) in
   let _ = Debug.ninfo_pprint ("keep_vars root: " ^ (!CP.print_svl keep_rootvars)) no_pos in
+  let _ = Debug.ninfo_pprint ("lhs_hpargs: " ^ (!CP.print_svl lhs_hpargs)) no_pos in
   let keep_closed_rootvars =  (List.fold_left close_def keep_rootvars eqs) in
-  let _ = Debug.tinfo_pprint ("keep_vars 1: " ^ (!CP.print_svl keep_closed_rootvars)) no_pos in
-  let keep_vars = look_up_closed_ptr_args prog hd_nodes hv_nodes (CP.remove_dups_svl (keep_closed_rootvars)) in
-  (*get backward ptrs*)
-  (* let lback_keep_ptrs = look_up_backward_closed_ptr_args prog hd_nodes hv_nodes lrootvars in *)
-  (* let lback_keep_closed_vars = CP.remove_dups_svl (List.fold_left close_def (lback_keep_ptrs) eqs) in *)
-  let lhs_keep_closed_rootvars = CP.remove_dups_svl (List.fold_left close_def (lrootvars) eqs) in
   let _ = Debug.ninfo_pprint ("keep_vars 1: " ^ (!CP.print_svl keep_closed_rootvars)) no_pos in
-  let lkeep_vars = look_up_closed_ptr_args prog hd_nodes hv_nodes lhs_keep_closed_rootvars in
-  (* let closed_lback_keep_ptrs = (CP.remove_dups_svl (List.fold_left close_def (lback_keep_ptrs) leqs)) in *)
+  let keep_vars = look_up_closed_ptr_args prog hd_nodes hv_nodes (CP.remove_dups_svl (keep_closed_rootvars)) in
+  let c_lhs_hpargs = CP.remove_dups_svl (List.fold_left close_def lhs_hpargs eqs) in
+  let _ = Debug.ninfo_pprint ("c_lhs_hpargs: " ^ (!CP.print_svl c_lhs_hpargs)) no_pos in
+  (* let lkeep_vars = look_up_closed_ptr_args prog hd_nodes hv_nodes lhs_keep_closed_rootvars in *)
   (*may be alisas between lhs and rhs*)
   let _ = Debug.ninfo_pprint ("keep_vars: " ^ (!CP.print_svl keep_vars)) no_pos in
-  let _ = Debug.ninfo_pprint ("lhs keep_vars: " ^ (!CP.print_svl lkeep_vars)) no_pos in
+  (* let _ = Debug.info_pprint ("lkeep_vars: " ^ (!CP.print_svl lkeep_vars)) no_pos in *)
   (* let pr1 = pr_list (pr_pair !CP.print_sv !CP.print_svl) in *)
   (* let _ = Debug.info_pprint ("lkeep_hpargs: " ^ (pr1 lkeep_hpargs)) no_pos in *)
+  (*remove dups*)
+  let lkeep_nodes = look_up_dups_node prog hd_nodes hv_nodes c_lhs_hpargs keep_vars 
+   (List.fold_left close_def rhs_svl eqs ) in
   (* let _ = Debug.info_pprint ("f1: " ^ (Cprinter.string_of_formula_base f1)) no_pos in *)
   let nf1 = CF.drop_data_view_hpargs_nodes_fb f1 check_nbelongsto_dnode check_nbelongsto_vnode check_neq_hpargs
-    (keep_vars(* @closed_lback_keep_ptrs *)) (keep_vars(* @closed_lback_keep_ptrs *)) lkeep_hpargs (keep_vars@lkeep_vars) in
+    (* lkeep_nodes *) keep_vars (* lkeep_nodes *) keep_vars lkeep_hpargs (keep_vars@c_lhs_hpargs (*lkeep_vars*)) in
   let nf2 = CF.drop_data_view_hrel_nodes_fb f2 check_nbelongsto_dnode check_nbelongsto_vnode check_neq_hrelnode
     keep_vars keep_vars rkeep_hps keep_vars in
   let _ = Debug.ninfo_pprint ("nf1: " ^ (Cprinter.string_of_formula_base nf1)) no_pos in
@@ -1134,7 +1163,7 @@ let rec drop_data_view_hrel_nodes_from_root prog f0 hd_nodes hv_nodes eqs drop_r
   match f with
     | CF.Base fb ->
         let hd_names = List.fold_left (fun ls hd -> ls@[hd.CF.h_formula_data_node]) [] hd_nodes in
-        let keep_hds = CP.diff_svl hd_names drop_rootvars in
+        let keep_hds = CP.diff_svl hd_names (drop_rootvars) in
         let closed_keep_svl = look_up_closed_ptr_args prog hd_nodes hv_nodes keep_hds in
         let well_defined_svl1 = CP.diff_svl well_defined_svl closed_keep_svl in
         let new_p=
@@ -1146,7 +1175,7 @@ let rec drop_data_view_hrel_nodes_from_root prog f0 hd_nodes hv_nodes eqs drop_r
         CF.Base { fb with
             CF.formula_base_heap = drop_data_view_hrel_nodes_hf_from_root
                 prog fb.CF.formula_base_heap
-                hd_nodes hv_nodes eqs (drop_rootvars@well_defined_svl1) defined_hps;
+                hd_nodes hv_nodes eqs (drop_rootvars@well_defined_svl1(* @rhs_svl *)) defined_hps;
             CF.formula_base_pure = new_p
     }
     | CF.Exists fe ->

@@ -11,7 +11,7 @@ HeapPred HP_6(node a, node@NI b).
 
 
 infer [HP_5,HP_6]
- //HP_5(next_24_784,y) * 
+ HP_5(next_24_784,y) * 
  HP_6(y,x) * x::node<val_24_783,next_24_784> 
  & next_24_784!=null 
  // &x=x' & y=y' 

@@ -1,3 +1,4 @@
+
 data node{
         int val;
         node next;
@@ -8,6 +9,7 @@ HeapPred H2(node a, node b).
 
 infer [H1,H2] x::node<_,q>*H2(q,r) |- H1(q,x).
 print residue.
+
 
 /*
 # sll-bug-1.slk
@@ -39,7 +41,7 @@ Since q already captured, we drop x from consideration.
 
 infer [H1,H2] x::node<_,_>*H2(q,r) |- H1(q,x).
 print residue.
-
+*/
 OK
  <1>emp&true&{FLOW,(19,20)=__norm}[]
  inferred hprel: [x::node<Anon_12,Anon_13>@M * H2(q,r)&true --> H1(q,x)&true]

@@ -1492,7 +1492,7 @@ G(x), such as x=null which does not seem to be present in
 this case.
 
 ============================================================
-# two-bug-1.slk
+# two-bug-1.slk :FIXED
 
 infer [HP_5,HP_6]
  //HP_5(next_24_784,y) * 
