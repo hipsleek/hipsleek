@@ -24,8 +24,29 @@ void paper_fix (node c, node p)
 }
 
 /*
-
 # sll-dll.ss
+
+We derive:
+
+ H1(c,p@NI)&c!=null --> c::node<val_21_807,prev_21_808,next_21_809>@M * 
+      HP_810(prev_21_808,p@NI) * HP_811(next_21_809,p@NI)&true,
+ 
+ HP_811(next_21_809,p@NI)&true --> H1(next_21_809,c'@NI)&true,
+
+ c::node<val_21_807,p,next_21_809>@M * G1(next_21_809,c)&true --> G1(c,p)&
+  true,
+
+ H1(c,p@NI)&c=null --> G1(c,p)&true
+
+The 4th RelAssume is a target for base-case split since
+we have a c=null which contradicts with 1st RelAssume.
+
+Hence:
+ H1(c,p@NI)&c=null --> emp
+ c=null & emp --> G1(c,p)&true
+
+=========================================================
+
 
 HP_810 should be dangling as it was instantiated from a field
 but never accessed.

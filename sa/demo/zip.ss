@@ -37,19 +37,31 @@ infer [H,G1]  requires H(x,y)  ensures  G1(x,y,res);
 }
 
 /*
-H(x,y)&x!=null --> x::node<val_31_814,next_31_815>@M *
+
+# zip.ss
+
+ H(x,y)&x!=null --> x::node<val_31_814,next_31_815>@M *
   (HP_816(next_31_815,y@NI)) * (HP_817(y,x@NI))&true,
+
  HP_817(y,x@NI)&true --> y::node<val_32_821,next_32_822>@M *
   (HP_823(next_32_822,x@NI))&true,
+
  (HP_816(next_31_815,y@NI)) * (HP_823(next_32_822,x@NI))&
   true --> H(next_31_815,next_32_822)&true,
+
  H(x,y)&res=x & x=null & res=null --> G1(x,y,res)&true,
+
  y::node<val_32_821,next_32_822>@M *
   (G1(next_31_815,next_32_822,v_node_34_853)) *
   x::node<v_int_33_837,v_node_34_853>@M&res=x --> G1(x,y,res)&true
- */
 
-/*
+4th RelAssume is a candidate for base-case split which
+complements the 1st RelAssume.
+
+In this case, we may also use --sa-s-split to capture
+y extension in the base-case.
+
+=================
 
 WHY?
 
