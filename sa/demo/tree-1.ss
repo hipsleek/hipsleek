@@ -13,14 +13,14 @@ tree<> == self=null
 inv true;
 
 void foo(node x) 
+/*
  requires x::tree<> & x!=null
  ensures x::tree<>;
+*/
 
-/*
  infer [H,G] requires H(x)
  ensures G(x);
 
-*/
 {
   if (x.left==null) return;
   foo(x.left);
