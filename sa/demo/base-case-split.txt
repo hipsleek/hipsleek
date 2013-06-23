@@ -44,3 +44,20 @@ complements the 1st RelAssume.
 In this case, we may also use --sa-s-split to capture
 y extension in the base-case.
 
+==============================================================
+
+# cll.ss
+
+ H(rest,h)&h!=rest --> rest::node<val_36_824,next_36_825>@M * 
+  HP_826(next_36_825,h@NI) * HP_827(h,rest@NI)&true,
+
+ HP_826(next_36_825,h@NI) * HP_827(h,rest@NI)&h!=rest --> H(next_36_825,h)&
+  true,
+
+ H(rest,h)&h=rest --> G(rest,h)&true,
+
+ rest::node<val_36_824,next_36_825>@M * G(next_36_825,h)&
+  h!=rest --> G(rest,h)&true
+
+3rd RelAssume is a candidate for base-case split which
+complements the 1st RelAssume.

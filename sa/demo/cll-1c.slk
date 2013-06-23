@@ -21,34 +21,22 @@ relAssume H //(3)
 //shape_infer [H,HP_6,HP_7][].
 shape_strengthen_conseq [H,HP_6,HP_7][].
 /*
-# cll-1b.slk
+# cll-1c.slk
 
-WRONG
-=====
-[ H(rest_45,h_46) ::=  emp&h_46=rest_45,
- HP_6(next_36_825,h) ::=  H(next_36_825,h)&h!=rest,
- HP_7(a,b) ::= NONE]
-
+GOT
+===
+ H(rest,h)&h!=rest --> rest::node<val_36_824,next_36_825>@M * 
+  HP_6(next_36_825,h) * HP_7(h,rest)&true,
+ H(next_36_37,h_38)&h_38!=rest_36 --> H(rest_36,h_38)&h_38!=rest_36,
+ H(rest,h)&h=rest --> emp&true]
+*
 EXPECT
 ======
+ H(rest,h)&h!=rest --> rest::node<val_36_824,next_36_825> * 
+  H(next_36_825,rest).
+ H(next_36_825,h) --> HP_6(next_36_825,h) * HP_7(h,rest)&h!=rest.
+ H(rest,h)&h=rest --> emp.
 
-Make Equal (2)
- HP_6(next_36_825,h) * HP_7(h,rest)&h!=rest 
-   <--> H(next_36_825,h). //(2a)
-
-Use (2a) to strengthen (1)
- H(rest,h)&h!=rest --> rest::node<val_36_824,nn> * 
-  H(nn,h). //(1a)
-
-Combine (1a) & (3)
- H(rest,h) --> 
-  rest::node<val_36_824,nn> * H(nn,h) & h!=null
-  or h=res
-
-Make Equal
- H(rest,h) <--> 
-  rest::node<val_36_824,nn> * H(nn,h) & h!=null
-  or h=res
 
 */
 
