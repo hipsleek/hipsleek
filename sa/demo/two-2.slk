@@ -49,7 +49,7 @@ EXPECT
   x::node<_,n>@M&n=null --> G2(x,y).
 
   G2(x,y) <->
-     y::node<val_27_794,next_27_795>@M * HP_9(next_27_795,x) * 
+     HP_5(n,y) * y::node<val_27_794,next_27_795>@M * HP_9(next_27_795,x) * 
      x::node<_,n>@M&n=null --> G2(x,y).
 
 */

@@ -1318,11 +1318,17 @@ let find_well_defined_hp_x prog hds hvs r_hps prog_vars post_hps (hp,args) def_p
     let undef_args = lookup_undef_args closed_args [] def_ptrs in
     if undef_args<> [] then
       (*not all args are well defined and in HIP. do not split*)
-      if not split_spatial then
+      let args_inst,args_ni =  partition_hp_args prog hp args in
+      let wdef_svl = CP.diff_svl args undef_args in
+      let wdef_ni_svl =  List.filter (fun (sv,_) -> CP.mem_svl sv wdef_svl) args_ni in
+      (*
+        wdef_ni_svl: if not empty, do not split.
+        TODO: forward hp defs to post-preds
+      *)
+      if wdef_ni_svl <> [] || not split_spatial then
         (lhsb, [],[(hp,args)], [])
       else begin
         (*not all args are well defined and in SHAPE INFER. do split*)
-        let args_inst,_ =  partition_hp_args prog hp args in
         let undef_args_inst = List.filter (fun (sv,_) -> CP.mem_svl sv undef_args) args_inst in
         if !Globals.sa_s_split_base then
           let new_hf, new_hp = add_raw_hp_rel_x prog undef_args_inst pos in
@@ -2544,9 +2550,10 @@ let weaken_trivial_constr_pre cs=
 
 let is_inconsistent_heap f =
   let ( hf,mix_f,_,_,_) = CF.split_components f in
-  let eqNulls = CP.remove_dups_svl ( MCP.get_null_ptrs mix_f) in
-  let ptrs = CF. get_ptrs hf in
-  if CP.intersect_svl eqNulls ptrs <> [] then true else false
+  let eqNulls = CP.remove_dups_svl (MCP.get_null_ptrs mix_f) in
+  let neqNull_svl = CP.get_neq_null_svl (MCP.pure_of_mix mix_f) in
+  let ptrs = CF.get_ptrs hf in
+  if CP.intersect_svl eqNulls (neqNull_svl@ptrs) <> [] then true else false
 
 let simplify_one_formula prog args f=
   let f1 = elim_irr_eq_exps prog args f in
@@ -3963,7 +3970,7 @@ let succ_susbt_x prog nrec_grps unk_hps allow_rec_subst (hp,args,f,unk_svl)=
                                                           in pr lsf_cmb)) no_pos;
           let lsf_cmb1 = List.map (simplify_one_formula prog args) lsf_cmb in
           let lsf_cmb2 = List.filter (fun f ->  not (is_trivial f (hp,args))
-              (* && not (is_inconsistent_heap f) *)
+              && not (is_inconsistent_heap f)
           ) lsf_cmb1 in
         (*remove f which has common prefix*)
           let lsf_cmb3 = remove_longer_common_prefix lsf_cmb2 in
@@ -3979,8 +3986,9 @@ let succ_susbt prog nrec_grps unk_hps allow_rec_subst (hp,args,f,unk_svl)=
    let pr1 = pr_list_ln (pr_list_ln string_of_par_def_w_name_short) in
    let pr2 = pr_quad !CP.print_sv !CP.print_svl Cprinter.prtt_string_of_formula !CP.print_svl in
    let pr3 = pr_pair string_of_bool (pr_list_ln pr2) in
-   Debug.no_3 "succ_susbt" pr1 string_of_bool pr2 pr3
-       (fun _ _  _ -> succ_susbt_x prog nrec_grps unk_hps allow_rec_subst (hp,args,f,unk_svl)) nrec_grps allow_rec_subst (hp,args,f,unk_svl)
+   Debug.no_4 "succ_susbt" pr1 string_of_bool !CP.print_svl pr2 pr3
+       (fun _ _ _  _ -> succ_susbt_x prog nrec_grps unk_hps allow_rec_subst (hp,args,f,unk_svl))
+       nrec_grps allow_rec_subst unk_hps (hp,args,f,unk_svl)
 
 let succ_subst_with_mutrec_x prog deps unk_hps=
   let find_succ_one_dep_grp dep_grp=
@@ -4403,6 +4411,25 @@ let combine_hpdefs hpdefs=
   let pr1 = pr_list_ln Cprinter.string_of_hp_rel_def in
   Debug.no_1 "combine_hpdefs" pr1 pr1
       (fun _ -> combine_hpdefs_x hpdefs) hpdefs
+
+let extract_nonrec_def_x defs=
+  let get_nonrec_def (cur_grps,cur_hps) (def_kind,hf,def)=
+    match def_kind with
+      | CP.HPRelDefn hp -> let hps = CF.get_hp_rel_name_formula def in
+        (*currently, we avoid rec preds*)
+        if (CP.mem_svl hp hps) then (cur_grps,cur_hps)
+        else
+          let _, args =  CF.extract_HRel hf in
+          ((cur_grps@[(List.map (fun f -> (hp, args, f, [])) (CF.list_of_disjs def))]), cur_hps@[hp])
+      | _ -> (cur_grps,cur_hps)
+  in
+  List.fold_left get_nonrec_def ([],[]) defs
+
+let extract_nonrec_def defs=
+  let pr1 = pr_list_ln Cprinter.string_of_hp_rel_def in
+  let pr2 = pr_list_ln (pr_list_ln string_of_par_def_w_name_short) in
+  Debug.no_1 "extract_nonrec_def" pr1 (pr_pair pr2 !CP.print_svl)
+      (fun _ -> extract_nonrec_def_x defs) defs
 
 (************************************************************)
     (****************END SUBST HP DEF*****************)

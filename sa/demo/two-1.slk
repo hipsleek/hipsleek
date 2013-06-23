@@ -24,8 +24,8 @@ relAssume G2
 */
 
 relAssume G2
-  y::node<_,nn> *  HP_9(nn,x) *
-  x::node<_,n> & n=null --> G2(x,y).
+   y::node<_,nn> *  HP_9(nn,x) *
+  x::node<_,n>  --> G2(x,y).
 
 relAssume G2
   HP_5(n4,y) * x::node<val_24_783,n4>@M * 
