@@ -4149,11 +4149,12 @@ and add_pre prog f =
 and trans_I2C_struc_formula i (prog : I.prog_decl) (quantify : bool) (fvars : ident list) (f0 : IF.struc_formula) 
       (tlist:spec_var_type_list) (check_self_sp:bool) (*disallow self in sp*) (check_pre:bool) : (spec_var_type_list*CF.struc_formula) = 
   let prb = string_of_bool in
+  let pr_out (_, f) = Cprinter.string_of_struc_formula f in
   (* Debug.no_5_loop    *)
   Debug.no_eff_5_num  i
       "trans_I2C_struc_formula" [true] string_of_tlist prb prb Cprinter.str_ident_list 
       (add_str "Input Struc:" Iprinter.string_of_struc_formula) 
-      (add_str "Output Struc:" Cprinter.string_of_struc_formula)
+      (add_str "Output Struc:" pr_out)
       (fun _ _ _ _ _ -> trans_I2C_struc_formula_x prog quantify fvars f0 tlist check_self_sp (check_pre:bool)) 
       tlist (* type table *) quantify (* quantified flag *) check_self_sp
       fvars (* free vars *) f0 (*struc formula *)
@@ -4395,9 +4396,11 @@ and compact_nodes_with_same_name_in_struc (f: CF.struc_formula): CF.struc_formul
 and trans_formula (prog : I.prog_decl) (quantify : bool) (fvars : ident list) sep_collect
       (f0 : IF.formula) tlist (clean_res:bool) : (spec_var_type_list*CF.formula) =
   let prb = string_of_bool in
-  Debug.no_eff_5 "trans_formula" [true] string_of_tlist 
-      (add_str "quantify" prb) 
-      (add_str "cleanres" prb) Cprinter.str_ident_list Iprinter.string_of_formula Cprinter.string_of_formula 
+  let pr_out (_, f) = Cprinter.string_of_formula f in
+  Debug.no_eff_5 "trans_formula" [true]
+      string_of_tlist (add_str "quantify" prb) (add_str "cleanres" prb)
+      Cprinter.str_ident_list Iprinter.string_of_formula
+      pr_out
       (fun _ _ _ _ _ -> trans_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : ident list) sep_collect
           (f0 : IF.formula) tlist (clean_res:bool)) tlist quantify clean_res fvars f0
 
@@ -4510,7 +4513,6 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
         hvars
     | [] -> [] in
   let expand_dereference_node (f: IF.h_formula) pos : (IF.h_formula * (Globals.ident * Globals.primed) list) = (
-    let _ = print_endline ("== in expand_dereference_node") in
     match f with
     | IF.HeapNode {IF.h_formula_heap_node = n;
                    IF.h_formula_heap_name = c;
@@ -4570,7 +4572,7 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
                   s := !s ^ "__star";
                   let e = IF.P.Var (!p1, l) in
                   let h1 = IF.mkHeapNode n !s 0 false (IF.ConstAnn(Mutable)) false false false None [e] [None] None l in
-                  let h2 = IF.mkHeapNode p c 0 dr imm full inv pd perm exps ann_param pi l in
+                  let h2 = IF.mkHeapNode p base_heap_id 0 dr imm full inv pd perm exps ann_param pi l in
                   let hf = List.fold_left (fun f1 f2 -> IF.mkStar f1 f2 l) h1 (!heaps @ [h2]) in
                   (hf, !new_vars)
                 )
@@ -4602,8 +4604,6 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
                 (hf, !new_vars)
               )
           ) in
-          let _ = print_endline ("=== f = " ^ (Iprinter.string_of_h_formula f)) in
-          let _ = print_endline ("=== expanded_heap = " ^ (Iprinter.string_of_h_formula expanded_heap)) in
           (* return *)
           (expanded_heap, newvars)
         )

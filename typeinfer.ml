@@ -863,20 +863,59 @@ and gather_type_info_struc_f_x prog (f0:IF.struc_formula) tlist =
     (* check_shallow_var := true *)
   end
 
-and try_unify_data_type_args prog c ddef v deref ies tlist pos =
+and try_unify_data_type_args prog c v deref ies tlist pos =
   (* An Hoa : problem detected - have to expand the inline fields as well, fix in look_up_all_fields. *)
-  let (n_tl,_) = gather_type_info_var v tlist ((Named c)) pos in
-  let fields = I.look_up_all_fields prog ddef in
-  try 
-    let f tl arg ((ty,_),_,_,_)=
-      (let (n_tl,_) = gather_type_info_exp arg tl ty in n_tl)
-    in (List.fold_left2 f n_tl ies fields)
-  with | Invalid_argument _ ->
-    Err.report_error {
-       Err.error_loc = pos;
-       Err.error_text = "number of arguments for data " ^ c 
-         ^ " does not match"^(pr_list (fun c->c)(List.map Iprinter.string_of_formula_exp ies));
-    }
+  if (deref = 0) then (
+    try (
+      let ddef = I.look_up_data_def_raw prog.I.prog_data_decls c in
+      let (n_tl,_) = gather_type_info_var v tlist ((Named c)) pos in
+      let fields = I.look_up_all_fields prog ddef in
+      try
+        let f tl arg ((ty,_),_,_,_)=
+          (let (n_tl,_) = gather_type_info_exp arg tl ty in n_tl)
+        in (List.fold_left2 f n_tl ies fields)
+      with | Invalid_argument _ ->
+        Err.report_error {
+           Err.error_loc = pos;
+           Err.error_text = "number of arguments for data " ^ c
+             ^ " does not match"^(pr_list (fun c->c)(List.map Iprinter.string_of_formula_exp ies));
+        }
+    )
+    with Not_found -> raise Not_found
+  )
+  else (
+    (* dereference cases *)
+    try (
+      let base_ddecl = (
+        let dname = (
+          match c with
+          | "int" | "float" | "void" | "bool" -> c ^ "__star"
+          | _ -> c
+        ) in
+        I.look_up_data_def_raw prog.I.prog_data_decls dname
+      ) in
+      let holder_name = (
+        let deref_str = ref "" in
+        for i = 1 to deref do
+          deref_str := !deref_str ^ "__star";
+        done;
+        c ^ !deref_str
+      ) in
+      let (n_tl,_) = gather_type_info_var v tlist ((Named holder_name)) pos in
+      let fields = I.look_up_all_fields prog base_ddecl in
+      try 
+        let f tl arg ((ty,_),_,_,_)=
+          (let (n_tl,_) = gather_type_info_exp arg tl ty in n_tl)
+        in (List.fold_left2 f n_tl ies fields)
+      with | Invalid_argument _ ->
+        Err.report_error {
+           Err.error_loc = pos;
+           Err.error_text = "number of arguments for data " ^ c 
+             ^ " does not match"^(pr_list (fun c->c)(List.map Iprinter.string_of_formula_exp ies));
+        }
+    )
+    with Not_found -> raise Not_found
+  )
 
 (* TODO WN : this is not doing anything *)
 and fill_view_param_types (vdef : I.view_decl) =
@@ -1140,34 +1179,8 @@ and gather_type_info_heap_x prog (h0 : IF.h_formula) tlist =
         with
         | Not_found ->
           (try
-            match c with
-            | "int"
-            | "float"
-            | "void"
-            | "bool" -> (
-                let c = (
-                  let deref_str = ref "" in
-                  for i = 1 to deref do
-                    deref_str := !deref_str ^ "__star";
-                  done;
-                  c ^ !deref_str
-                ) in
-                let ddef = I.look_up_data_def_raw prog.I.prog_data_decls c in 
-                let n_tl = try_unify_data_type_args prog c ddef v deref ies n_tl pos in 
-                n_tl
-              )
-            | _ -> (
-                let ddef = I.look_up_data_def_raw prog.I.prog_data_decls c in 
-                let c = (
-                  let deref_str = ref "" in
-                  for i = 1 to deref do
-                    deref_str := !deref_str ^ "__star";
-                  done;
-                  c ^ !deref_str
-                ) in
-                let n_tl = try_unify_data_type_args prog c ddef v deref ies n_tl pos in 
-                n_tl
-            )
+            let n_tl = try_unify_data_type_args prog c v deref ies n_tl pos in 
+            n_tl
           with
           | Not_found ->
             (*let _ = print_string (Iprinter.string_of_program prog) in*)
