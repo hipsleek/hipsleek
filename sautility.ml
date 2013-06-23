@@ -1291,6 +1291,14 @@ let simplify_one_constr_b prog unk_hps lhs_b rhs_b=
   Debug.no_2 "simplify_one_constr_b" pr pr (pr_triple pr pr !CP.print_svl)
       (fun _ _ -> simplify_one_constr_b_x prog unk_hps lhs_b rhs_b) lhs_b rhs_b
 
+
+let simp_match_unknown unk_hps link_hps cs=
+  let lhs_hps = CF.get_hp_rel_name_formula cs.CF.hprel_lhs in
+  let rhs_hps = CF.get_hp_rel_name_formula cs.CF.hprel_rhs in
+  let inter_hps = CP.intersect_svl lhs_hps rhs_hps in
+  let inter_unk_hps = CP.intersect_svl inter_hps (unk_hps@link_hps) in
+  CF.drop_hprel_constr cs inter_unk_hps
+
 let find_well_defined_hp_x prog hds hvs r_hps prog_vars post_hps (hp,args) def_ptrs lhsb split_spatial pos=
   let do_spit fb rhs new_hps=
     let f = keep_data_view_hrel_nodes_fb prog fb hds hvs args [(hp,args)] in
@@ -1325,15 +1333,20 @@ let find_well_defined_hp_x prog hds hvs r_hps prog_vars post_hps (hp,args) def_p
         wdef_ni_svl: if not empty, do not split.
         TODO: forward hp defs to post-preds
       *)
-      if wdef_ni_svl <> [] || not split_spatial then
+      if wdef_ni_svl <> [] then
         (lhsb, [],[(hp,args)], [])
       else begin
         (*not all args are well defined and in SHAPE INFER. do split*)
         let undef_args_inst = List.filter (fun (sv,_) -> CP.mem_svl sv undef_args) args_inst in
-        if !Globals.sa_s_split_base then
-          let new_hf, new_hp = add_raw_hp_rel_x prog undef_args_inst pos in
-          let nlhsb = CF.mkAnd_fb_hf lhsb new_hf pos in
-          do_spit nlhsb (CF.formula_of_heap new_hf pos) [(new_hf,(new_hp, List.map fst undef_args_inst))]
+        if undef_args_inst <> [] then
+          (*hip or shape infer*)
+          if not split_spatial then (lhsb, [],[(hp,args)], []) else
+            if !Globals.sa_s_split_base then
+              let new_hf, new_hp = add_raw_hp_rel_x prog undef_args_inst pos in
+              let nlhsb = CF.mkAnd_fb_hf lhsb new_hf pos in
+              do_spit nlhsb (CF.formula_of_heap new_hf pos) [(new_hf,(new_hp, List.map fst undef_args_inst))]
+            else
+              do_spit lhsb (CF.mkTrue (CF.mkTrueFlow()) pos) []
         else
           do_spit lhsb (CF.mkTrue (CF.mkTrueFlow()) pos) []
       end
@@ -1996,15 +2009,16 @@ let rec get_closed_ptrs_one rdn ldns rdns rcur_match ss=
                   end
         in
         let lm,rm = helper2 ldns in
-        let _ =  DD.ninfo_pprint ("    lm " ^ (!CP.print_svl (lm))) no_pos in
-        let _ =  DD.ninfo_pprint ("    rm " ^ (!CP.print_svl (rm))) no_pos in
+        (* let _ =  DD.info_pprint ("    lm " ^ (!CP.print_svl (lm))) no_pos in *)
+        (* let _ =  DD.info_pprint ("    rm " ^ (!CP.print_svl (rm))) no_pos in *)
         if lm = [] then ([],[]) (*all node intersected are diff in type*)
         else (rm, List.combine lm rm)
     end
 
 and get_closed_matched_ptrs ldns rdns rcur_match ss=
   let rec helper old_m old_ss inc_m=
-    let _ =  DD.ninfo_pprint ("    old_m " ^ (!CP.print_svl old_m)) no_pos in
+    (* let _ =  DD.info_pprint ("    old_m " ^ (!CP.print_svl old_m)) no_pos in *)
+    (* let _ =  DD.info_pprint ("    inc_m " ^ (!CP.print_svl inc_m)) no_pos in *)
     (*find matching ldns and rdns*)
     let r = List.map (fun m -> get_closed_ptrs_one m ldns rdns old_m old_ss) inc_m in
     let incr_match, incr_ss = List.split r in
@@ -2061,7 +2075,7 @@ let rec find_imply prog lunk_hps runk_hps lhs1 rhs1 lhs2 rhs2=
   in
   let transform_hrel (hp,eargs,_)= (hp, List.concat (List.map CP.afv eargs)) in
   let transform_dn dn= (dn.CF.h_formula_data_name, dn.CF.h_formula_data_node,
-                        List.filter (fun (CP.SpecVar (t,_,_)) -> is_pointer t ) dn.CF. h_formula_data_arguments) in
+                        List.filter (fun (CP.SpecVar (t,_,_)) -> is_pointer t ) dn.CF.h_formula_data_arguments) in
   let rec is_inconsistent_x ss done_ss=
     match ss with
       | [] -> false
@@ -2101,67 +2115,77 @@ let rec find_imply prog lunk_hps runk_hps lhs1 rhs1 lhs2 rhs2=
     if matched_hps = [] then None
     else
       begin
-          (*for debugging*)
-          (* let _ = Debug.ninfo_pprint ("     m_args2: " ^ (!CP.print_svl  m_args2)) no_pos in *)
-          (* let pr_ss = pr_list (pr_pair !CP.print_sv !CP.print_sv) in *)
-          (* let _ =  Debug.ninfo_pprint ("     subst: " ^ (pr_ss subst)) no_pos in *)
-          (*END for debugging*)
-          (*matching hnodes (in matched_hps) and return subst*)
-          let lhns1 = List.map transform_dn ldns in
-          let rhns1 = List.map transform_dn rdns in
-          (*all_matched_svl2: all matched slv of rhs2*)
-          let all_matched_svl1,subst1 = get_closed_matched_ptrs lhns1 rhns1 [] subst in
-          let all_matched_svl2 = all_matched_svl1 @ m_args2 in
-          (* let _ = Debug.ninfo_pprint ("    all matched 1: " ^ (!CP.print_svl all_matched_svl1)) no_pos in *)
-          (* let _ = Debug.ninfo_pprint ("    all matched 2: " ^ (!CP.print_svl all_matched_svl2)) no_pos in *)
-          (* let _ =  Debug.ninfo_pprint ("     subst1: " ^ (pr_ss subst1)) no_pos in *)
-          if  (is_inconsistent subst1 []) then None else
-            let n_lhs1 = CF.subst_b subst1 lhs1 in
-            (*check pure implication*)
-            let nldns,nlvns,_ = CF.get_hp_rel_bformula n_lhs1 in
-            (*loc-1b1.slk*)
-            (* let lmf = CP.filter_var_new (MCP.pure_of_mix n_lhs1.CF.formula_base_pure)
-              (look_up_closed_ptr_args prog nldns nlvns all_matched_svl2) in *)
-            let lmf = (MCP.pure_of_mix n_lhs1.CF.formula_base_pure) in
-            let rmf = (MCP.pure_of_mix rhs2.CF.formula_base_pure) in
+        (*for debugging*)
+        (* let _ = Debug.info_pprint ("     m_args2: " ^ (!CP.print_svl  m_args2)) no_pos in *)
+        (* let pr_ss = pr_list (pr_pair !CP.print_sv !CP.print_sv) in *)
+        (* let _ =  Debug.info_pprint ("     subst: " ^ (pr_ss subst)) no_pos in *)
+        (*END for debugging*)
+        (*matching hnodes (in matched_hps) and return subst*)
+        let lhns1 = List.map transform_dn ldns in
+        let rhns1 = List.map transform_dn rdns in
+        (*all_matched_svl2: all matched slv of rhs2*)
+        let cur_rnode_match = List.fold_left (fun ls (_,sv,_) ->
+            if CP.mem_svl sv m_args2 then (ls@[sv]) else ls
+          ) [] rhns1
+        in
+        let cur_node_match = List.fold_left (fun ls (_,sv,_) ->
+            let sv1 = CP.subs_one subst sv in
+            if CP.mem_svl sv1 cur_rnode_match then (ls@[sv]) else ls
+          ) [] lhns1
+        in
+        let all_matched_svl1,subst1 = get_closed_matched_ptrs lhns1 rhns1 cur_node_match subst in
+        let all_matched_svl2 = all_matched_svl1 @ m_args2 in
+        (* let _ = Debug.info_pprint ("    all matched 1: " ^ (!CP.print_svl all_matched_svl1)) no_pos in *)
+        (* let _ = Debug.info_pprint ("    all matched 2: " ^ (!CP.print_svl all_matched_svl2)) no_pos in *)
+        (* let _ =  Debug.info_pprint ("     subst1: " ^ (pr_ss subst1)) no_pos in *)
+        if (is_inconsistent subst1 []) then None else
+          let n_lhs1 = CF.subst_b subst1 lhs1 in
+          (*check pure implication*)
+          let nldns,nlvns,_ = CF.get_hp_rel_bformula n_lhs1 in
+          (*loc-1b1.slk*)
+          (* let lmf = CP.filter_var_new (MCP.pure_of_mix n_lhs1.CF.formula_base_pure)
+             (look_up_closed_ptr_args prog nldns nlvns all_matched_svl2) in *)
+          let lmf = (MCP.pure_of_mix n_lhs1.CF.formula_base_pure) in
+          let rmf = (MCP.pure_of_mix rhs2.CF.formula_base_pure) in
             (*get rele pure of lhs2*)
-            let rmf1 = CP.mkAnd rmf (CF.get_pure lhs2) no_pos in
-            let _ = Debug.ninfo_pprint ("    n_lhs1: " ^ (Cprinter.string_of_formula_base n_lhs1)) no_pos in
-            let _ = Debug.ninfo_pprint ("    lmf: " ^ (!CP.print_formula lmf)) no_pos in
-            let _ = Debug.ninfo_pprint ("    rmf1: " ^ (!CP.print_formula rmf1)) no_pos in
-            let b,_,_ = TP.imply rmf1 lmf "sa:check_hrels_imply" true None in
-            let lpos = (CF.pos_of_formula lhs2) in
-            if b then
-              let l_res = {n_lhs1 with
-                  CF.formula_base_heap = CF.drop_data_view_hrel_nodes_hf
-                      n_lhs1.CF.formula_base_heap select_dnode
-                      select_vnode select_hrel  all_matched_svl1 all_matched_svl1 matched_hps}
-              in
-              (*drop hps and matched svl in n_rhs2*)
-              let r_res = {rhs2 with
-                  CF.formula_base_heap = CF.drop_data_view_hrel_nodes_hf
-                      rhs2.CF.formula_base_heap select_dnode
-                      select_vnode select_hrel all_matched_svl1 all_matched_svl1 matched_hps;
-                  CF.formula_base_pure = MCP.mix_of_pure
-                      (CP.filter_var_new
-                          (MCP.pure_of_mix rhs2.CF.formula_base_pure) all_matched_svl2)}
-              in
-              let n_lhs2 = (* CF.subst ss2 *) lhs2 in
-              (*end refresh*)
-              (*combine l_res into lhs2*)
-              let l =  CF.mkStar n_lhs2 (CF.Base l_res) CF.Flow_combine lpos in
-              let n_rhs1 = CF.subst subst1 rhs1 in
-              (*avoid clashing --> should refresh remain svl of r_res*)
-              let r_res1 = (* CF.subst ss2 *) (CF.Base r_res) in
-              let _ = Debug.ninfo_pprint ("    r_res1: " ^ (Cprinter.prtt_string_of_formula r_res1)) no_pos in
-              (*elim duplicate hprel in r_res1 and n_rhs1*)
-              let nr_hprel = CF.get_HRels_f n_rhs1 in
-              let nrest_hprel = CF.get_HRels_f r_res1 in
-              let diff3 = Gen.BList.intersect_eq check_hp_arg_eq nr_hprel nrest_hprel in
-              let r_res2,_ = CF.drop_hrel_f r_res1 (List.map (fun (hp,_) -> hp) diff3) in
-              let r = CF.mkStar n_rhs1 r_res2 CF.Flow_combine (CF.pos_of_formula n_rhs1) in
-              (Some (l, r,subst1, sst))
-            else None
+          let rmf1 = CP.mkAnd rmf (CF.get_pure lhs2) no_pos in
+          (* let _ = Debug.ninfo_pprint ("    n_lhs1: " ^ (Cprinter.string_of_formula_base n_lhs1)) no_pos in *)
+          (* let _ = Debug.ninfo_pprint ("    lmf: " ^ (!CP.print_formula lmf)) no_pos in *)
+          (* let _ = Debug.ninfo_pprint ("    rmf1: " ^ (!CP.print_formula rmf1)) no_pos in *)
+          let b,_,_ = TP.imply rmf1 lmf "sa:check_hrels_imply" true None in
+          let lpos = (CF.pos_of_formula lhs2) in
+          if b then
+            let l_res = {n_lhs1 with
+                CF.formula_base_heap = CF.drop_data_view_hrel_nodes_hf
+                    n_lhs1.CF.formula_base_heap select_dnode
+                    select_vnode select_hrel  all_matched_svl1 all_matched_svl1 matched_hps}
+            in
+            (*drop hps and matched svl in n_rhs2*)
+            let r_res = {rhs2 with
+                CF.formula_base_heap = CF.drop_data_view_hrel_nodes_hf
+                    rhs2.CF.formula_base_heap select_dnode
+                    select_vnode select_hrel all_matched_svl1 all_matched_svl1 matched_hps;
+                CF.formula_base_pure = MCP.mix_of_pure
+                    (CP.filter_var_new
+                        (MCP.pure_of_mix rhs2.CF.formula_base_pure) all_matched_svl2)}
+            in
+            let n_lhs2 = (* CF.subst ss2 *) lhs2 in
+            (*end refresh*)
+            (*combine l_res into lhs2*)
+            let l =  CF.mkStar n_lhs2 (CF.Base l_res) CF.Flow_combine lpos in
+            let n_rhs1 = CF.subst subst1 rhs1 in
+            (*avoid clashing --> should refresh remain svl of r_res*)
+            let r_res1 = (* CF.subst ss2 *) (CF.Base r_res) in
+            (* let _ = Debug.info_pprint ("    r_res1: " ^ (Cprinter.prtt_string_of_formula r_res1)) no_pos in *)
+            (* let _ = Debug.info_pprint ("    n_rhs1: " ^ (Cprinter.string_of_formula n_rhs1)) no_pos in *)
+            (*elim duplicate hprel in r_res1 and n_rhs1*)
+            let nr_hprel = CF.get_HRels_f n_rhs1 in
+            let nrest_hprel = CF.get_HRels_f r_res1 in
+            let diff3 = Gen.BList.intersect_eq check_hp_arg_eq nr_hprel nrest_hprel in
+            let r_res2,_ = CF.drop_hrel_f r_res1 (List.map (fun (hp,_) -> hp) diff3) in
+            let r = CF.mkStar n_rhs1 r_res2 CF.Flow_combine (CF.pos_of_formula n_rhs1) in
+            (Some (l, r,subst1, sst))
+          else None
       end
   in
   r

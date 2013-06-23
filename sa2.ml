@@ -1391,13 +1391,14 @@ let partition_constrs constrs post_hps=
 let infer_shapes_proper prog proc_name (constrs2: CF.hprel list) callee_hps sel_hp_rels sel_post_hps
       (unk_map2: ((CP.spec_var * int list) * CP.xpure_view) list)
       prog_vars unk_hpargs link_hpargs detect_dang: (CF.hprel list * CF.hp_rel_def list* (CP.spec_var*CP.exp list * CP.exp list) list * (CP.spec_var * CP.spec_var list) list *  (CP.spec_var *CP.spec_var list) list)=
-  let unk_hps = List.map fst unk_hpargs in (*todo: total_unk_map + analize_unk*)
+  let unk_hps = List.map fst unk_hpargs in
+  let link_hps = List.map fst link_hpargs in
   let _ = DD.binfo_pprint ">>>>>> step 3: apply transitive implication<<<<<<" no_pos in
-  let constrs3,_ = apply_transitive_impl_fix prog callee_hps unk_map2
+  let constrs3a,_ = apply_transitive_impl_fix prog callee_hps unk_map2
      unk_hps constrs2 in
+  let constrs3 = List.map (SAU.simp_match_unknown unk_hps link_hps) constrs3a in
   (*partition constraints into 2 groups: pre-predicates, post-predicates*)
   let post_constrs, pre_constrs = partition_constrs constrs3 sel_post_hps in
-  let link_hps = List.map fst link_hpargs in
   (*find inital sol*)
   let _ = DD.binfo_pprint ">>>>>> pre-predicates<<<<<<" no_pos in
   let pre_hps, pre_defs, unk_hpargs1,unk_map3 = infer_shapes_init_pre prog pre_constrs callee_hps []
