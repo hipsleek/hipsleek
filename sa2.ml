@@ -1098,7 +1098,7 @@ let generalize_hps_cs prog callee_hps hpdefs unk_hps cs=
       (fun _ _ _ -> generalize_hps_cs_x prog callee_hps hpdefs unk_hps cs) cs  callee_hps hpdefs
 
 (*for tupled defs*)
-let generalize_hps_cs_new_x prog callee_hps hpdefs unk_hps cs=
+let generalize_hps_cs_new_x prog callee_hps hpdefs unk_hps link_hps cs=
   let generalize_hps_one_cs constr=
     let lhs,rhs = constr.CF.hprel_lhs,constr.CF.hprel_rhs in
     let lhds, lhvs,l_hp = CF.get_hp_rel_formula lhs in
@@ -1108,7 +1108,8 @@ let generalize_hps_cs_new_x prog callee_hps hpdefs unk_hps cs=
     (*filer def hp out*)
     let dfs = (hpdefs@callee_hps@unk_hps) in
     let diff = List.filter (fun (hp1,_) -> not(CP.mem_svl hp1 dfs)) lhp_args in
-    match diff with
+    let diff1 = List.filter (fun (hp1,_) -> not(CP.mem_svl hp1 link_hps)) diff in
+    match diff1 with
       | [] -> ([],[],[]) (*drop constraint, no new definition*)
       | _ -> begin
           let _ = DD.binfo_pprint ">>>>>> generalize_one_cs_hp: <<<<<<" no_pos in
@@ -1149,12 +1150,13 @@ let generalize_hps_cs_new_x prog callee_hps hpdefs unk_hps cs=
   let hpdefs = SAU.combine_hpdefs hp_defs in
   (cs1, hpdefs, hp_names)
 
-let generalize_hps_cs_new prog callee_hps hpdefs unk_hps cs=
+let generalize_hps_cs_new prog callee_hps hpdefs unk_hps link_hps cs=
    let pr1 = pr_list_ln Cprinter.string_of_hprel in
    let pr3  = pr_list Cprinter.string_of_hp_rel_def in
    let pr4 (_,b,c) = let pr = pr_pair pr3 !CP.print_svl in pr (b,c) in
-  Debug.no_3 "generalize_hps_cs_new" pr1 !CP.print_svl !CP.print_svl pr4
-      (fun _ _ _ -> generalize_hps_cs_new_x prog callee_hps hpdefs unk_hps cs) cs  callee_hps hpdefs
+  Debug.no_4 "generalize_hps_cs_new" pr1 !CP.print_svl !CP.print_svl !CP.print_svl pr4
+      (fun _ _ _ _ -> generalize_hps_cs_new_x prog callee_hps hpdefs unk_hps link_hps cs)
+      cs callee_hps hpdefs unk_hps
 
 let generalize_hps_x prog callee_hps unk_hps link_hps sel_post_hps pre_defs predef_hps cs par_defs=
   DD.binfo_pprint ">>>>>> step 6: generalization <<<<<<" no_pos;
@@ -1167,7 +1169,7 @@ let generalize_hps_x prog callee_hps unk_hps link_hps sel_post_hps pre_defs pred
   let pair_names_defs = generalize_hps_par_def prog non_ptr_unk_hps unk_hps link_hps sel_post_hps pre_defs predef_hps par_defs in
   let hp_names,hp_defs = List.split pair_names_defs in
 (*for each constraints, we may pick more definitions*)
-  let remain_constr, hp_def1, hp_names2 = generalize_hps_cs_new prog callee_hps (hp_names@link_hps) (List.map fst unk_hps) cs in
+  let remain_constr, hp_def1, hp_names2 = generalize_hps_cs_new prog callee_hps hp_names (List.map fst unk_hps) link_hps cs in
   (*room for unk predicates processing*)
   (remain_constr, (hp_defs@hp_def1), hp_names@hp_names2)
 
