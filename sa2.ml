@@ -340,7 +340,7 @@ let split_constr_x prog constrs post_hps prog_vars unk_map unk_hps link_hps=
   in
   let split_one cs total_unk_map =
     let pr1 = Cprinter.string_of_hprel_short in
-    let pr2 = (pr_list (pr_pair (pr_pair !CP.print_sv (pr_list string_of_int)) CP.string_of_xpure_view)) in
+    (* let pr2 = (pr_list (pr_pair (pr_pair !CP.print_sv (pr_list string_of_int)) CP.string_of_xpure_view)) in *)
     let res = split_one cs total_unk_map in
     let (new_cs,new_umap,link_hpargs) = res in
     if (List.length new_cs > 1) then
@@ -540,7 +540,7 @@ let combine_pdefs_pre_x prog unk_hps link_hps pr_pdefs=
   in
   (*nav code. to improve*)
   let combine_helper2 ((hp1,args1,unk_svl1, cond1, norm_cond1, olhs1, orhs1), cs1) ((hp2,args2,unk_svl2, cond2, norm_cond2, olhs2, orhs2), cs2)=
-    let norm_cond_disj1 = CP.mkAnd norm_cond1 (CP.mkNot norm_cond2 None no_pos) no_pos in
+    let norm_cond_disj1 = CP.mkAnd norm_cond1 (CP.mkNot (CP.remove_redundant norm_cond2) None no_pos) no_pos in
     let pdef1 = if (TP.is_sat_raw (MCP.mix_of_pure norm_cond_disj1)) then
       let npdef1 = do_combine (hp1,args1,unk_svl1, CP.remove_redundant norm_cond_disj1 , olhs1, orhs1) in
       npdef1
@@ -577,7 +577,7 @@ let combine_pdefs_pre_x prog unk_hps link_hps pr_pdefs=
       | ((_,_,_,_, norm_cond1,_,_),_)::rest ->
           (* let _ = print_endline ("cond: " ^ ( !CP.print_formula norm_cond)) in *)
           (* let _ = print_endline ("cond1: " ^ ( !CP.print_formula norm_cond1)) in *)
-          if not (TP.is_sat_raw (MCP.mix_of_pure (CP.mkAnd norm_cond norm_cond1 no_pos))) then
+            if not (TP.is_sat_raw (MCP.mix_of_pure (CP.mkAnd norm_cond norm_cond1 no_pos))) then
             refine_cond rest ((hp,args,unk_svl, cond, norm_cond, olhs, orhs), cs)
           else
             ([], [cs])
@@ -1450,7 +1450,7 @@ let infer_shapes_core prog proc_name (constrs0: CF.hprel list) callee_hps sel_hp
     else
       (constrs0, hp_rel_unkmap, unk_hpargs, link_hpargs)
   in
-  let unk_hps = (List.map fst unk_hpargs) in
+  (* let unk_hps = (List.map fst unk_hpargs) in *)
   (*TODO: remove detect dangling at pre/post process*)
   (*TEMP*)
   let user_detect_dang =  false (* detect_dang && !Globals.sa_elim_unused_preds  *)in

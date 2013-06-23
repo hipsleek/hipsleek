@@ -1740,7 +1740,7 @@ Thus:
    G(x,res) ::= P(x) & res=x
 
 ===========================================================
-# cll-1b.slk
+# cll-1b.slk: FIXED
 
 Declare_Unknown [HP_7].
 

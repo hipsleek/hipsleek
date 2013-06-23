@@ -2124,10 +2124,12 @@ let rec find_imply prog lunk_hps runk_hps lhs1 rhs1 lhs2 rhs2=
               (look_up_closed_ptr_args prog nldns nlvns all_matched_svl2) in *)
             let lmf = (MCP.pure_of_mix n_lhs1.CF.formula_base_pure) in
             let rmf = (MCP.pure_of_mix rhs2.CF.formula_base_pure) in
+            (*get rele pure of lhs2*)
+            let rmf1 = CP.mkAnd rmf (CF.get_pure lhs2) no_pos in
             let _ = Debug.ninfo_pprint ("    n_lhs1: " ^ (Cprinter.string_of_formula_base n_lhs1)) no_pos in
             let _ = Debug.ninfo_pprint ("    lmf: " ^ (!CP.print_formula lmf)) no_pos in
-            let _ = Debug.ninfo_pprint ("    rmf: " ^ (!CP.print_formula rmf)) no_pos in
-            let b,_,_ = TP.imply rmf lmf "sa:check_hrels_imply" true None in
+            let _ = Debug.ninfo_pprint ("    rmf1: " ^ (!CP.print_formula rmf1)) no_pos in
+            let b,_,_ = TP.imply rmf1 lmf "sa:check_hrels_imply" true None in
             let lpos = (CF.pos_of_formula lhs2) in
             if b then
               let l_res = {n_lhs1 with
