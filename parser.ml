@@ -2570,12 +2570,18 @@ constant_expression: [[t=expression -> t]];
 boolean_expression:  [[t=expression -> t]];
 
 assignment_expression:
-  [[ t1= prefixed_unary_expression; `EQ;  t2=expression            -> mkAssign OpAssign t1 t2 (get_pos_camlp4 _loc 2)
-	 | t1=prefixed_unary_expression; `OP_MULT_ASSIGN;t2=expression  -> mkAssign OpMultAssign t1 t2 (get_pos_camlp4 _loc 2)
-   | t1=prefixed_unary_expression; `OP_DIV_ASSIGN; t2=expression  -> mkAssign OpDivAssign t1 t2 (get_pos_camlp4 _loc 2)
-   | t1=prefixed_unary_expression; `OP_MOD_ASSIGN; t2=expression  -> mkAssign OpModAssign t1 t2 (get_pos_camlp4 _loc 2)
-	 | t1=prefixed_unary_expression; `OP_ADD_ASSIGN; t2=expression  -> mkAssign OpPlusAssign t1 t2 (get_pos_camlp4 _loc 2)
-	 | t1=prefixed_unary_expression; `OP_SUB_ASSIGN; t2=expression  -> mkAssign OpMinusAssign t1 t2 (get_pos_camlp4 _loc 2)]];
+  [[ t1= prefixed_unary_expression; `EQ;  t2=expression ->
+       mkAssign OpAssign t1 t2 (fresh_branch_point_id "") (get_pos_camlp4 _loc 2)
+   | t1=prefixed_unary_expression; `OP_MULT_ASSIGN;t2=expression ->
+       mkAssign OpMultAssign t1 t2 (fresh_branch_point_id "") (get_pos_camlp4 _loc 2)
+   | t1=prefixed_unary_expression; `OP_DIV_ASSIGN; t2=expression ->
+       mkAssign OpDivAssign t1 t2 (fresh_branch_point_id "") (get_pos_camlp4 _loc 2)
+   | t1=prefixed_unary_expression; `OP_MOD_ASSIGN; t2=expression ->
+       mkAssign OpModAssign t1 t2 (fresh_branch_point_id "") (get_pos_camlp4 _loc 2)
+   | t1=prefixed_unary_expression; `OP_ADD_ASSIGN; t2=expression ->
+       mkAssign OpPlusAssign t1 t2 (fresh_branch_point_id "") (get_pos_camlp4 _loc 2)
+   | t1=prefixed_unary_expression; `OP_SUB_ASSIGN; t2=expression ->
+       mkAssign OpMinusAssign t1 t2 (fresh_branch_point_id "") (get_pos_camlp4 _loc 2)]];
 
 conditional_expression: 
   [[ t= conditional_or_expression -> t
@@ -2588,11 +2594,13 @@ conditional_expression:
 
 conditional_or_expression:
   [[ t=conditional_and_expression -> t
-   | t1=SELF; `OROR; t2=conditional_and_expression -> mkBinary OpLogicalOr t1 t2 (get_pos_camlp4 _loc 2)]];
+   | t1=SELF; `OROR; t2=conditional_and_expression ->
+       mkBinary OpLogicalOr t1 t2 (fresh_branch_point_id "") (get_pos_camlp4 _loc 2)]];
 	
 conditional_and_expression:
   [[ t=inclusive_or_expression -> t
-   | t1=SELF; `ANDAND; t2=inclusive_or_expression -> mkBinary OpLogicalAnd t1 t2 (get_pos_camlp4 _loc 2)]];
+   | t1=SELF; `ANDAND; t2=inclusive_or_expression ->
+       mkBinary OpLogicalAnd t1 t2 (fresh_branch_point_id "") (get_pos_camlp4 _loc 2)]];
 
 (* bitwise *)
 inclusive_or_expression : [[ t=exclusive_or_expression -> t]];
@@ -2603,61 +2611,78 @@ and_expression : [[t=equality_expression -> t]];
 
 equality_expression : 
  [[ t=relational_expression -> t
-  | t1=SELF; `EQEQ; t2=relational_expression -> mkBinary OpEq t1 t2 (get_pos_camlp4 _loc 2)
-  | t1=SELF; `NEQ; t2=relational_expression -> mkBinary OpNeq t1 t2 (get_pos_camlp4 _loc 2)]];
+  | t1=SELF; `EQEQ; t2=relational_expression ->
+      mkBinary OpEq t1 t2 (fresh_branch_point_id "") (get_pos_camlp4 _loc 2)
+  | t1=SELF; `NEQ; t2=relational_expression ->
+      mkBinary OpNeq t1 t2 (fresh_branch_point_id "") (get_pos_camlp4 _loc 2)]];
 
 relational_expression :
  [[ t=shift_expression                 -> t
-  | t1=SELF; `LT; t2=shift_expression  -> mkBinary OpLt t1 t2 (get_pos_camlp4 _loc 2)
-  | t1=SELF; `GT; t2=shift_expression  -> mkBinary OpGt t1 t2 (get_pos_camlp4 _loc 2)
-  | t1=SELF; `LTE; t2=shift_expression -> mkBinary OpLte t1 t2 (get_pos_camlp4 _loc 2)
-  | t1=SELF; `GTE; t2=shift_expression -> mkBinary OpGte t1 t2 (get_pos_camlp4 _loc 2)]];
+  | t1=SELF; `LT; t2=shift_expression  ->
+      mkBinary OpLt t1 t2 (fresh_branch_point_id "") (get_pos_camlp4 _loc 2)
+  | t1=SELF; `GT; t2=shift_expression  ->
+      mkBinary OpGt t1 t2 (fresh_branch_point_id "") (get_pos_camlp4 _loc 2)
+  | t1=SELF; `LTE; t2=shift_expression ->
+      mkBinary OpLte t1 t2 (fresh_branch_point_id "") (get_pos_camlp4 _loc 2)
+  | t1=SELF; `GTE; t2=shift_expression ->
+      mkBinary OpGte t1 t2 (fresh_branch_point_id "") (get_pos_camlp4 _loc 2)]];
 
 shift_expression: [[t=additive_expression -> t]];
 
 additive_expression: 
  [[ t=multiplicative_expression                   -> t
-  | t1=SELF; `PLUS; t2=multiplicative_expression  -> mkBinary OpPlus t1 t2 (get_pos_camlp4 _loc 2)
-	| t1=SELF; `MINUS; t2=multiplicative_expression -> mkBinary OpMinus t1 t2 (get_pos_camlp4 _loc 2)]];
+  | t1=SELF; `PLUS; t2=multiplicative_expression  ->
+      mkBinary OpPlus t1 t2 (fresh_branch_point_id "") (get_pos_camlp4 _loc 2)
+  | t1=SELF; `MINUS; t2=multiplicative_expression ->
+      mkBinary OpMinus t1 t2 (fresh_branch_point_id "") (get_pos_camlp4 _loc 2)]];
 
 multiplicative_expression:
  [[ t=unary_expression                            -> t 
-  | t1=SELF; `STAR; t2=prefixed_unary_expression  -> mkBinary OpMult t1 t2 (get_pos_camlp4 _loc 2)
-	| t1=SELF; `DIV;  t2=prefixed_unary_expression  -> mkBinary OpDiv t1 t2 (get_pos_camlp4 _loc 2)
-	| t1=SELF; `PERCENT; t2=prefixed_unary_expression -> mkBinary OpMod t1 t2 (get_pos_camlp4 _loc 2)]];
+  | t1=SELF; `STAR; t2=prefixed_unary_expression  ->
+      mkBinary OpMult t1 t2 (fresh_branch_point_id "") (get_pos_camlp4 _loc 2)
+  | t1=SELF; `DIV;  t2=prefixed_unary_expression  ->
+      mkBinary OpDiv t1 t2 (fresh_branch_point_id "") (get_pos_camlp4 _loc 2)
+  | t1=SELF; `PERCENT; t2=prefixed_unary_expression ->
+      mkBinary OpMod t1 t2 (fresh_branch_point_id "") (get_pos_camlp4 _loc 2)]];
 
-prefixed_unary_expression: [[ t=unary_expression -> t]];
+prefixed_unary_expression: 
+ [[ t=unary_expression -> t]];
 
-pre_increment_expression: [[`OP_INC; t=prefixed_unary_expression -> mkUnary OpPreInc t (get_pos_camlp4 _loc 1)]];
+pre_increment_expression: 
+ [[ `OP_INC; t=prefixed_unary_expression ->
+      mkUnary OpPreInc t (fresh_branch_point_id "") (get_pos_camlp4 _loc 1)]];
 
-pre_decrement_expression: [[`OP_DEC; t=prefixed_unary_expression -> mkUnary OpPreDec t (get_pos_camlp4 _loc 1)]];
+pre_decrement_expression: 
+ [[ `OP_DEC; t=prefixed_unary_expression ->
+      mkUnary OpPreDec t (fresh_branch_point_id "") (get_pos_camlp4 _loc 1)]];
 
-post_increment_expression: [[peek_try_st_in; t=primary_expression; `OP_INC -> mkUnary OpPostInc t (get_pos_camlp4 _loc 2)]];
+post_increment_expression: 
+ [[ peek_try_st_in; t=primary_expression; `OP_INC ->
+      mkUnary OpPostInc t (fresh_branch_point_id "") (get_pos_camlp4 _loc 2)]];
 
-post_decrement_expression: [[ peek_try_st; t=primary_expression; `OP_DEC -> mkUnary OpPostDec t (get_pos_camlp4 _loc 2)]];
+post_decrement_expression:
+ [[ peek_try_st; t=primary_expression; `OP_DEC ->
+      mkUnary OpPostDec t (fresh_branch_point_id "") (get_pos_camlp4 _loc 2)]];
 
 unary_expression: 
  [[ t=unary_expression_not_plusminus -> t
   | `PLUS; t=SELF ->
-		let zero = IntLit { exp_int_lit_val = 0;
-                        exp_int_lit_pos = get_pos_camlp4 _loc 1 }in
-		  mkBinary OpPlus zero t (get_pos_camlp4 _loc 1)
+      let zero = mkIntLit 0 (get_pos_camlp4 _loc 1) in
+      mkBinary OpPlus zero t (fresh_branch_point_id "") (get_pos_camlp4 _loc 1)
   | `MINUS; t=SELF ->
-		let zero = IntLit { exp_int_lit_val = 0;
-                        exp_int_lit_pos = get_pos_camlp4 _loc 1 }	in
-		  mkBinary OpMinus zero t (get_pos_camlp4 _loc 1)
+      let zero = mkIntLit 0 (get_pos_camlp4 _loc 1) in
+      mkBinary OpMinus zero t (fresh_branch_point_id "") (get_pos_camlp4 _loc 1)
   | `STAR; t=SELF ->   (*Pointers: value-of *v *)
-        (* let _ = print_endline ("Pointer: value-of") in *)
-        mkUnary OpVal t (get_pos_camlp4 _loc 1)
+      mkUnary OpVal t (fresh_branch_point_id "") (get_pos_camlp4 _loc 1)
   | `AND; t=SELF ->   (*Pointers: address-of *& *)
-        (* let _ = print_endline ("Pointer: address-of") in *)
-        mkUnary OpAddr t (get_pos_camlp4 _loc 1)
+      mkUnary OpAddr t (fresh_branch_point_id "") (get_pos_camlp4 _loc 1)
   | t=pre_increment_expression -> t
   | t=pre_decrement_expression -> t]];
 
 unary_expression_not_plusminus:
  [[ t=postfix_expression -> t
-  | `NOT; t = prefixed_unary_expression -> mkUnary OpNot t (get_pos_camlp4 _loc 1)
+  | `NOT; t = prefixed_unary_expression ->
+      mkUnary OpNot t (fresh_branch_point_id "") (get_pos_camlp4 _loc 1)
   | t=cast_expression -> t]];
 
 postfix_expression:

@@ -1372,74 +1372,156 @@ and contains_field_ho (e:exp) : bool =
  
 (* smart constructors *)
 
-let mkConstDecl t d p = ConstDecl { exp_const_decl_type = t;
-									exp_const_decl_decls = d;
-									exp_const_decl_pos = p }
+let mkDataDecl name fields parent_name invs is_template methods =
+  { data_name = name;
+    data_fields = fields;
+    data_parent_name = parent_name;
+    data_invs = invs;
+    data_is_template = is_template;
+    data_methods = methods }
 
-and mkVarDecl t d p = VarDecl { exp_var_decl_type = t;
-								exp_var_decl_decls = d;
-								exp_var_decl_pos = p }
+let mkConstDecl t d p = 
+  ConstDecl { exp_const_decl_type = t;
+              exp_const_decl_decls = d;
+              exp_const_decl_pos = p }
 
-and mkGlobalVarDecl t d p = { exp_var_decl_type = t;
-							  exp_var_decl_decls = d;
-							  exp_var_decl_pos = p }
+and mkVarDecl t d p = 
+  VarDecl { exp_var_decl_type = t;
+            exp_var_decl_decls = d;
+            exp_var_decl_pos = p }
 
-and mkLogicalVarDecl t d p = {
-  exp_var_decl_type = t;
-	exp_var_decl_decls = d;
-	exp_var_decl_pos = p 
-}
+and mkGlobalVarDecl t d p = 
+  { exp_var_decl_type = t;
+    exp_var_decl_decls = d;
+    exp_var_decl_pos = p }
+
+and mkLogicalVarDecl t d p =
+  { exp_var_decl_type = t;
+    exp_var_decl_decls = d;
+    exp_var_decl_pos = p }
 
 and mkSeq e1 e2 l = match e1 with
   | Empty _ -> e2
-  | _ -> match e2 with
-	  | Empty _ -> e1
-	  | _ -> Seq { exp_seq_exp1 = e1;
-				   exp_seq_exp2 = e2;
-				   exp_seq_pos = l }
+  | _ -> (
+      match e2 with
+      | Empty _ -> e1
+      | _ -> Seq { exp_seq_exp1 = e1;
+                   exp_seq_exp2 = e2;
+                   exp_seq_pos = l }
+    )
 
-and mkAssign op lhs rhs pos = 	Assign { exp_assign_op = op;
-										 exp_assign_lhs = lhs;
-										 exp_assign_rhs = rhs;
-										 exp_assign_path_id = (fresh_branch_point_id "") ;
-										 exp_assign_pos = pos }
+and mkAssign op lhs rhs path_id pos = 
+  Assign { exp_assign_op = op;
+           exp_assign_lhs = lhs;
+           exp_assign_rhs = rhs;
+           exp_assign_path_id = path_id;
+           exp_assign_pos = pos }
 
-and mkBinary op oper1 oper2 pos = Binary { exp_binary_op = op;
-										   exp_binary_oper1 = oper1;
-										   exp_binary_oper2 = oper2;
-										   exp_binary_path_id = (fresh_branch_point_id "") ;
-										   exp_binary_pos = pos }
+and mkBinary op oper1 oper2 path_id pos =
+  Binary { exp_binary_op = op;
+           exp_binary_oper1 = oper1;
+           exp_binary_oper2 = oper2;
+           exp_binary_path_id = path_id;
+           exp_binary_pos = pos }
 
-and mkUnary op oper pos = Unary { exp_unary_op = op;
-								  exp_unary_exp = oper;
-								  exp_unary_path_id = (fresh_branch_point_id "") ;
-								  exp_unary_pos = pos }
+and mkUnary op oper path_id pos =
+  Unary { exp_unary_op = op;
+          exp_unary_exp = oper;
+          exp_unary_path_id = path_id;
+          exp_unary_pos = pos }
 
-and mkRaise ty usety rval final pid pos= Raise { exp_raise_type = ty ;
-										   exp_raise_val = rval;
-										   exp_raise_from_final = final;
-										   exp_raise_use_type = usety;
-										   exp_raise_path_id = pid;
-										   exp_raise_pos = pos;}
-and mkCatch var var_type fl_type fl_var body pos = Catch{  exp_catch_var = var; 
-												  exp_catch_flow_type = fl_type;
-												  exp_catch_alt_var_type = var_type ; 
-												  exp_catch_flow_var = fl_var;
-												  exp_catch_body = body; 
-												  exp_catch_pos = pos}
-				
-and mkTry body catch finally pid pos = Try{ exp_try_block = body;
-											exp_catch_clauses = catch;
-											exp_finally_clause = finally;
-											exp_try_path_id = pid;
-											exp_try_pos = pos;}
+and mkRaise ty usety rval final pid pos =
+  Raise { exp_raise_type = ty ;
+          exp_raise_val = rval;
+          exp_raise_from_final = final;
+          exp_raise_use_type = usety;
+          exp_raise_path_id = pid;
+          exp_raise_pos = pos;}
 
-and mkVar name pos= Var {exp_var_name = name; exp_var_pos = pos;}
+and mkCatch var var_type fl_type fl_var body pos =
+  Catch { exp_catch_var = var; 
+          exp_catch_flow_type = fl_type;
+          exp_catch_alt_var_type = var_type;
+          exp_catch_flow_var = fl_var;
+          exp_catch_body = body; 
+          exp_catch_pos = pos }
 
-(*and mkSeq f1 f2 pos = Seq {exp_seq_exp1 = f1; exp_seq_exp2 = f2; exp_seq_pos = pos;}*)
+and mkTry body catch finally pid pos =
+  Try { exp_try_block = body;
+        exp_catch_clauses = catch;
+        exp_finally_clause = finally;
+        exp_try_path_id = pid;
+        exp_try_pos = pos; }
 
-and mkBlock body lbl local_vars pos = Block {exp_block_body = body; exp_block_jump_label = lbl; exp_block_local_vars = local_vars; exp_block_pos = pos}
-								  
+and mkVar name pos =
+  Var { exp_var_name = name;
+        exp_var_pos = pos;}
+
+and mkBlock body lbl local_vars pos =
+  Block { exp_block_body = body;
+          exp_block_jump_label = lbl;
+          exp_block_local_vars = local_vars;
+          exp_block_pos = pos }
+
+and mkIntLit i pos =
+  IntLit { exp_int_lit_val = i;
+           exp_int_lit_pos = pos }
+
+and mkFloatLit f pos =
+  FloatLit { exp_float_lit_val = f;
+             exp_float_lit_pos = pos}
+
+and mkBoolLit b pos =
+  BoolLit { exp_bool_lit_val = b;
+            exp_bool_lit_pos = pos; }
+
+and mkNew class_name args pos= 
+  New { exp_new_class_name = class_name;
+        exp_new_arguments = args;
+        exp_new_pos = pos }
+
+and mkNull pos = Null pos
+
+and mkArrayAt base index pos =
+  ArrayAt { exp_arrayat_array_base = base;
+            exp_arrayat_index = index;
+            exp_arrayat_pos = pos; }
+
+and mkMember base fields path_id pos =
+  Member { exp_member_base = base;
+           exp_member_fields = fields;
+           exp_member_path_id = path_id;
+           exp_member_pos = pos }
+
+and mkCallNRecv method_name lock args path_id pos =
+  CallNRecv { exp_call_nrecv_method = method_name;
+              exp_call_nrecv_lock = lock;
+              exp_call_nrecv_arguments = args;
+              exp_call_nrecv_path_id = path_id;
+              exp_call_nrecv_pos = pos }
+
+and mkCond condition then_exp else_exp path_id pos =
+  Cond { exp_cond_condition = condition;
+        exp_cond_then_arm = then_exp;
+        exp_cond_else_arm = else_exp;
+        exp_cond_path_id = path_id;
+        exp_cond_pos = pos }
+
+and mkReturn return_val path_id pos =
+  Return { exp_return_val = return_val;
+           exp_return_path_id = path_id;
+           exp_return_pos = pos }
+
+and mkBreak jump_label path_id pos =
+  Break { exp_break_jump_label = jump_label;
+          exp_break_path_id = path_id;
+          exp_break_pos = pos }
+
+and mkContinue jump_label path_id pos =
+  Continue { exp_continue_jump_label = jump_label;
+             exp_continue_path_id = path_id;
+             exp_continue_pos = pos }
+
 (*************************************************************)
 (* Building the graph representing the class hierarchy       *)
 (*************************************************************)
