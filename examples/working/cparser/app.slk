@@ -24,7 +24,7 @@ lemma "ll_tail2" self::ll_tail2<t, n> <-> self::lseg2<t, n-1> * t::node__star<zz
 checkentail x::ll_tail2<tx_945,nnn>@M * 
 y::ll_tail2<ty_946,mmm>@M&x=x' & tx=tx' & y=y' & ty=ty' & 
 tx=tx_945 & ty=ty_946
- |-  tx'::node__star<pdata_25_854'>@L. 
+ |-  tx'::node__star<pdata_25_854'>@M. 
 
 print residue.
 
