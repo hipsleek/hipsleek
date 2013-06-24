@@ -33,38 +33,30 @@ shape_infer [HP_0,HP_1][].
 
 # tree-4.slk
 
-WRONG!
-======
+GOT
+===
+[ HP_0(x_35) ::=  
+ emp&x_35=null
+ or x_35::node<key_25_797,left_25_798,right_25_799>@M * HP_0(left_25_798) * 
+    HP_1(right_25_799)&true
+ ,
+ HP_1(x_36) ::=  
+ emp&x_36=null
+ or x_36::node<key_25_797,left_25_798,right_25_799>@M * HP_1(left_25_798) * 
+    HP_0(right_25_799)&true
+ ]
 
-[ 
-EXPECT
-======
- H(x)&true <--> x::node<key_25_797,left_25_798,right_25_799>@M * 
-  HP_0(left_25_798) * HP_1(right_25_799).
+WITH --sa-unify
+===============
+[ HP_0(x_35) ::=  
+ emp&x_36=null
+ or x_36::node<key_25_797,left_25_798,right_25_799>@M * HP_0(left_25_798) * 
+    HP_0(right_25_799)&true
+ ]
 
- HP_1(right_25_799)&right_25_799=null --> emp.
- HP_1(right)&right!=null --> 
-   right::node<key_25_797,left_25_798,right_25_799>@M * 
-  HP_0(left_25_798) * HP_1(right_25_799)
-
- HP_0(left_25_798)&left_25_798=null --> emp.
- HP_0(left)&left!=null --> 
-   left::node<key_25_797,left_25_798,right_25_799>@M * 
-  HP_0(left_25_798) * HP_1(right_25_799)
-
-
-THUS:
-=====
-
- H(x)&true <--> x::node<key_25_797,left_25_798,right_25_799>@M * 
-  HP_0(left_25_798) * HP_1(right_25_799).
- HP_1(right) = right=null
-   or    right::node<key_25_797,left_25_798,right_25_799>@M * 
-         HP_0(left_25_798) * HP_1(right_25_799)
- HP_0(left) = left=null
-   or    left::node<key_25_797,left_25_798,right_25_799>@M * 
-         HP_0(left_25_798) * HP_1(right_25_799)
-
+MISSING
+=======
+ HP_1(x) ::= HP_0(x)
 
 
 

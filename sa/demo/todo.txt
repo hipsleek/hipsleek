@@ -1950,3 +1950,34 @@ HP_974(left_31_798,right_31_799)&true,
 POSSIBLE ALGO
 =============
 in tree.ss comment.
+
+
+=============================================================
+# tree-4.slk
+
+GOT
+===
+[ HP_0(x_35) ::=  
+ emp&x_35=null
+ or x_35::node<key_25_797,left_25_798,right_25_799>@M * HP_0(left_25_798) * 
+    HP_1(right_25_799)&true
+ ,
+ HP_1(x_36) ::=  
+ emp&x_36=null
+ or x_36::node<key_25_797,left_25_798,right_25_799>@M * HP_1(left_25_798) * 
+    HP_0(right_25_799)&true
+ ]
+
+WITH --sa-unify
+===============
+[ HP_0(x_35) ::=  
+ emp&x_36=null
+ or x_36::node<key_25_797,left_25_798,right_25_799>@M * HP_0(left_25_798) * 
+    HP_0(right_25_799)&true
+ ]
+
+MISSING
+=======
+ HP_1(x) ::= HP_0(x)
+
+
