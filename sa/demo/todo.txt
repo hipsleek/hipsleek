@@ -1137,7 +1137,7 @@ Can we just have:
 */
 
 ============================================================
-# zip1b1.slk: 
+# zip1b1.slk: FIXED
 
 Previously, you managed to eliminate:
 
@@ -1351,7 +1351,7 @@ WHY is it not splitting?
 
 */
 ================================================
-# zip1.slk
+# zip1.slk: FIXED
 
 Why an intermediate HP_64?
 
@@ -1603,6 +1603,20 @@ Yields
 QUESTION : When would dangling be better than UNKNOWN?
 
 */
+
+=====================================================================
+# tree-3.ss
+
+EXPECTED:
+  H(x)&true <--> x::node<_,left,right>@M * 
+    HP_1(left) * HP_2(right)&true,
+ HP_2(x) <--> x=null
+   or x::node<_,left,right>@M * 
+      HP_1(left) * HP_2(right)&true,
+ G(x) <--> HP_1(left) * x::node<_,left,right>@M * G1(right)  
+ G1(right) <-->
+      right=null or  HP_1(l) * right::node<_,l,r>@M * G1(r)
+ HP_1(a) <--> NONE
 
 =====================================================================
 # tree-2-bug-1.slk

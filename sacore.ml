@@ -815,7 +815,7 @@ let analize_unk prog post_hps constrs total_unk_map unk_hpargs link_hpargs =
   let pr2 = (pr_list (pr_pair (pr_pair !CP.print_sv (pr_list string_of_int)) CP.string_of_xpure_view)) in
   let pr3 = pr_list (pr_pair !CP.print_sv !CP.print_svl) in
   let pr4 = pr_quad pr1 pr3 pr2 pr3 in
-  Debug.no_2 "analize_unk" pr1 pr2 pr4
+  Debug.ho_2 "analize_unk" pr1 pr2 pr4
       (fun _ _ -> analize_unk_x prog post_hps constrs total_unk_map unk_hpargs link_hpargs)
       constrs total_unk_map
 
