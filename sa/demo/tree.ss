@@ -17,13 +17,14 @@ void foo(node x)
  requires x::tree<> & x!=null
  ensures x::tree<>;
 
+ requires x::node<_,l,r> * l::tree<> * r::tree<> 
+ ensures x::node<_,l,r> * l::tree<> * r::tree<>;
+
+*/
 
  infer [H,G] requires H(x)
  ensures G(x);
-*/
 
- requires x::node<_,l,r> * l::tree<> * r::tree<> 
- ensures x::node<_,l,r> * l::tree<> * r::tree<>;
 
 
 {
@@ -35,6 +36,33 @@ void foo(node x)
 
 /*
 # tree.ss
+
+GOT BELOW which is WRONG
+========================
+[ H(x_971) ::=  x_971::node<key_31_797,left_31_798,right_31_799>@M * HP_801(right_31_799)&
+left_31_798=null,
+ G(x_973) ::=  x_973::node<key_31_797,left_31_798,right_31_799>@M * 
+HP_974(left_31_798,right_31_799)&true,
+ HP_801(right_31_870) ::=  
+ right_31_870::node<key_31_797,left_31_798,right_31_799>@M * 
+ HP_800(left_31_798) * HP_801(right_31_799)&true
+ or emp&right_31_870=null
+ ,
+ HP_974(left_31_798,right_31_799) ::=  
+ emp&left_31_798=null
+ or emp&right_31_799=null & left_31_798!=null
+ or left_31_798::node<key_31_797,left_31_975,right_31_976>@M * 
+    HP_974(left_31_975,right_31_976) * 
+    right_31_799::node<key_31_797,left_31_975,right_31_976>@M * 
+    HP_974(left_31_975,right_31_976)&true
+ ,
+ HP_800(left_31_972) ::=  emp&left_31_972=null]
+
+
+
+
+POSSIBLE ALGO
+=============
 
 
 [ H(x)&true --> x::node<key_25_797,left_25_798,right_25_799>@M * 

@@ -97,7 +97,38 @@ void foo(node x)
  G1(right) <-->
       right=null or  HP_1(l) * right::node<_,l,r>@M * G1(r)
 
- 
+
+=====================
+# tree-3.ss
+
+GOT
+
+The first parameter of below seems useless. Can we avoid introducing it?
+
+ HP_833(left_30_789,right_30_790) ::=  
+
+or do we need to try --sa-useless?
+
+==========
+
+[ H(x_831) ::=  x_831::node<key_30_788,left_30_789,right_30_790>@M * HP_791(left_30_789) * 
+                HP_792(right_30_790)&true,
+ G(x_832) ::=  x_832::node<key_30_788,left_30_789,right_30_790>@M * 
+                HP_833(left_30_789,right_30_790) * HP_791(left_30_789)&true,
+
+ HP_792(right_30_830) ::=  
+ emp&right_30_830=null
+ or right_30_830::node<key_30_788,left_30_789,right_30_790>@M * 
+    HP_791(left_30_789) * HP_792(right_30_790)&true
+ ,
+
+ HP_833(left_30_789,right_30_790) ::=  
+ emp&right_30_790=null
+ or right_30_790::node<key_30_788,left_30_834,right_30_835>@M * 
+    HP_833(left_30_834,right_30_835) * HP_791(left_30_834)&true
+ ,
+ HP_791(left_30_789) ::= NONE]
+
 */
 
 
