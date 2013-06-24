@@ -775,11 +775,23 @@ let analize_unk_x prog post_hps constrs total_unk_map unk_hpargs link_hpargs=
    let unk_hp_args1 = List.filter (fun (hp,_,_) -> not (CP.mem_svl hp detected_hps)) unk_hp_args02 in
    let full_hps = List.map (fun (hp, _, _) -> hp) full_unk_hp_args2_locs in
    (*find full unk_hps: I parameters + unk_svl*)
-   let full_unk_hp_locs, link_hpargs2 = find_full_unk_hps prog closure_post_hps full_hps unk_hp_args1 in
+   let full_unk_hp_locs0, link_hpargs2 = find_full_unk_hps prog closure_post_hps full_hps unk_hp_args1 in
    let _ = Debug.ninfo_pprint ("  full_unk_hp_locs: " ^ (let pr = pr_list (pr_pair !CP.print_sv (pr_list string_of_int))
-                                              in pr full_unk_hp_locs)) no_pos
+                                              in pr full_unk_hp_locs0)) no_pos
    in
-   let link_hpargs3 = Gen.BList.remove_dups_eq (fun (hp1,_) (hp2,_) -> CP.eq_spec_var hp1 hp2) ((List.filter (fun (hp,_) -> not (CP.mem_svl hp post_hps)) link_hpargs2)@link_hpargs) in
+   let full_unk_hp_locs, link_hpargs2a =
+     if !Globals.sa_dangling then
+       (full_unk_hp_locs0, [])
+     else
+       let rec assoc3 ls hp=
+         match ls with
+           | [] -> report_error no_pos "sac.analize_unk"
+           | (hp1,args,_)::rest -> if CP.eq_spec_var hp hp1 then args else
+               assoc3 rest hp
+       in
+       ([], List.map (fun (hp,locs) -> (hp,assoc3 unk_hp_args1 hp)) full_unk_hp_locs0)
+   in
+   let link_hpargs3 = Gen.BList.remove_dups_eq (fun (hp1,_) (hp2,_) -> CP.eq_spec_var hp1 hp2) ((List.filter (fun (hp,_) -> not (CP.mem_svl hp post_hps)) link_hpargs2)@link_hpargs@link_hpargs2a) in
    let _ = Debug.ninfo_pprint ("  link_hpargs3: " ^ (let pr = pr_list (pr_pair !CP.print_sv !CP.print_svl) in pr link_hpargs3)) no_pos
    in
    let link_hps = List.map fst link_hpargs3 in
@@ -1457,4 +1469,20 @@ let do_strengthen_ante prog constrs new_cs=
 
 (*=============**************************================*)
        (*=============END CONSTR CLOSURE================*)
+(*=============**************************================*)
+
+(*=============**************************================*)
+       (*=============PRE PREDS================*)
+(*=============**************************================*)
+
+(*=============**************************================*)
+       (*=============END PRE PREDS================*)
+(*=============**************************================*)
+
+(*=============**************************================*)
+       (*=============POST PREDS================*)
+(*=============**************************================*)
+
+(*=============**************************================*)
+       (*=============END POST PREDS================*)
 (*=============**************************================*)
