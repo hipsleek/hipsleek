@@ -1101,16 +1101,21 @@ and add_param_ann_constraints_to_pure (h_f: CF.h_formula) (p_f: MCP.mix_formula 
       | CF.DataNode h -> let data_ann = h.CF.h_formula_data_imm in
         let helper1 (param_imm: CF.ann) = 
 	  match (CF.mkExpAnn data_ann no_pos), (CF.mkExpAnn param_imm no_pos) with
-	    | CP.IConst i1, CP.IConst i2 -> if i1<=i2 then mkMTrue no_pos else mkMFalse no_pos 
-	    | (_ as l), (_ as r) -> MCP.mix_of_pure(CP.BForm((CP.Lte(l, r, no_pos), None), None)) in
+	    | CP.IConst i1, CP.IConst i2 -> None (* if i1<=i2 then mkMTrue  no_pos else mkMFalse no_pos  *)
+	    | (_ as n), (_ as f) -> Some (MCP.mix_of_pure(CP.BForm((CP.Lte(n, f, no_pos), None), None))) in
         let p = match p_f with
-          | Some x -> List.fold_left (fun pf ann -> CF.add_mix_formula_to_mix_formula (helper1 ann) pf) x h.CF.h_formula_data_param_imm  
+          | Some x -> List.fold_left (fun pf ann -> 
+                match helper1 ann with
+                  | None -> pf
+                  | Some mf -> CF.add_mix_formula_to_mix_formula mf pf) x h.CF.h_formula_data_param_imm  
           | None   -> 
                 let rec helper2 ann_lst = 
                   match ann_lst with 
                     | [] -> MCP.mkMTrue no_pos
-                    | h1 :: [] -> helper1 h1
-                    | h1 :: t  -> CF.add_mix_formula_to_mix_formula (helper1 h1) (helper2 t) in
+                    | h1 :: t  -> 
+                          match helper1 h1 with
+                            | None    -> helper2 t
+                            | Some mf -> CF.add_mix_formula_to_mix_formula mf (helper2 t) in
                 helper2 h.CF.h_formula_data_param_imm in
         p
       | _          -> match p_f with
@@ -1135,16 +1140,20 @@ and add_param_ann_constraints_formula (cf: CF.formula): CF.formula =
    (x::node<val1@A, val2@v, q@I>@I & @I<:@M & @I<:@V & @I<:@I & n = 2) will be translated to (x::node<val1@A, val2@v, q@I>@I & 1<=0 & 1<=v & 1<=1 & n = 2)
 *)
 and add_param_ann_constraints_struc_x (cf: CF.struc_formula) : CF.struc_formula = 
-  match cf with
-    | CF.EList b          -> CF.EList (map_l_snd add_param_ann_constraints_struc b)
-    | CF.ECase b          -> CF.ECase {b with CF.formula_case_branches = map_l_snd add_param_ann_constraints_struc b.CF.formula_case_branches;}
-    | CF.EBase b          -> CF.EBase {b with
-          CF.formula_struc_base =  add_param_ann_constraints_formula b.CF.formula_struc_base;
-          CF.formula_struc_continuation = map_opt add_param_ann_constraints_struc b.CF.formula_struc_continuation; }
-    | CF.EAssume b -> CF.EAssume {b with 
-	  CF.formula_assume_simpl = add_param_ann_constraints_formula b.CF.formula_assume_simpl;
-	  CF.formula_assume_struc = add_param_ann_constraints_struc b.CF.formula_assume_struc;}
-    | CF.EInfer b         -> CF.EInfer {b with CF.formula_inf_continuation = add_param_ann_constraints_struc b.CF.formula_inf_continuation}
+if (!Globals.allow_field_ann) then 
+    let rec helper cf = 
+      match cf with
+        | CF.EList b          -> CF.EList (map_l_snd helper b)
+        | CF.ECase b          -> CF.ECase {b with CF.formula_case_branches = map_l_snd helper b.CF.formula_case_branches;}
+        | CF.EBase b          -> CF.EBase {b with
+              CF.formula_struc_base =  add_param_ann_constraints_formula b.CF.formula_struc_base;
+              CF.formula_struc_continuation = map_opt helper b.CF.formula_struc_continuation; }
+        | CF.EAssume b -> CF.EAssume {b with 
+	      CF.formula_assume_simpl = add_param_ann_constraints_formula b.CF.formula_assume_simpl;
+	      CF.formula_assume_struc = helper b.CF.formula_assume_struc;}
+        | CF.EInfer b         -> CF.EInfer {b with CF.formula_inf_continuation = helper b.CF.formula_inf_continuation}
+    in helper cf
+  else cf
 
 and add_param_ann_constraints_struc (cf: CF.struc_formula) : CF.struc_formula =  (*cf disabled inner <> outer annotation relation *)
   let pr =  Cprinter.string_of_struc_formula in
