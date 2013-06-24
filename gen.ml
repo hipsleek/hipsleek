@@ -414,6 +414,21 @@ end;;
 
 exception Stack_Error
 
+class change_flag =
+   object 
+     val mutable cnt = 0
+     method reset = 
+       begin
+         cnt <- 0
+       end
+     method inc = 
+       begin
+         cnt <- cnt+1
+       end
+     method is_change = cnt>0
+     method no_change = (cnt==0)
+   end;;
+
 class ['a] stack  =
    object 
      val mutable stk = []

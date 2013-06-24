@@ -113,9 +113,9 @@ and formula =
 (*	check_specs_infer*)*)
 and hprel= {
     hprel_kind: CP.rel_cat;
-    unk_svl: CP.spec_var list;
-    unk_hps:(CP.spec_var*CP.spec_var list) list;
-    predef_svl: CP.spec_var list;
+    unk_svl: CP.spec_var list; (* unknown and dangling *)
+    unk_hps:(CP.spec_var*CP.spec_var list) list; (* not needed *)
+    predef_svl: CP.spec_var list; (* not needed *)
     hprel_lhs: formula;
     hprel_rhs: formula
 }
@@ -126,9 +126,9 @@ and hprel= {
  (*the results are never picked from the stack, rather they are returned by the inference method*)
 and hprel_def= {
     hprel_def_kind: CP.rel_cat;
-    hprel_def_hrel: h_formula;
-    hprel_def_body: formula option;
-    hprel_def_body_lib: formula option;
+    hprel_def_hrel: h_formula; (* LHS *)
+    hprel_def_body: formula option; (* RHS *)
+    hprel_def_body_lib: formula option; (* reuse of existing pred *)
 }
 
 (*temporal: name * hrel * definition body*)

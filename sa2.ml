@@ -12,6 +12,9 @@ module TP = Tpdispatcher
 module SAC = Sacore
 module SAU = Sautility
 
+let step_change = new Gen.change_flag
+
+(* outcome from shape_infer *)
 let rel_def_stk : CF.hprel_def Gen.stack_pr = new Gen.stack_pr
   Cprinter.string_of_hprel_def_lib (==)
 
@@ -214,7 +217,7 @@ let apply_transitive_impl_fix prog callee_hps hp_rel_unkmap unk_hps (constrs: CF
                       CONSTR: ELIM UNUSED PREDS
 ****************************************************************)
 (*split constrs like H(x) & x = null --> G(x): separate into 2 constraints*)
-let split_constr_x prog constrs post_hps prog_vars unk_map unk_hps link_hps=
+let split_constr prog constrs post_hps prog_vars unk_map unk_hps link_hps=
   (*internal method*)
   let split_one cs total_unk_map=
     let _ = Debug.ninfo_pprint ("  cs: " ^ (Cprinter.string_of_hprel_short cs)) no_pos in
@@ -276,6 +279,7 @@ let split_constr_x prog constrs post_hps prog_vars unk_map unk_hps link_hps=
           ) (lfb1, [], [], []) ls_lhp_args1
         in
         (* let defined_preds = List.concat ls_defined_hps in *)
+        (* let _ = if defined_preds!=[] then step_change # i else () in *)
         let rf = CF.mkTrue (CF.mkTrueFlow()) no_pos in
         let defined_preds0 = List.fold_left (fun (defined_preds) hpargs ->
             let def_hps, _ = (SAU.find_well_eq_defined_hp prog lhds lhvs lfb2 leqs hpargs) in
@@ -345,11 +349,12 @@ let split_constr_x prog constrs post_hps prog_vars unk_map unk_hps link_hps=
     let (new_cs,new_umap,link_hpargs) = res in
     if (List.length new_cs > 1) then
       begin
-        Debug.binfo_start "split_base";
-        Debug.binfo_hprint (add_str "BEFORE" pr1) cs no_pos;
-        Debug.binfo_pprint "=============>>>>" no_pos;
-        Debug.binfo_hprint (add_str "AFTER" (pr_list_ln pr1)) new_cs no_pos;
-        Debug.binfo_end "split_base";
+        step_change # inc;
+        (* Debug.binfo_start "split_base"; *)
+        (* Debug.binfo_hprint (add_str "BEFORE" pr1) cs no_pos; *)
+        (* Debug.binfo_pprint "=============>>>>" no_pos; *)
+        (* Debug.binfo_hprint (add_str "AFTER" (pr_list_ln pr1)) new_cs no_pos; *)
+        (* Debug.binfo_end "split_base"; *)
         res
       end
     else res
@@ -367,12 +372,34 @@ let split_constr_x prog constrs post_hps prog_vars unk_map unk_hps link_hps=
   (new_constrs, new_map, link_hpargs)
 
 let split_constr prog constrs post_hps prog_vars unk_map unk_hps link_hps=
+      let _ = step_change # reset in
+      let s1 = (pr_list_num Cprinter.string_of_hprel_short) constrs in
+      let (constrs2, unk_map2, link_hpargs2) as res = split_constr prog constrs post_hps prog_vars unk_map unk_hps link_hps in
+      let s2 = (pr_list_num Cprinter.string_of_hprel_short) constrs2 in
+      if step_change # no_change then 
+        DD.binfo_pprint "*** NO SPLITTING DONE ***" no_pos
+      else 
+        begin
+          let _ = DD.binfo_start "split_base" in
+          let _ = DD.binfo_hprint (add_str "post_hps" Cprinter.string_of_spec_var_list) post_hps no_pos in
+          let _ = DD.binfo_hprint (add_str "prog_vars" Cprinter.string_of_spec_var_list) prog_vars no_pos in
+          let _ = DD.binfo_hprint (add_str "BEFORE" pr_id) s1 no_pos in
+          let _ = DD.binfo_pprint "=============>>>>" no_pos in
+          let _ = DD.binfo_hprint (add_str "AFTER" pr_id) s2 no_pos in
+          let _ = DD.binfo_hprint (add_str "UNKNOWN added" (pr_list (fun (x,_) -> Cprinter.string_of_spec_var x)))  link_hpargs2 no_pos in
+          let _ = DD.binfo_end "split_base" in
+          ()
+        end;
+      res
+
+
+let split_constr prog constrs post_hps prog_vars unk_map unk_hps link_hps=
   let pr1 = pr_list_ln Cprinter.string_of_hprel in
   (* let pr2 = (pr_list (pr_pair (pr_list (pr_pair !CP.print_sv string_of_int)) CP.string_of_xpure_view)) in *)
   let pr2 = (pr_list (pr_pair (pr_pair !CP.print_sv (pr_list string_of_int)) CP.string_of_xpure_view)) in
   let pr3 = pr_list (pr_pair !CP.print_sv !CP.print_svl) in
   Debug.no_4 "split_constr" pr1 pr2 !CP.print_svl !CP.print_svl (pr_triple pr1 pr2 pr3)
-      (fun _ _ _ _ -> split_constr_x prog constrs post_hps prog_vars unk_map
+      (fun _ _ _ _ -> split_constr prog constrs post_hps prog_vars unk_map
           unk_hps link_hps) constrs unk_map unk_hps post_hps
 
 let get_preds (lhs_preds, lhs_heads, rhs_preds,rhs_heads) cs=
@@ -1448,6 +1475,18 @@ let infer_shapes_core prog proc_name (constrs0: CF.hprel list) callee_hps sel_hp
       let unk_hps1 = List.map fst unk_hpargs1 in
       let link_hps1 = List.map fst link_hpargs1 in
       let constrs2, unk_map2, link_hpargs2 = split_constr prog constrs1 sel_post_hps prog_vars unk_map1 unk_hps1 link_hps1 in
+      (* let s1 = (pr_list Cprinter.string_of_hprel_short) constrs1 in *)
+      (* let s2 = (pr_list Cprinter.string_of_hprel_short) constrs2 in *)
+      (* if step_change # no_change then  *)
+      (*   DD.binfo_pprint "*** NO SPLITTING DONE ***" no_pos *)
+      (* else  *)
+      (*   begin *)
+      (*     let _ = DD.binfo_hprint (add_str "post_hps" Cprinter.string_of_spec_var_list) sel_post_hps no_pos in *)
+      (*     let _ = DD.binfo_hprint (add_str "prog_vars" Cprinter.string_of_spec_var_list) prog_vars no_pos in *)
+      (*     let _ = DD.binfo_hprint (add_str "constrs1" pr_id) s1 no_pos in *)
+      (*     let _ = DD.binfo_hprint (add_str "constrs2" pr_id) s2 no_pos in *)
+      (*     DD.binfo_hprint (add_str " link_hpargs2" (pr_list (fun (x,_) -> Cprinter.string_of_spec_var x)))  link_hpargs2 no_pos *)
+      (*   end; *)
       let link_hpargs3= link_hpargs1@link_hpargs2 in
        (constrs2, unk_map2,unk_hpargs1, link_hpargs3)
     else

@@ -10,6 +10,8 @@ HeapPred HP_5(node a, node@NI b).
 HeapPred HP_6(node a, node@NI b).
 HeapPred HP_9(node a, node@NI b).
 
+Declare_Unknown [ HP_5, HP_9].
+
 relAssume H2
    H2(x,y)&true --> x::node<val_24_783,next_24_784>@M * 
      HP_5(next_24_784,y) * HP_6(y,x)&true.
@@ -33,7 +35,6 @@ relAssume G2
   n4!=null --> G2(x,y)&true.
 
 //Declare_Dangling [ HP_5, HP_9].
-Declare_Unknown [ HP_5, HP_9].
 
 shape_infer [H2,HP_5,HP_6,HP_9][G2].
 
