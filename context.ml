@@ -988,15 +988,17 @@ and process_one_match_x prog is_normalizing (c:match_res) :action_wt =
                     (match ms with
                       | View_mater -> (1,M_unfold (c,uf_i))
                       | Coerc_mater s -> (1,M_lemma (c,Some s))) in
-
+                  (* WHY do we need LHS_CASE_ANALYSIS? *)
                   let a1 = 
                     if (lhs_case_flag=true) then
                       let l1 = [(1,M_lhs_case c)] 
                       in
-                      (-1, (Search_action (a2::l1)))
+                      (* (-1, (Search_action (a2::l1))) *)
+                      (-1, (Cond_action (a2::l1)))
                     else
                       let l1 = [(1,M_base_case_unfold c)] in
-                      (-1, (Search_action (a2::l1)))
+                      (* (-1, (Search_action (a2::l1))) *)
+                      (-1, (Cond_action (a2::l1)))
                   in a1
             | _ -> report_error no_pos "process_one_match unexpected formulas 2\n"	
           )
