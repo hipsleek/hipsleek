@@ -1299,6 +1299,59 @@ let simp_match_unknown unk_hps link_hps cs=
   let inter_unk_hps = CP.intersect_svl inter_hps (unk_hps@link_hps) in
   CF.drop_hprel_constr cs inter_unk_hps
 
+(***************************************************************)
+           (*========SIMPLIFICATION============*)
+(***************************************************************)
+let rec simplify_one_constr prog unk_hps constr=
+  begin
+      let (lhs, rhs) = constr.CF.hprel_lhs,constr.CF.hprel_rhs in
+      match lhs,rhs with
+        | CF.Base lhs_b, CF.Base rhs_b ->
+            begin
+                let l,r,matched = simplify_one_constr_b prog unk_hps lhs_b rhs_b in
+                 (* if l.CF.formula_base_heap = CF.HEmp && *)
+                 (*   (MCP.isConstMTrue l.CF.formula_base_pure) then *)
+                if is_unk_f (CF.Base l) || is_unk_f (CF.Base r) ||
+                (is_empty_f (CF.Base l) && is_empty_f (CF.Base r)) then
+                  let _ = DD.ninfo_pprint (" input: " ^(Cprinter.prtt_string_of_formula_base lhs_b) ^ " ==> " ^
+                                                  (Cprinter.prtt_string_of_formula_base rhs_b)) no_pos in
+                  let _ =  DD.ninfo_pprint (" output: drop") no_pos in
+                   []
+                else
+                  (*it may subst into some unk_hps, should detect it*)
+                  let hp_args = (CF.get_HRels l.CF.formula_base_heap)@
+                    (CF.get_HRels r.CF.formula_base_heap) in
+                  let hp_args1 = Gen.BList.remove_dups_eq check_simp_hp_eq
+                    hp_args in
+                  (*get hp that all args are unk*)
+                  let unk_hp_args = List.filter (fun (hp,args) ->
+                  (Gen.BList.difference_eq CP.eq_spec_var args constr.CF.unk_svl) = []) hp_args1 in
+                  let new_constr = {constr with CF.predef_svl = constr.CF.predef_svl@matched;
+                      CF.unk_hps = Gen.BList.remove_dups_eq check_simp_hp_eq
+                          (constr.CF.unk_hps@unk_hp_args);
+                       CF.hprel_lhs = CF.Base l;
+                       CF.hprel_rhs = CF.Base r;
+                                   }
+                  in
+                  let _ =  DD.ninfo_pprint (" simplify: new cs:" ^ ( Cprinter.string_of_hprel new_constr)) no_pos in
+                  [new_constr]
+              end
+        | _ -> report_error no_pos "sa.simplify_one_constr"
+  end
+
+let simplify_constrs_x prog unk_hps constrs=
+  List.concat (List.map (simplify_one_constr prog unk_hps) constrs)
+
+let simplify_constrs prog unk_hps constrs=
+   let pr = pr_list_ln (Cprinter.string_of_hprel) in
+  Debug.no_1 "simplify_constrs" pr pr
+      (fun _ -> simplify_constrs_x prog unk_hps constrs) constrs
+
+(***************************************************************)
+           (*===========END SIMPLIFICATION===========*)
+(***************************************************************)
+
+
 let find_well_defined_hp_x prog hds hvs r_hps prog_vars post_hps (hp,args) def_ptrs lhsb split_spatial pos=
   let do_spit fb rhs new_hps=
     let f = keep_data_view_hrel_nodes_fb prog fb hds hvs args [(hp,args)] in
