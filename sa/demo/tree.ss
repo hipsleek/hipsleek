@@ -122,7 +122,7 @@ void foo(node x)
 
  HP_800(x) --> x=null
     or  x::node<key_25_797,left,right>@M * 
-       HP_801(left) * HP_800(right)& x!=null 
+       HP_800(left) * HP_801(right)& x!=null 
 
  HP_800(x) <--> HP_801(x) ????
 

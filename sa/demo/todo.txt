@@ -1682,10 +1682,14 @@ THUS:
 */
 
 ==========================================================================
+# tree-4.slk: 
+
+TODO: implement --sa-unify: intra-defs: between branches
+
 =====================================================================
 # tree-2-bug-1.slk: 
 
-TODO: implement --sa-unify
+TODO: implement --sa-unify: inter-defs
 
 relAssume H
  H(x)&true --> x::node<key_25_797,left_25_798,right_25_799>@M * 

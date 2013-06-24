@@ -2050,13 +2050,13 @@ let rec get_closed_ptrs_one rdn ldns rdns rcur_match ss=
                 (* if CP.mem_svl lsv1 rcur_match then helper2 ls *)
                 (* else *)
                 begin
-                  let _ =  DD.info_pprint ("    largs: " ^ (!CP.print_svl (lsv::largs))) no_pos in
+                  (* let _ =  DD.info_pprint ("    largs: " ^ (!CP.print_svl (lsv::largs))) no_pos in *)
                   let largs1 = List.map (CP.subs_one ss) largs in
-                  let _ =  DD.info_pprint ("    largs1: " ^ (!CP.print_svl (lsv1::largs1))) no_pos in
+                  (* let _ =  DD.info_pprint ("    largs1: " ^ (!CP.print_svl (lsv1::largs1))) no_pos in *)
                   (*look_up rdn in rdns*)
                   let cur_rdns = look_up_rdn rdn rdns [] in
                   let rargs = helper1 (ld_name, lsv1, largs1) cur_rdns in
-                  let _ =  DD.info_pprint ("    rargs: " ^ (!CP.print_svl (rargs))) no_pos in
+                  (* let _ =  DD.info_pprint ("    rargs: " ^ (!CP.print_svl (rargs))) no_pos in *)
                   if rargs = [] then helper2 ls
                   else
                     find_args_subst (lsv::largs) rargs [] []
