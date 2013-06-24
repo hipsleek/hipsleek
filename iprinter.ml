@@ -318,10 +318,10 @@ let rec string_of_h_formula = function
              F.h_formula_starminus_h2 = f2;
              F.h_formula_starminus_pos = l} ) ->
       if is_bool_f f1 then 
-        if is_bool_f f2 then (string_of_h_formula f1) ^ " * " ^ (string_of_h_formula f2)
-        else (string_of_h_formula f1) ^ " *- (" ^ (string_of_h_formula f2) ^ ")"
+        if is_bool_f f2 then (string_of_h_formula f2) ^ " -* " ^ (string_of_h_formula f1)
+        else (string_of_h_formula f2) ^ " -* (" ^ (string_of_h_formula f1) ^ ")"
       else
-        "(" ^ (string_of_h_formula f1) ^ ") *- (" ^ (string_of_h_formula f2) ^ ")"        
+        "(" ^ (string_of_h_formula f2) ^ ") -* (" ^ (string_of_h_formula f1) ^ ")"        
   | F.Conj ({F.h_formula_conj_h1 = f1;
              F.h_formula_conj_h2 = f2;
              F.h_formula_conj_pos = l} ) ->
