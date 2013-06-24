@@ -291,17 +291,45 @@ checkentail x::ll_tail2<tx,nnn>@M
  |-  tx::node<a,b>@L. 
 // |-  tx::node<a,b>. 
 
-print residue.
+-dd tracing
 
-/*
+It seems that lemmas are not being triggered for@L.
 
--dd
-why is there a "false": for conseq?
+With @L, I got
 
-run_entail_check:
- ### ivars = []
- ### ante =  x::ll_tail2<tx,nnn>@M[0][Orig][LHSCase]&true&{FLOW,(19,20)=__norm}[]
- ### conseq =  EBase exists (Expl)(Impl)[a; b](ex)tx::node<a,b>@L[Orig]
-                &false&
-              ^^^^^^^^^^^
-       {FLOW,(19,20)=__norm}[]
+!!!:0: 0: do_base_case_unfold attempt for :  r_121::ll_tail2<tx_118,flted_12_119>@M[1][Orig]
+!!!:0: 0: do_base_case_unfold attempt : unsuccessful for :  r_121::ll_tail2<tx_118,flted_12_119>@M[1][Orig]
+!!!:0: 0: process_action :
+ ### action =  LHSCaseAnalysis =>
+                    Type: MaterializedArg (tx,partial,) view_defn_mater
+                    LHS: x::ll_tail2<tx,nnn>@M[0][Orig][LHSCase]
+                    RHS: tx::node<a,b>@L[Orig]
+ lhs_rest: Hole[93]
+ rhs_rest: emp
+ ### estate =  x::ll_tail2<tx,nnn>@M[0][Orig][LHSCase]&true&{FLOW,(19,20)=__norm}[]
+ ### conseq =  tx::node<a,b>@L[Orig]&true&{FLOW,(19,20)=__norm}[]
+
+
+!!!:0: 0: do_lhs_case : unsuccessful for :  x::ll_tail2<tx,nnn>@M[0][Orig][LHSCase]
+Entail (1) : Fail.
+
+
+With @M, I got:
+
+!!!:0: 0: process_action :
+ ### action =  Lemma ==> ll_tail2 =>
+                       Type: MaterializedArg (tx_116,partial,) coerc_defn_mater: ==> ll_tail2
+                       LHS: r_119::ll_tail2<tx_116,flted_12_117>@M[1][Orig]
+                       RHS: tx::node<a,b>@M[Orig]
+ lhs_rest: x::node<Anon_118,r_119>@M[Orig]
+ rhs_rest: emp
+ ### estate =  x::node<Anon_118,r_119>@M[Orig] * r_119::ll_tail2<tx_116,flted_12_117>@M[1][Orig]&nnn=flted_12_117+1 & r_119!=null & tx=tx_116&{FLOW,(19,20)=__norm}[]
+ ### conseq =  tx::node<a,b>@M[Orig]&true&{FLOW,(19,20)=__norm}[]
+
+
+!!!:0: 0: do_coercion: estate : es_formula: 
+  x::node<Anon_118,r_119>@M[Orig] * 
+  r_119::ll_tail2<tx_116,flted_12_117>@M[1][Orig]&nnn=flted_12_117+1 & 
+  r_119!=null & tx=tx_116&{FLOW,(19,20)=__norm}[]
+ es_pure: true
+ es_orig_ante: None
