@@ -333,3 +333,42 @@ With @M, I got:
   r_119!=null & tx=tx_116&{FLOW,(19,20)=__norm}[]
  es_pure: true
  es_orig_ante: None
+
+============================================================
+# bug-base-case-2.slk
+
+performance bug
+
+lhs-case-analysis seem to have triggered many alternatives:
+Is there a way to apply lemma wo resorting to LHS case analysis,
+so that (1) would work
+
+Entail (2) : Valid. 
+
+ <1>
+    emp&q3=t & q=self & n!=self & q3=t & Anon_16=Anon_17 & q3!=self&
+    {FLOW,(19,20)=__norm}[]
+    or emp&n!=self & q3!=t & Anon_16=Anon_17 & self!=t&
+       {FLOW,(19,20)=__norm}[]
+    
+<2>
+   emp&q3=t & q=self & n!=self & q3=t & Anon_16=Anon_17&
+   {FLOW,(19,20)=__norm}[]
+   or emp&n!=self & q3!=t & Anon_16=Anon_17 & self!=t&{FLOW,(19,20)=__norm}[]
+   
+<3>emp&n!=self & Anon_16=Anon_17 & self!=t&{FLOW,(19,20)=__norm}[]
+<4>
+   emp&q3=t & q=self & n!=self & Anon_16=Anon_17 & q3=t & q3!=self&
+   {FLOW,(19,20)=__norm}[]
+   or emp&n!=self & Anon_16=Anon_17 & q3!=t & self!=t&{FLOW,(19,20)=__norm}[]
+   
+<5>
+   emp&q3=t & q=self & n!=self & Anon_16=Anon_17 & q3=t & q3!=self&
+   {FLOW,(19,20)=__norm}[]
+   or emp&n!=self & Anon_16=Anon_17 & q3!=t & self!=t&{FLOW,(19,20)=__norm}[]
+
+--dis-lhs-case
+
+Entail (2) : Valid. 
+
+ <1>emp&n!=self & Anon_16=Anon_17 & self!=t&{FLOW,(19,20)=__norm}[]

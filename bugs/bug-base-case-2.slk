@@ -1,0 +1,73 @@
+data node {
+	int val; 
+	node prev;	
+	node next;	
+}.
+
+
+pred dll_r5<p,t,n> == 
+  self=n & p=t
+  or self::node<_,p,q> * q::dll_r5<self,t,n> & self!=n
+  inv true.
+
+lemma "dll_r5_tail" self::dll_r5<p,t,n> & self!=n 
+  <-> self::dll_r5<p,q,t> * t::node<_,q,n>.
+
+//(1)
+//valid after adding case analysis
+checkentail 
+   self::node<_,p,q3> * q3::dll_r5<self,t,n> & self!=n
+     |- t::node<_,q,n> * self::dll_r5<p,q,t>.
+print residue.
+
+
+//(2)
+checkentail 
+   self::node<_,p,q3> * q3::dll_r5<self,q,t> * t::node<_,q,n> & self!=n
+     |- t::node<_,q,n> * self::dll_r5<p,q,t>.
+print residue.
+
+
+/*
+
+# bug-base-case-2.slk
+
+lhs-case-analysis seem to have triggered many alternatives:
+Is there a way to apply lemma wo resorting to LHS case analysis,
+so that (1) would work
+
+Entail (2) : Valid. 
+
+ <1>
+    emp&q3=t & q=self & n!=self & q3=t & Anon_16=Anon_17 & q3!=self&
+    {FLOW,(19,20)=__norm}[]
+    or emp&n!=self & q3!=t & Anon_16=Anon_17 & self!=t&
+       {FLOW,(19,20)=__norm}[]
+    
+<2>
+   emp&q3=t & q=self & n!=self & q3=t & Anon_16=Anon_17&
+   {FLOW,(19,20)=__norm}[]
+   or emp&n!=self & q3!=t & Anon_16=Anon_17 & self!=t&{FLOW,(19,20)=__norm}[]
+   
+<3>emp&n!=self & Anon_16=Anon_17 & self!=t&{FLOW,(19,20)=__norm}[]
+<4>
+   emp&q3=t & q=self & n!=self & Anon_16=Anon_17 & q3=t & q3!=self&
+   {FLOW,(19,20)=__norm}[]
+   or emp&n!=self & Anon_16=Anon_17 & q3!=t & self!=t&{FLOW,(19,20)=__norm}[]
+   
+<5>
+   emp&q3=t & q=self & n!=self & Anon_16=Anon_17 & q3=t & q3!=self&
+   {FLOW,(19,20)=__norm}[]
+   or emp&n!=self & Anon_16=Anon_17 & q3!=t & self!=t&{FLOW,(19,20)=__norm}[]
+
+--dis-lhs-case
+
+Entail (2) : Valid. 
+
+ <1>emp&n!=self & Anon_16=Anon_17 & self!=t&{FLOW,(19,20)=__norm}[]
+
+
+*/
+
+
+

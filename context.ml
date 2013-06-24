@@ -990,11 +990,12 @@ and process_one_match_x prog is_normalizing (c:match_res) :action_wt =
                       | Coerc_mater s -> (1,M_lemma (c,Some s))) in
                   (* WHY do we need LHS_CASE_ANALYSIS? *)
                   let a1 = 
-                    if (lhs_case_flag=true) then
+                    if (lhs_case_flag=true && !Globals.lhs_case_flag) then
                       let l1 = [(1,M_lhs_case c)] 
                       in
-                      (* (-1, (Search_action (a2::l1))) *)
-                      (-1, (Cond_action (a2::l1)))
+                      if !Globals.lhs_case_search_flag 
+                      then (-1, (Search_action (a2::l1)))
+                      else (-1, (Cond_action (a2::l1)))
                     else
                       let l1 = [(1,M_base_case_unfold c)] in
                       (* (-1, (Search_action (a2::l1))) *)
