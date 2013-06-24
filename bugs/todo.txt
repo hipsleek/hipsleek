@@ -284,3 +284,24 @@ Message: x is not found in both sides
 
 But x ia already on both sides!
 */
+==============================================
+# bugs/app-2.slk
+
+checkentail x::ll_tail2<tx,nnn>@M 
+ |-  tx::node<a,b>@L. 
+// |-  tx::node<a,b>. 
+
+print residue.
+
+/*
+
+-dd
+why is there a "false": for conseq?
+
+run_entail_check:
+ ### ivars = []
+ ### ante =  x::ll_tail2<tx,nnn>@M[0][Orig][LHSCase]&true&{FLOW,(19,20)=__norm}[]
+ ### conseq =  EBase exists (Expl)(Impl)[a; b](ex)tx::node<a,b>@L[Orig]
+                &false&
+              ^^^^^^^^^^^
+       {FLOW,(19,20)=__norm}[]
