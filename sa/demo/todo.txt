@@ -1685,9 +1685,9 @@ THUS:
 # tree-4.slk: 
 
 TODO: implement --sa-unify: intra-defs: between branches
-
+this example is not correct
 =====================================================================
-# tree-2-bug-1.slk: 
+# tree-2-bug-1.slk: DONE
 
 TODO: implement --sa-unify: inter-defs
 

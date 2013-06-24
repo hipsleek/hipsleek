@@ -680,6 +680,8 @@ let sa_keep_unused_preds = ref false
 
 let sa_unify_dangling = ref false
 
+let sa_unify = ref false
+
 let sa_tree_simp = ref false
 
 let sa_subsume = ref false
