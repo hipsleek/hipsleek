@@ -827,10 +827,17 @@ let analize_unk prog post_hps constrs total_unk_map unk_hpargs link_hpargs =
   let pr2 = (pr_list (pr_pair (pr_pair !CP.print_sv (pr_list string_of_int)) CP.string_of_xpure_view)) in
   let pr3 = pr_list (pr_pair !CP.print_sv !CP.print_svl) in
   let pr4 = pr_quad pr1 pr3 pr2 pr3 in
-  Debug.ho_2 "analize_unk" pr1 pr2 pr4
+  Debug.no_2 "analize_unk" pr1 pr2 pr4
       (fun _ _ -> analize_unk_x prog post_hps constrs total_unk_map unk_hpargs link_hpargs)
       constrs total_unk_map
 
+
+let remove_dups_constr constrs=
+  let constr_cmp cs1 cs2=
+    SAU.checkeq_pair_formula (cs1.CF.hprel_lhs,cs1.CF.hprel_rhs)
+        (cs2.CF.hprel_lhs,cs2.CF.hprel_rhs)
+  in
+  Gen.BList.remove_dups_eq constr_cmp constrs
 
 let generate_hp_def_from_unk_hps_x hpdefs unk_hpargs defined_hps post_hps unk_map=
   (* let rec obtain_xpure rem_args n hp res= *)

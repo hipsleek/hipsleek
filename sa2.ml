@@ -51,7 +51,7 @@ let rec find_imply_subst_x prog constrs new_cs=
               match r with
                 | Some (l,r,lhs_ss, rhs_ss) ->
                     (*check duplicate*)
-                    if check_constr_duplicate (l,r) constrs then []
+                    if check_constr_duplicate (l,r) (constrs@new_cs) then []
                     else
                       begin
                           let new_cs = {cs2 with
@@ -76,30 +76,49 @@ let rec find_imply_subst_x prog constrs new_cs=
       | _ -> report_error no_pos "sa2.find_imply_one"
   in
   (*new_cs: one x one*)
-  let rec helper_new_only don rest res=
+  (* let rec helper_new_only don rest res= *)
+  (*   match rest with *)
+  (*     | [] -> res *)
+  (*     | cs1::rest -> *)
+  (*         let _ = Debug.ninfo_pprint ("    lhs: " ^ (Cprinter.string_of_hprel cs1)) no_pos in *)
+  (*         let r = List.concat (List.map (find_imply_one cs1) (don@rest@res)) in *)
+  (*         (helper_new_only (don@[cs1]) rest (res@r)) *)
+  (* in *)
+  let rec helper_new_only don rest is_changed=
     match rest with
-      | [] -> res
-      | cs::ss ->
-          let _ = Debug.ninfo_pprint ("    lhs: " ^ (Cprinter.string_of_hprel cs)) no_pos in
-          let r = List.concat (List.map (find_imply_one cs) (don@ss@res)) in
-          (helper_new_only (don@[cs]) ss (res@r))
+      | [] -> is_changed,don
+      | cs1::rest ->
+          let _ = Debug.ninfo_pprint ("    lhs: " ^ (Cprinter.string_of_hprel cs1)) no_pos in
+          let is_changed1, new_rest = List.fold_left ( fun (b,res) cs2->
+              match find_imply_one cs1 cs2 with
+                | [n_cs2] -> true,res@[n_cs2]
+                | _ -> b,res@[cs2]
+          ) (is_changed, []) (rest)
+          in
+          let is_changed2,new_don = List.fold_left ( fun (b,res) cs2->
+              match find_imply_one cs1 cs2 with
+                | [n_cs2] -> true,res@[n_cs2]
+                | _ -> b,res@[cs2]
+          ) (is_changed1,[]) (don)
+          in
+          (helper_new_only (new_don@[cs1]) new_rest is_changed2)
   in
   (*new_cs x constr*)
   let rec helper_old_new rest res=
     match rest with
       | [] -> res
-      | cs::ss ->
-          let r = List.fold_left ( fun ls cs1 -> ls@(find_imply_one cs cs1)) res constrs in
-           helper_old_new ss r
+      | cs1::ss ->
+          let r = List.fold_left ( fun ls cs2 -> ls@(find_imply_one cs1 cs2)) res constrs in
+          helper_old_new ss r
   in
-  let new_cs1 = if List.length new_cs < 1 then [] else helper_new_only [] new_cs [] in
+  let is_changed,new_cs1 = if List.length new_cs < 1 then (false, new_cs) else helper_new_only [] new_cs false in
   let new_cs2 = helper_old_new new_cs [] in
-  (new_cs1@new_cs2)
+  (is_changed,new_cs1(* @new_cs2 *))
 
 and find_imply_subst prog constrs new_cs=
-  let pr1 = pr_list_ln Cprinter.string_of_hprel in
-  Debug.no_1 "find_imply_subst" pr1 pr1
-      (fun _ -> find_imply_subst_x prog constrs new_cs) constrs
+  let pr1 = pr_list_ln Cprinter.string_of_hprel_short in
+  Debug.no_2 "find_imply_subst" pr1 pr1 (pr_pair string_of_bool pr1)
+      (fun _ _ -> find_imply_subst_x prog constrs new_cs) constrs new_cs
 
 and is_trivial cs= (SAU.is_empty_f cs.CF.hprel_rhs) ||
   (SAU.is_empty_f cs.CF.hprel_lhs)
@@ -112,8 +131,9 @@ and is_non_recursive_cs dang_hps constr=
 and subst_cs_w_other_cs_x prog dang_hps constrs new_cs=
   (*remove recursive cs*)
   let constrs1 = List.filter (fun cs -> (is_non_recursive_cs dang_hps cs) && not (is_trivial cs)) constrs in
-  let new_cs1 = List.filter (fun cs -> (is_non_recursive_cs dang_hps cs) && not (is_trivial cs)) new_cs in
-  find_imply_subst prog constrs1 new_cs1
+  let new_cs1,rem = List.partition (fun cs -> (is_non_recursive_cs dang_hps cs) && not (is_trivial cs)) new_cs in
+  let b,new_cs2 = find_imply_subst prog constrs1 new_cs1 in
+  (b, new_cs2@rem)
 (*=========END============*)
 
 let rec subst_cs_w_other_cs prog dang_hps constrs new_cs=
@@ -121,43 +141,55 @@ let rec subst_cs_w_other_cs prog dang_hps constrs new_cs=
    Debug.no_1 "subst_cs_w_other_cs" pr1 pr1
        (fun _ -> subst_cs_w_other_cs_x prog dang_hps constrs  new_cs) constrs
 
+(* let subst_cs_x prog dang_hps constrs new_cs = *)
+(*   (\*subst by constrs*\) *)
+(*   DD.ninfo_pprint "\n subst with other assumptions" no_pos; *)
+(*   let new_cs1 = subst_cs_w_other_cs prog dang_hps constrs new_cs in *)
+(*   (constrs@new_cs, new_cs1,[]) *)
+
+(* let subst_cs prog dang_hps hp_constrs new_cs= *)
+(*   let pr1 = pr_list_ln Cprinter.string_of_hprel in *)
+(*   Debug.no_1 "subst_cs" pr1 (pr_triple pr1 pr1 !CP.print_svl) *)
+(*       (fun _ -> subst_cs_x prog dang_hps hp_constrs new_cs) new_cs *)
+
 let subst_cs_x prog dang_hps constrs new_cs =
   (*subst by constrs*)
   DD.ninfo_pprint "\n subst with other assumptions" no_pos;
-  let new_cs1 = subst_cs_w_other_cs prog dang_hps constrs new_cs in
-  (constrs@new_cs, new_cs1,[])
+  let is_changed, new_cs1 = subst_cs_w_other_cs prog dang_hps constrs new_cs in
+  (is_changed, new_cs1,[])
 
 let subst_cs prog dang_hps hp_constrs new_cs=
   let pr1 = pr_list_ln Cprinter.string_of_hprel in
-  Debug.no_1 "subst_cs" pr1 (pr_triple pr1 pr1 !CP.print_svl)
+  Debug.no_1 "subst_cs" pr1 (pr_triple string_of_bool  pr1 pr1)
       (fun _ -> subst_cs_x prog dang_hps hp_constrs new_cs) new_cs
 
 (*===========fix point==============*)
 let apply_transitive_impl_fix prog callee_hps hp_rel_unkmap unk_hps (constrs: CF.hprel list) =
   let dang_hps = (fst (List.split hp_rel_unkmap)) in
-  let rec helper_x (constrs: CF.hprel list) new_cs non_unk_hps=
+  let rec helper_x (constrs: CF.hprel list) new_cs =
     DD.binfo_pprint ">>>>>> step 3a: simplification <<<<<<" no_pos;
     let new_cs1 = (* simplify_constrs prog unk_hps *) new_cs in
      Debug.ninfo_hprint (add_str "apply_transitive_imp LOOP: " (pr_list_ln Cprinter.string_of_hprel)) constrs no_pos;
     begin
         DD.binfo_pprint ">>>>>> step 3b: do apply_transitive_imp <<<<<<" no_pos;
-        let constrs2, new_cs2, new_non_unk_hps = subst_cs prog dang_hps constrs new_cs1 in
+        (* let constrs2, new_cs2, new_non_unk_hps = subst_cs prog dang_hps constrs new_cs1 in *)
+      let is_changed, constrs2,new_cs2 = subst_cs prog dang_hps constrs new_cs1 in
         (*for debugging*)
-        let _ = DD.ninfo_pprint ("   new cs:" ^ (let pr = pr_list_ln Cprinter.string_of_hprel_short in pr new_cs2)) no_pos in
-        let helper (constrs: CF.hprel list) new_cs non_unk_hps=
+        let _ = DD.ninfo_pprint ("   new constrs:" ^ (let pr = pr_list_ln Cprinter.string_of_hprel_short in pr constrs2)) no_pos in
+        let helper (constrs: CF.hprel list) new_cs=
           let pr = pr_list_ln Cprinter.string_of_hprel in
           Debug.no_1 "apply_transitive_imp_fix" pr (fun (cs,_) -> pr cs)
-              (fun _ -> helper_x constrs new_cs non_unk_hps) new_cs
+              (fun _ -> helper_x constrs new_cs) new_cs
         in
         (*END for debugging*)
         let norm_constrs, non_unk_hps1 =
-          if List.length new_cs2 = 0 then (constrs2@new_cs2, new_non_unk_hps)
+          if (* List.length new_cs2 = 0 *) not is_changed then (constrs2@new_cs2,[])
           else
-            helper constrs2 new_cs2 (non_unk_hps@new_non_unk_hps) in
-        ( norm_constrs, CP.remove_dups_svl non_unk_hps1)
+            helper new_cs2 constrs2 in
+        ( norm_constrs, [])
       end
   in
-  helper_x [] constrs []
+  helper_x [] constrs
 
 (***************************************************************
                       END APPLY TRANS IMPL
@@ -474,7 +506,7 @@ let get_par_defs_pre constrs0 =
     match op_res with
       | Some (hp, args,p) ->
           (* let _ = print_endline ("p: " ^ ( !CP.print_formula p)) in *)
-          ([(mk_pdef hp args cs.CF.unk_svl p None (Some cs.CF.hprel_rhs), cs)], [])
+          ([(mk_pdef hp args cs.CF.unk_svl (CP.remove_redundant p) None (Some cs.CF.hprel_rhs), cs)], [])
       | None -> ([], [cs])
   in
   List.fold_left (fun (pdefs,rem_cs) cs ->
@@ -590,7 +622,9 @@ let combine_pdefs_pre_x prog unk_hps link_hps pr_pdefs=
           (new_pdef,[])
       | _ -> begin
           (*each group, filter depended constraints*)
-          let rem_pr_defs, depend_cs = List.fold_left filter_depend_pardef ([],[]) pr_pdefs in
+          (* let rem_pr_defs, depend_cs = List.fold_left filter_depend_pardef ([],[]) pr_pdefs in *)
+          let rem_pr_defs = pr_pdefs in
+          let depend_cs = [] in
           (*do norm args first, apply for cond only, other parts will be done later*)
           let cs, rem_pr_defs1=
             match rem_pr_defs with
@@ -1314,6 +1348,7 @@ let infer_shapes_init_pre_x prog (constrs0: CF.hprel list) callee_hps non_ptr_un
   let _ = DD.binfo_pprint ">>>>>> step pre-4: remove unused predicates<<<<<<" no_pos in
   let constrs01 =(*  apply_transitive_impl_fix prog callee_hps hp_rel_unkmap *)
      (* unk_hps *) constrs0 in
+  (* let constrs01 = SAC.remove_dups_constr constrs01a in *)
   let constrs02 = List.map SAU.weaken_trivial_constr_pre constrs01 in
   let unused_pre_hps, constrs0, unk_map1 =
     if detect_dang then elim_unused_pre_preds (sel_post_hps@link_hps) constrs02 hp_rel_unkmap

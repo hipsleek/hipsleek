@@ -1515,7 +1515,7 @@ WHY next_24_784!=null when not related to y,x.
                    HP_33(next_27_32,x@NI)&true]
 
 ================================================================
-# tree-1-bug-1.slk
+# tree-1-bug-1.slk: FIXED (use --sa-dangling for dangling)
 
 Declare_Unknown [HP_2].
 
@@ -1605,7 +1605,7 @@ QUESTION : When would dangling be better than UNKNOWN?
 */
 
 =====================================================================
-# tree-3.ss
+# tree-3.ss: FIXED
 
 EXPECTED:
   H(x)&true <--> x::node<_,left,right>@M * 
@@ -1619,7 +1619,7 @@ EXPECTED:
  HP_1(a) <--> NONE
 
 =====================================================================
-# tree-2-bug-1.slk
+# tree-2-bug-1.slk: FIXED
 
 relAssume H
  H(x)&true --> x::node<key_25_797,left_25_798,right_25_799>@M * 
@@ -1682,6 +1682,60 @@ THUS:
 */
 
 ==========================================================================
+=====================================================================
+# tree-2-bug-1.slk: 
+
+TODO: implement --sa-unify
+
+relAssume H
+ H(x)&true --> x::node<key_25_797,left_25_798,right_25_799>@M * 
+  HP_0(left_25_798) * HP_1(right_25_799).
+
+relAssume H
+ HP_0(left_25_798)&left_25_798!=null --> H(left_25_798).
+
+relAssume H
+ HP_1(right_25_799)&right_25_799!=null --> H(right_25_799).
+
+relAssume HP_1
+ HP_1(right_25_799)&right_25_799=null --> emp.
+
+relAssume HP_0
+ HP_0(left_25_798)&left_25_798=null --> emp.
+
+
+shape_infer [H,HP_0,HP_1][].
+
+/* 
+
+EXPECT
+======
+H(x)&true <--> x::node<key_25_797,left_25_798,right_25_799>@M * 
+  HP_0(left_25_798) * HP_1(right_25_799).
+ HP_1(right) = right=null
+   or    right::node<key_25_797,left_25_798,right_25_799>@M * 
+         HP_0(left_25_798) * HP_1(right_25_799)
+ HP_0(left) = left=null
+   or    left::node<key_25_797,left_25_798,right_25_799>@M * 
+         HP_0(left_25_798) * HP_1(right_25_799)
+
+=====>
+
+HP_0 <---> HP_1
+
+ H(x)&true <--> x::node<key_25_797,left_25_798,right_25_799>@M * 
+  HP_0(left_25_798) * HP_0(right_25_799).
+ HP_1(right) = right=null
+   or    right::node<key_25_797,left_25_798,right_25_799>@M * 
+         HP_1(left_25_798) * HP_1(right_25_799)
+ HP_0(left) = left=null
+   or    left::node<key_25_797,left_25_798,right_25_799>@M * 
+         HP_0(left_25_798) * HP_0(right_25_799)
+
+*/
+
+==========================================================================
+
 # two-2.slk
 
 relAssume HP_6
@@ -1822,7 +1876,7 @@ EXPECT
  H(rest,h)&h=rest --> emp.
 
 ========================================================
-# cll-1b.slk: FIXED
+# cll-1b.slk:
 
 GOT
 ===
@@ -1839,6 +1893,7 @@ GOT
 EXPECT
 ======
  HP_6(next_36_825,h) * HP_7(h,rest)&h!=rest 
+                                    ^^^^^^^
    <--> H(next_36_825,h).
 
 ===============================

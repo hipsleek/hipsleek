@@ -1299,6 +1299,7 @@ let simp_match_unknown unk_hps link_hps cs=
   let inter_unk_hps = CP.intersect_svl inter_hps (unk_hps@link_hps) in
   CF.drop_hprel_constr cs inter_unk_hps
 
+
 (***************************************************************)
            (*========SIMPLIFICATION============*)
 (***************************************************************)
@@ -2048,18 +2049,18 @@ let rec get_closed_ptrs_one rdn ldns rdns rcur_match ss=
                 let lsv1 = CP.subs_one ss lsv in
                 (* if CP.mem_svl lsv1 rcur_match then helper2 ls *)
                 (* else *)
-                  begin
-                      let largs1 = List.map (CP.subs_one ss) largs in
-                      (*look_up rdn in rdns*)
-                      let cur_rdns = look_up_rdn rdn rdns [] in
-                      let rargs = helper1 (ld_name, lsv1, largs1) cur_rdns in
-                      if rargs = [] then helper2 ls
-                      else
-                        let _ =  DD.ninfo_pprint ("    largs: " ^ (!CP.print_svl (lsv::largs))) no_pos in
-                        let _ =  DD.ninfo_pprint ("    largs1: " ^ (!CP.print_svl (lsv1::largs1))) no_pos in
-                        let _ =  DD.ninfo_pprint ("    rargs: " ^ (!CP.print_svl (rargs))) no_pos in
-                        find_args_subst (lsv::largs) rargs [] []
-                  end
+                begin
+                  let _ =  DD.info_pprint ("    largs: " ^ (!CP.print_svl (lsv::largs))) no_pos in
+                  let largs1 = List.map (CP.subs_one ss) largs in
+                  let _ =  DD.info_pprint ("    largs1: " ^ (!CP.print_svl (lsv1::largs1))) no_pos in
+                  (*look_up rdn in rdns*)
+                  let cur_rdns = look_up_rdn rdn rdns [] in
+                  let rargs = helper1 (ld_name, lsv1, largs1) cur_rdns in
+                  let _ =  DD.info_pprint ("    rargs: " ^ (!CP.print_svl (rargs))) no_pos in
+                  if rargs = [] then helper2 ls
+                  else
+                    find_args_subst (lsv::largs) rargs [] []
+                end
         in
         let lm,rm = helper2 ldns in
         (* let _ =  DD.info_pprint ("    lm " ^ (!CP.print_svl (lm))) no_pos in *)
@@ -2183,16 +2184,7 @@ let rec find_imply prog lunk_hps runk_hps lhs1 rhs1 lhs2 rhs2=
         let lhns1 = List.map transform_dn ldns in
         let rhns1 = List.map transform_dn rdns in
         (*all_matched_svl2: all matched slv of rhs2*)
-        let cur_rnode_match = List.fold_left (fun ls (_,sv,_) ->
-            if CP.mem_svl sv m_args2 then (ls@[sv]) else ls
-          ) [] rhns1
-        in
-        let cur_node_match = List.fold_left (fun ls (_,sv,_) ->
-            let sv1 = CP.subs_one subst sv in
-            if CP.mem_svl sv1 cur_rnode_match then (ls@[sv]) else ls
-          ) [] lhns1
-        in
-        let is_node_match, all_matched_svl1,subst1 = get_closed_matched_ptrs lhns1 rhns1 cur_node_match subst in
+        let is_node_match, all_matched_svl1,subst1 = get_closed_matched_ptrs lhns1 rhns1 (* cur_node_match  *)m_args2 subst in
         if not is_node_match then None else
           let all_matched_svl2 = all_matched_svl1 @ m_args2 in
           (* let _ = Debug.info_pprint ("    all matched 1: " ^ (!CP.print_svl all_matched_svl1)) no_pos in *)
@@ -2215,16 +2207,25 @@ let rec find_imply prog lunk_hps runk_hps lhs1 rhs1 lhs2 rhs2=
             let b,_,_ = TP.imply rmf1 lmf "sa:check_hrels_imply" true None in
             let lpos = (CF.pos_of_formula lhs2) in
             if b then
+              (*node match *)
+              let r_nodes = List.map (fun (_,sv,_) -> sv) rhns1 in
+              let lnodes_match, rnodes_match = List.fold_left
+                (fun (l_match,r_match) (_,sv,_) ->
+                  let sv1 = CP.subs_one subst sv in
+                  if CP.mem_svl sv1 r_nodes then (l_match@[sv],r_match@[sv1])
+                  else (l_match,r_match)
+              ) ([],[]) lhns1
+              in
               let l_res = {n_lhs1 with
                   CF.formula_base_heap = CF.drop_data_view_hrel_nodes_hf
                       n_lhs1.CF.formula_base_heap select_dnode
-                      select_vnode select_hrel  all_matched_svl1 all_matched_svl1 matched_hps}
+                      select_vnode select_hrel lnodes_match lnodes_match matched_hps}
               in
               (*drop hps and matched svl in n_rhs2*)
               let r_res = {rhs2 with
                   CF.formula_base_heap = CF.drop_data_view_hrel_nodes_hf
                       rhs2.CF.formula_base_heap select_dnode
-                      select_vnode select_hrel all_matched_svl1 all_matched_svl1 matched_hps;
+                      select_vnode select_hrel rnodes_match rnodes_match matched_hps;
                   CF.formula_base_pure = MCP.mix_of_pure
                       (CP.filter_var_new
                           (MCP.pure_of_mix rhs2.CF.formula_base_pure) all_matched_svl2)}
