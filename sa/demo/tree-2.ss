@@ -31,12 +31,25 @@ void foo(node x)
 /*
 # tree.ss
 
- State:
-x'::node<Anon_821,p_822,q_823>@M[Orig] * p_822::tree@M[0][Orig] 
-* q_823::node<Anon_824,Anon_825,Anon_826>@M[Orig]&x=x' 
-& x!=null & p_822!=null & !(v_bool_27_783') & p_822!=null 
-& !(v_bool_27_783') & q_823!=null & !(v_bool_30_782') & q_823!=null & !(v_bool_30_782')
+GOT BELOW which seems wrong!
 
-Why are not two Anons?
+ H(x_971) ::=  x_971::node<key_25_797,left_25_798,right_25_799>@M * HP_801(right_25_799)&
+left_25_798=null,
+ G(x_973) ::=  x_973::node<key_25_797,left_25_798,right_25_799>@M * 
+HP_974(left_25_798,right_25_799)&true,
+ HP_801(right_25_870) ::=  
+ right_25_870::node<key_25_797,left_25_798,right_25_799>@M * 
+ HP_800(left_25_798) * HP_801(right_25_799)&true
+ or emp&right_25_870=null
+ ,
+ HP_974(left_25_798,right_25_799) ::=  
+ emp&left_25_798=null
+ or emp&right_25_799=null & left_25_798!=null
+ or left_25_798::node<key_25_797,left_25_975,right_25_976>@M * 
+    HP_974(left_25_975,right_25_976) * 
+    right_25_799::node<key_25_797,left_25_975,right_25_976>@M * 
+    HP_974(left_25_975,right_25_976)&true
+ ,
+ HP_800(left_25_972) ::=  emp&left_25_972=null]
 
 */
