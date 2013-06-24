@@ -803,27 +803,19 @@ and translate_instr (instr: Cil.instr) : Iast.exp =
   let new_exp = (match instr with
     | Cil.Set (lv, exp, l) -> (
         let pos = translate_location l in
-        let addrof_exp_info = gather_addrof_info_exp exp in
-        let aux_exps_before = List.map (
-          fun e ->
-            let lv, lv_holder = e in
-            let exp1 = Iast.mkMember lv_holder ["pdata"] None pos in
-            let exp2 = translate_lval lv in
-            let exp3 = Iast.mkAssign Iast.OpAssign exp1 exp2 None pos in
-            exp3
-        ) addrof_exp_info in
         let le = translate_lval lv in
         let re = translate_exp exp in
         let set_exp = Iast.mkAssign Iast.OpAssign le re None pos in
-        let aux_exps_after = List.map (
-          fun e ->
-            let lv, lv_holder = e in
-            let exp1 = translate_lval lv in
-            let exp2 = Iast.mkMember lv_holder ["pdata"] None pos in
-            let exp3 = Iast.mkAssign Iast.OpAssign exp1 exp2 None pos in
-            exp3
-        ) addrof_exp_info in
-        merge_iast_exp (aux_exps_before @ [set_exp] @ aux_exps_after)
+        let update_holder_exps = (
+          try
+            let lv_str = string_of_cil_lval lv in
+            let lv_holder = Hashtbl.find tbl_addrof_lval lv_str in
+            let e1 = Iast.mkMember lv_holder ["pdata"] None pos in
+            let e2 = Iast.mkAssign Iast.OpAssign e1 le None pos in
+            [e2]
+          with Not_found -> []
+        ) in
+        merge_iast_exp ([set_exp] @ update_holder_exps)
       )
     | Cil.Call (lv_opt, exp, exps, l) -> (
         let pos = translate_location l in
@@ -831,18 +823,10 @@ and translate_instr (instr: Cil.instr) : Iast.exp =
           | Cil.Const (Cil.CStr s, _) -> s
           | Cil.Lval ((Cil.Var (v, _), _, _), _) -> v.Cil.vname
           | _ -> report_error_msg "translate_intstr: invalid callee's name!" in
-        let addrof_info = gather_addrof_info_exp_list exps in
-        let aux_exps_before_call = List.map (
-          fun e ->
-            let lv, lv_holder = e in
-            let e1 = Iast.mkMember lv_holder ["pdata"] None pos in
-            let e2 = translate_lval lv in
-            let e3 = Iast.mkAssign Iast.OpAssign e1 e2 None pos in
-            e3
-        ) addrof_info in
         let args = List.map (fun x -> translate_exp x) exps in
         let callee = Iast.mkCallNRecv fname None args None pos in
-        let aux_exps_after_call = List.map (
+        let addrof_info = gather_addrof_info_exp_list exps in
+        let update_addrof_args_exps = List.map (
           fun e ->
             let lv, lv_holder = e in
             let exp1 = translate_lval lv in
@@ -852,9 +836,7 @@ and translate_instr (instr: Cil.instr) : Iast.exp =
         ) addrof_info in
         let newexp = (
           match lv_opt with
-          | None -> (
-              merge_iast_exp (aux_exps_before_call @ [callee] @ aux_exps_after_call)
-            )
+          | None -> merge_iast_exp ([callee] @ update_addrof_args_exps)
           | Some lv -> (
               (* declare a temp var to store the value return by call *)
               let tmp_var = (
@@ -864,23 +846,20 @@ and translate_instr (instr: Cil.instr) : Iast.exp =
                 aux_local_vardecls := !aux_local_vardecls @ [vdecl];
                 Iast.mkVar vname pos
               ) in
-              let tmp_assign = (
-                let le = tmp_var in
-                let re = callee in
-                let lv_loc = Cil.get_lvalLoc lv in
-                let asgn_loc = Cil.makeLoc (Cil.startPos lv_loc) (Cil.endPos l) in
-                let asgn_pos = translate_location asgn_loc in
-                Iast.mkAssign Iast.OpAssign le re None asgn_pos
+              let tmp_assign = Iast.mkAssign Iast.OpAssign tmp_var callee None pos in
+              let lexp = translate_lval lv in
+              let call_assign = Iast.mkAssign Iast.OpAssign lexp tmp_var None pos in
+              let update_holder_exps = (
+                try
+                  let lv_str = string_of_cil_lval lv in
+                  let lv_holder = Hashtbl.find tbl_addrof_lval lv_str in
+                  let e1 = Iast.mkMember lv_holder ["pdata"] None pos in
+                  let e2 = Iast.mkAssign Iast.OpAssign e1 lexp None pos in
+                  [e2]
+                with Not_found -> []
               ) in
-              let call_assign = (
-                let le = translate_lval lv in
-                let re = tmp_var in
-                let lv_loc = Cil.get_lvalLoc lv in
-                let asgn_loc = Cil.makeLoc (Cil.startPos lv_loc) (Cil.endPos l) in
-                let asgn_pos = translate_location asgn_loc in
-                Iast.mkAssign Iast.OpAssign le re None asgn_pos
-              ) in
-              merge_iast_exp (aux_exps_before_call @ [tmp_assign] @ aux_exps_after_call @ [call_assign])
+              merge_iast_exp ([tmp_assign] @ update_addrof_args_exps 
+                              @ [call_assign] @ update_holder_exps)
             )
         ) in
         newexp
