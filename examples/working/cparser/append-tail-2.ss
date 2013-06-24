@@ -26,5 +26,6 @@ void append(node__star x, node__star tx, node__star y, node__star ty)
   requires x::ll_tail2<tx, nnn> * y::ll_tail2<ty, mmm>
   ensures x::ll_tail2<ty, qqq> & qqq=mmm+nnn;
 {
-  tx.pdata.next = y;
+  node xx = tx.pdata;
+  xx.next = y;
 }

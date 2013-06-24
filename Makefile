@@ -69,7 +69,7 @@ all: gbyte decidez.vo
 #gui
 byte: sleek.byte hip.byte
 
-gbyte: hip.gbyte
+gbyte: sleek.gbyte hip.gbyte
  
 # hsprinter.byte
 native: hip.native sleek.native

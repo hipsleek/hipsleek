@@ -1,0 +1,30 @@
+
+data node {
+  int val;
+  node__star next;
+}.
+
+data node__star {
+  node pdata;
+}.
+
+pred lseg2<p, n> == self=p & n=0
+  or self::node__star<uuu> * uuu::node<_, r> * r::lseg2<p, n-1>
+  inv n>=0.
+
+pred ll_tail2<tx, n> == self::node__star<vvv> * vvv::node<_, null> & tx=self & n=1
+  or self::node__star<yyy> * yyy::node<_, r> * r::ll_tail2<tx, n-1> & r!=null
+  inv self!=null & tx!=null & n>=1.
+
+lemma "lseg2" self::lseg2<p, n> <- self::lseg2<q, n1>@D * q::lseg2<p, n2>@D & n=n1+n2.
+
+lemma "ll_tail2" self::ll_tail2<t, n> <-> self::lseg2<t, n-1> * t::node__star<zzz> * zzz::node<_, null>.
+
+
+checkentail x::ll_tail2<tx_945,nnn>@M * 
+y::ll_tail2<ty_946,mmm>@M&x=x' & tx=tx' & y=y' & ty=ty' & 
+tx=tx_945 & ty=ty_946
+ |-  tx'::node__star<pdata_25_854'>@L. 
+
+print residue.
+
