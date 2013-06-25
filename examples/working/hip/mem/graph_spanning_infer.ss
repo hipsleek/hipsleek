@@ -5,7 +5,8 @@ data node {
 }
 
 
-graph<v,M> == self = null & M = {}
+graph<v,M> == self = null 
+	// & M = {}
 	or self::node<0,l,r> U* (l::graph<_,Ml> U* r::graph<_,Mr>) & v = 0
 	// & M = union(Ml,Mr,{self}) 
 	or self::node<1,l,r> U* (l::graph<1,Ml> U* r::graph<1,Mr>) & v = 1
@@ -14,11 +15,12 @@ graph<v,M> == self = null & M = {}
 	memE M->();
 	//memE M->(node<@M,@M,@M> & v = 0 ; node<1@M,@M,@M> & v != 0);
 
-tree<v,M> == self = null & M ={}
+tree<v,M> == self = null 
+	// & M ={}
 	or self::node<0,l,r> * l::tree<_,Ml> * r::tree<_,Mr> & v = 0
-	//& M = union(Ml,Mr,{self}) 
+	// & M = union(Ml,Mr,{self}) 
 	or self::node<1,l,r> * l::tree<1,Ml> * r::tree<1,Mr> & v = 1
-	//& M = union(Ml,Mr,{self}) 
+	// & M = union(Ml,Mr,{self}) 
 	inv true	
 	memE M->();
 	//memE M->(node<@M,@M,@M> & v = 0 ; node<1@M,@M,@M> & v != 0);

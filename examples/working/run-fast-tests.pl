@@ -372,6 +372,8 @@ $output_file = "log";
         "caching","SUCCESS","add_in","SUCCESS","find","SUCCESS"],
         ["pll.ss",2,"-tp om","length","SUCCESS","sum","SUCCESS"],
         ["pll_ramify.ss",2,"-tp om --ramify","length","SUCCESS","sum","SUCCESS"],
+        ["pll_infer.ss",2,"-tp om --infer-mem","length","SUCCESS","sum","SUCCESS"],
+        ["pll_ramify_infer.ss",2,"-tp om --ramify --infer-mem","length","SUCCESS","sum","SUCCESS"],
         ["doubly_circular_list.ss",4,"-tp om","insert_node_dcll","SUCCESS","insert_lln","SUCCESS",
         "insert_llt","SUCCESS","insert_dcll","SUCCESS"],
         ["infer_doubly_circular_list.ss",4,"-tp om --infer-mem","insert_node_dcll","SUCCESS","insert_lln","SUCCESS",
