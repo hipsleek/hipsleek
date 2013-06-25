@@ -4005,7 +4005,6 @@ let mkConjH_and_norm_x prog args unk_hps unk_svl f1 f2 pos=
                 else
                   CF.mkStar sharing_f (CF.mkStar nf1 nf2 CF.Flow_combine pos) CF.Flow_combine pos
               | false, false ->
-                    let _ = DD.info_pprint ("    **** :" ) no_pos in
                     CF.mkStar sharing_f (CF.mkConj_combine nf1 nf2 CF.Flow_combine pos) CF.Flow_combine pos
         end
       | _ -> report_error no_pos "sau.norm_and_heap: should be no more than two formulas"
@@ -5108,7 +5107,7 @@ let simp_tree_one_hp_x unk_hps hp args fs=
 
 let simp_tree_one_hp unk_hps hp args fs=
   let pr1 = pr_list_ln Cprinter.prtt_string_of_formula in
-  Debug.no_3 "simp_tree_one_hp" !CP.print_sv !CP.print_svl pr1 pr1
+  Debug.ho_3 "simp_tree_one_hp" !CP.print_sv !CP.print_svl pr1 pr1
       (fun _ _ _ -> simp_tree_one_hp_x unk_hps hp args fs) hp args fs
 
 let simp_tree_x unk_hps hpdefs=

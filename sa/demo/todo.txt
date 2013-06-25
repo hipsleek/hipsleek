@@ -1924,6 +1924,28 @@ HP_9(nn,x_151)&true,
  or HP_5(n,y_152)&n!=null
 
 ==========================================================
+# tree-5.slk: FIXED
+
+EXPECT:
+======
+  G1 (x) <--> G2 (x)
+
+  G2(x) <--> x=null
+     or x::node<_,left,right> * G2(left) * G2(right)
+
+==========================================================
+# tree-5a.slk
+
+EXPECT:
+======
+ G2=G1
+
+ G(x) <-->   x::node<k,l,r> * G1(l) * G1(r)
+
+ G1(left) <--->
+  left=null
+  or left::node<k,l,r> * G1(l) * G1(r)
+==========================================================
 # tree.ss
 
 GOT BELOW which is WRONG

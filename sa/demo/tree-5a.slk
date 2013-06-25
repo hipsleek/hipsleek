@@ -24,3 +24,17 @@ relAssume G
   x::node<k,l,r>@M *  G(l) * G(r) & r!=null & l!=null --> G(x)&true.
 
 shape_infer [HP_1][G].
+
+
+/*
+EXPECT:
+======
+ G2=G1
+
+ G(x) <-->   x::node<k,l,r> * G1(l) * G1(r)
+
+ G1(left) <--->
+  left=null
+  or left::node<k,l,r> * G1(l) * G1(r)
+
+*/

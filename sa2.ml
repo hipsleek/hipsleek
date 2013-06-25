@@ -1472,16 +1472,21 @@ let infer_shapes_proper prog proc_name (constrs2: CF.hprel list) callee_hps sel_
   let _ = DD.binfo_pprint ">>>>>> pre-predicates<<<<<<" no_pos in
   let pre_hps, pre_defs, unk_hpargs1,unk_map3 = infer_shapes_init_pre prog pre_constrs callee_hps []
     sel_post_hps unk_hpargs link_hps unk_map2 detect_dang in
-  let pre_defs1, unify_equiv_map = if !Globals.sa_unify then
+  let pre_defs1, unify_equiv_map1 = if !Globals.sa_unify then
     SAC.do_unify unk_hps link_hps pre_defs
   else
     (pre_defs, [])
   in
   let _ = DD.binfo_pprint ">>>>>> post-predicates<<<<<<" no_pos in
-  let post_constrs1 = SAU.subst_equiv_hprel unify_equiv_map post_constrs in
+  let post_constrs1 = SAU.subst_equiv_hprel unify_equiv_map1 post_constrs in
   let post_hps, post_defs,unk_hpargs2,unk_map4  = infer_shapes_init_post prog post_constrs1 []
     sel_post_hps unk_hpargs1 link_hps unk_map3 detect_dang pre_defs1 in
-  let defs1 = (pre_defs1@post_defs) in
+  let post_defs1,unify_equiv_map2 = if !Globals.sa_unify then
+    SAC.do_unify unk_hps link_hps post_defs
+  else
+    (post_defs,[])
+  in
+  let defs1 = (pre_defs1@post_defs1) in
   let defs2 = SAC.generate_hp_def_from_unk_hps defs1 unk_hpargs2 (pre_hps@post_hps) sel_post_hps unk_map4 in
   let defs3 = if !Globals.sa_inlining then
     (* SAU.transform_unk_hps_to_pure (defs3b) unk_hp_frargs *)

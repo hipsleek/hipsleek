@@ -1598,17 +1598,17 @@ let unify_branches_hpdef_x unk_hps link_hps hp_defs =
 let unify_branches_hpdef unk_hps link_hps hp_defs =
   let pr1 = pr_list_ln Cprinter.string_of_hp_rel_def in
   let pr2 = pr_pair pr1 (pr_list (pr_pair !CP.print_sv !CP.print_sv)) in
-  Debug.no_3 "unify_branches_hpdef" !CP.print_svl !CP.print_svl pr1 pr2
+  Debug.ho_3 "unify_branches_hpdef" !CP.print_svl !CP.print_svl pr1 pr2
       (fun _ _ _ -> unify_branches_hpdef_x unk_hps link_hps hp_defs)
       unk_hps link_hps hp_defs
 
-let unify_eq_hpdef_x unk_hps link_hps hp_defs =
-   (**************** internal methods**********************)
-   let equiv_cmp (hp11,hp12) (hp21,hp22)=
+let equiv_cmp (hp11,hp12) (hp21,hp22)=
     (CP.eq_spec_var hp11 hp21 && CP.eq_spec_var hp12 hp22) ||
         (CP.eq_spec_var hp11 hp22 && CP.eq_spec_var hp12 hp21)
-   in
-   let equiv_cmp1 (hp11,hp12) (hp21,hp22)=
+
+let unify_eq_hpdef_x unk_hps link_hps hp_defs =
+   (**************** internal methods**********************)
+  let equiv_cmp1 (hp11,hp12) (hp21,hp22)=
      (CP.eq_spec_var hp11 hp21 && CP.eq_spec_var hp12 hp22)
    in
   let rec lookup_equiv_hpdef hpdefs eq_pairs hp args f=
@@ -1661,7 +1661,7 @@ let unify_eq_hpdef unk_hps link_hps hp_defs =
 
 let do_unify_x unk_hps link_hps hp_defs=
   (* let hp_defs1,ss1= unify_branches_hpdef unk_hps link_hps hp_defs in *)
-  unify_eq_hpdef unk_hps link_hps hp_defs
+   unify_eq_hpdef unk_hps link_hps hp_defs
 
 let do_unify unk_hps link_hps hp_defs=
   let pr1 = pr_list_ln Cprinter.string_of_hp_rel_def in
@@ -1670,6 +1670,7 @@ let do_unify unk_hps link_hps hp_defs=
   Debug.no_3 "do_unify" pr2 pr2 pr1 pr3
       (fun _ _ _ -> do_unify_x unk_hps link_hps hp_defs)
       unk_hps link_hps hp_defs
+
 
 (*=============**************************================*)
        (*=============END UNIFY PREDS================*)
