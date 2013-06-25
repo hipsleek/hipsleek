@@ -3915,17 +3915,30 @@ let get_sharing prog unk_hps r other_args args sh_ldns eqNulls eqPures hprels un
       (fun _ _ _ _ _ _ -> get_sharing_x prog unk_hps r other_args args sh_ldns eqNulls eqPures hprels unk_svl)
       unk_hps args sh_ldns eqNulls eqPures hprels
 
-
-let mkConjH_and_norm_x prog args unk_hps unk_svl f1 f2 pos=
+let partittion_common_diff prog args unk_hps unk_svl f1 f2 pos=
   let fs = [f1;f2] in
   let r,non_r_args = find_root args fs in
   let lldns = List.map (fun f -> (get_hdnodes f, f)) fs in
   let min,sh_ldns,eqNulls,eqPures,hprels = get_min_common prog args unk_hps lldns in
   if min = 0 (* && eqNulls = [] && eqPures= [] *) then
-    (CF.mkConj_combine f1 f2 CF.Flow_combine pos)
+    (false,CF.mkTrue (CF.mkTrueFlow()) pos ,fs)
   else
     let sharing_f, n_args , sh_ldns2,next_roots = get_sharing prog unk_hps r non_r_args args sh_ldns eqNulls eqPures hprels unk_svl in
     let n_fs = List.map (norm_conjH_f prog args n_args next_roots sh_ldns2 eqNulls eqPures hprels) lldns in
+    (true, sharing_f,n_fs)
+
+let mkConjH_and_norm_x prog args unk_hps unk_svl f1 f2 pos=
+  let is_common, sharing_f, n_fs = partittion_common_diff prog args unk_hps unk_svl f1 f2 pos in
+  if not is_common then (CF.mkConj_combine f1 f2 CF.Flow_combine pos) else
+  (* let fs = [f1;f2] in *)
+  (* let r,non_r_args = find_root args fs in *)
+  (* let lldns = List.map (fun f -> (get_hdnodes f, f)) fs in *)
+  (* let min,sh_ldns,eqNulls,eqPures,hprels = get_min_common prog args unk_hps lldns in *)
+  (* if min = 0 (\* && eqNulls = [] && eqPures= [] *\) then *)
+  (*   (CF.mkConj_combine f1 f2 CF.Flow_combine pos) *)
+  (* else *)
+  (*   let sharing_f, n_args , sh_ldns2,next_roots = get_sharing prog unk_hps r non_r_args args sh_ldns eqNulls eqPures hprels unk_svl in *)
+  (*   let n_fs = List.map (norm_conjH_f prog args n_args next_roots sh_ldns2 eqNulls eqPures hprels) lldns in *)
     (* let n_fs1 = List.filter (fun f -> not ((is_empty_f f) || (CF.is_only_neqNull n_args [] f))) n_fs in *)
     match n_fs with
       | [] -> CF.mkFalse_nf pos
@@ -3935,7 +3948,8 @@ let mkConjH_and_norm_x prog args unk_hps unk_svl f1 f2 pos=
             let b1 = is_empty_heap_f nf1 in
             let b2 = is_empty_heap_f nf2 in
             match b1,b2 with
-              | true, true -> CF.mkStar sharing_f (CF.mkConj_combine nf1 nf2 CF.Flow_combine pos) CF.Flow_combine pos
+              | true, true ->
+                    CF.mkStar sharing_f (CF.mkStar nf1 nf2 CF.Flow_combine pos) CF.Flow_combine pos
               | true, false -> if check_inconsistency_f nf2 nf1 then
                   CF.mkFalse_nf pos
                 else
@@ -3944,7 +3958,9 @@ let mkConjH_and_norm_x prog args unk_hps unk_svl f1 f2 pos=
                   CF.mkFalse_nf pos
                 else
                   CF.mkStar sharing_f (CF.mkStar nf1 nf2 CF.Flow_combine pos) CF.Flow_combine pos
-              | false, false -> CF.mkStar sharing_f (CF.mkStar nf1 nf2 CF.Flow_combine pos) CF.Flow_combine pos
+              | false, false ->
+                    let _ = DD.info_pprint ("    **** :" ) no_pos in
+                    CF.mkStar sharing_f (CF.mkConj_combine nf1 nf2 CF.Flow_combine pos) CF.Flow_combine pos
         end
       | _ -> report_error no_pos "sau.norm_and_heap: should be no more than two formulas"
 
@@ -3952,6 +3968,94 @@ let mkConjH_and_norm prog args unk_hps unk_svl f1 f2 pos=
   let pr1 = Cprinter.prtt_string_of_formula in
   Debug.no_2 "mkConjH_and_norm" pr1 pr1 pr1
       (fun _ _ -> mkConjH_and_norm_x prog args unk_hps unk_svl f1 f2 pos) f1 f2
+
+let rec list_ss_partition ss r=
+  match ss with
+    | [] -> r
+    | (sv1,sv2)::tl ->
+          let part,rem = List.partition (fun (_, sv4) -> CP.eq_spec_var sv2 sv4) tl in
+          let part_svl = fst (List.split part) in
+          list_ss_partition rem r@[(sv1::part_svl, sv2)]
+
+(*match hprel: with the same args*)
+let norm_hf_x h1 h2 equivs=
+  let equiv_cmp (h1,h2) (h3,h4) = (CP.eq_spec_var h1 h3 && CP.eq_spec_var h2 h4) ||
+    (CP.eq_spec_var h1 h4 && CP.eq_spec_var h2 h3)
+  in
+  let hp_cmp (_,args1) (_,args2) =
+    let s1 = String.concat "" (List.map !CP.print_sv args1) in
+    let s2 = String.concat "" (List.map !CP.print_sv args2) in
+    String.compare s1 s2
+  in
+  let rec hp_match hpargs1 hpargs2 res=
+    match hpargs1, hpargs2 with
+      | [],[] -> true,res
+      | (hp1,args1)::rest1,(hp2,args2)::rest2 ->
+            if eq_spec_var_order_list args1 args2 then
+              let nres=
+                if CP.eq_spec_var hp1 hp2 then res else (res@[(hp1,hp2)])
+              in
+              hp_match rest1 rest2 nres
+            else
+              (false,res)
+      | _ -> false,res
+  in
+  let hpargs1 = CF.get_HRels h1 in
+  let hpargs2 = CF.get_HRels h2 in
+  let hpargs11 = List.sort hp_cmp hpargs1 in
+  let hpargs21 = List.sort hp_cmp hpargs2 in
+  let is_matched, new_equiv =  hp_match hpargs11 hpargs21 [] in
+  if is_matched then
+    let new_equiv = Gen.BList.difference_eq equiv_cmp new_equiv equivs in
+    let equivs1 =  equivs@new_equiv in
+    let parts = list_ss_partition equivs1 [] in
+    let new_h1 = List.fold_left (fun hf0 (from_hps, to_hp) -> CF.subst_hprel_hf hf0 from_hps to_hp) h1 parts in
+    let new_h2 = List.fold_left (fun hf0 (from_hps, to_hp) -> CF.subst_hprel_hf hf0 from_hps to_hp) h2 parts in
+    if check_stricteq_h_fomula true new_h1 new_h2 then
+      Some (new_h1, equivs1)
+    else None
+  else None
+
+
+let norm_hf h1 h2 equivs=
+  let pr1 = Cprinter.prtt_string_of_h_formula in
+  let pr2 = pr_list (pr_pair !CP.print_sv !CP.print_sv) in
+  let pr3 ores= match ores with
+    | None -> "NONE"
+    | Some (hf, equivs) -> (pr_pair pr1 pr2)  (hf, equivs)
+  in
+  Debug.no_2 "norm_hf" pr1 pr1 pr3
+      (fun _ _ -> norm_hf_x h1 h2 equivs) h1 h2
+
+let norm_formula_x prog args unk_hps unk_svl f1 f2 equivs=
+  let is_common, sharing_f, n_fs = partittion_common_diff prog args unk_hps unk_svl f1 f2 no_pos in
+  if not is_common then None else
+    match n_fs with
+      | [] -> None
+      | [f] -> Some (f, equivs)
+      | [nf1;nf2] -> begin
+          let (hf1 ,mf1,_,_,_) = CF.split_components nf1 in
+          let (hf2 ,mf2,_,_,_) = CF.split_components nf2 in
+          if CP.equalFormula (MCP.pure_of_mix mf1) (MCP.pure_of_mix mf2) then
+            let ores = norm_hf hf1 hf2 equivs in
+            match ores with
+              | None -> None
+              | Some (hf, n_equivs) ->
+                    Some (CF.mkAnd_f_hf sharing_f hf no_pos, n_equivs)
+          else
+            None
+        end
+      | _ -> report_error no_pos "sau.norm_formula: should be no more than two formulas"
+
+let norm_formula prog args unk_hps unk_svl f1 f2 equivs=
+  let pr1 = Cprinter.prtt_string_of_formula in
+  let pr2 = pr_list (pr_pair !CP.print_sv !CP.print_sv) in
+  let pr3 ores= match ores with
+    | None -> "NONE"
+    | Some (f, equivs) -> (pr_pair pr1 pr2)  (f, equivs)
+  in
+  Debug.no_2 "norm_formula" pr1 pr1 pr3
+      (fun _ _ -> norm_formula_x prog args unk_hps unk_svl f1 f2 equivs) f1 f2
 
 (************************************************************)
       (******************END FORM HP DEF*********************)
