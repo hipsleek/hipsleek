@@ -1934,7 +1934,7 @@ EXPECT:
      or x::node<_,left,right> * G2(left) * G2(right)
 
 ==========================================================
-# tree-5a.slk
+# tree-5a.slk: FIXED
 
 EXPECT:
 ======
@@ -1946,7 +1946,7 @@ EXPECT:
   left=null
   or left::node<k,l,r> * G1(l) * G1(r)
 ==========================================================
-# tree.ss
+# tree.ss: FIXED
 
 GOT BELOW which is WRONG
 ========================
@@ -2006,6 +2006,8 @@ MISSING
 
 =============================================================
 # tree-4a.slk
+
+TODO: --sa-unify + --sa-relate
 
 Added an equation:
 ==================
