@@ -344,7 +344,7 @@ let split_constr prog constrs post_hps prog_vars unk_map unk_hps link_hps=
     let pr1 = Cprinter.string_of_hprel in
     let pr2 = (pr_list (pr_pair (pr_pair !CP.print_sv (pr_list string_of_int)) CP.string_of_xpure_view)) in
     let pr3 = pr_list (pr_pair !CP.print_sv !CP.print_svl) in
-    Debug.ho_2 "split_one" pr1 pr2 (pr_triple (pr_list_ln pr1) pr2 pr3) split_one cs total_unk_map 
+    Debug.no_2 "split_one" pr1 pr2 (pr_triple (pr_list_ln pr1) pr2 pr3) split_one cs total_unk_map 
     in
   let new_constrs, new_map, link_hpargs = List.fold_left (fun (r_constrs,unk_map, r_link_hpargs) cs ->
       let new_constrs, new_map, new_link_hpargs = split_one cs unk_map in
@@ -525,13 +525,13 @@ let combine_pdefs_pre_x prog unk_hps link_hps pr_pdefs=
               CP.eq_spec_var a1 hp_name) xs in
           partition_pdefs_by_hp_name remains (parts@[[((a1,a2,a3,a4,a5,a6),cs)]@part])
   in
-  let do_combine (hp,args,unk_svl, cond, lhs, orhs)=
+  let do_combine (hp,args,unk_svl, cond, norm_cond, lhs, orhs)=
     match orhs with
       | Some rhs ->
             let n_cond = CP.remove_redundant cond in
             let nf = (CF.mkAnd_pure rhs (MCP.mix_of_pure n_cond) (CF.pos_of_formula rhs)) in
             if SAU.is_unsat nf then [] else
-            [(hp,args,unk_svl, n_cond, n_cond, lhs, Some nf)]
+            [(hp,args,unk_svl, n_cond,  norm_cond, lhs, Some nf)]
       | None -> report_error no_pos "sa2.combine_pdefs_pre: should not None 1"
   in
   let mkAnd_w_opt args ss of1 of2=
@@ -552,26 +552,29 @@ let combine_pdefs_pre_x prog unk_hps link_hps pr_pdefs=
   let combine_helper2_x (hp1,args1,unk_svl1, cond1, norm_cond1, olhs1, orhs1) (hp2,args2,unk_svl2, cond2, norm_cond2, olhs2, orhs2)=
     let norm_cond_disj1 = CP.mkAnd norm_cond1 (CP.mkNot (CP.remove_redundant norm_cond2) None no_pos) no_pos in
     let pdef1 = if (TP.is_sat_raw (MCP.mix_of_pure norm_cond_disj1)) then
-      let npdef1 = do_combine (hp1,args1,unk_svl1, CP.remove_redundant norm_cond_disj1 , olhs1, orhs1) in
+      let ss = List.combine args2 args1 in
+      let n_cond = CP.mkAnd cond1 (CP.mkNot (CP.remove_redundant (CP.subst ss cond2) ) None no_pos) no_pos in
+      let npdef1 = do_combine (hp1,args1,unk_svl1, CP.remove_redundant n_cond, CP.remove_redundant norm_cond_disj1 , olhs1, orhs1) in
       npdef1
     else []
     in
     let norm_cond_disj2 = CP.mkAnd norm_cond2 (CP.mkNot norm_cond1 None no_pos) no_pos in
     let pdef2 = if (TP.is_sat_raw (MCP.mix_of_pure norm_cond_disj2)) then
       let ss1 = List.combine args1 args2 in
-      let n_cond = CP.remove_redundant (CP.mkAnd cond2 (CP.mkNot (CP.subst ss1 cond1) None no_pos) no_pos) in
-      let npdef2 = do_combine (hp2,args2,unk_svl2, n_cond, olhs2, orhs2) in
+      let n_cond = (CP.mkAnd cond2 (CP.mkNot (CP.subst ss1 cond1) None no_pos) no_pos) in
+      let npdef2 = do_combine (hp2,args2,unk_svl2, n_cond, CP.remove_redundant norm_cond_disj2, olhs2, orhs2) in
       npdef2
     else []
     in
     let norm_cond_disj3 = CP.mkAnd norm_cond2 norm_cond1 no_pos in
     let pdef3 = if (TP.is_sat_raw (MCP.mix_of_pure norm_cond_disj3)) then
       let ss = List.combine args2 args1 in
+      let n_cond = CP.remove_redundant (CP.mkAnd cond1 (CP.subst ss cond2) no_pos) in
       let is_sat1, n_orhs = mkAnd_w_opt args1 ss orhs1 orhs2 in
       let is_sat2, n_olhs = mkAnd_w_opt args1 ss olhs1 olhs2 in
       let npdef3 = if is_sat1 && is_sat2 then
-        do_combine (hp1,args1,unk_svl1, norm_cond_disj3, n_olhs, n_orhs)
-      else [(hp1,args1,unk_svl1,  norm_cond_disj3, norm_cond_disj3, olhs1, Some (CF.mkFalse_nf no_pos))]
+        do_combine (hp1,args1,unk_svl1, n_cond, norm_cond_disj3, n_olhs, n_orhs)
+      else [(hp1,args1,unk_svl1,  n_cond, norm_cond_disj3, olhs1, Some (CF.mkFalse_nf no_pos))]
       in
       npdef3
     else []
@@ -586,45 +589,45 @@ let combine_pdefs_pre_x prog unk_hps link_hps pr_pdefs=
       | Some f -> Cprinter.prtt_string_of_formula f
     in
     let pr4 = pr_hepta !CP.print_sv pr1 pr1 pr2 pr2 pr3 pr3 in
-    Debug.no_2 " combine_helper2" pr4 pr4 (pr_list_ln pr4)
+    Debug.ho_2 " combine_helper2" pr4 pr4 (pr_list_ln pr4)
         (fun _ _ -> combine_helper2_x pdef1 pdef2)
         pdef1 pdef2
   in
   (*TO remove*)
-  let rec refine_cond rem_pr_par_defs ((hp,args,unk_svl, cond, norm_cond, olhs, orhs), cs)=
-    match rem_pr_par_defs with
-      | [] -> begin
-          let new_pdef = do_combine (hp,args,unk_svl,cond, olhs, orhs) in
-          (new_pdef,[])
-      end
-      | ((_,_,_,_, norm_cond1,_,_),_)::rest ->
-          (* let _ = print_endline ("cond: " ^ ( !CP.print_formula norm_cond)) in *)
-          (* let _ = print_endline ("cond1: " ^ ( !CP.print_formula norm_cond1)) in *)
-            if not (TP.is_sat_raw (MCP.mix_of_pure (CP.mkAnd norm_cond norm_cond1 no_pos))) then
-            refine_cond rest ((hp,args,unk_svl, cond, norm_cond, olhs, orhs), cs)
-          else
-            ([], [cs])
-  in
+  (* let rec refine_cond rem_pr_par_defs ((hp,args,unk_svl, cond, norm_cond, olhs, orhs), cs)= *)
+  (*   match rem_pr_par_defs with *)
+  (*     | [] -> begin *)
+  (*         let new_pdef = do_combine (hp,args,unk_svl,cond, olhs, orhs) in *)
+  (*         (new_pdef,[]) *)
+  (*     end *)
+  (*     | ((_,_,_,_, norm_cond1,_,_),_)::rest -> *)
+  (*         (\* let _ = print_endline ("cond: " ^ ( !CP.print_formula norm_cond)) in *\) *)
+  (*         (\* let _ = print_endline ("cond1: " ^ ( !CP.print_formula norm_cond1)) in *\) *)
+  (*           if not (TP.is_sat_raw (MCP.mix_of_pure (CP.mkAnd norm_cond norm_cond1 no_pos))) then *)
+  (*           refine_cond rest ((hp,args,unk_svl, cond, norm_cond, olhs, orhs), cs) *)
+  (*         else *)
+  (*           ([], [cs]) *)
+  (* in *)
   (*TO remove*)
-  let rec combine_helper rem_pr_par_defs done_pr_par_defs res_pdefs res_cs=
-    match rem_pr_par_defs with
-      | [] -> (res_pdefs, res_cs)
-      | pr::rest ->
-          let ls1,ls2 = refine_cond (done_pr_par_defs@rest) pr in
-          combine_helper rest (done_pr_par_defs@[pr]) (res_pdefs@ls1) (res_cs@ls2)
-  in
+  (* let rec combine_helper rem_pr_par_defs done_pr_par_defs res_pdefs res_cs= *)
+  (*   match rem_pr_par_defs with *)
+  (*     | [] -> (res_pdefs, res_cs) *)
+  (*     | pr::rest -> *)
+  (*         let ls1,ls2 = refine_cond (done_pr_par_defs@rest) pr in *)
+  (*         combine_helper rest (done_pr_par_defs@[pr]) (res_pdefs@ls1) (res_cs@ls2) *)
+  (* in *)
   (*TO remove*)
-  let filter_depend_pardef (res_pr, res_depen_cs) ((hp,args,unk_svl, cond, olhs, orhs), cs) =
-     match orhs with
-       | Some rhs -> let hps = CF.get_hp_rel_name_formula rhs in
-                     let hps = CP.remove_dups_svl hps in
-                     (* let _ = print_endline ("rhs: " ^ ( !CF.print_formula rhs)) in *)
-                     let dep_hps = List.filter (fun hp1 -> not (CP.eq_spec_var hp hp1) && not (CP.mem_svl hp1 link_hps)) hps in
-                     if (dep_hps = []) then
-                       (res_pr@[((hp,args,unk_svl, cond, olhs, orhs), cs)], res_depen_cs)
-                     else (res_pr, res_depen_cs@[cs])
-       | None -> report_error no_pos "sa2.combine_pdefs_pre: should not None 2"
-  in
+  (* let filter_depend_pardef (res_pr, res_depen_cs) ((hp,args,unk_svl, cond, olhs, orhs), cs) = *)
+  (*    match orhs with *)
+  (*      | Some rhs -> let hps = CF.get_hp_rel_name_formula rhs in *)
+  (*                    let hps = CP.remove_dups_svl hps in *)
+  (*                    (\* let _ = print_endline ("rhs: " ^ ( !CF.print_formula rhs)) in *\) *)
+  (*                    let dep_hps = List.filter (fun hp1 -> not (CP.eq_spec_var hp hp1) && not (CP.mem_svl hp1 link_hps)) hps in *)
+  (*                    if (dep_hps = []) then *)
+  (*                      (res_pr@[((hp,args,unk_svl, cond, olhs, orhs), cs)], res_depen_cs) *)
+  (*                    else (res_pr, res_depen_cs@[cs]) *)
+  (*      | None -> report_error no_pos "sa2.combine_pdefs_pre: should not None 2" *)
+  (* in *)
   let filter_trivial_pardef (res_pr, res_depen_cs) ((hp,args,unk_svl, cond, olhs, orhs), cs) =
      match orhs with
        | Some rhs -> let b = CP.isConstTrue cond && SAU.is_empty_f rhs in
@@ -643,7 +646,7 @@ let combine_pdefs_pre_x prog unk_hps link_hps pr_pdefs=
     match pr_pdefs with
       | [] -> ([],[],equivs)
       | [(hp,args,unk_svl, cond, lhs, orhs), _] ->
-          let new_pdef = do_combine (hp,args,unk_svl, cond, lhs, orhs) in
+          let new_pdef = do_combine (hp,args,unk_svl, cond, cond, lhs, orhs) in
           (new_pdef,[],equivs)
       | _ -> begin
           (*each group, filter depended constraints*)
@@ -668,7 +671,7 @@ let combine_pdefs_pre_x prog unk_hps link_hps pr_pdefs=
           let pdefs,rem_constrs0 = begin
             match cs,rem_pr_defs1 with
               | [],[] -> [],[]
-              | [(pdef, _)],[] -> (do_combine pdef),[]
+              | [((hp,args,unk_svl, cond, lhs, orhs), _)],[] -> (do_combine (hp, args, unk_svl, cond, cond, lhs, orhs)),[]
               | [],[(pr1,_);(pr2,_)] -> (*try with 2 first. to improve*)
                     let npdefs = combine_helper2 pr1 pr2 in
                 npdefs,[]
@@ -717,7 +720,7 @@ let combine_pdefs_pre prog unk_hps link_hps pr_pdefs=
   let pr1= pr_list_ln Cprinter.string_of_hprel_short in
   let pr2 = SAU.string_of_par_def_w_name in
   let pr3 (pdef, _) = pr2 pdef in
-  Debug.no_1 "combine_pdefs_pre" (pr_list_ln pr3) (pr_pair (pr_list_ln pr2) pr1)
+  Debug.ho_1 "combine_pdefs_pre" (pr_list_ln pr3) (pr_pair (pr_list_ln pr2) pr1)
       (fun _ -> combine_pdefs_pre_x prog unk_hps link_hps pr_pdefs) pr_pdefs
 (***************************************************************
                       END PARTIAL DEFS
@@ -1394,7 +1397,7 @@ let infer_shapes_init_post prog (constrs0: CF.hprel list) non_ptr_unk_hps sel_po
   let pr3 = pr_list_ln Cprinter.string_of_hp_rel_def in
   let pr4 = pr_list (pr_pair !CP.print_sv pr2) in
   let pr5 (a,b,c,_) = (pr_triple pr2 pr3 pr4) (a,b,c) in
-  Debug.ho_1 "infer_shapes_init_post" pr1 pr5
+  Debug.no_1 "infer_shapes_init_post" pr1 pr5
       (fun _ -> infer_shapes_init_post_x prog constrs0 non_ptr_unk_hps sel_post_hps unk_hps link_hps hp_rel_unkmap
       detect_dang pre_defs ) constrs0
 

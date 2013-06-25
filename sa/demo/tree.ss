@@ -279,4 +279,13 @@ POSSIBLE ALGO
 
 */
 
+  /*
+left_31_798=null & right_31_799=null,
 
+  right_31_799::node<key_31_797,left_31_848,right_31_849>@M * G1(left_31_848) * G2(right_31_849)&left_31_798=null,
+
+  left_31_798::node<key_31_797,left_31_850,right_31_851>@M * G1(left_31_850) * G2(right_31_851)&right_31_799=null & left_31_798!=null,
+
+ G1(left_31_798) * G2(right_31_799)&left_31_798!=null & right_31_799!=null
+
+*/

@@ -4985,7 +4985,7 @@ let is_only_neqNull_x args unk_hps f0=
 
 let is_only_neqNull args unk_hps f0=
   let pr1 = !print_formula in
-  Debug.ho_2 "is_only_neqNull" !CP.print_svl pr1 string_of_bool
+  Debug.no_2 "is_only_neqNull" !CP.print_svl pr1 string_of_bool
       (fun _ _ -> is_only_neqNull_x args unk_hps f0) args f0
 
 let get_args_neqNull_x args expl_ptrs f0=

@@ -1660,14 +1660,14 @@ let unify_eq_hpdef unk_hps link_hps hp_defs =
       link_hps hp_defs
 
 let do_unify_x unk_hps link_hps hp_defs=
-  let hp_defs1,ss1= unify_branches_hpdef unk_hps link_hps hp_defs in
-  unify_eq_hpdef unk_hps link_hps hp_defs1
+  (* let hp_defs1,ss1= unify_branches_hpdef unk_hps link_hps hp_defs in *)
+  unify_eq_hpdef unk_hps link_hps hp_defs
 
 let do_unify unk_hps link_hps hp_defs=
   let pr1 = pr_list_ln Cprinter.string_of_hp_rel_def in
   let pr2 = !CP.print_svl in
   let pr3 = pr_pair pr1 (pr_list (pr_pair !CP.print_sv !CP.print_sv)) in
-  Debug.ho_3 "do_unify" pr2 pr2 pr1 pr3
+  Debug.no_3 "do_unify" pr2 pr2 pr1 pr3
       (fun _ _ _ -> do_unify_x unk_hps link_hps hp_defs)
       unk_hps link_hps hp_defs
 
