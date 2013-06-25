@@ -445,7 +445,7 @@ and spatial_ctx_extract p f a i pi rn rr =
   let pr_svl = Cprinter.string_of_spec_var_list in
   (*let pr_aset = pr_list (pr_list Cprinter.string_of_spec_var) in*)
   (* let pr = pr_no in *)
-  Debug.no_4 "spatial_context_extract " string_of_h_formula Cprinter.string_of_imm pr_svl string_of_h_formula pr 
+  Debug.no_4 "spatial_ctx_extract" string_of_h_formula Cprinter.string_of_imm pr_svl string_of_h_formula pr 
       (fun _ _ _ _-> spatial_ctx_extract_x p f a i pi rn rr ) f i a rn 
 
 and update_ann (f : h_formula) (pimm1 : ann list) (pimm : ann list) : h_formula = 
@@ -601,6 +601,14 @@ and spatial_ctx_extract_x prog (f0 : h_formula) (aset : CP.spec_var list) (imm :
           failwith("[context.ml]: There should be no conj/phase in the lhs at this level\n")
   in
   let l = helper f0 in
+(* type: (Cformula.h_formula * Cformula.h_formula * (Cformula.h_formula * int) list * match_type) *)
+(*   list *)
+  let pr1 = (add_str "lhs_rest" Cprinter.string_of_h_formula) in
+  let pr2 = (add_str "lhs_node" Cprinter.string_of_h_formula) in
+  let pr3 = (add_str "holes" (pr_list (pr_pair Cprinter.string_of_h_formula string_of_int))) in
+  let pr4 = (add_str "match_type" pr_none) in
+  let pr = pr_quad pr1 pr2 pr3 pr4 in
+  let _ = DD.info_hprint (add_str "l" (pr_list pr)) l no_pos in 
   List.map (fun (lhs_rest,lhs_node,holes,mt) ->
       (* let _ = print_string ("\n(andreeac) lhs_rest spatial_ctx_extract " ^ (Cprinter.string_of_h_formula lhs_rest) ^ "\n(andreeac) f0: " ^ (Cprinter.string_of_h_formula f0)) in *)
       { match_res_lhs_node = lhs_node;
@@ -702,7 +710,8 @@ and lookup_lemma_action_x prog (c:match_res) :action =
     | MaterializedArg (mv,ms) -> 
           (*unexpected*)
           (1,M_Nothing_to_do (string_of_match_res c))
-    | WArg -> (1,M_Nothing_to_do (string_of_match_res c))
+    | WArg -> 
+          (1,M_Nothing_to_do (string_of_match_res c))
   in
   act
 
@@ -932,6 +941,7 @@ and process_one_match_x prog is_normalizing (c:match_res) :action_wt =
                   let vl_self_pts = vl_vdef.view_pt_by_self in
                   let vl_view_orig = vl.h_formula_view_original in
                   let vl_view_derv = vl.h_formula_view_derv in
+                  let _ = DD.tinfo_pprint "pred<..> |- node<..>" no_pos in
                   (*Is it LOCKED state*)
                   let is_l_lock = match vl_vdef.view_inv_lock with
                     | Some _ -> true
@@ -941,6 +951,7 @@ and process_one_match_x prog is_normalizing (c:match_res) :action_wt =
                   let uf_i = if new_orig then 0 else 1 in
                   let left_ls = filter_norm_lemmas(look_up_coercion_with_target prog.prog_left_coercions vl_name dr.h_formula_data_name) in
                   (* let a1 = if (new_orig || vl_self_pts==[]) then [(1,M_unfold (c,uf_i))] else [] in *)
+                  let _ = DD.tinfo_hprint (add_str "left_ls" (pr_list pr_none)) left_ls no_pos in
                   let a1 = 
                     if is_l_lock then [] else
                       if (new_orig || vl_self_pts==[]) then [(1,M_unfold (c,uf_i))] else [] in
@@ -955,7 +966,7 @@ and process_one_match_x prog is_normalizing (c:match_res) :action_wt =
             | _ -> report_error no_pos "process_one_match unexpected formulas 1\n"	
           )
     | MaterializedArg (mv,ms) ->
-          (* let _ = print_string "\n materialized args  analysis here!\n" in  *)  
+          let _ = DD.tinfo_pprint "materialized args  analysis here!\n" no_pos in  
           let uf_i = if mv.mater_full_flag then 0 else 1 in 
           (match lhs_node,rhs_node with
             | DataNode dl, _ -> (1,M_Nothing_to_do ("matching lhs: "^(string_of_h_formula lhs_node)^" with rhs: "^(string_of_h_formula rhs_node)))
@@ -970,7 +981,7 @@ and process_one_match_x prog is_normalizing (c:match_res) :action_wt =
                   let l1 = [(1,M_base_case_unfold c)] in
                   (-1, (Search_action ((1,a1)::l1)))
             | ViewNode vl, DataNode dr ->
-                  (* let _ = print_string "\n try LHS case analysis here!\n" in *)
+                  let _ = DD.tinfo_pprint "try LHS case analysis here!\n" no_pos in
 
 
                   (* let i = if mv.mater_full_flag then 0 else 1 in  *)
@@ -1003,7 +1014,10 @@ and process_one_match_x prog is_normalizing (c:match_res) :action_wt =
                   in a1
             | _ -> report_error no_pos "process_one_match unexpected formulas 2\n"	
           )
-    | WArg -> (1,M_Nothing_to_do (string_of_match_res c)) in
+    | WArg -> 
+          let _ = DD.tinfo_pprint "WArg  analysis here!\n" no_pos in  
+    (1,M_Nothing_to_do (string_of_match_res c)) 
+  in
 
   let r1 = match c.match_res_type with 
       (*Used when normalizing. MATCH only*)
@@ -1269,6 +1283,8 @@ and compute_actions_x prog estate es lhs_h lhs_p rhs_p posib_r_alias rhs_lst is_
   (*   | x::[]-> process_matches lhs_h x *)
   (*   | _ ->  List.hd r (\*Search_action (None,r)*\) *)
   (* let _ = print_string (" compute_actions: before process_matches") in *)
+(* type: (match_res list * (Cformula.h_formula * Cformula.h_formula)) list *)
+  let _ = DD.info_hprint (add_str "r" (pr_list pr_none)) r no_pos in 
   let r = List.map (process_matches prog estate lhs_h is_normalizing) r in
   match r with
     | [] -> M_Nothing_to_do "no nodes on RHS"

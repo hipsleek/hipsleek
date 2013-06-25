@@ -11,7 +11,7 @@ pred ll_tail2<tx> == self=null
 lemma "ll_tail2" self::ll_tail2<t> -> t::node<_, null>.
 
 checkentail x::ll_tail2<tx>@M 
- |-  tx::node<a,b>@L. 
+ |-  tx::node<a,b>. 
 
 print residue.
 
