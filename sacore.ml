@@ -832,13 +832,6 @@ let analize_unk prog post_hps constrs total_unk_map unk_hpargs link_hpargs =
       constrs total_unk_map
 
 
-let remove_dups_constr constrs=
-  let constr_cmp cs1 cs2=
-    SAU.checkeq_pair_formula (cs1.CF.hprel_lhs,cs1.CF.hprel_rhs)
-        (cs2.CF.hprel_lhs,cs2.CF.hprel_rhs)
-  in
-  Gen.BList.remove_dups_eq constr_cmp constrs
-
 let generate_hp_def_from_unk_hps_x hpdefs unk_hpargs defined_hps post_hps unk_map=
   (* let rec obtain_xpure rem_args n hp res= *)
   (*   match rem_args with *)
@@ -1570,7 +1563,7 @@ let unify_branches_hpdef_x unk_hps link_hps hp_defs =
           let b,m = CEQ.checkeq_formulas args f f1 in
           if b then
             let ss = swap_map unk_hps (List.hd m) [] in
-            let parts = SAU.list_ss_partition ss [] in
+            let parts = SAU.partition_subst_hprel ss [] in
             (* let pr = pr_list (pr_pair !CP.print_svl !CP.print_sv) in *)
             (* let _ = DD.info_pprint ("  parts: " ^ (pr parts)) no_pos in *)
             let new_f = List.fold_left (fun f0 (from_hps, to_hp) -> CF.subst_hprel f0 from_hps to_hp) f parts in
@@ -1674,7 +1667,7 @@ let do_unify unk_hps link_hps hp_defs=
   let pr1 = pr_list_ln Cprinter.string_of_hp_rel_def in
   let pr2 = !CP.print_svl in
   let pr3 = pr_pair pr1 (pr_list (pr_pair !CP.print_sv !CP.print_sv)) in
-  Debug.no_3 "do_unify" pr2 pr2 pr1 pr3
+  Debug.ho_3 "do_unify" pr2 pr2 pr1 pr3
       (fun _ _ _ -> do_unify_x unk_hps link_hps hp_defs)
       unk_hps link_hps hp_defs
 

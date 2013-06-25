@@ -100,6 +100,14 @@ let find_close_f svl0 f=
   let eqs = (MCP.ptr_equations_without_null mf)in
   find_close svl0 eqs
 
+let rec partition_subst_hprel ss r=
+  match ss with
+    | [] -> r
+    | (sv1,sv2)::tl ->
+          let part,rem = List.partition (fun (_, sv4) -> CP.eq_spec_var sv2 sv4) tl in
+          let part_svl = fst (List.split part) in
+          partition_subst_hprel rem r@[(sv1::part_svl, sv2)]
+
 (*List.combine but ls2 >= ls1*)
 let rec combine_length_neq_x ls1 ls2 res=
   match ls1,ls2 with
@@ -1395,12 +1403,25 @@ let find_well_defined_hp_x prog hds hvs r_hps prog_vars post_hps (hp,args) def_p
         if undef_args_inst <> [] then
           (*hip or shape infer*)
           if not split_spatial then (lhsb, [],[(hp,args)], []) else
-            if !Globals.sa_s_split_base then
-              let new_hf, new_hp = add_raw_hp_rel_x prog undef_args_inst pos in
-              let nlhsb = CF.mkAnd_fb_hf lhsb new_hf pos in
-              do_spit nlhsb (CF.formula_of_heap new_hf pos) [(new_hf,(new_hp, List.map fst undef_args_inst))]
-            else
-              do_spit lhsb (CF.mkTrue (CF.mkTrueFlow()) pos) []
+            let n_lhsb, new_ass, wdf_hpargs, ls_rhs=
+              if !Globals.sa_s_split_base then
+                let new_hf, new_hp = add_raw_hp_rel_x prog undef_args_inst pos in
+                let nlhsb = CF.mkAnd_fb_hf lhsb new_hf pos in
+                do_spit nlhsb (CF.formula_of_heap new_hf pos) [(new_hf,(new_hp, List.map fst undef_args_inst))]
+              else
+                do_spit lhsb (CF.mkTrue (CF.mkTrueFlow()) pos) []
+            in
+            match new_ass with
+              | [(hp1,args1,n_lhsb1, rhs)] -> begin
+                  let n_lhs1 = (CF.Base n_lhsb1) in
+                    match CF.extract_hrel_head n_lhs1 with
+                      | Some _ -> (lhsb, [],[(hp,args)], [])
+                      | None -> if CF.is_only_neqNull_pure (CF.get_pure n_lhs1) args1 then
+                          (lhsb, [],[(hp,args)], [])
+                        else (n_lhsb, new_ass, wdf_hpargs, ls_rhs)
+                end
+              | [] -> (lhsb, [],[(hp,args)], [])
+              | _ -> report_error no_pos "sau.find_well_defined_hp"
         else
           do_spit lhsb (CF.mkTrue (CF.mkTrueFlow()) pos) []
       end
@@ -2635,6 +2656,30 @@ let weaken_trivial_constr_pre cs=
     {cs with CF.hprel_rhs = CF.mkTrue (CF.flow_formula_of_formula cs.CF.hprel_rhs) (CF.pos_of_formula cs.CF.hprel_rhs)}
   else cs
 
+let remove_dups_constr constrs=
+  let constr_cmp cs1 cs2=
+    checkeq_pair_formula (cs1.CF.hprel_lhs,cs1.CF.hprel_rhs)
+        (cs2.CF.hprel_lhs,cs2.CF.hprel_rhs)
+  in
+  Gen.BList.remove_dups_eq constr_cmp constrs
+
+let subst_equiv_hprel equivs constrs=
+  let subst_one parts cs=
+    let nlhs = List.fold_left (fun f0 (from_hps, to_hp) ->
+        CF.subst_hprel f0 from_hps to_hp
+    ) cs.CF.hprel_lhs parts
+    in
+    let nrhs = List.fold_left (fun f0 (from_hps, to_hp) ->
+        CF.subst_hprel f0 from_hps to_hp
+    ) cs.CF.hprel_rhs parts
+    in
+    {cs with CF.hprel_lhs = nlhs;
+        CF.hprel_rhs = nrhs;}
+  in
+  if equivs = [] then constrs else
+    let parts = partition_subst_hprel equivs [] in
+    List.map (subst_one parts) constrs
+
 let is_inconsistent_heap f =
   let ( hf,mix_f,_,_,_) = CF.split_components f in
   let eqNulls = CP.remove_dups_svl (MCP.get_null_ptrs mix_f) in
@@ -3574,7 +3619,7 @@ let mk_orig_hprel_def_x prog cdefs unk_hps hp r other_args args sh_ldns eqNulls 
           CP.diff_svl next_roots unk_svl)
      (* | _ -> report_error no_pos "sau.generalize_one_hp: now we does not handle more than two ptr fields" *)
 
-let mk_orig_hprel_def prog unk_hps hp r other_args args sh_ldns eqNulls eqPures hprels unk_svl=
+let mk_orig_hprel_def prog defs unk_hps hp r other_args args sh_ldns eqNulls eqPures hprels unk_svl=
   let pr1 = !CP.print_sv in
   let pr2 = !CP.print_svl in
   let pr3 = fun hd -> Cprinter.prtt_string_of_h_formula (CF.DataNode hd) in
@@ -3585,8 +3630,9 @@ let mk_orig_hprel_def prog unk_hps hp r other_args args sh_ldns eqNulls eqPures 
   in
   let pr7a hrel = Cprinter.string_of_hrel_formula (CF.HRel hrel) in
   let pr7 = pr_list pr7a in
-  Debug.no_7 "mk_orig_hprel_def" pr2 pr1 pr2 (pr_list pr3) pr2 pr4 pr7 pr6
-      (fun _ _ _ _ _ _ _ -> mk_orig_hprel_def_x prog unk_hps hp r other_args args sh_ldns eqNulls eqPures hprels unk_svl)
+  Debug.ho_7 "mk_orig_hprel_def" pr2 pr1 pr2 (pr_list pr3) pr2 pr4 pr7 pr6
+      (fun _ _ _ _ _ _ _ -> mk_orig_hprel_def_x prog defs unk_hps hp r other_args args sh_ldns
+           eqNulls eqPures hprels unk_svl)
       unk_hps hp args sh_ldns eqNulls eqPures hprels
 
 let elim_not_in_used_args_x prog orig_fs fs hp args=
@@ -3969,14 +4015,6 @@ let mkConjH_and_norm prog args unk_hps unk_svl f1 f2 pos=
   Debug.no_2 "mkConjH_and_norm" pr1 pr1 pr1
       (fun _ _ -> mkConjH_and_norm_x prog args unk_hps unk_svl f1 f2 pos) f1 f2
 
-let rec list_ss_partition ss r=
-  match ss with
-    | [] -> r
-    | (sv1,sv2)::tl ->
-          let part,rem = List.partition (fun (_, sv4) -> CP.eq_spec_var sv2 sv4) tl in
-          let part_svl = fst (List.split part) in
-          list_ss_partition rem r@[(sv1::part_svl, sv2)]
-
 (*match hprel: with the same args*)
 let norm_hf_x h1 h2 equivs=
   let equiv_cmp (h1,h2) (h3,h4) = (CP.eq_spec_var h1 h3 && CP.eq_spec_var h2 h4) ||
@@ -4008,7 +4046,7 @@ let norm_hf_x h1 h2 equivs=
   if is_matched then
     let new_equiv = Gen.BList.difference_eq equiv_cmp new_equiv equivs in
     let equivs1 =  equivs@new_equiv in
-    let parts = list_ss_partition equivs1 [] in
+    let parts = partition_subst_hprel equivs1 [] in
     let new_h1 = List.fold_left (fun hf0 (from_hps, to_hp) -> CF.subst_hprel_hf hf0 from_hps to_hp) h1 parts in
     let new_h2 = List.fold_left (fun hf0 (from_hps, to_hp) -> CF.subst_hprel_hf hf0 from_hps to_hp) h2 parts in
     if check_stricteq_h_fomula true new_h1 new_h2 then
@@ -4603,24 +4641,21 @@ let combine_hpdefs hpdefs=
   Debug.no_1 "combine_hpdefs" pr1 pr1
       (fun _ -> combine_hpdefs_x hpdefs) hpdefs
 
-let extract_nonrec_def_x defs=
-  let get_nonrec_def (cur_grps,cur_hps) (def_kind,hf,def)=
+let extract_fwd_pre_defs_x fwd_pre_hps defs=
+  let get_pre_def (cur_grps,cur_hps) (def_kind,hf,def)=
     match def_kind with
-      | CP.HPRelDefn hp -> let hps = CF.get_hp_rel_name_formula def in
-        (*currently, we avoid rec preds*)
-        if (CP.mem_svl hp hps) then (cur_grps,cur_hps)
-        else
-          let _, args =  CF.extract_HRel hf in
+      | CP.HPRelDefn hp ->
+        let _, args =  CF.extract_HRel hf in
           ((cur_grps@[(List.map (fun f -> (hp, args, f, [])) (CF.list_of_disjs def))]), cur_hps@[hp])
       | _ -> (cur_grps,cur_hps)
   in
-  List.fold_left get_nonrec_def ([],[]) defs
+  List.fold_left get_pre_def ([],[]) defs
 
-let extract_nonrec_def defs=
+let extract_fwd_pre_defs fwd_pre_hps defs=
   let pr1 = pr_list_ln Cprinter.string_of_hp_rel_def in
   let pr2 = pr_list_ln (pr_list_ln string_of_par_def_w_name_short) in
-  Debug.no_1 "extract_nonrec_def" pr1 (pr_pair pr2 !CP.print_svl)
-      (fun _ -> extract_nonrec_def_x defs) defs
+  Debug.no_1 "extract_fwd_pre_defs" pr1 (pr_pair pr2 !CP.print_svl)
+      (fun _ -> extract_fwd_pre_defs_x fwd_pre_hps defs) defs
 
 (************************************************************)
     (****************END SUBST HP DEF*****************)

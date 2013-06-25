@@ -4948,35 +4948,35 @@ let hds, _, _ (*hvs, hrs*) =  get_hp_rel_h_formula hf in
 
 
 (*check the form: hp(x,y) = x!=null & y !=null*)
-let is_only_neqNull_x args unk_hps f0=
-  let is_only_neqNull_pure p=
+let is_only_neqNull_pure p args=
     let neqNulls = List.map (fun sv -> CP.mkNeqNull sv no_pos) args in
     let ps = (CP.split_conjunctions p) in
     let ps1 = CP.remove_redundant_helper ps [] in
     (Gen.BList.difference_eq CP.equalFormula ps1 neqNulls) = []
-  in
+
+let is_only_neqNull_x args unk_hps f0=
   let rec helper f=
     match f with
       | Base fb ->
           if is_empty_heap fb.formula_base_heap then
-            is_only_neqNull_pure (MCP.pure_of_mix fb.formula_base_pure)
+            is_only_neqNull_pure (MCP.pure_of_mix fb.formula_base_pure) args
           else
             let hds,hvs,hrels = get_hp_rel_h_formula fb.formula_base_heap in
             if hds=[] && hvs=[] then
               let hps = List.map (fun (hp,_,_) -> hp) hrels in
               if (CP.diff_svl hps unk_hps = []) then
-                is_only_neqNull_pure (MCP.pure_of_mix fb.formula_base_pure)
+                is_only_neqNull_pure (MCP.pure_of_mix fb.formula_base_pure) args
               else false
             else false
       | Exists fe ->
           if is_empty_heap fe.formula_exists_heap then
-            is_only_neqNull_pure (MCP.pure_of_mix fe.formula_exists_pure)
+            is_only_neqNull_pure (MCP.pure_of_mix fe.formula_exists_pure) args
           else
             let hds,hvs,hrels = get_hp_rel_h_formula fe.formula_exists_heap in
             if hds=[] && hvs=[] then
               let hps = List.map (fun (hp,_,_) -> hp) hrels in
               if (CP.diff_svl hps unk_hps = []) then
-                is_only_neqNull_pure (MCP.pure_of_mix fe.formula_exists_pure)
+                is_only_neqNull_pure (MCP.pure_of_mix fe.formula_exists_pure) args
               else false
             else false
       | Or orf -> (helper orf.formula_or_f1) && (helper orf.formula_or_f2)
@@ -4985,7 +4985,7 @@ let is_only_neqNull_x args unk_hps f0=
 
 let is_only_neqNull args unk_hps f0=
   let pr1 = !print_formula in
-  Debug.no_2 "is_only_neqNull" !CP.print_svl pr1 string_of_bool
+  Debug.ho_2 "is_only_neqNull" !CP.print_svl pr1 string_of_bool
       (fun _ _ -> is_only_neqNull_x args unk_hps f0) args f0
 
 let get_args_neqNull_x args expl_ptrs f0=
