@@ -119,7 +119,7 @@ and hp_decl = {
 
 (** An Hoa : axiom *)
 and axiom_decl = {
-	  axiom_id : int;
+    axiom_id : int;
     axiom_hypothesis : P.formula;
     axiom_conclusion : P.formula; }
 
@@ -128,7 +128,7 @@ and proc_decl = {
     proc_args : typed_ident list;
     proc_source : ident; (* source file *)
     proc_return : typ;
-	proc_flags : (ident*ident*(flags option)) list;
+    proc_flags : (ident*ident*(flags option)) list;
     mutable proc_important_vars : P.spec_var list; (* An Hoa : pre-computed list of important variables; namely the program parameters & logical variables in the specification that need to be retained during the process of verification i.e. such variables should not be removed when we perform simplification. Remark - all primed variables are important. *)
     proc_static_specs : Cformula.struc_formula;
     (* proc_static_specs_with_pre : Cformula.struc_formula; *)
@@ -139,8 +139,8 @@ and proc_decl = {
     proc_stk_of_static_specs : Cformula.struc_formula Gen.stack;
     mutable proc_hpdefs: Cformula.hp_rel_def list;(*set of heap predicate constraints derived from this method*)
     mutable proc_callee_hpdefs: Cformula.hp_rel_def list;
-		(*set of heap predicate constraints derived from calls in this method*)
-		(*due to the bottom up inference they are always just copyed from the proc_hpdefs of called methods*)
+    (*set of heap predicate constraints derived from calls in this method*)
+    (*due to the bottom up inference they are always just copyed from the proc_hpdefs of called methods*)
     proc_by_name_params : P.spec_var list;
     proc_body : exp option;
     (* Termination: Set of logical variables of the proc's scc group *)
@@ -167,20 +167,20 @@ and coercion_case =
   | Complex
   | Ramify
   | Normalize of bool 
-(* 
-   |LHS| > |RHS| --> Normalize of true --> combine
-   |LHS| < |RHS| --> Normalize of false --> split
-   Otherwise, simple or complex
-*)
+        (* 
+           |LHS| > |RHS| --> Normalize of true --> combine
+           |LHS| < |RHS| --> Normalize of false --> split
+           Otherwise, simple or complex
+        *)
 
 and coercion_decl = { 
     coercion_type : coercion_type;
-	coercion_exact : bool;
+    coercion_exact : bool;
     coercion_name : ident;
-    coercion_head : F.formula;
-    coercion_head_norm : F.formula;
-    coercion_body : F.formula;
-    coercion_body_norm : F.struc_formula;
+    coercion_head : F.formula; (* used as antecedent during --elp *)
+    coercion_head_norm : F.formula; (* used as consequent during --elp *)
+    coercion_body : F.formula; (* used as antecedent during --elp *)
+    coercion_body_norm : F.struc_formula; (* used as consequent during --elp *)
     coercion_impl_vars : P.spec_var list; (* list of implicit vars *)
     coercion_univ_vars : P.spec_var list; (* list of universally quantified variables. *)
     (* coercion_proof : exp; *)

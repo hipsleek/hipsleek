@@ -372,3 +372,22 @@ Entail (2) : Valid.
 Entail (2) : Valid. 
 
  <1>emp&n!=self & Anon_16=Anon_17 & self!=t&{FLOW,(19,20)=__norm}[]
+
+================================================================================================
+# bug-lem-2.slk
+
+lemma "dll_r5_tail2" self::dll_r5<p,t,n>  
+  <- self::dll_r5<p,q,t> * t::node<_,q,n> & self!=n.
+
+/*
+find_materialized_prop@3@2
+find_materialized_prop inp1 :[self,p,t,n]
+find_materialized_prop inp2 : EXISTS(q_33,Anon_12,
+q: self::dll_r5<p,q,t>@M#O[dll_r5_tail1][0][Derv][LHSCase] * 
+t::node<Anon_12,q_33,n>@M[Derv]&q=q_33&{FLOW,(1,22)=__flow})[]
+find_materialized_prop@3 EXIT out :[ (n,full,[dll_r5]), (p,full,[dll_r5]), (self,full,[dll_r5]), (t,partial,)]
+
+EXPECT:
+ find_materialized_prop@3 EXIT out :[(self,full,[dll_r5]), (t,partial,)]
+
+*/
