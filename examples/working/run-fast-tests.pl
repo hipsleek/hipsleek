@@ -382,6 +382,8 @@ $output_file = "log";
         "insert_pll","SUCCESS","insert_sll","SUCCESS"],
         ["ramified-cells.ss",3,"--ramify","ex0","SUCCESS","ex1","SUCCESS","mark","SUCCESS"],
         ["ramified-pairs.ss",1,"--ramify","mark","SUCCESS"],
+        ["graph_spanning.ss",1,"-tp om --ramify --eps","spanning","SUCCESS"],
+        ["graph_spanning_infer.ss",1,"-tp om --ramify --eps --infer-mem","spanning","SUCCESS"],
         ],
 	"hip" =>[
 #	["2-3trees.ss",4,"make_node","SUCCESS","insert_left","SUCCESS","insert_middle","SUCCESS","insert_right","SUCCESS","insert","SUCCESS"],
