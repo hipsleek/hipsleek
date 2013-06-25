@@ -798,7 +798,7 @@ and translate_exp (e: Cil.exp) : Iast.exp =
   | Cil.StartOf _ -> report_error_msg "translate_exp: Iast doesn't support Cil.StartOf exp!"
 
 
-and translate_instr (instr: Cil.instr) : Iast.exp =
+and translate_instr (instr: Cil.instr) : Iast.exp list =
   (* detect address-of operator *)
   let new_exp = (match instr with
     | Cil.Set (lv, exp, l) -> (
@@ -815,7 +815,7 @@ and translate_instr (instr: Cil.instr) : Iast.exp =
             [e2]
           with Not_found -> []
         ) in
-        merge_iast_exp ([set_exp] @ update_holder_exps)
+        [set_exp] @ update_holder_exps
       )
     | Cil.Call (lv_opt, exp, exps, l) -> (
         let pos = translate_location l in
@@ -836,7 +836,7 @@ and translate_instr (instr: Cil.instr) : Iast.exp =
         ) addrof_info in
         let newexp = (
           match lv_opt with
-          | None -> merge_iast_exp ([callee] @ update_addrof_args_exps)
+          | None -> [callee] @ update_addrof_args_exps
           | Some lv -> (
               (* declare a temp var to store the value return by call *)
               let tmp_var = (
@@ -858,14 +858,12 @@ and translate_instr (instr: Cil.instr) : Iast.exp =
                   [e2]
                 with Not_found -> []
               ) in
-              merge_iast_exp ([tmp_assign] @ update_addrof_args_exps 
-                              @ [call_assign] @ update_holder_exps)
+              [tmp_assign] @ update_addrof_args_exps @ [call_assign] @ update_holder_exps
             )
         ) in
         newexp
       )
-    | Cil.Asm _ ->
-        report_error_msg "TRUNG TODO: Handle Cil.Asm later!"
+    | Cil.Asm _ -> []           (* skip translating the ASM... *)
   ) in
   new_exp
   (* let collected_exps = [new_exp] in *)
@@ -877,9 +875,9 @@ and translate_stmt (s: Cil.stmt) : Iast.exp =
   | Cil.Instr instrs ->
       let newexp = (match instrs with
         | [] -> Iast.Empty no_pos
-        | [i] -> translate_instr i
+        | [i] -> merge_iast_exp (translate_instr i)
         | _ ->
-            let es = List.map translate_instr instrs in
+            let es = List.concat (List.map translate_instr instrs) in
             merge_iast_exp es
       ) in
       newexp
@@ -1198,42 +1196,35 @@ and translate_file (file: Cil.file) : Iast.prog_decl =
         (* let _ = print_endline ("== gl GType = " ^ (string_of_cil_global gl)) in *)
         ()
     | Cil.GCompTag (comp, l) ->
-        (* let _ = print_endline ("== gl GCompTag = " ^ (string_of_cil_global gl)) in *)
         let datadecl = translate_compinfo comp (Some l) in
         data_decls := !data_decls @ [datadecl]
     | Cil.GCompTagDecl _ ->
         (* let _ = print_endline ("== gl GCompTagDecl = " ^ (string_of_cil_global gl)) in *)
         ()
-        (* report_error_msg "TRUNG TODO: Handle Cil.GCompTagDecl later!" *)
     | Cil.GEnumTag _ ->
         (* let _ = print_endline ("== gl GEnumTag = " ^ (string_of_cil_global gl)) in *)
-        (* ()                                                                         *)
-        report_error_msg "TRUNG TODO: Handle Cil.GEnumTag later!"
+        ()
     | Cil.GEnumTagDecl _ ->
         (* let _ = print_endline ("== gl GEnumTagDecl = " ^ (string_of_cil_global gl)) in *)
-        (* ()                                                                             *)
-        report_error_msg "TRUNG TODO: Handle Cil.GEnumTagDecl later!"
-    | Cil.GVarDecl (v, l) -> ()
+        ()
+    | Cil.GVarDecl (v, l) ->
+        (* let _ = print_endline ("== gl GVarDecl = " ^ (string_of_cil_global gl)) in *)
+        ()
     | Cil.GVar (v, init, l) ->
-        (* let _ = print_endline ("== translate_file: collect GVar") in *)
         let gvar = translate_global_var v init (Some l) in
         global_var_decls := !global_var_decls @ [gvar];
     | Cil.GFun (fd, l) ->
-        (* let _ = print_endline ("== gl GFun = " ^ (string_of_cil_global gl)) in *)
         let proc = translate_fundec fd (Some l) in
         proc_decls := !proc_decls @ [proc]
     | Cil.GAsm _ ->
         (* let _ = print_endline ("== gl GAsm = " ^ (string_of_cil_global gl)) in *)
         ()
-        (* report_error_msg "TRUNG TODO: Handle Cil.GAsm later!" *)
     | Cil.GPragma _ ->
         (* let _ = print_endline ("== gl GPragma = " ^ (string_of_cil_global gl)) in *)
-        (* ()                                                                         *)
-        report_error_msg "TRUNG TODO: Handle Cil.GPragma later!"
-    | Cil.GText _ ->
-        let _ = print_endline ("== gl GText = " ^ (string_of_cil_global gl)) in
         ()
-        (* report_error_msg "TRUNG TODO: Handle Cil.GText later!" *)
+    | Cil.GText _ ->
+        (* let _ = print_endline ("== gl GText = " ^ (string_of_cil_global gl)) in *)
+        ()
     | Cil.GHipProgSpec (hipprog, _) ->
         aux_progs := !aux_progs @ [hipprog]
   ) globals;
@@ -1331,7 +1322,16 @@ let process_one_file (cil: Cil.file) : unit =
 
 
 let parse_hip (filename: string) : Iast.prog_decl =
-  let cil = parse_one_file filename in
+  (* do the preprocess by GCC first *)
+  let prep_filename = filename ^ ".prep" in
+  let cmd = "gcc -C -E " ^ filename ^ " -o " ^ prep_filename in
+  let _ = print_endline ("GCC Preprocessing...") in
+  let _ = print_endline cmd in
+  let exit_code = Sys.command cmd in
+  if (exit_code != 0) then
+    report_error_msg "GCC Preprocessing failed!";
+  (* then use CIL to parse the preprocessed file *)
+  let cil = parse_one_file prep_filename in
   if !Cilutil.doCheck then (
     ignore (Errormsg.log "First CIL check\n");
     if not (Check.checkFile [] cil) && !Cilutil.strictChecking then (
@@ -1341,11 +1341,17 @@ let parse_hip (filename: string) : Iast.prog_decl =
     )
   );
   if (!Globals.print_cil_input) then (
+    print_endline "";
     print_endline ("***********************************");
     print_endline ("********* input cil file **********");
     print_endline (string_of_cil_file cil);
     print_endline ("******** end of cil file **********");
+    print_endline "";
   );
+  (* finally, translate cil to iast *)
   let prog = translate_file cil in
+  (* and clean temp files *)
+  let cmd = ("rm " ^ prep_filename) in
+  let _ = Sys.command cmd in
   (* return *)
   prog
