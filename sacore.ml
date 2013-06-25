@@ -1569,62 +1569,66 @@ let unify_branches_hpdef unk_hps link_hps hp_defs =
       (fun _ _ _ -> unify_branches_hpdef_x unk_hps link_hps hp_defs)
       unk_hps link_hps hp_defs
 
-let check_eq_hpdef_x unk_hps link_hps hp_defs =
+let unify_eq_hpdef_x unk_hps link_hps hp_defs =
    (**************** internal methods**********************)
-  let rec lookup_equiv_hpdef hpdefs hp args f=
+   let equiv_cmp (hp11,hp12) (hp21,hp22)=
+    (CP.eq_spec_var hp11 hp21 && CP.eq_spec_var hp12 hp22) ||
+        (CP.eq_spec_var hp11 hp22 && CP.eq_spec_var hp12 hp21)
+   in
+   let equiv_cmp1 (hp11,hp12) (hp21,hp22)=
+     (CP.eq_spec_var hp11 hp21 && CP.eq_spec_var hp12 hp22)
+   in
+  let rec lookup_equiv_hpdef hpdefs eq_pairs hp args f=
     match hpdefs with
-      | [] -> (f,[])
+      | [] ->
+            let new_f = List.fold_left (fun f (hp1,hp) -> CF.subst_hprel f [hp1] hp) f (eq_pairs) in
+            (new_f,eq_pairs)
       | (a1,hrel1,f1)::tl ->
           let hp1,eargs1,p1 = CF.extract_HRel_orig hrel1 in
           let args1 = List.concat (List.map CP.afv eargs1) in
           if CP.eq_spec_var hp hp1 || CP.mem_svl hp1 unk_hps ||
             (List.length args <> List.length args1) then
-              lookup_equiv_hpdef tl hp args f
+              lookup_equiv_hpdef tl eq_pairs hp args f
           else
               let ss = List.combine args1 args in
               let f10 = CF.subst ss f1 in
               if SAU.checkeq_formula_list (CF.list_of_disjs f) (CF.list_of_disjs f10) then
              (* if fst (CEQ.checkeq_formulas (List.map CP.name_of_spec_var args) f f11) then *)
-                let new_f = CF.subst_hprel f1 [hp1] hp in
-                (new_f,[(hp,hp1)])
-              else lookup_equiv_hpdef tl hp args f
-  in
-  let remove_dups_equiv (hp11,hp12) (hp21,hp22)=
-    (CP.eq_spec_var hp11 hp21 && CP.eq_spec_var hp12 hp22) ||
-        (CP.eq_spec_var hp11 hp22 && CP.eq_spec_var hp12 hp21)
+                if List.exists (fun (hp2,hp3) -> equiv_cmp1 (hp1,hp) (hp2,hp3)) eq_pairs then
+                  let new_f = List.fold_left (fun f (hp1,hp) -> CF.subst_hprel f [hp1] hp) f10 (eq_pairs) in
+                  (new_f,eq_pairs)
+                else
+                  let new_f = SAU.mkHRel_f hp1 args p1 in
+                  let n_eq_pairs = if List.exists (fun (hp2,hp3) -> equiv_cmp1 (hp,hp1) (hp2,hp3)) eq_pairs then
+                    eq_pairs
+                  else (eq_pairs@[(hp,hp1)])
+                  in
+                  (new_f,n_eq_pairs)
+              else lookup_equiv_hpdef tl eq_pairs hp args f
   in
   let process_one_hpdef all_hpdefs (eq_pairs,r_hpdefs) (a,hrel,f)=
     let hp,args = CF.extract_HRel hrel in
+    (* let _ = DD.ninfo_pprint ("       hp: " ^ (!CP.print_sv hp)) no_pos in *)
     if CP.mem_svl hp unk_hps then
       (eq_pairs,r_hpdefs@[(a,hrel,f)])
     else
-      let new_f,new_eq_pairs = lookup_equiv_hpdef all_hpdefs hp args f in
-      let new_f1 = List.fold_left (fun f (hp1,hp) -> CF.subst_hprel f [hp1] hp) new_f (eq_pairs) in
-      (Gen.BList.remove_dups_eq remove_dups_equiv (eq_pairs@new_eq_pairs),
-      r_hpdefs@[(a,hrel,new_f1)])
+      let new_f,new_eq_pairs = lookup_equiv_hpdef all_hpdefs eq_pairs hp args f in
+      (new_eq_pairs, r_hpdefs@[(a,hrel,new_f)])
   in
   (****************END internal methods**********************)
   let equiv,res_hp_defs = List.fold_left (process_one_hpdef hp_defs)
     ([],[]) hp_defs in
-  (*drop the first of equiv*)
-  let fst_hps = List.map fst equiv in
-  let res_hp_defs1 = List.filter (fun (a,b,c) ->
-      match a with
-        | CP.HPRelDefn hp -> not (CP.mem_svl hp fst_hps)
-        | _ -> false
-  ) res_hp_defs
-  in
-  (res_hp_defs1, equiv)
+  (res_hp_defs, equiv)
 
-let check_eq_hpdef unk_hps link_hps hp_defs =
+let unify_eq_hpdef unk_hps link_hps hp_defs =
   let pr1 = pr_list_ln Cprinter.string_of_hp_rel_def in
-  Debug.no_2 "check_eq_hpdef" !CP.print_svl pr1 pr1
-      (fun _ _ -> check_eq_hpdef_x unk_hps link_hps hp_defs)
+  Debug.no_2 "unify_eq_hpdef" !CP.print_svl pr1 pr1
+      (fun _ _ -> unify_eq_hpdef_x unk_hps link_hps hp_defs)
       link_hps hp_defs
 
 let do_unify_x unk_hps link_hps hp_defs=
   (* unify_branches_hpdef unk_hps link_hps hp_defs *)
-  check_eq_hpdef unk_hps link_hps hp_defs
+  unify_eq_hpdef unk_hps link_hps hp_defs
 
 let do_unify unk_hps link_hps hp_defs=
   let pr1 = pr_list_ln Cprinter.string_of_hp_rel_def in
