@@ -35,6 +35,25 @@ shape_infer [HP_0,HP_1][].
 
 /* 
 
+GOT:
+
+ HP_0(x_41) ::=  
+ emp&x_41=null
+ or x_41::node<key_25_797,left_25_798,right_25_799>@M * HP_0(left_25_798) * 
+    HP_1(right_25_799)&true
+ ,
+ HP_1(x_42) ::=  
+ emp&x_42=null
+ or x_42::node<key_25_797,left_25_798,right_25_799>@M * HP_1(left_25_798) * 
+    HP_0(right_25_799)&true
+ or x_42::node<key_25_797,left_25_798,right_25_799>@M * HP_1(left_25_798) * 
+    (HP_1(right_25_799)/&\HP_0(right_25_799))&true
+ ]
+
+The above is not strictly correct, and may be
+weaker than necessary. We should be using
+conj-unify rather than disj-unify for pre-pred.
+
 # tree-4a.slk
 
 Added an equation:
