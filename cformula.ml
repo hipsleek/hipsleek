@@ -5500,6 +5500,7 @@ and filter_not_rele_eq p keep_svl=
     let p1 = CP.subst eqs1 p in
     CP.remove_redundant p1
 
+(*todo: merge three following functions in a higher-order function*)
 and drop_data_view_hrel_nodes f fn_data_select fn_view_select fn_hrel_select dnodes vnodes relnodes=
   match f with
     | Base fb ->
@@ -5518,6 +5519,34 @@ and drop_data_view_hrel_nodes f fn_data_select fn_view_select fn_hrel_select dno
         let new_hf = drop_data_view_hrel_nodes_hf
           fe.formula_exists_heap fn_data_select fn_view_select fn_hrel_select
           dnodes vnodes relnodes in
+        (*assume keep vars = dnodes*)
+        let new_p = CP.filter_var_new (MCP.pure_of_mix fe.formula_exists_pure) dnodes in
+        (*currently we drop all neqnull*)
+        let new_p1 = remove_neqNull_redundant_hnodes_hf new_hf new_p in
+        (* let new_p1 = remove_neqNulls new_p in *)
+        Exists {fe with formula_exists_heap = new_hf;
+            formula_exists_pure = MCP.mix_of_pure new_p1;
+             }
+    | _ -> report_error no_pos "cformula.drop_data_view_hrel_nodes"
+
+and drop_data_view_hpargs_nodes f fn_data_select fn_view_select fn_hrel_select dnodes vnodes hpargs=
+  match f with
+    | Base fb ->
+        let new_hf = drop_data_view_hpargs_nodes_hf
+          fb.formula_base_heap fn_data_select fn_view_select fn_hrel_select
+          dnodes vnodes hpargs in
+        (*assume keep vars = dnodes*)
+        let new_p = CP.filter_var_new (MCP.pure_of_mix fb.formula_base_pure) dnodes in
+        (*currently we drop all neqnull*)
+        let new_p1 = remove_neqNull_redundant_hnodes_hf new_hf new_p in
+        (* let new_p1 = remove_neqNulls new_p in *)
+        Base {fb with formula_base_heap = new_hf;
+            formula_base_pure = MCP.mix_of_pure new_p1;
+             }
+    | Exists fe ->
+        let new_hf = drop_data_view_hpargs_nodes_hf
+          fe.formula_exists_heap fn_data_select fn_view_select fn_hrel_select
+          dnodes vnodes hpargs in
         (*assume keep vars = dnodes*)
         let new_p = CP.filter_var_new (MCP.pure_of_mix fe.formula_exists_pure) dnodes in
         (*currently we drop all neqnull*)
@@ -5736,27 +5765,25 @@ let combine_length_geq ls1 ls2 res=
   Debug.no_2 "combine_length_geq" pr1 pr1 pr2
       (fun _ _ -> combine_length_geq_x ls1 ls2 res) ls1 ls2
 
-let rec subst_hrel_f f0 hprel_subst=
-  let rec helper f=
-    match f with
-      | Base fb -> Base {fb with formula_base_heap =  subst_hrel_hf fb.formula_base_heap hprel_subst;}
-      | Or orf -> Or {orf with formula_or_f1 = helper orf.formula_or_f1;
-          formula_or_f2 = helper orf.formula_or_f2;}
-      | Exists fe -> Exists {fe with formula_exists_heap = subst_hrel_hf fe.formula_exists_heap hprel_subst;}
-  in
-  if hprel_subst = [] then f0 else helper f0
-
-and subst_hrel_hf hf hprel_subst=
+let rec subst_hrel_hf hf hprel_subst=
   (* let helper (HRel (id,el,p)) (HRel (id1,el1,_), hf)= *)
   let helper hrel1 (hrel2, hf)=
     let id1,el1,_ = extract_HRel_orig hrel1 in
     let id2,el2,_ = extract_HRel_orig hrel2 in
     if CP.eq_spec_var id1 id2 then
+      (*fresh svl of the subst to avoid clash in tree which has more than one subst*)
       (*should specvar subst*)
       let svl1 = (List.fold_left List.append [] (List.map CP.afv el1)) in
       let svl2 = (List.fold_left List.append [] (List.map CP.afv el2)) in
-      let f = h_subst ((*List.combine*) combine_length_geq svl2 svl1 []) hf in
-      (true, f)
+      let svl = CP.remove_dups_svl ((h_fv hf)@svl2) in
+      (*elim hp*)
+      let ls1 = List.filter (fun sv -> not (CP.is_hprel_typ sv)) svl in
+      let fr_svl = CP.fresh_spec_vars ls1 in
+      let ss = List.combine ls1 fr_svl in
+      let fr_svl2 = subst_var_list ss svl2 in
+      let hf2 = h_subst ((*List.combine*) combine_length_geq fr_svl2 svl1 [])
+        (h_subst ss hf) in
+      (true, hf2)
     else (false, hrel1)
   in
   let rec find_and_subst hrel subst =
@@ -5824,6 +5851,21 @@ and subst_hrel_hf hf hprel_subst=
     | HFalse
     | HEmp -> hf
 
+let rec subst_hrel_f_x f0 hprel_subst=
+  let rec helper f=
+    match f with
+      | Base fb -> Base {fb with formula_base_heap =  subst_hrel_hf fb.formula_base_heap hprel_subst;}
+      | Or orf -> Or {orf with formula_or_f1 = helper orf.formula_or_f1;
+          formula_or_f2 = helper orf.formula_or_f2;}
+      | Exists fe -> Exists {fe with formula_exists_heap = subst_hrel_hf fe.formula_exists_heap hprel_subst;}
+  in
+  if hprel_subst = [] then f0 else helper f0
+
+let subst_hrel_f f0 hprel_subst=
+  let pr1 = !print_h_formula in
+  let pr2 = !print_formula in
+  Debug.no_2 "subst_hrel_f" pr2 (pr_list (pr_pair pr1 pr1)) pr2
+      (fun _ _ -> subst_hrel_f_x f0 hprel_subst) f0 hprel_subst
 
 let rec subst_hrel_hview_f f subst=
   match f with

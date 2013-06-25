@@ -1616,7 +1616,7 @@ let unify_eq_hpdef_x unk_hps link_hps hp_defs =
       | [] ->
             let new_f = List.fold_left (fun f (hp1,hp) -> CF.subst_hprel f [hp1] hp) f (eq_pairs) in
             (new_f,eq_pairs)
-      | (a1,hrel1,f1)::tl ->
+      | (a1,hrel1,f1)::tl -> try
           let hp1,eargs1,p1 = CF.extract_HRel_orig hrel1 in
           let args1 = List.concat (List.map CP.afv eargs1) in
           if CP.eq_spec_var hp hp1 || CP.mem_svl hp1 unk_hps ||
@@ -1638,15 +1638,19 @@ let unify_eq_hpdef_x unk_hps link_hps hp_defs =
                   in
                   (new_f,n_eq_pairs)
               else lookup_equiv_hpdef tl eq_pairs hp args f
+        with _ -> lookup_equiv_hpdef tl eq_pairs hp args f
   in
   let process_one_hpdef all_hpdefs (eq_pairs,r_hpdefs) (a,hrel,f)=
-    let hp,args = CF.extract_HRel hrel in
-    (* let _ = DD.ninfo_pprint ("       hp: " ^ (!CP.print_sv hp)) no_pos in *)
-    if CP.mem_svl hp unk_hps then
-      (eq_pairs,r_hpdefs@[(a,hrel,f)])
-    else
-      let new_f,new_eq_pairs = lookup_equiv_hpdef all_hpdefs eq_pairs hp args f in
-      (new_eq_pairs, r_hpdefs@[(a,hrel,new_f)])
+    try
+      let hp,args = CF.extract_HRel hrel in
+      (* let _ = DD.ninfo_pprint ("       hp: " ^ (!CP.print_sv hp)) no_pos in *)
+      if CP.mem_svl hp unk_hps then
+        (eq_pairs,r_hpdefs@[(a,hrel,f)])
+      else
+        let new_f,new_eq_pairs = lookup_equiv_hpdef all_hpdefs eq_pairs hp args f in
+        (new_eq_pairs, r_hpdefs@[(a,hrel,new_f)])
+    with _ -> (*tupled defs*)
+        (eq_pairs,r_hpdefs@[(a,hrel,f)])
   in
   (****************END internal methods**********************)
   let equiv,res_hp_defs = List.fold_left (process_one_hpdef hp_defs)
@@ -1660,8 +1664,17 @@ let unify_eq_hpdef unk_hps link_hps hp_defs =
       link_hps hp_defs
 
 let do_unify_x unk_hps link_hps hp_defs=
+  let subst_equiv equivs (a,b,f)=
+    let nf = List.fold_left (fun f0 (from_hps, to_hp) ->
+        CF.subst_hprel f0 from_hps to_hp
+    ) f equivs
+    in
+    (a,b, nf)
+  in
   (* let hp_defs1,ss1= unify_branches_hpdef unk_hps link_hps hp_defs in *)
-   unify_eq_hpdef unk_hps link_hps hp_defs
+  let defs, equivs =  unify_eq_hpdef unk_hps link_hps hp_defs in
+  let parts = SAU.partition_subst_hprel equivs [] in
+  (List.map (subst_equiv parts) defs, equivs)
 
 let do_unify unk_hps link_hps hp_defs=
   let pr1 = pr_list_ln Cprinter.string_of_hp_rel_def in

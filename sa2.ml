@@ -589,7 +589,7 @@ let combine_pdefs_pre_x prog unk_hps link_hps pr_pdefs=
       | Some f -> Cprinter.prtt_string_of_formula f
     in
     let pr4 = pr_hepta !CP.print_sv pr1 pr1 pr2 pr2 pr3 pr3 in
-    Debug.ho_2 " combine_helper2" pr4 pr4 (pr_list_ln pr4)
+    Debug.no_2 " combine_helper2" pr4 pr4 (pr_list_ln pr4)
         (fun _ _ -> combine_helper2_x pdef1 pdef2)
         pdef1 pdef2
   in
@@ -720,7 +720,7 @@ let combine_pdefs_pre prog unk_hps link_hps pr_pdefs=
   let pr1= pr_list_ln Cprinter.string_of_hprel_short in
   let pr2 = SAU.string_of_par_def_w_name in
   let pr3 (pdef, _) = pr2 pdef in
-  Debug.ho_1 "combine_pdefs_pre" (pr_list_ln pr3) (pr_pair (pr_list_ln pr2) pr1)
+  Debug.no_1 "combine_pdefs_pre" (pr_list_ln pr3) (pr_pair (pr_list_ln pr2) pr1)
       (fun _ -> combine_pdefs_pre_x prog unk_hps link_hps pr_pdefs) pr_pdefs
 (***************************************************************
                       END PARTIAL DEFS
