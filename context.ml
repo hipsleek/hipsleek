@@ -123,8 +123,8 @@ let rec pr_action_name a = match a with
   | M_base_case_unfold e -> fmt_string "BaseCaseUnfold"
   | M_base_case_fold e -> fmt_string "BaseCaseFold"
   | M_rd_lemma e -> fmt_string "RD_Lemma"
-  | M_lemma (e,s) -> fmt_string (""^(match s with | None -> "AnyLemma" | Some c-> "Lemma "
-        ^(string_of_coercion_type c.coercion_type)^" "^c.coercion_name))
+  | M_lemma (e,s) -> fmt_string (""^(match s with | None -> "AnyLemma" | Some c-> "(Lemma "
+        ^(string_of_coercion_type c.coercion_type)^" "^c.coercion_name ^ ")"))
   | M_Nothing_to_do s -> fmt_string ("NothingToDo"^s)
   | M_infer_heap p -> fmt_string ("InferHeap")
   | M_unmatched_rhs_data_node (h,_) -> fmt_string ("UnmatchedRHSData")
@@ -142,8 +142,8 @@ let rec pr_action_res pr_mr a = match a with
   | M_base_case_unfold e -> fmt_string "BaseCaseUnfold =>"; pr_mr e
   | M_base_case_fold e -> fmt_string "BaseCaseFold =>"; pr_mr e
   | M_rd_lemma e -> fmt_string "RD_Lemma =>"; pr_mr e
-  | M_lemma (e,s) -> fmt_string ((match s with | None -> "AnyLemma" | Some c-> "Lemma "
-        ^(string_of_coercion_type c.coercion_type)^" "^c.coercion_name)^" =>"); pr_mr e
+  | M_lemma (e,s) -> fmt_string ((match s with | None -> "AnyLemma" | Some c-> "(Lemma "
+        ^(string_of_coercion_type c.coercion_type)^" "^c.coercion_name)^") =>"); pr_mr e
   | M_Nothing_to_do s -> fmt_string ("NothingToDo => "^s)
   | M_infer_heap p -> let pr = string_of_h_formula in
     fmt_string ("InferHeap => "^(pr_pair pr pr p))
@@ -1137,7 +1137,21 @@ and sort_wt_x (ys: action_wt list) : action list =
     | _ -> if (w == -1) then (0,a) else (w,a) in
   let ls = List.map recalibrate_wt ys in
   let sl = List.sort (fun (w1,_) (w2,_) -> if w1<w2 then -1 else if w1>w2 then 1 else 0 ) ls in
-  (snd (List.split sl))
+  (* what if after sorted, there are elements with the same priority ??? *)
+  (* LDK: temporarily combine them into a Cond_action to
+     ensure that the head of the list has unique weight
+  *)
+  let head_w,head_a = List.hd sl in
+  let eq_ls, neq_ls = List.partition (fun (w,_) -> w==head_w) (List.tl sl) in
+  let res =
+    if (eq_ls == []) then
+      sl
+    else
+      (*Use Cond_action to avoid explosion*)
+      let new_head = (head_w,Cond_action ((head_w,head_a)::eq_ls)) in
+      (new_head::neq_ls)
+  in
+  (snd (List.split res))
 
 and drop_unmatched_action l=
   let rec helper acs rs=
@@ -1274,7 +1288,13 @@ and compute_actions_x prog estate es lhs_h lhs_p rhs_p posib_r_alias rhs_lst is_
     | [] -> M_Nothing_to_do "no nodes on RHS"
     | xs -> 
           (*  imm/imm1.slk imm/imm3.slk fails if sort_wt not done *)
-          let ys = sort_wt_match opt r in 
+          let ys = sort_wt_match opt r in
+          (*
+            LDK: why only List.hd ???
+            This makes compute_actions nondeterministic if we have
+            different orderings of heap nodes in the entailments.
+            What if ys=[-1,Search1) ; (-1,Search2)]
+          *)
           List.hd (ys)
               (*  match ys with
                   | [(_, act)] -> act
