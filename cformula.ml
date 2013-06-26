@@ -4291,8 +4291,108 @@ and get_hprel_h_formula hf0=
   in
   helper hf0
 
+let partition_heap_consj_hf hf0=
+  let rec helper hf=
+    match hf with
+      | Star { h_formula_star_h1 = hf1;
+        h_formula_star_h2 = hf2;
+        h_formula_star_pos = pos} ->
+            let ls1, rem1 = helper hf1 in
+            let ls2, rem2 = helper hf2 in
+            let n_rem =  (match rem1,rem2 with
+              | (HEmp,HEmp) -> HEmp
+              | (HEmp,_) -> rem2
+              | (_,HEmp) -> rem1
+              | _ -> Star {h_formula_star_h1 = rem1;
+                h_formula_star_h2 = rem2;
+                h_formula_star_pos = pos}
+            ) in
+            (ls1@ls2, n_rem)
+    | StarMinus { h_formula_starminus_h1 = hf1;
+      h_formula_starminus_h2 = hf2;
+      h_formula_starminus_pos = pos} ->
+          let ls1, rem1 = helper hf1 in
+          let ls2, rem2 = helper hf2 in
+          let n_rem =  (match rem1,rem2 with
+            | (HEmp,HEmp) -> HEmp
+            | (HEmp,_) -> rem2
+            | (_,HEmp) -> rem1
+            | _ -> StarMinus { h_formula_starminus_h1 = rem1;
+              h_formula_starminus_h2 = rem2;
+              h_formula_starminus_pos = pos}
+          ) in
+          (ls1@ls2, n_rem)
+    | ConjStar  { h_formula_conjstar_h1 = hf1;
+      h_formula_conjstar_h2 = hf2;
+      h_formula_conjstar_pos = pos} ->
+          let ls1, rem1 = helper hf1 in
+          let ls2, rem2 = helper hf2 in
+          let n_rem =  (match rem1,rem2 with
+            | (HEmp,HEmp) -> HEmp
+            | (HEmp,_) -> rem2
+            | (_,HEmp) -> rem1
+            | _ -> ConjStar { h_formula_conjstar_h1 = rem1;
+              h_formula_conjstar_h2 = rem2;
+              h_formula_conjstar_pos = pos}
+          ) in
+          (ls1@ls2, n_rem)
+    | ConjConj { h_formula_conjconj_h1 = hf1;
+      h_formula_conjconj_h2 = hf2;
+      h_formula_conjconj_pos = pos} ->
+          let ls1, rem1 = helper hf1 in
+          let ls2, rem2 = helper hf2 in
+          let n_rem =  (match rem1,rem2 with
+            | (HEmp,HEmp) -> HEmp
+            | (HEmp,_) -> rem2
+            | (_,HEmp) -> rem1
+            | _ -> ConjConj { h_formula_conjconj_h1 = rem1;
+              h_formula_conjconj_h2 = rem2;
+              h_formula_conjconj_pos = pos}
+          ) in
+          (ls1@ls2, n_rem)
+    | Phase { h_formula_phase_rd = hf1;
+      h_formula_phase_rw = hf2;
+      h_formula_phase_pos = pos} ->
+          let ls1, rem1 = helper hf1 in
+          let ls2, rem2 = helper hf2 in
+          let n_rem =  (match rem1,rem2 with
+            | (HEmp,HEmp) -> HEmp
+            | (HEmp,_) -> rem2
+            | (_,HEmp) -> rem1
+            | _ -> Phase { h_formula_phase_rd = rem1;
+              h_formula_phase_rw = rem2;
+              h_formula_phase_pos = pos}
+          ) in
+          (ls1@ls2, n_rem)
+    | Conj { h_formula_conj_h1 = hf1;
+      h_formula_conj_h2 = hf2;} -> ([hf1;hf2], HEmp)
+    | DataNode _  | ViewNode _ | HRel _ | Hole _
+    | HTrue  | HFalse | HEmp -> ([], hf)
+  in
+  helper hf0
 
-and eq_svl ls1 ls2=
+let partition_heap_consj_x (f0:formula) =
+  let rec helper f=
+    match f with
+      | Base fb ->
+            let cons_hfs, rem_hf = partition_heap_consj_hf fb.formula_base_heap in
+            (cons_hfs, Base {fb with formula_base_heap = rem_hf })
+      | Exists _ ->
+            let qvars, base_f = split_quantifiers f in
+            let cons_hfs, rem_f = helper base_f in
+            (cons_hfs, add_quantifiers qvars rem_f)
+      | Or _  ->
+            report_error no_pos "CF.partition_heap_consj: disj is not accepted"
+  in
+  helper f0
+
+let partition_heap_consj (f0:formula) =
+  let pr1 = !print_formula in
+  let pr2 = pr_list_ln !print_h_formula in
+  Debug.no_1 "partition_heap_consj" pr1 (pr_pair pr2 pr1)
+      (fun _ -> partition_heap_consj_x f0) f0
+
+let rec eq_svl ls1 ls2=
   match ls1,ls2 with
     | [],[] -> true
     | sv1::rest1,sv2::rest2 -> if CP.eq_spec_var sv1 sv2 then
@@ -4300,7 +4400,7 @@ and eq_svl ls1 ls2=
       else false
     | _ -> false
 
-and eq_hpargs (hp1,args1) (hp2,args2)=
+let eq_hpargs (hp1,args1) (hp2,args2)=
   if (CP.eq_spec_var hp1 hp2) then
    (* let args1 = (List.fold_left List.append [] (List.map CP.afv eargs1)) in *)
    (* let args2 = (List.fold_left List.append [] (List.map CP.afv eargs2)) in *)
@@ -4308,7 +4408,7 @@ and eq_hpargs (hp1,args1) (hp2,args2)=
   else
     false
 
-and eq_hprel (hp1,eargs1,_) (hp2,eargs2,_)=
+let eq_hprel (hp1,eargs1,_) (hp2,eargs2,_)=
   if (CP.eq_spec_var hp1 hp2) then
    let args1 = (List.fold_left List.append [] (List.map CP.afv eargs1)) in
    let args2 = (List.fold_left List.append [] (List.map CP.afv eargs2)) in
@@ -4316,20 +4416,7 @@ and eq_hprel (hp1,eargs1,_) (hp2,eargs2,_)=
   else
     false
 
-and get_hp_rel_name_formula (f: formula) =
-  match f with
-    | Base  ({formula_base_heap = h1;
-		      formula_base_pure = p1})
-    | Exists ({ formula_exists_heap = h1;
-		        formula_exists_pure = p1}) -> get_hp_rel_name_h_formula h1
-    | Or orf  ->
-        CP.remove_dups_svl ((get_hp_rel_name_formula orf.formula_or_f1)@
-        (get_hp_rel_name_formula orf.formula_or_f2))
-
-and get_hp_rel_name_bformula bf=
-  get_hp_rel_name_h_formula bf.formula_base_heap
-
-and get_hp_rel_name_h_formula hf=
+let rec get_hp_rel_name_h_formula hf=
   match hf with
     | Star { h_formula_star_h1 = hf1;
              h_formula_star_h2 = hf2}
@@ -4354,7 +4441,20 @@ and get_hp_rel_name_h_formula hf=
     | HFalse
     | HEmp -> []
 
-and get_hp_rel_vars_formula (f: formula) =
+let rec get_hp_rel_name_formula (f: formula) =
+  match f with
+    | Base  ({formula_base_heap = h1;
+		      formula_base_pure = p1})
+    | Exists ({ formula_exists_heap = h1;
+		        formula_exists_pure = p1}) -> get_hp_rel_name_h_formula h1
+    | Or orf  ->
+        CP.remove_dups_svl ((get_hp_rel_name_formula orf.formula_or_f1)@
+        (get_hp_rel_name_formula orf.formula_or_f2))
+
+let get_hp_rel_name_bformula bf=
+  get_hp_rel_name_h_formula bf.formula_base_heap
+
+let rec get_hp_rel_vars_formula (f: formula) =
   match f with
     | Base  ({formula_base_heap = h1;
 		      formula_base_pure = p1})
@@ -4473,7 +4573,7 @@ and filter_vars_hf hf rvs=
         let n_hf1 =  filter_vars_hf hf1 rvs in
         let n_hf2 = filter_vars_hf hf2 rvs in
         (match n_hf1,n_hf2 with
-          | (HEmp,HEmp) -> HTrue
+          | (HEmp,HEmp) -> HEmp
           | (HEmp,_) -> n_hf2
           | (_,HEmp) -> n_hf1
           | _ -> Star {h_formula_star_h1 = n_hf1;
@@ -4676,7 +4776,7 @@ let rec subst_hprel (f0: formula) from_hps to_hp=
 	  | Exists fe -> let nh = subst_hprel_hf fe.formula_exists_heap from_hps to_hp in
                      (Exists {fe with formula_exists_heap = nh;})
   in
-  helper f0
+  if from_hps = [] then f0 else helper f0
 
 and subst_hprel_hf hf0 from_hps to_hp=
   let rec helper hf=
@@ -4738,7 +4838,7 @@ and subst_hprel_hf hf0 from_hps to_hp=
     | HFalse
     | HEmp -> hf
   in
-  helper hf0
+  if from_hps = [] then hf0 else helper hf0
 
 and add_pure_formula_to_formula (f1_pure: CP.formula) (f2_f:formula)  : formula = add_mix_formula_to_formula (MCP.mix_of_pure f1_pure) f2_f
 

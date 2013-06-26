@@ -4067,8 +4067,8 @@ let mkConjH_and_norm prog args unk_hps unk_svl f1 f2 pos=
   Debug.no_2 "mkConjH_and_norm" pr1 pr1 pr1
       (fun _ _ -> mkConjH_and_norm_x prog args unk_hps unk_svl f1 f2 pos) f1 f2
 
-(*match hprel: with the same args*)
-let norm_hf_x h1 h2 equivs=
+(*match hprel: with the same args: TODO: enhance with data node + view node*)
+let norm_heap_consj_x h1 h2 equivs=
   let equiv_cmp (h1,h2) (h3,h4) = (CP.eq_spec_var h1 h3 && CP.eq_spec_var h2 h4) ||
     (CP.eq_spec_var h1 h4 && CP.eq_spec_var h2 h3)
   in
@@ -4107,15 +4107,73 @@ let norm_hf_x h1 h2 equivs=
   else None
 
 
-let norm_hf h1 h2 equivs=
+let norm_heap_consj h1 h2 equivs=
   let pr1 = Cprinter.prtt_string_of_h_formula in
   let pr2 = pr_list (pr_pair !CP.print_sv !CP.print_sv) in
   let pr3 ores= match ores with
     | None -> "NONE"
-    | Some (hf, equivs) -> (pr_pair pr1 pr2)  (hf, equivs)
+    | Some x -> (pr_pair pr1 pr2) x in
+  Debug.no_2 "norm_heap_consj" pr1 pr1 pr3
+      (fun _ _ -> norm_heap_consj_x h1 h2 equivs) h1 h2
+
+let subst_equiv_hf equivs hf=
+  let parts = partition_subst_hprel equivs [] in
+  let new_hf = List.fold_left (fun hf0 (from_hps, to_hp) -> CF.subst_hprel_hf hf0 from_hps to_hp) hf parts in
+  new_hf
+
+let subst_equiv equivs f=
+  let parts = partition_subst_hprel equivs [] in
+  let new_f = List.fold_left (fun f0 (from_hps, to_hp) -> CF.subst_hprel f0 from_hps to_hp) f parts in
+  new_f
+
+let norm_heap_consj_formula_x prog args unk_hps unk_svl f0 equivs0=
+  let rec unify_conj2 conj_hfs hf1 res_equivs=
+    match conj_hfs with
+      | [] -> Some (hf1, res_equivs)
+      | hf2::rest -> begin
+            let ores = norm_heap_consj hf1 hf2 res_equivs in
+            match ores with
+              | None -> None
+              | Some (nhf1, n_equivs) -> unify_conj2 rest nhf1 n_equivs
+        end
   in
-  Debug.no_2 "norm_hf" pr1 pr1 pr3
-      (fun _ _ -> norm_hf_x h1 h2 equivs) h1 h2
+  let rec unify_conj conj_hfs res_equivs=
+    match conj_hfs with
+      | [] -> None
+      | [hf] -> Some (subst_equiv_hf res_equivs hf, res_equivs)
+      | hf1::rest -> begin
+          let ores = unify_conj2 rest hf1 res_equivs in
+          match ores with
+              | None -> None
+              | Some (_, n_equiv) -> unify_conj rest n_equiv
+        end
+  in
+  let process_one f equivs1=
+    let conj_hfs, rem_f = CF.partition_heap_consj f in
+    let ores = unify_conj conj_hfs equivs1 in
+    match ores with
+      | None -> (f, equivs1)
+      | Some (hf, n_equivs) ->
+            let nf = CF.mkAnd_f_hf rem_f hf (CF.pos_of_formula f) in
+            (nf, n_equivs)
+  in
+  let fs = CF.list_of_disjs f0 in
+  let n_fs, n_equiv = List.fold_left (fun (r_fs, r_equivs) f ->
+      let nf, n_equivs =  process_one f r_equivs in
+      (r_fs@[nf], n_equivs)
+  ) ([],equivs0) fs
+  in
+  let nf0 = CF.join_conjunct_opt n_fs in
+  match nf0 with
+    | None -> (f0, equivs0)
+    | Some f01 -> (f01, n_equiv)
+
+let norm_heap_consj_formula prog args unk_hps unk_svl f equivs=
+  let pr1 = Cprinter.prtt_string_of_formula in
+  let pr2 = pr_list (pr_pair !CP.print_sv !CP.print_sv) in
+  let pr3 = (pr_pair pr1 pr2) in
+  Debug.no_1 "norm_heap_consj_formula" pr1 pr3
+      (fun _ -> norm_heap_consj_formula_x prog args unk_hps unk_svl f equivs) f
 
 let norm_formula_x prog args unk_hps unk_svl f1 f2 equivs=
   let is_common, sharing_f, n_fs = partittion_common_diff prog args unk_hps unk_svl f1 f2 no_pos in
@@ -4127,7 +4185,7 @@ let norm_formula_x prog args unk_hps unk_svl f1 f2 equivs=
           let (hf1 ,mf1,_,_,_) = CF.split_components nf1 in
           let (hf2 ,mf2,_,_,_) = CF.split_components nf2 in
           if CP.equalFormula (MCP.pure_of_mix mf1) (MCP.pure_of_mix mf2) then
-            let ores = norm_hf hf1 hf2 equivs in
+            let ores = norm_heap_consj hf1 hf2 equivs in
             match ores with
               | None -> None
               | Some (hf, n_equivs) ->

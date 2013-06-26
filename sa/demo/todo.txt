@@ -2005,9 +2005,8 @@ MISSING
 /* 
 
 =============================================================
-# tree-4a.slk
+# tree-4a.slk: FIXED
 
-TODO: --sa-unify + --sa-relate
 
 Added an equation:
 ==================
@@ -2027,7 +2026,7 @@ SEEMS BRITTLE (wrong HP_1 defn)
 *************************************
 
 =============================================================
-# tree-4a.slk
+# tree-4a.slk: FIXED
 
 We now GOT (which is very nice):
 
@@ -2058,7 +2057,7 @@ Two problems:
       scenario.
 
 =============================================================
-# tree-4b.slk :
+# tree-4b.slk : DONE --pred-unify
 
 GOT with --sa-unify
 ===
