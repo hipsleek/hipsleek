@@ -23,8 +23,8 @@ HeapPred H(node a, node@NI b).
 HeapPred G(node a, node@NI b, node c).
 
 node set_right (node x, node r)
-infer [H,G] requires H(x,r) ensures G(x,r,res);
-//requires x::tree<> ensures x::tll<res,r>;
+//infer [H,G] requires H(x,r) ensures G(x,r,res);
+requires x::tree<> ensures x::tll<res,r>;
 {
   if (x.right==null) 
   	{
@@ -57,4 +57,26 @@ infer [H,G] requires H(x,r) ensures G(x,r,res);
   x::node<left_29_845,right_29_846,next_29_847>@M * 
   G(right_29_846,r,l_878) * G(left_29_845,l_878,res)&
   right_29_846!=null --> G(x,r,res).
+
+# tll.ss
+
+PROBLEMS
+========
+Why  G(left_29_845,l_878,v_node_37_825') still in residue??
+--------------
+ id: 29; caller: []; line: 37; classic: false; kind: POST; hec_num: 5; evars: []; infer_vars: [H,G,HP_848,HP_849,HP_850]; c_heap: emp
+ checkentail HP_850(next_29_847,r) * 
+x::node<left_29_845,right_29_846,next_29_847>@M[Orig] * 
+G(right_29_846,r,l_878) * G(left_29_845,l_878,v_node_37_825')&
+right_29_846!=null & !(v_bool_29_826') & right_29_846!=null & 
+!(v_bool_29_826') & right_29_846=right_29_846 & r=r & 
+left_29_845=left_29_845 & res=v_node_37_825'&{FLOW,(22,23)=__norm}[]
+ |-  G(x,r,res)&true&{FLOW,(22,23)=__norm}[]. 
+hprel_ass: [ HP_850(next_29_847,r) * x::node<left_29_845,right_29_846,next_29_847>@M * 
+  G(right_29_846,r,l_878) * G(left_29_845,l_878,res)&
+  right_29_846!=null --> G(x,r,res)&true]
+res:  [
+  G(left_29_845,l_878,v_node_37_825')&right_29_846!=null & !(v_bool_29_826') & right_29_846!=null & !(v_bool_29_826') & right_29_846=right_29_846 & r=r & left_29_845=left_29_845 & res=v_node_37_825'&{FLOW,(22,23)=__norm}[]
+  ]
+
 */

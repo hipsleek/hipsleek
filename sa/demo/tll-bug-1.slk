@@ -43,7 +43,13 @@ relAssume HP_9
 shape_infer [H,HP_8,HP_9][].
 
 /*
-[ 
+
+Confirm HP_8(l) <-> H(l)
+
+
+  H(x,r) --> x::node<left_29_845,right_29_846,next_29_847>@M * 
+  H(left_29_845,r) * HP_9(right_29_846,r) * 
+  HP_0(next_29_847,r).
 
  
 [ HP_9(right_29_71,r_72) ::=  
