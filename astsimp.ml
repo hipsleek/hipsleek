@@ -1439,7 +1439,7 @@ and find_m_prop_heap_x params eq_f h =
             Debug.tinfo_hprint (add_str "view:l" (Cprinter.string_of_spec_var_list)) l no_pos;
             if l==[] then []
             else
-              let ret =  List.map (fun v -> C.mk_mater_prop v true [ h.CF.h_formula_view_name]) params in
+              let ret =  List.map (fun v -> C.mk_mater_prop v true [ h.CF.h_formula_view_name]) l in
               let _ = Debug.tinfo_hprint (add_str "ret" (pr_list Cprinter.string_of_mater_property)) ret no_pos in 
               ret
       | CF.Star h -> (helper h.CF.h_formula_star_h1)@(helper h.CF.h_formula_star_h2)
