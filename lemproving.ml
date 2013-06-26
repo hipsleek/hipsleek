@@ -135,7 +135,7 @@ let check_coercion_struc coer lhs rhs (cprog: C.prog_decl) =
   let pr1 = Cprinter.string_of_coercion in
   let pr2 = Cprinter.string_of_formula in
   let pr3 = Cprinter.string_of_struc_formula in
-  Debug.ho_3 "check_coercion_struc" pr1 pr2 pr3 (fun (valid,rs) -> string_of_bool valid) (fun _ _ _ -> check_coercion_struc coer lhs rhs cprog ) coer lhs rhs
+  Debug.no_3 "check_coercion_struc" pr1 pr2 pr3 (fun (valid,rs) -> string_of_bool valid) (fun _ _ _ -> check_coercion_struc coer lhs rhs cprog ) coer lhs rhs
 
 (* sets the lhs & rhs of the entailment when proving l2r lemma (coercion), where the rhs (coercion body) is normalized  *)
 let check_left_coercion coer (cprog: C.prog_decl) =

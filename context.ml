@@ -173,6 +173,8 @@ let string_of_action_wt_res e = poly_string_of_pr (pr_action_wt_res pr_match_res
 
 let string_of_action_wt_res0 e = poly_string_of_pr (pr_action_wt_res (fun _ -> fmt_string "")) e
 
+let string_of_match_type e = poly_string_of_pr pr_match_type e  
+
 let string_of_match_res e = poly_string_of_pr pr_match_res e  
 
 let must_action_stk = new Gen.stack(* _noexc (M_Nothing_to_do "empty must_action_stk") string_of_action_res_simpl (=) *)
@@ -344,14 +346,19 @@ and choose_context prog es lhs_h lhs_p rhs_p posib_r_aliases rhs_node rhs_rest p
 and view_mater_match prog c vs1 aset imm f =
   let pr1 = (fun x -> x) in
   let pr2 = !print_svl in
-  Debug.no_3 "view_mater_match" pr1 pr2 pr2 pr_no (fun _ _ _ -> view_mater_match_x prog c vs1 aset imm f) c vs1 aset
+  let pro1 = (add_str "lhs_rest" Cprinter.string_of_h_formula) in
+  let pro2 = (add_str "lhs_node" Cprinter.string_of_h_formula) in
+  let pro3 = (add_str "holes" (pr_list (pr_pair Cprinter.string_of_h_formula string_of_int))) in
+  let pro4 = (add_str "match_type" string_of_match_type) in
+  let pr = pr_list (pr_quad pro1 pro2 pro3 pro4) in
+  Debug.no_3 "view_mater_match" pr1 pr2 pr2 pr (fun _ _ _ -> view_mater_match_x prog c vs1 aset imm f) c vs1 aset
 
 and view_mater_match_x prog c vs1 aset imm f =
   let vdef = look_up_view_def_raw prog.prog_view_decls c in
   let vdef_param = (self_param vdef)::(vdef.view_vars) in
   let mvs = subst_mater_list_nth 1 vdef_param vs1 vdef.view_materialized_vars in
-  (* let vars =  vdef.view_vars in *)
-  (* let _ = print_string ("\n\nview_mater_match: vars = " ^ (Cprinter.string_of_spec_var_list vars)^ " \n\n") in  *)
+  let vars =  vdef.view_vars in
+  let _ = DD.tinfo_hprint  (add_str "vars" Cprinter.string_of_spec_var_list ) vars no_pos in
   try
     let mv = List.find (fun v -> List.exists (CP.eq_spec_var v.mater_var) aset) mvs in
     if  (produces_hole imm) && not(!Globals.allow_field_ann) then
@@ -401,12 +408,7 @@ and choose_full_mater_coercion l_vname l_vargs r_aset (c:coercion_decl) =
 and coerc_mater_match_x prog l_vname (l_vargs:P.spec_var list) r_aset (imm : ann) (lhs_f:Cformula.h_formula) =
   (* TODO : how about right coercion, Cristina? *)
   let coercs = prog.prog_left_coercions in
-  (* let _ = print_string ("coerc_mater_match_x:" *)
-  (*                       ^"\n l_vname = " ^ (Cprinter.string_of_ident l_vname) *)
-  (*                       ^"\n  l_vargs = " ^ (Cprinter.string_of_spec_var_list l_vargs) *)
-  (*                       ^"\n  r_aset = " ^ (Cprinter.string_of_spec_var_list r_aset) *)
-  (*                       ^ "\n coercs = " ^ (if (coercs!=[]) then Cprinter.string_of_coercion (List.hd coercs) else "") *)
-  (*                       ^ "\n") in *)
+  let _ = DD.tinfo_hprint (add_str "coercs" (pr_list Cprinter.string_of_coercion)) coercs no_pos in
   let pos_coercs = List.fold_right (fun c a -> match (choose_full_mater_coercion l_vname l_vargs r_aset c) with 
     | None ->  a 
     | Some t -> t::a) coercs [] in
@@ -419,7 +421,7 @@ and coerc_mater_match_x prog l_vname (l_vargs:P.spec_var list) r_aset (imm : ann
   (*         let mv = List.find (fun v -> List.exists (CP.eq_spec_var v.mater_var) r_aset) lmv in *)
   (*         (HTrue, lhs_f, [], MaterializedArg (mv,Coerc_mater c.coercion_name))::a *)
   (*       with  _ ->  a) [] pos_coercs in *)
-  if produces_hole imm then [] else res
+  (* if produces_hole imm then [] else *) res
 
 and coerc_mater_match prog l_vname (l_vargs:P.spec_var list) r_aset imm (lhs_f:Cformula.h_formula) =
   let pr = Cprinter.string_of_h_formula in
@@ -601,12 +603,10 @@ and spatial_ctx_extract_x prog (f0 : h_formula) (aset : CP.spec_var list) (imm :
           failwith("[context.ml]: There should be no conj/phase in the lhs at this level\n")
   in
   let l = helper f0 in
-(* type: (Cformula.h_formula * Cformula.h_formula * (Cformula.h_formula * int) list * match_type) *)
-(*   list *)
   let pr1 = (add_str "lhs_rest" Cprinter.string_of_h_formula) in
   let pr2 = (add_str "lhs_node" Cprinter.string_of_h_formula) in
   let pr3 = (add_str "holes" (pr_list (pr_pair Cprinter.string_of_h_formula string_of_int))) in
-  let pr4 = (add_str "match_type" pr_none) in
+  let pr4 = (add_str "match_type" string_of_match_type) in
   let pr = pr_quad pr1 pr2 pr3 pr4 in
   let _ = DD.tinfo_hprint (add_str "l" (pr_list pr)) l no_pos in 
   List.map (fun (lhs_rest,lhs_node,holes,mt) ->
