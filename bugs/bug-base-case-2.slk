@@ -50,6 +50,7 @@ checkentail
    self::node<_,p,q3> * q3::dll_r5<self,t,n> 
      |- t::node<_,q,n> * self::dll_r5<p,q,t>.
 print residue.
+*/
 
 
 //(2)
@@ -57,7 +58,6 @@ checkentail
    self::node<_,p,q3> * q3::dll_r5<self,q,t> * t::node<_,q,n> & self!=n
      |- t::node<_,q,n> * self::dll_r5<p,q,t>.
 print residue.
-*/
 
 /*
 

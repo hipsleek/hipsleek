@@ -18,8 +18,8 @@ lemma "lseg2" self::lseg2<p, n> <- self::lseg2<q, n1>@D * q::lseg2<p, n2>@D & n=
 lemma "ll_tail2" self::ll_tail2<t, n> <-> self::lseg2<t, n-1> * t::node<_, null>.
 
 checkentail x::ll_tail2<tx,nnn>@M 
-// |-  tx::node<a,b>@L. 
- |-  tx::node<a,b>. 
+ |-  tx::node<a,b>@L. 
+// |-  tx::node<a,b>. 
 
 print residue.
 

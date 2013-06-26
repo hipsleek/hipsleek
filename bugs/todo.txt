@@ -285,7 +285,7 @@ Message: x is not found in both sides
 But x ia already on both sides!
 */
 ==============================================
-# bugs/app-2.slk
+# bugs/app-2.slk  FIXED
 
 checkentail x::ll_tail2<tx,nnn>@M 
  |-  tx::node<a,b>@L. 
@@ -380,6 +380,25 @@ lemma "dll_r5_tail2" self::dll_r5<p,t,n>
   <- self::dll_r5<p,q,t> * t::node<_,q,n> & self!=n.
 
 /*
+
+find_materialized_prop@1
+find_materialized_prop inp1 :[self,p,t,n]
+find_materialized_prop inp2 : {1}->EXISTS(p_13,t_14,q_15,n_16,q,Anon_11: 
+ self::node<p_13,q,t_14>@M[Orig] * t::node<Anon_11,q_15,n_16>@M[Orig]
+   &n!=self & p=p_13 & t=t_14 & q=q_15 & 
+  n=n_16&{FLOW,(1,22)=__flow})[]
+
+find_materialized_prop@1 EXIT out :[ (self,full,), (t,full,)]
+
+find_materialized_prop@2
+find_materialized_prop inp1 :[self,p,t,n]
+find_materialized_prop inp2 : 
+EXISTS(q_32,Anon_12,q: 
+ self::dll_r5<p,q,t>@M#O[dll_r5_tail2][0][Derv][LHSCase] * 
+ t::node<Anon_12,q_32,n>@M[Derv]&n!=self & q=q_32&{FLOW,(1,22)=__flow})[]
+
+find_materialized_prop@2 EXIT out :[ (n,full,[dll_r5]), (p,full,[dll_r5]), (self,full,[dll_r5]), (t,partial,)]
+
 find_materialized_prop@3@2
 find_materialized_prop inp1 :[self,p,t,n]
 find_materialized_prop inp2 : EXISTS(q_33,Anon_12,

@@ -1525,7 +1525,7 @@ and find_materialized_prop params (f0 : CF.formula) : C.mater_property list =
   let pr1 = Cprinter.string_of_spec_var_list in
   let pr2 = Cprinter.string_of_formula in
   let pr3 = pr_list Cprinter.string_of_mater_property in
-  Debug.no_2 "find_materialized_prop" pr1 pr2 pr3 find_materialized_prop_x params (f0 : CF.formula)
+  Debug.ho_2 "find_materialized_prop" pr1 pr2 pr3 find_materialized_prop_x params (f0 : CF.formula)
 
 and find_materialized_prop_x params (f0 : CF.formula) : C.mater_property list = 
   let f_l = CF.list_of_disjuncts f0 in
