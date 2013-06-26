@@ -663,6 +663,8 @@ let sa_old = ref false
 
 let sa_en_norm = ref true
 
+let sa_en = ref true
+
 let sa_en_split = ref false
 
 let sa_dangling = ref false

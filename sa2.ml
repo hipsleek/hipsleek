@@ -773,7 +773,12 @@ let generalize_one_hp_x prog hpdefs non_ptr_unk_hps unk_hps par_defs=
           (*find longest hnodes common for more than 2 formulas*)
           (*each hds of hdss is def of a next_root*)
           (* let defs5 = List.filter (fun f -> have_roots args0 f) defs4 in *)
-          let defs,elim_ss = SAU.get_longest_common_hnodes_list prog hpdefs unk_hps unk_svl hp r non_r_args args0 defs5 in
+          let defs,elim_ss = if !Globals.sa_en_norm then
+            SAU.get_longest_common_hnodes_list prog hpdefs unk_hps unk_svl hp r non_r_args args0 defs5
+          else
+            let defs = SAU.mk_hprel_def prog hpdefs unk_hps unk_svl hp args0 defs5 no_pos in
+          (defs,[])
+          in
           if defs <> [] then (defs,elim_ss) else
             report_error no_pos "shape analysis: FAIL"
     end

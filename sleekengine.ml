@@ -984,7 +984,7 @@ let print_entail_result sel_hps (valid: bool) (residue: CF.list_context) (num_id
       (*   end; *)
       (* (\* let _ = Debug.info_pprint (" sel_hps:" ^ (!CP.print_svl sel_hps)) no_pos in *\) *)
       (* let ls_hprel, _(\* ls_inferred_hps *\), _ (\* dropped_hps *\) = *)
-      (*   if !Globals.sa_en_norm && (hp_lst_assume <> []) then *)
+      (*   if !Globals.sa_en && (hp_lst_assume <> []) then *)
       (*     Sa.infer_hps !cprog num_id hp_lst_assume *)
       (*         sel_hps [] [] *)
       (*   else [],[],[] *)

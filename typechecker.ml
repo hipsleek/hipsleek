@@ -647,7 +647,7 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
 						   (print_string "check 1 ok\n";
                           (impl_vs,new_post,new_post_struc))
 						  else (*temp fixing*)
-                            if not (!Globals.sa_en_norm) then report_error pos "Assume struc impl error"
+                            if not (!Globals.sa_en) then report_error pos "Assume struc impl error"
                             else
                             (print_string "check 1 fail\n";
                             (impl_vs,new_post,new_post_struc))
@@ -2404,7 +2404,7 @@ and check_proc (prog : prog_decl) (proc : proc_decl) cout_option (mutual_grp : p
                         print_endline "*************************************" 
                       end;
 		    let ls_hprel, ls_inferred_hps, dropped_hps =
-                      if !Globals.sa_en_norm && List.length sel_hp_rels> 0 && List.length hp_lst_assume > 0 then
+                      if !Globals.sa_en && List.length sel_hp_rels> 0 && List.length hp_lst_assume > 0 then
                         let infer_shape_fnc =  if not (!Globals.sa_old) then
                          Sa2.infer_shapes
                         else Sa2.infer_shapes (* Sa.infer_hps *)
