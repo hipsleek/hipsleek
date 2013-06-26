@@ -791,8 +791,6 @@ and translate_exp (e: Cil.exp) : Iast.exp =
       let pos = translate_location l in
       let output_typ = translate_typ ty in
       let input_exp = translate_exp exp in
-      let _ = print_endline ("== CastE ty = " ^ (string_of_cil_typ ty)) in
-      let _ = print_endline ("== CastE exp = " ^ (string_of_cil_exp exp)) in
       match input_exp with
       | Iast.Null _ -> input_exp
       | _ -> (

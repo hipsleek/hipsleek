@@ -1,0 +1,23 @@
+
+data node {
+  int val;
+  node next;
+}.
+
+pred ll_tail2<tx> == self=null
+  or self::node<_, r> * r::ll_tail2<tx> 
+  inv true.
+
+lemma "ll_tail2" self::ll_tail2<t> -> t::node<_, null> & self=t.
+
+checkentail x=null
+ or x::node<_, r> * r::ll_tail2<tx>
+ |-  tx::node<a,b>. 
+
+print residue.
+
+/*
+
+
+
+*/

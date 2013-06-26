@@ -1110,16 +1110,21 @@ and add_param_ann_constraints_to_pure (h_f: CF.h_formula) (p_f: MCP.mix_formula 
       | CF.DataNode h -> let data_ann = h.CF.h_formula_data_imm in
         let helper1 (param_imm: CF.ann) = 
 	  match (CF.mkExpAnn data_ann no_pos), (CF.mkExpAnn param_imm no_pos) with
-	    | CP.IConst i1, CP.IConst i2 -> if i1<=i2 then mkMTrue no_pos else mkMFalse no_pos 
-	    | (_ as l), (_ as r) -> MCP.mix_of_pure(CP.BForm((CP.Lte(l, r, no_pos), None), None)) in
+	    | CP.IConst i1, CP.IConst i2 -> None (* if i1<=i2 then mkMTrue  no_pos else mkMFalse no_pos  *)
+	    | (_ as n), (_ as f) -> Some (MCP.mix_of_pure(CP.BForm((CP.Lte(n, f, no_pos), None), None))) in
         let p = match p_f with
-          | Some x -> List.fold_left (fun pf ann -> CF.add_mix_formula_to_mix_formula (helper1 ann) pf) x h.CF.h_formula_data_param_imm  
+          | Some x -> List.fold_left (fun pf ann -> 
+                match helper1 ann with
+                  | None -> pf
+                  | Some mf -> CF.add_mix_formula_to_mix_formula mf pf) x h.CF.h_formula_data_param_imm  
           | None   -> 
                 let rec helper2 ann_lst = 
                   match ann_lst with 
                     | [] -> MCP.mkMTrue no_pos
-                    | h1 :: [] -> helper1 h1
-                    | h1 :: t  -> CF.add_mix_formula_to_mix_formula (helper1 h1) (helper2 t) in
+                    | h1 :: t  -> 
+                          match helper1 h1 with
+                            | None    -> helper2 t
+                            | Some mf -> CF.add_mix_formula_to_mix_formula mf (helper2 t) in
                 helper2 h.CF.h_formula_data_param_imm in
         p
       | _          -> match p_f with
@@ -1144,16 +1149,20 @@ and add_param_ann_constraints_formula (cf: CF.formula): CF.formula =
    (x::node<val1@A, val2@v, q@I>@I & @I<:@M & @I<:@V & @I<:@I & n = 2) will be translated to (x::node<val1@A, val2@v, q@I>@I & 1<=0 & 1<=v & 1<=1 & n = 2)
 *)
 and add_param_ann_constraints_struc_x (cf: CF.struc_formula) : CF.struc_formula = 
-  match cf with
-    | CF.EList b          -> CF.EList (map_l_snd add_param_ann_constraints_struc b)
-    | CF.ECase b          -> CF.ECase {b with CF.formula_case_branches = map_l_snd add_param_ann_constraints_struc b.CF.formula_case_branches;}
-    | CF.EBase b          -> CF.EBase {b with
-          CF.formula_struc_base =  add_param_ann_constraints_formula b.CF.formula_struc_base;
-          CF.formula_struc_continuation = map_opt add_param_ann_constraints_struc b.CF.formula_struc_continuation; }
-    | CF.EAssume b -> CF.EAssume {b with 
-	  CF.formula_assume_simpl = add_param_ann_constraints_formula b.CF.formula_assume_simpl;
-	  CF.formula_assume_struc = add_param_ann_constraints_struc b.CF.formula_assume_struc;}
-    | CF.EInfer b         -> CF.EInfer {b with CF.formula_inf_continuation = add_param_ann_constraints_struc b.CF.formula_inf_continuation}
+if (!Globals.allow_field_ann) then 
+    let rec helper cf = 
+      match cf with
+        | CF.EList b          -> CF.EList (map_l_snd helper b)
+        | CF.ECase b          -> CF.ECase {b with CF.formula_case_branches = map_l_snd helper b.CF.formula_case_branches;}
+        | CF.EBase b          -> CF.EBase {b with
+              CF.formula_struc_base =  add_param_ann_constraints_formula b.CF.formula_struc_base;
+              CF.formula_struc_continuation = map_opt helper b.CF.formula_struc_continuation; }
+        | CF.EAssume b -> CF.EAssume {b with 
+	      CF.formula_assume_simpl = add_param_ann_constraints_formula b.CF.formula_assume_simpl;
+	      CF.formula_assume_struc = helper b.CF.formula_assume_struc;}
+        | CF.EInfer b         -> CF.EInfer {b with CF.formula_inf_continuation = helper b.CF.formula_inf_continuation}
+    in helper cf
+  else cf
 
 and add_param_ann_constraints_struc (cf: CF.struc_formula) : CF.struc_formula =  (*cf disabled inner <> outer annotation relation *)
   let pr =  Cprinter.string_of_struc_formula in
@@ -1434,7 +1443,7 @@ and set_materialized_prop cdef =
       
 and find_m_prop_heap params eq_f h = 
   let pr = Cprinter.string_of_h_formula in
-  let prr x = string_of_int (List.length x) in
+  let prr = pr_list Cprinter.string_of_mater_property in
   Debug.no_1 "find_m_prop_heap" pr prr (fun _ -> find_m_prop_heap_x params eq_f h) h
       
 and find_m_prop_heap_x params eq_f h = 
@@ -1449,7 +1458,9 @@ and find_m_prop_heap_x params eq_f h =
             Debug.tinfo_hprint (add_str "view:l" (Cprinter.string_of_spec_var_list)) l no_pos;
             if l==[] then []
             else
-              List.map (fun v -> C.mk_mater_prop v true [ h.CF.h_formula_view_name]) params 
+              let ret =  List.map (fun v -> C.mk_mater_prop v true [ h.CF.h_formula_view_name]) l in
+              let _ = Debug.tinfo_hprint (add_str "ret" (pr_list Cprinter.string_of_mater_property)) ret no_pos in 
+              ret
       | CF.Star h -> (helper h.CF.h_formula_star_h1)@(helper h.CF.h_formula_star_h2)
       | CF.StarMinus h -> (helper h.CF.h_formula_starminus_h1)@(helper h.CF.h_formula_starminus_h2)
       | CF.Conj h -> (helper h.CF.h_formula_conj_h1)@(helper h.CF.h_formula_conj_h2)
@@ -1542,8 +1553,8 @@ and find_materialized_prop_x params (f0 : CF.formula) : C.mater_property list =
   let is_member (aset :(CP.spec_var list * CP.spec_var)list) v = 
     let l = List.filter (fun (l,_) -> List.exists (CP.eq_spec_var v) l) aset in
     snd (List.split l) in
-  let find_m_prop_heap_aux params pf hf =
-    let rec cycle p acc_p v_p =
+  let find_m_prop_heap_aux params pf hf = find_m_prop_heap params (is_member (param_alias_sets pf params)) hf in
+   (* let rec cycle p acc_p v_p =
         find_m_prop_heap params (is_member (param_alias_sets pf p)) hf
       (* if p==[] then *)
       (*   find_m_prop_heap params (is_member (param_alias_sets pf v_p)) hf *)
@@ -1553,7 +1564,7 @@ and find_materialized_prop_x params (f0 : CF.formula) : C.mater_property list =
       (*   let (ls,vs) = find_node_vars eq_f hf in *)
       (*   let rs = Gen.BList.difference_eq CP.eq_spec_var ls acc_p in *)
       (*   cycle rs (rs@p@acc_p) (vs@v_p) *)
-    in cycle params [] [] in
+    in cycle params [] [] in*)
   let find_m_one f = match f with
     | CF.Base b ->    
           find_m_prop_heap_aux params b.CF.formula_base_pure b.CF.formula_base_heap
