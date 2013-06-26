@@ -2173,7 +2173,7 @@ We should be using the last two relational assumption instead.
 to derive the defn of post-pred G.
 
 ===================================================================
-# single-bug-3.slk
+# single-bug-3.slk: FIXED
 
 GOT
 ===

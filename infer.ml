@@ -2209,7 +2209,7 @@ let update_es prog es hds hvs ass_lhs_b rhs rhs_rest r_new_hfs defined_hps lsele
      (*should consider closure of aliasing. since constraints are in normal form,
        but residue is not. and we want to drop exact matching of args*)
      let lselected_hpargs2 = List.map (fun (hp,args) -> (hp, SAU.find_close args leqs)) lselected_hpargs1 in
-     let _ = DD.info_pprint ("  lselected_hpargs2: " ^ (let pr = pr_list (pr_pair !CP.print_sv  !CP.print_svl) in
+     let _ = DD.ninfo_pprint ("  lselected_hpargs2: " ^ (let pr = pr_list (pr_pair !CP.print_sv  !CP.print_svl) in
         pr lselected_hpargs2)) pos
      in
      let _ = DD.ninfo_pprint ("  root_vars_ls2: " ^ (!CP.print_svl root_vars_ls2)) pos in

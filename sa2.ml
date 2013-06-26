@@ -709,10 +709,16 @@ let remove_neqNull_grp_helper grp=
     List.fold_left (fun r pdef-> let new_pdef = remove_neqNull_helper pdef in
                                  r@new_pdef) [] grp
 
+let get_null_quans f=
+  let qvars, base_f = CF.split_quantifiers f in
+   let (_ ,mix_lf,_,_,_) = CF.split_components base_f in
+   let eqNulls = MCP.get_null_ptrs mix_lf in
+   (CP.intersect_svl eqNulls qvars, base_f)
+
 (*for par_defs*)
 let generalize_one_hp_x prog hpdefs non_ptr_unk_hps unk_hps par_defs=
   (*collect definition for each partial definition*)
-  let obtain_and_norm_def hp args0 (a1,args,f,unk_args)=
+  let obtain_and_norm_def hp args0 quan_null_svl0 (a1,args,f,unk_args)=
     (*normalize args*)
     let subst = List.combine args args0 in
     let f1 = (CF.subst subst f) in
@@ -722,14 +728,21 @@ let generalize_one_hp_x prog hpdefs non_ptr_unk_hps unk_hps par_defs=
         (* fst (CF.drop_hrel_f f1 unk_hps) *)
       else f1
     in
+    let quan_null_svl, base_f2 = get_null_quans f2 in
+    let f3=
+      if List.length quan_null_svl = List.length quan_null_svl0 then
+        let ss = List.combine quan_null_svl quan_null_svl0 in
+        CF.add_quantifiers quan_null_svl0 (CF.subst ss base_f2)
+      else f2
+    in
     let unk_args1 = List.map (CP.subs_one subst) unk_args in
     (* (\*root = p && p:: node<_,_> ==> root = p& root::node<_,_> & *\) *)
-    (f2,unk_args1)
+    (f3,unk_args1)
   in
   DD.tinfo_pprint ">>>>>> generalize_one_hp: <<<<<<" no_pos;
   if par_defs = [] then ([],[]) else
     begin
-        let hp, args, _,_ = (List.hd par_defs) in
+        let hp, args, f0,_ = (List.hd par_defs) in
         if CP.mem_svl hp unk_hps then
           let fs = List.map (fun (a1,args,f,unk_args) -> fst (CF.drop_hrel_f f [hp]) ) par_defs in
           let fs1 = Gen.BList.remove_dups_eq (fun f1 f2 -> SAU.check_relaxeq_formula f1 f2) fs in
@@ -738,8 +751,10 @@ let generalize_one_hp_x prog hpdefs non_ptr_unk_hps unk_hps par_defs=
           (*find the root: ins2,ins3: root is the second, not the first*)
           let args0 = List.map (CP.fresh_spec_var) args in
           (* DD.ninfo_pprint ((!CP.print_sv hp)^"(" ^(!CP.print_svl args) ^ ")") no_pos; *)
-          let defs,ls_unk_args = List.split (List.map (obtain_and_norm_def hp args0) par_defs) in
-          let r,non_r_args = SAU.find_root args0 defs in
+          let quan_null_svl,_ = get_null_quans f0 in
+          let quan_null_svl0 = List.map (CP.fresh_spec_var) quan_null_svl in
+          let defs,ls_unk_args = List.split (List.map (obtain_and_norm_def hp args0 quan_null_svl0) par_defs) in
+          let r,non_r_args = SAU.find_root prog unk_hps args0 defs in
           (*make explicit root*)
           let defs0 = List.map (SAU.mk_expl_root r) defs in
           let unk_svl = CP.remove_dups_svl (List.concat (ls_unk_args)) in
@@ -1417,7 +1432,7 @@ let infer_shapes_init_pre prog (constrs0: CF.hprel list) callee_hps non_ptr_unk_
           hp_rel_unkmap detect_dang) constrs0
 
 let partition_constrs_x constrs post_hps=
-  let is_post_cs cs =
+  let classify (pre_cs,post_cs,rem) cs =
     let is_post =
       try
         let ohp = CF.extract_hrel_head cs.CF.hprel_rhs in
@@ -1426,14 +1441,18 @@ let partition_constrs_x constrs post_hps=
           | None -> false
       with _ -> false
     in
-    is_post
+    if is_post then (pre_cs,post_cs@[cs],rem) else
+      let lhs_hps = CF.get_hp_rel_name_formula cs.CF.hprel_lhs in
+      if CP.intersect_svl post_hps lhs_hps = [] then
+        (pre_cs@[cs],post_cs,rem)
+      else (pre_cs,post_cs,rem@[cs])
   in
-  List.partition is_post_cs constrs
+  List.fold_left classify ([],[],[]) constrs
 
 let partition_constrs constrs post_hps=
   let pr1 = pr_list_ln Cprinter.string_of_hprel in
   let pr2 = !CP.print_svl in
-  Debug.no_2 "partition_constrs" pr1 pr2 (pr_pair pr1 pr1)
+  Debug.no_2 "partition_constrs" pr1 pr2 (pr_triple pr1 pr1 pr1)
       (fun _ _ -> partition_constrs_x constrs post_hps) constrs post_hps
 
 let infer_shapes_proper prog proc_name (constrs2: CF.hprel list) callee_hps sel_hp_rels sel_post_hps
@@ -1446,7 +1465,7 @@ let infer_shapes_proper prog proc_name (constrs2: CF.hprel list) callee_hps sel_
      unk_hps constrs2 in
   let constrs3 = List.map (SAU.simp_match_unknown unk_hps link_hps) constrs3a in
   (*partition constraints into 2 groups: pre-predicates, post-predicates*)
-  let post_constrs, pre_constrs = partition_constrs constrs3 sel_post_hps in
+  let pre_constrs,post_constrs, mix_constrs = partition_constrs constrs3 sel_post_hps in
   (*find inital sol*)
   let _ = DD.binfo_pprint ">>>>>> pre-predicates<<<<<<" no_pos in
   let pre_hps, pre_defs, unk_hpargs1,unk_map3 = infer_shapes_init_pre prog pre_constrs callee_hps []
