@@ -335,7 +335,7 @@ With @M, I got:
  es_orig_ante: None
 
 ============================================================
-# bug-base-case-2.slk
+# bug-base-case-2.slk  FIXED (lhs-case disabled by default)
 
 performance bug
 
@@ -374,7 +374,7 @@ Entail (2) : Valid.
  <1>emp&n!=self & Anon_16=Anon_17 & self!=t&{FLOW,(19,20)=__norm}[]
 
 ================================================================================================
-# bug-lem-2.slk
+# bug-lem-2.slk  FIXED
 
 lemma "dll_r5_tail2" self::dll_r5<p,t,n>  
   <- self::dll_r5<p,q,t> * t::node<_,q,n> & self!=n.
