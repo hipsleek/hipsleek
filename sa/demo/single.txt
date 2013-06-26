@@ -3,17 +3,17 @@ assumptions related to post-pred G.
 
  G(next_29_789,t_32')&
   next_29_789!=null --> t_32'::node<val_34_802,next_34_803>@M * 
-  HP_4(next_34_803,next_29_789@NI) * HP_5(next_29_789,t_32'@NI)&true,
+  G4(next_34_803,next_29_789@NI) * G5(next_29_789,t_32'@NI)&true,
 
  x::node<val_29_788,null>@M&res=x 
       --> G(x,res)&true,
 
- x::node<val_29_788,next_29_789>@M * HP_5(next_29_789,res@NI) * 
+ x::node<val_29_788,next_29_789>@M * G5(next_29_789,res@NI) * 
   res::node<val_34_802,null>@M&next_29_789!=null --> G(x,res)&true]
 
 The first step is to obtain a post-pred definition using:
 
- x::node<val_29_788,next_29_789>@M * HP_5(next_29_789,res@NI) * 
+ x::node<val_29_788,next_29_789>@M * G5(next_29_789,res@NI) * 
      res::node<val_34_802,null>@M&next_29_789!=null 
  or  x::node<val_29_788,null>@M&res=x 
  --> G(x,res)
@@ -22,40 +22,42 @@ before we confirm it as an equality:
 
 G(x,res) <->
    x::node<val_29_788,null>@M&res=x 
-or x::node<val_29_788,next_29_789>@M * HP_5(next_29_789,res) * 
+or x::node<val_29_788,next_29_789>@M * G5(next_29_789,res) * 
      res::node<val_34_802,null>
 
-Perhaps, there is NO NEED to perform disj-unification at this
-stage. We can defer it to a separate predicate normalization
-phase.
+Disjunctive unification where we attempted to simplify the
+RHS for post-predicate can perhaps be delayed; as it 
+introduces extra predicates that may not be strictly required.
+Maybe we can add it as an option but after shape analysis
+step, at the predicate normalization stage.
 
 However, we do need to check post-predicate proof obligation:
 
  G(next_29_789,t_32')&
   next_29_789!=null --> t_32'::node<val_34_802,next_34_803>@M * 
-  HP_4(next_34_803,next_29_789@NI) * HP_5(next_29_789,t_32'@NI)&true,
+  G4(next_34_803,next_29_789@NI) * G5(next_29_789,t_32'@NI)&true,
 
 Checking this as a sleek proof (see single.slk), seems to have
 yielded further relational assumptions on the unknowns HP_4, HP_5.
 
  G(next_29_789,t_32') &
   next_29_789!=null |- t_32'::node<val_34_802,next_34_803>@M * 
-  HP_4(next_34_803,next_29_789@NI) * HP_5(next_29_789,t_32'@NI)&true,
+  G4(next_34_803,next_29_789@NI) * G5(next_29_789,t_32'@NI)&true,
 
 This seems to have derived relational assumptions
 on post-pred HP_4, HP_5:
 
- n=null -> HP_4(n,_)
+ n=null -> G4(n,_)
 
  n=t & n!=null
-  or n::node<_,nn>*HP_5(nn,t) --> HP_5(n,t)
+  or n::node<_,nn>*G5(nn,t) --> G5(n,t)
 
 And then post-predicates:
 
- HP_4(n,_) ::= n=null
- HP_5(n,t) ::= 
+ G4(n,_) ::= n=null
+ G5(n,t) ::= 
    n=t & n!=null
-   or n::node<_,nn>*HP_5(nn,t) --> HP_5(n,t)
+   or n::node<_,nn>*G5(nn,t) 
 
 Thus, we manage to have the following stronger
 derived specification:
