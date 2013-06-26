@@ -2155,3 +2155,50 @@ res:  [
   G(left_29_845,l_878,v_node_37_825')&right_29_846!=null & !(v_bool_29_826') & right_29_846!=null & !(v_bool_29_826') & right_29_846=right_29_846 & r=r & left_29_845=left_29_845 & res=v_node_37_825'&{FLOW,(22,23)=__norm}[]
   ]
 
+===================================================================
+
+# single.ss
+
+This defn for G is incorrect.
+
+ G(next_29_835,t_836) ::=  t_836::node<val_34_802,next_34_803>@M 
+  * HP_4(next_34_803,next_29_835) * HP_5(next_29_835,t_836)
+   &next_29_835!=null,
+
+We should be using the last two relational assumption instead.
+ x::node<val_29_788,null>@M&res=x 
+      --> G(x,res)&true,
+ x::node<val_29_788,next_29_789>@M * HP_5(next_29_789,res@NI) * 
+  res::node<val_34_802,null>@M&next_29_789!=null --> G(x,res)&true]
+to derive the defn of post-pred G.
+
+===================================================================
+# single-bug-3.slk
+
+GOT
+===
+which picks the node pointed by x_37 . However, it seems
+better to pick the node pointed by res_38 for unification
+since they are closer namely, res_38::node<_,null>. Can
+we have a similarity checking of nodes from each of the parameter
+to determine which is closer.
+
+[ G(x_37,res_38) ::=  x_37::node<val_29_788,flted_11_18>@M * HP_39(flted_11_18,res_38)&true,
+ HP_39(flted_11_18,res_38) ::=  
+ EXISTS(flted_11_18: emp&flted_11_18=null&[]
+ or EXISTS(flted_16_26: HP_5(flted_11_18,res_38) * 
+    res_38::node<val_34_802,flted_16_26>@M&flted_11_18!=null & 
+    flted_16_26=null&[]
+ ,
+ HP_5(a,b) ::= NONE]
+
+===================================================================
+
+===================================================================
+
+===================================================================
+
+===================================================================
+
+===================================================================
+

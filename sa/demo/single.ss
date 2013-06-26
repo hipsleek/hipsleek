@@ -37,23 +37,54 @@ ensures res::node<_,null> ;
 }
 
 /*
+# single.ss
 
-[ H(x)&true --> 
-    x::node<val_29_788,next_29_789>@M * HP_790(next_29_789)&true,
- HP_790(next_29_789)&next_29_789!=null --> H(next_29_789)&true,
+This defn for G is incorrect.
+
+ G(next_29_835,t_836) ::=  t_836::node<val_34_802,next_34_803>@M 
+  * HP_4(next_34_803,next_29_835) * HP_5(next_29_835,t_836)
+   &next_29_835!=null,
+
+We should be using the last two relational assumption instead.
+ x::node<val_29_788,null>@M&res=x 
+      --> G(x,res)&true,
+ x::node<val_29_788,next_29_789>@M * HP_5(next_29_789,res@NI) * 
+  res::node<val_34_802,null>@M&next_29_789!=null --> G(x,res)&true]
+to derive the defn of post-pred G.
+
+========
+
+[ H(x)&true --> x::node<val_29_788,next_29_789>@M * HP_0(next_29_789)&true,
+
+ HP_0(next_29_789)&next_29_789!=null --> H(next_29_789)&true,
 
  G(next_29_789,t_32')&
   next_29_789!=null --> t_32'::node<val_34_802,next_34_803>@M * 
-  HP_804(next_34_803,next_29_789@NI) * HP_805(next_29_789,t_32'@NI)&true,
+  HP_4(next_34_803,next_29_789@NI) * HP_5(next_29_789,t_32'@NI)&true,
 
- HP_790(next_29_789)&next_29_789=null --> emp&true,
+ HP_0(next_29_789)&next_29_789=null --> emp&true,
 
- x::node<val_29_788,next_29_789>@M&res=x & next_29_789=null 
-    --> G(x,res)&true,
+ x::node<val_29_788,null>@M&res=x 
+      --> G(x,res)&true,
 
- x::node<val_29_788,next_29_789>@M * G(next_29_789,res) * 
-  HP_805(next_29_789,res@NI) * res::node<val_34_802,v_null_34_808>@M&
-  next_29_789!=null & v_null_34_808=null --> G(x,res)&true]
+ x::node<val_29_788,next_29_789>@M * HP_5(next_29_789,res@NI) * 
+  res::node<val_34_802,null>@M&next_29_789!=null --> G(x,res)&true]
+
+==========
+
+[ H(x_834) ::=  x_834::node<val_29_788,next_29_789>@M * 
+        HP_0(next_29_789),
+
+ HP_0(next_29_837) ::=  
+   emp&next_29_837=null
+ or next_29_837::node<val_29_788,next_29_789>@M * HP_0(next_29_789)&true
+
+ G(next_29_835,t_836) ::=  t_836::node<val_34_802,next_34_803>@M 
+  * HP_4(next_34_803,next_29_835) * HP_5(next_29_835,t_836)
+   &next_29_835!=null,
+
+ 
+ HP_4(next_34_803,next_29_789) ::= NONE]
 
 
 */

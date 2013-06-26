@@ -73,7 +73,22 @@ SEEMS BRITTLE (wrong HP_1 defn)
  HP_1(right_25_42) ::=  emp&right_25_42=null]
 *************************************
 
+SOLN
+====
+relAssume HP_1
+ HP_1(x) --> x!=null -> x::node<key_25_797,left_25_798,right_25_799>@M * 
+  HP_1(left_25_798) * HP_0(right_25_799).
 
+relAssume HP_1
+ HP_1(x) --> &x!=null -> x::node<key_25_797,left_25_798,right_25_799>@M * 
+  HP_1(left_25_798) * HP_1(right_25_799).
+
+====>
+ HP_1(x) --> &x!=null -> 
+     x::node<key_25_797,left_25_798,right_25_799>@M * 
+        HP_1(left_25_798) * HP_1(right_25_799).
+  /\ x::node<key_25_797,left_25_798,right_25_799>@M * 
+        HP_1(left_25_798) * HP_0(right_25_799).
 
 
 */
