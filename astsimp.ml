@@ -1424,7 +1424,7 @@ and set_materialized_prop cdef =
       
 and find_m_prop_heap params eq_f h = 
   let pr = Cprinter.string_of_h_formula in
-  let prr x = string_of_int (List.length x) in
+  let prr = pr_list Cprinter.string_of_mater_property in
   Debug.no_1 "find_m_prop_heap" pr prr (fun _ -> find_m_prop_heap_x params eq_f h) h
       
 and find_m_prop_heap_x params eq_f h = 
@@ -1439,7 +1439,9 @@ and find_m_prop_heap_x params eq_f h =
             Debug.tinfo_hprint (add_str "view:l" (Cprinter.string_of_spec_var_list)) l no_pos;
             if l==[] then []
             else
-              List.map (fun v -> C.mk_mater_prop v true [ h.CF.h_formula_view_name]) params 
+              let ret =  List.map (fun v -> C.mk_mater_prop v true [ h.CF.h_formula_view_name]) params in
+              let _ = Debug.tinfo_hprint (add_str "ret" (pr_list Cprinter.string_of_mater_property)) ret no_pos in 
+              ret
       | CF.Star h -> (helper h.CF.h_formula_star_h1)@(helper h.CF.h_formula_star_h2)
       | CF.StarMinus h -> (helper h.CF.h_formula_starminus_h1)@(helper h.CF.h_formula_starminus_h2)
       | CF.Conj h -> (helper h.CF.h_formula_conj_h1)@(helper h.CF.h_formula_conj_h2)
@@ -1525,7 +1527,7 @@ and find_materialized_prop params (f0 : CF.formula) : C.mater_property list =
   let pr1 = Cprinter.string_of_spec_var_list in
   let pr2 = Cprinter.string_of_formula in
   let pr3 = pr_list Cprinter.string_of_mater_property in
-  Debug.ho_2 "find_materialized_prop" pr1 pr2 pr3 find_materialized_prop_x params (f0 : CF.formula)
+  Debug.no_2 "find_materialized_prop" pr1 pr2 pr3 find_materialized_prop_x params (f0 : CF.formula)
 
 and find_materialized_prop_x params (f0 : CF.formula) : C.mater_property list = 
   let f_l = CF.list_of_disjuncts f0 in

@@ -16,8 +16,8 @@ pred dll_r5<p,t,n> ==
   inv true.
 
 lemma "dll_r5_tail2" self::dll_r5<p,t,n>  
- <- self::dll_r5<p,q,t> * t::node<_,q,n> & self!=n.
-//  <- self::node<_,q,t> * t::node<_,q,n> & self!=n.
+// <- self::dll_r5<p,q,t> * t::node<_,q,n> & self!=n.
+  <- self::node<_,q,t> * t::node<_,q,n> & self!=n.
 
 
 /*
