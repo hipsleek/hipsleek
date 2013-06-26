@@ -13,6 +13,10 @@ pred dll_r5<p,t,n> ==
 lemma "dll_r5_tail" self::dll_r5<p,t,n> & self!=n 
   <-> self::dll_r5<p,q,t> * t::node<_,q,n>.
 
+//add this lemma could avoid lhs_case for (1)
+lemma "dll_r5_tail2" self::node<_,p,q> * q::dll_r5<self,t,n>
+      -> self::dll_r5<p,t,n>.
+
 //(1)
 //valid after adding case analysis
 checkentail 
@@ -70,4 +74,40 @@ Entail (2) : Valid.
 */
 
 
+/*
 
+LDK:
+
+For the two entailments in bug-base-case-2.slk,
+case analysis seems to be neccessary for the first entailment
+while such as analysis is exploded in the second entailment.
+
+The answer to the question "Is there a way to apply lemma
+wo resorting to LHS case analysis, so that (1) would work"
+seems to be NO. In order to apply the lemma (from left to right),
+one needs to satisfy its guard (which is to prove that q3!=n).
+In the entailment of (1), we could not prove that q3!=n.
+
+Another solution w/o using case analysis is to use the
+following lemma to guide the search process:
+
+lemma "dll_r5_tail2" self::node<_,p,q> * q::dll_r5<self,t,n>
+      -> self::dll_r5<p,t,n>.
+
+ With the above lemma, (1) is valid.
+
+==================================
+../sleek bug-base-case-2.slk --dis-lhs-case 
+Starting Omega...oc
+
+Entail (1) : Valid. 
+
+ <1>emp&n!=self & n!=self & t=t_235 & n=n_236&{FLOW,(19,20)=__norm}[]
+
+
+Entail (2) : Valid. 
+
+ <1>emp&n!=self & Anon_17=Anon_18 & self!=t&{FLOW,(19,20)=__norm}[]
+<2>emp&n!=self & Anon_17=Anon_18 & n!=self & Anon_17=Anon_18 & q=t_586 & n_587=t&{FLOW,(19,20)=__norm}[]
+
+*/
