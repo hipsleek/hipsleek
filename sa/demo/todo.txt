@@ -2085,6 +2085,8 @@ let us say pred-unify, as opposed to conj-unify or disj-unify?
  ]
 
 ===================================================================
+# single-bug-1.slk
+
 infer [G] x::node<val_29_788,next_29_789> * G(y_31',t_32')
  &x=x' & next_29_789=y_31' & y_31'!=null & !(v_bool_30_769') 
  & y_31'!=null &  !(v_bool_30_769') & next_29_789=y_31' 
@@ -2092,9 +2094,6 @@ infer [G] x::node<val_29_788,next_29_789> * G(y_31',t_32')
  |-  t_32'::node<val_34_767',next_34_768'>. 
 print residue.
 
-/*
-================================================================
-# single-bug-1.slk
 # conflicts with --en-sleek-logging-txt from single.ss
 
 GOT
