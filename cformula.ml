@@ -3802,7 +3802,7 @@ let get_HRel hf=
 let extract_HRel hf=
   match hf with
     | HRel (hp, eargs, _ ) -> (hp, List.concat (List.map CP.afv eargs))
-    | _ -> report_error no_pos "CF.extract_HRel"
+    | _ -> raise SA_HP_TUPLED
 
 let extract_HRel_f (f0:formula) =
   let rec helper f=
@@ -3921,7 +3921,7 @@ let simplify_pure_f (f0:formula) =
 let extract_HRel_orig hf=
   match hf with
     | HRel (hp, eargs, p ) -> (hp, eargs,p)
-    | _ -> report_error no_pos "CF.extract_HRel__orig"
+    | _ -> raise SA_HP_TUPLED
 
 
 let extract_HRel_orig_f (f0:formula) =

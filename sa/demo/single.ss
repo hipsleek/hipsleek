@@ -23,7 +23,7 @@ node foo (node x)
 infer [H,G]  requires H(x)  ensures  G(x,res);
 /*
 requires x::ll<> & x!=null
-ensures res::node<_,null>;
+ensures res::node<_,null> ;
 */
 {
    node y = x.next;

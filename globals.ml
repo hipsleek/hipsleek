@@ -13,6 +13,7 @@ type ident = string
 type constant_flow = string
 
 exception Illegal_Prover_Format of string
+exception SA_HP_TUPLED
 
 let reverify_flag = ref false
 let reverify_all_flag = ref false
