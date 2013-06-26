@@ -14,8 +14,10 @@ lemma "dll_r5_tail" self::dll_r5<p,t,n> & self!=n
   <-> self::dll_r5<p,q,t> * t::node<_,q,n>.
 
 //add this lemma could avoid lhs_case for (1)
-lemma "dll_r5_tail2" self::node<_,p,q> * q::dll_r5<self,t,n>
+
+lemma "dll_r5_tail2" self::node<_,p,q> * q::dll_r5<self,t,n> & self!=n
       -> self::dll_r5<p,t,n>.
+
 
 //(1)
 //valid after adding case analysis
