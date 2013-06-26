@@ -21,6 +21,9 @@ let tbl_addrof_lval : (string, Iast.exp) Hashtbl.t = Hashtbl.create 3
 (* list of address-represented pointer declaration *)
 let aux_local_vardecls : Iast.exp list ref = ref []
 
+(* hashtbl contains all casting procedures, keys is pairs of (input_type * output_type) *)
+let tbl_casting_proc: (Globals.typ * Globals.typ, Iast.proc_decl) Hashtbl.t = Hashtbl.create 1
+
 let tbl_bool_casting_proc: (Globals.typ, Iast.proc_decl) Hashtbl.t = Hashtbl.create 1
 
 let tbl_logical_not_proc:  (Globals.typ, Iast.proc_decl) Hashtbl.t = Hashtbl.create 1
@@ -201,6 +204,26 @@ let create_pointer_casting_proc (pointer_typ: Globals.typ) : Iast.proc_decl opti
       with Not_found -> None
     )
   | _ -> None
+
+(* let create_generic_casting_proc (ityp: Globals.typ) (otyp: Globals.typ) : Iast.proc_decl option = *)
+(*   try                                                                                             *)
+(*     let proc = Hashtbl.find tbl_casting_proc (ityp, otyp) in                                      *)
+(*     Some proc                                                                                     *)
+(*   with Not_found -> (                                                                             *)
+(*     let proc = (                                                                                  *)
+(*       match ityp, otyp with                                                                       *)
+(*       | Globals.Int, Globals.Int -> None                                                          *)
+(*       | Globals.Int, Globals.Float -> (                                                           *)
+(*           let proc = (                                                                            *)
+(*             otyp ^ " int_to_float___(" ^ ityp ^ " param)\n" ^                                     *)
+(*             "  case { param =  null -> ensures res != null;\n" ^                                  *)
+(*             "         param != null -> ensures res = null; }\n"                                   *)
+(*           ) in                                                                                    *)
+(*         )                                                                                         *)
+(*     ) in                                                                                          *)
+(*     Hashtbl.add tbl_casting_proc (ityp, otyp) proc;                                               *)
+(*     proc                                                                                          *)
+(*   )                                                                                               *)
 
 let create_logical_not_proc (typ: Globals.typ) : Iast.proc_decl =
   match typ with
@@ -595,12 +618,7 @@ and translate_constant (c: Cil.constant) (lopt: Cil.location option) : Iast.exp 
   | Cil.CStr s -> report_error_msg "TRUNG TODO: Handle Cil.CStr later!"
   | Cil.CWStr _ -> report_error_msg "TRUNG TODO: Handle Cil.CWStr later!"
   | Cil.CChr _ -> report_error_msg "TRUNG TODO: Handle Cil.CChr later!"
-  | Cil.CReal (f, fkind, _) -> (
-      match fkind with
-      | Cil.FFloat -> Iast.mkFloatLit f pos
-      | Cil.FDouble -> report_error_msg "TRUNG TODO: Handle Cil.FDouble later!"
-      | Cil.FLongDouble -> report_error_msg "TRUNG TODO: Handle Cil.FLongDouble later!"
-    )
+  | Cil.CReal (f, _, _) -> Iast.mkFloatLit f pos
   | Cil.CEnum _ -> report_error_msg "TRUNG TODO: Handle Cil.CEnum later!"
 
 
@@ -773,6 +791,8 @@ and translate_exp (e: Cil.exp) : Iast.exp =
       let pos = translate_location l in
       let output_typ = translate_typ ty in
       let input_exp = translate_exp exp in
+      let _ = print_endline ("== CastE ty = " ^ (string_of_cil_typ ty)) in
+      let _ = print_endline ("== CastE exp = " ^ (string_of_cil_exp exp)) in
       match input_exp with
       | Iast.Null _ -> input_exp
       | _ -> (

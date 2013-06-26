@@ -46,9 +46,6 @@ let global_axiom_defs = ref ([] : axiom_def list)
 
 (* Record of information on a formula *)
 type formula_info = {
-  is_linear          : bool;
-  is_quantifier_free : bool;
-  contains_array     : bool;
   relations          : ident list; (* list of relations that the formula mentions *)
   axioms             : int list; (* list of related axioms (in form of position in the global list of axiom definitions) *)
 }
@@ -109,12 +106,12 @@ let rec smt_of_exp a =
   | CP.Level _ -> illegal_format ("z3.smt_of_exp: level should not appear here")
   | CP.IConst (i, _) -> if i >= 0 then string_of_int i else "(- 0 " ^ (string_of_int (0-i)) ^ ")"
   | CP.AConst (i, _) -> string_of_int(int_of_heap_ann i)  (*string_of_heap_ann i*)
-  | CP.FConst _ -> illegal_format ("z3.smt_of_exp: ERROR in constraints (float should not appear here)")
+  | CP.FConst (f, _) -> string_of_float f 
   | CP.Add (a1, a2, _) -> "(+ " ^(smt_of_exp a1)^ " " ^ (smt_of_exp a2)^")"
   | CP.Subtract (a1, a2, _) -> "(- " ^(smt_of_exp a1)^ " " ^ (smt_of_exp a2)^")"
   | CP.Mult (a1, a2, _) -> "( * " ^ (smt_of_exp a1) ^ " " ^ (smt_of_exp a2) ^ ")"
+  | CP.Div (a1, a2, _) -> "( / " ^ (smt_of_exp a1) ^ " " ^ (smt_of_exp a2) ^ ")"
   (* UNHANDLED *)
-  | CP.Div _ -> illegal_format ("z3.smt_of_exp: divide is not supported.")
   | CP.Bag ([], _) -> "0"
   | CP.Max _
   | CP.Min _ -> illegal_format ("z3.smt_of_exp: min/max should not appear here")
@@ -234,9 +231,6 @@ let smt_of_formula pr_w pr_s f =
 
 (* Default info, returned in most cases *)
 let default_formula_info = { 
-  is_linear = true; 
-  is_quantifier_free = true; 
-  contains_array = false; 
   relations = []; 
   axioms = [];
 }
@@ -248,7 +242,8 @@ let rec collect_formula_info f =
   let all_relations = Gen.BList.remove_dups_eq (=) (info.relations @ indirect_relations) in
   let all_axioms = List.flatten (List.map (fun x -> if (List.mem x.rel_name all_relations) then x.related_axioms else []) !global_rel_defs) in
   let all_axioms = Gen.BList.remove_dups_eq (=) all_axioms in
-  {info with relations = all_relations; axioms = all_axioms;}
+  { relations = all_relations;
+    axioms = all_axioms;}
 
 and collect_combine_formula_info f1 f2 = 
   compact_formula_info (combine_formula_info (collect_formula_info f1) (collect_formula_info f2))
@@ -266,92 +261,27 @@ and collect_formula_info_raw f = match f with
       collect_combine_formula_info_raw f1 f2
   | CP.AndList _ -> Gen.report_error no_pos "smtsolver.ml: encountered AndList, should have been already handled"
   | CP.Not (f1,_,_) -> collect_formula_info_raw f1
-  | CP.Forall (svs,f1,_,_) | CP.Exists (svs,f1,_,_) -> 
-      let if1 = collect_formula_info_raw f1 in { if1 with is_quantifier_free = false; }
+  | CP.Forall (svs,f1,_,_) | CP.Exists (svs,f1,_,_) -> collect_formula_info_raw f1
 
 and collect_combine_formula_info_raw f1 f2 = 
   combine_formula_info (collect_formula_info_raw f1) (collect_formula_info_raw f2)
 
 and collect_bformula_info b = match b with
-  | CP.LexVar _ -> default_formula_info
-  | CP.BConst _ | CP.BVar _ -> default_formula_info
-  | CP.Lt (e1,e2,_) | CP.Lte (e1,e2,_) | CP.SubAnn (e1,e2,_) | CP.Gt (e1,e2,_) 
-  | CP.Gte (e1,e2,_) | CP.Eq (e1,e2,_) | CP.Neq (e1,e2,_) -> 
-      let ef1 = collect_exp_info e1 in
-      let ef2 = collect_exp_info e2 in
-      combine_formula_info ef1 ef2
-  | CP.EqMax (e1,e2,e3,_) | CP.EqMin (e1,e2,e3,_) ->
-      let ef1 = collect_exp_info e1 in
-      let ef2 = collect_exp_info e2 in
-      let ef3 = collect_exp_info e3 in
-      combine_formula_info (combine_formula_info ef1 ef2) ef3
-  | CP.BagIn _ 
-  | CP.BagNotIn _ 
-  | CP.BagSub _
-  | CP.BagMin _
-  | CP.BagMax _ 
-    | CP.VarPerm _
-  | CP.ListIn _
-  | CP.ListNotIn _
-  | CP.ListAllN _
-  | CP.ListPerm _ -> default_formula_info (* Unsupported bag and list; but leave this default_formula_info instead of a fail_with *)
   | CP.RelForm (r,args,_) -> 
       let r = CP.name_of_spec_var r in
       if r = "update_array" then
         default_formula_info 
       else 
-        let rinfo = { default_formula_info with relations = [r]; } in
-        let args_infos = List.map collect_exp_info args in
-        combine_formula_info_list (rinfo :: args_infos) (* check if there are axioms then change the quantifier free part *)
-  | CP.XPure _ -> Error.report_no_pattern ()
-
-and collect_exp_info e = match e with
-  | CP.Level _
-  | CP.Null _ | CP.Var _ | CP.AConst _ | CP.IConst _ | CP.FConst _ -> default_formula_info
-  | CP.Add (e1,e2,_) | CP.Subtract (e1,e2,_) | CP.Max (e1,e2,_) | CP.Min (e1,e2,_) -> 
-      let ef1 = collect_exp_info e1 in
-      let ef2 = collect_exp_info e2 in
-      combine_formula_info ef1 ef2
-  | CP.Mult (e1,e2,_) | CP.Div (e1,e2,_) ->
-      let ef1 = collect_exp_info e1 in
-      let ef2 = collect_exp_info e2 in
-      let result = combine_formula_info ef1 ef2 in
-      { result with is_linear = false; }
-  | CP.Bag _
-  | CP.BagUnion _
-  | CP.BagIntersect _
-  | CP.BagDiff _
-  | CP.List _
-  | CP.ListCons _
-  | CP.ListHead _
-  | CP.ListTail _
-  | CP.ListLength _
-  | CP.ListAppend _
-  | CP.ListReverse _ 
-  | CP.Tsconst _ -> default_formula_info (* Unsupported bag and list; but leave this default_formula_info instead of a fail_with *)
-  | CP.Func (_,i,_) -> combine_formula_info_list (List.map collect_exp_info i)
-  | CP.ArrayAt (_,i,_) -> combine_formula_info_list (List.map collect_exp_info i)
-  | CP.InfConst _ -> Error.report_no_pattern ()
+        { default_formula_info with relations = [r]; }
+  | _ -> default_formula_info
 
 and combine_formula_info if1 if2 =
-  {is_linear = if1.is_linear && if2.is_linear;
-  is_quantifier_free = if1.is_quantifier_free && if2.is_quantifier_free;
-  contains_array = if1.contains_array || if2.contains_array;
-  relations = List.append if1.relations if2.relations;
-  axioms = List.append if1.axioms if2.axioms;}
+  { relations = List.append if1.relations if2.relations;
+    axioms = List.append if1.axioms if2.axioms; }
 
-and combine_formula_info_list infos = {
-  is_linear = List.fold_left (&&) true (List.map (fun x -> x.is_linear) infos);
-  is_quantifier_free = List.fold_left (fun x y -> x && y) true (List.map (fun x -> x.is_quantifier_free) infos);
-  contains_array = List.fold_left (fun x y -> x || y) false (List.map (fun x -> x.contains_array) infos);
-  relations = List.flatten (List.map (fun x -> x.relations) infos);
-  axioms = List.flatten (List.map (fun x -> x.axioms) infos);
-}
-
-and compact_formula_info info = {
-  info with relations = Gen.BList.remove_dups_eq (=) info.relations;
-            axioms = Gen.BList.remove_dups_eq (=) info.axioms; 
-}
+and compact_formula_info info =
+  { relations = Gen.BList.remove_dups_eq (=) info.relations;
+    axioms = Gen.BList.remove_dups_eq (=) info.axioms; }
 
 (***************************************************************
                       AXIOMS AND RELATIONS
@@ -694,18 +624,8 @@ let string_of_logic logic =
   | AUFLIA -> "AUFLIA"
   | UFNIA -> "UFNIA"
 
-let logic_for_formulas f1 f2 =
-  let finfo = combine_formula_info (collect_formula_info_raw f1) (collect_formula_info_raw f2) in
-  let linear = finfo.is_linear in
-  let quantifier_free = finfo.is_quantifier_free in
-  match linear, quantifier_free with
-  | true, true -> QF_LIA 
-  | false, true -> QF_NIA 
-  | true, false -> AUFLIA (* should I use UFNIA instead? *)
-  | false, false -> UFNIA
-
 (* output for smt-lib v2.0 format *)
-let to_smt_v2 pr_weak pr_strong ante conseq logic fvars info =
+let to_smt_v2 pr_weak pr_strong ante conseq fvars info =
   (* Variable declarations *)
   let smt_var_decls = List.map (fun v ->
     let tp = (CP.type_of_spec_var v)in
@@ -726,7 +646,6 @@ let to_smt_v2 pr_weak pr_strong ante conseq logic fvars info =
   let ante_strs = List.map (fun x -> "(assert " ^ (smt_of_formula pr_weak pr_strong x) ^ ")\n") ante_clauses in
   let ante_str = String.concat "" ante_strs in
   let conseq_str = smt_of_formula pr_weak pr_strong conseq in (
-  (*"(set-logic AUFNIA" (\* ^ (string_of_logic logic) *\) ^ ")\n" ^  *)
     ";Variables declarations\n" ^ 
       smt_var_decls ^
     ";Relations declarations\n" ^ 
@@ -794,9 +713,7 @@ let to_smt pr_weak pr_strong (ante : CP.formula) (conseq : CP.formula option) (p
   let ante_fv = CP.fv ante in
   let conseq_fv = CP.fv conseq in
   let all_fv = Gen.BList.remove_dups_eq (=) (ante_fv @ conseq_fv) in
-  let logic = logic_for_formulas ante conseq in
-  let res = to_smt_v2 pr_weak pr_strong ante conseq logic all_fv info in
-  (*  | Cvc3 | Yices ->  to_smt_v1 ante conseq logic all_fv*)
+  let res = to_smt_v2 pr_weak pr_strong ante conseq all_fv info in
   res
   
 let to_smt pr_weak pr_strong (ante : CP.formula) (conseq : CP.formula option) (prover: smtprover) = 
@@ -997,7 +914,7 @@ and smt_imply_x pr_weak pr_strong (ante : Cpure.formula) (conseq : Cpure.formula
   (* let _ = print_endline ("#### [smt_imply] ante = " ^ (!CP.print_formula ante)) in *)
   (* let _ = print_endline ("#### [smt_imply] conseq = " ^ (!CP.print_formula conseq)) in *)
   let res, should_run_smt = (
-    (* (false, true) in *)
+    (* (false, true) in                                                             *)
     (* if (has_exists conseq) then                                                  *)
     (*   let (pr_w,pr_s) = CP.drop_complex_ops in                                   *)
     (*   try (                                                                      *)

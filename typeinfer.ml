@@ -424,7 +424,8 @@ and trans_type_back (te : typ) : typ =
 
 and sub_type_x (t1 : typ) (t2 : typ) =
   let it1 = trans_type_back t1 in
-  let it2 = trans_type_back t2 in I.sub_type it1 it2
+  let it2 = trans_type_back t2 in
+  I.sub_type it1 it2
 
 and sub_type (t1 : typ) (t2 : typ) =
   let pr = string_of_typ in

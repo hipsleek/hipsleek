@@ -1591,9 +1591,9 @@ let exists_path c1 c2 =	Debug.no_2_loop "exists_path" pr_id pr_id  string_of_boo
 		
 (* (\* is t1 a subtype of t2 *\) *)
 let sub_type2 (t1 : typ) (t2 : typ) =  
-	if is_named_type t1 && is_named_type t2 then 
-		exists_path (string_of_typ t1) (string_of_typ t2)
-	else false
+  if is_named_type t1 && is_named_type t2 then 
+    exists_path (string_of_typ t1) (string_of_typ t2)
+  else false
    
 let sub_type t1 t2 = sub_type t1 t2 || sub_type2 t1 t2
 
