@@ -40,4 +40,13 @@ to determine which is closer.
  ,
  HP_5(a,b) ::= NONE]
 
+
+ x::node<val_29_788,null>@M&res=x 
+      --> G(x,res)&true.
+
+relAssume G
+ x::node<val_29_788,next_29_789>@M * HP_5(next_29_789,res) * 
+  res::node<val_34_802,null>@M&next_29_789!=null --> G(x,res).
+
+
 */
