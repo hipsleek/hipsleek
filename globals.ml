@@ -683,7 +683,7 @@ let verify_callees = ref false
 
 let elim_unsat = ref false
 let disj_compute_flag = ref false
-let lhs_case_flag = ref true
+let lhs_case_flag = ref false
 let lhs_case_search_flag = ref false
 let smart_xpure = ref true
 let super_smart_xpure = ref false

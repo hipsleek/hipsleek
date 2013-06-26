@@ -179,6 +179,8 @@ let common_arguments = [
    "Enable re-computation of user-supplied disj. invariant");
   ("--dis-lhs-case", Arg.Clear Globals.lhs_case_flag,
    "Disable LHS Case Analysis");
+  ("--en-lhs-case", Arg.Set Globals.lhs_case_flag,
+   "Enable LHS Case Analysis");
   ("--en-lhs-case-search", Arg.Set Globals.lhs_case_search_flag,
    "Replace Cond_action by Search for LHS Case Analysis");
   ("-nxpure", Arg.Set_int Globals.n_xpure,
