@@ -380,7 +380,7 @@ let common_arguments = [
   ("--dis-sem", Arg.Set Globals.dis_sem, "Show differences between formulae");
   ("--sa-print-inter", Arg.Set Globals.sa_print_inter, "Print intermediate results of normalization");
   ("--sa-old", Arg.Set Globals.sa_old, "old algorithm of normalization");
-  ("--sa-dis-norm", Arg.Clear Globals.sa_en_norm, "do normalization");
+  ("--sa-en-norm", Arg.Set Globals.sa_en_norm, "do normalization");
   ("--sa-dis", Arg.Clear Globals.sa_en, "donot infer shape");
   ("--sa-dangling", Arg.Set Globals.sa_dangling, "elim dangling HP/pointers");
   ("--sa-useless", Arg.Set Globals.sa_elim_useless, "elim useless parameter from HP predicate");

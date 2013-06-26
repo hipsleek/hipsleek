@@ -31,10 +31,11 @@ ltwoB<p:node> == HL(p) & self = null  or
 */
 
 node foo (node x)
+/*
 requires x::ll<> & x!=null
 ensures res::G0<x>;
-
-//infer [H,G]  requires H(x)  ensures  G(x,res);
+*/
+infer [H,G]  requires H(x)  ensures  G(x,res);
 /*
 requires x::ll<> & x!=null
   ensures res::node<_,null> ;
