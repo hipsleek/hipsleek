@@ -18,24 +18,58 @@ void dll_append(node l1, node l2)
 infer [H,G] requires H(l1,l2) ensures G(l1,l2);
 //requires l1::dll<p> * l2::dll<_> & l1!=null  ensures l1::dll<p>;
 // requires l1::dllt<p,null> * l2::dll<_> & l1!=null  ensures l1::dll<p>;
-
-
 {
 	if (l1.next!=null)
 		dll_append(l1.next,l2);
 	else 
 		{
-			dprint;
 			l1.next = l2;
-			dprint;
 			if (l2!=null) {
-				dprint;
 				l2.prev = l1;
 				}
 		}
 }
 
 /*
+# dll-append.ss
+
+Is below correct?
+
+[ H(l1,l2)&true --> l1::node<next_22_815,prev_22_816>@M * 
+  HP_817(next_22_815,l2@NI) * HP_818(prev_22_816,l2@NI) * HP_819(l2,l1@NI)&
+  true,
+ HP_817(next_22_815,l2@NI) * HP_819(l2,l1@NI)&
+  next_22_815!=null --> H(next_22_815,l2)&true,
+ HP_819(l2,l1@NI)&l2!=null --> l2::node<next_28_842,prev_28_843>@M * 
+  HP_844(next_28_842,l1@NI) * HP_845(prev_28_843,l1@NI)&true,
+ HP_818(prev_22_816,l2@NI) * l1::node<next_22_815,prev_22_816>@M * 
+  G(next_22_815,l2)&next_22_815!=null --> G(l1,l2)&true,
+ HP_818(prev_22_816,l2@NI) * l1::node<l2,prev_22_816>@M * 
+  HP_844(next_28_842,l1@NI) * l2::node<next_28_842,l1>@M&true --> G(l1,l2)&
+  true,
+ HP_817(next_22_815,l2@NI)&next_22_815=null & l2=null --> emp&true,
+ HP_818(prev_22_816,l2@NI) * HP_819(l2,l1@NI) * l1::node<l2,prev_22_816>@M&
+  l2=null --> G(l1,l2)&true]
+
+====== 
+
+[ H(l1,l2) ::=  l1::node<next_22_815,prev_22_816>@M * HP_817(next_22_815,l2) * 
+HP_818(prev_22_816,l2) * HP_819(l2,l1)&true,
+ G(l1_887,l2_888) ::=  
+ HP_818(prev_22_816,l2_888) * l1_887::node<next_22_815,prev_22_816>@M * 
+ G(next_22_815,l2_888)&next_22_815!=null
+ or HP_818(prev_22_816,l2_888) * l1_887::node<l2_888,prev_22_816>@M * 
+    HP_844(next_28_842,l1_887) * l2_888::node<next_28_842,l1_887>@M&true
+ ,
+ HP_819(l2_879,l1_880) ::=  l2_879::node<next_28_842,prev_28_843>@M * HP_844(next_28_842,l1_880) * 
+HP_845(prev_28_843,l1_880)&l2_879!=null,
+ HP_817(next_22_881,l2_882) ::=  emp&next_22_881=null & l2_882=null,
+ HP_818(prev_22_816,l2) ::= NONE,
+ HP_844(next_28_842,l1) ::= NONE,
+ HP_845(prev_28_843,l1) ::= NONE]
+
+
+======================================
  id: 21; caller: []; line: 51; classic: false; kind: BIND; hec_num: 5; evars: []; infer_vars: [H3,G3,HP_817,HP_818]; c_heap: emp
  checkentail (HP_817(next_46_815,l2)) * (HP_818(prev_46_816,l2)) * 
 l1'::node<l2',prev_46_816>@M[Orig]&l1=l1' & l2=l2' & next_46_815=null & 
