@@ -8,11 +8,12 @@ HeapPred G(node a).
 
 
 
-relAssume G
- x=null  --> G(x).
 
 relAssume G
- x=e & e=null  --> G(x).
+ x=e & k=e & k=null  --> G(x).
+
+relAssume G
+ x=null  --> G(x).
 
 shape_infer [][G].
 
