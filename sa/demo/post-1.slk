@@ -1,5 +1,5 @@
 data node{
-	int val;
+	node val;
 	node next;
 }.
 
@@ -8,7 +8,7 @@ HeapPred G(node a).
 
 
 relAssume G
- x::node<key_31_797,xx>   --> G(x).
+ x::node<n,null> & n!=null   --> G(x).
 
 /*
 relAssume G
@@ -16,7 +16,7 @@ relAssume G
 */
 
 relAssume G
- x::node<_,right>  & right=null  --> G(x).
+ x::node<null,right>  & right=null  --> G(x).
 
 
 shape_infer [][G].

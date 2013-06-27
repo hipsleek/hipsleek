@@ -2460,6 +2460,19 @@ GOT
 Above is unsound. too strong.
 should have two disjuncts.
 ===================================================================
+# post-1a.slk
+
+relAssume G
+ x::node<b,right> & b<0  --> G(x).
+
+relAssume G
+ x::node<n,_> & n>0   --> G(x).
+
+shape_infer [][G].
+
+[ G(x_23) ::=  x_23::node<b,right>@M&0<b]
+
+Seems a loss of information. Should have 2 disjuncts.
 
 ===================================================================
 
