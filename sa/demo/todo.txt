@@ -2193,7 +2193,23 @@ to determine which is closer.
  HP_5(a,b) ::= NONE]
 
 ===================================================================
+# single-bug-3.slk
 
+GOT
+===
+[ G(x_45,res_46) ::=  
+ EXISTS(flted_18_47: x_45::node<val_29_48,next_29_789>@M * 
+ HP_5(next_29_789,res_46) * res_46::node<val_29_788,flted_18_47>@M&
+ next_29_789!=null & flted_18_47=null&[]
+ or EXISTS(flted_18_47: res_46::node<val_29_788,flted_18_47>@M&res_46=x_45 & 
+    flted_18_47=null&[]
+ ,
+ HP_5(a,b) ::= NONE]
+
+HP_5 should not be classified as NONE. This would
+only be applicable to pre-predicates.
+I wonder if proof obligation on G(..) can be
+subjected to SLEEK to derive HP_4,HP_5
 ===================================================================
 
 ===================================================================

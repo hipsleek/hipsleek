@@ -7,6 +7,13 @@ HeapPred HP_4(node a, node@NI b).
 HeapPred HP_5(node a, node@NI b).
 HeapPred G(node a, node b).
 
+
+relAssume G
+  G(next_29_789,t_32') &
+  next_29_789!=null --> t_32'::node<val_34_802,next_34_803>@M * 
+  HP_4(next_34_803,next_29_789) * HP_5(next_29_789,t_32').
+
+
 relAssume G
  x::node<val_29_788,null>@M&res=x 
       --> G(x,res)&true.
@@ -18,13 +25,30 @@ relAssume G
 
 Declare_Unknown [HP_5].
 
-shape_infer [][G].
+shape_infer [][G,HP_5,HP_4].
 
 /*
 # single-bug-3.slk
 
 GOT
 ===
+[ G(x_45,res_46) ::=  
+ EXISTS(flted_18_47: x_45::node<val_29_48,next_29_789>@M * 
+ HP_5(next_29_789,res_46) * res_46::node<val_29_788,flted_18_47>@M&
+ next_29_789!=null & flted_18_47=null&[]
+ or EXISTS(flted_18_47: res_46::node<val_29_788,flted_18_47>@M&res_46=x_45 & 
+    flted_18_47=null&[]
+ ,
+ HP_5(a,b) ::= NONE]
+
+HP_5 should not be classified as NONE. This would
+only be applicable to pre-predicates.
+I wonder if proof obligation on G(..) can be
+subjected to SLEEK to derive HP_4,HP_5
+
+
+=======
+
 which picks the node pointed by x_37 . However, it seems
 better to pick the node pointed by res_38 for unification
 since they are closer namely, res_38::node<_,null>. Can
