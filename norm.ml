@@ -379,7 +379,7 @@ let norm_extract_common_one_view_x cprog cviews vdecl=
   (***views to hprels*******)
   let fs1 = List.map CF.elim_exists fs in
   let fs2,map = List.split (List.map view_to_hprel fs1) in
-  let defs,elim_ss = SAU.get_longest_common_hnodes_list cprog cdefs unk_hps unk_svl
+  let defs,elim_ss = SAU.get_longest_common_hnodes_list cprog false cdefs unk_hps unk_svl
     hp self_var vdecl.C.view_vars args fs2 in
   match defs with
     | [a] -> [vdecl]

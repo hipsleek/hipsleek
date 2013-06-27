@@ -8,8 +8,11 @@ HeapPred G(node a).
 
 
 relAssume G
- x::node<key_31_797,right> & right=null  --> G(x).
-
+ x::node<key_31_797,right>  & right=null  --> G(x).
+/*
+relAssume G
+ x::node<key_31_797,null>   --> G(x).
+*/
 relAssume G
  yy::node<key_31_797,null>  --> G(yy).
 
@@ -19,7 +22,7 @@ shape_infer [][G].
 # post-1.slk
 
 
-should have just two disjuncts
+should have just one disjunct
 [ G(x_24) ::=  
  x_24::node<key_31_797,right>@M&right=null
  or EXISTS(flted_14_18: x_24::node<key_31_797,flted_14_18>@M&

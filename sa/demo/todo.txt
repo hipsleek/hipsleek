@@ -2410,7 +2410,7 @@ HP_1(right_31_799)&x_25!=null,
 
 
 ===================================================================
-# post-2.slk
+# post-2.slk: FIXED
 
 relAssume G
  x=null  --> G(x).
@@ -2427,7 +2427,7 @@ should have just one disjunct
  ]
 
 ===================================================================
-# post-1.slk
+# post-1.slk: FIXED
 
 relAssume G
  x::node<key_31_797,right> & right=null  --> G(x).
