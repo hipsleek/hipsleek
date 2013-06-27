@@ -2313,7 +2313,7 @@ GOT
     HP_800(left_31_798) * HP_801(right_31_799)&true
  ]
 
-ERROR with --sa-unify
+ERROR with --pred-unify
 =====================
 
 ERROR: at _0:0_0:0 
