@@ -26,7 +26,6 @@ relAssume HP_0
 relAssume HP_0
  HP_0(left_31_798)&left_31_798=null --> emp.
 
-
 shape_infer [H,HP_0][].
 
 /*
