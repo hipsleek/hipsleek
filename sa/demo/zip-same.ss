@@ -34,67 +34,48 @@ infer [H,G1]  requires H(x,y)  ensures  G1(x,y,res);
 
 /*
 
-# zip.ss
+# zip-same.ss
 
- H(x,y)&x!=null --> x::node<val_31_814,next_31_815>@M *
-  (HP_816(next_31_815,y@NI)) * (HP_817(y,x@NI))&true,
+[ H(x,y)&x!=null --> x::node<val_29_821,next_29_822>@M * 
+  HP_823(next_29_822,y@NI) * HP_824(y,x@NI)&true,
 
- HP_817(y,x@NI)&true --> y::node<val_32_821,next_32_822>@M *
-  (HP_823(next_32_822,x@NI))&true,
+ HP_824(y,x@NI)&true --> y::node<val_29_828,next_29_829>@M * 
+  HP_830(next_29_829,x@NI)&true,
 
- (HP_816(next_31_815,y@NI)) * (HP_823(next_32_822,x@NI))&
-  true --> H(next_31_815,next_32_822)&true,
+ HP_823(next_29_822,y@NI) * HP_830(next_29_829,x@NI)&
+  true --> H(next_29_822,next_29_829)&true,
 
- H(x,y)&res=x & x=null & res=null --> G1(x,y,res)&true,
+ H(x,y)&x=null & x=y --> emp&true,
 
- y::node<val_32_821,next_32_822>@M *
-  (G1(next_31_815,next_32_822,v_node_34_853)) *
-  x::node<v_int_33_837,v_node_34_853>@M&res=x --> G1(x,y,res)&true
+ emp&res=x & x=null & y=null & res=null & res=y & x=y --> G1(x,y,res)&true,
 
-4th RelAssume is a candidate for base-case split which
-complements the 1st RelAssume.
+ y::node<val_29_828,next_29_829>@M * 
+  G1(next_29_822,next_29_829,v_node_30_860) * 
+  x::node<v_int_29_844,v_node_30_860>@M&res=x --> G1(x,y,res)&true]
 
-In this case, we may also use --sa-s-split to capture
-y extension in the base-case.
+SMALL ISSUES
+============
+The last two defn became redundant. I suppose we should set
+--sa-en-eup as the default.
 
 =================
 
-WHY?
+[ H(x_897,y_898) ::=  
+ emp&x_897=null & x_897=y_898
+ or H(next_29_880,next_29_878) * y_898::node<val_29_877,next_29_878>@M * 
+    x_897::node<val_29_879,next_29_880>@M&!((x_897=null & x_897=y_898))
+ ,
+ G1(x_899,y_900,res_901) ::=  
+ emp&res_901=x_899 & x_899=null & y_900=null & res_901=null & 
+ res_901=y_900 & x_899=y_900
+ or y_900::node<val_29_828,next_29_829>@M * 
+    G1(v_node_30_860,next_29_829,v_node_30_860) * 
+    res_901::node<v_int_29_844,v_node_30_860>@M&res_901=x_899
+ ,
+ HP_823(next_29_822,y) * 
+  HP_830(next_29_829,x) ::=  H(next_29_822,next_29_829)&true,
 
-[ H(x_945,y_946) ::= emp&x_945=null,
- G1(x_949,y_950,res_951) ::= HP_952(x_949,y_950,res_951)&res_951=x_949,
- HP_952(x_953,y_950,res_951) ::= 
- emp&res_951=null
- or y_950::node<val_32_821,next_32_822>@M * 
-    (HP_952(next_31_815,next_32_822,v_node_34_853))&true
- ]
-
- H(x,y)&x!=null --> x::node<val_31_814,next_31_815>@M * 
-  (HP_816(next_31_815,y@NI)) * (HP_817(y,x@NI))&true,
- HP_817(y,x@NI)&true --> y::node<val_32_821,next_32_822>@M * 
-  (HP_823(next_32_822,x@NI))&true,
- (HP_816(next_31_815,y@NI)) * (HP_823(next_32_822,x@NI))&
-  true --> H(next_31_815,next_32_822)&true,
- H(x,y)&res=x & x=null & res=null --> G1(x,y,res)&true,
- y::node<val_32_821,next_32_822>@M * 
-  (G1(next_31_815,next_32_822,v_node_34_853)) * 
-  x::node<v_int_33_837,v_node_34_853>@M&res=x --> G1(x,y,res)&true]
-
-
-
-===============================================================
-# zip.ss
-
-How come below, when its relational assumption
-in zip1f.slk gives correct answer?
-
-[ H(x_945,y_946) ::= emp&x_945=null,
- G1(x_949,y_950,res_951) ::= HP_952(x_949,y_950,res_951)&res_951=x_949,
- HP_952(x_953,y_950,res_951) ::= 
- emp&res_951=null
- or y_950::node<val_32_821,next_32_822>@M * 
-    (HP_952(next_31_815,next_32_822,v_node_34_853))&true
- ]
+ HP_824(y_895,x_896) ::=  y_895::node<val_29_828,next_29_829>@M * HP_830(next_29_829,x_896)&true]
 
 
 */

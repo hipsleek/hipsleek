@@ -677,7 +677,7 @@ let sa_inlining = ref false
 
 let sa_s_split_base = ref false
 
-let sa_elim_unused_preds = ref false
+let sa_elim_unused_preds = ref true
 
 let sa_keep_unused_preds = ref false
 
