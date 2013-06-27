@@ -2410,8 +2410,39 @@ HP_1(right_31_799)&x_25!=null,
 
 
 ===================================================================
+# post-2.slk
+
+relAssume G
+ x=null  --> G(x).
+
+relAssume G
+ x=e & e=null  --> G(x).
+
+shape_infer [][G].
+
+should have just one disjunct
+[ G(x_17) ::=  
+ emp&x_17=null
+ or emp&x_17=null
+ ]
 
 ===================================================================
+# post-1.slk
+
+relAssume G
+ x::node<key_31_797,right> & right=null  --> G(x).
+
+relAssume G
+ yy::node<key_31_797,null>  --> G(yy).
+
+shape_infer [][G].
+
+should have just one disjunct
+[ G(x_24) ::=  
+ x_24::node<key_31_797,right>@M&right=null
+ or EXISTS(flted_14_18: x_24::node<key_31_797,flted_14_18>@M&
+    flted_14_18=null&[]
+ ]
 
 ===================================================================
 
