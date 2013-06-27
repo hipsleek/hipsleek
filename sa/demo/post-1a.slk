@@ -10,7 +10,7 @@ HeapPred G(node a).
 
 
 relAssume G
- x::node<b,right> & b<0  --> G(x).
+ x::node<b,right> & b>=0  --> G(x).
 
 relAssume G
  x::node<n,_> & n>0   --> G(x).

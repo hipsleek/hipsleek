@@ -787,7 +787,7 @@ and look_up_ptr_args_one_node prog hd_nodes hv_nodes node_name=
       | dn::ds ->
           if CP.eq_spec_var node_name dn.CF.h_formula_data_node then
             (* loop_up_ptr_args_data_node prog dn *)
-              List.filter CP.is_node_typ dn.CF.h_formula_data_arguments
+              (* List.filter CP.is_node_typ *) dn.CF.h_formula_data_arguments
           else
               (* let args =  List.filter CP.is_node_typ dn.CF.h_formula_data_arguments in *)
           (*     if (CP.intersect_svl args cur_ptrs) <> [] then *)
@@ -800,7 +800,7 @@ and look_up_ptr_args_one_node prog hd_nodes hv_nodes node_name=
     match ls with
       | [] -> []
       | vn::vs -> if CP.eq_spec_var node_name vn.CF.h_formula_view_node then
-            List.filter CP.is_node_typ vn.CF.h_formula_view_arguments
+            (* List.filter CP.is_node_typ *) vn.CF.h_formula_view_arguments
           else look_up_view_node vs
   in
   let ptrs = look_up_data_node hd_nodes in
@@ -1745,8 +1745,8 @@ let check_stricteq_hnodes_x stricted_eq hns1 hns2=
     CP.remove_dups_svl (ptrs1@ptrs2)
   in
   let check_stricteq_hnode hn1 hn2=
-    let arg_ptrs1 = List.filter CP.is_node_typ hn1.CF.h_formula_data_arguments in
-    let arg_ptrs2 = List.filter CP.is_node_typ  hn2.CF.h_formula_data_arguments in
+    let arg_ptrs1 = (* List.filter CP.is_node_typ *) hn1.CF.h_formula_data_arguments in
+    let arg_ptrs2 = (* List.filter CP.is_node_typ *)  hn2.CF.h_formula_data_arguments in
     if (hn1.CF.h_formula_data_name = hn2.CF.h_formula_data_name) &&
         (CP.eq_spec_var hn1.CF.h_formula_data_node hn2.CF.h_formula_data_node) then
       let b = eq_spec_var_order_list arg_ptrs1 arg_ptrs2 in

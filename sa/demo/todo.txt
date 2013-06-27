@@ -2446,7 +2446,7 @@ should have just one disjunct
  ]
 
 ===================================================================
-# post-1.slk
+# post-1.slk: FIXED
 
 relAssume G
  x::node<key_31_797,xx>   --> G(x).
@@ -2461,7 +2461,7 @@ GOT
 Above is unsound. too strong.
 should have two disjuncts.
 ===================================================================
-# post-1a.slk
+# post-1a.slk: FIXED (considered arith )
 
 relAssume G
  x::node<b,right> & b<0  --> G(x).
@@ -2476,7 +2476,52 @@ shape_infer [][G].
 Seems a loss of information. Should have 2 disjuncts.
 
 ===================================================================
+# post-1c.slk
 
+Test also 
+# post-1b.slk
+# post1d.slk
+
+
+relAssume G
+ x::node<b,right> & right=null  --> G(x).
+
+relAssume G
+ x::node<n,q> * q::node<_,r>    --> G(x).
+
+
+shape_infer [][G].
+
+GOT
+===
+[ G(x_24) ::=  
+ x_24::node<b,right>@M&right=null
+ or x_24::node<b,right>@M * right::node<Anon_11,r>@M&true
+ ]
+
+OPTION
+======
+Could we have an option: --sa-disj-unify
+to obtain. I tried --sa-en-norm but it did 
+not work.
+
+First derive:
+ x::node<b,right> & right=null 
+ or x::node<n,q> * q::node<_,r>  --> G(x).
+
+Then derive:
+ x::node<b,right> * GP_2(right) --> G(x)
+
+ right=null 
+ or right::node<_,r>  --> GP_2(x).
+
+Finally obtain definitions:
+
+ G(x) ::= x::node<b,right> * GP_2(right) 
+
+ GP_2(right) ::= right=null 
+    or right::node<_,r> .
+  --> G(x).
 ===================================================================
 
 ===================================================================
