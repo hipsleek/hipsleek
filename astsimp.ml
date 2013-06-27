@@ -3548,9 +3548,16 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
             (loop_procs := cw_proc :: !loop_procs; (iw_call, C.void_type))
       | Iast.FloatLit {I.exp_float_lit_val = fval; I.exp_float_lit_pos = pos} -> 
             (C.FConst {C.exp_fconst_val = fval; C.exp_fconst_pos = pos}, C.float_type)
+      | Iast.Cast {I.exp_cast_target_type = ty;
+                   I.exp_cast_body = exp;
+                   I.exp_cast_pos = pos} ->
+          let body, _ = trans_exp prog proc exp in
+          let cexp = C.Cast {C.exp_cast_target_type = ty;
+                             C.exp_cast_body = body;
+                             C.exp_cast_pos = pos} in
+          (cexp, ty)
       | Iast.Finally b ->  Err.report_error { Err.error_loc = b.I.exp_finally_pos; Err.error_text = "Translation of finally failed";}
       | Iast.ConstDecl _ -> failwith (Iprinter.string_of_exp ie)
-      | Iast.Cast _ -> failwith (Iprinter.string_of_exp ie)
       | Iast.Break _ -> failwith (Iprinter.string_of_exp ie)
       | Iast.Continue _ -> failwith (Iprinter.string_of_exp ie)
       | I.Raise ({ 

@@ -516,12 +516,12 @@ and gather_type_info_exp_x a0 tlist et =
       (n_tl,t2)
   | IP.TypeCast (ty, a1, pos) ->
       let _ = must_unify_expect_test et ty tlist pos in
-      let (new_et, n_tl) = fresh_tvar tlist in          
+      let (new_et, n_tl) = fresh_tvar tlist in
       let nt = List.find (fun (v,en) -> en.sv_info_kind = new_et) n_tl in 
-      let (tmp1,tmp2)=nt in           
+      let (tmp1,tmp2)=nt in
       let (n_tl1,t1) = gather_type_info_exp a1 n_tl new_et in
       let (n_tlist1,t1) = must_unify_expect t1 et n_tl1 pos in
-      let n_tl = List.filter (fun (v,en) -> v<>tmp1) n_tlist1 in
+      let n_tl = List.filter (fun (v,en) -> v<>tmp1) n_tl1 in
       (n_tl,t1)
   | IP.BagDiff (a1,a2,pos) ->
       let (el_t, n_tl) = fresh_tvar tlist in
@@ -530,8 +530,8 @@ and gather_type_info_exp_x a0 tlist et =
       let (n_tlist,t2) = gather_type_info_exp_x a2 n_tlist new_et in
       let (n_tlist,n_typ) = must_unify t1 t2 n_tlist pos in
       (n_tlist,n_typ)
-  | IP.BagIntersect (es,pos) | IP.BagUnion (es,pos) -> (*Need to consider*)
-      let (el_t,n_tl) = fresh_tvar tlist in         
+  | IP.BagIntersect (es,pos) | IP.BagUnion (es,pos) ->
+      let (el_t,n_tl) = fresh_tvar tlist in
       let new_et = must_unify_expect_test (BagT el_t) et n_tl pos in 
       let rec aux es_list type_list =
         match es_list with

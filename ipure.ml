@@ -332,6 +332,8 @@ and mkMax a1 a2 pos = Max (a1, a2, pos)
 
 and mkMin a1 a2 pos = Min (a1, a2, pos)
 
+and mkTypeCast t a pos = TypeCast (t, a, pos)
+
 and mkBVar (v, p) pos = BVar ((v, p), pos)
 
 and mkLt a1 a2 pos = 
