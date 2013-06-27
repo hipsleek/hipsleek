@@ -37,7 +37,7 @@ infer [H,G1]  requires H(x,y)  ensures  G1(x,y,res);
 # zip-same.ss
 
 Small issue: why didn't the elm of redundant pure condition
-eliminate !((x_897=null & x_897=y_898).
+eliminate !((x_897=null & x_897=y_898).  FIXED
 
 Did we not use xpure proving to eliminate it prior to
 forming defn for predicate?

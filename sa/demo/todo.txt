@@ -2313,17 +2313,18 @@ GOT
     HP_800(left_31_798) * HP_801(right_31_799)&true
  ]
 
-ERROR with --pred-unify
-=====================
-
-ERROR: at _0:0_0:0 
-Message: sau.combine_length_neq
- 
-Procedure foo$node FAIL-2
-
-Exception Failure("sau.combine_length_neq") Occurred!
 
 ===================================================================
+
+# tree-6a.slk
+
+WHY HP_0 did not have base-case? when
+HP_0 base case is duplicated. This should not happen.
+
+HP_0(left_31_86) ::=  
+  left_31_86::node<key_31_797,left_31_798,right_31_799>@M * 
+  HP_0(left_31_798) * HP_1(right_31_799)&true]
+
 
 ===================================================================
 

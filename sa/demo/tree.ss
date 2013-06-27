@@ -39,38 +39,62 @@ void foo(node x)
 
 GOT
 ===
-[ H(x_847) ::=  x_847::node<key_31_797,left_31_798,right_31_799>@M * HP_800(left_31_798) * HP_801(right_31_799)&true,
 
- G(x_848) ::=  
- HP_801(right_31_799) * x_848::node<key_31_797,left_31_798,right_31_799>@M&
+[ H(x_845) ::=  x_845::node<key_31_797,left_31_798,right_31_799>@M * HP_800(left_31_798) * HP_801(right_31_799)&true,
+
+ G(x_846) ::=  
+ HP_801(right_31_799) * x_846::node<key_31_797,left_31_798,right_31_799>@M&
  left_31_798=null
- or HP_800(left_31_798) * x_848::node<key_31_797,left_31_798,right_31_799>@M&
+ or HP_800(left_31_798) * x_846::node<key_31_797,left_31_798,right_31_799>@M&
     left_31_798!=null & right_31_799=null
- or x_848::node<key_31_797,left_31_798,right_31_799>@M * G(left_31_798) * 
-    G(right_31_799)&left_31_798!=null & right_31_799!=null
- ,
+ or x_846::node<key_31_797,left_31_798,right_31_799>@M * G(left_31_798) * 
+    G(right_31_799)&left_31_798!=null & right_31_799!=null,
 
- HP_800(left_31_845) ::=  
- emp&left_31_845=null
- or left_31_845::node<key_31_797,left_31_798,right_31_799>@M * 
-    HP_800(left_31_798) * HP_801(right_31_799)&true
- ,
+ HP_800(left_31_827) ::=  
+ left_31_827::node<key_31_797,left_31_798,right_31_799>@M * 
+ HP_800(left_31_798) * HP_801(right_31_799)&true
+ or emp&left_31_827=null ,
 
- HP_801(right_31_846) ::=  
- emp&right_31_846=null
- or right_31_846::node<key_31_797,left_31_798,right_31_799>@M * 
-    HP_800(left_31_798) * HP_801(right_31_799)&true
+ HP_801(right_31_828) ::=  
+ right_31_828::node<key_31_797,left_31_798,right_31_799>@M * 
+ HP_800(left_31_798) * HP_801(right_31_799)&true
+ or emp&right_31_828=null
  ]
 
-ERROR with --sa-unify
-=====================
 
-ERROR: at _0:0_0:0 
-Message: sau.combine_length_neq
- 
-Procedure foo$node FAIL-2
+WHY did G(..) get an extra branch with --pred-unify
+===================================================
+[ H(x_845) ::=  x_845::node<key_31_797,left_31_798,right_31_799>@M * HP_801(left_31_798) * HP_801(right_31_799)&true,
 
-Exception Failure("sau.combine_length_neq") Occurred!
+ G(x_854) ::=  x_854::node<key_31_797,left_31_798,right_31_799>@M * 
+ left_31_798::node<key_31_797,left_31_850,right_31_851>@M * G(left_31_850) * 
+ G(right_31_851)&right_31_799=null
+ or x_854::node<key_31_797,left_31_798,right_31_799>@M * 
+    right_31_799::node<key_31_797,left_31_846,right_31_847>@M * 
+    G(left_31_846) * G(right_31_847)&left_31_798=null
+ or x_854::node<key_31_797,left_31_798,right_31_799>@M * G(left_31_798) * 
+    G(right_31_799)&left_31_798!=null & right_31_799!=null
+ or emp&x_854=null
+ ,
+
+========================
+
+[ H(x)&true --> x::node<key_31_797,left_31_798,right_31_799>@M * 
+  HP_800(left_31_798) * HP_801(right_31_799)&true,
+ HP_800(left_31_798)&left_31_798!=null --> H(left_31_798)&true,
+ HP_801(right_31_799)&right_31_799!=null --> H(right_31_799)&true,
+ HP_801(right_31_799)&right_31_799=null --> emp&true,
+ HP_800(left_31_798) * x::node<key_31_797,left_31_798,right_31_799>@M&
+  left_31_798!=null & right_31_799=null --> G(x)&true,
+ HP_800(left_31_798)&left_31_798=null --> emp&true,
+ HP_801(right_31_799) * x::node<key_31_797,left_31_798,right_31_799>@M&
+  left_31_798=null --> G(x)&true,
+ HP_800(left_31_798)&left_31_798=null --> emp&true,
+ HP_801(right_31_799) * x::node<key_31_797,left_31_798,right_31_799>@M&
+  left_31_798=null --> G(x)&true,
+ x::node<key_31_797,left_31_798,right_31_799>@M * G(left_31_798) * 
+  G(right_31_799)&left_31_798!=null & right_31_799!=null --> G(x)&true]
+
 
 --sa-en-norm gives:
 ===================
