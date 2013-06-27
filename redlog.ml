@@ -288,6 +288,7 @@ let rec rl_of_exp e0 =
   | CP.Div (e1, e2, _) -> "(" ^ (rl_of_exp e1) ^ " / " ^ (rl_of_exp e2) ^ ")"
   | CP.Max _
   | CP.Min _ -> failwith ("redlog.rl_of_exp: min/max can't appear here")
+  | CP.TypeCast _ -> failwith ("redlog.rl_of_exp: TypeCast can't appear here")
   | _ -> failwith ("redlog: bags/list is not supported")
 
 let rl_of_b_formula b =

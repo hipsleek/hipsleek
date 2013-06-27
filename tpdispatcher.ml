@@ -632,70 +632,73 @@ let rec is_memo_bag_constraint (f:memo_pure): bool =
 
 (* TODO : make this work for expression *)
 let rec is_array_exp e = match e with
-    | CP.List _
-    | CP.ListCons _
-    | CP.ListHead _
-    | CP.ListTail _
-    | CP.ListLength _
-    | CP.ListAppend _
-    | CP.ListReverse _ 
-        -> Some false
-	| CP.Add (e1,e2,_)
-	| CP.Subtract (e1,e2,_)
-	| CP.Mult (e1,e2,_)
-	| CP.Div (e1,e2,_)
-	| CP.Max (e1,e2,_)
-	| CP.Min (e1,e2,_)
-	| CP.BagDiff (e1,e2,_)
-		-> (match (is_array_exp e1) with
-						| Some true -> Some true
-						| _ -> is_array_exp e2)
-	| CP.Bag (el,_)
-	| CP.BagUnion (el,_)
-	| CP.BagIntersect (el,_)
-		-> (List.fold_left (fun res exp -> match res with
-											| Some true -> Some true
-											| _ -> is_array_exp exp) (Some false) el)
-    | CP.ArrayAt (_,_,_) -> Some true
+  | CP.List _
+  | CP.ListCons _
+  | CP.ListHead _
+  | CP.ListTail _
+  | CP.ListLength _
+  | CP.ListAppend _
+  | CP.ListReverse _ ->
+      Some false
+  | CP.Add (e1,e2,_)
+  | CP.Subtract (e1,e2,_)
+  | CP.Mult (e1,e2,_)
+  | CP.Div (e1,e2,_)
+  | CP.Max (e1,e2,_)
+  | CP.Min (e1,e2,_)
+  | CP.BagDiff (e1,e2,_) -> (
+      match (is_array_exp e1) with
+      | Some true -> Some true
+      | _ -> is_array_exp e2
+    )
+  | CP.Bag (el,_)
+  | CP.BagUnion (el,_)
+  | CP.BagIntersect (el,_) -> (
+      List.fold_left (fun res exp -> match res with
+                      | Some true -> Some true
+                      | _ -> is_array_exp exp) (Some false) el
+    )
+  | CP.ArrayAt (_,_,_) -> Some true
   | CP.Func _ -> Some false
-    | CP.AConst _ | CP.FConst _ | CP.IConst _ | CP.Tsconst _ | CP.InfConst _ 
-    | CP.Level _
-    | CP.Var _ | CP.Null _ -> Some false
-    (* | _ -> Some false *)
+  | CP.TypeCast (_, e1, _) -> is_array_exp e1
+  | CP.AConst _ | CP.FConst _ | CP.IConst _ | CP.Tsconst _ | CP.InfConst _ 
+  | CP.Level _
+  | CP.Var _ | CP.Null _ -> Some false
 
   (* Method checking whether a formula contains list constraints *)
 let rec is_list_exp e = match e with
-    | CP.List _
-    | CP.ListCons _
-    | CP.ListHead _
-    | CP.ListTail _
-    | CP.ListLength _
-    | CP.ListAppend _
-    | CP.ListReverse _ 
-        -> Some true
-	| CP.Add (e1,e2,_)
-	| CP.Subtract (e1,e2,_)
-	| CP.Mult (e1,e2,_)
-	| CP.Div (e1,e2,_)
-	| CP.Max (e1,e2,_)
-	| CP.Min (e1,e2,_)
-	| CP.BagDiff (e1,e2,_)
-		-> (match (is_list_exp e1) with
-						| Some true -> Some true
-						| _ -> is_list_exp e2)
-	| CP.Bag (el,_)
-	| CP.BagUnion (el,_)
-	| CP.BagIntersect (el,_)
-		-> (List.fold_left (fun res exp -> match res with
-											| Some true -> Some true
-											| _ -> is_list_exp exp) (Some false) el)
-    | CP.ArrayAt (_,_,_) | CP.Func _ -> Some false
-    | CP.Null _ | CP.AConst _ | CP.Tsconst _ | CP.InfConst _
-    | CP.Level _
-    | CP.FConst _ | CP.IConst _ -> Some false
-    | CP.Var(sv,_) -> if CP.is_list_var sv then Some true else Some false
-    (* | _ -> Some false *)
-	  
+  | CP.List _
+  | CP.ListCons _
+  | CP.ListHead _
+  | CP.ListTail _
+  | CP.ListLength _
+  | CP.ListAppend _
+  | CP.ListReverse _ -> Some true
+  | CP.Add (e1,e2,_)
+  | CP.Subtract (e1,e2,_)
+  | CP.Mult (e1,e2,_)
+  | CP.Div (e1,e2,_)
+  | CP.Max (e1,e2,_)
+  | CP.Min (e1,e2,_)
+  | CP.BagDiff (e1,e2,_) -> (
+      match (is_list_exp e1) with
+      | Some true -> Some true
+      | _ -> is_list_exp e2
+    )
+  | CP.Bag (el,_)
+  | CP.BagUnion (el,_)
+  | CP.BagIntersect (el,_) -> (
+      List.fold_left (fun res exp -> match res with
+                      | Some true -> Some true
+                      | _ -> is_list_exp exp) (Some false) el
+    )
+  | CP.TypeCast (_, e1, _) -> is_list_exp e1
+  | CP.ArrayAt (_,_,_) | CP.Func _ -> Some false
+  | CP.Null _ | CP.AConst _ | CP.Tsconst _ | CP.InfConst _
+  | CP.Level _
+  | CP.FConst _ | CP.IConst _ -> Some false
+  | CP.Var(sv,_) -> if CP.is_list_var sv then Some true else Some false
+
 (*let f_e e = Debug.no_1 "f_e" (Cprinter.string_of_formula_exp) (fun s -> match s with
 	| Some ss -> string_of_bool ss
 	| _ -> "") f_e_1 e

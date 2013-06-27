@@ -478,6 +478,7 @@ and mona_of_exp_x e0 f =
       | CP.Div (a1, a2, p) -> failwith "[mona.ml]: divide is not supported."
       | CP.Max _
       | CP.Min _ -> failwith ("mona.mona_of_exp: min/max can never appear here")
+      | CP.TypeCast _ -> failwith ("mona.mona_of_exp: TypeCast can never appear here")
       | CP.Bag (elist, _) -> "{"^ (mona_of_formula_exp_list elist f) ^ "}"
       | CP.BagUnion ([], _) -> ""
       | CP.BagUnion (e::[], _) -> (helper e)

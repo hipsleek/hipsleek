@@ -115,6 +115,7 @@ let rec smt_of_exp a =
   | CP.Bag ([], _) -> "0"
   | CP.Max _
   | CP.Min _ -> illegal_format ("z3.smt_of_exp: min/max should not appear here")
+  | CP.TypeCast _ -> illegal_format ("z3.smt_of_exp: TypeCast should not appear here")
   | CP.Bag _
   | CP.BagUnion _
   | CP.BagIntersect _

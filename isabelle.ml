@@ -116,6 +116,7 @@ let rec isabelle_of_exp e0 = match e0 with
   | CP.Div (a1, a2, _) -> failwith "[isabelle.ml]: divide is not supported."
   | CP.Max _
   | CP.Min _ -> failwith ("isabelle.isabelle_of_exp: min/max can never appear here")
+  | CP.TypeCast _ -> failwith ("isabelle.isabelle_of_exp: TypeCast can never appear here")
   | CP.Bag (elist, _) ->
       if !bag_flag then "{#"^ (isabelle_of_formula_exp_list elist) ^ "}"
       else "{"^ (isabelle_of_formula_exp_list elist) ^ "}"

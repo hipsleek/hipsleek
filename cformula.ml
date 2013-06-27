@@ -12097,43 +12097,43 @@ let is_emp_term f =
   Debug.no_1 "is_emp_term" !print_formula string_of_bool is_emp_term f
 
 
-let elim_prm e =	
-	let nv v = match v with | CP.SpecVar (t,n,Primed) -> CP.SpecVar(t,n^"PRM",Unprimed) | _ -> v in
-    let f_e_f e = None in
-	let f_f e = None in
-    let f_m e = None in
-    let f_a e = None in
-	let f_b e = None in
-	let f_p_f e = None in
-	let f_e e = match e with 
-		| CP.Null _ 
-	    | CP.IConst _
-	    | CP.AConst _
-		| CP.Tsconst _
-	    | CP.FConst _ 
-		| CP.Func _
-		| CP.ArrayAt _ -> Some e 
-		| CP.Var (v,p)-> Some (CP.Var (nv v, p))
-		| CP.Add _ 
-	    | CP.Subtract _ 
-	    | CP.Mult _
-	    | CP.Div _
-	    | CP.Max _
-	    | CP.Min _
-	    | CP.Bag _ 
-	    | CP.BagUnion _
-	    | CP.BagIntersect _
-	    | CP.BagDiff _
-        | CP.List _
-        | CP.ListCons _
-        | CP.ListHead _
-        | CP.ListTail _
-        | CP.ListLength _
-        | CP.ListAppend _
-        | CP.ListReverse _ -> None
-        | CP.Level _| CP.InfConst _ -> report_error no_pos "CF.elim_prm: not handle yet"
-    in
-		
+let elim_prm e =
+  let nv v = match v with | CP.SpecVar (t,n,Primed) -> CP.SpecVar(t,n^"PRM",Unprimed) | _ -> v in
+  let f_e_f e = None in
+  let f_f e = None in
+  let f_m e = None in
+  let f_a e = None in
+  let f_b e = None in
+  let f_p_f e = None in
+  let f_e e = match e with 
+    | CP.Null _ 
+    | CP.IConst _
+    | CP.AConst _
+    | CP.Tsconst _
+    | CP.FConst _ 
+    | CP.Func _
+    | CP.ArrayAt _ -> Some e 
+    | CP.Var (v,p)-> Some (CP.Var (nv v, p))
+    | CP.Add _ 
+    | CP.Subtract _ 
+    | CP.Mult _
+    | CP.Div _
+    | CP.Max _
+    | CP.Min _
+    | CP.TypeCast _
+    | CP.Bag _ 
+    | CP.BagUnion _
+    | CP.BagIntersect _
+    | CP.BagDiff _
+    | CP.List _
+    | CP.ListCons _
+    | CP.ListHead _
+    | CP.ListTail _
+    | CP.ListLength _
+    | CP.ListAppend _
+    | CP.ListReverse _ -> None
+    | CP.Level _| CP.InfConst _ -> report_error no_pos "CF.elim_prm: not handle yet"
+  in
 	let rec f_h_f e = match e with 
 		| Star s -> None
 		| Conj s -> None
