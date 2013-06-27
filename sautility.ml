@@ -1760,7 +1760,8 @@ let check_stricteq_hnodes_x stricted_eq hns1 hns2=
       if stricted_eq then (* (diff1=[]) *)(b,[]) else
           (*allow dangl ptrs have diff names*)
         let diff2 = CP.intersect_svl diff1 all_ptrs in
-        (diff2 = [], List.combine arg_ptrs1 arg_ptrs2)
+        let ss = List.combine arg_ptrs1 arg_ptrs2 in
+        (diff2 = [], (* List.filter (fun (sv1, sv2) -> not(CP.eq_spec_var sv1 sv2)) *) ss)
     else
       (false,[])
   in
@@ -1817,7 +1818,7 @@ let check_stricteq_hrels hrels1 hrels2=
   in
   let rec helper2 hrs1 hrs2 ss0=
     match hrs1 with
-      | [] -> true,ss0
+      | [] -> if hrs2 = [] then (true,ss0) else (false,ss0)
       | hr1::rest1 ->
           let r,ss, rest2 = helper hr1 hrs2 [] in
           if r then
@@ -1857,18 +1858,20 @@ let check_stricteq_h_fomula stricted_eq hf1 hf2=
   Debug.no_3 " check_stricteq_h_fomula" string_of_bool pr1 pr1 (pr_pair string_of_bool pr2)
       (fun _ _ _ ->  check_stricteq_h_fomula_x stricted_eq hf1 hf2) stricted_eq hf1 hf2
 
-let checkeq_pure_x p1 p2=
+let checkeq_pure_x qvars1 qvars2 p1 p2=
   if CP.equalFormula p1 p2 then true else
-    let b1,_,_ = TP.imply p1 p2 "sa:checkeq_pure" true None in
+     let p2 = CP.mkExists qvars2 p2 None no_pos in
+     let b1,_,_ = TP.imply p1 p2 "sa:checkeq_pure" true None in
     if b1 then
+      let p1 = CP.mkExists qvars1 p1 None no_pos in
       let b2,_,_ = TP.imply p2 p1 "sa:checkeq_pure" true None in
       b2
     else false
 
-let checkeq_pure p1 p2=
+let checkeq_pure qvars1 qvars2 p1 p2=
   let pr1 = !CP.print_formula in
   Debug.no_2 "checkeq_pure" pr1 pr1 string_of_bool
-      (fun _ _ -> checkeq_pure_x p1 p2) p1 p2
+      (fun _ _ -> checkeq_pure_x qvars1 qvars2 p1 p2) p1 p2
 
 let check_relaxeq_formula_x args f1 f2=
   let qvars1, base_f1 = CF.split_quantifiers f1 in
@@ -1892,21 +1895,19 @@ let check_relaxeq_formula_x args f1 f2=
     (* DD.info_pprint ("   f1: " ^(!CP.print_formula np1)) no_pos; *)
     (* DD.info_pprint ("   f2: " ^ (!CP.print_formula np2)) no_pos; *)
     (* let r2,_ = CEQ.checkeq_p_formula [] np1 np2 mts in *)
-    (* let diff1,diff2 = List.split ss in *)
-    (* let _ = DD.info_pprint ("   diff: " ^ (!CP.print_svl diff2)) no_pos in *)
+    let diff2 = List.map snd ss in
+    let _ = DD.ninfo_pprint ("   diff: " ^ (!CP.print_svl diff2)) no_pos in
     let np11 = (* CP.mkExists qvars1 np1 None no_pos *) np1 in
     let np21 = (* CP.mkExists qvars2 np2 None no_pos *) np2 in
     let np12 = CP.subst ss np11 in
     (* let _, bare_f2 = CP.split_ex_quantifiers np2 in *)
     let svl1 = CP.fv np12 in
     let svl2 = CP.fv np21 in
-    (* (\*    DD.info_pprint ("   bare_f1: " ^(!CP.print_formula bare_f1)) no_pos; *\) *)
-    (* (\* DD.info_pprint ("   bare_f2: " ^ (!CP.print_formula bare_f2)) no_pos; *\) *)
-    let qvars1 = CP.remove_dups_svl ((CP.diff_svl svl1 (args))) in
-    let qvars2 = CP.remove_dups_svl ((CP.diff_svl svl2 (args))) in
-    let np13 = CP.mkExists qvars1 np12 None no_pos in
-    let np22 = CP.mkExists qvars2 np21 None no_pos in
-    let r2 = checkeq_pure np13 np22 in
+    DD.ninfo_pprint ("   np12: " ^(!CP.print_formula np12)) no_pos;
+    DD.ninfo_pprint ("   np21: " ^ (!CP.print_formula np21)) no_pos;
+    let qvars1 = CP.remove_dups_svl ((CP.diff_svl svl1 (args@diff2))) in
+    let qvars2 = CP.remove_dups_svl ((CP.diff_svl svl2 (args@diff2))) in
+    let r2 = checkeq_pure qvars1 qvars2 np12 np21 in
     let _ = DD.ninfo_pprint ("   eq: " ^ (string_of_bool r2)) no_pos in
     r2
   else
@@ -3507,7 +3508,8 @@ let remove_dups_recursive_x prog cdefs hp args unk_hps unk_svl defs=
     others-match with rec to find residue*)
   let rec_fs,rem_fs= List.partition is_rec_f defs in
   let indep_fs, dep_fs = List.partition is_independ_f rem_fs in
-  if (List.length indep_fs >= 1) then
+  (*base cases > 1*)
+  if (List.length indep_fs > 1) then
     let root,(* non_r_args *) _ = find_root prog unk_hps args defs in
     (* let _ = DD.info_pprint (" root: " ^ (!CP.print_sv root) ) no_pos in *)
     (* let root = *)

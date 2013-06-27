@@ -747,7 +747,7 @@ let generalize_one_hp_x prog is_pre hpdefs non_ptr_unk_hps unk_hps par_defs=
     (*     (\* fst (CF.drop_hrel_f f1 unk_hps) *\) *)
     (*   else f1 *)
     (* in *)
-    let f2 = f1 in
+    let f2 = (* CF.split_quantifiers *) f1 in
     let quan_null_svl, base_f2 = get_null_quans f2 in
     let f3=
       if List.length quan_null_svl = List.length quan_null_svl0 then

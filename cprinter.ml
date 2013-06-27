@@ -1608,8 +1608,8 @@ let rec prtt_pr_formula e =
           (match lbl with | None -> () | Some l -> fmt_string ("{"^(string_of_int (fst l))^"}->"));
           fmt_string "EXISTS("; pr_list_of_spec_var svs; fmt_string ": ";
           prtt_pr_h_formula h; pr_cut_after "&" ;
-          pr_mix_formula p; pr_cut_after  "&";
-          (* fmt_string ((string_of_flow_formula "FLOW" fl) ^  ")") *)
+          pr_mix_formula p; pr_cut_after  ")";
+          (* fmt_string ((string_of_flow_formula "FLOW" fl)  ^  ")") *)
           (*;fmt_string (" LOC: " ^ (string_of_loc pos))*)
           if (a==[]) then ()
           else
