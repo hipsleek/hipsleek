@@ -3561,7 +3561,7 @@ let simplify_set_of_formulas_x prog is_pre cdefs hp args unk_hps unk_svl defs=
   let helper f=
     let f1 = filter_var prog args f in
     let f2 = elim_irr_eq_exps prog (CP.remove_dups_svl (args@unk_svl)) f1 in
-    let _ = Debug.info_pprint ("  f2: "^ (Cprinter.prtt_string_of_formula f2)) no_pos in
+    let _ = Debug.ninfo_pprint ("  f2: "^ (Cprinter.prtt_string_of_formula f2)) no_pos in
     if is_pre && ( (is_trivial f2 (hp,args)) || is_self_rec f2) then [] else [f2]
   in
   if List.length defs < 2 then (false, defs) else
