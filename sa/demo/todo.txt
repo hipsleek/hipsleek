@@ -2316,7 +2316,7 @@ GOT
 
 ===================================================================
 
-# tree-6a.slk
+# tree-6a.slk: FIXED
 
 WHY HP_0 did not have base-case? when
 HP_0 base case is duplicated. This should not happen.
@@ -2327,7 +2327,7 @@ HP_0(left_31_86) ::=
 
 
 ===================================================================
-# tree-6b.slk
+# tree-6b.slk: FIXED
 
 Same problem with HP_1 being NONE
 
