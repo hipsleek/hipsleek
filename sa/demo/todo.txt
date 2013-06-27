@@ -2272,6 +2272,8 @@ PROBLEM : Why did we have a duplicated branch in HP_1?
  or emp&x_35=null
  ]
 ===================================================================
+# single-bug-4.slk  FIXED
+
 PostPred G(node a, node b).
 
 infer [G]  G(next_29_789,t) |- t::node<_,_>.
@@ -2279,7 +2281,6 @@ print residue.
 
 
 /*
-# single-bug-4.slk
 
 support for post-pred declaration using
 

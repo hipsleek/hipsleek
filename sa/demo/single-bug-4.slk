@@ -4,6 +4,7 @@ data node{
 }.
 
 PostPred G(node a, node b).
+//HeapPred G(node a, node b).
 
 infer [G]  G(next_29_789,t) |- t::node<_,_>.
 print residue.
@@ -12,9 +13,11 @@ print residue.
 /*
 # single-bug-4.slk
 
-support for post-pred declaration using
+ <1>GP_23(Anon_22,next_29_789) * GP_24(next_29_789,t)&Anon_11=Anon_21 & Anon_12=Anon_22&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [G(next_29_789,t)&true --> t::node<Anon_21,Anon_22>@M * 
+                   GP_23(Anon_22,next_29_789@NI) * GP_24(next_29_789,t@NI)&
+                   true]
 
-  PostPred 
 
 
 */
