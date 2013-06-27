@@ -1527,8 +1527,6 @@ cexp_w:
     ]
   | "type_casting"
     [ peek_typecast; `OPAREN; t = typ; `CPAREN; c = SELF ->
-        let _ = print_endline ("== type_cast") in
-        let _ = print_endline ("== t = " ^ (Globals.string_of_typ t)) in
         apply_cexp_form1 (fun c -> P.mkTypeCast t c (get_pos_camlp4 _loc 1)) c
     ]
   | "pure_paren" 

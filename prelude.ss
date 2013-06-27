@@ -70,28 +70,63 @@ int mod___(int a, int b) case {
   }
 }
 
-/*
+float add___(int a, float b) 
+  requires true 
+  ensures res = a + b;
+
+float add___(float a, int b) 
+  requires true 
+  ensures res = a + b;
+
 float add___(float a, float b) 
   requires true 
   ensures res = a + b;
+
+
+float minus___(int a, float b) 
+  requires true 
+  ensures res = a - b;
+
+float minus___(float a, int b) 
+  requires true 
+  ensures res = a - b;
 
 float minus___(float a, float b) 
   requires true 
   ensures res = a - b;
 
 
+float mult___(int a, float b) 
+  requires true 
+  ensures res = a * b;
+
+float mult___(float a, int b) 
+  requires true 
+  ensures res = a * b;
+
 float mult___(float a, float b) 
   requires true 
   ensures res = a * b;
+
+
+float div___(int a, float b)
+ case {
+  b = 0.0 -> ensures true & flow __DivByZeroErr;
+  b != 0.0 -> ensures res = a / b;
+ }
+
+float div___(float a, int b)
+ case {
+  b = 0.0 -> ensures true & flow __DivByZeroErr;
+  b != 0.0 -> ensures res = a / b;
+ }
 
 float div___(float a, float b)
  case {
   b = 0.0 -> ensures true & flow __DivByZeroErr;
   b != 0.0 -> ensures res = a / b;
  }
-// requires b!=0.0
-// ensures ensures res = a / b;
-*/
+
 bool eq___(int a, int b) 
   case {
     a = b -> ensures res;

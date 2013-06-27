@@ -118,8 +118,8 @@ let start () =
         send_cmd "load_package redlog";
         send_cmd "rlset ofsf";
         send_cmd "on rlnzden";
-		send_cmd "off varopt"; (* An Hoa : turn off variable rearrangement *)
-		send_cmd "off arbvars"; (* An Hoa : do not introduce arbcomplex(_) *)
+        send_cmd "off varopt"; (* An Hoa : turn off variable rearrangement *)
+        send_cmd "off arbvars"; (* An Hoa : do not introduce arbcomplex(_) *)
       in
       rl_current_mode := OFSF;
       let set_process proc = process := proc in
@@ -200,7 +200,7 @@ let send_and_receive f =
 
 let check_formula f =
   let res = send_and_receive ("rlqe " ^ f) in
-  (* let _ = print_endline ("redlog out:"^res) in *)
+  let _ = print_endline ("redlog out:"^res) in
   if res = "true$" then
     Some true
   else if res = "false$" then
@@ -288,7 +288,13 @@ let rec rl_of_exp e0 =
   | CP.Div (e1, e2, _) -> "(" ^ (rl_of_exp e1) ^ " / " ^ (rl_of_exp e2) ^ ")"
   | CP.Max _
   | CP.Min _ -> failwith ("redlog.rl_of_exp: min/max can't appear here")
-  | CP.TypeCast _ -> failwith ("redlog.rl_of_exp: TypeCast can't appear here")
+  | CP.TypeCast (t, e1, _) -> (
+      match t with
+      | Globals.Int -> "fix(" ^ (rl_of_exp e1) ^ ")"
+      | Globals.Float -> rl_of_exp e1
+      | _ -> failwith ("redlog.rl_of_exp: redlog don't support type casting to '"
+                       ^ (Globals.string_of_typ t) ^ "'") 
+    )
   | _ -> failwith ("redlog: bags/list is not supported")
 
 let rl_of_b_formula b =
@@ -1075,6 +1081,7 @@ let is_sat_no_cache_ops pr_w pr_s (f: CP.formula) (sat_no: string) : bool * floa
     else strengthen_formula f in
     let frl = rl_of_formula pr_w pr_s sf in
     let rl_input = "rlex(" ^ frl ^ ")" in
+    let _ = print_endline ("rl_input 1 = " ^ rl_input) in
     let _ = if !pasf then begin 
       if is_linear then set_rl_mode PASF
       else set_rl_mode OFSF end
@@ -1109,6 +1116,7 @@ let is_valid_ops pr_w pr_s f imp_no =
   let f = normalize_formula f in
   let frl = rl_of_formula pr_s pr_w f in
   let rl_input = "rlall(" ^ frl ^")" in
+  let _ = print_endline ("rl_input 2 = " ^ rl_input) in
   let runner () = check_formula rl_input in
   let err_msg = "Timeout when checking #imply " ^ imp_no ^ "!" in
   let proc = lazy (run_with_timeout runner err_msg) in

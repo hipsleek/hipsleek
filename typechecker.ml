@@ -1139,10 +1139,10 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
     let check_exp1 (ctx : CF.list_failesc_context) : CF.list_failesc_context = 
       (*let _ = print_string("Exp: "^(Cprinter.string_of_exp e0)^"\n") in *)
       match e0 with
-	| Label e ->
-	      let ctx = CF.add_path_id_ctx_failesc_list ctx e.exp_label_path_id in
-	      let ctx = CF.add_cond_label_list_failesc_context (fst e.exp_label_path_id) (snd e.exp_label_path_id) ctx in
-	      (check_exp prog proc ctx e.exp_label_exp post_start_label)
+      | Label e ->
+            let ctx = CF.add_path_id_ctx_failesc_list ctx e.exp_label_path_id in
+            let ctx = CF.add_cond_label_list_failesc_context (fst e.exp_label_path_id) (snd e.exp_label_path_id) ctx in
+            (check_exp prog proc ctx e.exp_label_exp post_start_label)
         | Unfold ({exp_unfold_var = sv;
           exp_unfold_pos = pos}) -> 
               unfold_failesc_context (prog,None) ctx sv true pos
@@ -1565,8 +1565,44 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
             Gen.Profiling.pop_time "[check_exp] Block";
             res
 	  end
-	| Catch b -> Error.report_error {Err.error_loc = b.exp_catch_pos;
-          Err.error_text = "[typechecker.ml]: malformed cast, unexpected catch clause"}
+        | Cast ({ exp_cast_target_type = target_typ;
+                  exp_cast_body = org_exp;
+                  exp_cast_pos = pos}) ->
+            let pr = Cprinter.string_of_exp in
+            let check_cast_body rhs = Debug.no_1 "check Cast (body)" pr (fun _ -> "void") 
+              (fun rhs -> check_exp prog proc ctx rhs post_start_label) rhs in
+            let assign_op () =
+              begin
+                let _ = proving_loc#set pos in
+                let ctx1 = check_cast_body org_exp in
+                let _ = CF.must_consistent_list_failesc_context "assign 1" ctx1  in
+                let org_typ = Gen.unsome (type_of_exp org_exp) in
+                let tempvar = CP.SpecVar (org_typ, Globals.fresh_name (), Primed) in
+                let fct c1 =
+                  if (CF.subsume_flow_f !norm_flow_int (CF.flow_formula_of_formula c1.CF.es_formula)) then
+                    let compose_es = CF.subst [((P.mkRes org_typ), tempvar)] c1.CF.es_formula in
+                    let compose_ctx = (CF.Ctx ({c1 with CF.es_formula = compose_es})) in
+                    compose_ctx
+                  else (CF.Ctx c1) in
+                let res = CF.transform_list_failesc_context (idf,idf,fct) ctx1 in
+                let res_v = CP.Var (CP.mkRes target_typ, pos) in
+                let tempvar_exp = CP.Var (tempvar, pos) in
+                let typcast_exp = CP.TypeCast (target_typ, tempvar_exp, pos) in
+                let target_exp = CP.mkEqExp res_v typcast_exp pos in
+                let f = CF.formula_of_mix_formula (MCP.mix_of_pure target_exp) pos in
+                let res_ctx = CF.normalize_max_renaming_list_failesc_context f pos true res in
+                let _ = CF.must_consistent_list_failesc_context "assign final" res_ctx  in
+                res_ctx
+              end
+            in
+            Gen.Profiling.push_time "[check_exp] Cast";  
+            let res = wrap_proving_kind "CAST" assign_op () in
+            Gen.Profiling.pop_time "[check_exp] Cast";
+            res
+        | Catch b -> Error.report_error {
+              Err.error_loc = b.exp_catch_pos;
+              Err.error_text = "[typechecker.ml]: malformed cast, unexpected catch clause"
+            }
         | Cond ({ exp_cond_type = t;
           exp_cond_condition = v;
           exp_cond_then_arm = e1;
