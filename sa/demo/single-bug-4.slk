@@ -1,0 +1,20 @@
+data node{
+	int val;
+	node next;
+}.
+
+PostPred G(node a, node b).
+
+infer [G]  G(next_29_789,t) |- t::node<_,_>.
+print residue.
+
+
+/*
+# single-bug-4.slk
+
+support for post-pred declaration using
+
+  PostPred 
+
+
+*/

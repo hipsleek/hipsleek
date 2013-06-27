@@ -37,28 +37,115 @@ void foo(node x)
 /*
 # tree.ss
 
-GOT BELOW which is WRONG
-========================
-[ H(x_971) ::=  x_971::node<key_31_797,left_31_798,right_31_799>@M * HP_801(right_31_799)&
-left_31_798=null,
- G(x_973) ::=  x_973::node<key_31_797,left_31_798,right_31_799>@M * 
-HP_974(left_31_798,right_31_799)&true,
- HP_801(right_31_870) ::=  
- right_31_870::node<key_31_797,left_31_798,right_31_799>@M * 
- HP_800(left_31_798) * HP_801(right_31_799)&true
- or emp&right_31_870=null
+GOT
+===
+[ H(x_847) ::=  x_847::node<key_31_797,left_31_798,right_31_799>@M * HP_800(left_31_798) * HP_801(right_31_799)&true,
+
+ G(x_848) ::=  
+ HP_801(right_31_799) * x_848::node<key_31_797,left_31_798,right_31_799>@M&
+ left_31_798=null
+ or HP_800(left_31_798) * x_848::node<key_31_797,left_31_798,right_31_799>@M&
+    left_31_798!=null & right_31_799=null
+ or x_848::node<key_31_797,left_31_798,right_31_799>@M * G(left_31_798) * 
+    G(right_31_799)&left_31_798!=null & right_31_799!=null
  ,
- HP_974(left_31_798,right_31_799) ::=  
+
+ HP_800(left_31_845) ::=  
+ emp&left_31_845=null
+ or left_31_845::node<key_31_797,left_31_798,right_31_799>@M * 
+    HP_800(left_31_798) * HP_801(right_31_799)&true
+ ,
+
+ HP_801(right_31_846) ::=  
+ emp&right_31_846=null
+ or right_31_846::node<key_31_797,left_31_798,right_31_799>@M * 
+    HP_800(left_31_798) * HP_801(right_31_799)&true
+ ]
+
+ERROR with --sa-unify
+=====================
+
+ERROR: at _0:0_0:0 
+Message: sau.combine_length_neq
+ 
+Procedure foo$node FAIL-2
+
+Exception Failure("sau.combine_length_neq") Occurred!
+
+--sa-en-norm gives:
+===================
+[ H(x_847) ::=  x_847::node<key_31_797,left_31_798,right_31_799>@M * HP_800(left_31_798) * HP_801(right_31_799)&true,
+
+ HP_800(left_31_845) ::=  
+ emp&left_31_845=null
+ or left_31_845::node<key_31_797,left_31_798,right_31_799>@M * 
+    HP_800(left_31_798) * HP_801(right_31_799)&true
+ ,
+ HP_801(right_31_846) ::=  
+ emp&right_31_846=null
+ or right_31_846::node<key_31_797,left_31_798,right_31_799>@M * 
+    HP_800(left_31_798) * HP_801(right_31_799)&true
+ ,
+
+-----
+
+ G(x_848) ::=  x_848::node<key_31_797,left_31_798,right_31_799>@M * HP_849(left_31_798) * HP_850(right_31_799)&true,
+
+ HP_849(left_31_798) ::=  
  emp&left_31_798=null
- or emp&right_31_799=null & left_31_798!=null
- or left_31_798::node<key_31_797,left_31_975,right_31_976>@M * 
-    HP_974(left_31_975,right_31_976) * 
-    right_31_799::node<key_31_797,left_31_975,right_31_976>@M * 
-    HP_974(left_31_975,right_31_976)&true
+ or left_31_798::node<key_31_855,left_31_856,right_31_857>@M * 
+    HP_849(left_31_856) * HP_850(right_31_857)&true
  ,
- HP_800(left_31_972) ::=  emp&left_31_972=null]
+ HP_850(right_31_799) ::=  
+ emp&right_31_799=null
+ or right_31_799::node<key_31_859,left_31_860,right_31_861>@M * 
+    HP_849(left_31_860) * HP_850(right_31_861)&true
+ or HP_801(right_31_799)&true
+ ]
+
+--sa-en-norm --pred-unify did not change anything.
+I expect it to combine 800/801 and 849/850
+
+-------
+../../hip tree.ss --sa-en-norm --sa-unify --pred-unify
+
+ H(x_847) ::=  x_847::node<key_31_797,left_31_798,right_31_799>@M * HP_858(left_31_798) * HP_858(right_31_799)&true,
+
+ G(x_856) ::=  x_856::node<key_31_797,left_31_798,right_31_799>@M * HP_858(left_31_798) * HP_858(right_31_799)&true,
+
+ HP_858(right_31_799) ::=  
+ right_31_799::node<key_31_797,left_31_798,right_31_799>@M * 
+ HP_858(left_31_798) * HP_858(right_31_799)&true
+ or emp&right_31_799=null
+ ]
 
 
+
+===========
+
+[ H(x)&true --> x::node<key_31_797,left_31_798,right_31_799>@M * 
+  HP_800(left_31_798) * HP_801(right_31_799)&true,
+
+ HP_800(left_31_798)&left_31_798!=null --> H(left_31_798)&true,
+ HP_801(right_31_799)&right_31_799!=null --> H(right_31_799)&true,
+
+ HP_801(right_31_799)&right_31_799=null --> emp&true,
+
+ HP_800(left_31_798)&left_31_798=null --> emp&true,
+ HP_800(left_31_798)&left_31_798=null --> emp&true,
+
+
+ HP_801(right_31_799) * x::node<key_31_797,left_31_798,right_31_799>@M&
+  left_31_798=null --> G(x)&true,
+
+ HP_800(left_31_798) * x::node<key_31_797,left_31_798,right_31_799>@M&
+  left_31_798!=null & right_31_799=null --> G(x)&true,
+
+ HP_801(right_31_799) * x::node<key_31_797,left_31_798,right_31_799>@M&
+  left_31_798=null --> G(x)&true,
+
+ x::node<key_31_797,left_31_798,right_31_799>@M * G(left_31_798) * 
+  G(right_31_799)&left_31_798!=null & right_31_799!=null --> G(x)&true]
 
 
 POSSIBLE ALGO

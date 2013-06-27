@@ -1740,7 +1740,7 @@ HP_0 <---> HP_1
 
 ==========================================================================
 
-# two-2.slk
+# two-2.slk  FIXED
 
 relAssume HP_6
   HP_6(y,x) --> y::node<val_27_794,next_27_795>@M * HP_9(next_27_795,x)&true.
@@ -2240,12 +2240,88 @@ like Anon_12, left_25_798 should be tolerated.
     true
  ]
 ===================================================================
+# tree-4d.slk 
 
-===================================================================
+PROBLEM : Why did we have a duplicated branch in HP_1?
 
-===================================================================
 
+[ HP_1(x_41) ::=  
+ emp&x_41=null
+ or x_41::node<key_25_797,left_25_798,right_25_799>@M * HP_1(right_25_799)&
+    left_25_798=null
+ or x_41::node<key_25_797,left_25_798,right_25_799>@M * HP_1(right_25_799) * 
+    left_25_798::node<Anon_11,ll_35,right_25_36>@M * HP_1(ll_35) * 
+    HP_1(right_25_36)&true
+ ,
+ HP_0(x_42) ::=  
+ emp&x_42=null
+ or x_42::node<Anon_11,ll,right_25_799>@M * HP_0(ll) * HP_0(right_25_799)&
+    true
+ ]
 ===================================================================
+# tree-4e.slk 
+
+--sa-unify & --pred-reuse not working
+
+ HP_0(x_34) ::=  
+ x_34::node<Anon_11,ll,right_25_799>@M * HP_0(right_25_799)&true
+ or emp&x_34=null
+ ,
+ HP_1(x_35) ::=  
+ x_35::node<key_25_797,left_25_798,right_25_799>@M * HP_1(right_25_799)&true
+ or emp&x_35=null
+ ]
+===================================================================
+PostPred G(node a, node b).
+
+infer [G]  G(next_29_789,t) |- t::node<_,_>.
+print residue.
+
+
+/*
+# single-bug-4.slk
+
+support for post-pred declaration using
+
+  PostPred 
+===================================================================
+/*
+# tree.ss
+
+GOT
+===
+[ H(x_847) ::=  x_847::node<key_31_797,left_31_798,right_31_799>@M * HP_800(left_31_798) * HP_801(right_31_799)&true,
+
+ G(x_848) ::=  
+ HP_801(right_31_799) * x_848::node<key_31_797,left_31_798,right_31_799>@M&
+ left_31_798=null
+ or HP_800(left_31_798) * x_848::node<key_31_797,left_31_798,right_31_799>@M&
+    left_31_798!=null & right_31_799=null
+ or x_848::node<key_31_797,left_31_798,right_31_799>@M * G(left_31_798) * 
+    G(right_31_799)&left_31_798!=null & right_31_799!=null
+ ,
+
+ HP_800(left_31_845) ::=  
+ emp&left_31_845=null
+ or left_31_845::node<key_31_797,left_31_798,right_31_799>@M * 
+    HP_800(left_31_798) * HP_801(right_31_799)&true
+ ,
+
+ HP_801(right_31_846) ::=  
+ emp&right_31_846=null
+ or right_31_846::node<key_31_797,left_31_798,right_31_799>@M * 
+    HP_800(left_31_798) * HP_801(right_31_799)&true
+ ]
+
+ERROR with --sa-unify
+=====================
+
+ERROR: at _0:0_0:0 
+Message: sau.combine_length_neq
+ 
+Procedure foo$node FAIL-2
+
+Exception Failure("sau.combine_length_neq") Occurred!
 
 ===================================================================
 

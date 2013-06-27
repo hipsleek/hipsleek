@@ -391,8 +391,8 @@ let common_arguments = [
   ("--sa-s-split", Arg.Set Globals.sa_s_split_base, "split constraints with base case");
   ("--sa-split", Arg.Set Globals.sa_en_split, "splitting hp args into multiple hp if possible");
   ("--sa-unify-dangling", Arg.Set Globals.sa_unify_dangling, "unify branches of definition to instantiate dangling predicate");
-  ("--sa-unify", Arg.Set Globals.sa_unify, "unify branches of definition or unify among inferred pred defs");
-  ("--pred-unify", Arg.Set Globals.pred_unify, "relate shapes");
+  ("--pred-unify", Arg.Set Globals.pred_unify, "attempt to unify two similar predicates among inferred pred defs");
+  ("--pred-equiv", Arg.Set Globals.pred_equiv, "attempt to reuse predicates with identical definition");
   ("--sa-tree-simp", Arg.Set Globals.sa_tree_simp, "simplify a tree branches of definition");
   ("--sa-subsume", Arg.Set Globals.sa_subsume, "use subsume when comparing definitions after infering");
   ("--norm-useless", Arg.Set Globals.norm_elim_useless, "elim useless parameters of user-defined predicates (view)");
