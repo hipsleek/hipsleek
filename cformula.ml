@@ -3773,8 +3773,33 @@ and disj_count (f0 : formula) = match f0 with
 		1 + c1 + c2
 
   | _ -> 1
-
+(****************************************)
 (*=========for sa==========*)
+(****************************************)
+let find_close svl0 eqs0=
+  let rec find_match svl ls_eqs rem_eqs=
+    match ls_eqs with
+      | [] -> svl,rem_eqs
+      | (sv1,sv2)::ss->
+            let b1 = CP.mem_svl sv1 svl in
+            let b2 = CP.mem_svl sv2 svl in
+            let new_m,new_rem_eqs=
+              match b1,b2 with
+                | false,false -> [],[(sv1,sv2)]
+                | true,false -> ([sv2],[])
+                | false,true -> ([sv1],[])
+                | true,true -> ([],[])
+            in
+            find_match (svl@new_m) ss (rem_eqs@new_rem_eqs)
+  in
+  let rec loop_helper svl eqs=
+    let new_svl,rem_eqs = find_match svl eqs [] in
+    if List.length new_svl > List.length svl then
+      loop_helper new_svl rem_eqs
+    else new_svl
+  in
+  loop_helper svl0 eqs0
+
 
 let is_HRel hf=
   match hf with
@@ -5212,7 +5237,8 @@ let remove_neqNull_redundant_andNOT_x f0 p=
             let eqs = (MCP.ptr_equations_without_null mf) in
             let hds, _, _ (*hvs, hrs*) =  get_hp_rel_h_formula fb.formula_base_heap in
             let node_ptrs = List.map (fun dn -> dn.h_formula_data_node) hds in
-            let null_diff = CP.diff_svl null_ptrs node_ptrs in
+            let null_ptrs1 = find_close null_ptrs eqs in
+            let null_diff = CP.diff_svl null_ptrs1 node_ptrs in
             CP.remove_redundant (CP.filter_var p null_diff)
       | Exists _ -> let _, base1 = split_quantifiers f in
         helper base1

@@ -261,9 +261,9 @@ let get_hp_split_cands_one_cs prog unk_hps lhs rhs=
         | [] -> parts
         | [a] -> (parts@[[a]])
         | a::tl ->
-            let part1 = SAU.find_close [a] eqs in
+            let part1 = CF.find_close [a] eqs in
             let part2 = SAU.look_up_closed_ptr_args prog hns hvs (CP.remove_dups_svl part1) in
-            let part2a = (SAU.find_close part2 eqs) in
+            let part2a = (CF.find_close part2 eqs) in
             let new_parts,part2b = intersect_with_pre_parts parts part2a [] [] in
             let part3 = CP.remove_dups_svl (a::(CP.intersect_svl part2a tl)) in
             part_helper (CP.diff_svl tl part3) (new_parts@[part2b@part3])
@@ -315,7 +315,7 @@ let check_split_global_x prog cands =
   (*each partition, create new hp and its corresponding HRel formula*)
   let helper1 pos args =
     let args1 = List.map (fun sv -> (sv,I)) args in
-    let hf,new_hp_sv = SAU.add_raw_hp_rel prog args1 pos in
+    let hf,new_hp_sv = SAU.add_raw_hp_rel prog true args1 pos in
     ((new_hp_sv,args), hf)
   in
   (*for each grp*)
@@ -765,7 +765,7 @@ and update_unk_one_constr_x prog unk_hp_locs cur_full_unk_hps equivs0 constr=
     let gen_unk_hp hp_unk_svl_locs=
       let hp_unk_svl = fst (List.split hp_unk_svl_locs) in
       let hp_unk_svl_inst = List.map (fun sv -> (sv,NI)) hp_unk_svl in
-      let unk_hf, sunk_hp = SAU.add_raw_hp_rel prog hp_unk_svl_inst no_pos in
+      let unk_hf, sunk_hp = SAU.add_raw_hp_rel prog true hp_unk_svl_inst no_pos in
       (*generate all matching: hp with similar unk_svl*)
       let new_equivs = gen_eqv equivs hp hp_unk_svl_locs cs_unk_svl [(sunk_hp, hp_unk_svl)] cs_unk_hps in
       (* let pr3 =  pr_list_ln (pr_pair (pr_pair !CP.print_sv (pr_list string_of_int)) *)
@@ -1094,7 +1094,7 @@ let add_xpure_dling f unk_hpargs local_unk_svl=
 let rec collect_par_defs_one_side_one_hp_aux_x prog f (hrel, args) def_ptrs
       eqs hd_nodes hv_nodes unk_hps unk_svl predef expl_ptrs=
   let refine_neq_null neqNulls=
-    let neqNulls1 = SAU.find_close neqNulls eqs in
+    let neqNulls1 = CF.find_close neqNulls eqs in
     let neqNulls2 = CP.diff_svl neqNulls1 expl_ptrs in
     CP.intersect_svl neqNulls2 args
   in
@@ -1427,7 +1427,7 @@ let collect_par_defs_recursive_hp_x prog lhs rhs (hrel, args) rec_args other_sid
      if dir then (*args in lhs*)
        begin
            let ptrs1 = CF.get_ptrs_f plhs in
-           let ptrs2 = SAU.find_close ptrs1 eqs in
+           let ptrs2 = CF.find_close ptrs1 eqs in
            let _ = Debug.ninfo_pprint ("ptrs2: " ^ (!CP.print_svl ptrs2)) no_pos in
            if CP.intersect_svl args ptrs2 <> [] then
              [(hrel , args, (* CP.intersect_svl args *) unk_svl, CF.get_pure plhs, Some plhs1, Some prhs1)]
@@ -1438,7 +1438,7 @@ let collect_par_defs_recursive_hp_x prog lhs rhs (hrel, args) rec_args other_sid
        end
      else
        let ptrs1 = CF.get_ptrs_f prhs in
-       let ptrs2 = SAU.find_close ptrs1 eqs in
+       let ptrs2 = CF.find_close ptrs1 eqs in
        let _ = Debug.ninfo_pprint ("ptrs2: " ^ (!CP.print_svl ptrs2)) no_pos in
        if CP.intersect_svl args ptrs2 <> [] then
          [(hrel , args, (* CP.intersect_svl args *) unk_svl , CF.get_pure plhs, Some plhs1, Some prhs1)]
@@ -1562,8 +1562,8 @@ let rec collect_par_defs_one_constr_new_x prog callee_hps constr =
   (*ptrs defined by h_formula_data*)
   let expl_ptrs = List.map (fun hd -> hd.CF.h_formula_data_node) (l_dnodes@r_dnodes) in
   (*CASE 1: formula --> hp*)
-  let lpredef = SAU.find_close (l_def_ptrs@cs_predef_ptrs) leqs in
-  let rpredef = SAU.find_close (r_def_ptrs) (leqs@reqs) in
+  let lpredef = CF.find_close (l_def_ptrs@cs_predef_ptrs) leqs in
+  let rpredef = CF.find_close (r_def_ptrs) (leqs@reqs) in
   let l_unknown_hps = List.filter (fun (hp,_) -> not(CP.mem hp callee_hps)) lnon_unk_hps in
   let lpdefs = List.concat (List.map (fun hrel ->
      collect_par_defs_one_side_one_hp prog nlhs nrhs hrel lpredef rpredef rnon_unk_hps leqs (l_dnodes@r_dnodes) (l_vnodes@r_vnodes) constr.CF.unk_hps constr.CF.unk_svl constr.CF.predef_svl expl_ptrs) l_unknown_hps) in

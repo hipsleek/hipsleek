@@ -165,8 +165,9 @@ module Make (Token : SleekTokenS)
    ("ranking", FUNC);
    ("global",GLOBAL);
    ("logical", LOGICAL);
-	 ("head",HEAD);
-     ("HeapPred", HP);
+   ("head",HEAD);
+   ("HeapPred", HP);
+   ("PostPred", HPPOST);
    ("ho_pred",HPRED);
    ("htrue", HTRUE);
    ("if", IF);

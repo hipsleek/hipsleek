@@ -116,6 +116,7 @@ and rel_decl = {
 and hp_decl = { 
     hp_name : ident; 
     hp_vars_inst : (P.spec_var * Globals.hp_arg_kind) list;
+    hp_is_pre: bool;
     hp_formula : F.formula;}
 
 (** An Hoa : axiom *)
@@ -909,6 +910,10 @@ let look_up_hp_def_raw defs name=
   let pr1 = !print_hp_decl in
   Debug.no_1 "look_up_hp_def_raw" pr_id pr1
       (fun _ -> look_up_hp_def_raw_x defs name) name
+
+let check_pre_post_hp defs hp_name=
+  let hpdecl = look_up_hp_def_raw defs hp_name in
+  hpdecl.hp_is_pre
 
 let rec look_up_view_def (pos : loc) (defs : view_decl list) (name : ident) = match defs with
   | d :: rest -> 

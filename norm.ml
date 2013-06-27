@@ -458,14 +458,14 @@ let cont_para_analysis_view cprog vdef other_vds=
       let rec_vns, other_vns = List.partition (fun vn -> String.compare vn.CF.h_formula_view_name vname = 0) vns in
       (*cont paras are para not changed, just forwarded*)
       let cont_paras = List.fold_left (fun cur_cont_paras vn ->
-          let closed_rec_args = SAU.find_close vn.CF.h_formula_view_arguments eqs in
+          let closed_rec_args = CF.find_close vn.CF.h_formula_view_arguments eqs in
           CP.intersect_svl cur_cont_paras closed_rec_args
       ) args rec_vns
       in
       (* process other_vns*)
       let cont_paras1 = List.fold_left (fun cur_cont_paras vn ->
           let cont_args = Cast.look_up_cont_args vn.CF.h_formula_view_arguments vn.CF.h_formula_view_name other_vds in
-          let closed_rec_args = SAU.find_close cont_args eqs in
+          let closed_rec_args = CF.find_close cont_args eqs in
           CP.intersect_svl cur_cont_paras closed_rec_args
       ) cont_paras other_vns
       in

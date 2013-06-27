@@ -71,34 +71,34 @@ let close_def defs (v1,v2)=
 
 (*close_def is not precise if eqs= x=y & y=z and x=t, svl0=[t], and first examine x=y*)
 
-let find_close svl0 eqs0=
-  let rec find_match svl ls_eqs rem_eqs=
-    match ls_eqs with
-      | [] -> svl,rem_eqs
-      | (sv1,sv2)::ss->
-            let b1 = CP.mem_svl sv1 svl in
-            let b2 = CP.mem_svl sv2 svl in
-            let new_m,new_rem_eqs=
-              match b1,b2 with
-                | false,false -> [],[(sv1,sv2)]
-                | true,false -> ([sv2],[])
-                | false,true -> ([sv1],[])
-                | true,true -> ([],[])
-            in
-            find_match (svl@new_m) ss (rem_eqs@new_rem_eqs)
-  in
-  let rec loop_helper svl eqs=
-    let new_svl,rem_eqs = find_match svl eqs [] in
-    if List.length new_svl > List.length svl then
-      loop_helper new_svl rem_eqs
-    else new_svl
-  in
-  loop_helper svl0 eqs0
+(* let find_close svl0 eqs0= *)
+(*   let rec find_match svl ls_eqs rem_eqs= *)
+(*     match ls_eqs with *)
+(*       | [] -> svl,rem_eqs *)
+(*       | (sv1,sv2)::ss-> *)
+(*             let b1 = CP.mem_svl sv1 svl in *)
+(*             let b2 = CP.mem_svl sv2 svl in *)
+(*             let new_m,new_rem_eqs= *)
+(*               match b1,b2 with *)
+(*                 | false,false -> [],[(sv1,sv2)] *)
+(*                 | true,false -> ([sv2],[]) *)
+(*                 | false,true -> ([sv1],[]) *)
+(*                 | true,true -> ([],[]) *)
+(*             in *)
+(*             find_match (svl@new_m) ss (rem_eqs@new_rem_eqs) *)
+(*   in *)
+(*   let rec loop_helper svl eqs= *)
+(*     let new_svl,rem_eqs = find_match svl eqs [] in *)
+(*     if List.length new_svl > List.length svl then *)
+(*       loop_helper new_svl rem_eqs *)
+(*     else new_svl *)
+(*   in *)
+(*   loop_helper svl0 eqs0 *)
 
 let find_close_f svl0 f=
   let ( _,mf,_,_,_) = CF.split_components f in
   let eqs = (MCP.ptr_equations_without_null mf)in
-  find_close svl0 eqs
+  CF.find_close svl0 eqs
 
 let rec partition_subst_hprel ss r=
   match ss with
@@ -231,11 +231,13 @@ let check_hp_locs_eq (hp1, locs1) (hp2, locs2)=
 let check_simp_hp_eq (hp1, _) (hp2, _)=
    (CP.eq_spec_var hp1 hp2)
 
-let add_raw_hp_rel_x prog unknown_ptrs pos=
+let add_raw_hp_rel_x prog is_pre unknown_ptrs pos=
   if (List.length unknown_ptrs > 0) then
     let hp_decl =
-      { Cast.hp_name = Globals.hp_default_prefix_name ^ (string_of_int (Globals.fresh_int()));
+      { Cast.hp_name = (if is_pre then Globals.hp_default_prefix_name else hppost_default_prefix_name)
+        ^ (string_of_int (Globals.fresh_int()));
         Cast.hp_vars_inst =  unknown_ptrs;
+        Cast.hp_is_pre = is_pre;
         Cast.hp_formula = CF.mkBase CF.HEmp (MCP.mkMTrue pos) CF.TypeTrue (CF.mkTrueFlow()) [] pos;}
     in
     let unk_args = (fst (List.split hp_decl.Cast.hp_vars_inst)) in
@@ -907,7 +909,7 @@ and check_node_args_defined prog def_svl hd_nodes hv_nodes dn_name=
 
 and find_defined_pointers_after_preprocess prog def_vs_wo_args hds hvs hrs eqs eqNulls predef_ptrs=
   let tmp = def_vs_wo_args in
-  let predef = find_close (def_vs_wo_args@predef_ptrs) eqs in
+  let predef = CF.find_close (def_vs_wo_args@predef_ptrs) eqs in
   (* DD.info_pprint ("   defined raw " ^(!CP.print_svl tmp)) no_pos; *)
   let def_vs = List.filter (check_node_args_defined prog predef hds hvs) tmp in
   (*(HP name * parameter name list)*)
@@ -987,7 +989,7 @@ let keep_data_view_hrel_nodes_fb prog fb hd_nodes hv_nodes keep_rootvars keep_hr
 
 let keep_data_view_hrel_nodes_two_f prog lhs rhs hd_nodes hv_nodes eqs lhs_hpargs rhs_keep_rootvars rhs_keep_hrels=
   let keep_ptrs = look_up_closed_ptr_args prog hd_nodes hv_nodes rhs_keep_rootvars in
-  let closed_keep_ptrs = find_close (keep_ptrs) eqs in
+  let closed_keep_ptrs = CF.find_close (keep_ptrs) eqs in
   let lhs_keep_hrels = List.concat (List.map (get_intersect_hps closed_keep_ptrs) lhs_hpargs) in
   let nf1 = CF.drop_data_view_hrel_nodes lhs check_nbelongsto_dnode check_nbelongsto_vnode check_neq_hrelnode keep_ptrs closed_keep_ptrs lhs_keep_hrels in
   let nf2 = CF.drop_data_view_hrel_nodes rhs check_nbelongsto_dnode check_nbelongsto_vnode check_neq_hrelnode keep_ptrs closed_keep_ptrs rhs_keep_hrels in
@@ -1107,7 +1109,7 @@ let smart_subst_x nf1 nf2 hpargs eqs0 reqs unk_svl prog_vars=
   let _ = DD.ninfo_pprint ("      eqs 1: " ^ (let pr = pr_list(pr_pair !CP.print_sv !CP.print_sv) in pr eqs)) no_pos in
   (*******************)
   let eqNulls = CP.remove_dups_svl (MCP.get_null_ptrs nf1.CF.formula_base_pure) in
-  let eqNulls1 = find_close eqNulls eqs in
+  let eqNulls1 = CF.find_close eqNulls eqs in
   (* let _ = DD.info_pprint ("      eqNulls1: " ^ (!CP.print_svl eqNulls1)) no_pos in *)
   let eqNulls2 = List.filter (fun sv -> CP.mem_svl sv all_args) eqNulls1 in
   (* let _ = DD.info_pprint ("      eqNulls2: " ^ (!CP.print_svl eqNulls2)) no_pos in *)
@@ -1420,7 +1422,8 @@ let find_well_defined_hp_x prog hds hvs r_hps prog_vars post_hps (hp,args) def_p
           if not split_spatial then (lhsb, [],[(hp,args)], []) else
             let n_lhsb, new_ass, wdf_hpargs, ls_rhs=
               if !Globals.sa_s_split_base then
-                let new_hf, new_hp = add_raw_hp_rel_x prog undef_args_inst pos in
+                (*generate new hp decl for pre-preds*)
+                let new_hf, new_hp = add_raw_hp_rel_x prog true undef_args_inst pos in
                 let nlhsb = CF.mkAnd_fb_hf lhsb new_hf pos in
                 do_spit nlhsb (CF.formula_of_heap new_hf pos) [(new_hf,(new_hp, List.map fst undef_args_inst))]
               else
@@ -1942,7 +1945,7 @@ let remove_subsumed_pure_formula args fs=
           let mf = MCP.mix_of_pure p in
           let eqs = (MCP.ptr_equations_without_null mf) in
           let null_svl = MCP.get_null_ptrs (mf) in
-          let null_svl1 = find_close null_svl eqs in
+          let null_svl1 = CF.find_close null_svl eqs in
           (p, null_svl1)
       ) fs
     in
@@ -2946,7 +2949,7 @@ let get_longest_common_hnodes_two args shortes_ldns ldns2 eqs=
     match lnds with
       | [] ->  ([],[],matched2, rest2)
       | hn1::ls ->
-          (* let eq_svl = find_close [hn1.CF.h_formula_data_node] eqs in *)
+          (* let eq_svl = CF.find_close [hn1.CF.h_formula_data_node] eqs in *)
           if hn.CF.h_formula_data_name = hn1.CF.h_formula_data_name &&
             CP.eq_spec_var hn.CF.h_formula_data_node hn1.CF.h_formula_data_node
             (* CP.mem_svl hn.CF.h_formula_data_node eq_svl *)
@@ -3170,7 +3173,7 @@ let closer_ranking prog unk_hps fs root_cand args0=
     let eqs = (MCP.ptr_equations_without_null mix_lf) in
     let def_vs = eqNulls @ (List.map (fun hd -> hd.CF.h_formula_data_node) hds)
       @ (List.map (fun hv -> hv.CF.h_formula_view_node) hvs) in
-    let def_ptrs = CP.remove_dups_svl (find_close def_vs (eqs)) in
+    let def_ptrs = CP.remove_dups_svl (CF.find_close def_vs (eqs)) in
     (hds, hvs, def_ptrs)
   in
   let fs_config = List.map build_conf fs in
@@ -3645,7 +3648,8 @@ let mk_orig_hprel_def_x prog cdefs unk_hps hp r other_args args sh_ldns eqNulls 
        (* let n_hprel,n_hp =  add_raw_hp_rel prog n_args_inst no_pos in *)
        let n_hprels,ls_n_hpargs = List.fold_left
          ( fun (r_hprels,r_hpargs) n_args_inst ->
-             let n_hprel,n_hp =  add_raw_hp_rel prog n_args_inst no_pos in
+             let is_pre = Cast.check_pre_post_hp prog.Cast.prog_hp_decls (CP.name_of_spec_var hp) in
+             let n_hprel,n_hp =  add_raw_hp_rel prog is_pre n_args_inst no_pos in
              (r_hprels@[n_hprel], r_hpargs@[(n_hp,List.map fst n_args_inst)])
          ) ([],[]) ls_n_args_inst
        in
@@ -3706,7 +3710,8 @@ let elim_not_in_used_args_x prog orig_fs fs hp args=
     if List.length args = List.length new_args then (orig_fs,fs,[],[],hp)
     else
       let old_hrel = mkHRel hp args no_pos in
-      let new_hrel,n_hp = add_raw_hp_rel prog (List.map (fun sv -> (sv,I)) new_args) no_pos in
+      let is_pre = Cast.check_pre_post_hp prog.Cast.prog_hp_decls (CP.name_of_spec_var hp) in
+      let new_hrel,n_hp = add_raw_hp_rel prog is_pre (List.map (fun sv -> (sv,I)) new_args) no_pos in
       (*let new_hrel = mkHRel hp new_args no_pos in *)
       (*linking defs*)
       let link_f = CF.formula_of_heap old_hrel no_pos in
@@ -5377,7 +5382,8 @@ let ann_unk_svl prog par_defs=
     let (hp,args0,unk_args0,cond0,olhs0,orhs0) = List.hd par_defs in
     let _ = Debug.ninfo_pprint ("     partial unk hp: " ^ (!CP.print_sv hp)) no_pos in
     let unk_args0_w_inst = List.map (fun sv -> (sv, NI)) unk_args0 in
-    let unk_hf, unk_hps = add_raw_hp_rel_x prog unk_args0_w_inst no_pos in
+    let is_pre = Cast.check_pre_post_hp prog.Cast.prog_hp_decls (CP.name_of_spec_var hp) in
+    let unk_hf, unk_hps = add_raw_hp_rel_x prog is_pre unk_args0_w_inst no_pos in
     let new_par_def0= (hp,args0,unk_args0,cond0,add_unk_hp_f unk_hf olhs0, add_unk_hp_f unk_hf orhs0) in
     let tl_par_defs = List.map (add_unk_hp_pdef unk_hf unk_args0) (List.tl par_defs) in
     ((unk_hps,unk_args0), new_par_def0::tl_par_defs)

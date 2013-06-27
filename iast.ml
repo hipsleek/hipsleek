@@ -104,6 +104,7 @@ and hp_decl = { hp_name : ident;
 (* rel_vars : ident list; *)
 (* rel_labels : branch_label list; *)
 hp_typed_inst_vars : (typ * ident * hp_arg_kind) list;
+hp_is_pre: bool;
 hp_formula : Iformula.formula ;
 (* try_case_inference: bool *)}
 

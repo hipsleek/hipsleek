@@ -1343,6 +1343,7 @@ and trans_hp (prog : I.prog_decl) (hpdef : I.hp_decl) : C.hp_decl =
   let (n_tl,crf) = trans_formula  prog false [] false hpdef.I.hp_formula n_tl false in
   {C.hp_name = hpdef.I.hp_name; 
   C.hp_vars_inst = hp_sv_vars;
+  C.hp_is_pre = hpdef.I.hp_is_pre;
   C.hp_formula = crf; }
 
 and trans_axiom (prog : I.prog_decl) (adef : I.axiom_decl) : C.axiom_decl =

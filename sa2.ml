@@ -235,7 +235,7 @@ let split_constr prog constrs post_hps prog_vars unk_map unk_hps link_hps=
         let r_hps = List.map fst ls_rhp_args in
         let l_def_vs = leqNulls @ (List.map (fun hd -> hd.CF.h_formula_data_node) lhds)
           @ (List.map (fun hv -> hv.CF.h_formula_view_node) lhvs) in
-        let l_def_vs = CP.remove_dups_svl (SAU.find_close l_def_vs (leqs)) in
+        let l_def_vs = CP.remove_dups_svl (CF.find_close l_def_vs (leqs)) in
         let helper (hp,eargs,_)=(hp,List.concat (List.map CP.afv eargs)) in
         let ls_lhp_args = (List.map helper lhrs) in
         (*generate linking*)
@@ -310,7 +310,7 @@ let split_constr prog constrs post_hps prog_vars unk_map unk_hps link_hps=
       (*   let ls_rhp_args = CF.get_HRels_f (CF.Base rhs_b1) in *)
       (*   let l_def_vs = leqNulls @ (List.map (fun hd -> hd.CF.h_formula_data_node) lhds) *)
       (*     @ (List.map (fun hv -> hv.CF.h_formula_view_node) lhvs) in *)
-      (*   let l_def_vs = CP.remove_dups_svl (SAU.find_close l_def_vs (leqs)) in *)
+      (*   let l_def_vs = CP.remove_dups_svl (CF.find_close l_def_vs (leqs)) in *)
       (*   let helper (hp,eargs,_)=(hp,List.concat (List.map CP.afv eargs)) in *)
       (*   let ls_lhp_args = (List.map helper lhrs) in *)
       (*   let link_hpargs0 =  match ls_rhp_args with *)

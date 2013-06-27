@@ -1938,9 +1938,19 @@ axiom_decl:[[
 hp_decl:[[
 `HP; `IDENTIFIER id; `OPAREN; tl= typed_id_inst_list_opt; (* opt_ann_cid_list *) `CPAREN  ->
     let _ = hp_names # push id in
-    { hp_name = id;
-    hp_typed_inst_vars = tl;
-    hp_formula =  F.mkBase F.HEmp (P.mkTrue (get_pos_camlp4 _loc 1)) top_flow [] (get_pos_camlp4 _loc 1);
+    {
+        hp_name = id;
+        hp_typed_inst_vars = tl;
+        hp_is_pre = true;
+        hp_formula =  F.mkBase F.HEmp (P.mkTrue (get_pos_camlp4 _loc 1)) top_flow [] (get_pos_camlp4 _loc 1);
+    }
+  | `HPPOST; `IDENTIFIER id; `OPAREN; tl= typed_id_inst_list_opt; (* opt_ann_cid_list *) `CPAREN  ->
+    let _ = hp_names # push id in
+    {
+        hp_name = id;
+        hp_typed_inst_vars = tl;
+        hp_is_pre = false;
+        hp_formula =  F.mkBase F.HEmp (P.mkTrue (get_pos_camlp4 _loc 1)) top_flow [] (get_pos_camlp4 _loc 1);
     }
 ]];
 
