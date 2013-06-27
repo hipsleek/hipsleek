@@ -36,6 +36,20 @@ infer [H,G1]  requires H(x,y)  ensures  G1(x,y,res);
 
 # zip-same.ss
 
+Small issue: why didn't the elm of redundant pure condition
+eliminate !((x_897=null & x_897=y_898).
+
+Did we not use xpure proving to eliminate it prior to
+forming defn for predicate?
+
+
+[ H(x_897,y_898) ::=  
+ emp&x_897=null & x_897=y_898
+ or H(next_29_880,next_29_878) * y_898::node<val_29_877,next_29_878>@M * 
+    x_897::node<val_29_879,next_29_880>@M&!((x_897=null & x_897=y_898))
+
+=======
+
 [ H(x,y)&x!=null --> x::node<val_29_821,next_29_822>@M * 
   HP_823(next_29_822,y@NI) * HP_824(y,x@NI)&true,
 
@@ -53,10 +67,6 @@ infer [H,G1]  requires H(x,y)  ensures  G1(x,y,res);
   G1(next_29_822,next_29_829,v_node_30_860) * 
   x::node<v_int_29_844,v_node_30_860>@M&res=x --> G1(x,y,res)&true]
 
-SMALL ISSUES
-============
-The last two defn became redundant. I suppose we should set
---sa-en-eup as the default.
 
 =================
 
