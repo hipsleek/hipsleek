@@ -10653,7 +10653,7 @@ and apply_right_coercion_a estate coer prog (conseq:CF.formula) resth2 ln2 lhs_b
     let new_iv = Gen.BList.difference_eq CP.eq_spec_var estate.es_gen_impl_vars vl in
     let _ = if not(vl==[]) then Debug.tinfo_zprint (lazy ("do_right_coercion : impl to expl vars  " ^ (Cprinter.string_of_spec_var_list vl) ^ "\n")) pos in
     let old_trace = estate.es_trace in
-    let estate = {estate with es_trace=(("(left: " ^ coer.coercion_name ^ ")")::old_trace)} in
+    let estate = {estate with es_trace=(("(right: " ^ coer.coercion_name ^ ")")::old_trace)} in
     let ctx0 = Ctx estate in
     let nctx = set_context (fun es -> {es with (* es_must_match = true; *)
         es_gen_impl_vars = new_iv; es_gen_expl_vars =  (es.es_gen_expl_vars@vl)}) ctx0 in
