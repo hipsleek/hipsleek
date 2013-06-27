@@ -2327,6 +2327,14 @@ HP_0(left_31_86) ::=
 
 
 ===================================================================
+# tree-6b.slk
+
+Same problem with HP_1 being NONE
+
+WHY HP_0 did not have base-case? when
+HP_0 base case is duplicated. This should not happen.
+HP_0(left_31_37) ::=  left_31_37::node<key_31_797,left_31_798,right_31_799>@M * HP_0(left_31_798) * HP_1(right_31_799)&true,
+ 
 
 ===================================================================
 
