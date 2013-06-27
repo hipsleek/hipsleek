@@ -1507,20 +1507,20 @@ let rec swap_map unk_hps ss r=
       end
 
 let unify_consj_pre_x prog unk_hps link_hps equivs0 pdefs=
-  let rec unify_one rem_pdefs ((hp,args1,unk_svl1, cond1, norm_cond1, olhs1, orhs1) as pdef1, cs1) done_pdefs equivs=
+  let rec unify_one rem_pdefs ((hp,args1,unk_svl1, cond1, olhs1, orhs1) as pdef1, cs1) done_pdefs equivs=
     match rem_pdefs with
       | [] -> (done_pdefs,[(pdef1,cs1)], equivs)
-      |  ((hp,args2,unk_svl2, cond2, norm_cond2, olhs2, orhs2) as pdef2,cs2)::rest ->
-            if CP.equalFormula norm_cond1 norm_cond2 then
+      |  ((hp,args2,unk_svl2, cond2,  olhs2, orhs2) as pdef2,cs2)::rest ->
+            if CP.equalFormula cond1 cond2 then
               match orhs1,orhs2 with
                 | Some f1, Some f2 -> begin
-                      let ss = List.combine args1 args2 in
-                      let nf1 = CF.subst ss f1 in
+                      (* let ss = List.combine args1 args2 in *)
+                      let nf1 = (* CF.subst ss *) f1 in
                       (* let nf2= SAU.mkConjH_and_norm prog args2 unk_hps [] nf1 f2 no_pos in *)
                       let ores = SAU.norm_formula prog args2 unk_hps [] f1 f2 equivs in
                       match ores with
                         | Some (new_f2, n_equivs) ->
-                              (rest@done_pdefs,[((hp,args2,unk_svl2, cond2, norm_cond2, olhs2, Some new_f2), cs2)],n_equivs)
+                              (rest@done_pdefs,[((hp,args2,unk_svl2, cond2, olhs2, Some new_f2), cs2)],n_equivs)
                         | None ->
                               unify_one rest (pdef1,cs1) (done_pdefs@[(pdef2,cs2)]) equivs
                   end
@@ -1536,7 +1536,7 @@ let unify_consj_pre_x prog unk_hps link_hps equivs0 pdefs=
   in
   match pdefs with
     | [] -> [],equivs0
-    |((hp,_,_,_,_,_,_),_)::_ ->
+    |((hp,_,_,_,_,_),_)::_ ->
          if CP.mem_svl hp (unk_hps@link_hps) then (pdefs, equivs0)  else
            unify_consj pdefs [] equivs0
 

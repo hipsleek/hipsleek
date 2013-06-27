@@ -493,6 +493,17 @@ let elim_unused_post_preds post_hps constrs unk_map=
 let mk_pdef hp_sv args unk_svl imp_cond olhs orhs=
   (hp_sv, args,  unk_svl, imp_cond, olhs , orhs)
 
+let cmp_formula_opt of1 of2=
+  match of1,of2 with
+    | Some f1, Some f2 ->
+          SAU.check_relaxeq_formula f1 f2
+    | None, None -> true
+    | _ -> false
+
+(*assume hp1 = hp2*)
+let cmp_pdef_grp (hp1,args1,unk_svl1, cond1, olhs1, orhs1) (hp2,args2,unk_svl2, cond2, olhs2, orhs2)=
+  (CP.equalFormula cond1 cond2) && (cmp_formula_opt orhs1 orhs2)
+
 let get_par_defs_post constrs0 =
   let mk_par_def cs=
     let hp, args = CF.extract_HRel_f cs.CF.hprel_rhs in
@@ -515,6 +526,7 @@ let get_par_defs_pre constrs0 =
       (pdefs@ls1, rem_cs@ls2)
   )
       ([], []) constrs0
+      (*remove_dups*)
 
 let combine_pdefs_pre_x prog unk_hps link_hps pr_pdefs=
   let rec partition_pdefs_by_hp_name pdefs parts=
@@ -525,58 +537,55 @@ let combine_pdefs_pre_x prog unk_hps link_hps pr_pdefs=
               CP.eq_spec_var a1 hp_name) xs in
           partition_pdefs_by_hp_name remains (parts@[[((a1,a2,a3,a4,a5,a6),cs)]@part])
   in
-  let do_combine (hp,args,unk_svl, cond, norm_cond, lhs, orhs)=
+  let do_combine (hp,args,unk_svl, cond, lhs, orhs)=
     match orhs with
       | Some rhs ->
             let n_cond = CP.remove_redundant cond in
             let nf = (CF.mkAnd_pure rhs (MCP.mix_of_pure n_cond) (CF.pos_of_formula rhs)) in
             if SAU.is_unsat nf then [] else
-            [(hp,args,unk_svl, n_cond,  norm_cond, lhs, Some nf)]
+            [(hp,args,unk_svl, n_cond, lhs, Some nf)]
       | None -> report_error no_pos "sa2.combine_pdefs_pre: should not None 1"
   in
-  let mkAnd_w_opt args ss of1 of2=
+  let mkAnd_w_opt args (* ss *) of1 of2=
     match of1,of2 with
       | Some f1, Some f2 ->
             let pos = CF.pos_of_formula f1 in
-            let new_f2 = CF.subst ss f2 in
+            let new_f2 = (*CF.subst ss*) f2 in
             let f = SAU.mkConjH_and_norm prog args unk_hps [] f1 new_f2 pos in
             (* let f = (CF.mkConj_combine f1 new_f2 CF.Flow_combine no_pos) in *)
         if CF.isAnyConstFalse f || SAU.is_unsat f then
           false, Some f
         else true, Some f
       | None, None -> true, None
-      | None, Some f2 -> true, (Some ( CF.subst ss f2))
+      | None, Some f2 -> true, (Some ( (*CF.subst ss*) f2))
       | Some f1, None -> true, of1
   in
   (*nav code. to improve*)
-  let combine_helper2_x (hp1,args1,unk_svl1, cond1, norm_cond1, olhs1, orhs1) (hp2,args2,unk_svl2, cond2, norm_cond2, olhs2, orhs2)=
-    let norm_cond_disj1 = CP.mkAnd norm_cond1 (CP.mkNot (CP.remove_redundant norm_cond2) None no_pos) no_pos in
-    let pdef1 = if (TP.is_sat_raw (MCP.mix_of_pure norm_cond_disj1)) then
-      let ss = List.combine args2 args1 in
-      let cond21 = CF.remove_neqNull_redundant_andNOT_opt orhs1 (CP.subst ss cond2) in
+  let combine_helper2_x (hp1,args1,unk_svl1, cond1, olhs1, orhs1) (hp2,args2,unk_svl2, cond2, olhs2, orhs2)=
+    let cond_disj1 = CP.mkAnd cond1 (CP.mkNot (CP.remove_redundant cond2) None no_pos) no_pos in
+    let pdef1 = if (TP.is_sat_raw (MCP.mix_of_pure cond_disj1)) then
+      let cond21 = CF.remove_neqNull_redundant_andNOT_opt orhs1 cond2 in
       let n_cond = CP.mkAnd cond1 (CP.mkNot cond21 None no_pos) no_pos in
-      let npdef1 = do_combine (hp1,args1,unk_svl1, CP.remove_redundant n_cond, CP.remove_redundant norm_cond_disj1 , olhs1, orhs1) in
+      let npdef1 = do_combine (hp1,args1,unk_svl1, CP.remove_redundant n_cond , olhs1, orhs1) in
       npdef1
     else []
     in
-    let norm_cond_disj2 = CP.mkAnd norm_cond2 (CP.mkNot norm_cond1 None no_pos) no_pos in
-    let pdef2 = if (TP.is_sat_raw (MCP.mix_of_pure norm_cond_disj2)) then
-      let ss1 = List.combine args1 args2 in
-      let cond11 = CF.remove_neqNull_redundant_andNOT_opt orhs2 (CP.subst ss1 cond1) in
+    let cond_disj2 = CP.mkAnd cond2 (CP.mkNot cond1 None no_pos) no_pos in
+    let pdef2 = if (TP.is_sat_raw (MCP.mix_of_pure cond_disj2)) then
+      let cond11 = CF.remove_neqNull_redundant_andNOT_opt orhs2 cond1 in
       let n_cond = (CP.mkAnd cond2 (CP.mkNot cond11 None no_pos) no_pos) in
-      let npdef2 = do_combine (hp2,args2,unk_svl2, n_cond, CP.remove_redundant norm_cond_disj2, olhs2, orhs2) in
+      let npdef2 = do_combine (hp2,args2,unk_svl2, CP.remove_redundant n_cond, olhs2, orhs2) in
       npdef2
     else []
     in
-    let norm_cond_disj3 = CP.mkAnd norm_cond2 norm_cond1 no_pos in
-    let pdef3 = if (TP.is_sat_raw (MCP.mix_of_pure norm_cond_disj3)) then
-      let ss = List.combine args2 args1 in
-      let n_cond = CP.remove_redundant (CP.mkAnd cond1 (CP.subst ss cond2) no_pos) in
-      let is_sat1, n_orhs = mkAnd_w_opt args1 ss orhs1 orhs2 in
-      let is_sat2, n_olhs = mkAnd_w_opt args1 ss olhs1 olhs2 in
+    let cond_disj3 = CP.mkAnd cond2 cond1 no_pos in
+    let pdef3 = if (TP.is_sat_raw (MCP.mix_of_pure cond_disj3)) then
+      let n_cond = CP.remove_redundant (CP.mkAnd cond1 cond2 no_pos) in
+      let is_sat1, n_orhs = mkAnd_w_opt args1 orhs1 orhs2 in
+      let is_sat2, n_olhs = mkAnd_w_opt args1 olhs1 olhs2 in
       let npdef3 = if is_sat1 && is_sat2 then
-        do_combine (hp1,args1,unk_svl1, n_cond, norm_cond_disj3, n_olhs, n_orhs)
-      else [(hp1,args1,unk_svl1,  n_cond, norm_cond_disj3, olhs1, Some (CF.mkFalse_nf no_pos))]
+        do_combine (hp1,args1,unk_svl1, n_cond, n_olhs, n_orhs)
+      else [(hp1,args1,unk_svl1,  n_cond, olhs1, Some (CF.mkFalse_nf no_pos))]
       in
       npdef3
     else []
@@ -590,7 +599,7 @@ let combine_pdefs_pre_x prog unk_hps link_hps pr_pdefs=
       | None -> "None"
       | Some f -> Cprinter.prtt_string_of_formula f
     in
-    let pr4 = pr_hepta !CP.print_sv pr1 pr1 pr2 pr2 pr3 pr3 in
+    let pr4 = pr_hexa !CP.print_sv pr1 pr1 pr2 pr3 pr3 in
     Debug.no_2 " combine_helper2" pr4 pr4 (pr_list_ln pr4)
         (fun _ _ -> combine_helper2_x pdef1 pdef2)
         pdef1 pdef2
@@ -616,13 +625,21 @@ let combine_pdefs_pre_x prog unk_hps link_hps pr_pdefs=
     (*normalize args*)
     let subst = List.combine args args0 in
     let cond1 = (CP.subst subst cond) in
-    ((hp,args,unk_svl, cond, cond1, olhs, orhs), cs)
+    let norhs = match orhs with
+      | Some f -> Some (CF.subst subst f)
+      | None -> None
+    in
+    let nolhs = match olhs with
+      | None -> None
+      | Some f -> Some (CF.subst subst f)
+    in
+    ((hp,args0,CP.subst_var_list subst unk_svl, cond1, nolhs, norhs), (*TODO: subst*)cs)
   in
   let combine_grp pr_pdefs equivs=
     match pr_pdefs with
       | [] -> ([],[], equivs)
       | [(hp,args,unk_svl, cond, lhs, orhs), _] ->
-          let new_pdef = do_combine (hp,args,unk_svl, cond, cond, lhs, orhs) in
+          let new_pdef = do_combine (hp,args,unk_svl, cond, lhs, orhs) in
           (new_pdef,[], equivs)
       | _ -> begin
           (*each group, filter depended constraints*)
@@ -636,14 +653,15 @@ let combine_pdefs_pre_x prog unk_hps link_hps pr_pdefs=
               | [x] -> [x],[],equivs
               | ((hp,args0,unk_svl0, cond0, olhs0, orhs0),cs0)::rest ->
                   let new_rest = List.map (obtain_and_norm_def args0) rest in
-                  let pdefs = ((hp,args0,unk_svl0, cond0,cond0, olhs0, orhs0),cs0)::new_rest in
-                  let pdefs1,n_equivs = SAC.unify_consj_pre prog unk_hps link_hps equivs pdefs in
-                  ([], pdefs1,n_equivs)
+                  let pdefs = ((hp,args0,unk_svl0, cond0, olhs0, orhs0),cs0)::new_rest in
+                  let pdefs1 = Gen.BList.remove_dups_eq (fun (pdef1,_) (pdef2,_) -> cmp_pdef_grp pdef1 pdef2) pdefs in
+                  let pdefs2,n_equivs = SAC.unify_consj_pre prog unk_hps link_hps equivs pdefs1 in
+                  ([], pdefs2,n_equivs)
           in
           let pdefs,rem_constrs0 = begin
             match cs,rem_pr_defs1 with
               | [],[] -> [],[]
-              | [((hp,args,unk_svl, cond, lhs, orhs), _)],[] -> (do_combine (hp, args, unk_svl, cond, cond, lhs, orhs)),[]
+              | [((hp,args,unk_svl, cond, lhs, orhs), _)],[] -> (do_combine (hp, args, unk_svl, cond, lhs, orhs)),[]
               | [],[(pr1,_);(pr2,_)] -> let npdefs = combine_helper2 pr1 pr2 in
                 npdefs,[]
               | _ ->
@@ -662,7 +680,6 @@ let combine_pdefs_pre_x prog unk_hps link_hps pr_pdefs=
           (pdefs, depend_cs@rem_constrs0, n_equivs)
       end
   in
-  
   let subst_equiv equivs ((hp,args1,unk_svl1, cond1, olhs1, orhs1) as pdef)=
     match orhs1 with
       | None -> pdef
@@ -683,7 +700,7 @@ let combine_pdefs_pre_x prog unk_hps link_hps pr_pdefs=
       (r_pdefs@pdefs, r_constrs@cs, new_equivs)
   ) ([],[],[]) ls_pr_pdefs
   in
-  let pdefs1 = List.map (fun (a,b,c,d,e,f,g) -> (a,b,c,d,f,g)) pdefs in
+  let pdefs1 = (* List.map (fun (a,b,c,d,e,f,g) -> (a,b,c,d,f,g)) *) pdefs in
   (*subst equivs*)
   let pdefs2 = List.map (subst_equiv equivs) pdefs1 in
   (pdefs2,rem_constr,equivs)
@@ -1368,7 +1385,7 @@ let match_hps_views (hp_defs: CF.hp_rel_def list) (vdcls: CA.view_decl list):
 let infer_shapes_init_pre_x prog (constrs0: CF.hprel list) callee_hps non_ptr_unk_hps sel_post_hps unk_hps link_hps
  hp_rel_unkmap detect_dang (* :(CP.spec_var list * CF.hp_rel_def list* (CP.spec_var * CP.spec_var list) list) *) =
   let _ = DD.binfo_pprint ">>>>>> step pre-4: remove unused predicates<<<<<<" no_pos in
-  let constrs01 = SAU.remove_dups_constr constrs0 in
+  let constrs01 = (* SAU.remove_dups_constr *) constrs0 in
   let constrs02 = List.map SAU.weaken_trivial_constr_pre constrs01 in
   let unused_pre_hps, constrs0, unk_map1 =
     if detect_dang then elim_unused_pre_preds (sel_post_hps@link_hps) constrs02 hp_rel_unkmap
@@ -1408,7 +1425,7 @@ let infer_shapes_init_pre prog (constrs0: CF.hprel list) callee_hps non_ptr_unk_
 
 let infer_shapes_init_post_x prog (constrs0: CF.hprel list) non_ptr_unk_hps sel_post_hps unk_hps link_hps
       hp_rel_unkmap detect_dang pre_defs (* :(CP.spec_var list * CF.hp_rel_def list * (CP.spec_var * CP.spec_var list) list * ) *) =
-  let constrs0a = SAU.remove_dups_constr constrs0 in
+  let constrs0a = (* SAU.remove_dups_constr *) constrs0 in
   let _ = DD.binfo_pprint ">>>>>> step post-4: step remove unused predicates<<<<<<" no_pos in
   let unused_post_hps,constrs0,unk_map1 =
     if detect_dang then elim_unused_post_preds (sel_post_hps@link_hps) constrs0a hp_rel_unkmap
