@@ -2211,7 +2211,7 @@ only be applicable to pre-predicates.
 I wonder if proof obligation on G(..) can be
 subjected to SLEEK to derive HP_4,HP_5
 ===================================================================
-# zip-same.ss
+# zip-same.ss :FIXED
 
 Small issue: why didn't the elm of redundant pure condition
 eliminate !((x_897=null & x_897=y_898).
@@ -2286,7 +2286,7 @@ support for post-pred declaration using
   PostPred 
 ===================================================================
 /*
-# tree.ss
+# tree.ss: FIXED
 
 GOT
 ===

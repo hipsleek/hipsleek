@@ -122,6 +122,17 @@ let combine_length_neq ls1 ls2 res=
   Debug.no_2 "combine_length_neq" pr1 pr1 pr2
       (fun _ _ -> combine_length_neq_x ls1 ls2 res) ls1 ls2
 
+
+let rec combine_multiple_length ls1 orig_args=
+  let rec helper ls1 ls2 res=
+    match ls1,ls2 with
+      | [],[] -> res
+      | [],sv2::_ -> res
+      | sv1::tl1,sv2::tl2 -> helper tl1 tl2 (res@[sv1,sv2])
+      | sv::_,[] -> helper ls1 orig_args res
+  in
+  helper ls1 orig_args []
+
  let get_hpdef_name hpdef=
    match hpdef with
      | CP.HPRelDefn hp -> hp
@@ -1215,7 +1226,16 @@ and drop_data_view_hrel_nodes_hf_from_root prog hf hd_nodes hv_nodes eqs drop_ro
   nhf
 
 
-(***********)
+(***************************************************************)
+           (*========SIMPLIFICATION============*)
+(***************************************************************)
+let simp_match_unknown unk_hps link_hps cs=
+  let lhs_hps = CF.get_hp_rel_name_formula cs.CF.hprel_lhs in
+  let rhs_hps = CF.get_hp_rel_name_formula cs.CF.hprel_rhs in
+  let inter_hps = CP.intersect_svl lhs_hps rhs_hps in
+  let inter_unk_hps = CP.intersect_svl inter_hps (unk_hps@link_hps) in
+  CF.drop_hprel_constr cs inter_unk_hps
+
 let simplify_one_constr_b_x prog unk_hps lhs_b rhs_b=
   (*return subst of args and add in lhs*)
   let rec look_up_eq_dn ldn rdns r_rem=
@@ -1306,17 +1326,6 @@ let simplify_one_constr_b prog unk_hps lhs_b rhs_b=
       (fun _ _ -> simplify_one_constr_b_x prog unk_hps lhs_b rhs_b) lhs_b rhs_b
 
 
-let simp_match_unknown unk_hps link_hps cs=
-  let lhs_hps = CF.get_hp_rel_name_formula cs.CF.hprel_lhs in
-  let rhs_hps = CF.get_hp_rel_name_formula cs.CF.hprel_rhs in
-  let inter_hps = CP.intersect_svl lhs_hps rhs_hps in
-  let inter_unk_hps = CP.intersect_svl inter_hps (unk_hps@link_hps) in
-  CF.drop_hprel_constr cs inter_unk_hps
-
-
-(***************************************************************)
-           (*========SIMPLIFICATION============*)
-(***************************************************************)
 let rec simplify_one_constr prog unk_hps constr=
   begin
       let (lhs, rhs) = constr.CF.hprel_lhs,constr.CF.hprel_rhs in
@@ -3379,7 +3388,8 @@ let remove_dups_recursive_x prog cdefs hp args unk_hps unk_svl defs=
                      (!CP.print_svl  unk_svl)) no_pos in
                let _ = DD.ninfo_pprint ("       last_svl2: " ^ (!CP.print_svl last_svl2)) no_pos in
                let _ = DD.ninfo_pprint ("       args: " ^ (!CP.print_svl args)) no_pos in
-               let ss = combine_length_neq last_svl2 args [] in
+               (* let ss = combine_length_neq last_svl2 args [] in *)
+               let ss = combine_multiple_length last_svl2 args in
                let n_rest2 = List.map (CF.dn_subst (ss)) rest2 in
                let n_matcheds21,r_ss1 = recover_subst r_ss n_matcheds2 in
              (* let _ = DD.info_pprint ("       n_matcheds21: " ^ (!CP.print_svl n_matcheds21)) no_pos in *)
@@ -3404,7 +3414,8 @@ let remove_dups_recursive_x prog cdefs hp args unk_hps unk_svl defs=
                      (Cprinter.prtt_string_of_formula residue)) no_pos in
       let _ = DD.ninfo_pprint ("       args: " ^
                      (!CP.print_svl args)) no_pos in
-      let ss = combine_length_neq last_svl1 args [] in
+      (* let ss = combine_length_neq last_svl1 args [] in *)
+      let ss = combine_multiple_length last_svl1 args in
       let new_residue = CF.subst ss residue in
       (* let _ = DD.info_pprint ("       new_residue:" ^ *)
       (*                (Cprinter.prtt_string_of_formula new_residue)) no_pos in *)
@@ -3843,7 +3854,7 @@ let get_longest_common_hnodes_list prog cdefs unk_hps unk_svl hp r non_r_args ar
   let pr4 = !CP.print_svl in
   let pr5 = pr_list (pr_pair Cprinter.prtt_string_of_h_formula Cprinter.prtt_string_of_h_formula) in
   let pr6= (pr_list_ln pr2) in
-  Debug.no_5 "get_longest_common_hnodes_list" pr3 pr4 pr4 pr4 pr1 (pr_pair pr6 pr5)
+  Debug.ho_5 "get_longest_common_hnodes_list" pr3 pr4 pr4 pr4 pr1 (pr_pair pr6 pr5)
       (fun _ _ _ _ _-> get_longest_common_hnodes_list_x prog cdefs unk_hps unk_svl hp r non_r_args args fs)
       hp args unk_hps unk_svl fs
 
