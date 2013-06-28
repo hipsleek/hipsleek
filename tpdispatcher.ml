@@ -29,6 +29,7 @@ type tp_type =
   | Coq
   | Z3
   | Redlog
+  | Mathematica
   | RM (* Redlog and Mona *)
   | PARAHIP (* Redlog, Z3 and Mona *) (*This option is used on ParaHIP website*)
   | ZM (* Z3 and Mona *)
@@ -81,6 +82,7 @@ let string_of_prover prover = match prover with
 	| Z3 -> "Z3"
 	| Redlog -> "REDLOG (REDUCE LOGIC)"
 	| RM -> "Redlog, Mona"
+    | Mathematica -> "Mathematica"
 	| PARAHIP -> "Redlog, Mona, z3" (*This option is used on ParaHIP website*)
 	| ZM -> "Z3, Mona"
 	| OZ -> "Omega, z3"
@@ -413,6 +415,8 @@ let set_tp tp_str =
 	(Smtsolver.smtsolver_name := tp_str; tp := Z3; prover_str := "z3"::!prover_str;)
   else if tp_str = "redlog" then
     (tp := Redlog; prover_str := "redcsl"::!prover_str;)
+  else if tp_str = "math" then
+    (tp := Mathematica; prover_str := "mathematica"::!prover_str;)
   else if tp_str = "rm" then
     tp := RM
   else if tp_str = "parahip" then
@@ -434,7 +438,6 @@ let set_tp tp_str =
   else if tp_str = "prm" then
     (Redlog.is_presburger := true; tp := RM)
   else if tp_str = "spass" then
-    (* (tp := SPASS; prover_str := "z3"::!prover_str;) *)
     (tp := SPASS; prover_str:= "SPASS-MOD"::!prover_str)
   else if tp_str = "minisat" then
     (tp := MINISAT; prover_str := "z3"::!prover_str;)	
@@ -459,6 +462,7 @@ let string_of_tp tp = match tp with
   | Coq -> "coq"
   | Z3 -> "z3"
   | Redlog -> "redlog"
+  | Mathematica -> "mathematica"
   | RM -> "rm"
   | PARAHIP -> "parahip"
   | ZM -> "zm"
@@ -484,6 +488,7 @@ let name_of_tp tp = match tp with
   | Coq -> "Coq"
   | Z3 -> "Z3"
   | Redlog -> "Redlog"
+  | Mathematica -> "Mathematica"
   | RM -> "Redlog and Mona"
   | PARAHIP -> "Redlog, Z3, and Mona"
   | ZM -> "Z3 and Mona"
@@ -501,6 +506,7 @@ let log_file_of_tp tp = match tp with
   | Mona -> "allinput.mona"
   | Coq -> "allinput.v"
   | Redlog -> "allinput.rl"
+  | Mathematica -> "allinput.math"
   | Z3 -> "allinput.z3"
   | AUTO -> "allinput.auto"
   | OZ -> "allinput.oz"
@@ -523,6 +529,7 @@ let start_prover () =
       Omega.start ();
     )
   | Mona -> Mona.start()
+  | Mathematica -> Mathematica.start()
   | Isabelle -> (
       Isabelle.start();
       Omega.start();
@@ -567,6 +574,7 @@ let stop_prover () =
       Omega.stop();
     )
   | Mona -> Mona.stop();
+  | Mathematica -> Mathematica.stop();
   | OM -> (
       Mona.stop();
       Omega.stop();
@@ -1051,6 +1059,7 @@ let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
   let wf = f in
   let omega_is_sat f = Omega.is_sat_ops pr_weak pr_strong f sat_no in
   let redlog_is_sat f = Redlog.is_sat_ops pr_weak pr_strong f sat_no in
+  let mathematica_is_sat f = Mathematica.is_sat_ops pr_weak pr_strong f sat_no in
   let mona_is_sat f = Mona.is_sat_ops pr_weak pr_strong f sat_no in
   let coq_is_sat f = Coq.is_sat_ops pr_weak pr_strong f sat_no in
   let z3_is_sat f = Smtsolver.is_sat_ops pr_weak_z3 pr_strong_z3 f sat_no in
@@ -1114,6 +1123,7 @@ let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
         else (omega_is_sat f)
     | SetMONA -> Setmona.is_sat wf
     | Redlog -> redlog_is_sat wf
+    | Mathematica -> mathematica_is_sat wf
     | RM ->
         if (is_bag_constraint wf) && (CP.is_float_formula wf) then
             (* Mixed bag constraints and float constraints *)
@@ -1453,6 +1463,7 @@ let hull (f : CP.formula) : CP.formula =
         else Omega.hull f
     | Z3 -> Smtsolver.hull f
     | Redlog -> Redlog.hull f
+    | Mathematica -> Mathematica.hull f
     | RM ->
         if is_bag_constraint f then Mona.hull f
         else Redlog.hull f
@@ -1488,6 +1499,7 @@ let pairwisecheck (f : CP.formula) : CP.formula =
         else Omega.pairwisecheck f
     | Z3 -> Smtsolver.pairwisecheck f
     | Redlog -> Redlog.pairwisecheck f
+    | Mathematica -> Mathematica.pairwisecheck f
     | RM ->
         if is_bag_constraint f then Mona.pairwisecheck f
         else Redlog.pairwisecheck f
@@ -1583,6 +1595,7 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
   let conseq_s = conseq in
   let omega_imply a c = Omega.imply_ops pr_weak pr_strong a c imp_no timeout in
   let redlog_imply a c = Redlog.imply_ops pr_weak pr_strong a c imp_no (* timeout *) in
+  let mathematica_imply a c = Mathematica.imply_ops pr_weak pr_strong a c imp_no (* timeout *) in
   let mona_imply a c = Mona.imply_ops pr_weak pr_strong a c imp_no in
   let coq_imply a c = Coq.imply_ops pr_weak pr_strong a c in
   let z3_imply a c = Smtsolver.imply_ops pr_weak_z3 pr_strong_z3 a c timeout in
@@ -1658,6 +1671,7 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
         else (omega_imply ante conseq)
     | SetMONA -> Setmona.imply ante_w conseq_s 
     | Redlog -> redlog_imply ante_w conseq_s  
+    | Mathematica -> mathematica_imply ante_w conseq_s  
     | RM ->
           (*use UNSOUND approximation
           a & b -> c&d ~~~ (a->c) & (b->d)*)
