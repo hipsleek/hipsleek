@@ -17,7 +17,7 @@ relAssume H
   HP_0(left_31_798) * HP_1(right_31_799).
 
 relAssume H
- H(x) --> x=nil.
+ H(x) --> x=null.
 
 
 shape_infer [H,HP_0,HP_1][].

@@ -2425,33 +2425,18 @@ let remove_irr_eqs keep_svl p=
 let rec elim_irr_eq_exps prog args f=
   match f with
     | CF.Base fb ->
-        (* let h_svl = CP.remove_dups_svl (args@(CF.h_fv fb.CF.formula_base_heap)) in *)
-        (* let cons = CP.list_of_conjs (MCP.pure_of_mix fb.CF.formula_base_pure) in *)
-        (* let cons1 = CP.remove_redundant_helper (cons) [] in *)
-        (* let cons2 = List.filter (filter_fn h_svl) cons1 in *)
-        (* let new_p = MCP.mix_of_pure (CP.conj_of_list cons2 no_pos) in *)
-        let hd_nodes,hv_nodes,hrels = CF.get_hp_rel_formula f in
-  (* let ls_hpargs = List.map (fun (hp,eargs,_) -> (hp, List.concat (List.map CP.afv eargs))) hrels in *)
-        let keep_ptrs = look_up_closed_ptr_args prog hd_nodes hv_nodes args in
-        let keep_ptrs1 = CP.remove_dups_svl keep_ptrs in
-        let new_p,ss = remove_irr_eqs keep_ptrs1 (MCP.pure_of_mix fb.CF.formula_base_pure) in
-        let new_h1 = CF.h_subst ss fb.CF.formula_base_heap in
-        let new_h2 = filter_unconnected_hf args new_h1 in
-        CF.Base {fb with CF.formula_base_pure = MCP.mix_of_pure new_p;
-            CF.formula_base_heap = new_h2}
+          let hd_nodes,hv_nodes,hrels = CF.get_hp_rel_formula f in
+          let keep_ptrs = look_up_closed_ptr_args prog hd_nodes hv_nodes args in
+          let keep_ptrs1 = CP.remove_dups_svl keep_ptrs in
+          let new_p,ss = remove_irr_eqs keep_ptrs1 (MCP.pure_of_mix fb.CF.formula_base_pure) in
+          let new_h1 = CF.h_subst ss fb.CF.formula_base_heap in
+          let new_h2 = filter_unconnected_hf args new_h1 in
+          CF.Base {fb with CF.formula_base_pure = MCP.mix_of_pure new_p;
+              CF.formula_base_heap = new_h2}
     | CF.Exists fe ->
         let qvars, base1 = CF.split_quantifiers f in
         let nf = elim_irr_eq_exps prog args base1 in
         CF.add_quantifiers qvars nf
-        (* let hd_nodes,hv_nodes,hrels = CF.get_hp_rel_formula f in *)
-  (* (\* let ls_hpargs = List.map (fun (hp,eargs,_) -> (hp, List.concat (List.map CP.afv eargs))) hrels in *\) *)
-  (*       let keep_ptrs = look_up_closed_ptr_args prog hd_nodes hv_nodes args in *)
-  (*       let keep_ptrs1 = CP.remove_dups_svl keep_ptrs in *)
-  (*       let new_p,ss = remove_irr_eqs keep_ptrs1 (MCP.pure_of_mix fe.CF.formula_exists_pure) in *)
-  (*       let new_h1 = CF.h_subst ss fe.CF.formula_exists_heap in *)
-  (*       let new_h2 = filter_unconnected_hf args new_h1 in *)
-  (*       CF.Exists {fe with CF.formula_exists_pure = MCP.mix_of_pure new_p; *)
-  (*           CF.formula_exists_heap = new_h2} *)
     | _ -> report_error no_pos "sau. elim_irr_eq_exps: not handle yet"
 
 let remove_dups_pardefs_x grp=
@@ -3599,10 +3584,10 @@ let mk_hprel_def prog is_pre cdefs unk_hps unk_svl hp args defs pos=
         in
         let base_case_exist,defs2 = simplify_set_of_formulas prog is_pre cdefs hp new_args unk_hps unk_svl defs1 in
         if defs2 = [] (* || not base_case_exist *) then [] else
-          (* let defs1 = List.map CF.remove_neqNull_redundant_hnodes_f defs in *)
+          let defs1 = List.map CF.remove_neqNull_redundant_hnodes_f defs in
           (*make disjunction*)
           let def = List.fold_left (fun f1 f2 -> CF.mkOr f1 f2 (CF.pos_of_formula f1))
-            (List.hd defs2) (List.tl defs2) in
+            (List.hd defs1) (List.tl defs1) in
           let _ = DD.ninfo_pprint ((!CP.print_sv hp)^"(" ^(!CP.print_svl new_args) ^ ")") pos in
           DD.ninfo_pprint (" =: " ^ (Cprinter.prtt_string_of_formula def) ) pos;
           let def = (hp, (CP.HPRelDefn hp, (CF.HRel (hp, List.map (fun x -> CP.mkVar x no_pos) new_args, pos)), def)) in
