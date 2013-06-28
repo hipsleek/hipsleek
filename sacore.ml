@@ -1490,6 +1490,10 @@ let do_strengthen_ante prog constrs new_cs=
 (*=============**************************================*)
        (*=============UNIFY PREDS================*)
 (*=============**************************================*)
+(*************************************************)
+(**********       CONJ-UNIFY       ***************)
+
+(*************************************************)
 (*move unk hps into the first position*)
 let rec swap_map unk_hps ss r=
   match ss with
@@ -1506,6 +1510,12 @@ let rec swap_map unk_hps ss r=
         swap_map unk_hps tl (r@new_ss)
       end
 
+(*
+This is mandatory
+  A<x> <--> x<l,r> * H1<l> * H2<r>    H1<x> <--> H2<x>
+--------------
+  A<x> --->  x::node<l,r> * H1<l> * H2<r> /\ x<l,r> * H2<l> * H1<r>
+*)
 let unify_consj_pre_x prog unk_hps link_hps equivs0 pdefs=
   let rec unify_one rem_pdefs ((hp,args1,unk_svl1, cond1, olhs1, orhs1) as pdef1, cs1) done_pdefs equivs=
     match rem_pdefs with
@@ -1554,6 +1564,12 @@ let unify_consj_pre prog unk_hps link_hps equivs pdefs=
          (fun _ -> unify_consj_pre_x prog unk_hps link_hps equivs pdefs)
          pdefs
 
+(*
+This is mandatory
+  A<x> <--> x<l,r> * H1<l> * H2<r>    H1<x> <--> H2<x>
+--------------
+  A<x> --->  x::node<l,r> * H1<l> * H2<r> /\ x<l,r> * H2<l> * H1<r>
+*)
 let unify_branches_hpdef_x unk_hps link_hps hp_defs =
   let unk_hps = unk_hps@link_hps in
   let rec check_eq_one args fs f done_fs=
@@ -1642,6 +1658,13 @@ let lookup_equiv_hpdef hpdefs0 transform_fnc unk_hps eq_pairs hp args f=
   in
   helper hpdefs0
 
+(*
+This is optional --pred-equiv
+  A<x> <--> x::node<l,r> * H1<l> * H2<r>    B<x> <--> A<x>
+--------------
+  A<x> <--->  x::node<l,r> * H1<l> * H2<r>
+  B<x> <-->  x::node<l,r> * H1<l> * H2<r>
+*)
 let unify_syntax_equiv_hpdef_x prog unk_hps link_hps hp_defs equivs0=
    (**************** internal methods**********************)
   let unk_hps = unk_hps@link_hps in
@@ -1697,6 +1720,13 @@ let unify_shape_equiv_x prog unk_hps link_hps hp_defs equivs0=
     (equivs0,[]) hp_defs in
   (res_hp_defs, equiv)
 
+(*
+This is optional --pred-equiv
+  H1<x> <--> x=null \/ x::node<l,r> * H1<l> * H1<r>    H2<x> <--> H1<x>
+--------------
+  H1<x> <---> x=null \/ x::node<l,r> * H1<l> * H1<r>
+  H2<y> <-->  y=null \/ y::node<l,r> * H2<l> * H2<r>
+*)
 let unify_shape_equiv prog unk_hps link_hps hpdefs equivs0=
   let pr1 = pr_list_ln Cprinter.string_of_hp_rel_def in
   let pr2 = pr_pair pr1 (pr_list (pr_pair !CP.print_sv !CP.print_sv)) in
@@ -1751,6 +1781,11 @@ let reverify_cond prog (unk_hps: CP.spec_var list) link_hps hpdefs cond_equivs=
     if diff2 == [] then
       (true, defs2, equivs2)
     else (false, hpdefs, cond_equivs)
+
+(*************************************************)
+(**********       DISJ-UNIFY       ***************)
+(*************************************************)
+
 (*=============**************************================*)
        (*=============END UNIFY PREDS================*)
 (*=============**************************================*)
