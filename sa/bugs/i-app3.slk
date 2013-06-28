@@ -8,7 +8,7 @@ HeapPred G1(node a, node b).
 
 
 relAssume G1
- c::node<_,p,t>@M *  G1(t,y) &t!=null 
+ c::node<_,pp,t>@M *  G1(t,y) &t!=null 
  --> G1(c,y)&true.
 
 relAssume G1
@@ -22,25 +22,32 @@ relAssume G1
 shape_infer [][G1].
 
 /*
+# i-app3.slk
 
-[ G1(c_25,y_26) ::= c_25::node<Anon_11,p,t>@M * (HP_27(p,t,y_26))&true,
- HP_27(p,t,y_26) ::= 
- emp&t=y_26
- or t::node<Anon_11,p_28,t_29>@M * (HP_27(p_28,t_29,y_26))&true
- ]
+ G1(c_27,y_28) ::=  
+    c_27::node<Anon_11,pp,t>@M * G1(t,y_28)&t!=null
+ or c_27::node<Anon_11,pp,y_28>@M&true
+ 
+--pred-disj-unify
 
---sa-useless
+GOT
+===
+  G1(c_27,y_28) ::=  c_27::node<Anon_11,pp,t>@M 
+     * HP_29(pp,y_28) * HP_30(t,y_28)&true,
+  HP_29(pp,y_28) ::=  emp&t=y_28, 
+                          ### why pp? and then t=y_28?
+  HP_30(t,y_28) ::=  
+        emp&t=y_28
+    or t::node<Anon_35,pp_36,t_37>@M * HP_29(pp_36,y_28) 
+       * HP_30(t_37,y_28)&true
 
-BUG with useless elim. 
-should be HP_27(t_20,y_26)
-
-[ G1(c_25,y_26) ::= c_25::node<Anon_11,p,t>@M * (HP_27(y_26,y_26))&true,
- HP_27(t,y_26) ::= 
- emp&t=y_26
- or t::node<Anon_11,p_28,t_29>@M * (HP_27(y_26,y_26))&true
-                                         ^^^^^ t_29
- ]
-
+EXPECT:
+=========
+  G1(c_27,y_28) ::=  c_27::node<Anon_11,pp,t>@M 
+                     * HP_30(t,y_28)&true,
+  HP_30(t,y_28) ::=  
+        emp&t=y_28
+    or t::node<Anon_35,pp_36,t_37>@M * HP_30(t_37,y_28)&true
 
 
 
