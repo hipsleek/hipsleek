@@ -2522,7 +2522,7 @@ Finally obtain definitions:
  GP_2(right) ::= right=null 
     or right::node<_,r> .
 ===================================================================
-# tree-1-bug-1a.slk
+# tree-1-bug-1a.slk  FIXED
 
 relAssume G
  HP_2(right_25_790) * x::node<key_25_788,left_25_789,right_25_790> 

@@ -23,7 +23,7 @@ relAssume G
 shape_infer [HP_1,HP_2][G].
 
 /*
-# tree-1-bug-1a.slk
+# tree-1-bug-1a.slk   FIXED
 
 OK without --pred-disj-unify
 

@@ -1223,24 +1223,44 @@ relAssume H1
 
 shape_infer [H1][].//[pre_hps][post_hps]
 
-The useless elimination is not working.
-We got below using --sa-useless
+--
 
-[ H1(c_44,p_43) ::=  
- H1(next_42,c') * c_44::node<Anon_40,prev_19_41,next_42>@M&true
- or emp&c_44=null
+without --pred-useless
+
+ [ HP_7(next_45,p_46) ::=  H1(next_45,c')&true,
+  H1(c_47,p_48) ::=  
+     H1(next_42,c') * c_47::node<Anon_40,prev_19_41,next_42>@M&true
+      or emp&c_47=null,
+  HP_6(a,b) ::= NONE]
+
+======
+--pred-useless
+ 
+ HP_7(next_45,p_46) ::=  HP_47(next_45)&true,
+ H1(c_48,p_49) ::=  HP_50(c_48)&true,
+ HP_47(next_45) ::=  HP_50(next_45)&true,
+ HP_50(c_48) ::=  
+ HP_50(next_42) * c_48::node<Anon_40,prev_19_41,next_42>@M&true
+ or emp&c_48=null
  ,
  HP_6(a,b) ::= NONE]
 
+==============
+ PROBLEM : HP_47 seems unnecessary; 
+ simpler to have just below. I guess we only
+ one to eliminate useless parameters of
+ recursive predicates. For non-rec predicates,
+ I think they can be easily eliminated
+ by unfolding.
+==============
+EXPECTING: 
 
-EXPECTING
-=========
- H1(c_54,p_53) ::= H1a(c_45) 
- 
- H1a(c_44) ::=  
-    H1a(next_42) * c_44::node<Anon_40,prev_19_41,next_42>@M&true
- or emp&c_44=null
- 
+ HP_7(next_45,p_46) ::=  H1(next_45,c')
+ H1(c_48,p_49) ::=  HP_50(c_48)&true,
+ HP_50(c_48) ::=  
+   HP_50(next_42) * c_48::node<Anon_40,prev_19_41,next_42>@M&true
+   or emp&c_48=null
+ ,
  HP_6(a,b) ::= NONE]
 
 ======================================================================
