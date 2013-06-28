@@ -167,6 +167,10 @@ let op_cons = ":::"
 
 
 (** add a bracket around e if is simple yields false *)
+(* 
+  hard to read wo brackets..
+   [ G(x_25) ::=  x_25::node<flted_13_14,right>@M&0<=flted_13_14 | flted_13_14=0] 
+*)
 let pr_bracket (isSimple:'a -> bool) (pr_elem:'a -> unit) (e:'a) : unit =
  if (isSimple e) then pr_elem e
  else (fmt_string "("; pr_elem e; fmt_string ")")
@@ -590,6 +594,7 @@ let pure_formula_wo_paren (e:P.formula) =
     | P.Forall _ 
     | P.Exists _ | P.Not _ -> true
     | P.BForm (e1,_) -> true (* b_formula_wo_paren e1 *)
+    (* | P.Or _ -> true  *)
     | P.And _ -> false (*Bach: change from true to false*) 
     | _ -> false
 
@@ -867,7 +872,7 @@ let rec pr_pure_formula  (e:P.formula) =
           let arg1 = bin_op_to_list op_or_short pure_formula_assoc_op f1 in
           let arg2 = bin_op_to_list op_or_short pure_formula_assoc_op f2 in
           let args = arg1@arg2 in
-          pr_list_op op_or f_b args
+          (fmt_string "("; pr_list_op op_or f_b args; fmt_string ")")
     | P.Not (f, lbl, l) -> 
           pr_formula_label_opt lbl; 
           fmt_string "!(";f_b f;fmt_string ")"
@@ -1525,7 +1530,8 @@ let rec pr_formula_base e =
       formula_base_label = lbl;
 	  formula_base_pos = pos}) ->
           (match lbl with | None -> fmt_string "" (* "<NoLabel>" *) | Some l -> fmt_string ("{"^(string_of_int (fst l))^"}->"));
-          pr_h_formula h ; pr_cut_after "&" ; pr_mix_formula p;
+          pr_h_formula h ; pr_cut_after "&" ; 
+          pr_mix_formula p;
           pr_cut_after  "&" ;  fmt_string (string_of_flow_formula "FLOW" fl)
         (* ; fmt_string (" LOC: " ^ (string_of_loc pos))*)
           ;if (a==[]) then ()

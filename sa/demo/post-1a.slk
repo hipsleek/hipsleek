@@ -10,10 +10,10 @@ HeapPred G(node a).
 
 
 relAssume G
- x::node<b,right> & b>=0  --> G(x).
+ x::node<0,right>   --> G(x).
 
 relAssume G
- x::node<n,_> & n>0   --> G(x).
+ x::node<n,_> & n>=0   --> G(x).
 
 
 shape_infer [][G].

@@ -24,9 +24,12 @@
 
       x in vs
     \rho = [ys->xs]
- conj_unify[vs+xs](D1,\rho D2) --> D3
+ conj_unify[vs+xs][E+(P1,P2),N](D1,\rho D2) --> D3,R
+   (P1,P2) \not\in N
+   R2 = if (P1,P2) in E then [] 
+        else [(P1,P2)]
 ---------------------------------------------------------
-conj-unify[vs](x::P(xs)*D1,x::P(ys)*D2) --> x::P(xs)*D3
+conj-unify[vs][E,N](x::P1(xs)*D1,x::P2(ys)*D2) --> x::P(xs)*D3,R+R2
 
 
    conj_unify[vs](D1,D3) --> D4
@@ -56,9 +59,12 @@ equivalent formula:
 
  equiv-unify[vs][E,N](D,pure) --> BOT
 
+E = sets of mutually equivalent {{p1,p2,p3}, {p5,p7}}
+N = pairs of non-equivalent pred {(p2,p5),..}
+
       x in vs
     \rho = [ys->xs]
- equiv_unify[vs+xs](D1,\rho D2) --> D3,R
+ equiv_unify[vs+xs][E+(P1,P2),N](D1,\rho D2) --> D3,R
    (P1,P2) \not\in N
    R2 = if (P1,P2) in E then [] 
         else [(P1,P2)]
