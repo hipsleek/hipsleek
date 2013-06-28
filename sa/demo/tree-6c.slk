@@ -38,14 +38,14 @@ shape_infer [H,HP_0][].
 
 GOT:
 
- HP_0(l_51) ::=  l_51::node<key_31_797,left_31_798,right_31_799>@M * HP_0(left_31_798) * HP_1(right_31_799)&l_51!=null,
-
- H(x_52) ::=  x_52::node<key_31_797,left_31_798,right_31_799>@M * HP_0(left_31_798) * HP_1(right_31_799)&true,
-
+[ HP_0(left_31_51) ::=  
+ emp&left_31_51=null
+ or left_31_51::node<key_31_797,left_31_798,right_31_799>@M * 
+    HP_0(left_31_798) * HP_1(right_31_799)&true
+ ,
+ H(x_52) ::=  x_52::node<key_31_797,left_31_798,right_31_799>@M * HP_0(left_31_798) * 
+HP_1(right_31_799)&true,
  HP_1(a) ::= NONE]
-
-
-What happen to be base-case of HP_0?
 
 
 */

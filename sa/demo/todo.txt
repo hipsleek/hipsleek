@@ -129,7 +129,6 @@ Why got two definitions for G?
 got: 
 [ H(x_980,r_981) ::= x_980::node<l,r,n>@M * HP_849(r,r_981)
 
-
  G(r,rr,l_47') ::=  H(l,l_47') & r!=null
  or HP_849(r,l_47') & r!=null
  
@@ -2384,7 +2383,7 @@ relAssume H
   HP_0(left_31_798) * HP_1(right_31_799).
 
 relAssume H
- H(x) --> x=nil. // x=null???
+ H(x) --> x=nil. // x= null ???
 
 
 shape_infer [H,HP_0,HP_1][].
@@ -2569,6 +2568,39 @@ EXPECTING:
     GP_30(left_25_38) *  HP_2(right_25_39)&true
 
 ===================================================================
+# tree-6c8.slk
+
+relAssume H
+ H(x)&true --> x::node<key_31_797,left_31_798,right_31_799> * 
+  HP_0(left_31_798) * HP_1(right_31_799).
+
+relAssume H
+ HP_0(left)&left!=null --> H(left).
+
+shape_infer [H,HP_0][].
+
+GOT:
+ HP_0(left_31) ::=  H(left_31)&true,
+ H(x_32) ::=  x_32::node<key_31_797,left_31_798,right_31_799>@M 
+    * H(left_31_798) * HP_1(right_31_799)&true,
+ HP_1(a) ::= NONE
+
+WHY left!=null dropped?
+
+EXPECT:
+=======
+ HP_0(left) ::=  H(left) & left!=null,
+ H(x_32) ::=  x_32::node<key_31_797,left_31_798,right_31_799>@M 
+    * H(left_31_798) * HP_1(right_31_799)&true,
+ HP_1(a) ::= NONE
+
+which can be (optionally) expanded to:
+
+ HP_0(left) ::=  left::node<key_31_797,left_31_798,right_31_799>@M 
+    * H(left_31_798) * HP_1(right_31_799)&true,
+ H(x_32) ::=  x_32::node<key_31_797,left_31_798,right_31_799>@M 
+    * H(left_31_798) * HP_1(right_31_799)&true,
+ HP_1(a) ::= NONE
 
 ===================================================================
 

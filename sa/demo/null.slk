@@ -1,0 +1,23 @@
+data node { int val ; node next }.
+
+pred ll<n> == self = null & n = 0
+	or self::node<next = r> * r::ll<n - 1>
+	inv n >= 0.
+
+pred ll3<n> == self::node<next = r> * r::ll<n-1>
+	inv n >= 1.
+
+checkentail x::node<_, z> & x=null |- false.
+print residue.
+
+checkentail x::node<_, z> & x=nil |- false.
+print residue.
+
+/*
+Entail (1) : Valid. 
+
+ <1>hfalse&false&{FLOW,(19,20)=__norm}[]
+
+
+Entail (2) : Fail.
+*/
