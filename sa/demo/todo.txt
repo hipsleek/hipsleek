@@ -2603,7 +2603,30 @@ which can be (optionally) expanded to:
  HP_1(a) ::= NONE
 
 ===================================================================
+# du-2.slk  --pred-disj-unify
 
+relAssume G
+ x::node<k,left,right> 
+  & left=null & right!=null--> G(x).
+
+relAssume G
+ x::node<k,left,right> *left::node<_,_,_> 
+  & right=null--> G(x).
+
+shape_infer [][G].
+
+Problem : How come GP_36 is not picking right!=null?
+    This is unsound. Otherwise, disj-unify is performing
+    a weakening process, and may only be applied to post-pred.
+    We may want to consider a version of disj-unify that
+    is equivalence-preserving...
+
+GOT
+===
+ G(x_34) ::=  x_34::node<k,left,right>@M * GP_35(left) * GP_36(right),
+ GP_35(left) ::=  emp&left=null
+      or left::node<Anon_11,Anon_12,Anon_13>@M&true
+ GP_36(right) ::=  emp&right=null,
 ===================================================================
 
 ===================================================================
