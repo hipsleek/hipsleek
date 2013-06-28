@@ -3756,9 +3756,10 @@ let mk_orig_hprel_def prog is_pre defs unk_hps hp r other_args args sh_ldns eqNu
            eqNulls eqPures hprels unk_svl quans)
       unk_hps hp args sh_ldns eqNulls eqPures hprels
 
-let elim_not_in_used_args_x prog orig_fs fs hp args=
+let elim_not_in_used_args_x prog unk_hps orig_fs fs hp args=
+  let drop_hps = hp::unk_hps in
   let helper svl f=
-    let new_f,_ = CF.drop_hrel_f f [hp] in
+    let new_f,_ = CF.drop_hrel_f f drop_hps in
     svl@(CF.fv new_f)
   in
   let svl = List.fold_left helper [] fs in
@@ -3780,19 +3781,20 @@ let elim_not_in_used_args_x prog orig_fs fs hp args=
   in
   n_orig_fs,new_args,new_fs,ss,link_defs, n_hp
 
-let elim_not_in_used_args prog orig_fs fs hp args=
+let elim_not_in_used_args prog unk_hps orig_fs fs hp args=
   let pr1 = !CP.print_sv in
   let pr2 = !CP.print_svl in
   let pr3 (_,b,_,_,link_defs,_)=
     let pra = pr_list_ln (pr_pair pr1 Cprinter.string_of_hp_rel_def) in
     (pr2 b) ^ "\n" ^ (pra link_defs) in
-  Debug.no_2 "elim_not_in_used_args" pr1 pr2 pr3
-      (fun _ _ -> elim_not_in_used_args_x prog orig_fs fs hp args) hp args
+  Debug.no_3 "elim_not_in_used_args" pr1 pr2 pr2 pr3
+      (fun _ _ _ -> elim_not_in_used_args_x prog unk_hps orig_fs fs hp args)
+      hp args unk_hps
 
 let check_and_elim_not_in_used_args prog is_pre cdefs unk_hps unk_svl orig_fs fs hp args=
   let n_hp, n_args, n_fs,elim_ss, link_defs =
     if !Globals.pred_elim_useless then
-      let _,n_args,n_fs,ss,link_defs,n_hp = elim_not_in_used_args prog (CF.mkHTrue_nf no_pos) fs hp args in
+      let _,n_args,n_fs,ss,link_defs,n_hp = elim_not_in_used_args prog unk_hps (CF.mkHTrue_nf no_pos) fs hp args in
       (n_hp, n_args,n_fs,ss, link_defs)
     else (hp, args, fs, [],[])
   in
@@ -3887,7 +3889,7 @@ let generate_extra_defs prog is_pre cdefs unk_hps unk_svl hp r non_r_args args f
               match ls_n_hpargs with
                 | [(new_hp, n_args)] ->
                       let (a,b,orig_fs) = orig_hpdef in
-                      let n_orig_fs,n_args, n_fs,ss, link_defs, n_hp1=  elim_not_in_used_args prog orig_fs n_fs2 new_hp n_args in
+                      let n_orig_fs,n_args, n_fs,ss, link_defs, n_hp1=  elim_not_in_used_args prog unk_hps orig_fs n_fs2 new_hp n_args in
                       ((a,b,n_orig_fs), [(n_hp1, n_args)], n_fs,ss, link_defs)
                 | _ -> (orig_hpdef, ls_n_hpargs, n_fs2, [],[])
             else (orig_hpdef, ls_n_hpargs, n_fs2, [],[])
@@ -3903,7 +3905,9 @@ let generate_extra_defs prog is_pre cdefs unk_hps unk_svl hp r non_r_args args f
 
 let get_longest_common_hnodes_list_x prog is_pre cdefs unk_hps unk_svl hp r non_r_args args fs0=
   if List.length fs0 <= 1 then
-    check_and_elim_not_in_used_args prog is_pre cdefs unk_hps unk_svl (CF.mkHTrue_nf no_pos) fs0 hp args
+    let hpdef = mk_hprel_def prog is_pre cdefs unk_hps unk_svl hp args fs0 no_pos in
+    (hpdef,[])
+  (* check_and_elim_not_in_used_args prog is_pre cdefs unk_hps unk_svl (CF.mkHTrue_nf no_pos) fs0 hp args *)
   else begin
    let quans, _ = CF.split_quantifiers (List.hd fs0) in
    let fs = (* List.map (fun f -> snd (CF.split_quantifiers f)) *) fs0 in

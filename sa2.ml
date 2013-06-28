@@ -738,7 +738,8 @@ let get_null_quans f=
    (CP.intersect_svl eqNulls qvars, base_f)
 
 (*for par_defs*)
-let generalize_one_hp_x prog is_pre hpdefs non_ptr_unk_hps unk_hps par_defs=
+let generalize_one_hp_x prog is_pre hpdefs non_ptr_unk_hps unk_hps link_hps par_defs=
+  let skip_hps = unk_hps@link_hps in
   (*collect definition for each partial definition*)
   let obtain_and_norm_def hp args0 quan_null_svl0 (a1,args,f,unk_args)=
     (*normalize args*)
@@ -766,7 +767,7 @@ let generalize_one_hp_x prog is_pre hpdefs non_ptr_unk_hps unk_hps par_defs=
   if par_defs = [] then ([],[]) else
     begin
         let hp, args, f0,_ = (List.hd par_defs) in
-        if CP.mem_svl hp unk_hps then
+        if CP.mem_svl hp skip_hps then
           let fs = List.map (fun (a1,args,f,unk_args) -> fst (CF.drop_hrel_f f [hp]) ) par_defs in
           let fs1 = Gen.BList.remove_dups_eq (fun f1 f2 -> SAU.check_relaxeq_formula args f1 f2) fs in
           (SAU.mk_unk_hprel_def hp args fs1 no_pos,[])
@@ -777,7 +778,7 @@ let generalize_one_hp_x prog is_pre hpdefs non_ptr_unk_hps unk_hps par_defs=
           let quan_null_svl,_ = get_null_quans f0 in
           let quan_null_svl0 = List.map (CP.fresh_spec_var) quan_null_svl in
           let defs,ls_unk_args = List.split (List.map (obtain_and_norm_def hp args0 quan_null_svl0) par_defs) in
-          let r,non_r_args = SAU.find_root prog unk_hps args0 defs in
+          let r,non_r_args = SAU.find_root prog skip_hps args0 defs in
           (*make explicit root*)
           let defs0 = List.map (SAU.mk_expl_root r) defs in
           let unk_svl = CP.remove_dups_svl (List.concat (ls_unk_args)) in
@@ -787,7 +788,7 @@ let generalize_one_hp_x prog is_pre hpdefs non_ptr_unk_hps unk_hps par_defs=
           let defs2 = (* List.map remove_non_ptr_unk_hp *) defs1 in
           (*remove duplicate*)
           let defs3 = SAU.equiv_unify args0 defs2 in
-          let defs4 = SAU.remove_equiv_wo_unkhps hp unk_hps defs3 in
+          let defs4 = SAU.remove_equiv_wo_unkhps hp skip_hps defs3 in
           let defs5 = SAU.find_closure_eq hp args0 defs4 in
           (* let pr1 = pr_list_ln Cprinter.prtt_string_of_formula in *)
           (* let _ = DD.info_pprint ("defs4: " ^ (pr1 defs4)) no_pos in *)
@@ -799,9 +800,9 @@ let generalize_one_hp_x prog is_pre hpdefs non_ptr_unk_hps unk_hps par_defs=
           let old_disj = !Globals.pred_disj_unify in
           let disj_opt = !Globals.pred_elim_useless || !Globals.pred_disj_unify in
           let defs,elim_ss = if disj_opt then
-            SAU.get_longest_common_hnodes_list prog is_pre hpdefs unk_hps unk_svl hp r non_r_args args0 defs5
+            SAU.get_longest_common_hnodes_list prog is_pre hpdefs (skip_hps) unk_svl hp r non_r_args args0 defs5
           else
-            let defs = SAU.mk_hprel_def prog is_pre hpdefs unk_hps unk_svl hp args0 defs5 no_pos in
+            let defs = SAU.mk_hprel_def prog is_pre hpdefs skip_hps unk_svl hp args0 defs5 no_pos in
           (defs,[])
           in
           let _ = Globals.pred_disj_unify := old_disj in
@@ -809,12 +810,13 @@ let generalize_one_hp_x prog is_pre hpdefs non_ptr_unk_hps unk_hps par_defs=
             report_error no_pos "shape analysis: FAIL"
     end
 
-let generalize_one_hp prog is_pre defs non_ptr_unk_hps unk_hps par_defs=
+let generalize_one_hp prog is_pre defs non_ptr_unk_hps unk_hps link_hps par_defs=
   let pr1 = pr_list_ln SAU.string_of_par_def_w_name_short in
   let pr2 = pr_list_ln (pr_pair !CP.print_sv Cprinter.string_of_hp_rel_def) in
   let pr3 = pr_list (pr_pair Cprinter.prtt_string_of_h_formula Cprinter.prtt_string_of_h_formula) in
   Debug.no_2 "generalize_one_hp" pr1 !CP.print_svl (pr_pair pr2 pr3)
-      (fun _ _ -> generalize_one_hp_x prog is_pre defs non_ptr_unk_hps unk_hps par_defs) par_defs unk_hps
+      (fun _ _ -> generalize_one_hp_x prog is_pre defs non_ptr_unk_hps
+          unk_hps link_hps par_defs) par_defs unk_hps
 
 let get_pdef_body_x unk_hps post_hps (a1,args,unk_args,a3,olf,orf)=
   let exchane_unk_post hp1 args f unk_args=
@@ -1096,7 +1098,7 @@ let generalize_hps_par_def_x prog is_pre non_ptr_unk_hps unk_hpargs link_hps pos
   let _ = DD.binfo_hprint (add_str "before remove redundant" pr1) groups2 no_pos in
   (*each group, do union partial definition*)
   let hpdefs,elim_ss = List.fold_left (fun (hpdefs,elim_ss) pdefs->
-      let new_defs,ss = generalize_one_hp prog is_pre hpdefs non_ptr_unk_hps unk_hps pdefs in
+      let new_defs,ss = generalize_one_hp prog is_pre hpdefs non_ptr_unk_hps unk_hps link_hps pdefs in
       ((hpdefs@new_defs), elim_ss@ss)
   ) ([],[]) groups3
   in
@@ -1118,10 +1120,10 @@ let generalize_hps_par_def prog is_pre non_ptr_unk_hps unk_hpargs link_hps post_
  let pr1 = pr_list_ln SAU.string_of_par_def_w_name in
   let pr2 = Cprinter.string_of_hp_rel_def in
   let pr3 = fun (_,a)-> pr2 a in
-  Debug.no_2 "generalize_hps_par_def" !CP.print_svl pr1 (pr_list_ln pr3)
-      (fun _ _ -> generalize_hps_par_def_x prog is_pre non_ptr_unk_hps unk_hpargs
+  Debug.no_3 "generalize_hps_par_def" !CP.print_svl !CP.print_svl pr1 (pr_list_ln pr3)
+      (fun _ _ _ -> generalize_hps_par_def_x prog is_pre non_ptr_unk_hps unk_hpargs
           link_hps post_hps pre_defs predef_hps par_defs)
-      post_hps par_defs
+      post_hps link_hps par_defs
 
 (**********get more definition from cs once, by right should loop************)
 (* let generalize_hps_cs_x prog callee_hps hpdefs unk_hps cs= *)
@@ -1501,7 +1503,8 @@ let infer_shapes_from_obligation prog (constrs0: CF.hprel list) non_ptr_unk_hps 
   let pr4 = pr_list (pr_pair !CP.print_sv pr2) in
   let pr5 (a,b,c,_) = (pr_triple pr2 pr3 pr4) (a,b,c) in
   Debug.no_1 "infer_shapes_from_obligation" pr1 pr5
-      (fun _ -> infer_shapes_from_obligation_x prog constrs0 non_ptr_unk_hps sel_post_hps unk_hps link_hps hp_rel_unkmap detect_dang pre_defs post_defs) constrs0
+      (fun _ -> infer_shapes_from_obligation_x prog constrs0 non_ptr_unk_hps sel_post_hps unk_hps link_hps hp_rel_unkmap detect_dang pre_defs post_defs)
+      constrs0
 
 let infer_shapes_proper prog proc_name (constrs2: CF.hprel list) callee_hps sel_hp_rels sel_post_hps
       (unk_map2: ((CP.spec_var * int list) * CP.xpure_view) list)
