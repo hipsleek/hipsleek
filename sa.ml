@@ -2990,7 +2990,7 @@ let generalize_hps_par_def_x prog non_ptr_unk_hps unk_hpargs post_hps par_defs=
   ) ([],[]) groups3
   in
   let hpdefs1 =
-    if !Globals.sa_elim_useless then
+    if !Globals.pred_elim_useless then
       List.map (fun (hp,(a,b,def)) ->
           (hp, (a,b,CF.subst_hrel_f def elim_ss))) hpdefs
     else

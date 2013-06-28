@@ -2476,7 +2476,7 @@ shape_infer [][G].
 Seems a loss of information. Should have 2 disjuncts.
 
 ===================================================================
-# post-1c.slk
+# post-1c.slk: FIXED
 
 Test also 
 # post-1b.slk

@@ -672,7 +672,7 @@ let sa_dangling = ref false
 
 let sa_refine_dang = ref false
 
-let sa_elim_useless = ref false
+let pred_elim_useless = ref false
 
 let sa_inlining = ref false
 
@@ -694,7 +694,7 @@ let sa_tree_simp = ref false
 
 let sa_subsume = ref false
 
-let norm_elim_useless = ref false
+(* let norm_elim_useless = ref false *)
 
 let norm_extract = ref false
 

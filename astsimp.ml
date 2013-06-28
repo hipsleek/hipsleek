@@ -805,7 +805,7 @@ let rec trans_prog (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_decl
 	  (* let _ = print_string "trans_prog :: going to trans_view \n" in *)
 	  let cviews = List.map (trans_view prog) tmp_views in
           let cviews1 =
-            if !Globals.norm_elim_useless then
+            if !Globals.pred_elim_useless then
               Norm.norm_elim_useless cviews (List.map (fun vdef -> vdef.C.view_name) cviews)
             else cviews
           in

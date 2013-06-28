@@ -383,7 +383,7 @@ let common_arguments = [
   (* ("--sa-en-norm", Arg.Set Globals.sa_en_norm, "do normalization"); *)
   ("--sa-dis", Arg.Clear Globals.sa_en, "donot infer shape");
   ("--sa-dangling", Arg.Set Globals.sa_dangling, "elim dangling HP/pointers");
-  ("--sa-useless", Arg.Set Globals.sa_elim_useless, "elim useless parameter from HP predicate");
+  ("--pred-useless", Arg.Set Globals.pred_elim_useless, "elim useless parameter from HP predicate and user-defined predicates (view)");
   ("--sa-refine-dang", Arg.Set Globals.sa_refine_dang, "refine dangling among branches of one hprels def");
   ("--sa-inlining", Arg.Set Globals.sa_inlining, "inline dangling HP/pointers");
   ("--sa-en-eup", Arg.Set Globals.sa_elim_unused_preds, "-sa-en-eup");
@@ -395,7 +395,7 @@ let common_arguments = [
   ("--pred-equiv", Arg.Set Globals.pred_equiv, "attempt to reuse predicates with identical definition");
   ("--sa-tree-simp", Arg.Set Globals.sa_tree_simp, "simplify a tree branches of definition");
   ("--sa-subsume", Arg.Set Globals.sa_subsume, "use subsume when comparing definitions after infering");
-  ("--norm-useless", Arg.Set Globals.norm_elim_useless, "elim useless parameters of user-defined predicates (view)");
+  (* ("--norm-useless", Arg.Set Globals.norm_elim_useless, "elim useless parameters of user-defined predicates (view)"); *)
   ("--norm-extract", Arg.Set Globals.norm_extract, "extract common pattern among branches of user-defined predicates (view)");
   ("--en-print-ann" , Arg.Set Globals.print_ann, "enable annotation printing (default)");
   ("--dis-print-ann", Arg.Clear Globals.print_ann, "disable annotation printing");

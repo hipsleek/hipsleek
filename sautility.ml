@@ -2030,6 +2030,23 @@ let check_com_pre_eq_formula f1 f2=
       (fun _ _ -> check_com_pre_eq_formula_x f1 f2) f1 f2
 
 
+let check_inconsistency hf mixf=
+  let new_mf = CF.xpure_for_hnodes hf in
+  let cmb_mf = MCP.merge_mems new_mf mixf true in
+  not (TP.is_sat_raw cmb_mf)
+
+let check_inconsistency_f f0 pure_f=
+  let p = MCP.mix_of_pure (CF.get_pure pure_f) in
+  let rec helper f=
+    match f with
+      | CF.Base fb -> check_inconsistency fb.CF.formula_base_heap p
+      | CF.Or orf -> (helper orf.CF.formula_or_f1) && (helper orf.CF.formula_or_f2)
+      | CF.Exists fe ->
+        (*may not correct*)
+          check_inconsistency fe.CF.formula_exists_heap p
+  in
+  helper f0
+
 let rec is_unsat_x f0=
   let rec helper f=
     match f with
@@ -2046,23 +2063,6 @@ and is_unsat f=
   let pr2 = string_of_bool in
   Debug.no_1 "is_unsat" pr1 pr2
       (fun _ -> is_unsat_x f) f
-
-and check_inconsistency hf mixf=
-  let new_mf = CF.xpure_for_hnodes hf in
-  let cmb_mf = MCP.merge_mems mixf new_mf true in
-  not (TP.is_sat_raw cmb_mf)
-
-let check_inconsistency_f f0 pure_f=
-  let p = MCP.mix_of_pure (CF.get_pure pure_f) in
-  let rec helper f=
-    match f with
-      | CF.Base fb -> check_inconsistency fb.CF.formula_base_heap p
-      | CF.Or orf -> (helper orf.CF.formula_or_f1) && (helper orf.CF.formula_or_f2)
-      | CF.Exists fe ->
-        (*may not correct*)
-          check_inconsistency fe.CF.formula_exists_heap p
-  in
-  helper f0
 
 let check_heap_inconsistency unk_hpargs f0=
   let do_check hf=
@@ -3631,7 +3631,7 @@ let mk_link_hprel_def prog (hp,_)=
   def
 
 (*because root is moved to top*)
-let extract_common prog hp r other_args args sh_ldns=
+let extract_common prog hp r other_args args sh_ldns com_hprels=
   let get_connected_helper ((CP.SpecVar (t,v,p)) as r)=
     if CP.mem_svl r other_args then
       let new_v = (* CP.SpecVar (t, *)
@@ -3679,7 +3679,11 @@ let extract_common prog hp r other_args args sh_ldns=
   in
   let next_roots,new_sh_dns,ss,rem_dns = get_last_ptrs_new sh_ldns [r] [r] [] [] in
   let dnss = (new_sh_dns@rem_dns) in
-  (next_roots, dnss)
+  (* let _ = DD.info_pprint ("   next_roots:" ^ (Cprinter.string_of_spec_var_list  next_roots)) no_pos in *)
+  let comp_args = List.fold_left (fun ls (_, eargs, _) -> ls@(List.fold_left List.append [] (List.map CP.afv eargs))) [] com_hprels in
+  let next_roots1 = CP.diff_svl next_roots comp_args in
+  (* let _ = DD.info_pprint ("   next_roots1:" ^ (Cprinter.string_of_spec_var_list  next_roots1)) no_pos in *)
+  (next_roots1, dnss)
 
 (*new_h_preds: generated sub preds *)
 let get_sharing_multiple new_h_preds dnss eqNulls eqPures hprels =
@@ -3704,7 +3708,7 @@ let get_sharing_multiple new_h_preds dnss eqNulls eqPures hprels =
    (orig_def3, orig_defs_h)
 
 let mk_orig_hprel_def_x prog is_pre cdefs unk_hps hp r other_args args sh_ldns eqNulls eqPures hprels unk_svl quans=
-  let next_roots, dnss = extract_common prog hp r other_args args sh_ldns in
+  let next_roots, dnss = extract_common prog hp r other_args args sh_ldns hprels in
   match next_roots with
     | [] -> report_error no_pos "sau.generalize_one_hp: sth wrong"
     | _ ->  let _ = DD.ninfo_pprint ("      last root:" ^ (Cprinter.string_of_spec_var_list  next_roots)) no_pos in
@@ -3787,7 +3791,7 @@ let elim_not_in_used_args prog orig_fs fs hp args=
 
 let check_and_elim_not_in_used_args prog is_pre cdefs unk_hps unk_svl orig_fs fs hp args=
   let n_hp, n_args, n_fs,elim_ss, link_defs =
-    if !Globals.sa_elim_useless || !Globals.norm_elim_useless then
+    if !Globals.pred_elim_useless then
       let _,n_args,n_fs,ss,link_defs,n_hp = elim_not_in_used_args prog (CF.mkHTrue_nf no_pos) fs hp args in
       (n_hp, n_args,n_fs,ss, link_defs)
     else (hp, args, fs, [],[])
@@ -3873,7 +3877,7 @@ let generate_extra_defs prog is_pre cdefs unk_hps unk_svl hp r non_r_args args f
           let n_fs2 = Gen.BList.remove_dups_eq (fun f1 f2 -> check_relaxeq_formula n_args f1 f2) n_fs1 in
           (* let _ = Debug.info_pprint ("  n_fs2: "^ (pr1 n_fs2)) no_pos in *)
           let n_orig_hpdef, ls_n_hpargs1, n_fs3, elim_ss, link_defs =
-            if (!Globals.sa_elim_useless || !Globals.norm_elim_useless) then
+            if (!Globals.pred_elim_useless) then
               (*
               (*********************************************)
                 currently, we dont elim useless args when we have more
@@ -3917,7 +3921,7 @@ let get_longest_common_hnodes_list_x prog is_pre cdefs unk_hps unk_svl hp r non_
            (* let _ = Debug.info_pprint ("  n: "^ (string_of_int n)) no_pos in *)
            n = min ) lldns) ) then
          (*if they all are base cases, wedo not need generate a new hp*)
-         let next_roots,sh_ldns2 = extract_common prog hp r non_r_args args sh_ldns in
+         let next_roots,sh_ldns2 = extract_common prog hp r non_r_args args sh_ldns hprels1 in
          let common_f,_ = get_sharing_multiple [] sh_ldns2 eqNulls eqPures hprels in
          let hprel = CF.HRel (hp, List.map (fun x -> CP.mkVar x no_pos) args, no_pos) in
          let hp_subst0 = (hprel, hprel) in

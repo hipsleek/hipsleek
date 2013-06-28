@@ -564,6 +564,7 @@ let combine_pdefs_pre_x prog unk_hps link_hps pr_pdefs=
   let combine_helper2_x (hp1,args1,unk_svl1, cond1, olhs1, orhs1) (hp2,args2,unk_svl2, cond2, olhs2, orhs2)=
     let cond_disj1 = CP.mkAnd cond1 (CP.mkNot (CP.remove_redundant cond2) None no_pos) no_pos in
     let pdef1 = if (TP.is_sat_raw (MCP.mix_of_pure cond_disj1)) then
+      (* let _ = DD.info_pprint ("      cond_disj1: " ^ (!CP.print_formula  cond_disj1) ) no_pos in *)
       let cond21 = CF.remove_neqNull_redundant_andNOT_opt orhs1 cond2 in
       let n_cond = CP.mkAnd cond1 (CP.mkNot cond21 None no_pos) no_pos in
       let npdef1 = do_combine (hp1,args1,unk_svl1, CP.remove_redundant n_cond , olhs1, orhs1) in
@@ -572,6 +573,7 @@ let combine_pdefs_pre_x prog unk_hps link_hps pr_pdefs=
     in
     let cond_disj2 = CP.mkAnd cond2 (CP.mkNot cond1 None no_pos) no_pos in
     let pdef2 = if (TP.is_sat_raw (MCP.mix_of_pure cond_disj2)) then
+      (* let _ = DD.info_pprint ("      cond_disj2: " ^ (!CP.print_formula  cond_disj2) ) no_pos in *)
       let cond11 = CF.remove_neqNull_redundant_andNOT_opt orhs2 cond1 in
       let n_cond = (CP.mkAnd cond2 (CP.mkNot cond11 None no_pos) no_pos) in
       let npdef2 = do_combine (hp2,args2,unk_svl2, CP.remove_redundant n_cond, olhs2, orhs2) in
@@ -579,6 +581,7 @@ let combine_pdefs_pre_x prog unk_hps link_hps pr_pdefs=
     else []
     in
     let cond_disj3 = CP.mkAnd cond2 cond1 no_pos in
+    (* let _ = DD.info_pprint ("      cond_disj3: " ^ (!CP.print_formula  cond_disj3) ) no_pos in *)
     let pdef3 = if (TP.is_sat_raw (MCP.mix_of_pure cond_disj3)) then
       let n_cond = CP.remove_redundant (CP.mkAnd cond1 cond2 no_pos) in
       let is_sat1, n_orhs = mkAnd_w_opt args1 orhs1 orhs2 in
@@ -793,12 +796,15 @@ let generalize_one_hp_x prog is_pre hpdefs non_ptr_unk_hps unk_hps par_defs=
           (*find longest hnodes common for more than 2 formulas*)
           (*each hds of hdss is def of a next_root*)
           (* let defs5 = List.filter (fun f -> have_roots args0 f) defs4 in *)
-          let defs,elim_ss = if !Globals.pred_disj_unify then
+          let old_disj = !Globals.pred_disj_unify in
+          let disj_opt = !Globals.pred_elim_useless || !Globals.pred_disj_unify in
+          let defs,elim_ss = if disj_opt then
             SAU.get_longest_common_hnodes_list prog is_pre hpdefs unk_hps unk_svl hp r non_r_args args0 defs5
           else
             let defs = SAU.mk_hprel_def prog is_pre hpdefs unk_hps unk_svl hp args0 defs5 no_pos in
           (defs,[])
           in
+          let _ = Globals.pred_disj_unify := old_disj in
           if defs <> [] then (defs,elim_ss) else
             report_error no_pos "shape analysis: FAIL"
     end
@@ -1100,7 +1106,7 @@ let generalize_hps_par_def_x prog is_pre non_ptr_unk_hps unk_hpargs link_hps pos
   let pr_hpd = pr_list (fun (_,a)-> pr2 a) in
   let _ = DD.binfo_hprint (add_str "after remove redundant" pr_hpd) hpdefs no_pos in
   let hpdefs1 =
-    if !Globals.sa_elim_useless then
+    if !Globals.pred_elim_useless then
       List.map (fun (hp,(a,b,def)) ->
           (hp, (a,b,CF.subst_hrel_f def elim_ss))) hpdefs
     else
@@ -1246,7 +1252,8 @@ let generalize_hps_x prog is_pre callee_hps unk_hps link_hps sel_post_hps pre_de
           not ( CP.is_node_typ a))
         args then [hp]
       else []) unk_hps) in
-  let pair_names_defs = generalize_hps_par_def prog is_pre non_ptr_unk_hps unk_hps link_hps sel_post_hps pre_defs predef_hps par_defs in
+  let pair_names_defs = generalize_hps_par_def prog is_pre non_ptr_unk_hps unk_hps link_hps
+    sel_post_hps pre_defs predef_hps par_defs in
   let hp_names,hp_defs = List.split pair_names_defs in
 (*for each constraints, we may pick more definitions*)
   let remain_constr, hp_def1, hp_names2 = generalize_hps_cs_new prog callee_hps hp_names (List.map fst unk_hps) link_hps cs in
@@ -1533,6 +1540,7 @@ let infer_shapes_proper prog proc_name (constrs2: CF.hprel list) callee_hps sel_
   let oblg_hps, oblg_defs,unk_hpargs3,unk_map5  = infer_shapes_from_obligation prog oblg_constrs []
     sel_post_hps unk_hpargs2 link_hps unk_map4 detect_dang pre_defs2 post_defs1 in
   let defs1 = (pre_defs2@post_defs1) in
+  (*normalization*)
   let defs2a, unify_equiv_map3 =
     if !Globals.pred_equiv then (*TODO: should move it to normalization*)
       SAC.unify_pred prog unk_hps link_hps defs1 unify_equiv_map2

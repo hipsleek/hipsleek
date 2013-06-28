@@ -386,7 +386,7 @@ let norm_extract_common_one_view_x cprog cviews vdecl=
     | [(hp1,(_,hrel1,f1));(hp2,(a,hrel2,f2))] ->
         let _ = Debug.info_pprint ("  DO EXTRACT on view: "^ (!CP.print_sv hp1) ^ "\n") no_pos in 
         let n_f1 =
-          if !Globals.norm_elim_useless then
+          if !Globals.pred_elim_useless then
             CF.subst_hrel_f f1 elim_ss
           else
             f1

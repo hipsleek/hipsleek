@@ -242,7 +242,7 @@ let convert_pred_to_cast () =
   let cviews = List.map (AS.trans_view iprog) tmp_views in
   Debug.tinfo_pprint "after trans_view" no_pos;
   let cviews =
-    if !Globals.norm_elim_useless then
+    if !Globals.pred_elim_useless then
       Norm.norm_elim_useless cviews (List.map (fun vdef -> vdef.C.view_name) cviews)
     else cviews
   in

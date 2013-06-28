@@ -1557,7 +1557,7 @@ let unify_consj_pre prog unk_hps link_hps equivs pdefs=
       | None -> "None"
       | Some f -> Cprinter.prtt_string_of_formula f
     in
-    let pr4 (a,_) = (pr_hepta !CP.print_sv pr1 pr1 pr2 pr2 pr3 pr3) a in
+    let pr4 (a,_) = (pr_hexa !CP.print_sv pr1 pr1 pr2 pr3 pr3) a in
     let pr5 = pr_list_ln pr4 in
     let pr6 = pr_pair pr5 (pr_list (pr_pair !CP.print_sv !CP.print_sv) ) in
      Debug.no_1 "unify_consj_pre" pr5 pr6

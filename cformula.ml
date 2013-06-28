@@ -5250,7 +5250,8 @@ let remove_neqNull_redundant_andNOT_x f0 p=
             let node_ptrs = List.map (fun dn -> dn.h_formula_data_node) hds in
             let null_ptrs1 = find_close null_ptrs eqs in
             let null_diff = CP.diff_svl null_ptrs1 node_ptrs in
-            CP.remove_redundant (CP.filter_var p null_diff)
+            let np = CP.remove_redundant (CP.filter_var p null_diff) in
+            if CP.isConstTrue np then (CP.mkFalse (CP.pos_of_formula np)) else np
       | Exists _ -> let _, base1 = split_quantifiers f in
         helper base1
       | Or orf -> report_error no_pos "CF.remove_neqNull_redundant_andNOT: should not OR"
