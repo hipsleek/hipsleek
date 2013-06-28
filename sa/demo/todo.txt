@@ -2349,7 +2349,7 @@ GOT:
 
 What happen to be base-case of HP_0?
 ===================================================================
-# tree-6c6.slk
+# tree-6c6.slk: FIXED
 
 relAssume H
  H(x) --> x::node<key_31_797,left_31_798,right_31_799> * 
