@@ -1512,9 +1512,9 @@ let rec swap_map unk_hps ss r=
 
 (*
 This is mandatory
-  A<x> <--> x<l,r> * H1<l> * H2<r>    H1<x> <--> H2<x>
+  A<x> <--> x::node<l,r> * H1<l> * H2<r>    H1<x> <--> H2<x>
 --------------
-  A<x> --->  x::node<l,r> * H1<l> * H2<r> /\ x<l,r> * H2<l> * H1<r>
+  A<x> --->  x::node<l,r> * H1<l> * H2<r> /\ x::node<l,r> * H2<l> * H1<r>
 *)
 let unify_consj_pre_x prog unk_hps link_hps equivs0 pdefs=
   let rec unify_one rem_pdefs ((hp,args1,unk_svl1, cond1, olhs1, orhs1) as pdef1, cs1) done_pdefs equivs=
@@ -1566,9 +1566,9 @@ let unify_consj_pre prog unk_hps link_hps equivs pdefs=
 
 (*
 This is mandatory
-  A<x> <--> x<l,r> * H1<l> * H2<r>    H1<x> <--> H2<x>
+  A<x> --> x::node<l,r> * H1<l> * H2<r>    H1<x> <--> H2<x>
 --------------
-  A<x> --->  x::node<l,r> * H1<l> * H2<r> /\ x<l,r> * H2<l> * H1<r>
+  A<x> --->  x::node<l,r> * H1<l> * H2<r> /\ x::node<l,r> * H2<l> * H1<r>
 *)
 let unify_branches_hpdef_x unk_hps link_hps hp_defs =
   let unk_hps = unk_hps@link_hps in

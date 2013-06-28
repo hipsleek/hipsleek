@@ -4017,12 +4017,23 @@ and get_ptrs_f (f: formula)=
         get_ptrs fb.formula_base_heap
     | _ -> report_error no_pos "SAU.is_empty_f: not handle yet"
 
-and get_pure (f: formula)=
-  match f with
-    | Base fb ->
-        MCP.pure_of_mix fb.formula_base_pure
-    | Exists fe -> MCP.pure_of_mix fe.formula_exists_pure
-    | _ -> report_error no_pos "SAU.is_empty_f: not handle yet"
+and get_pure (f0: formula)=
+  let rec helper f=
+    match f with
+      | Base fb ->
+            MCP.pure_of_mix fb.formula_base_pure
+      | Exists fe ->
+            let qvars, base1 = split_quantifiers f in
+            let p = helper base1 in
+            CP.mkExists qvars p None fe.formula_exists_pos
+      | Or orf ->
+            let p1 = helper orf.formula_or_f1 in
+            let p2 = helper orf.formula_or_f2 in
+            CP.Or (p1, p2, None , orf.formula_or_pos)
+                (*use CP.mkOr will remove trueConst*)
+            (* CP.mkOr p1 p2 None orf.formula_or_pos *)
+  in
+  helper f0
 
 and get_ptrs (f: h_formula): CP.spec_var list = match f with
   | DataNode {h_formula_data_node = c}
@@ -4041,7 +4052,7 @@ and get_ptrs_w_args_f (f: formula)=
           CP.remove_dups_svl (get_ptrs_w_args fb.formula_base_heap)
     | Exists fe ->
           CP.remove_dups_svl (get_ptrs_w_args fe.formula_exists_heap)
-    | _ -> report_error no_pos "SAU.is_empty_f: not handle yet"
+    | _ -> report_error no_pos "CF.get_ptrs_w_args_f: not handle yet"
 
 and get_ptrs_w_args (f: h_formula): CP.spec_var list = match f with
   | DataNode {h_formula_data_node = c;
@@ -4059,7 +4070,7 @@ and get_all_sv_f (f: formula)=
   match f with
     | Base fb ->
         CP.remove_dups_svl (get_all_sv fb.formula_base_heap)
-    | _ -> report_error no_pos "SAU.is_empty_f: not handle yet"
+    | _ -> report_error no_pos "CF.is_empty_f: not handle yet"
 and get_all_sv (f: h_formula): CP.spec_var list = match f with
   | DataNode {h_formula_data_node = c;
              h_formula_data_arguments = args}

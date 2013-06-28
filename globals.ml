@@ -662,7 +662,7 @@ let sa_print_inter = ref false
 
 let sa_old = ref false
 
-let sa_en_norm = ref false
+(* let sa_en_norm = ref false *)
 
 let sa_en = ref true
 
@@ -684,7 +684,9 @@ let sa_keep_unused_preds = ref false
 
 let sa_unify_dangling = ref false
 
-let pred_unify = ref false
+let sa_conj_unify = ref true
+
+let pred_disj_unify = ref false
 
 let pred_equiv = ref false
 

@@ -793,7 +793,7 @@ let generalize_one_hp_x prog is_pre hpdefs non_ptr_unk_hps unk_hps par_defs=
           (*find longest hnodes common for more than 2 formulas*)
           (*each hds of hdss is def of a next_root*)
           (* let defs5 = List.filter (fun f -> have_roots args0 f) defs4 in *)
-          let defs,elim_ss = if !Globals.sa_en_norm then
+          let defs,elim_ss = if !Globals.pred_disj_unify then
             SAU.get_longest_common_hnodes_list prog is_pre hpdefs unk_hps unk_svl hp r non_r_args args0 defs5
           else
             let defs = SAU.mk_hprel_def prog is_pre hpdefs unk_hps unk_svl hp args0 defs5 no_pos in
@@ -1511,7 +1511,7 @@ let infer_shapes_proper prog proc_name (constrs2: CF.hprel list) callee_hps sel_
   let _ = DD.binfo_pprint ">>>>>> pre-predicates<<<<<<" no_pos in
   let pre_hps, pre_defs, unk_hpargs1,unk_map3 = infer_shapes_init_pre prog pre_constrs callee_hps []
     sel_post_hps unk_hpargs link_hps unk_map2 detect_dang in
-  let pre_defs1, unify_equiv_map1 = if !Globals.pred_unify then
+  let pre_defs1, unify_equiv_map1 = if !Globals.sa_conj_unify then
     SAC.do_unify prog unk_hps link_hps pre_defs
   else
     (pre_defs, [])
@@ -1525,7 +1525,7 @@ let infer_shapes_proper prog proc_name (constrs2: CF.hprel list) callee_hps sel_
   let post_constrs1 = SAU.subst_equiv_hprel unify_equiv_map11 post_constrs in
   let post_hps, post_defs,unk_hpargs2,unk_map4  = infer_shapes_init_post prog post_constrs1 []
     sel_post_hps unk_hpargs1 link_hps unk_map3 detect_dang pre_defs2 in
-  let post_defs1,unify_equiv_map2 = if (* !Globals.pred_unify *) false then (*this just for pre-preds*)
+  let post_defs1,unify_equiv_map2 = if false then (*this just for pre-preds*)
     SAC.do_unify prog unk_hps link_hps post_defs
   else
     (post_defs,unify_equiv_map1)

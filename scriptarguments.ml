@@ -380,7 +380,7 @@ let common_arguments = [
   ("--dis-sem", Arg.Set Globals.dis_sem, "Show differences between formulae");
   ("--sa-print-inter", Arg.Set Globals.sa_print_inter, "Print intermediate results of normalization");
   ("--sa-old", Arg.Set Globals.sa_old, "old algorithm of normalization");
-  ("--sa-en-norm", Arg.Set Globals.sa_en_norm, "do normalization");
+  (* ("--sa-en-norm", Arg.Set Globals.sa_en_norm, "do normalization"); *)
   ("--sa-dis", Arg.Clear Globals.sa_en, "donot infer shape");
   ("--sa-dangling", Arg.Set Globals.sa_dangling, "elim dangling HP/pointers");
   ("--sa-useless", Arg.Set Globals.sa_elim_useless, "elim useless parameter from HP predicate");
@@ -391,7 +391,7 @@ let common_arguments = [
   ("--sa-s-split", Arg.Set Globals.sa_s_split_base, "split constraints with base case");
   ("--sa-split", Arg.Set Globals.sa_en_split, "splitting hp args into multiple hp if possible");
   ("--sa-unify-dangling", Arg.Set Globals.sa_unify_dangling, "unify branches of definition to instantiate dangling predicate");
-  ("--pred-unify", Arg.Set Globals.pred_unify, "attempt to unify two similar predicates among inferred pred defs");
+  ("--pred-disj-unify", Arg.Set Globals.pred_disj_unify, "attempt to unify two similar predicates among inferred pred defs");
   ("--pred-equiv", Arg.Set Globals.pred_equiv, "attempt to reuse predicates with identical definition");
   ("--sa-tree-simp", Arg.Set Globals.sa_tree_simp, "simplify a tree branches of definition");
   ("--sa-subsume", Arg.Set Globals.sa_subsume, "use subsume when comparing definitions after infering");
