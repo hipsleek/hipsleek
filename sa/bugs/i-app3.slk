@@ -5,7 +5,14 @@ data node{
 }.
 
 HeapPred G1(node a, node b).
+HeapPred HP1(node a, node b).
 
+Declare_Unknown [HP1].
+/*
+relAssume G1
+ c::node<_,pp,t>@M * HP1(pp, y)*  G1(t,y) &t!=null 
+ --> G1(c,y)&true.
+*/
 
 relAssume G1
  c::node<_,pp,t>@M *  G1(t,y) &t!=null 
