@@ -6172,12 +6172,16 @@ and doDecl (isglobal: bool) : A.definition -> chunk = function
                         n docEnv); *)
             cabsPushGlobal (GFun (!currentFunctionFDEC, funloc));
             empty
-          with e when continueOnError -> begin
-            ignore (E.log "error in collectFunction %s: %s"
-                      n (Printexc.to_string e));
-            cabsPushGlobal (GAsm("error in function " ^ n, !currentLoc));
-            empty
-          end)
+          with e -> (
+            E.s (error "Error in collectFunction %s: %s" n (Printexc.to_string e));
+          )
+        )
+          (* with e when continueOnError -> begin                            *)
+          (*   ignore (E.log "error in collectFunction %s: %s"               *)
+          (*             n (Printexc.to_string e));                          *)
+          (*   cabsPushGlobal (GAsm("error in function " ^ n, !currentLoc)); *)
+          (*   empty                                                         *)
+          (* end)                                                            *)
         () (* argument of E.withContext *)
     end (* FUNDEF *)
 
