@@ -1,0 +1,62 @@
+data node{
+	node next;
+	node prev;
+}.
+
+
+PostPred G(node a,node b).
+HeapPred H(node a,node b).
+HeapPred HP_9(node a,node@NI b).
+HeapPred HP_0(node a,node@NI b).
+HeapPred HP_1(node a,node@NI b).
+HeapPred HP_2(node a,node@NI b).
+HeapPred HP_3(node a,node@NI b).
+
+Declare_Unknown [HP_2].
+
+relAssume H
+  H(x,y)&true --> x::node<next_15_797,prev_15_798>@M * 
+  HP_9(next_15_797,y) * HP_0(prev_15_798,y) * HP_1(y,x).
+
+relAssume H
+ HP_9(next_15_797,y) * HP_1(y,x)&
+  next_15_797!=null --> H(next_15_797,y).
+
+relAssume HP_1
+ HP_1(y,x) --> y::node<next_21_820,prev_21_821>@M * 
+  HP_2(next_21_820,x) * HP_3(prev_21_821,x).
+
+shape_infer [H,HP_0,HP_1,HP_2,HP_3,HP_9][].
+
+/*
+Confirm Equality:
+  H(x,y)&true <--> x::node<next_15_797,prev_15_798>@M * 
+      HP_9(next_15_797,y) * HP_0(prev_15_798,y) * HP_1(y,x).
+  HP_1(y,x) <--> y::node<next_21_820,prev_21_821>@M * 
+     HP_2(next_21_820,x) * HP_3(prev_21_821,x).
+
+  HP_9(n,y) * HP_1(y,x)&
+    n!=null --> H(n,y).
+
+  HP_9(n,y) * HP_1(y,x) & n!=null --> 
+     n::node<next_15_797,prev_15_798>@M * 
+      HP_9(next_15_797,y) * HP_0(prev_15_798,y) * HP_1(y,n).
+
+  Drop HP_1(y,_) on both sides assumig that parameter is useless on x.
+
+  HP_9(n,y) & n!=null --> 
+     n::node<next_15_797,prev_15_798>@M * 
+      HP_9(next_15_797,y) * HP_0(prev_15_798,y).
+
+
+--------
+
+relAssume G
+ HP_0(prev_15_798,y) * x::node<next_15_797,prev_15_798>@M * 
+  G(next_15_797,y)&next_15_797!=null --> G(x,y).
+
+relAssume G
+ HP_0(prev_15_798,y) * x::node<y,prev_15_798>@M * 
+  HP_2(next_21_820,x) * y::node<next_21_820,x>@M&true --> G(x,y).
+
+*/
