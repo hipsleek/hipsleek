@@ -3807,13 +3807,17 @@ let mk_hprel_def_for_subs_x prog is_pre cdefs unk_hps unk_svl ls_n_hpargs1 n_fs3
         CP.diff_svl args0 closed_args = []
     ) hpargs in
     let nf =  keep_data_view_hpargs_nodes prog f hds hvs args keep_hpargs in
-    if is_empty_f nf || CF.is_only_neqNull_pure (CF.get_pure nf) args then
-      []
-    else
-      match CF.extract_hrel_head nf with
-        | Some hp1 -> if CP.eq_spec_var hp1 hp then [] else
-            [nf]
-        | None -> [nf]
+    (*we may want to do overapporximate go give and nice solution.
+      however, it may lose the equiv
+    *)
+    (* if is_empty_f nf || CF.is_only_neqNull_pure (CF.get_pure nf) args then *)
+    (*   [] *)
+    (* else *)
+      (* match CF.extract_hrel_head nf with *)
+      (*   | Some hp1 -> if CP.eq_spec_var hp1 hp then [] else *)
+      (*       [nf] *)
+      (*   | None -> [nf] *)
+    [nf]
   in
   let generate_one (hp,args)=
     let fs = List.fold_left (fun r_fs fc ->
@@ -3938,7 +3942,7 @@ let get_longest_common_hnodes_list prog is_pre cdefs unk_hps unk_svl hp r non_r_
   let pr4 = !CP.print_svl in
   let pr5 = pr_list (pr_pair Cprinter.prtt_string_of_h_formula Cprinter.prtt_string_of_h_formula) in
   let pr6= (pr_list_ln pr2) in
-  Debug.ho_5 "get_longest_common_hnodes_list" pr3 pr4 pr4 pr4 pr1 (pr_pair pr6 pr5)
+  Debug.no_5 "get_longest_common_hnodes_list" pr3 pr4 pr4 pr4 pr1 (pr_pair pr6 pr5)
       (fun _ _ _ _ _-> get_longest_common_hnodes_list_x prog is_pre cdefs unk_hps unk_svl hp r non_r_args args fs)
       hp args unk_hps unk_svl fs
 

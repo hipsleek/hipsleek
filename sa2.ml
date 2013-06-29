@@ -1095,7 +1095,7 @@ let generalize_hps_par_def_x prog is_pre non_ptr_unk_hps unk_hpargs link_hps pos
   (*remove empty*)
   let _ = DD.tinfo_pprint ("      groups2: " ^ (pr1 groups2)) no_pos in
   let groups3 = List.filter (fun grp -> grp <> []) groups2 in
-  let _ = DD.binfo_hprint (add_str "before remove redundant" pr1) groups2 no_pos in
+  let _ = DD.tinfo_hprint (add_str "before remove redundant" pr1) groups2 no_pos in
   (*each group, do union partial definition*)
   let hpdefs,elim_ss = List.fold_left (fun (hpdefs,elim_ss) pdefs->
       let new_defs,ss = generalize_one_hp prog is_pre hpdefs non_ptr_unk_hps unk_hps link_hps pdefs in
@@ -1103,10 +1103,10 @@ let generalize_hps_par_def_x prog is_pre non_ptr_unk_hps unk_hpargs link_hps pos
   ) ([],[]) groups3
   in
   let prh = Cprinter.string_of_h_formula in
-  let _ = DD.binfo_hprint (add_str "elim_ss" (pr_list (pr_pair prh prh))) elim_ss no_pos in
+  let _ = DD.tinfo_hprint (add_str "elim_ss" (pr_list (pr_pair prh prh))) elim_ss no_pos in
   let pr2 = Cprinter.string_of_hp_rel_def in
   let pr_hpd = pr_list (fun (_,a)-> pr2 a) in
-  let _ = DD.binfo_hprint (add_str "after remove redundant" pr_hpd) hpdefs no_pos in
+  let _ = DD.tinfo_hprint (add_str "after remove redundant" pr_hpd) hpdefs no_pos in
   let hpdefs1 =
     if !Globals.pred_elim_useless then
       List.map (fun (hp,(a,b,def)) ->
@@ -1407,7 +1407,7 @@ let infer_shapes_init_pre_x prog (constrs0: CF.hprel list) callee_hps non_ptr_un
   let pr_par_defs,rem_constr1 = get_par_defs_pre constrs0 in
   let _ = DD.binfo_pprint ">>>>>> pre-predicates: step pre-6: combine<<<<<<" no_pos in
   let par_defs, rem_constrs2, hconj_unify_cond = combine_pdefs_pre prog unk_hps1 link_hps pr_par_defs in
-  let _ = DD.binfo_pprint ">>>>>> pre-predicates: step pre-7: remove redundant x!=null: not implemented yet<<<<<<" no_pos in
+  let _ = DD.binfo_pprint ">>>>>> pre-predicates: step pre-7: remove redundant x!=null<<<<<<" no_pos in
   let _ = DD.binfo_pprint ">>>>>> pre-predicates: step pre-8: strengthen<<<<<<" no_pos in
   let rem_constrs3, hp_defs, defined_hps = generalize_hps prog true callee_hps unk_hpargs1 link_hps sel_post_hps [] []
     constrs0 par_defs in
