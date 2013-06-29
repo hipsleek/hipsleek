@@ -4448,7 +4448,6 @@ and heap_entail_split_rhs_x (prog : prog_decl) (is_folding : bool) (ctx_0 : cont
 (* entailment method for splitting the antecedent *)
 and heap_entail_split_lhs (prog : prog_decl) (is_folding : bool) (ctx0 : context) (conseq : formula) 
       (rhs_h_matched_set : CP.spec_var list) pos : (list_context * proof) =
-
   Debug.devel_zprint (lazy ("heap_entail_split_lhs: \nante:\n" ^ (Cprinter.string_of_context ctx0) ^ "\nconseq:\n"
   ^ (Cprinter.string_of_formula conseq))) pos;
 
@@ -4922,6 +4921,8 @@ and heap_entail_conjunct_lhs_x prog is_folding  (ctx:context) (conseq:CF.formula
 	      heap_entail_split_rhs prog is_folding ctx conseq pos     
               end
               else*)
+            (* WN : check lhs_contra if infer_vars present *)
+            (* check if ctx0 /\ conseq = false *)
 	    if !Globals.allow_imm then
               begin
                 Debug.devel_zprint (lazy ("heap_entail_conjunct_lhs: invoking heap_entail_split_rhs_phases")) pos;
@@ -5535,7 +5536,7 @@ and heap_entail_split_lhs_phases p is_folding  ctx0 conseq d pos : (list_context
 (* entailment method for splitting the antecedent *)
 and heap_entail_split_lhs_phases_x (prog : prog_decl) (is_folding : bool) (ctx0 : context) (conseq : formula) (drop_read_phase : bool)
       pos : (list_context * proof) =
-
+  (* WN : lhs_contra - need to check at beginning here if infer vars present *)
   Debug.devel_zprint (lazy ("heap_entail_split_lhs_phases: \nante:\n" ^ (Cprinter.string_of_context ctx0) ^ "\nconseq:\n"
   ^ (Cprinter.string_of_formula conseq))) pos;
 
@@ -7686,6 +7687,7 @@ and do_base_case_unfold_only_x prog ante conseq estate lhs_node rhs_node is_fold
         es_infer_hp_rel = estate.es_infer_hp_rel;
         es_group_lbl = estate.es_group_lbl;
         es_term_err = estate.es_term_err;
+        es_trace = estate.es_trace;
     } in
     let na,prf = match lhs_vd.view_base_case with
       | None ->  Debug.devel_zprint (lazy ("do_base_case_unfold attempt : unsuccessful for : " ^
@@ -9865,6 +9867,7 @@ and rewrite_coercion_x prog estate node f coer lhs_b rhs_b target_b weaken pos :
                     (*LDK: 
                       - Not yet handle perm in this case
                       - case_split is probably for view nodes only
+                      - similar to lhs_case but only applied after failed to imply lhs_guard
                     *)
                     match node with
                       | ViewNode h1 ->
@@ -10205,7 +10208,7 @@ and apply_left_coercion_complex_x estate coer prog conseq ctx0 resth1 anode lhs_
 	    
             (* let new_es_heap = CF.mkStarH head_node estate.es_heap no_pos in *)
             let old_trace = estate.es_trace in
-            let new_estate = {estate with es_heap = new_es_heap; es_formula = f;es_trace=("(Complex)"::old_trace)} in
+            let new_estate = {estate with es_heap = new_es_heap; es_formula = f;es_trace=(("(Complex: " ^ coer.coercion_name ^ ")")::old_trace)} in
             let new_ctx1 = Ctx new_estate in
             let new_ctx = SuccCtx[((* set_context_must_match *) new_ctx1)] in
             (*prove extra heap + guard*)

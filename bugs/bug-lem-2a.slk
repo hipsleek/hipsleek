@@ -1,0 +1,38 @@
+
+data node {
+	int val; 
+	node prev;	
+	node next;	
+}.
+
+
+pred dll_r5<p,t,n> == 
+  //self=n & p=t
+  self::node<p,q,t> * t::node<_,q,n> & self!=n
+/*
+  self::node<_,p,n> & self=n & p=t
+  or self::node<_,p,q> * q::dll_r5<self,t,n> & self!=n
+*/
+  inv true.
+
+lemma "dll_r5_tail2" self::dll_r5<p,t,n>  
+// <- self::dll_r5<p,q,t> * t::node<_,q,n> & self!=n.
+  <- self::node<_,q,t> * t::node<_,q,n> & self!=n.
+
+
+/*
+
+find_materialized_prop@2
+find_materialized_prop inp1 :[self,p,t,n]
+find_materialized_prop inp2 : EXISTS(q_32,Anon_12,
+q: self::dll_r5<p,q,t>@M#O[dll_r5_tail2][0][Derv][LHSCase] * 
+t::node<Anon_12,q_32,n>@M[Derv]&n!=self & q=q_32&{FLOW,(1,22)=__flow})[]
+find_materialized_prop@2 EXIT out :[ (n,full,[dll_r5]), (p,full,[dll_r5]), (self,full,[dll_r5]), (t,partial,)]
+
+======
+
+EXPECT:
+ find_materialized_prop@3 EXIT out :[(self,full,[dll_r5]), (t,partial,)]
+
+
+*/

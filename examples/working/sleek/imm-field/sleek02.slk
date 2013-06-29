@@ -22,6 +22,8 @@ pred ll<n, v1, v2> == self = null & n = 0
 checkentail x::ll<n,@A,@L> |- x::ll<n,@A,@M>.
 print residue.
 
+// WN : should this succeed or fail?
+// imm-field/sleek02.slk
 // (2) Valid - ok 
 checkentail x::ll<n,@A,@M> |- x::ll<n,@A,@L>.
 print residue.
