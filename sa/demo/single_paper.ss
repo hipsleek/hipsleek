@@ -1,6 +1,6 @@
 data node{
-	int val;
-	node next;
+       int val;
+       node next;
 }
 
 ll<> == self = null  or self::node<_, q> * q::ll<>;
@@ -16,13 +16,13 @@ node last (node x)
 infer[H,G] requires H(x) ensures G(res,x);
 {
    if (x.next==null) return x;
-   else 
+   else
    {
-	node t = last(x.next);
-	//t.val = t.val+1;
-	t.next = null;
-	return t;
-	}
+       node t = last(x.next);
+       //t.val = t.val+1;
+       t.next = null;
+       return t;
+       }
 }
 /*
 {

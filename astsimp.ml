@@ -730,8 +730,10 @@ let rec trans_prog (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_decl
   (* let _ = print_endline (exlist # string_of ) in *)
   let prog3 = prog4 in
   let prog2 = { prog3 with I.prog_data_decls =
-          ({I.data_name = raisable_class;I.data_fields = [];I.data_parent_name = "Object";I.data_invs = [];I.data_is_template = false;I.data_methods = []})
-          ::({I.data_name = error_flow;I.data_fields = [];I.data_parent_name = "Object";I.data_invs = [];I.data_is_template = false;I.data_methods = []})
+          ({I.data_name = raisable_class;I.data_fields = [];
+          I.data_pos = no_pos;
+          I.data_parent_name = "Object";I.data_invs = [];I.data_is_template = false;I.data_methods = []})
+          ::({I.data_name = error_flow;I.data_pos = no_pos;I.data_fields = [];I.data_parent_name = "Object";I.data_invs = [];I.data_is_template = false;I.data_methods = []})
           :: prog3.I.prog_data_decls;} in
   (* let _ = print_endline (exlist # string_of ) in *)
   (* let _ = I.find_empty_static_specs prog2 in *)
@@ -959,6 +961,7 @@ and trans_data (prog : I.prog_decl) (ddef : I.data_decl) : C.data_decl =
   in
   let res = {
       C.data_name = ddef.I.data_name;
+      C.data_pos = ddef.I.data_pos;
       C.data_fields = fields;
       C.data_parent_name = ddef.I.data_parent_name;
       C.data_methods = List.map (trans_proc prog) ddef.I.data_methods;
@@ -1274,6 +1277,7 @@ and trans_view_x (prog : I.prog_decl) (vdef : I.view_decl) : C.view_decl =
       let _ = if view_kind = Cast.View_PRIM then CF.view_prim_lst # push vn  in
       let cvdef ={
           C.view_name = vn;
+          C.view_pos = vdef.I.view_pos;
           C.view_is_prim = is_prim_v;
           C.view_kind = view_kind;
           C.view_vars = view_sv_vars;
@@ -7396,6 +7400,7 @@ let transform_hp_rels_to_iviews (hp_rels:(ident* CF.hp_rel_def) list):(ident*ide
 		let i_body = IF.subst [((slf,Unprimed),(self,Unprimed))] i_body in
 		let struc_body = IF.mkEBase [] [] [] i_body None (* false *) no_pos in
                 let n_iview = {  I.view_name = vname;
+                                         I.view_pos = no_pos;
 		I.view_data_name = "";
 		I.view_vars = vars;
 		I.view_labels = List.map (fun _ -> empty_spec_label) vars;

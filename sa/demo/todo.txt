@@ -2721,6 +2721,108 @@ Fatal error: exception Not_found
 Please give a better error message with line number..
 HP_2 at line is not declared
 ===================================================================
+# last.ss
+
+Relational Assumption:
+======================
+[ H(x)&true --> x::node<val_18_809,next_18_810>@M 
+    * HP_1(next_18_810)&true,
+ HP_1(next_18_810)&next_18_810!=null --> H(next_18_810)&true,
+ HP_1(next_18_810)&next_18_810=null --> emp&true,
+ x::node<val_18_809,next_18_810>@M&res=x & next_18_810=null 
+   --> G(res,x)&true,
+ x::node<val_18_809,next_18_810>@M * G(res,next_18_810)&
+  next_18_810!=null --> G(res,x)&true]
+
+Predicate:
+==========
+ H(x_828) ::=  x_828::node<val_18_809,next_18_810>@M 
+      * HP_1(next_18_810)&true,
+ G(res_830,x_831) ::=  
+    res_830::node<val_18_809,next_18_810>@M&next_18_810=null & res_830=x_831
+ or x_831::node<val_18_809,next_18_810>@M * G(res_830,next_18_810)&
+    next_18_810!=null,
+ HP_1(next_18_829) ::=  
+   next_18_829::node<val_18_809,next_18_810>@M * HP_1(next_18_810)&true
+ or emp&next_18_829=null
+
+EXPECTING:
+==========
+ Need predicate-splitting to:
+  G(res,x) <-> res::node<_,null>*P(x,res@NI)
+ and then derive:
+  P(x,res) = x=res
+   x::node<_,q>*q::P<res>
 
 ===================================================================
+# last.ss
 
+Relational Assumption:
+======================
+[ H(x)&true --> x::node<val_18_809,next_18_810>@M 
+    * HP_1(next_18_810)&true,
+ HP_1(next_18_810)&next_18_810!=null --> H(next_18_810)&true,
+ HP_1(next_18_810)&next_18_810=null --> emp&true,
+ x::node<val_18_809,next_18_810>@M&res=x & next_18_810=null 
+   --> G(res,x)&true,
+ x::node<val_18_809,next_18_810>@M * G(res,next_18_810)&
+  next_18_810!=null --> G(res,x)&true]
+
+Predicate:
+==========
+ H(x_828) ::=  x_828::node<val_18_809,next_18_810>@M 
+      * HP_1(next_18_810)&true,
+ G(res_830,x_831) ::=  
+    res_830::node<val_18_809,next_18_810>@M&next_18_810=null & res_830=x_831
+ or x_831::node<val_18_809,next_18_810>@M * G(res_830,next_18_810)&
+    next_18_810!=null,
+ HP_1(next_18_829) ::=  
+   next_18_829::node<val_18_809,next_18_810>@M * HP_1(next_18_810)&true
+ or emp&next_18_829=null
+
+EXPECTING:
+==========
+ Need predicate-splitting to:
+  G(res,x) <-> res::node<_,null>*P(x,res@NI)
+ and then derive:
+  P(x,res) = x=res
+   x::node<_,q>*q::P<res>
+=====================================================================
+# single-b.slk
+
+PostPred GP_4(node a, node@NI b).
+PostPred GP_5(node a, node@NI b).
+
+pred G<x> ==
+     self::node<val_29_788,null>@M&self=x 
+or x::node<val_29_788,next_29_789> * GP_5(next_29_789,self) * 
+     self::node<val_34_802,null>
+inv self!=null.
+
+relAssume GP_4
+ t_32'::G<next_29_789> & next_29_789!=null 
+ --> t_32'::node<val_34_802,next_34_803>@M * 
+    GP_4(next_34_803,next_29_789) * GP_5(next_29_789,t_32').
+
+shape_obligation [][GP_4,GP_5].
+//shape_infer [][GP_4,GP_5].
+
+print residue.
+
+/*
+WE need to convert shape_obligation to:
+
+infer [GP_4,GP_5]
+ t_32'::G<next_29_789> & next_29_789!=null 
+  |- t_32'::node<val_34_802,next_34_803>@M * 
+    GP_4(next_34_803,next_29_789) * GP_5(next_29_789,t_32').
+=====================================================================
+=====================================================================
+=====================================================================
+=====================================================================
+=====================================================================
+=====================================================================
+=====================================================================
+=====================================================================
+=====================================================================
+=====================================================================

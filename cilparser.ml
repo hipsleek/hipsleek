@@ -221,6 +221,7 @@ let rec translate_typ (t: Cil.typ) : Globals.typ =
             let ftype = translate_typ ty in
             let fname = gl_pointer_data_name in
             let pointer_data = {Iast.data_name = pointer_name;
+                                Iast.data_pos = no_pos;
                                 Iast.data_fields = [((ftype, fname), no_pos, true, Iast.F_NO_ANN)];
                                 Iast.data_parent_name = "Object";
                                 Iast.data_invs = [];
@@ -303,6 +304,7 @@ let translate_compinfo (comp: Cil.compinfo) (lopt: Cil.location option)
   let name = comp.Cil.cname in
   let fields = List.map (fun x -> translate_fieldinfo x lopt) comp.Cil.cfields in
   let datadecl = {Iast.data_name = name;
+                  Iast.data_pos = no_pos;
                   Iast.data_fields = fields;
                   Iast.data_parent_name = "Object";
                   Iast.data_invs = [];
@@ -509,6 +511,7 @@ and translate_exp (e: Cil.exp) : Iast.exp =
               let pointer_data = {Iast.data_name = pointer_name;
                                   Iast.data_fields = [((ftype, fname), no_pos, true,Iast.F_NO_ANN)];
                                   Iast.data_parent_name = "Object";
+                                  Iast.data_pos = no_pos;
                                   Iast.data_invs = [];
                                   Iast.data_is_template = false;
                                   Iast.data_methods = [];} in
@@ -921,11 +924,13 @@ let translate_file (file: Cil.file) : Iast.prog_decl =
   ) globals;
   let obj_def = {Iast.data_name = "Object";
                  Iast.data_fields = [];
+                 Iast.data_pos = no_pos;
                  Iast.data_parent_name = "";
                  Iast.data_invs = [];
                  Iast.data_is_template = false;
                  Iast.data_methods = []} in
   let string_def = {Iast.data_name = "String";
+                    Iast.data_pos = no_pos;
                     Iast.data_fields = [];
                     Iast.data_parent_name = "Object";
                     Iast.data_invs = [];
