@@ -4,7 +4,9 @@ data node {
 }.
 
 // (28)
-infer [m] m=-1 |- x::node<_,_> & m>=0.
+infer [mmm] mmm=-1 |- x::node<_,_> & mmm>=0
+    or x::node<_,_>
+    .
 print residue.
 
 /*
