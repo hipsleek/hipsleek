@@ -1,0 +1,10 @@
+data node{
+	int val;
+	node next;
+}.
+
+
+infer [ann1] c::node<a,b>@ann1&c=c'
+ |-  c'::node<val_20_775',next_20_776'>@M.
+
+print residue.
