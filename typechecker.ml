@@ -2287,7 +2287,7 @@ and proc_mutual_scc (prog: prog_decl) (proc_lst : proc_decl list) (fn:prog_decl 
   in helper proc_lst
 
 (* checking procedure: (PROC p61) *)
-and check_proc (prog : prog_decl) (proc : proc_decl) cout_option (mutual_grp : proc_decl list) : bool =
+and check_proc iprog (prog : prog_decl) (proc : proc_decl) cout_option (mutual_grp : proc_decl list) : bool =
   Debug.vv_debug ("check_proc:"^proc.proc_name);
   let unmin_name = unmingle_name proc.proc_name in
   (* get latest procedure from table *)
@@ -2409,7 +2409,7 @@ and check_proc (prog : prog_decl) (proc : proc_decl) cout_option (mutual_grp : p
                          Sa2.infer_shapes
                         else Sa2.infer_shapes (* Sa.infer_hps *)
                         in
-                         infer_shape_fnc prog proc.proc_name hp_lst_assume
+                         infer_shape_fnc iprog prog proc.proc_name hp_lst_assume
                             sel_hp_rels sel_post_hp_rels (Gen.BList.remove_dups_eq
                                 (fun ((hp1,_),_) ((hp2, _),_) ->
                                     (CP.eq_spec_var hp1 hp2 )) hp_rel_unkmap) [] [] true true
@@ -2629,16 +2629,16 @@ and check_proc (prog : prog_decl) (proc : proc_decl) cout_option (mutual_grp : p
 	      end
     end else true
 
-let check_proc (prog : prog_decl) (proc : proc_decl) cout_option (mutual_grp : proc_decl list) : bool =
+let check_proc iprog (prog : prog_decl) (proc : proc_decl) cout_option (mutual_grp : proc_decl list) : bool =
   let pr p = pr_id (name_of_proc p)  in
   Debug.no_1_opt (fun _ -> not(is_primitive_proc proc))
-      "check_proc" pr string_of_bool (check_proc prog) proc cout_option mutual_grp
+      "check_proc" pr string_of_bool (check_proc iprog prog) proc cout_option mutual_grp
 
-let check_phase_only prog  proc =
+let check_phase_only iprog prog  proc =
 (* check_proc prog proc *)
   try
 	(*  let _ = print_endline ("check_proc_wrapper : proc = " ^ proc.Cast.proc_name) in *)
-    let _=check_proc prog proc in () 
+    let _=check_proc iprog prog proc in () 
   with _ as e ->
       print_string ("\nError(s) detected when checking procedure " ^ proc.proc_name ^ "\n");
       print_string ("\nException "^(Printexc.to_string e)^" during check_phase_only!\n");
@@ -2646,11 +2646,11 @@ let check_phase_only prog  proc =
       ()
 
 (* check entire program *)
-let check_proc_wrapper prog proc cout_option mutual_grp =
+let check_proc_wrapper iprog prog proc cout_option mutual_grp =
 (* check_proc prog proc *)
   try
 	(*  let _ = print_endline ("check_proc_wrapper : proc = " ^ proc.Cast.proc_name) in *)
-    let res = check_proc prog proc cout_option mutual_grp in 
+    let res = check_proc iprog prog proc cout_option mutual_grp in 
     (* Termination: Infer the phase numbers of functions in a scc group *) 
     (* TODO: The list of scc group does not 
      * need to be computed many times *)
@@ -2702,10 +2702,10 @@ let check_view_wrapper def = match def with
   | View vdef -> check_view vdef
 *)
 
-let check_data (prog : prog_decl) (cdef : data_decl) =
+let check_data iprog (prog : prog_decl) (cdef : data_decl) =
   if not (Gen.is_empty cdef.data_methods) then
 	print_string ("\nChecking class " ^ cdef.data_name ^ "...\n\n");
-  List.map (check_proc_wrapper prog) cdef.data_methods 
+  List.map (check_proc_wrapper iprog prog) cdef.data_methods 
 
 let check_coercion (prog : prog_decl) =
   let find_coerc coercs name =
@@ -2741,11 +2741,11 @@ let init_files () =
     Setmona.init_files ();
   end
 
-let check_proc_wrapper_map prog (proc,num) cout_option =
+let check_proc_wrapper_map iprog prog (proc,num) cout_option =
   Debug.vv_debug ("check_proc_wrapper_map:"^proc.proc_name) ;
   if !Tpdispatcher.external_prover then Tpdispatcher.Netprover.set_use_socket_map (List.nth !Tpdispatcher.external_host_ports (num mod (List.length !Tpdispatcher.external_host_ports))); (* make this dynamic according to availability of server machines*)
   try
-    check_proc prog proc cout_option []
+    check_proc iprog prog proc cout_option []
   with _ as e ->
     if !Globals.check_all then begin
       print_string ("\nProcedure "^proc.proc_name^" FAIL-3\n");
@@ -2754,9 +2754,9 @@ let check_proc_wrapper_map prog (proc,num) cout_option =
     end else
       raise e 
 
-let check_proc_wrapper_map_net prog  (proc,num) cout_option =
+let check_proc_wrapper_map_net iprog prog  (proc,num) cout_option =
   try
-    check_proc prog proc cout_option []
+    check_proc iprog prog proc cout_option []
   with _ as e ->
     if !Globals.check_all then begin
       print_string ("\nProcedure "^proc.proc_name^" FAIL-4\n");
@@ -2786,7 +2786,7 @@ let restore_phase_infer_checks() =
   dis_term_msg := stk_tmp_checks # pop_top;
   dis_bnd_chk := stk_tmp_checks # pop_top
 
-let check_prog (prog : prog_decl) =
+let check_prog iprog (prog : prog_decl) =
   let cout_option = if(!Globals.gen_cpfile) then (
     Some (open_out (!Globals.cpfile))
   )
@@ -2802,7 +2802,7 @@ let check_prog (prog : prog_decl) =
       print_string "DONE.\n"
     end;
   
-  ignore (List.map (check_data prog) prog.prog_data_decls);
+  ignore (List.map (check_data iprog prog) prog.prog_data_decls);
   (* Sort the proc_decls by proc_call_order *)
   let l_proc = Cast.list_of_procs prog in
   let proc_prim, proc_main = List.partition Cast.is_primitive_proc l_proc in
@@ -2831,7 +2831,7 @@ let check_prog (prog : prog_decl) =
             Debug.dinfo_pprint ">>>>>> Perform Phase Inference for a Mutual Recursive Group  <<<<<<" no_pos;
             Debug.dinfo_hprint (add_str "SCC"  (pr_list (fun p -> p.proc_name))) scc no_pos;
             drop_phase_infer_checks();
-            proc_mutual_scc prog scc (fun prog proc -> ignore (check_proc prog proc cout_option []));
+            proc_mutual_scc prog scc (fun prog proc -> ignore (check_proc iprog prog proc cout_option []));
             restore_phase_infer_checks();
             (* the message here should be empty *)
             (* Term.term_check_output Term.term_res_stk; *)
@@ -2845,14 +2845,14 @@ let check_prog (prog : prog_decl) =
           mutual_grp := List.filter (fun x -> x.proc_name != proc.proc_name) !mutual_grp;
           Debug.tinfo_hprint (add_str "SCC"  (pr_list (fun p -> p.proc_name))) scc no_pos;
           Debug.tinfo_hprint (add_str "MG_new"  (pr_list (fun p -> p.proc_name))) !mutual_grp no_pos;
-          ignore (check_proc_wrapper prog proc cout_option !mutual_grp)
+          ignore (check_proc_wrapper iprog prog proc cout_option !mutual_grp)
         end
       ) in        
       prog
   ) prog proc_scc 
   in 
 
-  ignore (List.map (fun proc -> check_proc_wrapper prog proc cout_option []) ((* sorted_proc_main @ *) proc_prim));
+  ignore (List.map (fun proc -> check_proc_wrapper iprog prog proc cout_option []) ((* sorted_proc_main @ *) proc_prim));
   (*ignore (List.map (check_proc_wrapper prog) prog.prog_proc_decls);*)
   let _ =  match cout_option with
     | Some cout -> close_out cout
@@ -2860,6 +2860,6 @@ let check_prog (prog : prog_decl) =
   in 
   Term.term_check_output ()
 	    
-let check_prog (prog : prog_decl) =
-  Debug.no_1 "check_prog" (fun _ -> "?") (fun _ -> "?") check_prog prog 
+let check_prog iprog (prog : prog_decl) =
+  Debug.no_1 "check_prog" (fun _ -> "?") (fun _ -> "?") check_prog iprog prog 
   (*Debug.no_1 "check_prog" (fun _ -> "?") (fun _ -> "?") check_prog prog iprog*)
