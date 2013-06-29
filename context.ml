@@ -1175,8 +1175,9 @@ and sort_wt_x (ys: action_wt list) : action_wt list =
     | _ -> if (w == -1) then (0,a) else (w,a) in
   let ls = List.map recalibrate_wt ys in
   let sl = List.sort (fun (w1,_) (w2,_) -> if w1<w2 then -1 else if w1>w2 then 1 else 0 ) ls in
-  let ucert, cert = List.partition uncertain sl in (*delay uncertain*)
-  let sl = cert@ucert in
+  (* WN : is below critical? why do we need them? *)
+  (* let ucert, cert = List.partition uncertain sl in (\*delay uncertain*\) *)
+  (* let sl = cert@ucert in *)
   (* what if after sorted, there are elements with the same priority ??? *)
   (* LDK: temporarily combine them into a Cond_action to ensure that
      the head of the list has unique weight *)

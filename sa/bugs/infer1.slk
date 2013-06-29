@@ -1,0 +1,28 @@
+data node {
+	int val; 
+	node next;	
+}.
+
+HeapPred H1(node x).
+HeapPred H2(node x, int n).
+relation R(int n).
+
+
+// (9)
+infer [H1]  H1(y) |- (exists a: y::node<a,null> & a>0).
+print residue.
+
+infer [H1]  H1(y) |- (exists a: y::node<a,null>).
+print residue.
+
+infer [R]  y::node<b,null> & R(b) |- y::node<a,null> & a>0.
+print residue.
+
+infer [H1]  H1(y) |- y::node<a,null>.
+print residue.
+
+/* 
+  seems impossible to capture (9).
+  do we need higher-order predicates?
+*/
+

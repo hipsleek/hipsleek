@@ -1291,8 +1291,72 @@ EXPECT:
         emp&t=y_28
     or t::node<Anon_35,pp_36,t_37>@M * HP_30(t_37,y_28)&true
 ======================================================================
+# infer13b.slk
+
+infer [H1] H1(y)  |- y=null .
+print residue.
+
+GOT
+===
+ OK
+ <1>H1(y)&true&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [H1(y)&true --> emp&y=null]
+
+Why is it missing on inferred hprel in the log??
+
+LOG CAPTURE
+===========
+ id: 0; caller: []; line: 0; classic: false; kind: Why None?; hec_num: 2; evars: []; infer_vars: [H1]; c_heap: emp
+ checkentail H1(y)&true&{FLOW,(19,20)=__norm}[]
+ |-  emp&y=null&{FLOW,(19,20)=__norm}[]. 
+res:  [
+  H1(y)&true&{FLOW,(19,20)=__norm}[]
+  ]
 ======================================================================
+# infer13c.slk
+
+infer [H1] H1(y) & y=z |- z=null .
+print residue.
+
+infer [H1] H1(z) & y=z |- z=null .
+print residue.
+
+The first entailment should succeed too.
+
+GOT
+===
+Entail (1) : Fail.
+
+
+Entail (2) : Valid. 
+
+ <1>H1(z)&y=z&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [H1(z)&true --> emp&z=null]
+
+
+*/
 ======================================================================
+# infer13d.slk
+
+HeapPred H1(node y).
+
+infer [H1] H1(y)  |-y::lseg<null> .
+print residue.
+
+LOG indicate failure but this contradict with the
+result from infer13b.slk!
+
+ id: 2; caller: []; line: 13; classic: false; kind: Why None?; hec_num: 4; evars: [flted_13_27]; infer_vars: [H1,HP_29]; c_heap: y::lseg<flted_13_28>@M[0][Orig][LHSCase]
+ checkentail HP_29(flted_13_28)&true&{FLOW,(19,20)=__norm}[]
+ |-  emp&flted_13_28=null&{FLOW,(19,20)=__norm}[]. 
+res:  failctx
+         fe_kind: MAY
+         fe_name: logical bug
+         fe_locs: {
+                   fc_message: failed in entailing pure formula(s) in conseq
+                   fc_current_lhs_flow: {FLOW,(19,20)=__norm}}
+w
+*/
 ======================================================================
 ======================================================================
 ======================================================================
