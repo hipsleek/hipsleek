@@ -386,16 +386,28 @@ let common_arguments = [
   ("--dis-sem", Arg.Set Globals.dis_sem, "Show differences between formulae");
   ("--sa-print-inter", Arg.Set Globals.sa_print_inter, "Print intermediate results of normalization");
   ("--sa-old", Arg.Set Globals.sa_old, "old algorithm of normalization");
-  ("--sa-dis-norm", Arg.Clear Globals.sa_en_norm, "do normalization");
+  (* ("--sa-en-norm", Arg.Set Globals.sa_en_norm, "do normalization"); *)
+  ("--sa-dis", Arg.Clear Globals.sa_en, "donot infer shape");
   ("--sa-dangling", Arg.Set Globals.sa_dangling, "elim dangling HP/pointers");
-  ("--sa-useless", Arg.Set Globals.sa_elim_useless, "elim useless parameter from HP predicate");
+  ("--pred-useless", Arg.Set Globals.pred_elim_useless, "elim useless parameter from HP predicate and user-defined predicates (view)");
   ("--sa-refine-dang", Arg.Set Globals.sa_refine_dang, "refine dangling among branches of one hprels def");
   ("--sa-inlining", Arg.Set Globals.sa_inlining, "inline dangling HP/pointers");
+  ("--sa-en-eup", Arg.Set Globals.sa_elim_unused_preds, "-sa-en-eup");
+  ("--sa-dis-eup", Arg.Clear Globals.sa_elim_unused_preds, "-sa-dis-eup");
+  ("--sa-s-split", Arg.Set Globals.sa_s_split_base, "split constraints with base case");
   ("--sa-split", Arg.Set Globals.sa_en_split, "splitting hp args into multiple hp if possible");
   ("--sa-unify-dangling", Arg.Set Globals.sa_unify_dangling, "unify branches of definition to instantiate dangling predicate");
+  ("--pred-disj-unify", Arg.Set Globals.pred_disj_unify, "attempt to unify two similar predicates among inferred pred defs");
+   ("--pred-conj-unify", Arg.Set Globals.pred_conj_unify, "attempt to conj-unify among inferred assumption");
+  ("--pred-equiv", Arg.Set Globals.pred_equiv, "attempt to reuse predicates with identical definition");
   ("--sa-tree-simp", Arg.Set Globals.sa_tree_simp, "simplify a tree branches of definition");
-  ("--norm-useless", Arg.Set Globals.norm_elim_useless, "elim useless parameters of user-defined predicates (view)");
+  ("--sa-subsume", Arg.Set Globals.sa_subsume, "use subsume when comparing definitions after infering");
+  (* ("--norm-useless", Arg.Set Globals.norm_elim_useless, "elim useless parameters of user-defined predicates (view)"); *)
   ("--norm-extract", Arg.Set Globals.norm_extract, "extract common pattern among branches of user-defined predicates (view)");
+  ("--en-print-ann" , Arg.Set Globals.print_ann, "enable annotation printing (default)");
+  ("--dis-print-ann", Arg.Clear Globals.print_ann, "disable annotation printing");
+
+
   ]
 
 (* arguments/flags used only by hip *)	
@@ -427,7 +439,6 @@ let hip_specific_arguments = [ ("-cp", Arg.String set_pred,
    "compare set of constraints");
   ("-lib", Arg.String set_lib_file,
    "lib");
-  ("--sa-subsume", Arg.Set Globals.sa_subsume, "use subsume when comparing definitions after infering");
   ] 
 
 (* arguments/flags used only by sleek *)	

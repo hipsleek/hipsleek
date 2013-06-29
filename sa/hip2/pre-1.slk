@@ -1,0 +1,19 @@
+data node{
+ int val;
+ node next;
+}.
+
+
+HeapPred H(node a).
+HeapPred HP_2(node a).
+
+relAssume  H // (1)
+ H(x) & x=null --> emp.
+relAssume  HP // (2)
+ H(x) & x!=null --> x::node<_,next> * HP_2(next) .
+
+shape_infer [H][].
+
+/*
+
+*/

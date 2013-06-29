@@ -1,0 +1,13 @@
+# single-bug-5.slk
+
+An unfold on G0 seems to be required!!
+
+Why does't res::G<x> on RHS succeed?
+
+ checkentail x::node<Anon_827,q_828>[Orig] * res::G0<q_828>@M[0][Orig][LHSCase]&
+x!=null & q_828!=null & !(v_bool_46_801') & q_828!=null & !(v_bool_46_801')&
+{FLOW,(22,23)=__norm}[]
+ |-  EXISTS(x_39: res::G0<x_39>@M[0][Orig][LHSCase]&x=x_39&
+{FLOW,(22,23)=__norm})[]. 
+
+*/

@@ -1,0 +1,41 @@
+data node{
+ int val;
+ node prev;
+ node next;
+}.
+
+
+HeapPred H(node a,node b).
+HeapPred HP_1(node a,node b).
+HeapPred HP_2(node a,node b).
+HeapPred G(node a, node a).
+
+relAssume  H // (1)
+ H(x,y) --> x::node<_,prev, next> * HP_1(prev, y) * HP_2(next,y).
+relAssume  H // (2)
+ HP_2(next,y) & next!=null --> H(next,y).
+relAssume  G // (3)
+ HP_2(next,y) & next=null --> G(next,y).
+
+shape_infer [H,HP_2,x][G].
+
+/*
+
+ Perform unfold of (1) to replace (2)
+ HP_2(next,y) & next!=null 
+   --> next::node2<_,prev, nn> * HP_1(prev, y) * HP_2(nn,y).
+
+ Only HP_1 is dangling.
+ Split (3) into:
+  HP_2(next,y) * next=null --> emp
+  next=null --> G<next,y>
+
+ Perform shape inference with:
+  H(x,y) --> x::node2<_,prev, next> * HP_1(prev, y) * HP_2(next,y).
+  HP_2(next,y) & next!=null 
+   --> next::node2<_,prev, nn> * HP_1(prev, y) * HP_2(nn,y).
+
+  HP_2(next,y) * next=null --> emp
+  next=null --> G<next,y>
+
+*/

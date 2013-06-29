@@ -34,6 +34,7 @@ print residue.
 //(6)
 infer [n] n=0 |- q::ll<n> .
 print residue.
+// should FAIL
 
 //(7)
 infer [n,q] n=0 |- q::ll<n> .
@@ -54,8 +55,5 @@ Inferred Pure:[ inf_n_101=0]
 infer [n] n!=0 |- q::ll<n> .
 print residue.
 /*
-// Fixed
-Inferred Heap:[]
-Inferred Pure:[ n=0]
-<1>false & false &
+should fail since no contradiction
 */

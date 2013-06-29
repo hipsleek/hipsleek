@@ -1,0 +1,53 @@
+data node {
+ int key;
+ node left;
+ node right;
+}.
+
+
+HeapPred H(node a).
+HeapPred G(node a).
+HeapPred HP_0(node a).
+HeapPred HP_1(node a).
+
+infer [H,G,HP_0,HP_1] 
+ HP_0(left_24_838) * HP_1(right_24_839) * 
+ x::node<key_24_837,left_24_838,right_24_839> &x=x' & 
+ left_24_838!=null 
+ & right_24_839=null 
+ & left_24_838=s_31' & s_31'!=null 
+ |-  s_31'::node<key_35_795',left_35_796',right_35_797'>.
+
+print residue.
+/*
+# heap-bug-2.slk
+
+yields
+======
+ inferred hprel: [HP_0(s_31')&
+                   s_31'!=null --> s_31'::node<key_35_34,left_35_35,right_35_36>@M * 
+                   HP_37(left_35_35) * HP_38(right_35_36)&true; 
+                  HP_1(right_24_839)&right_24_839=null --> emp&true]
+
+WHY a spurious
+                  HP_1(right_24_839)&right_24_839=null --> emp&true]
+
+
+ id: 40; caller: []; line: 35; classic: false; kind: BIND; hec_num: 5; evars: []; infer_vars: [H,G,H_0,H_1]; c_heap: emp
+ checkentail H_0(left_24_838) * H_1(right_24_839) * 
+x::node<key_24_837,left_24_838,right_24_839>@M[Orig]&x=x' & 
+left_24_838!=null & !(v_bool_24_818') & left_24_838!=null & 
+!(v_bool_24_818') & right_24_839=null & v_bool_27_794' & right_24_839=null & 
+v_bool_27_794' & left_24_838=s_31' & s_31'!=null & v_bool_34_817' & 
+s_31'!=null & v_bool_34_817'&{FLOW,(22,23)=__norm}[]
+ |-  s_31'::node<key_35_795',left_35_796',right_35_797'>@L[Orig]&true&
+{FLOW,(1,25)=__flow}[]. 
+hprel_ass: [ H_0(left_24_838)&
+  left_24_838!=null --> left_24_838::node<key_35_902,left_35_903,right_35_904>@M * 
+  H_5(left_35_903) * H_6(right_35_904)&true,
+ H_1(right_24_839)&right_24_839=null --> emp&true]
+res:  [
+  x::node<key_24_837,left_24_838,right_24_839>@M[Orig] * H_5(left_35_903) * H_6(right_35_904) * left_24_838::node<key_35_902,left_35_903,right_35_904>@M[Orig]&x=x' & left_24_838!=null & !(v_bool_24_818') & left_24_838!=null & !(v_bool_24_818') & right_24_839=null & v_bool_27_794' & right_24_839=null & v_bool_27_794' & left_24_838=s_31' & s_31'!=null & v_bool_34_817' & s_31'!=null & v_bool_34_817' & key_35_795'=key_35_902 & left_35_796'=left_35_903 & right_35_797'=right_35_904&{FLOW,(22,23)=__norm}[]
+  ]
+
+*/

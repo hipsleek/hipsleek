@@ -1,0 +1,37 @@
+data node{
+ int val;
+ node prev;
+ node next;
+}.
+
+
+HeapPred H(node a,node b).
+HeapPred HP_1(node a,node b).
+HeapPred HP_2(node a,node b).
+HeapPred G(node a, node a).
+
+relAssume  H // (1)
+ H(x,y) --> x::node<_,prev, next> * HP_2(next,y) * HP_1(prev, y).
+
+/*
+relAssume  HP_2 // (2)
+  HP_2(next,y) & next!=null --> H(next,y).
+relAssume  HP_2 // (3)
+  HP_2(next,y) & next=null --> emp.
+*/
+
+relAssume  G // (3)
+  HP_1(prev, y) & next=null --> G(next,y).
+
+shape_infer [H,HP_2][G].
+
+/*
+
+# loc-1b2.slk 
+
+!!! after remove redundant:[HP_RELDEFN G:  G(next_43,y_44) ::=  emp&next_43=null &  XPURE(HP_1(prev,y_44))]
+ERROR: at _0:0_0:0 
+Message: sac.obtain_xpure
+ Fatal error: exception Failure("sac.obtain_xpure")
+
+*/

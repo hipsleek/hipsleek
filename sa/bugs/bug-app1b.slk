@@ -16,9 +16,9 @@ pred lseg<p> ==
   or self::node<_,q> * q::lseg<p> 
  inv true.
 
-infer [H2] H2(r)*H2(q)   |- r::lseg<null>*q::ln<>.
+//infer [H2] H2(r)*H2(q)   |- r::lseg<null>*q::ln<>.
 
-//infer [H2,H3] H2(r)*H3(q)   |- r::lseg<null>*q::ln<>.
+infer [H2,H3] H2(r)*H3(q)   |- r::lseg<null>*q::ln<>.
 print residue.
 
 /*

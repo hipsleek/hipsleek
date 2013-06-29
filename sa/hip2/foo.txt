@@ -1,0 +1,345 @@
+data node{
+ int val;
+ node next;
+}.
+
+
+HeapPred H(node a).
+HeapPred HP_7(node a).
+HeapPred G(node a, node a).
+
+relAssume  H // (1)
+ H(x) --> x::node<val_31_786,next_31_787>@M * HP_7(next_31_787).
+relAssume  G // (2)
+ HP_7(res) * x::node<val_31_786,res>@M&true --> G(x,res).
+relAssume  G // (3)
+ H(x)&res=x 
+   //& x=null 
+ --> G(x,res).
+
+shape_infer [H][G].
+
+/*
+
+We gather a set of relational assumptions of the form:
+
+  LHS --> RHS
+
+Some of them are for pre-pred, H, of the form:
+
+  H(..) & p --> RHS
+
+Some of them are for post-pred, G, of the form:
+
+  LHS --> G(..)
+
+
+Some of them are for both pre-pred and post-pred:
+
+  H(..) * K --> G(..)
+
+Our goal is to transform these implications into a
+set of predicate definitions of the form:
+
+  H(..) <-> RHS1
+  G(..) <-> RHS2
+
+such that the relational assumptions are a direct
+consequence of these predicate definitions.
+
+We will be applying abductive transformation since
+we are expected to derive stronger properties
+that supports the implications. For soundness,
+we allow pre-predicates to be strengthen, and 
+post-predicates to be weakened. For predicates
+that are in both pre-conditions and post-conditions,
+we will support it with only equivalence transformation.
+
+Abductive transformation of "relational assumption"
+would allow the following:
+ (i)  antecedent to be weakened
+ (ii) consequent to be strengthened
+
+Abduction Synthesis WEAK-A (weaken antecedent)
+=======================================
+
+ Given :
+  A --> B
+  A * R --> C
+ =========== Abduction (weaken antecedent)
+ A-Derive:
+  A --> B
+  B * R --> C
+
+An example is:
+
+ H(x) --> x::node<val_31_786,next_31_787>@M * HP_7(next_31_787).
+ x::node<val_31_786,next_31_787>@M * HP_7(next_31_787)
+       & res=x --> G(x,res).
+================================================================
+ H(x) --> x::node<val_31_786,next_31_787>@M * HP_7(next_31_787).
+ H(x)&res=x --> G(x,res).
+
+Abduction Synthesis STRONG-C (strengthen consequent)
+==================================================
+
+ Given :
+  C <-- D
+  A --> C * R
+ =========== Abduction (strengthen consequent)
+ A-Derive:
+  C <-- D
+  A --> D * R
+
+An example is:
+ H(x,y) <--> x::node<_,prev, next> * HP_1(prev,y) *  HP_2(next,y) .
+ HP_2(next,y) & next!=null --> 
+      next::node<_,prev, next_p> * HP_1(prev,y) *  HP_2(next_p,y)
+==================================================================
+ H(x,y) <--> x::node<_,prev, next> * HP_1(prev,y) *  HP_2(next,y) .
+ HP_2(next,y) & next!=null 
+      --> H(next,y).
+
+Abduction Synthesis SPLIT (split implication)
+=========================================
+
+We may also use abduction synthesis to split
+an implication which involves both pre and
+post-predicates.
+
+  A*B --> C*D
+ ============= Abduction (split)
+  A   --> C
+  B   --> D
+
+Examples are:
+
+  HP_2(next,y) & x::node<_,_, null>  & next=null  -->  G(x,y).
+  ============================================================
+  x::node<Anon_11,Anon_12,flted_14_22>@M&flted_14_22=null 
+          --> G(x,y)&true,
+  HP_2(next,y)&next=null --> emp&true
+
+
+Abduction Synthesis (CombinePre)
+=================================
+We would be collecting a set of implications
+for pre-predicate of the form:
+
+  Pre(..) & p1 --> C1
+  Pre(..) & p2 --> C2
+
+Each pair can be combined by the following rule:
+
+ Pre(..) --> P1 -> C1
+ Pre(..) --> P2 -> C2  P1/\P2=false
+--------------------------------------
+ Pre(..) --> P1 \/ P2 -> C1 & P1 \/ C2 & P2
+
+ Pre(..) --> P1 -> C1
+ Pre(..) --> P2 -> C2  P1/\P2!=false
+------------------------------
+ Pre(..) --> P1\/P2 ->
+                C1 & P1 & not(P2) 
+             \/ C2 & P2 & not(P1)
+             \/ (C1 /\ C2) & P1 & P2 // most tricky
+              // to be treated like intuitionistic && for merger
+              // if fail; to throw exception?
+
+
+Abduction Synthesis (CombinePost)
+=================================
+We would be collecting a set of implications
+for pre-predicate of the form:
+
+  A1 --> Post(..)
+  A2 --> Post(..)
+
+Each pair can be combined by the following rule:
+
+  A1 --> Post(..)
+  A2 --> Post(..)
+--------------------------------------
+ A1 \/ A2 --> Post(..)
+
+
+Abduction Synthesis (EqualPre/EqualPost)
+========================================
+
+We ae interested in a pre-pred that is as weak
+as possible and post-pred that is as strong as
+possible. When we have successfully simplified our
+predicates, we can proceed to confirm the current
+synthesized pre-pred and post-pred as the 
+inferred definitions.
+
+This would allow us to reach a fix-point for
+our synthesis pr. We refer to this process as
+equality confirmation for pre/post predicates.
+
+As an example, EqualPre is defined, as follows:
+
+Given:
+  Pre(..) --> B1 \/ B2 .. \/ Bn
+
+We can equalize a pre-predicate by:
+  Pre(..) <--> B1 \/ B2 .. \/ Bn
+
+Given:
+  B1 \/ B2 .. \/ Bn --> Post(...)
+
+We can equalize a post-predicate by:
+  B1 \/ B2 .. \/ Bn <--> Post(...)
+
+
+Dangling Predicate
+==================
+ How to identify them?
+ How to introduce them? 
+ How to link them?
+
+Second-Order Entailment
+=======================
+
+
+Normalization
+==============
+. eliminate parameter
+. reuse predicate
+   - equivalent
+   - subsumption
+       - stronger pre-pred
+       - weaker post-pred
+. 
+
+ 
+
+
+
+#################################################################
+
+
+[ H(x_45) ::= x_45::node<val_31_786,next_31_787>@M& XPURE(HP_7(next_31_787)),
+ G(x_46,res_47) ::= 
+ emp&res_47=x_46 &  XPURE(H(x_46))
+ or x_46::node<val_31_786,res_47>@M& XPURE(HP_7(res_47))
+ ]
+
+Base-Case Split
+===============
+
+Consider an inferred relational assumption with
+both a pre-pred (H) and a post-pred (G).
+
+ H(x) & A --> G(x,..)
+
+If we have an unconditional defn:
+ H(x) --> Y
+
+We shall immediately apply abduction synthesis
+to give:
+ Y & A --> G(x,..)
+
+If this cannot be ascertained, we will proceed
+with a base-case-split thru:
+
+ H(x) & pre(x) --> emp
+ A --> G(x,..)
+
+We can perform a base-case split, if detect
+on the LHS, a property such as:
+ H(x) & pre(x)
+
+
+Given
+=====
+
+P(x) -> Q
+Q & K --> G
+===============
+P(x) -> Q
+P(x) & K --> G
+
+ H(x) --> x::node<val_31_786,next_31_787>@M * HP_7(next_31_787).
+ x::node<val_31_786,next_31_787>@M * HP_7(next_31_787)
+       & res=x --> G(x,res).
+================================================================
+ H(x) --> x::node<val_31_786,next_31_787>@M * HP_7(next_31_787).
+ H(x)&res=x --> G(x,res).
+
+
+
+H(x) --> Q
+P    --> H(x)
+==============
+H(x) --> Q
+P    --> Q
+
+
+H(x) <-- Q
+P    --> Q
+==============
+H(x) <-- Q
+P    --> H(x)
+
+ H  --> Q
+ S  --> T
+---------------
+ H*S --> Q*T
+
+
+ HP_2(next,y) <--> ....
+===============================================================
+ HP_2(next,y) --> ....
+===============================================================
+ H(x,y) <--> x::node<_,prev, next> * HP_1(prev,y) *  HP_2(next,y) .
+ HP_2(next,y) & next!=null --> 
+      x::node<_,prev, next> * HP_1(prev,y) *  HP_2(next,y)
+ HP_2(next,y) & next=null  -->  emp
+ next=null --> G(next,y).
+=================================================================
+ H(x,y) <--> x::node<_,prev, next> * HP_1(prev,y) *  HP_2(next,y) .
+ HP_2(next,y) & next!=null --> 
+      x::node<_,prev, next> * HP_1(prev,y) *  HP_2(next,y)
+ HP_2(next,y) & next=null  -->  G(next,y).
+==================================================================
+ H(x,y) <--> x::node<_,prev, next> * HP_1(prev,y) *  HP_2(next,y) .
+ HP_2(next,y) & next!=null --> H(next,y).
+ HP_2(next,y) & next=null  -->  G(next,y).
+==================================================================
+ H(x,y) --> x::node<_,prev, next> * HP_1(prev,y) *  HP_2(next,y) .
+ HP_2(next,y) & next!=null --> H(next,y).
+ HP_2(next,y) & next=null  -->  G(next,y).
+
+
+P --> Q
+
+
+P -> Q(x)
+Q(x) -> G
+===============
+H(x) -> G(...)
+K(x) -> H(x)
+
+
+
+Modus-ponen gives:
+
+P -> Q
+P -> K -> G
+-----------
+Q -> K -> G
+
+P -> Q
+
+------
+P -> R
+Q -> P
+
+
+Q -> R
+P -> Q
+----------
+P -> Q
+P -> R
+*/

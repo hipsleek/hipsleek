@@ -1,0 +1,28 @@
+data node {
+ int key;
+ node left;
+ node right;
+}.
+
+HeapPred HP_0(node a).
+HeapPred HP_1(node a).
+HeapPred HP_3(node a).
+HeapPred HP_4(node a).
+
+Declare_Unknown [HP_2,HP_4]. 
+
+shape_infer [H,HP_1,HP_0,HP_3,HP_4][].
+
+/*
+# tree-conj-bug-1a.slk
+
+HP_1 is defined.
+HP_3 is defined.
+HP_4 is defined.
+Fatal error: exception Not_found
+
+Please give a better error message with line number..
+HP_2 at line is not declared
+
+
+*/

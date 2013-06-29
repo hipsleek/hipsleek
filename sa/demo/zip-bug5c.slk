@@ -1,0 +1,26 @@
+data node{
+	int val;
+	node next;
+}.
+
+HeapPred H1(node a, node b).
+HeapPred HP_1(node a, node@NI b).
+HeapPred HP_2(node a, node@NI b).
+HeapPred HP_8(node a, node@NI b).
+
+infer [HP_1,HP_2]
+HP_1(next_24_820,y) * HP_2(y,x) * 
+x::node<val_24_819,next_24_820>@M & x!=null 
+ |-  y::node<_,next_25_782'>@L. 
+print residue.
+
+/*
+# zip-bug5c.slk
+
+ <1>(HP_1(next_24_820,y)) * x::node<val_24_819,next_24_820>@M[Orig] * (HP_32(next_25_31,x)) * y::node<Anon_30,next_25_31>@M[Orig]&x!=null & Anon_11=Anon_30 & next_25_31=next_25_782'&{FLOW,(19,20)=__norm}[]
+
+ inferred hprel: [HP_2(y,x@NI)&true --> y::node<Anon_30,next_25_31>@M * 
+                   (HP_32(next_25_31,x@NI))&true]
+
+
+*/

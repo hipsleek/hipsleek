@@ -77,6 +77,7 @@ and view_kind =
 and view_decl = { 
     view_name : ident; 
     view_vars : P.spec_var list;
+    view_cont_vars : P.spec_var list;
     view_case_vars : P.spec_var list; (* predicate parameters that are bound to guard of case, but excluding self; subset of view_vars*)
     view_uni_vars : P.spec_var list; (*predicate parameters that may become universal variables of universal lemmas*)
     view_labels : Label_only.spec_label list;
@@ -114,7 +115,8 @@ and rel_decl = {
 
 and hp_decl = { 
     hp_name : ident; 
-    hp_vars : P.spec_var list;
+    hp_vars_inst : (P.spec_var * Globals.hp_arg_kind) list;
+    hp_is_pre: bool;
     hp_formula : F.formula;}
 
 (** An Hoa : axiom *)
@@ -448,6 +450,7 @@ let print_mater_prop_list = ref (fun (c:mater_property list) -> "cast printer ha
 (*single node -> simple (true), otherwise -> complex (false*)
 (* let is_simple_formula x = true *)
 let print_view_decl = ref (fun (c:view_decl) -> "cast printer has not been initialized")
+let print_hp_decl = ref (fun (c:hp_decl) -> "cast printer has not been initialized")
 let print_coercion = ref (fun (c:coercion_decl) -> "cast printer has not been initialized")
 let print_coerc_decl_list = ref (fun (c:coercion_decl list) -> "cast printer has not been initialized")
 let print_mater_prop_list = ref (fun (c:mater_property list) -> "cast printer has not been initialized")
@@ -532,6 +535,8 @@ let re_proc_mutual_from_prog cp : (proc_decl list * ((proc_decl list) list) ) =
   let lst = list_of_procs cp
   in re_proc_mutual lst
 
+let mater_prop_var a = a.mater_var 
+let mater_prop_cmp_var a c = P.eq_spec_var_ident a.mater_var c.mater_var 
 let mk_mater_prop v ff tv = {mater_var=v; mater_full_flag = ff; mater_target_view = tv}
 let mater_prop_cmp c1 c2 = P.spec_var_cmp c1.mater_var c2.mater_var
 let merge_mater_views v1 v2 = match v1,v2 with
@@ -896,6 +901,19 @@ let look_up_view_def_raw (defs : view_decl list) (name : ident) =
 let rec look_up_rel_def_raw (defs : rel_decl list) (name : ident) = match defs with
   | d :: rest -> if d.rel_name = name then d else look_up_rel_def_raw rest name
   | [] -> raise Not_found
+
+let rec look_up_hp_def_raw_x (defs : hp_decl list) (name : ident) = match defs with
+  | d :: rest -> if d.hp_name = name then d else look_up_hp_def_raw_x rest name
+  | [] -> raise Not_found
+
+let look_up_hp_def_raw defs name=
+  let pr1 = !print_hp_decl in
+  Debug.no_1 "look_up_hp_def_raw" pr_id pr1
+      (fun _ -> look_up_hp_def_raw_x defs name) name
+
+let check_pre_post_hp defs hp_name=
+  let hpdecl = look_up_hp_def_raw defs hp_name in
+  hpdecl.hp_is_pre
 
 let rec look_up_view_def (pos : loc) (defs : view_decl list) (name : ident) = match defs with
   | d :: rest -> 
@@ -1941,3 +1959,13 @@ and add_term_nums_proc (proc: proc_decl) log_vars add_call add_phase =
 let collect_hp_rels prog= Hashtbl.fold (fun i p acc-> 
 	let name = unmingle_name p.proc_name in
 	(List.map (fun c-> name,c) p.proc_hpdefs)@acc) prog.new_proc_decls []
+
+let look_up_cont_args_x a_args vname cviews=
+  let vdef = look_up_view_def_raw cviews vname in
+  let pr_args = List.combine vdef.view_vars a_args in
+  List.fold_left (fun ls cont_sv -> ls@[List.assoc cont_sv pr_args]) [] vdef.view_cont_vars
+
+let look_up_cont_args a_args vname cviews=
+  let pr1 = !Cpure.print_svl in
+  Debug.no_2 "look_up_cont_args" pr1 pr_id pr1
+      (fun _ _ -> look_up_cont_args_x a_args vname cviews) a_args vname

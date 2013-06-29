@@ -1,0 +1,32 @@
+data node{
+ int val;
+ node next;
+}.
+
+
+HeapPred H(node a).
+HeapPred HP_2(node a).
+
+relAssume  H // (1)
+ H(x) --> x::node<_,next> * HP_2(next).
+relAssume  HP_2 // (2)
+  HP_2(next) & next!=null --> H(next).
+relAssume  HP_2 // (3)
+  HP_2(next) & next=null --> emp.
+
+shape_infer [H,HP_2][].
+
+/*
+ Obtained:
+
+[ H(x_42) ::= x_42::node<Anon_11,next>@M * (HP_2(next))&true,
+ HP_2(next_43) ::= 
+ emp&next_43=null
+ or next_43::node<Anon_11,next>@M * (HP_2(next))&true
+ ]
+
+ Good thing here is that we never introduce a new
+ predicate HP_66. How come we introduce a new predicate
+ in loc-1d.slk?
+
+*/

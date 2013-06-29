@@ -61,6 +61,7 @@ type spec_qualifier =
 type ann =
   | AnnMode of mode
   | AnnType of typ
+  | AnnMater
 
 type file_offset =
   {
@@ -132,6 +133,8 @@ let get_pos_camlp4 l x =
     mid_pos = new_mp;
   }
 
+let get_mater_vars l = List.fold_left (fun a (((_,v),_),al)-> if (List.exists (fun c-> c=AnnMater) al) then v::a else a) [] l
+  
 let rec get_mode (anns : ann list) : mode = match anns with
 	| ann :: rest -> begin
 		match ann with
@@ -382,6 +385,7 @@ let peek_try =
          | [GT,_;ACCS,_] -> raise Stream.Failure 
          | [GT,_;AT,_] -> raise Stream.Failure 
          | [GT,_;MUT,_] -> raise Stream.Failure 
+		 | [GT,_;MAT,_] -> raise Stream.Failure 
          | [GT,_;DERV,_] -> raise Stream.Failure 
          | [GT,_;LEND,_] -> raise Stream.Failure 
          | [GT,_;CASE,_] -> raise Stream.Failure 
@@ -720,8 +724,14 @@ non_empty_command:
       | t=checkentail_cmd     -> EntailCheck t
       | t=relassume_cmd     -> RelAssume t
       | t=shapeinfer_cmd     -> ShapeInfer t
+      | t=shapeinfer_proper_cmd     -> ShapeInferProp t
+      | t=shapesplit_base_cmd     -> ShapeSplitBase t
       | t=shapeElim_cmd     -> ShapeElim t
       | t=shapeExtract_cmd     -> ShapeExtract t
+      | t=decl_dang_cmd        -> ShapeDeclDang t
+      | t=decl_unknown_cmd        -> ShapeDeclUnknown t
+      | t=shape_sconseq_cmd     -> ShapeSConseq t
+      | t=shape_sante_cmd     -> ShapeSAnte t
       | t=infer_cmd           -> Infer t  
       | t=captureresidue_cmd  -> CaptureResidue t
       | t=print_cmd           -> PrintCmd t
@@ -961,6 +971,7 @@ view_header:
           view_prop_extns = [];
           view_invariant = P.mkTrue (get_pos_camlp4 _loc 1);
           view_mem = None;
+		  view_materialized_vars = get_mater_vars l;
           try_case_inference = false;
 			}]];
 
@@ -990,6 +1001,7 @@ view_header_ext:
           view_prop_extns = sl;
           view_invariant = P.mkTrue (get_pos_camlp4 _loc 1);
           view_mem = None;
+		  view_materialized_vars = get_mater_vars l;
           try_case_inference = false;
 			}]];
 
@@ -1048,14 +1060,14 @@ cid_typ:
       let _ =
         (* WN : code below uses side-effects and may also result in relational name clashes *)
         if is_RelT ut then
-          (* let _ = print_endline ("ll: " ^ id) in *)
+          (* let _ = print_endline ("ll 1: " ^ id) in *)
           let _ = rel_names # push id in
           (* let rd = get_tmp_rel_decl () in *)
          (*  let rd = {rd with rel_name = id} in *)
         (* (\*push rd in the list*\) *)
         (*   let _ = g_rel_defs # push rd in *)
           ()
-        else ()
+        else (* let _ = print_endline ("ll: " ^ id)  in *) ()
       in
         (ut,id)
    ]];
@@ -1076,7 +1088,8 @@ ann:
   [[ `AT; `IDENTIFIER id -> begin
       if id = "out" then AnnMode ModeOut
       else report_error (get_pos_camlp4 _loc 2) ("unrecognized mode: " ^ id) end
-   | `AT ; `IN_T       -> AnnMode ModeIn]];
+   | `AT ; `IN_T       -> AnnMode ModeIn
+   | `MAT -> AnnMater  ]];
       
 sq_clist: [[`OSQUARE; l= opt_cid_list; `CSQUARE -> l ]];
 
@@ -1271,7 +1284,10 @@ simple_heap_constr:
       (match hal with
         | ([],t) -> F.mkHeapNode2 c generic_pointer_type_name dr (F.ConstAnn(Mutable)) false false false frac t [] ofl (get_pos_camlp4 _loc 2)
         | (t,_)  -> F.mkHeapNode c generic_pointer_type_name dr (F.ConstAnn(Mutable)) false false false frac t [] ofl (get_pos_camlp4 _loc 2))
-   | `IDENTIFIER id; `OPAREN; cl = opt_cexp_list; `CPAREN -> F.HRel(id, cl, (get_pos_camlp4 _loc 2))
+   | `IDENTIFIER id; `OPAREN; cl = opt_cexp_list; `CPAREN ->
+         (* if hp_names # mem id then *)
+           F.HRel(id, cl, (get_pos_camlp4 _loc 2))
+         (* else report_error (get_pos 1) ("should be a heap pred, not pure a relation here") *)
    | `HTRUE -> F.HTrue
    | `EMPTY -> F.HEmp
     ]];
@@ -1491,15 +1507,15 @@ cexp_w:
 		  Pure_c (P.Var (("#" ^ (string_of_int !hash_count),Unprimed),(get_pos_camlp4 _loc 1)))
        | `IDENTIFIER id1;`OPAREN; `IDENTIFIER id; `OPAREN; cl = id_list; `CPAREN ; `CPAREN-> (* xpure *)
        (* print_string ("xpure"^id1^"("^id^"())!!!"); *)
-	  	  if hp_names # mem id then Pure_f(P.BForm ((P.mkXPure id cl (get_pos_camlp4 _loc 1), None), None))
-	  	  else
-	  	    begin
-	  	      if not(rel_names # mem id) then print_endline ("WARNING1 : parsing problem "^id^" is neither a ranking function nor a relation nor a heap predicate (not in rel_names)")
-	  	      else  print_endline ("WARNING2 : parsing problem "^id^" is neither a ranking function nor a relation nor a heap predicate (in rel_names)") ;
-	  	      Pure_f(P.BForm ((P.mkXPure id cl (get_pos_camlp4 _loc 1), None), None))
-	  	    end
+          	  if hp_names # mem id then Pure_f(P.BForm ((P.mkXPure id cl (get_pos_camlp4 _loc 1), None), None))
+          	  else
+          	    begin
+          	      if not(rel_names # mem id) then print_endline ("WARNING1 : parsing problem "^id^" is neither a ranking function nor a relation nor a heap predicate (not in rel_names)")
+          	      else  print_endline ("WARNING2 : parsing problem "^id^" is neither a ranking function nor a relation nor a heap predicate (in rel_names)") ;
+          	      Pure_f(P.BForm ((P.mkXPure id cl (get_pos_camlp4 _loc 1), None), None))
+          	    end
        | `IDENTIFIER id; `OPAREN; cl = opt_cexp_list; `CPAREN -> (* print_string("here"); *)
-      (* AnHoa: relation constraint, for instance, given the relation 
+             (* AnHoa: relation constraint, for instance, given the relation 
        * s(a,b,c) == c = a + b.
        * After this definition, we can have the relation constraint like
        * s(x,1,x+1), s(x,y,x+y), ...
@@ -1507,7 +1523,8 @@ cexp_w:
        *)
 	  (* print_string ("rel: "^id^"!!!\n"); *)
 	  if func_names # mem id then Pure_c (P.Func (id, cl, get_pos_camlp4 _loc 1))
-          else if hp_names # mem id then Pure_f(P.BForm ((P.RelForm (id, cl, get_pos_camlp4 _loc 1), None), None))
+          else if hp_names # mem id then (* Pure_f(P.BForm ((P.RelForm (id, cl, get_pos_camlp4 _loc 1), None), None)) *)
+            report_error (get_pos 1) ("should be a heap pred, not pure a relation here")
           else
             begin
               if not(rel_names # mem id) then print_endline ("WARNING : parsing problem "^id^" is neither a ranking function nor a relation nor a heap predicate");
@@ -1625,8 +1642,44 @@ relassume_cmd:
    [[ `RELASSUME; `IDENTIFIER id; l=meta_constr; `CONSTR;r=meta_constr -> (id, l, r)
    ]];
 
+decl_dang_cmd:
+   [[ `SHAPE_DECL_DANG; `OSQUARE; il1=OPT id_list ;`CSQUARE -> un_option il1 []
+   ]];
+
+decl_unknown_cmd:
+   [[ `SHAPE_DECL_UNKNOWN; `OSQUARE; il1= OPT id_list ;`CSQUARE   -> un_option il1 []
+   ]];
+
 shapeinfer_cmd:
    [[ `SHAPE_INFER; `OSQUARE;il1=OPT id_list;`CSQUARE; `OSQUARE; il2=OPT id_list;`CSQUARE ->
+   let il1 = un_option il1 [] in
+   let il2 = un_option il2 [] in
+   (il1,il2)
+   ]];
+
+shape_sconseq_cmd:
+   [[ `SHAPE_STRENGTHEN_CONSEQ; `OSQUARE;il1=OPT id_list;`CSQUARE; `OSQUARE; il2=OPT id_list;`CSQUARE ->
+   let il1 = un_option il1 [] in
+   let il2 = un_option il2 [] in
+   (il1,il2)
+   ]];
+
+shape_sante_cmd:
+   [[ `SHAPE_WEAKEN_ANTE; `OSQUARE;il1=OPT id_list;`CSQUARE; `OSQUARE; il2=OPT id_list;`CSQUARE ->
+   let il1 = un_option il1 [] in
+   let il2 = un_option il2 [] in
+   (il1,il2)
+   ]];
+
+shapeinfer_proper_cmd:
+   [[ `SHAPE_INFER_PROP; `OSQUARE;il1=OPT id_list;`CSQUARE; `OSQUARE; il2=OPT id_list;`CSQUARE ->
+   let il1 = un_option il1 [] in
+   let il2 = un_option il2 [] in
+   (il1,il2)
+   ]];
+
+shapesplit_base_cmd:
+   [[ `SHAPE_SPLIT_BASE; `OSQUARE;il1=OPT id_list;`CSQUARE; `OSQUARE; il2=OPT id_list;`CSQUARE ->
    let il1 = un_option il1 [] in
    let il2 = un_option il2 [] in
    (il1,il2)
@@ -1830,7 +1883,13 @@ rel_decl:[[ rh=rel_header; `EQEQ; rb=rel_body (* opt_inv *) ->
 
 typed_id_list:[[ t = typ; `IDENTIFIER id ->  (t,id) ]];
 
+typed_id_inst_list:[[ t = typ; `IDENTIFIER id ->  (t,id, Globals.I)
+  |  t = typ; `NI; `IDENTIFIER id->  (t,id, Globals.NI)
+ ]];
+
 typed_id_list_opt: [[ t = LIST0 typed_id_list SEP `COMMA -> t ]];
+
+typed_id_inst_list_opt: [[ t = LIST0 typed_id_inst_list SEP `COMMA -> t ]];
 
 typed_default_id_list:[[ t = typ  ->  (t,default_rel_id) ]];
 
@@ -1877,12 +1936,22 @@ axiom_decl:[[
 ]];
 
 hp_decl:[[
-`HP; `IDENTIFIER id; `OPAREN; tl= typed_id_list_opt; (* opt_ann_cid_list *) `CPAREN  ->
- let _ = hp_names # push id in
-		  { hp_name = id;
-			hp_typed_vars = tl;
-            hp_formula =  F.mkBase F.HEmp (P.mkTrue (get_pos_camlp4 _loc 1)) top_flow [] (get_pos_camlp4 _loc 1);
-		  }
+`HP; `IDENTIFIER id; `OPAREN; tl= typed_id_inst_list_opt; (* opt_ann_cid_list *) `CPAREN  ->
+    let _ = hp_names # push id in
+    {
+        hp_name = id;
+        hp_typed_inst_vars = tl;
+        hp_is_pre = true;
+        hp_formula =  F.mkBase F.HEmp (P.mkTrue (get_pos_camlp4 _loc 1)) top_flow [] (get_pos_camlp4 _loc 1);
+    }
+  | `HPPOST; `IDENTIFIER id; `OPAREN; tl= typed_id_inst_list_opt; (* opt_ann_cid_list *) `CPAREN  ->
+    let _ = hp_names # push id in
+    {
+        hp_name = id;
+        hp_typed_inst_vars = tl;
+        hp_is_pre = false;
+        hp_formula =  F.mkBase F.HEmp (P.mkTrue (get_pos_camlp4 _loc 1)) top_flow [] (get_pos_camlp4 _loc 1);
+    }
 ]];
 
  (*end of sleek part*)   

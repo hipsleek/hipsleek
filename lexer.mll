@@ -127,11 +127,17 @@ module Make (Token : SleekTokenS)
    ("checkentail", CHECKENTAIL);
    ("relAssume", RELASSUME);
    ("shape_infer", SHAPE_INFER );
+   ("shape_infer_proper", SHAPE_INFER_PROP );
+   ( "shape_split_base", SHAPE_SPLIT_BASE);
    ("shape_elim_useless", SHAPE_ELIM_USELESS );
    ("shape_extract", SHAPE_EXTRACT );
+   ("Declare_Dangling", SHAPE_DECL_DANG);
+   ("Declare_Unknown", SHAPE_DECL_UNKNOWN);
+   ("shape_strengthen_conseq", SHAPE_STRENGTHEN_CONSEQ );
+   ("shape_weaken_ante", SHAPE_WEAKEN_ANTE );
    ("checkentail_exact", CHECKENTAIL_EXACT);
    ("checkentail_inexact", CHECKENTAIL_INEXACT);
-	 ("capture_residue", CAPTURERESIDUE);
+   ("capture_residue", CAPTURERESIDUE);
 	 ("class", CLASS);
 	 (* ("coercion", COERCION); *)
 	 ("compose", COMPOSE);
@@ -159,8 +165,9 @@ module Make (Token : SleekTokenS)
    ("ranking", FUNC);
    ("global",GLOBAL);
    ("logical", LOGICAL);
-	 ("head",HEAD);
-     ("HeapPred", HP);
+   ("head",HEAD);
+   ("HeapPred", HP);
+   ("PostPred", HPPOST);
    ("ho_pred",HPRED);
    ("htrue", HTRUE);
    ("if", IF);
@@ -190,7 +197,7 @@ module Make (Token : SleekTokenS)
 	 ("and", ANDWORD);
 	 ("macro",PMACRO);
      ("perm",PERM);
-	 ("pred", PRED);
+     ("pred", PRED);
 	 ("pred_prim", PRED_PRIM);
      ("pred_extn", PRED_EXT);
 	 ("hip_include", HIP_INCLUDE);
@@ -304,12 +311,15 @@ rule tokenizer file_name = parse
   | "@A" {ACCS}
   | "@D" { DERV }
   | "@M" { MUT }
+  | "@R" { MAT }
   | "@VAL" {VAL}
   | "@REC" {REC}
+  | "@NI" {NI}
   | "@pre" { PRE }
   | "@xpre" { XPRE }
   | "@post" { POST }
   | "@xpost" { XPOST }
+(*  | "XPURE" {XPURE}*)
   | "@zero" {PZERO}
   | "@full" {PFULL}
   | "@value" {PVALUE}

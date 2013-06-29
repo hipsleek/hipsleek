@@ -1,0 +1,1610 @@
+# cll-imm.slk   DONE (fixed by Andreea)
+
+  false when @L is used
+
+infer [] x::node<_,_> |-  x::node<a,b>@L. 
+print residue.
+
+/*
+Why is there a false on conseq?
+
+INPUT: 
+ ### ante =  x::node<Anon_11,Anon_12>@M[Orig]&true&{FLOW,(19,20)=__norm}[]
+ ### conseq =  EBase exists (Expl)(Impl)[a; b](ex)x::node<a,b>@L[Orig]&false&
+       {FLOW,(19,20)=__norm}[]
+
+*/
+(**************************************)
+
+# cll-d1.slk: FIXED
+
+infer [HP_6,x] HP_6(n) & n=v & v!=null & x!=n
+    |-  v::node<_,_> .
+print residue.
+
+/*
+This currently generates:
+ <1>HP_28(Anon_27)&n=v & v!=null & n!=x & Anon_11=Anon_26 & Anon_12=Anon_27&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [HP_6(v)&v!=null --> v::node<Anon_26,Anon_27>@M * 
+                   (HP_28(Anon_27))&true]
+
+I wonder if we can add a constraint v!=x and generate instead:
+
+ inferred hprel: [HP_6(v)&v!=null & v!=x --> v::node<Anon_26,Anon_27>@M * 
+                   (HP_28(Anon_27))&true]
+
+This is to allow parameter expansion, later to:
+
+ HP_6(v) --> HP_6e(v,n)
+ inferred hprel: [HP_6(v,n)&v!=null & v!=x --> v::node<Anon_26,Anon_27>@M * 
+                   (HP_28(Anon_27))&true]
+
+
+*/
+***************************************************
+# cll-d2a.slk: FIXED
+
+infer [HP_6,x]
+HP_6(v) * xp::node<val_35_804,v> & n!=x & n=v & x=xp
+ |-  v::node<_,_> .
+print residue.
+
+/*
+Why isn't x!=v captured here? just because of an extra x=xp?
+
+ inferred hprel: [HP_6(v)&true --> v::node<Anon_47,Anon_48>@M * 
+                   (HP_49(Anon_48))&true]
+*/
+
+***************************************************
+
+# cll-d2a.slk: : FIXED
+
+Why did the 2nd version below dropped HP_6 pred on
+the LHS?
+
+ <1>(HP_6(n)) * xp::node<val_35_804,n>@M[Orig] * (HP_51(Anon_50))&x=xp & n!=x & n=v & Anon_13=Anon_49 & Anon_14=Anon_50&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [emp&v!=x --> v::node<Anon_49,Anon_50>@M * (HP_51(Anon_50))&
+                   true]
+
+infer [HP_6,x]
+HP_6(v) * xp::node<val_35_804,n> & x=xp & n!=x & n=v 
+ |-  v::node<_,_> .
+print residue.
+
+infer [HP_6,x]
+HP_6(n) * xp::node<val_35_804,n> & x=xp & n!=x & n=v 
+ |-  v::node<_,_> .
+print residue.
+
+***************************************************
+# cll-d3a.slk: DONE (--sa-split-base)
+
+infer [HP_6] HP_6(n) * x_814::node<_,n> & x=x_814 & n=x_814 & xp=null
+ |-  G(x,xp). 
+print residue.
+/*
+ Should we first obtain:
+   HP_6(n) * x::node<_,n> & x=n & xp=null --> G(x,xp)
+
+ After that, we can split to:
+   HP_6(n) & x=n --> emp
+   x::node<_,n> & x=n & xp=null --> G(x,xp)
+
+ This split should be organized as a procedure that is
+ invoked as --en-split-base ==> --sa-split-base
+
+ Why is x_814::node<..> duplicated in your split-base operation?
+
+ <1>HP_6(n)&x=x_814 & n=x_814 & xp=null&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [x_814::node<Anon_11,x_814>@M&xp=null --> G_28(x_814,xp)&
+                   true; 
+                  (HP_6(x_814)) * x_814::node<Anon_11,x_814>@M&true --> emp&
+                   true]
+*/
+
+infer [HP_6,x,G] HP_6(n) * x_814::node<_,n> & x=x_814 & n=x_814 & xp=null
+ |-  G(x,xp). 
+print residue.
+
+/*
+  Obtained:
+
+ <1>HP_6(n)&x=x_814 & n=x_814 & xp=null&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [x::node<Anon_12,x>@M&xp=null --> G_39(x,xp)&true; 
+                  (HP_6(x_814)) * x_814::node<Anon_12,x_814>@M&true --> emp&
+                   true]
+
+  Why did we not capture  x!=x_814 below?
+  Remember that this is always for pre-pred implication.
+
+  HP_6(x_814) & x=x_814 --> emp
+  x::node<_,n> & n=x & xp=null -> G(x,xp).
+
+*/
+
+***************************************************
+# cll-d3b.slk: FIXED
+
+some scenarios for inferences
+
+//sol: check infer_vars_hp in rhs only
+infer [HP_6] HP_6(x) * x::node<_,x> & xp=null
+ |-  G(x,xp).
+print residue.
+// expecting a failure since G(..) is not to be inferred
+
+infer [G] HP_6(x) * x::node<_,x> & xp=null
+ |-  G(x,xp). 
+print residue.
+/*
+ expecting
+   x::node<_,x> & xp=null --> G(x,xp)
+  since HP_6 is not to be inferred
+*/
+
+infer [G,HP_6] HP_6(x) * x::node<_,x> & xp=null
+ |-  G(x,xp). 
+print residue.
+/*
+ expecting
+   HP_6(x) & x::node<_,x> & xp=null --> G(x,xp)
+ which is later base-splitted into:
+   HP_6(x) --> emp
+   x::node<_,x> & xp=null --> G(x,xp)
+*/
+
+infer [G,HP_6,x] HP_6(x) * x::node<_,x> & xp=null
+ |-  G(x,xp). 
+print residue.
+/*
+ expecting
+   HP_6(x) & x::node<_,x> & xp=null --> G(x,xp)
+ which is later base-splitted into:
+   HP_6(v) & v=x --> emp
+   x::node<_,x> & xp=null --> G(x,xp)
+*/
+***********************************************
+# bug-imm.ss (TODO Andreea to fix)
+
+/* function to delete the node after the head in a circular list */
+void delete(ref node x)
+
+	requires x::ll<> & x!=null
+	ensures x'::ll<> & x::node<_,null>;
+
+/*
+
+Post-cond has a "conjunction" but this result in
+wrong message below:
+
+Exception Failure("The postcondition cannot contain @L heap predicates/data nodes/field annotations\n") Occurred!
+(Program not linked with -g, cannot print stack backtrace)
+
+
+*/
+***********************************************
+# ll-d1.slk: FIXED
+
+
+relAssume  H
+ H(x) --> x::node<_,nn> .
+relAssume  G
+ x::node<_,null> &  x'=null  --> G(x,x').
+relAssume  G
+ x::node<_,null> &  x'=nn --> G(x,x').
+
+This bug occurs before merging with default too.
+
+/*
+!! >>>>>> step 1: find dangling ptrs that link pre and post-preds<<<<<<
+ERROR: at _0:0_0:0 
+Message: SAU.drop_get_hrel: not handle yet
+ Fatal error: exception Failure("SAU.drop_get_hrel: not handle yet")
+
+*/
+
+*****************************************************
+# cll-d3a.slk (without --sa-split-base)  OK
+
+infer [HP_6,G] HP_6(n) * x_814::node<_,n> & x=x_814 & n=x_814 & xp=null
+ |-  G(x,xp). 
+print residue.
+/*
+Got:
+ <1>emp&x=x_814 & n=x_814 & xp=null & x=x_814&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [(HP_6(n)) * x_814::node<Anon_11,n>@M&n=x_814 & 
+                   xp=null --> G(x_814,xp)&true]
+Expecting:
+  (HP_6(n)) * x_814::node<Anon_11,n>@M&n=x_814 & 
+                   xp=null & x=x_814 --> G(x_814,xp)&true]
+
+Look at RHS G(x_814,xp). Extract connected heap predicate for x_815
+and all pure predicates linked from there and x_418,xp.
+
+*/
+
+infer [HP_6,G,x] HP_6(n) * x_814::node<_,n> & x=x_814 & n=x_814 & xp=null
+ |-  G(x,xp). 
+print residue.
+/*
+
+Got:
+<1>HP_6(n)&x=x_814 & n=x_814 & xp=null&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [(HP_6(x)) * x::node<Anon_12,x>@M&xp=null --> G(x,xp)&true]
+
+Expecting:
+<1> emp &x=x_814 & n=x_814 & xp=null&{FLOW,(19,20)=__norm}[]
+  (HP_6(n)) * x_814::node<Anon_11,n>@M&n=x_814 & 
+                   xp=null & x=x_814 --> G(x_814,xp)&true]
+
+Look at RHS G(x_814,xp). Extract connected heap predicate for x_815
+and all pure predicates linked from there and x_418,xp.
+
+*/
+***********************************************************************
+# cll-d3a.slk --sa-split-base  OK
+
+infer [HP_6,G] HP_6(n) * x_814::node<_,n> & x=x_814 & n=x_814 & xp=null
+ |-  G(x,xp).
+print residue.
+/*
+Got:
+ <1>HP_6(n)&x=x_814 & n=x_814 & xp=null & x=x_814&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [x_814::node<Anon_11,n>@M&n=x_814 & xp=null --> G(x_814,xp)&
+                   true;
+                  HP_6(n)&n=x_814 --> emp&true]
+Problems :
+  (i) why is HP_6(n) present in the residue?
+       <1>HP_6(n)&x=x_814 & n=x_814 & xp=null & x=x_814&{FLOW,(19,20)=__norm}[]
+
+ (ii) For pre-predicate on the LHS, we should just have:
+                  HP_6(n) --> emp
+
+Solution:
+=========
+Assuming:
+  (HP_6(n)) * x_814::node<Anon_11,n>@M&n=x_814 &
+                   xp=null & x=x_814 --> G(x_814,xp)&true]
+Split:
+  (HP_6(n)) & n=x_814 & x=x_814 --> emp
+  x_814::node<Anon_11,n>@M& n=x_814 & 
+                   xp=null & x=x_814 --> G(x_814,xp)&true]
+
+Simplify :
+  HP_6(n)  --> emp  (using exists x_814,x)
+  x_814::node<Anon_11,n>@M& n=x_814 & 
+                   xp=null --> G(x_814,xp)&true (using exists x)
+
+*/
+
+infer [HP_6,G,x] HP_6(n) * x_814::node<_,n> & x=x_814 & n=x_814 & xp=null
+ |-  G(x,xp). 
+print residue.
+/*
+Got:
+ <1>HP_6(n)&x=x_814 & n=x_814 & xp=null&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [x::node<Anon_12,x>@M&xp=null --> G(x,xp)&true; 
+                  HP_6(x)&true --> emp
+
+  (i) why is HP_6(n) present in the residue?
+       <1>HP_6(n)&x=x_814 & n=x_814 & xp=null & x=x_814&{FLOW,(19,20)=__norm}[]
+
+ (ii) For pre-pred on the LHS, we should keep var x and n
+      separately, and generate instead:
+                  HP_6(n) & n=x --> emp
+
+*/
+Solution:
+=========
+Assuming:
+  (HP_6(n)) * x_814::node<Anon_11,n>@M&n=x_814 & 
+                   xp=null & x=x_814 --> G(x_814,xp)&true]
+Split:
+  (HP_6(n)) & n=x_814 & x=x_814 --> emp
+  x_814::node<Anon_11,n>@M& n=x_814 & 
+                   xp=null & x=x_814 --> G(x_814,xp)&true]
+
+Simplify :
+  HP_6(n) & n=x  --> emp  (using exists x_814)
+  x_814::node<Anon_11,n>@M& n=x_814 & 
+                   xp=null --> G(x_814,xp)&true (using exists x)
+**********************************************************
+# TODO post-condition extraction of pre-pred for hip
+
+Towards the end of proving, we will need to extract
+pre-pred from the residue hip state during post-condition
+proving; if pre-pred  are being inferred.
+**********************************************************
+
+# ll-d2.slk  DONE
+
+relAssume  G
+ x::node<_,null> &  xp=null  --> G(x,xp).
+relAssume  G
+ x::node<_,null> &  xp!=null --> G(x,xp).
+
+shape_infer [][G].
+
+/*
+Got:
+ G(x_37,xp_38) ::= x_37::node<Anon_11,flted_10_16>@M * (HP_39(flted_10_16,xp_38))&true,
+ HP_39(flted_10_16,xp_38) ::= emp&flted_10_16=null & xp_38=null]
+
+However, expecting:
+ G(x_37,xp_38) ::= 
+     x_37::node<Anon_11,null>@M *& xp_38=null
+  or x_37::node<Anon_12,null>@M *& xp_38!=null
+
+*/
+**********************************************************
+# cll-d3a2.slk :
+
+Given :
+
+relAssume G
+   HP_6(n) * x_814::node<_,n>@M & n=x_814 & xp=null & x=x_814 --> G(x_814,xp) &true.
+shape_split_base [H,x][G].
+
+Got:
+
+ RELASS [G] unknown svl: ;  unknown hps: ;  predefined: ; x_814::node<Anon_11,n>@M&
+  n=x_814 & xp=null & x=x_814 --> G(x_814,xp)&true,
+
+ RELASS [HP_6] unknown svl: ;  unknown hps: ;  predefined: ; HP_6(x_814)&
+  true --> emp&true]
+
+Shouldn't HP_6 be since x was specified in [H,x]:
+
+   HP_6(x_814)& x=x_816 --> emp&true]
+
+
+
+/*
+ <1>emp&xp=null&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [(H(n)) * x::node<Anon_11,n>@M&xp=null --> G(x,xp)&true]
+
+At the sleek level, we do not know if H is a pre-pred or a post-pred.
+Hence, it is not useful to invoke --sa-split-base
+
+This must instead be done by shape_infer; after redundant pred has
+been identified and removed. For relAssume with both pre/post pred,
+we attempt to do a base-case split.
+
+To test it, we could support the following in sleek:
+DONE
+relAssume 
+   (H(n)) * x::node<Anon_11,n>@M&xp=null --> G(x,xp)&true.
+shape_split_base [H][G].
+
+TODO:
+Alternatively, we could use:
+ infer [H@pre,G@post] H(n) * x::node<_,n>  & xp=null
+   |-  G(x,xp). 
+ print residue.
+and then use the pre/post annotation to support
+base-case-split
+
+*/
+===========================================
+# ll-del-1.slk vs.: FIXED
+the first example of cll-d3b.slk
+
+Why is the following basic thing failing?
+
+infer [H] H(x) |-  x::node<_,_>. OK
+print residue.
+
+===========================================
+# cll-d3a2.slk 
+
+infer [H,G] HP_6(n) * x_814::node<Anon_11,n> & n=x_814 & 
+                   xp=null & x=x_814 
+ |-  G(x_814,xp). 
+print residue.
+
+/*
+We obtained:
+<1>HP_6(n)&n=x_814 & xp=null & x=x_814&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [x_814::node<Anon_11,n>@M&n=x_814 & xp=null --> G(x_814,xp)&
+                   true]
+
+How come we did not include HP_6(n)? I think at the very
+least, we should try to include XPURE(HP_6(n)):
+
+<1>HP_6(n)&n=x_814 & xp=null & x=x_814&{FLOW,(19,20)=__norm}[]
+ inferred hprel: 
+   x_814::node<Anon_11,n>@M&n=x_814 & xp=null & XPURE(HP_6(n)) 
+     --> G(x_814,xp)& true]
+
+*/
+
+
+===========================================
+
+relAssume G
+   HP_6(n) * x_814::node<_,n>@M & n=x_814 & xp=null & x=x_814 --> G(x_814,xp) &true.
+
+shape_split_base [H,x][G].
+/*
+
+ Shouldn't splitted HP_6 be:
+   HP_6(x_814)& x=x_816 --> emp&true]
+======================================
+# ll-getnext.slk: FIXED
+
+infer [HP_6,x,G] 
+ HP_6(next_23_782) * x::node<val_23_781,next_23_782>@M & next_23_782=res
+ |-  G(x,res). 
+
+/*
+SOLN:
+ - when compute residue after constraints generated, should consider closure of aliasing.
+ since constraints are in normal form,
+       but residue is not. and we want to drop exact matching of args
+ - test bugs/bug-app1b.slk together
+----------
+ <1>HP_6(next_23_782)&next_23_782=res&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [(HP_6(res)) * x::node<val_23_781,res>@M&true --> G(x,res)&
+                   true]
+
+ Problem: spurious residue:
+   Why is HP_6 not consumed?
+
+*/
+===============================================
+# ll-getnext.ss: DONE
+
+Why disjunct in post-pred?
+
+ H(x_799) ::= x_799::node<val_42_781,next_42_782>@M& XPURE(HP_786(next_42_782)),
+ G(x_800,res_801) ::= 
+ emp& XPURE(HP_786(res_801))
+ or x_800::node<val_42_781,res_801>@M& XPURE(HP_786(res_801))
+
+Please see ll-getnext-a.slk
+
+
+Why is there a spurious XPure(..) generated by hip that is
+not present in sleek command?
+
+ id: 6; caller: []; line: 20; classic: false; kind: POST; hec_num: 5; evars: []; c_heap: emp
+ checkentail (HP_783(next_23_782)) * x::node<val_23_781,next_23_782>@M[Orig]&
+next_23_782=res&{FLOW,(22,23)=__norm}[]
+ |-  G(x,res)&true&{FLOW,(22,23)=__norm}[]. 
+hprel_ass: [ (HP_783(res)) * x::node<val_23_781,res>@M&
+   XPURE(HP_786(next_23_782)) --> G(x,res)&true]
+   ^^^^^^^^^^^^^^^^^^^^^^^^^^
+res:  [
+  HP_783(next_23_782)&next_23_782=res&{FLOW,(22,23)=__norm}[]
+  es_infer_vars/rel: [x]
+  ]
+===============================================
+# ll-getnext2.ss -dd
+
+es_history is redundant and also duplicated es_heap,
+as trace below show.
+
+ es_heap: x::node<Anon_11,v_null_25_806>@M[Orig]
+ es_history: [x::node<Anon_11,q>@M[Orig]]
+
+=============================================
+# ll-getnext2a.ss: FIXED
+
+You have now generated:
+
+[ H(x_809) ::= x_809::node<val_26_784,next_26_785>@M& XPURE(HP_786(next_26_785)),
+ G(x,res) ::= x::node<val_26_784,v_null_27_793>@M&v_null_27_793=null & 
+ XPURE(HP_786(res)) &  XPURE(HP_786(res))]
+
+This is good. Not sure why XPURE(HP_786(res)) 
+was duplicated though. We can try to remove such
+a redundant step later.
+
+=============================================
+# ll-getnext2.slk: use --sa-inlining DONE
+
+WE got:
+
+H(x_42) ::= x_42::node<val_26_784,next_26_785>@M& XPURE(HP_27(next_26_785)),
+ G(x,res) ::= x::node<val_26_784,v_null_27_793>@M&v_null_27_793=null &  XPURE(HP_27(res))]
+
+and then generated below via --sa-inling:
+
+ H(x_42) ::= x_42::node<val_26_784,UU_next_26_43>@M&true,
+ G(x,res) ::= x::node<val_26_784,v_null_27_793>@M&v_null_27_793=null & UU_next_26_43=res]
+
+To avoid problem with naming, I suggest using instead the name
+of the predicates. That is:
+
+  UU_HP_27_UU: DONE
+
+rather than:
+
+  UU_next_26_4
+
+The above is more stable and not affected by variable renaming.
+
+ Why dangling introduction for shape_infer not working?
+
+relAssume H
+  H(x)&true --> x::node<val_26_784,next_26_785>@M * HP_6(next_26_785).
+ 
+relAssume G
+  HP_6(res) * x::node<val_26_784,v_null_27_793> 
+   & v_null_27_793=null --> G(x,res).
+
+shape_infer [H][G].
+
+/*
+
+H(x_42) ::= x_42::node<val_26_784,next_26_785>@M& XPURE(HP_27(next_26_785)),
+ G(x,res) ::= x::node<val_26_784,v_null_27_793>@M&v_null_27_793=null &  XPURE(HP_27(res))]
+
+Tried --sa-dangling, --sa-refine-dang, --sa-unify-dangling
+What are these different options anyway?
+
+How come we did not get:
+
+ H(x_42) ::= x_42::node<val_26_784,next_26_785>@M& 
+     UU_HP_27_UU=next_26_785),
+ G(x,res) ::= x::node<val_26_784,v_null_27_793>@M&v_null_27_793=null 
+     &  UU_HP_27_UU=res
+
+Solution: This could be done by replacing
+
+   XPure(P(v)) ==> UU_P_UU=v
+
+
+*/
+=================================================
+# ll-getnext-a.slk: FIXED
+
+Problem with post-derivation:
+
+relAssume H
+  H(x)&true --> x::node<_,next_26_785>@M * HP_6(next_26_785).
+relAssume G
+  HP_6(res) * x::node<_,res>  --> G(x,res).
+
+shape_infer [H][G].
+
+/*
+Output:
+
+[ H(x_40) ::= x_40::node<Anon_11,next_26_785>@M& XPURE(HP_27(next_26_785)),
+ G(x_41,res_42) ::= 
+ emp& XPURE(HP_27(res_42))
+ or x_41::node<Anon_12,res_42>@M& XPURE(HP_27(res_42))
+ ]
+
+However, defn of G should have been:
+
+  G(x,res) ::= x::node<_,res> & XPURE( HP_6(res)).
+
+Why did we have a disjunction?
+
+*/
+=================================================
+# ll-append9-10.ss: wo. --sa-split-base: OK
+
+=================================================
+# ll-del1a.slk
+
+ Why was XPURE(HP_6(..)) dropped?
+
+relAssume  G
+ x::node<_,nn> * HP_6(nn) & nn=null & x'=null  --> G(x,x').
+relAssume  G
+ x::node<_,null> * HP_6(nn) & nn!=null & x'=nn --> G(x,x').
+
+shape_infer [][G].
+
+/*
+ Obtained:
+
+[ G(x_44,x_45) ::= 
+ x_44::node<Anon_11,nn>@M&nn=null & x_45=null
+ or EXISTS(flted_14_25: x_44::node<Anon_11,flted_14_25>@M&flted_14_25=null & 
+    x_45!=null&[]
+ ]
+
+*/
+=================================================
+# ll-del.slk
+
+relAssume  H
+ H(x) --> x::node<_,nn> * HP_6(nn) .
+relAssume  G
+ x::node<_,nn> * HP_6(nn) & nn=null & x'=null  --> G(x,x').
+relAssume  G
+ x::node<_,null> * HP_6(nn) & nn!=null & x'=nn --> G(x,x').
+
+shape_infer [H,x][G].
+
+/*
+
+ H(x_65) ::= x_65::node<Anon_11,nn>@M&nn=null,
+ G(x_66,x_67) ::= 
+ x_66::node<Anon_12,nn>@M&nn=null & x_67=null
+ or EXISTS(flted_17_32: x_66::node<Anon_12,flted_17_32>@M&flted_17_32=null & 
+    x_67!=null&[]
+ ]
+
+How come HP_6 has been dropped?
+Why do we have nn=null in H(..) pred?
+
+Should it not have been:
+
+ H(x_65) ::= x_65::node<Anon_11,nn>@M& XPure(HP_6(nn))
+ G(x,x') ::= x::node<_,nn> * GH(nn,x') & HP_6(nn)
+ GH(nn,x') ::=  nn=null & x'=null or nn!=null & x'=nn
+
+=================================================
+# ll-del1b.slk
+
+HeapPred HP_6(node a).
+HeapPred G(node a, node a).
+
+relAssume  G
+ x::node<_,nn> * HP_6(nn) & nn=null & x'=null  --> G(x,x').
+
+shape_infer [][G].
+
+/*
+ Obtained:
+
+  G(x_23,x_24) ::= x_23::node<Anon_11,nn>@M&nn=null & x_24=null]
+
+ Why was XPURE(HP_6(..)) dropped?
+
+*/
+=================================================
+# ll-del1c.slk
+
+relAssume  G
+ x::node<_,null> * HP_6(nn) & nn!=null & x'=nn --> G(x,x').
+
+shape_infer [][G].
+
+/*
+ Obtained:
+
+[ G(x_28,x_29) ::= EXISTS(flted_11_16: x_28::node<Anon_11,flted_11_16>@M&flted_11_16=null & 
+nn=x_29 &  XPURE(HP_26(nn)) &  XPURE(G_27(x_29)) & nn!=null&[]]
+*
+ but where did HP_26 and G_27 came from?
+ and what happen to HP_6.
+
+*/
+=================================================
+# ll-del1b1.slk vs ll-del1b.slk
+
+ll-del1b1.slk Seems OK below:
+
+!!! >>>>>> step 6: generalization <<<<<<
+!!! before remove redundant:[]
+!!! after remove redundant:[]
+
+!!! before remove redundant:[[(G,[x,x'], x::node<Anon_11,nn>@M&x'=null &  XPURE(HP_21(nn)),[nn])]]
+!!! after remove redundant:[HP_RELDEFN G:  G(x_22,x_23) ::=  x_22::node<Anon_11,nn>@M&x_23=null &  XPURE(HP_21(nn))]
+*************************************
+*******relational definition ********
+*************************************
+[ G(x_22,x_23) ::= x_22::node<Anon_11,nn>@M&x_23=null &  XPURE(HP_21(nn))]
+
+However, for  ll-del1b.slk, we obtained instead below where there is
+an extra generalization step which removed HP_6!
+Why is there such an extra generalization step?
+
+!!! >>>>>> step 6: generalization <<<<<<
+!!! before remove redundant:[[(HP_6,[nn], emp&nn=null,[])]]
+!!! after remove redundant:[HP_RELDEFN HP_6:  HP_6(nn_22) ::=  emp&nn_22=null
+
+*************************************
+*******relational definition ********
+*************************************
+[ G(x_23,x_24) ::= x_23::node<Anon_11,nn>@M&nn=null & x_24=null]
+*************************************
+
+*/
+=================================================
+# ll-del1b2.slk: FIXED
+
+relAssume  G
+ x::node<_,nn> * HP_6(nn) & x'=null & nn=null  --> G(x,x').
+
+shape_split_base [][G].
+
+GOT:
+
+ RELASS [G] unknown svl: ;  unknown hps: ;  predefined: ; x::node<Anon_11,nn>@M&
+  nn=null & x'=null --> G(x,x')&true,
+ RELASS [HP_6] unknown svl: ;  unknown hps: ;  predefined: ; HP_6(nn)&
+  nn=null --> emp&true]
+
+But we should not split-base on HP_6 which is a
+redundant predicate that will be used as a dangling reference
+
+
+=================================================
+# ll-getnext2a1.slk: FIXED
+
+relAssume  H
+ H(vv) * x::node<_,vv> * HP_6(vv) --> G(x,res).
+
+shape_split_base [H][G].
+
+/*
+
+OBTAINED:
+[ RELASS [H] unknown svl: ;  unknown hps: ;  predefined: ; (H(vv)) * 
+  x::node<Anon_11,vv>@M * (HP_6(vv))&true --> G(x,res)&true]
+
+But we should strictly enforce a split. I am expecting:
+
+ x::node<_,vv> & XPURE(HP_6(vv)) --> G(x,res).
+ H(vv) & XPURE(HP_6(vv)) --> G(x,res).
+
+SOLUTION:
+  (i) first identify HP_6 as a redundant predicate
+      and convert it to XPURE(..) so that it can be freely
+      duplicated:
+    Thus, convert:
+      H(vv) * x::node<_,vv> * HP_6(vv) --> G(x,res).
+    into:
+      H(vv) * x::node<_,vv> & XPURE(HP_6(vv)) --> G(x,res).
+  (ii) traverse post-pred x::node<_,vv> & XPURE(HP_6(vv)) but
+       take care not to include pre-pred H(..).
+  (iii) traverse for pre-pred H(vv) & XPURE(HP_6(vv)) but
+       take care not to include any post-pred G(..).
+
+*/
+=================================================
+# loc-1.slk  OK
+
+HeapPred H(node a,node b).
+HeapPred HP_1(node a,node b).
+HeapPred HP_2(node a,node b).
+HeapPred G(node a, node a).
+
+relAssume  H // (1)
+ H(x,y) --> x::node<_,prev, next> * HP_1(prev, y) * HP_2(next,y).
+
+relAssume  HP_2 // (2)
+  HP_2(next,y) & next!=null 
+   --> next::node<_,prev, nn> * HP_1(prev, y) * HP_2(nn,y).
+
+relAssume  HP_2 // (3)
+  HP_2(next,y) & next=null --> emp.
+
+relAssume  G // (3)
+  next=null --> G(next,y).
+
+shape_infer [H,HP_2][G].
+
+/*
+
+OBTAINED:
+
+[ H(x_62,y_63) ::= x_62::node<Anon_11,prev,next>@M * (HP_2(next,y_63))& XPURE(H(y_63)) & 
+ XPURE(HP_1(prev)),
+
+ # why is there a XPURE(H(y_63))? 
+
+ HP_2(next_64,y_65) ::= HP_66(next_64,y_65)& XPURE(H(y_65)),
+
+ # why is there a XPURE(H(y_65))? 
+
+ G(next_67,y_68) ::= emp&next_67=null &  XPURE(G(y_68)),
+
+ # why is there a XPURE(G(y_68))? 
+
+ HP_66(next_64,y_65) ::= 
+ emp&next_64=null
+ or next_64::node<Anon_12,prev,nn>@M * (HP_66(nn,y_65))& XPURE(HP_1(prev))
+ ]
+
+
+*/
+=================================================
+# loc-1.slk -dd
+
+The -dd tracing for shape_infer is almost absent at the moment.
+This makes it difficult to trace the detailed steps of shape analysis.
+I think we need to add print out on meaningful steps taken
+using:
+
+  Debug.dinfo_pprint "..." pos
+  Debug.dinfo_hprint "..." pos
+
+!!!:0: 0: >>>>>> step 1: find dangling ptrs that link pre and post-preds<<<<<<
+
+   ##### Found HP_1,.. dangling ptrs
+
+!!!:0: 0: >>>>>> step 2: apply transitive implication<<<<<<
+
+  ##### Given:
+          HP_2(next,y) & next!=null --> H(next,y)
+  ##### Unfold H(..) to derive:
+          HP_2(next,y) & next!=null 
+          --> next::node<_,prev, nn> * HP_1(prev, y) * HP_2(nn,y).
+
+!!!:0: 0: >>>>>> step 1a: simplification <<<<<<
+!!!:0: 0: >>>>>> step 1b: do apply_transitive_imp <<<<<<
+
+   #### how is this different from Step 2?
+
+!!!:0: 0: IMP #1
+!!!:0: 0: imply_timeout: ante:  true
+!!!:0: 0: imply_timeout: conseq:  next_49=null &  XPURE(H(y_52))
+!!!:0: 0: ante 1: : true
+!!!:0: 0: ante 3: : true
+!!!:0: 0: ante 4: : true
+!!!:0: 0: res: :false
+!!!:0: 0: >>>>>> pre-predicates<<<<<<
+!!!:0: 0: res: :false
+!!!:0: 0: >>>>>> pre-predicates<<<<<<
+!!!:0: 0: >>>>>> step 3: remove unused predicates<<<<<<
+!!!:0: 0: pre-preds: [HP_1] are removed
+
+ ##### After removing HP_1, derived:
+    H(x,y) --> x::node<_,prev, next> * HP_2(next,y) & XPURE(HP_1(prev, y)).
+    HP_2(next,y) & next!=null 
+          --> next::node<_,prev, nn> * HP_2(nn,y) & XPURE(HP_1(prev, y)) .
+
+!!!:0: 0: >>>>>> pre-predicates: step 4: group & simpl impl<<<<<<
+!!!:0: 0: >>>>>> pre-predicates: step 5: combine<<<<<<
+!!!:0: 0: SAT #2
+!!!:0: 0:  next!=null &  XPURE(HP_1(prev)) &  XPURE(H(y)) & next=null &  XPURE(H(y))
+!!!:0: 0: SAT #3
+!!!:0: 0:  next=null &  XPURE(H(y)) & next!=null &  XPURE(HP_1(prev)) &  XPURE(H(y))
+!!!:0: 0: >>>>>> pre-predicates: step 6: remove redundant x!=null<<<<<<
+!!!:0: 0: >>>>>> pre-predicates: step 7: strengthen<<<<<<
+!!!:0: 0: >>>>>> step 6: generalization <<<<<<
+========================================================
+# ll-del1b.slk: DONE
+
+relAssume  G
+ x::node<_,nn> * HP_6(nn) & nn=null & x'=null  --> G(x,x').
+shape_infer [][G].
+
+For shape_infer, any heap predicate not declared
+as pre or post will automatically be classified as dangling.
+
+Thus, for this example, once we have identified HP_6 to be dangling,
+we will immediately convert from:
+ x::node<_,nn> * HP_6(nn) & nn=null & x'=null  --> G(x,x').
+to:
+ x::node<_,nn> & nn=null & x'=null & XPURE(HP_6(nn))  --> G(x,x').
+
+The presence of HP_6 would allow us to link with the dangling
+reference (named as UU_HP_6_UU) in pre-condition; despite
+any substitution that may occur; such as:
+
+ x::node<_,null> & x'=null & XPURE(HP_6(null))  --> G(x,x').
+
+This would not cause a problem, as we can use --sa-inlining
+to obtain below:
+
+ x::node<_,null> & x'=null & UU_HP_6_UU=null  --> G(x,x').
+
+where UU_HP_6_UU would have been a logical variable from pre-condition.
+===========================================================
+# loc-2a.slk: FIXED
+
+relAssume  H // (1)
+ H(x,y) --> x::node<_,prev, next> * HP_1(prev,y) *  HP_2(next,y) .
+relAssume  HP_2 // (2)
+  HP_2(next,y) & next!=null --> H(next,y).
+relAssume  HP_2 // (3a)
+  HP_2(next,y) & next=null  --> emp & true.
+relAssume G // (3b)
+ next=null  --> G(next,y).
+
+shape_infer [H,HP_2][G].
+
+/*
+Output for this example need to be corrected.
+   (i) use XPURE(HP_1(prev,y_98)) which can be
+       --sa-inlined to UU_HP_1_UU=prev
+  (ii) do not generate non dangling predicate, such as:
+         G(y_94) which is a post-pred.
+
+ H(x_88,y_89) ::= x_88::node<Anon_11,prev,next>@M * (HP_2(next,y_89))
+   & XPURE(HP_1(y_89)) & XPURE(HP_1(prev)),
+  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^ should just be XPURE(HP_1(prev,y_89) ^^^^
+
+ HP_2(next_90,y_91) ::= HP_92(next_90,y_91)& XPURE(HP_1(y_91)),
+                                             ^^^^^^^^^ should not be there
+ G(next_93,y_94) ::= emp&next_93=null &  XPURE(G(y_94)),
+                                             ^^^^^^^^^ should not be there
+ HP_92(next_90,y_91) ::= 
+ emp&next_90=null
+ or next_90::node<Anon_11,prev,next>@M * (HP_92(next,y_91))&
+     XPURE(HP_1(prev))
+     ^^^^^^^^^ be just HP_1(prev,y_91)
+
+
+SOLUTION:
+ From the instruction.
+    shape_infer [H,HP_2][G].
+
+ Step 1: we will first compute heap pred sets
+    pre_set={H,HP_2}
+    post_set={G}
+    all_set={H,HP_2,G}.
+
+ Step 2: We will then gather four relAssume with 
+   for shape inference from all_set; 
+
+ Step 3: We will find all heap predicates H_set ={H,HP_1,H_2,G}
+   in the 4 relAssume; and then compute
+     dangling_set=H_set-all_set
+                 = {HP_1}
+
+ Step 4: With dangling_set, we need only transform the first relAssume
+ to:
+    H(x,y) --> x::node<_,prev, next> *  HP_2(next,y) & XPURE(HP_1(prev,y)).
+
+ After this shape preprocessing, we can proceed with shape inference
+
+*/
+===========================================================
+# loc-1a.slk: FIXED
+
+relAssume  H // (1)
+ H(x,y) --> x::node<_,prev, next> * HP_1(prev, y) * HP_2(next,y).
+relAssume  HP_2 // (2)
+  HP_2(next,y) & next!=null --> H(next,y).
+relAssume  HP_2 // (3)
+ HP_2(next,y) & next=null --> G<next,y>                             (3)
+
+shape_infer [H,HP_2][G].
+
+/*
+
+Say we managed to infer below from HIP
+
+ H(x,y) --> x::node2<_,prev, next> * HP_1(prev, y) * HP_2(next,y).  (1)
+ HP_2(next,y) & next!=null --> H(next,y)                            (2)
+ HP_2(next,y) & next=null --> G<next,y>                             (3)
+
+I think our shape_infer has to be performed in two steps:
+   (i) shape pre-processing
+   (ii) pre/post shape inference
+
+Shape pre-processing would have to perform the following
+steps
+  (i) note the pre/post predicates e.g. [H,HP_2][G]
+  (ii) identify dangling predicates, e.g. [HP_1]
+       and convert to XPURE(HP_1(..)) form
+ (iii) perform base-case split.
+
+Thus. given:
+  shape_infer [H,HP_2,x][G].
+
+It would indicate two things:
+  (i) HP_1 is dangling predicate
+ (ii) the 3rd implication needs to be
+      subjected to a base-case-split
+
+Hence, (1) would be changed to:
+
+ H(x,y) --> x::node2<_,prev, next> * HP_2(next,y) & XPURE(HP_1(prev, y)).
+
+and (3) would be base-case-split into:
+
+ HP_2(next,y) & next=null --> emp  (3a)
+ next=null --> G<next,y>           (3b)
+
+With this shape pre-processing, we would now have the following
+refined implications:
+
+ H(x,y) --> x::node2<_,prev, next> * HP_2(next,y) & XPURE(HP_1(prev, y)).
+ HP_2(next,y) & next!=null --> H(next,y)
+ HP_2(next,y) & next=null --> emp
+ next=null --> G<next,y> 
+
+After this, we can subject this list of refined implications
+to our proper shape_infer procedure?
+
+*/
+===========================================================
+# loc-1d.slk (vs loc-1e.slk): FIXED
+
+relAssume  H // (1)
+ H(x,y) --> x::node<_,next> * HP_2(next,y).
+relAssume  HP_2 // (2)
+  HP_2(next,y) & next!=null --> H(next,y).
+relAssume  HP_2 // (3)
+  HP_2(next,y) & next=null --> emp.
+
+shape_infer [H,HP_2][].
+
+/*
+ Obtained:
+
+[ H(x_57,y_58) ::= x_57::node<Anon_11,next>@M * (HP_2(next,y_58))
+    & XPURE(H(y_58)),
+      ^^^^^^^^^^^^^^
+ HP_2(next_59,y_60) ::= HP_61(next_59,y_60)& XPURE(H(y_60)),
+                                             ^^^^^^^^^^^^^^
+ HP_61(next_59,y_60) ::= 
+ emp&next_59=null
+ or next_59::node<Anon_11,next>@M * (HP_61(next,y_60))&true
+ ]
+
+Why did we have spurious XPURE(...)?
+Why did we have an extra HP_61(..)?
+Please compare this with loc-1e.slk which did not have this problem.
+
+SOLUTION
+========
+(i) no dangling predicate detected; hence do not ever introduce
+    XPURE(..)
+(ii)
+   H(x,y) --> x::node<_,next> * HP_2(next,y) (1)
+   HP_2(next,y) & next!=null --> H(next,y)    (2)
+   HP_2(next,y) & next=null --> emp    (3)
+
+ From (2), unfold H(..) to obtain:
+   HP_2(next,y) & next!=null --> next::node<_,nn> * HP_2(nn,y)   (2a)
+
+ From (3) and (2a), derive:
+   HP_2(next,y) == next::node<_,nn> * HP_2(nn,y) & next!=null
+     or next=null
+
+ From (1), derive:
+   H(x,y) == x::node<_,next> * HP_2(next,y) 
+
+*/
+===========================================================
+# loc-1b.slk
+
+relAssume  H // (1)
+ H(x,y) --> x::node<_,prev, next> * HP_2(next,y) & XPURE(HP_1(prev, y)).
+relAssume  HP_2 // (2)
+  HP_2(next,y) & next!=null --> H(next,y).
+relAssume  HP_2 // (3)
+ HP_2(next,y) & next=null --> emp.
+relAssume  G // (3)
+ next=null --> G(next,y).
+
+shape_infer_proper [H,HP_2][G].
+
+/*
+I think we need to introduce a new instruction
+without shape pre-processing
+
+  shape_infer_proper [H,HP_2][G].
+
+Expecting:
+  (i) no dangling predicate detected since it is already on XPURE(...)
+      found_set computed as {H,HP_2,G}
+ (ii) no base-case split detected
+ (iii) shape_infer_proper[H,HP_2][G] would then generate:
+
+   H(x,y) == x::node2<_,prev, next> * HP_2(next,y) 
+              & XPURE(HP_1(prev, y)).
+   HP_2(next,y) == emp & next=null
+     or next::node2<_,prev,post> * HP_2(next,y) & XPURE(HP_1(prev, y)).
+   G(next,y) == next=null 
+
+
+*/
+===========================================================
+# loc-1c.slk:FIXED
+
+relAssume  H // (1)
+ H(x,y) --> x::node<_,prev, next> * HP_2(next,y).
+relAssume  HP_2 // (2)
+  HP_2(next,y) & next!=null --> H(next,y).
+relAssume  HP_2 // (3)
+  HP_2(next,y) & next=null --> emp.
+
+shape_infer [H,HP_2][].
+
+/*
+Two problems above
+  (i) no dangling predicate used bit
+      we still have two XPURE(..) below
+ (ii) why did we have a new HP_68 pred?
+      Can we not use just HP_2 itself.
+
+[ H(x_64,y_65) ::= x_64::node<Anon_11,prev,next>@M * (HP_2(next,y_65))
+    & XPURE(H(y_65)),
+      ^^^^^^^^^^^^^^
+ HP_2(next_66,y_67) ::= HP_68(next_66,y_67)& XPURE(H(y_67)),
+                                             ^^^^^^^^^^^^^^
+ HP_68(next_66,y_67) ::= 
+ emp&next_66=null
+ or next_66::node<Anon_11,prev,next>@M * (HP_68(next,y_67))&true
+ ]
+
+
+*/
+===========================================================
+# loc-1c2.slk: FIXED
+
+relAssume  G // (3)
+ next=null --> G(next,y).
+
+shape_infer [][G].
+
+/*
+
+OBTAINED:
+
+ G(next_16,y_17) ::= emp&next_16=null &  XPURE(G(y_17))]
+
+Why is G considered redundant and a dangling predicate?
+Correct answer should just be:
+
+ G(next_16,y_17) ::= emp&next_16=null 
+
+
+# loc-1a.slk OK
+
+OBTAINED
+========
+[ H(x_86,y_87) ::= x_86::node<Anon_11,prev,next>@M * (HP_2(next,y_87))
+      & XPURE(H(x_86,y_87)),
+        ^^^^^^^^^^^^^^^^^^^
+ HP_2(next_88,y_89) ::= 
+ emp&next_88=null
+ or next_88::node<Anon_11,prev,next>@M * (HP_2(next,y_89))&
+     XPURE(H(next_88,y_89))
+     ^^^^^^^^^^^^^^^^^^^^^^
+ 
+Instead of XPURE(H(x_86,y_87)), it should have been
+          XPURE(HP_1(x_86,y_87))
+since HP_1 is the dangling predicate..
+
+
+=================================================
+# ll-getnext2a.slk : FIXED
+
+relAssume  H
+ H(x)  --> x::node<_,nn>@M * HP_6(nn).
+
+relAssume  H
+ HP_6(res) * x::node<_,vv> & vv=null --> G(x,res).
+
+shape_infer [H][G].
+
+Obtained:
+
+ H(x_37) ::= x_37::node<Anon_11,nn>@M& XPURE(HP_6(nn)),
+ G(x_38,res_39) ::= x_38::node<Anon_12,vv>@M&vv=null]
+
+What happened to XPURE(HP_6(res)) in post-pred G?
+which was generated by ll-getnext2a2.slk.
+
+Also, test with --sa-inlining gave:
+
+ H(x_37) ::= x_37::node<Anon_11,nn>@M& XPURE(HP_6(nn)),
+ G(x_38,res_39) ::= x_38::node<Anon_12,vv>@M&vv=null]
+
+Where is the linking/dangling ptr?
+
+However, separately pre/post inference for
+  post-pred H in ll-getnext2a2.slk
+  pre-pred H in  ll-getnext2a3.slk
+seems to work OK.
+======================================================
+# ll-getnext2-1.slk: FIXED
+
+parser error here:
+XPURE(..) can be used in RHS but not LHS, as below.
+Can this error be fixed.
+
+ File "ll-getnext2-1.slk", line 17, characters 38-39
+ error: Stream.Error("[id_list] expected after OPAREN (in [cexp_w])")
+
+
+===========================================================
+
+# ll-getnext2-1.slk --sa-inlining: FIXED
+
+How come --sa-inlining did not have UU_HP_6_UU?
+
+relAssume G
+  x::node<_,vv> & vv=null & XPURE(HP_6(res)) 
+   --> G(x,res).
+shape_infer [][G].
+[ G(x_23,r_24) ::= x_23::node<Anon_11,vv>@M&vv=null]
+
+
+However, below works fine instead!
+
+ll-getnext2a2.slk --sa-inlining
+
+
+relAssume  G
+ HP_6(res) * x::node<_,vv> & vv=null --> G(x,res).
+shape_infer [][G].
+
+[ G(x_23,res_24) ::= x_23::node<Anon_11,vv>@M&vv=null & UU_HP_6_UU=res_24]
+
+===========================================================
+
+# loc-4a2.slk: FIXED
+
+BUT why did we get: so many "emp" below!
+========================================
+[ HP_2(next,y) ::= (emp) & (emp)&next=null,
+ G(x_40,y_41) ::= EXISTS(flted_14_22: (emp) & x_40::node<Anon_11,Anon_12,flted_14_22>@M&
+flted_14_22=null&[]]
+
+===========================================================
+
+# loc-1b1.slk --sa-inlining
+
+Why isn't UU_HP_1_UU not being generated?
+
+ H(x_93,y_94) ::= x_93::node<Anon_11,prev,next>@M * (HP_2(next,y_94))&true,
+ HP_2(next_95,y_96) ::= 
+ next_95::node<Anon_11,prev,next>@M * (HP_2(next,y_96))&true
+ or emp&next_95=null
+
+However, loc-1b1.slk (looks OK)
+
+ H(x_93,y_94) ::= x_93::node<Anon_11,prev,next>@M * (HP_2(next,y_94))& XPURE(HP_1(prev,y_94)),
+ HP_2(next_95,y_96) ::= 
+ emp&next_95=null
+ or next_95::node<Anon_11,prev,next>@M * (HP_2(next,y_96))&
+     XPURE(HP_1(prev,y_96))
+ ,
+ G(next_97,y_98) ::= emp&next_97=null &  XPURE(HP_1(prev,y_98))]
+
+
+===========================================================
+
+# loc-1b2.slk: FIXED
+
+!!! after remove redundant:[HP_RELDEFN G:  G(next_43,y_44) ::=  emp&next_43=null &  XPURE(HP_1(prev,y_44))]
+ERROR: at _0:0_0:0 
+Message: sac.obtain_xpure
+ Fatal error: exception Failure("sac.obtain_xpure")
+
+===========================================================
+
+# loc-4a3.slk: FIXED
+
+1. split-base caused problem with loc-4a.slk
+
+2. please print input/output of split-base in -dd
+   so that we can visualize its effects without
+   having to write another sleek file.
+
+relAssume  G // (3)
+  HP_2(next,y) & x::node<_,_, null>  & next=null  -->  G(x,y).
+
+shape_split_base [HP_2][G].
+
+/*
+GOT:
+
+[ RELASS [G] unknown svl: ;  unknown hps: ;  predefined: ; 
+   EXISTS(flted_14_22: 
+   x::node<Anon_11,Anon_12,flted_14_22>@M&next=null & flted_14_22=null&
+   [] --> G(x,y)&true,
+ RELASS [HP_2] unknown svl: ;  unknown hps: ;  predefined: ; 
+   HP_2(next,y)/&\(emp)&next=null --> emp&true
+
+Expecting:
+   x::node<Anon_11,Anon_12,flted_14_22>@M 
+      & flted_14_22=null --> G(x,y)&true,
+   HP_2(next,y) & next=null --> emp&true]
+
+Problems:
+   (i)   next=null should not be in the first --> G(..)
+   (ii) /&\emp should not be present in 2nd -->
+*/
+===========================================================
+# loc-1b1.slk: FIXED
+
+How come we now have below? where did next=null and  XPURE(G(next,y)) 
+come from? It seems the detection of dangling predicate is having
+problem again
+
+[ HP_2(next_37,y_40) ::= emp& XPURE(HP_2(next_37,y_40)),
+ H(x,y) ::= 
+ x::node<Anon_11,prev,next>@M& XPURE(HP_1(prev,y)) &  XPURE(HP_2(next,y))
+ or x::node<Anon_36,prev_38,next_37>@M&next=null &  XPURE(HP_2(next_37,y)) & 
+     XPURE(G(next,y))
+ ,
+ G(next,y) ::= emp&next=null &  XPURE(HP_1(prev,y))]
+
+
+You generated:
+ HP_2(next,y) ::= emp& XPURE(HP_2(next,y)),
+ H(x_41,y_42) ::= x_41::node<Anon_11,prev,next>@M& XPURE(HP_1(prev,y_42)) & 
+ XPURE(HP_2(next,y_42)),
+ G(next_43,y_44) ::= emp&next_43=null &  XPURE(HP_1(prev,y_44))]
+which seems to have identified HP_2 as a dangling predicate.
+
+However, I think there is no necessity to provide a definition
+for it:
+ HP_2(next,y) ::= emp& XPURE(HP_2(next,y)),
+
+I think it is probably more deterministic to just generate:
+ H(x_41,y_42) ::= x_41::node<Anon_11,prev,next>@M *
+                    HP_2(next,y_42) & XPURE(HP_1(prev,y_42))
+ G(next_43,y_44) ::= emp&next_43=null &  XPURE(HP_1(prev,y_44))]
+
+--sa-inlining gave:
+
+ HP_2(next,y) ::= emp&UU_HP_2_UU=next,
+ H(x_41,y_42) ::= x_41::node<Anon_11,UU_HP_1_UU,UU_HP_2_UU>@M&true,
+ G(next_43,y_44) ::= emp&next_43=null]
+
+Expecting:
+
+ (HP_2 is selected, we should keep it)
+ H(x_41,y_42) ::= x_41::node<Anon_11,UU_HP_1_UU,next) 
+     * HP_2(next,y_42) &true,
+       ^^^^^^^^^^^^^^^
+ G(next_43,y_44) ::= emp&next_43=null & prev=UU_HP_1_UU
+                                        ^^^^^^^^^^^^^^^
+===========================================================
+
+# pre-2.slk  FIXED
+
+relAssume  H // (1)
+ H(x) & x=null --> emp.
+relAssume  HP // (2)
+ H(x) --> x::node<_,next> * HP_2(next) .
+
+shape_infer [H][].
+
+/*
+
+GOT:
+[ H(x) ::= x::node<Anon_11,next>@M& XPURE(HP_2(next))
+        or emp&x=null
+ ]
+
+EXPECTING:
+[ H(x) ::= x::node<Anon_11,next>@M& XPURE(HP_2(next))
+]
+
+===========================================================
+
+# loc-1b1.slk 
+
+You now generated:
+
+[ HP_2(next,y) ::= emp& XPURE(HP_2(next,y)),
+ H(x_41,y_42) ::= x_41::node<Anon_11,prev,next>@M& XPURE(HP_2(next,y_42)) & 
+ XPURE(HP_1(prev,y_42)),
+ G(next_43,y_44) ::= emp&next_43=null &  XPURE(HP_1(prev,y_44))]
+
+BUT --sa-inlining loses the link prev=UU_HP_1_UU which I think
+is important.
+
+[ HP_2(next,y) ::= emp&UU_HP_2_UU=next,
+ H(x_41,y_42) ::= x_41::node<Anon_11,UU_HP_1_UU,UU_HP_2_UU>@M&true,
+ G(next_43,y_44) ::= emp&next_43=null]
+
+
+For example, for pre-post; we may have:
+
+  requires x::node<_,UU_HP_1>
+  ensures  x::node<_,y> & UU_HP_1=null 
+           or x::node<_,z> & UU_HP_1!=null
+
+===================================================
+# loc-1b3.slk 
+
+relAssume  H // (1)
+ H(x,y) --> x::node<_,next> * HP_2(next,y).
+
+relAssume  G // (3)
+  x::node<_,y> *
+  HP_2(next, y) 
+   //& next=null 
+  --> G(x,y).
+
+shape_infer_proper [H][G].
+
+/*
+WE GOT:
+
+[ H(x_49,y_50) ::= x_49::node<Anon_11,next>@M& XPURE(HP_2(next,y_50)),
+ G(x,y_40) ::= (H(x_39,y_40)) * x::node<Anon_12,y_40>@M&true,
+ G(x_51,y_52) ::= x_51::node<Anon_12,y_52>@M& XPURE(HP_2(next,y_52))]
+
+Why is there an extra equation:
+
+ G(x,y_40) ::= (H(x_39,y_40)) * x::node<Anon_12,y_40>@M&true,
+
+Where did H(..) come from?
+
+-dd showed. Can u print before this step to see if problem
+is at this step or the one before??
+
+!!!:0: 0: >>>>>> step pre-4: remove unused predicates<<<<<<
+!!!:0: 0: pre-preds: [HP_2] are removed
+!!!:0: 0:    After removing, derived:
+[ H(x,y)&true --> x::node<Anon_11,next>@M& XPURE(HP_2(next,y)),
+ (H(x_39,y_40)) * x::node<Anon_12,y_40>@M&true --> (G(x,y_40)) * 
+  x_39::node<Anon_37,next_38>@M&true]
+
+*/
+
+===================================================
+# pre-2c.slk: FIXED
+
+relAssume  H // (1)
+ H(x) --> x=null.
+relAssume  HP // (2)
+ H(x) --> x::node<_,next> * HP_2(next) .
+
+
+/*
+
+GOT:
+[ H(x) ::= 
+ x::node<Anon_11,next>@M& XPURE(HP_2(next))
+ or emp&x=null
+ ]
+
+EXPECTING:
+  H(x) == false
+
+
+relAssume  H // (1)
+ H(x) --> x::node<_,n> & n=null .
+relAssume  HP // (2)
+ H(x) --> x::node<_,next> * next::node<_,_>.
+
+===================================================
+# pre-2d.slk: FIXED
+
+relAssume  H // (1)
+ H(x) --> x::node<_,next> & next=null.
+relAssume  HP // (2)
+ H(x) --> x::node<_,next> * HP_2(next) .
+
+
+GOT
+===
+[ H(x_31) ::= x_31::node<Anon_11,next>@M * x_31::node<Anon_12,next>@M&next=null & 
+ XPURE(HP_2(next))]
+
+EXPECT
+======
+
+ H(x) --> x::node<_,next> & next=null /\ x::node<_,next> * HP_2(next) 
+      --> x::node<_,next> & (next=null /\ XPURE(HP_2(next)) 
+
+===================================================
+# pre-2e.slk: FIXED
+
+relAssume  H // (1)
+ H(x) --> x::node<_,next> .
+relAssume  HP // (2)
+ H(x) --> x::node<_,next> * next::node<_,null>.
+
+
+shape_infer [H][].
+
+/*
+
+GOT
+===
+[ H(x_37) ::= x_37::node<Anon_11,next>@M * x_37::node<Anon_12,next>@M * 
+next::node<Anon_13,flted_13_23>@M&flted_13_23=null]
+
+EXPECT
+======
+
+ H(x) --> x::node<_,next> & next=null /\ x::node<_,next> * HP_2(next) 
+      --> x::node<_,next> * next::node<_,null>
+
+
+*/
+===================================================
+# pre-2f.slk: FIXED
+
+/*
+
+GOT
+===
+ H(x_36) ::= x_36::node<Anon_11,n>@M * x_36::node<Anon_12,next>@M * 
+next::node<Anon_13,Anon_14>@M&n=null]
+
+
+EXPECT
+======
+
+ H(x) --> x::node<_,n> & n=null /\ x::node<_,next> * next::node<_,_> 
+      --> x::node<_,next> * next::node<_,_> & next=null
+      --> false
+
+
+*/
+
+
+===================================================
+# s_conseq-1.slk: FIXED
+
+relAssume  H
+ x::node<_,prev, next> * HP_1(prev,y) *  HP_2(next,y) -->
+  H(x,y).
+relAssume  H
+ HP_2(next,y) & next!=null 
+      --> H(next,y).
+shape_strengthen_post [H,HP_2][].
+
+Two problems:
+ (i) shape_strengthen_conseq
+(ii) replace the 2nd relAssume.
+
+/*
+GOT
+
+
+[ HP_2(next_32,y_31)&next_32!=null --> next_32::node<Anon_11,prev,next>@M * 
+  (HP_1(prev,y_31)) * (HP_2(next,y_31))&true,
+  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ x_33::node<Anon_34,prev_35,next_36>@M * (HP_1(prev_35,y_37)) * 
+  (HP_2(next_36,y_37))&true --> HP_2(x_33,y_37)&x_33!=null]
+
+
+Expecting
+=========
+
+ x::node<_,prev, next> * HP_1(prev,y) *  HP_2(next,y) -->
+  H(x,y).
+ HP_2(next,y) & next!=null 
+      --> next::node<_,prev, nn> * HP_1(prev,y) *  HP_2(nn,y) 
+
+
+*/
+==========================================================
+# sb-4.slk
+
+relAssume  G // (3)
+  HP_1(next, y) & next=null --> G(next,y).
+
+shape_split_base [H,HP_1][G].
+
+/*
+
+GOT:
+[ emp&next=null --> G(next,y)&true,
+ HP_1(next,y)&next=null --> emp&true]
+
+However, if given option, --sa-inst-split
+can we generate instead:
+
+[ HL(y) &next=null --> G(next,y)&true,
+ HP_1(next,y)&next=null --> HL(y) &true]
+
+where HL(y) is a new unknown predicate with
+no definition. It can be considered a primitive predicate.
+
+==========================================================
+# sb-4a.slk
+
+HeapPred HP_1(node a,node@NI b).
+relAssume  G // (3)
+  HP_1(next, y) & next=null --> G(next,y).
+
+shape_split_base [H,HP_1][G].
+
+/*
+# sb-4a.slk
+--sa-inst-split is for a split that can
+instantiate its parameter.
+
+EXPECT below even with --sa-inst-split
+due to @NI for y.
+
+[ emp&next=null --> G(next,y)&true,
+ HP_1(next,y)&next=null --> emp&true]
+
+

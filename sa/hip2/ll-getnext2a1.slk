@@ -1,0 +1,45 @@
+data node{
+ int val;
+ node next;
+}.
+
+
+HeapPred H(node a).
+HeapPred HP_6(node a).
+HeapPred G(node a, node b).
+
+relAssume  H
+ H(vv) * x::node<_,vv> * HP_6(vv) --> G(x,res).
+
+shape_split_base [H][G].
+
+/*
+
+OBTAINED:
+[ RELASS [H] unknown svl: ;  unknown hps: ;  predefined: ; (H(vv)) * 
+  x::node<Anon_11,vv>@M * (HP_6(vv))&true --> G(x,res)&true]
+
+But we should strictly enforce a split. I am expecting:
+
+ x::node<_,vv> & XPURE(HP_6(vv)) --> G(x,res).
+ H(vv) & XPURE(HP_6(vv)) --> G(x,res).
+
+SOLUTION:
+  (i) first identify HP_6 as a redundant predicate
+      and convert it to XPURE(..) so that it can be freely
+      duplicated:
+    Thus, convert:
+      H(vv) * x::node<_,vv> * HP_6(vv) --> G(x,res).
+    into:
+      H(vv) * x::node<_,vv> & XPURE(HP_6(vv)) --> G(x,res).
+  (ii) traverse post-pred x::node<_,vv> & XPURE(HP_6(vv)) but
+       take care not to include pre-pred H(..).
+  (iii) traverse for pre-pred H(vv) & XPURE(HP_6(vv)) but
+       take care not to include any post-pred G(..).
+
+
+ H(x) & x!=null & HP_6(x) --> emp.
+ H(x) * HP_6(x) * x::node<_,vv> & vv=null --> G(x,res).
+
+
+*/

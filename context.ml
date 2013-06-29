@@ -1016,7 +1016,7 @@ and process_one_match_x prog is_normalizing (c:match_res) :action_wt =
           )
     | WArg -> 
           let _ = DD.tinfo_pprint "WArg  analysis here!\n" no_pos in  
-    (1,M_Nothing_to_do (string_of_match_res c)) 
+          (1,M_Nothing_to_do (string_of_match_res c)) 
   in
 
   let r1 = match c.match_res_type with 
@@ -1049,43 +1049,45 @@ and process_matches prog estate lhs_h is_normalizing ((l:match_res list),(rhs_no
   let pr1 = pr_list string_of_match_res in
   let pr2 x = (fun (l1, (c1,c2)) -> "(" ^ (pr1 l1) ^ ",(" ^ (pr c1) ^ "," ^ (pr c2) ^ "))" ) x in
   let pr3 = string_of_action_wt_res0 in
-  Debug.no_2 "process_matches" pr pr2 pr3 (fun _ _-> process_matches_x prog estate lhs_h is_normalizing (l, (rhs_node,rhs_rest))) lhs_h (l, (rhs_node,rhs_rest))
+  Debug.no_2 "process_matches" pr pr2 pr3 
+      (fun _ _-> process_matches_x prog estate lhs_h is_normalizing (l, (rhs_node,rhs_rest))) 
+      lhs_h (l, (rhs_node,rhs_rest))
 
 and process_matches_x prog estate lhs_h is_normalizing ((l:match_res list),(rhs_node,rhs_rest)) = 
-    let _ = Debug.tinfo_pprint "**** sel_hp_rel **********************" no_pos in
-    let _ = Debug.tinfo_hprint (add_str "hp_rel" Cprinter.string_of_spec_var_list) estate.es_infer_vars_hp_rel no_pos in
-    let _ = Debug.tinfo_hprint (add_str "sel_hp_rel" Cprinter.string_of_spec_var_list) estate.es_infer_vars_sel_hp_rel no_pos in
-    let _ = Debug.tinfo_hprint (add_str "sel_post_hp_rel" Cprinter.string_of_spec_var_list) estate.es_infer_vars_sel_post_hp_rel no_pos in
-    match l with
-      | [] -> 
-            let r0 = (2,M_unmatched_rhs_data_node (rhs_node,rhs_rest)) in
-            let rs = 
-              if estate.es_infer_vars_hp_rel==[] then []
-              else [(2,M_infer_heap (rhs_node,rhs_rest))] in
-            if (is_view rhs_node) && (get_view_original rhs_node) then
-              let r = (2, M_base_case_fold { match_res_lhs_node = HEmp;
-              match_res_lhs_rest = lhs_h;
-              match_res_holes = [];
-              match_res_type = Root;
-              match_res_rhs_node = rhs_node;
-              match_res_rhs_rest = rhs_rest; }) in 
-              (* WN : why do we need to have a fold following a base-case fold?*)
-              (* changing to no_match found *)
-              (*(-1, Search_action [r])*)
-              (* let r1 = (2, M_fold { *)
-              (*     match_res_lhs_node = HTrue;  *)
-              (*     match_res_lhs_rest = lhs_h;  *)
-              (*     match_res_holes = []; *)
-              (*     match_res_type = Root; *)
-              (*     match_res_rhs_node = rhs_node; *)
-              (*     match_res_rhs_rest = rhs_rest; *)
-              (* }) in *)
-              (* temp removal of infer-heap and base-case fold *)
-              (-1, (Cond_action (rs@[r;r0])))
-            else (-1, Cond_action (rs@[r0]))
-              (* M_Nothing_to_do ("no match found for: "^(string_of_h_formula rhs_node)) *)
-      | x::[] -> process_one_match prog is_normalizing x 
-      | _ -> (-1,Search_action (List.map (process_one_match prog is_normalizing) l))
+  let _ = Debug.tinfo_pprint "**** sel_hp_rel **********************" no_pos in
+  let _ = Debug.tinfo_hprint (add_str "hp_rel" Cprinter.string_of_spec_var_list) estate.es_infer_vars_hp_rel no_pos in
+  let _ = Debug.tinfo_hprint (add_str "sel_hp_rel" Cprinter.string_of_spec_var_list) estate.es_infer_vars_sel_hp_rel no_pos in
+  let _ = Debug.tinfo_hprint (add_str "sel_post_hp_rel" Cprinter.string_of_spec_var_list) estate.es_infer_vars_sel_post_hp_rel no_pos in
+  match l with
+    | [] -> 
+          let r0 = (2,M_unmatched_rhs_data_node (rhs_node,rhs_rest)) in
+          let rs = 
+            if estate.es_infer_vars_hp_rel==[] then []
+            else [(2,M_infer_heap (rhs_node,rhs_rest))] in
+          if (is_view rhs_node) && (get_view_original rhs_node) then
+            let r = (2, M_base_case_fold { match_res_lhs_node = HEmp;
+            match_res_lhs_rest = lhs_h;
+            match_res_holes = [];
+            match_res_type = Root;
+            match_res_rhs_node = rhs_node;
+            match_res_rhs_rest = rhs_rest; }) in 
+            (* WN : why do we need to have a fold following a base-case fold?*)
+            (* changing to no_match found *)
+            (*(-1, Search_action [r])*)
+            (* let r1 = (2, M_fold { *)
+            (*     match_res_lhs_node = HTrue;  *)
+            (*     match_res_lhs_rest = lhs_h;  *)
+            (*     match_res_holes = []; *)
+            (*     match_res_type = Root; *)
+            (*     match_res_rhs_node = rhs_node; *)
+            (*     match_res_rhs_rest = rhs_rest; *)
+            (* }) in *)
+            (* temp removal of infer-heap and base-case fold *)
+            (-1, (Cond_action (rs@[r;r0])))
+          else (-1, Cond_action (rs@[r0]))
+            (* M_Nothing_to_do ("no match found for: "^(string_of_h_formula rhs_node)) *)
+    | x::[] -> process_one_match prog is_normalizing x 
+    | _ -> (-1,Search_action (List.map (process_one_match prog is_normalizing) l))
 
 and choose_closest a ys =
   let similar m o =
@@ -1115,18 +1117,40 @@ and choose_closest a ys =
     | M_match m -> find m ys
     | _ -> None
           
-and choose_match f ys =
+and choose_match_x f ys =
   match f with
     | None -> None
     | Some a -> choose_closest a ys
 
+and choose_match f ys = 
+  let pr = pr_list_num string_of_action_wt_res in
+  let pr2 = pr_option string_of_action_res in
+  Debug.no_1 "choose_match" pr pr2 (choose_match_x f) ys
 
-and sort_wt (ys: action_wt list) : action list =
+and sort_wt (ys: action_wt list) : action_wt list =
   let pr = pr_list string_of_action_wt_res_simpl in
-  let pr2 = pr_list string_of_action_res in
-  Debug.no_1 "sort_wt" pr pr2 sort_wt_x ys
+  (* let pr2 = pr_list string_of_action_res in *)
+  Debug.no_1 "sort_wt" pr pr sort_wt_x ys
 
-and sort_wt_x (ys: action_wt list) : action list =
+and sort_wt_x (ys: action_wt list) : action_wt list =
+  let rec uncertain (_,a) = match a with 
+    | M_infer_heap _
+    | M_base_case_fold _
+    | M_rd_lemma _
+    | M_lemma  _
+    | M_base_case_unfold _ 
+    | M_unfold _
+    | M_fold _
+    | M_split_match _ 
+    | M_match _ 
+    | M_lhs_case _ -> false
+    | M_Nothing_to_do _ 
+    | Undefined_action _ 
+    | M_unmatched_rhs_data_node _ -> true
+    | Search_action l
+    | Seq_action l
+    | Cond_action l -> List.exists uncertain l  in	
+  
   let rec recalibrate_wt (w,a) = match a with
     | Search_action l ->
           let l = List.map recalibrate_wt l in
@@ -1151,10 +1175,12 @@ and sort_wt_x (ys: action_wt list) : action list =
     | _ -> if (w == -1) then (0,a) else (w,a) in
   let ls = List.map recalibrate_wt ys in
   let sl = List.sort (fun (w1,_) (w2,_) -> if w1<w2 then -1 else if w1>w2 then 1 else 0 ) ls in
+  (* WN : is below critical? why do we need them? *)
+  (* let ucert, cert = List.partition uncertain sl in (\*delay uncertain*\) *)
+  (* let sl = cert@ucert in *)
   (* what if after sorted, there are elements with the same priority ??? *)
-  (* LDK: temporarily combine them into a Cond_action to
-     ensure that the head of the list has unique weight
-  *)
+  (* LDK: temporarily combine them into a Cond_action to ensure that
+     the head of the list has unique weight *)
   let head_w,head_a = List.hd sl in
   let eq_ls, neq_ls = List.partition (fun (w,_) -> w==head_w) (List.tl sl) in
   let res =
@@ -1165,7 +1191,8 @@ and sort_wt_x (ys: action_wt list) : action list =
       let new_head = (head_w,Cond_action ((head_w,head_a)::eq_ls)) in
       (new_head::neq_ls)
   in
-  (snd (List.split res))
+  res
+  (* (snd (List.split res)) *)
 
 and drop_unmatched_action l=
   let rec helper acs rs=
@@ -1183,12 +1210,12 @@ and drop_unmatched_action l=
     | _ -> helper l []
   )
 
-and sort_wt_match opt (ys: action_wt list) : action list =
+and sort_wt_match opt (ys: action_wt list) : action_wt list =
   match (choose_match opt ys) with
     | None -> sort_wt ys
     | Some a -> 
           (* let _ = print_endline "WN : Found a must_action_stk match" in  *)
-          [a]
+          [(0,a)]
 
 and sort_wt_new (ys: action_wt list) : action_wt list =
   let pr = pr_list string_of_action_wt_res_simpl in
@@ -1297,21 +1324,29 @@ and compute_actions_x prog estate es lhs_h lhs_p rhs_p posib_r_alias rhs_lst is_
   (*   | x::[]-> process_matches lhs_h x *)
   (*   | _ ->  List.hd r (\*Search_action (None,r)*\) *)
   (* let _ = print_string (" compute_actions: before process_matches") in *)
-(* type: (match_res list * (Cformula.h_formula * Cformula.h_formula)) list *)
+  (* type: (match_res list * (Cformula.h_formula * Cformula.h_formula)) list *)
   let _ = DD.tinfo_hprint (add_str "r" (pr_list pr_none)) r no_pos in 
   let r = List.map (process_matches prog estate lhs_h is_normalizing) r in
   match r with
     | [] -> M_Nothing_to_do "no nodes on RHS"
     | xs -> 
           (*  imm/imm1.slk imm/imm3.slk fails if sort_wt not done *)
+          let _ = DD.tinfo_hprint (add_str "weighted action" (pr_list_num 
+              (string_of_action_wt_res_simpl))) r no_pos in
           let ys = sort_wt_match opt r in
+          let _ = DD.tinfo_hprint (add_str "sorted action" (pr_list_num string_of_action_wt_res_simpl)) ys no_pos in
+          let ys2 = drop_low ys in
+          (* let ys2 = snd (List.split ys) in *)
+ 	  (*Cond_action  ys *)
+	  (*above would be required for entailments in which an available match has no solution unless another one is performed first*)
+	  (*it could be expensive and trip the inference therefore a current solution delays matches with miss-match and unmatched actions*)
           (*
             LDK: why only List.hd ???
             This makes compute_actions nondeterministic if we have
             different orderings of heap nodes in the entailments.
             What if ys=[-1,Search1) ; (-1,Search2)]
           *)
-          List.hd (ys)
+	  List.hd (ys2)
               (*  match ys with
                   | [(_, act)] -> act
                   | ys -> (Cond_action ys) *)
@@ -1319,6 +1354,19 @@ and compute_actions_x prog estate es lhs_h lhs_p rhs_p posib_r_alias rhs_lst is_
               (* time for runfast hip --eps --imm - 42s *)
               (* Cond_action (r) *)
               (* time for runfast hip --eps --imm - 43s *)
+
+and drop_low ys =
+  let rec aux a ys = 
+    match ys with
+      | [] -> []
+      | (b,x)::ys -> 
+            if a==b then x::(aux a ys)
+            else [] 
+  in
+  match ys with
+    | [] -> []
+    | ((a,w) as y)::_ -> aux a ys 
+
 
 and compute_actions prog estate es (* list of right aliases *)
       lhs_h (*lhs heap *) 
@@ -1332,18 +1380,18 @@ and compute_actions prog estate es (* list of right aliases *)
   (* let pr_rhs_lst = pr_list (pr_pair Cprinter.string_of_h_formula Cprinter.string_of_h_formula) in *)
   let pr = Cprinter.string_of_h_formula   in
   (* let pr1 x = String.concat ";\n" (List.map (fun (c1,c2)-> "("^(Cprinter.string_of_h_formula c1)^" *** "^(Cprinter.string_of_h_formula c2)^")") x) in *)
-  (* let pr3 = Cprinter.string_of_mix_formula in *)
+  let pr3 = Cprinter.string_of_mix_formula in
   let pr1 x = pr_list (fun (c1,_)-> Cprinter.string_of_h_formula c1) x in
-  (* let pr4 = pr_list Cprinter.string_of_spec_var in *)
+  let pr4 = pr_list Cprinter.string_of_spec_var in
   let pr2 = string_of_action_res_simpl in
-  Debug.no_3 "compute_actions" 
+  Debug.no_5 "compute_actions" 
       (add_str "EQ ptr" pr0) 
       (add_str "LHS heap" pr) 
-      (* (add_str "LHS pure" pr3)  *)
+      (add_str "LHS pure" pr3)
       (add_str "RHS cand" pr1)
-      (* (add_str "right alias" pr4) *)
+      (add_str "right alias" pr4)
       pr2
-      (fun _ _ _-> compute_actions_x prog estate es lhs_h lhs_p rhs_p posib_r_alias rhs_lst is_normalizing pos) es lhs_h (* lhs_p *) rhs_lst  (* posib_r_alias *)
+      (fun _ _ _ _ _ -> compute_actions_x prog estate es lhs_h lhs_p rhs_p posib_r_alias rhs_lst is_normalizing pos) es lhs_h lhs_p rhs_lst  posib_r_alias 
 
 and input_formula_in2_frame (frame, id_hole) (to_input : formula) : formula =
   match to_input with

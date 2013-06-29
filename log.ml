@@ -47,6 +47,7 @@ type sleek_log_entry = {
     sleek_proving_conseq: CF.formula;
     sleek_proving_c_heap: CF.h_formula;
     sleek_proving_evars: CP.spec_var list;
+    sleek_proving_infer_vars: CP.spec_var list;
     sleek_proving_hprel_ass: CF.hprel list;
     sleek_proving_rel_ass: CP.infer_rel_type list;
     sleek_proving_res : CF.list_context;
@@ -73,6 +74,7 @@ let pr_sleek_log_entry e=
   fmt_string ("; kind: " ^ (e.sleek_proving_kind)) ;
   fmt_string ("; hec_num: " ^ (string_of_int e.sleek_proving_hec)) ;
   fmt_string ("; evars: " ^ (Cprinter.string_of_spec_var_list e.sleek_proving_evars)) ;
+  fmt_string ("; infer_vars: " ^ (Cprinter.string_of_spec_var_list e.sleek_proving_infer_vars)) ;
   fmt_string ("; c_heap:" ^ (Cprinter.string_of_h_formula e.sleek_proving_c_heap)) ;
   fmt_string "\n checkentail";
   fmt_string (Cprinter.string_of_formula e.sleek_proving_ante);
@@ -126,7 +128,7 @@ let proof_gt5_log_list = ref [] (*Logging proofs require more than 5 secs to be 
 
 (* TODO : add result into the log printing *)
 (* wrong order number indicates recursive invocations *)
-let add_new_sleek_logging_entry classic_flag caller avoid hec slk_no ante conseq 
+let add_new_sleek_logging_entry infer_vars classic_flag caller avoid hec slk_no ante conseq 
       consumed_heap evars (result:CF.list_context) pos=
   (* let _ = Debug.info_pprint ("avoid: "^(string_of_bool avoid)) no_pos in *)
   if !Globals.sleek_logging_txt then
@@ -147,6 +149,7 @@ let add_new_sleek_logging_entry classic_flag caller avoid hec slk_no ante conseq
         sleek_proving_rel_ass = current_infer_rel_stk # get_stk;
         sleek_proving_c_heap = consumed_heap;
         sleek_proving_evars = evars;
+        sleek_proving_infer_vars = infer_vars;
         sleek_proving_res = result;
     }
     in
