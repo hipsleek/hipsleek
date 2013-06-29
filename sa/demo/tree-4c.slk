@@ -31,7 +31,7 @@ shape_infer [HP_0,HP_1][].
 
 /* 
 
-# tree-4c.slk --pred-unify :
+# tree-4c.slk --pred-equiv : OK
 
 PROBLEM : we should have unified as dfference in local names
 like Anon_12, left_25_798 should be tolerated.

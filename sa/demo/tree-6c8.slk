@@ -19,6 +19,11 @@ relAssume H
 relAssume H
  HP_0(left)&left!=null --> H(left).
 
+/*
+relAssume H
+ H(left)&left=null --> emp&true.
+*/
+
 shape_infer [H,HP_0][].
 
 /*

@@ -1521,7 +1521,7 @@ let infer_shapes_proper prog proc_name (constrs2: CF.hprel list) callee_hps sel_
   let _ = DD.binfo_pprint ">>>>>> pre-predicates<<<<<<" no_pos in
   let pre_hps, pre_defs, unk_hpargs1,unk_map3, pre_equivs, unk_equivs = infer_shapes_init_pre prog pre_constrs callee_hps []
     sel_post_hps unk_hpargs link_hps unk_map2 detect_dang in
-  let pre_defs1, unify_equiv_map1 = if (* !Globals.sa_conj_unify *) true then
+  let pre_defs1, unify_equiv_map1 = if !Globals.sa_conj_unify then
     SAC.do_unify prog unk_hps link_hps pre_defs
   else
     (pre_defs, [])

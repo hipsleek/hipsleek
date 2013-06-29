@@ -684,7 +684,7 @@ let sa_keep_unused_preds = ref false
 
 let sa_unify_dangling = ref false
 
-let sa_conj_unify = ref true
+let sa_conj_unify = ref false
 
 let pred_disj_unify = ref false
 
