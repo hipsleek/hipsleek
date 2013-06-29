@@ -4,6 +4,7 @@ open Gen
 module DD = Debug
 module Err = Error
 module CA = Cast
+module AS = Astsimp
 module CP = Cpure
 module CF = Cformula
 module MCP = Mcpure
@@ -833,9 +834,11 @@ let analize_unk prog post_hps constrs total_unk_map unk_hpargs link_hpargs =
 
 let generate_equiv_unkdef unk_hpargs (ls1,ls2) (hp1, hp2)=
   let args = List.assoc hp1 unk_hpargs in
+  let r = List.hd args in
+  let paras =  List.tl args in
   let hf = CF.HRel (hp2, List.map (fun sv -> CP.mkVar sv no_pos) args, no_pos) in
   let def = CF.formula_of_heap hf no_pos in
-  let new_hpdef = (CP.HPRelDefn hp1,
+  let new_hpdef = (CP.HPRelDefn (hp1, r,paras ),
   CF.HRel (hp1, List.map (fun sv -> CP.mkVar sv no_pos) args, no_pos), def) in
   (ls1@[new_hpdef],ls2@[hp1])
 
@@ -865,7 +868,9 @@ let generate_hp_def_from_unk_hps_x hpdefs unk_hpargs defined_hps post_hps
                                     (!CP.print_svl args) ^ ")=" ^
                                     (Cprinter.prtt_string_of_formula (* (CF.formula_of_heap h_def no_pos) *) def)) pos
     in
-    let new_hpdef = (CP.HPRelDefn hp,
+    let r = List.hd args in
+    let paras = List.tl args in
+    let new_hpdef = (CP.HPRelDefn (hp, r, paras),
     (CF.HRel (hp, List.map (fun x -> CP.mkVar x no_pos) args,pos)),
      (* CF.formula_of_heap h_def no_pos *) def)
     in
@@ -1813,3 +1818,8 @@ let reverify_cond prog (unk_hps: CP.spec_var list) link_hps hpdefs cond_equivs=
 (*=============**************************================*)
        (*=============END UNIFY PREDS================*)
 (*=============**************************================*)
+
+(*=============**************************================*)
+       (*=============TRANSFORM PREDS TO CVIEW================*)
+(*=============**************************================*)
+

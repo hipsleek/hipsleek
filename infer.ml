@@ -17,7 +17,7 @@ module IF = Iformula
 module I = Iast
 module IMM = Immutable
 module SAU = Sautility
-module SAC = Sacore
+
 
 (************************************************)
 let keep_dist f = match f with
@@ -2636,7 +2636,8 @@ let add_infer_hp_contr_to_list_context h_arg_map cp (l:list_context) : list_cont
 			match new_hd with
 			 | [((h,hf),h_args)] -> 
 				if (Gen.BList.subset_eq CP.eq_spec_var fv h_args (*(List.concat (snd (List.split new_hd)))*)) then
-				mkHprel (CP.HPRelDefn h) h_args [] []  (formula_of_heap hf no_pos) (formula_of_pure_N c no_pos)  				
+                                  (*LOC changed here. may be wrong*)
+				mkHprel (CP.HPRelDefn (h, List.hd h_args, List.tl h_args )) h_args [] []  (formula_of_heap hf no_pos) (formula_of_pure_N c no_pos)  				
 				else raise Not_found
 			| _ -> raise Not_found ) new_cp in
                  let _ = rel_ass_stk # push_list (new_rels) in

@@ -802,7 +802,7 @@ let generalize_one_hp_x prog is_pre hpdefs non_ptr_unk_hps unk_hps link_hps par_
           let defs,elim_ss = if disj_opt then
             SAU.get_longest_common_hnodes_list prog is_pre hpdefs (skip_hps) unk_svl hp r non_r_args args0 defs5
           else
-            let defs = SAU.mk_hprel_def prog is_pre hpdefs skip_hps unk_svl hp args0 defs5 no_pos in
+            let defs = SAU.mk_hprel_def prog is_pre hpdefs skip_hps unk_svl hp (args0,r,non_r_args) defs5 no_pos in
           (defs,[])
           in
           let _ = Globals.pred_disj_unify := old_disj in
@@ -1217,8 +1217,8 @@ let generalize_hps_cs_new_x prog callee_hps hpdefs unk_hps link_hps cs=
               let hps = List.map fst diff in
               let hfs = List.map (fun (hp,args) -> (CF.HRel (hp, List.map (fun x -> CP.mkVar x pos) args, pos))) diff in
               let hf = CF.join_star_conjunctions hfs in
-              let def_tit = match hps with
-                | [hp] -> CP.HPRelDefn hp
+              let def_tit = match diff with
+                | [(hp,args)] -> CP.HPRelDefn (hp, List.hd args, List.tl args)
                 | _ -> CP.HPRelLDefn hps
               in
               let _ = DD.ninfo_pprint ">>>>>> generalize_one_cs_hp: <<<<<<" pos in

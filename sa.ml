@@ -2796,7 +2796,8 @@ let def_subst_fix_x prog unk_hps hpdefs=
         else false
       in
       (* let fs2 = SAU.remove_subset new_fs1 in *)
-      (b , (CP.HPRelDefn hp,hprel,CF.disj_of_list fs1 no_pos ))
+      (*may be wrong: should reevauate root*)
+      (b , (CP.HPRelDefn (hp, List.hd args, List.tl args ),hprel,CF.disj_of_list fs1 no_pos ))
     else
       (*return*)
       (false,hpdef)
@@ -3062,9 +3063,10 @@ let generalize_hps_cs_x prog callee_hps hpdefs unk_hps cs=
             let r = CF.drop_data_view_hrel_nodes nlhs SAU.check_nbelongsto_dnode SAU.check_nbelongsto_vnode SAU.check_neq_hrelnode keep_ptrs keep_ptrs keep_def_hps in
             if (not (SAU.is_empty_f r)) then
               let _ = DD.ninfo_pprint ">>>>>> generalize_one_cs_hp: <<<<<<" no_pos in
+              (*should identify root. Now, root is the first, it may be wrong*)
               let _ = DD.ninfo_pprint ((!CP.print_sv hp)^"(" ^(!CP.print_svl args) ^ ")=" ^
                   (Cprinter.prtt_string_of_formula r) ) no_pos in
-                  ([],[(CP.HPRelDefn hp, (*CF.formula_of_heap*)
+                  ([],[(CP.HPRelDefn (hp, List.hd args, List.tl args), (*CF.formula_of_heap*)
                   (CF.HRel (hp, List.map (fun x -> CP.mkVar x no_pos) args, p)) , r)])
             else
               ([constr],[])
@@ -3131,7 +3133,8 @@ let get_unk_hps_relation_x prog callee_hps defined_hps post_hps hpdefs cs=
                       DD.ninfo_pprint ">>>>>> from assumption to def: <<<<<<" no_pos;
                       DD.ninfo_pprint ((!CP.print_sv hp)^"(" ^(!CP.print_svl args) ^ ")=" ^
                                              (Cprinter.prtt_string_of_formula f) ) no_pos;
-                      ([(CP.HPRelDefn hp, CF.HRel (hp, List.map (fun x -> CP.mkVar x no_pos) args, no_pos), f) ],[])
+                      ([(CP.HPRelDefn (hp, List.hd args,List.tl args),
+                      CF.HRel (hp, List.map (fun x -> CP.mkVar x no_pos) args, no_pos), f) ],[])
                    end
               (* | _ -> report_error no_pos "sa.get_unk_hps_relation" *)
             )
@@ -3196,7 +3199,7 @@ let generate_defs_from_unk_rels prog unk_rels=
           begin
               DD.ninfo_pprint ((!CP.print_sv hp1)^"(" ^(!CP.print_svl args) ^ ")=" ^
                                      (Cprinter.prtt_string_of_formula rhs) ) no_pos;
-              [(CP.HPRelDefn hp1, CF.HRel (hp1, List.map (fun x -> CP.mkVar x no_pos) args1, no_pos), rhs) ]
+              [(CP.HPRelDefn (hp1, List.hd args1, List.tl args1), CF.HRel (hp1, List.map (fun x -> CP.mkVar x no_pos) args1, no_pos), rhs) ]
           end
       end
   in
@@ -3226,7 +3229,7 @@ let generalize_pure_def_from_hpunk_x prog hp_def_names cs=
       let def1 = CP.filter_var_new p args in
       let def2,_ = SAU.remove_irr_eqs args def1 in
       if not (CP.isConstTrue def2) then
-        let d = SAU.mk_hprel_def prog false [] [hp] args hp args [(CF.formula_of_pure_formula def2 pos)]
+        let d = SAU.mk_hprel_def prog false [] [hp] args hp (args,List.hd args, List.tl args) [(CF.formula_of_pure_formula def2 pos)]
           pos
         in d
       else []
@@ -3369,7 +3372,7 @@ let generate_hp_def_from_split_x prog hpdefs hp_defs_split unk_hpargs=
           else combine_def (List.tl fss) no_pos (List.hd fss)
         in nfs
     in
-      SAU.mk_hprel_def prog false [] unk_hps unk_svl hp0 args0 fs no_pos
+      SAU.mk_hprel_def prog false [] unk_hps unk_svl hp0 (args0, List.hd args0, List.tl args0) fs no_pos
   in
   let _ = DD.ninfo_pprint ">>>>>> equivalent hps: <<<<<<" no_pos in
   let new_hpdefs = snd (List.split (List.concat (List.map generate_def hp_defs_split))) in
