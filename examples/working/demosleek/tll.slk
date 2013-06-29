@@ -1,0 +1,27 @@
+/* representation of a node */
+data node{
+	node left;
+	node right;
+	node next;
+}.
+
+/* predicate for a tree with chained leaf list */
+pred tll<ll,lr> == self::node<null,null,lr> & self = ll
+	or self::node<l,r,null> * l::tll<ll,z> * r::tll<z,lr>
+inv self!=null.
+
+checkentail x::tll<ll,lr> & x!=ll |- x::node<l,r,null> * l::tll<ll,z> * r::tll<z,lr>. 
+//Valid
+print residue.
+
+checkentail x::tll<ll,lr> |- x::node<l,r,null> * l::tll<ll,z> * r::tll<z,lr>.
+//Fail (as LHS can be base-case)
+print residue.
+
+checkentail x::node<l,r,null> * l::tll<ll,z> * r::tll<z,lr> |- x::tll<ll,lr>. //Valid
+print residue.
+
+checkentail x::tll<ll,lr> |- x!=null.
+//Valid
+print residue.
+

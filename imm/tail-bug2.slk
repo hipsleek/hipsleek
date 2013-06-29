@@ -1,0 +1,22 @@
+data node{
+	int val;
+	node next;
+}.
+
+
+infer [ann1] c::node<a,b>@ann1&c=c'
+ |-  c'::node<val_20_775',next_20_776'>@M.
+
+print residue.
+
+/*
+ id: 2; caller: []; line: 20; classic: false; kind: BIND; hec_num: 4; evars: []; c_heap: emp
+ checkentail c::node<a,b>@ann1[Orig]&c=c' & a=val_20_774' & b=next_20_775' & ann1<=2&
+{FLOW,(22,23)=__norm}[]
+ |-  emp&true&{FLOW,(1,25)=__flow}[]. 
+res:  [
+  c::node<a,b>@ann1[Orig]&c=c' & a=val_20_774' & b=next_20_775' & ann1<=2&{FLOW,(22,23)=__norm}[]
+  es_infer_vars/rel: [ann1]
+  es_infer_pure: [ann1<=2]
+  ]
+*/
