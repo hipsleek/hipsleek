@@ -925,11 +925,11 @@ and sat_warnings cprog =
 	      | x::[] -> x
 	      | _ as l-> CF.EList (List.map (fun c-> (empty_spec_label_def,c)) l)) in
         (*      List.fold_left (fun a c-> match (snd c) with
-                        | CF.EBase b -> if ((List.length b.CF.formula_ext_continuation)>0) then c::a
-                        else 
-                        let goods, unsat_list = Solver.find_unsat cprog b.CF.formula_ext_base in 
-                        (List.map (fun d-> (fst c, CF.EBase {b with CF.formula_ext_base = d})) goods) @ a 
-                        |  _ -> c::a) [] c.Cast.view_formula in      *)
+                | CF.EBase b -> if ((List.length b.CF.formula_ext_continuation)>0) then c::a
+                else 
+                let goods, unsat_list = Solver.find_unsat cprog b.CF.formula_ext_base in 
+                (List.map (fun d-> (fst c, CF.EBase {b with CF.formula_ext_base = d})) goods) @ a 
+                |  _ -> c::a) [] c.Cast.view_formula in      *)
         {c with Cast.view_un_struc_formula = nf; Cast.view_formula = ncf}    
     ) cprog.Cast.prog_view_decls in  
     {cprog with Cast.prog_view_decls = n_pred_list;}
@@ -1046,7 +1046,7 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
           vdef.C.view_addr_vars <- addr_vars;
 	  vdef.C.view_baga <- (match ms.CF.mem_formula_mset with | [] -> [] | h::_ -> h) ;
 	  helper (n - 1) do_not_compute_flag
-          (* else report_error pos "view formula does not entail supplied invariant\n" in () *)
+              (* else report_error pos "view formula does not entail supplied invariant\n" in () *)
       )
     else (validate_mem_spec prog vdef);(* verify the memory specs using predicate definition *)
     if !Globals.print_x_inv && (n = 0)
@@ -1183,7 +1183,7 @@ and trans_view_x (prog : I.prog_decl) (vdef : I.view_decl) : C.view_decl =
     (match inv_lock with
       | None -> (n_tl, None)
       | Some f ->
-          let (n_tl_tmp,new_f) = trans_formula prog true (self :: vdef.I.view_vars) true f n_tl false in
+            let (n_tl_tmp,new_f) = trans_formula prog true (self :: vdef.I.view_vars) true f n_tl false in
             (*find existential variables*)
             let fvars = CF.fv new_f in
             let evars = List.filter (fun sv -> not (List.exists (fun name -> name = (CP.name_of_spec_var sv)) (self :: vdef.I.view_vars))) fvars in
@@ -1194,18 +1194,18 @@ and trans_view_x (prog : I.prog_decl) (vdef : I.view_decl) : C.view_decl =
             (* let _ = print_endline ("evars = " ^ (Cprinter.string_of_spec_var_list evars)) in *)
 
             (****************************)
-          (n_tl_tmp, Some new_f2))
+            (n_tl_tmp, Some new_f2))
   in
   let cf = CF.mark_derv_self vdef.I.view_name cf in 
   let inv = vdef.I.view_invariant in
   let (n_tl,mem_form) = (
-    match vdef.I.view_mem with
-    | Some a -> 
-        let _ = Mem.check_mem_formula vdef prog.I.prog_data_decls in 
-        let (new_typ_mem,n_tl) = fresh_tvar n_tl in 
-        let (n_tl,_) = gather_type_info_exp a.IF.mem_formula_exp n_tl new_typ_mem in 
-        (n_tl,trans_view_mem vdef.I.view_mem n_tl)
-    | None -> (n_tl,None)
+      match vdef.I.view_mem with
+        | Some a -> 
+              let _ = Mem.check_mem_formula vdef prog.I.prog_data_decls in 
+              let (new_typ_mem,n_tl) = fresh_tvar n_tl in 
+              let (n_tl,_) = gather_type_info_exp a.IF.mem_formula_exp n_tl new_typ_mem in 
+              (n_tl,trans_view_mem vdef.I.view_mem n_tl)
+        | None -> (n_tl,None)
   ) in 
   let inv = Mem.add_mem_invariant inv vdef.I.view_mem in
   let n_tl = gather_type_info_pure prog inv n_tl in 
@@ -1239,8 +1239,8 @@ and trans_view_x (prog : I.prog_decl) (vdef : I.view_decl) : C.view_decl =
       let typed_vars = List.map ( fun (Cpure.SpecVar (c1,c2,c3))-> (c1,c2)) view_sv_vars in
       let _ = vdef.I.view_typed_vars <- typed_vars in
       let mvars =  List.filter 
-			(fun c-> List.exists (fun v-> String.compare v (CP.name_of_spec_var c) = 0) vdef.I.view_materialized_vars) view_sv_vars in
-	  let mvars = List.map (fun v -> C.mk_mater_prop v false []) mvars in
+	(fun c-> List.exists (fun v-> String.compare v (CP.name_of_spec_var c) = 0) vdef.I.view_materialized_vars) view_sv_vars in
+      let mvars = List.map (fun v -> C.mk_mater_prop v false []) mvars in
       let cf = CF.label_view cf in
       let n_un_str =  CF.get_view_branches cf in   
       let rec f_tr_base f = 
@@ -1363,8 +1363,8 @@ and trans_axiom_x (prog : I.prog_decl) (adef : I.axiom_decl) : C.axiom_decl =
   let ccln = trans_pure_formula adef.I.axiom_conclusion n_tl in
   (* let _ = Smtsolver.add_axiom_def (Smtsolver.AxmDefn (chyp,ccln)) in *)
   { C.axiom_id=adef.I.axiom_id; 
-    C.axiom_hypothesis = chyp;
-    C.axiom_conclusion = ccln; }
+  C.axiom_hypothesis = chyp;
+  C.axiom_conclusion = ccln; }
       (* END : trans_axiom *) 
 
 and rec_grp prog :ident list =
@@ -1430,12 +1430,13 @@ and set_materialized_prop_x cdef =
   (cdef.C.view_materialized_vars <- mvars; cdef)
       
 and set_materialized_prop cdef = 
-	let pr1 = Cprinter.string_of_view_decl in
-	Debug.no_1 "set_materialized_prop" pr1 pr1 set_materialized_prop_x cdef
-	  
+  let pr1 = Cprinter.string_of_view_decl in
+  Debug.no_1 "set_materialized_prop" pr1 pr1 set_materialized_prop_x cdef
+      
 and find_m_prop_heap params eq_f h = 
   let pr = Cprinter.string_of_h_formula in
   let pr1 = Cprinter.string_of_spec_var_list in
+  let prr = pr_list Cprinter.string_of_mater_property in
   let prr x = Cprinter.string_of_mater_prop_list x in (*string_of_int (List.length x) in*)
   Debug.no_2 "find_m_prop_heap" pr pr1 prr (fun _ _ -> find_m_prop_heap_x params eq_f h) h params
       
@@ -1451,7 +1452,9 @@ and find_m_prop_heap_x params eq_f h =
             Debug.tinfo_hprint (add_str "view:l" (Cprinter.string_of_spec_var_list)) l no_pos;
             if l==[] then []
             else
-              List.map (fun v -> C.mk_mater_prop v true [ h.CF.h_formula_view_name]) params 
+              let ret =  List.map (fun v -> C.mk_mater_prop v true [ h.CF.h_formula_view_name]) l in
+              let _ = Debug.tinfo_hprint (add_str "ret" (pr_list Cprinter.string_of_mater_property)) ret no_pos in 
+              ret
       | CF.Star h -> (helper h.CF.h_formula_star_h1)@(helper h.CF.h_formula_star_h2)
       | CF.StarMinus h -> (helper h.CF.h_formula_starminus_h1)@(helper h.CF.h_formula_starminus_h2)
       | CF.Conj h -> (helper h.CF.h_formula_conj_h1)@(helper h.CF.h_formula_conj_h2)
@@ -1545,7 +1548,7 @@ and find_materialized_prop_x params forced_vars (f0 : CF.formula) : C.mater_prop
     let l = List.filter (fun (l,_) -> List.exists (CP.eq_spec_var v) l) aset in
     snd (List.split l) in
   let find_m_prop_heap_aux params pf hf = find_m_prop_heap params (is_member (param_alias_sets pf params)) hf in
-    (*let rec cycle p acc_p v_p =
+   (* let rec cycle p acc_p v_p =
         find_m_prop_heap params (is_member (param_alias_sets pf p)) hf
       (* if p==[] then *)
       (*   find_m_prop_heap params (is_member (param_alias_sets pf v_p)) hf *)
