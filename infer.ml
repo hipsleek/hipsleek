@@ -222,6 +222,11 @@ let collect_rel_list_context ctx =
   | FailCtx _ -> []
   | SuccCtx lst -> List.concat (List.map collect_rel lst)
 
+let collect_hp_rel_list_context ctx = 
+  match ctx with
+  | FailCtx _ -> []
+  | SuccCtx lst -> List.concat (List.map collect_hp_rel lst)
+
 let collect_rel_list_partial_context (ctx:list_partial_context) =
   let r = List.map (fun (_,cl) -> List.concat (List.map (fun (_,c) -> collect_rel c) cl))  ctx in
   List.concat r

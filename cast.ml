@@ -114,8 +114,9 @@ and rel_decl = {
     rel_formula : P.formula;}
 
 and hp_decl = { 
-    hp_name : ident; 
+    hp_name : ident;
     hp_vars_inst : (P.spec_var * Globals.hp_arg_kind) list;
+    mutable hp_root_pos: int;
     hp_is_pre: bool;
     hp_formula : F.formula;}
 
@@ -910,6 +911,15 @@ let look_up_hp_def_raw defs name=
   let pr1 = !print_hp_decl in
   Debug.no_1 "look_up_hp_def_raw" pr_id pr1
       (fun _ -> look_up_hp_def_raw_x defs name) name
+
+let set_proot_hp_def_raw r_pos defs name=
+  let hpdclr = look_up_hp_def_raw defs name in
+  let _ = hpdclr.hp_root_pos <- r_pos in
+  hpdclr
+
+let get_proot_hp_def_raw defs name=
+  let hpdclr = look_up_hp_def_raw defs name in
+  hpdclr.hp_root_pos
 
 let check_pre_post_hp defs hp_name=
   let hpdecl = look_up_hp_def_raw defs hp_name in

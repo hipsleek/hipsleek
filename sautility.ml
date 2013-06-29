@@ -6,9 +6,9 @@ open Globals
 open Gen
 
 module DD = Debug
-module CF=Cformula
-module CP=Cpure
-module MCP=Mcpure
+module CF = Cformula
+module CP = Cpure
+module MCP = Mcpure
 module C = Cast
 module CEQ = Checkeq
 module TP = Tpdispatcher
@@ -193,6 +193,12 @@ let rec is_only_xpure_f f=
                      is_unk_f base1
     | _ -> report_error no_pos "SAU.is_unk_f: not handle yet"
 
+let rec get_pos ls n sv=
+  match ls with
+    | [] -> report_error no_pos "sau.find_closure_eq: impossible 1"
+    | sv1::rest -> if CP.eq_spec_var sv sv1 then n
+      else get_pos rest (n+1) sv
+
 (*for drop hp args*)
 let rec retrieve_args_from_locs_helper args locs index res=
   match args with
@@ -239,6 +245,7 @@ let add_raw_hp_rel_x prog is_pre unknown_ptrs pos=
     let hp_decl =
       { Cast.hp_name = (if is_pre then Globals.hp_default_prefix_name else hppost_default_prefix_name)
         ^ (string_of_int (Globals.fresh_int()));
+      Cast.hp_root_pos = 0; (*default, reset when def is inferred*)
         Cast.hp_vars_inst =  unknown_ptrs;
         Cast.hp_is_pre = is_pre;
         Cast.hp_formula = CF.mkBase CF.HEmp (MCP.mkMTrue pos) CF.TypeTrue (CF.mkTrueFlow()) [] pos;}
@@ -3593,6 +3600,7 @@ let mk_hprel_def prog is_pre cdefs unk_hps unk_svl hp (args, r, paras) defs pos=
             (List.hd defs1) (List.tl defs1) in
           let _ = DD.ninfo_pprint ((!CP.print_sv hp)^"(" ^(!CP.print_svl new_args) ^ ")") pos in
           DD.ninfo_pprint (" =: " ^ (Cprinter.prtt_string_of_formula def) ) pos;
+          let _ = C.set_proot_hp_def_raw (get_pos new_args 0 r) prog.C.prog_hp_decls (CP.name_of_spec_var hp) in
           let def = (hp, (CP.HPRelDefn (hp, r, paras), (CF.HRel (hp, List.map (fun x -> CP.mkVar x no_pos) new_args, pos)), def)) in
           [def]
       end
@@ -3766,6 +3774,7 @@ let elim_not_in_used_args_x prog unk_hps orig_fs fs hp (args, r, paras)=
       (*let new_hrel = mkHRel hp new_args no_pos in *)
       (*linking defs*)
       let link_f = CF.formula_of_heap old_hrel no_pos in
+      let _ = C.set_proot_hp_def_raw (get_pos args 0 r) prog.C.prog_hp_decls (CP.name_of_spec_var hp) in
       let link_def = (hp, (CP.HPRelDefn (hp, r, paras), old_hrel, link_f)) in
       (*end linking*)
       let subst = [(old_hrel,new_hrel)] in
@@ -3982,12 +3991,6 @@ let find_closure_eq_null hp args f=
       hp args f
 
 let find_closure_eq_x hp args fs=
-  let rec get_pos ls n sv=
-    match ls with
-      | [] -> report_error no_pos "sau.find_closure_eq: impossible 1"
-      | sv1::rest -> if CP.eq_spec_var sv sv1 then n
-        else get_pos rest (n+1) sv
-  in
   let extract_eq_pos f=
     let (_ ,mf,_,_,_) = CF.split_components f in
     let eqs = (MCP.ptr_equations_without_null mf) in

@@ -119,3 +119,12 @@ G(next_29_789,t_32')&
 
 */
 
+  /*
+
+[ emp&next_51_832=null --> HP_833(next_51_832,next_45_818)&true,
+ emp&next_45_818=t_39' & next_45_818!=null --> HP_834(next_45_818,t_39')&true,
+ emp&next_51_832=null --> HP_833(next_51_832,next_45_818)&true,
+ next_45_818::node<val_45_925,next_45_926>@M * HP_834(next_45_926,t_39')&
+  next_45_926!=null --> HP_834(next_45_818,t_39')&true]
+
+   */
