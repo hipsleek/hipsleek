@@ -1920,7 +1920,7 @@ let do_entail_check_x vars cprog cs=
 
 let do_entail_check vars cprog cs=
   let pr1 = Cprinter.string_of_hprel_short in
-  Debug.ho_1 "do_entail_check" pr1 (pr_list_ln pr1)
+  Debug.no_1 "do_entail_check" pr1 (pr_list_ln pr1)
       (fun _ -> do_entail_check_x vars cprog cs) cs
 
 
