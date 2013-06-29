@@ -1122,11 +1122,11 @@ let process_eq_check (ivars: ident list)(if1 : meta_formula) (if2 : meta_formula
     let _ = if(res) then Debug.info_pprint (CEQ.string_of_map_table (List.hd mt_list) ^ "\n") no_pos in
     ()
    )
-let process_infer (ivars: ident list) (iante0 : meta_formula) (iconseq0 : meta_formula) =
+let process_infer (ivars: ident list) (iante0 : meta_formula) (iconseq0 : meta_formula) etype =
   let nn = "("^(string_of_int (sleek_proof_counter#inc_and_get))^") " in
   let num_id = "\nEntail "^nn in
     try 
-      let valid, rs, sel_hps = run_infer_one_pass ivars iante0 iconseq0 in
+      let valid, rs, sel_hps = wrap_classic etype (run_infer_one_pass ivars iante0) iconseq0 in
       print_entail_result sel_hps valid rs num_id
     with ex -> 
         (* print_exc num_id *)

@@ -59,6 +59,7 @@ infer [G1,G2,P1] G1(a,b) |- P1(a).
 print residue.
 
 /*
+# split-1e.slk
 
 GOT
 ===

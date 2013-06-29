@@ -138,6 +138,8 @@ module Make (Token : SleekTokenS)
    ("shape_weaken_ante", SHAPE_WEAKEN_ANTE );
    ("checkentail_exact", CHECKENTAIL_EXACT);
    ("checkentail_inexact", CHECKENTAIL_INEXACT);
+   ("infer_exact", INFER_EXACT);
+   ("infer_inexact", INFER_INEXACT);
    ("capture_residue", CAPTURERESIDUE);
 	 ("class", CLASS);
 	 (* ("coercion", COERCION); *)

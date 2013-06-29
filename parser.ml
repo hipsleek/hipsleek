@@ -721,7 +721,7 @@ non_empty_command:
       | t= axiom_decl -> AxiomDef t (* [4/10/2011] An Hoa : axiom declarations *)
       | t=let_decl            -> t
       | t=checkeq_cmd         -> EqCheck t
-      | t=checkentail_cmd     -> EntailCheck t
+      | t= checkentail_cmd     -> EntailCheck t
       | t=relassume_cmd     -> RelAssume t
       | t=shapeinfer_cmd     -> ShapeInfer t
       | t=shapepost_obl_cmd     -> ShapePostObl t
@@ -733,7 +733,7 @@ non_empty_command:
       | t=decl_unknown_cmd        -> ShapeDeclUnknown t
       | t=shape_sconseq_cmd     -> ShapeSConseq t
       | t=shape_sante_cmd     -> ShapeSAnte t
-      | t=infer_cmd           -> Infer t  
+      | t= infer_cmd           -> InferCmd t  
       | t=captureresidue_cmd  -> CaptureResidue t
       | t=print_cmd           -> PrintCmd t
       | t=cmp_cmd           ->  CmpCmd t
@@ -1711,7 +1711,12 @@ shapeExtract_cmd:
 
 infer_cmd:
   [[ `INFER; `OSQUARE; il=OPT id_list; `CSQUARE; t=meta_constr; `DERIVE; b=extended_meta_constr -> 
-    let il = un_option il [] in (il,t,b)
+    let il = un_option il [] in (il,t,b,None)
+    | `INFER_EXACT; `OSQUARE; il=OPT id_list; `CSQUARE; t=meta_constr; `DERIVE; b=extended_meta_constr -> 
+    let il = un_option il [] in (il,t,b,Some true)
+    | `INFER_INEXACT; `OSQUARE; il=OPT id_list; `CSQUARE; t=meta_constr; `DERIVE; b=extended_meta_constr -> 
+    let il = un_option il [] in (il,t,b,Some false)
+
   ]];
 
 captureresidue_cmd:

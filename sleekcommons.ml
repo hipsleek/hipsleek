@@ -56,7 +56,7 @@ type command =
   | ShapeSAnte of (ident list * ident list)
   | EqCheck of (ident list * meta_formula * meta_formula)
   | BarrierCheck of I.barrier_decl
-  | Infer of (ident list * meta_formula * meta_formula)
+  | InferCmd of (ident list * meta_formula * meta_formula * entail_type)
   | CaptureResidue of ident
   | PrintCmd of print_cmd
   | CmpCmd of (ident list * ident * meta_formula list)
@@ -111,7 +111,7 @@ let string_of_command c = match c with
   | ShapeSAnte _ -> "ShapeSAnte"
   | EqCheck _ -> "EqCheck"
   | BarrierCheck _ -> "BarrierCheck"
-  | Infer _ -> "Infer"
+  | InferCmd _ -> "Infer"
   | CaptureResidue _ -> "CaptureResidue"  
   | PrintCmd _ -> "PrintCmd"  
   | CmpCmd _ -> "CmpCmd"  
