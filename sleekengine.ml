@@ -109,7 +109,7 @@ let clear_all () =
   residues := None
 
 let check_data_pred_name name : bool =
-  try 
+  try
 	let _ = I.look_up_data_def_raw iprog.I.prog_data_decls name in
 	  false
   with
@@ -125,7 +125,7 @@ let check_data_pred_name name : bool =
 			  		let _ = I.look_up_rel_def_raw iprog.I.prog_rel_decls name in
 						false
 					with
-			  		| Not_found -> 
+			  		| Not_found ->
                         begin
 					        try
 			        		    let _ = I.look_up_func_def_raw iprog.I.prog_func_decls name in
@@ -143,9 +143,9 @@ let check_data_pred_name name : bool =
 		  	    end
 	end
 
-let check_data_pred_name name :bool = 
+let check_data_pred_name name :bool =
   let pr1 x = x in
-  let pr2 = string_of_bool in 
+  let pr2 = string_of_bool in
   Debug.no_1 "check_data_pred_name" pr1 pr2 (fun _ -> check_data_pred_name name) name
     
 let silenced_print f s = if !Globals.silence_output then () else f s 

@@ -1163,7 +1163,7 @@ and add_param_ann_constraints_struc (cf: CF.struc_formula) : CF.struc_formula = 
 and trans_view (prog : I.prog_decl) (vdef : I.view_decl) : C.view_decl =
   let pr = Iprinter.string_of_view_decl in
   let pr_r = Cprinter.string_of_view_decl in
-  Debug.no_1 "trans_view" pr pr_r  (fun _ -> trans_view_x prog vdef) vdef
+  Debug.ho_1 "trans_view" pr pr_r  (fun _ -> trans_view_x prog vdef) vdef
 
 and trans_view_x (prog : I.prog_decl) (vdef : I.view_decl) : C.view_decl =
   let view_formula1 = vdef.I.view_formula in
@@ -1436,7 +1436,7 @@ and set_materialized_prop cdef =
 and find_m_prop_heap params eq_f h = 
   let pr = Cprinter.string_of_h_formula in
   let pr1 = Cprinter.string_of_spec_var_list in
-  let prr = pr_list Cprinter.string_of_mater_property in
+  (* let prr = pr_list Cprinter.string_of_mater_property in *)
   let prr x = Cprinter.string_of_mater_prop_list x in (*string_of_int (List.length x) in*)
   Debug.no_2 "find_m_prop_heap" pr pr1 prr (fun _ _ -> find_m_prop_heap_x params eq_f h) h params
       
@@ -7419,6 +7419,112 @@ let transform_hp_rels_to_iviews hp_rels =
 	let pr2 = pr_list (pr_triple pr_id pr_id Iprinter.string_of_view_decl) in
 	Debug.no_1 "transform_hp_rels_to_iviews" pr1 pr2 transform_hp_rels_to_iviews hp_rels
 
+let check_data_pred_name iprog name : bool =
+  try
+    let _ = I.look_up_data_def_raw iprog.I.prog_data_decls name in
+    false
+  with
+    | Not_found -> begin
+	try
+	  let _ = I.look_up_view_def_raw 3 iprog.I.prog_view_decls name in
+	  false
+	with
+	  | Not_found -> (*true*)
+		begin
+		  try
+		    let _ = I.look_up_rel_def_raw iprog.I.prog_rel_decls name in
+		    false
+		  with
+		    | Not_found ->
+                          begin
+			    try
+			      let _ = I.look_up_func_def_raw iprog.I.prog_func_decls name in
+			      false
+			    with
+			      | Not_found ->
+                                    begin
+				      try
+			         	let _ = I.look_up_hp_def_raw iprog.I.prog_hp_decls name in
+					false
+				      with
+			        	| Not_found -> true
+		        	    end
+		          end
+		end
+      end
+
+let check_data_pred_name iprog name :bool =
+  let pr1 x = x in
+  let pr2 = string_of_bool in
+  Debug.no_1 "check_data_pred_name" pr1 pr2 (fun _ -> check_data_pred_name iprog name) name
+
+let process_pred_def_4_iast iprog pdef = 
+  if check_data_pred_name iprog pdef.I.view_name then
+    let curr_view_decls = iprog.I.prog_view_decls in
+    try
+      let h = (self,Unprimed)::(res_name,Unprimed)::(List.map (fun c-> (c,Unprimed)) pdef.Iast.view_vars ) in
+      let p = (self,Primed)::(res_name,Primed)::(List.map (fun c-> (c,Primed)) pdef.Iast.view_vars ) in
+      iprog.I.prog_view_decls <- pdef :: curr_view_decls;
+      let wf = case_normalize_struc_formula_view 11 iprog h p pdef.Iast.view_formula false 
+        false (*allow_post_vars*) false [] in
+      let inv_lock = pdef.I.view_inv_lock in
+      let inv_lock =
+        (match inv_lock with
+          | None -> None
+          | Some f ->
+                let new_f = case_normalize_formula iprog h f None in (*TO CHECK: h or p*)
+                Some new_f)
+        in
+      let new_pdef = {pdef with Iast.view_formula = wf;Iast.view_inv_lock = inv_lock} in
+      iprog.I.prog_view_decls <- ( new_pdef :: curr_view_decls);
+    with
+      | _ ->  dummy_exception() ; iprog.I.prog_view_decls <- curr_view_decls
+    else
+      print_string (pdef.I.view_name ^ " is already defined.\n")
+
+let process_pred_def_4_iast pdef =
+  let pr = Iprinter.string_of_view_decl in
+  Debug.no_1 "process_pred_def_4_iast" pr pr_no process_pred_def_4_iast pdef
+
+let convert_pred_to_cast iprog cprog = 
+  let tmp_views = (order_views (iprog.I.prog_view_decls)) in
+  Debug.tinfo_pprint "after order_views" no_pos;
+  let _ = Iast.set_check_fixpt iprog.I.prog_data_decls tmp_views in
+  Debug.tinfo_pprint "after check_fixpt" no_pos;
+  iprog.I.prog_view_decls <- tmp_views;
+  let cviews = List.map (trans_view iprog) tmp_views in
+  Debug.tinfo_pprint "after trans_view" no_pos;
+  let cviews =
+    if !Globals.pred_elim_useless then
+      Norm.norm_elim_useless cviews (List.map (fun vdef -> vdef.C.view_name) cviews)
+    else cviews
+  in
+  let _ = cprog.C.prog_view_decls <- cviews in
+  let cviews1 =
+    if !Globals.norm_extract then
+      Norm.norm_extract_common cprog cviews (List.map (fun vdef -> vdef.C.view_name) cviews)
+    else cviews
+  in
+  let cviews2 = Norm.cont_para_analysis cprog cviews1 in
+  let _ = cprog.C.prog_view_decls <- cviews2 in
+  let _ =  (List.map (fun vdef -> compute_view_x_formula cprog vdef !Globals.n_xpure) cviews2) in
+  Debug.tinfo_pprint "after compute_view" no_pos;
+  let _ = (List.map (fun vdef -> set_materialized_prop vdef) cprog.C.prog_view_decls) in
+  Debug.tinfo_pprint "after materialzed_prop" no_pos;
+  let cprog1 = fill_base_case cprog in
+  let cprog2 = sat_warnings cprog1 in
+  let cprog3 = if (!Globals.enable_case_inference or (not !Globals.dis_ps)(* !Globals.allow_pred_spec *))
+    then pred_prune_inference cprog2 else cprog2 in
+  let cprog4 = (add_pre_to_cprog cprog3) in
+  let _ = cprog.C.prog_view_decls <- cprog4.C.prog_view_decls in
+  cprog.C.prog_view_decls
+
+let convert_pred_to_cast iprog cprog =
+  let pr1 _ = pr_no in
+  Debug.no_1 "convert_pred_to_cast" pr1 pr_no
+      ( fun _ -> convert_pred_to_cast iprog cprog) cprog
+
+
 let trans_hprel_2_cview_x iprog cprog proc_name hpdefs : C.view_decl list =
 
   (*topo sort hp_rels*)
@@ -7426,9 +7532,10 @@ let trans_hprel_2_cview_x iprog cprog proc_name hpdefs : C.view_decl list =
   (*convert to iview*)
   let tripple_iviews = transform_hp_rels_to_iviews (List.map (fun hpdef -> (proc_name, hpdef)) hpdefs1)in
   let iviews = List.map (fun (_,_,iv) -> iv) tripple_iviews in
-  let _ = iprog.Iast.prog_view_decls <- iprog.Iast.prog_view_decls@iviews in
+  let _ = List.iter (process_pred_def_4_iast iprog) iviews in
+  (* let _ = iprog.Iast.prog_view_decls <- iprog.Iast.prog_view_decls@iviews in *)
   (*convert to cview*)
-  let cviews = List.map (trans_view iprog) iviews in
+  let cviews = (convert_pred_to_cast iprog cprog) in
   let cviews1 =
     if !Globals.pred_elim_useless then
       Norm.norm_elim_useless cviews (List.map (fun vdef -> vdef.C.view_name) cviews)
