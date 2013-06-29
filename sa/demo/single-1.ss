@@ -12,7 +12,7 @@ ltwo<p:node> == p::ll<> & self = null  or
 
 HeapPred HL(node a).
 HeapPred H(node a).
-HeapPred G(node a, node b).
+PostPred G(node a, node b).
 
 G0<x> ==
      self::node<val_29_788,null>@M&self=x 
@@ -55,6 +55,43 @@ requires x::ll<> & x!=null
 
 /*
 # single.ss
+
+ H(x)&true --> x::node<val_45_817,next_45_818>@M * H_9(next_45_818)&true,
+ H_9(next_45_818)&next_45_818!=null --> H(next_45_818)&true,
+
+ G(next_45_818,t_39')&
+  next_45_818!=null --> t_39'::node<val_51_831,next_51_832>@M * 
+  G_3(next_51_832,next_45_818@NI) * G_4(next_45_818,t_39'@NI)&true,
+
+ H_9(next_45_818)&next_45_818=null --> emp&true,
+
+ x::node<val_45_817,next_45_818>@M&res=x & next_45_818=null --> G(x,res)&true,
+ x::node<val_45_817,next_45_818>@M * G_4(next_45_818,res@NI) * 
+  res::node<val_51_831,v_null_51_837>@M&next_45_818!=null & 
+  v_null_51_837=null --> G(x,res)&true]
+*
+
+==========================
+
+[ H(x_863) ::=  x_863::node<val_45_817,next_45_818>@M * H_9(next_45_818)&true,
+ G(x_865,res_866) ::=  
+ x_865::node<val_45_817,next_45_818>@M&next_45_818=null & res_866=x_865
+ or x_865::node<val_45_817,next_45_818>@M * G_4(next_45_818,res_866) * 
+    res_866::node<val_51_831,v_null_51_837>@M&next_45_818!=null & 
+    v_null_51_837=null,
+
+ H_9(next_45_864) ::=  
+ next_45_864::node<val_45_817,next_45_818>@M * H_9(next_45_818)&true
+ or emp&next_45_864=null,
+
+ G_4(next_45_929,t_930) ::=  
+ emp&next_45_929!=null & next_45_929=t_930
+ or next_45_929::node<val_45_925,next_45_926>@M * G_4(next_45_926,t_930)&
+    next_45_926!=null,
+
+ G_3(next_51_832,next_45_818) ::= NONE
+
+======================
 
 This defn for G is incorrect.
 

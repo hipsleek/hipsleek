@@ -1530,9 +1530,10 @@ let rec pr_formula_base e =
       formula_base_label = lbl;
 	  formula_base_pos = pos}) ->
           (match lbl with | None -> fmt_string "" (* "<NoLabel>" *) | Some l -> fmt_string ("{"^(string_of_int (fst l))^"}->"));
-          pr_h_formula h ; pr_cut_after "&" ; 
-          pr_mix_formula p;
-          pr_cut_after  "&" ;  fmt_string (string_of_flow_formula "FLOW" fl)
+          pr_h_formula h ; 
+          (if not(MP.isConstMTrue p) then 
+            (pr_cut_after "&" ; pr_mix_formula p))
+          ;pr_cut_after  "&" ;  fmt_string (string_of_flow_formula "FLOW" fl)
         (* ; fmt_string (" LOC: " ^ (string_of_loc pos))*)
           ;if (a==[]) then ()
           else
@@ -1548,7 +1549,10 @@ let rec prtt_pr_formula_base e =
       formula_base_label = lbl;
 	  formula_base_pos = pos}) ->
           (match lbl with | None -> fmt_string "" (* "<NoLabel>" *) | Some l -> fmt_string ("{"^(string_of_int (fst l))^"}->"));
-          prtt_pr_h_formula h ; pr_cut_after "&" ; pr_mix_formula p;()
+          prtt_pr_h_formula h ; 
+          (if not(MP.isConstMTrue p) then 
+            (pr_cut_after "&" ; pr_mix_formula p))
+          ;()
           (* pr_cut_after  "&"; *) (*;  fmt_string (string_of_flow_formula "FLOW" fl) *)
         (* ; fmt_string (" LOC: " ^ (string_of_loc pos))*)
           (* if (a==[]) then () *)
@@ -1565,7 +1569,10 @@ let rec prtt_pr_formula_base_inst prog e =
       formula_base_label = lbl;
       formula_base_pos = pos}) ->
           (match lbl with | None -> fmt_string "" (* "<NoLabel>" *) | Some l -> fmt_string ("{"^(string_of_int (fst l))^"}->"));
-          prtt_pr_h_formula_inst prog h ; pr_cut_after "&" ; pr_mix_formula p;()
+          prtt_pr_h_formula_inst prog h ; 
+          (if not(MP.isConstMTrue p) then 
+            (pr_cut_after "&" ; pr_mix_formula p))
+          (* pr_cut_after "&" ; pr_mix_formula p;() *)
 
 let rec pr_formula e =
   let f_b e =  pr_bracket formula_wo_paren pr_formula e in
@@ -1586,8 +1593,10 @@ let rec pr_formula e =
 	  formula_exists_pos = pos}) ->
           (match lbl with | None -> () | Some l -> fmt_string ("{"^(string_of_int (fst l))^"}->"));
           fmt_string "EXISTS("; pr_list_of_spec_var svs; fmt_string ": ";
-          pr_h_formula h; pr_cut_after "&" ;
-          pr_mix_formula p; pr_cut_after  "&" ; 
+          pr_h_formula h; 
+          (if not(MP.isConstMTrue p) then 
+            (pr_cut_after "&" ; pr_mix_formula p))
+          ; pr_cut_after  "&" ; 
           fmt_string ((string_of_flow_formula "FLOW" fl) ^  ")")
           (*;fmt_string (" LOC: " ^ (string_of_loc pos))*)
           ;if (a==[]) then ()
