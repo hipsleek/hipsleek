@@ -42,6 +42,7 @@ and data_field_ann =
 
 and data_decl = { 
     data_name : ident;
+    data_pos : loc;
     data_fields : (typed_ident * data_field_ann) list;
     data_parent_name : ident;
     data_invs : F.formula list;
@@ -105,6 +106,7 @@ and view_decl = {
     view_prune_conditions: (P.b_formula * (formula_label list)) list;
     view_prune_conditions_baga: ba_prun_cond list;
     view_prune_invariants : (formula_label list * (Gen.Baga(P.PtrSV).baga * P.b_formula list )) list ;
+    view_pos : loc;
     view_raw_base_case: Cformula.formula option;}
 
 (* An Hoa : relation *)					

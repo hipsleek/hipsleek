@@ -742,6 +742,7 @@ non_empty_command:
 data_decl:
     [[ dh=data_header ; db = data_body 
         -> {data_name = dh;
+            data_pos = get_pos_camlp4 _loc 1;
             data_fields = db;
             data_parent_name="Object"; (* Object; *)
             data_invs = [];
@@ -751,6 +752,7 @@ data_decl:
 template_data_decl:
     [[ dh=template_data_header ; db = data_body 
         -> {data_name = dh;
+            data_pos = get_pos_camlp4 _loc 1;
             data_fields = db;
             data_parent_name="Object"; (* Object; *)
             data_invs = [];
@@ -957,6 +959,7 @@ view_header:
       let modes = get_modes anns in
       let _ = view_names # push vn in
         { view_name = vn;
+          view_pos = get_pos_camlp4 _loc 1;
           view_data_name = "";
           view_vars = (* List.map fst *) cids;
           (* view_frac_var = empty_iperm; *)
@@ -987,6 +990,7 @@ view_header_ext:
       let modes = get_modes anns in
       let _ = view_names # push vn in
         { view_name = vn;
+          view_pos = get_pos_camlp4 _loc 1;
           view_data_name = "";
           view_vars = (* List.map fst *) cids;
           (* view_frac_var = empty_iperm; *)
@@ -1993,6 +1997,7 @@ hprogn:
         | Coercion cdef -> coercion_defs := cdef :: !coercion_defs in
     let _ = List.map choose t in
     let obj_def = { data_name = "Object";
+                    data_pos = no_pos;
                     data_fields = [];
                     data_parent_name = "";
                     data_invs = []; (* F.mkTrue no_pos; *)
@@ -2000,6 +2005,7 @@ hprogn:
                     data_methods = [] } in
     let string_def = { data_name = "String";
                        data_fields = [];
+                       data_pos = no_pos;
                        data_parent_name = "Object";
                        data_invs = []; (* F.mkTrue no_pos; *)
                        data_is_template = false;
@@ -2072,6 +2078,7 @@ class_decl:
 		(* An Hoa [22/08/2011] : blindly add the members as non-inline because we do not support inline fields in classes. TODO revise. *)
 		let t1 = List.map (fun (t, p) -> (t, p, false,F_NO_ANN)) t1 in
       let cdef = { data_name = id;
+                   data_pos = get_pos_camlp4 _loc 2;
                    data_parent_name = un_option par "Object";
                    data_fields = t1;
                    data_invs = t2;

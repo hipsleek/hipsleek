@@ -36,6 +36,7 @@ let sleek_proof_counter = new Gen.counter 0
 *)
 let iobj_def =  {I.data_name = "Object";
 				 I.data_fields = [];
+				 I.data_pos = no_pos;
 				 I.data_parent_name = "";
 				 I.data_invs = []; (* F.mkTrue no_pos; *)
                  I.data_is_template = false;
@@ -61,6 +62,7 @@ let iprog = { I.prog_include_decls =[];
 
 let cobj_def = { C.data_name = "Object";
 				 C.data_fields = [];
+				 C.data_pos = no_pos;
 				 C.data_parent_name = "";
 				 C.data_invs = [];
 				 C.data_methods = [] }
@@ -196,7 +198,8 @@ let process_pred_def pdef =
 	  with
 		| _ ->  dummy_exception() ; iprog.I.prog_view_decls <- curr_view_decls
   else
-	print_string (pdef.I.view_name ^ " is already defined.\n")
+	(* print_string (pdef.I.view_name ^ " is already defined.\n") *)
+	report_error pdef.I.view_pos (pdef.I.view_name ^ " is already defined.")
 
 let process_pred_def pdef = 
   let pr = Iprinter.string_of_view_decl in
@@ -226,7 +229,9 @@ let process_pred_def_4_iast pdef =
 	  with
 		| _ ->  dummy_exception() ; iprog.I.prog_view_decls <- curr_view_decls
   else
-	print_string (pdef.I.view_name ^ " is already defined.\n")
+    begin
+	report_error pdef.I.view_pos (pdef.I.view_name ^ " is already defined.")
+    end
 
 let process_pred_def_4_iast pdef = 
   let pr = Iprinter.string_of_view_decl in
@@ -389,7 +394,8 @@ let process_data_def ddef =
 	| _ -> dummy_exception() ; iprog.I.prog_data_decls <- tmp
       else begin
         dummy_exception() ;
-	print_string (ddef.I.data_name ^ " is already defined.\n")
+	(* print_string (ddef.I.data_name ^ " is already defined.\n") *)
+	report_error ddef.I.data_pos (ddef.I.data_name ^ " is already defined.")
       end
 
 let process_barrier_def bd = 
