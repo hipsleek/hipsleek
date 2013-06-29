@@ -4448,7 +4448,6 @@ and heap_entail_split_rhs_x (prog : prog_decl) (is_folding : bool) (ctx_0 : cont
 (* entailment method for splitting the antecedent *)
 and heap_entail_split_lhs (prog : prog_decl) (is_folding : bool) (ctx0 : context) (conseq : formula) 
       (rhs_h_matched_set : CP.spec_var list) pos : (list_context * proof) =
-
   Debug.devel_zprint (lazy ("heap_entail_split_lhs: \nante:\n" ^ (Cprinter.string_of_context ctx0) ^ "\nconseq:\n"
   ^ (Cprinter.string_of_formula conseq))) pos;
 
@@ -4922,6 +4921,8 @@ and heap_entail_conjunct_lhs_x prog is_folding  (ctx:context) (conseq:CF.formula
 	      heap_entail_split_rhs prog is_folding ctx conseq pos     
               end
               else*)
+            (* WN : check lhs_contra if infer_vars present *)
+            (* check if ctx0 /\ conseq = false *)
 	    if !Globals.allow_imm then
               begin
                 Debug.devel_zprint (lazy ("heap_entail_conjunct_lhs: invoking heap_entail_split_rhs_phases")) pos;
@@ -5535,7 +5536,7 @@ and heap_entail_split_lhs_phases p is_folding  ctx0 conseq d pos : (list_context
 (* entailment method for splitting the antecedent *)
 and heap_entail_split_lhs_phases_x (prog : prog_decl) (is_folding : bool) (ctx0 : context) (conseq : formula) (drop_read_phase : bool)
       pos : (list_context * proof) =
-
+  (* WN : lhs_contra - need to check at beginning here if infer vars present *)
   Debug.devel_zprint (lazy ("heap_entail_split_lhs_phases: \nante:\n" ^ (Cprinter.string_of_context ctx0) ^ "\nconseq:\n"
   ^ (Cprinter.string_of_formula conseq))) pos;
 

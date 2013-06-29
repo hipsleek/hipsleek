@@ -1,0 +1,42 @@
+data node {
+	int val; 
+	node next;	
+}.
+
+// (28)
+infer [mmm] mmm=-1 |- x::node<_,_> & mmm>=0
+    or x::node<_,_>
+    .
+print residue.
+
+/*
+# infer8a.slk
+
+Can contradiction be detected earlier?
+Not just at empty RHS which may be too late.
+
+ id: 1; caller: []; line: 0; classic: false; kind: Why None?; hec_num: 5; evars: []; infer_vars: [m]; c_heap: emp
+ checkentail emp&m+1=0&{FLOW,(19,20)=__norm}[]
+ |-  x::node<Anon_12,Anon_13>@M[Orig]&true&{FLOW,(19,20)=__norm}[]. 
+res:  failctx
+         fe_kind: MUST
+         fe_name: separation entailment
+         fe_locs: {
+                   fc_message: infer_heap_node
+                   fc_current_lhs_flow: {FLOW,(19,20)=__norm}}
+
+Entail (1) : Fail.
+
+// (28)
+infer [m] m=-1 |- m>=0.
+print residue.
+
+Entail (2) : Valid. 
+
+ <1>hfalse&false&{FLOW,(19,20)=__norm}[]
+ inferred pure: [m!=(0-1)]
+
+
+*/
+
+
