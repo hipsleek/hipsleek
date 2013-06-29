@@ -791,6 +791,32 @@ let process_shape_infer pre_hps post_hps=
   (* in *)
   ()
 
+let process_shape_postObl pre_hps post_hps=
+   let hp_lst_assume = !sleek_hprel_assumes in
+  let constrs2, sel_hps, sel_post_hps, unk_map, unk_hpargs, link_hpargs=
+    shape_infer_pre_process hp_lst_assume pre_hps post_hps
+  in
+  let ls_inferred_hps, ls_hprel, _, _ =
+    if List.length sel_hps> 0 && List.length hp_lst_assume > 0 then
+      let infer_shape_fnc = Sa2.infer_shapes_from_fresh_obligation in
+      infer_shape_fnc iprog !cprog "" constrs2 [] []
+          sel_hps sel_post_hps [] unk_hpargs link_hpargs true unk_map false
+          [] [] []
+    else [], [],[],[]
+  in
+  let _ = begin
+      if (ls_hprel <> []) then
+        let pr = pr_list_ln Cprinter.string_of_hp_rel_def in
+        print_endline "";
+      print_endline "\n*************************************";
+      print_endline "*******relational definition ********";
+      print_endline "*************************************";
+      print_endline (pr ls_hprel);
+      print_endline "*************************************"
+    end
+  in
+  ()
+
 let process_shape_sconseq pre_hps post_hps=
   (* let _ = DD.info_pprint "process_shape_infer" no_pos in *)
   let hp_lst_assume = !sleek_hprel_assumes in

@@ -45,6 +45,7 @@ type command =
   | EntailCheck of (meta_formula * meta_formula * entail_type)
   | RelAssume of (ident * meta_formula * meta_formula)
   | ShapeInfer of (ident list * ident list)
+  | ShapePostObl of (ident list * ident list)
   | ShapeInferProp of (ident list * ident list)
   | ShapeSplitBase of (ident list * ident list)
   | ShapeElim of (ident list)
@@ -99,6 +100,7 @@ let string_of_command c = match c with
   | EntailCheck _ -> "EntailCheck"
   | RelAssume _ -> "RelAssume"
   | ShapeInfer _ -> "ShapeInfer"
+  | ShapePostObl _ -> "| ShapePostObl"
   | ShapeInferProp _ -> "ShapeInferProper"
   | ShapeSplitBase _ -> "ShapeSplitbase"
   | ShapeDeclDang _ -> "ShapeDeclDang"

@@ -1504,7 +1504,15 @@ let rec infer_shapes_from_fresh_obligation_x iprog cprog proc_name (constrs0: CF
   if ho_constrs = [] then ([],[],unk_hpargs,hp_rel_unkmap) else
     let constr, hp_defs, c, unk_hpargs2, link_hpargs2, equivs = infer_shapes_core iprog cprog proc_name ho_constrs callee_hps (sel_lhps@sel_rhps)
     (sel_post_hps@sel_rhps) hp_rel_unkmap unk_hpargs link_hpargs need_preprocess detect_dang in
-    ([],hp_defs,unk_hpargs2,[])
+    let hp_names = List.fold_left ( fun ls (hpdef, _,_)->
+        let new_hps =  match hpdef with
+          | CP.HPRelDefn (hp,_,_) -> [hp]
+          | CP.HPRelLDefn hps -> hps
+          | _ -> []
+        in
+        ls@new_hps
+    ) [] hp_defs in
+    (hp_names,hp_defs,unk_hpargs2,[])
 
 and infer_shapes_from_fresh_obligation iprog cprog proc_name (constrs0: CF.hprel list) callee_hps non_ptr_unk_hps sel_lhps sel_rhps sel_post_hps
       unk_hps link_hps need_preprocess hp_rel_unkmap detect_dang pre_defs post_defs def_hps=
@@ -1554,7 +1562,7 @@ and infer_shapes_from_obligation iprog prog proc_name (constrs0: CF.hprel list)
   let pr3 = pr_list_ln Cprinter.string_of_hp_rel_def in
   let pr4 = pr_list (pr_pair !CP.print_sv pr2) in
   let pr5 (a,b,c,_) = (pr_triple pr2 pr3 pr4) (a,b,c) in
-  Debug.ho_1 "infer_shapes_from_obligation" pr1 pr5
+  Debug.no_1 "infer_shapes_from_obligation" pr1 pr5
       (fun _ -> infer_shapes_from_obligation_x iprog prog proc_name constrs0
           callee_hps non_ptr_unk_hps sel_post_hps unk_hps
           link_hps need_preprocess hp_rel_unkmap detect_dang pre_defs post_defs def_hps)
