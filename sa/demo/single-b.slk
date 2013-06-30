@@ -21,7 +21,7 @@ relAssume GP_4
 shape_post_obligation [][GP_3,GP_4].
 //shape_infer [][GP_4,GP_5].
 
-print residue.
+//print residue.
 
 /*
 # single-b.slk

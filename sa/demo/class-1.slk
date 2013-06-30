@@ -25,6 +25,12 @@ print residue.
 infer_exact [H,G] G(b) & a=null & b!=null |- emp.
 print residue.
 
+infer_inexact [H,G] G(b) & a=null & b!=null |- emp.
+print residue.
+
+infer [H,G] G(b) & a=null & b!=null |- emp.
+print residue.
+
 /*
 # class-1.slk
 

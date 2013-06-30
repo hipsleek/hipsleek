@@ -3035,6 +3035,7 @@ print residue.
 
 GOT
 ===
+
 Entail (3) : Valid. 
  <1>emp&a=null&{FLOW,(19,20)=__norm}[]
  inferred hprel: [G(b) --> emp]
