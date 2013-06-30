@@ -770,7 +770,19 @@ let rec infer_pure_m_x unk_heaps estate lhs_rels lhs_xpure_orig lhs_xpure0 lhs_w
       let split_rhs = CP.split_conjunctions rhs_xpure in
       let rem_rhs = List.filter (fun c -> not(TP.imply_raw lhs_xpure c)) split_rhs in
       let rhs_xpure = CP.join_conjunctions rem_rhs in
-      let _ = DD.tinfo_hprint (add_str "lhs_xpure: " (!CP.print_formula)) lhs_xpure pos in
+      let lhs_xpure,iv =
+        if unk_heaps!=[] then
+          let _ = DD.binfo_pprint "WN : to convert unk_heaps to corresponding pure relation using __pure_of_" no_pos in
+          let _ = DD.binfo_hprint (add_str "unk_heaps" (pr_list !CF.print_h_formula)) unk_heaps no_pos in
+          let _ = DD.tinfo_hprint (add_str "lhs_xpure: " (!CP.print_formula)) lhs_xpure pos in
+          (* WN infer_pure_heap_pred : to implement below *)
+          (* let pure_of_unk_heap = pure_relation_of_heap unk_heaps in *)
+          (* let lhs_xpure = pure_of_heap_pred /\ lhs_xpure in *)
+          (* let lhs_xpure = pure_name_of_heap_pred unk_heaps *)
+          (* let iv = iv @ new_pure_rel *)
+          (lhs_xpure,iv) 
+        else (lhs_xpure,iv)
+      in
       let _ = DD.tinfo_hprint (add_str "split_rhs: " (pr_list !CP.print_formula)) split_rhs pos in
       let _ = DD.tinfo_hprint (add_str "rem_rhs: " (pr_list !CP.print_formula)) rem_rhs pos in
       let _ = DD.trace_hprint (add_str "lhs(orig): " !CP.print_formula) lhs_xpure_orig pos in
@@ -1013,6 +1025,10 @@ let rec infer_pure_m_x unk_heaps estate lhs_rels lhs_xpure_orig lhs_xpure0 lhs_w
                                   let _ = DD.ninfo_hprint (add_str "LHS : " !CP.print_formula) lhs_xpure pos in           
                                   let _ = DD.devel_hprint (add_str "rel_ass_final: " (pr_list print_lhs_rhs)) rel_ass pos in
                                   let _ = DD.devel_hprint (add_str "New estate : " !print_entail_state_short) new_estate pos in
+                                  (* WN : infer_pure_of_heap_pred *)
+                                  (* for rel_ass of heap_pred, convert to hprel form *)
+                                  (* add to relevant store *)
+                                  (* return None,None,.. *)
                                   let _ = infer_rel_stk # push_list rel_ass in
                                   let _ = Log.current_infer_rel_stk # push_list rel_ass in
                                   (None,None,[(new_estate,rel_ass,false)])
@@ -1200,7 +1216,7 @@ and infer_pure_m unk_heaps estate lhs_rels lhs_xpure_orig lhs_xpure0 lhs_wo_heap
   let pr_res_lst = pr_list (fun (es,r,b) -> (pr_pair (pr2) (pr_list CP.print_lhs_rhs)) (es,r)) in
   let pr_res = pr_triple (pr_option (pr_pair pr2 !print_pure_f)) (pr_option pr_p) pr_res_lst in
   let pr0 es = pr_pair pr2 !CP.print_svl (es,es.es_infer_vars) in
-  Debug.to_5 "infer_pure_m_1" 
+  Debug.no_5 "infer_pure_m_1" 
       (add_str "estate " pr0) 
       (add_str "lhs xpure " pr_p) 
       (add_str "lhs xpure0 " pr1)
