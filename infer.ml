@@ -1416,7 +1416,7 @@ let infer_collect_rel is_sat estate lhs_h_mix lhs_mix rhs_mix pos =
   if no_infer_rel estate (* && no_infer_hp_rel estate *) then (estate,lhs_mix,rhs_mix,None,[]) 
   else 
     let ivs = estate.es_infer_vars_rel(* @estate.es_infer_vars_hp_rel *)  in
-    Debug.info_hprint (add_str "ivs" Cprinter.string_of_spec_var_list) ivs no_pos;
+    Debug.tinfo_hprint (add_str "ivs" Cprinter.string_of_spec_var_list) ivs no_pos;
     (*add instance of relational s0-pred*)
     (* let new_es_infer_vars_rel = find_close_infer_vars_rel lhs_mix estate.CF.es_infer_vars_rel in *)
     (* let estate = { estate with CF.es_infer_vars_rel = new_es_infer_vars_rel} in *)
