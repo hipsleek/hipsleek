@@ -1165,6 +1165,14 @@ let smart_subst nf1 nf2 hpargs eqs reqs unk_svl prog_vars=
   Debug.no_3 "smart_subst" pr1 pr1 pr2 (pr_triple pr1 pr1 pr2)
       (fun _ _ _ -> smart_subst_x nf1 nf2 hpargs eqs reqs unk_svl prog_vars) nf1 nf2 prog_vars
 
+let smart_subst_lhs f lhpargs leqs infer_vars=
+  match f with
+    | CF.Base fb ->
+          let nfb,_,_ = smart_subst fb (CF.formula_base_of_heap CF.HEmp no_pos) lhpargs
+            leqs [] [] infer_vars in
+          nfb
+    | _ -> report_error no_pos "SAU.smart_subst_lhs"
+
 let keep_data_view_hrel_nodes_two_fbs prog f1 f2 hd_nodes hv_nodes hpargs leqs reqs his_ss keep_rootvars
       lhs_hpargs (* lback_keep_ptrs *) lkeep_hpargs rkeep_hps rhs_svl unk_svl prog_vars =
   let eqs = (leqs@reqs@his_ss) in

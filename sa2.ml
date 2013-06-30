@@ -288,39 +288,6 @@ let split_constr prog constrs post_hps prog_vars unk_map unk_hps link_hps=
         in
         (new_constrs, unk_map1, link_hps)
     else
-      (*detect link hps: move to outside of shape_infer??*)
-      (*  let leqs = (MCP.ptr_equations_without_null mix_lf) in *)
-      (*   let lhs_b = match lhs with *)
-      (*     | CF.Base fb -> fb *)
-      (*     | _ -> report_error no_pos "sa2.split_constr: lhs should be a Base Formula" *)
-      (*   in *)
-      (*   let rhs_b = match rhs with *)
-      (*     | CF.Base fb -> fb *)
-      (*     | _ -> report_error no_pos "sa2.split_constr: lhs should be a Base Formula" *)
-      (*   in *)
-      (*   (\**smart subst**\) *)
-      (*   let lhs_b1, rhs_b1, subst_prog_vars = SAU.smart_subst lhs_b rhs_b (l_hpargs@r_hpargs) *)
-      (*     leqs [] [] prog_vars *)
-      (*   in *)
-      (*   let lfb = lhs_b1 in *)
-      (*   let lhds, lhvs, lhrs = CF.get_hp_rel_bformula lfb in *)
-      (*   let (_ ,mix_lf,_,_,_) = CF.split_components (CF.Base lfb) in *)
-      (*   let leqNulls = MCP.get_null_ptrs mix_lf in *)
-      (*   let leqs = (MCP.ptr_equations_without_null mix_lf) in *)
-      (*   let ls_rhp_args = CF.get_HRels_f (CF.Base rhs_b1) in *)
-      (*   let l_def_vs = leqNulls @ (List.map (fun hd -> hd.CF.h_formula_data_node) lhds) *)
-      (*     @ (List.map (fun hv -> hv.CF.h_formula_view_node) lhvs) in *)
-      (*   let l_def_vs = CP.remove_dups_svl (CF.find_close l_def_vs (leqs)) in *)
-      (*   let helper (hp,eargs,_)=(hp,List.concat (List.map CP.afv eargs)) in *)
-      (*   let ls_lhp_args = (List.map helper lhrs) in *)
-      (*   let link_hpargs0 =  match ls_rhp_args with *)
-      (*     | [(r_hp,r_args)] -> *)
-      (*           if CP.mem_svl r_hp post_hps then *)
-      (*             [] *)
-      (*           else *)
-      (*             SAU.detect_link_hp prog lhds lhvs r_hp r_args post_hps ls_lhp_args (l_def_vs) *)
-      (*     | _ -> [] *)
-      (* in *)
       ([cs],total_unk_map,[])
   in
   let split_one cs total_unk_map =
@@ -401,19 +368,6 @@ let get_preds (lhs_preds, lhs_heads, rhs_preds,rhs_heads) cs=
     | _ -> rhs_heads
   in
   (lhs_preds@lhs_hps, n_lhs_heads, rhs_preds@rhs_hps,n_rhs_heads)
-
-(* let do_elim_unused unused_hps cs map= *)
-(*   let new_lhs, _ = CF.drop_hrel_f cs.CF.hprel_lhs unused_hps in *)
-(*   let new_rhs, _ = CF.drop_hrel_f cs.CF.hprel_rhs unused_hps in *)
-(*   ({cs with CF.hprel_lhs = new_lhs; CF.hprel_rhs = new_rhs}, map) *)
-
-(* let do_elim_unused unused_hps cs map= *)
-(*   let pr1 = !CP.print_svl in *)
-(*   let pr2 = Cprinter.string_of_hprel in *)
-(*   (\* let pr3= (pr_list (pr_pair (pr_list (pr_pair !CP.print_sv string_of_int)) CP.string_of_xpure_view)) in *\) *)
-(*   let pr3 = (pr_list (pr_pair (pr_pair !CP.print_sv (pr_list string_of_int)) CP.string_of_xpure_view)) in *)
-(*   Debug.no_3 "do_elim_unused" pr1 pr2 pr3 (pr_pair pr2 pr3) *)
-(*       do_elim_unused unused_hps cs map *)
 
 let cmp_hpargs_fn (hp1, _) (hp2, _) = CP.eq_spec_var hp1 hp2
 
@@ -1492,15 +1446,17 @@ let partition_constrs constrs post_hps=
     (*call to infer_shape? proper? or post?*)
 let rec infer_shapes_from_fresh_obligation_x iprog cprog proc_name (constrs0: CF.hprel list) callee_hps non_ptr_unk_hps sel_lhps sel_rhps sel_post_hps
       unk_hpargs link_hpargs need_preprocess hp_rel_unkmap detect_dang pre_defs post_defs def_hps=
-  let collect_ho_ass acc_constrs cs=
+  let collect_ho_ass (acc_constrs, post_no_def) cs=
     let lhs_hps = CF.get_hp_rel_name_formula cs.CF.hprel_lhs in
     let rhs_hps = CF.get_hp_rel_name_formula cs.CF.hprel_rhs in
-    let infer_hps = CP.remove_dups_svl (CP.diff_svl (lhs_hps@rhs_hps) def_hps) in
-    if infer_hps = [] then acc_constrs else
+    let linfer_hps = CP.remove_dups_svl (CP.diff_svl (lhs_hps) def_hps) in
+    let rinfer_hps =  (CP.diff_svl (rhs_hps) def_hps) in
+    let infer_hps = CP.remove_dups_svl (linfer_hps@rinfer_hps) in
+    if infer_hps = [] then (acc_constrs, post_no_def) else
       let new_constrs = SAC.do_entail_check infer_hps cprog cs in
-      (acc_constrs@new_constrs)
+      (acc_constrs@new_constrs, post_no_def@linfer_hps)
   in
-  let ho_constrs = List.fold_left collect_ho_ass [] constrs0 in
+  let ho_constrs, nondef_post_hps = List.fold_left collect_ho_ass ([],[]) constrs0 in
   if ho_constrs = [] then ([],[],unk_hpargs,hp_rel_unkmap) else
     (***************  PRINTING*********************)
     let _ =
@@ -1515,8 +1471,11 @@ let rec infer_shapes_from_fresh_obligation_x iprog cprog proc_name (constrs0: CF
     end
     in
     (***************  END PRINTING*********************)
-    let constr, hp_defs, c, unk_hpargs2, link_hpargs2, equivs = infer_shapes_core iprog cprog proc_name ho_constrs callee_hps (sel_lhps@sel_rhps)
-    (sel_post_hps@sel_rhps) hp_rel_unkmap unk_hpargs link_hpargs need_preprocess detect_dang in
+    let constr, hp_defs, c, unk_hpargs2, link_hpargs2, equivs = infer_shapes_core iprog cprog proc_name
+      ho_constrs callee_hps (sel_lhps@sel_rhps)
+      (*post-preds in lhs which dont have ad definition should be considered as pre-preds*)
+      (CP.diff_svl (sel_post_hps@sel_rhps) nondef_post_hps)
+      hp_rel_unkmap unk_hpargs link_hpargs need_preprocess detect_dang in
     let hp_names = List.fold_left ( fun ls (hpdef, _,_)->
         let new_hps =  match hpdef with
           | CP.HPRelDefn (hp,_,_) -> [hp]

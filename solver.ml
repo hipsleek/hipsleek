@@ -6334,10 +6334,17 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
                                                   ^ "\ncontext:\n" ^ (Cprinter.string_of_context ctx0)
                                                   ^ "\nconseq:\n"  ^ (Cprinter.string_of_formula conseq))) pos;
                                                   if (!Globals.do_classic_frame_rule && (h1 != HEmp) && (h1 != HFalse) && (h2 = HEmp)) then (
-                                                      let fail_ctx = mkFailContext "classical separation logic" estate conseq None pos in
-                                                      let ls_ctx = CF.mkFailCtx_in (Basic_Reason (fail_ctx, CF.mk_failure_must "residue is forbidden." "" )) in
-                                                      let proof = mkClassicSepLogic ctx0 conseq in
-                                                      (ls_ctx, proof)
+                                                      (* let _ = DD.info_hprint (add_str "h1: " !CF.print_h_formula) h1 no_pos in *)
+                                                      let r, new_es = Inf.infer_collect_hp_rel_classsic 0 prog estate h2 pos in
+                                                      if not r then
+                                                        let fail_ctx = mkFailContext "classical separation logic" estate conseq None pos in
+                                                        let ls_ctx = CF.mkFailCtx_in (Basic_Reason (fail_ctx, CF.mk_failure_must "residue is forbidden." "" )) in
+                                                        let proof = mkClassicSepLogic ctx0 conseq in
+                                                        (ls_ctx, proof)
+                                                      else
+                                                        (*let n_ctx = SuccCtx [(Ctx new_es)] in*)
+                                                        let ctx, proof =  heap_entail_conjunct_helper 4 prog is_folding  (Ctx new_es) conseq rhs_h_matched_set pos in
+                                                        (ctx, proof)
                                                   )
                                                   else (
                                                       let b1 = {formula_base_heap = h1;
