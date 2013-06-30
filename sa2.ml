@@ -1502,6 +1502,19 @@ let rec infer_shapes_from_fresh_obligation_x iprog cprog proc_name (constrs0: CF
   in
   let ho_constrs = List.fold_left collect_ho_ass [] constrs0 in
   if ho_constrs = [] then ([],[],unk_hpargs,hp_rel_unkmap) else
+    (***************  PRINTING*********************)
+    let _ =
+    begin
+      let pr = pr_list_ln Cprinter.string_of_hprel_short in
+      print_endline "";
+      print_endline "\n*************************************************";
+      print_endline "*******relational assumptions (obligation)********";
+      print_endline "****************************************************";
+      print_endline (pr ho_constrs);
+      print_endline "*************************************"
+    end
+    in
+    (***************  END PRINTING*********************)
     let constr, hp_defs, c, unk_hpargs2, link_hpargs2, equivs = infer_shapes_core iprog cprog proc_name ho_constrs callee_hps (sel_lhps@sel_rhps)
     (sel_post_hps@sel_rhps) hp_rel_unkmap unk_hpargs link_hpargs need_preprocess detect_dang in
     let hp_names = List.fold_left ( fun ls (hpdef, _,_)->

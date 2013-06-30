@@ -808,9 +808,9 @@ let process_shape_postObl pre_hps post_hps=
       if (ls_hprel <> []) then
         let pr = pr_list_ln Cprinter.string_of_hp_rel_def in
         print_endline "";
-      print_endline "\n*************************************";
-      print_endline "*******relational definition ********";
-      print_endline "*************************************";
+      print_endline "\n************************************************";
+      print_endline "*******relational definition (obligation)********";
+      print_endline "**************************************************";
       print_endline (pr ls_hprel);
       print_endline "*************************************"
     end
