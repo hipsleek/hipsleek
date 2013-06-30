@@ -24,6 +24,9 @@ relAssume H
  HP_9(next_15_797,y) * HP_1(y,x)&
   next_15_797!=null --> H(next_15_797,y).
 
+relAssume H
+ HP_9(next_15_797,y) & next_15_797=null --> emp.
+
 relAssume HP_1
  HP_1(y,x) --> y::node<next_21_820,prev_21_821>@M * 
   HP_2(next_21_820,x) * HP_3(prev_21_821,x).
@@ -33,28 +36,24 @@ shape_infer [H,HP_1,HP_9][].
 /*
 # dll-pap-1.slk
 
-[ H(x_81,y_82) ::=  y_82::node<next_21_820,prev_21_821>@M * 
-    HP_2(next_21_820,x_81) *  HP_3(prev_21_821,x_81) 
-   * x_81::node<next_15_62,prev_15_63>@M * HP_9(next_15_62,y_82) 
-   * HP_0(prev_15_63,y_82)&true, 
-   // refrain from unrolling HP_9 & HP_1 unless strictly needed
+GOT which is incorrect
+===
+H(x_85,y_86) ::=  
+   y_86::node<next_21_820,prev_21_821>@M * HP_2(next_21_820,x_85) * 
+   HP_3(prev_21_821,x_85) * x_85::node<next_15_66,prev_15_67>@M * 
+   HP_0(prev_15_67,y_86)&next_15_66=null,
+  // need to refrain from unrolling HP_9 & HP_1 unless strictly needed
 
- HP_1(y_83,x_84) ::=  y_83::node<next_21_820,prev_21_821>@M 
-    * HP_2(next_21_820,x_84) * HP_3(prev_21_821,x_84)&true,
+HP_1(y_87,x_88) ::=  y_87::node<next_21_820,prev_21_821>@M * 
+   HP_2(next_21_820,x_88) * HP_3(prev_21_821,x_88),
+HP_9(next_15_89,y_90) ::=  emp&next_15_89=null,
+  // defn for HP_9 is incorrect
 
- HP_9(next_15_70,y_68) ::=  y_68::node<next_21_820,prev_21_821>@M * HP_2(next_21_820,next_15_70) * HP_3(prev_21_821,next_15_70) 
- * next_15_70::node<next_15_66,prev_15_67>@M 
- * HP_9(next_15_66,y_68) * HP_0(prev_15_67,y_68)&true, 
-   // HP_9 is wrong...
-
- HP_2(a,b) ::= NONE,
- HP_3(a,b) ::= NONE,
- HP_0(a,b) ::= NONE]
 
 POSSIBLE ALGORITM
 =================
 
-Confirm Equality:
+Confirm Equality first:
   H(x,y)&true <--> x::node<next_15_797,prev_15_798>@M * 
       HP_9(next_15_797,y) * HP_0(prev_15_798,y) * HP_1(y,x).
   HP_1(y,x) <--> y::node<next_21_820,prev_21_821>@M * 
@@ -77,13 +76,17 @@ Trasform HP_9 with complex LHS
   // add missing base-case (missed by post-cond proving)
   HP_9(n,y) & n=null --> emp
   // Can now transform HP_9 into ll list.
---------
-relAssume G
- HP_0(prev_15_798,y) * x::node<next_15_797,prev_15_798>@M * 
-  G(next_15_797,y)&next_15_797!=null --> G(x,y).
 
-relAssume G
- HP_0(prev_15_798,y) * x::node<y,prev_15_798>@M * 
-  HP_2(next_21_820,x) * y::node<next_21_820,x>@M&true --> G(x,y).
+When to unfold? Only if it helps make it self-recursive
+and during the transformation of implication:
+  H(..) = ...G(..)..
+
+If we have implication:
+  G(..) & pure --> ..H(..)...
+
+To make it recursive, we unfold:
+  G(..) & pure --> ..[..G(..)..]...
+
+
 
 */

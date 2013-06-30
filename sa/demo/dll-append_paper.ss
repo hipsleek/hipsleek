@@ -55,8 +55,52 @@ res:  [
  HP_800(prev_15_798,y@NI) * x::node<y,prev_15_798>@M * 
   HP_822(next_21_820,x@NI) * y::node<next_21_820,x>@M&true --> G(x,y)&true]
 
+=======
+
+[ H(x,y) --> x::node<next_15_797,prev_15_798>@M * HP_799(next_15_797,y@NI) * 
+  HP_800(prev_15_798,y@NI) * HP_801(y,x@NI),
+
+ HP_799(next_15_797,y@NI) * HP_801(y,x@NI)&
+  next_15_797!=null --> H(next_15_797,y),
+
+ HP_801(y,x@NI) --> y::node<next_21_820,prev_21_821>@M * 
+  HP_822(next_21_820,x@NI) * HP_823(prev_21_821,x@NI),
+
+ HP_800(prev_15_798,y@NI) * x::node<next_15_797,prev_15_798>@M * 
+  G(next_15_797,y)&next_15_797!=null --> G(x,y),
+
+ HP_823(prev_21_821,x@NI) --> emp,
+
+ HP_799(next_15_797,y@NI)&next_15_797=null --> emp,
+
+ HP_800(prev_15_798,y@NI) * x::node<y,prev_15_798>@M * 
+  HP_822(next_21_820,x@NI) * y::node<next_21_820,x>@M --> G(x,y)]
 
 ==================
+[ 
+
+H(x_859,y_860) ::=  y_860::node<next_21_820,prev_21_821>@M * HP_822(next_21_820,x_859) * 
+  HP_823(prev_21_821,x_859) * x_859::node<next_15_845,prev_15_846>@M * 
+  HP_800(prev_15_846,y_860)&next_15_845=null,
+
+ G(x_865,y_866) ::=  HP_800(prev_15_798,y_866) * x_865::node<next_15_797,prev_15_798>@M * 
+      G(next_15_797,y_866)&next_15_797!=null
+ or HP_800(prev_15_798,y_866) * x_865::node<y_866,prev_15_798>@M * 
+    HP_822(next_21_820,x_865) * y_866::node<next_21_820,x_865>@M
+ ,
+ HP_800(prev_15_798,y) ::= NONE,
+ HP_822(next_21_820,x) ::= NONE,
+ HP_823(prev_21_821,x) ::= NONE]
+*************************************
+
+*************************************
+*******fixcalc of pure relation *******
+*************************************
+[]
+
+
+========
+
 [ H(x_849,y_850) ::=  y_850::node<next_19_810,prev_19_811>@M * HP_812(next_19_810,x_849) * 
 HP_813(prev_19_811,x_849) * x_849::node<next_15_835,prev_15_836>@M * 
 HP_789(next_15_835,y_850) * HP_0(prev_15_836,y_850)&true,
