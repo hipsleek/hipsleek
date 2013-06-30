@@ -6155,7 +6155,7 @@ and heap_entail_conjunct_helper i (prog : prog_decl) (is_folding : bool)  (ctx0 
   let pr1 = Cprinter.string_of_context in
   let pr2 (r,_) = Cprinter.string_of_list_context r in
   let pr3  = Cprinter.string_of_formula in
-  Debug.no_2_loop_num i "heap_entail_conjunct_helper" pr1  pr3 pr2
+  Debug.ho_2_loop_num i "heap_entail_conjunct_helper" pr1  pr3 pr2
       (fun _ _ -> heap_entail_conjunct_helper_x prog is_folding ctx0 conseq rhs_h_matched_set pos) ctx0 conseq
 
 and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 : context) (conseq : formula)
@@ -6334,6 +6334,7 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
                                                   ^ "\ncontext:\n" ^ (Cprinter.string_of_context ctx0)
                                                   ^ "\nconseq:\n"  ^ (Cprinter.string_of_formula conseq))) pos;
                                                   if (!Globals.do_classic_frame_rule && (h1 != HEmp) && (h1 != HFalse) && (h2 = HEmp)) then (
+                                                      let _ = DD.info_hprint (add_str "h1: " !CF.print_h_formula) h1 no_pos in
                                                       let fail_ctx = mkFailContext "classical separation logic" estate conseq None pos in
                                                       let ls_ctx = CF.mkFailCtx_in (Basic_Reason (fail_ctx, CF.mk_failure_must "residue is forbidden." "" )) in
                                                       let proof = mkClassicSepLogic ctx0 conseq in
@@ -8373,7 +8374,7 @@ and heap_entail_non_empty_rhs_heap_x prog is_folding  ctx0 estate ante conseq lh
 
 and heap_entail_non_empty_rhs_heap prog is_folding  ctx0 estate ante conseq lhs_b rhs_b (rhs_h_matched_set:CP.spec_var list) pos : (list_context * proof) =
   (*LDK*)
-  Debug.no_3_loop "heap_entail_non_empty_rhs_heap" 
+  Debug.ho_3_loop "heap_entail_non_empty_rhs_heap" 
       Cprinter.string_of_formula_base 
       Cprinter.string_of_formula
       Cprinter.string_of_spec_var_list 

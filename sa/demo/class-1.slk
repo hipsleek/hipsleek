@@ -5,10 +5,10 @@ data node{
 
 
 HeapPred H(node a,node b).
-
+/*
 infer [H] H(a,b) & a=null |- emp.
 print residue.
-
+*/
 infer_exact [H] H(a,b) & a=null |- emp.
 print residue.
 
