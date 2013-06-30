@@ -914,8 +914,11 @@ let rec infer_pure_m_x unk_heaps estate lhs_rels lhs_xpure_orig lhs_xpure0 lhs_w
                           DD.ninfo_hprint (add_str "lhs_xpure" (!CP.print_formula)) lhs_xpure pos;
                           DD.ninfo_hprint (add_str "rhs_xpure" (!CP.print_formula)) rhs_xpure pos;
                           let vs = CP.fv rhs_xpure in
-                          let choose_unk_h = List.filter (fun h -> (Gen.BList.difference_eq CP.eq_spec_var vs (CF.h_fv h)) == []) unk_heaps in
-                          DD.info_hprint (add_str "choose_unk_h" (pr_list !CF.print_h_formula)) choose_unk_h pos;
+                          let choose_unk_h = List.filter (fun h ->
+                              let rvs = (CF.h_fv h) in
+                              let closed_rvs = List.fold_left (fun ls r -> ls@(r::(CP.EMapSV.find_equiv_all r lhs_aset))) [] rvs in
+                              (CP.diff_svl vs closed_rvs) == []) unk_heaps in
+                          DD.ninfo_hprint (add_str "choose_unk_h" (pr_list !CF.print_h_formula)) choose_unk_h pos;
                           if choose_unk_h==[] then (None,None,[])
                           else 
                             (*Loc : need to add (choose_unk_h --> rhs_xpure) heap assumption*)
@@ -1250,7 +1253,7 @@ let infer_pure_m i unk_heaps estate lhs_xpure lhs_xpure0 lhs_wo_heap rhs_xpure p
   (* let pr_len = fun l -> (string_of_int (List.length l)) in *)
   let pr_res = pr_triple (pr_option (pr_pair pr2 !print_pure_f)) (pr_option pr_p) pr_res_lst in
   let pr0 es = pr_pair pr2 !CP.print_svl (es,es.es_infer_vars) in
-  Debug.ho_4_num i "infer_pure_m_2" 
+  Debug.no_4_num i "infer_pure_m_2" 
     (add_str "estate " pr0) 
     (add_str "lhs xpure " pr1) 
     (add_str "lhs xpure0 " pr1)
@@ -2413,7 +2416,10 @@ let collect_classic_assumption prog lfb sel_hps infer_vars pos=
   let rem_defined= List.fold_left (fun ls (hp,args) ->
       if CP.mem_svl hp sel_hps then
         let hf = (CF.HRel (hp, List.map (fun x -> CP.mkVar x pos) args, pos)) in
-        let new_defined = (hp, args, CF.formula_base_of_heap hf pos, truef) in
+        let p = CP.filter_var (MCP.pure_of_mix lfb.CF.formula_base_pure) args in
+        let lhs_ass = CF.mkAnd_base_pure (CF.formula_base_of_heap hf pos)
+          (MCP.mix_of_pure p) pos in
+        let new_defined = (hp, args, lhs_ass, truef) in
         (ls@[new_defined])
       else ls
   ) [] rems_hpargs in
