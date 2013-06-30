@@ -18,6 +18,11 @@ infer [n,y] H_9(n) * x::node<n> & y=n
   & n=t
  |-  t=null.
 print residue.
+/*
+<1>H_9(n) * x::node<n>@M[Orig]&n=y & n=t & y=null&{FLOW,(19,20)=__norm}[]
+ inferred pure: [y=null]
+*/
+
 
 
 /*

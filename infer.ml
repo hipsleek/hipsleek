@@ -1026,9 +1026,17 @@ let rec infer_pure_m_x unk_heaps estate lhs_rels lhs_xpure_orig lhs_xpure0 lhs_w
                                   let _ = DD.devel_hprint (add_str "rel_ass_final: " (pr_list print_lhs_rhs)) rel_ass pos in
                                   let _ = DD.devel_hprint (add_str "New estate : " !print_entail_state_short) new_estate pos in
                                   (* WN : infer_pure_of_heap_pred *)
-                                  (* for rel_ass of heap_pred, convert to hprel form *)
-                                  (* add to relevant store *)
-                                  (* return None,None,.. *)
+                                  let rel_ass,heap_ass =
+                                    if unk_heaps!=[] then
+                                      let _ = DD.binfo_pprint "WN : to convert unk_heaps to corresponding pure relation using __pure_of_" no_pos in
+                                      let _ = DD.binfo_hprint (add_str "unk_heaps" (pr_list !CF.print_h_formula)) unk_heaps no_pos in
+                                      (* WN infer_pure_heap_pred : to implement below *)
+                                      (* for rel_ass of heap_pred, convert to hprel form *)
+                                      (* add to relevant store *)
+                                      (* return None,None,.. *)
+                                      (rel_ass,[]) 
+                                    else (rel_ass,[])
+                                  in
                                   let _ = infer_rel_stk # push_list rel_ass in
                                   let _ = Log.current_infer_rel_stk # push_list rel_ass in
                                   (None,None,[(new_estate,rel_ass,false)])
