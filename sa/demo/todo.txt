@@ -2970,7 +2970,7 @@ inferred hprel: [
    next_29_789::node<val_29_73,next_29_74>@M * GP_5(next_29_74,t_32'@NI)
       --> GP_5(next_29_789,t_32'@NI)&true]
 =====================================================================
-# single-b1.slk
+# single-b1.slk: FIXED
 
 relAssume GP_3
  GP_3(next_34_803,next_29_789)
