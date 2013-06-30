@@ -4923,10 +4923,17 @@ and heap_entail_conjunct_lhs_x prog is_folding  (ctx:context) (conseq:CF.formula
               else*)
             (* WN : check lhs_contra if infer_vars present *)
             (* check if ctx0 /\ conseq = false *)
-            (* DD.binfo_start "Higher LHS CONTRA check"; *)
+            (* DD.binfo_start "Earlier LHS CONTRA check"; *)
             (* DD.binfo_hprint (add_str "ctx" Cprinter.string_of_context_short) ctx no_pos; *)
             (* DD.binfo_hprint (add_str "conseq" Cprinter.string_of_formula) conseq no_pos; *)
-            (* DD.binfo_end "HIGHER LHS CONTRA check"; *)
+            (* DD.binfo_end "LHS CONTRA check"; *)
+            let es = get_estate_from_context ctx in
+            let r = match es with
+              | Some estate -> solver_detect_lhs_rhs_contra prog estate conseq pos "EARLY CONTRA DETECTION"
+              | None -> 
+                    let _ = DD.info_pprint "WARNING : presence of disj context at EARLY CONTRA DETECTION" no_pos in
+                    (None,[])
+            in
 	    if !Globals.allow_imm then
               begin
                 Debug.devel_zprint (lazy ("heap_entail_conjunct_lhs: invoking heap_entail_split_rhs_phases")) pos;
@@ -8953,6 +8960,43 @@ and init_para lhs_h rhs_h lhs_aset prog pos = match (lhs_h, rhs_h) with
         else []
   | _ -> []
 
+  (* (Inf.CF.entail_state * Cprinter.P.formula) option * *)
+  (* (Inf.CF.entail_state * Cformula.CP.infer_rel_type list * bool) list *) 
+and solver_detect_lhs_rhs_contra prog estate conseq pos msg =
+  let pr_estate = Cprinter.string_of_entail_state_short in
+  let pr_f = Cprinter.string_of_formula in
+  let pr_es (es,e) =  pr_pair pr_estate Cprinter.string_of_pure_formula (es,e) in
+  let pr = CP.print_lhs_rhs in
+  let pr_3 (_,lr,b) =  pr_pair (pr_list pr) string_of_bool (lr,b) in
+  Debug.ho_3 "solver_detect_lhs_rhs_contra" 
+      pr_estate pr_f pr_id  (pr_pair (pr_option pr_es) (pr_list pr_3)) (fun _ _ _ -> 
+          solver_detect_lhs_rhs_contra_x prog estate conseq pos msg) estate conseq msg
+
+and solver_detect_lhs_rhs_contra_x prog estate conseq pos msg =
+  let lhs_xpure,_,_ = xpure prog estate.es_formula in
+  (* call infer_lhs_contra *)
+  let lhs_rhs_contra_flag = 
+    let rhs_xpure,_,_ = xpure prog conseq in              
+    let p_lhs_xpure = MCP.pure_of_mix lhs_xpure in
+    let p_rhs_xpure = MCP.pure_of_mix rhs_xpure in
+    let contr, _ = Infer.detect_lhs_rhs_contra  p_lhs_xpure p_rhs_xpure pos in 
+    contr in (* Cristian : to detect_lhs_rhs_contra *) 
+  let h_inf_args, hinf_args_map = get_heap_inf_args estate in
+  (* let esv = estate.es_infer_vars in *)
+  let r_inf_contr,relass = 
+    if lhs_rhs_contra_flag then (None,[])
+    else
+      begin
+	(*if CP.intersect rhs_als estate.es_infer_vars = [] && List.exists CP.is_node_typ estate.es_infer_vars then None,[] else*) 
+	(* let msg = "Early LHS/RHS contra detection" in *)
+	let h_inf_args_add = Gen.BList.difference_eq CP.eq_spec_var h_inf_args estate.es_infer_vars in
+	let estate = {estate with es_infer_vars = h_inf_args_add} in
+        (* let _ = DD.tinfo_hprint (add_str "es_infer_vars" Cprinter.string_of_spec_var_list) esv no_pos in *)
+        (* let _ = DD.tinfo_hprint (add_str "h_inf_args_add" Cprinter.string_of_spec_var_list) h_inf_args_add no_pos in *)
+	Inf.infer_lhs_contra_estate 4 estate lhs_xpure pos msg 
+      end
+  in (r_inf_contr,relass)  
+
 and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:CP.spec_var list) is_folding pos =
   if not(Context.is_complex_action a) then
     begin
@@ -9267,29 +9311,32 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
             (* CF.mk_failure_bot ("infer_heap .. "))), NoAlias) *)
             (* let _ =  Debug.info_pprint ">>>>>> Inf.infer_collect_hp_rel 1: infer_heap <<<<<<" pos in *)
             (*let _ = DD.binfo_start "TODO : Check for LHS Contradiction here?" in*)
-	    let lhs_xpure,_,_ = xpure prog estate.es_formula in
-            (* call infer_lhs_contra *)
-            let lhs_rhs_contra_flag = 
-	      let rhs_xpure,_,_ = xpure prog conseq in              
-	      let p_lhs_xpure = MCP.pure_of_mix lhs_xpure in
-	      let p_rhs_xpure = MCP.pure_of_mix rhs_xpure in
-	      let contr, _ = Infer.detect_lhs_rhs_contra  p_lhs_xpure p_rhs_xpure no_pos in 
-	      contr in (* Cristian : to detect_lhs_rhs_contra *) 
+	    let msg = "M_infer_heap :"^(Cprinter.string_of_h_formula rhs) in
+            let r_inf_contr,relass = solver_detect_lhs_rhs_contra prog estate conseq pos msg 
+            in
+	    (* let lhs_xpure,_,_ = xpure prog estate.es_formula in *)
+            (* (\* call infer_lhs_contra *\) *)
+            (* let lhs_rhs_contra_flag =  *)
+	    (*   let rhs_xpure,_,_ = xpure prog conseq in               *)
+	    (*   let p_lhs_xpure = MCP.pure_of_mix lhs_xpure in *)
+	    (*   let p_rhs_xpure = MCP.pure_of_mix rhs_xpure in *)
+	    (*   let contr, _ = Infer.detect_lhs_rhs_contra  p_lhs_xpure p_rhs_xpure no_pos in  *)
+	    (*   contr in (\* Cristian : to detect_lhs_rhs_contra *\)  *)
 	    let h_inf_args, hinf_args_map = get_heap_inf_args estate in
             let esv = estate.es_infer_vars in
-            let r_inf_contr,relass = 
-              if lhs_rhs_contra_flag then (None,[])
-              else
-                begin
-		  (*if CP.intersect rhs_als estate.es_infer_vars = [] && List.exists CP.is_node_typ estate.es_infer_vars then None,[] else*) 
-	          let msg = "M_infer_heap :"^(Cprinter.string_of_h_formula rhs) in
-	          let h_inf_args_add = Gen.BList.difference_eq CP.eq_spec_var h_inf_args estate.es_infer_vars in
-	          let estate = {estate with es_infer_vars = h_inf_args_add} in
-                  let _ = DD.tinfo_hprint (add_str "es_infer_vars" Cprinter.string_of_spec_var_list) esv no_pos in
-                  let _ = DD.tinfo_hprint (add_str "h_inf_args_add" Cprinter.string_of_spec_var_list) h_inf_args_add no_pos in
-	          Inf.infer_lhs_contra_estate 4 estate lhs_xpure pos msg 
-                end
-            in
+            (* let r_inf_contr,relass =  *)
+            (*   if lhs_rhs_contra_flag then (None,[]) *)
+            (*   else *)
+            (*     begin *)
+	    (*       (\*if CP.intersect rhs_als estate.es_infer_vars = [] && List.exists CP.is_node_typ estate.es_infer_vars then None,[] else*\)  *)
+	    (*       let msg = "M_infer_heap :"^(Cprinter.string_of_h_formula rhs) in *)
+	    (*       let h_inf_args_add = Gen.BList.difference_eq CP.eq_spec_var h_inf_args estate.es_infer_vars in *)
+	    (*       let estate = {estate with es_infer_vars = h_inf_args_add} in *)
+            (*       let _ = DD.tinfo_hprint (add_str "es_infer_vars" Cprinter.string_of_spec_var_list) esv no_pos in *)
+            (*       let _ = DD.tinfo_hprint (add_str "h_inf_args_add" Cprinter.string_of_spec_var_list) h_inf_args_add no_pos in *)
+	    (*       Inf.infer_lhs_contra_estate 4 estate lhs_xpure pos msg  *)
+            (*     end *)
+            (* in *)
             begin 
 	      match r_inf_contr with
                 | Some (new_estate,pf) -> (* if successful, should skip infer_collect_hp_rel below *)

@@ -1,0 +1,63 @@
+data node {
+	int val; 
+	node next;	
+}.
+
+pred ll<n> == self=null & n=0
+ or self::node<_,q>*q::ll<n-1>
+inv n>=0.
+
+HeapPred P(node a). 
+HeapPred Q(node a). 
+
+relation F(int n). 
+
+
+infer [P] P(x) & mmm=-1 & x!=null |-  x::ll<mmm>.
+print residue.
+// P(x) --> x=null
+
+infer [P,Q] P(x) * Q(y) & mmm=-1 & x!=null |-  mmm=3.
+print residue.
+// P(x) --> x=null
+
+infer [P,Q] P(x) * Q(y) & mmm=-1 & x!=null & y=null |-  mmm=3.
+print residue.
+// P(x)*Q(y) --> x=null | y=null
+
+infer [P] P(x) * Q(y) & mmm=-1 & x!=null & y=null |-  mmm=3.
+print residue.
+// P(x) --> x=null 
+
+infer [P,Q] P(x) * Q(x) & mmm=-1 & x!=null & y=null |-  mmm=3.
+print residue.
+// P(x) --> x=null 
+
+infer [P] P(x) & mmm=-1 & xx!=null |-  mmm=3.
+print residue.
+// fail
+
+infer [P] P(x) & mmm=-1 & x!=null |-  mmm<=0.
+print residue.
+// no contradiction
+
+infer [P] P(xx) & mmm=-1 & x!=null |-  mmm<=0.
+print residue.
+// no contra
+
+infer [F] F(n) & mmm=-1 & n>0 |-  mmm=3.
+print residue.
+// F(n) --> n<=0
+
+infer [P] P(x) & mmm=-1 & x=null |-  x::node<_,_>.
+print residue.
+// P(x) --> x!=null
+
+/*
+# contra1.slk
+
+
+
+*/
+
+

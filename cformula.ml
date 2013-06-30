@@ -6380,6 +6380,11 @@ let print_failesc_context = ref(fun (c:failesc_context) -> "printer not initiali
 let print_failure_kind_full = ref(fun (c:failure_kind) -> "printer not initialized")
 let print_fail_type = ref(fun (c:fail_type) -> "printer not initialized")
 
+let get_estate_from_context ctx =
+  match ctx with
+    | Ctx es -> Some es
+    | _ -> None
+
 let get_infer_vars_sel_hp_ctx ctx0=
   let rec helper ctx=
     match ctx with
@@ -8166,7 +8171,6 @@ let list_failesc_context_or f (l1:list_failesc_context) (l2:list_failesc_context
   Debug.no_2 "list_failesc_context_or" 
       pr pr pr
       (fun _ _ -> list_failesc_context_or f l1 l2) l1 l2
-
 
 let add_cond_label_partial_context (c_pid: control_path_id_strict) (c_opt: path_label) ((fl,sl):partial_context) =
   let sl_1 = List.map (fun (pt,ctx) -> (((c_pid,c_opt)::pt),ctx) ) sl in
