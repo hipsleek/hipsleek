@@ -8,7 +8,7 @@ data node{
 ll<> == self = null  or self::node<_, _ , q> * q::ll<>;
 dll<p> == self = null or self::node<_, p , q> * q::dll<self>;   // p stores the prev node
 
-HeapPred H1(node a, node@NI b).
+HeapPred H1(node a, node b).
 // seems critical to have @NI
 HeapPred G1(node a, node b).
 
