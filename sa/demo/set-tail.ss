@@ -4,8 +4,8 @@ data node{
 }
 
 
-HeapPred H(node a,node b).
-  HeapPred G(node a, node b).
+HeapPred H(node a, node@NI b).
+HeapPred G(node a, node b).
 
   void set_tail (node x,node y)
   infer[H,G] 
