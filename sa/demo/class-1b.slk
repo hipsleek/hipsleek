@@ -6,28 +6,32 @@ data node{
 
 HeapPred H(node a,node b).
 HeapPred G(node b).
+
 /*
-infer [H] H(a,b) & a=null |- emp.
+infer_exact [H,G] G(a) & a=null & b!=null |- emp.
+print residue.
+
+infer_exact [H,G] G(b) & a=null |- emp.
 print residue.
 */
-infer_exact [H] H(a,b) & a=null |- emp.
-print residue.
-
-infer_exact [H] H(a,b) * b::node<_,_> & a=null |- emp.
-print residue.
-
-infer_exact [H] H(a,b) * G(b) & a=null & b!=null |- emp.
-print residue.
-
-infer_exact [H,G] H(a,b) * G(b) & a=null & b!=null |- emp.
-print residue.
 
 infer_exact [H,G] G(b) & a=null & b!=null |- emp.
 print residue.
 
 /*
-# class-1.slk
+# class-1b.slk
 
+GOT
+===
+Entail (3) : Valid. 
+ <1>emp&a=null&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [G(b) --> emp]
+
+EXPECT
+======
+ inferred hprel: [G(b) & b!=null--> emp]
+
+===========
 Exact classical reasoning does not allow residue.
 
 Entail (1) : Valid. 
