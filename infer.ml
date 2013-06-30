@@ -2388,6 +2388,43 @@ let infer_collect_hp_rel i prog (es:entail_state) rhs rhs_rest (rhs_h_matched_se
   Debug.no_2_num i "infer_collect_hp_rel" pr1 pr1 pr5
 ( fun _ _ -> infer_collect_hp_rel_x prog es rhs rhs_rest rhs_h_matched_set lhs_b rhs_b pos) lhs_b rhs_b
 
+let collect_classic_assumption prog lfb sel_hps infer_vars pos=
+  let lhds, lhvs, lhrs = CF.get_hp_rel_bformula lfb in
+  let (_ ,mix_lf,_,_,_) = CF.split_components (CF.Base lfb) in
+  let leqNulls = MCP.get_null_ptrs mix_lf in
+  let leqs = (MCP.ptr_equations_without_null mix_lf) in
+  let l_def_vs = leqNulls @ (List.map (fun hd -> hd.CF.h_formula_data_node) lhds)
+    @ (List.map (fun hv -> hv.CF.h_formula_view_node) lhvs) in
+  let l_def_vs = CP.remove_dups_svl (CF.find_close l_def_vs (leqs)) in
+  let helper (hp,eargs,_)=(hp,List.concat (List.map CP.afv eargs)) in
+  let ls_lhp_args = (List.map helper lhrs) in
+  let _, defined_preds,rems_hpargs,link_hps =
+    List.fold_left (fun (lfb1, r_defined_preds, r_rems, r_link_hps) hpargs ->
+        let n_lfb,def_hps, rem_hps, ls_link_hps=
+          SAU.find_well_defined_hp prog lhds lhvs []
+              infer_vars [] hpargs (l_def_vs) lfb1 true pos
+        in
+        (n_lfb, r_defined_preds@def_hps, r_rems@rem_hps, r_link_hps@(snd (List.split ls_link_hps)))
+    ) (lfb, [], [], []) ls_lhp_args
+  in
+  (* let pr1 = pr_list (pr_pair !CP.print_sv !CP.print_svl) in *)
+  (* let _ = Debug.info_pprint (" rems_hpargs: " ^ (pr1 rems_hpargs)) no_pos in *)
+  let truef = CF.mkTrue (CF.mkTrueFlow()) pos in
+  let rem_defined= List.fold_left (fun ls (hp,args) ->
+      if CP.mem_svl hp sel_hps then
+        let hf = (CF.HRel (hp, List.map (fun x -> CP.mkVar x pos) args, pos)) in
+        let new_defined = (hp, args, CF.formula_base_of_heap hf pos, truef) in
+        (ls@[new_defined])
+      else ls
+  ) [] rems_hpargs in
+  let defined_preds0 = defined_preds@rem_defined in
+  let new_constrs =
+    match defined_preds0 with
+      | [] -> []
+      | _ -> let defined_hprels = List.map (SAU.generate_hp_ass []) defined_preds0 in
+        defined_hprels
+  in
+  (new_constrs, (List.map (fun (a, _, _,_) -> a) defined_preds0))
 
 let infer_collect_hp_rel_classsic_x prog (es:entail_state) rhs pos =
   let _ = Debug.ninfo_pprint ("es_infer_vars_hp_rel: " ^ (!CP.print_svl es.es_infer_vars_hp_rel)) no_pos in
@@ -2416,12 +2453,30 @@ let infer_collect_hp_rel_classsic_x prog (es:entail_state) rhs pos =
       let l_hpargs = CF.get_HRels_f lhs in
       let l_non_infer_hps = CP.diff_svl lhrs ivs in
       (**smart subst**)
-      let lhs1 = SAU.smart_subst_lhs lhs l_hpargs leqs es.es_infer_vars in
-      let ( _,mix_lf1,_,_,_) = CF.split_components lhs1 in
-      let leqs1 = (MCP.ptr_equations_without_null mix_lf1) in
-      (true, es)
+      let lhsb1 = SAU.smart_subst_lhs lhs l_hpargs leqs es.es_infer_vars in
+      (**************COLLECT ASS*******************)
+      let ls_ass, defined_hps = collect_classic_assumption prog lhsb1
+        (es.es_infer_vars_hp_rel@es.es_infer_vars_sel_hp_rel) es.es_infer_vars pos in
+      if ls_ass = [] then (false, es) else
+      (**************REFINE RES*******************)
+        let n_es_formula, _ = CF.drop_hrel_f es.es_formula defined_hps in
+        let new_es = {es with (* CF. es_infer_vars_hp_rel = es.CF.es_infer_vars_hp_rel@rvhp_rels; *)
+            CF.es_infer_hp_rel = es.CF.es_infer_hp_rel @ ls_ass;
+            (* CF.es_infer_hp_unk_map = (es.CF.es_infer_hp_unk_map@unk_map); *)
+            (* CF.es_infer_vars_sel_post_hp_rel = (es.CF.es_infer_vars_sel_post_hp_rel @ post_hps); *)
+            CF.es_formula = n_es_formula}
+        in
+        DD.tinfo_pprint ("  new residue: " ^ (Cprinter.string_of_formula new_es.CF.es_formula)) pos;
+        (true, new_es)
     end
 
+let infer_collect_hp_rel_classsic i prog (es:entail_state) rhs pos =
+  let pr1 = Cprinter.string_of_formula in
+  let pr2 = Cprinter.string_of_h_formula in
+  let pr3 = Cprinter.string_of_estate_infer_hp in
+  let pr4 =  pr_pair string_of_bool pr3 in
+  Debug.no_2_num i "infer_collect_hp_rel" pr1 pr2 pr4
+( fun _ _ -> infer_collect_hp_rel_classsic_x prog es rhs pos) es.CF.es_formula rhs
 (*=*****************************************************************=*)
          (*=**************INFER REL HP ASS*****************=*)
 (*=*****************************************************************=*)

@@ -1170,7 +1170,7 @@ let smart_subst_lhs f lhpargs leqs infer_vars=
     | CF.Base fb ->
           let nfb,_,_ = smart_subst fb (CF.formula_base_of_heap CF.HEmp no_pos) lhpargs
             leqs [] [] infer_vars in
-          CF.Base nfb
+          nfb
     | _ -> report_error no_pos "SAU.smart_subst_lhs"
 
 let keep_data_view_hrel_nodes_two_fbs prog f1 f2 hd_nodes hv_nodes hpargs leqs reqs his_ss keep_rootvars
