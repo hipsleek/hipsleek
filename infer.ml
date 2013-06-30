@@ -915,7 +915,7 @@ let rec infer_pure_m_x unk_heaps estate lhs_rels lhs_xpure_orig lhs_xpure0 lhs_w
                           DD.ninfo_hprint (add_str "rhs_xpure" (!CP.print_formula)) rhs_xpure pos;
                           let vs = CP.fv rhs_xpure in
                           let choose_unk_h = List.filter (fun h -> (Gen.BList.difference_eq CP.eq_spec_var vs (CF.h_fv h)) == []) unk_heaps in
-                          DD.ninfo_hprint (add_str "choose_unk_h" (pr_list !CF.print_h_formula)) choose_unk_h pos;
+                          DD.info_hprint (add_str "choose_unk_h" (pr_list !CF.print_h_formula)) choose_unk_h pos;
                           if choose_unk_h==[] then (None,None,[])
                           else 
                             (*Loc : need to add (choose_unk_h --> rhs_xpure) heap assumption*)
@@ -1250,7 +1250,7 @@ let infer_pure_m i unk_heaps estate lhs_xpure lhs_xpure0 lhs_wo_heap rhs_xpure p
   (* let pr_len = fun l -> (string_of_int (List.length l)) in *)
   let pr_res = pr_triple (pr_option (pr_pair pr2 !print_pure_f)) (pr_option pr_p) pr_res_lst in
   let pr0 es = pr_pair pr2 !CP.print_svl (es,es.es_infer_vars) in
-  Debug.no_4_num i "infer_pure_m_2" 
+  Debug.ho_4_num i "infer_pure_m_2" 
     (add_str "estate " pr0) 
     (add_str "lhs xpure " pr1) 
     (add_str "lhs xpure0 " pr1)
