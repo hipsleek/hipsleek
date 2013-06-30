@@ -2970,6 +2970,33 @@ inferred hprel: [
    next_29_789::node<val_29_73,next_29_74>@M * GP_5(next_29_74,t_32'@NI)
       --> GP_5(next_29_789,t_32'@NI)&true]
 =====================================================================
+# single-b1.slk
+
+relAssume GP_3
+ GP_3(next_34_803,next_29_789)
+ --> next_34_803 = null.
+
+//shape_post_obligation [][GP_3]. // loop
+shape_infer [][GP_3]. // loop
+//shape_infer [GP_3][]. // terminates
+
+print residue.
+
+Above is a proof obligation on a post-pred
+which can be used to provide a definition 
+for GP_3. Currently, it goes into a LOOP.
+
+Can we prevent it going into a LOOP?
+
+ALGORITHM
+---------
+IF post-pred on LHS has a definition,
+subject it to SLEEK entailment.
+
+IF post-pred on the LHS does not yet have 
+a definition, use this obligation to provide
+a definition in a similar manner to pre-pred.
+
 =====================================================================
 =====================================================================
 =====================================================================
