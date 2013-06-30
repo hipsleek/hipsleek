@@ -3,16 +3,22 @@ data node {
 }.
 
 HeapPred H_9(node a).
-
-infer [n] H_9(n) * x::node<n> 
+//1.
+infer [n] H_9(n) * x::node<n>
   & n=t
  |-  t=null.
 print residue.
-
+//2.
 infer [t] H_9(t) * x::node<n> 
   & n=t
  |-  t=null.
 print residue.
+//3.
+infer [n,y] H_9(n) * x::node<n> & y=n
+  & n=t
+ |-  t=null.
+print residue.
+
 
 /*
 # assert-2-bug.slk
