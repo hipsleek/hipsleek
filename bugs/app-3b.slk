@@ -1,0 +1,40 @@
+
+data node {
+  int val;
+  node next;
+}.
+
+pred ll_tail2<tx> == self=null
+  or self::node<_, r> * r::ll_tail2<tx>
+  inv true.
+
+lemma "ll_tail2" self::ll_tail2<t> -> t::node<_, null>.
+
+checkentail x::ll_tail2<tx>@M 
+ |-  tx::node<a,b>. 
+
+print residue.
+
+/*
+# app-3b.slk FIXED
+
+This is hypothetical example. Lemmas cannot be proven.
+In contrast app-3.slk triggers the lemma three times
+due to a LHS case analysis.
+
+-----------------
+@L lemma action not being triggered..
+
+conseq:
+ tx::node<a,b>@L[Orig]&true&{FLOW,(19,20)=__norm}[]
+!!!:0: 0: process_action :
+ ### action =  NothingToDo =>  
+  Type: WArg
+  LHS: x::ll_tail2<tx>@M[0][Orig][LHSCase]
+  RHS: tx::node<a,b>@L[Orig]
+ lhs_rest: Hole[36]
+ rhs_rest: emp
+ ### estate =  x::ll_tail2<tx>@M[0][Orig][LHSCase]&true&{FLOW,(19,20)=__norm}[]
+ ### conseq =  tx::node<a,b>@L[Orig]&true&{FLOW,(19,20)=__norm}[]
+
+*/

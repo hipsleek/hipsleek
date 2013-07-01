@@ -1,0 +1,59 @@
+data node{
+ int val;
+ node prev;
+ node next;
+}.
+
+
+HeapPred H(node a,node b).
+HeapPred HP_1(node a,node b).
+HeapPred HP_2(node a,node b).
+HeapPred G(node a, node a).
+
+relAssume  H // (1)
+ H(x,y) --> x::node<_,prev, next> * HP_2(next,y) & XPURE(HP_1(prev, y)).
+relAssume  HP_2 // (2)
+  HP_2(next,y) & next!=null --> H(next,y).
+relAssume  HP_2 // (3)
+ HP_2(next,y) & next=null --> emp.
+relAssume  G // (3)
+ next=null & XPURE(HP_1(prev, y)) --> G(next,y).
+
+shape_infer_proper [H,HP_2][G].
+
+/*
+I think we need to introduce a new instruction
+without shape pre-processing
+
+  shape_infer_proper [H,HP_2][G].
+
+Expecting:
+  (i) no dangling predicate detected since it is already on XPURE(...)
+      found_set computed as {H,HP_2,G}
+ (ii) no base-case split detected
+ (iii) shape_infer_proper[H,HP_2][G] would then generate:
+
+   H(x,y) == x::node2<_,prev, next> * HP_2(next,y) 
+              & XPURE(HP_1(prev, y)).
+   HP_2(next,y) == emp & next=null
+     or next::node2<_,prev,post> * HP_2(next,y) & XPURE(HP_1(prev, y)).
+   G(next,y) == next=null 
+
+Current:
+  H(x_88,y_89) ::= x_88::node<Anon_11,prev,next>@M 
+        * (HP_2(next,y_89))& XPURE(H(y_89)) & 
+                             ^^^^^^^^^^^^^^
+ XPURE(HP_1(prev,y_89)),
+ HP_2(next_90,y_91) ::= HP_92(next_90,y_91)& XPURE(H(y_91)),
+                                             ^^^^^^^^^^^^^^
+ G(next_93,y_94) ::= emp&next_93=null &  XPURE(G(y_94)),
+                                         ^^^^^^^^^^^^^^
+ HP_92(next_90,y_91) ::= 
+ emp&next_90=null
+ or next_90::node<Anon_11,prev,next>@M * (HP_92(next,y_91))&
+     XPURE(HP_1(prev,y_91))
+     
+ ]
+
+
+*/

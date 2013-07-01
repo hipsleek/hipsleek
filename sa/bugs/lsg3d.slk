@@ -1,0 +1,28 @@
+
+data node{
+    node s;
+}.
+
+HeapPred H(node a).
+relation P(node a).
+
+infer[H] 
+H(x) & x!=null
+ |-  x::node<n>@L. 
+print residue.
+
+infer[x] 
+P(x) & x!=null
+ |-  x::node<n>@L. 
+print residue.
+
+/*
+Problem for Thai:
+  pre seems verbose..
+
+ <1>x::node<inf_n_26>@inf_ann_25[Orig]&P(x) & x!=null & inf_n_26=n & (inf_ann_25<=2 | (inf_n_26<n & x!=null) | (n<inf_n_26 & x!=null) | x=null)&{FLOW,(19,20)=__norm}[]
+ inferred heap: [x::node<inf_n_26>@inf_ann_25[Orig]]
+ inferred pure: [inf_ann_25<=2 | (inf_n_26<n & x!=null) | (n<inf_n_26 & 
+                 x!=null) | x=null]
+*/
+

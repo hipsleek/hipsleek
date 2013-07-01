@@ -1,0 +1,26 @@
+Total number of errors: 3 in files:
+  ann1.slk imm/imm1.slk imm/imm3.slk.
+
+run-fast-test.pl imm -flags "--eps"
+Total number of errors: 2 in files:
+ error at: bigint_imm.ss mult2
+error at: bigint-tight-imm.ss mult
+
+
+run-fast-test.pl array -flags "-tp z3"
+
+Total number of errors: 4 in files:
+ error at: arr_search_decrease_less_than_two.java searchzero
+error at: arr_invert.java Invert
+error at: arr_mergesort.java merge_sorted_arrays
+error at: arr_mergesort.java merge_sort
+
+must-err?
+
+vperm?
+
+infer?
+
+shape analysis?
+
+slicing?

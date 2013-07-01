@@ -1,0 +1,48 @@
+data node{
+  node prev;
+  node next;
+}.
+
+HeapPred R(node a).
+
+pred dll<p> == self = null 
+          or self::node<p, q> * q::dll<r> & r=self 
+  inv true.
+
+//infer [R] R(x) |-  x::dll<_>. 
+//infer [R] R(x) |-  x::node<_,_>.
+//infer [] emp |-  x::node<_,_>. 
+
+/* 
+   why is infer_heap called?
+*/
+
+//infer [R] x=null |-  R(x).
+/* 
+   succeeds with x=null -> R(x)
+*/
+infer [R] emp |-  R(x).
+/*
+ why above fails?
+ Can't we use true --> R(x)
+*/ 
+print residue.
+
+/*
+
+   Why is InferHeap carried out here? -dd
+
+ ### action =  InferHeap: ( A5::dll<Anon_12,Anon_13>@M[0][Orig][LHSCase], emp)
+ ### estate =  emp&true&{FLOW,(19,20)=__norm}[]
+ ### conseq =  A5::dll<Anon_12,Anon_13>@M[0][Orig][LHSCase]&true&{FLOW,(19,20)=__norm}[]
+
+What are scenarios for infer_heap
+
+   x::R<..> |- x::pred<..>
+   x::R<..> |- x::node<..>
+   ..       |- x::node<..>
+   ..       |- x::pred<..>
+
+
+
+*/

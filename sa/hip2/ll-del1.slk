@@ -1,0 +1,44 @@
+data node{
+ int val;
+ node next;
+}.
+
+
+HeapPred H(node a).
+HeapPred HP_6(node a).
+HeapPred G(node a, node a).
+
+relAssume  H
+ H(x) --> x::node<_,nn> * HP_6(nn) .
+
+shape_infer [H,x][].
+
+/*
+
+ H(x_65) ::= x_65::node<Anon_11,nn>@M&nn=null,
+ G(x_66,x_67) ::= 
+ x_66::node<Anon_12,nn>@M&nn=null & x_67=null
+ or EXISTS(flted_17_32: x_66::node<Anon_12,flted_17_32>@M&flted_17_32=null & 
+    x_67!=null&[]
+ ]
+
+How come HP_6 has been dropped?
+Should it not have been:
+
+ H(x_65) ::= x_65::node<Anon_11,nn>@M& XPure(HP_6(nn))
+ G(x,x') ::= x::node<_,nn> * GH(nn,x') & HP_6(nn)
+ GH(nn,x') ::=  nn=null & x'=null or nn!=null & x'=nn
+
+
+[ H(x_65) ::= x_65::node<Anon_11,nn>@M&nn=null,
+ G(x_66,x_67) ::= x_66::node<Anon_12,nn>@M * (HP_69(nn,x_67))&true,
+ HP_69(nn,x_67) ::= 
+ emp&nn=null & x_67=null
+ or emp&nn=null & x_67!=null
+ ]
+
+Two problems:
+ (i) why do we have nn=null in defn of H
+ (ii) how come dangling reference UU_HP_6_UU is missing
+
+*/

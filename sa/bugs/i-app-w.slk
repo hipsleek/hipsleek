@@ -1,0 +1,61 @@
+data node{
+	int val;
+        node prev;
+	node next;
+}.
+
+HeapPred H1(node a, node b).
+HeapPred HP_p(node a, node b).
+HeapPred HP_2(node a, node b).
+HeapPred G1(node a, node b).
+HeapPred K(int a).
+
+infer [H1] HP_p(prev_17_803,y) * HP_2(t_32',y) * 
+c'::node<val_17_802,prev_17_803,t_32'> &c=c' & y=y' & t_32'!=null & 
+v_bool_18_772' & t_32'!=null & v_bool_18_772'
+ |-  H1(t_32',y'). 
+print residue.
+
+/*
+
+Entail (1) : Valid. 
+
+ <1>c'::node<val_17_802,prev_17_803,t_32'>@M[Orig]&c=c' & y=y' & t_32'!=null & v_bool_18_772' & t_32'!=null & v_bool_18_772'&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [(HP_p(prev_17_803,y')) * (HP_2(t_32',y'))&
+                   t_32'!=null --> H1(t_32',y')&true]
+
+We picked also HP_p((prev_17_803,y').
+
+I think it would be good to have the following notion of parameters:
+    (i) head
+   (ii) continuation
+  (iii) don't know
+Let us assume that head is always the first paramter,
+and continuation parameter are marked by *.
+
+     x::node<_,p#,q#> * H1(p) * H2(q)  |- H(x,..,p#)
+
+     x::lseg<_,p#> * H1(p)             |- H(x,..,p#)
+
+ From
+     c'::node<val_17_802,p,t_32'>@M[Orig] *
+      HP_p(p,y') * (HP_2(t_32',y')) & t_32'!=null & .. |- H1(t_32',y')     
+
+ Pick only:
+     (HP_2(t_32',y')) & t_32'!=null |- H1(t_32',y')
+ with residue:
+     c'::node<val_17_802,p,t_32'>@M[Orig] * HP_p(p,y') & ...
+
+
+Why did we generate HP_34 below?
+
+ <1>c'::node<val_17_802,prev_17_803,t_32'>@M[Orig] * (HP_34(prev_17_803))&c=c' & y=y' & t_32'!=null & v_bool_18_772' & t_32'!=null & v_bool_18_772'&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [(HP_p(prev_17_803,y')) * (HP_2(t_32',y'))&
+                   t_32'!=null --> (H1(t_32',y')) * (HP_34(prev_17_803))&true]
+
+*/
+
+
+
+
+

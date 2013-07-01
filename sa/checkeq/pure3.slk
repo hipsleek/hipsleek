@@ -1,0 +1,43 @@
+/*
+Test pure part: only 1 element (bform or bvar)
+*/
+
+//1
+checkeq[] x -|- y.
+//VALID
+
+//2.
+checkeq[x] x -|- y.
+//FAIL
+
+//3.
+checkeq[] !x -|- x.
+//FAIL
+
+//4.
+checkeq[] !x -|- !y.
+//VALID
+
+//5.
+checkeq[x] x -|- x & !y.
+//FAIL
+
+//6.
+checkeq[] x = y -|- y = z.
+//VALID
+
+//7.
+checkeq[x] x = y -|- y = z.
+//FAIL
+
+//8.
+checkeq[] x >= y -|- y > z.
+//FAIL
+
+//9.
+checkeq[] x > 3 -|- y > 2.
+//FAIL
+
+//6.
+checkeq[] x = y -|- y != z & x = y.
+//FAIL

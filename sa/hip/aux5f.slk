@@ -1,0 +1,30 @@
+data node {
+	int val; 
+	node next;
+}.
+
+/*
+pred tree<> == self=null
+ or self::node<_,l>*l::node<_,_>
+inv true.
+
+pred H<> == self=null
+ or self::node<_,l>
+inv true.
+
+lemma "strong" self::tree<> -> self::H<>.
+lemma self::tree<> <- self::H<>. 
+lemma self::H<> -> self::tree<>. 
+*/
+
+pred H2<> == self::node<_,l>
+inv self!=null.
+
+pred tree2<> == self::node<_,l>*l::node<_,_>
+inv self!=null.
+
+lemma self::H2<> -> self::tree2<>.
+// fail as expected
+lemma self::tree2<> <- self::H2<>. 
+// should fail but succeeded
+

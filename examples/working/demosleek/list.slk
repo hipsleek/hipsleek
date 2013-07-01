@@ -1,0 +1,14 @@
+/* representation of a node */
+data node{
+	node next;
+}.
+
+/* predicate for a list */
+pred list<tl> ==  self = tl
+	or self::node<x> * x::list<tl>.
+
+checkentail x::node<b>*b::node<q> |- x::list<q>.
+print residue.
+
+checkentail x::list<tl> & x!=tl |- x::node<a>.
+print residue.

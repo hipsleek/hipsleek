@@ -1,0 +1,23 @@
+// examples from bi-abduction paper
+
+data node {
+	node next;	
+}.
+
+pred lseg<p> == self = p 
+	or self::node<q> * q::lseg<p> & self!=p 
+  inv true.
+  
+HeapPred H1(node y).
+
+infer [H1] H1(y)  |-y::lseg<z> & z=null .
+print residue.
+
+/*
+
+ id: 2; caller: []; line: 0; classic: false; kind: Why None?; hec_num: 4; evars: []; infer_vars: [H1,HP_26]; c_heap: y::lseg<z_25>@M[0][Orig][LHSCase]
+ checkentail HP_26(z_25)&z=z_25&{FLOW,(19,20)=__norm}[]
+ |-  emp&z=null&{FLOW,(19,20)=__norm}[]. 
+res:  failctx
+
+*/

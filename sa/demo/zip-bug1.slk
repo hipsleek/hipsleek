@@ -1,0 +1,44 @@
+data node{
+	int val;
+	node next;
+}.
+
+pred ll<> == self = null  or self::node<_, q> * q::ll<>.
+
+pred ltwo<p:node> == p::ll<> & self = null  or 
+   self::node<_, q> * p::node<_,r> * q::ltwo<r>.
+
+
+checkentail 
+ x::ltwo<y>
+ & x=null 
+ & res=null
+ //& x=res
+ |-  res::ll<> * y::ll<>.
+print residue.
+
+/*
+ why did the above fail? why didn't
+ we unfold x::ltwo<y>?
+*/
+
+/*
+checkentail 
+ x::ltwo<y>
+ & x=null 
+ |-  y::ll<>.
+print residue.
+*/
+/*
+checkentail 
+ y::ll<>
+ & x=null 
+ & res=null
+ |-  res::ll<> * y::ll<>.
+*/
+
+
+checkentail x::ltwo<y_820> &y=y_820 & x=null & v_bool_23_800' &
+x=null & v_bool_23_800' & v_null_23_781'=null & res=v_null_23_781'
+//& res=x 
+|-  res::ll<> * y::ll<>.

@@ -47,20 +47,24 @@ checkentail
 
 */
 
-
+//(1)
 checkentail self::dll_r5<p,t,n> & self!=n |-
       self::dll_r5<p,q,t> * t::node<_,q,n>.
+print residue.
 
+//(2)
 //valid after adding case analysis
 checkentail 
    self::node<_,p,q3> * q3::dll_r5<self,t,n> & self!=n
      |- t::node<_,q,n> * self::dll_r5<p,q,t>.
+print residue.
 
+//(3)
 checkentail 
    self::node<_,p,q3> * q3::dll_r5<self,t,n> & self!=n & q3!=n
    or self::node<_,p,q3> * q3::dll_r5<self,t,n> & self!=n & q3=n
      |- t::node<_,q,n> * self::dll_r5<p,q,t>.
-
+print residue.
 
 /*
 //??? after normalizing case analysis, similar to the above -> why fail
@@ -70,7 +74,23 @@ checkentail
 */
 
 
+/*
+Using Cond_action:
+Entail (2) : Valid. 
+ <1>
+    emp&n=q3 & self=t & n!=self & n=q3 & Anon_14=Anon_15 & p=q&
+    {FLOW,(19,20)=__norm}[]
+    or emp&n!=self & n!=q3 & self!=t&{FLOW,(19,20)=__norm}[]
+Entail (3) : Valid.     
+ <1>
+    emp&n!=self & n!=q3 & self!=t&{FLOW,(19,20)=__norm}[]
+    or emp&n=q3 & self=t & n!=self & n=q3 & Anon_17=Anon_18 & p=q&
+       {FLOW,(19,20)=__norm}[]
 
+Using Search:
+
+ 
+*/
 
 
 

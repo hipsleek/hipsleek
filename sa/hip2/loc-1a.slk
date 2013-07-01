@@ -1,0 +1,85 @@
+data node{
+ int val;
+ node prev;
+ node next;
+}.
+
+
+HeapPred H(node a,node b).
+HeapPred HP_1(node a,node b).
+HeapPred HP_2(node a,node b).
+HeapPred G(node a, node a).
+
+relAssume  H // (1)
+ H(x,y) --> x::node<_,prev, next> * HP_1(prev, y) * HP_2(next,y).
+relAssume  HP_2 // (2)
+  HP_2(next,y) & next!=null --> H(next,y).
+relAssume  HP_2 // (3)
+ HP_2(next,y) & next=null --> G(next,y).
+
+shape_infer [H,HP_2][G].
+
+/*
+OBTAINED
+========
+[ H(x_86,y_87) ::= x_86::node<Anon_11,prev,next>@M * (HP_2(next,y_87))
+      & XPURE(H(x_86,y_87)),
+        ^^^^^^^^^^^^^^^^^^^
+ HP_2(next_88,y_89) ::= 
+ emp&next_88=null
+ or next_88::node<Anon_11,prev,next>@M * (HP_2(next,y_89))&
+     XPURE(H(next_88,y_89))
+     ^^^^^^^^^^^^^^^^^^^^^^
+ 
+Instead of XPURE(H(x_86,y_87)), it should have been
+          XPURE(HP_1(x_86,y_87))
+since HP_1 is the dangling predicate..
+
+Say we managed to infer below from HIP
+
+ H(x,y) --> x::node2<_,prev, next> * HP_1(prev, y) * HP_2(next,y).  (1)
+ HP_2(next,y) & next!=null --> H(next,y)                            (2)
+ HP_2(next,y) & next=null --> G<next,y>                             (3)
+
+I think our shape_infer has to be performed in two steps:
+   (i) shape pre-processing
+   (ii) pre/post shape inference
+
+Shape pre-processing would have to perform the following
+steps
+  (i) note the pre/post predicates e.g. [H,HP_2][G]
+  (ii) identify dangling predicates, e.g. [HP_1]
+       and convert to XPURE(HP_1(..)) form
+ (iii) perform base-case split.
+
+Thus. given:
+  shape_infer [H,HP_2,x][G].
+
+It would indicate two things:
+  (i) HP_1 is dangling predicate
+ (ii) the 3rd implication needs to be
+      subjected to a base-case-split
+
+Hence, (1) would be changed to:
+
+ H(x,y) --> x::node2<_,prev, next> * HP_2(next,y) & XPURE(HP_1(prev, y)).
+
+and (3) would be base-case-split into:
+
+ HP_2(next,y) & next=null --> emp  (3a)
+ next=null --> G<next,y>           (3b)
+
+With this shape pre-processing, we would now have the following
+refined implications:
+
+ H(x,y) --> x::node2<_,prev, next> * HP_2(next,y) & XPURE(HP_1(prev, y)).
+ HP_2(next,y) & next!=null --> H(next,y)
+ HP_2(next,y) & next=null --> emp
+ next=null --> G<next,y> 
+
+After this, we can subject this list of refined implications
+to our proper shape_infer procedure?
+
+
+
+*/

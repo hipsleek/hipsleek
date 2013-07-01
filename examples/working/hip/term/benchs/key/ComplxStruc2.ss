@@ -18,6 +18,7 @@ case {
 	if (i > 0) {
 		if (i >= j) {
 			return;
+			//skip ();
 		} else { // i < j
 			if (i > 0 && j < 0) { // unreachable 
 				i--;
@@ -38,3 +39,7 @@ case {
 		loop(i, j);
 	}
 }
+
+void skip () 
+requires Term
+ensures true;

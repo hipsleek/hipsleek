@@ -1,0 +1,557 @@
+
+!!! Full processing file (parse only) "n-ins-4b3a.ss"
+!!!  processing primitives "["prelude.ss"]
+!!! Full processing file "n-ins-4b3a.ss"
+!!!  processing primitives "["prelude.ss"]Starting Omega...oc
+Translating global variables to procedure parameters...
+
+Checking procedure insert$node~node... Timeout when checking #simplify  Restarting Omega after ... 166 invocations Stop Omega... 166 invocations Starting Omega...oc
+Timeout when checking #simplify  Restarting Omega after ... 167 invocations Stop Omega... 167 invocations Starting Omega...oc
+
+*************************************
+*******pure relation assumption ******
+*************************************
+[RELDEFN P4: ( mx=mx2 & a<=mx2) -->  P4(mx,a,mx2),
+RELDEFN P3: ( a=mi2 & mi2<=mi) -->  P3(mi,a,mi2),
+RELDEFN P4: ( exists(next_41_667:exists(flted_24_609:exists(res:exists(y:exists(p_758:exists(x:exists(p_779:exists(p_650:exists(mi:exists(mi2_760:exists(mx2_761:exists(v_bool_40_593':exists(v:exists(Anon_780:exists(Anon_651:exists(mi2_652:exists(mx2_653:exists(v_649:exists(mx2_782:exists(Anon_759:exists(mi2_781:exists(mi2:exists(v2:((mi2_652=mi2_781 & 
+Anon_759=mi & mx=mx2_782 & mi=v_649 & mx=mx2_653 & Anon_651=Anon_780 & 
+mi=v & a=mi2 & mi2=v2 & (mi2+1)<=mi & mi<mi2_652 & mi2_652<=Anon_780 & 
+Anon_780<mx & p_779!=null & p_779<p_758 & p_758<res) | (mi2_652=mi2_781 & 
+Anon_759=mi & mx=mx2_782 & mi=v_649 & mx=mx2_653 & Anon_651=mx & 
+Anon_780=mx & mi=v & a=mi2 & mi2=v2 & (mi2+1)<=mi & mi<mi2_652 & 
+mi2_652<=mx & p_779!=null & p_779<p_758 & p_758<res) | (mi2_652=mi2_781 & 
+Anon_759=mi & mx=mx2_782 & mi=v_649 & mx=mx2_653 & Anon_651=Anon_780 & 
+mi=v & a=mi2 & mi2=v2 & (mi2+1)<=mi & mi<mi2_652 & mi2_652<=Anon_780 & 
+Anon_780<mx & p_758!=null & p_758<p_779 & p_779<res) | (mi2_652=mi2_781 & 
+Anon_759=mi & mx=mx2_782 & mi=v_649 & mx=mx2_653 & Anon_651=mx & 
+Anon_780=mx & mi=v & a=mi2 & mi2=v2 & (mi2+1)<=mi & mi<mi2_652 & 
+mi2_652<=mx & p_758!=null & p_758<p_779 & p_779<res) | (mi2_652=mi2_781 & 
+Anon_759=mi & mx=mx2_782 & mi=v_649 & mx=mx2_653 & Anon_651=Anon_780 & 
+mi=v & a=mi2 & mi2=v2 & (mi2+1)<=mi & mi<mi2_652 & mi2_652<=Anon_780 & 
+Anon_780<mx & p_758!=null & p_758<res & res<p_779) | (mi2_652=mi2_781 & 
+Anon_759=mi & mx=mx2_782 & mi=v_649 & mx=mx2_653 & Anon_651=mx & 
+Anon_780=mx & mi=v & a=mi2 & mi2=v2 & (mi2+1)<=mi & mi<mi2_652 & 
+mi2_652<=mx & p_758!=null & p_758<res & res<p_779) | (mi2_652=mi2_781 & 
+Anon_759=mi & mx=mx2_782 & mi=v_649 & mx=mx2_653 & Anon_651=Anon_780 & 
+mi=v & a=mi2 & mi2=v2 & (mi2+1)<=mi & mi<mi2_652 & mi2_652<=Anon_780 & 
+Anon_780<mx & p_779!=null & p_779<res & res<p_758) | (mi2_652=mi2_781 & 
+Anon_759=mi & mx=mx2_782 & mi=v_649 & mx=mx2_653 & Anon_651=mx & 
+Anon_780=mx & mi=v & a=mi2 & mi2=v2 & (mi2+1)<=mi & mi<mi2_652 & 
+mi2_652<=mx & p_779!=null & p_779<res & res<p_758) | (mi2_652=mi2_781 & 
+Anon_759=mi & mx=mx2_782 & mi=v_649 & mx=mx2_653 & Anon_651=Anon_780 & 
+mi=v & a=mi2 & mi2=v2 & (mi2+1)<=mi & mi<mi2_652 & mi2_652<=Anon_780 & 
+Anon_780<mx & res!=null & res<p_779 & p_779<p_758) | (mi2_652=mi2_781 & 
+Anon_759=mi & mx=mx2_782 & mi=v_649 & mx=mx2_653 & Anon_651=mx & 
+Anon_780=mx & mi=v & a=mi2 & mi2=v2 & (mi2+1)<=mi & mi<mi2_652 & 
+mi2_652<=mx & res!=null & res<p_779 & p_779<p_758) | (mi2_652=mi2_781 & 
+Anon_759=mi & mx=mx2_782 & mi=v_649 & mx=mx2_653 & Anon_651=Anon_780 & 
+mi=v & a=mi2 & mi2=v2 & (mi2+1)<=mi & mi<mi2_652 & mi2_652<=Anon_780 & 
+Anon_780<mx & res!=null & res<p_758 & p_758<p_779) | (mi2_652=mi2_781 & 
+Anon_759=mi & mx=mx2_782 & mi=v_649 & mx=mx2_653 & Anon_651=mx & 
+Anon_780=mx & mi=v & a=mi2 & mi2=v2 & (mi2+1)<=mi & mi<mi2_652 & 
+mi2_652<=mx & res!=null & res<p_758 & p_758<p_779) | (mi=mi2_781 & 
+Anon_759=v & mx=mx2_782 & v=v_649 & mx=mx2_653 & mi=mi2_652 & 
+Anon_651=Anon_780 & a=mi2 & mi2=v2 & (mi2+1)<=mi & mi<=v & mi<=Anon_780 & 
+v<mx & Anon_780<mx & p_779!=null & p_779<p_758 & p_758<res) | (mi=mi2_781 & 
+Anon_759=v & mx=mx2_782 & v=v_649 & mx=mx2_653 & mi=mi2_652 & Anon_651=mx & 
+Anon_780=mx & a=mi2 & mi2=v2 & (mi2+1)<=mi & mi<=v & v<mx & p_779!=null & 
+p_779<p_758 & p_758<res) | (mi=mi2_781 & Anon_759=v & mx=mx2_782 & v=v_649 & 
+mx=mx2_653 & mi=mi2_652 & Anon_651=Anon_780 & a=mi2 & mi2=v2 & (mi2+1)<=mi & 
+mi<=v & mi<=Anon_780 & v<mx & Anon_780<mx & p_758!=null & p_758<p_779 & 
+p_779<res) | (mi=mi2_781 & Anon_759=v & mx=mx2_782 & v=v_649 & mx=mx2_653 & 
+mi=mi2_652 & Anon_651=mx & Anon_780=mx & a=mi2 & mi2=v2 & (mi2+1)<=mi & 
+mi<=v & v<mx & p_758!=null & p_758<p_779 & p_779<res) | (mi=mi2_781 & 
+Anon_759=v & mx=mx2_782 & v=v_649 & mx=mx2_653 & mi=mi2_652 & 
+Anon_651=Anon_780 & a=mi2 & mi2=v2 & (mi2+1)<=mi & mi<=v & mi<=Anon_780 & 
+v<mx & Anon_780<mx & p_758!=null & p_758<res & res<p_779) | (mi=mi2_781 & 
+Anon_759=v & mx=mx2_782 & v=v_649 & mx=mx2_653 & mi=mi2_652 & Anon_651=mx & 
+Anon_780=mx & a=mi2 & mi2=v2 & (mi2+1)<=mi & mi<=v & v<mx & p_758!=null & 
+p_758<res & res<p_779) | (mi=mi2_781 & Anon_759=v & mx=mx2_782 & v=v_649 & 
+mx=mx2_653 & mi=mi2_652 & Anon_651=Anon_780 & a=mi2 & mi2=v2 & (mi2+1)<=mi & 
+mi<=v & mi<=Anon_780 & v<mx & Anon_780<mx & p_779!=null & p_779<res & 
+res<p_758) | (mi=mi2_781 & Anon_759=v & mx=mx2_782 & v=v_649 & mx=mx2_653 & 
+mi=mi2_652 & Anon_651=mx & Anon_780=mx & a=mi2 & mi2=v2 & (mi2+1)<=mi & 
+mi<=v & v<mx & p_779!=null & p_779<res & res<p_758) | (mi=mi2_781 & 
+Anon_759=v & mx=mx2_782 & v=v_649 & mx=mx2_653 & mi=mi2_652 & 
+Anon_651=Anon_780 & a=mi2 & mi2=v2 & (mi2+1)<=mi & mi<=v & mi<=Anon_780 & 
+v<mx & Anon_780<mx & res!=null & res<p_779 & p_779<p_758) | (mi=mi2_781 & 
+Anon_759=v & mx=mx2_782 & v=v_649 & mx=mx2_653 & mi=mi2_652 & Anon_651=mx & 
+Anon_780=mx & a=mi2 & mi2=v2 & (mi2+1)<=mi & mi<=v & v<mx & res!=null & 
+res<p_779 & p_779<p_758) | (mi=mi2_781 & Anon_759=v & mx=mx2_782 & v=v_649 & 
+mx=mx2_653 & mi=mi2_652 & Anon_651=Anon_780 & a=mi2 & mi2=v2 & (mi2+1)<=mi & 
+mi<=v & mi<=Anon_780 & v<mx & Anon_780<mx & res!=null & res<p_758 & 
+p_758<p_779) | (mi=mi2_781 & Anon_759=v & mx=mx2_782 & v=v_649 & 
+mx=mx2_653 & mi=mi2_652 & Anon_651=mx & Anon_780=mx & a=mi2 & mi2=v2 & (mi2+
+1)<=mi & mi<=v & v<mx & res!=null & res<p_758 & p_758<p_779) | (mi=mi2_781 & 
+Anon_759=mx & mx2_653=mx2_782 & mx=v_649 & mi=mi2_652 & Anon_651=Anon_780 & 
+mx=v & a=mi2 & mi2=v2 & (mi2+1)<=mi & mi<=Anon_780 & Anon_780<mx2_653 & 
+mx2_653<=mx & p_779!=null & p_779<p_758 & p_758<res) | (mi=mi2_781 & 
+Anon_759=mx & Anon_780=mx2_782 & mx=v_649 & Anon_780=mx2_653 & mi=mi2_652 & 
+Anon_651=Anon_780 & mx=v & a=mi2 & mi2=v2 & (mi2+1)<=mi & mi<=Anon_780 & 
+Anon_780<=mx & p_779!=null & p_779<p_758 & p_758<res) | (mi=mi2_781 & 
+Anon_759=mx & mx2_653=mx2_782 & mx=v_649 & mi=mi2_652 & Anon_651=Anon_780 & 
+mx=v & a=mi2 & mi2=v2 & (mi2+1)<=mi & mi<=Anon_780 & Anon_780<mx2_653 & 
+mx2_653<=mx & p_758!=null & p_758<p_779 & p_779<res) | (mi=mi2_781 & 
+Anon_759=mx & Anon_780=mx2_782 & mx=v_649 & Anon_780=mx2_653 & mi=mi2_652 & 
+Anon_651=Anon_780 & mx=v & a=mi2 & mi2=v2 & (mi2+1)<=mi & mi<=Anon_780 & 
+Anon_780<=mx & p_758!=null & p_758<p_779 & p_779<res) | (mi=mi2_781 & 
+Anon_759=mx & mx2_653=mx2_782 & mx=v_649 & mi=mi2_652 & Anon_651=Anon_780 & 
+mx=v & a=mi2 & mi2=v2 & (mi2+1)<=mi & mi<=Anon_780 & Anon_780<mx2_653 & 
+mx2_653<=mx & p_758!=null & p_758<res & res<p_779) | (mi=mi2_781 & 
+Anon_759=mx & Anon_780=mx2_782 & mx=v_649 & Anon_780=mx2_653 & mi=mi2_652 & 
+Anon_651=Anon_780 & mx=v & a=mi2 & mi2=v2 & (mi2+1)<=mi & mi<=Anon_780 & 
+Anon_780<=mx & p_758!=null & p_758<res & res<p_779) | (mi=mi2_781 & 
+Anon_759=mx & mx2_653=mx2_782 & mx=v_649 & mi=mi2_652 & Anon_651=Anon_780 & 
+mx=v & a=mi2 & mi2=v2 & (mi2+1)<=mi & mi<=Anon_780 & Anon_780<mx2_653 & 
+mx2_653<=mx & p_779!=null & p_779<res & res<p_758) | (mi=mi2_781 & 
+Anon_759=mx & Anon_780=mx2_782 & mx=v_649 & Anon_780=mx2_653 & mi=mi2_652 & 
+Anon_651=Anon_780 & mx=v & a=mi2 & mi2=v2 & (mi2+1)<=mi & mi<=Anon_780 & 
+Anon_780<=mx & p_779!=null & p_779<res & res<p_758) | (mi=mi2_781 & 
+Anon_759=mx & mx2_653=mx2_782 & mx=v_649 & mi=mi2_652 & Anon_651=Anon_780 & 
+mx=v & a=mi2 & mi2=v2 & (mi2+1)<=mi & mi<=Anon_780 & Anon_780<mx2_653 & 
+mx2_653<=mx & res!=null & res<p_779 & p_779<p_758) | (mi=mi2_781 & 
+Anon_759=mx & Anon_780=mx2_782 & mx=v_649 & Anon_780=mx2_653 & mi=mi2_652 & 
+Anon_651=Anon_780 & mx=v & a=mi2 & mi2=v2 & (mi2+1)<=mi & mi<=Anon_780 & 
+Anon_780<=mx & res!=null & res<p_779 & p_779<p_758) | (mi=mi2_781 & 
+Anon_759=mx & mx2_653=mx2_782 & mx=v_649 & mi=mi2_652 & Anon_651=Anon_780 & 
+mx=v & a=mi2 & mi2=v2 & (mi2+1)<=mi & mi<=Anon_780 & Anon_780<mx2_653 & 
+mx2_653<=mx & res!=null & res<p_758 & p_758<p_779) | (mi=mi2_781 & 
+Anon_759=mx & Anon_780=mx2_782 & mx=v_649 & Anon_780=mx2_653 & mi=mi2_652 & 
+Anon_651=Anon_780 & mx=v & a=mi2 & mi2=v2 & (mi2+1)<=mi & mi<=Anon_780 & 
+Anon_780<=mx & res!=null & res<p_758 & p_758<p_779) | (mi=mi2 & 
+mi2_652=mi2_781 & Anon_759=mi & mx=mx2_782 & mi=v_649 & mx=mx2_653 & 
+Anon_651=Anon_780 & mi=v & a=mi & mi=v2 & mi<mi2_652 & mi2_652<=Anon_780 & 
+Anon_780<mx & p_779!=null & p_779<p_758 & p_758<res) | (mi=mi2 & 
+mi2_652=mi2_781 & Anon_759=mi & mx=mx2_782 & mi=v_649 & mx=mx2_653 & 
+Anon_651=mx & Anon_780=mx & mi=v & a=mi & mi=v2 & p_779!=null & 
+p_779<p_758 & p_758<res & mi<mi2_652 & mi2_652<=mx) | (mi=mi2 & 
+mi2_652=mi2_781 & Anon_759=mi & mx=mx2_782 & mi=v_649 & mx=mx2_653 & 
+Anon_651=Anon_780 & mi=v & a=mi & mi=v2 & mi<mi2_652 & mi2_652<=Anon_780 & 
+Anon_780<mx & p_758!=null & p_758<p_779 & p_779<res) | (mi=mi2 & 
+mi2_652=mi2_781 & Anon_759=mi & mx=mx2_782 & mi=v_649 & mx=mx2_653 & 
+Anon_651=mx & Anon_780=mx & mi=v & a=mi & mi=v2 & p_758!=null & 
+p_758<p_779 & p_779<res & mi<mi2_652 & mi2_652<=mx) | (mi=mi2 & 
+mi2_652=mi2_781 & Anon_759=mi & mx=mx2_782 & mi=v_649 & mx=mx2_653 & 
+Anon_651=Anon_780 & mi=v & a=mi & mi=v2 & mi<mi2_652 & mi2_652<=Anon_780 & 
+Anon_780<mx & p_758!=null & p_758<res & res<p_779) | (mi=mi2 & 
+mi2_652=mi2_781 & Anon_759=mi & mx=mx2_782 & mi=v_649 & mx=mx2_653 & 
+Anon_651=mx & Anon_780=mx & mi=v & a=mi & mi=v2 & p_758!=null & p_758<res & 
+res<p_779 & mi<mi2_652 & mi2_652<=mx) | (mi=mi2 & mi2_652=mi2_781 & 
+Anon_759=mi & mx=mx2_782 & mi=v_649 & mx=mx2_653 & Anon_651=Anon_780 & 
+mi=v & a=mi & mi=v2 & mi<mi2_652 & mi2_652<=Anon_780 & Anon_780<mx & 
+p_779!=null & p_779<res & res<p_758) | (mi=mi2 & mi2_652=mi2_781 & 
+Anon_759=mi & mx=mx2_782 & mi=v_649 & mx=mx2_653 & Anon_651=mx & 
+Anon_780=mx & mi=v & a=mi & mi=v2 & p_779!=null & p_779<res & res<p_758 & 
+mi<mi2_652 & mi2_652<=mx) | (mi=mi2 & mi2_652=mi2_781 & Anon_759=mi & 
+mx=mx2_782 & mi=v_649 & mx=mx2_653 & Anon_651=Anon_780 & mi=v & a=mi & 
+mi=v2 & mi<mi2_652 & mi2_652<=Anon_780 & Anon_780<mx & res!=null & 
+res<p_779 & p_779<p_758) | (mi=mi2 & mi2_652=mi2_781 & Anon_759=mi & 
+mx=mx2_782 & mi=v_649 & mx=mx2_653 & Anon_651=mx & Anon_780=mx & mi=v & 
+a=mi & mi=v2 & res!=null & res<p_779 & p_779<p_758 & mi<mi2_652 & 
+mi2_652<=mx) | (mi=mi2 & mi2_652=mi2_781 & Anon_759=mi & mx=mx2_782 & 
+mi=v_649 & mx=mx2_653 & Anon_651=Anon_780 & mi=v & a=mi & mi=v2 & 
+mi<mi2_652 & mi2_652<=Anon_780 & Anon_780<mx & res!=null & res<p_758 & 
+p_758<p_779) | (mi=mi2 & mi2_652=mi2_781 & Anon_759=mi & mx=mx2_782 & 
+mi=v_649 & mx=mx2_653 & Anon_651=mx & Anon_780=mx & mi=v & a=mi & mi=v2 & 
+res!=null & res<p_758 & p_758<p_779 & mi<mi2_652 & mi2_652<=mx) | (mi=mi2 & 
+mi=mi2_781 & Anon_759=v & mx=mx2_782 & v=v_649 & mx=mx2_653 & mi=mi2_652 & 
+Anon_651=Anon_780 & a=v2 & mi<=a & a<=v & v<mx & p_779!=null & p_779<p_758 & 
+p_758<res & mi<=Anon_780 & Anon_780<mx) | (mi=mi2 & mi=mi2_781 & 
+Anon_759=v & mx=mx2_782 & v=v_649 & mx=mx2_653 & mi=mi2_652 & Anon_651=mx & 
+Anon_780=mx & a=v2 & mi<=a & a<=v & v<mx & p_779!=null & p_779<p_758 & 
+p_758<res) | (mi=mi2 & mi=mi2_781 & Anon_759=v & mx=mx2_782 & v=v_649 & 
+mx=mx2_653 & mi=mi2_652 & Anon_651=Anon_780 & a=v2 & mi<=a & a<=v & v<mx & 
+p_758!=null & p_758<p_779 & p_779<res & mi<=Anon_780 & Anon_780<mx) | 
+(mi=mi2 & mi=mi2_781 & Anon_759=v & mx=mx2_782 & v=v_649 & mx=mx2_653 & 
+mi=mi2_652 & Anon_651=mx & Anon_780=mx & a=v2 & mi<=a & a<=v & v<mx & 
+p_758!=null & p_758<p_779 & p_779<res) | (mi=mi2 & mi=mi2_781 & Anon_759=v & 
+mx=mx2_782 & v=v_649 & mx=mx2_653 & mi=mi2_652 & Anon_651=Anon_780 & a=v2 & 
+mi<=a & a<=v & v<mx & p_758!=null & p_758<res & res<p_779 & mi<=Anon_780 & 
+Anon_780<mx) | (mi=mi2 & mi=mi2_781 & Anon_759=v & mx=mx2_782 & v=v_649 & 
+mx=mx2_653 & mi=mi2_652 & Anon_651=mx & Anon_780=mx & a=v2 & mi<=a & a<=v & 
+v<mx & p_758!=null & p_758<res & res<p_779) | (mi=mi2 & mi=mi2_781 & 
+Anon_759=v & mx=mx2_782 & v=v_649 & mx=mx2_653 & mi=mi2_652 & 
+Anon_651=Anon_780 & a=v2 & mi<=a & a<=v & v<mx & p_779!=null & p_779<res & 
+res<p_758 & mi<=Anon_780 & Anon_780<mx) | (mi=mi2 & mi=mi2_781 & 
+Anon_759=v & mx=mx2_782 & v=v_649 & mx=mx2_653 & mi=mi2_652 & Anon_651=mx & 
+Anon_780=mx & a=v2 & mi<=a & a<=v & v<mx & p_779!=null & p_779<res & 
+res<p_758) | (mi=mi2 & mi=mi2_781 & Anon_759=v & mx=mx2_782 & v=v_649 & 
+mx=mx2_653 & mi=mi2_652 & Anon_651=Anon_780 & a=v2 & mi<=a & a<=v & v<mx & 
+res!=null & res<p_779 & p_779<p_758 & mi<=Anon_780 & Anon_780<mx) | 
+(mi=mi2 & mi=mi2_781 & Anon_759=v & mx=mx2_782 & v=v_649 & mx=mx2_653 & 
+mi=mi2_652 & Anon_651=mx & Anon_780=mx & a=v2 & mi<=a & a<=v & v<mx & 
+res!=null & res<p_779 & p_779<p_758) | (mi=mi2 & mi=mi2_781 & Anon_759=v & 
+mx=mx2_782 & v=v_649 & mx=mx2_653 & mi=mi2_652 & Anon_651=Anon_780 & a=v2 & 
+mi<=a & a<=v & v<mx & res!=null & res<p_758 & p_758<p_779 & mi<=Anon_780 & 
+Anon_780<mx) | (mi=mi2 & mi=mi2_781 & Anon_759=v & mx=mx2_782 & v=v_649 & 
+mx=mx2_653 & mi=mi2_652 & Anon_651=mx & Anon_780=mx & a=v2 & mi<=a & a<=v & 
+v<mx & res!=null & res<p_758 & p_758<p_779) | (mi=mi2 & mi=mi2_781 & 
+Anon_759=mx & mx2_653=mx2_782 & mx=v_649 & mi=mi2_652 & Anon_651=Anon_780 & 
+mx=v & a=v2 & mi<=Anon_780 & Anon_780<mx2_653 & mx2_653<=mx & p_779!=null & 
+p_779<p_758 & p_758<res & mi<=a & a<mx) | (mi=mi2 & mi=mi2_781 & 
+Anon_759=mx & Anon_780=mx2_782 & mx=v_649 & Anon_780=mx2_653 & mi=mi2_652 & 
+Anon_651=Anon_780 & mx=v & a=v2 & p_779!=null & p_779<p_758 & p_758<res & 
+mi<=Anon_780 & Anon_780<=mx & mi<=a & a<mx) | (mi=mi2 & mi=mi2_781 & 
+Anon_759=mx & mx2_653=mx2_782 & mx=v_649 & mi=mi2_652 & Anon_651=Anon_780 & 
+mx=v & a=v2 & mi<=Anon_780 & Anon_780<mx2_653 & mx2_653<=mx & p_758!=null & 
+p_758<p_779 & p_779<res & mi<=a & a<mx) | (mi=mi2 & mi=mi2_781 & 
+Anon_759=mx & Anon_780=mx2_782 & mx=v_649 & Anon_780=mx2_653 & mi=mi2_652 & 
+Anon_651=Anon_780 & mx=v & a=v2 & p_758!=null & p_758<p_779 & p_779<res & 
+mi<=Anon_780 & Anon_780<=mx & mi<=a & a<mx) | (mi=mi2 & mi=mi2_781 & 
+Anon_759=mx & mx2_653=mx2_782 & mx=v_649 & mi=mi2_652 & Anon_651=Anon_780 & 
+mx=v & a=v2 & mi<=Anon_780 & Anon_780<mx2_653 & mx2_653<=mx & p_758!=null & 
+p_758<res & res<p_779 & mi<=a & a<mx) | (mi=mi2 & mi=mi2_781 & Anon_759=mx & 
+Anon_780=mx2_782 & mx=v_649 & Anon_780=mx2_653 & mi=mi2_652 & 
+Anon_651=Anon_780 & mx=v & a=v2 & p_758!=null & p_758<res & res<p_779 & 
+mi<=Anon_780 & Anon_780<=mx & mi<=a & a<mx) | (mi=mi2 & mi=mi2_781 & 
+Anon_759=mx & mx2_653=mx2_782 & mx=v_649 & mi=mi2_652 & Anon_651=Anon_780 & 
+mx=v & a=v2 & mi<=Anon_780 & Anon_780<mx2_653 & mx2_653<=mx & p_779!=null & 
+p_779<res & res<p_758 & mi<=a & a<mx) | (mi=mi2 & mi=mi2_781 & Anon_759=mx & 
+Anon_780=mx2_782 & mx=v_649 & Anon_780=mx2_653 & mi=mi2_652 & 
+Anon_651=Anon_780 & mx=v & a=v2 & p_779!=null & p_779<res & res<p_758 & 
+mi<=Anon_780 & Anon_780<=mx & mi<=a & a<mx) | (mi=mi2 & mi=mi2_781 & 
+Anon_759=mx & mx2_653=mx2_782 & mx=v_649 & mi=mi2_652 & Anon_651=Anon_780 & 
+mx=v & a=v2 & mi<=Anon_780 & Anon_780<mx2_653 & mx2_653<=mx & res!=null & 
+res<p_779 & p_779<p_758 & mi<=a & a<mx) | (mi=mi2 & mi=mi2_781 & 
+Anon_759=mx & Anon_780=mx2_782 & mx=v_649 & Anon_780=mx2_653 & mi=mi2_652 & 
+Anon_651=Anon_780 & mx=v & a=v2 & res!=null & res<p_779 & p_779<p_758 & 
+mi<=Anon_780 & Anon_780<=mx & mi<=a & a<mx) | (mi=mi2 & mi=mi2_781 & 
+Anon_759=mx & mx2_653=mx2_782 & mx=v_649 & mi=mi2_652 & Anon_651=Anon_780 & 
+mx=v & a=v2 & mi<=Anon_780 & Anon_780<mx2_653 & mx2_653<=mx & res!=null & 
+res<p_758 & p_758<p_779 & mi<=a & a<mx) | (mi=mi2 & mi=mi2_781 & 
+Anon_759=mx & Anon_780=mx2_782 & mx=v_649 & Anon_780=mx2_653 & mi=mi2_652 & 
+Anon_651=Anon_780 & mx=v & a=v2 & res!=null & res<p_758 & p_758<p_779 & 
+mi<=Anon_780 & Anon_780<=mx & mi<=a & a<mx) | (mi=mi2 & mi=mi2_781 & 
+Anon_759=mx & mx2_653=mx2_782 & mx=v_649 & mi=mi2_652 & Anon_651=Anon_780 & 
+mx=v & a=mx & mx=v2 & mi<=Anon_780 & Anon_780<mx2_653 & mx2_653<=mx & 
+p_779!=null & p_779<p_758 & p_758<res) | (mi=mi2 & mi=mi2_781 & 
+Anon_759=mx & Anon_780=mx2_782 & mx=v_649 & Anon_780=mx2_653 & mi=mi2_652 & 
+Anon_651=Anon_780 & mx=v & a=mx & mx=v2 & p_779!=null & p_779<p_758 & 
+p_758<res & mi<=Anon_780 & Anon_780<=mx) | (mi=mi2 & mi=mi2_781 & 
+Anon_759=mx & mx2_653=mx2_782 & mx=v_649 & mi=mi2_652 & Anon_651=Anon_780 & 
+mx=v & a=mx & mx=v2 & mi<=Anon_780 & Anon_780<mx2_653 & mx2_653<=mx & 
+p_758!=null & p_758<p_779 & p_779<res) | (mi=mi2 & mi=mi2_781 & 
+Anon_759=mx & Anon_780=mx2_782 & mx=v_649 & Anon_780=mx2_653 & mi=mi2_652 & 
+Anon_651=Anon_780 & mx=v & a=mx & mx=v2 & p_758!=null & p_758<p_779 & 
+p_779<res & mi<=Anon_780 & Anon_780<=mx) | (mi=mi2 & mi=mi2_781 & 
+Anon_759=mx & mx2_653=mx2_782 & mx=v_649 & mi=mi2_652 & Anon_651=Anon_780 & 
+mx=v & a=mx & mx=v2 & mi<=Anon_780 & Anon_780<mx2_653 & mx2_653<=mx & 
+p_758!=null & p_758<res & res<p_779) | (mi=mi2 & mi=mi2_781 & Anon_759=mx & 
+Anon_780=mx2_782 & mx=v_649 & Anon_780=mx2_653 & mi=mi2_652 & 
+Anon_651=Anon_780 & mx=v & a=mx & mx=v2 & p_758!=null & p_758<res & 
+res<p_779 & mi<=Anon_780 & Anon_780<=mx) | (mi=mi2 & mi=mi2_781 & 
+Anon_759=mx & mx2_653=mx2_782 & mx=v_649 & mi=mi2_652 & Anon_651=Anon_780 & 
+mx=v & a=mx & mx=v2 & mi<=Anon_780 & Anon_780<mx2_653 & mx2_653<=mx & 
+p_779!=null & p_779<res & res<p_758) | (mi=mi2 & mi=mi2_781 & Anon_759=mx & 
+Anon_780=mx2_782 & mx=v_649 & Anon_780=mx2_653 & mi=mi2_652 & 
+Anon_651=Anon_780 & mx=v & a=mx & mx=v2 & p_779!=null & p_779<res & 
+res<p_758 & mi<=Anon_780 & Anon_780<=mx) | (mi=mi2 & mi=mi2_781 & 
+Anon_759=mx & mx2_653=mx2_782 & mx=v_649 & mi=mi2_652 & Anon_651=Anon_780 & 
+mx=v & a=mx & mx=v2 & mi<=Anon_780 & Anon_780<mx2_653 & mx2_653<=mx & 
+res!=null & res<p_779 & p_779<p_758) | (mi=mi2 & mi=mi2_781 & Anon_759=mx & 
+Anon_780=mx2_782 & mx=v_649 & Anon_780=mx2_653 & mi=mi2_652 & 
+Anon_651=Anon_780 & mx=v & a=mx & mx=v2 & res!=null & res<p_779 & 
+p_779<p_758 & mi<=Anon_780 & Anon_780<=mx) | (mi=mi2 & mi=mi2_781 & 
+Anon_759=mx & mx2_653=mx2_782 & mx=v_649 & mi=mi2_652 & Anon_651=Anon_780 & 
+mx=v & a=mx & mx=v2 & mi<=Anon_780 & Anon_780<mx2_653 & mx2_653<=mx & 
+res!=null & res<p_758 & p_758<p_779) | (Anon_780<=mx & mi<=Anon_780 & 
+p_758<p_779 & res<p_758 & res!=null & mx=v2 & a=mx & mi=mi2 & mi=mi2_781 & 
+Anon_759=mx & Anon_780=mx2_782 & mx=v_649 & Anon_780=mx2_653 & mi=mi2_652 & 
+Anon_651=Anon_780 & mx=v)) & v_bool_40_593' & next_41_667=null & 
+mx=mx2_761 & mx=mx2 & mi=mi2_760 & p_650=p_779 & p_758=x & res=y & 
+flted_24_609=next_41_667)))))))))))))))))))))))) -->  P4(mx,a,mx2),
+RELDEFN P3: ( exists(next_41_667:exists(flted_24_609:exists(res:exists(y:exists(p_758:exists(x:exists(p_779:exists(p_650:exists(mi2_760:exists(mx:exists(mx2:exists(mx2_761:exists(v_bool_40_593':exists(v:exists(Anon_780:exists(Anon_651:exists(mi2_652:exists(mx2_653:exists(v_649:exists(mx2_782:exists(Anon_759:exists(mi2_781:exists(v2:((mi2_652=mi2_781 & 
+Anon_759=mi & mx=mx2_782 & mi=v_649 & mx=mx2_653 & Anon_651=Anon_780 & 
+mi=v & a=mi2 & mi2=v2 & (mi2+1)<=mi & mi<mi2_652 & mi2_652<=Anon_780 & 
+Anon_780<mx & p_779!=null & p_779<p_758 & p_758<res) | (mi2_652=mi2_781 & 
+Anon_759=mi & mx=mx2_782 & mi=v_649 & mx=mx2_653 & Anon_651=mx & 
+Anon_780=mx & mi=v & a=mi2 & mi2=v2 & (mi2+1)<=mi & mi<mi2_652 & 
+mi2_652<=mx & p_779!=null & p_779<p_758 & p_758<res) | (mi2_652=mi2_781 & 
+Anon_759=mi & mx=mx2_782 & mi=v_649 & mx=mx2_653 & Anon_651=Anon_780 & 
+mi=v & a=mi2 & mi2=v2 & (mi2+1)<=mi & mi<mi2_652 & mi2_652<=Anon_780 & 
+Anon_780<mx & p_758!=null & p_758<p_779 & p_779<res) | (mi2_652=mi2_781 & 
+Anon_759=mi & mx=mx2_782 & mi=v_649 & mx=mx2_653 & Anon_651=mx & 
+Anon_780=mx & mi=v & a=mi2 & mi2=v2 & (mi2+1)<=mi & mi<mi2_652 & 
+mi2_652<=mx & p_758!=null & p_758<p_779 & p_779<res) | (mi2_652=mi2_781 & 
+Anon_759=mi & mx=mx2_782 & mi=v_649 & mx=mx2_653 & Anon_651=Anon_780 & 
+mi=v & a=mi2 & mi2=v2 & (mi2+1)<=mi & mi<mi2_652 & mi2_652<=Anon_780 & 
+Anon_780<mx & p_758!=null & p_758<res & res<p_779) | (mi2_652=mi2_781 & 
+Anon_759=mi & mx=mx2_782 & mi=v_649 & mx=mx2_653 & Anon_651=mx & 
+Anon_780=mx & mi=v & a=mi2 & mi2=v2 & (mi2+1)<=mi & mi<mi2_652 & 
+mi2_652<=mx & p_758!=null & p_758<res & res<p_779) | (mi2_652=mi2_781 & 
+Anon_759=mi & mx=mx2_782 & mi=v_649 & mx=mx2_653 & Anon_651=Anon_780 & 
+mi=v & a=mi2 & mi2=v2 & (mi2+1)<=mi & mi<mi2_652 & mi2_652<=Anon_780 & 
+Anon_780<mx & p_779!=null & p_779<res & res<p_758) | (mi2_652=mi2_781 & 
+Anon_759=mi & mx=mx2_782 & mi=v_649 & mx=mx2_653 & Anon_651=mx & 
+Anon_780=mx & mi=v & a=mi2 & mi2=v2 & (mi2+1)<=mi & mi<mi2_652 & 
+mi2_652<=mx & p_779!=null & p_779<res & res<p_758) | (mi2_652=mi2_781 & 
+Anon_759=mi & mx=mx2_782 & mi=v_649 & mx=mx2_653 & Anon_651=Anon_780 & 
+mi=v & a=mi2 & mi2=v2 & (mi2+1)<=mi & mi<mi2_652 & mi2_652<=Anon_780 & 
+Anon_780<mx & res!=null & res<p_779 & p_779<p_758) | (mi2_652=mi2_781 & 
+Anon_759=mi & mx=mx2_782 & mi=v_649 & mx=mx2_653 & Anon_651=mx & 
+Anon_780=mx & mi=v & a=mi2 & mi2=v2 & (mi2+1)<=mi & mi<mi2_652 & 
+mi2_652<=mx & res!=null & res<p_779 & p_779<p_758) | (mi2_652=mi2_781 & 
+Anon_759=mi & mx=mx2_782 & mi=v_649 & mx=mx2_653 & Anon_651=Anon_780 & 
+mi=v & a=mi2 & mi2=v2 & (mi2+1)<=mi & mi<mi2_652 & mi2_652<=Anon_780 & 
+Anon_780<mx & res!=null & res<p_758 & p_758<p_779) | (mi2_652=mi2_781 & 
+Anon_759=mi & mx=mx2_782 & mi=v_649 & mx=mx2_653 & Anon_651=mx & 
+Anon_780=mx & mi=v & a=mi2 & mi2=v2 & (mi2+1)<=mi & mi<mi2_652 & 
+mi2_652<=mx & res!=null & res<p_758 & p_758<p_779) | (mi=mi2_781 & 
+Anon_759=v & mx=mx2_782 & v=v_649 & mx=mx2_653 & mi=mi2_652 & 
+Anon_651=Anon_780 & a=mi2 & mi2=v2 & (mi2+1)<=mi & mi<=v & mi<=Anon_780 & 
+v<mx & Anon_780<mx & p_779!=null & p_779<p_758 & p_758<res) | (mi=mi2_781 & 
+Anon_759=v & mx=mx2_782 & v=v_649 & mx=mx2_653 & mi=mi2_652 & Anon_651=mx & 
+Anon_780=mx & a=mi2 & mi2=v2 & (mi2+1)<=mi & mi<=v & v<mx & p_779!=null & 
+p_779<p_758 & p_758<res) | (mi=mi2_781 & Anon_759=v & mx=mx2_782 & v=v_649 & 
+mx=mx2_653 & mi=mi2_652 & Anon_651=Anon_780 & a=mi2 & mi2=v2 & (mi2+1)<=mi & 
+mi<=v & mi<=Anon_780 & v<mx & Anon_780<mx & p_758!=null & p_758<p_779 & 
+p_779<res) | (mi=mi2_781 & Anon_759=v & mx=mx2_782 & v=v_649 & mx=mx2_653 & 
+mi=mi2_652 & Anon_651=mx & Anon_780=mx & a=mi2 & mi2=v2 & (mi2+1)<=mi & 
+mi<=v & v<mx & p_758!=null & p_758<p_779 & p_779<res) | (mi=mi2_781 & 
+Anon_759=v & mx=mx2_782 & v=v_649 & mx=mx2_653 & mi=mi2_652 & 
+Anon_651=Anon_780 & a=mi2 & mi2=v2 & (mi2+1)<=mi & mi<=v & mi<=Anon_780 & 
+v<mx & Anon_780<mx & p_758!=null & p_758<res & res<p_779) | (mi=mi2_781 & 
+Anon_759=v & mx=mx2_782 & v=v_649 & mx=mx2_653 & mi=mi2_652 & Anon_651=mx & 
+Anon_780=mx & a=mi2 & mi2=v2 & (mi2+1)<=mi & mi<=v & v<mx & p_758!=null & 
+p_758<res & res<p_779) | (mi=mi2_781 & Anon_759=v & mx=mx2_782 & v=v_649 & 
+mx=mx2_653 & mi=mi2_652 & Anon_651=Anon_780 & a=mi2 & mi2=v2 & (mi2+1)<=mi & 
+mi<=v & mi<=Anon_780 & v<mx & Anon_780<mx & p_779!=null & p_779<res & 
+res<p_758) | (mi=mi2_781 & Anon_759=v & mx=mx2_782 & v=v_649 & mx=mx2_653 & 
+mi=mi2_652 & Anon_651=mx & Anon_780=mx & a=mi2 & mi2=v2 & (mi2+1)<=mi & 
+mi<=v & v<mx & p_779!=null & p_779<res & res<p_758) | (mi=mi2_781 & 
+Anon_759=v & mx=mx2_782 & v=v_649 & mx=mx2_653 & mi=mi2_652 & 
+Anon_651=Anon_780 & a=mi2 & mi2=v2 & (mi2+1)<=mi & mi<=v & mi<=Anon_780 & 
+v<mx & Anon_780<mx & res!=null & res<p_779 & p_779<p_758) | (mi=mi2_781 & 
+Anon_759=v & mx=mx2_782 & v=v_649 & mx=mx2_653 & mi=mi2_652 & Anon_651=mx & 
+Anon_780=mx & a=mi2 & mi2=v2 & (mi2+1)<=mi & mi<=v & v<mx & res!=null & 
+res<p_779 & p_779<p_758) | (mi=mi2_781 & Anon_759=v & mx=mx2_782 & v=v_649 & 
+mx=mx2_653 & mi=mi2_652 & Anon_651=Anon_780 & a=mi2 & mi2=v2 & (mi2+1)<=mi & 
+mi<=v & mi<=Anon_780 & v<mx & Anon_780<mx & res!=null & res<p_758 & 
+p_758<p_779) | (mi=mi2_781 & Anon_759=v & mx=mx2_782 & v=v_649 & 
+mx=mx2_653 & mi=mi2_652 & Anon_651=mx & Anon_780=mx & a=mi2 & mi2=v2 & (mi2+
+1)<=mi & mi<=v & v<mx & res!=null & res<p_758 & p_758<p_779) | (mi=mi2_781 & 
+Anon_759=mx & mx2_653=mx2_782 & mx=v_649 & mi=mi2_652 & Anon_651=Anon_780 & 
+mx=v & a=mi2 & mi2=v2 & (mi2+1)<=mi & mi<=Anon_780 & Anon_780<mx2_653 & 
+mx2_653<=mx & p_779!=null & p_779<p_758 & p_758<res) | (mi=mi2_781 & 
+Anon_759=mx & Anon_780=mx2_782 & mx=v_649 & Anon_780=mx2_653 & mi=mi2_652 & 
+Anon_651=Anon_780 & mx=v & a=mi2 & mi2=v2 & (mi2+1)<=mi & mi<=Anon_780 & 
+Anon_780<=mx & p_779!=null & p_779<p_758 & p_758<res) | (mi=mi2_781 & 
+Anon_759=mx & mx2_653=mx2_782 & mx=v_649 & mi=mi2_652 & Anon_651=Anon_780 & 
+mx=v & a=mi2 & mi2=v2 & (mi2+1)<=mi & mi<=Anon_780 & Anon_780<mx2_653 & 
+mx2_653<=mx & p_758!=null & p_758<p_779 & p_779<res) | (mi=mi2_781 & 
+Anon_759=mx & Anon_780=mx2_782 & mx=v_649 & Anon_780=mx2_653 & mi=mi2_652 & 
+Anon_651=Anon_780 & mx=v & a=mi2 & mi2=v2 & (mi2+1)<=mi & mi<=Anon_780 & 
+Anon_780<=mx & p_758!=null & p_758<p_779 & p_779<res) | (mi=mi2_781 & 
+Anon_759=mx & mx2_653=mx2_782 & mx=v_649 & mi=mi2_652 & Anon_651=Anon_780 & 
+mx=v & a=mi2 & mi2=v2 & (mi2+1)<=mi & mi<=Anon_780 & Anon_780<mx2_653 & 
+mx2_653<=mx & p_758!=null & p_758<res & res<p_779) | (mi=mi2_781 & 
+Anon_759=mx & Anon_780=mx2_782 & mx=v_649 & Anon_780=mx2_653 & mi=mi2_652 & 
+Anon_651=Anon_780 & mx=v & a=mi2 & mi2=v2 & (mi2+1)<=mi & mi<=Anon_780 & 
+Anon_780<=mx & p_758!=null & p_758<res & res<p_779) | (mi=mi2_781 & 
+Anon_759=mx & mx2_653=mx2_782 & mx=v_649 & mi=mi2_652 & Anon_651=Anon_780 & 
+mx=v & a=mi2 & mi2=v2 & (mi2+1)<=mi & mi<=Anon_780 & Anon_780<mx2_653 & 
+mx2_653<=mx & p_779!=null & p_779<res & res<p_758) | (mi=mi2_781 & 
+Anon_759=mx & Anon_780=mx2_782 & mx=v_649 & Anon_780=mx2_653 & mi=mi2_652 & 
+Anon_651=Anon_780 & mx=v & a=mi2 & mi2=v2 & (mi2+1)<=mi & mi<=Anon_780 & 
+Anon_780<=mx & p_779!=null & p_779<res & res<p_758) | (mi=mi2_781 & 
+Anon_759=mx & mx2_653=mx2_782 & mx=v_649 & mi=mi2_652 & Anon_651=Anon_780 & 
+mx=v & a=mi2 & mi2=v2 & (mi2+1)<=mi & mi<=Anon_780 & Anon_780<mx2_653 & 
+mx2_653<=mx & res!=null & res<p_779 & p_779<p_758) | (mi=mi2_781 & 
+Anon_759=mx & Anon_780=mx2_782 & mx=v_649 & Anon_780=mx2_653 & mi=mi2_652 & 
+Anon_651=Anon_780 & mx=v & a=mi2 & mi2=v2 & (mi2+1)<=mi & mi<=Anon_780 & 
+Anon_780<=mx & res!=null & res<p_779 & p_779<p_758) | (mi=mi2_781 & 
+Anon_759=mx & mx2_653=mx2_782 & mx=v_649 & mi=mi2_652 & Anon_651=Anon_780 & 
+mx=v & a=mi2 & mi2=v2 & (mi2+1)<=mi & mi<=Anon_780 & Anon_780<mx2_653 & 
+mx2_653<=mx & res!=null & res<p_758 & p_758<p_779) | (mi=mi2_781 & 
+Anon_759=mx & Anon_780=mx2_782 & mx=v_649 & Anon_780=mx2_653 & mi=mi2_652 & 
+Anon_651=Anon_780 & mx=v & a=mi2 & mi2=v2 & (mi2+1)<=mi & mi<=Anon_780 & 
+Anon_780<=mx & res!=null & res<p_758 & p_758<p_779) | (mi=mi2 & 
+mi2_652=mi2_781 & Anon_759=mi & mx=mx2_782 & mi=v_649 & mx=mx2_653 & 
+Anon_651=Anon_780 & mi=v & a=mi & mi=v2 & mi<mi2_652 & mi2_652<=Anon_780 & 
+Anon_780<mx & p_779!=null & p_779<p_758 & p_758<res) | (mi=mi2 & 
+mi2_652=mi2_781 & Anon_759=mi & mx=mx2_782 & mi=v_649 & mx=mx2_653 & 
+Anon_651=mx & Anon_780=mx & mi=v & a=mi & mi=v2 & p_779!=null & 
+p_779<p_758 & p_758<res & mi<mi2_652 & mi2_652<=mx) | (mi=mi2 & 
+mi2_652=mi2_781 & Anon_759=mi & mx=mx2_782 & mi=v_649 & mx=mx2_653 & 
+Anon_651=Anon_780 & mi=v & a=mi & mi=v2 & mi<mi2_652 & mi2_652<=Anon_780 & 
+Anon_780<mx & p_758!=null & p_758<p_779 & p_779<res) | (mi=mi2 & 
+mi2_652=mi2_781 & Anon_759=mi & mx=mx2_782 & mi=v_649 & mx=mx2_653 & 
+Anon_651=mx & Anon_780=mx & mi=v & a=mi & mi=v2 & p_758!=null & 
+p_758<p_779 & p_779<res & mi<mi2_652 & mi2_652<=mx) | (mi=mi2 & 
+mi2_652=mi2_781 & Anon_759=mi & mx=mx2_782 & mi=v_649 & mx=mx2_653 & 
+Anon_651=Anon_780 & mi=v & a=mi & mi=v2 & mi<mi2_652 & mi2_652<=Anon_780 & 
+Anon_780<mx & p_758!=null & p_758<res & res<p_779) | (mi=mi2 & 
+mi2_652=mi2_781 & Anon_759=mi & mx=mx2_782 & mi=v_649 & mx=mx2_653 & 
+Anon_651=mx & Anon_780=mx & mi=v & a=mi & mi=v2 & p_758!=null & p_758<res & 
+res<p_779 & mi<mi2_652 & mi2_652<=mx) | (mi=mi2 & mi2_652=mi2_781 & 
+Anon_759=mi & mx=mx2_782 & mi=v_649 & mx=mx2_653 & Anon_651=Anon_780 & 
+mi=v & a=mi & mi=v2 & mi<mi2_652 & mi2_652<=Anon_780 & Anon_780<mx & 
+p_779!=null & p_779<res & res<p_758) | (mi=mi2 & mi2_652=mi2_781 & 
+Anon_759=mi & mx=mx2_782 & mi=v_649 & mx=mx2_653 & Anon_651=mx & 
+Anon_780=mx & mi=v & a=mi & mi=v2 & p_779!=null & p_779<res & res<p_758 & 
+mi<mi2_652 & mi2_652<=mx) | (mi=mi2 & mi2_652=mi2_781 & Anon_759=mi & 
+mx=mx2_782 & mi=v_649 & mx=mx2_653 & Anon_651=Anon_780 & mi=v & a=mi & 
+mi=v2 & mi<mi2_652 & mi2_652<=Anon_780 & Anon_780<mx & res!=null & 
+res<p_779 & p_779<p_758) | (mi=mi2 & mi2_652=mi2_781 & Anon_759=mi & 
+mx=mx2_782 & mi=v_649 & mx=mx2_653 & Anon_651=mx & Anon_780=mx & mi=v & 
+a=mi & mi=v2 & res!=null & res<p_779 & p_779<p_758 & mi<mi2_652 & 
+mi2_652<=mx) | (mi=mi2 & mi2_652=mi2_781 & Anon_759=mi & mx=mx2_782 & 
+mi=v_649 & mx=mx2_653 & Anon_651=Anon_780 & mi=v & a=mi & mi=v2 & 
+mi<mi2_652 & mi2_652<=Anon_780 & Anon_780<mx & res!=null & res<p_758 & 
+p_758<p_779) | (mi=mi2 & mi2_652=mi2_781 & Anon_759=mi & mx=mx2_782 & 
+mi=v_649 & mx=mx2_653 & Anon_651=mx & Anon_780=mx & mi=v & a=mi & mi=v2 & 
+res!=null & res<p_758 & p_758<p_779 & mi<mi2_652 & mi2_652<=mx) | (mi=mi2 & 
+mi=mi2_781 & Anon_759=v & mx=mx2_782 & v=v_649 & mx=mx2_653 & mi=mi2_652 & 
+Anon_651=Anon_780 & a=v2 & mi<=a & a<=v & v<mx & p_779!=null & p_779<p_758 & 
+p_758<res & mi<=Anon_780 & Anon_780<mx) | (mi=mi2 & mi=mi2_781 & 
+Anon_759=v & mx=mx2_782 & v=v_649 & mx=mx2_653 & mi=mi2_652 & Anon_651=mx & 
+Anon_780=mx & a=v2 & mi<=a & a<=v & v<mx & p_779!=null & p_779<p_758 & 
+p_758<res) | (mi=mi2 & mi=mi2_781 & Anon_759=v & mx=mx2_782 & v=v_649 & 
+mx=mx2_653 & mi=mi2_652 & Anon_651=Anon_780 & a=v2 & mi<=a & a<=v & v<mx & 
+p_758!=null & p_758<p_779 & p_779<res & mi<=Anon_780 & Anon_780<mx) | 
+(mi=mi2 & mi=mi2_781 & Anon_759=v & mx=mx2_782 & v=v_649 & mx=mx2_653 & 
+mi=mi2_652 & Anon_651=mx & Anon_780=mx & a=v2 & mi<=a & a<=v & v<mx & 
+p_758!=null & p_758<p_779 & p_779<res) | (mi=mi2 & mi=mi2_781 & Anon_759=v & 
+mx=mx2_782 & v=v_649 & mx=mx2_653 & mi=mi2_652 & Anon_651=Anon_780 & a=v2 & 
+mi<=a & a<=v & v<mx & p_758!=null & p_758<res & res<p_779 & mi<=Anon_780 & 
+Anon_780<mx) | (mi=mi2 & mi=mi2_781 & Anon_759=v & mx=mx2_782 & v=v_649 & 
+mx=mx2_653 & mi=mi2_652 & Anon_651=mx & Anon_780=mx & a=v2 & mi<=a & a<=v & 
+v<mx & p_758!=null & p_758<res & res<p_779) | (mi=mi2 & mi=mi2_781 & 
+Anon_759=v & mx=mx2_782 & v=v_649 & mx=mx2_653 & mi=mi2_652 & 
+Anon_651=Anon_780 & a=v2 & mi<=a & a<=v & v<mx & p_779!=null & p_779<res & 
+res<p_758 & mi<=Anon_780 & Anon_780<mx) | (mi=mi2 & mi=mi2_781 & 
+Anon_759=v & mx=mx2_782 & v=v_649 & mx=mx2_653 & mi=mi2_652 & Anon_651=mx & 
+Anon_780=mx & a=v2 & mi<=a & a<=v & v<mx & p_779!=null & p_779<res & 
+res<p_758) | (mi=mi2 & mi=mi2_781 & Anon_759=v & mx=mx2_782 & v=v_649 & 
+mx=mx2_653 & mi=mi2_652 & Anon_651=Anon_780 & a=v2 & mi<=a & a<=v & v<mx & 
+res!=null & res<p_779 & p_779<p_758 & mi<=Anon_780 & Anon_780<mx) | 
+(mi=mi2 & mi=mi2_781 & Anon_759=v & mx=mx2_782 & v=v_649 & mx=mx2_653 & 
+mi=mi2_652 & Anon_651=mx & Anon_780=mx & a=v2 & mi<=a & a<=v & v<mx & 
+res!=null & res<p_779 & p_779<p_758) | (mi=mi2 & mi=mi2_781 & Anon_759=v & 
+mx=mx2_782 & v=v_649 & mx=mx2_653 & mi=mi2_652 & Anon_651=Anon_780 & a=v2 & 
+mi<=a & a<=v & v<mx & res!=null & res<p_758 & p_758<p_779 & mi<=Anon_780 & 
+Anon_780<mx) | (mi=mi2 & mi=mi2_781 & Anon_759=v & mx=mx2_782 & v=v_649 & 
+mx=mx2_653 & mi=mi2_652 & Anon_651=mx & Anon_780=mx & a=v2 & mi<=a & a<=v & 
+v<mx & res!=null & res<p_758 & p_758<p_779) | (mi=mi2 & mi=mi2_781 & 
+Anon_759=mx & mx2_653=mx2_782 & mx=v_649 & mi=mi2_652 & Anon_651=Anon_780 & 
+mx=v & a=v2 & mi<=Anon_780 & Anon_780<mx2_653 & mx2_653<=mx & p_779!=null & 
+p_779<p_758 & p_758<res & mi<=a & a<mx) | (mi=mi2 & mi=mi2_781 & 
+Anon_759=mx & Anon_780=mx2_782 & mx=v_649 & Anon_780=mx2_653 & mi=mi2_652 & 
+Anon_651=Anon_780 & mx=v & a=v2 & p_779!=null & p_779<p_758 & p_758<res & 
+mi<=Anon_780 & Anon_780<=mx & mi<=a & a<mx) | (mi=mi2 & mi=mi2_781 & 
+Anon_759=mx & mx2_653=mx2_782 & mx=v_649 & mi=mi2_652 & Anon_651=Anon_780 & 
+mx=v & a=v2 & mi<=Anon_780 & Anon_780<mx2_653 & mx2_653<=mx & p_758!=null & 
+p_758<p_779 & p_779<res & mi<=a & a<mx) | (mi=mi2 & mi=mi2_781 & 
+Anon_759=mx & Anon_780=mx2_782 & mx=v_649 & Anon_780=mx2_653 & mi=mi2_652 & 
+Anon_651=Anon_780 & mx=v & a=v2 & p_758!=null & p_758<p_779 & p_779<res & 
+mi<=Anon_780 & Anon_780<=mx & mi<=a & a<mx) | (mi=mi2 & mi=mi2_781 & 
+Anon_759=mx & mx2_653=mx2_782 & mx=v_649 & mi=mi2_652 & Anon_651=Anon_780 & 
+mx=v & a=v2 & mi<=Anon_780 & Anon_780<mx2_653 & mx2_653<=mx & p_758!=null & 
+p_758<res & res<p_779 & mi<=a & a<mx) | (mi=mi2 & mi=mi2_781 & Anon_759=mx & 
+Anon_780=mx2_782 & mx=v_649 & Anon_780=mx2_653 & mi=mi2_652 & 
+Anon_651=Anon_780 & mx=v & a=v2 & p_758!=null & p_758<res & res<p_779 & 
+mi<=Anon_780 & Anon_780<=mx & mi<=a & a<mx) | (mi=mi2 & mi=mi2_781 & 
+Anon_759=mx & mx2_653=mx2_782 & mx=v_649 & mi=mi2_652 & Anon_651=Anon_780 & 
+mx=v & a=v2 & mi<=Anon_780 & Anon_780<mx2_653 & mx2_653<=mx & p_779!=null & 
+p_779<res & res<p_758 & mi<=a & a<mx) | (mi=mi2 & mi=mi2_781 & Anon_759=mx & 
+Anon_780=mx2_782 & mx=v_649 & Anon_780=mx2_653 & mi=mi2_652 & 
+Anon_651=Anon_780 & mx=v & a=v2 & p_779!=null & p_779<res & res<p_758 & 
+mi<=Anon_780 & Anon_780<=mx & mi<=a & a<mx) | (mi=mi2 & mi=mi2_781 & 
+Anon_759=mx & mx2_653=mx2_782 & mx=v_649 & mi=mi2_652 & Anon_651=Anon_780 & 
+mx=v & a=v2 & mi<=Anon_780 & Anon_780<mx2_653 & mx2_653<=mx & res!=null & 
+res<p_779 & p_779<p_758 & mi<=a & a<mx) | (mi=mi2 & mi=mi2_781 & 
+Anon_759=mx & Anon_780=mx2_782 & mx=v_649 & Anon_780=mx2_653 & mi=mi2_652 & 
+Anon_651=Anon_780 & mx=v & a=v2 & res!=null & res<p_779 & p_779<p_758 & 
+mi<=Anon_780 & Anon_780<=mx & mi<=a & a<mx) | (mi=mi2 & mi=mi2_781 & 
+Anon_759=mx & mx2_653=mx2_782 & mx=v_649 & mi=mi2_652 & Anon_651=Anon_780 & 
+mx=v & a=v2 & mi<=Anon_780 & Anon_780<mx2_653 & mx2_653<=mx & res!=null & 
+res<p_758 & p_758<p_779 & mi<=a & a<mx) | (mi=mi2 & mi=mi2_781 & 
+Anon_759=mx & Anon_780=mx2_782 & mx=v_649 & Anon_780=mx2_653 & mi=mi2_652 & 
+Anon_651=Anon_780 & mx=v & a=v2 & res!=null & res<p_758 & p_758<p_779 & 
+mi<=Anon_780 & Anon_780<=mx & mi<=a & a<mx) | (mi=mi2 & mi=mi2_781 & 
+Anon_759=mx & mx2_653=mx2_782 & mx=v_649 & mi=mi2_652 & Anon_651=Anon_780 & 
+mx=v & a=mx & mx=v2 & mi<=Anon_780 & Anon_780<mx2_653 & mx2_653<=mx & 
+p_779!=null & p_779<p_758 & p_758<res) | (mi=mi2 & mi=mi2_781 & 
+Anon_759=mx & Anon_780=mx2_782 & mx=v_649 & Anon_780=mx2_653 & mi=mi2_652 & 
+Anon_651=Anon_780 & mx=v & a=mx & mx=v2 & p_779!=null & p_779<p_758 & 
+p_758<res & mi<=Anon_780 & Anon_780<=mx) | (mi=mi2 & mi=mi2_781 & 
+Anon_759=mx & mx2_653=mx2_782 & mx=v_649 & mi=mi2_652 & Anon_651=Anon_780 & 
+mx=v & a=mx & mx=v2 & mi<=Anon_780 & Anon_780<mx2_653 & mx2_653<=mx & 
+p_758!=null & p_758<p_779 & p_779<res) | (mi=mi2 & mi=mi2_781 & 
+Anon_759=mx & Anon_780=mx2_782 & mx=v_649 & Anon_780=mx2_653 & mi=mi2_652 & 
+Anon_651=Anon_780 & mx=v & a=mx & mx=v2 & p_758!=null & p_758<p_779 & 
+p_779<res & mi<=Anon_780 & Anon_780<=mx) | (mi=mi2 & mi=mi2_781 & 
+Anon_759=mx & mx2_653=mx2_782 & mx=v_649 & mi=mi2_652 & Anon_651=Anon_780 & 
+mx=v & a=mx & mx=v2 & mi<=Anon_780 & Anon_780<mx2_653 & mx2_653<=mx & 
+p_758!=null & p_758<res & res<p_779) | (mi=mi2 & mi=mi2_781 & Anon_759=mx & 
+Anon_780=mx2_782 & mx=v_649 & Anon_780=mx2_653 & mi=mi2_652 & 
+Anon_651=Anon_780 & mx=v & a=mx & mx=v2 & p_758!=null & p_758<res & 
+res<p_779 & mi<=Anon_780 & Anon_780<=mx) | (mi=mi2 & mi=mi2_781 & 
+Anon_759=mx & mx2_653=mx2_782 & mx=v_649 & mi=mi2_652 & Anon_651=Anon_780 & 
+mx=v & a=mx & mx=v2 & mi<=Anon_780 & Anon_780<mx2_653 & mx2_653<=mx & 
+p_779!=null & p_779<res & res<p_758) | (mi=mi2 & mi=mi2_781 & Anon_759=mx & 
+Anon_780=mx2_782 & mx=v_649 & Anon_780=mx2_653 & mi=mi2_652 & 
+Anon_651=Anon_780 & mx=v & a=mx & mx=v2 & p_779!=null & p_779<res & 
+res<p_758 & mi<=Anon_780 & Anon_780<=mx) | (mi=mi2 & mi=mi2_781 & 
+Anon_759=mx & mx2_653=mx2_782 & mx=v_649 & mi=mi2_652 & Anon_651=Anon_780 & 
+mx=v & a=mx & mx=v2 & mi<=Anon_780 & Anon_780<mx2_653 & mx2_653<=mx & 
+res!=null & res<p_779 & p_779<p_758) | (mi=mi2 & mi=mi2_781 & Anon_759=mx & 
+Anon_780=mx2_782 & mx=v_649 & Anon_780=mx2_653 & mi=mi2_652 & 
+Anon_651=Anon_780 & mx=v & a=mx & mx=v2 & res!=null & res<p_779 & 
+p_779<p_758 & mi<=Anon_780 & Anon_780<=mx) | (mi=mi2 & mi=mi2_781 & 
+Anon_759=mx & mx2_653=mx2_782 & mx=v_649 & mi=mi2_652 & Anon_651=Anon_780 & 
+mx=v & a=mx & mx=v2 & mi<=Anon_780 & Anon_780<mx2_653 & mx2_653<=mx & 
+res!=null & res<p_758 & p_758<p_779) | (Anon_780<=mx & mi<=Anon_780 & 
+p_758<p_779 & res<p_758 & res!=null & mx=v2 & a=mx & mi=mi2 & mi=mi2_781 & 
+Anon_759=mx & Anon_780=mx2_782 & mx=v_649 & Anon_780=mx2_653 & mi=mi2_652 & 
+Anon_651=Anon_780 & mx=v)) & v_bool_40_593' & next_41_667=null & 
+mx=mx2_761 & mx=mx2 & mi=mi2_760 & p_650=p_779 & p_758=x & res=y & 
+flted_24_609=next_41_667)))))))))))))))))))))))) -->  P3(mi,a,mi2),
+RELDEFN P4: ( a=mx2 & mx<mx2) -->  P4(mx,a,mx2),
+RELDEFN P3: ( mi=mi2 & mi2<a) -->  P3(mi,a,mi2),
+RELDEFN P4: ( P4(mx_688,a_689,mx2_712) & P3(mi_687,a_689,mi2_711) & ((mx=mx_688 & 
+a=a_689 & mx2=mx2_712 & mi2_711<=mx2) | (a=a_689 & mx2=mx2_712 & 
+mx_688<=mx & mx<mi2_711 & mi2_711<=mx2 & mx<a_689) | (a=a_689 & 
+mx2=mx2_712 & mi2_711<=mx & mx_688<=mx & mx<=(a_689-1) & mx<=(mx2-1)) | 
+(mx=mx_688 & a=a_689 & mi2_711<=mx2_712 & mx2_712<=mx2 & mx2<=(a_689-1) & 
+mx2<=(mx-1)) | (mx=mx2 & a=a_689 & mx2_712<=mx & mx_688<=mx & mx<a_689 & 
+mi2_711<=mx2_712))) -->  P4(mx,a,mx2),
+RELDEFN P3: ( P4(mx_688,a_689,mx2_712) & P3(mi_687,a_689,mi2_711) & ((mi=mi2 & a=a_689 & 
+mi<=(mi_687-1) & mi<=(a_689-1) & mi<=(mi2_711-1) & mi2_711<=mx2_712) | 
+(mi=mi_687 & a=a_689 & mi<=mi2 & mi2<mi2_711 & mi2_711<=mx2_712 & 
+mi2<a_689) | (mi2=mi2_711 & a=a_689 & mi2_711<=mi & mi<=(mi_687-1) & 
+mi<=(a_689-1) & mi<=(mx2_712-1)) | (mi2=mi2_711 & mi=mi_687 & a=a_689 & 
+mi<=(mx2_712-1) & mi<=(a_689-1) & mi2_711<=(a_689-1) & mi2_711<=(mx2_712-
+1)) | (mi2=mi2_711 & a=a_689 & mi2_711<=mx2_712 & mx2_712<=mi & mi<=(mi_687-
+1) & mi<=(a_689-1)) | (mi2=mi2_711 & mi=mi_687 & a=a_689 & 
+mi2_711<=mx2_712 & mx2_712<a_689 & mi<a_689))) -->  P3(mi,a,mi2)]
+*************************************
+Timeout when checking #simplify  Restarting Omega after ... 234 invocations Stop Omega... 234 invocations Starting Omega...oc
+Timeout when checking #simplify  Restarting Omega after ... 239 invocations Stop Omega... 239 invocations Starting Omega...oc
+
+*************************************
+*******fixcalc of pure relation *******
+*************************************
+[( P3(mi,a,mi2), (a=mi2 & a<=mi) | (mi=mi2 & mi2<=a), true, true),
+( P4(mx,a,mx2), (mx=mx2 & a<=mx) | (a=mx2 & mx<mx2), true, true)]
+*************************************
+
+!!! REL POST :  P4(mx,a,mx2)
+!!! POST:  (mx=mx2 & a<=mx) | (a=mx2 & mx<mx2)
+!!! REL PRE :  true
+!!! PRE :  true
+!!! REL POST :  P3(mi,a,mi2)
+!!! POST:  (a=mi2 & a<=mi) | (mi=mi2 & mi2<=a)
+!!! REL PRE :  true
+!!! PRE :  true
+Procedure insert$node~node SUCCESS
+
+Termination checking result:
+
+Stop Omega... 252 invocations 
+0 false contexts at: ()
+
+Total verification time: 15.200949 second(s)
+	Time spent in main process: 6.4044 second(s)
+	Time spent in child processes: 8.796549 second(s)
+

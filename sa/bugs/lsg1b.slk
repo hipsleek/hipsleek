@@ -1,0 +1,34 @@
+
+data node2{
+    node2 n;
+    node2 s;
+}.
+
+HeapPred SLSEG(node2 a,node2 b).
+
+// lsg1.slk
+/*
+infer[SLSEG] 
+SLSEG(l,e) 
+ & e!=null
+ & l=null 
+ |-  l::node2<n,s>@L. 
+*/
+
+infer[l,e] 
+ e!=null
+ & l=null 
+ |-  l!=null.
+
+print residue.
+
+/*
+
+Should it be as weak as possible? Or should
+we use interpolant to get simpler LHS?
+
+ <1>hfalse&false&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [SLSEG(l,e)&true --> emp&l!=null | e=null]
+
+
+*/

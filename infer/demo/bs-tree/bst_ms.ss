@@ -22,7 +22,7 @@ relation APP(int a, int b, int c).
 node2 append(node2 x, node2 y)
    infer[APP]
    requires x::dll<_, m> * y::dll<_, n>
-     ensures res::dll<r, k> & APP(k,m,n);
+   ensures res::dll<r, k> & APP(k,m,n);
 {
 	node2 z;
 

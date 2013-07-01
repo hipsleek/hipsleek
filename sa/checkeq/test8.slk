@@ -1,0 +1,20 @@
+//heap formula
+data node { int val ; node next }.
+
+//1. Valid
+checkeq[] a or b -|- c or d.
+
+//2. Valid
+checkeq[] a or !b -|- c or !d.
+
+//3. fail
+checkeq[] a = b or b -|- c or d = e.
+
+//4. fail
+checkeq[a] a or b = r -|- c = b or d.
+
+//5. fail
+checkeq[] a | b or b -|- c or d | b.
+
+//6. fail
+checkeq[] a | c or b -|- c or d | h.

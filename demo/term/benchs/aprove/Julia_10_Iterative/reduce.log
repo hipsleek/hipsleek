@@ -1,0 +1,133 @@
++++ Transcript to reduce.log started at Sun Feb 12 14:34:46 2012 +++
+Reduce (Free CSL version), 09-Dec-11 ...
+
+off nat;
+
+linelength 10000;
+t$
+
+
+load_package redlog;
+
+rlset ofsf;
+{}$
+
+
+on rlnzden;
+
+off varopt;
+
+off arbvars;
+
+rlqe rlex(((((y_25 + x_24) <= 0)) and (true)));
+true$
+
+
+rlqe rlex((((0 <= ((y_25 + x_24) + -1))) and (true)));
+true$
+
+
+rlqe rlex(((((((0 <= ((y_25 + x_24) + -1))) and ((0 <= ((y_25 + x_24) + -1)))) and (((v_bool_12_491PRMD > 0)) and ((0 <= ((y_25 + x_24) + -1))))) and ((v_bool_12_491PRMD > 0))) and ((res = (a_26PRMD * b_27PRMD)))));
+true$
+
+
+rlqe rlex((((((((0 <= ((y_25 + x_24) + -1))) and ((0 <= ((y_25 + x_24) + -1)))) and (((v_bool_12_491PRMD > 0)) and ((0 <= ((y_25 + x_24) + -1))))) and ((v_bool_12_491PRMD > 0))) and ((v_int_21_482PRMD = (a_26PRMD * b_27PRMD)))) and ((9 <= (v_int_21_482PRMD + -1)))));
+true$
+
+
+rlqe rlex(((((((((0 <= ((y_25 + x_24) + -1))) and ((0 <= ((y_25 + x_24) + -1)))) and (((v_bool_12_491PRMD > 0)) and ((0 <= ((y_25 + x_24) + -1))))) and ((v_bool_12_491PRMD > 0))) and ((v_int_21_482PRMD = (a_26PRMD * b_27PRMD)))) and ((9 <= (v_int_21_482PRMD + -1)))) and (((res > 0)) and ((9 <= (v_int_21_482PRMD + -1))))));
+true$
+
+
+rlqe rlex((((((((0 <= ((y_25 + x_24) + -1))) and ((0 <= ((y_25 + x_24) + -1)))) and (((v_bool_12_491PRMD > 0)) and ((0 <= ((y_25 + x_24) + -1))))) and ((v_bool_12_491PRMD > 0))) and ((v_int_21_482PRMD = (a_26PRMD * b_27PRMD)))) and ((v_int_21_482PRMD <= 9))));
+true$
+
+
+rlqe rlex(((((((((0 <= ((y_25 + x_24) + -1))) and ((0 <= ((y_25 + x_24) + -1)))) and (((v_bool_12_491PRMD > 0)) and ((0 <= ((y_25 + x_24) + -1))))) and ((v_bool_12_491PRMD > 0))) and ((v_int_21_482PRMD = (a_26PRMD * b_27PRMD)))) and ((v_int_21_482PRMD <= 9))) and ((not ((res > 0))) and ((v_int_21_482PRMD <= 9)))));
+true$
+
+
+rlqe rlex(((((((((0 <= ((y_25 + x_24) + -1))) and ((0 <= ((y_25 + x_24) + -1)))) and (((v_bool_12_491PRMD > 0)) and ((0 <= ((y_25 + x_24) + -1))))) and ((v_bool_12_491PRMD > 0))) and (((a_26PRMD * b_27PRMD) <= 9))) and ((not ((v_bool_21_489PRMD > 0))) and (((a_26PRMD * b_27PRMD) <= 9)))) and ((v_bool_21_489PRMD > 0))));
+false$
+
+
+rlqe rlex(((((((((0 <= ((y_25 + x_24) + -1))) and ((0 <= ((y_25 + x_24) + -1)))) and (((v_bool_12_491PRMD > 0)) and ((0 <= ((y_25 + x_24) + -1))))) and ((v_bool_12_491PRMD > 0))) and ((9 <= ((a_26PRMD * b_27PRMD) + -1)))) and (((v_bool_21_489PRMD > 0)) and ((9 <= ((a_26PRMD * b_27PRMD) + -1))))) and ((v_bool_21_489PRMD > 0))));
+true$
+
+
+rlqe rlex(((((((((0 <= ((y_25 + x_24) + -1))) and ((0 <= ((y_25 + x_24) + -1)))) and (((v_bool_12_491PRMD > 0)) and ((0 <= ((y_25 + x_24) + -1))))) and ((v_bool_12_491PRMD > 0))) and (((a_26PRMD * b_27PRMD) <= 9))) and ((not ((v_bool_21_489PRMD > 0))) and (((a_26PRMD * b_27PRMD) <= 9)))) and (not ((v_bool_21_489PRMD > 0)))));
+true$
+
+
+rlqe rlex(((((((((0 <= ((y_25 + x_24) + -1))) and ((0 <= ((y_25 + x_24) + -1)))) and (((v_bool_12_491PRMD > 0)) and ((0 <= ((y_25 + x_24) + -1))))) and ((v_bool_12_491PRMD > 0))) and ((9 <= ((a_26PRMD * b_27PRMD) + -1)))) and (((v_bool_21_489PRMD > 0)) and ((9 <= ((a_26PRMD * b_27PRMD) + -1))))) and (not ((v_bool_21_489PRMD > 0)))));
+false$
+
+
+rlqe rlex((((((((((0 <= ((y_25 + x_24) + -1))) and ((0 <= ((y_25 + x_24) + -1)))) and (((v_bool_12_491PRMD > 0)) and ((0 <= ((y_25 + x_24) + -1))))) and ((v_bool_12_491PRMD > 0))) and ((9 <= ((a_26PRMD * b_27PRMD) + -1)))) and (((v_bool_21_489PRMD > 0)) and ((9 <= ((a_26PRMD * b_27PRMD) + -1))))) and ((v_bool_21_489PRMD > 0))) and (((res + 1) = x_24))));
+true$
+
+
+rlqe rlex((((((((((0 <= ((y_25 + x_24) + -1))) and ((0 <= ((y_25 + x_24) + -1)))) and (((v_bool_12_491PRMD > 0)) and ((0 <= ((y_25 + x_24) + -1))))) and ((v_bool_12_491PRMD > 0))) and (((a_26PRMD * b_27PRMD) <= 9))) and ((not ((v_bool_21_489PRMD > 0))) and (((a_26PRMD * b_27PRMD) <= 9)))) and (not ((v_bool_21_489PRMD > 0)))) and (((res + 1) = y_25))));
+true$
+
+
+rlqe rlex(((((((((((0 <= ((y_25 + x_24) + -1))) and ((0 <= ((y_25 + x_24) + -1)))) and (((v_bool_12_491PRMD > 0)) and ((0 <= ((y_25 + x_24) + -1))))) and ((v_bool_12_491PRMD > 0))) and ((9 <= ((a_26PRMD * b_27PRMD) + -1)))) and (((v_bool_21_489PRMD > 0)) and ((9 <= ((a_26PRMD * b_27PRMD) + -1))))) and ((v_bool_21_489PRMD > 0))) and (((x_24PRMD + 1) = x_24))) and (((y_25 + x_24PRMD) <= 0))));
+true$
+
+
+rlqe rlex((((((((((((0 <= ((y_25 + x_24) + -1))) and ((0 <= ((y_25 + x_24) + -1)))) and (((v_bool_12_491PRMD > 0)) and ((0 <= ((y_25 + x_24) + -1))))) and ((v_bool_12_491PRMD > 0))) and ((9 <= ((a_26PRMD * b_27PRMD) + -1)))) and (((v_bool_21_489PRMD > 0)) and ((9 <= ((a_26PRMD * b_27PRMD) + -1))))) and ((v_bool_21_489PRMD > 0))) and (((x_598 + 1) = x_24))) and (((y_25 + x_598) <= 0))) and (((y_25 + x_598) <= 0))));
+true$
+
+
+rlqe rlex(((((((((((0 <= ((y_25 + x_24) + -1))) and ((0 <= ((y_25 + x_24) + -1)))) and (((v_bool_12_491PRMD > 0)) and ((0 <= ((y_25 + x_24) + -1))))) and ((v_bool_12_491PRMD > 0))) and ((9 <= ((a_26PRMD * b_27PRMD) + -1)))) and (((v_bool_21_489PRMD > 0)) and ((9 <= ((a_26PRMD * b_27PRMD) + -1))))) and ((v_bool_21_489PRMD > 0))) and (((x_24PRMD + 1) = x_24))) and ((0 <= ((y_25 + x_24PRMD) + -1)))));
+true$
+
+
+rlqe rlex((((((((((((0 <= ((y_25 + x_24) + -1))) and ((0 <= ((y_25 + x_24) + -1)))) and (((v_bool_12_491PRMD > 0)) and ((0 <= ((y_25 + x_24) + -1))))) and ((v_bool_12_491PRMD > 0))) and ((9 <= ((a_26PRMD * b_27PRMD) + -1)))) and (((v_bool_21_489PRMD > 0)) and ((9 <= ((a_26PRMD * b_27PRMD) + -1))))) and ((v_bool_21_489PRMD > 0))) and (((x_600 + 1) = x_24))) and ((0 <= ((y_25 + x_600) + -1)))) and ((0 <= ((y_25 + x_600) + -1)))));
+true$
+
+
+rlqe rlex(((((((((((0 <= ((y_25 + x_24) + -1))) and ((0 <= ((y_25 + x_24) + -1)))) and (((v_bool_12_491PRMD > 0)) and ((0 <= ((y_25 + x_24) + -1))))) and ((v_bool_12_491PRMD > 0))) and (((a_26PRMD * b_27PRMD) <= 9))) and ((not ((v_bool_21_489PRMD > 0))) and (((a_26PRMD * b_27PRMD) <= 9)))) and (not ((v_bool_21_489PRMD > 0)))) and (((y_25PRMD + 1) = y_25))) and (((y_25PRMD + x_24) <= 0))));
+true$
+
+
+rlqe rlex((((((((((((0 <= ((y_25 + x_24) + -1))) and ((0 <= ((y_25 + x_24) + -1)))) and (((v_bool_12_491PRMD > 0)) and ((0 <= ((y_25 + x_24) + -1))))) and ((v_bool_12_491PRMD > 0))) and (((a_26PRMD * b_27PRMD) <= 9))) and ((not ((v_bool_21_489PRMD > 0))) and (((a_26PRMD * b_27PRMD) <= 9)))) and (not ((v_bool_21_489PRMD > 0)))) and (((y_601 + 1) = y_25))) and (((y_601 + x_24) <= 0))) and (((y_601 + x_24) <= 0))));
+true$
+
+
+rlqe rlex(((((((((((0 <= ((y_25 + x_24) + -1))) and ((0 <= ((y_25 + x_24) + -1)))) and (((v_bool_12_491PRMD > 0)) and ((0 <= ((y_25 + x_24) + -1))))) and ((v_bool_12_491PRMD > 0))) and (((a_26PRMD * b_27PRMD) <= 9))) and ((not ((v_bool_21_489PRMD > 0))) and (((a_26PRMD * b_27PRMD) <= 9)))) and (not ((v_bool_21_489PRMD > 0)))) and (((y_25PRMD + 1) = y_25))) and ((0 <= ((y_25PRMD + x_24) + -1)))));
+true$
+
+
+rlqe rlex((((((((((((0 <= ((y_25 + x_24) + -1))) and ((0 <= ((y_25 + x_24) + -1)))) and (((v_bool_12_491PRMD > 0)) and ((0 <= ((y_25 + x_24) + -1))))) and ((v_bool_12_491PRMD > 0))) and (((a_26PRMD * b_27PRMD) <= 9))) and ((not ((v_bool_21_489PRMD > 0))) and (((a_26PRMD * b_27PRMD) <= 9)))) and (not ((v_bool_21_489PRMD > 0)))) and (((y_603 + 1) = y_25))) and ((0 <= ((y_603 + x_24) + -1)))) and ((0 <= ((y_603 + x_24) + -1)))));
+true$
+
+
+rlqe rlex(((((y_25 + x_24) <= 0)) and (true)));
+true$
+
+
+rlqe rlex((((0 <= ((y_25 + x_24) + -1))) and (true)));
+true$
+
+
+rlqe rlex(((((((((((0 <= ((y_25 + x_24) + -1))) and ((0 <= ((y_25 + x_24) + -1)))) and (((v_bool_12_491PRMD > 0)) and ((0 <= ((y_25 + x_24) + -1))))) and ((v_bool_12_491PRMD > 0))) and ((9 <= ((a_26PRMD * b_27PRMD) + -1)))) and (((v_bool_21_489PRMD > 0)) and ((9 <= ((a_26PRMD * b_27PRMD) + -1))))) and ((v_bool_21_489PRMD > 0))) and (((x_698 + 1) = x_24))) and (((y_25 + x_698) <= 0))));
+true$
+
+
+rlqe rlex(((((((((((0 <= ((y_25 + x_24) + -1))) and ((0 <= ((y_25 + x_24) + -1)))) and (((v_bool_12_491PRMD > 0)) and ((0 <= ((y_25 + x_24) + -1))))) and ((v_bool_12_491PRMD > 0))) and ((9 <= ((a_26PRMD * b_27PRMD) + -1)))) and (((v_bool_21_489PRMD > 0)) and ((9 <= ((a_26PRMD * b_27PRMD) + -1))))) and ((v_bool_21_489PRMD > 0))) and (((x_700 + 1) = x_24))) and ((0 <= ((y_25 + x_700) + -1)))));
+true$
+
+
+rlqe rlex(((((((((((0 <= ((y_25 + x_24) + -1))) and ((0 <= ((y_25 + x_24) + -1)))) and (((v_bool_12_491PRMD > 0)) and ((0 <= ((y_25 + x_24) + -1))))) and ((v_bool_12_491PRMD > 0))) and (((a_26PRMD * b_27PRMD) <= 9))) and ((not ((v_bool_21_489PRMD > 0))) and (((a_26PRMD * b_27PRMD) <= 9)))) and (not ((v_bool_21_489PRMD > 0)))) and (((y_701 + 1) = y_25))) and (((y_701 + x_24) <= 0))));
+true$
+
+
+rlqe rlex(((((((((((0 <= ((y_25 + x_24) + -1))) and ((0 <= ((y_25 + x_24) + -1)))) and (((v_bool_12_491PRMD > 0)) and ((0 <= ((y_25 + x_24) + -1))))) and ((v_bool_12_491PRMD > 0))) and (((a_26PRMD * b_27PRMD) <= 9))) and ((not ((v_bool_21_489PRMD > 0))) and (((a_26PRMD * b_27PRMD) <= 9)))) and (not ((v_bool_21_489PRMD > 0)))) and (((y_703 + 1) = y_25))) and ((0 <= ((y_703 + x_24) + -1)))));
+true$
+
+
+rlqe rlex((true));
+true$
+
+

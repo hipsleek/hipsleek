@@ -52,7 +52,7 @@ GLOBAL: expression summaries summary fml pred preddef ptr lbl id;
   
   summary:
   [ "summary" LEFTA
-    [ x = LIST0 fml -> List.fold_left gen_conj (formula_of_heap HTrue loc) x ]
+    [ x = LIST0 fml -> List.fold_left gen_conj (formula_of_heap HEmp loc) x ]
   ];
 
   fml:

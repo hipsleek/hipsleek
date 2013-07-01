@@ -1,0 +1,74 @@
+
+data node{
+    node s;
+}.
+
+HeapPred H(node a).
+relation P(node a).
+
+infer[H] 
+H(l) & l=null 
+ |-  l::node<n>@L. 
+print residue.
+
+infer[P] 
+P(l) & l=null 
+ |-  l::node<n>@L. 
+print residue.
+/*
+GOT:
+
+Entail (1) : Valid. 
+
+ <1>(HP_19(n_18)) * l::node<n_18>@M[Orig]&l=null & n=n_18&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [H(l)&l=null --> l::node<n_18>@M * (HP_19(n_18))&true]
+
+
+Entail (2) : Valid. 
+
+ <1>hfalse&false&{FLOW,(19,20)=__norm}[]
+ inferred rel: [RELASS [P]: ( P(l)) -->  l!=null]
+
+Relation P is doing the correct thing by going for LHS
+contradiction. Can we introduce a LHS contradiction step
+prior to infer_collect_hp_rel, in a similar way to how
+pure relation is being handled.
+
+see infer.ml
+
+      let rhs_xpure = MCP.pure_of_mix rhs_xpure_orig in 
+      let lhs_xpure = MCP.pure_of_mix lhs_xpure0 in 
+      let split_rhs = CP.split_conjunctions rhs_xpure in
+      let rem_rhs = List.filter (fun c -> not(TP.imply_raw lhs_xpure c)) split_rhs in
+      let rhs_xpure = CP.join_conjunctions rem_rhs in
+      let _ = DD.tinfo_hprint (add_str "lhs_xpure: " (!CP.print_formula)) lhs_xpure pos in
+      let _ = DD.tinfo_hprint (add_str "split_rhs: " (pr_list !CP.print_formula)) split_rhs pos in
+      let _ = DD.tinfo_hprint (add_str "rem_rhs: " (pr_list !CP.print_formula)) rem_rhs pos in
+      let _ = DD.trace_hprint (add_str "lhs(orig): " !CP.print_formula) lhs_xpure_orig pos in
+      let _ = DD.trace_hprint (add_str "lhs0(orig): " !print_mix_formula) lhs_xpure0 pos in
+      let _ = DD.trace_hprint (add_str "rhs(orig): " !CP.print_formula) rhs_xpure pos in
+      let lhs_xpure = CP.filter_ante lhs_xpure_orig rhs_xpure in
+      let _ = DD.trace_hprint (add_str "lhs (after filter_ante): " !CP.print_formula) lhs_xpure pos in
+      let fml = CP.mkAnd lhs_xpure rhs_xpure pos in
+      let fml = CP.drop_rel_formula fml in
+      (*      let iv_orig = estate.es_infer_vars in*)
+      (* let iv_lhs_rel = match lhs_rels with *)
+      (*   | None -> [] *)
+      (*   | Some f -> List.filter (fun x -> not(is_rel_var x)) (CP.fv f) in *)
+      (* Debug.trace_hprint (add_str "iv_orig" !CP.print_svl) iv_orig no_pos; *)
+      (* Debug.trace_hprint (add_str "iv_lhs_rel" !CP.print_svl) iv_lhs_rel no_pos; *)
+      let iv = iv_orig(* @iv_lhs_rel *) in
+      let _ = DD.trace_hprint (add_str "fml: " !CP.print_formula) fml pos in
+      let check_sat = TP.is_sat_raw (MCP.mix_of_pure fml) in
+      if not(check_sat) then
+        let _ = DD.devel_pprint "LHS-RHS contradiction" pos in
+        (* let lhs_xpure0 = MCP.pure_of_mix lhs_xpure0 in *)
+        let _ = DD.trace_hprint (add_str "lhs0: " !print_mix_formula) lhs_xpure0 pos in
+        let _ = DD.trace_hprint (add_str "rhs: " !CP.print_formula) rhs_xpure pos in
+        (* let lhs_xpure0 = CP.filter_ante lhs_xpure0 rhs_xpure in *)
+        (* let _ = DD.trace_hprint (add_str "lhs0 (after filter_ante): " !CP.print_formula) lhs_xpure0 pos in *)
+        let p, rel_ass = infer_lhs_contra_estate estate lhs_xpure0 pos "ante contradict with conseq" in
+
+*/
+
+

@@ -1,0 +1,50 @@
+data node{
+ int val;
+ node next;
+}.
+
+HeapPred H(node a).
+HeapPred HP_6(node a).
+HeapPred HP_6e(node a, node a).
+HeapPred G(node a, node a).
+
+
+infer [HP_6,G] HP_6(n) * x_814::node<_,n> & x=x_814 & n=x_814 & xp=null
+ |-  G(x,xp). 
+print residue.
+
+/*
+Got:
+ <1>HP_6(n)&x=x_814 & n=x_814 & xp=null & x=x_814&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [x_814::node<Anon_11,n>@M&n=x_814 & xp=null --> G(x_814,xp)&
+                   true; 
+                  HP_6(n)&n=x_814 --> emp&true]
+Problems :
+  (i) why is HP_6(n) present in the residue?
+       <1>HP_6(n)&x=x_814 & n=x_814 & xp=null & x=x_814&{FLOW,(19,20)=__norm}[]
+
+ (ii) For pre-predicate on the LHS, we should just have:
+                  HP_6(n) --> emp&true]
+
+*/
+
+infer [HP_6,G,x] HP_6(n) * x_814::node<_,n> & x=x_814 & n=x_814 & xp=null
+ |-  G(x,xp). 
+print residue.
+
+/*
+Got:
+ <1>HP_6(n)&x=x_814 & n=x_814 & xp=null&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [x::node<Anon_12,x>@M&xp=null --> G(x,xp)&true; 
+                  HP_6(x)&true --> emp&true]
+
+  (i) why is HP_6(n) present in the residue?
+       <1>HP_6(n)&x=x_814 & n=x_814 & xp=null & x=x_814&{FLOW,(19,20)=__norm}[]
+
+ (ii) For pre-predicate on the LHS, we should keep var x and n
+      separately, and generate instead:
+                  HP_6(n) & n=x --> emp&true]
+
+*/
+
+

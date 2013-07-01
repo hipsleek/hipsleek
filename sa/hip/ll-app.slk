@@ -1,0 +1,79 @@
+data node {
+  int val;
+  node next;
+}.
+
+HeapPred H1(node a).
+HeapPred H2(node a,node b).
+HeapPred G2(node a, node b).
+
+infer [H1]  H1(x) * y::node<a,flted_65_571> & flted_65_571=null |- x::node<c1,c2>@L.
+
+/* OK
+infer [H1]  H1(x) * y::node<a,flted_65_571> & flted_65_571=null |- x::node<c1,c2>@L.
+print residue.
+
+ <1>y::node<a,flted_65_571>@M[Orig] * HP_22(c2,x) * x::node<c1,c2>@M[Orig]&flted_65_571=null&{FLOW,(19,20)=__norm}[]
+*/
+
+/* OK
+infer [H1]  H1(x) * y::node<a,flted_65_571> & flted_65_571=null |- x::node<c1,c2>@M.
+print residue.
+
+ <1>y::node<a,flted_65_571>@M[Orig] * HP_31(c2,x)&flted_65_571=null&{FLOW,(19,20)=__norm}[]
+*/
+
+
+infer [H1,H2] H2(v5,x) * x::node<_,v5> |- H1(v5) .
+compare residue.
+/* ERROR : wrong relass inferred!
+H2(v5,x) --> H1(v5)
+
+!!!   hp_rel:  (RELASS [H2,H1], H2(v5,x) * x::node<Anon_11,v5>&true, H1(v5)&true)
+Entail (1) : Valid. 
+
+ <1>x::node<Anon_11,v5>@M[Orig]&true&{FLOW,(19,20)=__norm}[]
+*/
+
+infer [H1,H2] H2(v5,x) * x::node<_,v5> |- H1(v) .
+/* FAILURE
+infer [H1,H2] H2(v5,x) * x::node<_,v5> |- H1(v5) .
+print residue.
+
+ERROR: at _0_0 
+Message: Expect a node
+ 
+Entailment Failure (4) Failure("Expect a node")
+: no residue 
+*/
+/*
+infer [G2] x::node<val_77_580,v_node_77_595> * G2(v_node_77_595,y)
+ & flted_65_571=null & v_node_77_595!=null & 
+ v_node_77_595!=null & !(v_bool_77_558') & a_599=a & y!=null 
+|- G2(x,y) .
+print residue.
+*/
+/* ERROR - wrong residue
+!!!   hp_rel:  (RELASS [G2], x::node<val_77_580,v_node_77_595> * G2(v_node_77_595,y)&y!=null & 
+v_node_77_595!=null, G2(x,y)&true)
+
+ <1>x::node<val_77_580,v_node_77_595>@M[Orig]&flted_65_571=null & v_node_77_595!=null & v_node_77_595!=null & !(v_bool_77_558') & a_599=a & y!=null&{FLOW,(19,20)=__norm}[]
+
+*/
+
+
+infer [H1,H2] x::node<_,q>*H2(q,null) |- H1(x) .
+print residue.
+
+infer [H1,H2] x::node<a,q>*H2(q,r) & r=x & a=1 |- H1(x) .
+print residue.
+/* too strong or ok?
+ !!!   hp_rel:  (RELASS [H2,H1], x::node<a,q> * H2(q,x)&true, H1(x)&true)
+*/
+
+infer [H1,H2] x::node<_,q>*H2(q,x) |- H1(x) .
+print residue.
+
+infer [H1,H2] x::node<_,q>*H2(q,x) |- H1(q) .
+print residue.
+

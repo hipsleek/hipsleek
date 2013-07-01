@@ -1,0 +1,9 @@
+data node {
+	int val; 
+	node next; 
+}.
+
+pred ls<n> == self = null & n = 0 or 
+  self::node<d, p> * p::ls<n-2> 
+  inv self=null & n=0  | self!=null & n>0 & exists(m:n=2*m)  
+  .

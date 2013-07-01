@@ -1,0 +1,41 @@
+data node{
+	int val;
+	node next;
+}.
+
+HeapPred H1(node a,node y).
+HeapPred HP_4(node a,node@NI y).
+HeapPred HP_5(node a,node@NI y).
+HeapPred G1(node a,node b, node y).
+
+Declare_Dangling [HP_4].
+Declare_Unknown [HP_5].
+
+relAssume H1
+ H1(c,y)&true --> c::node<val_14_2,next_14_3>@M * 
+  HP_4(next_14_3,y) * HP_5(y,c).
+
+relAssume G1
+ HP_5(y,c) * c::node<val_14_2,y>&res=y --> G1(res,c,y).
+
+shape_infer [H1,HP_5][G1].
+
+/*
+# tail-2.slk
+
+Why was HP_5 made emp and then removed from pre/post
+
+[ H1(c_63,y_64) ::= c_63::node<val_14_45,next_14_46>@M& XPURE(HP_4(next_14_46,y_64)),
+ HP_5(y_65,c_66) ::= emp&true,
+ G1(res_67,c_68,y_69) ::= c_68::node<val_14_2,res_67>@M&res_67=y_69]
+
+EXPECTS
+=======
+ H1(c_63,y_64) ::= c_63::node<val_14_45,next_14_46>@M * HP_5(..)
+     & XPURE(HP_4(next_14_46,y_64)) ,
+ G1(res_67,c_68,y_69) ::= c_68::node<val_14_2,res_67>@M
+    HP_5(...) & res_67=y_69
+ HP_5(y_65,c_66) ::= NONE
+
+*/
+

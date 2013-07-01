@@ -1,0 +1,36 @@
+data node{
+ int val;
+ node next;
+}.
+
+
+HeapPred H(node a).
+HeapPred HP_2(node a).
+
+// pre-2e.slk
+
+relAssume  H // (1)
+ H(x) --> x::node<_,nn> .
+relAssume  HP // (2)
+ H(x) --> x::node<_,next> * next::node<_,null>.
+
+
+shape_infer [H][].
+
+/*
+
+GOT
+===
+[ H(x_37) ::= EXISTS(flted_13_23: 
+   next::node<Anon_13,flted_13_23>@M&flted_13_23=null&[]]
+
+BUT this is incorrect.
+
+EXPECT
+======
+
+ H(x) --> x::node<_,next> & next=null /\ x::node<_,next>
+      --> x::node<_,next> * next::node<_,null>
+
+
+*/

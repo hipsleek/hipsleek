@@ -1,0 +1,25 @@
+data node {
+  int val;
+  node next;
+}.
+
+pred p<v> == self::node<v,_>
+  inv self!=null.
+
+checkentail y::node<_,r>@I |- [vvv] y::node<_,_>@vvv.
+print residue.
+/*
+ PROBLEM : why is there EXISTS v for explicit instantiation?
+ <1>EXISTS(v: true&Anon_27=Anon_26 & Anon_28=r & @I<:v&{FLOW,(17,18)=__norm})[]
+*/
+
+checkentail y::node<r,_> & r>6  |- [vvv] y::node<vvv,_> & vvv>4.
+print residue.
+/*
+ PROBLEM : what the above explicit v disappeared?
+
+ <1>true&6<r & Anon_26=Anon_25 & 4<r&{FLOW,(17,18)=__norm}[]
+*/
+
+
+

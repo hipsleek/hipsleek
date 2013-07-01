@@ -1,0 +1,62 @@
+data node {
+	int val; 
+	node next;	
+}.
+
+pred ll<n> == self = null & n = 0 
+	or self::node<_, q> * q::ll<n-1> 
+  inv n >= 0.
+
+// (1)
+infer [y] true |- y::node<a,b>.
+print residue.
+
+// (2)
+infer [y] true |- y::ll<n>.
+print residue.
+
+// (3)
+infer [y] true |- y::node<a,b> * b::node<c,d>.
+print residue.
+
+// (4)
+infer [y] true |- y::node<a,b> * b::ll<m>.
+print residue.
+
+// (5)
+infer [x] x=y  |- y::ll<n>.
+print residue.
+
+// (6)
+infer [x] n=0 & x=y  |- y::ll<n>.
+print residue.
+
+// (7)
+infer [x] true & x=y |- x::ll<n> .
+print residue.
+
+// (8)
+infer [ia,ib] y::node<ia,ib> |- y::node<a,b>.
+print residue.
+
+// (9)
+infer [y] true |- (exists a: y::node<a,null> & a>0).
+print residue.
+
+// (10)
+infer [aa]  y::node<aa,null> |- (exists a: y::node<a,null> & a>0).
+print residue.
+
+// (11)
+infer [m] y::ll<m> |- y::ll<n>.
+print residue.
+
+// (12)
+infer [x] x=null |- x::node<_,null> .
+print residue.
+
+// (13)
+infer [y] y=null |- y::node<a,b>.
+print residue.
+
+

@@ -1,0 +1,48 @@
+requires x::node<_,q>
+ensures  x::node<_,res> & x=x' & q=res ;
+
+requires H(x)
+ensures  G(res,x,x');
+
+requires x::node<_,ps> 
+ensures x::node<_,res> & x=x';
+
+requires x::node<_,ps> * H(ps)
+ensures x::node<_,res> * H(res) & x=x';
+
+
+requires x::node<_,ps> 
+ensures x::node<_,res> & x=x' & res=ps;
+
+
+      H1(x) ::= x::node<val_28_524',ps> * H(ps)
+      G4(ps,x,v_544) ::= x::node<val_28_543,v_node_29_526'>
+      * H(ps) & x=v_544,
+
+
+
+
+
+    [ HP_RELDEFN G4
+      G4(v_node_29_526',x,v_544) ::= x::node<val_28_543,v_node_29_526'>&x=v_544,
+      �HP_RELDEFN H1
+      H1(x) ::= x::node<val_28_524',next_28_525'>&true]
+
+      �Why isn't the above result the following,
+      �as was the case with ll-next4.ss?
+
+      H1(x) ::= x::node<val_28_524',ps> * H(ps)
+      G4(ps,x,v_544) ::= x::node<val_28_543,v_node_29_526'>
+      * H(ps) & x=v_544,
+
+      This result would be better since it can help capture
+      what happened to the tail of x.
+
+      // ll-next4.ss
+      HP_559(v_node_31_548') ::=UNKNOWN,
+      �HP_RELDEFN G4
+      G4(v_node_31_548',x,v_571) ::= HP_559(v_node_31_548') * x::node<val_29_568,next_30_547'>&
+      next_30_547'=null & x=v_571,
+      �HP_RELDEFN H1
+      H1(x) ::= x::node<val_29_543',next_29_544'> * HP_559(next_29_544')&true]
+

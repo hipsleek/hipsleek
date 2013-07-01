@@ -66,7 +66,7 @@ let rec fixbag_of_b_formula b =
     | CP.Gte (e1, e2, _) -> "{}={}"
     | CP.Eq (e1, e2, _) -> fixbag_of_exp e1 ^ op_eq ^ fixbag_of_exp e2
     | CP.Neq (e1, e2, _) -> 
-      if !allow_pred_spec && (List.exists is_bag_typ (CP.bfv b) || is_bag e1 || is_bag e2) then "{}={}"
+      if (* !allow_pred_spec *) not !dis_ps && (List.exists is_bag_typ (CP.bfv b) || is_bag e1 || is_bag e2) then "{}={}"
       else
         if List.exists is_int_typ (CP.bfv b) then fixbag_of_exp e1 ^ op_neq ^ fixbag_of_exp e2
         else "!(" ^ fixbag_of_exp e1 ^ op_eq ^ fixbag_of_exp e2 ^ ")"
@@ -258,11 +258,11 @@ let arr_para_order (rel: CP.formula) (rel_def: CP.formula) (ante_vars: CP.spec_v
       let pairs = List.combine args_def args in
       let new_args = List.map (fun a -> List.assoc a pairs) new_args_def in
       let new_args, subs = List.split (List.map (fun a -> substitute a) new_args) in
-      let id = match id with | CP.SpecVar (t,n,p) -> CP.SpecVar (t,"fixbag" ^ n,p) in
+      let id = match id with | CP.SpecVar (t,n,p) -> CP.SpecVar (t,"fixbagA"(* ^ n*),p) in
       (CP.BForm ((CP.RelForm (id,new_args,p), o1), o2), [CP.conj_of_list (List.concat subs) no_pos])
     else 
       let args, subs = List.split (List.map (fun a -> substitute a) args) in
-      let id = match id with | CP.SpecVar (t,n,p) -> CP.SpecVar (t,"fixbag" ^ n,p) in
+      let id = match id with | CP.SpecVar (t,n,p) -> CP.SpecVar (t,"fixbagA"(* ^ n*),p) in
       (CP.BForm ((CP.RelForm (id,args,p), o1), o2), [CP.conj_of_list (List.concat subs) no_pos])
   | _ -> report_error no_pos "Expecting relation formulae"
 
@@ -670,7 +670,7 @@ let propagate_rec pfs rel ante_vars = match CP.get_rel_id rel with
     let bcases = List.map remove_subtract bcases in
     let bcases = List.map (fun bcase -> 
       let conjs = list_of_conjs bcase in
-      let conjs = List.filter (fun x -> not (isComp x)) conjs in
+      let conjs =  Gen.BList.remove_dups_eq CP.equalFormula (List.filter (fun x -> not (isComp x)) conjs) in
       conj_of_list conjs no_pos) bcases in
     let rcases = List.map remove_subtract rcases in
     DD.devel_hprint (add_str "BCASE: " (pr_list !CP.print_formula)) bcases no_pos;
@@ -683,7 +683,7 @@ let propagate_rec pfs rel ante_vars = match CP.get_rel_id rel with
     DD.devel_hprint (add_str "RCASE: " (pr_list !CP.print_formula)) rcases no_pos;
     let fv_rel = get_rel_args rel in
     let bcases = List.map (fun x -> let fv_x = CP.fv x in
-        if List.length fv_x <= 10 || not(!allow_pred_spec) then x else
+        if List.length fv_x <= 10 || !dis_ps (* not(!allow_pred_spec) *) then x else
           let r = CP.mkExists (CP.diff_svl (CP.fv x) fv_rel) x None no_pos in 
           let r = Redlog.elim_exists_with_eq r in
           TP.simplify_raw r) bcases in
@@ -771,7 +771,7 @@ let compute_fixpoint_aux rel_fml pf no_of_disjs ante_vars is_recur =
     try
       let rhs = fixbag_of_pure_formula pf in
       let no = string_of_int no_of_disjs in
-      let input_fixbag =  "fixbag" ^ name ^ "(" ^ (string_of_elems pre_vars fixbag_of_spec_var ",") ^ " -> "
+      let input_fixbag =  "fixbagA" (*^ name *)^ "(" ^ (string_of_elems pre_vars fixbag_of_spec_var ",") ^ " -> "
         ^ (string_of_elems post_vars fixbag_of_spec_var ",") ^ ") := " 
         ^ rhs
       in
@@ -795,11 +795,11 @@ let compute_fixpoint_aux rel_fml pf no_of_disjs ante_vars is_recur =
     with _ -> 
       if not(is_rec pf) then 
         let _ = DD.devel_hprint (add_str "Input: " !CP.print_formula) pf no_pos in
-        let exists_vars = CP.diff_svl (CP.fv pf) (CP.fv rel_fml) in 
-        let exists_vars = List.filter (fun x -> not(CP.is_rel_var x)) exists_vars in
+        let exists_vars = CP.diff_svl (CP.fv_wo_rel pf) (CP.fv rel_fml) in 
         let pf = TP.simplify_exists_raw exists_vars pf in
         (rel_fml, remove_subtract pf)
-      else report_error no_pos "Unexpected error in computing fixpoint by FixBag")
+      else report_error no_pos "Unexpected error in computing fixpoint by FixBag"
+    )
 
 let compute_fixpoint input_pairs ante_vars is_rec =
   let (pfs, rels) = List.split input_pairs in

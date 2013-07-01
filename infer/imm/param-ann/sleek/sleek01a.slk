@@ -1,0 +1,53 @@
+/*
+@M - mutable   (0)
+@I - immutable (1)
+@L - lending   (2)
+@A - no access (3)
+*/
+
+//data cell {int val;}.
+
+data node {
+	int val; 
+	node next;	
+}.
+
+
+// (1) valid
+checkentail x::node<_@A,_@M> * x::node<_@A,_@M> |- false.
+print residue.
+
+
+// (1) valid
+checkentail x::node<_@A,_@M> * x::node<_@M,_@A> |- false.
+print residue.
+
+// (1) valid
+checkentail x::node<_@A,_@M> * y::node<_@A,_@M> |- x!=y.
+print residue.
+
+// (1) valid
+checkentail x::node<_@A,_@M> * y::node<_@M,_@A> |- x!=y.
+print residue.
+
+
+// (1) valid
+checkentail x::node<_@A,_@I> * y::node<_@A,_@I> |- x!=y.
+print residue.
+
+//Entailment Failure (6) Failure("Invalid read phase 
+// h = ((x::node<Anon_31@A, Anon_32@L>@M[1]) & (y::node<Anon_33@A, Anon_34@L>@M[1])) ; (true)\n") : no residue 
+checkentail (x::node<_@A,_@L>@L & y::node<_@A,_@L>@L) |- x!=y.
+print residue.
+
+checkentail (x::node<_@A,_@L>@L * y::node<_@A,_@L>@L) |- x!=y.
+print residue.
+
+checkentail (x::node<_@A,_@L>@L * y::node<_@A,_@L>@L) |- x!=y.
+print residue.
+
+
+checkentail (x::node<_@A,_@L>@L & y::node<_@A,_@L>@L) |- true.
+print residue.
+
+

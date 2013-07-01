@@ -1,0 +1,25 @@
+data node{
+	int val;
+	node prev;
+	node next;
+}.
+
+HeapPred H1(node a).
+HeapPred HP_5(node a).
+HeapPred HP_6(node a).
+HeapPred G1(node a, node b).
+HeapPred K(int a).
+
+Declare_Dangling [HP_5,HP_6].
+Declare_Unknown [].
+
+relAssume H1
+ H1(c) --> c::node<v,prev_19_765',next_19_766'>@M * 
+  K(v) * HP_5(prev_19_765') * HP_6(next_19_766')&true.
+
+relAssume G1
+ c::node<v,prev_14_771,res>@M * HP_5(prev_14_771) * K(v) * 
+  HP_6(res)&true --> G1(res,c)&true.
+
+shape_infer [H1][G1].
+

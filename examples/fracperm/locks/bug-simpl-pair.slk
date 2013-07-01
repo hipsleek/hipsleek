@@ -1,0 +1,14 @@
+// bug was fixed
+
+checkentail ls'=ls & l1'=l1 & l2'=l2 & l1!=l2 & l1=1 & l2=2 & {l1,l2} subset ls |- l1' in ls'.
+// SHOULD BE VALID
+//this used to fail because tp.simpl_pair replaced all l1 in the LHS
+//with its quality counterpart but did not replace on the rhs
+// For the above example,
+// after simpl_pair
+// PREVIOUSLY,1!=2 & bag({1,2})<subset> ls |- l1 <in> ls (FAIL)
+// NOW, l1'=1 & 1!=2 & bag({1,2})<subset> ls |- l1' <in> ls (VALID)
+
+checkentail ls'=ls & 1=l1 & {l1} subset ls |- l1 in ls'.
+
+//checkentail {1,2} subset ls' & 1!=2 & l1'=1 |-  l1' in ls'.

@@ -1,0 +1,35 @@
+// examples from bi-abduction paper
+
+data node {
+	node next;	
+}.
+
+  
+HeapPred H1(node y).
+
+
+infer [H1] H1(y)  |- y=null .
+print residue.
+
+
+/*
+# infer13b.slk
+
+GOT
+===
+ OK
+ <1>H1(y)&true&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [H1(y)&true --> emp&y=null]
+
+Why is it missing on inferred hprel in the log??
+
+LOG CAPTURE
+===========
+ id: 0; caller: []; line: 0; classic: false; kind: Why None?; hec_num: 2; evars: []; infer_vars: [H1]; c_heap: emp
+ checkentail H1(y)&true&{FLOW,(19,20)=__norm}[]
+ |-  emp&y=null&{FLOW,(19,20)=__norm}[]. 
+res:  [
+  H1(y)&true&{FLOW,(19,20)=__norm}[]
+  ]
+
+*/

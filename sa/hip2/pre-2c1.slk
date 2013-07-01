@@ -1,0 +1,38 @@
+data node{
+ int val;
+ node next;
+}.
+
+
+HeapPred H(node a).
+HeapPred HP_2(node a).
+
+relAssume  H // (1)
+ H(y) --> y=null.
+relAssume  HP // (2)
+ H(x) --> x::node<_,next> * HP_2(next) .
+
+shape_infer [H][].
+
+/*
+
+GOT:
+[ H(x_26) ::= hfalse&false]
+
+EXPECTING:
+  H(x) == false
+
+
+
+ H(x) --> true -> emp
+ H(x) --> true -> x::node<_,next> & XPURE(HP_2(next))
+---------------------------------------------------------
+ H(x) --> true & false -> emp
+   /\ true & false -> x::node<_,next> & XPURE(HP_2(next))
+   /\ true & true -> x::node<_,next> & XPURE(HP_2(next)) /\ x=null
+---------------------------------------------------------
+ H(x) --> false \/ false \/ x::node<..> /\ x=null
+      --> false
+
+ H(x) --> false
+*/

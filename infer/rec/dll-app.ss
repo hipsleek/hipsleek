@@ -7,6 +7,10 @@ data node2 {
 	node2 next;	
 }
 
+dll1<p> == self = null
+  or self::node2<_ ,p , q> * q::dll1<self> 
+  inv true;
+
 /* view for a doubly linked list with size */
 dll<p,n> == self = null & n = 0 
   or self::node2<_ ,p , q> * q::dll<self, n-1> // = q1 
@@ -45,12 +49,12 @@ node2 append(node2 x, node2 y)
 	}
 }
 
-relation D(int x, int y, int z, node2 m, node2 n, node2 p).
+relation D(int x, int y, int z).
 
 void append2(node2 x, node2 y)
   infer  [D]
 	requires x::dll<q, m> * y::dll<p, n> & m>=1
-	ensures x::dll<r, t> & D(t,m,n,r,p,q);
+	ensures x::dll<q, t> & D(t,m,n);
 
 {
 	node2 tmp;

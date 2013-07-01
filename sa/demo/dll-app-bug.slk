@@ -1,0 +1,26 @@
+data node{
+	node prev;
+	node next;
+}.
+
+HeapPred HP_817(node a,node b).
+HeapPred HP_818(node a,node b).
+
+infer [HP_817,HP_818] 
+HP_817(next_46_815,l2) * HP_818(prev_46_816,l2) * 
+l1'::node<l2',prev_46_816> &l1=l1' & l2=l2' & next_46_815=null & 
+!(v_bool_46_796') & next_46_815=null & !(v_bool_46_796') & 
+next_46_815=next_50_834 & l2'!=null & v_bool_51_795' & l2'!=null & 
+v_bool_51_795'
+ |-  l2'::node<next_51_793',prev_51_794'>@M.
+
+print residue.
+
+/*
+ <1>l1'::node<l2,prev_46_816>@M[Orig] * (HP_35(next_51_33,next_50_834)) * (HP_36(prev_51_34,next_50_834))&l1=l1' & next_46_815=null & !(v_bool_46_796') & next_46_815=null & !(v_bool_46_796') & next_46_815=next_50_834 & l2!=null & v_bool_51_795' & l2!=null & v_bool_51_795' & next_51_33=next_51_793' & prev_51_34=prev_51_794'&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [(HP_817(next_46_815,l2')) * (HP_818(prev_46_816,l2'))&
+                   l2'!=null & 
+                   next_46_815=null --> (HP_35(next_51_33,next_46_815)) * 
+                   (HP_36(prev_51_34,next_46_815))&true]
+
+*/

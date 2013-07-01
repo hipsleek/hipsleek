@@ -1,0 +1,97 @@
+data node {
+	int val; 
+	node next;	
+}.
+
+pred ll<n> == self = null & n = 0 
+	or self::node<_, q> * q::ll<n-1> 
+  inv n >= 0.
+
+
+infer[x] true |- x::node<v,q>  .
+print residue.
+
+infer[x] true |- x::ll<n>  .
+print residue.
+
+infer [p] x::node<1,p> |- x::ll<n> .
+print residue.
+
+infer [n] x::ll<n> |- x::node<_,p> .
+print residue.
+
+infer [n] x::ll<n> |- x::node<_,null>.
+print residue.
+
+infer [n] x::ll<n> & x=null  |- x::node<_,null>.  //==> n!=0
+print residue.
+
+infer [n] x::ll<n> & n=0 |- x::node<_,null>.  //==> n!=0
+print residue.
+
+infer [n] x::ll<n> & n>0 |- x::node<_,null>.  //==> n=1
+print residue.
+
+infer [n] x::ll<n> & n<=1 |- x::node<_,null>.
+print residue.
+
+infer [n] x::ll<n> & n<=0 |- x::node<_,null>. // --> n>0
+print residue.
+
+infer [p] x::node<1,x2>*x2::node<3,p> |- x::ll<n> .
+print residue.
+
+infer [n] x::ll<n> |- x::node<_,y>*y::node<_,p> .
+print residue.
+
+infer [p] x::node<1,x2>*x2::node<3,p> |- x::ll<n> & n=4 .
+print residue.
+
+infer [p] x::node<1,p> |- x::node<a,x2>*x2::node<b,q> & q=null.
+print residue.
+
+infer [p] x::node<1,p> |- x::node<2,x2>*x2::node<b,q> & q=null.
+print residue.
+
+infer [p] x::node<1,p> |- x::node<1,x2>*x2::node<3,q> & q=null.
+print residue.
+
+infer [p] x::node<1,p> |- x::node<1,x2>*x2::ll<m> & m>3.
+print residue.
+
+infer [p] x::node<1,r>*r::node<a,p> |- x::node<1,x2>*x2::ll<m> & m>3.
+print residue.
+
+infer [n] x::ll<n> |- x::ll<m> & m>3.
+print residue.
+
+infer [n] x::ll<n> |- x::node<_,null>.
+print residue.
+
+infer [m] q::ll<m> |- q=null.
+print residue.
+
+infer [q] q=null |- q=null.
+print residue.
+
+infer [q] q::node<_,r>*r::ll<m2> |- q=null.
+print residue.
+
+infer [m] x::node<_,a>*a::ll<m> |- x::node<_,null> .
+print residue.
+
+infer [x] x::node<_,null> |- x=null.
+print residue.
+
+infer [x] x=null |- x!=null .
+print residue.
+
+infer [x] x=null |- x::node<_,null> .
+print residue.
+
+infer [x] x!=null |- x=null.
+print residue.
+
+infer [x] true |- x::node<_,null> .
+print residue.
+

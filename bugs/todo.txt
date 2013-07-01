@@ -1,3 +1,35 @@
+# test3.slk # DONE 
+
+Inference has three basic problems in above file/
+
+//(4).
+infer[n] x::ll<n> |- x::node<_,null>.
+print residue.
+/*
+This is WRONG! Previously, we got n=1 as inferred constraint.
+
+Entail (4) : Fail.
+*/
+
+//(10).
+infer[Q] x::node<_,y> * y::ll<n2> & 
+Q(n1-1, n2, n3) & n1>0 |- x::ll<n3> & Q(n1,n2,n3).
+print residue.
+/*
+The RELASS are wrong here. n3=n2+1 should have been instantiated
+and n3=1 occurs when n2=0 presumably.
+
+ <1>emp&Q(-1+n1,n2,n3) & 0<n1 & Anon_183=Anon_21 & r_184=y & n3=n2+1 & n3=1&{FLOW,(19,20)=__norm}[]
+ inferred rel: [RELASS [Q]: ( Q(-1+n1,n2,n3)) -->  n3=n2+1; 
+                RELASS [Q]: ( Q(-1+n1,n2,n3)) -->  n3=1; 
+                RELDEFN Q: ( 1<=n1 & 0<=n2 & Q(-1+n1,n2,n3)) -->  Q(n1,n2,n3)]
+*/
+
+
+
+#
+
+
 
 added memo_Pure re-patch;
       should do it more selectively
@@ -33,3 +65,348 @@ Printing very indented:
                                                                    flted_0_114,
                                                                    flted_0_115,
                                                                    flted_0_116: 
+
+# graph2.txt: DONE
+
+Why do two equivalent expression below give different result!
+
+checkentail
+x4::ls<x5>
+* x3::node<x4>
+* x4::ls<x7>
+* x4::node<q>
+* q::ls<x6> & x4!=x6
+& x5!=x7
+& x1=x2 & x2=x3
+|- false.
+
+
+checkentail
+x3::node<x4>
+* x4::ls<x5>
+* x4::ls<x7>
+* x4::node<q>
+* q::ls<x6> & x4!=x6
+& x5!=x7
+& x1=x2 & x2=x3
+|- false.
+
+# test-5a.slk
+
+How come explicit instantiation still have "exist" wrapper?
+
+ checkentail x::sll<n> & n>2 |- [q] x::node<_,q>.
+
+/*
+
+Why is there an EXIST q wrapper for explicit instantiation?
+
+ <1>EXISTS(q,flted_8_243: q::sll<flted_8_243>@M[0][Orig]&n=flted_8_243+1 & 2<n & q=q&{FLOW,(19,20)=__norm})[]
+
+
+*/
+@2! vheap: c'::node<Anon_12'@L,nn'@L>@L[Orig]&true&{FLOW,(1,25)=__flow}[]
+@2! vheap 2: c'::node<Anon_12'@L,nn'@L>@L[Orig]&true&{FLOW,(1,25)=__flow}[]
+
+
+dprint: bind2.ss:16: ctx:  List of Failesc Context: [FEC(0, 0, 1  )]
+
+Successful States:
+[
+ Label: 
+ State:c::node<Anon_11@M,p@M>@M[Orig]&c=c' & 0<=0 & Anon_11=Anon_33' & nn_34'=p&{FLOW,(22,23)=__norm}[]
+       es_var_measures: MayLoop
+       es_trace: empty
+
+ ]
+
+dprint: bind2.ss:20: ctx:  List of Failesc Context: [FEC(0, 0, 1  )]
+
+Successful States:
+[
+ Label: 
+ State:hfalse&false&{FLOW,(22,23)=__norm}[]
+
+# bind2b1.ss (vs bind2b.ss)  TEMP FIXED fields-->@M
+
+node paper_fix (node c)
+  requires c::node<_,p>
+  ensures res=p;
+{
+      node t;
+      bind c to (vv,nn) in { t = nn; };
+      dprint;
+      return t;
+}
+
+/*
+
+Why is this bind inferred as @M?
+@7! >>>>>> bind type-checker <<<<<<
+@7! node:c
+@7! fields:[vv_32,nn_33]
+@7! node ann:@M
+@7! fields ann:[@L,@L]
+@7! read-only:false
+
+It should be @L; as in bind2b.ss with
+@7! >>>>>> bind type-checker <<<<<<
+@7! node:c
+@7! fields:[val_15_762,next_15_763]
+@7! node ann:@L
+@7! fields ann:[@A,@L]
+@7! read-only:true
+@7!bind2b.ss:15: 10: bind: unfolded context:
+
+
+
+*/
+
+
+# bind2b2.ss   DONE
+
+node paper_fix (node c)
+  requires c::node<_,p>
+  ensures res=p;
+{
+      node t;
+      t = bind c to (vv,nn) in nn ;
+      dprint;
+      return t;
+}
+
+/*
+
+Why is there a parsing error for bind in the RHS of assignment?
+
+File "bind2b2.ss", line 15, characters 8-9
+ --error: Stream.Error("[expression] expected after EQ (in [assignment_expression])")
+
+
+*/
+
+# bind2e.ss
+
+ bind node lost during exception!
+
+bind node not released by exception!
+  1. restore
+  2. use try-catch for bind?
+
+dprint: bind2e.ss:17: ctx:  List of Failesc Context: [FEC(0, 1, 0 )]
+Escaped States:
+[
+ 
+ Try-Block:0::
+ [
+  Path: 
+  State:emp&c=c' & 0<=0 & Anon_11=Anon_36' & nn_37'=p & nn_37'=res&{FLOW,(16,17)=__Return}[]
+        es_var_measures: MayLoop
+        es_trace: empty
+
+  ]
+ ]
+
+
+# bind2{e3,e4}.ss  DONE 
+     (via CF.normalize_max_renaming_list_failesc_context_4_bind)
+
+dprint: bind2e4.ss:18: ctx:  List of Failesc Context: [FEC(0, 1, 0 )]
+!!! bind:tmp_res1:[ Escaped States:
+ [
+  
+  Try-Block:62::
+  [
+   Path: 
+   State:emp&c=c' & 0<=0 & Anon_11=Anon_36' & nn_37'=p & nn_37'=res&{FLOW,(16,17)=__Return}[]
+         es_var_measures: MayLoop
+         es_trace: empty
+
+   ];
+  
+  ]]
+
+bind2e3.ss
+
+!!! bind:tmp_res1:[ 
+ Successful States:
+ [
+  Label: 
+  State:emp&c=c' & 0<=0 & Anon_11=Anon_36' & nn_37'=p & nn_37'=res&{FLOW,(16,17)=__Return}[]
+        es_var_measures: MayLoop
+        es_trace: empty
+
+  ]]
+
+
+# TODO how about field level access for bind2{e3,e4}.ss
+
+Trung:
+
+Could you try fix the type problem below 
+at default branch? If possible, please also
+support type annotation at the infer parameter
+list by changing the parser, e.g:
+  infer [(x:int)] x=3 & x=x' |-  x>4.
+
+# bugs/cll-type.slk
+
+// why "could not find coherent-type below" ?
+// x & x' has the same int type
+infer [x] x=3 & x=x'
+ |-  x>4.
+
+# cll-t2.slk  FIXED by Trung
+
+infer [x] x::node<val_35_804,next_35_805> & y=null
+ |-  y!=null.
+
+/*
+Got error which is not present in sa_logging branch.
+
+ERROR: at _0:0_0:0 
+Message: x is not found in both sides
+ caught
+
+It is not necessary for x to be on both sides;
+just one side is sufficient.
+*/
+
+infer [x] x::node<val_35_804,next_35_805> & x=y
+ |-  x!=null.
+
+/*
+Got error which is not present in sa_logging branch.
+
+ERROR: at _0:0_0:0 
+Message: x is not found in both sides
+ caught
+
+But x ia already on both sides!
+*/
+==============================================
+# bugs/app-2.slk  FIXED
+
+checkentail x::ll_tail2<tx,nnn>@M 
+ |-  tx::node<a,b>@L. 
+// |-  tx::node<a,b>. 
+
+-dd tracing
+
+It seems that lemmas are not being triggered for@L.
+
+With @L, I got
+
+!!!:0: 0: do_base_case_unfold attempt for :  r_121::ll_tail2<tx_118,flted_12_119>@M[1][Orig]
+!!!:0: 0: do_base_case_unfold attempt : unsuccessful for :  r_121::ll_tail2<tx_118,flted_12_119>@M[1][Orig]
+!!!:0: 0: process_action :
+ ### action =  LHSCaseAnalysis =>
+                    Type: MaterializedArg (tx,partial,) view_defn_mater
+                    LHS: x::ll_tail2<tx,nnn>@M[0][Orig][LHSCase]
+                    RHS: tx::node<a,b>@L[Orig]
+ lhs_rest: Hole[93]
+ rhs_rest: emp
+ ### estate =  x::ll_tail2<tx,nnn>@M[0][Orig][LHSCase]&true&{FLOW,(19,20)=__norm}[]
+ ### conseq =  tx::node<a,b>@L[Orig]&true&{FLOW,(19,20)=__norm}[]
+
+
+!!!:0: 0: do_lhs_case : unsuccessful for :  x::ll_tail2<tx,nnn>@M[0][Orig][LHSCase]
+Entail (1) : Fail.
+
+
+With @M, I got:
+
+!!!:0: 0: process_action :
+ ### action =  Lemma ==> ll_tail2 =>
+                       Type: MaterializedArg (tx_116,partial,) coerc_defn_mater: ==> ll_tail2
+                       LHS: r_119::ll_tail2<tx_116,flted_12_117>@M[1][Orig]
+                       RHS: tx::node<a,b>@M[Orig]
+ lhs_rest: x::node<Anon_118,r_119>@M[Orig]
+ rhs_rest: emp
+ ### estate =  x::node<Anon_118,r_119>@M[Orig] * r_119::ll_tail2<tx_116,flted_12_117>@M[1][Orig]&nnn=flted_12_117+1 & r_119!=null & tx=tx_116&{FLOW,(19,20)=__norm}[]
+ ### conseq =  tx::node<a,b>@M[Orig]&true&{FLOW,(19,20)=__norm}[]
+
+
+!!!:0: 0: do_coercion: estate : es_formula: 
+  x::node<Anon_118,r_119>@M[Orig] * 
+  r_119::ll_tail2<tx_116,flted_12_117>@M[1][Orig]&nnn=flted_12_117+1 & 
+  r_119!=null & tx=tx_116&{FLOW,(19,20)=__norm}[]
+ es_pure: true
+ es_orig_ante: None
+
+============================================================
+# bug-base-case-2.slk  FIXED (lhs-case disabled by default)
+
+performance bug
+
+lhs-case-analysis seem to have triggered many alternatives:
+Is there a way to apply lemma wo resorting to LHS case analysis,
+so that (1) would work
+
+Entail (2) : Valid. 
+
+ <1>
+    emp&q3=t & q=self & n!=self & q3=t & Anon_16=Anon_17 & q3!=self&
+    {FLOW,(19,20)=__norm}[]
+    or emp&n!=self & q3!=t & Anon_16=Anon_17 & self!=t&
+       {FLOW,(19,20)=__norm}[]
+    
+<2>
+   emp&q3=t & q=self & n!=self & q3=t & Anon_16=Anon_17&
+   {FLOW,(19,20)=__norm}[]
+   or emp&n!=self & q3!=t & Anon_16=Anon_17 & self!=t&{FLOW,(19,20)=__norm}[]
+   
+<3>emp&n!=self & Anon_16=Anon_17 & self!=t&{FLOW,(19,20)=__norm}[]
+<4>
+   emp&q3=t & q=self & n!=self & Anon_16=Anon_17 & q3=t & q3!=self&
+   {FLOW,(19,20)=__norm}[]
+   or emp&n!=self & Anon_16=Anon_17 & q3!=t & self!=t&{FLOW,(19,20)=__norm}[]
+   
+<5>
+   emp&q3=t & q=self & n!=self & Anon_16=Anon_17 & q3=t & q3!=self&
+   {FLOW,(19,20)=__norm}[]
+   or emp&n!=self & Anon_16=Anon_17 & q3!=t & self!=t&{FLOW,(19,20)=__norm}[]
+
+--dis-lhs-case
+
+Entail (2) : Valid. 
+
+ <1>emp&n!=self & Anon_16=Anon_17 & self!=t&{FLOW,(19,20)=__norm}[]
+
+================================================================================================
+# bug-lem-2.slk  FIXED
+
+lemma "dll_r5_tail2" self::dll_r5<p,t,n>  
+  <- self::dll_r5<p,q,t> * t::node<_,q,n> & self!=n.
+
+/*
+
+find_materialized_prop@1
+find_materialized_prop inp1 :[self,p,t,n]
+find_materialized_prop inp2 : {1}->EXISTS(p_13,t_14,q_15,n_16,q,Anon_11: 
+ self::node<p_13,q,t_14>@M[Orig] * t::node<Anon_11,q_15,n_16>@M[Orig]
+   &n!=self & p=p_13 & t=t_14 & q=q_15 & 
+  n=n_16&{FLOW,(1,22)=__flow})[]
+
+find_materialized_prop@1 EXIT out :[ (self,full,), (t,full,)]
+
+find_materialized_prop@2
+find_materialized_prop inp1 :[self,p,t,n]
+find_materialized_prop inp2 : 
+EXISTS(q_32,Anon_12,q: 
+ self::dll_r5<p,q,t>@M#O[dll_r5_tail2][0][Derv][LHSCase] * 
+ t::node<Anon_12,q_32,n>@M[Derv]&n!=self & q=q_32&{FLOW,(1,22)=__flow})[]
+
+find_materialized_prop@2 EXIT out :[ (n,full,[dll_r5]), (p,full,[dll_r5]), (self,full,[dll_r5]), (t,partial,)]
+
+find_materialized_prop@3@2
+find_materialized_prop inp1 :[self,p,t,n]
+find_materialized_prop inp2 : EXISTS(q_33,Anon_12,
+q: self::dll_r5<p,q,t>@M#O[dll_r5_tail1][0][Derv][LHSCase] * 
+t::node<Anon_12,q_33,n>@M[Derv]&q=q_33&{FLOW,(1,22)=__flow})[]
+find_materialized_prop@3 EXIT out :[ (n,full,[dll_r5]), (p,full,[dll_r5]), (self,full,[dll_r5]), (t,partial,)]
+
+EXPECT:
+ find_materialized_prop@3 EXIT out :[(self,full,[dll_r5]), (t,partial,)]
+
+*/

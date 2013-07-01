@@ -1,0 +1,15 @@
+data node {
+	int val; 
+	node next; 
+}.
+
+pred ll<n> == self=null & n=0
+  or self::node<v,p> * p::ll<n-1> 
+inv n>=0.
+
+infer [n] x::ll<n> |- x::node<_,q> .
+print residue.
+infer [x] x::ll<n> |- x::node<_,q> .
+print residue.
+infer [n,x] x::ll<n> |- x::node<_,q> .
+print residue.

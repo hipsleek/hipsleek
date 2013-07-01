@@ -31,6 +31,8 @@ void swap (ref int[] a, int i, int j)
        ;
 {
     int t = a[i];
+	dprint;
+	assume false;
     a[i] = a[j];
     a[j] = t;
 }

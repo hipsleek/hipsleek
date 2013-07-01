@@ -3,6 +3,10 @@ data node {
   node next;
 }
 
+ll1<> == self = null
+  or self::node<_, q> * q::ll1<>
+  inv true;
+
 ll<n> == self = null & n = 0 
 	or self::node<_, q> * q::ll<n-1> 
   inv n >= 0;

@@ -1,0 +1,339 @@
+## n-ins-3a.ss
+
+ infer [R]
+ requires x::sortA<a> * y::node<v,null>
+ ensures  res::sortA<b> & R(b,a,v);
+
+  requires x::sortA<a> * y::node<v,null>
+  ensures  res::sortA<b> & b=min(a,v) ;
+
+ why does this example succeed individually
+ but fails when put together? 
+ esp when infernce is done before checking
+ Is this due to us modifying the spec after inference?
+ Maybe we need to re-think on this.
+
+
+## n-sort-2f.ss
+
+node sort(node x)
+     infer [R0,R1]
+     requires x::sortHO<a,R0>
+     ensures  res::sortHO<b,R1> & b<=a;
+     //b<=a ;
+
+[RELASS [R0,R1]: ( R1(r_647,a_648)) -->  r_647<=a_648,
+RELDEFN R1: ( r_677<=a_678) -->  R1(r_677,a_678)]
+*************************************
+
+!!! REL POST :  R1(r_677,a_678)
+!!! POST:  r_677<=a_678
+!!! REL PRE :  true
+!!! PRE :  true
+
+@@  R1 is not strictly a post. but it is a post-relation
+    where ideally, we wish for the strongest? However, what if we
+    had :  Pred(..R..) :- not(R(..))
+
+## n-ins-3c.ss (simplifying RELDEFN)
+
+@ NEED to do simplicafication of relational definition
+  to avoid timeouts in larger examples.
+
+RELDEFN R2: ( b<=v2_671) -->  R2(b,v2_671),
+RELDEFN R2: ( R(r_744,a_745)) -->  R2(r_744,a_745),
+RELDEFN R2: ( R(a,v2_619) & a=v2_709 & v2_619=v2_727) -->  R2(v2_709,v2_727),
+   @can we substitute equality for existential variables on LHS 
+    such as a=? and v2_619=? to obtain:
+   R(v2_709,v2_727) -->  R2(v2_709,v2_727)
+RELDEFN R2: ( v2_619=v2_727 & R2(v_617,v2_727) & R(a,v2_619) & v2_709=v_617 & a=v2_709 & 
+b<=v2_709) -->  R2(b,v2_709),
+  @elim exists = on LHS
+  R2(v2_709,v2_727) & R(r_744,a_745) & R(v2_709,v2_727) &  b<=v2_709 
+  -->  R2(b,v2_709)
+  @filter irrelevant on LHS
+  R2(v2_709,v2_727) & R(v2_709,v2_727) &  b<=v2_709 
+  -->  R2(b,v2_709)
+  @using R(..)->R2(..)
+  R(v2_709,v2_727) &  b<=v2_709 
+  -->  R2(b,v2_709)
+RELDEFN R2: ( b<v2_758) -->  R2(b,v2_758),
+RELDEFN R2: ( R(a,v2_619) & ((a=b & a<v2_798 & v2_798<=v2_619) | (a=b & v2_619=v2_798))) -->  R2(b,v2_798)]
+*
+   @do a deep split of disjunction on the LHS
+    R(a,v2_619) & a=b & a<v2_798 & v2_798<=v2_619
+    -->  R2(b,v2_798)]
+    R(a,v2_619) & a=b & v2_619=v2_798 
+    -->  R2(b,v2_798)]
+   @eliminate existential = on LHS
+    R(b,v2_619) & b<v2_798 & v2_798<=v2_619
+    -->  R2(b,v2_798)]
+    R(b,v2_798) 
+    -->  R2(b,v2_798)]
+
+ Summary:
+   (b<=v2_671) -->  R2(b,v2_671),
+   R(r_744,a_745) -->  R2(r_744,a_745)
+   R(v2_709,v2_727) -->  R2(v2_709,v2_727)
+   R(v2_709,v2_727) &  b<=v2_709 -->  R2(b,v2_709)
+   b<v2_758) -->  R2(b,v2_758)
+   R(b,v2_619) & b<v2_798 & v2_798<=v2_619 -->  R2(b,v2_798)]
+   R(b,v2_798) -->  R2(b,v2_798)
+
+ Remove duplicates:
+   (b<=v2_671) -->  R2(b,v2_671),
+   b<v2_758) -->  R2(b,v2_758)
+   R(v2_709,v2_627) -->  R2(v2_709,v2_727)
+   R(v2_709,v2_727) &  b<=v2_709 -->  R2(b,v2_709)
+   R(b,v2_619) & b<v2_798 & v2_798<=v2_619 -->  R2(b,v2_798)]
+
+ Combine constant on LHS and PairWiseCheck:
+   b<=v2_671 -->  R2(b,v2_671),
+   R(v2_709,v2_627) -->  R2(v2_709,v2_727)
+   R(v2_709,v2_727) &  b<=v2_709 -->  R2(b,v2_709)
+   R(b,v2_619) & b<v2_798 & v2_798<=v2_619 -->  R2(b,v2_798)]
+
+##################################################
+
+ At this point, we can do two things
+  (i) keep relational constraints
+  (ii) use strongest post; to find weakest pre
+
+ Let us try (ii).
+ We first determine the strongest post-relation, namely:
+   b<=v2_671 -->  R2(b,v2_671),
+ After that, we substitute in to determine pre of R(..)
+   R(v2_709,v2_627) -->  v2_709<=v2_727)
+   R(v2_709,v2_727) &  b<=v2_709 -->  b<=v2_709
+   R(b,v2_619) & b<v2_798 & v2_798<=v2_619 -->  b<=v2_798
+ This should then yield relational assumptions:
+   R(v2_709,v2_627) -->  v2_709<=v2_727
+   R(v2_709,v2_727) -->  v2_709<=v2_727
+
+ With this, we can get:
+  [a<=b -> R2(a,b); R(a,b) -> a<=b]
+  [true -> R2(a,b); R(a,b) -> true]
+
+We can add both versions to pre/post; as follows:
+
+ node sort(node x)
+  requires x::sortHO<a,R0> & R0(a,b)-->a<=b
+  ensures  res::sortHO<b,R1> & b<=a & R2(a,b)-->a<=b;
+  requires x::sortHO<a,R0> 
+  ensures  res::sortHO<b,R1> & b<=a &
+   b<=v2_671 -->  R2(b,v2_671),
+   R(v2_709,v2_627) -->  R2(v2_709,v2_727)
+   R(v2_709,v2_727) &  b<=v2_709 -->  R2(b,v2_709)
+   R(b,v2_619) & b<v2_798 & v2_798<=v2_619 -->  R2(b,v2_798)]
+
+## n-ins-4b3a.ss
+
+PROBLEM : some time-outs and very large RELDEFN. 
+ see a-ins-4b3a.ss.
+ It is important to do the simplification mechanisms
+ (see n-ins-2b.ss)
+
+ for RELDEFN.
+
+llMM<v,mi,mx> == self::node<v,null> & mi=v & mx=v 
+  or self::node<v, p> * p::llMM<_,mi2,mx2> 
+     & mi=min(v,mi2) & mx=max(v,mx2)
+inv self!=null;
+
+
+node insert(node x, node y)
+     infer [P3,P4]
+     requires x::llMM<v,mi,mx> * y::node<a,null> 
+      //& R(a,mi,mx)
+     ensures  res::llMM<v2,mi2,mx2> 
+         & P3(mi,a,mi2) 
+         & P4(mx,a,mx2);
+Checking procedure insert$node~node... Timeout when checking #simplify  Restarting Omega after ... 166 invocations Stop Omega... 166 invocations Starting Omega...oc
+Timeout when checking #simplify  Restarting Omega after ... 167 invocations Stop Omega... 167 invocations Starting Omega...oc
+
+!!! REL POST :  P4(mx,a,mx2)
+!!! POST:  (mx=mx2 & a<=mx) | (a=mx2 & mx<mx2)
+!!! REL PRE :  true
+!!! PRE :  true
+!!! REL POST :  P3(mi,a,mi2)
+!!! POST:  (a=mi2 & a<=mi) | (mi=mi2 & mi2<=a)
+!!! REL PRE :  true
+!!! PRE :  true
+Total verification time: 15.200949 second(s)
+	Time spent in main process: 6.4044 second(s)
+	Time spent in child processes: 8.796549 second(s)
+
+#2a1.slk
+/*
+For the above entailment, is it possible to have
+two relations rather than four but to use min/max expression
+on the LHS?
+
+ inferred rel: [RELDEFN P4: ( mi_633<=mx_634 & P3(mi2,mi_633,mx_634) & m=mi & mi<mi_633 & mi<mi2) -->  P4(m,mi,mi2); 
+                RELDEFN P4: ( P3(mi2,mi,mx_634) & mi<=m & m<mi2 & mi<=mx_634) -->  P4(m,mi,mi2); 
+                RELDEFN P5: ( mi_633<=mx_634 & P3(mx2,mi_633,mx_634) & m=mx & mx_634<=mx & mx<mx2) -->  P5(m,mx,mx2); 
+                RELDEFN P5: ( P3(mx2,mi_633,mx) & m<=(mx-1) & m<=(mx2-1) & mi_633<=mx) -->  P5(m,mx,mx2)]
+*/
+
+## n-sel-1.ss
+Need to do sanity checks
+
+
+## n-ins-3e.ss #DONE
+
+node insert(node x, node y)
+     infer [R,R2]
+     requires x::sortHO<a,R> * y::node<v,null>
+     ensures  res::sortHO<b,R2> 
+        //&  b=min(a,v) 
+        //& (v>a & b=a | (a>=b & b=v))
+     ;
+
+Without the post-relation b=min(a,v), how come
+we are able to infer sortedness property below.
+Have we checked the obligations?
+
+How come we still can have strongest post for R2?
+I suppose the last defn ( R(b,v2_615)) -->  R2(b,v2_794)
+cannot be proven.
+
+[RELDEFN R2: ( b<=v2_667) -->  R2(b,v2_667),
+RELDEFN R2: ( R(r_740,a_741)) -->  R2(r_740,a_741),
+RELDEFN R2: ( R(v2_705,v2_723)) -->  R2(v2_705,v2_723),
+RELDEFN R2: ( R2(v2_705,v2_723) & R(v2_705,v2_723) & b<=v2_705) -->  R2(b,v2_705),
+RELDEFN R2: ( b<v2_754) -->  R2(b,v2_754),
+RELDEFN R2: ( R(b,v2_615)) -->  R2(b,v2_794)]
+
+Below is the correct version.
+
+RELDEFN R2: ( b<=v2_668) -->  R2(b,v2_668),
+RELDEFN R2: ( R(r_741,a_742)) -->  R2(r_741,a_742),
+RELDEFN R2: ( R(v2_706,v2_724)) -->  R2(v2_706,v2_724),
+RELDEFN R2: ( R2(v2_706,v2_724) & R(v2_706,v2_724) & b<=v2_706) -->  R2(b,v2_706),
+RELDEFN R2: ( b<v2_755) -->  R2(b,v2_755),
+RELDEFN R2: ( R(b,v2_616) & b<v2_795 & v2_795<=v2_616) -->  R2(b,v2_795),
+RELDEFN R2: ( R(b,v2_795)) -->  R2(b,v2_795)]
+
+*************************************
+
+*************************************
+*******fixcalc of pure relation *******
+*************************************
+[( R2(b,v2_668), b<=v2_668, R(r_741,a_742), r_741<=a_742)]
+*************************************
+
+!!! REL POST :  R2(b,v2_668)
+!!! POST:  b<=v2_668
+!!! REL PRE :  R(r_741,a_742)
+!!! PRE :  r_741<=a_742
+Procedure insert$node~node SUCCESS
+
+## n-ins-4b3c.ss #DONE
+
+node insert(node x, node y)
+     infer [R,P3,P4,P5]
+     requires x::llMM<v,mi,mx> * y::node<a,null> & R(a,mi,mx)
+     ensures  res::llMM<v2,mi2,mx2> 
+         & P3(mi,a,mi2) 
+         & P4(mx,a,mx2)
+         & P5(v2,v,a)
+     ;
+
+Why did we not a printing on R(a,mi,mx) itself?
+
+!!! REL POST :  P5(v2,v,a)
+!!! POST:  (a=v2 & a<=v) | (v=v2 & v2<a)
+!!! REL PRE :  true
+!!! PRE :  true
+!!! REL POST :  P4(mx,a,mx2)
+!!! POST:  (mx=mx2 & a<=mx) | (a=mx2 & mx<mx2)
+!!! REL PRE :  true
+!!! PRE :  true
+!!! REL POST :  P3(mi,a,mi2)
+!!! POST:  (a=mi2 & a<=mi) | (mi=mi2 & mi2<=a)
+!!! REL PRE :  true
+!!! PRE :  true
+
+## n-z-1d.ss
+
+There seems a confusing renaming of RELDEFN inferred
+when it is tranposed to fixcalc bottom-up. The RELDEFN
+obtained is:
+
+RELDEFN R: ( x=0 & res=0 & 0<=y & P(x,y)) -->  R(res,x,y),
+RELDEFN R: ( 
+R(v_int_51_580,v_int_51_575,v_int_51_576) 
+& v_int_51_580=res-1 
+& v_int_51_575=x-1 
+& v_int_51_576=y-1 
+& 1<=x 
+& 1<=y 
+& P(x,y)) -->  R(res,x,y)]
+
+while fixcalc seems to have renamed all the variables from
+[y -> res;x -> y;res -> x]. This is confusing and does
+not serve any purpose.
+
+R:={[x,y] -> [res] -> []: 
+(((y=0 && x=0) && 0<=res) 
+||  (exists (v_int_51_576: (exists (v_int_51_575: (exists (v_int_51_580:
+(
+(x=v_int_51_580+1 
+&& (y=v_int_51_575+1 
+&& (res=v_int_51_576+1 
+&& (0<=v_int_51_575 
+&& 0<=v_int_51_576)))) 
+&& R(v_int_51_580,v_int_51_575,v_int_51_576)))) )) )) )
+};
+bottomupgen([R], [2], SimHeur);
+
+Instead, I think what we should do is to just have a
+renaming of position. For example, assume we have to
+change the parameters of R from:
+  R: [res,x,y] --> [x,y,res]
+What this suggest is that we need to have the
+following positional changes:
+     1->3
+     2->1
+     3->2
+Hence, for each rec call R(e1,e2,e3), we just need to change
+it to R(e2,e3,e1). There is no need to change the variables 
+in the rest of the formula. For the above example, I would
+expect the following fixcalc command to be generated.
+
+R:={[x,y] -> [res] -> []: 
+ (x=0 & res=0 & 0<=y) |
+  // R(v_int_51_580,v_int_51_575,v_int_51_576) -->
+  ( R(v_int_51_575,v_int_51_576,v_int_51_580) 
+  & v_int_51_580=res-1 
+  & v_int_51_575=x-1 
+  & v_int_51_576=y-1 
+  & 1<=x 
+  & 1<=y)
+  & P(x,y)) -->  R(res,x,y)]
+
+There is an easy way to do this. For each relation,
+R(res,x,y), we construct a list of bool
+where True denotes input and False denotes output.
+Thus, for R(res,x,y), it will be associated with
+("R",[False;True;True]).
+
+With this, for each call R(e1,e2,e3), we would partition
+the parameters into two sets 
+    input: [e2,e3] and 
+    output: [e1]
+and then concatenate them to give R(e2,e3,e1).
+This can be done systematically, so that inputs
+always come before outputs. 
+   let args = [e1,e2,e3]
+   let pbool = [False;True;True]
+   let newarg = zip args pbool in
+   let (input,output) = List.partition (fun (_,b)->b) newarg in
+   List.map fst (input@output)
+
+With this, the formula
+we obtained need never be renamed again, as the names
+are not changed. Only the parameter positions have
+changed.
+
+

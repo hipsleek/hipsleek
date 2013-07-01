@@ -1,0 +1,13 @@
+
+// redlog cannot prove this
+// but z3 and oc can
+
+checkentail emp&0<=p_563 & p_563<=9 & v2=p_563+(10*v1_565) & 0<=p_542 & p_542<=9 & 
+v1=p_542+(10*v1_544) & x!=null & !(v_bool_18_490') & x!=null & 
+!(v_bool_18_490') & y!=null & !(v_bool_22_489') & y!=null & 
+!(v_bool_22_489') & p_542!=p_563 & !(v_bool_26_488') & p_542!=p_563 & 
+!(v_bool_26_488') & !(v_boolean_27_487') & res2=v_boolean_27_487' & 
+p_542=p_638 & q_543=q_639 & v1_544=v1_640 & p_563=p_643 & q_564=q_644 & 
+v1_565=v1_645
+|-  emp&(res2 & v1=v2 | !(res2) & v1!=v2).
+//|- emp & v2=p_643+(10*v1_645) & v1=p_638+(10*v1_640). 

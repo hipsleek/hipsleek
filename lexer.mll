@@ -123,10 +123,21 @@ module Make (Token : SleekTokenS)
 	 ("break", BREAK);
 	 ("case",CASE);
    ("catch", CATCH);
-	 ("checkentail", CHECKENTAIL);
+   ("checkeq", CHECKEQ);
+   ("checkentail", CHECKENTAIL);
+   ("relAssume", RELASSUME);
+   ("shape_infer", SHAPE_INFER );
+   ("shape_infer_proper", SHAPE_INFER_PROP );
+   ( "shape_split_base", SHAPE_SPLIT_BASE);
+   ("shape_elim_useless", SHAPE_ELIM_USELESS );
+   ("shape_extract", SHAPE_EXTRACT );
+   ("Declare_Dangling", SHAPE_DECL_DANG);
+   ("Declare_Unknown", SHAPE_DECL_UNKNOWN);
+   ("shape_strengthen_conseq", SHAPE_STRENGTHEN_CONSEQ );
+   ("shape_weaken_ante", SHAPE_WEAKEN_ANTE );
    ("checkentail_exact", CHECKENTAIL_EXACT);
    ("checkentail_inexact", CHECKENTAIL_INEXACT);
-	 ("capture_residue", CAPTURERESIDUE);
+   ("capture_residue", CAPTURERESIDUE);
 	 ("class", CLASS);
 	 (* ("coercion", COERCION); *)
 	 ("compose", COMPOSE);
@@ -154,7 +165,9 @@ module Make (Token : SleekTokenS)
    ("ranking", FUNC);
    ("global",GLOBAL);
    ("logical", LOGICAL);
-	 ("head",HEAD);
+   ("head",HEAD);
+   ("HeapPred", HP);
+   ("PostPred", HPPOST);
    ("ho_pred",HPRED);
    ("htrue", HTRUE);
    ("if", IF);
@@ -163,11 +176,13 @@ module Make (Token : SleekTokenS)
 	("inline", INLINE); (* An Hoa [22/08/2011] : add inline keyword *)
    ("inlist", INLIST);
 	 ("int", INT);
+	 ("INFint", INFINT_TYPE);
 	 ("intersect", INTERSECT);
 	 ("inv", INV);
 	 ("inv_lock", INVLOCK);
    ("joinpred", JOIN); (*Changed by 28/12/2011*)
-	 ("lemma", LEMMA);
+	 ("lemma", LEMMA false);
+	 ("lemma_exact", LEMMA true);
    ("len", LENGTH);
 	 ("let", LET);
 	 ("max", MAX);
@@ -182,9 +197,15 @@ module Make (Token : SleekTokenS)
 	 ("and", ANDWORD);
 	 ("macro",PMACRO);
      ("perm",PERM);
-	 ("pred", PRED);
+     ("pred", PRED);
+	 ("pred_prim", PRED_PRIM);
+     ("pred_extn", PRED_EXT);
+	 ("hip_include", HIP_INCLUDE);
      ("print", PRINT);
+     ("mem", MEM);
+     ("memE", MEME);
 	 ("dprint", DPRINT);
+	 ("sleek_compare", CMP);
    ("raise", RAISE);
 	 ("ref", REF);
 ("relation", REL);
@@ -198,6 +219,7 @@ module Make (Token : SleekTokenS)
 	 ("split", SPLIT);
 	 ("LexVar", LEXVAR);
    ("Term", TERM);
+    ("template", TEMPL);
    ("Loop", LOOP);
    ("MayLoop", MAYLOOP);
 	 ("subset", SUBSET);
@@ -276,18 +298,28 @@ rule tokenizer file_name = parse
                 |['0'-'9'] ['0'-'9'] ['0'-'9']
                 |'x' hexa_char hexa_char)
           as x) "'"                                { CHAR_LIT (Camlp4.Struct.Token.Eval.char x, x) }
+  | "@A" { ACCS }  
   | '&' { AND }
+  | "&*" { ANDSTAR }
   | "&&" { ANDAND }
+  | "*-" { STARMINUS }
   | "@" { AT }
   | "@@" { ATAT }
+  | "@@[" { ATATSQ }
   | "@I" {IMM}
   | "@L" {LEND}
+  | "@A" {ACCS}
   | "@D" { DERV }
   | "@M" { MUT }
+  | "@R" { MAT }
+  | "@VAL" {VAL}
+  | "@REC" {REC}
+  | "@NI" {NI}
   | "@pre" { PRE }
   | "@xpre" { XPRE }
   | "@post" { POST }
   | "@xpost" { XPOST }
+(*  | "XPURE" {XPURE}*)
   | "@zero" {PZERO}
   | "@full" {PFULL}
   | "@value" {PVALUE}
@@ -303,6 +335,7 @@ rule tokenizer file_name = parse
   | '$' { DOLLAR }
   | "." { DOT }
   | "\"" { DOUBLEQUOTE }
+  | "\\inf" {INFINITY}
   | "=" { EQ }
   | "==" { EQEQ }
   | "==>" { ESCAPE }
@@ -330,6 +363,8 @@ rule tokenizer file_name = parse
   | '|' { OR }
   | "||" { OROR }
   | "|-" { (* (print_string "der\n"; *)DERIVE }
+  | "-|-" { EQV }
+  | "-->" { CONSTR }
   | '[' { OSQUARE }
   | '%' { PERCENT }
   | '+' { PLUS }

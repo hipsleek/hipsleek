@@ -1,0 +1,45 @@
+data node{
+ int val;
+ node next;
+}.
+
+HeapPred H(node a).
+HeapPred HP_6(node a).
+
+
+infer [x] x::node<val_35_804,next_35_805> & y=null
+ |-  y!=null.
+print residue.
+
+/*
+Got error which is not present in sa_logging branch.
+
+ERROR: at _0:0_0:0 
+Message: x is not found in both sides
+ caught
+
+It is not necessary for x to be on both sides;
+just one side is sufficient.
+*/
+
+infer [x] x::node<val_35_804,next_35_805> & x=y
+ |-  x!=null.
+print residue.
+
+/*
+Got error which is not present in sa_logging branch.
+
+ERROR: at _0:0_0:0 
+Message: x is not found in both sides
+ caught
+
+But x ia already on both sides!
+*/
+
+infer [] x::node<val_35_804,next_35_805> & x=x'
+ |-  x!=null.
+print residue.
+
+infer [x] x::node<val_35_804,next_35_805> & x=x'
+ |-  x!=null.
+print residue.

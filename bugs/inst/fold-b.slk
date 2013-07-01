@@ -1,0 +1,17 @@
+data cell{
+  int v
+}.
+
+
+pred foo<p> == 
+   [] self::cell<v> 
+     case { v>0 -> [] p=1;
+            v<=0 -> [] p=2;
+     }
+  inv 1<=p<=2.
+
+checkentail c::cell<3> |- c::foo<n>. 
+print residue.
+
+checkentail c::cell<v> |- c::foo<n>. 
+print residue.

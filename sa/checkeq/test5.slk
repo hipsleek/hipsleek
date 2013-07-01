@@ -1,0 +1,26 @@
+//heap formula
+data node { int val ; node next }.
+data node2 { int val ; node next }.
+HeapPred ll(node x, node y).
+//check exists
+
+checkeq[] x::node<a,null> -|- (exists u: x::node<u,null>).
+//VALID
+
+checkeq[x] x::node<a,null> -|- (exists u: x::node<u,null>).
+//VALID
+
+
+checkeq[] x::node<t,null> -|- y::node<t,null>.
+//VALID
+
+//3.
+checkeq[x] x::node<t,null> -|- x::node<t,null>.
+//VALID
+
+
+checkeq[x] x::node<t,null> * z::node<t,null> -|- y::node<t,null> * x::node<t,null>.
+
+checkeq[]  ll(x,x0)*x::node<a,b> -|- ll(x2,x0).
+
+checkeq[]  ll(x,x0) -|- ll(x2,x0) * x::node<a,b>.

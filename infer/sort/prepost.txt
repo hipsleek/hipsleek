@@ -1,0 +1,8 @@
+determining pre/post
+ (i) find strongest post;
+      we can extract a pre that
+      can be satisfied recursively?
+      for an unconditional post
+ (ii) find weakest pre;
+      make sure the pre is satisfied 
+      recursively
