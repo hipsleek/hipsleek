@@ -1,9 +1,9 @@
 data node{
-	node next;
 	node prev;
+	node next;
 }
 
-dll<p> == self = null or self::node<x,p> * x::dll<self>;
+dll<p> == self = null or self::node<p,x> * x::dll<self>;
 	
 PostPred G(node a,node b).
 HeapPred H(node a,node b).
@@ -23,6 +23,51 @@ infer [H,G] requires H(x,y) ensures G(x,y);
 }
 
 /*
+dll-append_paper.ss --classic --sa-dis-eup
+
+[ H(x_832,y_833) ::=  x_832::node<prev_15_797,next_15_798>@M * HP_799(prev_15_797,y_833) * 
+HP_800(next_15_798,y_833) * y_833::node<prev_21_828,next_21_829>@M * 
+HP_822(prev_21_828,x_832) * HP_823(next_21_829,x_832),
+
+ G(x_836,y_837) ::=  
+ HP_799(prev_15_797,y_837) * x_836::node<prev_15_797,next_15_798>@M * 
+ G(next_15_798,y_837)&next_15_798!=null
+ or HP_799(prev_15_797,y_837) * x_836::node<prev_15_797,y_837>@M * 
+    HP_823(next_21_821,x_836) * y_837::node<x_836,next_21_821>@M,
+
+ HP_800(next_15_830,y_831) ::=  
+ next_15_830::node<prev_15_797,next_15_798>@M * HP_799(prev_15_797,y_831) * 
+ HP_800(next_15_798,y_831)
+ or emp&next_15_830=null,
+
+ HP_799(prev_15_797,y) ::= NONE,
+ HP_822(prev_21_820,x) ::= NONE,
+ HP_823(next_21_821,x) ::= NONE]
+
+dll-append_paper.ss --classic --sa-dis-eup
+
+ H(x_832,y_833) ::=  x_832::node<prev_15_797,next_15_798>@M 
+   * HP_799(prev_15_797,y_833) * HP_800(next_15_798,y_833) 
+   * y_833::node<prev_21_828,next_21_829>@M 
+   * HP_822(prev_21_828,x_832) * HP_823(next_21_829,x_832),
+
+ G(x_836,y_837) ::=  
+ HP_799(prev_15_797,y_837) * x_836::node<prev_15_797,next_15_798>@M * 
+ G(next_15_798,y_837)&next_15_798!=null
+ or HP_799(prev_15_797,y_837) * x_836::node<prev_15_797,y_837>@M * 
+    HP_823(next_21_821,x_836) * y_837::node<x_836,next_21_821>@M,
+
+ HP_800(next_15_830,y_831) ::=  
+ next_15_830::node<prev_15_797,next_15_798>@M * HP_799(prev_15_797,y_831) * 
+ HP_800(next_15_798,y_831)
+ or emp&next_15_830=null
+
+ HP_799(prev_15_797,y) ::= NONE,
+ HP_822(prev_21_820,x) ::= NONE,
+ HP_823(next_21_821,x) ::= NONE]
+
+==============================
+
 Post-Check need to pick base cases ...
 ---------------
  id: 23; caller: []; line: 12; classic: false; kind: POST; hec_num: 5; evars: []; infer_vars: [H,G,HP_9,HP_0,HP_1,HP_2,HP_3]; c_heap: emp
