@@ -13,6 +13,7 @@ HeapPred G(node a, node b).
   ensures G(x,y);
 {
    node t = x.next;
+   assume t'=null;
    x.next = y;
 }
 

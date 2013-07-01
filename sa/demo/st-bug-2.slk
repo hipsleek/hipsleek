@@ -1,0 +1,50 @@
+data node{
+	node prev;
+	node next;
+}.
+
+HeapPred H(node a, node@NI b).
+HeapPred G(node a, node b).
+HeapPred H(node a, node@NI b).
+HeapPred H_3(node a, node@NI b).
+HeapPred H_4(node a, node@NI b).
+HeapPred H_5(node a, node@NI b).
+HeapPred H_7(node a, node@NI b).
+HeapPred H_8(node a, node@NI b).
+
+
+infer [H,G,H_7,H_8]
+H_7(prev_15_785,y) * H_8(next_15_786,y) *  x::node<prev_15_785,y>
+ & next_15_786=null & next_15_786=next_17_792
+ |-  G(x,y).
+print residue.
+
+
+/*
+# st-bug-2.slk (taken from set-tail-2.ss) produces
+
+Entail (2) : Valid. 
+ <1>H_8(next_15_786,y)&next_15_786=null & next_15_786=next_17_792&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [H_7(prev_15_785,y@NI) * x::node<prev_15_785,y>@M --> G(x,y)
+
+with a non-emp residue. However, in the case of hip; we obtained
+an emp residue. (see below). Why is there an inconsistency between 
+sleek and hip?
+
+
+# set-tail-2.ss
+
+--------------
+ id: 6; caller: []; line: 13; classic: false; kind: POST; hec_num: 5; evars: []; 
+infer [H,G,H_7,H_8]
+checkentail H_7(prev_15_785,y) * H_8(next_15_786,y) 
+ * x::node<prev_15_785,y>@&next_15_786=null & next_15_786=next_17_792
+ |-  G(x,y).
+hprel_ass: [ H_7(prev_15_785,y) * x::node<prev_15_785,y>@M --> G(x,y),
+ H_8(next_15_786,y)&next_15_786=null --> emp]
+res:  [
+  emp&next_15_786=next_17_792 & next_15_786=null&{FLOW,(22,23)=__norm}[]
+  ]
+
+  ]
+*/

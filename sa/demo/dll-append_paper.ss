@@ -23,7 +23,12 @@ infer [H,G] requires H(x,y) ensures G(x,y);
 }
 
 /*
+dll-append_paper.ss --classic --sa-en-eup
 dll-append_paper.ss --classic --sa-dis-eup
+
+gave the same result even though some predicates have been eliminated.
+could we have the the --sa-dis-eup option working properly?
+
 
 [ H(x_832,y_833) ::=  x_832::node<prev_15_797,next_15_798>@M * HP_799(prev_15_797,y_833) * 
 HP_800(next_15_798,y_833) * y_833::node<prev_21_828,next_21_829>@M * 

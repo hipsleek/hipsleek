@@ -3045,7 +3045,7 @@ EXPECT
  inferred hprel: [G(b) & b!=null--> emp]
 
 =====================================================================
-# class-dll-app.slk
+# class-dll-app.slk  FIXED
 # hip dll-append_paper.ss --en-sleek-logging --classic
 
 Result of sleek/hip does not tally, as hip is not collecting
@@ -3074,7 +3074,7 @@ GOOD:
                   H_3(prev_21_821,x@NI) --> emp]
 
 =============================
-hip dll-append_paper.ss --en-sleek-logging --classic
+hip dll-append_paper.ss --en-sleek-logging --classic 
 
 For hip, it is missing on the relassume:
                   H_9(next_15_797,y@NI)&next_15_797=null --> emp; 
@@ -3098,7 +3098,7 @@ res:  [
   ]
 
 =====================================================================
-# dll-pap-1.slk
+# dll-pap-1.slk  FIXED
 
 GOT below which is incorrect
 ===
@@ -3157,17 +3157,18 @@ dll-append_paper.ss --classic --sa-dis-eup
 gave the same result even though some predicates have been eliminated.
 could we have the the --sa-dis-eup option working properly?
 
-[ H(x_832,y_833) ::=  x_832::node<prev_15_797,next_15_798>@M * HP_799(prev_15_797,y_833) * 
-HP_800(next_15_798,y_833) * y_833::node<prev_21_828,next_21_829>@M * 
-HP_822(prev_21_828,x_832) * HP_823(next_21_829,x_832),
+[ 
+H(x_832,y_833) ::=  x_832::node<prev_15_797,next_15_798>@M * HP_799(prev_15_797,y_833) * 
+ HP_800(next_15_798,y_833) * y_833::node<prev_21_828,next_21_829>@M * 
+ HP_822(prev_21_828,x_832) * HP_823(next_21_829,x_832),
 
- G(x_836,y_837) ::=  
+G(x_836,y_837) ::=  
  HP_799(prev_15_797,y_837) * x_836::node<prev_15_797,next_15_798>@M * 
  G(next_15_798,y_837)&next_15_798!=null
  or HP_799(prev_15_797,y_837) * x_836::node<prev_15_797,y_837>@M * 
     HP_823(next_21_821,x_836) * y_837::node<x_836,next_21_821>@M,
 
- HP_800(next_15_830,y_831) ::=  
+HP_800(next_15_830,y_831) ::=  
  next_15_830::node<prev_15_797,next_15_798>@M * HP_799(prev_15_797,y_831) * 
  HP_800(next_15_798,y_831)
  or emp&next_15_830=null,
@@ -3176,7 +3177,60 @@ HP_822(prev_21_828,x_832) * HP_823(next_21_829,x_832),
  HP_822(prev_21_820,x) ::= NONE,
  HP_823(next_21_821,x) ::= NONE]
 =====================================================================
+# set-tail.ss --classic
+
+GOT
+===
+[ H(x,y@NI) --> x::node<prev_15_778,next_15_779>@M * 
+  HP_780(prev_15_778,y@NI) * HP_781(next_15_779,y@NI),
+ HP_781(next_15_779,y@NI) --> emp,
+ HP_780(prev_15_778,y@NI) * x::node<prev_15_778,y>@M --> G(x,y)]
+
+where HP_781 remains none. This is OK but would be
+good to provide some proper justification.
+
+DERIVES
+=======
+[ H(x_783,y_784) ::=  x_783::node<prev_15_778,next_15_779>@M * HP_780(prev_15_778,y_784) * 
+HP_781(next_15_779,y_784),
+ G(x_785,y_786) ::=  HP_780(prev_15_778,y_786) * x_785::node<prev_15_778,y_786>@M,
+ HP_780(prev_15_778,y) ::= NONE,
+ HP_781(next_15_779,y) ::= NONE]
+
 =====================================================================
+# st-bug-2.slk (taken from set-tail-2.ss) 
+
+infer [H,G,H_7,H_8]
+H_7(prev_15_785,y) * H_8(next_15_786,y) *  x::node<prev_15_785,y>
+ & next_15_786=null & next_15_786=next_17_792
+ |-  G(x,y).
+print residue.
+
+PRODUCES
+--------
+Entail (2) : Valid. 
+ <1>H_8(next_15_786,y)&next_15_786=null & next_15_786=next_17_792&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [H_7(prev_15_785,y@NI) * x::node<prev_15_785,y>@M --> G(x,y)
+
+with a non-emp residue. However, in the case of hip; we obtained
+an emp residue. (see below). 
+
+Why is there an inconsistency between sleek above and 
+hip below?
+
+# set-tail-2.ss --en-sleek-logging-txt
+
+--------------
+ id: 6; caller: []; line: 13; classic: false; kind: POST; hec_num: 5; evars: []; 
+infer [H,G,H_7,H_8]
+checkentail H_7(prev_15_785,y) * H_8(next_15_786,y) 
+ * x::node<prev_15_785,y>@&next_15_786=null & next_15_786=next_17_792
+ |-  G(x,y).
+hprel_ass: [ H_7(prev_15_785,y) * x::node<prev_15_785,y>@M --> G(x,y),
+ H_8(next_15_786,y)&next_15_786=null --> emp]
+res:  [
+  emp&next_15_786=next_17_792 & next_15_786=null&{FLOW,(22,23)=__norm}[]
+  ]
 =====================================================================
 =====================================================================
 =====================================================================
