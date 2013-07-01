@@ -251,6 +251,8 @@ let add_raw_hp_rel_x prog is_pre unknown_ptrs pos=
         Cast.hp_formula = CF.mkBase CF.HEmp (MCP.mkMTrue pos) CF.TypeTrue (CF.mkTrueFlow()) [] pos;}
     in
     let unk_args = (fst (List.split hp_decl.Cast.hp_vars_inst)) in
+    (* PURE_RELATION_OF_HEAP_PRED *)
+    (* is this a new synthesized hp_pred? *)
     prog.Cast.prog_hp_decls <- (hp_decl :: prog.Cast.prog_hp_decls);
     Smtsolver.add_hp_relation hp_decl.Cast.hp_name unk_args hp_decl.Cast.hp_formula;
     let hf =

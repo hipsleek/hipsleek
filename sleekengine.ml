@@ -327,13 +327,20 @@ let process_hp_def hpdef =
   if check_data_pred_name hpdef.I.hp_name then
 	let tmp = iprog.I.prog_hp_decls in
 	  try
-          iprog.I.prog_hp_decls <- ( hpdef :: iprog.I.prog_hp_decls);
-		  let chpdef = AS.trans_hp iprog hpdef in !cprog.C.prog_hp_decls <- (chpdef :: !cprog.C.prog_hp_decls);
-			(* Forward the relation to the smt solver. *)
-                  let args = fst (List.split chpdef.C.hp_vars_inst) in
-		  Smtsolver.add_hp_relation chpdef.C.hp_name args chpdef.C.hp_formula;
+            (* PURE_RELATION_OF_HEAP_PRED *)
+            (* are these a newly added hp_pred? *)
+            iprog.I.prog_hp_decls <- ( hpdef :: iprog.I.prog_hp_decls);
+	      let chpdef = AS.trans_hp iprog hpdef in !cprog.C.prog_hp_decls <- (chpdef :: !cprog.C.prog_hp_decls);
+	      (* Forward the relation to the smt solver. *)
+              let args = fst (List.split chpdef.C.hp_vars_inst) in
+	      Smtsolver.add_hp_relation chpdef.C.hp_name args chpdef.C.hp_formula;
 	  with
-		| _ ->  dummy_exception() ; iprog.I.prog_hp_decls <- tmp
+	    | _ ->  
+                  begin
+                  dummy_exception() ; 
+                    (* why do we perform restoration here? *)
+                  iprog.I.prog_hp_decls <- tmp
+                  end
   else
 	print_string (hpdef.I.hp_name ^ " is already defined.\n")
 

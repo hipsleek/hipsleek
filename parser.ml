@@ -2026,25 +2026,28 @@ hprogn:
     (* let g_rel_lst = g_rel_defs # get_stk in *)
     let rel_lst = ((rel_defs # get_stk)(* @(g_rel_lst) *)) in
     let hp_lst = hp_defs # get_stk in
+    (* PURE_RELATION_OF_HEAP_PRED *)
+    (* to create __pure_of_relation from hp_lst to add to rel_lst *)
+    (* rel_lst = rel_lst @ List.map (pure_relation_of_hp_pred) hp_lst *)
     { prog_include_decls = !include_defs;
-			prog_data_decls = obj_def :: string_def :: !data_defs;
-      prog_global_var_decls = !global_var_defs;
-      prog_logical_var_decls = !logical_var_defs;
-      prog_enum_decls = !enum_defs;
-      (* prog_rel_decls = [];  TODO : new field for array parsing *)
-      prog_view_decls = !view_defs;
-      prog_func_decls = func_defs # get_stk ;
-      prog_rel_decls = rel_lst; (* An Hoa *)
-      prog_rel_ids = List.map (fun x ->
-          let tl,_ = List.split x.rel_typed_vars in
-          (RelT tl,x.rel_name)) (rel_lst); (* WN *)
-      prog_hp_decls = hp_lst ;
-      prog_hp_ids = List.map (fun x -> (HpT,x.hp_name)) hp_lst; (* l2 *)
-      prog_axiom_decls = !axiom_defs; (* [4/10/2011] An Hoa *)
-      prog_proc_decls = !proc_defs;
-      prog_coercion_decls = !coercion_defs; 
-      prog_hopred_decls = !hopred_defs;
-      prog_barrier_decls = !barrier_defs; } ]];
+    prog_data_decls = obj_def :: string_def :: !data_defs;
+    prog_global_var_decls = !global_var_defs;
+    prog_logical_var_decls = !logical_var_defs;
+    prog_enum_decls = !enum_defs;
+    (* prog_rel_decls = [];  TODO : new field for array parsing *)
+    prog_view_decls = !view_defs;
+    prog_func_decls = func_defs # get_stk ;
+    prog_rel_decls = rel_lst; (* An Hoa *)
+    prog_rel_ids = List.map (fun x ->
+        let tl,_ = List.split x.rel_typed_vars in
+        (RelT tl,x.rel_name)) (rel_lst); (* WN *)
+    prog_hp_decls = hp_lst ;
+    prog_hp_ids = List.map (fun x -> (HpT,x.hp_name)) hp_lst; (* l2 *)
+    prog_axiom_decls = !axiom_defs; (* [4/10/2011] An Hoa *)
+    prog_proc_decls = !proc_defs;
+    prog_coercion_decls = !coercion_defs; 
+    prog_hopred_decls = !hopred_defs;
+    prog_barrier_decls = !barrier_defs; } ]];
 
 opt_decl_list: [[t=LIST0 mdecl -> List.concat t]];
   
