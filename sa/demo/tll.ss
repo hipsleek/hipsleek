@@ -23,8 +23,8 @@ HeapPred H(node a, node@NI b).
 HeapPred G(node a, node@NI b, node c).
 
 node set_right (node x, node r)
-//infer [H,G] requires H(x,r) ensures G(x,r,res);
-requires x::tree<> ensures x::tll<res,r>;
+infer [H,G] requires H(x,r) ensures G(x,r,res);
+//requires x::tree<> ensures x::tll<res,r>;
 {
   if (x.right==null) 
   	{
@@ -39,44 +39,55 @@ requires x::tree<> ensures x::tll<res,r>;
 }
 
 /*
-[ 
-  H(x,r)&true --> x::node<left_29_845,right_29_846,next_29_847>@M * 
-  HP_8(left_29_845,r) * HP_9(right_29_846,r) * 
-  HP_0(next_29_847,r).
-
-  HP_9(right_29_846,r)&right_29_846!=null --> H(right_29_846,r).
- 
-  HP_8(left_29_845,r)&true --> H(left_29_845,l_47').
- 
-  HP_9(right_29_846,r)&right_29_846=null --> emp.
-
- HP_8(left_29_845,r) * x::node<left_29_845,right_29_846,r>@M&res=x & 
-  right_29_846=null --> G(x,r,res).
-
- HP_0(next_29_847,r) * 
-  x::node<left_29_845,right_29_846,next_29_847>@M * 
-  G(right_29_846,r,l_878) * G(left_29_845,l_878,res)&
-  right_29_846!=null --> G(x,r,res).
-
 # tll.ss
 
-PROBLEMS
-========
-Why  G(left_29_845,l_878,v_node_37_825') still in residue??
---------------
- id: 29; caller: []; line: 37; classic: false; kind: POST; hec_num: 5; evars: []; infer_vars: [H,G,HP_848,HP_849,HP_850]; c_heap: emp
- checkentail HP_850(next_29_847,r) * 
-x::node<left_29_845,right_29_846,next_29_847>@M[Orig] * 
-G(right_29_846,r,l_878) * G(left_29_845,l_878,v_node_37_825')&
-right_29_846!=null & !(v_bool_29_826') & right_29_846!=null & 
-!(v_bool_29_826') & right_29_846=right_29_846 & r=r & 
-left_29_845=left_29_845 & res=v_node_37_825'&{FLOW,(22,23)=__norm}[]
- |-  G(x,r,res)&true&{FLOW,(22,23)=__norm}[]. 
-hprel_ass: [ HP_850(next_29_847,r) * x::node<left_29_845,right_29_846,next_29_847>@M * 
-  G(right_29_846,r,l_878) * G(left_29_845,l_878,res)&
-  right_29_846!=null --> G(x,r,res)&true]
-res:  [
-  G(left_29_845,l_878,v_node_37_825')&right_29_846!=null & !(v_bool_29_826') & right_29_846!=null & !(v_bool_29_826') & right_29_846=right_29_846 & r=r & left_29_845=left_29_845 & res=v_node_37_825'&{FLOW,(22,23)=__norm}[]
-  ]
+ H(x,r@NI) --> x::node<left_29_845,right_29_846,next_29_847>@M * 
+    H_8(left_29_845,r@NI) * H_9(right_29_846,r@NI) 
+    * H_0(next_29_847,r@NI),
+
+ H_9(right_29_846,r@NI)&right_29_846!=null --> H(right_29_846,r@NI),
+
+ H_8(left_29_845,r@NI) --> H(left_29_845,l_47'@NI),
+
+ H_9(right_29_846,r@NI)&right_29_846=null --> emp,
+
+ H_8(left_29_845,r@NI) * x::node<left_29_845,right_29_846,r>@M&res=x & 
+  right_29_846=null --> G(x,r@NI,res),
+
+ H_0(next_29_847,r@NI) * 
+  x::node<left_29_845,right_29_846,next_29_847>@M * 
+  G(right_29_846,r@NI,l_878) * G(left_29_845,l_878@NI,res)&
+  right_29_846!=null --> G(x,r@NI,res)]
+-------
+
+ H(x_899,r_900) ::=  x_899::node<left_29_845,right_29_846,next_29_847>@M 
+  * H_8(left_29_845,r_900) * H_9(right_29_846,r_900) 
+  * H_0(next_29_847,r_900),
+
+ G(x_901,r_902,res_903) ::=  
+ H_0(next_29_847,r_902) * 
+ x_901::node<left_29_845,right_29_846,next_29_847>@M * 
+ G(right_29_846,r_902,l_878) * G(left_29_845,l_878,res_903)&
+ right_29_846!=null
+ or H_8(left_29_845,r_902) * 
+    x_901::node<left_29_845,right_29_846,r_902>@M&right_29_846=null & 
+    res_903=x_901,
+
+ H_9(right_29_895,r_896) ::=  
+ left_29_890::node<left_29_845,right_29_846,next_29_847>@M * 
+ H_8(left_29_845,l_881) * H_9(right_29_846,l_881) * 
+ H_0(next_29_847,l_881) * 
+ right_29_895::node<left_29_890,right_29_891,next_29_892>@M * 
+ H_9(right_29_891,r_896) * H_0(next_29_892,r_896)
+ or emp&right_29_895=null,
+
+ H_8(left_29_897,r_898) ::=  left_29_897::node<left_29_845,right_29_846,next_29_847>@M * 
+ H_8(left_29_845,l_881) * H_9(right_29_846,l_881) * H_0(next_29_847,l_881),
+
+ H_0(next_29_847,r) ::= NONE]
+
+
+
+
 
 */

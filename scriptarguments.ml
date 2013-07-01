@@ -390,6 +390,8 @@ let common_arguments = [
   ("--sa-dis", Arg.Clear Globals.sa_en, "donot infer shape");
   ("--sa-dangling", Arg.Set Globals.sa_dangling, "elim dangling HP/pointers");
   ("--pred-useless", Arg.Set Globals.pred_elim_useless, "elim useless parameter from HP predicate and user-defined predicates (view)");
+  ("--pred-en-dangling", Arg.Set Globals.pred_elim_dangling, "enable the elimination of dangling predicate from derived HP defns");
+  ("--pred-dis-dangling", Arg.Clear Globals.pred_elim_dangling, "disable the elimination of dangling predicate from derived HP defns");
   ("--sa-refine-dang", Arg.Set Globals.sa_refine_dang, "refine dangling among branches of one hprels def");
   ("--sa-inlining", Arg.Set Globals.sa_inlining, "inline dangling HP/pointers");
   ("--sa-en-eup", Arg.Set Globals.sa_elim_unused_preds, "-sa-en-eup");
