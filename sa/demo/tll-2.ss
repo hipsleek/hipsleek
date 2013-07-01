@@ -8,6 +8,8 @@ data node{
 
 /* predicate for a non-empty tree with chained leaf list */
 
+Iosif spec
+==========
  tree<> == self::node<null,null,_>
 	or self::node<l,r,null> * l::tree<> * r::tree<>
 	inv self!=null;
@@ -18,6 +20,8 @@ data node{
 
 /* predicate for a non-empty tree  */
 
+Our stronger spec
+=================
  tree2<> == self::node<_,null,_> 
 	or self::node<l,r,null> * l::tree2<> * r::tree2<>
 	inv self!=null;
