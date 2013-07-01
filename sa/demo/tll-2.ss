@@ -7,13 +7,23 @@ data node{
 }
 
 /* predicate for a non-empty tree with chained leaf list */
+
+ tree<> == self::node<null,null,_>
+	or self::node<l,r,null> * l::tree<> * r::tree<>
+	inv self!=null;
+
  tll<ll,lr> == self::node<null,null,lr> & self = ll
 	or self::node<l,r,null> * l::tll<ll,z> * r::tll<z,lr>
 	inv self!=null;
 
 /* predicate for a non-empty tree  */
- tree<> == self::node<null,null,_>
-	or self::node<l,r,null> * l::tree<> * r::tree<>
+
+ tree2<> == self::node<_,null,_> 
+	or self::node<l,r,null> * l::tree2<> * r::tree2<>
+	inv self!=null;
+
+ tll2<ll,lr> == self::node<_,null,lr> & self=ll
+	or self::node<l,r,null> * l::tll2<ll,z> * r::tll2<z,lr>
 	inv self!=null;
 
 
@@ -23,8 +33,10 @@ HeapPred H(node a, node@NI b).
 HeapPred G(node a, node@NI b, node c).
 
 node set_right (node x, node r)
-infer [H,G] requires H(x,r) ensures G(x,r,res);
+//infer [H,G] requires H(x,r) ensures G(x,r,res);
 //requires x::tree<> ensures x::tll<res,r>;
+requires x::tree2<> ensures x::tll2<res,r>;
+// fail as right!=null --> left!=null
 {
   if (x.right==null) 
   	{
