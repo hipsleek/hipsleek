@@ -753,6 +753,11 @@ let rec infer_pure_m_x unk_heaps estate lhs_rels lhs_xpure_orig lhs_xpure0 lhs_w
   (* Debug.info_hprint (add_str "iv_orig" (pr_list pr_none)) iv_orig no_pos;  *)
   (* Debug.info_hprint (add_str "lhs_res" (pr_option pr_none)) lhs_rels no_pos;  *)
   (* Debug.info_hprint (add_str "unk_heaps" (pr_list !CF.print_h_formula)) unk_heaps no_pos;  *)
+  (*remove unslected*)
+  let unk_heaps = List.filter (fun hf ->
+      let hps = CF.get_hp_rel_name_h_formula hf in
+      CP.diff_svl hps iv_orig = []
+  ) unk_heaps in
   if (iv_orig)==[] && unk_heaps==[] && ((no_infer_all_all estate) || (lhs_rels==None)) 
   then 
     (* let _ = Debug.info_pprint "exit" no_pos in *)
