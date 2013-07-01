@@ -772,6 +772,7 @@ let rec infer_pure_m_x unk_heaps estate lhs_rels lhs_xpure_orig lhs_xpure0 lhs_w
       let rhs_xpure = CP.join_conjunctions rem_rhs in
       let lhs_xpure,iv =
         if unk_heaps!=[] then
+          (* PURE_RELATION_OF_HEAP_PRED *)
           let _ = DD.binfo_pprint "WN : to convert unk_heaps to corresponding pure relation using __pure_of_" no_pos in
           let _ = DD.binfo_hprint (add_str "unk_heaps" (pr_list !CF.print_h_formula)) unk_heaps no_pos in
           let _ = DD.tinfo_hprint (add_str "lhs_xpure: " (!CP.print_formula)) lhs_xpure pos in
@@ -1030,6 +1031,7 @@ let rec infer_pure_m_x unk_heaps estate lhs_rels lhs_xpure_orig lhs_xpure0 lhs_w
                                     if unk_heaps!=[] then
                                       let _ = DD.binfo_pprint "WN : to convert unk_heaps to corresponding pure relation using __pure_of_" no_pos in
                                       let _ = DD.binfo_hprint (add_str "unk_heaps" (pr_list !CF.print_h_formula)) unk_heaps no_pos in
+                                      (* PURE_RELATION_OF_HEAP_PRED *)
                                       (* WN infer_pure_heap_pred : to implement below *)
                                       (* for rel_ass of heap_pred, convert to hprel form *)
                                       (* add to relevant store *)

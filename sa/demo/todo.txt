@@ -3124,8 +3124,7 @@ Confirm Equality first:
      HP_2(next_21_820,x) * HP_3(prev_21_821,x).
 
 Trasform HP_9 with complex LHS
-  HP_9(n,y) * HP_1(y,x)&
-    n!=null --> H(n,y).
+  HP_9(n,y) * HP_1(y,x) & n!=null --> H(n,y).
   //replace H(..)
   HP_9(n,y) * HP_1(y,x) & n!=null --> 
      n::node<next_15_797,prev_15_798>@M * 
