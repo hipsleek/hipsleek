@@ -71,6 +71,18 @@ dll-append_paper.ss --classic --sa-dis-eup
  HP_822(prev_21_820,x) ::= NONE,
  HP_823(next_21_821,x) ::= NONE]
 
+
+====
+
+ G(x_843,y_844) ::=  x_843::node<prev_15_797,next_15_798>@M 
+   * GP_845(next_15_798,y_844) * 
+     HP_823(next_21_821,x_843) * HP_799(prev_15_797,y_844),
+ 
+ GP_845(next_15_798,y_844) ::=  
+ next_15_798::node<prev_15_853,next_15_851>@M * GP_845(next_15_851,y_844) * 
+ HP_823(next_21_852,next_15_798) * HP_799(prev_15_853,y_844)
+ or y_844::node<x_843,next_21_821>@M&next_15_798=y_844
+ 
 ==============================
 
 Post-Check need to pick base cases ...

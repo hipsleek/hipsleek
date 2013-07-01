@@ -5,6 +5,8 @@ data node{
 
 ll<> == self = null  or self::node<_, q> * q::ll<>;
 
+//ll<D> == self = null & D={}  or self::node<_, q> * q::ll<>;
+
 lseg<p> == self = p & self!=null  or self::node<_, q> * q::lseg<p>& self!=p;
 lshd<p> == p::lseg<self>*self::node<_,null>;
 
