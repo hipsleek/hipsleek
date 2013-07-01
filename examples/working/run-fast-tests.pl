@@ -384,6 +384,7 @@ $output_file = "log";
         "insert_pll","SUCCESS","insert_sll","SUCCESS"],
         ["ramified-cells.ss",3,"--ramify","ex0","SUCCESS","ex1","SUCCESS","mark","SUCCESS"],
         ["ramified-pairs.ss",1,"--ramify","mark","SUCCESS"],
+        ["jsvarstore.ss",1,"--ramify","ex1","SUCCESS"],
         ["graph_spanning.ss",1,"-tp om --ramify --eps","spanning","SUCCESS"],
         ["graph_spanning_infer.ss",1,"-tp om --ramify --eps --infer-mem","spanning","SUCCESS"],
         ],
