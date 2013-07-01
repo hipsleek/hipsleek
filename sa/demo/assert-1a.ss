@@ -5,6 +5,10 @@ data node {
 HeapPred H(node a).
 PostPred G(node a).
 
+void assertfoo(node x)
+ requires x=null
+ ensures true;
+
 void foo(node x)
 /*
  requires x::node<null>
@@ -16,7 +20,8 @@ void foo(node x)
 {
   node t;
   t = x.next;
-  assert t'=null;
+  //assert t'=null;
+  assertfoo(t);
 }
 /*
 
