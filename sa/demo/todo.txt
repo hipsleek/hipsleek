@@ -2998,7 +2998,7 @@ a definition, use this obligation to provide
 a definition in a similar manner to pre-pred.
 
 =====================================================================
-# assert-1-bug.slk
+# assert-1-bug.slk FIXED
 
 infer [H_9] H_9(n) * x::node<n> 
   & n=t
@@ -3232,6 +3232,20 @@ res:  [
   emp&next_15_786=next_17_792 & next_15_786=null&{FLOW,(22,23)=__norm}[]
   ]
 =====================================================================
+# assert-2-bug-1.slk
+
+infer [] H_9(n) * x::node<n>  & n=t |-  t=null.
+print residue.
+
+GOT
+===
+Entail (1) : Valid. 
+
+ <1>H_9(n) * x::node<n>@M[Orig]&n=t&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [H_9(n) --> emp&n=null]
+
+BUT should FAIL. Please only add those __pure_relation 
+from the inferable list.
 =====================================================================
 =====================================================================
 =====================================================================

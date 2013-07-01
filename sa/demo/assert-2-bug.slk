@@ -4,17 +4,17 @@ data node {
 
 HeapPred H_9(node a).
 //1.
-infer [n] H_9(n) * x::node<n>
+infer [x] H_9(n) * x::node<n>
   & n=t
  |-  t=null.
 print residue.
 //2.
-infer [t] H_9(t) * x::node<n> 
+infer [H9] H_9(t) * x::node<n> 
   & n=t
  |-  t=null.
 print residue.
 //3.
-infer [n,y] H_9(n) * x::node<n> & y=n
+infer [H9] H_9(n) * x::node<n> & y=n
   & n=t
  |-  t=null.
 print residue.
