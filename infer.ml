@@ -294,7 +294,8 @@ let get_args_h_formula aset (h:h_formula) =
           if (!Globals.allow_imm) then
             Some (root, arg,new_arg, [av],
             DataNode {h with h_formula_data_arguments=new_arg;
-              h_formula_data_imm = mkPolyAnn av})
+              h_formula_data_imm = mkPolyAnn av;
+              h_formula_data_param_imm = List.map (fun c -> mkConstAnn 0) h.h_formula_data_param_imm })
           else
             Some (root, arg,new_arg, [],
             DataNode {h with h_formula_data_arguments=new_arg})

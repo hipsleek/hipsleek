@@ -8615,7 +8615,7 @@ and process_unfold_x prog estate conseq a is_folding pos has_post pid =
 and do_infer_heap rhs rhs_rest caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:CP.spec_var list) is_folding pos =
   let pr1 = Cprinter.string_of_h_formula in
   let pr2 = Cprinter.string_of_formula in
-  let pr3 = "???" in
+  let pr3 = fun (a,b) -> Cprinter.string_of_list_context a in
   Debug.no_5 " do_infer_heap" pr1 pr1 pr2 pr2 pr2 pr3 (fun _ _ _ _ _-> do_infer_heap_x rhs rhs_rest caller prog estate conseq lhs_b rhs_b a rhs_h_matched_set is_folding pos) rhs rhs_rest conseq (Base lhs_b) (Base rhs_b)
 
 and do_infer_heap_x rhs rhs_rest caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:CP.spec_var list) is_folding pos = 
@@ -9133,7 +9133,8 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
               let msg = "do_unmatched_rhs :"^(Cprinter.string_of_h_formula rhs) in
               let r,relass = if CP.intersect rhs_als estate.es_infer_vars = []
                 && List.exists CP.is_node_typ estate.es_infer_vars then None,[]
-              else Inf.infer_lhs_contra_estate estate lhs_xpure pos msg 
+              else if (!Globals.pa) then None,[] else 
+                Inf.infer_lhs_contra_estate estate lhs_xpure pos msg 
               in
               begin
                 match r with
@@ -10842,8 +10843,8 @@ let heap_entail_list_failesc_context_init (prog : prog_decl) (is_folding : bool)
 
 (* TODO : what is this verify_pre_is_sat verification for? *)
 let rec verify_pre_is_sat prog fml = match fml with
-  | Or _ -> report_error no_pos "Do not expect disjunction in precondition"
-  | Base b -> 
+  | Or _  (*report_error no_pos "Do not expect disjunction in precondition"*)
+  | Base _ -> 
         let fml,_,_ = xpure prog fml 
     in TP.is_sat_raw fml
   | Exists e ->
@@ -10853,7 +10854,7 @@ let rec verify_pre_is_sat prog fml = match fml with
 
 let verify_pre_is_sat prog fml = 
   let pr = Cprinter.string_of_formula in
-  Debug.no_1 "verify_pre_is_sat" pr pr_no 
+  Debug.no_1 "verify_pre_is_sat" pr string_of_bool
       (fun _ -> verify_pre_is_sat prog fml) fml
 
 let rec eqHeap h1 h2 = match (h1,h2) with

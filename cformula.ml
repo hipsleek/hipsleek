@@ -6326,6 +6326,8 @@ let add_infer_rel_to_list_context cp (l : list_context) : list_context  =
 let add_infer_pre f_ctx ctx =
   let ch = collect_pre_heap f_ctx in
   if (ch!=[]) then
+    if(!Globals.pa) then add_infer_heap_to_ctx ch ctx
+    else 
     let _ = print_endline "ERROR : non-pure heap inferred for false" in
     report_error no_pos ("add_infer_pre: non-pure inferred heap :"^(!print_context f_ctx))
   else
