@@ -394,8 +394,8 @@ let common_arguments = [
   ("--pred-dis-dangling", Arg.Clear Globals.pred_elim_dangling, "disable the elimination of dangling predicate from derived HP defns");
   ("--sa-refine-dang", Arg.Set Globals.sa_refine_dang, "refine dangling among branches of one hprels def");
   ("--sa-inlining", Arg.Set Globals.sa_inlining, "inline dangling HP/pointers");
-  ("--sa-en-eup", Arg.Set Globals.sa_elim_unused_preds, "-sa-en-eup");
-  ("--sa-dis-eup", Arg.Clear Globals.sa_elim_unused_preds, "-sa-dis-eup");
+  ("--pred-en-eup", Arg.Set Globals.pred_elim_unused_preds, "enable the elimination of unused hprel predicates");
+  ("--pred-dis-eup", Arg.Clear Globals.pred_elim_unused_preds, "disable the elimination of unused hprel predicates");
   ("--sa-s-split", Arg.Set Globals.sa_s_split_base, "split constraints with base case");
   ("--sa-split", Arg.Set Globals.sa_en_split, "splitting hp args into multiple hp if possible");
   ("--sa-unify-dangling", Arg.Set Globals.sa_unify_dangling, "unify branches of definition to instantiate dangling predicate");

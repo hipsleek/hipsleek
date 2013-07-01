@@ -1648,7 +1648,7 @@ and infer_shapes_core iprog prog proc_name (constrs0: CF.hprel list) callee_hps 
   (* let unk_hps = (List.map fst unk_hpargs) in *)
   (*TODO: remove detect dangling at pre/post process*)
   (*TEMP*)
-  let user_detect_dang =  false (* detect_dang && !Globals.sa_elim_unused_preds  *)in
+  let user_detect_dang =  false (* detect_dang && !Globals.pred_elim_unused_preds  *)in
   (* let _ = Debug.info_pprint ("  link_hpargs3: " ^ (let pr = pr_list (pr_pair !CP.print_sv !CP.print_svl) *)
   (*                                             in pr link_hpargs3)) no_pos *)
   (*  in *)
@@ -1683,7 +1683,7 @@ and infer_shapes_x iprog prog proc_name (constrs0: CF.hprel list) sel_hps sel_po
       CF.hprel_def_body_lib = Some f;
   }
   ) tupled_defs in
-  let shown_defs = if !Globals.sa_elim_unused_preds then sel_hp_defs@link_hp_defs else
+  let shown_defs = if !Globals.pred_elim_unused_preds then sel_hp_defs@link_hp_defs else
     sel_hp_defs@tupled_defs1@link_hp_defs
   in
   let _ = List.iter (fun hp_def -> rel_def_stk # push hp_def) shown_defs in
