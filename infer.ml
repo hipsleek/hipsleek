@@ -1853,7 +1853,7 @@ let find_undefined_selective_pointers_x prog lfb lmix_f unmatched rhs_rest rhs_h
     List.fold_left (fun (lfb0,ls_defined,ls_rem, ls_new_hps) hpargs ->
         let lfb1, r_def,r_mem, new_hps = SAU.find_well_defined_hp prog lhds lhvs r_hps
           prog_vars post_hps hpargs l_def_vs lfb0
-          (!Globals.do_classic_frame_rule) pos
+          (!Globals.do_classic_frame_rule)  pos
         in
         (lfb1, ls_defined@r_def,ls_rem@r_mem, ls_new_hps@new_hps)
     ) (lfb, [],[], []) ls_lhp_args
@@ -1926,7 +1926,7 @@ let find_undefined_selective_pointers_x prog lfb lmix_f unmatched rhs_rest rhs_h
   let ls_undef =  (* List.map CP.remove_dups_svl *) (ls_fwd_svl) in
   (* DD.info_pprint ("selected_hpargs: " ^ (let pr = pr_list (pr_pair !CP.print_sv !CP.print_svl) in pr (selected_hpargs))) pos; *)
   (*********CLASSIC************)
-  let classic_defined= if !Globals.do_classic_frame_rule then
+  let classic_defined= if  !Globals.do_classic_frame_rule then
     let lhs_sel_hps = List.map fst lhs_selected_hpargs in
     let truef = CF.mkTrue (CF.mkTrueFlow()) pos in
     let rem_lhpargs1 = List.filter (fun (hp,_) -> not (CP.mem_svl hp lhs_sel_hps)) rem_lhpargs in

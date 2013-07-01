@@ -1427,7 +1427,8 @@ let find_well_defined_hp_x prog hds hvs r_hps prog_vars post_hps (hp,args) def_p
       (*not all args are well defined and in HIP. do not split*)
       let args_inst,args_ni =  partition_hp_args prog hp args in
       let wdef_svl = CP.diff_svl args undef_args in
-      let wdef_ni_svl =  List.filter (fun (sv,_) -> CP.mem_svl sv wdef_svl) args_ni in
+      let wdef_ni_svl =  List.filter (fun (sv,_) -> CP.mem_svl sv wdef_svl
+      ) args_ni in
       (*
         wdef_ni_svl: if not empty, do not split.
         TODO: forward hp defs to post-preds

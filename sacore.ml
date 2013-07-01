@@ -16,6 +16,43 @@ module Inf = Infer
 
 let cmp_hp_pos (hp1,pos1) (hp2,pos2)= (CP.eq_spec_var hp1 hp2) && pos1=pos2
 
+(*
+  find all pre-preds that has only one assumption ===> equal
+*)
+let search_pred_4_equal_x constrs post_hps=
+  let partition_pre_preds (pre_preds, rem) cs=
+    let lhps = CF.get_hp_rel_name_formula cs.CF.hprel_lhs in
+    match lhps with
+      | [hp] -> if CP.mem_svl hp post_hps then (pre_preds, rem@[cs]) else
+          pre_preds@[(hp,cs)], rem
+      | _ -> (pre_preds, rem@[cs])
+  in
+  let rec partition_equal (cand_equal, rem_pre_constrs) ls_pre=
+   match ls_pre with
+     | [] -> (cand_equal, rem_pre_constrs)
+     | (hp0, cs0)::rest ->
+           let grp,rest1 = List.fold_left (fun (ls1,ls2) (hp1,cs1) ->
+               if CP.eq_spec_var hp1 hp0 then (ls1@[cs1], ls2)
+               else (ls1, ls2@[(hp1,cs1)])
+           ) ([],[]) rest in
+           let n_res = if List.length grp > 0 then
+             (cand_equal,rem_pre_constrs@(cs0::grp))
+           else (cand_equal@[(hp0,cs0)],rem_pre_constrs)
+           in
+           partition_equal n_res rest1
+  in
+  let pr_pre_preds, rem_constrs = List.fold_left partition_pre_preds ([],[]) constrs in
+  let pre_preds_4_equal, rem_pre_constrs = partition_equal ([],[]) pr_pre_preds in
+  (pre_preds_4_equal, rem_pre_constrs@rem_constrs)
+
+let search_pred_4_equal constrs post_hps=
+  let pr1 = Cprinter.string_of_hprel_short in
+  let pr2 = pr_list_ln (pr_pair !CP.print_sv pr1) in
+  let pr3 = pr_list_ln pr1 in
+  Debug.no_2 "search_pred_4_equal" pr3 !CP.print_svl (pr_pair pr2 pr3)
+      (fun _ _ -> search_pred_4_equal_x constrs post_hps)
+      constrs post_hps
+
 let rec build_unk_locs args n unk_svl res=
   match args with
     | [] -> res
@@ -761,17 +798,17 @@ let analize_unk_x prog post_hps constrs total_unk_map unk_hpargs link_hpargs=
   in
   let unk_hp_args02,full_unk_hp_args2_locs, closure_post_hps = loop_helper post_hps unk_hp_args01 in
   (*********END double check ****************)
-   let full_unk_hp_args2_locs = SAU.refine_full_unk unk_hp_args02 full_unk_hp_args2_locs in
-   (*for debugging*)
-   let _ = Debug.ninfo_pprint ("  unks 2: " ^ (let pr = pr_list (pr_triple !CP.print_sv !CP.print_svl (pr_list string_of_int))
-                                              in pr unk_hp_args02)) no_pos
-   in
-   let _ = Debug.ninfo_pprint ("  full_unk_hp_args2_locs: " ^ (let pr = pr_list (pr_triple !CP.print_sv !CP.print_svl (pr_list string_of_int))
-                                              in pr full_unk_hp_args2_locs)) no_pos
-   in
-   (* let pr1 =  pr_list_ln (pr_pair (pr_pair !CP.print_sv (pr_list string_of_int)) *)
-   (*                            (pr_list (pr_pair !CP.print_sv !CP.print_svl))) in *)
-   (* let _ = Debug.info_pprint ("  equivs0: " ^ (pr1 equivs0) ) no_pos in *)
+  let full_unk_hp_args2_locs = SAU.refine_full_unk unk_hp_args02 full_unk_hp_args2_locs in
+  (*for debugging*)
+  let _ = Debug.info_pprint ("  unks 2: " ^ (let pr = pr_list (pr_triple !CP.print_sv !CP.print_svl (pr_list string_of_int))
+  in pr unk_hp_args02)) no_pos
+  in
+  let _ = Debug.info_pprint ("  full_unk_hp_args2_locs: " ^ (let pr = pr_list (pr_triple !CP.print_sv !CP.print_svl (pr_list string_of_int))
+  in pr full_unk_hp_args2_locs)) no_pos
+  in
+  (* let pr1 =  pr_list_ln (pr_pair (pr_pair !CP.print_sv (pr_list string_of_int)) *)
+  (*                            (pr_list (pr_pair !CP.print_sv !CP.print_svl))) in *)
+  (* let _ = Debug.info_pprint ("  equivs0: " ^ (pr1 equivs0) ) no_pos in *)
   (*END for debugging*)
   (*END double check*)
    let detected_hps = (List.map fst link_hpargs)@unk_hps in
