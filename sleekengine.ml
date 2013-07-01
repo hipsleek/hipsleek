@@ -330,7 +330,9 @@ let process_hp_def hpdef =
             (* PURE_RELATION_OF_HEAP_PRED *)
             (* are these a newly added hp_pred? *)
             iprog.I.prog_hp_decls <- ( hpdef :: iprog.I.prog_hp_decls);
-	      let chpdef = AS.trans_hp iprog hpdef in !cprog.C.prog_hp_decls <- (chpdef :: !cprog.C.prog_hp_decls);
+	      let chpdef, p_chpdef = AS.trans_hp iprog hpdef in
+              let _ = !cprog.C.prog_hp_decls <- (chpdef :: !cprog.C.prog_hp_decls) in
+              let _ = !cprog.C.prog_rel_decls <- (p_chpdef::!cprog.C.prog_rel_decls) in
 	      (* Forward the relation to the smt solver. *)
               let args = fst (List.split chpdef.C.hp_vars_inst) in
 	      Smtsolver.add_hp_relation chpdef.C.hp_name args chpdef.C.hp_formula;

@@ -18,7 +18,7 @@ following
 
   pure_of_heap_pred :: h_formula --> formula_pure
 
-  e.g. HP1(n)*HP2(w) ==>  _pure_of_HP1(n) & _pure_of_HP2(n)
+  e.g. HP1(n)*HP2(w) ==>  _pure_of_HP1(n) & _pure_of_HP2(w)
 
   pure_relation_name_of heap_pred :: spec_var --> spec_var
       HP1 --> _pure_of_HP1

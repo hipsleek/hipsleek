@@ -23,12 +23,14 @@ module MCP = Mcpure
 module H = Hashtbl
 module TP = Tpdispatcher
 module Chk = Checks
+module PRED = Predicate
 
 
 type trans_exp_type =
   (C.exp * typ)
 
 let pr_v_decls l = pr_list (fun v -> v.I.view_name) l
+
 
 (* list of scc views that are in mutual-recursion *)
 let view_scc : (ident list) list ref = ref []
@@ -813,10 +815,12 @@ let rec trans_prog (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_decl
           in
           let cviews2 = Norm.cont_para_analysis prog cviews1 in
 	  (* let _ = print_string "trans_prog :: trans_view PASSED\n" in *)
-	  let crels = List.map (trans_rel prog) prog.I.prog_rel_decls in (* An Hoa *)
+	  let crels0 = List.map (trans_rel prog) prog.I.prog_rel_decls in (* An Hoa *)
           let _ = prog.I.prog_rel_ids <- List.map (fun rd -> (RelT[],rd.I.rel_name)) prog.I.prog_rel_decls in
-          let chps = List.map (trans_hp prog) prog.I.prog_hp_decls in 
+          let pr_chps = List.map (trans_hp prog) prog.I.prog_hp_decls in 
+          let chps, pure_chps = List.split pr_chps in
           let _ = prog.I.prog_hp_ids <- List.map (fun rd -> (HpT,rd.I.hp_name)) prog.I.prog_hp_decls in
+          let crels = crels0@pure_chps in
 	  let caxms = List.map (trans_axiom prog) prog.I.prog_axiom_decls in (* [4/10/2011] An Hoa *)
 	  (* let _ = print_string "trans_prog :: trans_rel PASSED\n" in *)
 	  let cdata =  List.map (trans_data prog) prog.I.prog_data_decls in
@@ -1337,7 +1341,7 @@ and trans_rel (prog : I.prog_decl) (rdef : I.rel_decl) : C.rel_decl =
   C.rel_vars = rel_sv_vars;
   C.rel_formula = crf; }
 
-and trans_hp (prog : I.prog_decl) (hpdef : I.hp_decl) : C.hp_decl =
+and trans_hp (prog : I.prog_decl) (hpdef : I.hp_decl) : (C.hp_decl * C.rel_decl) =
   let pos = IF.pos_of_formula hpdef.I.hp_formula in
   let hp_sv_vars = List.map (fun (var_type, var_name, i) -> (CP.SpecVar (trans_type prog var_type pos, var_name, Unprimed), i))
     hpdef.I.hp_typed_inst_vars in
@@ -1345,11 +1349,14 @@ and trans_hp (prog : I.prog_decl) (hpdef : I.hp_decl) : C.hp_decl =
   (* Need to collect the type information before translating the formula *)
   let n_tl = gather_type_info_formula prog hpdef.I.hp_formula n_tl false in
   let (n_tl,crf) = trans_formula  prog false [] false hpdef.I.hp_formula n_tl false in
-  {C.hp_name = hpdef.I.hp_name; 
+  let chprel = {C.hp_name = hpdef.I.hp_name; 
   C.hp_vars_inst = hp_sv_vars;
   Cast.hp_root_pos = 0; (*default, reset when def is inferred*)
   C.hp_is_pre = hpdef.I.hp_is_pre;
   C.hp_formula = crf; }
+  in
+  let c_p_hprel = PRED.generate_pure_rel chprel in
+  chprel,c_p_hprel
 
 and trans_axiom (prog : I.prog_decl) (adef : I.axiom_decl) : C.axiom_decl =
   let pr1 adef = Iprinter.string_of_axiom_decl_list [adef] in

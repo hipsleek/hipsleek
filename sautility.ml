@@ -260,9 +260,10 @@ let add_raw_hp_rel_x prog is_pre unknown_ptrs pos=
         Cast.hp_formula = CF.mkBase CF.HEmp (MCP.mkMTrue pos) CF.TypeTrue (CF.mkTrueFlow()) [] pos;}
     in
     let unk_args = (fst (List.split hp_decl.Cast.hp_vars_inst)) in
-    (* PURE_RELATION_OF_HEAP_PRED *)
-    (* is this a new synthesized hp_pred? *)
     prog.Cast.prog_hp_decls <- (hp_decl :: prog.Cast.prog_hp_decls);
+    (* PURE_RELATION_OF_HEAP_PRED *)
+    let p_hp_decl = Predicate.generate_pure_rel hp_decl in
+    let _ = prog.C.prog_rel_decls <- (p_hp_decl::prog.C.prog_rel_decls) in
     Smtsolver.add_hp_relation hp_decl.Cast.hp_name unk_args hp_decl.Cast.hp_formula;
     let hf =
       CF.HRel (CP.SpecVar (HpT,hp_decl.Cast.hp_name, Unprimed), 
@@ -1298,7 +1299,7 @@ let simp_match_hp_w_unknown_x prog unk_hps link_hps cs=
   let lunk_svl,lrem_hpargs = List.fold_left part_helper ([],[]) (lhp_args) in
   let runk_svl,rrem_hpargs = List.fold_left part_helper ([],[]) (rhp_args) in
   let unk_svl = CP.remove_dups_svl (lunk_svl@runk_svl) in
-  let  _ = DD.info_pprint ("unk_svl: " ^ (!CP.print_svl unk_svl)) no_pos in
+  let  _ = DD.ninfo_pprint ("unk_svl: " ^ (!CP.print_svl unk_svl)) no_pos in
   let drop_hps = List.fold_left (fun ls (r_hp,r_args) ->
       ls@(List.fold_left (fun ls_inn (l_hp, l_args) ->
           if CP.eq_spec_var l_hp r_hp then
