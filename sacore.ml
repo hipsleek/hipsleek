@@ -800,10 +800,10 @@ let analize_unk_x prog post_hps constrs total_unk_map unk_hpargs link_hpargs=
   (*********END double check ****************)
   let full_unk_hp_args2_locs = SAU.refine_full_unk unk_hp_args02 full_unk_hp_args2_locs in
   (*for debugging*)
-  let _ = Debug.info_pprint ("  unks 2: " ^ (let pr = pr_list (pr_triple !CP.print_sv !CP.print_svl (pr_list string_of_int))
+  let _ = Debug.ninfo_pprint ("  unks 2: " ^ (let pr = pr_list (pr_triple !CP.print_sv !CP.print_svl (pr_list string_of_int))
   in pr unk_hp_args02)) no_pos
   in
-  let _ = Debug.info_pprint ("  full_unk_hp_args2_locs: " ^ (let pr = pr_list (pr_triple !CP.print_sv !CP.print_svl (pr_list string_of_int))
+  let _ = Debug.ninfo_pprint ("  full_unk_hp_args2_locs: " ^ (let pr = pr_list (pr_triple !CP.print_sv !CP.print_svl (pr_list string_of_int))
   in pr full_unk_hp_args2_locs)) no_pos
   in
   (* let pr1 =  pr_list_ln (pr_pair (pr_pair !CP.print_sv (pr_list string_of_int)) *)
@@ -855,18 +855,24 @@ let analize_unk_x prog post_hps constrs total_unk_map unk_hpargs link_hpargs=
        in
        (new_constrs1, unk_hpargs, new_map,link_hpargs4a)
    in
+   let tot_unk_hpargs = Gen.BList.remove_dups_eq (fun (hp1,_) (hp2,_) -> CP.eq_spec_var hp1 hp2) (new_unk_hpargs@unk_hpargs) in
+   let tot_unk_dang_hps = List.map fst (tot_unk_hpargs@link_hpargs4) in
+   (*partial unknown*)
+   let punk_map = List.fold_left (fun ls (hp,_,locs) ->
+       if CP.mem hp tot_unk_dang_hps then ls else ls@[(hp,locs)]) [] unk_hp_args02
+   in
    let _ = Debug.dinfo_pprint ("map after: " ^
        (let pr = (pr_list (pr_pair (pr_pair !CP.print_sv (pr_list string_of_int)) CP.string_of_xpure_view)) in
        pr new_map)) no_pos in
-   (new_cs, Gen.BList.remove_dups_eq (fun (hp1,_) (hp2,_) -> CP.eq_spec_var hp1 hp2) (new_unk_hpargs@unk_hpargs), new_map,
-   link_hpargs4)
+   (new_cs, tot_unk_hpargs, new_map,
+   link_hpargs4, punk_map)
 
 let analize_unk prog post_hps constrs total_unk_map unk_hpargs link_hpargs =
   let pr1 = pr_list_ln Cprinter.string_of_hprel in
-  (* let pr2 = (pr_list (pr_pair (pr_list (pr_pair !CP.print_sv string_of_int)) CP.string_of_xpure_view)) in *)
+  let pr2a = pr_list (pr_pair !CP.print_sv (pr_list string_of_int)) in
   let pr2 = (pr_list (pr_pair (pr_pair !CP.print_sv (pr_list string_of_int)) CP.string_of_xpure_view)) in
   let pr3 = pr_list (pr_pair !CP.print_sv !CP.print_svl) in
-  let pr4 = pr_quad pr1 pr3 pr2 pr3 in
+  let pr4 = pr_penta pr1 pr3 pr2 pr3 pr2a in
   Debug.no_2 "analize_unk" pr1 pr2 pr4
       (fun _ _ -> analize_unk_x prog post_hps constrs total_unk_map unk_hpargs link_hpargs)
       constrs total_unk_map

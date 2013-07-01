@@ -199,6 +199,15 @@ let rec get_pos ls n sv=
     | sv1::rest -> if CP.eq_spec_var sv sv1 then n
       else get_pos rest (n+1) sv
 
+let rec get_all_locs_helper ls n svl res=
+  match ls with
+    | [] -> res
+    | sv1::rest ->
+          let n_res = if CP.mem_svl sv1 svl then (res@[n]) else res in
+          get_all_locs_helper rest (n+1) svl n_res
+
+let get_all_locs ls need_svl = get_all_locs_helper ls 0 need_svl []
+
 (*for drop hp args*)
 let rec retrieve_args_from_locs_helper args locs index res=
   match args with
@@ -1251,12 +1260,63 @@ and drop_data_view_hrel_nodes_hf_from_root prog hf hd_nodes hv_nodes eqs drop_ro
 (***************************************************************)
            (*========SIMPLIFICATION============*)
 (***************************************************************)
+(*
+this function may be subsumed by simp_match_partial_unknown
+*)
 let simp_match_unknown unk_hps link_hps cs=
   let lhs_hps = CF.get_hp_rel_name_formula cs.CF.hprel_lhs in
   let rhs_hps = CF.get_hp_rel_name_formula cs.CF.hprel_rhs in
   let inter_hps = CP.intersect_svl lhs_hps rhs_hps in
   let inter_unk_hps = CP.intersect_svl inter_hps (unk_hps@link_hps) in
   CF.drop_hprel_constr cs inter_unk_hps
+
+let simp_match_hp_w_unknown_x prog unk_hps link_hps cs=
+  let tot_unk_hps = unk_hps@link_hps in
+  let part_helper = (fun (unk_svl,rem) (hp,args)->
+        if CP.mem_svl hp tot_unk_hps then
+          (unk_svl@args, rem)
+        else (unk_svl, rem@[(hp,args)])
+  ) in
+  let rec order_eq_w_unk l_args r_args unk_svl args_violate_ni =
+    match l_args,r_args with
+      | [],[] -> true
+      | sv1::rest1,sv2::rest2 ->
+            if CP.eq_spec_var sv1 sv2 || (CP.mem_svl sv1 unk_svl && CP.mem_svl sv2 unk_svl) ||
+              (CP.mem_svl sv2 args_violate_ni) || CP.mem_svl sv1 args_violate_ni
+            then
+              order_eq_w_unk rest1 rest2 unk_svl args_violate_ni
+            else false
+      | _ -> false
+  in
+  let tot_unk_hps = unk_hps@link_hps in
+  let lhp_args = CF.get_HRels_f cs.CF.hprel_lhs in
+  let rhp_args = CF.get_HRels_f cs.CF.hprel_rhs in
+  (*get_all ptrs initiated*)
+  let l_ptrs = CF.get_ptrs_f cs.CF.hprel_lhs in
+  let r_ptrs = CF.get_ptrs_f cs.CF.hprel_rhs in
+  let ptrs = (l_ptrs@r_ptrs) in
+  let lunk_svl,lrem_hpargs = List.fold_left part_helper ([],[]) (lhp_args) in
+  let runk_svl,rrem_hpargs = List.fold_left part_helper ([],[]) (rhp_args) in
+  let unk_svl = CP.remove_dups_svl (lunk_svl@runk_svl) in
+  let  _ = DD.info_pprint ("unk_svl: " ^ (!CP.print_svl unk_svl)) no_pos in
+  let drop_hps = List.fold_left (fun ls (r_hp,r_args) ->
+      ls@(List.fold_left (fun ls_inn (l_hp, l_args) ->
+          if CP.eq_spec_var l_hp r_hp then
+            let _, l_arg_ni = partition_hp_args prog l_hp l_args in
+            let _, r_arg_ni = partition_hp_args prog r_hp r_args in
+            let violate_ni = CP.intersect_svl (List.map fst (l_arg_ni@r_arg_ni)) ptrs in
+            if order_eq_w_unk l_args r_args unk_svl violate_ni then (ls_inn@[l_hp]) else ls_inn
+          else ls_inn
+      ) [] lrem_hpargs)
+  ) [] rrem_hpargs in
+  CF.drop_hprel_constr cs drop_hps
+
+let simp_match_hp_w_unknown prog unk_hps link_hps cs=
+  let pr1 = !CP.print_svl in
+  let pr2 = Cprinter.string_of_hprel_short in
+  Debug.no_3 "simp_match_hp_w_unknown" pr1 pr1 pr2 pr2
+      (fun _ _ _ -> simp_match_hp_w_unknown_x prog unk_hps link_hps cs)
+      unk_hps link_hps cs
 
 let simplify_one_constr_b_x prog unk_hps lhs_b rhs_b=
   (*return subst of args and add in lhs*)
