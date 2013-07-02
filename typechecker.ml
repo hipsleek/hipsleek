@@ -611,7 +611,7 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
 	            flow_store := [];
 	            let ctx1 = CF.set_flow_in_context_override
 	    	      { CF.formula_flow_interval = !norm_flow_int; CF.formula_flow_link = None} ctx1 in
-	            let ctx1 = CF.add_path_id ctx1 (Some post_label,-1) in
+	            let ctx1 = CF.add_path_id ctx1 (Some post_label,-1) (-1) in
                     (* need to add initial esc_stack *)
                     let init_esc = [((0,""),[])] in
 	            let lfe = [CF.mk_failesc_context ctx1 [] init_esc] in
@@ -1158,7 +1158,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
       (*let _ = print_string("Exp: "^(Cprinter.string_of_exp e0)^"\n") in *)
       match e0 with
 	| Label e ->
-	      let ctx = CF.add_path_id_ctx_failesc_list ctx e.exp_label_path_id in
+	      let ctx = CF.add_path_id_ctx_failesc_list ctx e.exp_label_path_id (-1) in
 	      let ctx = CF.add_cond_label_list_failesc_context (fst e.exp_label_path_id) (snd e.exp_label_path_id) ctx in
 	      (check_exp prog proc ctx e.exp_label_exp post_start_label)
         | Unfold ({exp_unfold_var = sv;
@@ -2093,7 +2093,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 		      (idf,idf,
                       (fun es -> CF.Ctx {es with CF.es_formula = CF.set_flow_in_formula (CF.get_flow_from_stack v !flow_store pos) es.CF.es_formula}))
                           nctx in
-	      CF.add_path_id_ctx_failesc_list r (pid,0)
+	      CF.add_path_id_ctx_failesc_list r (pid,0) (-1)
         | Try ({exp_try_body = body;
       	  exp_catch_clause = cc;
       	  exp_try_path_id = pid;
@@ -2108,7 +2108,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
               (*Decide which to escape, and which to be caught.
               Caught exceptions become normal flows*)
               let ctx4 = CF.splitter_failesc_context (cc.exp_catch_flow_type) (cc.exp_catch_var) 
-                (fun c -> CF.add_path_id c (Some pid,0)) elim_exists_ctx ctx3 in
+                (fun c -> CF.add_path_id c (Some pid,0) (-1)) elim_exists_ctx ctx3 in
               (* let _ = print_endline ("WN:ESCAPE ctx4:"^(Cprinter.string_of_list_failesc_context ctx4)) in *)
               let ctx5 = check_exp prog proc ctx4 cc.exp_catch_body post_start_label in
               CF.pop_esc_level_list ctx5 pid

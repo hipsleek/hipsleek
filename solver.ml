@@ -237,7 +237,7 @@ let clear_entailment_history_es (es :entail_state) :context =
     (empty_es (mkTrueFlow ()) es.es_group_lbl no_pos) with
 	es_formula = es.es_formula;
 	es_path_label = es.es_path_label;
-	es_cond_path = es.es_cond_path # clone;
+	es_cond_path = es.es_cond_path ;
 	es_prior_steps = es.es_prior_steps;
 	es_var_measures = es.es_var_measures;
 	(* es_var_label = es.es_var_label; *)
@@ -4133,7 +4133,7 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
                                             (*donot rename lockset variable when fork*)
                                             let new_ref_vars = List.filter (fun v -> CP.name_of_spec_var v <> Globals.ls_name && CP.name_of_spec_var v <> Globals.lsmu_name) ref_vars in
                                             let rs2 = compose_context_formula_and rs1 new_post df id new_ref_vars pos in
-				            let rs3 = add_path_id rs2 (pid,i) in
+				            let rs3 = add_path_id rs2 (pid,i) (-1) in
                                             let rs4 = prune_ctx prog rs3 in
 	                                    ((SuccCtx [rs4]),TrueConseq)
                                       | None ->
@@ -4199,7 +4199,7 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
                                               let rs2 = if !Globals.force_post_sat then CF.transform_context (elim_unsat_es_now 5 prog (ref 1)) rs1 else rs1 in
                                               if (!Globals.ann_vp) then
                                                 Debug.devel_zprint (lazy ("\nheap_entail_conjunct_lhs_struc: after checking VarPerm in EAssume: \n ### rs = "^(Cprinter.string_of_context rs2)^"\n")) pos;
-	                                      let rs3 = add_path_id rs2 (pid,i) in
+	                                      let rs3 = add_path_id rs2 (pid,i) (-1) in
                                               (* let _ = print_endline ("\n### rs3 = "^(Cprinter.string_of_context rs3)) in *)
                                               let rs4 = prune_ctx prog rs3 in
                                               (*l2: debugging*)
@@ -7684,7 +7684,7 @@ and do_base_case_unfold_only_x prog ante conseq estate lhs_node rhs_node is_fold
         es_var_zero_perm = estate.es_var_zero_perm;
         es_prior_steps = estate.es_prior_steps;
         es_path_label = estate.es_path_label;
-        es_cond_path = estate.es_cond_path # clone;
+        es_cond_path = estate.es_cond_path ;
         es_var_measures = estate.es_var_measures;
         es_var_stack = estate.es_var_stack;
         es_orig_ante = estate.es_orig_ante;
@@ -7800,7 +7800,7 @@ and do_lhs_case_x prog ante conseq estate lhs_node rhs_node is_folding pos=
                  es_unsat_flag = false;
                  es_prior_steps = estate.es_prior_steps;
                  es_path_label = estate.es_path_label;
-                 es_cond_path = estate.es_cond_path # clone;
+                 es_cond_path = estate.es_cond_path ;
                  es_orig_ante = estate.es_orig_ante;
                  es_infer_vars = estate.es_infer_vars;
                  es_infer_heap = estate.es_infer_heap;
