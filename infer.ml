@@ -1940,7 +1940,10 @@ let find_undefined_selective_pointers_x prog lfb lmix_f unmatched rhs_rest rhs_h
   in
   let drop_hpargs =  List.concat (List.map (select_helper rest_svl1) ls_lhp_args) in
   let drop_hps =  (List.map fst drop_hpargs) in
-  (*find post_hps NI- cll case*)
+  (* find post_hps NI- cll case *)
+  (******************************************)
+  (*TODO:*)
+  (******************************************)
   let post_svl_ni = List.fold_left (fun svl (hp, args) ->
       if CP.mem_svl hp post_hps then
         let args_i,_ = SAU.partition_hp_args prog hp args in
@@ -1963,6 +1966,9 @@ let find_undefined_selective_pointers_x prog lfb lmix_f unmatched rhs_rest rhs_h
         (ls1,ls2)
   ) ([],[]) ls_lhp_args
   in
+  (*TODO: find correct INIT for node (NI should not be INIT)*)
+  let vioated_ni_hps, vioated_ni_svl = [],[] in
+  (******************************************)
   let selected_hpargs =
     let drop_hps1 = drop_hps@vioated_ni_hps in
     List.filter (fun (hp,_) -> not (CP.mem_svl hp drop_hps1)) selected_hp_args
