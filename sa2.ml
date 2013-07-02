@@ -1685,7 +1685,10 @@ and infer_shapes_x iprog prog proc_name (constrs0: CF.hprel list) sel_hps sel_po
   let hp_defs1,tupled_defs = SAU.partition_tupled hp_defs in
   (*decide what to show: DO NOT SHOW hps relating to tupled defs*)
   let m = match_hps_views hp_defs1 prog.CA.prog_view_decls in
-  let sel_hp_defs = collect_sel_hp_def hp_defs1 sel_hps unk_hpargs2 m in
+  let sel_hps1 = if !Globals.pred_elim_unused_preds then sel_hps else
+    CP.remove_dups_svl ((List.map (fun (a,_,_) -> SAU.get_hpdef_name a) hp_defs1)@sel_hps)
+  in
+  let sel_hp_defs = collect_sel_hp_def hp_defs1 sel_hps1 unk_hpargs2 m in
   let tupled_defs1 = List.map (fun (a, hf, f) -> {
       CF.hprel_def_kind = a;
       CF.hprel_def_hrel = hf;
@@ -1698,6 +1701,7 @@ and infer_shapes_x iprog prog proc_name (constrs0: CF.hprel list) sel_hps sel_po
   in
   let _ = List.iter (fun hp_def -> rel_def_stk # push hp_def) shown_defs in
   (constr, hp_defs, c)
+
 
 let infer_shapes iprog prog proc_name (hp_constrs: CF.hprel list) sel_hp_rels sel_post_hp_rels
       hp_rel_unkmap unk_hpargs link_hpargs need_preprocess detect_dang:
