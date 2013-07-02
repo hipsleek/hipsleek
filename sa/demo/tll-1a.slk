@@ -76,9 +76,10 @@ Derive H9
 Further Transform H
 ===================
   H(x,r) <-> x::node<left_29_845,null,next_29_847>@M * 
-    H(left_29_845,_) * H_0(next_29_847,r).
+    D(left_29_845,_) * H_0(next_29_847,r).
   or x::node<left_29_845,right_29_846,next_29_847>@M * 
     H(left_29_845,_) * H(right_29_846,r) * H_0(next_29_847,r).
+
 
 Thus
 ====
