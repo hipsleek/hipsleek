@@ -5611,3 +5611,20 @@ let get_pre_post pre_hps post_hps constrs=
       (fun _ -> get_pre_post_x pre_hps post_hps constrs) constrs
 
 (*SLEEK*)
+
+let rec cmp_list_int ls1 ls2=
+  match ls1,ls2 with
+    | [],[] -> true
+    | i1::rest1, i2::rest2 -> if i1=i2 then cmp_list_int rest1 rest2
+      else false
+    | _ -> false
+
+let rec dang_partition pr_cond_hpargs grps=
+  match pr_cond_hpargs with
+    | [] -> grps
+    | (cond1,hpargs1)::rest->
+          let grp, rest1 = List.partition (fun (cond2, _) ->
+              cmp_list_int cond1 cond2
+          ) rest in
+          let n_grps = grps@[(cond1,hpargs1::(List.map snd grp))] in
+          dang_partition rest1 n_grps

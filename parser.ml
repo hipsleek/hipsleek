@@ -1652,7 +1652,7 @@ decl_dang_cmd:
    ]];
 
 decl_unknown_cmd:
-   [[ `SHAPE_DECL_UNKNOWN; `OSQUARE; il1= OPT id_list ;`CSQUARE   -> un_option il1 []
+   [[ `SHAPE_DECL_UNKNOWN; `OPAREN; il2 = OPT int_list; `CPAREN; `OSQUARE; il1= OPT id_list ;`CSQUARE   -> (un_option il2 [], un_option il1 [])
    ]];
 
 shapeinfer_cmd:
@@ -1815,6 +1815,8 @@ rank_specifier:
 comma_list: [[`COMMA; s = OPT SELF -> 1 + (un_option s 1)]];
   
 id_list_opt:[[t= LIST0 id SEP `COMMA ->t]];
+
+int_list:[[t= LIST1 integer_literal SEP `DOT ->t]];
 
 id_list:[[t=LIST1 id SEP `COMMA -> t]];
 

@@ -83,7 +83,7 @@ let cprog = ref { C.prog_data_decls = [];
 let residues =  ref (None : (CF.list_context * bool) option)    (* parameter 'bool' is used for printing *)
 
 let sleek_hprel_assumes = ref ([]: CF.hprel list)
-let sleek_hprel_unknown = ref ([]: (CP.spec_var * CP.spec_var list) list)
+let sleek_hprel_unknown = ref ([]: (cond_path_type * (CP.spec_var * CP.spec_var list)) list)
 let sleek_hprel_dang = ref ([]: (CP.spec_var *CP.spec_var list) list)
 
 let clear_iprog () =
@@ -724,16 +724,16 @@ let process_decl_hpdang hp_names =
   let _ = sleek_hprel_dang := !sleek_hprel_dang@hpargs in
   ()
 
-let process_decl_hpunknown hp_names =
+let process_decl_hpunknown (cond_path, hp_names) =
   let process hp_name=
     let hp_def = Cast.look_up_hp_def_raw !cprog.Cast.prog_hp_decls hp_name in
     let hp = Cpure.SpecVar (HpT , hp_name, Unprimed) in
     let args = fst (List.split hp_def.Cast.hp_vars_inst) in
-    (hp,args)
+    (cond_path, (hp,args))
   in
   let hpargs = List.map process hp_names in
   let _ = Debug.ninfo_pprint ("unknown: " ^
-      (let pr = pr_list (pr_pair !Cpure.print_sv !Cpure.print_svl) in pr hpargs)) no_pos in
+      (let pr = pr_list (pr_pair string_of_cond_path (pr_pair !Cpure.print_sv !Cpure.print_svl)) in pr hpargs)) no_pos in
   let _ = sleek_hprel_unknown := !sleek_hprel_unknown@hpargs in
   ()
 
@@ -808,7 +808,12 @@ let process_shape_postObl pre_hps post_hps=
   let constrs2, sel_hps, sel_post_hps, unk_map, unk_hpargs, link_hpargs=
     shape_infer_pre_process hp_lst_assume pre_hps post_hps
   in
+  let grp_link_hpargs = SAU.dang_partition link_hpargs [] in
   let cond_path = [] in
+   let link_hpargs = match grp_link_hpargs with
+    | [] -> []
+    | (_, a)::_ -> a
+  in
   let ls_inferred_hps, ls_hprel, _, _ =
     if List.length sel_hps> 0 && List.length hp_lst_assume > 0 then
       let infer_shape_fnc = Sa2.infer_shapes_from_fresh_obligation in
@@ -922,6 +927,11 @@ let process_shape_split pre_hps post_hps=
   (*sleek level: depend on user annotation. with hip, this information is detected automatically*)
   let constrs1, unk_map, unk_hpargs = SAC.detect_dangling_pred !sleek_hprel_assumes sel_hp_rels [] in
    let link_hpargs = !sleek_hprel_unknown in
+   let grp_link_hpargs = SAU.dang_partition link_hpargs [] in
+    let link_hpargs = match grp_link_hpargs with
+    | [] -> []
+    | (_, a)::_ -> a
+  in
    let cond_path = [] in
   let new_constrs,_,_ = Sa2.split_constr !cprog cond_path constrs1 post_hp_rels infer_vars unk_map (List.map fst unk_hpargs) (List.map fst link_hpargs) in
   let pr1 = pr_list_ln Cprinter.string_of_hprel_short in

@@ -1665,7 +1665,8 @@ and infer_shapes_core iprog prog proc_name cond_path (constrs0: CF.hprel list) c
   infer_shapes_proper iprog prog proc_name cond_path constrs1 callee_hps sel_hp_rels sel_post_hps unk_map prog_vars
       unk_hpargs link_hpargs3 need_preprocess user_detect_dang
 
-and infer_shapes_x iprog prog proc_name (constrs0: CF.hprel list) sel_hps sel_post_hps hp_rel_unkmap unk_hpargs link_hpargs need_preprocess detect_dang:
+
+and infer_shapes_x iprog prog proc_name (constrs0: CF.hprel list) sel_hps sel_post_hps hp_rel_unkmap unk_hpargs link_hpargs0 need_preprocess detect_dang:
       (CF.hprel list * CF.hp_rel_def list* (CP.spec_var*CP.exp list * CP.exp list) list ) =
   (*move to outer func*)
   (* let callee_hpdefs = *)
@@ -1678,10 +1679,16 @@ and infer_shapes_x iprog prog proc_name (constrs0: CF.hprel list) sel_hps sel_po
   (* let _ = DD.info_pprint ("  sel_hps:" ^ !CP.print_svl sel_hps) no_pos in *)
   (*remove hp(x) --> hp(x)*)
   (* let constrs1 = List.filter (fun cs -> not(SAU.is_trivial_constr cs)) constrs0 in *)
+  let grp_link_hpargs = SAU.dang_partition link_hpargs0 [] in
   (*TODO: LOC: find a group of rel ass with the same cond_path.
     Now, assume = []
   *)
   let cond_path = [] in
+  (*for temporal*)
+  let link_hpargs = match grp_link_hpargs with
+    | [] -> []
+    | (_, a)::_ -> a
+  in
   let constr, hp_defs, c, unk_hpargs2, link_hpargs2, equivs = infer_shapes_core iprog prog proc_name cond_path constrs0
     callee_hps sel_hps
     sel_post_hps hp_rel_unkmap unk_hpargs link_hpargs need_preprocess detect_dang in
