@@ -1,0 +1,42 @@
+data node{
+	int val;
+	node prev;
+	node next;
+}.
+
+HeapPred H1(node a, node b).
+HeapPred HP_2(node a, node b).
+HeapPred HP_3(node a, node b).
+HeapPred G1(node a, node b).
+
+infer [H1,G1]
+ H1(c,p)&c=c' & p=p' & c'!=null & v_bool_19_784' & c'!=null & v_bool_19_784'
+ |-  c'::node<val_21_777',prev_21_778',next_21_779'>@M.
+
+print residue.
+
+
+/*
+
+GOT
+===
+ <1>HP_38(prev_21_36,p') * HP_39(next_21_37,p') * HP_40(p',c)&p=p' & c!=null & v_bool_19_784' & c!=null & v_bool_19_784' & val_21_35=val_21_777' & prev_21_36=prev_21_778' & next_21_37=next_21_779'&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [H1(c',p)&
+                   c'!=null --> c'::node<val_21_35,prev_21_36,next_21_37>@M * 
+                   HP_38(prev_21_36,p@NI) * HP_39(next_21_37,p@NI) * 
+                   HP_40(p,c'@NI)]
+
+
+ id: 4; caller: []; line: 21; classic: false; kind: BIND; hec_num: 5; evars: []; infer_vars: [H1,G1]; c_heap: emp
+ checkentail H1(c,p)&c=c' & p=p' & c'!=null & v_bool_19_784' & c'!=null & v_bool_19_784'&
+{FLOW,(22,23)=__norm}[]
+ |-  c'::node<val_21_777',prev_21_778',next_21_779'>@M[Orig]&
+{FLOW,(1,25)=__flow}[]. 
+hprel_ass: 
+[ H1(c,p)&c!=null --> c::node<val_21_807,prev_21_808,next_21_809>@M * 
+  HP_810(prev_21_808,p) * HP_811(next_21_809,p) * HP_812(p,c)]
+res:  [
+  HP_810(prev_21_808,p) * HP_811(next_21_809,p) * HP_812(p,c)&c=c' & p=p' & c'!=null & v_bool_19_784' & c'!=null & v_bool_19_784' & val_21_777'=val_21_807 & prev_21_778'=prev_21_808 & next_21_779'=next_21_809&{FLOW,(22,23)=__norm}[]
+  ]
+*/
+
