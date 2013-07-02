@@ -192,7 +192,7 @@ let convert_prim_to_obj (t:typ) : typ =
 (*for heap predicate*)
 let hp_default_prefix_name = "HP_"
 let hppost_default_prefix_name = "GP_"
-let dang_hp_default_prefix_name = "UU"
+let dang_hp_default_prefix_name = "__DP"
 (*
   Data types for code gen
 *)
@@ -668,7 +668,7 @@ let sa_en = ref true
 
 let sa_en_split = ref false
 
-let sa_dangling = ref false
+(* let sa_dangling = ref false *)
 
 let sa_refine_dang = ref false
 
@@ -676,7 +676,7 @@ let pred_elim_useless = ref false
 
 let pred_elim_dangling = ref false
 
-let sa_inlining = ref false
+(* let sa_inlining = ref false *)
 
 let sa_s_split_base = ref false
 

@@ -1264,12 +1264,19 @@ and drop_data_view_hrel_nodes_hf_from_root prog hf hd_nodes hv_nodes eqs drop_ro
 (*
 this function may be subsumed by simp_match_partial_unknown
 *)
-let simp_match_unknown unk_hps link_hps cs=
+let simp_match_unknown_x unk_hps link_hps cs=
   let lhs_hps = CF.get_hp_rel_name_formula cs.CF.hprel_lhs in
   let rhs_hps = CF.get_hp_rel_name_formula cs.CF.hprel_rhs in
   let inter_hps = CP.intersect_svl lhs_hps rhs_hps in
   let inter_unk_hps = CP.intersect_svl inter_hps (unk_hps@link_hps) in
   CF.drop_hprel_constr cs inter_unk_hps
+
+let simp_match_unknown unk_hps link_hps cs=
+  let pr1 = Cprinter.string_of_hprel_short in
+  let pr2 = !CP.print_svl in
+  Debug.no_3 "simp_match_unknown" pr2 pr2 pr1 pr1
+      (fun _ _ _ -> simp_match_unknown_x unk_hps link_hps cs)
+      unk_hps link_hps cs
 
 let simp_match_hp_w_unknown_x prog unk_hps link_hps cs=
   let tot_unk_hps = unk_hps@link_hps in
@@ -2396,7 +2403,7 @@ let rec find_imply prog lunk_hps runk_hps lhs1 rhs1 lhs2 rhs2=
                       select_vnode select_hrel rnodes_match rnodes_match matched_hps;
                   CF.formula_base_pure = MCP.mix_of_pure
                       (CP.filter_var_new
-                          (MCP.pure_of_mix rhs2.CF.formula_base_pure) all_matched_svl2)}
+                          (MCP.pure_of_mix rhs2.CF.formula_base_pure) (CP.diff_svl (CF.fv (CF.Base rhs2)) all_matched_svl2))}
               in
               let n_lhs2 = (* CF.subst ss2 *) lhs2 in
               (*end refresh*)
@@ -3822,7 +3829,7 @@ let mk_orig_hprel_def prog is_pre defs unk_hps hp r other_args args sh_ldns eqNu
   in
   let pr7a hrel = Cprinter.string_of_hrel_formula (CF.HRel hrel) in
   let pr7 = pr_list pr7a in
-  Debug.ho_7 "mk_orig_hprel_def" pr2 pr1 pr2 (pr_list pr3) pr2 pr4 pr7 pr6
+  Debug.no_7 "mk_orig_hprel_def" pr2 pr1 pr2 (pr_list pr3) pr2 pr4 pr7 pr6
       (fun _ _ _ _ _ _ _ -> mk_orig_hprel_def_x prog is_pre defs unk_hps hp r other_args args sh_ldns
            eqNulls eqPures hprels unk_svl quans)
       unk_hps hp args sh_ldns eqNulls eqPures hprels
@@ -3937,7 +3944,7 @@ let mk_hprel_def_for_subs prog is_pre cdefs unk_hps unk_svl ls_n_hpargs1 n_fs3 p
   let pr2 = pr_list (pr_pair !CP.print_sv pr2a) in
   let pr3a = fun (_, def) -> Cprinter.string_of_hp_rel_def def in
   let pr3 = (pr_list_ln pr3a) in
-  Debug.ho_2 "mk_hprel_def_for_subs" pr2 pr1 pr3
+  Debug.no_2 "mk_hprel_def_for_subs" pr2 pr1 pr3
       (fun _ _ -> mk_hprel_def_for_subs_x prog is_pre cdefs unk_hps unk_svl ls_n_hpargs1 n_fs3 pos)
       ls_n_hpargs1 n_fs3
 

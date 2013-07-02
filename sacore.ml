@@ -820,7 +820,7 @@ let analize_unk_x prog post_hps constrs total_unk_map unk_hpargs link_hpargs=
                                               in pr full_unk_hp_locs0)) no_pos
    in
    let full_unk_hp_locs, link_hpargs2a =
-     if !Globals.sa_dangling then
+     if !Globals.pred_elim_dangling then
        (full_unk_hp_locs0, [])
      else
        let rec assoc3 ls hp=
@@ -850,6 +850,7 @@ let analize_unk_x prog post_hps constrs total_unk_map unk_hpargs link_hpargs=
        let new_constrs, unk_hpargs, new_map, drop_links = update_helper constrs total_unk_map [] [] [] in
        let new_constrs1, link_hpargs4a=
          if drop_links = [] then (new_constrs, link_hpargs3) else
+           (* let _ = Debug.info_pprint ("  drop_links: " ^ (!CP.print_svl drop_links)) no_pos in *)
            (List.map (fun cs -> CF.drop_hprel_constr cs drop_links) new_constrs,
            List.filter (fun (hp,_) -> not(CP.mem_svl hp drop_links)) link_hpargs3)
        in
@@ -1026,6 +1027,12 @@ let transform_unk_hps_to_pure_x hp_defs unk_hp_frargs =
     let f2 = CF.subst ss f1 in
     (*add pure eqs*)
     let pos = CF.pos_of_formula f2 in
+    (****************************************)
+    (*LOC: now we dont need eqs for pred parameters
+      (we abs preds as a set it should be set inclusion operators).
+      so we set eqs = []*)
+    (***************************************)
+    let eqs = [] in
     let p_eqs = List.map (fun (sv1,sv2) -> CP.mkPtrEqn sv1 sv2 pos) eqs in
     let p = CP.conj_of_list (CP.remove_redundant_helper p_eqs []) pos in
     let f3 = CF.mkAnd_pure f2 (MCP.mix_of_pure p) pos in
@@ -1060,27 +1067,40 @@ let transform_unk_hps_to_pure hp_defs unk_hpargs =
   Debug.no_2 "transform_unk_hps_to_pure" pr1 pr2 pr1
       (fun _ _ -> transform_unk_hps_to_pure_x hp_defs unk_hpargs) hp_defs unk_hpargs
 
-let transform_xpure_to_pure_x hp_defs unk_map=
+let transform_xpure_to_pure_x prog hp_defs unk_map link_hpargs=
   let fr_map = List.map (fun ((hp,_), xp) ->
       let args = match xp.CP.xpure_view_node with
         | None -> xp.CP.xpure_view_arguments
         | Some sv -> sv::xp.CP.xpure_view_arguments
       in
+      let args_inst = SAU.get_hp_args_inst prog hp args in
       let (CP.SpecVar (t, _, p)) = hp in
       (CP.SpecVar(t, xp.CP.xpure_view_name, p),
-      let dang_name = dang_hp_default_prefix_name ^ "_" ^ xp.CP.xpure_view_name ^ "_" ^dang_hp_default_prefix_name  in
-      let (CP.SpecVar (t, _, p)) = List.hd args in
+      let dang_name = dang_hp_default_prefix_name ^ "_" ^ xp.CP.xpure_view_name (* ^ "_" ^dang_hp_default_prefix_name *)  in
+      let (CP.SpecVar (t, _, p)) = List.hd args_inst in
       [CP.SpecVar (t, dang_name, p)])
   ) unk_map
   in
+  let link_fr_map = List.map (fun ((hp,args)) ->
+      let locs_i = SAU.get_pos_of_hp_args_inst prog hp in
+      let args_inst = SAU.retrieve_args_from_locs args locs_i in
+      let (CP.SpecVar (t, _, p)) = hp in
+      let (CP.SpecVar (t, _, p)) = List.hd args_inst in
+      (hp,
+      let dang_name = dang_hp_default_prefix_name ^ "_" ^ (CP.name_of_spec_var hp) (* ^ "_" ^dang_hp_default_prefix_name *)  in
+      [CP.SpecVar (t, dang_name, p)])
+  ) link_hpargs
+  in
   let tupled_defs,hp_defs1 = List.partition SAU.is_tupled_hpdef hp_defs in
-  let hp_defs2 = transform_unk_hps_to_pure hp_defs1 fr_map in
+  let hp_defs2 = transform_unk_hps_to_pure hp_defs1 (fr_map@link_fr_map) in
   (hp_defs2@tupled_defs)
 
-let transform_xpure_to_pure hp_defs (unk_map:((CP.spec_var * int list) * CP.xpure_view) list) =
+let transform_xpure_to_pure prog hp_defs (unk_map:((CP.spec_var * int list) * CP.xpure_view) list) link_hpargs =
   let pr1 = pr_list_ln Cprinter.string_of_hp_rel_def in
-  Debug.no_1 "transform_xpure_to_pure" pr1 pr1
-      (fun _ -> transform_xpure_to_pure_x hp_defs unk_map) hp_defs
+  let pr2 = pr_list (pr_pair !CP.print_sv !CP.print_svl) in
+  Debug.no_2 "transform_xpure_to_pure" pr1 pr2 pr1
+      (fun _ _ -> transform_xpure_to_pure_x prog hp_defs unk_map link_hpargs)
+      hp_defs link_hpargs
 
 let rec gen_full_pos args n res=
   match args with
@@ -1585,6 +1605,7 @@ This is mandatory
   A<x> --->  x::node<l,r> * H1<l> * H2<r> /\ x::node<l,r> * H2<l> * H1<r>
 *)
 let unify_consj_pre_x prog unk_hps link_hps equivs0 pdefs=
+  let dang_hps = (unk_hps@link_hps) in
   let rec unify_one rem_pdefs ((hp,args1,unk_svl1, cond1, olhs1, orhs1) as pdef1, cs1) done_pdefs equivs=
     match rem_pdefs with
       | [] -> (done_pdefs,[(pdef1,cs1)], equivs)
@@ -1615,7 +1636,7 @@ let unify_consj_pre_x prog unk_hps link_hps equivs0 pdefs=
   match pdefs with
     | [] -> [],equivs0
     |((hp,_,_,_,_,_),_)::_ ->
-         if CP.mem_svl hp (unk_hps@link_hps) then (pdefs, equivs0)  else
+         if CP.mem_svl hp dang_hps then (pdefs, equivs0)  else
            unify_consj pdefs [] equivs0
 
 let unify_consj_pre prog unk_hps link_hps equivs pdefs=
@@ -1882,7 +1903,7 @@ let trans_constr_hp_2_view_x iprog cprog proc_name in_hp_names chprels_decl cons
 let trans_constr_hp_2_view iprog cprog proc_name in_hp_names chprels_decl constrs=
   let pr1= pr_list_ln Cprinter.string_of_hprel_short in
   let pr2 = pr_list pr_id in
-  Debug.ho_2 "trans_constr_hp_2_view" pr2 pr1 pr1
+  Debug.no_2 "trans_constr_hp_2_view" pr2 pr1 pr1
       (fun _ _ -> trans_constr_hp_2_view_x iprog cprog proc_name
           in_hp_names chprels_decl constrs)
       in_hp_names constrs

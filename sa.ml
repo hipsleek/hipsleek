@@ -1127,7 +1127,7 @@ let rec collect_par_defs_one_side_one_hp_aux_x prog f (hrel, args) def_ptrs
           (* let _ =  DD.info_pprint ("  l: \n" ^ *)
           (*                                 (Cprinter.prtt_string_of_formula l) ) no_pos in *)
           let lhs =
-            if !Globals.sa_dangling then
+            if !Globals.pred_elim_dangling then
               let inter_unk_svl = CP.intersect_svl unk_svl keep_ptrs2 in
               if inter_unk_svl = [] || (CF.is_only_neqNull args keep_unk_hps l) then l else
                 add_xpure_dling l unk_hps inter_unk_svl
@@ -1216,7 +1216,7 @@ and collect_par_defs_one_side_one_hp_x prog lhs rhs (hrel, args) ldef_ptrs rdef_
               in
               if (SAU.is_empty_f l) || (CF.is_only_neqNull args keep_unk_hps l)  then None else
                 let lhs =
-                  if !Globals.sa_dangling then
+                  if !Globals.pred_elim_dangling then
                     let inter_unk_svl = CP.intersect_svl unk_svl keep_ptrs in
                     if inter_unk_svl = [] then l else
                       add_xpure_dling l unk_hps inter_unk_svl
@@ -1416,7 +1416,7 @@ let collect_par_defs_recursive_hp_x prog lhs rhs (hrel, args) rec_args other_sid
      let _ = Debug.ninfo_pprint ("args: " ^ (!CP.print_svl args)) no_pos in
      let _ = Debug.ninfo_pprint ("rec_args: " ^ (!CP.print_svl rec_args)) no_pos in
      let plhs1,prhs1=
-       if !Globals.sa_dangling then
+       if !Globals.pred_elim_dangling then
          let inter_unk_svl = CP.intersect_svl unk_svl keep_ptrs in
          let plhs0 = add_xpure_dling plhs unk_hps inter_unk_svl in
          let prhs0 = add_xpure_dling prhs unk_hps inter_unk_svl in
@@ -2457,7 +2457,7 @@ let generalize_one_hp_x prog hpdefs non_ptr_unk_hps unk_hps par_defs=
     let subst = List.combine args args0 in
     let f1 = (CF.subst subst f) in
     let f2 =
-      if !Globals.sa_dangling then
+      if !Globals.pred_elim_dangling then
         CF.annotate_dl f1 (List.filter (fun hp1 -> not (CP.eq_spec_var hp hp1)) unk_hps)
       else f1
     in
@@ -3388,7 +3388,7 @@ let generate_hp_def_from_split prog hpdefs hp_defs_split unk_hpargs=
 
 let generate_init_unk_hpdefs_x ls_unk_hpargs=
   let unk_defs =
-    if !Globals.sa_dangling then [] else
+    if !Globals.pred_elim_dangling then [] else
       List.fold_left (fun ls (hp,args)  ->
           let _, defs = List.split (SAU.mk_unk_hprel_def hp args [(CF.mkHTrue_nf no_pos)] no_pos) in
           ls@defs) [] ls_unk_hpargs
@@ -3802,13 +3802,13 @@ let infer_hps_x prog proc_name (hp_constrs: CF.hprel list) sel_hp_rels sel_post_
   (* in *)
   (* let hp_defs21 = SAU.drop_non_node_unk_hps hp_defs2 non_node_unk_hps in *)
   let hp_defs4=
-     if !Globals.sa_dangling then
+     if !Globals.pred_elim_dangling then
        let _ = print_endline "\n*******relational definitions (wo elim-dangling) ********" in
        let _ = print_endline
          ((let pr = pr_list_ln  Cprinter.string_of_hp_rel_def_short in pr hp_defs3) )
        in
        let hp_defs3a,unk_rel_hpdefs, unk_hp_defs,unk_hp_frargs,unk_rels3 = SAU.generate_hp_def_from_unk_hps hp_def_names unk_hps2 hp_defs3 sel_post_hps [](* unk_rels *) in
-       if !Globals.sa_inlining then
+       if !Globals.pred_elim_dangling then
          let unk_hpdefs_from_rel = SAU.rel_helper sel_post_hps unk_rels3 unk_hp_frargs in
          let all_unk_hpdefs = SAU.combine_hpdefs (unk_hp_defs@unk_hpdefs_from_rel) in
          let hp_defs3b = hp_defs3a@all_unk_hpdefs in
