@@ -5,9 +5,11 @@ data node {
 HeapPred H_9(node a).
 
 
-infer [H_9]
- H_9(next_18_778) * x::node<next_18_778>@M&x=x' & next_18_778=t_30'
-|-  emp&t_30'=null.
+infer [H_9] H_9(n) * x::node<n>@M&x=x' & n=t_30' |-  emp&t_30'=null.
+print residue.
+
+
+infer [n] H_9(n) * x::node<n>@M&x=x' & n=t_30' |-  emp&t_30'=null.
 print residue.
 
 /*
