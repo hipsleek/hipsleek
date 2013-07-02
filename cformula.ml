@@ -3788,15 +3788,6 @@ and disj_count (f0 : formula) = match f0 with
 		1 + c1 + c2
 
   | _ -> 1
-(****************************************)
-(*=========for sa==========*)
-(****************************************)
-(*TODO: LOC: es_cond_path from estate*)
-let get_es_cond_path es=
-  []
-
-let get_list_ctx_cond_path lc=
-  []
 
 let find_close svl0 eqs0=
   let rec find_match svl ls_eqs rem_eqs=
@@ -6230,7 +6221,7 @@ think it is used to instantiate when folding.
   es_orig_ante   : formula option       ;  (* original antecedent formula *) 
   es_orig_conseq : struc_formula ;
   es_path_label : path_trace;
-  es_cond_path : cond_path_type;
+  es_cond_path : cond_path_type_stk;
   es_prior_steps : steps; (* prior steps in reverse order *)
   (*es_cache_no_list : formula_cache_no_list;*)
 
@@ -6483,7 +6474,7 @@ let empty_es flowt grp_lbl pos =
   es_orig_conseq = mkETrue flowt pos;
   es_rhs_eqset = [];
   es_path_label  =[];
-  es_cond_path  =[];
+  es_cond_path  = new Gen.stack ;
   es_prior_steps  = [];
   es_var_measures = None;
   es_var_stack = [];
@@ -9854,7 +9845,7 @@ let clear_entailment_history_es xp (es :entail_state) :context =
           es_formula = es_f;
           es_history = old_history;
           es_path_label = es.es_path_label;
-          es_cond_path = es.es_cond_path;
+          es_cond_path = es.es_cond_path # clone;
           es_prior_steps = es.es_prior_steps;
           es_var_measures = es.es_var_measures;
       (* WN : what is the purpose of es_var_stack?*)
@@ -12743,3 +12734,11 @@ let rec get_heap_inf_args estate =
 
 
 
+(****************************************)
+(*=========for sa==========*)
+(****************************************)
+(*TODO: LOC: es_cond_path from estate*)
+let get_es_cond_path es = es.es_cond_path # get_stk
+
+let get_list_ctx_cond_path lc=
+  []

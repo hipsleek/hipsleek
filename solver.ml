@@ -237,7 +237,7 @@ let clear_entailment_history_es (es :entail_state) :context =
     (empty_es (mkTrueFlow ()) es.es_group_lbl no_pos) with
 	es_formula = es.es_formula;
 	es_path_label = es.es_path_label;
-	es_cond_path = es.es_cond_path;
+	es_cond_path = es.es_cond_path # clone;
 	es_prior_steps = es.es_prior_steps;
 	es_var_measures = es.es_var_measures;
 	(* es_var_label = es.es_var_label; *)
@@ -7684,7 +7684,7 @@ and do_base_case_unfold_only_x prog ante conseq estate lhs_node rhs_node is_fold
         es_var_zero_perm = estate.es_var_zero_perm;
         es_prior_steps = estate.es_prior_steps;
         es_path_label = estate.es_path_label;
-        es_cond_path = estate.es_cond_path;
+        es_cond_path = estate.es_cond_path # clone;
         es_var_measures = estate.es_var_measures;
         es_var_stack = estate.es_var_stack;
         es_orig_ante = estate.es_orig_ante;
@@ -7800,7 +7800,7 @@ and do_lhs_case_x prog ante conseq estate lhs_node rhs_node is_folding pos=
                  es_unsat_flag = false;
                  es_prior_steps = estate.es_prior_steps;
                  es_path_label = estate.es_path_label;
-                 es_cond_path = estate.es_cond_path;
+                 es_cond_path = estate.es_cond_path # clone;
                  es_orig_ante = estate.es_orig_ante;
                  es_infer_vars = estate.es_infer_vars;
                  es_infer_heap = estate.es_infer_heap;

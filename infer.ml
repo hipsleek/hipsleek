@@ -1061,7 +1061,7 @@ let rec infer_pure_m_x unk_heaps estate lhs_rels lhs_xpure_orig lhs_xpure0 lhs_w
                                       (*heap_pred_of_pure*)
                                       (* let truef = CF.mkTrue (CF.mkNormalFlow()) pos in *)
                                       (*LOC: es_cond_path from estate*)
-                                      let es_cond_path = CF.get_es_cond_path new_estate in
+                                      let es_cond_path = CF.get_es_cond_path new_estate  in
                                       let rel_ass1,heap_ass = List.fold_left ( fun (ls1, ls2) (a, p1, p2) ->
                                           let ohf = Predicate.trans_rels p1 in
                                           match ohf with
