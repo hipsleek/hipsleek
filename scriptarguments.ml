@@ -397,7 +397,8 @@ let common_arguments = [
   (* ("--sa-inlining", Arg.Set Globals.sa_inlining, "inline dangling HP/pointers"); *)
   ("--pred-en-eup", Arg.Set Globals.pred_elim_unused_preds, "enable the elimination of unused hprel predicates");
   ("--pred-dis-eup", Arg.Clear Globals.pred_elim_unused_preds, "disable the elimination of unused hprel predicates");
-  ("--sa-s-split", Arg.Set Globals.sa_s_split_base, "split constraints with base case");
+  ("--sa-en-split", Arg.Set Globals.sa_s_split_base, "enable base case splitting of relational assumption");
+  ("--sa-dis-split", Arg.Clear Globals.sa_s_split_base, "disable base case splitting of relational assumption");
   ("--sa-split", Arg.Set Globals.sa_en_split, "splitting hp args into multiple hp if possible");
   ("--sa-unify-dangling", Arg.Set Globals.sa_unify_dangling, "unify branches of definition to instantiate dangling predicate");
   ("--pred-disj-unify", Arg.Set Globals.pred_disj_unify, "attempt to unify two similar predicates among inferred pred defs");
