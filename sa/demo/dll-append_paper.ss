@@ -23,6 +23,24 @@ infer [H,G] requires H(x,y) ensures G(x,y);
 }
 
 /*
+--pred-en-dangling
+
+ H(x_833,y_834) ::=  
+    x_833::node<__DP_H_9,next_15_798>@M * HP_800(next_15_798,y_834) * 
+    y_834::node<__DP_H_2,__DP_H_3>@M,
+
+ HP_800(next_15_831,y_832) ::=  
+ emp&next_15_831=null
+ or next_15_831::node<__DP_H_9,next_15_798>@M * HP_800(next_15_798,y_832)
+
+ G(x_837,y_838) ::=  
+ x_837::node<__DP_H_9,y_838>@M * y_838::node<x_837,__DP_H_3>@M
+ or x_837::node<__DP_H_9,next_15_798>@M * G(next_15_798,y_838)&
+    next_15_798!=null,
+
+
+
+=====================
 dll-append_paper.ss --classic --sa-en-eup
 dll-append_paper.ss --classic --sa-dis-eup
 
@@ -30,57 +48,57 @@ gave the same result even though some predicates have been eliminated.
 could we have the the --sa-dis-eup option working properly?
 
 
-[ H(x_832,y_833) ::=  x_832::node<prev_15_797,next_15_798>@M * HP_799(prev_15_797,y_833) * 
+[ H(x_832,y_833) ::=  x_832::node<prev_15_797,next_15_798>@M * H_9(prev_15_797,y_833) * 
 HP_800(next_15_798,y_833) * y_833::node<prev_21_828,next_21_829>@M * 
-HP_822(prev_21_828,x_832) * HP_823(next_21_829,x_832),
+H_2(prev_21_828,x_832) * H_3(next_21_829,x_832),
 
  G(x_836,y_837) ::=  
- HP_799(prev_15_797,y_837) * x_836::node<prev_15_797,next_15_798>@M * 
+ H_9(prev_15_797,y_837) * x_836::node<prev_15_797,next_15_798>@M * 
  G(next_15_798,y_837)&next_15_798!=null
- or HP_799(prev_15_797,y_837) * x_836::node<prev_15_797,y_837>@M * 
-    HP_823(next_21_821,x_836) * y_837::node<x_836,next_21_821>@M,
+ or H_9(prev_15_797,y_837) * x_836::node<prev_15_797,y_837>@M * 
+    H_3(next_21_821,x_836) * y_837::node<x_836,next_21_821>@M,
 
  HP_800(next_15_830,y_831) ::=  
- next_15_830::node<prev_15_797,next_15_798>@M * HP_799(prev_15_797,y_831) * 
+ next_15_830::node<prev_15_797,next_15_798>@M * H_9(prev_15_797,y_831) * 
  HP_800(next_15_798,y_831)
  or emp&next_15_830=null,
 
- HP_799(prev_15_797,y) ::= NONE,
- HP_822(prev_21_820,x) ::= NONE,
- HP_823(next_21_821,x) ::= NONE]
+ H_9(prev_15_797,y) ::= NONE,
+ H_2(prev_21_820,x) ::= NONE,
+ H_3(next_21_821,x) ::= NONE]
 
 dll-append_paper.ss --classic --sa-dis-eup
 
  H(x_832,y_833) ::=  x_832::node<prev_15_797,next_15_798>@M 
-   * HP_799(prev_15_797,y_833) * HP_800(next_15_798,y_833) 
+   * H_9(prev_15_797,y_833) * HP_800(next_15_798,y_833) 
    * y_833::node<prev_21_828,next_21_829>@M 
-   * HP_822(prev_21_828,x_832) * HP_823(next_21_829,x_832),
+   * H_2(prev_21_828,x_832) * H_3(next_21_829,x_832),
 
  G(x_836,y_837) ::=  
- HP_799(prev_15_797,y_837) * x_836::node<prev_15_797,next_15_798>@M * 
+ H_9(prev_15_797,y_837) * x_836::node<prev_15_797,next_15_798>@M * 
  G(next_15_798,y_837)&next_15_798!=null
- or HP_799(prev_15_797,y_837) * x_836::node<prev_15_797,y_837>@M * 
-    HP_823(next_21_821,x_836) * y_837::node<x_836,next_21_821>@M,
+ or H_9(prev_15_797,y_837) * x_836::node<prev_15_797,y_837>@M * 
+    H_3(next_21_821,x_836) * y_837::node<x_836,next_21_821>@M,
 
  HP_800(next_15_830,y_831) ::=  
- next_15_830::node<prev_15_797,next_15_798>@M * HP_799(prev_15_797,y_831) * 
+ next_15_830::node<prev_15_797,next_15_798>@M * H_9(prev_15_797,y_831) * 
  HP_800(next_15_798,y_831)
  or emp&next_15_830=null
 
- HP_799(prev_15_797,y) ::= NONE,
- HP_822(prev_21_820,x) ::= NONE,
- HP_823(next_21_821,x) ::= NONE]
+ H_9(prev_15_797,y) ::= NONE,
+ H_2(prev_21_820,x) ::= NONE,
+ H_3(next_21_821,x) ::= NONE]
 
 
 ====
 
  G(x_843,y_844) ::=  x_843::node<prev_15_797,next_15_798>@M 
    * GP_845(next_15_798,y_844) * 
-     HP_823(next_21_821,x_843) * HP_799(prev_15_797,y_844),
+     H_3(next_21_821,x_843) * H_9(prev_15_797,y_844),
  
  GP_845(next_15_798,y_844) ::=  
  next_15_798::node<prev_15_853,next_15_851>@M * GP_845(next_15_851,y_844) * 
- HP_823(next_21_852,next_15_798) * HP_799(prev_15_853,y_844)
+ H_3(next_21_852,next_15_798) * H_9(prev_15_853,y_844)
  or y_844::node<x_843,next_21_821>@M&next_15_798=y_844
  
 ==============================
@@ -103,56 +121,56 @@ res:  [
 ==============
 
 [ H(x,y)&true --> x::node<next_15_797,prev_15_798>@M * 
-  HP_799(next_15_797,y@NI) * HP_800(prev_15_798,y@NI) * HP_801(y,x@NI)&true,
+  H_9(next_15_797,y@NI) * HP_800(prev_15_798,y@NI) * HP_801(y,x@NI)&true,
 
- HP_799(next_15_797,y@NI) * HP_801(y,x@NI)&
+ H_9(next_15_797,y@NI) * HP_801(y,x@NI)&
   next_15_797!=null --> H(next_15_797,y)&true,
 
  HP_801(y,x@NI)&true --> y::node<next_21_820,prev_21_821>@M * 
-  HP_822(next_21_820,x@NI) * HP_823(prev_21_821,x@NI)&true,
+  H_2(next_21_820,x@NI) * H_3(prev_21_821,x@NI)&true,
 
  HP_800(prev_15_798,y@NI) * x::node<next_15_797,prev_15_798>@M * 
   G(next_15_797,y)&next_15_797!=null --> G(x,y)&true,
 
  HP_800(prev_15_798,y@NI) * x::node<y,prev_15_798>@M * 
-  HP_822(next_21_820,x@NI) * y::node<next_21_820,x>@M&true --> G(x,y)&true]
+  H_2(next_21_820,x@NI) * y::node<next_21_820,x>@M&true --> G(x,y)&true]
 
 =======
 
-[ H(x,y) --> x::node<next_15_797,prev_15_798>@M * HP_799(next_15_797,y@NI) * 
+[ H(x,y) --> x::node<next_15_797,prev_15_798>@M * H_9(next_15_797,y@NI) * 
   HP_800(prev_15_798,y@NI) * HP_801(y,x@NI),
 
- HP_799(next_15_797,y@NI) * HP_801(y,x@NI)&
+ H_9(next_15_797,y@NI) * HP_801(y,x@NI)&
   next_15_797!=null --> H(next_15_797,y),
 
  HP_801(y,x@NI) --> y::node<next_21_820,prev_21_821>@M * 
-  HP_822(next_21_820,x@NI) * HP_823(prev_21_821,x@NI),
+  H_2(next_21_820,x@NI) * H_3(prev_21_821,x@NI),
 
  HP_800(prev_15_798,y@NI) * x::node<next_15_797,prev_15_798>@M * 
   G(next_15_797,y)&next_15_797!=null --> G(x,y),
 
- HP_823(prev_21_821,x@NI) --> emp,
+ H_3(prev_21_821,x@NI) --> emp,
 
- HP_799(next_15_797,y@NI)&next_15_797=null --> emp,
+ H_9(next_15_797,y@NI)&next_15_797=null --> emp,
 
  HP_800(prev_15_798,y@NI) * x::node<y,prev_15_798>@M * 
-  HP_822(next_21_820,x@NI) * y::node<next_21_820,x>@M --> G(x,y)]
+  H_2(next_21_820,x@NI) * y::node<next_21_820,x>@M --> G(x,y)]
 
 ==================
 [ 
 
-H(x_859,y_860) ::=  y_860::node<next_21_820,prev_21_821>@M * HP_822(next_21_820,x_859) * 
-  HP_823(prev_21_821,x_859) * x_859::node<next_15_845,prev_15_846>@M * 
+H(x_859,y_860) ::=  y_860::node<next_21_820,prev_21_821>@M * H_2(next_21_820,x_859) * 
+  H_3(prev_21_821,x_859) * x_859::node<next_15_845,prev_15_846>@M * 
   HP_800(prev_15_846,y_860)&next_15_845=null,
 
  G(x_865,y_866) ::=  HP_800(prev_15_798,y_866) * x_865::node<next_15_797,prev_15_798>@M * 
       G(next_15_797,y_866)&next_15_797!=null
  or HP_800(prev_15_798,y_866) * x_865::node<y_866,prev_15_798>@M * 
-    HP_822(next_21_820,x_865) * y_866::node<next_21_820,x_865>@M
+    H_2(next_21_820,x_865) * y_866::node<next_21_820,x_865>@M
  ,
  HP_800(prev_15_798,y) ::= NONE,
- HP_822(next_21_820,x) ::= NONE,
- HP_823(prev_21_821,x) ::= NONE]
+ H_2(next_21_820,x) ::= NONE,
+ H_3(prev_21_821,x) ::= NONE]
 *************************************
 
 *************************************

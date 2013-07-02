@@ -16,6 +16,17 @@ module Err = Error
 module CP = Cpure
 module MCP = Mcpure
 
+type cond_path_type = int list
+
+(* let string_of_cond_path c = "(" ^(String.concat ", " (List.map string_of_int c)) ^ ")" *)
+let string_of_cond_path c = pr_list_round string_of_int c
+
+type cond_path_type_stk = int Gen.stack
+
+let string_of_cond_path_stk stk =
+  let lst = stk # get_stk in
+  string_of_cond_path lst
+
 type ann = ConstAnn of heap_ann | PolyAnn of CP.spec_var | TempAnn of ann
 
 let view_prim_lst = new Gen.stack_pr pr_id (=) 

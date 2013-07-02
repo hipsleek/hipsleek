@@ -51,7 +51,7 @@ type command =
   | ShapeElim of (ident list)
   | ShapeExtract of (ident list)
   | ShapeDeclDang of (ident list)
-  | ShapeDeclUnknown of (cond_path_type * ident list)
+  | ShapeDeclUnknown of (CF.cond_path_type * ident list)
   | ShapeSConseq of (ident list * ident list)
   | ShapeSAnte of (ident list * ident list)
   | EqCheck of (ident list * meta_formula * meta_formula)

@@ -83,7 +83,7 @@ let cprog = ref { C.prog_data_decls = [];
 let residues =  ref (None : (CF.list_context * bool) option)    (* parameter 'bool' is used for printing *)
 
 let sleek_hprel_assumes = ref ([]: CF.hprel list)
-let sleek_hprel_unknown = ref ([]: (cond_path_type * (CP.spec_var * CP.spec_var list)) list)
+let sleek_hprel_unknown = ref ([]: (CF.cond_path_type * (CP.spec_var * CP.spec_var list)) list)
 let sleek_hprel_dang = ref ([]: (CP.spec_var *CP.spec_var list) list)
 
 let clear_iprog () =
@@ -733,7 +733,7 @@ let process_decl_hpunknown (cond_path, hp_names) =
   in
   let hpargs = List.map process hp_names in
   let _ = Debug.ninfo_pprint ("unknown: " ^
-      (let pr = pr_list (pr_pair string_of_cond_path (pr_pair !Cpure.print_sv !Cpure.print_svl)) in pr hpargs)) no_pos in
+      (let pr = pr_list (pr_pair CF.string_of_cond_path (pr_pair !Cpure.print_sv !Cpure.print_svl)) in pr hpargs)) no_pos in
   let _ = sleek_hprel_unknown := !sleek_hprel_unknown@hpargs in
   ()
 
