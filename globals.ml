@@ -21,10 +21,6 @@ let ineq_opt_flag = ref false
 
 let illegal_format s = raise (Illegal_Prover_Format s)
 
-type cond_path_type = int list
-
-let string_of_cond_path c= "(" ^(String.concat ", " (List.map string_of_int c))
-  ^ ")"
 
 (* type nflow = (int*int)(\*numeric representation of flow*\) *)
 type flags = 
