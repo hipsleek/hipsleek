@@ -3151,7 +3151,7 @@ To make it recursive, we unfold:
   G(..) & pure --> ..[..G(..)..]...
 
 =====================================================================
-# dll-append_paper.ss --classic --sa-en-eup
+# dll-append_paper.ss --classic --sa-en-eup  FIXED
 dll-append_paper.ss --classic --sa-dis-eup
 
 gave the same result even though some predicates have been eliminated.
