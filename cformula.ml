@@ -118,7 +118,7 @@ and hprel= {
     predef_svl: CP.spec_var list; (* not needed *)
     hprel_lhs: formula;
     hprel_rhs: formula;
-    (* hprel_path: cond_path_type; *)
+    hprel_path: cond_path_type;
 }
 
 
@@ -348,16 +348,16 @@ let mkETrue flowt pos = EBase({
 	formula_struc_continuation = None;
 	formula_struc_pos = pos})
 
-let mkHprel  knd u_svl u_hps pd_svl hprel_l hprel_r =  
+let mkHprel knd u_svl u_hps pd_svl hprel_l hprel_r hprel_p=
  {  hprel_kind = knd;
     unk_svl = u_svl;
-    unk_hps = u_hps ; 
+    unk_hps = u_hps ;
     predef_svl = pd_svl;
     hprel_lhs = hprel_l;
     hprel_rhs = hprel_r;
-    (* hprel_path = None; *)
+    hprel_path = hprel_p;
  }
-	
+
 let isAnyConstFalse f = match f with
   | Exists ({formula_exists_heap = h;
     formula_exists_pure = p;
@@ -3780,6 +3780,13 @@ and disj_count (f0 : formula) = match f0 with
 (****************************************)
 (*=========for sa==========*)
 (****************************************)
+(*TODO: LOC: es_cond_path from estate*)
+let get_es_cond_path es=
+  []
+
+let get_list_ctx_cond_path lc=
+  []
+
 let find_close svl0 eqs0=
   let rec find_match svl ls_eqs rem_eqs=
     match ls_eqs with

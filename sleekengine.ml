@@ -696,6 +696,8 @@ let process_rel_assume hp_id (ilhs : meta_formula) (irhs: meta_formula)=
   let hp = TI.get_spec_var_type_list_infer (hp_id, Unprimed) orig_vars no_pos in
   (* let _ =  print_endline ("LHS = " ^ (Cprinter.string_of_formula lhs)) in *)
   (* let _ =  print_endline ("RHS = " ^ (Cprinter.string_of_formula rhs)) in *)
+  (*TODO: LOC: hp_id should be cond_path*)
+  let cond_path = [] in
   let new_rel_ass = {
       CF.hprel_kind = CP.RelAssume [hp];
       unk_svl = [];(*inferred from norm*)
@@ -703,6 +705,7 @@ let process_rel_assume hp_id (ilhs : meta_formula) (irhs: meta_formula)=
       predef_svl = [];
       hprel_lhs = lhs;
       hprel_rhs = rhs;
+      hprel_path = cond_path;
   } in
   (*hp_assumes*)
   let _ = sleek_hprel_assumes := !sleek_hprel_assumes@[new_rel_ass] in
@@ -805,10 +808,11 @@ let process_shape_postObl pre_hps post_hps=
   let constrs2, sel_hps, sel_post_hps, unk_map, unk_hpargs, link_hpargs=
     shape_infer_pre_process hp_lst_assume pre_hps post_hps
   in
+  let cond_path = [] in
   let ls_inferred_hps, ls_hprel, _, _ =
     if List.length sel_hps> 0 && List.length hp_lst_assume > 0 then
       let infer_shape_fnc = Sa2.infer_shapes_from_fresh_obligation in
-      infer_shape_fnc iprog !cprog "" constrs2 [] []
+      infer_shape_fnc iprog !cprog "" cond_path constrs2 [] []
           sel_hps sel_post_hps [] unk_hpargs link_hpargs true unk_map false
           [] [] []
     else [], [],[],[]
@@ -918,7 +922,8 @@ let process_shape_split pre_hps post_hps=
   (*sleek level: depend on user annotation. with hip, this information is detected automatically*)
   let constrs1, unk_map, unk_hpargs = SAC.detect_dangling_pred !sleek_hprel_assumes sel_hp_rels [] in
    let link_hpargs = !sleek_hprel_unknown in
-  let new_constrs,_,_ = Sa2.split_constr !cprog constrs1 post_hp_rels infer_vars unk_map (List.map fst unk_hpargs) (List.map fst link_hpargs) in
+   let cond_path = [] in
+  let new_constrs,_,_ = Sa2.split_constr !cprog cond_path constrs1 post_hp_rels infer_vars unk_map (List.map fst unk_hpargs) (List.map fst link_hpargs) in
   let pr1 = pr_list_ln Cprinter.string_of_hprel_short in
   begin
     print_endline "\n*************************************";

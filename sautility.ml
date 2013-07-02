@@ -1628,7 +1628,7 @@ let find_well_eq_defined_hp prog hds hvs lhsb eqs (hp,args)=
   in
   if List.length args = 2 then loop_helper eqs else ([], [(hp,args)])
 
-let generate_hp_ass unk_svl (hp,args,lfb,rf) =
+let generate_hp_ass unk_svl cond_p (hp,args,lfb,rf) =
   let new_cs = {
       CF.hprel_kind = CP.RelAssume [hp];
       unk_svl = unk_svl;(*inferred from norm*)
@@ -1636,6 +1636,7 @@ let generate_hp_ass unk_svl (hp,args,lfb,rf) =
       predef_svl = [];
       hprel_lhs = CF.Base lfb;
       hprel_rhs = rf;
+      hprel_path = cond_p;
   }
   in
   let _ = Debug.dinfo_pprint ("  new cs " ^ (Cprinter.string_of_hprel_short new_cs)) no_pos in
