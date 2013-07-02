@@ -458,6 +458,7 @@ class ['a] stack  =
      method is_empty = stk == []
      method len = List.length stk
      method reverse = stk <- List.rev stk
+     method reverse_of = List.rev stk
      method mem (i:'a) = List.mem i stk 
      method mem_eq eq (i:'a) = List.exists (fun b -> eq i b) stk 
      (* method exists (i:'a) = List.mem i stk  *)
@@ -470,21 +471,26 @@ class ['a] stack  =
    end;;
 
 class ['a] stack_pr (epr:'a->string) (eq:'a->'a->bool)  =
-   object 
-     inherit ['a] stack as super
-     val elem_pr = epr 
-     val elem_eq = eq 
-     method string_of = Basic.pr_list_ln elem_pr stk
-     method string_of_no_ln = Basic.pr_list elem_pr stk
-     method string_of_reverse = let _ = super#reverse  in
-                                Basic.pr_list_ln elem_pr stk
-     method string_of_reverse_log = let _ = super#reverse  in
-                                Basic.pr_list_mln elem_pr stk
-     method mem (i:'a) = List.exists (elem_eq i) stk
-     method overlap (ls:'a list) = 
-	   if (ls == []) then false
-	   else List.exists (fun x -> List.exists (elem_eq x) ls) stk
-   end;;
+object 
+  inherit ['a] stack as super
+  val elem_pr = epr 
+  val elem_eq = eq 
+  method string_of = Basic.pr_list_ln elem_pr stk
+  method string_of_no_ln = Basic.pr_list elem_pr stk
+  method string_of_no_ln_rev = 
+    let s = super#reverse_of in
+    Basic.pr_list elem_pr s
+  method string_of_reverse = 
+    let s = super#reverse_of  in
+    Basic.pr_list_ln elem_pr s
+  method string_of_reverse_log = 
+    let s = super#reverse_of  in
+    Basic.pr_list_mln elem_pr s
+  method mem (i:'a) = List.exists (elem_eq i) stk
+  method overlap (ls:'a list) = 
+    if (ls == []) then false
+    else List.exists (fun x -> List.exists (elem_eq x) ls) stk
+end;;
 
 
 class ['a] stack_filter (epr:'a->string) (eq:'a->'a->bool) (fil:'a->bool)  =

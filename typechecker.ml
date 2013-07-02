@@ -44,8 +44,23 @@ let simplify_context = ref false
 let parallelize num =
   num_para := num
 
- 
-  
+let cond_path = new Gen.stack_pr (string_of_int) (==) 
+
+let wrap_cond_path i exec_function args =
+  begin
+    let _ = cond_path # push i in
+    let _ = DD.binfo_pprint ("cond_path "^(cond_path # string_of_no_ln_rev)) no_pos in
+    try 
+      let res = exec_function args in
+      let _ = cond_path # pop in
+      res
+    with _ as e ->
+        begin
+          let _ = cond_path # pop in
+          raise e
+        end
+  end
+
 (* let rec check_specs prog proc ctx spec_list e0 = *)
 (*   check_specs_a prog proc ctx spec_list e0 *)
 (*       (\*Debug.loop_2_no "check_specs" (Cprinter.string_of_context) (Cprinter.string_of_struc_formula) (string_of_bool) (fun ctx spec_list -> (check_specs_a prog proc ctx spec_list e0)) ctx spec_list*\) *)
@@ -567,6 +582,8 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
 			CF.formula_assume_lbl = post_label;
 			CF.formula_assume_ensures_type = etype;
 			CF.formula_assume_struc = post_struc} ->
+            let _ = cond_path # reset in
+            let _ = cond_path # push 0 in
             let curr_vars = stk_vars # get_stk in
             (* let ovars = CF.fv post_cond in *)
             (* let ov = CP.diff_svl ovars curr_vars in *)
@@ -1578,8 +1595,10 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
           exp_cond_condition = v;
           exp_cond_then_arm = e1;
           exp_cond_else_arm = e2;
-          exp_cond_path_id =pid;
+          exp_cond_path_id = pid;
           exp_cond_pos = pos}) ->
+              (* let _ = DD.binfo_hprint (add_str "cond_path_id"  *)
+              (*     (fun s -> Cprinter.pr_control_path_id_opt s)) pid pos in *)
               let cond_op () =
                 begin
 	          let _ = proving_loc#set pos in
@@ -1598,9 +1617,9 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 		  
 	          Debug.devel_zprint (lazy ("conditional: else_delta:\n" ^ (Cprinter.string_of_list_failesc_context else_ctx))) pos;
 	          let then_ctx1 = CF.add_cond_label_list_failesc_context pid 0 then_ctx in
-	          let else_ctx1 = CF.add_cond_label_list_failesc_context pid 1 else_ctx in 
-	          let then_ctx2 = check_exp prog proc then_ctx1 e1 post_start_label in
-	          let else_ctx2 = check_exp prog proc else_ctx1 e2 post_start_label in
+	          let else_ctx1 = CF.add_cond_label_list_failesc_context pid 1 else_ctx in
+	          let then_ctx2 = wrap_cond_path 1 (check_exp prog proc then_ctx1 e1) post_start_label in
+	          let else_ctx2 = wrap_cond_path 2 (check_exp prog proc else_ctx1 e2) post_start_label in
 	          let res = CF.list_failesc_context_or (Cprinter.string_of_esc_stack) then_ctx2 else_ctx2 in
 	          res
 	        end in

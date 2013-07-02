@@ -830,6 +830,8 @@ let string_of_formula_label_opt h s2:string = match h with | None-> s2 | Some s 
 let string_of_control_path_id (i,s) s2:string = string_of_formula_label (i,s) s2
 let string_of_control_path_id_opt h s2:string = string_of_formula_label_opt h s2
 let string_of_formula_label_only x :string = string_of_formula_label x ""
+let pr_formula_label = pr_pair string_of_int pr_id
+let pr_control_path_id_opt h = pr_option pr_formula_label h
 
 let string_of_iast_label_table table =
   let string_of_row row =

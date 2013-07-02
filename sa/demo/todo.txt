@@ -3285,7 +3285,7 @@ EXPECTED
 =====================================================================
 # assert-1-bug-5.slk
 
-  inconsistent with
+  inconsistent with hip outcome in
 
 # assert-1.ss
 # assert-1a.ss

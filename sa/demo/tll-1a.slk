@@ -59,7 +59,7 @@ Derive
   H(x,r) --> x::node<left_29_845,right_29_846,next_29_847>@M * 
     H(left_29_845,_) * H_9(right_29_846,r) * H_0(next_29_847,r).
   //Confirm
-  H(x,r) <-> x::node<left_29_845,right_29_846,next_29_847>@M * 
+  H(x,r) --> x::node<left_29_845,right_29_846,next_29_847>@M * 
     H(left_29_845,_) * H_9(right_29_846,r) * H_0(next_29_847,r).
 
 Derive H9
@@ -68,7 +68,7 @@ Derive H9
   H_9(x,r)&x!=null --> H(right_29_846,r).
   // Conj Unify
   H_9(x,r) --> 
-     H(x,r) & x!=null  or x!=null
+     H(x,r) & x!=null /\ x!=null
   // Confirm H_9
   H_9(x,r) <--> 
      H(x,_) & x!=null  or x=null
@@ -80,6 +80,9 @@ Further Transform H
   or x::node<left_29_845,right_29_846,next_29_847>@M * 
     H(left_29_845,_) * H(right_29_846,r) * H_0(next_29_847,r).
 
+
+H(..) --> x::node<l,q>*H(l)*K(q)
+K(q) --> q=null /\ H(q) & x!=null--
 
 Thus
 ====

@@ -248,12 +248,12 @@ let string_of_vp_ann a =
 
 let string_of_term_ann a =
   match a with
-  | Term -> "Term"
-  | Loop -> "Loop"
-  | MayLoop -> "MayLoop"
-  | Fail f -> match f with
-    | TermErr_May -> "TermErr_May"
-    | TermErr_Must -> "TermErr_Must"
+    | Term -> "Term"
+    | Loop -> "Loop"
+    | MayLoop -> "MayLoop"
+    | Fail f -> match f with
+        | TermErr_May -> "TermErr_May"
+        | TermErr_Must -> "TermErr_Must"
 
 let string_of_loc (p : loc) = 
     Printf.sprintf "1 File \"%s\",Line:%d,Col:%d"
@@ -384,7 +384,7 @@ let proving_info () =
           in ("Proving Infor spec:"^(post_pos#string_of_pos) ^loc_info^" kind::"^temp)
     )
   else "..no proving kind.."(*"who called is_sat,imply,simplify to be displayed later..."*)
-	
+
 
 let wrap_proving_kind (str : string) exec_function args =
   (* if (!sleek_logging_txt || !proof_logging_txt) then *)
