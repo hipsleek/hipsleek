@@ -1,0 +1,689 @@
+
+##################### sleek tests ###################
+Starting sleek tests:
+Checking sleek.slk
+Checking sleek1.slk
+Checking sleek10.slk
+Checking sleek2.slk
+Checking sleek3.slk
+Checking sleek4.slk
+Checking sleek6.slk
+Checking sleek7.slk
+Checking sleek8.slk
+Checking sleek9.slk
+Checking symb-diff.slk
+Checking infer/infer1.slk
+Checking infer/infer2.slk
+Checking infer/infer4.slk
+Checking infer/infer5.slk
+Checking infer/infer6.slk
+Checking infer/infer7.slk
+Checking infer/infer8.slk
+Checking infer/infer9.slk
+Checking infer/infer10.slk
+Checking infer/infer11.slk
+Checking infer/infer12.slk
+Checking infer/infer13.slk
+Checking infer/infer14.slk
+Checking infer/infer15.slk
+Checking ann1.slk (runs with extra options:  --imm )
+Checking imm/imm1.slk (runs with extra options:  --imm )
+Unexpected result with : imm/imm1.slk
+Checking imm/imm2.slk (runs with extra options:  --imm )
+Checking imm/imm3.slk (runs with extra options:  --imm )
+Unexpected result with : imm/imm3.slk
+Checking imm/imm4.slk (runs with extra options:  --imm )
+Checking imm/imm-hard.slk (runs with extra options:  --imm --eps)
+Checking classic/classic1.slk
+Checking classic/classic1.slk (runs with extra options:  --classic)
+Checking classic/classic2.slk
+Checking classic/classic3.slk
+Starting hip-sleek tests:
+Total number of errors: 2 in files:
+  imm/imm1.slk imm/imm3.slk.
+Total verification time: 2.43 second
+	Time spent in main process: 1.14 second
+	Time spent in child processes: 1.29 second
+	Number of false contexts: 0
+
+##################### must-bugs error tests ###################
+Starting sleek must/may errors tests:
+Starting sleek-musterr tests:
+Checking err1.slk
+Checking err2.slk
+Checking err3.slk
+Checking err4.slk
+Checking err5.slk
+Checking err6.slk
+Checking err7.slk
+Checking err9.slk
+Starting hip-musterr tests:
+All test results were as expected.
+Total verification time: 0.00 second
+	Time spent in main process: 0.00 second
+	Time spent in child processes: 0.00 second
+	Number of false contexts: 0
+
+##################### hip tests --eps #####################
+Starting sleek-hip tests:
+Starting hip tests:
+Checking eps.ss
+Checking append.ss
+Checking append-tail.ss
+Checking avl-bind.ss
+Checking avl.ss
+Checking avl-orig-2.ss
+Checking avl-orig3.ss
+Checking bll.ss
+Checking bubble.ss
+Checking cll.ss
+Checking complete.ss
+Checking dll.ss
+Checking heaps.ss
+Checking insertion.ss
+Checking ll.ss
+Checking merge.ss
+Checking perfect.ss
+Checking qsort.ss
+Checking qsort-tail.ss
+Checking selection.ss
+Checking sll.ss
+Checking trees.ss
+Checking rb.ss
+Checking global1.ss
+Checking global2.ss
+Checking global3.ss
+Checking global4.ss
+Checking global5.ss
+Checking global-ll.ss
+Checking global-mutual-rec.ss
+Checking classic/classic1.ss
+Checking classic/classic1.ss (runs with extra options: --classic)
+Checking classic/classic1a.ss
+Checking classic/classic1a.ss (runs with extra options: --classic)
+Checking classic/classic2.ss
+Checking classic/classic2a.ss
+Checking classic/classic3.ss
+Checking classic/classic3a.ss
+All test results were as expected.
+Total verification time: 140.04 second
+	Time spent in main process: 44.74 second
+	Time spent in child processes: 95.30 second
+	Number of false contexts: 826
+
+##################### imm tests --eps ###################
+Starting sleek-imm tests:
+Starting hip-imm tests:
+Checking bigint.ss (runs with extra options:  --imm -tp redlog)
+Checking bigint_imm.ss (runs with extra options:  --imm -tp redlog)
+error at: bigint_imm.ss mult2
+Checking bigint_imm-star.ss (runs with extra options:  --imm -tp redlog)
+Checking bigint-tight.ss (runs with extra options:  --imm -tp redlog)
+Checking bigint-tight-imm.ss (runs with extra options:  --imm -tp redlog)
+error at: bigint-tight-imm.ss mult
+Checking bigint-tight-imm-star.ss (runs with extra options:  --imm -tp redlog)
+Checking append_imm.ss (runs with extra options:  --imm )
+Checking kara.ss (runs with extra options:  --imm -tp redlog)
+Checking kara-imm-star.ss (runs with extra options:  --imm -tp redlog)
+Checking kara-imm-conj.ss (runs with extra options: --imm -tp redlog)
+Checking ll_imm.ss (runs with extra options:  --imm )
+Total number of errors: 2 in files:
+ error at: bigint_imm.ss mult2
+error at: bigint-tight-imm.ss mult
+.
+Total verification time: 901.70 second
+	Time spent in main process: 26.10 second
+	Time spent in child processes: 875.60 second
+	Number of false contexts: 102
+
+##################### term tests #####################
+Starting sleek-term tests:
+Starting hip-term tests:
+Checking e1.ss
+Checking ex1.ss
+Checking ex10.ss
+Checking ex11.ss
+Checking ex15.ss
+Checking ex16.ss
+Checking ex2.ss
+Checking ex3.ss
+Checking ex4.ss
+Checking ex5.ss
+Checking ex6.ss
+Checking ex7.ss
+Checking ex8.ss
+Checking ex9.ss
+Checking mutual.ss
+Checking benchs/lit/cav08-1.ss
+Checking benchs/lit/cav08-2.ss
+Checking benchs/lit/cav08-3.ss
+Checking benchs/lit/cav08-4.ss
+Checking benchs/lit/cav08-5.ss
+Checking benchs/lit/cav08-6.ss
+Checking benchs/lit/dijkstra76-1.ss
+Checking benchs/lit/dijkstra76-2.ss
+Checking benchs/lit/dijkstra76-3.ss
+Checking benchs/lit/pldi06-1.ss
+Checking benchs/lit/pldi06-2.ss
+Checking benchs/lit/pldi06-3.ss
+Checking benchs/lit/pldi06-4.ss
+Checking benchs/lit/pldi06-5.ss
+Checking benchs/lit/popl07-1.ss
+Checking benchs/lit/popl07-2.ss
+Checking benchs/lit/sas05.ss
+Checking benchs/lit/sas10-1.ss
+Checking benchs/lit/sas10-2.ss
+Checking benchs/lit/sas10-2a.ss
+Checking benchs/lit/sas10-3.ss
+Checking benchs/lit/vcc-1.ss
+Checking benchs/lit/vmcai05-1a.ss
+Checking benchs/lit/vmcai05-1b.ss (runs with extra options: -tp redlog)
+Checking benchs/key/AlternatingIncr.ss
+Checking benchs/key/AlternDiv-invalid-1.ss (runs with extra options: -tp redlog)
+Checking benchs/key/AlternDiv.ss (runs with extra options: -tp redlog)
+Checking benchs/key/AlternDivWidening.ss (runs with extra options: -tp redlog)
+Checking benchs/key/AlternDivWide.ss
+Checking benchs/key/AlternKonv.ss
+Checking benchs/key/Collatz.ss
+Checking benchs/key/ComplInterv2.ss
+Checking benchs/key/ComplInterv3.ss
+Checking benchs/key/ComplInterv.ss (runs with extra options: -tp z3)
+Checking benchs/key/ComplxStruc-may.ss
+Checking benchs/key/ComplxStruc2.ss
+Checking benchs/key/ConvLower.ss
+Checking benchs/key/Cousot.ss
+Checking benchs/key/DoubleNeg.ss (runs with extra options: -tp redlog)
+Checking benchs/key/Even.ss
+Checking benchs/key/Ex01.ss
+Checking benchs/key/Ex02.ss
+Checking benchs/key/Ex03.ss
+Checking benchs/key/Ex04.ss
+Checking benchs/key/Ex05.ss
+Checking benchs/key/Ex06.ss
+Checking benchs/key/Ex07.ss
+Checking benchs/key/Ex08.ss
+Checking benchs/key/Ex09.ss
+Checking benchs/key/Fibonacci.ss
+Checking benchs/key/Flip2.ss
+Checking benchs/key/Flip3.ss
+Checking benchs/key/Flip.ss
+Checking benchs/key/Gauss.ss
+Checking benchs/key/Gcd-may.ss
+Checking benchs/key/Lcm.ss
+Checking benchs/key/Marbie1.ss
+Checking benchs/key/Marbie2.ss
+Checking benchs/key/Middle.ss
+Checking benchs/key/MirrorIntervSim.ss
+Checking benchs/key/MirrorInterv.ss
+Checking benchs/key/ModuloLower.ss
+Checking benchs/key/ModuloUp.ss (runs with extra options: -tp redlog)
+Checking benchs/key/Narrowing.ss
+Checking benchs/key/NarrowKonv.ss
+Checking benchs/key/NegPos.ss (runs with extra options: -tp redlog)
+Checking benchs/key/Plait-may.ss
+Checking benchs/key/Sunset.ss
+Checking benchs/key/TrueDiv.ss
+Checking benchs/key/TwoFloatInterv.ss
+Checking benchs/key/UpAndDownIneq.ss
+Checking benchs/key/UpAndDown.ss
+Checking benchs/key/WhileBreak.ss
+Checking benchs/key/WhileDecr.ss
+Checking benchs/key/WhileIncrPart.ss
+Checking benchs/key/WhileIncr.ss
+Checking benchs/key/WhileNestedOffset.ss
+Checking benchs/key/WhileNested.ss
+Checking benchs/key/WhilePart.ss
+Checking benchs/key/WhileSingle.ss
+Checking benchs/key/WhileSum.ss
+Checking benchs/key/WhileTrue.ss
+Checking benchs/aprove/Aprove_09/DivMinus2.ss
+Checking benchs/aprove/Aprove_09/DivMinus.ss
+Checking benchs/aprove/Aprove_09/DivWithoutMinus.ss
+Checking benchs/aprove/Aprove_09/Duplicate.ss
+Checking benchs/aprove/Aprove_09/GCD2.ss (runs with extra options: -tp redlog)
+Checking benchs/aprove/Aprove_09/GCD3.ss
+Checking benchs/aprove/Aprove_09/GCD4.ss
+Checking benchs/aprove/Aprove_09/GCD5.ss (runs with extra options: -tp redlog)
+Checking benchs/aprove/Aprove_09/GCD.ss (runs with extra options: -tp redlog)
+Checking benchs/aprove/Aprove_09/LogAG.ss
+Checking benchs/aprove/Aprove_09/LogBuiltIn.ss
+Checking benchs/aprove/Aprove_09/LogIterative.ss (runs with extra options: -tp redlog)
+Checking benchs/aprove/Aprove_09/LogMult.ss (runs with extra options: -tp redlog)
+Checking benchs/aprove/Aprove_09/Log.ss
+Checking benchs/aprove/Aprove_09/McCarthyIterative-may.ss
+Checking benchs/aprove/Aprove_09/McCarthyRec.ss
+Checking benchs/aprove/Aprove_09/MinusBuiltIn.ss
+Checking benchs/aprove/Aprove_09/MinusMin.ss
+Checking benchs/aprove/Aprove_09/MinusUserDefined.ss
+Checking benchs/aprove/Aprove_09/Mod.ss
+Checking benchs/aprove/Aprove_09/PlusSwap.ss
+Checking benchs/aprove/Aprove_09/Round3.ss
+Checking benchs/aprove/AProVE_10/AG313.ss
+Checking benchs/aprove/AProVE_11_iterative/RetValRec.ss
+Checking benchs/aprove/AProVE_11_iterative/RetVal.ss
+Checking benchs/aprove/AProVE11NO/LoopingNonTerm.ss
+Checking benchs/aprove/AProVE11NO/NonPeriodicNonTerm2.ss
+Checking benchs/aprove/BOG_RTA_11/Avg.ss
+Checking benchs/aprove/BOG_RTA_11/EqUserDefRec.ss
+Checking benchs/aprove/BOG_RTA_11/Fibonacci.ss
+Checking benchs/aprove/BOG_RTA_11/LeUserDefRec.ss
+Checking benchs/aprove/BOG_RTA_11/LogRecursive.ss (runs with extra options: -tp redlog)
+Checking benchs/aprove/BOG_RTA_11/Nest.ss
+Checking benchs/aprove/BOG_RTA_11/TerminatiorRec01.ss
+Checking benchs/aprove/BOG_RTA_11/TerminatiorRec02.ss (runs with extra options: -tp redlog)
+Checking benchs/aprove/BOG_RTA_11/TerminatiorRec03.ss
+Checking benchs/aprove/BOG_RTA_11/TerminatiorRec04-modified.ss
+Checking benchs/aprove/BOG_RTA_11/TerminatiorRec04.ss
+Checking benchs/aprove/BOG_RTA_11/TimesPlusUserDef.ss
+Checking benchs/aprove/BOG_RTA_11/TwoWay.ss (runs with extra options: -tp redlog)
+Checking benchs/aprove/Costa_Julia_09/Break.ss
+Checking benchs/aprove/Costa_Julia_09/Continue1.ss
+Checking benchs/aprove/Costa_Julia_09/Continue.ss
+Checking benchs/aprove/Costa_Julia_09/costa09-example_1.ss
+Checking benchs/aprove/Costa_Julia_09/costa09-example_2.ss (runs with extra options: -tp redlog)
+Checking benchs/aprove/Costa_Julia_09/costa09-example_3.ss
+Checking benchs/aprove/Costa_Julia_09/Exc1-exc.ss
+Checking benchs/aprove/Costa_Julia_09/Exc2-exc.ss
+Checking benchs/aprove/Costa_Julia_09/Exc3-exc.ss
+Checking benchs/aprove/Costa_Julia_09/Exc4-exc.ss
+Checking benchs/aprove/Costa_Julia_09/Exc5-exc.ss
+Checking benchs/aprove/Costa_Julia_09/Exc-exc.ss
+Checking benchs/aprove/Costa_Julia_09/Exc1-no.ss
+Checking benchs/aprove/Costa_Julia_09/Exc2-no.ss
+Checking benchs/aprove/Costa_Julia_09/Exc3-no.ss
+Checking benchs/aprove/Costa_Julia_09/Exc4-no.ss
+Checking benchs/aprove/Costa_Julia_09/Exc5-no.ss
+Checking benchs/aprove/Costa_Julia_09/Exc-no.ss
+Checking benchs/aprove/Costa_Julia_09/Loop1.ss
+Checking benchs/aprove/Costa_Julia_09/Nested.ss
+Checking benchs/aprove/Costa_Julia_09/Sequence.ss
+Checking benchs/aprove/Costa_Julia_09/TestJulia4.ss (runs with extra options: -tp redlog)
+Checking benchs/aprove/Costa_Julia_09-recursive/Ackermann.ss
+Checking benchs/aprove/Costa_Julia_09-recursive/Double-1.ss (runs with extra options: -tp redlog)
+Checking benchs/aprove/Costa_Julia_09-recursive/Double2-1.ss
+Checking benchs/aprove/Costa_Julia_09-recursive/Double2.ss
+Checking benchs/aprove/Costa_Julia_09-recursive/Double3-1.ss
+Checking benchs/aprove/Costa_Julia_09-recursive/Double3.ss
+Checking benchs/aprove/Costa_Julia_09-recursive/Double.ss (runs with extra options: -tp redlog)
+Checking benchs/aprove/Costa_Julia_09-recursive/Factorial.ss (runs with extra options: -tp redlog)
+Checking benchs/aprove/Costa_Julia_09-recursive/FactSumList.ss (runs with extra options: -tp redlog)
+Checking benchs/aprove/Costa_Julia_09-recursive/FactSum.ss (runs with extra options: -tp redlog)
+Checking benchs/aprove/Costa_Julia_09-recursive/Hanoi.ss
+Checking benchs/aprove/Julia_10_Iterative/NonPeriodic.ss
+Checking benchs/aprove/Julia_10_Iterative/Test11.ss (runs with extra options: -tp redlog)
+Checking benchs/aprove/Julia_10_Iterative/Test2.ss
+Checking benchs/aprove/Julia_10_Recursive/AckR.ss
+Checking benchs/aprove/Julia_10_Recursive/FibSLR.ss (runs with extra options: -tp redlog)
+Checking benchs/aprove/Julia_10_Recursive/HanR.ss
+Checking benchs/aprove/Julia_10_Recursive/Power.ss (runs with extra options: -tp redlog)
+Checking benchs/aprove/Julia_10_Recursive/Recursions.ss
+Checking benchs/aprove/Julia_10_Recursive/Test10.ss
+Checking benchs/aprove/Julia_10_Recursive/Test12.ss (runs with extra options: -tp redlog)
+Checking benchs/aprove/Julia_10_Recursive/Test1.ss
+Checking benchs/aprove/Julia_11_iterative/ChooseLife.ss
+Checking benchs/aprove/Julia_11_iterative/Choose.ss
+Checking benchs/aprove/Julia_11_iterative/Continue.ss
+Checking benchs/aprove/Julia_11_iterative/Loop.ss (runs with extra options: -tp redlog)
+Checking benchs/aprove/Julia_11_iterative/NO_00.ss
+Checking benchs/aprove/Julia_11_iterative/NO_01.ss
+Checking benchs/aprove/Julia_11_iterative/NO_02.ss
+Checking benchs/aprove/Julia_11_iterative/NO_03.ss
+Checking benchs/aprove/Julia_11_iterative/NO_04.ss
+Checking benchs/aprove/Julia_11_iterative/NO_05.ss
+Checking benchs/aprove/Julia_11_iterative/NO_06.ss
+Checking benchs/aprove/Julia_11_iterative/NO_10.ss
+Checking benchs/aprove/Julia_11_iterative/NO_11.ss
+Checking benchs/aprove/Julia_11_iterative/NO_12.ss
+Checking benchs/aprove/Julia_11_iterative/NO_20.ss
+Checking benchs/aprove/Julia_11_iterative/NO_21.ss
+Checking benchs/aprove/Julia_11_iterative/NO_22.ss
+Checking benchs/aprove/Julia_11_iterative/NO_23.ss
+Checking benchs/aprove/Julia_11_iterative/NO_24.ss
+Checking benchs/aprove/Julia_11_iterative/Parts.ss
+Checking benchs/aprove/Julia_11_iterative/Swingers.ss
+Checking benchs/aprove/pasta/PastaA10.ss
+Checking benchs/aprove/pasta/PastaA1.ss
+Checking benchs/aprove/pasta/PastaA4.ss
+Checking benchs/aprove/pasta/PastaA5.ss
+Checking benchs/aprove/pasta/PastaA6.ss
+Checking benchs/aprove/pasta/PastaA7.ss
+Checking benchs/aprove/pasta/PastaA8.ss
+Checking benchs/aprove/pasta/PastaA9.ss
+Checking benchs/aprove/pasta/PastaB10.ss
+Checking benchs/aprove/pasta/PastaB11.ss
+Checking benchs/aprove/pasta/PastaB12.ss
+Checking benchs/aprove/pasta/PastaB13.ss
+Checking benchs/aprove/pasta/PastaB14.ss
+Checking benchs/aprove/pasta/PastaB15.ss
+Checking benchs/aprove/pasta/PastaB16-loop.ss
+Checking benchs/aprove/pasta/PastaB16.ss
+Checking benchs/aprove/pasta/PastaB17.ss
+Checking benchs/aprove/pasta/PastaB18.ss
+Checking benchs/aprove/pasta/PastaB1.ss
+Checking benchs/aprove/pasta/PastaB2.ss
+Checking benchs/aprove/pasta/PastaB3.ss
+Checking benchs/aprove/pasta/PastaB4.ss
+Checking benchs/aprove/pasta/PastaB4-loop.ss
+Checking benchs/aprove/pasta/PastaB5.ss
+Checking benchs/aprove/pasta/PastaB6.ss
+Checking benchs/aprove/pasta/PastaB7.ss
+Checking benchs/aprove/pasta/PastaB8.ss
+Checking benchs/aprove/pasta/PastaC10-while.ss
+Checking benchs/aprove/pasta/PastaC11.ss
+Checking benchs/aprove/pasta/PastaC11-while.ss
+Checking benchs/aprove/pasta/PastaC1.ss
+Checking benchs/aprove/pasta/PastaC1-while.ss
+Checking benchs/aprove/pasta/PastaC2-while.ss
+Checking benchs/aprove/pasta/PastaC3.ss
+Checking benchs/aprove/pasta/PastaC3-while.ss
+Checking benchs/aprove/pasta/PastaC4-while.ss
+Checking benchs/aprove/pasta/PastaC5-while.ss
+Checking benchs/aprove/pasta/PastaC7-simpl-1.ss
+Checking benchs/aprove/pasta/PastaC7-simpl-2.ss
+Checking benchs/aprove/pasta/PastaC7-simpl.ss
+Checking benchs/aprove/pasta/PastaC7.ss
+Checking benchs/aprove/pasta/PastaC7-while.ss
+Checking benchs/aprove/pasta/PastaC8-while.ss
+Checking benchs/aprove/pasta/PastaC9-while.ss
+All test results were as expected.
+Total verification time: 70.36 second
+	Time spent in main process: 41.06 second
+	Time spent in child processes: 29.30 second
+	Number of false contexts: 5770
+
+##################### lists tests #####################
+Starting sleek-lemmas tests:
+Checking lemma_check01.slk (runs with extra options:  --elp )
+Unexpected result with : lemma_check01.slk
+Checking lemma_check02.slk (runs with extra options:  --elp )
+Unexpected result with : lemma_check02.slk
+Checking lemma_check03.slk (runs with extra options:  --elp )
+Unexpected result with : lemma_check03.slk
+Checking lemma_check04.slk (runs with extra options:  --elp )
+Unexpected result with : lemma_check04.slk
+Checking lemma_check06.slk (runs with extra options:  --elp )
+Unexpected result with : lemma_check06.slk
+Starting hip-lemmas tests:
+Checking lemma_check01.ss (runs with extra options:  --elp )
+error at: lemma_check01.ss V1
+error at: lemma_check01.ss V2
+error at: lemma_check01.ss F3
+Checking lemma_check02.ss (runs with extra options:  --elp )
+error at: lemma_check02.ss F5
+error at: lemma_check02.ss V6
+Checking lemma_check03.ss (runs with extra options:  --elp )
+error at: lemma_check03.ss L1
+error at: lemma_check03.ss L2
+error at: lemma_check03.ss L4
+Checking lemma_check04.ss (runs with extra options:  --elp )
+error at: lemma_check04.ss L41
+error at: lemma_check04.ss L42
+error at: lemma_check04.ss L43
+Checking lemma_check06.ss (runs with extra options:  --elp )
+error at: lemma_check06.ss L61
+error at: lemma_check06.ss L67
+error at: lemma_check06.ss L62
+error at: lemma_check06.ss L64
+error at: lemma_check06.ss L65
+error at: lemma_check06.ss L66
+Total number of errors: 22 in files:
+  lemma_check01.slk lemma_check02.slk lemma_check03.slk lemma_check04.slk lemma_check06.slkerror at: lemma_check01.ss V1
+error at: lemma_check01.ss V2
+error at: lemma_check01.ss F3
+error at: lemma_check02.ss F5
+error at: lemma_check02.ss V6
+error at: lemma_check03.ss L1
+error at: lemma_check03.ss L2
+error at: lemma_check03.ss L4
+error at: lemma_check04.ss L41
+error at: lemma_check04.ss L42
+error at: lemma_check04.ss L43
+error at: lemma_check06.ss L61
+error at: lemma_check06.ss L67
+error at: lemma_check06.ss L62
+error at: lemma_check06.ss L64
+error at: lemma_check06.ss L65
+error at: lemma_check06.ss L66
+.
+Total verification time: 3.94 second
+	Time spent in main process: 1.36 second
+	Time spent in child processes: 2.58 second
+	Number of false contexts: 0
+
+##################### lists tests #####################
+Starting sleek-lists tests:
+Starting hip-lists tests:
+Checking demo.ss
+error at: demo.ss reverse
+error at: demo.ss create_list
+error at: demo.ss delete_val
+error at: demo.ss delete
+error at: demo.ss insert
+error at: demo.ss get_next_next
+error at: demo.ss set_null
+error at: demo.ss set_next
+error at: demo.ss get_next
+error at: demo.ss ret_first
+error at: demo.ss append
+Checking demo2.ss
+error at: demo2.ss app_rev
+error at: demo2.ss reverse
+error at: demo2.ss append
+Checking err-coq.ss
+Checking ll.ss
+error at: ll.ss reverse
+error at: ll.ss create_list
+error at: ll.ss delete_val
+error at: ll.ss delete
+error at: ll.ss insert
+error at: ll.ss get_next_next
+error at: ll.ss set_null
+error at: ll.ss set_next
+error at: ll.ss get_next
+error at: ll.ss ret_first
+error at: ll.ss append
+Checking ll_bak.ss
+error at: ll_bak.ss reverse
+error at: ll_bak.ss create_list
+error at: ll_bak.ss delete_val
+error at: ll_bak.ss delete
+error at: ll_bak.ss insert
+error at: ll_bak.ss get_next_next
+error at: ll_bak.ss set_null
+error at: ll_bak.ss set_next
+error at: ll_bak.ss get_next
+error at: ll_bak.ss ret_first
+error at: ll_bak.ss append
+Checking ll_bak2.ss
+error at: ll_bak2.ss reverse
+error at: ll_bak2.ss create_list
+error at: ll_bak2.ss delete_val
+error at: ll_bak2.ss delete
+error at: ll_bak2.ss insert
+error at: ll_bak2.ss get_next_next
+error at: ll_bak2.ss set_null
+error at: ll_bak2.ss set_next
+error at: ll_bak2.ss get_next
+error at: ll_bak2.ss ret_first
+error at: ll_bak2.ss append
+Checking ll_bak3.ss
+error at: ll_bak3.ss reverse
+error at: ll_bak3.ss create_list
+error at: ll_bak3.ss delete_val
+error at: ll_bak3.ss delete
+error at: ll_bak3.ss insert
+error at: ll_bak3.ss get_next_next
+error at: ll_bak3.ss set_null
+error at: ll_bak3.ss set_next
+error at: ll_bak3.ss get_next
+error at: ll_bak3.ss ret_first
+error at: ll_bak3.ss append
+Checking ll_nolists.ss
+Checking ll_test1.ss
+error at: ll_test1.ss reverse
+Checking ll_test2.ss
+error at: ll_test2.ss delete
+Checking ll_test4.ss
+error at: ll_test4.ss test
+Checking ll_test5.ss
+error at: ll_test5.ss delete_val
+Checking lrev-bug.ss
+Checking lrev.ss
+Checking merge.ss
+error at: merge.ss merge
+Checking merge1.ss
+error at: merge1.ss merge
+Checking merge2.ss
+error at: merge2.ss merge
+Checking merge3.ss
+error at: merge3.ss merge
+Checking mk_zero.ss
+error at: mk_zero.ss mk_zero
+Checking perm.ss
+error at: perm.ss append
+Total number of errors: 68 in files:
+ error at: demo.ss reverse
+error at: demo.ss create_list
+error at: demo.ss delete_val
+error at: demo.ss delete
+error at: demo.ss insert
+error at: demo.ss get_next_next
+error at: demo.ss set_null
+error at: demo.ss set_next
+error at: demo.ss get_next
+error at: demo.ss ret_first
+error at: demo.ss append
+error at: demo2.ss app_rev
+error at: demo2.ss reverse
+error at: demo2.ss append
+error at: ll.ss reverse
+error at: ll.ss create_list
+error at: ll.ss delete_val
+error at: ll.ss delete
+error at: ll.ss insert
+error at: ll.ss get_next_next
+error at: ll.ss set_null
+error at: ll.ss set_next
+error at: ll.ss get_next
+error at: ll.ss ret_first
+error at: ll.ss append
+error at: ll_bak.ss reverse
+error at: ll_bak.ss create_list
+error at: ll_bak.ss delete_val
+error at: ll_bak.ss delete
+error at: ll_bak.ss insert
+error at: ll_bak.ss get_next_next
+error at: ll_bak.ss set_null
+error at: ll_bak.ss set_next
+error at: ll_bak.ss get_next
+error at: ll_bak.ss ret_first
+error at: ll_bak.ss append
+error at: ll_bak2.ss reverse
+error at: ll_bak2.ss create_list
+error at: ll_bak2.ss delete_val
+error at: ll_bak2.ss delete
+error at: ll_bak2.ss insert
+error at: ll_bak2.ss get_next_next
+error at: ll_bak2.ss set_null
+error at: ll_bak2.ss set_next
+error at: ll_bak2.ss get_next
+error at: ll_bak2.ss ret_first
+error at: ll_bak2.ss append
+error at: ll_bak3.ss reverse
+error at: ll_bak3.ss create_list
+error at: ll_bak3.ss delete_val
+error at: ll_bak3.ss delete
+error at: ll_bak3.ss insert
+error at: ll_bak3.ss get_next_next
+error at: ll_bak3.ss set_null
+error at: ll_bak3.ss set_next
+error at: ll_bak3.ss get_next
+error at: ll_bak3.ss ret_first
+error at: ll_bak3.ss append
+error at: ll_test1.ss reverse
+error at: ll_test2.ss delete
+error at: ll_test4.ss test
+error at: ll_test5.ss delete_val
+error at: merge.ss merge
+error at: merge1.ss merge
+error at: merge2.ss merge
+error at: merge3.ss merge
+error at: mk_zero.ss mk_zero
+error at: perm.ss append
+.
+Total verification time: 0.22 second
+	Time spent in main process: 0.12 second
+	Time spent in child processes: 0.10 second
+	Number of false contexts: 0
+
+##################### NO slicing tests ?? ###################
+
+##################### imm tests no eps ###################
+Starting sleek-imm tests:
+Starting hip-imm tests:
+Checking bigint.ss (runs with extra options:  --imm -tp redlog)
+Checking bigint_imm.ss (runs with extra options:  --imm -tp redlog)
+error at: bigint_imm.ss mult2
+Checking bigint_imm-star.ss (runs with extra options:  --imm -tp redlog)
+Checking bigint-tight.ss (runs with extra options:  --imm -tp redlog)
+Checking bigint-tight-imm.ss (runs with extra options:  --imm -tp redlog)
+error at: bigint-tight-imm.ss mult
+Checking bigint-tight-imm-star.ss (runs with extra options:  --imm -tp redlog)
+Checking append_imm.ss (runs with extra options:  --imm )
+Checking kara.ss (runs with extra options:  --imm -tp redlog)
+Checking kara-imm-star.ss (runs with extra options:  --imm -tp redlog)
+error at: kara-imm-star.ss karatsuba_mult
+Checking kara-imm-conj.ss (runs with extra options: --imm -tp redlog)
+error at: kara-imm-conj.ss karatsuba_mult
+Checking ll_imm.ss (runs with extra options:  --imm )
+Total number of errors: 4 in files:
+ error at: bigint_imm.ss mult2
+error at: bigint-tight-imm.ss mult
+error at: kara-imm-star.ss karatsuba_mult
+error at: kara-imm-conj.ss karatsuba_mult
+.
+Total verification time: 413.22 second
+	Time spent in main process: 26.58 second
+	Time spent in child processes: 386.64 second
+	Number of false contexts: 88
+
+##################### array tests (runs with -tp z3) #####################
+Starting sleek-array tests:
+Starting hip-array tests:
+Checking arr_at.java
+Checking arr_binarysearch.java
+Checking arr_search_decrease_less_than_two.java
+error at: arr_search_decrease_less_than_two.java searchzero
+Checking arr_bubblesort.java
+Checking arr_bubblesort_perm.java
+Checking arr_double.java
+Checking arr_extract_nonzeros.java
+Checking arr_init.java
+Checking arr_insertsort.java
+Checking arr_insertsort_perm.java
+error at: arr_insertsort_perm.java insertion_sort
+Checking arr_invert.java
+error at: arr_invert.java Invert
+Checking arr_max.java
+Checking arr_mergesort.java
+error at: arr_mergesort.java merge_sorted_arrays
+error at: arr_mergesort.java merge_sort
+Checking arr_new_exp.java
+Checking arr_nqueens.java
+Checking arr_qsort.java
+Checking arr_rev.java
+Checking arr_selectionsort.java
+Checking arr_selectionsort_perm.java
+Checking arr_sparse.java (runs with extra options: --imm)
+Checking arr_sum.java
+Total number of errors: 5 in files:
+ error at: arr_search_decrease_less_than_two.java searchzero
+error at: arr_insertsort_perm.java insertion_sort
+error at: arr_invert.java Invert
+error at: arr_mergesort.java merge_sorted_arrays
+error at: arr_mergesort.java merge_sort
+.
+Total verification time: 91.66 second
+	Time spent in main process: 4.88 second
+	Time spent in child processes: 86.78 second
+	Number of false contexts: 254

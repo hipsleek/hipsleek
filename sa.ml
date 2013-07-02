@@ -202,6 +202,7 @@ and filter_hp_rel_args (hf: CF.h_formula) (drlocs: (CP.spec_var* int list) list)
       | CF.HTrue
       | CF.HFalse
       | CF.HEmp -> hf0,[]
+	  | CF.StarMinus _ | CF.ConjStar _ | CF.ConjConj _ -> Error.report_no_pattern ()
   in
   helper hf
 
@@ -4063,10 +4064,12 @@ let build_horm_view_x templ_view_decls horm_dd=
       Iast.view_vars = view.Iast.view_vars;
 	  Iast.view_labels = view.Iast.view_labels;
 	  Iast.view_modes = view.Iast.view_modes;
+	  Iast.view_is_prim = view.Iast.view_is_prim;
 	  Iast.view_kind = view.Iast.view_kind;
       Iast.view_prop_extns = view.Iast.view_prop_extns;
 	  Iast.view_typed_vars = view.Iast.view_typed_vars;
 	  Iast.view_invariant = n_view_invariant;
+	  Iast.view_mem = view.Iast.view_mem;
 	  Iast.view_formula = n_view_formula;
       Iast.view_inv_lock = n_view_inv_lock;
 	  Iast.view_pt_by_self = view.Iast.view_pt_by_self;

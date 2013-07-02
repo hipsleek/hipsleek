@@ -141,9 +141,11 @@ let rec fixcalc_of_pure_formula f = match f with
 let rec fixcalc_of_h_formula f = match f with
   | Star {h_formula_star_h1 = h1; h_formula_star_h2 = h2} -> 
     "(" ^ fixcalc_of_h_formula h1 ^ op_and ^ fixcalc_of_h_formula h2 ^ ")"
-  | Phase _ -> 
-    illegal_format ("Fixcalc.fixcalc_of_h_formula: Not supported Phase-formula")
-  | Conj {h_formula_conj_h1 = h1; h_formula_conj_h2 = h2} -> 
+  | StarMinus {h_formula_starminus_h1 = h1; h_formula_starminus_h2 = h2} -> 
+    "(" ^ fixcalc_of_h_formula h1 ^ op_and ^ fixcalc_of_h_formula h2 ^ ")"    
+  | Conj {h_formula_conj_h1 = h1; h_formula_conj_h2 = h2} 
+  | ConjStar {h_formula_conjstar_h1 = h1; h_formula_conjstar_h2 = h2} 
+  | ConjConj {h_formula_conjconj_h1 = h1; h_formula_conjconj_h2 = h2} -> 
     "(" ^ fixcalc_of_h_formula h1 ^ op_or ^ fixcalc_of_h_formula h2 ^ ")"
   | DataNode {h_formula_data_node = sv; h_formula_data_name = c; 
               h_formula_data_arguments = svs} -> 
@@ -161,6 +163,7 @@ let rec fixcalc_of_h_formula f = match f with
   | HRel _ -> "HTrue"
   | Hole _ -> 
     illegal_format ("Fixcalc.fixcalc_of_h_formula: Not supported Hole-formula")
+  | Phase _ -> Error.report_no_pattern ()
 
 let fixcalc_of_mix_formula f = match f with
   | MCP.MemoF _ -> ""

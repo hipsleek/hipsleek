@@ -1,0 +1,769 @@
+
+!!! Full processing file "replace.c"
+Parsing file "replace.c" by default parser...
+WARNING : parsing problem dom is neither a ranking function nor a relation nor a heap predicate
+WARNING : parsing problem dom is neither a ranking function nor a relation nor a heap predicate
+WARNING : parsing problem dom is neither a ranking function nor a relation nor a heap predicate
+WARNING : parsing problem dom is neither a ranking function nor a relation nor a heap predicate
+WARNING : parsing problem dom is neither a ranking function nor a relation nor a heap predicate
+WARNING : parsing problem dom is neither a ranking function nor a relation nor a heap predicate
+WARNING : parsing problem dom is neither a ranking function nor a relation nor a heap predicate
+WARNING : parsing problem dom is neither a ranking function nor a relation nor a heap predicate
+WARNING : parsing problem dom is neither a ranking function nor a relation nor a heap predicate
+WARNING : parsing problem dom is neither a ranking function nor a relation nor a heap predicate
+WARNING : parsing problem dom is neither a ranking function nor a relation nor a heap predicate
+WARNING : parsing problem dom is neither a ranking function nor a relation nor a heap predicate
+WARNING : parsing problem dom is neither a ranking function nor a relation nor a heap predicate
+WARNING : parsing problem dom is neither a ranking function nor a relation nor a heap predicate
+WARNING : parsing problem dom is neither a ranking function nor a relation nor a heap predicate
+WARNING : parsing problem dom is neither a ranking function nor a relation nor a heap predicate
+WARNING : parsing problem dom is neither a ranking function nor a relation nor a heap predicate
+WARNING : parsing problem dom is neither a ranking function nor a relation nor a heap predicate
+WARNING : parsing problem dom is neither a ranking function nor a relation nor a heap predicate
+WARNING : parsing problem dom is neither a ranking function nor a relation nor a heap predicate
+WARNING : parsing problem dom is neither a ranking function nor a relation nor a heap predicate
+WARNING : parsing problem dom is neither a ranking function nor a relation nor a heap predicate
+WARNING : parsing problem dom is neither a ranking function nor a relation nor a heap predicate
+WARNING : parsing problem dom is neither a ranking function nor a relation nor a heap predicate
+WARNING : parsing problem dom is neither a ranking function nor a relation nor a heap predicate
+WARNING : parsing problem dom is neither a ranking function nor a relation nor a heap predicate
+WARNING : parsing problem dom is neither a ranking function nor a relation nor a heap predicate
+WARNING : parsing problem dom is neither a ranking function nor a relation nor a heap predicate
+WARNING : parsing problem dom is neither a ranking function nor a relation nor a heap predicate
+WARNING : parsing problem dom is neither a ranking function nor a relation nor a heap predicate
+WARNING : parsing problem dom is neither a ranking function nor a relation nor a heap predicate
+WARNING : parsing problem dom is neither a ranking function nor a relation nor a heap predicate
+WARNING : parsing problem dom is neither a ranking function nor a relation nor a heap predicate
+WARNING : parsing problem dom is neither a ranking function nor a relation nor a heap predicate
+WARNING : parsing problem dom is neither a ranking function nor a relation nor a heap predicate
+WARNING : parsing problem dom is neither a ranking function nor a relation nor a heap predicate
+WARNING : parsing problem dom is neither a ranking function nor a relation nor a heap predicate
+WARNING : parsing problem dom is neither a ranking function nor a relation nor a heap predicate
+WARNING : parsing problem dom is neither a ranking function nor a relation nor a heap predicate
+WARNING : parsing problem dom is neither a ranking function nor a relation nor a heap predicate
+WARNING : parsing problem dom is neither a ranking function nor a relation nor a heap predicate
+WARNING : parsing problem dom is neither a ranking function nor a relation nor a heap predicate
+WARNING : parsing problem dom is neither a ranking function nor a relation nor a heap predicate
+WARNING : parsing problem dom is neither a ranking function nor a relation nor a heap predicate
+WARNING : parsing problem dom is neither a ranking function nor a relation nor a heap predicate
+WARNING : parsing problem dom is neither a ranking function nor a relation nor a heap predicate
+WARNING : parsing problem dom is neither a ranking function nor a relation nor a heap predicate
+WARNING : parsing problem dom is neither a ranking function nor a relation nor a heap predicate
+WARNING : parsing problem dom is neither a ranking function nor a relation nor a heap predicate
+WARNING : parsing problem dom is neither a ranking function nor a relation nor a heap predicate
+WARNING : parsing problem dom is neither a ranking function nor a relation nor a heap predicate
+WARNING : parsing problem dom is neither a ranking function nor a relation nor a heap predicate
+WARNING : parsing problem dom is neither a ranking function nor a relation nor a heap predicate
+WARNING : parsing problem dom is neither a ranking function nor a relation nor a heap predicate
+WARNING : parsing problem dom is neither a ranking function nor a relation nor a heap predicate
+WARNING : parsing problem dom is neither a ranking function nor a relation nor a heap predicate
+WARNING : parsing problem dom is neither a ranking function nor a relation nor a heap predicate
+WARNING : parsing problem dom is neither a ranking function nor a relation nor a heap predicate
+WARNING : parsing problem dom is neither a ranking function nor a relation nor a heap predicate
+WARNING : parsing problem dom is neither a ranking function nor a relation nor a heap predicate
+WARNING : parsing problem dom is neither a ranking function nor a relation nor a heap predicate
+WARNING : parsing problem dom is neither a ranking function nor a relation nor a heap predicate
+WARNING : parsing problem dom is neither a ranking function nor a relation nor a heap predicate
+WARNING : parsing problem dom is neither a ranking function nor a relation nor a heap predicate
+WARNING : parsing problem dom is neither a ranking function nor a relation nor a heap predicate
+WARNING : parsing problem dom is neither a ranking function nor a relation nor a heap predicate
+WARNING : parsing problem dom is neither a ranking function nor a relation nor a heap predicate
+WARNING : parsing problem dom is neither a ranking function nor a relation nor a heap predicate
+WARNING : parsing problem dom is neither a ranking function nor a relation nor a heap predicate
+WARNING : parsing problem dom is neither a ranking function nor a relation nor a heap predicate
+WARNING : parsing problem dom is neither a ranking function nor a relation nor a heap predicate
+WARNING : parsing problem dom is neither a ranking function nor a relation nor a heap predicate
+WARNING : parsing problem dom is neither a ranking function nor a relation nor a heap predicate
+WARNING : parsing problem dom is neither a ranking function nor a relation nor a heap predicate
+WARNING : parsing problem dom is neither a ranking function nor a relation nor a heap predicate
+WARNING : parsing problem dom is neither a ranking function nor a relation nor a heap predicate
+WARNING : parsing problem dom is neither a ranking function nor a relation nor a heap predicate
+WARNING : parsing problem dom is neither a ranking function nor a relation nor a heap predicate
+WARNING : parsing problem dom is neither a ranking function nor a relation nor a heap predicate
+
+!!!  processing primitives "["prelude.ss"]
+
+Checking procedure Caseerror$int... 
+Procedure Caseerror$int SUCCESS
+
+Checking procedure addstr$int~int[]~int~int... 
+Context of Verification Failure: 1 File "replace.c",Line:62,Col:22
+Last Proving Location: 1 File "replace.c",Line:70,Col:1
+
+ERROR: at _0:0_0:0 
+Message: Error popping check_exp1from the stack
+ 
+Context of Verification Failure: 1 File "replace.c",Line:62,Col:22
+Last Proving Location: 1 File "replace.c",Line:70,Col:1
+
+ERROR: at _0:0_0:0 
+Message: Error popping check_exp1from the stack
+ 
+Context of Verification Failure: 1 File "replace.c",Line:62,Col:22
+Last Proving Location: 1 File "replace.c",Line:70,Col:1
+
+ERROR: at _0:0_0:0 
+Message: Error popping check_exp1from the stack
+ 
+Context of Verification Failure: 1 File "replace.c",Line:62,Col:22
+Last Proving Location: 1 File "replace.c",Line:70,Col:1
+
+ERROR: at _0:0_0:0 
+Message: Error popping check_exp1from the stack
+ 
+Context of Verification Failure: 1 File "replace.c",Line:62,Col:22
+Last Proving Location: 1 File "replace.c",Line:70,Col:1
+
+ERROR: at _0:0_0:0 
+Message: Error popping check_exp1from the stack
+ 
+Context of Verification Failure: 1 File "replace.c",Line:62,Col:22
+Last Proving Location: 1 File "replace.c",Line:70,Col:1
+
+ERROR: at _0:0_0:0 
+Message: Error popping check_exp1from the stack
+ 
+Context of Verification Failure: 1 File "replace.c",Line:62,Col:22
+Last Proving Location: 1 File "replace.c",Line:70,Col:1
+
+ERROR: at _0:0_0:0 
+Message: Error popping check_exp1from the stack
+ 
+Context of Verification Failure: 1 File "replace.c",Line:62,Col:22
+Last Proving Location: 1 File "replace.c",Line:70,Col:1
+
+ERROR: at _0:0_0:0 
+Message: Error popping check_exp1from the stack
+ 
+Context of Verification Failure: 1 File "replace.c",Line:62,Col:22
+Last Proving Location: 1 File "replace.c",Line:70,Col:1
+
+ERROR: at _0:0_0:0 
+Message: Error popping check_exp1from the stack
+ 
+Context of Verification Failure: 1 File "replace.c",Line:62,Col:22
+Last Proving Location: 1 File "replace.c",Line:70,Col:1
+
+ERROR: at _0:0_0:0 
+Message: Error popping check_exp1from the stack
+ 
+Context of Verification Failure: 1 File "replace.c",Line:62,Col:22
+Last Proving Location: 1 File "replace.c",Line:70,Col:1
+
+ERROR: at _0:0_0:0 
+Message: Error popping method addstr$int~int[]~int~intfrom the stack
+ 
+Procedure addstr$int~int[]~int~int FAIL-2
+
+Exception Failure("Error popping method addstr$int~int[]~int~intfrom the stack") Occurred!
+
+Error(s) detected when checking procedure addstr$int~int[]~int~int
+
+Checking procedure getline$int[]~int... 
+Procedure getline$int[]~int SUCCESS
+
+Checking procedure putsub$int[]~int~int~int[]... 
+Procedure putsub$int[]~int~int~int[] SUCCESS
+
+Checking procedure subline_loop$int[]~int[]~int[]~int~int~int... 
+Procedure subline_loop$int[]~int[]~int[]~int~int~int SUCCESS
+
+Checking procedure subline$int[]~int[]~int[]... 
+Procedure subline$int[]~int[]~int[] SUCCESS
+
+Checking procedure change$int[]~int[]... 
+Procedure change$int[]~int[] SUCCESS
+
+Checking procedure dodash_loop1$int[]~int~int[]~int~int~int~boolean... 
+Procedure dodash_loop1$int[]~int~int[]~int~int~int~boolean SUCCESS
+
+Checking procedure esc$int[]~int... 
+Procedure esc$int[]~int SUCCESS
+
+Checking procedure dodash$int~int[]~int~int[]~int~int... 
+Procedure dodash$int~int[]~int~int[]~int~int SUCCESS
+
+Checking procedure getccl$int[]~int~int[]~int... 
+Procedure getccl$int[]~int~int[]~int SUCCESS
+
+Checking procedure in_set_2$int... 
+Procedure in_set_2$int SUCCESS
+
+Checking procedure stclose_loop$int[]~int~int... 
+Procedure stclose_loop$int[]~int~int SUCCESS
+
+Checking procedure stclose$int[]~int~int... 
+Procedure stclose$int[]~int~int SUCCESS
+
+Checking procedure makepat_loop$int[]~int~int~int[]~boolean~int~boolean~int~int~int~int~boolean... 
+Context of Verification Failure: 1 File "replace.c",Line:315,Col:10
+Last Proving Location: 1 File "replace.c",Line:333,Col:23
+
+ERROR: at _0:0_0:0 
+Message: Error popping check_exp1from the stack
+ 
+Context of Verification Failure: 1 File "replace.c",Line:315,Col:10
+Last Proving Location: 1 File "replace.c",Line:333,Col:23
+
+ERROR: at _0:0_0:0 
+Message: Error popping check_exp1from the stack
+ 
+Context of Verification Failure: 1 File "replace.c",Line:315,Col:10
+Last Proving Location: 1 File "replace.c",Line:333,Col:23
+
+ERROR: at _0:0_0:0 
+Message: Error popping check_exp1from the stack
+ 
+Context of Verification Failure: 1 File "replace.c",Line:315,Col:10
+Last Proving Location: 1 File "replace.c",Line:333,Col:23
+
+ERROR: at _0:0_0:0 
+Message: Error popping check_exp1from the stack
+ 
+Context of Verification Failure: 1 File "replace.c",Line:315,Col:10
+Last Proving Location: 1 File "replace.c",Line:333,Col:23
+
+ERROR: at _0:0_0:0 
+Message: Error popping check_exp1from the stack
+ 
+Context of Verification Failure: 1 File "replace.c",Line:315,Col:10
+Last Proving Location: 1 File "replace.c",Line:333,Col:23
+
+ERROR: at _0:0_0:0 
+Message: Error popping check_exp1from the stack
+ 
+Context of Verification Failure: 1 File "replace.c",Line:315,Col:10
+Last Proving Location: 1 File "replace.c",Line:333,Col:23
+
+ERROR: at _0:0_0:0 
+Message: Error popping check_exp1from the stack
+ 
+Context of Verification Failure: 1 File "replace.c",Line:315,Col:10
+Last Proving Location: 1 File "replace.c",Line:333,Col:23
+
+ERROR: at _0:0_0:0 
+Message: Error popping check_exp1from the stack
+ 
+Context of Verification Failure: 1 File "replace.c",Line:315,Col:10
+Last Proving Location: 1 File "replace.c",Line:333,Col:23
+
+ERROR: at _0:0_0:0 
+Message: Error popping check_exp1from the stack
+ 
+Context of Verification Failure: 1 File "replace.c",Line:315,Col:10
+Last Proving Location: 1 File "replace.c",Line:333,Col:23
+
+ERROR: at _0:0_0:0 
+Message: Error popping check_exp1from the stack
+ 
+Context of Verification Failure: 1 File "replace.c",Line:315,Col:10
+Last Proving Location: 1 File "replace.c",Line:333,Col:23
+
+ERROR: at _0:0_0:0 
+Message: Error popping check_exp1from the stack
+ 
+Context of Verification Failure: 1 File "replace.c",Line:315,Col:10
+Last Proving Location: 1 File "replace.c",Line:333,Col:23
+
+ERROR: at _0:0_0:0 
+Message: Error popping check_exp1from the stack
+ 
+Context of Verification Failure: 1 File "replace.c",Line:315,Col:10
+Last Proving Location: 1 File "replace.c",Line:333,Col:23
+
+ERROR: at _0:0_0:0 
+Message: Error popping check_exp1from the stack
+ 
+Context of Verification Failure: 1 File "replace.c",Line:315,Col:10
+Last Proving Location: 1 File "replace.c",Line:333,Col:23
+
+ERROR: at _0:0_0:0 
+Message: Error popping check_exp1from the stack
+ 
+Context of Verification Failure: 1 File "replace.c",Line:315,Col:10
+Last Proving Location: 1 File "replace.c",Line:333,Col:23
+
+ERROR: at _0:0_0:0 
+Message: Error popping check_exp1from the stack
+ 
+Context of Verification Failure: 1 File "replace.c",Line:315,Col:10
+Last Proving Location: 1 File "replace.c",Line:333,Col:23
+
+ERROR: at _0:0_0:0 
+Message: Error popping check_exp1from the stack
+ 
+Context of Verification Failure: 1 File "replace.c",Line:315,Col:10
+Last Proving Location: 1 File "replace.c",Line:333,Col:23
+
+ERROR: at _0:0_0:0 
+Message: Error popping check_exp1from the stack
+ 
+Context of Verification Failure: 1 File "replace.c",Line:315,Col:10
+Last Proving Location: 1 File "replace.c",Line:333,Col:23
+
+ERROR: at _0:0_0:0 
+Message: Error popping check_exp1from the stack
+ 
+Context of Verification Failure: 1 File "replace.c",Line:315,Col:10
+Last Proving Location: 1 File "replace.c",Line:333,Col:23
+
+ERROR: at _0:0_0:0 
+Message: Error popping check_exp1from the stack
+ 
+Context of Verification Failure: 1 File "replace.c",Line:315,Col:10
+Last Proving Location: 1 File "replace.c",Line:333,Col:23
+
+ERROR: at _0:0_0:0 
+Message: Error popping check_exp1from the stack
+ 
+Context of Verification Failure: 1 File "replace.c",Line:315,Col:10
+Last Proving Location: 1 File "replace.c",Line:333,Col:23
+
+ERROR: at _0:0_0:0 
+Message: Error popping check_exp1from the stack
+ 
+Context of Verification Failure: 1 File "replace.c",Line:315,Col:10
+Last Proving Location: 1 File "replace.c",Line:333,Col:23
+
+ERROR: at _0:0_0:0 
+Message: Error popping check_exp1from the stack
+ 
+Context of Verification Failure: 1 File "replace.c",Line:315,Col:10
+Last Proving Location: 1 File "replace.c",Line:333,Col:23
+
+ERROR: at _0:0_0:0 
+Message: Error popping check_exp1from the stack
+ 
+Context of Verification Failure: 1 File "replace.c",Line:315,Col:10
+Last Proving Location: 1 File "replace.c",Line:333,Col:23
+
+ERROR: at _0:0_0:0 
+Message: Error popping check_exp1from the stack
+ 
+Context of Verification Failure: 1 File "replace.c",Line:315,Col:10
+Last Proving Location: 1 File "replace.c",Line:333,Col:23
+
+ERROR: at _0:0_0:0 
+Message: Error popping check_exp1from the stack
+ 
+Context of Verification Failure: 1 File "replace.c",Line:315,Col:10
+Last Proving Location: 1 File "replace.c",Line:333,Col:23
+
+ERROR: at _0:0_0:0 
+Message: Error popping check_exp1from the stack
+ 
+Context of Verification Failure: 1 File "replace.c",Line:315,Col:10
+Last Proving Location: 1 File "replace.c",Line:333,Col:23
+
+ERROR: at _0:0_0:0 
+Message: Error popping check_exp1from the stack
+ 
+Context of Verification Failure: 1 File "replace.c",Line:315,Col:10
+Last Proving Location: 1 File "replace.c",Line:333,Col:23
+
+ERROR: at _0:0_0:0 
+Message: Error popping check_exp1from the stack
+ 
+Context of Verification Failure: 1 File "replace.c",Line:315,Col:10
+Last Proving Location: 1 File "replace.c",Line:333,Col:23
+
+ERROR: at _0:0_0:0 
+Message: Error popping check_exp1from the stack
+ 
+Context of Verification Failure: 1 File "replace.c",Line:315,Col:10
+Last Proving Location: 1 File "replace.c",Line:333,Col:23
+
+ERROR: at _0:0_0:0 
+Message: Error popping check_exp1from the stack
+ 
+Context of Verification Failure: 1 File "replace.c",Line:315,Col:10
+Last Proving Location: 1 File "replace.c",Line:333,Col:23
+
+ERROR: at _0:0_0:0 
+Message: Error popping check_exp1from the stack
+ 
+Context of Verification Failure: 1 File "replace.c",Line:315,Col:10
+Last Proving Location: 1 File "replace.c",Line:333,Col:23
+
+ERROR: at _0:0_0:0 
+Message: Error popping check_exp1from the stack
+ 
+Context of Verification Failure: 1 File "replace.c",Line:315,Col:10
+Last Proving Location: 1 File "replace.c",Line:333,Col:23
+
+ERROR: at _0:0_0:0 
+Message: Error popping check_exp1from the stack
+ 
+Context of Verification Failure: 1 File "replace.c",Line:315,Col:10
+Last Proving Location: 1 File "replace.c",Line:333,Col:23
+
+ERROR: at _0:0_0:0 
+Message: Error popping check_exp1from the stack
+ 
+Context of Verification Failure: 1 File "replace.c",Line:315,Col:10
+Last Proving Location: 1 File "replace.c",Line:333,Col:23
+
+ERROR: at _0:0_0:0 
+Message: Error popping check_exp1from the stack
+ 
+Context of Verification Failure: 1 File "replace.c",Line:315,Col:10
+Last Proving Location: 1 File "replace.c",Line:333,Col:23
+
+ERROR: at _0:0_0:0 
+Message: Error popping check_exp1from the stack
+ 
+Context of Verification Failure: 1 File "replace.c",Line:315,Col:10
+Last Proving Location: 1 File "replace.c",Line:333,Col:23
+
+ERROR: at _0:0_0:0 
+Message: Error popping check_exp1from the stack
+ 
+Context of Verification Failure: 1 File "replace.c",Line:315,Col:10
+Last Proving Location: 1 File "replace.c",Line:333,Col:23
+
+ERROR: at _0:0_0:0 
+Message: Error popping check_exp1from the stack
+ 
+Context of Verification Failure: 1 File "replace.c",Line:315,Col:10
+Last Proving Location: 1 File "replace.c",Line:333,Col:23
+
+ERROR: at _0:0_0:0 
+Message: Error popping check_exp1from the stack
+ 
+Context of Verification Failure: 1 File "replace.c",Line:315,Col:10
+Last Proving Location: 1 File "replace.c",Line:333,Col:23
+
+ERROR: at _0:0_0:0 
+Message: Error popping check_exp1from the stack
+ 
+Context of Verification Failure: 1 File "replace.c",Line:315,Col:10
+Last Proving Location: 1 File "replace.c",Line:333,Col:23
+
+ERROR: at _0:0_0:0 
+Message: Error popping check_exp1from the stack
+ 
+Context of Verification Failure: 1 File "replace.c",Line:315,Col:10
+Last Proving Location: 1 File "replace.c",Line:333,Col:23
+
+ERROR: at _0:0_0:0 
+Message: Error popping check_exp1from the stack
+ 
+Context of Verification Failure: 1 File "replace.c",Line:315,Col:10
+Last Proving Location: 1 File "replace.c",Line:333,Col:23
+
+ERROR: at _0:0_0:0 
+Message: Error popping check_exp1from the stack
+ 
+Context of Verification Failure: 1 File "replace.c",Line:315,Col:10
+Last Proving Location: 1 File "replace.c",Line:333,Col:23
+
+ERROR: at _0:0_0:0 
+Message: Error popping check_exp1from the stack
+ 
+Context of Verification Failure: 1 File "replace.c",Line:315,Col:10
+Last Proving Location: 1 File "replace.c",Line:333,Col:23
+
+ERROR: at _0:0_0:0 
+Message: Error popping method makepat_loop$int[]~int~int~int[]~boolean~int~boolean~int~int~int~int~booleanfrom the stack
+ 
+Procedure makepat_loop$int[]~int~int~int[]~boolean~int~boolean~int~int~int~int~boolean FAIL-2
+
+Exception Failure("Error popping method makepat_loop$int[]~int~int~int[]~boolean~int~boolean~int~int~int~int~booleanfrom the stack") Occurred!
+
+Error(s) detected when checking procedure makepat_loop$int[]~int~int~int[]~boolean~int~boolean~int~int~int~int~boolean
+
+Checking procedure makepat$int[]~int~int~int[]... 
+Context of Verification Failure: 1 File "replace.c",Line:362,Col:10
+Last Proving Location: 1 File "replace.c",Line:373,Col:4
+
+ERROR: at _0:0_0:0 
+Message: Error popping check_exp1from the stack
+ 
+Context of Verification Failure: 1 File "replace.c",Line:362,Col:10
+Last Proving Location: 1 File "replace.c",Line:373,Col:4
+
+ERROR: at _0:0_0:0 
+Message: Error popping check_exp1from the stack
+ 
+Context of Verification Failure: 1 File "replace.c",Line:362,Col:10
+Last Proving Location: 1 File "replace.c",Line:373,Col:4
+
+ERROR: at _0:0_0:0 
+Message: Error popping check_exp1from the stack
+ 
+Context of Verification Failure: 1 File "replace.c",Line:362,Col:10
+Last Proving Location: 1 File "replace.c",Line:373,Col:4
+
+ERROR: at _0:0_0:0 
+Message: Error popping check_exp1from the stack
+ 
+Context of Verification Failure: 1 File "replace.c",Line:362,Col:10
+Last Proving Location: 1 File "replace.c",Line:373,Col:4
+
+ERROR: at _0:0_0:0 
+Message: Error popping check_exp1from the stack
+ 
+Context of Verification Failure: 1 File "replace.c",Line:362,Col:10
+Last Proving Location: 1 File "replace.c",Line:373,Col:4
+
+ERROR: at _0:0_0:0 
+Message: Error popping check_exp1from the stack
+ 
+Context of Verification Failure: 1 File "replace.c",Line:362,Col:10
+Last Proving Location: 1 File "replace.c",Line:373,Col:4
+
+ERROR: at _0:0_0:0 
+Message: Error popping check_exp1from the stack
+ 
+Context of Verification Failure: 1 File "replace.c",Line:362,Col:10
+Last Proving Location: 1 File "replace.c",Line:373,Col:4
+
+ERROR: at _0:0_0:0 
+Message: Error popping check_exp1from the stack
+ 
+Context of Verification Failure: 1 File "replace.c",Line:362,Col:10
+Last Proving Location: 1 File "replace.c",Line:373,Col:4
+
+ERROR: at _0:0_0:0 
+Message: Error popping check_exp1from the stack
+ 
+Context of Verification Failure: 1 File "replace.c",Line:362,Col:10
+Last Proving Location: 1 File "replace.c",Line:373,Col:4
+
+ERROR: at _0:0_0:0 
+Message: Error popping method makepat$int[]~int~int~int[]from the stack
+ 
+Procedure makepat$int[]~int~int~int[] FAIL-2
+
+Exception Failure("Error popping method makepat$int[]~int~int~int[]from the stack") Occurred!
+
+Error(s) detected when checking procedure makepat$int[]~int~int~int[]
+
+Checking procedure getpat$int[]~int[]... 
+Procedure getpat$int[]~int[] SUCCESS
+
+Checking procedure makesub_loop$int[]~int~int~int[]~int~int... 
+Procedure makesub_loop$int[]~int~int~int[]~int~int SUCCESS
+
+Checking procedure makesub$int[]~int~int~int[]... 
+Procedure makesub$int[]~int~int~int[] SUCCESS
+
+Checking procedure getsub$int[]~int[]... 
+Procedure getsub$int[]~int[] SUCCESS
+
+Checking procedure in_pat_set$int... 
+Procedure in_pat_set$int SUCCESS
+
+Checking procedure locate_loop$int~int[]~int~int~boolean... 
+Context of Verification Failure: 1 File "replace.c",Line:496,Col:24
+Last Proving Location: 1 File "replace.c",Line:507,Col:7
+
+ERROR: at _0:0_0:0 
+Message: Error popping check_exp1from the stack
+ 
+Context of Verification Failure: 1 File "replace.c",Line:496,Col:24
+Last Proving Location: 1 File "replace.c",Line:507,Col:7
+
+ERROR: at _0:0_0:0 
+Message: Error popping check_exp1from the stack
+ 
+Context of Verification Failure: 1 File "replace.c",Line:496,Col:24
+Last Proving Location: 1 File "replace.c",Line:507,Col:7
+
+ERROR: at _0:0_0:0 
+Message: Error popping check_exp1from the stack
+ 
+Context of Verification Failure: 1 File "replace.c",Line:496,Col:24
+Last Proving Location: 1 File "replace.c",Line:507,Col:7
+
+ERROR: at _0:0_0:0 
+Message: Error popping check_exp1from the stack
+ 
+Context of Verification Failure: 1 File "replace.c",Line:496,Col:24
+Last Proving Location: 1 File "replace.c",Line:507,Col:7
+
+ERROR: at _0:0_0:0 
+Message: Error popping check_exp1from the stack
+ 
+Context of Verification Failure: 1 File "replace.c",Line:496,Col:24
+Last Proving Location: 1 File "replace.c",Line:507,Col:7
+
+ERROR: at _0:0_0:0 
+Message: Error popping check_exp1from the stack
+ 
+Context of Verification Failure: 1 File "replace.c",Line:496,Col:24
+Last Proving Location: 1 File "replace.c",Line:507,Col:7
+
+ERROR: at _0:0_0:0 
+Message: Error popping check_exp1from the stack
+ 
+Context of Verification Failure: 1 File "replace.c",Line:496,Col:24
+Last Proving Location: 1 File "replace.c",Line:507,Col:7
+
+ERROR: at _0:0_0:0 
+Message: Error popping check_exp1from the stack
+ 
+Context of Verification Failure: 1 File "replace.c",Line:496,Col:24
+Last Proving Location: 1 File "replace.c",Line:507,Col:7
+
+ERROR: at _0:0_0:0 
+Message: Error popping check_exp1from the stack
+ 
+Context of Verification Failure: 1 File "replace.c",Line:496,Col:24
+Last Proving Location: 1 File "replace.c",Line:507,Col:7
+
+ERROR: at _0:0_0:0 
+Message: Error popping check_exp1from the stack
+ 
+Context of Verification Failure: 1 File "replace.c",Line:496,Col:24
+Last Proving Location: 1 File "replace.c",Line:507,Col:7
+
+ERROR: at _0:0_0:0 
+Message: Error popping check_exp1from the stack
+ 
+Context of Verification Failure: 1 File "replace.c",Line:496,Col:24
+Last Proving Location: 1 File "replace.c",Line:507,Col:7
+
+ERROR: at _0:0_0:0 
+Message: Error popping check_exp1from the stack
+ 
+Context of Verification Failure: 1 File "replace.c",Line:496,Col:24
+Last Proving Location: 1 File "replace.c",Line:507,Col:7
+
+ERROR: at _0:0_0:0 
+Message: Error popping check_exp1from the stack
+ 
+Context of Verification Failure: 1 File "replace.c",Line:496,Col:24
+Last Proving Location: 1 File "replace.c",Line:507,Col:7
+
+ERROR: at _0:0_0:0 
+Message: Error popping check_exp1from the stack
+ 
+Context of Verification Failure: 1 File "replace.c",Line:496,Col:24
+Last Proving Location: 1 File "replace.c",Line:507,Col:7
+
+ERROR: at _0:0_0:0 
+Message: Error popping check_exp1from the stack
+ 
+Context of Verification Failure: 1 File "replace.c",Line:496,Col:24
+Last Proving Location: 1 File "replace.c",Line:507,Col:7
+
+ERROR: at _0:0_0:0 
+Message: Error popping check_exp1from the stack
+ 
+Context of Verification Failure: 1 File "replace.c",Line:496,Col:24
+Last Proving Location: 1 File "replace.c",Line:507,Col:7
+
+ERROR: at _0:0_0:0 
+Message: Error popping method locate_loop$int~int[]~int~int~booleanfrom the stack
+ 
+Procedure locate_loop$int~int[]~int~int~boolean FAIL-2
+
+Exception Failure("Error popping method locate_loop$int~int[]~int~int~booleanfrom the stack") Occurred!
+
+Error(s) detected when checking procedure locate_loop$int~int[]~int~int~boolean
+
+Checking procedure main$int... 
+Procedure main$int SUCCESS
+
+Checking procedure omatch$int[]~int~int[]~int... 
+Context of Verification Failure: 1 File "replace.c",Line:538,Col:20
+Last Proving Location: 1 File "replace.c",Line:564,Col:6
+
+ERROR: at _0:0_0:0 
+Message: Error popping check_exp1from the stack
+ 
+Context of Verification Failure: 1 File "replace.c",Line:538,Col:20
+Last Proving Location: 1 File "replace.c",Line:564,Col:6
+
+ERROR: at _0:0_0:0 
+Message: Error popping check_exp1from the stack
+ 
+Context of Verification Failure: 1 File "replace.c",Line:538,Col:20
+Last Proving Location: 1 File "replace.c",Line:564,Col:6
+
+ERROR: at _0:0_0:0 
+Message: Error popping check_exp1from the stack
+ 
+Context of Verification Failure: 1 File "replace.c",Line:538,Col:20
+Last Proving Location: 1 File "replace.c",Line:564,Col:6
+
+ERROR: at _0:0_0:0 
+Message: Error popping check_exp1from the stack
+ 
+Context of Verification Failure: 1 File "replace.c",Line:538,Col:20
+Last Proving Location: 1 File "replace.c",Line:564,Col:6
+
+ERROR: at _0:0_0:0 
+Message: Error popping check_exp1from the stack
+ 
+Context of Verification Failure: 1 File "replace.c",Line:538,Col:20
+Last Proving Location: 1 File "replace.c",Line:564,Col:6
+
+ERROR: at _0:0_0:0 
+Message: Error popping check_exp1from the stack
+ 
+Context of Verification Failure: 1 File "replace.c",Line:538,Col:20
+Last Proving Location: 1 File "replace.c",Line:564,Col:6
+
+ERROR: at _0:0_0:0 
+Message: Error popping check_exp1from the stack
+ 
+Context of Verification Failure: 1 File "replace.c",Line:538,Col:20
+Last Proving Location: 1 File "replace.c",Line:564,Col:6
+
+ERROR: at _0:0_0:0 
+Message: Error popping check_exp1from the stack
+ 
+Context of Verification Failure: 1 File "replace.c",Line:538,Col:20
+Last Proving Location: 1 File "replace.c",Line:564,Col:6
+
+ERROR: at _0:0_0:0 
+Message: Error popping check_exp1from the stack
+ 
+Context of Verification Failure: 1 File "replace.c",Line:538,Col:20
+Last Proving Location: 1 File "replace.c",Line:564,Col:6
+
+ERROR: at _0:0_0:0 
+Message: Error popping check_exp1from the stack
+ 
+Context of Verification Failure: 1 File "replace.c",Line:538,Col:20
+Last Proving Location: 1 File "replace.c",Line:564,Col:6
+
+ERROR: at _0:0_0:0 
+Message: Error popping check_exp1from the stack
+ 
+Context of Verification Failure: 1 File "replace.c",Line:538,Col:20
+Last Proving Location: 1 File "replace.c",Line:564,Col:6
+
+ERROR: at _0:0_0:0 
+Message: Error popping method omatch$int[]~int~int[]~intfrom the stack
+ 
+Procedure omatch$int[]~int~int[]~int FAIL-2
+
+Exception Failure("Error popping method omatch$int[]~int~int[]~intfrom the stack") Occurred!
+
+Error(s) detected when checking procedure omatch$int[]~int~int[]~int
+
+Checking procedure patsize$int[]~int... 
+Procedure patsize$int[]~int SUCCESS
+
+Termination checking result:
+
+Stop z3... 6224 invocations 
+232 false contexts at: ( (628,20)  (628,10)  (628,10)  (628,6)  (629,15)  (629,8)  (628,23)  (642,16)  (642,15)  (642,8)  (640,10)  (638,15)  (638,8)  (637,28)  (637,25)  (637,15)  (637,15)  (637,11)  (635,12)  (635,25)  (635,20)  (635,16)  (635,12)  (635,5)  (634,44)  (634,41)  (634,31)  (634,31)  (634,25)  (634,15)  (634,15)  (634,15)  (634,11)  (632,15)  (632,8)  (631,60)  (631,57)  (631,47)  (631,47)  (631,41)  (631,31)  (631,31)  (631,25)  (631,15)  (631,15)  (631,15)  (631,15)  (631,11)  (626,6)  (626,14)  (626,13)  (623,29)  (443,2)  (443,5)  (443,15)  (444,4)  (452,6)  (451,10)  (451,14)  (451,6)  (449,8)  (449,32)  (448,18)  (448,8)  (447,11)  (446,27)  (446,16)  (446,15)  (446,8)  (445,6)  (445,20)  (445,10)  (445,10)  (444,24)  (444,8)  (444,8)  (443,17)  (270,4)  (269,9)  (269,13)  (269,4)  (268,11)  (268,36)  (268,18)  (268,4)  (267,9)  (267,14)  (267,4)  (266,19)  (266,2)  (205,2)  (205,5)  (205,15)  (206,4)  (230,6)  (229,11)  (229,15)  (229,7)  (226,15)  (226,22)  (226,8)  (225,11)  (217,8)  (218,10)  (221,16)  (221,20)  (221,12)  (220,12)  (219,16)  (219,25)  (219,22)  (219,20)  (219,16)  (219,12)  (218,40)  (218,36)  (218,32)  (218,28)  (218,22)  (218,18)  (218,14)  (218,14)  (217,32)  (217,28)  (217,24)  (217,20)  (217,12)  (216,35)  (216,31)  (216,27)  (216,23)  (216,15)  (216,11)  (214,15)  (214,22)  (214,8)  (213,41)  (213,39)  (213,33)  (213,29)  (213,25)  (213,25)  (213,20)  (213,15)  (213,15)  (213,11)  (211,15)  (211,22)  (211,8)  (210,29)  (210,26)  (210,16)  (210,16)  (210,13)  (209,12)  (209,5)  (208,15)  (208,5)  (207,27)  (207,24)  (207,18)  (207,14)  (207,10)  (207,10)  (206,24)  (206,8)  (206,8)  (205,17)  (94,10)  (94,1)  (106,21)  (106,12)  (104,21)  (104,12)  (103,22)  (103,14)  (103,14)  (103,10)  (101,19)  (101,10)  (100,20)  (100,12)  (100,12)  (99,12)  (99,16)  (99,8)  (98,11)  (97,17)  (97,8)  (96,22)  (96,16)  (96,12)  (96,10)  (96,10)  (96,6)  (160,4)  (159,8)  (159,10)  (159,4)  (158,11)  (158,4)  (157,18)  (157,2)  (764,2)  (764,6)  (764,16)  (777,4)  (776,10)  (776,6)  (774,10)  (774,14)  (774,6)  (772,31)  (772,22)  (772,15)  (772,14)  (772,9)  (772,8)  (766,4)  (767,6)  (769,16)  (769,8)  (768,8)  (767,21)  (767,10)  (766,14)  (766,12)  (766,7)  (765,8)  (765,28)  (765,4)  (764,18) )
+
+Total verification time: 31.71 second(s)
+	Time spent in main process: 20.38 second(s)
+	Time spent in child processes: 11.33 second(s)
+	Z3 Prover Time: 12.23 second(s)
+
+Context of Verification Failure: 1 File "replace.c",Line:619,Col:102
+Last Proving Location: 1 File "replace.c",Line:644,Col:11
+
+ERROR: at _0:0_0:0 
+Message: Error popping Overallfrom the stack
+ caught
+
+Exception occurred: Failure("Error popping Overallfrom the stack")
+Error(s) detected at main 

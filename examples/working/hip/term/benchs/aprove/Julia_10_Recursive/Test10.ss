@@ -18,9 +18,13 @@ case {
 	if (l > 0) {
 		int i = l;
 		while (i < 100)
+		/* case { */
+		/* 	i>=100 -> requires Term ensures l'=l; */
+		/* 	i<100 -> requires Term[100-i] ensures l'=l; */
+		/* } */
 		case {
-			i>=100 -> requires Term ensures l'=l;
-			i<100 -> requires Term[100-i] ensures l'=l;
+			i>=100 -> requires Term ensures true;
+			i<100 -> requires Term[100-i] ensures true;
 		}
 		{
 			test(i);

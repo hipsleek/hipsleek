@@ -67,16 +67,18 @@ struct
 
   (* assumes that xs and ys are normalized *)
   (* returns 0 if two labels are considered identical *)
-  let rec compare xs ys =
+  let rec compare_x xs ys =
     match xs,ys with
       | [],[] -> 0
       | [],y::_ -> -1
       | x::_,[] -> 1
       | x::xs1,y::ys1 -> 
             let v = String.compare x y in
-            if v==0 then compare xs1 ys1
+            if v==0 then compare_x xs1 ys1
             else v
-
+  let compare xs ys = 
+	let pr = pr_list pr_id  in
+	Debug.no_2 "Label_compare" pr pr string_of_int compare_x xs ys 
   (* assumes that xs and ys are normalized *)
   (* combine two labels that are considered identical *)
   (* let comb_identical xs ys = xs *)
@@ -103,6 +105,7 @@ struct
   let unlabelled = (None, [])
   let is_unlabelled (n,l) = n==None && l==[]
   let string_of = pr_pair (pr_opt string_of_int) (pr_list pr_id)
+  let string_of_opt l = if is_unlabelled l then "" else pr_pair (pr_opt string_of_int) (pr_list pr_id) l
   let singleton s = (None,[s])
   let is_comp_opt lx ly = match lx,ly with
                            | Some x1,Some y1 -> x1==y1

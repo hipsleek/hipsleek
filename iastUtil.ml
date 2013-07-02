@@ -938,6 +938,7 @@ let rec find_free_read_write (e:exp) bound
       )
     | Unary b ->
         (match b.exp_unary_op with
+        | OpVal | OpAddr (*to check*)
         | OpUMinus | OpNot -> None
 	| OpPreInc | OpPreDec | OpPostInc | OpPostDec ->
             (match b.exp_unary_exp with
@@ -1186,6 +1187,26 @@ let addin_callargs_of_exp ht e : exp =
                 })
 
     | CallNRecv e ->
+        if(e.exp_call_nrecv_method=Globals.fork_name) then
+          (*get forked procedure name*)
+          let fn_exp = (List.hd e.exp_call_nrecv_arguments) in
+          let fn = match fn_exp with
+            | Var v ->
+                v.exp_var_name
+            | _ ->
+                Error.report_error {Error.error_loc = no_pos; Error.error_text = ("addin_callargs_of_exp: expecting a method name as the first parameter of a fork")}
+          in
+          let cn = fn in
+          (*add free vars into forked proc call*)
+          let rws = H.find ht cn in
+          let loc = e.exp_call_nrecv_pos in
+          let eags = exp_of_rws loc rws in
+          Some (CallNRecv 
+                    { e with
+                        exp_call_nrecv_arguments = 
+                            e.exp_call_nrecv_arguments @ eags;
+                    })
+        else
         let cn = e.exp_call_nrecv_method in
         let rws = H.find ht cn in
         let loc = e.exp_call_nrecv_pos in
@@ -1250,16 +1271,21 @@ let add_globalv_to_mth_prog prog =
 
 (*iprims: primitives in the header files
 prog: current program*)  
-let pre_process_of_iprog iprims prog = 
+let pre_process_of_iprog iprims prog =
   let prog =
           { prog with prog_data_decls = iprims.prog_data_decls @ prog.prog_data_decls;
                       prog_proc_decls = iprims.prog_proc_decls @ prog.prog_proc_decls;
+											prog_view_decls = iprims.prog_view_decls @ prog.prog_view_decls;
+											prog_coercion_decls = iprims.prog_coercion_decls @ prog.prog_coercion_decls;
+											prog_global_var_decls = iprims.prog_global_var_decls @ prog.prog_global_var_decls;
 						(* An Hoa : MISSING PRIMITIVE RELATIONS! *)
 					  prog_rel_decls = iprims.prog_rel_decls @ prog.prog_rel_decls;
 					  prog_axiom_decls = iprims.prog_axiom_decls @ prog.prog_axiom_decls;
           } in
   let prog = float_var_decl_prog prog in
+  (* let _ = print_endline ("PROG = " ^ (Iprinter.string_of_program prog)) in *)
   let prog = rename_prog prog in
+  (* let _ = print_endline ("PROG = " ^ (Iprinter.string_of_program prog)) in *)
   let prog = add_globalv_to_mth_prog prog in 
   prog
 

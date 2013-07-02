@@ -39,7 +39,7 @@ let simplify_conjs f =
   Debug.no_1 "simplify_conjs" (!CP.print_formula) (!CP.print_formula) simplify_conjs f 
 
 let simp_lhs_rhs vars (c,lhs,rhs) =
-  let ra = MCP.pure_ptr_equations lhs in
+  let ra = CP.pure_ptr_equations lhs in
   let (subs,rest) = CP.simplify_subs ra vars [] in
   let nsubs = CP.norm_subs (rest@subs) in
   let asubs = rest@nsubs in	  
@@ -618,11 +618,11 @@ let infer_lhs_contra_estate estate lhs_xpure pos msg =
                             [RelAssume vs_rel,CP.conj_of_list lhs_conjs pos,x]
                           else []
                         ) (CP.list_of_conjs neg_lhs)) in
-                      if rel_ass = [] then (None,[])
-                      else
-                        let _ = DD.devel_hprint (add_str "rel_ass_final(unsat) : " (pr_list print_lhs_rhs)) rel_ass pos in
-                        let new_estate = CF.false_es_with_orig_ante estate estate.es_formula pos in
-                        (None, [(new_estate,rel_ass,true)])
+                    if rel_ass = [] then (None,[])
+                    else
+                      let _ = DD.devel_hprint (add_str "rel_ass_final(unsat) : " (pr_list print_lhs_rhs)) rel_ass pos in
+                      let new_estate = CF.false_es_with_orig_ante estate estate.es_formula pos in
+                      (None, [(new_estate,rel_ass,true)])
                 end
             | None -> (None,[])
           end
@@ -743,9 +743,9 @@ let rec infer_pure_m_x estate lhs_rels lhs_xpure_orig lhs_xpure0 lhs_wo_heap_ori
       (*      if CP.isConstTrue new_p then None                         *)
       (*      else                                                      *)
       let lhs_wo_heap = CP.drop_rel_formula (MCP.pure_of_mix lhs_wo_heap_orig) in
-      let lhs_wo_ptr_eqs = MCP.remove_ptr_equations lhs_wo_heap false in
+      let lhs_wo_ptr_eqs = CP.remove_ptr_equations lhs_wo_heap false in
       let vars_lhs = fv lhs_wo_ptr_eqs in (* var on lhs *)
-      let vars_rhs = fv (MCP.remove_ptr_equations rhs_xpure false) in (* var on rhs *)
+      let vars_rhs = fv (CP.remove_ptr_equations rhs_xpure false) in (* var on lhs *)
       let lhs_als = MCP.ptr_equations_without_null (MCP.mix_of_pure lhs_xpure) in
       let lhs_aset = build_var_aset lhs_als in
       let total_sub_flag = List.for_all (fun r ->
@@ -834,6 +834,7 @@ let rec infer_pure_m_x estate lhs_rels lhs_xpure_orig lhs_xpure0 lhs_wo_heap_ori
                   DD.devel_hprint (add_str "RHS : " !CP.print_formula) rhs_xpure pos;
                   DD.devel_hprint (add_str "LHS REL : " (pr_opt !CP.print_formula)) lhs_rels pos;
                   (* DD.devel_hprint (add_str "new pure: " !CP.print_formula) new_p pos; *)
+                  DD.devel_hprint (add_str "new_p_ass: " !CP.print_formula) new_p_ass pos;
                   DD.devel_hprint (add_str "new pure: " !CP.print_formula) new_p pos;
                   (None,None,[])
             end
@@ -920,7 +921,7 @@ let rec infer_pure_m_x estate lhs_rels lhs_xpure_orig lhs_xpure0 lhs_wo_heap_ori
                       let _ = infer_rel_stk # push_list rel_ass in
                       let _ = Log.current_infer_rel_stk # push_list rel_ass in
                       (None,None,[(new_estate,rel_ass,false)])
-                  end
+              end
 (*                  DD.devel_pprint ">>>>>> infer_pure_m <<<<<<" pos;*)
 (*                  DD.devel_pprint "Add relational assumption" pos;*)
 (*                  DD.devel_hprint (add_str "new pure: " !CP.print_formula) new_p pos;*)
@@ -2260,7 +2261,7 @@ let get_shape_from_file view_node keep_vars proc_name =
 let get_spec_from_file prog = 
   let input_spec = (get_file_name Sys.argv.(1)) ^ ".spec" in
   let input_str = syscall ("cat " ^ input_spec) in
-  let res = Parser.parse_spec input_str in
+  let res = Parser.parse_specs_list input_str in
 (*  print_endline ("SPEC" ^ (Iprinter.string_of_struc_formula res));*)
 (*  let id,command = get_cmd_from_file in*)
   let id, command = !(IF.cmd) in

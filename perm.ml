@@ -19,8 +19,48 @@ let string_of_perm_type t =
     | Frac -> "Frac"
     | Count -> "Count"
     | NoPerm -> "NoPerm"
-	| Dperm  -> "Dperm"
+    | Dperm  -> "Dperm"
 
+(*To disable concurrency verification, for testing purposes*)
+let disable_para () =
+  allow_norm:= true;
+  perm:= NoPerm;
+  ann_vp:= false;
+  allow_ls:= false;
+  allow_locklevel:=false
+
+(*To enable concurrency verification*)
+let enable_para () =
+  allow_norm:= false;
+  allow_field_ann := false;
+  perm:= (match !perm with
+    | NoPerm -> Frac (*the default is fractional permission*)
+    | _ -> !perm);
+  ann_vp:= true;
+  allow_ls:= true;
+  (*
+    need to enable filtering_flag, so that we could prove more programs.
+    For example, if we want to prove: n>10 & f=1.0 |- n>=11.
+    Because n is solved by an integer solver n>10 |- n>=11 valid.
+    However, n is solved by an floating point solver, it is not valid.
+    Therefore, we enable the flag, so that (f=1.0) is filtered out,
+    therefore the remaining antecedent n>10 could be proven by
+    an integer solver
+  *)
+  filtering_flag:=true;
+  (* Using variable permissions, a global variable is considered
+     pass-by-ref.
+     Reference: http://www.comp.nus.edu.sg/~leduykha/pubs/ldk-vperm-icfem2012-tr.pdf
+  *)
+  pass_global_by_value := false;
+  (* 
+     For testing.
+     Clear this flag so that information about locksets are transferred
+     until proving post-condition when new locks are created inside
+     the scope of the procedure.
+  *)
+  (* Globals.elim_exists := false; *)
+  allow_locklevel:=true
 
 let allow_perm ():bool = 
   match !perm with
@@ -28,7 +68,9 @@ let allow_perm ():bool =
     | _ -> true
 
 let set_perm perm_str = 
-  if perm_str = "fperm" then perm:=Frac
+  if perm_str = "fperm" then
+    let _ = allow_norm := false in
+    perm:=Frac
   else if perm_str = "cperm" then perm:=Count
   else if perm_str = "dperm" then perm:=Dperm 
   else perm:= NoPerm

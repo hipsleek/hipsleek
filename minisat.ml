@@ -153,6 +153,7 @@ let  minisat_cnf_of_p_formula (pf : Cpure.p_formula) (allvars:Glabel.t) (ge:G.t)
   | ListAllN _
   | ListPerm _
   | RelForm _       -> "" 
+  | VarPerm _ -> Error.report_no_pattern ()
 
 let minisat_cnf_of_b_formula (bf : Cpure.b_formula) (allvars:Glabel.t) (ge:G.t) (gd:G.t)=
   match bf with
@@ -217,6 +218,7 @@ let  minisat_cnf_of_not_of_p_formula (pf : Cpure.p_formula) (allvars:Glabel.t) (
   | ListAllN _
   | ListPerm _
   | RelForm _       -> ""
+  | XPure _ | VarPerm _ -> Error.report_no_pattern ()
 
 let minisat_cnf_of_not_of_b_formula (bf : Cpure.b_formula) (allvars:Glabel.t) (ge:G.t) (gd:G.t) =
   match bf with
@@ -233,6 +235,8 @@ let return_pure bf f= match bf with
       | Neq _ -> f  
       | BConst(a,_)->f (*let _=if(a) then print_endline ("TRUE") else print_endline ("FALSE")  in*)
       | BVar(_,_)->f
+	  | XPure _ | LexVar _ | Lt _ | Lte _ | Gt _ | Gte _ | SubAnn _ | EqMax _ | EqMin _ | BagIn _ | BagNotIn _ | BagSub _ 
+	  | BagMin _ | BagMax _ | VarPerm _ | ListIn _ | ListNotIn _ | ListAllN _ | ListPerm _ | RelForm _ -> Error.report_no_pattern ()
 
 (*For converting to NNF--no need??--*)
 let rec minisat_cnf_of_formula f =
@@ -282,6 +286,7 @@ and is_cnf_old2 f =
 	| And (BForm(b,_),f2,_)->let _=unsat_in_cnf b in if(!sat=true) then is_cnf f2 else true
 	| And (f1,BForm(b,_),_)->let _=unsat_in_cnf b in if(!sat=true) then is_cnf f1 else true
 	| And (f1,f2,_)-> if(is_cnf f1) then is_cnf f2 else false
+	| AndList _ | Not _ |  Forall _ | Exists _ -> Error.report_no_pattern ()
 
 and is_cnf_old1 f = (*Should use heuristic in CNF*)
   match f with
@@ -290,6 +295,7 @@ and is_cnf_old1 f = (*Should use heuristic in CNF*)
 	| And (BForm(b,_),f2,_)->is_cnf f2 
 	| And (f1,BForm(b,_),_)->is_cnf f1 
 	| And (f1,f2,_)-> if(is_cnf f1) then is_cnf f2 else false
+	| AndList _ | Not _ | Forall _ | Exists _ -> Error.report_no_pattern()
 
 and is_cnf f = (*Should use heuristic in CNF*)
   match f with
@@ -304,14 +310,14 @@ and is_cnf f = (*Should use heuristic in CNF*)
 let dist_1 f = 
   match f with (*using heuristic for the first one*)
   | Or(f1, And(f2, f3,_),l1,l2) -> Or (f1,f3,l1,l2)(*And(Or(f1, f2,l1,l2), Or(f1, f3,l1,l2),l2)*) (*The main here- when using slicing*)
-	| Or(And(f1, f2,_), And(f3, f4,_),l1,l2) ->And(And(Or(f1, f3,l1,l2), Or(f1, f4,l1,l2),l2), And(Or(f2, f3,l1,l2), Or(f2, f4,l1,l2),l2),l2)
+  (*| Or(And(f1, f2,_), And(f3, f4,_),l1,l2) ->And(And(Or(f1, f3,l1,l2), Or(f1, f4,l1,l2),l2), And(Or(f2, f3,l1,l2), Or(f2, f4,l1,l2),l2),l2)*)
   | Or(And(f2, f3,_), f1,l1,l2) -> And(Or(f1, f2,l1,l2), Or(f1, f3,l1,l2),l2)
   | _ -> f
 
 let dist_no_slicing f = 
   match f with 
   | Or(f1, And(f2, f3,_),l1,l2) -> And(Or(f1, f2,l1,l2), Or(f1, f3,l1,l2),l2) (*The main here- when using slicing*)
-	| Or(And(f1, f2,_), And(f3, f4,_),l1,l2) ->And(And(Or(f1, f3,l1,l2), Or(f1, f4,l1,l2),l2), And(Or(f2, f3,l1,l2), Or(f2, f4,l1,l2),l2),l2)
+	(*| Or(And(f1, f2,_), And(f3, f4,_),l1,l2) ->And(And(Or(f1, f3,l1,l2), Or(f1, f4,l1,l2),l2), And(Or(f2, f3,l1,l2), Or(f2, f4,l1,l2),l2),l2)*)
   | Or(And(f2, f3,_), f1,l1,l2) -> And(Or(f1, f2,l1,l2), Or(f1, f3,l1,l2),l2)
   | _ -> f
 
@@ -325,6 +331,7 @@ let rec nnf_to_xxx f rule =
 	| Exists (_,f1,_,_) -> nnf_to_xxx f1 rule
 		(* let _=print_endline ("CNF form: "^Cprinter.string_of_pure_formula f1) in let _= print_endline ("[minisat.ml exit 0] Please use the option '--enable-slicing'") in exit 0 *)
   (* | Exists _ ->  *)
+  | AndList _ | Forall _ -> Error.report_no_pattern()
   in
     rule nf
 
@@ -387,6 +394,7 @@ let rec can_minisat_handle_expression (exp: Cpure.exp) : bool =
   (* array expressions *)
   | Cpure.ArrayAt _      -> false
   | Cpure.Func _ ->  false 
+  | Cpure.Level _ | Cpure.InfConst _ | Cpure.Tsconst _ -> Error.report_no_pattern()
 
 
 and can_minisat_handle_p_formula (pf : Cpure.p_formula) : bool =
@@ -415,6 +423,7 @@ and can_minisat_handle_p_formula (pf : Cpure.p_formula) : bool =
   | ListAllN _
   | ListPerm _
   | RelForm _            -> false
+  | XPure _ | VarPerm _ -> Error.report_no_pattern()
 
 and can_minisat_handle_b_formula (bf : Cpure.b_formula) : bool =
   match bf with
@@ -428,6 +437,7 @@ and can_minisat_handle_formula (f: Cpure.formula) : bool =
   | Not (f, _, _)       -> can_minisat_handle_formula f
   | Forall (_, f, _, _) -> can_minisat_handle_formula f
   | Exists (_, f, _, _) -> can_minisat_handle_formula f
+  | AndList _ -> Error.report_no_pattern()
 
 (***************************************************************
 INTERACTION
@@ -544,9 +554,9 @@ let check_problem_through_file (input: string) (timeout: float) : bool =
       false
     )
 		in
-	let tstartlog = Gen.Profiling.get_time () in
+	let (*tstartlog*)_ = Gen.Profiling.get_time () in
   let _ = Procutils.PrvComms.stop false stdout !minisat_process 0 9 (fun () -> ()) in
-	let tstoplog = Gen.Profiling.get_time () in
+	let (*tstoplog*)_ = Gen.Profiling.get_time () in
 	(* let _= Globals.minisat_time_T := !Globals.minisat_time_T +. (tstoplog -. tstartlog) in *)
   remove_file infile;
   res

@@ -3,8 +3,8 @@
  */
 
 void foo(ref int x, ref int y)
-  requires @full[x,y]
-  ensures  @full[x,y] & x'=x+1 & y'=y+1;
+  requires true //@full[x,y]
+  ensures  x'=x+1 & y'=y+1; //& @full[x,y];
 {
   x++;
   y++;
@@ -24,8 +24,8 @@ requires true
 }
 
 void foo2(int x, ref int y)
-  requires @value[x] & @full[y]
-ensures @full[y] & y'=y+1; //'
+  requires true //@value[x] & @full[y]
+  ensures y'=y+1; // & @full[y]; //'
 {
   x++;
   y++;

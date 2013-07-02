@@ -1,0 +1,93 @@
+data pair {
+	int fst; 
+	int snd;	
+}.
+
+
+//(1)
+checkentail x::pair<a,d> & d=3|- x::pair<c@A,y@M> & y=3.
+print residue.
+/* 
+   Why do we have c=a when c@A is empty?
+    <1>x::pair<a@M,d@A>@M[Orig]&0<=0 & d=3 & c=a & y=d&{FLOW,(19,20)=__norm}[]
+*/
+
+//(2)
+checkentail x::pair<_@A,b@M> * x1::pair<a@M,d@A> & x=x1 & d=3|- x::pair<c@A,y@M> & y=3.
+print residue.
+/*
+ Why d=a when d@A is empty?
+
+ <1>x::pair<Anon_11@M,b@A>@M[Orig]&0<=0 & 0<=3 & x=x1 & d=3 & Anon_11=a & b=d 
+& c=Anon_11 & y=b&{FLOW,(19,20)=__norm}[]
+*/
+
+//(3)
+checkentail x::pair<_@A,b@L> * x1::pair<a@M,d@L> & x=x1 & d=3|- x::pair<c@A,y@I> & y=3.
+print residue.
+/*
+  how do we handle @L * @L --> hfalse?
+
+*/
+
+//(4)
+checkentail x::pair<_@A,b@I> & x::pair<a@M,d@I> & x=x1 & d=3|- x::pair<c@A,y@L> & y=3.
+print residue.
+/*
+without --mem
+ERROR: at pair.slk_34_12 
+Message: Invalid read phase h = ((x::pair<Anon_13@A, b@I>@M[1]) & (x1::pair<a@M, d@I>@M[1])) ; (emp)
+
+with --mem
+ <1>hfalse&false&{FLOW,(19,20)=__norm}[]
+*/
+
+
+//(5)
+checkentail x::pair<_@A,b@M> & x::pair<a@M,d@M> & x=x1 & d=3|- x::pair<c@A,y@L> & y=3.
+print residue.
+/*
+with --mem
+ <1>hfalse&false&{FLOW,(19,20)=__norm}[]
+*/
+
+//(6)
+checkentail x::pair<_@A,b@M> * x1::pair<a@M,d@A> & x=x1 & d=3|- x::pair<c@A,y@M> & y=3.
+print residue.
+
+
+//(7)
+checkentail x::pair<_@A,b@M> * x1::pair<a@M,d@M> & x=x1 & d=3|- false.
+print residue.
+
+//(8)
+checkentail x::pair<_,_> * x::pair<_,_> |- false.
+print residue.
+
+//(9)
+checkentail x::pair<_@M,_@M> * x::pair<_@M,_@M> |- false.
+print residue.
+
+//(10)
+checkentail x::pair<_@M,_@M> * x::pair<_@A,_@M> |- false.
+print residue.
+
+//(11)
+checkentail x::pair<_@M,_@A> * y::pair<_@A,_@M> & x=y |- false.
+print residue.
+
+//(12)
+checkentail x::pair<_@M,_@M> * y::pair<_@A,_@M> & x=y |- false.
+print residue.
+
+//(13)
+checkentail x::pair<_@M,_@M> * x::pair<_@A,_@M>  |- false.
+print residue.
+
+//(14)
+checkentail x::pair<b@A,d@M> & d=3|- x::pair<c@A,y@M> & d=y.
+print residue.
+
+//(15)
+checkentail x::pair<b@A,d@M> & d=3|- x::pair<c@A,y@M> & c=b.
+print residue.
