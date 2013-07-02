@@ -11199,6 +11199,8 @@ let rec add_pure (sp:struc_formula) rel_fml_pre rel_fml_post = match sp with
     (match b.formula_struc_continuation with
       | None -> None
       | Some f -> Some (add_pure f None rel_fml_post))}
+  | EInfer b -> EInfer {b with formula_inf_continuation = 
+    add_pure b.formula_inf_continuation rel_fml_pre rel_fml_post}
   | EAssume b -> (match rel_fml_post with
       | None -> sp
       | Some fml -> EAssume {b with 
@@ -11237,9 +11239,12 @@ let rec remove_rel (sp:struc_formula) = match sp with
     pr_rel@pr_rel2, po_rel, EBase {b with 
       formula_struc_base = pr_fml;
       formula_struc_continuation = struc}
-  | EAssume(svl,f,fl,t) -> 
-    let po_rel, po_fml = remove_rel_fml f in
-    [],po_rel, EAssume(svl,po_fml,fl,t)
+  | EAssume b -> 
+    let po_rel, po_fml = remove_rel_fml b.formula_assume_simpl in
+    let pr_rel, po_rel2, struc = remove_rel b.formula_assume_struc in
+    pr_rel,po_rel@po_rel2, EAssume {b with 
+		  formula_assume_simpl = po_fml;
+		  formula_assume_struc = struc;}
   | EInfer b -> 
     let pr_rel, po_rel, struc = remove_rel b.formula_inf_continuation in
     pr_rel, po_rel, EInfer {b with formula_inf_continuation = struc}
@@ -11249,12 +11254,6 @@ let rec remove_rel (sp:struc_formula) = match sp with
       pr_rel, po_rel, [(l,struc)]) b in
     let res = List.fold_left (fun (a1,a2,a3) (b1,b2,b3) -> (a1@b1,a2@b2,a3@b3)) ([],[],[]) res in
     (fun (a,b,c) -> (a,b,EList c)) res
-  | EOr b -> 
-    let pr_rel1, po_rel1, struc1 = remove_rel b.formula_struc_or_f1 in
-    let pr_rel2, po_rel2, struc2 = remove_rel b.formula_struc_or_f2 in
-    pr_rel1@pr_rel2, po_rel1@po_rel2, EOr {b with formula_struc_or_f1 = struc1;
-                                                  formula_struc_or_f2 = struc2}
-
 
 let rec ctx_no_heap c = match c with 
   | Ctx e-> 
