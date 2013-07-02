@@ -1703,7 +1703,7 @@ let infer_shapes iprog prog proc_name (hp_constrs: CF.hprel list) sel_hp_rels se
       hp_rel_unkmap unk_hpargs link_hpargs need_preprocess detect_dang:
  (CF.hprel list * CF.hp_rel_def list*(CP.spec_var*CP.exp list * CP.exp list) list) =
   let pr0 = pr_list !CP.print_exp in
-  let pr1 = pr_list_ln Cprinter.string_of_hprel in
+  let pr1 = pr_list_ln Cprinter.string_of_hprel_short in
   let pr2 = pr_list_ln Cprinter.string_of_hp_rel_def in
   let pr3 = pr_list (pr_triple !CP.print_sv pr0 pr0) in
   (* let pr4 = pr_list (pr_pair (pr_list (pr_pair !CP.print_sv string_of_int)) CP.string_of_xpure_view) in *)

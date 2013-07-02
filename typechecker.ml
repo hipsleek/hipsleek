@@ -2418,7 +2418,8 @@ and check_proc iprog (prog : prog_decl) (proc : proc_decl) cout_option (mutual_g
                         print_endline "*************************************";
                         let pr = pr_list_ln (fun x -> Cprinter.string_of_hprel_short_inst prog x) in
                         let _ = Infer.rel_ass_stk # reverse in
-                        print_endline (pr (Infer.rel_ass_stk # get_stk));
+                        (* print_endline (pr (Infer.rel_ass_stk # get_stk)); *)
+                        print_endline (pr (hp_lst_assume));
                         (* print_endline (Infer.rel_ass_stk # string_of_reverse); *)
                         print_endline "*************************************" 
                       end;

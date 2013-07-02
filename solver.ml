@@ -7193,6 +7193,7 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
         else (lhs_h,lhs_p) in
       let inf_p = stk_inf_pure # get_stk in
       let inf_relass = stk_rel_ass # get_stk in
+      (* let inf_heap_ass = stk_rel_ass # get_stk in *)
       let estate = add_infer_pure_to_estate inf_p estate in
       let estate = add_infer_rel_to_estate inf_relass estate in
       let to_add_rel_ass = 

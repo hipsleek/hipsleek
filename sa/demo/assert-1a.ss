@@ -21,7 +21,7 @@ void foo(node x)
   node t;
   t = x.next;
   assertfoo(t);
-  dprint;
+  //dprint;
 }
 /*
 # assert-1a.ss

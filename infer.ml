@@ -1046,7 +1046,7 @@ let rec infer_pure_m_x unk_heaps estate lhs_rels lhs_xpure_orig lhs_xpure0 lhs_w
                                   let _ = DD.devel_hprint (add_str "rel_ass_final: " (pr_list print_lhs_rhs)) rel_ass pos in
                                   let _ = DD.devel_hprint (add_str "New estate : " !print_entail_state_short) new_estate pos in
                                   (* WN : infer_pure_of_heap_pred *)
-                                  let rel_ass,heap_ass,estate =
+                                  let rel_ass,heap_ass,new_estate =
                                     if unk_heaps!=[] then
                                       let _ = DD.ninfo_pprint "WN : to convert unk_heaps to corresponding pure relation using __pure_of_" no_pos in
                                       let _ = DD.ninfo_hprint (add_str "unk_heaps" (pr_list !CF.print_h_formula)) unk_heaps no_pos in
@@ -1056,6 +1056,7 @@ let rec infer_pure_m_x unk_heaps estate lhs_rels lhs_xpure_orig lhs_xpure0 lhs_w
                                       (* add to relevant store *)
                                       (* return None,None,.. *)
                                       (*heap_pred_of_pure*)
+                                      (* let truef = CF.mkTrue (CF.mkNormalFlow()) pos in *)
                                       let rel_ass1,heap_ass = List.fold_left ( fun (ls1, ls2) (a, p1, p2) ->
                                           let ohf = Predicate.trans_rels p1 in
                                           match ohf with
@@ -1065,23 +1066,28 @@ let rec infer_pure_m_x unk_heaps estate lhs_rels lhs_xpure_orig lhs_xpure0 lhs_w
                                                       unk_svl = [];
                                                       unk_hps = [];
                                                       predef_svl = [];
+                                                      (* hprel_lhs = CF.mkBase hf (MCP.mix_of_pure p2) CF.TypeTrue (CF.mkTrueFlow ()) [] pos; *)
+                                                      (* hprel_rhs = truef; *)
                                                       hprel_lhs = CF.formula_of_heap hf pos;
-                                                      hprel_rhs = CF.formula_of_pure_formula p2 pos;
+                                                      hprel_rhs = CF.formula_of_pure_P p2 pos;
                                                   }
                                                   in
                                                   (ls1, ls2@[hp_rel])
                                             | None -> (ls1@[(a, p1, p2)], ls2)
                                       ) ([], []) rel_ass
                                       in
-                                      let new_es = {estate with CF.es_infer_hp_rel = estate.CF.es_infer_hp_rel @ heap_ass;} in
+                                      let _ = Log.current_hprel_ass_stk # push_list heap_ass in
+                                      let _ = rel_ass_stk # push_list heap_ass in
+                                      let new_es = {new_estate with CF.es_infer_hp_rel = estate.CF.es_infer_hp_rel @ heap_ass;} in
                                       (rel_ass1, heap_ass,new_es)
                                     else
-                                      (rel_ass, [],estate)
+                                      (rel_ass, [],new_estate)
                                   in
-                                  if rel_ass = [] then (Some (estate, CP.mkTrue pos),None,[]) else
-                                  let _ = infer_rel_stk # push_list rel_ass in
-                                  let _ = Log.current_infer_rel_stk # push_list rel_ass in
-                                  (None,None,[(new_estate,rel_ass,false)])
+                                  let _ =  DD.ninfo_hprint (add_str "New estate 1: " !print_entail_state) new_estate pos in
+                                  if rel_ass = [] then (Some (new_estate, CP.mkTrue pos),None,[]) else
+                                    let _ = infer_rel_stk # push_list rel_ass in
+                                    let _ = Log.current_infer_rel_stk # push_list rel_ass in
+                                    (None,None,[(new_estate,rel_ass,false)])
                       end
                           (*                  DD.devel_pprint ">>>>>> infer_pure_m <<<<<<" pos;*)
                           (*                  DD.devel_pprint "Add relational assumption" pos;*)
@@ -1968,7 +1974,7 @@ let find_undefined_selective_pointers_x prog lfb lmix_f unmatched rhs_rest rhs_h
   (*********CLASSIC************)
   let classic_defined= if  !Globals.do_classic_frame_rule then
     let lhs_sel_hps = List.map fst lhs_selected_hpargs in
-    let truef = CF.mkTrue (CF.mkTrueFlow()) pos in
+    let truef = CF.mkTrue (CF.mkNormalFlow()) pos in
     let rem_lhpargs1 = List.filter (fun (hp,_) -> not (CP.mem_svl hp lhs_sel_hps)) rem_lhpargs in
     List.fold_left (fun ls (hp,args) ->
         (* if CP.mem_svl hp sel_hps then *)
