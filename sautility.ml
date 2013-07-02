@@ -667,6 +667,13 @@ let rec cmp_inst ls1 ls2 =
       else false
     | _ -> false
 
+let rec cmp_subsume_inst ls1 ls2 =
+  match ls1,ls2 with
+    | [], _ -> true
+    | i1::rest1,i2::rest2 -> if i1=i2 then cmp_inst rest1 rest2
+      else false
+    | _ -> false
+
 let get_inst_hp_args prog hp=
   let hp_name= CP.name_of_spec_var hp in
   let hprel = Cast.look_up_hp_def_raw prog.C.prog_hp_decls hp_name in
