@@ -117,7 +117,8 @@ and hprel= {
     unk_hps:(CP.spec_var*CP.spec_var list) list; (* not needed *)
     predef_svl: CP.spec_var list; (* not needed *)
     hprel_lhs: formula;
-    hprel_rhs: formula
+    hprel_rhs: formula;
+    (* hprel_path: cond_path_type; *)
 }
 
 
@@ -129,6 +130,7 @@ and hprel_def= {
     hprel_def_hrel: h_formula; (* LHS *)
     hprel_def_body: formula option; (* RHS *)
     hprel_def_body_lib: formula option; (* reuse of existing pred *)
+    (* hprel_def_path: cond_path_type; *)
 }
 
 (*temporal: name * hrel * definition body*)
@@ -197,6 +199,7 @@ and h_formula = (* heap formula *)
   | Hole of int
   (* | TempHole of int * h_formula *)
   | HRel of (CP.spec_var * ((CP.exp) list) * loc) (*placeh older for heap predicates*)
+  (* | HRel of ((CP.spec_var * cond_path_type) * ((CP.exp) list) * loc) (\*placeh older for heap predicates*\) *)
   | HTrue
   | HFalse
   | HEmp (* emp for classical logic *)
@@ -352,6 +355,7 @@ let mkHprel  knd u_svl u_hps pd_svl hprel_l hprel_r =
     predef_svl = pd_svl;
     hprel_lhs = hprel_l;
     hprel_rhs = hprel_r;
+    (* hprel_path = None; *)
  }
 	
 let isAnyConstFalse f = match f with
@@ -6208,6 +6212,7 @@ think it is used to instantiate when folding.
   es_orig_ante   : formula option       ;  (* original antecedent formula *) 
   es_orig_conseq : struc_formula ;
   es_path_label : path_trace;
+  es_cond_path : cond_path_type;
   es_prior_steps : steps; (* prior steps in reverse order *)
   (*es_cache_no_list : formula_cache_no_list;*)
 
@@ -6460,6 +6465,7 @@ let empty_es flowt grp_lbl pos =
   es_orig_conseq = mkETrue flowt pos;
   es_rhs_eqset = [];
   es_path_label  =[];
+  es_cond_path  =[];
   es_prior_steps  = [];
   es_var_measures = None;
   es_var_stack = [];
@@ -9830,6 +9836,7 @@ let clear_entailment_history_es xp (es :entail_state) :context =
           es_formula = es_f;
           es_history = old_history;
           es_path_label = es.es_path_label;
+          es_cond_path = es.es_cond_path;
           es_prior_steps = es.es_prior_steps;
           es_var_measures = es.es_var_measures;
       (* WN : what is the purpose of es_var_stack?*)
