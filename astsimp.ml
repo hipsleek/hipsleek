@@ -7640,6 +7640,6 @@ and normalize_fracs cprog  =
 (*   let pr2 = !CP.print_svl in *)
 (*   let pr3 = Cprinter.string_of_formula in *)
 (*   let pr4 = Cprinter.string_of_view_decl in *)
-(*   Debug.ho_4 "trans_hp_2_view" pr1 pr1 pr2 pr3 pr4 *)
+(*   Debug.no_4 "trans_hp_2_view" pr1 pr1 pr2 pr3 pr4 *)
 (*       (fun _ _ _ _ -> trans_hp_2_view_x hp r args f) *)
 (*       hp r args f *)
