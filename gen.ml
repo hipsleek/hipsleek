@@ -431,7 +431,7 @@ class change_flag =
    end;;
 
 class ['a] stack  =
-   object 
+  object (self)
      val mutable stk = []
      method push (i:'a) = 
        begin
@@ -468,6 +468,12 @@ class ['a] stack  =
      method pop_list (ls:'a list) = 
        stk <- BList.drop (List.length ls) stk
      method reset = stk <- []
+     method clone =
+       Oo.copy self
+       (* let n = new Gen.stack in *)
+       (*   let lst = self # get_stk in *)
+       (*   let _ = n # push_list lst in *)
+       (* n *)
    end;;
 
 class ['a] stack_pr (epr:'a->string) (eq:'a->'a->bool)  =
@@ -1195,7 +1201,7 @@ struct
 end;;
 
 class mult_counters =
-object (self)
+ object (self)
   val ctrs = Hashtbl.create 10
   method get (s:string) : int = 
     try
