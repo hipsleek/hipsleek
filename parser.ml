@@ -2351,7 +2351,7 @@ valid_declaration_statement:
   | t=try_statement; `SEMICOLON -> t
   | t=java_statement -> t
   | t=jump_statement;`SEMICOLON  -> t
-  | t=assert_statement;`SEMICOLON -> t
+  | t= assert_statement;`SEMICOLON -> t
   | t=dprint_statement;`SEMICOLON  -> t
   | t=debug_statement -> t
   | t=time_statement -> t
@@ -2369,7 +2369,7 @@ barr_statement : [[`BARRIER; `IDENTIFIER t -> I.Barrier {exp_barrier_recv = t ; 
  
 assert_statement:
   [[ `ASSERT; ol= opt_label; f=formulas ->
-       mkAssert (Some ((F.subst_stub_flow_struc n_flow (fst f)),(snd f))) None (fresh_formula_label ol) None (get_pos_camlp4 _loc 1)
+       mkAssert (Some ((F.subst_stub_flow_struc n_flow (fst f)),(snd f))) None (fresh_formula_label ol) (Some false) (get_pos_camlp4 _loc 1)
    | `ASSERT_EXACT; ol= opt_label; f=formulas -> 
        mkAssert (Some ((F.subst_stub_flow_struc n_flow (fst f)),(snd f))) None (fresh_formula_label ol) (Some true) (get_pos_camlp4 _loc 1)
    | `ASSERT_INEXACT; ol= opt_label; f=formulas -> 
@@ -2377,7 +2377,7 @@ assert_statement:
    | `ASSUME; ol=opt_label; dc=disjunctive_constr ->
        mkAssert None (Some (F.subst_stub_flow n_flow dc)) (fresh_formula_label ol) None (get_pos_camlp4 _loc 1)
    | `ASSERT; ol=opt_label; f=formulas; `ASSUME; dc=disjunctive_constr ->  
-       mkAssert (Some ((F.subst_stub_flow_struc n_flow (fst f)),(snd f))) (Some (F.subst_stub_flow n_flow dc)) (fresh_formula_label ol) None (get_pos_camlp4 _loc 1)
+       mkAssert (Some ((F.subst_stub_flow_struc n_flow (fst f)),(snd f))) (Some (F.subst_stub_flow n_flow dc)) (fresh_formula_label ol) (Some false) (get_pos_camlp4 _loc 1)
    | `ASSERT_EXACT; ol=opt_label; f=formulas; `ASSUME; dc=disjunctive_constr ->  
        mkAssert (Some ((F.subst_stub_flow_struc n_flow (fst f)),(snd f))) (Some (F.subst_stub_flow n_flow dc)) (fresh_formula_label ol) (Some true) (get_pos_camlp4 _loc 1)
    | `ASSERT_INEXACT; ol=opt_label; f=formulas; `ASSUME; dc=disjunctive_constr ->  

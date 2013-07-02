@@ -3177,7 +3177,7 @@ HP_800(next_15_830,y_831) ::=
  HP_822(prev_21_820,x) ::= NONE,
  HP_823(next_21_821,x) ::= NONE]
 =====================================================================
-# set-tail.ss --classic
+# set-tail.ss --classic  
 
 GOT
 ===
@@ -3247,7 +3247,7 @@ Entail (1) : Valid.
 BUT should FAIL. Please only add those __pure_relation 
 from the inferable list.
 =====================================================================
-# set-tail.ss
+# set-tail.ss  FIXED
 
 To implement options:
 
@@ -3283,7 +3283,7 @@ EXPECTED
 
  G(x_786,y_787) ::=  x_786::node<__DP_H_0,y_787>@M,
 =====================================================================
-# assert-1-bug-5.slk
+# assert-1-bug-5.slk  FIXED by Loc
 
   inconsistent with hip outcome in
 

@@ -16,7 +16,8 @@ void foo(node x)
 {
   node t;
   t = x.next;
-  assert t'=null;
+  assert t'=null assume true;
+  dprint;
 }
 /*
 
