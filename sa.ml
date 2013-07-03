@@ -3582,7 +3582,7 @@ let collect_sel_hp_def_x defs sel_hps unk_hps m=
     {
         CF.hprel_def_kind = kind;
         CF.hprel_def_hrel = hprel;
-        CF.hprel_def_body = opf;
+        CF.hprel_def_body = [([], opf)];
         CF.hprel_def_body_lib = opflib;
     }
   in
@@ -3605,8 +3605,8 @@ let collect_sel_hp_def_x defs sel_hps unk_hps m=
   in
   let look_up_depend cur_hp_sel f=
     let hps = CF.get_hp_rel_name_formula f in
-    let dep_hp = Gen.BList.difference_eq CP.eq_spec_var hps (cur_hp_sel(* @unk_hps *)) in
-    (CP.remove_dups_svl dep_hp)
+    let dep_hps =CP.diff_svl hps (cur_hp_sel(* @unk_hps *)) in
+    (CP.remove_dups_svl dep_hps)
   in
   let look_up_hp_def new_sel_hps non_sel_hp_def=
     List.partition (fun (hp,_) -> CP.mem_svl hp new_sel_hps) non_sel_hp_def

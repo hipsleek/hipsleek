@@ -1854,7 +1854,7 @@ let pr_hprel hpa=
 
 let pr_hprel_short hpa=
   fmt_open_box 1;
-  (pr_seq "" (fun s -> fmt_int s)) hpa.hprel_path;
+  (pr_seq ";" (fun s -> fmt_int s)) hpa.hprel_path;
   (* fmt_string (CP.print_rel_cat hpa.hprel_kind); *)
   prtt_pr_formula hpa.hprel_lhs;
   fmt_string " --> ";
@@ -1869,21 +1869,42 @@ let pr_hprel_short_inst cprog hpa=
   prtt_pr_formula_inst cprog hpa.hprel_rhs;
   fmt_close()
 
+let pr_path_of (path, off)=
+  fmt_string (((pr_list_round string_of_int) path ) ^ ": " ^
+      (match off with
+        | None -> "UNKNOWN"
+        | Some f -> prtt_string_of_formula f))
+
 let pr_hprel_def hpd=
   fmt_open_box 1;
   (* fmt_string (CP.print_rel_cat hpd.hprel_def_kind); *)
   (* fmt_string "\n"; *)
   (pr_h_formula hpd.hprel_def_hrel);
   fmt_string " ::=";
-  fmt_string (match hpd.hprel_def_body with
-    | None -> "UNKNOWN"
-    | Some f -> prtt_string_of_formula f);
+   (* fmt_string (String.concat " \/ " (List.map pr_path_of hpd.hprel_def_body)); *)
+  (pr_list_op_none " \/ " pr_path_of hpd.hprel_def_body);
   fmt_string " LIB FORM:\n";
   (pr_h_formula hpd.hprel_def_hrel);
   fmt_string " ::=";
   fmt_string ( match hpd.hprel_def_body_lib with
     | None -> "UNKNOWN"
     | Some f -> prtt_string_of_formula f);
+  fmt_close()
+
+let pr_hprel_def_short hpd=
+  fmt_open_box 1;
+  (* fmt_string (CP.print_rel_cat hpd.hprel_def_kind); *)
+  (* fmt_string "\n"; *)
+  (pr_h_formula hpd.hprel_def_hrel);
+  fmt_string " ::=";
+  (pr_list_op_none " \/ " pr_path_of hpd.hprel_def_body);
+   (* fmt_string (String.concat " OR " (List.map pr_path_of hpd.hprel_def_body)); *)
+  (* fmt_string " LIB FORM:\n"; *)
+  (* (pr_h_formula hpd.hprel_def_hrel); *)
+  (* fmt_string " ::="; *)
+  (* fmt_string ( match hpd.hprel_def_body_lib with *)
+  (*   | None -> "UNKNOWN" *)
+  (*   | Some f -> prtt_string_of_formula f); *)
   fmt_close()
 
 let pr_hprel_def_lib hpd=
@@ -1905,6 +1926,8 @@ let string_of_hprel_short_inst prog hp =
   poly_string_of_pr (pr_hprel_short_inst prog) hp
 
 let string_of_hprel_def hp = poly_string_of_pr pr_hprel_def hp
+
+let string_of_hprel_def_short hp = poly_string_of_pr pr_hprel_def_short hp
 
 let string_of_hprel_def_lib hp = poly_string_of_pr pr_hprel_def_lib hp
 
