@@ -734,8 +734,8 @@ let process_rel_defn cond_path (ilhs : meta_formula) (irhs: meta_formula)=
   let pr_new_rel_defn =  (cond_path, (CP.HPRelDefn (hp, List.hd args, List.tl args), hf, rhs))
   in
   (*hp_defn*)
-  let pr= pr_pair CF.string_of_cond_path Cprinter.string_of_hp_rel_def_short in
-  let _ = Debug.info_pprint ((pr pr_new_rel_defn) ^ "\n") no_pos in
+  (* let pr= pr_pair CF.string_of_cond_path Cprinter.string_of_hp_rel_def_short in *)
+  (* let _ = Debug.ninfo_pprint ((pr pr_new_rel_defn) ^ "\n") no_pos in *)
   let _ =  sleek_hprel_defns := ! sleek_hprel_defns@[pr_new_rel_defn] in
   ()
 
@@ -760,7 +760,7 @@ let process_decl_hpunknown (cond_path, hp_names) =
     (cond_path, (hp,args))
   in
   let hpargs = List.map process hp_names in
-  let _ = Debug.info_pprint (("unknown: " ^
+  let _ = Debug.ninfo_pprint (("unknown: " ^
       (let pr = pr_list (pr_pair CF.string_of_cond_path (pr_pair !Cpure.print_sv !Cpure.print_svl)) in pr hpargs)) ^ "\n") no_pos in
   let _ = sleek_hprel_unknown := !sleek_hprel_unknown@hpargs in
   ()
@@ -860,8 +860,35 @@ let process_shape_divide pre_hps post_hps=
   let _ = List.iter pr_one ls_cond_defs_drops in
   ()
 
-let process_shape_conquer cond_paths=
-  let _ = DD.info_pprint "process_shape_conquer\n" no_pos in
+let process_shape_conquer sel_ids cond_paths=
+  let _ = DD.ninfo_pprint "process_shape_conquer\n" no_pos in
+  let ls_pr_defs = !sleek_hprel_defns in
+  let link_hpargs = !sleek_hprel_unknown in
+  let orig_vars = List.fold_left (fun ls (_,(_,hf,_))-> ls@(CF.h_fv hf)) [] ls_pr_defs in
+  let sel_hps = List.map (fun v -> TI.get_spec_var_type_list_infer (v, Unprimed) orig_vars no_pos) (sel_ids) in
+  let sel_hps  = List.filter (fun sv ->
+      let t = CP.type_of_spec_var sv in
+       ((* is_RelT t || *) is_HpT t )) sel_hps in
+  let ls_path_link = SAU.dang_partition link_hpargs in
+  let ls_path_defs = SAU.defn_partition ls_pr_defs in
+  (*pairing*)
+  let ls_path_link_defs = SAU.pair_dang_constr_path ls_path_defs ls_path_link
+    (pr_list_ln Cprinter.string_of_hp_rel_def_short) in
+  let ls_path_defs_settings = List.map (fun (path,link_hpargs, defs) ->
+      (path, defs,[],[], [],link_hpargs,[])) ls_path_link_defs in
+  let defs = Sa2.infer_shapes_conquer iprog !cprog "" ls_path_defs_settings sel_hps in
+  let _ =
+    begin
+      let rel_defs =  Sa2.rel_def_stk in
+      if not(rel_defs# is_empty) then
+        print_endline "";
+      print_endline "\n*************************************";
+      print_endline "*******relational definition ********";
+      print_endline "*************************************";
+      print_endline (rel_defs # string_of_reverse);
+      print_endline "*************************************"
+    end
+  in
   ()
 
 let process_shape_postObl pre_hps post_hps=

@@ -1680,9 +1680,10 @@ shapedivide_cmd:
    (il1,il2)
    ]];
 shapeconquer_cmd:
-   [[ `SHAPE_CONQUER; `OSQUARE; il1=OPT list_int_list ;`CSQUARE ->
+   [[ `SHAPE_CONQUER; `OSQUARE; il2=OPT id_list;`CSQUARE; `OSQUARE; il1=OPT list_int_list ;`CSQUARE ->
    let il1 = un_option il1 [] in
-   (il1)
+   let il2 = un_option il2 [] in
+   (il2, il1)
    ]];
 
 shapepost_obl_cmd:

@@ -139,7 +139,7 @@ and hprel= {
 and hprel_def= {
     hprel_def_kind: CP.rel_cat;
     hprel_def_hrel: h_formula; (* LHS *)
-    hprel_def_body: formula option; (* RHS *)
+    hprel_def_body: (cond_path_type * formula option) list; (* RHS *)
     hprel_def_body_lib: formula option; (* reuse of existing pred *)
     (* hprel_def_path: cond_path_type; *)
 }
@@ -368,6 +368,14 @@ let mkHprel knd u_svl u_hps pd_svl hprel_l hprel_r hprel_p=
     hprel_rhs = hprel_r;
     hprel_path = hprel_p;
  }
+
+ let mk_hprel_def kind hprel path_opf opflib=
+   {
+       hprel_def_kind = kind;
+       hprel_def_hrel = hprel;
+       hprel_def_body =  path_opf;
+       hprel_def_body_lib = opflib;
+   }
 
 let isAnyConstFalse f = match f with
   | Exists ({formula_exists_heap = h;

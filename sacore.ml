@@ -948,12 +948,12 @@ let generate_hp_def_from_unk_hps hpdefs unk_hpargs defined_hps post_hps unk_map 
       (fun _ _ _ _ -> generate_hp_def_from_unk_hps_x hpdefs unk_hpargs defined_hps post_hps unk_map equivs)
       unk_hpargs hpdefs defined_hps unk_map
 
-let generate_hp_def_from_link_hps prog equivs link_hpargs=
+let generate_hp_def_from_link_hps prog cond_path equivs link_hpargs=
   let trans_link_hpdef (k, hf, f)=
     {
       CF.hprel_def_kind = k;
       CF.hprel_def_hrel = hf;
-      CF.hprel_def_body = Some f;
+      CF.hprel_def_body = [(cond_path, Some f)];
       CF.hprel_def_body_lib = Some f;
     }
   in
@@ -962,7 +962,7 @@ let generate_hp_def_from_link_hps prog equivs link_hpargs=
   CP.mem_svl hp1 link_hps) equivs in
   let equiv_link_hpdefs, define_link_hps = List.fold_left (generate_equiv_unkdef link_hpargs) ([],[]) link_equivs in
   let link_hpargs1 = List.filter (fun (hp,_) -> not (CP.mem_svl hp define_link_hps)) link_hpargs in
-  let link_hpdefs =List.map (SAU.mk_link_hprel_def prog) link_hpargs1 in
+  let link_hpdefs =List.map (SAU.mk_link_hprel_def prog cond_path) link_hpargs1 in
   ((List.map trans_link_hpdef equiv_link_hpdefs)@link_hpdefs)
 
 let transform_unk_hps_to_pure_x hp_defs unk_hp_frargs =

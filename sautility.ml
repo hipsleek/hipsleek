@@ -3703,7 +3703,7 @@ let mk_unk_hprel_def hp args defs pos=
   def)) in
   [def]
 
-let mk_link_hprel_def prog (hp,_)=
+let mk_link_hprel_def prog cond_path (hp,_)=
   let hp_name= CP.name_of_spec_var hp in
   let hprel = Cast.look_up_hp_def_raw prog.C.prog_hp_decls hp_name in
   let args = fst (List.split hprel.C.hp_vars_inst) in
@@ -3712,7 +3712,7 @@ let mk_link_hprel_def prog (hp,_)=
   let def= {
       CF.hprel_def_kind = CP.HPRelDefn (hp, List.hd args, List.tl args);
       CF.hprel_def_hrel = hf;
-      CF.hprel_def_body = None;
+      CF.hprel_def_body = [(cond_path, None)];
       CF.hprel_def_body_lib = None;
   } in
   def
@@ -5660,6 +5660,9 @@ let rec partition_helper pr_cond_hpargs grps=
 let dang_partition pr_cond_hpargs0 =
   partition_helper pr_cond_hpargs0 []
 
+let defn_partition pr_cond_defs=
+  partition_helper pr_cond_defs []
+
 let assumption_partition_x constrs0=
   (*********************************)
   (*        INTERNAL               *)
@@ -5720,8 +5723,9 @@ let pair_dang_constr_path_x ls_constr_path ls_dang_path=
   ) ls_constr_path in
   r
 
-let pair_dang_constr_path ls_constr_path ls_dang_path=
-  let pr1 = pr_list_ln Cprinter.string_of_hprel_short in
+let pair_dang_constr_path ls_constr_path ls_dang_path pr1=
+  (* let pr1 = pr_list_ln Cprinter.string_of_hprel_short in *)
+  (* let pr1 = pr_list_ln Cprinter.string_of_hp_rel_def_short in *)
   let pr2 = CF.string_of_cond_path in
   let pr3 = pr_list_ln (pr_pair pr2 pr1) in
   let pr4 = pr_list (pr_pair !CP.print_sv !CP.print_svl) in
@@ -5734,3 +5738,89 @@ let pair_dang_constr_path ls_constr_path ls_dang_path=
 (*=============**************************================*)
        (*=============END COND PATH================*)
 (*=============**************************================*)
+let find_closed_sel_hp_def_x defs sel_hps dang_hps equivs=
+  let look_up_depend cur_hp_sel f=
+    let hps = CF.get_hp_rel_name_formula f in
+    let dep_hps =CP.diff_svl hps (cur_hp_sel) in
+    (CP.remove_dups_svl dep_hps)
+  in
+  let look_up_hp_def new_sel_hps non_sel_hp_def=
+    List.partition (fun (hp,_) -> CP.mem_svl hp new_sel_hps) non_sel_hp_def
+  in
+  let rec find_closed_sel cur_sel cur_sel_hpdef non_sel_hp_def incr=
+    let rec helper1 ls res=
+      match ls with
+        | [] -> res
+        | (hp,(a,hf,f))::lss ->
+            let incr =
+              if CP.mem_svl hp (cur_sel) then
+                []
+              else
+                [hp]
+            in
+            let new_hp_dep = look_up_depend cur_sel f in
+            helper1 lss (CP.remove_dups_svl (res@incr@new_hp_dep))
+    in
+    let incr_sel_hps = helper1 incr [] in
+    (*nothing new*)
+    if incr_sel_hps = [] then cur_sel_hpdef else
+      let incr_sel_hp_def,remain_hp_defs = look_up_hp_def incr_sel_hps non_sel_hp_def in
+      find_closed_sel (cur_sel@incr_sel_hps) (cur_sel_hpdef@incr_sel_hp_def) remain_hp_defs incr_sel_hp_def
+  in
+  (**********END INTERNAL********************)
+  let defsw = List.map (fun (a,hf,f) ->
+      (List.hd (CF.get_hp_rel_name_h_formula hf), (a,hf,f))) defs in
+  let sel_defw,remain_hp_defs = List.partition (fun (hp,_) -> CP.mem_svl hp sel_hps) defsw in
+  let closed_sel_defw = find_closed_sel sel_hps sel_defw remain_hp_defs sel_defw in
+  List.split closed_sel_defw
+
+let find_closed_sel_hp_def defs sel_hps dang_hps equivs=
+  let pr1 = pr_list_ln Cprinter.string_of_hp_rel_def in
+  let pr2 = !CP.print_svl in
+  let pr4 = pr_pair pr2 pr1 in
+  Debug.no_2 "find_closed_sel_hp_def" pr1 pr2 pr4
+      (fun _ _ -> find_closed_sel_hp_def_x defs sel_hps dang_hps equivs) defs sel_hps
+
+let combine_path_defs sel_hps1 path_defs=
+  let rec look_up rem hp=
+    match rem with
+      | [] -> []
+      | hpd::rest ->
+            let hp1,args = CF.extract_HRel hpd.CF.hprel_def_hrel in
+            if CP.eq_spec_var hp hp1 then
+              [ (hpd.CF.hprel_def_kind, args, hpd.CF.hprel_def_body,
+              hpd.CF.hprel_def_body_lib)]
+            else look_up rest hp
+  in
+  let combine_path args0 args1 old_paths paths1 old_lib lib1=
+    let ss = List.combine args1 args0 in
+    let n_path (path1, ofs1) = (path1, match ofs1 with
+      | None -> None
+      | Some f -> Some (CF.subst ss f)
+    )
+    in
+    let n_lib = match old_lib, lib1 with
+      | Some f1, Some f2 -> Some (CF.mkOr f1 f2 no_pos)
+      | _ -> None
+    in
+    (old_paths@(List.map n_path paths1), n_lib)
+  in
+  let rec norm rem_path args0 paths lib=
+    match rem_path with
+      | [] -> (paths, lib)
+      | (_, args1, path_fs1, lib1)::rest ->
+            let n_paths, n_lib = combine_path args0 args1 paths path_fs1 lib lib1 in
+            norm rest args0 n_paths n_lib
+  in
+  let rec combine_one_def hp=
+    let settings= List.fold_left (fun ls path ->
+        let res = look_up path hp in
+        ls@res
+    ) [] path_defs
+    in
+    match settings with
+      | [] -> []
+      | (k, args0, path_fs0, lib0)::rest -> let path_fs, lib = norm rest args0 path_fs0 lib0 in
+        [(CF.mk_hprel_def k (mkHRel hp args0 no_pos) path_fs lib)]
+  in
+  List.fold_left (fun ls hp -> ls@(combine_one_def hp)) [] sel_hps1

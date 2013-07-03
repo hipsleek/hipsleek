@@ -98,7 +98,7 @@ let proc_gen_cmd cmd =
     | RelDefn (id, ilhs, irhs) -> process_rel_defn id ilhs irhs
     | ShapeInfer (pre_hps, post_hps) -> process_shape_infer pre_hps post_hps
     | ShapeDivide (pre_hps, post_hps) -> process_shape_divide pre_hps post_hps
-    | ShapeConquer (paths) -> process_shape_conquer paths
+    | ShapeConquer (ids, paths) -> process_shape_conquer ids paths
     | ShapePostObl (pre_hps, post_hps) -> process_shape_postObl pre_hps post_hps
     | ShapeInferProp (pre_hps, post_hps) -> process_shape_infer_prop pre_hps post_hps
     | ShapeSplitBase (pre_hps, post_hps) -> process_shape_split pre_hps post_hps
@@ -165,7 +165,7 @@ let parse_file (parse) (source_file : string) =
       | RelDefn (id, ilhs, irhs) -> process_rel_defn id ilhs irhs
       | ShapeInfer (pre_hps, post_hps) -> process_shape_infer pre_hps post_hps
       | ShapeDivide (pre_hps, post_hps) -> process_shape_divide pre_hps post_hps
-      | ShapeConquer (paths) -> process_shape_conquer paths
+      | ShapeConquer (ids, paths) -> process_shape_conquer ids paths
       | ShapePostObl (pre_hps, post_hps) -> process_shape_postObl pre_hps post_hps
       | ShapeInferProp (pre_hps, post_hps) -> process_shape_infer_prop pre_hps post_hps
       | ShapeSplitBase (pre_hps, post_hps) -> process_shape_split pre_hps post_hps

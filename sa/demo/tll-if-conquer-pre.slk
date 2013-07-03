@@ -13,8 +13,10 @@ HeapPred H_3(node a).
 HeapPred H_2a(node a).
 HeapPred H_3a(node a).
 
-
 relDefn (1;0)
+ H_3(right_25_31) <->  right_25_31=null.
+
+relDefn (2;0)
  H_3(right_25_31) <->  H(right_25_31)&right_25_31!=null.
 
 
@@ -35,7 +37,7 @@ relDefn (1;0)
  H_2(a) <-> NONE.
 */
 
-shape_conquer [1;0,1;2].
+shape_conquer [H][1;0,1;2].
 
 
 /*
