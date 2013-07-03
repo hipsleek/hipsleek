@@ -1517,7 +1517,7 @@ let find_well_defined_hp_x prog hds hvs r_hps prog_vars post_hps (hp,args) def_p
           (*hip or shape infer*)
           if not split_spatial then (lhsb, [],[(hp,args)], []) else
             let n_lhsb, new_ass, wdf_hpargs, ls_rhs=
-              if !Globals.sa_s_split_base then
+              if !Globals.sa_sp_split_base then
                 (*generate new hp decl for pre-preds*)
                 let new_hf, new_hp = add_raw_hp_rel_x prog true undef_args_inst pos in
                 let nlhsb = CF.mkAnd_fb_hf lhsb new_hf pos in
