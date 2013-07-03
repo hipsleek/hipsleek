@@ -640,6 +640,8 @@ let lib_files = ref ([] : string list)
 
 (* command line options *)
 
+let texify = ref false
+
 let instantiation_variants = ref 0
 
 let omega_simpl = ref true

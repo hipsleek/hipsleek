@@ -1,25 +1,25 @@
 data node{
-        int val;
+//        int val;
         node prev;
         node next;
 }
 
 
-ll<> == self = null  or self::node<_, _ , q> * q::ll<>;
-dll<p> == self = null or self::node<_, p , q> * q::dll<self>;   // p stores the prev node
+ll<> == self = null  or self::node< _ , q> * q::ll<>;
+dll<p> == self = null or self::node< p , q> * q::dll<self>;   // p stores the prev node
 
 HeapPred H1(node a, node@NI b).
 // seems critical to have @NI
 HeapPred G1(node a, node b).
 
-void paper_fix (node c, node p)
-  infer[H1,G1] requires H1(c,p) ensures G1(c,p);
+void paper_fix (node x, node p)
+  infer[H1,G1] requires H1(x,p) ensures G1(x,p);
   //requires c::ll<> ensures c::dll<p>;
 {
-        if (c!=null) 
+        if (x!=null) 
         {
-            c.prev=p;
-	        paper_fix(c.next,c); 
+            x.prev=p;
+	        paper_fix(x.next,x); 
         }
 }
 

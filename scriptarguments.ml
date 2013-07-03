@@ -412,7 +412,7 @@ let common_arguments = [
   ("--norm-extract", Arg.Set Globals.norm_extract, "extract common pattern among branches of user-defined predicates (view)");
   ("--en-print-ann" , Arg.Set Globals.print_ann, "enable annotation printing (default)");
   ("--dis-print-ann", Arg.Clear Globals.print_ann, "disable annotation printing");
-
+  ("--en-texify", Arg.Set Globals.texify, "output latex formulas");
 
   ]
 
