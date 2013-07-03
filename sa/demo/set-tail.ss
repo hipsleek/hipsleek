@@ -4,30 +4,51 @@ data node{
 }
 
 
-HeapPred H(node a,node b).
-  HeapPred G(node a, node b).
+HeapPred H(node a, node@NI b).
+HeapPred G(node a, node b).
 
-  void set_tail (node l1,node l2)
+  void set_tail (node x,node y)
   infer[H,G] 
-  requires H(l1,l2) 
-  ensures G(l1,l2);
+  requires H(x,y) 
+  ensures G(x,y);
 {
-   l1.next = l2;
+// node t = x.next;
+   x.next = y;
 }
 
 /*
+# set-tail.ss
 
-[ H1(c,y)&true --> c::node<val_16_779,prev_16_780,next_16_781>@M * 
-  (HP_782(prev_16_780,y)) * (HP_783(next_16_781,y))&true,
- (HP_782(prev_16_780,y)) * (HP_783(next_16_781,y)) * 
-  c::node<val_16_779,prev_16_780,y>@M&true --> G1(c,y)&true]
+option --pred-elim-dangling
 
-=============
+GOT
+===
+ H(x_784,y_785) ::=  x_784::node<prev_16_778,next_16_779>@M 
+   * H_0(prev_16_778,y_785) * H_1(next_16_779,y_785) 
+   * H_2(y_785,x_784),
 
-[ H1(c_795,y_796) ::= c_795::node<val_16_779,prev_16_780,next_16_781>@M&
- XPURE(HP_782(prev_16_780,y_796)) &  XPURE(HP_783(next_16_781,y_796)),
- G1(c_797,y_798) ::= c_797::node<val_16_779,prev_16_780,y_798>@M&
- XPURE(HP_782(prev_16_780,y_798)) &  XPURE(HP_783(next_16_781,y_798))]
+ G(x_786,y_787) ::=  H_0(prev_16_778,y_787) 
+   * H_2(y_787,x_786) * x_786::node<prev_16_778,y_787>@M,
+
+ H_2(y,x) ::= NONE,
+ H_0(prev_16_778,y) ::= NONE,
+ H_1(next_16_779,y) ::= NONE]
+
+There are three unknown (new dangling) preds. We would like to
+remove them from our predicate definition.
+  H_2 pred originate from parameter y (parameter dangling)
+  H_0/H_1 pred originate from fields next/prev. (field dangling)
+You can easily check this on the root paramter of each
+pred defn. For parameter dangling, we just remove them
+without any other change. However, for each field-dangling,
+we would replace its root paramter by a unique name,
+e.g. HP_x(field,..) replaced field by __UU_DG_HP_x
+
+EXPECTED
+========
+ H(x_784,y_785) ::=  x_784::node<__DP_H_0,__DP_H_1>@M 
+
+ G(x_786,y_787) ::=  x_786::node<__DP_H_0,y_787>@M,
 
 ============= --sa-inlining
 

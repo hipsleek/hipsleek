@@ -1,110 +1,35 @@
-data cell{
-	cell val;
+data node{
+        node prev;
+        node up;
+        node next;
 }
 
+ll<> == self = null  or self::node< _ ,_, q> * q::ll<>;
+/*
+llD<D1,D2> == self = null  or self::node< p ,u, q> * q::llD<D1,D2> 
+       & p in D1 & u in D2;
+*/
+//HeapPred H1(node a, node@NI b).
+// seems critical to have @NI
+//HeapPred G1(node a, node b).
 
-HeapPred P(cell a).
-  HeapPred G(cell a, cell r).
+HeapPred H1(node a).
+// seems critical to have @NI
+HeapPred G1(node a).
 
-cell id (cell x)
- infer [P,G]  requires P(x)  ensures  G(x,res);
-//requires emp  ensures  emp & x=res;
+void id (node x)
+  infer[H1,G1] requires H1(x) ensures G1(x);
+  //requires x::ll<> ensures x::ll<>;
+  //requires x::llD<D1,D2> ensures x::llD<D2,D1>; // fails
+//  requires x::llD<D1,D2> ensures x::llD<D1,D2>; // succeed
 {
-  return x;
+        if (x!=null) 
+        {
+	     id(x.next); 
+        }
 }
 
 /*
-# id.ss
-
-We obtained:
-
-[ P(x)&res=x --> G(x,res)&true]
-
-We should not do base-case split here.
-
-First, we consider pre-pred. There
-is only P but no definition. Hence,
-P is unknown. Thus, we have
-
- P(x) ::= NONE
-
-Next, we consider the post-pred G.
-There is only one assumption:
-   P(x) & res=x --> G(x,res)
-
-We derive:
-   G(x,res) ::= P(x) & res=x
-
-Thus:
-   P(x) ::= NONE
-   G(x,res) ::= P(x) & res=x
-
-
-==============================
-
-
-WHY are both treated as UNKNOWN!
-
-[ P(a) ::=NONE,
- G(a,r) ::=NONE]
-
-P/Q should be normal pre/post; and have
-defns:
-
-  P(a) ::= emp.
- G(a,r) ::= a=res
-
-=====
-
- P(a) = NONE
- G(a,res) ::= P(a) & s=res
-
-
-
-P(x) - pre-condition cannot be dangling
-  'cos x is from input
-
-P(x,y) --> x::node<_,q>*HP1(q,y@NI)*HP2(y,x@NI)
-  HP1(..) could be dangling pred
-  HP2(..) is non-dangling 'cos y is from input
-
-
- requires P(x,y)
- ensures  G(x,y,res)
- 
-
- P(x)&res=x --> G(x,res)&true]
-
- P(x) --> emp
- res=x --> G(x,res)
-
-A predicate is non-dangling if it is being used
-for a pre-pred definition.
-I suppose dangling classification may have to be
-done after base-case splitting.
-
-
- P(..) & p --> RHS
-
-
-
-[ P(x)&res=x --> G(x,res)&true]
-
-====
-
-[ P(x) ::= emp& XPURE(P(x)),
- G(x_773,res_774) ::= emp&res_774=x_773 &  XPURE(P(x_773))]
-
-====
-
-Sufficient to use:
-
-  P(x) --> emp
-  res=x --> G(x,res)
-
-====>
-  P(x)     <--> emp
-  G(x,res) <--> res=x
+# id
 
 */
-

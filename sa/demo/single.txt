@@ -38,7 +38,7 @@ However, we do need to check post-predicate proof obligation:
   G4(next_34_803,next_29_789@NI) * G5(next_29_789,t_32'@NI)&true,
 
 Checking this as a sleek proof (see single.slk), seems to have
-yielded further relational assumptions on the unknowns HP_4, HP_5.
+yielded further relational assumptions on the unknowns G4, G5.
 
  G(next_29_789,t_32') &
   next_29_789!=null |- t_32'::node<val_34_802,next_34_803>@M * 

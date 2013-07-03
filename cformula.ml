@@ -16,6 +16,17 @@ module Err = Error
 module CP = Cpure
 module MCP = Mcpure
 
+type cond_path_type = int list
+
+(* let string_of_cond_path c = "(" ^(String.concat ", " (List.map string_of_int c)) ^ ")" *)
+let string_of_cond_path c = pr_list_round string_of_int c
+
+(* WN: mutable data is bad idea *)
+(* type cond_path_type_stk = int Gen.stack *)
+(* let string_of_cond_path_stk stk = *)
+(*   let lst = stk # get_stk in *)
+(*   string_of_cond_path lst *)
+
 type ann = ConstAnn of heap_ann | PolyAnn of CP.spec_var | TempAnn of ann
 
 let view_prim_lst = new Gen.stack_pr pr_id (=) 
@@ -117,7 +128,8 @@ and hprel= {
     unk_hps:(CP.spec_var*CP.spec_var list) list; (* not needed *)
     predef_svl: CP.spec_var list; (* not needed *)
     hprel_lhs: formula;
-    hprel_rhs: formula
+    hprel_rhs: formula;
+    hprel_path: cond_path_type;
 }
 
 
@@ -129,6 +141,7 @@ and hprel_def= {
     hprel_def_hrel: h_formula; (* LHS *)
     hprel_def_body: formula option; (* RHS *)
     hprel_def_body_lib: formula option; (* reuse of existing pred *)
+    (* hprel_def_path: cond_path_type; *)
 }
 
 (*temporal: name * hrel * definition body*)
@@ -197,6 +210,7 @@ and h_formula = (* heap formula *)
   | Hole of int
   (* | TempHole of int * h_formula *)
   | HRel of (CP.spec_var * ((CP.exp) list) * loc) (*placeh older for heap predicates*)
+  (* | HRel of ((CP.spec_var * cond_path_type) * ((CP.exp) list) * loc) (\*placeh older for heap predicates*\) *)
   | HTrue
   | HFalse
   | HEmp (* emp for classical logic *)
@@ -345,15 +359,16 @@ let mkETrue flowt pos = EBase({
 	formula_struc_continuation = None;
 	formula_struc_pos = pos})
 
-let mkHprel  knd u_svl u_hps pd_svl hprel_l hprel_r =  
+let mkHprel knd u_svl u_hps pd_svl hprel_l hprel_r hprel_p=
  {  hprel_kind = knd;
     unk_svl = u_svl;
-    unk_hps = u_hps ; 
+    unk_hps = u_hps ;
     predef_svl = pd_svl;
     hprel_lhs = hprel_l;
     hprel_rhs = hprel_r;
+    hprel_path = hprel_p;
  }
-	
+
 let isAnyConstFalse f = match f with
   | Exists ({formula_exists_heap = h;
     formula_exists_pure = p;
@@ -3773,9 +3788,7 @@ and disj_count (f0 : formula) = match f0 with
 		1 + c1 + c2
 
   | _ -> 1
-(****************************************)
-(*=========for sa==========*)
-(****************************************)
+
 let find_close svl0 eqs0=
   let rec find_match svl ls_eqs rem_eqs=
     match ls_eqs with
@@ -6208,6 +6221,7 @@ think it is used to instantiate when folding.
   es_orig_ante   : formula option       ;  (* original antecedent formula *) 
   es_orig_conseq : struc_formula ;
   es_path_label : path_trace;
+  es_cond_path : cond_path_type;
   es_prior_steps : steps; (* prior steps in reverse order *)
   (*es_cache_no_list : formula_cache_no_list;*)
 
@@ -6460,6 +6474,7 @@ let empty_es flowt grp_lbl pos =
   es_orig_conseq = mkETrue flowt pos;
   es_rhs_eqset = [];
   es_path_label  =[];
+  es_cond_path  = [] ;
   es_prior_steps  = [];
   es_var_measures = None;
   es_var_stack = [];
@@ -9704,31 +9719,56 @@ and change_ret_flow_failesc_ctx ctx_list =
   transform_list_failesc_context 
     (idf,idf,(fun es -> Ctx{es with es_formula = substitute_flow_in_f !norm_flow_int !ret_flow_int es.es_formula;})) ctx_list
     
-let add_path_id ctx (pi1,pi2) = match pi1 with
-	| None -> ctx
-	| Some s -> 
-    let fct e = Ctx{e with es_path_label = (s,pi2)::e.es_path_label} in    
-    transform_context fct ctx
-	
-let add_path_id_ctx_list c (pi1,pi2)  = match pi1 with
-	| None -> c
-	| Some s ->	      
-    let fct e = Ctx{e with es_path_label = (s,pi2)::e.es_path_label} in    
-    transform_list_context (fct,(fun c-> c)) c
- 
-let add_path_id_ctx_partial_list (c:list_partial_context) (pi1,pi2) : list_partial_context = 
-  match pi1 with
-    | None -> c
-    | Some s ->	      
-	let fct e = Ctx{e with es_path_label = (s,pi2)::e.es_path_label} in    
-	  transform_list_partial_context (fct,(fun c-> c)) c
+let add_both_path (s,pi2) i e =
+  Ctx { e 
+  with es_path_label = (s,pi2)::e.es_path_label;
+      es_cond_path = if i<0 then e.es_cond_path else i::e.es_cond_path
+  }
+let add_one_path i e =
+  Ctx { e 
+  with es_cond_path = i::e.es_cond_path
+  }  
 
-let add_path_id_ctx_failesc_list (c:list_failesc_context) (pi1,pi2) : list_failesc_context = 
+let add_path_id ctx ((pi1,pi2) as p) i = 
   match pi1 with
-    | None -> c
-    | Some s ->	      
-	let fct e = Ctx{e with es_path_label = (s,pi2)::e.es_path_label} in    
-	  transform_list_failesc_context (idf,idf,fct) c
+    | None -> if i<0 then ctx else transform_context (add_one_path i) ctx
+    | Some s -> transform_context (add_both_path (s,pi2) i) ctx
+
+let add_path_id ctx ((pi1,pi2)as p) i =
+  let pr1 = pr_pair (pr_option pr_none) string_of_int in
+  let pr2 = string_of_int in
+  Debug.no_2 "add_path_id" pr1 pr2 pr_none (fun _ _ -> add_path_id ctx p i) p i 
+	
+let add_path_id_ctx_list c (pi1,pi2) i  = 
+  match pi1 with
+    | None -> if i<0 then c else transform_list_context (add_one_path i,idf) c
+    | Some s ->	 transform_list_context ((add_both_path (s,pi2) i),idf) c
+ 
+let add_path_id_ctx_partial_list (c:list_partial_context) (pi1,pi2) i : list_partial_context = 
+  match pi1 with
+    | None -> if i<0 then c else transform_list_partial_context (add_one_path i,idf) c
+    | Some s ->	 transform_list_partial_context ((add_both_path (s,pi2) i),idf) c
+  (* match pi1 with *)
+  (*   | None -> c *)
+  (*   | Some s ->	       *)
+  (*       let fct e = Ctx{e with  *)
+  (*           es_path_label = (s,pi2)::e.es_path_label; *)
+  (*           es_cond_path = i::e.es_cond_path *)
+  (*       } in     *)
+  (*       transform_list_partial_context (fct,(fun c-> c)) c *)
+
+let add_path_id_ctx_failesc_list (c:list_failesc_context) (pi1,pi2) i : list_failesc_context = 
+  match pi1 with
+    | None -> if i<0 then c else transform_list_failesc_context (idf,idf,add_one_path i) c
+    | Some s ->	 transform_list_failesc_context (idf,idf,(add_both_path (s,pi2) i)) c
+  (* match pi1 with *)
+  (*   | None -> c *)
+  (*   | Some s ->	       *)
+  (*       let fct e = Ctx{e with  *)
+  (*           es_path_label = (s,pi2)::e.es_path_label; *)
+  (*           es_cond_path = i::e.es_cond_path *)
+  (*       } in     *)
+  (*       transform_list_failesc_context (idf,idf,fct) c *)
 
 let proc_esc_stack pid f_es es = 
   List.map (fun ((p,l) as e) -> 
@@ -9830,6 +9870,7 @@ let clear_entailment_history_es xp (es :entail_state) :context =
           es_formula = es_f;
           es_history = old_history;
           es_path_label = es.es_path_label;
+          es_cond_path = es.es_cond_path ;
           es_prior_steps = es.es_prior_steps;
           es_var_measures = es.es_var_measures;
       (* WN : what is the purpose of es_var_stack?*)
@@ -12718,3 +12759,11 @@ let rec get_heap_inf_args estate =
 
 
 
+(****************************************)
+(*=========for sa==========*)
+(****************************************)
+(*TODO: LOC: es_cond_path from estate*)
+let get_es_cond_path es = es.es_cond_path
+
+let get_list_ctx_cond_path lc=
+  []

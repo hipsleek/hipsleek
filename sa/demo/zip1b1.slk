@@ -15,7 +15,7 @@ relAssume H1
   HP_1(next_24_820,y) * HP_2(y,x).
 
 relAssume HP_2
- HP_2(y,x)
+ HP_2(y,x) 
    --> y::node<val_25_826,next_25_827> * HP_8(next_25_827,x).
 
 relAssume H1

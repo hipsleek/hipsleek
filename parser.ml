@@ -721,9 +721,10 @@ non_empty_command:
       | t= axiom_decl -> AxiomDef t (* [4/10/2011] An Hoa : axiom declarations *)
       | t=let_decl            -> t
       | t=checkeq_cmd         -> EqCheck t
-      | t=checkentail_cmd     -> EntailCheck t
+      | t= checkentail_cmd     -> EntailCheck t
       | t=relassume_cmd     -> RelAssume t
       | t=shapeinfer_cmd     -> ShapeInfer t
+      | t=shapepost_obl_cmd     -> ShapePostObl t
       | t=shapeinfer_proper_cmd     -> ShapeInferProp t
       | t=shapesplit_base_cmd     -> ShapeSplitBase t
       | t=shapeElim_cmd     -> ShapeElim t
@@ -732,7 +733,7 @@ non_empty_command:
       | t=decl_unknown_cmd        -> ShapeDeclUnknown t
       | t=shape_sconseq_cmd     -> ShapeSConseq t
       | t=shape_sante_cmd     -> ShapeSAnte t
-      | t=infer_cmd           -> Infer t  
+      | t= infer_cmd           -> InferCmd t  
       | t=captureresidue_cmd  -> CaptureResidue t
       | t=print_cmd           -> PrintCmd t
       | t=cmp_cmd           ->  CmpCmd t
@@ -742,6 +743,7 @@ non_empty_command:
 data_decl:
     [[ dh=data_header ; db = data_body 
         -> {data_name = dh;
+            data_pos = get_pos_camlp4 _loc 1;
             data_fields = db;
             data_parent_name="Object"; (* Object; *)
             data_invs = [];
@@ -751,6 +753,7 @@ data_decl:
 template_data_decl:
     [[ dh=template_data_header ; db = data_body 
         -> {data_name = dh;
+            data_pos = get_pos_camlp4 _loc 1;
             data_fields = db;
             data_parent_name="Object"; (* Object; *)
             data_invs = [];
@@ -957,6 +960,7 @@ view_header:
       let modes = get_modes anns in
       let _ = view_names # push vn in
         { view_name = vn;
+          view_pos = get_pos_camlp4 _loc 1;
           view_data_name = "";
           view_vars = (* List.map fst *) cids;
           (* view_frac_var = empty_iperm; *)
@@ -987,6 +991,7 @@ view_header_ext:
       let modes = get_modes anns in
       let _ = view_names # push vn in
         { view_name = vn;
+          view_pos = get_pos_camlp4 _loc 1;
           view_data_name = "";
           view_vars = (* List.map fst *) cids;
           (* view_frac_var = empty_iperm; *)
@@ -1647,11 +1652,18 @@ decl_dang_cmd:
    ]];
 
 decl_unknown_cmd:
-   [[ `SHAPE_DECL_UNKNOWN; `OSQUARE; il1= OPT id_list ;`CSQUARE   -> un_option il1 []
+   [[ `SHAPE_DECL_UNKNOWN; `OPAREN; il2 = OPT int_list; `CPAREN; `OSQUARE; il1= OPT id_list ;`CSQUARE   -> (un_option il2 [], un_option il1 [])
    ]];
 
 shapeinfer_cmd:
    [[ `SHAPE_INFER; `OSQUARE;il1=OPT id_list;`CSQUARE; `OSQUARE; il2=OPT id_list;`CSQUARE ->
+   let il1 = un_option il1 [] in
+   let il2 = un_option il2 [] in
+   (il1,il2)
+   ]];
+
+shapepost_obl_cmd:
+   [[ `SHAPE_POST_OBL; `OSQUARE;il1=OPT id_list;`CSQUARE; `OSQUARE; il2=OPT id_list;`CSQUARE ->
    let il1 = un_option il1 [] in
    let il2 = un_option il2 [] in
    (il1,il2)
@@ -1699,7 +1711,12 @@ shapeExtract_cmd:
 
 infer_cmd:
   [[ `INFER; `OSQUARE; il=OPT id_list; `CSQUARE; t=meta_constr; `DERIVE; b=extended_meta_constr -> 
-    let il = un_option il [] in (il,t,b)
+    let il = un_option il [] in (il,t,b,None)
+    | `INFER_EXACT; `OSQUARE; il=OPT id_list; `CSQUARE; t=meta_constr; `DERIVE; b=extended_meta_constr -> 
+    let il = un_option il [] in (il,t,b,Some true)
+    | `INFER_INEXACT; `OSQUARE; il=OPT id_list; `CSQUARE; t=meta_constr; `DERIVE; b=extended_meta_constr -> 
+    let il = un_option il [] in (il,t,b,Some false)
+
   ]];
 
 captureresidue_cmd:
@@ -1798,6 +1815,8 @@ rank_specifier:
 comma_list: [[`COMMA; s = OPT SELF -> 1 + (un_option s 1)]];
   
 id_list_opt:[[t= LIST0 id SEP `COMMA ->t]];
+
+int_list:[[t= LIST1 integer_literal SEP `DOT ->t]];
 
 id_list:[[t=LIST1 id SEP `COMMA -> t]];
 
@@ -1993,6 +2012,7 @@ hprogn:
         | Coercion cdef -> coercion_defs := cdef :: !coercion_defs in
     let _ = List.map choose t in
     let obj_def = { data_name = "Object";
+                    data_pos = no_pos;
                     data_fields = [];
                     data_parent_name = "";
                     data_invs = []; (* F.mkTrue no_pos; *)
@@ -2000,6 +2020,7 @@ hprogn:
                     data_methods = [] } in
     let string_def = { data_name = "String";
                        data_fields = [];
+                       data_pos = no_pos;
                        data_parent_name = "Object";
                        data_invs = []; (* F.mkTrue no_pos; *)
                        data_is_template = false;
@@ -2007,25 +2028,28 @@ hprogn:
     (* let g_rel_lst = g_rel_defs # get_stk in *)
     let rel_lst = ((rel_defs # get_stk)(* @(g_rel_lst) *)) in
     let hp_lst = hp_defs # get_stk in
+    (* PURE_RELATION_OF_HEAP_PRED *)
+    (* to create __pure_of_relation from hp_lst to add to rel_lst *)
+    (* rel_lst = rel_lst @ List.map (pure_relation_of_hp_pred) hp_lst *)
     { prog_include_decls = !include_defs;
-			prog_data_decls = obj_def :: string_def :: !data_defs;
-      prog_global_var_decls = !global_var_defs;
-      prog_logical_var_decls = !logical_var_defs;
-      prog_enum_decls = !enum_defs;
-      (* prog_rel_decls = [];  TODO : new field for array parsing *)
-      prog_view_decls = !view_defs;
-      prog_func_decls = func_defs # get_stk ;
-      prog_rel_decls = rel_lst; (* An Hoa *)
-      prog_rel_ids = List.map (fun x ->
-          let tl,_ = List.split x.rel_typed_vars in
-          (RelT tl,x.rel_name)) (rel_lst); (* WN *)
-      prog_hp_decls = hp_lst ;
-      prog_hp_ids = List.map (fun x -> (HpT,x.hp_name)) hp_lst; (* l2 *)
-      prog_axiom_decls = !axiom_defs; (* [4/10/2011] An Hoa *)
-      prog_proc_decls = !proc_defs;
-      prog_coercion_decls = !coercion_defs; 
-      prog_hopred_decls = !hopred_defs;
-      prog_barrier_decls = !barrier_defs; } ]];
+    prog_data_decls = obj_def :: string_def :: !data_defs;
+    prog_global_var_decls = !global_var_defs;
+    prog_logical_var_decls = !logical_var_defs;
+    prog_enum_decls = !enum_defs;
+    (* prog_rel_decls = [];  TODO : new field for array parsing *)
+    prog_view_decls = !view_defs;
+    prog_func_decls = func_defs # get_stk ;
+    prog_rel_decls = rel_lst; (* An Hoa *)
+    prog_rel_ids = List.map (fun x ->
+        let tl,_ = List.split x.rel_typed_vars in
+        (RelT tl,x.rel_name)) (rel_lst); (* WN *)
+    prog_hp_decls = hp_lst ;
+    prog_hp_ids = List.map (fun x -> (HpT,x.hp_name)) hp_lst; (* l2 *)
+    prog_axiom_decls = !axiom_defs; (* [4/10/2011] An Hoa *)
+    prog_proc_decls = !proc_defs;
+    prog_coercion_decls = !coercion_defs; 
+    prog_hopred_decls = !hopred_defs;
+    prog_barrier_decls = !barrier_defs; } ]];
 
 opt_decl_list: [[t=LIST0 mdecl -> List.concat t]];
   
@@ -2072,6 +2096,7 @@ class_decl:
 		(* An Hoa [22/08/2011] : blindly add the members as non-inline because we do not support inline fields in classes. TODO revise. *)
 		let t1 = List.map (fun (t, p) -> (t, p, false,F_NO_ANN)) t1 in
       let cdef = { data_name = id;
+                   data_pos = get_pos_camlp4 _loc 2;
                    data_parent_name = un_option par "Object";
                    data_fields = t1;
                    data_invs = t2;
@@ -2328,7 +2353,7 @@ valid_declaration_statement:
   | t=try_statement; `SEMICOLON -> t
   | t=java_statement -> t
   | t=jump_statement;`SEMICOLON  -> t
-  | t=assert_statement;`SEMICOLON -> t
+  | t= assert_statement;`SEMICOLON -> t
   | t=dprint_statement;`SEMICOLON  -> t
   | t=debug_statement -> t
   | t=time_statement -> t
@@ -2346,7 +2371,7 @@ barr_statement : [[`BARRIER; `IDENTIFIER t -> I.Barrier {exp_barrier_recv = t ; 
  
 assert_statement:
   [[ `ASSERT; ol= opt_label; f=formulas ->
-       mkAssert (Some ((F.subst_stub_flow_struc n_flow (fst f)),(snd f))) None (fresh_formula_label ol) None (get_pos_camlp4 _loc 1)
+       mkAssert (Some ((F.subst_stub_flow_struc n_flow (fst f)),(snd f))) None (fresh_formula_label ol) (Some false) (get_pos_camlp4 _loc 1)
    | `ASSERT_EXACT; ol= opt_label; f=formulas -> 
        mkAssert (Some ((F.subst_stub_flow_struc n_flow (fst f)),(snd f))) None (fresh_formula_label ol) (Some true) (get_pos_camlp4 _loc 1)
    | `ASSERT_INEXACT; ol= opt_label; f=formulas -> 
@@ -2354,7 +2379,7 @@ assert_statement:
    | `ASSUME; ol=opt_label; dc=disjunctive_constr ->
        mkAssert None (Some (F.subst_stub_flow n_flow dc)) (fresh_formula_label ol) None (get_pos_camlp4 _loc 1)
    | `ASSERT; ol=opt_label; f=formulas; `ASSUME; dc=disjunctive_constr ->  
-       mkAssert (Some ((F.subst_stub_flow_struc n_flow (fst f)),(snd f))) (Some (F.subst_stub_flow n_flow dc)) (fresh_formula_label ol) None (get_pos_camlp4 _loc 1)
+       mkAssert (Some ((F.subst_stub_flow_struc n_flow (fst f)),(snd f))) (Some (F.subst_stub_flow n_flow dc)) (fresh_formula_label ol) (Some false) (get_pos_camlp4 _loc 1)
    | `ASSERT_EXACT; ol=opt_label; f=formulas; `ASSUME; dc=disjunctive_constr ->  
        mkAssert (Some ((F.subst_stub_flow_struc n_flow (fst f)),(snd f))) (Some (F.subst_stub_flow n_flow dc)) (fresh_formula_label ol) (Some true) (get_pos_camlp4 _loc 1)
    | `ASSERT_INEXACT; ol=opt_label; f=formulas; `ASSUME; dc=disjunctive_constr ->  

@@ -44,8 +44,23 @@ let simplify_context = ref false
 let parallelize num =
   num_para := num
 
- 
-  
+(* let cond_path = new Gen.stack_pr (string_of_int) (==)  *)
+
+(* let wrap_cond_path i exec_function args = *)
+(*   begin *)
+(*     let _ = cond_path # push i in *)
+(*     let _ = DD.binfo_pprint ("cond_path "^(cond_path # string_of_no_ln_rev)) no_pos in *)
+(*     try  *)
+(*       let res = exec_function args in *)
+(*       let _ = cond_path # pop in *)
+(*       res *)
+(*     with _ as e -> *)
+(*         begin *)
+(*           let _ = cond_path # pop in *)
+(*           raise e *)
+(*         end *)
+(*   end *)
+
 (* let rec check_specs prog proc ctx spec_list e0 = *)
 (*   check_specs_a prog proc ctx spec_list e0 *)
 (*       (\*Debug.loop_2_no "check_specs" (Cprinter.string_of_context) (Cprinter.string_of_struc_formula) (string_of_bool) (fun ctx spec_list -> (check_specs_a prog proc ctx spec_list e0)) ctx spec_list*\) *)
@@ -567,6 +582,9 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
 			CF.formula_assume_lbl = post_label;
 			CF.formula_assume_ensures_type = etype;
 			CF.formula_assume_struc = post_struc} ->
+            (* let _ = cond_path # reset in *)
+            (* let _ = cond_path # push 0 in *)
+            let ctx = CF.add_path_id ctx (None,0) 0 in
             let curr_vars = stk_vars # get_stk in
             (* let ovars = CF.fv post_cond in *)
             (* let ov = CP.diff_svl ovars curr_vars in *)
@@ -594,7 +612,7 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
 	            flow_store := [];
 	            let ctx1 = CF.set_flow_in_context_override
 	    	      { CF.formula_flow_interval = !norm_flow_int; CF.formula_flow_link = None} ctx1 in
-	            let ctx1 = CF.add_path_id ctx1 (Some post_label,-1) in
+	            let ctx1 = CF.add_path_id ctx1 (Some post_label,-1) (-1) in
                     (* need to add initial esc_stack *)
                     let init_esc = [((0,""),[])] in
 	            let lfe = [CF.mk_failesc_context ctx1 [] init_esc] in
@@ -1141,7 +1159,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
       (*let _ = print_string("Exp: "^(Cprinter.string_of_exp e0)^"\n") in *)
       match e0 with
 	| Label e ->
-	      let ctx = CF.add_path_id_ctx_failesc_list ctx e.exp_label_path_id in
+	      let ctx = CF.add_path_id_ctx_failesc_list ctx e.exp_label_path_id (-1) in
 	      let ctx = CF.add_cond_label_list_failesc_context (fst e.exp_label_path_id) (snd e.exp_label_path_id) ctx in
 	      (check_exp prog proc ctx e.exp_label_exp post_start_label)
         | Unfold ({exp_unfold_var = sv;
@@ -1578,8 +1596,10 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
           exp_cond_condition = v;
           exp_cond_then_arm = e1;
           exp_cond_else_arm = e2;
-          exp_cond_path_id =pid;
+          exp_cond_path_id = pid;
           exp_cond_pos = pos}) ->
+              (* let _ = DD.binfo_hprint (add_str "cond_path_id"  *)
+              (*     (fun s -> Cprinter.pr_control_path_id_opt s)) pid pos in *)
               let cond_op () =
                 begin
 	          let _ = proving_loc#set pos in
@@ -1597,10 +1617,12 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 		    else  combine_list_failesc_context_and_unsat_now prog ctx else_cond_prim in
 		  
 	          Debug.devel_zprint (lazy ("conditional: else_delta:\n" ^ (Cprinter.string_of_list_failesc_context else_ctx))) pos;
-	          let then_ctx1 = CF.add_cond_label_list_failesc_context pid 0 then_ctx in
-	          let else_ctx1 = CF.add_cond_label_list_failesc_context pid 1 else_ctx in 
-	          let then_ctx2 = check_exp prog proc then_ctx1 e1 post_start_label in
-	          let else_ctx2 = check_exp prog proc else_ctx1 e2 post_start_label in
+	          let then_ctx1 = CF.add_cond_label_list_failesc_context pid 1 then_ctx in
+	          let else_ctx1 = CF.add_cond_label_list_failesc_context pid 2 else_ctx in
+	          let then_ctx1 = CF.add_path_id_ctx_failesc_list then_ctx1 (None,-1) 1 in
+	          let else_ctx1 = CF.add_path_id_ctx_failesc_list else_ctx1 (None,-1) 2 in
+	          let then_ctx2 = (check_exp prog proc then_ctx1 e1) post_start_label in
+	          let else_ctx2 = (check_exp prog proc else_ctx1 e2) post_start_label in
 	          let res = CF.list_failesc_context_or (Cprinter.string_of_esc_stack) then_ctx2 else_ctx2 in
 	          res
 	        end in
@@ -2074,7 +2096,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 		      (idf,idf,
                       (fun es -> CF.Ctx {es with CF.es_formula = CF.set_flow_in_formula (CF.get_flow_from_stack v !flow_store pos) es.CF.es_formula}))
                           nctx in
-	      CF.add_path_id_ctx_failesc_list r (pid,0)
+	      CF.add_path_id_ctx_failesc_list r (pid,0) (-1)
         | Try ({exp_try_body = body;
       	  exp_catch_clause = cc;
       	  exp_try_path_id = pid;
@@ -2089,7 +2111,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
               (*Decide which to escape, and which to be caught.
               Caught exceptions become normal flows*)
               let ctx4 = CF.splitter_failesc_context (cc.exp_catch_flow_type) (cc.exp_catch_var) 
-                (fun c -> CF.add_path_id c (Some pid,0)) elim_exists_ctx ctx3 in
+                (fun c -> CF.add_path_id c (Some pid,0) (-1)) elim_exists_ctx ctx3 in
               (* let _ = print_endline ("WN:ESCAPE ctx4:"^(Cprinter.string_of_list_failesc_context ctx4)) in *)
               let ctx5 = check_exp prog proc ctx4 cc.exp_catch_body post_start_label in
               CF.pop_esc_level_list ctx5 pid
@@ -2287,7 +2309,7 @@ and proc_mutual_scc (prog: prog_decl) (proc_lst : proc_decl list) (fn:prog_decl 
   in helper proc_lst
 
 (* checking procedure: (PROC p61) *)
-and check_proc (prog : prog_decl) (proc : proc_decl) cout_option (mutual_grp : proc_decl list) : bool =
+and check_proc iprog (prog : prog_decl) (proc : proc_decl) cout_option (mutual_grp : proc_decl list) : bool =
   Debug.vv_debug ("check_proc:"^proc.proc_name);
   let unmin_name = unmingle_name proc.proc_name in
   (* get latest procedure from table *)
@@ -2399,7 +2421,8 @@ and check_proc (prog : prog_decl) (proc : proc_decl) cout_option (mutual_grp : p
                         print_endline "*************************************";
                         let pr = pr_list_ln (fun x -> Cprinter.string_of_hprel_short_inst prog x) in
                         let _ = Infer.rel_ass_stk # reverse in
-                        print_endline (pr (Infer.rel_ass_stk # get_stk));
+                        (* print_endline (pr (Infer.rel_ass_stk # get_stk)); *)
+                        print_endline (pr (hp_lst_assume));
                         (* print_endline (Infer.rel_ass_stk # string_of_reverse); *)
                         print_endline "*************************************" 
                       end;
@@ -2409,7 +2432,7 @@ and check_proc (prog : prog_decl) (proc : proc_decl) cout_option (mutual_grp : p
                          Sa2.infer_shapes
                         else Sa2.infer_shapes (* Sa.infer_hps *)
                         in
-                         infer_shape_fnc prog proc.proc_name hp_lst_assume
+                         infer_shape_fnc iprog prog proc.proc_name hp_lst_assume
                             sel_hp_rels sel_post_hp_rels (Gen.BList.remove_dups_eq
                                 (fun ((hp1,_),_) ((hp2, _),_) ->
                                     (CP.eq_spec_var hp1 hp2 )) hp_rel_unkmap) [] [] true true
@@ -2629,16 +2652,16 @@ and check_proc (prog : prog_decl) (proc : proc_decl) cout_option (mutual_grp : p
 	      end
     end else true
 
-let check_proc (prog : prog_decl) (proc : proc_decl) cout_option (mutual_grp : proc_decl list) : bool =
+let check_proc iprog (prog : prog_decl) (proc : proc_decl) cout_option (mutual_grp : proc_decl list) : bool =
   let pr p = pr_id (name_of_proc p)  in
   Debug.no_1_opt (fun _ -> not(is_primitive_proc proc))
-      "check_proc" pr string_of_bool (check_proc prog) proc cout_option mutual_grp
+      "check_proc" pr string_of_bool (check_proc iprog prog) proc cout_option mutual_grp
 
-let check_phase_only prog  proc =
+let check_phase_only iprog prog  proc =
 (* check_proc prog proc *)
   try
 	(*  let _ = print_endline ("check_proc_wrapper : proc = " ^ proc.Cast.proc_name) in *)
-    let _=check_proc prog proc in () 
+    let _=check_proc iprog prog proc in () 
   with _ as e ->
       print_string ("\nError(s) detected when checking procedure " ^ proc.proc_name ^ "\n");
       print_string ("\nException "^(Printexc.to_string e)^" during check_phase_only!\n");
@@ -2646,11 +2669,11 @@ let check_phase_only prog  proc =
       ()
 
 (* check entire program *)
-let check_proc_wrapper prog proc cout_option mutual_grp =
+let check_proc_wrapper iprog prog proc cout_option mutual_grp =
 (* check_proc prog proc *)
   try
 	(*  let _ = print_endline ("check_proc_wrapper : proc = " ^ proc.Cast.proc_name) in *)
-    let res = check_proc prog proc cout_option mutual_grp in 
+    let res = check_proc iprog prog proc cout_option mutual_grp in 
     (* Termination: Infer the phase numbers of functions in a scc group *) 
     (* TODO: The list of scc group does not 
      * need to be computed many times *)
@@ -2702,10 +2725,10 @@ let check_view_wrapper def = match def with
   | View vdef -> check_view vdef
 *)
 
-let check_data (prog : prog_decl) (cdef : data_decl) =
+let check_data iprog (prog : prog_decl) (cdef : data_decl) =
   if not (Gen.is_empty cdef.data_methods) then
 	print_string ("\nChecking class " ^ cdef.data_name ^ "...\n\n");
-  List.map (check_proc_wrapper prog) cdef.data_methods 
+  List.map (check_proc_wrapper iprog prog) cdef.data_methods 
 
 let check_coercion (prog : prog_decl) =
   let find_coerc coercs name =
@@ -2741,11 +2764,11 @@ let init_files () =
     Setmona.init_files ();
   end
 
-let check_proc_wrapper_map prog (proc,num) cout_option =
+let check_proc_wrapper_map iprog prog (proc,num) cout_option =
   Debug.vv_debug ("check_proc_wrapper_map:"^proc.proc_name) ;
   if !Tpdispatcher.external_prover then Tpdispatcher.Netprover.set_use_socket_map (List.nth !Tpdispatcher.external_host_ports (num mod (List.length !Tpdispatcher.external_host_ports))); (* make this dynamic according to availability of server machines*)
   try
-    check_proc prog proc cout_option []
+    check_proc iprog prog proc cout_option []
   with _ as e ->
     if !Globals.check_all then begin
       print_string ("\nProcedure "^proc.proc_name^" FAIL-3\n");
@@ -2754,9 +2777,9 @@ let check_proc_wrapper_map prog (proc,num) cout_option =
     end else
       raise e 
 
-let check_proc_wrapper_map_net prog  (proc,num) cout_option =
+let check_proc_wrapper_map_net iprog prog  (proc,num) cout_option =
   try
-    check_proc prog proc cout_option []
+    check_proc iprog prog proc cout_option []
   with _ as e ->
     if !Globals.check_all then begin
       print_string ("\nProcedure "^proc.proc_name^" FAIL-4\n");
@@ -2786,7 +2809,7 @@ let restore_phase_infer_checks() =
   dis_term_msg := stk_tmp_checks # pop_top;
   dis_bnd_chk := stk_tmp_checks # pop_top
 
-let check_prog (prog : prog_decl) =
+let check_prog iprog (prog : prog_decl) =
   let cout_option = if(!Globals.gen_cpfile) then (
     Some (open_out (!Globals.cpfile))
   )
@@ -2802,7 +2825,7 @@ let check_prog (prog : prog_decl) =
       print_string "DONE.\n"
     end;
   
-  ignore (List.map (check_data prog) prog.prog_data_decls);
+  ignore (List.map (check_data iprog prog) prog.prog_data_decls);
   (* Sort the proc_decls by proc_call_order *)
   let l_proc = Cast.list_of_procs prog in
   let proc_prim, proc_main = List.partition Cast.is_primitive_proc l_proc in
@@ -2831,7 +2854,7 @@ let check_prog (prog : prog_decl) =
             Debug.dinfo_pprint ">>>>>> Perform Phase Inference for a Mutual Recursive Group  <<<<<<" no_pos;
             Debug.dinfo_hprint (add_str "SCC"  (pr_list (fun p -> p.proc_name))) scc no_pos;
             drop_phase_infer_checks();
-            proc_mutual_scc prog scc (fun prog proc -> ignore (check_proc prog proc cout_option []));
+            proc_mutual_scc prog scc (fun prog proc -> ignore (check_proc iprog prog proc cout_option []));
             restore_phase_infer_checks();
             (* the message here should be empty *)
             (* Term.term_check_output Term.term_res_stk; *)
@@ -2845,14 +2868,14 @@ let check_prog (prog : prog_decl) =
           mutual_grp := List.filter (fun x -> x.proc_name != proc.proc_name) !mutual_grp;
           Debug.tinfo_hprint (add_str "SCC"  (pr_list (fun p -> p.proc_name))) scc no_pos;
           Debug.tinfo_hprint (add_str "MG_new"  (pr_list (fun p -> p.proc_name))) !mutual_grp no_pos;
-          ignore (check_proc_wrapper prog proc cout_option !mutual_grp)
+          ignore (check_proc_wrapper iprog prog proc cout_option !mutual_grp)
         end
       ) in        
       prog
   ) prog proc_scc 
   in 
 
-  ignore (List.map (fun proc -> check_proc_wrapper prog proc cout_option []) ((* sorted_proc_main @ *) proc_prim));
+  ignore (List.map (fun proc -> check_proc_wrapper iprog prog proc cout_option []) ((* sorted_proc_main @ *) proc_prim));
   (*ignore (List.map (check_proc_wrapper prog) prog.prog_proc_decls);*)
   let _ =  match cout_option with
     | Some cout -> close_out cout
@@ -2860,6 +2883,6 @@ let check_prog (prog : prog_decl) =
   in 
   Term.term_check_output ()
 	    
-let check_prog (prog : prog_decl) =
-  Debug.no_1 "check_prog" (fun _ -> "?") (fun _ -> "?") check_prog prog 
+let check_prog iprog (prog : prog_decl) =
+  Debug.no_1 "check_prog" (fun _ -> "?") (fun _ -> "?") check_prog iprog prog 
   (*Debug.no_1 "check_prog" (fun _ -> "?") (fun _ -> "?") check_prog prog iprog*)

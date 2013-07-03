@@ -1,0 +1,49 @@
+Test with
+  assert-1-bug1.slk 
+
+
+For each heap predicate,
+  HeapPred HP1(..).
+  PostPred HP2(..).
+
+We should internally create a corresponding pure 
+relation:
+  relation _pure_of_HP1(...).
+  relation _pure_of_HP2(...).
+
+Is this being kept in a dictionary?
+
+That is for each element in prog_hp_decls, we will always
+provide its corresponding pure relation at prog_rel_decls.
+This include both declared and automatically generated
+heap_pred relations.
+
+    mutable prog_rel_decls : rel_decl list; (* An Hoa : relation definitions *)
+    mutable prog_hp_decls : hp_decl list; (*only used to compare against some expected output????*)
+
+    (* PURE_RELATION_OF_HEAP_PRED *)
+
+After that, we should have a method which performs the
+following
+
+  pure_of_heap_pred :: h_formula --> formula_pure
+
+  e.g. HP1(n)*HP2(w) ==>  _pure_of_HP1(n) & _pure_of_HP2(n)
+
+  pure_relation_name_of heap_pred :: spec_var --> spec_var
+      HP1 --> _pure_of_HP1
+
+  heap_pred_name_of_pure_relation :: spec_var --> spec_var option
+      _pure_of_HP1 --> Some HP1
+
+This way we pass pure_relations in place of heap_pred for
+infer pure to handle. Once it come back as:
+
+     _pure_of_H1(x) & _pure_of_H2(r) & --> pure
+
+We convert it back to heap-pred form:
+
+     H1(x) * H2(r) --> pure
+
+This would then allow us to pass to our relational assumption.
+

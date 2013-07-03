@@ -24,7 +24,36 @@ void paper_fix (node c, node p)
 }
 
 /*
+
 # sll-dll.ss
+
+--sa-dis-split not working
+
+We derive relAssume
+
+[ H1(c,p@NI)&c!=null --> c::node<val_21_807,prev_21_808,next_21_809>@M * 
+  HP_810(prev_21_808,p@NI) * HP_811(next_21_809,p@NI),
+ HP_811(next_21_809,p@NI) --> H1(next_21_809,c'@NI),
+ c::node<val_21_807,p,next_21_809>@M * G1(next_21_809,c) --> G1(c,p),
+ emp&c=null --> G1(c,p),
+ H1(c,p@NI)&c=null --> emp]
+
+which included a base-case split where
+
+ H1(c,p@NI)&c=null --> G1(c,p)
+
+is splited into:
+
+ emp&c=null --> G1(c,p),
+ H1(c,p@NI)&c=null --> emp
+
+Both --sa-en-split & --sa-dis-split produced the same
+result. Could we make -dis-split work?
+
+  ("--sa-en-split", Arg.Set Globals.sa_s_split_base, "enable base case splitting of relational assumption");
+  ("--sa-dis-split", Arg.Clear Globals.sa_s_split_base, "disable base case splitting of relational assumption");
+
+==========
 
 We derive:
 

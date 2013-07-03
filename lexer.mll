@@ -128,6 +128,7 @@ module Make (Token : SleekTokenS)
    ("relAssume", RELASSUME);
    ("shape_infer", SHAPE_INFER );
    ("shape_infer_proper", SHAPE_INFER_PROP );
+   ( "shape_post_obligation", SHAPE_POST_OBL);
    ( "shape_split_base", SHAPE_SPLIT_BASE);
    ("shape_elim_useless", SHAPE_ELIM_USELESS );
    ("shape_extract", SHAPE_EXTRACT );
@@ -137,6 +138,8 @@ module Make (Token : SleekTokenS)
    ("shape_weaken_ante", SHAPE_WEAKEN_ANTE );
    ("checkentail_exact", CHECKENTAIL_EXACT);
    ("checkentail_inexact", CHECKENTAIL_INEXACT);
+   ("infer_exact", INFER_EXACT);
+   ("infer_inexact", INFER_INEXACT);
    ("capture_residue", CAPTURERESIDUE);
 	 ("class", CLASS);
 	 (* ("coercion", COERCION); *)

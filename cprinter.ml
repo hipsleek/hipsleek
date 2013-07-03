@@ -830,6 +830,8 @@ let string_of_formula_label_opt h s2:string = match h with | None-> s2 | Some s 
 let string_of_control_path_id (i,s) s2:string = string_of_formula_label (i,s) s2
 let string_of_control_path_id_opt h s2:string = string_of_formula_label_opt h s2
 let string_of_formula_label_only x :string = string_of_formula_label x ""
+let pr_formula_label = pr_pair string_of_int pr_id
+let pr_control_path_id_opt h = pr_option pr_formula_label h
 
 let string_of_iast_label_table table =
   let string_of_row row =
@@ -1530,9 +1532,10 @@ let rec pr_formula_base e =
       formula_base_label = lbl;
 	  formula_base_pos = pos}) ->
           (match lbl with | None -> fmt_string "" (* "<NoLabel>" *) | Some l -> fmt_string ("{"^(string_of_int (fst l))^"}->"));
-          pr_h_formula h ; pr_cut_after "&" ; 
-          pr_mix_formula p;
-          pr_cut_after  "&" ;  fmt_string (string_of_flow_formula "FLOW" fl)
+          pr_h_formula h ; 
+          (if not(MP.isConstMTrue p) then 
+            (pr_cut_after "&" ; pr_mix_formula p))
+          ;pr_cut_after  "&" ;  fmt_string (string_of_flow_formula "FLOW" fl)
         (* ; fmt_string (" LOC: " ^ (string_of_loc pos))*)
           ;if (a==[]) then ()
           else
@@ -1548,7 +1551,10 @@ let rec prtt_pr_formula_base e =
       formula_base_label = lbl;
 	  formula_base_pos = pos}) ->
           (match lbl with | None -> fmt_string "" (* "<NoLabel>" *) | Some l -> fmt_string ("{"^(string_of_int (fst l))^"}->"));
-          prtt_pr_h_formula h ; pr_cut_after "&" ; pr_mix_formula p;()
+          prtt_pr_h_formula h ; 
+          (if not(MP.isConstMTrue p) then 
+            (pr_cut_after "&" ; pr_mix_formula p))
+          ;()
           (* pr_cut_after  "&"; *) (*;  fmt_string (string_of_flow_formula "FLOW" fl) *)
         (* ; fmt_string (" LOC: " ^ (string_of_loc pos))*)
           (* if (a==[]) then () *)
@@ -1565,7 +1571,10 @@ let rec prtt_pr_formula_base_inst prog e =
       formula_base_label = lbl;
       formula_base_pos = pos}) ->
           (match lbl with | None -> fmt_string "" (* "<NoLabel>" *) | Some l -> fmt_string ("{"^(string_of_int (fst l))^"}->"));
-          prtt_pr_h_formula_inst prog h ; pr_cut_after "&" ; pr_mix_formula p;()
+          prtt_pr_h_formula_inst prog h ; 
+          (if not(MP.isConstMTrue p) then 
+            (pr_cut_after "&" ; pr_mix_formula p))
+          (* pr_cut_after "&" ; pr_mix_formula p;() *)
 
 let rec pr_formula e =
   let f_b e =  pr_bracket formula_wo_paren pr_formula e in
@@ -1586,8 +1595,10 @@ let rec pr_formula e =
 	  formula_exists_pos = pos}) ->
           (match lbl with | None -> () | Some l -> fmt_string ("{"^(string_of_int (fst l))^"}->"));
           fmt_string "EXISTS("; pr_list_of_spec_var svs; fmt_string ": ";
-          pr_h_formula h; pr_cut_after "&" ;
-          pr_mix_formula p; pr_cut_after  "&" ; 
+          pr_h_formula h; 
+          (if not(MP.isConstMTrue p) then 
+            (pr_cut_after "&" ; pr_mix_formula p))
+          ; pr_cut_after  "&" ; 
           fmt_string ((string_of_flow_formula "FLOW" fl) ^  ")")
           (*;fmt_string (" LOC: " ^ (string_of_loc pos))*)
           ;if (a==[]) then ()
@@ -2170,7 +2181,8 @@ let pr_estate (es : entail_state) =
   (* pr_wrap_test "es_success_pts: " Gen.is_empty (pr_seq "" (fun (c1,c2)-> fmt_string "(";(pr_op pr_formula_label c1 "," c2);fmt_string ")")) es.es_success_pts; *)
   (* pr_wrap_test "es_residue_pts: " Gen.is_empty (pr_seq "" pr_formula_label) es.es_residue_pts; *)
   (* pr_wrap_test "es_path_label: " Gen.is_empty pr_path_trace es.es_path_label; *)
-  pr_vwrap "es_var_measures: " (pr_opt (fun (t_ann, l1, l2) ->
+  pr_wrap_test "es_cond_path: " Gen.is_empty (pr_seq "" (fun s -> fmt_int s)) es.es_cond_path;
+  pr_vwrap "es_var_measures 1: " (pr_opt (fun (t_ann, l1, l2) ->
     fmt_string (string_of_term_ann t_ann);
     pr_seq "" pr_formula_exp l1; pr_set pr_formula_exp l2;
   )) es.es_var_measures;
@@ -2344,9 +2356,9 @@ let pr_list_context (ctx:list_context) =
 let pr_context_short (ctx : context) = 
   let rec f xs = match xs with
     | Ctx e -> [(e.es_formula,e.es_infer_vars@e.es_infer_vars_rel,e.es_infer_heap,e.es_infer_pure,e.es_infer_rel,
-      e.es_var_measures,e. es_var_zero_perm,e.es_trace)]
+      e.es_var_measures,e. es_var_zero_perm,e.es_trace,e.es_cond_path)]
     | OCtx (x1,x2) -> (f x1) @ (f x2) in
-  let pr (f,(* ac, *)iv,ih,ip,ir,vm,vperms,trace) =
+  let pr (f,(* ac, *)iv,ih,ip,ir,vm,vperms,trace,ecp) =
     fmt_open_vbox 0;
     pr_formula_wrap f;
     pr_wrap_test "es_var_zero_perm: " Gen.is_empty  (pr_seq "" pr_spec_var) vperms;
@@ -2355,8 +2367,9 @@ let pr_context_short (ctx : context) =
     pr_wrap_test "es_infer_heap: " Gen.is_empty  (pr_seq "" pr_h_formula) ih; 
     pr_wrap_test "es_infer_pure: " Gen.is_empty  (pr_seq "" pr_pure_formula) ip;
     pr_wrap_test "es_infer_rel: " Gen.is_empty  (pr_seq "" pr_lhs_rhs) ir;  
-    pr_wrap_opt "es_var_measures: " pr_var_measures vm;
+    pr_wrap_opt "es_var_measures 2: " pr_var_measures vm;
     pr_vwrap "es_trace: " pr_es_trace trace;
+    pr_wrap_test "es_cond_path: " Gen.is_empty (pr_seq "" (fun s -> fmt_int s)) ecp;
     fmt_string "\n";
     fmt_close_box();
   in 
@@ -2413,7 +2426,8 @@ let pr_entail_state_short e =
   pr_wrap_test "es_infer_heap: " Gen.is_empty  (pr_seq "" pr_h_formula) e.es_infer_heap; 
   pr_wrap_test "es_infer_pure: " Gen.is_empty  (pr_seq "" pr_pure_formula) e.es_infer_pure;
   pr_wrap_test "es_infer_rel: " Gen.is_empty  (pr_seq "" pr_lhs_rhs) e.es_infer_rel;  
-  pr_wrap_opt "es_var_measures: " pr_var_measures e.es_var_measures;
+  pr_wrap_test "es_cond_path: " Gen.is_empty (pr_seq "" (fun s -> fmt_int s)) e.es_cond_path;
+  pr_wrap_opt "es_var_measures 3: " pr_var_measures e.es_var_measures;
   (* fmt_cut(); *)
   fmt_close_box()
 

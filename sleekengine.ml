@@ -36,6 +36,7 @@ let sleek_proof_counter = new Gen.counter 0
 *)
 let iobj_def =  {I.data_name = "Object";
 				 I.data_fields = [];
+				 I.data_pos = no_pos;
 				 I.data_parent_name = "";
 				 I.data_invs = []; (* F.mkTrue no_pos; *)
                  I.data_is_template = false;
@@ -61,6 +62,7 @@ let iprog = { I.prog_include_decls =[];
 
 let cobj_def = { C.data_name = "Object";
 				 C.data_fields = [];
+				 C.data_pos = no_pos;
 				 C.data_parent_name = "";
 				 C.data_invs = [];
 				 C.data_methods = [] }
@@ -81,7 +83,7 @@ let cprog = ref { C.prog_data_decls = [];
 let residues =  ref (None : (CF.list_context * bool) option)    (* parameter 'bool' is used for printing *)
 
 let sleek_hprel_assumes = ref ([]: CF.hprel list)
-let sleek_hprel_unknown = ref ([]: (CP.spec_var * CP.spec_var list) list)
+let sleek_hprel_unknown = ref ([]: (CF.cond_path_type * (CP.spec_var * CP.spec_var list)) list)
 let sleek_hprel_dang = ref ([]: (CP.spec_var *CP.spec_var list) list)
 
 let clear_iprog () =
@@ -109,7 +111,7 @@ let clear_all () =
   residues := None
 
 let check_data_pred_name name : bool =
-  try 
+  try
 	let _ = I.look_up_data_def_raw iprog.I.prog_data_decls name in
 	  false
   with
@@ -125,7 +127,7 @@ let check_data_pred_name name : bool =
 			  		let _ = I.look_up_rel_def_raw iprog.I.prog_rel_decls name in
 						false
 					with
-			  		| Not_found -> 
+			  		| Not_found ->
                         begin
 					        try
 			        		    let _ = I.look_up_func_def_raw iprog.I.prog_func_decls name in
@@ -143,9 +145,9 @@ let check_data_pred_name name : bool =
 		  	    end
 	end
 
-let check_data_pred_name name :bool = 
+let check_data_pred_name name :bool =
   let pr1 x = x in
-  let pr2 = string_of_bool in 
+  let pr2 = string_of_bool in
   Debug.no_1 "check_data_pred_name" pr1 pr2 (fun _ -> check_data_pred_name name) name
     
 let silenced_print f s = if !Globals.silence_output then () else f s 
@@ -196,7 +198,8 @@ let process_pred_def pdef =
 	  with
 		| _ ->  dummy_exception() ; iprog.I.prog_view_decls <- curr_view_decls
   else
-	print_string (pdef.I.view_name ^ " is already defined.\n")
+	(* print_string (pdef.I.view_name ^ " is already defined.\n") *)
+	report_error pdef.I.view_pos (pdef.I.view_name ^ " is already defined.")
 
 let process_pred_def pdef = 
   let pr = Iprinter.string_of_view_decl in
@@ -226,7 +229,9 @@ let process_pred_def_4_iast pdef =
 	  with
 		| _ ->  dummy_exception() ; iprog.I.prog_view_decls <- curr_view_decls
   else
-	print_string (pdef.I.view_name ^ " is already defined.\n")
+    begin
+	report_error pdef.I.view_pos (pdef.I.view_name ^ " is already defined.")
+    end
 
 let process_pred_def_4_iast pdef = 
   let pr = Iprinter.string_of_view_decl in
@@ -322,13 +327,22 @@ let process_hp_def hpdef =
   if check_data_pred_name hpdef.I.hp_name then
 	let tmp = iprog.I.prog_hp_decls in
 	  try
-          iprog.I.prog_hp_decls <- ( hpdef :: iprog.I.prog_hp_decls);
-		  let chpdef = AS.trans_hp iprog hpdef in !cprog.C.prog_hp_decls <- (chpdef :: !cprog.C.prog_hp_decls);
-			(* Forward the relation to the smt solver. *)
-                  let args = fst (List.split chpdef.C.hp_vars_inst) in
-		  Smtsolver.add_hp_relation chpdef.C.hp_name args chpdef.C.hp_formula;
+            (* PURE_RELATION_OF_HEAP_PRED *)
+            (* are these a newly added hp_pred? *)
+            iprog.I.prog_hp_decls <- ( hpdef :: iprog.I.prog_hp_decls);
+	      let chpdef, p_chpdef = AS.trans_hp iprog hpdef in
+              let _ = !cprog.C.prog_hp_decls <- (chpdef :: !cprog.C.prog_hp_decls) in
+              let _ = !cprog.C.prog_rel_decls <- (p_chpdef::!cprog.C.prog_rel_decls) in
+	      (* Forward the relation to the smt solver. *)
+              let args = fst (List.split chpdef.C.hp_vars_inst) in
+	      Smtsolver.add_hp_relation chpdef.C.hp_name args chpdef.C.hp_formula;
 	  with
-		| _ ->  dummy_exception() ; iprog.I.prog_hp_decls <- tmp
+	    | _ ->  
+                  begin
+                  dummy_exception() ; 
+                    (* why do we perform restoration here? *)
+                  iprog.I.prog_hp_decls <- tmp
+                  end
   else
 	print_string (hpdef.I.hp_name ^ " is already defined.\n")
 
@@ -389,7 +403,8 @@ let process_data_def ddef =
 	| _ -> dummy_exception() ; iprog.I.prog_data_decls <- tmp
       else begin
         dummy_exception() ;
-	print_string (ddef.I.data_name ^ " is already defined.\n")
+	(* print_string (ddef.I.data_name ^ " is already defined.\n") *)
+	report_error ddef.I.data_pos (ddef.I.data_name ^ " is already defined.")
       end
 
 let process_barrier_def bd = 
@@ -681,6 +696,8 @@ let process_rel_assume hp_id (ilhs : meta_formula) (irhs: meta_formula)=
   let hp = TI.get_spec_var_type_list_infer (hp_id, Unprimed) orig_vars no_pos in
   (* let _ =  print_endline ("LHS = " ^ (Cprinter.string_of_formula lhs)) in *)
   (* let _ =  print_endline ("RHS = " ^ (Cprinter.string_of_formula rhs)) in *)
+  (*TODO: LOC: hp_id should be cond_path*)
+  let cond_path = [] in
   let new_rel_ass = {
       CF.hprel_kind = CP.RelAssume [hp];
       unk_svl = [];(*inferred from norm*)
@@ -688,6 +705,7 @@ let process_rel_assume hp_id (ilhs : meta_formula) (irhs: meta_formula)=
       predef_svl = [];
       hprel_lhs = lhs;
       hprel_rhs = rhs;
+      hprel_path = cond_path;
   } in
   (*hp_assumes*)
   let _ = sleek_hprel_assumes := !sleek_hprel_assumes@[new_rel_ass] in
@@ -706,16 +724,16 @@ let process_decl_hpdang hp_names =
   let _ = sleek_hprel_dang := !sleek_hprel_dang@hpargs in
   ()
 
-let process_decl_hpunknown hp_names =
+let process_decl_hpunknown (cond_path, hp_names) =
   let process hp_name=
     let hp_def = Cast.look_up_hp_def_raw !cprog.Cast.prog_hp_decls hp_name in
     let hp = Cpure.SpecVar (HpT , hp_name, Unprimed) in
     let args = fst (List.split hp_def.Cast.hp_vars_inst) in
-    (hp,args)
+    (cond_path, (hp,args))
   in
   let hpargs = List.map process hp_names in
   let _ = Debug.ninfo_pprint ("unknown: " ^
-      (let pr = pr_list (pr_pair !Cpure.print_sv !Cpure.print_svl) in pr hpargs)) no_pos in
+      (let pr = pr_list (pr_pair CF.string_of_cond_path (pr_pair !Cpure.print_sv !Cpure.print_svl)) in pr hpargs)) no_pos in
   let _ = sleek_hprel_unknown := !sleek_hprel_unknown@hpargs in
   ()
 
@@ -761,7 +779,7 @@ let process_shape_infer pre_hps post_hps=
         Sa2.infer_shapes
       else Sa2.infer_shapes (* Sa.infer_hps *)
       in
-      infer_shape_fnc !cprog "" constrs2
+      infer_shape_fnc iprog !cprog "" constrs2
           sel_hps sel_post_hps unk_map unk_hpargs link_hpargs true false
     else [],[],[]
   in
@@ -783,6 +801,38 @@ let process_shape_infer pre_hps post_hps=
   (* let _ = if(!Globals.cp_test || !Globals.cp_prefile) then *)
   (*    CEQ.cp_test !cprog hp_lst_assume ls_inferred_hps sel_hps *)
   (* in *)
+  ()
+
+let process_shape_postObl pre_hps post_hps=
+   let hp_lst_assume = !sleek_hprel_assumes in
+  let constrs2, sel_hps, sel_post_hps, unk_map, unk_hpargs, link_hpargs=
+    shape_infer_pre_process hp_lst_assume pre_hps post_hps
+  in
+  let grp_link_hpargs = SAU.dang_partition link_hpargs [] in
+  let cond_path = [] in
+   let link_hpargs = match grp_link_hpargs with
+    | [] -> []
+    | (_, a)::_ -> a
+  in
+  let ls_inferred_hps, ls_hprel, _, _ =
+    if List.length sel_hps> 0 && List.length hp_lst_assume > 0 then
+      let infer_shape_fnc = Sa2.infer_shapes_from_fresh_obligation in
+      infer_shape_fnc iprog !cprog "" cond_path constrs2 [] []
+          sel_hps sel_post_hps [] unk_hpargs link_hpargs true unk_map false
+          [] [] []
+    else [], [],[],[]
+  in
+  let _ = begin
+      if (ls_hprel <> []) then
+        let pr = pr_list_ln Cprinter.string_of_hp_rel_def in
+        print_endline "";
+      print_endline "\n************************************************";
+      print_endline "*******relational definition (obligation)********";
+      print_endline "**************************************************";
+      print_endline (pr ls_hprel);
+      print_endline "*************************************"
+    end
+  in
   ()
 
 let process_shape_sconseq pre_hps post_hps=
@@ -837,7 +887,7 @@ let process_shape_infer_prop pre_hps post_hps=
       Sa2.infer_shapes
     else Sa2.infer_shapes (* Sa.infer_hps *)
     in
-    infer_shape_fnc !cprog "" hp_lst_assume
+    infer_shape_fnc iprog !cprog "" hp_lst_assume
         sel_hps sel_post_hps unk_map unk_hpargs link_hpargs false false
   in
   let _ = if not (!Globals.sa_old) then
@@ -877,7 +927,13 @@ let process_shape_split pre_hps post_hps=
   (*sleek level: depend on user annotation. with hip, this information is detected automatically*)
   let constrs1, unk_map, unk_hpargs = SAC.detect_dangling_pred !sleek_hprel_assumes sel_hp_rels [] in
    let link_hpargs = !sleek_hprel_unknown in
-  let new_constrs,_,_ = Sa2.split_constr !cprog constrs1 post_hp_rels infer_vars unk_map (List.map fst unk_hpargs) (List.map fst link_hpargs) in
+   let grp_link_hpargs = SAU.dang_partition link_hpargs [] in
+    let link_hpargs = match grp_link_hpargs with
+    | [] -> []
+    | (_, a)::_ -> a
+  in
+   let cond_path = [] in
+  let new_constrs,_,_ = Sa2.split_constr !cprog cond_path constrs1 post_hp_rels infer_vars unk_map (List.map fst unk_hpargs) (List.map fst link_hpargs) in
   let pr1 = pr_list_ln Cprinter.string_of_hprel_short in
   begin
     print_endline "\n*************************************";
@@ -1090,11 +1146,11 @@ let process_eq_check (ivars: ident list)(if1 : meta_formula) (if2 : meta_formula
     let _ = if(res) then Debug.info_pprint (CEQ.string_of_map_table (List.hd mt_list) ^ "\n") no_pos in
     ()
    )
-let process_infer (ivars: ident list) (iante0 : meta_formula) (iconseq0 : meta_formula) =
+let process_infer (ivars: ident list) (iante0 : meta_formula) (iconseq0 : meta_formula) etype =
   let nn = "("^(string_of_int (sleek_proof_counter#inc_and_get))^") " in
   let num_id = "\nEntail "^nn in
     try 
-      let valid, rs, sel_hps = run_infer_one_pass ivars iante0 iconseq0 in
+      let valid, rs, sel_hps = wrap_classic etype (run_infer_one_pass ivars iante0) iconseq0 in
       print_entail_result sel_hps valid rs num_id
     with ex -> 
         (* print_exc num_id *)

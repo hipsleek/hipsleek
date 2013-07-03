@@ -431,7 +431,7 @@ class change_flag =
    end;;
 
 class ['a] stack  =
-   object 
+  object (self)
      val mutable stk = []
      method push (i:'a) = 
        begin
@@ -458,6 +458,7 @@ class ['a] stack  =
      method is_empty = stk == []
      method len = List.length stk
      method reverse = stk <- List.rev stk
+     method reverse_of = List.rev stk
      method mem (i:'a) = List.mem i stk 
      method mem_eq eq (i:'a) = List.exists (fun b -> eq i b) stk 
      (* method exists (i:'a) = List.mem i stk  *)
@@ -467,24 +468,35 @@ class ['a] stack  =
      method pop_list (ls:'a list) = 
        stk <- BList.drop (List.length ls) stk
      method reset = stk <- []
+     method clone =
+       Oo.copy self
+       (* let n = new Gen.stack in *)
+       (*   let lst = self # get_stk in *)
+       (*   let _ = n # push_list lst in *)
+       (* n *)
    end;;
 
 class ['a] stack_pr (epr:'a->string) (eq:'a->'a->bool)  =
-   object 
-     inherit ['a] stack as super
-     val elem_pr = epr 
-     val elem_eq = eq 
-     method string_of = Basic.pr_list_ln elem_pr stk
-     method string_of_no_ln = Basic.pr_list elem_pr stk
-     method string_of_reverse = let _ = super#reverse  in
-                                Basic.pr_list_ln elem_pr stk
-     method string_of_reverse_log = let _ = super#reverse  in
-                                Basic.pr_list_mln elem_pr stk
-     method mem (i:'a) = List.exists (elem_eq i) stk
-     method overlap (ls:'a list) = 
-	   if (ls == []) then false
-	   else List.exists (fun x -> List.exists (elem_eq x) ls) stk
-   end;;
+object 
+  inherit ['a] stack as super
+  val elem_pr = epr 
+  val elem_eq = eq 
+  method string_of = Basic.pr_list_ln elem_pr stk
+  method string_of_no_ln = Basic.pr_list elem_pr stk
+  method string_of_no_ln_rev = 
+    let s = super#reverse_of in
+    Basic.pr_list elem_pr s
+  method string_of_reverse = 
+    let s = super#reverse_of  in
+    Basic.pr_list_ln elem_pr s
+  method string_of_reverse_log = 
+    let s = super#reverse_of  in
+    Basic.pr_list_mln elem_pr s
+  method mem (i:'a) = List.exists (elem_eq i) stk
+  method overlap (ls:'a list) = 
+    if (ls == []) then false
+    else List.exists (fun x -> List.exists (elem_eq x) ls) stk
+end;;
 
 
 class ['a] stack_filter (epr:'a->string) (eq:'a->'a->bool) (fil:'a->bool)  =
@@ -1189,7 +1201,7 @@ struct
 end;;
 
 class mult_counters =
-object (self)
+ object (self)
   val ctrs = Hashtbl.create 10
   method get (s:string) : int = 
     try

@@ -42,6 +42,7 @@ and data_field_ann =
 
 and data_decl = { 
     data_name : ident;
+    data_pos : loc;
     data_fields : (typed_ident * data_field_ann) list;
     data_parent_name : ident;
     data_invs : F.formula list;
@@ -105,6 +106,7 @@ and view_decl = {
     view_prune_conditions: (P.b_formula * (formula_label list)) list;
     view_prune_conditions_baga: ba_prun_cond list;
     view_prune_invariants : (formula_label list * (Gen.Baga(P.PtrSV).baga * P.b_formula list )) list ;
+    view_pos : loc;
     view_raw_base_case: Cformula.formula option;}
 
 (* An Hoa : relation *)					
@@ -114,8 +116,9 @@ and rel_decl = {
     rel_formula : P.formula;}
 
 and hp_decl = { 
-    hp_name : ident; 
+    hp_name : ident;
     hp_vars_inst : (P.spec_var * Globals.hp_arg_kind) list;
+    mutable hp_root_pos: int;
     hp_is_pre: bool;
     hp_formula : F.formula;}
 
@@ -910,6 +913,15 @@ let look_up_hp_def_raw defs name=
   let pr1 = !print_hp_decl in
   Debug.no_1 "look_up_hp_def_raw" pr_id pr1
       (fun _ -> look_up_hp_def_raw_x defs name) name
+
+let set_proot_hp_def_raw r_pos defs name=
+  let hpdclr = look_up_hp_def_raw defs name in
+  let _ = hpdclr.hp_root_pos <- r_pos in
+  hpdclr
+
+let get_proot_hp_def_raw defs name=
+  let hpdclr = look_up_hp_def_raw defs name in
+  hpdclr.hp_root_pos
 
 let check_pre_post_hp defs hp_name=
   let hpdecl = look_up_hp_def_raw defs hp_name in

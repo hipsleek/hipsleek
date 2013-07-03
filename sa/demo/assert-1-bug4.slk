@@ -1,0 +1,72 @@
+data node {
+ node next;
+}.
+
+relation F(node a).
+relation G(node a).
+
+//(1)
+infer [F,G] F(n)  & n=t |-  n=null.
+print residue.
+
+//(2)
+infer [F,G] F(t)  & n=t |-  n=null.
+print residue.
+
+//(3)
+infer [F,G] F(t) & G(n)  & n=t |-  n=null.
+print residue.
+
+//(4)
+infer [F,G] F(n) & G(t)  & n=t |-  n=null.
+print residue.
+
+//(5)
+infer [F,G] F(t) & G(t)  & n=t |-  n=null.
+print residue.
+
+//(6)
+infer [F,G] F(n) & G(n)  & n=t |-  n=null.
+print residue.
+
+/*
+# assert-1-bug4.slk
+
+Entail (1) : Valid. 
+
+ <1>emp&F(n) & n=t & n=null&{FLOW,(19,20)=__norm}[]
+ inferred rel: [RELASS [F]: ( F(n)) -->  n=null]
+
+
+Entail (2) : Valid. 
+
+ <1>emp&F(t) & n=t & t=null&{FLOW,(19,20)=__norm}[]
+ inferred rel: [RELASS [F]: ( F(t)) -->  t=null]
+
+
+Entail (3) : Valid. 
+
+ <1>emp&F(t) & G(n) & n=t & n=null&{FLOW,(19,20)=__norm}[]
+ inferred rel: [RELASS [F,G]: ( G(n)) -->  n=null]
+
+
+Entail (4) : Valid. 
+
+ <1>emp&F(n) & G(t) & n=t & n=null&{FLOW,(19,20)=__norm}[]
+ inferred rel: [RELASS [F,G]: ( F(n)) -->  n=null]
+
+
+Entail (5) : Valid. 
+
+ <1>emp&F(t) & G(t) & n=t & t=null&{FLOW,(19,20)=__norm}[]
+ inferred rel: [RELASS [F,G]: ( F(t) & G(t)) -->  t=null]
+
+
+Entail (6) : Valid. 
+
+ <1>emp&F(n) & G(n) & n=t & n=null&{FLOW,(19,20)=__norm}[]
+ inferred rel: [RELASS [F,G]: ( F(n) & G(n)) -->  n=null]
+
+
+*/
+  
