@@ -1905,7 +1905,7 @@ let find_undefined_selective_pointers_x prog lfb lmix_f unmatched rhs_rest rhs_h
     List.fold_left (fun (lfb0,ls_defined,ls_rem, ls_new_hps) hpargs ->
         let lfb1, r_def,r_mem, new_hps = SAU.find_well_defined_hp prog lhds lhvs r_hps
           prog_vars post_hps hpargs l_def_vs lfb0
-          (!Globals.do_classic_frame_rule)  pos
+          true  pos
         in
         (lfb1, ls_defined@r_def,ls_rem@r_mem, ls_new_hps@new_hps)
     ) (lfb, [],[], []) ls_lhp_args
@@ -1940,10 +1940,10 @@ let find_undefined_selective_pointers_x prog lfb lmix_f unmatched rhs_rest rhs_h
   in
   let drop_hpargs =  List.concat (List.map (select_helper rest_svl1) ls_lhp_args) in
   let drop_hps =  (List.map fst drop_hpargs) in
+  (******************************************)
+  (*TODO: test with sa/demo/sll-dll-2.ss*)
+  (******************************************)
   (* find post_hps NI- cll case *)
-  (******************************************)
-  (*TODO:*)
-  (******************************************)
   let post_svl_ni = List.fold_left (fun svl (hp, args) ->
       if CP.mem_svl hp post_hps then
         let args_i,_ = SAU.partition_hp_args prog hp args in
@@ -2007,6 +2007,17 @@ let find_undefined_selective_pointers_x prog lfb lmix_f unmatched rhs_rest rhs_h
   in
   let ls_undef =  (* List.map CP.remove_dups_svl *) (ls_fwd_svl) in
   (* DD.info_pprint ("selected_hpargs: " ^ (let pr = pr_list (pr_pair !CP.print_sv !CP.print_svl) in pr (selected_hpargs))) pos; *)
+  (*special split_base*)
+  let defined_hps0, lhs_selected_hpargs0 = if not !Globals.sa_sp_split_base then
+    (*transfer all defined preds into selected lhs so that
+      - they are consumed in ass (and removed from residue)
+      - it will be split in shape _infer
+    *)
+    let lhs_selected_from_def = List.map (fun (hp,args,_,_) -> (hp,args)) defined_hps in
+    ([], lhs_selected_hpargs@lhs_selected_from_def)
+  else
+    (defined_hps, lhs_selected_hpargs)
+  in
   (*********CLASSIC************)
   let classic_defined= if  !Globals.do_classic_frame_rule then
     let lhs_sel_hps = List.map fst lhs_selected_hpargs in
@@ -2025,13 +2036,13 @@ let find_undefined_selective_pointers_x prog lfb lmix_f unmatched rhs_rest rhs_h
   else []
   in
   (****************************)
-  let total_defined_hps = defined_hps@classic_defined in
+  let total_defined_hps = defined_hps0@classic_defined in
   let ls_defined_hpargs =  List.map (fun (hp,args,_,_) -> (hp,args)) total_defined_hps in
-  let lhs_selected_hpargs0 = List.filter (fun (hp,args) ->
+  let lhs_selected_hpargs1 = List.filter (fun (hp,args) ->
       not (Gen.BList.mem_eq SAU.check_hp_arg_eq (hp,args) ls_defined_hpargs)
-  ) lhs_selected_hpargs
+  ) lhs_selected_hpargs0
   in
-  (mis_match_found, (* undefs1@lundefs_args *) ls_undef,hds,hvs,lhrs,rhrs,leqNulls@reqNulls, lhs_selected_hpargs0,rhs_sel_hpargs, total_defined_hps,
+  (mis_match_found, (* undefs1@lundefs_args *) ls_undef,hds,hvs,lhrs,rhrs,leqNulls@reqNulls, lhs_selected_hpargs1,rhs_sel_hpargs, total_defined_hps,
   CP.remove_dups_svl (unk_svl),unk_xpure,unk_map1,new_lhs_hps,vioated_ni_svl)
 
 let find_undefined_selective_pointers prog lfb lmix_f unmatched rhs_rest rhs_h_matched_set leqs reqs pos

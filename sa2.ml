@@ -1647,7 +1647,12 @@ and infer_shapes_core iprog prog proc_name cond_path (constrs0: CF.hprel list) c
       (*split constrs like H(x) & x = null --> G(x): separate into 2 constraints*)
       let unk_hps1 = List.map fst unk_hpargs1 in
       let link_hps1 = List.map fst link_hpargs1 in
-      let constrs2, unk_map2, link_hpargs2 = split_constr prog cond_path constrs1 sel_post_hps prog_vars unk_map1 unk_hps1 link_hps1 in
+      let constrs2, unk_map2, link_hpargs2 =
+        if !Globals.sa_sp_split_base || !Globals.sa_infer_split_base then
+          split_constr prog cond_path constrs1 sel_post_hps prog_vars unk_map1 unk_hps1 link_hps1
+        else
+          (constrs1, unk_map1, [] (*extra preds from spec split*))
+      in
       let link_hpargs3= link_hpargs1@link_hpargs2 in
        (constrs2, unk_map2,unk_hpargs1, link_hpargs3, punk_map0)
     else

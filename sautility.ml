@@ -1472,7 +1472,9 @@ let simplify_constrs prog unk_hps constrs=
            (*===========END SIMPLIFICATION===========*)
 (***************************************************************)
 
-
+(*
+TODO: should remove split_spatial, now it always be true
+*)
 let find_well_defined_hp_x prog hds hvs r_hps prog_vars post_hps (hp,args) def_ptrs lhsb split_spatial pos=
   let do_spit fb rhs new_hps=
     let f = keep_data_view_hrel_nodes_fb prog fb hds hvs args [(hp,args)] in
