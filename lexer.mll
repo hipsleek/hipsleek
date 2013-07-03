@@ -129,6 +129,8 @@ module Make (Token : SleekTokenS)
    ("shape_infer", SHAPE_INFER );
    ("shape_infer_proper", SHAPE_INFER_PROP );
    ( "shape_post_obligation", SHAPE_POST_OBL);
+   ("shape_divide" , SHAPE_DIVIDE);
+   ("shape_conquer" , SHAPE_CONQUER);
    ( "shape_split_base", SHAPE_SPLIT_BASE);
    ("shape_elim_useless", SHAPE_ELIM_USELESS );
    ("shape_extract", SHAPE_EXTRACT );

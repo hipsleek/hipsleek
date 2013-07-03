@@ -5620,7 +5620,9 @@ let get_pre_post pre_hps post_hps constrs=
       (fun _ -> get_pre_post_x pre_hps post_hps constrs) constrs
 
 (*SLEEK*)
-
+(*=============**************************================*)
+       (*=============COND PATH================*)
+(*=============**************************================*)
 let rec cmp_list_int ls1 ls2=
   match ls1,ls2 with
     | [],[] -> true
@@ -5628,7 +5630,24 @@ let rec cmp_list_int ls1 ls2=
       else false
     | _ -> false
 
-let rec dang_partition pr_cond_hpargs grps=
+let cmp_list_subsume_int_rev_x ls10 ls20=
+  let rec helper ls1 ls2=
+    match ls1,ls2 with
+      | [],[] -> true
+      | _, [] -> true
+      | i1::rest1, i2::rest2 -> if i1=i2 then helper rest1 rest2
+        else false
+      | _ -> false
+  in
+  helper (List.rev ls10) (List.rev ls20)
+
+let cmp_list_subsume_int_rev ls10 ls20=
+  let pr1 = pr_list string_of_int in
+  Debug.no_2 "cmp_list_subsume_int_rev" pr1 pr1 string_of_bool
+      (fun _ _ -> cmp_list_subsume_int_rev_x ls10 ls20)
+      ls10 ls20
+
+let rec partition_helper pr_cond_hpargs grps=
   match pr_cond_hpargs with
     | [] -> grps
     | (cond1,hpargs1)::rest->
@@ -5636,4 +5655,82 @@ let rec dang_partition pr_cond_hpargs grps=
               cmp_list_int cond1 cond2
           ) rest in
           let n_grps = grps@[(cond1,hpargs1::(List.map snd grp))] in
-          dang_partition rest1 n_grps
+          partition_helper rest1 n_grps
+
+let dang_partition pr_cond_hpargs0 =
+  partition_helper pr_cond_hpargs0 []
+
+let assumption_partition_x constrs0=
+  (*********************************)
+  (*        INTERNAL               *)
+  (*********************************)
+  let cmp_path_cs (path1, _,_) (path2, _,_) = (List.length path2) - (List.length path1) in
+  let rec partition_helper constrs grps=
+    match constrs with
+      | [] -> grps
+      | cs::rest->
+            let grp, rest1 = List.partition (fun cs2 ->
+                cmp_list_int cs.CF.hprel_path cs2.CF.hprel_path
+            ) rest in
+            let n_grps = grps@[(cs.CF.hprel_path,cs::grp, false)] in
+            partition_helper rest1 n_grps
+  in
+  (*grps are sorted based on their path length*)
+  let rec insert_subsumed rem_grps res=
+    match rem_grps with
+      | []-> res
+      | (p1, grp1, is1)::rest ->
+            let subsumed_constrs, n_rest = List.fold_left (fun (ls1,ls2) (p2, grp2, is2) ->
+                if cmp_list_subsume_int_rev p1 p2 then
+                  (ls1@grp2, ls2@[(p2, grp2, true)])
+                else (ls1, ls2@[(p2, grp2, is2)])
+            ) ([],[]) rest
+            in
+            insert_subsumed n_rest (res@[(p1, grp1@subsumed_constrs, is1)])
+  in
+  (*********************************)
+  (*       END INTERNAL            *)
+  (*********************************)
+  (*group: path, constrs, is_subsumed (default: false) *)
+  let grps = partition_helper constrs0 [] in
+  (*sort (>) base on length of cond_path*)
+  let grps1 = List.sort cmp_path_cs grps in
+  (*insert grps that are subsumed.*)
+  let grps2 = insert_subsumed grps1 [] in
+  (*RETRUN: if one group is subsumed, it will not returned*)
+  List.fold_left (fun ls (a,b,is)-> if not is then ls@[(a,b)] else ls) [] grps2
+   (* List.map (fun (a,b,is)-> (a,b)) grps2 *)
+
+let assumption_partition constrs=
+  let pr1 = pr_list_ln Cprinter.string_of_hprel_short in
+  let pr2 = CF.string_of_cond_path in
+  let pr3 = pr_list_ln (pr_pair pr2 pr1) in
+  Debug.no_1 "assumption_partition" pr1 pr3
+      (fun _ -> assumption_partition_x constrs)
+      constrs
+
+let pair_dang_constr_path_x ls_constr_path ls_dang_path=
+  let rec look_up ls p=
+    match ls with
+      | [] -> []
+      | (p1, ls_hpargs)::rest -> if cmp_list_int p p1 then ls_hpargs
+        else look_up rest p
+  in
+  let r = List.map (fun (p1, constrs) -> (p1, look_up ls_dang_path p1, constrs)
+  ) ls_constr_path in
+  r
+
+let pair_dang_constr_path ls_constr_path ls_dang_path=
+  let pr1 = pr_list_ln Cprinter.string_of_hprel_short in
+  let pr2 = CF.string_of_cond_path in
+  let pr3 = pr_list_ln (pr_pair pr2 pr1) in
+  let pr4 = pr_list (pr_pair !CP.print_sv !CP.print_svl) in
+  let pr5 = pr_list_ln (pr_pair pr2 pr4) in
+  let pr6 = pr_list_ln (pr_triple pr2 pr4 pr1) in
+  Debug.no_2 "pair_dang_constr_path" pr3 pr5 pr6
+      (fun _ _ -> pair_dang_constr_path_x ls_constr_path ls_dang_path)
+      ls_constr_path ls_dang_path
+
+(*=============**************************================*)
+       (*=============END COND PATH================*)
+(*=============**************************================*)

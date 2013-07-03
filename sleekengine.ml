@@ -684,22 +684,22 @@ let run_infer_one_pass ivars (iante0 : meta_formula) (iconseq0 : meta_formula) =
   let pr_2 = pr_triple string_of_bool Cprinter.string_of_list_context !CP.print_svl in
   Debug.no_3 "run_infer_one_pass" pr1 pr pr pr_2 run_infer_one_pass ivars iante0 iconseq0
 
-let process_rel_assume hp_id (ilhs : meta_formula) (irhs: meta_formula)=
+let process_rel_assume cond_path (ilhs : meta_formula) (irhs: meta_formula)=
   (* let _ = DD.info_pprint "process_rel_assume" no_pos in *)
   (* let stab = H.create 103 in *)
   let stab = [] in
   let (stab,lhs) = meta_to_formula ilhs false [] stab in
   let fvs = CF.fv lhs in
-  let fv_idents = (List.map CP.name_of_spec_var fvs)@[hp_id] in
+  let fv_idents = (List.map CP.name_of_spec_var fvs) in
   let (stab,rhs) = meta_to_formula irhs false fv_idents stab in
   let orig_vars = CF.fv lhs @ CF.fv rhs in
-  let hp = TI.get_spec_var_type_list_infer (hp_id, Unprimed) orig_vars no_pos in
+  let lhps = CF.get_hp_rel_name_formula lhs in
+  let rhps = CF.get_hp_rel_name_formula rhs in
   (* let _ =  print_endline ("LHS = " ^ (Cprinter.string_of_formula lhs)) in *)
   (* let _ =  print_endline ("RHS = " ^ (Cprinter.string_of_formula rhs)) in *)
   (*TODO: LOC: hp_id should be cond_path*)
-  let cond_path = [] in
   let new_rel_ass = {
-      CF.hprel_kind = CP.RelAssume [hp];
+      CF.hprel_kind = CP.RelAssume (CP.remove_dups_svl (lhps@rhps));
       unk_svl = [];(*inferred from norm*)
       unk_hps = [];
       predef_svl = [];
@@ -708,6 +708,7 @@ let process_rel_assume hp_id (ilhs : meta_formula) (irhs: meta_formula)=
       hprel_path = cond_path;
   } in
   (*hp_assumes*)
+  let _ = Debug.ninfo_pprint (Cprinter.string_of_hprel_short new_rel_ass) no_pos in
   let _ = sleek_hprel_assumes := !sleek_hprel_assumes@[new_rel_ass] in
   ()
 
@@ -802,13 +803,42 @@ let process_shape_infer pre_hps post_hps=
   (*    CEQ.cp_test !cprog hp_lst_assume ls_inferred_hps sel_hps *)
   (* in *)
   ()
+let process_shape_divide pre_hps post_hps=
+   (* let _ = DD.info_pprint "process_shape_infer" no_pos in *)
+  let hp_lst_assume = !sleek_hprel_assumes in
+  let constrs2, sel_hps, sel_post_hps, unk_map, unk_hpargs, link_hpargs=
+    shape_infer_pre_process hp_lst_assume pre_hps post_hps
+  in
+  let ls_cond_defs_drops =
+    if List.length sel_hps> 0 && List.length hp_lst_assume > 0 then
+      let infer_shape_fnc = Sa2.infer_shapes_divide in
+      infer_shape_fnc iprog !cprog "" constrs2 []
+          sel_hps sel_post_hps unk_map unk_hpargs link_hpargs true false
+    else []
+  in
+  let pr = pr_list_ln Cprinter.string_of_hp_rel_def in
+  let pr_one (cond, hpdefs,_, _, link_hpargs,_)=
+    begin
+      if not(List.length hpdefs = 0) then
+        print_endline "";
+      print_endline "\n*************************************";
+      print_endline "*******relational definition ********";
+      print_endline "*************************************";
+      print_endline ("path: " ^ (CF.string_of_cond_path cond));
+      print_endline (pr hpdefs);
+      print_endline ("UNKNOWN: " ^ ((pr_list (pr_pair !CP.print_sv !CP.print_svl)) link_hpargs));
+      print_endline "*************************************"
+    end
+  in
+  let _ = List.iter pr_one ls_cond_defs_drops in
+  ()
 
 let process_shape_postObl pre_hps post_hps=
    let hp_lst_assume = !sleek_hprel_assumes in
   let constrs2, sel_hps, sel_post_hps, unk_map, unk_hpargs, link_hpargs=
     shape_infer_pre_process hp_lst_assume pre_hps post_hps
   in
-  let grp_link_hpargs = SAU.dang_partition link_hpargs [] in
+  let grp_link_hpargs = SAU.dang_partition link_hpargs in
   let cond_path = [] in
    let link_hpargs = match grp_link_hpargs with
     | [] -> []
@@ -927,7 +957,7 @@ let process_shape_split pre_hps post_hps=
   (*sleek level: depend on user annotation. with hip, this information is detected automatically*)
   let constrs1, unk_map, unk_hpargs = SAC.detect_dangling_pred !sleek_hprel_assumes sel_hp_rels [] in
    let link_hpargs = !sleek_hprel_unknown in
-   let grp_link_hpargs = SAU.dang_partition link_hpargs [] in
+   let grp_link_hpargs = SAU.dang_partition link_hpargs in
     let link_hpargs = match grp_link_hpargs with
     | [] -> []
     | (_, a)::_ -> a

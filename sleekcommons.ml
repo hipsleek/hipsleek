@@ -43,8 +43,9 @@ type command =
   | LemmaDef of I.coercion_decl
   | LetDef of (ident * meta_formula)
   | EntailCheck of (meta_formula * meta_formula * entail_type)
-  | RelAssume of (ident * meta_formula * meta_formula)
+  | RelAssume of (CF.cond_path_type * meta_formula * meta_formula)
   | ShapeInfer of (ident list * ident list)
+  | ShapeDivide of (ident list * ident list)
   | ShapePostObl of (ident list * ident list)
   | ShapeInferProp of (ident list * ident list)
   | ShapeSplitBase of (ident list * ident list)
@@ -100,6 +101,7 @@ let string_of_command c = match c with
   | EntailCheck _ -> "EntailCheck"
   | RelAssume _ -> "RelAssume"
   | ShapeInfer _ -> "ShapeInfer"
+  | ShapeDivide _ -> "ShapeDivide"
   | ShapePostObl _ -> "| ShapePostObl"
   | ShapeInferProp _ -> "ShapeInferProper"
   | ShapeSplitBase _ -> "ShapeSplitbase"

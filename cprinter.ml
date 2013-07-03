@@ -1765,6 +1765,7 @@ let pr_hprel_lhs_rhs (lhs,rhs) =
 let pr_hprel hpa=
   fmt_open_box 1;
   fmt_string (CP.print_rel_cat hpa.hprel_kind);
+  (pr_seq "" (fun s -> fmt_int s)) hpa.hprel_path;
   pr_seq " unknown svl: " pr_spec_var hpa.unk_svl;
   fmt_string "; ";
   let hps = List.map (fun (hp,_) -> hp) hpa.unk_hps in
@@ -1779,6 +1780,7 @@ let pr_hprel hpa=
 
 let pr_hprel_short hpa=
   fmt_open_box 1;
+  (pr_seq "" (fun s -> fmt_int s)) hpa.hprel_path;
   (* fmt_string (CP.print_rel_cat hpa.hprel_kind); *)
   prtt_pr_formula hpa.hprel_lhs;
   fmt_string " --> ";

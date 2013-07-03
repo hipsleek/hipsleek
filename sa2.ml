@@ -1670,9 +1670,30 @@ and infer_shapes_core iprog prog proc_name cond_path (constrs0: CF.hprel list) c
   infer_shapes_proper iprog prog proc_name cond_path constrs1 callee_hps sel_hp_rels sel_post_hps unk_map prog_vars
       unk_hpargs link_hpargs3 need_preprocess user_detect_dang
 
+and infer_shapes_divide iprog prog proc_name (constrs0: CF.hprel list) callee_hps sel_hps sel_post_hps
+      hp_rel_unkmap unk_hpargs0 link_hpargs0 need_preprocess detect_dang:
+      ((CF.cond_path_type * CF.hp_rel_def list * (CP.spec_var*CP.exp list * CP.exp list) list *
+      (CP.spec_var * CP.spec_var list) list * (CP.spec_var * CP.spec_var list) list * (CP.spec_var * CP.spec_var) list ) list) =
+  let process_one_path (cond_path, link_hpargs, constrs1)=
+    let constr, hp_defs, c, unk_hpargs2, link_hpargs2, equivs = infer_shapes_core iprog prog proc_name cond_path constrs1
+      callee_hps sel_hps sel_post_hps hp_rel_unkmap unk_hpargs0 link_hpargs need_preprocess detect_dang
+    in
+    (cond_path, hp_defs, c, unk_hpargs2, link_hpargs2, equivs)
+  in
+  let ls_link_hpargs = SAU.dang_partition link_hpargs0 in
+  let ls_constrs_path = SAU.assumption_partition constrs0 in
+  (* matching constrs_path with dang_path*)
+  let ls_cond_danghps_constrs = SAU.pair_dang_constr_path ls_constrs_path ls_link_hpargs in
+  let ls_res = List.map process_one_path ls_cond_danghps_constrs in
+  (* let constr, hp_defs, c, unk_hpargs2, link_hpargs2, equivs = infer_shapes_core iprog prog proc_name cond_path constrs1 *)
+  (*   callee_hps sel_hps *)
+  (*   sel_post_hps hp_rel_unkmap unk_hpargs0 link_hpargs need_preprocess detect_dang in *)
+  (* (constr, hp_defs, c,unk_hpargs2, link_hpargs2, equivs) *)
+  ls_res
 
-and infer_shapes_x iprog prog proc_name (constrs0: CF.hprel list) sel_hps sel_post_hps hp_rel_unkmap unk_hpargs link_hpargs0 need_preprocess detect_dang:
-      (CF.hprel list * CF.hp_rel_def list* (CP.spec_var*CP.exp list * CP.exp list) list ) =
+and infer_shapes_x iprog prog proc_name (constrs0: CF.hprel list) sel_hps sel_post_hps hp_rel_unkmap unk_hpargs
+      link_hpargs_w_path need_preprocess detect_dang:
+      (CF.cond_path_type * CF.hp_rel_def list* (CP.spec_var*CP.exp list * CP.exp list) list ) =
   (*move to outer func*)
   (* let callee_hpdefs = *)
   (*   try *)
@@ -1682,46 +1703,42 @@ and infer_shapes_x iprog prog proc_name (constrs0: CF.hprel list) sel_hps sel_po
   (* let callee_hps = List.map (fun (hpname,_,_) -> SAU.get_hpdef_name hpname) callee_hpdefs in *)
   let callee_hps = [] in
   (* let _ = DD.info_pprint ("  sel_hps:" ^ !CP.print_svl sel_hps) no_pos in *)
-  (*remove hp(x) --> hp(x)*)
-  (* let constrs1 = List.filter (fun cs -> not(SAU.is_trivial_constr cs)) constrs0 in *)
-  let grp_link_hpargs = SAU.dang_partition link_hpargs0 [] in
-  (*TODO: LOC: find a group of rel ass with the same cond_path.
-    Now, assume = []
-  *)
-  let cond_path = [] in
-  (*for temporal*)
-  let link_hpargs = match grp_link_hpargs with
-    | [] -> []
-    | (_, a)::_ -> a
+  let ls_path_res = infer_shapes_divide iprog prog proc_name constrs0
+    callee_hps sel_hps sel_post_hps hp_rel_unkmap unk_hpargs link_hpargs_w_path need_preprocess detect_dang
   in
-  let constr, hp_defs, c, unk_hpargs2, link_hpargs2, equivs = infer_shapes_core iprog prog proc_name cond_path constrs0
-    callee_hps sel_hps
-    sel_post_hps hp_rel_unkmap unk_hpargs link_hpargs need_preprocess detect_dang in
-  let link_hp_defs = SAC.generate_hp_def_from_link_hps prog equivs link_hpargs2 in
-  let hp_defs1,tupled_defs = SAU.partition_tupled hp_defs in
-  (*decide what to show: DO NOT SHOW hps relating to tupled defs*)
-  let m = match_hps_views hp_defs1 prog.CA.prog_view_decls in
-  let sel_hps1 = if !Globals.pred_elim_unused_preds then sel_hps else
-    CP.remove_dups_svl ((List.map (fun (a,_,_) -> SAU.get_hpdef_name a) hp_defs1)@sel_hps)
+  let r = match ls_path_res with
+    |[] -> ([],[],[])
+    | (cond_path, hp_defs, c, unk_hpargs2, link_hpargs2, equivs)::_ -> (*conquer HERE*)
+          let link_hp_defs = SAC.generate_hp_def_from_link_hps prog equivs link_hpargs2 in
+          let hp_defs1,tupled_defs = SAU.partition_tupled hp_defs in
+          (*decide what to show: DO NOT SHOW hps relating to tupled defs*)
+          let m = match_hps_views hp_defs1 prog.CA.prog_view_decls in
+          let sel_hps1 = if !Globals.pred_elim_unused_preds then sel_hps else
+            CP.remove_dups_svl ((List.map (fun (a,_,_) -> SAU.get_hpdef_name a) hp_defs1)@sel_hps)
+          in
+          let sel_hp_defs = collect_sel_hp_def hp_defs1 sel_hps1 unk_hpargs2 m in
+          let tupled_defs1 = List.map (fun (a, hf, f) -> {
+              CF.hprel_def_kind = a;
+              CF.hprel_def_hrel = hf;
+              CF.hprel_def_body = Some f;
+              CF.hprel_def_body_lib = Some f;
+          }
+          ) tupled_defs in
+          let shown_defs = if !Globals.pred_elim_unused_preds then sel_hp_defs@link_hp_defs else
+            sel_hp_defs@tupled_defs1@link_hp_defs
+          in
+          let _ = List.iter (fun hp_def -> rel_def_stk # push hp_def) shown_defs in
+          (cond_path, hp_defs, c)
   in
-  let sel_hp_defs = collect_sel_hp_def hp_defs1 sel_hps1 unk_hpargs2 m in
-  let tupled_defs1 = List.map (fun (a, hf, f) -> {
-      CF.hprel_def_kind = a;
-      CF.hprel_def_hrel = hf;
-      CF.hprel_def_body = Some f;
-      CF.hprel_def_body_lib = Some f;
-  }
-  ) tupled_defs in
-  let shown_defs = if !Globals.pred_elim_unused_preds then sel_hp_defs@link_hp_defs else
-    sel_hp_defs@tupled_defs1@link_hp_defs
-  in
-  let _ = List.iter (fun hp_def -> rel_def_stk # push hp_def) shown_defs in
-  (constr, hp_defs, c)
+  (* let ls_path_res = infer_shapes_divide iprog prog proc_name constrs0 *)
+  (*   callee_hps sel_hps sel_post_hps hp_rel_unkmap unk_hpargs link_hpargs_w_path need_preprocess detect_dang *)
+  (* in *)
+  r
 
 
 let infer_shapes iprog prog proc_name (hp_constrs: CF.hprel list) sel_hp_rels sel_post_hp_rels
       hp_rel_unkmap unk_hpargs link_hpargs need_preprocess detect_dang:
- (CF.hprel list * CF.hp_rel_def list*(CP.spec_var*CP.exp list * CP.exp list) list) =
+ (CF.cond_path_type * CF.hp_rel_def list*(CP.spec_var*CP.exp list * CP.exp list) list) =
   let pr0 = pr_list !CP.print_exp in
   let pr1 = pr_list_ln Cprinter.string_of_hprel_short in
   let pr2 = pr_list_ln Cprinter.string_of_hp_rel_def in
@@ -1729,7 +1746,7 @@ let infer_shapes iprog prog proc_name (hp_constrs: CF.hprel list) sel_hp_rels se
   (* let pr4 = pr_list (pr_pair (pr_list (pr_pair !CP.print_sv string_of_int)) CP.string_of_xpure_view) in *)
   let pr4 = (pr_list (pr_pair (pr_pair !CP.print_sv (pr_list string_of_int)) CP.string_of_xpure_view)) in
   let pr5 = pr_list (pr_pair !CP.print_sv !CP.print_svl) in
-  Debug.no_6 "infer_shapes" pr_id pr1 !CP.print_svl pr4 pr5 pr5 (pr_triple pr1 pr2 pr3)
+  Debug.no_6 "infer_shapes" pr_id pr1 !CP.print_svl pr4 pr5 pr5 (pr_triple CF.string_of_cond_path pr2 pr3)
       (fun _ _ _ _ _ _ -> infer_shapes_x iprog prog proc_name hp_constrs sel_hp_rels
           sel_post_hp_rels hp_rel_unkmap unk_hpargs link_hpargs
           need_preprocess detect_dang)
