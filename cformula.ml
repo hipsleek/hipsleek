@@ -222,7 +222,7 @@ and h_formula_star = {  h_formula_star_h1 : h_formula;
                         
 and h_formula_starminus = {  h_formula_starminus_h1 : h_formula;
                         h_formula_starminus_h2 : h_formula;
-                        h_formula_starminus_pos : loc }                        
+                        h_formula_starminus_pos : loc }
 
 and h_formula_conj = { h_formula_conj_h1 : h_formula;
 h_formula_conj_h2 : h_formula;
