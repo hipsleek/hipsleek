@@ -244,6 +244,8 @@ let common_arguments = [
   ("--en-pstat", Arg.Set Globals.profiling,
    "enable profiling statistics");
   ("--en-cstat", Arg.Set Globals.enable_counters, "enable counter statistics");
+  ("--dis-time-stat", Arg.Clear Globals.enable_time_stats, "disable timing statistics from being printed");
+  ("--dis-count-stat", Arg.Clear Globals.enable_count_stats, "disable counting statistics from being printed");
   ("--en-stat", (Arg.Tuple [Arg.Set Globals.profiling; Arg.Set Globals.enable_counters]),
    "enable all statistics");
   ("--sbc", Arg.Set Globals.enable_syn_base_case,

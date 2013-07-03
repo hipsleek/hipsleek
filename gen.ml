@@ -32,6 +32,9 @@ struct
       | q::qs -> if (List.mem q qs) then remove_dups qs else q::(remove_dups qs)
 
   let pr_id x = x
+  
+  let print_endline_if b s = if b then print_endline s else ()
+  let print_string_if b s = if b then print_string s else ()
 
   let pr_var_prime (id,p) = match p with
     | Globals.Primed -> id^"'"

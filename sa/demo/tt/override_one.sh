@@ -1,1 +1,1 @@
-cp out.$2 test/ref$1.out.$2
+cp tests/$2.out tests/$2.ref

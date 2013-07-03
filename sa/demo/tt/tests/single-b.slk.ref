@@ -1,0 +1,43 @@
+Starting Omega...oc
+GP_3 is defined.
+GP_4 is defined.
+
+
+*************************************************
+*******relational assumptions (obligation)********
+****************************************************
+[ emp&next_34_803=null --> GP_3(next_34_803,next_29_789),
+ emp&next_29_789=t_32' & next_29_789!=null --> GP_4(next_29_789,t_32'),
+ emp&next_34_803=null --> GP_3(next_34_803,next_29_789),
+ next_29_789::node<val_29_61,next_29_62>@M * 
+  GP_4(next_29_62,t_32') --> GP_4(next_29_789,t_32')]
+*************************************
+
+!!! >>>>>> step 1: find dangling ptrs, link pre and post-preds dangling preds<<<<<<
+!!! >>>>>> step 2: split constraints based on pre and post-preds<<<<<<
+!!! *** NO SPLITTING DONE ***
+!!! >>>>>> step 3: apply transitive implication<<<<<<
+!!! >>>>>> step 3a: simplification <<<<<<
+!!! >>>>>> step 3b: do apply_transitive_imp <<<<<<
+!!! >>>>>> pre-predicates<<<<<<
+!!! >>>>>> step pre-4: remove unused predicates<<<<<<
+!!! >>>>>> pre-predicates: step pre-5: group & simpl impl<<<<<<
+!!! >>>>>> pre-predicates: step pre-6: combine<<<<<<
+!!! >>>>>> pre-predicates: step pre-7: remove redundant x!=null<<<<<<
+!!! >>>>>> pre-predicates: step pre-8: strengthen<<<<<<
+!!! >>>>>> step 6: generalization <<<<<<
+!!! >>>>>> post-predicates<<<<<<
+!!! >>>>>> step post-4: step remove unused predicates<<<<<<
+!!! >>>>>> post-predicates: step post-5: remove redundant x!=null : not implemented yet<<<<<<
+!!! >>>>>> post-predicates: step post-61: weaken<<<<<<
+
+************************************************
+*******relational definition (obligation)********
+**************************************************
+[HP_RELDEFN GP_4:  GP_4(next_29_64,t_65) ::=  
+ emp&next_29_64!=null & next_29_64=t_65
+ or next_29_64::node<val_29_61,next_29_62>@M * GP_4(next_29_62,t_65)
+ ,
+HP_RELDEFN GP_3:  GP_3(next_34_66,next_29_67) ::=  emp&next_34_66=null]
+*************************************
+

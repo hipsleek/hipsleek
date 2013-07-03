@@ -1,0 +1,14 @@
+Starting Omega...oc
+H1 is defined.
+H2 is defined.
+H3 is defined.
+G1 is defined.
+G2 is defined.
+G3 is defined.
+
+Entail (1) : Valid. 
+
+ <1>emp&x=null&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [H1(x,y)&x=null --> G3(x,y)]
+
+

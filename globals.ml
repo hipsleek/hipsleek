@@ -869,6 +869,10 @@ let enable_prune_cache = ref true
 
 let enable_counters = ref false
 
+let enable_time_stats = ref true
+
+let enable_count_stats = ref true
+
 let enable_fast_imply = ref false
 
 let failure_analysis = ref false

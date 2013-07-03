@@ -1,0 +1,12 @@
+Starting Omega...oc
+H is defined.
+H4 is defined.
+G is defined.
+
+Entail (1) : Valid. 
+
+ <1>emp&next_22_793=null & res=x & r=r_24&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [H4(next_22_793) * x::node<val_22_792,next_22_793>@M&
+                   res=x & next_22_793=null --> G(x,r_24)]
+
+
