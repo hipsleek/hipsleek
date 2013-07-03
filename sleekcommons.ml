@@ -44,8 +44,10 @@ type command =
   | LetDef of (ident * meta_formula)
   | EntailCheck of (meta_formula * meta_formula * entail_type)
   | RelAssume of (CF.cond_path_type * meta_formula * meta_formula)
+  | RelDefn of (CF.cond_path_type * meta_formula * meta_formula)
   | ShapeInfer of (ident list * ident list)
   | ShapeDivide of (ident list * ident list)
+  | ShapeConquer of (CF.cond_path_type list)
   | ShapePostObl of (ident list * ident list)
   | ShapeInferProp of (ident list * ident list)
   | ShapeSplitBase of (ident list * ident list)
@@ -100,8 +102,10 @@ let string_of_command c = match c with
   | LetDef  _ -> "LetDef"   
   | EntailCheck _ -> "EntailCheck"
   | RelAssume _ -> "RelAssume"
+  | RelDefn _ -> "RelDefn"
   | ShapeInfer _ -> "ShapeInfer"
   | ShapeDivide _ -> "ShapeDivide"
+  | ShapeConquer _ -> "ShapeConquer"
   | ShapePostObl _ -> "| ShapePostObl"
   | ShapeInferProp _ -> "ShapeInferProper"
   | ShapeSplitBase _ -> "ShapeSplitbase"

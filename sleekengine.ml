@@ -83,6 +83,8 @@ let cprog = ref { C.prog_data_decls = [];
 let residues =  ref (None : (CF.list_context * bool) option)    (* parameter 'bool' is used for printing *)
 
 let sleek_hprel_assumes = ref ([]: CF.hprel list)
+let sleek_hprel_defns = ref ([]: (CF.cond_path_type * CF.hp_rel_def) list)
+
 let sleek_hprel_unknown = ref ([]: (CF.cond_path_type * (CP.spec_var * CP.spec_var list)) list)
 let sleek_hprel_dang = ref ([]: (CP.spec_var *CP.spec_var list) list)
 
@@ -712,6 +714,31 @@ let process_rel_assume cond_path (ilhs : meta_formula) (irhs: meta_formula)=
   let _ = sleek_hprel_assumes := !sleek_hprel_assumes@[new_rel_ass] in
   ()
 
+let process_rel_defn cond_path (ilhs : meta_formula) (irhs: meta_formula)=
+  (* let _ = DD.info_pprint "process_rel_assume" no_pos in *)
+  (* let stab = H.create 103 in *)
+  let stab = [] in
+  let (stab,lhs) = meta_to_formula ilhs false [] stab in
+  let fvs = CF.fv lhs in
+  let fv_idents = (List.map CP.name_of_spec_var fvs) in
+  let (stab,rhs) = meta_to_formula irhs false fv_idents stab in
+  let hfs = CF.heap_of lhs in
+  let hf = match hfs with
+    | [x] -> x
+    | _ -> report_error no_pos "sleekengine.process_rel_defn: rel defn"
+  in
+  let hp,args = CF.extract_HRel hf in
+  (* let _ =  print_endline ("LHS = " ^ (Cprinter.string_of_formula lhs)) in *)
+  (* let _ =  print_endline ("RHS = " ^ (Cprinter.string_of_formula rhs)) in *)
+  (*TODO: LOC: hp_id should be cond_path*)
+  let pr_new_rel_defn =  (cond_path, (CP.HPRelDefn (hp, List.hd args, List.tl args), hf, rhs))
+  in
+  (*hp_defn*)
+  let pr= pr_pair CF.string_of_cond_path Cprinter.string_of_hp_rel_def_short in
+  let _ = Debug.info_pprint ((pr pr_new_rel_defn) ^ "\n") no_pos in
+  let _ =  sleek_hprel_defns := ! sleek_hprel_defns@[pr_new_rel_defn] in
+  ()
+
 let process_decl_hpdang hp_names =
   let process hp_name=
     let hp_def = Cast.look_up_hp_def_raw !cprog.Cast.prog_hp_decls hp_name in
@@ -733,8 +760,8 @@ let process_decl_hpunknown (cond_path, hp_names) =
     (cond_path, (hp,args))
   in
   let hpargs = List.map process hp_names in
-  let _ = Debug.ninfo_pprint ("unknown: " ^
-      (let pr = pr_list (pr_pair CF.string_of_cond_path (pr_pair !Cpure.print_sv !Cpure.print_svl)) in pr hpargs)) no_pos in
+  let _ = Debug.info_pprint (("unknown: " ^
+      (let pr = pr_list (pr_pair CF.string_of_cond_path (pr_pair !Cpure.print_sv !Cpure.print_svl)) in pr hpargs)) ^ "\n") no_pos in
   let _ = sleek_hprel_unknown := !sleek_hprel_unknown@hpargs in
   ()
 
@@ -804,7 +831,7 @@ let process_shape_infer pre_hps post_hps=
   (* in *)
   ()
 let process_shape_divide pre_hps post_hps=
-   (* let _ = DD.info_pprint "process_shape_infer" no_pos in *)
+   (* let _ = DD.info_pprint "process_shape_divide" no_pos in *)
   let hp_lst_assume = !sleek_hprel_assumes in
   let constrs2, sel_hps, sel_post_hps, unk_map, unk_hpargs, link_hpargs=
     shape_infer_pre_process hp_lst_assume pre_hps post_hps
@@ -831,6 +858,10 @@ let process_shape_divide pre_hps post_hps=
     end
   in
   let _ = List.iter pr_one ls_cond_defs_drops in
+  ()
+
+let process_shape_conquer cond_paths=
+  let _ = DD.info_pprint "process_shape_conquer\n" no_pos in
   ()
 
 let process_shape_postObl pre_hps post_hps=

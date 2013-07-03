@@ -95,8 +95,10 @@ let proc_gen_cmd cmd =
     | AxiomDef adef -> process_axiom_def adef
     | EntailCheck (iante, iconseq, etype) -> (process_entail_check iante iconseq etype;())
     | RelAssume (id, ilhs, irhs) -> process_rel_assume id ilhs irhs
+    | RelDefn (id, ilhs, irhs) -> process_rel_defn id ilhs irhs
     | ShapeInfer (pre_hps, post_hps) -> process_shape_infer pre_hps post_hps
     | ShapeDivide (pre_hps, post_hps) -> process_shape_divide pre_hps post_hps
+    | ShapeConquer (paths) -> process_shape_conquer paths
     | ShapePostObl (pre_hps, post_hps) -> process_shape_postObl pre_hps post_hps
     | ShapeInferProp (pre_hps, post_hps) -> process_shape_infer_prop pre_hps post_hps
     | ShapeSplitBase (pre_hps, post_hps) -> process_shape_split pre_hps post_hps
@@ -139,7 +141,7 @@ let parse_file (parse) (source_file : string) =
       | AxiomDef adef -> process_axiom_def adef  (* An Hoa *)
             (* | Infer (ivars, iante, iconseq) -> process_infer ivars iante iconseq *)
       | LemmaDef _ | InferCmd _ | CaptureResidue _ | LetDef _ | EntailCheck _ | EqCheck _ | PrintCmd _ | CmpCmd _ 
-      | RelAssume _ | ShapeInfer _ | ShapeDivide _ | ShapePostObl _ | ShapeInferProp _ | ShapeSplitBase _ | ShapeElim _ | ShapeExtract _ | ShapeDeclDang _ | ShapeDeclUnknown _
+      | RelAssume _ | RelDefn _ | ShapeInfer _ | ShapeDivide _ | ShapeConquer _ | ShapePostObl _ | ShapeInferProp _ | ShapeSplitBase _ | ShapeElim _ | ShapeExtract _ | ShapeDeclDang _ | ShapeDeclUnknown _
       | ShapeSConseq _ | ShapeSAnte _
       | Time _ | EmptyCmd -> () 
   in
@@ -151,7 +153,7 @@ let parse_file (parse) (source_file : string) =
       | LemmaDef ldef -> process_lemma ldef
       | DataDef _ | PredDef _ | BarrierCheck _ | FuncDef _ | RelDef _ | HpDef _ | AxiomDef _ (* An Hoa *)
       | CaptureResidue _ | LetDef _ | EntailCheck _ | EqCheck _ | InferCmd _ | PrintCmd _ 
-      | RelAssume _ | ShapeInfer _ | ShapeDivide _ | ShapePostObl _ | ShapeInferProp _ | ShapeSplitBase _ | ShapeElim _ | ShapeExtract _ | ShapeDeclDang _ | ShapeDeclUnknown _
+      | RelAssume _ | RelDefn _ | ShapeInfer _ | ShapeDivide _ | ShapeConquer _ | ShapePostObl _ | ShapeInferProp _ | ShapeSplitBase _ | ShapeElim _ | ShapeExtract _ | ShapeDeclDang _ | ShapeDeclUnknown _
       | ShapeSConseq _ | ShapeSAnte _
       | CmpCmd _| Time _ | EmptyCmd -> () in
   let proc_one_cmd c = 
@@ -160,8 +162,10 @@ let parse_file (parse) (source_file : string) =
             (* let pr_op () = process_entail_check_common iante iconseq in  *)
             (* Log.wrap_calculate_time pr_op !Globals.source_files ()               *)
       | RelAssume (id, ilhs, irhs) -> process_rel_assume id ilhs irhs
+      | RelDefn (id, ilhs, irhs) -> process_rel_defn id ilhs irhs
       | ShapeInfer (pre_hps, post_hps) -> process_shape_infer pre_hps post_hps
       | ShapeDivide (pre_hps, post_hps) -> process_shape_divide pre_hps post_hps
+      | ShapeConquer (paths) -> process_shape_conquer paths
       | ShapePostObl (pre_hps, post_hps) -> process_shape_postObl pre_hps post_hps
       | ShapeInferProp (pre_hps, post_hps) -> process_shape_infer_prop pre_hps post_hps
       | ShapeSplitBase (pre_hps, post_hps) -> process_shape_split pre_hps post_hps

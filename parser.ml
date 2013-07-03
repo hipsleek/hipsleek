@@ -723,8 +723,10 @@ non_empty_command:
       | t=checkeq_cmd         -> EqCheck t
       | t= checkentail_cmd     -> EntailCheck t
       | t=relassume_cmd     -> RelAssume t
+      | t=reldefn_cmd     -> RelDefn t
       | t=shapeinfer_cmd     -> ShapeInfer t
       | t=shapedivide_cmd     -> ShapeDivide t
+      | t=shapeconquer_cmd     -> ShapeConquer t
       | t=shapepost_obl_cmd     -> ShapePostObl t
       | t=shapeinfer_proper_cmd     -> ShapeInferProp t
       | t=shapesplit_base_cmd     -> ShapeSplitBase t
@@ -1652,6 +1654,10 @@ relassume_cmd:
    [[ `RELASSUME; il2 = OPT cond_path; l=meta_constr; `CONSTR;r=meta_constr -> (un_option il2 [], l, r)
    ]];
 
+reldefn_cmd:
+   [[ `RELDEFN; il2 = OPT cond_path; l=meta_constr; `EQUIV;r=meta_constr -> (un_option il2 [], l, r)
+   ]];
+
 decl_dang_cmd:
    [[ `SHAPE_DECL_DANG; `OSQUARE; il1=OPT id_list ;`CSQUARE -> un_option il1 []
    ]];
@@ -1672,6 +1678,11 @@ shapedivide_cmd:
    let il1 = un_option il1 [] in
    let il2 = un_option il2 [] in
    (il1,il2)
+   ]];
+shapeconquer_cmd:
+   [[ `SHAPE_CONQUER; `OSQUARE; il1=OPT list_int_list ;`CSQUARE ->
+   let il1 = un_option il1 [] in
+   (il1)
    ]];
 
 shapepost_obl_cmd:
@@ -1829,6 +1840,8 @@ comma_list: [[`COMMA; s = OPT SELF -> 1 + (un_option s 1)]];
 id_list_opt:[[t= LIST0 id SEP `COMMA ->t]];
 
 int_list:[[t= LIST1 integer_literal SEP `SEMICOLON ->t]];
+
+list_int_list:[[t= LIST1 int_list SEP `COMMA ->t]];
 
 id_list:[[t=LIST1 id SEP `COMMA -> t]];
 
