@@ -9729,10 +9729,15 @@ let add_one_path i e =
   with es_cond_path = i::e.es_cond_path
   }  
 
-let add_path_id ctx (pi1,pi2) i = 
+let add_path_id ctx ((pi1,pi2) as p) i = 
   match pi1 with
     | None -> if i<0 then ctx else transform_context (add_one_path i) ctx
     | Some s -> transform_context (add_both_path (s,pi2) i) ctx
+
+let add_path_id ctx ((pi1,pi2)as p) i =
+  let pr1 = pr_pair (pr_option pr_none) string_of_int in
+  let pr2 = string_of_int in
+  Debug.no_2 "add_path_id" pr1 pr2 pr_none (fun _ _ -> add_path_id ctx p i) p i 
 	
 let add_path_id_ctx_list c (pi1,pi2) i  = 
   match pi1 with

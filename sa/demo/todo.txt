@@ -975,7 +975,7 @@ Can we avoid this, as it has nullified uninterpreted predicates.
 
 
 [ HP_2(y_175,x_176) ::= y_175::node<val_25_826,next_25_827>@M * (HP_8(next_25_827,x_176))&true,
- H1(x_177,y_178) ::= 
+ls  H1(x_177,y_178) ::= 
  emp&x_177=null
  or (H1(next_24_102,next_25_100)) * y_178::node<val_25_99,next_25_100>@M * 
     x_177::node<val_24_101,next_24_102>@M&true
@@ -3325,7 +3325,7 @@ res:  [
   HP_780(next_22_779) * x::node<next_22_779>@M[Orig]&x=x' & next_22_779=t_30'&{FLOW,(22,23)=__norm}[]
   ]
 =====================================================================
-# sll-dll.ss
+# sll-dll.ss  FIXED
 
 --sa-dis-split not working
 
@@ -3382,6 +3382,44 @@ We really wanted a base-split:
 Here, we can probably weaken the current
 restriction on the base-split strategy
 =====================================================================
+# tll-if-2.ss (INFO only)
+
+Entail_Stack now logs cond_path to track the
+state for conditionals.
+  - 0 initially
+  - 1 then brach
+  - 2 else branch
+Note that the path is stored in reverse
+   es_cond_path: [2; 1; 0]
+
+
+Successful States:
+[
+ Label: [(,0 ); (,1 ); (,0 ); (,1 )]
+ State:x'::node<Anon_819,flted_11_818>@M[Orig]&flted_11_818=null & x=x' & flted_11_818=null & v_bool_30_783' & flted_11_818=null & v_bool_30_783' & v_bool_39_786' & v_bool_39_786'&{FLOW,(22,23)=__norm}[]
+       es_var_measures 2: MayLoop
+       es_trace: empty
+       es_cond_path: [1; 1; 0]
+;
+ Label: [(,1 ); (,2 ); (,0 ); (,1 )]
+ State:x'::node<Anon_819,flted_11_818>@M[Orig]&flted_11_818=null & x=x' & flted_11_818=null & v_bool_30_783' & flted_11_818=null & v_bool_30_783' & !(v_bool_39_786') & !(v_bool_39_786')&{FLOW,(22,23)=__norm}[]
+       es_var_measures 2: MayLoop
+       es_trace: empty
+       es_cond_path: [2; 1; 0]
+;
+ Label: [(,0 ); (,1 ); (,1 ); (,2 )]
+ State:r_824::tree@M[0][Orig][LHSCase] * l_823::tree@M[0][Orig][LHSCase] * x'::node<l_823,r_824>@M[Orig]&x=x' & r_824!=null & !(v_bool_30_783') & r_824!=null & !(v_bool_30_783') & r_824!=null & r_824!=null & r_824=right_36_841 & l_823!=null & l_823!=null & l_823=left_37_851 & v_bool_39_786' & v_bool_39_786'&{FLOW,(22,23)=__norm}[]
+       es_var_measures 2: MayLoop
+       es_trace: empty
+       es_cond_path: [1; 2; 0]
+;
+ Label: [(,1 ); (,2 ); (,1 ); (,2 )]
+ State:r_824::tree@M[0][Orig][LHSCase] * l_823::tree@M[0][Orig][LHSCase] * x'::node<l_823,r_824>@M[Orig]&x=x' & r_824!=null & !(v_bool_30_783') & r_824!=null & !(v_bool_30_783') & r_824!=null & r_824!=null & r_824=right_36_841 & l_823!=null & l_823!=null & l_823=left_37_851 & !(v_bool_39_786') & !(v_bool_39_786')&{FLOW,(22,23)=__norm}[]
+       es_var_measures 2: MayLoop
+       es_trace: empty
+       es_cond_path: [2; 2; 0]
+
+ ]
 =====================================================================
 =====================================================================
 =====================================================================

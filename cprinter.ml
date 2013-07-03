@@ -2182,7 +2182,7 @@ let pr_estate (es : entail_state) =
   (* pr_wrap_test "es_residue_pts: " Gen.is_empty (pr_seq "" pr_formula_label) es.es_residue_pts; *)
   (* pr_wrap_test "es_path_label: " Gen.is_empty pr_path_trace es.es_path_label; *)
   pr_wrap_test "es_cond_path: " Gen.is_empty (pr_seq "" (fun s -> fmt_int s)) es.es_cond_path;
-  pr_vwrap "es_var_measures: " (pr_opt (fun (t_ann, l1, l2) ->
+  pr_vwrap "es_var_measures 1: " (pr_opt (fun (t_ann, l1, l2) ->
     fmt_string (string_of_term_ann t_ann);
     pr_seq "" pr_formula_exp l1; pr_set pr_formula_exp l2;
   )) es.es_var_measures;
@@ -2356,9 +2356,9 @@ let pr_list_context (ctx:list_context) =
 let pr_context_short (ctx : context) = 
   let rec f xs = match xs with
     | Ctx e -> [(e.es_formula,e.es_infer_vars@e.es_infer_vars_rel,e.es_infer_heap,e.es_infer_pure,e.es_infer_rel,
-      e.es_var_measures,e. es_var_zero_perm,e.es_trace)]
+      e.es_var_measures,e. es_var_zero_perm,e.es_trace,e.es_cond_path)]
     | OCtx (x1,x2) -> (f x1) @ (f x2) in
-  let pr (f,(* ac, *)iv,ih,ip,ir,vm,vperms,trace) =
+  let pr (f,(* ac, *)iv,ih,ip,ir,vm,vperms,trace,ecp) =
     fmt_open_vbox 0;
     pr_formula_wrap f;
     pr_wrap_test "es_var_zero_perm: " Gen.is_empty  (pr_seq "" pr_spec_var) vperms;
@@ -2367,8 +2367,9 @@ let pr_context_short (ctx : context) =
     pr_wrap_test "es_infer_heap: " Gen.is_empty  (pr_seq "" pr_h_formula) ih; 
     pr_wrap_test "es_infer_pure: " Gen.is_empty  (pr_seq "" pr_pure_formula) ip;
     pr_wrap_test "es_infer_rel: " Gen.is_empty  (pr_seq "" pr_lhs_rhs) ir;  
-    pr_wrap_opt "es_var_measures: " pr_var_measures vm;
+    pr_wrap_opt "es_var_measures 2: " pr_var_measures vm;
     pr_vwrap "es_trace: " pr_es_trace trace;
+    pr_wrap_test "es_cond_path: " Gen.is_empty (pr_seq "" (fun s -> fmt_int s)) ecp;
     fmt_string "\n";
     fmt_close_box();
   in 
@@ -2425,7 +2426,8 @@ let pr_entail_state_short e =
   pr_wrap_test "es_infer_heap: " Gen.is_empty  (pr_seq "" pr_h_formula) e.es_infer_heap; 
   pr_wrap_test "es_infer_pure: " Gen.is_empty  (pr_seq "" pr_pure_formula) e.es_infer_pure;
   pr_wrap_test "es_infer_rel: " Gen.is_empty  (pr_seq "" pr_lhs_rhs) e.es_infer_rel;  
-  pr_wrap_opt "es_var_measures: " pr_var_measures e.es_var_measures;
+  pr_wrap_test "es_cond_path: " Gen.is_empty (pr_seq "" (fun s -> fmt_int s)) e.es_cond_path;
+  pr_wrap_opt "es_var_measures 3: " pr_var_measures e.es_var_measures;
   (* fmt_cut(); *)
   fmt_close_box()
 
