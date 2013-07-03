@@ -36,6 +36,29 @@ relAssume (1;0)
 /*
 # tll-if-divide-pre.slk
 
+I thought the splitting is for relational assumptions only.
+It seems you also perform shape_inference. Maybe it is OK too.
+
+*************************************
+*******relational definition ********
+*************************************
+path: (2,0)
+[HP_RELDEFN H_3:  H_3(right_25_34) ::=  H(right_25_34)&right_25_34!=null,
+HP_RELDEFN H_2:  H_2(left_25_35) ::=  H(left_25_35),
+HP_RELDEFN H:  H(x_36) ::=  x_36::node<left_25_800,right_25_801>@M * H(left_25_800) * H(right_25_801)&
+right_25_801!=null]
+UNKNOWN: []
+*************************************
+
+*************************************
+*******relational definition ********
+*************************************
+path: (1,0)
+[HP_RELDEFN H:  H(x_37) ::=  x_37::node<left_25_800,right_25_801>@M * H_2(left_25_800)&right_25_801=null,
+HP_RELDEFN H_3:  H_3(right_25_38) ::=  emp&right_25_38=null]
+UNKNOWN: [(H_2,[a])]
+*************************************
+
 OUTPUT
 ======
 relAssume (1.2)
