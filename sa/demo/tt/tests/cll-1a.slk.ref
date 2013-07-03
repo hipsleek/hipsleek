@@ -4,8 +4,6 @@ G is defined.
 HP_6 is defined.
 HP_7 is defined.
 
-!!! unknown: [((),(HP_7,[a,b]))]
-
 Entail (1) : Valid. 
 
  <1>emp&h!=rest&{FLOW,(19,20)=__norm}[]

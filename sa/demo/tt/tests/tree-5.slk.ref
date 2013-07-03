@@ -23,11 +23,11 @@ G2 is defined.
 *************************************
 *******relational definition ********
 *************************************
-[ G1(l_30) ::=  
+[ G1(l_30) ::= 
  emp&l_30=null
  or l_30::node<k,left,right>@M * G1(left) * G2(right)
  ,
- G2(r_31) ::=  
+ G2(r_31) ::= 
  emp&r_31=null
  or r_31::node<k,left,right>@M * G1(left) * G2(right)
  ]

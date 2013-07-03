@@ -30,12 +30,12 @@ G1 is defined.
 *************************************
 *******relational definition ********
 *************************************
-[ H1(x_86,y_87) ::=  
+[ H1(x_86,y_87) ::= 
  H1(next_24_77,next_25_75) * y_87::node<val_25_74,next_25_75>@M * 
  x_86::node<val_24_76,next_24_77>@M
  or emp&x_86=null
  ,
- G1(x_88,y_89,res_90) ::=  
+ G1(x_88,y_89,res_90) ::= 
  emp&res_90=x_88 & res_90=null & x_88=null
  or y_89::node<val_25_826,next_25_827>@M * res_90::node<val_24_819,nn>@M * 
     G1(nn,next_25_827,rr)&nn=rr & res_90=x_88

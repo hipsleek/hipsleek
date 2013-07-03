@@ -5,10 +5,6 @@ G is defined.
 HP_2 is defined.
 HP_3 is defined.
 
-!!! unknown: [((),(HP_2,[a,b]))]
-
-!!! unknown: [((),(HP_3,[a,b]))]
-
 !!! >>>>>> step 1: find dangling ptrs, link pre and post-preds dangling preds<<<<<<
 !!! >>>>>> step 2: split constraints based on pre and post-preds<<<<<<
 !!! *** NO SPLITTING DONE ***
@@ -60,18 +56,18 @@ HP_3 is defined.
 *************************************
 *******relational definition ********
 *************************************
-[ H(x_65) ::=  x_65::node<Anon_11,n>@M * HP_1(n),
- G(res_67,x_68) ::=  
+[ H(x_65) ::= x_65::node<Anon_11,n>@M * HP_1(n),
+ G(res_67,x_68) ::= 
  EXISTS(flted_22_69: x_68::node<Anon_14,n>@M * HP_3(n,res_67) * 
  res_67::node<Anon_13,flted_22_69>@M&n!=null & flted_22_69=null)[]
  or EXISTS(flted_22_69: res_67::node<Anon_13,flted_22_69>@M&res_67=x_68 & 
     flted_22_69=null)[]
  ,
- HP_1(n_66) ::=  
+ HP_1(n_66) ::= 
  n_66::node<Anon_11,n>@M * HP_1(n)
  or emp&n_66=null
  ,
- HP_2(a,b) ::= NONE,
- HP_3(a,b) ::= NONE]
+ HP_2(a,b) ::=UNKNOWN,
+ HP_3(a,b) ::=UNKNOWN]
 *************************************
 

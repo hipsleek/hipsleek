@@ -6,16 +6,13 @@ H_3 is defined.
 H_2a is defined.
 H_3a is defined.
 
-!!! ((1,0), H_3(right_25_31) ::=  H(right_25_31)&right_25_31!=null)
 
-!!! ((2,0), H_2(left_25_32) ::=  H(left_25_32))
-
-!!! ((2,0), H(x_33) ::=  x_33::node<left_25_800,right_25_801>@M * H(left_25_800) * H(right_25_801)&
-right_25_801!=null)
-
-!!! ((1,0), H(x_27) ::=  x_27::node<left_25_800,right_25_801>@M * H_2(left_25_800)&right_25_801=null)
-
-!!! unknown: [((1,0),(H_2,[a]))]
-
-!!! process_shape_conquer
+*************************************
+*******relational definition ********
+*************************************
+[ H_2(a) ::=PATH:(1,0)UNKNOWN,
+ H(x_27) ::=PATH:(1,0) x_27::node<left_25_800,right_25_801>@M * H_2(left_25_800)&right_25_801=null
+   \/ PATH:(2,0) x_27::node<left_25_800,right_25_801>@M * H(left_25_800) * H(right_25_801)&
+right_25_801!=null]
+*************************************
 

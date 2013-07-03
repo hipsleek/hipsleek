@@ -5,8 +5,6 @@ HP_4 is defined.
 HP_0 is defined.
 G2 is defined.
 
-!!! unknown: [((),(HP_4,[a,b]))]
-
 !!! >>>>>> step 1: find dangling ptrs, link pre and post-preds dangling preds<<<<<<
 !!! >>>>>> step 2: split constraints based on pre and post-preds<<<<<<
 !!! *** NO SPLITTING DONE ***
@@ -30,16 +28,16 @@ G2 is defined.
 *************************************
 *******relational definition ********
 *************************************
-[ H2(x_47,y_48) ::=  x_47::node<val_34_821,next_34_822>@M * HP_3(next_34_822,y_48),
- HP_3(next_34_49,y_50) ::=  
+[ H2(x_47,y_48) ::= x_47::node<val_34_821,next_34_822>@M * HP_3(next_34_822,y_48),
+ HP_3(next_34_49,y_50) ::= 
  next_34_49::node<val_34_821,next_34_822>@M * HP_3(next_34_822,y_50)
  or emp&next_34_49=null
  ,
- G2(x_51,y_52) ::=  
+ G2(x_51,y_52) ::= 
  x_51::node<val_34_821,y_52>@M
  or x_51::node<val_34_821,next_34_822>@M * G2(next_34_822,y_52)&
     next_34_822!=null
  ,
- HP_4(a,b) ::= NONE]
+ HP_4(a,b) ::=UNKNOWN]
 *************************************
 

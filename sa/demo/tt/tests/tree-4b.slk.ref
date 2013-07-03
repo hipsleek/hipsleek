@@ -25,12 +25,12 @@ G is defined.
 *************************************
 *******relational definition ********
 *************************************
-[ HP_0(x_33) ::=  
+[ HP_0(x_33) ::= 
  x_33::node<key_25_797,left_25_798,right_25_799>@M * HP_0(left_25_798) * 
  HP_0(right_25_799)
  or emp&x_33=null
  ,
- HP_1(x_34) ::=  
+ HP_1(x_34) ::= 
  x_34::node<key_25_797,left_25_798,right_25_799>@M * HP_1(left_25_798) * 
  HP_1(right_25_799)
  or emp&x_34=null

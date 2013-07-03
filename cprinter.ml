@@ -314,6 +314,17 @@ let pr_wrap_test hdr (e:'a -> bool) (f: 'a -> unit) (x:'a) =
       fmt_close_box()
     end
 
+let pr_wrap_test_nocut hdr (e:'a -> bool) (f: 'a -> unit) (x:'a) =
+  if (e x) then ()
+  else 
+    begin
+      fmt_open_hbox ();
+      fmt_string hdr; 
+      (* f x; *)
+      wrap_box ("B",1) f x;
+      fmt_close_box()
+    end
+
 
 (** if f e  is not true print with a cut in front of  hdr*)    
 let pr_wrap (f: 'a -> unit) (x:'a) =
@@ -1854,7 +1865,7 @@ let pr_hprel hpa=
 
 let pr_hprel_short hpa=
   fmt_open_box 1;
-  (pr_seq "" (fun s -> fmt_int s)) hpa.hprel_path;
+  pr_wrap_test_nocut "PATH:" Gen.is_empty (fun p -> fmt_string ((pr_list_round (fun s -> string_of_int s)) p)) hpa.hprel_path;
   (* fmt_string (CP.print_rel_cat hpa.hprel_kind); *)
   prtt_pr_formula hpa.hprel_lhs;
   fmt_string " --> ";
@@ -1869,21 +1880,42 @@ let pr_hprel_short_inst cprog hpa=
   prtt_pr_formula_inst cprog hpa.hprel_rhs;
   fmt_close()
 
+let pr_path_of (path, off)=
+   pr_wrap_test_nocut "PATH:" Gen.is_empty  (fun l -> fmt_string (pr_list_round string_of_int l)) path
+  ; (match off with
+     | None -> fmt_string "UNKNOWN"
+     | Some f -> fmt_string (prtt_string_of_formula f))
+
 let pr_hprel_def hpd=
   fmt_open_box 1;
   (* fmt_string (CP.print_rel_cat hpd.hprel_def_kind); *)
   (* fmt_string "\n"; *)
   (pr_h_formula hpd.hprel_def_hrel);
   fmt_string " ::=";
-  fmt_string (match hpd.hprel_def_body with
-    | None -> "UNKNOWN"
-    | Some f -> prtt_string_of_formula f);
+   (* fmt_string (String.concat " \/ " (List.map pr_path_of hpd.hprel_def_body)); *)
+  (pr_list_op_none " \/ " pr_path_of hpd.hprel_def_body);
   fmt_string " LIB FORM:\n";
   (pr_h_formula hpd.hprel_def_hrel);
   fmt_string " ::=";
   fmt_string ( match hpd.hprel_def_body_lib with
     | None -> "UNKNOWN"
     | Some f -> prtt_string_of_formula f);
+  fmt_close()
+
+let pr_hprel_def_short hpd=
+  fmt_open_box 1;
+  (* fmt_string (CP.print_rel_cat hpd.hprel_def_kind); *)
+  (* fmt_string "\n"; *)
+  (pr_h_formula hpd.hprel_def_hrel);
+  fmt_string " ::=";
+  (pr_list_op_none " \/ " pr_path_of) hpd.hprel_def_body;
+   (* fmt_string (String.concat " OR " (List.map pr_path_of hpd.hprel_def_body)); *)
+  (* fmt_string " LIB FORM:\n"; *)
+  (* (pr_h_formula hpd.hprel_def_hrel); *)
+  (* fmt_string " ::="; *)
+  (* fmt_string ( match hpd.hprel_def_body_lib with *)
+  (*   | None -> "UNKNOWN" *)
+  (*   | Some f -> prtt_string_of_formula f); *)
   fmt_close()
 
 let pr_hprel_def_lib hpd=
@@ -1905,6 +1937,8 @@ let string_of_hprel_short_inst prog hp =
   poly_string_of_pr (pr_hprel_short_inst prog) hp
 
 let string_of_hprel_def hp = poly_string_of_pr pr_hprel_def hp
+
+let string_of_hprel_def_short hp = poly_string_of_pr pr_hprel_def_short hp
 
 let string_of_hprel_def_lib hp = poly_string_of_pr pr_hprel_def_lib hp
 

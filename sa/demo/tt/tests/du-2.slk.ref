@@ -22,7 +22,7 @@ G is defined.
 *************************************
 *******relational definition ********
 *************************************
-[ G(x_31) ::=  
+[ G(x_31) ::= 
  x_31::node<k,left,right>@M&right!=null & left=null
  or x_31::node<k,left,right>@M * left::node<Anon_11,Anon_12,Anon_13>@M&
     right=null

@@ -27,7 +27,7 @@ G1 is defined.
 *************************************
 *******relational definition ********
 *************************************
-[ G1(x_36,y_37,res_38) ::=  
+[ G1(x_36,y_37,res_38) ::= 
  emp&res_38=x_36 & res_38=null & x_36=null
  or y_37::node<val_25_826,next_25_827>@M * res_38::node<val_24_819,nnn>@M * 
     G1(nnn,next_25_827,rrr)&nnn=rrr & res_38=x_36

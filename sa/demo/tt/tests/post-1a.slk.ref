@@ -22,7 +22,7 @@ G is defined.
 *************************************
 *******relational definition ********
 *************************************
-[ G(x_25) ::=  
+[ G(x_25) ::= 
  x_25::node<flted_13_14,right>@M&flted_13_14=0
  or x_25::node<flted_13_14,right>@M&0<=flted_13_14
  ]

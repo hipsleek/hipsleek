@@ -4,8 +4,6 @@ H is defined.
 HP_0 is defined.
 HP_1 is defined.
 
-!!! unknown: [((),(HP_1,[a]))]
-
 !!! >>>>>> step 1: find dangling ptrs, link pre and post-preds dangling preds<<<<<<
 !!! >>>>>> step 2: split constraints based on pre and post-preds<<<<<<
 !!! *** NO SPLITTING DONE ***
@@ -29,13 +27,13 @@ HP_1 is defined.
 *************************************
 *******relational definition ********
 *************************************
-[ HP_0(left_31_43) ::=  
+[ HP_0(left_31_43) ::= 
  left_31_43::node<key_31_797,left_31_798,right_31_799>@M * 
  HP_0(left_31_798) * HP_1(right_31_799)
  or emp&left_31_43=null
  ,
- H(x_44) ::=  x_44::node<key_31_797,left_31_798,right_31_799>@M * HP_0(left_31_798) * 
+ H(x_44) ::= x_44::node<key_31_797,left_31_798,right_31_799>@M * HP_0(left_31_798) * 
 HP_1(right_31_799),
- HP_1(a) ::= NONE]
+ HP_1(a) ::=UNKNOWN]
 *************************************
 

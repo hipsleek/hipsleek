@@ -47,7 +47,7 @@ type command =
   | RelDefn of (CF.cond_path_type * meta_formula * meta_formula)
   | ShapeInfer of (ident list * ident list)
   | ShapeDivide of (ident list * ident list)
-  | ShapeConquer of (CF.cond_path_type list)
+  | ShapeConquer of (ident list * CF.cond_path_type list)
   | ShapePostObl of (ident list * ident list)
   | ShapeInferProp of (ident list * ident list)
   | ShapeSplitBase of (ident list * ident list)

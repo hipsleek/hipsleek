@@ -6,8 +6,6 @@ H_3 is defined.
 H_2a is defined.
 H_3a is defined.
 
-!!! unknown: [((),(H_2a,[a]))]
-
 !!! >>>>>> step 1: find dangling ptrs, link pre and post-preds dangling preds<<<<<<
 !!! >>>>>> step 2: split constraints based on pre and post-preds<<<<<<
 !!! *** NO SPLITTING DONE ***
@@ -29,8 +27,8 @@ H_3a is defined.
 *************************************
 *******relational definition ********
 *************************************
-[ H(x_27) ::=  x_27::node<left_25_800,right_25_801>@M * H_2a(left_25_800)&right_25_801=null,
- H_3a(right_25_28) ::=  emp&right_25_28=null,
- H_2a(a) ::= NONE]
+[ H(x_27) ::= x_27::node<left_25_800,right_25_801>@M * H_2a(left_25_800)&right_25_801=null,
+ H_3a(right_25_28) ::= emp&right_25_28=null,
+ H_2a(a) ::=UNKNOWN]
 *************************************
 

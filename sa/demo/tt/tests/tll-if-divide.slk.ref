@@ -6,8 +6,6 @@ H_3 is defined.
 H_2a is defined.
 H_3a is defined.
 
-!!! unknown: [((1,2),(H_2,[a]))]
-
 !!! >>>>>> step 1: find dangling ptrs, link pre and post-preds dangling preds<<<<<<
 !!! >>>>>> step 2: split constraints based on pre and post-preds<<<<<<
 !!! *** NO SPLITTING DONE ***

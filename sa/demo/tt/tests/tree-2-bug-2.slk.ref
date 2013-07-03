@@ -27,17 +27,17 @@ G is defined.
 *************************************
 *******relational definition ********
 *************************************
-[ HP_0(left_25_46) ::=  
+[ HP_0(left_25_46) ::= 
  left_25_46::node<key_25_797,left_25_798,right_25_799>@M * 
  HP_0(left_25_798) * HP_1(right_25_799)
  or emp&left_25_46=null
  ,
- HP_1(right_25_47) ::=  
+ HP_1(right_25_47) ::= 
  right_25_47::node<key_25_797,left_25_798,right_25_799>@M * 
  HP_0(left_25_798) * HP_1(right_25_799)
  or emp&right_25_47=null
  ,
- H(x_48) ::=  x_48::node<key_25_797,left_25_798,right_25_799>@M * HP_0(left_25_798) * 
+ H(x_48) ::= x_48::node<key_25_797,left_25_798,right_25_799>@M * HP_0(left_25_798) * 
 HP_1(right_25_799)]
 *************************************
 

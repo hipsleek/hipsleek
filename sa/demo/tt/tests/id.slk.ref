@@ -2,8 +2,6 @@ Starting Omega...oc
 P is defined.
 G is defined.
 
-!!! unknown: []
-
 !!! >>>>>> step 1: find dangling ptrs, link pre and post-preds dangling preds<<<<<<
 !!! >>>>>> step 2: split constraints based on pre and post-preds<<<<<<
 !!! *** NO SPLITTING DONE ***
@@ -25,6 +23,6 @@ G is defined.
 *************************************
 *******relational definition ********
 *************************************
-[ G(a_18,res_19) ::=  P(a_18)&a_18=res_19]
+[ G(a_18,res_19) ::= P(a_18)&a_18=res_19]
 *************************************
 

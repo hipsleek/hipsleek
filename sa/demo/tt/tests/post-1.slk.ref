@@ -22,7 +22,7 @@ G is defined.
 *************************************
 *******relational definition ********
 *************************************
-[ G(x_28) ::=  
+[ G(x_28) ::= 
  EXISTS(flted_11_29: x_28::node<n,flted_11_29>@M&n!=null & flted_11_29=null)
  []
  or EXISTS(flted_11_29: x_28::node<flted_11_29,flted_11_29>@M&

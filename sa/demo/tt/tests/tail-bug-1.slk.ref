@@ -24,9 +24,9 @@ G1 is defined.
 *************************************
 *******relational definition ********
 *************************************
-[ HP_9(next_14_778) ::=  emp& XPURE(HP_9(next_14_778)),
- H1(c_26) ::=  c_26::node<val_14_777,next_14_778>@M& XPURE(HP_9(next_14_778)),
- G1(res_27,c_28) ::=  c_28::node<val_14_777,res_27>@M& XPURE(HP_9(next_14_778)) & 
+[ HP_9(next_14_778) ::= emp& XPURE(HP_9(next_14_778)),
+ H1(c_26) ::= c_26::node<val_14_777,next_14_778>@M& XPURE(HP_9(next_14_778)),
+ G1(res_27,c_28) ::= c_28::node<val_14_777,res_27>@M& XPURE(HP_9(next_14_778)) & 
 next_14_778=res_27]
 *************************************
 

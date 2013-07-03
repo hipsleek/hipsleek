@@ -7,12 +7,6 @@ HP_1 is defined.
 HP_2 is defined.
 HP_3 is defined.
 
-!!! unknown: [((),(HP_2,[a,b]))]
-
-!!! unknown: [((),(HP_3,[a,b]))]
-
-!!! unknown: [((),(HP_0,[a,b]))]
-
 !!! >>>>>> step 1: find dangling ptrs, link pre and post-preds dangling preds<<<<<<
 !!! >>>>>> step 2: split constraints based on pre and post-preds<<<<<<
 !!! *** NO SPLITTING DONE ***
@@ -36,18 +30,18 @@ HP_3 is defined.
 *************************************
 *******relational definition ********
 *************************************
-[ HP_9(next_15_56,y_57) ::=  
+[ HP_9(next_15_56,y_57) ::= 
  next_15_56::node<next_15_797,prev_15_798>@M * HP_9(next_15_797,y_57) * 
  HP_0(prev_15_798,y_57)
  or emp&next_15_56=null
  ,
- H(x_58,y_59) ::=  x_58::node<next_15_797,prev_15_798>@M * HP_9(next_15_797,y_59) * 
+ H(x_58,y_59) ::= x_58::node<next_15_797,prev_15_798>@M * HP_9(next_15_797,y_59) * 
 HP_0(prev_15_798,y_59) * y_59::node<next_21_54,prev_21_55>@M * 
 HP_2(next_21_54,x_58) * HP_3(prev_21_55,x_58),
- HP_1(y_60,x_61) ::=  y_60::node<next_21_820,prev_21_821>@M * HP_2(next_21_820,x_61) * 
+ HP_1(y_60,x_61) ::= y_60::node<next_21_820,prev_21_821>@M * HP_2(next_21_820,x_61) * 
 HP_3(prev_21_821,x_61),
- HP_2(a,b) ::= NONE,
- HP_3(a,b) ::= NONE,
- HP_0(a,b) ::= NONE]
+ HP_2(a,b) ::=UNKNOWN,
+ HP_3(a,b) ::=UNKNOWN,
+ HP_0(a,b) ::=UNKNOWN]
 *************************************
 

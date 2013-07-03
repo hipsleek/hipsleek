@@ -23,12 +23,12 @@ HP_1 is defined.
 *************************************
 *******relational definition ********
 *************************************
-[ HP_1(right_25_44) ::=  
+[ HP_1(right_25_44) ::= 
  emp&right_25_44=null
  or right_25_44::node<key_25_797,left_25_798,right_25_44>@M * 
     HP_1(left_25_798) * HP_1(right_25_44)
  ,
- G(x_51) ::=  
+ G(x_51) ::= 
  x_51::node<k,l,r>@M&r=null & l=null
  or x_51::node<k,l,r>@M * r::node<key_25_797,left_25_45,r>@M * 
     G(left_25_45) * G(r)&l=null

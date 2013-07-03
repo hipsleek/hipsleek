@@ -4,8 +4,6 @@ H is defined.
 HP_0 is defined.
 HP_1 is defined.
 
-!!! unknown: [((),(HP_1,[a])),((),(HP_0,[a]))]
-
 !!! >>>>>> step 1: find dangling ptrs, link pre and post-preds dangling preds<<<<<<
 !!! >>>>>> step 2: split constraints based on pre and post-preds<<<<<<
 !!! *** NO SPLITTING DONE ***
@@ -27,8 +25,8 @@ HP_1 is defined.
 *************************************
 *******relational definition ********
 *************************************
-[ H(x_30) ::=  hfalse&false,
- HP_1(a) ::= NONE,
- HP_0(a) ::= NONE]
+[ H(x_30) ::= hfalse&false,
+ HP_1(a) ::=UNKNOWN,
+ HP_0(a) ::=UNKNOWN]
 *************************************
 

@@ -3,8 +3,6 @@ H is defined.
 HP_6 is defined.
 HP_7 is defined.
 
-!!! unknown: [((),(HP_7,[a,b]))]
-
 !!! >>>>>> step 1: find dangling ptrs, link pre and post-preds dangling preds<<<<<<
 !!! >>>>>> step 2: split constraints based on pre and post-preds<<<<<<
 !!! *** NO SPLITTING DONE ***
@@ -29,10 +27,10 @@ HP_7 is defined.
 *************************************
 *******relational definition ********
 *************************************
-[ H(rest_43,h_44) ::=  
+[ H(rest_43,h_44) ::= 
  H(next_36_40,h_44) * rest_43::node<val_36_39,next_36_40>@M&h_44!=rest_43
  or emp&h_44=rest_43
  ,
- HP_7(a,b) ::= NONE]
+ HP_7(a,b) ::=UNKNOWN]
 *************************************
 

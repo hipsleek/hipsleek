@@ -25,11 +25,11 @@ G is defined.
 *************************************
 *******relational definition ********
 *************************************
-[ HP_0(x_36) ::=  
+[ HP_0(x_36) ::= 
  x_36::node<Anon_11,ll,right_25_799>@M * HP_0(ll) * HP_1(right_25_799)
  or emp&x_36=null
  ,
- HP_1(x_37) ::=  
+ HP_1(x_37) ::= 
  x_37::node<key_25_797,left_25_798,right_25_799>@M * HP_1(left_25_798) * 
  HP_0(right_25_799)
  or emp&x_37=null

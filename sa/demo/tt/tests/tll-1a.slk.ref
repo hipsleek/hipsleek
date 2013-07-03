@@ -5,8 +5,6 @@ H_0 is defined.
 H_8 is defined.
 H_9 is defined.
 
-!!! unknown: [((),(H_0,[a,b]))]
-
 !!! >>>>>> step 1: find dangling ptrs, link pre and post-preds dangling preds<<<<<<
 !!! >>>>>> step 2: split constraints based on pre and post-preds<<<<<<
 !!! *** NO SPLITTING DONE ***
@@ -30,16 +28,16 @@ H_9 is defined.
 *************************************
 *******relational definition ********
 *************************************
-[ H(x_108,r_109) ::=  x_108::node<left_29_83,flted_30_85,next_29_84>@M * (H(left_29_83,l_47') * 
+[ H(x_108,r_109) ::= x_108::node<left_29_83,flted_30_85,next_29_84>@M * (H(left_29_83,l_47') * 
 H_0(next_29_84,r_109)/&\H(left_29_83,l_47') * H_0(next_29_84,r_109))&
 flted_30_85=null,
- H_9(right_29_111,r_112) ::=  
+ H_9(right_29_111,r_112) ::= 
  H(left_29_93,l_47') * 
  right_29_111::node<left_29_93,flted_30_95,next_29_94>@M * 
  H_0(next_29_94,r_112)&flted_30_95=null
  or emp&right_29_111=null
  ,
- H_8(left_29_113,r_114) ::=  H(left_29_113,l_47'),
- H_0(a,b) ::= NONE]
+ H_8(left_29_113,r_114) ::= H(left_29_113,l_47'),
+ H_0(a,b) ::=UNKNOWN]
 *************************************
 

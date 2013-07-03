@@ -1,4 +1,8 @@
+diff tests/$2.out tests/$2.ref  > _XYZ
+if [ -s _XYZ ]
+then
 echo =======
 echo " $2  "
 echo =======
-diff out.$2 test/ref$1.out.$2
+cat _XYZ
+fi
