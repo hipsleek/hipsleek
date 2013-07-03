@@ -731,7 +731,7 @@ non_empty_command:
       | t=shapeElim_cmd     -> ShapeElim t
       | t=shapeExtract_cmd     -> ShapeExtract t
       | t=decl_dang_cmd        -> ShapeDeclDang t
-      | t=decl_unknown_cmd        -> ShapeDeclUnknown t
+      | t= decl_unknown_cmd        -> ShapeDeclUnknown t
       | t=shape_sconseq_cmd     -> ShapeSConseq t
       | t=shape_sante_cmd     -> ShapeSAnte t
       | t= infer_cmd           -> InferCmd t  
@@ -1644,8 +1644,12 @@ checkentail_cmd:
    | `CHECKENTAIL_EXACT; t=meta_constr; `DERIVE; b=extended_meta_constr -> (t, b, Some true)
    | `CHECKENTAIL_INEXACT; t=meta_constr; `DERIVE; b=extended_meta_constr -> (t, b, Some false)]];
 
+cond_path:
+    [[ `OPAREN; il2 = OPT int_list; `CPAREN -> un_option il2 []
+    ]];
+
 relassume_cmd:
-   [[ `RELASSUME; `OPAREN; il2 = OPT int_list; `CPAREN; l=meta_constr; `CONSTR;r=meta_constr -> (un_option il2 [], l, r)
+   [[ `RELASSUME; il2 = OPT cond_path; l=meta_constr; `CONSTR;r=meta_constr -> (un_option il2 [], l, r)
    ]];
 
 decl_dang_cmd:
@@ -1653,7 +1657,7 @@ decl_dang_cmd:
    ]];
 
 decl_unknown_cmd:
-   [[ `SHAPE_DECL_UNKNOWN; `OPAREN; il2 = OPT int_list; `CPAREN; `OSQUARE; il1= OPT id_list ;`CSQUARE   -> (un_option il2 [], un_option il1 [])
+   [[ `SHAPE_DECL_UNKNOWN; il2 = OPT cond_path; `OSQUARE; il1= OPT id_list ;`CSQUARE   -> (un_option il2 [], un_option il1 [])
    ]];
 
 shapeinfer_cmd:

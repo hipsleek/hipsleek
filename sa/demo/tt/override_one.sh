@@ -1,0 +1,1 @@
+cp out.$2 test/ref$1.out.$2
