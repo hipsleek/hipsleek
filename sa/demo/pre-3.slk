@@ -8,10 +8,10 @@ HeapPred H(node a).
 
 
 
-relAssume H
+relAssume 
  H(x) --> x=null.
 
-relAssume H
+relAssume 
  H(x) --> true.
 
 shape_infer [H][].

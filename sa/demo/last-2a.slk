@@ -12,24 +12,24 @@ HeapPred HP_2(node a, node b).
 HeapPred HP_3(node a, node b).
 
 //with next=null
-relAssume H      
+relAssume       
  //H(x) --> x::node<_,n> * HP_1(n).
  H(x)&true --> x::node<val_18_812,next_18_813>@M * HP_4(next_18_813).
 
-relAssume H      
+relAssume       
  //HP_1(n)&n!=null --> H(n).
  HP_4(next_18_813)&next_18_813!=null --> H(next_18_813).
 
-relAssume HP_1   
+relAssume    
  //HP_1(n)&n=null --> emp.
  HP_4(next_18_813)&next_18_813=null --> emp.
 
 /*
-relAssume G      
+relAssume       
 G(t,n)& n!=null --> t::node<_,tn> * HP_2(tn,n) * HP_3(n,t).
 
-relAssume G      x::node<_,null>& res=x  --> G(res,x).
-relAssume G	     x::node<_,n> * HP_3(n,res) * res::node<_,null> & n!=null --> G(res,x).
+relAssume       x::node<_,null>& res=x  --> G(res,x).
+relAssume 	     x::node<_,n> * HP_3(n,res) * res::node<_,null> & n!=null --> G(res,x).
 */
 
 Declare_Unknown [HP_2].

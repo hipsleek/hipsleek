@@ -10,26 +10,26 @@ HeapPred HP_2(node a, node@NI b).
 HeapPred HP_8(node a, node@NI b).
 HeapPred G1(node a, node b, node c).
 
-relAssume H1
+relAssume 
  H1(x,y)&x!=null --> x::node<val_24_819,next_24_820>@M * 
   HP_1(next_24_820,y) * HP_2(y,x).
 
-relAssume HP_2
+relAssume 
  HP_2(y,x) 
    --> y::node<val_25_826,next_25_827> * HP_8(next_25_827,x).
 
-relAssume H1
+relAssume 
  HP_8(next_25_827,x) * HP_1(next_24_820,y) & true 
  --> H1(next_24_820,next_25_827).
 
-relAssume G1
+relAssume 
  //res=x & 
  x=null & res=null --> G1(x,y,res).
 
-relAssume H1
+relAssume 
  H1(x,y)&x=null  --> emp.
 
-relAssume G1
+relAssume 
  y::node<val_25_826,next_25_827> * x::node<val_24_819,nn>
   * G1(nn,next_25_827,rr) 
   & nn=rr

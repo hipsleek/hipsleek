@@ -14,11 +14,11 @@ HeapPred H_3a(node a).
 
 Declare_Unknown [H_2a].
 
-relAssume G
+relAssume 
  G(right_25_801,v_node_31_823) * G(left_25_800,v_node_32_833) * 
   x::node<v_node_32_833,v_node_31_823> &right_25_801!=null & 
   res=x --> G(x,res).
-relAssume H
+relAssume 
  H_2a(left_25_800) * x::node<left_25_800,right_25_801> &res=x & 
   right_25_801=null --> G(x,res).
 

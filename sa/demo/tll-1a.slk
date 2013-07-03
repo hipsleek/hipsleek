@@ -26,21 +26,21 @@ HeapPred H_9(node a, node@NI b).
 
 Declare_Unknown [H_0].
 
-relAssume H
+relAssume 
   H(x,r) --> x::node<left_29_845,null,next_29_847>@M * 
     H_8(left_29_845,r) * H_0(next_29_847,r).
 
-relAssume H
+relAssume 
   H(x,r) --> x::node<left_29_845,right_29_846,next_29_847>@M * 
     H_8(left_29_845,r) * H_9(right_29_846,r) * H_0(next_29_847,r).
 
-relAssume H
+relAssume 
   H_9(right_29_846,r)&right_29_846!=null --> H(right_29_846,r).
 
-relAssume H
+relAssume 
   H_8(left_29_845,r) --> H(left_29_845,l_47').
 
-relAssume H_9
+relAssume 
   H_9(right_29_846,r)&right_29_846=null --> emp.
 
 

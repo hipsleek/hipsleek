@@ -16,31 +16,31 @@ Declare_Unknown [HP_2].
 //Declare_Unknown [HP_3].
 Declare_Unknown [HP_0].
 
-relAssume H
+relAssume
   H(x,y)&true --> x::node<next_15_797,prev_15_798>@M * 
   HP_9(next_15_797,y) * HP_0(prev_15_798,y) * HP_1(y,x).
 
-relAssume H
+relAssume 
  HP_9(next_15_797,y) * HP_1(y,x)&
   next_15_797!=null --> H(next_15_797,y).
 
-relAssume H
+relAssume 
  HP_9(next_15_797,y) & next_15_797=null --> emp.
 
-relAssume HP_1
+relAssume 
  HP_1(y,x) --> y::node<next_21_820,prev_21_821>@M * 
   HP_2(next_21_820,x) * HP_3(prev_21_821,x).
 
 
-relAssume G
+relAssume 
  HP_0(prev_15_798,y) * x::node<next_15_797,prev_15_798>@M * 
   G(next_15_797,y)&next_15_797!=null --> G(x,y).
 
-relAssume G
+relAssume
  HP_0(prev_15_798,y) * x::node<y,prev_15_798>@M * 
   HP_2(next_21_820,x) * y::node<next_21_820,x>@M --> G(x,y).
 
-relAssume HP_3
+relAssume
  HP_3(prev_21_821,x) --> emp.
 
 shape_infer [HP_1,HP_9,HP_3,H,HP_0,HP_2][G].

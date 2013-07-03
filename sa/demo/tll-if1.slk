@@ -14,12 +14,12 @@ HeapPred H_2a(node a).
 HeapPred H_3a(node a).
 
 //[1.1]
-relAssume H
+relAssume 
  H(x) --> x::node<left_25_800,right_25_801>@M * H_2(left_25_800) 
   * H_3(right_25_801).
-relAssume H
+relAssume 
  H_3(right_25_801)&right_25_801!=null --> H(right_25_801).
-relAssume H
+relAssume 
  H_2(left_25_800) --> H(left_25_800).
 
 shape_infer [H,H_2,H_3][].

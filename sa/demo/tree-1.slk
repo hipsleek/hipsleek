@@ -8,19 +8,19 @@ HeapPred HP_1(node a).
 HeapPred HP_2(node a).
 HeapPred G(node a).
 
-relAssume H
+relAssume 
  H(x)&x!=null --> x::node<l,r> * HP_1(l) * HP_2(r).
   
-relAssume H
+relAssume 
  HP_1(l) --> H(l).
  
-relAssume H
+relAssume 
  HP_2(r) --> H(r).
  
-relAssume H 
+relAssume  
  H(x)&x=null --> H(x).
  
-relAssume H
+relAssume 
  x::node<l,r> * H(l) * H(r) --> H(x).
 
 shape_infer [H,HP_1,HP_2][].
