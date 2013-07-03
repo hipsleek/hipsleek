@@ -4584,12 +4584,12 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
                     new_vars := !new_vars @ [(fresh_var, Unprimed)];
                     p1 := (fresh_var, Unprimed);
                     s := !s ^ "__star";
-                    let h = IF.mkHeapNode !p1 !s 0 false (IF.ConstAnn(Mutable)) false false false None [!p2] [None] None l in
+                    let h = IF.mkHeapNode !p1 !s 0 dr imm inv full pd perm [!p2] ann_param None l in
                     heaps := !heaps @ [h];
                   done;
                   s := !s ^ "__star";
                   let e = IF.P.Var (!p1, l) in
-                  let h1 = IF.mkHeapNode n !s 0 false (IF.ConstAnn(Mutable)) false false false None [e] [None] None l in
+                  let h1 = IF.mkHeapNode n !s 0 dr imm full inv pd perm [e] ann_param None l in
                   let h2 = IF.mkHeapNode p base_heap_id 0 dr imm full inv pd perm exps ann_param pi l in
                   let hf = List.fold_left (fun f1 f2 -> IF.mkStar f1 f2 l) h1 (!heaps @ [h2]) in
                   (hf, !new_vars)
@@ -4611,12 +4611,12 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
                   new_vars := !new_vars @ [(fresh_var, Unprimed)];
                   p1 := (fresh_var, Unprimed);
                   s := !s ^ "__star";
-                  let h = IF.mkHeapNode !p1 !s 0 false (IF.ConstAnn(Mutable)) false false false None [!p2] [None] None l in
+                  let h = IF.mkHeapNode !p1 !s 0 dr imm full inv pd perm [!p2] ann_param None l in
                   heaps := !heaps @ [h];
                 done;
                 s := !s ^ "__star";
                 let e = IF.P.Var (!p1, l) in
-                let h1 = IF.mkHeapNode n !s 0 false (IF.ConstAnn(Mutable)) false false false None [e] [None] None l in
+                let h1 = IF.mkHeapNode n !s 0 dr imm full inv pd perm [e] ann_param None l in
                 let h2 = IF.mkHeapNode p c 0 dr imm full inv pd perm exps ann_param pi l in
                 let hf = List.fold_left (fun f1 f2 -> IF.mkStar f1 f2 l) h1 (!heaps @ [h2]) in
                 (hf, !new_vars)

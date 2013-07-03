@@ -1525,12 +1525,12 @@ cexp_w:
         let f = cexp_list_to_pure (fun ls1 -> P.LexVar(t_ann,ls1,ls2,(get_pos_camlp4 _loc 1))) ls1 in
         set_slicing_utils_pure_double f false
     ]
+  | "pure_paren" 
+    [ peek_pure; `OPAREN; dc=SELF; `CPAREN -> dc ]
   | "type_casting"
     [ peek_typecast; `OPAREN; t = typ; `CPAREN; c = SELF ->
         apply_cexp_form1 (fun c -> P.mkTypeCast t c (get_pos_camlp4 _loc 1)) c
     ]
-  | "pure_paren" 
-    [ peek_pure; `OPAREN; dc=SELF; `CPAREN -> dc ]
   (* constraint expressions *)
   | "gen" 
     [ `OBRACE; c= opt_cexp_list; `CBRACE -> Pure_c (P.Bag (c, get_pos_camlp4 _loc 1)) 
