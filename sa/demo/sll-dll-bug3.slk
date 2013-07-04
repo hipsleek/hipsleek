@@ -1,0 +1,21 @@
+data node{
+	int val;
+	node prev;
+	node next;
+}.
+
+HeapPred H1(node a, node b).
+HeapPred HP_2(node a, node b).
+HeapPred HP_3(node a, node b).
+HeapPred G1(node a, node b).
+
+infer [H1,G1]
+ H1(c,p)&c=null & !(v_bool_18_784') & c=null & !(v_bool_18_784')
+ |-  G1(c,p) . 
+
+print residue.
+
+/*
+ <1>emp&c=null & !(v_bool_18_784') & c=null & !(v_bool_18_784')&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [H1(c,p)&c=null --> G1(c,p)&true]
+*/

@@ -1,0 +1,65 @@
+data node{
+	int val;
+        node prev;
+	node next;
+}.
+
+HeapPred G1(node a, node b).
+HeapPred HP_3(node a, node b).
+
+
+relAssume G1
+ c::node<_,p,t>@M *  G1(t,y) * HP_3(p,y) & t!=null 
+ --> G1(c,y)&true.
+
+relAssume G1
+  c::node<_,p,y>@M * HP_3(p,y) --> G1(c,y)&true.
+
+Step 3
+======
+Drop unused post-predicate HP_3.
+A pre-predicate p(..) is unused if it never appears on
+the LHS. Correspondingly, a post-predicate p(..) is unused
+if it never appears on the RHS
+
+Given:
+ c::node<_,p,t>@M *  G1(t,y) * HP_3(p,y) & t!=null 
+   --> G1(c,y)&true.
+ c::node<_,p,y>@M * HP_3(p,y) --> G1(c,y)&true.
+
+Drop HP_3 to derive:
+ c::node<_,p,y>@M * HP_3(p,y) --> G1(c,y)&true.
+
+Step 1
+======
+Combining post-implication L -> p(..):
+
+Convert to disjunction on LHS
+
+  L1 -> R /\ L2 --> R
+===>
+  L1 \/ L2 --> R
+
+
+Given:
+ c::node<_,p,t>@M *  G1(t,y) & t!=null 
+   --> G1(c,y)&true.
+ c::node<_,p,y>@M --> G1(c,y)&true.
+
+Derive:
+=======
+ c::node<_,p,t>@M * G1(t,y)&true or emp & c=y
+   --> G1(c,y)&true.
+
+
+Step 2
+======
+Strengthen post-condition p(..):
+  L --> p(..)
+===>
+  p(..) <--> L
+
+   G1(c,y) <--> c::node<_,p,n>@M * G1(n,y)&true  or emp & c=y
+
+
+

@@ -1,0 +1,29 @@
+data node{
+	int val;
+        node prev;
+	node next;
+}.
+
+pred G1<y> == self::node<_,p,t> * t::G2<p,y>.
+
+pred G2<p,y> == self=y
+  or self::node<_,pp,tt> * qq::G2<pp,y>.
+
+
+//shape_elim_useless [G1,G2].
+
+/*
+
+# use3.slk
+
+type inference problem. (see use1.slk for annotated solution)
+
+ERROR: at use3.slk_9:16_9:22 
+Message: couldn't infer type for p in ; (p Unknown); (pp node); (qq node); (pp_15 node); (y node); (self node); (Anon_12 int); (tt node); (TVar__18 node); (y_16 node); (TVar__26 node); (TVar__27 node)
+
+ Fatal error: exception Failure("couldn't infer type for p in ; (p Unknown); (pp node); (qq node); (pp_15 node); (y node); (self node); (Anon_12 int); (tt node); (TVar__18 node); (y_16 node); (TVar__26 node); (TVar__27 node)
+")
+
+
+*/
+

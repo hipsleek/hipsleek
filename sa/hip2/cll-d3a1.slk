@@ -1,0 +1,34 @@
+data node{
+ int val;
+ node next;
+}.
+
+HeapPred H(node a).
+HeapPred HP_6(node a).
+HeapPred HP_6e(node a, node a).
+HeapPred G(node a, node a).
+
+infer [HP_6,G] HP_6(n) * x::node<_,m>  & xp=null
+ |-  G(x,xp). 
+print residue.
+/*
+ <1>HP_6(n)&xp=null&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [x::node<Anon_11,m>@M&xp=null --> G(x,xp)&true]
+*/
+
+
+infer [HP_6,G] HP_6(n) * x::node<_,n>  & xp=null
+ |-  G(x,xp). 
+print residue.
+/*
+ <1>emp&xp=null&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [(HP_6(n)) * x::node<Anon_12,n>@M&xp=null --> G(x,xp)&true]
+*/
+
+infer [HP_6,G,n] HP_6(n) * x::node<_,m>  & xp=null & n!=null &m=null
+ |-  G(x,xp). 
+print residue.
+/*
+ <1>HP_6(n)&xp=null & n!=null&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [x::node<Anon_13,m>@M&xp=null &m=null --> G(x,xp)&true]
+*/

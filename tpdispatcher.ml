@@ -538,7 +538,7 @@ let start_prover () =
   | DP -> Smtsolver.start();
   | Z3 -> Smtsolver.start();
   | SPASS -> Spass.start();
-  | LOG -> file_to_proof_log ()
+  | LOG -> file_to_proof_log !Globals.source_files
   | MINISAT -> Minisat.start ()
   | _ -> Omega.start()
 
@@ -1736,6 +1736,22 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
   let _ = Gen.Profiling.pop_time "tp_is_sat" in 
   r
 
+let tp_imply_no_cache ante conseq imp_no timeout process =
+	(*wrapper for capturing equalities due to transitive equality with null*)
+	let enull = CP.Var (CP.SpecVar(Void,"NULLV",Unprimed),no_pos) in
+	let f_e _ (e,r) = match e with 
+		| CP.Eq(CP.Null _,CP.Var v,p2) -> Some ( (CP.Eq(enull, CP.Var v,p2),r), true)
+		| CP.Eq(CP.Var v,CP.Null _,p2) -> Some ( (CP.Eq(CP.Var v, enull,p2),r), true)
+		| _ -> None in
+	let transformer_fct = (fun _ _ -> None),f_e,(fun _ _ -> None) in
+	let tr_arg = (fun _ _->()),(fun _ _->()),(fun _ _->()) in
+	let ante,did = trans_formula ante ()  transformer_fct tr_arg (fun x -> List.exists (fun x->x) x) in
+	let ante = if did then  And(ante, (CP.mkNull (CP.SpecVar(Void,"NULLV",Unprimed)) no_pos) ,no_pos) 
+			   else ante in
+	tp_imply_no_cache ante conseq imp_no timeout process
+
+  
+  
 let tp_imply_no_cache ante conseq imp_no timeout process =
   let pr = Cprinter.string_of_pure_formula in
   Debug.no_3_loop "tp_imply_no_cache" pr pr (fun s -> s) string_of_bool

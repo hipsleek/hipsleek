@@ -1,0 +1,22 @@
+data node{
+ int val;
+ node next;
+}.
+
+
+HeapPred H(node a).
+HeapPred HP_6(node a).
+HeapPred G(node a, node a).
+
+/*
+relAssume H 
+ H(x)&true --> x::node<val_26_784,next_26_785> & XPURE(HP_6(next_26_785)).
+*/
+ 
+relAssume G
+  x::node<_,vv> & vv=null &
+   XPURE(HP_6(r))
+   --> G(x,r).
+
+shape_infer_proper [][G].
+

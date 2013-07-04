@@ -1,0 +1,40 @@
+data node{
+	node prev;
+	node next;
+}.
+
+HeapPred H(node a).
+HeapPred HP_1(node a).
+HeapPred HP_2(node a).
+HeapPred G(node a).
+
+relAssume H
+ H(x)&x!=null --> x::node<l,r> * HP_1(l) * HP_2(r).
+  
+relAssume H
+ HP_1(l) --> H(l).
+ 
+relAssume H
+ HP_2(r) --> H(r).
+ 
+relAssume H 
+ H(x)&x=null --> H(x).
+ 
+relAssume H
+ x::node<l,r> * H(l) * H(r) --> H(x).
+
+shape_infer [H,HP_1,HP_2][].
+
+/* 
+
+Why got two definitions for H?
+Got: 
+[ H(x) ::= x::node<l,r>@M& XPURE(HP_2(r)) &  XPURE(HP_1(l)),
+ H(l_48) ::= l_48::node<l,r>@M * (H(l)) * (H(r))&true]
+
+
+Expecting: [ H(x_119) ::= 
+ emp&x_119=null
+ or (H(r_63)) * (H(l_62)) * x_119::node<l_62,r_63>@M&true ]
+
+*/

@@ -47,6 +47,7 @@ type sleek_log_entry = {
     sleek_proving_conseq: CF.formula;
     sleek_proving_c_heap: CF.h_formula;
     sleek_proving_evars: CP.spec_var list;
+    sleek_proving_infer_vars: CP.spec_var list;
     sleek_proving_hprel_ass: CF.hprel list;
     sleek_proving_rel_ass: CP.infer_rel_type list;
     sleek_proving_res : CF.list_context;
@@ -73,6 +74,7 @@ let pr_sleek_log_entry e=
   fmt_string ("; kind: " ^ (e.sleek_proving_kind)) ;
   fmt_string ("; hec_num: " ^ (string_of_int e.sleek_proving_hec)) ;
   fmt_string ("; evars: " ^ (Cprinter.string_of_spec_var_list e.sleek_proving_evars)) ;
+  fmt_string ("; infer_vars: " ^ (Cprinter.string_of_spec_var_list e.sleek_proving_infer_vars)) ;
   fmt_string ("; c_heap:" ^ (Cprinter.string_of_h_formula e.sleek_proving_c_heap)) ;
   fmt_string "\n checkentail";
   fmt_string (Cprinter.string_of_formula e.sleek_proving_ante);
@@ -126,9 +128,11 @@ let proof_gt5_log_list = ref [] (*Logging proofs require more than 5 secs to be 
 
 (* TODO : add result into the log printing *)
 (* wrong order number indicates recursive invocations *)
-let add_new_sleek_logging_entry classic_flag caller avoid hec slk_no ante conseq 
+let add_new_sleek_logging_entry infer_vars classic_flag caller avoid hec slk_no ante conseq 
       consumed_heap evars (result:CF.list_context) pos=
+  (* let _ = Debug.info_pprint ("avoid: "^(string_of_bool avoid)) no_pos in *)
   if !Globals.sleek_logging_txt then
+    (* let _ = Debug.info_pprint "logging .." no_pos in *)
     let sleek_log_entry = {
         (* sleek_proving_id = get_sleek_proving_id (); *)
         sleek_proving_id = slk_no;
@@ -145,6 +149,7 @@ let add_new_sleek_logging_entry classic_flag caller avoid hec slk_no ante conseq
         sleek_proving_rel_ass = current_infer_rel_stk # get_stk;
         sleek_proving_c_heap = consumed_heap;
         sleek_proving_evars = evars;
+        sleek_proving_infer_vars = infer_vars;
         sleek_proving_res = result;
     }
     in
@@ -173,15 +178,15 @@ let find_formula_proof_res pno =
 		| _ -> report_error no_pos "Fatal error with Proof Logging: Unexpected result."
 	with _ -> report_error no_pos "Fatal error with Proof Logging. Do remember to enable proof logging before using LOG."	
 			
-let proof_log_to_file () = 
-	let out_chn = 
-		(try Unix.mkdir "logs" 0o750 with _ -> ());
-		open_out ("logs/proof_log_" ^ (Globals.norm_file_name (List.hd !Globals.source_files))) in
-	 output_value out_chn proof_log_tbl 
+let proof_log_to_file src_files = 
+  let out_chn = 
+    (try Unix.mkdir "logs" 0o750 with _ -> ());
+    open_out ("logs/proof_log_" ^ (Globals.norm_file_name (List.hd src_files))) in
+  output_value out_chn proof_log_tbl 
 	
-let file_to_proof_log () =
+let file_to_proof_log  src_files =
 	try 
-		let in_chn = open_in ("logs/proof_log_" ^ (Globals.norm_file_name (List.hd !Globals.source_files))) in
+		let in_chn = open_in ("logs/proof_log_" ^ (Globals.norm_file_name (List.hd src_files))) in
 		let tbl = input_value in_chn in
 		Hashtbl.iter (fun k log -> Hashtbl.add proof_log_tbl k log) tbl
 	with _ -> report_error no_pos "File of proof logging cannot be opened."
@@ -339,45 +344,52 @@ let sleek_log_to_text_file (src_files) =
     (* let _= Globals.proof_logging_time := !Globals.proof_logging_time +. (tstoplog -. tstartlog) in  *)
     close_out oc
 
+let sleek_log_to_text_file (src_files) =
+  let pr = pr_list pr_id in
+  Debug.no_1 "sleek_log_to_text_file" pr pr_none sleek_log_to_text_file (src_files)
 
-let process_proof_logging ()=
+let process_proof_logging src_files  =
+  (* Debug.info_pprint ("process_proof_logging\n") no_pos; *)
   if !Globals.proof_logging || !Globals.proof_logging_txt || !Globals.sleek_logging_txt then 
-      begin
-        let tstartlog = Gen.Profiling.get_time () in
-        let _= proof_log_to_file () in
-        let with_option = if(!Globals.en_slc_ps) then "eps" else "no_eps" in
-        let fname = "logs/"^with_option^"_proof_log_" ^ (Globals.norm_file_name (List.hd !Globals.source_files)) ^".txt"  in
-        let fz3name= ("logs/"^with_option^"_z3_proof_log_"^ (Globals.norm_file_name (List.hd !Globals.source_files)) ^".txt") in
-        let slfn = "logs/sleek_log_" ^ (Globals.norm_file_name (List.hd !Globals.source_files)) ^".txt" in
-        let _= if (!Globals.proof_logging_txt) 
+    begin
+      let tstartlog = Gen.Profiling.get_time () in
+      let _= proof_log_to_file src_files in
+      let with_option = if(!Globals.en_slc_ps) then "eps" else "no_eps" in
+      let fname = "logs/"^with_option^"_proof_log_" ^ (Globals.norm_file_name (List.hd src_files)) ^".txt"  in
+      let fz3name= ("logs/"^with_option^"_z3_proof_log_"^ (Globals.norm_file_name (List.hd src_files)) ^".txt") in
+      let slfn = "logs/sleek_log_" ^ (Globals.norm_file_name (List.hd src_files)) ^".txt" in
+      let _= 
+        if (!Globals.proof_logging_txt) 
         then 
           begin
             Debug.info_pprint ("Logging "^fname^"\n") no_pos;
             Debug.info_pprint ("Logging "^fz3name^"\n") no_pos;
-            proof_log_to_text_file !Globals.source_files;
-            z3_proofs_list_to_file !Globals.source_files
+            proof_log_to_text_file src_files;
+            z3_proofs_list_to_file src_files
           end
         else try Sys.remove fname 
-          (* ("logs/proof_log_" ^ (Globals.norm_file_name (List.hd !Globals.source_files))^".txt") *)
+          (* ("logs/proof_log_" ^ (Globals.norm_file_name (List.hd src_files))^".txt") *)
         with _ -> ()
-        in
-        let _= if (!Globals.sleek_logging_txt) 
-        then 
-          begin
-            Debug.info_pprint ("Logging "^slfn^"\n") no_pos;
-            sleek_log_to_text_file !Globals.source_files;
-          end
-        else try Sys.remove slfn 
-          (* ("logs/proof_log_" ^ (Globals.norm_file_name (List.hd !Globals.source_files))^".txt") *)
-        with _ -> ()
-        in
-        let tstoplog = Gen.Profiling.get_time () in
-        let _= Globals.proof_logging_time := !Globals.proof_logging_time +. (tstoplog -. tstartlog) in ()
-        (* let _=print_endline ("Time for logging: "^(string_of_float (!Globals.proof_logging_time))) in    () *)
-      end
+      in
+      let _= if (!Globals.sleek_logging_txt) 
+      then 
+        begin
+          Debug.info_pprint ("Logging "^slfn^"\n") no_pos;
+          sleek_log_to_text_file src_files;
+        end
+      else try Sys.remove slfn 
+        (* ("logs/proof_log_" ^ (Globals.norm_file_name (List.hd src_files))^".txt") *)
+      with _ -> ()
+      in
+      let tstoplog = Gen.Profiling.get_time () in
+      let _= Globals.proof_logging_time := !Globals.proof_logging_time +. (tstoplog -. tstartlog) in ()
+                                                                                                         (* let _=print_endline ("Time for logging: "^(string_of_float (!Globals.proof_logging_time))) in    () *)
+    end
   else ()
 
-
+let process_proof_logging src_files  =
+  let pr = pr_list pr_id in
+  Debug.no_1 "process_proof_logging" pr pr_none process_proof_logging src_files
 
 
 (* let add_sleek_log_entry e= *)
@@ -395,7 +407,7 @@ let process_proof_logging ()=
 (*     (\* let _ = print_endline "*************************************" in *\) *)
 (*     (\* let _ = print_endline (sleek_log_stk # string_of) in *\) *)
 (*     (\* let _ = print_endline "*************************************" in () *\) *)
-(*     let _ = sleek_log_to_text_file !Globals.source_files in *)
+(*     let _ = sleek_log_to_text_file src_files in *)
 (*     () *)
 (*   else *)
 (*     () *)

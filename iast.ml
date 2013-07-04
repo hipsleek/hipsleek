@@ -47,6 +47,7 @@ and data_decl = { data_name : ident;
 data_fields : (typed_ident * loc * bool * data_field_ann) list; (* An Hoa [20/08/2011] : add a bool to indicate whether a field is an inline field or not. TODO design revision on how to make this more extensible; for instance: use a record instead of a bool to capture additional information on the field?  *)
 data_parent_name : ident;
 data_invs : F.formula list;
+data_pos : loc;
 data_is_template: bool;
 data_methods : proc_decl list }
 
@@ -61,24 +62,27 @@ and view_kind =
   | View_NORM
   | View_EXTN
 
-and view_decl = { view_name : ident; 
-mutable view_data_name : ident;
-(* view_frac_var : iperm; (\*LDK: frac perm ??? think about it later*\) *)
-view_vars : ident list;
-view_labels : Label_only.spec_label list;
-view_modes : mode list;
-mutable view_typed_vars : (typ * ident) list;
-view_kind : view_kind;
-view_prop_extns:  ident list;
-view_is_prim : bool;
-view_invariant : P.formula;
-		  view_mem : F.mem_formula option; 
-		  (* Represents the Memory Permission Set. Option None will not use Memory Permission Set*)
-view_formula : Iformula.struc_formula;
-view_inv_lock : F.formula option;
-mutable view_pt_by_self : ident list; (* list of views pointed by self *)
-(* view_targets : ident list;  *)(* list of views pointed within declaration *)
-try_case_inference: bool }
+and view_decl = 
+    { view_name : ident; 
+    mutable view_data_name : ident;
+    (* view_frac_var : iperm; (\*LDK: frac perm ??? think about it later*\) *)
+    view_vars : ident list;
+    view_pos : loc;
+    view_labels : Label_only.spec_label list;
+    view_modes : mode list;
+    mutable view_typed_vars : (typ * ident) list;
+    view_kind : view_kind;
+    view_prop_extns:  ident list;
+    view_is_prim : bool;
+    view_invariant : P.formula;
+    view_mem : F.mem_formula option; 
+    (* Represents the Memory Permission Set. Option None will not use Memory Permission Set*)
+    view_formula : Iformula.struc_formula;
+    view_inv_lock : F.formula option;
+    mutable view_pt_by_self : ident list; (* list of views pointed by self *)
+    (* view_targets : ident list;  *)(* list of views pointed within declaration *)
+    try_case_inference: bool;
+    view_materialized_vars: ident list; }
 
 and func_decl = { func_name : ident; 
 func_typed_vars : (typ * ident) list;}
@@ -102,7 +106,8 @@ and axiom_decl = {
 and hp_decl = { hp_name : ident; 
 (* rel_vars : ident list; *)
 (* rel_labels : branch_label list; *)
-hp_typed_vars : (typ * ident) list;
+hp_typed_inst_vars : (typ * ident * hp_arg_kind) list;
+hp_is_pre: bool;
 hp_formula : Iformula.formula ;
 (* try_case_inference: bool *)}
 
@@ -178,6 +183,7 @@ param_loc : loc }
 and proc_decl = { proc_name : ident;
 mutable proc_mingled_name : ident;
 mutable proc_data_decl : data_decl option; (* the class containing the method *)
+proc_flags: (ident*ident*(flags option)) list;
 proc_source : ident;
 proc_constructor : bool;
 proc_args : param list;
@@ -193,6 +199,7 @@ proc_loc : loc;
 proc_test_comps: test_comps option}
 
 and coercion_decl = { coercion_type : coercion_type;
+coercion_exact : bool;
 coercion_name : ident;
 coercion_head : F.formula;
 coercion_body : F.formula;
@@ -228,7 +235,7 @@ and uni_op =
   | OpPostInc
   | OpPostDec
   | OpNot
-  (*For pointers: *v and &v *)
+          (*For pointers: *v and &v *)
   | OpVal (*value-of*)
   | OpAddr (*address-off*)
 
@@ -717,7 +724,7 @@ and mkHoPred  n m mh tv ta fa s i=
           hopred_shape    = s;
           hopred_invariant = i}
 	
-let mkProc sfile id n dd c ot ags r ss ds pos bd =
+let mkProc sfile id flgs n dd c ot ags r ss ds pos bd =
   (* Debug.info_hprint (add_str "static spec" !print_struc_formula) ss pos; *)
   let ss = match ss with 
     | F.EList [] -> 
@@ -727,6 +734,7 @@ let mkProc sfile id n dd c ot ags r ss ds pos bd =
           in
   { proc_name = id;
   proc_source =sfile;
+  proc_flags = flgs;
       proc_mingled_name = n; 
       proc_data_decl = dd;
       proc_constructor = c;
@@ -2022,6 +2030,7 @@ and compute_field_seq_offset ddefs data_name field_sequence =
 let b_data_constr bn larg=
 	if bn = b_datan || (snd (List.hd larg))="state" then		
 		{ data_name = bn;
+                data_pos = no_pos;
 		  data_fields = List.map (fun c-> c,no_pos,false,F_NO_ANN) larg ;
 		  data_parent_name = if bn = b_datan then "Object" else b_datan;
 		  data_invs =[];
@@ -2050,6 +2059,7 @@ let add_bar_inits prog =
 			(*let _ =print_string ("post: "^(!print_struc_formula post)^"\n") in*)
 			{ proc_name = "init_"^b.barrier_name;
                           proc_source = "source_file";
+			  proc_flags = [];
 			  proc_mingled_name = "";
 			  proc_data_decl = None ;
 			  proc_constructor = false;
@@ -2080,6 +2090,7 @@ let gen_normalize_lemma_comb ddef =
  let pure = List.fold_left2 (fun a c1 c2 -> P.And (a,P.BForm ((P.Eq (c1,c2,no_pos),None),None), no_pos)) (P.BForm ((P.Eq (perm3,P.Add (perm1,perm2,no_pos),no_pos),None),None)) args1 args2 in
  {coercion_type = Left;
   coercion_name = lem_name;
+  coercion_exact = false;
   coercion_head = F.formula_of_heap_1 (F.mkStar (gennode perm1 args1) (gennode perm2 args2) no_pos) no_pos;
   coercion_body = F. mkBase (gennode perm3 args1) pure  top_flow [] no_pos;
   coercion_proof =  Return { exp_return_val = None; exp_return_path_id = None ; exp_return_pos = no_pos }
@@ -2095,6 +2106,7 @@ let gen_normalize_lemma_comb ddef =
  let pure = P.BForm ((P.Eq (perm3,P.Add (perm1,perm2,no_pos),no_pos),None),None) in
  {coercion_type = Left;
   coercion_name = lem_name;
+  coercion_exact = false;
   coercion_head = F.mkBase (gennode perm3 args) pure  top_flow [] no_pos;
   coercion_body = F.formula_of_heap_1 (F.mkStar (gennode perm1 args) (gennode perm2 args) no_pos) no_pos;
   

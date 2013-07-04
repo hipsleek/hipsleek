@@ -1,0 +1,21 @@
+relAssume H
+ H(x)&x!=null --> x::node<l,r> * HP_1(l) * HP_2(r).
+ HP_1(l) --> H(l).
+ HP_2(r) --> H(r).
+ H(x)&x=null --> H(x).
+
+In the case equiv-pred, we are going to first assume
+that its aux will be equiv-pred. Thus, first step is to confirm:
+ HP_1(l) <--> H(l).
+ HP_2(r) <--> H(r).
+
+Next, we have:
+ H(x)&x!=null --> x::node<l,r> * H(l) * H(r).
+
+We perform a split:
+ H(x)&x=null --> emp
+ x=null  --> H(x).
+
+We then have:
+ H(x) --> x::node<l,r> * H(l) * H(r) 
+          or x=null

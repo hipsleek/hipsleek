@@ -1,0 +1,15 @@
+//post predicates
+data node{
+	int val;
+	node next;
+}.
+
+HeapPred H1(node a).
+
+relAssume H1
+   x::node<_,x'>&x'=null --> H1(x).
+
+relAssume H1
+   x::node<_,x'> * H1(x')&x'!=null --> H1(x).
+
+shape_infer [][H1].

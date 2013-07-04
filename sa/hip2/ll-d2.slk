@@ -1,0 +1,33 @@
+data node{
+ int val;
+ node next;
+}.
+
+
+HeapPred G(node a, node a).
+
+relAssume  G
+ x::node<_,null> &  xp=null  --> G(x,xp).
+relAssume  G
+ x::node<_,null> &  xp!=null --> G(x,xp).
+
+
+shape_infer [][G].
+
+/*
+
+Got:
+
+ G(x_37,xp_38) ::= x_37::node<Anon_11,flted_10_16>@M * (HP_39(flted_10_16,xp_38))&true,
+ HP_39(flted_10_16,xp_38) ::= emp&flted_10_16=null & xp_38=null]
+
+However, expecting:
+ G(x_37,xp_38) ::= 
+     x_37::node<Anon_11,null>@M *& xp_38=null
+  or x_37::node<Anon_11,null>@M *& xp_38!=null
+
+
+
+
+
+*/

@@ -5,16 +5,30 @@ HeapPred H1(node a).
 HeapPred G(node a, node b).
 HeapPred H2(node a, node b).
 
+pred ll<n> == self = null & n=0  
+ or self::node<_, q> * q::ll<n-1>
+ inv n>=0.
+
 //1. for x.next
-infer [H] H(x) |- x::node<a,b>@L.
+
+infer [] x::ll<n> & n>5 |- x::node<_,q>*q::node<_,r>.
 print residue.
-compare residue [H,b]: H2(b,x) * x::node<a,b>.
+
+infer [y] x>0 |- x+y>0.
+infer [y] x>0 & y<0 |- x=0.
+
+infer [y] x>0 |- x+y>0.
+
+
+
+print residue.
+//compare residue [H,b]: H2(b,x) * x::node<a,b>.
 
 
 //2.
 infer [H] H(x) |- x::node<a,b>.
 print residue.
-compare residue [H,b]: H2(b,x).
+//compare residue [H,b]: H2(b,x).
 
 /*
 //3. for x.next

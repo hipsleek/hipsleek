@@ -1,0 +1,19 @@
+
+data node{
+    node s;
+}.
+
+HeapPred H(node a).
+
+infer[x] 
+x=null
+ |-  x::node<n>. 
+print residue.
+
+/*
+infer[l,H] 
+H(l) & l=null 
+ |-  l::node<n>@L. 
+print residue.
+
+*/

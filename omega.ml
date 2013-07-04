@@ -99,8 +99,14 @@ and omega_of_b_formula b =
   | SubAnn (a1, a2, _) -> (omega_of_exp a1) ^ " <= " ^ (omega_of_exp a2)
   (* | LexVar (_, a1, a2, _) -> "(0=0)" *)
   | Eq (a1, a2, _) -> begin
-        if is_null a2 then	(omega_of_exp a1)^ " < 1"
-        else if is_null a1 then (omega_of_exp a2) ^ " < 1"
+        if is_null a2 then
+          let v= omega_of_exp a1 in
+          ("("^v^" < 1)")
+          (* ("("^v^" < 1 && "^v^" = xxxnull)") *)
+        else if is_null a1 then 
+          let v= omega_of_exp a2 in
+          ("("^v^" < 1)")
+          (* ("("^v^ " < 1 && "^v^" = xxxnull)") *)
         else (omega_of_exp a1) ^ " = " ^ (omega_of_exp a2)
   end
   | Neq (a1, a2, _) -> begin
@@ -168,11 +174,11 @@ and omega_of_formula_old f  =
 (*   Debug.no_1_num i "omega_of_formula_old"  *)
 (*       pr pr_id (fun _ -> omega_of_formula_old f) f *)
 
-let omegacalc = ref ("oc":string)
+ let omegacalc = ref ("oc":string)
 (* let omegacalc = ref ("/home/locle/workspace/hg/infer2r2/sleekex/omega_modified/omega_calc/obj/oc":string) *)
 (*let modified_omegacalc = "/usr/local/bin/oc5"*)
 (* TODO: fix oc path *)
-(*let omegacalc = "/home/locle/workspace/hg/error_specs/sleekex/omega_modified/omega_calc/obj/oc"*)
+(* let omegacalc = ref ("/home/locle/workspace/default/sleekex/omega_modified/omega_calc/obj/oc": string)*)
 
 let start_with str prefix =
   (String.length str >= String.length prefix) && (String.sub str 0 (String.length prefix) = prefix) 

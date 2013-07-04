@@ -1,0 +1,25 @@
+data node{
+	node prev;
+	node next;
+}.
+
+HeapPred HP_7(node@NI a,node b).
+
+HeapPred HP_9(node a,node b).
+
+infer [HP_9] //(3)
+HP_9(x,l2) & x!=null |-  l2::node<_,_>@M.
+print residue.
+// should succeed
+/*
+GOT:
+ inferred hprel: [HP_9(x,l2)&x!=null --> l2::node<Anon_24,Anon_25>@M * 
+                   (HP_26(Anon_24,x)) * (HP_27(Anon_25,x))&true]
+
+EXPECTING:
+
+ HP_9(x,l2)  & x!=null
+  --> l2::node<p,q>*HP_10(p,x#)*HP_11(q,x#)*HP_12(x,l2#)
+
+*/
+

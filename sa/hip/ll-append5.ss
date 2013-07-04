@@ -27,11 +27,15 @@ l2<y> == self::node<a,null> & y=self
   inv y!=null;
 
 void append(node x, node y)
-
-
   infer[H2,G2]
   requires H2(x,y)
   ensures G2(x,y);
+{
+  if (x.next == null)
+    x.next = y;
+  else
+    append(x.next, y);
+}
 
 /*
 PROBLEM : base case for G2(x,y)?
@@ -51,13 +55,6 @@ PROBLEM : base case for G2(x,y)?
 !!! >>>>>> equivalent hp: <<<<<<
 
    */
-
-{
-  if (x.next == null)
-    x.next = y;
-  else
-    append(x.next, y);
-}
 
 /*
 !!!    new hrel:  RELASS [HP_579,G2] unknown svl: [y];  unknown hps: [HP_609];  predefined: [x]; HP_579(v_node_56_596) * 

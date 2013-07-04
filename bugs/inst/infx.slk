@@ -1,0 +1,31 @@
+data node{
+  node prev;
+  node next;
+}.
+
+
+pred dll<p,q> == self = null 
+          or self::node<p, q> * q::dll<r,_> & r=self 
+  inv true.
+
+checkentail emp  
+  |-     A5::dll<_,_>. 
+
+/*
+
+   Why is InferHeap carried out here? -dd
+
+ ### action =  InferHeap: ( A5::dll<Anon_12,Anon_13>@M[0][Orig][LHSCase], emp)
+ ### estate =  emp&true&{FLOW,(19,20)=__norm}[]
+ ### conseq =  A5::dll<Anon_12,Anon_13>@M[0][Orig][LHSCase]&true&{FLOW,(19,20)=__norm}[]
+
+What are scenarios for infer_heap
+
+   x::R<..> |- x::pred<..>
+   x::R<..> |- x::node<..>
+   ..       |- x::node<..>
+   ..       |- x::pred<..>
+
+
+
+*/

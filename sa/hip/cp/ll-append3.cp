@@ -8,7 +8,7 @@ ass [H1,G1][]:{
   HP_617(b)&b!=null --> H1(b);
   HP_617(a) & a=null --> emp& true;
   x::node<_,y> --> G1(x,y);
-  x::node<_,b> * G1(b,y)&y!=null & b!=null --> G1(x,y)
+  x::node<_,b> * G1(b,y) & b!=null --> G1(x,y)
 }
 
 hpdefs [H1,G1][]:{H1(x) --> x::node<_,p>*HP_1(p);

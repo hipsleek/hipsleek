@@ -188,6 +188,12 @@ let process_lib_file prog =
   {prog with Iast.prog_data_decls = prog.Iast.prog_data_decls @ ddecls;
       Iast.prog_view_decls = prog.Iast.prog_view_decls @ vdecls;}
 
+let reverify_with_hp_rel old_cprog iprog =
+	let new_iviews = Astsimp.transform_hp_rels_to_iviews (Cast.collect_hp_rels old_cprog) in
+	let cprog = Astsimp.trans_prog (Astsimp.plugin_inferred_iviews new_iviews iprog) in
+	ignore (Typechecker.check_prog iprog cprog)
+
+	  
 (***************end process compare file*****************)
 (*Working*)
 let process_source_full source =
@@ -242,6 +248,10 @@ let process_source_full source =
     let intermediate_prog=IastUtil.pre_process_of_iprog iprims intermediate_prog in
 		(* let _= print_string ("\n*After pre process iprog* "(*^Iprinter.string_of_program intermediate_prog*)) in *)
     let intermediate_prog = Iast.label_procs_prog intermediate_prog true in
+	(*let intermediate_prog_reverif = 
+			if (!Globals.reverify_all_flag) then 
+					Marshal.from_string (Marshal.to_string intermediate_prog [Marshal.Closures]) 0 
+			else intermediate_prog in*)
     (* let _ = print_endline ("process_source_full: before --pip") in *)
     let _ = if (!Globals.print_input_all) then print_string (Iprinter.string_of_program intermediate_prog) 
 		        else if(!Globals.print_input) then
@@ -253,8 +263,11 @@ let process_source_full source =
     (* let ptime1 = Unix.times () in
        let t1 = ptime1.Unix.tms_utime +. ptime1.Unix.tms_cutime in *)
     let _ = Gen.Profiling.push_time "Translating to Core" in
-    (* let _ = print_string ("Translating to core language...\n"); flush stdout in *)
+(*    let _ = print_string ("Translating to core language...\n"); flush stdout in *)
     let cprog = Astsimp.trans_prog intermediate_prog (*iprims*) in
+		(* let cprog = Astsimp.trans_prog intermediate_prog (*iprims*) in *)
+    (* let _ = print_string ("Translating to core language...\n"); flush stdout in *)
+    (*let cprog = Astsimp.trans_prog intermediate_prog (*iprims*) in*)
     (* Forward axioms and relations declarations to SMT solver module *)
     let _ = List.map (fun crdef -> 
         Smtsolver.add_relation crdef.Cast.rel_name crdef.Cast.rel_vars crdef.Cast.rel_formula) (List.rev cprog.Cast.prog_rel_decls) in
@@ -307,12 +320,17 @@ let process_source_full source =
     if (!Scriptarguments.typecheck_only) 
     then print_string (Cprinter.string_of_program cprog)
     else (try
-       ignore (Typechecker.check_prog cprog);
+       ignore (Typechecker.check_prog intermediate_prog cprog);
     with _ as e -> begin
       print_string ("\nException"^(Printexc.to_string e)^"Occurred!\n");
       print_string ("\nError(s) detected at main "^"\n");
       raise e
     end);
+	if (!Globals.reverify_all_flag)
+	then 
+		reverify_with_hp_rel cprog intermediate_prog(*_reverif *)
+	else ();
+	
     (* Stopping the prover *)
     if (!Tpdispatcher.tp_batch_mode) then Tpdispatcher.stop_prover ();
     (* Get the total verification time *)
@@ -329,7 +347,7 @@ let process_source_full source =
     in
     
     (* Proof Logging *)
-    let _ = Log.process_proof_logging ()
+    let _ = Log.process_proof_logging !Globals.source_files
     (*  if !Globals.proof_logging || !Globals.proof_logging_txt then  *)
       (* begin *)
       (*   let tstartlog = Gen.Profiling.get_time () in *)
@@ -452,7 +470,8 @@ let process_source_full_after_parser source (prog, prims_list) =
         ()
   in
   (**************************************)
-  let cprog = Astsimp.trans_prog intermediate_prog (*iprims*) in
+ let cprog = Astsimp.trans_prog intermediate_prog (*iprims*) in
+ 	(* let cprog = Astsimp.trans_prog intermediate_prog (*iprims*) in *)
    
 
   (* Forward axioms and relations declarations to SMT solver module *)
@@ -507,7 +526,7 @@ let process_source_full_after_parser source (prog, prims_list) =
   if (!Scriptarguments.typecheck_only) 
   then print_string (Cprinter.string_of_program cprog)
   else (try
-    ignore (Typechecker.check_prog cprog);
+    ignore (Typechecker.check_prog intermediate_prog cprog);
   with _ as e -> begin
     print_string ("\nException"^(Printexc.to_string e)^"Occurred!\n");
     print_string ("\nError(s) detected at main "^"\n");

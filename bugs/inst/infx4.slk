@@ -1,0 +1,25 @@
+data node{
+  node prev;
+  node next;
+}.
+
+HeapPred R(node a).
+
+pred dll<p> == self = null 
+          or self::node<p, q> * q::dll<r> & r=self 
+  inv true.
+
+
+//infer [R] x=null |-  R(x).
+/* 
+   succeeds with x=null -> R(x)
+*/
+
+infer [R] true |-  R(x).
+
+/*
+ why above fails?
+ Can't we use true --> R(x)
+*/ 
+print residue.
+

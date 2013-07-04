@@ -1,0 +1,36 @@
+data node{
+ int val;
+ node prev;
+ node next;
+}.
+
+
+HeapPred H(node a,node b).
+HeapPred HP_1(node a,node b).
+HeapPred HP_2(node a,node b).
+HeapPred G(node a, node a).
+
+relAssume  G // (3)
+  HP_1(next, y) & next=null --> G(next,y).
+
+shape_split_base [H,HP_1][G].
+
+/*
+# sb-4.slk
+
+GOT:
+[ emp&next=null --> G(next,y)&true,
+ HP_1(next,y)&next=null --> emp&true]
+
+However, if given option, --sa-inst-split
+can we generate instead:
+
+[ HL(y) &next=null --> G(next,y)&true,
+ HP_1(next,y)&next=null --> HL(y) &true]
+
+where HL(y) is a new unknown predicate with
+no definition. It can be considered a primitive predicate.
+
+
+
+*/

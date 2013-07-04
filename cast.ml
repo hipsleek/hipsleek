@@ -23,7 +23,7 @@ and prog_decl = {
     mutable prog_logical_vars : P.spec_var list;
     mutable prog_view_decls : view_decl list;
     mutable prog_rel_decls : rel_decl list; (* An Hoa : relation definitions *)
-    mutable prog_hp_decls : hp_decl list;
+    mutable prog_hp_decls : hp_decl list; (*only used to compare against some expected output????*)
     mutable prog_axiom_decls : axiom_decl list; (* An Hoa : axiom definitions *)
     (*old_proc_decls : proc_decl list;*) (* To be removed completely *)
     new_proc_decls : (ident, proc_decl) Hashtbl.t; (* Mingled name with proc_delc *)
@@ -42,6 +42,7 @@ and data_field_ann =
 
 and data_decl = { 
     data_name : ident;
+    data_pos : loc;
     data_fields : (typed_ident * data_field_ann) list;
     data_parent_name : ident;
     data_invs : F.formula list;
@@ -77,6 +78,7 @@ and view_kind =
 and view_decl = { 
     view_name : ident; 
     view_vars : P.spec_var list;
+    view_cont_vars : P.spec_var list;
     view_case_vars : P.spec_var list; (* predicate parameters that are bound to guard of case, but excluding self; subset of view_vars*)
     view_uni_vars : P.spec_var list; (*predicate parameters that may become universal variables of universal lemmas*)
     view_labels : Label_only.spec_label list;
@@ -104,6 +106,7 @@ and view_decl = {
     view_prune_conditions: (P.b_formula * (formula_label list)) list;
     view_prune_conditions_baga: ba_prun_cond list;
     view_prune_invariants : (formula_label list * (Gen.Baga(P.PtrSV).baga * P.b_formula list )) list ;
+    view_pos : loc;
     view_raw_base_case: Cformula.formula option;}
 
 (* An Hoa : relation *)					
@@ -113,13 +116,15 @@ and rel_decl = {
     rel_formula : P.formula;}
 
 and hp_decl = { 
-    hp_name : ident; 
-    hp_vars : P.spec_var list;
+    hp_name : ident;
+    hp_vars_inst : (P.spec_var * Globals.hp_arg_kind) list;
+    mutable hp_root_pos: int;
+    hp_is_pre: bool;
     hp_formula : F.formula;}
 
 (** An Hoa : axiom *)
 and axiom_decl = {
-	  axiom_id : int;
+    axiom_id : int;
     axiom_hypothesis : P.formula;
     axiom_conclusion : P.formula; }
 
@@ -128,6 +133,7 @@ and proc_decl = {
     proc_args : typed_ident list;
     proc_source : ident; (* source file *)
     proc_return : typ;
+    proc_flags : (ident*ident*(flags option)) list;
     mutable proc_important_vars : P.spec_var list; (* An Hoa : pre-computed list of important variables; namely the program parameters & logical variables in the specification that need to be retained during the process of verification i.e. such variables should not be removed when we perform simplification. Remark - all primed variables are important. *)
     proc_static_specs : Cformula.struc_formula;
     (* proc_static_specs_with_pre : Cformula.struc_formula; *)
@@ -136,6 +142,10 @@ and proc_decl = {
     (*proc_dynamic_specs_with_pre : Cformula.struc_formula;*)
     (* stack of static specs inferred *)
     proc_stk_of_static_specs : Cformula.struc_formula Gen.stack;
+    mutable proc_hpdefs: Cformula.hp_rel_def list;(*set of heap predicate constraints derived from this method*)
+    mutable proc_callee_hpdefs: Cformula.hp_rel_def list;
+    (*set of heap predicate constraints derived from calls in this method*)
+    (*due to the bottom up inference they are always just copyed from the proc_hpdefs of called methods*)
     proc_by_name_params : P.spec_var list;
     proc_body : exp option;
     (* Termination: Set of logical variables of the proc's scc group *)
@@ -162,19 +172,20 @@ and coercion_case =
   | Complex
   | Ramify
   | Normalize of bool 
-(* 
-   |LHS| > |RHS| --> Normalize of true --> combine
-   |LHS| < |RHS| --> Normalize of false --> split
-   Otherwise, simple or complex
-*)
+        (* 
+           |LHS| > |RHS| --> Normalize of true --> combine
+           |LHS| < |RHS| --> Normalize of false --> split
+           Otherwise, simple or complex
+        *)
 
 and coercion_decl = { 
     coercion_type : coercion_type;
+    coercion_exact : bool;
     coercion_name : ident;
-    coercion_head : F.formula;
-    coercion_head_norm : F.formula;
-    coercion_body : F.formula;
-    coercion_body_norm : F.struc_formula;
+    coercion_head : F.formula; (* used as antecedent during --elp *)
+    coercion_head_norm : F.formula; (* used as consequent during --elp *)
+    coercion_body : F.formula; (* used as antecedent during --elp *)
+    coercion_body_norm : F.struc_formula; (* used as consequent during --elp *)
     coercion_impl_vars : P.spec_var list; (* list of implicit vars *)
     coercion_univ_vars : P.spec_var list; (* list of universally quantified variables. *)
     (* coercion_proof : exp; *)
@@ -442,6 +453,7 @@ let print_mater_prop_list = ref (fun (c:mater_property list) -> "cast printer ha
 (*single node -> simple (true), otherwise -> complex (false*)
 (* let is_simple_formula x = true *)
 let print_view_decl = ref (fun (c:view_decl) -> "cast printer has not been initialized")
+let print_hp_decl = ref (fun (c:hp_decl) -> "cast printer has not been initialized")
 let print_coercion = ref (fun (c:coercion_decl) -> "cast printer has not been initialized")
 let print_coerc_decl_list = ref (fun (c:coercion_decl list) -> "cast printer has not been initialized")
 let print_mater_prop_list = ref (fun (c:mater_property list) -> "cast printer has not been initialized")
@@ -526,6 +538,8 @@ let re_proc_mutual_from_prog cp : (proc_decl list * ((proc_decl list) list) ) =
   let lst = list_of_procs cp
   in re_proc_mutual lst
 
+let mater_prop_var a = a.mater_var 
+let mater_prop_cmp_var a c = P.eq_spec_var_ident a.mater_var c.mater_var 
 let mk_mater_prop v ff tv = {mater_var=v; mater_full_flag = ff; mater_target_view = tv}
 let mater_prop_cmp c1 c2 = P.spec_var_cmp c1.mater_var c2.mater_var
 let merge_mater_views v1 v2 = match v1,v2 with
@@ -757,7 +771,7 @@ let mkEAssume pos =
  
 let mkEAssume_norm pos = 
 	let f = Cformula.mkTrue (Cformula.mkNormalFlow ()) pos in
-	let sf = Cformula.mkEBase f None no_pos in
+	(* let sf = Cformula.mkEBase f None no_pos in *)
 	Cformula.mkEAssume [] f (Cformula.mkEBase f None no_pos) (stub_branch_point_id "") None
 	
 let mkSeq t e1 e2 pos = match e1 with
@@ -891,6 +905,28 @@ let rec look_up_rel_def_raw (defs : rel_decl list) (name : ident) = match defs w
   | d :: rest -> if d.rel_name = name then d else look_up_rel_def_raw rest name
   | [] -> raise Not_found
 
+let rec look_up_hp_def_raw_x (defs : hp_decl list) (name : ident) = match defs with
+  | d :: rest -> if d.hp_name = name then d else look_up_hp_def_raw_x rest name
+  | [] -> raise Not_found
+
+let look_up_hp_def_raw defs name=
+  let pr1 = !print_hp_decl in
+  Debug.no_1 "look_up_hp_def_raw" pr_id pr1
+      (fun _ -> look_up_hp_def_raw_x defs name) name
+
+let set_proot_hp_def_raw r_pos defs name=
+  let hpdclr = look_up_hp_def_raw defs name in
+  let _ = hpdclr.hp_root_pos <- r_pos in
+  hpdclr
+
+let get_proot_hp_def_raw defs name=
+  let hpdclr = look_up_hp_def_raw defs name in
+  hpdclr.hp_root_pos
+
+let check_pre_post_hp defs hp_name=
+  let hpdecl = look_up_hp_def_raw defs hp_name in
+  hpdecl.hp_is_pre
+
 let rec look_up_view_def (pos : loc) (defs : view_decl list) (name : ident) = match defs with
   | d :: rest -> 
 	    if d.view_name = name then d 
@@ -996,6 +1032,44 @@ let rec look_up_proc_def pos (procs : (ident, proc_decl) Hashtbl.t) (name : stri
 	with Not_found -> Error.report_error {
     Error.error_loc = pos;
     Error.error_text = "Procedure " ^ name ^ " is not found."}
+
+let look_up_hpdefs_proc (procs : (ident, proc_decl) Hashtbl.t) (name : string) = 
+  try
+      let proc = Hashtbl.find procs name in
+      proc.proc_hpdefs
+  with Not_found -> Error.report_error {
+      Error.error_loc = no_pos;
+      Error.error_text = "Procedure " ^ name ^ " is not found."}
+
+let update_hpdefs_proc (procs : (ident, proc_decl) Hashtbl.t) hpdefs (name : string) = 
+  try
+      let proc = Hashtbl.find procs name in
+      (* let new_proc = {proc with proc_hpdefs = proc.proc_hpdefs@hpdefs} in *)
+      let _ = proc.proc_hpdefs <- proc.proc_hpdefs@hpdefs in ()
+      (* Hashtbl.replace procs name proc *)
+  with Not_found -> Error.report_error {
+      Error.error_loc = no_pos;
+      Error.error_text = "Procedure " ^ name ^ " is not found."}
+
+let look_up_callee_hpdefs_proc (procs : (ident, proc_decl) Hashtbl.t) (name : string) = 
+  try
+      let proc = Hashtbl.find procs name in
+      proc.proc_callee_hpdefs
+  with Not_found -> []
+(* Error.report_error { *)
+      (* Error.error_loc = no_pos; *)
+      (* Error.error_text = "Procedure " ^ name ^ " is not found."} *)
+
+let update_callee_hpdefs_proc (procs : (ident, proc_decl) Hashtbl.t) caller_name (callee_name : string) = 
+  try
+      let hpdefs = look_up_hpdefs_proc procs callee_name in
+      let proc = Hashtbl.find procs caller_name in
+      (* let new_proc = {proc with proc_callee_hpdefs = proc.proc_callee_hpdefs@hpdefs} in *)
+      let _ = proc.proc_callee_hpdefs <- proc.proc_callee_hpdefs@hpdefs in ()
+      (* Hashtbl.replace procs name new_proc *)
+  with Not_found -> Error.report_error {
+      Error.error_loc = no_pos;
+      Error.error_text = "Procedure " ^ caller_name ^ " is not found."}
 
 (* Replaced by the new function with Hashtbl *)
 (*
@@ -1894,3 +1968,16 @@ and add_term_nums_proc (proc: proc_decl) log_vars add_call add_phase =
     }, pvl1 @ pvl2)
 
 
+let collect_hp_rels prog= Hashtbl.fold (fun i p acc-> 
+	let name = unmingle_name p.proc_name in
+	(List.map (fun c-> name,c) p.proc_hpdefs)@acc) prog.new_proc_decls []
+
+let look_up_cont_args_x a_args vname cviews=
+  let vdef = look_up_view_def_raw cviews vname in
+  let pr_args = List.combine vdef.view_vars a_args in
+  List.fold_left (fun ls cont_sv -> ls@[List.assoc cont_sv pr_args]) [] vdef.view_cont_vars
+
+let look_up_cont_args a_args vname cviews=
+  let pr1 = !Cpure.print_svl in
+  Debug.no_2 "look_up_cont_args" pr1 pr_id pr1
+      (fun _ _ -> look_up_cont_args_x a_args vname cviews) a_args vname

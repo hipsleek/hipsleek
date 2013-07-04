@@ -1,0 +1,113 @@
+data node{
+	int val;
+	node prev;
+	node next;
+}.
+
+HeapPred H1(node a, node b).
+HeapPred G1(node a, node b).
+HeapPred HP_6(node a, node b).
+HeapPred HP_7(node a, node b).
+
+Declare_Unknown [HP_6].
+
+relAssume H1
+  H1(c,p)&c!=null --> c::node<_,prev_19_766',next_19>@M *
+    HP_6(prev_19_766',p) * HP_7(next_19,p)&true.
+
+relAssume H1
+  HP_7(next_19,p) & true --> H1(next_19,c')&true.
+
+relAssume H1
+  H1(c,p)&c=null --> emp.
+
+relAssume G1
+ G1(next_19,c) * c::node<_,p,next_19>@M &
+  true --> G1(c,p)&true.
+
+relAssume G1
+ emp & c=null --> G1(c,p).
+
+shape_infer [H1][G1].//[pre_hps][post_hps]
+
+/*
+# dll-3b.slk 
+
+The useless elimination is not working.
+We got below using --sa-useless
+
+ H1(c_54,p_53) ::=  
+ H1(next_52,c') * c_54::node<Anon_50,prev_19_51,next_52>@M * 
+ HP_6(prev_19_51,p_53)&true
+ or emp&c_54=null
+ ,
+ G1(c_57,p_58) ::=  
+ emp&c_57=null
+ or G1(next_19,c_57) * c_57::node<Anon_12,p_58,next_19>@M&true
+ ]
+
+EXPECTING
+=========
+
+ H1(c_54,p_53) ::= H1a(c_45) 
+ H1a(c_45) ::= 
+ H1(next_52,c') * c_54::node<Anon_50,prev_19_51,next_52>@M * 
+ HP_6(prev_19_51,p_53)&true
+ or emp&c_54=null
+ ,
+ G1(c_57,p_58) ::=  
+ emp&c_57=null
+ or G1(next_19,c_57) * c_57::node<Anon_12,p_58,next_19>@M&true
+ ]
+
+
+=================================================
+
+
+Below seems wrong still...
+
+ H1(c_42,p_43) ::= 
+ emp&c_42=null
+ or c_42::node<Anon_11,prev_19_766',next_19>@M * 
+    (HP_6(prev_19_766',p_43)) * (HP_7(next_19,p_43))&true
+ ,
+ G1(c_44,p_45) ::= emp&c_44=null,
+ HP_7(next_19,p) ::= htrue&true,
+ HP_6(c') ::= htrue&true]
+
+*************************************
+
+Why did we not get below:
+
+ H1(c,p) ::= 
+   c::node<_,prev_19_766',next_19>@M * (H1(next_19,p))&c!=null
+   or c=null & emp
+
+ G1(c,p) := c=null
+      or c::node<_,p,next_19_767'> * G1(next_19_806,c)
+
+Note that 2nd paramter of of H1 is useless.
+
+This came from :
+
+
+Pre
+---
+ H1(c,p) ::= 
+   c::node<_,prev_19_766',next_19_767'>@M * (HP_7(next_19_767',p))&c!=null
+   or c=null --> emp
+ HP_7(n,p) & true --> H1(n,c')&true.
+
+Post
+----
+ G1(c,p) := c=null
+      or c::node<_,p,next_19_767'> * G1(next_19_806,c)
+
+which should further simplify to:
+
+
+
+
+
+
+*/

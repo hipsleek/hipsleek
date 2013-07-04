@@ -1,0 +1,27 @@
+
+data node2{
+    node2 n;
+    node2 s;
+}.
+
+HeapPred SLSEG(node2 a,node2 b).
+HeapPred HP_5(node2 a,node2 b).
+HeapPred HP_6(node2 a,node2 b).
+
+// lsg.slk
+
+relAssume SLSEG
+  SLSEG(l,e) & e!=l & l=null --> emp.
+
+relAssume SLSEG
+  SLSEG(l,e) & e=l --> emp.
+
+relAssume SLSEG
+  SLSEG(l,e)&e!=l & l!=null --> l::node2<n_16_793,s_16_794>@M * 
+  HP_5(n_16_793,e) * HP_6(s_16_794,e) .
+relAssume SLSEG
+  HP_5(n_16_793,e)&true --> SLSEG(n_16_793,e).
+
+shape_infer [SLSEG,HP_5][].
+
+

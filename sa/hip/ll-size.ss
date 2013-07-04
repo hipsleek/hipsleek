@@ -12,7 +12,7 @@ ll<n> == self = null & n = 0
   inv n >= 0;
 
 HeapPred H(node a).
-HeapPred G(node a, node b).
+//HeapPred G(node a, node b).
 HeapPred H1(node a).
 void dispose(ref node x)
   requires x::node<_,_>
@@ -20,11 +20,11 @@ void dispose(ref node x)
 
 
 //The number of elements that conform the list's content.
-relation SIZEH(int a, int b, int c).
+//relation SIZEH(int a, int b, int c).
 int size_helper(node x, ref int n)
-  infer[SIZEH,H,H1]
+  infer[H,H1]
   requires H(x) //0<=m
-  ensures  H1(x) & SIZEH(res,n);//res=m+n & m>=0
+     ensures  H1(x);// & SIZEH(res,n);//res=m+n & m>=0
 {
   if (x==null) 
     return n;

@@ -1,0 +1,31 @@
+data node{
+ int val;
+ node next;
+}.
+
+
+HeapPred H(node a).
+HeapPred HP_6(node a).
+HeapPred HP_7(node a).
+HeapPred G(node a, node a).
+
+relAssume  H
+ H(x) --> x::node<_,nn> .
+relAssume  G
+ x::node<_,null> &  xp=null  --> G(x,xp).
+relAssume  G
+ x::node<_,q> * q::node<_,null>&  xp!=null --> G(x,xp).
+
+
+shape_infer [H][G].
+
+/*
+[ H(x_64) ::= x_64::node<Anon_11,nn>@M&true,
+ G(x_65,xp_66) ::= x_65::node<Anon_12,flted_15_25>@M * (HP_67(flted_15_25,xp_66))&true,
+ HP_67(flted_15_25,xp_66) ::= 
+ EXISTS(flted_15_25: emp&flted_15_25=null & xp_66=null&[]
+ or EXISTS(flted_17_33: flted_15_25::node<Anon_14,flted_17_33>@M&
+    flted_17_33=null & xp_66!=null&[]
+ ]
+
+*/

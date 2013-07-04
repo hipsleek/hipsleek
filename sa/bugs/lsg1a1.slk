@@ -1,0 +1,22 @@
+
+data node2{
+    node2 n;
+    node2 s;
+}.
+
+HeapPred SLSEG(node2 a,node2 b).
+
+// lsg1.slk
+
+infer[SLSEG] 
+SLSEG(l,e) & l=lp 
+ & e!=lp
+ |-  lp::node2<n,s>@L. 
+print residue.
+
+/*
+ <1>(HP_23(n_21,e)) * (HP_24(s_22,e)) * lp::node2<n_21,s_22>@M[Orig]&l=lp & e!=lp & n=n_21 & s=s_22&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [SLSEG(lp,e)&e!=lp --> lp::node2<n_21,s_22>@M * 
+                   (HP_23(n_21,e)) * (HP_24(s_22,e))&true]
+
+*/

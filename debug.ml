@@ -3,6 +3,7 @@ open Globals
 let debug_on = ref false
 let devel_debug_on = ref false
 let devel_debug_print_orig_conseq = ref false
+let trace_on = ref true
 
 let log_devel_debug = ref false
 let debug_log = Buffer.create 5096
@@ -63,17 +64,57 @@ let prior_msg pos =
   in tmp
 
 let devel_pprint (msg:string) (pos:loc) =
-	ho_print !devel_debug_on (fun m -> (prior_msg pos)^m) msg
+  let flag = !devel_debug_on in
+  ho_print flag (fun m -> (prior_msg pos)^m) msg
 
 let devel_hprint (pr:'a->string) (m:'a) (pos:loc) = 
-	ho_print !devel_debug_on (fun x -> (prior_msg pos)^(pr x)) m
+  let flag = !devel_debug_on in
+  ho_print flag (fun x -> (prior_msg pos)^(pr x)) m
 
 let devel_zprint msg (pos:loc) =
-	ho_print !devel_debug_on (fun m -> (prior_msg pos)^(Lazy.force m)) msg
+  let flag = !devel_debug_on in
+  ho_print flag (fun m -> (prior_msg pos)^(Lazy.force m)) msg
 
 let dinfo_zprint m p = devel_zprint m p
 let dinfo_hprint pr m p  = devel_hprint pr m p
 let dinfo_pprint m p = devel_pprint m p
+
+let binfo_pprint (msg:string) (pos:loc) =
+  let s = if !devel_debug_on then (prior_msg pos) else " " in
+  let flag = !trace_on or !devel_debug_on in
+  ho_print flag (fun m -> s^m) msg
+
+
+let binfo_hprint (pr:'a->string) (m:'a) (pos:loc) = 
+  let s = if !devel_debug_on then (prior_msg pos) else " " in
+  let flag = !trace_on or !devel_debug_on in
+  ho_print flag (fun x -> s^(pr x)) m
+
+let binfo_zprint msg (pos:loc) =
+  let s = if !devel_debug_on then (prior_msg pos) else " " in
+  let flag = !trace_on or !devel_debug_on in
+  ho_print flag (fun m -> s^(Lazy.force m)) msg
+
+
+let binfo_start (msg:string) =
+        binfo_pprint "**********************************" no_pos;
+        binfo_pprint ("**** "^msg^" ****") no_pos;
+        binfo_pprint "**********************************" no_pos
+
+let binfo_end (msg:string) =
+        binfo_pprint "**********************************" no_pos;
+        binfo_pprint ("**** end of "^msg^" ****") no_pos;
+        binfo_pprint "**********************************" no_pos
+
+let dinfo_start (msg:string) =
+        dinfo_pprint "**********************************" no_pos;
+        dinfo_pprint ("**** "^msg^" detected ****") no_pos;
+        dinfo_pprint "**********************************" no_pos
+
+let dinfo_end (msg:string) =
+        dinfo_pprint "**********************************" no_pos;
+        dinfo_pprint ("**** end of "^msg^" ****") no_pos;
+        dinfo_pprint "**********************************" no_pos
 
 let ninfo_zprint m p = ()
 let ninfo_hprint pr m p  = ()

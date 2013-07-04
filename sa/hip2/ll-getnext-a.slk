@@ -1,0 +1,34 @@
+data node{
+ int val;
+ node next;
+}.
+
+
+HeapPred H(node a).
+HeapPred HP_6(node a).
+HeapPred G(node a, node a).
+
+relAssume H
+  H(x)&true --> x::node<_,next_26_785>@M * HP_6(next_26_785).
+ 
+relAssume G
+  HP_6(res) * x::node<_,res>  --> G(x,res).
+
+shape_infer [H][G].
+
+/*
+Output:
+
+[ H(x_40) ::= x_40::node<Anon_11,next_26_785>@M& XPURE(HP_27(next_26_785)),
+ G(x_41,res_42) ::= 
+ emp& XPURE(HP_27(res_42))
+ or x_41::node<Anon_12,res_42>@M& XPURE(HP_27(res_42))
+ ]
+
+However, defn of G should have been:
+
+  G(x,res) ::= x::node<_,res> & XPURE( HP_6(res)).
+
+Why did we have a disjunction?
+
+*/

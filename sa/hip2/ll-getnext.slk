@@ -1,0 +1,24 @@
+data node{
+ int val;
+ node next;
+}.
+
+
+HeapPred H(node a).
+HeapPred HP_6(node a).
+HeapPred G(node a, node a).
+
+infer [HP_6,x,G] 
+ HP_6(next_23_782) * x::node<val_23_781,next_23_782>@M & next_23_782=res
+ |-  G(x,res). 
+
+print residue.
+/*
+
+ <1>HP_6(next_23_782)&next_23_782=res&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [(HP_6(res)) * x::node<val_23_781,res>@M&true --> G(x,res)&
+                   true]
+
+ Why is HP_6 not consumed?
+
+*/

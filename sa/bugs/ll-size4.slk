@@ -1,0 +1,21 @@
+data node{
+	int val;
+	node next;
+}.
+HeapPred H(node a).
+HeapPred H1(node a).
+HeapPred HP_1a(node a).
+
+relAssume H
+ H(x)&x!=null --> x::node<_,p> * HP_1a(p).
+
+relAssume H
+  HP_1a(x') --> H(x')&true.
+
+relAssume H1
+  x::node<_,x'> * H1(x')&true --> H1(x)&true.
+
+relAssume H
+  H(x) & x=null --> H1(x)&true.
+
+shape_infer [H][H1].

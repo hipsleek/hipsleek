@@ -1,0 +1,35 @@
+
+data node {
+  int val;
+  node next;
+}.
+
+pred ll_tail2<tx> == self=null
+  or self::node<_, r> * r::ll_tail2<tx>
+  inv true.
+
+lemma "ll_tail2" self::ll_tail2<t> -> t::node<_, null>.
+
+checkentail x::ll_tail2<tx>@M 
+// |-  tx::node<a,b>@L. 
+ |-  tx::node<a,b>. 
+
+print residue.
+
+/*
+
+This is hypothetical example. Lemmas cannot be proven.
+
+@M <2> seems unsound!
+
+ <1>emp&b=null&{FLOW,(19,20)=__norm}[]
+<2>  emp&b=null & x=null&{FLOW,(19,20)=__norm}[]
+     or emp&b=null & x!=null&{FLOW,(19,20)=__norm}[]
+
+Above was triggered by LHSCaseAnalysis which
+ es_trace:  SEARCH ==>  SEARCH ==>  LHSCaseAnalysis ==> 
+introduced two branches, x=null or x!=null.
+Not sure why we perform such CaseAnalysis which seems to have
+duplicated program state.
+
+*/

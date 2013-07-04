@@ -1,0 +1,22 @@
+data node{
+	int val;
+	node prev;
+	node next;
+}.
+
+HeapPred G1(node a).
+HeapPred G2(node a).
+
+relAssume G1
+    l=null  --> G1(l).
+
+relAssume G2
+    r=null  --> G2(r).
+
+relAssume G2
+   r::node<k,left,right>@M * G1(left) * G2(right) --> G2(r).
+
+relAssume G1
+  l::node<k,left,right> * G1(left) * G2(right) & l!=null --> G1(l).
+
+shape_infer [][G1,G2].
