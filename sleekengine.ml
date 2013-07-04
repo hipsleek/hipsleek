@@ -875,7 +875,7 @@ let process_shape_conquer sel_ids cond_paths=
   let ls_path_link_defs = SAU.pair_dang_constr_path ls_path_defs ls_path_link
     (pr_list_ln Cprinter.string_of_hp_rel_def_short) in
   let ls_path_defs_settings = List.map (fun (path,link_hpargs, defs) ->
-      (path, defs,[],[], [],link_hpargs,[])) ls_path_link_defs in
+      (path, defs,[], [],link_hpargs,[])) ls_path_link_defs in
   let defs = Sa2.infer_shapes_conquer iprog !cprog "" ls_path_defs_settings sel_hps in
   let _ =
     begin

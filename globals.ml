@@ -664,6 +664,8 @@ let sa_print_inter = ref false
 
 let sa_old = ref false
 
+let sa_dnc = ref false
+
 (* let sa_en_norm = ref false *)
 
 let sa_en = ref true

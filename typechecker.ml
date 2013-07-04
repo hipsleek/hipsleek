@@ -2429,14 +2429,18 @@ and check_proc iprog (prog : prog_decl) (proc : proc_decl) cout_option (mutual_g
                       end;
 		    let ls_hprel, ls_inferred_hps, dropped_hps =
                       if !Globals.sa_en && List.length sel_hp_rels> 0 && List.length hp_lst_assume > 0 then
-                        let infer_shape_fnc =  if not (!Globals.sa_old) then
-                         Sa2.infer_shapes
-                        else Sa2.infer_shapes (* Sa.infer_hps *)
-                        in
-                         infer_shape_fnc iprog prog proc.proc_name hp_lst_assume
+                        let res =  if not (!Globals.sa_dnc) then
+                          Sa2.infer_shapes iprog prog proc.proc_name hp_lst_assume
+                              sel_hp_rels sel_post_hp_rels (Gen.BList.remove_dups_eq
+                                  (fun ((hp1,_),_) ((hp2, _),_) ->
+                                      (CP.eq_spec_var hp1 hp2 )) hp_rel_unkmap) [] [] true true
+                        else
+                          let _= Sa2.infer_shapes_new iprog prog proc.proc_name hp_lst_assume
                             sel_hp_rels sel_post_hp_rels (Gen.BList.remove_dups_eq
                                 (fun ((hp1,_),_) ((hp2, _),_) ->
                                     (CP.eq_spec_var hp1 hp2 )) hp_rel_unkmap) [] [] true true
+                          in ([],[],[])
+                        in res
                       else [],[],[]
                     in
                     (**update hpdefs for func call*)
