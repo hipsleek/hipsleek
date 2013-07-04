@@ -20,7 +20,8 @@ infer[H,G] requires H(x) ensures G(res,x);
    {
 	node t = last(x.next);
 	//t.val = t.val+1;
-	t.next = null;
+	node v = t.next;
+	assert v' = null;
 	return t;
 	}
 }

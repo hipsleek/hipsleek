@@ -10,9 +10,9 @@ function one
 	echo "$defs"
 	echo "===================="
 }
-one set-tail-2.ss
-one sll-dll.ss
-one last-2.ss
+one "set-tail-2.ss --pred-en-dangling"
+one "sll-dll.ss --pred-en-dangling"
+one "last-2.ss --pred-en-dangling"
 one "dll-append_paper.ss --pred-en-dangling --classic"
 one "zip_paper_leq.ss --sa-en-sp-split --pred-en-dangling"
 one "tll.ss --sa-dnc --pred-en-dangling"
