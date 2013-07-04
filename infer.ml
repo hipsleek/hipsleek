@@ -657,7 +657,7 @@ let infer_lhs_contra_estate i e f pos msg =
   let pr = CP.print_lhs_rhs in
   let pr3 (_,lr,b) =  pr_pair (pr_list pr) string_of_bool (lr,b) in
   let pr_res = (pr_pair (pr_option pr_es) (pr_list pr3)) in
-  Debug.to_2_num i "infer_lhs_contra_estate" pr0 pr1 pr_res (fun _ _ -> infer_lhs_contra_estate e f pos msg) e f
+  Debug.no_2_num i "infer_lhs_contra_estate" pr0 pr1 pr_res (fun _ _ -> infer_lhs_contra_estate e f pos msg) e f
 
 (*
    should this be done by ivars?
@@ -745,7 +745,7 @@ let detect_lhs_rhs_contra_x (*lhs_xpure*) lhs_xpure_orig rhs_xpure pos =
 
 let detect_lhs_rhs_contra lhs rhs pos =
 	let pr = !CP.print_formula in
-	Debug.to_2 "detect_lhs_rhs_contra" pr pr (pr_pair string_of_bool !CP.print_formula) 
+	Debug.no_2 "detect_lhs_rhs_contra" pr pr (pr_pair string_of_bool !CP.print_formula) 
 		(fun _ _ -> detect_lhs_rhs_contra_x lhs rhs pos) lhs rhs
 	  
 (* let infer_h prog estate conseq lhs_b rhs_b lhs_rels*)
@@ -2675,5 +2675,5 @@ let add_infer_hp_contr_to_list_context h_arg_map cp (l:list_context) : list_cont
   let pr1 = pr_list (pr_pair (pr_pair !print_sv pr_none) !print_svl) in 
   let pr2 = pr_list !CP.print_formula in
   let pr3 = !print_list_context in
-  Debug.to_3 "add_infer_hp_contr_to_list_context" pr1 pr2 pr3 (pr_option pr3)
+  Debug.no_3 "add_infer_hp_contr_to_list_context" pr1 pr2 pr3 (pr_option pr3)
       add_infer_hp_contr_to_list_context h_arg_map cp l
