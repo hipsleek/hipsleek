@@ -2455,9 +2455,9 @@ and check_proc iprog (prog : prog_decl) (proc : proc_decl) cout_option (mutual_g
 		        print_endline ""; 
 		        print_endline "*************************************";
 		        print_endline "*******relational definition ********";
-		        print_endline "*************************************<dstart>";
+		        print_endline "*************************************";
                         print_endline (rel_defs # string_of_reverse);
-		        print_endline "<dstop>*************************************"
+		        print_endline "*************************************"
                       end;
 		    (**************cp_test _ gen_cpfile******************)
 		    let _ = if(!Globals.cp_test || !Globals.cp_prefile) then
