@@ -3500,7 +3500,7 @@ RELDEFN
    \/  x_883::node<left_29_845,right_29_846,__DP_H_0>@M * G(right_29_846,l_878,r_885) 
        * G(left_29_845,res_884,l_878)&right_29_846!=null]
 =====================================================================
-# skip0-bug-1.slk
+# skip0-bug-1.slk: FIXED
 
 infer [l,e]
  SLSEG(l,e)&e!=l & l=null 
