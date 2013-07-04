@@ -4948,11 +4948,13 @@ and heap_entail_conjunct_lhs_x prog is_folding  (ctx:context) (conseq:CF.formula
                         (* | None ->  heap_entail () *)
 	               let h_inf_args, hinf_args_map = get_heap_inf_args estate in
                        let esv = estate.es_infer_vars in
+                       let orig_ante = CF.formula_of_context ctx in
                        match r_inf_contr with
                          | Some (new_estate,pf) -> 
-                               (* let new_estate = {new_estate with es_infer_vars = esv} in *)
+                               let new_estate = {new_estate with es_infer_vars = esv} in
                                let ctx1 = CF.Ctx new_estate in
-                               let r1, prf = heap_entail_conjunct 17 prog is_folding ctx1 conseq [] pos in
+                               let _ = Debug.tinfo_hprint (add_str "ctx1"  Cprinter.string_of_context) ctx1 pos in
+                               let r1,prf =  (SuccCtx[false_ctx_with_orig_ante new_estate orig_ante pos],UnsatAnte) in
                                let _ = Debug.tinfo_hprint (add_str "r1"  Cprinter.string_of_list_context) r1 pos in
                                let r1 = Infer.add_infer_hp_contr_to_list_context hinf_args_map [pf] r1 in
                                let _ = Debug.tinfo_hprint (add_str "r1 opt"  (pr_option Cprinter.string_of_list_context)) r1 pos in
@@ -4966,7 +4968,6 @@ and heap_entail_conjunct_lhs_x prog is_folding  (ctx:context) (conseq:CF.formula
                                          (r1, prf)
                                    | None -> heap_entail ()
                                end
-                               (* (r1, prf) *)
                          | None ->  
                                  match relass with
 				   | [(es,h,_)] -> 
@@ -4975,7 +4976,7 @@ and heap_entail_conjunct_lhs_x prog is_folding  (ctx:context) (conseq:CF.formula
                                          let _ = Debug.tinfo_hprint (add_str "ctx1" Cprinter.string_of_context) ctx1 pos in
                                          let ctx1 = add_infer_rel_to_ctx h ctx1 in
                                          let _ = Debug.tinfo_hprint (add_str "ctx1(with inf rel)" Cprinter.string_of_context) ctx1 pos in
-                                         let r1, prf = heap_entail_conjunct 18 prog is_folding ctx1 conseq [] pos in
+                                          let r1,prf =  (SuccCtx[false_ctx_with_orig_ante new_estate orig_ante pos], UnsatAnte) in
                                           (r1, prf)
 				   | _ ->  heap_entail ()
                     end
@@ -9069,7 +9070,7 @@ and init_para lhs_h rhs_h lhs_aset prog pos = match (lhs_h, rhs_h) with
   (* (Inf.CF.entail_state * Cprinter.P.formula) option * *)
   (* (Inf.CF.entail_state * Cformula.CP.infer_rel_type list * bool) list *) 
 and solver_detect_lhs_rhs_contra i prog estate conseq pos msg =
-  let pr_estate = Cprinter.string_of_entail_state_short in
+  let pr_estate = Cprinter.string_of_entail_state(*_short*) in
   let pr_f = Cprinter.string_of_formula in
   let pr_es (es,e) =  pr_pair pr_estate Cprinter.string_of_pure_formula (es,e) in
   let pr = CP.print_lhs_rhs in
