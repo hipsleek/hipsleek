@@ -23,7 +23,7 @@ HeapPred H(node a, node@NI b).
 HeapPred G(node a, node@NI b, node c).
 
 node set_right (node x, node r)
-infer [H,G] requires H(x,r) ensures G(x,r,res);
+  infer [H,G] requires H(x,r) ensures G(x,res,r);
 //requires x::tree<> ensures x::tll<res,r>;
 {
   if (x.right==null) 
@@ -39,7 +39,61 @@ infer [H,G] requires H(x,r) ensures G(x,r,res);
 }
 
 /*
-# tll.ss
+# tll.ss --sa-dnc --pred-en-dangling
+
+
+RELASSUME
+=========
+[ H_8(left_29_845,r@NI) * H_9(right_29_846,r@NI) * 
+  x::node<left_29_845,right_29_846,r>@M&res=x & 
+  right_29_846=null --> G(x,res@NI,r),
+ H(x,r@NI) --> x::node<left_29_845,right_29_846,next_29_847>@M * 
+  H_8(left_29_845,r@NI) * H_9(right_29_846,r@NI) * 
+  H_0(next_29_847,r@NI),
+ H_9(right_29_846,r@NI)&right_29_846!=null --> H(right_29_846,r@NI),
+ H_8(left_29_845,r@NI) --> H(left_29_845,l_47'@NI),
+ H_0(next_29_847,r@NI) * 
+  x::node<left_29_845,right_29_846,next_29_847>@M * 
+  G(right_29_846,l_878@NI,r) * G(left_29_845,res@NI,l_878)&
+  right_29_846!=null --> G(x,res@NI,r)]
+
+
+RELDEFN
+=======
+
+[ H(x_879,r_880) ::= 
+   x_879::node<__DP_H_8,right_29_846,__DP_H_0>@M&right_29_846=null
+   \/  x_879::node<left_29_845,right_29_846,__DP_H_0>@M * H(left_29_845,l_886) 
+       * H(right_29_846,r_880)&right_29_846!=null,
+
+ G(x_883,res_884,r_885) ::= 
+   res_884::node<__DP_H_8,right_29_846,r_885>@M&right_29_846=null & res_884=x_883
+   \/  x_883::node<left_29_845,right_29_846,__DP_H_0>@M * G(right_29_846,l_878,r_885) 
+       * G(left_29_845,res_884,l_878)&right_29_846!=null]
+
+# tll.ss --sa-dnc
+
+
+ H_8(left_29_845,r) ::= UNKNOWN,
+
+ H(x_879,r_880) ::= 
+   x_879::node<left_29_845,right_29_846,next_29_847>@M * 
+       H_8(left_29_845,r_880) * H_0(next_29_847,r_880)&right_29_846=null
+   \/  x_879::node<left_29_845,right_29_846,next_29_847>@M * H_0(next_29_847,r_880) 
+       * H(left_29_845,l_886) * H(right_29_846,r_880)& right_29_846!=null,
+
+
+ G(x_883,res_884,r_885) ::= 
+   H_8(left_29_845,r_885) * res_884::node<left_29_845,right_29_846,r_885>@M
+            &right_29_846=null & res_884=x_883
+   \/  H_0(next_29_847,r_885) * x_883::node<left_29_845,right_29_846,next_29_847>@M 
+       * G(right_29_846,l_878,r_885) * G(left_29_845,res_884,l_878)&right_29_846!=null,
+
+ H_0(next_29_847,r) ::= UNKNOWN \/ UNKNOWN]
+
+
+=========================
+
 
  H(x,r@NI) --> x::node<left_29_845,right_29_846,next_29_847>@M * 
     H_8(left_29_845,r@NI) * H_9(right_29_846,r@NI) 
@@ -64,21 +118,21 @@ infer [H,G] requires H(x,r) ensures G(x,r,res);
   right_29_846!=null --> G(x,r@NI,res)]
 -------
 [ H(x,r@NI) --> x::node<left_29_845,right_29_846,next_29_847>@M * 
-  HP_848(left_29_845,r@NI) * HP_849(right_29_846,r@NI) * 
-  HP_850(next_29_847,r@NI),
+  H_8(left_29_845,r@NI) * H_9(right_29_846,r@NI) * 
+  H_0(next_29_847,r@NI),
 
- HP_849(right_29_846,r@NI)&right_29_846!=null --> H(right_29_846,r@NI),
+ H_9(right_29_846,r@NI)&right_29_846!=null --> H(right_29_846,r@NI),
 
- HP_848(left_29_845,r@NI) --> H(left_29_845,l_47'@NI),
+ H_8(left_29_845,r@NI) --> H(left_29_845,l_47'@NI),
 
- HP_850(next_29_847,r@NI) --> emp,
+ H_0(next_29_847,r@NI) --> emp,
 
- HP_849(right_29_846,r@NI)&right_29_846=null --> emp,
+ H_9(right_29_846,r@NI)&right_29_846=null --> emp,
 
- HP_848(left_29_845,r@NI) * x::node<left_29_845,right_29_846,r>@M&res=x & 
+ H_8(left_29_845,r@NI) * x::node<left_29_845,right_29_846,r>@M&res=x & 
   right_29_846=null --> G(x,r@NI,res),
 
- HP_850(next_29_847,r@NI) * 
+ H_0(next_29_847,r@NI) * 
   x::node<left_29_845,right_29_846,next_29_847>@M * 
   G(right_29_846,r@NI,l_878) * G(left_29_845,l_878@NI,res)&
   right_29_846!=null --> G(x,r@NI,res)]

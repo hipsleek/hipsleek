@@ -662,6 +662,8 @@ let dis_show_diff = ref false
 
 let sa_print_inter = ref false
 
+let cond_path_trace = ref false
+
 let sa_old = ref false
 
 let sa_dnc = ref false

@@ -3438,7 +3438,7 @@ directly be used as input to conquer so it is easier to test.
    \/ PATH:(2,0) x_27::node<left_25_800,right_25_801>@M * H(left_25_800) * H(right_25_801)&
 right_25_801!=null]
 =====================================================================
-# tll-if-divide-pre.slk
+# tll-if-divide-pre.slk 
 
 Above generates:
 
@@ -3468,6 +3468,37 @@ relDefn (2;0)
  H(x_33) <->  x_33::node<left_25_800,right_25_801>@M 
    * H(left_25_800) * H(right_25_801) & right_25_801!=null.
 =====================================================================
+# tll.ss --sa-dnc --pred-en-dangling (INFO)
+
+
+RELASSUME
+=========
+[ H_8(left_29_845,r@NI) * H_9(right_29_846,r@NI) * 
+  x::node<left_29_845,right_29_846,r>@M&res=x & 
+  right_29_846=null --> G(x,res@NI,r),
+ H(x,r@NI) --> x::node<left_29_845,right_29_846,next_29_847>@M * 
+  H_8(left_29_845,r@NI) * H_9(right_29_846,r@NI) * 
+  H_0(next_29_847,r@NI),
+ H_9(right_29_846,r@NI)&right_29_846!=null --> H(right_29_846,r@NI),
+ H_8(left_29_845,r@NI) --> H(left_29_845,l_47'@NI),
+ H_0(next_29_847,r@NI) * 
+  x::node<left_29_845,right_29_846,next_29_847>@M * 
+  G(right_29_846,l_878@NI,r) * G(left_29_845,res@NI,l_878)&
+  right_29_846!=null --> G(x,res@NI,r)]
+
+
+RELDEFN
+=======
+
+[ H(x_879,r_880) ::= 
+   x_879::node<__DP_H_8,right_29_846,__DP_H_0>@M&right_29_846=null
+   \/  x_879::node<left_29_845,right_29_846,__DP_H_0>@M * H(left_29_845,l_886) 
+       * H(right_29_846,r_880)&right_29_846!=null,
+
+ G(x_883,res_884,r_885) ::= 
+   res_884::node<__DP_H_8,right_29_846,r_885>@M&right_29_846=null & res_884=x_883
+   \/  x_883::node<left_29_845,right_29_846,__DP_H_0>@M * G(right_29_846,l_878,r_885) 
+       * G(left_29_845,res_884,l_878)&right_29_846!=null]
 =====================================================================
 =====================================================================
 =====================================================================

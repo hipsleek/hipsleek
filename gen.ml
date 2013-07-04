@@ -80,10 +80,12 @@ struct
   let pr_lst s f xs = String.concat s (List.map f xs)
   let pr_lst_num s f xs = String.concat s (pr_add_num f xs)
 
- let pr_list_brk open_b close_b f xs  = open_b ^(pr_lst "," f xs)^close_b
+ let pr_list_brk_sep open_b close_b sep f xs  = open_b ^(pr_lst sep f xs)^close_b
+ let pr_list_brk open_b close_b f xs  = pr_list_brk_sep open_b close_b "," f xs
  let pr_list f xs = pr_list_brk "[" "]" f xs
  let pr_list_angle f xs = pr_list_brk "<" ">" f xs
  let pr_list_round f xs = pr_list_brk "(" ")" f xs
+ let pr_list_round_sep sep f xs = pr_list_brk_sep "(" ")" sep f xs
  let pr_list_ln f xs = "["^(pr_lst ",\n" f xs)^"]"
  let pr_list_num f xs = "["^(pr_lst_num ",\n" f xs)^"]"
 

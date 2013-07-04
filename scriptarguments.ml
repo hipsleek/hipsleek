@@ -146,22 +146,22 @@ let common_arguments = [
   ("--ann-derv", Arg.Set Globals.ann_derv,"manual annotation of derived nodes");
   ("--ann-vp", Arg.Set Globals.ann_vp,"manual annotation of variable permissions");
   ("--dis-ann-vp", Arg.Clear Globals.ann_vp,"manual annotation of variable permissions");
-	("--ls", Arg.Set Globals.allow_ls,"enable locksets during verification");
-	("--en-web-compile", Arg.Set Globals.web_compile_flag,"enable web compilation setting");
-	("--dis-ls", Arg.Clear Globals.allow_ls,"disable locksets during verification");
-	("--locklevel", Arg.Set Globals.allow_locklevel,"enable locklevels during verification");
-	("--dis-locklevel", Arg.Clear Globals.allow_locklevel,"disable locklevels during verification");
-	("--dis-para", Arg.Unit Perm.disable_para,"disable concurrency verification");
-	("--en-para", Arg.Unit Perm.enable_para,"enable concurrency verification");
+  ("--ls", Arg.Set Globals.allow_ls,"enable locksets during verification");
+  ("--en-web-compile", Arg.Set Globals.web_compile_flag,"enable web compilation setting");
+  ("--dis-ls", Arg.Clear Globals.allow_ls,"disable locksets during verification");
+  ("--locklevel", Arg.Set Globals.allow_locklevel,"enable locklevels during verification");
+  ("--dis-locklevel", Arg.Clear Globals.allow_locklevel,"disable locklevels during verification");
+  ("--dis-para", Arg.Unit Perm.disable_para,"disable concurrency verification");
+  ("--en-para", Arg.Unit Perm.enable_para,"enable concurrency verification");
   ("--imm", Arg.Set Globals.allow_imm,"enable the use of immutability annotations");
-	("--field-ann", Arg.Set Globals.allow_field_ann,"enable the use of immutability annotations for data fields");
+  ("--field-ann", Arg.Set Globals.allow_field_ann,"enable the use of immutability annotations for data fields");
   ("--memset-opt", Arg.Set Globals.ineq_opt_flag,"to optimize the inequality set enable");
-	("--dis-field-ann", Arg.Clear Globals.allow_field_ann,"disable the use of immutability annotations for data fields");
-	(*("--mem", Arg.Set Globals.allow_mem,"Enable the use of Memory Specifications");*)
-	("--dis-mem", Arg.Clear Globals.allow_mem,"Disable the use of Memory Specifications");
-	("--ramify", Arg.Clear Solver.unfold_duplicated_pointers,"Use Ramification (turns off unfold on dup pointers)");
+  ("--dis-field-ann", Arg.Clear Globals.allow_field_ann,"disable the use of immutability annotations for data fields");
+  (*("--mem", Arg.Set Globals.allow_mem,"Enable the use of Memory Specifications");*)
+  ("--dis-mem", Arg.Clear Globals.allow_mem,"Disable the use of Memory Specifications");
+  ("--ramify", Arg.Clear Solver.unfold_duplicated_pointers,"Use Ramification (turns off unfold on dup pointers)");
   ("--reverify", Arg.Set Globals.reverify_flag,"enable re-verification after specification inference");
-	("--reverify-all", Arg.Set Globals.reverify_all_flag,"enable re-verification after heap specification inference");
+  ("--reverify-all", Arg.Set Globals.reverify_all_flag,"enable re-verification after heap specification inference");
   ("--dis-imm", Arg.Clear Globals.allow_imm,"disable the use of immutability annotations");
   ("--dis-inf", Arg.Clear Globals.allow_inf,"disable support for infinity ");
   ("--dsd", Arg.Set Globals.deep_split_disjuncts,"enable deep splitting of disjunctions");
@@ -386,6 +386,8 @@ let common_arguments = [
   ("--en-lemma-s", Arg.Set Globals.enable_split_lemma_gen, "Enable automatic generation of splitting lemmas");
   ("--dis-show-diff", Arg.Set Globals.dis_show_diff, "Show differences between formulae");
   ("--dis-sem", Arg.Set Globals.dis_sem, "Show differences between formulae");
+  ("--en-cp-trace", Arg.Set Globals.cond_path_trace, "Enable the tracing of conditional paths");
+  ("--dis-cp-trace", Arg.Clear Globals.cond_path_trace, "Disable the tracing of conditional paths");
   ("--sa-print-inter", Arg.Set Globals.sa_print_inter, "Print intermediate results of normalization");
   ("--sa-old", Arg.Set Globals.sa_old, "old algorithm of normalization");
    ("--sa-dnc", Arg.Set Globals.sa_dnc, "algorithm of normalization with divide and conquer");
