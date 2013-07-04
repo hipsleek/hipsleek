@@ -21,7 +21,7 @@ print residue.
 infer [Z] P(x)*Q(y)*Z(x,k) & mmm=-1 & x!=null & y=null |-  mmm=3.
 print residue.
 // why fail when above succeeds?
-*/
+
 /*
 # contra2c.slk
 
