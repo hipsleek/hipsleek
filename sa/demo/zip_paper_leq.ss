@@ -19,7 +19,9 @@ infer [H,G]  requires H(x,y)  ensures  G(x,y,res);
    else 
    {
    //assume false;
-   return new node(x.val+y.val, zip(x.next,y.next));
+   int v = x.val+y.val;
+   node n = zip(x.next,y.next);
+   return new node(v,n);
    }
 }
 
