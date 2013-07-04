@@ -2666,8 +2666,8 @@ let add_infer_hp_contr_to_list_context h_arg_map cp (l:list_context) : list_cont
                        (*       let _ = Debug.tinfo_hprint (add_str "Not_found 2"  pr_none) () no_pos in *)
                        (*       raise Not_found *)
            ) [] new_cp in
-           let _ = rel_ass_stk # push_list (new_rels) in
-           (* let _ = Log.current_hprel_ass_stk # push_list (new_rels) in *)
+           (* let _ = rel_ass_stk # push_list (new_rels) in *)
+           let _ = Log.current_hprel_ass_stk # push_list (new_rels) in
 	   let scc_f es = Ctx {es with es_infer_hp_rel = new_rels@es.es_infer_hp_rel;} in
 	   Some (transform_list_context (scc_f, (fun a -> a)) l)
 	 with Not_found -> None
