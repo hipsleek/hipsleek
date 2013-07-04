@@ -1503,7 +1503,7 @@ let pairwisecheck_raw (f : CP.formula) : CP.formula =
   let rels = CP.get_RelForm f in
   let ids = List.concat (List.map get_rel_id_list rels) in
   let f_memo, subs, bvars = CP.memoise_rel_formula ids f in
-  let res_memo = Omega.pairwisecheck f_memo in
+  let res_memo = pairwisecheck f_memo in
   CP.restore_memo_formula subs bvars res_memo
 
 let pairwisecheck_raw (f : CP.formula) : CP.formula =
