@@ -1911,8 +1911,9 @@ let pr_hprel_def_short hpd=
   (* fmt_string (CP.print_rel_cat hpd.hprel_def_kind); *)
   (* fmt_string "\n"; *)
   (pr_h_formula hpd.hprel_def_hrel);
-  fmt_string " ::= ";
-  fmt_cut();
+  fmt_string " ::=";
+  (* no cut here please *)
+  (* fmt_cut(); *)
   (pr_list_op_none " \/ " pr_path_of) hpd.hprel_def_body;
    (* fmt_string (String.concat " OR " (List.map pr_path_of hpd.hprel_def_body)); *)
   (* fmt_string " LIB FORM:\n"; *)
