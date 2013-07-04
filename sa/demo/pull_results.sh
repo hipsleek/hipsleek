@@ -13,7 +13,7 @@ function one
 one set-tail-2.ss
 one sll-dll.ss
 one last-2.ss
-one "dll-append_paper.ss --pred-en-dangling --pred-disj-unify"
+one "dll-append_paper.ss --pred-en-dangling --classic"
 one "zip_paper_leq.ss --sa-en-sp-split --pred-en-dangling"
 one "tll.ss --sa-dnc --pred-en-dangling"
 
