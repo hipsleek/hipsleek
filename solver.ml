@@ -4944,25 +4944,23 @@ and heap_entail_conjunct_lhs_x prog is_folding  (ctx:context) (conseq:CF.formula
                       (*         let _ = Log.current_hprel_ass_stk # push_list ([hp_rel]) in *)
                       (*         let new_es = {estate with CF.es_infer_hp_rel = estate.CF.es_infer_hp_rel @ [hp_rel];} in *)
                         (* | None ->  heap_entail () *)
+	               let h_inf_args, hinf_args_map = get_heap_inf_args estate in
+                       let esv = estate.es_infer_vars in
                        match r_inf_contr with
                          | Some (new_estate,pf) -> 
-                               (* let new_estate = {new_estate with es_infer_vars = esv} in *)
-                               (* let new_es = List.map add_infer_rel_to_estate (\* inf_ *\)relass new_estate in *)
-		               let _ = Debug.tinfo_hprint (add_str "inferred contradiction : " Cprinter.string_of_pure_formula) pf pos in
-                               let h_inf_args, hinf_args_map = get_heap_inf_args estate in
-                               let esv = estate.es_infer_vars in
                                let new_estate = {new_estate with es_infer_vars = esv} in
                                let ctx1 = CF.Ctx new_estate in
-                               let r1, prf = heap_entail_one_context 17 prog is_folding ctx1 conseq None None None pos in (* andreeac: is this ok? *)
+                               let r1, prf = heap_entail_conjunct 17 prog is_folding ctx1 conseq [] pos in
+                               let _ = Debug.tinfo_hprint (add_str "r1"  Cprinter.string_of_list_context) r1 pos in
                                let r1 = Infer.add_infer_hp_contr_to_list_context hinf_args_map [pf] r1 in
+                               let _ = Debug.tinfo_hprint (add_str "r1 opt"  (pr_option Cprinter.string_of_list_context)) r1 pos in
                                begin
                                  match r1 with
                                    | Some r1 ->
-                                         let rec aux lst =
-                                           match lst with
-				             | [(_,h,_)] -> add_infer_rel_to_list_context h r1 
+                                         let r1 =
+                                           match relass with
+				             | [(_,h,_)] -> add_infer_rel_to_list_context h r1
 				             | _ -> r1 in
-                                         let r1 = aux relass in
                                          (r1, prf)
                                    | None -> heap_entail ()
                                end
@@ -4970,11 +4968,12 @@ and heap_entail_conjunct_lhs_x prog is_folding  (ctx:context) (conseq:CF.formula
                          | None ->  
                                  match relass with
 				   | [(es,h,_)] -> 
-                                         let ctx1 = CF.Ctx es in
+                                         let new_estate = {es with es_infer_vars = esv} in
+                                         let ctx1 = CF.Ctx new_estate in
                                          let _ = Debug.tinfo_hprint (add_str "ctx1" Cprinter.string_of_context) ctx1 pos in
                                          let ctx1 = add_infer_rel_to_ctx h ctx1 in
                                          let _ = Debug.tinfo_hprint (add_str "ctx1(with inf rel)" Cprinter.string_of_context) ctx1 pos in
-                                         let r1, prf = heap_entail_one_context 18 prog is_folding ctx1 conseq None None None pos in (* andreeac: is this ok? *) 
+                                         let r1, prf = heap_entail_conjunct 18 prog is_folding ctx1 conseq [] pos in
                                           (r1, prf)
 				   | _ ->  heap_entail ()
                     end
