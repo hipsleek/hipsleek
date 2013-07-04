@@ -1885,7 +1885,7 @@ let pr_hprel_short_inst cprog hpa=
 let pr_path_of (path, off)=
    pr_wrap_test_nocut "" skip_cond_path_trace  (fun l -> fmt_string (pr_list_round_sep ";" string_of_int l)) path
   ; (match off with
-     | None -> fmt_string "UNKNOWN"
+     | None -> fmt_string " NONE"
      | Some f -> fmt_string (prtt_string_of_formula f))
 
 let pr_hprel_def hpd=
@@ -1902,7 +1902,7 @@ let pr_hprel_def hpd=
   fmt_string " ::= ";
   fmt_cut () ;
   fmt_string ( match hpd.hprel_def_body_lib with
-    | None -> "UNKNOWN"
+    | None -> " NONE"
     | Some f -> prtt_string_of_formula f);
   fmt_close()
 
