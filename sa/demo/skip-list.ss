@@ -27,7 +27,7 @@ infer[SLSEG] requires SLSEG(l,e) ensures res;
 {
 	if (l == e) return true;
 	else if (l==null) return false;
-	else  return  l.s == null;
+	else  return skip0(l.n, e) && l.s == null;
 }
 
 
