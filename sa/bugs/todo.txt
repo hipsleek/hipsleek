@@ -1376,7 +1376,45 @@ res:  failctx
                    fc_message: infer_heap_node
                    fc_current_lhs_flow: {FLOW,(19,20)=__norm}}
 ======================================================================
+# contra2b.slk
+
+infer [P,Q] P(x)*Q(y) & mmm=-1 & x!=null & y=null |-  mmm=3.
+print residue.
+
+Currently fails at method add_infer_hp_contr_to_list_context
+
+EXPECTING one of below:
+(i)   P(x)*Q(y) --> x=null | y!=null
+(ii)  P(x)     --> x=null | y!=null
+(iii) Q(y)     --> x=null | y!=null
 ======================================================================
+# contra2c.slk
+
+infer [Z] P(x)*Q(y)*Z(x,k) & mmm=-1 & x!=null & y=null |-  mmm=3.
+
+Why fail?
+
+EXPECT:
+ Z(x,k) --> x=null
+
+ Loc : problem is still with 
+
+add_infer_hp_contr_to_list_context@19@15
+add_infer_hp_contr_to_list_context inp1 :[((Z,?),[k,x])]
+add_infer_hp_contr_to_list_context inp2 :[ x=null]
+add_infer_hp_contr_to_list_context inp3 : 
+Good Context: [es_formula: hfalse&false&{FLOW,(19,20)=__norm}[]
+               es_pure: true
+               es_orig_ante: Some(hfalse&false&{FLOW,(19,20)=__norm}[])
+               es_heap: emp
+               es_aux_conseq: true
+               es_must_error: None
+               es_var_measures: None
+               es_term_err: None
+               es_infer_vars: [k; x]
+               es_infer_vars_hp_rel: [Z]
+               es_unsat_flag: true]
+
 ======================================================================
 ======================================================================
 ======================================================================

@@ -1,0 +1,27 @@
+data node {
+	int val; 
+	node next;	
+}.
+
+pred ll<n> == self=null & n=0
+ or self::node<_,q>*q::ll<n-1>
+inv n>=0.
+
+HeapPred P(node a). 
+HeapPred Q(node a). 
+HeapPred Z(node a, node b). 
+
+
+infer [P,Q] P(x)*Q(y) & mmm=-1 & x!=null & y=null |-  mmm=3.
+print residue.
+/*
+# contra2b.slk
+
+Currently fails at method add_infer_hp_contr_to_list_context
+
+EXPECTING one of below:
+(i)   P(x)*Q(y) --> x=null | y!=null
+(ii)  P(x)     --> x=null | y!=null
+(iii) Q(y)     --> x=null | y!=null
+
+*/
