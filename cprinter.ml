@@ -1929,6 +1929,17 @@ let pr_hprel_def_lib hpd=
     | Some f -> prtt_string_of_formula f);
   fmt_close()
 
+let pr_pair_path_def (path, (hf,body))=
+  fmt_open_box 1;
+    pr_wrap_test_nocut "relDefn " Gen.is_empty  (fun l -> fmt_string (pr_list_round string_of_int l)) path;
+    fmt_string ((prtt_string_of_h_formula hf) ^ "<->" ^ (prtt_string_of_formula body));
+  fmt_close()
+
+let pr_pair_path_dang (path, hp)=
+  fmt_open_box 1;
+  fmt_string ("Declare_Unknown " ^ (pr_list_round string_of_int path) ^ "[" ^ (string_of_spec_var hp) ^ "]");
+  fmt_close()
+
 let string_of_hprel hp = poly_string_of_pr pr_hprel hp
 
 let string_of_hprel_short hp = poly_string_of_pr pr_hprel_short hp
@@ -1937,6 +1948,10 @@ let string_of_hprel_short_inst prog hp =
   poly_string_of_pr (pr_hprel_short_inst prog) hp
 
 let string_of_hprel_def hp = poly_string_of_pr pr_hprel_def hp
+
+let string_of_pair_path_def pair = poly_string_of_pr pr_pair_path_def pair
+
+let string_of_pair_path_dang pair = poly_string_of_pr pr_pair_path_dang pair
 
 let string_of_hprel_def_short hp = poly_string_of_pr pr_hprel_def_short hp
 

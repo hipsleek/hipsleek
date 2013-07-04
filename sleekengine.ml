@@ -843,17 +843,17 @@ let process_shape_divide pre_hps post_hps=
           sel_hps sel_post_hps unk_map unk_hpargs link_hpargs true false
     else []
   in
-  let pr = pr_list_ln Cprinter.string_of_hp_rel_def in
   let pr_one (cond, hpdefs,_, _, link_hpargs,_)=
     begin
       if not(List.length hpdefs = 0) then
+        let pr_path_defs = List.map (fun (_, hf, f) -> (cond,(hf,f))) hpdefs in
+        let pr_path_dangs = List.map (fun (hp,_) -> (cond, hp)) link_hpargs in
         print_endline "";
       print_endline "\n*************************************";
       print_endline "*******relational definition ********";
       print_endline "*************************************";
-      print_endline ("path: " ^ (CF.string_of_cond_path cond));
-      print_endline (pr hpdefs);
-      print_endline ("UNKNOWN: " ^ ((pr_list (pr_pair !CP.print_sv !CP.print_svl)) link_hpargs));
+      let _ = List.iter (fun pair -> print_endline (Cprinter.string_of_pair_path_def pair) ) pr_path_defs in
+      let _ = List.iter (fun pair -> print_endline (Cprinter.string_of_pair_path_dang pair) ) pr_path_dangs in
       print_endline "*************************************"
     end
   in
