@@ -2633,30 +2633,38 @@ let get_spec_from_file prog =
 let add_infer_hp_contr_to_list_context h_arg_map cp (l:list_context) : list_context option= 
 	 (* let new_cp = List.concat (List.map CP.split_conjunctions cp) in *)
 	 let new_cp = List.map CP.arith_simplify_new cp in
-	 (*let _ = print_string ("\n new_cp: "^(!CP.print_formula (List.hd new_cp))^"\n") in*)
+	 (* let _ = print_string ("\n new_cp: "^(!CP.print_formula (List.hd new_cp))^"\n") in *)
+         let process_one fv c ((h,hf),h_args)=
+           if (Gen.BList.subset_eq CP.eq_spec_var h_args fv(*(List.concat (snd (List.split new_hd)))*)) then
+             (*LOC changed here. may be wrong*)
+	     mkHprel (CP.HPRelDefn (h, List.hd h_args, List.tl h_args )) h_args [] []  (formula_of_heap hf no_pos) (formula_of_pure_N c no_pos)
+	   else
+             let _ = Debug.tinfo_hprint (add_str "Not_found 1"  pr_none) () no_pos in
+             raise Not_found
+         in
 	 try
-		 let new_rels = List.map (fun c->
-			let fv = CP.fv c in
-			let new_hd = List.filter (fun (_,vl)-> Gen.BList.overlap_eq CP.eq_spec_var fv vl) h_arg_map in
-			(*let _ = print_string ("\n matching rels: "^(string_of_int (List.length new_hd))^"\n") in*)
-			(*let _ = print_string ("\n new_cp fv: "^(!print_svl fv)^"\n") in*)
-                        let pr1 = pr_list (pr_pair (pr_pair !print_sv pr_none) !print_svl) in 
-                        let _ = Debug.tinfo_hprint (add_str "new_hd"  pr1) new_hd no_pos in
-                        
-			match new_hd with
-			 | ((h,hf),h_args)::t -> 
-				if (Gen.BList.subset_eq CP.eq_spec_var fv h_args (*(List.concat (snd (List.split new_hd)))*)) then
-                                  (*LOC changed here. may be wrong*)
-				mkHprel (CP.HPRelDefn (h, List.hd h_args, List.tl h_args )) h_args [] []  (formula_of_heap hf no_pos) (formula_of_pure_N c no_pos)  
-				else 
-                                  let _ = Debug.tinfo_hprint (add_str "Not_found 1"  pr_none) () no_pos in
-                                  raise Not_found
-			| _ -> 
-                              let _ = Debug.tinfo_hprint (add_str "Not_found 2"  pr_none) () no_pos in
-                              raise Not_found 
-                       
-                        
-                 ) new_cp in
+		 let new_rels = List.fold_left (fun res_rels c->
+		     let fv = CP.fv c in
+		     let new_hd = List.filter (fun (_,vl)-> Gen.BList.overlap_eq CP.eq_spec_var fv vl) h_arg_map in
+		     (*let _ = print_string ("\n matching rels: "^(string_of_int (List.length new_hd))^"\n") in*)
+		     (* let _ = print_string ("\n new_cp fv: "^(!print_svl fv)^"\n") in *)
+                     let pr1 = pr_list (pr_pair (pr_pair !print_sv pr_none) !print_svl) in 
+                     let _ = Debug.tinfo_hprint (add_str "new_hd"  pr1) new_hd no_pos in
+                     match new_hd with
+                       | [] -> let _ = Debug.tinfo_hprint (add_str "Not_found 2"  pr_none) () no_pos in
+                         raise Not_found
+                       | _ -> res_rels@(List.map (process_one fv c) new_hd)
+                             (* | [((h,hf),h_args)] -> process_one fv c ((h,hf),h_args) *)
+			     (* if (Gen.BList.subset_eq CP.eq_spec_var fv h_args (\*(List.concat (snd (List.split new_hd)))*\)) then *)
+                             (*   (\*LOC changed here. may be wrong*\) *)
+			     (* mkHprel (CP.HPRelDefn (h, List.hd h_args, List.tl h_args )) h_args [] []  (formula_of_heap hf no_pos) (formula_of_pure_N c no_pos)   *)
+			     (* else  *)
+                             (*   let _ = Debug.tinfo_hprint (add_str "Not_found 1"  pr_none) () no_pos in *)
+                             (*   raise Not_found *)
+			     (* | _ -> *)
+                             (*       let _ = Debug.tinfo_hprint (add_str "Not_found 2"  pr_none) () no_pos in *)
+                             (*       raise Not_found *)
+                 ) [] new_cp in
                  let _ = rel_ass_stk # push_list (new_rels) in
                  let _ = Log.current_hprel_ass_stk # push_list (new_rels) in
 		 let scc_f es = Ctx {es with es_infer_hp_rel = new_rels@es.es_infer_hp_rel;} in
