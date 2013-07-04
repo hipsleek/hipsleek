@@ -6402,6 +6402,11 @@ let print_failesc_context = ref(fun (c:failesc_context) -> "printer not initiali
 let print_failure_kind_full = ref(fun (c:failure_kind) -> "printer not initialized")
 let print_fail_type = ref(fun (c:fail_type) -> "printer not initialized")
 
+let get_estate_from_context ctx =
+  match ctx with
+    | Ctx es -> Some es
+    | _ -> None
+
 let get_infer_vars_sel_hp_ctx ctx0=
   let rec helper ctx=
     match ctx with
@@ -8189,7 +8194,6 @@ let list_failesc_context_or f (l1:list_failesc_context) (l2:list_failesc_context
   Debug.no_2 "list_failesc_context_or" 
       pr pr pr
       (fun _ _ -> list_failesc_context_or f l1 l2) l1 l2
-
 
 let add_cond_label_partial_context (c_pid: control_path_id_strict) (c_opt: path_label) ((fl,sl):partial_context) =
   let sl_1 = List.map (fun (pt,ctx) -> (((c_pid,c_opt)::pt),ctx) ) sl in
@@ -12773,5 +12777,18 @@ let rec get_heap_inf_args estate =
 (*TODO: LOC: es_cond_path from estate*)
 let get_es_cond_path es = es.es_cond_path
 
+(*TODO: should improve*)
+let rec get_ctx_cond_path ctx =
+  match ctx with
+    | Ctx es -> get_es_cond_path es
+    | OCtx (c1,_) ->  get_ctx_cond_path c1
+
+(*TODO: should improve*)
 let get_list_ctx_cond_path lc=
-  []
+  match lc with
+    | SuccCtx cl -> begin
+        match cl with
+          | [] -> []
+          | c::_ ->  get_ctx_cond_path c
+        end
+    | _ -> []
