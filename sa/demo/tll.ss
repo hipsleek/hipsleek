@@ -22,18 +22,22 @@ data node{
 HeapPred H(node a, node@NI b).
 HeapPred G(node a, node@NI b, node c).
 
-node set_right (node x, node r)
-  infer [H,G] requires H(x,r) ensures G(x,res,r);
-//requires x::tree<> ensures x::tll<res,r>;
+node set_right (node x, node t)
+  infer [H,G] requires H(x,t) ensures G(x,res,t);
+//requires x::tree<> ensures x::tll<res,t>;
 {
+  //node xr = x.right;
+  //node xl = x.left;
   if (x.right==null) 
   	{
-  	  	x.next = r;
+//		assert xl'=null;
+  	  	x.next = t;
   	  	return x;
   	}
   else 
   	{
-  		node l_most = set_right(x.right, r);
+//		assert xr'!=null & xl'!=null;
+  		node l_most = set_right(x.right, t);
   		return set_right(x.left, l_most);  		
   	}
 }
