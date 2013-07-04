@@ -14,7 +14,7 @@ HeapPred Z(node a, node b).
 infer [P,Q,Z] P(x)*Q(y)*Z(x,k) & mmm=-1 & x!=null & y=null |-  mmm=3.
 print residue.
 // why fail?
-/*
+
 infer [x,k] P(x)*Q(y)*Z(x,k) & mmm=-1 & x!=null & y=null |-  mmm=3.
 print residue.
 
@@ -22,15 +22,15 @@ infer [Z] P(x)*Q(y)*Z(x,k) & mmm=-1 & x!=null & y=null |-  mmm=3.
 print residue.
 // why fail when above succeeds?
 */
-
 /*
-# contra2b.slk
+# contra2c.slk
 
-Currently fails at method add_infer_hp_contr_to_list_context
+infer [Z] P(x)*Q(y)*Z(x,k) & mmm=-1 & x!=null & y=null |-  mmm=3.
 
-EXPECTING one of below:
-(i)   P(x)*Q(y) --> x=null | y!=null
-(ii)  P(x)     --> x=null | y!=null
-(iii) Q(y)     --> x=null | y!=null
+Why fail?
+
+EXPECT:
+ Z(x,k) --> x=null
+
 
 */

@@ -1396,6 +1396,25 @@ Why fail?
 
 EXPECT:
  Z(x,k) --> x=null
+
+ Loc : problem is still with 
+
+add_infer_hp_contr_to_list_context@19@15
+add_infer_hp_contr_to_list_context inp1 :[((Z,?),[k,x])]
+add_infer_hp_contr_to_list_context inp2 :[ x=null]
+add_infer_hp_contr_to_list_context inp3 : 
+Good Context: [es_formula: hfalse&false&{FLOW,(19,20)=__norm}[]
+               es_pure: true
+               es_orig_ante: Some(hfalse&false&{FLOW,(19,20)=__norm}[])
+               es_heap: emp
+               es_aux_conseq: true
+               es_must_error: None
+               es_var_measures: None
+               es_term_err: None
+               es_infer_vars: [k; x]
+               es_infer_vars_hp_rel: [Z]
+               es_unsat_flag: true]
+
 ======================================================================
 ======================================================================
 ======================================================================
