@@ -23,18 +23,19 @@ infer [H,G] requires H(x) ensures G(x,res);
 //requires x::tree<> ensures x::tree<> & res=x;
 {
   //[1]
-  dprint;
+  //dprint;
   if (x.right==null) 
     { //[1.1]
-      dprint;
+      //dprint;
+      assert true;
    	}
   else 
     { //[1.2]
-      dprint;
+      //dprint;
   		x.right =set_right(x.right);
   		x.left = set_right(x.left);
   	}
-  dprint;
+  //dprint;
   return x;
 }
 

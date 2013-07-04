@@ -3500,6 +3500,29 @@ RELDEFN
    \/  x_883::node<left_29_845,right_29_846,__DP_H_0>@M * G(right_29_846,l_878,r_885) 
        * G(left_29_845,res_884,l_878)&right_29_846!=null]
 =====================================================================
+# skip0-bug-1.slk
+
+infer [l,e]
+ SLSEG(l,e)&e!=l & l=null 
+ & !(v_boolean_32_770') & res=v_boolean_32_770'
+ |-  res.
+print residue.
+
+infer [SLSEG]
+ SLSEG(l,e)&e!=l & l=null 
+ & !(v_boolean_32_770') & res=v_boolean_32_770'
+ |-  res.
+print residue.
+
+lhs_contra for heap_pred not working properly;
+please check if the fix by Andreea solved this problem.
+Cristian did a patch before but not sure why this isn't workin
+
+Entail (1) : Valid. 
+ <1>hfalse&false&{FLOW,(19,20)=__norm}[]
+ inferred pure: [(e>=l | l!=null); (l!=null | l>(e-1))]
+
+Entail (2) : Fail.
 =====================================================================
 =====================================================================
 =====================================================================
