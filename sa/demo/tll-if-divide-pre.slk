@@ -36,6 +36,38 @@ relAssume (1;0)
 /*
 # tll-if-divide-pre.slk
 
+Above generates:
+
+path: (2,0)
+[HP_RELDEFN H_3:  H_3(right_25_34) ::=  H(right_25_34)&right_25_34!=null,
+HP_RELDEFN H_2:  H_2(left_25_35) ::=  H(left_25_35),
+HP_RELDEFN H:  H(x_36) ::=  x_36::node<left_25_800,right_25_801>@M * H(left_25_800) * H(right_25_801)&
+right_25_801!=null]
+UNKNOWN: []
+
+path: (1,0)
+[HP_RELDEFN H:  H(x_37) ::=  x_37::node<left_25_800,right_25_801>@M * H_2(left_25_800)&right_25_801=null,
+HP_RELDEFN H_3:  H_3(right_25_38) ::=  emp&right_25_38=null]
+UNKNOWN: [(H_2,[a])]
+
+Can we make it consistent with the format of conquer
+so that it is easier to do cut-paste.
+
+relDefn (1;0)
+ H_3(right_25_31) <->  right_25_31=null.
+ H(x_27) <->  x_27::node<left_25_800,right_25_801>@M 
+                * H_2(left_25_800)&right_25_801=null.
+ H_2(x) <-> __UNKNOWN
+relDefn (2;0)
+ H_3(right_25_31) <->  H(right_25_31)&right_25_31!=null.
+ H_2(left_25_32)  <->  H(left_25_32).
+ H(x_33) <->  x_33::node<left_25_800,right_25_801>@M 
+   * H(left_25_800) * H(right_25_801) & right_25_801!=null.
+
+=======================
+
+
+
 I thought the splitting is for relational assumptions only.
 It seems you also perform shape_inference. Maybe it is OK too.
 
