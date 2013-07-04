@@ -3750,7 +3750,7 @@ let mk_orig_hprel_def prog is_pre defs unk_hps hp r other_args args sh_ldns eqNu
   in
   let pr7a hrel = Cprinter.string_of_hrel_formula (CF.HRel hrel) in
   let pr7 = pr_list pr7a in
-  Debug.ho_7 "mk_orig_hprel_def" pr2 pr1 pr2 (pr_list pr3) pr2 pr4 pr7 pr6
+  Debug.no_7 "mk_orig_hprel_def" pr2 pr1 pr2 (pr_list pr3) pr2 pr4 pr7 pr6
       (fun _ _ _ _ _ _ _ -> mk_orig_hprel_def_x prog is_pre defs unk_hps hp r other_args args sh_ldns
            eqNulls eqPures hprels unk_svl quans)
       unk_hps hp args sh_ldns eqNulls eqPures hprels
@@ -3865,7 +3865,7 @@ let mk_hprel_def_for_subs prog is_pre cdefs unk_hps unk_svl ls_n_hpargs1 n_fs3 p
   let pr2 = pr_list (pr_pair !CP.print_sv pr2a) in
   let pr3a = fun (_, def) -> Cprinter.string_of_hp_rel_def def in
   let pr3 = (pr_list_ln pr3a) in
-  Debug.ho_2 "mk_hprel_def_for_subs" pr2 pr1 pr3
+  Debug.no_2 "mk_hprel_def_for_subs" pr2 pr1 pr3
       (fun _ _ -> mk_hprel_def_for_subs_x prog is_pre cdefs unk_hps unk_svl ls_n_hpargs1 n_fs3 pos)
       ls_n_hpargs1 n_fs3
 

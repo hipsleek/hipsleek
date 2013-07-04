@@ -10,7 +10,7 @@ inv n>=0.
 HeapPred P(node a). 
 HeapPred Q(node a). 
 
-relation F(node n). 
+relation F(int n). 
 
 /*
 infer [x]  mmm=-1 & x!=null |-  x::ll<mmm> & mmm>=0.
@@ -22,13 +22,13 @@ print residue.
 infer [x]  mmm=-1 & x!=null |-  mmm>=0.
 print residue.
 // x=null
-*/
+
 
 infer [P]  P(x) & mmm=-1 & x!=null |-  mmm>=0.
 print residue.
 // x=null
 
-/*
+
 infer [x]  mmm=-1 & x!=null |-  x::ll<mmm>.
 print residue.
 // P(x) --> x=null
@@ -65,11 +65,11 @@ print residue.
 infer [P] P(xx) & mmm=-1 & x!=null |-  mmm<=0.
 print residue.
 // no contra
-
+*/
 infer [F] F(n) & mmm=-1 & n>0 |-  mmm=3.
 print residue.
 // F(n) --> n<=0
-
+/*
 infer [P] P(x) & mmm=-1 & x=null |-  x::node<_,_>.
 print residue.
 // P(x) --> x!=null

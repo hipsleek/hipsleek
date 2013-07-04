@@ -4689,7 +4689,7 @@ and heap_entail_one_context i prog is_folding  ctx conseq (tid: CP.spec_var opti
   (* let pr1 = fun _-> "" in  *)
   (* let pr2 = fun _-> "" in *)
   (* let pr3 = fun _-> "" in *)
-  Debug.to_2_num i "heap_entail_one_context" pr1 pr2 pr3 (fun ctx conseq -> heap_entail_one_context_a i prog is_folding  ctx conseq pos) ctx conseq
+  Debug.no_2_num i "heap_entail_one_context" pr1 pr2 pr3 (fun ctx conseq -> heap_entail_one_context_a i prog is_folding  ctx conseq pos) ctx conseq
 
 (*only struc_formula can have some thread id*)
 and heap_entail_one_context_a i (prog : prog_decl) (is_folding : bool)  (ctx : context) (conseq : formula) pos : (list_context * proof) =
@@ -4764,7 +4764,7 @@ and heap_entail_conjunct_lhs prog is_folding  (ctx:context) conseq pos : (list_c
   let pr4 = Cprinter.string_of_formula in
   let pr5 = string_of_loc in
   let pr_res (ctx,_) = ("\n ctx = "^(Cprinter.string_of_list_context ctx)) in
-  Debug.to_5 "heap_entail_conjunct_lhs" pr1 pr2 pr3 pr4 pr5 pr_res heap_entail_conjunct_lhs_x prog is_folding ctx conseq pos
+  Debug.no_5 "heap_entail_conjunct_lhs" pr1 pr2 pr3 pr4 pr5 pr_res heap_entail_conjunct_lhs_x prog is_folding ctx conseq pos
 
 (* check entailment when lhs is normal-form, rhs is a conjunct *)
 and heap_entail_conjunct_lhs_x prog is_folding  (ctx:context) (conseq:CF.formula) pos : (list_context * proof) =
@@ -4948,20 +4948,35 @@ and heap_entail_conjunct_lhs_x prog is_folding  (ctx:context) (conseq:CF.formula
                          | Some (new_estate,pf) -> 
                                (* let new_estate = {new_estate with es_infer_vars = esv} in *)
                                (* let new_es = List.map add_infer_rel_to_estate (\* inf_ *\)relass new_estate in *)
-		               (* let _ = Debug.tinfo_hprint (add_str "inferred contradiction : " Cprinter.string_of_pure_formula) pf pos in *)
+		               let _ = Debug.tinfo_hprint (add_str "inferred contradiction : " Cprinter.string_of_pure_formula) pf pos in
                                let h_inf_args, hinf_args_map = get_heap_inf_args estate in
                                let esv = estate.es_infer_vars in
                                let new_estate = {new_estate with es_infer_vars = esv} in
                                let ctx1 = CF.Ctx new_estate in
-                               let r1, prf = heap_entail_one_context 220 prog is_folding ctx1 conseq None None None pos in (* andreeac: is this ok? *)
+                               let r1, prf = heap_entail_one_context 17 prog is_folding ctx1 conseq None None None pos in (* andreeac: is this ok? *)
                                let r1 = Infer.add_infer_hp_contr_to_list_context hinf_args_map [pf] r1 in
                                begin
                                  match r1 with
-                                   | Some r1 ->  (r1, prf)
+                                   | Some r1 ->
+                                         let rec aux lst =
+                                           match lst with
+				             | [(_,h,_)] -> add_infer_rel_to_list_context h r1 
+				             | _ -> r1 in
+                                         let r1 = aux relass in
+                                         (r1, prf)
                                    | None -> heap_entail ()
                                end
                                (* (r1, prf) *)
-                         | None ->  heap_entail ()
+                         | None ->  
+                                 match relass with
+				   | [(es,h,_)] -> 
+                                         let ctx1 = CF.Ctx es in
+                                         let _ = Debug.tinfo_hprint (add_str "ctx1" Cprinter.string_of_context) ctx1 pos in
+                                         let ctx1 = add_infer_rel_to_ctx h ctx1 in
+                                         let _ = Debug.tinfo_hprint (add_str "ctx1(with inf rel)" Cprinter.string_of_context) ctx1 pos in
+                                         let r1, prf = heap_entail_one_context 18 prog is_folding ctx1 conseq None None None pos in (* andreeac: is this ok? *) 
+                                          (r1, prf)
+				   | _ ->  heap_entail ()
                     end
               | None -> 
                     let _ = DD.info_pprint "WARNING : presence of disj context at EARLY CONTRA DETECTION" no_pos in
@@ -8993,7 +9008,7 @@ and solver_detect_lhs_rhs_contra i prog estate conseq pos msg =
   let pr_es (es,e) =  pr_pair pr_estate Cprinter.string_of_pure_formula (es,e) in
   let pr = CP.print_lhs_rhs in
   let pr_3 (_,lr,b) =  pr_pair (pr_list pr) string_of_bool (lr,b) in
-  Debug.to_3_num i "solver_detect_lhs_rhs_contra" 
+  Debug.no_3_num i "solver_detect_lhs_rhs_contra" 
       pr_estate pr_f pr_id  (pr_pair (pr_option pr_es) (pr_list pr_3)) (fun _ _ _ -> 
           solver_detect_lhs_rhs_contra_x prog estate conseq pos msg) estate conseq msg
 

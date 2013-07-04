@@ -1839,7 +1839,7 @@ let trans_constr_hp_2_view_x iprog cprog proc_name in_hp_names chprels_decl cons
 let trans_constr_hp_2_view iprog cprog proc_name in_hp_names chprels_decl constrs=
   let pr1= pr_list_ln Cprinter.string_of_hprel_short in
   let pr2 = pr_list pr_id in
-  Debug.ho_2 "trans_constr_hp_2_view" pr2 pr1 pr1
+  Debug.no_2 "trans_constr_hp_2_view" pr2 pr1 pr1
       (fun _ _ -> trans_constr_hp_2_view_x iprog cprog proc_name
           in_hp_names chprels_decl constrs)
       in_hp_names constrs

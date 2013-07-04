@@ -580,7 +580,7 @@ let infer_lhs_contra pre_thus lhs_xpure ivars pos msg =
 let infer_lhs_contra pre_thus f ivars pos msg =
   let pr = !print_mix_formula in
   let pr2 = !print_pure_f in
-  Debug.to_2 "infer_lhs_contra" pr !print_svl (pr_option pr2) 
+  Debug.no_2 "infer_lhs_contra" pr !print_svl (pr_option pr2) 
       (fun _ _ -> infer_lhs_contra pre_thus f ivars pos msg) f ivars
 
 let infer_lhs_contra_estate estate lhs_xpure pos msg =
@@ -651,11 +651,13 @@ let infer_lhs_contra_estate estate lhs_xpure pos msg =
 
 let infer_lhs_contra_estate i e f pos msg =
   let pr0 = !print_entail_state(* _short *) in
-  let pr = !print_mix_formula in
-  let pr2 = fun (_,r,_) -> pr_list pr_none r in
-  let pr_res = pr_pair (pr_option (pr_pair pr0 !CP.print_formula)) (pr_list pr2) in
-    (* (fun l -> (string_of_int (List.length l))) *)
-  Debug.to_2_num i "infer_lhs_contra_estate" pr0 pr pr_res (fun _ _ -> infer_lhs_contra_estate e f pos msg) e f
+  let pr1 = !print_mix_formula in
+  let pr_f = Cprinter.string_of_formula in
+  let pr_es (es,e) =  pr_pair pr0 Cprinter.string_of_pure_formula (es,e) in
+  let pr = CP.print_lhs_rhs in
+  let pr3 (_,lr,b) =  pr_pair (pr_list pr) string_of_bool (lr,b) in
+  let pr_res = (pr_pair (pr_option pr_es) (pr_list pr3)) in
+  Debug.no_2_num i "infer_lhs_contra_estate" pr0 pr1 pr_res (fun _ _ -> infer_lhs_contra_estate e f pos msg) e f
 
 (*
    should this be done by ivars?
@@ -743,7 +745,7 @@ let detect_lhs_rhs_contra_x (*lhs_xpure*) lhs_xpure_orig rhs_xpure pos =
 
 let detect_lhs_rhs_contra lhs rhs pos =
 	let pr = !CP.print_formula in
-	Debug.to_2 "detect_lhs_rhs_contra" pr pr (pr_pair string_of_bool !CP.print_formula) 
+	Debug.no_2 "detect_lhs_rhs_contra" pr pr (pr_pair string_of_bool !CP.print_formula) 
 		(fun _ _ -> detect_lhs_rhs_contra_x lhs rhs pos) lhs rhs
 	  
 (* let infer_h prog estate conseq lhs_b rhs_b lhs_rels*)
@@ -1402,7 +1404,7 @@ let detect_lhs_rhs_contra2 ivs lhs_c rhs_mix pos =
      let pr2 = Cprinter.string_of_pure_formula in
      let pr3 = Cprinter.string_of_mix_formula in
      let pr = pr_pair string_of_bool pr2 in
-     Debug.to_3 "detect_lhs_rhs_contra2" (add_str "ivs" pr1) 
+     Debug.no_3 "detect_lhs_rhs_contra2" (add_str "ivs" pr1) 
      (add_str "lhs" pr2) 
      (add_str "rhs" pr3) 
      (add_str "(res,new_rhs)" pr)
@@ -1643,7 +1645,7 @@ let infer_collect_rel is_sat estate lhs_h_mix lhs_mix rhs_mix pos =
   let pr_neg_lhs = pr_option (pr_pair pr2 !CP.print_formula) in
   let pr2 (es,l,r,p,a) = 
     pr_penta pr1 pr1 (pr_list CP.print_lhs_rhs) pr_neg_lhs pr_rel_ass (l,r,es.es_infer_rel,p,a) in
-  Debug.to_4 "infer_collect_rel" pr0 pr1 pr1 pr1 pr2
+  Debug.no_4 "infer_collect_rel" pr0 pr1 pr1 pr1 pr2
     (fun _ _ _ _ -> 
       infer_collect_rel is_sat estate lhs_h_mix lhs_mix rhs_mix pos) 
     estate.es_infer_vars_rel lhs_h_mix lhs_mix rhs_mix
