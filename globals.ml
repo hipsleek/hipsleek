@@ -641,6 +641,7 @@ let lib_files = ref ([] : string list)
 (* command line options *)
 
 let texify = ref false
+let testing_flag = ref false
 
 let instantiation_variants = ref 0
 

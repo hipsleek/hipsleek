@@ -418,6 +418,7 @@ let common_arguments = [
   ("--en-print-ann" , Arg.Set Globals.print_ann, "enable annotation printing (default)");
   ("--dis-print-ann", Arg.Clear Globals.print_ann, "disable annotation printing");
   ("--en-texify", Arg.Set Globals.texify, "output latex formulas");
+  ("--en-testing", Arg.Set Globals.testing_flag, "generate for testing comparison with start/stop markers");
 
   ]
 

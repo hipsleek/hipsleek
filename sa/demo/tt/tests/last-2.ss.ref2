@@ -1,0 +1,31 @@
+========last-2.ss ==========
+<rstart>5
+[ HP_818(next_18_817) * x::node<val_18_816,next_18_817>@M&res=x & 
+  next_18_817=null --> G(res,x),
+ H(x) --> x::node<val_18_816,next_18_817>@M * HP_818(next_18_817),
+ HP_818(next_18_817)&next_18_817!=null --> H(next_18_817),
+ G(t_37',next_18_817)&
+  next_18_817!=null --> t_37'::node<val_23_833,next_23_834>@M * 
+  GP_835(next_23_834,next_18_817@NI) * GP_836(next_18_817,t_37'@NI),
+ x::node<val_18_816,next_18_817>@M * GP_835(next_23_834,next_18_817@NI) * 
+  GP_836(next_18_817,res@NI) * res::node<val_23_833,next_23_834>@M&
+  next_18_817!=null --> G(res,x)]
+<rstop>*************************************
+<dstart>
+[ H(x_854) ::= x_854::node<val_18_816,next_18_817>@M * HP_818(next_18_817),
+ G(res_856,x_857) ::= 
+ res_856::node<val_18_816,next_18_817>@M&res_856=x_857 & next_18_817=null
+ or x_857::node<val_18_858,next_18_859>@M * GP_836(next_18_859,res_856) * 
+    res_856::node<val_18_816,__DP_GP_835>@M&next_18_859!=null
+ ,
+ HP_818(next_18_855) ::= 
+ emp&next_18_855=null
+ or next_18_855::node<val_18_816,next_18_817>@M * HP_818(next_18_817)
+ ,
+ GP_836(next_18_922,t_923) ::= 
+ next_18_922::node<val_18_914,next_18_915>@M * GP_836(next_18_915,t_923)&
+ next_18_915!=null
+ or emp&next_18_922!=null & next_18_922=t_923
+ ]
+<dstop>
+====================

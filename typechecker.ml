@@ -2419,14 +2419,14 @@ and check_proc iprog (prog : prog_decl) (proc : proc_decl) cout_option (mutual_g
                         print_endline "*************************************";
                         print_endline "*******relational assumptions (4) ********";
                         print_endline "*************************************";
-			if !Globals.texify then print_endline ("<rstart>"^(string_of_int (List.length hp_lst_assume)));
+			if !Globals.testing_flag then print_endline ("<rstart>"^(string_of_int (List.length hp_lst_assume)));
 						
                         let pr = pr_list_ln (fun x -> Cprinter.string_of_hprel_short_inst prog x) in
                         let _ = Infer.rel_ass_stk # reverse in
                         (* print_endline (pr (Infer.rel_ass_stk # get_stk)); *)
                         print_endline (pr (hp_lst_assume));
                         (* print_endline (Infer.rel_ass_stk # string_of_reverse); *)
-                        if !Globals.texify then print_endline "<rstop>*************************************" 
+                        if !Globals.testing_flag then print_endline "<rstop>*************************************" 
                       end;
 		    let s_hprel, ls_inferred_hps, dropped_hps =
                       if !Globals.sa_en && List.length sel_hp_rels> 0 && List.length hp_lst_assume > 0 then
@@ -2456,9 +2456,9 @@ and check_proc iprog (prog : prog_decl) (proc : proc_decl) cout_option (mutual_g
 		        print_endline "*************************************";
 		        print_endline "*******relational definition ********";
 		        print_endline "*************************************";
-		        if !Globals.texify then print_endline "<dstart>"; 
+		        if !Globals.testing_flag then print_endline "<dstart>"; 
                         print_endline (rel_defs # string_of_reverse);
-		        if !Globals.texify then print_endline "<dstop>"; 
+		        if !Globals.testing_flag then print_endline "<dstop>"; 
 		        print_endline "*************************************";
                       end;
 		    (**************cp_test _ gen_cpfile******************)
