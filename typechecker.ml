@@ -515,10 +515,10 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
             let (vars_rel,vars_inf) = List.partition (fun v -> is_RelT(CP.type_of_spec_var v) ) vars in
             let _ = Debug.ninfo_hprint (add_str "vars_rel" !print_svl) vars_rel no_pos in
             let _ = 
-              if old_vars=[] then 
-                Debug.info_hprint (add_str "TRANSLATED SPECS" pr_spec) einfer no_pos 
-              else
-                let _ = Debug.info_hprint (add_str "TRANSLATED SPECS" pr_spec) einfer no_pos in
+(*              if old_vars=[] then *)
+(*                Debug.info_hprint (add_str "TRANSLATED SPECS" pr_spec) einfer no_pos *)
+(*              else*)
+(*                let _ = Debug.info_hprint (add_str "TRANSLATED SPECS" pr_spec) einfer no_pos in*)
                 let proc_args_vars = List.map (fun (t,i) -> CP.SpecVar(t,i,Unprimed) ) proc.proc_args in
                 let pre_post_vars = CP.remove_dups_svl (pre_vars @ post_vars @ new_fml_fv @ proc_args_vars) in
                 let _ = Debug.ninfo_hprint (add_str "all vars" !print_svl) pre_post_vars no_pos in
@@ -554,7 +554,35 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
                     CF.es_infer_vars_sel_hp_rel = es.CF.es_infer_vars_sel_hp_rel@vars_hp_rel;
                     CF.es_infer_vars_sel_post_hp_rel = es.CF.es_infer_vars_sel_post_hp_rel;
                     CF.es_infer_post = es.CF.es_infer_post || postf}) ctx in
-            let (c,pre,rel,hprel, _, post_hps ,unk_map,f) = helper nctx new_formula_inf_continuation in
+            let nctx_sc, pr_rel, po_rel, new_formula_inf_continuation_sc =
+              if !TP.tp == TP.Z3 & proc.proc_is_recursive then
+                let tmp_rel1, tmp_rel2, tmp_fml = CF.remove_rel new_formula_inf_continuation in
+                let _ = proc.proc_stk_of_static_specs # push tmp_fml in
+                CF.transform_context (fun es -> CF.Ctx {es with CF.es_infer_vars_rel = []}) ctx,tmp_rel1,tmp_rel2,tmp_fml
+              else nctx,[],[],new_formula_inf_continuation
+            in
+(*            let _ = print_endline ("debug1: " ^ Cprinter.string_of_context nctx_sc) in*)
+(*            let _ = if !TP.tp == TP.Z3 & proc.proc_is_recursive then *)
+(*                print_endline ("debug2: " ^ Cprinter.string_of_struc_formula new_formula_inf_continuation_sc) *)
+(*              else () in*)
+            let (c,pre,rel,hprel, x, post_hps ,unk_map,f) = helper nctx_sc new_formula_inf_continuation_sc in
+            let (c,pre,rel,hprel, x, post_hps ,unk_map,f) = 
+              if f then
+                let _ = if !TP.tp == TP.Z3 & proc.proc_is_recursive then
+                  let tr = CP.mkTrue no_pos in
+                  let pr_rel = Gen.BList.remove_dups_eq (CP.equalFormula) pr_rel in
+                  let po_rel = Gen.BList.remove_dups_eq (CP.equalFormula) po_rel in
+                  let rec fold_x list1 list2 = match list1, list2 with
+                    | [],[] -> []
+                    | [],ls -> List.map (fun l -> (tr,tr,l,tr)) ls
+                    | ls,[] -> List.map (fun l -> (l,tr,tr,tr)) ls
+                    | l1::ls1,l2::ls2 -> (l1,tr,l2,tr) :: fold_x ls1 ls2
+                  in
+                  let tuples = fold_x pr_rel po_rel in
+                  Infer.fixcalc_rel_stk # push_list tuples;
+                else () in
+                (c,pre,rel,hprel, x, post_hps ,unk_map,f)
+              else helper nctx new_formula_inf_continuation in
             let new_c = if pre=[] then c else
               match c with
                 | CF.EAssume _ -> CF.EBase {
@@ -635,11 +663,8 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
                       let lh = Inf.collect_pre_heap_list_partial_context res_ctx in
                       let lp = Inf.collect_pre_pure_list_partial_context res_ctx in
                       let lr = Inf.collect_rel_list_partial_context res_ctx in
-                      let rel_stk = Infer.infer_rel_stk # get_stk in
-                      let rel_ass = List.filter (fun (rt,_,_) -> CP.is_rel_assume rt) lr in
-                      let rel_ass = List.filter (fun r -> not(List.mem r rel_stk)) rel_ass in
-                      let _ = Infer.infer_rel_stk # push_list rel_ass in
-                      let _ = Log.current_infer_rel_stk # push_list rel_ass in
+                      let _ = Infer.infer_rel_stk # push_list lr in
+                      let _ = Log.current_infer_rel_stk # push_list lr in
                       let post_iv = Inf.collect_infer_vars_list_partial_context res_ctx in
                       (* Why? Bug cll-count-base.ss *)
                       (* no abductive inference for post-condition *)
@@ -662,8 +687,8 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
                           (* let _ = Debug.info_pprint ("  impl_struc: " ^ (!CP.print_svl impl_struc)) pos in *)
                           (* let _ = Debug.info_pprint ("  impl_vs: " ^ (!CP.print_svl impl_vs)) pos in *)
 						  if (Gen.BList.list_setequal_eq  CP.eq_spec_var_ident impl_struc impl_vs) then
-						   (print_string "check 1 ok\n";
-                          (impl_vs,new_post,new_post_struc))
+(*						   (print_string "check 1 ok\n";*)
+                          (impl_vs,new_post,new_post_struc)
 						  else (*temp fixing*)
                             if not (!Globals.sa_en) then report_error pos "Assume struc impl error"
                             else
@@ -2403,16 +2428,7 @@ and check_proc iprog (prog : prog_decl) (proc : proc_decl) cout_option (mutual_g
                     let rels = List.map (fun (_,a2,a3)-> (a2,a3)) rels in
                     (* let hprels = List.map (fun (_,a2,a3)-> (a2,a3)) hprels in *)
                     (* let hp_lst_assume = List.map (fun (_,a2,a3)-> (a2,a3)) hp_lst_assume in *)
-		    (* let hp_lst_simplified_assume = Sa2.simplify_lst_constrs hp_lst_assume in *)
-                    if not(Infer.infer_rel_stk# is_empty) then
-                      begin
-                        print_endline "\n*************************************";
-                        print_endline "*******pure relation assumption ******";
-                        print_endline "*************************************";
-                        print_endline (Infer.infer_rel_stk # string_of_reverse);
-                        print_endline "*************************************";
-(*                        Infer.infer_rel_stk # reset;*)
-                      end;                    
+                    (* let hp_lst_simplified_assume = Sa2.simplify_lst_constrs hp_lst_assume in *)
                     if not(Infer.rel_ass_stk# is_empty) then
                       begin
                         print_endline ""; 
@@ -2489,7 +2505,6 @@ and check_proc iprog (prog : prog_decl) (proc : proc_decl) cout_option (mutual_g
                           try 
                             begin
                               let _ = DD.devel_pprint ">>>>>> do_compute_fixpoint <<<<<<" no_pos in
-                              (* type: (Fixbag.CP.formula * Fixbag.CP.Label_Pure.exp_ty) list *)
                               let pr = Cprinter.string_of_pure_formula in
                               Debug.tinfo_hprint (add_str "rels" (pr_list (pr_pair pr pr))) rels no_pos;
                               Debug.tinfo_hprint (add_str "mutual grp" (pr_list (fun x -> x.proc_name))) mutual_grp no_pos;
@@ -2500,6 +2515,15 @@ and check_proc iprog (prog : prog_decl) (proc : proc_decl) cout_option (mutual_g
                                   let _ = DD.devel_pprint ">>>>>> do_compute_bottom_up_fixpoint <<<<<<" no_pos in
                                   let rels = Infer.infer_rel_stk # get_stk in
                                   let _ = Infer.infer_rel_stk # reset in
+                                  let rels = Gen.Basic.remove_dups rels in
+                                  if rels!=[] then
+                                    begin
+                                      print_endline "\n*************************************";
+                                      print_endline "*******pure relation assumption ******";
+                                      print_endline "*************************************";
+                                      print_endline (Gen.Basic.pr_list_ln (CP.string_of_infer_rel) (List.rev rels));
+                                      print_endline "*************************************";
+                                    end;
                                   let reloblgs, reldefns = List.partition (fun (rt,_,_) -> CP.is_rel_assume rt) rels in
                                   let reldefns = List.map (fun (_,f1,f2) -> (f1,f2)) reldefns in
                                   let is_post_rel fml pvars =
@@ -2541,7 +2565,7 @@ and check_proc iprog (prog : prog_decl) (proc : proc_decl) cout_option (mutual_g
                                 print_endline (Infer.fixcalc_rel_stk # string_of_reverse);
                                 print_endline "*************************************"
                               end;
-
+                              Infer.fixcalc_rel_stk # reset;
                               let tuples = List.map (fun (rel_post,post,rel_pre,pre) ->
                                   let pre_new = if CP.isConstTrue rel_pre then
                                       (* let inf_pre_vars = List.filter (fun x -> List.mem x pre_vars) inf_vars in *)

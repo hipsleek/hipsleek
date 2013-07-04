@@ -633,11 +633,11 @@ let infer_lhs_contra_estate estate lhs_xpure pos msg =
                             [RelAssume vs_rel,CP.conj_of_list lhs_conjs pos,x]
                           else []
                         ) (CP.list_of_conjs neg_lhs)) in
-                      if rel_ass = [] then (None,[])
-                      else
-                        let _ = DD.devel_hprint (add_str "rel_ass_final(unsat) : " (pr_list print_lhs_rhs)) rel_ass pos in
-                        let new_estate = CF.false_es_with_orig_ante estate estate.es_formula pos in
-                        (None, [(new_estate,rel_ass,true)])
+                    if rel_ass = [] then (None,[])
+                    else
+                      let _ = DD.devel_hprint (add_str "rel_ass_final(unsat) : " (pr_list print_lhs_rhs)) rel_ass pos in
+                      let new_estate = CF.false_es_with_orig_ante estate estate.es_formula pos in
+                      (None, [(new_estate,rel_ass,true)])
                 end
             | None -> (None,[])
           end
