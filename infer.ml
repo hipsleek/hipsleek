@@ -2630,47 +2630,87 @@ let get_spec_from_file prog =
 (*   CP.formula list -> list_context -> list_context option *)
 
 
-let add_infer_hp_contr_to_list_context h_arg_map cp (l:list_context) : list_context option= 
-	 (* let new_cp = List.concat (List.map CP.split_conjunctions cp) in *)
-	 let new_cp = List.map CP.arith_simplify_new cp in
-	 (* let _ = print_string ("\n new_cp: "^(!CP.print_formula (List.hd new_cp))^"\n") in *)
-         let process_one fv c ((h,hf),h_args)=
-           (* if (Gen.BList.subset_eq CP.eq_spec_var h_args fv(\*(List.concat (snd (List.split new_hd)))*\)) then *)
-           if CP.intersect_svl h_args fv <> [] then
-             (*LOC changed here. may be wrong*)
-	     mkHprel (CP.HPRelDefn (h, List.hd h_args, List.tl h_args )) h_args [] []  (formula_of_heap hf no_pos) (formula_of_pure_N c no_pos)
-	   else
-             let _ = Debug.tinfo_hprint (add_str "Not_found 1"  pr_none) () no_pos in
-             raise Not_found
-         in
-	 try
-	   let new_rels = List.fold_left (fun res_rels c->
-	       let fv = CP.fv c in
-	       let new_hd = List.filter (fun (_,vl)-> Gen.BList.overlap_eq CP.eq_spec_var fv vl) h_arg_map in
-	       (*let _ = print_string ("\n matching rels: "^(string_of_int (List.length new_hd))^"\n") in*)
-	       (* let _ = print_string ("\n new_cp fv: "^(!print_svl fv)^"\n") in *)
-               (* let pr1 = pr_list (pr_pair (pr_pair !print_sv pr_none) !print_svl) in  *)
-               (* let _ = Debug.info_hprint (add_str "new_hd"  pr1) new_hd no_pos in *)
-               match new_hd with
-                 | [] -> let _ = Debug.tinfo_hprint (add_str "Not_found 2"  pr_none) () no_pos in
-                   raise Not_found
-                 | _ -> res_rels@(List.map (process_one fv c) new_hd)
-                       (* | [((h,hf),h_args)] -> process_one fv c ((h,hf),h_args) *)
-		       (* if (Gen.BList.subset_eq CP.eq_spec_var fv h_args (\*(List.concat (snd (List.split new_hd)))*\)) then *)
-                       (*   (\*LOC changed here. may be wrong*\) *)
-		       (* mkHprel (CP.HPRelDefn (h, List.hd h_args, List.tl h_args )) h_args [] []  (formula_of_heap hf no_pos) (formula_of_pure_N c no_pos)   *)
-		       (* else  *)
-                       (*   let _ = Debug.tinfo_hprint (add_str "Not_found 1"  pr_none) () no_pos in *)
-                       (*   raise Not_found *)
-		       (* | _ -> *)
-                       (*       let _ = Debug.tinfo_hprint (add_str "Not_found 2"  pr_none) () no_pos in *)
-                       (*       raise Not_found *)
-           ) [] new_cp in
-           (* let _ = rel_ass_stk # push_list (new_rels) in *)
-           let _ = Log.current_hprel_ass_stk # push_list (new_rels) in
-	   let scc_f es = Ctx {es with es_infer_hp_rel = new_rels@es.es_infer_hp_rel;} in
-	   Some (transform_list_context (scc_f, (fun a -> a)) l)
-	 with Not_found -> None
+let add_infer_hp_contr_to_list_context h_arg_map cps (l:list_context) : list_context option=
+  (*******************INTERNAL******************************)
+  let mkRel h hf h_args p pos= mkHprel (CP.RelAssume [h]) [] [] []  (formula_of_heap hf pos) (formula_of_pure_N p pos)
+  in
+  let mkTupleRel ls_w_cans=
+    let (hp0, hf0, _, p, _, pos) = List.hd ls_w_cans in
+    let hps, hfs = List.fold_left (fun (r_hps, r_hfs) (hp, hf, _, _,_, _) ->
+        (r_hps@[hp], r_hfs@[hf])
+    ) ([hp0],[hf0]) (List.tl ls_w_cans)
+    in
+    let hf = CF.join_star_conjunctions hfs in
+    mkHprel (CP.RelAssume hps) [] [] []  (formula_of_heap hf pos) (formula_of_pure_N p pos)
+  in
+  let process_one fv p pos ((h,hf),h_args)=
+    (* let _ = print_string ("\n p: "^(!CP.print_formula p)^"\n") in *)
+    if CP.intersect_svl h_args fv <> [] then
+      let diff = CP.diff_svl fv h_args in
+      if diff = [] then
+        [(true, (h,hf,h_args, p,p, pos))]
+      else
+        let n_p = CP.mkForall diff p None pos in
+        if TP.is_sat_raw (MCP.mix_of_pure n_p) then
+          [(true, (h,hf,h_args, p, n_p , pos))]
+        else [(false, (h,hf,h_args, p, n_p, pos))]
+    else
+      (*drop out*)
+      []
+  in
+  let rec do_combine rem_weak_cands rem_fv res=
+    match rem_weak_cands with
+      | [] -> if rem_fv = [] then raise Not_found else res
+      | (h,hf,h_args, p, n_p, pos)::rest->
+            (*check finish*)
+            if rem_fv = [] then res else
+              (*check whether it contributes some new sel vars*)
+              let inter, diff = List.partition (fun sv -> CP.mem_svl sv rem_fv) h_args in
+              if inter = [] then (*do not contribute, ignore*)
+                do_combine rest rem_fv res
+              else
+                let n_rem_fv = CP.diff_svl rem_fv h_args in
+                do_combine rest n_rem_fv (res@[(h,hf,h_args,p,  n_p, pos)])
+  in
+  (*******************END INTERNAL******************************)
+  (* let new_cp = List.concat (List.map CP.split_conjunctions cp) in *)
+  let new_cps = List.map CP.arith_simplify_new cps in
+  (* let _ = print_string ("\n new_cp: "^(!CP.print_formula (List.hd new_cp))^"\n") in *)
+  try
+    let new_rels = List.fold_left (fun res_rels c->
+	let fv = CP.fv c in
+	let new_hd = List.filter (fun (_,vl)-> Gen.BList.overlap_eq CP.eq_spec_var fv vl) h_arg_map in
+	(*let _ = print_string ("\n matching rels: "^(string_of_int (List.length new_hd))^"\n") in*)
+	(* let _ = print_string ("\n new_cp fv: "^(!print_svl fv)^"\n") in *)
+        (* let pr1 = pr_list (pr_pair (pr_pair !print_sv pr_none) !print_svl) in *)
+        (* let _ = Debug.info_hprint (add_str "new_hd"  pr1) new_hd no_pos in *)
+        match new_hd with
+          | [] -> let _ = Debug.tinfo_hprint (add_str "Not_found 0"  pr_none) () no_pos in
+            raise Not_found
+          | _ -> let pos = CP.pos_of_formula c in
+            let rel_cands = List.fold_left ( fun r tuple ->
+                r@(process_one fv c pos tuple)) [] new_hd
+            in
+            let strong_cands, weak_cands = List.partition (fun (b,_) -> b) rel_cands in
+            if strong_cands <> [] then
+              (*return the first one*)
+              let _, (h,hf,h_args, _, n_p, pos) = List.hd strong_cands in
+              let new_rel = mkRel h hf h_args n_p pos in
+              (res_rels@[new_rel])
+            else
+              (*dont have a strong cands, we combine multiple weak candidates*)
+              (*remove the flag at the first component*)
+              let weak_cands1 = List.map snd weak_cands in
+              let succ_w_cands = do_combine weak_cands1 fv [] in
+              if succ_w_cands = [] then raise Not_found else
+                let new_rel = mkTupleRel succ_w_cands in
+                (res_rels@[new_rel])
+    ) [] new_cps in
+    let _ = rel_ass_stk # push_list (new_rels) in
+    let _ = Log.current_hprel_ass_stk # push_list (new_rels) in
+    let scc_f es = Ctx {es with es_infer_hp_rel = new_rels@es.es_infer_hp_rel;} in
+    Some (transform_list_context (scc_f, (fun a -> a)) l)
+  with Not_found -> None
 
 let add_infer_hp_contr_to_list_context h_arg_map cp (l:list_context) : list_context option =
   let pr1 = pr_list (pr_pair (pr_pair !print_sv pr_none) !print_svl) in 

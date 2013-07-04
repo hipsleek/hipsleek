@@ -1157,9 +1157,9 @@ let process_print_command pcmd0 = match pcmd0 with
         (*print all posible outcomes and their traces with numbering*)
         | Some (ls_ctx, print) ->
             if (print) then
-              let _ = print_endline (Cprinter.string_of_list_context ls_ctx) in
-              (* print_string ((Cprinter.string_of_numbered_list_formula_trace_inst !cprog *)
-              (*                  (CF.list_formula_trace_of_list_context ls_ctx))^"\n" ); *)
+              (* let _ = print_endline (Cprinter.string_of_list_context ls_ctx) in *)
+              let _ = print_string ((Cprinter.string_of_numbered_list_formula_trace_inst !cprog
+                               (CF.list_formula_trace_of_list_context ls_ctx))^"\n" ) in
               ()
 	  else
 			print_string ("unsupported print command: " ^ pcmd)
