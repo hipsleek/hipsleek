@@ -657,7 +657,7 @@ let infer_lhs_contra_estate i e f pos msg =
   let pr = CP.print_lhs_rhs in
   let pr3 (_,lr,b) =  pr_pair (pr_list pr) string_of_bool (lr,b) in
   let pr_res = (pr_pair (pr_option pr_es) (pr_list pr3)) in
-  Debug.no_2_num i "infer_lhs_contra_estate" pr0 pr1 pr_res (fun _ _ -> infer_lhs_contra_estate e f pos msg) e f
+  Debug.to_2_num i "infer_lhs_contra_estate" pr0 pr1 pr_res (fun _ _ -> infer_lhs_contra_estate e f pos msg) e f
 
 (*
    should this be done by ivars?
@@ -745,7 +745,7 @@ let detect_lhs_rhs_contra_x (*lhs_xpure*) lhs_xpure_orig rhs_xpure pos =
 
 let detect_lhs_rhs_contra lhs rhs pos =
 	let pr = !CP.print_formula in
-	Debug.no_2 "detect_lhs_rhs_contra" pr pr (pr_pair string_of_bool !CP.print_formula) 
+	Debug.to_2 "detect_lhs_rhs_contra" pr pr (pr_pair string_of_bool !CP.print_formula) 
 		(fun _ _ -> detect_lhs_rhs_contra_x lhs rhs pos) lhs rhs
 	  
 (* let infer_h prog estate conseq lhs_b rhs_b lhs_rels*)
@@ -2640,13 +2640,23 @@ let add_infer_hp_contr_to_list_context h_arg_map cp (l:list_context) : list_cont
 			let new_hd = List.filter (fun (_,vl)-> Gen.BList.overlap_eq CP.eq_spec_var fv vl) h_arg_map in
 			(*let _ = print_string ("\n matching rels: "^(string_of_int (List.length new_hd))^"\n") in*)
 			(*let _ = print_string ("\n new_cp fv: "^(!print_svl fv)^"\n") in*)
+                        let pr1 = pr_list (pr_pair (pr_pair !print_sv pr_none) !print_svl) in 
+                        let _ = Debug.tinfo_hprint (add_str "new_hd"  pr1) new_hd no_pos in
+                        
 			match new_hd with
-			 | [((h,hf),h_args)] -> 
+			 | ((h,hf),h_args)::t -> 
 				if (Gen.BList.subset_eq CP.eq_spec_var fv h_args (*(List.concat (snd (List.split new_hd)))*)) then
                                   (*LOC changed here. may be wrong*)
-				mkHprel (CP.HPRelDefn (h, List.hd h_args, List.tl h_args )) h_args [] []  (formula_of_heap hf no_pos) (formula_of_pure_N c no_pos)  				
-				else raise Not_found
-			| _ -> raise Not_found ) new_cp in
+				mkHprel (CP.HPRelDefn (h, List.hd h_args, List.tl h_args )) h_args [] []  (formula_of_heap hf no_pos) (formula_of_pure_N c no_pos)  
+				else 
+                                  let _ = Debug.tinfo_hprint (add_str "Not_found 1"  pr_none) () no_pos in
+                                  raise Not_found
+			| _ -> 
+                              let _ = Debug.tinfo_hprint (add_str "Not_found 2"  pr_none) () no_pos in
+                              raise Not_found 
+                       
+                        
+                 ) new_cp in
                  let _ = rel_ass_stk # push_list (new_rels) in
                  let _ = Log.current_hprel_ass_stk # push_list (new_rels) in
 		 let scc_f es = Ctx {es with es_infer_hp_rel = new_rels@es.es_infer_hp_rel;} in
@@ -2657,5 +2667,5 @@ let add_infer_hp_contr_to_list_context h_arg_map cp (l:list_context) : list_cont
   let pr1 = pr_list (pr_pair (pr_pair !print_sv pr_none) !print_svl) in 
   let pr2 = pr_list !CP.print_formula in
   let pr3 = !print_list_context in
-  Debug.no_3 "add_infer_hp_contr_to_list_context" pr1 pr2 pr3 (pr_option pr3)
+  Debug.to_3 "add_infer_hp_contr_to_list_context" pr1 pr2 pr3 (pr_option pr3)
       add_infer_hp_contr_to_list_context h_arg_map cp l

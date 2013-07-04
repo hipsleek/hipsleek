@@ -4764,7 +4764,7 @@ and heap_entail_conjunct_lhs prog is_folding  (ctx:context) conseq pos : (list_c
   let pr4 = Cprinter.string_of_formula in
   let pr5 = string_of_loc in
   let pr_res (ctx,_) = ("\n ctx = "^(Cprinter.string_of_list_context ctx)) in
-  Debug.no_5 "heap_entail_conjunct_lhs" pr1 pr2 pr3 pr4 pr5 pr_res heap_entail_conjunct_lhs_x prog is_folding ctx conseq pos
+  Debug.to_5 "heap_entail_conjunct_lhs" pr1 pr2 pr3 pr4 pr5 pr_res heap_entail_conjunct_lhs_x prog is_folding ctx conseq pos
 
 (* check entailment when lhs is normal-form, rhs is a conjunct *)
 and heap_entail_conjunct_lhs_x prog is_folding  (ctx:context) (conseq:CF.formula) pos : (list_context * proof) =
@@ -4948,7 +4948,7 @@ and heap_entail_conjunct_lhs_x prog is_folding  (ctx:context) (conseq:CF.formula
                        let esv = estate.es_infer_vars in
                        match r_inf_contr with
                          | Some (new_estate,pf) -> 
-                               let new_estate = {new_estate with es_infer_vars = esv} in
+                               (* let new_estate = {new_estate with es_infer_vars = esv} in *)
                                let ctx1 = CF.Ctx new_estate in
                                let r1, prf = heap_entail_conjunct 17 prog is_folding ctx1 conseq [] pos in
                                let _ = Debug.tinfo_hprint (add_str "r1"  Cprinter.string_of_list_context) r1 pos in
@@ -9007,7 +9007,7 @@ and solver_detect_lhs_rhs_contra i prog estate conseq pos msg =
   let pr_es (es,e) =  pr_pair pr_estate Cprinter.string_of_pure_formula (es,e) in
   let pr = CP.print_lhs_rhs in
   let pr_3 (_,lr,b) =  pr_pair (pr_list pr) string_of_bool (lr,b) in
-  Debug.no_3_num i "solver_detect_lhs_rhs_contra" 
+  Debug.to_3_num i "solver_detect_lhs_rhs_contra" 
       pr_estate pr_f pr_id  (pr_pair (pr_option pr_es) (pr_list pr_3)) (fun _ _ _ -> 
           solver_detect_lhs_rhs_contra_x prog estate conseq pos msg) estate conseq msg
 

@@ -1376,6 +1376,17 @@ res:  failctx
                    fc_message: infer_heap_node
                    fc_current_lhs_flow: {FLOW,(19,20)=__norm}}
 ======================================================================
+# contra2b.slk
+
+infer [P,Q] P(x)*Q(y) & mmm=-1 & x!=null & y=null |-  mmm=3.
+print residue.
+
+Currently fails at method add_infer_hp_contr_to_list_context
+
+EXPECTING one of below:
+(i)   P(x)*Q(y) --> x=null | y!=null
+(ii)  P(x)     --> x=null | y!=null
+(iii) Q(y)     --> x=null | y!=null
 ======================================================================
 ======================================================================
 ======================================================================
