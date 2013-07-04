@@ -15,5 +15,5 @@ one sll-dll.ss
 one last-2.ss
 one dll-append_paper.ss
 one "zip_paper_leq.ss --sa-en-sp-split --pred-en-dangling"
-one tll3.ss
+one "tll.ss --sa-dnc --pred-en-dangling"
 
