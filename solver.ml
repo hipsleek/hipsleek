@@ -9076,7 +9076,7 @@ and init_para lhs_h rhs_h lhs_aset prog pos = match (lhs_h, rhs_h) with
   (* (Inf.CF.entail_state * Cprinter.P.formula) option * *)
   (* (Inf.CF.entail_state * Cformula.CP.infer_rel_type list * bool) list *) 
 and solver_detect_lhs_rhs_contra i prog estate conseq pos msg =
-  let pr_estate = Cprinter.string_of_entail_state(*_short*) in
+  let pr_estate = Cprinter.string_of_entail_state_short in
   let pr_f = Cprinter.string_of_formula in
   let pr_es (es,e) =  pr_pair pr_estate Cprinter.string_of_pure_formula (es,e) in
   let pr = CP.print_lhs_rhs in

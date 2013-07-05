@@ -583,6 +583,10 @@ let subst_coercion fr t (c:coercion_decl) =
               ; coercion_body = F.subst_avoid_capture fr t c.coercion_body
       }
  
+let subst_coercion fr t (c:coercion_decl) = 
+  let pr = !print_coercion in
+  Debug.no_1 "subst_coercion" pr pr (fun _ -> subst_coercion fr t c ) c
+
 (* process each proc into some data which are then combined,
    e.g. verify each method and collect the failure points
 *)
@@ -1175,12 +1179,34 @@ let case_of_coercion_x (lhs:F.formula) (rhs:F.formula) : coercion_case =
   if(flag) then Ramify
   else
   let fct f = match f with
-      | Cformula.Base {F.formula_base_heap=h}
-      | Cformula.Exists {F.formula_exists_heap=h} ->      
+    | Cformula.Base {F.formula_base_heap=h}
+    | Cformula.Exists {F.formula_exists_heap=h} ->      
+          let _ = Debug.tinfo_hprint (add_str "formula_exists_heap" !print_h_formula ) h no_pos in 
           let hs = F.split_star_conjunctions h in
-		  let self_n = List.for_all (fun c-> (P.name_of_spec_var (F.get_node_var c)) = self) hs in
-          (List.length hs),self_n, List.map F.get_node_name hs
-      | _ -> 1,false,[]
+	  let self_n = List.for_all (fun c-> 
+              let _ = Debug.tinfo_hprint (add_str "c" !print_h_formula ) c no_pos in
+              let only_self = match c with
+                | F.DataNode _
+                | F.ViewNode _-> (P.name_of_spec_var (F.get_node_var c)) = self 
+                | F.HRel (sv,exp_lst,_) -> (
+                      let _ = Debug.tinfo_hprint (add_str "sv" !print_sv ) sv no_pos in
+                      match exp_lst with
+                        | [sv] -> (
+                              match sv with
+                                | (P.Var (v,_)) -> (P.name_of_spec_var v) = self
+                                | _ -> false)
+                        | _ -> false
+                  )
+                | _ -> failwith ("Only nodes and HRel allowed after split_star_conjunctions ") 
+              in
+              only_self) hs  in
+          let get_name h = match h with
+            | F.DataNode _
+            | F.ViewNode _-> F.get_node_name h
+            | F.HRel (sv,exp_lst,_) -> P.name_of_spec_var sv
+            | _ -> failwith ("Only nodes and HRel allowed after split_star_conjunctions ") in
+          (List.length hs),self_n, List.map get_name hs
+    | _ -> 1,false,[]
   in
   (*length = #nodes, sn = is there a self node, typ= List of names of nodes*)
   let lhs_length,l_sn,lhs_typ = fct lhs in
