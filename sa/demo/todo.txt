@@ -3547,7 +3547,7 @@ Entail (1) : Valid.
 Entail (2) : Fail.
 
 =====================================================================
-# xisa-bug-1.slk
+# xisa-bug-1.slk: FIXED
 
 infer [G,H] H(a) |- G(b).
 print residue.
