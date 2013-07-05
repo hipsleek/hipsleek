@@ -17,5 +17,5 @@ pred dll<parent:tree, prev:node> ==
  or self::node<c,n,prev,parent>*c::treep<>* n::dll<parent,self>.
 
 
-//checkentail x::treep<> & x!=null |- x::tree<a,b>.
-//print residue.
+checkentail x::treep<> & x!=null |- x::tree<a,b>.
+print residue.
