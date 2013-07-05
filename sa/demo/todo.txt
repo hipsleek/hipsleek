@@ -3588,6 +3588,19 @@ print residue.
  inferred hprel: [emp&b=null --> G(b)]
 */
 =====================================================================
+/*
+# rose-tree.ss --pcp
+
+Handled mutual recursive method but it seems
+that there was an exception thrown..
+
+WARNING: _0:0_0:0:View definitions [[treep,dll]] are mutually recursive
+Stop Omega... 0 invocations caught
+
+Exception occurred: Not_found
+Error(s) detected at main 
+
+*/
 =====================================================================
 =====================================================================
 =====================================================================

@@ -11,7 +11,7 @@ function one
 }
 function two 
 {
-   one $1 $2 >& tests/$1.out2
+   one $1 $2 >& tests/hip/$1.out
 }
 two set-tail-2.ss "$1"
 two sll-dll.ss "$1"

@@ -1,0 +1,19 @@
+========sll-dll.ss ==========
+<rstart>4
+[ H1(x,p@NI)&x!=null --> x::node<prev_21_927,next_21_928>@M * 
+  HP_929(prev_21_927,p@NI) * HP_930(next_21_928,p@NI),
+ HP_930(next_21_928,p@NI) --> H1(next_21_928,x'@NI),
+ x::node<p,next_21_928>@M * G1(next_21_928,x) --> G1(x,p),
+ H1(x,p@NI)&x=null --> G1(x,p)]
+<rstop>*************************************
+<dstart>
+[ H1(x_944,p_945) ::= 
+ emp&x_944=null
+ or H1(next_21_941,x') * x_944::node<__DP_HP_929,next_21_941>@M
+ ,
+ G1(x_949,p_950) ::= 
+ emp&x_949=null
+ or x_949::node<p_950,next_21_928>@M * G1(next_21_928,x_949)
+ ]
+<dstop>
+====================

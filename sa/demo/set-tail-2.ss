@@ -12,8 +12,8 @@ HeapPred G(node a, node b).
   requires H(x,y) 
   ensures G(x,y);
 {
-   node t = x.next;
-   assume t'=null;
+  //node t = x.next;
+  //assume t'=null;
    x.next = y;
 }
 
