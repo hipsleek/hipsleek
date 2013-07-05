@@ -25,7 +25,7 @@ print residue.
 //3
 infer [P]  P(x) & mmm=-1 & x!=null |-  mmm>=0.
 print residue.
-// x=null
+// P(x) --> x=null
 
 //4
 infer [x]  mmm=-1 & x!=null |-  x::ll<mmm>.
