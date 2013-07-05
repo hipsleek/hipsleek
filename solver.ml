@@ -3131,7 +3131,9 @@ and elim_unsat_es_now i (prog : prog_decl) (sat_subno:  int ref) (es : entail_st
   Debug.no_1_num i "elim_unsat_es_now" pr1 pr2 (fun _ -> elim_unsat_es_now_x prog sat_subno es) es
 
 and elim_unsat_es_now_x (prog : prog_decl) (sat_subno:  int ref) (es : entail_state) : context =
-  let f = es.es_formula in
+  let f = (* match es.es_orig_ante with *)
+    (* | Some f -> f *)
+    (* | None   ->  *)es.es_formula in
   let _ = reset_int2 () in
   let b = unsat_base_nth 1 prog sat_subno f in
   (* Slicing: Set the flag memo_group_unsat to false *)
@@ -4952,9 +4954,12 @@ and heap_entail_conjunct_lhs_x prog is_folding  (ctx:context) (conseq:CF.formula
                                let ctx1 = CF.Ctx new_estate in
                                let _ = Debug.tinfo_hprint (add_str "ctx1"  Cprinter.string_of_context) ctx1 pos in
                                let r1,prf =  (SuccCtx[false_ctx_with_orig_ante new_estate orig_ante pos],UnsatAnte) in
-                               let _ = Debug.tinfo_hprint (add_str "r1"  Cprinter.string_of_list_context) r1 pos in
                                let r1 = Infer.add_infer_hp_contr_to_list_context hinf_args_map [pf] r1 in
                                let _ = Debug.tinfo_hprint (add_str "r1 opt"  (pr_option Cprinter.string_of_list_context)) r1 pos in
+		               let _ = Debug.info_hprint (add_str "inferred contradiction : " Cprinter.string_of_pure_formula) pf pos in
+                               let _ = Debug.info_pprint ("Andreea 1 : we need to call add_new_sleek_logging_entry to do sleek_logging") no_pos in
+                               (* add_new_sleek_logging_entry infer_vars classic_flag caller avoid hec slk_no ante conseq  *)
+                               (*     consumed_heap evars (result:CF.list_context) pos *)
                                begin
                                  match r1 with
                                    | Some r1 ->
@@ -4969,10 +4974,8 @@ and heap_entail_conjunct_lhs_x prog is_folding  (ctx:context) (conseq:CF.formula
                                  match relass with
 				   | [(es,h,_)] -> 
                                          let new_estate = {es with es_infer_vars = esv} in
-                                         let ctx1 = CF.Ctx new_estate in
-                                         let _ = Debug.tinfo_hprint (add_str "ctx1" Cprinter.string_of_context) ctx1 pos in
-                                         let ctx1 = add_infer_rel_to_ctx h ctx1 in
-                                         let _ = Debug.tinfo_hprint (add_str "ctx1(with inf rel)" Cprinter.string_of_context) ctx1 pos in
+                                         let new_estate = add_infer_rel_to_estate h new_estate in
+                                         let _ = Debug.tinfo_hprint (add_str "new_estate(with inf rel)" Cprinter.string_of_entail_state) new_estate pos in
                                           let r1,prf =  (SuccCtx[false_ctx_with_orig_ante new_estate orig_ante pos], UnsatAnte) in
                                           (r1, prf)
 				   | _ ->  heap_entail ()
@@ -7205,6 +7208,7 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
     let pr = Cprinter.string_of_mix_formula in
     Debug.no_1 "fold_fun_impt" pr pr_none (fun _ -> fold_fun_impt x rhs_p) rhs_p
   in
+  let _ = DD.tinfo_hprint (add_str "estate" Cprinter.string_of_entail_state) estate no_pos in
   let prf = mkPure estate (CP.mkTrue no_pos) (CP.mkTrue no_pos) true None in
   let (r_rez,r_succ_match, r_fail_match, (fc_kind, (contra_list, must_list, may_list))) =  
     fold_fun_impt  (true,[],None, (Failure_Valid, ([],[],[]))) rhs_p in
@@ -7214,7 +7218,13 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
       let new_estate = stk_estate # top in
       let new_ante_fmls = List.map (fun es -> es.es_formula) (stk_estate # get_stk) in
       let new_estate = {new_estate with es_formula = disj_of_list new_ante_fmls pos} in
+      let _ = DD.tinfo_hprint (add_str "new_estate" Cprinter.string_of_entail_state) new_estate no_pos in
+      let orig_ante = new_estate.es_orig_ante in
       let ctx1 = (elim_unsat_es_now 8 prog (ref 1) new_estate) in
+      let ctx1 = match ctx1 with
+        | Ctx es -> Ctx {es with es_orig_ante = orig_ante}
+        | _ -> ctx1 in
+      let _ = DD.tinfo_hprint (add_str "ctx1 1" Cprinter.string_of_context) ctx1 no_pos in
       let ctx1 = add_infer_pure_to_ctx (stk_inf_pure # get_stk) ctx1 in
       let ctx1 = add_infer_rel_to_ctx (stk_rel_ass # get_stk) ctx1 in
       (SuccCtx[ctx1],UnsatAnte)
@@ -9449,11 +9459,16 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
 	      match r_inf_contr with
                 | Some (new_estate,pf) -> (* if successful, should skip infer_collect_hp_rel below *)
                       let new_estate = {new_estate with es_infer_vars = esv} in
-		      let _ = Debug.tinfo_hprint (add_str "inferred contradiction : " Cprinter.string_of_pure_formula) pf pos in
+		      let _ = Debug.info_hprint (add_str "inferred contradiction : " Cprinter.string_of_pure_formula) pf pos in
+                      let _ = Debug.info_pprint ("Andreea 2 : we need to add_new_sleek_logging_entry to do sleek_logging") no_pos in
+                      (* add_new_sleek_logging_entry infer_vars classic_flag caller avoid hec slk_no ante conseq  *)
+                      (*     consumed_heap evars (result:CF.list_context) pos *)
 		      if (List.length relass)>1 then report_error pos "Length of relational assumption list > 1"
 		      else
 			let ctx1 = (elim_unsat_es_now 6 prog (ref 1) new_estate) in
+                        let _ = Debug.tinfo_hprint (add_str "ctx1"  Cprinter.string_of_context) ctx1 pos in
 			let r1, prf = heap_entail_one_context 9 prog is_folding ctx1 conseq None None None pos in
+                        let _ = Debug.tinfo_hprint (add_str "r1"  Cprinter.string_of_list_context) r1 pos in
  			let r1 = Infer.add_infer_hp_contr_to_list_context hinf_args_map [pf] r1 in
 			begin 
 			  (*r1 might be None if the inferred contradiction might span several predicates or if it includes non heap pred arguments*)

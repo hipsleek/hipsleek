@@ -1,0 +1,25 @@
+data node {
+ int val;
+ node next;
+}.
+
+HeapPred H(node x, int v).
+PostPred G(node x, int v).
+
+
+infer [H] H(y,_) & x=null & y!=null |- x::node<>.
+print residue.
+/*
+# sorted-2.slk --en-sleek-logging-txt
+
+Below is correct but the step is not curently
+logged. I think we should log such important info.
+
+!!! inferred contradiction : : y=null
+!!! Andreea 1 : we need to call add_new_sleek_logging_entry to do sleek_logging
+Entail (1) : Valid. 
+
+ <1>hfalse&false&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [H(y,Anon_11) --> emp&y=null]
+
+*/

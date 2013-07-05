@@ -1335,7 +1335,7 @@ let infer_pure_m unk_heaps estate lhs_mix lhs_mix_0 lhs_wo_heap rhs_mix pos =
 
 let infer_pure_m i unk_heaps estate lhs_xpure lhs_xpure0 lhs_wo_heap rhs_xpure pos =
   let pr1 = !print_mix_formula in 
-  let pr2 = !print_entail_state_short in 
+  let pr2 = !print_entail_state(* _short *) in 
   (* let pr2a = !print_entail_state in  *)
   let pr_p = !CP.print_formula in
   let pr_res_lst = pr_list (fun (es,r,b) -> pr_pair pr2 (pr_list CP.print_lhs_rhs) (es,r)) in

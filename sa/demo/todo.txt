@@ -3734,8 +3734,61 @@ Message: error 3: free variables [H] in proc mark
 caught
 (Program not linked with -g, cannot print stack backtrace)
 =====================================================================
+# sorted-3.slk --en-sleek-logging-txt
+
+infer [H] H(y,_) & x=null  |- x::node<>.
+print residue.
+
+Message below a little wrong. Either we introduce:
+  H(y,_) --> false
+or we say we have a LHS contradiction but not allowed
+to introduce H(..) --> false.
+
+!!! >>>>>> mismatch ptr is not found (or inst) in the lhs <<<<<<
+!!! >>>>>> mismatch ptr is not found (or inst) in the lhs <<<<<<
+Entail (1) : Fail.
 =====================================================================
+# sorted-2.slk --en-sleek-logging-txt
+
+infer [H] H(y,_) & x=null & y!=null |- x::node<>.
+print residue.
+
+Below is correct but the step is not curently
+logged. I think we should log such important info.
+
+!!! inferred contradiction : : y=null
+!!! Andreea 1 : we need to call add_new_sleek_logging_entry to do sleek_logging
+Entail (1) : Valid. 
+
+ <1>hfalse&false&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [H(y,Anon_11) --> emp&y=null]
 =====================================================================
+# sorted-1a.ss --en-sleek-logging-txt
+
+WHY is shape_infer not performing for hip
+(sleek did not have a problem see sorted-2b.slk)
+
+bool check_sorted(node x, int v)
+  infer [H,G]
+  requires H(x,v) & v>0
+  ensures G(x,v) & v=0;
+{ 
+  dprint;
+  return false;
+} 
+
+GOT
+[ H(x,v) --> emp&1>v]
+
+Derived:
+[ H(x,v) ::= NONE]
+*
+
+==========
+
+Why do we get NONE and not a lhs contradiction formula?
+
+Why did we derive UNKNOWN?
 =====================================================================
 =====================================================================
 =====================================================================
