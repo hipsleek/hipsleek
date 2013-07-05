@@ -5,9 +5,16 @@ data node {
 
 HeapPred H(node a).
 relation R1(int a).
+relation G(node a).
+
+/*
+infer [R1] x::node<a1,b1> * R1(a1) & G(b1) |- x::node<a,b> & a>0.
+print residue.
+*/
 
 infer [H,R1] x::node<a1,b1> * H(b1) & R1(a1) |- x::node<a,b> & a>0.
 print residue.
+
 
 /*
 # mt-2.slk

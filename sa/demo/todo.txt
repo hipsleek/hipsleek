@@ -3637,7 +3637,7 @@ SOLUTION
 (2) would then also have:
   R_1(a_17) --> a_17>0
 =====================================================================
-# mt-2.slk
+# mt-2.slk  FIXED
 
 infer [H,R1] x::node<a1,b1> * H(b1) & R1(a1) |- x::node<a,b> & a>0.
 print residue.
@@ -3649,6 +3649,10 @@ Entail (3) : Valid.
 
  <1>H(b1)&R1(a1) & a=a1 & b=b1 & 1<=a1&{FLOW,(19,20)=__norm}[]
  inferred rel: [RELASS [R1,_pure_of_H]: ( R1(a1)) -->  1<=a1]
+=====================================================================
+# mt-3.slk
+  
+  why is there a type error?
 =====================================================================
 # xisa-bug-2.slk
 

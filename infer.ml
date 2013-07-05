@@ -952,7 +952,7 @@ let rec infer_pure_m_x unk_heaps estate lhs_rels lhs_xpure_orig lhs_xpure0 lhs_w
                               let rvs = (CF.h_fv h) in
                               let closed_rvs = List.fold_left (fun ls r -> ls@(r::(CP.EMapSV.find_equiv_all r lhs_aset))) [] rvs in
                               (CP.diff_svl vs closed_rvs) == []) unk_heaps in
-                          DD.binfo_hprint (add_str "choose_unk_h" (pr_list !CF.print_h_formula)) choose_unk_h pos;
+                          DD.tinfo_hprint (add_str "choose_unk_h" (pr_list !CF.print_h_formula)) choose_unk_h pos;
                           if choose_unk_h==[] then (None,None,[])
                           else 
                             (*Loc : need to add (choose_unk_h --> rhs_xpure) heap assumption*)
@@ -1013,14 +1013,22 @@ let rec infer_pure_m_x unk_heaps estate lhs_rels lhs_xpure_orig lhs_xpure0 lhs_w
                           | [],[] -> (None,None,[])
                           | (ps,rs) ->
                                 let rel_ass = 
-                                  if List.length (List.concat (List.map CP.get_rel_id_list (CP.list_of_conjs f)))=1 then
+                                  let ls = List.concat (List.map CP.get_rel_id_list (CP.list_of_conjs f)) in
+                                  let _ = DD.tinfo_hprint (add_str "f" Cprinter.string_of_pure_formula) f no_pos in
+                                  let _ = DD.tinfo_hprint (add_str "vs_rel" Cprinter.string_of_spec_var_list) vs_rel no_pos in
+                                  let _ = DD.tinfo_hprint (add_str "ls" Cprinter.string_of_spec_var_list) ls no_pos in
+                                  if (List.length ls)=1 then
                                     [RelAssume vs_rel,f,CP.conj_of_list (ps@rs) pos]
                                   else
-                                    let p_ass_conjs = if ps = [] then [] else
-                                      let lhs_xpure_new = CP.drop_rel_formula lhs_xpure in
-                                      let tmp = CP.conj_of_list ps pos in
-                                      let tmp = Omega.gist tmp lhs_xpure_new in 
-                                      if CP.subset (CP.fv tmp) vs_lhs then CP.list_of_conjs tmp else ps
+                                    let p_ass_conjs = 
+                                      if ps = [] then [] 
+                                      else
+                                        let lhs_xpure_new = CP.drop_rel_formula lhs_xpure in
+                                        let tmp = CP.conj_of_list ps pos in
+                                        let tmp = Omega.gist tmp lhs_xpure_new in 
+                                        if CP.subset (CP.fv tmp) vs_lhs 
+                                        then CP.list_of_conjs tmp 
+                                        else ps
                                         (*                          let lhs_xpure_new = CP.drop_rel_formula lhs_xpure in*)
                                         (*                          let lhs_xpure_conjs = List.filter (fun x -> match x with*)
                                         (*                            | BForm ((Eq _,_),_) -> true | _ -> false) (CP.list_of_conjs lhs_xpure_new) in*)
@@ -1033,8 +1041,9 @@ let rec infer_pure_m_x unk_heaps estate lhs_rels lhs_xpure_orig lhs_xpure0 lhs_w
                                         let lhs_conjs = List.filter (fun y -> 
                                             CP.intersect (CP.fv y) (CP.fv x) != []) (CP.list_of_conjs f) in
                                         let rel_ids = List.concat (List.map get_rel_id_list lhs_conjs) in
+                                        let _ = DD.tinfo_hprint (add_str "rel_ids" Cprinter.string_of_spec_var_list) rel_ids no_pos in
                                         if CP.remove_dups_svl rel_ids = rel_ids && lhs_conjs != [] then
-                                          [RelAssume vs_rel,CP.conj_of_list lhs_conjs pos,x]
+                                          [RelAssume rel_ids,CP.conj_of_list lhs_conjs pos,x]
                                         else []
                                     ) (p_ass_conjs @ rs))
                                 in
