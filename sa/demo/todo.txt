@@ -3524,7 +3524,7 @@ Entail (1) : Valid.
 
 Entail (2) : Fail.
 =====================================================================
-# skip0-bug-2.slk
+# skip0-bug-2.slk: FIXED
 
 Why this simple example fail?
 

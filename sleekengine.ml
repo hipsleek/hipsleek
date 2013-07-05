@@ -259,7 +259,12 @@ let convert_pred_to_cast () =
       Norm.norm_extract_common !cprog cviews (List.map (fun vdef -> vdef.C.view_name) cviews)
     else cviews
   in
-  let cviews2 = Norm.cont_para_analysis !cprog cviews1 in
+  let cviews2 =
+    if !Globals.norm_cont_analysis then
+      Norm.cont_para_analysis !cprog cviews1
+    else
+      cviews1
+  in
   let _ = !cprog.C.prog_view_decls <- cviews2 in
   let _ =  (List.map (fun vdef -> AS.compute_view_x_formula !cprog vdef !Globals.n_xpure) cviews2) in
   Debug.tinfo_pprint "after compute_view" no_pos;
@@ -1290,20 +1295,19 @@ let process_print_command pcmd0 = match pcmd0 with
 	  let (n_tl,pf) = meta_to_struc_formula mf false [] None [] in
 		print_string ((Cprinter.string_of_struc_formula pf) ^ "\n")
   | PCmd pcmd -> 
-	  if pcmd = "residue" then
-      match !residues with
-        | None -> print_string ": no residue \n"
-        (* | Some s -> print_string ((Cprinter.string_of_list_formula  *)
-        (*       (CF.list_formula_of_list_context s))^"\n") *)
-        (*print all posible outcomes and their traces with numbering*)
-        | Some (ls_ctx, print) ->
-            if (print) then
-              (* let _ = print_endline (Cprinter.string_of_list_context ls_ctx) in *)
-              let _ = print_string ((Cprinter.string_of_numbered_list_formula_trace_inst !cprog
-                               (CF.list_formula_trace_of_list_context ls_ctx))^"\n" ) in
-              ()
-	  else
-			print_string ("unsupported print command: " ^ pcmd)
+	if pcmd = "residue" then
+          match !residues with
+            | None -> print_string ": no residue \n"
+                  (* | Some s -> print_string ((Cprinter.string_of_list_formula  *)
+                  (*       (CF.list_formula_of_list_context s))^"\n") *)
+                  (*print all posible outcomes and their traces with numbering*)
+            | Some (ls_ctx, print) ->
+                  if (print) then
+                    (* let _ = print_endline (Cprinter.string_of_list_context ls_ctx) in *)
+                    print_string ((Cprinter.string_of_numbered_list_formula_trace_inst !cprog
+                        (CF.list_formula_trace_of_list_context ls_ctx))^"\n" );
+	else
+	  print_string ("unsupported print command: " ^ pcmd)
 
 let process_cmp_command (input: ident list * ident * meta_formula list) =
   let iv,var,fl = input in
