@@ -52,7 +52,8 @@ let rec spass_dfg_of_exp (e0 : Cpure.exp) : (string * string list * string list)
   | Cpure.Div _       -> illegal_format "SPASS don't support Div expresion"
   | Cpure.Max _       -> illegal_format "SPASS don't support Max expresion"
   | Cpure.Min _       -> illegal_format "SPASS don't support Min expresion"
-    (* bag expressions *)
+  | Cpure.TypeCast _       -> illegal_format "SPASS don't support TypeCast expresion"
+  (* bag expressions *)
   | Cpure.Bag _
   | Cpure.BagUnion _
   | Cpure.BagIntersect _
@@ -190,6 +191,7 @@ let rec spass_tptp_of_exp (e0 : Cpure.exp) : string =
   | Cpure.Div _       -> illegal_format "SPASS don't support Div expresion"
   | Cpure.Max _       -> illegal_format "SPASS don't support Max expresion"
   | Cpure.Min _       -> illegal_format "SPASS don't support Min expresion"
+  | Cpure.TypeCast _       -> illegal_format "SPASS don't support TypeCast expresion"
     (* bag expressions *)
   | Cpure.Bag _
   | Cpure.BagUnion _
@@ -271,7 +273,8 @@ let rec can_spass_handle_expression (exp: Cpure.exp) : bool =
   | Cpure.Mult _
   | Cpure.Div _
   | Cpure.Max _
-  | Cpure.Min _          -> false
+  | Cpure.Min _
+  | Cpure.TypeCast _     -> false
   (* bag expressions *)
   | Cpure.Bag _
   | Cpure.BagUnion _

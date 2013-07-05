@@ -73,6 +73,7 @@ let rec minisat_of_exp e0 = match e0 with
   | Div (a1, a2, l) -> illegal_format ("eq_logic.eq_logic_of_exp: array, bag or list constraint")
   | Max _
   | Min _ -> illegal_format ("eq_logic.eq_logic_of_exp: min/max should not appear here")
+  | TypeCast _ -> illegal_format ("eq_logic.eq_logic_of_exp: TypeCast should not appear here")
   | FConst _ -> illegal_format ("eq_logic.eq_logic_of_exp: FConst")
   | Func _ -> "0" (* TODO: Need to handle *)
   | _ -> illegal_format ("eq_logic.eq_logic_of_exp: array, bag or list constraint")
@@ -377,7 +378,8 @@ let rec can_minisat_handle_expression (exp: Cpure.exp) : bool =
   | Cpure.Mult _
   | Cpure.Div _
   | Cpure.Max _
-  | Cpure.Min _          -> false
+  | Cpure.Min _
+  | Cpure.TypeCast _     -> false
   (* bag expressions *)
   | Cpure.Bag _
   | Cpure.BagUnion _

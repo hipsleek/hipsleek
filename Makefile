@@ -65,7 +65,7 @@ LIBOCCMDP4 = ocamlopt.opt -pp camlp4of $(LIBOCCMDFLAGS)
  
 
 
-all: byte decidez.vo 
+all: gbyte decidez.vo 
 #gui
 byte: sleek.byte hip.byte
 

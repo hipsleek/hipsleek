@@ -84,7 +84,7 @@ and exp =
   | Null of loc
   | Level of ((ident * primed) * loc)
   | Var of ((ident * primed) * loc)
-	  (* variables could be of type pointer, int, bags, lists etc *)
+  (* variables could be of type pointer, int, bags, lists etc *)
   | IConst of (int * loc)
   | FConst of (float * loc)
   | AConst of (heap_ann * loc)
@@ -97,12 +97,13 @@ and exp =
   | Div of (exp * exp * loc)
   | Max of (exp * exp * loc)
   | Min of (exp * exp * loc)
-	  (* bag expressions *)
+  | TypeCast of (typ * exp * loc)
+  (* bag expressions *)
   | Bag of (exp list * loc)
   | BagUnion of (exp list * loc)
   | BagIntersect of (exp list * loc)
   | BagDiff of (exp * exp * loc)
- 	  (* list expressions *)
+  (* list expressions *)
   | List of (exp list * loc)
   | ListCons of (exp * exp * loc)
   | ListHead of (exp * loc)
@@ -115,7 +116,7 @@ and exp =
 
 and relation = (* for obtaining back results from Omega Calculator. Will see if it should be here*)
   | ConstRel of bool
-  |	BaseRel of (exp list * formula)
+  | BaseRel of (exp list * formula)
   | UnionRel of (relation * relation)
 
 (* let print_formula = ref (fun (c:formula) -> "cpure printer has not been initialized") *)

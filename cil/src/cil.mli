@@ -160,6 +160,7 @@ and global =
   | GText of string                     (** Some text (printed verbatim) at 
                                             top level. E.g., this way you can 
                                             put comments in the output.  *)
+  | GHipProgSpec of Iast.prog_decl * location  (** HIP prog *)
 
 (** {b Types}. A C type is represented in CIL using the type {!Cil.typ}. 
  * Among types we differentiate the integral types (with different kinds 
@@ -864,7 +865,7 @@ and fundec =
       mutable sallstmts: stmt list;  (** After you call {!Cil.computeCFGInfo} 
                                       * this field is set to contain all 
                                       * statements in the function *)
-      mutable sspecs: Iformula.struc_formula;       (** static specs of function, used by hip/sleek system *)
+      mutable hipfuncspec: Iformula.struc_formula;       (** static specs of function, used by hip/sleek system *)
     }
 
 
@@ -991,7 +992,7 @@ and stmtkind =
          exception !!!
      *)      
   | TryExcept of block * (instr list * exp) * block * location
-  | HipStmt of Iast.exp * location
+  | HipStmtSpec of Iast.exp * location
 
   
 
