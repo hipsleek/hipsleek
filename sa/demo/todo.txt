@@ -3547,6 +3547,46 @@ Entail (1) : Valid.
 Entail (2) : Fail.
 
 =====================================================================
+# xisa-bug-1.slk
+
+infer [G,H] H(a) |- G(b).
+print residue.
+/* 
+Entail (1) : Fail.
+
+   should succeed with
+   emp --> G(b)
+   residue: H(a)
+*/
+
+
+infer_exact [G,H] H(a) |- G(b).
+print residue.
+/*
+Entail (2) : Fail.
+
+  should succeed with
+  H(a) --> G(b)
+*/
+
+
+infer_exact [G] H(a) |- G(b).
+print residue.
+/*
+OK
+
+ Entail (3) : Fail.
+
+*/
+
+infer [G,H] H(a) & b=null |- G(b).
+print residue.
+/*
+ OK
+
+ <1>H(a)&b=null&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [emp&b=null --> G(b)]
+*/
 =====================================================================
 =====================================================================
 =====================================================================
