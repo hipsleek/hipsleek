@@ -200,7 +200,6 @@ let send_and_receive f =
 
 let check_formula f =
   let res = send_and_receive ("rlqe " ^ f) in
-  let _ = print_endline ("redlog out:"^res) in
   if res = "true$" then
     Some true
   else if res = "false$" then
@@ -1081,7 +1080,6 @@ let is_sat_no_cache_ops pr_w pr_s (f: CP.formula) (sat_no: string) : bool * floa
     else strengthen_formula f in
     let frl = rl_of_formula pr_w pr_s sf in
     let rl_input = "rlex(" ^ frl ^ ")" in
-    let _ = print_endline ("rl_input 1 = " ^ rl_input) in
     let _ = if !pasf then begin 
       if is_linear then set_rl_mode PASF
       else set_rl_mode OFSF end

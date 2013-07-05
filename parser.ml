@@ -2839,15 +2839,8 @@ boolean_literal :
    | `FALSE-> false]];
 
 primary_expression :
- [[ t=type_cast_expression -> t
-  | t=parenthesized_expression -> t
-  | t=primary_expression_no_parenthesis -> t]];
-
-type_cast_expression :
- [[ `OPAREN; t = typ; `CPAREN; e = expression ->
-      Cast { exp_cast_target_type = t;
-             exp_cast_body = e;
-             exp_cast_pos = get_pos_camlp4 _loc 1 } ]];
+ [[ t=parenthesized_expression -> t
+  | t=primary_expression_no_parenthesis -> t ]];
 
 parenthesized_expression : [[`OPAREN; e= expression; `CPAREN -> e]];
 
