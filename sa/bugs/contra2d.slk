@@ -11,17 +11,11 @@ HeapPred P(node a).
 HeapPred Q(node a). 
 HeapPred Z(node a, node b). 
 
+
 infer [P,Q,Z] P(x)*Q(y)*Z(x,k) & mmm=-1 & x!=null & y=null |-  mmm=3.
 print residue.
 // why fail?
-/*
-infer [x,k] P(x)*Q(y)*Z(x,k) & mmm=-1 & x!=null & y=null |-  mmm=3.
-print residue.
 
-infer [Z] P(x)*Q(y)*Z(x,k) & mmm=-1 & x!=null & y=null |-  mmm=3.
-print residue.
-// why fail when above succeeds?
-*/
 /*
 # contra2c.slk
 
