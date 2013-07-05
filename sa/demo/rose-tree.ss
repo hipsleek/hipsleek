@@ -16,7 +16,7 @@ PostPred G2(node a,tree b,node c).
 
 treep<> == 
   self= null or
-  self::tree<_,c>* c::dll<self,parent> ;
+  self::tree<_,c>* c::dll<self,null> ;
 
 dll<parent, prev> == 
   self=null or 
@@ -28,7 +28,7 @@ bool check_tree (tree t)
   ensures res;
 {
    if (t.children==null) return true;
-   else return check_child(t.children,t,t); //check_child(t.children,t,t): (node * tree * tree)
+   else return check_child(t.children,t,null); //check_child(t.children,t,t): (node * tree * tree)
 }
 
 bool check_child (node l, tree par, node prv)
