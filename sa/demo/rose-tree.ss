@@ -28,7 +28,7 @@ bool check_tree (tree t)
   ensures res;
 {
    if (t.children==null) return true;
-    else return check_child(t.children,t,t);
+   else return check_child(t.children,t,t); //check_child(t.children,t,t): (node * tree * tree)
 }
 
 bool check_child (node l, tree par, node prv)
