@@ -1,0 +1,36 @@
+data node{
+	int val;
+	node next;
+}.
+
+HeapPred HL(node a).
+HeapPred H1(node a, node b).
+HeapPred HP_1(node a, node@NI b).
+HeapPred HP_2(node a, node@NI b).
+HeapPred HP_8(node a, node@NI b).
+HeapPred G1(node a, node b, node c).
+
+// 1.
+infer [H1,G1]  H1(x,y) & x=null & res=x |- G1(x,y,res).
+print residue.
+
+
+//2.
+
+infer [H1,G1]  H1(x,y) & x=null & res=null |- G1(x,y,res).
+print residue.
+
+
+/*
+# zip1.slk 
+
+(2) Also, for G, we seem to lose the relation x=r. Why is it missing??
+ EXPECTING:
+ G1(x_180,y_181,res_183) ::= 
+ emp&x_180=null  //& x=r
+ or y_181::node<val_25_826,next_25_827>@M * x_180::node<val_24_819,nn>@M * 
+    (G1(nn,next_25_827,nn))  //& x=r
+ ]
+
+
+*/

@@ -1,0 +1,23 @@
+
+data node {
+	int val; 
+	node next;	
+}.
+
+pred ll<n> == self = null & n = 0 
+	or self::node<_, q> * q::ll<n-1> 
+  inv n >= 0.
+
+checkentail x'::node<Anon_824,q_825> 
+* y::ll<n2> * q_825::ll<n1_839>
+& n1 = n1_839+1 
+& x=x' & y=y' & 0<n1 & 
+q_825!=null & !(v_bool_23_788') & q_825!=null & !(v_bool_23_788') & 
+q_825=v_node_26_787' & n2=n2_840
+ |-  0<n1_839.
+
+
+checkentail  q_825::ll<n1_839> &
+// n1 = n1_839+1  & 0<n1 &
+q_825!=null 
+ |-  0<n1_839.

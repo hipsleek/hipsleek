@@ -1,0 +1,53 @@
+data node{
+	int val;
+	node next;
+}.
+
+HeapPred H1(node a, node b).
+HeapPred HP_1(node a, node@NI b).
+HeapPred HP_2(node a, node@NI b).
+HeapPred HP_8(node a, node@NI b).
+
+
+infer [HP_1,HP_2,HP_8,H1] 
+HP_8(next_25_827,x) * y::node<val_25_826,next_25_827> * 
+x'::node<val_24_819,next_24_820> *
+ HP_1(next_24_820,y)
+&x=x' & y=y' 
+& x'!=null 
+//& !(v_bool_21_795') & x'!=null & !(v_bool_21_795') 
+& n1_34'=val_24_819 & n2_35'=val_25_826 & val_24_819=n2_35'+n1_34' 
+& next_24_820=v_node_27_791' & 
+next_25_827=v_node_27_790'
+ |-  H1(v_node_27_791',v_node_27_790').
+
+print residue.
+
+/*
+# zip-bug5a.slk
+
+GOT
+ inferred hprel: [(HP_8(v_node_27_790',x@NI)) * (HP_1(v_node_27_791',y@NI))&
+                   true --> (H1(v_node_27_791',v_node_27_790')) * (HP_37(x))&
+                   true]
+
+Why do we instantiate HP_37(x)? We should not instantiate
+for parameters that has been marked as x@NI.
+We can instantiate for FIELDS an for parameters that are not marked
+as @NI
+
+
+
+ id: 21; caller: []; line: 27; classic: false; kind: PRE-2; hec_num: 5; evars: []; infer_vars: [H1,G1,HP_821,HP_822,HP_828]; c_heap: emp
+ checkentail (HP_828(next_25_827,x)) * y::node<val_25_826,next_25_827>@M[Orig] * 
+x'::node<val_24_819,next_24_820>@M[Orig]&x=x' & y=y' & x'!=null & 
+!(v_bool_21_795') & x'!=null & !(v_bool_21_795') & n1_34'=val_24_819 & 
+n2_35'=val_25_826 & val_24_819=n2_35'+n1_34' & next_24_820=v_node_27_791' & 
+next_25_827=v_node_27_790'&{FLOW,(22,23)=__norm}[]
+ |-  H1(v_node_27_791',v_node_27_790')&true&{FLOW,(22,23)=__norm}[]. 
+hprel_ass: [ HP_828(next_25_827,x)&true --> H1(next_24_820,next_25_827)&true]
+res:  [
+  y::node<val_25_826,next_25_827>@M[Orig] * x'::node<val_24_819,next_24_820>@M[Orig]&x=x' & y=y' & x'!=null & !(v_bool_21_795') & x'!=null & !(v_bool_21_795') & n1_34'=val_24_819 & n2_35'=val_25_826 & val_24_819=n2_35'+n1_34' & next_24_820=v_node_27_791' & next_25_827=v_node_27_790' & next_24_820=v_node_27_791' & next_25_827=v_node_27_790'&{FLOW,(22,23)=__norm}[]
+  ]
+
+*/

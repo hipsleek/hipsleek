@@ -73,7 +73,8 @@ let is_inf_sv sv = match sv with
 
 type rel_cat = 
   | RelDefn of spec_var
-  | HPRelDefn of spec_var
+  | HPRelDefn of (spec_var * spec_var * spec_var list) (*hp name * root * arguments*)
+  | HPRelLDefn of spec_var list
   | RelAssume of spec_var list
   | RankDecr of spec_var list
   | RankBnd of spec_var
@@ -249,7 +250,8 @@ let print_svl = ref (fun (c:spec_var list) -> "cpure printer has not been initia
 let print_sv = ref (fun (c:spec_var) -> "cpure printer has not been initialized")
 let print_rel_cat rel_cat = match rel_cat with
   | RelDefn v -> "RELDEFN " ^ (!print_sv v)
-  | HPRelDefn v -> "HP_RELDEFN " ^ (!print_sv v)
+  | HPRelDefn (v,r,args) -> "HP_RELDEFN " ^ (!print_sv v)
+  | HPRelLDefn vs -> "HP_REL_L_DEFN " ^ (!print_svl vs)
   | RelAssume v -> "RELASS " ^ (!print_svl v)
   | RankDecr vs -> "RANKDEC " ^ (!print_svl vs)
   | RankBnd v -> "RANKBND " ^ (!print_sv v)
@@ -479,6 +481,11 @@ let get_var_opt (e:exp) =
     | Var (v,_) -> Some v
     | _ -> None
 
+let filter_vars lv = 
+	List.fold_left (fun a c -> match c with 
+		| Var (v,_)-> v::a
+		| _ -> a) [] lv
+		
 let rec exp_contains_spec_var (e : exp) : bool =
   match e with
   | Var (SpecVar (t, _, _), _) -> true
@@ -3881,7 +3888,7 @@ and elim_exists_x (f0 : formula) : formula =
 	          let st, pp1 = get_subst_equation_formula with_qvars qvar false in
 	          if not (Gen.is_empty st) then
 	            let new_qf = subst_term st pp1 in
-		        let new_qf = prune_perm_bounds new_qf in
+		    let new_qf = prune_perm_bounds new_qf in
 	            let new_qf = mkExists qvars0 new_qf lbl pos in
 	            let tmp3 = helper new_qf in
 	            let tmp4 = mkAnd no_qvars tmp3 pos in
@@ -10594,3 +10601,58 @@ let find_closure_pure_formula (v:spec_var) (f:formula) : spec_var list =
       !print_formula
       !print_svl
       find_closure_pure_formula_x v f
+
+(*s2*)
+let prune_irr_neq_b_form b irr_svl=
+  let (pf,c) = b in
+  match pf with
+    | Neq (a1, a2, pos)
+    (* | Eq (a1, a2, pos) *) -> begin
+        match a1,a2 with
+          | Var (sv1,pos1), Var (sv2,pos2) ->
+                if (List.exists (fun sv -> (eq_spec_var sv sv1) || (eq_spec_var sv sv2)) irr_svl) then
+                  (true,  (BConst (true,pos),c))
+                else (false,b)
+          | _ -> (false,b)
+      end
+    | _ -> (false,b)
+
+let prune_irr_neq_x p0 irr_svl=
+  let rec helper p=
+    match p with
+      | BForm (bf,a) -> let b,nbf = prune_irr_neq_b_form bf irr_svl in
+        if b then b, mkTrue no_pos else
+          false, BForm (nbf,a)
+      | And (p1,p2,pos) -> begin
+          let b1,np1 = (helper p1) in
+          let b2,np2 = (helper p2) in
+          match b1,b2 with
+            | true,true -> (true, mkTrue no_pos)
+            | true,false -> false,np2
+            | _, true -> false,np1
+            | _ -> (false,mkAnd np1 np2 pos)
+        end
+      | AndList b-> false,p(* let ls_and,svl = List.fold_left (fun (ls1,) (sl,b1) -> *)
+        (*     let nb1,svl1 = helper b1 in *)
+        (*     if svl1 = [] then ls1@[(sl,b1)],svl0 else *)
+        (*       ls1,svl0@svl1 *)
+        (* ) ([],[]) b in *)
+        (* if svl = [] then (mkTrue no_pos, []) else *)
+        (*   AndList ls_and,svl *)
+      | Or (b1,b2,_,_) -> (*intersect_svl (helper b1) (helper b2)*)
+            false,p
+      | Not (b, _,pos) -> let b,np = helper b in
+        if b then false,mkFalse no_pos else (false, np)
+      | Forall (a,b,c,pos)-> let b,np = helper b in
+         if b then b,mkTrue pos else false,Forall (a,np,c,pos)
+      | Exists (q,b,lbl,pos)-> let b,np = helper b in
+         if b then b,mkTrue pos else (false,Exists (q,np,lbl,pos))
+  in
+  helper p0
+
+let prune_irr_neq p0 svl=
+  let irr_svl = diff_svl (remove_dups_svl (fv p0)) svl in
+  let pr1= !print_formula in
+  let pr2 = !print_svl in
+  Debug.no_2 "prune_irr_neq" pr1 pr2 (pr_pair string_of_bool pr1)
+      (fun _ _ -> prune_irr_neq_x p0 irr_svl ) p0 irr_svl

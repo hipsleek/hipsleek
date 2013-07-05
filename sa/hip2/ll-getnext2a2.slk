@@ -1,0 +1,23 @@
+data node{
+ int val;
+ node next;
+}.
+
+
+HeapPred H(node a).
+HeapPred HP_6(node a).
+HeapPred G(node a, node b).
+
+relAssume  G
+ HP_6(res) * x::node<_,vv> & vv=null --> G(x,res).
+
+shape_infer [][G].
+
+/*
+
+ G(x_23,res_24) ::= x_23::node<Anon_11,vv>@M&vv=null &  XPURE(HP_6(res_24))]
+
+--sa-inling
+ G(x_23,res_24) ::= x_23::node<Anon_11,vv>@M&vv=null & UU_HP_6_UU=res_24]
+
+*/

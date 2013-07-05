@@ -84,6 +84,7 @@ let binfo_pprint (msg:string) (pos:loc) =
   let flag = !trace_on or !devel_debug_on in
   ho_print flag (fun m -> s^m) msg
 
+
 let binfo_hprint (pr:'a->string) (m:'a) (pos:loc) = 
   let s = if !devel_debug_on then (prior_msg pos) else " " in
   let flag = !trace_on or !devel_debug_on in
@@ -93,6 +94,27 @@ let binfo_zprint msg (pos:loc) =
   let s = if !devel_debug_on then (prior_msg pos) else " " in
   let flag = !trace_on or !devel_debug_on in
   ho_print flag (fun m -> s^(Lazy.force m)) msg
+
+
+let binfo_start (msg:string) =
+        binfo_pprint "**********************************" no_pos;
+        binfo_pprint ("**** "^msg^" ****") no_pos;
+        binfo_pprint "**********************************" no_pos
+
+let binfo_end (msg:string) =
+        binfo_pprint "**********************************" no_pos;
+        binfo_pprint ("**** end of "^msg^" ****") no_pos;
+        binfo_pprint "**********************************" no_pos
+
+let dinfo_start (msg:string) =
+        dinfo_pprint "**********************************" no_pos;
+        dinfo_pprint ("**** "^msg^" detected ****") no_pos;
+        dinfo_pprint "**********************************" no_pos
+
+let dinfo_end (msg:string) =
+        dinfo_pprint "**********************************" no_pos;
+        dinfo_pprint ("**** end of "^msg^" ****") no_pos;
+        dinfo_pprint "**********************************" no_pos
 
 let ninfo_zprint m p = ()
 let ninfo_hprint pr m p  = ()

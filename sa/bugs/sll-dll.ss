@@ -17,9 +17,9 @@ node paper_fix (node c, node p)
 	if (c!=null) 
 	{
 		c.prev=p;
-                dprint;
+                //dprint;
         node d = c.next;
-        dprint;
+        //dprint;
 	paper_fix(d,c);	
 	}
 	return c;

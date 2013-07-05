@@ -1,0 +1,71 @@
+data node{
+ int val;
+ node prev;
+ node next;
+}.
+
+
+HeapPred H(node a,node b).
+HeapPred HP_1(node a,node b).
+HeapPred HP_2(node a,node b).
+HeapPred G(node a, node a).
+
+relAssume  H // (1)
+ H(x,y) --> x::node<_,prev, next> * HP_1(prev,y) *  HP_2(next,y) .
+relAssume  HP_2 // (2)
+  HP_2(next,y) & next!=null --> H(next,y).
+relAssume  HP_2 // (3a)
+  HP_2(next,y) & next=null  --> emp & true.
+relAssume G // (3b)
+ next=null  --> G(next,y).
+
+shape_infer [H,HP_2][G].
+
+/*
+Output for this example need to be corrected.
+   (i) use XPURE(HP_1(prev,y_98)) which can be
+       --sa-inlined to UU_HP_1_UU=prev
+  (ii) do not generate non dangling predicate, such as:
+         G(y_94) which is a post-pred.
+
+ H(x_88,y_89) ::= x_88::node<Anon_11,prev,next>@M * (HP_2(next,y_89))
+   & XPURE(HP_1(y_89)) & XPURE(HP_1(prev)),
+  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^ should just be XPURE(HP_1(prev,y_89) ^^^^
+
+ HP_2(next_90,y_91) ::= HP_92(next_90,y_91)& XPURE(HP_1(y_91)),
+                                             ^^^^^^^^^ should not be there
+ G(next_93,y_94) ::= emp&next_93=null &  XPURE(G(y_94)),
+                                             ^^^^^^^^^ should not be there
+ HP_92(next_90,y_91) ::= 
+ emp&next_90=null
+ or next_90::node<Anon_11,prev,next>@M * (HP_92(next,y_91))&
+     XPURE(HP_1(prev))
+     ^^^^^^^^^ be just HP_1(prev,y_91)
+
+
+SOLUTION:
+ From the instruction.
+    shape_infer [H,HP_2][G].
+
+ Step 1: we will first compute heap pred sets
+    pre_set={H,HP_2}
+    post_set={G}
+    all_set={H,HP_2,G}.
+
+ Step 2: We will then gather four relAssume with 
+   for shape inference from all_set; 
+
+ Step 3: We will find all heap predicates H_set ={H,HP_1,H_2,G}
+   in the 4 relAssume; and then compute
+     dangling_set=H_set-all_set
+                 = {HP_1}
+
+ Step 4: With dangling_set, we need only transform the first relAssume
+ to:
+    H(x,y) --> x::node<_,prev, next> *  HP_2(next,y) & XPURE(HP_1(prev,y)).
+
+ After this shape preprocessing, we can proceed with shape inference
+
+
+
+*/

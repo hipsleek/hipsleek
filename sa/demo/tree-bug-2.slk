@@ -1,0 +1,27 @@
+data node{
+     int val;
+	node prev;
+	node next;
+}.
+
+HeapPred H(node a).
+HeapPred HP_1(node a).
+HeapPred HP_0(node a).
+HeapPred G(node a).
+
+infer [HP_0,HP_1,G]
+ HP_0(left_25_798) * HP_1(right_25_799) * 
+ x::node<key_25_797,left_25_798,right_25_799>
+ &left_25_798=null 
+ |-  G(x).
+
+print residue.
+
+/* 
+
+ <1>emp&left_25_798=null&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [HP_0(left_25_798) * HP_1(right_25_799) * 
+                   x::node<key_25_797,left_25_798,right_25_799>@M&
+                   left_25_798=null --> G(x)&true]
+
+*/

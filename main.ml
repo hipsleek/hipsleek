@@ -192,7 +192,7 @@ let process_lib_file prog =
 let reverify_with_hp_rel old_cprog iprog =
 	let new_iviews = Astsimp.transform_hp_rels_to_iviews (Cast.collect_hp_rels old_cprog) in
 	let cprog = Astsimp.trans_prog (Astsimp.plugin_inferred_iviews new_iviews iprog) in
-	ignore (Typechecker.check_prog cprog)
+	ignore (Typechecker.check_prog iprog cprog)
 
 	  
 (***************end process compare file*****************)
@@ -331,7 +331,7 @@ let process_source_full source =
     if (!Scriptarguments.typecheck_only) 
     then print_string (Cprinter.string_of_program cprog)
     else (try
-       ignore (Typechecker.check_prog cprog);
+       ignore (Typechecker.check_prog intermediate_prog cprog);
     with _ as e -> begin
       print_string ("\nException"^(Printexc.to_string e)^"Occurred!\n");
       print_string ("\nError(s) detected at main "^"\n");
@@ -537,7 +537,7 @@ let process_source_full_after_parser source (prog, prims_list) =
   if (!Scriptarguments.typecheck_only) 
   then print_string (Cprinter.string_of_program cprog)
   else (try
-    ignore (Typechecker.check_prog cprog);
+    ignore (Typechecker.check_prog intermediate_prog cprog);
   with _ as e -> begin
     print_string ("\nException"^(Printexc.to_string e)^"Occurred!\n");
     print_string ("\nError(s) detected at main "^"\n");

@@ -1,39 +1,23 @@
-BUGS with hip --eps
-
-Warning 26: unused variable rhs_xpure.
-File "solver.ml", line 3206, characters 4-8091:
-Warning 8: this pattern-matching is not exhaustive.
-Here is an example of a value that is not matched:
-EInfer _
-File "solver.ml", line 6383, characters 22-488:
-Warning 8: this pattern-matching is not exhaustive.
-Here is an example of a value that is not matched:
-AConst _
-File "solver.ml", line 8489, characters 6-5368:
-Warning 25: bad style, all clauses in this pattern-matching are guarded.
-File "solver.ml", line 8825, characters 25-1033:
-Warning 8: this pattern-matching is not exhaustive.
-Here is an example of a value that is not matched:
-EInfer _
-File "solver.ml", line 8842, characters 25-1016:
-Warning 8: this pattern-matching is not exhaustive.
-Here is an example of a value that is not matched:
-EInfer _
-File "solver.ml", line 8857, characters 43-301:
-Warning 8: this pattern-matching is not exhaustive.
-Here is an example of a value that is not matched:
-EInfer _
-File "solver.ml", line 8863, characters 26-734:
-Warning 8: this pattern-matching is not exhaustive.
-Here is an example of a value that is not matched:
-EInfer _
-File "solver.ml", line 8824, characters 75-3240:
-Warning 8: this pattern-matching is not exhaustive.
-Here is an example of a value that is not matched:
-EInfer _
-+ /usr/local/bin/ocamlc.opt -c -I +ocamlgraph -I /home2/loris/hg/sl_infer/xml -I +lablgtk2 -I +camlp4 -g -annot -pp camlp4of -o parser.cmo parser.ml
-File "parser.ml", line 445, characters 6-16:
-Warning 11: this match case is unused.
-/usr/local/bin/ocamlc.opt -c -I +ocamlgraph -I /home2/loris/hg/sl_infer/xml -I +lablgtk2 -I +camlp4 -g -annot -o astsimp.cmo astsimp.ml
-+ /usr/local/bin/ocamlc.opt -c -I +ocamlgraph -I /home2/loris/hg/sl_infer/xml -I +lablgtk2 -I +camlp4 -g -annot -o astsimp.cmo astsimp.ml
-
+==============================================
+Total number of errors: 10 in files:
+  infer/infer1.slk infer/infer2.slk infer/infer8.slk infer/infer13.slk infer/infer14.slk ann1.slk imm/imm1.slk imm/imm3.slk imm/imm-hard.slk imm-field/sleek02.slk.
+====================================================================
+====================================================================
+====================================================================
+====================================================================
+====================================================================
+====================================================================
+====================================================================
+====================================================================
+====================================================================
+====================================================================
+====================================================================
+====================================================================
+====================================================================
+====================================================================
+====================================================================
+====================================================================
+====================================================================
+====================================================================
+====================================================================
+====================================================================

@@ -1,0 +1,24 @@
+data node{
+	node next;
+	node prev;
+}.
+
+infer [] x::node<_,_> |- emp.
+print residue.
+
+checkentail x::node<_,_> |- emp.
+print residue.
+
+/*
+seems like infer command ignores --classic option but not
+checkentail.
+
+Entail (1) : Valid. 
+
+ <1>x::node<Anon_11,Anon_12>@M[Orig]&true&{FLOW,(19,20)=__norm}[]
+
+
+Entail (2) : Fail.
+
+
+*/

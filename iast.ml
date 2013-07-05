@@ -47,6 +47,7 @@ and data_decl = { data_name : ident;
 data_fields : (typed_ident * loc * bool * data_field_ann) list; (* An Hoa [20/08/2011] : add a bool to indicate whether a field is an inline field or not. TODO design revision on how to make this more extensible; for instance: use a record instead of a bool to capture additional information on the field?  *)
 data_parent_name : ident;
 data_invs : F.formula list;
+data_pos : loc;
 data_is_template: bool;
 data_methods : proc_decl list }
 
@@ -61,24 +62,27 @@ and view_kind =
   | View_NORM
   | View_EXTN
 
-and view_decl = { view_name : ident; 
-mutable view_data_name : ident;
-(* view_frac_var : iperm; (\*LDK: frac perm ??? think about it later*\) *)
-mutable view_vars : ident list;
-view_labels : Label_only.spec_label list;
-view_modes : mode list;
-mutable view_typed_vars : (typ * ident) list;
-view_kind : view_kind;
-view_prop_extns:  ident list;
-view_is_prim : bool;
-view_invariant : P.formula;
-		  view_mem : F.mem_formula option; 
-		  (* Represents the Memory Permission Set. Option None will not use Memory Permission Set*)
-view_formula : Iformula.struc_formula;
-view_inv_lock : F.formula option;
-mutable view_pt_by_self : ident list; (* list of views pointed by self *)
-(* view_targets : ident list;  *)(* list of views pointed within declaration *)
-try_case_inference: bool }
+and view_decl = 
+    { view_name : ident; 
+    mutable view_data_name : ident;
+    (* view_frac_var : iperm; (\*LDK: frac perm ??? think about it later*\) *)
+    mutable view_vars : ident list;
+    view_pos : loc;
+    view_labels : Label_only.spec_label list;
+    view_modes : mode list;
+    mutable view_typed_vars : (typ * ident) list;
+    view_kind : view_kind;
+    view_prop_extns:  ident list;
+    view_is_prim : bool;
+    view_invariant : P.formula;
+    view_mem : F.mem_formula option; 
+    (* Represents the Memory Permission Set. Option None will not use Memory Permission Set*)
+    view_formula : Iformula.struc_formula;
+    view_inv_lock : F.formula option;
+    mutable view_pt_by_self : ident list; (* list of views pointed by self *)
+    (* view_targets : ident list;  *)(* list of views pointed within declaration *)
+    try_case_inference: bool;
+    view_materialized_vars: ident list; }
 
 and func_decl = { func_name : ident; 
 func_typed_vars : (typ * ident) list;}
@@ -102,7 +106,8 @@ and axiom_decl = {
 and hp_decl = { hp_name : ident; 
 (* rel_vars : ident list; *)
 (* rel_labels : branch_label list; *)
-hp_typed_vars : (typ * ident) list;
+hp_typed_inst_vars : (typ * ident * hp_arg_kind) list;
+hp_is_pre: bool;
 hp_formula : Iformula.formula ;
 (* try_case_inference: bool *)}
 
@@ -230,7 +235,7 @@ and uni_op =
   | OpPostInc
   | OpPostDec
   | OpNot
-  (*For pointers: *v and &v *)
+          (*For pointers: *v and &v *)
   | OpVal (*value-of*)
   | OpAddr (*address-off*)
 
@@ -1372,11 +1377,13 @@ and contains_field_ho (e:exp) : bool =
  
 (* smart constructors *)
 
+(* WN : may want to add pos info *)
 let mkDataDecl name fields parent_name invs is_template methods =
   { data_name = name;
     data_fields = fields;
     data_parent_name = parent_name;
     data_invs = invs;
+    data_pos = no_pos;
     data_is_template = is_template;
     data_methods = methods }
 
@@ -2117,6 +2124,7 @@ and compute_field_seq_offset ddefs data_name field_sequence =
 let b_data_constr bn larg=
 	if bn = b_datan || (snd (List.hd larg))="state" then		
 		{ data_name = bn;
+                data_pos = no_pos;
 		  data_fields = List.map (fun c-> c,no_pos,false,F_NO_ANN) larg ;
 		  data_parent_name = if bn = b_datan then "Object" else b_datan;
 		  data_invs =[];

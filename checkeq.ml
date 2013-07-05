@@ -463,8 +463,8 @@ and check_view_node_equiv (hvars: ident list)(n1: CF.h_formula_view) (n2:  CF.h_
     else (false, mt1)
   )
 
-and match_equiv_rel (hvars: ident list) (r: (CP.spec_var * (CP.exp list) * loc)) (hf2: CF.h_formula)(mtl: map_table list): (bool * (map_table list))=
-  let rec match_equiv_rel_helper (hvars: ident list) (r: (CP.spec_var * (CP.exp list) * loc)) (hf2: CF.h_formula)(mt: map_table): (bool * (map_table list)) = match hf2 with 
+and match_equiv_rel (hvars: ident list) (r: (CP.spec_var * ((CP.exp ) list) * loc)) (hf2: CF.h_formula)(mtl: map_table list): (bool * (map_table list))=
+  let rec match_equiv_rel_helper (hvars: ident list) (r: (CP.spec_var * ((CP.exp) list) * loc)) (hf2: CF.h_formula)(mt: map_table): (bool * (map_table list)) = match hf2 with 
     | CF.Star ({CF.h_formula_star_h1 = h1;
 		CF.h_formula_star_h2 = h2}) 
     | CF.Phase  ({CF.h_formula_phase_rd = h1;
@@ -487,7 +487,7 @@ and match_equiv_rel (hvars: ident list) (r: (CP.spec_var * (CP.exp list) * loc))
     | CF.HTrue  -> (false,[mt]) 
     | CF.HFalse ->  report_error no_pos "not a case"
     | CF.HEmp   ->  (false,[mt]) 
-	| CF.StarMinus _ | CF.ConjStar _ | CF.ConjConj _ -> Error.report_no_pattern()
+    | CF.StarMinus _ | CF.ConjStar _ | CF.ConjConj _ -> Error.report_no_pattern()
   in
   let res_list = (List.map (fun c -> match_equiv_rel_helper hvars r hf2 c) mtl) in
   let (bs, mtls) = List.split res_list in
@@ -501,7 +501,7 @@ and match_equiv_rel (hvars: ident list) (r: (CP.spec_var * (CP.exp list) * loc))
     let _, mtls =  List.split false_part in
     (b, List.concat mtls)
     
-and check_rel_equiv (hvars: ident list) (r1:  (CP.spec_var * (CP.exp list) * loc)) (r2:  (CP.spec_var * (CP.exp list) * loc))(mt: map_table): (bool * map_table)=
+and check_rel_equiv (hvars: ident list) (r1:  (CP.spec_var * ((CP.exp) list) * loc)) (r2:  (CP.spec_var * ((CP.exp) list) * loc))(mt: map_table): (bool * map_table)=
   let (n1,el1,l1) = r1 in
   let (n2,el2,l2) = r2 in
   let is_hard_r1 = (List.mem (CP.name_of_spec_var n1) hvars) in 
@@ -509,7 +509,8 @@ and check_rel_equiv (hvars: ident list) (r1:  (CP.spec_var * (CP.exp list) * loc
   let res = CP.eq_spec_var n1 n2 in (*eq_spec_var means same relation*)
   if(res) then (
     let res, new_mt = add_map_rel mt n1 n2 in 
-    if(res) then check_exp_list_equiv hvars el1 el2 new_mt
+    if(res) then
+      check_exp_list_equiv hvars el1 el2 new_mt
     else (false,mt)
   )
   else (
@@ -517,7 +518,8 @@ and check_rel_equiv (hvars: ident list) (r1:  (CP.spec_var * (CP.exp list) * loc
     else (
        let _ = Debug.ninfo_pprint ("ADD REL BEFORE: " ^ (string_of_map_table mt)) no_pos in 
       let res, new_mt = add_map_rel mt n1 n2 in
-      if(res) then check_exp_list_equiv hvars el1 el2 new_mt 
+      if(res) then
+        check_exp_list_equiv hvars el1 el2 new_mt 
       else (false, mt)
     )
   )
@@ -2143,7 +2145,7 @@ let gen_cpfile prog proc hp_lst_assume ls_inferred_hps dropped_hps old_hpdecls s
     let rename_all hpdecls hp_mtb = 
       let rename_one hpdecl hp_mtb = 
 	let name = hpdecl.Cast.hp_name in
-	let vars = hpdecl.Cast.hp_vars in
+	let vars, insts = (List.split hpdecl.Cast.hp_vars_inst) in
 	try (
 	  let (a, b) = List.find (fun (a,_) -> String.compare (CP.full_name_of_spec_var a) name == 0) hp_mtb in
 	  let new_name = CP.full_name_of_spec_var b in
@@ -2157,7 +2159,7 @@ let gen_cpfile prog proc hp_lst_assume ls_inferred_hps dropped_hps old_hpdecls s
 	    (index+1,new_sv::vs)
 	  ) (0,[]) vars in
 	  [({hpdecl with Cast.hp_name = new_name;
-	    Cast.hp_vars = new_vars})]
+	    Cast.hp_vars_inst = List.combine new_vars insts})]
 	)
 	with
 	  | Not_found -> []
@@ -2187,7 +2189,8 @@ let gen_cpfile prog proc hp_lst_assume ls_inferred_hps dropped_hps old_hpdecls s
 	    let arg_name = if(String.compare arg_name "res" == 0) then fresh_name () else arg_name in
 	    (CP.name_of_type t) ^ " " ^ arg_name
 	  in
-	  let args = pr_lst ", " pr_arg hpdecl.Cast.hp_vars in
+          let pr_inst (sv, i) = (pr_arg sv) ^ (if i=NI then "@NI" else "") in
+	  let args = pr_lst ", " pr_inst hpdecl.Cast.hp_vars_inst in
 	  "HeapPred "^ name ^ "(" ^ args ^ ").\n"
 	)
       in
@@ -2221,7 +2224,7 @@ let gen_cpfile prog proc hp_lst_assume ls_inferred_hps dropped_hps old_hpdecls s
       print_string ("from name: " ^name ^" --> name: "^ new_name ^ "\n" );
       let new_sv =  CP.SpecVar (HpT,new_name,Unprimed) in
       let new_hpdecl =  ({hpdecl with Cast.hp_name = new_name;
-	Cast.hp_vars = new_hp_vars}) in
+	Cast.hp_vars_inst = List.map (fun sv -> (sv, I)) new_hp_vars}) in
       (new_hpdecl::[hpdecl],[(sv,new_sv)])
     )
     with 

@@ -871,6 +871,11 @@ let rec string_of_global_var_decl_list l =
 let string_of_rel_decl_list rdecls = 
 	String.concat "\n" (List.map (fun r -> "relation " ^ r.rel_name) rdecls)
 
+let string_of_hp_decl hpdecl =
+  let name = hpdecl.Iast.hp_name in
+  name
+
+
 (* An Hoa : print axioms *)
 let string_of_axiom_decl_list adecls = 
 	String.concat "\n" (List.map (fun a -> "axiom " ^ (string_of_pure_formula a.axiom_hypothesis) ^ " |- " ^ (string_of_pure_formula a.axiom_conclusion)) adecls)

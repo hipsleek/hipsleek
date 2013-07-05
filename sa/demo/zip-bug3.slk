@@ -1,0 +1,17 @@
+data node{
+	int val;
+	node next;
+}.
+
+pred ll<> == self = null  or self::node<_, q> * q::ll<>.
+
+pred ltwo<p:node> == p::ll<> & self = null  or 
+   self::node<_, q> * p::node<_,r> * q::ltwo<r>.
+
+
+checkentail x::ltwo<y> & x=null & res=null 
+//& x=res
+ |-  res::ll<> * y::ll<>.
+print residue.
+
+

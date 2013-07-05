@@ -26,7 +26,7 @@ let norm_elim_useless_para_x view_name sf args=
             build_keep_pos_list ass (res@[index]) (index+1) all
           else build_keep_pos_list ass (res) (index+1) all
    in
-  if args = [] then (args, []) else
+  if args = [] then (view_name, args, []) else
     let svl = extract_svl (CF.struc_to_formula sf) in
     (* let _ = Debug.info_pprint (" svl:" ^ (!CP.print_svl svl) ) no_pos in *)
     (* let _ = Debug.info_pprint (" args:" ^ (!CP.print_svl args) ) no_pos in *)
@@ -34,45 +34,74 @@ let norm_elim_useless_para_x view_name sf args=
     (* let _ = Debug.info_pprint (" new_args:" ^ (!CP.print_svl new_args) ) no_pos in *)
     if List.length args > List.length new_args then
       let keep_pos = build_keep_pos_list args [] 0 new_args in
-      let ss = [(view_name,keep_pos)] in
+      let new_vname = CP.fresh_old_name view_name in
+      let ss = [(view_name,new_vname,keep_pos)] in
       (* let n_sf = CF.drop_view_paras_struc_formula sf ss in *)
       (* let n_ufs = List.map ( fun (uf, ufl) -> (CF.drop_view_paras_formula uf ss, ufl)) ufs in *)
       let dropped_args = CP.diff_svl args svl in
       let _ = Debug.info_pprint ("  ELIMINATE parameters:" ^ (!CP.print_svl dropped_args) ^ " of view " ^ view_name ^ "\n" ) no_pos in
-      (new_args, ss)
+      (new_vname, new_args, ss)
     else
-      (args, [])
+      (view_name, args, [])
 
 let norm_elim_useless_para view_name sf args=
   let pr1 = Cprinter.string_of_struc_formula in
-  let pr2 = pr_pair !CP.print_svl (pr_list (pr_pair pr_id (pr_list string_of_int))) in
+  let pr2 = pr_triple pr_id !CP.print_svl (pr_list (pr_triple pr_id pr_id (pr_list string_of_int))) in
   Debug.no_2 "norm_elim_useless_para" pr1 !CP.print_svl pr2
       (fun _ _ -> norm_elim_useless_para_x view_name sf args) sf args
 
 (*assume views are sorted*)
 let norm_elim_useless_x vdefs sel_vns=
-  let elim_vdef ss vdef= { vdef with
-      Cast.view_formula = CF.drop_view_paras_struc_formula vdef.Cast.view_formula ss;
-      Cast.view_un_struc_formula =  List.map ( fun (uf, ufl) -> (CF.drop_view_paras_formula uf ss, ufl)) vdef.Cast.view_un_struc_formula;
+  let elim_vdef ss vdef=
+    let new_vdef = { vdef with
+        Cast.view_formula = CF.drop_view_paras_struc_formula vdef.Cast.view_formula ss;
+        Cast.view_un_struc_formula =  List.map ( fun (uf, ufl) -> (CF.drop_view_paras_formula uf ss, ufl)) vdef.Cast.view_un_struc_formula;
     }
+    in
+    new_vdef
   in
   let process_one_view vdef rem_vdefs=
     if List.exists (fun vn -> String.compare vn vdef.Cast.view_name = 0) sel_vns then
       (*update vdef*)
-      let view_sv_vars, ss = norm_elim_useless_para vdef.Cast.view_name vdef.Cast.view_formula  vdef.Cast.view_vars in
+      let new_vname, view_sv_vars, ss = norm_elim_useless_para vdef.Cast.view_name vdef.Cast.view_formula  vdef.Cast.view_vars in
       (*push it back*)
-      if ss = [] then (vdef,rem_vdefs) else
-        let new_def = {vdef with Cast.view_vars = view_sv_vars;} in
+      if ss = [] then ([vdef],rem_vdefs) else
+        let vn = CF.mkViewNode (CP.SpecVar (Named new_vname, self, Unprimed))
+          new_vname view_sv_vars no_pos in
+        let f = CF.formula_of_heap vn no_pos in
+        let cf = CF.struc_formula_of_heap vn no_pos in
+        let link_view={vdef with
+            C.view_formula = cf;
+            C.view_xpure_flag = true;
+            C.view_addr_vars = [];
+            C.view_baga = [];
+            C.view_complex_inv = None;
+            C.view_mem = None;
+            C.view_inv_lock = None;
+            C.view_un_struc_formula = [(f, (0,"0"))];
+            C.view_base_case = None;
+            C.view_is_rec = false;
+            C.view_pt_by_self = [new_vname];
+            C.view_case_vars = [];
+            C.view_raw_base_case = None;
+            C.view_prune_branches = [];
+            C.view_prune_conditions = [];
+            C.view_prune_conditions_baga = [];
+            C.view_prune_invariants = []
+        } in
+        let new_def = {vdef with
+            Cast.view_name = new_vname;
+            Cast.view_vars = view_sv_vars;} in
         (*update rem_vdefs*)
-        (elim_vdef ss new_def, List.map (elim_vdef ss) rem_vdefs)
+        ([link_view;(elim_vdef ss new_def)], List.map (elim_vdef ss) rem_vdefs)
     else
-      (vdef,rem_vdefs)
+      ([vdef],rem_vdefs)
   in
   let rec interate_helper rem_vdefs done_vdefs=
     match rem_vdefs with
       | [] -> done_vdefs
-      | vdef::rest -> let new_def,new_rest = process_one_view vdef rest in
-        interate_helper new_rest (done_vdefs@[new_def])
+      | vdef::rest -> let new_defs,new_rest = process_one_view vdef rest in
+        interate_helper new_rest (done_vdefs@new_defs)
   in
   interate_helper vdefs []
 
@@ -350,14 +379,14 @@ let norm_extract_common_one_view_x cprog cviews vdecl=
   (***views to hprels*******)
   let fs1 = List.map CF.elim_exists fs in
   let fs2,map = List.split (List.map view_to_hprel fs1) in
-  let defs,elim_ss = SAU.get_longest_common_hnodes_list cprog cdefs unk_hps unk_svl
+  let defs,elim_ss = SAU.get_longest_common_hnodes_list cprog false cdefs unk_hps unk_svl
     hp self_var vdecl.C.view_vars args fs2 in
   match defs with
     | [a] -> [vdecl]
     | [(hp1,(_,hrel1,f1));(hp2,(a,hrel2,f2))] ->
         let _ = Debug.info_pprint ("  DO EXTRACT on view: "^ (!CP.print_sv hp1) ^ "\n") no_pos in 
         let n_f1 =
-          if !Globals.norm_elim_useless then
+          if !Globals.pred_elim_useless then
             CF.subst_hrel_f f1 elim_ss
           else
             f1
@@ -419,4 +448,56 @@ let norm_extract_common cprog cviews sel_vns=
 
 (*****************************************************************)
    (********END EXTRACT common pattern **********)
+(*****************************************************************)
+let cont_para_analysis_view cprog vdef other_vds=
+  let process_branch vname args f=
+    let _, vns, _ = CF.get_hp_rel_formula f in
+    if vns = [] then args else
+      let ( _,mix_f,_,_,_) = CF.split_components f in
+      let eqs = (MCP.ptr_equations_without_null mix_f) in
+      let rec_vns, other_vns = List.partition (fun vn -> String.compare vn.CF.h_formula_view_name vname = 0) vns in
+      (*cont paras are para not changed, just forwarded*)
+      let cont_paras = List.fold_left (fun cur_cont_paras vn ->
+          let closed_rec_args = CF.find_close vn.CF.h_formula_view_arguments eqs in
+          CP.intersect_svl cur_cont_paras closed_rec_args
+      ) args rec_vns
+      in
+      (* process other_vns*)
+      let cont_paras1 = List.fold_left (fun cur_cont_paras vn ->
+          let cont_args = Cast.look_up_cont_args vn.CF.h_formula_view_arguments vn.CF.h_formula_view_name other_vds in
+          let closed_rec_args = CF.find_close cont_args eqs in
+          CP.intersect_svl cur_cont_paras closed_rec_args
+      ) cont_paras other_vns
+      in
+      cont_paras1
+  in
+  let vname = vdef.Cast.view_name in
+  let args = vdef.Cast.view_vars in
+  let cont_paras = List.fold_left (fun cur_cont_paras (f,_) ->
+      let br_cont_paras = process_branch vname args f in
+          CP.intersect_svl cur_cont_paras br_cont_paras
+      ) args vdef.Cast.view_un_struc_formula
+  in
+  {vdef with Cast.view_cont_vars = cont_paras}
+
+(*assume cviews are sorted*)
+let cont_para_analysis_x cprog cviews=
+  let rec loop_helper rem_cviews done_cviews=
+    match rem_cviews with
+      | [] -> done_cviews
+      | vdef::rest ->
+            let new_vdef = cont_para_analysis_view cprog vdef done_cviews in
+            loop_helper rest (done_cviews@[new_vdef])
+  in
+  loop_helper cviews []
+
+let cont_para_analysis cprog cviews=
+  (* let pr0 = pr_list_ln Cprinter.string_of_view_decl in *)
+  let pr1 = pr_pair pr_id !CP.print_svl in
+  let pr2 vdef = pr1 (vdef.Cast.view_name, vdef.Cast.view_cont_vars) in
+  let pr3 = pr_list pr2 in
+  Debug.no_1 "cont_para_analysis" pr3 pr3
+      (fun _ -> cont_para_analysis_x cprog cviews) cviews
+(*****************************************************************)
+   (********END PARA CONTINUATION ANALYSIS **********)
 (*****************************************************************)

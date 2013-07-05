@@ -1,0 +1,58 @@
+data node{
+ int val;
+ node prev;
+ node next;
+}.
+
+
+HeapPred H(node a,node b).
+HeapPred HP_1(node a,node b).
+HeapPred HP_2(node a,node b).
+HeapPred G(node a, node a).
+
+relAssume  H // (1)
+ H(x,y) --> x::node<_,prev, next> * HP_1(prev, y) * HP_2(next,y).
+
+relAssume  HP_2 // (2)
+  HP_2(next,y) & next!=null --> H(next,y).
+// HP_2(next,y) & next!=null 
+// --> next::node<_,prev, nn> * HP_1(prev, y) * HP_2(nn,y).
+
+relAssume  HP_2 // (3)
+  HP_2(next,y) * p::node<_,prev, next> & next=null  --> G(p,y).
+
+/*
+relAssume  HP_2 // (3)
+  HP_2(next,y) & next=null  --> emp& true.
+
+relAssume G //(3)
+p::node<_,prev, next> & next=null  --> G(p,y).
+*/
+
+
+shape_infer [H,HP_2][G].
+
+/*
+
+OBTAINED:
+
+[ H(x_62,y_63) ::= x_62::node<Anon_11,prev,next>@M * (HP_2(next,y_63))& XPURE(H(y_63)) & 
+ XPURE(HP_1(prev)),
+
+ # why is there a XPURE(H(y_63))? 
+
+ HP_2(next_64,y_65) ::= HP_66(next_64,y_65)& XPURE(H(y_65)),
+
+ # why is there a XPURE(H(y_65))? 
+
+ G(next_67,y_68) ::= emp&next_67=null &  XPURE(G(y_68)),
+
+ # why is there a XPURE(G(y_68))? 
+
+ HP_66(next_64,y_65) ::= 
+ emp&next_64=null
+ or next_64::node<Anon_12,prev,nn>@M * (HP_66(nn,y_65))& XPURE(HP_1(prev))
+ ]
+
+
+*/

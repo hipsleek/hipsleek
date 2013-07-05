@@ -1,0 +1,6 @@
+data cell {
+  int v;
+}.
+
+checkentail x::cell<2> or x::cell<3> |- x::cell<n> & n>0.
+print residue.

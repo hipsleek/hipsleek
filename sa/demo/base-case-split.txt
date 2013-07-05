@@ -1,0 +1,63 @@
+# sll-dll.ss
+
+We derive:
+
+ H1(c,p@NI)&c!=null --> c::node<val_21_807,prev_21_808,next_21_809>@M * 
+      HP_810(prev_21_808,p@NI) * HP_811(next_21_809,p@NI)&true,
+ 
+ HP_811(next_21_809,p@NI)&true --> H1(next_21_809,c'@NI)&true,
+
+ c::node<val_21_807,p,next_21_809>@M * G1(next_21_809,c)&true --> G1(c,p)&
+  true,
+
+ H1(c,p@NI)&c=null --> G1(c,p)&true
+
+The 4th RelAssume is a target for base-case split since
+we have a c=null which contradicts with 1st RelAssume.
+
+Hence base-case split:
+ H1(c,p@NI)&c=null --> emp
+ c=null & emp --> G1(c,p)&true
+
+==============================================================
+
+# zip.ss
+
+ H(x,y)&x!=null --> x::node<val_31_814,next_31_815>@M *
+  (HP_816(next_31_815,y@NI)) * (HP_817(y,x@NI))&true,
+
+ HP_817(y,x@NI)&true --> y::node<val_32_821,next_32_822>@M *
+  (HP_823(next_32_822,x@NI))&true,
+
+ (HP_816(next_31_815,y@NI)) * (HP_823(next_32_822,x@NI))&
+  true --> H(next_31_815,next_32_822)&true,
+
+ H(x,y)&res=x & x=null & res=null --> G1(x,y,res)&true,
+
+ y::node<val_32_821,next_32_822>@M *
+  (G1(next_31_815,next_32_822,v_node_34_853)) *
+  x::node<v_int_33_837,v_node_34_853>@M&res=x --> G1(x,y,res)&true
+
+4th RelAssume is a candidate for base-case split which
+complements the 1st RelAssume.
+
+In this case, we may also use --sa-s-split to capture
+y extension in the base-case.
+
+==============================================================
+
+# cll.ss
+
+ H(rest,h)&h!=rest --> rest::node<val_36_824,next_36_825>@M * 
+  HP_826(next_36_825,h@NI) * HP_827(h,rest@NI)&true,
+
+ HP_826(next_36_825,h@NI) * HP_827(h,rest@NI)&h!=rest --> H(next_36_825,h)&
+  true,
+
+ H(rest,h)&h=rest --> G(rest,h)&true,
+
+ rest::node<val_36_824,next_36_825>@M * G(next_36_825,h)&
+  h!=rest --> G(rest,h)&true
+
+3rd RelAssume is a candidate for base-case split which
+complements the 1st RelAssume.

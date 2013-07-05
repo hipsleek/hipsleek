@@ -32,9 +32,52 @@ Isn't x1,x2 instantiated? We should not use EXISTS wrapper.
 */
 
 ===========================================================
-# sll-dll2.ss
+# sll-dll2a1.slk  DONE
+
+infer [H1,G1]
+ H1(c,p)&c=null & !(v_bool_18_760') & c=null & !(v_bool_18_760') & c=res
+ |-  G1(c,p).
+
+ inferred hprel: [emp&c=null --> G1(c,p)&true; 
+                  H1(res,p)&res=null --> emp&true]
+
+Below is wrong:
+ inferred hprel: [H1(c,p)&c=null --> G1(c,p)&true; 
+                  H1(res,p)&res=null --> emp&true]
+WE should just have:
+ H1(c,p)&c=null --> G1(c,p)
+which will later be base-case spitted separately 
+into pre-pred and post-pred:
+ H1(c,p)&c=null --> emp
+ c=null --> G1(c,p)
+
+=============================================================
+# sll-dll2.ss   DONE
+
+FIXED :
+
+[ H1(c,p)&c!=null --> c::node<Anon_784,pp_785,nn_786>@M * 
+  (HP_787(pp_785,p)) * (HP_788(nn_786,p))&true,
+ HP_788(nn_786,p)&c'!=null --> H1(nn_786,c')&true,
+ (HP_787(pp_785,p)) * (G1(nn_786,c)) * c::node<Anon_784,p,nn_786>@M&
+  true --> G1(c,p)&true,
+ H1(c,p)&c=null --> emp&true,
+ emp&c=null --> G1(c,p)&true]
+
 
 Error during shape inference ..
+
+[ H1(c,p)&c!=null --> c::node<Anon_784,pp_785,nn_786>@M * 
+  (HP_787(pp_785,p)) * (HP_788(nn_786,p))&true,
+ HP_788(nn_786,p)&c'!=null --> H1(nn_786,c')&true,
+ (HP_787(pp_785,p)) * (G1(nn_786,c)) * c::node<Anon_784,p,nn_786>@M&
+  true --> G1(c,p)&true,
+ H1(c,p)&c=null --> emp&true,
+ H1(c,p)&c=null --> G1(c,p)&true]
+
+Problem with:
+ H1(c,p)&c=null --> emp&true,
+ H1(c,p)&c=null --> G1(c,p)&true]
 
 ************************************
 *******relational assumption ********
@@ -197,8 +240,15 @@ Expecting relational assumption : H(r) --> r::lseg<q> * q::ln<>
 @5! rfb: r::lseg<q>@M[0][Orig][LHSCase] * q::ln@M[0][Orig][LHSCase]&true&
 {FLOW,(19,20)=__norm}[]
 *******************************************************
-# bug-app3.slk:
+# bug-app3.slk:  DONE
 
+Why is there a inferred pre of "true"?
+
+ <1>HP_37(flted_16_36)&Anon_13=Anon_35&{FLOW,(19,20)=__norm}[]
+ inferred pure: [true]
+ inferred hprel: [H2(r)&true --> r::node<Anon_35,flted_16_36>@M * 
+                   (HP_37(flted_16_36))&true; 
+  
 loss: flted_13_30 = null
 
 inferred hprel: [H2(r)&true --> r::lseg<flted_13_30>@M[LHSCase] * 
@@ -236,67 +286,7 @@ Checking procedure foo$node...
 
 break into two constraints
 
-=================================*===============
-# i-app.ss: 
 
-Problems:
- (i) Need to get rid of redundant prev fields..
- (ii) Why is there an extra predicate 
-       HP_797(?)
-
-Latest result is below, but there is a complex
-RHS    --> H1(t_32',y)) * HP_810(prev_17_803).
-
-[ H1(c,y)&true --> c::node<val_17_766',prev_17_767',next_17_768'>@M * 
-  HP_791(prev_17_767',y) * HP_792(next_17_768',y)&true,
-
- HP_791(prev_17_803,y) * HP_792(t_32',y) &t_32'!=null 
-   --> H1(t_32',y)) * HP_810(prev_17_803) ,
-
- c::node<val_17_802,prev_17_803,t_815>@M * HP_810(prev_17_803) * 
-  (G1(t_815,y))&t_815!=null --> G1(c,y)&true,
-
- HP_792(next_22_813,y)&next_22_813=null --> emp&true,
-
- (HP_791(prev_17_799,y)) * c::node<val_17_798,prev_17_799,y>@M&
-  true --> G1(c,y)&true]
-*
-
-[ H1(c,y)&true --> c::node<val_17_753',prev_17_754',next_17_755'>@M * 
-  (HP_778(prev_17_754',y)) * (HP_779(next_17_755',y))&true,
- (HP_778(prev_17_790,y)) * (HP_779(t_32',y))&t_32'!=null 
-    --> (H1(t_32',y)) * (HP_797(prev_17_790))&true,
-                         ^^^^^^^^^^^^^^^^^^^
- c::node<val_17_789,prev_17_790,t_802>@M * (HP_797(prev_17_790)) *
-                                           ^^^^^^^^^^^^^^^^^^^^^ 
-  (G1(t_802,y))&t_802!=null --> G1(c,y)&true,
- (HP_778(prev_17_786,y)) * (HP_779(next_22_800,y)) * 
-  c::node<val_17_785,prev_17_786,y>@M&next_22_800=null --> G1(c,y)&true]
-
-data node{
-	int val;
-	node prev;
-	node next;
-}
-
-ll<> == self = null  or self::node<_, _ , q> * q::ll<>;
-
-HeapPred H1(node a, node b).
-HeapPred G1(node a, node b).
-
-void foo (node c, node y)
-  infer [H1,G1]
-  requires H1(c,y)
-  ensures  G1(c,y);
-{
-   node t = c.next;
-   if (t!=null) {
-      foo(t,y);
-   }
-   else {
-      c.next=y;
-   }
-}
 =================================*===============
 # dll-4a1.slk: FIXED
 
@@ -311,11 +301,11 @@ why did we get emp?
 ************************
 */
 =================================*===============
-# bug-t3.slk (to be fixed in ann-1 branch)
+# bug-t3.slk (TODO to be fixed in ann-1 branch)
 
 @v annotation problematic
 =================================*===============
-# bind2.ss (to fix at default branch)
+# bind2.ss (TODO to fix at default branch)
 
 ERROR : why did bind not temporarily remove a node?
 It seems we still use @L annotation on node & field regardless..
@@ -356,7 +346,7 @@ should be HP_27(t_20,y_26)
                                          ^^^^^ t_29
  ]
 =================================*===============
-# use3.slk
+# use3.slk  TODO (type inference)
 
 type inference problem. (see use1.slk)
 
@@ -366,7 +356,7 @@ Message: couldn't infer type for p in ; (p Unknown); (pp node); (qq node); (pp_1
  Fatal error: exception Failure("couldn't infer type for p in ; (p Unknown); (pp node); (qq node); (pp_15 node); (y node); (self node); (Anon_12 int); (tt node); (TVar__18 node); (y_16 node); (TVar__26 node); (TVar__27 node)
 ")
 =================================*===============
-# use1.slk; use2.slk: 
+# use1.slk; use2.slk: TODO
 
 Instead of:
  self::G2(y) = ...
@@ -454,8 +444,68 @@ eliminated.
     (HP_2(next_17_768',y_40))&true
  ]
 
-# i-app.ss
+******************************************************
+# i-app.ss: FIXED
 
+Problems:
+ (i) Need to get rid of redundant prev fields..
+ (ii) Why is there an extra predicate 
+       HP_797(?)
+
+Latest result is below, but there is a complex
+RHS    --> H1(t_32',y)) * HP_810(prev_17_803).
+
+[ H1(c,y)&true --> c::node<val_17_766',prev_17_767',next_17_768'>@M * 
+  HP_791(prev_17_767',y) * HP_792(next_17_768',y)&true,
+
+ HP_791(prev_17_803,y) * HP_792(t_32',y) &t_32'!=null 
+   --> H1(t_32',y)) * HP_810(prev_17_803) ,
+
+ c::node<val_17_802,prev_17_803,t_815>@M * HP_810(prev_17_803) * 
+  (G1(t_815,y))&t_815!=null --> G1(c,y)&true,
+
+ HP_792(next_22_813,y)&next_22_813=null --> emp&true,
+
+ (HP_791(prev_17_799,y)) * c::node<val_17_798,prev_17_799,y>@M&
+  true --> G1(c,y)&true]
+*
+
+[ H1(c,y)&true --> c::node<val_17_753',prev_17_754',next_17_755'>@M * 
+  (HP_778(prev_17_754',y)) * (HP_779(next_17_755',y))&true,
+ (HP_778(prev_17_790,y)) * (HP_779(t_32',y))&t_32'!=null 
+    --> (H1(t_32',y)) * (HP_797(prev_17_790))&true,
+                         ^^^^^^^^^^^^^^^^^^^
+ c::node<val_17_789,prev_17_790,t_802>@M * (HP_797(prev_17_790)) *
+                                           ^^^^^^^^^^^^^^^^^^^^^ 
+  (G1(t_802,y))&t_802!=null --> G1(c,y)&true,
+ (HP_778(prev_17_786,y)) * (HP_779(next_22_800,y)) * 
+  c::node<val_17_785,prev_17_786,y>@M&next_22_800=null --> G1(c,y)&true]
+
+data node{
+	int val;
+	node prev;
+	node next;
+}
+
+ll<> == self = null  or self::node<_, _ , q> * q::ll<>;
+
+HeapPred H1(node a, node b).
+HeapPred G1(node a, node b).
+
+void foo (node c, node y)
+  infer [H1,G1]
+  requires H1(c,y)
+  ensures  G1(c,y);
+{
+   node t = c.next;
+   if (t!=null) {
+      foo(t,y);
+   }
+   else {
+      c.next=y;
+   }
+}
+============
 This generated below. The 2nd relational assumption seems wrong.
 
 [ H1(c,y)&true --> c::node<val_17_766',prev_17_767',next_17_768'>@M * 
@@ -472,7 +522,8 @@ This generated below. The 2nd relational assumption seems wrong.
  (HP_791(prev_17_799,y)) * c::node<val_17_798,prev_17_799,y>@M&
   true --> G1(c,y)&true]
 
-# i-app-w.slk
+***************************************************************************
+# i-app-w.slk DONE (by recognizing root/cont parameters)
   
 infer [H1] HP_p(prev_17_803,y) * HP_2(t_32',y) * 
 c'::node<val_17_802,prev_17_803,t_32'> &c=c' & y=y' & t_32'!=null & 
@@ -482,35 +533,31 @@ print residue.
 
 /*
 
-Why did we generate HP_34 below?
-
- <1>c'::node<val_17_802,prev_17_803,t_32'>@M[Orig] * (HP_34(prev_17_803))&c=c' & y=y' & t_32'!=null & v_bool_18_772' & t_32'!=null & v_bool_18_772'&{FLOW,(19,20)=__norm}[]
+<1>c'::node<val_17_802,prev_17_803,t_32'>@M[Orig]&c=c' & y=y' & t_32'!=null & v_bool_18_772' & t_32'!=null & v_bool_18_772'&{FLOW,(19,20)=__norm}[]
  inferred hprel: [(HP_p(prev_17_803,y')) * (HP_2(t_32',y'))&
-                   t_32'!=null --> (H1(t_32',y')) * (HP_34(prev_17_803))&true]
-
-Solution
-========
-
-    H(x) |- x::node<...>
- =================================
- H(x,p) --> x::node<.,q>* Hg<q,p>
-
-
-     H(x,p)   |- x::lseg<q>
- ==================================
-   H(x,p) --> x::lseg<q>*Hg<q,p>
-
-Given:
-  x::lseg<q>
-We have:
-  x is root parameter
-  q is continuation parameter
-For HeapPred
- (i) by default, first parameter is the root
- (ii) unless named as "self"
-
+                   t_32'!=null --> H1(t_32',y')&true]
 
 */
+
+I think it would be good to have the following notion of parameters:
+    (i) head (self)
+   (ii) continuation
+  (iii) don't know
+Let us assume that head is always the first paramter,
+and continuation parameter are marked by *.
+
+     x::node<_,p#,q#> * H1(p) * H2(q)  |- H(x,..,p#)
+
+     x::lseg<_,p#> * H1(p)             |- H(x,..,p#)
+
+ From
+     c'::node<val_17_802,p,t_32'>@M[Orig] *
+      HP_p(p,y') * (HP_2(t_32',y')) & t_32'!=null & .. |- H1(t_32',y')     
+
+ Pick only:
+     (HP_2(t_32',y')) & t_32'!=null |- H1(t_32',y')
+ with residue:
+     c'::node<val_17_802,p,t_32'>@M[Orig] * HP_p(p,y') & ...
 
 We have:
 
@@ -547,7 +594,17 @@ The inferred rule below is not good:
 as it has both complex LHS and complex RHS.
 
 
-# sll-dll2.ss
+******************************************************
+# sll-dll2.ss     DONE (by not using es_history)
+
+ checkentail (HP_787(pp_785,p)) * (HP_788(nn_786,p))&c=c' & p=p' & c'!=null & 
+v_bool_18_760' & c'!=null & v_bool_18_760' & Anon_11'=Anon_784 & 
+pp_785=pp_789 & nn'=nn_786 & p'=pp'&{FLOW,(22,23)=__norm}[]
+ |-  H1(nn',c')&true&{FLOW,(22,23)=__norm}[]. 
+hprel_ass: [ HP_788(nn_786,p)&c'!=null --> H1(nn_786,c')&true]
+res:  [
+  HP_787(pp_785,p)&c=c' & p=p' & c'!=null & v_bool_18_760' & c'!=null & v_bool_18_760' & Anon_11'=Anon_784 & pp_785=pp_789 & nn'=nn_786 & p'=pp'&{FLOW,(22,23)=__norm}[]
+  ]
 
 On sleek logging of sll-dll2.ss, we got:
 
@@ -572,8 +629,8 @@ We derived:
 
 <1>HP_4(pp_786,p)&c=c' & p=p' & c'!=null & v_bool_18_760' & c'!=null & v_bool_18_760' & p'=pp'&{FLOW,(19,20)=__norm}[]
  inferred hprel: [HP_5(nn',pp')&c'!=null --> H1(nn',c')&true]
-
-# sll-dll2b.slk
+******************************************************
+# sll-dll2b.slk OK
 
 Given:
 relAssume G1
@@ -582,9 +639,747 @@ relAssume G1
  emp&c=null --> G1(c,p) .
 shape_infer [][G1].//[pre_hps][post_hps]
 
-Why did we synthesize an empty predicate?
+Answer seems correct below:
 
- G1(c_27,p_28) ::= emp&c_27=null]
+ G1(c_27,p_28) ::= 
+ emp&c_27=null
+ or c_27::node<Anon_796,p_28,nn_797>@M * (G1(nn_797,c_27))&true
+ ]
+*
+******************************************************
+# bug-app3.slk   DONE (by renaming vars)
 
-Did you revert to old code??????
+When generating:
+ es_infer_hp_rel: [H2(r)&true --> r::node<Anon_13,flted_17_34>@M * 
+                    (HP_35(flted_17_34))&true]
+We used the RHS variables:
+ r::node<Anon_13,flted_17_34>@M 
 
+But the RHS vars may be bound and this causes a
+name clash. Thus, it seem necessary to generate
+a fresh set of names, such as:
+ r::node<Anon_98,flted_17_99>@M 
+and then generate:
+ H2(r)&true --> r::node<Anon_98,flted_17_99>@M * 
+                    (HP_35(flted_17_34))&true]
+
+I have found one place to perform this change as shown below:
+
+!!! >>>>>> infer_hp_rel <<<<<<
+!!!   lhs:  H2(r)&true&{FLOW,(19,20)=__norm}[]
+!!!   rhs:  r::node<Anon_13,flted_17_34>@M[Orig]&true&{FLOW,(19,20)=__norm}[]
+!!!   unmatch:  r::node<Anon_13,flted_17_34>@M[Orig]
+!!! ==========================
+!!! LOC : renaming needed here
+!!! ==========================
+!!! lhs: H2(r)&true&{FLOW,(19,20)=__norm}[]
+!!! rhs: r::node<Anon_13,flted_17_34>@M[Orig]
+!!! lhs(vars):[H2,r]
+!!! rhs(vars):[r,Anon_13,flted_17_34]
+!!! VARS ro rename in RHS:[Anon_13,flted_17_34]
+
+
+bug-app3.slk:
+
+add_to_subst@5@3@2@1
+add_to_subst inp1 :[flted_17_34]
+add_to_subst inp2 :[flted_17_34]
+add_to_subst@5 EXIT out :?
+
+a:604:heap_entail_split_rhs_phases@2@1
+a:605:heap_entail_split_rhs_phases inp1 : es_formula: H2(r)&true&{FLOW,(19,20)=__norm}[]
+a:617:heap_entail_split_rhs_phases inp2 : r::node<Anon_13,flted_17_34>@M[Orig]&flted_17_34=null&
+a:619:heap_entail_split_rhs_phases@2 EXIT out : 
+a:642:heap_entail_split_rhs_phases@1
+a:643:heap_entail_split_rhs_phases inp1 : es_formula: H2(r)&true&{FLOW,(19,20)=__norm}[]
+a:654:heap_entail_split_rhs_phases inp2 : EXISTS(flted_17_30: r::node<Anon_13,flted_17_30>@M[Orig]&flted_17_30=null&
+a:656:heap_entail_split_rhs_phases@1 EXIT out : 
+
+
+******************************************************
+bug-imm.slk:
+
+add_to_subst@5@3@2@1
+add_to_subst inp1 :[nnn_36]
+add_to_subst inp2 :[xxx]
+add_to_subst@5 EXIT out :?
+
+a:142:!!!:0: 0: heap_entail_conjunct_lhs: invoking heap_entail_split_rhs_phases
+a:144:@1!:0: 0: heap_entail_split_rhs_phases: 
+a:161:@2!bug-imm.slk:17: 38: heap_entail_split_rhs_phases: 
+a:549:heap_entail_split_rhs_phases@2@1
+a:550:heap_entail_split_rhs_phases inp1 : es_formula: r::node<xxx,Anon_13>@M[Orig]&xxx=6&{FLOW,(19,20)=__norm}[]
+a:561:heap_entail_split_rhs_phases inp2 : r::node<nnn_36,Anon_14>@M[Orig]&4<nnn_36&{FLOW,(19,20)=__norm}[]
+a:562:heap_entail_split_rhs_phases@2 EXIT out : 
+a:580:heap_entail_split_rhs_phases@1
+a:581:heap_entail_split_rhs_phases inp1 : es_formula: r::node<xxx,Anon_13>@M[Orig]&xxx=6&{FLOW,(19,20)=__norm}[]
+a:591:heap_entail_split_rhs_phases inp2 : EXISTS(nnn_32: r::node<nnn_32,Anon_14>@M[Orig]&4<nnn_32&
+a:593:heap_entail_split_rhs_phases@1 EXIT out : 
+
+
+******************************************************
+# bug-app3n.slk
+
+Must shape and pure be combined?
+
+infer [H2] H2(r)   |- r::node<n,q> & n>0 .
+print residue.
+
+/*
+Can we support pure inference within shape?
+Can shape be done independently of pure property?
+
+!!! >>>>>> infer_pure_m <<<<<<
+!!! Adding heap assumption?
+!!! unk_heaps:[ HP_33(q_32)]
+!!! lhs_xpure: n=n_31
+!!! rhs_xpure: 0<n
+!!! choose_unk_h:[]
+Entail (1) : Fail.
+
+*/
+
+
+******************************************************
+# bug-app3s1.slk: DONE
+
+p parameter of pred is a continuation if
+it is unchanged parameter that is defined for every branch.
+In the 
+
+pred lseg<p> ==
+    self=p
+  or self::node<_,_,q> * q::lseg<p> 
+ inv true.
+
+pred ls<p> ==
+    self::node<_,_,p>
+  or self::node<_,_,q> * q::ls<p> 
+ inv true.
+
+The parameter below is not a continuation:
+
+pred dll<p> ==
+    self=null
+  or self::node<_,p,q> * q::dll<self> 
+ inv true.
+
+
+Below is wrong:
+
+infer [H2] H2(r)   |- r::dll<q> .
+Entail (1) : Valid. 
+ <1>HP_40(q_39)&q=q_39&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [H2(r)&true --> r::dll<q_39>@M[LHSCase] * (HP_40(q_39))&true]
+
+We should just have:
+
+ [H2(r)&true --> r::dll<q_39>@M[LHSCase] 
+
+Solution
+========
+
+    H(x) |- x::node<...>
+ =================================
+ H(x,p) --> x::node<.,q>* Hg<q,p>
+
+
+     H(x,p)   |- x::lseg<q>
+ ==================================
+   H(x,p) --> x::lseg<q>*Hg<q,p>
+
+Given:
+  x::lseg<q>
+We have:
+  x is root parameter
+  q is continuation parameter
+For HeapPred
+ (i) by default, first parameter is the root
+ (ii) unless named as "self"
+
+ =========================================================
+# i-cll.ss: DONE
+
+hip generated the following rel assumption:
+
+ H1(rest,h)&h!=rest --> rest::node<val_31_824,next_31_825>@M * 
+  HP_8(next_31_825,h).
+
+ HP_8(next_31_825,h)&h!=rest -->
+  H1(next_31_825,h)&true.
+
+ H1(rest,h)&h=rest --> G1(rest,h).
+
+ rest::node<val_31_824,next_31_825>@M * G1(next_31_825,h) &
+  h!=rest --> G1(rest,h).
+
+
+There are two problems
+(i) Guard must be captured exclusively
+    by nodes/predicates from both LHS and RHS
+      HP_8(next,h)&h!=rest -->
+            H1(next,h)&true.
+  The LHS & RHS vars are {next,h}
+ but guard h!=rest contains an unknown var h!=rest which
+ should not be included.
+ Thus, we should have generated"
+      HP_8(next,h) --> H1(next,h)&true.
+
+ (ii) The assumption contains both
+  pre-pred and post-pred. We should split them 
+  as follows:
+
+ H1(rest,h)&h=rest --> G1(rest,h).
+
+ split to:
+
+ (i)  H1(rest,h)&h=rest --> emp.
+ (ii) h=rest --> G1(rest,h).
+=========================================================
+# set-tail.slk: DONE (with --sa-inlining)
+
+relAssume H1
+ H1(c,y) --> c::node<v,prev_19_765',next_19_766'>@M * 
+   HP_5(prev_19_765',y) * HP_6(next_19_766',y)&true.
+
+How about renaming root parameter of unused pred to
+a unique dangling name?
+
+  prev_19_765' to _uu_HP_5_uu
+
+====>
+relAssume H1
+ H1(c,y) & y@F --> c::node<v,prev_19_765',next_19_766'>@M * 
+   HP_5(prev_19_765',y) * HP_6(next_19_766',y)&true.
+
+=========================================================
+# i-app-r.slk: DONE (with --sa-inlining)
+
+
+do_elim_unused inp1 :[HP_p]
+do_elim_unused inp2 : RELASS [G1] unknown svl: ;  unknown hps: ;  predefined: ; (HP_p(p,y)) * 
+  c::node<Anon_12,p,y>@M&true --> G1(c,y)&true
+do_elim_unused@9 EXIT out : RELASS [G1] unknown svl: ;  unknown hps: ;  predefined: ; c::node<Anon_12,p,y>@M&
+  true --> G1(c,y)&true
+
+Rename unused dangling uniquely
+  HP_p(p,..) --> _uu_HP_p_uu
+
+ c::node<Anon_12,_uu_HP_p_uu,y>@M & true --> G1(c,y)&true
+
+=========================================================
+# set-tail.slk: DONE
+
+/*
+ What happen to HP_5 & HP_6?
+ They seem to have been renamed to HP_36,HP_37?
+ Why is there a H1_38?
+
+[ H1(c_49,y_50) ::= c_49::node<v,prev,next>@M& 
+     XPURE(HP_36(prev)) &  XPURE(HP_37(next)) & XPURE(H1_38(y_50)),
+ G1(c_51,y_52) ::= c_51::node<v,prev7,y_52>@M
+     & XPURE(HP_36(prev7)) &  XPURE(H1_38(y_52))]
+*/
+
+================================================================
+
+# lsg2.slk FIXED
+
+HeapPred H(node a).
+relation P(node a).
+
+infer[H] 
+H(l) & l=null 
+ |-  l::node<n>@L. 
+print residue.
+
+infer[P] 
+P(l) & l=null 
+ |-  l::node<n>@L. 
+print residue.
+/*
+GOT:
+
+Entail (1) : Valid. 
+
+ <1>(HP_19(n_18)) * l::node<n_18>@M[Orig]&l=null & n=n_18&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [H(l)&l=null --> l::node<n_18>@M * (HP_19(n_18))&true]
+
+
+Entail (2) : Valid. 
+
+ <1>hfalse&false&{FLOW,(19,20)=__norm}[]
+ inferred rel: [RELASS [P]: ( P(l)) -->  l!=null]
+
+Relation P is doing the correct thing by going for LHS
+contradiction. Can we introduce a LHS contradiction step
+prior to infer_collect_hp_rel, in a similar way to how
+pure relation is being handled.
+
+*/
+
+
+================================================================
+
+# lsg3c.slk  FIXED (by Cristian)
+
+infer[H] 
+H(l) & l=null 
+ |-  l::node<n>@L. 
+print residue.
+
+/*
+INCORRECT:
+==========
+
+ <1>hfalse&false&{FLOW,(19,20)=__norm}[]
+ inferred pure: [l!=null]
+
+We must not add l!=null to
+  es_infer_pure : CP.formula list; 
+
+We must instead add: 
+ inferred hprel: [H(l) --> l!=null]
+which is kept at:
+  es_infer_hp_rel : hprel list; (*(CP.rel_cat * formula * formula) list;*)
+
+
+
+EXPECTING:
+==========
+
+ <1> false
+
+ inferred hprel: [H(l) -> l!=null]
+
+
+*/
+=================================================================
+
+# lsg3d.slk  (FIXED)
+
+  to add detect_lhs_rhs_contra
+
+=================================================================
+# lsg3d.slk  
+
+infer[x] 
+P(x) & x!=null
+ |-  x::node<n>@L. 
+print residue.
+
+/*
+Problem for Thai:
+  pre seems verbose..
+
+ <1>x::node<inf_n_26>@inf_ann_25[Orig]&P(x) & x!=null & inf_n_26=n & (inf_ann_25<=2 | (inf_n_26<n & x!=null) | (n<inf_n_26 & x!=null) | x=null)&{FLOW,(19,20)=__norm}[]
+ inferred heap: [x::node<inf_n_26>@inf_ann_25[Orig]]
+ inferred pure: [inf_ann_25<=2 | (inf_n_26<n & x!=null) | (n<inf_n_26 & 
+                 x!=null) | x=null]
+*/
+
+=================================================================
+# lsg1.slk      FIXED
+
+infer[SLSEG] 
+SLSEG(l,e) & l=lp 
+ & e!=lp
+ & l=null 
+ |-  lp::node2<n,s>@L. 
+print residue.
+
+/*
+GOT
+===
+Entail (1) : Valid. 
+
+ <1>hfalse&false&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [SLSEG(l,e)&true --> emp&l!=null | l>(e-1); 
+                  SLSEG(l,e)&true --> emp&e>=l | l!=null]
+
+Why did we pick twice? Can
+we just generate one?
+
+
+*/
+
+================================================================
+# lsg.ss  DONE
+
+FIXED by explicitly adding to
+    let _ = rel_ass_stk # push_list (new_rels) in
+    let _ = Log.current_hprel_ass_stk # push_list (new_rels) in
+
+
+[ SLSEG(l,e)&true --> emp&((e+1)>l | l!=null) & (l!=null | l>(e-1)),
+ SLSEG(l,e)&e!=l & l!=null --> l::node2<n_13_792,s_13_793>@M * 
+  (HP_794(n_13_792,e)) * (HP_795(s_13_793,e))&true,
+ HP_794(n_13_792,e)&true --> SLSEG(n_13_792,e)&true]
+
+What happen to our contradiction relass?
+It seems not to have been collected in hp_rel!
+
+[ SLSEG(l,e)&e!=l & l!=null --> l::node2<n_13_792,s_13_793>@M * 
+  (HP_794(n_13_792,e)) * (HP_795(s_13_793,e))&true,
+  HP_794(n_13_792,e)&true --> SLSEG(n_13_792,e)&true]
+
+This is from sleek trace..
+
+ id: 8; caller: []; line: 13; classic: false; kind: BIND; hec_num: 5; evars: []; c_heap: emp
+ checkentail SLSEG(l,e)&l=l' & e=e' & e'!=l' & !(v_bool_12_762') & e'!=l' & 
+!(v_bool_12_762') & l'=null & !(v_boolean_13_760') & l'=null&
+{FLOW,(22,23)=__norm}[]
+ |-  l'::node2<n_13_756',s_13_757'>@L[Orig]&true&{FLOW,(1,25)=__flow}[]. 
+res:  [
+  hfalse&false&{FLOW,(22,23)=__norm}[]
+  es_infer_vars/rel: [e; l]
+  ]
+
+
+
+ SLSEG(l,e)&l'=null & e!=l' & l=null --> emp&true,
+ SLSEG(l,e)&e!=l & l!=null --> l::node2<n_13_794,s_13_795>@M * 
+      (HP_796(n_13_794,e)) * (HP_797(s_13_795,e))&true,
+ emp&l'=null --> SLSEG(n_13_792,e')&true,
+  HP_796(n_13_794,e)&true --> SLSEG(n_13_794,e)&true]
+
+================================================================
+# lsg.ss
+
+works for lsgA.ss with post-condition
+
+OBTAINED :
+========
+
+relAssume SLSEG
+  SLSEG(l,e)&e!=l & l!=null --> l::node2<n_16_793,s_16_794>@M * 
+  HP_5(n_16_793,e) * HP_6(s_16_794,e) .
+relAssume SLSEG
+  HP_5(n_16_793,e)&true --> SLSEG(n_16_793,e).
+
+Still missing on some base-case equation for pre-pred!
+
+MISSING due to absence of post-condition
+=======
+
+relAssume SLSEG
+  SLSEG(l,e) & e!=l & l=null --> emp.
+
+relAssume SLSEG
+  SLSEG(l,e) & e=l --> emp.
+
+================================================================
+# lsgB.ss
+
+Due to strict &&, it triggered:
+
+ SLSEG(l,e)&true --> emp&((e+1)>l | l!=null) & (l!=null | l>(e-1)),
+
+
+================================================================
+# // lsgB.slk
+
+relAssume SLSEG
+  SLSEG(l,e) --> emp&((e+1)>l | l!=null) & (l!=null | l>(e-1)).
+relAssume SLSEG
+  SLSEG(l,e)&e!=l & l!=null --> l::node2<n_16_793,s_16_794>@M * 
+  HP_5(n_16_793,e) * HP_6(s_16_794,e) .
+relAssume SLSEG
+  HP_5(n_16_793,e) --> SLSEG(n_16_793,e).
+relAssume G
+ SLSEG(l,e)&e=l --> G(l,e)&true.
+relAssume G
+ HP_6(s_19_796,e) * l::node2<n_19_795,s_19_796>@M * G(n_19_795,e) &
+  e!=l --> G(l,e).
+relAssume G
+ HP_6(s_19_796,e) * l::node2<n_19_795,s_19_796>@M * G(n_19_795,e)&
+  e!=l --> G(l,e).
+
+shape_infer [SLSEG,HP_5][G].
+
+/*
+Why is G not synthesized
+
+[ HP_5(n_16_69,e_70) ::= SLSEG(n_16_69,e_70)&true,
+ SLSEG(l_71,e_72) ::= 
+ emp&e_72!=l_71 & l_71=null
+ or emp&e_72=l_71
+ or (SLSEG(n_16_65,e_72)) * l_71::node2<n_16_65,s_16_66>@M&
+     XPURE(HP_6(s_16_66,e_72)) & e_72!=l_71
+ ]
+
+
+*/
+
+================================================================
+# lsgB.slk
+
+relAssume SLSEG
+  SLSEG(l,e) --> emp&((e+1)>l | l!=null) & (l!=null | l>(e-1)).
+relAssume SLSEG
+  SLSEG(l,e)&e!=l & l!=null --> l::node2<n_16_793,s_16_794>@M * 
+  HP_5(n_16_793,e) * HP_6(s_16_794,e) .
+relAssume SLSEG
+  HP_5(n_16_793,e) --> SLSEG(n_16_793,e).
+relAssume G
+ SLSEG(l,e)&e=l --> G(l,e)&true.
+relAssume G
+ HP_6(s_19_796,e) * l::node2<n_19_795,s_19_796>@M * G(n_19_795,e) &
+  e!=l --> G(l,e).
+relAssume G
+ HP_6(s_19_796,e) * l::node2<n_19_795,s_19_796>@M * G(n_19_795,e)&
+  e!=l --> G(l,e).
+
+shape_infer [SLSEG,HP_5][G].
+
+/*
+Why is G not synthesized
+
+[ HP_5(n_16_69,e_70) ::= SLSEG(n_16_69,e_70)&true,
+ SLSEG(l_71,e_72) ::= 
+ emp&e_72!=l_71 & l_71=null
+ or emp&e_72=l_71
+ or (SLSEG(n_16_65,e_72)) * l_71::node2<n_16_65,s_16_66>@M&
+     XPURE(HP_6(s_16_66,e_72)) & e_72!=l_71
+ ]
+
+
+*/
+
+================================================================
+# bugs/tail-2.ss
+
+node foo (node c, node y)
+  infer[H1,G1] 
+  requires H1(c,y) 
+  ensures G1(res,c,y);
+{
+    c.next =y;
+    return c.next;
+}
+
+GOT
+===
+[ H1(c_799,y_800) ::= c_799::node<val_14_782,next_14_783>@M 
+   * HP_784(next_14_783,y_800)& XPURE(HP_785(y_800)),
+ G1(res_801,c_802,y_803) ::= c_802::node<val_14_782,res_801>@M&res_801=y_803]
+
+HP_784 is a dangling predicate
+HP_785 is an unknown pred from y paramter.
+  why did it has only one parameter? The
+  relational assumption had two parameters.
+
+[ H1(c,y)&true --> c::node<val_14_782,next_14_783>@M * 
+  HP_784(next_14_783,y@NI) * HP_785(y,c@NI)&true,
+
+
+EXPECT
+======
+[ H1(c_799,y_800) ::= c_799::node<val_14_782,next_14_783>@M 
+   * HP_785(y_800,?) &  XPURE(HP_784(next_14_783,y_800)),
+ G1(res_801,c_802,y_803) ::= 
+   c_802::node<val_14_782,res_801>@M * * HP_785(y_800,?) &res_801=y_803]
+
+================================================================
+# bugs/tail-2.slk
+
+relAssume H1
+ H1(c,y)&true --> c::node<val_14_2,next_14_3>@M * 
+  HP_4(next_14_3,y) * HP_5(y,c).
+
+relAssume G1
+ HP_5(y,c) * c::node<val_14_2,y>&res=y --> G1(res,c,y).
+
+shape_infer [H1,HP_5][G1].
+
+
+Why was HP_5 made emp and then removed from pre/post
+
+[ H1(c_63,y_64) ::= c_63::node<val_14_45,next_14_46>@M& XPURE(HP_4(next_14_46,y_64)),
+ HP_5(y_65,c_66) ::= emp&true,
+ G1(res_67,c_68,y_69) ::= c_68::node<val_14_2,res_67>@M&res_67=y_69]
+
+EXPECTS
+=======
+ H1(c_63,y_64) ::= c_63::node<val_14_45,next_14_46>@M * HP_5(..)
+     & XPURE(HP_4(next_14_46,y_64)) ,
+ G1(res_67,c_68,y_69) ::= c_68::node<val_14_2,res_67>@M
+    HP_5(...) & res_67=y_69
+ HP_5(y_65,c_66) ::= NONE
+
+*/
+======================================================================
+# dll-3b1.slk --sa-useless  FIXED
+
+relAssume H1
+  H1(c,p)&c!=null --> c::node<_,prev_19_766',next_19>@M *
+    HP_7(next_19,p)&true.
+
+relAssume H1
+  HP_7(next_19,p) & true --> H1(next_19,c')&true.
+
+relAssume H1
+  H1(c,p)&c=null --> emp.
+
+shape_infer [H1][].//[pre_hps][post_hps]
+
+--
+
+without --pred-useless
+
+ [ HP_7(next_45,p_46) ::=  H1(next_45,c')&true,
+  H1(c_47,p_48) ::=  
+     H1(next_42,c') * c_47::node<Anon_40,prev_19_41,next_42>@M&true
+      or emp&c_47=null,
+  HP_6(a,b) ::= NONE]
+
+======
+--pred-useless
+ 
+ HP_7(next_45,p_46) ::=  HP_47(next_45)&true,
+ H1(c_48,p_49) ::=  HP_50(c_48)&true,
+ HP_47(next_45) ::=  HP_50(next_45)&true,
+ HP_50(c_48) ::=  
+ HP_50(next_42) * c_48::node<Anon_40,prev_19_41,next_42>@M&true
+ or emp&c_48=null
+ ,
+ HP_6(a,b) ::= NONE]
+
+==============
+ PROBLEM : HP_47 seems unnecessary; 
+ simpler to have just below. I guess we only
+ one to eliminate useless parameters of
+ recursive predicates. For non-rec predicates,
+ I think they can be easily eliminated
+ by unfolding.
+==============
+EXPECTING: 
+
+ HP_7(next_45,p_46) ::=  H1(next_45,c')
+ H1(c_48,p_49) ::=  HP_50(c_48)&true,
+ HP_50(c_48) ::=  
+   HP_50(next_42) * c_48::node<Anon_40,prev_19_41,next_42>@M&true
+   or emp&c_48=null
+ ,
+ HP_6(a,b) ::= NONE]
+
+======================================================================
+# bugs/i-app3.slk
+
+ G1(c_27,y_28) ::=  
+    c_27::node<Anon_11,pp,t>@M * G1(t,y_28)&t!=null
+ or c_27::node<Anon_11,pp,y_28>@M&true
+ 
+--pred-disj-unify
+
+GOT
+===
+  G1(c_27,y_28) ::=  c_27::node<Anon_11,pp,t>@M 
+     * HP_29(pp,y_28) * HP_30(t,y_28)&true,
+  HP_29(pp,y_28) ::=  emp&t=y_28, 
+                          ### why pp? and then t=y_28?
+  HP_30(t,y_28) ::=  
+        emp&t=y_28
+    or t::node<Anon_35,pp_36,t_37>@M * HP_29(pp_36,y_28) 
+       * HP_30(t_37,y_28)&true
+
+EXPECT:
+=========
+  G1(c_27,y_28) ::=  c_27::node<Anon_11,pp,t>@M 
+                     * HP_30(t,y_28)&true,
+  HP_30(t,y_28) ::=  
+        emp&t=y_28
+    or t::node<Anon_35,pp_36,t_37>@M * HP_30(t_37,y_28)&true
+======================================================================
+# infer13b.slk
+
+infer [H1] H1(y)  |- y=null .
+print residue.
+
+GOT
+===
+ OK
+ <1>H1(y)&true&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [H1(y)&true --> emp&y=null]
+
+Why is it missing on inferred hprel in the log??
+
+LOG CAPTURE
+===========
+ id: 0; caller: []; line: 0; classic: false; kind: Why None?; hec_num: 2; evars: []; infer_vars: [H1]; c_heap: emp
+ checkentail H1(y)&true&{FLOW,(19,20)=__norm}[]
+ |-  emp&y=null&{FLOW,(19,20)=__norm}[]. 
+res:  [
+  H1(y)&true&{FLOW,(19,20)=__norm}[]
+  ]
+======================================================================
+# infer13c.slk
+
+infer [H1] H1(y) & y=z |- z=null .
+print residue.
+
+infer [H1] H1(z) & y=z |- z=null .
+print residue.
+
+The first entailment should succeed too.
+
+GOT
+===
+Entail (1) : Fail.
+
+
+Entail (2) : Valid. 
+
+ <1>H1(z)&y=z&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [H1(z)&true --> emp&z=null]
+
+
+*/
+======================================================================
+# infer13d.slk
+
+HeapPred H1(node y).
+
+infer [H1] H1(y)  |-y::lseg<null> .
+print residue.
+
+LOG indicate failure but this contradict with the
+result from infer13b.slk!
+
+ id: 2; caller: []; line: 13; classic: false; kind: Why None?; hec_num: 4; evars: [flted_13_27]; infer_vars: [H1,HP_29]; c_heap: y::lseg<flted_13_28>@M[0][Orig][LHSCase]
+ checkentail HP_29(flted_13_28)&true&{FLOW,(19,20)=__norm}[]
+ |-  emp&flted_13_28=null&{FLOW,(19,20)=__norm}[]. 
+res:  failctx
+         fe_kind: MAY
+         fe_name: logical bug
+         fe_locs: {
+                   fc_message: failed in entailing pure formula(s) in conseq
+                   fc_current_lhs_flow: {FLOW,(19,20)=__norm}}
+w
+*/
+======================================================================
+# infer8a.slk
+
+infer [m] m=-1 |- x::node<_,_> & m>=0.
+print residue.
+
+Can contradiction be detected earlier?
+Not just at empty RHS which may be too late.
+
+ id: 1; caller: []; line: 0; classic: false; kind: Why None?; hec_num: 5; evars: []; infer_vars: [m]; c_heap: emp
+ checkentail emp&m+1=0&{FLOW,(19,20)=__norm}[]
+ |-  x::node<Anon_12,Anon_13>@M[Orig]&true&{FLOW,(19,20)=__norm}[]. 
+res:  failctx
+         fe_kind: MUST
+         fe_name: separation entailment
+         fe_locs: {
+                   fc_message: infer_heap_node
+                   fc_current_lhs_flow: {FLOW,(19,20)=__norm}}
+======================================================================
+======================================================================
+======================================================================
+======================================================================
+======================================================================
+======================================================================
+======================================================================
+======================================================================

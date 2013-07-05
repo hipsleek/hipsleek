@@ -1,0 +1,27 @@
+data node{
+	node next;
+	node prev;
+}.
+
+
+HeapPred H(node a,node b).
+HeapPred G(node a).
+
+infer_exact [H,G] H(a,b) * G(b) & a=null |- emp.
+print residue.
+
+/*
+# class-1a.slk
+
+Exact classical reasoning does not allow residue.
+
+Entail (1) : Fail.
+
+EXPECTED:
+=========
+
+    H(a,b) & a=null --> emp
+    G(b)  --> emp
+
+
+*/

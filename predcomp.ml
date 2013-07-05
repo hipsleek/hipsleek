@@ -1851,6 +1851,7 @@ and gen_view (prog : C.prog_decl) (vdef : C.view_decl) : (data_decl * CP.spec_va
     proc_test_comps = None} in
   let ddef = { data_name = class_name_of_view vdef.C.view_name;
   data_fields = fields;
+  data_pos = vdef.C.view_pos;
   data_parent_name = "Object";
   data_invs = [];
   data_is_template = false;
@@ -1959,6 +1960,7 @@ and gen_partially_bound_type ((CP.SpecVar (t, v, p)) : CP.spec_var) pos : data_d
 	let fields = [((Bool, "bound"), pos, false,F_NO_ANN); ((Named (string_of_typ t), "val"), pos, false,F_NO_ANN)] in
 	let ddef = { data_name = cls_aug;
 	data_fields = fields;
+	data_pos = no_pos;
 	data_parent_name = "Object";
 	data_invs = [];
         data_is_template = false;

@@ -1,0 +1,32 @@
+data node{
+	node prev;
+	node next;
+}.
+
+HeapPred H(node a, node@NI b).
+HeapPred G(node a, node b).
+HeapPred H(node a, node@NI b).
+HeapPred H_3(node a, node@NI b).
+HeapPred H_4(node a, node@NI b).
+HeapPred H_5(node a, node@NI b).
+
+infer [H,G,H_3,H_4]
+ H_3(prev_15_781,y) * H_4(n,y) 
+ * x::node<prev_15_781,y> 
+ //* H_5(n,y) & n=null 
+ & n=next_16_788
+ |-  G(x,y).
+print residue.
+
+
+/*
+ id: 6; caller: []; line: 13; classic: false; kind: POST; hec_num: 5; evars: []; infer_vars: [H,G,H_3,H_4]; c_heap: emp
+ checkentail H_3(prev_15_781,y) * H_4(next_15_782,y) * 
+x::node<prev_15_781,y>@M[Orig]&next_15_782=next_16_788&
+{FLOW,(22,23)=__norm}[]
+ |-  G(x,y)&{FLOW,(22,23)=__norm}[]. 
+hprel_ass: [ H_3(prev_15_781,y) * x::node<prev_15_781,y>@M --> G(x,y)]
+res:  [
+  H_4(next_15_782,y)&next_15_782=next_16_788&{FLOW,(22,23)=__norm}[]
+  ]
+*/

@@ -1,0 +1,51 @@
+data node {
+  node next;
+}.
+
+HeapPred H_9(node a).
+
+
+infer [H_9] H_9(n) * x::node<n>@M&x=x' & n=t_30' |-  emp&t_30'=null.
+print residue.
+
+
+infer [n] H_9(n) * x::node<n>@M&x=x' & n=t_30' |-  emp&t_30'=null.
+print residue.
+
+/*
+# assert-1-bug-5.slk
+
+  not consistent with assert-1.ss
+
+SLEEK gave correct result:
+
+ <1>H_9(next_18_778) * x::node<next_18_778>@M[Orig]&x=x' & next_18_778=t_30'&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [H_9(next_18_778) --> emp&next_18_778=null]
+
+However HIP did not collect the pure hprel, as shown below
+for assert-1.ss.
+
+ id: 3; caller: []; line: 19; classic: false; kind: ASSERT/ASSUME; hec_num: 2; evars: []; infer_vars: [H,G,H_9]; c_heap: emp
+ checkentail H_9(next_18_778) * x::node<next_18_778>@M[Orig]&x=x' & next_18_778=t_30'&
+{FLOW,(22,23)=__norm}[]
+ |-  emp&t_30'=null&{FLOW,(22,23)=__norm}[]. 
+res:  [
+  H_9(next_18_778) * x::node<next_18_778>@M[Orig]&x=x' & next_18_778=t_30'&{FLOW,(22,23)=__norm}[]
+  ]
+
+It seems to be a general problem of pure hp_rel; as 
+it also occurred when pure pre-condition is used as
+shown in log of # assert-1a.ss
+
+--------------
+ id: 3; caller: []; line: 24; classic: false; kind: PRE-2; hec_num: 2; evars: []; infer_vars: [H,G,HP_780]; c_heap: emp
+ checkentail HP_780(next_22_779) * x::node<next_22_779>@M[Orig]&x=x' & next_22_779=t_30'&
+{FLOW,(22,23)=__norm}[]
+ |-  emp&t_30'=null&{FLOW,(22,23)=__norm}[]. 
+res:  [
+  HP_780(next_22_779) * x::node<next_22_779>@M[Orig]&x=x' & next_22_779=t_30'&{FLOW,(22,23)=__norm}[]
+  ]
+
+
+*/
+  

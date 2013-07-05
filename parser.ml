@@ -61,6 +61,7 @@ type spec_qualifier =
 type ann =
   | AnnMode of mode
   | AnnType of typ
+  | AnnMater
 
 type file_offset =
   {
@@ -158,6 +159,8 @@ let get_pos_camlp4 l x =
       mid_pos = mp; }
   )
 
+let get_mater_vars l = List.fold_left (fun a (((_,v),_),al)-> if (List.exists (fun c-> c=AnnMater) al) then v::a else a) [] l
+  
 let rec get_mode (anns : ann list) : mode = match anns with
 	| ann :: rest -> begin
 		match ann with
@@ -408,6 +411,7 @@ let peek_try =
          | [GT,_;ACCS,_] -> raise Stream.Failure 
          | [GT,_;AT,_] -> raise Stream.Failure 
          | [GT,_;MUT,_] -> raise Stream.Failure 
+		 | [GT,_;MAT,_] -> raise Stream.Failure 
          | [GT,_;DERV,_] -> raise Stream.Failure 
          | [GT,_;LEND,_] -> raise Stream.Failure 
          | [GT,_;CASE,_] -> raise Stream.Failure 
@@ -779,12 +783,19 @@ non_empty_command:
       | t= axiom_decl -> AxiomDef t (* [4/10/2011] An Hoa : axiom declarations *)
       | t=let_decl            -> t
       | t=checkeq_cmd         -> EqCheck t
-      | t=checkentail_cmd     -> EntailCheck t
+      | t= checkentail_cmd     -> EntailCheck t
       | t=relassume_cmd     -> RelAssume t
       | t=shapeinfer_cmd     -> ShapeInfer t
+      | t=shapepost_obl_cmd     -> ShapePostObl t
+      | t=shapeinfer_proper_cmd     -> ShapeInferProp t
+      | t=shapesplit_base_cmd     -> ShapeSplitBase t
       | t=shapeElim_cmd     -> ShapeElim t
       | t=shapeExtract_cmd     -> ShapeExtract t
-      | t=infer_cmd           -> Infer t  
+      | t=decl_dang_cmd        -> ShapeDeclDang t
+      | t=decl_unknown_cmd        -> ShapeDeclUnknown t
+      | t=shape_sconseq_cmd     -> ShapeSConseq t
+      | t=shape_sante_cmd     -> ShapeSAnte t
+      | t= infer_cmd           -> InferCmd t  
       | t=captureresidue_cmd  -> CaptureResidue t
       | t=print_cmd           -> PrintCmd t
       | t=cmp_cmd           ->  CmpCmd t
@@ -794,6 +805,7 @@ non_empty_command:
 data_decl:
     [[ dh=data_header ; db = data_body 
         -> {data_name = dh;
+            data_pos = get_pos_camlp4 _loc 1;
             data_fields = db;
             data_parent_name="Object"; (* Object; *)
             data_invs = [];
@@ -803,6 +815,7 @@ data_decl:
 template_data_decl:
     [[ dh=template_data_header ; db = data_body 
         -> {data_name = dh;
+            data_pos = get_pos_camlp4 _loc 1;
             data_fields = db;
             data_parent_name="Object"; (* Object; *)
             data_invs = [];
@@ -1009,6 +1022,7 @@ view_header:
       let modes = get_modes anns in
       let _ = view_names # push vn in
         { view_name = vn;
+          view_pos = get_pos_camlp4 _loc 1;
           view_data_name = "";
           view_vars = (* List.map fst *) cids;
           (* view_frac_var = empty_iperm; *)
@@ -1023,6 +1037,7 @@ view_header:
           view_prop_extns = [];
           view_invariant = P.mkTrue (get_pos_camlp4 _loc 1);
           view_mem = None;
+		  view_materialized_vars = get_mater_vars l;
           try_case_inference = false;
 			}]];
 
@@ -1038,6 +1053,7 @@ view_header_ext:
       let modes = get_modes anns in
       let _ = view_names # push vn in
         { view_name = vn;
+          view_pos = get_pos_camlp4 _loc 1;
           view_data_name = "";
           view_vars = (* List.map fst *) cids;
           (* view_frac_var = empty_iperm; *)
@@ -1052,6 +1068,7 @@ view_header_ext:
           view_prop_extns = sl;
           view_invariant = P.mkTrue (get_pos_camlp4 _loc 1);
           view_mem = None;
+		  view_materialized_vars = get_mater_vars l;
           try_case_inference = false;
 			}]];
 
@@ -1110,14 +1127,14 @@ cid_typ:
       let _ =
         (* WN : code below uses side-effects and may also result in relational name clashes *)
         if is_RelT ut then
-          (* let _ = print_endline ("ll: " ^ id) in *)
+          (* let _ = print_endline ("ll 1: " ^ id) in *)
           let _ = rel_names # push id in
           (* let rd = get_tmp_rel_decl () in *)
          (*  let rd = {rd with rel_name = id} in *)
         (* (\*push rd in the list*\) *)
         (*   let _ = g_rel_defs # push rd in *)
           ()
-        else ()
+        else (* let _ = print_endline ("ll: " ^ id)  in *) ()
       in
         (ut,id)
    ]];
@@ -1138,7 +1155,8 @@ ann:
   [[ `AT; `IDENTIFIER id -> begin
       if id = "out" then AnnMode ModeOut
       else report_error (get_pos_camlp4 _loc 2) ("unrecognized mode: " ^ id) end
-   | `AT ; `IN_T       -> AnnMode ModeIn]];
+   | `AT ; `IN_T       -> AnnMode ModeIn
+   | `MAT -> AnnMater  ]];
       
 sq_clist: [[`OSQUARE; l= opt_cid_list; `CSQUARE -> l ]];
 
@@ -1368,7 +1386,10 @@ simple_heap_constr:
        | ([],t) -> F.mkHeapNode2 c generic_pointer_type_name 0 dr (F.ConstAnn(Mutable)) false false false frac t [] ofl (get_pos_camlp4 _loc 2)
        | (t,_)  -> F.mkHeapNode c generic_pointer_type_name 0 dr (F.ConstAnn(Mutable)) false false false frac t [] ofl (get_pos_camlp4 _loc 2)
      )
-   | `IDENTIFIER id; `OPAREN; cl = opt_cexp_list; `CPAREN -> F.HRel(id, cl, (get_pos_camlp4 _loc 2))
+   | `IDENTIFIER id; `OPAREN; cl = opt_cexp_list; `CPAREN ->
+         (* if hp_names # mem id then *)
+           F.HRel(id, cl, (get_pos_camlp4 _loc 2))
+         (* else report_error (get_pos 1) ("should be a heap pred, not pure a relation here") *)
    | `HTRUE -> F.HTrue
    | `EMPTY -> F.HEmp
   ]];
@@ -1571,14 +1592,15 @@ cexp_w:
             Pure_f(P.BForm ((P.mkXPure id cl (get_pos_camlp4 _loc 1), None), None))
           end
     | `IDENTIFIER id; `OPAREN; cl = opt_cexp_list; `CPAREN ->
-      (* AnHoa: relation constraint, for instance, given the relation 
+             (* AnHoa: relation constraint, for instance, given the relation 
        * s(a,b,c) == c = a + b.
        * After this definition, we can have the relation constraint like
        * s(x,1,x+1), s(x,y,x+y), ...
        * in our formula.
        *)
         if func_names # mem id then Pure_c (P.Func (id, cl, get_pos_camlp4 _loc 1))
-          else if hp_names # mem id then Pure_f(P.BForm ((P.RelForm (id, cl, get_pos_camlp4 _loc 1), None), None))
+          else if hp_names # mem id then (* Pure_f(P.BForm ((P.RelForm (id, cl, get_pos_camlp4 _loc 1), None), None)) *)
+            report_error (get_pos 1) ("should be a heap pred, not pure a relation here")
           else
             begin
               if not(rel_names # mem id) then print_endline ("WARNING : parsing problem "^id^" is neither a ranking function nor a relation nor a heap predicate");
@@ -1689,8 +1711,51 @@ relassume_cmd:
    [[ `RELASSUME; `IDENTIFIER id; l=meta_constr; `CONSTR;r=meta_constr -> (id, l, r)
    ]];
 
+decl_dang_cmd:
+   [[ `SHAPE_DECL_DANG; `OSQUARE; il1=OPT id_list ;`CSQUARE -> un_option il1 []
+   ]];
+
+decl_unknown_cmd:
+   [[ `SHAPE_DECL_UNKNOWN; `OPAREN; il2 = OPT int_list; `CPAREN; `OSQUARE; il1= OPT id_list ;`CSQUARE   -> (un_option il2 [], un_option il1 [])
+   ]];
+
 shapeinfer_cmd:
    [[ `SHAPE_INFER; `OSQUARE;il1=OPT id_list;`CSQUARE; `OSQUARE; il2=OPT id_list;`CSQUARE ->
+   let il1 = un_option il1 [] in
+   let il2 = un_option il2 [] in
+   (il1,il2)
+   ]];
+
+shapepost_obl_cmd:
+   [[ `SHAPE_POST_OBL; `OSQUARE;il1=OPT id_list;`CSQUARE; `OSQUARE; il2=OPT id_list;`CSQUARE ->
+   let il1 = un_option il1 [] in
+   let il2 = un_option il2 [] in
+   (il1,il2)
+   ]];
+
+shape_sconseq_cmd:
+   [[ `SHAPE_STRENGTHEN_CONSEQ; `OSQUARE;il1=OPT id_list;`CSQUARE; `OSQUARE; il2=OPT id_list;`CSQUARE ->
+   let il1 = un_option il1 [] in
+   let il2 = un_option il2 [] in
+   (il1,il2)
+   ]];
+
+shape_sante_cmd:
+   [[ `SHAPE_WEAKEN_ANTE; `OSQUARE;il1=OPT id_list;`CSQUARE; `OSQUARE; il2=OPT id_list;`CSQUARE ->
+   let il1 = un_option il1 [] in
+   let il2 = un_option il2 [] in
+   (il1,il2)
+   ]];
+
+shapeinfer_proper_cmd:
+   [[ `SHAPE_INFER_PROP; `OSQUARE;il1=OPT id_list;`CSQUARE; `OSQUARE; il2=OPT id_list;`CSQUARE ->
+   let il1 = un_option il1 [] in
+   let il2 = un_option il2 [] in
+   (il1,il2)
+   ]];
+
+shapesplit_base_cmd:
+   [[ `SHAPE_SPLIT_BASE; `OSQUARE;il1=OPT id_list;`CSQUARE; `OSQUARE; il2=OPT id_list;`CSQUARE ->
    let il1 = un_option il1 [] in
    let il2 = un_option il2 [] in
    (il1,il2)
@@ -1710,7 +1775,12 @@ shapeExtract_cmd:
 
 infer_cmd:
   [[ `INFER; `OSQUARE; il=OPT id_list; `CSQUARE; t=meta_constr; `DERIVE; b=extended_meta_constr -> 
-    let il = un_option il [] in (il,t,b)
+    let il = un_option il [] in (il,t,b,None)
+    | `INFER_EXACT; `OSQUARE; il=OPT id_list; `CSQUARE; t=meta_constr; `DERIVE; b=extended_meta_constr -> 
+    let il = un_option il [] in (il,t,b,Some true)
+    | `INFER_INEXACT; `OSQUARE; il=OPT id_list; `CSQUARE; t=meta_constr; `DERIVE; b=extended_meta_constr -> 
+    let il = un_option il [] in (il,t,b,Some false)
+
   ]];
 
 captureresidue_cmd:
@@ -1811,6 +1881,8 @@ comma_list: [[`COMMA; s = OPT SELF -> 1 + (un_option s 1)]];
   
 id_list_opt:[[t= LIST0 id SEP `COMMA ->t]];
 
+int_list:[[t= LIST1 integer_literal SEP `DOT ->t]];
+
 id_list:[[t=LIST1 id SEP `COMMA -> t]];
 
 id:[[`IDENTIFIER id-> id]];
@@ -1895,7 +1967,13 @@ rel_decl:[[ rh=rel_header; `EQEQ; rb=rel_body (* opt_inv *) ->
 
 typed_id_list:[[ t = typ; `IDENTIFIER id ->  (t,id) ]];
 
+typed_id_inst_list:[[ t = typ; `IDENTIFIER id ->  (t,id, Globals.I)
+  |  t = typ; `NI; `IDENTIFIER id->  (t,id, Globals.NI)
+ ]];
+
 typed_id_list_opt: [[ t = LIST0 typed_id_list SEP `COMMA -> t ]];
+
+typed_id_inst_list_opt: [[ t = LIST0 typed_id_inst_list SEP `COMMA -> t ]];
 
 typed_default_id_list:[[ t = typ  ->  (t,default_rel_id) ]];
 
@@ -1942,12 +2020,22 @@ axiom_decl:[[
 ]];
 
 hp_decl:[[
-`HP; `IDENTIFIER id; `OPAREN; tl= typed_id_list_opt; (* opt_ann_cid_list *) `CPAREN  ->
- let _ = hp_names # push id in
-		  { hp_name = id;
-			hp_typed_vars = tl;
-            hp_formula =  F.mkBase F.HEmp (P.mkTrue (get_pos_camlp4 _loc 1)) top_flow [] (get_pos_camlp4 _loc 1);
-		  }
+`HP; `IDENTIFIER id; `OPAREN; tl= typed_id_inst_list_opt; (* opt_ann_cid_list *) `CPAREN  ->
+    let _ = hp_names # push id in
+    {
+        hp_name = id;
+        hp_typed_inst_vars = tl;
+        hp_is_pre = true;
+        hp_formula =  F.mkBase F.HEmp (P.mkTrue (get_pos_camlp4 _loc 1)) top_flow [] (get_pos_camlp4 _loc 1);
+    }
+  | `HPPOST; `IDENTIFIER id; `OPAREN; tl= typed_id_inst_list_opt; (* opt_ann_cid_list *) `CPAREN  ->
+    let _ = hp_names # push id in
+    {
+        hp_name = id;
+        hp_typed_inst_vars = tl;
+        hp_is_pre = false;
+        hp_formula =  F.mkBase F.HEmp (P.mkTrue (get_pos_camlp4 _loc 1)) top_flow [] (get_pos_camlp4 _loc 1);
+    }
 ]];
 
  (*end of sleek part*)   
@@ -1989,6 +2077,7 @@ hprogn:
         | Coercion cdef -> coercion_defs := cdef :: !coercion_defs in
     let _ = List.map choose t in
     let obj_def = { data_name = "Object";
+                    data_pos = no_pos;
                     data_fields = [];
                     data_parent_name = "";
                     data_invs = []; (* F.mkTrue no_pos; *)
@@ -1996,6 +2085,7 @@ hprogn:
                     data_methods = [] } in
     let string_def = { data_name = "String";
                        data_fields = [];
+                       data_pos = no_pos;
                        data_parent_name = "Object";
                        data_invs = []; (* F.mkTrue no_pos; *)
                        data_is_template = false;
@@ -2003,25 +2093,28 @@ hprogn:
     (* let g_rel_lst = g_rel_defs # get_stk in *)
     let rel_lst = ((rel_defs # get_stk)(* @(g_rel_lst) *)) in
     let hp_lst = hp_defs # get_stk in
+    (* PURE_RELATION_OF_HEAP_PRED *)
+    (* to create __pure_of_relation from hp_lst to add to rel_lst *)
+    (* rel_lst = rel_lst @ List.map (pure_relation_of_hp_pred) hp_lst *)
     { prog_include_decls = !include_defs;
-			prog_data_decls = obj_def :: string_def :: !data_defs;
-      prog_global_var_decls = !global_var_defs;
-      prog_logical_var_decls = !logical_var_defs;
-      prog_enum_decls = !enum_defs;
-      (* prog_rel_decls = [];  TODO : new field for array parsing *)
-      prog_view_decls = !view_defs;
-      prog_func_decls = func_defs # get_stk ;
-      prog_rel_decls = rel_lst; (* An Hoa *)
-      prog_rel_ids = List.map (fun x ->
-          let tl,_ = List.split x.rel_typed_vars in
-          (RelT tl,x.rel_name)) (rel_lst); (* WN *)
-      prog_hp_decls = hp_lst ;
-      prog_hp_ids = List.map (fun x -> (HpT,x.hp_name)) hp_lst; (* l2 *)
-      prog_axiom_decls = !axiom_defs; (* [4/10/2011] An Hoa *)
-      prog_proc_decls = !proc_defs;
-      prog_coercion_decls = !coercion_defs; 
-      prog_hopred_decls = !hopred_defs;
-      prog_barrier_decls = !barrier_defs; } ]];
+    prog_data_decls = obj_def :: string_def :: !data_defs;
+    prog_global_var_decls = !global_var_defs;
+    prog_logical_var_decls = !logical_var_defs;
+    prog_enum_decls = !enum_defs;
+    (* prog_rel_decls = [];  TODO : new field for array parsing *)
+    prog_view_decls = !view_defs;
+    prog_func_decls = func_defs # get_stk ;
+    prog_rel_decls = rel_lst; (* An Hoa *)
+    prog_rel_ids = List.map (fun x ->
+        let tl,_ = List.split x.rel_typed_vars in
+        (RelT tl,x.rel_name)) (rel_lst); (* WN *)
+    prog_hp_decls = hp_lst ;
+    prog_hp_ids = List.map (fun x -> (HpT,x.hp_name)) hp_lst; (* l2 *)
+    prog_axiom_decls = !axiom_defs; (* [4/10/2011] An Hoa *)
+    prog_proc_decls = !proc_defs;
+    prog_coercion_decls = !coercion_defs; 
+    prog_hopred_decls = !hopred_defs;
+    prog_barrier_decls = !barrier_defs; } ]];
 
 opt_decl_list: [[t=LIST0 mdecl -> List.concat t]];
   
@@ -2068,6 +2161,7 @@ class_decl:
 		(* An Hoa [22/08/2011] : blindly add the members as non-inline because we do not support inline fields in classes. TODO revise. *)
 		let t1 = List.map (fun (t, p) -> (t, p, false,F_NO_ANN)) t1 in
       let cdef = { data_name = id;
+                   data_pos = get_pos_camlp4 _loc 2;
                    data_parent_name = un_option par "Object";
                    data_fields = t1;
                    data_invs = t2;
@@ -2324,7 +2418,7 @@ valid_declaration_statement:
   | t=try_statement; `SEMICOLON -> t
   | t=java_statement -> t
   | t=jump_statement;`SEMICOLON  -> t
-  | t=assert_statement;`SEMICOLON -> t
+  | t= assert_statement;`SEMICOLON -> t
   | t=dprint_statement;`SEMICOLON  -> t
   | t=debug_statement -> t
   | t=time_statement -> t
@@ -2342,7 +2436,7 @@ barr_statement : [[`BARRIER; `IDENTIFIER t -> I.Barrier {exp_barrier_recv = t ; 
  
 assert_statement:
   [[ `ASSERT; ol= opt_label; f=formulas ->
-       mkAssert (Some ((F.subst_stub_flow_struc n_flow (fst f)),(snd f))) None (fresh_formula_label ol) None (get_pos_camlp4 _loc 1)
+       mkAssert (Some ((F.subst_stub_flow_struc n_flow (fst f)),(snd f))) None (fresh_formula_label ol) (Some false) (get_pos_camlp4 _loc 1)
    | `ASSERT_EXACT; ol= opt_label; f=formulas -> 
        mkAssert (Some ((F.subst_stub_flow_struc n_flow (fst f)),(snd f))) None (fresh_formula_label ol) (Some true) (get_pos_camlp4 _loc 1)
    | `ASSERT_INEXACT; ol= opt_label; f=formulas -> 
@@ -2350,7 +2444,7 @@ assert_statement:
    | `ASSUME; ol=opt_label; dc=disjunctive_constr ->
        mkAssert None (Some (F.subst_stub_flow n_flow dc)) (fresh_formula_label ol) None (get_pos_camlp4 _loc 1)
    | `ASSERT; ol=opt_label; f=formulas; `ASSUME; dc=disjunctive_constr ->  
-       mkAssert (Some ((F.subst_stub_flow_struc n_flow (fst f)),(snd f))) (Some (F.subst_stub_flow n_flow dc)) (fresh_formula_label ol) None (get_pos_camlp4 _loc 1)
+       mkAssert (Some ((F.subst_stub_flow_struc n_flow (fst f)),(snd f))) (Some (F.subst_stub_flow n_flow dc)) (fresh_formula_label ol) (Some false) (get_pos_camlp4 _loc 1)
    | `ASSERT_EXACT; ol=opt_label; f=formulas; `ASSUME; dc=disjunctive_constr ->  
        mkAssert (Some ((F.subst_stub_flow_struc n_flow (fst f)),(snd f))) (Some (F.subst_stub_flow n_flow dc)) (fresh_formula_label ol) (Some true) (get_pos_camlp4 _loc 1)
    | `ASSERT_INEXACT; ol=opt_label; f=formulas; `ASSUME; dc=disjunctive_constr ->  

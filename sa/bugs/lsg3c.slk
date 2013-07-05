@@ -1,0 +1,61 @@
+
+data node{
+    node s;
+}.
+
+HeapPred H(node a).
+
+//(1)
+infer[H,x] 
+H(x) 
+ & x=null 
+ |-  x::node<n>@L. 
+print residue.
+// OK
+// <1>hfalse&false&{FLOW,(19,20)=__norm}[]
+// inferred pure: [x!=null]
+
+//(2)
+infer[x] 
+H(x) 
+ & x=null 
+ |-  x::node<n>@L. 
+print residue.
+// OK
+// <1>hfalse&false&{FLOW,(19,20)=__norm}[]
+// inferred pure: [x!=null]
+
+//(3)
+infer[H] 
+H(x) 
+ & x=null 
+ |-  x::node<n>@L. 
+print residue.
+// OK
+// <1>hfalse&false&{FLOW,(19,20)=__norm}[]
+// inferred hprel: [H(x)&true --> emp&x!=null]
+
+
+//(4)
+infer[H,x] 
+H(x) 
+ |-  x::node<n>@L. 
+print residue.
+
+//(5)
+infer[x] 
+H(x) 
+ |-  x::node<n>@L. 
+print residue.
+
+//(6)
+infer[H] 
+H(x) 
+ |-  x::node<n>@L. 
+print residue.
+
+//(7)
+infer[H] 
+H(x) & x!=null
+ |-  x::node<n>@L. 
+print residue.

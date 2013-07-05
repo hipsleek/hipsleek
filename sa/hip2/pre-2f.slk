@@ -1,0 +1,34 @@
+data node{
+ int val;
+ node next;
+}.
+
+
+HeapPred H(node a).
+HeapPred HP_2(node a).
+
+relAssume  H // (1)
+ H(x) --> x::node<_,n> & n=null .
+relAssume  HP // (2)
+ H(x) --> x::node<_,next> * next::node<_,_>.
+
+
+shape_infer [H][].
+
+/*
+
+GOT
+===
+ H(x_36) ::= x_36::node<Anon_11,n>@M * x_36::node<Anon_12,next>@M * 
+next::node<Anon_13,Anon_14>@M&n=null]
+
+
+EXPECT
+======
+
+ H(x) --> x::node<_,n> & n=null /\ x::node<_,next> * next::node<_,_> 
+      --> x::node<_,next> * next::node<_,_> & next=null
+      --> false
+
+
+*/
