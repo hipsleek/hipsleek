@@ -3650,7 +3650,35 @@ Entail (3) : Valid.
  <1>H(b1)&R1(a1) & a=a1 & b=b1 & 1<=a1&{FLOW,(19,20)=__norm}[]
  inferred rel: [RELASS [R1,_pure_of_H]: ( R1(a1)) -->  1<=a1]
 =====================================================================
+# xisa-bug-2.slk
+
+  non-critical
+
+infer [G,H] H(a) |- G(b).
+print residue.
+
+Why is there a renaming of b here?
+Is it critical? Just ecstatic.
+
+Entail (2) : Valid. 
+
+ <1>H(a)&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [emp --> G(b_24)]
 =====================================================================
+# xisa-bug-2.slk
+
+infer_exact [G,H] H(a) & b!=null|- G(b).
+print residue.
+
+Entail (1) : Valid. 
+<1>emp&b!=null&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [emp&b!=null --> G(b); H(a) --> emp]
+
+Better to have:
+   H(a) & b!=null --> G(b)
+
+If G(..) is the last consequent, we include all heap
+terms and their corresponding (reachable) pure constrains.
 =====================================================================
 =====================================================================
 =====================================================================
