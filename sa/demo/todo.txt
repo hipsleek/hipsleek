@@ -3684,6 +3684,69 @@ Better to have:
 If G(..) is the last consequent, we include all heap
 terms and their corresponding (reachable) pure constrains.
 =====================================================================
+# assert.ss
+
+  dprint;
+  assert ttt'=null assume ttt'=null;
+  dprint;
+
+ Why is x'=x information lost? This seem to occur for
+ inference but not verification.
+
+Successful States:
+[
+ Label: 
+ State:HP_910(left_19_908) * HP_911(right_19_909) * x::node<val_19_907,left_19_908,right_19_909>@M[Orig]&x=x' & right_19_909=ttt_30'&{FLOW,(22,23)=__norm}[]
+       es_var_measures 2: MayLoop
+       es_trace: empty
+       es_cond_path: [0]
+
+ ]
+
+Successful States:
+[
+ Label: 
+ State:HP_910(left_19_908) * HP_911(right_19_909) * x::node<val_19_907,left_19_908,right_19_909>@M[Orig]&right_19_909=ttt_30' & ttt_30'=null&{FLOW,(22,23)=__norm}[]
+       es_var_measures 2: MayLoop
+       es_trace: empty
+       es_cond_path: [0]
+
+ ]
+=====================================================================
+# assert2.ss   FIXED with just a warning 
+
+int mark(node x) 
+ requires x::node<a,_,r> * H(r)
+ ensures x::node<a,_,r> * H(r) & res=a;
+{
+  int ttt= x.val;
+  return ttt;
+}
+
+ we could give a warning but should allow uninterpreted heap
+ predicates in specification
+
+Last Proving Location: 1 File "assert2.ss",Line:10,Col:0
+
+ERROR: at _0:0_0:0 
+Message: error 3: free variables [H] in proc mark 
+ Stop Omega... 26 invocations Halting Reduce... 
+caught
+(Program not linked with -g, cannot print stack backtrace)
+=====================================================================
+=====================================================================
+=====================================================================
+=====================================================================
+=====================================================================
+=====================================================================
+=====================================================================
+=====================================================================
+=====================================================================
+=====================================================================
+=====================================================================
+=====================================================================
+=====================================================================
+=====================================================================
 =====================================================================
 =====================================================================
 =====================================================================

@@ -21,8 +21,8 @@ print residue.
 # mt-3.slk
 
 Why is there a type error?
-
-* treated like a heap pred..
+infer [R1] x::node<a1,b1> * R1(a1) |- x::node<a,b> & a>0.
+* parsed as a like a heap pred..
 
 */
 

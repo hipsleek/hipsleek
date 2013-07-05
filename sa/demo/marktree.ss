@@ -35,7 +35,7 @@ if(x == null) return;
 else {
   int ttt=x.val;
  if (ttt == 1) return;
- //assert ttt'=0; //' pure property not inferred.
+ assert ttt'=0; //' need to pick up inferred from assertion ...
  l = x.left;
  r = x.right;
  x.val = 1;
@@ -45,31 +45,23 @@ else {
 }
 
 /*
-[ H(x)&x=null --> G(x,Anon_1008),
- HP_975(left_36_973) * HP_976(right_36_974) * 
+# marktree
+
+hprel_ass: [ HP_975(val_36_972) --> emp&val_36_972=0]
+
+Not picked in:
+
+[ H(x)&x=null --> G(x,Anon_1009),
+ HP_975(val_36_972@NI) * HP_976(left_36_973) * HP_977(right_36_974) * 
   x::node<val_36_972,left_36_973,right_36_974>@M&
-  val_36_972=1 --> G(x,Anon_1007),
+  val_36_972=1 --> G(x,Anon_1008),
  H(x)&x!=null --> x::node<val_36_972,left_36_973,right_36_974>@M * 
-  HP_975(left_36_973) * HP_976(right_36_974),
- HP_975(left_36_973) --> H(left_36_973),
- HP_976(right_36_974) --> H(right_36_974),
+  HP_975(val_36_972@NI) * HP_976(left_36_973) * HP_977(right_36_974),
+ HP_976(left_36_973) --> H(left_36_973),
+ HP_977(right_36_974) --> H(right_36_974),
+ HP_975(val_36_972@NI) * x::node<v_int_41_1001,left_36_973,right_36_974>@M * 
+  G(left_36_973,Anon_1006) * G(right_36_974,Anon_1011)&val_36_972!=1 & 
+  v_int_41_1001=1 --> G(x,Anon_1012)]
 
- x::node<v_int_41_1000,left_36_973,right_36_974>@M * 
-  G(left_36_973,Anon_1005) * G(right_36_974,Anon_1010)&
-  v_int_41_1000=1 --> G(x,Anon_1011)]
-
-=======
-
- H(x_1012) ::= x_1012::node<val_36_972,left_36_973,right_36_974>@M 
-      * HP_975(left_36_973) * HP_976(right_36_974)
-   \/  x_1012::node<val_36_972,left_36_973,right_36_974>@M 
-       * H(left_36_973) * H(right_36_974)
-   \/  emp&x_1012=null,
-
- G(x_1013,Anon_1014) ::= HP_975(left_36_973) * HP_976(right_36_974) * 
-x_1013::node<val_36_972,left_36_973,right_36_974>@M&val_36_972=1
-   \/  x_1013::node<v_int_41_1000,left_36_973,right_36_974>@M * 
-G(left_36_973,Anon_1005) * G(right_36_974,Anon_1010)&v_int_41_1000=1
-   \/  emp&x_1013=null]
 
 */

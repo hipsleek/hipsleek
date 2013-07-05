@@ -12838,3 +12838,9 @@ let get_list_ctx_cond_path lc=
           | c::_ ->  get_ctx_cond_path c
         end
     | _ -> []
+
+(* WN_2_loc : this should clear all inferred info from context *)
+let clear_infer_from_context c1 = c1
+
+(* WN_2_Loc: add p to ts; add new_infer (only those related to pure) from new_ctx into ts *)
+let add_pure_and_infer_from_asserted p new_ctx ts = ts

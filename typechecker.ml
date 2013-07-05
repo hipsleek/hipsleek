@@ -1178,6 +1178,9 @@ and check_exp prog proc ctx (e0:exp) label =
       let res = check_exp_a prog proc ctx e0 label in
       Gen.Profiling.pop_time "check_exp_a"; res) ctx e0
 
+(* WN_2_Loc : to be implemented by returing xpure of asserted f formula*)
+and get_xpure_of_formula f = 1
+
 and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_context) (e0:exp) (post_start_label:formula_label) : CF.list_failesc_context = 
   if (exp_to_check e0) then  CF.find_false_list_failesc_ctx ctx (Cast.pos_of_exp e0)
   else ();
@@ -1214,10 +1217,20 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 	            if (String.length s)>0 (* && (String.length s1)>0 *) && (String.compare s s1 <> 0) then ctx
 	            else
                       let (ts,ps) = List.partition (fun (fl,el,sl)-> (List.length fl) = 0) ctx in
-	              let new_ctx = match c1_o with
-                        | None -> ts
+	              let new_ctx,pure_info = match c1_o with
+                        | None -> ts,None
                         | Some c1 ->
                               let c1 = prune_pred_struc prog true c1 in (* specialise asserted formula *)
+                              let c1 = match c2 with
+                                | None -> 
+                                      (* WN_2_Loc: clear c1 of inferred info first *)
+                                      let pr2 = Cprinter.string_of_struc_formula in
+                                      let c1a = CF.clear_infer_from_context c1 in
+                                      let _ = DD.binfo_hprint (add_str "c1(before clear)" pr2) c1 no_pos in
+                                      let _ = DD.binfo_hprint (add_str "c1(after clear)" pr2) c1a no_pos in
+                                      c1a
+                                | Some _ -> c1
+                              in
                               let to_print = "Proving assert/assume in method " ^ proc.proc_name ^ " for spec: \n" ^ !log_spec ^ "\n" in	
                               Debug.devel_pprint(*print_info "assert"*) to_print pos;
                               (* let _ = Log.update_sleek_proving_kind Log.ASSERTION in *)
@@ -1227,10 +1240,15 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                               Debug.info_hprint (add_str "assert(inp-formula)" Cprinter.string_of_struc_formula) c1 pos;
                               Debug.info_hprint (add_str "assert(res-failesc)" Cprinter.string_of_list_failesc_context) rs pos;
                               if CF.isSuccessListFailescCtx rs then 
-			        (Debug.print_info "assert" (s ^(if (CF.isNonFalseListFailescCtx ts) then " : ok\n" else ": unreachable\n")) pos;
-			        Debug.devel_pprint(*print_info "assert"*) ("Residual:\n" ^ (Cprinter.string_of_list_failesc_context rs)) pos)
-			      else Debug.print_info "assert/assume" (s ^" : failed\n") pos ;
-                              rs in 
+                                begin
+			        Debug.print_info "assert" (s ^(if (CF.isNonFalseListFailescCtx ts) then " : ok\n" else ": unreachable\n")) pos;
+			        Debug.devel_pprint(*print_info "assert"*) ("Residual:\n" ^ (Cprinter.string_of_list_failesc_context rs)) pos; 
+                                (* WN_2_Loc: put xpure of asserted by fn below  *)
+                                let xp = get_xpure_of_formula c1_o in
+                                (rs,Some xp)
+                                end
+			      else (Debug.print_info "assert/assume" (s ^" : failed\n") pos ; (rs,None))
+                      in 
 		      let _ = if !print_proof  && (match c1_o with | None -> false | Some _ -> true) then 
                         begin
           	          Prooftracer.add_assert_assume e0;
@@ -1240,7 +1258,14 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 		          Tpdispatcher.restore_suppress_imply_output_state ();
                         end in
                       let res = match c2 with
-                        | None -> ts
+                        | None -> 
+                              begin
+                              match pure_info with
+                                | None -> ts
+                                | Some p ->
+                                      (* WN_2_Loc: add p to ts; add new_infer from new_ctx into ts *)
+                                      CF.add_pure_and_infer_from_asserted p new_ctx ts
+                              end
                         | Some c ->
                               let c = if (!Globals.allow_locklevel) then
                                     (*Some assumption may contain waitlevel,
