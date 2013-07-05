@@ -2762,11 +2762,8 @@ and fold_op_x1 prog (ctx : context) (view : h_formula) vd (rhs_p : MCP.mix_formu
 	      (*let new_ctx = set_es_evars ctx vs in*)
               let rs0, fold_prf = heap_entail_one_context_struc_nth "fold" prog true false new_ctx view_form None None None pos None in
               let rels = Inf.collect_rel_list_context rs0 in
-              let rel_stk = Infer.infer_rel_stk # get_stk in
-              let rel_ass = List.filter (fun (rt,_,_) -> CP.is_rel_assume rt) rels in
-              let rel_ass = List.filter (fun r -> not(List.mem r rel_stk)) rel_ass in
-              let _ = Infer.infer_rel_stk # push_list rel_ass in
-              let _ = Log.current_infer_rel_stk # push_list rel_ass in
+              let _ = Infer.infer_rel_stk # push_list rels in
+              let _ = Log.current_infer_rel_stk # push_list rels in
 
               (* let rs0 = remove_impl_evars rs0 impl_vars in *)
               (* let _ = print_string ("\nbefore fold: " ^ (Cprinter.string_of_context new_ctx)) in *)
@@ -8577,6 +8574,7 @@ and inst_before_fold_x estate rhs_p case_vars =
 	          | CP.Null _ | CP.Var _ | CP.IConst _ | CP.FConst _ | CP.AConst _ | CP.Tsconst _ | CP.InfConst _ 
               | CP.Level _ (*TOCHECK*) -> true
 	          | CP.Subtract (e1,e2,_) | CP.Mult (e1,e2,_) | CP.Div (e1,e2,_) | CP.Add (e1,e2,_) -> prop_e e1 && prop_e e2
+            | CP.TypeCast (_, e1, _) -> prop_e e1
 	          | CP.Bag (l,_) | CP.BagUnion (l,_) | CP.BagIntersect (l,_) -> List.for_all prop_e l
 	          | CP.Max _ | CP.Min _ | CP.BagDiff _ | CP.List _ | CP.ListCons _ | CP.ListHead _ 
 	          | CP.ListTail _ | CP.ListLength _ | CP.ListAppend _	| CP.ListReverse _ | CP.ArrayAt _ | CP.Func _ -> false in

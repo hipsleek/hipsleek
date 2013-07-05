@@ -18,6 +18,10 @@ void remove(node x)
   requires p::node<pp,pn>*x::node<p,n>*n::node<np,nn>
   ensures  p::node<pp,n>*n::node<p,nn>;
 
+
+  requires p::node<pp,pn>*x::node<p,n>*n::node<np,nn>
+  ensures  p::node<pp,n>*n::node<p,nn>;
+
   requires x::node<null,n>*n::node<np,nn>
   ensures  n::node<null,nn>;
   requires p::node<pp,pn>*x::node<p,null>

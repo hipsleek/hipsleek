@@ -5,6 +5,7 @@ data node {
 
 HeapPred H(node a).
 PostPred G(node a).
+PostPred G2(node a).
 
 
 infer [G,H] H(a) |- G(b).
@@ -13,19 +14,20 @@ print residue.
 Entail (1) : Fail.
 
    should succeed with
-   emp --> G(b)
+   [emp --> G(b)]
    residue: H(a)
 */
 
 
-infer_exact [G,H] H(a) |- G(b).
+infer_exact [G,H] H(a)*y::node<_,_> |- G(b).
 print residue.
 /*
 Entail (2) : Fail.
 
   should succeed with
-  H(a) --> G(b)
+  H(a) * y::node<_> --> G(b)
 */
+
 
 
 infer_exact [G] H(a) |- G(b).
@@ -44,5 +46,21 @@ print residue.
 
  <1>H(a)&b=null&{FLOW,(19,20)=__norm}[]
  inferred hprel: [emp&b=null --> G(b)]
+*/
+
+infer_exact [H,G,G2] H(a) |- G2(a).
+print residue.
+/*
+ <1>emp&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [H(a) --> G2(a)]
+*/
+
+infer_exact [G,G2,H] H(a)|- G(b) *G2(a).
+print residue.
+/*
+Fail  but expecting
+  H(a) --> G2(a)
+  emp --> G(b)
+
 */
 

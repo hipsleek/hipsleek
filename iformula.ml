@@ -139,30 +139,32 @@ and h_formula_phase = { h_formula_phase_rd : h_formula;
 			h_formula_phase_pos : loc }
 
 and h_formula_heap = { h_formula_heap_node : (ident * primed);
-		       h_formula_heap_name : ident;
-		       h_formula_heap_derv : bool; 
-		       h_formula_heap_imm : ann;
-		       h_formula_heap_imm_param : ann option list;
-		       h_formula_heap_full : bool;
-		       h_formula_heap_with_inv : bool;
-		       h_formula_heap_perm : iperm; (*LDK: optional fractional permission*)
-		       h_formula_heap_arguments : P.exp list;
-		       h_formula_heap_pseudo_data : bool;
-		       h_formula_heap_label : formula_label option;
-		       h_formula_heap_pos : loc }
+                       h_formula_heap_name : ident;
+                       h_formula_heap_deref : int;
+                       h_formula_heap_derv : bool; 
+                       h_formula_heap_imm : ann;
+                       h_formula_heap_imm_param : ann option list;
+                       h_formula_heap_full : bool;
+                       h_formula_heap_with_inv : bool;
+                       h_formula_heap_perm : iperm; (*LDK: optional fractional permission*)
+                       h_formula_heap_arguments : P.exp list;
+                       h_formula_heap_pseudo_data : bool;
+                       h_formula_heap_label : formula_label option;
+                       h_formula_heap_pos : loc }
 
 and h_formula_heap2 = { h_formula_heap2_node : (ident * primed);
-			h_formula_heap2_name : ident;
-			h_formula_heap2_derv : bool;
-			h_formula_heap2_imm : ann;
-		    h_formula_heap2_imm_param : ann option list;
-			h_formula_heap2_full : bool;
-			h_formula_heap2_with_inv : bool;
-		    h_formula_heap2_perm : iperm; (*LDK: fractional permission*)
-			h_formula_heap2_arguments : (ident * P.exp) list;
-			h_formula_heap2_pseudo_data : bool;
-			h_formula_heap2_label : formula_label option;
-			h_formula_heap2_pos : loc }
+                        h_formula_heap2_name : ident;
+                        h_formula_heap2_deref : int;
+                        h_formula_heap2_derv : bool;
+                        h_formula_heap2_imm : ann;
+                        h_formula_heap2_imm_param : ann option list;
+                        h_formula_heap2_full : bool;
+                        h_formula_heap2_with_inv : bool;
+                        h_formula_heap2_perm : iperm; (*LDK: fractional permission*)
+                        h_formula_heap2_arguments : (ident * P.exp) list;
+                        h_formula_heap2_pseudo_data : bool;
+                        h_formula_heap2_label : formula_label option;
+                        h_formula_heap2_pos : loc }
 
 let print_pure_formula = ref(fun (c:Ipure.formula) -> "printer not initialized")
 (* Interactive command line *)
@@ -384,15 +386,16 @@ and mkBase (h : h_formula) (p : P.formula) flow (a: one_formula list) pos = matc
 and mkExists (qvars : (ident * primed) list) (h : h_formula) (p : P.formula) flow (a: one_formula list) pos = match h with
   | HFalse -> mkFalse flow pos
   | _ ->
-	  if P.isConstFalse p then
-		mkFalse flow pos
-	  else
-		Exists { formula_exists_qvars = qvars;
-             formula_exists_heap = h;
-             formula_exists_pure = p;
-             formula_exists_flow = flow;
-             formula_exists_and = a;
-             formula_exists_pos = pos }
+      if P.isConstFalse p then
+        mkFalse flow pos
+      else (
+        Exists { formula_exists_qvars = qvars;
+                 formula_exists_heap = h;
+                 formula_exists_pure = p;
+                 formula_exists_flow = flow;
+                 formula_exists_and = a;
+                 formula_exists_pos = pos }
+      )
 
 and mkOneFormula (h : h_formula) (p : P.formula) id pos = 
   {formula_heap =h;
@@ -455,46 +458,46 @@ and mkPhase f1 f2 pos =
                    h_formula_phase_rw = f2;
                    h_formula_phase_pos = pos }
 
-and mkHeapNode_x c id dr i f inv pd perm hl hl_i ofl l= 
-  HeapNode { 
-                   h_formula_heap_node = c;
-                   h_formula_heap_name = id;
-                   h_formula_heap_derv = dr;
-                   h_formula_heap_imm = i;
-                   h_formula_heap_imm_param = hl_i;
-                   h_formula_heap_full = f;
-                   h_formula_heap_with_inv = inv;
-                   h_formula_heap_pseudo_data = pd;
-                   h_formula_heap_perm = perm; (*LDK: perm from parser*)
-                   h_formula_heap_arguments = hl;
-                   h_formula_heap_label = ofl;
-                   h_formula_heap_pos = l }
+and mkHeapNode_x c id deref dr i f inv pd perm hl hl_i ofl l= 
+  HeapNode { h_formula_heap_node = c;
+             h_formula_heap_name = id;
+             h_formula_heap_deref = deref;
+             h_formula_heap_derv = dr;
+             h_formula_heap_imm = i;
+             h_formula_heap_imm_param = hl_i;
+             h_formula_heap_full = f;
+             h_formula_heap_with_inv = inv;
+             h_formula_heap_pseudo_data = pd;
+             h_formula_heap_perm = perm; (*LDK: perm from parser*)
+             h_formula_heap_arguments = hl;
+             h_formula_heap_label = ofl;
+             h_formula_heap_pos = l }
 
-and mkHeapNode  c id dr i f inv pd perm hl hl_i ofl l= 
+and mkHeapNode  c id deref dr i f inv pd perm hl hl_i ofl l= 
    Debug.no_1 "mkHeapNode" (fun (name, _) -> name) !print_h_formula 
-      (fun _ -> mkHeapNode_x c id dr i f inv pd perm hl hl_i ofl l ) c
-          
-and mkHeapNode2 c id dr i f inv pd perm ohl hl_i ofl l = 
-  HeapNode2 { 
-                    h_formula_heap2_node = c;
-                    h_formula_heap2_name = id;
-                    h_formula_heap2_derv = dr;
-                    h_formula_heap2_imm = i;
-                    h_formula_heap2_imm_param = hl_i;
-                    h_formula_heap2_full = f;
-                    h_formula_heap2_with_inv = inv;
-                    h_formula_heap2_pseudo_data = pd;
-                    h_formula_heap2_perm = perm; (*LDK: perm from parser*)
-                    h_formula_heap2_arguments = ohl;
-                    h_formula_heap2_label = ofl;
-                    h_formula_heap2_pos = l}
+      (fun _ -> mkHeapNode_x c id deref dr i f inv pd perm hl hl_i ofl l ) c
+
+and mkHeapNode2 c id deref dr i f inv pd perm ohl hl_i ofl l = 
+  HeapNode2 { h_formula_heap2_node = c;
+              h_formula_heap2_name = id;
+              h_formula_heap2_deref = deref;
+              h_formula_heap2_derv = dr;
+              h_formula_heap2_imm = i;
+              h_formula_heap2_imm_param = hl_i;
+              h_formula_heap2_full = f;
+              h_formula_heap2_with_inv = inv;
+              h_formula_heap2_pseudo_data = pd;
+              h_formula_heap2_perm = perm; (*LDK: perm from parser*)
+              h_formula_heap2_arguments = ohl;
+              h_formula_heap2_label = ofl;
+              h_formula_heap2_pos = l }
 
 and pos_of_formula f0 = match f0 with
   | Base f -> f.formula_base_pos
   | Or f -> f.formula_or_pos
   | Exists f -> f.formula_exists_pos
-	
-and pos_of_struc_formula f0  = match f0 with 
+
+and pos_of_struc_formula f0 = match f0 with 
 	| ECase b -> b.formula_case_pos
 	| EBase b -> b.formula_struc_pos
 	| EAssume b -> pos_of_formula b.formula_assume_simpl
@@ -955,160 +958,164 @@ and apply_one_pointer ((fr, t) as s : ((ident*primed) * (ident*primed))) (f : fo
 and h_apply_one_pointer ((fr, t) as s : ((ident*primed) * (ident*primed))) (f : h_formula) vars : h_formula * (Ipure.formula list)= 
   let rec helper f =
     match f with
-      | Conj ({h_formula_conj_h1 = h1; 
-	           h_formula_conj_h2 = h2; 
-	           h_formula_conj_pos = pos}) ->
-          let new_h1,ps1 = helper h1 in
-          let new_h2,ps2 = helper h2 in
-          if (new_h1=HTrue) then new_h2,ps1@ps2 else
-            if (new_h2=HTrue) then new_h1,ps1@ps2 else
-              let node = Conj ({h_formula_conj_h1 = h1; 
-	                            h_formula_conj_h2 = h2; 
-	                            h_formula_conj_pos = pos})
-              in (node,ps1@ps2)
-      | Star ({h_formula_star_h1 = f1; 
-	           h_formula_star_h2 = f2; 
-	           h_formula_star_pos = pos}) ->
-          let new_h1,ps1 = helper f1 in
-          let new_h2,ps2 = helper f2 in
-          if (new_h1=HTrue) then new_h2,ps1@ps2 else
-            if (new_h2=HTrue) then new_h1,ps1@ps2 else
-              let node = Star ({h_formula_star_h1 = h_apply_one s f1; 
-	                            h_formula_star_h2 = h_apply_one s f2; 
-	                            h_formula_star_pos = pos})
-              in (node,ps1@ps2)
-      | HeapNode ({h_formula_heap_node = x; 
-	               h_formula_heap_name = c; 
-	               h_formula_heap_arguments = args;
-	               h_formula_heap_pos = pos} as h_node) ->
-          let b,_ = Globals.is_program_pointer c in
-          let node = HeapNode {h_node with h_formula_heap_node = subst_var s x; 
-		                               h_formula_heap_arguments = List.map (Ipure.e_apply_one s) args;
-		                               h_formula_heap_pos = pos}
-          in
-          if ((not b) || (List.length args != 1))  then
-            (node,[])
-          else
-            (*convert pointer heap node to equality*)
-            (*if is a pointer, expecting a single argument*)
-            let arg = List.hd args in
-            (match arg with
-              | P.Var (v,_) ->
-                  if Gen.BList.mem_eq P.eq_var v vars then
-                    let p = P.mkEqVarExp x v pos in
-                    (HTrue,[p])
-                  else
-                    (node,[])
-              | _ ->
-                  (node,[]))
-      | HeapNode2 _
-      | Phase _
-      | HRel _ (*TO CHECK*)
-      | HEmp
-      | HTrue
-      | HFalse -> (f,[])
-	  | ConjStar _ | ConjConj _ | StarMinus _ -> Error.report_no_pattern ()
+    | Conj ({h_formula_conj_h1 = h1; 
+             h_formula_conj_h2 = h2; 
+             h_formula_conj_pos = pos}) ->
+        let new_h1,ps1 = helper h1 in
+        let new_h2,ps2 = helper h2 in
+        if (new_h1=HTrue) then new_h2,ps1@ps2 else
+          if (new_h2=HTrue) then new_h1,ps1@ps2 else
+            let node = Conj ({h_formula_conj_h1 = h1; 
+                              h_formula_conj_h2 = h2; 
+                              h_formula_conj_pos = pos})
+            in (node,ps1@ps2)
+    | Star ({h_formula_star_h1 = f1; 
+             h_formula_star_h2 = f2; 
+             h_formula_star_pos = pos}) ->
+        let new_h1,ps1 = helper f1 in
+        let new_h2,ps2 = helper f2 in
+        if (new_h1=HTrue) then new_h2,ps1@ps2 else
+          if (new_h2=HTrue) then new_h1,ps1@ps2 else
+            let node = Star ({h_formula_star_h1 = h_apply_one s f1; 
+                              h_formula_star_h2 = h_apply_one s f2; 
+                              h_formula_star_pos = pos})
+            in (node,ps1@ps2)
+    | HeapNode ({h_formula_heap_node = x; 
+                 h_formula_heap_name = c; 
+                 h_formula_heap_arguments = args;
+                 h_formula_heap_pos = pos} as h_node) ->
+        let b,_ = Globals.is_program_pointer c in
+        let node = HeapNode {h_node with h_formula_heap_node = subst_var s x; 
+                             h_formula_heap_arguments = List.map (Ipure.e_apply_one s) args;
+                             h_formula_heap_pos = pos}
+        in
+        if ((not b) || (List.length args != 1))  then
+          (node,[])
+        else
+          (*convert pointer heap node to equality*)
+          (*if is a pointer, expecting a single argument*)
+          let arg = List.hd args in
+          (match arg with
+            | P.Var (v,_) ->
+                if Gen.BList.mem_eq P.eq_var v vars then
+                  let p = P.mkEqVarExp x v pos in
+                  (HTrue,[p])
+                else
+                  (node,[])
+            | _ ->
+                (node,[]))
+    | HeapNode2 _
+    | Phase _
+    | HRel _ (*TO CHECK*)
+    | HEmp
+    | HTrue
+    | HFalse -> (f,[])
+    | ConjStar _ | ConjConj _ | StarMinus _ -> Error.report_no_pattern ()
   in helper f
 
 
 and h_apply_one ((fr, t) as s : ((ident*primed) * (ident*primed))) (f : h_formula) = match f with
   | Conj ({h_formula_conj_h1 = h1; 
-	h_formula_conj_h2 = h2; 
-	h_formula_conj_pos = pos}) ->
-        Conj ({h_formula_conj_h1 = h_apply_one s h1; 
-	    h_formula_conj_h2 = h_apply_one s h2; 
-	    h_formula_conj_pos = pos})
+           h_formula_conj_h2 = h2; 
+           h_formula_conj_pos = pos}) ->
+      Conj ({h_formula_conj_h1 = h_apply_one s h1; 
+             h_formula_conj_h2 = h_apply_one s h2; 
+             h_formula_conj_pos = pos})
   | ConjStar ({h_formula_conjstar_h1 = h1; 
-	h_formula_conjstar_h2 = h2; 
-	h_formula_conjstar_pos = pos}) ->
-        ConjStar ({h_formula_conjstar_h1 = h_apply_one s h1; 
-	    h_formula_conjstar_h2 = h_apply_one s h2; 
-	    h_formula_conjstar_pos = pos})
+               h_formula_conjstar_h2 = h2; 
+               h_formula_conjstar_pos = pos}) ->
+      ConjStar ({h_formula_conjstar_h1 = h_apply_one s h1; 
+                 h_formula_conjstar_h2 = h_apply_one s h2; 
+                 h_formula_conjstar_pos = pos})
   | ConjConj ({h_formula_conjconj_h1 = h1; 
-	h_formula_conjconj_h2 = h2; 
-	h_formula_conjconj_pos = pos}) ->
-        ConjConj ({h_formula_conjconj_h1 = h_apply_one s h1; 
-	    h_formula_conjconj_h2 = h_apply_one s h2; 
-	    h_formula_conjconj_pos = pos})	    	    
+               h_formula_conjconj_h2 = h2; 
+               h_formula_conjconj_pos = pos}) ->
+      ConjConj ({h_formula_conjconj_h1 = h_apply_one s h1; 
+                 h_formula_conjconj_h2 = h_apply_one s h2; 
+                 h_formula_conjconj_pos = pos})
   | Phase ({h_formula_phase_rd = h1; 
-	h_formula_phase_rw = h2; 
-	h_formula_phase_pos = pos}) ->
-        Phase ({h_formula_phase_rd = h_apply_one s h1; 
-	    h_formula_phase_rw = h_apply_one s h2; 
-	    h_formula_phase_pos = pos}) 
+            h_formula_phase_rw = h2; 
+            h_formula_phase_pos = pos}) ->
+      Phase ({h_formula_phase_rd = h_apply_one s h1; 
+              h_formula_phase_rw = h_apply_one s h2; 
+              h_formula_phase_pos = pos}) 
   | StarMinus ({h_formula_starminus_h1 = f1; 
-	h_formula_starminus_h2 = f2; 
-	h_formula_starminus_pos = pos}) -> 
-        StarMinus ({h_formula_starminus_h1 = h_apply_one s f1; 
-	    h_formula_starminus_h2 = h_apply_one s f2; 
-	    h_formula_starminus_pos = pos})	    
+                h_formula_starminus_h2 = f2; 
+                h_formula_starminus_pos = pos}) -> 
+      StarMinus ({h_formula_starminus_h1 = h_apply_one s f1; 
+                  h_formula_starminus_h2 = h_apply_one s f2; 
+                  h_formula_starminus_pos = pos})
   | Star ({h_formula_star_h1 = f1; 
-	h_formula_star_h2 = f2; 
-	h_formula_star_pos = pos}) -> 
-        Star ({h_formula_star_h1 = h_apply_one s f1; 
-	    h_formula_star_h2 = h_apply_one s f2; 
-	    h_formula_star_pos = pos})
+           h_formula_star_h2 = f2; 
+           h_formula_star_pos = pos}) -> 
+      Star ({h_formula_star_h1 = h_apply_one s f1; 
+             h_formula_star_h2 = h_apply_one s f2; 
+             h_formula_star_pos = pos})
   | HeapNode ({h_formula_heap_node = x; 
-	h_formula_heap_name = c; 
-	h_formula_heap_derv = dr; 
-	h_formula_heap_imm = imm; 
-	h_formula_heap_imm_param = imm_p; 
-	h_formula_heap_full = full; 
-	h_formula_heap_with_inv = winv;
-	h_formula_heap_perm = perm; (*LDK*)
-	h_formula_heap_arguments = args;
-	h_formula_heap_pseudo_data = ps_data;
-	h_formula_heap_label = l;
-	h_formula_heap_pos = pos}) -> 
+               h_formula_heap_name = c; 
+               h_formula_heap_deref = deref;
+               h_formula_heap_derv = dr; 
+               h_formula_heap_imm = imm; 
+               h_formula_heap_imm_param = imm_p; 
+               h_formula_heap_full = full; 
+               h_formula_heap_with_inv = winv;
+               h_formula_heap_perm = perm; (*LDK*)
+               h_formula_heap_arguments = args;
+               h_formula_heap_pseudo_data = ps_data;
+               h_formula_heap_label = l;
+               h_formula_heap_pos = pos}) -> 
       let imm = apply_one_imm s imm in
       let imm_p = List.map (fun x -> apply_one_opt_imm s x) imm_p in
-      let perm1 = match perm with
+      let perm1 = ( match perm with
         | Some f -> Some (apply_one_iperm () s f)
         | None -> None
-      in HeapNode ({h_formula_heap_node = subst_var s x; 
-		h_formula_heap_name = c;
-	    h_formula_heap_derv = dr; 
-		h_formula_heap_imm = imm; 
-	    h_formula_heap_imm_param = imm_p; 
-		h_formula_heap_full = full;
-		h_formula_heap_with_inv = winv;
-		h_formula_heap_perm = perm1 ; (*LDK*)
-		h_formula_heap_arguments = List.map (Ipure.e_apply_one s) args;
-		h_formula_heap_pseudo_data = ps_data;
-		h_formula_heap_label = l;
-		h_formula_heap_pos = pos})
-  | HeapNode2 ({
-		h_formula_heap2_node = x;
-		h_formula_heap2_name = c;
-	    h_formula_heap2_derv = dr; 
-		h_formula_heap2_imm = imm;
-	    h_formula_heap2_imm_param = imm_p; 
-		h_formula_heap2_full = full;
-		h_formula_heap2_with_inv = winv;
-		h_formula_heap2_arguments = args;
-	    h_formula_heap2_perm = perm; (*LDK*)
-		h_formula_heap2_pseudo_data = ps_data;
-		h_formula_heap2_label = l;
-		h_formula_heap2_pos= pos}) -> 
+      ) in
+      HeapNode ({h_formula_heap_node = subst_var s x; 
+                 h_formula_heap_name = c;
+                 h_formula_heap_deref = deref;
+                 h_formula_heap_derv = dr; 
+                 h_formula_heap_imm = imm; 
+                 h_formula_heap_imm_param = imm_p; 
+                 h_formula_heap_full = full;
+                 h_formula_heap_with_inv = winv;
+                 h_formula_heap_perm = perm1 ; (*LDK*)
+                 h_formula_heap_arguments = List.map (Ipure.e_apply_one s) args;
+                 h_formula_heap_pseudo_data = ps_data;
+                 h_formula_heap_label = l;
+                 h_formula_heap_pos = pos})
+  | HeapNode2 ({h_formula_heap2_node = x;
+                h_formula_heap2_name = c;
+                h_formula_heap2_deref = deref;
+                h_formula_heap2_derv = dr; 
+                h_formula_heap2_imm = imm;
+                h_formula_heap2_imm_param = imm_p; 
+                h_formula_heap2_full = full;
+                h_formula_heap2_with_inv = winv;
+                h_formula_heap2_arguments = args;
+                h_formula_heap2_perm = perm; (*LDK*)
+                h_formula_heap2_pseudo_data = ps_data;
+                h_formula_heap2_label = l;
+                h_formula_heap2_pos= pos}) -> 
       let imm = apply_one_imm s imm in
       let imm_p = List.map (fun x -> apply_one_opt_imm s x) imm_p in
-      let perm1 = match perm with
+      let perm1 = (
+        match perm with
         | Some f -> Some (apply_one_iperm () s f)
         | None -> None
-      in
-        HeapNode2 ({
-		    h_formula_heap2_node = subst_var s x;
-		    h_formula_heap2_name =c;
-	        h_formula_heap2_derv = dr; 
-		    h_formula_heap2_imm = imm;
-	        h_formula_heap2_imm_param = imm_p; 
-		    h_formula_heap2_full =full;
-		    h_formula_heap2_with_inv = winv;
-		    h_formula_heap2_perm = perm1; (*LDK*)
-		    h_formula_heap2_arguments = List.map (fun (c1,c2)-> (c1,(Ipure.e_apply_one s c2))) args;
-		    h_formula_heap2_pseudo_data =ps_data;
-		    h_formula_heap2_label = l;
-		    h_formula_heap2_pos = pos})
+      ) in
+      HeapNode2 ({h_formula_heap2_node = subst_var s x;
+                  h_formula_heap2_name = c;
+                  h_formula_heap2_deref = deref;
+                  h_formula_heap2_derv = dr; 
+                  h_formula_heap2_imm = imm;
+                  h_formula_heap2_imm_param = imm_p; 
+                  h_formula_heap2_full = full;
+                  h_formula_heap2_with_inv = winv;
+                  h_formula_heap2_perm = perm1; (*LDK*)
+                  h_formula_heap2_arguments = List.map (fun (c1,c2)-> (c1,(Ipure.e_apply_one s c2))) args;
+                  h_formula_heap2_pseudo_data = ps_data;
+                  h_formula_heap2_label = l;
+                  h_formula_heap2_pos = pos})
   | HTrue -> f
   | HFalse -> f
   | HEmp -> f
@@ -1224,105 +1231,108 @@ and h_apply_one_w_data_name ((fr, t) as s : ((ident*primed) * (ident*primed))) (
   in
   let rec helper f=
     match f with
-      | Conj ({h_formula_conj_h1 = h1;
-	           h_formula_conj_h2 = h2;
-	           h_formula_conj_pos = pos}) ->
-          Conj ({h_formula_conj_h1 = helper h1;
-	             h_formula_conj_h2 = helper h2;
-	             h_formula_conj_pos = pos})
-      | Phase ({h_formula_phase_rd = h1;
-	            h_formula_phase_rw = h2;
-	            h_formula_phase_pos = pos}) ->
-        Phase ({h_formula_phase_rd = helper h1;
-	            h_formula_phase_rw = helper h2;
-	            h_formula_phase_pos = pos})
-      | Star ({h_formula_star_h1 = f1;
-	           h_formula_star_h2 = f2;
-	           h_formula_star_pos = pos}) ->
-          Star ({h_formula_star_h1 = helper f1;
-	             h_formula_star_h2 = helper f2;
-	             h_formula_star_pos = pos})
-      | ConjStar ({h_formula_conjstar_h1 = f1;
-	           h_formula_conjstar_h2 = f2;
-	           h_formula_conjstar_pos = pos}) ->
-          ConjStar ({h_formula_conjstar_h1 = helper f1;
-	             h_formula_conjstar_h2 = helper f2;
-	             h_formula_conjstar_pos = pos})
-      | ConjConj ({h_formula_conjconj_h1 = f1;
-	           h_formula_conjconj_h2 = f2;
-	           h_formula_conjconj_pos = pos}) ->
-          ConjConj ({h_formula_conjconj_h1 = helper f1;
-	             h_formula_conjconj_h2 = helper f2;
-	             h_formula_conjconj_pos = pos})
-      | StarMinus ({h_formula_starminus_h1 = f1;
-	           h_formula_starminus_h2 = f2;
-	           h_formula_starminus_pos = pos}) ->
-          StarMinus ({h_formula_starminus_h1 = helper f1;
-	             h_formula_starminus_h2 = helper f2;
-	             h_formula_starminus_pos = pos})	             	             	             
-      | HeapNode ({h_formula_heap_node = x;
-	               h_formula_heap_name = c;
-	               h_formula_heap_derv = dr;
-	               h_formula_heap_imm = imm;
-               	       h_formula_heap_imm_param = imm_p; 
-	               h_formula_heap_full = full;
-	               h_formula_heap_with_inv = winv;
-	               h_formula_heap_perm = perm; (*LDK*)
-	               h_formula_heap_arguments = args;
-	               h_formula_heap_pseudo_data = ps_data;
-	               h_formula_heap_label = l;
-	               h_formula_heap_pos = pos}) ->
-          let imm = apply_one_imm s imm in
-          let perm1 = match perm with
-            | Some f -> Some (apply_one_iperm () s f)
-            | None -> None
-          in HeapNode ({h_formula_heap_node = subst_var s x;
-		                h_formula_heap_name = subst_data_name s c;
-	                    h_formula_heap_derv = dr;
-		                h_formula_heap_imm = imm;
-                               	h_formula_heap_imm_param = imm_p; 
-		                h_formula_heap_full = full;
-		                h_formula_heap_with_inv = winv;
-		                h_formula_heap_perm = perm1 ; (*LDK*)
-		                h_formula_heap_arguments = List.map (Ipure.e_apply_one s) args;
-		                h_formula_heap_pseudo_data = ps_data;
-		                h_formula_heap_label = l;
-		                h_formula_heap_pos = pos})
-      | HeapNode2 ({
-		  h_formula_heap2_node = x;
-		  h_formula_heap2_name = c;
-	      h_formula_heap2_derv = dr;
-		  h_formula_heap2_imm = imm;
-		  h_formula_heap2_imm_param = imm_p;
-		  h_formula_heap2_full = full;
-		  h_formula_heap2_with_inv = winv;
-		  h_formula_heap2_arguments = args;
-	      h_formula_heap2_perm = perm; (*LDK*)
-		  h_formula_heap2_pseudo_data = ps_data;
-		  h_formula_heap2_label = l;
-		  h_formula_heap2_pos= pos}) ->
-          let imm = apply_one_imm s imm in
-          let perm1 = match perm with
-            | Some f -> Some (apply_one_iperm () s f)
-            | None -> None
-          in
-          HeapNode2 ({
-		      h_formula_heap2_node = subst_var s x;
-		      h_formula_heap2_name = subst_data_name s c;
-	          h_formula_heap2_derv = dr;
-		      h_formula_heap2_imm = imm;
-		      h_formula_heap2_imm_param = imm_p;
-		      h_formula_heap2_full =full;
-		      h_formula_heap2_with_inv = winv;
-		      h_formula_heap2_perm = perm1; (*LDK*)
-		      h_formula_heap2_arguments = List.map (fun (c1,c2)-> (c1,(Ipure.e_apply_one s c2))) args;
-		      h_formula_heap2_pseudo_data =ps_data;
-		      h_formula_heap2_label = l;
-		      h_formula_heap2_pos = pos})
-      | HTrue -> f
-      | HFalse -> f
-      | HEmp -> f
-      | HRel (r, args, l) -> HRel (r, List.map (Ipure.e_apply_one s) args,l)
+    | Conj ({h_formula_conj_h1 = h1;
+             h_formula_conj_h2 = h2;
+             h_formula_conj_pos = pos}) ->
+        Conj ({h_formula_conj_h1 = helper h1;
+               h_formula_conj_h2 = helper h2;
+               h_formula_conj_pos = pos})
+    | Phase ({h_formula_phase_rd = h1;
+              h_formula_phase_rw = h2;
+              h_formula_phase_pos = pos}) ->
+      Phase ({h_formula_phase_rd = helper h1;
+              h_formula_phase_rw = helper h2;
+              h_formula_phase_pos = pos})
+    | Star ({h_formula_star_h1 = f1;
+             h_formula_star_h2 = f2;
+             h_formula_star_pos = pos}) ->
+        Star ({h_formula_star_h1 = helper f1;
+               h_formula_star_h2 = helper f2;
+               h_formula_star_pos = pos})
+    | ConjStar ({h_formula_conjstar_h1 = f1;
+                 h_formula_conjstar_h2 = f2;
+                 h_formula_conjstar_pos = pos}) ->
+        ConjStar ({h_formula_conjstar_h1 = helper f1;
+                   h_formula_conjstar_h2 = helper f2;
+                   h_formula_conjstar_pos = pos})
+    | ConjConj ({h_formula_conjconj_h1 = f1;
+                 h_formula_conjconj_h2 = f2;
+                 h_formula_conjconj_pos = pos}) ->
+        ConjConj ({h_formula_conjconj_h1 = helper f1;
+                   h_formula_conjconj_h2 = helper f2;
+                   h_formula_conjconj_pos = pos})
+    | StarMinus ({h_formula_starminus_h1 = f1;
+                  h_formula_starminus_h2 = f2;
+                  h_formula_starminus_pos = pos}) ->
+        StarMinus ({h_formula_starminus_h1 = helper f1;
+                    h_formula_starminus_h2 = helper f2;
+                    h_formula_starminus_pos = pos})
+    | HeapNode ({h_formula_heap_node = x;
+                 h_formula_heap_name = c;
+                 h_formula_heap_deref = deref;
+                 h_formula_heap_derv = dr;
+                 h_formula_heap_imm = imm;
+                 h_formula_heap_imm_param = imm_p; 
+                 h_formula_heap_full = full;
+                 h_formula_heap_with_inv = winv;
+                 h_formula_heap_perm = perm; (*LDK*)
+                 h_formula_heap_arguments = args;
+                 h_formula_heap_pseudo_data = ps_data;
+                 h_formula_heap_label = l;
+                 h_formula_heap_pos = pos}) ->
+        let imm = apply_one_imm s imm in
+        let perm1 = ( match perm with
+          | Some f -> Some (apply_one_iperm () s f)
+          | None -> None
+        ) in 
+        HeapNode ({h_formula_heap_node = subst_var s x;
+                   h_formula_heap_name = subst_data_name s c;
+                   h_formula_heap_deref = deref;
+                   h_formula_heap_derv = dr;
+                   h_formula_heap_imm = imm;
+                   h_formula_heap_imm_param = imm_p; 
+                   h_formula_heap_full = full;
+                   h_formula_heap_with_inv = winv;
+                   h_formula_heap_perm = perm1 ; (*LDK*)
+                   h_formula_heap_arguments = List.map (Ipure.e_apply_one s) args;
+                   h_formula_heap_pseudo_data = ps_data;
+                   h_formula_heap_label = l;
+                   h_formula_heap_pos = pos})
+    | HeapNode2 ({h_formula_heap2_node = x;
+                  h_formula_heap2_name = c;
+                  h_formula_heap2_deref = deref;
+                  h_formula_heap2_derv = dr;
+                  h_formula_heap2_imm = imm;
+                  h_formula_heap2_imm_param = imm_p;
+                  h_formula_heap2_full = full;
+                  h_formula_heap2_with_inv = winv;
+                  h_formula_heap2_arguments = args;
+                  h_formula_heap2_perm = perm; (*LDK*)
+                  h_formula_heap2_pseudo_data = ps_data;
+                  h_formula_heap2_label = l;
+                  h_formula_heap2_pos= pos}) ->
+        let imm = apply_one_imm s imm in
+        let perm1 = match perm with
+          | Some f -> Some (apply_one_iperm () s f)
+          | None -> None
+        in
+        HeapNode2 ({h_formula_heap2_node = subst_var s x;
+                    h_formula_heap2_name = subst_data_name s c;
+                    h_formula_heap2_deref = deref;
+                    h_formula_heap2_derv = dr;
+                    h_formula_heap2_imm = imm;
+                    h_formula_heap2_imm_param = imm_p;
+                    h_formula_heap2_full =full;
+                    h_formula_heap2_with_inv = winv;
+                    h_formula_heap2_perm = perm1; (*LDK*)
+                    h_formula_heap2_arguments = List.map (fun (c1,c2)-> (c1,(Ipure.e_apply_one s c2))) args;
+                    h_formula_heap2_pseudo_data =ps_data;
+                    h_formula_heap2_label = l;
+                    h_formula_heap2_pos = pos})
+    | HTrue -> f
+    | HFalse -> f
+    | HEmp -> f
+    | HRel (r, args, l) -> HRel (r, List.map (Ipure.e_apply_one s) args,l)
   in
   helper f0
 
