@@ -1,0 +1,45 @@
+Starting Omega...oc
+HL is defined.
+H1 is defined.
+HP_1 is defined.
+HP_2 is defined.
+HP_8 is defined.
+G1 is defined.
+
+!!! >>>>>> step 1: find dangling ptrs, link pre and post-preds dangling preds<<<<<<
+!!! >>>>>> step 2: split constraints based on pre and post-preds<<<<<<
+!!! **********************************
+!!! **** split_base ****
+!!! **********************************
+!!! post_hps:[G1]
+!!! prog_vars:[]
+!!! BEFORE:[(1): H1(x,y)&x=null & res=null --> G1(x,y,res)]
+!!! =============>>>>
+!!! AFTER:[(1): emp&res=x & res=null & x=null --> G1(x,y,res),
+(2): H1(x,y)&x=null --> emp]
+!!! UNKNOWN added:[]
+!!! **********************************
+!!! **** end of split_base ****
+!!! **********************************
+!!! >>>>>> step 3: apply transitive implication<<<<<<
+!!! >>>>>> step 3a: simplification <<<<<<
+!!! >>>>>> step 3b: do apply_transitive_imp <<<<<<
+!!! >>>>>> pre-predicates<<<<<<
+!!! >>>>>> step pre-4: remove unused predicates<<<<<<
+!!! >>>>>> pre-predicates: step pre-5: group & simpl impl<<<<<<
+!!! >>>>>> pre-predicates: step pre-6: combine<<<<<<
+!!! >>>>>> pre-predicates: step pre-7: remove redundant x!=null<<<<<<
+!!! >>>>>> pre-predicates: step pre-8: strengthen<<<<<<
+!!! >>>>>> step 6: generalization <<<<<<
+!!! >>>>>> post-predicates<<<<<<
+!!! >>>>>> step post-4: step remove unused predicates<<<<<<
+!!! >>>>>> post-predicates: step post-5: remove redundant x!=null : not implemented yet<<<<<<
+!!! >>>>>> post-predicates: step post-61: weaken<<<<<<
+
+*************************************
+*******relational definition ********
+*************************************
+[ H1(x_29,y_30) ::= emp&x_29=null,
+ G1(x_31,y_32,res_33) ::= emp&x_31=null & res_33=null & res_33=x_31]
+*************************************
+

@@ -7,6 +7,7 @@
 
 open Globals
 open GlobProver
+open Gen.Basic
 module CP = Cpure
 
 let isabelle_file_number = ref 0
@@ -344,7 +345,7 @@ let ending_remarks () =
 let stop () = 
   let num_tasks = !test_number - !last_test_number in
   let _  = Procutils.PrvComms.stop !log_all_flag log_all !process num_tasks 3 ending_remarks in
-  print_string ("Stop Isabelle after ... "^(string_of_int num_tasks)^" invocations\n")
+  print_string_if !Globals.enable_count_stats ("Stop Isabelle after ... "^(string_of_int num_tasks)^" invocations\n")
 
 
 (* restart isabelle system *)

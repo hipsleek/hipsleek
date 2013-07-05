@@ -13,15 +13,15 @@ or x::node<val_29_788,next_29_789> * GP_4(next_29_789,self) *
 inv self!=null.
 
 
-relAssume GP_3
+relAssume 
  GP_3(next_34_803,next_29_789)
  --> next_34_803 = null.
 
-//shape_post_obligation [][GP_3]. // loop
-shape_infer [][GP_3]. // loop
-//shape_infer [GP_3][]. // terminates
+shape_post_obligation [][GP_3]. // loop
+//shape_infer [][GP_3]. // loop
+shape_infer [GP_3][]. // terminates
 
-print residue.
+//print residue.
 
 /*
 # single-b1.slk

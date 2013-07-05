@@ -5,11 +5,30 @@ data node{
 
 
 HeapPred H(node a,node b).
-
+HeapPred G(node b).
+/*
 infer [H] H(a,b) & a=null |- emp.
 print residue.
-
+*/
 infer_exact [H] H(a,b) & a=null |- emp.
+print residue.
+
+infer_exact [H] H(a,b) * b::node<_,_> & a=null |- emp.
+print residue.
+
+infer_exact [H] H(a,b) * G(b) & a=null & b!=null |- emp.
+print residue.
+
+infer_exact [H,G] H(a,b) * G(b) & a=null & b!=null |- emp.
+print residue.
+
+infer_exact [H,G] G(b) & a=null & b!=null |- emp.
+print residue.
+
+infer_inexact [H,G] G(b) & a=null & b!=null |- emp.
+print residue.
+
+infer [H,G] G(b) & a=null & b!=null |- emp.
 print residue.
 
 /*

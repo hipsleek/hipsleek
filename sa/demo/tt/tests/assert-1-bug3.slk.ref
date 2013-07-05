@@ -1,0 +1,38 @@
+Starting Omega...oc
+
+Entail (1) : Valid. 
+
+ <1>emp&F(n) & n=t & 1<=n&{FLOW,(19,20)=__norm}[]
+ inferred rel: [RELASS [F]: ( F(n)) -->  1<=n]
+
+
+Entail (2) : Valid. 
+
+ <1>emp&F(t) & n=t & 1<=t&{FLOW,(19,20)=__norm}[]
+ inferred rel: [RELASS [F]: ( F(t)) -->  1<=t]
+
+
+Entail (3) : Valid. 
+
+ <1>emp&F(t) & G(n) & n=t & 1<=n&{FLOW,(19,20)=__norm}[]
+ inferred rel: [RELASS [F,G]: ( G(n)) -->  1<=n]
+
+
+Entail (4) : Valid. 
+
+ <1>emp&F(n) & G(t) & n=t & 1<=n&{FLOW,(19,20)=__norm}[]
+ inferred rel: [RELASS [F,G]: ( F(n)) -->  1<=n]
+
+
+Entail (5) : Valid. 
+
+ <1>emp&F(t) & G(t) & n=t & 1<=t&{FLOW,(19,20)=__norm}[]
+ inferred rel: [RELASS [F,G]: ( F(t) & G(t)) -->  1<=t]
+
+
+Entail (6) : Valid. 
+
+ <1>emp&F(n) & G(n) & n=t & 1<=n&{FLOW,(19,20)=__norm}[]
+ inferred rel: [RELASS [F,G]: ( F(n) & G(n)) -->  1<=n]
+
+

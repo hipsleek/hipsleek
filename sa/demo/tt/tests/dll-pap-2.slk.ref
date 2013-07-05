@@ -1,0 +1,52 @@
+Starting Omega...oc
+G is defined.
+H is defined.
+HP_9 is defined.
+HP_0 is defined.
+HP_1 is defined.
+HP_2 is defined.
+HP_3 is defined.
+
+!!! >>>>>> step 1: find dangling ptrs, link pre and post-preds dangling preds<<<<<<
+!!! >>>>>> step 2: split constraints based on pre and post-preds<<<<<<
+!!! *** NO SPLITTING DONE ***
+!!! >>>>>> step 3: apply transitive implication<<<<<<
+!!! >>>>>> step 3a: simplification <<<<<<
+!!! >>>>>> step 3b: do apply_transitive_imp <<<<<<
+!!! >>>>>> step 3a: simplification <<<<<<
+!!! >>>>>> step 3b: do apply_transitive_imp <<<<<<
+!!! >>>>>> pre-predicates<<<<<<
+!!! >>>>>> step pre-4: remove unused predicates<<<<<<
+!!! >>>>>> pre-predicates: step pre-5: group & simpl impl<<<<<<
+!!! >>>>>> pre-predicates: step pre-6: combine<<<<<<
+!!! >>>>>> pre-predicates: step pre-7: remove redundant x!=null<<<<<<
+!!! >>>>>> pre-predicates: step pre-8: strengthen<<<<<<
+!!! >>>>>> step 6: generalization <<<<<<
+!!! >>>>>> post-predicates<<<<<<
+!!! >>>>>> step post-4: step remove unused predicates<<<<<<
+!!! >>>>>> post-predicates: step post-5: remove redundant x!=null : not implemented yet<<<<<<
+!!! >>>>>> post-predicates: step post-61: weaken<<<<<<
+
+*************************************
+*******relational definition ********
+*************************************
+[ HP_9(next_15_73,y_74) ::= 
+ next_15_73::node<next_15_797,prev_15_798>@M * HP_9(next_15_797,y_74) * 
+ HP_0(prev_15_798,y_74)
+ or emp&next_15_73=null
+ ,
+ H(x_75,y_76) ::= x_75::node<next_15_797,prev_15_798>@M * HP_9(next_15_797,y_76) * 
+HP_0(prev_15_798,y_76) * y_76::node<next_21_72,prev_21_71>@M * 
+HP_2(next_21_72,x_75),
+ HP_1(y_77,x_78) ::= y_77::node<next_21_820,prev_21_821>@M * HP_2(next_21_820,x_78),
+ HP_3(prev_21_79,x_80) ::= emp,
+ G(x_81,y_82) ::= 
+ HP_0(prev_15_798,y_82) * x_81::node<next_15_797,prev_15_798>@M * 
+ G(next_15_797,y_82)&next_15_797!=null
+ or HP_0(prev_15_798,y_82) * x_81::node<y_82,prev_15_798>@M * 
+    HP_2(next_21_820,x_81) * y_82::node<next_21_820,x_81>@M
+ ,
+ HP_2(a,b) ::=UNKNOWN,
+ HP_0(a,b) ::=UNKNOWN]
+*************************************
+

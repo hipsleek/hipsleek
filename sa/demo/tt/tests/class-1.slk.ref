@@ -1,0 +1,38 @@
+Starting Omega...oc
+H is defined.
+G is defined.
+
+Entail (1) : Valid. 
+
+ <1>emp&a=null&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [H(a,b)&a=null --> emp]
+
+
+Entail (2) : Fail.
+
+
+Entail (3) : Fail.
+
+
+Entail (4) : Valid. 
+
+ <1>emp&a=null & b!=null&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [H(a,b)&b!=null & a=null --> emp; G(b)&b!=null --> emp]
+
+
+Entail (5) : Valid. 
+
+ <1>emp&a=null & b!=null&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [G(b)&b!=null --> emp]
+
+
+Entail (6) : Valid. 
+
+ <1>G(b)&a=null & b!=null&{FLOW,(19,20)=__norm}[]
+
+
+Entail (7) : Valid. 
+
+ <1>G(b)&a=null & b!=null&{FLOW,(19,20)=__norm}[]
+
+

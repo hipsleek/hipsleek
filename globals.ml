@@ -192,7 +192,7 @@ let convert_prim_to_obj (t:typ) : typ =
 (*for heap predicate*)
 let hp_default_prefix_name = "HP_"
 let hppost_default_prefix_name = "GP_"
-let dang_hp_default_prefix_name = "UU"
+let dang_hp_default_prefix_name = "__DP"
 (*
   Data types for code gen
 *)
@@ -248,12 +248,12 @@ let string_of_vp_ann a =
 
 let string_of_term_ann a =
   match a with
-  | Term -> "Term"
-  | Loop -> "Loop"
-  | MayLoop -> "MayLoop"
-  | Fail f -> match f with
-    | TermErr_May -> "TermErr_May"
-    | TermErr_Must -> "TermErr_Must"
+    | Term -> "Term"
+    | Loop -> "Loop"
+    | MayLoop -> "MayLoop"
+    | Fail f -> match f with
+        | TermErr_May -> "TermErr_May"
+        | TermErr_Must -> "TermErr_Must"
 
 let string_of_loc (p : loc) = 
     Printf.sprintf "1 File \"%s\",Line:%d,Col:%d"
@@ -384,7 +384,7 @@ let proving_info () =
           in ("Proving Infor spec:"^(post_pos#string_of_pos) ^loc_info^" kind::"^temp)
     )
   else "..no proving kind.."(*"who called is_sat,imply,simplify to be displayed later..."*)
-	
+
 
 let wrap_proving_kind (str : string) exec_function args =
   (* if (!sleek_logging_txt || !proof_logging_txt) then *)
@@ -640,6 +640,9 @@ let lib_files = ref ([] : string list)
 
 (* command line options *)
 
+let texify = ref false
+let testing_flag = ref false
+
 let instantiation_variants = ref 0
 
 let omega_simpl = ref true
@@ -660,7 +663,11 @@ let dis_show_diff = ref false
 
 let sa_print_inter = ref false
 
+let cond_path_trace = ref false
+
 let sa_old = ref false
+
+let sa_dnc = ref false
 
 (* let sa_en_norm = ref false *)
 
@@ -668,19 +675,23 @@ let sa_en = ref true
 
 let sa_en_split = ref false
 
-let sa_dangling = ref false
+(* let sa_dangling = ref false *)
 
 let sa_refine_dang = ref false
 
 let pred_elim_useless = ref false
 
-let sa_inlining = ref false
+let pred_elim_dangling = ref false
 
-let sa_s_split_base = ref false
+(* let sa_inlining = ref false *)
 
-let sa_elim_unused_preds = ref true
+let sa_sp_split_base = ref false
 
-let sa_keep_unused_preds = ref false
+let sa_infer_split_base = ref true
+
+let pred_elim_unused_preds = ref true
+
+(* let sa_keep_unused_preds = ref false *)
 
 let sa_unify_dangling = ref false
 
@@ -862,6 +873,10 @@ let print_err_sleek = ref false
 let enable_prune_cache = ref true
 
 let enable_counters = ref false
+
+let enable_time_stats = ref true
+
+let enable_count_stats = ref true
 
 let enable_fast_imply = ref false
 

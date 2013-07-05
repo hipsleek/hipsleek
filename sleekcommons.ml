@@ -43,15 +43,18 @@ type command =
   | LemmaDef of I.coercion_decl
   | LetDef of (ident * meta_formula)
   | EntailCheck of (meta_formula * meta_formula * entail_type)
-  | RelAssume of (ident * meta_formula * meta_formula)
+  | RelAssume of (CF.cond_path_type * meta_formula * meta_formula)
+  | RelDefn of (CF.cond_path_type * meta_formula * meta_formula)
   | ShapeInfer of (ident list * ident list)
+  | ShapeDivide of (ident list * ident list)
+  | ShapeConquer of (ident list * CF.cond_path_type list)
   | ShapePostObl of (ident list * ident list)
   | ShapeInferProp of (ident list * ident list)
   | ShapeSplitBase of (ident list * ident list)
   | ShapeElim of (ident list)
   | ShapeExtract of (ident list)
   | ShapeDeclDang of (ident list)
-  | ShapeDeclUnknown of (ident list)
+  | ShapeDeclUnknown of (CF.cond_path_type * ident list)
   | ShapeSConseq of (ident list * ident list)
   | ShapeSAnte of (ident list * ident list)
   | EqCheck of (ident list * meta_formula * meta_formula)
@@ -99,7 +102,10 @@ let string_of_command c = match c with
   | LetDef  _ -> "LetDef"   
   | EntailCheck _ -> "EntailCheck"
   | RelAssume _ -> "RelAssume"
+  | RelDefn _ -> "RelDefn"
   | ShapeInfer _ -> "ShapeInfer"
+  | ShapeDivide _ -> "ShapeDivide"
+  | ShapeConquer _ -> "ShapeConquer"
   | ShapePostObl _ -> "| ShapePostObl"
   | ShapeInferProp _ -> "ShapeInferProper"
   | ShapeSplitBase _ -> "ShapeSplitbase"

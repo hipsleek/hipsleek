@@ -1,0 +1,48 @@
+Starting Omega...oc
+H is defined.
+G is defined.
+H_0 is defined.
+H_8 is defined.
+H_9 is defined.
+
+!!! >>>>>> step 1: find dangling ptrs, link pre and post-preds dangling preds<<<<<<
+!!! >>>>>> step 2: split constraints based on pre and post-preds<<<<<<
+!!! *** NO SPLITTING DONE ***
+!!! >>>>>> step 3: apply transitive implication<<<<<<
+!!! >>>>>> step 3a: simplification <<<<<<
+!!! >>>>>> step 3b: do apply_transitive_imp <<<<<<
+!!! >>>>>> step 3a: simplification <<<<<<
+!!! >>>>>> step 3b: do apply_transitive_imp <<<<<<
+!!! >>>>>> pre-predicates<<<<<<
+!!! >>>>>> step pre-4: remove unused predicates<<<<<<
+!!! >>>>>> pre-predicates: step pre-5: group & simpl impl<<<<<<
+!!! >>>>>> pre-predicates: step pre-6: combine<<<<<<
+!!! >>>>>> pre-predicates: step pre-7: remove redundant x!=null<<<<<<
+!!! >>>>>> pre-predicates: step pre-8: strengthen<<<<<<
+!!! >>>>>> step 6: generalization <<<<<<
+!!! >>>>>> post-predicates<<<<<<
+!!! >>>>>> step post-4: step remove unused predicates<<<<<<
+!!! >>>>>> post-predicates: step post-5: remove redundant x!=null : not implemented yet<<<<<<
+!!! >>>>>> post-predicates: step post-61: weaken<<<<<<
+
+*************************************
+*******relational definition ********
+*************************************
+[ H(x_69,r_70) ::= x_69::node<left_29_845,right_29_846,next_29_847>@M * 
+H_9(right_29_846,r_70) * 
+left_29_845::node<left_29_62,right_29_63,next_29_61>@M * 
+H_8(left_29_62,l_64) * H_9(right_29_63,l_64),
+ H_8(left_29_71,r_72) ::= left_29_71::node<left_29_56,right_29_57,next_29_55>@M * 
+H_8(left_29_56,l_47') * H_9(right_29_57,l_47'),
+ H_9(right_29_73,r_74) ::= 
+ right_29_73::node<left_29_50,right_29_51,next_29_52>@M * 
+ H_9(right_29_51,r_74) * 
+ left_29_50::node<left_29_59,right_29_60,next_29_58>@M * 
+ H_9(right_29_60,l_47') * 
+ left_29_59::node<left_29_66,right_29_67,next_29_65>@M * 
+ H_8(left_29_66,l_68) * H_9(right_29_67,l_68)
+ or emp&right_29_73=null
+ ,
+ H_0(next_29_75,r_76) ::= emp]
+*************************************
+

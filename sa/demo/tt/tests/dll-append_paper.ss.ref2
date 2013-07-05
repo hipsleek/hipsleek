@@ -1,0 +1,29 @@
+========dll-append_paper.ss --classic==========
+<rstart>7
+[ HP_800(next_15_798,y@NI) * HP_801(y,x@NI)&
+  next_15_798!=null --> H(next_15_798,y),
+ HP_799(prev_15_797,y@NI) * x::node<prev_15_797,next_15_798>@M * 
+  G(next_15_798,y)&next_15_798!=null --> G(x,y),
+ H(x,y) --> x::node<prev_15_797,next_15_798>@M * HP_799(prev_15_797,y@NI) * 
+  HP_800(next_15_798,y@NI) * HP_801(y,x@NI),
+ HP_801(y,x@NI) --> y::node<prev_21_820,next_21_821>@M * 
+  HP_822(prev_21_820,x@NI) * HP_823(next_21_821,x@NI),
+ HP_799(prev_15_797,y@NI) * x::node<prev_15_797,y>@M * 
+  HP_823(next_21_821,x@NI) * y::node<x,next_21_821>@M --> G(x,y),
+ HP_800(next_15_798,y@NI)&next_15_798=null --> emp,
+ HP_822(prev_21_820,x@NI) --> emp]
+<rstop>*************************************
+<dstart>
+[ H(x_832,y_833) ::= x_832::node<__DP_HP_799,next_15_798>@M * HP_800(next_15_798,y_833) * 
+y_833::node<__DP_HP_822,__DP_HP_823>@M,
+ G(x_836,y_837) ::= 
+ x_836::node<__DP_HP_799,y_837>@M * y_837::node<x_836,__DP_HP_823>@M
+ or x_836::node<__DP_HP_799,next_15_798>@M * G(next_15_798,y_837)&
+    next_15_798!=null
+ ,
+ HP_800(next_15_830,y_831) ::= 
+ emp&next_15_830=null
+ or next_15_830::node<__DP_HP_799,next_15_798>@M * HP_800(next_15_798,y_831)
+ ]
+<dstop>
+====================

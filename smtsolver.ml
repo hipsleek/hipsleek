@@ -620,7 +620,7 @@ and start() =
 let stop () =
   if !is_z3_running then (
     let num_tasks = !test_number - !last_test_number in
-    print_string ("Stop z3... "^(string_of_int !z3_call_count)^" invocations "); flush stdout;
+    print_string_if !Globals.enable_count_stats ("Stop z3... "^(string_of_int !z3_call_count)^" invocations "); flush stdout;
     let _ = Procutils.PrvComms.stop !log_all_flag log_all !prover_process num_tasks Sys.sigkill (fun () -> ()) in
     is_z3_running := false;
   )
@@ -628,10 +628,10 @@ let stop () =
 (* restart Z3 system *)
 let restart reason =
   if !is_z3_running then (
-    let _ = print_string (reason^" Restarting z3 after ... "^(string_of_int !z3_call_count)^" invocations. ") in
+    let _ = print_string_if !Globals.enable_count_stats (reason^" Restarting z3 after ... "^(string_of_int !z3_call_count)^" invocations. ") in
     Procutils.PrvComms.restart !log_all_flag log_all reason "z3" start stop
   ) else (
-    let _ = print_string (reason^" not restarting z3 ... "^(string_of_int !z3_call_count)^" invocations ") in
+    let _ = print_string_if !Globals.enable_count_stats (reason^" not restarting z3 ... "^(string_of_int !z3_call_count)^" invocations ") in
     ()
   )
 

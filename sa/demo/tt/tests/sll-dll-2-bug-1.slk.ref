@@ -1,0 +1,15 @@
+Starting Omega...oc
+H1 is defined.
+HP_2 is defined.
+HP_3 is defined.
+G1 is defined.
+
+Entail (1) : Valid. 
+
+ <1>HP_38(prev_21_36,p') * HP_39(next_21_37,p') * HP_40(p',c)&p=p' & c!=null & v_bool_19_784' & c!=null & v_bool_19_784' & val_21_35=val_21_777' & prev_21_36=prev_21_778' & next_21_37=next_21_779'&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [H1(c',p)&
+                   c'!=null --> c'::node<val_21_35,prev_21_36,next_21_37>@M * 
+                   HP_38(prev_21_36,p@NI) * HP_39(next_21_37,p@NI) * 
+                   HP_40(p,c'@NI)]
+
+

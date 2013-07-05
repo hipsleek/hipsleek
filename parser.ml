@@ -723,14 +723,17 @@ non_empty_command:
       | t=checkeq_cmd         -> EqCheck t
       | t= checkentail_cmd     -> EntailCheck t
       | t=relassume_cmd     -> RelAssume t
+      | t=reldefn_cmd     -> RelDefn t
       | t=shapeinfer_cmd     -> ShapeInfer t
+      | t=shapedivide_cmd     -> ShapeDivide t
+      | t=shapeconquer_cmd     -> ShapeConquer t
       | t=shapepost_obl_cmd     -> ShapePostObl t
       | t=shapeinfer_proper_cmd     -> ShapeInferProp t
       | t=shapesplit_base_cmd     -> ShapeSplitBase t
       | t=shapeElim_cmd     -> ShapeElim t
       | t=shapeExtract_cmd     -> ShapeExtract t
       | t=decl_dang_cmd        -> ShapeDeclDang t
-      | t=decl_unknown_cmd        -> ShapeDeclUnknown t
+      | t= decl_unknown_cmd        -> ShapeDeclUnknown t
       | t=shape_sconseq_cmd     -> ShapeSConseq t
       | t=shape_sante_cmd     -> ShapeSAnte t
       | t= infer_cmd           -> InferCmd t  
@@ -1643,8 +1646,16 @@ checkentail_cmd:
    | `CHECKENTAIL_EXACT; t=meta_constr; `DERIVE; b=extended_meta_constr -> (t, b, Some true)
    | `CHECKENTAIL_INEXACT; t=meta_constr; `DERIVE; b=extended_meta_constr -> (t, b, Some false)]];
 
+cond_path:
+    [[ `OPAREN; il2 = OPT int_list; `CPAREN -> un_option il2 []
+    ]];
+
 relassume_cmd:
-   [[ `RELASSUME; `IDENTIFIER id; l=meta_constr; `CONSTR;r=meta_constr -> (id, l, r)
+   [[ `RELASSUME; il2 = OPT cond_path; l=meta_constr; `CONSTR;r=meta_constr -> (un_option il2 [], l, r)
+   ]];
+
+reldefn_cmd:
+   [[ `RELDEFN; il2 = OPT cond_path; l=meta_constr; `EQUIV;r=meta_constr -> (un_option il2 [], l, r)
    ]];
 
 decl_dang_cmd:
@@ -1652,7 +1663,7 @@ decl_dang_cmd:
    ]];
 
 decl_unknown_cmd:
-   [[ `SHAPE_DECL_UNKNOWN; `OSQUARE; il1= OPT id_list ;`CSQUARE   -> un_option il1 []
+   [[ `SHAPE_DECL_UNKNOWN; il2 = OPT cond_path; `OSQUARE; il1= OPT id_list ;`CSQUARE   -> (un_option il2 [], un_option il1 [])
    ]];
 
 shapeinfer_cmd:
@@ -1660,6 +1671,19 @@ shapeinfer_cmd:
    let il1 = un_option il1 [] in
    let il2 = un_option il2 [] in
    (il1,il2)
+   ]];
+
+shapedivide_cmd:
+   [[ `SHAPE_DIVIDE; `OSQUARE;il1=OPT id_list;`CSQUARE; `OSQUARE; il2=OPT id_list;`CSQUARE ->
+   let il1 = un_option il1 [] in
+   let il2 = un_option il2 [] in
+   (il1,il2)
+   ]];
+shapeconquer_cmd:
+   [[ `SHAPE_CONQUER; `OSQUARE; il2=OPT id_list;`CSQUARE; `OSQUARE; il1=OPT list_int_list ;`CSQUARE ->
+   let il1 = un_option il1 [] in
+   let il2 = un_option il2 [] in
+   (il2, il1)
    ]];
 
 shapepost_obl_cmd:
@@ -1815,6 +1839,10 @@ rank_specifier:
 comma_list: [[`COMMA; s = OPT SELF -> 1 + (un_option s 1)]];
   
 id_list_opt:[[t= LIST0 id SEP `COMMA ->t]];
+
+int_list:[[t= LIST1 integer_literal SEP `SEMICOLON ->t]];
+
+list_int_list:[[t= LIST1 int_list SEP `COMMA ->t]];
 
 id_list:[[t=LIST1 id SEP `COMMA -> t]];
 
@@ -2026,25 +2054,28 @@ hprogn:
     (* let g_rel_lst = g_rel_defs # get_stk in *)
     let rel_lst = ((rel_defs # get_stk)(* @(g_rel_lst) *)) in
     let hp_lst = hp_defs # get_stk in
+    (* PURE_RELATION_OF_HEAP_PRED *)
+    (* to create __pure_of_relation from hp_lst to add to rel_lst *)
+    (* rel_lst = rel_lst @ List.map (pure_relation_of_hp_pred) hp_lst *)
     { prog_include_decls = !include_defs;
-			prog_data_decls = obj_def :: string_def :: !data_defs;
-      prog_global_var_decls = !global_var_defs;
-      prog_logical_var_decls = !logical_var_defs;
-      prog_enum_decls = !enum_defs;
-      (* prog_rel_decls = [];  TODO : new field for array parsing *)
-      prog_view_decls = !view_defs;
-      prog_func_decls = func_defs # get_stk ;
-      prog_rel_decls = rel_lst; (* An Hoa *)
-      prog_rel_ids = List.map (fun x ->
-          let tl,_ = List.split x.rel_typed_vars in
-          (RelT tl,x.rel_name)) (rel_lst); (* WN *)
-      prog_hp_decls = hp_lst ;
-      prog_hp_ids = List.map (fun x -> (HpT,x.hp_name)) hp_lst; (* l2 *)
-      prog_axiom_decls = !axiom_defs; (* [4/10/2011] An Hoa *)
-      prog_proc_decls = !proc_defs;
-      prog_coercion_decls = !coercion_defs; 
-      prog_hopred_decls = !hopred_defs;
-      prog_barrier_decls = !barrier_defs; } ]];
+    prog_data_decls = obj_def :: string_def :: !data_defs;
+    prog_global_var_decls = !global_var_defs;
+    prog_logical_var_decls = !logical_var_defs;
+    prog_enum_decls = !enum_defs;
+    (* prog_rel_decls = [];  TODO : new field for array parsing *)
+    prog_view_decls = !view_defs;
+    prog_func_decls = func_defs # get_stk ;
+    prog_rel_decls = rel_lst; (* An Hoa *)
+    prog_rel_ids = List.map (fun x ->
+        let tl,_ = List.split x.rel_typed_vars in
+        (RelT tl,x.rel_name)) (rel_lst); (* WN *)
+    prog_hp_decls = hp_lst ;
+    prog_hp_ids = List.map (fun x -> (HpT,x.hp_name)) hp_lst; (* l2 *)
+    prog_axiom_decls = !axiom_defs; (* [4/10/2011] An Hoa *)
+    prog_proc_decls = !proc_defs;
+    prog_coercion_decls = !coercion_defs; 
+    prog_hopred_decls = !hopred_defs;
+    prog_barrier_decls = !barrier_defs; } ]];
 
 opt_decl_list: [[t=LIST0 mdecl -> List.concat t]];
   
@@ -2348,7 +2379,7 @@ valid_declaration_statement:
   | t=try_statement; `SEMICOLON -> t
   | t=java_statement -> t
   | t=jump_statement;`SEMICOLON  -> t
-  | t=assert_statement;`SEMICOLON -> t
+  | t= assert_statement;`SEMICOLON -> t
   | t=dprint_statement;`SEMICOLON  -> t
   | t=debug_statement -> t
   | t=time_statement -> t
@@ -2366,7 +2397,7 @@ barr_statement : [[`BARRIER; `IDENTIFIER t -> I.Barrier {exp_barrier_recv = t ; 
  
 assert_statement:
   [[ `ASSERT; ol= opt_label; f=formulas ->
-       mkAssert (Some ((F.subst_stub_flow_struc n_flow (fst f)),(snd f))) None (fresh_formula_label ol) None (get_pos_camlp4 _loc 1)
+       mkAssert (Some ((F.subst_stub_flow_struc n_flow (fst f)),(snd f))) None (fresh_formula_label ol) (Some false) (get_pos_camlp4 _loc 1)
    | `ASSERT_EXACT; ol= opt_label; f=formulas -> 
        mkAssert (Some ((F.subst_stub_flow_struc n_flow (fst f)),(snd f))) None (fresh_formula_label ol) (Some true) (get_pos_camlp4 _loc 1)
    | `ASSERT_INEXACT; ol= opt_label; f=formulas -> 
@@ -2374,7 +2405,7 @@ assert_statement:
    | `ASSUME; ol=opt_label; dc=disjunctive_constr ->
        mkAssert None (Some (F.subst_stub_flow n_flow dc)) (fresh_formula_label ol) None (get_pos_camlp4 _loc 1)
    | `ASSERT; ol=opt_label; f=formulas; `ASSUME; dc=disjunctive_constr ->  
-       mkAssert (Some ((F.subst_stub_flow_struc n_flow (fst f)),(snd f))) (Some (F.subst_stub_flow n_flow dc)) (fresh_formula_label ol) None (get_pos_camlp4 _loc 1)
+       mkAssert (Some ((F.subst_stub_flow_struc n_flow (fst f)),(snd f))) (Some (F.subst_stub_flow n_flow dc)) (fresh_formula_label ol) (Some false) (get_pos_camlp4 _loc 1)
    | `ASSERT_EXACT; ol=opt_label; f=formulas; `ASSUME; dc=disjunctive_constr ->  
        mkAssert (Some ((F.subst_stub_flow_struc n_flow (fst f)),(snd f))) (Some (F.subst_stub_flow n_flow dc)) (fresh_formula_label ol) (Some true) (get_pos_camlp4 _loc 1)
    | `ASSERT_INEXACT; ol=opt_label; f=formulas; `ASSUME; dc=disjunctive_constr ->  

@@ -1,0 +1,15 @@
+Starting Omega...oc
+H_9 is defined.
+
+Entail (1) : Valid. 
+
+ <1>H_9(n) * x::node<n>@M[Orig]&n=t & t=null&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [H_9(n) --> emp&n=null]
+
+
+Entail (2) : Valid. 
+
+ <1>H_9(t) * x::node<n>@M[Orig]&n=t & n=null&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [H_9(t) --> emp&t=null]
+
+

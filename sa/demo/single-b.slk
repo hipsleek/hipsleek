@@ -13,7 +13,7 @@ or x::node<val_29_788,next_29_789> * GP_4(next_29_789,self) *
 inv self!=null.
 
 
-relAssume GP_4
+relAssume
  t_32'::G<next_29_789> & next_29_789!=null 
  --> t_32'::node<val_34_802,next_34_803>@M * 
     GP_3(next_34_803,next_29_789) * GP_4(next_29_789,t_32').
@@ -21,7 +21,7 @@ relAssume GP_4
 shape_post_obligation [][GP_3,GP_4].
 //shape_infer [][GP_4,GP_5].
 
-print residue.
+//print residue.
 
 /*
 # single-b.slk

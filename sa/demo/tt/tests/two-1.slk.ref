@@ -1,0 +1,40 @@
+Starting Omega...oc
+H2 is defined.
+G2 is defined.
+HP_5 is defined.
+HP_6 is defined.
+HP_9 is defined.
+
+!!! >>>>>> step 1: find dangling ptrs, link pre and post-preds dangling preds<<<<<<
+!!! >>>>>> step 2: split constraints based on pre and post-preds<<<<<<
+!!! *** NO SPLITTING DONE ***
+!!! >>>>>> step 3: apply transitive implication<<<<<<
+!!! >>>>>> step 3a: simplification <<<<<<
+!!! >>>>>> step 3b: do apply_transitive_imp <<<<<<
+!!! >>>>>> pre-predicates<<<<<<
+!!! >>>>>> step pre-4: remove unused predicates<<<<<<
+!!! >>>>>> pre-predicates: step pre-5: group & simpl impl<<<<<<
+!!! >>>>>> pre-predicates: step pre-6: combine<<<<<<
+!!! >>>>>> pre-predicates: step pre-7: remove redundant x!=null<<<<<<
+!!! >>>>>> pre-predicates: step pre-8: strengthen<<<<<<
+!!! >>>>>> step 6: generalization <<<<<<
+!!! >>>>>> post-predicates<<<<<<
+!!! >>>>>> step post-4: step remove unused predicates<<<<<<
+!!! >>>>>> post-predicates: step post-5: remove redundant x!=null : not implemented yet<<<<<<
+!!! >>>>>> post-predicates: step post-61: weaken<<<<<<
+
+*************************************
+*******relational definition ********
+*************************************
+[ H2(x_56,y_57) ::= x_56::node<val_24_783,next_24_784>@M * HP_5(next_24_784,y_57) * 
+y_57::node<val_27_794,next_27_55>@M * HP_9(next_27_55,x_56),
+ HP_6(y_58,x_59) ::= y_58::node<val_27_794,next_27_795>@M * HP_9(next_27_795,x_59),
+ G2(x_60,y_61) ::= 
+ y_61::node<Anon_11,nn>@M * HP_9(nn,x_60) * x_60::node<Anon_12,n>@M&n=null
+ or HP_5(n,y_61) * x_60::node<Anon_12,n>@M * HP_9(nn,x_60) * 
+    y_61::node<Anon_11,nn>@M&n!=null
+ ,
+ HP_5(a,b) ::=UNKNOWN,
+ HP_9(a,b) ::=UNKNOWN]
+*************************************
+

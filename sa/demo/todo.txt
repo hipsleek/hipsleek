@@ -975,7 +975,7 @@ Can we avoid this, as it has nullified uninterpreted predicates.
 
 
 [ HP_2(y_175,x_176) ::= y_175::node<val_25_826,next_25_827>@M * (HP_8(next_25_827,x_176))&true,
- H1(x_177,y_178) ::= 
+ls  H1(x_177,y_178) ::= 
  emp&x_177=null
  or (H1(next_24_102,next_25_100)) * y_178::node<val_25_99,next_25_100>@M * 
     x_177::node<val_24_101,next_24_102>@M&true
@@ -2788,7 +2788,7 @@ EXPECTING:
   P(x,res) = x=res
    x::node<_,q>*q::P<res>
 =====================================================================
-# single-b.slk
+# single-b.slk: DONE
 
 PostPred GP_4(node a, node@NI b).
 PostPred GP_5(node a, node@NI b).
@@ -2817,7 +2817,7 @@ infer [GP_4,GP_5]
   |- t_32'::node<val_34_802,next_34_803>@M * 
     GP_4(next_34_803,next_29_789) * GP_5(next_29_789,t_32').
 =====================================================================
-# dll-pap-1.slk
+# dll-pap-1.slk: DONE
 
 relAssume H
   H(x,y)&true --> x::node<next_15_797,prev_15_798>@M * 
@@ -2879,7 +2879,7 @@ Trasform HP_9 with complex LHS
   HP_9(n,y) & n=null --> emp
   // Can now transform HP_9 into ll list.
 =====================================================================
-# class-1.slk
+# class-1.slk  FIXED
 
 infer [H] H(a,b) & a=null |- emp.
 print residue.
@@ -2915,7 +2915,7 @@ to be empty, as follows:
 Can be done when rhs is empty.
 
 =====================================================================
-# class-1a.slk
+# class-1a.slk  FIXED
 
 infer_exact [H,G] H(a,b) * G(b) & a=null |- emp.
 print residue.
@@ -2949,7 +2949,7 @@ Entail (2) : Fail.
 Should have forced base-case unfold to allow it
 to succeed!
 =====================================================================
-# single-b.slk
+# single-b.slk  FIXED
 
 GOT:
 ====
@@ -2970,7 +2970,7 @@ inferred hprel: [
    next_29_789::node<val_29_73,next_29_74>@M * GP_5(next_29_74,t_32'@NI)
       --> GP_5(next_29_789,t_32'@NI)&true]
 =====================================================================
-# single-b1.slk
+# single-b1.slk: FIXED
 
 relAssume GP_3
  GP_3(next_34_803,next_29_789)
@@ -2997,6 +2997,542 @@ IF post-pred on the LHS does not yet have
 a definition, use this obligation to provide
 a definition in a similar manner to pre-pred.
 
+=====================================================================
+# assert-1-bug.slk FIXED
+
+infer [H_9] H_9(n) * x::node<n> 
+  & n=t
+ |-  t=null.
+print residue.
+
+infer [H_9] H_9(t) * x::node<n> 
+  & n=t
+ |-  t=null.
+print residue.
+
+BUG
+===
+Need to take into account equality on LHS when doing
+inference for pure formula of heap pred.
+Above two should work the same way..
+
+GOT
+===
+Entail (1) : Fail.
+
+
+Entail (2) : Valid. 
+
+ <1>H_9(t) * x::node<n>@M[Orig]&n=t&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [H_9(t) --> emp&t=null]
+
+=====================================================================
+infer_exact [H,G] G(b) & a=null & b!=null |- emp.
+print residue.
+
+/*
+# class-1b.slk
+
+GOT
+===
+
+Entail (3) : Valid. 
+ <1>emp&a=null&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [G(b) --> emp]
+
+EXPECT
+======
+ inferred hprel: [G(b) & b!=null--> emp]
+
+=====================================================================
+# class-dll-app.slk  FIXED
+# hip dll-append_paper.ss --en-sleek-logging --classic
+
+Result of sleek/hip does not tally, as hip is not collecting
+some base-case constraint from --classic reasoning that is
+present in sleek.
+
+SLEEK correctly
+===============
+infer_exact [H,G,H_9,H_0,H_1,H_2,H_3]
+H_9(next_15_797,y) * H_0(prev_15_798,y) * 
+x::node<y,prev_15_798>@M * H_2(next_21_820,x) * 
+H_3(prev_21_821,x) * y::node<next_21_820,x>
+&next_15_797=null 
+//& !(v_bool_15_778') & next_15_797=null & !(v_bool_15_778') 
+& next_15_797=next_20_817 & prev_21_821=prev_21_824
+ |-  G(x,y).
+print residue.
+
+GOOD:
+====
+ <1>emp&next_15_797=null & next_15_797=next_20_817 & prev_21_821=prev_21_824&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [H_0(prev_15_798,y@NI) * x::node<y,prev_15_798>@M * 
+                   H_2(next_21_820,x@NI) * 
+                   y::node<next_21_820,x>@M --> G(x,y); 
+                  H_9(next_15_797,y@NI)&next_15_797=null --> emp; 
+                  H_3(prev_21_821,x@NI) --> emp]
+
+=============================
+hip dll-append_paper.ss --en-sleek-logging --classic 
+
+For hip, it is missing on the relassume:
+                  H_9(next_15_797,y@NI)&next_15_797=null --> emp; 
+                  H_3(prev_21_821,x@NI) --> emp]
+
+as seen in the log below.
+
+id: 23; caller: []; line: 12; classic: true; kind: POST; hec_num: 5; evars: []; 
+infer [H,G,H_9,H_0,H_1,H_2,H_3]
+H_9(next_15_797,y) * H_0(prev_15_798,y) * 
+x::node<y,prev_15_798>@M * H_2(next_21_820,x) * 
+H_3(prev_21_821,x) * y::node<next_21_820,x>
+&next_15_797=null & 
+!(v_bool_15_778') & next_15_797=null & !(v_bool_15_778') & 
+next_15_797=next_20_817 & prev_21_821=prev_21_824
+ |-  G(x,y).
+ hprel_ass: [ H_0(prev_15_798,y) * x::node<y,prev_15_798>@M * H_2(next_21_820,x) * 
+  y::node<next_21_820,x>@M --> G(x,y)]
+res:  [
+  emp&next_15_797=null & !(v_bool_15_778') & next_15_797=null & !(v_bool_15_778') & next_15_797=next_20_817 & prev_21_821=prev_21_824&{FLOW,(22,23)=__norm}[]
+  ]
+
+=====================================================================
+# dll-pap-1.slk  FIXED
+
+GOT below which is incorrect
+===
+H(x_85,y_86) ::=  
+   y_86::node<next_21_820,prev_21_821>@M * HP_2(next_21_820,x_85) * 
+   HP_3(prev_21_821,x_85) * x_85::node<next_15_66,prev_15_67>@M * 
+   HP_0(prev_15_67,y_86)&next_15_66=null,
+  // need to refrain from unrolling HP_9 & HP_1 unless strictly needed
+
+HP_1(y_87,x_88) ::=  y_87::node<next_21_820,prev_21_821>@M * 
+   HP_2(next_21_820,x_88) * HP_3(prev_21_821,x_88),
+HP_9(next_15_89,y_90) ::=  emp&next_15_89=null,
+  // defn for HP_9 is incorrect
+
+
+POSSIBLE ALGORITM
+=================
+
+Confirm Equality first:
+  H(x,y)&true <--> x::node<next_15_797,prev_15_798>@M * 
+      HP_9(next_15_797,y) * HP_0(prev_15_798,y) * HP_1(y,x).
+  HP_1(y,x) <--> y::node<next_21_820,prev_21_821>@M * 
+     HP_2(next_21_820,x) * HP_3(prev_21_821,x).
+
+Trasform HP_9 with complex LHS
+  HP_9(n,y) * HP_1(y,x) & n!=null --> H(n,y).
+  //replace H(..)
+  HP_9(n,y) * HP_1(y,x) & n!=null --> 
+     n::node<next_15_797,prev_15_798>@M * 
+      HP_9(next_15_797,y) * HP_0(prev_15_798,y) * HP_1(y,n).
+  Drop HP_1(y,_) on both sides assummig that parameter is useless on x.
+  //abstract commom HP_1(..)
+  // this can be confirmed by the definition of HP_1 itself
+  // where x is not accessed
+  HP_9(n,y) & n!=null --> 
+     n::node<nexts_15_797,prev_15_798>@M * 
+      HP_9(next_15_797,y) * HP_0(prev_15_798,y).
+  // add missing base-case (missed by post-cond proving)
+  HP_9(n,y) & n=null --> emp
+  // Can now transform HP_9 into ll list.
+
+When to unfold? Only if it helps make it self-recursive
+and during the transformation of implication:
+  H(..) = ...G(..)..
+
+If we have implication:
+  G(..) & pure --> ..H(..)...
+
+To make it recursive, we unfold:
+  G(..) & pure --> ..[..G(..)..]...
+
+=====================================================================
+# dll-append_paper.ss --classic --sa-en-eup  FIXED
+dll-append_paper.ss --classic --sa-dis-eup
+
+gave the same result even though some predicates have been eliminated.
+could we have the the --sa-dis-eup option working properly?
+
+[ 
+H(x_832,y_833) ::=  x_832::node<prev_15_797,next_15_798>@M * HP_799(prev_15_797,y_833) * 
+ HP_800(next_15_798,y_833) * y_833::node<prev_21_828,next_21_829>@M * 
+ HP_822(prev_21_828,x_832) * HP_823(next_21_829,x_832),
+
+G(x_836,y_837) ::=  
+ HP_799(prev_15_797,y_837) * x_836::node<prev_15_797,next_15_798>@M * 
+ G(next_15_798,y_837)&next_15_798!=null
+ or HP_799(prev_15_797,y_837) * x_836::node<prev_15_797,y_837>@M * 
+    HP_823(next_21_821,x_836) * y_837::node<x_836,next_21_821>@M,
+
+HP_800(next_15_830,y_831) ::=  
+ next_15_830::node<prev_15_797,next_15_798>@M * HP_799(prev_15_797,y_831) * 
+ HP_800(next_15_798,y_831)
+ or emp&next_15_830=null,
+
+ HP_799(prev_15_797,y) ::= NONE,
+ HP_822(prev_21_820,x) ::= NONE,
+ HP_823(next_21_821,x) ::= NONE]
+=====================================================================
+# set-tail.ss --classic  
+
+GOT
+===
+[ H(x,y@NI) --> x::node<prev_15_778,next_15_779>@M * 
+  HP_780(prev_15_778,y@NI) * HP_781(next_15_779,y@NI),
+ HP_781(next_15_779,y@NI) --> emp,
+ HP_780(prev_15_778,y@NI) * x::node<prev_15_778,y>@M --> G(x,y)]
+
+where HP_781 remains none. This is OK but would be
+good to provide some proper justification.
+
+DERIVES
+=======
+[ H(x_783,y_784) ::=  x_783::node<prev_15_778,next_15_779>@M * HP_780(prev_15_778,y_784) * 
+HP_781(next_15_779,y_784),
+ G(x_785,y_786) ::=  HP_780(prev_15_778,y_786) * x_785::node<prev_15_778,y_786>@M,
+ HP_780(prev_15_778,y) ::= NONE,
+ HP_781(next_15_779,y) ::= NONE]
+
+=====================================================================
+# st-bug-2.slk (taken from set-tail-2.ss) 
+
+infer [H,G,H_7,H_8]
+H_7(prev_15_785,y) * H_8(next_15_786,y) *  x::node<prev_15_785,y>
+ & next_15_786=null & next_15_786=next_17_792
+ |-  G(x,y).
+print residue.
+
+PRODUCES
+--------
+Entail (2) : Valid. 
+ <1>H_8(next_15_786,y)&next_15_786=null & next_15_786=next_17_792&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [H_7(prev_15_785,y@NI) * x::node<prev_15_785,y>@M --> G(x,y)
+
+with a non-emp residue. However, in the case of hip; we obtained
+an emp residue. (see below). 
+
+Why is there an inconsistency between sleek above and 
+hip below?
+
+# set-tail-2.ss --en-sleek-logging-txt
+
+--------------
+ id: 6; caller: []; line: 13; classic: false; kind: POST; hec_num: 5; evars: []; 
+infer [H,G,H_7,H_8]
+checkentail H_7(prev_15_785,y) * H_8(next_15_786,y) 
+ * x::node<prev_15_785,y>@&next_15_786=null & next_15_786=next_17_792
+ |-  G(x,y).
+hprel_ass: [ H_7(prev_15_785,y) * x::node<prev_15_785,y>@M --> G(x,y),
+ H_8(next_15_786,y)&next_15_786=null --> emp]
+res:  [
+  emp&next_15_786=next_17_792 & next_15_786=null&{FLOW,(22,23)=__norm}[]
+  ]
+=====================================================================
+# assert-2-bug-1.slk: FIXED
+
+infer [] H_9(n) * x::node<n>  & n=t |-  t=null.
+print residue.
+
+GOT
+===
+Entail (1) : Valid. 
+
+ <1>H_9(n) * x::node<n>@M[Orig]&n=t&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [H_9(n) --> emp&n=null]
+
+BUT should FAIL. Please only add those __pure_relation 
+from the inferable list.
+=====================================================================
+# set-tail.ss  FIXED
+
+To implement options:
+
+  ("--pred-en-dangling", Arg.Set Globals.pred_elim_dangling, "enable the elimination of dangling predicate from derived HP defns");
+  ("--pred-dis-dangling", Arg.Clear Globals.pred_elim_dangling, "disable the elimination of dangling predicate from derived HP defns");
+
+GOT
+===
+ H(x_784,y_785) ::=  x_784::node<prev_16_778,next_16_779>@M 
+   * H_0(prev_16_778,y_785) * H_1(next_16_779,y_785) 
+   * H_2(y_785,x_784),
+
+ G(x_786,y_787) ::=  H_0(prev_16_778,y_787) 
+   * H_2(y_787,x_786) * x_786::node<prev_16_778,y_787>@M,
+
+ H_2(y,x) ::= NONE,
+ H_0(prev_16_778,y) ::= NONE,
+ H_1(next_16_779,y) ::= NONE]
+
+There are three unknown (new dangling) preds. We would like to
+remove them from our predicate definition.
+  H_2 pred originate from parameter y (parameter dangling)
+  H_0/H_1 pred originate from fields next/prev. (field dangling)
+You can easily check this on the root paramter of each
+pred defn. For parameter dangling, we just remove them
+without any other change. However, for each field-dangling,
+we would replace its root paramter by a unique name,
+e.g. HP_x(field,..) replaced field by __UU_DG_HP_x
+
+EXPECTED
+========
+ H(x_784,y_785) ::=  x_784::node<__DP_H_0,__DP_H_1>@M 
+
+ G(x_786,y_787) ::=  x_786::node<__DP_H_0,y_787>@M,
+=====================================================================
+# assert-1-bug-5.slk  FIXED by Loc
+
+  inconsistent with hip outcome in
+
+# assert-1.ss
+# assert-1a.ss
+
+
+infer [H_9]
+ H_9(next_18_778) * x::node<next_18_778>@M&x=x' & next_18_778=t_30'
+|-  emp&t_30'=null.
+print residue.
+
+SLEEK gave correct result:
+
+ <1>H_9(next_18_778) * x::node<next_18_778>@M[Orig]&x=x' & next_18_778=t_30'&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [H_9(next_18_778) --> emp&next_18_778=null]
+
+However HIP did not collect the pure hprel, as shown below
+for # assert-1.ss.
+
+ id: 3; caller: []; line: 19; classic: false; kind: ASSERT/ASSUME; hec_num: 2; evars: []; infer_vars: [H,G,H_9]; c_heap: emp
+ checkentail H_9(next_18_778) * x::node<next_18_778>@M[Orig]&x=x' & next_18_778=t_30'&
+{FLOW,(22,23)=__norm}[]
+ |-  emp&t_30'=null&{FLOW,(22,23)=__norm}[]. 
+res:  [
+  H_9(next_18_778) * x::node<next_18_778>@M[Orig]&x=x' & next_18_778=t_30'&{FLOW,(22,23)=__norm}[]
+  ]
+
+It seems to be a general problem of pure hp_rel; as 
+it also occurred when pure pre-condition is used as
+shown in log of # assert-1a.ss
+
+--------------
+ id: 3; caller: []; line: 24; classic: false; kind: PRE-2; hec_num: 2; evars: []; infer_vars: [H,G,HP_780]; c_heap: emp
+ checkentail HP_780(next_22_779) * x::node<next_22_779>@M[Orig]&x=x' & next_22_779=t_30'&
+{FLOW,(22,23)=__norm}[]
+ |-  emp&t_30'=null&{FLOW,(22,23)=__norm}[]. 
+res:  [
+  HP_780(next_22_779) * x::node<next_22_779>@M[Orig]&x=x' & next_22_779=t_30'&{FLOW,(22,23)=__norm}[]
+  ]
+=====================================================================
+# sll-dll.ss  FIXED
+
+--sa-dis-split not working
+
+We derive relAssume
+
+[ H1(c,p@NI)&c!=null --> c::node<val_21_807,prev_21_808,next_21_809>@M * 
+  HP_810(prev_21_808,p@NI) * HP_811(next_21_809,p@NI),
+ HP_811(next_21_809,p@NI) --> H1(next_21_809,c'@NI),
+ c::node<val_21_807,p,next_21_809>@M * G1(next_21_809,c) --> G1(c,p),
+ emp&c=null --> G1(c,p),
+ H1(c,p@NI)&c=null --> emp]
+
+which included a base-case split where
+
+ H1(c,p@NI)&c=null --> G1(c,p)
+
+is splited into:
+
+ emp&c=null --> G1(c,p),
+ H1(c,p@NI)&c=null --> emp
+
+Both --sa-en-split & --sa-dis-split produced the same
+result. Could we make -dis-split work?
+
+  ("--sa-en-split", Arg.Set Globals.sa_s_split_base, "enable base case splitting of relational assumption");
+  ("--sa-dis-split", Arg.Clear Globals.sa_s_split_base, "disable base case splitting of relational assumption");
+=====================================================================
+# sll-dll-2.ss (without @NI)
+
+Necessity of prior @NI analysis here.
+
+Problem is caused by:
+
+ HP_811(next_21_809,p@NI) * HP_812(p,c@NI) * 
+  c::node<val_21_807,p,next_21_809>@M --> H1(next_21_809,c),
+
+We really wanted below:
+
+ HP_811(next_21_809,p@NI)  --> H1(next_21_809,c@NI),
+
+but this seem to require @NI annotation on the c parameter.
+
+========
+
+A second problem is caused by:
+
+ H1(c,p)&c=null --> G1(c,p)]
+
+We really wanted a base-split:
+
+ emp&c=null --> G1(c,p),
+ H1(c,p@NI)&c=null --> emp]
+
+Here, we can probably weaken the current
+restriction on the base-split strategy
+=====================================================================
+# tll-if-2.ss (INFO only)
+
+Entail_Stack now logs cond_path to track the
+state for conditionals.
+  - 0 initially
+  - 1 then brach
+  - 2 else branch
+Note that the path is stored in reverse
+   es_cond_path: [2; 1; 0]
+
+
+Successful States:
+[
+ Label: [(,0 ); (,1 ); (,0 ); (,1 )]
+ State:x'::node<Anon_819,flted_11_818>@M[Orig]&flted_11_818=null & x=x' & flted_11_818=null & v_bool_30_783' & flted_11_818=null & v_bool_30_783' & v_bool_39_786' & v_bool_39_786'&{FLOW,(22,23)=__norm}[]
+       es_var_measures 2: MayLoop
+       es_trace: empty
+       es_cond_path: [1; 1; 0]
+;
+ Label: [(,1 ); (,2 ); (,0 ); (,1 )]
+ State:x'::node<Anon_819,flted_11_818>@M[Orig]&flted_11_818=null & x=x' & flted_11_818=null & v_bool_30_783' & flted_11_818=null & v_bool_30_783' & !(v_bool_39_786') & !(v_bool_39_786')&{FLOW,(22,23)=__norm}[]
+       es_var_measures 2: MayLoop
+       es_trace: empty
+       es_cond_path: [2; 1; 0]
+;
+ Label: [(,0 ); (,1 ); (,1 ); (,2 )]
+ State:r_824::tree@M[0][Orig][LHSCase] * l_823::tree@M[0][Orig][LHSCase] * x'::node<l_823,r_824>@M[Orig]&x=x' & r_824!=null & !(v_bool_30_783') & r_824!=null & !(v_bool_30_783') & r_824!=null & r_824!=null & r_824=right_36_841 & l_823!=null & l_823!=null & l_823=left_37_851 & v_bool_39_786' & v_bool_39_786'&{FLOW,(22,23)=__norm}[]
+       es_var_measures 2: MayLoop
+       es_trace: empty
+       es_cond_path: [1; 2; 0]
+;
+ Label: [(,1 ); (,2 ); (,1 ); (,2 )]
+ State:r_824::tree@M[0][Orig][LHSCase] * l_823::tree@M[0][Orig][LHSCase] * x'::node<l_823,r_824>@M[Orig]&x=x' & r_824!=null & !(v_bool_30_783') & r_824!=null & !(v_bool_30_783') & r_824!=null & r_824!=null & r_824=right_36_841 & l_823!=null & l_823!=null & l_823=left_37_851 & !(v_bool_39_786') & !(v_bool_39_786')&{FLOW,(22,23)=__norm}[]
+       es_var_measures 2: MayLoop
+       es_trace: empty
+       es_cond_path: [2; 2; 0]
+
+ ]
+=====================================================================
+# tll-if-conquer-pre.slk
+
+Not sure if conquer is just combining the cases using
+disjunction. It could be that they are different defns?
+But this is a decent start.
+
+Our printing should be such that the output of divide can
+directly be used as input to conquer so it is easier to test.
+
+*************************************
+*******relational definition ********
+*************************************
+[ H_2(a) ::=PATH:(1,0)UNKNOWN,
+ H(x_27) ::=PATH:(1,0) x_27::node<left_25_800,right_25_801>@M * H_2(left_25_800)&right_25_801=null
+   \/ PATH:(2,0) x_27::node<left_25_800,right_25_801>@M * H(left_25_800) * H(right_25_801)&
+right_25_801!=null]
+=====================================================================
+# tll-if-divide-pre.slk 
+
+Above generates:
+
+path: (2,0)
+[HP_RELDEFN H_3:  H_3(right_25_34) ::=  H(right_25_34)&right_25_34!=null,
+HP_RELDEFN H_2:  H_2(left_25_35) ::=  H(left_25_35),
+HP_RELDEFN H:  H(x_36) ::=  x_36::node<left_25_800,right_25_801>@M * H(left_25_800) * H(right_25_801)&
+right_25_801!=null]
+UNKNOWN: []
+
+path: (1,0)
+[HP_RELDEFN H:  H(x_37) ::=  x_37::node<left_25_800,right_25_801>@M * H_2(left_25_800)&right_25_801=null,
+HP_RELDEFN H_3:  H_3(right_25_38) ::=  emp&right_25_38=null]
+UNKNOWN: [(H_2,[a])]
+
+Can we make it consistent with the format of conquer
+so that it is easier to do cut-paste.
+
+relDefn (1;0)
+ H_3(right_25_31) <->  right_25_31=null.
+ H(x_27) <->  x_27::node<left_25_800,right_25_801>@M 
+                * H_2(left_25_800)&right_25_801=null.
+ H_2(x) <-> __UNKNOWN
+relDefn (2;0)
+ H_3(right_25_31) <->  H(right_25_31)&right_25_31!=null.
+ H_2(left_25_32)  <->  H(left_25_32).
+ H(x_33) <->  x_33::node<left_25_800,right_25_801>@M 
+   * H(left_25_800) * H(right_25_801) & right_25_801!=null.
+=====================================================================
+# tll.ss --sa-dnc --pred-en-dangling (INFO)
+
+
+RELASSUME
+=========
+[ H_8(left_29_845,r@NI) * H_9(right_29_846,r@NI) * 
+  x::node<left_29_845,right_29_846,r>@M&res=x & 
+  right_29_846=null --> G(x,res@NI,r),
+ H(x,r@NI) --> x::node<left_29_845,right_29_846,next_29_847>@M * 
+  H_8(left_29_845,r@NI) * H_9(right_29_846,r@NI) * 
+  H_0(next_29_847,r@NI),
+ H_9(right_29_846,r@NI)&right_29_846!=null --> H(right_29_846,r@NI),
+ H_8(left_29_845,r@NI) --> H(left_29_845,l_47'@NI),
+ H_0(next_29_847,r@NI) * 
+  x::node<left_29_845,right_29_846,next_29_847>@M * 
+  G(right_29_846,l_878@NI,r) * G(left_29_845,res@NI,l_878)&
+  right_29_846!=null --> G(x,res@NI,r)]
+
+
+RELDEFN
+=======
+
+[ H(x_879,r_880) ::= 
+   x_879::node<__DP_H_8,right_29_846,__DP_H_0>@M&right_29_846=null
+   \/  x_879::node<left_29_845,right_29_846,__DP_H_0>@M * H(left_29_845,l_886) 
+       * H(right_29_846,r_880)&right_29_846!=null,
+
+ G(x_883,res_884,r_885) ::= 
+   res_884::node<__DP_H_8,right_29_846,r_885>@M&right_29_846=null & res_884=x_883
+   \/  x_883::node<left_29_845,right_29_846,__DP_H_0>@M * G(right_29_846,l_878,r_885) 
+       * G(left_29_845,res_884,l_878)&right_29_846!=null]
+=====================================================================
+# skip0-bug-1.slk: FIXED
+
+infer [l,e]
+ SLSEG(l,e)&e!=l & l=null 
+ & !(v_boolean_32_770') & res=v_boolean_32_770'
+ |-  res.
+print residue.
+
+infer [SLSEG]
+ SLSEG(l,e)&e!=l & l=null 
+ & !(v_boolean_32_770') & res=v_boolean_32_770'
+ |-  res.
+print residue.
+
+lhs_contra for heap_pred not working properly;
+please check if the fix by Andreea solved this problem.
+Cristian did a patch before but not sure why this isn't workin
+
+Entail (1) : Valid. 
+ <1>hfalse&false&{FLOW,(19,20)=__norm}[]
+ inferred pure: [(e>=l | l!=null); (l!=null | l>(e-1))]
+
+Entail (2) : Fail.
+=====================================================================
+=====================================================================
+=====================================================================
+=====================================================================
+=====================================================================
+=====================================================================
+=====================================================================
+=====================================================================
+=====================================================================
+=====================================================================
 =====================================================================
 =====================================================================
 =====================================================================

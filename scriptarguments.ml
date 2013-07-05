@@ -146,22 +146,22 @@ let common_arguments = [
   ("--ann-derv", Arg.Set Globals.ann_derv,"manual annotation of derived nodes");
   ("--ann-vp", Arg.Set Globals.ann_vp,"manual annotation of variable permissions");
   ("--dis-ann-vp", Arg.Clear Globals.ann_vp,"manual annotation of variable permissions");
-	("--ls", Arg.Set Globals.allow_ls,"enable locksets during verification");
-	("--en-web-compile", Arg.Set Globals.web_compile_flag,"enable web compilation setting");
-	("--dis-ls", Arg.Clear Globals.allow_ls,"disable locksets during verification");
-	("--locklevel", Arg.Set Globals.allow_locklevel,"enable locklevels during verification");
-	("--dis-locklevel", Arg.Clear Globals.allow_locklevel,"disable locklevels during verification");
-	("--dis-para", Arg.Unit Perm.disable_para,"disable concurrency verification");
-	("--en-para", Arg.Unit Perm.enable_para,"enable concurrency verification");
+  ("--ls", Arg.Set Globals.allow_ls,"enable locksets during verification");
+  ("--en-web-compile", Arg.Set Globals.web_compile_flag,"enable web compilation setting");
+  ("--dis-ls", Arg.Clear Globals.allow_ls,"disable locksets during verification");
+  ("--locklevel", Arg.Set Globals.allow_locklevel,"enable locklevels during verification");
+  ("--dis-locklevel", Arg.Clear Globals.allow_locklevel,"disable locklevels during verification");
+  ("--dis-para", Arg.Unit Perm.disable_para,"disable concurrency verification");
+  ("--en-para", Arg.Unit Perm.enable_para,"enable concurrency verification");
   ("--imm", Arg.Set Globals.allow_imm,"enable the use of immutability annotations");
-	("--field-ann", Arg.Set Globals.allow_field_ann,"enable the use of immutability annotations for data fields");
+  ("--field-ann", Arg.Set Globals.allow_field_ann,"enable the use of immutability annotations for data fields");
   ("--memset-opt", Arg.Set Globals.ineq_opt_flag,"to optimize the inequality set enable");
-	("--dis-field-ann", Arg.Clear Globals.allow_field_ann,"disable the use of immutability annotations for data fields");
-	(*("--mem", Arg.Set Globals.allow_mem,"Enable the use of Memory Specifications");*)
-	("--dis-mem", Arg.Clear Globals.allow_mem,"Disable the use of Memory Specifications");
-	("--ramify", Arg.Clear Solver.unfold_duplicated_pointers,"Use Ramification (turns off unfold on dup pointers)");
+  ("--dis-field-ann", Arg.Clear Globals.allow_field_ann,"disable the use of immutability annotations for data fields");
+  (*("--mem", Arg.Set Globals.allow_mem,"Enable the use of Memory Specifications");*)
+  ("--dis-mem", Arg.Clear Globals.allow_mem,"Disable the use of Memory Specifications");
+  ("--ramify", Arg.Clear Solver.unfold_duplicated_pointers,"Use Ramification (turns off unfold on dup pointers)");
   ("--reverify", Arg.Set Globals.reverify_flag,"enable re-verification after specification inference");
-	("--reverify-all", Arg.Set Globals.reverify_all_flag,"enable re-verification after heap specification inference");
+  ("--reverify-all", Arg.Set Globals.reverify_all_flag,"enable re-verification after heap specification inference");
   ("--dis-imm", Arg.Clear Globals.allow_imm,"disable the use of immutability annotations");
   ("--dis-inf", Arg.Clear Globals.allow_inf,"disable support for infinity ");
   ("--dsd", Arg.Set Globals.deep_split_disjuncts,"enable deep splitting of disjunctions");
@@ -244,6 +244,8 @@ let common_arguments = [
   ("--en-pstat", Arg.Set Globals.profiling,
    "enable profiling statistics");
   ("--en-cstat", Arg.Set Globals.enable_counters, "enable counter statistics");
+  ("--dis-time-stat", Arg.Clear Globals.enable_time_stats, "disable timing statistics from being printed");
+  ("--dis-count-stat", Arg.Clear Globals.enable_count_stats, "disable counting statistics from being printed");
   ("--en-stat", (Arg.Tuple [Arg.Set Globals.profiling; Arg.Set Globals.enable_counters]),
    "enable all statistics");
   ("--sbc", Arg.Set Globals.enable_syn_base_case,
@@ -384,17 +386,26 @@ let common_arguments = [
   ("--en-lemma-s", Arg.Set Globals.enable_split_lemma_gen, "Enable automatic generation of splitting lemmas");
   ("--dis-show-diff", Arg.Set Globals.dis_show_diff, "Show differences between formulae");
   ("--dis-sem", Arg.Set Globals.dis_sem, "Show differences between formulae");
+  ("--en-cp-trace", Arg.Set Globals.cond_path_trace, "Enable the tracing of conditional paths");
+  ("--dis-cp-trace", Arg.Clear Globals.cond_path_trace, "Disable the tracing of conditional paths");
   ("--sa-print-inter", Arg.Set Globals.sa_print_inter, "Print intermediate results of normalization");
   ("--sa-old", Arg.Set Globals.sa_old, "old algorithm of normalization");
+   ("--sa-dnc", Arg.Set Globals.sa_dnc, "algorithm of normalization with divide and conquer");
   (* ("--sa-en-norm", Arg.Set Globals.sa_en_norm, "do normalization"); *)
   ("--sa-dis", Arg.Clear Globals.sa_en, "donot infer shape");
-  ("--sa-dangling", Arg.Set Globals.sa_dangling, "elim dangling HP/pointers");
-  ("--pred-useless", Arg.Set Globals.pred_elim_useless, "elim useless parameter from HP predicate and user-defined predicates (view)");
+  (* ("--sa-dangling", Arg.Set Globals.sa_dangling, "elim dangling HP/pointers"); *)
+  ("--pred-en-useless-para", Arg.Set Globals.pred_elim_useless, "enable the elimination of useless parameter from HP predicate and user-defined predicates (view)");
+  ("--pred-dis-useless-para", Arg.Clear Globals.pred_elim_useless, "disable the elimination of useless parameter from HP predicate and user-defined predicates (view)");
+  ("--pred-en-dangling", Arg.Set Globals.pred_elim_dangling, "enable the elimination of dangling predicate from derived HP defns");
+  ("--pred-dis-dangling", Arg.Clear Globals.pred_elim_dangling, "disable the elimination of dangling predicate from derived HP defns");
   ("--sa-refine-dang", Arg.Set Globals.sa_refine_dang, "refine dangling among branches of one hprels def");
-  ("--sa-inlining", Arg.Set Globals.sa_inlining, "inline dangling HP/pointers");
-  ("--sa-en-eup", Arg.Set Globals.sa_elim_unused_preds, "-sa-en-eup");
-  ("--sa-dis-eup", Arg.Clear Globals.sa_elim_unused_preds, "-sa-dis-eup");
-  ("--sa-s-split", Arg.Set Globals.sa_s_split_base, "split constraints with base case");
+  (* ("--sa-inlining", Arg.Set Globals.sa_inlining, "inline dangling HP/pointers"); *)
+  ("--pred-en-eup", Arg.Set Globals.pred_elim_unused_preds, "enable the elimination of unused hprel predicates");
+  ("--pred-dis-eup", Arg.Clear Globals.pred_elim_unused_preds, "disable the elimination of unused hprel predicates");
+  ("--sa-en-sp-split", Arg.Set Globals.sa_sp_split_base, "enable special base case split at entailment");
+  ("--sa-dis-sp-split", Arg.Clear Globals.sa_sp_split_base, "disable special base case split at entailment");
+  ("--sa-en-split", Arg.Set Globals.sa_infer_split_base, "enable base case splitting of relational assumption at shape infer");
+  ("--sa-dis-split", Arg.Clear Globals.sa_infer_split_base, "disable base case splitting of relational assumption at shape infer");
   ("--sa-split", Arg.Set Globals.sa_en_split, "splitting hp args into multiple hp if possible");
   ("--sa-unify-dangling", Arg.Set Globals.sa_unify_dangling, "unify branches of definition to instantiate dangling predicate");
   ("--pred-disj-unify", Arg.Set Globals.pred_disj_unify, "attempt to unify two similar predicates among inferred pred defs");
@@ -406,7 +417,8 @@ let common_arguments = [
   ("--norm-extract", Arg.Set Globals.norm_extract, "extract common pattern among branches of user-defined predicates (view)");
   ("--en-print-ann" , Arg.Set Globals.print_ann, "enable annotation printing (default)");
   ("--dis-print-ann", Arg.Clear Globals.print_ann, "disable annotation printing");
-
+  ("--en-texify", Arg.Set Globals.texify, "output latex formulas");
+  ("--en-testing", Arg.Set Globals.testing_flag, "generate for testing comparison with start/stop markers");
 
   ]
 

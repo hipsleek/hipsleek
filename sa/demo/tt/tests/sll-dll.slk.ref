@@ -1,0 +1,64 @@
+Starting Omega...oc
+H1 is defined.
+HP_2 is defined.
+HP_3 is defined.
+G1 is defined.
+
+!!! >>>>>> step 1: find dangling ptrs, link pre and post-preds dangling preds<<<<<<
+!!! >>>>>> step 2: split constraints based on pre and post-preds<<<<<<
+!!! **********************************
+!!! **** split_base ****
+!!! **********************************
+!!! post_hps:[G1]
+!!! prog_vars:[]
+!!! BEFORE:[(1): H1(c,p)&c!=null --> c::node<val_21_809,prev_21_810,next_21_811>@M * 
+  HP_2(prev_21_810,p) * HP_3(next_21_811,p),
+(2): HP_3(next_20_809,p) --> H1(next_20_809,c'),
+(3): HP_2(prev_20_808,p) * c::node<val_20_807,p,next_20_809>@M * 
+  G1(next_20_809,c) --> G1(c,p),
+(4): H1(c,p)&c=null --> G1(c,p)]
+!!! =============>>>>
+!!! AFTER:[(1): H1(c,p)&c!=null --> c::node<val_21_809,prev_21_810,next_21_811>@M * 
+  HP_2(prev_21_810,p) * HP_3(next_21_811,p),
+(2): HP_3(next_20_809,p) --> H1(next_20_809,c'),
+(3): HP_2(prev_20_808,p) * c::node<val_20_807,p,next_20_809>@M * 
+  G1(next_20_809,c) --> G1(c,p),
+(4): emp&c=null --> G1(c,p),
+(5): H1(c,p)&c=null --> emp]
+!!! UNKNOWN added:[]
+!!! **********************************
+!!! **** end of split_base ****
+!!! **********************************
+!!! >>>>>> step 3: apply transitive implication<<<<<<
+!!! >>>>>> step 3a: simplification <<<<<<
+!!! >>>>>> step 3b: do apply_transitive_imp <<<<<<
+!!! >>>>>> step 3a: simplification <<<<<<
+!!! >>>>>> step 3b: do apply_transitive_imp <<<<<<
+!!! >>>>>> pre-predicates<<<<<<
+!!! >>>>>> step pre-4: remove unused predicates<<<<<<
+!!! >>>>>> pre-predicates: step pre-5: group & simpl impl<<<<<<
+!!! >>>>>> pre-predicates: step pre-6: combine<<<<<<
+!!! >>>>>> pre-predicates: step pre-7: remove redundant x!=null<<<<<<
+!!! >>>>>> pre-predicates: step pre-8: strengthen<<<<<<
+!!! >>>>>> step 6: generalization <<<<<<
+!!! >>>>>> post-predicates<<<<<<
+!!! >>>>>> step post-4: step remove unused predicates<<<<<<
+!!! >>>>>> post-predicates: step post-5: remove redundant x!=null : not implemented yet<<<<<<
+!!! >>>>>> post-predicates: step post-61: weaken<<<<<<
+
+*************************************
+*******relational definition ********
+*************************************
+[ H1(c_50,p_51) ::= 
+ H1(next_21_47,c') * c_50::node<val_21_45,prev_21_46,next_21_47>@M * 
+ HP_2(prev_21_46,p_51)
+ or emp&c_50=null
+ ,
+ HP_3(next_20_53,p_54) ::= H1(next_20_53,c'),
+ G1(c_55,p_56) ::= 
+ HP_2(prev_20_808,p_56) * c_55::node<val_20_807,p_56,next_20_809>@M * 
+ G1(next_20_809,c_55)
+ or emp&c_55=null
+ ]
+*************************************
+

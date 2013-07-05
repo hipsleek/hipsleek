@@ -1,0 +1,40 @@
+Starting Omega...oc
+G is defined.
+HP_1 is defined.
+
+!!! >>>>>> step 1: find dangling ptrs, link pre and post-preds dangling preds<<<<<<
+!!! >>>>>> step 2: split constraints based on pre and post-preds<<<<<<
+!!! *** NO SPLITTING DONE ***
+!!! >>>>>> step 3: apply transitive implication<<<<<<
+!!! >>>>>> step 3a: simplification <<<<<<
+!!! >>>>>> step 3b: do apply_transitive_imp <<<<<<
+!!! >>>>>> pre-predicates<<<<<<
+!!! >>>>>> step pre-4: remove unused predicates<<<<<<
+!!! >>>>>> pre-predicates: step pre-5: group & simpl impl<<<<<<
+!!! >>>>>> pre-predicates: step pre-6: combine<<<<<<
+!!! >>>>>> pre-predicates: step pre-7: remove redundant x!=null<<<<<<
+!!! >>>>>> pre-predicates: step pre-8: strengthen<<<<<<
+!!! >>>>>> step 6: generalization <<<<<<
+!!! >>>>>> post-predicates<<<<<<
+!!! >>>>>> step post-4: step remove unused predicates<<<<<<
+!!! >>>>>> post-predicates: step post-5: remove redundant x!=null : not implemented yet<<<<<<
+!!! >>>>>> post-predicates: step post-61: weaken<<<<<<
+
+*************************************
+*******relational definition ********
+*************************************
+[ HP_1(right_25_44) ::= 
+ emp&right_25_44=null
+ or right_25_44::node<key_25_797,left_25_798,right_25_44>@M * 
+    HP_1(left_25_798) * HP_1(right_25_44)
+ ,
+ G(x_51) ::= 
+ x_51::node<k,l,r>@M&r=null & l=null
+ or x_51::node<k,l,r>@M * r::node<key_25_797,left_25_45,r>@M * 
+    G(left_25_45) * G(r)&l=null
+ or x_51::node<k,l,r>@M * l::node<key_25_797,left_25_48,l>@M * 
+    G(left_25_48) * G(l)&r=null
+ or x_51::node<k,l,r>@M * G(l) * G(r)&l!=null & r!=null
+ ]
+*************************************
+

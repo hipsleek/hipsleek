@@ -1,0 +1,14 @@
+Starting Omega...oc
+H is defined.
+G is defined.
+HP_0 is defined.
+HP_1 is defined.
+
+Entail (1) : Valid. 
+
+ <1>emp&left_24_838=null & v_bool_24_818' & left_24_838=null & v_bool_24_818'&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [HP_0(left_24_838) * HP_1(right_24_839) * 
+                   x::node<key_24_837,left_24_838,right_24_839>@M&
+                   left_24_838=null --> G(x)]
+
+

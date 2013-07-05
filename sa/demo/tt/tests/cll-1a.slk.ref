@@ -1,0 +1,13 @@
+Starting Omega...oc
+H is defined.
+G is defined.
+HP_6 is defined.
+HP_7 is defined.
+
+Entail (1) : Valid. 
+
+ <1>emp&h!=rest&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [HP_6(next_36_825,h@NI) * HP_7(h,rest@NI)&
+                   h!=rest --> H(next_36_825,h)]
+
+

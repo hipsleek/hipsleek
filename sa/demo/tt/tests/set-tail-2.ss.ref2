@@ -1,0 +1,12 @@
+========set-tail-2.ss ==========
+<rstart>2
+[ H(x,y@NI) --> x::node<prev_15_785,next_15_786>@M * 
+  HP_787(prev_15_785,y@NI) * HP_788(next_15_786,y@NI),
+ HP_787(prev_15_785,y@NI) * HP_788(next_15_786,y@NI) * 
+  x::node<prev_15_785,y>@M&next_15_786=null --> G(x,y)]
+<rstop>*************************************
+<dstart>
+[ H(x_793,y_794) ::= x_793::node<__DP_HP_787,next_15_786>@M&next_15_786=null,
+ G(x_797,y_798) ::= x_797::node<__DP_HP_787,y_798>@M]
+<dstop>
+====================
