@@ -3602,7 +3602,7 @@ Error(s) detected at main
 
 */
 =====================================================================
-# mt-1.slk
+# mt-1.slk: DONE
 
 To add feature to infer pure properties for fields.
 

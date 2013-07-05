@@ -10,6 +10,7 @@ relation R1(int a).
 infer [H] H(x) |- x::node<a,b> .
 print residue.
 
+
 infer [H] H(x) |- x::node<a,b> & a>0.
 print residue.
 
