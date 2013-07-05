@@ -3669,7 +3669,7 @@ Entail (2) : Valid.
  <1>H(a)&{FLOW,(19,20)=__norm}[]
  inferred hprel: [emp --> G(b_24)]
 =====================================================================
-# xisa-bug-2.slk
+# xisa-bug-2.slk: FIXED
 
 infer_exact [G,H] H(a) & b!=null|- G(b).
 print residue.

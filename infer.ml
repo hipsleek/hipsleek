@@ -2517,13 +2517,18 @@ let infer_collect_hp_rel_x prog (es:entail_state) rhs0 rhs_rest (rhs_h_matched_s
                   let lhds, lhvs, lhrs = CF.get_hp_rel_bformula lhs_b1 in
                   let helper (hp,eargs,_)=(hp,List.concat (List.map CP.afv eargs)) in
                   let ls_lhp_args = (List.map helper lhrs) in
-                  let lselected_hpargs0 = List.filter (fun (_, args) -> CP.intersect_svl args rest_args = [] ) ls_lhp_args in
-                  let ass_lhs = SAU.keep_data_view_hrel_nodes_fb prog lhs_b1 lhds lhvs (CP.diff_svl (CF.fv (CF.Base lhs_b1))
-                      rest_args) lselected_hpargs0
+                  let ass_lhs1, lselected_hpargs1 =
+                    if rest_args = [] then ( lhs_b1, ls_lhp_args) else
+                      let lselected_hpargs0 =  List.filter (fun (_, args) ->
+                          CP.intersect_svl args rest_args = []) ls_lhp_args
                   in
-                  let new_es,_ = update_es prog es lhds lhvs lhs_b1 rhs rhs_rest [] [] lselected_hpargs0
+                      let ass_lhs0 = SAU.keep_data_view_hrel_nodes_fb prog lhs_b1 lhds lhvs (CP.diff_svl (CF.fv (CF.Base lhs_b1))
+                          rest_args) lselected_hpargs0
+                      in (ass_lhs0, lselected_hpargs0)
+                  in
+                  let new_es,_ = update_es prog es lhds lhvs lhs_b1 rhs rhs_rest [] [] lselected_hpargs1
                    [] leqs [] post_hps [] [] pos in
-                  (CF.Base ass_lhs, new_es)
+                  (CF.Base ass_lhs1, new_es)
                 else
                   (* let n_es = {es with CF.es_formula = CF.mkStar es.CF.es_formula *)
                   (*         (CF.formula_of_heap rhs0 no_pos) Flow_combine no_pos;} *)
