@@ -211,29 +211,9 @@ let process_pred_def pdef =
 let process_pred_def_4_iast pdef = 
   if check_data_pred_name pdef.I.view_name then
     let curr_view_decls = iprog.I.prog_view_decls in
-  (* let tmp = iprog.I.prog_view_decls in *)
-    try
-      let h = (self,Unprimed)::(res_name,Unprimed)::(List.map (fun c-> (c,Unprimed)) pdef.Iast.view_vars ) in
-      let p = (self,Primed)::(res_name,Primed)::(List.map (fun c-> (c,Primed)) pdef.Iast.view_vars ) in
-      iprog.I.prog_view_decls <- pdef :: curr_view_decls;
-      let wf = AS.case_normalize_struc_formula_view 11 iprog h p pdef.Iast.view_formula false 
-            false (*allow_post_vars*) false [] in
-      let inv_lock = pdef.I.view_inv_lock in
-      let inv_lock =
-        (match inv_lock with
-          | None -> None
-          | Some f ->
-              let new_f = AS.case_normalize_formula iprog h f None in (*TO CHECK: h or p*)
-              Some new_f)
-      in
-      let new_pdef = {pdef with Iast.view_formula = wf;Iast.view_inv_lock = inv_lock} in
-      iprog.I.prog_view_decls <- ( new_pdef :: curr_view_decls);
-    with
-    | _ ->  dummy_exception() ; iprog.I.prog_view_decls <- curr_view_decls
+    iprog.I.prog_view_decls <- pdef :: curr_view_decls;
   else
-    begin
-	report_error pdef.I.view_pos (pdef.I.view_name ^ " is already defined.")
-    end
+    report_error pdef.I.view_pos (pdef.I.view_name ^ " is already defined.")
 
 let process_pred_def_4_iast pdef = 
   let pr = Iprinter.string_of_view_decl in
@@ -412,7 +392,22 @@ let convert_data_and_pred_to_cast_x () =
   ) iprog.I.prog_data_decls;
 
   (* convert pred *)
-  let tmp_views = (AS.order_views (iprog.I.prog_view_decls)) in
+  let tmp_views = List.map (fun pdef ->
+    let h = (self,Unprimed)::(res_name,Unprimed)::(List.map (fun c-> (c,Unprimed)) pdef.Iast.view_vars ) in
+    let p = (self,Primed)::(res_name,Primed)::(List.map (fun c-> (c,Primed)) pdef.Iast.view_vars ) in
+    let wf = AS.case_normalize_struc_formula_view 11 iprog h p pdef.Iast.view_formula false false false [] in
+    let inv_lock = pdef.I.view_inv_lock in
+    let inv_lock = (
+      match inv_lock with
+      | None -> None
+      | Some f ->
+          let new_f = AS.case_normalize_formula iprog h f None in (*TO CHECK: h or p*)
+          Some new_f
+    ) in
+    let new_pdef = {pdef with Iast.view_formula = wf;Iast.view_inv_lock = inv_lock} in
+    new_pdef
+  ) iprog.I.prog_view_decls in
+  let tmp_views = (AS.order_views tmp_views) in
   Debug.tinfo_pprint "after order_views" no_pos;
   let _ = Iast.set_check_fixpt iprog.I.prog_data_decls tmp_views in
   Debug.tinfo_pprint "after check_fixpt" no_pos;
