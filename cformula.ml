@@ -207,6 +207,7 @@ and h_formula = (* heap formula *)
   | Phase of h_formula_phase
   | DataNode of h_formula_data
   | ViewNode of h_formula_view
+  | MWand of (h_formula*h_formula * loc)
   | Hole of int
   (* | TempHole of int * h_formula *)
   | HRel of (CP.spec_var * ((CP.exp) list) * loc) (*placeh older for heap predicates*)
@@ -1590,6 +1591,7 @@ and is_hformula_contain_htrue (h: h_formula) : bool =
   match h with
   | Star { h_formula_star_h1 = h1;
            h_formula_star_h2 = h2; } 
+  | MWand (h1,h2,_)
   | StarMinus { h_formula_starminus_h1 = h1;
            h_formula_starminus_h2 = h2; }         
            -> (is_hformula_contain_htrue h1) || (is_hformula_contain_htrue h2)
@@ -2353,6 +2355,7 @@ and h_fv (h : h_formula) : CP.spec_var list = match h with
   | Star ({h_formula_star_h1 = h1; 
 	h_formula_star_h2 = h2; 
 	h_formula_star_pos = pos})
+  | MWand (h1,h2,pos)
   | StarMinus ({h_formula_starminus_h1 = h1; 
 	h_formula_starminus_h2 = h2; 
 	h_formula_starminus_pos = pos}) -> CP.remove_dups_svl (h_fv h1 @ h_fv h2)
@@ -2412,6 +2415,7 @@ and f_top_level_vars (f : formula) : CP.spec_var list =
 and top_level_vars (h : h_formula) : CP.spec_var list = match h with
   | Star ({h_formula_star_h1 = h1; 
 	h_formula_star_h2 = h2}) 
+  | MWand (h1,h2,_)
   | StarMinus ({h_formula_starminus_h1 = h1; 
 	h_formula_starminus_h2 = h2}) -> (top_level_vars h1) @ (top_level_vars h2)
   | Conj ({h_formula_conj_h1 = h1; 
@@ -2667,6 +2671,7 @@ and h_subst sst (f : h_formula) =
 		Star ({h_formula_star_h1 = h_subst sst f1; 
 		h_formula_star_h2 = h_subst sst f2; 
 		h_formula_star_pos = pos})
+  | MWand (h1,h2,p) -> MWand (h_subst sst h1, h_subst sst h2, p)
   | StarMinus ({h_formula_starminus_h1 = f1; 
 					h_formula_starminus_h2 = f2; 
 					h_formula_starminus_pos = pos}) -> 
@@ -2885,7 +2890,8 @@ and h_apply_one ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : h_formula) = m
 	h_formula_star_pos = pos}) -> 
         Star ({h_formula_star_h1 = h_apply_one s f1; 
 	    h_formula_star_h2 = h_apply_one s f2; 
-	    h_formula_star_pos = pos})
+	    h_formula_star_pos = pos}) 
+  | MWand (h1,h2,p) -> MWand (h_apply_one s h1, h_apply_one s h2, p)
   | StarMinus ({h_formula_starminus_h1 = f1; 
 	h_formula_starminus_h2 = f2; 
 	h_formula_starminus_pos = pos}) -> 
@@ -4231,6 +4237,7 @@ let get_ptrs_group_hf hf0=
     match hf with
       | Star {h_formula_star_h1 = hf1;
         h_formula_star_h2 = hf2;}
+	  | MWand (hf1,hf2,_)
       | StarMinus { h_formula_starminus_h1 = hf1;
         h_formula_starminus_h2 = hf2;}
       | Conj { h_formula_conj_h1 = hf1;
@@ -4272,6 +4279,7 @@ and get_hp_rel_h_formula hf=
   match hf with
     | Star { h_formula_star_h1 = hf1;
              h_formula_star_h2 = hf2} 
+	| MWand (hf1,hf2,_)
     | StarMinus { h_formula_starminus_h1 = hf1;
              h_formula_starminus_h2 = hf2}           
              ->
@@ -4319,6 +4327,7 @@ and get_hprel_h_formula hf0=
   match hf with
     | Star { h_formula_star_h1 = hf1;
              h_formula_star_h2 = hf2} 
+	| MWand (hf1,hf2, _)
     | StarMinus { h_formula_starminus_h1 = hf1;
              h_formula_starminus_h2 = hf2} ->
         let hr1 = helper hf1 in
@@ -4365,6 +4374,7 @@ let partition_heap_consj_hf hf0=
                 h_formula_star_pos = pos}
             ) in
             (ls1@ls2, n_rem)
+	| MWand (h1,h2,p)-> report_error p "unexpected MWand"
     | StarMinus { h_formula_starminus_h1 = hf1;
       h_formula_starminus_h2 = hf2;
       h_formula_starminus_pos = pos} ->
@@ -4477,6 +4487,7 @@ let rec get_hp_rel_name_h_formula hf=
   match hf with
     | Star { h_formula_star_h1 = hf1;
              h_formula_star_h2 = hf2}
+	| MWand (hf1,hf2,_)
     | StarMinus { h_formula_starminus_h1 = hf1;
              h_formula_starminus_h2 = hf2} ->
         (get_hp_rel_name_h_formula hf1)@(get_hp_rel_name_h_formula hf2)
@@ -4545,6 +4556,7 @@ and get_hp_rel_vars_h_formula_x hf=
   match hf with
     | Star { h_formula_star_h1 = hf1;
              h_formula_star_h2 = hf2}
+	| MWand (hf1,hf2, _)
     | StarMinus { h_formula_starminus_h1 = hf1;
              h_formula_starminus_h2 = hf2} ->
         (get_hp_rel_vars_h_formula_x hf1)@(get_hp_rel_vars_h_formula_x hf2)
@@ -4590,6 +4602,7 @@ and filter_irr_hp_lhs_hf hf relevant_vars=
                        h_formula_star_h2 = n_hf2;
                        h_formula_star_pos = pos}
         )
+	| MWand (h1,h2,p) -> MWand (filter_irr_hp_lhs_hf h1 relevant_vars, filter_irr_hp_lhs_hf h2 relevant_vars, p)
     | StarMinus { h_formula_starminus_h1 = hf1;
              h_formula_starminus_h2 = hf2;
              h_formula_starminus_pos = pos} ->
@@ -4655,6 +4668,7 @@ and filter_vars_hf hf rvs=
                        h_formula_star_h2 = n_hf2;
                        h_formula_star_pos = pos}
         )
+	| MWand (h1,h2,p) -> MWand (filter_vars_hf h1 rvs, filter_vars_hf h2 rvs, p)
     | StarMinus { h_formula_starminus_h1 = hf1;
              h_formula_starminus_h2 = hf2;
              h_formula_starminus_pos = pos} ->
@@ -4771,6 +4785,10 @@ let annotate_dl_hf hf0 unk_hps=
                             h_formula_star_pos = pos})
           in
           (new_hf, ps1@ps2)
+	  | MWand (h1,h2,p) ->
+			let n_hf1,ps1 = helper h1 in
+            let n_hf2,ps2 = helper h2 in
+            (MWand (n_hf1,n_hf2,p), ps1@ps2)
       | Conj { h_formula_conj_h1 = hf1;
                h_formula_conj_h2 = hf2;
                h_formula_conj_pos = pos} ->
@@ -4864,6 +4882,7 @@ and subst_hprel_hf hf0 from_hps to_hp=
           Star {h_formula_star_h1 = n_hf1;
                 h_formula_star_h2 = n_hf2;
                 h_formula_star_pos = pos}
+	  | MWand (h1, h2, p) -> MWand (helper h1, helper h2, p)
       | StarMinus {h_formula_starminus_h1 = hf1;
               h_formula_starminus_h2 = hf2;
               h_formula_starminus_pos = pos} ->
@@ -4935,6 +4954,7 @@ let drop_views_h_formula hf0 views=
                             h_formula_star_pos = pos})
           in
           (new_hf)
+	  | MWand (h1,h2,p) -> MWand (helper h1, helper h2, p)
       | Conj { h_formula_conj_h1 = hf1;
                h_formula_conj_h2 = hf2;
                h_formula_conj_pos = pos} ->
@@ -5041,6 +5061,7 @@ let drop_view_paras_h_formula hf0 ls_view_pos=
                             h_formula_star_pos = pos})
           in
           (new_hf)
+	  | MWand (h1,h2,p) -> MWand (helper h1, helper h2, p)
       | Conj { h_formula_conj_h1 = hf1;
                h_formula_conj_h2 = hf2;
                h_formula_conj_pos = pos} ->
@@ -5410,6 +5431,10 @@ and drop_hrel_hf hf hp_names=
                        h_formula_star_pos = pos})
         ) in
         (newf, argsl1@argsl2)
+	| MWand (hf1,hf2,p) ->
+        let n_hf1, argsl1 = drop_hrel_hf hf1 hp_names in
+        let n_hf2, argsl2 = drop_hrel_hf hf2 hp_names in
+        (MWand(n_hf1,n_hf2,p), argsl1@argsl2)
     | StarMinus { h_formula_starminus_h1 = hf1;
              h_formula_starminus_h2 = hf2;
              h_formula_starminus_pos = pos} ->
@@ -5554,6 +5579,7 @@ and drop_exact_hrel_hf hf0 unk_hpargs=
                             h_formula_star_pos = pos})
             ) in
           (newf)
+	  | MWand (h1,h2,p) -> MWand(helper h1,helper h2,p)
       | Conj { h_formula_conj_h1 = hf1;
                h_formula_conj_h2 = hf2;
                h_formula_conj_pos = pos} ->
@@ -5615,6 +5641,8 @@ and drop_hnodes_hf hf0 hn_names=
             h_formula_star_pos = pos})
         ) in
         (newf)
+	| MWand (h1,h2,p) -> MWand (helper h1, helper h2, p)
+		 	
     | StarMinus { h_formula_starminus_h1 = hf1;
       h_formula_starminus_h2 = hf2;
       h_formula_starminus_pos = pos} ->
@@ -5824,6 +5852,7 @@ and drop_data_view_hrel_nodes_hf hf0 fn_data_select fn_view_select fn_hrel_selec
           in
           Debug.ninfo_hprint (add_str "nhf1*nhf2: " !print_h_formula) res no_pos;
           res
+    | MWand (h1,h2,p) -> MWand(helper h1, helper h2, p)
     | StarMinus { h_formula_starminus_h1 = hf1;
       h_formula_starminus_h2 = hf2;
       h_formula_starminus_pos = pos} ->
@@ -5897,7 +5926,8 @@ and drop_data_view_hpargs_nodes_hf hf0 fn_data_select fn_view_select fn_hrel_sel
           in
           Debug.ninfo_hprint (add_str "nhf1*nhf2: " !print_h_formula) res no_pos;
           res
-    | StarMinus { h_formula_starminus_h1 = hf1;
+    | MWand (h1,h2,p)-> MWand(helper h1, helper h2, p)
+	| StarMinus { h_formula_starminus_h1 = hf1;
       h_formula_starminus_h2 = hf2;
       h_formula_starminus_pos = pos} ->
           let n_hf1 = helper hf1 in
@@ -6023,6 +6053,7 @@ let rec subst_hrel_hf hf hprel_subst=
         Star {h_formula_star_h1 = n_hf1;
               h_formula_star_h2 = n_hf2;
               h_formula_star_pos = pos}
+    | MWand (h1,h2,p) -> MWand(subst_hrel_hf h1 hprel_subst, subst_hrel_hf h2 hprel_subst, p)
     | StarMinus {h_formula_starminus_h1 = hf1;
             h_formula_starminus_h2 = hf2;
             h_formula_starminus_pos = pos} ->
@@ -6129,6 +6160,7 @@ and subst_hrel_hview_hf hf0 subst=
         Star {h_formula_star_h1 = n_hf1;
               h_formula_star_h2 = n_hf2;
               h_formula_star_pos = pos}
+     | MWand (h1,h2,p) -> MWand( helper2 h1 , helper2 h2, p)
      | StarMinus {h_formula_starminus_h1 = hf1;
               h_formula_starminus_h2 = hf2;
               h_formula_starminus_pos = pos} ->
@@ -8959,6 +8991,7 @@ and filter_heap (f:formula):formula option = match f with
   | Base b-> begin 
       match b.formula_base_heap with
 	| Star _
+	| MWand _
 	| StarMinus _	
 	| Conj _
 	| ConjStar _
@@ -8976,7 +9009,8 @@ and filter_heap (f:formula):formula option = match f with
       begin
 	match b.formula_exists_heap with
 	  | Star _
-          | StarMinus _
+      | MWand _
+	  | StarMinus _
 	  | Conj _
 	  | ConjStar _	  
           | ConjConj _	  
@@ -9049,6 +9083,7 @@ let rec replace_heap_formula_label nl f = match f with
   | Star b -> Star {b with 
 		      h_formula_star_h1 = replace_heap_formula_label nl b.h_formula_star_h1; 
 		      h_formula_star_h2 = replace_heap_formula_label nl b.h_formula_star_h2; }
+  | MWand (h1,h2,p)-> MWand (replace_heap_formula_label nl h1, replace_heap_formula_label nl h2, p)
   | StarMinus b -> StarMinus {b with 
 		      h_formula_starminus_h1 = replace_heap_formula_label nl b.h_formula_starminus_h1; 
 		      h_formula_starminus_h2 = replace_heap_formula_label nl b.h_formula_starminus_h2; }		      
@@ -9108,6 +9143,7 @@ and replace_formula_label_fresh f = replace_formula_label1 (fun c -> (fresh_bran
 and residue_labels_in_formula f = 
   let rec residue_labels_in_heap f = match f with
     | Star b -> (residue_labels_in_heap b.h_formula_star_h1) @ (residue_labels_in_heap b.h_formula_star_h2)
+	| MWand (h1,h2,p) -> (residue_labels_in_heap h1) @ (residue_labels_in_heap h2)
     | StarMinus b -> (residue_labels_in_heap b.h_formula_starminus_h1) @ (residue_labels_in_heap b.h_formula_starminus_h2)    
     | Conj b -> (residue_labels_in_heap b.h_formula_conj_h1) @ (residue_labels_in_heap b.h_formula_conj_h2)
     | ConjStar b -> (residue_labels_in_heap b.h_formula_conjstar_h1) @ (residue_labels_in_heap b.h_formula_conjstar_h2)
@@ -9145,6 +9181,10 @@ let trans_h_formula (e:h_formula) (arg:'a) (f:'a->h_formula->(h_formula * 'b) op
             let (e2,r2)=helper s.h_formula_star_h2 new_arg in
             (Star {s with h_formula_star_h1 = e1;
                           h_formula_star_h2 = e2;},f_comb [r1;r2])
+		| MWand (h1,h2,p) ->
+		    let (e1,r1)=helper h1 new_arg in
+            let (e2,r2)=helper h2 new_arg in
+            (MWand (e1,e2,p),f_comb [r1;r2])
         | StarMinus s -> 
             let (e1,r1)=helper s.h_formula_starminus_h1 new_arg in
             let (e2,r2)=helper s.h_formula_starminus_h2 new_arg in
@@ -9214,6 +9254,7 @@ let rec transform_h_formula (f:h_formula -> h_formula option) (e:h_formula):h_fo
 	      | Star s -> Star {s with 
 			  h_formula_star_h1 = transform_h_formula f s.h_formula_star_h1;
 			  h_formula_star_h2 = transform_h_formula f s.h_formula_star_h2;}
+		  | MWand (h1,h2,p)-> MWand (transform_h_formula f h1, transform_h_formula f h2, p)
 	      | StarMinus s -> StarMinus {s with 
 			  h_formula_starminus_h1 = transform_h_formula f s.h_formula_starminus_h1;
 			  h_formula_starminus_h2 = transform_h_formula f s.h_formula_starminus_h2;}			  
@@ -9569,6 +9610,7 @@ let rename_labels transformer e =
 	let f_f e = None in
 	let rec f_h_f e = match e with 
 		| Star s -> None
+		| MWand _ -> None
 		| StarMinus s -> None
 		| Conj s -> None
 		| ConjStar s -> None
@@ -9611,6 +9653,7 @@ let rename_labels_formula_ante  e=
             | ConjConj s -> None
 	    | Phase s -> None
 	    | Star s -> None
+		| MWand _ -> None
 	    | StarMinus s -> None
 	    | DataNode d -> Some (DataNode {d with h_formula_data_label = n_l_f d.h_formula_data_label})
 	    | ViewNode v -> Some (ViewNode {v with h_formula_view_label = n_l_f v.h_formula_view_label})
@@ -10726,6 +10769,7 @@ let mark_derv_self name f =
       | Star s -> Star {s with 
           h_formula_star_h1 = h_h s.h_formula_star_h1;
           h_formula_star_h2 = h_h s.h_formula_star_h2;} 
+      | MWand (h1,h2,p) -> MWand ( h_h h1, h_h h2, p)
       | StarMinus s -> StarMinus {s with 
           h_formula_starminus_h1 = h_h s.h_formula_starminus_h1;
           h_formula_starminus_h2 = h_h s.h_formula_starminus_h2;} 
@@ -12037,6 +12081,7 @@ and sum_of_int_lst lst = List.fold_left (+) 0 lst
 
 and no_of_cnts_heap heap = match heap with
   | Star h -> no_of_cnts_heap h.h_formula_star_h1 + no_of_cnts_heap h.h_formula_star_h2
+  | MWand (h1,h2,_) -> no_of_cnts_heap h1 + no_of_cnts_heap h2
   | StarMinus h -> no_of_cnts_heap h.h_formula_starminus_h1 + no_of_cnts_heap h.h_formula_starminus_h2  
   | Conj h -> no_of_cnts_heap h.h_formula_conj_h1 + no_of_cnts_heap h.h_formula_conj_h2
   | ConjStar h -> no_of_cnts_heap h.h_formula_conjstar_h1 + no_of_cnts_heap h.h_formula_conjstar_h2
@@ -12566,6 +12611,10 @@ let rec find_barr bln v f =
 	    let rd = h_bars eqs h.h_formula_star_h1 in
 		let rw = h_bars eqs h.h_formula_star_h2 in
 	   (match rd with | None -> rw | _ -> tester rd rw)
+	   | MWand (h1,h2,_) -> 
+	    let h1 = h_bars eqs h1 in
+		let h2 = h_bars eqs h2 in
+	   (match h1 with | None -> h2 | _ -> tester h1 h2)
 	   | StarMinus h -> 
 	    let rd = h_bars eqs h.h_formula_starminus_h1 in
 		let rw = h_bars eqs h.h_formula_starminus_h2 in
@@ -12749,6 +12798,7 @@ let elim_prm e =
   in
 	let rec f_h_f e = match e with 
 		| Star s -> None
+		| MWand _ -> None
 		| Conj s -> None
 		| Phase s -> None	
   	        | DataNode d -> Some (DataNode {d with h_formula_data_arguments = List.map nv d.h_formula_data_arguments; h_formula_data_node = nv d.h_formula_data_node})

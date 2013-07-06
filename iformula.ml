@@ -110,6 +110,7 @@ and h_formula = (* heap formula *)
 	  (*  | ArrayNode of ((ident * primed) * ident * P.exp list * loc) *)
 	  (* pointer * base type * list of dimensions *)
   | HRel of (ident * (P.exp list) * loc)
+  | MWand of (h_formula*h_formula * loc)
   | HTrue 
   | HFalse
   | HEmp (* emp for classical logic *)
@@ -560,7 +561,9 @@ let rec h_fv (f:h_formula):(ident*primed) list = match f with
 	   h_formula_starminus_pos = pos})
   | Star ({h_formula_star_h1 = h1; 
 	   h_formula_star_h2 = h2; 
-	   h_formula_star_pos = pos}) ->  Gen.BList.remove_dups_eq (=) ((h_fv h1)@(h_fv h2))
+	   h_formula_star_pos = pos}) 
+  | MWand (h1,h2,pos)
+	   ->  Gen.BList.remove_dups_eq (=) ((h_fv h1)@(h_fv h2))
 (*WN:TODO:DONE*)
  | HeapNode {h_formula_heap_node = name ;
           (* An Hoa : problem detected and fix - name is a 
@@ -1010,7 +1013,7 @@ and h_apply_one_pointer ((fr, t) as s : ((ident*primed) * (ident*primed))) (f : 
     | HEmp
     | HTrue
     | HFalse -> (f,[])
-    | ConjStar _ | ConjConj _ | StarMinus _ -> Error.report_no_pattern ()
+    | ConjStar _ | ConjConj _ | StarMinus _ | MWand _-> Error.report_no_pattern ()
   in helper f
 
 
@@ -1051,6 +1054,9 @@ and h_apply_one ((fr, t) as s : ((ident*primed) * (ident*primed))) (f : h_formul
       Star ({h_formula_star_h1 = h_apply_one s f1; 
              h_formula_star_h2 = h_apply_one s f2; 
              h_formula_star_pos = pos})
+			 
+  | MWand (h1,h2,pos) -> MWand(h_apply_one s h1, h_apply_one s h2, pos)
+  
   | HeapNode ({h_formula_heap_node = x; 
                h_formula_heap_name = c; 
                h_formula_heap_deref = deref;
@@ -1267,6 +1273,7 @@ and h_apply_one_w_data_name ((fr, t) as s : ((ident*primed) * (ident*primed))) (
         StarMinus ({h_formula_starminus_h1 = helper f1;
                     h_formula_starminus_h2 = helper f2;
                     h_formula_starminus_pos = pos})
+	| MWand (h1,h2,pos) -> MWand(helper h1, helper h2, pos)
     | HeapNode ({h_formula_heap_node = x;
                  h_formula_heap_name = c;
                  h_formula_heap_deref = deref;
@@ -1445,7 +1452,13 @@ and float_out_exps_from_heap_x (f:formula ) (rel0: rel option) :formula =
 	let r21,r22 = float_out_exps b.h_formula_phase_rw in
 	  (Phase ({h_formula_phase_rd  =r11; h_formula_phase_rw=r21;h_formula_phase_pos = b.h_formula_phase_pos}), 
 	   (r12@r22))
-    | HeapNode b->
+    | MWand (h1,h2,pos)-> 
+	let r11,r12 = float_out_exps h1 in
+	let r21,r22 = float_out_exps h2 in
+	   if r12!=[] then Error.report_error {Error.error_loc=pos; Error.error_text = "MWand does not allow any pure in the LHS"}
+	   else 
+	  (MWand(r11,r21,pos),(r12@r22))
+	| HeapNode b->
         (*LDK*)
         let perm = b.h_formula_heap_perm in
         let na_perm, ls_perm = float_out_iperm () perm b.h_formula_heap_pos in
@@ -1709,6 +1722,17 @@ match h with
 		  h_formula_star_pos = l;
 		}),
             np)
+	|  MWand (f1,f2,pos)->
+	 let (nf1, np1) = float_out_heap_min_max f1 in
+	 let (nf2, np2) = float_out_heap_min_max f2 in
+	 let np =
+           (match (np1, np2) with
+              | (None, None) -> None
+              | (None, Some _) -> np2
+			  | (Some _, None)  
+              | (Some _, Some _) -> Error.report_error{Error.error_loc=no_pos; Error.error_text = "LHS of wand must not contain pure"} )
+	 in
+           (MWand (nf1,nf2,pos),np)
     |  StarMinus
 	{
           h_formula_starminus_h1 = f1;
@@ -2234,6 +2258,7 @@ let find_barr_node bname (f:int) (t:int) struc :bool=
 		 | ConjStar {h_formula_conjstar_h1 = h1; h_formula_conjstar_h2 = h2}
 		 | ConjConj {h_formula_conjconj_h1 = h1; h_formula_conjconj_h2 = h2}	
 		 | StarMinus {h_formula_starminus_h1 = h1; h_formula_starminus_h2 = h2}	 		 
+		 | MWand (h1,h2,_)
 		 | Star {h_formula_star_h1 = h1; h_formula_star_h2 = h2} -> 
 			(match find_h_node x h1 with 
 				| Bar_not_found -> find_h_node x h2 
@@ -2342,6 +2367,7 @@ let rec heap_trans_heap_node fct f =
   | Phase b -> Phase {b with h_formula_phase_rd = recf b.h_formula_phase_rd; h_formula_phase_rw = recf b.h_formula_phase_rw}
   | Conj b -> Conj {b with h_formula_conj_h2 = recf b.h_formula_conj_h2; h_formula_conj_h1 = recf b.h_formula_conj_h1}
   | Star b -> Star {b with h_formula_star_h2 = recf b.h_formula_star_h2; h_formula_star_h1 = recf b.h_formula_star_h1}
+  | MWand (h1,h2,p) -> MWand (recf h1, recf h2, p)
   | ConjStar _|ConjConj _|StarMinus _ -> report_error no_pos "IF.heap_trans_heap_node: not handle yet"
 
 
@@ -2386,6 +2412,7 @@ let rec heap_drop_heap_node f0 hns=
       else f
   | Phase b -> Phase {b with h_formula_phase_rd = helper b.h_formula_phase_rd; h_formula_phase_rw = helper b.h_formula_phase_rw}
   | Conj b -> Conj {b with h_formula_conj_h2 = helper b.h_formula_conj_h2; h_formula_conj_h1 = helper b.h_formula_conj_h1}
+  | MWand (h1,h2,p) -> MWand (helper h1, helper h2, p)
   | Star b -> begin
       let nh1 = helper b.h_formula_star_h1 in
       let nh2 = helper b.h_formula_star_h2 in

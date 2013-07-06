@@ -38,7 +38,7 @@ type sleek_token =
   | THEN| THIS of string | TO | TRUE | LEXVAR
   | TEMPL | TERM | LOOP | MAYLOOP
   | UNFOLD | UNION
-  | VOID 
+  | VOID | WAND
   | WHILE | FLOW of string
   (*operators*)  
   | CARET 
@@ -116,6 +116,7 @@ module Token = struct
     | TERM -> "Term"
     | LOOP -> "Loop"
     | MAYLOOP -> "MayLoop"
+	| WAND -> "--*"
     | XPURE -> "XPURE"
 
 

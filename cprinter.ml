@@ -126,6 +126,7 @@ let op_and_short = "&"
 let op_or_short = "|"  
 let op_not_short = "!"  
 let op_star_short = "*"  
+let op_wand_short = "--*"  
 let op_starminus_short = "*-" 
 let op_phase_short = ";"  
 let op_conj_short = "&"  
@@ -157,6 +158,7 @@ let op_and = " & "
 let op_or = " | "  
 let op_not = "!"  
 let op_star = " * "  
+let op_wand  = " --* "
 let op_starminus = " *- " 
 let op_phase = " ; "  
 let op_conj = " & "  
@@ -1015,6 +1017,11 @@ let rec pr_h_formula h =
           let arg2 = bin_op_to_list op_star_short h_formula_assoc_op h2 in
           let args = arg1@arg2 in
           pr_list_op op_star f_b args
+	| MWand (h1,h2,p) -> 
+		  let arg1 = bin_op_to_list op_wand_short h_formula_assoc_op h1 in
+          let arg2 = bin_op_to_list op_wand_short h_formula_assoc_op h2 in
+          let args = arg1@arg2 in
+		  pr_list_op op_wand f_b args
     | StarMinus ({h_formula_starminus_h1 = h1; h_formula_starminus_h2 = h2; h_formula_starminus_pos = pos}) -> 
 	      let arg1 = bin_op_to_list op_starminus_short h_formula_assoc_op h1 in
           let arg2 = bin_op_to_list op_starminus_short h_formula_assoc_op h2 in
@@ -1167,6 +1174,11 @@ let rec prtt_pr_h_formula h =
           let arg2 = bin_op_to_list op_star_short h_formula_assoc_op h2 in
           let args = arg1@arg2 in
           pr_list_op op_star f_b args
+	| MWand (h1,h2,p) ->
+	      let arg1 = bin_op_to_list op_wand_short h_formula_assoc_op h1 in
+          let arg2 = bin_op_to_list op_wand_short h_formula_assoc_op h2 in
+          let args = arg1@arg2 in
+          pr_list_op op_wand f_b args
     | Phase ({h_formula_phase_rd = h1; h_formula_phase_rw = h2; h_formula_phase_pos = pos}) -> 
 	      let arg1 = bin_op_to_list op_phase_short h_formula_assoc_op h1 in
           let arg2 = bin_op_to_list op_phase_short h_formula_assoc_op h2 in
@@ -1291,6 +1303,11 @@ let rec prtt_pr_h_formula_inst prog h =
           let arg2 = bin_op_to_list op_star_short h_formula_assoc_op h2 in
           let args = arg1@arg2 in
           pr_list_op op_star f_b args
+	| MWand (h1,h2,p) ->
+	      let arg1 = bin_op_to_list op_wand_short h_formula_assoc_op h1 in
+          let arg2 = bin_op_to_list op_wand_short h_formula_assoc_op h2 in
+          let args = arg1@arg2 in
+          pr_list_op op_wand f_b args
     | Phase ({h_formula_phase_rd = h1; h_formula_phase_rw = h2; h_formula_phase_pos = pos}) -> 
 	      let arg1 = bin_op_to_list op_phase_short h_formula_assoc_op h1 in
           let arg2 = bin_op_to_list op_phase_short h_formula_assoc_op h2 in
@@ -1418,6 +1435,11 @@ let rec pr_h_formula_for_spec h =
     let arg2 = bin_op_to_list op_star_short h_formula_assoc_op h2 in
     let args = arg1@arg2 in
     pr_list_op op_star f_b args
+  | MWand (h1,h2,p) -> 
+    let arg1 = bin_op_to_list op_wand_short h_formula_assoc_op h1 in
+    let arg2 = bin_op_to_list op_wand_short h_formula_assoc_op h2 in
+    let args = arg1@arg2 in
+    pr_list_op op_wand f_b args
   | Phase ({h_formula_phase_rd = h1; h_formula_phase_rw = h2; h_formula_phase_pos = pos}) -> 
     let arg1 = bin_op_to_list op_phase_short h_formula_assoc_op h1 in
     let arg2 = bin_op_to_list op_phase_short h_formula_assoc_op h2 in
@@ -3395,6 +3417,7 @@ let html_op_and = " &and; "
 let html_op_or = " &or; "  
 let html_op_not = " &not; "  
 let html_op_star = " &lowast; "
+let html_op_wand = " --&lowast; "
 let html_op_starminus = " &lowast;- "   
 let html_op_phase = " ; "  
 let html_op_conj = " &and; "  
@@ -3537,6 +3560,11 @@ let rec html_of_h_formula h = match h with
 		let arg2 = bin_op_to_list op_star_short h_formula_assoc_op h2 in
 		let args = arg1@arg2 in
 			String.concat html_op_star (List.map html_of_h_formula args)
+	| MWand (h1,h2,p) -> 
+		let arg1 = bin_op_to_list op_wand_short h_formula_assoc_op h1 in
+		let arg2 = bin_op_to_list op_wand_short h_formula_assoc_op h2 in
+		let args = arg1@arg2 in
+			String.concat html_op_wand (List.map html_of_h_formula args)
 	| StarMinus ({h_formula_starminus_h1 = h1;
 			h_formula_starminus_h2 = h2;
 			h_formula_starminus_pos = pos}) -> 

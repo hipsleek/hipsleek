@@ -315,6 +315,12 @@ let rec string_of_h_formula = function
         else (string_of_h_formula f1) ^ " * (" ^ (string_of_h_formula f2) ^ ")"
       else
         "(" ^ (string_of_h_formula f1) ^ ") * (" ^ (string_of_h_formula f2) ^ ")"
+  | F.MWand(f1,f2,l)->
+	  if is_bool_f f1 then 
+        if is_bool_f f2 then (string_of_h_formula f1) ^ " --* " ^ (string_of_h_formula f2)
+        else (string_of_h_formula f1) ^ " --* (" ^ (string_of_h_formula f2) ^ ")"
+      else
+        "(" ^ (string_of_h_formula f1) ^ ") --* (" ^ (string_of_h_formula f2) ^ ")"
   | F.StarMinus ({F.h_formula_starminus_h1 = f1;
              F.h_formula_starminus_h2 = f2;
              F.h_formula_starminus_pos = l} ) ->
