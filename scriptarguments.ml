@@ -425,6 +425,7 @@ let common_arguments = [
   ("--sa-subsume", Arg.Set Globals.sa_subsume, "use subsume when comparing definitions after infering");
   (* ("--norm-useless", Arg.Set Globals.norm_elim_useless, "elim useless parameters of user-defined predicates (view)"); *)
   ("--norm-extract", Arg.Set Globals.norm_extract, "extract common pattern among branches of user-defined predicates (view)");
+  ("--sa-en-print-hprel" , Arg.Set Globals.print_heap_pred_decl, "enable predicates declaration printing (not default)");
   ("--en-print-ann" , Arg.Set Globals.print_ann, "enable annotation printing (default)");
   ("--dis-print-ann", Arg.Clear Globals.print_ann, "disable annotation printing");
   ("--en-texify", Arg.Set Globals.texify, "output latex formulas");

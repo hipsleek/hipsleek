@@ -1848,6 +1848,14 @@ let infer_shapes iprog prog proc_name (hp_constrs: CF.hprel list) sel_hp_rels se
   let pr4 = (pr_list (pr_pair (pr_pair !CP.print_sv (pr_list string_of_int)) CP.string_of_xpure_view)) in
   let pr5 = pr_list (pr_pair !CP.print_sv !CP.print_svl) in
   let pr5a = pr_list (pr_pair CF.string_of_cond_path (pr_pair !CP.print_sv !CP.print_svl)) in
+  let _ = if !Globals.print_heap_pred_decl then
+    let all_hps = CF.get_hp_rel_name_assumption_set hp_constrs in
+    let all_hp_decls = List.map (fun hp ->
+        Cast.look_up_hp_def_raw prog.Cast.prog_hp_decls (CP.name_of_spec_var hp)) all_hps in
+    let _ = List.iter (fun hpdcl -> print_endline (Cprinter.string_of_hp_decl hpdcl)) all_hp_decls in
+    ()
+  else ()
+  in
   Debug.no_6 "infer_shapes" pr_id pr1 !CP.print_svl pr4 pr5 pr5a (pr_triple pr1 pr2 pr3)
       (fun _ _ _ _ _ _ -> infer_shapes_x iprog prog proc_name hp_constrs sel_hp_rels
           sel_post_hp_rels hp_rel_unkmap unk_hpargs link_hpargs
@@ -1866,6 +1874,14 @@ let infer_shapes_new iprog prog proc_name (hp_constrs: CF.hprel list) sel_hp_rel
   let pr4 = (pr_list (pr_pair (pr_pair !CP.print_sv (pr_list string_of_int)) CP.string_of_xpure_view)) in
   let pr5 = pr_list (pr_pair !CP.print_sv !CP.print_svl) in
   let pr6 = (pr_triple CF.string_of_cond_path pr2 pr3) in
+  let _ = if !Globals.print_heap_pred_decl then
+    let all_hps = CF.get_hp_rel_name_assumption_set hp_constrs in
+    let all_hp_decls = List.map (fun hp ->
+        Cast.look_up_hp_def_raw prog.Cast.prog_hp_decls (CP.name_of_spec_var hp)) all_hps in
+    let _ = List.iter (fun hpdcl -> print_endline (Cprinter.string_of_hp_decl hpdcl)) all_hp_decls in
+    ()
+  else ()
+  in
   Debug.no_6 "infer_shapes_new" pr_id pr1 !CP.print_svl pr4 pr5 pr5 pr2
       (fun _ _ _ _ _ _ -> infer_shapes_new_x iprog prog proc_name hp_constrs sel_hp_rels
           sel_post_hp_rels hp_rel_unkmap unk_hpargs link_hpargs

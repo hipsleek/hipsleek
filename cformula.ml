@@ -4508,6 +4508,15 @@ let rec get_hp_rel_name_formula (f: formula) =
         CP.remove_dups_svl ((get_hp_rel_name_formula orf.formula_or_f1)@
         (get_hp_rel_name_formula orf.formula_or_f2))
 
+let get_hp_rel_name_assumption cs=
+  CP.remove_dups_svl ((get_hp_rel_name_formula cs.hprel_lhs)@
+      (get_hp_rel_name_formula cs.hprel_rhs))
+
+let get_hp_rel_name_assumption_set constrs=
+  let all_hps = List.fold_left (fun ls cs -> ls@(get_hp_rel_name_assumption cs))
+    [] constrs in
+  (CP.remove_dups_svl all_hps)
+
 let get_hp_rel_name_bformula bf=
   get_hp_rel_name_h_formula bf.formula_base_heap
 
