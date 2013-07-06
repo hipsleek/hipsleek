@@ -24,13 +24,12 @@ dll<parent, prev> ==
 
 
 bool check_tree (tree t)
-  requires t::treep<> & t!=null 
+  requires t::treep<> 
   ensures res;
 {
-   node n = null;
    if (t.children==null) return true;
-   else return check_child(t.children,t,n); 
-    //check_child(t.children,t,t); // (node * tree * tree)
+   else //return check_child(t.children,t,null); 
+        return check_child(t.children,t,t); //: (node * tree * tree)
 }
 
 bool check_child (node l, tree par, node prv)
@@ -43,15 +42,19 @@ bool check_child (node l, tree par, node prv)
 }
 
 /*
-# rose-tree.ss --pcp
+# rose-bug-tree.ss 
 
-Handled mutual recursive method but it seems
-that there was an exception thrown..
+Typechecker has failed to pick this error!
 
-WARNING: _0:0_0:0:View definitions [[treep,dll]] are mutually recursive
-Stop Omega... 0 invocations caught
+Last Proving Location: 1 File "rose-bug-tree.ss",Line:26,Col:0
 
-Exception occurred: Not_found
-Error(s) detected at main 
+ERROR: at rose-bug-tree.ss_32:15_32:42 
+Message: trans_exp :: case CallNRecv :: procedure 2 check_child$node~tree~tree is not found
+ Stop Omega... 26 invocations Halting Reduce... 
+caught
+(Program not linked with -g, cannot print stack backtrace)
+
+Exception occurred: Failure("trans_exp :: case CallNRecv :: procedure 2 check_child$node~tree~tree is not found")
+
 
 */
