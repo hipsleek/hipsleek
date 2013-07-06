@@ -4145,7 +4145,7 @@ Confirm Equation
    or x::node<vvv,next_16_919>@M * 
          * H(next_16_919,vvv) & vvv>=v
 =====================================================================
-# sorted-4b.slk 
+# sorted-4b.slk : FIXED
 
 HeapPred H(node x, int v).
 HeapPred H2(node x, int@NI v).
