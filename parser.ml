@@ -1285,7 +1285,7 @@ heap_rw:
 heap_wr:
   [[   
      shc=SELF; peek_star; `STAR;  hw= simple_heap_constr    -> F.mkStar shc hw (get_pos_camlp4 _loc 2)
-   | 'OPAREN; hrd=heap_constr; `WAND; hc=heap_constr; `CPAREN -> F.MWand (hrd,hc)
+   | `OPAREN; hrd=heap_constr; `WAND; hc=heap_constr; `CPAREN -> F.MWand (hrd,hc)
    | shc=simple_heap_constr        -> shc
    (* | shi=simple_heap_constr_imm; `STAR;  hw=SELF -> F.mkStar shi hw (get_pos_camlp4 _loc 2) *)
    (* | shi=simple_heap_constr_imm; `STAR; `OPAREN; hc=heap_constr; `CPAREN  -> F.mkStar shi hc (get_pos_camlp4 _loc 2) *)

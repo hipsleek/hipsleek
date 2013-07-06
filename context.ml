@@ -1412,6 +1412,7 @@ and input_h_formula_in2_frame (frame, id_hole) (to_input : h_formula) : h_formul
     | Hole id ->
 	  if id = id_hole then to_input
 	  else frame
+	| MWand _ -> report_error no_pos "unexpected MWand"
     | Star ({h_formula_star_h1 = f1;
       h_formula_star_h2 = f2;
       h_formula_star_pos = pos}) -> 
