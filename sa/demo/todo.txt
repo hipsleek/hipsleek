@@ -3876,7 +3876,7 @@ y_960::node<val_24_937,next_24_958>@M * HP_939(next_24_958,x_959),
    \/ (2;0) x_948::node<val_24_930,next_24_931>@M * 
 y_949::node<val_24_937,next_24_938>@M * G(next_24_931,next_24_938)]
 =====================================================================
-# check-multi-tree.ss
+# check-multi-tree.ss  FIXED
 
 We seems to be collecting only the relational assumption
 of H2/G2 (from one of the method check_child). What happen to the
@@ -3890,8 +3890,61 @@ It seems not to have been collected.
  HP_957(child_38_955) --> H(child_38_955),
  l::node<child_38_955,sibling_38_956>@M * G2(sibling_38_956) * 
   G(child_38_955) --> G2(l)]
-
 =====================================================================
+# multi-tree-2.slk
+
+GOT
+
+[ H(t_56) ::= t_56::tree<children_30_986>@M * H2(children_30_986),
+ H_9(children_30_57) ::= H2(children_30_57),
+ H_8(sibling_38_58) ::= H2(sibling_38_58),
+ H_7(child_38_59) ::= child_38_59::tree<children_30_55>@M * H2(children_30_55),
+ H2(l_60) ::= 
+ H2(sibling_38_45) * l_60::node<child_38_46,sibling_38_45>@M * 
+ child_38_46::tree<children_30_54>@M * H2(children_30_54)
+ or emp&l_60=null
+ ]
+
+PROBLEM : H_7 is unnecessarily unfolded.
+
+ALGO
+====
+
+1. First confirm the simple "equiv" definitions H_7.H_8,H_9
+
+ H_8(sibling_38_956) --> H2(sibling_38_956).
+ H_7(child_38_955) --> H(child_38_955).
+ H_9(children_30_986) --> H2(children_30_986).
+
+Confirmed as:
+ H_8(sibling_38_956) <-> H2(sibling_38_956).
+ H_7(child_38_955) <-> H(child_38_955).
+ H_9(children_30_986) <-> H2(children_30_986).
+
+2. Try confirm the next simplest:
+
+ H(t)&t!=null --> t::tree<children_30_986>@M * H_9(children_30_986).
+
+ Apply simplification (e.g. rewriting) 
+
+ H(t)&t!=null --> t::tree<children_30_986>@M * H2(children_30_986).
+
+3. Try confirm the next simplest:
+
+  H2(l)&l!=null --> l::node<child_38_955,sibling_38_956>@M * 
+    H_7(child_38_955) * H_8(sibling_38_956).
+  H2(l)&l=null --> emp.
+
+ Apply simplification (e.g. rewriting) 
+
+  H2(l)&l!=null --> l::node<child_38_955,sibling_38_956>@M * 
+    H(child_38_955) * H2(sibling_38_956).
+  H2(l)&l=null --> emp.
+
+ Combine conjuctively:
+  H2(l) = l::node<child_38_955,sibling_38_956>@M * 
+       H(child_38_955) * H2(sibling_38_956) & l!=null
+  or l=null --> emp.
 =====================================================================
 =====================================================================
 =====================================================================
