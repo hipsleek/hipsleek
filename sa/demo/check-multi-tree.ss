@@ -42,23 +42,33 @@ bool check_child (node l)
 # check-multi-tree.ss
 
 
-[ H2(l)&l!=null --> l::node<child_38_955,sibling_38_956>@M * 
-  HP_957(child_38_955) * HP_958(sibling_38_956),
- HP_958(sibling_38_956) --> H2(sibling_38_956),
- HP_957(child_38_955) --> H(child_38_955),
+ H2(l)&l!=null --> l::node<child_38_955,sibling_38_956>@M * 
+  H_7(child_38_955) * H_8(sibling_38_956).
+
+ H_8(sibling_38_956) --> H2(sibling_38_956).
+
+ H_7(child_38_955) --> H(child_38_955).
+
  H2(l)&l=null --> G2(l),
  l::node<child_38_955,sibling_38_956>@M * G2(sibling_38_956) * 
-  G(child_38_955) --> G2(l)]
+  G(child_38_955) --> G2(l).
+
 
 --------
 
-[ H(t)&t!=null --> t::tree<children_30_986>@M * HP_987(children_30_986),
- HP_987(children_30_986) --> H2(children_30_986),
- H(t) --> emp&t!=null,
+ H(t)&t!=null --> t::tree<children_30_986>@M * H_9(children_30_986).
+
+ H_9(children_30_986) --> H2(children_30_986).
+
+ H(t) --> emp&t!=null.
+
  t::tree<children_30_986>@M * G2(children_30_986)&
-  children_30_986=null --> G(t),
+  children_30_986=null --> G(t).
+
  t::tree<children_30_986>@M * G2(children_30_986)&
-  children_30_986!=null --> G(t)]
+  children_30_986!=null --> G(t).
+
+
 
 ==========================
 
@@ -69,14 +79,14 @@ It seems not to have been collected.
 
 [ H2(l)&l=null --> G2(l),
  H2(l)&l!=null --> l::node<child_38_955,sibling_38_956>@M * 
-  HP_957(child_38_955) * HP_958(sibling_38_956),
- HP_958(sibling_38_956) --> H2(sibling_38_956),
- HP_957(child_38_955) --> H(child_38_955),
+  H_7(child_38_955) * H_8(sibling_38_956),
+ H_8(sibling_38_956) --> H2(sibling_38_956),
+ H_7(child_38_955) --> H(child_38_955),
  l::node<child_38_955,sibling_38_956>@M * G2(sibling_38_956) * 
   G(child_38_955) --> G2(l)]
 
-!!! hp_lst_assume:[ H(t)&t!=null --> t::tree<children_30_986>@M * HP_987(children_30_986),
- HP_987(children_30_986) --> H2(children_30_986),
+!!! hp_lst_assume:[ H(t)&t!=null --> t::tree<children_30_986>@M * H_9(children_30_986),
+ H_9(children_30_986) --> H2(children_30_986),
  H(t) --> emp&t!=null,
  t::tree<children_30_986>@M * G2(children_30_986)&
   children_30_986=null --> G(t),
