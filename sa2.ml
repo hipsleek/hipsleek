@@ -1857,7 +1857,9 @@ let infer_shapes iprog prog proc_name (hp_constrs: CF.hprel list) sel_hp_rels se
     let all_hps = CF.get_hp_rel_name_assumption_set hp_constrs in
     let all_hp_decls = List.map (fun hp ->
         Cast.look_up_hp_def_raw prog.Cast.prog_hp_decls (CP.name_of_spec_var hp)) all_hps in
-    let _ = List.iter (fun hpdcl -> print_endline (Cprinter.string_of_hp_decl hpdcl)) all_hp_decls in
+    let _ = print_endline "\nHeap Predicate Declarations" in
+    let _ = print_endline "===========================" in
+    let _ = List.iter (fun hpdcl -> print_string (Cprinter.string_of_hp_decl hpdcl)) all_hp_decls in
     ()
   else ()
   in
@@ -1883,7 +1885,7 @@ let infer_shapes_new iprog prog proc_name (hp_constrs: CF.hprel list) sel_hp_rel
     let all_hps = CF.get_hp_rel_name_assumption_set hp_constrs in
     let all_hp_decls = List.map (fun hp ->
         Cast.look_up_hp_def_raw prog.Cast.prog_hp_decls (CP.name_of_spec_var hp)) all_hps in
-    let _ = List.iter (fun hpdcl -> print_endline (Cprinter.string_of_hp_decl hpdcl)) all_hp_decls in
+    let _ = List.iter (fun hpdcl -> print_string (Cprinter.string_of_hp_decl hpdcl)) all_hp_decls in
     ()
   else ()
   in
