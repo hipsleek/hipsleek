@@ -1,3 +1,4 @@
+========single-b.slk ==========
 Starting Omega...oc
 GP_3 is defined.
 GP_4 is defined.
@@ -40,4 +41,4 @@ GP_4 is defined.
  ,
 HP_RELDEFN GP_3:  GP_3(next_34_66,next_29_67) ::=  emp&next_34_66=null]
 *************************************
-
+====================

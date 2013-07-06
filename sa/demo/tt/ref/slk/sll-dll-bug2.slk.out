@@ -1,3 +1,4 @@
+========sll-dll-bug2.slk ==========
 Starting Omega...oc
 H1 is defined.
 HP_2 is defined.
@@ -9,5 +10,4 @@ Entail (1) : Valid.
  <1>emp&{FLOW,(19,20)=__norm}[]
  inferred hprel: [HP_2(pp,p) * HP_3(nn,p) * 
                    c::node<Anon_11,p,nn>@M --> H1(nn,c)]
-
-
+====================

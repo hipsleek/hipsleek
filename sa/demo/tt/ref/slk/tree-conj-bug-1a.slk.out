@@ -1,6 +1,8 @@
+Fatal error: exception Not_found
+========tree-conj-bug-1a.slk ==========
 Starting Omega...oc
 HP_0 is defined.
 HP_1 is defined.
 HP_3 is defined.
 HP_4 is defined.
-Fatal error: exception Not_found
+====================

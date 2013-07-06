@@ -1,3 +1,4 @@
+========tree-bug-2.slk ==========
 Starting Omega...oc
 H is defined.
 HP_1 is defined.
@@ -10,5 +11,4 @@ Entail (1) : Valid.
  inferred hprel: [HP_0(left_25_798) * HP_1(right_25_799) * 
                    x::node<key_25_797,left_25_798,right_25_799>@M&
                    left_25_798=null --> G(x)]
-
-
+====================

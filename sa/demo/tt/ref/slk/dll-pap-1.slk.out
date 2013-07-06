@@ -1,3 +1,4 @@
+========dll-pap-1.slk ==========
 Starting Omega...oc
 G is defined.
 H is defined.
@@ -40,8 +41,8 @@ HP_0(prev_15_798,y_59) * y_59::node<next_21_54,prev_21_55>@M *
 HP_2(next_21_54,x_58) * HP_3(prev_21_55,x_58),
  HP_1(y_60,x_61) ::= y_60::node<next_21_820,prev_21_821>@M * HP_2(next_21_820,x_61) * 
 HP_3(prev_21_821,x_61),
- HP_2(a,b) ::=UNKNOWN,
- HP_3(a,b) ::=UNKNOWN,
- HP_0(a,b) ::=UNKNOWN]
+ HP_2(a,b) ::= NONE,
+ HP_3(a,b) ::= NONE,
+ HP_0(a,b) ::= NONE]
 *************************************
-
+====================

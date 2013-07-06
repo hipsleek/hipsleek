@@ -1,3 +1,4 @@
+========single-bug-3.slk ==========
 Starting Omega...oc
 HP_4 is defined.
 HP_5 is defined.
@@ -63,6 +64,6 @@ flted_18_49=null & flted_18_49!=null & flted_18_49=flted_18_50&
     flted_18_47=null & res_46=x_45)[]
  ,
  HP_4(next_34_83,next_29_84) ::= emp&next_34_83=null,
- HP_5(a,b) ::=UNKNOWN]
+ HP_5(a,b) ::= NONE]
 *************************************
-
+====================

@@ -1,3 +1,4 @@
+========tll-if.slk ==========
 Starting Omega...oc
 H is defined.
 G is defined.
@@ -44,20 +45,16 @@ H_3a is defined.
 *************************************
 *******relational definition ********
 *************************************
-path: (1,1)
-[HP_RELDEFN H_3:  H_3(right_25_34) ::=  H(right_25_34)&right_25_34!=null,
-HP_RELDEFN H_2:  H_2(left_25_35) ::=  H(left_25_35),
-HP_RELDEFN H:  H(x_36) ::=  x_36::node<left_25_800,right_25_801>@M * H(left_25_800) * H(right_25_801)&
-right_25_801!=null]
-UNKNOWN: []
+  H_3(right_25_34)<-> H(right_25_34)&right_25_34!=null
+  H_2(left_25_35)<-> H(left_25_35)
+  H(x_36)<-> x_36::node<left_25_800,right_25_801>@M * H(left_25_800) * H(right_25_801)&
+right_25_801!=null
 *************************************
 
 
 *************************************
 *******relational definition ********
 *************************************
-path: (1,2)
-[HP_RELDEFN H_3:  H_3(right_25_37) ::=  emp&right_25_37=null]
-UNKNOWN: []
+  H_3(right_25_37)<-> emp&right_25_37=null
 *************************************
-
+====================

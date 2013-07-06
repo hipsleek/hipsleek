@@ -1,3 +1,4 @@
+========heap-bug-3b.slk ==========
 Starting Omega...oc
 H is defined.
 G is defined.
@@ -18,5 +19,4 @@ Entail (2) : Valid.
  inferred hprel: [HP_5(right_39_833) * 
                    x::node<key_39_831,flted_22_41,right_39_833>@M&
                    flted_22_41=null --> G(x)]
-
-
+====================

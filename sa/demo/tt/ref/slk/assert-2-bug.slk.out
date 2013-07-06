@@ -1,3 +1,4 @@
+========assert-2-bug.slk ==========
 Starting Omega...oc
 H_9 is defined.
 
@@ -8,5 +9,4 @@ Entail (2) : Fail.
 
 
 Entail (3) : Fail.
-
-
+====================

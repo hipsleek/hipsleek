@@ -1,3 +1,4 @@
+========single-a1.slk ==========
 Starting Omega...oc
 GP_4 is defined.
 GP_5 is defined.
@@ -29,4 +30,4 @@ GP_5 is defined.
  ,
  GP_4(next_34_31,next_29_32) ::= emp&next_34_31=null]
 *************************************
-
+====================

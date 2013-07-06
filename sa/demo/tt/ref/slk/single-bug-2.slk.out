@@ -1,3 +1,4 @@
+========single-bug-2.slk ==========
 Starting Omega...oc
 HP_4 is defined.
 HP_5 is defined.
@@ -58,7 +59,7 @@ G is defined.
  next_29_789!=null
  or x_41::node<val_29_788,next_29_789>@M&res_42=x_41 & next_29_789=null
  ,
- HP_4(a,b) ::=UNKNOWN,
- HP_5(a,b) ::=UNKNOWN]
+ HP_4(a,b) ::= NONE,
+ HP_5(a,b) ::= NONE]
 *************************************
-
+====================

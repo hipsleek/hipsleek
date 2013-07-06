@@ -1,3 +1,4 @@
+========cll-1c.slk ==========
 Starting Omega...oc
 H is defined.
 HP_6 is defined.
@@ -11,4 +12,4 @@ HP_7 is defined.
  H(rest_46,h_45)&h_45!=rest_46 --> H(next_36_44,h_45) * 
   rest_46::node<val_36_43,next_36_44>@M&h_45!=rest_46]
 *************************************
-
+====================

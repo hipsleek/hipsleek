@@ -1,3 +1,4 @@
+========tll-bug-2.slk ==========
 Starting Omega...oc
 H is defined.
 G is defined.
@@ -13,5 +14,4 @@ Entail (1) : Valid.
                    G(right_29_846,r@NI,l_878) * 
                    G(left_29_845,l_878@NI,v_node_37_825')&
                    right_29_846!=null --> G(x,r@NI,v_node_37_825')]
-
-
+====================

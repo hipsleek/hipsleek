@@ -1,3 +1,4 @@
+========class-dll-app.slk ==========
 Starting Omega...oc
 H is defined.
 H_0 is defined.
@@ -11,9 +12,7 @@ Entail (1) : Valid.
 
  <1>emp&next_15_797=next_20_817 & prev_21_821=prev_21_824 & next_15_797=null&{FLOW,(19,20)=__norm}[]
  inferred hprel: [H_0(prev_15_798,y@NI) * x::node<y,prev_15_798>@M * 
-                   H_2(next_21_820,x@NI) * 
+                   H_2(next_21_820,x@NI) * H_3(prev_21_821,x@NI) * 
                    y::node<next_21_820,x>@M --> G(x,y); 
-                  H_9(next_15_797,y@NI)&next_15_797=null --> emp; 
-                  H_3(prev_21_821,x@NI) --> emp]
-
-
+                  H_9(next_15_797,y@NI)&next_15_797=null --> emp]
+====================

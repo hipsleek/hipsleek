@@ -1,3 +1,4 @@
+========pair2-bug2.slk ==========
 Starting Omega...oc
 H1 is defined.
 HP_4 is defined.
@@ -28,4 +29,4 @@ G1 is defined.
  H1(x_33,y_34) ::= x_33::cell<val_20_783>@M * y_34::cell<val_21_788>@M,
  G1(x_35,y_36) ::= x_35::cell<val_20_783>@M * y_36::cell<val_21_788>@M]
 *************************************
-
+====================

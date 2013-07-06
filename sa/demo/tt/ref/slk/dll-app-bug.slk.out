@@ -1,3 +1,4 @@
+========dll-app-bug.slk ==========
 Starting Omega...oc
 HP_817 is defined.
 HP_818 is defined.
@@ -11,5 +12,4 @@ Entail (1) : Valid.
                    HP_35(next_51_33,next_46_815@NI) * 
                    HP_36(prev_51_34,next_46_815@NI) * 
                    HP_37(next_46_815,l2'@NI)]
-
-
+====================

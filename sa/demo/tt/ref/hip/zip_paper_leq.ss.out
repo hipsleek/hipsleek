@@ -1,28 +1,28 @@
 ========zip_paper_leq.ss --sa-en-sp-split==========
 <rstart>6
-[ HP_990(y)&res=x & x=null & res=null --> G(x,y,res),
- H(x,y)&x=null --> HP_990(y),
- H(x,y)&x!=null --> x::node<val_22_960,next_22_961>@M * 
+[ H(x,y)&x!=null --> x::node<val_22_960,next_22_961>@M * 
   HP_962(next_22_961,y@NI) * HP_963(y,x@NI),
  HP_963(y,x@NI) --> y::node<val_22_967,next_22_968>@M * 
   HP_969(next_22_968,x@NI),
  HP_962(next_22_961,y@NI) * 
   HP_969(next_22_968,x@NI) --> H(next_22_961,next_22_968),
+ H(x,y)&x=null --> HP_990(y),
+ HP_990(y)&res=x & x=null & res=null --> G(x,y,res),
  x::node<val_22_960,next_22_961>@M * y::node<val_22_967,next_22_968>@M * 
   G(next_22_961,next_22_968,n_993) * res::node<v_994,n_993>@M&
   v_994=val_22_967+val_22_960 --> G(x,y,res)]
 <rstop>*************************************
 <dstart>
-[ H(x_1040,y_1041) ::= 
- H(next_22_1025,next_22_1023) * y_1041::node<val_22_1022,next_22_1023>@M * 
- x_1040::node<val_22_1024,next_22_1025>@M
- or HP_990(y_1041)&x_1040=null
+[ H(x_1042,y_1043) ::= 
+ H(next_22_1017,next_22_1015) * y_1043::node<val_22_1014,next_22_1015>@M * 
+ x_1042::node<val_22_1016,next_22_1017>@M
+ or HP_990(y_1043)&x_1042=null
  ,
- G(x_1044,y_1045,res_1046) ::= 
- x_1044::node<val_22_960,next_22_961>@M * 
- y_1045::node<val_22_967,next_22_968>@M * G(next_22_961,next_22_968,n_993) * 
- res_1046::node<v_994,n_993>@M&v_994=val_22_967+val_22_960
- or HP_990(y_1045)&res_1046=x_1044 & x_1044=null & res_1046=null
+ G(x_1046,y_1047,res_1048) ::= 
+ x_1046::node<val_22_960,next_22_961>@M * 
+ y_1047::node<val_22_967,next_22_968>@M * G(next_22_961,next_22_968,n_993) * 
+ res_1048::node<v_994,n_993>@M&v_994=val_22_967+val_22_960
+ or HP_990(y_1047)&res_1048=x_1046 & x_1046=null & res_1048=null
  ]
 <dstop>
 ====================

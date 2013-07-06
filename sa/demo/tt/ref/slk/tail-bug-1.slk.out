@@ -1,3 +1,4 @@
+========tail-bug-1.slk ==========
 Starting Omega...oc
 H1 is defined.
 HP_9 is defined.
@@ -29,4 +30,4 @@ G1 is defined.
  G1(res_27,c_28) ::= c_28::node<val_14_777,res_27>@M& XPURE(HP_9(next_14_778)) & 
 next_14_778=res_27]
 *************************************
-
+====================

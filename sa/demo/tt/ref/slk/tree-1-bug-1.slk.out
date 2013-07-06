@@ -1,3 +1,4 @@
+========tree-1-bug-1.slk ==========
 Starting Omega...oc
 H is defined.
 HP_1 is defined.
@@ -40,6 +41,6 @@ HP_2(right_25_790),
  or HP_2(right_25_790) * x_46::node<key_25_788,left_25_789,right_25_790>@M * 
     G(left_25_789)&left_25_789!=null
  ,
- HP_2(a) ::=UNKNOWN]
+ HP_2(a) ::= NONE]
 *************************************
-
+====================

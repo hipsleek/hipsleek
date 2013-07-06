@@ -1,3 +1,4 @@
+========dll-app-bug2.slk ==========
 Starting Omega...oc
 G3 is defined.
 HP_4 is defined.
@@ -27,4 +28,4 @@ HP_5 is defined.
 [ G3(l1_24,l2_25) ::= l1_24::node<l2_25,p>@M * HP_4(n3,l1_24) * HP_5(p,l1_24) * 
 l2_25::node<n3,l1_24>@M]
 *************************************
-
+====================

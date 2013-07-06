@@ -1,3 +1,4 @@
+========tree-5.slk ==========
 Starting Omega...oc
 G1 is defined.
 G2 is defined.
@@ -32,4 +33,4 @@ G2 is defined.
  or r_31::node<k,left,right>@M * G1(left) * G2(right)
  ]
 *************************************
-
+====================

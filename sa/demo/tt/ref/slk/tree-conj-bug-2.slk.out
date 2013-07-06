@@ -1,3 +1,4 @@
+========tree-conj-bug-2.slk ==========
 Starting Omega...oc
 H is defined.
 G is defined.
@@ -30,6 +31,6 @@ HP_4 is defined.
 [ H(x_41) ::= x_41::node<key_29_797,left_29_798,right_29_799>@M * HP_0(left_29_798) * 
 HP_1(right_29_799),
  HP_4(a) ::= HP_1(a),
- HP_0(a) ::=UNKNOWN]
+ HP_0(a) ::= NONE]
 *************************************
-
+====================

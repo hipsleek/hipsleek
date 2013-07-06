@@ -1,3 +1,4 @@
+========tll-bug-1.slk ==========
 Starting Omega...oc
 H is defined.
 G is defined.
@@ -43,6 +44,6 @@ HP_8(left_29_52,l_47') * HP_9(right_29_53,l_47') * HP_0(next_29_54,l_47'),
  HP_8(left_29_62,l_65) * HP_9(right_29_63,l_65) * HP_0(next_29_64,l_65)
  or emp&right_29_70=null
  ,
- HP_0(a,b) ::=UNKNOWN]
+ HP_0(a,b) ::= NONE]
 *************************************
-
+====================

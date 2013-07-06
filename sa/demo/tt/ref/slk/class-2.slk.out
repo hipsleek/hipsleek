@@ -1,3 +1,4 @@
+========class-2.slk ==========
 Starting Omega...oc
 
 Entail (1) : Valid. 
@@ -8,5 +9,4 @@ Entail (1) : Valid.
 Entail (2) : Valid. 
 
  <1>x::node<Anon_13,Anon_14>@M[Orig]&{FLOW,(19,20)=__norm}[]
-
-
+====================

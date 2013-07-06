@@ -1,3 +1,4 @@
+========dll-append2.slk ==========
 Starting Omega...oc
 H1 is defined.
 H2 is defined.
@@ -65,4 +66,4 @@ G is defined.
  or HP_826(p) * l1_75::node<n,p>@M * G(n)
  ]
 *************************************
-
+====================

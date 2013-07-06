@@ -1,3 +1,4 @@
+========cll-1.slk ==========
 Starting Omega...oc
 H is defined.
 G is defined.
@@ -38,6 +39,6 @@ HP_7 is defined.
  HP_7(h_53,rest_52)&h_53!=rest_52
  or emp&h_53=rest_52
  ,
- HP_7(a,b) ::=UNKNOWN]
+ HP_7(a,b) ::= NONE]
 *************************************
-
+====================

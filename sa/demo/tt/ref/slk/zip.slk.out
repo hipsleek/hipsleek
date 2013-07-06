@@ -1,3 +1,4 @@
+========zip.slk ==========
 Starting Omega...oc
 H1 is defined.
 HP_1 is defined.
@@ -40,4 +41,4 @@ G1 is defined.
     G1(nn,next_25_827,rr)&nn=rr & res_89=x_87
  ]
 *************************************
-
+====================

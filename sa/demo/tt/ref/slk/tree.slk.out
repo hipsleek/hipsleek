@@ -1,3 +1,5 @@
+Fatal error: exception Failure("iast.gather_type_info_heap :gather_type_info_heap: relation H cannot be found")
+========tree.slk ==========
 Starting Omega...oc
 H is defined.
 HP_1 is defined.
@@ -20,4 +22,5 @@ G is defined.
 !!! >>>>>> post-predicates<<<<<<
 !!! >>>>>> step post-4: step remove unused predicates<<<<<<
 !!! >>>>>> post-predicates: step post-5: remove redundant x!=null : not implemented yet<<<<<<
-!!! >>>>>> post-predicates: step post-61: weaken<<<<<<Fatal error: exception Failure("iast.gather_type_info_heap :gather_type_info_heap: relation H cannot be found")
+!!! >>>>>> post-predicates: step post-61: weaken<<<<<<
+====================

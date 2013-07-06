@@ -1,3 +1,4 @@
+========null.slk ==========
 Starting Omega...oc
 [Warning] False ctx
 
@@ -7,5 +8,4 @@ Entail (1) : Valid.
 
 
 Entail (2) : Fail.
-
-
+====================

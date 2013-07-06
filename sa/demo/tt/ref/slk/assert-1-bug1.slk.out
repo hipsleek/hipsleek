@@ -1,3 +1,4 @@
+========assert-1-bug1.slk ==========
 Starting Omega...oc
 H_9 is defined.
 H_8 is defined.
@@ -23,6 +24,5 @@ Entail (3) : Valid.
 Entail (4) : Valid. 
 
  <1>x::node<n>@M[Orig]&F(n) & n=t & G(t) & n=null&{FLOW,(19,20)=__norm}[]
- inferred rel: [RELASS [F,G]: ( F(n)) -->  n=null]
-
-
+ inferred rel: [RELASS [F]: ( F(n)) -->  n=null]
+====================

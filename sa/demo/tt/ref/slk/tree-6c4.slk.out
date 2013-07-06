@@ -1,3 +1,4 @@
+========tree-6c4.slk ==========
 Starting Omega...oc
 G is defined.
 H is defined.
@@ -26,7 +27,7 @@ HP_1 is defined.
 *******relational definition ********
 *************************************
 [ H(x_30) ::= hfalse&false,
- HP_1(a) ::=UNKNOWN,
- HP_0(a) ::=UNKNOWN]
+ HP_1(a) ::= NONE,
+ HP_0(a) ::= NONE]
 *************************************
-
+====================

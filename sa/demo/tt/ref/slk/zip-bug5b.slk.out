@@ -1,3 +1,4 @@
+========zip-bug5b.slk ==========
 Starting Omega...oc
 H1 is defined.
 HP_1 is defined.
@@ -11,5 +12,4 @@ Entail (1) : Valid.
  inferred hprel: [y::node<val_25_826,next_25_827>@M * 
                    G1(next_24_820,next_25_827,next_24_820) * 
                    x::node<val_24_819,next_24_820>@M&res=x --> G1(x,y,res)]
-
-
+====================

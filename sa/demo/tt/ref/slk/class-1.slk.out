@@ -1,3 +1,4 @@
+========class-1.slk ==========
 Starting Omega...oc
 H is defined.
 G is defined.
@@ -34,5 +35,4 @@ Entail (6) : Valid.
 Entail (7) : Valid. 
 
  <1>G(b)&a=null & b!=null&{FLOW,(19,20)=__norm}[]
-
-
+====================

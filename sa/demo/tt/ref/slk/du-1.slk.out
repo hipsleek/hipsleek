@@ -1,3 +1,4 @@
+========du-1.slk ==========
 Starting Omega...oc
 H is defined.
 HP_1 is defined.
@@ -29,6 +30,6 @@ G is defined.
  x_29::node<k,left,right>@M&right!=null & left=null
  or x_29::node<k,left,right>@M&right=null & left!=null
  ,
- HP_2(a) ::=UNKNOWN]
+ HP_2(a) ::= NONE]
 *************************************
-
+====================

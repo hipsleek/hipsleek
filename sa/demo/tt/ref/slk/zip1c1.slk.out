@@ -1,3 +1,4 @@
+========zip1c1.slk ==========
 Starting Omega...oc
 HL is defined.
 H1 is defined.
@@ -42,4 +43,4 @@ G1 is defined.
 [ H1(x_29,y_30) ::= emp&x_29=null,
  G1(x_31,y_32,res_33) ::= emp&x_31=null & res_33=null & res_33=x_31]
 *************************************
-
+====================

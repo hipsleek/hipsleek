@@ -1,3 +1,4 @@
+========tll-1a.slk ==========
 Starting Omega...oc
 H is defined.
 G is defined.
@@ -38,6 +39,6 @@ flted_30_85=null,
  or emp&right_29_111=null
  ,
  H_8(left_29_113,r_114) ::= H(left_29_113,l_47'),
- H_0(a,b) ::=UNKNOWN]
+ H_0(a,b) ::= NONE]
 *************************************
-
+====================

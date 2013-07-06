@@ -1,3 +1,4 @@
+========dll-app-bug1d.slk ==========
 Starting Omega...oc
 HP_7 is defined.
 HP_9 is defined.
@@ -29,9 +30,10 @@ Entail (4) : Valid.
                    HP_70(l2,x@NI)]
 
 
+!!! inferred contradiction : : x!=null
+!!! Andreea 1 : we need to call add_new_sleek_logging_entry to do sleek_logging
 Entail (5) : Valid. 
 
  <1>hfalse&false&{FLOW,(19,20)=__norm}[]
  inferred hprel: [HP_9(x,l2) --> emp&x!=null]
-
-
+====================

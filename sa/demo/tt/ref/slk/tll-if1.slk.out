@@ -1,3 +1,4 @@
+========tll-if1.slk ==========
 Starting Omega...oc
 H is defined.
 G is defined.
@@ -32,4 +33,4 @@ H_3a is defined.
  H(x_33) ::= x_33::node<left_25_800,right_25_801>@M * H(left_25_800) * H(right_25_801)&
 right_25_801!=null]
 *************************************
-
+====================

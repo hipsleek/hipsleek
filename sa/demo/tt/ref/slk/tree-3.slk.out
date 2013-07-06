@@ -1,3 +1,4 @@
+========tree-3.slk ==========
 Starting Omega...oc
 H is defined.
 HP_1 is defined.
@@ -36,6 +37,6 @@ G is defined.
  HP_1(left) * x_49::node<Anon_12,left,right>@M&right=null
  or HP_1(left) * x_49::node<Anon_12,left,right>@M * G(right)&right!=null
  ,
- HP_1(a) ::=UNKNOWN]
+ HP_1(a) ::= NONE]
 *************************************
-
+====================

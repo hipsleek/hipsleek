@@ -1,3 +1,4 @@
+========tree-bug1.slk ==========
 Starting Omega...oc
 H is defined.
 G is defined.
@@ -6,5 +7,4 @@ Entail (1) : Valid.
 
  <1>emp&x=null & v_bool_23_771' & x=null & v_bool_23_771' & v_int_23_759'=0 & res=v_int_23_759'&{FLOW,(19,20)=__norm}[]
  inferred hprel: [H(x)&x=null --> G(x)]
-
-
+====================

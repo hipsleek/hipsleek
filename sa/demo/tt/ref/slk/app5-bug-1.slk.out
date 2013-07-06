@@ -1,3 +1,4 @@
+========app5-bug-1.slk ==========
 Starting Omega...oc
 H2 is defined.
 HP_3 is defined.
@@ -38,6 +39,6 @@ G2 is defined.
  or x_51::node<val_34_821,next_34_822>@M * G2(next_34_822,y_52)&
     next_34_822!=null
  ,
- HP_4(a,b) ::=UNKNOWN]
+ HP_4(a,b) ::= NONE]
 *************************************
-
+====================

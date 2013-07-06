@@ -1,3 +1,4 @@
+========single.slk ==========
 Starting Omega...oc
 HP_4 is defined.
 HP_5 is defined.
@@ -15,5 +16,4 @@ Entail (1) : Valid.
                   emp&next_34_803=null --> HP_4(next_34_803,next_29_789@NI); 
                   next_29_789::node<val_29_73,next_29_74>@M * 
                    HP_5(next_29_74,t_32'@NI) --> HP_5(next_29_789,t_32'@NI)]
-
-
+====================

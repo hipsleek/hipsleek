@@ -1,3 +1,4 @@
+========last-2b.slk ==========
 Starting Omega...oc
 H is defined.
 HP_1 is defined.
@@ -13,5 +14,4 @@ Entail (1) : Valid.
                    GP_3(next_18_813,res@NI) * 
                    res::node<val_23_830,v_null_23_836>@M&next_18_813!=null & 
                    v_null_23_836=null --> G(res,x)]
-
-
+====================

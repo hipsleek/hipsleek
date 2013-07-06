@@ -1,3 +1,4 @@
+========sll-dll-2-bug-1.slk ==========
 Starting Omega...oc
 H1 is defined.
 HP_2 is defined.
@@ -11,5 +12,4 @@ Entail (1) : Valid.
                    c'!=null --> c'::node<val_21_35,prev_21_36,next_21_37>@M * 
                    HP_38(prev_21_36,p@NI) * HP_39(next_21_37,p@NI) * 
                    HP_40(p,c'@NI)]
-
-
+====================

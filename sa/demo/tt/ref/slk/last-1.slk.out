@@ -1,3 +1,4 @@
+========last-1.slk ==========
 Starting Omega...oc
 H is defined.
 HP_1 is defined.
@@ -67,7 +68,7 @@ HP_3 is defined.
  n_66::node<Anon_11,n>@M * HP_1(n)
  or emp&n_66=null
  ,
- HP_2(a,b) ::=UNKNOWN,
- HP_3(a,b) ::=UNKNOWN]
+ HP_2(a,b) ::= NONE,
+ HP_3(a,b) ::= NONE]
 *************************************
-
+====================

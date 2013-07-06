@@ -1,3 +1,4 @@
+========loop1.slk ==========
 Starting Omega...oc
 P is defined.
 G is defined.
@@ -50,4 +51,4 @@ G is defined.
 [ P(x_19) ::= emp,
  G(x_25) ::= x_25::cell<Anon_24>@M]
 *************************************
-
+====================

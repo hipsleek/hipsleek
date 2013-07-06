@@ -1,5 +1,7 @@
+Fatal error: exception Stream.Error("EQUIV expected after [meta_constr] (in [reldefn_cmd])")
+========tll-if-conquer.slk ==========
 Starting Omega...oc
 File "../tll-if-conquer.slk", line 19, characters 16-17
  error: Stream.Error("EQUIV expected after [meta_constr] (in [reldefn_cmd])")
  at:(Program not linked with -g, cannot print stack backtrace)
-Fatal error: exception Stream.Error("EQUIV expected after [meta_constr] (in [reldefn_cmd])")
+====================

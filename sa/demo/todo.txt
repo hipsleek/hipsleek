@@ -4019,6 +4019,9 @@ Perform Conjunctive Unification (without loss)
 Confirm Equation:
  G(t) ::= t::tree<children_30_986>@M * G2(children_30_986)
 =====================================================================
+# tree.slk
+
+!!! >>>>>> post-predicates: step post-61: weaken<<<<<<Fatal error: exception Failure("iast.gather_type_info_heap :gather_type_info_heap: relation H cannot be found")
 =====================================================================
 =====================================================================
 =====================================================================

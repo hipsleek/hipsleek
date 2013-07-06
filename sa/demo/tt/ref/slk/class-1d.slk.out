@@ -1,3 +1,4 @@
+========class-1d.slk ==========
 Starting Omega...oc
 H is defined.
 G is defined.
@@ -7,5 +8,4 @@ Entail (1) : Valid.
 
  <1>emp&a=null&{FLOW,(19,20)=__norm}[]
  inferred hprel: [H(c) --> K(c); G(b)&b!=null --> emp]
-
-
+====================

@@ -1,3 +1,4 @@
+========tree-6c3.slk ==========
 Starting Omega...oc
 G is defined.
 H is defined.
@@ -27,7 +28,7 @@ HP_1 is defined.
 *************************************
 [ H(x_37) ::= x_37::node<key_31_797,left_31_798,right_31_799>@M * HP_1(left_31_798) * 
 HP_0(right_31_799),
- HP_1(a) ::=UNKNOWN,
- HP_0(a) ::=UNKNOWN]
+ HP_1(a) ::= NONE,
+ HP_0(a) ::= NONE]
 *************************************
-
+====================

@@ -1,3 +1,4 @@
+========assert-1-bug-5.slk ==========
 Starting Omega...oc
 H_9 is defined.
 
@@ -11,5 +12,4 @@ Entail (2) : Valid.
 
  <1>H_9(n) * x::node<n>@M[Orig]&x=x' & n=t_30' & n=null&{FLOW,(19,20)=__norm}[]
  inferred pure: [n=null]
-
-
+====================

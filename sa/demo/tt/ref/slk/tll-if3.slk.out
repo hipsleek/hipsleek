@@ -1,3 +1,4 @@
+========tll-if3.slk ==========
 Starting Omega...oc
 H is defined.
 G is defined.
@@ -34,6 +35,6 @@ H_3a is defined.
     res_34::node<v_node_32_833,v_node_31_823>@M&left_25_800=v_node_32_833 & 
     right_25_801=v_node_31_823 & res_34=x_33 & right_25_801!=null
  ,
- H_2a(a) ::=UNKNOWN]
+ H_2a(a) ::= NONE]
 *************************************
-
+====================

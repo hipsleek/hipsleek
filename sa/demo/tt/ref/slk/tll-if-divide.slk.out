@@ -1,3 +1,4 @@
+========tll-if-divide.slk ==========
 Starting Omega...oc
 H is defined.
 G is defined.
@@ -44,18 +45,15 @@ H_3a is defined.
 *************************************
 *******relational definition ********
 *************************************
-path: (1,2)
-[HP_RELDEFN H_3:  H_3(right_25_34) ::=  H(right_25_34)&right_25_34!=null]
-UNKNOWN: [(H_2,[a])]
+  H_3(right_25_34)<-> H(right_25_34)&right_25_34!=null
+ Declare_Unknown (1,2)[H_2]
 *************************************
 
 
 *************************************
 *******relational definition ********
 *************************************
-path: (1,1)
-[HP_RELDEFN H:  H(x_35) ::=  x_35::node<left_25_800,right_25_801>@M * H_2(left_25_800)&right_25_801=null,
-HP_RELDEFN H_3:  H_3(right_25_36) ::=  emp&right_25_36=null]
-UNKNOWN: []
+  H(x_35)<-> x_35::node<left_25_800,right_25_801>@M * H_2(left_25_800)&right_25_801=null
+  H_3(right_25_36)<-> emp&right_25_36=null
 *************************************
-
+====================

@@ -1,3 +1,4 @@
+========two.slk ==========
 Starting Omega...oc
 H2 is defined.
 G2 is defined.
@@ -36,7 +37,7 @@ y_54::node<val_27_794,next_27_52>@M * HP_9(next_27_52,x_53),
     HP_9(next_27_57,x_58) * y_59::node<val_27_794,next_27_57>@M&
     next_24_784!=null
  ,
- HP_5(a,b) ::=UNKNOWN,
- HP_9(a,b) ::=UNKNOWN]
+ HP_5(a,b) ::= NONE,
+ HP_9(a,b) ::= NONE]
 *************************************
-
+====================
