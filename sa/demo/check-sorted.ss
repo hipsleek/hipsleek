@@ -23,9 +23,39 @@ bool check_sorted(node x, int v)
 } 
 
 /*
-# check-sorted.ss
+# check-sorted.ss --sa-en-pure-field 
 
---sa-en-pure-field 
+GOT which is very good but a bit ambiguous
+with respecy to HP_921
+-------------------------------------------
+ H(x_955,v_956) ::= 
+ x_955::node<val_16_943,next_16_944>@M * HP_921(next_16_944,v_956)&
+   val_16_943>=v_956
+ or emp&x_955=null,
+
+ G(x_961,v_962) ::= 
+ emp&x_961=null
+ or x_961::node<val_16_918,next_16_919>@M * G(next_16_919,val_16_918)&
+    val_16_918>=v_962,
+
+ HP_921(next_16_957,v_958) ::= H(next_16_957,val_16_918)&v_958<=val_16_918]
+--------------------------------------------
+The last equation should have been:
+ HP_921(next_16_957,v_958) & v_958<=val_16_918 
+    <--> H(next_16_957,val_16_918)
+
+If we confirm it before H, we would have an opportunity to inline it
+during simplication
+ H(x_955,v_956) & x_255!=null -->
+   x_955::node<val_16_943,next_16_944>@M * HP_921(next_16_944,v_956)&
+   val_16_943>=v_956
+ H(x_955,v_956) & x_255!=null -->
+   x_955::node<val_16_943,next_16_944>@M * H(next_16_944,val_16_943) &
+   val_16_943>=v_956
+This would yield a perfect result.
+
+
+===================================
 
 GOT
 ===

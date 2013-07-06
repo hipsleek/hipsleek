@@ -37,7 +37,7 @@ and mem_perm_formula = {mem_formula_exp : CP.exp;
 			mem_formula_exact : bool;
 			mem_formula_field_layout : (ident * (ann list)) list;
 			mem_formula_guards : CP.formula list; 
-			}
+Sh_			}
 		
 and formula_type =
   | Simple
