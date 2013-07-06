@@ -4175,6 +4175,25 @@ Entail (2) : Valid.
  inferred hprel: [H2(x,v@NI)&x!=null --> x::node<a_33,n_34>@M * 
                    HP_35(n_34,v@NI)]
 =====================================================================
+# check-multi-tree.ss
+
+If we had processed HP_987 before H, we would have been able
+to inline away HP_987. This is because HP_987 is simpler
+than H, and should be considered first.
+
+[ H(t_1007) ::= t_1007::tree<children_30_986>@M * HP_987(children_30_986),
+ H2(l_1009) ::= 
+ H(child_38_997) * H2(sibling_38_996) * 
+ l_1009::node<child_38_997,sibling_38_996>@M
+ or emp&l_1009=null
+ ,
+ G2(l_1010) ::= 
+ emp&l_1010=null
+ or l_1010::node<child_38_955,sibling_38_956>@M * G2(sibling_38_956) * 
+    G(child_38_955)
+ ,
+ G(t_1011) ::= t_1011::tree<children_30_986>@M * G2(children_30_986),
+ HP_987(children_30_1008) ::= H2(children_30_1008)]
 =====================================================================
 =====================================================================
 =====================================================================
