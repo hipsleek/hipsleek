@@ -1374,8 +1374,13 @@ and trans_hp (prog : I.prog_decl) (hpdef : I.hp_decl) : (C.hp_decl * C.rel_decl)
   (* Need to collect the type information before translating the formula *)
   let n_tl = gather_type_info_formula prog hpdef.I.hp_formula n_tl false in
   let (n_tl,crf) = trans_formula  prog false [] false hpdef.I.hp_formula n_tl false in
+  (*non-ptrs are @NI by default*)
+  let hp_sv_vars1 = List.map (fun (sv, i_kind) ->
+      let n_i_kind = if not (CP.is_node_typ sv) then NI else i_kind in
+      (sv, n_i_kind)
+  ) hp_sv_vars in
   let chprel = {C.hp_name = hpdef.I.hp_name; 
-  C.hp_vars_inst = hp_sv_vars;
+  C.hp_vars_inst = hp_sv_vars1;
   Cast.hp_root_pos = 0; (*default, reset when def is inferred*)
   C.hp_is_pre = hpdef.I.hp_is_pre;
   C.hp_formula = crf; }

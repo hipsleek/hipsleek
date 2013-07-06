@@ -4162,7 +4162,7 @@ There is no point in instantiating integer
 type, such as HP_23(v,x@NI). By default,
 H(x,v) ought to be H(x,v@NI).
 
-Thus both entailments should cause teh
+Thus both entailments should cause the
 same outcome!
 
 Entail (1) : Valid. 

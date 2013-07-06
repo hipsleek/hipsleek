@@ -3,8 +3,8 @@ data node {
  node next;
 }
 
-HeapPred H(node x, int@NI v). // non-ptrs are @NI by default
-PostPred G(node x, int@NI v). // non-ptrs are @NI by default
+HeapPred H(node x, int v). // non-ptrs are @NI by default
+PostPred G(node x, int v). // non-ptrs are @NI by default
 
 bool check_sorted(node x, int v)
   infer [H,G]
