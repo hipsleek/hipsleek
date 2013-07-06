@@ -12,11 +12,14 @@ let tbl_pointer_typ : (Cil.typ, Globals.typ) Hashtbl.t = Hashtbl.create 3
 (* hash table contains Iast.data_decl structures that are used to represent pointer types *)
 let tbl_pointer_data_decl : (Globals.typ, Iast.data_decl) Hashtbl.t = Hashtbl.create 3
 
-(* hash table contains Iast.data_decl structures that are used to represent pointer types *)
+(* hash table contains Iast.data_decl structures that are used to represent struct types *)
 let tbl_struct_data_decl : (Globals.typ, Iast.data_decl) Hashtbl.t = Hashtbl.create 1
 
-(* hash table map between a lval (in string form) and a pointer to its address *)
-let tbl_addrof_lval : (string, Iast.exp) Hashtbl.t = Hashtbl.create 3
+(* hash table map lval expressions (in string form) to their address holder generated-pointers *)
+let tbl_addrof_holder : (string, Iast.exp) Hashtbl.t = Hashtbl.create 3
+
+(* hash table map content of the address holders to expresses they hold *)
+let tbl_addrof_data : (string, Iast.exp) Hashtbl.t = Hashtbl.create 3
 
 (* list of address-represented pointer declaration *)
 let aux_local_vardecls : Iast.exp list ref = ref []
@@ -356,7 +359,7 @@ let rec gather_addrof_info_stmt (stmt: Cil.stmt)  : (Cil.lval * Iast.exp) list =
       let r4 = gather_addrof_info_block blk2 in
       Gen.BList.remove_dups_eq eq_lval (r1 @ r2 @r3 @ r4)
     )
-  | Cil.HipStmtSpec (iast_exp, l) -> []
+  | Cil.HipStmt (iast_exp, l) -> []
 
 
 and gather_addrof_info_block (blk: Cil.block) : (Cil.lval * Iast.exp) list =
@@ -401,7 +404,7 @@ and gather_addrof_info_exp (e: Cil.exp) : (Cil.lval * Iast.exp) list =
       let pos = translate_location l in
       let lv_str = string_of_cil_lval lv in
       try
-        let holder_var = Hashtbl.find tbl_addrof_lval lv_str in
+        let holder_var = Hashtbl.find tbl_addrof_holder lv_str in
         [(lv, holder_var)]
       with Not_found -> (
         let lv_ty = typ_of_cil_lval lv in
@@ -429,7 +432,7 @@ and gather_addrof_info_exp (e: Cil.exp) : (Cil.lval * Iast.exp) list =
           )
         ) in
         (* define new pointer var px that will be used to represent x: {x, &x} --> {*px, px} *)
-        let vname = "addrof_p_" ^ (string_of_int (Hashtbl.length tbl_addrof_lval)) in
+        let vname = "addrof_p_" ^ (string_of_int (Hashtbl.length tbl_addrof_holder)) in
         let init_params = List.fold_left (
           fun params field ->
             let ((ftyp, _), _, _, _) = field in
@@ -448,7 +451,13 @@ and gather_addrof_info_exp (e: Cil.exp) : (Cil.lval * Iast.exp) list =
         let vardecl = Iast.mkVarDecl datatyp decl pos in
         aux_local_vardecls := !aux_local_vardecls @ [vardecl];
         let holder_var = Iast.mkVar vname pos in
-        Hashtbl.add tbl_addrof_lval lv_str holder_var;
+        Hashtbl.add tbl_addrof_holder lv_str holder_var;
+        let base = Iast.mkVar vname pos in
+        let fields = ["pdata"] in
+        let e2 = Iast.mkMember base fields None pos in
+        let e2_str = Iprinter.string_of_exp e2 in
+        let lv_exp = translate_lval lv in
+        Hashtbl.add tbl_addrof_data e2_str lv_exp;
         [(lv, holder_var)]
       )
     )
@@ -734,6 +743,7 @@ and translate_lval (lv: Cil.lval) : Iast.exp =
       newexp
     )
 
+
 and translate_exp (e: Cil.exp) : Iast.exp =
   match e with
   | Cil.Const (c, l) -> translate_constant c (Some l)
@@ -808,7 +818,7 @@ and translate_exp (e: Cil.exp) : Iast.exp =
       let lv_str = string_of_cil_lval lv in
       let lv_holder = (
         try
-          Hashtbl.find tbl_addrof_lval lv_str
+          Hashtbl.find tbl_addrof_holder lv_str
         with Not_found ->
           report_error_msg ("translate_exp: lval holder of '" ^ lv_str ^ "' is not found.")
       ) in
@@ -824,16 +834,42 @@ and translate_instr (instr: Cil.instr) : Iast.exp list =
         let le = translate_lval lv in
         let re = translate_exp exp in
         let set_exp = Iast.mkAssign Iast.OpAssign le re None pos in
-        let update_holder_exps = (
+        let aux_addrof_holder_exps = (
           try
             let lv_str = string_of_cil_lval lv in
-            let lv_holder = Hashtbl.find tbl_addrof_lval lv_str in
+            let lv_holder = Hashtbl.find tbl_addrof_holder lv_str in
             let e1 = Iast.mkMember lv_holder ["pdata"] None pos in
             let e2 = Iast.mkAssign Iast.OpAssign e1 le None pos in
             [e2]
           with Not_found -> []
         ) in
-        [set_exp] @ update_holder_exps
+        (* update addrof_data table *)
+        let _ = (
+          let continue = ref true in
+          let e1 = ref re in
+          let e2 = ref le in
+          while !continue do
+            try
+              let e1_data = Iast.mkMember !e1 ["pdata"] None pos in
+              e1 := Hashtbl.find tbl_addrof_data (Iprinter.string_of_exp e1_data);
+              e2 := Iast.mkMember !e2 ["pdata"] None pos;
+              Hashtbl.add tbl_addrof_data (Iprinter.string_of_exp !e2) !e1;
+              continue := true;
+            with Not_found -> continue := false;
+          done;
+        ) in
+        let aux_addrof_data_exp = (
+          match lv with
+          | (Cil.Mem _, _, _) -> (
+              try
+                let e1 = Hashtbl.find tbl_addrof_data (Iprinter.string_of_exp le) in
+                let e2 = Iast.mkAssign Iast.OpAssign e1 le None pos in
+                [e2]
+              with Not_found -> []
+            )
+          | _ -> []
+        ) in
+        [set_exp] @ aux_addrof_holder_exps @ aux_addrof_data_exp
       )
     | Cil.Call (lv_opt, exp, exps, l) -> (
         let pos = translate_location l in
@@ -865,18 +901,30 @@ and translate_instr (instr: Cil.instr) : Iast.exp list =
                 Iast.mkVar vname pos
               ) in
               let tmp_assign = Iast.mkAssign Iast.OpAssign tmp_var callee None pos in
-              let lexp = translate_lval lv in
-              let call_assign = Iast.mkAssign Iast.OpAssign lexp tmp_var None pos in
-              let update_holder_exps = (
+              let le = translate_lval lv in
+              let call_assign = Iast.mkAssign Iast.OpAssign le tmp_assign None pos in
+              let aux_addrof_holder_exps = (
                 try
                   let lv_str = string_of_cil_lval lv in
-                  let lv_holder = Hashtbl.find tbl_addrof_lval lv_str in
+                  let lv_holder = Hashtbl.find tbl_addrof_holder lv_str in
                   let e1 = Iast.mkMember lv_holder ["pdata"] None pos in
-                  let e2 = Iast.mkAssign Iast.OpAssign e1 lexp None pos in
+                  let e2 = Iast.mkAssign Iast.OpAssign e1 le None pos in
                   [e2]
                 with Not_found -> []
               ) in
-              [tmp_assign] @ update_addrof_args_exps @ [call_assign] @ update_holder_exps
+              let aux_addrof_data_exp = (
+                match lv with
+                | (Cil.Mem _, _, _) -> (
+                    try
+                      let e1 = Hashtbl.find tbl_addrof_data (Iprinter.string_of_exp le) in
+                      let e2 = Iast.mkAssign Iast.OpAssign e1 le None pos in
+                      [e2]
+                    with Not_found -> []
+                  )
+                | _ -> []
+              ) in
+              [tmp_assign] @ update_addrof_args_exps @ [call_assign] 
+              @ aux_addrof_holder_exps @ aux_addrof_data_exp
             )
         ) in
         newexp
@@ -884,8 +932,7 @@ and translate_instr (instr: Cil.instr) : Iast.exp list =
     | Cil.Asm _ -> []           (* skip translating the ASM... *)
   ) in
   new_exp
-  (* let collected_exps = [new_exp] in *)
-  (* merge_iast_exp collected_exps     *)
+
 
 and translate_stmt (s: Cil.stmt) : Iast.exp =
   let skind = s.Cil.skind in
@@ -970,8 +1017,43 @@ and translate_stmt (s: Cil.stmt) : Iast.exp =
       let e2 = translate_block blk2 in
       let newexp = Iast.mkTry e1 [] [e2] None p in
       newexp
-  | Cil.HipStmtSpec (iast_exp, l) -> iast_exp
+  | Cil.HipStmt (iast_exp, l) -> 
+      let p = translate_location l in
+      translate_hip_stmt iast_exp p
 
+
+and translate_hip_stmt (stmt: Iast.exp) pos : Iast.exp =
+  match stmt with
+  | Iast.Assert assert_e -> (
+      let assert_vars = (
+        match assert_e.Iast.exp_assert_asserted_formula with
+        | None -> []
+        | Some (sf, b) -> Iformula.struc_free_vars true sf
+      ) in
+      let assume_vars = (
+        match assert_e.Iast.exp_assert_assumed_formula with
+        | None -> []
+        | Some f -> Iformula.all_fv f
+      ) in
+      let vars = fst (List.split (assert_vars @ assume_vars)) in
+      let vars = Gen.BList.remove_dups_eq (=) vars in
+      let update_exps = List.fold_left (fun es v ->
+        let new_es = (
+          try
+            let v_holder = Hashtbl.find tbl_addrof_holder v in
+            let e1 = Iast.mkMember v_holder ["pdata"] None pos in
+            let e2 = Iast.mkVar v pos in
+            let e3 = Iast.mkAssign Iast.OpAssign e2 e1 None pos in
+            [e3]
+          with Not_found -> []
+        ) in
+        es @ new_es
+      ) [] vars in
+      merge_iast_exp (update_exps @ [stmt])
+    )
+  | Iast.Dprint _ -> stmt
+  | _ -> report_error_msg ("translate_hip_stmt: unexpected hip statement: "
+                           ^ (Iprinter.string_of_exp stmt))
 
 and translate_block (blk: Cil.block): Iast.exp =
   let stmts = blk.Cil.bstmts in
@@ -1063,7 +1145,8 @@ and translate_global_var (vinfo: Cil.varinfo) (iinfo: Cil.initinfo)
 
 and translate_fundec (fundec: Cil.fundec) (lopt: Cil.location option) : Iast.proc_decl =
   (* reset some local setting *)
-  Hashtbl.clear tbl_addrof_lval;
+  Hashtbl.clear tbl_addrof_holder;
+  Hashtbl.clear tbl_addrof_data;
   aux_local_vardecls := [];
   (* supporting functions *)
   let translate_funtyp (ty: Cil.typ) : Globals.typ = (
@@ -1199,7 +1282,7 @@ and translate_file (file: Cil.file) : Iast.prog_decl =
   Hashtbl.reset tbl_pointer_typ;
   Hashtbl.reset tbl_pointer_data_decl;
   Hashtbl.reset tbl_struct_data_decl;
-  Hashtbl.reset tbl_addrof_lval;
+  Hashtbl.reset tbl_addrof_holder;
   Hashtbl.reset tbl_bool_casting_proc;
   Hashtbl.reset tbl_logical_not_proc;
   aux_local_vardecls := [];
