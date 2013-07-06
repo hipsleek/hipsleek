@@ -4175,7 +4175,7 @@ Entail (2) : Valid.
  inferred hprel: [H2(x,v@NI)&x!=null --> x::node<a_33,n_34>@M * 
                    HP_35(n_34,v@NI)]
 =====================================================================
-# check-multi-tree.ss
+# check-multi-tree.ss: FIXED
 
 If we had processed HP_987 before H, we would have been able
 to inline away HP_987. This is because HP_987 is simpler

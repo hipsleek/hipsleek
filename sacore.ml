@@ -40,9 +40,9 @@ let search_pred_4_equal_x constrs post_hps=
                if CP.eq_spec_var hp1 hp0 then (ls1@[cs1], ls2)
                else (ls1, ls2@[(hp1,cs1)])
            ) ([],[]) rest in
-           let grp1 = List.filter (fun cs -> not(cs_rhs_is_only_neqNull cs)) (cs0::grp) in
+           let grp1 = (cs0::grp) in
            let n_res = if List.length grp1 > 1 then
-             (cand_equal,rem_pre_constrs@(cs0::grp))
+             (cand_equal,rem_pre_constrs@(grp1))
            else (cand_equal@[(hp0,cs0)],rem_pre_constrs)
            in
            partition_equal n_res rest1
