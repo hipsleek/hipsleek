@@ -59,13 +59,7 @@ bool check_child (node l, node prv, tree par)
  H_1(child_07,prv,par)&par=par' & 
   prev_08=prv --> H1(child_07).
 
- H2(l,prv,par)&l=null --> G2(l,prv,par).
 
- H_2(prev_08,prv,par) * 
-  H_4(parent_10,prv,par) * 
-  l::node<child_07,prev_08,next_09,parent_10>@M * 
-  G2(next_09,l,par) * G1(child_07)&par=parent_10 & 
-  prev_08=prv --> G2(l,prv,par).
 
  H_2(prev_08,prv,par) --> emp&
   forall(parent_10:((par!=parent_10 | prv>=prev_08)) & 
@@ -86,8 +80,18 @@ bool check_child (node l, node prv, tree par)
  H_5(children_84)&
   children_84!=null --> H2(children_84,n_38',t).
 
+---------
+
+ H2(l,prv,par)&l=null --> G2(l,prv,par).
+
  H_5(children_84) * t::tree<val_83,children_84>@M&
   children_84=null --> G1(t).
+
+ H_2(prev_08,prv,par) * 
+  H_4(parent_10,prv,par) * 
+  l::node<child_07,prev_08,next_09,parent_10>@M * 
+  G2(next_09,l,par) * G1(child_07)&par=parent_10 & 
+  prev_08=prv --> G2(l,prv,par).
 
  t::tree<val_83,children_84>@M * 
   G2(children_84,n_1105,t)&children_84!=null & 

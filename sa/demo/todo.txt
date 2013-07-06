@@ -4197,6 +4197,8 @@ than H, and should be considered first.
 =====================================================================
 # mcf-1.slk
 
+Should have a better type error message 
+
 ERROR: at mcf-1.slk_66:47_66:58 
 Message: gather_type_info_var : unexpected exceptionInvalid_argument("[ocamlgraph] iter_succ")
  Fatal error: exception Failure("gather_type_info_var : unexpected exceptionInvalid_argument("[ocamlgraph] iter_succ")")

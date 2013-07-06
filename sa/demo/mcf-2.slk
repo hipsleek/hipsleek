@@ -1,4 +1,5 @@
 data tree {
+    int val; 
     node children;
     }.
     
@@ -16,7 +17,7 @@ HeapPred H_1(tree a,node@NI c,tree@NI b).
 HeapPred H_2(node a,node@NI c,tree@NI b).
 HeapPred H_3(node a,node@NI c,tree@NI b).
 HeapPred H_4(tree a,node@NI c,tree@NI b).
-HeapPred H_5(node a).
+HeapPred H_5(tree a).
 PostPred G2(node a,node@NI c,tree@NI b).
 Declare_Unknown [H_2,H_4].
 
@@ -33,12 +34,10 @@ relAssume
   prev_08=prv --> H2(next_09,l,par). // what should l be?
 
 relAssume
- H_1(child_07,prv,par) //&par=par' & prev_08=prv 
-   --> H1(child_07).
-
+ H_1(child_07,prv,par)&par=par' & prev_08=prv --> H1(child_07).
 
 relAssume
- H1(t) --> t::tree<children_84> * H_5(children_84).
+ H1(t) --> t::tree<val_83,children_84>@M * H_5(children_84).
 
 relAssume
  H_5(children_84)&
@@ -71,7 +70,7 @@ relAssume
 
  H2(l,prv,par)&l=null --> G2(l,prv,par).
 
- H_5(children_84) * t::tree<children_84>@M&
+ H_5(children_84) * t::tree<val_83,children_84>@M&
   children_84=null --> G1(t).
 
  H_2(prev_08,prv,par) * 
@@ -80,7 +79,7 @@ relAssume
   G2(next_09,l,par) * G1(child_07)&par=parent_10 & 
   prev_08=prv --> G2(l,prv,par).
 
- t::tree<children_84>@M * 
+ t::tree<val_83,children_84>@M * 
   G2(children_84,n_1105,t)&children_84!=null & 
   n_1105=null --> G1(t).
 
