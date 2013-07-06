@@ -3201,7 +3201,7 @@ let process_one_f_x prog org_args args next_roots hp_subst sh_ldns com_eqNulls c
               let hp_args = CF.get_HRels n_hf1 in
               let fst_args = match hp_args with
                 | [(_,args0)] -> args0
-                | _ -> report_error no_pos "sau.process_one_f: sth wrong"
+                | _ -> report_error no_pos "sau.process_one_f: sth wrong 1"
               in
               let ss2 = List.combine fst_args inter in
               let n_hf2 = CF.h_subst ss2 n_hf1 in
@@ -3797,7 +3797,7 @@ let get_sharing_multiple new_h_preds dnss eqNulls eqPures hprels =
 let mk_orig_hprel_def_x prog is_pre cdefs unk_hps hp r other_args args sh_ldns eqNulls eqPures hprels unk_svl quans=
   let next_roots, dnss = extract_common prog hp r other_args args sh_ldns hprels in
   match next_roots with
-    | [] -> report_error no_pos "sau.generalize_one_hp: sth wrong"
+    | [] -> report_error no_pos "sau.generalize_one_hp: sth wrong 2"
     | _ ->  let _ = DD.ninfo_pprint ("      last root:" ^ (Cprinter.string_of_spec_var_list  next_roots)) no_pos in
       (*generate new hp*)
       let other_args_inst = (List.map (fun sv -> (sv,NI)) other_args) in
@@ -4318,6 +4318,25 @@ let mkConjH_and_norm prog args unk_hps unk_svl f1 f2 pos=
   let pr1 = Cprinter.prtt_string_of_formula in
   Debug.no_2 "mkConjH_and_norm" pr1 pr1 pr1
       (fun _ _ -> mkConjH_and_norm_x prog args unk_hps unk_svl f1 f2 pos) f1 f2
+
+let perform_conj_unify_post_x prog args unk_hps unk_svl fs pos=
+  match fs with
+    | [f1;f2] -> let is_common, sharing_f, n_fs = partittion_common_diff prog args unk_hps unk_svl f1 f2 pos in
+      if not is_common then fs else
+        if List.for_all (fun f ->  is_empty_heap_f f) n_fs then
+          let ps = List.map (fun f -> CF.get_pure f) n_fs in
+          let p = CP.disj_of_list ps pos in
+          let neg_p = CP.mkNot p None pos in
+          if not(TP.is_sat_raw (MCP.mix_of_pure neg_p)) then
+            [sharing_f]
+          else fs
+        else fs
+    | _ -> fs
+
+let perform_conj_unify_post prog args unk_hps unk_svl fs pos=
+  let pr1 = pr_list_ln Cprinter.prtt_string_of_formula in
+  Debug.no_1 "perform_conj_unify_post" pr1 pr1
+      (fun _ -> perform_conj_unify_post_x prog args unk_hps unk_svl fs pos) fs
 
 (*match hprel: with the same args: TODO: enhance with data node + view node*)
 let norm_heap_consj_x h1 h2 equivs=
@@ -5003,21 +5022,34 @@ let combine_hpdefs hpdefs=
   Debug.no_1 "combine_hpdefs" pr1 pr1
       (fun _ -> combine_hpdefs_x hpdefs) hpdefs
 
+let get_pre_fwd post_hps post_pdefs=
+  let process_one_pdef cur_fwd_hps (hp, _, _,_,_, off)=
+    match off with
+      | Some f-> let hps = CF.get_hp_rel_name_formula f in
+        cur_fwd_hps@(CP.diff_svl hps post_hps)
+      | None -> cur_fwd_hps
+  in
+  let fwd_pre = List.fold_left process_one_pdef [] post_pdefs in
+  (CP.remove_dups_svl fwd_pre)
+
 let extract_fwd_pre_defs_x fwd_pre_hps defs=
   let get_pre_def (cur_grps,cur_hps) (def_kind,hf,def)=
     match def_kind with
       | CP.HPRelDefn (hp,_,_) ->
-        let _, args =  CF.extract_HRel hf in
-          ((cur_grps@[(List.map (fun f -> (hp, args, f, [])) (CF.list_of_disjs def))]), cur_hps@[hp])
+            if CP.mem_svl hp fwd_pre_hps then
+              let _, args =  CF.extract_HRel hf in
+              ((cur_grps@[(List.map (fun f -> (hp, args, f, [])) (CF.list_of_disjs def))]), cur_hps@[hp])
+            else (cur_grps,cur_hps)
       | _ -> (cur_grps,cur_hps)
   in
-  List.fold_left get_pre_def ([],[]) defs
+  if fwd_pre_hps = [] then ([],[]) else
+    List.fold_left get_pre_def ([],[]) defs
 
 let extract_fwd_pre_defs fwd_pre_hps defs=
   let pr1 = pr_list_ln Cprinter.string_of_hp_rel_def in
   let pr2 = pr_list_ln (pr_list_ln string_of_par_def_w_name_short) in
-  Debug.no_1 "extract_fwd_pre_defs" pr1 (pr_pair pr2 !CP.print_svl)
-      (fun _ -> extract_fwd_pre_defs_x fwd_pre_hps defs) defs
+  Debug.no_2 "extract_fwd_pre_defs" !CP.print_svl pr1 (pr_pair pr2 !CP.print_svl)
+      (fun _ _ -> extract_fwd_pre_defs_x fwd_pre_hps defs) fwd_pre_hps defs
 
 (************************************************************)
     (****************END SUBST HP DEF*****************)

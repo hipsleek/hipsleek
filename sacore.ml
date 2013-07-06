@@ -16,6 +16,11 @@ module Inf = Infer
 
 let cmp_hp_pos (hp1,pos1) (hp2,pos2)= (CP.eq_spec_var hp1 hp2) && pos1=pos2
 
+let cs_rhs_is_only_neqNull cs=
+  let lhs_hpargs = CF.get_HRels_f cs.CF.hprel_lhs in
+  let args = List.fold_left (fun ls (_, args) -> ls@args) [] lhs_hpargs in
+  CF.is_only_neqNull args [] cs.CF.hprel_rhs
+
 (*
   find all pre-preds that has only one assumption ===> equal
 *)
@@ -35,7 +40,8 @@ let search_pred_4_equal_x constrs post_hps=
                if CP.eq_spec_var hp1 hp0 then (ls1@[cs1], ls2)
                else (ls1, ls2@[(hp1,cs1)])
            ) ([],[]) rest in
-           let n_res = if List.length grp > 0 then
+           let grp1 = List.filter (fun cs -> not(cs_rhs_is_only_neqNull cs)) (cs0::grp) in
+           let n_res = if List.length grp1 > 1 then
              (cand_equal,rem_pre_constrs@(cs0::grp))
            else (cand_equal@[(hp0,cs0)],rem_pre_constrs)
            in

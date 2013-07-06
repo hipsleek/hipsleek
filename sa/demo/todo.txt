@@ -3891,7 +3891,7 @@ It seems not to have been collected.
  l::node<child_38_955,sibling_38_956>@M * G2(sibling_38_956) * 
   G(child_38_955) --> G2(l)]
 =====================================================================
-# multi-tree-2.slk
+# multi-tree-2.slk: FIXED
 
 GOT
 
@@ -3946,7 +3946,7 @@ Confirmed as:
        H(child_38_955) * H2(sibling_38_956) & l!=null
   or l=null --> emp.
 =====================================================================
-# multi-tree-3.slk
+# multi-tree-3.slk: FIXED
 
 GOT below which is too complex:
 

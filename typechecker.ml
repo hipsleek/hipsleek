@@ -2589,6 +2589,7 @@ and check_proc iprog (prog : prog_decl) (proc : proc_decl) cout_option (mutual_g
                           (* DD.info_hprint (add_str "len(rel_ass_stk)" pr_len) ras no_pos; *)
                           (* DD.info_hprint (add_str "hp_lst_assume" pr) ras no_pos; *)
                           print_endline (pr (ras));
+                        print_endline (pr (hp_lst_assume));
                           (* print_endline (Infer.rel_ass_stk # string_of_reverse); *)
                           if !Globals.testing_flag then print_endline "<rstop>*************************************" 
                         end;
