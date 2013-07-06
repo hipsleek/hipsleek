@@ -681,6 +681,8 @@ let sa_refine_dang = ref false
 
 let pred_elim_useless = ref false
 
+let pred_infer_flag = ref true
+
 let pred_elim_dangling = ref false
 
 (* let sa_inlining = ref false *)

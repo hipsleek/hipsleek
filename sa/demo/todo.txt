@@ -4027,6 +4027,8 @@ Confirm Equation:
 
 --sa-en-pure-field 
 
+# EXCEPTION disappeared when I mark all non-pointers as @NI
+
 Issue : should we use relation rather than HeapPred for this.
  This is to try follow correct design decision.
 
@@ -4081,6 +4083,105 @@ shape_infer [H_8][G].
  G(x_27) ::= 
  emp&x_27=null
  or x_27::node<val_16_916,next_16_917>@M * G(next_16_917)
+=====================================================================
+# sorted-4.slk 
+
+GOT
+===
+[ H(x_60,v_61) ::= 
+ x_60::node<val_16_46,next_16_47>@M * H(next_16_47,val_16_58)&
+ v_61<=val_16_46 & v_61<=val_16_58
+ or emp&x_60=null,
+ H_1(next_16_63,v_64) ::= 
+ emp&v_64<=val_16_918 & next_16_63=null
+ or next_16_63::node<val_16_46,next_16_59>@M * H_1(next_16_59,val_16_918)&
+    v_64<=val_16_918 & val_16_918<=val_16_46,
+ H_0(val_16_66,v_67) ::= emp&v_67<=val_16_66]
+
+BETTER ALGO
+===========
+
+Step 1
+------
+Choose simplest which is H_0
+ H_0(val_16_918,v) --> emp&val_16_918>=v.
+ H_0(val_16_918,v) <-> val_16_918>=v.
+
+Step 2
+------
+Choose next simplest which is H_1
+ H_1(n,v)&v<=vv --> H(n,vv).
+
+Confirm equation:
+ H_1(n,v) & v<=vv --> H(n,vv).
+ H_1(n,v) & v<=vv <--> H(n,vv) ----[1]
+
+Step 2
+------
+Choose next simplest which is H
+
+ H(x,v)&x!=null --> x::node<val_16_918,next_16_919>@M * 
+  H_0(val_16_918,v) * H_1(next_16_919,v).
+ H(x,v)&x=null --> emp.  --- [2]
+
+Simplify (by unfolding simple defns only)
+ H(x,v)&x!=null --> x::node<vvv,next_16_919>@M * 
+  H_0(vvv,v) * H_1(next_16_919,v).
+ H(x,v)&x!=null --> x::node<vvv,next_16_919>@M * 
+        vvv>=v * H_1(next_16_919,v).
+ Conditional Unfold of [1] above
+ H(x,v)&x!=null --> x::node<vvv,next_16_919>@M * 
+         * H(next_16_919,vvv) & vvv>=v .--[3]
+
+Conj-unify [2] & [3]
+--------------------
+ H(x,v) --> emp & x=null
+   or x::node<vvv,next_16_919>@M * 
+         * H(next_16_919,vvv) & vvv>=v
+
+Confirm Equation
+----------------
+ H(x,v) <--> emp & x=null
+   or x::node<vvv,next_16_919>@M * 
+         * H(next_16_919,vvv) & vvv>=v
+=====================================================================
+# sorted-4b.slk 
+
+HeapPred H(node x, int v).
+HeapPred H2(node x, int@NI v).
+
+infer [H] H(x,v) & x!=null |- x::node<a,n>.
+print residue.
+
+infer [H2] H2(x,v) & x!=null |- x::node<a,n>.
+print residue.
+
+non-ptr types are @NI by default
+
+There is no point in instantiating integer
+type, such as HP_23(v,x@NI). By default,
+H(x,v) ought to be H(x,v@NI).
+
+Thus both entailments should cause teh
+same outcome!
+
+Entail (1) : Valid. 
+ <1>HP_22(n_21,v) * HP_23(v,x)&x!=null & a=a_20 & n=n_21&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [H(x,v)&x!=null --> x::node<a_20,n_21>@M * 
+                   HP_22(n_21,v@NI) * HP_23(v,x@NI)]
+
+Entail (2) : Valid. 
+ <1>HP_35(n_34,v)&x!=null & a=a_33 & n=n_34&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [H2(x,v@NI)&x!=null --> x::node<a_33,n_34>@M * 
+                   HP_35(n_34,v@NI)]
+=====================================================================
+=====================================================================
+=====================================================================
+=====================================================================
+=====================================================================
+=====================================================================
+=====================================================================
+=====================================================================
 =====================================================================
 =====================================================================
 =====================================================================
