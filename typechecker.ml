@@ -2408,8 +2408,61 @@ and proc_mutual_scc (prog: prog_decl) (proc_lst : proc_decl list) (fn:prog_decl 
   let rec helper lst = 
     match lst with
       | [] -> ()
-      | p::ps -> (fn prog p); helper ps 
-  in helper proc_lst
+      | p::ps ->
+            let _ = (fn prog p) in
+            helper ps
+  in
+  (*verify one scc - collect assumptions if applicable*)
+  let _ = helper proc_lst in
+  ()
+
+let proc_mutual_scc_shape_infer iprog prog scc_procs=
+  (*solve the set of assumptions for scc*)
+  let scc_hprel_ass = List.fold_left (fun r_ass proc -> r_ass@proc.Cast.proc_hprel_ass) [] scc_procs in
+  let scc_hprel_unkmap =  List.fold_left (fun r_map proc -> r_map@proc.Cast.proc_hprel_unkmap) [] scc_procs in
+  let scc_sel_hps = List.fold_left (fun r_hps proc -> r_hps@proc.Cast.proc_sel_hps) [] scc_procs in
+  let scc_sel_post_hps = List.fold_left (fun r_hps proc -> r_hps@proc.Cast.proc_sel_post_hps) [] scc_procs in
+  let scc_hprel, scc_inferred_hps, scc_dropped_hps =
+    if !Globals.sa_en && List.length scc_sel_hps> 0 && List.length scc_hprel_ass > 0 then
+      let res =  if not (!Globals.sa_dnc) then
+        Sa2.infer_shapes iprog prog (* proc.proc_name *)"" scc_hprel_ass
+            scc_sel_hps scc_sel_post_hps (Gen.BList.remove_dups_eq
+                (fun ((hp1,_),_) ((hp2, _),_) ->
+                    (CP.eq_spec_var hp1 hp2 )) scc_hprel_unkmap) [] [] true true
+      else
+        let _= Sa2.infer_shapes_new iprog prog (* proc.proc_name *)"" scc_hprel_ass
+          scc_sel_hps scc_sel_post_hps (Gen.BList.remove_dups_eq
+              (fun ((hp1,_),_) ((hp2, _),_) ->
+                  (CP.eq_spec_var hp1 hp2 )) scc_hprel_unkmap) [] [] true true
+        in ([],[],[])
+      in res
+    else [],[],[]
+  in
+  (*update hpdefs for func call*)
+  let _ = List.iter (fun proc ->
+      let _ = Cast.update_hpdefs_proc prog.Cast.new_proc_decls scc_inferred_hps proc.proc_name in
+      ()) scc_procs
+  in
+  let rel_defs = Sa2.rel_def_stk in
+  if not(rel_defs# is_empty) then
+    begin
+      print_endline "*************************************";
+      print_endline "*******relational definition ********";
+      print_endline "*************************************";
+      if !Globals.testing_flag then print_endline "<dstart>"; 
+      print_endline (rel_defs # string_of_reverse);
+      if !Globals.testing_flag then print_endline "<dstop>"; 
+      print_endline "*************************************";
+      let _ = Sa2.rel_def_stk # reset in
+      ()
+    end;
+  (**************cp_test _ gen_cpfile******************)
+  (* let _ = if(!Globals.cp_test || !Globals.cp_prefile) then *)
+  (*   CEQ.cp_test proc scc_hprel_ass scc_inferred_hps scc_sel_hps in *)
+  (* let _ = if(!Globals.gen_cpfile) then *)
+  (*   CEQ.gen_cpfile prog proc scc_hprel_ass scc_inferred_hps scc_dropped_hps old_hpdecls sel_hp_rels cout_option in *)
+  (**************end cp_test _ gen_cpfile******************)
+  ()
 
 (* checking procedure: (PROC p61) *)
 and check_proc iprog (prog : prog_decl) (proc : proc_decl) cout_option (mutual_grp : proc_decl list) : bool =
@@ -2490,7 +2543,8 @@ and check_proc iprog (prog : prog_decl) (proc : proc_decl) cout_option (mutual_g
 		let pp, exc = 
                   try (* catch exception to close the section appropriately *)
                     (* let f = check_specs prog proc init_ctx (proc.proc_static_specs (\* @ proc.proc_dynamic_specs *\)) body in *)
-		    let old_hpdecls = prog.prog_hp_decls in
+                    (*TODO: old_hpdecls is for CP TEST*)
+		    (* let old_hpdecls = prog.prog_hp_decls in *)
                     let (new_spec,fm,rels,hprels,sel_hp_rels,sel_post_hp_rels,hp_rel_unkmap,f) = check_specs_infer prog proc init_ctx (proc.proc_static_specs (* @ proc.proc_dynamic_specs *)) body true in
                     Debug.trace_hprint (add_str "SPECS (after specs_infer)" pr_spec) new_spec no_pos;
                     Debug.trace_hprint (add_str "fm formula " (pr_list !CF.print_formula)) fm no_pos;
@@ -2507,59 +2561,70 @@ and check_proc iprog (prog : prog_decl) (proc : proc_decl) cout_option (mutual_g
                     (* let hprels = List.map (fun (_,a2,a3)-> (a2,a3)) hprels in *)
                     (* let hp_lst_assume = List.map (fun (_,a2,a3)-> (a2,a3)) hp_lst_assume in *)
                     (* let hp_lst_simplified_assume = Sa2.simplify_lst_constrs hp_lst_assume in *)
+                    (****************************************************************)
+                    (********************SHAPE INFER*****************************)
+                    (****************************************************************)
+                    (*store assumption. solve it when we finish analyse its scc*)
+                    let _ = proc.Cast.proc_hprel_ass <- proc.Cast.proc_hprel_ass@hp_lst_assume in
+                    let _ = proc.Cast.proc_hprel_unkmap <- proc.Cast.proc_hprel_unkmap@hp_rel_unkmap in
+                    let _ = proc.Cast.proc_sel_hps <- proc.Cast.proc_sel_hps@sel_hp_rels in
+                    let _ = proc.Cast.proc_sel_post_hps <- proc.Cast.proc_sel_post_hps@sel_post_hp_rels in
                     if not(Infer.rel_ass_stk# is_empty) then
                       begin
-                        print_endline ""; 
+                        print_endline "";
                         print_endline "*************************************";
                         print_endline "*******relational assumptions (4) ********";
                         print_endline "*************************************";
 			if !Globals.testing_flag then print_endline ("<rstart>"^(string_of_int (List.length hp_lst_assume)));
-						
-                        let pr = pr_list_ln (fun x -> Cprinter.string_of_hprel_short_inst prog x) in
+			let pr = pr_list_ln (fun x -> Cprinter.string_of_hprel_short_inst prog x) in
                         let _ = Infer.rel_ass_stk # reverse in
                         (* print_endline (pr (Infer.rel_ass_stk # get_stk)); *)
                         print_endline (pr (hp_lst_assume));
                         (* print_endline (Infer.rel_ass_stk # string_of_reverse); *)
+                        let _ = Infer.rel_ass_stk # reset in
                         if !Globals.testing_flag then print_endline "<rstop>*************************************" 
                       end;
-		    let s_hprel, ls_inferred_hps, dropped_hps =
-                      if !Globals.sa_en && List.length sel_hp_rels> 0 && List.length hp_lst_assume > 0 then
-                        let res =  if not (!Globals.sa_dnc) then
-                          Sa2.infer_shapes iprog prog proc.proc_name hp_lst_assume
-                              sel_hp_rels sel_post_hp_rels (Gen.BList.remove_dups_eq
-                                  (fun ((hp1,_),_) ((hp2, _),_) ->
-                                      (CP.eq_spec_var hp1 hp2 )) hp_rel_unkmap) [] [] true true
-                        else
-                          let _= Sa2.infer_shapes_new iprog prog proc.proc_name hp_lst_assume
-                            sel_hp_rels sel_post_hp_rels (Gen.BList.remove_dups_eq
-                                (fun ((hp1,_),_) ((hp2, _),_) ->
-                                    (CP.eq_spec_var hp1 hp2 )) hp_rel_unkmap) [] [] true true
-                          in ([],[],[])
-                        in res
-                      else [],[],[]
-                    in
-                    (**update hpdefs for func call*)
-                    let _ = Cast.update_hpdefs_proc prog.Cast.new_proc_decls ls_inferred_hps proc.proc_name
-                    in
-                    let rel_defs = if not (!Globals.sa_old) then
-                      Sa2.rel_def_stk
-                    else Sa.rel_def_stk
-                    in
-                    if not(rel_defs# is_empty) then
-                      begin
-		        print_endline "*************************************";
-		        print_endline "*******relational definition ********";
-		        print_endline "*************************************";
-		        if !Globals.testing_flag then print_endline "<dstart>"; 
-                        print_endline (rel_defs # string_of_reverse);
-		        if !Globals.testing_flag then print_endline "<dstop>"; 
-		        print_endline "*************************************";
-                      end;
+                    (****************************************************************)
+                    (*inference is postponed until all scc procs are analized*)
+                    (********************END SHAPE INFER*****************************)
+                    (****************************************************************)
+		    (* let s_hprel, ls_inferred_hps, dropped_hps = *)
+                    (*   if !Globals.sa_en && List.length sel_hp_rels> 0 && List.length hp_lst_assume > 0 then *)
+                    (*     let res =  if not (!Globals.sa_dnc) then *)
+                    (*       Sa2.infer_shapes iprog prog proc.proc_name hp_lst_assume *)
+                    (*           sel_hp_rels sel_post_hp_rels (Gen.BList.remove_dups_eq *)
+                    (*               (fun ((hp1,_),_) ((hp2, _),_) -> *)
+                    (*                   (CP.eq_spec_var hp1 hp2 )) hp_rel_unkmap) [] [] true true *)
+                    (*     else *)
+                    (*       let _= Sa2.infer_shapes_new iprog prog proc.proc_name hp_lst_assume *)
+                    (*         sel_hp_rels sel_post_hp_rels (Gen.BList.remove_dups_eq *)
+                    (*             (fun ((hp1,_),_) ((hp2, _),_) -> *)
+                    (*                 (CP.eq_spec_var hp1 hp2 )) hp_rel_unkmap) [] [] true true *)
+                    (*       in ([],[],[]) *)
+                    (*     in res *)
+                    (*   else [],[],[] *)
+                    (* in *)
+                    (*update hpdefs for func call*)
+                    (* let _ = Cast.update_hpdefs_proc prog.Cast.new_proc_decls ls_inferred_hps proc.proc_name *)
+                    (* in *)
+                    (* let rel_defs = Sa2.rel_def_stk in *)
+                    (* if not(rel_defs# is_empty) then *)
+                    (*   begin *)
+		    (*     print_endline "*************************************"; *)
+		    (*     print_endline "*******relational definition ********"; *)
+		    (*     print_endline "*************************************"; *)
+		    (*     if !Globals.testing_flag then print_endline "<dstart>";  *)
+                    (*     print_endline (rel_defs # string_of_reverse); *)
+		    (*     if !Globals.testing_flag then print_endline "<dstop>";  *)
+		    (*     print_endline "*************************************"; *)
+                    (*     let _ = Sa2.rel_def_stk # reset in *)
+                    (*     () *)
+                    (*   end; *)
 		    (**************cp_test _ gen_cpfile******************)
-		    let _ = if(!Globals.cp_test || !Globals.cp_prefile) then
-                      CEQ.cp_test proc hp_lst_assume ls_inferred_hps sel_hp_rels in
-		    let _ = if(!Globals.gen_cpfile) then
-                      CEQ.gen_cpfile prog proc hp_lst_assume ls_inferred_hps dropped_hps old_hpdecls sel_hp_rels cout_option in
+		    (* let _ = if(!Globals.cp_test || !Globals.cp_prefile) then *)
+                    (*   CEQ.cp_test proc hp_lst_assume ls_inferred_hps sel_hp_rels in *)
+		    (* let _ = if(!Globals.gen_cpfile) then *)
+                    (*   CEQ.gen_cpfile prog proc hp_lst_assume ls_inferred_hps dropped_hps old_hpdecls sel_hp_rels cout_option in *)
 		    (**************end cp_test _ gen_cpfile******************)
                     let lst_rank = List.map (fun (_,a2,a3)-> (a2,a3)) lst_rank in
                     (*let _ = Ranking.do_nothing in*)
@@ -2729,7 +2794,7 @@ and check_proc iprog (prog : prog_decl) (proc : proc_decl) cout_option (mutual_g
                             Debug.ninfo_hprint (add_str "NEW ASSUME" (pr_list_ln Cprinter.string_of_lhs_rhs)) lst_assume no_pos;
                             Debug.ninfo_hprint (add_str "NEW HP RELS" (pr_list_ln Cprinter.string_of_hprel)) hprels no_pos;
                             Debug.ninfo_hprint (add_str "NEW HP ASSUME" (pr_list_ln Cprinter.string_of_hprel)) hp_lst_assume no_pos;
-			    Debug.ninfo_hprint (add_str "NEW INFERRED HP" (pr_list_ln Cprinter.string_of_hprel)) ls_inferred_hps no_pos;
+			    (* Debug.ninfo_hprint (add_str "NEW INFERRED HP" (pr_list_ln Cprinter.string_of_hprel)) ls_inferred_hps no_pos; *)
                             Debug.tinfo_hprint (add_str "NEW RANK" (pr_list_ln Cprinter.string_of_only_lhs_rhs)) lst_rank no_pos;
                             Debug.tinfo_hprint (add_str "NEW CONJS" string_of_int) ((CF.no_of_cnts new_spec)-(CF.no_of_cnts proc.proc_static_specs)) no_pos;
                             stk_evars # reset;
@@ -2969,7 +3034,8 @@ let check_prog iprog (prog : prog_decl) =
             (* Term.term_check_output Term.term_res_stk; *)
             Term.phase_num_infer_whole_scc prog scc 
           end
-        else prog in
+        else prog
+      in
       let mutual_grp = ref scc in
       Debug.tinfo_hprint (add_str "MG"  (pr_list (fun p -> p.proc_name))) !mutual_grp no_pos;
       let _ = proc_mutual_scc prog scc (fun prog proc ->
@@ -2979,7 +3045,8 @@ let check_prog iprog (prog : prog_decl) =
           Debug.tinfo_hprint (add_str "MG_new"  (pr_list (fun p -> p.proc_name))) !mutual_grp no_pos;
           ignore (check_proc_wrapper iprog prog proc cout_option !mutual_grp)
         end
-      ) in        
+      ) in
+      let _ =  proc_mutual_scc_shape_infer iprog prog scc in
       prog
   ) prog proc_scc 
   in 
