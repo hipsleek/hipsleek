@@ -28,8 +28,8 @@ bool check_tree (tree t)
   ensures res;
 {
    if (t.children==null) return true;
-   else //return check_child(t.children,t,null); 
-        return check_child(t.children,t,t); //: (node * tree * tree)
+   else return check_child(t.children,t,null); 
+        //return check_child(t.children,t,t); //: (node * tree * tree)
 }
 
 bool check_child (node l, tree par, node prv)
@@ -44,7 +44,12 @@ bool check_child (node l, tree par, node prv)
 /*
 # rose-bug-tree.ss 
 
-Typechecker has failed to pick this error!
+Why is there a type: check_child$node~tree~null
+
+ERROR: at rose-bug-tree.ss_31:15_31:45 
+Message: trans_exp :: case CallNRecv :: procedure 2 check_child$node~tree~null is not found
+
+Typechecker has failed to pick error below with check_child(t.children,t,t)
 
 Last Proving Location: 1 File "rose-bug-tree.ss",Line:26,Col:0
 

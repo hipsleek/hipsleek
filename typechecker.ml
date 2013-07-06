@@ -531,15 +531,31 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
                 let _ = Debug.ninfo_hprint (add_str "unknown_rel" !print_svl) unknown_rel no_pos in
                 let _ = Debug.ninfo_hprint (add_str "known_rel" !print_svl) known_rel no_pos in
                 let inf_pos = b.CF.formula_inf_pos in
+                let pr_vars = Cprinter.string_of_spec_var_list in
                 let _ =
                   if not(CP.subset vars pre_post_vars) then
-                    report_error inf_pos "Inferable vars include some external variables!"
+                    begin
+                      let v1 = (add_str "vars" pr_vars) vars in
+                      let v2 = (add_str "pre_post_vars" pr_vars) pre_post_vars in
+                      let v = ("\n"^v1^" "^v2^"\n") in
+                      DD.info_pprint ("WARNING : Inferable vars include some external variables!"^v) inf_pos
+                    end
                   else
                   if not(CP.subset unknown_rel vars_rel) then
-                    report_error inf_pos "Inferable vars do not include some unknown relation!"
+                    begin
+                      let v1 = (add_str "unknown_rel" pr_vars) unknown_rel in
+                      let v2 = (add_str "vars_rel" pr_vars) vars_rel in
+                      let v = ("\n"^v1^" "^v2^"\n") in
+                      report_error inf_pos ("Inferable vars do not include some unknown relation!"^v)
+                    end
                   else
                   if CP.intersect known_rel vars_rel<>[] then
-                    report_error inf_pos "Inferable vars include some known relation!"
+                    begin
+                      let v1 = (add_str "known_rel" pr_vars) known_rel in
+                      let v2 = (add_str "vars_rel" pr_vars) vars_rel in
+                      let v = ("\n"^v1^" "^v2^"\n") in
+                      report_error inf_pos ("Inferable vars include some known relation!"^v)
+                    end
                   else () 
                 in ()
             in
