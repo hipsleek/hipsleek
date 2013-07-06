@@ -28,8 +28,8 @@ bool check_tree (tree t)
   ensures res;
 {
    if (t.children==null) return true;
-   else return check_child(t.children,t,null); 
-        //return check_child(t.children,t,t); //: (node * tree * tree)
+   else //return check_child(t.children,t,null); 
+        return check_child(t.children,t,t); //: (node * tree * tree)
 }
 
 bool check_child (node l, tree par, node prv)
@@ -42,24 +42,15 @@ bool check_child (node l, tree par, node prv)
 }
 
 /*
-# rose-bug-tree.ss 
-
-Why is there a type: check_child$node~tree~null
-
-ERROR: at rose-bug-tree.ss_31:15_31:45 
-Message: trans_exp :: case CallNRecv :: procedure 2 check_child$node~tree~null is not found
+# rose-bug-type2.ss 
 
 Typechecker has failed to pick error below with check_child(t.children,t,t)
 
-Last Proving Location: 1 File "rose-bug-tree.ss",Line:26,Col:0
+Why wasn't check_child(t.children,t,t) flagged
+as a type error. The error only appeared during trans_exp
 
-ERROR: at rose-bug-tree.ss_32:15_32:42 
+ERROR: at rose-bug-type2.ss_32:15_32:42 
 Message: trans_exp :: case CallNRecv :: procedure 2 check_child$node~tree~tree is not found
- Stop Omega... 26 invocations Halting Reduce... 
-caught
-(Program not linked with -g, cannot print stack backtrace)
-
-Exception occurred: Failure("trans_exp :: case CallNRecv :: procedure 2 check_child$node~tree~tree is not found")
 
 
 */
