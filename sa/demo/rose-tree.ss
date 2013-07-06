@@ -15,7 +15,7 @@ PostPred G3(tree a).
 PostPred G2(node a,tree b,node c).
 
 treep<> == 
-  self= null or
+  //self=null or
   self::tree<_,c>* c::dll<self,null> ;
 
 dll<parent, prev> == 
@@ -24,7 +24,7 @@ dll<parent, prev> ==
 
 
 bool check_tree (tree t)
-  requires t::treep<> & t!=null 
+  requires t::treep<> //& t!=null 
   ensures res;
 {
    node n = null;
