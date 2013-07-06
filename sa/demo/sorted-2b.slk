@@ -14,7 +14,7 @@ shape_infer [H][].
 /*
 
 Result below is correct. However,
-a similar code at sorted-2.ss gave a different
+a similar code at sorted-1.ss gave a different
 result
 
 *************************************

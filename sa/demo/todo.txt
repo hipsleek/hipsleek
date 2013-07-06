@@ -3750,6 +3750,8 @@ Entail (1) : Fail.
 =====================================================================
 # sorted-2.slk --en-sleek-logging-txt
 
+Andreea to fix this
+
 infer [H] H(y,_) & x=null & y!=null |- x::node<>.
 print residue.
 
@@ -3782,7 +3784,6 @@ GOT
 
 Derived:
 [ H(x,v) ::= NONE]
-*
 
 ==========
 
