@@ -4195,6 +4195,31 @@ than H, and should be considered first.
  G(t_1011) ::= t_1011::tree<children_30_986>@M * G2(children_30_986),
  HP_987(children_30_1008) ::= H2(children_30_1008)]
 =====================================================================
+# mcf-1.slk
+
+ERROR: at mcf-1.slk_66:47_66:58 
+Message: gather_type_info_var : unexpected exceptionInvalid_argument("[ocamlgraph] iter_succ")
+ Fatal error: exception Failure("gather_type_info_var : unexpected exceptionInvalid_argument("[ocamlgraph] iter_succ")")
+
+Not sure if this is due to wrong type declaration of heap predicate.
+I wonder if we can do a dump of unknown heap predicate defined
+and generated at the start of shape inference (in hip) which we could 
+later cut for sleek. This would reduce tedium for preparing sleek file.
+
+HeapPred H1(tree a).
+PostPred G1(tree a).
+HeapPred H2(node a,node@NI c,tree@NI b).
+HeapPred H_1(tree a,node@NI c,tree@NI b).
+HeapPred H_2(node a,node@NI c,tree@NI b).
+HeapPred H_3(node a,node@NI c,tree@NI b).
+HeapPred H_4(tree a,node@NI c,tree@NI b).
+HeapPred H_5(tree a).
+PostPred G2(node a,node@NI c,tree@NI b).
+
+Also, after we have have analysed the unknowns, can we
+also output the statement (in hip)
+
+Declare_Unknown [H_2,H_4].
 =====================================================================
 =====================================================================
 =====================================================================

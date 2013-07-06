@@ -36,7 +36,7 @@ bool check_tree (tree t)
 
 bool check_child (node l, node prv, tree par)
   //requires l::dll<par, prv>@L ensures  res;
-  infer [H1,G1,H2,G2] requires G2(l,prv,par) ensures G2(l,prv,par) & res;
+  infer [H1,G1,H2,G2] requires H2(l,prv,par) ensures G2(l,prv,par) & res;
 {
 	if (l==null) return true;
 	else if (l.parent==par && l.prev==prv) 
@@ -47,42 +47,52 @@ bool check_child (node l, node prv, tree par)
 /*
 # check-mcf.ss
 
-[ G2(l,prv@NI,par@NI)&
-  l!=null --> l::node<child_42_1006,prev_42_1007,next_42_1008,parent_42_1009>@M * 
-  G_0(child_42_1006,prv@NI,par@NI) * 
-  G_1(prev_42_1007,prv@NI,par@NI) * 
-  G_2(next_42_1008,prv@NI,par@NI) * G_3(parent_42_1009,prv@NI,par@NI),
- G_2(next_42_1008,prv@NI,par@NI)&par=par' & 
-  prev_42_1007=prv --> G2(next_42_1008,l@NI,par@NI),
- G_0(child_42_1006,prv@NI,par@NI)&par=par' & 
-  prev_42_1007=prv --> H1(child_42_1006),
- G2(l,prv@NI,par@NI)&l=null --> G2(l,prv@NI,par@NI),
- G_1(prev_42_1007,prv@NI,par@NI) * 
-  G_3(parent_42_1009,prv@NI,par@NI) * 
-  l::node<child_42_1006,prev_42_1007,next_42_1008,parent_42_1009>@M * 
-  G2(next_42_1008,l@NI,par@NI) * G1(child_42_1006)&par=parent_42_1009 & 
-  prev_42_1007=prv --> G2(l,prv@NI,par@NI),
- G_1(prev_42_1007,prv@NI,par@NI) --> emp&
-  forall(parent_42_1009:((par!=parent_42_1009 | prv>=prev_42_1007)) & 
-  ((par!=parent_42_1009 | prev_42_1007>=prv))),
- G_1(prev_42_1007,prv@NI,par@NI) --> emp&
-  forall(parent_42_1009:((prev_42_1007!=prv | par>=parent_42_1009)) & 
-  ((prev_42_1007!=prv | parent_42_1009>=par))),
- G_1(prev_42_1007,prv@NI,par@NI) --> emp&
-  forall(parent_42_1009:((par>=parent_42_1009 | prv>=prev_42_1007)) & 
-  ((parent_42_1009>=par | prv>=prev_42_1007)) & ((par>=parent_42_1009 | 
-  prev_42_1007>=prv)) & ((parent_42_1009>=par | prev_42_1007>=prv)))]
+  H2(l,prv,par)&
+  l!=null --> l::node<child_07,prev_08,next_09,parent_10>@M * 
+  H_1(child_07,prv,par) * 
+  H_2(prev_08,prv,par) * 
+  H_3(next_09,prv,par) * H_4(parent_10,prv,par).
 
+ H_3(next_09,prv,par)&par=par' & 
+  prev_08=prv --> H2(next_09,l,par).
 
-[ H1(t) --> t::tree<val_32_1082,children_32_1083>@M * 
-  HP_1084(children_32_1083),
- HP_1084(children_32_1083)&
-  children_32_1083!=null --> G2(children_32_1083,n_38'@NI,t@NI),
- HP_1084(children_32_1083) * t::tree<val_32_1082,children_32_1083>@M&
-  children_32_1083=null --> G1(t),
- t::tree<val_32_1082,children_32_1083>@M * 
-  G2(children_32_1083,n_1104@NI,t@NI)&children_32_1083!=null & 
-  n_1104=null --> G1(t)]
+ H_1(child_07,prv,par)&par=par' & 
+  prev_08=prv --> H1(child_07).
+
+ H2(l,prv,par)&l=null --> G2(l,prv,par).
+
+ H_2(prev_08,prv,par) * 
+  H_4(parent_10,prv,par) * 
+  l::node<child_07,prev_08,next_09,parent_10>@M * 
+  G2(next_09,l,par) * G1(child_07)&par=parent_10 & 
+  prev_08=prv --> G2(l,prv,par).
+
+ H_2(prev_08,prv,par) --> emp&
+  forall(parent_10:((par!=parent_10 | prv>=prev_08)) & 
+  ((par!=parent_10 | prev_08>=prv))).
+
+ H_2(prev_08,prv,par) --> emp&
+  forall(parent_10:((prev_08!=prv | par>=parent_10)) & 
+  ((prev_08!=prv | parent_10>=par))).
+
+ H_2(prev_08,prv,par) --> emp&
+  forall(parent_10:((par>=parent_10 | prv>=prev_08)) & 
+  ((parent_10>=par | prv>=prev_08)) & ((par>=parent_10 | 
+  prev_08>=prv)) & ((parent_10>=par | prev_08>=prv))).
+
+ H1(t) --> t::tree<val_83,children_84>@M * 
+  H_5(children_84).
+
+ H_5(children_84)&
+  children_84!=null --> H2(children_84,n_38',t).
+
+ H_5(children_84) * t::tree<val_83,children_84>@M&
+  children_84=null --> G1(t).
+
+ t::tree<val_83,children_84>@M * 
+  G2(children_84,n_1105,t)&children_84!=null & 
+  n_1105=null --> G1(t).
+
 
 
 */
