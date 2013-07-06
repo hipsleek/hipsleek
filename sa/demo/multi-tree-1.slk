@@ -1,0 +1,46 @@
+data tree {
+  node children;
+}.
+
+data node {
+  tree child;
+  node sibling;
+}.
+
+/*
+ptree<> ==
+  self::tree<c>*c::sll<>;
+
+sll<> ==
+  self=null
+or  self::node<c,n>*c::ptree<> * n::sll<>;
+*/
+
+HeapPred H(tree a).
+PostPred G(tree a).
+HeapPred H2(node a).
+PostPred G2(node a).
+HeapPred H_7(tree a).
+HeapPred H_8(tree a).
+
+relAssume
+ H2(l) & l=null --> G2(l).
+
+relAssume
+ H2(l) & l!=null --> l::node<child_38_955,sibling_38_956>@M * 
+        H_7(child_38_955) * H_8(sibling_38_956).
+
+relAssume
+ H_8(sibling_38_956) --> H2(sibling_38_956).
+
+relAssume
+ H_7(child_38_955) --> H(child_38_955).
+
+relAssume
+ l::node<child_38_955,sibling_38_956>@M * G2(sibling_38_956) * 
+      G(child_38_955) --> G2(l).
+
+
+
+
+

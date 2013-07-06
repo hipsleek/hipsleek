@@ -3876,6 +3876,21 @@ y_960::node<val_24_937,next_24_958>@M * HP_939(next_24_958,x_959),
    \/ (2;0) x_948::node<val_24_930,next_24_931>@M * 
 y_949::node<val_24_937,next_24_938>@M * G(next_24_931,next_24_938)]
 =====================================================================
+# check-multi-tree.ss
+
+We seems to be collecting only the relational assumption
+of H2/G2 (from one of the method check_child). What happen to the
+relational assumption of H/G (from check_tree)?
+It seems not to have been collected.
+
+[ H2(l)&l=null --> G2(l),
+ H2(l)&l!=null --> l::node<child_38_955,sibling_38_956>@M * 
+  HP_957(child_38_955) * HP_958(sibling_38_956),
+ HP_958(sibling_38_956) --> H2(sibling_38_956),
+ HP_957(child_38_955) --> H(child_38_955),
+ l::node<child_38_955,sibling_38_956>@M * G2(sibling_38_956) * 
+  G(child_38_955) --> G2(l)]
+
 =====================================================================
 =====================================================================
 =====================================================================
