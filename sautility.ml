@@ -2384,11 +2384,19 @@ let rec find_imply prog lunk_hps runk_hps lhs1 rhs1 lhs2 rhs2=
                (look_up_closed_ptr_args prog nldns nlvns all_matched_svl2) in *)
             let lmf = (MCP.pure_of_mix n_lhs1.CF.formula_base_pure) in
             let rmf = (MCP.pure_of_mix rhs2.CF.formula_base_pure) in
+            let lmf, subst1, n_lhs1=
+              let b, n_subst1 = CP.checkeq lmf rmf subst1 in
+              if b then
+                (CP.subst n_subst1 lmf, n_subst1, CF.subst_b n_subst1 lhs1)
+              else
+                (lmf, subst1,n_lhs1)
+            in
             (*get rele pure of lhs2*)
             let rmf1 = CP.mkAnd rmf (CF.get_pure lhs2) no_pos in
             (* let _ = Debug.ninfo_pprint ("    n_lhs1: " ^ (Cprinter.string_of_formula_base n_lhs1)) no_pos in *)
-            (* let _ = Debug.ninfo_pprint ("    lmf: " ^ (!CP.print_formula lmf)) no_pos in *)
-            (* let _ = Debug.ninfo_pprint ("    rmf1: " ^ (!CP.print_formula rmf1)) no_pos in *)
+            (*ptrs: cmpare node. pure --> quantifiers*)
+            let _ = Debug.ninfo_pprint ("    lmf: " ^ (!CP.print_formula lmf)) no_pos in
+            let _ = Debug.ninfo_pprint ("    rmf1: " ^ (!CP.print_formula rmf1)) no_pos in
             let b,_,_ = TP.imply rmf1 lmf "sa:check_hrels_imply" true None in
             let lpos = (CF.pos_of_formula lhs2) in
             if b then
@@ -2423,7 +2431,7 @@ let rec find_imply prog lunk_hps runk_hps lhs1 rhs1 lhs2 rhs2=
               (*avoid clashing --> should refresh remain svl of r_res*)
               let r_res1 = (* CF.subst ss2 *) (CF.Base r_res) in
               (* let _ = Debug.info_pprint ("    r_res1: " ^ (Cprinter.prtt_string_of_formula r_res1)) no_pos in *)
-              (* let _ = Debug.info_pprint ("    n_rhs1: " ^ (Cprinter.string_of_formula n_rhs1)) no_pos in *)
+              let _ = Debug.ninfo_pprint ("    n_rhs1: " ^ (Cprinter.string_of_formula n_rhs1)) no_pos in
               (*elim duplicate hprel in r_res1 and n_rhs1*)
               let nr_hprel = CF.get_HRels_f n_rhs1 in
               let nrest_hprel = CF.get_HRels_f r_res1 in

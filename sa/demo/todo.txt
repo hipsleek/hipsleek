@@ -4023,7 +4023,7 @@ Confirm Equation:
 
 !!! >>>>>> post-predicates: step post-61: weaken<<<<<<Fatal error: exception Failure("iast.gather_type_info_heap :gather_type_info_heap: relation H cannot be found")
 =====================================================================
-# check-sorted.ss
+# check-sorted.ss: FIXED
 
 --sa-en-pure-field 
 
@@ -4084,7 +4084,7 @@ shape_infer [H_8][G].
  emp&x_27=null
  or x_27::node<val_16_916,next_16_917>@M * G(next_16_917)
 =====================================================================
-# sorted-4.slk 
+# sorted-4.slk : FIXED
 
 GOT
 ===

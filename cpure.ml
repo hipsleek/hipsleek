@@ -2162,6 +2162,7 @@ and equalBFormula_f (eq:spec_var -> spec_var -> bool) (f1:b_formula)(f2:b_formul
     | (Gt(IConst(i1, _), e2, _), Gte(IConst(i3, _), e4, _)) -> i1=i3+1 && eqExp_f eq e2 e4
     | (Gt(e1, IConst(i2, _), _), Gte(e3, IConst(i4, _), _)) -> i2=i4-1 && eqExp_f eq e1 e3
     | (Lte(e1, e2, _), Gt(e4, e3, _))
+    | (Lte(e1, e2, _), Gte(e4, e3, _))
     | (Gt(e1, e2, _), Lte(e4, e3, _))
     | (Gte(e1, e2, _), Lt(e4, e3, _))
     | (Lt(e1, e2, _), Gte(e4, e3, _))  
@@ -10656,3 +10657,35 @@ let prune_irr_neq p0 svl=
   let pr2 = !print_svl in
   Debug.no_2 "prune_irr_neq" pr1 pr2 (pr_pair string_of_bool pr1)
       (fun _ _ -> prune_irr_neq_x p0 irr_svl ) p0 irr_svl
+
+let checkeq_exp e1 e2 ss=
+  match e1,e2 with
+    | Var (sv1,_), Var (sv2,_) ->
+          let nsv1 = subs_one ss sv1 in
+          if eq_spec_var nsv1 sv2 then (true) else false
+    | _ -> (false)
+
+let checkeq_p p1 p2 ss=
+  match p1,p2 with
+    | Lte (e11,e12,_),  Lte (e21,e22,_) -> begin
+          if checkeq_exp e11 e21 ss then
+            match e12,e22 with
+              | Var (sv1,_), Var (sv2,_) -> (true, ss@[(sv1,sv2)])
+              | _ -> (false, ss)
+          else
+            (false, ss)
+      end
+    | _ -> (false, ss)
+
+let checkeq_x p1 p2 ss=
+  match p1, p2 with
+    | (BForm ((pf1,_),_)), (BForm ((pf2,_),_)) ->
+          checkeq_p pf1 pf2 ss
+    | _ -> (false, ss)
+
+let checkeq p1 p2 ss=
+  let pr1 = !print_formula in
+  let pr3 = pr_list (pr_pair !print_sv !print_sv) in
+  Debug.no_3 "checkeq" pr1 pr1 pr3 (pr_pair string_of_bool pr3)
+      (fun _ _ _ -> checkeq_x p1 p2 ss)
+      p1 p2 ss
