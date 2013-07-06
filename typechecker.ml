@@ -2416,9 +2416,10 @@ and proc_mutual_scc (prog: prog_decl) (proc_lst : proc_decl list) (fn:prog_decl 
   let _ = helper proc_lst in
   ()
 
-let proc_mutual_scc_shape_infer iprog prog scc_procs=
+let proc_mutual_scc_shape_infer iprog prog scc_procs =
   (*solve the set of assumptions for scc*)
-  let scc_hprel_ass = List.fold_left (fun r_ass proc -> r_ass@proc.Cast.proc_hprel_ass) [] scc_procs in
+  (* let scc_hprel_ass = List.fold_left (fun r_ass proc -> r_ass@proc.Cast.proc_hprel_ass) [] scc_procs in *)
+  let scc_hprel_ass = Infer.scc_rel_ass_stk # get_stk in
   let scc_hprel_unkmap =  List.fold_left (fun r_map proc -> r_map@proc.Cast.proc_hprel_unkmap) [] scc_procs in
   let scc_sel_hps = List.fold_left (fun r_hps proc -> r_hps@proc.Cast.proc_sel_hps) [] scc_procs in
   let scc_sel_post_hps = List.fold_left (fun r_hps proc -> r_hps@proc.Cast.proc_sel_post_hps) [] scc_procs in
@@ -2575,13 +2576,18 @@ and check_proc iprog (prog : prog_decl) (proc : proc_decl) cout_option (mutual_g
                         print_endline "*************************************";
                         print_endline "*******relational assumptions (4) ********";
                         print_endline "*************************************";
-			if !Globals.testing_flag then print_endline ("<rstart>"^(string_of_int (List.length hp_lst_assume)));
-			let pr = pr_list_ln (fun x -> Cprinter.string_of_hprel_short_inst prog x) in
-                        let _ = Infer.rel_ass_stk # reverse in
-                        (* print_endline (pr (Infer.rel_ass_stk # get_stk)); *)
-                        print_endline (pr (hp_lst_assume));
-                        (* print_endline (Infer.rel_ass_stk # string_of_reverse); *)
+                        let ras = Infer.rel_ass_stk # get_stk in
+                        let _ = Infer.scc_rel_ass_stk # push_list ras in
                         let _ = Infer.rel_ass_stk # reset in
+                        let ras = List.rev(ras) in
+			if !Globals.testing_flag then print_endline ("<rstart>"^(string_of_int (List.length ras)));
+			let pr = pr_list_ln (fun x -> Cprinter.string_of_hprel_short_inst prog x) in
+                        let pr_len x = string_of_int (List.length x) in
+                        (* print_endline (pr (Infer.rel_ass_stk # get_stk)); *)
+                        (* DD.info_hprint (add_str "len(rel_ass_stk)" pr_len) ras no_pos; *)
+                        (* DD.info_hprint (add_str "hp_lst_assume" pr) ras no_pos; *)
+                        print_endline (pr (ras));
+                        (* print_endline (Infer.rel_ass_stk # string_of_reverse); *)
                         if !Globals.testing_flag then print_endline "<rstop>*************************************" 
                       end;
                     (****************************************************************)
@@ -3043,10 +3049,14 @@ let check_prog iprog (prog : prog_decl) =
           mutual_grp := List.filter (fun x -> x.proc_name != proc.proc_name) !mutual_grp;
           Debug.tinfo_hprint (add_str "SCC"  (pr_list (fun p -> p.proc_name))) scc no_pos;
           Debug.tinfo_hprint (add_str "MG_new"  (pr_list (fun p -> p.proc_name))) !mutual_grp no_pos;
-          ignore (check_proc_wrapper iprog prog proc cout_option !mutual_grp)
+          let r = check_proc_wrapper iprog prog proc cout_option !mutual_grp in
+          (* add rel_assumption of r to relass_grp *)
+          ()
         end
       ) in
-      let _ =  proc_mutual_scc_shape_infer iprog prog scc in
+      let _ = Infer.scc_rel_ass_stk # reverse in
+      let _ = proc_mutual_scc_shape_infer iprog prog scc in
+      let _ = Infer.scc_rel_ass_stk # reset in
       prog
   ) prog proc_scc 
   in 

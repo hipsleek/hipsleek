@@ -67,6 +67,9 @@ let infer_rel_stk : CP.infer_rel_type Gen.stack_pr = new Gen.stack_pr
 let rel_ass_stk : hprel Gen.stack_pr = new Gen.stack_pr 
   Cprinter.string_of_hprel_short (==)
 
+let scc_rel_ass_stk : hprel Gen.stack_pr = new Gen.stack_pr 
+  Cprinter.string_of_hprel_short (==)
+
 let dump_rel_ass s = 
   DD.info_pprint "==========================================";
   DD.info_pprint (" Relational Assumption "^s);

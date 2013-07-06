@@ -41,6 +41,27 @@ bool check_child (node l)
 /*
 # check-multi-tree.ss
 
+
+[ H2(l)&l!=null --> l::node<child_38_955,sibling_38_956>@M * 
+  HP_957(child_38_955) * HP_958(sibling_38_956),
+ HP_958(sibling_38_956) --> H2(sibling_38_956),
+ HP_957(child_38_955) --> H(child_38_955),
+ H2(l)&l=null --> G2(l),
+ l::node<child_38_955,sibling_38_956>@M * G2(sibling_38_956) * 
+  G(child_38_955) --> G2(l)]
+
+--------
+
+[ H(t)&t!=null --> t::tree<children_30_986>@M * HP_987(children_30_986),
+ HP_987(children_30_986) --> H2(children_30_986),
+ H(t) --> emp&t!=null,
+ t::tree<children_30_986>@M * G2(children_30_986)&
+  children_30_986=null --> G(t),
+ t::tree<children_30_986>@M * G2(children_30_986)&
+  children_30_986!=null --> G(t)]
+
+==========================
+
 We seems to be collecting only the relational assumption
 of H2/G2 (from one of the method check_child). What happen to the
 relational assumption of H/G (from check_tree)?
@@ -53,5 +74,14 @@ It seems not to have been collected.
  HP_957(child_38_955) --> H(child_38_955),
  l::node<child_38_955,sibling_38_956>@M * G2(sibling_38_956) * 
   G(child_38_955) --> G2(l)]
+
+!!! hp_lst_assume:[ H(t)&t!=null --> t::tree<children_30_986>@M * HP_987(children_30_986),
+ HP_987(children_30_986) --> H2(children_30_986),
+ H(t) --> emp&t!=null,
+ t::tree<children_30_986>@M * G2(children_30_986)&
+  children_30_986=null --> G(t),
+ t::tree<children_30_986>@M * G2(children_30_986)&
+  children_30_986!=null --> G(t)]
+
 
 */
