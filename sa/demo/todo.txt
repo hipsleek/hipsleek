@@ -4062,7 +4062,7 @@ caught
 
 Exception occurred: Failure("cpure.get_neq_null_svl: ?")
 =====================================================================
-# pos-1b.slk
+# pos-1b.slk: FIXED (do not split_base on all-non-ptrs preds")
 
 relAssume
  H_8(val_16_916) --> emp&val_16_916>0.

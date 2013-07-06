@@ -4498,15 +4498,24 @@ let rec get_hp_rel_name_h_formula hf=
     | HFalse
     | HEmp -> []
 
-let rec get_hp_rel_name_formula (f: formula) =
+let rec get_hp_rel_name_formula_x (f0: formula) =
+  let rec helper f=
   match f with
     | Base  ({formula_base_heap = h1;
-		      formula_base_pure = p1})
+      formula_base_pure = p1})
     | Exists ({ formula_exists_heap = h1;
-		        formula_exists_pure = p1}) -> get_hp_rel_name_h_formula h1
+      formula_exists_pure = p1}) -> get_hp_rel_name_h_formula h1
     | Or orf  ->
-        CP.remove_dups_svl ((get_hp_rel_name_formula orf.formula_or_f1)@
-        (get_hp_rel_name_formula orf.formula_or_f2))
+          CP.remove_dups_svl ((helper orf.formula_or_f1)@
+              (helper orf.formula_or_f2))
+  in
+  helper f0
+
+let get_hp_rel_name_formula (f: formula) =
+  let pr1 = !print_formula in
+  let pr2 = !CP.print_svl in
+  Debug.no_1 "get_hp_rel_name_formula" pr1 pr2
+      (fun _ -> get_hp_rel_name_formula_x f) f
 
 let get_hp_rel_name_assumption cs=
   CP.remove_dups_svl ((get_hp_rel_name_formula cs.hprel_lhs)@

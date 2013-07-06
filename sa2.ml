@@ -260,9 +260,13 @@ let split_constr prog cond_path constrs post_hps prog_vars unk_map unk_hps link_
           (* ([], lfb1, unk_map1) *)
         in
         let unk_svl1 = CP.remove_dups_svl (cs.CF.unk_svl@unk_svl) in
-        (*do not split unk_hps and link_hps*)
+        (*do not split unk_hps and link_hps, all non-ptrs args*)
         let non_split_hps = unk_hps @ link_hps in
-        let ls_lhp_args1 = List.filter (fun (hp,_) -> not(CP.mem_svl hp non_split_hps)) ls_lhp_args in
+        let ls_lhp_args1 = List.filter (fun (hp,args) ->
+            let arg_i,_ = SAU. partition_hp_args prog hp args in
+            (((List.filter (fun (sv,_) -> CP.is_node_typ sv) arg_i) <> []) &&
+                not (CP.mem_svl hp non_split_hps) )
+        ) ls_lhp_args in
         (* let _ = Debug.info_pprint ("  ls_lhp_args1: " ^ *)
         (*     (let pr1 = pr_list (pr_pair !CP.print_sv !CP.print_svl) in pr1 ls_lhp_args1)) no_pos in *)
         let lfb2, defined_preds,rems_hpargs,link_hps =
@@ -775,8 +779,8 @@ let generalize_one_hp_x prog is_pre hpdefs non_ptr_unk_hps unk_hps link_hps par_
           let defs5 =  if is_pre then defs5a else
             SAU.perform_conj_unify_post prog args0 (unk_hps@link_hps) unk_svl defs5a no_pos
           in
-          (* let pr1 = pr_list_ln Cprinter.prtt_string_of_formula in *)
-          (* let _ = DD.info_pprint ("defs4: " ^ (pr1 defs4)) no_pos in *)
+          let pr1 = pr_list_ln Cprinter.prtt_string_of_formula in
+          let _ = DD.ninfo_pprint ("defs1: " ^ (pr1 defs1)) no_pos in
           (*remove duplicate with self-recursive*)
           (* let base_case_exist,defs4 = SAU.remove_dups_recursive hp args0 unk_hps defs3 in *)
           (*find longest hnodes common for more than 2 formulas*)
@@ -1067,7 +1071,7 @@ let generalize_hps_par_def_x prog is_pre non_ptr_unk_hps unk_hpargs link_hps pos
     subst such that each partial def does not contain other hps
     dont subst recursively search_largest_matching between two formulas
   *)
-  let _ = DD.tinfo_pprint ("      groups1: " ^ (pr1 groups)) no_pos in
+  let _ = DD.ninfo_pprint ("      groups1: " ^ (pr1 groups)) no_pos in
   let groups20 =
     if predef_hps <> [] then pardef_subst_fix prog unk_hps (groups1@pre_def_grps)
     else
@@ -1082,7 +1086,7 @@ let generalize_hps_par_def_x prog is_pre non_ptr_unk_hps unk_hpargs link_hps pos
   in
   (* let _ = Debug.info_pprint ("     END: " ) no_pos in *)
   (*remove empty*)
-  let _ = DD.tinfo_pprint ("      groups2: " ^ (pr1 groups2)) no_pos in
+  let _ = DD.ninfo_pprint ("      groups2: " ^ (pr1 groups2)) no_pos in
   let groups3 = List.filter (fun grp -> grp <> []) groups2 in
   let _ = DD.tinfo_hprint (add_str "before remove redundant" pr1) groups2 no_pos in
   (*each group, do union partial definition*)
@@ -1109,10 +1113,11 @@ let generalize_hps_par_def prog is_pre non_ptr_unk_hps unk_hpargs link_hps post_
  let pr1 = pr_list_ln SAU.string_of_par_def_w_name in
   let pr2 = Cprinter.string_of_hp_rel_def in
   let pr3 = fun (_,a)-> pr2 a in
-  Debug.no_3 "generalize_hps_par_def" !CP.print_svl !CP.print_svl pr1 (pr_list_ln pr3)
-      (fun _ _ _ -> generalize_hps_par_def_x prog is_pre non_ptr_unk_hps unk_hpargs
+  Debug.no_4 "generalize_hps_par_def" !CP.print_svl !CP.print_svl pr1
+      !CP.print_svl (pr_list_ln pr3)
+      (fun _ _ _ _ -> generalize_hps_par_def_x prog is_pre non_ptr_unk_hps unk_hpargs
           link_hps post_hps pre_defs predef_hps par_defs)
-      post_hps link_hps par_defs
+      post_hps link_hps par_defs predef_hps
 
 (**********get more definition from cs once, by right should loop************)
 (* let generalize_hps_cs_x prog callee_hps hpdefs unk_hps cs= *)

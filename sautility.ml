@@ -5022,15 +5022,27 @@ let combine_hpdefs hpdefs=
   Debug.no_1 "combine_hpdefs" pr1 pr1
       (fun _ -> combine_hpdefs_x hpdefs) hpdefs
 
-let get_pre_fwd post_hps post_pdefs=
-  let process_one_pdef cur_fwd_hps (hp, _, _,_,_, off)=
+let get_pre_fwd_x post_hps post_pdefs=
+  let process_one_pdef cur_fwd_hps (hp, _, _,_,off, _)=
     match off with
       | Some f-> let hps = CF.get_hp_rel_name_formula f in
-        cur_fwd_hps@(CP.diff_svl hps post_hps)
+        (cur_fwd_hps@(CP.diff_svl hps (hp::post_hps)))
       | None -> cur_fwd_hps
   in
   let fwd_pre = List.fold_left process_one_pdef [] post_pdefs in
   (CP.remove_dups_svl fwd_pre)
+
+let get_pre_fwd post_hps post_pdefs=
+  let pr_f off= match off with
+    | Some f -> Cprinter.prtt_string_of_formula f
+    | None -> "None"
+  in
+  let pr0 (a, b, _,_, c,d) = (pr_quad !CP.print_sv !CP.print_svl pr_f pr_f) (a,b,c,d) in
+  let pr1 = pr_list_ln pr0 in
+  let pr2 = !CP.print_svl in
+  Debug.no_2 "get_pre_fwd" pr2 pr1 pr2
+      (fun _ _ -> get_pre_fwd_x post_hps post_pdefs)
+      post_hps post_pdefs
 
 let extract_fwd_pre_defs_x fwd_pre_hps defs=
   let get_pre_def (cur_grps,cur_hps) (def_kind,hf,def)=
