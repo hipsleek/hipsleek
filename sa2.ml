@@ -263,7 +263,7 @@ let split_constr prog cond_path constrs post_hps prog_vars unk_map unk_hps link_
         (*do not split unk_hps and link_hps, all non-ptrs args*)
         let non_split_hps = unk_hps @ link_hps in
         let ls_lhp_args1 = List.filter (fun (hp,args) ->
-            let arg_i,_ = SAU. partition_hp_args prog hp args in
+            let arg_i,_ = SAU.partition_hp_args prog hp args in
             (((List.filter (fun (sv,_) -> CP.is_node_typ sv) arg_i) <> []) &&
                 not (CP.mem_svl hp non_split_hps) )
         ) ls_lhp_args in
