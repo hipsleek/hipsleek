@@ -2762,11 +2762,8 @@ and fold_op_x1 prog (ctx : context) (view : h_formula) vd (rhs_p : MCP.mix_formu
 	      (*let new_ctx = set_es_evars ctx vs in*)
               let rs0, fold_prf = heap_entail_one_context_struc_nth "fold" prog true false new_ctx view_form None None None pos None in
               let rels = Inf.collect_rel_list_context rs0 in
-              let rel_stk = Infer.infer_rel_stk # get_stk in
-              let rel_ass = List.filter (fun (rt,_,_) -> CP.is_rel_assume rt) rels in
-              let rel_ass = List.filter (fun r -> not(List.mem r rel_stk)) rel_ass in
-              let _ = Infer.infer_rel_stk # push_list rel_ass in
-              let _ = Log.current_infer_rel_stk # push_list rel_ass in
+              let _ = Infer.infer_rel_stk # push_list rels in
+              let _ = Log.current_infer_rel_stk # push_list rels in
 
               (* let rs0 = remove_impl_evars rs0 impl_vars in *)
               (* let _ = print_string ("\nbefore fold: " ^ (Cprinter.string_of_context new_ctx)) in *)
@@ -4959,6 +4956,10 @@ and heap_entail_conjunct_lhs_x prog is_folding  (ctx:context) (conseq:CF.formula
                                let r1,prf =  (SuccCtx[false_ctx_with_orig_ante new_estate orig_ante pos],UnsatAnte) in
                                let r1 = Infer.add_infer_hp_contr_to_list_context hinf_args_map [pf] r1 in
                                let _ = Debug.tinfo_hprint (add_str "r1 opt"  (pr_option Cprinter.string_of_list_context)) r1 pos in
+		               let _ = Debug.info_hprint (add_str "inferred contradiction : " Cprinter.string_of_pure_formula) pf pos in
+                               let _ = Debug.info_pprint ("Andreea 1 : we need to call add_new_sleek_logging_entry to do sleek_logging") no_pos in
+                               (* add_new_sleek_logging_entry infer_vars classic_flag caller avoid hec slk_no ante conseq  *)
+                               (*     consumed_heap evars (result:CF.list_context) pos *)
                                begin
                                  match r1 with
                                    | Some r1 ->
@@ -8135,7 +8136,7 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
         h_formula_view_imm = ann;
         h_formula_view_arguments = l_args} -> (l_args, l_node_name, perm, ann, [])
       | HRel (_, eargs, _) -> ((List.fold_left List.append [] (List.map CP.afv eargs)), "",  None, ConstAnn Mutable,[])
-      | _ -> report_error no_pos "[solver.ml]: do_match non view input\n" in
+      | _ -> report_error no_pos "[solver.ml]: do_match non view input lhs\n" in
     let r_args, r_node_name, r_var, r_perm, r_ann, r_param_ann = match r_node with
       | DataNode {h_formula_data_name = r_node_name;
         h_formula_data_perm = perm;
@@ -8149,7 +8150,7 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
         h_formula_view_arguments = r_args;
         h_formula_view_node = r_var} -> (r_args, r_node_name, r_var, perm, ann, [])
       | HRel (rhp, eargs, _) -> ((List.fold_left List.append [] (List.map CP.afv eargs)), "",rhp, None, ConstAnn Mutable,[])
-      | _ -> report_error no_pos "[solver.ml]: do_match non view input\n" in     
+      | _ -> report_error no_pos "[solver.ml]: do_match non view input rhs\n" in     
 
     (* An Hoa : found out that the current design of do_match 
        will eventually remove both nodes. Here, I detected that 
@@ -8583,6 +8584,7 @@ and inst_before_fold_x estate rhs_p case_vars =
 	          | CP.Null _ | CP.Var _ | CP.IConst _ | CP.FConst _ | CP.AConst _ | CP.Tsconst _ | CP.InfConst _ 
               | CP.Level _ (*TOCHECK*) -> true
 	          | CP.Subtract (e1,e2,_) | CP.Mult (e1,e2,_) | CP.Div (e1,e2,_) | CP.Add (e1,e2,_) -> prop_e e1 && prop_e e2
+            | CP.TypeCast (_, e1, _) -> prop_e e1
 	          | CP.Bag (l,_) | CP.BagUnion (l,_) | CP.BagIntersect (l,_) -> List.for_all prop_e l
 	          | CP.Max _ | CP.Min _ | CP.BagDiff _ | CP.List _ | CP.ListCons _ | CP.ListHead _ 
 	          | CP.ListTail _ | CP.ListLength _ | CP.ListAppend _	| CP.ListReverse _ | CP.ArrayAt _ | CP.Func _ -> false in
@@ -9457,7 +9459,10 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
 	      match r_inf_contr with
                 | Some (new_estate,pf) -> (* if successful, should skip infer_collect_hp_rel below *)
                       let new_estate = {new_estate with es_infer_vars = esv} in
-		      let _ = Debug.tinfo_hprint (add_str "inferred contradiction : " Cprinter.string_of_pure_formula) pf pos in
+		      let _ = Debug.info_hprint (add_str "inferred contradiction : " Cprinter.string_of_pure_formula) pf pos in
+                      let _ = Debug.info_pprint ("Andreea 2 : we need to add_new_sleek_logging_entry to do sleek_logging") no_pos in
+                      (* add_new_sleek_logging_entry infer_vars classic_flag caller avoid hec slk_no ante conseq  *)
+                      (*     consumed_heap evars (result:CF.list_context) pos *)
 		      if (List.length relass)>1 then report_error pos "Length of relational assumption list > 1"
 		      else
 			let ctx1 = (elim_unsat_es_now 6 prog (ref 1) new_estate) in

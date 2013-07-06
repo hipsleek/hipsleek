@@ -66,13 +66,13 @@ RELDEFN
 =======
 
 [ H(x_879,r_880) ::= 
-   x_879::node<__DP_H_8,right_29_846,__DP_H_0>@M&right_29_846=null
-   \/  x_879::node<left_29_845,right_29_846,__DP_H_0>@M * H(left_29_845,l_886) 
+   x_879::node<__DP_8,right_29_846,__DP_0>@M&right_29_846=null
+   \/  x_879::node<left_29_845,right_29_846,__DP_0>@M * H(left_29_845,l_886) 
        * H(right_29_846,r_880)&right_29_846!=null,
 
  G(x_883,res_884,r_885) ::= 
-   res_884::node<__DP_H_8,right_29_846,r_885>@M&right_29_846=null & res_884=x_883
-   \/  x_883::node<left_29_845,right_29_846,__DP_H_0>@M * G(right_29_846,l_878,r_885) 
+   res_884::node<__DP_8,right_29_846,r_885>@M&right_29_846=null & res_884=x_883
+   \/  x_883::node<left_29_845,right_29_846,__DP_0>@M * G(right_29_846,l_878,r_885) 
        * G(left_29_845,res_884,l_878)&right_29_846!=null]
 
 # tll.ss --sa-dnc

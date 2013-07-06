@@ -1,0 +1,40 @@
+========tll-if3.slk ==========
+Starting Omega...oc
+H is defined.
+G is defined.
+H_2 is defined.
+H_3 is defined.
+H_2a is defined.
+H_3a is defined.
+
+!!! >>>>>> step 1: find dangling ptrs, link pre and post-preds dangling preds<<<<<<
+!!! >>>>>> step 2: split constraints based on pre and post-preds<<<<<<
+!!! *** NO SPLITTING DONE ***
+!!! >>>>>> step 3: apply transitive implication<<<<<<
+!!! >>>>>> step 3a: simplification <<<<<<
+!!! >>>>>> step 3b: do apply_transitive_imp <<<<<<
+!!! >>>>>> pre-predicates<<<<<<
+!!! >>>>>> step pre-4: remove unused predicates<<<<<<
+!!! >>>>>> pre-predicates: step pre-5: group & simpl impl<<<<<<
+!!! >>>>>> pre-predicates: step pre-6: combine<<<<<<
+!!! >>>>>> pre-predicates: step pre-7: remove redundant x!=null<<<<<<
+!!! >>>>>> pre-predicates: step pre-8: strengthen<<<<<<
+!!! >>>>>> step 6: generalization <<<<<<
+!!! >>>>>> post-predicates<<<<<<
+!!! >>>>>> step post-4: step remove unused predicates<<<<<<
+!!! >>>>>> post-predicates: step post-5: remove redundant x!=null : not implemented yet<<<<<<
+!!! >>>>>> post-predicates: step post-61: weaken<<<<<<
+
+*************************************
+*******relational definition ********
+*************************************
+[ G(x_33,res_34) ::= 
+ H_2a(v_node_32_833) * res_34::node<v_node_32_833,v_node_31_823>@M&
+ v_node_31_823=null & res_34=x_33
+ or G(right_25_801,v_node_31_823) * G(left_25_800,v_node_32_833) * 
+    res_34::node<v_node_32_833,v_node_31_823>@M&left_25_800=v_node_32_833 & 
+    right_25_801=v_node_31_823 & res_34=x_33 & right_25_801!=null
+ ,
+ H_2a(a) ::= NONE]
+*************************************
+====================

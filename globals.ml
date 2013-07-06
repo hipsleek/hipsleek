@@ -663,6 +663,8 @@ let dis_show_diff = ref false
 
 let sa_print_inter = ref false
 
+let print_heap_pred_decl = ref false
+
 let cond_path_trace = ref false
 
 let sa_old = ref false
@@ -681,11 +683,14 @@ let sa_refine_dang = ref false
 
 let pred_elim_useless = ref false
 
+let pred_infer_flag = ref true
+
 let pred_elim_dangling = ref false
 
 (* let sa_inlining = ref false *)
 
 let sa_sp_split_base = ref false
+let sa_pure_field = ref false
 
 let sa_infer_split_base = ref true
 
@@ -708,6 +713,8 @@ let sa_subsume = ref false
 (* let norm_elim_useless = ref false *)
 
 let norm_extract = ref false
+
+let norm_cont_analysis = ref false
 
 let dis_sem = ref false
 
@@ -887,6 +894,7 @@ let seq_to_try = ref false
 let print_input = ref false
 let print_input_all = ref false
 
+let print_cil_input = ref false
 (* let pass_global_by_value = ref true *)
 
 (* let allow_pred_spec = ref false *)

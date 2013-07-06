@@ -1,9 +1,8 @@
 function EX 
 {
- cp tests/$1.out2 tests/$1$2.ref2
+ cp tests/hip/$1.out ref/hip/$1.out
 }
 
-EX app5-bug-1.slk
 EX set-tail-2.ss 
 EX sll-dll.ss 
 EX last-2.ss  

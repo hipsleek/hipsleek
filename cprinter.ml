@@ -671,7 +671,7 @@ let rec pr_formula_exp (e:P.exp) =
     | P.IConst (i, l) -> fmt_int i
     | P.AConst (i, l) -> fmt_string (string_of_heap_ann i)
     | P.InfConst (i,l) -> let r = "\\inf" in fmt_string r
-	| P.Tsconst (i,l) -> fmt_string (Tree_shares.Ts.string_of i)
+    | P.Tsconst (i,l) -> fmt_string (Tree_shares.Ts.string_of i)
     | P.FConst (f, l) -> fmt_string "FLOAT ";fmt_float f
     | P.Add (e1, e2, l) -> 
           let args = bin_op_to_list op_add_short exp_assoc_op e in
@@ -685,6 +685,9 @@ let rec pr_formula_exp (e:P.exp) =
     | P.Min (e1, e2, l) -> 
           let args = bin_op_to_list op_min_short exp_assoc_op e in
           pr_fn_args op_min pr_formula_exp  args
+    | P.TypeCast (ty, e1, l) ->
+        fmt_string ("(" ^ (Globals.string_of_typ ty) ^ ")");
+        pr_formula_exp e1;
     | P.Bag (elist, l) 	-> 
         fmt_string ("bag("); 
         pr_set pr_formula_exp elist;
@@ -1828,9 +1831,10 @@ let string_of_hp_decl hpdecl =
     let arg_name = if(String.compare arg_name "res" == 0) then fresh_name () else arg_name in
     (CP.name_of_type t) ^ " " ^ arg_name
   in
+  let decl_kind = if hpdecl.hp_is_pre then "HeapPred " else "PostPred " in
   let pr_inst (sv, i) = (pr_arg sv) ^ (if not !print_ann then "" else if i=NI then "@NI" else "") in
   let args = pr_lst ", " pr_inst hpdecl.Cast.hp_vars_inst in
-  "HeapPred "^ name ^ "(" ^ args ^ ").\n"
+  decl_kind ^ name ^ "(" ^ args ^ ").\n"
 
 
 let string_of_hp_rels (e) : string =
@@ -3428,7 +3432,7 @@ let rec html_of_formula_exp e =
     | P.IConst (i, l) -> string_of_int i
     | P.FConst (f, l) -> string_of_float f
     | P.AConst (f, l) -> string_of_heap_ann f
-	| P.Tsconst(f, l) -> Tree_shares.Ts.string_of f
+    | P.Tsconst(f, l) -> Tree_shares.Ts.string_of f
     | P.Add (e1, e2, l) -> 
           let args = bin_op_to_list op_add_short exp_assoc_op e in
           String.concat html_op_add (List.map html_of_formula_exp args)
@@ -3441,6 +3445,8 @@ let rec html_of_formula_exp e =
     | P.Min (e1, e2, l) -> 
           let args = bin_op_to_list op_min_short exp_assoc_op e in
           html_op_min ^ "(" ^ (String.concat "," (List.map html_of_formula_exp args)) ^ ")"
+    | P.TypeCast (ty, e1, l) ->
+          "(" ^ (Globals.string_of_typ ty) ^ ")" ^ (html_of_formula_exp e1)
     | P.Bag (elist, l) 	-> "{" ^ (String.concat "," (List.map html_of_formula_exp elist)) ^ "}"
     | P.BagUnion (args, l) -> 
 		let args = bin_op_to_list op_union_short exp_assoc_op e in
@@ -3758,4 +3764,9 @@ Redlog.print_exp := string_of_formula_exp;;
 Redlog.print_formula := string_of_pure_formula;;
 Redlog.print_svl := string_of_spec_var_list;;
 Redlog.print_sv := string_of_spec_var;;
+Mathematica.print_b_formula := string_of_b_formula;;
+Mathematica.print_exp := string_of_formula_exp;;
+Mathematica.print_formula := string_of_pure_formula;;
+Mathematica.print_svl := string_of_spec_var_list;;
+Mathematica.print_sv := string_of_spec_var;;
 Perm.print_sv := string_of_spec_var;;

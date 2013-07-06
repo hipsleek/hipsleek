@@ -16,22 +16,22 @@ HeapPred H_3a(node a).
 //Declare_Unknown (1;2) [H_2]
 
 relDefn (1;1)
- H_3(right_25_31) ::=  H(right_25_31)&right_25_31!=null.
+ H_3(right_25_31) <->  H(right_25_31)&right_25_31!=null.
 
 relDefn (1;1)
- H_2(left_25_32)  ::=  H(left_25_32).
+ H_2(left_25_32)  <->  H(left_25_32).
 
 relDefn (1;1)
- H(x_33) ::=  x_33::node<left_25_800,right_25_801>@M 
+ H(x_33) <->  x_33::node<left_25_800,right_25_801>@M 
    * H(left_25_800) * H(right_25_801) & right_25_801!=null.
 
 relDefn (1;2)
- H(x_27) ::=  x_27::node<left_25_800,right_25_801>@M 
+ H(x_27) <->  x_27::node<left_25_800,right_25_801>@M 
                  * H_2(left_25_800)&right_25_801=null.
 relDefn (1;2)
- H_2(a) ::= NONE.
+ H_2(a) <-> NONE.
 
-shape_conquer [1;1,1;2].
+shape_conquer [H][1;1,1;2].
 
 
 /*
@@ -41,26 +41,26 @@ shape_conquer [1;1,1;2].
 
 
 //[1.1]
- H_3(right_25_31) ::=  H(right_25_31)&right_25_31!=null.
- H_2(left_25_32)  ::=  H(left_25_32).
- H(x_33) ::=  x_33::node<left_25_800,right_25_801>@M 
+ H_3(right_25_31) <->  H(right_25_31)&right_25_31!=null.
+ H_2(left_25_32)  <->  H(left_25_32).
+ H(x_33) <->  x_33::node<left_25_800,right_25_801>@M 
    * H(left_25_800) * H(right_25_801) & right_25_801!=null.
 (++)
 //[1.2]
- H(x_27) ::=  x_27::node<left_25_800,right_25_801>@M 
+ H(x_27) <->  x_27::node<left_25_800,right_25_801>@M 
                  * H_2(left_25_800)&right_25_801=null.
- H_2(a) ::= NONE.
+ H_2(a) <-> NONE.
 
 
 ==>
 //{1}
 
- H{1}(x_27) ::=  x_27::node<left_25_800,right_25_801>@M 
+ H{1}(x_27) <->  x_27::node<left_25_800,right_25_801>@M 
             * H_2{1.2}(left_25_800)&right_25_801=null
       or x_33::node<left_25_800,right_25_801>@M 
        * H{1}(left_25_800) * H{1}(right_25_801) & right_25_801!=null
 
- H_2{1.1}(a) ::= NONE]
+ H_2{1.1}(a) <-> NONE]
 
 
 =========

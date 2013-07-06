@@ -1,0 +1,29 @@
+data node {
+ int val;
+ node right;
+}.
+
+HeapPred H(node a).
+relation R1(int a).
+//relation G(int a).
+relation R(int a).
+
+
+infer [H,R1] x::node<a1,b1> & R1(a1) |- x::node<a,b> & a>0.
+print residue.
+
+
+infer [R1] x::node<a1,b1> & R1(a1) |- x::node<a,b> & a>0.
+print residue.
+
+
+/*
+# mt-3.slk
+
+Why is there a type error?
+infer [R1] x::node<a1,b1> * R1(a1) |- x::node<a,b> & a>0.
+* parsed as a like a heap pred..
+
+*/
+
+

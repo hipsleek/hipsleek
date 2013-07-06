@@ -142,6 +142,10 @@ and proc_decl = {
     (*proc_dynamic_specs_with_pre : Cformula.struc_formula;*)
     (* stack of static specs inferred *)
     proc_stk_of_static_specs : Cformula.struc_formula Gen.stack;
+    mutable proc_hprel_ass: Cformula.hprel list;
+    mutable proc_hprel_unkmap: ((P.spec_var * int list) * P.xpure_view) list;
+    mutable proc_sel_hps: P.spec_var list;
+    mutable proc_sel_post_hps: P.spec_var list;
     mutable proc_hpdefs: Cformula.hp_rel_def list;(*set of heap predicate constraints derived from this method*)
     mutable proc_callee_hpdefs: Cformula.hp_rel_def list;
     (*set of heap predicate constraints derived from calls in this method*)
@@ -1035,7 +1039,7 @@ let rec look_up_proc_def pos (procs : (ident, proc_decl) Hashtbl.t) (name : stri
   try Hashtbl.find procs name 
 	with Not_found -> Error.report_error {
     Error.error_loc = pos;
-    Error.error_text = "Procedure " ^ name ^ " is not found."}
+    Error.error_text = "look_up_proc_def: Procedure " ^ name ^ " is not found."}
 
 let look_up_hpdefs_proc (procs : (ident, proc_decl) Hashtbl.t) (name : string) = 
   try
@@ -1043,7 +1047,7 @@ let look_up_hpdefs_proc (procs : (ident, proc_decl) Hashtbl.t) (name : string) =
       proc.proc_hpdefs
   with Not_found -> Error.report_error {
       Error.error_loc = no_pos;
-      Error.error_text = "Procedure " ^ name ^ " is not found."}
+      Error.error_text = "look_up_hpdefs_proc: Procedure " ^ name ^ " is not found."}
 
 let update_hpdefs_proc (procs : (ident, proc_decl) Hashtbl.t) hpdefs (name : string) = 
   try
@@ -1053,7 +1057,7 @@ let update_hpdefs_proc (procs : (ident, proc_decl) Hashtbl.t) hpdefs (name : str
       (* Hashtbl.replace procs name proc *)
   with Not_found -> Error.report_error {
       Error.error_loc = no_pos;
-      Error.error_text = "Procedure " ^ name ^ " is not found."}
+      Error.error_text = "update_hpdefs_proc: Procedure " ^ name ^ " is not found."}
 
 let look_up_callee_hpdefs_proc (procs : (ident, proc_decl) Hashtbl.t) (name : string) = 
   try
@@ -1073,7 +1077,7 @@ let update_callee_hpdefs_proc (procs : (ident, proc_decl) Hashtbl.t) caller_name
       (* Hashtbl.replace procs name new_proc *)
   with Not_found -> Error.report_error {
       Error.error_loc = no_pos;
-      Error.error_text = "Procedure " ^ caller_name ^ " is not found."}
+      Error.error_text = "update_callee_hpdefs_proc: Procedure " ^ caller_name ^ " is not found."}
 
 (* Replaced by the new function with Hashtbl *)
 (*
@@ -1093,7 +1097,7 @@ let rec look_up_proc_def_no_mingling pos (procs : (ident, proc_decl) Hashtbl.t) 
   match proc with
   | None -> Error.report_error {
       Error.error_loc = pos;
-      Error.error_text = "Procedure " ^ name ^ " is not found." }
+      Error.error_text = "look_up_proc_def_no_mingling: Procedure " ^ name ^ " is not found." }
   | Some p -> p
   
 (* takes a class and returns the list of all the methods from that class or from any of the parent classes *)

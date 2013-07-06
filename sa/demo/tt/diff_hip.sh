@@ -1,6 +1,6 @@
 function EX 
 {
-diff tests/$1.out2 tests/$1.ref2 -b  > _XYZ
+diff tests/hip/$1.out ref/hip/$1.out -b  > _XYZ
 if [ -s _XYZ ]
 then
 echo =======

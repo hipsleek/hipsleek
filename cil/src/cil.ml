@@ -205,6 +205,7 @@ and global =
   | GText of string                     (** Some text (printed verbatim) at 
                                             top level. E.g., this way you can 
                                             put comments in the output.  *)
+  | GHipProgSpec of Iast.prog_decl * location  (** HIP prog *)
 
 
 (** The various types available. Every type is associated with a list of 
@@ -403,7 +404,7 @@ and typeinfo = {
  * example. Use one of the {!Cil.makeLocalVar}, {!Cil.makeTempVar} or 
  * {!Cil.makeGlobalVar} to create instances of this data structure. *)
 and varinfo = { 
-    mutable vname: string;		(** The name of the variable. Cannot 
+    mutable vname: string;              (** The name of the variable. Cannot 
                                           * be empty. *)
     mutable vtype: typ;                 (** The declared type of the 
                                           * variable. *)
@@ -672,7 +673,7 @@ and fundec =
       mutable sallstmts: stmt list;   (** After you call {!Cil.computeCFGInfo} 
                                       * this field is set to contain all 
                                       * statements in the function *)
-      mutable sspecs: Iformula.struc_formula;       (** static specs of function, used by hip/sleek system *)
+      mutable hipfuncspec: Iformula.struc_formula;       (** static specs of function, used by hip/sleek system *)
     }
 
 
@@ -782,7 +783,7 @@ and stmtkind =
          exception !!! The location corresponds to the try keyword. 
      *)      
   | TryExcept of block * (instr list * exp) * block * location
-  | HipStmt of Iast.exp * location
+  | HipStmtSpec of Iast.exp * location
 
 (** Instructions. They may cause effects directly but may not have control
     flow.*)
@@ -1116,6 +1117,7 @@ let get_globalLoc (g : global) =
   | GVar(_,_,l) -> (l)
   | GAsm(_,l) -> (l)
   | GPragma(_,l) -> (l) 
+  | GHipProgSpec (_, l) -> (l)
   | GText(_) -> locUnknown
 
 let rec get_stmtLoc (statement : stmtkind) =
@@ -1133,7 +1135,7 @@ let rec get_stmtLoc (statement : stmtkind) =
                else get_stmtLoc ((List.hd b.bstmts).skind)
   | TryFinally (_, _, l) -> l
   | TryExcept (_, _, _, l) -> l
-  | HipStmt (_, l) -> l
+  | HipStmtSpec (_, l) -> l
 
 let get_expLoc (e: exp) : location =
   match e with
@@ -3917,7 +3919,7 @@ class defaultCilPrinterClass : cilPrinter = object (self)
           ++ text ") " ++ unalign
           ++ self#pBlock () h
 
-    | HipStmt (iast_exp, l) -> 
+    | HipStmtSpec (iast_exp, l) -> 
         self#pLineDirective l 
           ++ text "/*@ "
           ++ text (Iprinter.string_of_exp iast_exp)
@@ -4056,6 +4058,8 @@ class defaultCilPrinterClass : cilPrinter = object (self)
           text s ++ text "\n"
         else
           nil
+
+    | GHipProgSpec _ -> nil
 
 
    method dGlobal (out: out_channel) (g: global) : unit = 
@@ -4502,6 +4506,7 @@ let d_shortglobal () = function
   | GFun(fd, _) -> dprintf "definition of %s" fd.svar.vname
   | GText _ -> text "GText"
   | GAsm _ -> text "GAsm"
+  | GHipProgSpec _ -> text "GHipProgSpec"
 
 (** Some string conversation functions *)
 let string_of_exp (e: exp) = Pretty.sprint 10 (d_exp () e)
@@ -4997,7 +5002,7 @@ let emptyFunction name =
     sbody = mkBlock [];
     smaxstmtid = None;
     sallstmts = [];
-    sspecs = Iformula.EList [];
+    hipfuncspec = Iformula.EList [];
   } 
 
 
@@ -5378,7 +5383,7 @@ and childrenStmt (toPrepend: instr list ref) : cilVisitor -> stmt -> stmt =
         if b' != b || il'' != il || e' != e || h' != h then 
           TryExcept(b', (il'', e'), h', l) 
         else s.skind
-    | HipStmt _ -> s.skind
+    | HipStmtSpec _ -> s.skind
   in
   if skind' != s.skind then s.skind <- skind';
   (* Visit the labels *)
@@ -5871,7 +5876,7 @@ let rec peepHole1 (* Process one instruction and possibly replace it *)
           peepHole1 doone h.bstmts;
           s.skind <- TryExcept(b, (doInstrList il, e), h, l);
       | Return _ | Goto _ | Break _ | Continue _ -> ()
-      | HipStmt _ -> ())
+      | HipStmtSpec _ -> ())
     ss
 
 let rec peepHole2  (* Process two instructions and possibly replace them both *)
@@ -5906,7 +5911,7 @@ let rec peepHole2  (* Process two instructions and possibly replace them both *)
           s.skind <- TryExcept (b, (doInstrList il, e), h, l)
 
       | Return _ | Goto _ | Break _ | Continue _ -> ()
-      | HipStmt _ -> ())
+      | HipStmtSpec _ -> ())
     ss
 
 
@@ -6552,7 +6557,7 @@ and succpred_stmt s fallthrough =
                 end
   | TryExcept _ | TryFinally _ -> 
       failwith "computeCFGInfo: structured exception handling not implemented"
-  | HipStmt _ -> ()
+  | HipStmtSpec _ -> ()
 
 (* [weimer] Sun May  5 12:25:24 PDT 2002
  * This code was pulled from ext/switch.ml because it looks like we really
@@ -6710,7 +6715,7 @@ let rec xform_switch_stmt s break_dest cont_dest = begin
   | Block(b) -> xform_switch_block b break_dest cont_dest
   | TryExcept _ | TryFinally _ -> 
       failwith "xform_switch_statement: structured exception handling not implemented"
-  | HipStmt _ -> ()
+  | HipStmtSpec _ -> ()
 
 end and xform_switch_block b break_dest cont_dest =
   try 

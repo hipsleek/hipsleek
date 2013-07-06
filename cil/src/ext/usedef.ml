@@ -202,7 +202,7 @@ let computeUseDefStmtKind ?(acc_used=VS.empty)
         List.iter (fun i -> ignore (visitCilInstr useDefVisitor i)) il
     | TryExcept _ | TryFinally _ -> ()
     | Block _ -> ()
-    | HipStmt _ -> ()
+    | HipStmtSpec _ -> ()
   in
   !varUsed, !varDefs
 
@@ -243,7 +243,7 @@ let rec computeDeepUseDefStmtKind ?(acc_used=VS.empty)
       !varUsed, !varDefs
   | TryExcept _ | TryFinally _ -> !varUsed, !varDefs
   | Block b -> handle_block b
-  | HipStmt _ -> !varUsed, !varDefs
+  | HipStmtSpec _ -> !varUsed, !varDefs
 
 let computeUseLocalTypes ?(acc_used=VS.empty)
                          (fd : fundec)

@@ -26,6 +26,9 @@ relAssume
 shape_infer [H][H].
 
 /* 
+# tree.slk
+
+!!! >>>>>> post-predicates: step post-61: weaken<<<<<<Fatal error: exception Failure("iast.gather_type_info_heap :gather_type_info_heap: relation H cannot be found")
 
 Why got two definitions for H?
 Got: 

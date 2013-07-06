@@ -1,0 +1,47 @@
+========tree-bug-1.slk ==========
+Starting Omega...oc
+H is defined.
+HP_1 is defined.
+HP_0 is defined.
+G is defined.
+
+!!! >>>>>> step 1: find dangling ptrs, link pre and post-preds dangling preds<<<<<<
+!!! >>>>>> step 2: split constraints based on pre and post-preds<<<<<<
+!!! **********************************
+!!! **** split_base ****
+!!! **********************************
+!!! post_hps:[G]
+!!! prog_vars:[]
+!!! BEFORE:[(1): HP_0(left_25_798) * HP_1(right_25_799) * 
+  x::node<key_25_797,left_25_798,right_25_799>@M&left_25_798=null --> G(x)]
+!!! =============>>>>
+!!! AFTER:[(1): HP_1(right_25_799) * x::node<key_25_797,left_25_798,right_25_799>@M&
+  left_25_798=null --> G(x),
+(2): HP_0(left_25_798)&left_25_798=null --> emp]
+!!! UNKNOWN added:[]
+!!! **********************************
+!!! **** end of split_base ****
+!!! **********************************
+!!! >>>>>> step 3: apply transitive implication<<<<<<
+!!! >>>>>> step 3a: simplification <<<<<<
+!!! >>>>>> step 3b: do apply_transitive_imp <<<<<<
+!!! >>>>>> pre-predicates<<<<<<
+!!! >>>>>> step pre-4: remove unused predicates<<<<<<
+!!! >>>>>> pre-predicates: step pre-5: group & simpl impl<<<<<<
+!!! >>>>>> pre-predicates: step pre-6: combine<<<<<<
+!!! >>>>>> pre-predicates: step pre-7: remove redundant x!=null<<<<<<
+!!! >>>>>> pre-predicates: step pre-8: strengthen<<<<<<
+!!! >>>>>> step 6: generalization <<<<<<
+!!! >>>>>> post-predicates<<<<<<
+!!! >>>>>> step post-4: step remove unused predicates<<<<<<
+!!! >>>>>> post-predicates: step post-5: remove redundant x!=null : not implemented yet<<<<<<
+!!! >>>>>> post-predicates: step post-61: weaken<<<<<<
+
+*************************************
+*******relational definition ********
+*************************************
+[ HP_0(left_25_23) ::= emp&left_25_23=null,
+ G(x_24) ::= HP_1(right_25_799) * x_24::node<key_25_797,left_25_798,right_25_799>@M&
+left_25_798=null]
+*************************************
+====================

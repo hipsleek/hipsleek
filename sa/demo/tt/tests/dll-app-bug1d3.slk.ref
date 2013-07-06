@@ -1,9 +1,0 @@
-Starting Omega...oc
-HP_7 is defined.
-
-Entail (1) : Valid. 
-
- <1>hfalse&false&{FLOW,(19,20)=__norm}[]
- inferred hprel: [HP_7(x,l2) --> emp&x!=null]
-
-

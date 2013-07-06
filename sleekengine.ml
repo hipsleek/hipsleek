@@ -211,29 +211,9 @@ let process_pred_def pdef =
 let process_pred_def_4_iast pdef = 
   if check_data_pred_name pdef.I.view_name then
     let curr_view_decls = iprog.I.prog_view_decls in
-	(* let tmp = iprog.I.prog_view_decls in *)
-	  try
-		let h = (self,Unprimed)::(res_name,Unprimed)::(List.map (fun c-> (c,Unprimed)) pdef.Iast.view_vars ) in
-		let p = (self,Primed)::(res_name,Primed)::(List.map (fun c-> (c,Primed)) pdef.Iast.view_vars ) in
-		iprog.I.prog_view_decls <- pdef :: curr_view_decls;
-		let wf = AS.case_normalize_struc_formula_view 11 iprog h p pdef.Iast.view_formula false 
-          false (*allow_post_vars*) false [] in
-        let inv_lock = pdef.I.view_inv_lock in
-        let inv_lock =
-          (match inv_lock with
-            | None -> None
-            | Some f ->
-                let new_f = AS.case_normalize_formula iprog h f None in (*TO CHECK: h or p*)
-                Some new_f)
-        in
-		let new_pdef = {pdef with Iast.view_formula = wf;Iast.view_inv_lock = inv_lock} in
-		iprog.I.prog_view_decls <- ( new_pdef :: curr_view_decls);
-	  with
-		| _ ->  dummy_exception() ; iprog.I.prog_view_decls <- curr_view_decls
+    iprog.I.prog_view_decls <- pdef :: curr_view_decls;
   else
-    begin
-	report_error pdef.I.view_pos (pdef.I.view_name ^ " is already defined.")
-    end
+    report_error pdef.I.view_pos (pdef.I.view_name ^ " is already defined.")
 
 let process_pred_def_4_iast pdef = 
   let pr = Iprinter.string_of_view_decl in
@@ -259,7 +239,12 @@ let convert_pred_to_cast () =
       Norm.norm_extract_common !cprog cviews (List.map (fun vdef -> vdef.C.view_name) cviews)
     else cviews
   in
-  let cviews2 = Norm.cont_para_analysis !cprog cviews1 in
+  let cviews2 =
+    if !Globals.norm_cont_analysis then
+      Norm.cont_para_analysis !cprog cviews1
+    else
+      cviews1
+  in
   let _ = !cprog.C.prog_view_decls <- cviews2 in
   let _ =  (List.map (fun vdef -> AS.compute_view_x_formula !cprog vdef !Globals.n_xpure) cviews2) in
   Debug.tinfo_pprint "after compute_view" no_pos;
@@ -385,29 +370,78 @@ let process_lemma ldef =
 
 	
 let process_data_def ddef =
-  (*
-    print_string (Iprinter.string_of_data_decl ddef);
-    print_string ("\n"); 
-  *)
   if check_data_pred_name ddef.I.data_name then
     let tmp = iprog.I.prog_data_decls in
-      try
-	iprog.I.prog_data_decls <- ddef :: iprog.I.prog_data_decls;
-	(* let _ = Iast.build_exc_hierarchy true iprog in *)
-	(* let _ = Exc.compute_hierarchy 2 () in *)
-	let cddef = AS.trans_data iprog ddef in
-	let _ = if (!Globals.print_input || !Globals.print_input_all) then print_string (Iprinter.string_of_data_decl ddef ^"\n") else () in
-	let _ = if (!Globals.print_core || !Globals.print_core_all) then print_string (Cprinter.string_of_data_decl cddef ^"\n") else () in
-	!cprog.C.prog_data_decls <- cddef :: !cprog.C.prog_data_decls;
-	if !perm=NoPerm || not !enable_split_lemma_gen then () 
-	else (process_lemma (Iast.gen_normalize_lemma_split ddef);process_lemma (Iast.gen_normalize_lemma_comb ddef))
-      with
-	| _ -> dummy_exception() ; iprog.I.prog_data_decls <- tmp
-      else begin
-        dummy_exception() ;
+    iprog.I.prog_data_decls <- ddef :: iprog.I.prog_data_decls;
+  else begin
+    dummy_exception() ;
 	(* print_string (ddef.I.data_name ^ " is already defined.\n") *)
 	report_error ddef.I.data_pos (ddef.I.data_name ^ " is already defined.")
-      end
+  end
+
+let process_data_def ddef =
+  Debug.no_1 "process_data_def" pr_no pr_no process_data_def ddef 
+
+let convert_data_and_pred_to_cast_x () =
+  (* convert data *)
+  List.iter (fun ddef ->
+    let cddef = AS.trans_data iprog ddef in
+    !cprog.C.prog_data_decls <- cddef :: !cprog.C.prog_data_decls;
+    if !perm=NoPerm || not !enable_split_lemma_gen then () 
+    else (process_lemma (Iast.gen_normalize_lemma_split ddef);process_lemma (Iast.gen_normalize_lemma_comb ddef))
+  ) iprog.I.prog_data_decls;
+
+  (* convert pred *)
+  let tmp_views = List.map (fun pdef ->
+    let h = (self,Unprimed)::(res_name,Unprimed)::(List.map (fun c-> (c,Unprimed)) pdef.Iast.view_vars ) in
+    let p = (self,Primed)::(res_name,Primed)::(List.map (fun c-> (c,Primed)) pdef.Iast.view_vars ) in
+    let wf = AS.case_normalize_struc_formula_view 11 iprog h p pdef.Iast.view_formula false false false [] in
+    let inv_lock = pdef.I.view_inv_lock in
+    let inv_lock = (
+      match inv_lock with
+      | None -> None
+      | Some f ->
+          let new_f = AS.case_normalize_formula iprog h f None in (*TO CHECK: h or p*)
+          Some new_f
+    ) in
+    let new_pdef = {pdef with Iast.view_formula = wf;Iast.view_inv_lock = inv_lock} in
+    new_pdef
+  ) iprog.I.prog_view_decls in
+  let tmp_views = (AS.order_views tmp_views) in
+  Debug.tinfo_pprint "after order_views" no_pos;
+  let _ = Iast.set_check_fixpt iprog.I.prog_data_decls tmp_views in
+  Debug.tinfo_pprint "after check_fixpt" no_pos;
+  iprog.I.prog_view_decls <- tmp_views;
+  let cviews = List.map (AS.trans_view iprog) tmp_views in
+  Debug.tinfo_pprint "after trans_view" no_pos;
+  let cviews =
+    if !Globals.pred_elim_useless then
+      Norm.norm_elim_useless cviews (List.map (fun vdef -> vdef.C.view_name) cviews)
+    else cviews
+  in
+  let _ = !cprog.C.prog_view_decls <- cviews in
+  let cviews1 =
+    if !Globals.norm_extract then
+      Norm.norm_extract_common !cprog cviews (List.map (fun vdef -> vdef.C.view_name) cviews)
+    else cviews
+  in
+  let _ = !cprog.C.prog_view_decls <- cviews1 in
+  let _ =  (List.map (fun vdef -> AS.compute_view_x_formula !cprog vdef !Globals.n_xpure) cviews1) in
+  Debug.tinfo_pprint "after compute_view" no_pos;
+  let _ = (List.map (fun vdef -> AS.set_materialized_prop vdef) cviews1) in
+  Debug.tinfo_pprint "after materialzed_prop" no_pos;
+  let cprog1 = AS.fill_base_case !cprog in
+  let cprog2 = AS.sat_warnings cprog1 in        
+  let cprog3 = if (!Globals.enable_case_inference or (not !Globals.dis_ps)(* !Globals.allow_pred_spec *)) 
+    then AS.pred_prune_inference cprog2 else cprog2 in
+  let cprog4 = (AS.add_pre_to_cprog cprog3) in
+  let cprog5 = (*if !Globals.enable_case_inference then AS.case_inference iprog cprog4 else*) cprog4 in
+  let _ = if (!Globals.print_input || !Globals.print_input_all) then print_string (Iprinter.string_of_program iprog) else () in
+  let _ = if (!Globals.print_core || !Globals.print_core_all) then print_string (Cprinter.string_of_program cprog5) else () in
+  cprog := cprog5
+
+let convert_data_and_pred_to_cast () = 
+  Debug.no_1 "convert_data_and_pred_to_cast" pr_no pr_no convert_data_and_pred_to_cast_x ()
 
 let process_barrier_def bd = 
     if !Globals.print_core || !Globals.print_core_all then print_string (Iprinter.string_of_barrier_decl bd) else () ;
@@ -422,11 +456,6 @@ let process_barrier_def bd =
     
 let process_barrier_def bd = 
 	Debug.no_1 "process_barrier" (fun _ -> "") (fun _ -> "done") process_barrier_def bd
-  
-
-	  
-let process_data_def ddef =
-  Debug.no_1 "process_data_def" pr_no pr_no process_data_def ddef 
 
 (** An Hoa : Second stage of parsing : iprog already contains the whole input.
              We do a reparse in order to distinguish between data & enum that
@@ -577,6 +606,7 @@ let rec meta_to_formula_not_rename (mf0 : meta_formula) quant fv_idents (tlist:T
 let run_infer_one_pass (ivars: ident list) (iante0 : meta_formula) (iconseq0 : meta_formula) =
   let _ = residues := None in
   let _ = Infer.rel_ass_stk # reset in
+  let _ = Sa2.rel_def_stk # reset in
   let _ = if (!Globals.print_input || !Globals.print_input_all) then print_endline ("INPUT: \n ### 1 ante = " ^ (string_of_meta_formula iante0) ^"\n ### conseq = " ^ (string_of_meta_formula iconseq0)) else () in
   let _ = Debug.devel_pprint ("\nrun_entail_check 1:"
                               ^ "\n ### iante0 = "^(string_of_meta_formula iante0)
@@ -1261,20 +1291,19 @@ let process_print_command pcmd0 = match pcmd0 with
 	  let (n_tl,pf) = meta_to_struc_formula mf false [] None [] in
 		print_string ((Cprinter.string_of_struc_formula pf) ^ "\n")
   | PCmd pcmd -> 
-	  if pcmd = "residue" then
-      match !residues with
-        | None -> print_string ": no residue \n"
-        (* | Some s -> print_string ((Cprinter.string_of_list_formula  *)
-        (*       (CF.list_formula_of_list_context s))^"\n") *)
-        (*print all posible outcomes and their traces with numbering*)
-        | Some (ls_ctx, print) ->
-            if (print) then
-              (* let _ = print_endline (Cprinter.string_of_list_context ls_ctx) in *)
-              let _ = print_string ((Cprinter.string_of_numbered_list_formula_trace_inst !cprog
-                               (CF.list_formula_trace_of_list_context ls_ctx))^"\n" ) in
-              ()
-	  else
-			print_string ("unsupported print command: " ^ pcmd)
+	if pcmd = "residue" then
+          match !residues with
+            | None -> print_string ": no residue \n"
+                  (* | Some s -> print_string ((Cprinter.string_of_list_formula  *)
+                  (*       (CF.list_formula_of_list_context s))^"\n") *)
+                  (*print all posible outcomes and their traces with numbering*)
+            | Some (ls_ctx, print) ->
+                  if (print) then
+                    (* let _ = print_endline (Cprinter.string_of_list_context ls_ctx) in *)
+                    print_string ((Cprinter.string_of_numbered_list_formula_trace_inst !cprog
+                        (CF.list_formula_trace_of_list_context ls_ctx))^"\n" );
+	else
+	  print_string ("unsupported print command: " ^ pcmd)
 
 let process_cmp_command (input: ident list * ident * meta_formula list) =
   let iv,var,fl = input in

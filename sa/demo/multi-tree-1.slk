@@ -1,0 +1,110 @@
+data tree {
+  node children;
+}.
+
+data node {
+  tree child;
+  node sibling;
+}.
+
+/*
+ptree<> ==
+  self::tree<c>*c::sll<>;
+
+sll<> ==
+  self=null
+or  self::node<c,n>*c::ptree<> * n::sll<>;
+*/
+
+HeapPred H(tree a).
+PostPred G(tree a).
+HeapPred H2(node a).
+PostPred G2(node a).
+HeapPred H_7(tree a).
+HeapPred H_8(node a).
+HeapPred H_9(node a).
+
+relAssume
+ H2(l)&l!=null --> l::node<child_38_955,sibling_38_956>@M * 
+  H_7(child_38_955) * H_8(sibling_38_956).
+
+relAssume
+ H_8(sibling_38_956) --> H2(sibling_38_956).
+
+relAssume
+ H_7(child_38_955) --> H(child_38_955).
+
+relAssume
+ H2(l)&l=null --> G2(l).
+
+relAssume
+ l::node<child_38_955,sibling_38_956>@M * G2(sibling_38_956) * 
+  G(child_38_955) --> G2(l).
+
+relAssume
+ H(t)&t!=null --> t::tree<children_30_986>@M * H_9(children_30_986).
+
+relAssume
+ H_9(children_30_986) --> H2(children_30_986).
+
+relAssume
+ H(t) --> emp&t!=null.
+
+relAssume
+ t::tree<children_30_986>@M * G2(children_30_986)&
+  children_30_986=null --> G(t).
+
+relAssume
+ t::tree<children_30_986>@M * G2(children_30_986)&
+  children_30_986!=null --> G(t).
+
+shape_infer [H,H2,H_7,H_8,H_9][G,G2].
+
+
+/*
+# multi-tree-1.slk
+
+Too much unfolding!
+
+[ H_7(child_38_110) ::= 
+ emp&child_38_110!=null
+ or child_38_110::tree<children_30_103>@M&children_30_103=null
+ or child_38_110::tree<children_30_103>@M * H_7(sibling_38_105) * 
+    children_30_103::node<child_38_104,sibling_38_105>@M
+ ,
+ H(t_111) ::= 
+ emp&t_111!=null
+ or t_111::tree<children_30_84>@M&children_30_84=null
+ or t_111::tree<children_30_84>@M * H(sibling_38_108) * 
+    children_30_84::node<child_38_107,sibling_38_108>@M
+ ,
+ H_8(sibling_38_112) ::= H2(sibling_38_112),
+ H_9(children_30_113) ::= H2(children_30_113),
+ H2(l_114) ::= 
+ H2(sibling_38_87) * l_114::node<child_38_86,sibling_38_87>@M&
+ child_38_86!=null
+ or emp&l_114=null
+ ,
+ G(t_133) ::= 
+ t_133::tree<children_30_986>@M&children_30_986=null
+ or t_133::tree<children_30_986>@M * 
+    children_30_986::node<child_38_124,sibling_38_123>@M * 
+    G(sibling_38_123) * child_38_124::tree<children_30_125>@M * 
+    G(children_30_125)&children_30_125=null
+ or t_133::tree<children_30_986>@M * 
+    children_30_986::node<child_38_127,sibling_38_126>@M * 
+    G(sibling_38_126) * child_38_127::tree<children_30_128>@M * 
+    G(children_30_128)
+ ,
+ G2(l_134) ::= 
+ emp&l_134=null
+ or l_134::node<child_38_955,sibling_38_956>@M * G2(sibling_38_956) * 
+    child_38_955::tree<children_30_115>@M * G2(children_30_115)&
+    children_30_115=null
+ or l_134::node<child_38_955,sibling_38_956>@M * G2(sibling_38_956) * 
+    child_38_955::tree<children_30_116>@M * G2(children_30_116)&
+    children_30_116!=null
+ ]
+*/
+
+

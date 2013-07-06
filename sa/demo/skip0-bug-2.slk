@@ -1,0 +1,30 @@
+data node2{
+	node2 n;
+	node2 s;
+}.
+
+HeapPred SLSEG(node2 a,node2@NI b).
+
+infer [l,e]
+ SLSEG(l,e)& l=null & !res
+ |-  res.
+print residue.
+
+infer [SLSEG]
+ SLSEG(l,e)& l=null & !res
+ |-  res.
+print residue.
+
+/*
+# skip0-bug-2.slk
+
+Entail (1) : Valid. 
+
+ <1>hfalse&false&{FLOW,(19,20)=__norm}[]
+ inferred pure: [l!=null]
+
+
+Entail (2) : Fail.
+
+
+*/

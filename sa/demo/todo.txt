@@ -3524,6 +3524,705 @@ Entail (1) : Valid.
 
 Entail (2) : Fail.
 =====================================================================
+# skip0-bug-2.slk: FIXED
+
+Why this simple example fail?
+
+infer [l,e]
+ SLSEG(l,e)& l=null & !res
+ |-  res.
+print residue.
+
+infer [SLSEG]
+ SLSEG(l,e)& l=null & !res
+ |-  res.
+print residue.
+
+Entail (1) : Valid. 
+
+ <1>hfalse&false&{FLOW,(19,20)=__norm}[]
+ inferred pure: [l!=null]
+
+
+Entail (2) : Fail.
+
+=====================================================================
+# xisa-bug-1.slk: FIXED
+
+infer [G,H] H(a) |- G(b).
+print residue.
+/* 
+Entail (1) : Fail.
+
+   should succeed with
+   emp --> G(b)
+   residue: H(a)
+*/
+
+
+infer_exact [G,H] H(a) |- G(b).
+print residue.
+/*
+Entail (2) : Fail.
+
+  should succeed with
+  H(a) --> G(b)
+*/
+
+
+infer_exact [G] H(a) |- G(b).
+print residue.
+/*
+OK
+
+ Entail (3) : Fail.
+
+*/
+
+infer [G,H] H(a) & b=null |- G(b).
+print residue.
+/*
+ OK
+
+ <1>H(a)&b=null&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [emp&b=null --> G(b)]
+*/
+=====================================================================
+/*
+# rose-tree.ss --pcp
+
+Handled mutual recursive method but it seems
+that there was an exception thrown..
+
+WARNING: _0:0_0:0:View definitions [[treep,dll]] are mutually recursive
+Stop Omega... 0 invocations caught
+
+Exception occurred: Not_found
+Error(s) detected at main 
+
+*/
+=====================================================================
+# mt-1.slk: DONE
+
+To add feature to infer pure properties for fields.
+
+--sa-en-pure-field
+
+  ("--sa-en-pure-field", Arg.Set Globals.sa_pure_field, "enable the inference of pure field property");
+  ("--sa-dis-pure-field", Arg.Clear Globals.sa_pure_field, "disable the inference of pure field property");
+
+
+infer [H] H(x) |- x::node<a,b> .
+print residue.
+
+infer [H] H(x) |- x::node<a,b> & a>0.
+print residue.
+
+
+Entail (1) : Valid. 
+
+ <1>HP_19(b_18)&a=a_17 & b=b_18&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [H(x) --> x::node<a_17,b_18>@M * HP_19(b_18)]
+
+Entail (2) : Fail.
+
+SOLUTION
+========
+--sa-en-pure-field
+
+(1) would then give:
+ <1>HP_19(b_18)&a=a_17 & b=b_18& T_1(a_17) {FLOW,(19,20)=__norm}[]
+  H(x) --> x::node<a_17,b_18>@M * HP_19(b_18) & R_1(a_17)]
+
+(2) would then also have:
+  R_1(a_17) --> a_17>0
+=====================================================================
+# mt-2.slk  FIXED
+
+infer [H,R1] x::node<a1,b1> * H(b1) & R1(a1) |- x::node<a,b> & a>0.
+print residue.
+
+Why is there an extra _pure_of_H name? Can it
+be removed for pure infer
+
+Entail (3) : Valid. 
+
+ <1>H(b1)&R1(a1) & a=a1 & b=b1 & 1<=a1&{FLOW,(19,20)=__norm}[]
+ inferred rel: [RELASS [R1,_pure_of_H]: ( R1(a1)) -->  1<=a1]
+=====================================================================
+# mt-3.slk: can't reproduce
+  
+  why is there a type error?
+=====================================================================
+# xisa-bug-2.slk
+
+  non-critical
+
+infer [G,H] H(a) |- G(b).
+print residue.
+
+Why is there a renaming of b here?
+Is it critical? Just ecstatic.
+
+Entail (2) : Valid. 
+
+ <1>H(a)&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [emp --> G(b_24)]
+=====================================================================
+# xisa-bug-2.slk: FIXED
+
+infer_exact [G,H] H(a) & b!=null|- G(b).
+print residue.
+
+Entail (1) : Valid. 
+<1>emp&b!=null&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [emp&b!=null --> G(b); H(a) --> emp]
+
+Better to have:
+   H(a) & b!=null --> G(b)
+
+If G(..) is the last consequent, we include all heap
+terms and their corresponding (reachable) pure constrains.
+=====================================================================
+# assert.ss
+
+  dprint;
+  assert ttt'=null assume ttt'=null;
+  dprint;
+
+ Why is x'=x information lost? This seem to occur for
+ inference but not verification.
+
+Successful States:
+[
+ Label: 
+ State:HP_910(left_19_908) * HP_911(right_19_909) * x::node<val_19_907,left_19_908,right_19_909>@M[Orig]&x=x' & right_19_909=ttt_30'&{FLOW,(22,23)=__norm}[]
+       es_var_measures 2: MayLoop
+       es_trace: empty
+       es_cond_path: [0]
+
+ ]
+
+Successful States:
+[
+ Label: 
+ State:HP_910(left_19_908) * HP_911(right_19_909) * x::node<val_19_907,left_19_908,right_19_909>@M[Orig]&right_19_909=ttt_30' & ttt_30'=null&{FLOW,(22,23)=__norm}[]
+       es_var_measures 2: MayLoop
+       es_trace: empty
+       es_cond_path: [0]
+
+ ]
+=====================================================================
+# assert2.ss   FIXED with just a warning 
+
+int mark(node x) 
+ requires x::node<a,_,r> * H(r)
+ ensures x::node<a,_,r> * H(r) & res=a;
+{
+  int ttt= x.val;
+  return ttt;
+}
+
+ we could give a warning but should allow uninterpreted heap
+ predicates in specification
+
+Last Proving Location: 1 File "assert2.ss",Line:10,Col:0
+
+ERROR: at _0:0_0:0 
+Message: error 3: free variables [H] in proc mark 
+ Stop Omega... 26 invocations Halting Reduce... 
+caught
+(Program not linked with -g, cannot print stack backtrace)
+=====================================================================
+# sorted-3.slk --en-sleek-logging-txt
+
+infer [H] H(y,_) & x=null  |- x::node<>.
+print residue.
+
+Message below a little wrong. Either we introduce:
+  H(y,_) --> false
+or we say we have a LHS contradiction but not allowed
+to introduce H(..) --> false.
+
+!!! >>>>>> mismatch ptr is not found (or inst) in the lhs <<<<<<
+!!! >>>>>> mismatch ptr is not found (or inst) in the lhs <<<<<<
+Entail (1) : Fail.
+=====================================================================
+# sorted-2.slk --en-sleek-logging-txt
+
+Andreea to fix this
+
+infer [H] H(y,_) & x=null & y!=null |- x::node<>.
+print residue.
+
+Below is correct but the step is not curently
+logged. I think we should log such important info.
+
+!!! inferred contradiction : : y=null
+!!! Andreea 1 : we need to call add_new_sleek_logging_entry to do sleek_logging
+Entail (1) : Valid. 
+
+ <1>hfalse&false&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [H(y,Anon_11) --> emp&y=null]
+=====================================================================
+# sorted-1a.ss --en-sleek-logging-txt
+
+WHY is shape_infer not performing for hip
+(sleek did not have a problem see sorted-2b.slk)
+
+bool check_sorted(node x, int v)
+  infer [H,G]
+  requires H(x,v) & v>0
+  ensures G(x,v) & v=0;
+{ 
+  dprint;
+  return false;
+} 
+
+GOT
+[ H(x,v) --> emp&1>v]
+
+Derived:
+[ H(x,v) ::= NONE]
+
+==========
+
+Why do we get NONE and not a lhs contradiction formula?
+
+Why did we derive UNKNOWN?
+=====================================================================
+# rose-bug-tree.ss 
+
+Why is there a type: check_child$node~tree~null
+
+ERROR: at rose-bug-tree.ss_31:15_31:45 
+Message: trans_exp :: case CallNRecv :: procedure 2 check_child$node~tree~null is not found
+
+Typechecker has failed to pick error below with check_child(t.children,t,t)
+
+Last Proving Location: 1 File "rose-bug-tree.ss",Line:26,Col:0
+
+ERROR: at rose-bug-tree.ss_32:15_32:42 
+Message: trans_exp :: case CallNRecv :: procedure 2 check_child$node~tree~tree is not found
+ Stop Omega... 26 invocations Halting Reduce... 
+caught
+(Program not linked with -g, cannot print stack backtrace)
+
+Exception occurred: Failure("trans_exp :: case CallNRecv :: procedure 2 check_child$node~tree~tree is not found")
+=====================================================================
+# rose-sll-1.ss 
+
+This is a simpler rose-tree with sll
+
+We currently perform inference of each method separately.
+However, for mutual recursive methods; we must perform the
+fix-point simulatenously. That is use Hoare rule to first
+gather the two sets of assumptions.
+
+After that, combine them into a single set for shape
+inference.
+=====================================================================
+# check-zip-leq.ss
+
+--sa-dnc
+
+problem with dnc algo;
+pre-predicate derived is too strong
+
+[ H(x_946,y_947) ::= emp&x_946=null,
+ G(x_948,y_949) ::= emp&x_948=null
+   \/  x_948::node<val_24_930,next_24_931>@M * 
+y_949::node<val_24_937,next_24_938>@M * G(next_24_931,next_24_938)]
+
+without --sa-dnc
+
+[ H(x_970,y_971) ::= 
+ H(next_24_961,next_24_959) * y_971::node<val_24_958,next_24_959>@M * 
+ x_970::node<val_24_960,next_24_961>@M
+ or emp&x_970=null
+ ,
+ G(x_972,y_973) ::= 
+ emp&x_972=null
+ or x_972::node<val_24_930,next_24_931>@M * 
+    y_973::node<val_24_937,next_24_938>@M * G(next_24_931,next_24_938)
+ ]
+---------------------------------
+--en-cp-trace --pred-dis-eup
+
+ How come disjoint H(..) not being combined?
+ ALGO: Consider two branches:
+    P(..) = (1;0)RHS1
+    P(..) = (2;0)RHS2
+ We can combine them disjunctively together if
+    XPure(RHS1) & XPURE(RHS2) |- false
+ This occurs below for both H/G; so they are combined as:
+    P(..) = (1;0)RHS1
+         \/ (2;0)RHS2
+
+[ H(x_946,y_947) ::=(1;0) emp&x_946=null,
+ G(x_948,y_949) ::=(1;0) emp&x_948=null
+   \/ (2;0) x_948::node<val_24_930,next_24_931>@M * 
+y_949::node<val_24_937,next_24_938>@M * G(next_24_931,next_24_938),
+ HP_932(next_24_931,y) * 
+  HP_939(next_24_938,x) ::=(2;0) H(next_24_931,next_24_938),
+ H(x_959,y_960) ::=(2;0) x_959::node<val_24_930,next_24_931>@M * HP_932(next_24_931,y_960) * 
+y_960::node<val_24_937,next_24_958>@M * HP_939(next_24_958,x_959),
+ HP_933(y_961,x_962) ::=(2;0) y_961::node<val_24_937,next_24_938>@M * HP_939(next_24_938,x_962)]
+
+--en-cp-trace 
+
+[ H(x_946,y_947) ::=(1;0) emp&x_946=null,
+ G(x_948,y_949) ::=(1;0) emp&x_948=null
+   \/ (2;0) x_948::node<val_24_930,next_24_931>@M * 
+y_949::node<val_24_937,next_24_938>@M * G(next_24_931,next_24_938)]
+=====================================================================
+# check-multi-tree.ss  FIXED
+
+We seems to be collecting only the relational assumption
+of H2/G2 (from one of the method check_child). What happen to the
+relational assumption of H/G (from check_tree)?
+It seems not to have been collected.
+
+[ H2(l)&l=null --> G2(l),
+ H2(l)&l!=null --> l::node<child_38_955,sibling_38_956>@M * 
+  HP_957(child_38_955) * HP_958(sibling_38_956),
+ HP_958(sibling_38_956) --> H2(sibling_38_956),
+ HP_957(child_38_955) --> H(child_38_955),
+ l::node<child_38_955,sibling_38_956>@M * G2(sibling_38_956) * 
+  G(child_38_955) --> G2(l)]
+=====================================================================
+# multi-tree-2.slk: FIXED
+
+GOT
+
+[ H(t_56) ::= t_56::tree<children_30_986>@M * H2(children_30_986),
+ H_9(children_30_57) ::= H2(children_30_57),
+ H_8(sibling_38_58) ::= H2(sibling_38_58),
+ H_7(child_38_59) ::= child_38_59::tree<children_30_55>@M * H2(children_30_55),
+ H2(l_60) ::= 
+ H2(sibling_38_45) * l_60::node<child_38_46,sibling_38_45>@M * 
+ child_38_46::tree<children_30_54>@M * H2(children_30_54)
+ or emp&l_60=null
+ ]
+
+PROBLEM : H_7 is unnecessarily unfolded.
+
+ALGO
+====
+
+1. First confirm the simple "equiv" definitions H_7.H_8,H_9
+
+ H_8(sibling_38_956) --> H2(sibling_38_956).
+ H_7(child_38_955) --> H(child_38_955).
+ H_9(children_30_986) --> H2(children_30_986).
+
+Confirmed as:
+ H_8(sibling_38_956) <-> H2(sibling_38_956).
+ H_7(child_38_955) <-> H(child_38_955).
+ H_9(children_30_986) <-> H2(children_30_986).
+
+2. Try confirm the next simplest:
+
+ H(t)&t!=null --> t::tree<children_30_986>@M * H_9(children_30_986).
+
+ Apply simplification (e.g. rewriting) 
+
+ H(t)&t!=null --> t::tree<children_30_986>@M * H2(children_30_986).
+
+3. Try confirm the next simplest:
+
+  H2(l)&l!=null --> l::node<child_38_955,sibling_38_956>@M * 
+    H_7(child_38_955) * H_8(sibling_38_956).
+  H2(l)&l=null --> emp.
+
+ Apply simplification (e.g. rewriting) 
+
+  H2(l)&l!=null --> l::node<child_38_955,sibling_38_956>@M * 
+    H(child_38_955) * H2(sibling_38_956).
+  H2(l)&l=null --> emp.
+
+ Combine conjuctively:
+  H2(l) = l::node<child_38_955,sibling_38_956>@M * 
+       H(child_38_955) * H2(sibling_38_956) & l!=null
+  or l=null --> emp.
+=====================================================================
+# multi-tree-3.slk: FIXED
+
+GOT below which is too complex:
+
+[ G(t_53) ::= 
+ t_53::tree<children_30_986>@M&children_30_986=null
+ or t_53::tree<children_30_986>@M * 
+    children_30_986::node<child_38_44,sibling_38_43>@M * G(sibling_38_43) * 
+    child_38_44::tree<children_30_45>@M * G(children_30_45)&
+    children_30_45=null
+ or t_53::tree<children_30_986>@M * 
+    children_30_986::node<child_38_47,sibling_38_46>@M * G(sibling_38_46) * 
+    child_38_47::tree<children_30_48>@M * G(children_30_48)
+ ,
+ G2(l_54) ::= 
+ l_54::node<child_38_955,sibling_38_956>@M * G2(sibling_38_956) * 
+ child_38_955::tree<children_30_35>@M * G2(children_30_35)&
+ children_30_35=null
+ or l_54::node<child_38_955,sibling_38_956>@M * G2(sibling_38_956) * 
+    child_38_955::tree<children_30_35>@M * G2(children_30_35)&
+    children_30_35!=null
+ or emp&l_54=null
+ ]
+
+ALGO
+====
+
+Do not unfold disjunctie form.
+
+Step 1
+======
+ l::node<child_38_955,sibling_38_956>@M * G2(sibling_38_956) * 
+  G(child_38_955) --> G2(l).
+
+ emp & l=null --> G2(l).
+
+Simplify and combine the disjunct:
+
+ l::node<child_38_955,sibling_38_956>@M * G2(sibling_38_956) * 
+  G(child_38_955) 
+ or & l=null --> G2(l).
+
+Confirm equation
+================
+ G2(l) ::=  
+  l::node<child_38_955,sibling_38_956>@M * G2(sibling_38_956) * 
+    G(child_38_955) 
+  or & l=null 
+
+Step 2 (process G)
+======
+Simplify (no change, as G2 is disj, so DO NOT unfold)
+ t::tree<children_30_986>@M * G2(children_30_986)&
+  children_30_986=null --> G(t).
+ t::tree<children_30_986>@M * G2(children_30_986)&
+  children_30_986!=null --> G(t).
+
+Combine disjunct:
+ t::tree<children_30_986>@M * G2(children_30_986)&
+  children_30_986=null
+ or t::tree<children_30_986>@M * G2(children_30_986)&
+  children_30_986!=null --> G(t).
+
+Perform Conjunctive Unification (without loss)
+ t::tree<children_30_986>@M * G2(children_30_986)&
+  (children_30_986=null|children_30_986!=null)
+   --> G(t).
+ t::tree<children_30_986>@M * G2(children_30_986)
+   --> G(t).
+
+Confirm Equation:
+ G(t) ::= t::tree<children_30_986>@M * G2(children_30_986)
+=====================================================================
+# tree.slk
+
+!!! >>>>>> post-predicates: step post-61: weaken<<<<<<Fatal error: exception Failure("iast.gather_type_info_heap :gather_type_info_heap: relation H cannot be found")
+=====================================================================
+# check-sorted.ss
+
+--sa-en-pure-field 
+
+# EXCEPTION disappeared when I mark all non-pointers as @NI
+
+Issue : should we use relation rather than HeapPred for this.
+ This is to try follow correct design decision.
+
+GOT
+===
+
+ H(x,v)&x!=null --> x::node<val_16_918,next_16_919>@M * 
+  HP_920(val_16_918@NI,v@NI) * HP_921(next_16_919,v@NI) * HP_922(v,x@NI),
+ HP_921(next_16_919,v@NI)&v<=val_16_918 --> H(next_16_919,val_16_918),
+ H(x,v)&x=null --> G(x,v),
+ HP_920(val_16_918@NI,v@NI) * HP_922(v,x@NI) * 
+  x::node<val_16_918,next_16_919>@M * G(next_16_919,val_16_918)&
+  v<=val_16_918 --> G(x,v),
+ HP_920(val_16_918@NI,v@NI) --> emp&forall(x:(val_16_918>=v | x=null))]
+
+
+BUT caused an exception during shape_infer..
+
+Context of Verification Failure: 1 File "check-sorted.ss",Line:12,Col:10
+Last Proving Location: 1 File "check-sorted.ss",Line:20,Col:14
+
+ERROR: at _0:0_0:0 
+Message: cpure.get_neq_null_svl: ?
+ 
+ExceptionFailure("cpure.get_neq_null_svl: ?")Occurred!
+
+Error(s) detected at main 
+Stop Omega... 78 invocations Halting Reduce... 
+caught
+(Program not linked with -g, cannot print stack backtrace)
+
+Exception occurred: Failure("cpure.get_neq_null_svl: ?")
+=====================================================================
+# pos-1b.slk
+
+relAssume
+ H_8(val_16_916) --> emp&val_16_916>0.
+
+relAssume
+ x=null --> G(x).
+
+relAssume
+ H_8(val_16_916) * x::node<val_16_916,next_16_917>@M * G(next_16_917)&
+  0<val_16_916 --> G(x).
+
+shape_infer [H_8][G].
+
+  H_8 has been inlined in G but there is a weakening
+   since 0<val_16_916 is also LOST  ..
+
+ H_8(val_16_26) ::= emp&0<val_16_26,
+ G(x_27) ::= 
+ emp&x_27=null
+ or x_27::node<val_16_916,next_16_917>@M * G(next_16_917)
+=====================================================================
+# sorted-4.slk 
+
+GOT
+===
+[ H(x_60,v_61) ::= 
+ x_60::node<val_16_46,next_16_47>@M * H(next_16_47,val_16_58)&
+ v_61<=val_16_46 & v_61<=val_16_58
+ or emp&x_60=null,
+ H_1(next_16_63,v_64) ::= 
+ emp&v_64<=val_16_918 & next_16_63=null
+ or next_16_63::node<val_16_46,next_16_59>@M * H_1(next_16_59,val_16_918)&
+    v_64<=val_16_918 & val_16_918<=val_16_46,
+ H_0(val_16_66,v_67) ::= emp&v_67<=val_16_66]
+
+BETTER ALGO
+===========
+
+Step 1
+------
+Choose simplest which is H_0
+ H_0(val_16_918,v) --> emp&val_16_918>=v.
+ H_0(val_16_918,v) <-> val_16_918>=v.
+
+Step 2
+------
+Choose next simplest which is H_1
+ H_1(n,v)&v<=vv --> H(n,vv).
+
+Confirm equation:
+ H_1(n,v) & v<=vv --> H(n,vv).
+ H_1(n,v) & v<=vv <--> H(n,vv) ----[1]
+
+Step 2
+------
+Choose next simplest which is H
+
+ H(x,v)&x!=null --> x::node<val_16_918,next_16_919>@M * 
+  H_0(val_16_918,v) * H_1(next_16_919,v).
+ H(x,v)&x=null --> emp.  --- [2]
+
+Simplify (by unfolding simple defns only)
+ H(x,v)&x!=null --> x::node<vvv,next_16_919>@M * 
+  H_0(vvv,v) * H_1(next_16_919,v).
+ H(x,v)&x!=null --> x::node<vvv,next_16_919>@M * 
+        vvv>=v * H_1(next_16_919,v).
+ Conditional Unfold of [1] above
+ H(x,v)&x!=null --> x::node<vvv,next_16_919>@M * 
+         * H(next_16_919,vvv) & vvv>=v .--[3]
+
+Conj-unify [2] & [3]
+--------------------
+ H(x,v) --> emp & x=null
+   or x::node<vvv,next_16_919>@M * 
+         * H(next_16_919,vvv) & vvv>=v
+
+Confirm Equation
+----------------
+ H(x,v) <--> emp & x=null
+   or x::node<vvv,next_16_919>@M * 
+         * H(next_16_919,vvv) & vvv>=v
+=====================================================================
+# sorted-4b.slk : FIXED
+
+HeapPred H(node x, int v).
+HeapPred H2(node x, int@NI v).
+
+infer [H] H(x,v) & x!=null |- x::node<a,n>.
+print residue.
+
+infer [H2] H2(x,v) & x!=null |- x::node<a,n>.
+print residue.
+
+non-ptr types are @NI by default
+
+There is no point in instantiating integer
+type, such as HP_23(v,x@NI). By default,
+H(x,v) ought to be H(x,v@NI).
+
+Thus both entailments should cause the
+same outcome!
+
+Entail (1) : Valid. 
+ <1>HP_22(n_21,v) * HP_23(v,x)&x!=null & a=a_20 & n=n_21&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [H(x,v)&x!=null --> x::node<a_20,n_21>@M * 
+                   HP_22(n_21,v@NI) * HP_23(v,x@NI)]
+
+Entail (2) : Valid. 
+ <1>HP_35(n_34,v)&x!=null & a=a_33 & n=n_34&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [H2(x,v@NI)&x!=null --> x::node<a_33,n_34>@M * 
+                   HP_35(n_34,v@NI)]
+=====================================================================
+# check-multi-tree.ss: FIXED
+
+If we had processed HP_987 before H, we would have been able
+to inline away HP_987. This is because HP_987 is simpler
+than H, and should be considered first.
+
+[ H(t_1007) ::= t_1007::tree<children_30_986>@M * HP_987(children_30_986),
+ H2(l_1009) ::= 
+ H(child_38_997) * H2(sibling_38_996) * 
+ l_1009::node<child_38_997,sibling_38_996>@M
+ or emp&l_1009=null
+ ,
+ G2(l_1010) ::= 
+ emp&l_1010=null
+ or l_1010::node<child_38_955,sibling_38_956>@M * G2(sibling_38_956) * 
+    G(child_38_955)
+ ,
+ G(t_1011) ::= t_1011::tree<children_30_986>@M * G2(children_30_986),
+ HP_987(children_30_1008) ::= H2(children_30_1008)]
+=====================================================================
+# mcf-1.slk
+
+Should have a better type error message 
+
+ERROR: at mcf-1.slk_66:47_66:58 
+Message: gather_type_info_var : unexpected exceptionInvalid_argument("[ocamlgraph] iter_succ")
+ Fatal error: exception Failure("gather_type_info_var : unexpected exceptionInvalid_argument("[ocamlgraph] iter_succ")")
+
+Not sure if this is due to wrong type declaration of heap predicate.
+I wonder if we can do a dump of unknown heap predicate defined
+and generated at the start of shape inference (in hip) which we could 
+later cut for sleek. This would reduce tedium for preparing sleek file.
+
+HeapPred H1(tree a).
+PostPred G1(tree a).
+HeapPred H2(node a,node@NI c,tree@NI b).
+HeapPred H_1(tree a,node@NI c,tree@NI b).
+HeapPred H_2(node a,node@NI c,tree@NI b).
+HeapPred H_3(node a,node@NI c,tree@NI b).
+HeapPred H_4(tree a,node@NI c,tree@NI b).
+HeapPred H_5(tree a).
+PostPred G2(node a,node@NI c,tree@NI b).
+
+Also, after we have have analysed the unknowns, can we
+also output the statement (in hip)
+
+Declare_Unknown [H_2,H_4].
+=====================================================================
 =====================================================================
 =====================================================================
 =====================================================================

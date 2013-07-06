@@ -16,6 +16,11 @@ module Inf = Infer
 
 let cmp_hp_pos (hp1,pos1) (hp2,pos2)= (CP.eq_spec_var hp1 hp2) && pos1=pos2
 
+let cs_rhs_is_only_neqNull cs=
+  let lhs_hpargs = CF.get_HRels_f cs.CF.hprel_lhs in
+  let args = List.fold_left (fun ls (_, args) -> ls@args) [] lhs_hpargs in
+  CF.is_only_neqNull args [] cs.CF.hprel_rhs
+
 (*
   find all pre-preds that has only one assumption ===> equal
 *)
@@ -35,8 +40,9 @@ let search_pred_4_equal_x constrs post_hps=
                if CP.eq_spec_var hp1 hp0 then (ls1@[cs1], ls2)
                else (ls1, ls2@[(hp1,cs1)])
            ) ([],[]) rest in
-           let n_res = if List.length grp > 0 then
-             (cand_equal,rem_pre_constrs@(cs0::grp))
+           let grp1 = (cs0::grp) in
+           let n_res = if List.length grp1 > 1 then
+             (cand_equal,rem_pre_constrs@(grp1))
            else (cand_equal@[(hp0,cs0)],rem_pre_constrs)
            in
            partition_equal n_res rest1
@@ -865,6 +871,25 @@ let analize_unk_x prog post_hps constrs total_unk_map unk_hpargs link_hpargs=
    let _ = Debug.dinfo_pprint ("map after: " ^
        (let pr = (pr_list (pr_pair (pr_pair !CP.print_sv (pr_list string_of_int)) CP.string_of_xpure_view)) in
        pr new_map)) no_pos in
+   (*printing such that it is easy to construct a sleek test cases*)
+   let _ = if !Globals.print_heap_pred_decl then
+     let unk_hps = List.map fst tot_unk_hpargs in
+     let _ = if unk_hps <> [] then
+       let hp_names = List.map (CP.name_of_spec_var) unk_hps in
+       let _ = print_endline ("\nDeclare_Dangling [" ^ (String.concat "," hp_names) ^ "].") in
+       ()
+     else ()
+     in
+     let link_hps = List.map fst link_hpargs4 in
+     let _ = if link_hps <> [] then
+       let hp_names = List.map (CP.name_of_spec_var) link_hps in
+       let _ = print_endline ("\nDeclare_Unknown [" ^ (String.concat "," hp_names) ^ "].") in
+       ()
+     else ()
+     in
+     ()
+   else ()
+   in
    (new_cs, tot_unk_hpargs, new_map,
    link_hpargs4, punk_map)
 
