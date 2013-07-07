@@ -4398,6 +4398,30 @@ relational assumption of H_9. I think we should never have
 unfolded a predicate with a complex RHS. Hence, we should 
 never have unfolded H2 in the first place.
 =====================================================================
+# mcf-3a1.slk
+
+a more complex variant of mcf-3a.slk
+(from pre of check-mcf-2.ss)
+
+This version produced below which did not inlined H_5,H_6
+which are defns in guarded form?
+
+ H_6(next_3,par) &par=par'--> H2(next_3,par). 
+ H_5(child_2,par) &par=par'--> H1(child_2). 
+
+However, this guard is useless as par' is not used in
+the RHS either. Can we simplify these guarded form to:
+
+ H_6(next_3,par) --> H2(next_3,par). 
+ H_5(child_2,par) --> H1(child_2). 
+
+Also, did you process H_5,H_6 before H_9, followed
+by H2.
+
+H_5/H_6 are  simpler than H_9.
+
+H_9 itself is simpler than H2, hence it must
+be transformed before H2. Please check.
 =====================================================================
 =====================================================================
 =====================================================================
