@@ -2163,6 +2163,7 @@ and equalBFormula_f (eq:spec_var -> spec_var -> bool) (f1:b_formula)(f2:b_formul
     | (Gt(e1, IConst(i2, _), _), Gte(e3, IConst(i4, _), _)) -> i2=i4-1 && eqExp_f eq e1 e3
     | (Lte(e1, e2, _), Gt(e4, e3, _))
     | (Lte(e1, e2, _), Gte(e4, e3, _))
+    | (Gte(e1, e2, _), Lte(e4, e3, _))
     | (Gt(e1, e2, _), Lte(e4, e3, _))
     | (Gte(e1, e2, _), Lt(e4, e3, _))
     | (Lt(e1, e2, _), Gte(e4, e3, _))  
@@ -10668,6 +10669,30 @@ let checkeq_exp e1 e2 ss=
 let checkeq_p p1 p2 ss=
   match p1,p2 with
     | Lte (e11,e12,_),  Lte (e21,e22,_) -> begin
+          if checkeq_exp e11 e21 ss then
+            match e12,e22 with
+              | Var (sv1,_), Var (sv2,_) -> (true, ss@[(sv1,sv2)])
+              | _ -> (false, ss)
+          else
+            (false, ss)
+      end
+    | Gte (e11,e12,_),  Gte (e21,e22,_) -> begin
+          if checkeq_exp e11 e21 ss then
+            match e12,e22 with
+              | Var (sv1,_), Var (sv2,_) -> (true, ss@[(sv1,sv2)])
+              | _ -> (false, ss)
+          else
+            (false, ss)
+      end
+    | Lte (e11,e12,_),  Gte (e22,e21,_) -> begin
+          if checkeq_exp e11 e21 ss then
+            match e12,e22 with
+              | Var (sv1,_), Var (sv2,_) -> (true, ss@[(sv1,sv2)])
+              | _ -> (false, ss)
+          else
+            (false, ss)
+      end
+    | Gte (e11,e12,_),  Lte (e22,e21,_) -> begin
           if checkeq_exp e11 e21 ss then
             match e12,e22 with
               | Var (sv1,_), Var (sv2,_) -> (true, ss@[(sv1,sv2)])

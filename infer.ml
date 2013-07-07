@@ -540,19 +540,27 @@ let infer_lhs_contra pre_thus lhs_xpure ivars pos msg =
   let lhs_xpure = MCP.mix_drop_rel lhs_xpure_orig in
   let check_sat = TP.is_sat_raw lhs_xpure in
   if not(check_sat) then None
-  else 
+  else
     let f = simplify_contra (MCP.pure_of_mix lhs_xpure) ivars in
     let vf = CP.fv f in
     let over_v = CP.intersect vf ivars in
     if (over_v ==[]) then None
     else 
       let exists_var = CP.diff_svl vf ivars in
+      (* let _ = DD.info_hprint (add_str "f (before simplify_helper): " !print_formula) f pos in *)
+      (* let ps = CP.list_of_conjs (CP.remove_redundant f) in *)
+      (* let ptrs_ps, non_ptrs_ps = List.partition (fun p -> List.for_all (CP.is_node_typ) (CP.fv p)) ps in *)
+      (* let _ = DD.info_hprint (add_str " ptrs_ps: " (pr_list_ln !print_formula)) ptrs_ps pos in *)
+      (* let _ = DD.info_hprint (add_str " non_ptrs_ps: " (pr_list_ln !print_formula)) non_ptrs_ps pos in *)
+      (* let f = simplify_helper (CP.mkExists exists_var (CP.conj_of_list non_ptrs_ps pos) None pos) in *)
+      (* let f = CP.conj_of_list (ptrs_ps@[f]) pos in *)
       let f = simplify_helper (CP.mkExists exists_var f None pos) in
       if CP.isConstTrue f || CP.isConstFalse f then None
       else 
-        let _ = DD.ninfo_hprint (add_str "f: " !print_formula) f pos in
+        (* let _ = DD.info_hprint (add_str "f (after simplify_helper): " !print_formula) f pos in *)
         let f = TP.pairwisecheck_raw f in
         let neg_f = Redlog.negate_formula f in
+        let _ = DD.info_hprint (add_str "neg_f: " !print_formula) neg_f pos in
         (* Thai: Remove disjs contradicting with pre_thus *)
         let new_neg_f = 
           if CP.isConstTrue pre_thus then neg_f
@@ -2974,6 +2982,7 @@ let add_infer_hp_contr_to_list_context h_arg_map cps (l:list_context) : list_con
       if diff = [] then
         [(true, (h,hf,h_args, p,p, pos))]
       else
+        let _ = print_string ("\n p: "^(!CP.print_formula p)^"\n") in
         let n_p = CP.mkForall diff p None pos in
         if TP.is_sat_raw (MCP.mix_of_pure n_p) then
           [(true, (h,hf,h_args, p, n_p , pos))]
