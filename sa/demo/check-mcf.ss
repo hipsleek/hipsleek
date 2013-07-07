@@ -10,18 +10,19 @@ data node {
     tree parent;
     }
 
-HeapPred H1(tree a).
-PostPred G1(tree a).
-HeapPred H2(node a,node@NI c,tree@NI b).
-PostPred G2(node a,node@NI c,tree@NI b).
-
 treep<> == 
-  //self=null or
   self::tree<_,c>* c::dll<self,null> ;
 
 dll<parent, prev> == 
   self=null or 
   self::node<c,prev,n,parent>*c::treep<>* n::dll<parent,self>;
+
+  //self=null or
+
+HeapPred H1(tree a).
+PostPred G1(tree a).
+HeapPred H2(node a,node@NI c,tree@NI b).
+PostPred G2(node a,node@NI c,tree@NI b).
 
 /*
  H2(l,prv,par)<--> l::node<child_07,prev_08,next_09,parent_10> * 
