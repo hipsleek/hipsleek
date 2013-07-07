@@ -5255,7 +5255,8 @@ let remove_neqNull_redundant_hnodes svl p=
       let disjs = CP.list_of_disjs bare_p in
       let rem = List.filter (fun p -> not (CP.is_eq_null_exp p)) disjs in
       let bare1 = CP.disj_of_list rem pos in
-      if new_quans = [] then bare1 else CP.mkForall new_quans bare1 lbl pos
+      let p2 = if new_quans = [] then bare1 else CP.mkForall new_quans bare1 lbl pos in
+      p2
     else p1
   else p1
 
