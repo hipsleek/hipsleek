@@ -221,4 +221,4 @@ let verify_lemma (l2r: C.coercion_decl option) (r2l: C.coercion_decl option) (cp
     | Some coerc -> Cprinter.string_of_coercion coerc
     | None -> ""
   in
-  Debug.no_3 "verify_lemma" pr pr (fun x -> x) (fun _ -> "Unit") (fun _ _ _ -> verify_lemma l2r r2l cprog coerc_name coerc_type) l2r r2l coerc_name
+  Debug.no_3 "verify_lemma" pr pr (fun x -> x) (Gen.pr_opt Cprinter.string_of_list_context) (fun _ _ _ -> verify_lemma l2r r2l cprog coerc_name coerc_type) l2r r2l coerc_name
