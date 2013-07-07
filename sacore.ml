@@ -818,7 +818,11 @@ let analize_unk_x prog post_hps constrs total_unk_map unk_hpargs link_hpargs=
   (*END for debugging*)
   (*END double check*)
    let detected_hps = (List.map fst link_hpargs)@unk_hps in
-   let unk_hp_args1 = List.filter (fun (hp,_,_) -> not (CP.mem_svl hp detected_hps)) unk_hp_args02 in
+   let unk_hp_args1 = List.filter (fun (hp,args,_) ->
+       (*all non-ptrs args: are not consider unknown*)
+       ((List.filter (fun sv -> CP.is_node_typ sv) args) <> []) &&
+       not (CP.mem_svl hp detected_hps)
+   ) unk_hp_args02 in
    let full_hps = List.map (fun (hp, _, _) -> hp) full_unk_hp_args2_locs in
    (*find full unk_hps: I parameters + unk_svl*)
    let full_unk_hp_locs0, link_hpargs2 = find_full_unk_hps prog closure_post_hps full_hps unk_hp_args1 in

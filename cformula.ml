@@ -37,8 +37,8 @@ and mem_perm_formula = {mem_formula_exp : CP.exp;
 			mem_formula_exact : bool;
 			mem_formula_field_layout : (ident * (ann list)) list;
 			mem_formula_guards : CP.formula list; 
-			}
-		
+}
+
 and formula_type =
   | Simple
   | Complex
@@ -4498,15 +4498,24 @@ let rec get_hp_rel_name_h_formula hf=
     | HFalse
     | HEmp -> []
 
-let rec get_hp_rel_name_formula (f: formula) =
+let rec get_hp_rel_name_formula_x (f0: formula) =
+  let rec helper f=
   match f with
     | Base  ({formula_base_heap = h1;
-		      formula_base_pure = p1})
+      formula_base_pure = p1})
     | Exists ({ formula_exists_heap = h1;
-		        formula_exists_pure = p1}) -> get_hp_rel_name_h_formula h1
+      formula_exists_pure = p1}) -> get_hp_rel_name_h_formula h1
     | Or orf  ->
-        CP.remove_dups_svl ((get_hp_rel_name_formula orf.formula_or_f1)@
-        (get_hp_rel_name_formula orf.formula_or_f2))
+          CP.remove_dups_svl ((helper orf.formula_or_f1)@
+              (helper orf.formula_or_f2))
+  in
+  helper f0
+
+let get_hp_rel_name_formula (f: formula) =
+  let pr1 = !print_formula in
+  let pr2 = !CP.print_svl in
+  Debug.no_1 "get_hp_rel_name_formula" pr1 pr2
+      (fun _ -> get_hp_rel_name_formula_x f) f
 
 let get_hp_rel_name_assumption cs=
   CP.remove_dups_svl ((get_hp_rel_name_formula cs.hprel_lhs)@
@@ -5230,13 +5239,26 @@ let remove_neqNull_redundant_hnodes svl p=
   let ps = (CP.split_conjunctions p) in
   let ps1 = CP.remove_redundant_helper ps [] in
   let new_ps = Gen.BList.difference_eq CP.equalFormula ps1 neqNulls in
-  (CP.join_conjunctions new_ps)
+  let p1 =  (CP.join_conjunctions new_ps) in
+  let quans, bare_p, lbl,pos = CP.split_forall_quantifiers p1 in
+  (* let _ = Debug.info_pprint ("  quans: " ^ (!CP.print_svl quans) ) no_pos in *)
+  if quans<> [] then
+    let null_svl = CP.get_null_ptrs bare_p in
+    if svl <> [] && null_svl <> [] then
+      let new_quans = CP.diff_svl quans null_svl in
+      let disjs = CP.list_of_disjs bare_p in
+      let rem = List.filter (fun p -> not (CP.is_eq_null_exp p)) disjs in
+      let bare1 = CP.disj_of_list rem pos in
+      if new_quans = [] then bare1 else CP.mkForall new_quans bare1 lbl pos
+    else p1
+  else p1
 
 (*elim redundant x::node<_> & x!=null: remove x!=null*)
 let remove_neqNull_redundant_hnodes_hf_x hf p=
   let hds, _, _ (*hvs, hrs*) =  get_hp_rel_h_formula hf in
   let svl = List.map (fun dn -> dn.h_formula_data_node) hds in
-  remove_neqNull_redundant_hnodes svl p
+  let p1 = remove_neqNull_redundant_hnodes svl p in
+  p1
 
 let remove_neqNull_redundant_hnodes_hf hf0 p=
   let pr1 = !print_h_formula in

@@ -2384,11 +2384,19 @@ let rec find_imply prog lunk_hps runk_hps lhs1 rhs1 lhs2 rhs2=
                (look_up_closed_ptr_args prog nldns nlvns all_matched_svl2) in *)
             let lmf = (MCP.pure_of_mix n_lhs1.CF.formula_base_pure) in
             let rmf = (MCP.pure_of_mix rhs2.CF.formula_base_pure) in
+            let lmf, subst1, n_lhs1=
+              let b, n_subst1 = CP.checkeq lmf rmf subst1 in
+              if b then
+                (CP.subst n_subst1 lmf, n_subst1, CF.subst_b n_subst1 lhs1)
+              else
+                (lmf, subst1,n_lhs1)
+            in
             (*get rele pure of lhs2*)
             let rmf1 = CP.mkAnd rmf (CF.get_pure lhs2) no_pos in
             (* let _ = Debug.ninfo_pprint ("    n_lhs1: " ^ (Cprinter.string_of_formula_base n_lhs1)) no_pos in *)
-            (* let _ = Debug.ninfo_pprint ("    lmf: " ^ (!CP.print_formula lmf)) no_pos in *)
-            (* let _ = Debug.ninfo_pprint ("    rmf1: " ^ (!CP.print_formula rmf1)) no_pos in *)
+            (*ptrs: cmpare node. pure --> quantifiers*)
+            let _ = Debug.ninfo_pprint ("    lmf: " ^ (!CP.print_formula lmf)) no_pos in
+            let _ = Debug.ninfo_pprint ("    rmf1: " ^ (!CP.print_formula rmf1)) no_pos in
             let b,_,_ = TP.imply rmf1 lmf "sa:check_hrels_imply" true None in
             let lpos = (CF.pos_of_formula lhs2) in
             if b then
@@ -2423,7 +2431,7 @@ let rec find_imply prog lunk_hps runk_hps lhs1 rhs1 lhs2 rhs2=
               (*avoid clashing --> should refresh remain svl of r_res*)
               let r_res1 = (* CF.subst ss2 *) (CF.Base r_res) in
               (* let _ = Debug.info_pprint ("    r_res1: " ^ (Cprinter.prtt_string_of_formula r_res1)) no_pos in *)
-              (* let _ = Debug.info_pprint ("    n_rhs1: " ^ (Cprinter.string_of_formula n_rhs1)) no_pos in *)
+              let _ = Debug.ninfo_pprint ("    n_rhs1: " ^ (Cprinter.string_of_formula n_rhs1)) no_pos in
               (*elim duplicate hprel in r_res1 and n_rhs1*)
               let nr_hprel = CF.get_HRels_f n_rhs1 in
               let nrest_hprel = CF.get_HRels_f r_res1 in
@@ -5022,15 +5030,27 @@ let combine_hpdefs hpdefs=
   Debug.no_1 "combine_hpdefs" pr1 pr1
       (fun _ -> combine_hpdefs_x hpdefs) hpdefs
 
-let get_pre_fwd post_hps post_pdefs=
-  let process_one_pdef cur_fwd_hps (hp, _, _,_,_, off)=
+let get_pre_fwd_x post_hps post_pdefs=
+  let process_one_pdef cur_fwd_hps (hp, _, _,_,off, _)=
     match off with
       | Some f-> let hps = CF.get_hp_rel_name_formula f in
-        cur_fwd_hps@(CP.diff_svl hps post_hps)
+        (cur_fwd_hps@(CP.diff_svl hps (hp::post_hps)))
       | None -> cur_fwd_hps
   in
   let fwd_pre = List.fold_left process_one_pdef [] post_pdefs in
   (CP.remove_dups_svl fwd_pre)
+
+let get_pre_fwd post_hps post_pdefs=
+  let pr_f off= match off with
+    | Some f -> Cprinter.prtt_string_of_formula f
+    | None -> "None"
+  in
+  let pr0 (a, b, _,_, c,d) = (pr_quad !CP.print_sv !CP.print_svl pr_f pr_f) (a,b,c,d) in
+  let pr1 = pr_list_ln pr0 in
+  let pr2 = !CP.print_svl in
+  Debug.no_2 "get_pre_fwd" pr2 pr1 pr2
+      (fun _ _ -> get_pre_fwd_x post_hps post_pdefs)
+      post_hps post_pdefs
 
 let extract_fwd_pre_defs_x fwd_pre_hps defs=
   let get_pre_def (cur_grps,cur_hps) (def_kind,hf,def)=

@@ -663,7 +663,7 @@ let dis_show_diff = ref false
 
 let sa_print_inter = ref false
 
-let print_heap_pred_decl = ref false
+let print_heap_pred_decl = ref true
 
 let cond_path_trace = ref false
 

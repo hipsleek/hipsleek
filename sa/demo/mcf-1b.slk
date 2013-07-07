@@ -1,0 +1,86 @@
+data tree {
+    node children;
+    }.
+    
+data node {
+    tree child; 
+    node prev; 
+    node next; 
+    tree parent;
+    }.
+
+HeapPred H1(tree a).
+PostPred G1(tree a).
+HeapPred H2(node a,node@NI c,tree@NI b).
+HeapPred H_1(tree a,node@NI c,tree@NI b).
+HeapPred H_2(node a,node@NI c,tree@NI b).
+HeapPred H_3(node a,node@NI c,tree@NI b).
+HeapPred H_4(tree a,node@NI c,tree@NI b).
+HeapPred H_5(node a).
+PostPred G2(node a,node@NI c,tree@NI b).
+Declare_Unknown [H_2,H_4].
+
+infer [H_1,H_2,H_3,H_4,H2]
+ H_1(child_7,prv,par) * H_2(prev_8,prv,par) * 
+ H_3(next_9,prv,par) * H_4(parent_0,prv,par) * 
+ l::node<child_7,prev_8,next_9,parent_0>&
+ l=l' & prv=prv' & par=par' 
+ & l'!=null 
+ //& !(v_bool_41_969') 
+ //& l'!=null 
+ //& !(v_bool_41_969') 
+ & par'=parent_0 
+ //& v_boolean_0 
+ //& par'=parent_0 & prev_8=prv' 
+ //& v_boolean_1 
+ & prev_8=prv' 
+ //& v_bool_8' & v_boolean_1 & v_boolean_0 
+ //& v_bool_8' 
+ & next_9=v_node_43_958'
+ |-  H2(v_node_43_958',l',par').
+print residue. 
+
+/*
+# mcf-1b.slk
+
+GOT:
+ <1>H_1(child_7,prv,par) * H_2(prev_8,prv,par) * H_4(parent_0,prv,par) * l::node<child_7,prev_8,next_9,parent_0>@M[Orig]&l=l' & prv=prv' & par=par' & l'!=null & par'=parent_0 & prev_8=prv' & next_9=v_node_43_958' & par'=parent_0&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [H_3(v_node_43_958',prv@NI,par'@NI)&par'=parent_0 & 
+                   prev_8=prv --> H2(v_node_43_958',l'@NI,parent_0@NI)]
+
+========================
+Step 1
+------
+Simplify:
+   H_3(v_node_43_958',prv@NI,par'@NI)&par'=parent_0 & prev_8=prv --> H2(v_node_43_958',l'@NI,parent_0@NI)]
+  // replace parent_0 by par'
+   H_3(v_node_43_958',prv@NI,par'@NI) & prev_8=prv --> H2(v_node_43_958',l'@NI,par'@NI)]
+  // replace prev_8 by prv
+   H_3(v_node_43_958',prv@NI,par'@NI)  --> H2(v_node_43_958',l'@NI,par'@NI)]
+Find context of l':
+   l::node<child_7,prev_8,next_9,parent_0> & next_9=v_node_43_958' & l'=l
+   // replace next_9 by v_node_43_958'; l by l'
+   l'::node<_,_,v_node_43_958',_> 
+Final contextual rule:
+   H_3(v_node_43_958',prv@NI,par'@NI) | l'::node<_,_,v_node_43_958',_> --> H2(v_node_43_958',l'@NI,par'@NI)]
+
+
+========================
+
+It seems we are missing on n_38'=null. Also, 
+It seems we need some context that would allow n_38',t'
+on the RHS to be instantiated. Thus, we should have:
+
+ H_5(v_node) & v_node!=null & n_38'=null  
+     & children=v_node & t=t'
+     | t::tree<children> 
+   --> H2(v_node,n_38'@NI,t'@NI)
+
+ H_5(v_node) & v_node!=null 
+     | t::tree<v_node> 
+   --> H2(v_node,n_38'@NI,t@NI) & n_38'=null
+
+============================================
+
+
+*/

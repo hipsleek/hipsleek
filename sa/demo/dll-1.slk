@@ -1,0 +1,60 @@
+    
+data node {
+    node prev; 
+    node next; 
+    }.
+
+HeapPred H_1(node next_9, node@NI prv).
+HeapPred H1(node a, node@NI b).
+PostPred G1(node a, node@NI b).
+HeapPred H_0(node prev_8, node@NI prv).
+
+Declare_Unknown [H_0].
+
+relAssume
+ H1(l,prv)&l!=null --> l::node<prev_8,next_9>@M * 
+   H_0(prev_8,prv) * H_1(next_9,prv).
+
+relAssume
+ H_1(next_9,prv)&prev_8=prv --> H1(next_9,l).
+
+relAssume
+ H_1(next_9,prv) --> H1(next_9,l).
+
+relAssume
+ H1(l,prv)&l=null --> emp.
+
+shape_infer [H1,H_1,H_0][].
+
+/*
+relAssume
+ l=null --> G1(l,prv).
+
+relAssume
+ H_0(prev_8,prv) * l::node<prev_8,next_9>@M * 
+   G1(next_9,l)&prev_8=prv --> G1(l,prv).
+
+
+ H_0(prev_8,prv) --> emp&forall(l:((prv>=prev_8 | l=null)) & 
+  ((prev_8>=prv | l=null)))]
+
+*/
+
+
+/*
+# check-dll.ss
+
+[ H1(l_1011,prv_1012) ::= 
+ H1(next_19_984,l_983) * l_1011::node<prev_19_985,next_19_984>@M&
+ forall(l:((prv_1012>=prev_19_985 | l=null)) & ((prev_19_985>=prv_1012 | 
+ l=null)))
+ or emp&l_1011=null
+ ,
+ G1(l_1014,prv_1015) ::= 
+ H_0(prev_8,prv_1015) * l_1014::node<prev_8,next_9>@M * 
+ G1(next_9,l_1014)&prev_8=prv_1015
+ or emp&l_1014=null
+ ,
+ H_0(prev_8,prv) ::= NONE]
+
+*/

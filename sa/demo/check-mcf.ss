@@ -10,18 +10,28 @@ data node {
     tree parent;
     }
 
-HeapPred H1(tree a).
-PostPred G1(tree a).
-HeapPred H2(node a,node@NI c,tree@NI b).
-PostPred G2(node a,node@NI c,tree@NI b).
-
 treep<> == 
-  //self=null or
   self::tree<_,c>* c::dll<self,null> ;
 
 dll<parent, prev> == 
   self=null or 
   self::node<c,prev,n,parent>*c::treep<>* n::dll<parent,self>;
+
+  //self=null or
+
+HeapPred H1(tree a).
+PostPred G1(tree a).
+HeapPred H2(node a,node@NI c,tree@NI b).
+PostPred G2(node a,node@NI c,tree@NI b).
+
+/*
+ H2(l,prv,par)<--> l::node<child_07,prev_08,next_09,parent_10> * 
+     H1(child_07) * H_2(prev_08,prv,par) * H2(next_09,l,par) * H_4(parent_10,prv,par)
+     or l=null
+
+ H1(t) <-> t::tree<children> & children=null
+      or t::tree<children> * H2(children,n_38',t) & n_38'=null & children!=null 
+*/
 
 
 bool check_tree (tree t)
@@ -59,8 +69,6 @@ bool check_child (node l, node prv, tree par)
  H_1(child_07,prv,par)&par=par' & 
   prev_08=prv --> H1(child_07).
 
-
-
  H_2(prev_08,prv,par) --> emp&
   forall(parent_10:((par!=parent_10 | prv>=prev_08)) & 
   ((par!=parent_10 | prev_08>=prv))).
@@ -96,7 +104,6 @@ bool check_child (node l, node prv, tree par)
  t::tree<val_83,children_84>@M * 
   G2(children_84,n_1105,t)&children_84!=null & 
   n_1105=null --> G1(t).
-
 
 
 */
