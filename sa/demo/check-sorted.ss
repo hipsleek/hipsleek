@@ -10,12 +10,10 @@ sortll<n> == self=null
  inv true; 
 
 bool check_sorted(node x, int v)
-/*
   infer [H,G]
   requires H(x,v)
   ensures G(x,v) & res;
-*/
-requires x::sortll<v>@L ensures  res;
+//requires x::sortll<v>@L ensures  res;
 { 
   if (x==null) return true;
   else {
@@ -30,6 +28,20 @@ requires x::sortll<v>@L ensures  res;
 
 /*
 # check-sorted.ss --sa-en-pure-field 
+
+
+HP_930(next_20_928,v)&v<=val_20_927 --> H(next_20_928,val_20_927)]
+
+Should not convert to:
+ HP_930(next_20_928,v) <--> H(next_20_928,val_20_927) & v<=val_20_927
+
+Defn
+====
+
+HP_930(next_20_928,v) | v<=val_20_927 <-> H(next_20_928,val_20_927)]
+
+HP_930(n,v) | l::node<.,n> <-> H(n,l)]
+
 
 GOT which is very good but a bit ambiguous
 with respecy to HP_921
