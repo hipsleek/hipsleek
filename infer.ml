@@ -1825,18 +1825,28 @@ let match_unk_preds prog lhs_hpargs rhs_hp rhs_args=
   in
   helper lhs_hpargs
 
-let find_guard_x lhds leqs l_selhpargs rhs_args=
-  None
+let find_guard_x prog lhds lhvs leqs l_selhpargs rhs_args=
+  let l_args = List.fold_left (fun ls (_,args) -> ls@args) [] l_selhpargs in
+  let l_args1 = CF.find_close l_args leqs in
+  let diff = CP.diff_svl rhs_args l_args1 in
+  if diff = [] then None else
+    (*Now we just keep heap nodes as pattern (env)*)
+    let guard_hds = List.filter (fun hd ->
+        let svl = hd.CF.h_formula_data_node::hd.CF.h_formula_data_arguments in
+        CP.intersect_svl svl l_args1 <> []
+    ) lhds
+    in
+    CF.join_star_conjunctions_opt (List.map (fun hd -> CF.DataNode hd) guard_hds)
 
-let find_guard lhds leqs l_selhpargs rhs_args=
+let find_guard prog lhds lhvs leqs l_selhpargs rhs_args=
   let pr1 = pr_list (pr_pair !CP.print_sv !CP.print_sv) in
   let pr2 = pr_list_ln (pr_pair !CP.print_sv !CP.print_svl) in
   let pr3 off= match off with
     | None -> "NONE"
     | Some hf -> Cprinter.prtt_string_of_h_formula hf
   in
-  Debug.ho_3 "find_guard" pr1 pr2 !CP.print_svl pr3
-      (fun _ _ _ -> find_guard_x lhds leqs l_selhpargs rhs_args)
+  Debug.no_3 "find_guard" pr1 pr2 !CP.print_svl pr3
+      (fun _ _ _ -> find_guard_x prog lhds lhvs leqs l_selhpargs rhs_args)
       leqs l_selhpargs rhs_args
 
 (*
@@ -2065,7 +2075,7 @@ let find_undefined_selective_pointers_x prog lfb lmix_f unmatched rhs_rest rhs_h
                 let ass_guard1 = if CP.mem_svl rhs_hp post_hps then
                   None
                 else
-                  find_guard lhds leqs r2 rhs_args
+                  find_guard prog lhds lhvs leqs r2 rhs_args
                 in
                 ([r1],r2, ass_guard1)
       in
@@ -2424,7 +2434,7 @@ let generate_constraints prog es rhs lhs_b ass_guard rhs_b1 defined_hps
   let _ = rel_ass_stk # push_list (hp_rel_list) in
   let _ = Log.current_hprel_ass_stk # push_list (hp_rel_list) in
   let _ = DD.tinfo_pprint ("  hp_rels: " ^ (let pr = pr_list_ln Cprinter.string_of_hprel in pr hp_rels)) pos in
-  let _ = DD.info_pprint ("  hp_rel_list: " ^ (let pr = pr_list_ln Cprinter.string_of_hprel in pr hp_rel_list)) pos in
+  let _ = DD.tinfo_pprint ("  hp_rel_list: " ^ (let pr = pr_list_ln Cprinter.string_of_hprel in pr hp_rel_list)) pos in
   r_new_hfs, new_lhs_b,m,rvhp_rels,hp_rel_list
 
 
@@ -2486,7 +2496,7 @@ let update_es prog es hds hvs ass_lhs_b rhs rhs_rest r_new_hfs defined_hps lsele
          CF.es_infer_hp_unk_map = (es.CF.es_infer_hp_unk_map@unk_map);
          CF.es_infer_vars_sel_post_hp_rel = (es.CF.es_infer_vars_sel_post_hp_rel @ post_hps);
          CF.es_formula = new_es_formula1} in
-     DD.info_pprint ("  new residue: " ^ (Cprinter.string_of_formula new_es.CF.es_formula)) pos;
+     DD.tinfo_pprint ("  new residue: " ^ (Cprinter.string_of_formula new_es.CF.es_formula)) pos;
      let new_lhs = CF.convert_hf_to_mut new_rhs in
      (new_es, new_lhs)
    end
@@ -2546,12 +2556,12 @@ let infer_collect_hp_rel_x prog (es:entail_state) rhs0 rhs_rest (rhs_h_matched_s
         let reqs = List.combine (CP.subst_var_list sst0 rls1) (CP.subst_var_list sst0 rls2)
           (* (MCP.ptr_equations_without_null mix_rf) *)  in
         let _ =
-          DD.info_pprint ">>>>>> infer_hp_rel <<<<<<" pos;
+          DD.tinfo_pprint ">>>>>> infer_hp_rel <<<<<<" pos;
           DD.tinfo_pprint ("  es_heap: " ^ (Cprinter.string_of_h_formula es.CF.es_heap)) pos;
-          DD.info_pprint ("  es_history: " ^ (let pr=pr_list_ln Cprinter.string_of_h_formula in pr es.CF.es_history)) pos;
-          DD.info_pprint ("  lhs: " ^ (Cprinter.string_of_formula_base lhs_b0)) pos;
+          DD.tinfo_pprint ("  es_history: " ^ (let pr=pr_list_ln Cprinter.string_of_h_formula in pr es.CF.es_history)) pos;
+          DD.tinfo_pprint ("  lhs: " ^ (Cprinter.string_of_formula_base lhs_b0)) pos;
           DD.tinfo_pprint ("  rhs: " ^ (Cprinter.string_of_formula_base rhs_b)) pos;
-          DD.info_pprint ("  unmatch: " ^ (Cprinter.string_of_h_formula rhs)) pos;
+          DD.tinfo_pprint ("  unmatch: " ^ (Cprinter.string_of_h_formula rhs)) pos;
           DD.tinfo_pprint ("  classic: " ^ (string_of_bool !Globals.do_classic_frame_rule)) pos
         in
         let mis_nodes =  match rhs with
