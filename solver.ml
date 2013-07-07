@@ -4966,7 +4966,7 @@ and heap_entail_conjunct_lhs_x hec_num prog is_folding  (ctx:context) (conseq:CF
                                 let ctx1 = CF.Ctx new_estate in
                                 let _ = Debug.tinfo_hprint (add_str "ctx1"  Cprinter.string_of_context) ctx1 pos in
                                 let r1,prf =  (SuccCtx[false_ctx_with_orig_ante new_estate orig_ante pos],UnsatAnte) in
-                               let _ = Debug.info_pprint ("*********1********") no_pos in
+                               (* let _ = Debug.info_pprint ("*********1********") no_pos in *)
                                 let r1 = Infer.add_infer_hp_contr_to_list_context hinf_args_map [pf] r1 in
                                 let _ = Debug.tinfo_hprint (add_str "r1 opt"  (pr_option Cprinter.string_of_list_context)) r1 pos in
 		                let _ = Debug.tinfo_hprint (add_str "inferred contradiction : " Cprinter.string_of_pure_formula) pf pos in
