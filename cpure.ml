@@ -3404,6 +3404,12 @@ and split_ex_quantifiers (f0 : formula) : (spec_var list * formula) = match f0 w
         (qv :: qvars, new_f)
   | _ -> ([], f0)
 
+and split_forall_quantifiers (f0 : formula) = match f0 with
+  | Forall (qv, qf, lbl, pos) ->
+        let qvars, new_f,_,_ = split_forall_quantifiers qf in
+        (qv :: qvars, new_f, lbl, pos)
+  | _ -> ([], f0,None, no_pos)
+
 (*
 recursively idenfify existential variables
 Assume name conflicts have been resolved (e.g.
@@ -8328,6 +8334,26 @@ let is_eq_exp (f:formula) = match f with
     | _ -> false)
   | _ -> false
 
+let is_eq_null_exp (f:formula) = match f with
+  | BForm (bf,_) ->
+    (match bf with
+    | (Eq (sv1,sv2,_),_) ->
+        begin
+            match sv1,sv2 with
+              | Var _, Null _ -> true
+              | Null _, Var _ -> true
+              | _ -> false
+        end
+    | _ -> false)
+  | _ -> false
+
+let is_neq_exp (f:formula) = match f with
+  | BForm (bf,_) ->
+    (match bf with
+    | (Neq _,_) -> true
+    | _ -> false)
+  | _ -> false
+
 let is_neq_null_exp_x (f:formula) = match f with
   | BForm (bf,_) ->
     (match bf with
@@ -8345,6 +8371,22 @@ let is_neq_null_exp (f:formula)=
   let pr1 = !print_formula in
   Debug.no_1 "is_neq_null_exp" pr1 string_of_bool
       (fun _ -> is_neq_null_exp_x f) f
+
+(*neg(x!=y) == x=y; neg(x!=null) === x=null*)
+let neg_neq_x f=
+  match f with
+    | BForm (bf,a) ->
+          (match bf with
+            | (Neq (sv1,sv2,b),c) ->
+                  let sv1,sv2 = if is_null sv1 then (sv2, sv1) else (sv1,sv2) in
+                  BForm ((Eq (sv1, sv2, b), c), a)
+            | _ -> f)
+    | _ -> f
+
+let neg_neq p=
+  let pr1 = !print_formula in
+  Debug.no_1 "neg_neq" pr1 pr1
+      (fun _ -> neg_neq_x p) p
 
 let rec get_neq_null_svl_x (f:formula) =
   let helper (bf:b_formula) =
@@ -10658,6 +10700,28 @@ let prune_irr_neq p0 svl=
   let pr2 = !print_svl in
   Debug.no_2 "prune_irr_neq" pr1 pr2 (pr_pair string_of_bool pr1)
       (fun _ _ -> prune_irr_neq_x p0 irr_svl ) p0 irr_svl
+
+let get_null_ptrs_p pf=
+  match pf with
+    | Eq (e1, e2, _) -> if is_null e1 then (afv e2)
+      else if is_null e2 then (afv e1)
+      else []
+    | _ -> []
+
+let get_null_ptrs p0 =
+  let rec helper p=
+    match p with
+      | BForm ((pf,_),_) -> let svl = get_null_ptrs_p pf in svl
+      | And (p1,p2,_) ->
+          (helper p1)@(helper p2)
+      | AndList b-> List.fold_left (fun ls (_, p1) -> ls@(helper p1)) [] b
+      | Or (b1,b2,_,_) -> (helper b1)@(helper b2)
+      | Not (b, _,pos) -> []
+      | Forall (a,b,c,pos)-> let svl = helper b in (diff_svl svl [a])
+      | Exists (q,b,lbl,pos)-> let svl = helper b in (diff_svl svl [q])
+  in
+  remove_dups_svl (helper p0)
+
 
 let checkeq_exp e1 e2 ss=
   match e1,e2 with

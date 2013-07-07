@@ -5239,13 +5239,26 @@ let remove_neqNull_redundant_hnodes svl p=
   let ps = (CP.split_conjunctions p) in
   let ps1 = CP.remove_redundant_helper ps [] in
   let new_ps = Gen.BList.difference_eq CP.equalFormula ps1 neqNulls in
-  (CP.join_conjunctions new_ps)
+  let p1 =  (CP.join_conjunctions new_ps) in
+  let quans, bare_p, lbl,pos = CP.split_forall_quantifiers p1 in
+  (* let _ = Debug.info_pprint ("  quans: " ^ (!CP.print_svl quans) ) no_pos in *)
+  if quans<> [] then
+    let null_svl = CP.get_null_ptrs bare_p in
+    if svl <> [] && null_svl <> [] then
+      let new_quans = CP.diff_svl quans null_svl in
+      let disjs = CP.list_of_disjs bare_p in
+      let rem = List.filter (fun p -> not (CP.is_eq_null_exp p)) disjs in
+      let bare1 = CP.disj_of_list rem pos in
+      if new_quans = [] then bare1 else CP.mkForall new_quans bare1 lbl pos
+    else p1
+  else p1
 
 (*elim redundant x::node<_> & x!=null: remove x!=null*)
 let remove_neqNull_redundant_hnodes_hf_x hf p=
   let hds, _, _ (*hvs, hrs*) =  get_hp_rel_h_formula hf in
   let svl = List.map (fun dn -> dn.h_formula_data_node) hds in
-  remove_neqNull_redundant_hnodes svl p
+  let p1 = remove_neqNull_redundant_hnodes svl p in
+  p1
 
 let remove_neqNull_redundant_hnodes_hf hf0 p=
   let pr1 = !print_h_formula in
