@@ -33,8 +33,11 @@ Some issues:
  H_2(next_16_901) * 
   x::node<next_16_901>@M |#| x::node<next_16_901>@M --> P(x).
 
-(2) If we had where H_2(_) is Dangling:
-  x::node<n>*H_2(_) |- P(x)
+(2) Whenever we have:
+      x::node<n>*H_2(_) --> P(x)
+   We regard this as a pre-obligation which we will perform after
+   P(x) has been synthesized.
+
  Is that a pre-obligation (obligation for pre) that needs to be checked.
   x::node<n> |- P(x)
  based on the definition of P(x) that was derived.

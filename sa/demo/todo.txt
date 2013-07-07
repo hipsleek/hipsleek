@@ -4456,8 +4456,52 @@ Some issues:
   x::node<n> |- P(x)
  based on the definition of P(x) that was derived.
 =====================================================================
+# loop-3c.slk
+
+PostPred G(node a).
+
+relAssume
+  G(x) --> G(x).
+
+shape_infer [][G].
+
+GOT:
+  G(x_14) ::= G(x_14)
+
+Better to have:
+  G(x_14) ::= false
 =====================================================================
+# loop-3c1.slk
+
+PostPred G(node a).
+relAssume G(x) --> G(x).
+relAssume  x=null --> G(x).
+
+shape_infer [][G].
+
+GOT:
+ G(x_16) ::=  G(x_16)
+              or emp&x_16=null
+
+Better (simpler) to have:
+  G(x) ::= x=null
 =====================================================================
+# loop-3b4.slk
+  also loop-3b3.slk
+
+HeapPred H(node a).
+relAssume  H(x) --> x=null.
+relAssume  H(x) --> x!=null.
+shape_infer [H][].
+
+URGENT PROBLEM
+
+GOT: 
+  H(x_21) ::= emp&x_21=null]
+
+This is UNSOUND! I was expecting
+  H(x) --> x=null & x!=null
+  H(x) --> false
 =====================================================================
 =====================================================================
 =====================================================================
