@@ -562,7 +562,7 @@ let infer_lhs_contra pre_thus lhs_xpure ivars pos msg =
     if (over_v ==[]) then None
     else 
       let exists_var = CP.diff_svl vf ivars in
-      let _ = DD.info_hprint (add_str "f (before simplify_helper): " !print_formula) f pos in
+      (* let _ = DD.info_hprint (add_str "f (before simplify_helper): " !print_formula) f pos in *)
       let qvars0, bare_f = split_ex_quantifiers f in
       let ptr_qvars0, non_ptrs0_qvars0 = List.partition CP.is_node_typ qvars0 in
       let ps = CP.list_of_conjs (CP.remove_redundant bare_f) in
@@ -614,7 +614,7 @@ let infer_lhs_contra pre_thus lhs_xpure ivars pos msg =
 let infer_lhs_contra pre_thus f ivars pos msg =
   let pr = !print_mix_formula in
   let pr2 = !print_pure_f in
-  Debug.ho_2 "infer_lhs_contra" pr !print_svl (pr_option pr2) 
+  Debug.no_2 "infer_lhs_contra" pr !print_svl (pr_option pr2) 
       (fun _ _ -> infer_lhs_contra pre_thus f ivars pos msg) f ivars
 
 let infer_lhs_contra_estate estate lhs_xpure pos msg =

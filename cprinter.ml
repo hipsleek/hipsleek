@@ -1825,14 +1825,14 @@ let string_of_hp_rel_def_short hp_rel =
 
 let string_of_hp_decl hpdecl =
   let name = hpdecl.Cast.hp_name in
-  let pr_arg arg = 
-    let t = CP.type_of_spec_var arg in 
+  let pr_arg arg i =
+    let t = CP.type_of_spec_var arg in
     let arg_name = string_of_spec_var arg in
     let arg_name = if(String.compare arg_name "res" == 0) then fresh_name () else arg_name in
-    (CP.name_of_type t) ^ " " ^ arg_name
+    (CP.name_of_type t) ^  (if not !print_ann then "" else if i=NI then "@NI" else "") ^ " " ^ arg_name
   in
   let decl_kind = if hpdecl.hp_is_pre then "HeapPred " else "PostPred " in
-  let pr_inst (sv, i) = (pr_arg sv) ^ (if not !print_ann then "" else if i=NI then "@NI" else "") in
+  let pr_inst (sv, i) = (pr_arg sv i) in
   let args = pr_lst ", " pr_inst hpdecl.Cast.hp_vars_inst in
   decl_kind ^ name ^ "(" ^ args ^ ").\n"
 
