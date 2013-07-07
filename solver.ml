@@ -4753,22 +4753,22 @@ and heap_entail_after_sat_x prog is_folding  (ctx:CF.context) (conseq:CF.formula
                 let new_zero_vars = CF.CP.remove_dups_svl (es.es_var_zero_perm@vars) in
                 {es with es_formula = new_f; es_var_zero_perm=new_zero_vars}
               else es in
-              let tmp, prf = heap_entail_conjunct_lhs prog is_folding  (Ctx es) conseq pos in  
+              let tmp, prf = heap_entail_conjunct_lhs 1 prog is_folding  (Ctx es) conseq pos in  
 	      (filter_set tmp, prf)
             end
 	  in wrap_trace es.es_path_label exec ()
 
-and heap_entail_conjunct_lhs prog is_folding  (ctx:context) conseq pos : (list_context * proof) = 
+and heap_entail_conjunct_lhs hec_num prog is_folding  (ctx:context) conseq pos : (list_context * proof) = 
   let pr1 = (fun _ -> "prog_decl") in
   let pr2 = string_of_bool in
   let pr3 = Cprinter.string_of_context in
   let pr4 = Cprinter.string_of_formula in
   let pr5 = string_of_loc in
   let pr_res (ctx,_) = ("\n ctx = "^(Cprinter.string_of_list_context ctx)) in
-  Debug.no_5 "heap_entail_conjunct_lhs" pr1 pr2 pr3 pr4 pr5 pr_res heap_entail_conjunct_lhs_x prog is_folding ctx conseq pos
+  Debug.no_5_num hec_num "heap_entail_conjunct_lhs" pr1 pr2 pr3 pr4 pr5 pr_res (fun _ _ _ _ _ -> heap_entail_conjunct_lhs_x hec_num prog is_folding ctx conseq pos) prog is_folding ctx conseq pos
 
 (* check entailment when lhs is normal-form, rhs is a conjunct *)
-and heap_entail_conjunct_lhs_x prog is_folding  (ctx:context) (conseq:CF.formula) pos : (list_context * proof) =
+and heap_entail_conjunct_lhs_x hec_num prog is_folding  (ctx:context) (conseq:CF.formula) pos : (list_context * proof) =
   (** [Internal] Collect the data and view nodes in a h_formula. 
       @return The list of all DataNode and ViewNode **)
   Debug.vv_trace "heap_entail_conjunct_lhs" ;
@@ -4898,13 +4898,13 @@ and heap_entail_conjunct_lhs_x prog is_folding  (ctx:context) (conseq:CF.formula
             let ctx_L = CF.add_to_context_num 3 ctx "left OR 2 on conseq" in
             let ctx_R = CF.add_to_context_num 4 ctx "right OR 2 on conseq" in
             if !Globals.use_set then
-	      let rs1, prf1 = heap_entail_conjunct_lhs_x prog is_folding  ctx_L f1 pos in
-	      let rs2, prf2 = heap_entail_conjunct_lhs_x prog is_folding  ctx_R f2 pos in
+	      let rs1, prf1 = heap_entail_conjunct_lhs 2 prog is_folding  ctx_L f1 pos in
+	      let rs2, prf2 = heap_entail_conjunct_lhs 3 prog is_folding  ctx_R f2 pos in
 	      ((fold_context_left 5 [rs1;rs2]),( mkOrRight ctx conseq [prf1; prf2]))		  
             else
-	      let rs1, prf1 = heap_entail_conjunct_lhs_x prog is_folding  ctx_L f1 pos in
+	      let rs1, prf1 = heap_entail_conjunct_lhs 4 prog is_folding  ctx_L f1 pos in
 	      if (isFailCtx rs1) then
-	        let rs2, prf2 = heap_entail_conjunct_lhs_x prog is_folding  ctx_R f2 pos in
+	        let rs2, prf2 = heap_entail_conjunct_lhs 5 prog is_folding  ctx_R f2 pos in
 	        (filter_set rs2, prf2)
 	      else
 	        (filter_set rs1, prf1)
@@ -4932,61 +4932,90 @@ and heap_entail_conjunct_lhs_x prog is_folding  (ctx:context) (conseq:CF.formula
 	      else
                 heap_entail_conjunct 1 prog is_folding  ctx conseq [] pos in
             let es = get_estate_from_context ctx in
-             match es with
-              | Some estate -> 
-                    begin
-                       let r_inf_contr,relass = solver_detect_lhs_rhs_contra 1 prog estate conseq pos "EARLY CONTRA DETECTION" in
-                       (*   (Inf.CF.entail_state * Cprinter.P.formula) option *
-                            (Inf.CF.entail_state * Cformula.CP.infer_rel_type list * bool) list *)
-                      (* match contr with *)
-                      (*   | Some (_,  hp_rel) -> *)
-                      (*         (\* add hp_rel P(x) --> x=null to estate *\) *)
-                      (*         let _ = Inf.rel_ass_stk # push_list ([hp_rel]) in *)
-                      (*         let _ = Log.current_hprel_ass_stk # push_list ([hp_rel]) in *)
-                      (*         let new_es = {estate with CF.es_infer_hp_rel = estate.CF.es_infer_hp_rel @ [hp_rel];} in *)
+            let early_hp_contra_detection_x es = 
+              match es with
+                | Some estate -> 
+                      begin
+                        let r_inf_contr,relass = solver_detect_lhs_rhs_contra 1 prog estate conseq pos "EARLY CONTRA DETECTION" in
+                        (*   (Inf.CF.entail_state * Cprinter.P.formula) option *
+                             (Inf.CF.entail_state * Cformula.CP.infer_rel_type list * bool) list *)
+                        (* match contr with *)
+                        (*   | Some (_,  hp_rel) -> *)
+                        (*         (\* add hp_rel P(x) --> x=null to estate *\) *)
+                        (*         let _ = Inf.rel_ass_stk # push_list ([hp_rel]) in *)
+                        (*         let _ = Log.current_hprel_ass_stk # push_list ([hp_rel]) in *)
+                        (*         let new_es = {estate with CF.es_infer_hp_rel = estate.CF.es_infer_hp_rel @ [hp_rel];} in *)
                         (* | None ->  heap_entail () *)
-	               let h_inf_args, hinf_args_map = get_heap_inf_args estate in
-                       let esv = estate.es_infer_vars in
-                       let orig_ante = CF.formula_of_context ctx in
-                       match r_inf_contr with
-                         | Some (new_estate,pf) -> 
-                               let new_estate = {new_estate with es_infer_vars = esv} in
-                               let ctx1 = CF.Ctx new_estate in
-                               let _ = Debug.tinfo_hprint (add_str "ctx1"  Cprinter.string_of_context) ctx1 pos in
-                               let r1,prf =  (SuccCtx[false_ctx_with_orig_ante new_estate orig_ante pos],UnsatAnte) in
-                               let r1 = Infer.add_infer_hp_contr_to_list_context hinf_args_map [pf] r1 in
-                               let _ = Debug.tinfo_hprint (add_str "r1 opt"  (pr_option Cprinter.string_of_list_context)) r1 pos in
-		               let _ = Debug.info_hprint (add_str "inferred contradiction : " Cprinter.string_of_pure_formula) pf pos in
-                               let _ = Debug.info_pprint ("Andreea 1 : we need to call add_new_sleek_logging_entry to do sleek_logging") no_pos in
-                               (* add_new_sleek_logging_entry infer_vars classic_flag caller avoid hec slk_no ante conseq  *)
-                               (*     consumed_heap evars (result:CF.list_context) pos *)
-                               begin
-                                 match r1 with
-                                   | Some r1 ->
-                                         let r1 =
-                                           match relass with
-				             | [(_,h,_)] -> add_infer_rel_to_list_context h r1
-				             | _ -> r1 in
-                                         (r1, prf)
-                                   | None -> heap_entail ()
-                               end
-                         | None ->  
-                                 match relass with
-				   | [(es,h,_)] -> 
-                                         let new_estate = {es with es_infer_vars = esv} in
-                                         let new_estate = add_infer_rel_to_estate h new_estate in
-                                         let _ = Debug.tinfo_hprint (add_str "new_estate(with inf rel)" Cprinter.string_of_entail_state) new_estate pos in
-                                          let r1,prf =  (SuccCtx[false_ctx_with_orig_ante new_estate orig_ante pos], UnsatAnte) in
-                                          (r1, prf)
-				   | _ ->  heap_entail ()
-                    end
-              | None -> 
-                    let _ = DD.info_pprint "WARNING : presence of disj context at EARLY CONTRA DETECTION" no_pos in
-                    (* (None,[]) *)
-                    heap_entail ()
+	                let h_inf_args, hinf_args_map = get_heap_inf_args estate in
+                        let esv = estate.es_infer_vars in
+                        let orig_ante = CF.formula_of_context ctx in
+                        let new_slk_log result es = 
+                          let avoid = CF.is_emp_term conseq in
+                          let avoid = avoid or (not (hec_stack # is_empty)) in
+                          let caller = hec_stack # string_of_no_ln in
+                          let slk_no = (* if avoid then 0 else *) Log.get_sleek_proving_id () in
+                          (* let _ = hec_stack # push slk_no in *)
+                          (* let r = hec a b c in *)
+                          (* let _ = hec_stack # pop in *)
+                          let _ = Log.add_new_sleek_logging_entry esv !Globals.do_classic_frame_rule caller (* avoid *) false hec_num slk_no orig_ante 
+                            conseq es.es_heap es.es_evars result pos in
+                          () in
+                        match r_inf_contr with
+                          | Some (new_estate,pf) -> 
+                                let new_estate = {new_estate with es_infer_vars = esv} in
+                                let ctx1 = CF.Ctx new_estate in
+                                let _ = Debug.tinfo_hprint (add_str "ctx1"  Cprinter.string_of_context) ctx1 pos in
+                                let r1,prf =  (SuccCtx[false_ctx_with_orig_ante new_estate orig_ante pos],UnsatAnte) in
+                                let r1 = Infer.add_infer_hp_contr_to_list_context hinf_args_map [pf] r1 in
+                                let _ = Debug.tinfo_hprint (add_str "r1 opt"  (pr_option Cprinter.string_of_list_context)) r1 pos in
+		                let _ = Debug.info_hprint (add_str "inferred contradiction : " Cprinter.string_of_pure_formula) pf pos in
+                                let _ = Debug.info_pprint ("Andreea 1 : we need to call add_new_sleek_logging_entry to do sleek_logging") no_pos in
+                                begin
+                                  match r1 with
+                                    | Some r1 ->
+                                          let r1 =
+                                            match relass with
+				              | [(_,h,_)] -> add_infer_rel_to_list_context h r1
+				              | _ -> r1 in
+                                          let _ = new_slk_log r1 new_estate in
+                                          (true, Some new_estate, Some r1, Some prf)
+                                    | None -> (false, Some estate, None, None) 
+                                end
+                          | None ->  
+                                match relass with
+				  | [(es,h,_)] -> 
+                                        let new_estate = {es with es_infer_vars = esv} in
+                                        let new_estate = add_infer_rel_to_estate h new_estate in
+                                        let _ = Debug.tinfo_hprint (add_str "new_estate(with inf rel)" Cprinter.string_of_entail_state) new_estate pos in
+                                        let r1,prf =  (SuccCtx[false_ctx_with_orig_ante new_estate orig_ante pos], UnsatAnte) in
+                                        let _ = new_slk_log r1 new_estate in
+                                        (true, Some new_estate, Some r1, Some prf)
+				  | _ ->(false, Some estate, None, None) 
+                      end
+                | None -> 
+                      let _ = DD.info_pprint "WARNING : presence of disj context at EARLY CONTRA DETECTION" no_pos in
+                      (false, None, None, None)
+            in 
+
+            let early_hp_contra_detection estate =  
+              let contra_str contra = if (contra) then "contradiction detected" else "no contradiction detected at this step" in
+              let pr_res (contra, es, ctx, _) = (contra_str contra) ^ 
+                match ctx with 
+                  | Some ctx -> ("\n ctx = " ^ (Cprinter.string_of_list_context ctx))
+                  | None ->     ("\n estate: " ^ (pr_option Cprinter.string_of_entail_state(* _short *) es))  in
+              let f = wrap_proving_kind "EARLY CONTRA DETECTION" early_hp_contra_detection_x in
+              Debug.no_1 "early_hp_contra_detection" (pr_option Cprinter.string_of_entail_state_short) pr_res f estate in
+
+            let (contra, _, r1,p1) = early_hp_contra_detection es in
+            if not(contra) then 
+              heap_entail()
+            else 
+              match (r1,p1) with
+                | Some r1, Some p1 -> (r1,p1)
+                | _, _ ->  heap_entail()
           in
 	  (r1,p1)
-        end
+ end
 
 (* 23.10.2008 *)
 (* for empty RHS heap:
@@ -9430,8 +9459,6 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
             (* let _ =  Debug.info_pprint ">>>>>> Inf.infer_collect_hp_rel 1: infer_heap <<<<<<" pos in *)
             (*let _ = DD.binfo_start "TODO : Check for LHS Contradiction here?" in*)
 	    let msg = "M_infer_heap :"^(Cprinter.string_of_h_formula rhs) in
-            let r_inf_contr,relass = solver_detect_lhs_rhs_contra 2 prog estate conseq pos msg 
-            in
 	    (* let lhs_xpure,_,_ = xpure prog estate.es_formula in *)
             (* (\* call infer_lhs_contra *\) *)
             (* let lhs_rhs_contra_flag =  *)
@@ -9440,8 +9467,6 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
 	    (*   let p_rhs_xpure = MCP.pure_of_mix rhs_xpure in *)
 	    (*   let contr, _ = Infer.detect_lhs_rhs_contra  p_lhs_xpure p_rhs_xpure no_pos in  *)
 	    (*   contr in (\* Cristian : to detect_lhs_rhs_contra *\)  *)
-	    let h_inf_args, hinf_args_map = get_heap_inf_args estate in
-            let esv = estate.es_infer_vars in
             (* let r_inf_contr,relass =  *)
             (*   if lhs_rhs_contra_flag then (None,[]) *)
             (*   else *)
@@ -9456,7 +9481,26 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
             (*     end *)
             (* in *)
             begin 
-	      match r_inf_contr with
+              let early_pure_contra_detection_x hec_num estate = 
+                let r_inf_contr,relass = solver_detect_lhs_rhs_contra 2 prog estate conseq pos msg  in
+	        let h_inf_args, hinf_args_map = get_heap_inf_args estate in
+                let esv = estate.es_infer_vars in
+
+                let new_slk_log result es = 
+                  let avoid = CF.is_emp_term conseq in
+                  let avoid = avoid or (not (hec_stack # is_empty)) in
+                  let caller = hec_stack # string_of_no_ln in
+                  let slk_no = (* if avoid then 0 else *) Log.get_sleek_proving_id () in
+                  (* let _ = hec_stack # push slk_no in *)
+                  (* let r = hec a b c in *)
+                  (* let _ = hec_stack # pop in *)
+                  let _ = Log.add_new_sleek_logging_entry esv !Globals.do_classic_frame_rule caller (* avoid *) false hec_num slk_no estate.es_formula
+                    conseq es.es_heap es.es_evars result pos in
+                  () in
+
+
+                let _ = Debug.info_pprint ("Andreea 3 : we need to add_new_sleek_logging_entry to do sleek_logging") no_pos in
+	        match r_inf_contr with
                 | Some (new_estate,pf) -> (* if successful, should skip infer_collect_hp_rel below *)
                       let new_estate = {new_estate with es_infer_vars = esv} in
 		      let _ = Debug.info_hprint (add_str "inferred contradiction : " Cprinter.string_of_pure_formula) pf pos in
@@ -9477,41 +9521,43 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
 				  let r1 = match relass with
 				    | [(_,h,_)] -> add_infer_rel_to_list_context h r1 
 				    | _ -> r1 in
-				  (r1,prf)
-			    | None ->
-				  let (res,new_estate, n_lhs, orhs_b) = Inf.infer_collect_hp_rel 1 prog estate rhs rhs_rest rhs_h_matched_set lhs_b rhs_b pos in
-				  (* Debug.info_hprint (add_str "DD: n_lhs" (Cprinter.string_of_h_formula)) n_lhs pos; *)
-				  if (not res) then r 
-				  else
-				    let n_rhs_b = match orhs_b with
-				      | Some f -> f
-				      | None -> Base {rhs_b with formula_base_heap = rhs_rest}
-				    in
-				    (* Debug.info_hprint (add_str "DD: new_estate 1" (Cprinter.string_of_entail_state)) new_estate pos; *)
-				    (* let res_es0, prf0 = do_match prog new_estate n_lhs rhs n_rhs_b rhs_h_matched_set is_folding pos in *)
-				    let res_es0, prf0 = do_match prog new_estate n_lhs rhs n_rhs_b rhs_h_matched_set is_folding pos in
-				    (* Debug.info_hprint (add_str "DD: new_estate 2" (Cprinter.string_of_list_context)) res_es0 pos; *)
-				    (* let res_ctx = Ctx new_estate  in *)
-				    (* (SuccCtx[res_ctx], NoAlias) *)
-				    (res_es0,prf0)
+                                  let _ = new_slk_log r1 new_estate in
+				  (true, None, Some r1, Some prf)
+			    | None -> (false, Some estate, None, None)
 			end
-                | None ->
-						  
-                      let (res,new_estate, n_lhs, orhs_b) = Inf.infer_collect_hp_rel 1 prog estate rhs rhs_rest rhs_h_matched_set lhs_b rhs_b pos in
-		      (* Debug.info_hprint (add_str "DD: n_lhs" (Cprinter.string_of_h_formula)) n_lhs pos; *)
-		      if (not res) then r 
-		      else
-			let n_rhs_b = match orhs_b with
-			  | Some f -> f
-			  | None -> Base {rhs_b with formula_base_heap = rhs_rest}
-			in
-			(* Debug.info_hprint (add_str "DD: new_estate 1" (Cprinter.string_of_entail_state)) new_estate pos; *)
-			(* let res_es0, prf0 = do_match prog new_estate n_lhs rhs n_rhs_b rhs_h_matched_set is_folding pos in *)
-			let res_es0, prf0 = do_match prog new_estate n_lhs rhs n_rhs_b rhs_h_matched_set is_folding pos in
-			(* Debug.info_hprint (add_str "DD: new_estate 2" (Cprinter.string_of_list_context)) res_es0 pos; *)
-			(* let res_ctx = Ctx new_estate  in *)
-			(* (SuccCtx[res_ctx], NoAlias) *)
-			(res_es0,prf0)
+                | None -> (false, Some estate, None, None)
+              in
+
+              let early_pure_contra_detection hec_num estate = 
+                let contra_str contra = if (contra) then "contradiction detected" else "no contradiction detected at this step" in
+                let pr_res (contra, es, ctx, _) = (contra_str contra) ^ 
+                  match ctx with 
+                    | Some ctx -> ("\n ctx = " ^ (Cprinter.string_of_list_context ctx))
+                    | None ->     ("\n estate: " ^ (pr_option Cprinter.string_of_entail_state_short es))  in
+                let f = wrap_proving_kind "CONTRA DETECTION for pure" early_pure_contra_detection_x hec_num in
+                Debug.no_1_num hec_num "early_pure_contra_detection" Cprinter.string_of_entail_state_short pr_res f estate in
+
+              let (contra, _, lc, prf ) = early_pure_contra_detection 1 estate in
+
+              let do_match () = 
+                let (res,new_estate, n_lhs, orhs_b) = Inf.infer_collect_hp_rel 1 prog estate rhs rhs_rest rhs_h_matched_set lhs_b rhs_b pos in
+		(* Debug.info_hprint (add_str "DD: n_lhs" (Cprinter.string_of_h_formula)) n_lhs pos; *)
+		if (not res) then r 
+		else
+		  let n_rhs_b = match orhs_b with
+		    | Some f -> f
+		    | None -> Base {rhs_b with formula_base_heap = rhs_rest}
+		  in
+		  (* Debug.info_hprint (add_str "DD: new_estate 1" (Cprinter.string_of_entail_state)) new_estate pos; *)
+		  let res_es0, prf0 = do_match prog new_estate n_lhs rhs n_rhs_b rhs_h_matched_set is_folding pos in
+		  (* Debug.info_hprint (add_str "DD: new_estate 2" (Cprinter.string_of_list_context)) res_es0 pos; *)
+		  (res_es0,prf0) in
+
+              if (contra) then 
+                 match (lc, prf) with
+                | Some lc, Some prf -> (lc,prf)
+                | _, _ ->  do_match ()
+              else do_match ()
 	    end
       | Context.M_unmatched_rhs_data_node (rhs,rhs_rest) ->
             (*  do_unmatched_rhs rhs rhs_rest caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:CP.spec_var list) is_folding pos *)
