@@ -1863,6 +1863,11 @@ let pr_hprel hpa=
   pr_seq " predefined: " pr_spec_var hpa.predef_svl;
   fmt_string "; ";
   prtt_pr_formula hpa.hprel_lhs;
+  fmt_string " | ";
+  let _ = match hpa.hprel_guard with
+    | None -> fmt_string " NONE "
+    | Some hf -> prtt_pr_h_formula hf
+  in
   fmt_string " --> ";
   prtt_pr_formula hpa.hprel_rhs;
   fmt_close()
@@ -1874,6 +1879,11 @@ let pr_hprel_short hpa=
   pr_wrap_test_nocut "" skip_cond_path_trace (fun p -> fmt_string ((pr_list_round_sep ";" (fun s -> string_of_int s)) p)) hpa.hprel_path;
   (* fmt_string (CP.print_rel_cat hpa.hprel_kind); *)
   prtt_pr_formula hpa.hprel_lhs;
+  fmt_string " | ";
+  let _ = match hpa.hprel_guard with
+    | None -> fmt_string " NONE "
+    | Some hf -> prtt_pr_h_formula hf
+  in
   fmt_string " --> ";
   prtt_pr_formula hpa.hprel_rhs;
   fmt_close()
@@ -1882,6 +1892,11 @@ let pr_hprel_short_inst cprog hpa=
   fmt_open_box 1;
   (* fmt_string (CP.print_rel_cat hpa.hprel_kind); *)
   prtt_pr_formula_inst cprog hpa.hprel_lhs;
+  fmt_string " | ";
+  let _ = match hpa.hprel_guard with
+    | None -> fmt_string " NONE "
+    | Some hf -> prtt_pr_h_formula_inst cprog hf
+  in
   fmt_string " --> ";
   prtt_pr_formula_inst cprog hpa.hprel_rhs;
   fmt_close()

@@ -1644,6 +1644,7 @@ let generate_hp_ass unk_svl cond_p (hp,args,lfb,rf) =
       unk_hps = [];
       predef_svl = [];
       hprel_lhs = CF.Base lfb;
+      hprel_guard = None; (*guard exists with post-proving*)
       hprel_rhs = rf;
       hprel_path = cond_p;
   }
