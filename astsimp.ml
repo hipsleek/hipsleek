@@ -2991,8 +2991,13 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
                         C.exp_block_local_vars = local_vars;
                         C.exp_block_pos = pos; }),ret_ct)))
               )
-              with Not_found ->
-                Err.report_error { Err.error_loc = pos; Err.error_text = "trans_exp :: case CallNRecv :: procedure 2 " ^ (mingled_mn ^ " is not found");}
+              with Not_found -> (
+                try
+                  let _ = I.look_up_proc_def_raw prog.I.prog_proc_decls mn in
+                  report_error pos ("trans_exp :: case CallNRecv :: procedure call " ^ mingled_mn ^ " has invalid argument types")
+                with Not_found -> 
+                  report_error pos ("trans_exp :: case CallNRecv :: procedure " ^ (mingled_mn ^ " is not found"))
+              )
             )
       | I.Catch { I.exp_catch_var = cv;
         I.exp_catch_flow_type = cvt;
