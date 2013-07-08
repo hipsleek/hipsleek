@@ -4509,7 +4509,7 @@ This is UNSOUND! I was expecting
   H(x) --> x=null & x!=null
   H(x) --> false
 =====================================================================
-# loop-3b1.slk
+# loop-3b1.slk: FIXED
 
 (minor issue)
 

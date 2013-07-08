@@ -716,7 +716,7 @@ let run_infer_one_pass ivars (iante0 : meta_formula) (iconseq0 : meta_formula) =
   let pr_2 = pr_triple string_of_bool Cprinter.string_of_list_context !CP.print_svl in
   Debug.no_3 "run_infer_one_pass" pr1 pr pr pr_2 run_infer_one_pass ivars iante0 iconseq0
 
-let process_rel_assume cond_path (ilhs : meta_formula) (irhs: meta_formula)=
+let process_rel_assume cond_path (ilhs : meta_formula) (igurad_opt : meta_formula option) (irhs: meta_formula)=
   (* let _ = DD.info_pprint "process_rel_assume" no_pos in *)
   (* let stab = H.create 103 in *)
   let stab = [] in
@@ -724,6 +724,17 @@ let process_rel_assume cond_path (ilhs : meta_formula) (irhs: meta_formula)=
   let fvs = CF.fv lhs in
   let fv_idents = (List.map CP.name_of_spec_var fvs) in
   let (stab,rhs) = meta_to_formula irhs false fv_idents stab in
+  let guard = match igurad_opt with
+    | None -> None
+    | Some iguard -> let (_,guard0) = meta_to_formula iguard false fv_idents stab in
+      let _, guard = CF.split_quantifiers guard0 in
+      (* let _ = Debug.info_pprint (Cprinter.string_of_formula guard) no_pos in *)
+      (* let p = CF.get_pure guard in *)
+      (* if CP.isConstTrue p then *)
+        let hfs = CF.heap_of guard in
+        CF.join_star_conjunctions_opt hfs
+      (* else report_error no_pos "Sleekengine.process_rel_assume: guard should be heaps only" *)
+  in
   let orig_vars = CF.fv lhs @ CF.fv rhs in
   let lhps = CF.get_hp_rel_name_formula lhs in
   let rhps = CF.get_hp_rel_name_formula rhs in

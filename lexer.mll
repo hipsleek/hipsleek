@@ -351,6 +351,7 @@ rule tokenizer file_name = parse
   | '>' { GT }
   | ">=" { GTE }
   | '#' { HASH }
+  | "|#|" {REL_GUARD}
   | "->" { LEFTARROW }
   | '<' { LT }
   | "<=" { LTE }
