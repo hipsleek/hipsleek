@@ -4223,7 +4223,7 @@ also output the statement (in hip)
 
 Declare_Unknown [H_2,H_4].
 =====================================================================
-# check-dll.ss
+# check-dll.ss: FIXED
 
 MAJOR issue
 
@@ -4298,7 +4298,7 @@ which came from
  H_0(prev_8,prv@NI) --> emp&forall(l:((prv>=prev_8 | l=null)) & 
   ((prev_8>=prv | l=null)))]
 =====================================================================
-# check-sorted.ss --sa-en-pure-field 
+# check-sorted.ss --sa-en-pure-field : FIXED
 
 GOT which is very good but a bit ambiguous
 with respecy to HP_921
@@ -4330,7 +4330,7 @@ during simplication
 This would yield a perfect result.
 
 =====================================================================
-# dll-mw-1.slk
+# dll-mw-1.slk: FIXED
 
 infer [H_0,H_1,H1]
  H_0(prev_8,prv) * H_1(next_9,prv) * l::node<prev_8,next_9>
@@ -4426,6 +4426,8 @@ be transformed before H2. Please check.
 =====================================================================
 # loop-3.ss
 
+For 2: (Loc says) we should perform pre-obligation (e.g. for tupled-definition)
+
 void loop (node x)
   infer [P,G]  requires P(x)  ensures  G(x);
   //requires x::node<_> ensures false;
@@ -4449,15 +4451,16 @@ Some issues:
 ------------
 (1) we do not need a guard below. Why was it formed?
  H_2(next_16_901) * 
-  x::node<next_16_901>@M |#| x::node<next_16_901>@M --> P(x).
+  x::node<next_16_901>@M |#| x::node<next_16_901>@M --> P(x). FIXED
 
 (2) If we had where H_2(_) is Dangling:
   x::node<n>*H_2(_) |- P(x)
  Is that a pre-obligation (obligation for pre) that needs to be checked.
   x::node<n> |- P(x)
  based on the definition of P(x) that was derived.
+
 =====================================================================
-# loop-3c.slk
+# loop-3c.slk: FIXED
 
 PostPred G(node a).
 
@@ -4472,7 +4475,7 @@ GOT:
 Better to have:
   G(x_14) ::= false
 =====================================================================
-# loop-3c1.slk
+# loop-3c1.slk: FIXED
 
 PostPred G(node a).
 relAssume G(x) --> G(x).

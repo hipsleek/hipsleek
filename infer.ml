@@ -2361,6 +2361,7 @@ let constant_checking prog rhs lhs_b rhs_b es=
 
 let generate_constraints prog es rhs lhs_b ass_guard rhs_b1 defined_hps
       ls_unknown_ptrs unk_pure unk_svl no_es_history lselected_hpargs rselected_hpargs  hds hvs lhras lhrs rhras rhrs leqs reqs eqNull prog_vars lvi_ni_svl classic_nodes pos =
+  (*****************INTERNAL********************)
   let update_fb (fb,r_hprels,hps,hfs) (is_pre, unknown_ptrs) =
     match unknown_ptrs with
       | [] -> (fb,r_hprels,hps,hfs)
@@ -2374,6 +2375,28 @@ let generate_constraints prog es rhs lhs_b ass_guard rhs_b1 defined_hps
                 | _ -> report_error pos "infer.generate_constraints: add_raw_hp_rel should return a hrel"
             end
   in
+  (*if guard exists in the lhs, remove it*)
+  let check_guard guard_opt lhs_b=
+    let process_guard guard=
+      let g_hds = SAU.get_hdnodes_hf guard in
+      let l_hds = SAU.get_hdnodes_basef lhs_b in
+      let l_hd_svl = List.map (fun hd -> hd.CF.h_formula_data_node) l_hds in
+      let inter_svl = List.fold_left (fun res hd ->
+          if CP.mem_svl hd.CF.h_formula_data_node l_hd_svl then
+            (res@[hd.CF.h_formula_data_node])
+          else res
+      ) [] g_hds in
+      let new_guard = if inter_svl = [] then (Some guard) else
+        let guard1 = CF.drop_hnodes_hf guard inter_svl in
+        if guard1 = CF.HEmp then None else (Some guard1)
+      in
+      new_guard
+    in
+    match guard_opt with
+      | None -> None
+      | Some hf -> process_guard hf
+  in
+  (*****************END INTERNAL********************)
   (* let new_lhs = rhs_b1 in *)
   let new_rhs_b,rvhp_rels,new_hrels,r_new_hfs =
     List.fold_left update_fb (rhs_b1,[],[],[]) ls_unknown_ptrs in
@@ -2425,7 +2448,7 @@ let generate_constraints prog es rhs lhs_b ass_guard rhs_b1 defined_hps
           unk_hps = [];
           predef_svl = matched_svl ; (*(closed_hprel_args_def@total_unk_svl@matched_svl);*)
           hprel_lhs = CF.remove_neqNull_svl matched_svl (CF.Base new_lhs_b);
-          hprel_guard = ass_guard;
+          hprel_guard = check_guard ass_guard new_lhs_b;
           hprel_rhs = CF.Base new_rhs_b;
           hprel_path = es_cond_path;
       }]

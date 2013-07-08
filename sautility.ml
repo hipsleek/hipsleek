@@ -400,6 +400,9 @@ and get_hdnodes_hf_x (hf: CF.h_formula) = match hf with
       -> (get_hdnodes_hf h1)@(get_hdnodes_hf h2)
   | _ -> []
 
+let get_hdnodes_basef fb=
+  get_hdnodes_hf fb.CF.formula_base_heap
+
 let rec get_h_node_args (f: CF.formula)=
   match f with
     | CF.Base fb ->
@@ -2859,9 +2862,12 @@ let is_trivial_constr cs=
     | Some hp1, Some hp2 -> CP.eq_spec_var hp1 hp2
     | _ -> false
 
-let weaken_trivial_constr_pre cs=
+let weaken_strengthen_special_constr_pre is_pre cs=
   if is_trivial_constr cs then
+    if is_pre then
     {cs with CF.hprel_rhs = CF.mkTrue (CF.flow_formula_of_formula cs.CF.hprel_rhs) (CF.pos_of_formula cs.CF.hprel_rhs)}
+    else
+      {cs with CF.hprel_lhs = CF.mkFalse (CF.flow_formula_of_formula cs.CF.hprel_rhs) (CF.pos_of_formula cs.CF.hprel_rhs)}
   else cs
 
 let remove_dups_constr constrs=

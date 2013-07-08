@@ -1397,7 +1397,7 @@ let infer_shapes_init_pre_x prog (constrs0: CF.hprel list) callee_hps non_ptr_un
  hp_rel_unkmap detect_dang (* :(CP.spec_var list * CF.hp_rel_def list* (CP.spec_var * CP.spec_var list) list) *) =
   let _ = DD.binfo_pprint ">>>>>> step pre-4: remove unused predicates<<<<<<" no_pos in
   let constrs01 = (* SAU.remove_dups_constr *) constrs0 in
-  let constrs02 = List.map SAU.weaken_trivial_constr_pre constrs01 in
+  let constrs02 = List.map (SAU.weaken_strengthen_special_constr_pre true) constrs01 in
   let unused_pre_hps, constrs0, unk_map1 =
     if detect_dang then elim_unused_pre_preds (sel_post_hps@link_hps) constrs02 hp_rel_unkmap
     else ([], constrs02, hp_rel_unkmap)
@@ -1437,13 +1437,14 @@ let infer_shapes_init_pre prog (constrs0: CF.hprel list) callee_hps non_ptr_unk_
 let infer_shapes_init_post_x prog (constrs0: CF.hprel list) non_ptr_unk_hps sel_post_hps unk_hps link_hps
       hp_rel_unkmap detect_dang pre_defs (* :(CP.spec_var list * CF.hp_rel_def list * (CP.spec_var * CP.spec_var list) list * ) *) =
   let constrs0a = (* SAU.remove_dups_constr *) constrs0 in
+  let constrs0b = List.map (SAU.weaken_strengthen_special_constr_pre false) constrs0a in
   let _ = DD.binfo_pprint ">>>>>> step post-4: step remove unused predicates<<<<<<" no_pos in
-  let unused_post_hps,constrs0,unk_map1 =
-    if detect_dang then elim_unused_post_preds (sel_post_hps@link_hps) constrs0a hp_rel_unkmap
-    else ([], constrs0a, hp_rel_unkmap)
+  let unused_post_hps,constrs1,unk_map1 =
+    if detect_dang then elim_unused_post_preds (sel_post_hps@link_hps) constrs0b hp_rel_unkmap
+    else ([], constrs0b, hp_rel_unkmap)
   in
   let unk_hps1 = Gen.BList.remove_dups_eq cmp_hpargs_fn (unk_hps@unused_post_hps) in
-  let par_defs = get_par_defs_post constrs0 in
+  let par_defs = get_par_defs_post constrs1 in
   let _ = DD.binfo_pprint ">>>>>> post-predicates: step post-5: remove redundant x!=null : not implemented yet<<<<<<" no_pos in
 
   let _ = DD.binfo_pprint ">>>>>> post-predicates: step post-61: weaken<<<<<<" no_pos in

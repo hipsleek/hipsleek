@@ -5719,7 +5719,9 @@ and drop_hnodes_hf hf0 hn_names=
     | HTrue
     | HFalse
     | HEmp -> hf
-  in helper hf0
+  in
+  if hn_names = [] then hf0 else
+    helper hf0
 
 and filter_not_rele_eq p keep_svl=
   let rec filter_fn leqs res=
