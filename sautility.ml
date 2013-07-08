@@ -4543,24 +4543,34 @@ let norm_heap_consj_formula prog args unk_hps unk_svl f equivs=
       (fun _ -> norm_heap_consj_formula_x prog args unk_hps unk_svl f equivs) f
 
 let norm_formula_x prog args unk_hps unk_svl f1 f2 equivs=
-  let is_common, sharing_f, n_fs = partittion_common_diff prog args unk_hps unk_svl f1 f2 no_pos in
-  if not is_common then None else
-    match n_fs with
-      | [] -> None
-      | [f] -> Some (f, equivs)
-      | [nf1;nf2] -> begin
-          let (hf1 ,mf1,_,_,_) = CF.split_components nf1 in
-          let (hf2 ,mf2,_,_,_) = CF.split_components nf2 in
-          if CP.equalFormula (MCP.pure_of_mix mf1) (MCP.pure_of_mix mf2) then
-            let ores = norm_heap_consj hf1 hf2 equivs in
-            match ores with
-              | None -> None
-              | Some (hf, n_equivs) ->
-                    Some (CF.mkAnd_f_hf sharing_f hf no_pos, n_equivs)
-          else
-            None
-        end
-      | _ -> report_error no_pos "sau.norm_formula: should be no more than two formulas"
+  if is_empty_heap_f f1 && is_empty_heap_f f2 then
+    let pos = CF.pos_of_formula f1 in
+    let cmb_f = CF.mkStar f1 f2 CF.Flow_combine pos in
+    let cmb_f1=
+      if not (TP.is_sat_raw (MCP.mix_of_pure (CF.get_pure cmb_f))) then
+        CF.mkFalse (CF.flow_formula_of_formula cmb_f) pos
+      else cmb_f
+    in
+    Some (cmb_f1, equivs)
+  else
+    let is_common, sharing_f, n_fs = partittion_common_diff prog args unk_hps unk_svl f1 f2 no_pos in
+    if not is_common then None else
+      match n_fs with
+        | [] -> None
+        | [f] -> Some (f, equivs)
+        | [nf1;nf2] -> begin
+            let (hf1 ,mf1,_,_,_) = CF.split_components nf1 in
+            let (hf2 ,mf2,_,_,_) = CF.split_components nf2 in
+            if CP.equalFormula (MCP.pure_of_mix mf1) (MCP.pure_of_mix mf2) then
+              let ores = norm_heap_consj hf1 hf2 equivs in
+              match ores with
+                | None -> None
+                | Some (hf, n_equivs) ->
+                      Some (CF.mkAnd_f_hf sharing_f hf no_pos, n_equivs)
+            else
+              None
+          end
+        | _ -> report_error no_pos "sau.norm_formula: should be no more than two formulas"
 
 let norm_formula prog args unk_hps unk_svl f1 f2 equivs=
   let pr1 = Cprinter.prtt_string_of_formula in

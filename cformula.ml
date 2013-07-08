@@ -4097,7 +4097,8 @@ and get_all_sv_f (f: formula)=
   match f with
     | Base fb ->
         CP.remove_dups_svl (get_all_sv fb.formula_base_heap)
-    | _ -> report_error no_pos "CF.is_empty_f: not handle yet"
+    | _ -> report_error no_pos "CF.get_all_sv_f: not handle yet"
+
 and get_all_sv (f: h_formula): CP.spec_var list = match f with
   | DataNode {h_formula_data_node = c;
              h_formula_data_arguments = args}

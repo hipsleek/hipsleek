@@ -1670,17 +1670,17 @@ let unify_consj_pre_x prog unk_hps link_hps equivs0 pdefs=
 
 let unify_consj_pre prog unk_hps link_hps equivs pdefs=
   let pr1 = !CP.print_svl in
-    let pr2 = !CP.print_formula in
-    let pr3 oform= match oform with
-      | None -> "None"
-      | Some f -> Cprinter.prtt_string_of_formula f
-    in
-    let pr4 (a,_) = (pr_hexa !CP.print_sv pr1 pr1 pr2 pr3 pr3) a in
-    let pr5 = pr_list_ln pr4 in
-    let pr6 = pr_pair pr5 (pr_list (pr_pair !CP.print_sv !CP.print_sv) ) in
-     Debug.no_1 "unify_consj_pre" pr5 pr6
-         (fun _ -> unify_consj_pre_x prog unk_hps link_hps equivs pdefs)
-         pdefs
+  let pr2 = !CP.print_formula in
+  let pr3 oform= match oform with
+    | None -> "None"
+    | Some f -> Cprinter.prtt_string_of_formula f
+  in
+  let pr4 (a,_) = (pr_hexa !CP.print_sv pr1 pr1 pr2 pr3 pr3) a in
+  let pr5 = pr_list_ln pr4 in
+  let pr6 = pr_pair pr5 (pr_list (pr_pair !CP.print_sv !CP.print_sv) ) in
+  Debug.no_1 "unify_consj_pre" pr5 pr6
+      (fun _ -> unify_consj_pre_x prog unk_hps link_hps equivs pdefs)
+      pdefs
 
 (*
 This is mandatory

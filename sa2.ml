@@ -608,16 +608,17 @@ let combine_pdefs_pre_x prog unk_hps link_hps pr_pdefs=
                      else (res_pr, res_depen_cs@[cs])
        | None -> report_error no_pos "sa2.combine_pdefs_pre: should not None 2"
   in
-  let obtain_and_norm_def args0 ((hp,args,unk_svl, cond, olhs, orhs), cs)=
+  let obtain_and_norm_def_x args0 ((hp,args,unk_svl, cond, olhs, orhs), cs)=
     (*normalize args*)
     let subst = List.combine args args0 in
     let cond1 = (CP.subst subst cond) in
     let norhs, cond1 = match orhs with
       | Some f -> let nf = (CF.subst subst f) in
         let cond2 =
-          if SAU.is_empty_heap_f nf then
-            CP.mkAnd cond1 (CF.get_pure nf) (CP.pos_of_formula cond1)
-          else cond1
+          (* if SAU.is_empty_heap_f nf then *)
+          (*   CP.mkAnd cond1 (CF.get_pure nf) (CP.pos_of_formula cond1) *)
+          (* else cond1 *)
+          cond1
         in
         (Some nf, cond2)
       | None -> None, cond1
@@ -627,6 +628,19 @@ let combine_pdefs_pre_x prog unk_hps link_hps pr_pdefs=
       | Some f -> Some (CF.subst subst f)
     in
     ((hp,args0,CP.subst_var_list subst unk_svl, cond1, nolhs, norhs), (*TODO: subst*)cs)
+  in
+  let obtain_and_norm_def args0 ((hp,args,unk_svl, cond, olhs, orhs), cs)=
+    let pr1 = !CP.print_svl in
+    let pr2 = !CP.print_formula in
+    let pr3 oform= match oform with
+      | None -> "None"
+      | Some f -> Cprinter.prtt_string_of_formula f
+    in
+    let pr4 = pr_hexa !CP.print_sv pr1 pr1 pr2 pr3 pr3 in
+    let pr5 (a,_) = pr4 a in
+    Debug.no_2 "obtain_and_norm_def" pr1 pr4 pr5
+        (fun _ _ -> obtain_and_norm_def_x args0 ((hp,args,unk_svl, cond, olhs, orhs), cs))
+        args0 (hp,args,unk_svl, cond, olhs, orhs)
   in
   let combine_grp pr_pdefs equivs=
     match pr_pdefs with
@@ -645,11 +659,12 @@ let combine_pdefs_pre_x prog unk_hps link_hps pr_pdefs=
               | [] -> [],[],equivs
               | [x] -> [x],[],equivs
               | ((hp,args0,unk_svl0, cond0, olhs0, orhs0),cs0)::rest ->
-                  let new_rest = List.map (obtain_and_norm_def args0) rest in
-                  let pdefs = ((hp,args0,unk_svl0, cond0, olhs0, orhs0),cs0)::new_rest in
-                  let pdefs1 = Gen.BList.remove_dups_eq (fun (pdef1,_) (pdef2,_) -> cmp_pdef_grp pdef1 pdef2) pdefs in
-                  let pdefs2,n_equivs = SAC.unify_consj_pre prog unk_hps link_hps equivs pdefs1 in
-                  ([], pdefs2,n_equivs)
+                    (* let pr_pdef0 = obtain_and_norm_def args0 ((hp,args0,unk_svl0, cond0, olhs0, orhs0),cs0) in *)
+                    let pdefs = List.map (obtain_and_norm_def args0) rem_pr_defs in
+                    (* let pdefs = pr_pdef0::new_rest in *)
+                    let pdefs1 = Gen.BList.remove_dups_eq (fun (pdef1,_) (pdef2,_) -> cmp_pdef_grp pdef1 pdef2) pdefs in
+                    let pdefs2,n_equivs = SAC.unify_consj_pre prog unk_hps link_hps equivs pdefs1 in
+                    ([], pdefs2,n_equivs)
           in
           let pdefs,rem_constrs0 = begin
             match cs,rem_pr_defs1 with
