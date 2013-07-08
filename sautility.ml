@@ -2865,10 +2865,21 @@ let is_trivial_constr cs=
 let weaken_strengthen_special_constr_pre is_pre cs=
   if is_trivial_constr cs then
     if is_pre then
-    {cs with CF.hprel_rhs = CF.mkTrue (CF.flow_formula_of_formula cs.CF.hprel_rhs) (CF.pos_of_formula cs.CF.hprel_rhs)}
+    {cs with CF.hprel_rhs = CF.mkHTrue (CF. mkTrueFlow ()) (CF.pos_of_formula cs.CF.hprel_rhs)}
     else
       {cs with CF.hprel_lhs = CF.mkFalse (CF.flow_formula_of_formula cs.CF.hprel_rhs) (CF.pos_of_formula cs.CF.hprel_rhs)}
   else cs
+
+let convert_HTrue_2_None hpdefs=
+  let do_convert (res_link_hps, res_hpdefs) ((kind, hf, f) as orig)=
+    if CF.isStrictConstTrue f then
+      try
+        let hpargs = CF.extract_HRel hf in
+        (res_link_hps@[hpargs], res_hpdefs)
+      with _ -> (res_link_hps, res_hpdefs@[orig])
+    else (res_link_hps, res_hpdefs@[orig])
+  in
+  List.fold_left do_convert ([],[]) hpdefs
 
 let remove_dups_constr constrs=
   let constr_cmp cs1 cs2=

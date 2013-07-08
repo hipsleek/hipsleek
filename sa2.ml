@@ -1648,14 +1648,15 @@ and infer_shapes_proper iprog prog proc_name cond_path (constrs2: CF.hprel list)
       SAC.unify_pred prog unk_hps link_hps defs1 (pre_equivs@unify_equiv_map2@unk_equivs)
     else (defs1, unify_equiv_map2)
   in
-  let defs2 = SAC.generate_hp_def_from_unk_hps defs2a unk_hpargs2 (pre_hps@post_hps@oblg_hps) sel_post_hps unk_map4 unify_equiv_map3 in
+  let htrue_hpargs, defs2b = SAU.convert_HTrue_2_None defs2a in
+  let defs2 = SAC.generate_hp_def_from_unk_hps defs2b unk_hpargs2 (pre_hps@post_hps@oblg_hps) sel_post_hps unk_map4 unify_equiv_map3 in
   let defs3,link_hpargs1 = if !Globals.pred_elim_dangling then
     (* SAU.transform_unk_hps_to_pure (defs3b) unk_hp_frargs *)
-    let defs3a = SAC.transform_xpure_to_pure prog defs2 unk_map4 link_hpargs in
+    let defs3a = SAC.transform_xpure_to_pure prog defs2 unk_map4 (link_hpargs@htrue_hpargs) in
     (*we have already transformed link/unk preds into pure form.
       Now return [] so that we do not need generate another unk preds*)
     (defs3a, [])
-  else (defs2,link_hpargs)
+  else (defs2,link_hpargs@htrue_hpargs)
   in
   (constrs2, defs3,[], unk_hpargs2, link_hpargs1,(pre_equivs@unify_equiv_map2@unk_equivs))
 
