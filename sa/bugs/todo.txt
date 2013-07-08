@@ -1468,6 +1468,8 @@ Message: gather_type_info_var : unexpected exceptionInvalid_argument("[ocamlgrap
 ======================================================================
 # sa/bugs/pure-1.slk 
 
+# came for check-dll.ss
+
 The above proof came from check-dll-1.slk. 
    H_0 is a pre-predicate
    G1 is a post-predicate
@@ -1500,6 +1502,9 @@ The outcome of the first three variants:
 Entail (1) : Valid. 
  inferred hprel: [H_0(prev28,prv@NI) --> emp&forall(l:(prev28=prv | l=null))]
 
+Expected:
+ inferred hprel: [H_0(prev28,prv@NI) --> emp&prev28=prv]
+
 Entail (2) : Valid. 
  inferred hprel: [G1(next29,l@NI) --> emp&l=null]
 
@@ -1522,6 +1527,8 @@ a contra. If not, we search thru the list to find
 the first unknown predicate that has a satisfiable
 entry. If so, we return that as our solution.
 
+ //(4)
+ infer [l,H_0]
  inferred hprel: [G1(next29,l@NI) --> emp&l=null]
 
 GOT
