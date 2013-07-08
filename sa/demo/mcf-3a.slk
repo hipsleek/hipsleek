@@ -93,5 +93,9 @@ relational assumption of H_9. I think we should never have
 unfolded a predicate with a complex RHS. Hence, we should 
 never have unfolded H2 in the first place.
 
+Another solution : We should process H_9 before H2 since
+H_9 is simpler to handler. This will confirm and freeze
+H_9 as an equation.
+
 */
 

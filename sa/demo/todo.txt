@@ -4406,6 +4406,7 @@ a more complex variant of mcf-3a.slk
 This version produced below which did not inlined H_5,H_6
 which are defns in guarded form?
 
+[par'-->par]
  H_6(next_3,par) &par=par'--> H2(next_3,par). 
  H_5(child_2,par) &par=par'--> H1(child_2). 
 
@@ -4436,8 +4437,8 @@ void loop (node x)
 GOT
 ===
 [P(x) --> x::node<next_16_901>@M * H_2(next_16_901).
- H_2(next_16_901) * 
-  x::node<next_16_901>@M |#| x::node<next_16_901>@M --> P(x).
+ H_2(next_16_901) * x::node<next_16_901>@M 
+            |#| x::node<next_16_901>@M --> P(x).
 G(x) --> G(x).
 --------------------
  P(x_906) ::= x_906::node<next_16_901>@M * H_2(next_16_901),
@@ -4476,6 +4477,8 @@ Better to have:
 PostPred G(node a).
 relAssume G(x) --> G(x).
 relAssume  x=null --> G(x).
+
+false --> G(x)
 
 shape_infer [][G].
 

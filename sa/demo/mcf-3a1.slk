@@ -31,23 +31,27 @@ relAssume
 */
 
 relAssume
-  H2(l,par)& l!=null --> 
+ H_9(children_8) &
+  children_8=null --> emp.
+
+relAssume
+ H2(l,par)& l!=null --> 
     l::node<child_2,next_3,parent_4>@M * 
     H_5(child_2,par) * H_6(next_3,par) * 
     H_7(parent_4,par).
 
 relAssume
  H_6(next_3,par) &par=par'--> H2(next_3,par). 
+ //H_6(next_3,par) --> H2(next_3,par). 
 
 relAssume
  H_5(child_2,par) &par=par'--> H1(child_2). 
+ //H_5(child_2,par) --> H1(child_2). 
 
 relAssume
  H2(l,par)&l=null --> emp.
 
-relAssume
- H_9(children_8) &
-  children_8=null --> emp.
+
 
 relAssume
  H_7(parent_4,par) --> emp&par=parent_4.
