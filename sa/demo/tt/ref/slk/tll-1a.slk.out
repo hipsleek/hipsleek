@@ -29,16 +29,14 @@ H_9 is defined.
 *************************************
 *******relational definition ********
 *************************************
-[ H(x_108,r_109) ::= x_108::node<left_29_83,flted_30_85,next_29_84>@M * (H(left_29_83,l_47') * 
-H_0(next_29_84,r_109)/&\H(left_29_83,l_47') * H_0(next_29_84,r_109))&
-flted_30_85=null,
- H_9(right_29_111,r_112) ::= 
- H(left_29_93,l_47') * 
- right_29_111::node<left_29_93,flted_30_95,next_29_94>@M * 
- H_0(next_29_94,r_112)&flted_30_95=null
- or emp&right_29_111=null
+[ H_9(right_29_94,r_95) ::= 
+ H(right_29_94,r_95)&right_29_94!=null
+ or emp&right_29_94=null
  ,
- H_8(left_29_113,r_114) ::= H(left_29_113,l_47'),
+ H_8(left_29_96,r_97) ::= H(left_29_96,l_47'),
+ H(x_98,r_99) ::= x_98::node<left_29_80,flted_30_82,next_29_81>@M * (H(left_29_80,l_47') * 
+H_0(next_29_81,r_99)/&\H(left_29_80,l_47') * H_9(flted_30_82,r_99) * 
+H_0(next_29_81,r_99))&flted_30_82=null,
  H_0(a,b) ::= NONE]
 *************************************
 ====================

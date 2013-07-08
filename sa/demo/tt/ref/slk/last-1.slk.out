@@ -29,9 +29,9 @@ HP_3 is defined.
 *************************************************
 *******relational assumptions (obligation)********
 ****************************************************
-[ n::node<Anon_111,n_114>@M * HP_3(n_114,t)&n_114!=null & 
+[ n::node<Anon_109,n_112>@M * HP_3(n_112,t)&n_112!=null & 
   tn=null --> HP_2(tn,n),
- emp&n!=null --> HP_3(n,t_115),
+ emp&n!=null --> HP_3(n,t_113),
  emp&n!=null & tn=null --> HP_2(tn,n),
  emp&n=t & n!=null --> HP_3(n,t)]
 *************************************
@@ -59,10 +59,9 @@ HP_3 is defined.
 *************************************
 [ H(x_65) ::= x_65::node<Anon_11,n>@M * HP_1(n),
  G(res_67,x_68) ::= 
- EXISTS(flted_22_69: x_68::node<Anon_14,n>@M * HP_3(n,res_67) * 
- res_67::node<Anon_13,flted_22_69>@M&n!=null & flted_22_69=null)[]
- or EXISTS(flted_22_69: res_67::node<Anon_13,flted_22_69>@M&res_67=x_68 & 
-    flted_22_69=null)[]
+ EXISTS(flted_23_53: x_68::node<Anon_14,n>@M * HP_3(n,res_67) * 
+ res_67::node<Anon_13,flted_23_53>@M&n!=null & flted_23_53=null)[]
+ or res_67::node<Anon_13,flted_22_45>@M&res_67=x_68 & flted_22_45=null
  ,
  HP_1(n_66) ::= 
  n_66::node<Anon_11,n>@M * HP_1(n)

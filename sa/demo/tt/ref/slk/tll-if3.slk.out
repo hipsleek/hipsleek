@@ -30,10 +30,10 @@ H_3a is defined.
 *************************************
 [ G(x_33,res_34) ::= 
  H_2a(v_node_32_833) * res_34::node<v_node_32_833,v_node_31_823>@M&
- v_node_31_823=null & res_34=x_33
+ res_34=x_33 & v_node_31_823=null
  or G(right_25_801,v_node_31_823) * G(left_25_800,v_node_32_833) * 
     res_34::node<v_node_32_833,v_node_31_823>@M&left_25_800=v_node_32_833 & 
-    right_25_801=v_node_31_823 & res_34=x_33 & right_25_801!=null
+    right_25_801=v_node_31_823 & right_25_801!=null & res_34=x_33
  ,
  H_2a(a) ::= NONE]
 *************************************

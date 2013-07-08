@@ -27,14 +27,11 @@ HP_9 is defined.
 *************************************
 *******relational definition ********
 *************************************
-[ H2(x_56,y_57) ::= x_56::node<val_24_783,next_24_784>@M * HP_5(next_24_784,y_57) * 
-y_57::node<val_27_794,next_27_55>@M * HP_9(next_27_55,x_56),
- HP_6(y_58,x_59) ::= y_58::node<val_27_794,next_27_795>@M * HP_9(next_27_795,x_59),
- G2(x_60,y_61) ::= 
- y_61::node<Anon_11,nn>@M * HP_9(nn,x_60) * x_60::node<Anon_12,n>@M&n=null
- or HP_5(n,y_61) * x_60::node<Anon_12,n>@M * HP_9(nn,x_60) * 
-    y_61::node<Anon_11,nn>@M&n!=null
- ,
+[ H2(x_55,y_56) ::= x_55::node<val_24_783,next_24_784>@M * HP_5(next_24_784,y_56) * 
+HP_6(y_56,x_55),
+ HP_6(y_57,x_58) ::= y_57::node<val_27_794,next_27_795>@M * HP_9(next_27_795,x_58),
+ G2(x_59,y_60) ::= x_59::node<Anon_12,n>@M * y_60::node<Anon_11,nn>@M * HP_5(n,y_60) * 
+HP_9(nn,x_59),
  HP_5(a,b) ::= NONE,
  HP_9(a,b) ::= NONE]
 *************************************

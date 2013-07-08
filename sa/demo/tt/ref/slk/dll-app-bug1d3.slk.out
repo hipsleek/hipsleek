@@ -2,8 +2,6 @@
 Starting Omega...oc
 HP_7 is defined.
 
-!!! inferred contradiction : : x!=null
-!!! Andreea 1 : we need to call add_new_sleek_logging_entry to do sleek_logging
 Entail (1) : Valid. 
 
  <1>hfalse&false&{FLOW,(19,20)=__norm}[]

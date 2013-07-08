@@ -50,12 +50,12 @@ G1 is defined.
 *************************************
 *******relational definition ********
 *************************************
-[ H1(c_50,p_51) ::= 
- H1(next_21_47,c') * c_50::node<val_21_45,prev_21_46,next_21_47>@M * 
- HP_2(prev_21_46,p_51)
- or emp&c_50=null
+[ HP_3(next_20_50,p_51) ::= H1(next_20_50,c'),
+ H1(c_52,p_53) ::= 
+ H1(next_21_47,c') * c_52::node<val_21_45,prev_21_46,next_21_47>@M * 
+ HP_2(prev_21_46,p_53)
+ or emp&c_52=null
  ,
- HP_3(next_20_53,p_54) ::= H1(next_20_53,c'),
  G1(c_55,p_56) ::= 
  HP_2(prev_20_808,p_56) * c_55::node<val_20_807,p_56,next_20_809>@M * 
  G1(next_20_809,c_55)

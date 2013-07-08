@@ -28,12 +28,12 @@ HP_7 is defined.
 *************************************
 *******relational definition ********
 *************************************
-[ H(rest_48,h_49) ::= 
- H(next_36_45,h_49) * rest_48::node<val_36_44,next_36_45>@M * 
- HP_7(h_49,rest_48)&h_49!=rest_48
- or emp&h_49=rest_48
+[ HP_6(next_36_48,h_49) ::= H(next_36_48,h_49),
+ H(rest_50,h_51) ::= 
+ H(next_36_45,h_51) * rest_50::node<val_36_44,next_36_45>@M * 
+ HP_7(h_51,rest_50)&h_51!=rest_50
+ or emp&h_51=rest_50
  ,
- HP_6(next_36_50,h_51) ::= H(next_36_50,h_51),
  G(rest_52,h_53) ::= 
  rest_52::node<val_36_824,next_36_825>@M * G(next_36_825,h_53) * 
  HP_7(h_53,rest_52)&h_53!=rest_52

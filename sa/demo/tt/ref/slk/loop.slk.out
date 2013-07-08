@@ -12,6 +12,8 @@ G is defined.
 !!! >>>>>> pre-predicates<<<<<<
 !!! >>>>>> step pre-4: remove unused predicates<<<<<<
 !!! >>>>>> pre-predicates: step pre-5: group & simpl impl<<<<<<
+!!! pre-obligation:
+[ x::cell<Anon_12>@M --> P(x)]
 !!! >>>>>> pre-predicates: step pre-6: combine<<<<<<
 !!! >>>>>> pre-predicates: step pre-7: remove redundant x!=null<<<<<<
 !!! >>>>>> pre-predicates: step pre-8: strengthen<<<<<<
@@ -25,6 +27,6 @@ G is defined.
 *******relational definition ********
 *************************************
 [ P(x_23) ::= x_23::cell<Anon_11>@M,
- G(x_24) ::= G(x_24)]
+ G(x_24) ::= hfalse&false]
 *************************************
 ====================

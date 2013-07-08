@@ -4684,7 +4684,55 @@ pre-predicate? We need to do so for soundness.
 It is similar to post-obligation, where we may get
 some extra relational assumption.
 =====================================================================
+# pre-2a.slk
+
+relAssume   P(x) --> x::node<q>*P2(q).
+
+relAssume   P2(x)  --> P(x).
+
+shape_infer[P][].
+
+GOT
+===
+[ P(x_20) ::= x_20::node<q>@M * P2(q),
+ P2(x_21) ::= P(x_21)]
+
+If we confirm P2 first, and then
+proceed to process P; wouldn't P2 be
+unfolded to give:
+
+[ P(x_20) ::= x_20::node<q>@M * P(q),
+ P2(x_21) ::= P(x_21)]
+
+Later P2 can be dropped as --eup.
+We unfold because it ha a very simple RHS.
+
 =====================================================================
+# tll-if.slk
+
+relAssume (1)
+ H(x) --> x::node<left_25_800,right_25_801>@M * H_2(left_25_800) 
+  * H_3(right_25_801).
+relAssume (1;1)
+ H_3(right_25_801)&right_25_801!=null --> H(right_25_801).
+relAssume (1;1)
+ H_2(left_25_800) --> H(left_25_800).
+relAssume (1;2)
+ H_3(right_25_801)&right_25_801=null --> emp.
+
+shape_divide [H,H_2,H_3][].
+
+For the first divide, I would first process H_2.
+Then H_3.
+Finally H, where H_2 and H_3 could be both inlined.
+
+*************************************
+*******relational definition ********
+*************************************
+  H_3(right_25_34)<-> H(right_25_34)&right_25_34!=null
+  H_2(left_25_35)<-> H(left_25_35)
+  H(x_36)<-> x_36::node<left_25_800,right_25_801>@M * H_2(left_25_800) * 
+H_3(right_25_801)
 =====================================================================
 =====================================================================
 =====================================================================

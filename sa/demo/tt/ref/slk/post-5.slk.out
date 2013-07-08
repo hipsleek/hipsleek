@@ -25,8 +25,8 @@ G is defined.
 *************************************
 [ G(x_28) ::= 
  x_28::node<Anon_11,yy>@M
- or EXISTS(flted_15_20: x_28::node<Anon_11,yy>@M * 
-    yy::node<Anon_13,flted_15_20>@M&flted_15_20=null)[]
+ or x_28::node<Anon_11,yy>@M * yy::node<Anon_13,flted_15_20>@M&
+    flted_15_20=null
  ]
 *************************************
 ====================

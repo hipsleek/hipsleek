@@ -29,20 +29,14 @@ HP_9 is defined.
 *************************************
 *******relational definition ********
 *************************************
-[ H(x_66,r_67) ::= x_66::node<left_29_845,right_29_846,next_29_847>@M * 
-HP_9(right_29_846,r_67) * HP_0(next_29_847,r_67) * 
-left_29_845::node<left_29_58,right_29_59,next_29_60>@M * 
-HP_8(left_29_58,l_61) * HP_9(right_29_59,l_61) * HP_0(next_29_60,l_61),
- HP_8(left_29_68,r_69) ::= left_29_68::node<left_29_52,right_29_53,next_29_54>@M * 
-HP_8(left_29_52,l_47') * HP_9(right_29_53,l_47') * HP_0(next_29_54,l_47'),
- HP_9(right_29_70,r_71) ::= 
- right_29_70::node<left_29_47,right_29_48,next_29_49>@M * 
- HP_9(right_29_48,r_71) * HP_0(next_29_49,r_71) * 
- left_29_47::node<left_29_55,right_29_56,next_29_57>@M * 
- HP_9(right_29_56,l_47') * HP_0(next_29_57,l_47') * 
- left_29_55::node<left_29_62,right_29_63,next_29_64>@M * 
- HP_8(left_29_62,l_65) * HP_9(right_29_63,l_65) * HP_0(next_29_64,l_65)
- or emp&right_29_70=null
+[ H(x_52,r_53) ::= x_52::node<left_29_845,right_29_846,next_29_847>@M * 
+HP_8(left_29_845,r_53) * HP_9(right_29_846,r_53) * HP_0(next_29_847,r_53),
+ HP_8(left_29_54,r_55) ::= H(left_29_54,l_47'),
+ HP_9(right_29_56,r_57) ::= 
+ H(left_29_47,l_47') * 
+ right_29_56::node<left_29_47,right_29_48,next_29_49>@M * 
+ HP_9(right_29_48,r_57) * HP_0(next_29_49,r_57)
+ or emp&right_29_56=null
  ,
  HP_0(a,b) ::= NONE]
 *************************************

@@ -28,7 +28,7 @@ G is defined.
 *************************************
 [ G(x_29) ::= 
  x_29::node<k,left,right>@M&right!=null & left=null
- or x_29::node<k,left,right>@M&right=null & left!=null
+ or x_29::node<k,left,right>@M&left!=null & right=null
  ,
  HP_2(a) ::= NONE]
 *************************************
