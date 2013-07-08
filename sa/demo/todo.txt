@@ -4361,7 +4361,7 @@ sleek/parser need to accept guarded relational assumptions of the form:
 
  H_1(next_9,prv) |#| l::node<_,next_9> --> H1(next_9,l).
 =====================================================================
-# mcf-3a.slk
+# mcf-3a.slk: FIXED
 (from pre of check-mcf-2.ss)
 
 The version below seems to have allowed --pred-en-eup

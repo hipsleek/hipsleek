@@ -33,7 +33,7 @@ ss: subst from ldns -> ldns
 (*
 equal_hps: are preds that are going to be generalized. DO NOT subst them
 *)
-let rec find_imply_subst_x prog unk_hps link_hps equal_hps constrs new_cs=
+let rec find_imply_subst_x prog unk_hps link_hps equal_hps complex_hps constrs new_cs=
   let rec check_constr_duplicate (lhs,rhs) constrs=
     match constrs with
       | [] -> false
@@ -51,7 +51,7 @@ let rec find_imply_subst_x prog unk_hps link_hps equal_hps constrs new_cs=
       let qvars2, f2 = CF.split_quantifiers cs2.CF.hprel_rhs in
       match f1,f2 with
       | CF.Base lhs1, CF.Base rhs2 ->
-            let r = SAU.find_imply prog (List.map fst cs1.CF.unk_hps) (List.map fst cs2.CF.unk_hps) lhs1 cs1.CF.hprel_rhs cs2.CF.hprel_lhs rhs2 cs1.CF.hprel_guard in
+            let r = SAU.find_imply prog (List.map fst cs1.CF.unk_hps) (List.map fst cs2.CF.unk_hps) lhs1 cs1.CF.hprel_rhs cs2.CF.hprel_lhs rhs2 cs1.CF.hprel_guard complex_hps in
             begin
               match r with
                 | Some (l,r,lhs_ss, rhs_ss) ->
@@ -131,10 +131,10 @@ let rec find_imply_subst_x prog unk_hps link_hps equal_hps constrs new_cs=
   (* let new_cs2 = helper_old_new new_cs [] in *)
   (is_changed,new_cs1(* @new_cs2 *))
 
-and find_imply_subst prog unk_hps link_hps equal_hps constrs new_cs=
+and find_imply_subst prog unk_hps link_hps equal_hps complex_hps constrs new_cs=
   let pr1 = pr_list_ln Cprinter.string_of_hprel_short in
   Debug.no_2 "find_imply_subst" pr1 pr1 (pr_pair string_of_bool pr1)
-      (fun _ _ -> find_imply_subst_x prog unk_hps link_hps equal_hps constrs new_cs) constrs new_cs
+      (fun _ _ -> find_imply_subst_x prog unk_hps link_hps equal_hps complex_hps constrs new_cs) constrs new_cs
 
 and is_trivial cs= (SAU.is_empty_f cs.CF.hprel_rhs) ||
   (SAU.is_empty_f cs.CF.hprel_lhs || SAU.is_empty_f cs.CF.hprel_rhs)
@@ -144,18 +144,18 @@ and is_non_recursive_non_post_cs post_hps dang_hps constr=
   let rhrel_svl = CF.get_hp_rel_name_formula constr.CF.hprel_rhs in
   (CP.intersect_svl rhrel_svl post_hps = []) && ((CP.intersect lhrel_svl rhrel_svl) = [])
 
-and subst_cs_w_other_cs_x prog post_hps dang_hps link_hps equal_hps constrs new_cs=
+and subst_cs_w_other_cs_x prog post_hps dang_hps link_hps equal_hps complex_hps constrs new_cs=
   (*remove recursive cs and post-preds based to preserve soundness*)
   let constrs1 = List.filter (fun cs -> (is_non_recursive_non_post_cs post_hps dang_hps cs) && not (is_trivial cs)) constrs in
   let new_cs1,rem = List.partition (fun cs -> (is_non_recursive_non_post_cs post_hps dang_hps cs) && not (is_trivial cs)) new_cs in
-  let b,new_cs2 = find_imply_subst prog dang_hps link_hps equal_hps constrs1 new_cs1 in
+  let b,new_cs2 = find_imply_subst prog dang_hps link_hps equal_hps complex_hps constrs1 new_cs1 in
   (b, new_cs2@rem)
 (*=========END============*)
 
-let rec subst_cs_w_other_cs prog post_hps dang_hps link_hps equal_hps constrs new_cs=
+let rec subst_cs_w_other_cs prog post_hps dang_hps link_hps equal_hps complex_hps constrs new_cs=
   let pr1 = pr_list_ln Cprinter.string_of_hprel in
    Debug.no_1 "subst_cs_w_other_cs" pr1 pr1
-       (fun _ -> subst_cs_w_other_cs_x prog post_hps dang_hps link_hps equal_hps constrs  new_cs) constrs
+       (fun _ -> subst_cs_w_other_cs_x prog post_hps dang_hps link_hps equal_hps complex_hps constrs  new_cs) constrs
 
 (* let subst_cs_x prog dang_hps constrs new_cs = *)
 (*   (\*subst by constrs*\) *)
@@ -168,16 +168,16 @@ let rec subst_cs_w_other_cs prog post_hps dang_hps link_hps equal_hps constrs ne
 (*   Debug.no_1 "subst_cs" pr1 (pr_triple pr1 pr1 !CP.print_svl) *)
 (*       (fun _ -> subst_cs_x prog dang_hps hp_constrs new_cs) new_cs *)
 
-let subst_cs_x prog post_hps dang_hps link_hps equal_hps constrs new_cs =
+let subst_cs_x prog post_hps dang_hps link_hps equal_hps complex_hps constrs new_cs =
   (*subst by constrs*)
   DD.ninfo_pprint "\n subst with other assumptions" no_pos;
-  let is_changed, new_cs1 = subst_cs_w_other_cs prog post_hps dang_hps link_hps equal_hps constrs new_cs in
+  let is_changed, new_cs1 = subst_cs_w_other_cs prog post_hps dang_hps link_hps equal_hps complex_hps constrs new_cs in
   (is_changed, new_cs1,[])
 
-let subst_cs prog post_hps dang_hps link_hps equal_hps hp_constrs new_cs=
+let subst_cs prog post_hps dang_hps link_hps equal_hps complex_hps hp_constrs new_cs=
   let pr1 = pr_list_ln Cprinter.string_of_hprel_short in
   Debug.no_1 "subst_cs" pr1 (pr_triple string_of_bool  pr1 pr1)
-      (fun _ -> subst_cs_x prog post_hps dang_hps link_hps equal_hps hp_constrs new_cs) new_cs
+      (fun _ -> subst_cs_x prog post_hps dang_hps link_hps equal_hps complex_hps hp_constrs new_cs) new_cs
 
 (*===========fix point==============*)
 let apply_transitive_impl_fix prog post_hps callee_hps (* hp_rel_unkmap *) dang_hps link_hps (constrs: CF.hprel list) =
@@ -185,7 +185,7 @@ let apply_transitive_impl_fix prog post_hps callee_hps (* hp_rel_unkmap *) dang_
   (*find equal pre-preds: has one assumption.
     in the new algo, those will be generalized as equiv. do not need to substed
   *)
-  let equal_cands,_ = SAC.search_pred_4_equal constrs post_hps in
+  let equal_cands,_, complex_hps = SAC.search_pred_4_equal constrs post_hps in
   let equal_hps = List.map fst equal_cands in
   let rec helper_x (constrs: CF.hprel list) new_cs =
     DD.binfo_pprint ">>>>>> step 3a: simplification <<<<<<" no_pos;
@@ -194,7 +194,7 @@ let apply_transitive_impl_fix prog post_hps callee_hps (* hp_rel_unkmap *) dang_
     begin
         DD.binfo_pprint ">>>>>> step 3b: do apply_transitive_imp <<<<<<" no_pos;
         (* let constrs2, new_cs2, new_non_unk_hps = subst_cs prog dang_hps constrs new_cs1 in *)
-      let is_changed, constrs2,new_cs2 = subst_cs prog post_hps dang_hps link_hps equal_hps constrs new_cs1 in
+      let is_changed, constrs2,new_cs2 = subst_cs prog post_hps dang_hps link_hps equal_hps complex_hps constrs new_cs1 in
       (*for debugging*)
       let _ = DD.ninfo_pprint ("   new constrs:" ^ (let pr = pr_list_ln Cprinter.string_of_hprel_short in pr constrs2)) no_pos in
       let helper (constrs: CF.hprel list) new_cs=

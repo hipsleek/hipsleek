@@ -2360,7 +2360,7 @@ step 1: apply transitive implication
   ---------------------------------
   c1 = A |- B ;c2 = C |- D ===> c3=A |- D * E
 *)
-let rec find_imply prog lunk_hps runk_hps lhs1 rhs1 lhs2 rhs2 lguard1=
+let rec find_imply prog lunk_hps runk_hps lhs1 rhs1 lhs2 rhs2 lguard1 complex_hps=
   let sort_hps_x hps = List.sort (fun (CP.SpecVar (_, id1,_),_)
       (CP.SpecVar (_, id2, _),_)-> String.compare id1 id2) hps
   in
@@ -2436,7 +2436,7 @@ let rec find_imply prog lunk_hps runk_hps lhs1 rhs1 lhs2 rhs2 lguard1=
   (*m_args2: matched svl of rhs2*)
   let subst,matched_hps, m_args2,rhs_hps_rename = check_hrels_imply l_rhrels r_rhrels ldns rdns (List.map fst l_rhrels) [] [] [] [] in
   let r=
-    if matched_hps = [] then None
+    if matched_hps = [] || (CP.intersect_svl matched_hps complex_hps <> []) then None
     else
       begin
         (*for debugging*)
@@ -3819,6 +3819,7 @@ let mk_link_hprel_def prog cond_path (hp,_)=
   let def= {
       CF.hprel_def_kind = CP.HPRelDefn (hp, List.hd args, List.tl args);
       CF.hprel_def_hrel = hf;
+      (* CF.hprel_def_guard = None; *)
       CF.hprel_def_body = [(cond_path, None)];
       CF.hprel_def_body_lib = None;
   } in

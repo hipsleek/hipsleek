@@ -32,9 +32,9 @@ let search_pred_4_equal_x constrs post_hps=
           pre_preds@[(hp,cs)], rem
       | _ -> (pre_preds, rem@[cs])
   in
-  let rec partition_equal (cand_equal, rem_pre_constrs) ls_pre=
+  let rec partition_equal (cand_equal, rem_pre_constrs, complex_hps) ls_pre=
    match ls_pre with
-     | [] -> (cand_equal, rem_pre_constrs)
+     | [] -> (cand_equal, rem_pre_constrs,complex_hps)
      | (hp0, cs0)::rest ->
            let grp,rest1 = List.fold_left (fun (ls1,ls2) (hp1,cs1) ->
                if CP.eq_spec_var hp1 hp0 then (ls1@[cs1], ls2)
@@ -42,20 +42,20 @@ let search_pred_4_equal_x constrs post_hps=
            ) ([],[]) rest in
            let grp1 = (cs0::grp) in
            let n_res = if List.length grp1 > 1 then
-             (cand_equal,rem_pre_constrs@(grp1))
-           else (cand_equal@[(hp0,cs0)],rem_pre_constrs)
+             (cand_equal,rem_pre_constrs@(grp1),complex_hps@[hp0])
+           else (cand_equal@[(hp0,cs0)],rem_pre_constrs,complex_hps)
            in
            partition_equal n_res rest1
   in
   let pr_pre_preds, rem_constrs = List.fold_left partition_pre_preds ([],[]) constrs in
-  let pre_preds_4_equal, rem_pre_constrs = partition_equal ([],[]) pr_pre_preds in
-  (pre_preds_4_equal, rem_pre_constrs@rem_constrs)
+  let pre_preds_4_equal, rem_pre_constrs,complex_hps = partition_equal ([],[],[]) pr_pre_preds in
+  (pre_preds_4_equal, rem_pre_constrs@rem_constrs, complex_hps)
 
 let search_pred_4_equal constrs post_hps=
   let pr1 = Cprinter.string_of_hprel_short in
   let pr2 = pr_list_ln (pr_pair !CP.print_sv pr1) in
   let pr3 = pr_list_ln pr1 in
-  Debug.no_2 "search_pred_4_equal" pr3 !CP.print_svl (pr_pair pr2 pr3)
+  Debug.no_2 "search_pred_4_equal" pr3 !CP.print_svl (pr_triple pr2 pr3 !CP.print_svl)
       (fun _ _ -> search_pred_4_equal_x constrs post_hps)
       constrs post_hps
 
@@ -806,10 +806,10 @@ let analize_unk_x prog post_hps constrs total_unk_map unk_hpargs link_hpargs=
   (*********END double check ****************)
   let full_unk_hp_args2_locs = SAU.refine_full_unk unk_hp_args02 full_unk_hp_args2_locs in
   (*for debugging*)
-  let _ = Debug.ninfo_pprint ("  unks 2: " ^ (let pr = pr_list (pr_triple !CP.print_sv !CP.print_svl (pr_list string_of_int))
+  let _ = Debug.info_pprint ("  unks 2: " ^ (let pr = pr_list (pr_triple !CP.print_sv !CP.print_svl (pr_list string_of_int))
   in pr unk_hp_args02)) no_pos
   in
-  let _ = Debug.ninfo_pprint ("  full_unk_hp_args2_locs: " ^ (let pr = pr_list (pr_triple !CP.print_sv !CP.print_svl (pr_list string_of_int))
+  let _ = Debug.info_pprint ("  full_unk_hp_args2_locs: " ^ (let pr = pr_list (pr_triple !CP.print_sv !CP.print_svl (pr_list string_of_int))
   in pr full_unk_hp_args2_locs)) no_pos
   in
   (* let pr1 =  pr_list_ln (pr_pair (pr_pair !CP.print_sv (pr_list string_of_int)) *)

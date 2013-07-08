@@ -2049,6 +2049,17 @@ and mkForall (vs : spec_var list) (f : formula) lbl pos = match vs with
         else
           ef
 
+and mkForall_disjs_deep (vs : spec_var list) (f : formula) lbl pos =
+  let ps = list_of_disjs f in
+  let irr_ps, rele_ps = List.fold_left (fun (r_ls1,r_ls2) p ->
+      let svl = fv p in
+      let inter = intersect_svl svl vs in
+      if inter = [] then (r_ls1@[p], r_ls2)
+      else (r_ls1, r_ls2@[(p, inter)])
+  ) ([],[]) ps in
+  let quan_rele_ps = List.map (fun (p, quans) -> mkForall quans p lbl pos) rele_ps in
+  disj_of_list (irr_ps@quan_rele_ps) pos
+
 (* same of list_of_conjs *)
 and split_conjunctions =  function
   | And (x, y, _) -> (split_conjunctions x) @ (split_conjunctions y)
