@@ -1342,6 +1342,7 @@ let collect_sel_hp_def_x cond_path defs sel_hps unk_hps m=
     {
         CF.hprel_def_kind = kind;
         CF.hprel_def_hrel = hprel;
+        CF.hprel_def_guard = og;
         CF.hprel_def_body = [(cond_path,opf)];
         CF.hprel_def_body_lib = opflib;
     }
@@ -1786,6 +1787,7 @@ and infer_shapes_conquer iprog prog proc_name ls_path_defs_setting sel_hps=
         let tupled_defs1 = List.map (fun (a, hf, og,f) -> {
             CF.hprel_def_kind = a;
             CF.hprel_def_hrel = hf;
+            CF.hprel_def_guard = og;
             CF.hprel_def_body = [(cond_path, Some f)];
             CF.hprel_def_body_lib = Some f;
         }
@@ -1796,7 +1798,7 @@ and infer_shapes_conquer iprog prog proc_name ls_path_defs_setting sel_hps=
         in
         (cl_sel_hps, hp_defs1,tupled_defs1)
     in
-    let hpdefs = List.map (fun (k, hf, og, f) -> CF.mk_hprel_def k hf [(cond_path, Some f)] (Some f)) defs in
+    let hpdefs = List.map (fun (k, hf, og, f) -> CF.mk_hprel_def k hf og [(cond_path, Some f)] (Some f)) defs in
     let link_hp_defs = SAC.generate_hp_def_from_link_hps prog cond_path equivs link_hpargs0 in
     (cl_sel_hps@(List.map fst link_hpargs0), hpdefs@link_hp_defs, tupled_defs2)
   in
@@ -1890,6 +1892,7 @@ and infer_shapes_x iprog prog proc_name (constrs0: CF.hprel list) sel_hps sel_po
   let tupled_defs1 = List.map (fun (a, hf,og, f) -> {
       CF.hprel_def_kind = a;
       CF.hprel_def_hrel = hf;
+      CF.hprel_def_guard = og;
       CF.hprel_def_body = [(cond_path, Some f)];
       CF.hprel_def_body_lib = Some f;
   }

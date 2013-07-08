@@ -1944,6 +1944,15 @@ let pr_hprel_def hpd=
   (* fmt_string (CP.print_rel_cat hpd.hprel_def_kind); *)
   (* fmt_string "\n"; *)
   (pr_h_formula hpd.hprel_def_hrel);
+  let _ = match hpd.hprel_def_guard with
+    | None -> ()
+          (* fmt_string " NONE " *)
+    | Some hf -> 
+          begin
+            fmt_string " |#| ";
+            prtt_pr_h_formula hf
+          end
+  in
   fmt_string " ::= ";
   fmt_cut () ;
    (* fmt_string (String.concat " \/ " (List.map pr_path_of hpd.hprel_def_body)); *)
@@ -1962,6 +1971,15 @@ let pr_hprel_def_short hpd=
   (* fmt_string (CP.print_rel_cat hpd.hprel_def_kind); *)
   (* fmt_string "\n"; *)
   (pr_h_formula hpd.hprel_def_hrel);
+  let _ = match hpd.hprel_def_guard with
+    | None -> ()
+          (* fmt_string " NONE " *)
+    | Some hf -> 
+          begin
+            fmt_string " |#| ";
+            prtt_pr_h_formula hf
+          end
+  in
   fmt_string " ::=";
   (* no cut here please *)
   (* fmt_cut(); *)
@@ -1980,6 +1998,15 @@ let pr_hprel_def_lib hpd=
   (* fmt_string (CP.print_rel_cat hpd.hprel_def_kind); *)
   (* fmt_string "\n"; *)
   (pr_h_formula hpd.hprel_def_hrel);
+  let _ = match hpd.hprel_def_guard with
+    | None -> ()
+          (* fmt_string " NONE " *)
+    | Some hf -> 
+          begin
+            fmt_string " |#| ";
+            prtt_pr_h_formula hf
+          end
+  in
   fmt_string " ::= ";
   fmt_cut() ;
   fmt_string (match hpd.hprel_def_body_lib with

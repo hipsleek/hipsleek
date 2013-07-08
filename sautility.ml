@@ -3828,7 +3828,7 @@ let mk_link_hprel_def prog cond_path (hp,_)=
   let def= {
       CF.hprel_def_kind = CP.HPRelDefn (hp, List.hd args, List.tl args);
       CF.hprel_def_hrel = hf;
-      (* CF.hprel_def_guard = None; *)
+      CF.hprel_def_guard = None;
       CF.hprel_def_body = [(cond_path, None)];
       CF.hprel_def_body_lib = None;
   } in
@@ -5964,7 +5964,7 @@ let combine_path_defs sel_hps1 path_defs=
       | hpd::rest ->
             let hp1,args = CF.extract_HRel hpd.CF.hprel_def_hrel in
             if CP.eq_spec_var hp hp1 then
-              [ (hpd.CF.hprel_def_kind, args, hpd.CF.hprel_def_body,
+              [ (hpd.CF.hprel_def_kind, args, hpd.CF.hprel_def_guard, hpd.CF.hprel_def_body,
               hpd.CF.hprel_def_body_lib)]
             else look_up rest hp
   in
@@ -5984,7 +5984,7 @@ let combine_path_defs sel_hps1 path_defs=
   let rec norm rem_path args0 paths lib=
     match rem_path with
       | [] -> (paths, lib)
-      | (_, args1, path_fs1, lib1)::rest ->
+      | (_, args1, g, path_fs1, lib1)::rest ->
             let n_paths, n_lib = combine_path args0 args1 paths path_fs1 lib lib1 in
             norm rest args0 n_paths n_lib
   in
@@ -5996,7 +5996,7 @@ let combine_path_defs sel_hps1 path_defs=
     in
     match settings with
       | [] -> []
-      | (k, args0, path_fs0, lib0)::rest -> let path_fs, lib = norm rest args0 path_fs0 lib0 in
-        [(CF.mk_hprel_def k (mkHRel hp args0 no_pos) path_fs lib)]
+      | (k, args0, g, path_fs0, lib0)::rest -> let path_fs, lib = norm rest args0 path_fs0 lib0 in
+        [(CF.mk_hprel_def k (mkHRel hp args0 no_pos) g path_fs lib)]
   in
   List.fold_left (fun ls hp -> ls@(combine_one_def hp)) [] sel_hps1

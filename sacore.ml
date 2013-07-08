@@ -982,6 +982,7 @@ let generate_hp_def_from_link_hps prog cond_path equivs link_hpargs=
     {
       CF.hprel_def_kind = k;
       CF.hprel_def_hrel = hf;
+      CF.hprel_def_guard = og;
       CF.hprel_def_body = [(cond_path, Some f)];
       CF.hprel_def_body_lib = Some f;
     }

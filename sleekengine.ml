@@ -731,9 +731,11 @@ let process_rel_assume cond_path (ilhs : meta_formula) (igurad_opt : meta_formul
     | Some iguard -> let (_,guard0) = meta_to_formula iguard false fv_idents stab in
       let _, guard = CF.split_quantifiers guard0 in
       (* let _ = Debug.info_pprint (Cprinter.string_of_formula guard) no_pos in *)
-      (* let p = CF.get_pure guard in *)
+      let p = CF.get_pure guard in
+      let eq = (Mcpure.ptr_equations_without_null (Mcpure.mix_of_pure p)) in
+      let guard1 = CF.subst eq guard in
       (* if CP.isConstTrue p then *)
-        let hfs = CF.heap_of guard in
+        let hfs = CF.heap_of guard1 in
         CF.join_star_conjunctions_opt hfs
       (* else report_error no_pos "Sleekengine.process_rel_assume: guard should be heaps only" *)
   in

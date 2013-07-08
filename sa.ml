@@ -3582,6 +3582,7 @@ let collect_sel_hp_def_x defs sel_hps unk_hps m=
     {
         CF.hprel_def_kind = kind;
         CF.hprel_def_hrel = hprel;
+        CF.hprel_def_guard = og;
         CF.hprel_def_body = [([], opf)];
         CF.hprel_def_body_lib = opflib;
     }
