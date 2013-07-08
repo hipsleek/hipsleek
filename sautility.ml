@@ -4564,6 +4564,8 @@ let norm_formula_x prog args unk_hps unk_svl f1 f2 equivs=
       else cmb_f
     in
     Some (cmb_f1, equivs)
+  else if CF.isStrictConstTrue f1 then Some (f2, equivs)
+  else if CF.isStrictConstTrue f2 then Some (f1, equivs)
   else
     let is_common, sharing_f, n_fs = partittion_common_diff prog args unk_hps unk_svl f1 f2 no_pos in
     if not is_common then None else

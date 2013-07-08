@@ -4634,8 +4634,9 @@ PROBLEM
      H_1(next_46,prv_47) ::= H1(next_46,l)
   EXPECT:
     H_1(next_9,prv) |#| l::node<_,next_9> ::= H1(next_9,l).
+
 =====================================================================
-# loop-3b1.slk
+# loop-3d1.slk
 
 relAssume P(x) --> x::node<next_1> * H_2(next_1).
 
