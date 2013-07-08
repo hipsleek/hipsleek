@@ -16,7 +16,7 @@ infer [P,Q,Z] P(x)*Q(y)*Z(x,k) & mmm=-1 & x!=null & y=null |-  mmm=3.
 print residue.*/
 // why fail?
 
-infer [x,k] P(x)*Q(y)*Z(x,k) & mmm=-1 & x!=null & y=null |-  mmm=3.
+infer [x,k,Q] P(x)*Q(y)*Z(x,k) & mmm=-1 & x!=null & y=null |-  mmm=3.
 print residue.
 
 /*
