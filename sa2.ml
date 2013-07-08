@@ -314,7 +314,24 @@ let split_constr prog cond_path constrs post_hps prog_vars unk_map unk_hps link_
         in
         (new_constrs, unk_map1, link_hps)
     else
-      ([cs],total_unk_map,[])
+      (*do subst: sa/demo/mcf-3a1.slk*)
+      let leqs = (MCP.ptr_equations_without_null mix_lf) in
+      let lhs_b = match lhs with
+        | CF.Base fb -> fb
+        | _ -> report_error no_pos "sa2.split_constr: lhs should be a Base Formula"
+      in
+      let rhs_b = match rhs with
+        | CF.Base fb -> fb
+        | _ -> report_error no_pos "sa2.split_constr: lhs should be a Base Formula"
+      in
+      (*smart subst*)
+      let lhs_b1, rhs_b1, _ = SAU.smart_subst lhs_b rhs_b (l_hpargs@r_hpargs)
+        leqs [] [] prog_vars
+      in
+      let n_cs = {cs with CF.hprel_lhs = (CF.Base lhs_b1);
+          CF.hprel_rhs = (CF.Base rhs_b1);
+      } in
+      ([n_cs],total_unk_map,[])
   in
   let split_one cs total_unk_map =
     let pr1 = Cprinter.string_of_hprel_short in

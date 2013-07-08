@@ -4398,7 +4398,7 @@ relational assumption of H_9. I think we should never have
 unfolded a predicate with a complex RHS. Hence, we should 
 never have unfolded H2 in the first place.
 =====================================================================
-# mcf-3a1.slk
+# mcf-3a1.slk: FIXED
 
 a more complex variant of mcf-3a.slk
 (from pre of check-mcf-2.ss)
