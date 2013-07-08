@@ -1,0 +1,118 @@
+data tree {
+    node children;
+    }.
+    
+data node {
+    tree child; 
+    node prev; 
+    node next; 
+    tree parent;
+    }.
+
+HeapPred H_3(node next_09, node@NI prv, tree@NI par).
+HeapPred H_1(tree child_07, node@NI prv, tree@NI par).
+HeapPred H_4(tree parent_10, node@NI prv, tree@NI par).
+HeapPred H_2(node prev_08, node@NI prv, tree@NI par).
+HeapPred H1(tree a).
+HeapPred H2(node a, node@NI c, tree@NI b).
+HeapPred H_5(node children_84).
+PostPred G2(node a, node@NI c, tree@NI b).
+PostPred G1(tree a).
+
+Declare_Unknown [H_4].
+
+relAssume
+ H2(l,prv,par)&
+  l!=null --> l::node<child_07,prev_08,next_09,parent_10>@M * 
+  H_1(child_07,prv,par) * 
+  H_2(prev_08,prv,par) * 
+  H_3(next_09,prv,par) * H_4(parent_10,prv,par).
+
+relAssume
+ H_3(next_09,prv,par)&par=par' & 
+  prev_08=prv |#| l::node<child_07,prev_08,next_09,par'>@M --> H2(next_09,l,par).
+
+relAssume
+ H_1(child_07,prv,par)&par=par' & 
+  prev_08=prv --> H1(child_07).
+
+relAssume
+ H1(t) --> t::tree<children_84>@M * 
+  H_5(children_84).
+
+relAssume
+ H_5(children_84)&
+  children_84!=null |#| t::tree<children_84>@M --> H2(children_84,n_38',t).
+
+relAssume
+ H2(l,prv,par)&l=null --> emp.
+
+relAssume
+ H_5(children_84) &
+  children_84=null --> emp.
+
+relAssume
+ H_2(prev_08,prv,par) --> prev_08=prv.
+
+relAssume
+ H_2(prev_08,prv,par) --> prev_08!=prv.
+
+shape_infer [H1,H2,H_1,H_2,H_3,H_4,H_5][].
+
+/*
+# mcf-4.slk
+(from check-mcf-4.ss)
+
+
+relAssume
+ H_2(prev_08,prv,par) --> emp&
+  forall(parent_10:forall(l:((par!=parent_10 | prv>=prev_08 | 
+  l=null)) & ((par!=parent_10 | prev_08>=prv | l=null)))).
+
+relAssume
+ H_2(prev_08,prv,par) --> emp& prev_08!=prv
+  forall(parent_10:forall(l:((prev_08!=prv | par>=parent_10 | 
+  l=null)) & ((prev_08!=prv | parent_10>=par | l=null)))).
+
+relAssume
+ H_2(prev_08,prv,par) --> emp& prev_08=prv
+  forall(parent_10:forall(l:(prev_08=prv | par=parent_10 | 
+  l=null))).
+
+=======
+
+X1:={[prev_4,prv,par]:
+  forall(parent_6:((par!=parent_6 | prv>=prev_4)) & 
+  ((par!=parent_6 | prev_4>=prv)))};
+
+X2:={[prev_4,prv,par]:
+  forall(parent_6:((prev_4!=prv | par>=parent_6)) & 
+  ((prev_4!=prv | parent_6>=par)))};
+
+X3:={[prev_4,prv,par]:
+  forall(parent_6:(par=parent_6 | prev_4=prv))};
+
+X1;X2;X3;
+
+
+-------
+
+ l=null --> G2(l,prv,par).
+
+  t::tree<children_84>@M&
+  children_84=null --> G1(t).
+
+ H_2(prev_08,prv,par) * 
+  H_4(parent_10,prv,par) * 
+  l::node<child_07,prev_08,next_09,parent_10>@M * 
+  G2(next_09,l,par) * G1(child_07)&par=parent_10 & 
+  prev_08=prv --> G2(l,prv,par).
+
+ t::tree<children_84>@M * 
+  G2(children_84,n_1105,t)&children_84!=null & 
+  n_1105=null --> G1(t).
+
+
+
+*/
+

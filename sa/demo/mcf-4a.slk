@@ -1,0 +1,140 @@
+data tree {
+    node children;
+    }.
+    
+data node {
+    tree child; 
+    node prev; 
+    node next; 
+    tree parent;
+    }.
+
+HeapPred H_9(node next_5, node@NI prv, tree@NI par).
+HeapPred H_7(tree child_3, node@NI prv, tree@NI par).
+HeapPred H_0(tree parent_6, node@NI prv, tree@NI par).
+HeapPred H_8(node prev_4, node@NI prv, tree@NI par).
+HeapPred H1(tree a).
+HeapPred H2(node a, node@NI c, tree@NI b).
+HeapPred H_5(node children_42_1079).
+PostPred G2(node a, node@NI c, tree@NI b).
+PostPred G1(tree a).
+
+
+ infer [H_7,H_8,H_0,H_9,G2]
+H_7(child_3,prv,par) * 
+H_8(prev_4,prv,par) * H_9(next_5,prv,par) * 
+H_0(parent_6,prv,par) * 
+l::node<child_3,prev_4,next_5,parent_6>&
+l!=null & !(v_bool_51_967') & l!=null & !(v_bool_51_967') & 
+par=parent_6 & v_boolean_1' & par=parent_6 & 
+prev_4!=prv & !(v_boolean_0') & prev_4!=prv & 
+!(v_bool_6') & !(v_boolean_0') & v_boolean_1' & 
+!(v_bool_6') & !(v_boolean_54_965') & res=v_boolean_54_965'
+ |-  G2(l,prv,par)&res.
+
+print residue.
+
+/*
+# mcf-4.slk
+(from check-mcf-4.ss)
+
+
+--------------
+ id: 50; caller: []; line: 49; classic: false; kind: EARLY CONTRA DETECTION; hec_num: 1; evars: []; infer_vars: []; c_heap: emp
+
+hprel_ass: [ H_8(prev_4,prv,par) --> emp&
+  forall(parent_6:((par!=parent_6 | prv>=prev_4)) & 
+  ((par!=parent_6 | prev_4>=prv)))]
+res:  [
+  hfalse&false&{FLOW,(22,23)=__norm}[]
+  ]
+--------------
+ id: 51; caller: []; line: 49; classic: false; kind: EARLY CONTRA DETECTION; hec_num: 1; evars: []; infer_vars: []; c_heap: emp
+ infer [] EXISTS(v_boolean_1',
+v_boolean_0': H_7(child_3,prv,par) * 
+H_8(prev_4,prv,par) * H_9(next_5,prv,par) * 
+H_0(parent_6,prv,par) * 
+l::node<child_3,prev_4,next_5,parent_6>&
+l!=null & !(v_bool_51_967') & l!=null & !(v_bool_51_967') & 
+par!=parent_6 & !(v_boolean_1') & par!=parent_6 & 
+prev_4=prv & v_boolean_0' & prev_4=prv & 
+!(v_bool_6') & !(v_boolean_1') & !(v_bool_6') & 
+!(v_boolean_54_965') & res=v_boolean_54_965'&{FLOW,(22,23)=__norm})[]
+ |-  G2(l,prv,par)&res.
+hprel_ass: [ H_8(prev_4,prv,par) --> emp&
+  forall(parent_6:((prev_4!=prv | par>=parent_6)) & 
+  ((prev_4!=prv | parent_6>=par)))]
+res:  [
+  hfalse&false&{FLOW,(22,23)=__norm}[]
+  ]
+--------------
+ id: 52; caller: []; line: 49; classic: false; kind: EARLY CONTRA DETECTION; hec_num: 1; evars: []; infer_vars: []; c_heap: emp
+ checkentail EXISTS(v_boolean_1',
+v_boolean_0': H_7(child_3,prv,par) * 
+H_8(prev_4,prv,par) * H_9(next_5,prv,par) * 
+H_0(parent_6,prv,par) * 
+l::node<child_3,prev_4,next_5,parent_6>&
+l!=null & !(v_bool_51_967') & l!=null & !(v_bool_51_967') & 
+par!=parent_6 & !(v_boolean_1') & par!=parent_6 & 
+prev_4!=prv & !(v_boolean_0') & prev_4!=prv & 
+!(v_bool_6') & !(v_boolean_1') & !(v_bool_6') & 
+!(v_boolean_54_965') & res=v_boolean_54_965'&{FLOW,(22,23)=__norm})[]
+ |-  G2(l,prv,par)&res&{FLOW,(22,23)=__norm}[]. 
+hprel_ass: [ H_8(prev_4,prv,par) --> emp&
+  forall(parent_6:(par=parent_6 | prev_4=prv))]
+res:  [
+  hfalse&false&{FLOW,(22,23)=__norm}[]
+  ]
+
+relAssume
+ H_2(prev_08,prv,par) --> emp&
+  forall(parent_10:forall(l:((par!=parent_10 | prv>=prev_08 | 
+  l=null)) & ((par!=parent_10 | prev_08>=prv | l=null)))).
+
+relAssume
+ H_2(prev_08,prv,par) --> emp& prev_08!=prv
+  forall(parent_10:forall(l:((prev_08!=prv | par>=parent_10 | 
+  l=null)) & ((prev_08!=prv | parent_10>=par | l=null)))).
+
+relAssume
+ H_2(prev_08,prv,par) --> emp& prev_08=prv
+  forall(parent_10:forall(l:(prev_08=prv | par=parent_10 | 
+  l=null))).
+
+=======
+
+X1:={[prev_4,prv,par]:
+  forall(parent_6:((par!=parent_6 | prv>=prev_4)) & 
+  ((par!=parent_6 | prev_4>=prv)))};
+
+X2:={[prev_4,prv,par]:
+  forall(parent_6:((prev_4!=prv | par>=parent_6)) & 
+  ((prev_4!=prv | parent_6>=par)))};
+
+X3:={[prev_4,prv,par]:
+  forall(parent_6:(par=parent_6 | prev_4=prv))};
+
+X1;X2;X3;
+
+
+-------
+
+ l=null --> G2(l,prv,par).
+
+  t::tree<children_84>@M&
+  children_84=null --> G1(t).
+
+ H_2(prev_08,prv,par) * 
+  H_4(parent_10,prv,par) * 
+  l::node<child_07,prev_08,next_09,parent_10>@M * 
+  G2(next_09,l,par) * G1(child_07)&par=parent_10 & 
+  prev_08=prv --> G2(l,prv,par).
+
+ t::tree<children_84>@M * 
+  G2(children_84,n_1105,t)&children_84!=null & 
+  n_1105=null --> G1(t).
+
+
+
+*/
+
