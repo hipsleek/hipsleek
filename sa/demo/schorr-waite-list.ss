@@ -9,15 +9,16 @@ inv true;
 
 global node SENTINEL;
 
-void traverse(node c, node p)
-requires c::node<_,cn> * cn::ll<> * p::ll<>
-ensures c::ll<> * p::ll<>;
+void traverse(ref node c, ref node p, ref node n)
+requires c::node<_,n> * p::ll<> * n::ll<>
+ensures n'::ll<> * p'::ll<> & c'= SENTINEL & SENTINEL' = SENTINEL; 
+//& n' = c;
 {
-	node n;
+//	node n;
 	if (c != SENTINEL){ 
 		if(c != null){
 		//assume false;
-		n = c.next;
+//		n = c.next;
 		c.next = p;
 		p = c;
 		c = n;
@@ -27,21 +28,25 @@ ensures c::ll<> * p::ll<>;
 			c = p;
 			p = null;
 		}
-		//traverse(c,p);
+		n = c.next;
+		traverse(c,p,n);
 	}
 //	dprint;
 }
 
-void trav(node root)
+void trav(ref node root)
 requires root::ll<> * SENTINEL::node<_,null>
-ensures root::ll<>;
+ensures root'::ll<> ;
+//& root = SENTINEL;
 {
 	if (root == null) return;
 	else {
 		node prev = SENTINEL;
 		node curr = root;
+		node next = curr.next;
 //		dprint;
-		traverse(curr,prev);
+		traverse(curr,prev,next);
+		root = next;
 	}
 //dprint;
 }

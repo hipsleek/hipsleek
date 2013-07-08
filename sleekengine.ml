@@ -731,9 +731,11 @@ let process_rel_assume cond_path (ilhs : meta_formula) (igurad_opt : meta_formul
     | Some iguard -> let (_,guard0) = meta_to_formula iguard false fv_idents stab in
       let _, guard = CF.split_quantifiers guard0 in
       (* let _ = Debug.info_pprint (Cprinter.string_of_formula guard) no_pos in *)
-      (* let p = CF.get_pure guard in *)
+      let p = CF.get_pure guard in
+      let eq = (Mcpure.ptr_equations_without_null (Mcpure.mix_of_pure p)) in
+      let guard1 = CF.subst eq guard in
       (* if CP.isConstTrue p then *)
-        let hfs = CF.heap_of guard in
+        let hfs = CF.heap_of guard1 in
         CF.join_star_conjunctions_opt hfs
       (* else report_error no_pos "Sleekengine.process_rel_assume: guard should be heaps only" *)
   in
@@ -775,7 +777,7 @@ let process_rel_defn cond_path (ilhs : meta_formula) (irhs: meta_formula)=
   (* let _ =  print_endline ("LHS = " ^ (Cprinter.string_of_formula lhs)) in *)
   (* let _ =  print_endline ("RHS = " ^ (Cprinter.string_of_formula rhs)) in *)
   (*TODO: LOC: hp_id should be cond_path*)
-  let pr_new_rel_defn =  (cond_path, (CP.HPRelDefn (hp, List.hd args, List.tl args), hf, rhs))
+  let pr_new_rel_defn =  (cond_path, (CP.HPRelDefn (hp, List.hd args, List.tl args), hf, None, rhs))
   in
   (*hp_defn*)
   (* let pr= pr_pair CF.string_of_cond_path Cprinter.string_of_hp_rel_def_short in *)
@@ -890,7 +892,7 @@ let process_shape_divide pre_hps post_hps=
   let pr_one (cond, hpdefs,_, _, link_hpargs,_)=
     begin
       if not(List.length hpdefs = 0) then
-        let pr_path_defs = List.map (fun (_, hf, f) -> (cond,(hf,f))) hpdefs in
+        let pr_path_defs = List.map (fun (_, hf,_,f) -> (cond,(hf,f))) hpdefs in
         let pr_path_dangs = List.map (fun (hp,_) -> (cond, hp)) link_hpargs in
         print_endline "";
       print_endline "\n*************************************";
@@ -908,7 +910,7 @@ let process_shape_conquer sel_ids cond_paths=
   let _ = DD.ninfo_pprint "process_shape_conquer\n" no_pos in
   let ls_pr_defs = !sleek_hprel_defns in
   let link_hpargs = !sleek_hprel_unknown in
-  let orig_vars = List.fold_left (fun ls (_,(_,hf,_))-> ls@(CF.h_fv hf)) [] ls_pr_defs in
+  let orig_vars = List.fold_left (fun ls (_,(_,hf,_,_))-> ls@(CF.h_fv hf)) [] ls_pr_defs in
   let sel_hps = List.map (fun v -> TI.get_spec_var_type_list_infer (v, Unprimed) orig_vars no_pos) (sel_ids) in
   let sel_hps  = List.filter (fun sv ->
       let t = CP.type_of_spec_var sv in

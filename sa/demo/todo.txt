@@ -4612,7 +4612,7 @@ GOT
 PROBLEMS
 ========
 
-1. H_1 should be presented in guarded form
+1. H_1 should be presented in guarded form: DONE
 
 2. The above result seems to have lost the link between l,l_47
    and is inconsistent with the outcome from check-dll.ss.
@@ -4623,7 +4623,7 @@ PROBLEMS
  prev_43=prv_49
  or emp&l_48=null
 =====================================================================
-# dll-1.slk
+# dll-1.slk: DONE
 (came from loop-3.ss)
 
 PROBLEM
@@ -4636,7 +4636,7 @@ PROBLEM
     H_1(next_9,prv) |#| l::node<_,next_9> ::= H1(next_9,l).
 
 =====================================================================
-# loop-3d1.slk
+# loop-3d1.slk: DONE
 
 relAssume P(x) --> x::node<next_1> * H_2(next_1).
 
