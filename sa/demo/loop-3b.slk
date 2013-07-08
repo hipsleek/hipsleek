@@ -8,8 +8,8 @@ relAssume
   H(x) --> H(x).
 
 relAssume
-  //H(x) --> x::node<n>.
-  H(x) --> x::node<n>*H(n).
+  H(x) --> x::node<n>.
+  //H(x) --> x::node<n>*H(n).
 
 shape_infer [H][].
 

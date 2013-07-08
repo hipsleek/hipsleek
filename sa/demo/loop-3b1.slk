@@ -2,10 +2,10 @@ data node{
 	node next;
 }.
 
+
 HeapPred H(node a).
 
-relAssume
-  H(x) --> H(x).
+relAssume H(x) --> H(x).
 
 shape_infer [H][].
 
