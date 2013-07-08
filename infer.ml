@@ -480,7 +480,7 @@ let rec filter_var f vars =
   match f with
   | CP.Or (f1,f2,l,p) -> 
         CP.Or (filter_var f1 vars, filter_var f2 vars, l, p)
-  | _ -> if TP.is_sat_raw (MCP.mix_of_pure f) && CP.get_Neg_RelForm f = [] then CP.filter_var (CP.drop_rel_formula f) vars else CP.mkFalse no_pos
+  | _ -> if TP.is_sat_raw (MCP.mix_of_pure f) && CP.get_Neg_RelForm f = [] then CP.filter_var_new (CP.drop_rel_formula f) vars else CP.mkFalse no_pos
 (*        let flag = TP.is_sat_raw f                                 *)
 (*          try                                                      *)
 (*            Omega.is_sat_weaken f "0"                              *)
@@ -491,9 +491,9 @@ let rec filter_var f vars =
         then CP.filter_var f vars 
         else CP.mkFalse no_pos*)
 
-let filter_var f vars =
+let filter_var caller f vars =
   let pr = !print_pure_f in
-  Debug.no_2 "i.filter_var" pr !print_svl pr filter_var f vars 
+  Debug.no_2_num caller "i.filter_var" pr !print_svl pr filter_var f vars 
 
 let simplify_helper f0 =
   let helper f=
@@ -516,12 +516,16 @@ let simplify_helper f0 =
   helper f0
 
 (* TODO : this simplify could be improved *)
-let simplify f vars = TP.simplify_raw (filter_var (TP.simplify_raw f) vars)
-let simplify_contra f vars = filter_var f vars
+let simplify f vars = TP.simplify_raw (filter_var 1 (TP.simplify_raw f) vars)
+let simplify_contra f vars = filter_var 2 f vars
 
 let simplify f vars =
   let pr = !print_pure_f in
   Debug.no_2 "i.simplify" pr !print_svl pr simplify f vars 
+
+let simplify_contra caller f vars =
+  let pr = !print_pure_f in
+  Debug.no_2_num caller "i.simplify_contra" pr !print_svl pr simplify_contra f vars 
 
 let helper fml lhs_rhs_p weaken_flag = 
   let new_fml = CP.remove_dup_constraints (CP.mkAnd fml lhs_rhs_p no_pos) in
@@ -556,7 +560,7 @@ let infer_lhs_contra pre_thus lhs_xpure ivars pos msg =
   let check_sat = TP.is_sat_raw lhs_xpure in
   if not(check_sat) then None
   else
-    let f = simplify_contra (MCP.pure_of_mix lhs_xpure) ivars in
+    let f = simplify_contra 1 (MCP.pure_of_mix lhs_xpure) ivars in
     let vf = CP.fv f in
     let over_v = CP.intersect vf ivars in
     if (over_v ==[]) then None

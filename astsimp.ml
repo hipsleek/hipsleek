@@ -1263,7 +1263,8 @@ and trans_view_x (prog : I.prog_decl) (vdef : I.view_decl) : C.view_decl =
           let is_deref_var = CP.is_inter_deference_spec_var v in
           if (is_deref_var) then (
             match v with
-            | CP.SpecVar (_, n, _) -> vdef.I.view_vars <- vdef.I.view_vars @ [n];
+            | CP.
+SpecVar (_, n, _) -> vdef.I.view_vars <- vdef.I.view_vars @ [n];
           );
           not (is_deref_var)
         ) ffv in
