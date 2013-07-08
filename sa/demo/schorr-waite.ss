@@ -14,43 +14,38 @@ tree<v> == self=null
  or self::node<1,_,p,q> * p::tree<2> * q::tree<2> & v = 2
  inv true;
 
-void traverse(node t, node p)
-requires t::tree<_> * p::tree<_>
-ensures t::tree<_> * p::tree<_>;
+treeG<> == self=null or self::node<_,_,l,r> * l::treeG<> * r::treeG<>;
+
+global node SENTINEL;
+
+void traverse(node root)
+requires root::treeG<> * SENTINEL::node<_,_,_,_>
+ensures root::treeG<> * SENTINEL::node<_,_,_,_>;
 /*
 infer[H,G]
 requires H(t) * H(p)
 ensures G(t,2) * G(p,2);
 */
 { 
-  node x,y;
-  if (t == null) return;
-  if (p != null || t.mark == 1){
-  	if(t.mark == 1) { //push
-  		x = p;
-		p = t;
-		t = t.left;
-		p.left = x;
-		p.swing = 0;
-		p.mark = 1;
+  node prev,cur,next,tmp;
+  if (root == null) return;
+  prev = SENTINEL;
+  cur = root;
+  while (cur != SENTINEL) 
+  requires cur::node<_,_,l,r> * l::treeG<> * r::treeG<> * prev::node<_,_,_,_>
+  ensures cur::node<_,_,r,prev> * l::treeG<> * r::treeG<> * prev::node<_,_,_,_> & cur' = l;
+  {
+  	next = cur.left;
+ 	tmp = cur.right;
+	cur.right = null;
+	cur.right = prev;
+	cur.left = null;
+	cur.left = tmp;
+	prev = cur;
+	cur = next;
+	if (cur == null) {
+		cur = prev;
+		prev = null;
 	}
-	else {
-		if (p.swing == 0) { //swing
-			x = t;
-			t = p.right;
-			y = p.left;
-			p.right = y;
-			p.left = x;
-			p.swing = 1;
-		}
-		else { //pop
-			x = t;
-			t = p;
-			p = p.right;
-			t.right = x;
-		}
-	}
-	traverse(t,p);
   }
-  else return;
 }

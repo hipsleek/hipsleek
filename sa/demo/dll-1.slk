@@ -16,10 +16,7 @@ relAssume
    H_0(prev_8,prv) * H_1(next_9,prv).
 
 relAssume
- H_1(next_9,prv)&prev_8=prv --> H1(next_9,l).
-
-relAssume
- H_1(next_9,prv) --> H1(next_9,l).
+ H_1(next_9,prv) |#| l::node<_,next_9> --> H1(next_9,l).
 
 relAssume
  H1(l,prv)&l=null --> emp.
@@ -27,6 +24,16 @@ relAssume
 shape_infer [H1,H_1,H_0][].
 
 /*
+
+ H_1(next_9,prv) |#| l::node<prev_8,next_9>@M 
+ --> H1(next_9,l).
+
+
+ H1(l,prv)&l=null --> G1(l,prv),
+ H_0(prev_8,prv) * l::node<prev_8,next_9>@M * 
+  G1(next_9,l)&prev_8=prv --> G1(l,prv),
+ H_0(prev_8,prv) --> emp&forall(l:(prev_8=prv | l=null))]
+
 relAssume
  l=null --> G1(l,prv).
 
@@ -42,7 +49,13 @@ relAssume
 
 
 /*
-# check-dll.ss
+# dll-1.slk
+
+sleek/parser need to accept guarded relational assumptions of the form:
+
+ H_1(next_9,prv) |#| l::node<_,next_9> --> H1(next_9,l).
+
+============
 
 [ H1(l_1011,prv_1012) ::= 
  H1(next_19_984,l_983) * l_1011::node<prev_19_985,next_19_984>@M&

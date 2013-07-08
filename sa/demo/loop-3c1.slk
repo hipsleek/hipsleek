@@ -1,0 +1,23 @@
+data node{
+	node next;
+}.
+
+PostPred G(node a).
+relAssume G(x) --> G(x).
+relAssume  x=null --> G(x).
+
+shape_infer [][G].
+
+/*
+# loop-3c1.slk
+
+GOT:
+ G(x_16) ::=  G(x_16)
+              or emp&x_16=null
+
+Better (simpler) to have:
+  G(x) ::= x=null
+
+
+
+*/

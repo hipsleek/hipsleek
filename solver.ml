@@ -4966,11 +4966,11 @@ and heap_entail_conjunct_lhs_x hec_num prog is_folding  (ctx:context) (conseq:CF
                                 let ctx1 = CF.Ctx new_estate in
                                 let _ = Debug.tinfo_hprint (add_str "ctx1"  Cprinter.string_of_context) ctx1 pos in
                                 let r1,prf =  (SuccCtx[false_ctx_with_orig_ante new_estate orig_ante pos],UnsatAnte) in
-                               let _ = Debug.info_pprint ("*********1********") no_pos in
+                               (* let _ = Debug.info_pprint ("*********1********") no_pos in *)
                                 let r1 = Infer.add_infer_hp_contr_to_list_context hinf_args_map [pf] r1 in
                                 let _ = Debug.tinfo_hprint (add_str "r1 opt"  (pr_option Cprinter.string_of_list_context)) r1 pos in
-		                let _ = Debug.info_hprint (add_str "inferred contradiction : " Cprinter.string_of_pure_formula) pf pos in
-                                let _ = Debug.info_pprint ("Andreea 1 : we need to call add_new_sleek_logging_entry to do sleek_logging") no_pos in
+		                let _ = Debug.tinfo_hprint (add_str "inferred contradiction : " Cprinter.string_of_pure_formula) pf pos in
+                                (* let _ = Debug.info_pprint ("Andreea 1 : we need to call add_new_sleek_logging_entry to do sleek_logging") no_pos in *)
                                 begin
                                   match r1 with
                                     | Some r1 ->
@@ -9500,12 +9500,12 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
                   () in
 
 
-                let _ = Debug.info_pprint ("Andreea 3 : we need to add_new_sleek_logging_entry to do sleek_logging") no_pos in
+                (* let _ = Debug.info_pprint ("Andreea 3 : we need to add_new_sleek_logging_entry to do sleek_logging") no_pos in *)
 	        match r_inf_contr with
                 | Some (new_estate,pf) -> (* if successful, should skip infer_collect_hp_rel below *)
                       let new_estate = {new_estate with es_infer_vars = esv} in
-		      let _ = Debug.info_hprint (add_str "inferred contradiction : " Cprinter.string_of_pure_formula) pf pos in
-                      let _ = Debug.info_pprint ("Andreea 2 : we need to add_new_sleek_logging_entry to do sleek_logging") no_pos in
+		      (* let _ = Debug.info_hprint (add_str "inferred contradiction : " Cprinter.string_of_pure_formula) pf pos in *)
+                      let _ = Debug.info_pprint ("Do we need to add_new_sleek_logging_entry to do sleek_logging") no_pos in
                       (* add_new_sleek_logging_entry infer_vars classic_flag caller avoid hec slk_no ante conseq  *)
                       (*     consumed_heap evars (result:CF.list_context) pos *)
 		      if (List.length relass)>1 then report_error pos "Length of relational assumption list > 1"

@@ -400,6 +400,9 @@ and get_hdnodes_hf_x (hf: CF.h_formula) = match hf with
       -> (get_hdnodes_hf h1)@(get_hdnodes_hf h2)
   | _ -> []
 
+let get_hdnodes_basef fb=
+  get_hdnodes_hf fb.CF.formula_base_heap
+
 let rec get_h_node_args (f: CF.formula)=
   match f with
     | CF.Base fb ->
@@ -1269,7 +1272,7 @@ and drop_data_view_hrel_nodes_hf_from_root prog hf hd_nodes hv_nodes eqs drop_ro
            (*========SIMPLIFICATION============*)
 (***************************************************************)
 (*
-this function may be subsumed by simp_match_partial_unknown
+  this function may be subsumed by simp_match_partial_unknown
 *)
 let simp_match_unknown_x unk_hps link_hps cs=
   let lhs_hps = CF.get_hp_rel_name_formula cs.CF.hprel_lhs in
@@ -1286,6 +1289,9 @@ let simp_match_unknown unk_hps link_hps cs=
       unk_hps link_hps cs
 
 let simp_match_hp_w_unknown_x prog unk_hps link_hps cs=
+  (* check-dll: recusrsive do not check*)
+  if CP.intersect_svl (CF.get_hp_rel_name_formula cs.CF.hprel_lhs) 
+    (CF.get_hp_rel_name_formula cs.CF.hprel_rhs) <> [] then cs else
   let tot_unk_hps = unk_hps@link_hps in
   let part_helper = (fun (unk_svl,rem) (hp,args)->
         if CP.mem_svl hp tot_unk_hps then
@@ -1644,6 +1650,7 @@ let generate_hp_ass unk_svl cond_p (hp,args,lfb,rf) =
       unk_hps = [];
       predef_svl = [];
       hprel_lhs = CF.Base lfb;
+      hprel_guard = None; (*guard exists with post-proving*)
       hprel_rhs = rf;
       hprel_path = cond_p;
   }
@@ -2276,12 +2283,84 @@ and get_closed_matched_ptrs ldns rdns rcur_match ss=
     (true, all_matched_svl1,subst1)
 
 (*
+  - find the pattern of rhs1 in guard
+  - apply the pattern in rhs2 to get the subsst
+  - apply subst in rhs1. return the new rhs1
+assume pattern is ONE datanode. enhance later
+*)
+let pattern_matching_with_guard_x rhs1 rhs2 guard match_svl=
+  (************ INTERNAL ***********)
+  let find_pattern hd f=
+    let hpargs = CF.get_HRels_f rhs1 in
+    let sel_args = List.fold_left (fun ls (_,args) ->
+        if CP.intersect_svl args match_svl = [] then ls
+        else ls@args
+    ) [] hpargs in
+    let hd_args = hd.CF.h_formula_data_node::hd.CF.h_formula_data_arguments in
+    let inter = CP.intersect_svl hd_args sel_args in
+    let locs_pattern = get_all_locs hd_args inter in
+    (inter, locs_pattern, hd.CF.h_formula_data_name)
+  in
+  let apply_partter locs hd_name f=
+    let hds = get_hdnodes f in
+    let sel_pats = List.fold_left (fun ls hd ->
+        if String.compare hd_name hd.CF.h_formula_data_name = 0 then
+          let hd_args = hd.CF.h_formula_data_node::hd.CF.h_formula_data_arguments in
+          if CP.intersect_svl hd_args match_svl <> [] then
+            let sel_args = retrieve_args_from_locs hd_args locs in
+            ls@[sel_args]
+          else
+            ls
+        else ls
+    ) [] hds
+    in
+    match sel_pats with
+      | [args] -> args
+      | _ -> report_error no_pos "sau.pattern_matching_with_guard 1"
+  in
+  let rec combine_remove_eq ls1 ls2 res=
+    match ls1,ls2 with
+      | [], [] -> res
+      | sv1::rest1, sv2::rest2 ->
+            let new_res =
+              if CP.eq_spec_var sv1 sv2 then
+                res
+              else (res@[(sv1,sv2)])
+            in
+            combine_remove_eq rest1 rest2 new_res
+      | _ -> report_error no_pos "sau.pattern_matching_with_guard 2"
+  in
+  (************END INTERNAL ***********)
+  match guard with
+    | None -> (false, rhs1)
+    | Some hf -> begin
+        match hf with
+          | CF.DataNode hd ->
+                let inter_rhs1, hd_locs, hd_name = find_pattern hd rhs1 in
+                let inter_rhs2 =  apply_partter hd_locs hd_name rhs2 in
+                let ss = combine_remove_eq inter_rhs1 inter_rhs2 [] in
+                (true,CF.subst ss rhs1)
+          | _ -> (false,rhs1)
+      end
+
+let pattern_matching_with_guard rhs1 rhs2 guard match_svl1=
+  let pr1 = Cprinter.prtt_string_of_formula in
+  let pr2 ohf= match ohf with
+    | None -> "None"
+    | Some hf -> Cprinter.prtt_string_of_h_formula hf
+  in
+  let pr3 = !CP.print_svl in
+  Debug.no_4 "pattern_matching_with_guard" pr1 pr1 pr2 pr3 (pr_pair string_of_bool pr1)
+      (fun _ _ _ _ -> pattern_matching_with_guard_x rhs1 rhs2 guard match_svl1)
+      rhs1 rhs2 guard match_svl1
+
+(*
 step 1: apply transitive implication
         B |= C ---> E
   ---------------------------------
   c1 = A |- B ;c2 = C |- D ===> c3=A |- D * E
 *)
-let rec find_imply prog lunk_hps runk_hps lhs1 rhs1 lhs2 rhs2=
+let rec find_imply prog lunk_hps runk_hps lhs1 rhs1 lhs2 rhs2 lguard1=
   let sort_hps_x hps = List.sort (fun (CP.SpecVar (_, id1,_),_)
       (CP.SpecVar (_, id2, _),_)-> String.compare id1 id2) hps
   in
@@ -2427,17 +2506,23 @@ let rec find_imply prog lunk_hps runk_hps lhs1 rhs1 lhs2 rhs2=
               (*end refresh*)
               (*combine l_res into lhs2*)
               let l =  CF.mkStar n_lhs2 (CF.Base l_res) CF.Flow_combine lpos in
-              let n_rhs1 = CF.subst subst1 rhs1 in
+              let n_rhs1a = CF.subst subst1 rhs1 in
               (*avoid clashing --> should refresh remain svl of r_res*)
               let r_res1 = (* CF.subst ss2 *) (CF.Base r_res) in
               (* let _ = Debug.info_pprint ("    r_res1: " ^ (Cprinter.prtt_string_of_formula r_res1)) no_pos in *)
+              (* let _ = Debug.info_pprint ("    n_rhs1a: " ^ (Cprinter.string_of_formula n_rhs1a)) no_pos in *)
+              let _, n_rhs1 = pattern_matching_with_guard n_rhs1a r_res1 lguard1
+                m_args2 in
               let _ = Debug.ninfo_pprint ("    n_rhs1: " ^ (Cprinter.string_of_formula n_rhs1)) no_pos in
               (*elim duplicate hprel in r_res1 and n_rhs1*)
               let nr_hprel = CF.get_HRels_f n_rhs1 in
               let nrest_hprel = CF.get_HRels_f r_res1 in
               let diff3 = Gen.BList.intersect_eq check_hp_arg_eq nr_hprel nrest_hprel in
+              (* let _ = Debug.info_pprint ("    diff3: " ^ ((pr_list (pr_pair !CP.print_sv !CP.print_svl)) diff3)) no_pos in *)
               let r_res2,_ = CF.drop_hrel_f r_res1 (List.map (fun (hp,_) -> hp) diff3) in
               let r = CF.mkStar n_rhs1 r_res2 CF.Flow_combine (CF.pos_of_formula n_rhs1) in
+              (* let _ = Debug.info_pprint ("    l: " ^ (Cprinter.string_of_formula l)) no_pos in *)
+              (* let _ = Debug.info_pprint ("    r: " ^ (Cprinter.string_of_formula r)) no_pos in *)
               (Some (l, r,subst1, sst))
             else None
       end
@@ -2777,9 +2862,12 @@ let is_trivial_constr cs=
     | Some hp1, Some hp2 -> CP.eq_spec_var hp1 hp2
     | _ -> false
 
-let weaken_trivial_constr_pre cs=
+let weaken_strengthen_special_constr_pre is_pre cs=
   if is_trivial_constr cs then
+    if is_pre then
     {cs with CF.hprel_rhs = CF.mkTrue (CF.flow_formula_of_formula cs.CF.hprel_rhs) (CF.pos_of_formula cs.CF.hprel_rhs)}
+    else
+      {cs with CF.hprel_lhs = CF.mkFalse (CF.flow_formula_of_formula cs.CF.hprel_rhs) (CF.pos_of_formula cs.CF.hprel_rhs)}
   else cs
 
 let remove_dups_constr constrs=

@@ -736,6 +736,7 @@ let process_rel_assume cond_path (ilhs : meta_formula) (irhs: meta_formula)=
       unk_hps = [];
       predef_svl = [];
       hprel_lhs = lhs;
+      hprel_guard = None;
       hprel_rhs = rhs;
       hprel_path = cond_path;
   } in

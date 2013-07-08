@@ -51,7 +51,7 @@ let rec find_imply_subst_x prog unk_hps link_hps equal_hps constrs new_cs=
       let qvars2, f2 = CF.split_quantifiers cs2.CF.hprel_rhs in
       match f1,f2 with
       | CF.Base lhs1, CF.Base rhs2 ->
-            let r = SAU.find_imply prog (List.map fst cs1.CF.unk_hps) (List.map fst cs2.CF.unk_hps) lhs1 cs1.CF.hprel_rhs cs2.CF.hprel_lhs rhs2 in
+            let r = SAU.find_imply prog (List.map fst cs1.CF.unk_hps) (List.map fst cs2.CF.unk_hps) lhs1 cs1.CF.hprel_rhs cs2.CF.hprel_lhs rhs2 cs1.CF.hprel_guard in
             begin
               match r with
                 | Some (l,r,lhs_ss, rhs_ss) ->
@@ -59,6 +59,11 @@ let rec find_imply_subst_x prog unk_hps link_hps equal_hps constrs new_cs=
                       if check_constr_duplicate (l,r) (constrs@new_cs) then []
                       else
                         begin
+                          let n_cs_hprel_guard =
+                            match cs2.CF.hprel_guard with
+                              | None -> None
+                              | Some hf -> Some (CF.h_subst lhs_ss hf)
+                          in
                           let new_cs = {cs2 with
                               CF.predef_svl = CP.remove_dups_svl
                                   ((CP.subst_var_list lhs_ss cs1.CF.predef_svl)@
@@ -70,11 +75,13 @@ let rec find_imply_subst_x prog unk_hps link_hps equal_hps constrs new_cs=
                                   ((List.map (fun (hp,args) -> (hp,CP.subst_var_list lhs_ss args)) cs1.CF.unk_hps)@
                                       (List.map (fun (hp,args) -> (hp,CP.subst_var_list rhs_ss args)) cs2.CF.unk_hps));
                               CF.hprel_lhs = l;
+                              CF.hprel_guard = n_cs_hprel_guard;
                               CF.hprel_rhs = r;
                           }
                           in
-                          let new_cs1 = SAU.simp_match_hp_w_unknown prog unk_hps link_hps new_cs in
-                          let _ = Debug.ninfo_pprint ("    new cs1: " ^ (Cprinter.string_of_hprel_short new_cs1)) no_pos in
+                          let new_cs1 = SAU.simp_match_hp_w_unknown prog unk_hps link_hps new_cs
+                          in
+                          let _ = Debug.ninfo_pprint ("    new rhs: " ^ (Cprinter.string_of_hprel_short new_cs1)) no_pos in
                           [new_cs1]
                         end
                 | None -> []
@@ -124,10 +131,10 @@ let rec find_imply_subst_x prog unk_hps link_hps equal_hps constrs new_cs=
   (* let new_cs2 = helper_old_new new_cs [] in *)
   (is_changed,new_cs1(* @new_cs2 *))
 
-and find_imply_subst prog unk_hps link_hps constrs new_cs=
+and find_imply_subst prog unk_hps link_hps equal_hps constrs new_cs=
   let pr1 = pr_list_ln Cprinter.string_of_hprel_short in
   Debug.no_2 "find_imply_subst" pr1 pr1 (pr_pair string_of_bool pr1)
-      (fun _ _ -> find_imply_subst_x prog unk_hps link_hps constrs new_cs) constrs new_cs
+      (fun _ _ -> find_imply_subst_x prog unk_hps link_hps equal_hps constrs new_cs) constrs new_cs
 
 and is_trivial cs= (SAU.is_empty_f cs.CF.hprel_rhs) ||
   (SAU.is_empty_f cs.CF.hprel_lhs || SAU.is_empty_f cs.CF.hprel_rhs)
@@ -1390,7 +1397,7 @@ let infer_shapes_init_pre_x prog (constrs0: CF.hprel list) callee_hps non_ptr_un
  hp_rel_unkmap detect_dang (* :(CP.spec_var list * CF.hp_rel_def list* (CP.spec_var * CP.spec_var list) list) *) =
   let _ = DD.binfo_pprint ">>>>>> step pre-4: remove unused predicates<<<<<<" no_pos in
   let constrs01 = (* SAU.remove_dups_constr *) constrs0 in
-  let constrs02 = List.map SAU.weaken_trivial_constr_pre constrs01 in
+  let constrs02 = List.map (SAU.weaken_strengthen_special_constr_pre true) constrs01 in
   let unused_pre_hps, constrs0, unk_map1 =
     if detect_dang then elim_unused_pre_preds (sel_post_hps@link_hps) constrs02 hp_rel_unkmap
     else ([], constrs02, hp_rel_unkmap)
@@ -1430,13 +1437,14 @@ let infer_shapes_init_pre prog (constrs0: CF.hprel list) callee_hps non_ptr_unk_
 let infer_shapes_init_post_x prog (constrs0: CF.hprel list) non_ptr_unk_hps sel_post_hps unk_hps link_hps
       hp_rel_unkmap detect_dang pre_defs (* :(CP.spec_var list * CF.hp_rel_def list * (CP.spec_var * CP.spec_var list) list * ) *) =
   let constrs0a = (* SAU.remove_dups_constr *) constrs0 in
+  let constrs0b = List.map (SAU.weaken_strengthen_special_constr_pre false) constrs0a in
   let _ = DD.binfo_pprint ">>>>>> step post-4: step remove unused predicates<<<<<<" no_pos in
-  let unused_post_hps,constrs0,unk_map1 =
-    if detect_dang then elim_unused_post_preds (sel_post_hps@link_hps) constrs0a hp_rel_unkmap
-    else ([], constrs0a, hp_rel_unkmap)
+  let unused_post_hps,constrs1,unk_map1 =
+    if detect_dang then elim_unused_post_preds (sel_post_hps@link_hps) constrs0b hp_rel_unkmap
+    else ([], constrs0b, hp_rel_unkmap)
   in
   let unk_hps1 = Gen.BList.remove_dups_eq cmp_hpargs_fn (unk_hps@unused_post_hps) in
-  let par_defs = get_par_defs_post constrs0 in
+  let par_defs = get_par_defs_post constrs1 in
   let _ = DD.binfo_pprint ">>>>>> post-predicates: step post-5: remove redundant x!=null : not implemented yet<<<<<<" no_pos in
 
   let _ = DD.binfo_pprint ">>>>>> post-predicates: step post-61: weaken<<<<<<" no_pos in

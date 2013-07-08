@@ -128,6 +128,11 @@ and hprel= {
     unk_hps:(CP.spec_var*CP.spec_var list) list; (* not needed *)
     predef_svl: CP.spec_var list; (* not needed *)
     hprel_lhs: formula;
+    hprel_guard: h_formula option;
+    (*capture the ctx when we want to capture relations
+      of more than one field. ususally it is heap nodes
+      guard is used in unfolding pre-preds
+    *)
     hprel_rhs: formula;
     hprel_path: cond_path_type;
 }
@@ -359,12 +364,13 @@ let mkETrue flowt pos = EBase({
 	formula_struc_continuation = None;
 	formula_struc_pos = pos})
 
-let mkHprel knd u_svl u_hps pd_svl hprel_l hprel_r hprel_p=
+let mkHprel knd u_svl u_hps pd_svl hprel_l hprel_g hprel_r hprel_p=
  {  hprel_kind = knd;
     unk_svl = u_svl;
     unk_hps = u_hps ;
     predef_svl = pd_svl;
     hprel_lhs = hprel_l;
+    hprel_guard = hprel_g;
     hprel_rhs = hprel_r;
     hprel_path = hprel_p;
  }
@@ -5249,7 +5255,8 @@ let remove_neqNull_redundant_hnodes svl p=
       let disjs = CP.list_of_disjs bare_p in
       let rem = List.filter (fun p -> not (CP.is_eq_null_exp p)) disjs in
       let bare1 = CP.disj_of_list rem pos in
-      if new_quans = [] then bare1 else CP.mkForall new_quans bare1 lbl pos
+      let p2 = if new_quans = [] then bare1 else CP.mkForall new_quans bare1 lbl pos in
+      p2
     else p1
   else p1
 
@@ -5712,7 +5719,9 @@ and drop_hnodes_hf hf0 hn_names=
     | HTrue
     | HFalse
     | HEmp -> hf
-  in helper hf0
+  in
+  if hn_names = [] then hf0 else
+    helper hf0
 
 and filter_not_rele_eq p keep_svl=
   let rec filter_fn leqs res=
