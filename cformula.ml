@@ -12850,10 +12850,13 @@ let rec find_nodes e l=
 	 let f_arg = l, f_fst, f_fst, (f_fst, f_fst, f_fst), f_fst in
 	snd (trans_formula e l f f_arg (fun l1 -> List.concat l1))
 
-let rec get_heap_inf_args estate = 
-    let node_arg_map = find_nodes estate.es_formula estate.es_infer_vars_hp_rel in
+let get_heap_inf_args_hp_rel estate vars_hp_rel = 
+    let node_arg_map = find_nodes estate.es_formula vars_hp_rel in
    let args = List.concat (snd (List.split node_arg_map)) in
    args,node_arg_map
+
+let get_heap_inf_args estate = 
+  get_heap_inf_args_hp_rel estate estate.es_infer_vars_hp_rel
 
 
 
