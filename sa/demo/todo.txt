@@ -4355,7 +4355,7 @@ EXPECT
   H_1(v_node_9',prv@NI) | l'::node<_,v_node_9'>@M
                --> H1(v_node_9',l'@NI)]
 =====================================================================
-# dll-1.slk
+# dll-1.slk: DONE
 
 sleek/parser need to accept guarded relational assumptions of the form:
 
