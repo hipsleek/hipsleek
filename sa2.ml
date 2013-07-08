@@ -1495,7 +1495,7 @@ let rec infer_shapes_init_pre_x prog (constrs0: CF.hprel list) callee_hps non_pt
  (* generalize_hps_par_def prog non_ptr_unk_hps unk_hps sel_post_hps par_defs in *)
   (* let hp_names,hp_defs = List.split pair_names_defs in *)
   (*TODO: check consistency of the solution against rem_constraints: LOOP*)
-  (defined_hps,hp_defs1,unk_hpargs1, unk_map1, new_equivs, unk_equivs)
+  (defined_hps,hp_defs1,unk_hpargs1, unk_map1, new_equivs, unk_equivs,rem_constr1)
 
 and infer_shapes_init_pre prog (constrs0: CF.hprel list) callee_hps non_ptr_unk_hps sel_post_hps unk_hps link_hps
       hp_rel_unkmap detect_dang (* :(CP.spec_var list * CF.hp_rel_def list * (CP.spec_var * CP.spec_var list) list) *) =
@@ -1503,7 +1503,7 @@ and infer_shapes_init_pre prog (constrs0: CF.hprel list) callee_hps non_ptr_unk_
   let pr2 = !CP.print_svl in
   let pr3 = pr_list_ln Cprinter.string_of_hp_rel_def in
   let pr4 = pr_list (pr_pair !CP.print_sv pr2) in
-  let pr5 (a,b,c,_,_,_) = (pr_triple pr2 pr3 pr4) (a,b,c) in
+  let pr5 (a,b,c,_,_,_,pre_oblg) = (pr_quad pr2 pr3 pr4 pr1) (a,b,c,pre_oblg) in
   Debug.no_1 "infer_shapes_init_pre" pr1 pr5
       (fun _ -> infer_shapes_init_pre_x prog constrs0 callee_hps non_ptr_unk_hps sel_post_hps unk_hps link_hps
           hp_rel_unkmap detect_dang) constrs0
@@ -1598,7 +1598,6 @@ and infer_shapes_from_fresh_obligation iprog cprog proc_name cond_path (constrs0
       constrs0
 
 
-
 and infer_shapes_from_obligation_x iprog prog proc_name cond_path (constrs0: CF.hprel list) callee_hps non_ptr_unk_hps sel_post_hps unk_hpargs link_hpargs need_preprocess hp_rel_unkmap detect_dang pre_defs post_defs def_hps=
   let classify_hps (r_lhs, r_rhs, dep_def_hps) cs=
     let lhs_hps = CF.get_hp_rel_name_formula cs.CF.hprel_lhs in
@@ -1635,11 +1634,11 @@ and infer_shapes_from_obligation iprog prog proc_name cond_path (constrs0: CF.hp
   let pr3 = pr_list_ln Cprinter.string_of_hp_rel_def in
   let pr4 = pr_list (pr_pair !CP.print_sv pr2) in
   let pr5 (a,b,c,_) = (pr_triple pr2 pr3 pr4) (a,b,c) in
-  Debug.no_1 "infer_shapes_from_obligation" pr1 pr5
-      (fun _ -> infer_shapes_from_obligation_x iprog prog proc_name cond_path constrs0
+  Debug.no_2 "infer_shapes_from_obligation" pr1 pr2 pr5
+      (fun _ _ -> infer_shapes_from_obligation_x iprog prog proc_name cond_path constrs0
           callee_hps non_ptr_unk_hps sel_post_hps unk_hps
           link_hps need_preprocess hp_rel_unkmap detect_dang pre_defs post_defs def_hps)
-      constrs0
+      constrs0 def_hps
 
 and infer_shapes_proper iprog prog proc_name cond_path (constrs2: CF.hprel list) callee_hps sel_hp_rels sel_post_hps
       (unk_map2: ((CP.spec_var * int list) * CP.xpure_view) list)
@@ -1652,10 +1651,10 @@ and infer_shapes_proper iprog prog proc_name cond_path (constrs2: CF.hprel list)
   (*TODO: this function may be subsumed by SAU.simp_match_partial_unknown. may be redundant code *)
   let constrs3 = List.map (SAU.simp_match_unknown unk_hps link_hps) constrs3a in
   (*partition constraints into 2 groups: pre-predicates, post-predicates*)
-  let pre_constrs,post_constrs, oblg_constrs = partition_constrs constrs3 sel_post_hps in
+  let pre_constrs,post_constrs, post_oblg_constrs = partition_constrs constrs3 sel_post_hps in
   (*find inital sol*)
   let _ = DD.binfo_pprint ">>>>>> pre-predicates<<<<<<" no_pos in
-  let pre_hps, pre_defs, unk_hpargs1,unk_map3, pre_equivs, unk_equivs = infer_shapes_init_pre prog pre_constrs callee_hps []
+  let pre_hps, pre_defs, unk_hpargs1,unk_map3, pre_equivs, unk_equivs, pre_oblg_constrs = infer_shapes_init_pre prog pre_constrs callee_hps []
     sel_post_hps unk_hpargs link_hps unk_map2 detect_dang in
   let pre_defs1, unify_equiv_map1 = if !Globals.pred_conj_unify then
     SAC.do_unify prog unk_hps link_hps pre_defs
@@ -1676,7 +1675,7 @@ and infer_shapes_proper iprog prog proc_name cond_path (constrs2: CF.hprel list)
   else
     (post_defs,unify_equiv_map11)
   in
-  let oblg_hps, oblg_defs,unk_hpargs3,unk_map5  = infer_shapes_from_obligation iprog prog proc_name cond_path oblg_constrs callee_hps [] sel_post_hps unk_hpargs2
+  let oblg_hps, oblg_defs,unk_hpargs3,unk_map5  = infer_shapes_from_obligation iprog prog proc_name cond_path (post_oblg_constrs@pre_oblg_constrs) callee_hps [] sel_post_hps unk_hpargs2
     link_hpargs need_preprocess unk_map4 detect_dang pre_defs2 post_defs1 (pre_hps@post_hps) in
   let defs1 = (pre_defs2@post_defs1@oblg_defs) in
   (*normalization*)
