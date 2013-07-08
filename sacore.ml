@@ -1932,7 +1932,10 @@ let trans_constr_hp_2_view_x iprog cprog proc_name in_hp_names chprels_decl cons
     {cs with CF.hprel_lhs = nlhs;
     CF.hprel_rhs = nrhs;}
   in
-  List.map process_cs constrs
+  let n_constrs = List.map process_cs constrs in
+  (* let pr1= pr_list_ln Cprinter.string_of_hprel_short in *)
+  (* let _ = print_endline ("n_constrs: " ^ (pr1 n_constrs))  in *)
+  n_constrs
 
 let trans_constr_hp_2_view iprog cprog proc_name in_hp_names chprels_decl constrs=
   let pr1= pr_list_ln Cprinter.string_of_hprel_short in

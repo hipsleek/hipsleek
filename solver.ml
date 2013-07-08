@@ -9113,7 +9113,7 @@ and solver_detect_lhs_rhs_contra i prog estate conseq pos msg =
   let pr_es (es,e) =  pr_pair pr_estate Cprinter.string_of_pure_formula (es,e) in
   let pr = CP.print_lhs_rhs in
   let pr_3 (_,lr,b) =  pr_pair (pr_list pr) string_of_bool (lr,b) in
-  Debug.ho_3_num i "solver_detect_lhs_rhs_contra" 
+  Debug.no_3_num i "solver_detect_lhs_rhs_contra" 
       pr_estate pr_f pr_id  (pr_pair (pr_option pr_es) (pr_list pr_3)) (fun _ _ _ -> 
           solver_detect_lhs_rhs_contra_x prog estate conseq pos msg) estate conseq msg
 
