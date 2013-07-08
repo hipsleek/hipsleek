@@ -9118,14 +9118,22 @@ and solver_detect_lhs_rhs_contra i prog estate conseq pos msg =
           solver_detect_lhs_rhs_contra_x prog estate conseq pos msg) estate conseq msg
 
 and solver_detect_lhs_rhs_contra_x prog estate conseq pos msg =
-  let lhs_xpure,_,_ = xpure prog estate.es_formula in
+  (* ======================================================= *)
+  let (qvars, new_f) = match estate.es_formula with
+    | Exists f ->  split_quantifiers estate.es_formula
+    | _ ->  ([], estate.es_formula) in
+  let new_estate = {estate with es_formula = new_f } in
+  let lhs_xpure,_,_ = xpure prog new_estate.es_formula in
+  (* ======================================================= *)
+  (* let lhs_xpure,_,_ = xpure prog estate.es_formula in *)
+  (* let _ = DD.tinfo_hprint (add_str "lhs_xpure" Cprinter.string_of_mix_formula ) lhs_xpure pos in *)
   (* call infer_lhs_contra *)
   let lhs_rhs_contra_flag = 
     let p_lhs_xpure = MCP.pure_of_mix lhs_xpure in
     let rhs_xpure,_,_ = xpure prog conseq in
     let p_rhs_xpure = MCP.pure_of_mix rhs_xpure in
     let contr, _ = Infer.detect_lhs_rhs_contra  p_lhs_xpure p_rhs_xpure pos in
-    contr in (* Cristian : to detect_lhs_rhs_contra *)
+    contr in 
   (* let esv = estate.es_infer_vars in *)
   let r_inf_contr,relass = 
     if lhs_rhs_contra_flag then (None,[])
@@ -9134,10 +9142,34 @@ and solver_detect_lhs_rhs_contra_x prog estate conseq pos msg =
         (* lhs_rhs contradiction detected *)
 	(* if CP.intersect rhs_als estate.es_infer_vars = [] && List.exists CP.is_node_typ estate.es_infer_vars then None,[] else*) 
 	(* let msg = "Early LHS/RHS contra detection" in *)
+
         (* ================================================= *)
+
+        (* trying to infer a contradiction with given spec vars *)
+        (* let infer_lhs_contra () =  *)
+	(* let h_inf_args_add = Gen.BList.difference_eq CP.eq_spec_var h_inf_args estate.es_infer_vars in *)
+	(* let estate = {estate with es_infer_vars = h_inf_args_add} in *)
+        (* let _ = DD.tinfo_hprint (add_str "h_inf_args" Cprinter.string_of_spec_var_list) h_inf_args no_pos in *)
+        (* let _ = DD.tinfo_hprint (add_str "es_infer_vars" Cprinter.string_of_spec_var_list) estate.es_infer_vars no_pos in *)
+        (* let _ = DD.tinfo_hprint (add_str "h_inf_args_add" Cprinter.string_of_spec_var_list) h_inf_args_add no_pos in *)
+
+	(* let r_inf_contr,relass = Inf.infer_lhs_contra_estate 4 estate lhs_xpure pos msg  in  *)
+        (* let contra, c,r =  *)
+        (*   match r_inf_contr with *)
+        (*     | Some _ ->  (true, r_inf_contr, relass) *)
+        (*     | None ->  *)
+        (*           begin *)
+        (*             match relass with *)
+        (*               | h::t0 -> (true, r_inf_contr, relass) *)
+        (*               | []   ->  (false, None, []) *)
+        (*           end *)
+        (* in *)
         
-        (* let h_inf_args, _ = get_heap_inf_args estate in *)
-      
+        (* if (contra) then (c,r) *)
+        (* else *)
+        (*   begin  *)
+        (* ================================================= *)
+
         let infer_vars_hp_rel = estate.es_infer_vars_hp_rel in
 
         let pr = pr_list (fun sv -> 
@@ -9146,6 +9178,7 @@ and solver_detect_lhs_rhs_contra_x prog estate conseq pos msg =
         ) in
         let _ = DD.tinfo_hprint (add_str "type of infer_vars_hp_rel: " pr) infer_vars_hp_rel no_pos in
 
+        let _ = DD.tinfo_hprint (add_str "infer_vars_hp_rel" Cprinter.string_of_spec_var_list) infer_vars_hp_rel no_pos in
         (* sort hp_rel vars such that Pre Pred comes bef Post Pred*)
         let infer_vars_hp_rel = List.fast_sort (fun hp1 hp2 -> 
             let hpdecl1 = Cast.look_up_hp_def_raw prog.Cast.prog_hp_decls (CP.name_of_spec_var hp1) in
@@ -9161,11 +9194,11 @@ and solver_detect_lhs_rhs_contra_x prog estate conseq pos msg =
         (* trying to infer a contradiction with given spec vars *)
         let infer_lhs_contra h_inf_args = 
 	  let h_inf_args_add = Gen.BList.difference_eq CP.eq_spec_var h_inf_args estate.es_infer_vars in
-	  let estate = {estate with es_infer_vars = h_inf_args_add} in (*andreeac: why does it need to update the estate?*)
+	  let new_estate = {estate with es_infer_vars = h_inf_args_add } in
           let _ = DD.tinfo_hprint (add_str "h_inf_args" Cprinter.string_of_spec_var_list) h_inf_args no_pos in
-          let _ = DD.tinfo_hprint (add_str "es_infer_vars" Cprinter.string_of_spec_var_list) estate.es_infer_vars no_pos in
+          let _ = DD.tinfo_hprint (add_str "es_infer_vars" Cprinter.string_of_spec_var_list) new_estate.es_infer_vars no_pos in
           (* let _ = DD.tinfo_hprint (add_str "h_inf_args_add" Cprinter.string_of_spec_var_list) h_inf_args_add no_pos in *)
-	  let r_inf_contr,relass = Inf.infer_lhs_contra_estate 4 estate lhs_xpure pos msg  in 
+	  let r_inf_contr,relass = Inf.infer_lhs_contra_estate 4 new_estate lhs_xpure pos msg  in 
           r_inf_contr,relass
         in
 
@@ -9187,9 +9220,9 @@ and solver_detect_lhs_rhs_contra_x prog estate conseq pos msg =
                   end 
             | [] -> (None, []) in
         
-        infer_lhs_contra_helper infer_vars_hp_rel 
-        (* ================================================= *)
-
+        let (c,r)  = infer_lhs_contra_helper infer_vars_hp_rel  in
+        (c,r)
+            (* end *)
       end
   in (r_inf_contr,relass)
 

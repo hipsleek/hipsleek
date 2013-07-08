@@ -3622,7 +3622,10 @@ and prune_perm_bounds f =
    F1 & F2 & .. & Fn ==> [F1,F2,..,FN] 
    TODO : push exists inside where possible..
 *)
-and list_of_conjs (f0 : formula) : formula list = split_conjunctions f0
+and list_of_conjs_x (f0 : formula) : formula list = split_conjunctions f0
+
+and list_of_conjs (f0 : formula) : formula list = 
+  Debug.no_1 "list_of_conjs"  !print_formula (pr_list !print_formula) split_conjunctions f0
   (*let rec helper f conjs = match f with
     | And (f1, f2, pos) ->
     let tmp1 = helper f2 conjs in
@@ -4187,6 +4190,13 @@ let rec filter_var (f0 : formula) (rele_vars0 : spec_var list) : formula =
   let filtered_f = select_relevants relevants0 unknowns0 rele_var_set in
 	filtered_f
 
+
+let filter_var (f0 : formula) (keep_slv : spec_var list) : formula =
+  let pr1 = !print_formula in
+  let pr2 = !print_svl in
+  Debug.no_2 "filter_var" pr1 pr2 pr1
+      (fun _ _ -> filter_var f0 keep_slv) f0 keep_slv
+
 (* Assumption: f0 is SAT *)
 (*implemented by L2 to replace the old one (the old one does not distinguish primed and unprimed)
 f is in CNF
@@ -4198,10 +4208,10 @@ let filter_var_new_x (f : formula) (keep_slv : spec_var list) : formula =
       | [] -> (res_rele_fs,res_unk_fs,old_keep_svl,incr_keep)
       | f::fs ->
           begin
-              (* let _ = Debug.info_pprint ("svl: " ^ (!print_svl old_keep_svl)) no_pos in *)
-              (* let _ = Debug.info_pprint ("f: " ^ (!print_formula f)) no_pos in *)
+              let _ = Debug.tinfo_hprint (add_str "svl: "  (!print_svl)) old_keep_svl no_pos in
+              let _ = Debug.tinfo_hprint ( add_str "f: "   (!print_formula )) f no_pos in
               let svl = fv f in
-              (* let _ = Debug.info_pprint ("svl f: " ^ (!print_svl svl)) no_pos in *)
+              let _ = Debug.tinfo_hprint (add_str "svl f: "  !print_svl ) svl no_pos in
               let inters = intersect svl old_keep_svl in
               if inters = [] then
                 get_new_rele_svl fs old_keep_svl res_rele_fs (res_unk_fs@[f]) incr_keep
