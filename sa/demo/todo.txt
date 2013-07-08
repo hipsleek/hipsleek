@@ -4493,7 +4493,7 @@ Better (simpler) to have:
   G(x) ::= x=null
 =====================================================================
 # loop-3b4.slk
-  also loop-3b3.slk
+  also loop-3b3.slk : FIXED
 
 HeapPred H(node a).
 relAssume  H(x) --> x=null.
