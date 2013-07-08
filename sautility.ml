@@ -2360,7 +2360,7 @@ step 1: apply transitive implication
   ---------------------------------
   c1 = A |- B ;c2 = C |- D ===> c3=A |- D * E
 *)
-let rec find_imply prog lunk_hps runk_hps lhs1 rhs1 lhs2 rhs2 lguard1=
+let rec find_imply prog lunk_hps runk_hps lhs1 rhs1 lhs2 rhs2 lguard1 complex_hps=
   let sort_hps_x hps = List.sort (fun (CP.SpecVar (_, id1,_),_)
       (CP.SpecVar (_, id2, _),_)-> String.compare id1 id2) hps
   in
@@ -2436,7 +2436,7 @@ let rec find_imply prog lunk_hps runk_hps lhs1 rhs1 lhs2 rhs2 lguard1=
   (*m_args2: matched svl of rhs2*)
   let subst,matched_hps, m_args2,rhs_hps_rename = check_hrels_imply l_rhrels r_rhrels ldns rdns (List.map fst l_rhrels) [] [] [] [] in
   let r=
-    if matched_hps = [] then None
+    if matched_hps = [] || (CP.intersect_svl matched_hps complex_hps <> []) then None
     else
       begin
         (*for debugging*)
@@ -2865,10 +2865,21 @@ let is_trivial_constr cs=
 let weaken_strengthen_special_constr_pre is_pre cs=
   if is_trivial_constr cs then
     if is_pre then
-    {cs with CF.hprel_rhs = CF.mkTrue (CF.flow_formula_of_formula cs.CF.hprel_rhs) (CF.pos_of_formula cs.CF.hprel_rhs)}
+    {cs with CF.hprel_rhs = CF.mkHTrue (CF. mkTrueFlow ()) (CF.pos_of_formula cs.CF.hprel_rhs)}
     else
       {cs with CF.hprel_lhs = CF.mkFalse (CF.flow_formula_of_formula cs.CF.hprel_rhs) (CF.pos_of_formula cs.CF.hprel_rhs)}
   else cs
+
+let convert_HTrue_2_None hpdefs=
+  let do_convert (res_link_hps, res_hpdefs) ((kind, hf, f) as orig)=
+    if CF.isStrictConstTrue f then
+      try
+        let hpargs = CF.extract_HRel hf in
+        (res_link_hps@[hpargs], res_hpdefs)
+      with _ -> (res_link_hps, res_hpdefs@[orig])
+    else (res_link_hps, res_hpdefs@[orig])
+  in
+  List.fold_left do_convert ([],[]) hpdefs
 
 let remove_dups_constr constrs=
   let constr_cmp cs1 cs2=
@@ -3808,6 +3819,7 @@ let mk_link_hprel_def prog cond_path (hp,_)=
   let def= {
       CF.hprel_def_kind = CP.HPRelDefn (hp, List.hd args, List.tl args);
       CF.hprel_def_hrel = hf;
+      (* CF.hprel_def_guard = None; *)
       CF.hprel_def_body = [(cond_path, None)];
       CF.hprel_def_body_lib = None;
   } in
@@ -4543,24 +4555,36 @@ let norm_heap_consj_formula prog args unk_hps unk_svl f equivs=
       (fun _ -> norm_heap_consj_formula_x prog args unk_hps unk_svl f equivs) f
 
 let norm_formula_x prog args unk_hps unk_svl f1 f2 equivs=
-  let is_common, sharing_f, n_fs = partittion_common_diff prog args unk_hps unk_svl f1 f2 no_pos in
-  if not is_common then None else
-    match n_fs with
-      | [] -> None
-      | [f] -> Some (f, equivs)
-      | [nf1;nf2] -> begin
-          let (hf1 ,mf1,_,_,_) = CF.split_components nf1 in
-          let (hf2 ,mf2,_,_,_) = CF.split_components nf2 in
-          if CP.equalFormula (MCP.pure_of_mix mf1) (MCP.pure_of_mix mf2) then
-            let ores = norm_heap_consj hf1 hf2 equivs in
-            match ores with
-              | None -> None
-              | Some (hf, n_equivs) ->
-                    Some (CF.mkAnd_f_hf sharing_f hf no_pos, n_equivs)
-          else
-            None
-        end
-      | _ -> report_error no_pos "sau.norm_formula: should be no more than two formulas"
+  if is_empty_heap_f f1 && is_empty_heap_f f2 then
+    let pos = CF.pos_of_formula f1 in
+    let cmb_f = CF.mkStar f1 f2 CF.Flow_combine pos in
+    let cmb_f1=
+      if not (TP.is_sat_raw (MCP.mix_of_pure (CF.get_pure cmb_f))) then
+        CF.mkFalse (CF.flow_formula_of_formula cmb_f) pos
+      else cmb_f
+    in
+    Some (cmb_f1, equivs)
+  else if CF.isStrictConstTrue f1 then Some (f2, equivs)
+  else if CF.isStrictConstTrue f2 then Some (f1, equivs)
+  else
+    let is_common, sharing_f, n_fs = partittion_common_diff prog args unk_hps unk_svl f1 f2 no_pos in
+    if not is_common then None else
+      match n_fs with
+        | [] -> None
+        | [f] -> Some (f, equivs)
+        | [nf1;nf2] -> begin
+            let (hf1 ,mf1,_,_,_) = CF.split_components nf1 in
+            let (hf2 ,mf2,_,_,_) = CF.split_components nf2 in
+            if CP.equalFormula (MCP.pure_of_mix mf1) (MCP.pure_of_mix mf2) then
+              let ores = norm_heap_consj hf1 hf2 equivs in
+              match ores with
+                | None -> None
+                | Some (hf, n_equivs) ->
+                      Some (CF.mkAnd_f_hf sharing_f hf no_pos, n_equivs)
+            else
+              None
+          end
+        | _ -> report_error no_pos "sau.norm_formula: should be no more than two formulas"
 
 let norm_formula prog args unk_hps unk_svl f1 f2 equivs=
   let pr1 = Cprinter.prtt_string_of_formula in

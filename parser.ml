@@ -1715,7 +1715,9 @@ cond_path:
     ]];
 
 relassume_cmd:
-   [[ `RELASSUME; il2 = OPT cond_path; l=meta_constr; `CONSTR;r=meta_constr -> (un_option il2 [], l, r)
+   [[ `RELASSUME; il2 = OPT cond_path; l=meta_constr; `CONSTR;r=meta_constr -> (un_option il2 [], l, None,  r)
+    | `RELASSUME; il2 = OPT cond_path; l=meta_constr; `REL_GUARD; guard = meta_constr; `CONSTR;r=meta_constr ->
+           (un_option il2 [], l, Some guard,  r)
    ]];
 
 reldefn_cmd:

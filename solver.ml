@@ -4935,72 +4935,75 @@ and heap_entail_conjunct_lhs_x hec_num prog is_folding  (ctx:context) (conseq:CF
             let early_hp_contra_detection_x es = 
               match es with
                 | Some estate -> 
-                      begin
-                        let r_inf_contr, relass = solver_detect_lhs_rhs_contra 1 prog estate conseq pos "EARLY CONTRA DETECTION" in
-                        (*   (Inf.CF.entail_state * Cprinter.P.formula) option *
-                             (Inf.CF.entail_state * Cformula.CP.infer_rel_type list * bool) list *)
-                        (* match contr with *)
-                        (*   | Some (_,  hp_rel) -> *)
-                        (*         (\* add hp_rel P(x) --> x=null to estate *\) *)
-                        (*         let _ = Inf.rel_ass_stk # push_list ([hp_rel]) in *)
-                        (*         let _ = Log.current_hprel_ass_stk # push_list ([hp_rel]) in *)
-                        (*         let new_es = {estate with CF.es_infer_hp_rel = estate.CF.es_infer_hp_rel @ [hp_rel];} in *)
-                        (* | None ->  heap_entail () *)
-	                let h_inf_args, hinf_args_map = get_heap_inf_args estate in
-                        let esv = estate.es_infer_vars in
-                        let orig_ante = CF.formula_of_context ctx in
+                      (* if there is no hp inf, post pone contra detection *)
+                      if (List.length estate.es_infer_vars_hp_rel == 0 ) then  (false, None, None, None)
+                      else
+                        begin
+                          let r_inf_contr, relass = solver_detect_lhs_rhs_contra 1 prog estate conseq pos "EARLY CONTRA DETECTION" in
+                          (*   (Inf.CF.entail_state * Cprinter.P.formula) option *
+                               (Inf.CF.entail_state * Cformula.CP.infer_rel_type list * bool) list *)
+                          (* match contr with *)
+                          (*   | Some (_,  hp_rel) -> *)
+                          (*         (\* add hp_rel P(x) --> x=null to estate *\) *)
+                          (*         let _ = Inf.rel_ass_stk # push_list ([hp_rel]) in *)
+                          (*         let _ = Log.current_hprel_ass_stk # push_list ([hp_rel]) in *)
+                          (*         let new_es = {estate with CF.es_infer_hp_rel = estate.CF.es_infer_hp_rel @ [hp_rel];} in *)
+                          (* | None ->  heap_entail () *)
+	                  let h_inf_args, hinf_args_map = get_heap_inf_args estate in
+                          let esv = estate.es_infer_vars in
+                          let orig_ante = CF.formula_of_context ctx in
 
-                        let new_slk_log result es = 
-                          let avoid = CF.is_emp_term conseq in
-                          let avoid = avoid or (not (hec_stack # is_empty)) in
-                          let caller = hec_stack # string_of_no_ln in
-                          let slk_no = (* if avoid then 0 else *) Log.get_sleek_proving_id () in
-                          (* let _ = hec_stack # push slk_no in *)
-                          (* let r = hec a b c in *)
-                          (* let _ = hec_stack # pop in *)
-                          let _ = Log.add_new_sleek_logging_entry esv !Globals.do_classic_frame_rule caller (* avoid *) false hec_num slk_no orig_ante 
-                            conseq es.es_heap es.es_evars result pos in
-                          () in
+                          let new_slk_log result es = 
+                            let avoid = CF.is_emp_term conseq in
+                            let avoid = avoid or (not (hec_stack # is_empty)) in
+                            let caller = hec_stack # string_of_no_ln in
+                            let slk_no = (* if avoid then 0 else *) Log.get_sleek_proving_id () in
+                            (* let _ = hec_stack # push slk_no in *)
+                            (* let r = hec a b c in *)
+                            (* let _ = hec_stack # pop in *)
+                            let _ = Log.add_new_sleek_logging_entry esv !Globals.do_classic_frame_rule caller (* avoid *) false hec_num slk_no orig_ante 
+                              conseq es.es_heap es.es_evars result pos in
+                            () in
 
-                        match r_inf_contr with
-                          | Some (new_estate,pf) -> 
-                                let new_estate = {new_estate with es_infer_vars = esv} in
-                                let ctx1 = CF.Ctx new_estate in
-                                let _ = Debug.tinfo_hprint (add_str "ctx1"  Cprinter.string_of_context) ctx1 pos in
-                                let r1,prf =  (SuccCtx[false_ctx_with_orig_ante new_estate orig_ante pos],UnsatAnte) in
-                               (* let _ = Debug.info_pprint ("*********1********") no_pos in *)
-                                let r2 = Infer.add_infer_hp_contr_to_list_context hinf_args_map [pf] r1 in
-                                let _ = Debug.tinfo_hprint (add_str "r2 opt"  (pr_option Cprinter.string_of_list_context)) r2 pos in
-		                let _ = Debug.tinfo_hprint (add_str "inferred contradiction : " Cprinter.string_of_pure_formula) pf pos in
-                                (* let _ = Debug.info_pprint ("Andreea 1 : we need to call add_new_sleek_logging_entry to do sleek_logging") no_pos in *)
-                                begin
-                                  match r2 with
-                                    | None -> 
-                                           let r = add_infer_pure_to_list_context [pf] r1 in
-                                           let _ = new_slk_log r new_estate in
-                                          (true, Some new_estate, Some r, Some prf)
-                                    | Some r0 ->
-                                          let r =
-                                            match relass with
-				              | [(_,h,_)] -> add_infer_rel_to_list_context h r0
-				              | _ -> r0 in
-                                          let _ = new_slk_log r new_estate in
-                                          (true, Some new_estate, Some r, Some prf)
-                                end
-                          | None ->  
-                                match relass with
-				  | [(es,h,_)] -> 
-                                        let new_estate = {es with es_infer_vars = esv} in
-                                        let new_estate = add_infer_rel_to_estate h new_estate in
-                                        let _ = Debug.tinfo_hprint (add_str "new_estate(with inf rel)" Cprinter.string_of_entail_state) new_estate pos in
-                                        let r1,prf =  (SuccCtx[false_ctx_with_orig_ante new_estate orig_ante pos], UnsatAnte) in
-                                        let _ = new_slk_log r1 new_estate in
-                                        (true, Some new_estate, Some r1, Some prf)
-				  | _ ->(false, Some estate, None, None) 
-                      end
+                          match r_inf_contr with
+                            | Some (new_estate,pf) -> 
+                                  let new_estate = {new_estate with es_infer_vars = esv} in
+                                  let ctx1 = CF.Ctx new_estate in
+                                  let _ = Debug.tinfo_hprint (add_str "ctx1"  Cprinter.string_of_context) ctx1 pos in
+                                  let r1,prf =  (SuccCtx[false_ctx_with_orig_ante new_estate orig_ante pos],UnsatAnte) in
+                                  (* let _ = Debug.info_pprint ("*********1********") no_pos in *)
+                                  let r2 = Infer.add_infer_hp_contr_to_list_context hinf_args_map [pf] r1 in
+                                  let _ = Debug.tinfo_hprint (add_str "r2 opt"  (pr_option Cprinter.string_of_list_context)) r2 pos in
+		                  let _ = Debug.tinfo_hprint (add_str "inferred contradiction : " Cprinter.string_of_pure_formula) pf pos in
+                                  (* let _ = Debug.info_pprint ("Andreea 1 : we need to call add_new_sleek_logging_entry to do sleek_logging") no_pos in *)
+                                  begin
+                                    match r2 with
+                                      | None -> 
+                                            let r = add_infer_pure_to_list_context [pf] r1 in
+                                            let _ = new_slk_log r new_estate in
+                                            (true, Some new_estate, Some r, Some prf)
+                                      | Some r0 ->
+                                            let r =
+                                              match relass with
+				                | [(_,h,_)] -> add_infer_rel_to_list_context h r0
+				                | _ -> r0 in
+                                            let _ = new_slk_log r new_estate in
+                                            (true, Some new_estate, Some r, Some prf)
+                                  end
+                            | None ->  
+                                  match relass with
+				    | [(es,h,_)] -> 
+                                          let new_estate = {es with es_infer_vars = esv} in
+                                          let new_estate = add_infer_rel_to_estate h new_estate in
+                                          let _ = Debug.tinfo_hprint (add_str "new_estate(with inf rel)" Cprinter.string_of_entail_state) new_estate pos in
+                                          let r1,prf =  (SuccCtx[false_ctx_with_orig_ante new_estate orig_ante pos], UnsatAnte) in
+                                          let _ = new_slk_log r1 new_estate in
+                                          (true, Some new_estate, Some r1, Some prf)
+				    | _ ->(false, Some estate, None, None) 
+                        end
                 | None -> 
-                      let _ = DD.info_pprint "WARNING : presence of disj context at EARLY CONTRA DETECTION" no_pos in
-                      (false, None, None, None)
+                        let _ = DD.info_pprint "WARNING : presence of disj context at EARLY CONTRA DETECTION" no_pos in
+                        (false, None, None, None)
             in 
 
             let early_hp_contra_detection estate =  

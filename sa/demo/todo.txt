@@ -4355,13 +4355,13 @@ EXPECT
   H_1(v_node_9',prv@NI) | l'::node<_,v_node_9'>@M
                --> H1(v_node_9',l'@NI)]
 =====================================================================
-# dll-1.slk
+# dll-1.slk: DONE
 
 sleek/parser need to accept guarded relational assumptions of the form:
 
  H_1(next_9,prv) |#| l::node<_,next_9> --> H1(next_9,l).
 =====================================================================
-# mcf-3a.slk
+# mcf-3a.slk: FIXED
 (from pre of check-mcf-2.ss)
 
 The version below seems to have allowed --pred-en-eup
@@ -4398,7 +4398,7 @@ relational assumption of H_9. I think we should never have
 unfolded a predicate with a complex RHS. Hence, we should 
 never have unfolded H2 in the first place.
 =====================================================================
-# mcf-3a1.slk
+# mcf-3a1.slk: FIXED
 
 a more complex variant of mcf-3a.slk
 (from pre of check-mcf-2.ss)
@@ -4493,7 +4493,7 @@ Better (simpler) to have:
   G(x) ::= x=null
 =====================================================================
 # loop-3b4.slk
-  also loop-3b3.slk
+  also loop-3b3.slk : FIXED
 
 HeapPred H(node a).
 relAssume  H(x) --> x=null.
@@ -4509,7 +4509,7 @@ This is UNSOUND! I was expecting
   H(x) --> x=null & x!=null
   H(x) --> false
 =====================================================================
-# loop-3b1.slk
+# loop-3b1.slk: FIXED
 
 (minor issue)
 
@@ -4528,9 +4528,161 @@ Better to have:
 
 (as we do not have any definition yet)
 =====================================================================
+# loop-4.ss
+
+(minor)
+
+foo<> == self::node<q>*q::foo<> inv self!=null;
+void loop (node x)
+  infer [P,G]  requires P(x)  ensures  G(x);
+  //requires x::foo<> ensures x::foo<>;
+{
+   node y = x.next;
+   loop(y);
+}
+
+GOT
+===
+ P(x) --> x::node<next_1>@M * H_2(next_1),
+ H_2(next_1) --> P(next_1),
+ x::node<next_1>@M * G(next_1) --> G(x)]
+--------------------
+[P(x_906) ::= x_906::node<next_1>@M * H_2(next_1),
+ G(x_908) ::= x_908::node<next_1>@M * G(next_1),
+ H_2(next_7) ::= P(next_7)]
+
+EXPECTING
+=========
+[P(x_906) ::= x_906::node<next_1>@M * P(next_1),
+ G(x_908) ::= x_908::node<next_1>@M * G(next_1),
+]
+
+ALGO
+====
+We have two pre-predicates:
+ P(x) --> x::node<next_1>@M * H_2(next_1),
+ H_2(next_1) --> P(next_1),
+
+H_2(..) is simpler than P(..)
+
+Step 1
+======
+transform and confirm H_2.
+ H_2(next_1) --> P(next_1),
+ H_2(next_1) <-> P(next_1),
+
+
+Step 2
+======
+transform and confirm P.
+ P(x_906) ::= x_906::node<next_1>@M * H_2(next_1),
+ // unfold H_2 which has a simple RHS
+ P(x_906) ::= x_906::node<next_1>@M * P(next_1),
 =====================================================================
+# dll-1.slk
+
+(extracted fro hip check-dll.ss)
+
+relAssume
+ H1(l,prv)&l!=null --> l::node<prev_8,next_9>@M * 
+   H_0(prev_8,prv) * H_1(next_9,prv) & prev_8=prv.
+relAssume H_1(next_9,prv) |#| l::node<_,next_9> --> H1(next_9,l).
+relAssume H1(l,prv)&l=null --> emp.
+
+shape_infer [H1,H_1,H_0][].
+
+[ H1(l_1011,prv_1012) ::= 
+ H1(next_19_984,l_983) * l_1011::node<prev_19_985,next_19_984>@M&
+ forall(l:((prv_1012>=prev_19_985 | l=null)) & ((prev_19_985>=prv_1012 | 
+ l=null)))
+ or emp&l_1011=null
+
+URGENT (inconsistency between sleek/hip)
+
+GOT
+===
+[ H_1(next_45,prv_46) ::= H1(next_45,l),
+
+ H1(l_48,prv_49) ::= 
+ H1(next_42,l) * l_48::node<prev_43,next_42>@M * H_0(prev_43,prv_49)&
+ prev_43=prv_49
+ or emp&l_48=null
+
+
+PROBLEMS
+========
+
+1. H_1 should be presented in guarded form
+
+2. The above result seems to have lost the link between l,l_47
+   and is inconsistent with the outcome from check-dll.ss.
+   Expecting:
+ H1(l_48,prv_49) ::= 
+ H1(next_42,l_48) * l_48::node<prev_43,next_42>@M * H_0(prev_43,prv_49)&
+            ^^^^
+ prev_43=prv_49
+ or emp&l_48=null
 =====================================================================
+# dll-1.slk
+(came from loop-3.ss)
+
+PROBLEM
+=======
+
+1. H_1 should be presented in guarded form
+  Instead of:
+     H_1(next_46,prv_47) ::= H1(next_46,l)
+  EXPECT:
+    H_1(next_9,prv) |#| l::node<_,next_9> ::= H1(next_9,l).
+
 =====================================================================
+# loop-3d1.slk
+
+relAssume P(x) --> x::node<next_1> * H_2(next_1).
+
+relAssume x::node<next_1> * H_2(next_1)  --> P(x) & next_1!=null.
+
+shape_infer [P,H_2][].
+
+PROBLEM : there seems to be a missing sleek step.
+When I invoke --en-sleek-logging-txt, there wasn't
+any sleek invocation. Have you called sleek for
+pre-obligation?
+
+How should we handle pre-obligation of the form:
+ x::node<next_1> * H_2(next_1)  --> P(x).
+
+I was expecting: (see loop-3d1a.slk)
+   H_2(n) --> H_2(n)
+   H_2(n) --> n!=null
+
+It has a complex LHS that has to be delayed until we have 
+obtained a pre-pred defn for P. Hence, the steps are:
+
+Step 1
+======
+Process P(..)
+ P(x) --> x::node<next_1> * H_2(next_1).
+Simplify and confirm as a defn:
+ P(x) <-> x::node<next_1> * H_2(next_1).
+
+Step 2
+======
+ x::node<next_1> * H_2(next_1)  --> P(x) & next_1!=null.
+Use the Defn of P(..) & pass to sleek:
+ x::node<next_1> * H_2(next_1)  |- P(x) & next_1!=null.
+which succeds with:
+  H_2(next_1) --> H_2(next_1)
+  H_2(next_1) --> next_1!=null
+which then simplifies to:
+  H_2(next_1) --> next_1!=null
+and then:
+  H_2(next_1) ::= next_1!=null
+
+Did we do this SLEEK proof obligation for
+pre-predicate? We need to do so for soundness.
+It is similar to post-obligation, where we may get
+some extra relational assumption.
 =====================================================================
 =====================================================================
 =====================================================================

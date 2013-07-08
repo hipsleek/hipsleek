@@ -32,9 +32,9 @@ let search_pred_4_equal_x constrs post_hps=
           pre_preds@[(hp,cs)], rem
       | _ -> (pre_preds, rem@[cs])
   in
-  let rec partition_equal (cand_equal, rem_pre_constrs) ls_pre=
+  let rec partition_equal (cand_equal, rem_pre_constrs, complex_hps) ls_pre=
    match ls_pre with
-     | [] -> (cand_equal, rem_pre_constrs)
+     | [] -> (cand_equal, rem_pre_constrs,complex_hps)
      | (hp0, cs0)::rest ->
            let grp,rest1 = List.fold_left (fun (ls1,ls2) (hp1,cs1) ->
                if CP.eq_spec_var hp1 hp0 then (ls1@[cs1], ls2)
@@ -42,20 +42,20 @@ let search_pred_4_equal_x constrs post_hps=
            ) ([],[]) rest in
            let grp1 = (cs0::grp) in
            let n_res = if List.length grp1 > 1 then
-             (cand_equal,rem_pre_constrs@(grp1))
-           else (cand_equal@[(hp0,cs0)],rem_pre_constrs)
+             (cand_equal,rem_pre_constrs@(grp1),complex_hps@[hp0])
+           else (cand_equal@[(hp0,cs0)],rem_pre_constrs,complex_hps)
            in
            partition_equal n_res rest1
   in
   let pr_pre_preds, rem_constrs = List.fold_left partition_pre_preds ([],[]) constrs in
-  let pre_preds_4_equal, rem_pre_constrs = partition_equal ([],[]) pr_pre_preds in
-  (pre_preds_4_equal, rem_pre_constrs@rem_constrs)
+  let pre_preds_4_equal, rem_pre_constrs,complex_hps = partition_equal ([],[],[]) pr_pre_preds in
+  (pre_preds_4_equal, rem_pre_constrs@rem_constrs, complex_hps)
 
 let search_pred_4_equal constrs post_hps=
   let pr1 = Cprinter.string_of_hprel_short in
   let pr2 = pr_list_ln (pr_pair !CP.print_sv pr1) in
   let pr3 = pr_list_ln pr1 in
-  Debug.no_2 "search_pred_4_equal" pr3 !CP.print_svl (pr_pair pr2 pr3)
+  Debug.no_2 "search_pred_4_equal" pr3 !CP.print_svl (pr_triple pr2 pr3 !CP.print_svl)
       (fun _ _ -> search_pred_4_equal_x constrs post_hps)
       constrs post_hps
 
@@ -1670,17 +1670,17 @@ let unify_consj_pre_x prog unk_hps link_hps equivs0 pdefs=
 
 let unify_consj_pre prog unk_hps link_hps equivs pdefs=
   let pr1 = !CP.print_svl in
-    let pr2 = !CP.print_formula in
-    let pr3 oform= match oform with
-      | None -> "None"
-      | Some f -> Cprinter.prtt_string_of_formula f
-    in
-    let pr4 (a,_) = (pr_hexa !CP.print_sv pr1 pr1 pr2 pr3 pr3) a in
-    let pr5 = pr_list_ln pr4 in
-    let pr6 = pr_pair pr5 (pr_list (pr_pair !CP.print_sv !CP.print_sv) ) in
-     Debug.no_1 "unify_consj_pre" pr5 pr6
-         (fun _ -> unify_consj_pre_x prog unk_hps link_hps equivs pdefs)
-         pdefs
+  let pr2 = !CP.print_formula in
+  let pr3 oform= match oform with
+    | None -> "None"
+    | Some f -> Cprinter.prtt_string_of_formula f
+  in
+  let pr4 (a,_) = (pr_hexa !CP.print_sv pr1 pr1 pr2 pr3 pr3) a in
+  let pr5 = pr_list_ln pr4 in
+  let pr6 = pr_pair pr5 (pr_list (pr_pair !CP.print_sv !CP.print_sv) ) in
+  Debug.no_1 "unify_consj_pre" pr5 pr6
+      (fun _ -> unify_consj_pre_x prog unk_hps link_hps equivs pdefs)
+      pdefs
 
 (*
 This is mandatory

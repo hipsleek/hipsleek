@@ -3067,7 +3067,7 @@ let add_infer_hp_contr_to_list_context h_arg_map cps (l:list_context) : list_con
         [(true, (h,hf,h_args, p,p, pos))]
       else
         (* let _ = print_string ("\n p: "^(!CP.print_formula p)^"\n") in *)
-        let n_p = CP.mkForall diff p None pos in
+        let n_p = CP.mkForall(* _disjs_deep *) diff p None pos in
         if TP.is_sat_raw (MCP.mix_of_pure n_p) then
           [(true, (h,hf,h_args, p, n_p , pos))]
         else [(false, (h,hf,h_args, p, n_p, pos))]
