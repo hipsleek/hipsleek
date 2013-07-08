@@ -7564,7 +7564,7 @@ let rec rev_trans_formula f = match f with
 let transform_hp_rels_to_iviews (hp_rels:(ident* CF.hp_rel_def) list):(ident*ident*I.view_decl) list = 
 (*CP.rel_cat * h_formula * formula*)
 
-  List.fold_left (fun acc (proc_id,(rel_cat, hf,f_body))->
+  List.fold_left (fun acc (proc_id,(rel_cat, hf,_,f_body))->
 	match rel_cat with
 	  | CP.HPRelDefn (v,r,paras)->
 		let vname = sv_n v in

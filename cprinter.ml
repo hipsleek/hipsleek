@@ -1771,6 +1771,11 @@ let prtt_string_of_formula_base fb: string =  poly_string_of_pr  prtt_pr_formula
 
 let prtt_string_of_h_formula (e:h_formula) : string =  poly_string_of_pr  prtt_pr_h_formula e
 
+let prtt_string_of_h_formula_opt (eo:h_formula option) : string =
+  match eo with
+    | None -> ""
+    | Some e -> poly_string_of_pr prtt_pr_h_formula e
+
 let rec string_of_formula_list_noparen l = match l with 
   | [] -> ""
   | h::[] -> string_of_formula h 
@@ -1815,12 +1820,29 @@ let pr_hp_rel hp_rel =
   fmt_string (pr3 hp_rel)
 
 let string_of_hp_rel_def hp_rel =
- let str_of_hp_rel (r,f1, f2) =
-   ( (CP.print_rel_cat r)^ ": " ^(string_of_h_formula f1) ^ " ::= "  ^(prtt_string_of_formula f2)) in
+  let print_g guard=
+    (match guard with
+      | None -> ""
+            (* fmt_string " NONE " *)
+      | Some hf -> 
+            begin
+              " |#| " ^ (prtt_string_of_h_formula hf)
+            end
+     )
+  in
+ let str_of_hp_rel (r,f1, g, f2) =
+   ( (CP.print_rel_cat r)^ ": " ^(string_of_h_formula f1) ^ (print_g g) ^ " ::= "  ^(prtt_string_of_formula f2)) in
   (str_of_hp_rel hp_rel)
 
 let string_of_hp_rel_def_short hp_rel =
- let str_of_hp_rel (_,f1, f2) = ((string_of_h_formula f1) ^ " ::= "  ^(prtt_string_of_formula f2)) in
+ let str_of_hp_rel (_,f1, guard, f2) = ((string_of_h_formula f1)
+     ^ (match guard with
+       | None -> ""
+       | Some hf -> begin
+           " |#| " ^ (prtt_string_of_h_formula hf)
+         end
+     )
+ ^ " ::= "  ^(prtt_string_of_formula f2)) in
   (str_of_hp_rel hp_rel)
 
 let string_of_hp_decl hpdecl =

@@ -150,9 +150,9 @@ and hprel_def= {
     (* hprel_def_path: cond_path_type; *)
 }
 
-(*temporal: name * hrel * definition body*)
+(*temporal: name * hrel * guard option * definition body*)
 (*actually used to store the constraints on heap predicates inference*)
-and hp_rel_def = CP.rel_cat * h_formula (* * (h_formula option) *) * formula
+and hp_rel_def = CP.rel_cat * h_formula * (h_formula option) * formula
 
 (* and infer_rel_type =  (CP.rel_cat * CP.formula * CP.formula) *)
 
@@ -3829,6 +3829,10 @@ let find_close svl0 eqs0=
   in
   loop_helper svl0 eqs0
 
+let pr_h_formula_opt og=
+  match og with
+    | None -> ""
+    | Some hf -> !print_h_formula hf
 
 let is_HRel hf=
   match hf with
@@ -12890,3 +12894,15 @@ let clear_infer_from_context c1 = c1
 
 (* WN_2_Loc: add p to ts; add new_infer (only those related to pure) from new_ctx into ts *)
 let add_pure_and_infer_from_asserted p new_ctx ts = ts
+
+let combine_guard ogs0=
+  let rec helper ogs res=
+    match ogs with
+      | [] -> join_star_conjunctions_opt res
+      | og::rest -> begin
+        match og with
+          | None -> helper rest res
+          | Some hf -> helper rest (res@[hf])
+        end
+  in
+  helper ogs0 []
