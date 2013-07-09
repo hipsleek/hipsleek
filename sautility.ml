@@ -1297,10 +1297,12 @@ let simp_match_unknown unk_hps link_hps cs=
       (fun _ _ _ -> simp_match_unknown_x unk_hps link_hps cs)
       unk_hps link_hps cs
 
+(*da/demo/dll-pap-1.slk*)
 let simp_match_hp_w_unknown_x prog unk_hps link_hps cs=
   (* check-dll: recusrsive do not check*)
-  if CP.intersect_svl (CF.get_hp_rel_name_formula cs.CF.hprel_lhs) 
-    (CF.get_hp_rel_name_formula cs.CF.hprel_rhs) <> [] then cs else
+  let rec_hps = CP.intersect_svl (CF.get_hp_rel_name_formula cs.CF.hprel_lhs)
+    (CF.get_hp_rel_name_formula cs.CF.hprel_rhs) in
+  if List.length rec_hps <= 1 then cs else
   let tot_unk_hps = unk_hps@link_hps in
   let part_helper = (fun (unk_svl,rem) (hp,args)->
         if CP.mem_svl hp tot_unk_hps then
@@ -1343,7 +1345,7 @@ let simp_match_hp_w_unknown_x prog unk_hps link_hps cs=
 
 let simp_match_hp_w_unknown prog unk_hps link_hps cs=
   let pr1 = !CP.print_svl in
-  let pr2 = Cprinter.string_of_hprel_short in
+  let pr2 = Cprinter.string_of_hprel_short_inst prog in
   Debug.no_3 "simp_match_hp_w_unknown" pr1 pr1 pr2 pr2
       (fun _ _ _ -> simp_match_hp_w_unknown_x prog unk_hps link_hps cs)
       unk_hps link_hps cs
