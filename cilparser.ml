@@ -142,6 +142,22 @@ let rec loc_of_iast_exp (e: Iast.exp) : Globals.loc =
   | Iast.While e -> e.Iast.exp_while_pos
 
 
+let loc_of_cil_exp (exp: Cil.exp) : Cil.location =
+  match exp with
+  | Cil.Const (_, l)
+  | Cil.Lval (_, l)
+  | Cil.SizeOf (_, l) 
+  | Cil.SizeOfE (_, l)
+  | Cil.SizeOfStr (_, l)
+  | Cil.AlignOf (_, l)
+  | Cil.AlignOfE (_, l)
+  | Cil.UnOp (_, _, _, l)
+  | Cil.BinOp (_, _, _, _, l)
+  | Cil.Question (_, _, _, _, l)
+  | Cil.CastE (_, _, l)
+  | Cil.AddrOf (_, l) 
+  | Cil.StartOf (_, l) -> l
+
 (* create an Iast.exp from a list of Iast.exp *)
 let merge_iast_exp (es: Iast.exp list) : Iast.exp =
   match es with
@@ -165,6 +181,18 @@ let typ_of_cil_lval (lv: Cil.lval) : Cil.typ =
 let typ_of_cil_exp (e: Cil.exp) : Cil.typ =
   Cil.typeOf e
 
+(* location  functions *)
+let makeLocation (startPos: Lexing.position) (endPos: Lexing.position) : Globals.loc =
+  let newloc = {Globals.start_pos = startPos;
+                Globals.mid_pos = startPos;
+                Globals.end_pos = endPos;} in
+  newloc
+
+let startPos (loc: Globals.loc) : Lexing.position =
+  loc.Globals.start_pos
+
+let endPos (loc: Globals.loc) : Lexing.position =
+  loc.Globals.end_pos
 
 (**********************************************)
 (****** create intermediate procedures  *******)
@@ -585,56 +613,33 @@ and translate_binary_operator (op : Cil.binop) pos : Iast.bin_op =
 and translate_lval (lv: Cil.lval) : Iast.exp =
   let (lhost, offset, loc) = lv in
   let pos = translate_location loc in
-  let rec collect_index (off: Cil.offset) : Iast.exp list = (
-    match off with
-    | Cil.NoOffset -> []
-    | Cil.Field _ -> report_error pos "TRUNG TODO: collect_index: handle Cil.Field _ later"
-    | Cil.Index (e, o, _) -> [(translate_exp e)] @ (collect_index o)
+  let rec create_complex_exp (base : Iast.exp) (offset : Cil.offset) pos : Iast.exp = (
+    match offset with
+    | Cil.NoOffset -> base
+    | Cil.Field ((field, l1), off, _) -> (
+        let p = makeLocation (startPos pos) (endPos (translate_location l1)) in
+        let b = Iast.mkMember base [field.Cil.fname] None p in
+        create_complex_exp b off pos
+      )
+    | Cil.Index (e, off, _) -> (
+        let l1 = loc_of_cil_exp e in
+        let p = makeLocation (startPos pos) (endPos (translate_location l1)) in
+        let b = Iast.mkArrayAt base [(translate_exp e)] p in
+        create_complex_exp b off pos
+      )
   ) in
-  let rec collect_field (off: Cil.offset) : ident list = (
-    match off with
-    | Cil.NoOffset -> []
-    | Cil.Field ((f, _), o, _) -> [(f.Cil.fname)] @ (collect_field o)
-    | Cil.Index _ -> report_error pos "TRUNG TODO: collect_field: handle Cil.Index _ later"
-  ) in
-  match (lhost, offset) with
-  | Cil.Var (v, l), Cil.NoOffset -> (
-      let newexp = translate_var v (Some l) in
-      newexp
-    )
-  | Cil.Var (v, l), Cil.Index _ -> (
+  match lhost with
+  | Cil.Var (v, l) -> (
       let base = translate_var v (Some l) in
-      let index = collect_index offset in
-      let newexp = Iast.mkArrayAt base index pos in
+      let newexp = create_complex_exp base offset pos in
       newexp
     )
-  | Cil.Var (v, l), Cil.Field _ -> (
-      let base = translate_var v (Some l) in
-      let fields = collect_field offset in
-      let newexp = Iast.mkMember base fields None pos in
-      newexp
-    )
-  | Cil.Mem e, Cil.NoOffset -> (
+  | Cil.Mem e -> (
       (* access to data in pointer variable *)
-      let base = translate_exp e in
-      let fields = ["pdata"] in
-      let newexp = Iast.mkMember base fields None pos in
-      newexp
-    )
-  | Cil.Mem e, Cil.Index _ -> (
       let data_base = translate_exp e  in
       let data_fields = ["pdata"] in
-      let array_base = Iast.mkMember data_base data_fields None pos in
-      let array_index = collect_index offset in
-      let newexp = Iast.mkArrayAt array_base array_index pos in
-      newexp
-    )
-  | Cil.Mem e, Cil.Field _ -> (
-      let data_base = translate_exp e  in
-      let data_fields = ["pdata"] in
-      let member_base = Iast.mkMember data_base data_fields None pos in
-      let member_fields = collect_field offset in
-      let newexp = Iast.mkMember member_base member_fields None pos in
+      let base = Iast.mkMember data_base data_fields None pos in
+      let newexp = create_complex_exp base offset pos in
       newexp
     )
 
@@ -704,10 +709,17 @@ and translate_exp (e: Cil.exp) : Iast.exp =
       match output_typ with
       | Globals.Named output_typ_name -> (
           match input_typ with
-          | Globals.Named "void__star" -> (
-              need_pointer_casting_proc := true;
-              let cast_proc_name = "cast_void_pointer_to_" ^ output_typ_name in
-              Iast.mkCallNRecv cast_proc_name None [input_exp] None pos
+          | Globals.Named input_typ_name -> (
+              if (input_typ_name = "void__star") then (
+                need_pointer_casting_proc := true;
+                let cast_proc_name = "cast_void_pointer_to_" ^ output_typ_name in
+                Iast.mkCallNRecv cast_proc_name None [input_exp] None pos
+              )
+              else if (input_typ_name = output_typ_name) then
+                input_exp
+              else
+                report_error pos ("translate_exp: couldn't cast type 0: " ^ input_typ_name
+                                   ^ " to " ^ output_typ_name)
             )
           | Globals.Int -> (
               match input_exp with
@@ -742,9 +754,7 @@ and translate_exp (e: Cil.exp) : Iast.exp =
           report_error pos ("translate_exp: lval holder of '" ^ lv_str ^ "' is not found.")
       ) in
       lv_holder
-  | Cil.StartOf (_, l) ->
-      let pos = translate_location l in
-      report_error pos "translate_exp: Iast doesn't support Cil.StartOf exp!"
+  | Cil.StartOf (lv, l) -> translate_lval lv
 
 
 and translate_instr (instr: Cil.instr) : Iast.exp list =
