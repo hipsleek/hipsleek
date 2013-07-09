@@ -144,14 +144,15 @@ and hprel= {
 and hprel_def= {
     hprel_def_kind: CP.rel_cat;
     hprel_def_hrel: h_formula; (* LHS *)
+    hprel_def_guard:  h_formula option;
     hprel_def_body: (cond_path_type * formula option) list; (* RHS *)
     hprel_def_body_lib: formula option; (* reuse of existing pred *)
     (* hprel_def_path: cond_path_type; *)
 }
 
-(*temporal: name * hrel * definition body*)
+(*temporal: name * hrel * guard option * definition body*)
 (*actually used to store the constraints on heap predicates inference*)
-and hp_rel_def = CP.rel_cat * h_formula * formula
+and hp_rel_def = CP.rel_cat * h_formula * (h_formula option) * formula
 
 (* and infer_rel_type =  (CP.rel_cat * CP.formula * CP.formula) *)
 
@@ -375,10 +376,11 @@ let mkHprel knd u_svl u_hps pd_svl hprel_l hprel_g hprel_r hprel_p=
     hprel_path = hprel_p;
  }
 
- let mk_hprel_def kind hprel path_opf opflib=
+ let mk_hprel_def kind hprel guard_opt path_opf opflib=
    {
        hprel_def_kind = kind;
        hprel_def_hrel = hprel;
+       hprel_def_guard = guard_opt;
        hprel_def_body =  path_opf;
        hprel_def_body_lib = opflib;
    }
@@ -3827,6 +3829,10 @@ let find_close svl0 eqs0=
   in
   loop_helper svl0 eqs0
 
+let pr_h_formula_opt og=
+  match og with
+    | None -> ""
+    | Some hf -> !print_h_formula hf
 
 let is_HRel hf=
   match hf with
@@ -12888,3 +12894,15 @@ let clear_infer_from_context c1 = c1
 
 (* WN_2_Loc: add p to ts; add new_infer (only those related to pure) from new_ctx into ts *)
 let add_pure_and_infer_from_asserted p new_ctx ts = ts
+
+let combine_guard ogs0=
+  let rec helper ogs res=
+    match ogs with
+      | [] -> join_star_conjunctions_opt res
+      | og::rest -> begin
+        match og with
+          | None -> helper rest res
+          | Some hf -> helper rest (res@[hf])
+        end
+  in
+  helper ogs0 []

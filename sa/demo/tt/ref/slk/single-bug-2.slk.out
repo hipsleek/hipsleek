@@ -41,6 +41,8 @@ G is defined.
 !!! >>>>>> pre-predicates<<<<<<
 !!! >>>>>> step pre-4: remove unused predicates<<<<<<
 !!! >>>>>> pre-predicates: step pre-5: group & simpl impl<<<<<<
+!!! pre-obligation:
+[ next_29_789::node<val_29_83,next_29_84>@M&next_29_84!=null --> emp]
 !!! >>>>>> pre-predicates: step pre-6: combine<<<<<<
 !!! >>>>>> pre-predicates: step pre-7: remove redundant x!=null<<<<<<
 !!! >>>>>> pre-predicates: step pre-8: strengthen<<<<<<
@@ -55,8 +57,8 @@ G is defined.
 *************************************
 [ G(x_41,res_42) ::= 
  x_41::node<val_29_788,next_29_789>@M * HP_5(next_29_789,res_42) * 
- res_42::node<val_34_802,v_null_34_808>@M&v_null_34_808=null & 
- next_29_789!=null
+ res_42::node<val_34_802,v_null_34_808>@M&next_29_789!=null & 
+ v_null_34_808=null
  or x_41::node<val_29_788,next_29_789>@M&res_42=x_41 & next_29_789=null
  ,
  HP_4(a,b) ::= NONE,

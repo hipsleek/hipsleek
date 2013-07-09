@@ -19,12 +19,25 @@ relAssume H_1(next_9,prv) |#| l::node<_,next_9> --> H1(next_9,l).
 
 relAssume H1(l,prv)&l=null --> emp.
 
+//relAssume H_0(prev_19_928,prv) --> prev_19_928=prv.
+//relAssume H_0(prev_19_928,prv) --> emp&forall(l:(prev_19_928=prv | l=null)).
+
 shape_infer [H1,H_1,H_0][].
 
 
 
 /*
 # dll-1.slk
+
+PROBLEMS
+========
+
+1. H_1 should be presented in guarded form
+  Instead of:
+     H_1(next_46,prv_47) ::= H1(next_46,l)
+  EXPECT:
+    H_1(next_9,prv) |#| l::node<_,next_9> ::= H1(next_9,l).
+
 
 (extracted fro hip check-dll.ss)
 [ H1(l_1011,prv_1012) ::= 
@@ -43,10 +56,6 @@ GOT
     or emp&l_47=null,
   H_0(prev_8,prv) ::= NONE]
 
-PROBLEMS
-========
-
-1. H_1 should be presented in guarded form
 
 2. The above result seems to have lost the link between l,l_47
    and is inconsistent with the outcome from check-dll.ss.

@@ -19,8 +19,8 @@ treeG<> == self=null or self::node<_,_,l,r> * l::treeG<> * r::treeG<>;
 global node SENTINEL;
 
 void traverse(node root)
-requires root::treeG<> * SENTINEL::node<_,_,_,_>
-ensures root::treeG<> * SENTINEL::node<_,_,_,_>;
+requires root::treeG<> * SENTINEL::node<_,_,null,null>
+ensures root::treeG<> * SENTINEL::node<_,_,null,null>;
 /*
 infer[H,G]
 requires H(t) * H(p)

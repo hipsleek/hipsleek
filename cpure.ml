@@ -2049,6 +2049,17 @@ and mkForall (vs : spec_var list) (f : formula) lbl pos = match vs with
         else
           ef
 
+and mkForall_disjs_deep (vs : spec_var list) (f : formula) lbl pos =
+  let ps = list_of_disjs f in
+  let irr_ps, rele_ps = List.fold_left (fun (r_ls1,r_ls2) p ->
+      let svl = fv p in
+      let inter = intersect_svl svl vs in
+      if inter = [] then (r_ls1@[p], r_ls2)
+      else (r_ls1, r_ls2@[(p, inter)])
+  ) ([],[]) ps in
+  let quan_rele_ps = List.map (fun (p, quans) -> mkForall quans p lbl pos) rele_ps in
+  disj_of_list (irr_ps@quan_rele_ps) pos
+
 (* same of list_of_conjs *)
 and split_conjunctions =  function
   | And (x, y, _) -> (split_conjunctions x) @ (split_conjunctions y)
@@ -3622,7 +3633,10 @@ and prune_perm_bounds f =
    F1 & F2 & .. & Fn ==> [F1,F2,..,FN] 
    TODO : push exists inside where possible..
 *)
-and list_of_conjs (f0 : formula) : formula list = split_conjunctions f0
+and list_of_conjs_x (f0 : formula) : formula list = split_conjunctions f0
+
+and list_of_conjs (f0 : formula) : formula list = 
+  Debug.no_1 "list_of_conjs"  !print_formula (pr_list !print_formula) split_conjunctions f0
   (*let rec helper f conjs = match f with
     | And (f1, f2, pos) ->
     let tmp1 = helper f2 conjs in
@@ -4187,6 +4201,13 @@ let rec filter_var (f0 : formula) (rele_vars0 : spec_var list) : formula =
   let filtered_f = select_relevants relevants0 unknowns0 rele_var_set in
 	filtered_f
 
+
+let filter_var (f0 : formula) (keep_slv : spec_var list) : formula =
+  let pr1 = !print_formula in
+  let pr2 = !print_svl in
+  Debug.no_2 "filter_var" pr1 pr2 pr1
+      (fun _ _ -> filter_var f0 keep_slv) f0 keep_slv
+
 (* Assumption: f0 is SAT *)
 (*implemented by L2 to replace the old one (the old one does not distinguish primed and unprimed)
 f is in CNF
@@ -4198,10 +4219,10 @@ let filter_var_new_x (f : formula) (keep_slv : spec_var list) : formula =
       | [] -> (res_rele_fs,res_unk_fs,old_keep_svl,incr_keep)
       | f::fs ->
           begin
-              (* let _ = Debug.info_pprint ("svl: " ^ (!print_svl old_keep_svl)) no_pos in *)
-              (* let _ = Debug.info_pprint ("f: " ^ (!print_formula f)) no_pos in *)
+              let _ = Debug.tinfo_hprint (add_str "svl: "  (!print_svl)) old_keep_svl no_pos in
+              let _ = Debug.tinfo_hprint ( add_str "f: "   (!print_formula )) f no_pos in
               let svl = fv f in
-              (* let _ = Debug.info_pprint ("svl f: " ^ (!print_svl svl)) no_pos in *)
+              let _ = Debug.tinfo_hprint (add_str "svl f: "  !print_svl ) svl no_pos in
               let inters = intersect svl old_keep_svl in
               if inters = [] then
                 get_new_rele_svl fs old_keep_svl res_rele_fs (res_unk_fs@[f]) incr_keep

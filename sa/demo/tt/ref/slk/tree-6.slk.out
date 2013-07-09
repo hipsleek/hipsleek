@@ -28,25 +28,25 @@ HP_1 is defined.
 *************************************
 *******relational definition ********
 *************************************
-[ HP_1(right_31_79) ::= 
- right_31_79::node<key_31_797,left_31_798,right_31_799>@M * 
- HP_0(left_31_798) * HP_1(right_31_799)
- or emp&right_31_79=null
- ,
- H(x_80) ::= x_80::node<key_31_797,left_31_798,right_31_799>@M * HP_0(left_31_798) * 
+[ H(x_78) ::= x_78::node<key_31_797,left_31_798,right_31_799>@M * HP_0(left_31_798) * 
 HP_1(right_31_799),
+ HP_1(right_31_80) ::= 
+ right_31_80::node<key_31_797,left_31_798,right_31_799>@M * 
+ HP_0(left_31_798) * HP_1(right_31_799)
+ or emp&right_31_80=null
+ ,
  G(x_81) ::= 
  HP_0(left_31_798) * x_81::node<key_31_797,left_31_798,right_31_799>@M&
- right_31_799=null & left_31_798!=null
+ left_31_798!=null & right_31_799=null
  or HP_1(right_31_799) * x_81::node<key_31_797,left_31_798,right_31_799>@M&
     left_31_798=null
  or x_81::node<key_31_797,left_31_798,right_31_799>@M * G(left_31_798) * 
-    G(right_31_799)&right_31_799!=null & left_31_798!=null
+    G(right_31_799)&left_31_798!=null & right_31_799!=null
  ,
- HP_0(left_31_78) ::= 
- left_31_78::node<key_31_797,left_31_798,right_31_799>@M * 
+ HP_0(left_31_79) ::= 
+ left_31_79::node<key_31_797,left_31_798,right_31_799>@M * 
  HP_0(left_31_798) * HP_1(right_31_799)
- or emp&left_31_78=null
+ or emp&left_31_79=null
  ]
 *************************************
 ====================
