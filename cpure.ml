@@ -8393,6 +8393,15 @@ let is_neq_null_exp (f:formula)=
   Debug.no_1 "is_neq_null_exp" pr1 string_of_bool
       (fun _ -> is_neq_null_exp_x f) f
 
+let rec contains_neq (f:formula) : bool =  match f with
+    | BForm (b1,_) -> (is_neq_exp f) || (is_neq_null_exp f)
+    | Or (f1,f2,_,_)  
+    | And (f1,f2, _) -> (contains_neq f1) || (contains_neq f2) 
+    | Not(f1,_,_)
+    | Forall (_ ,f1,_,_) 
+    | Exists (_ ,f1,_,_) -> (contains_neq f1)  
+    | AndList l -> exists_l_snd contains_exists l
+
 (*neg(x!=y) == x=y; neg(x!=null) === x=null*)
 let neg_neq_x f=
   match f with

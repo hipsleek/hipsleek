@@ -3042,7 +3042,6 @@ let get_spec_from_file prog =
 (* type: ((CP.spec_var * h_formula) * CP.spec_var list) list -> *)
 (*   CP.formula list -> list_context -> list_context option *)
 
-
 let add_infer_hp_contr_to_list_context h_arg_map cps (l:list_context) : list_context option=
   (*TODO: es_cond_path*)
   let es_cond_path = CF.get_list_ctx_cond_path l in

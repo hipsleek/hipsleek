@@ -4782,9 +4782,9 @@ and early_hp_contra_detection_x hec_num prog estate conseq pos =
                   | None -> 
                         (* contra due to direct vars *)
                         let res_es = add_infer_pure_to_estate [pf] new_estate in
-                        (* let _ = new_slk_log r new_estate in *)
-                         res_es
+                        res_es
                   | Some res_ctx ->
+                        (* contra due to HP args *)
                         let res_es_opt = Cformula.estate_opt_of_list_context res_ctx in
                         match res_es_opt with
                           | Some res_es0 ->
@@ -4792,9 +4792,8 @@ and early_hp_contra_detection_x hec_num prog estate conseq pos =
                                   match relass with
 			            | [(_,h,_)] -> add_infer_rel_to_estate h res_es0
 			            | _ -> res_es0 in
-                                (* let _ = new_slk_log r new_estate in *)
                                 res_es
-                          | None -> new_estate (* andreeac to check this one *)
+                          | None -> new_estate (* andreeac to check this one --- cand it ever get here? *)
               in
               (true, Some es)
         | None ->  
@@ -4828,18 +4827,6 @@ and early_hp_contra_detection_add_to_list_context hec_num prog estate conseq pos
   let pr_res = pr_triple string_of_bool (pr_option (Cprinter.string_of_list_context )) pr_none in
   Debug.no_1_num hec_num "early_hp_contra_detection_add_to_list_context" Cprinter.string_of_entail_state_short pr_res 
         (fun _ -> early_hp_contra_detection_add_to_list_context_x hec_num prog estate conseq pos) estate
-
-(* let new_slk_log result es =  *)
-(*   let avoid = CF.is_emp_term conseq in *)
-(*   let avoid = avoid or (not (hec_stack # is_empty)) in *)
-(*   let caller = hec_stack # string_of_no_ln in *)
-(*   let slk_no = (\* if avoid then 0 else *\) Log.get_sleek_proving_id () in *)
-(*   (\* let _ = hec_stack # push slk_no in *\) *)
-(*   (\* let r = hec a b c in *\) *)
-(*   (\* let _ = hec_stack # pop in *\) *)
-(*   let _ = Log.add_new_sleek_logging_entry esv !Globals.do_classic_frame_rule caller (\* avoid *\) false hec_num slk_no orig_ante  *)
-(*     conseq es.es_heap es.es_evars result pos in *)
-(*   () in *)
 
 and early_pure_contra_detection_x hec_num prog estate conseq pos msg is_folding = 
   (* andreeac: check if this step is redundant *)
@@ -5088,8 +5075,7 @@ and heap_entail_conjunct_lhs_x hec_num prog is_folding  (ctx:context) (conseq:CF
               heap_entail()
             else 
               match (r1,prf) with
-                | Some r1, Some prf -> let _ = log_contra_detect 1 conseq r1 pos in 
-                  (r1,prf)
+                | Some r1, Some prf -> let _ = log_contra_detect 1 conseq r1 pos in (r1,prf)
                 | _ ->  heap_entail()
           in
 	  (r1,p1)
@@ -9254,64 +9240,126 @@ and solver_detect_lhs_rhs_contra_x prog estate conseq pos msg =
         
         if (contra) then (c,r)
         else
-          begin
-        (* ================================================= *)
-
-        let infer_vars_hp_rel = estate.es_infer_vars_hp_rel in
-
-        let pr = pr_list (fun sv -> 
-            let hpdecl = Cast.look_up_hp_def_raw prog.Cast.prog_hp_decls (CP.name_of_spec_var sv) in
-            if hpdecl.hp_is_pre then "Pre" else "Post"
-        ) in
-        let _ = DD.tinfo_hprint (add_str "type of infer_vars_hp_rel: " pr) infer_vars_hp_rel no_pos in
-
-        let _ = DD.tinfo_hprint (add_str "infer_vars_hp_rel" Cprinter.string_of_spec_var_list) infer_vars_hp_rel no_pos in
-        (* sort hp_rel vars such that Pre Pred comes bef Post Pred*)
-        let infer_vars_hp_rel = List.fast_sort (fun hp1 hp2 -> 
-            let hpdecl1 = Cast.look_up_hp_def_raw prog.Cast.prog_hp_decls (CP.name_of_spec_var hp1) in
-            let hpdecl2 = Cast.look_up_hp_def_raw prog.Cast.prog_hp_decls (CP.name_of_spec_var hp2) in
-            let h1,h2 = (hpdecl1.hp_is_pre,  hpdecl2.hp_is_pre) in
-            if (h1 = h2) then 0
-            else if (h1 && (not h2)) then (-1)
-            else 1
-        ) infer_vars_hp_rel in
-        
-        let _ = DD.tinfo_hprint (add_str "infer_vars_hp_rel" Cprinter.string_of_spec_var_list) infer_vars_hp_rel no_pos in
-
-        (* trying to infer a contradiction with given spec vars *)
-        let infer_lhs_contra h_inf_args = 
-	  let h_inf_args_add = Gen.BList.difference_eq CP.eq_spec_var h_inf_args estate.es_infer_vars in
-	  let new_estate = {estate with es_infer_vars = h_inf_args_add } in
-          let _ = DD.tinfo_hprint (add_str "h_inf_args" Cprinter.string_of_spec_var_list) h_inf_args no_pos in
-          let _ = DD.tinfo_hprint (add_str "es_infer_vars" Cprinter.string_of_spec_var_list) new_estate.es_infer_vars no_pos in
-          (* let _ = DD.tinfo_hprint (add_str "h_inf_args_add" Cprinter.string_of_spec_var_list) h_inf_args_add no_pos in *)
-	  let r_inf_contr,relass = Inf.infer_lhs_contra_estate 4 new_estate lhs_xpure pos msg  in 
-          r_inf_contr,relass
-        in
-
-        (* search for the first unknown predicate that has a satisfiable entry (can form a contradiction)  *)
-        let rec infer_lhs_contra_helper infer_vars_hp_rel =
-          match infer_vars_hp_rel with
-            | hp_rel0 :: t -> 
-                  let h_inf_args, _ = get_heap_inf_args_hp_rel estate [hp_rel0] in
-                  let rcontr,rel =  infer_lhs_contra h_inf_args in
-                  begin
-                    match rcontr with
-                      | Some _ -> (rcontr,rel)
-                      | None -> 
-                            begin
-                              match rel with
-                                | h::t0 -> rcontr,rel 
-                                | []   -> infer_lhs_contra_helper t
-                            end
-                  end 
-            | [] -> (None, []) in
-        
-        let (c,r)  = infer_lhs_contra_helper infer_vars_hp_rel  in
-        (c,r)
-            end
+          let contr_lst, rel = solver_detect_lhs_rhs_contra_all_sat_HP prog estate lhs_xpure pos msg in
+          match contr_lst with
+            | h::t ->
+                  let h = choose_best_candidate contr_lst in
+                  (h, rel)
+            | []   -> (None,[])
+          (* solver_detect_lhs_rhs_contra_first_sat_HP prog estate lhs_xpure pos msg *)
       end
   in (r_inf_contr,relass)
+
+and choose_best_candidate contr_lst =
+  let rec helper lst =
+    match lst with
+      | []     -> None
+      | (es,f)::[] -> 
+            if not(CP.contains_neq f) then Some (es,f)
+            else Some (List.hd contr_lst) 
+              (* if all formulae contain neq, then just return the head 
+                 of contr_lst ----> it is assumed that this contr_lst is 
+                 sorted according to the rel PreHP <: PostHP  *)
+      | (es,f)::t  -> 
+            if not(CP.contains_neq f) then  Some (es,f)
+            else choose_best_candidate t
+  in helper contr_lst 
+
+(* trying to infer a contradiction with given spec vars *)
+and solver_infer_lhs_contra estate lhs_xpure h_inf_args pos msg = 
+  let h_inf_args_add = Gen.BList.difference_eq CP.eq_spec_var h_inf_args estate.es_infer_vars in
+  let new_estate = {estate with es_infer_vars = h_inf_args_add } in
+  let _ = DD.tinfo_hprint (add_str "h_inf_args" Cprinter.string_of_spec_var_list) h_inf_args no_pos in
+  let _ = DD.tinfo_hprint (add_str "es_infer_vars" Cprinter.string_of_spec_var_list) new_estate.es_infer_vars no_pos in
+  (* let _ = DD.tinfo_hprint (add_str "h_inf_args_add" Cprinter.string_of_spec_var_list) h_inf_args_add no_pos in *)
+  let r_inf_contr,relass = Inf.infer_lhs_contra_estate 4 new_estate lhs_xpure pos msg  in 
+  r_inf_contr,relass
+
+and solver_detect_lhs_rhs_contra_first_sat_HP_x prog estate lhs_xpure pos msg =
+  let infer_vars_hp_rel = estate.es_infer_vars_hp_rel in
+  let _ = DD.tinfo_hprint (add_str "infer_vars_hp_rel" Cprinter.string_of_spec_var_list) infer_vars_hp_rel pos in
+  (* sort hp_rel vars such that Pre Pred comes bef Post Pred*)
+  let infer_vars_hp_rel = List.fast_sort (fun hp1 hp2 -> 
+      let hpdecl1 = Cast.look_up_hp_def_raw prog.Cast.prog_hp_decls (CP.name_of_spec_var hp1) in
+      let hpdecl2 = Cast.look_up_hp_def_raw prog.Cast.prog_hp_decls (CP.name_of_spec_var hp2) in
+      let h1,h2 = (hpdecl1.hp_is_pre,  hpdecl2.hp_is_pre) in
+      if (h1 = h2) then 0
+      else if (h1 && (not h2)) then (-1)
+      else 1
+  ) infer_vars_hp_rel in
+  
+  let _ = DD.tinfo_hprint (add_str "infer_vars_hp_rel" Cprinter.string_of_spec_var_list) infer_vars_hp_rel no_pos in
+
+  (* search for the first unknown predicate that has a satisfiable entry (can form a contradiction)  *)
+  let rec infer_lhs_contra_helper infer_vars_hp_rel =
+    match infer_vars_hp_rel with
+      | hp_rel0 :: t -> 
+            let h_inf_args, _ = get_heap_inf_args_hp_rel estate [hp_rel0] in
+            let rcontr,rel =  solver_infer_lhs_contra estate lhs_xpure h_inf_args pos msg in
+            begin
+              match rcontr with
+                | Some _ -> (rcontr,rel)
+                | None -> 
+                      begin
+                        match rel with
+                          | h::t0 -> rcontr,rel 
+                          | []   -> infer_lhs_contra_helper t
+                      end
+            end 
+      | [] -> (None, []) in
+  let (c,r)  = infer_lhs_contra_helper infer_vars_hp_rel  in
+  (c,r)
+
+and solver_detect_lhs_rhs_contra_first_sat_HP prog estate lhs_xpure pos msg =
+  let pr_estate = Cprinter.string_of_entail_state_short in
+  let pr_es (es,e) =  pr_pair pr_estate Cprinter.string_of_pure_formula (es,e) in
+  let pr = CP.print_lhs_rhs in
+  let pr_3 (_,lr,b) =  pr_pair (pr_list pr) string_of_bool (lr,b) in
+  Debug.no_2 "solver_detect_lhs_rhs_contra_first_sat_HP_x" pr_estate Cprinter.string_of_mix_formula  
+      (pr_pair (pr_option pr_es) (pr_list pr_3)) (fun _ _ -> solver_detect_lhs_rhs_contra_first_sat_HP_x prog estate lhs_xpure pos msg ) estate lhs_xpure
+
+and solver_detect_lhs_rhs_contra_all_sat_HP_x prog estate lhs_xpure pos msg =
+  let infer_vars_hp_rel = estate.es_infer_vars_hp_rel in
+  let _ = DD.tinfo_hprint (add_str "infer_vars_hp_rel" Cprinter.string_of_spec_var_list) infer_vars_hp_rel pos in
+  (* sort hp_rel vars such that Pre Pred comes bef Post Pred*)
+  let infer_vars_hp_rel = List.fast_sort (fun hp1 hp2 -> 
+      let hpdecl1 = Cast.look_up_hp_def_raw prog.Cast.prog_hp_decls (CP.name_of_spec_var hp1) in
+      let hpdecl2 = Cast.look_up_hp_def_raw prog.Cast.prog_hp_decls (CP.name_of_spec_var hp2) in
+      let h1,h2 = (hpdecl1.hp_is_pre,  hpdecl2.hp_is_pre) in
+      if (h1 = h2) then 0
+      else if (h1 && (not h2)) then (-1)
+      else 1
+  ) infer_vars_hp_rel in
+  let _ = DD.tinfo_hprint (add_str "infer_vars_hp_rel" Cprinter.string_of_spec_var_list) infer_vars_hp_rel no_pos in
+
+  let h_inf_args, h_arg_map = get_heap_inf_args_hp_rel estate infer_vars_hp_rel in
+  let rcontr,rel =  solver_infer_lhs_contra estate lhs_xpure h_inf_args pos msg in
+
+  let r_contr_lst = match rcontr with
+    | Some (es,f) -> 
+	  let fv = CP.fv f in
+          let rcontr_lst = List.fold_left (fun x hp_rel0 -> 
+              let h_inf_args0, _ = get_heap_inf_args_hp_rel estate [hp_rel0] in
+              let diff = CP.diff_svl fv  h_inf_args0 in
+              let p = CP.mkForall diff f None pos in 
+              if TP.is_sat_raw (MCP.mix_of_pure p) then
+                let np = (Omega.simplify (CP.arith_simplify_new p)) in
+                let _ = DD.tinfo_hprint (add_str "p" !CP.print_formula) p no_pos in
+                let _ = DD.tinfo_hprint (add_str "p(omega simpl)" !CP.print_formula) (Omega.simplify p) no_pos in
+                x@[(es,np)]
+              else x
+          ) [] infer_vars_hp_rel in
+          rcontr_lst
+    | None -> [] in
+  (r_contr_lst, rel)
+
+and solver_detect_lhs_rhs_contra_all_sat_HP prog estate lhs_xpure pos msg =
+  let pr_estate = Cprinter.string_of_entail_state(* _short *) in
+  let pr_es (es,e) =  pr_pair pr_estate Cprinter.string_of_pure_formula (es,e) in
+  let pr = CP.print_lhs_rhs in
+  let pr_3 (_,lr,b) =  pr_pair (pr_list pr) string_of_bool (lr,b) in
+  Debug.no_2 "solver_detect_lhs_rhs_contra_all_sat_HP" pr_estate Cprinter.string_of_mix_formula  
+      (pr_pair (pr_list pr_es) (pr_list pr_3)) (fun _ _ -> solver_detect_lhs_rhs_contra_all_sat_HP_x prog estate lhs_xpure pos msg ) estate lhs_xpure
 
 and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:CP.spec_var list) is_folding pos =
   if not(Context.is_complex_action a) then
