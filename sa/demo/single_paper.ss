@@ -23,7 +23,7 @@ infer[H,G] requires H(x) ensures G(res,x);
        node t = last(x.next);
        //t.val = t.val+1;
        node v = t.next;
-       dprint;
+       // dprint;
        assert v' = null assume true;//'
        return t;
        }

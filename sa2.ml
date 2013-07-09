@@ -51,7 +51,8 @@ let rec find_imply_subst_x prog unk_hps link_hps equal_hps complex_hps constrs n
       let qvars2, f2 = CF.split_quantifiers cs2.CF.hprel_rhs in
       match f1,f2 with
       | CF.Base lhs1, CF.Base rhs2 ->
-            let r = SAU.find_imply prog (List.map fst cs1.CF.unk_hps) (List.map fst cs2.CF.unk_hps) lhs1 cs1.CF.hprel_rhs cs2.CF.hprel_lhs rhs2 cs1.CF.hprel_guard complex_hps in
+            let r = SAU.find_imply prog (List.map fst cs1.CF.unk_hps) (List.map fst cs2.CF.unk_hps)
+              lhs1 cs1.CF.hprel_rhs cs2.CF.hprel_lhs rhs2 cs1.CF.hprel_guard equal_hps complex_hps in
             begin
               match r with
                 | Some (l,r,lhs_ss, rhs_ss) ->
@@ -153,7 +154,7 @@ and subst_cs_w_other_cs_x prog post_hps dang_hps link_hps equal_hps complex_hps 
 
 let rec subst_cs_w_other_cs prog post_hps dang_hps link_hps equal_hps complex_hps constrs new_cs=
   let pr1 = pr_list_ln Cprinter.string_of_hprel in
-   Debug.no_1 "subst_cs_w_other_cs" pr1 pr1
+   Debug.no_1 "subst_cs_w_other_cs" pr1 (pr_pair string_of_bool pr1)
        (fun _ -> subst_cs_w_other_cs_x prog post_hps dang_hps link_hps equal_hps complex_hps constrs  new_cs) constrs
 
 (* let subst_cs_x prog dang_hps constrs new_cs = *)
@@ -198,25 +199,29 @@ let apply_transitive_impl_fix prog post_hps callee_hps (* hp_rel_unkmap *) dang_
       in
       DD.binfo_pprint ">>>>>> step 3b: do apply_transitive_imp <<<<<<" no_pos;
       (* let constrs2, new_cs2, new_non_unk_hps = subst_cs prog dang_hps constrs new_cs1 in *)
-      let is_changed, constrs2,new_cs2 = subst_cs prog post_hps dang_hps link_hps (frozen_hps@equal_hps)
+      if equal_hps = [] then
+        (*stop*)
+        let _ =  if complex_hps <> [] then DD.binfo_pprint (" synthesize: " ^ (!CP.print_svl complex_hps) ) no_pos
+        else ()
+        in
+        (constrs@new_cs1,[])
+      else
+        let is_changed, constrs2,new_cs2 = subst_cs prog post_hps dang_hps link_hps (frozen_hps@equal_hps)
         complex_hps constrs new_cs1 in
-      (*for debugging*)
-      let _ = DD.ninfo_pprint ("   new constrs:" ^ (let pr = pr_list_ln Cprinter.string_of_hprel_short in pr constrs2)) no_pos in
-      let helper (constrs: CF.hprel list) new_cs=
-        let pr = pr_list_ln Cprinter.string_of_hprel_short in
-        Debug.no_1 "apply_transitive_imp_fix" pr (fun (cs,_) -> pr cs)
-            (fun _ -> helper_x constrs new_cs) new_cs
+        (*for debugging*)
+        let _ = DD.ninfo_pprint ("   new constrs:" ^ (let pr = pr_list_ln Cprinter.string_of_hprel_short in pr constrs2)) no_pos in
+        let helper (constrs: CF.hprel list) new_cs=
+          let pr = pr_list_ln Cprinter.string_of_hprel_short in
+          Debug.no_1 "apply_transitive_imp_fix" pr (fun (cs,_) -> pr cs)
+              (fun _ -> helper_x constrs new_cs) new_cs
+        in
+        (*END for debugging*)
+        let norm_constrs, non_unk_hps1 =
+          let constrs, new_constrs = if is_changed then (new_cs2, constrs2) else (constrs, new_cs1) in
+          (* helper new_cs2 constrs2 (frozen_hps@equal_hps) in *)
+          helper constrs new_constrs (frozen_hps@equal_hps)
       in
-      (*END for debugging*)
-      let norm_constrs, non_unk_hps1 =
-        if (* List.length new_cs2 = 0 *) not is_changed then
-          let _ =  if complex_hps <> [] then DD.binfo_pprint (" synthesize: " ^ (!CP.print_svl complex_hps) ) no_pos
-          else ()
-          in
-          (constrs2@new_cs2,[])
-        else
-          helper new_cs2 constrs2 (frozen_hps@equal_hps) in
-      ( norm_constrs, [])
+      (norm_constrs, [])
     end
   in
   let _ = DD.ninfo_pprint ("   constrs:" ^ (let pr = pr_list_ln Cprinter.string_of_hprel_short in pr constrs)) no_pos in
@@ -1537,6 +1542,9 @@ and infer_shapes_init_post_x prog (constrs0: CF.hprel list) non_ptr_unk_hps sel_
   let pre_defs, pre_hps = SAU.extract_fwd_pre_defs pre_hps_need_fwd pre_defs in
   let pair_names_defs = generalize_hps_par_def prog false non_ptr_unk_hps unk_hps1 link_hps sel_post_hps pre_defs pre_hps par_defs in
   let hp_names,hp_defs = List.split pair_names_defs in
+  let _ = if hp_names = [] then () else
+    DD.binfo_pprint (" synthesize: " ^ (!CP.print_svl hp_names) )no_pos
+  in
   (hp_names,hp_defs,unk_hps1,unk_map1)
 
 and infer_shapes_init_post prog (constrs0: CF.hprel list) non_ptr_unk_hps sel_post_hps unk_hps link_hps hp_rel_unkmap

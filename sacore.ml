@@ -33,7 +33,7 @@ let search_pred_4_equal_x constrs post_hps frozen_hps=
     match l_hpargs with
       | [] -> (pre_preds, rem_constrs@[cs])
       | [(hp,_)] -> if CP.mem_svl hp ignored_hps then (pre_preds, rem_constrs@[cs]) else
-          pre_preds@[(hp,cs, CP.diff_svl rhps ignored_hps)],rem_constrs
+          pre_preds@[(hp,cs, CP.diff_svl rhps (hp::ignored_hps))],rem_constrs
       | _ -> let linter = List.fold_left (fun ls (hp,args) ->
             if not (CP.mem_svl hp ignored_hps) && List.exists (fun (_,args1) ->
                 SAU.eq_spec_var_order_list args args1
@@ -42,7 +42,7 @@ let search_pred_4_equal_x constrs post_hps frozen_hps=
             else ls
         ) [] l_hpargs in
             if linter  = [] then (pre_preds, rem_constrs@[cs]) else
-          pre_preds@(List.map (fun hp -> (hp,cs, CP.diff_svl rhps ignored_hps)) linter), rem_constrs
+          pre_preds@(List.map (fun hp -> (hp,cs, CP.diff_svl rhps (hp::ignored_hps))) linter), rem_constrs
   in
   let rec partition_equal (cand_equal, complex_hps) ls_pre=
    match ls_pre with

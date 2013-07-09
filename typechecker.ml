@@ -2449,7 +2449,7 @@ let proc_mutual_scc_shape_infer iprog prog scc_procs =
     let rel_defs = Sa2.rel_def_stk in
     if not(rel_defs# is_empty) then
       begin
-        print_endline "*************************************";
+        print_endline "\n*************************************";
         print_endline "*******relational definition ********";
         print_endline "*************************************";
         if !Globals.testing_flag then print_endline "<dstart>"; 

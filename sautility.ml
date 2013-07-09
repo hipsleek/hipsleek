@@ -2370,8 +2370,10 @@ step 1: apply transitive implication
         B |= C ---> E
   ---------------------------------
   c1 = A |- B ;c2 = C |- D ===> c3=A |- D * E
+
+Note: subst if the lhs is equal (frozen) and not complex
 *)
-let rec find_imply prog lunk_hps runk_hps lhs1 rhs1 lhs2 rhs2 lguard1 complex_hps=
+let rec find_imply prog lunk_hps runk_hps lhs1 rhs1 lhs2 rhs2 lguard1 equal_hps complex_hps=
   let sort_hps_x hps = List.sort (fun (CP.SpecVar (_, id1,_),_)
       (CP.SpecVar (_, id2, _),_)-> String.compare id1 id2) hps
   in
@@ -2446,8 +2448,10 @@ let rec find_imply prog lunk_hps runk_hps lhs1 rhs1 lhs2 rhs2 lguard1 complex_hp
   let r_rhrels = sort_hps (List.map transform_hrel rhrels) in
   (*m_args2: matched svl of rhs2*)
   let subst,matched_hps, m_args2,rhs_hps_rename = check_hrels_imply l_rhrels r_rhrels ldns rdns (List.map fst l_rhrels) [] [] [] [] in
+  let _ = Debug.ninfo_pprint ("    matched_hps: " ^ (!CP.print_svl matched_hps)) no_pos in
+  let _ = Debug.ninfo_pprint ("    complex_hps: " ^ (!CP.print_svl complex_hps)) no_pos in
   let r=
-    if matched_hps = [] || (CP.intersect_svl matched_hps complex_hps <> []) then None
+    if matched_hps = [] || ((CP.intersect_svl matched_hps complex_hps <> []) (* || CP.intersect_svl matched_hps equal_hps = [] *)) then None
     else
       begin
         (*for debugging*)
