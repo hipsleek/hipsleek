@@ -5872,8 +5872,9 @@ and rename_exp (ren:(ident*ident) list) (f:Iast.exp):Iast.exp =
     | Iast.Finally b-> Iast.Finally {b with Iast.exp_finally_body = helper ren b.Iast.exp_finally_body}
     | Iast.Member b ->
           Iast.Member {b with 
-              Iast.exp_member_base = helper ren b.Iast.exp_member_base;
-              Iast.exp_member_fields = List.map (subid ren ) b.Iast.exp_member_fields}
+              Iast.exp_member_base = helper ren b.Iast.exp_member_base}
+              (* bug introduced by WN *)
+              (* Iast.exp_member_fields = List.map (subid ren ) b.Iast.exp_member_fields *)
               (* An Hoa *)
     | Iast.ArrayAlloc b-> 
           Iast.ArrayAlloc {b with Iast.exp_aalloc_dimensions = List.map (helper ren) b.Iast.exp_aalloc_dimensions}

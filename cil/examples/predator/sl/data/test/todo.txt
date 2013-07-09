@@ -1,3 +1,0 @@
-- Put "___sl_summary("....");" at the beginning and end of the code segment you want to capture summary.
-- TODO: Try to implement the method to handle capturing summary of a code segment instead of handlePlot
-
