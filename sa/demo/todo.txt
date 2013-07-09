@@ -4856,7 +4856,7 @@ How come the processing message for H_9 is
 not printed??
 
 =====================================================================
-# single_paper.ss
+# single_paper.ss: FIXED
 
 [ H(x) --> x::node<val_20_942,next_20_943>@M * HP_944(next_20_943),
 

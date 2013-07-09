@@ -1561,7 +1561,7 @@ and infer_shapes_init_post prog (constrs0: CF.hprel list) non_ptr_unk_hps sel_po
 
  (*for each oblg generate new constrs with new hp post in rhs*)
     (*call to infer_shape? proper? or post?*)
-and infer_shapes_from_fresh_obligation_x iprog cprog proc_name cond_path (constrs0: CF.hprel list) callee_hps non_ptr_unk_hps sel_lhps sel_rhps sel_post_hps
+and infer_shapes_from_fresh_obligation_x iprog cprog proc_name is_pre cond_path (constrs0: CF.hprel list) callee_hps non_ptr_unk_hps sel_lhps sel_rhps sel_post_hps
       unk_hpargs link_hpargs need_preprocess hp_rel_unkmap detect_dang pre_defs post_defs def_hps=
   let collect_ho_ass (acc_constrs, post_no_def) cs=
     let lhs_hps = CF.get_hp_rel_name_formula cs.CF.hprel_lhs in
@@ -1570,7 +1570,8 @@ and infer_shapes_from_fresh_obligation_x iprog cprog proc_name cond_path (constr
     let rinfer_hps =  (CP.diff_svl (rhs_hps) def_hps) in
     let infer_hps = CP.remove_dups_svl (linfer_hps@rinfer_hps) in
     if infer_hps = [] then (acc_constrs, post_no_def) else
-      let f = wrap_proving_kind "POST/PRE OBLIGATION" (SAC.do_entail_check infer_hps cprog) in
+      let log_str = if is_pre then "PRE OBLIGATION" else "POST OBLIGATION" in
+      let f = wrap_proving_kind log_str (SAC.do_entail_check infer_hps cprog) in
       let new_constrs = f cs in
       (acc_constrs@new_constrs, post_no_def@linfer_hps)
   in
@@ -1604,7 +1605,8 @@ and infer_shapes_from_fresh_obligation_x iprog cprog proc_name cond_path (constr
     ) [] hp_defs in
     (hp_names,hp_defs,unk_hpargs2,[])
 
-and infer_shapes_from_fresh_obligation iprog cprog proc_name cond_path (constrs0: CF.hprel list) callee_hps non_ptr_unk_hps sel_lhps sel_rhps sel_post_hps
+and infer_shapes_from_fresh_obligation iprog cprog proc_name is_pre cond_path (constrs0: CF.hprel list)
+      callee_hps non_ptr_unk_hps sel_lhps sel_rhps sel_post_hps
       unk_hps link_hps need_preprocess hp_rel_unkmap detect_dang pre_defs post_defs def_hps=
   let pr1 = pr_list_ln Cprinter.string_of_hprel in
   let pr2 = !CP.print_svl in
@@ -1612,12 +1614,14 @@ and infer_shapes_from_fresh_obligation iprog cprog proc_name cond_path (constrs0
   let pr4 = pr_list (pr_pair !CP.print_sv pr2) in
   let pr5 (a,b,c,_) = (pr_triple pr2 pr3 pr4) (a,b,c) in
   Debug.no_1 "infer_shapes_from_obligation" pr1 pr5
-      (fun _ -> infer_shapes_from_fresh_obligation_x iprog cprog proc_name cond_path constrs0 callee_hps non_ptr_unk_hps sel_lhps sel_rhps sel_post_hps unk_hps
+      (fun _ -> infer_shapes_from_fresh_obligation_x iprog cprog proc_name is_pre cond_path constrs0
+          callee_hps non_ptr_unk_hps sel_lhps sel_rhps sel_post_hps unk_hps
           link_hps need_preprocess hp_rel_unkmap detect_dang pre_defs post_defs def_hps)
       constrs0
 
 
-and infer_shapes_from_obligation_x iprog prog proc_name is_pre cond_path (constrs0: CF.hprel list) callee_hps non_ptr_unk_hps sel_post_hps unk_hpargs link_hpargs need_preprocess hp_rel_unkmap detect_dang pre_defs post_defs def_hps=
+and infer_shapes_from_obligation_x iprog prog proc_name is_pre cond_path (constrs0: CF.hprel list)
+      callee_hps non_ptr_unk_hps sel_post_hps unk_hpargs link_hpargs need_preprocess hp_rel_unkmap detect_dang pre_defs post_defs def_hps=
   (*TODO: tupled preds should be infer after the obligation (from the below rem_constrs)*)
   (* let def_hps_w_tupled = List.fold_left (fun ls (hp_kind, _,_,_) -> *)
   (*     match hp_kind with *)
@@ -1629,7 +1633,7 @@ and infer_shapes_from_obligation_x iprog prog proc_name is_pre cond_path (constr
     let rhs_hps = CF.get_hp_rel_name_formula cs.CF.hprel_rhs in
     let dep_define_hps1, rem_lhs = List.partition (fun hp -> CP.mem_svl hp def_hps) lhs_hps in
     let dep_define_hps2, rem_rhs = List.partition (fun hp -> CP.mem_svl hp def_hps) rhs_hps in
-    if (rem_lhs = [] && rem_rhs=[]) ||(is_pre && rem_rhs <> []) || ((not is_pre) && rem_rhs <> []) then
+    if (rem_lhs = [] && rem_rhs=[]) ||(is_pre && rem_rhs <> []) || ((not is_pre) && (rem_rhs = [] || rem_lhs <> [])) then
       (r_lhs, r_rhs, dep_def_hps, r_oblg_constrs, r_rem_constrs@[cs])
     else
       (r_lhs@rem_lhs, r_rhs@rem_rhs, dep_def_hps@dep_define_hps1@dep_define_hps2,r_oblg_constrs@[cs], r_rem_constrs)
@@ -1653,7 +1657,7 @@ and infer_shapes_from_obligation_x iprog prog proc_name is_pre cond_path (constr
       in_hp_names chprels_decl oblg_constrs in
     (*for each oblg generate new constrs with new hp post in rhs*)
     (*call to infer_shape? proper? or post?*)
-    infer_shapes_from_fresh_obligation iprog prog proc_name cond_path constrs2
+    infer_shapes_from_fresh_obligation iprog prog proc_name is_pre cond_path constrs2
        callee_hps non_ptr_unk_hps sel_lhs_hps sel_rhs_hps sel_post_hps unk_hpargs link_hpargs
         need_preprocess hp_rel_unkmap detect_dang pre_defs post_defs def_hps
 
