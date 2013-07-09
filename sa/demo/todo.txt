@@ -4640,6 +4640,15 @@ PROBLEM
 
   URGENT (example used in paper)
 
+search_pred_4_equal@1 EXIT out :(
+ [(H, H(x,y) --> x::node<next_15_797,prev_15_798>@M * HP_9(next_15_797,y) * 
+  HP_0(prev_15_798,y) * HP_1(y,x)),
+ (HP_9, HP_9(next_15_797,y)&next_15_797=null --> emp),
+ (HP_1, HP_1(y,x) --> y::node<next_21_820,prev_21_821>@M * HP_2(next_21_820,x) * 
+
+Correct order for processing : HP_1; H; HP_9
+
+
 relAssume 
   H(x,y)&true --> x::node<next_15_797,prev_15_798>@M * 
   HP_9(next_15_797,y) * HP_0(prev_15_798,y) * HP_1(y,x).
@@ -4764,6 +4773,11 @@ For the first divide, I would first process H_2.
 Then H_3.
 Finally H, where H_2 and H_3 could be both inlined.
 
+ISSUE
+=====
+Do we convert from guard to equation?
+Maybe OK.
+
 *************************************
 *******relational definition ********
 *************************************
@@ -4771,6 +4785,18 @@ Finally H, where H_2 and H_3 could be both inlined.
   H_2(left_25_35)<-> H(left_25_35)
   H(x_36)<-> x_36::node<left_25_800,right_25_801>@M * H_2(left_25_800) * 
 H_3(right_25_801)
+*************************************
+
+PROBLEM
+=======
+H should be duplicated below.
+
+*************************************
+*******relational definition ********
+*************************************
+  H_3(right_25_37)<-> emp&right_25_37=null
+*************************************
+
 =====================================================================
 # sorted-2c.slk 
 
@@ -4819,6 +4845,7 @@ DESIGN CONSIDERATION
  and would be identical to previous form.
 
 =====================================================================
+
 =====================================================================
 =====================================================================
 =====================================================================

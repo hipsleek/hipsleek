@@ -55,7 +55,7 @@ let search_pred_4_equal constrs post_hps=
   let pr1 = Cprinter.string_of_hprel_short in
   let pr2 = pr_list_ln (pr_pair !CP.print_sv pr1) in
   let pr3 = pr_list_ln pr1 in
-  Debug.no_2 "search_pred_4_equal" pr3 !CP.print_svl (pr_triple pr2 pr3 !CP.print_svl)
+  Debug.ho_2 "search_pred_4_equal" pr3 !CP.print_svl (pr_triple pr2 pr3 !CP.print_svl)
       (fun _ _ -> search_pred_4_equal_x constrs post_hps)
       constrs post_hps
 

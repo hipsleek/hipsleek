@@ -36,6 +36,13 @@ shape_infer [H,HP_1,HP_9][].
 /*
 # dll-pap-1.slk
 
+search_pred_4_equal@1 EXIT out :(
+ [(H, H(x,y) --> x::node<next_15_797,prev_15_798>@M * HP_9(next_15_797,y) * 
+  HP_0(prev_15_798,y) * HP_1(y,x)),
+ (HP_9, HP_9(next_15_797,y)&next_15_797=null --> emp),
+ (HP_1, HP_1(y,x) --> y::node<next_21_820,prev_21_821>@M * HP_2(next_21_820,x) * 
+
+Correct order for processing : HP_1; H; HP_9
 
 GOT
 ===
