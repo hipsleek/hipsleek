@@ -4772,6 +4772,52 @@ Finally H, where H_2 and H_3 could be both inlined.
   H(x_36)<-> x_36::node<left_25_800,right_25_801>@M * H_2(left_25_800) * 
 H_3(right_25_801)
 =====================================================================
+# sorted-2c.slk 
+
+  Design Issue:
+  (taken from check-sorted-2.ss)
+
+infer [H,G,H29,H30]
+H29(val_27,v) * H30(next_28,v) * x::node<val_27,next_28>@M
+ &x=x' & v=v' & t_31'=val_27 & t_31'<v' & next_28=v_node_9'
+ |-  H(v_node_9',t_31'). 
+print residue.
+
+
+GOT
+===
+ inferred hprel: 
+  [H30(v_node_9',v@NI)&
+     val_27<v |#| x::node<val_27,v_node_9'>@M --> H(v_node_9',val_27@NI)]
+
+EXPECTED
+========
+ inferred hprel: 
+  [H30(v_node_9',v@NI)&
+     |#| x::node<val_27,v_node_9'>@M --> H(v_node_9',val_27@NI)]
+
+
+DESIGN CONSIDERATION
+====================
+
+ Either pure guard var_27<v or heap-guard
+   x::node<val_27,v_node_9'>@M is sufficient
+ since it would help provide the val_27 instantiation.
+
+ There is no need for both to be present.
+
+ It is better to heap guard, as it is easier to locate
+ the instantiation. Hence, I suggest dropping the
+ pure guard. This would be helpful if we had a different
+ scenario:
+
+ H30(next_8,v)&
+  val_7<v |#| x::node<val_7,next_8>@M --> H(next_8,val_7).
+
+ which appears to have a contradiction to previous.
+ Heap guard would still pick the expected value;
+ and would be identical to previous form.
+
 =====================================================================
 =====================================================================
 =====================================================================

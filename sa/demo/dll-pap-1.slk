@@ -36,6 +36,24 @@ shape_infer [H,HP_1,HP_9][].
 /*
 # dll-pap-1.slk
 
+
+GOT
+===
+ H(x_59,y_60) ::= x_59::node<next_15_797,prev_15_798>@M 
+   * HP_9(next_15_797,y_60) * HP_0(prev_15_798,y_60) * HP_1(y_60,x_59),
+ HP_1(y_61,x_62) ::= y_61::node<next_21_820,prev_21_821>@M 
+    * HP_2(next_21_820,x_62) * HP_3(prev_21_821,x_62),
+ HP_9(next_15_63,y_64) ::= emp&next_15_63=null,
+ HP_2(a,b) ::= NONE,
+
+SEE ALGO BELOW on how to transform complex LHS for
+H_9 by ridding HP_1.
+
+NOTE : H, HP_1 should be confirmed before H_9.
+ When processing H_9, we may use defns of H,HP_1 to 
+ help us simplify
+
+
 GOT which is incorrect
 ===
 H(x_85,y_86) ::=  
