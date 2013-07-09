@@ -184,16 +184,22 @@ let apply_transitive_impl_fix prog post_hps callee_hps (* hp_rel_unkmap *) dang_
   (*find equal pre-preds: has one assumption.
     in the new algo, those will be generalized as equiv. do not need to substed
   *)
-  let equal_cands,_, complex_hps = SAC.search_pred_4_equal constrs post_hps in
-  let equal_hps = List.map fst equal_cands in
-  let rec helper_x (constrs: CF.hprel list) new_cs =
+  (*frozen_hps: it is synthesized already*)
+  let rec helper_x (constrs: CF.hprel list) new_cs frozen_hps =
     DD.binfo_pprint ">>>>>> step 3a: simplification <<<<<<" no_pos;
     let new_cs1 = (* SAU.simplify_constrs prog unk_hps *) new_cs in
-     Debug.ninfo_hprint (add_str "apply_transitive_imp LOOP: " (pr_list_ln Cprinter.string_of_hprel)) constrs no_pos;
+    (*  Debug.ninfo_hprint (add_str "apply_transitive_imp LOOP: " (pr_list_ln Cprinter.string_of_hprel)) constrs no_pos; *)
     begin
-        DD.binfo_pprint ">>>>>> step 3b: do apply_transitive_imp <<<<<<" no_pos;
-        (* let constrs2, new_cs2, new_non_unk_hps = subst_cs prog dang_hps constrs new_cs1 in *)
-      let is_changed, constrs2,new_cs2 = subst_cs prog post_hps dang_hps link_hps equal_hps complex_hps constrs new_cs1 in
+      let equal_cands, complex_hps = SAC.search_pred_4_equal new_cs1 post_hps frozen_hps in
+      let equal_hps = List.map fst equal_cands in
+      let _ = if equal_hps <> [] then
+        DD.binfo_pprint (" synthesize: " ^ (!CP.print_svl equal_hps) )no_pos
+      else DD.binfo_pprint (" synthesize: " ^ (!CP.print_svl complex_hps) )no_pos
+      in
+      DD.binfo_pprint ">>>>>> step 3b: do apply_transitive_imp <<<<<<" no_pos;
+      (* let constrs2, new_cs2, new_non_unk_hps = subst_cs prog dang_hps constrs new_cs1 in *)
+      let is_changed, constrs2,new_cs2 = subst_cs prog post_hps dang_hps link_hps (frozen_hps@equal_hps)
+        complex_hps constrs new_cs1 in
       (*for debugging*)
       let _ = DD.ninfo_pprint ("   new constrs:" ^ (let pr = pr_list_ln Cprinter.string_of_hprel_short in pr constrs2)) no_pos in
       let helper (constrs: CF.hprel list) new_cs=
@@ -205,12 +211,12 @@ let apply_transitive_impl_fix prog post_hps callee_hps (* hp_rel_unkmap *) dang_
       let norm_constrs, non_unk_hps1 =
         if (* List.length new_cs2 = 0 *) not is_changed then (constrs2@new_cs2,[])
         else
-          helper new_cs2 constrs2 in
+          helper new_cs2 constrs2 (frozen_hps@equal_hps) in
       ( norm_constrs, [])
     end
   in
   let _ = DD.ninfo_pprint ("   constrs:" ^ (let pr = pr_list_ln Cprinter.string_of_hprel_short in pr constrs)) no_pos in
-  helper_x [] constrs
+  helper_x [] constrs []
 
 (***************************************************************
                       END APPLY TRANS IMPL
@@ -1478,8 +1484,8 @@ let rec infer_shapes_init_pre_x prog (constrs0: CF.hprel list) callee_hps non_pt
   let _ = DD.binfo_pprint ">>>>>> pre-predicates: step pre-5: group & simpl impl<<<<<<" no_pos in
   let pr_par_defs,rem_constr1 = get_par_defs_pre constrs0 in
   let pr1 = pr_list_ln  Cprinter.string_of_hprel_short in
-  if rem_constr1!=[] then
-    DD.ninfo_pprint ("pre-obligation:\n" ^ (pr1 rem_constr1)) no_pos;
+  if rem_constr1 !=[] then
+    DD.binfo_pprint ("pre-obligation:\n" ^ (pr1 rem_constr1)) no_pos;
   let _ = DD.binfo_pprint ">>>>>> pre-predicates: step pre-6: combine<<<<<<" no_pos in
   let par_defs, rem_constrs2, hconj_unify_cond = combine_pdefs_pre prog unk_hps1 link_hps pr_par_defs in
   let _ = DD.binfo_pprint ">>>>>> pre-predicates: step pre-7: remove redundant x!=null<<<<<<" no_pos in
@@ -1620,7 +1626,7 @@ and infer_shapes_from_obligation_x iprog prog proc_name is_pre cond_path (constr
     (*the remain contraints will be treated as tupled ones.*)
     let sel_lhs_hps, sel_rhs_hps, dep_def_hps, oblg_constrs, rem_constr = List.fold_left classify_hps ([],[],[],[],[]) constrs1 in
     if oblg_constrs = [] then ([],[],unk_hpargs,hp_rel_unkmap) else
-      let _ = DD.info_pprint ("dep_def_hps: " ^ (!CP.print_svl dep_def_hps)) no_pos in
+      (* let _ = DD.info_pprint ("dep_def_hps: " ^ (!CP.print_svl dep_def_hps)) no_pos in *)
       let need_trans_hprels = List.filter (fun (hp_kind, _,_,_) ->
         match hp_kind with
           |  CP.HPRelDefn (hp,_,_) -> CP.mem_svl hp dep_def_hps

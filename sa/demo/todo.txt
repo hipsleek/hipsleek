@@ -4528,7 +4528,7 @@ Better to have:
 
 (as we do not have any definition yet)
 =====================================================================
-# loop-4.ss
+# loop-4.ss: FIXED
 
 (minor)
 
@@ -4579,7 +4579,7 @@ transform and confirm P.
  // unfold H_2 which has a simple RHS
  P(x_906) ::= x_906::node<next_1>@M * P(next_1),
 =====================================================================
-# dll-1.slk
+# dll-1.slk: FIXED
 
 (extracted fro hip check-dll.ss)
 
@@ -4636,7 +4636,7 @@ PROBLEM
     H_1(next_9,prv) |#| l::node<_,next_9> ::= H1(next_9,l).
 
 ======================================================================
-# dll-pap-1.slk 
+# dll-pap-1.slk : FIXED (synthesis order is printed also)
 
   URGENT (example used in paper)
 
@@ -4731,7 +4731,7 @@ pre-predicate? We need to do so for soundness.
 It is similar to post-obligation, where we may get
 some extra relational assumption.
 =====================================================================
-# pre-2a.slk
+# pre-2a.slk: FIXED
 
 relAssume   P(x) --> x::node<q>*P2(q).
 
