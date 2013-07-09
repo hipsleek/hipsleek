@@ -1674,7 +1674,7 @@ and infer_shapes_from_obligation_x iprog prog proc_name is_pre cond_path (constr
       else (pre_defs,post_defs@oblg_defs1)
       in
       let oblg_hps2, oblg_defs2, unk_hpargs2,unk_map2= infer_shapes_from_obligation iprog prog proc_name is_pre cond_path rem_constr callee_hps [] sel_post_hps unk_hpargs1
-    link_hpargs need_preprocess unk_map1 detect_dang (pre_defs1) post_defs1 (def_hps@oblg_hps1) in
+    link_hpargs need_preprocess unk_map1 detect_dang (pre_defs1) post_defs1 (def_hps(* @oblg_hps1 *)) in
       (oblg_hps1@oblg_hps2, oblg_defs1@oblg_defs2,unk_hpargs2,unk_map2)
 
 and infer_shapes_from_obligation iprog prog proc_name is_pre cond_path (constrs0: CF.hprel list)
