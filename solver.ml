@@ -9265,20 +9265,48 @@ and solver_detect_lhs_rhs_contra i prog estate conseq pos msg =
       pr_estate pr_f pr_id  (pr_pair (pr_option pr_es) (pr_list pr_3)) (fun _ _ _ -> 
           solver_detect_lhs_rhs_contra_x i prog estate conseq pos msg) estate conseq msg
 
+(*
+type: (Inf.CF.entail_state * CP.formula) list ->
+  (Inf.CF.entail_state * CP.formula) option
+*)
+
+and rank_cand_list_x ls =
+  let rank_formula f =
+    if CP.is_False f then 0
+    else if CP.contains_neq f then 1
+    else if not(CP.is_Prim f) then 2
+    else 3 (* assuming equality *) in
+  let rl = List.map (fun ((es,f) as x) -> (rank_formula f,x)) ls in
+  List.sort (fun (a,_) (b,_) ->if a>b then -1 else if a<b then 1 else 0) rl
+
+and rank_cand_list ls =
+  let pr0 (_,f) = Cprinter.string_of_pure_formula f in
+  let pr = pr_list (pr_pair string_of_int pr0) in
+  Debug.no_1 "rank_cand_list" pr_none pr rank_cand_list_x ls
+
 and choose_best_candidate contr_lst =
-  let rec helper lst =
-    match lst with
-      | []     -> None
-      | (es,f)::[] -> 
-            if not(CP.contains_neq f) then Some (es,f)
-            else Some (List.hd contr_lst) 
-              (* if all formulae contain neq, then just return the head 
-                 of contr_lst ----> it is assumed that this contr_lst is 
-                 sorted according to the rel PreHP <: PostHP  *)
-      | (es,f)::t  -> 
-            if not(CP.contains_neq f) then  Some (es,f)
-            else choose_best_candidate t
-  in helper contr_lst 
+  let pr1 = pr_list (pr_pair Cprinter.string_of_entail_state_short Cprinter.string_of_pure_formula) in
+  let pr2 = pr_option (fun (_,x) -> Cprinter.string_of_pure_formula x) in
+  Debug.no_1 "choose_best_candidate " pr1 pr2 choose_best_candidate_x contr_lst 
+
+and choose_best_candidate_x contr_lst =
+  match (rank_cand_list contr_lst) with
+    | (_,a)::_ -> Some a
+    | _ -> None
+  (* let rec helper lst = *)
+  (*   match lst with *)
+  (*     | []     -> None *)
+  (*     | (es,f)::[] ->  *)
+  (*           if not(CP.contains_neq f) then Some (es,f) *)
+  (*           else Some (List.hd contr_lst)  *)
+  (*             (\* if all formulae contain neq, then just return the head  *)
+  (*                of contr_lst ----> it is assumed that this contr_lst is  *)
+  (*                sorted according to the rel PreHP <: PostHP  *\) *)
+  (*     | (es,f)::t  ->  *)
+  (*           if not(CP.contains_neq f) then  Some (es,f) *)
+  (*           else choose_best_candidate t *)
+  (* in helper contr_lst  *)
+
 
 (* trying to infer a contradiction with given spec vars *)
 and solver_infer_lhs_contra estate lhs_xpure h_inf_args pos msg = 

@@ -217,6 +217,19 @@ and rounding_func =
 
 and infer_rel_type =  (rel_cat * formula * formula)
 
+let is_False cp = match cp with
+  | BForm (p,_) -> 
+        begin
+        match p with
+          | (BConst (b,_),_) -> not(b)
+          | _ -> false
+        end
+  | _ -> false
+
+let is_Prim cp = match cp with
+  | BForm (p,_) -> true
+  | _ -> false
+
 let exp_to_spec_var e = 
   match e with
     | Var (sv, _) -> sv

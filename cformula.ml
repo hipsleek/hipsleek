@@ -7401,7 +7401,7 @@ let add_infer_pure_thus_estate cp es =
   {es with es_infer_pure_thus = CP.mkAnd es.es_infer_pure_thus cp no_pos;
   }
 
-let add_infer_rel_to_estate_x cp es =
+let add_infer_rel_to_estate cp es =
   let old_cp = es.es_infer_rel in
   let new_cp = cp@old_cp in
   {es with es_infer_rel = new_cp;}
@@ -7410,7 +7410,7 @@ let add_infer_rel_to_estate cp es =
   let pr = pr_list CP.print_lhs_rhs in
   let pr2 es = pr es.es_infer_rel in
  Debug.no_1 "add_infer_rel_to_estate" pr pr2 
-  (fun _ -> add_infer_rel_to_estate_x cp es) cp
+  (fun _ -> add_infer_rel_to_estate cp es) cp
 
 let add_infer_pure_to_estate cp es =
   let old_cp = es.es_infer_pure in
