@@ -2877,6 +2877,17 @@ let is_trivial_constr cs=
     | Some hp1, Some hp2 -> CP.eq_spec_var hp1 hp2
     | _ -> false
 
+let collect_post_preds prog constrs=
+  let collect_one r_post_hps cs=
+    let hps = (CF.get_hp_rel_name_formula cs.CF.hprel_lhs)@(CF.get_hp_rel_name_formula cs.CF.hprel_rhs) in
+    let hps1 = CP.remove_dups_svl hps in
+    let post_hps = List.filter (fun hp -> not (Cast.check_pre_post_hp prog.Cast.prog_hp_decls (CP.name_of_spec_var hp)))
+      hps1 in
+    (r_post_hps@post_hps)
+  in
+  let post_hps = List.fold_left collect_one [] constrs in
+  CP.remove_dups_svl (post_hps)
+
 let weaken_strengthen_special_constr_pre is_pre cs=
   if is_trivial_constr cs then
     if is_pre then

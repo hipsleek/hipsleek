@@ -1705,10 +1705,15 @@ and infer_shapes_proper iprog prog proc_name cond_path (constrs2: CF.hprel list)
   else
     (post_defs,unify_equiv_map11)
   in
-  let pre_oblg_hps, pre_oblg_defs,unk_hpargs3,unk_map5  = infer_shapes_from_obligation iprog prog proc_name true cond_path (post_oblg_constrs@pre_oblg_constrs) callee_hps [] sel_post_hps unk_hpargs2
+  let pre_oblg_hps, pre_oblg_defs,unk_hpargs3,unk_map5  = infer_shapes_from_obligation iprog prog proc_name true cond_path (pre_oblg_constrs) callee_hps [] sel_post_hps unk_hpargs2
     link_hpargs need_preprocess unk_map4 detect_dang pre_defs2 post_defs1 (pre_hps@post_hps) in
+  (*********POST-OBLG************)
+  let pr1 = pr_list_ln  Cprinter.string_of_hprel_short in
+  if post_oblg_constrs !=[] then
+    DD.binfo_pprint ("post-obligation:\n" ^ (pr1 post_oblg_constrs)) no_pos;
   let post_oblg_hps, post_oblg_defs,unk_hpargs4,unk_map6  = infer_shapes_from_obligation iprog prog proc_name false cond_path (post_oblg_constrs) callee_hps [] sel_post_hps unk_hpargs3
     link_hpargs need_preprocess unk_map5 detect_dang (pre_defs2@pre_oblg_defs) post_defs1 (pre_hps@post_hps@pre_oblg_hps) in
+  (*********END POST-OBLG************)
   let defs1 = (pre_defs2@post_defs1@pre_oblg_defs@post_oblg_defs) in
   (*normalization*)
   let defs2a, unify_equiv_map3 =
@@ -1854,9 +1859,12 @@ and infer_shapes_new_x iprog prog proc_name (constrs0: CF.hprel list) sel_hps se
   (* in *)
   (* let callee_hps = List.map (fun (hpname,_,_) -> SAU.get_hpdef_name hpname) callee_hpdefs in *)
   let callee_hps = [] in
-  (* let _ = DD.info_pprint ("  sel_hps:" ^ !CP.print_svl sel_hps) no_pos in *)
+  let _ = DD.binfo_pprint ("  sel_hps:" ^ !CP.print_svl sel_hps) no_pos in
+  let _ = DD.binfo_pprint ("  sel post_hps:" ^ !CP.print_svl sel_post_hps) no_pos in
+  let all_post_hps = CP.remove_dups_svl (sel_post_hps@(SAU.collect_post_preds prog constrs0)) in
+  let _ = DD.binfo_pprint ("  all post_hps:" ^ !CP.print_svl all_post_hps) no_pos in
   let ls_path_res = infer_shapes_divide iprog prog proc_name constrs0
-    callee_hps sel_hps sel_post_hps hp_rel_unkmap unk_hpargs link_hpargs_w_path need_preprocess detect_dang
+    callee_hps sel_hps all_post_hps hp_rel_unkmap unk_hpargs link_hpargs_w_path need_preprocess detect_dang
   in
   let r =
     match ls_path_res with
@@ -1886,7 +1894,7 @@ and infer_shapes_new_x iprog prog proc_name (constrs0: CF.hprel list) sel_hps se
   in
   r
 
-and infer_shapes_x iprog prog proc_name (constrs0: CF.hprel list) sel_hps sel_post_hps hp_rel_unkmap unk_hpargs link_hpargs0 need_preprocess detect_dang:
+and infer_shapes_x iprog prog proc_name (constrs0: CF.hprel list) sel_hps post_hps hp_rel_unkmap unk_hpargs link_hpargs0 need_preprocess detect_dang:
       (CF.hprel list * CF.hp_rel_def list* (CP.spec_var*CP.exp list * CP.exp list) list ) =
   (*move to outer func*)
   (* let callee_hpdefs = *)
@@ -1896,7 +1904,10 @@ and infer_shapes_x iprog prog proc_name (constrs0: CF.hprel list) sel_hps sel_po
   (* in *)
   (* let callee_hps = List.map (fun (hpname,_,_) -> SAU.get_hpdef_name hpname) callee_hpdefs in *)
   let callee_hps = [] in
-  (* let _ = DD.info_pprint ("  sel_hps:" ^ !CP.print_svl sel_hps) no_pos in *)
+  let _ = DD.binfo_pprint ("  sel_hps:" ^ !CP.print_svl sel_hps) no_pos in
+  let _ = DD.binfo_pprint ("  sel post_hps:" ^ !CP.print_svl post_hps) no_pos in
+  let all_post_hps = CP.remove_dups_svl (post_hps@(SAU.collect_post_preds prog constrs0)) in
+  let _ = DD.binfo_pprint ("  all post_hps:" ^ !CP.print_svl all_post_hps) no_pos in
   (*remove hp(x) --> hp(x)*)
   (* let constrs1 = List.filter (fun cs -> not(SAU.is_trivial_constr cs)) constrs0 in *)
   let grp_link_hpargs = SAU.dang_partition link_hpargs0 in
@@ -1911,7 +1922,7 @@ and infer_shapes_x iprog prog proc_name (constrs0: CF.hprel list) sel_hps sel_po
   in
   let constr, hp_defs, c, unk_hpargs2, link_hpargs2, equivs = infer_shapes_core iprog prog proc_name cond_path constrs0
     callee_hps sel_hps
-    sel_post_hps hp_rel_unkmap unk_hpargs link_hpargs need_preprocess detect_dang in
+    all_post_hps hp_rel_unkmap unk_hpargs link_hpargs need_preprocess detect_dang in
   let link_hp_defs = SAC.generate_hp_def_from_link_hps prog cond_path equivs link_hpargs2 in
   let hp_defs1,tupled_defs = SAU.partition_tupled hp_defs in
   (*decide what to show: DO NOT SHOW hps relating to tupled defs*)

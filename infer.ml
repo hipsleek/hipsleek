@@ -2366,15 +2366,16 @@ let constant_checking prog rhs lhs_b rhs_b es=
 let generate_constraints prog es rhs lhs_b ass_guard rhs_b1 defined_hps
       ls_unknown_ptrs unk_pure unk_svl no_es_history lselected_hpargs rselected_hpargs  hds hvs lhras lhrs rhras rhrs leqs reqs eqNull prog_vars lvi_ni_svl classic_nodes pos =
   (*****************INTERNAL********************)
-  let update_fb (fb,r_hprels,hps,hfs) (is_pre, unknown_ptrs) =
+  let update_fb (fb,r_hprels,post_hps, hps,hfs) (is_pre, unknown_ptrs) =
     match unknown_ptrs with
-      | [] -> (fb,r_hprels,hps,hfs)
+      | [] -> (fb,r_hprels,post_hps,hps,hfs)
       | _ ->
             let (hf,vhp_rels) = SAU.add_raw_hp_rel prog is_pre unknown_ptrs pos in
             begin
               match hf with
                 | HRel hp ->
-                      ((CF.mkAnd_fb_hf fb hf pos), r_hprels@[vhp_rels],
+                      let new_post_hps = if is_pre then post_hps else (post_hps@[vhp_rels]) in
+                      ((CF.mkAnd_fb_hf fb hf pos), r_hprels@[vhp_rels], new_post_hps,
                       hps@[hp], hfs@[hf])
                 | _ -> report_error pos "infer.generate_constraints: add_raw_hp_rel should return a hrel"
             end
@@ -2402,8 +2403,8 @@ let generate_constraints prog es rhs lhs_b ass_guard rhs_b1 defined_hps
   in
   (*****************END INTERNAL********************)
   (* let new_lhs = rhs_b1 in *)
-  let new_rhs_b,rvhp_rels,new_hrels,r_new_hfs =
-    List.fold_left update_fb (rhs_b1,[],[],[]) ls_unknown_ptrs in
+  let new_rhs_b,rvhp_rels,new_post_hps, new_hrels,r_new_hfs =
+    List.fold_left update_fb (rhs_b1,[],[],[],[]) ls_unknown_ptrs in
   (*add roots from history*)
   let matched_svl = CF.get_ptrs (*es.CF.es_heap*) lhs_b.CF.formula_base_heap in
   let matched_svl1 = (List.fold_left SAU.close_def matched_svl (leqs@reqs)) in
@@ -2460,9 +2461,11 @@ let generate_constraints prog es rhs lhs_b ass_guard rhs_b1 defined_hps
   let hp_rel_list = hp_rels@defined_hprels in
   let _ = rel_ass_stk # push_list (hp_rel_list) in
   let _ = Log.current_hprel_ass_stk # push_list (hp_rel_list) in
+  (* let _ = DD.info_pprint ("  rvhp_rels: " ^ (!CP.print_svl rvhp_rels)) pos in *)
+  (* let _ = DD.info_pprint ("  new_post_hps: " ^ (!CP.print_svl new_post_hps)) pos in *)
   let _ = DD.tinfo_pprint ("  hp_rels: " ^ (let pr = pr_list_ln Cprinter.string_of_hprel in pr hp_rels)) pos in
   let _ = DD.tinfo_pprint ("  hp_rel_list: " ^ (let pr = pr_list_ln Cprinter.string_of_hprel in pr hp_rel_list)) pos in
-  r_new_hfs, new_lhs_b,m,rvhp_rels,hp_rel_list
+  r_new_hfs, new_lhs_b,m,rvhp_rels,new_post_hps, hp_rel_list
 
 
 let update_es prog es hds hvs ass_lhs_b rhs rhs_rest r_new_hfs defined_hps lselected_hpargs0
@@ -2690,15 +2693,17 @@ let infer_collect_hp_rel_x prog (es:entail_state) rhs0 rhs_rest (rhs_h_matched_s
                | [] -> lhs_b1
                | hf::rest -> CF.mkAnd_fb_hf lhs_b1 (List.fold_left(fun a c-> mkStarH a c pos ) hf rest) pos
             in
-            let r_new_hfs,ass_lhs_b, m,rvhp_rels,hp_rel_list =
+            let r_new_hfs,ass_lhs_b, m,rvhp_rels, r_post_hps,hp_rel_list =
               generate_constraints prog es rhs n_lhs_b1 ass_guard rhs_b1
                   defined_hps1 ls_unknown_ptrs unk_pure unk_svl
                   no_es_history lselected_hpargs2 rselected_hpargs
                   hds hvs lhras lhrs rhras rhrs leqs1 reqs1 eqNull subst_prog_vars lvi_ni_svl classic_nodes pos in
             (*update residue*)
+            (*the new hprel generate may be from post-preds, update them*)
+            let new_post_hps = post_hps@r_post_hps in
             (*use leqs not leqs: since res is not substed*)
             let new_es, new_lhs = update_es prog es hds hvs ass_lhs_b rhs rhs_rest r_new_hfs defined_hps1 lselected_hpargs2
-              rvhp_rels leqs m post_hps unk_map hp_rel_list pos in
+              rvhp_rels leqs m new_post_hps unk_map hp_rel_list pos in
             (true, new_es,new_lhs, None)
       end
 
