@@ -794,6 +794,8 @@ let check_all = ref true
   
 let auto_number = ref true
 
+let sleek_flag = ref false
+
 let sleek_log_filter = ref true
 (* flag to filter trivial sleek entailment logs *)
 

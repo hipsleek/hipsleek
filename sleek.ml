@@ -33,6 +33,7 @@ module AS = Astsimp
 module XF = Xmlfront
 module NF = Nativefront
 
+let _ = Globals.sleek_flag := true
 
 let usage_msg = Sys.argv.(0) ^ " [options] <source files>"
 

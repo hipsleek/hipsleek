@@ -1,7 +1,19 @@
-Fatal error: exception Stream.Error("EQUIV expected after [meta_constr] (in [reldefn_cmd])")
 ========tll-if-conquer.slk ==========
 Starting Omega...oc
-File "../tll-if-conquer.slk", line 19, characters 16-17
- error: Stream.Error("EQUIV expected after [meta_constr] (in [reldefn_cmd])")
- at:(Program not linked with -g, cannot print stack backtrace)
+H is defined.
+G is defined.
+H_2 is defined.
+H_3 is defined.
+H_2a is defined.
+H_3a is defined.
+
+
+*************************************
+*******relational definition ********
+*************************************
+[ H(x_33) ::= x_33::node<left_25_800,right_25_801>@M * H(left_25_800) * H(right_25_801)&
+right_25_801!=null
+   \/  x_33::node<left_25_800,right_25_801>@M * H_2(left_25_800)&right_25_801=null,
+ H_2(a) ::= emp&NONE]
+*************************************
 ====================

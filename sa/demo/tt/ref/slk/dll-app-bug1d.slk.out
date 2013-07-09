@@ -30,8 +30,6 @@ Entail (4) : Valid.
                    HP_70(l2,x@NI)]
 
 
-!!! inferred contradiction : : x!=null
-!!! Andreea 1 : we need to call add_new_sleek_logging_entry to do sleek_logging
 Entail (5) : Valid. 
 
  <1>hfalse&false&{FLOW,(19,20)=__norm}[]

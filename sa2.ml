@@ -1479,7 +1479,8 @@ let rec infer_shapes_init_pre_x prog (constrs0: CF.hprel list) callee_hps non_pt
   let _ = DD.binfo_pprint ">>>>>> pre-predicates: step pre-5: group & simpl impl<<<<<<" no_pos in
   let pr_par_defs,rem_constr1 = get_par_defs_pre constrs0 in
   let pr1 = pr_list_ln  Cprinter.string_of_hprel_short in
-  let _ = DD.binfo_pprint ("pre-obligation:\n" ^ (pr1 rem_constr1)) no_pos in
+  if rem_constr1!=[] then
+    DD.binfo_pprint ("pre-obligation:\n" ^ (pr1 rem_constr1)) no_pos;
   let _ = DD.binfo_pprint ">>>>>> pre-predicates: step pre-6: combine<<<<<<" no_pos in
   let par_defs, rem_constrs2, hconj_unify_cond = combine_pdefs_pre prog unk_hps1 link_hps pr_par_defs in
   let _ = DD.binfo_pprint ">>>>>> pre-predicates: step pre-7: remove redundant x!=null<<<<<<" no_pos in
@@ -1919,10 +1920,12 @@ let infer_shapes iprog prog proc_name (hp_constrs: CF.hprel list) sel_hp_rels se
     let all_hps = CF.get_hp_rel_name_assumption_set hp_constrs in
     let all_hp_decls = List.map (fun hp ->
         Cast.look_up_hp_def_raw prog.Cast.prog_hp_decls (CP.name_of_spec_var hp)) all_hps in
-    let _ = print_endline "\nHeap Predicate Declarations" in
-    let _ = print_endline "===========================" in
-    let _ = List.iter (fun hpdcl -> print_string (Cprinter.string_of_hp_decl hpdcl)) all_hp_decls in
-    ()
+    if !Globals.sleek_flag then () 
+    else
+      let _ = print_endline "\nHeap Predicate Declarations" in
+      let _ = print_endline "===========================" in
+      let _ = List.iter (fun hpdcl -> print_string (Cprinter.string_of_hp_decl hpdcl)) all_hp_decls in
+      ()
   else ()
   in
   Debug.no_6 "infer_shapes" pr_id pr1 !CP.print_svl pr4 pr5 pr5a (pr_triple pr1 pr2 pr3)

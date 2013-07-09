@@ -55,9 +55,10 @@ res_51::node<v_node_32_833,v_node_31_823>@M&right_25_801!=null & res_51=x_50
 *************************************
 *******relational definition ********
 *************************************
-  H(x_53)<-> x_53::node<left_25_800,right_25_801>@M * H_2(left_25_800)&right_25_801=null
+  H(x_53)<-> x_53::node<left_25_800,right_25_801>@M * H_2(left_25_800) * 
+H_3(right_25_801)
   H_3(right_25_54)<-> emp&right_25_54=null
-  G(x_55,res_56)<-> H_2(left_25_800) * res_56::node<left_25_800,right_25_801>@M&
-right_25_801=null & res_56=x_55
+  G(x_55,res_56)<-> H_2(left_25_800) * res_56::node<left_25_800,right_25_801>@M&res_56=x_55 & 
+right_25_801=null
 *************************************
 ====================

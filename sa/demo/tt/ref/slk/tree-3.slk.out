@@ -28,11 +28,11 @@ G is defined.
 *************************************
 *******relational definition ********
 *************************************
-[ HP_2(right_47) ::= 
- right_47::node<Anon_11,left,right>@M * HP_1(left) * HP_2(right)
- or emp&right_47=null
+[ H(x_47) ::= x_47::node<Anon_11,left,right>@M * HP_1(left) * HP_2(right),
+ HP_2(right_48) ::= 
+ right_48::node<Anon_11,left,right>@M * HP_1(left) * HP_2(right)
+ or emp&right_48=null
  ,
- H(x_48) ::= x_48::node<Anon_11,left,right>@M * HP_1(left) * HP_2(right),
  G(x_49) ::= 
  HP_1(left) * x_49::node<Anon_12,left,right>@M&right=null
  or HP_1(left) * x_49::node<Anon_12,left,right>@M * G(right)&right!=null

@@ -22,7 +22,8 @@ relAssume H1(l,prv)&l=null --> emp.
 //relAssume H_0(prev_19_928,prv) --> prev_19_928=prv.
 //relAssume H_0(prev_19_928,prv) --> emp&forall(l:(prev_19_928=prv | l=null)).
 
-shape_infer [H1,H_1,H_0][].
+//shape_infer [H1,H_1,H_0][].
+shape_infer [H1][].
 
 
 
