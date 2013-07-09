@@ -9120,28 +9120,76 @@ and solver_detect_lhs_rhs_contra i prog estate conseq pos msg =
 and solver_detect_lhs_rhs_contra_x prog estate conseq pos msg =
   let lhs_xpure,_,_ = xpure prog estate.es_formula in
   (* call infer_lhs_contra *)
-  let lhs_rhs_contra_flag, pure_f = 
+  let lhs_rhs_contra_flag = 
     let p_lhs_xpure = MCP.pure_of_mix lhs_xpure in
     let rhs_xpure,_,_ = xpure prog conseq in
     let p_rhs_xpure = MCP.pure_of_mix rhs_xpure in
-    let contr, pf = Infer.detect_lhs_rhs_contra  p_lhs_xpure p_rhs_xpure pos in
-    contr,pf in (* Cristian : to detect_lhs_rhs_contra *)
-  let h_inf_args, hinf_args_map = get_heap_inf_args estate in
+    let contr, _ = Infer.detect_lhs_rhs_contra  p_lhs_xpure p_rhs_xpure pos in
+    contr in (* Cristian : to detect_lhs_rhs_contra *)
   (* let esv = estate.es_infer_vars in *)
   let r_inf_contr,relass = 
     if lhs_rhs_contra_flag then (None,[])
     else
       begin
         (* lhs_rhs contradiction detected *)
-	(*if CP.intersect rhs_als estate.es_infer_vars = [] && List.exists CP.is_node_typ estate.es_infer_vars then None,[] else*) 
+	(* if CP.intersect rhs_als estate.es_infer_vars = [] && List.exists CP.is_node_typ estate.es_infer_vars then None,[] else*) 
 	(* let msg = "Early LHS/RHS contra detection" in *)
-	let h_inf_args_add = Gen.BList.difference_eq CP.eq_spec_var h_inf_args estate.es_infer_vars in
-	let estate = {estate with es_infer_vars = h_inf_args_add} in (*andreeac: why does it need to update the estate?*)
-        let _ = DD.tinfo_hprint (add_str "estate" Cprinter.string_of_entail_state ) estate no_pos in
-        (* let _ = DD.tinfo_hprint (add_str "es_infer_vars" Cprinter.string_of_spec_var_list) esv no_pos in *)
-        (* let _ = DD.tinfo_hprint (add_str "h_inf_args_add" Cprinter.string_of_spec_var_list) h_inf_args_add no_pos in *)
-	let r_inf_contr,relass = Inf.infer_lhs_contra_estate 4 estate lhs_xpure pos msg  in 
-        r_inf_contr,relass
+        (* ================================================= *)
+        
+        (* let h_inf_args, _ = get_heap_inf_args estate in *)
+      
+        let infer_vars_hp_rel = estate.es_infer_vars_hp_rel in
+
+        let pr = pr_list (fun sv -> 
+            let hpdecl = Cast.look_up_hp_def_raw prog.Cast.prog_hp_decls (CP.name_of_spec_var sv) in
+            if hpdecl.hp_is_pre then "Pre" else "Post"
+        ) in
+        let _ = DD.tinfo_hprint (add_str "type of infer_vars_hp_rel: " pr) infer_vars_hp_rel no_pos in
+
+        (* sort hp_rel vars such that Pre Pred comes bef Post Pred*)
+        let infer_vars_hp_rel = List.fast_sort (fun hp1 hp2 -> 
+            let hpdecl1 = Cast.look_up_hp_def_raw prog.Cast.prog_hp_decls (CP.name_of_spec_var hp1) in
+            let hpdecl2 = Cast.look_up_hp_def_raw prog.Cast.prog_hp_decls (CP.name_of_spec_var hp2) in
+            let h1,h2 = (hpdecl1.hp_is_pre,  hpdecl2.hp_is_pre) in
+            if (h1 = h2) then 0
+            else if (h1 && (not h2)) then (-1)
+            else 1
+        ) infer_vars_hp_rel in
+        
+        let _ = DD.tinfo_hprint (add_str "infer_vars_hp_rel" Cprinter.string_of_spec_var_list) infer_vars_hp_rel no_pos in
+
+        (* trying to infer a contradiction with given spec vars *)
+        let infer_lhs_contra h_inf_args = 
+	  let h_inf_args_add = Gen.BList.difference_eq CP.eq_spec_var h_inf_args estate.es_infer_vars in
+	  let estate = {estate with es_infer_vars = h_inf_args_add} in (*andreeac: why does it need to update the estate?*)
+          let _ = DD.tinfo_hprint (add_str "h_inf_args" Cprinter.string_of_spec_var_list) h_inf_args no_pos in
+          let _ = DD.tinfo_hprint (add_str "es_infer_vars" Cprinter.string_of_spec_var_list) estate.es_infer_vars no_pos in
+          (* let _ = DD.tinfo_hprint (add_str "h_inf_args_add" Cprinter.string_of_spec_var_list) h_inf_args_add no_pos in *)
+	  let r_inf_contr,relass = Inf.infer_lhs_contra_estate 4 estate lhs_xpure pos msg  in 
+          r_inf_contr,relass
+        in
+
+        (* search for the first unknown predicate that has a satisfiable entry (can form a contradiction)  *)
+        let rec infer_lhs_contra_helper infer_vars_hp_rel =
+          match infer_vars_hp_rel with
+            | hp_rel0 :: t -> 
+                  let h_inf_args, _ = get_heap_inf_args_hp_rel estate [hp_rel0] in
+                  let rcontr,rel =  infer_lhs_contra h_inf_args in
+                  begin
+                    match rcontr with
+                      | Some _ -> (rcontr,rel)
+                      | None -> 
+                            begin
+                              match rel with
+                                | h::t0 -> rcontr,rel 
+                                | []   -> infer_lhs_contra_helper t
+                            end
+                  end 
+            | [] -> (None, []) in
+        
+        infer_lhs_contra_helper infer_vars_hp_rel 
+        (* ================================================= *)
+
       end
   in (r_inf_contr,relass)
 

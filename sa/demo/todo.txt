@@ -4623,6 +4623,43 @@ PROBLEMS
  prev_43=prv_49
  or emp&l_48=null
 =====================================================================
+# dll-pap-1.slk 
+
+  URGENT (example used in paper)
+
+relAssume 
+  H(x,y)&true --> x::node<next_15_797,prev_15_798>@M * 
+  HP_9(next_15_797,y) * HP_0(prev_15_798,y) * HP_1(y,x).
+
+relAssume 
+ HP_9(next_15_797,y) * HP_1(y,x)&
+  next_15_797!=null --> H(next_15_797,y).
+
+relAssume 
+ HP_9(next_15_797,y) & next_15_797=null --> emp.
+
+relAssume 
+ HP_1(y,x) --> y::node<next_21_820,prev_21_821>@M * 
+  HP_2(next_21_820,x) * HP_3(prev_21_821,x).
+
+shape_infer [H,HP_1,HP_9][].
+
+GOT
+===
+ H(x_59,y_60) ::= x_59::node<next_15_797,prev_15_798>@M 
+   * HP_9(next_15_797,y_60) * HP_0(prev_15_798,y_60) * HP_1(y_60,x_59),
+ HP_1(y_61,x_62) ::= y_61::node<next_21_820,prev_21_821>@M 
+    * HP_2(next_21_820,x_62) * HP_3(prev_21_821,x_62),
+ HP_9(next_15_63,y_64) ::= emp&next_15_63=null,
+ HP_2(a,b) ::= NONE,
+
+SEE ALGO (in dll-pap-1.slk) on how to transform complex LHS for
+H_9 by ridding HP_1.
+
+NOTE : H, HP_1 should be confirmed before H_9.
+ When processing H_9, we may use defns of H,HP_1 to 
+ help us simplify
+
 =====================================================================
 =====================================================================
 =====================================================================
