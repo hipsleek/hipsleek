@@ -1,6 +1,6 @@
 open Globals
-open Error
 open Exc.GTable
+open Gen.Basic
 
 (* --------------------- *)
 (* Global variables      *)
@@ -165,6 +165,7 @@ let typ_of_cil_lval (lv: Cil.lval) : Cil.typ =
 let typ_of_cil_exp (e: Cil.exp) : Cil.typ =
   Cil.typeOf e
 
+
 (**********************************************)
 (****** create intermediate procedures  *******)
 (**********************************************)
@@ -189,10 +190,10 @@ let create_pointer_casting_proc (pointer_typ: Globals.typ) : Iast.proc_decl opti
               try 
                 let data_decl = Hashtbl.find tbl_struct_data_decl (Globals.Named base_data) in
                 match data_decl.Iast.data_fields with
-                | []   -> report_error_msg "Error: Invalid data_decl fields"
+                | []   -> report_error no_pos "create_pointer_casting_proc: Invalid data_decl fields"
                 | [hd] -> "<_>"
                 | hd::tl -> "<" ^ (List.fold_left (fun s _ -> s ^ ",_") "_" tl) ^ ">"
-              with Not_found -> report_error_msg ("Error: Unknown data type: " ^ base_data)
+              with Not_found -> report_error no_pos ("create_pointer_casting_proc: Unknown data type: " ^ base_data)
             ) 
         ) in
         let cast_proc = (
@@ -239,7 +240,7 @@ let create_logical_not_proc (typ: Globals.typ) : Iast.proc_decl =
       let procdecl = Parser.parse_c_aux_proc "inter_logical_not_proc" proc in
       procdecl
     )
-  | _ -> report_error_msg "Error: Invalid type"
+  | _ -> report_error no_pos "create_logical_not_proc: Invalid type"
 
 
 let create_bool_casting_proc (typ: Globals.typ) : Iast.proc_decl =
@@ -279,7 +280,7 @@ let create_bool_casting_proc (typ: Globals.typ) : Iast.proc_decl =
       let procdecl = Parser.parse_c_aux_proc "inter_bool_casting_proc" proc in
       procdecl
     )
-  | _ -> report_error_msg ("create_bool_casting_proc: Invalid type" ^ (Globals.string_of_typ typ))
+  | _ -> report_error no_pos ("create_bool_casting_proc: Invalid type" ^ (Globals.string_of_typ typ))
 
 (************************************************************)
 (****** collect information about address-of operator *******)
@@ -327,12 +328,12 @@ let rec gather_addrof_info_exp (e: Cil.exp) : (Cil.lval * Iast.exp) list =
             let dname = (
               match dtyp with
               | Globals.Named s -> s
-              | _ -> report_error_msg "gather_addrof_info_exp: unexpected type!"
+              | _ -> report_error pos "gather_addrof_info_exp: unexpected type!"
             ) in
             (dtyp, dname, ddecl)
           with Not_found -> (
             (* create new Globals.typ and Iast.data_decl, then update to a hash table *)
-            let ftyp = translate_typ lv_ty in
+            let ftyp = translate_typ lv_ty pos in
             let fname = "pdata" in
             let dname = (Globals.string_of_typ ftyp) ^ "__star" in
             let dtyp = Globals.Named dname in
@@ -354,7 +355,7 @@ let rec gather_addrof_info_exp (e: Cil.exp) : (Cil.lval * Iast.exp) list =
               | Globals.Bool -> Iast.mkBoolLit true pos;
               | Globals.Float -> Iast.mkFloatLit 0. pos;
               | Globals.Named _ -> Iast.Null pos
-              | _ -> report_error_msg ("Unexpected typ 1: " ^ (Globals.string_of_typ ftyp))
+              | _ -> report_error pos ("Unexpected typ 1: " ^ (Globals.string_of_typ ftyp))
             ) in
             params @ [exp]
         ) [] datadecl.Iast.data_fields in
@@ -421,7 +422,7 @@ and get_actual_cil_typ (t: Cil.typ) : Cil.typ = (
   actual_typ
 )
 
-and translate_typ (t: Cil.typ) : Globals.typ =
+and translate_typ (t: Cil.typ) pos : Globals.typ =
   let newtype = 
     match t with
     | Cil.TVoid _ -> Globals.Void
@@ -437,7 +438,7 @@ and translate_typ (t: Cil.typ) : Globals.typ =
             Hashtbl.find tbl_pointer_typ actual_ty
           with Not_found -> (
             (* create new Globals.typ and Iast.data_decl update to hash tables *)
-            let ftype = translate_typ actual_ty in
+            let ftype = translate_typ actual_ty pos in
             let fname = "pdata" in
             let dname = (Globals.string_of_typ ftype) ^ "__star" in
             let dtype = Globals.Named dname in
@@ -452,17 +453,16 @@ and translate_typ (t: Cil.typ) : Globals.typ =
         newt
       )
     | Cil.TArray (ty, _, _) ->
-        let arrayty = translate_typ ty in
+        let arrayty = translate_typ ty pos in
         Globals.Array (arrayty, 1)
     | Cil.TFun _ ->
-        let _ = print_endline ("== t TFun = " ^ (string_of_cil_typ t)) in
-        report_error_msg "TRUNG TODO: handle TFun later! Maybe it's function pointer case?"
+        report_error pos "TRUNG TODO: handle TFun later! Maybe it's function pointer case?"
     | Cil.TNamed _ ->                                          (* typedef type *)
        let ty = get_actual_cil_typ t in
-       translate_typ ty
+       translate_typ ty pos
     | Cil.TComp (comp, _) -> Globals.Named comp.Cil.cname                          (* struct or union type*)
-    | Cil.TEnum _ -> report_error_msg "TRUNG TODO: handle TEnum later!"
-    | Cil.TBuiltin_va_list _ -> report_error_msg "TRUNG TODO: handle TBuiltin_va_list later!" in
+    | Cil.TEnum _ -> report_error pos "TRUNG TODO: handle TEnum later!"
+    | Cil.TBuiltin_va_list _ -> report_error pos "TRUNG TODO: handle TBuiltin_va_list later!" in
   (* return *)
   newtype
 
@@ -475,7 +475,7 @@ and translate_var (vinfo: Cil.varinfo) (lopt: Cil.location option) : Iast.exp =
 
 and translate_var_decl (vinfo: Cil.varinfo) : Iast.exp =
   let pos = translate_location vinfo.Cil.vdecl in
-  let ty = translate_typ vinfo.Cil.vtype in
+  let ty = translate_typ vinfo.Cil.vtype pos in
   let name = vinfo.Cil.vname in
   let newexp = (
     match ty with
@@ -490,7 +490,7 @@ and translate_var_decl (vinfo: Cil.varinfo) : Iast.exp =
           try Hashtbl.find tbl_struct_data_decl ty
           with Not_found -> (
             try Hashtbl.find tbl_pointer_data_decl ty
-            with Not_found -> report_error_msg ("Unfound typ: " ^ (Globals.string_of_typ ty))
+            with Not_found -> report_error pos ("translate_var_decl: Unknown typ " ^ (Globals.string_of_typ ty))
           )
         ) in
         (* create and initiate a new object *)
@@ -503,14 +503,14 @@ and translate_var_decl (vinfo: Cil.varinfo) : Iast.exp =
               | Globals.Bool -> Iast.mkBoolLit true pos
               | Globals.Float -> Iast.mkFloatLit 0. pos
               | Globals.Named _ -> Iast.mkNull no_pos
-              | _ -> report_error_msg ("Unexpected typ 1: " ^ (Globals.string_of_typ ftyp))
+              | _ -> report_error pos ("translate_var_decl: Unexpected typ 1 - " ^ (Globals.string_of_typ ftyp))
             ) in
             params @ [exp]
         ) [] data_decl.Iast.data_fields in
         let init_data = Iast.mkNew typ_name init_params pos in
         Iast.mkVarDecl ty [(name, Some init_data, pos)] pos
       )
-    | _ -> report_error_msg ("Unexpected typ 2: " ^ (Globals.string_of_typ ty))
+    | _ -> report_error pos ("translate_var_decl: Unexpected typ 2 - " ^ (Globals.string_of_typ ty))
   ) in
   newexp
 
@@ -519,11 +519,11 @@ and translate_constant (c: Cil.constant) (lopt: Cil.location option) : Iast.exp 
   let pos = match lopt with None -> no_pos | Some l -> translate_location l in
   match c with
   | Cil.CInt64 (i, _, _) -> Iast.mkIntLit (Int64.to_int i) pos
-  | Cil.CStr s -> report_error_msg "TRUNG TODO: Handle Cil.CStr later!"
-  | Cil.CWStr _ -> report_error_msg "TRUNG TODO: Handle Cil.CWStr later!"
-  | Cil.CChr _ -> report_error_msg "TRUNG TODO: Handle Cil.CChr later!"
+  | Cil.CStr s -> report_error pos "TRUNG TODO: Handle Cil.CStr later!"
+  | Cil.CWStr _ -> report_error pos "TRUNG TODO: Handle Cil.CWStr later!"
+  | Cil.CChr _ -> report_error pos "TRUNG TODO: Handle Cil.CChr later!"
   | Cil.CReal (f, _, _) -> Iast.mkFloatLit f pos
-  | Cil.CEnum _ -> report_error_msg "TRUNG TODO: Handle Cil.CEnum later!"
+  | Cil.CEnum _ -> report_error pos "TRUNG TODO: Handle Cil.CEnum later!"
 
 
 (* translate a field of a struct                       *)
@@ -537,7 +537,7 @@ and translate_fieldinfo (field: Cil.fieldinfo) (lopt: Cil.location option)
       let ty = Globals.Named comp.Cil.cname in
       ((ty, name), pos, false, Iast.F_NO_ANN)
   | _ ->
-      let ty = translate_typ field.Cil.ftype in
+      let ty = translate_typ field.Cil.ftype pos in
       ((ty, name), pos, false, Iast.F_NO_ANN)
 
 
@@ -549,14 +549,14 @@ and translate_compinfo (comp: Cil.compinfo) (lopt: Cil.location option) : Iast.d
   datadecl
 
 
-and translate_unary_operator (op : Cil.unop) : Iast.uni_op =
+and translate_unary_operator (op : Cil.unop) pos : Iast.uni_op =
   match op with
   | Cil.Neg -> Iast.OpUMinus
-  | Cil.BNot -> report_error_msg "Error!!! Iast doesn't support BNot (bitwise complement) operator!"
+  | Cil.BNot -> report_error pos "Error!!! Iast doesn't support BNot (bitwise complement) operator!"
   | Cil.LNot -> Iast.OpNot
 
 
-and translate_binary_operator (op : Cil.binop) : Iast.bin_op =
+and translate_binary_operator (op : Cil.binop) pos : Iast.bin_op =
   match op with
   | Cil.PlusA -> Iast.OpPlus
   | Cil.PlusPI -> Iast.OpPlus
@@ -567,17 +567,17 @@ and translate_binary_operator (op : Cil.binop) : Iast.bin_op =
   | Cil.Mult -> Iast.OpMult
   | Cil.Div -> Iast.OpDiv
   | Cil.Mod -> Iast.OpMod
-  | Cil.Shiftlt -> report_error_msg "Error!!! Iast doesn't support Cil.Shiftlf operator!"
-  | Cil.Shiftrt -> report_error_msg "Error!!! Iast doesn't support Cil.Shiftrt operator!"
+  | Cil.Shiftlt -> report_error pos "Error!!! Iast doesn't support Cil.Shiftlf operator!"
+  | Cil.Shiftrt -> report_error pos "Error!!! Iast doesn't support Cil.Shiftrt operator!"
   | Cil.Lt -> Iast.OpLt
   | Cil.Gt -> Iast.OpGt
   | Cil.Le -> Iast.OpLte
   | Cil.Ge -> Iast.OpGte
   | Cil.Eq -> Iast.OpEq
   | Cil.Ne -> Iast.OpNeq
-  | Cil.BAnd -> report_error_msg "Error!!! Iast doesn't support Cil.BAnd operator!"
-  | Cil.BXor -> report_error_msg "Error!!! Iast doesn't support Cil.BXor operator!"
-  | Cil.BOr -> report_error_msg "Error!!! Iast doesn't support Cil.BOr operator!"
+  | Cil.BAnd -> report_error pos "Error!!! Iast doesn't support Cil.BAnd operator!"
+  | Cil.BXor -> report_error pos "Error!!! Iast doesn't support Cil.BXor operator!"
+  | Cil.BOr -> report_error pos "Error!!! Iast doesn't support Cil.BOr operator!"
   | Cil.LAnd -> Iast.OpLogicalAnd
   | Cil.LOr -> Iast.OpLogicalOr
 
@@ -588,14 +588,14 @@ and translate_lval (lv: Cil.lval) : Iast.exp =
   let rec collect_index (off: Cil.offset) : Iast.exp list = (
     match off with
     | Cil.NoOffset -> []
-    | Cil.Field _ -> report_error_msg "TRUNG TODO: collect_index: handle Cil.Field _ later"
+    | Cil.Field _ -> report_error pos "TRUNG TODO: collect_index: handle Cil.Field _ later"
     | Cil.Index (e, o, _) -> [(translate_exp e)] @ (collect_index o)
   ) in
   let rec collect_field (off: Cil.offset) : ident list = (
     match off with
     | Cil.NoOffset -> []
     | Cil.Field ((f, _), o, _) -> [(f.Cil.fname)] @ (collect_field o)
-    | Cil.Index _ -> report_error_msg "TRUNG TODO: collect_field: handle Cil.Index _ later"
+    | Cil.Index _ -> report_error pos "TRUNG TODO: collect_field: handle Cil.Index _ later"
   ) in
   match (lhost, offset) with
   | Cil.Var (v, l), Cil.NoOffset -> (
@@ -652,12 +652,16 @@ and translate_exp (e: Cil.exp) : Iast.exp =
   | Cil.SizeOfStr (s, l) ->
       let pos = translate_location l in
       Iast.mkIntLit (String.length s) pos
-  | Cil.AlignOf _ -> report_error_msg "TRUNG TODO: Handle Cil.AlignOf later!"
-  | Cil.AlignOfE _ -> report_error_msg "TRUNG TODO: Handle Cil.AlignOfE later!"
+  | Cil.AlignOf (_, l) ->
+      let pos = translate_location l in
+      report_error pos "TRUNG TODO: Handle Cil.AlignOf later!"
+  | Cil.AlignOfE (_, l) -> 
+      let pos = translate_location l in
+      report_error pos "TRUNG TODO: Handle Cil.AlignOfE later!"
   | Cil.UnOp (op, exp, ty, l) -> (
       let pos = translate_location l in
-      let o = translate_unary_operator op in
-      let t = translate_typ (typ_of_cil_exp exp) in
+      let o = translate_unary_operator op pos in
+      let t = translate_typ (typ_of_cil_exp exp) pos in
       let e = translate_exp exp in
       let newexp = (
         match t with
@@ -679,10 +683,10 @@ and translate_exp (e: Cil.exp) : Iast.exp =
       newexp
     )
   | Cil.BinOp (op, exp1, exp2, ty, l) ->
+      let pos = translate_location l in
       let e1 = translate_exp exp1 in
       let e2 = translate_exp exp2 in
-      let o = translate_binary_operator op in
-      let pos = translate_location l in
+      let o = translate_binary_operator op pos in
       let newexp = Iast.mkBinary o e1 e2 None pos in
       newexp
   | Cil.Question (exp1, exp2, exp3, _, l) ->
@@ -694,8 +698,8 @@ and translate_exp (e: Cil.exp) : Iast.exp =
       newexp
   | Cil.CastE (ty, exp, l) -> (
       let pos = translate_location l in
-      let input_typ = translate_typ (typ_of_cil_exp exp) in
-      let output_typ = translate_typ ty in
+      let input_typ = translate_typ (typ_of_cil_exp exp) pos in
+      let output_typ = translate_typ ty pos in
       let input_exp = translate_exp exp in
       match output_typ with
       | Globals.Named output_typ_name -> (
@@ -711,33 +715,36 @@ and translate_exp (e: Cil.exp) : Iast.exp =
                   if (intlit.Iast.exp_int_lit_val = 0) then
                     Iast.mkNull pos
                   else
-                    report_error_msg ("translate_exp: couldn't cast '" ^ (Iprinter.string_of_exp input_exp) 
-                                      ^ "' to type " ^ output_typ_name)
+                    report_error pos ("translate_exp: couldn't cast type 1: " ^ (Globals.string_of_typ input_typ) 
+                                      ^ " to " ^ output_typ_name)
                 )
-              | _ -> report_error_msg ("translate_exp: couldn't cast type '" ^ (Globals.string_of_typ input_typ) 
-                                       ^ "' to type " ^ output_typ_name)
+              | _ -> report_error pos ("translate_exp: couldn't cast type 2: " ^ (Globals.string_of_typ input_typ) 
+                                       ^ " to " ^ output_typ_name)
             )
-          | _ -> report_error_msg ("translate_exp: couldn't cast type '" ^ (Globals.string_of_typ input_typ) 
-                                   ^ "' to type " ^ output_typ_name)
+          | _ -> report_error pos ("translate_exp: couldn't cast type 3: " ^ (Globals.string_of_typ input_typ) 
+                                   ^ " to " ^ output_typ_name)
         )
       | _ -> (
           if (input_typ = output_typ) then
             input_exp
           else
-            report_error_msg ("translate_exp: couldn't cast type '" ^ (Globals.string_of_typ input_typ) 
-                              ^ "' to type " ^ (Globals.string_of_typ output_typ))
+            report_error pos ("translate_exp: couldn't cast type 4: " ^ (Globals.string_of_typ input_typ) 
+                              ^ " to " ^ (Globals.string_of_typ output_typ))
       )
     )
   | Cil.AddrOf (lv, l) ->
+      let pos = translate_location l in
       let lv_str = string_of_cil_lval lv in
       let lv_holder = (
         try
           Hashtbl.find tbl_addrof_holder lv_str
         with Not_found ->
-          report_error_msg ("translate_exp: lval holder of '" ^ lv_str ^ "' is not found.")
+          report_error pos ("translate_exp: lval holder of '" ^ lv_str ^ "' is not found.")
       ) in
       lv_holder
-  | Cil.StartOf _ -> report_error_msg "translate_exp: Iast doesn't support Cil.StartOf exp!"
+  | Cil.StartOf (_, l) ->
+      let pos = translate_location l in
+      report_error pos "translate_exp: Iast doesn't support Cil.StartOf exp!"
 
 
 and translate_instr (instr: Cil.instr) : Iast.exp list =
@@ -816,7 +823,7 @@ and translate_instr (instr: Cil.instr) : Iast.exp list =
         let fname = match exp with
           | Cil.Const (Cil.CStr s, _) -> s
           | Cil.Lval ((Cil.Var (v, _), _, _), _) -> v.Cil.vname
-          | _ -> report_error_msg "translate_intstr: invalid callee's name!" in
+          | _ -> report_error pos "translate_intstr: invalid callee's name!" in
         let args = List.map (fun x -> translate_exp x) exps in
         let callee = Iast.mkCallNRecv fname None args None pos in
         let newexp = (
@@ -825,7 +832,7 @@ and translate_instr (instr: Cil.instr) : Iast.exp list =
           | Some lv -> (
               (* declare a temp var to store the value return by call *)
               let tmp_var = (
-                let vty = translate_typ (typ_of_cil_lval lv) in
+                let vty = translate_typ (typ_of_cil_lval lv) pos in
                 let vname = Globals.fresh_name () in
                 let vdecl = Iast.mkVarDecl vty [vname, None, pos] pos in
                 aux_local_vardecls := !aux_local_vardecls @ [vdecl];
@@ -886,7 +893,9 @@ and translate_stmt (s: Cil.stmt) : Iast.exp =
       ) in
       let newexp = Iast.mkReturn retval None pos in
       newexp
-  | Cil.Goto (sref, l) -> report_error_msg "translate_stmt: handle GOTO later!"
+  | Cil.Goto (sref, l) ->
+      let pos = translate_location l in
+      report_error pos "translate_stmt: handle GOTO later!"
   | Cil.Break l ->
       let pos = translate_location l in
       let newexp = Iast.mkBreak Iast.NoJumpLabel None pos in
@@ -897,7 +906,7 @@ and translate_stmt (s: Cil.stmt) : Iast.exp =
       newexp
   | Cil.If (exp, blk1, blk2, l) ->
       let pos = translate_location l in
-      let ty = translate_typ (typ_of_cil_exp exp) in
+      let ty = translate_typ (typ_of_cil_exp exp) pos in
       let cond = (
         match ty with
         | Globals.Bool -> translate_exp exp
@@ -920,7 +929,9 @@ and translate_stmt (s: Cil.stmt) : Iast.exp =
       let e2 = translate_block blk2 in
       let ifexp = Iast.mkCond cond e1 e2 None pos in
       ifexp
-  | Cil.Switch _ -> report_error_msg "TRUNG TODO: Handle Cil.Switch later!"
+  | Cil.Switch (_, _, _, l) ->
+      let pos = translate_location l in
+      report_error pos "TRUNG TODO: Handle Cil.Switch later!"
   | Cil.Loop (blk, hspecs, l, stmt_opt1, stmt_opt2) ->
       let p = translate_location l in
       let cond = Iast.mkBoolLit true p in
@@ -983,7 +994,7 @@ and translate_hip_stmt (stmt: Iast.exp) pos : Iast.exp =
       merge_iast_exp (update_exps @ [stmt])
     )
   | Iast.Dprint _ -> stmt
-  | _ -> report_error_msg ("translate_hip_stmt: unexpected hip statement: "
+  | _ -> report_error pos ("translate_hip_stmt: unexpected hip statement: "
                            ^ (Iprinter.string_of_exp stmt))
 
 and translate_block (blk: Cil.block): Iast.exp =
@@ -1006,7 +1017,7 @@ and translate_init (init: Cil.init) (lopt: Cil.location option) : Iast.exp =
   match init with
   | Cil.SingleInit exp -> translate_exp exp
   | Cil.CompoundInit (typ, offset_init_list) -> (
-      let newtyp = translate_typ typ in
+      let newtyp = translate_typ typ pos in
       match newtyp with
       (* translate data structure *)
       | Globals.Named newtyp_name ->
@@ -1015,11 +1026,11 @@ and translate_init (init: Cil.init) (lopt: Cil.location option) : Iast.exp =
           List.iter (fun x ->
             let off, init2 = x in
             let fname = match off with
-              | Cil.NoOffset -> report_error_msg "translate_init: handle Cil.NoOffset later!"
+              | Cil.NoOffset -> report_error pos "translate_init: handle Cil.NoOffset later!"
               | Cil.Field ((f, _), Cil.NoOffset, _) -> f.Cil.fname
-              | Cil.Field ((f, _), (Cil.Field _), _) -> report_error_msg "translate_init: handle Cil.Field later!"
-              | Cil.Field ((f, _), (Cil.Index _), _) -> report_error_msg "translate_init: handle Cil.Index later!"
-              | Cil.Index _ -> report_error_msg "translate_init: handle Cil.Index later!" in
+              | Cil.Field ((f, _), (Cil.Field _), _) -> report_error pos "translate_init: handle Cil.Field later!"
+              | Cil.Field ((f, _), (Cil.Index _), _) -> report_error pos "translate_init: handle Cil.Index later!"
+              | Cil.Index _ -> report_error pos "translate_init: handle Cil.Index later!" in
             let fexp = translate_init init2 lopt in
             Hashtbl.add tbl_fields_init fname fexp;
           ) offset_init_list;
@@ -1029,7 +1040,7 @@ and translate_init (init: Cil.init) (lopt: Cil.location option) : Iast.exp =
             with Not_found -> (
               try Hashtbl.find tbl_pointer_data_decl newtyp
               with Not_found ->
-                report_error_msg ("translate_init: couldn't find typ - " ^ newtyp_name)
+                report_error pos ("translate_init: couldn't find typ - " ^ newtyp_name)
             )
           ) in
           let init_params = List.fold_left (
@@ -1043,14 +1054,14 @@ and translate_init (init: Cil.init) (lopt: Cil.location option) : Iast.exp =
                   | Globals.Bool -> Iast.mkBoolLit true pos
                   | Globals.Float -> Iast.mkFloatLit 0. pos
                   | Globals.Named _ -> Iast.mkNull pos
-                  | _ -> report_error_msg ("Unexpected typ 3: " ^ (Globals.string_of_typ ftyp))
+                  | _ -> report_error pos ("Unexpected typ 3: " ^ (Globals.string_of_typ ftyp))
                 )
               ) in
               params @ [finit]
           ) [] data_decl.Iast.data_fields in
           let init_exp = Iast.mkNew newtyp_name init_params pos in
           init_exp
-      | _ -> report_error_msg ("translate_init: handle other type later - " 
+      | _ -> report_error pos ("translate_init: handle other type later - " 
                                 ^ (Globals.string_of_typ newtyp))
     )
 
@@ -1059,7 +1070,7 @@ and translate_global_var (vinfo: Cil.varinfo) (iinfo: Cil.initinfo)
                          (lopt: Cil.location option)
                          : Iast.exp_var_decl =
   let pos = match lopt with None -> no_pos | Some l -> translate_location l in
-  let ty = translate_typ vinfo.Cil.vtype in
+  let ty = translate_typ vinfo.Cil.vtype pos in
   let name = vinfo.Cil.vname in
   let decl = (
     match iinfo.Cil.init with
@@ -1079,13 +1090,18 @@ and translate_fundec (fundec: Cil.fundec) (lopt: Cil.location option) : Iast.pro
   Hashtbl.clear tbl_addrof_holder;
   Hashtbl.clear tbl_addrof_data;
   aux_local_vardecls := [];
-  (* supporting functions *)
-  let translate_funtyp (ty: Cil.typ) : Globals.typ = (
-    match ty with
-    | Cil.TFun (t, params, _, _) -> translate_typ t
-    | _ -> report_error_msg "Error!!! Invalid type! Have to be TFun only."
+  (* start translating function *)
+  let pos = match lopt with None -> no_pos | Some l -> translate_location l in
+  let fheader = fundec.Cil.svar in
+  let name = fheader.Cil.vname in
+  let mingled_name = "" in (* TRUNG TODO: check mingled_name later *)
+  let static_specs = fundec.Cil.hipfuncspec in
+  let return_typ = ( 
+    match fheader.Cil.vtype with
+    | Cil.TFun (t, params, _, _) -> translate_typ t pos
+    | _ -> report_error pos "Error!!! Invalid type! Have to be TFun only."
   ) in
-  let collect_params (fheader: Cil.varinfo) : Iast.param list = (
+  let funargs = (
     let ftyp = fheader.Cil.vtype in
     let pos = translate_location fheader.Cil.vdecl in
     match ftyp with
@@ -1094,7 +1110,7 @@ and translate_fundec (fundec: Cil.fundec) (lopt: Cil.location option) : Iast.pro
         let translate_one_param (p : string * Cil.typ * Cil.attributes) 
                                 : Iast.param = (
           let (name, ty, _) = p in
-          let typ = translate_typ ty in
+          let typ = translate_typ ty pos in
           let newparam = {Iast.param_type = typ;
                           Iast.param_name = name;
                           Iast.param_mod = Iast.NoMod;
@@ -1103,17 +1119,8 @@ and translate_fundec (fundec: Cil.fundec) (lopt: Cil.location option) : Iast.pro
         ) in
         List.map translate_one_param params
       )
-    | _ -> report_error_msg "Invalid function header!"
+    | _ -> report_error pos "Invalid function header!"
   ) in
-  
-  (* start translating function *)
-  let pos = match lopt with None -> no_pos | Some l -> translate_location l in
-  let fheader = fundec.Cil.svar in
-  let name = fheader.Cil.vname in
-  let mingled_name = "" in (* TRUNG TODO: check mingled_name later *)
-  let static_specs = fundec.Cil.hipfuncspec in
-  let return = translate_funtyp (fheader.Cil.vtype) in
-  let args = collect_params fheader in
   let funbody = (
     match fundec.Cil.sbody.Cil.bstmts with
     | [] -> None
@@ -1131,9 +1138,9 @@ and translate_fundec (fundec: Cil.fundec) (lopt: Cil.location option) : Iast.pro
     Iast.proc_data_decl = None;
     Iast.proc_flags = [] ;
     Iast.proc_constructor = false;
-    Iast.proc_args = args;
+    Iast.proc_args = funargs;
     Iast.proc_source = ""; (* WN : need to change *)
-    Iast.proc_return = return;
+    Iast.proc_return = return_typ;
     Iast.proc_static_specs = static_specs;
     Iast.proc_dynamic_specs = Iformula.mkEFalseF ();
     Iast.proc_exceptions = [];
@@ -1361,7 +1368,7 @@ let parse_hip (filename: string) : Iast.prog_decl =
   let _ = print_endline cmd in
   let exit_code = Sys.command cmd in
   if (exit_code != 0) then
-    report_error_msg "GCC Preprocessing failed!";
+    report_error no_pos "GCC Preprocessing failed!";
   (* then use CIL to parse the preprocessed file *)
   let cil = parse_one_file prep_filename in
   if !Cilutil.doCheck then (
