@@ -4755,7 +4755,7 @@ Later P2 can be dropped as --eup.
 We unfold because it ha a very simple RHS.
 
 =====================================================================
-# tll-if.slk
+# tll-if.slk FIXED the cond_path: should be in reverse order. ([1;2] ===> [2;1])
 
 relAssume (1)
  H(x) --> x::node<left_25_800,right_25_801>@M * H_2(left_25_800) 
@@ -4789,7 +4789,7 @@ H_3(right_25_801)
 
 PROBLEM
 =======
-H should be duplicated below.
+H should be duplicated below. :FIXED
 
 *************************************
 *******relational definition ********

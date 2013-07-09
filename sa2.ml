@@ -194,7 +194,7 @@ let apply_transitive_impl_fix prog post_hps callee_hps (* hp_rel_unkmap *) dang_
       let equal_hps = List.map fst equal_cands in
       let _ = if equal_hps <> [] then
         DD.binfo_pprint (" synthesize: " ^ (!CP.print_svl equal_hps) )no_pos
-      else DD.binfo_pprint (" synthesize: " ^ (!CP.print_svl complex_hps) )no_pos
+      else ()
       in
       DD.binfo_pprint ">>>>>> step 3b: do apply_transitive_imp <<<<<<" no_pos;
       (* let constrs2, new_cs2, new_non_unk_hps = subst_cs prog dang_hps constrs new_cs1 in *)
@@ -209,7 +209,11 @@ let apply_transitive_impl_fix prog post_hps callee_hps (* hp_rel_unkmap *) dang_
       in
       (*END for debugging*)
       let norm_constrs, non_unk_hps1 =
-        if (* List.length new_cs2 = 0 *) not is_changed then (constrs2@new_cs2,[])
+        if (* List.length new_cs2 = 0 *) not is_changed then
+          let _ =  if complex_hps <> [] then DD.binfo_pprint (" synthesize: " ^ (!CP.print_svl complex_hps) ) no_pos
+          else ()
+          in
+          (constrs2@new_cs2,[])
         else
           helper new_cs2 constrs2 (frozen_hps@equal_hps) in
       ( norm_constrs, [])

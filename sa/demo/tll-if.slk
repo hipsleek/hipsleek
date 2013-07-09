@@ -13,7 +13,7 @@ HeapPred H_3(node a).
 HeapPred H_2a(node a).
 HeapPred H_3a(node a).
 
-//Declare_Unknown(1;2)[H_2]
+//Declare_Unknown(2;1)[H_2]
 
 relAssume (1)
  H(x) --> x::node<left_25_800,right_25_801>@M * H_2(left_25_800) 
@@ -22,7 +22,7 @@ relAssume (1;1)
  H_3(right_25_801)&right_25_801!=null --> H(right_25_801).
 relAssume (1;1)
  H_2(left_25_800) --> H(left_25_800).
-relAssume (1;2)
+relAssume (2;1)
  H_3(right_25_801)&right_25_801=null --> emp.
 
 shape_divide [H,H_2,H_3][].
