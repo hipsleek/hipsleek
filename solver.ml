@@ -4838,7 +4838,7 @@ and early_hp_contra_detection hec_num prog ctx conseq pos =
   let pr_res (contra, es, ctx, _) = (contra_str contra) ^
     match ctx with
       | Some ctx -> ("\n ctx = " ^ (Cprinter.string_of_list_context ctx))
-      | None ->     ("\n estate: " ^ (pr_option Cprinter.string_of_entail_state(* _short *) es))  in
+      | None ->     ("\n estate: " ^ (pr_option Cprinter.string_of_entail_state(* _short *) es)) in
   let f = wrap_proving_kind "EARLY CONTRA DETECTION" (early_hp_contra_detection_x hec_num prog ctx conseq) in
   Debug.no_1 "early_hp_contra_detection" Cprinter.string_of_context_short pr_res 
         (fun _ -> f pos) ctx 
@@ -4970,6 +4970,7 @@ and heap_entail_conjunct_lhs_x hec_num prog is_folding  (ctx:context) (conseq:CF
     else (* Dummy result & set dup = false to do the usual checking. *)
       ((FailCtx (Trivial_Reason (CF.mk_failure_must "Dummy list_context" Globals.sl_error)), Prooftracer.TrueConseq) ,false)
     in
+    let _ = Debug.tinfo_hprint (add_str "temp" (pr_pair Cprinter.string_of_list_context pr_none )) temp no_pos in 
     if dup then (* Contains duplicate --> already handled by process_action in process_entail_state *) 
       temp 
     else match conseq with
@@ -5380,14 +5381,16 @@ and heap_entail_split_rhs_phases_x (prog : prog_decl) (is_folding : bool) (ctx_0
     let eqns = (MCP.ptr_equations_without_null rhs_pure) in
     CF.set_context (fun es -> {es with es_rhs_eqset=(es.es_rhs_eqset@eqns);}) ctx_0 in
   let helper ctx_00 h p (func : CF.h_formula -> MCP.mix_formula -> CF.formula) =
-    let _ = DD.ninfo_hprint (add_str "heap(helper)" Cprinter.string_of_h_formula) h no_pos in
-    let _ = DD.ninfo_hprint (add_str "pure(helper)" Cprinter.string_of_mix_formula) p no_pos in
+    let _ = DD.tinfo_hprint (add_str "heap(helper)" Cprinter.string_of_h_formula) h no_pos in
+    let _ = DD.tinfo_hprint (add_str "pure(helper)" Cprinter.string_of_mix_formula) p no_pos in
     let h1, h2, h3 = split_phase 1 h in
     if(is_empty_heap h1) && (is_empty_heap h2) && (is_empty_heap h3) then (* no heap on the RHS *)
+      let _ = DD.tinfo_hprint (add_str "BRANCH1" pr_none) () no_pos in
       heap_entail_conjunct 2 prog is_folding ctx_00 conseq [] pos
     else(* only h2!=true *)
       if ((is_empty_heap h1) && (is_empty_heap h3)) then
-	    heap_n_pure_entail 1 prog is_folding  ctx_00 conseq h2 p func true pos
+        let _ = DD.tinfo_hprint (add_str "BRANCH2" pr_none) () no_pos in
+	heap_n_pure_entail 1 prog is_folding  ctx_00 conseq h2 p func true pos
       else(* only h1!=true *)
 	    if ((is_empty_heap h2) && (is_empty_heap h3)) then
 	      heap_n_pure_entail 2 prog is_folding  ctx_00 conseq h1 p func false pos
@@ -5479,7 +5482,7 @@ and heap_entail_split_rhs_phases_x (prog : prog_decl) (is_folding : bool) (ctx_0
 	          match conseq with  
 	            | Base(bf) -> 
 	                  let h, p, fl, t, a = CF.split_components conseq in
-                          (* let _ =  Debug.info_pprint ("XXXX 2 p: " ^ (Cprinter.string_of_mix_formula p)) no_pos in *)
+                          let _ =  Debug.tinfo_hprint (add_str "HERE p: "  (Cprinter.string_of_mix_formula)) p no_pos in
 	                  helper ctx_with_rhs (* ctx_0 *) h p (fun xh xp -> CF.mkBase xh xp t fl a pos)
 	            | Exists ({formula_exists_qvars = qvars;
 		          formula_exists_heap = qh;
@@ -9336,10 +9339,10 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
             Context.match_res_rhs_node = rhs_node;
             Context.match_res_rhs_rest = rhs_rest;
             Context.match_res_holes = holes;} as m_res)->
-            Debug.ninfo_hprint (add_str "lhs_node" (Cprinter.string_of_h_formula)) lhs_node pos;
-            Debug.ninfo_hprint (add_str "lhs_rest" (Cprinter.string_of_h_formula)) lhs_rest pos;
-            Debug.ninfo_hprint (add_str "rhs_node" (Cprinter.string_of_h_formula)) rhs_node pos;
-            Debug.ninfo_hprint (add_str "rhs_rest" (Cprinter.string_of_h_formula)) rhs_rest pos;
+            Debug.tinfo_hprint (add_str "lhs_node" (Cprinter.string_of_h_formula)) lhs_node pos;
+            Debug.tinfo_hprint (add_str "lhs_rest" (Cprinter.string_of_h_formula)) lhs_rest pos;
+            Debug.tinfo_hprint (add_str "rhs_node" (Cprinter.string_of_h_formula)) rhs_node pos;
+            Debug.tinfo_hprint (add_str "rhs_rest" (Cprinter.string_of_h_formula)) rhs_rest pos;
              (*******SPLIT/COMBINE permissions********>>
             if lhs_p |\- perm(lhs_node) != perm(rhs_node) then MATCH
             else SPLIT followed by MATCH or COMBINE followed by MATCH
