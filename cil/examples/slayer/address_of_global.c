@@ -1,15 +1,17 @@
 /**
   Copyright (c) Microsoft Corporation.  All rights reserved.
 
-  y is an alias of &x.
+  y is an alias of the global x.
  **/
-//#include "slayer.h"
+
+void** NULL = 0;
+
+int x;
 
 void main() {
-  int x;
   int *y = &x;
   *y = 0;
-  //FAIL_IF(x != 0) ;
+  //if(x!=0) *NULL = 0;
   //@ assert (x' = 0);
   return;
 }
