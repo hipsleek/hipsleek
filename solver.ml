@@ -9192,19 +9192,7 @@ and init_para lhs_h rhs_h lhs_aset prog pos = match (lhs_h, rhs_h) with
         else []
   | _ -> []
 
-  (* (Inf.CF.entail_state * Cprinter.P.formula) option * *)
-  (* (Inf.CF.entail_state * Cformula.CP.infer_rel_type list * bool) list *) 
-and solver_detect_lhs_rhs_contra i prog estate conseq pos msg =
-  let pr_estate = Cprinter.string_of_entail_state_short in
-  let pr_f = Cprinter.string_of_formula in
-  let pr_es (es,e) =  pr_pair pr_estate Cprinter.string_of_pure_formula (es,e) in
-  let pr = CP.print_lhs_rhs in
-  let pr_3 (_,lr,b) =  pr_pair (pr_list pr) string_of_bool (lr,b) in
-  Debug.no_3_num i "solver_detect_lhs_rhs_contra" 
-      pr_estate pr_f pr_id  (pr_pair (pr_option pr_es) (pr_list pr_3)) (fun _ _ _ -> 
-          solver_detect_lhs_rhs_contra_x prog estate conseq pos msg) estate conseq msg
-
-and solver_detect_lhs_rhs_contra_x prog estate conseq pos msg =
+and solver_detect_lhs_rhs_contra_all_x prog estate conseq pos msg =
   (* ======================================================= *)
   let (qvars, new_f) = match estate.es_formula with
     | Exists f ->  split_quantifiers estate.es_formula
@@ -9220,35 +9208,62 @@ and solver_detect_lhs_rhs_contra_x prog estate conseq pos msg =
     let rhs_xpure,_,_ = xpure prog conseq in
     let p_rhs_xpure = MCP.pure_of_mix rhs_xpure in
     let contr, _ = Infer.detect_lhs_rhs_contra  p_lhs_xpure p_rhs_xpure pos in
-    contr in (* Cristian : to detect_lhs_rhs_contra *)
+    contr in
   let r_inf_contr,relass = 
-    if lhs_rhs_contra_flag then (None,[])
+    if lhs_rhs_contra_flag then ([],[])
     else
       begin
         (* lhs_rhs contradiction detected *)
+        (* try to first infer contra on lhs only with direct vars *)
 	let r_inf_contr,relass = Inf.infer_lhs_contra_estate 4 estate lhs_xpure pos msg  in
         let contra, c,r =
           match r_inf_contr with
-            | Some _ ->  (true, r_inf_contr, relass)
+            | Some r ->  (true, [r], relass)
             | None ->
                   begin
                     match relass with
-                      | h::t0 -> (true, r_inf_contr, relass)
-                      | []   ->  (false, None, [])
+                      | h::t0 -> (true, [], relass)
+                      | []   ->  (false, [], [])
                   end
         in
         
         if (contra) then (c,r)
         else
-          let contr_lst, rel = solver_detect_lhs_rhs_contra_all_sat_HP prog estate lhs_xpure pos msg in
-          match contr_lst with
-            | h::t ->
-                  let h = choose_best_candidate contr_lst in
-                  (h, rel)
-            | []   -> (None,[])
-          (* solver_detect_lhs_rhs_contra_first_sat_HP prog estate lhs_xpure pos msg *)
+          (* contra with  HP args *)
+          let contr_lst, rel = solver_infer_lhs_contra_list prog estate lhs_xpure pos msg in
+          (contr_lst, rel)
       end
   in (r_inf_contr,relass)
+
+and solver_detect_lhs_rhs_contra_all i prog estate conseq pos msg =
+  let pr_estate = Cprinter.string_of_entail_state_short in
+  let pr_f = Cprinter.string_of_formula in
+  let pr_es (es,e) =  pr_pair pr_estate Cprinter.string_of_pure_formula (es,e) in
+  let pr = CP.print_lhs_rhs in
+  let pr_3 (_,lr,b) =  pr_pair (pr_list pr) string_of_bool (lr,b) in
+  Debug.no_3_num i "solver_detect_lhs_rhs_contra_all" 
+      pr_estate pr_f pr_id  (pr_pair (pr_list (pr_option pr_es)) (pr_list pr_3)) (fun _ _ _ -> 
+          solver_detect_lhs_rhs_contra_all_x prog estate conseq pos msg) estate conseq msg
+
+and solver_detect_lhs_rhs_contra_x i prog estate conseq pos msg =
+  let contr_lst, rel = solver_detect_lhs_rhs_contra_all 1 prog estate conseq pos msg in
+  match contr_lst with
+    | h::t ->
+          let h = choose_best_candidate contr_lst in
+          (h, rel)
+    | []   -> (None,rel)
+
+  (* (Inf.CF.entail_state * Cprinter.P.formula) option * *)
+  (* (Inf.CF.entail_state * Cformula.CP.infer_rel_type list * bool) list *) 
+and solver_detect_lhs_rhs_contra i prog estate conseq pos msg =
+  let pr_estate = Cprinter.string_of_entail_state_short in
+  let pr_f = Cprinter.string_of_formula in
+  let pr_es (es,e) =  pr_pair pr_estate Cprinter.string_of_pure_formula (es,e) in
+  let pr = CP.print_lhs_rhs in
+  let pr_3 (_,lr,b) =  pr_pair (pr_list pr) string_of_bool (lr,b) in
+  Debug.no_3_num i "solver_detect_lhs_rhs_contra" 
+      pr_estate pr_f pr_id  (pr_pair (pr_option pr_es) (pr_list pr_3)) (fun _ _ _ -> 
+          solver_detect_lhs_rhs_contra_x i prog estate conseq pos msg) estate conseq msg
 
 and choose_best_candidate contr_lst =
   let rec helper lst =
@@ -9275,18 +9290,21 @@ and solver_infer_lhs_contra estate lhs_xpure h_inf_args pos msg =
   let r_inf_contr,relass = Inf.infer_lhs_contra_estate 4 new_estate lhs_xpure pos msg  in 
   r_inf_contr,relass
 
-and solver_detect_lhs_rhs_contra_first_sat_HP_x prog estate lhs_xpure pos msg =
-  let infer_vars_hp_rel = estate.es_infer_vars_hp_rel in
-  let _ = DD.tinfo_hprint (add_str "infer_vars_hp_rel" Cprinter.string_of_spec_var_list) infer_vars_hp_rel pos in
-  (* sort hp_rel vars such that Pre Pred comes bef Post Pred*)
-  let infer_vars_hp_rel = List.fast_sort (fun hp1 hp2 -> 
+and sort_infer_vars_hp_rel prog infer_vars_hp_rel = 
+  List.fast_sort (fun hp1 hp2 -> 
       let hpdecl1 = Cast.look_up_hp_def_raw prog.Cast.prog_hp_decls (CP.name_of_spec_var hp1) in
       let hpdecl2 = Cast.look_up_hp_def_raw prog.Cast.prog_hp_decls (CP.name_of_spec_var hp2) in
       let h1,h2 = (hpdecl1.hp_is_pre,  hpdecl2.hp_is_pre) in
       if (h1 = h2) then 0
       else if (h1 && (not h2)) then (-1)
       else 1
-  ) infer_vars_hp_rel in
+  ) infer_vars_hp_rel
+
+and solver_infer_lhs_contra_first_sat_x prog estate lhs_xpure pos msg =
+  let infer_vars_hp_rel = estate.es_infer_vars_hp_rel in
+  let _ = DD.tinfo_hprint (add_str "infer_vars_hp_rel" Cprinter.string_of_spec_var_list) infer_vars_hp_rel pos in
+  (* sort hp_rel vars such that Pre Pred comes bef Post Pred*)
+ let infer_vars_hp_rel =  sort_infer_vars_hp_rel prog infer_vars_hp_rel in
   
   let _ = DD.tinfo_hprint (add_str "infer_vars_hp_rel" Cprinter.string_of_spec_var_list) infer_vars_hp_rel no_pos in
 
@@ -9310,26 +9328,19 @@ and solver_detect_lhs_rhs_contra_first_sat_HP_x prog estate lhs_xpure pos msg =
   let (c,r)  = infer_lhs_contra_helper infer_vars_hp_rel  in
   (c,r)
 
-and solver_detect_lhs_rhs_contra_first_sat_HP prog estate lhs_xpure pos msg =
+and solver_infer_lhs_contra_first_sat prog estate lhs_xpure pos msg =
   let pr_estate = Cprinter.string_of_entail_state_short in
   let pr_es (es,e) =  pr_pair pr_estate Cprinter.string_of_pure_formula (es,e) in
   let pr = CP.print_lhs_rhs in
   let pr_3 (_,lr,b) =  pr_pair (pr_list pr) string_of_bool (lr,b) in
-  Debug.no_2 "solver_detect_lhs_rhs_contra_first_sat_HP_x" pr_estate Cprinter.string_of_mix_formula  
-      (pr_pair (pr_option pr_es) (pr_list pr_3)) (fun _ _ -> solver_detect_lhs_rhs_contra_first_sat_HP_x prog estate lhs_xpure pos msg ) estate lhs_xpure
+  Debug.no_2 "solver_infer_lhs_contra_first_sat" pr_estate Cprinter.string_of_mix_formula  
+      (pr_pair (pr_option pr_es) (pr_list pr_3)) (fun _ _ -> solver_infer_lhs_contra_first_sat_x prog estate lhs_xpure pos msg ) estate lhs_xpure
 
-and solver_detect_lhs_rhs_contra_all_sat_HP_x prog estate lhs_xpure pos msg =
+and solver_infer_lhs_contra_list_x prog estate lhs_xpure pos msg =
   let infer_vars_hp_rel = estate.es_infer_vars_hp_rel in
   let _ = DD.tinfo_hprint (add_str "infer_vars_hp_rel" Cprinter.string_of_spec_var_list) infer_vars_hp_rel pos in
   (* sort hp_rel vars such that Pre Pred comes bef Post Pred*)
-  let infer_vars_hp_rel = List.fast_sort (fun hp1 hp2 -> 
-      let hpdecl1 = Cast.look_up_hp_def_raw prog.Cast.prog_hp_decls (CP.name_of_spec_var hp1) in
-      let hpdecl2 = Cast.look_up_hp_def_raw prog.Cast.prog_hp_decls (CP.name_of_spec_var hp2) in
-      let h1,h2 = (hpdecl1.hp_is_pre,  hpdecl2.hp_is_pre) in
-      if (h1 = h2) then 0
-      else if (h1 && (not h2)) then (-1)
-      else 1
-  ) infer_vars_hp_rel in
+  let infer_vars_hp_rel =  sort_infer_vars_hp_rel prog infer_vars_hp_rel in
   let _ = DD.tinfo_hprint (add_str "infer_vars_hp_rel" Cprinter.string_of_spec_var_list) infer_vars_hp_rel no_pos in
 
   let h_inf_args, h_arg_map = get_heap_inf_args_hp_rel estate infer_vars_hp_rel in
@@ -9353,13 +9364,13 @@ and solver_detect_lhs_rhs_contra_all_sat_HP_x prog estate lhs_xpure pos msg =
     | None -> [] in
   (r_contr_lst, rel)
 
-and solver_detect_lhs_rhs_contra_all_sat_HP prog estate lhs_xpure pos msg =
+and solver_infer_lhs_contra_list prog estate lhs_xpure pos msg =
   let pr_estate = Cprinter.string_of_entail_state(* _short *) in
   let pr_es (es,e) =  pr_pair pr_estate Cprinter.string_of_pure_formula (es,e) in
   let pr = CP.print_lhs_rhs in
   let pr_3 (_,lr,b) =  pr_pair (pr_list pr) string_of_bool (lr,b) in
-  Debug.no_2 "solver_detect_lhs_rhs_contra_all_sat_HP" pr_estate Cprinter.string_of_mix_formula  
-      (pr_pair (pr_list pr_es) (pr_list pr_3)) (fun _ _ -> solver_detect_lhs_rhs_contra_all_sat_HP_x prog estate lhs_xpure pos msg ) estate lhs_xpure
+  Debug.no_2 "solver_infer_lhs_contra_list" pr_estate Cprinter.string_of_mix_formula  
+      (pr_pair (pr_list pr_es) (pr_list pr_3)) (fun _ _ -> solver_infer_lhs_contra_list_x prog estate lhs_xpure pos msg ) estate lhs_xpure
 
 and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:CP.spec_var list) is_folding pos =
   if not(Context.is_complex_action a) then
