@@ -1,5 +1,5 @@
 ==================================================================
-# tll-guard.slk
+# tll-guard.slk: FIXED
   (from tll.ss)
 
 infer [H,G,H_4,H_5,H_6]

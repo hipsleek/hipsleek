@@ -2381,21 +2381,33 @@ let generate_constraints prog es rhs lhs_b ass_guard rhs_b1 defined_hps
             end
   in
   (*if guard exists in the lhs, remove it*)
-  let check_guard guard_opt lhs_b=
+  let check_guard guard_opt lhs_b rhs_b=
     let process_guard guard=
       let g_hds = SAU.get_hdnodes_hf guard in
-      let l_hds = SAU.get_hdnodes_basef lhs_b in
-      let l_hd_svl = List.map (fun hd -> hd.CF.h_formula_data_node) l_hds in
-      let inter_svl = List.fold_left (fun res hd ->
-          if CP.mem_svl hd.CF.h_formula_data_node l_hd_svl then
-            (res@[hd.CF.h_formula_data_node])
-          else res
-      ) [] g_hds in
-      let new_guard = if inter_svl = [] then (Some guard) else
-        let guard1 = CF.drop_hnodes_hf guard inter_svl in
-        if guard1 = CF.HEmp then None else (Some guard1)
-      in
-      new_guard
+      let l_hds,_, l_hrels = CF.get_hp_rel_bformula lhs_b in
+      let _,_, r_hrels = CF.get_hp_rel_bformula rhs_b in
+      (* check useful guard:
+         A guard is useful if
+         vars(G) /\ (ws-vs) != []
+      *)
+      let largs = List.fold_left (fun ls (_,eargs,_)->
+      ls@(List.fold_left List.append [] (List.map CP.afv eargs))) [] l_hrels in
+      let rargs = List.fold_left (fun ls (_,eargs,_)->
+      ls@(List.fold_left List.append [] (List.map CP.afv eargs))) [] r_hrels in
+      if (CP.intersect_svl (CF.h_fv guard) (CP.diff_svl rargs largs) = []) then
+        None
+      else
+        let l_hd_svl = List.map (fun hd -> hd.CF.h_formula_data_node) l_hds in
+        let inter_svl = List.fold_left (fun res hd ->
+            if CP.mem_svl hd.CF.h_formula_data_node l_hd_svl then
+              (res@[hd.CF.h_formula_data_node])
+            else res
+        ) [] g_hds in
+        let new_guard = if inter_svl = [] then (Some guard) else
+          let guard1 = CF.drop_hnodes_hf guard inter_svl in
+          if guard1 = CF.HEmp then None else (Some guard1)
+        in
+        new_guard
     in
     match guard_opt with
       | None -> None
@@ -2453,7 +2465,7 @@ let generate_constraints prog es rhs lhs_b ass_guard rhs_b1 defined_hps
           unk_hps = [];
           predef_svl = matched_svl ; (*(closed_hprel_args_def@total_unk_svl@matched_svl);*)
           hprel_lhs = CF.remove_neqNull_svl matched_svl (CF.Base new_lhs_b);
-          hprel_guard = check_guard ass_guard new_lhs_b;
+          hprel_guard = check_guard ass_guard new_lhs_b new_rhs_b;
           hprel_rhs = CF.Base new_rhs_b;
           hprel_path = es_cond_path;
       }]
