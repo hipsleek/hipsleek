@@ -2,7 +2,7 @@
 
 function one 
 {
-	sll_out=`../../hip --en-texify $1`
+	sll_out=`../../hip --en-texify $1 --en-testing`
 	rels=`echo "$sll_out" | awk '/rstart/,/rstop/'`
 	defs=`echo "$sll_out" | awk '/dstart/,/dstop/'`
 	echo "========$1=========="
