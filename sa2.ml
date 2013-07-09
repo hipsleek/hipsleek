@@ -1570,7 +1570,8 @@ and infer_shapes_from_fresh_obligation_x iprog cprog proc_name cond_path (constr
     let rinfer_hps =  (CP.diff_svl (rhs_hps) def_hps) in
     let infer_hps = CP.remove_dups_svl (linfer_hps@rinfer_hps) in
     if infer_hps = [] then (acc_constrs, post_no_def) else
-      let new_constrs = SAC.do_entail_check infer_hps cprog cs in
+      let f = wrap_proving_kind "POST/PRE OBLIGATION" (SAC.do_entail_check infer_hps cprog) in
+      let new_constrs = f cs in
       (acc_constrs@new_constrs, post_no_def@linfer_hps)
   in
   let ho_constrs, nondef_post_hps = List.fold_left collect_ho_ass ([],[]) constrs0 in
