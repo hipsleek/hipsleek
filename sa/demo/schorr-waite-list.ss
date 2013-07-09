@@ -3,50 +3,76 @@ data node{
 	node next;
 }
 
-ll<> == self = null
-	or self::node<_,p> * p::ll<>
+ll<M> == self = null & M = {}
+	or self::node<_,nxt> * nxt::ll<Mnxt> & M = union(Mnxt,{self})
 inv true;
 
 global node SENTINEL;
 
-void traverse(ref node c, ref node p, ref node n)
-requires c::node<_,n> * p::ll<> * n::ll<>
-ensures n'::ll<> * p'::ll<> & c'= SENTINEL & SENTINEL' = SENTINEL; 
-//& n' = c;
+void traverse(ref node c, ref node p)
+requires c::ll<Mc> * p::ll<Mp>
+ensures p'::ll<M> & M = union(Mc,Mp) & c' = null;
 {
-//	node n;
-	if (c != SENTINEL){ 
-		if(c != null){
-		//assume false;
-//		n = c.next;
-		c.next = p;
-		p = c;
-		c = n;
-//		dprint;
-		}
-		if (c == null){
-			c = p;
-			p = null;
-		}
-		n = c.next;
-		traverse(c,p,n);
+if(c == null) return;
+else {
+	node n = c.next;
+	c.next = p;
+	p = c;
+	c = n;
+	traverse(c,p);
 	}
-//	dprint;
 }
 
 void trav(ref node root)
-requires root::ll<> * SENTINEL::node<_,null>
-ensures root'::ll<> ;
+requires root::ll<M>
+ensures root'::ll<M>;
 //& root = SENTINEL;
 {
 	if (root == null) return;
 	else {
-		node prev = SENTINEL;
+		node prev = null;
 		node curr = root;
-		node next = curr.next;
 //		dprint;
-		traverse(curr,prev,next);
-		root = next;
+		traverse(curr,prev);
+		curr = prev;
+		prev = null;
+		traverse(curr,prev);
+		root = prev;
 	}
 //dprint;
+}
+
+void scan(ref node cur, ref node prev)
+requires cur::ll<Mc> * prev::ll<Mp>
+ensures prev'::ll<M1> * cur'::ll<M2> & union(M1,M2) = union(Mp,Mc);
+{
+  node n;
+  if (cur != SENTINEL && cur != null) 
+  {
+  	n = cur.next;
+	cur.next = prev;
+	prev = cur;
+	cur = n;
+	if (cur == null) {
+		cur = prev;
+		prev = null;
+	}
+	scan(cur,prev);
+  }  
+}
+
+void scantrav(ref node root)
+requires root::ll<M> * SENTINEL::node<_,null>
+case{
+	root != null -> ensures root'::ll<M1>;
+	root = null -> ensures root'::ll<M> & root' = root;
+}
+{
+  node cur,prev;
+  if (root == null) return;
+  prev = SENTINEL;
+  cur = root;
+  scan(cur,prev);
+  root = prev;
+//  dprint;
 }
