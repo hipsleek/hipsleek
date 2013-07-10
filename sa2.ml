@@ -1726,7 +1726,7 @@ and infer_shapes_proper iprog prog proc_name cond_path (constrs2: CF.hprel list)
   else
     (post_defs,unify_equiv_map11)
   in
-  let pre_oblg_hps, pre_oblg_defs,unk_hpargs3,unk_map5  = if !Globals.sa_en_pre_oblg then
+  let pre_oblg_hps, pre_oblg_defs,unk_hpargs3,unk_map5  = if !Globals.pred_en_oblg then
     infer_shapes_from_obligation iprog prog proc_name true cond_path (pre_oblg_constrs) callee_hps [] sel_post_hps unk_hpargs2
     link_hpargs need_preprocess unk_map4 detect_dang pre_defs2 post_defs1 (pre_hps@post_hps)
   else ([],[],unk_hpargs,  unk_map4)
@@ -1735,8 +1735,11 @@ and infer_shapes_proper iprog prog proc_name cond_path (constrs2: CF.hprel list)
   let pr1 = pr_list_ln  Cprinter.string_of_hprel_short in
   if post_oblg_constrs !=[] then
     DD.binfo_pprint ("post-obligation:\n" ^ (pr1 post_oblg_constrs)) no_pos;
-  let post_oblg_hps, post_oblg_defs,unk_hpargs4,unk_map6  = infer_shapes_from_obligation iprog prog proc_name false cond_path (post_oblg_constrs) callee_hps [] sel_post_hps unk_hpargs3
-    link_hpargs need_preprocess unk_map5 detect_dang (pre_defs2@pre_oblg_defs) post_defs1 (pre_hps@post_hps@pre_oblg_hps) in
+  let post_oblg_hps, post_oblg_defs,unk_hpargs4,unk_map6  = if !Globals.pred_en_oblg then
+    infer_shapes_from_obligation iprog prog proc_name false cond_path (post_oblg_constrs) callee_hps [] sel_post_hps unk_hpargs3
+    link_hpargs need_preprocess unk_map5 detect_dang (pre_defs2@pre_oblg_defs) post_defs1 (pre_hps@post_hps@pre_oblg_hps)
+  else ([],[],unk_hpargs3,   unk_map5 )
+  in
   (*********END POST-OBLG************)
   let defs1 = (pre_defs2@post_defs1@pre_oblg_defs@post_oblg_defs) in
   (*normalization*)

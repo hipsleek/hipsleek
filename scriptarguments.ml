@@ -397,7 +397,8 @@ let common_arguments = [
   ("--dis-cp-trace", Arg.Clear Globals.cond_path_trace, "Disable the tracing of conditional paths");
   ("--sa-print-inter", Arg.Set Globals.sa_print_inter, "Print intermediate results of normalization");
   ("--sa-old", Arg.Set Globals.sa_old, "old algorithm of normalization");
-  ("--sa-en-pre-oblg", Arg.Set Globals.sa_en_pre_oblg, "enable sa_en_pre_oblg");
+  ("--pred-en-oblg", Arg.Set Globals.pred_en_oblg, "enable sa_en_pre_oblg");
+  ("--pred-dis-oblg", Arg.Clear Globals.pred_en_oblg, "enable sa_en_pre_oblg");
    ("--sa-dnc", Arg.Set Globals.sa_dnc, "algorithm of normalization with divide and conquer");
   (* ("--sa-en-norm", Arg.Set Globals.sa_en_norm, "do normalization"); *)
   ("--sa-dis", Arg.Clear Globals.sa_en, "donot infer shape");
