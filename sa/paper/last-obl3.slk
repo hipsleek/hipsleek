@@ -14,13 +14,13 @@ infer [G_1]
   G_1(next_62,next_20_60)&next_0=next_62 & next_62=null & 
          next_0=null  |- G_1(next_0,next_3).
 print residue.
-
+/*
 infer [G_1]
   next_3::node<val_20_59,next_20_60>@M *
   G_1(null,next_20_60)&next_0=null & 
          next_0=null  |- G_1(next_0,next_3).
 print residue.
-
+*/
 /*
 # last-obl3.slk
 

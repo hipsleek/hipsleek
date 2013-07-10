@@ -2015,7 +2015,7 @@ let find_undefined_selective_pointers_x prog lfb lmix_f unmatched rhs_rest rhs_h
   (* let unmatched_hp_args = CF.get_HRels n_unmatched in *)
   let selected_hp_args = List.filter (fun (hp, args) ->
       let args_inst = SAU.get_hp_args_inst prog hp args in
-      (*SHOUL NOT traverse NULL ptr.his may cause some base-case split to be automatically
+      (*SHOUL NOT traverse NULL ptr. this may cause some base-case split to be automatically
         done, but --classic will pick them up. sa/paper/last-obl3.slk
       *)
       let args_inst1 = CP.diff_svl args_inst leqNulls in

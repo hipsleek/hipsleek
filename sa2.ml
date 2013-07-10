@@ -209,7 +209,7 @@ let apply_transitive_impl_fix prog post_hps callee_hps (* hp_rel_unkmap *) dang_
         let is_changed, constrs2,new_cs2 = subst_cs prog post_hps dang_hps link_hps (frozen_hps@equal_hps)
         complex_hps constrs new_cs1 in
         (*for debugging*)
-        let _ = DD.binfo_pprint ("   new constrs:" ^ (let pr = pr_list_ln Cprinter.string_of_hprel_short in pr constrs2)) no_pos in
+        let _ = DD.ninfo_pprint ("   new constrs:" ^ (let pr = pr_list_ln Cprinter.string_of_hprel_short in pr constrs2)) no_pos in
         let helper (constrs: CF.hprel list) new_cs=
           let pr = pr_list_ln Cprinter.string_of_hprel_short in
           Debug.no_1 "apply_transitive_imp_fix" pr (fun (cs,_) -> pr cs)

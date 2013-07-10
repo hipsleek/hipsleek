@@ -21,6 +21,53 @@ let cs_rhs_is_only_neqNull cs=
   let args = List.fold_left (fun ls (_, args) -> ls@args) [] lhs_hpargs in
   CF.is_only_neqNull args [] cs.CF.hprel_rhs
 
+
+(*
+That means the following priorities:
+   1. H(..) --> H2(..)
+   2. H(..) | G --> H2(..)
+   3. H(..) * D --> H2(..)
+   4. H(..)  --> D*H2(..)
+*)
+let ranking_frozen_mutrec_preds_x pr_hp_cs=
+  let pre_preds_4_equal_w_prio = List.map (fun (hp,cs,deps) ->
+      let is_lhs_emp = (CF.extract_hrel_head cs.CF.hprel_lhs <> None) in
+      let is_rhs_emp = (CF.extract_hrel_head cs.CF.hprel_rhs <> None) in
+      let is_empty_both = is_lhs_emp && is_rhs_emp in
+      let is_guard = (cs.CF.hprel_guard <> None) && is_rhs_emp in
+      (hp,cs, is_empty_both, is_guard, (not is_lhs_emp) && is_rhs_emp , CF.get_h_size_f cs.CF.hprel_rhs)
+  )
+    pr_hp_cs
+  in
+  (*first ranking*)
+  let fst_ls = List.filter (fun (_,_, is_empty_both, _, _ , _) ->  is_empty_both) pre_preds_4_equal_w_prio in
+  match fst_ls with
+    | (hp,cs,_,_,_,_)::_ -> [(hp,cs)]
+    | _ -> begin
+        let snd_ls = List.filter (fun (_,_, _, is_guard, _ , _) ->  is_guard) pre_preds_4_equal_w_prio in
+        match snd_ls with
+          | (hp,cs,_,_,_,_)::_ -> [(hp,cs)]
+          | _ -> begin
+              let rd_ls = List.filter (fun (_,_, _, _, is_emp_r , _) ->  is_emp_r) pre_preds_4_equal_w_prio in
+              match rd_ls with
+                | (hp,cs,_,_,_,_)::_ -> [(hp,cs)]
+                | _ -> begin
+                    let hp,cs,_,_,_,_ = List.fold_left (fun (hp0,cs0,a0,b0,c0, s0) (hp1,cs1,a1,b1,c1, s1) ->
+                        if s1<s0 then (hp1,cs1,a1,b1,c1, s1) else (hp0,cs0,a0, b0, c0, s0)
+                    ) (List.hd pre_preds_4_equal_w_prio) (List.tl pre_preds_4_equal_w_prio) in
+                    [(hp,cs)]
+                  end
+            end
+      end
+
+let ranking_frozen_mutrec_preds pr_hp_cs=
+  let pr1 = Cprinter.string_of_hprel_short in
+  let pr2 = pr_list_ln (pr_pair !CP.print_sv pr1) in
+  let pr3 = pr_list_ln (pr_triple !CP.print_sv pr1 !CP.print_svl) in
+  Debug.no_1 "ranking_frozen_mutrec_preds" pr3 pr2
+      (fun _ -> ranking_frozen_mutrec_preds_x pr_hp_cs)
+      pr_hp_cs
+
 (*
   find all pre-preds that has only one assumption ===> equal
 *)
@@ -75,12 +122,13 @@ let search_pred_4_equal_x constrs post_hps frozen_hps=
   in
   (*mut rec dep*)
   let pre_preds_4_equal1 = if pre_preds_4_equal = [] && pre_preds_cand_equal <> [] then
-    let pre_preds_4_equal_w_size = List.map (fun (hp,cs,deps) -> (hp,cs,deps, CF.get_h_size_f cs.CF.hprel_rhs))
-      pre_preds_cand_equal in
-    let hp,cs,_,_ = List.fold_left (fun (hp0,cs0,deps0, s0) (hp1,cs1,deps1, s1) ->
-        if s1<s0 then (hp1,cs1,deps1, s1) else (hp0,cs0,deps0, s0)
-    ) (List.hd pre_preds_4_equal_w_size) (List.tl pre_preds_4_equal_w_size) in
-    [(hp,cs)]
+    ranking_frozen_mutrec_preds pre_preds_cand_equal
+    (* let pre_preds_4_equal_w_size = List.map (fun (hp,cs,deps) -> (hp,cs,deps, CF.get_h_size_f cs.CF.hprel_rhs)) *)
+    (*   pre_preds_cand_equal in *)
+    (* let hp,cs,_,_ = List.fold_left (fun (hp0,cs0,deps0, s0) (hp1,cs1,deps1, s1) -> *)
+    (*     if s1<s0 then (hp1,cs1,deps1, s1) else (hp0,cs0,deps0, s0) *)
+    (* ) (List.hd pre_preds_4_equal_w_size) (List.tl pre_preds_4_equal_w_size) in *)
+    (* [(hp,cs)] *)
   else pre_preds_4_equal
   in
   (pre_preds_4_equal1, complex_hps)

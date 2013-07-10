@@ -4919,7 +4919,7 @@ Outcome below is wrong
  or emp&next_20_1004=null
  ]
 =====================================================================
-# tll-if.slk
+# tll-if.slk: FIXED
 
 *************************************
 *******relational definition ********
