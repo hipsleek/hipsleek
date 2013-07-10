@@ -14,7 +14,7 @@ inv true.
 
 lemma self::zip<y> -> self::ll<>*y::ll<>.
 
-checkentail x::zip<y> |- x::ll<> * y::ll<>.
+checkentail xx::zip<yy> |- xx::ll<> * yy::ll<>.
 print residue.
 
 /*

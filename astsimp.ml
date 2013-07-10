@@ -1474,14 +1474,14 @@ and set_materialized_prop_x cdef =
       
 and set_materialized_prop cdef = 
   let pr1 = Cprinter.string_of_view_decl in
-  Debug.no_1 "set_materialized_prop" pr1 pr1 set_materialized_prop_x cdef
+  Debug.to_1 "set_materialized_prop" pr1 pr1 set_materialized_prop_x cdef
       
 and find_m_prop_heap params eq_f h = 
   let pr = Cprinter.string_of_h_formula in
   let pr1 = Cprinter.string_of_spec_var_list in
   (* let prr = pr_list Cprinter.string_of_mater_property in *)
   let prr x = Cprinter.string_of_mater_prop_list x in (*string_of_int (List.length x) in*)
-  Debug.no_2 "find_m_prop_heap" pr pr1 prr (fun _ _ -> find_m_prop_heap_x params eq_f h) h params
+  Debug.to_2 "find_m_prop_heap" pr pr1 prr (fun _ _ -> find_m_prop_heap_x params eq_f h) h params
       
 and find_m_prop_heap_x params eq_f h = 
   let rec helper h =
@@ -1498,6 +1498,18 @@ and find_m_prop_heap_x params eq_f h =
               let ret =  List.map (fun v -> C.mk_mater_prop v true [ h.CF.h_formula_view_name]) l in
               let _ = Debug.tinfo_hprint (add_str "ret" (pr_list Cprinter.string_of_mater_property)) ret no_pos in 
               ret
+      | CF.HRel (hp,e,_) ->
+            let args = CP.diff_svl (CF.get_all_sv h) [hp] in
+            (* let l, _  = Sautility.find_root prog [hp] args  [] in *)
+            (* let l = eq_f l in *)
+            let l = args in
+            (* andreeac: to do smth because this is not correct for hrel with more than one arg (args should be [root]) *)
+            Debug.tinfo_hprint (add_str "hrel:l" (Cprinter.string_of_spec_var_list)) l no_pos;
+            if l==[] then []
+            else
+              let ret =  List.map (fun v -> C.mk_mater_prop v true [Cprinter.string_of_spec_var hp]) l in
+              let _ = Debug.tinfo_hprint (add_str "ret" (pr_list Cprinter.string_of_mater_property)) ret no_pos in 
+              ret
       | CF.Star h -> (helper h.CF.h_formula_star_h1)@(helper h.CF.h_formula_star_h2)
       | CF.StarMinus h -> (helper h.CF.h_formula_starminus_h1)@(helper h.CF.h_formula_starminus_h2)
       | CF.Conj h -> (helper h.CF.h_formula_conj_h1)@(helper h.CF.h_formula_conj_h2)
@@ -1507,7 +1519,6 @@ and find_m_prop_heap_x params eq_f h =
       | CF.Hole _ 
       | CF.HTrue 
       | CF.HFalse 
-      | CF.HRel _
       | CF.HEmp -> [] in
   helper h
 
@@ -1528,8 +1539,12 @@ and find_trans_view_name_x ff self pos =
     in cycle params [] [] in
   let find_m_one f = match f with
     | CF.Base b ->    
+          let _ = Debug.tinfo_hprint (add_str "b.CF.formula_base_pure" Cprinter.string_of_mix_formula ) b.CF.formula_base_pure pos in
+          let _ = Debug.tinfo_hprint (add_str "b.CF.formula_base_heap" Cprinter.string_of_h_formula ) b.CF.formula_base_heap pos in
           find_m_prop_heap_aux params b.CF.formula_base_pure b.CF.formula_base_heap
     | CF.Exists b->
+          let _ = Debug.tinfo_hprint (add_str "b.CF.formula_exists_pure" Cprinter.string_of_mix_formula ) b.CF.formula_exists_pure pos in
+          let _ = Debug.tinfo_hprint (add_str "b.CF.formula_exists_heap" Cprinter.string_of_h_formula ) b.CF.formula_exists_heap pos in
           find_m_prop_heap_aux params b.CF.formula_exists_pure b.CF.formula_exists_heap      
     | _ -> Error.report_error 
           {Error.error_loc = no_pos; Error.error_text = "find_materialized_prop: unexpected disjunction"} in
@@ -1539,7 +1554,7 @@ and find_trans_view_name_x ff self pos =
 and find_trans_view_name ff self pos =
   let pr1 = Cprinter.string_of_formula in
   let pr2 = Cprinter.string_of_spec_var in
-  Debug.no_2 "find_trans_view_name" pr1 pr2 (pr_list pr_id) (fun _ _ -> find_trans_view_name_x ff self pos) ff self
+  Debug.to_2 "find_trans_view_name" pr1 pr2 (pr_list pr_id) (fun _ _ -> find_trans_view_name_x ff self pos) ff self
 
 
 and find_node_vars eq_f h =
@@ -1555,6 +1570,14 @@ and find_node_vars eq_f h =
         Debug.tinfo_hprint (add_str "view:l" (Cprinter.string_of_spec_var_list)) l no_pos;
         if l==[] then ([],[])
         else ([],[h.CF.h_formula_view_name])
+    | CF.HRel (hp, e, _) ->        
+        let l = List.fold_left (fun lst exp ->  
+            match exp with
+              | (CP.Var (v,_)) -> [v]@lst
+              | _ -> lst) [] e in
+        Debug.tinfo_hprint (add_str "hrel:l" (Cprinter.string_of_spec_var_list)) l no_pos;
+        if l==[] then ([],[])
+        else ([], [CP.name_of_spec_var hp])
     | CF.Star h -> join (helper  h.CF.h_formula_star_h1) (helper  h.CF.h_formula_star_h2)
     | CF.StarMinus h -> join (helper  h.CF.h_formula_starminus_h1) (helper  h.CF.h_formula_starminus_h2)
     | CF.Conj h -> join (helper  h.CF.h_formula_conj_h1) (helper  h.CF.h_formula_conj_h2)
@@ -1564,7 +1587,6 @@ and find_node_vars eq_f h =
     | CF.Hole _ 
     | CF.HTrue 
     | CF.HFalse 
-    | CF.HRel _
     | CF.HEmp -> ([],[]) in
   (* let helper h =  *)
   (*   let pr1 = Cprinter.string_of_h_formula in *)
@@ -2121,7 +2143,7 @@ and trans_one_coercion (prog : I.prog_decl) (coer : I.coercion_decl) :
       ((C.coercion_decl list) * (C.coercion_decl list)) =
   let pr x =  Iprinter.string_of_coerc_decl x in
   let pr2 (r1,r2) = pr_list Cprinter.string_of_coercion (r1@r2) in
-  Debug.no_1 "trans_one_coercion" pr pr2 (fun _ -> trans_one_coercion_x prog coer) coer
+  Debug.to_1 "trans_one_coercion" pr pr2 (fun _ -> trans_one_coercion_x prog coer) coer
 
 (* let pr x = "?" in *)
 (* let pr2 (r1,r2) = pr_list Cprinter.string_of_coercion (r1@r2) in *)
@@ -7753,6 +7775,8 @@ let convert_pred_to_cast new_views iprog cprog =
   let _ = cprog.C.prog_view_decls <- cprog.C.prog_view_decls@cviews2 in
   let _ =  (List.map (fun vdef -> compute_view_x_formula cprog vdef !Globals.n_xpure) cviews2) in
   let _ = (List.map (fun vdef -> set_materialized_prop vdef) cprog.C.prog_view_decls) in
+  (* andreeac: to check: set it for hrel as well? 
+     let _ = (List.map (fun vdef -> set_materialized_prop vdef) cprog.C.prog_view_decls) in *)
   let cprog1 = fill_base_case cprog in
   let cprog2 = sat_warnings cprog1 in
   let cprog3 = if (!Globals.enable_case_inference or (not !Globals.dis_ps)(* !Globals.allow_pred_spec *))

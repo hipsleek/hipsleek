@@ -18,8 +18,8 @@ HeapPred P2(node a).
 //lemma self::zip<y> -> P2(y).
 
 
-checkentail x::zip<y>
-     |- P1(x) * P2(y).
+checkentail xx::zip<yy>
+     |- P1(xx) * P2(yy).
 print residue.
 
 /*

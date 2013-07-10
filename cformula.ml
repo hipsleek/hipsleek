@@ -1627,6 +1627,7 @@ and is_formula_contain_htrue (h: formula) : bool =
 and get_node_name (h : h_formula) = match h with
   | ViewNode ({h_formula_view_name = c}) 
   | DataNode ({h_formula_data_name = c}) -> c
+  | HRel (hp, _, _) -> CP.name_of_spec_var hp
   | _ -> failwith ("get_node_name: invalid argument")
 
 and get_node_perm (h : h_formula) = match h with
