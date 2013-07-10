@@ -7,16 +7,19 @@ ll<M> == self = null & M = {}
 	or self::node<_,nxt> * nxt::ll<Mnxt> & M = union(Mnxt,{self})
 inv true;
 
-ls<p> == self::node<_,nxt> * nxt::ls<p> 
+ls<p> == self=p
+    or self::node<_,nxt> * nxt::ls<p> & self=p
 inv true;
+
+
 
 global node SENTINEL;
 
 void lscan(ref node cur, ref node prev, node sentinel)
-requires cur::ls<null> * prev::ls<sentinel> * sentinel::node<_,_>@L
-ensures prev'::ls<null> & cur'=sentinel;
-requires cur::ls<sentinel> * prev::ls<null> * sentinel::node<_,_>@L
-ensures prev'::ls<null> & cur'=sentinel;
+requires cur::ls<null> * prev::ls<sentinel> * sentinel::node<_,_> & cur!=null
+ensures prev'::ls<null> * sentinel::node<_,_> & cur'=sentinel;
+requires cur::ls<sentinel> * prev::ls<null> * sentinel::node<_,_> & cur!=sentinel
+ensures prev'::ls<null> * sentinel::node<_,_> & cur'=sentinel;
 {
 
   node n;
