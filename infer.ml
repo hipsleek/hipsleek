@@ -2015,7 +2015,11 @@ let find_undefined_selective_pointers_x prog lfb lmix_f unmatched rhs_rest rhs_h
   (* let unmatched_hp_args = CF.get_HRels n_unmatched in *)
   let selected_hp_args = List.filter (fun (hp, args) ->
       let args_inst = SAU.get_hp_args_inst prog hp args in
-      (CP.intersect_svl args_inst closed_unmatched_svl) != []) rem_lhpargs in
+      (*SHOUL NOT traverse NULL ptr.his may cause some base-case split to be automatically
+        done, but --classic will pick them up. sa/paper/last-obl3.slk
+      *)
+      let args_inst1 = CP.diff_svl args_inst leqNulls in
+      (CP.intersect_svl args_inst1 closed_unmatched_svl) != []) rem_lhpargs in
   let selected_hps0, hrel_args = List.split selected_hp_args in
   (*tricky here: do matching between two unk hps and we keep sth in rhs which not matched*)
   let rest_svl = CF.get_hp_rel_vars_h_formula rhs_rest in

@@ -671,6 +671,9 @@ let sa_old = ref false
 
 let sa_dnc = ref false
 
+(*temp: should be improve*)
+let sa_en_pre_oblg = ref false
+
 (* let sa_en_norm = ref false *)
 
 let sa_en = ref true

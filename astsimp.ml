@@ -7882,7 +7882,7 @@ let trans_hprel_2_cview iprog cprog proc_name hp_rels :
   let pr1 = pr_list_ln ( Cprinter.string_of_hp_rel_def) in
   let pr2 = pr_list_ln Cprinter.string_of_view_decl in
   let pr3 = pr_list_ln Cprinter.string_of_hp_decl in
-  Debug.ho_1 "trans_hprel_2_view" pr1 (pr_pair pr2 pr3)
+  Debug.no_1 "trans_hprel_2_view" pr1 (pr_pair pr2 pr3)
       (fun _ -> trans_hprel_2_cview_x iprog cprog proc_name hp_rels)
       hp_rels
 
@@ -7938,7 +7938,7 @@ let trans_formula_hp_2_view_x iprog cprog proc_name in_hp_names chprels_decl f=
 let trans_formula_hp_2_view iprog cprog proc_name in_hp_names chprels_decl f=
   let pr1= !CF.print_formula in
   let pr2 = pr_list pr_id in
-  Debug.ho_2 "trans_formula_hp_2_view" pr2 pr1 pr1
+  Debug.no_2 "trans_formula_hp_2_view" pr2 pr1 pr1
       (fun _ _ -> trans_formula_hp_2_view_x iprog cprog proc_name
           in_hp_names chprels_decl f)
       in_hp_names f
