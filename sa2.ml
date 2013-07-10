@@ -43,7 +43,7 @@ let rec find_imply_subst_x prog unk_hps link_hps equal_hps complex_hps constrs n
           else check_constr_duplicate (lhs,rhs) ss
   in
   let find_imply_one cs1 cs2=
-    let _ = Debug.ninfo_pprint ("    rhs: " ^ (Cprinter.string_of_hprel_short cs2)) no_pos in
+    let _ = Debug.info_pprint ("    rhs: " ^ (Cprinter.string_of_hprel_short cs2)) no_pos in
     (*if this assumption is going to be equal generalized. do not subst*)
     let lhps = CF.get_hp_rel_name_formula cs2.CF.hprel_lhs in
     if List.length lhps<2 && CP.diff_svl lhps equal_hps = [] then [] else
@@ -81,7 +81,7 @@ let rec find_imply_subst_x prog unk_hps link_hps equal_hps complex_hps constrs n
                           }
                           in
                           let new_cs1 = SAU.simp_match_hp_w_unknown prog unk_hps link_hps new_cs in
-                          let _ = Debug.ninfo_pprint ("    new rhs: " ^ (Cprinter.string_of_hprel_short new_cs1)) no_pos in
+                          let _ = Debug.info_pprint ("    new rhs: " ^ (Cprinter.string_of_hprel_short new_cs1)) no_pos in
                           [new_cs1]
                         end
                 | None -> []
@@ -101,7 +101,7 @@ let rec find_imply_subst_x prog unk_hps link_hps equal_hps complex_hps constrs n
     match rest with
       | [] -> is_changed,don
       | cs1::rest ->
-          let _ = Debug.ninfo_pprint ("    lhs: " ^ (Cprinter.string_of_hprel_short cs1)) no_pos in
+          let _ = Debug.info_pprint ("    lhs: " ^ (Cprinter.string_of_hprel_short cs1)) no_pos in
           if SAC.cs_rhs_is_only_neqNull cs1 then
             (helper_new_only (don@[cs1]) rest is_changed)
           else
@@ -1476,7 +1476,7 @@ let partition_constrs_x constrs post_hps=
 let partition_constrs constrs post_hps=
   let pr1 = pr_list_ln Cprinter.string_of_hprel_short in
   let pr2 = !CP.print_svl in
-  Debug.no_2 "partition_constrs" pr1 pr2 (pr_triple pr1 pr1 pr1)
+  Debug.ho_2 "partition_constrs" pr1 pr2 (pr_triple pr1 pr1 pr1)
       (fun _ _ -> partition_constrs_x constrs post_hps) constrs post_hps
 
 let rec infer_shapes_init_pre_x prog (constrs0: CF.hprel list) callee_hps non_ptr_unk_hps sel_post_hps unk_hps link_hps
