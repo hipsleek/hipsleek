@@ -692,7 +692,10 @@ and translate_exp (e: Cil.exp) : Iast.exp =
       let e1 = translate_exp exp1 in
       let e2 = translate_exp exp2 in
       let o = translate_binary_operator op pos in
-      let newexp = Iast.mkBinary o e1 e2 None pos in
+      let binexp = Iast.mkBinary o e1 e2 None pos in
+      let _ = print_endline ("== binexp = " ^ (Iprinter.string_of_exp binexp)) in
+      let target_typ = translate_typ ty pos in
+      let newexp = Iast.mkCast target_typ binexp pos in 
       newexp
   | Cil.Question (exp1, exp2, exp3, _, l) ->
       let e1 = translate_exp exp1 in

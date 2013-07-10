@@ -26,7 +26,9 @@ let infilename = ref (!tmp_files_path ^ "input.oc." ^ (string_of_int (Unix.getpi
 let resultfilename = ref (!tmp_files_path ^ "result.txt." ^ (string_of_int (Unix.getpid())))
 
 (*let oc_maxVars = ref 1024*)
-let print_pure = ref (fun (c:formula)-> " printing not initialized")
+let print_pure = ref (fun (c:formula)-> "printing not initialized")
+
+let print_exp = ref (fun (e: Cpure.exp) -> "printing not initialized")
 
 let process = ref {name = "omega"; pid = 0;  inchannel = stdin; outchannel = stdout; errchannel = stdin}
 
@@ -78,7 +80,18 @@ let rec omega_of_exp e0 = match e0 with
       (* } *)
   | Max _
   | Min _ -> illegal_format ("Omega.omega_of_exp: min/max should not appear here")
-  | TypeCast _ -> illegal_format ("Omega.omega_of_exp: TypeCast should not appear here")
+  | TypeCast (t, e1, p) -> (
+      match e1 with
+      | Var (SpecVar (_, svt, _), _) -> (
+          if (t = svt) then
+            omega_of_exp e1
+          else if (t = Int) && (svt = Bool) then
+            
+        )
+      | _ -> report_error p "Expect Var exp after TypeCast!"
+      (* let _ = print_endline ("== typecast exp: " ^ (!print_exp e0)) in       *)
+      (* illegal_format ("Omega.omega_of_exp: TypeCast should not appear here") *)
+    )
   | FConst _ -> illegal_format ("Omega.omega_of_exp: FConst")
   | Func _ -> "0" (* TODO: Need to handle *)
   | _ -> illegal_format ("Omega.omega_of_exp: array, bag or list constraint "^(!print_exp e0))

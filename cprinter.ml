@@ -3623,6 +3623,7 @@ Cast.print_mater_prop_list := string_of_mater_prop_list;;
 Cast.print_coercion := string_of_coerc_long;;
 print_coerc_decl_list := string_of_coerc_decl_list;;
 Omega.print_pure := string_of_pure_formula;;
+Omega.print_exp := string_of_formula_exp;
 Smtsolver.print_pure := string_of_pure_formula;;
 Smtsolver.print_ty_sv := string_of_typed_spec_var;;
 Coq.print_p_f_f := string_of_pure_formula ;;
