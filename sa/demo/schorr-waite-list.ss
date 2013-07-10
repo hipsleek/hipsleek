@@ -76,3 +76,44 @@ case{
   root = prev;
 //  dprint;
 }
+/*
+
+ls<p> == self = p &
+	or self::node<_,nxt> * nxt::ls<p> 
+inv true;
+
+void scan(ref node cur, ref node prev, node sentinel)
+requires cur::ls<null> * prev::ls<sentinel> * sentinel::node<_,_>@L
+ensures prev'::ls<null> * cur'=sentinel;
+requires cur::ls<sentinel> * prev::ls<null> * sentinel::node<_,_>@L
+ensures prev'::ls<null> * cur'=sentinel;
+{
+  node n;
+  n = cur.next;
+  // rotate ptrs
+  cur.next = prev;
+  // move forward
+  prev = cur;
+  cur = n;
+  if (cur == sentinel) return;
+  if (cur == null) {
+      // change direction;
+      cur = prev;
+      prev = null;
+  };
+  scan(cur,prev);
+}
+  if (cur != SENTINEL && cur != null) 
+  {
+  	n = cur.next;
+	cur.next = prev;
+	prev = cur;
+	cur = n;
+	if (cur == null) {
+		cur = prev;
+		prev = null;
+	}
+	scan(cur,prev);
+  }  
+}
+*/
