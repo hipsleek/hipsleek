@@ -4965,7 +4965,7 @@ In the normal mode, this conversion is not
 allowed.
 
 =====================================================================
-# swl-i.ss
+# swl-1.ss
 
 was there a pre-proof obligation that failed?
 
@@ -5011,6 +5011,17 @@ Stop Omega... 70 invocations caught
 
 */
 =====================================================================
+# swl-2.ss
+
+hg !!!  synthesize: [G]
+ExceptionFailure("iast.gather_type_info_heap :gather_type_info_heap: relation HP_885 cannot be found")Occurred!
+
+Error(s) detected at main 
+Stop Omega... 89 invocations caught
+(Program not linked with -g, cannot print stack backtrace)
+
+Exception occurred: Failure("iast.gather_type_info_heap :gather_type_info_heap: relation HP_885 cannot be found")
+Error(s) detected at main 
 =====================================================================
 =====================================================================
 =====================================================================

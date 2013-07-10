@@ -51,7 +51,7 @@ ensures prev'::ls<M3,null> & cur'=sentinel  & M3=union(M1,M2);
 /*
 # swl-2.ss
 
-!!!  synthesize: [G]
+hg !!!  synthesize: [G]
 ExceptionFailure("iast.gather_type_info_heap :gather_type_info_heap: relation HP_885 cannot be found")Occurred!
 
 Error(s) detected at main 
