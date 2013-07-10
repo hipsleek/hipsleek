@@ -8,6 +8,35 @@ tree<M> == self=null & M = {}
  or self::node<_,l,r> * l::tree<Ml> * r::tree<Mr> & M = union(Ml,Mr,{self})
  inv true;
 
+treeG<> == self::node<_,l,r> * l::treeG<> * r::treeG<>
+ inv true;
+
+void lscan(ref node cur, ref node prev, node sentinel)
+requires cur::treeG<> * prev::treeG<> * sentinel::node<_,_,_>@L
+ensures prev'::treeG<> & cur'=sentinel;
+requires cur::treeG<> * prev::treeG<> * sentinel::node<_,_,_>@L
+ensures prev'::treeG<> & cur'=sentinel;
+{
+
+  node n,tmp;
+  n = cur.left;
+  tmp = cur.right;
+  // rotate ptrs
+  cur.right = prev;
+  cur.left = tmp;
+  // move forward
+  prev = cur;
+  cur = n;
+  if (cur == sentinel) return;
+  if (cur == null) {
+      // change direction;
+      cur = prev;
+      prev = null;
+  }
+  lscan(cur,prev,sentinel);
+//  dprint;
+}
+
 void traverse(ref node c,ref node p)
 requires c::tree<Mc> * p::tree<Mp>
 ensures p'::tree<M> & M = union(Mc,Mp) & c' = null;

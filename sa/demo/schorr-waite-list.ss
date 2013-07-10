@@ -7,7 +7,34 @@ ll<M> == self = null & M = {}
 	or self::node<_,nxt> * nxt::ll<Mnxt> & M = union(Mnxt,{self})
 inv true;
 
+ls<p> == self::node<_,nxt> * nxt::ls<p> 
+inv true;
+
 global node SENTINEL;
+
+void lscan(ref node cur, ref node prev, node sentinel)
+requires cur::ls<null> * prev::ls<sentinel> * sentinel::node<_,_>@L
+ensures prev'::ls<null> & cur'=sentinel;
+requires cur::ls<sentinel> * prev::ls<null> * sentinel::node<_,_>@L
+ensures prev'::ls<null> & cur'=sentinel;
+{
+
+  node n;
+  n = cur.next;
+  // rotate ptrs
+  cur.next = prev;
+  // move forward
+  prev = cur;
+  cur = n;
+  if (cur == sentinel) return;
+  if (cur == null) {
+      // change direction;
+      cur = prev;
+      prev = null;
+  }
+  lscan(cur,prev,sentinel);
+//  dprint;
+}
 
 void traverse(ref node c, ref node p)
 requires c::ll<Mc> * p::ll<Mp>
@@ -88,6 +115,7 @@ ensures prev'::ls<null> * cur'=sentinel;
 requires cur::ls<sentinel> * prev::ls<null> * sentinel::node<_,_>@L
 ensures prev'::ls<null> * cur'=sentinel;
 {
+
   node n;
   n = cur.next;
   // rotate ptrs
