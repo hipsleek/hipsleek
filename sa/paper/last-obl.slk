@@ -1,87 +1,74 @@
 data node{
-       int val;
-       node next;
-}
+	int val;
+	node next;
+}.
 
-ll<> == self = null  or self::node<_, q> * q::ll<>;
+PostPred HP_4(node a, node@NI b).
+PostPred HP_5(node a, node@NI b).
+PostPred HP_6(node a, node@NI b).
 
-//ll<D> == self = null & D={}  or self::node<_, q> * q::ll<>;
-
-lseg<p> == self = p & self!=null  or self::node<_, q> * q::lseg<p>& self!=p;
-lshd<p> == p::lseg<self>*self::node<_,null>;
-
-HeapPred H(node a).
-PostPred G(node a, node b).
-
-node last (node x)
-//requires x::ll<> & x!=null ensures res::lshd<x>;
-infer[H,G] requires H(x) ensures G(res,x);
-{
-   if (x.next==null) return x;
-   else
-   {
-       node t = last(x.next);
-       //t.val = t.val+1;
-       node v = t.next;
-       // dprint;
-       assert v' = null assume true;//'
-       return t;
-       }
-}
-/*
-{
-   node y = x.next;
-   if (y==null) return x;
-   else {
-     //assume false;
-     node t = last(y);
-     t.next=null;
-     return t;
-   }
-}*/
+pred G<x> ==
+     self::node<val_29_788,null>@M&self=x 
+or x::node<val_29_788,next_29_789> * HP_5(next_29_789,self) 
+   * HP_4(null,next_29_789) *
+     self::node<val_34_802,null>
+inv self!=null.
 
 /*
-# single_paper.ss
+pred G5<t> ==
+   self=t & self!=null
+   or self::node<_,nn>*nn::G5<t>
+inv self!=null.
+*/
+
+infer [HP_4,HP_5]
+ t_32'::G<next_29_789> & next_29_789!=null 
+  |- t_32'::node<val_34_802,next_34_803>@M * 
+    HP_4(next_34_803,next_29_789) * HP_5(next_29_789,t_32').
+
+print residue.
+
+/*
+# single.slk
 
 
-HeapPred H(node a).
-HeapPred HP_944(node next_20_943).
-PostPred GP_961(node next_25_960, node@NI next_20_943).
-PostPred GP_962(node next_20_943, node@NI t_37').
-PostPred G(node a, node b).
+[ H(x) --> x::node<val_20_942,next_20_943>@M * HP_944(next_20_943),
+ HP_944(next_20_943)&next_20_943!=null --> H(next_20_943),
 
-[ H(x_972) ::= x_972::node<val_20_942,next_20_943>@M * HP_944(next_20_943),
- G(res_974,x_975) ::= 
- res_974::node<val_20_942,next_20_943>@M&res_974=x_975 & next_20_943=null
- or x_975::node<val_20_976,next_20_977>@M * 
-    GP_961(next_20_943,next_20_977) * GP_962(next_20_977,res_974) * 
-    res_974::node<val_20_942,next_20_943>@M&next_20_943=null
- ,
- HP_944(next_20_973) ::= 
- next_20_973::node<val_20_942,next_20_943>@M * HP_944(next_20_943)
- or emp&next_20_973=null
- ,
- GP_961(next_25_1040,next_20_1041) ::= 
- emp&next_25_1040=null
- or GP_961(next_25_1040,next_20_1037)&next_20_1039=next_25_1040 & 
+ G(t_37',next_20_943)&
+  next_20_943!=null --> t_37'::node<val_25_959,next_25_960>@M * 
+  GP_961(next_25_960,next_20_943@NI) * GP_962(next_20_943,t_37'@NI),
 
- id: 24; caller: []; line: 0; classic: false; kind: POST OBLIGATION; hec_num: 5; evars: []; infer_vars: [GP_961,GP_962]; c_heap: emp
- checkentail t_37'::G<next_20_943>@M[0][Orig][LHSCase]&next_20_943!=null&
-{FLOW,(22,23)=__norm}[]
- |-  t_37'::node<val_25_959,next_25_960>@M[Orig] * 
-GP_961(next_25_960,next_20_943) * GP_962(next_20_943,t_37')&
-{FLOW,(1,25)=__flow}[]. 
-hprel_ass: [ next_20_943::node<val_20_1036,next_20_1037>@M * 
-  GP_962(next_20_1037,t_37') --> GP_962(next_20_943,t_37'),
- GP_961(next_20_1039,next_20_1037)&next_20_1039=next_25_960 & 
-  next_20_1039=null & 
-  next_25_960=null |#| next_20_943::node<val_20_1036,next_20_1037>@M --> GP_961(next_25_960,next_20_943),
- emp&next_20_943=t_37' & next_20_943!=null --> GP_962(next_20_943,t_37'),
- emp&next_25_960=null --> GP_961(next_25_960,next_20_943)]
-res:  [
-  or[emp&next_20_943=t_37' & next_20_1031=null & next_20_943!=null & val_20_1030=val_25_959 & next_20_1031=next_25_960&{FLOW,(22,23)=__norm}[]; emp&next_20_1039=null & next_20_943!=null & val_20_1038=val_25_959 & next_20_1039=next_25_960&{FLOW,(22,23)=__norm}[]]
-  ]
+ GP_961(next_25_960,next_20_943@NI) --> emp&next_25_960=null,
+
+ HP_944(next_20_943) * x::node<val_20_942,next_20_943>@M&res=x & 
+  next_20_943=null --> G(res,x),
+
+ x::node<val_20_942,next_20_943>@M * GP_961(next_25_960,next_20_943@NI) * 
+  GP_962(next_20_943,res@NI) * res::node<val_25_959,next_25_960>@M&
+  next_25_960=null --> G(res,x)]
 
 
+ inferred hprel: [emp&next_34_803=null --> HP_4(next_34_803,next_29_789@NI)&
+                   true; 
+                  emp&next_29_789=t_32' & 
+                   next_29_789!=null --> HP_5(next_29_789,t_32'@NI)&true; 
+                  emp&next_34_803=null --> HP_4(next_34_803,next_29_789@NI)&
+                   true; 
+                  next_29_789::node<val_29_62,next_29_63>@M * 
+                   HP_5(next_29_63,t_32'@NI)&
+                   true --> HP_5(next_29_789,t_32'@NI)&true]
+
+Thus:
+ n=null -> HP_4(n,_)
+
+ n=t & n!=null
+  or n::node<_,nn>*HP_5(nn,t) --> HP_5(n,t)
+
+Hence:
+ HP_4(n,_) ::= n=null
+ HP_5(n,t) ::= 
+   n=t & n!=null
+   or n::node<_,nn>*HP_5(nn,t) --> HP_5(n,t)
 
 */
