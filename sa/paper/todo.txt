@@ -32,7 +32,7 @@ A guard is selected if:
 A guard is useful if
   vars(G) /\ (ws-vs) != []
 ==================================================================
-# check-mcf-4.ss
+# check-mcf-4.ss: FIXED
 
 We have:
  H1(t) --> t::tree<children_42_1079>@M * HP_1080(children_42_1079),
