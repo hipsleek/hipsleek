@@ -2468,7 +2468,7 @@ let rec find_imply prog lunk_hps runk_hps lhs1 rhs1 lhs2 rhs2 lguard1 equal_hps 
         if not is_node_match then None else
           let all_matched_svl2 = all_matched_svl1 @ m_args2 in
           (* let _ = Debug.info_pprint ("    all matched 1: " ^ (!CP.print_svl all_matched_svl1)) no_pos in *)
-          let _ = Debug.info_pprint ("    all matched 2: " ^ (!CP.print_svl all_matched_svl2)) no_pos in
+          let _ = Debug.ninfo_pprint ("    all matched 2: " ^ (!CP.print_svl all_matched_svl2)) no_pos in
           (* let _ =  Debug.info_pprint ("     subst1: " ^ (pr_ss subst1)) no_pos in *)
           if (is_inconsistent subst1 []) then None else
             let n_lhs1 = CF.subst_b subst1 lhs1 in
