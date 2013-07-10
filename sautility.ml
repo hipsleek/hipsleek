@@ -994,7 +994,8 @@ let get_raw_defined_w_pure_x prog predef lhs rhs=
   let svl1 = if eqs = [] then svl else
                 (List.fold_left close_def svl eqs)
   in
-  (CP.remove_dups_svl svl1)
+  let svl2 = (CP.remove_dups_svl svl1) in
+  svl2
 
 let get_raw_defined_w_pure prog predef lhs rhs=
   let pr1 = Cprinter.prtt_string_of_formula in

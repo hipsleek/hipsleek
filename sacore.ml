@@ -429,9 +429,30 @@ let build_hp_unk_locs known_svl unk_hps fn_cmp (hp_name, args)=
   in
   get_unk_ptr known_svl (hp_name, args)
 
+let check_equality_constr lhpargs lhs_f_rem rhs svl2=
+  (*handle equality*)
+  (* let _ = Debug.info_pprint ("   svl2: " ^ (!CP.print_svl svl2)) no_pos in *)
+  if svl2 <> [] then svl2 else
+    match lhpargs with
+      | [(_,args)] ->
+            (* let _ = Debug.info_pprint ("   rhs: " ^ (!CF.print_formula rhs)) no_pos in *)
+            if SAU.is_empty_heap_f lhs_f_rem && SAU.is_empty_heap_f rhs then
+              match args with
+                | sv::_ ->
+                      let ( _,mix_f,_,_,_) = CF.split_components rhs in
+                      let reqs2 = (MCP.ptr_equations_without_null mix_f) in
+                      let cl_svl = CP.remove_dups_svl (CF.find_close [sv] reqs2) in
+                      (* let _ = Debug.info_pprint ("   cl_svl: " ^ (!CP.print_svl cl_svl)) no_pos in *)
+                      if CP.diff_svl args cl_svl = [] then
+                        args
+                      else svl2
+                | _ -> svl2
+            else svl2
+      | _ -> svl2
+
 (*analysis unknown information*)
 let rec analize_unk_one prog unk_hps constr =
-  let _ = Debug.ninfo_pprint ("   hrel: " ^ (Cprinter.string_of_hprel constr)) no_pos in
+  let _ = Debug.info_pprint ("   hrel: " ^ (Cprinter.string_of_hprel constr)) no_pos in
  (*elim hrel in the formula and returns hprel_args*)
   (*lhs*)
   let lhs1,lhrels = SAU.drop_get_hrel constr.CF.hprel_lhs in
@@ -441,8 +462,10 @@ let rec analize_unk_one prog unk_hps constr =
   (* let lsvl = SAU.get_raw_defined_w_pure prog lhs1 in *)
   (* let rsvl = SAU.get_raw_defined_w_pure prog rhs1 in *)
   let svl = SAU.get_raw_defined_w_pure prog constr.CF.predef_svl lhs1 rhs1 in
+  (*handle equality*)
+  let svl1 = check_equality_constr lhrels lhs1 constr.CF.hprel_rhs svl in
   (*return*)
-  let unk_hp_locs,unk_hp_args_locs = List.split (List.map (build_hp_unk_locs (svl) unk_hps CP.mem_svl) (lhrels@rhrels)) in
+  let unk_hp_locs,unk_hp_args_locs = List.split (List.map (build_hp_unk_locs (svl1) unk_hps CP.mem_svl) (lhrels@rhrels)) in
   (List.concat unk_hp_locs, List.concat unk_hp_args_locs)
 
 and find_closure_post_hps_x post_hps ls_unk_hps_args =
