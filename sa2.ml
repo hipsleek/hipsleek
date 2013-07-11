@@ -1728,7 +1728,7 @@ and infer_shapes_proper iprog prog proc_name cond_path (constrs2: CF.hprel list)
   in
   let pre_oblg_hps, pre_oblg_defs,unk_hpargs3,unk_map5  = if !Globals.pred_en_oblg then
     infer_shapes_from_obligation iprog prog proc_name true cond_path (pre_oblg_constrs) callee_hps [] sel_post_hps unk_hpargs2
-    link_hpargs need_preprocess unk_map4 detect_dang pre_defs2 post_defs1 (pre_hps@post_hps)
+    (* link_hpargs *)[] need_preprocess unk_map4 detect_dang pre_defs2 post_defs1 (pre_hps@post_hps)
   else ([],[],unk_hpargs,  unk_map4)
   in
   (*********POST-OBLG ********)
@@ -1737,28 +1737,31 @@ and infer_shapes_proper iprog prog proc_name cond_path (constrs2: CF.hprel list)
     DD.binfo_pprint ("post-obligation:\n" ^ (pr1 post_oblg_constrs)) no_pos;
   let post_oblg_hps, post_oblg_defs,unk_hpargs4,unk_map6  = if !Globals.pred_en_oblg then
     infer_shapes_from_obligation iprog prog proc_name false cond_path (post_oblg_constrs) callee_hps [] sel_post_hps unk_hpargs3
-    link_hpargs need_preprocess unk_map5 detect_dang (pre_defs2@pre_oblg_defs) post_defs1 (pre_hps@post_hps@pre_oblg_hps)
-  else ([],[],unk_hpargs3,   unk_map5 )
+    (* link_hpargs *)[] need_preprocess unk_map5 detect_dang (pre_defs2@pre_oblg_defs) post_defs1 (pre_hps@post_hps@pre_oblg_hps)
+  else ([],[],unk_hpargs3,  unk_map5 )
   in
   (*********END POST-OBLG************)
   let defs1 = (pre_defs2@post_defs1@pre_oblg_defs@post_oblg_defs) in
   (*normalization*)
+  let def_oblg_hps = pre_oblg_hps@post_oblg_hps in
+  let link_hpargs2 = List.filter (fun (hp,_) -> not(CP.mem hp def_oblg_hps)) link_hpargs in
+  let link_hps1 = List.map fst link_hpargs2 in
   let defs2a, unify_equiv_map3 =
     if !Globals.pred_equiv then (*TODO: should move it to normalization*)
-      SAC.unify_pred prog unk_hps link_hps defs1 (pre_equivs@unify_equiv_map2@unk_equivs)
+      SAC.unify_pred prog unk_hps link_hps1 defs1 (pre_equivs@unify_equiv_map2@unk_equivs)
     else (defs1, unify_equiv_map2)
   in
   let htrue_hpargs, defs2b = SAU.convert_HTrue_2_None defs2a in
   let defs2 = SAC.generate_hp_def_from_unk_hps defs2b unk_hpargs4 (pre_hps@post_hps@post_oblg_hps@pre_oblg_hps) sel_post_hps unk_map6 unify_equiv_map3 in
-  let defs3,link_hpargs1 = if !Globals.pred_elim_dangling then
+  let defs3,link_hpargs3 = if !Globals.pred_elim_dangling then
     (* SAU.transform_unk_hps_to_pure (defs3b) unk_hp_frargs *)
-    let defs3a = SAC.transform_xpure_to_pure prog defs2 unk_map4 (link_hpargs@htrue_hpargs) in
+    let defs3a = SAC.transform_xpure_to_pure prog defs2 unk_map4 (link_hpargs2@htrue_hpargs) in
     (*we have already transformed link/unk preds into pure form.
       Now return [] so that we do not need generate another unk preds*)
     (defs3a, [])
-  else (defs2,link_hpargs@htrue_hpargs)
+  else (defs2,link_hpargs2@htrue_hpargs)
   in
-  (constrs2, defs3,[], unk_hpargs4, link_hpargs1,(pre_equivs@unify_equiv_map2@unk_equivs))
+  (constrs2, defs3,[], unk_hpargs4, link_hpargs3,(pre_equivs@unify_equiv_map2@unk_equivs))
 
 and infer_shapes_core iprog prog proc_name cond_path (constrs0: CF.hprel list) callee_hps sel_hp_rels sel_post_hps hp_rel_unkmap
       unk_hpargs0a link_hpargs need_preprocess detect_dang:
