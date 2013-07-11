@@ -2444,6 +2444,7 @@ let rec find_imply prog lunk_hps runk_hps lhs1 rhs1 lhs2 rhs2 lguard1 equal_hps 
   let lhs2 = CF.subst sst lhs2 in
   (*END*)
   let ldns,lvns,lhrels = CF.get_hp_rel_bformula lhs1 in
+  let _ = Debug.ninfo_pprint ("    rhs after subst: " ^ (Cprinter.prtt_string_of_formula_base rhs2)) no_pos in
   let rdns,_,rhrels = CF.get_hp_rel_bformula rhs2 in
   let l_rhrels = sort_hps (List.map transform_hrel lhrels) in
   let r_rhrels = sort_hps (List.map transform_hrel rhrels) in
@@ -2499,11 +2500,15 @@ let rec find_imply prog lunk_hps runk_hps lhs1 rhs1 lhs2 rhs2 lguard1 equal_hps 
               let r_nodes = List.map (fun (_,sv,_) -> sv) rhns1 in
               let lnodes_match, rnodes_match = List.fold_left
                 (fun (l_match,r_match) (_,sv,_) ->
-                  let sv1 = CP.subs_one subst sv in
-                  if CP.mem_svl sv1 r_nodes then (l_match@[sv],r_match@[sv1])
+                  let sv1 = CP.subs_one subst1 sv in
+                  if CP.mem_svl sv1 r_nodes then (l_match@[sv1],r_match@[sv1])
                   else (l_match,r_match)
               ) ([],[]) lhns1
               in
+              (* let _ = Debug.info_pprint ("    lnodes_match: " ^ (!CP.print_svl lnodes_match)) no_pos in *)
+              (* let _ = Debug.info_pprint ("    rnodes_match: " ^ (!CP.print_svl rnodes_match)) no_pos in *)
+              (* let _ = Debug.info_pprint ("    n_lhs1: " ^ (Cprinter.prtt_string_of_formula_base n_lhs1)) no_pos in *)
+              (* let _ = Debug.info_pprint ("    rhs2: " ^ (Cprinter.prtt_string_of_formula_base rhs2)) no_pos in *)
               let l_res = {n_lhs1 with
                   CF.formula_base_heap = CF.drop_data_view_hrel_nodes_hf
                       n_lhs1.CF.formula_base_heap select_dnode
