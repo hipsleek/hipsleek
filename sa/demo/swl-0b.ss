@@ -13,7 +13,7 @@ ll<> == self=null
   or self::node<_,nxt> * nxt::ll<>  
 inv true;
 
-lseg<p> == self::node<_,_> & self=p 
+lseg<p> == self=p 
   or self::node<_,nxt> * nxt::lseg<p> & self!=p 
 inv true;
 
@@ -45,9 +45,9 @@ ensures prev'::ls<M3,null> & cur'=sent  & M3=union(M2,M2);
   }
  }
 */
-requires cur::ll<> * prev::lseg<sent> & cur!=null
+requires cur::ll<> * prev::lseg<sent> & cur!=null & sent!=null
 ensures prev'::ll<> & cur'=sent ;
-requires cur::lseg<sent> * prev::ll<> & cur!=sent 
+requires cur::lseg<sent> * prev::ll<> & cur!=sent & sent!=null
 ensures prev'::ll<> & cur'=sent ;
 
 /*
