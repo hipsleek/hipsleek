@@ -13,14 +13,14 @@ HeapPred H1(tree a).
 PostPred G1(tree a).
 HeapPred H2(node a,tree b).
 PostPred G2(node a,tree b).
-
+/*
 treep<> == 
   self::tree<_,c>* c::sll<self> ;
 
 sll<parent> == 
   self=null or 
   self::node<c,n,parent>*c::treep<>* n::sll<parent>;
-
+*/
 bool check_tree (tree t)
 /*
 requires t::treep<> //& t!=null 
