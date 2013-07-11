@@ -1653,7 +1653,10 @@ let find_well_eq_defined_hp prog hds hvs lhsb eqs (hp,args)=
           ([(hp,args, f)],[])
         else loop_helper rest
   in
-  if List.length args = 2 then loop_helper eqs else ([], [(hp,args)])
+  if List.length args = 2 then
+    let cmp_form = CP.get_cmp_form (MCP.pure_of_mix lhsb.CF.formula_base_pure) in
+    loop_helper (eqs@cmp_form)
+  else ([], [(hp,args)])
 
 let generate_hp_ass unk_svl cond_p (hp,args,lfb,rf) =
   let new_cs = {

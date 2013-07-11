@@ -283,13 +283,18 @@ let split_constr prog cond_path constrs post_hps prog_vars unk_map unk_hps link_
         let unk_svl1 = CP.remove_dups_svl (cs.CF.unk_svl@unk_svl) in
         (*do not split unk_hps and link_hps, all non-ptrs args*)
         let non_split_hps = unk_hps @ link_hps in
-        let ls_lhp_args1 = List.filter (fun (hp,args) ->
+        let ls_lhp_args1, ls_lhs_non_node_hpargs = List.fold_left (fun (r1,r2) (hp,args) ->
             let arg_i,_ = SAU.partition_hp_args prog hp args in
-            (((List.filter (fun (sv,_) -> CP.is_node_typ sv) arg_i) <> []) &&
-                not (CP.mem_svl hp non_split_hps) )
-        ) ls_lhp_args in
+            if ((List.filter (fun (sv,_) -> CP.is_node_typ sv) arg_i) = []) then
+              (r1, r2@[(hp,args)])
+            else if not (CP.mem_svl hp non_split_hps) then
+              (r1@[(hp,args)],r2)
+            else (r1,r2)
+        ) ([],[]) ls_lhp_args in
         (* let _ = Debug.info_pprint ("  ls_lhp_args1: " ^ *)
-        (*     (let pr1 = pr_list (pr_pair !CP.print_sv !CP.print_svl) in pr1 ls_lhp_args1)) no_pos in *)
+        (* (let pr1 = pr_list (pr_pair !CP.print_sv !CP.print_svl) in pr1 ls_lhp_args1)) no_pos in *)
+        (* let _ = Debug.info_pprint ("  ls_lhs_non_node_hpargs: " ^ *)
+        (* (let pr1 = pr_list (pr_pair !CP.print_sv !CP.print_svl) in pr1 ls_lhs_non_node_hpargs)) no_pos in *)
         let lfb2, defined_preds,rems_hpargs,link_hps =
           List.fold_left (fun (lfb, r_defined_preds, r_rems, r_link_hps) hpargs ->
               let n_lfb,def_hps, rem_hps, ls_link_hps=
@@ -305,7 +310,7 @@ let split_constr prog cond_path constrs post_hps prog_vars unk_map unk_hps link_
         let defined_preds0 = List.fold_left (fun (defined_preds) hpargs ->
             let def_hps, _ = (SAU.find_well_eq_defined_hp prog lhds lhvs lfb2 leqs hpargs) in
             (defined_preds@(List.map (fun (a,b,c) -> (a,b,c,rf)) def_hps))
-        ) (defined_preds) rems_hpargs in
+        ) (defined_preds) (rems_hpargs@ls_lhs_non_node_hpargs) in
         let new_cs = {cs with CF.hprel_lhs = CF.add_quantifiers l_qvars (CF.Base lfb2);
             CF.unk_svl = unk_svl1;
             CF.hprel_rhs = (CF.add_quantifiers r_qvars (CF.Base rhs_b1));

@@ -535,7 +535,8 @@ let check_equality_constr lhpargs lhs_f_rem rhs svl2=
                       let reqs2 = (MCP.ptr_equations_without_null mix_f) in
                       let cl_svl = CP.remove_dups_svl (CF.find_close [sv] reqs2) in
                       (* let _ = Debug.info_pprint ("   cl_svl: " ^ (!CP.print_svl cl_svl)) no_pos in *)
-                      if CP.diff_svl cl_svl args = [] then
+                      if (* List.length cl_svl >1 && *)
+                        CP.diff_svl cl_svl args = [] then
                         args
                       else svl2
                 | _ -> svl2
