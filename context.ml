@@ -385,7 +385,7 @@ and view_mater_match_x prog c vs1 aset imm f =
             else []
 
 
-and hrel_mater_match prog c vs1 aset imm f =
+and hrel_mater_match prog c vs1 aset imm f = []
 
   (* let vdef = look_up_view_def_raw prog.prog_view_decls c in *)
   (* let vdef_param = (self_param vdef)::(vdef.view_vars) in *)
@@ -408,7 +408,6 @@ and hrel_mater_match prog c vs1 aset imm f =
   (*               [(Hole hole_no, f, [(f, hole_no)], WArg)] *)
   (*             else [(HEmp, f, [], WArg)] *)
   (*           else [] *)
-              [(HEmp, f, [], WArg)]
 
 
 (* and view_mater_match prog c vs1 aset imm f = *)
@@ -1112,11 +1111,16 @@ and process_one_match_x prog is_normalizing (c:match_res) :action_wt =
                   else  [] in
                   let src = (-1,norm_search_action (l2@l3  (* @l4 *) )) in
                   src (*Seq_action [l1;src]*)
+            | DataNode dl,  HRel (hpr, er, _) -> 
+                  let a1 = [(1,M_fold c)] in
+                  let a2 = [(1,M_rd_lemma c)] in
+                  let a = a1@a2 in
+                  if a!=[] then (-1,Search_action a)
+                  else (1,M_Nothing_to_do (" matched data with RHS HRel "^(string_of_match_res c)))
             | HRel (hpl, el, _), HRel (hpr, er, _) -> 
                   let hl_name = CP.name_of_spec_var hpl in
                   let hr_name = CP.name_of_spec_var hpr in
                   let l2 =
-                    (* andreeac - what does 0/1 mean? eg(0,M_match c) *)
                     if ((String.compare hl_name hr_name)==0) then [(0,M_match c)] (*force a MATCH after each lemma*)
                     else [(1,M_Nothing_to_do ("no proper match (type error) found for: "^(string_of_match_res c)))]
                   in
@@ -1215,7 +1219,8 @@ and process_one_match_x prog is_normalizing (c:match_res) :action_wt =
                   else  (1,M_Nothing_to_do (string_of_match_res c))
             | DataNode dl, ViewNode vr -> (1,M_Nothing_to_do (string_of_match_res c))
             | ViewNode vl, DataNode dr -> (1,M_Nothing_to_do (string_of_match_res c))
-            | ViewNode vl, HRel dr -> (1,M_Nothing_to_do (string_of_match_res c))
+            | ViewNode _, HRel _ -> (1,M_Nothing_to_do (string_of_match_res c))
+            | DataNode _, HRel _ -> (1,M_Nothing_to_do (string_of_match_res c))
             | _ -> report_error no_pos "process_one_match unexpected formulas 3\n"	              )
     | MaterializedArg (mv,ms) -> 
           (*??? expect MATCHING only when normalizing => this situation does not need to be handled*)

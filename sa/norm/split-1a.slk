@@ -13,6 +13,8 @@ HeapPred P2(node a).
 
  lemma self::zip<y> -> P1(self) * P2(y).
 
+// lemma self::zip<y> * y::node<_,_> -> P1(self) * P2(y).
+
 // lemma self::zip<y> -> P1(self) * P2(y).
 
 //lemma self::zip<y> -> P2(y).
