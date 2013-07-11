@@ -580,7 +580,7 @@ let subst_mater_list_nth i fr t l =
 
 let subst_mater_list_nth i fr t l = 
   let pr_svl = !print_svl in
-  Debug.to_3_num i "subst_mater_list" pr_svl pr_svl !print_mater_prop_list pr_no  subst_mater_list fr t l
+  Debug.no_3_num i "subst_mater_list" pr_svl pr_svl !print_mater_prop_list pr_no  subst_mater_list fr t l
 
 let subst_coercion fr t (c:coercion_decl) = 
       {c with coercion_head = F.subst_avoid_capture fr t c.coercion_head
@@ -1242,7 +1242,7 @@ let  look_up_coercion_with_target coers (c : ident) (t : ident) : coercion_decl 
 
 let  look_up_coercion_with_target coers (c : ident) (t : ident) : coercion_decl list = 
   let pr1 = pr_list !print_coercion in
-  Debug.to_3 "look_up_coercion_with_target" (fun x-> x)  (fun x-> x) pr1 pr1 
+  Debug.no_3 "look_up_coercion_with_target" (fun x-> x)  (fun x-> x) pr1 pr1 
     (fun _ _ _ -> look_up_coercion_with_target coers c t) c t coers
  
 let rec callees_of_proc (prog : prog_decl) (name : ident) : ident list =

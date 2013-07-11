@@ -335,7 +335,7 @@ and choose_context prog es lhs_h lhs_p rhs_p posib_r_aliases rhs_node rhs_rest p
   let pr3 = Cprinter.string_of_mix_formula in
   (*let pr4 = pr_list Cprinter.string_of_spec_var in*)
   (*let pr2 (m,svl,_) = (Cprinter.string_of_spec_var_list svl) ^ ";"^ (Cprinter.string_of_mix_formula m) in*)
-  Debug.to_5 "choose_context" 
+  Debug.no_5 "choose_context" 
       (add_str "LHS node" pr1) 
       (add_str "RHS node" pr1) 
       (add_str "LHS pure" pr3) 
@@ -359,7 +359,7 @@ and view_mater_match prog c vs1 aset imm f =
   let pro3 = (add_str "holes" (pr_list (pr_pair Cprinter.string_of_h_formula string_of_int))) in
   let pro4 = (add_str "match_type" string_of_match_type) in
   let pr = pr_list (pr_quad pro1 pro2 pro3 pro4) in
-  Debug.to_3 "view_mater_match" pr1 pr2 pr2 pr (fun _ _ _ -> view_mater_match_x prog c vs1 aset imm f) c vs1 aset
+  Debug.no_3 "view_mater_match" pr1 pr2 pr2 pr (fun _ _ _ -> view_mater_match_x prog c vs1 aset imm f) c vs1 aset
 
 and view_mater_match_x prog c vs1 aset imm f =
   let vdef = look_up_view_def_raw prog.prog_view_decls c in
@@ -438,7 +438,7 @@ and choose_full_mater_coercion_x l_vname l_vargs r_aset (c:coercion_decl) =
 and choose_full_mater_coercion l_vname l_vargs r_aset (c:coercion_decl) =
   let pr_svl = Cprinter.string_of_spec_var_list in
   let pr (c,_) = string_of_coercion c in
-  Debug.to_1 "choose_full_mater_coercion" pr_svl (pr_option pr) (fun _ -> choose_full_mater_coercion_x l_vname l_vargs r_aset c) r_aset
+  Debug.no_1 "choose_full_mater_coercion" pr_svl (pr_option pr) (fun _ -> choose_full_mater_coercion_x l_vname l_vargs r_aset c) r_aset
 
 and coerc_mater_match_x prog l_vname (l_vargs:P.spec_var list) r_aset (imm : ann) (lhs_f:Cformula.h_formula) =
   (* TODO : how about right coercion, Cristina? *)
@@ -463,7 +463,7 @@ and coerc_mater_match prog l_vname (l_vargs:P.spec_var list) r_aset imm (lhs_f:C
   let pr4 (h1,h2,l,mt) = pr_pair pr pr (h1,h2) in
   let pr2 ls = pr_list pr4 ls in
   let pr_svl = Cprinter.string_of_spec_var_list in
-  Debug.to_3 "coerc_mater_match" pr_id pr_svl pr_svl pr2
+  Debug.no_3 "coerc_mater_match" pr_id pr_svl pr_svl pr2
       (fun _ _ _ -> coerc_mater_match_x prog l_vname l_vargs r_aset imm lhs_f) l_vname l_vargs r_aset
       
 (*
@@ -482,7 +482,7 @@ and spatial_ctx_extract p f a i pi rn rr =
   let pr_svl = Cprinter.string_of_spec_var_list in
   (*let pr_aset = pr_list (pr_list Cprinter.string_of_spec_var) in*)
   (* let pr = pr_no in *)
-  Debug.to_4 "spatial_ctx_extract" string_of_h_formula Cprinter.string_of_imm pr_svl string_of_h_formula pr 
+  Debug.no_4 "spatial_ctx_extract" string_of_h_formula Cprinter.string_of_imm pr_svl string_of_h_formula pr 
       (fun _ _ _ _-> spatial_ctx_extract_x p f a i pi rn rr ) f i a rn 
 
 and update_ann (f : h_formula) (pimm1 : ann list) (pimm : ann list) : h_formula = 
@@ -764,7 +764,7 @@ and lookup_lemma_action_x prog (c:match_res) :action =
 and process_one_match prog is_normalizing (c:match_res) :action_wt =
   let pr1 = string_of_match_res in
   let pr2 = string_of_action_wt_res0  in
-  Debug.to_1 "process_one_match" pr1 pr2 (process_one_match_x prog is_normalizing) c 
+  Debug.no_1 "process_one_match" pr1 pr2 (process_one_match_x prog is_normalizing) c 
 
 (*
 (* return a list of nodes from heap f that appears in *)
@@ -1135,6 +1135,7 @@ and process_one_match_x prog is_normalizing (c:match_res) :action_wt =
                       else left_act@right_act in
                   let src = (-1,Search_action (l2@l3)) in
                   src
+            | HRel _, _            ->(1,M_Nothing_to_do (string_of_match_res c))
             | _ -> report_error no_pos "process_one_match unexpected formulas 1\n"
           )
     | MaterializedArg (mv,ms) ->
@@ -1220,8 +1221,9 @@ and process_one_match_x prog is_normalizing (c:match_res) :action_wt =
                   else  (1,M_Nothing_to_do (string_of_match_res c))
             | DataNode dl, ViewNode vr -> (1,M_Nothing_to_do (string_of_match_res c))
             | ViewNode vl, DataNode dr -> (1,M_Nothing_to_do (string_of_match_res c))
-            | ViewNode _, HRel _ -> (1,M_Nothing_to_do (string_of_match_res c))
-            | DataNode _, HRel _ -> (1,M_Nothing_to_do (string_of_match_res c))
+            | ViewNode _, HRel _ 
+            | DataNode _, HRel _ 
+            | HRel _, _            ->(1,M_Nothing_to_do (string_of_match_res c))
             | _ -> report_error no_pos "process_one_match unexpected formulas 3\n"	              )
     | MaterializedArg (mv,ms) -> 
           (*??? expect MATCHING only when normalizing => this situation does not need to be handled*)
@@ -1238,7 +1240,7 @@ and process_matches prog estate lhs_h is_normalizing ((l:match_res list),(rhs_no
   let pr1 = pr_list string_of_match_res in
   let pr2 x = (fun (l1, (c1,c2)) -> "(" ^ (pr1 l1) ^ ",(" ^ (pr c1) ^ "," ^ (pr c2) ^ "))" ) x in
   let pr3 = string_of_action_wt_res0 in
-  Debug.to_2 "process_matches" pr pr2 pr3 
+  Debug.no_2 "process_matches" pr pr2 pr3 
       (fun _ _-> process_matches_x prog estate lhs_h is_normalizing (l, (rhs_node,rhs_rest))) 
       lhs_h (l, (rhs_node,rhs_rest))
 
@@ -1592,7 +1594,7 @@ and compute_actions prog estate es (* list of right aliases *)
   let pr1 x = pr_list (fun (c1,_)-> Cprinter.string_of_h_formula c1) x in
   let pr4 = pr_list Cprinter.string_of_spec_var in
   let pr2 = string_of_action_res_simpl in
-  Debug.to_5 "compute_actions" 
+  Debug.no_5 "compute_actions" 
       (add_str "EQ ptr" pr0) 
       (add_str "LHS heap" pr) 
       (add_str "LHS pure" pr3)

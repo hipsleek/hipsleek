@@ -8937,7 +8937,7 @@ and do_full_fold_x prog estate conseq rhs_node rhs_rest rhs_b is_folding pos =
 and do_full_fold prog estate conseq rhs_node rhs_rest rhs_b is_folding pos =
   let pr1 = Cprinter.string_of_h_formula in
   let pr2 x = Cprinter.string_of_list_context_short (fst x) in
-  Debug.to_2 "do_full_fold" Cprinter.string_of_entail_state pr1 pr2 
+  Debug.no_2 "do_full_fold" Cprinter.string_of_entail_state pr1 pr2 
       (fun _ _ -> do_full_fold_x prog estate conseq rhs_node rhs_rest rhs_b is_folding pos) estate rhs_node
       
 
@@ -9963,7 +9963,7 @@ and process_action i caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
     | CF.SuccCtx ctx0 -> List.length ctx0 in
   let pr2 x = "\nctx length:" ^ (string_of_int (length_ctx (fst x))) ^ " \n Context:"^ Cprinter.string_of_list_context_short (fst x) in
   let pr3 = Cprinter.string_of_formula in
-  Debug.to_6_num i "process_action" string_of_int pr1 Cprinter.string_of_entail_state Cprinter.string_of_formula pr3 pr3 pr2
+  Debug.no_6_num i "process_action" string_of_int pr1 Cprinter.string_of_entail_state Cprinter.string_of_formula pr3 pr3 pr2
       (fun _ _ _ _ _ _ -> process_action_x caller prog estate conseq lhs_b rhs_b a rhs_h_matched_set is_folding pos) caller a estate conseq (Base lhs_b) (Base rhs_b) 
       
       
@@ -10449,7 +10449,7 @@ and find_coercions c1 c2 prog anode ln2 =
 and do_coercion prog c_opt estate conseq resth1 resth2 anode lhs_b rhs_b ln2 is_folding pos : (CF.list_context * proof list) =
   let pr (e,_) = Cprinter.string_of_list_context e in
   let pr_h = Cprinter.string_of_h_formula in
-  Debug.to_5 "do_coercion" pr_h pr_h pr_h pr_h Cprinter.string_of_formula_base pr
+  Debug.no_5 "do_coercion" pr_h pr_h pr_h pr_h Cprinter.string_of_formula_base pr
     (fun _ _ _ _ _ -> do_coercion_x prog c_opt estate conseq resth1 resth2 anode lhs_b rhs_b ln2 is_folding pos) anode resth1 ln2 resth2 rhs_b
 
 (*
