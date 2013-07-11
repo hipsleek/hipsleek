@@ -21,6 +21,7 @@ lemma self::zip<y> -> P1(self) * P2(y).
 infer [P1,P2] x::zip<y> |- P1(x) * P2(y).
 print residue.
 
+/*
 infer [P1,P2]   x=null & y=null
 or x::node<_,p>*y::node<_,q>*p::zip<q> |- P1(x) * P2(y).
 print residue.
@@ -29,7 +30,7 @@ infer [P1,P2]
   x::node<_,p>*y::node<_,q>* P1(p) * P2(q) |- P1(x) * P2(y).
 print residue.
 
-
+*/
 
 /*
 

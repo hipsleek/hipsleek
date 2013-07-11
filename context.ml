@@ -1155,6 +1155,7 @@ and process_one_match_x prog is_normalizing (c:match_res) :action_wt =
                   let l1 = [(1,M_base_case_unfold c)] in
                   (-1, (Search_action ((1,a1)::l1)))
            | ViewNode vl, HRel hr -> 
+                 (* schedule only lemma or nothing *)
                   let a1 = (match ms with
                     | View_mater -> 
                           (* print_string "\n WN : unfold for meteralised!"; *)
@@ -1280,24 +1281,24 @@ and process_matches_x prog estate lhs_h is_normalizing ((l:match_res list),(rhs_
   in
   match l with
     | [] -> inf_act() 
-    | x::[] -> 
-          begin
-            match inf_hrel_lst with
-              | [] -> process_one_match prog is_normalizing x
-              | _  ->
-                    let act_wt0 = process_one_match prog is_normalizing x  in
-                    let act_wt1 = inf_act () in
-                    (-1, Search_action ([act_wt0]@[act_wt1]))
-          end
-    | _ -> 
-           begin
-            match inf_hrel_lst with
-              | [] ->  (-1,Search_action (List.map (process_one_match prog is_normalizing) l))
-              | _  ->
-                    let act_wt0 = (-1,Search_action (List.map (process_one_match prog is_normalizing) l))  in
-                    let act_wt1 = inf_act () in
-                    (-1, Search_action ([act_wt0]@[act_wt1]))
-           end
+    | x::[] -> process_one_match prog is_normalizing x 
+          (* begin *)
+          (*   match inf_hrel_lst with *)
+          (*     | [] -> process_one_match prog is_normalizing x *)
+          (*     | _  -> *)
+          (*           let act_wt0 = process_one_match prog is_normalizing x  in *)
+          (*           let act_wt1 = inf_act () in *)
+          (*           (-1, Cond_action ([act_wt0]@[act_wt1])) *)
+          (* end *)
+    | _ ->  (-1,Search_action (List.map (process_one_match prog is_normalizing) l))
+           (* begin *)
+           (*  match inf_hrel_lst with *)
+           (*    | [] ->  (-1,Search_action (List.map (process_one_match prog is_normalizing) l)) *)
+           (*    | _  -> *)
+           (*          let act_wt0 = (-1,Search_action (List.map (process_one_match prog is_normalizing) l))  in *)
+           (*          let act_wt1 = inf_act () in *)
+           (*          (-1, Cond_action ([act_wt0]@[act_wt1])) *)
+           (* end *)
 
 and choose_closest a ys =
   let similar m o =
