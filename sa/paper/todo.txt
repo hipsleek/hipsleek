@@ -1,0 +1,120 @@
+==================================================================
+# tll-guard.slk: FIXED
+  (from tll.ss)
+
+infer [H,G,H_4,H_5,H_6]
+ H_4(left_1,t) * H_6(next_3,t) *  x::node<left_1,right_2,next_3>@M * 
+ G(right_2,l_47',t')&x=x' & t=t' 
+  & right_2!=null & !(v_bool_2') 
+  //& right_2!=null & !(v_bool_2') & right_2=right_2 
+  & t=t' & left_1=v_node_0'
+  |-  H(v_node_0',l_47').
+
+print residue.
+
+ inferred hprel: [
+  H_4(v_node_0',t'@NI) |#| x::node<v_node_0',right_2,next_3>@M 
+    --> H(v_node_0',l_47'@NI)]
+
+PROBLEM
+=======
+Heap guard here is useless, as it does not serve
+to instantiate l_47'. We should drop such useless
+heap guards.
+
+ALGO
+====
+Given U1(vs) |#| G --> U2(ws)
+
+A guard is selected if:
+  vars(G) /\ vs != []
+
+A guard is useful if
+  vars(G) /\ (ws-vs) != []
+==================================================================
+# check-mcf-4.ss: FIXED
+
+We have:
+ H1(t) --> t::tree<children_42_1079>@M * HP_1080(children_42_1079),
+ HP_1080(children_42_1079)&
+  children_42_1079!=null |#| t::tree<children_42_1079>@M --> H2(children_42_1079,n_37'@NI,t@NI)
+
+It seems that H1 is processed before HP_1080:
+
+!!!  synthesize: [HP_1009,H1]
+!!! >>>>>> step 3b: do apply_transitive_imp <<<<<<
+!!! >>>>>> step 3a: simplification <<<<<<
+!!!  synthesize: [HP_1007]
+!!! >>>>>> step 3b: do apply_transitive_imp <<<<<<
+!!! >>>>>> step 3a: simplification <<<<<<
+!!! >>>>>> step 3b: do apply_transitive_imp <<<<<<
+!!!  synthesize: [H2,HP_1008,HP_1080]
+
+PROBLEM
+=======
+HP_1080 cannot be unfolded since H1 was confirmed earlier.
+Can you change the order so that guarded assumptions
+are processed before those like H1.
+That means the following priorities:
+
+   1. H(..) --> H2(..)
+   2. H(..) | G --> H2(..)
+   3. H(..) * D --> H2(..)
+   4. H(..)  --> D*H2(..)
+
+==================================================================
+# last-obl3.slk
+
+infer [G_1]
+  next_3::node<val_20_59,next_20_60>@M *
+  G_1(next_62,next_20_60)&next_0=next_62 & next_62=null & 
+         next_0=null  |- G_1(next_0,next_3).
+print residue.
+
+infer [G_1]
+  next_3::node<val_20_59,next_20_60>@M *
+  G_1(null,next_20_60)&next_0=null & 
+         next_0=null  |- G_1(next_0,next_3).
+print residue.
+
+ISSUE
+=====
+The first example gave a longer answer because we were traversing
+NULL ptr. Can we avoid traversing null when we perform folding
+against unknowns? This may cause some base-case split to be automatically
+done, but --classic will pick them up.
+
+Entail (1) : Valid. 
+
+ <1>next_3::node<val_20_59,next_20_60>@M[Orig]&next_0=next_62 & next_62=null & next_0=null&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [G_1(next_62,next_20_60@NI)&next_0=next_62 & next_62=null & 
+                   next_0=null |#| next_3::node<val_20_59,next_20_60>@M --> G_1(next_0,next_3@NI)]
+
+
+Entail (2) : Valid. 
+
+ <1>EXISTS(flted_20_38: next_3::node<val_20_59,next_20_60>@M[Orig] * G_1(flted_20_38,next_20_60)&flted_20_38=null & next_0=null & next_0=null&{FLOW,(19,20)=__norm})[]
+ inferred hprel: [emp&next_0=null --> G_1(next_0,next_3@NI)]
+==================================================================
+==================================================================
+==================================================================
+==================================================================
+==================================================================
+==================================================================
+==================================================================
+==================================================================
+==================================================================
+==================================================================
+==================================================================
+==================================================================
+==================================================================
+==================================================================
+==================================================================
+==================================================================
+==================================================================
+==================================================================
+==================================================================
+==================================================================
+==================================================================
+==================================================================
+

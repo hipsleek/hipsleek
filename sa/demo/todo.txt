@@ -4528,7 +4528,7 @@ Better to have:
 
 (as we do not have any definition yet)
 =====================================================================
-# loop-4.ss
+# loop-4.ss: FIXED
 
 (minor)
 
@@ -4579,7 +4579,7 @@ transform and confirm P.
  // unfold H_2 which has a simple RHS
  P(x_906) ::= x_906::node<next_1>@M * P(next_1),
 =====================================================================
-# dll-1.slk
+# dll-1.slk: FIXED
 
 (extracted fro hip check-dll.ss)
 
@@ -4636,9 +4636,18 @@ PROBLEM
     H_1(next_9,prv) |#| l::node<_,next_9> ::= H1(next_9,l).
 
 ======================================================================
-# dll-pap-1.slk 
+# dll-pap-1.slk : FIXED (synthesis order is printed also)
 
   URGENT (example used in paper)
+
+search_pred_4_equal@1 EXIT out :(
+ [(H, H(x,y) --> x::node<next_15_797,prev_15_798>@M * HP_9(next_15_797,y) * 
+  HP_0(prev_15_798,y) * HP_1(y,x)),
+ (HP_9, HP_9(next_15_797,y)&next_15_797=null --> emp),
+ (HP_1, HP_1(y,x) --> y::node<next_21_820,prev_21_821>@M * HP_2(next_21_820,x) * 
+
+Correct order for processing : HP_1; H; HP_9
+
 
 relAssume 
   H(x,y)&true --> x::node<next_15_797,prev_15_798>@M * 
@@ -4722,7 +4731,7 @@ pre-predicate? We need to do so for soundness.
 It is similar to post-obligation, where we may get
 some extra relational assumption.
 =====================================================================
-# pre-2a.slk
+# pre-2a.slk: FIXED
 
 relAssume   P(x) --> x::node<q>*P2(q).
 
@@ -4746,7 +4755,7 @@ Later P2 can be dropped as --eup.
 We unfold because it ha a very simple RHS.
 
 =====================================================================
-# tll-if.slk
+# tll-if.slk FIXED the cond_path: should be in reverse order. ([1;2] ===> [2;1])
 
 relAssume (1)
  H(x) --> x::node<left_25_800,right_25_801>@M * H_2(left_25_800) 
@@ -4764,6 +4773,11 @@ For the first divide, I would first process H_2.
 Then H_3.
 Finally H, where H_2 and H_3 could be both inlined.
 
+ISSUE
+=====
+Do we convert from guard to equation?
+Maybe OK.
+
 *************************************
 *******relational definition ********
 *************************************
@@ -4771,6 +4785,18 @@ Finally H, where H_2 and H_3 could be both inlined.
   H_2(left_25_35)<-> H(left_25_35)
   H(x_36)<-> x_36::node<left_25_800,right_25_801>@M * H_2(left_25_800) * 
 H_3(right_25_801)
+*************************************
+
+PROBLEM
+=======
+H should be duplicated below. :FIXED
+
+*************************************
+*******relational definition ********
+*************************************
+  H_3(right_25_37)<-> emp&right_25_37=null
+*************************************
+
 =====================================================================
 # sorted-2c.slk 
 
@@ -4819,8 +4845,125 @@ DESIGN CONSIDERATION
  and would be identical to previous form.
 
 =====================================================================
+# dll-pap-1.slk   DONE
+
+PROBLEM
+=======
+The processing message of H_1, then H1 
+are preinted.
+
+How come the processing message for H_9 is
+not printed??
+
 =====================================================================
+# single_paper.ss:
+
+todo: last post-oblg: transform inferred preds --> views
+
+[ H(x) --> x::node<val_20_942,next_20_943>@M * HP_944(next_20_943),
+
+ HP_944(next_20_943)&next_20_943!=null --> H(next_20_943),
+
+ G(t_37',next_20_943)&
+  next_20_943!=null --> t_37'::node<val_25_959,next_25_960>@M * 
+  GP_961(next_25_960,next_20_943@NI) * GP_962(next_20_943,t_37'@NI),
+
+ GP_961(next_25_960,next_20_943@NI) --> emp&next_25_960=null,
+
+ HP_944(next_20_943) * x::node<val_20_942,next_20_943>@M&res=x & 
+  next_20_943=null --> G(res,x),
+
+ x::node<val_20_942,next_20_943>@M * GP_961(next_25_960,next_20_943@NI) * 
+  GP_962(next_20_943,res@NI) * res::node<val_25_959,next_25_960>@M&
+  next_25_960=null --> G(res,x)]
+
+----
+
+GOT
+===
+
+!!! >>>>>> step 3: apply transitive implication<<<<<<
+!!! >>>>>> step 3a: simplification <<<<<<
+!!!  synthesize: [H,GP_962]
+!!! >>>>>> step 3b: do apply_transitive_imp <<<<<<
+!!! >>>>>> step 3a: simplification <<<<<<
+!!!  synthesize: [HP_944,GP_961]
+!!! >>>>>> step 3b: do apply_transitive_imp <<<<<<
+!!! >>>>>> pre-predicates<<<<<<
+
+
+Expected Order:
+===============
+  H,
+  HP_944,
+  G
+  post-obligation :
+   G(t_37',next_20_943)&
+   next_20_943!=null --> t_37'::node<val_25_959,next_25_960>@M * 
+   GP_961(next_25_960,next_20_943@NI) * GP_962(next_20_943,t_37'@NI),
+  G_961/G_962
+  post-obligation:
+    GP_961(next_25_960,next_20_943@NI) --> emp&next_25_960=null,
+
+Outcome below is wrong
+======================
+[ H(x_1001) ::= x_1001::node<val_20_942,next_20_943>@M * HP_944(next_20_943),
+ G(res_1005,x_1006) ::= 
+ res_1005::node<val_20_942,next_20_943>@M&res_1005=x_1006 & next_20_943=null
+ or x_1006::node<val_20_1007,next_20_1008>@M * 
+    GP_962(next_20_1008,res_1005) * res_1005::node<val_20_942,next_20_943>@M&
+    next_20_943=null
+ ,
+ HP_944(next_20_1004) ::= 
+ next_20_1004::node<val_20_942,next_20_943>@M * HP_944(next_20_943)
+ or emp&next_20_1004=null
+ ]
 =====================================================================
+# tll-if.slk: FIXED
+
+*************************************
+*******relational definition ********
+*************************************
+  H_3(right_25_42)<-> H(right_25_42)&right_25_42!=null
+  H_2(left_25_43)<-> H(left_25_38) * left_25_43::node<left_25_38,right_25_39>@M * 
+H_3(right_25_39)
+  H(x_44)<-> H(left_25_38) * x_44::node<left_25_38,right_25_39>@M * H_3(right_25_39)
+*************************************
+
+*************************************
+*******relational definition ********
+*************************************
+  H(x_45)<-> x_45::node<left_25_800,right_25_801>@M * H_2(left_25_800) * 
+H_3(right_25_801)
+  H_3(right_25_46)<-> emp&right_25_46=null
+*************************************
+
+TWO PROBLEMS
+============
+1. The order of processing seems wrong. It should be:
+   1. Confirm H_2
+   2. Confirm H_3
+   3. Confirm H
+However, I saw only, so where is H?
+!!! >>>>>> step 3: apply transitive implication<<<<<<
+!!! >>>>>> step 3a: simplification <<<<<<
+!!!  synthesize: [H_3]
+!!! >>>>>> step 3b: do apply_transitive_imp <<<<<<
+!!! >>>>>> step 3a: simplification <<<<<<
+!!!  synthesize: [H_2]
+
+It seems you confirmed H before H2.
+
+2. When given:
+ H_3(right_25_801)&right_25_801!=null 
+   --> H(right_25_801).
+In DnC mode, we would transform it into:
+ H_3(right_25_801) <-> H(right_25_801) &right_25_801!=null 
+This would allow H3 to be inlined under DnC mode.
+
+In the normal mode, this conversion is not
+allowed.
+
 =====================================================================
 =====================================================================
 =====================================================================

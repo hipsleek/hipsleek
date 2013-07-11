@@ -951,7 +951,7 @@ let process_shape_postObl pre_hps post_hps=
   let ls_inferred_hps, ls_hprel, _, _ =
     if List.length sel_hps> 0 && List.length hp_lst_assume > 0 then
       let infer_shape_fnc = Sa2.infer_shapes_from_fresh_obligation in
-      infer_shape_fnc iprog !cprog "" cond_path constrs2 [] []
+      infer_shape_fnc iprog !cprog "" false cond_path constrs2 [] []
           sel_hps sel_post_hps [] unk_hpargs link_hpargs true unk_map false
           [] [] []
     else [], [],[],[]

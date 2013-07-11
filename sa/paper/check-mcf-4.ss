@@ -55,7 +55,39 @@ bool check_child (node l, node prv, tree par)
 }
 
 /*
-# check-mcf.ss
+# check-mcf-4.ss
+
+We have:
+ H1(t) --> t::tree<children_42_1079>@M * HP_1080(children_42_1079),
+ HP_1080(children_42_1079)&
+  children_42_1079!=null |#| t::tree<children_42_1079>@M --> H2(children_42_1079,n_37'@NI,t@NI)
+
+It seems that H1 is processed before HP_1080:
+
+!!!  synthesize: [HP_1009,H1]
+!!! >>>>>> step 3b: do apply_transitive_imp <<<<<<
+!!! >>>>>> step 3a: simplification <<<<<<
+!!!  synthesize: [HP_1007]
+!!! >>>>>> step 3b: do apply_transitive_imp <<<<<<
+!!! >>>>>> step 3a: simplification <<<<<<
+!!! >>>>>> step 3b: do apply_transitive_imp <<<<<<
+!!!  synthesize: [H2,HP_1008,HP_1080]
+
+PROBLEM
+=======
+HP_1080 cannot be unfolded since H1 was confirmed earlier.
+Can you change the order so that guarded assumptions
+are processed before those like H1.
+That means the following priorities:
+
+   1. H(..) --> H2(..)
+   2. H(..) | G --> H2(..)
+   3. H(..) * D --> H2(..)
+   4. H(..)  --> D*H2(..)
+
+
+
+==========================
 
   H2(l,prv,par)&
   l!=null --> l::node<child_07,prev_08,next_09,parent_10>@M * 

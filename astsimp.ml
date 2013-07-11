@@ -7696,7 +7696,7 @@ let check_data_pred_name iprog name : bool =
 (*   Debug.no_1 "check_data_pred_name" pr1 pr2 (fun _ -> check_data_pred_name iprog name) name *)
 
 let process_pred_def_4_iast iprog pdef = 
-  if check_data_pred_name iprog pdef.I.view_name then
+  (* if check_data_pred_name iprog pdef.I.view_name then *)
     let curr_view_decls = iprog.I.prog_view_decls in
     try
       let h = (self,Unprimed)::(res_name,Unprimed)::(List.map (fun c-> (c,Unprimed)) pdef.Iast.view_vars ) in
@@ -7716,8 +7716,8 @@ let process_pred_def_4_iast iprog pdef =
       iprog.I.prog_view_decls <- ( new_pdef :: curr_view_decls);
     with
       | _ ->  dummy_exception() ; iprog.I.prog_view_decls <- curr_view_decls
-    else
-      print_string (pdef.I.view_name ^ " is already defined.\n")
+    (* else *)
+      (* print_string (pdef.I.view_name ^ " is already defined.\n") *)
 
 let process_pred_def_4_iast iprog pdef =
   let pr = Iprinter.string_of_view_decl in
@@ -7730,7 +7730,7 @@ let syn_hprel_x crem_hprels irem_hprels=
       | [] -> res
       | chp::rest ->
             try
-              let _ = I.look_up_hp_def_raw res chp.C.hp_name in
+              let _ = I.look_up_hp_def_raw (res@irem_hprels) chp.C.hp_name in
                process_one rest res
             with Not_found ->
                 let n_ihp = {
@@ -7743,7 +7743,7 @@ let syn_hprel_x crem_hprels irem_hprels=
                 in
                 process_one rest (res@[n_ihp])
   in
-  process_one crem_hprels irem_hprels
+  process_one crem_hprels []
 
 let syn_hprel crem_hprels irem_hprels =
   let pr1 = pr_list_ln Iprinter.string_of_hp_decl in
@@ -7817,6 +7817,7 @@ let hn_trans pname vnames hn = match hn with
         else hn
   | _ -> hn 
 
+(*LOC: this transformation is not quite correct. please improve*)
 let plugin_inferred_iviews views iprog =
   let vnames = List.map (fun (p,n,_)-> p,n) views in
   let vdecls = List.map (fun (pname,_,prd)-> { prd with 
@@ -7837,32 +7838,60 @@ let plugin_inferred_iviews views iprog =
 
 let plugin_inferred_iviews views iprog =
   let pr1 = pr_list (pr_triple pr_id pr_id pr_none) in
-Debug.no_1 "plugin_inferred_iviews" pr1 Iprinter.string_of_program (fun _ -> plugin_inferred_iviews views iprog) views
+  Debug.no_1 "plugin_inferred_iviews" pr1 Iprinter.string_of_program (fun _ -> plugin_inferred_iviews views iprog) views
 
+(*TODO: improve*)
+let plugin_inferred_iviews_new views iprog =
+  let vnames = List.map (fun (p,n,_)-> p,n) views in
+  let vdecls = List.map (fun (pname,_,prd)-> { prd with 
+        I.view_name = prd.I.view_name^"_"^pname;
+        I.view_formula = IF.struc_formula_trans_heap_node (hn_trans pname vnames) prd.I.view_formula}
+  ) views in
+  let plug_views_proc proc = 
+    let vnames = List.filter (fun (p,_)-> (String.compare p proc.I.proc_name)==0) vnames in
+	 (* let _ = print_string ("gugu: "^proc.I.proc_name^" "^(pr_list (pr_pair pr_id pr_id) vnames)^"\n") in *)
+    let hn_trans = hn_trans proc.I.proc_name vnames in
+    {proc with  I.proc_static_specs= IF.struc_formula_trans_heap_node hn_trans (IF.struc_formula_drop_infer proc.I.proc_static_specs);
+                I.proc_dynamic_specs= IF.struc_formula_trans_heap_node hn_trans (IF.struc_formula_drop_infer proc.I.proc_dynamic_specs)} in
+  {iprog with 
+    I.prog_view_decls= iprog.I.prog_view_decls@vdecls; 
+    I.prog_proc_decls= List.map plug_views_proc iprog.I.prog_proc_decls;
+    I.prog_hp_ids = []; 
+    I.prog_hp_decls=[];} 
+
+let plugin_inferred_iviews_new views iprog =
+  let pr1 = pr_list (pr_triple pr_id pr_id pr_none) in
+  Debug.no_1 "plugin_inferred_iviews_new" pr1 Iprinter.string_of_program
+      (fun _ -> plugin_inferred_iviews_new views iprog) views
 
 let trans_hprel_2_cview_x iprog cprog proc_name hpdefs:
       C.view_decl list * C.hp_decl list =
 
   (*TODO: topo sort hp_rels*)
   let hpdefs1 = hpdefs in
-  (*convert to iview*)
-  let tripple_iviews = transform_hp_rels_to_iviews (List.map (fun hpdef -> (proc_name, hpdef)) hpdefs1) in
-  (*subst hprel -> view in defs*)
-  let n_iproc = plugin_inferred_iviews tripple_iviews iprog in
-  let _ = iprog.I.prog_view_decls <- n_iproc.I.prog_view_decls in
-  let iviews, new_views = List.fold_left (fun (ls1,ls2) (_,id,iv) -> ((ls1@[iv]), (ls2@[id]))) ([],[]) tripple_iviews in
+  let need_trans_hprels = List.fold_left (fun ls (hp_kind, _,_,_) ->
+        match hp_kind with
+          |  CP.HPRelDefn (hp,_,_) -> ls@[hp]
+          | _ -> ls
+    ) [] (hpdefs) in
   (*remove defined unknown*)
   let irem_hprels, idef_hprels = List.partition (fun hp1 ->
-      not (List.exists (fun hp2 -> String.compare hp1.I.hp_name hp2 = 0) new_views)
+      not (List.exists (fun hp2 -> String.compare hp1.I.hp_name (CP.name_of_spec_var hp2) = 0) need_trans_hprels)
   ) iprog.I.prog_hp_decls in
   let crem_hprels, c_hprels_decl= List.partition (fun hp1 ->
-      not (List.exists (fun hp2 -> String.compare hp1.C.hp_name hp2 = 0) new_views)
+      not (List.exists (fun hp2 -> String.compare hp1.C.hp_name (CP.name_of_spec_var hp2) = 0) need_trans_hprels)
   ) cprog.C.prog_hp_decls in
   (*unknown preds which generated by INFER exist in cprog but iprog.
     good time to push them in*)
   let irem_hprels1 = syn_hprel crem_hprels irem_hprels in
-  let _ = iprog.I.prog_hp_decls <- irem_hprels1 in
-  let _ = cprog.C.prog_hp_decls <- crem_hprels in
+  let _ = iprog.I.prog_hp_decls <- iprog.I.prog_hp_decls@irem_hprels1 in
+  (* let _ = cprog.C.prog_hp_decls <- crem_hprels in *)
+  (*convert to iview*)
+  let tripple_iviews = transform_hp_rels_to_iviews (List.map (fun hpdef -> (proc_name, hpdef)) hpdefs1) in
+  (*subst hprel -> view in defs*)
+  let n_iproc = plugin_inferred_iviews_new tripple_iviews iprog in
+  let _ = iprog.I.prog_view_decls <- n_iproc.I.prog_view_decls in
+  let iviews, new_views = List.fold_left (fun (ls1,ls2) (_,id,iv) -> ((ls1@[iv]), (ls2@[id]))) ([],[]) tripple_iviews in
   let _ = List.iter (process_pred_def_4_iast iprog) iviews in
   (* let _ = iprog.Iast.prog_view_decls <- iprog.Iast.prog_view_decls@iviews in *)
   (*convert to cview*)

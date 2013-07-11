@@ -1,0 +1,89 @@
+data node{
+	int val;
+	node next;
+}.
+
+HeapPred H(node a).
+HeapPred H4(node next_3).
+PostPred G_1(node next_0, node@NI next_3).
+PostPred G_2(node next_3, node@NI t_37').
+
+/*
+pred G<x> ==
+     self::node<val_29_788,null>@M&self=x 
+or x::node<val_29_788,next_29_789> * HP_5(next_29_789,self) 
+   * HP_4(null,next_29_789) *
+     self::node<val_34_802,null>
+*/
+
+pred G<x> == 
+ self::node<val_2,next_3>@M&self=x & next_3=null
+ or x::node<val_20_976,next_20_977>@M * 
+    G_1(next_3,next_20_977) * G_2(next_20_977,self) * 
+    self::node<val_2,next_3>@M&next_3=null
+
+inv self!=null.
+
+
+/*
+pred G5<t> ==
+   self=t & self!=null
+   or self::node<_,nn>*nn::G5<t>
+inv self!=null.
+*/
+
+/*
+infer [HP_4,HP_5]
+ t_32'::G<next_29_789> & next_29_789!=null 
+  |- t_32'::node<val_34_802,next_34_803>@M * 
+    HP_4(next_34_803,next_29_789) * HP_5(next_29_789,t_32').
+*/
+
+infer [G_1,G_2]
+  t_37'::G<next_3>@M&next_3!=null
+ |-  t_37'::node<val_25_959,next_0>@M * 
+G_1(next_0,next_3) * G_2(next_3,t_37'). 
+
+print residue.
+
+infer [G_1]
+  next_3::node<val_20_59,next_20_60>@M *
+  G_1(next_62,next_20_60)&next_0=next_62 & next_62=null & 
+         next_0=null  |- G_1(next_0,next_3).
+
+infer [G_1]
+  next_3::node<val_20_59,next_20_60>@M *
+  G_1(null,next_20_60)&next_0=null & 
+         next_0=null  |- G_1(next_0,next_3).
+
+print residue.
+
+/*
+# single.slk
+
+
+
+
+ id: 24; caller: []; line: 0; classic: false; kind: POST OBLIGATION; hec_num: 5; evars: []; infer_vars: [G_1,G_2]; c_heap: emp
+
+ checkentail t_37'::G<next_3>@M[0][LHSCase]&next_3!=null&
+{FLOW,(22,23)=__norm}[]
+ |-  t_37'::node<val_25_959,next_0>@M * 
+G_1(next_0,next_3) * G_2(next_3,t_37')&
+{FLOW,(1,25)=__flow}[]. 
+
+
+hprel_ass: [ next_3::node<val_36,next_37>@M * 
+  G_2(next_37,t_37') --> G_2(next_3,t_37'),
+ G_1(next_39,next_37)&next_39=next_0 & 
+  next_39=null & 
+  next_0=null |#| next_3::node<val_36,next_37>@M --> G_1(next_0,next_3),
+ emp&next_3=t_37' & next_3!=null --> G_2(next_3,t_37'),
+ emp&next_0=null --> G_1(next_0,next_3)]
+res:  [
+  or[emp&next_3=t_37' & next_31=null & next_3!=null & val_30=val_25_959 & next_31=next_0&{FLOW,(22,23)=__norm}[]; emp&next_39=null & next_3!=null & val_38=val_25_959 & next_39=next_0&{FLOW,(22,23)=__norm}[]]
+  ]
+
+
+
+*/

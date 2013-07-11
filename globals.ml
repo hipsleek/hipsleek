@@ -671,6 +671,9 @@ let sa_old = ref false
 
 let sa_dnc = ref false
 
+(*temp: should be improve*)
+let sa_en_pre_oblg = ref false
+
 (* let sa_en_norm = ref false *)
 
 let sa_en = ref true
@@ -754,6 +757,7 @@ let allow_inf = ref true (*enable support to use infinity (\inf and -\inf) in fo
 let ann_derv = ref false
 
 let print_ann = ref true
+let print_derv = ref false
 
 (*is used during deployment, e.g. on a website*)
 (*Will shorten the error/warning/... message delivered

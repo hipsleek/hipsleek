@@ -23,7 +23,8 @@ relAssume
 /*
   below would be treated as a pre-obligation.
   what if it cannot be handled
-      
+     if defn has not been formed; leave it as
+     a complex lhs rule to be used.
 */
 relAssume  x::node<l,r> * H(l) * H(r) --> H(x).
 

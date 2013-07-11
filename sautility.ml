@@ -994,7 +994,8 @@ let get_raw_defined_w_pure_x prog predef lhs rhs=
   let svl1 = if eqs = [] then svl else
                 (List.fold_left close_def svl eqs)
   in
-  (CP.remove_dups_svl svl1)
+  let svl2 = (CP.remove_dups_svl svl1) in
+  svl2
 
 let get_raw_defined_w_pure prog predef lhs rhs=
   let pr1 = Cprinter.prtt_string_of_formula in
@@ -1297,10 +1298,12 @@ let simp_match_unknown unk_hps link_hps cs=
       (fun _ _ _ -> simp_match_unknown_x unk_hps link_hps cs)
       unk_hps link_hps cs
 
+(*da/demo/dll-pap-1.slk*)
 let simp_match_hp_w_unknown_x prog unk_hps link_hps cs=
   (* check-dll: recusrsive do not check*)
-  if CP.intersect_svl (CF.get_hp_rel_name_formula cs.CF.hprel_lhs) 
-    (CF.get_hp_rel_name_formula cs.CF.hprel_rhs) <> [] then cs else
+  let rec_hps = CP.intersect_svl (CF.get_hp_rel_name_formula cs.CF.hprel_lhs)
+    (CF.get_hp_rel_name_formula cs.CF.hprel_rhs) in
+  if List.length rec_hps <= 1 then cs else
   let tot_unk_hps = unk_hps@link_hps in
   let part_helper = (fun (unk_svl,rem) (hp,args)->
         if CP.mem_svl hp tot_unk_hps then
@@ -1343,7 +1346,7 @@ let simp_match_hp_w_unknown_x prog unk_hps link_hps cs=
 
 let simp_match_hp_w_unknown prog unk_hps link_hps cs=
   let pr1 = !CP.print_svl in
-  let pr2 = Cprinter.string_of_hprel_short in
+  let pr2 = Cprinter.string_of_hprel_short_inst prog in
   Debug.no_3 "simp_match_hp_w_unknown" pr1 pr1 pr2 pr2
       (fun _ _ _ -> simp_match_hp_w_unknown_x prog unk_hps link_hps cs)
       unk_hps link_hps cs
@@ -2368,8 +2371,10 @@ step 1: apply transitive implication
         B |= C ---> E
   ---------------------------------
   c1 = A |- B ;c2 = C |- D ===> c3=A |- D * E
+
+Note: subst if the lhs is equal (frozen) and not complex
 *)
-let rec find_imply prog lunk_hps runk_hps lhs1 rhs1 lhs2 rhs2 lguard1 complex_hps=
+let rec find_imply prog lunk_hps runk_hps lhs1 rhs1 lhs2 rhs2 lguard1 equal_hps complex_hps=
   let sort_hps_x hps = List.sort (fun (CP.SpecVar (_, id1,_),_)
       (CP.SpecVar (_, id2, _),_)-> String.compare id1 id2) hps
   in
@@ -2444,8 +2449,10 @@ let rec find_imply prog lunk_hps runk_hps lhs1 rhs1 lhs2 rhs2 lguard1 complex_hp
   let r_rhrels = sort_hps (List.map transform_hrel rhrels) in
   (*m_args2: matched svl of rhs2*)
   let subst,matched_hps, m_args2,rhs_hps_rename = check_hrels_imply l_rhrels r_rhrels ldns rdns (List.map fst l_rhrels) [] [] [] [] in
+  let _ = Debug.ninfo_pprint ("    matched_hps: " ^ (!CP.print_svl matched_hps)) no_pos in
+  let _ = Debug.ninfo_pprint ("    complex_hps: " ^ (!CP.print_svl complex_hps)) no_pos in
   let r=
-    if matched_hps = [] || (CP.intersect_svl matched_hps complex_hps <> []) then None
+    if matched_hps = [] || ((CP.intersect_svl matched_hps complex_hps <> []) (* || CP.intersect_svl matched_hps equal_hps = [] *)) then None
     else
       begin
         (*for debugging*)
@@ -2870,6 +2877,17 @@ let is_trivial_constr cs=
   match l_ohp,r_ohp with
     | Some hp1, Some hp2 -> CP.eq_spec_var hp1 hp2
     | _ -> false
+
+let collect_post_preds prog constrs=
+  let collect_one r_post_hps cs=
+    let hps = (CF.get_hp_rel_name_formula cs.CF.hprel_lhs)@(CF.get_hp_rel_name_formula cs.CF.hprel_rhs) in
+    let hps1 = CP.remove_dups_svl hps in
+    let post_hps = List.filter (fun hp -> not (Cast.check_pre_post_hp prog.Cast.prog_hp_decls (CP.name_of_spec_var hp)))
+      hps1 in
+    (r_post_hps@post_hps)
+  in
+  let post_hps = List.fold_left collect_one [] constrs in
+  CP.remove_dups_svl (post_hps)
 
 let weaken_strengthen_special_constr_pre is_pre cs=
   if is_trivial_constr cs then

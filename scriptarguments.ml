@@ -397,6 +397,7 @@ let common_arguments = [
   ("--dis-cp-trace", Arg.Clear Globals.cond_path_trace, "Disable the tracing of conditional paths");
   ("--sa-print-inter", Arg.Set Globals.sa_print_inter, "Print intermediate results of normalization");
   ("--sa-old", Arg.Set Globals.sa_old, "old algorithm of normalization");
+  ("--sa-en-pre-oblg", Arg.Set Globals.sa_en_pre_oblg, "enable sa_en_pre_oblg");
    ("--sa-dnc", Arg.Set Globals.sa_dnc, "algorithm of normalization with divide and conquer");
   (* ("--sa-en-norm", Arg.Set Globals.sa_en_norm, "do normalization"); *)
   ("--sa-dis", Arg.Clear Globals.sa_en, "donot infer shape");
@@ -429,6 +430,8 @@ let common_arguments = [
   ("--sa-dis-print-decl" , Arg.Clear Globals.print_heap_pred_decl, "disable predicates declaration printing");
   ("--en-print-ann" , Arg.Set Globals.print_ann, "enable annotation printing (default)");
   ("--dis-print-ann", Arg.Clear Globals.print_ann, "disable annotation printing");
+  ("--en-print-derv" , Arg.Set Globals.print_derv, "enable [derv,orig] annotation printing");
+  ("--dis-print-derv" , Arg.Clear Globals.print_derv, "disable [derv,orig] annotation printing (default)");
   ("--en-texify", Arg.Set Globals.texify, "output latex formulas");
   ("--en-testing", Arg.Set Globals.testing_flag, "generate for testing comparison with start/stop markers");
 

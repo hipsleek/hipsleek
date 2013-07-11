@@ -7,8 +7,8 @@ HeapPred G(node a).
 
 foo<> == self::node<q>*q::foo<> inv self!=null;
 void loop (node x)
-//infer [P,G]  requires P(x)  ensures  G(x);
-  requires x::foo<> ensures x::foo<>;
+infer [P,G]  requires P(x)  ensures  G(x);
+//  requires x::foo<> ensures x::foo<>;
 {
    node y = x.next;
    loop(y);

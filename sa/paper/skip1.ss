@@ -23,8 +23,8 @@ infer[SLL,G] requires SLL(l) ensures G(l) & res;
 }
 
 bool skip0(node2 l, node2 e) 
-//infer[SLSEG] requires SLSEG(l,e) ensures res;
-requires l::lseg<e> ensures l::lseg<e> & res;
+infer[SLSEG] requires SLSEG(l,e) ensures res;
+//requires l::lseg<e> ensures l::lseg<e> & res;
 {
 	if (l == e) return true;
 	else if (l==null) return false;

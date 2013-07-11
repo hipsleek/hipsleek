@@ -2,12 +2,12 @@ data node {
   int val;
   node next;
 }
-
+/*
 ll<> == self = null  
 	or self::node<_, q>* q::ll<> 
   inv true;
-
-HeapPred H1(node a, node b).
+*/
+HeapPred H1(node a,node b).
 HeapPred H2(node a).
 HeapPred HX(node a).
 HeapPred HY(node a).
@@ -28,8 +28,8 @@ HP_RELDEFN G1:  G1(x,y)::  HP_571(x) * HP_572(y)&true]
 
  */
 void reverse(ref node x, ref node y)
-  infer[H1,G1]
-  requires H1(x,y)
+  infer[HX,HY,G1]
+  requires HX(x)*HY(y)
   ensures G1(x',y');
 
 /*
@@ -39,8 +39,8 @@ void reverse(ref node x, ref node y)
 */
 //requires x::ll<>
 //  ensures  x'=null; //'
- //requires x::ll<> * y::ll<>
- //ensures y'::ll<> & x'=null;
+ /* requires x::ll<> * y::ll<> */
+ /* ensures y'::ll<> & x'=null; */
  /*  FAIL
     requires x::ll<> & x=y
     ensures y'::ll<> & x'=null;

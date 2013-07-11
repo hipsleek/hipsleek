@@ -3927,7 +3927,9 @@ let extract_hrel_head_x (f0:formula) =
 
 let extract_hrel_head (f0:formula) =
   let pr1 = !print_formula in
-  let pr2 = !CP.print_svl in
+  let pr2 a = match a with None -> "None"
+    | Some hp -> !CP.print_sv hp
+  in
   Debug.no_1 "extract_hrel_head" pr1 pr2
       (fun _ ->  extract_hrel_head_x f0) f0
 

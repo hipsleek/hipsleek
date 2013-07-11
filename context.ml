@@ -1110,17 +1110,26 @@ and process_one_match_x prog is_normalizing (c:match_res) :action_wt =
                     left_act@right_act
                   end
                   else  [] in
-                  (*let l4 = 
-                  (* TODO WN : what is original?? *)
-                  (* Without it, run-fast-test of big imm runs faster while
-                    * still accurate. However, it fails with
-                    * imm/imm1.slk imm/imm3.slk *)
-                    if get_view_original rhs_node then 
-                    [(2,M_base_case_fold c)] 
-                    else [] in*)
-                  (* [] in *)
                   let src = (-1,norm_search_action (l2@l3  (* @l4 *) )) in
                   src (*Seq_action [l1;src]*)
+            | HRel (hpl, el, _), HRel (hpr, er, _) -> 
+                  let hl_name = CP.name_of_spec_var hpl in
+                  let hr_name = CP.name_of_spec_var hpr in
+                  let l2 =
+                    (* andreeac - what does 0/1 mean? eg(0,M_match c) *)
+                    if ((String.compare hl_name hr_name)==0) then [(0,M_match c)] (*force a MATCH after each lemma*)
+                    else [(1,M_Nothing_to_do ("no proper match (type error) found for: "^(string_of_match_res c)))]
+                  in
+		  let l2 = if !perm=Dperm && !use_split_match && not !consume_all then (1,M_split_match c)::l2 else l2 in
+                  let l3 = 
+                      let left_ls = filter_norm_lemmas(look_up_coercion_with_target prog.prog_left_coercions hl_name hr_name) in
+                      let right_ls = filter_norm_lemmas(look_up_coercion_with_target prog.prog_right_coercions hr_name hl_name) in
+                      let left_act = List.map (fun l -> (1,M_lemma (c,Some l))) left_ls in
+                      let right_act = List.map (fun l -> (1,M_lemma (c,Some l))) right_ls in
+                      if (left_act==[] && right_act==[]) then [] (* [(1,M_lemma (c,None))] *) (* only targetted lemma *)
+                      else left_act@right_act in
+                  let src = (-1,Search_action (l2@l3)) in
+                  src
             | _ -> report_error no_pos "process_one_match unexpected formulas 1\n"
           )
     | MaterializedArg (mv,ms) ->
@@ -1128,6 +1137,7 @@ and process_one_match_x prog is_normalizing (c:match_res) :action_wt =
           let uf_i = if mv.mater_full_flag then 0 else 1 in 
           (match lhs_node,rhs_node with
             | DataNode dl, _ -> (1,M_Nothing_to_do ("matching lhs: "^(string_of_h_formula lhs_node)^" with rhs: "^(string_of_h_formula rhs_node)))
+            | HRel _, _ -> (1,M_Nothing_to_do ("matching lhs: "^(string_of_h_formula lhs_node)^" with rhs: "^(string_of_h_formula rhs_node)))
             | ViewNode vl, ViewNode vr -> 
                   let a1 = (match ms with
                     | View_mater -> 
@@ -1197,6 +1207,10 @@ and process_one_match_x prog is_normalizing (c:match_res) :action_wt =
                   else  (1,M_Nothing_to_do (string_of_match_res c))
             | ViewNode vl, ViewNode vr -> 
                   if ((String.compare vl.h_formula_view_name vr.h_formula_view_name)==0) 
+                  then (0,M_match c)
+                  else  (1,M_Nothing_to_do (string_of_match_res c))
+            | HRel (hpl,_,_), HRel (hpr,_,_) -> 
+                  if ((String.compare (CP.name_of_spec_var hpl) (CP.name_of_spec_var hpr))==0) 
                   then (0,M_match c)
                   else  (1,M_Nothing_to_do (string_of_match_res c))
             | DataNode dl, ViewNode vr -> (1,M_Nothing_to_do (string_of_match_res c))
