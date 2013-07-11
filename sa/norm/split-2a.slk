@@ -13,14 +13,11 @@ HeapPred P2(node a).
 
  lemma self::zip<y> -> P1(self) * P2(y).
 
-// lemma self::zip<y> * y::node<_,_> -> P1(self) * P2(y).
-
-// lemma self::zip<y> -> P1(self) * P2(y).
-
-//lemma self::zip<y> -> P2(y).
 
 
-checkentail xx::zip<yy>
+
+infer [P1,P2]
+  xx::node<_,p>*yy::node<_,q> * P1(p) * P2(q)
      |- P1(xx) * P2(yy).
 print residue.
 
