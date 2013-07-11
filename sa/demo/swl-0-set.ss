@@ -9,27 +9,22 @@ ls<M,p> == self=p & M={}
 inv true;
 */
 
-ll<s> == self=null & self!=s 
-  or self::node<_,nxt> * nxt::ll<s> & self!=s 
+ll<s,B> == self=null & self!=s & B={}
+  or self::node<v,nxt> * nxt::ll<s,B1> & self!=s & B=union({v},B1)
 inv self!=s ;
 
-lseg<p> == self=p 
-  or self::node<_,nxt> * nxt::lseg<p> & self!=p 
+lseg<p,B> == self=p & B={}
+  or self::node<v,nxt> * nxt::lseg<p,B1> & self!=p & B=union({v},B1)
 inv true;
 
 HeapPred H(node a, node b, node@NI c).
 HeapPred G(node a, node@NI ra, node b, node@NI rb, node@NI c).
 
 void lscan(ref node cur, ref node prev, node sent)
-requires cur::ll<sent> * prev::lseg<sent>
-//*sent::node<_,_>@L 
-   & cur!=null 
-ensures prev'::ll<sent>  & cur'=sent ;
-requires cur::lseg<sent> * prev::ll<sent> 
-//* sent::node<_,_>@L 
-    & cur!=sent 
-ensures prev'::ll<sent>  & cur'=sent ;
-//ensures prev'::ll<> * sent::node<_,_> & cur'=sent ;
+  requires cur::ll<sent,B1> * prev::lseg<sent,B2> & cur!=null 
+ensures prev'::ll<sent,union(B1,B2)>  & cur'=sent ;
+requires cur::lseg<sent,B1> * prev::ll<sent,B2> & cur!=sent 
+ensures prev'::ll<sent,union(B1,B2)>  & cur'=sent ;
 
 /*
   infer [H,G]

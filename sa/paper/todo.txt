@@ -145,7 +145,147 @@ code reuse later.
 
 
 ==================================================================
+# paper/check-sorted.ss --sa-en-pure-field: FIXED.
+ comment: now, all confirmation needs ranking
+
+Why isn't HP_885 unfolded?
+
+[ H(x_911,v_912) ::= 
+ x_911::node<val_21_907,next_21_908>@M * HP_885(next_21_908,v_912)&
+ v_912<=val_21_907
+ or emp&x_911=null
+ ,
+ G(x_917,v_918) ::= 
+ emp&x_917=null
+ or x_917::node<val_21_882,next_21_883>@M * G(next_21_883,val_21_882)&
+    v_918<=val_21_882
+ ,
+ HP_885(next_21_913,v_914) |#| x::node<val_21_882,next_21_913>@M ::= H(next_21_913,val_21_882)&v_914<=val_21_882]
+
+You were processing it in the right order though,
+so the problem is with unfolding guarded defn.
+
+!!! >>>>>> step 3a: simplification <<<<<<
+!!!  synthesize: [HP_885,HP_884]
+!!! >>>>>> step 3b: do apply_transitive_imp <<<<<<
+!!! >>>>>> step 3a: simplification <<<<<<
+!!! >>>>>> step 3b: do apply_transitive_imp <<<<<<
+!!!  synthesize: [H]
 ==================================================================
+# check-mcf-4.ss
+
+Guarded defns must be eliminated. Hence, they should be
+placed a higher priority, as follows:
+
+ 1. H(..) -> H2(..)
+ 2. H(..) & pure | D -> H2(..) // non-recursive
+ 3. H(..) * D ==> H(..)
+
+(2) is expected to be non-recursive, but may 
+include those with disjunctive form. 
+They are unfolded where possible  including
+disj unfolding.
+
+!!! >>>>>> step 3: apply transitive implication<<<<<<
+!!! >>>>>> step 3a: simplification <<<<<<
+!!!  synthesize: [HP_973,HP_974,H1]
+!!! >>>>>> step 3b: do apply_transitive_imp <<<<<<
+!!! >>>>>> step 3a: simplification <<<<<<
+!!!  synthesize: [HP_971]
+!!! >>>>>> step 3b: do apply_transitive_imp <<<<<<
+!!! >>>>>> step 3a: simplification <<<<<<
+ !!! >>>>>> step 3b: do apply_transitive_imp <<<<<<
+!!!  synthesize: [H2,HP_972,HP_1044]
+!!! >>>>>> pre-predicates<<<<<<
+!!! >>>>>> step pre-4: remove unused predicates<<<<<<
+!!! >>>>>> pre-predicates: step pre-5: group & simpl impl<<<<<<
+!!! >>>>>> pre-predicates: step pre-6: combine<<<<<<
+!!! >>>>>> pre-predicates: step pre-7: remove redundant x!=null<<<<<<
+!!! >>>>>> pre-predicates: step pre-8: strengthen<<<<<<
+!!! >>>>>> step 6: generalization <<<<<<
+!!! >>>>>> post-predicates<<<<<<
+!!! >>>>>> step post-4: step remove unused predicates<<<<<<
+!!! >>>>>> post-predicates: step post-5: remove redundant x!=null : not implemented yet<<<<<<
+!!! >>>>>> post-predicates: step post-61: weaken<<<<<<
+!!!  synthesize: [G2,G1]
+
+For outcome below:;
+
+[ H2(l_1254,prv_1255,par_1256) ::= 
+ child_52_1166::tree<children_42_1043>@M * HP_1044(children_42_1043) * 
+
+ H2(next_52_1167,l_1254,par_1256) * 
+ l_1254::node<child_52_1166,prev_52_1168,next_52_1167,parent_52_1169>@M * 
+ HP_972(prev_52_1168,prv_1255,par_1256)&par_1256=parent_52_1169
+ or emp&l_1254=null,
+
+ H1(t_1263) ::= t_1263::tree<children_42_1043>@M * HP_1044(children_42_1043,
+ 
+ G2(l_1265,prv_1266,par_1267) ::= 
+ HP_972(prev_52_968,prv_1266,par_1267) * 
+ HP_974(parent_52_970,prv_1266,par_1267) * 
+ l_1265::node<child_52_967,prev_52_968,next_52_969,parent_52_970>@M * 
+ G2(next_52_969,l_1265,par_1267) * G1(child_52_967)&par_1267=parent_52_970 & 
+ prev_52_968=prv_1266
+ or emp&l_1265=null,
+
+ G1(t_1268) ::= 
+ t_1268::tree<children_42_1043>@M&children_42_1043=null
+ or t_1268::tree<children_42_1043>@M * G2(children_42_1043,n_1064,t_1268)&
+    children_42_1043!=null & n_1064=null,
+
+ HP_1044(children_42_1264) |#| t::tree<children_42_1264>@M ::= 
+ H2(children_42_1264,n_37',t)&children_42_1264!=null
+ or emp&children_42_1264=null,
+
+ HP_972(prev_52_968,prv,par) ::= NONE,
+ HP_974(parent_52_970,prv,par) ::= NONE]
+==========
+
+(0)
+ HP_972(prev_52_968,prv@NI,par@NI) --> emp&prev_52_968=prv,
+ HP_974(parent_52_970,prv@NI,par@NI) --> emp&par=parent_52_970,
+ HP_972(prev_52_968,prv@NI,par@NI) --> emp&prev_52_968=prv]
+
+(1)
+ HP_971(child_52_967,prv@NI,par@NI)&par=par' & 
+  prev_52_968=prv --> H1(child_52_967),
+
+(2)
+ HP_973(next_52_969,prv@NI,par@NI)&par=par' & 
+  prev_52_968=prv |#| l::node<child_52_967,prev_52_968,next_52_969,par'>@M --> H2(next_52_969,l@NI,par@NI),
+
+(3)
+ HP_1044(children_42_1043)&
+  children_42_1043!=null |#| t::tree<children_42_1043>@M --> H2(children_42_1043,n_37'@NI,t@NI),
+ HP_1044(children_42_1043) * t::tree<children_42_1043>@M&
+  children_42_1043=null --> G1(t),
+ 
+(4)
+[ H1(t) --> t::tree<children_42_1043>@M * HP_1044(children_42_1043),
+
+(5)
+  H2(l,prv@NI,par@NI)&
+  l!=null --> l::node<child_52_967,prev_52_968,next_52_969,parent_52_970>@M * 
+
+Post-Pred
+=========
+  HP_971(child_52_967,prv@NI,par@NI) * HP_972(prev_52_968,prv@NI,par@NI) * 
+  HP_973(next_52_969,prv@NI,par@NI) * HP_974(parent_52_970,prv@NI,par@NI),H2(l,prv@NI,par@NI)&l=null --> G2(l,prv@NI,par@NI),
+
+
+ HP_972(prev_52_968,prv@NI,par@NI) * HP_974(parent_52_970,prv@NI,par@NI) * 
+  l::node<child_52_967,prev_52_968,next_52_969,parent_52_970>@M * 
+  G2(next_52_969,l@NI,par@NI) * G1(child_52_967)&par=parent_52_970 & 
+  prev_52_968=prv --> G2(l,prv@NI,par@NI),
+
+
+
+
+ t::tree<children_42_1043>@M * G2(children_42_1043,n_1064@NI,t@NI)&
+  children_42_1043!=null & n_1064=null --> G1(t)]
+
+
 ==================================================================
 ==================================================================
 ==================================================================

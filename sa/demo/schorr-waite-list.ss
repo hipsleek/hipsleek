@@ -10,8 +10,12 @@ inv true;
 global node SENTINEL;
 
 ls<p> == self=p
-    or self::node<_,nxt> * nxt::ls<p> & self=p
+    or self::node<_,nxt> * nxt::ls<p> & self!=p
 inv true;
+
+ll1<s> == self = null & self != s
+	or self::node<_,p> * p::ll1<s> & self != s
+inv self!= s;
 
 void lscan(ref node cur, ref node prev, node sentinel)
 /*
@@ -20,10 +24,10 @@ ensures prev'::ls<null> & cur'=sentinel;
 requires cur::ls<sentinel> * prev::ls<null> * sentinel::node<_,_>@L & cur!=sentinel
 ensures prev'::ls<null> & cur'=sentinel;
 */
-requires cur::ls<null> * prev::ls<sentinel> & cur!=null
-ensures prev'::ls<null> & cur'=sentinel;
-requires cur::ls<sentinel> * prev::ls<null> & cur!=sentinel
-ensures prev'::ls<null> & cur'=sentinel;
+requires cur::ll1<sentinel> * prev::ls<sentinel> & cur!=null
+ensures prev'::ll1<sentinel> & cur'=sentinel;
+requires cur::ls<sentinel> * prev::ll1<sentinel> & cur!=sentinel
+ensures prev'::ll1<sentinel> & cur'=sentinel;
 {
 
   node n;
@@ -40,7 +44,7 @@ ensures prev'::ls<null> & cur'=sentinel;
       prev = null;
   }
   lscan(cur,prev,sentinel);
-//  dprint;
+  //dprint;
 }
 
 void traverse(ref node c, ref node p)
@@ -110,6 +114,7 @@ case{
   root = prev;
 //  dprint;
 }
+
 /*
 
 ls<p> == self = p &
