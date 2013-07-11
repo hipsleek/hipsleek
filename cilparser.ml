@@ -700,7 +700,10 @@ and translate_exp (e: Cil.exp) : Iast.exp =
       let newexp = Iast.mkCast target_typ qexp pos in 
       newexp
   | Cil.CastE (ty, exp, l) -> (
-      let pos = translate_location l in
+      let pos = (
+        if (l != Cil.locUnknown) then translate_location l
+        else translate_location (loc_of_cil_exp exp)
+      ) in
       let input_typ = translate_typ (typ_of_cil_exp exp) pos in
       let output_typ = translate_typ ty pos in
       let input_exp = translate_exp exp in
