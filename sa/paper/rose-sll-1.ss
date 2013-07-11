@@ -22,6 +22,10 @@ sll<parent> ==
   self::node<c,n,parent>*c::treep<>* n::sll<parent>;
 
 bool check_tree (tree t)
+/*
+requires t::treep<> //& t!=null 
+  ensures res;
+ */
   infer [H1,H2,G1,G2]
   requires H1(t) //t::treep<>@L //& t!=null 
   ensures G1(t) & res;
@@ -31,6 +35,10 @@ bool check_tree (tree t)
 }
 
 bool check_child (node l, tree par)
+/*
+ requires l::dll<par, prev> 
+  ensures  res;
+ */
   infer [H1,H2,G2,G2]
   requires H2(l,par) //l::sll<par>@L 
   ensures  G2(l,par) & res;
