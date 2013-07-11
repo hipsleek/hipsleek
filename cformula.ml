@@ -3200,8 +3200,10 @@ and normalize_only_clash_rename_x (f1 : formula) (f2 : formula) (pos : loc) = ma
 
 (* split a conjunction into heap constraints, pure pointer constraints, *)
 (* and Presburger constraints *)
+ (* h_formula * MCP.mix_formula * flow_formula * t_formula * one_formula list *)
 and split_components (f: formula) =
-  Debug.no_1 "split_components" !print_formula (fun _ -> "")
+  let pr_res (h_f, p_f, _, _ , lst) = (pr_triple !print_h_formula !print_mix_formula (pr_list !print_one_formula)) (h_f, p_f, lst) in
+  Debug.to_1 "split_components" !print_formula pr_res
   split_components_x f 
 
 and split_components_x (f : formula) = 

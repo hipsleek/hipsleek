@@ -12,8 +12,8 @@ dll<prev> ==
   self::node<prev,n>* n::dll<self>;
 
 bool check_dll (node l, node prv)
-  //requires l::dll<prv>@L ensures  res;
-  infer [H1,G1] requires H1(l,prv) ensures G1(l,prv) & res;
+//requires l::dll<prv>@L ensures  res;
+ infer [H1,G1] requires H1(l,prv) ensures G1(l,prv) & res;
 {
 	if (l==null) return true;
 	else { bool r1 = check_dll(l.next,l);

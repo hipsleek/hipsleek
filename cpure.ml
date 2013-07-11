@@ -8448,7 +8448,7 @@ let rec get_neq_null_svl_x (f:formula) =
 	| AndList b -> List.fold_left (fun svl (_,c)->
         let svl1 = get_neq_null_svl_x c in
         svl@svl1) [] b
-	| Or _ -> report_error no_pos "cpure.get_neq_null_svl: ?"
+	| Or (b1,b2,_,_) -> (get_neq_null_svl_x b1)@(get_neq_null_svl_x b2)
 	| Not (b,_,_)-> get_neq_null_svl_x b
 	| Forall (_,f,_,_) -> get_neq_null_svl_x f
 	| Exists (_,f,_,_) -> get_neq_null_svl_x f
