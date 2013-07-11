@@ -992,8 +992,8 @@ and process_one_match_x prog is_normalizing (c:match_res) :action_wt =
 
                   let left_ls = filter_norm_lemmas(look_up_coercion_with_target prog.prog_left_coercions vl_name h_name) in
                   let right_ls = filter_norm_lemmas(look_up_coercion_with_target prog.prog_right_coercions h_name vl_name) in
-                  let left_act = List.map (fun l -> (0,M_lemma (c,Some l))) left_ls in
-                  let right_act = List.map (fun l -> (0,M_lemma (c,Some l))) right_ls in
+                  let left_act = List.map (fun l -> (1,M_lemma (c,Some l))) left_ls in
+                  let right_act = List.map (fun l -> (1,M_lemma (c,Some l))) right_ls in
                   let l = left_act@right_act in
                   let res = 
                     match l with
@@ -1001,10 +1001,7 @@ and process_one_match_x prog is_normalizing (c:match_res) :action_wt =
                       | l1::[] -> l1
                       | _      -> (-1, norm_search_action l)
                   in res
-            | DataNode dl,  HRel (hpr, er, _) -> 
-                  let a = [(1,M_rd_lemma c)] in
-                  if a!=[] then (-1,Search_action a)
-                  else (1,M_Nothing_to_do (" matched data with RHS HRel "^(string_of_match_res c)))
+            | DataNode _,  HRel _
             | HRel _, _            -> (1,M_Nothing_to_do (string_of_match_res c))
             | _ -> report_error no_pos "process_one_match unexpected formulas 1\n"
           )
@@ -1028,7 +1025,7 @@ and process_one_match_x prog is_normalizing (c:match_res) :action_wt =
                  (* schedule only lemma or nothing *)
                   let l = match ms with
                     | Coerc_mater s -> (1, M_lemma (c,Some s))
-                    | _ -> (-1,M_Nothing_to_do (string_of_match_res c) ) in
+                    | _ -> (1, M_Nothing_to_do (string_of_match_res c) ) in
                    (* (-1, (Search_action [l])) *)
                   l
             | ViewNode vl, DataNode dr ->
@@ -1112,55 +1109,36 @@ and process_matches_x prog estate lhs_h is_normalizing ((l:match_res list),(rhs_
   let _ = Debug.tinfo_hprint (add_str "hp_rel" Cprinter.string_of_spec_var_list) estate.es_infer_vars_hp_rel no_pos in
   let _ = Debug.tinfo_hprint (add_str "sel_hp_rel" Cprinter.string_of_spec_var_list) estate.es_infer_vars_sel_hp_rel no_pos in
   let _ = Debug.tinfo_hprint (add_str "sel_post_hp_rel" Cprinter.string_of_spec_var_list) estate.es_infer_vars_sel_post_hp_rel no_pos in
-  let inf_hrel_lst = estate.es_infer_vars_hp_rel @ estate.es_infer_vars_sel_hp_rel @ estate.es_infer_vars_sel_post_hp_rel in
-  let inf_act () = 
-    let r0 = (2,M_unmatched_rhs_data_node (rhs_node,rhs_rest)) in
-    let rs = 
-      if estate.es_infer_vars_hp_rel==[] then []
-      else [(2,M_infer_heap (rhs_node,rhs_rest))] in
-    if (is_view rhs_node) && (get_view_original rhs_node) then
-      let r = (2, M_base_case_fold { match_res_lhs_node = HEmp;
-      match_res_lhs_rest = lhs_h;
-      match_res_holes = [];
-      match_res_type = Root;
-      match_res_rhs_node = rhs_node;
-      match_res_rhs_rest = rhs_rest; }) in 
-      (* WN : why do we need to have a fold following a base-case fold?*)
-      (* changing to no_match found *)
-      (*(-1, Search_action [r])*)
-      (* let r1 = (2, M_fold { *)
-      (*     match_res_lhs_node = HTrue;  *)
-      (*     match_res_lhs_rest = lhs_h;  *)
-      (*     match_res_holes = []; *)
-      (*     match_res_type = Root; *)
-      (*     match_res_rhs_node = rhs_node; *)
-      (*     match_res_rhs_rest = rhs_rest; *)
-      (* }) in *)
-      (* temp removal of infer-heap and base-case fold *)
-      (-1, (Cond_action (rs@[r;r0])))
-    else (-1, Cond_action (rs@[r0]))
-      (* M_Nothing_to_do ("no match found for: "^(string_of_h_formula rhs_node)) *) 
-  in
   match l with
-    | [] -> inf_act() 
+    | [] -> 
+          let r0 = (2,M_unmatched_rhs_data_node (rhs_node,rhs_rest)) in
+          let rs = 
+            if estate.es_infer_vars_hp_rel==[] then []
+            else [(2,M_infer_heap (rhs_node,rhs_rest))] in
+          if (is_view rhs_node) && (get_view_original rhs_node) then
+            let r = (2, M_base_case_fold { match_res_lhs_node = HEmp;
+            match_res_lhs_rest = lhs_h;
+            match_res_holes = [];
+            match_res_type = Root;
+            match_res_rhs_node = rhs_node;
+            match_res_rhs_rest = rhs_rest; }) in 
+            (* WN : why do we need to have a fold following a base-case fold?*)
+            (* changing to no_match found *)
+            (*(-1, Search_action [r])*)
+            (* let r1 = (2, M_fold { *)
+            (*     match_res_lhs_node = HTrue;  *)
+            (*     match_res_lhs_rest = lhs_h;  *)
+            (*     match_res_holes = []; *)
+            (*     match_res_type = Root; *)
+            (*     match_res_rhs_node = rhs_node; *)
+            (*     match_res_rhs_rest = rhs_rest; *)
+            (* }) in *)
+            (* temp removal of infer-heap and base-case fold *)
+            (-1, (Cond_action (rs@[r;r0])))
+          else (-1, Cond_action (rs@[r0]))
+      (* M_Nothing_to_do ("no match found for: "^(string_of_h_formula rhs_node)) *) 
     | x::[] -> process_one_match prog is_normalizing x
-          (* begin *)
-          (*   match inf_hrel_lst with *)
-          (*     | [] -> process_one_match prog is_normalizing x *)
-          (*     | _  -> *)
-          (*           let act_wt0 = process_one_match prog is_normalizing x  in *)
-          (*           let act_wt1 = inf_act () in *)
-          (*           (-1, Search_action ([act_wt0]@[act_wt1])) *)
-          (* end *)
     | _ ->  (-1,Search_action (List.map (process_one_match prog is_normalizing) l))
-           (* begin *)
-           (*  match inf_hrel_lst with *)
-           (*    | [] ->  (-1,Search_action (List.map (process_one_match prog is_normalizing) l)) *)
-           (*    | _  -> *)
-           (*          let act_wt0 = (-1,Search_action (List.map (process_one_match prog is_normalizing) l))  in *)
-           (*          let act_wt1 = inf_act () in *)
-           (*          (-1, Search_action ([act_wt0]@[act_wt1])) *)
-           (* end *)
 
 and choose_closest a ys =
   let similar m o =
