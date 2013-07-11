@@ -111,17 +111,19 @@ let search_pred_4_equal_x constrs post_hps frozen_hps=
   let pre_preds_cand_equal, complex_hps = partition_equal ([],[]) pr_pre_preds in
   (*filter frozen candidates that depends on others. they will be synthesized next round.*)
   let cand_equal_hps = List.map fst3 pre_preds_cand_equal in
-  let pre_preds_4_equal = List.fold_left (fun res (hp, cs, dep_hps) ->
-      let n_res=
-        if CP.intersect_svl dep_hps cand_equal_hps = [] then
-        [(hp,cs)]
-        else []
-      in
-      res@n_res
-  ) [] pre_preds_cand_equal
-  in
+  (* let pre_preds_4_equal = List.fold_left (fun res (hp, cs, dep_hps) -> *)
+  (*     let n_res= *)
+  (*       if CP.intersect_svl dep_hps cand_equal_hps = [] then *)
+  (*       [(hp,cs)] *)
+  (*       else [] *)
+  (*     in *)
+  (*     res@n_res *)
+  (* ) [] pre_preds_cand_equal *)
+  (* in *)
+  let pre_preds_4_equal = List.map (fun (hp,cs,_) -> (hp,cs)) pre_preds_cand_equal in
   (*mut rec dep*)
-  let pre_preds_4_equal1 = if pre_preds_4_equal = [] && pre_preds_cand_equal <> [] then
+  let pre_preds_4_equal1 = (* if pre_preds_4_equal = [] && pre_preds_cand_equal <> [] then *)
+    if  pre_preds_4_equal  <> [] then
     ranking_frozen_mutrec_preds pre_preds_cand_equal
     (* let pre_preds_4_equal_w_size = List.map (fun (hp,cs,deps) -> (hp,cs,deps, CF.get_h_size_f cs.CF.hprel_rhs)) *)
     (*   pre_preds_cand_equal in *)

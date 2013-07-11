@@ -145,7 +145,8 @@ code reuse later.
 
 
 ==================================================================
-# paper/check-sorted.ss --sa-en-pure-field
+# paper/check-sorted.ss --sa-en-pure-field: FIXED.
+ comment: now, all confirmation needs ranking
 
 Why isn't HP_885 unfolded?
 
