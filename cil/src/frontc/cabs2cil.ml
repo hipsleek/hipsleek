@@ -61,7 +61,7 @@ let mydebugfunction () =
 
 let debugGlobal = false
 
-let continueOnError = true
+let continueOnError = false
 
 (** Turn on tranformation that forces correct parameter evaluation order *)
 let forceRLArgEval = ref false
@@ -6203,7 +6203,9 @@ and doDecl (isglobal: bool) : A.definition -> chunk = function
       let progspec = (
         try
           Parser.parse_c_program_spec fname hspec base_loc
-        with _ -> raise (HipSpecsError "Program specs error!")
+        with _ -> 
+          let error_loc = ("line " ^ string_of_int (loc.Cabs.start_pos.lineno)) in
+          raise (HipSpecsError ("Program specs erro: " ^ error_loc))
       ) in
       cabsPushGlobal (GHipProgSpec (progspec, !currentLoc));
       empty
@@ -6432,7 +6434,9 @@ and doStatement (s : A.statement) : chunk =
               let fname = hsloc.A.start_pos.A.filename in
               try
                 Parser.parse_c_function_spec fname s base_loc
-              with _ ->  raise (HipSpecsError "Loop specs error!")
+              with _ -> 
+                let error_loc = ("line " ^ string_of_int (loc.Cabs.start_pos.lineno)) in
+                raise (HipSpecsError ("Loop specs error: " ^ error_loc))
         ) in
         loopChunk ((doCondition false e skipChunk break_cond)
                    @@ s') hspec
@@ -6456,7 +6460,9 @@ and doStatement (s : A.statement) : chunk =
               let fname = hsloc.A.start_pos.A.filename in
               try
                 Parser.parse_c_function_spec fname s base_loc
-              with _ ->  raise (HipSpecsError "Loop specs error!")
+              with _ -> 
+                let error_loc = ("line " ^ string_of_int (loc.Cabs.start_pos.lineno)) in
+                raise (HipSpecsError ("Loop specs error: " ^ error_loc))
         ) in
         loopChunk (s' @@ s'') hspec
           
@@ -6486,7 +6492,9 @@ and doStatement (s : A.statement) : chunk =
               let fname = hsloc.A.start_pos.A.filename in
               try
                 Parser.parse_c_function_spec fname s base_loc
-              with _ ->  raise (HipSpecsError "Loop specs error!")
+              with _ -> 
+                let error_loc = ("line " ^ string_of_int (loc.Cabs.start_pos.lineno)) in
+                raise (HipSpecsError ("Loop specs error: " ^ error_loc))
         ) in
         let res = 
           match e2 with
@@ -6725,7 +6733,9 @@ and doStatement (s : A.statement) : chunk =
         let hspec = (
           try
             Parser.parse_c_statement_spec fname hs base_loc
-          with _ -> raise (HipSpecsError "Statement specs error!")
+          with _ -> 
+            let error_loc = ("line " ^ string_of_int (loc.Cabs.start_pos.lineno)) in
+            raise (HipSpecsError ("Statement specs error: " ^ error_loc))
         ) in
         let new_hspec = (
           match hspec with
@@ -6768,7 +6778,10 @@ and doStatement (s : A.statement) : chunk =
                                        Iast.exp_assert_assumed_formula = new_assume_f; } in
               Iast.Assert new_exp
           | Iast.Dprint _ -> hspec
-          | _ -> raise (HipSpecsError ("Unsupported Hip statement: " ^ (Iprinter.string_of_exp hspec)))
+          | _ -> 
+            let error_loc = ("line " ^ string_of_int (loc.Cabs.start_pos.lineno)) in
+            raise (HipSpecsError ("Unsupported Hip statement, " ^ error_loc ^ ": " 
+                                  ^ (Iprinter.string_of_exp hspec)))
         ) in
         (* return *)
         s2c (mkStmt (HipStmt (new_hspec, loc'))) loc'
@@ -6790,7 +6803,9 @@ and doHipSpecs (hs: (string * Cabs.cabsloc) option) : IF.struc_formula =
         let fname = hsloc.A.start_pos.A.filename in
         try
           Parser.parse_c_function_spec fname s base_loc
-        with _ -> raise (HipSpecsError "Function specs error!")
+        with _ ->
+          let error_loc = ("line " ^ string_of_int (hsloc.Cabs.start_pos.lineno)) in
+          raise (HipSpecsError ("Function specs error!" ^ error_loc))
   ) in
   let vars = IF.struc_free_vars true hspec in
   let substitutes = ref [] in
