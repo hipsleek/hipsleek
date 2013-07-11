@@ -275,7 +275,7 @@ let create_bool_casting_proc (typ: Globals.typ) : Iast.proc_decl =
   match typ with
   | Globals.Named typ_name -> (
       let proc = (
-        "bool bool_of___(" ^ typ_name ^ " param)\n" ^
+        "bool bool_of_" ^ typ_name ^ "__(" ^ typ_name ^ " param)\n" ^
         "  case { param =  null -> ensures res;\n" ^
         "         param != null -> ensures !res; }\n"
       ) in
@@ -284,7 +284,7 @@ let create_bool_casting_proc (typ: Globals.typ) : Iast.proc_decl =
     )
   | Globals.Int -> (
       let proc = (
-        "bool bool_of___(int param)\n" ^
+        "bool bool_of_int__(int param)\n" ^
         "  case { param != 0 -> ensures res;\n" ^
         "         param = 0  -> ensures !res; }\n"
       ) in
@@ -293,17 +293,9 @@ let create_bool_casting_proc (typ: Globals.typ) : Iast.proc_decl =
     )
   | Globals.Float -> (
       let proc = (
-        "bool bool_of___(float param)\n" ^
+        "bool bool_of_float__(float param)\n" ^
         "  case { param != 0. -> ensures res;\n" ^
         "         param = 0.  -> ensures !res; }\n"
-      ) in
-      let procdecl = Parser.parse_c_aux_proc "inter_bool_casting_proc" proc in
-      procdecl
-    )
-  | Globals.Bool -> (
-      let proc = (
-        "bool bool_of___(bool param)\n" ^
-        "  ensures res = param;\n"
       ) in
       let procdecl = Parser.parse_c_aux_proc "inter_bool_casting_proc" proc in
       procdecl
@@ -668,7 +660,7 @@ and translate_exp (e: Cil.exp) : Iast.exp =
       let o = translate_unary_operator op pos in
       let t = translate_typ (typ_of_cil_exp exp) pos in
       let e = translate_exp exp in
-      let newexp = (
+      let unexp = (
         match t with
         | Globals.Bool -> Iast.mkUnary o e None pos
         | _ -> (
@@ -685,6 +677,8 @@ and translate_exp (e: Cil.exp) : Iast.exp =
             Iast.mkCallNRecv proc_name None [e] None pos
           )
       ) in
+      let target_typ = translate_typ ty pos in
+      let newexp = Iast.mkCast target_typ unexp pos in 
       newexp
     )
   | Cil.BinOp (op, exp1, exp2, ty, l) ->
@@ -693,16 +687,17 @@ and translate_exp (e: Cil.exp) : Iast.exp =
       let e2 = translate_exp exp2 in
       let o = translate_binary_operator op pos in
       let binexp = Iast.mkBinary o e1 e2 None pos in
-      let _ = print_endline ("== binexp = " ^ (Iprinter.string_of_exp binexp)) in
       let target_typ = translate_typ ty pos in
       let newexp = Iast.mkCast target_typ binexp pos in 
       newexp
-  | Cil.Question (exp1, exp2, exp3, _, l) ->
+  | Cil.Question (exp1, exp2, exp3, ty, l) ->
       let e1 = translate_exp exp1 in
       let e2 = translate_exp exp2 in
       let e3 = translate_exp exp3 in
       let pos = translate_location l in
-      let newexp = Iast.mkCond e1 e2 e3 None pos in
+      let qexp = Iast.mkCond e1 e2 e3 None pos in
+      let target_typ = translate_typ ty pos in
+      let newexp = Iast.mkCast target_typ qexp pos in 
       newexp
   | Cil.CastE (ty, exp, l) -> (
       let pos = translate_location l in
@@ -1228,8 +1223,6 @@ and translate_file (file: Cil.file) : Iast.prog_decl =
   Hashtbl.reset tbl_bool_casting_proc;
   Hashtbl.reset tbl_logical_not_proc;
   aux_local_vardecls := [];
-  let proc = create_bool_casting_proc Globals.Bool in
-  Hashtbl.add tbl_bool_casting_proc Globals.Bool proc;
 
   (* begin to translate *)
   let globals = file.Cil.globals in

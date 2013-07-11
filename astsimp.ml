@@ -3579,11 +3579,31 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
       | Iast.Cast {I.exp_cast_target_type = ty;
                    I.exp_cast_body = exp;
                    I.exp_cast_pos = pos} ->
-          let body, _ = trans_exp prog proc exp in
-          let cexp = C.Cast {C.exp_cast_target_type = ty;
-                             C.exp_cast_body = body;
-                             C.exp_cast_pos = pos} in
-          (cexp, ty)
+          let org_exp, _ = trans_exp prog proc exp in
+          let org_ty = Gen.unsome (C.type_of_exp org_exp) in
+          if (ty = org_ty) then
+            (org_exp, ty)
+          else if (org_ty = Bool && ty = Int) then (
+            (* cast bool exp to int exp *)
+            let tmp_name = (fresh_var_name "int" pos.start_pos.Lexing.pos_lnum) in
+            let tmp_var_decl = Iast.mkVarDecl Int [(tmp_name, None, pos)] pos in
+            let tmp_var = I.mkVar tmp_name pos in
+            let then_exp = I.mkAssign I.OpAssign tmp_var (I.mkIntLit 1 pos) None pos in
+            let else_exp = I.mkAssign I.OpAssign tmp_var (I.mkIntLit 0 pos) None pos in
+            let if_exp = I.Cond {I.exp_cond_condition = exp;
+                                 I.exp_cond_then_arm = then_exp;
+                                 I.exp_cond_else_arm = else_exp;
+                                 I.exp_cond_path_id = None;
+                                 I.exp_cond_pos = pos } in
+            let cast_exp = I.mkSeq tmp_var_decl (I.mkSeq if_exp tmp_var pos) pos in
+            trans_exp prog proc cast_exp
+          )
+          else (
+            let cast_exp = C.Cast {C.exp_cast_target_type = ty;
+                                   C.exp_cast_body = org_exp;
+                                   C.exp_cast_pos = pos} in
+            (cast_exp, ty)
+          )
       | Iast.Finally b ->  Err.report_error { Err.error_loc = b.I.exp_finally_pos; Err.error_text = "Translation of finally failed";}
       | Iast.ConstDecl _ -> failwith (Iprinter.string_of_exp ie)
       | Iast.Break _ -> failwith (Iprinter.string_of_exp ie)

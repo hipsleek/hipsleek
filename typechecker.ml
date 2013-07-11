@@ -1618,38 +1618,39 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 	  end
         | Cast ({ exp_cast_target_type = target_typ;
                   exp_cast_body = org_exp;
-                  exp_cast_pos = pos}) ->
-            let pr = Cprinter.string_of_exp in
-            let check_cast_body rhs = Debug.no_1 "check Cast (body)" pr (fun _ -> "void") 
-              (fun rhs -> check_exp prog proc ctx rhs post_start_label) rhs in
-            let assign_op () =
-              begin
-                let _ = proving_loc#set pos in
-                let ctx1 = check_cast_body org_exp in
-                let _ = CF.must_consistent_list_failesc_context "assign 1" ctx1  in
-                let org_typ = Gen.unsome (type_of_exp org_exp) in
-                let tempvar = CP.SpecVar (org_typ, Globals.fresh_name (), Primed) in
-                let fct c1 =
-                  if (CF.subsume_flow_f !norm_flow_int (CF.flow_formula_of_formula c1.CF.es_formula)) then
-                    let compose_es = CF.subst [((P.mkRes org_typ), tempvar)] c1.CF.es_formula in
-                    let compose_ctx = (CF.Ctx ({c1 with CF.es_formula = compose_es})) in
-                    compose_ctx
-                  else (CF.Ctx c1) in
-                let res = CF.transform_list_failesc_context (idf,idf,fct) ctx1 in
-                let res_v = CP.Var (CP.mkRes target_typ, pos) in
-                let tempvar_exp = CP.Var (tempvar, pos) in
-                let typcast_exp = CP.TypeCast (target_typ, tempvar_exp, pos) in
-                let target_exp = CP.mkEqExp res_v typcast_exp pos in
-                let f = CF.formula_of_mix_formula (MCP.mix_of_pure target_exp) pos in
-                let res_ctx = CF.normalize_max_renaming_list_failesc_context f pos true res in
-                let _ = CF.must_consistent_list_failesc_context "assign final" res_ctx  in
-                res_ctx
-              end
-            in
+                  exp_cast_pos = pos}) -> (
+            let check_cast_body body = (
+              let pr = Cprinter.string_of_exp in
+              Debug.no_1 "check Cast (body)" pr (fun _ -> "void")
+                (fun rhs -> check_exp prog proc ctx body post_start_label) body
+            ) in
+            let casting_op () = (
+              let _ = proving_loc#set pos in
+              let ctx1 = check_cast_body org_exp in
+              let _ = CF.must_consistent_list_failesc_context "assign 1" ctx1  in
+              let org_typ = Gen.unsome (type_of_exp org_exp) in
+              let tempvar = CP.SpecVar (org_typ, Globals.fresh_name (), Primed) in
+              let fct c1 =
+                if (CF.subsume_flow_f !norm_flow_int (CF.flow_formula_of_formula c1.CF.es_formula)) then
+                  let compose_es = CF.subst [((P.mkRes org_typ), tempvar)] c1.CF.es_formula in
+                  let compose_ctx = (CF.Ctx ({c1 with CF.es_formula = compose_es})) in
+                  compose_ctx
+                else (CF.Ctx c1) in
+              let res = CF.transform_list_failesc_context (idf,idf,fct) ctx1 in
+              let res_v = CP.Var (CP.mkRes target_typ, pos) in
+              let tempvar_exp = CP.Var (tempvar, pos) in
+              let typcast_exp = CP.TypeCast (target_typ, tempvar_exp, pos) in
+              let target_exp = CP.mkEqExp res_v typcast_exp pos in
+              let f = CF.formula_of_mix_formula (MCP.mix_of_pure target_exp) pos in
+              let res_ctx = CF.normalize_max_renaming_list_failesc_context f pos true res in
+              let _ = CF.must_consistent_list_failesc_context "assign final" res_ctx  in
+              res_ctx
+            ) in
             Gen.Profiling.push_time "[check_exp] Cast";  
-            let res = wrap_proving_kind "CAST" assign_op () in
+            let res = wrap_proving_kind "CAST" casting_op () in
             Gen.Profiling.pop_time "[check_exp] Cast";
             res
+          )
         | Catch b -> Error.report_error {
               Err.error_loc = b.exp_catch_pos;
               Err.error_text = "[typechecker.ml]: malformed cast, unexpected catch clause"
@@ -1660,39 +1661,38 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
           exp_cond_else_arm = e2;
           exp_cond_path_id = pid;
           exp_cond_pos = pos}) ->
-              (* let _ = DD.binfo_hprint (add_str "cond_path_id"  *)
-              (*     (fun s -> Cprinter.pr_control_path_id_opt s)) pid pos in *)
-              let cond_op () =
-                begin
-	          let _ = proving_loc#set pos in
-	          let pure_cond = (CP.BForm ((CP.mkBVar v Primed pos, None), None)) in
-	          (*let _ = print_string ("\nPure_Cond : "^(Cprinter.string_of_pure_formula pure_cond)) in*)
-	          let then_cond_prim = MCP.mix_of_pure pure_cond in
-		  (*let _ = print_string ("\nthen_cond_prim  : "^(Cprinter.string_of_mix_formula then_cond_prim )) in*)
-	          let else_cond_prim = MCP.mix_of_pure (CP.mkNot pure_cond None pos) in
-	          let then_ctx = 
-		    if !Globals.delay_if_sat then combine_list_failesc_context prog ctx then_cond_prim
-		    else  combine_list_failesc_context_and_unsat_now prog ctx then_cond_prim in
-	          Debug.devel_zprint (lazy ("conditional: then_delta:\n" ^ (Cprinter.string_of_list_failesc_context then_ctx))) pos;
-	          let else_ctx =
-		    if !Globals.delay_if_sat then combine_list_failesc_context prog ctx else_cond_prim
-		    else  combine_list_failesc_context_and_unsat_now prog ctx else_cond_prim in
-		  
-	          Debug.devel_zprint (lazy ("conditional: else_delta:\n" ^ (Cprinter.string_of_list_failesc_context else_ctx))) pos;
-	          let then_ctx1 = CF.add_cond_label_list_failesc_context pid 1 then_ctx in
-	          let else_ctx1 = CF.add_cond_label_list_failesc_context pid 2 else_ctx in
-	          let then_ctx1 = CF.add_path_id_ctx_failesc_list then_ctx1 (None,-1) 1 in
-	          let else_ctx1 = CF.add_path_id_ctx_failesc_list else_ctx1 (None,-1) 2 in
-	          let then_ctx2 = (check_exp prog proc then_ctx1 e1) post_start_label in
-	          let else_ctx2 = (check_exp prog proc else_ctx1 e2) post_start_label in
-	          let res = CF.list_failesc_context_or (Cprinter.string_of_esc_stack) then_ctx2 else_ctx2 in
-	          res
-	        end in
-	      Gen.Profiling.push_time "[check_exp] Cond";
-              let res = wrap_proving_kind "IF" cond_op () in
-	      Gen.Profiling.pop_time "[check_exp] Cond";
-	      res
-              ;
+            (* let _ = DD.binfo_hprint (add_str "cond_path_id"  *)
+            (*     (fun s -> Cprinter.pr_control_path_id_opt s)) pid pos in *)
+            let cond_op () =
+              begin
+                let _ = proving_loc#set pos in
+                let pure_cond = (CP.BForm ((CP.mkBVar v Primed pos, None), None)) in
+                (*let _ = print_string ("\nPure_Cond : "^(Cprinter.string_of_pure_formula pure_cond)) in*)
+                let then_cond_prim = MCP.mix_of_pure pure_cond in
+                (*let _ = print_string ("\nthen_cond_prim  : "^(Cprinter.string_of_mix_formula then_cond_prim )) in*)
+                let else_cond_prim = MCP.mix_of_pure (CP.mkNot pure_cond None pos) in
+                let then_ctx = 
+                  if !Globals.delay_if_sat then combine_list_failesc_context prog ctx then_cond_prim
+                  else  combine_list_failesc_context_and_unsat_now prog ctx then_cond_prim in
+                Debug.devel_zprint (lazy ("conditional: then_delta:\n" ^ (Cprinter.string_of_list_failesc_context then_ctx))) pos;
+                let else_ctx =
+                  if !Globals.delay_if_sat then combine_list_failesc_context prog ctx else_cond_prim
+                  else  combine_list_failesc_context_and_unsat_now prog ctx else_cond_prim in
+                Debug.devel_zprint (lazy ("conditional: else_delta:\n" ^ (Cprinter.string_of_list_failesc_context else_ctx))) pos;
+                let then_ctx1 = CF.add_cond_label_list_failesc_context pid 1 then_ctx in
+                let else_ctx1 = CF.add_cond_label_list_failesc_context pid 2 else_ctx in
+                let then_ctx1 = CF.add_path_id_ctx_failesc_list then_ctx1 (None,-1) 1 in
+                let else_ctx1 = CF.add_path_id_ctx_failesc_list else_ctx1 (None,-1) 2 in
+                let then_ctx2 = (check_exp prog proc then_ctx1 e1) post_start_label in
+                let else_ctx2 = (check_exp prog proc else_ctx1 e2) post_start_label in
+                let res = CF.list_failesc_context_or (Cprinter.string_of_esc_stack) then_ctx2 else_ctx2 in
+                res
+              end in
+            Gen.Profiling.push_time "[check_exp] Cond";
+                  let res = wrap_proving_kind "IF" cond_op () in
+            Gen.Profiling.pop_time "[check_exp] Cond";
+            res
+            ;
         | Dprint ({exp_dprint_string = str;
           exp_dprint_visible_names = visib_names;
           exp_dprint_pos = pos}) -> begin

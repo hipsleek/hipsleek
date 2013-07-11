@@ -80,18 +80,7 @@ let rec omega_of_exp e0 = match e0 with
       (* } *)
   | Max _
   | Min _ -> illegal_format ("Omega.omega_of_exp: min/max should not appear here")
-  | TypeCast (t, e1, p) -> (
-      match e1 with
-      | Var (SpecVar (_, svt, _), _) -> (
-          if (t = svt) then
-            omega_of_exp e1
-          else if (t = Int) && (svt = Bool) then
-            
-        )
-      | _ -> report_error p "Expect Var exp after TypeCast!"
-      (* let _ = print_endline ("== typecast exp: " ^ (!print_exp e0)) in       *)
-      (* illegal_format ("Omega.omega_of_exp: TypeCast should not appear here") *)
-    )
+  | TypeCast (t, e1, p) -> illegal_format ("Omega.omega_of_exp: TypeCast should not appear here")
   | FConst _ -> illegal_format ("Omega.omega_of_exp: FConst")
   | Func _ -> "0" (* TODO: Need to handle *)
   | _ -> illegal_format ("Omega.omega_of_exp: array, bag or list constraint "^(!print_exp e0))
