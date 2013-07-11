@@ -9,9 +9,9 @@ ls<M,p> == self=p & M={}
 inv true;
 */
 
-ll<> == self=null 
-  or self::node<_,nxt> * nxt::ll<>  
-inv true;
+ll<s> == self=null & self!=s 
+  or self::node<_,nxt> * nxt::ll<s> & self!=s 
+inv self!=s ;
 
 lseg<p> == self=p 
   or self::node<_,nxt> * nxt::lseg<p> & self!=p 
@@ -22,33 +22,15 @@ HeapPred G(node a, node@NI ra, node b, node@NI rb, node@NI c).
 
 
 void lscan(ref node cur, ref node prev, node sent)
-/*
-  requires cur::ls<M1,null> * prev::ls<M2,sent> & cur!=null
-  ensures prev'::ls<M3,null> & cur'=sent & M3=union(M2,M2);
-requires cur::ls<M1,sent> * prev::ls<M2,null> & cur!=sent
-ensures prev'::ls<M3,null> & cur'=sent  & M3=union(M2,M2);
-*/
-
-/*
-# swl-0a.ss
-*/
-/*
- requires cur::lseg<n> * sent::node<_,_>@L & cur!=null
- case {
-  n=null ->  
-       requires prev::lseg<sent> 
-       ensures  prev'::lseg<null> & cur'=sent;
-  n!=null ->  case {
-         n=sent -> requires prev::lseg<null> & cur!=sent
-              ensures prev'::lseg<null> & cur'=sent;
-         n!=sent -> requires false ensures false;
-  }
- }
-*/
-requires cur::ll<> * prev::lseg<sent> & cur!=null & sent!=null
-ensures prev'::ll<> & cur'=sent ;
-requires cur::lseg<sent> * prev::ll<> & cur!=sent & sent!=null
-ensures prev'::ll<> & cur'=sent ;
+requires cur::ll<sent> * prev::lseg<sent>
+//*sent::node<_,_>@L 
+   & cur!=null 
+ensures prev'::ll<sent>  & cur'=sent ;
+requires cur::lseg<sent> * prev::ll<sent> 
+//* sent::node<_,_>@L 
+    & cur!=sent 
+ensures prev'::ll<sent>  & cur'=sent ;
+//ensures prev'::ll<> * sent::node<_,_> & cur'=sent ;
 
 /*
   infer [H,G]
@@ -64,12 +46,19 @@ ensures prev'::ll<> & cur'=sent ;
   // move forward
   prev = cur;
   cur = n;
-  if (cur == sent) return;
+  if (cur == sent) {
+      //assume false;
+      return;
+  }
   if (cur == null) {
       // change direction;
       cur = prev;
       prev = null;
+      lscan(cur,prev,sent);
   }
-  lscan(cur,prev,sent);
+  else {
+    //assume false;
+      lscan(cur,prev,sent);
+  }
 }
 

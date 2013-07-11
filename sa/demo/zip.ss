@@ -10,24 +10,18 @@ ltwo<p:node> == p::ll<> & self = null  or
    self::node<_, q> * p::node<_,r> * q::ltwo<r>;
 */
 
-HeapPred HL(node a).
 HeapPred H(node a, node b).
 HeapPred G1(node a, node b, node c).
 
+HeapPred HL(node a).
 ltwoB<p:node> == HL(p) & self = null  or 
    self::node<_, q> * p::node<_,r> * q::ltwoB<r>;
 
 node zip (node x, node y)
-//infer [H,G1]  requires H(x,y)  ensures  G1(x,y,res);
-// requires x::ltwo<y>  ensures res::ll<> * y::ll<> & res=x;
-// requires x::ltwoA<y>  ensures res::ltwoA<y> & res=x;
-//requires x::ltwoB<y>  ensures res::ltwoB<y> & res=x;
-//infer [HL] requires x::ltwoB<y>  ensures res::ltwoB<y> & res=x;
 requires x::ltwoB<y>  ensures res::ltwoB<y> & res=x;
 {
    if (x==null) return x;
    else {
-	//assume false;
      int n1=x.val;
      int n2=y.val;
      x.val = n1+n2;
@@ -37,6 +31,13 @@ requires x::ltwoB<y>  ensures res::ltwoB<y> & res=x;
 }
 
 /*
+
+//infer [H,G1]  requires H(x,y)  ensures  G1(x,y,res);
+// requires x::ltwo<y>  ensures res::ll<> * y::ll<> & res=x;
+// requires x::ltwoA<y>  ensures res::ltwoA<y> & res=x;
+//requires x::ltwoB<y>  ensures res::ltwoB<y> & res=x;
+//infer [HL] requires x::ltwoB<y>  ensures res::ltwoB<y> & res=x;
+
 
 # zip.ss
 
