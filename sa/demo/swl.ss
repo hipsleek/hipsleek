@@ -3,17 +3,10 @@ data node{
 	node next;
 }
 
-ll<M> == self = null & M = {}
-	or self::node<_,nxt> * nxt::ll<Mnxt> & M = union(Mnxt,{self})
-inv true;
-
 ls<M,p> == self=p & M={}
   or self::node<_,nxt> * nxt::ls<M2,p> & self=p & M=union(M2,{self})
 inv true;
 
-
-
-global node SENTINEL;
 
 void lscan(ref node cur, ref node prev, node sentinel)
   requires cur::ls<M1,null> * prev::ls<M2,sentinel> * sentinel::node<_,_>@L & cur!=null
