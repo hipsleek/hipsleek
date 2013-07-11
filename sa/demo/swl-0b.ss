@@ -20,7 +20,6 @@ inv true;
 HeapPred H(node a, node b, node@NI c).
 HeapPred G(node a, node@NI ra, node b, node@NI rb, node@NI c).
 
-
 void lscan(ref node cur, ref node prev, node sent)
 requires cur::ll<sent> * prev::lseg<sent>
 //*sent::node<_,_>@L 

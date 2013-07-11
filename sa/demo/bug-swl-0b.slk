@@ -11,6 +11,12 @@ pred lseg<p> == self=p
   or self::node<_,nxt> * nxt::lseg<p> & self!=p 
 inv true.
 
+pred ll<> == self=null 
+  or self::node<_,nxt> * nxt::ll<>  
+inv true.
+
+lemma self::lseg<null> -> self::ll<>.
+
 
 checkentail nxt_926::ll<>@M * prev::lseg<sent_927>@M * sent::node<Anon_13,Anon_14>@L 
 * cur_934::node<Anon_925,prev_933>@M & cur=cur_934 & prev=prev_933 & 

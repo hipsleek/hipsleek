@@ -8,14 +8,20 @@ tree<M> == self=null & M = {}
  or self::node<_,l,r> * l::tree<Ml> * r::tree<Mr> & M = union(Ml,Mr,{self})
  inv true;
 
-treeG<> == self::node<_,l,r> * l::treeG<> * r::treeG<>
- inv true;
+treeG<s> == self = null & s != self
+	or self::node<_,l,r> * l::treeG<s> * r::treeG<s> & s != self
+inv self != s;
+
+treeseg<p> == self=p
+    or self::node<_,l,r> * l::treeseg<p> * r::treeG<p> & self != p
+    or self::node<_,l,r> * l::treeG<p> * r::treeseg<p> & self != p
+inv true;
 
 void lscan(ref node cur, ref node prev, node sentinel)
-requires cur::treeG<> * prev::treeG<> * sentinel::node<_,_,_>@L
-ensures prev'::treeG<> & cur'=sentinel;
-requires cur::treeG<> * prev::treeG<> * sentinel::node<_,_,_>@L
-ensures prev'::treeG<> & cur'=sentinel;
+requires cur::treeG<sentinel> * prev::treeseg<sentinel> & cur != null
+ensures prev'::treeG<sentinel> & cur'=sentinel;
+requires cur::treeseg<sentinel> * prev::treeG<sentinel> & cur != sentinel
+ensures prev'::treeG<sentinel> & cur'=sentinel;
 {
 
   node n,tmp;
