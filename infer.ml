@@ -2259,10 +2259,10 @@ let get_h_formula_data_fr_hnode hn=
 (*history from func calls*)
 let simplify_lhs_rhs prog lhs_b rhs_b leqs reqs hds hvs lhrs rhrs lhs_selected_hpargs rhs_selected_hpargs
       crt_holes history unk_svl prog_vars lvi_ni_svl classic_nodes=
-  let look_up_lhs_i_var (hp,args)=
+  let partition_i_ni_svl (hp,args)=
     (* let _ = Debug.info_pprint ("    args:" ^ (!CP.print_svl hd) ^ ": "^(!CP.print_svl args)) no_pos in *)
-    let i_args_w_inst,_ = SAU.partition_hp_args prog hp args in
-    List.map fst i_args_w_inst
+    let i_args_w_inst, i_args_w_ni = SAU.partition_hp_args prog hp args in
+    (List.map fst i_args_w_inst,List.map fst i_args_w_ni)
   in
   let filter_non_selected_hp selected_hpargs (hp,args)= Gen.BList.mem_eq SAU.check_hp_arg_eq (hp,args) selected_hpargs in
   let filter_non_selected_hp_rhs selected_hps (hp,_)= CP.mem_svl hp selected_hps in
@@ -2272,15 +2272,20 @@ let simplify_lhs_rhs prog lhs_b rhs_b leqs reqs hds hvs lhrs rhrs lhs_selected_h
   let lhp_args = lhs_selected_hpargs in
   let lkeep_hrels,lhs_keep_rootvars = List.split lhp_args in
   let lhs_keep_rootvars = List.concat lhs_keep_rootvars in
-  let lhs_keep_i_rootvars = List.fold_left (fun ls (hp,args) -> ls@(look_up_lhs_i_var (hp,args))) [] lhp_args in
+  let lhs_keep_i_rootvars, lhs_args_ni = List.fold_left (fun (i_svl, ni_svl) (hp,args) ->
+      let args_i, args_ni = partition_i_ni_svl (hp,args) in
+      (i_svl@args_i, ni_svl@args_ni)
+  ) ([],[]) lhp_args in
   (*rhs*)
   let rhs_selected_hps = List.map fst rhs_selected_hpargs in
   let r_hpargs = CF.get_HRels rhs_b.CF.formula_base_heap in
   let rhp_args,r_rem_hp_args = (List.partition (filter_non_selected_hp_rhs rhs_selected_hps) r_hpargs) in
-  (*root of hprel is the inst args*)
-  let rkeep_hrels, rhs_keep_rootvars0 = List.fold_left (fun (hps,r_args) (hp,args) ->
-      (hps@[hp], r_args@(look_up_lhs_i_var (hp,args)))
-  ) ([],[]) rhp_args in
+  (*root of hprel is the inst args; ni should be kept to preserve rele pure
+  *)
+  let rkeep_hrels, rhs_keep_rootvars0, rhs_args_ni = List.fold_left (fun (hps,r_args, r_ni_svl) (hp,args) ->
+      let args_i, args_ni = partition_i_ni_svl (hp,args) in
+      (hps@[hp], r_args@(args_i), r_ni_svl@args_ni)
+  ) ([],[], []) rhp_args in
   (*elim ptrs that violate NI rule in lhs*)
   let rhs_keep_rootvars = CP.diff_svl rhs_keep_rootvars0 lvi_ni_svl in
   (***************************)
@@ -2306,8 +2311,10 @@ let simplify_lhs_rhs prog lhs_b rhs_b leqs reqs hds hvs lhrs rhrs lhs_selected_h
   let filter_his = elim_redun_his (List.concat (List.map get_h_formula_data_fr_hnode history)) [] in
   (* let _ = Debug.info_pprint ("    prog_vars:" ^(!CP.print_svl prog_vars)) no_pos in *)
   let lhs_b1,rhs_b1 = SAU.keep_data_view_hrel_nodes_two_fbs prog lhs_b rhs_b
-    (hds@filter_his) hvs (lhp_args@rhp_args) leqs reqs [] (svl@keep_root_hrels@classic_nodes) (lhs_keep_rootvars@keep_root_hrels)
-   lhp_args rhs_selected_hps rhs_keep_rootvars unk_svl (CP.remove_dups_svl prog_vars) in
+    (hds@filter_his) hvs (lhp_args@rhp_args) leqs reqs [] (svl@keep_root_hrels@classic_nodes)
+    (lhs_keep_rootvars@keep_root_hrels) lhp_args lhs_args_ni
+    rhs_selected_hps rhs_keep_rootvars rhs_args_ni
+    unk_svl (CP.remove_dups_svl prog_vars) in
   (***************************)
   (*subst holes*)
   let lhs_b1 = {lhs_b1 with CF.formula_base_heap = IMM.apply_subs_h_formula crt_holes lhs_b1.CF.formula_base_heap} in
@@ -2442,14 +2449,9 @@ let generate_constraints prog es rhs lhs_b ass_guard rhs_b1 defined_hps
     total_unk_svl prog_vars lvi_ni_svl classic_nodes in
   (*simply add constraints: *)
   let hprel_def = List.concat (List.map CF.get_ptrs (no_es_history@(CF.get_hnodes lhs_b.CF.formula_base_heap
-      (* es.CF.es_heap *)))) in
-  (* let closed_hprel_def = CP.subst_var_list (leqs@reqs) hprel_def in *)
-  (* let closed_hprel_args_def,_,_,_,_ = SAU.find_defined_pointers_after_preprocess prog closed_hprel_def *)
-  (*   (hds@(List.concat (List.map get_h_formula_data_fr_hnode no_es_history))) *)
-  (*   hvs (lhras@rhras@new_hrels) (leqs@reqs) eqNull [] in *)
+      (* es.CF.es_heap *))))
+  in
   (*split the constraints relating between pre- andxs post-preds*)
-  (* let rf = CF.mkTrue (CF.mkTrueFlow()) pos in *)
-  (*TODO: LOC: cond_path from estate*)
   let es_cond_path = CF.get_es_cond_path es in
   let defined_hprels = List.map (SAU.generate_hp_ass [](* (closed_hprel_args_def@total_unk_svl) *) es_cond_path) defined_hps in
   (*lookup to check redundant*)
