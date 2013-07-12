@@ -8,17 +8,37 @@
 
 int a,b,c;
 
+void* malloc(int size) __attribute__ ((noreturn))
+/*@
+  case {
+    size <= 0 -> requires true ensures res = null;
+    size >  0 -> requires true ensures res != null;
+  }
+*/;
+
 void h(int** i)
+/*@
+  requires i::int^^<p>
+  ensures i::int^^<q>;
+*/
 {
   **i = &a;
 }
 
 void g(int** i)
+/*@
+  requires i::int^^<p>
+  ensures i::int^^<q>;
+*/
 {
   h(i);
 }
 
 void f(int* i)
+/*@
+  requires i::int^<p>
+  ensures i::int^<q>;
+*/
 {
   int** pi;
   pi = &i;

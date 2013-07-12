@@ -26,14 +26,8 @@ let tbl_addrof_data : (string, Iast.exp) Hashtbl.t = Hashtbl.create 1
 (* list of address-represented pointer declaration *)
 let aux_local_vardecls : Iast.exp list ref = ref []
 
-(* hashtbl contains all casting procedures, keys is pairs of (input_type * output_type) *)
-let tbl_casting_proc: (Globals.typ * Globals.typ, Iast.proc_decl) Hashtbl.t = Hashtbl.create 1
-
-let tbl_bool_casting_proc: (Globals.typ, Iast.proc_decl) Hashtbl.t = Hashtbl.create 1
-
-let tbl_logical_not_proc:  (Globals.typ, Iast.proc_decl) Hashtbl.t = Hashtbl.create 1
-
-let need_pointer_casting_proc : bool ref = ref false
+(* hashtbl contains all auxiliary procedures, proc_name -> proc_decl *)
+let tbl_aux_proc: (string, Iast.proc_decl) Hashtbl.t = Hashtbl.create 1
 
 (* reset all global vars for the next use *)
 let reset_global_vars () =
@@ -198,14 +192,15 @@ let endPos (loc: Globals.loc) : Lexing.position =
 (****** create intermediate procedures  *******)
 (**********************************************)
 
-let create_pointer_casting_proc (pointer_typ: Globals.typ) : Iast.proc_decl option =
-  match pointer_typ with
-  | Globals.Named "void__star" -> None
-  | Globals.Named typ_name -> (
-      let re = Str.regexp "\(__star\)" in
-      try (
-        let _ = Str.search_forward re typ_name 0 in
-        let proc_name = "cast_void_pointer_to_" ^ typ_name in
+let create_void_pointer_casting_proc (typ_name: string) : Iast.proc_decl =
+  let re = Str.regexp "\(__star\)" in
+  try (
+    let _ = Str.search_forward re typ_name 0 in
+    let proc_name = "cast_void_pointer_to_" ^ typ_name in
+    let proc_decl = (
+      try
+        Hashtbl.find tbl_aux_proc proc_name
+      with Not_found -> (
         let data_name = Str.global_replace re "^" typ_name in
         let param = (
           let base_data = Str.global_replace re "" typ_name in
@@ -218,89 +213,143 @@ let create_pointer_casting_proc (pointer_typ: Globals.typ) : Iast.proc_decl opti
               try 
                 let data_decl = Hashtbl.find tbl_struct_data_decl (Globals.Named base_data) in
                 match data_decl.Iast.data_fields with
-                | []   -> report_error no_pos "create_pointer_casting_proc: Invalid data_decl fields"
+                | []   -> report_error no_pos "create_void_pointer_casting_proc: Invalid data_decl fields"
                 | [hd] -> "<_>"
                 | hd::tl -> "<" ^ (List.fold_left (fun s _ -> s ^ ",_") "_" tl) ^ ">"
-              with Not_found -> report_error no_pos ("create_pointer_casting_proc: Unknown data type: " ^ base_data)
+              with Not_found -> report_error no_pos ("create_void_pointer_casting_proc: Unknown data type: " ^ base_data)
             ) 
         ) in
         let cast_proc = (
           typ_name ^ " " ^ proc_name ^ " (void__star p)\n" ^
           "  case { \n" ^
-          "    p =  null -> requires true ensures res = null; \n" ^
-          "    p != null -> requires true ensures res::" ^ data_name ^ param ^ "; \n" ^
+          "    p =  null -> ensures res = null; \n" ^
+          "    p != null -> ensures res::" ^ data_name ^ param ^ "; \n" ^
           "  }\n"
         ) in
-        let proc_decl = Parser.parse_c_aux_proc "inter_pointer_casting_proc" cast_proc in
-        (* return *)
-        Some proc_decl
+        let pd = Parser.parse_c_aux_proc "void_pointer_casting_proc" cast_proc in
+        Hashtbl.add tbl_aux_proc proc_name pd;
+        pd
       )
-      with Not_found -> None
-    )
-  | _ -> None
+    ) in
+    (* return *)
+    proc_decl
+  )
+  with Not_found -> report_error no_pos ("create_void_pointer_casting_proc: invalid typ_name")
+
+let create_pointer_to_int_casting_proc (pointer_typ_name: string) : Iast.proc_decl =
+  let re = Str.regexp "\(__star\)" in
+  try (
+    let _ = Str.search_forward re pointer_typ_name 0 in
+    let proc_name = "cast_" ^ pointer_typ_name ^ "_to_int" in
+    let proc_decl = (
+      try
+        Hashtbl.find tbl_aux_proc proc_name
+      with Not_found -> (
+        let cast_proc = (
+          "int " ^ proc_name ^ " (" ^ pointer_typ_name ^ " p)\n" ^
+          "  case { \n" ^
+          "    p =  null -> ensures res = 0; \n" ^
+          "    p != null -> ensures res != 0; \n" ^
+          "  }\n"
+        ) in
+        let pd = Parser.parse_c_aux_proc "pointer_to_int_casting_proc" cast_proc in
+        Hashtbl.add tbl_aux_proc proc_name pd;
+        pd
+      )
+    ) in
+    (* return *)
+    proc_decl
+  )
+  with Not_found ->
+    report_error no_pos ("create_pointer_to_int_casting_proc: invalid typ_name")
+
+let create_int_to_pointer_casting_proc (pointer_typ_name: string) : Iast.proc_decl =
+  let re = Str.regexp "\(__star\)" in
+  try (
+    let _ = Str.search_forward re pointer_typ_name 0 in
+    let proc_name = "cast_int_to_" ^ pointer_typ_name in
+    let proc_decl = (
+      try
+        Hashtbl.find tbl_aux_proc proc_name
+      with Not_found -> (
+        let cast_proc = (
+          pointer_typ_name ^ " " ^ proc_name ^ " (int p)\n" ^
+          "  case { \n" ^
+          "    p =  0 -> ensures res =  null; \n" ^
+          "    p != 0 -> ensures res != null; \n" ^
+          "  }\n"
+        ) in
+        let pd = Parser.parse_c_aux_proc "int_to_pointer_casting_proc" cast_proc in
+        Hashtbl.add tbl_aux_proc proc_name pd;
+        pd
+      )
+    ) in
+    (* return *)
+    proc_decl
+  )
+  with Not_found ->
+    report_error no_pos ("create_int_to_pointer_casting_proc: invalid typ_name")
 
 let create_logical_not_proc (typ: Globals.typ) : Iast.proc_decl =
-  match typ with
-  | Globals.Named typ_name -> (
-      let proc = (
-        typ_name ^ " not___(" ^ typ_name ^ " param)\n" ^
-        "  case { param =  null -> ensures res != null;\n" ^
-        "         param != null -> ensures res = null; }\n"
-      ) in
-      let procdecl = Parser.parse_c_aux_proc "inter_logical_not_proc" proc in
-      procdecl
-    )
-  | Globals.Int -> (
-      let proc = (
-        "int not___(int param)\n" ^
-        "  case { param =  0 -> ensures res != 0;\n" ^
-        "         param != 0 -> ensures res = 0; }\n"
-      ) in
-      let procdecl = Parser.parse_c_aux_proc "inter_logical_not_proc" proc in
-      procdecl
-    )
-  | Globals.Float -> (
-      let proc = (
-        "float not___(float param)\n" ^
-        "  case { param =  0. -> ensures res != 0.;\n" ^
-        "         param != 0. -> ensures res = 0.; }\n"
-      ) in
-      let procdecl = Parser.parse_c_aux_proc "inter_logical_not_proc" proc in
-      procdecl
-    )
-  | _ -> report_error no_pos "create_logical_not_proc: Invalid type"
+  let typ_name = Globals.string_of_typ typ in
+  let proc_name = "not_" ^ typ_name ^ "___" in
+  try
+    Hashtbl.find tbl_aux_proc proc_name
+  with Not_found -> (
+    let proc = (
+      match typ with
+      | Globals.Named typ_name -> (
+          typ_name ^ " " ^ proc_name ^ "(" ^ typ_name ^ " param)\n" ^
+          "  case { param =  null -> ensures res != null;\n" ^
+          "         param != null -> ensures res = null; }\n"
+        )
+      | Globals.Int -> (
+          "int " ^ proc_name ^ "(int param)\n" ^
+          "  case { param =  0 -> ensures res != 0;\n" ^
+          "         param != 0 -> ensures res = 0; }\n"
+        )
+      | Globals.Float -> (
+            "float " ^ proc_name ^ "(float param)\n" ^
+            "  case { param =  0. -> ensures res != 0.;\n" ^
+            "         param != 0. -> ensures res = 0.; }\n"
+        )
+      | _ -> report_error no_pos "create_logical_not_proc: Invalid type"
+    ) in
+    let proc_decl = Parser.parse_c_aux_proc "inter_logical_not_proc" proc in
+    Hashtbl.add tbl_aux_proc proc_name proc_decl;
+    proc_decl
+  )
 
 
 let create_bool_casting_proc (typ: Globals.typ) : Iast.proc_decl =
-  match typ with
-  | Globals.Named typ_name -> (
-      let proc = (
-        "bool bool_of_" ^ typ_name ^ "__(" ^ typ_name ^ " param)\n" ^
-        "  case { param =  null -> ensures res;\n" ^
-        "         param != null -> ensures !res; }\n"
-      ) in
-      let procdecl = Parser.parse_c_aux_proc "inter_bool_casting_proc" proc in
-      procdecl
-    )
-  | Globals.Int -> (
-      let proc = (
-        "bool bool_of_int__(int param)\n" ^
-        "  case { param != 0 -> ensures res;\n" ^
-        "         param = 0  -> ensures !res; }\n"
-      ) in
-      let procdecl = Parser.parse_c_aux_proc "inter_bool_casting_proc" proc in
-      procdecl
-    )
-  | Globals.Float -> (
-      let proc = (
-        "bool bool_of_float__(float param)\n" ^
-        "  case { param != 0. -> ensures res;\n" ^
-        "         param = 0.  -> ensures !res; }\n"
-      ) in
-      let procdecl = Parser.parse_c_aux_proc "inter_bool_casting_proc" proc in
-      procdecl
-    )
-  | _ -> report_error no_pos ("create_bool_casting_proc: Invalid type" ^ (Globals.string_of_typ typ))
+  let typ_name = Globals.string_of_typ typ in
+  let proc_name = "bool_of_" ^ typ_name ^ "___" in
+  try
+    Hashtbl.find tbl_aux_proc proc_name
+  with Not_found -> (
+    let proc = (
+      match typ with
+      | Globals.Named typ_name -> (
+          "bool " ^ proc_name ^ "(" ^ typ_name ^ " param)\n" ^
+          "  case { param =  null -> ensures res;\n" ^
+          "         param != null -> ensures !res; }\n"
+        )
+      | Globals.Int -> (
+          "bool " ^ proc_name ^ "(int param)\n" ^
+          "  case { param != 0 -> ensures res;\n" ^
+          "         param = 0  -> ensures !res; }\n"
+        )
+      | Globals.Float -> (
+          "bool " ^ proc_name ^ "(float param)\n" ^
+          "  case { param != 0. -> ensures res;\n" ^
+          "         param = 0.  -> ensures !res; }\n"
+        )
+      | _ -> report_error no_pos ("create_bool_casting_proc: Invalid type" ^ (Globals.string_of_typ typ))
+    ) in
+    let proc_decl = Parser.parse_c_aux_proc "inter_bool_casting_proc" proc in
+    Hashtbl.add tbl_aux_proc proc_name proc_decl;
+    proc_decl
+  )
 
 (************************************************************)
 (****** collect information about address-of operator *******)
@@ -664,15 +713,7 @@ and translate_exp (e: Cil.exp) : Iast.exp =
         match t with
         | Globals.Bool -> Iast.mkUnary o e None pos
         | _ -> (
-            let not_proc = (
-              try
-                Hashtbl.find tbl_logical_not_proc t
-              with Not_found -> (
-                let proc = create_logical_not_proc t in
-                Hashtbl.add tbl_logical_not_proc t proc;
-                proc
-              )
-            ) in
+            let not_proc = create_logical_not_proc t in
             let proc_name = not_proc.Iast.proc_name in
             Iast.mkCallNRecv proc_name None [e] None pos
           )
@@ -707,42 +748,30 @@ and translate_exp (e: Cil.exp) : Iast.exp =
       let input_typ = translate_typ (typ_of_cil_exp exp) pos in
       let output_typ = translate_typ ty pos in
       let input_exp = translate_exp exp in
-      match output_typ with
-      | Globals.Named output_typ_name -> (
-          match input_typ with
-          | Globals.Named input_typ_name -> (
-              if (input_typ_name = "void__star") then (
-                need_pointer_casting_proc := true;
-                let cast_proc_name = "cast_void_pointer_to_" ^ output_typ_name in
-                Iast.mkCallNRecv cast_proc_name None [input_exp] None pos
-              )
-              else if (input_typ_name = output_typ_name) then
-                input_exp
-              else
-                report_error pos ("translate_exp: couldn't cast type 0: " ^ input_typ_name
-                                   ^ " to " ^ output_typ_name)
+      if (input_typ = output_typ) then
+        (* no need casting *)
+        input_exp
+      else (
+        (* do casting *)
+        match output_typ, input_typ with
+        | Globals.Named otyp_name, Globals.Named ityp_name -> (
+            if (ityp_name = "void__star") then (
+              let cast_proc = create_void_pointer_casting_proc otyp_name in
+              Iast.mkCallNRecv cast_proc.Iast.proc_name None [input_exp] None pos
             )
-          | Globals.Int -> (
-              match input_exp with
-              | Iast.IntLit intlit -> (
-                  if (intlit.Iast.exp_int_lit_val = 0) then
-                    Iast.mkNull pos
-                  else
-                    report_error pos ("translate_exp: couldn't cast type 1: " ^ (Globals.string_of_typ input_typ) 
-                                      ^ " to " ^ output_typ_name)
-                )
-              | _ -> report_error pos ("translate_exp: couldn't cast type 2: " ^ (Globals.string_of_typ input_typ) 
-                                       ^ " to " ^ output_typ_name)
-            )
-          | _ -> report_error pos ("translate_exp: couldn't cast type 3: " ^ (Globals.string_of_typ input_typ) 
-                                   ^ " to " ^ output_typ_name)
-        )
-      | _ -> (
-          if (input_typ = output_typ) then
-            input_exp
-          else
-            report_error pos ("translate_exp: couldn't cast type 4: " ^ (Globals.string_of_typ input_typ) 
-                              ^ " to " ^ (Globals.string_of_typ output_typ))
+            else 
+              report_error pos ("translate_exp: couldn't cast type 1: " ^ ityp_name ^ " to " ^ otyp_name)
+          )
+        | Globals.Named otyp_name, Globals.Int -> (
+            let cast_proc = create_int_to_pointer_casting_proc otyp_name in
+            Iast.mkCallNRecv cast_proc.Iast.proc_name None [input_exp] None pos
+          )
+        | Globals.Int, Globals.Named ityp_name -> (
+            let cast_proc = create_pointer_to_int_casting_proc ityp_name in
+            Iast.mkCallNRecv cast_proc.Iast.proc_name None [input_exp] None pos
+          )
+        | _ -> report_error pos ("translate_exp: couldn't cast type 2: " ^ (Globals.string_of_typ input_typ) 
+                                 ^ " to " ^ (Globals.string_of_typ output_typ))
       )
     )
   | Cil.AddrOf (lv, l) ->
@@ -923,15 +952,7 @@ and translate_stmt (s: Cil.stmt) : Iast.exp =
         | Globals.Bool -> translate_exp exp
         | _ -> (
             let e = translate_exp exp in
-            let bool_of_proc = (
-              try 
-                Hashtbl.find tbl_bool_casting_proc ty
-              with Not_found -> (
-                let proc = create_bool_casting_proc ty in
-                Hashtbl.add tbl_bool_casting_proc ty proc;
-                proc
-              )
-            ) in
+            let bool_of_proc = create_bool_casting_proc ty in
             let proc_name = bool_of_proc.Iast.proc_name in
             Iast.mkCallNRecv proc_name None [e] None pos
           )
@@ -1223,8 +1244,7 @@ and translate_file (file: Cil.file) : Iast.prog_decl =
   Hashtbl.reset tbl_pointer_data_decl;
   Hashtbl.reset tbl_struct_data_decl;
   Hashtbl.reset tbl_addrof_holder;
-  Hashtbl.reset tbl_bool_casting_proc;
-  Hashtbl.reset tbl_logical_not_proc;
+  Hashtbl.reset tbl_aux_proc;
   aux_local_vardecls := [];
 
   (* begin to translate *)
@@ -1290,25 +1310,8 @@ and translate_file (file: Cil.file) : Iast.prog_decl =
                     Iast.data_methods = []} in
   (* update some global settings *)
   Hashtbl.iter (fun _ data -> data_decls := !data_decls @ [data]) tbl_pointer_data_decl;
-  (* create negation & casting procs for data structure *)
-  Hashtbl.iter (fun typ _ ->
-    if (!need_pointer_casting_proc) then (
-      let cast_procs = (
-        match create_pointer_casting_proc typ with
-        | None -> []
-        | Some proc -> [proc]
-      ) in
-      proc_decls := !proc_decls @ cast_procs
-    )
-  ) tbl_pointer_data_decl;
-  (* bool_of procs *)
-  Hashtbl.iter (
-    fun _ p -> proc_decls := !proc_decls @ [p]
-  ) tbl_bool_casting_proc;
-  (* logical not procs *)
-  Hashtbl.iter (
-    fun _ p -> proc_decls := !proc_decls @ [p]
-  ) tbl_logical_not_proc;
+  (* aux procs *)
+  Hashtbl.iter (fun _ p -> proc_decls := !proc_decls @ [p]) tbl_aux_proc;
   (* return *)
   let newprog : Iast.prog_decl = {
     Iast.prog_data_decls = obj_def :: string_def :: !data_decls;
