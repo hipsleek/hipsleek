@@ -418,7 +418,8 @@ let common_arguments = [
   (* ("--norm-useless", Arg.Set Globals.norm_elim_useless, "elim useless parameters of user-defined predicates (view)"); *)
   ("--norm-extract", Arg.Set Globals.norm_extract, "extract common pattern among branches of user-defined predicates (view)");
   ("--en-print-ann" , Arg.Set Globals.print_ann, "enable annotation printing (default)");
-  ("--dis-print-ann", Arg.Clear Globals.print_ann, "disable annotation printing");
+  ("--dis-print-clean", Arg.Clear Globals.print_clean_flag, "disable cleaner printing");
+  ("--en-print-clean" , Arg.Set Globals.print_clean_flag, "enable cleaner printing (default)");
 
 
   ]

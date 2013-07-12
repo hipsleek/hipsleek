@@ -741,6 +741,8 @@ let ann_derv = ref false
 
 let print_ann = ref true
 
+let print_clean_flag = ref true
+
 (*is used during deployment, e.g. on a website*)
 (*Will shorten the error/warning/... message delivered
 to end-users*)
