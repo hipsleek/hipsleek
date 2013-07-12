@@ -11,57 +11,68 @@ pred H<prev,sent> ==
   self::node<_,n1> * H_2(n1,prev,sent) * H_3(prev,self,sent)
 inv self!=null.
 
+relAssume
+   H_2(next_1,prev,sent)&next_1!=sent & 
+       next_1!=null --> next_1::node<Anon_36,n1_37>@M * 
+       H_2(n1_37,_,sent).
 
-infer_exact [H_2,H_3] 
- H_2(next_1,prev,sent) * H_3(prev,cur,sent) * 
-  cur::node<_,prev>@M & next_1!=sent & 
-   next_1!=null |- //next_1::H<cur,sent>
-     next_1::node<_,n1> * H_2(n1,cur,sent) * H_3(cur,next_1,sent)
-  .
-print residue.
+relAssume
+   H_2(cur',prev,sent) & cur'=sent --> emp.
+
+shape_infer [H_2][].
+
 /*
- <1>emp&next_1!=sent & next_1!=null & Anon_13=Anon_47 & n1=n1_48 & n1=n1_48&{FLOW,(19,20)=__norm}[]
+relAssume
+   H_3(prev,cur,sent) * cur::node<Anon_11,prev>@M&
+       next_1!=sent & next_1!=null --> H_3(cur,next_1,sent).
+
+relAssume
+   H_3(prev,cur,sent) --> H_2(prev,null,sent).
+
+relAssume
+   emp&prev'=null --> H_3(prev',cur_30,sent_31).
+*/
+
+
+/*
+Outcome from pre-obligations:
+
+ <1>emp&next_1!=sent & next_1!=null & Anon_12=Anon_36 & n1=n1_37 & n1=n1_37&{FLOW,(19,20)=__norm}[]
  inferred hprel: [
-   H_2(next_1,prev@NI,sent@NI)&next_1!=sent & 
-      next_1!=null --> next_1::node<Anon_47,n1_48>@M * 
-                   HP_49(n1_48,prev@NI,sent@NI); 
-   H_3(prev,cur@NI,sent@NI)&next_1!=null & 
-                   next_1!=sent --> emp; 
-   HP_49(n1_48,prev@NI,sent@NI)&
-       next_1!=null |#| cur::node<Anon_12,prev>@M 
-                   --> H_2(n1_48,cur@NI,sent@NI); 
-   cur::node<Anon_12,prev>@M --> H_3(cur,next_1@NI,sent@NI)
-*/
 
+   H_2(next_1,prev,sent)&next_1!=sent & 
+       next_1!=null --> next_1::node<Anon_36,n1_37>@M * 
+       HP_38(n1_37,prev,sent).
 
+   HP_38(n1_37,prev,sent)&
+       |#| cur::node<Anon_11,prev>@M --> H_2(n1_37,cur,sent).
 
-infer_exact [H_2,H_3] 
- H_3(prev,cur,sent) * cur::node<_,prev>@M
-  & next_1=null 
-  & prev'=null |- //cur::H<prev',sent>
-     cur::node<_,n1> * H_2(n1,prev',sent) * H_3(prev',cur,sent)
- .
-print residue.
-/*
- <1>emp&next_1=null & prev'=null & Anon_14=Anon_15 
-    & n1=prev & n1=prev & cur=cur_61 & sent=sent_62&{FLOW,(19,20)=__norm}[]
- inferred hprel: [
-   H_3(prev,cur@NI,sent@NI) --> H_2(prev,prev'@NI,sent@NI); 
-          ^^prev'=null^^
+   H_3(prev,cur,sent) * cur::node<Anon_11,prev>@M&
+       next_1!=sent & next_1!=null --> H_3(cur,next_1,sent).
 
-   emp&prev'=null --> H_3(prev',cur_61@NI,sent_62@NI)]
+---
+   H_3(prev,cur,sent)&
+         prev'=null --> H_2(prev,prev',sent).
 
-*/
+   emp&prev'=null --> H_3(prev',cur_30,sent_31).
 
-/*
-# swl-i2a.slk
+-----
 
+   H_2(cur',prev,sent) & cur'=sent --> emp.
 
-Entail (1) : Valid. 
+Confirm:
+========
+   HP_38(n1_37,prev,sent)&
+       |#| cur::node<Anon_11,prev>@M --> H_2(n1_37,cur,sent).
 
+unfold HP_38:
 
-Entail (2) : Valid. 
-
+   H_2(next_1,prev,sent)&next_1!=sent & 
+       next_1!=null --> next_1::node<Anon_36,n1_37>@M * 
+       H_2(n1_37,_,sent).
 
 
 */
+
+
+
