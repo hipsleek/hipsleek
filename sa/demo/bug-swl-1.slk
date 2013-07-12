@@ -39,6 +39,21 @@ WHY was it split into 2 parts?
    H_3(prev,cur@NI,sent@NI)&next_1!=null & 
                    next_1!=sent --> emp; 
    cur::node<Anon_12,prev>@M --> H_3(cur,next_1@NI,sent@NI)
+
+===========
+ inferred hprel: [
+   H_2(next_1,prev@NI,sent@NI)&next_1!=sent & 
+                   next_1!=null --> next_1::node<Anon_36,n1_37>@M * 
+                   HP_38(n1_37,prev@NI,sent@NI); 
+  HP_38(n1_37,prev@NI,sent@NI)&
+     next_1!=null |#| cur::node<Anon_11,prev>@M --> H_2(n1_37,cur@NI,sent@NI); 
+  cur::node<Anon_11,prev>@M&next_1!=sent & 
+                   next_1!=null --> H_3(cur,next_1@NI,sent@NI)]
+  H_3(prev,cur@NI,sent@NI)&next_1!=null & 
+                   next_1!=sent --> emp; 
+
+
+
 */
 
 
