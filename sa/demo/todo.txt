@@ -5061,7 +5061,7 @@ GOT
           ^^prev'=null^^
    emp&prev'=null --> H_3(prev',cur_61@NI,sent_62@NI)]
 =====================================================================
-# bug-swl-1.slk
+# bug-swl-1.slk: use infer
 
 infer_exact [H_2,H_3] 
  H_2(next_1,prev,sent) * H_3(prev,cur,sent) * 
