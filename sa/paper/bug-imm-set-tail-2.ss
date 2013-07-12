@@ -8,8 +8,9 @@ HeapPred H(node a, node@NI b).
 HeapPred G(node a, node b).
 
   void set_tail (node x,node y)
-//requires x::node<_,_>  ensures true;
-infer[H,G] requires H(x,y) ensures G(x,y);
+  requires x::node<_@M,_@I>
+  ensures true;
+//infer[H,G] requires H(x,y) ensures G(x,y);
 {
   //node t = x.next;
   //assume t'=null;

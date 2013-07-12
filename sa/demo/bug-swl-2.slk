@@ -7,10 +7,8 @@ HeapPred H_3(node prev, node@NI cur, node@NI sent).
 HeapPred H_2(node next_1, node@NI prev, node@NI sent).
 
 infer_exact [H_2,H_3] 
- H_3(prev,cur,sent) * cur::node<_,prev>@M
-  & next_1=null 
-  & prev'=null |- //cur::H<prev',sent>
-     cur::node<_,n1> * H_2(n1,prev',sent) * H_3(prev',cur,sent)
+ H_3(prev,cur,sent) * cur::node<_,prev>@M  & next_1=null  & prev'=null 
+   |-   cur::node<_,n1> * H_2(n1,prev',sent) * H_3(prev',cur,sent)
  .
 print residue.
 
