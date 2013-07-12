@@ -328,7 +328,7 @@ let split_constr prog cond_path constrs post_hps prog_vars unk_map unk_hps link_
                 let _ = Debug.ninfo_pprint ("  refined cs: " ^ (Cprinter.string_of_hprel_short new_cs)) no_pos in
                 (* let rf = CF.mkTrue (CF.mkTrueFlow()) no_pos in *)
                 let _ = Debug.ninfo_pprint ("  generate pre-preds-based constraints: " ) no_pos in
-                let defined_hprels = List.map (SAU.generate_hp_ass unk_svl1 cond_path) defined_preds0 in
+                let defined_hprels = List.map (SAU.generate_hp_ass 2 unk_svl1 cond_path) defined_preds0 in
                 new_cs::defined_hprels
         in
         (new_constrs, unk_map1, link_hps)
