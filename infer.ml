@@ -1879,6 +1879,8 @@ let find_undefined_selective_pointers_x prog lfb lmix_f unmatched rhs_rest rhs_h
     if res then
       let args1 = CP.remove_dups_svl (CP.diff_svl h_args def_svl) in
       (* let _ = Debug.info_pprint ("     h_args:" ^(!CP.print_svl args1)) no_pos in *)
+      (* let _ = Debug.info_pprint ("     niu_svl_i:" ^((pr_list (pr_pair !CP.print_sv print_arg_kind) ) niu_svl_i)) no_pos in *)
+      (* let _ = Debug.info_pprint ("     niu_svl_ni:" ^((pr_list (pr_pair !CP.print_sv print_arg_kind) ) niu_svl_ni)) no_pos in *)
       (*old: args1@not_in_used_svl*)
       (*not_in_used_svl: NI*)
       let args11 = if !Globals.sa_pure_field then
@@ -1898,7 +1900,7 @@ let find_undefined_selective_pointers_x prog lfb lmix_f unmatched rhs_rest rhs_h
       (*generate extra hp for cll*)
       let extra_clls = if niu_svl_i = [] then []
       else
-        [(is_pre, niu_svl_i@[(h_node, NI)])]
+        [(is_pre, niu_svl_i@[(h_node, NI)]@niu_svl_ni)]
       in
       (true,ls_fwd_svl@extra_clls)
     else (false, [])
