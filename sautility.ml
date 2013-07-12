@@ -1670,8 +1670,12 @@ let generate_hp_ass unk_svl cond_p (hp,args,lfb,rf) =
       hprel_path = cond_p;
   }
   in
-  let _ = Debug.dinfo_pprint ("  new cs " ^ (Cprinter.string_of_hprel_short new_cs)) no_pos in
+  let _ = Debug.dinfo_pprint ("  new hp_ass " ^ (Cprinter.string_of_hprel_short new_cs)) no_pos in
   new_cs
+
+let generate_hp_ass i unk_svl cond_p (hp,args,lfb,rf) =
+  Debug.ho_1_num i "generate_hp_ass" pr_none pr_none (fun _ -> generate_hp_ass unk_svl cond_p (hp,args,lfb,rf)) 1
+
 
 (************************************************)
 (**aux2.slk**)

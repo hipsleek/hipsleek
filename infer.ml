@@ -2453,7 +2453,7 @@ let generate_constraints prog es rhs lhs_b ass_guard rhs_b1 defined_hps
   in
   (*split the constraints relating between pre- andxs post-preds*)
   let es_cond_path = CF.get_es_cond_path es in
-  let defined_hprels = List.map (SAU.generate_hp_ass [](* (closed_hprel_args_def@total_unk_svl) *) es_cond_path) defined_hps in
+  let defined_hprels = List.map (SAU.generate_hp_ass 0 [](* (closed_hprel_args_def@total_unk_svl) *) es_cond_path) defined_hps in
   (*lookup to check redundant*)
   let new_lhs = CF.Base new_lhs_b in
   let new_rhs = CF.Base new_rhs_b in
@@ -2771,7 +2771,7 @@ let collect_classic_assumption prog es lfb sel_hps infer_vars pos=
     match defined_preds0 with
       | [] -> []
       | _ -> let es_cond_path = CF.get_es_cond_path es in
-            let defined_hprels = List.map (SAU.generate_hp_ass [] es_cond_path) defined_preds0 in
+            let defined_hprels = List.map (SAU.generate_hp_ass 1 [] es_cond_path) defined_preds0 in
         defined_hprels
   in
   (new_constrs, (List.map (fun (a, _, _,_) -> a) defined_preds0))
@@ -2825,7 +2825,7 @@ let infer_collect_hp_rel_classsic i prog (es:entail_state) rhs pos =
   let pr2 = Cprinter.string_of_h_formula in
   let pr3 = Cprinter.string_of_estate_infer_hp in
   let pr4 =  pr_pair string_of_bool pr3 in
-  Debug.no_2_num i "infer_collect_hp_rel" pr1 pr2 pr4
+  Debug.ho_2_num i "infer_collect_hp_rel" pr1 pr2 pr4
 ( fun _ _ -> infer_collect_hp_rel_classsic_x prog es rhs pos) es.CF.es_formula rhs
 (*=*****************************************************************=*)
          (*=**************INFER REL HP ASS*****************=*)

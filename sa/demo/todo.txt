@@ -5106,6 +5106,36 @@ GOT
                    next_1!=sent & next_1!=null --> H_3(cur,next_1@NI,sent@NI)]
 
 =====================================================================
+# bug-swl-1.slk
+
+!!!:0: 0: SAT #5
+!!!:0: 0:  true
+!!!:0: 0:   new hp_ass  H_3(prev,cur,sent)&next_1!=null & next_1!=sent --> emp
+generate_hp_ass#0@1
+generate_hp_ass#0 inp1 :?
+generate_hp_ass#0@1 EXIT out :?
+
+!!!:0: 0: do_match: using  next_1::node<Anon_36,n1_37>@M to prove  next_1::node<Anon_12,n1>@M
+!!!:0: 0: do_match: source LHS:  es_formula: 
+  cur::node<Anon_11,prev>@M * HP_38(n1_37,prev,sent)&next_1!=sent & 
+  next_1!=null&{FLOW,(19,20)=__norm}[]
+
+PROBLEM
+=======
+It seems you called generate_hp_ass very early before the first
+do_match. I think this must be due to --classic processing.
+This is the wrong place to pick classic info. You need to collect
+this only at empty_rhs. That is provide a --classic collection
+of empty unknowns but just prior to the classic checking of
+residue.
+
+generate_hp_ass#0@1
+generate_hp_ass#0 inp1 :?
+generate_hp_ass#0@1 EXIT out :?
+
+Below does not seem to have been called by:
+   let infer_collect_hp_rel_classsic i prog (es:entail_state) rhs pos =
+which is the correct place to pick residue unknown pred from the LHS.
 =====================================================================
 =====================================================================
 =====================================================================
