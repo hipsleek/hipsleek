@@ -580,7 +580,7 @@ let subst_mater_list_nth i fr t l =
 
 let subst_mater_list_nth i fr t l = 
   let pr_svl = !print_svl in
-  Debug.no_3_num i "subst_mater_list" pr_svl pr_svl !print_mater_prop_list pr_no  subst_mater_list fr t l
+  Debug.no_3_num i "subst_mater_list" pr_svl pr_svl !print_mater_prop_list !print_mater_prop_list subst_mater_list fr t l
 
 let subst_coercion fr t (c:coercion_decl) = 
       {c with coercion_head = F.subst_avoid_capture fr t c.coercion_head
