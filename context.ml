@@ -550,12 +550,13 @@ and empty_inters lst1 lst2 =
       | [] -> true
       | _  -> false
 
+(* try to find a lemma to be applied only if the view on the lhs is reachable from a node matching
+the node on the rhs *)
 and coerc_mater_match_with_unk_hp prog (l_vname: ident) (l_vargs: P.spec_var list) (r_aset: P.spec_var list) (lhs_node: Cformula.h_formula) (l_f: Cformula.h_formula) view_sv coerc_body =
   let cmm () = 
     let cmm = coerc_mater_match prog l_vname l_vargs r_aset (ConstAnn(Mutable)) lhs_node (Some coerc_body) in 
     cmm in
   let hd_nodes, hv_nodes, hrels = get_hp_rel_h_formula l_f in
-  let nodes = split_star_conjunctions l_f in
   let ptrs0 = (List.map (fun v -> v.h_formula_data_node) (get_data_nodes_ptrs_to_view prog hd_nodes hv_nodes view_sv) ) in
   if (empty_inters ptrs0 r_aset) then
     let ptrs0 = (List.map (fun v -> v.h_formula_view_node) (get_view_nodes_ptrs_to_view prog hd_nodes hv_nodes view_sv) ) in
@@ -930,8 +931,8 @@ and process_one_match_x prog is_normalizing (c:match_res) :action_wt =
                       let a4 = 
                         (*Do not fold/unfold LOCKs*)
                         if (is_l_lock || is_r_lock) then None else 
-                          if not(vl_is_rec) then Some (2,M_unfold (c,0))
-                          else if not(vr_is_rec) then Some (2,M_fold c) 
+                          if not(vl_is_rec) then Some (3,M_unfold (c,0))
+                          else if not(vr_is_rec) then Some (3,M_fold c) 
                           else None in
                       let a5 = 
                         if a4==None then
@@ -940,17 +941,17 @@ and process_one_match_x prog is_normalizing (c:match_res) :action_wt =
                               (*Do not fold/unfold LOCKs*)
                               if (is_l_lock) then [] else 
                                 if (vl_view_orig && vr_view_orig && en_self_fold && Gen.BList.mem_eq (=) vl_name vr_self_pts) 
-                                then  [(2,M_fold c)] 
+                                then  [(3,M_fold c)] 
                                 else [] in
                             let l2 =
                               (*Do not fold/unfold LOCKs*)
                               if (is_r_lock) then [] else
                                 if (vl_view_orig && vr_view_orig && en_self_fold && Gen.BList.mem_eq (=) vr_name vl_self_pts) 
-                                then [(2,M_unfold (c,0))]
+                                then [(3,M_unfold (c,0))]
                                 else [] in
                             let l = l1@l2 in
                             if l=[] then None
-                            else Some (2,Cond_action l) 
+                            else Some (3,Cond_action l) 
                           end
                         else a4 in
                       let a6 = 
@@ -1189,12 +1190,12 @@ and process_matches_x prog estate lhs_h is_normalizing ((l:match_res list),(rhs_
   let _ = Debug.tinfo_hprint (add_str "sel_post_hp_rel" Cprinter.string_of_spec_var_list) estate.es_infer_vars_sel_post_hp_rel no_pos in
   match l with
     | [] -> 
-          let r0 = (2,M_unmatched_rhs_data_node (rhs_node,rhs_rest)) in
+          let r0 = (3,M_unmatched_rhs_data_node (rhs_node,rhs_rest)) in
           let rs = 
             if estate.es_infer_vars_hp_rel==[] then []
-            else [(2,M_infer_heap (rhs_node,rhs_rest))] in
+            else [(3,M_infer_heap (rhs_node,rhs_rest))] in
           if (is_view rhs_node) && (get_view_original rhs_node) then
-            let r = (2, M_base_case_fold { match_res_lhs_node = HEmp;
+            let r = (3, M_base_case_fold { match_res_lhs_node = HEmp;
             match_res_lhs_rest = lhs_h;
             match_res_holes = [];
             match_res_type = Root;
