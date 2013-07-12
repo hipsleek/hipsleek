@@ -21,16 +21,10 @@ HeapPred H(node a, node b, node@NI c).
 HeapPred G(node a, node@NI ra, node b, node@NI rb, node@NI c).
 
 void lscan(ref node cur, ref node prev, node sent)
-requires cur::ll<sent> * prev::lseg<sent>
-//*sent::node<_,_>@L 
-   & cur!=null 
+requires cur::ll<sent> * prev::lseg<sent> & cur!=null 
 ensures prev'::ll<sent>  & cur'=sent ;
-requires cur::lseg<sent> * prev::ll<sent> 
-//* sent::node<_,_>@L 
-    & cur!=sent 
-ensures prev'::ll<sent>  & cur'=sent ;
-//ensures prev'::ll<> * sent::node<_,_> & cur'=sent ;
-
+requires cur::lseg<sent> * prev::ll<sent> & cur!=sent 
+ensures prev'::ll<sent>  & cur'=sent ; 
 /*
   infer [H,G]
   requires H(cur,prev,sent)
@@ -53,11 +47,8 @@ ensures prev'::ll<sent>  & cur'=sent ;
       // change direction;
       cur = prev;
       prev = null;
-      lscan(cur,prev,sent);
   }
-  else {
-    //assume false;
-      lscan(cur,prev,sent);
-  }
+  lscan(cur,prev,sent);
+
 }
 
