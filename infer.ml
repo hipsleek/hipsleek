@@ -2116,7 +2116,7 @@ let find_undefined_selective_pointers_x prog lfb lmix_f unmatched rhs_rest rhs_h
     (defined_hps, lhs_selected_hpargs)
   in
   (*********CLASSIC************)
-  let classic_defined, classic_lhs_sel_hpargs= if !Globals.do_classic_frame_rule then
+  let classic_defined, classic_lhs_sel_hpargs= if !Globals.do_classic_frame_rule &&  (CF.is_empty_heap rhs_rest)  then
     let lhs_sel_hps = List.map fst lhs_selected_hpargs in
     let truef = CF.mkTrue (CF.mkNormalFlow()) pos in
     let rem_lhpargs1 = List.filter (fun (hp,_) -> not (CP.mem_svl hp lhs_sel_hps)) rem_lhpargs in
@@ -2141,7 +2141,7 @@ let find_undefined_selective_pointers_x prog lfb lmix_f unmatched rhs_rest rhs_h
   ) lhs_selected_hpargs0@classic_lhs_sel_hpargs
   in
   (*********CLASSIC**sa/demo/xisa-remove2**********)
-  let classic_ptrs = if !Globals.do_classic_frame_rule then
+  let classic_ptrs = if !Globals.do_classic_frame_rule && (CF.is_empty_heap rhs_rest) then
     let acc_ptrs = List.fold_left (fun ls (_, args) -> ls@args) [] (lhs_selected_hpargs1@rhs_sel_hpargs@(List.map (fun (a,b,_,_) -> (a,b)) total_defined_hps)) in
     let cl_acc_ptrs= SAU.look_up_closed_ptr_args prog hds hvs acc_ptrs in
     List.fold_left (fun ls hd -> let sv = hd.CF.h_formula_data_node in

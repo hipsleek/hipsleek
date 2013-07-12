@@ -1387,7 +1387,7 @@ Why isn't splitting invoked?
 */
 
 ================================================
-# sll-bug-1.slk
+# sll-bug-1.slk:
 
 infer [H1,H2] x::node<_,q>*H2(q,r) |- H1(q,x).
 print residue.
@@ -5061,7 +5061,7 @@ GOT
           ^^prev'=null^^
    emp&prev'=null --> H_3(prev',cur_61@NI,sent_62@NI)]
 =====================================================================
-# bug-swl-1.slk: use infer
+# bug-swl-1.slk: FIXED
 
 infer_exact [H_2,H_3] 
  H_2(next_1,prev,sent) * H_3(prev,cur,sent) * 
