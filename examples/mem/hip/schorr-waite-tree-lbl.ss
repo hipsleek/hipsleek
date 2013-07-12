@@ -4,21 +4,21 @@ data node {
  node right;
 }
 
-tree<s,M> == self=null & M = {} & s != self
- or self::node<_,l,r> * l::tree<s,Ml> * r::tree<s,Mr> & M = union(Ml,Mr,{self}) & s !=self
-inv forall(x: x notin M | (x != null & x != s)) & self != s;
-//inv self != s;
+tree<"n":s,"s":M> == true&["n": self=null & s != self; "s": M = {}]
+ or self::node<_,l,r> * l::tree<s,Ml> * r::tree<s,Mr> & ["s": M = union(Ml,Mr,{self}) ; "n":s !=self]
+//inv forall(x: x notin M | (x != null & x != s));
+inv true&["n":self != s];
 
-treeseg<p,M> == self=p
-or self::node<_,l,r> * l::treeseg<p,Ml> * r::tree<p,Mr> & M = union(Ml,Mr,{self}) & self != p
-or self::node<_,l,r> * l::tree<p,Ml> * r::treeseg<p,Mr> & M = union(Ml,Mr,{self}) & self != p
+treeseg<"n":p,"s":M> == true&["n":self=p]
+or self::node<_,l,r> * l::treeseg<p,Ml> * r::tree<p,Mr> & ["s": M = union(Ml,Mr,{self}) ; "n":self != p]
+or self::node<_,l,r> * l::tree<p,Ml> * r::treeseg<p,Mr> & ["s": M = union(Ml,Mr,{self}) ; "n":self != p]
 inv true;
 
 void lscan(ref node cur, ref node prev, node sentinel)
-requires cur::tree<sentinel,Mc> * prev::treeseg<sentinel,Mp> & cur' != null & Mc != {}
-ensures prev'::tree<sentinel,union(Mc,Mp)> & cur'=sentinel;
-requires cur::treeseg<sentinel,Mc> * prev::tree<sentinel,Mp> & cur' != sentinel
-ensures prev'::tree<sentinel,union(Mc,Mp)> & cur'=sentinel;
+requires cur::tree<sentinel,Mc> * prev::treeseg<sentinel,Mp> & ["n": cur' != null]
+ensures prev'::tree<sentinel,M> & ["n": cur'=sentinel ; "s": M = union(Mc,Mp)];
+requires cur::treeseg<sentinel,Mc> * prev::tree<sentinel,Mp> & ["n": cur' != sentinel]
+ensures prev'::tree<sentinel,M> & ["n": cur'=sentinel ; "s": M = union(Mc,Mp)];
 {
 
   node n,tmp;
@@ -30,11 +30,8 @@ ensures prev'::tree<sentinel,union(Mc,Mp)> & cur'=sentinel;
   // move forward
   prev = cur;
   cur = n;
-  if (cur == sentinel){
-	assume false;
-	 return; }
+  if (cur == sentinel) return;
   if (cur == null) {
-	assume false;
       // change direction;
       cur = prev;
       prev = null;

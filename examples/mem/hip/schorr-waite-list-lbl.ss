@@ -9,22 +9,22 @@ ll<M> == self = null & M = {}
 inv forall(x: x notin M | x != null);
 */
 
-lg<s,M> == self = null & M = {} & self != s
-	or self::node<_,nxt> * nxt::lg<s,Mnxt> & M = union(Mnxt,{self}) & self != s
+lg<"n":s,"s":M> == true & ["n":self = null & self != s; "s":M = {}] 
+	or self::node<_,nxt> * nxt::lg<s,Mnxt> & ["s": M = union(Mnxt,{self}); "n": self != s]
 //inv forall(x: x notin M | (x != null & x != s));
-inv self!=s;
+inv true&["n":self!=s];
 
-ls<p,M> == self = p & M = {}
-	or self::node<_,nxt> * nxt::ls<p,M1> & self != p & M = union({self},M1)
+ls<"n":p,"s":M> == true & ["n":self = p; "s":M = {}]
+	or self::node<_,nxt> * nxt::ls<p,M1> & ["n": self != p ; "s": M = union({self},M1)]
 inv true;
 
-//global node SENTINEL;
+global node SENTINEL;
 
 void lscan(ref node cur, ref node prev, node sentinel)
-requires cur::lg<sentinel,Mc> * prev::ls<sentinel,Mp> & cur != null
-ensures prev'::lg<sentinel,union(Mc,Mp)> & cur'=sentinel;
-requires cur::ls<sentinel,Mc> * prev::lg<sentinel,Mp> & cur != sentinel
-ensures prev'::lg<sentinel,union(Mc,Mp)> & cur'=sentinel;
+requires cur::lg<sentinel,Mc> * prev::ls<sentinel,Mp> & ["n": cur != null]
+ensures prev'::lg<sentinel,M> & ["n": cur'=sentinel; "s": M = union(Mc,Mp)];
+requires cur::ls<sentinel,Mc> * prev::lg<sentinel,Mp> & ["n": cur != sentinel]
+ensures prev'::lg<sentinel,M> & ["n": cur'=sentinel; "s": M = union(Mc,Mp)];
 {
 
   node n;
