@@ -5039,7 +5039,7 @@ GOT:
 
 PROBLEM : sent' is missing in the last unknown predicate generated.
 =====================================================================
-# bug-swl-2.slk
+# bug-swl-2.slk: FIXED
 
 infer_exact [H_2,H_3] 
  H_3(prev,cur,sent) * cur::node<_,prev>@M
