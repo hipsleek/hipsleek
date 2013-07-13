@@ -277,11 +277,13 @@ let comp_alias_part r_asets a_vars =
 let rec choose_context_x prog rhs_es lhs_h lhs_p rhs_p posib_r_aliases rhs_node rhs_rest pos :  match_res list =
   (* let _ = print_string("choose ctx: lhs_h = " ^ (string_of_h_formula lhs_h) ^ "\n") in *)
   match rhs_node with
+    (* | HRel _ *)
     | DataNode _ 
     | ViewNode _ ->
           let imm,pimm,p= match rhs_node with
             | DataNode{h_formula_data_node=p;h_formula_data_imm=imm; h_formula_data_param_imm = pimm;} -> ( imm, pimm, p)
             | ViewNode{h_formula_view_node=p;h_formula_view_imm=imm} -> (imm, [], p)
+            (* | HRel (sv,e,_) -> (ConstAnn(Mutable), [], sv) *)
             | _ -> report_error no_pos "choose_context unexpected rhs formula\n"
           in
           let lhs_fv = (h_fv lhs_h) @ (MCP.mfv lhs_p) in
@@ -298,6 +300,7 @@ let rec choose_context_x prog rhs_es lhs_h lhs_p rhs_p posib_r_aliases rhs_node 
           let eqns = (p, p) :: eqns' in
           let asets = alias_nth 3 (eqns@r_eqns) in
           let paset = get_aset asets p in (* find the alias set containing p *)
+          (* andreeac: for HRel, paset should be the list of all HRel exp? *)
           if Gen.is_empty paset then
             failwith ("choose_context: Error in getting aliases for " ^ (string_of_spec_var p))
           else if (* not(CP.mem p lhs_fv) ||  *)(!Globals.enable_syn_base_case && (CP.mem CP.null_var paset)) then
@@ -316,7 +319,7 @@ let rec choose_context_x prog rhs_es lhs_h lhs_p rhs_p posib_r_aliases rhs_node 
           )
           else []
       )
-    | HRel _ -> []
+    | HRel _ -> [] (* spatial_ctx_extract prog lhs_h paset CF.ConstAnn(Mutable) [] rhs_node rhs_rest *)
     | _ -> report_error no_pos "choose_context unexpected rhs formula\n"
 
 and choose_context prog es lhs_h lhs_p rhs_p posib_r_aliases rhs_node rhs_rest pos :  match_res list =
@@ -481,7 +484,7 @@ and spatial_ctx_extract_x prog (f0 : h_formula) (aset : CP.spec_var list) (imm :
     | HTrue -> []
     | HFalse -> []
     | HEmp -> []
-    | HRel _ -> []
+    | HRel _ -> let _ = DD.tinfo_hprint (add_str "HRel here" pr_none ) () no_pos in  []                    (* andreeac: this has to be modified *)
     | Hole _ -> []
     | DataNode ({h_formula_data_node = p1; 
       h_formula_data_imm = imm1;
@@ -520,6 +523,7 @@ and spatial_ctx_extract_x prog (f0 : h_formula) (aset : CP.spec_var list) (imm :
             else
               [(HEmp, f, [], Root)]
           else
+            (* andreeac: when to use root, or materialized *)
             let vmm = view_mater_match prog c (p1::vs1) aset imm f in
             let cmm = coerc_mater_match prog c vs1 aset imm f in 
             (*LDK: currently, assume that frac perm does not effect 
@@ -527,6 +531,13 @@ and spatial_ctx_extract_x prog (f0 : h_formula) (aset : CP.spec_var list) (imm :
             vmm@cmm
           )
               (* else [] *)
+    (* | HRel (sv, vs1_lst, _)  -> *)
+    (*         let vmm = view_mater_match prog c (p1::vs1) aset ConstAnn(Mutable) f in *)
+    (*         let cmm = coerc_mater_match prog c vs1 aset ConstAnn(Mutable) f in  *)
+    (*         (\*LDK: currently, assume that frac perm does not effect  *)
+    (*           the choice of lemmas (coercions)*\) *)
+    (*         vmm@cmm *)
+    (*       ) *)
     | Star ({h_formula_star_h1 = f1;
       h_formula_star_h2 = f2;
       h_formula_star_pos = pos}) ->
@@ -1325,7 +1336,7 @@ and compute_actions_x prog estate es lhs_h lhs_p rhs_p posib_r_alias rhs_lst is_
   (*   | _ ->  List.hd r (\*Search_action (None,r)*\) *)
   (* let _ = print_string (" compute_actions: before process_matches") in *)
   (* type: (match_res list * (Cformula.h_formula * Cformula.h_formula)) list *)
-  let _ = DD.tinfo_hprint (add_str "r" (pr_list pr_none)) r no_pos in 
+  let _ = DD.tinfo_hprint (add_str "r" (pr_list (pr_pair (pr_list string_of_match_res) pr_none))) r no_pos in 
   let r = List.map (process_matches prog estate lhs_h is_normalizing) r in
   match r with
     | [] -> M_Nothing_to_do "no nodes on RHS"

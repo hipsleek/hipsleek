@@ -1,0 +1,26 @@
+========tll.ss --sa-dnc==========
+<rstart>5
+[ H(x,t@NI) --> x::node<left_31_971,right_31_972,next_31_973>@M * 
+  HP_974(left_31_971,t@NI) * HP_975(right_31_972,t@NI) * 
+  HP_976(next_31_973,t@NI),
+ HP_975(right_31_972,t@NI)&right_31_972!=null --> H(right_31_972,t@NI),
+ HP_974(left_31_971,t@NI) --> H(left_31_971,l_47'@NI),
+ HP_974(left_31_971,t@NI) * HP_975(right_31_972,t@NI) * 
+  x::node<left_31_971,right_31_972,t>@M&res=x & 
+  right_31_972=null --> G(x,res@NI,t),
+ HP_976(next_31_973,t@NI) * 
+  x::node<left_31_971,right_31_972,next_31_973>@M * 
+  G(right_31_972,l_1004@NI,t) * G(left_31_971,res@NI,l_1004)&
+  right_31_972!=null --> G(x,res@NI,t)]
+<rstop>*************************************
+<dstart>
+[ H(x_1006,t_1007) ::= x_1006::node<left_31_971,right_31_972,__DP_HP_976>@M * 
+H(left_31_971,l_1005) * H(right_31_972,t_1007)&right_31_972!=null
+   \/  x_1006::node<__DP_HP_974,right_31_972,__DP_HP_976>@M&right_31_972=null,
+ G(x_1013,res_1014,t_1015) ::= x_1013::node<left_31_971,right_31_972,__DP_HP_976>@M * 
+G(right_31_972,l_1004,t_1015) * G(left_31_971,res_1014,l_1004)&
+right_31_972!=null
+   \/  res_1014::node<__DP_HP_974,right_31_972,t_1015>@M&right_31_972=null & 
+res_1014=x_1013]
+<dstop>
+====================

@@ -1,0 +1,73 @@
+========last-1.slk ==========
+Starting Omega...oc
+H is defined.
+HP_1 is defined.
+G is defined.
+HP_2 is defined.
+HP_3 is defined.
+
+!!! >>>>>> step 1: find dangling ptrs, link pre and post-preds dangling preds<<<<<<
+!!! >>>>>> step 2: split constraints based on pre and post-preds<<<<<<
+!!! *** NO SPLITTING DONE ***
+!!! >>>>>> step 3: apply transitive implication<<<<<<
+!!! >>>>>> step 3a: simplification <<<<<<
+!!! >>>>>> step 3b: do apply_transitive_imp <<<<<<
+!!! >>>>>> step 3a: simplification <<<<<<
+!!! >>>>>> step 3b: do apply_transitive_imp <<<<<<
+!!! >>>>>> pre-predicates<<<<<<
+!!! >>>>>> step pre-4: remove unused predicates<<<<<<
+!!! >>>>>> pre-predicates: step pre-5: group & simpl impl<<<<<<
+!!! >>>>>> pre-predicates: step pre-6: combine<<<<<<
+!!! >>>>>> pre-predicates: step pre-7: remove redundant x!=null<<<<<<
+!!! >>>>>> pre-predicates: step pre-8: strengthen<<<<<<
+!!! >>>>>> step 6: generalization <<<<<<
+!!! >>>>>> post-predicates<<<<<<
+!!! >>>>>> step post-4: step remove unused predicates<<<<<<
+!!! >>>>>> post-predicates: step post-5: remove redundant x!=null : not implemented yet<<<<<<
+!!! >>>>>> post-predicates: step post-61: weaken<<<<<<
+
+*************************************************
+*******relational assumptions (obligation)********
+****************************************************
+[ n::node<Anon_109,n_112>@M * HP_3(n_112,t)&n_112!=null & 
+  tn=null --> HP_2(tn,n),
+ emp&n!=null --> HP_3(n,t_113),
+ emp&n!=null & tn=null --> HP_2(tn,n),
+ emp&n=t & n!=null --> HP_3(n,t)]
+*************************************
+
+!!! >>>>>> step 1: find dangling ptrs, link pre and post-preds dangling preds<<<<<<
+!!! >>>>>> step 2: split constraints based on pre and post-preds<<<<<<
+!!! *** NO SPLITTING DONE ***
+!!! >>>>>> step 3: apply transitive implication<<<<<<
+!!! >>>>>> step 3a: simplification <<<<<<
+!!! >>>>>> step 3b: do apply_transitive_imp <<<<<<
+!!! >>>>>> pre-predicates<<<<<<
+!!! >>>>>> step pre-4: remove unused predicates<<<<<<
+!!! >>>>>> pre-predicates: step pre-5: group & simpl impl<<<<<<
+!!! >>>>>> pre-predicates: step pre-6: combine<<<<<<
+!!! >>>>>> pre-predicates: step pre-7: remove redundant x!=null<<<<<<
+!!! >>>>>> pre-predicates: step pre-8: strengthen<<<<<<
+!!! >>>>>> step 6: generalization <<<<<<
+!!! >>>>>> post-predicates<<<<<<
+!!! >>>>>> step post-4: step remove unused predicates<<<<<<
+!!! >>>>>> post-predicates: step post-5: remove redundant x!=null : not implemented yet<<<<<<
+!!! >>>>>> post-predicates: step post-61: weaken<<<<<<
+
+*************************************
+*******relational definition ********
+*************************************
+[ H(x_65) ::= x_65::node<Anon_11,n>@M * HP_1(n),
+ G(res_67,x_68) ::= 
+ EXISTS(flted_23_53: x_68::node<Anon_14,n>@M * HP_3(n,res_67) * 
+ res_67::node<Anon_13,flted_23_53>@M&n!=null & flted_23_53=null)[]
+ or res_67::node<Anon_13,flted_22_45>@M&res_67=x_68 & flted_22_45=null
+ ,
+ HP_1(n_66) ::= 
+ n_66::node<Anon_11,n>@M * HP_1(n)
+ or emp&n_66=null
+ ,
+ HP_2(a,b) ::= NONE,
+ HP_3(a,b) ::= NONE]
+*************************************
+====================

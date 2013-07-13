@@ -1,0 +1,19 @@
+========conseq1.slk ==========
+Starting Omega...oc
+H1 is defined.
+H2 is defined.
+H3 is defined.
+
+Entail (1) : Valid. 
+
+ <1>emp&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [x::node<Anon_11,n1>@M * y::node<Anon_12,n2>@M * 
+                   H2(n1,Anon_13@NI) --> H1(x,y)]
+
+
+Entail (2) : Valid. 
+
+ <1>emp&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [x::node<Anon_14,n1>@M * y::node<Anon_15,n2>@M * 
+                   H2(n1,Anon_16@NI) * H3(Anon_17@NI,n2) --> H1(x,y)]
+====================

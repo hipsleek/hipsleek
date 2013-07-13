@@ -60,6 +60,7 @@ let fmt_open x = fmt_open_box x
 let fmt_close x = fmt_close_box x
 (* test cvs commit*)
 
+let texify l nl = if !Globals.texify then l else nl
 
 let pr_int i = fmt_int i
 
@@ -310,6 +311,18 @@ let pr_wrap_test hdr (e:'a -> bool) (f: 'a -> unit) (x:'a) =
       fmt_string hdr; 
       (* f x; *)
       wrap_box ("B",1) f x;
+      fmt_close_box()
+    end
+
+let pr_wrap_test_nocut hdr (e:'a -> bool) (f: 'a -> unit) (x:'a) =
+  if (e x) then ()
+  else 
+    begin
+      let ff a = f a; fmt_string " " in
+      fmt_open_hbox ();
+      fmt_string hdr;
+      (* f x; *)
+      wrap_box ("B",1) ff x;
       fmt_close_box()
     end
 
@@ -713,10 +726,18 @@ let rec pr_formula_exp (e:P.exp) =
 		in fmt_string  ("]") (* An Hoa *)
 ;;
 
+let pr_formula_exp_list op l = match l with
+	| [] -> ()
+	| h::t -> pr_formula_exp h; List.iter (fun a-> fmt_string op;pr_formula_exp a) t 
+
 let pr_formula_exp_w_ins (e,i) = pr_formula_exp e; 
   if not !print_ann then ()
   else if i = Globals.NI then fmt_string "@NI" else ()
 
+let pr_formula_exp_w_ins_list l = match l with
+	| [] -> ()
+	| h::t -> pr_formula_exp_w_ins h; List.iter (fun a-> fmt_string ",";pr_formula_exp_w_ins a) t 
+  
 let pr_slicing_label sl =
   match sl with
 	| None -> fmt_string ""
@@ -1035,34 +1056,44 @@ let rec pr_h_formula h =
       h_formula_data_label = pid})->
 			(** [Internal] Replace the specvars at positions of holes with '-' **)
         (*TO CHECK: this may hide some potential errors*)
-        let perm_str = string_of_cperm perm in
-			let rec replace_holes svl hs n = 
-				if hs = [] then svl
-				else let sv = List.hd svl in
-						match sv with
-							| CP.SpecVar (t,vn,vp) -> 
-								if (List.hd hs = n) then
-									CP.SpecVar (t,"-",vp) :: (replace_holes (List.tl svl) (List.tl hs) (n+1))
-								else
-									sv :: (replace_holes (List.tl svl) hs (n+1))
-			in
-			let svs = replace_holes svs hs 0 in
+          let perm_str = string_of_cperm perm in
+	  let rec replace_holes svl hs n = 
+	    if hs = [] then svl
+	    else let sv = List.hd svl in
+	    match sv with
+	      | CP.SpecVar (t,vn,vp) -> 
+		    if (List.hd hs = n) then
+		      CP.SpecVar (t,"-",vp) :: (replace_holes (List.tl svl) (List.tl hs) (n+1))
+		    else
+		      sv :: (replace_holes (List.tl svl) hs (n+1))
+	  in
+	  let svs = replace_holes svs hs 0 in
           fmt_open_hbox ();
-          (* (if pid==None then fmt_string "NN " else fmt_string "SS "); *)
-          (* pr_formula_label_opt pid; *)
-		  (* An Hoa : Replace the spec-vars at holes with the symbol '-' *)
-          pr_spec_var sv; fmt_string "::";
-          (if not(!Globals.allow_field_ann) then pr_angle (c^perm_str) (fun x ->  pr_spec_var x) svs 
-           else pr_angle (c^perm_str) (fun (x,y) ->  pr_spec_var x; pr_imm y) (List.combine svs ann_param) );
+	  if (!Globals.texify) then
+	    begin
+	      fmt_string "\sepnode{";pr_spec_var sv; fmt_string ("}{"^c^"}{"); pr_list_of_spec_var svs ;fmt_string "}";
+	    end
+	  else
+	    begin
+              (* (if pid==None then fmt_string "NN " else fmt_string "SS "); *)
+              (* pr_formula_label_opt pid; *)
+	      (* An Hoa : Replace the spec-vars at holes with the symbol '-' *)
+              pr_spec_var sv; fmt_string "::";
+              (if not(!Globals.allow_field_ann) then pr_angle (c^perm_str) (fun x ->  pr_spec_var x) svs 
+              else pr_angle (c^perm_str) (fun (x,y) ->  pr_spec_var x; pr_imm y) (List.combine svs ann_param) );
 	      if (!Globals.allow_imm) then pr_imm imm;
 	      pr_derv dr;
-          if (hs!=[]) then (fmt_string "("; fmt_string (pr_list string_of_int hs); fmt_string ")");
-          (* For example, #O[lem_29][Derv] means origins=[lem_29], and the heap node is derived*)
-          if origs!=[] then pr_seq "#O" pr_ident origs; (* origins of lemma coercion.*)
-	      if original then fmt_string "[Orig]"
-	      else fmt_string "[Derv]";
-          pr_remaining_branches ann;
-          fmt_close();
+              if (hs!=[]) then (fmt_string "("; fmt_string (pr_list string_of_int hs); fmt_string ")");
+              (* For example, #O[lem_29][Derv] means origins=[lem_29], and the heap node is derived*)
+              if !print_derv then
+                begin
+                  if origs!=[] then pr_seq "#O" pr_ident origs; (* origins of lemma coercion.*)
+	          if original then fmt_string "[Orig]"
+	          else fmt_string "[Derv]"
+                end;
+              pr_remaining_branches ann;
+	    end;
+	  fmt_close();
     | ViewNode ({h_formula_view_node = sv; 
       h_formula_view_name = c; 
 	  h_formula_view_derv = dr;
@@ -1077,29 +1108,47 @@ let rec pr_h_formula h =
       h_formula_view_pruning_conditions = pcond;
 	  h_formula_view_unfold_num = ufn;
       h_formula_view_pos =pos}) ->
-        let perm_str = string_of_cperm perm in
+          let perm_str = string_of_cperm perm in
           fmt_open_hbox ();
-         (* (if pid==None then fmt_string "NN " else fmt_string "SS "); *)
-          (* pr_formula_label_opt pid;  *)
-          pr_spec_var sv; 
-          fmt_string "::"; 
-          pr_angle (c^perm_str) pr_spec_var svs;
+	  if (!Globals.texify) then
+	    begin
+	      fmt_string "\seppred{";pr_spec_var sv;fmt_string ("}{"^c^"}{"); pr_list_of_spec_var svs; fmt_string "}";
+	    end
+	  else
+	    begin
+              (* (if pid==None then fmt_string "NN " else fmt_string "SS "); *)
+              (* pr_formula_label_opt pid;  *)
+              pr_spec_var sv; 
+              fmt_string "::"; 
+              pr_angle (c^perm_str) pr_spec_var svs;
 	      pr_imm imm;
 	      pr_derv dr;
-          (* For example, #O[lem_29][Derv] means origins=[lem_29], and the heap node is derived*)
-          if origs!=[] then pr_seq "#O" pr_ident origs; (* origins of lemma coercion.*)
-	      fmt_string ("["^(string_of_int ufn)^"]");
+              (* For example, #O[lem_29][Derv] means origins=[lem_29], and the heap node is derived*)
+              if (!Globals.print_derv) then
+                begin
+                  if origs!=[] then pr_seq "#O" pr_ident origs; (* origins of lemma coercion.*)
+	          fmt_string ("["^(string_of_int ufn)^"]");
 		  if original then fmt_string "[Orig]"
-	      else fmt_string "[Derv]";
- 	  if lhs_case then fmt_string "[LHSCase]";
-         pr_remaining_branches ann; 
-          pr_prunning_conditions ann pcond;
+	          else fmt_string "[Derv]";
+ 	          if lhs_case then fmt_string "[LHSCase]"
+                end;
+              pr_remaining_branches ann; 
+              pr_prunning_conditions ann pcond;
+	    end;
           fmt_close()
-    | HRel (r, args, l) -> fmt_string ((string_of_spec_var r) ^ "(");
+    | HRel (r, args, l) -> 
+		if (!Globals.texify) then
+		begin 
+			  fmt_string ("\seppred{"^(string_of_spec_var r) ^ "}{");pr_formula_exp_list "," args;fmt_string "}"
+		  end
+		else
+		begin
+		fmt_string ((string_of_spec_var r) ^ "(");
           (match args with
 	    | [] -> ()
 	    | arg_first::arg_rest -> let _ = pr_formula_exp arg_first in 
-	      let _ = List.map (fun x -> fmt_string (","); pr_formula_exp x) arg_rest in fmt_string ")")
+	      let _ = List.map (fun x -> fmt_string (","); pr_formula_exp x) arg_rest in fmt_string ")");
+		end
     | HTrue -> fmt_string "htrue"
     | HFalse -> fmt_string "hfalse"
     | HEmp -> fmt_string "emp"
@@ -1162,19 +1211,26 @@ let rec prtt_pr_h_formula h =
 			in
 			let svs = replace_holes svs hs 0 in
           fmt_open_hbox ();
-          (* (if pid==None then fmt_string "NN " else fmt_string "SS "); *)
+		  if !Globals.texify then
+			begin
+			  fmt_string "\sepnode{";pr_spec_var sv; fmt_string ("}{"^c^"}{"); pr_list_of_spec_var svs ;fmt_string "}";
+			end
+		  else
+		    begin
+			          (* (if pid==None then fmt_string "NN " else fmt_string "SS "); *)
           (* pr_formula_label_opt pid; *)
 			(* An Hoa : Replace the spec-vars at holes with the symbol '-' *)
-          pr_spec_var sv; fmt_string "::";
-          pr_angle (c^perm_str) pr_spec_var svs ;
-	      pr_imm imm;
-	      pr_derv dr;
-          if (hs!=[]) then (fmt_string "("; fmt_string (pr_list string_of_int hs); fmt_string ")");
-          (* For example, #O[lem_29][Derv] means origins=[lem_29], and the heap node is derived*)
-          if origs!=[] then pr_seq "#O" pr_ident origs; (* origins of lemma coercion.*)
-	      (* if original then fmt_string "[Orig]" *)
-	      (* else fmt_string "[Derv]"; *)
-          pr_remaining_branches ann;
+			  pr_spec_var sv; fmt_string "::";
+			  pr_angle (c^perm_str) pr_spec_var svs ;
+			  pr_imm imm;
+			  pr_derv dr;
+			  if (hs!=[]) then (fmt_string "("; fmt_string (pr_list string_of_int hs); fmt_string ")");
+			  (* For example, #O[lem_29][Derv] means origins=[lem_29], and the heap node is derived*)
+			  if origs!=[] && !print_derv then pr_seq "#O" pr_ident origs; (* origins of lemma coercion.*)
+			  (* if original then fmt_string "[Orig]" *)
+			  (* else fmt_string "[Derv]"; *)
+			  pr_remaining_branches ann;
+			end;
           fmt_close();
     | ViewNode ({h_formula_view_node = sv; 
       h_formula_view_name = c; 
@@ -1194,27 +1250,42 @@ let rec prtt_pr_h_formula h =
          (* (if pid==None then fmt_string "N
 N " else fmt_string "SS "); *)
           (* pr_formula_label_opt pid;  *)
-          pr_spec_var sv; 
-          fmt_string "::"; 
-          pr_angle (c^perm_str) pr_spec_var svs;
-	      pr_imm imm;
-	      pr_derv dr;
-          (* For example, #O[lem_29][Derv] means origins=[lem_29], and the heap node is derived*)
-          if origs!=[] then pr_seq "#O" pr_ident origs; (* origins of lemma coercion.*)
-	      (* if original then fmt_string "[Orig]" *)
-	      (* else fmt_string "[Derv]"; *)
- 	  if lhs_case then fmt_string "[LHSCase]";
-         pr_remaining_branches ann; 
-          pr_prunning_conditions ann pcond;
-          fmt_close()
-    | HRel (r, args, l) -> fmt_string ((string_of_spec_var r) ^ "(");
-        (match args with
-		  | [] -> ()
-		  | arg_first::arg_rest -> let _ = pr_formula_exp arg_first in 
-		                           let _ = List.map (fun x -> fmt_string (","); pr_formula_exp x) arg_rest in fmt_string ")")
+		  if (!Globals.texify) then 
+			  begin
+			  fmt_string "\seppred{";pr_spec_var sv;fmt_string ("}{"^c^"}{"); pr_list_of_spec_var svs; fmt_string "}";
+			  end
+		  else
+          begin
+			  pr_spec_var sv; 
+			  fmt_string "::"; 
+			  pr_angle (c^perm_str) pr_spec_var svs;
+			  pr_imm imm;
+			  pr_derv dr;
+			  (* For example, #O[lem_29][Derv] means origins=[lem_29], and the heap node is derived*)
+			  if origs!=[] && !print_derv then pr_seq "#O" pr_ident origs; (* origins of lemma coercion.*)
+			  (* if original then fmt_string "[Orig]" *)
+			  (* else fmt_string "[Derv]"; *)
+		  if lhs_case  && !print_derv then fmt_string "[LHSCase]";
+			 pr_remaining_branches ann; 
+			  pr_prunning_conditions ann pcond;
+		  end;
+		  fmt_close()
+    | HRel (r, args, l) -> 
+		if (!Globals.texify) then
+		  begin 
+			  fmt_string ("\seppred{"^(string_of_spec_var r) ^ "}{");pr_formula_exp_list "," args;fmt_string "}"
+		  end
+		  else
+		  begin
+		   fmt_string ((string_of_spec_var r) ^ "(");
+			(match args with
+			  | [] -> ()
+			  | arg_first::arg_rest -> let _ = pr_formula_exp arg_first in 
+									   let _ = List.map (fun x -> fmt_string (","); pr_formula_exp x) arg_rest in fmt_string ")");
+		  end
     | HTrue -> fmt_string "htrue"
     | HFalse -> fmt_string "hfalse"
-    | HEmp -> fmt_string "emp"
+    | HEmp -> fmt_string (texify "\emp" "emp")
     | Hole m -> fmt_string ("Hole[" ^ (string_of_int m) ^ "]")
 	| StarMinus _ | ConjStar _ | ConjConj _  -> Error.report_no_pattern ()
 
@@ -1264,19 +1335,26 @@ let rec prtt_pr_h_formula_inst prog h =
 	  in
 	  let svs = replace_holes svs hs 0 in
           fmt_open_hbox ();
-          (* (if pid==None then fmt_string "NN " else fmt_string "SS "); *)
-          (* pr_formula_label_opt pid; *)
-			(* An Hoa : Replace the spec-vars at holes with the symbol '-' *)
-          pr_spec_var sv; fmt_string "::";
-          pr_angle (c^perm_str) pr_spec_var svs ;
-	      pr_imm imm;
-	      pr_derv dr;
-          if (hs!=[]) then (fmt_string "("; fmt_string (pr_list string_of_int hs); fmt_string ")");
-          (* For example, #O[lem_29][Derv] means origins=[lem_29], and the heap node is derived*)
-          if origs!=[] then pr_seq "#O" pr_ident origs; (* origins of lemma coercion.*)
-	      (* if original then fmt_string "[Orig]" *)
-	      (* else fmt_string "[Derv]"; *)
-          pr_remaining_branches ann;
+		   if !Globals.texify then
+			begin
+			  fmt_string "\sepnode{";pr_spec_var sv; fmt_string ("}{"^c^"}{"); pr_list_of_spec_var svs ;fmt_string "}";
+			end
+			else 
+			begin
+			  (* (if pid==None then fmt_string "NN " else fmt_string "SS "); *)
+			  (* pr_formula_label_opt pid; *)
+				(* An Hoa : Replace the spec-vars at holes with the symbol '-' *)
+			  pr_spec_var sv; fmt_string "::";
+			  pr_angle (c^perm_str) pr_spec_var svs ;
+			  pr_imm imm;
+			  pr_derv dr;
+			  if (hs!=[]) then (fmt_string "("; fmt_string (pr_list string_of_int hs); fmt_string ")");
+			  (* For example, #O[lem_29][Derv] means origins=[lem_29], and the heap node is derived*)
+			  if origs!=[] && !print_derv then pr_seq "#O" pr_ident origs; (* origins of lemma coercion.*)
+			  (* if original then fmt_string "[Orig]" *)
+			  (* else fmt_string "[Derv]"; *)
+			  pr_remaining_branches ann;
+		  end;
           fmt_close();
     | ViewNode ({h_formula_view_node = sv; 
       h_formula_view_name = c; 
@@ -1293,35 +1371,49 @@ let rec prtt_pr_h_formula_inst prog h =
       h_formula_view_pos =pos}) ->
         let perm_str = string_of_cperm perm in
           fmt_open_hbox ();
-         (* (if pid==None then fmt_string "N
-N " else fmt_string "SS "); *)
-          (* pr_formula_label_opt pid;  *)
-          pr_spec_var sv; 
-          fmt_string "::"; 
-          pr_angle (c^perm_str) pr_spec_var svs;
-	      pr_imm imm;
-	      pr_derv dr;
-          (* For example, #O[lem_29][Derv] means origins=[lem_29], and the heap node is derived*)
-          if origs!=[] then pr_seq "#O" pr_ident origs; (* origins of lemma coercion.*)
-	      (* if original then fmt_string "[Orig]" *)
-	      (* else fmt_string "[Derv]"; *)
- 	  if lhs_case then fmt_string "[LHSCase]";
-         pr_remaining_branches ann; 
-          pr_prunning_conditions ann pcond;
+		    if (!Globals.texify) then 
+			  begin
+			  fmt_string "\seppred{";pr_spec_var sv;fmt_string ("}{"^c^"}{");pr_list_of_spec_var svs;fmt_string "}";
+			  end
+		  else
+          begin
+				 (* (if pid==None then fmt_string "N
+		N " else fmt_string "SS "); *)
+				  (* pr_formula_label_opt pid;  *)
+				  pr_spec_var sv; 
+				  fmt_string "::"; 
+				  pr_angle (c^perm_str) pr_spec_var svs;
+				  pr_imm imm;
+				  pr_derv dr;
+				  (* For example, #O[lem_29][Derv] means origins=[lem_29], and the heap node is derived*)
+				  if origs!=[] && !print_derv then pr_seq "#O" pr_ident origs; (* origins of lemma coercion.*)
+				  (* if original then fmt_string "[Orig]" *)
+				  (* else fmt_string "[Derv]"; *)
+			  if lhs_case && !print_derv then fmt_string "[LHSCase]";
+				 pr_remaining_branches ann; 
+				  pr_prunning_conditions ann pcond;
+		  end;
           fmt_close()
     | HRel (r, args, l) ->
           let hp_name= CP.name_of_spec_var r in
           let hprel = Cast.look_up_hp_def_raw prog.Cast.prog_hp_decls hp_name in
           let ss = List.combine args hprel.Cast.hp_vars_inst in
           let args_inst = List.map (fun (sv,(_,i)) -> (sv,i)) ss in
-          fmt_string ((string_of_spec_var r) ^ "(");
-          (match args_inst with
-	    | [] -> ()
-	    | arg_first::arg_rest -> let _ = pr_formula_exp_w_ins arg_first in 
-	      let _ = List.map (fun x -> fmt_string (","); pr_formula_exp_w_ins x) arg_rest in fmt_string ")")
+		  if (!Globals.texify) then
+		  begin 
+		  fmt_string ("\seppred{"^(string_of_spec_var r) ^ "}{");pr_formula_exp_w_ins_list args_inst;fmt_string "}";
+		  end
+		  else
+		  begin
+			  fmt_string ((string_of_spec_var r) ^ "(");
+			  (match args_inst with
+			| [] -> ()
+			| arg_first::arg_rest -> let _ = pr_formula_exp_w_ins arg_first in 
+			  let _ = List.map (fun x -> fmt_string (","); pr_formula_exp_w_ins x) arg_rest in fmt_string ")")
+		  end
     | HTrue -> fmt_string "htrue"
     | HFalse -> fmt_string "hfalse"
-    | HEmp -> fmt_string "emp"
+    | HEmp -> fmt_string (texify "\emp" "emp")
     | Hole m -> fmt_string ("Hole[" ^ (string_of_int m) ^ "]")
 	| StarMinus _ | ConjStar _ | ConjConj _  -> Error.report_no_pattern ()
 
@@ -1380,7 +1472,8 @@ let rec pr_h_formula_for_spec h =
     if (hs!=[]) then (fmt_string "("; fmt_string (pr_list string_of_int hs); fmt_string ")");
     (* For example, #O[lem_29][Derv] means origins=[lem_29], and the heap node is derived*)
     if origs!=[] then pr_seq "#O" pr_ident origs; (* origins of lemma coercion.*)
-    if original then fmt_string "[Orig]" else fmt_string "[Derv]";
+    if (!print_derv) then
+      (if original then fmt_string "[Orig]" else fmt_string "[Derv]");
     (match ann with | None -> () | Some _ -> fmt_string "[]");
     fmt_close();
   | ViewNode ({h_formula_view_node = sv; 
@@ -1686,6 +1779,11 @@ let prtt_string_of_formula_base fb: string =  poly_string_of_pr  prtt_pr_formula
 
 let prtt_string_of_h_formula (e:h_formula) : string =  poly_string_of_pr  prtt_pr_h_formula e
 
+let prtt_string_of_h_formula_opt (eo:h_formula option) : string =
+  match eo with
+    | None -> ""
+    | Some e -> poly_string_of_pr prtt_pr_h_formula e
+
 let rec string_of_formula_list_noparen l = match l with 
   | [] -> ""
   | h::[] -> string_of_formula h 
@@ -1730,25 +1828,43 @@ let pr_hp_rel hp_rel =
   fmt_string (pr3 hp_rel)
 
 let string_of_hp_rel_def hp_rel =
- let str_of_hp_rel (r,f1, f2) =
-   ( (CP.print_rel_cat r)^ ": " ^(string_of_h_formula f1) ^ " ::= "  ^(prtt_string_of_formula f2)) in
+  let print_g guard=
+    (match guard with
+      | None -> ""
+            (* fmt_string " NONE " *)
+      | Some hf -> 
+            begin
+              " |#| " ^ (prtt_string_of_h_formula hf)
+            end
+     )
+  in
+ let str_of_hp_rel (r,f1, g, f2) =
+   ( (CP.print_rel_cat r)^ ": " ^(string_of_h_formula f1) ^ (print_g g) ^ " ::= "  ^(prtt_string_of_formula f2)) in
   (str_of_hp_rel hp_rel)
 
 let string_of_hp_rel_def_short hp_rel =
- let str_of_hp_rel (_,f1, f2) = ((string_of_h_formula f1) ^ " ::= "  ^(prtt_string_of_formula f2)) in
+ let str_of_hp_rel (_,f1, guard, f2) = ((string_of_h_formula f1)
+     ^ (match guard with
+       | None -> ""
+       | Some hf -> begin
+           " |#| " ^ (prtt_string_of_h_formula hf)
+         end
+     )
+ ^ " ::= "  ^(prtt_string_of_formula f2)) in
   (str_of_hp_rel hp_rel)
 
 let string_of_hp_decl hpdecl =
   let name = hpdecl.Cast.hp_name in
-  let pr_arg arg = 
-    let t = CP.type_of_spec_var arg in 
+  let pr_arg arg i =
+    let t = CP.type_of_spec_var arg in
     let arg_name = string_of_spec_var arg in
     let arg_name = if(String.compare arg_name "res" == 0) then fresh_name () else arg_name in
-    (CP.name_of_type t) ^ " " ^ arg_name
+    (CP.name_of_type t) ^  (if not !print_ann then "" else if i=NI then "@NI" else "") ^ " " ^ arg_name
   in
-  let pr_inst (sv, i) = (pr_arg sv) ^ (if not !print_ann then "" else if i=NI then "@NI" else "") in
+  let decl_kind = if hpdecl.hp_is_pre then "HeapPred " else "PostPred " in
+  let pr_inst (sv, i) = (pr_arg sv i) in
   let args = pr_lst ", " pr_inst hpdecl.Cast.hp_vars_inst in
-  "HeapPred "^ name ^ "(" ^ args ^ ").\n"
+  decl_kind ^ name ^ "(" ^ args ^ ").\n"
 
 
 let string_of_hp_rels (e) : string =
@@ -1768,6 +1884,7 @@ let pr_hprel_lhs_rhs (lhs,rhs) =
 let pr_hprel hpa=
   fmt_open_box 1;
   fmt_string (CP.print_rel_cat hpa.hprel_kind);
+  (pr_seq "" (fun s -> fmt_int s)) hpa.hprel_path;
   pr_seq " unknown svl: " pr_spec_var hpa.unk_svl;
   fmt_string "; ";
   let hps = List.map (fun (hp,_) -> hp) hpa.unk_hps in
@@ -1776,52 +1893,154 @@ let pr_hprel hpa=
   pr_seq " predefined: " pr_spec_var hpa.predef_svl;
   fmt_string "; ";
   prtt_pr_formula hpa.hprel_lhs;
+  let _ = match hpa.hprel_guard with
+    | None -> ()
+    | Some hf -> 
+          begin
+          fmt_string " |#| ";
+          prtt_pr_h_formula hf
+          end
+  in
   fmt_string " --> ";
   prtt_pr_formula hpa.hprel_rhs;
   fmt_close()
 
+let skip_cond_path_trace l = Gen.is_empty l || not(!Globals.cond_path_trace)
+
 let pr_hprel_short hpa=
   fmt_open_box 1;
+  (* fmt_string "hprel(1)"; *)
+  pr_wrap_test_nocut "" skip_cond_path_trace (fun p -> fmt_string ((pr_list_round_sep ";" (fun s -> string_of_int s)) p)) hpa.hprel_path;
   (* fmt_string (CP.print_rel_cat hpa.hprel_kind); *)
   prtt_pr_formula hpa.hprel_lhs;
+  let _ = match hpa.hprel_guard with
+    | None -> ()
+    | Some hf -> 
+          begin
+            fmt_string " |#| ";
+            prtt_pr_h_formula hf
+          end
+  in
   fmt_string " --> ";
   prtt_pr_formula hpa.hprel_rhs;
   fmt_close()
 
 let pr_hprel_short_inst cprog hpa=
   fmt_open_box 1;
+  (* fmt_string "hprel(2)"; *)
   (* fmt_string (CP.print_rel_cat hpa.hprel_kind); *)
+  fmt_string ("// "^(Others.string_of_proving_kind hpa.hprel_proving_kind));
+  fmt_print_newline();
+  pr_wrap_test_nocut "" Gen.is_empty (* skip_cond_path_trace *) 
+      (fun p -> fmt_string ((pr_list_round_sep ";" (fun s -> string_of_int s)) p)) hpa.hprel_path;
   prtt_pr_formula_inst cprog hpa.hprel_lhs;
+  let _ = match hpa.hprel_guard with
+    | None -> ()
+          (* fmt_string " NONE " *)
+    | Some hf -> 
+          begin
+            fmt_string " |#| ";
+            prtt_pr_h_formula_inst cprog hf
+          end
+  in
   fmt_string " --> ";
   prtt_pr_formula_inst cprog hpa.hprel_rhs;
   fmt_close()
 
+let pr_path_of (path, off)=
+   (* fmt_string "PATH format"; *)
+   pr_wrap_test_nocut "" skip_cond_path_trace  (fun l -> fmt_string (pr_list_round_sep ";" string_of_int l)) path
+  ; (match off with
+     | None -> fmt_string " NONE"
+     | Some f -> fmt_string (prtt_string_of_formula f))
+
 let pr_hprel_def hpd=
   fmt_open_box 1;
+  (* fmt_string "hprel(3)"; *)
   (* fmt_string (CP.print_rel_cat hpd.hprel_def_kind); *)
   (* fmt_string "\n"; *)
   (pr_h_formula hpd.hprel_def_hrel);
-  fmt_string " ::=";
-  fmt_string (match hpd.hprel_def_body with
-    | None -> "UNKNOWN"
-    | Some f -> prtt_string_of_formula f);
+  let _ = match hpd.hprel_def_guard with
+    | None -> ()
+          (* fmt_string " NONE " *)
+    | Some hf -> 
+          begin
+            fmt_string " |#| ";
+            prtt_pr_h_formula hf
+          end
+  in
+  fmt_string " ::= ";
+  fmt_cut () ;
+   (* fmt_string (String.concat " \/ " (List.map pr_path_of hpd.hprel_def_body)); *)
+  (pr_list_op_none " \/ " pr_path_of hpd.hprel_def_body);
   fmt_string " LIB FORM:\n";
   (pr_h_formula hpd.hprel_def_hrel);
-  fmt_string " ::=";
+  fmt_string " ::= ";
+  fmt_cut () ;
   fmt_string ( match hpd.hprel_def_body_lib with
-    | None -> "UNKNOWN"
+    | None -> " NONE"
     | Some f -> prtt_string_of_formula f);
+  fmt_close()
+
+let pr_hprel_def_short hpd=
+  fmt_open_box 1;
+  (* fmt_string "hprel(4)"; *)
+  (* fmt_string (CP.print_rel_cat hpd.hprel_def_kind); *)
+  (* fmt_string "\n"; *)
+  (pr_h_formula hpd.hprel_def_hrel);
+  let _ = match hpd.hprel_def_guard with
+    | None -> ()
+          (* fmt_string " NONE " *)
+    | Some hf -> 
+          begin
+            fmt_string " |#| ";
+            prtt_pr_h_formula hf
+          end
+  in
+  fmt_string " ::=";
+  (* no cut here please *)
+  (* fmt_cut(); *)
+  (pr_list_op_none " \/ " pr_path_of) hpd.hprel_def_body;
+   (* fmt_string (String.concat " OR " (List.map pr_path_of hpd.hprel_def_body)); *)
+  (* fmt_string " LIB FORM:\n"; *)
+  (* (pr_h_formula hpd.hprel_def_hrel); *)
+  (* fmt_string " ::="; *)
+  (* fmt_string ( match hpd.hprel_def_body_lib with *)
+  (*   | None -> "UNKNOWN" *)
+  (*   | Some f -> prtt_string_of_formula f); *)
   fmt_close()
 
 let pr_hprel_def_lib hpd=
   fmt_open_box 1;
+  (* fmt_string "hprel(5)"; *)
   (* fmt_string (CP.print_rel_cat hpd.hprel_def_kind); *)
   (* fmt_string "\n"; *)
   (pr_h_formula hpd.hprel_def_hrel);
+  let _ = match hpd.hprel_def_guard with
+    | None -> ()
+          (* fmt_string " NONE " *)
+    | Some hf -> 
+          begin
+            fmt_string " |#| ";
+            prtt_pr_h_formula hf
+          end
+  in
   fmt_string " ::= ";
+  fmt_cut() ;
   fmt_string (match hpd.hprel_def_body_lib with
     | None -> "NONE"
     | Some f -> prtt_string_of_formula f);
+  fmt_close()
+
+let pr_pair_path_def (path, (hf,body))=
+  fmt_open_box 1;
+    pr_wrap_test_nocut "relDefn " skip_cond_path_trace  (fun l -> fmt_string (pr_list_round_sep ";" string_of_int l)) path;
+    fmt_string ((prtt_string_of_h_formula hf) ^ "<->" ^ (prtt_string_of_formula body));
+  fmt_close()
+
+let pr_pair_path_dang (path, hp)=
+  fmt_open_box 1;
+  fmt_string ("Declare_Unknown " ^ (pr_list_round string_of_int path) ^ "[" ^ (string_of_spec_var hp) ^ "]");
   fmt_close()
 
 let string_of_hprel hp = poly_string_of_pr pr_hprel hp
@@ -1832,6 +2051,12 @@ let string_of_hprel_short_inst prog hp =
   poly_string_of_pr (pr_hprel_short_inst prog) hp
 
 let string_of_hprel_def hp = poly_string_of_pr pr_hprel_def hp
+
+let string_of_pair_path_def pair = poly_string_of_pr pr_pair_path_def pair
+
+let string_of_pair_path_dang pair = poly_string_of_pr pr_pair_path_dang pair
+
+let string_of_hprel_def_short hp = poly_string_of_pr pr_hprel_def_short hp
 
 let string_of_hprel_def_lib hp = poly_string_of_pr pr_hprel_def_lib hp
 

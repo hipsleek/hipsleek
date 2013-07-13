@@ -12,18 +12,18 @@ HeapPred G(node a).
 //Declare_Dangling [HP_2].
 //Declare_Unknown [HP_2].
 
-relAssume HP_0
+relAssume 
  HP_0(x)&x!=null --> x::node<_,ll,right_25_799>@M * 
   HP_0(ll) * HP_0(right_25_799).
 
-relAssume HP_1
+relAssume 
  HP_1(x)&x!=null --> x::node<key_25_797,left_25_798,right_25_799>@M * 
   HP_0(left_25_798) * HP_1(right_25_799).
 
-relAssume HP_1
+relAssume 
  HP_1(right_25_799)&right_25_799=null --> emp.
 
-relAssume HP_0
+relAssume 
  HP_0(left_25_798)&left_25_798=null --> emp.
 
 

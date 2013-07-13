@@ -32,6 +32,9 @@ struct
       | q::qs -> if (List.mem q qs) then remove_dups qs else q::(remove_dups qs)
 
   let pr_id x = x
+  
+  let print_endline_if b s = if b then print_endline s else ()
+  let print_string_if b s = if b then print_string s else ()
 
   let pr_var_prime (id,p) = match p with
     | Globals.Primed -> id^"'"
@@ -77,10 +80,12 @@ struct
   let pr_lst s f xs = String.concat s (List.map f xs)
   let pr_lst_num s f xs = String.concat s (pr_add_num f xs)
 
- let pr_list_brk open_b close_b f xs  = open_b ^(pr_lst "," f xs)^close_b
+ let pr_list_brk_sep open_b close_b sep f xs  = open_b ^(pr_lst sep f xs)^close_b
+ let pr_list_brk open_b close_b f xs  = pr_list_brk_sep open_b close_b "," f xs
  let pr_list f xs = pr_list_brk "[" "]" f xs
  let pr_list_angle f xs = pr_list_brk "<" ">" f xs
  let pr_list_round f xs = pr_list_brk "(" ")" f xs
+ let pr_list_round_sep sep f xs = pr_list_brk_sep "(" ")" sep f xs
  let pr_list_ln f xs = "["^(pr_lst ",\n" f xs)^"]"
  let pr_list_num f xs = "["^(pr_lst_num ",\n" f xs)^"]"
 
@@ -438,7 +443,7 @@ class ['a] stack  =
          stk <- i::stk
        end
      method get_stk  = stk (* return entire content of stack *)
-     method override_stk newstk  = stk <- newstk 
+     method set_stk newstk  = stk <- newstk 
        (* override with a new stack *)
      method pop = match stk with 
        | [] -> print_string "ERROR : popping empty stack"; 
@@ -456,6 +461,9 @@ class ['a] stack  =
        | [] -> () 
        | x::xs -> stk <- xs
      method is_empty = stk == []
+     method is_avail = not(stk == [])
+     method get = self # top
+     (* method set x = self # push x *)
      method len = List.length stk
      method reverse = stk <- List.rev stk
      method reverse_of = List.rev stk
@@ -516,6 +524,9 @@ class ['a] stack_noexc (x_init:'a) (epr:'a->string) (eq:'a->'a->bool)  =
      method top_no_exc : 'a = match stk with 
        | [] ->  emp_val
        | x::xs -> x
+     method last : 'a = match stk with 
+       | [] -> emp_val
+       | _ -> List.hd (List.rev stk)
    end;;
 
 (* class ['a] stack_noexc (x_init:'a) (epr:'a->string) (eq:'a->'a->bool)  = *)
@@ -1386,7 +1397,7 @@ struct
         | [] -> Error.report_error {Error.error_loc = Globals.no_pos; Error.error_text = ("Error special poping "^msg^"from the stack")}
         | (m1,_,_)::t ->  if not ((String.compare m1 msg)==0) then helper t			
 		  else t in
-      profiling_stack#override_stk (helper profiling_stack#get_stk) 
+      profiling_stack#set_stk (helper profiling_stack#get_stk) 
 	else ()
 
   let add_index l = 

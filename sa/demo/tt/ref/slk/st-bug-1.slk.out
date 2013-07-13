@@ -1,0 +1,15 @@
+========st-bug-1.slk ==========
+Starting Omega...oc
+H is defined.
+G is defined.
+H is defined.
+H is already defined.
+H_3 is defined.
+H_4 is defined.
+H_5 is defined.
+
+Entail (1) : Valid. 
+
+ <1>H_4(n,y)&n=next_16_788&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [H_3(prev_15_781,y@NI) * x::node<prev_15_781,y>@M --> G(x,y)]
+====================

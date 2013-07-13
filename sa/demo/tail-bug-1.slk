@@ -10,10 +10,10 @@ HeapPred G1(node a, node r).
 //Declare_Unknown [HP_9].
 Declare_Dangling [HP_9].
 
-relAssume H
+relAssume
  H1(c)&true --> c::node<val_14_777,next_14_778> * HP_9(next_14_778).
 
-relAssume H
+relAssume 
  HP_9(next_14_778) * c::node<val_14_777,next_14_778> &
   next_14_778=res --> G1(res,c).
 

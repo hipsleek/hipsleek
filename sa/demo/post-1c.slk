@@ -7,10 +7,10 @@ data node{
 PostPred G(node a).
 
 
-relAssume G
+relAssume 
  x::node<b,right> & right=null  --> G(x).
 
-relAssume G
+relAssume 
  x::node<n,q> * q::node<_,r>    --> G(x).
 
 

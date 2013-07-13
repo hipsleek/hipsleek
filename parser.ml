@@ -785,14 +785,17 @@ non_empty_command:
       | t=checkeq_cmd         -> EqCheck t
       | t= checkentail_cmd     -> EntailCheck t
       | t=relassume_cmd     -> RelAssume t
+      | t=reldefn_cmd     -> RelDefn t
       | t=shapeinfer_cmd     -> ShapeInfer t
+      | t=shapedivide_cmd     -> ShapeDivide t
+      | t=shapeconquer_cmd     -> ShapeConquer t
       | t=shapepost_obl_cmd     -> ShapePostObl t
       | t=shapeinfer_proper_cmd     -> ShapeInferProp t
       | t=shapesplit_base_cmd     -> ShapeSplitBase t
       | t=shapeElim_cmd     -> ShapeElim t
       | t=shapeExtract_cmd     -> ShapeExtract t
       | t=decl_dang_cmd        -> ShapeDeclDang t
-      | t=decl_unknown_cmd        -> ShapeDeclUnknown t
+      | t= decl_unknown_cmd        -> ShapeDeclUnknown t
       | t=shape_sconseq_cmd     -> ShapeSConseq t
       | t=shape_sante_cmd     -> ShapeSAnte t
       | t= infer_cmd           -> InferCmd t  
@@ -1707,8 +1710,18 @@ checkentail_cmd:
    | `CHECKENTAIL_EXACT; t=meta_constr; `DERIVE; b=extended_meta_constr -> (t, b, Some true)
    | `CHECKENTAIL_INEXACT; t=meta_constr; `DERIVE; b=extended_meta_constr -> (t, b, Some false)]];
 
+cond_path:
+    [[ `OPAREN; il2 = OPT int_list; `CPAREN -> un_option il2 []
+    ]];
+
 relassume_cmd:
-   [[ `RELASSUME; `IDENTIFIER id; l=meta_constr; `CONSTR;r=meta_constr -> (id, l, r)
+   [[ `RELASSUME; il2 = OPT cond_path; l=meta_constr; `CONSTR;r=meta_constr -> (un_option il2 [], l, None,  r)
+    | `RELASSUME; il2 = OPT cond_path; l=meta_constr; `REL_GUARD; guard = meta_constr; `CONSTR;r=meta_constr ->
+           (un_option il2 [], l, Some guard,  r)
+   ]];
+
+reldefn_cmd:
+   [[ `RELDEFN; il2 = OPT cond_path; l=meta_constr; `EQUIV;r=meta_constr -> (un_option il2 [], l, r)
    ]];
 
 decl_dang_cmd:
@@ -1716,7 +1729,7 @@ decl_dang_cmd:
    ]];
 
 decl_unknown_cmd:
-   [[ `SHAPE_DECL_UNKNOWN; `OPAREN; il2 = OPT int_list; `CPAREN; `OSQUARE; il1= OPT id_list ;`CSQUARE   -> (un_option il2 [], un_option il1 [])
+   [[ `SHAPE_DECL_UNKNOWN; il2 = OPT cond_path; `OSQUARE; il1= OPT id_list ;`CSQUARE   -> (un_option il2 [], un_option il1 [])
    ]];
 
 shapeinfer_cmd:
@@ -1724,6 +1737,19 @@ shapeinfer_cmd:
    let il1 = un_option il1 [] in
    let il2 = un_option il2 [] in
    (il1,il2)
+   ]];
+
+shapedivide_cmd:
+   [[ `SHAPE_DIVIDE; `OSQUARE;il1=OPT id_list;`CSQUARE; `OSQUARE; il2=OPT id_list;`CSQUARE ->
+   let il1 = un_option il1 [] in
+   let il2 = un_option il2 [] in
+   (il1,il2)
+   ]];
+shapeconquer_cmd:
+   [[ `SHAPE_CONQUER; `OSQUARE; il2=OPT id_list;`CSQUARE; `OSQUARE; il1=OPT list_int_list ;`CSQUARE ->
+   let il1 = un_option il1 [] in
+   let il2 = un_option il2 [] in
+   (il2, il1)
    ]];
 
 shapepost_obl_cmd:
@@ -1881,7 +1907,9 @@ comma_list: [[`COMMA; s = OPT SELF -> 1 + (un_option s 1)]];
   
 id_list_opt:[[t= LIST0 id SEP `COMMA ->t]];
 
-int_list:[[t= LIST1 integer_literal SEP `DOT ->t]];
+int_list:[[t= LIST1 integer_literal SEP `SEMICOLON ->t]];
+
+list_int_list:[[t= LIST1 int_list SEP `COMMA ->t]];
 
 id_list:[[t=LIST1 id SEP `COMMA -> t]];
 

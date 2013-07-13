@@ -1,0 +1,37 @@
+data node{
+	int val;
+	node next;
+}.
+
+
+HeapPred H(node a, node b, node@NI c).
+HeapPred H_3(node prev, node@NI cur, node@NI sent).
+HeapPred H_2(node next_1, node@NI prev, node@NI sent).
+HeapPred G(node a, node ra, node b, node rb, node@NI c).
+
+infer_exact [H_2,H_3]
+ H_2(next_1,prev,sent) * H_3(prev,cur,sent) * 
+  cur::node<val_0,prev>@M&cur=cur_909 & cur'=next_1 & cur'!=sent & 
+  cur'!=null |-
+     cur'::node<val_0,n1>@M * H_2(n1,cur_909,sent) * H_3(cur_909,cur',sent).
+
+print residue.
+
+/*
+# swl-i3a.slk 
+
+ expected rel ass fromd pre-oblg entailment in swl-i3.slk
+ can u print the new assumptions generateted from pre/post oblg
+
+ inferred hprel: [
+   H_2(next_1,prev@NI,sent@NI)&next_1!=sent & 
+                   next_1!=null --> next_1::node<val_0,n1_43>@M * 
+                   HP_44(n1_43,prev@NI,sent@NI); 
+  HP_44(n1_43,prev@NI,sent@NI) |#| cur_909::node<val_0,prev>@M --> H_2(n1_43,cur_909@NI,sent@NI); 
+  H_3(prev,cur_909@NI,sent@NI) * cur_909::node<val_0,prev>@M&
+         cur'!=sent & cur'!=null --> H_3(cur_909,cur'@NI,sent@NI)
+
+*/
+
+
+

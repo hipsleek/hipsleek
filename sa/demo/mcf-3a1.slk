@@ -1,0 +1,140 @@
+data tree {
+    node children;
+    }.
+    
+data node {
+    tree child; 
+    //node prev; 
+    node next; 
+    tree parent;
+    }.
+
+HeapPred H_9(node children_8).
+HeapPred H_6(node next_3, tree@NI par).
+HeapPred H_5(tree child_2, tree@NI par).
+HeapPred H1(tree a).
+HeapPred H2(node a, tree@NI b).
+PostPred G1(tree a).
+PostPred G2(node a, tree@NI b).
+HeapPred H_7(tree parent_4, tree@NI par).
+Declare_Unknown [H_7].
+
+relAssume
+ H1(t) --> t::tree<children_8>@M * H_9(children_8).
+
+relAssume
+ H_9(children_8)&
+  children_8!=null --> H2(children_8,t).
+/*
+ H_9(children_8)&
+  children_8!=null |#| t::tree<children_8>@M --> H2(children_8,t).
+*/
+
+relAssume
+ H_9(children_8) &
+  children_8=null --> emp.
+
+relAssume
+ H2(l,par)& l!=null --> 
+    l::node<child_2,next_3,parent_4>@M * 
+    H_5(child_2,par) * H_6(next_3,par) * 
+    H_7(parent_4,par).
+
+relAssume
+ H_6(next_3,par) &par=par'--> H2(next_3,par). 
+ //H_6(next_3,par) --> H2(next_3,par). 
+
+relAssume
+ H_5(child_2,par) &par=par'--> H1(child_2). 
+ //H_5(child_2,par) --> H1(child_2). 
+
+relAssume
+ H2(l,par)&l=null --> emp.
+
+
+
+relAssume
+ H_7(parent_4,par) --> emp&par=parent_4.
+
+shape_infer [H1,H2][].
+//shape_infer [H1,H2,H_5,H_6,H_9,H_7][].
+
+/*
+# mcf-3a1.slk
+
+a more complex variant of mcf-3a.slk
+(from pre of check-mcf-2.ss)
+
+This version produced below which did not inlined H_5,H_6
+which are defns in guarded form?
+
+ H_6(next_3,par) &par=par'--> H2(next_3,par). 
+ H_5(child_2,par) &par=par'--> H1(child_2). 
+
+However, this guard is useless as par' is not used in
+the RHS either. Can we simplify these guarded form to:
+
+ H_6(next_3,par) --> H2(next_3,par). 
+ H_5(child_2,par) --> H1(child_2). 
+
+Also, did you process H_5,H_6 before H_9, followed
+by H2.
+
+H_5/H_6 are  simpler than H_9.
+
+H_9 itself is simpler than H2, hence it must
+be transformed before H2. Please check.
+
+--------------------------------------
+
+[ H1(t_158) ::= t_158::tree<children_8>@M * H_9(children_8),
+ H2(l_160,par_161) ::= 
+ l_160::node<child_103,next_104,parent_105>@M * H_5(child_103,par_161) * 
+ H_6(next_104,par_161)&par_161=parent_105
+ or emp&l_160=null,
+ H_9(children_159) ::= 
+ children_159::node<child_98,next_99,parent_100>@M * H_5(child_98,t_101) * 
+ H_6(next_99,t_101)&parent_100=t_101
+ or emp&children_159=null,
+ H_6(next_162,par_163) ::= H2(next_162,par_163)&par'=par_163,
+ H_5(child_164,par_165) ::= H1(child_164)&par'=par_165,
+ H_7(parent_4,par) ::= NONE]
+
+
+
+The version below seems to have allowed --pred-en-eup
+but not the longer version.
+  shape_infer [H1,H2][].
+//shape_infer [H1,H2,H_5,H_6,H_9,H_7][].
+
+GOT
+===
+ H1(t_129) ::= t_129::tree<children_8>@M * H_9(children_8),
+ H2(l_135,par_136) ::= 
+  H1(child_101) * H2(next_102,par_136) * 
+  l_135::node<child_101,next_102,parent_103>@M&par_136=parent_103
+ or emp&l_135=null,
+ H_9(children_134) ::= 
+  child_106::tree<children_8>@M * H_9(children_8) * H2(next_107,t_108) * 
+  children_134::node<child_106,next_107,parent_109>@M&parent_109=t_108
+ or emp&children_134=null,
+ H_7(parent_4,par) ::= NONE]
+
+ISSUE
+=====
+Outcome above is nice. Howevever H2 & H_9 are identical.
+I wonder if we can avoid them. 
+
+ALGO
+====
+We have:
+ H_9(children_8)&
+  children_8!=null --> H2(children_8,t).
+
+It seems that we have unfolded H2 when simplifying the
+relational assumption of H_9. I think we should never have
+unfolded a predicate with a complex RHS. Hence, we should 
+never have unfolded H2 in the first place.
+
+*/
+

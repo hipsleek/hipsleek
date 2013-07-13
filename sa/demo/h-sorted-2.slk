@@ -1,0 +1,47 @@
+
+data node {
+ int val;
+ node next;
+}.
+
+HeapPred H30(node next_17_928, int@NI v).
+HeapPred H(node x, int@NI v).
+PostPred G(node x, int@NI v).
+HeapPred H29(int@NI val_17_927, int@NI v).
+
+relAssume
+ H(x,v)&x!=null --> x::node<val_7,next_8>@M * 
+  H29(val_7,v) * H30(next_8,v).
+
+relAssume
+ H30(next_8,v)&
+  v<=val_7 |#| x::node<val_7,next_8>@M --> H(next_8,val_7).
+
+relAssume
+ H30(next_8,v)&
+  val_7<v |#| x::node<val_7,next_8>@M --> H(next_8,val_7).
+
+relAssume
+ H29(val_7,v) --> emp&val_7>=v.
+
+relAssume
+ H(x,v)&x=null --> emp.
+
+shape_infer [H,H_0,H_1,H_2][].
+
+/*
+# h-sorted-2.slk 
+
+
+----------
+
+ H30(next_8,v)&
+  val_7<v |#| x::node<val_7,next_8>@M --> H(next_8,val_7).
+
+ x=null --> G(x,v).
+
+ H29(val_7,v) * x::node<val_7,next_8>@M * 
+  G(next_8,val_7)&v<=val_7 --> G(x,v).
+
+
+*/

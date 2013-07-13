@@ -1376,6 +1376,178 @@ res:  failctx
                    fc_message: infer_heap_node
                    fc_current_lhs_flow: {FLOW,(19,20)=__norm}}
 ======================================================================
+# contra2b.slk
+
+infer [P,Q] P(x)*Q(y) & mmm=-1 & x!=null & y=null |-  mmm=3.
+print residue.
+
+Currently fails at method add_infer_hp_contr_to_list_context
+
+EXPECTING one of below:
+(i)   P(x)*Q(y) --> x=null | y!=null
+(ii)  P(x)     --> x=null | y!=null
+(iii) Q(y)     --> x=null | y!=null
+======================================================================
+# contra2c.slk
+
+infer [Z] P(x)*Q(y)*Z(x,k) & mmm=-1 & x!=null & y=null |-  mmm=3.
+
+Why fail?
+
+EXPECT:
+ Z(x,k) --> x=null
+
+ Loc : problem is still with 
+
+add_infer_hp_contr_to_list_context@19@15
+add_infer_hp_contr_to_list_context inp1 :[((Z,?),[k,x])]
+add_infer_hp_contr_to_list_context inp2 :[ x=null]
+add_infer_hp_contr_to_list_context inp3 : 
+Good Context: [es_formula: hfalse&false&{FLOW,(19,20)=__norm}[]
+               es_pure: true
+               es_orig_ante: Some(hfalse&false&{FLOW,(19,20)=__norm}[])
+               es_heap: emp
+               es_aux_conseq: true
+               es_must_error: None
+               es_var_measures: None
+               es_term_err: None
+               es_infer_vars: [k; x]
+               es_infer_vars_hp_rel: [Z]
+               es_unsat_flag: true]
+
+======================================================================
+# contra2e.slk
+
+Entail (1) : Valid. 
+
+ <1>hfalse&false&{FLOW,(19,20)=__norm}[]
+
+inferred hprel: [P(x) --> emp&x!=y; Q(y) --> emp&x!=y; Z(x,k) --> emp&x!=y]
+
+Above is inaccurate as it os the same as 
+  P(x) --> forall(y: x!=y).
+       --> false
+
+We really need:
+  P(x)*Q(y) --> x!=y
+
+If we get below (contra2c.slk), it is OK:
+
+  P(x) --> emp&(y!=null | x=null); 
+       --> forall(y:y!=null | x=null)
+       --> x=null
+Maybe better to have it simplified, and just pick
+one or more predicate. I suggest you do the following:
+
+Assume I have P1(x)P2(y)P3(y,k)
+and formula f(x,y)
+
+Try LHS:
+   P1(x) and then compute forall(y:F(x,y))
+Try LHS:
+   P2(y) and then compute forall(x:F(x,y))
+Try LHS:
+   P3(y,k) and then compute forall(x:F(x,y))
+
+If any not false, we just pick one of it as our
+solution. If all are false, we just return all terms
+that cover together the vars {x,y}:
+  P1(x)*P2(y) --> F(x,y)
+  P1(x)*P3(y,k) --> F(x,y)
+Only one of them is sufficient; so that we do not
+impose too strong an assumption.
+======================================================================
+# mcf-type-bug-1.slk
+
+Can we have a more meaningful type error message than below.
+At least, print the variable.
+
+ERROR: at mcf-1.slk_66:47_66:58 
+Message: gather_type_info_var : unexpected exceptionInvalid_argument("[ocamlgraph] iter_succ")
+ Fatal error: exception Failure("gather_type_info_var : unexpected exceptionInvalid_argument("[ocamlgraph] iter_succ")")
+======================================================================
+# sa/bugs/pure-1.slk 
+
+# came for check-dll.ss
+
+The above proof came from check-dll-1.slk. 
+   H_0 is a pre-predicate
+   G1 is a post-predicate
+We currently got below which is somewhat complex.
+
+Entail (1) : Valid. 
+ inferred hprel: [H_0(prev28,prv@NI) --> emp&forall(l:(prev28=prv | l=null))]
+
+//(1)
+infer [H_0,G1]
+H_0(prev28,prv) * 
+l::node<prev28,next29> * G1(next29,l)&l!=null & 
+!(v_bool_18_904') & l!=null & !(v_bool_18_904') & prev28!=prv & 
+!(v_boolean02') & prev28!=prv & next29=next29 & l=l & 
+v_boolean01' & !(v_boolean03') & !(v_boolean02') & res=v_boolean03'
+ |-  G1(l,prv)&res.
+print residue.
+
+//(2)
+infer [G1]
+
+//(3)
+infer [H_0]
+
+//(4)
+infer [l,H_0]
+
+The outcome of the first three variants:
+
+Entail (1) : Valid. 
+ inferred hprel: [H_0(prev28,prv@NI) --> emp&forall(l:(prev28=prv | l=null))]
+
+Expected:
+ inferred hprel: [H_0(prev28,prv@NI) --> emp&prev28=prv]
+
+Entail (2) : Valid. 
+ inferred hprel: [G1(next29,l@NI) --> emp&l=null]
+
+Entail (3) : Valid. 
+ inferred hprel: [H_0(prev28,prv@NI) --> emp&prev28=prv]
+
+The first version is complex as it have used parameters
+from H_0 & G1. The 2nd version is for post-predicate G1, 
+and is less preferred than the 3rd version for pre-predicate H_0.
+
+ALGO
+====
+We will attempt to find early contradiction for
+single predicate rather than multiple predicate.
+We should order the unknown predicates such that
+only pre-pred comes before post-pred
+
+We first choose direct vars to see if we can find
+a contra. If not, we search thru the list to find
+the first unknown predicate that has a satisfiable
+entry. If so, we return that as our solution.
+
+ //(4)
+ infer [l,H_0]
+ inferred hprel: [G1(next29,l@NI) --> emp&l=null]
+
+GOT
+===
+Entail (4) : Valid. 
+ <1>hfalse&false&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [H_0(prev28,prv@NI) --> emp&prev28=prv]
+
+EXPECTED:
+ <1>hfalse&false&{FLOW,(19,20)=__norm}[]
+ inferred pure : l=null
+
+*/
+======================================================================
+======================================================================
+======================================================================
+======================================================================
+======================================================================
+======================================================================
 ======================================================================
 ======================================================================
 ======================================================================

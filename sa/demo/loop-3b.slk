@@ -1,0 +1,25 @@
+data node{
+	node next;
+}.
+
+HeapPred H(node a).
+
+relAssume
+  H(x) --> H(x).
+
+relAssume
+  H(x) --> x::node<n>.
+  //H(x) --> x::node<n>*H(n).
+
+shape_infer [H][].
+
+
+/*
+# loop-3b.slk
+
+GOT correct result:
+  H(x_18) ::= x_18::node<Anon_11>@M]
+[ H(x_17) ::= x_17::node<n>@M * H(x_17)]
+
+
+*/

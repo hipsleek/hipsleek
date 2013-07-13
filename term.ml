@@ -6,6 +6,7 @@ module Inf = Infer
 
 open Gen.Basic
 open Globals
+open Others
 open Cprinter
 open Cformula
 
@@ -574,7 +575,7 @@ let check_term_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
 let check_term_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
   let pr = !print_mix_formula in
   let pr2 = !print_entail_state in
-  let f = wrap_proving_kind "TERM-DEC" (check_term_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p) in
+  let f = wrap_proving_kind PK_Term_Dec (check_term_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p) in
    Debug.no_3 "trans_lexvar_rhs" pr2 pr pr
     (fun (es, lhs, rhs, _) -> pr_triple pr2 pr pr (es, lhs, rhs))  
     (fun _ _ _ -> f pos) estate lhs_p rhs_p
@@ -1207,7 +1208,7 @@ let phase_num_infer_whole_scc (prog: Cast.prog_decl) (proc_lst: Cast.proc_decl l
 
 (* Main function of the termination checker *)
 let term_check_output () =
-  if not !Globals.dis_term_msg then
+  if (not !Globals.dis_term_msg) && not(term_res_stk # is_empty) then
     (fmt_string "\nTermination checking result:\n";
     (if (!Globals.term_verbosity == 0) then pr_term_res_stk (term_res_stk # get_stk)
     else pr_term_err_stk (term_err_stk # get_stk));

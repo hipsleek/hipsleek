@@ -1,0 +1,63 @@
+data tree {
+    node children;
+    }.
+    
+data node {
+    tree child; 
+    node prev; 
+    node next; 
+    tree parent;
+    }.
+
+HeapPred H1(tree a).
+PostPred G1(tree a).
+HeapPred H2(node a,node@NI c,tree@NI b).
+HeapPred H_1(tree a,node@NI c,tree@NI b).
+HeapPred H_2(node a,node@NI c,tree@NI b).
+HeapPred H_3(node a,node@NI c,tree@NI b).
+HeapPred H_4(tree a,node@NI c,tree@NI b).
+HeapPred H_5(node a).
+PostPred G2(node a,node@NI c,tree@NI b).
+Declare_Unknown [H_2,H_4].
+
+infer [H_5,H2] H_5(children) * 
+  t::tree<children> 
+  & t=t' & n_38'=null & children!=null 
+  //& !(v_bool_32_983') &  children!=null & !(v_bool_32_983') 
+  & children=v_node
+ |-  H2(v_node,n_38',t').
+print residue. 
+
+
+/*
+# mcf-1a.slk
+
+GOT:
+ inferred hprel: [H_5(v_node)&
+                   v_node!=null --> H2(v_node,n_38'@NI,t'@NI)
+ <1>t::tree<children_>@M[Orig]&t=t' & n_38'=null & children_!=null & !(v_bool_32_983') & children_!=null & !(v_bool_32_983') & children_=v_node&{FLOW,(19,20)=__norm}[]
+
+========================
+
+It seems we are missing on n_38'=null. Also, 
+It seems we need some context that would allow n_38',t'
+on the RHS to be instantiated. Thus, we should have:
+
+ H_5(v_node) & v_node!=null & n_38'=null  
+     & children=v_node & t=t'
+     | t::tree<children> 
+   --> H2(v_node,n_38'@NI,t'@NI)
+
+ H_5(v_node) & v_node!=null 
+     | t::tree<v_node> 
+   --> H2(v_node,n_38'@NI,t@NI) & n_38'=null
+
+============================================
+
+ id: 60; caller: []; line: 33; classic: false; kind: PRE-2; hec_num: 5; evars: []; infer_vars: [H1,G1,H2,G2,HP_1085]; c_heap: emp
+ checkentail HP_1085(children_) * t::tree<val_32_1083,children_>@M[Orig]&
+t=t' & n_38'=null & children_!=null & !(v_bool_32_983') & 
+children_!=null & !(v_bool_32_983') & children_=v_node&
+{FLOW,(22,23)=__norm}[]
+ |-  H2(v_node,n_38',t')&{FLOW,(22,23)=__norm}[]. 
+*/

@@ -7,7 +7,7 @@ HeapPred G3(node a,node b).
 HeapPred HP_4(node a,node@NI b).
 HeapPred HP_5(node a,node@NI b).
 
-relAssume G3
+relAssume
  l1::node<l2,p> * HP_4(n3,l1) * HP_5(p,l1) * l2::node<n3,l1> --> G3(l1,l2).
  
 shape_infer [HP_4,HP_5][G3].

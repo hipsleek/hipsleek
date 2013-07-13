@@ -348,21 +348,11 @@ object
        | Some l -> (string_of_pos l.start_pos)
 end;;
 
-class proving_type =
-object
-  inherit [string] store "None" (fun x -> x)
-     (* method string_of_string : string = match lc with *)
-     (*   | None -> "None" *)
-     (*   | Some l -> l *)
-end;;
-
 
 
 (*Some global vars for logging*)
 let proving_loc  = new prog_loc
 let post_pos = new prog_loc
-let proving_kind = new proving_type
-let sleek_kind = new proving_type
 let explain_mode = new failure_mode
 let return_exp_pid = ref ([]: control_path_id list)	
 let z3_proof_log_list = ref ([]: string list)
@@ -370,51 +360,7 @@ let z3_time = ref 0.0
 
 let add_to_z3_proof_log_list (f: string) =
 	z3_proof_log_list := !z3_proof_log_list @ [f]
-	 
-let proving_info () = 
-  if(proving_kind # is_avail) then
-    (
-	let temp= if(explain_mode # is_avail) then "FAILURE EXPLAINATION" else proving_kind # string_of in
-      	if (post_pos # is_avail) 
-        then ("Proving Infor spec:"^(post_pos#string_of_pos) ^" loc:"^(proving_loc#string_of_pos)^" kind::"^temp)
-        else 
-          let loc_info = 
-            if (proving_loc # is_avail) then " loc:"^(proving_loc#string_of_pos)
-            else " loc: NONE" 
-          in ("Proving Infor spec:"^(post_pos#string_of_pos) ^loc_info^" kind::"^temp)
-    )
-  else "..no proving kind.."(*"who called is_sat,imply,simplify to be displayed later..."*)
 
-
-let wrap_proving_kind (str : string) exec_function args =
-  (* if (!sleek_logging_txt || !proof_logging_txt) then *)
-    begin
-      let b = proving_kind # is_avail in
-      let m = proving_kind # get in
-      let _ = proving_kind # set str in
- 	  try 
-        let res = exec_function args in
-        let _ =  
-          if b then proving_kind # set m 
-          else proving_kind # reset
-        in res
-      with _ as e ->
-          begin
-            (if b then proving_kind # set m 
-            else proving_kind # reset);
-            raise e
-          end
-    end
-  (* else 	 *)
-  (*   let res = exec_function args  *)
-  (*   in res *)
- 
-(* let wrap_proving_kind (str : string) exec_function args = *)
-(*   Debug.no_1 "wrap_proving_kind" pr_id pr_none  *)
-(*       (fun _ -> wrap_proving_kind str exec_function args) str *)
-
-(* let post_pos = ref no_pos *)
-(* let set_post_pos p = post_pos := p *)
 
 let entail_pos = ref no_pos
 let set_entail_pos p = entail_pos := p
@@ -640,6 +586,9 @@ let lib_files = ref ([] : string list)
 
 (* command line options *)
 
+let texify = ref false
+let testing_flag = ref false
+
 let instantiation_variants = ref 0
 
 let omega_simpl = ref true
@@ -660,7 +609,16 @@ let dis_show_diff = ref false
 
 let sa_print_inter = ref false
 
+let print_heap_pred_decl = ref true
+
+let cond_path_trace = ref false
+
 let sa_old = ref false
+
+let sa_dnc = ref false
+
+(*temp: should be improve*)
+let pred_en_oblg = ref true
 
 (* let sa_en_norm = ref false *)
 
@@ -674,11 +632,14 @@ let sa_refine_dang = ref false
 
 let pred_elim_useless = ref false
 
+let pred_infer_flag = ref true
+
 let pred_elim_dangling = ref false
 
 (* let sa_inlining = ref false *)
 
 let sa_sp_split_base = ref false
+let sa_pure_field = ref false
 
 let sa_infer_split_base = ref true
 
@@ -701,6 +662,8 @@ let sa_subsume = ref false
 (* let norm_elim_useless = ref false *)
 
 let norm_extract = ref false
+
+let norm_cont_analysis = ref false
 
 let dis_sem = ref false
 
@@ -740,6 +703,7 @@ let allow_inf = ref true (*enable support to use infinity (\inf and -\inf) in fo
 let ann_derv = ref false
 
 let print_ann = ref true
+let print_derv = ref false
 
 let print_clean_flag = ref true
 
@@ -781,6 +745,8 @@ let print_proc = ref false
 let check_all = ref true
   
 let auto_number = ref true
+
+let sleek_flag = ref false
 
 let sleek_log_filter = ref true
 (* flag to filter trivial sleek entailment logs *)
@@ -868,6 +834,10 @@ let print_err_sleek = ref false
 let enable_prune_cache = ref true
 
 let enable_counters = ref false
+
+let enable_time_stats = ref true
+
+let enable_count_stats = ref true
 
 let enable_fast_imply = ref false
 

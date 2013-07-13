@@ -15,10 +15,10 @@ HeapPred H_3a(node a).
 
 Declare_Unknown [H_2a].
 
-relAssume H
+relAssume 
  H(x) --> x::node<left_25_800,right_25_801>@M * H_2a(left_25_800) 
   * H_3a(right_25_801).
-relAssume H
+relAssume 
  H_3a(right_25_801)&right_25_801=null --> emp.
 
 shape_infer [H,H_3a][].

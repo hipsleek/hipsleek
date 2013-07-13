@@ -1,0 +1,23 @@
+data node{
+	node next;
+}.
+
+PostPred G(node a).
+
+relAssume
+  G(x) --> G(x).
+
+shape_infer [][G].
+
+/*
+# loop-3c.slk
+
+GOT:
+  G(x_14) ::= G(x_14)
+
+Better (simpler) to have:
+  G(x_14) ::= false
+
+
+
+*/
