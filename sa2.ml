@@ -875,51 +875,63 @@ let generalize_one_hp_x prog is_pre (hpdefs: (CP.spec_var *CF.hp_rel_def) list) 
   if par_defs = [] then ([],[]) else
     begin
         let hp, args, _, f0,_ = (List.hd par_defs) in
-        if CP.mem_svl hp skip_hps then
-          let fs = List.map (fun (a1,args,og,f,unk_args) -> fst (CF.drop_hrel_f f [hp]) ) par_defs in
-          let fs1 = Gen.BList.remove_dups_eq (fun f1 f2 -> SAU.check_relaxeq_formula args f1 f2) fs in
-          (SAU.mk_unk_hprel_def hp args fs1 no_pos,[])
-        else
-          (*find the root: ins2,ins3: root is the second, not the first*)
-          let args0 = List.map (CP.fresh_spec_var) args in
-          (* DD.ninfo_pprint ((!CP.print_sv hp)^"(" ^(!CP.print_svl args) ^ ")") no_pos; *)
-          let quan_null_svl,_ = get_null_quans f0 in
-          let quan_null_svl0 = List.map (CP.fresh_spec_var) quan_null_svl in
-          let defs,ogs, ls_unk_args = split3 (List.map (obtain_and_norm_def hp args0 quan_null_svl0) par_defs) in
-          let r,non_r_args = SAU.find_root prog skip_hps args0 defs in
-          (*make explicit root*)
-          let defs0 = List.map (SAU.mk_expl_root r) defs in
-          let unk_svl = CP.remove_dups_svl (List.concat (ls_unk_args)) in
-          (*normalize linked ptrs*)
-          let defs1 = SAU.norm_hnodes args0 defs0 in
-          (*remove unkhp of non-node*)
-          let defs2 = (* List.map remove_non_ptr_unk_hp *) defs1 in
-          (*remove duplicate*)
-          let defs3 = SAU.equiv_unify args0 defs2 in
-          let defs4 = SAU.remove_equiv_wo_unkhps hp skip_hps defs3 in
-          let defs5a = SAU.find_closure_eq hp args0 defs4 in
-          (*Perform Conjunctive Unification (without loss) for post-preds. pre-preds are performed separately*)
-          let defs5 =  if is_pre then defs5a else
-            SAU.perform_conj_unify_post prog args0 (unk_hps@link_hps) unk_svl defs5a no_pos
-          in
-          let pr1 = pr_list_ln Cprinter.prtt_string_of_formula in
-          let _ = DD.ninfo_pprint ("defs1: " ^ (pr1 defs1)) no_pos in
-          (*remove duplicate with self-recursive*)
-          (* let base_case_exist,defs4 = SAU.remove_dups_recursive hp args0 unk_hps defs3 in *)
-          (*find longest hnodes common for more than 2 formulas*)
-          (*each hds of hdss is def of a next_root*)
-          (* let defs5 = List.filter (fun f -> have_roots args0 f) defs4 in *)
-          let old_disj = !Globals.pred_disj_unify in
-          let disj_opt = !Globals.pred_elim_useless || !Globals.pred_disj_unify in
-          let defs,elim_ss = if disj_opt then
-            SAU.get_longest_common_hnodes_list prog is_pre hpdefs (skip_hps) unk_svl hp r non_r_args args0 defs5 ogs
+        let _ = Debug.binfo_pprint ("    synthesize: " ^ (!CP.print_sv hp) ) no_pos in
+        let hpdefs,subst_useless=
+          if CP.mem_svl hp skip_hps then
+            let fs = List.map (fun (a1,args,og,f,unk_args) -> fst (CF.drop_hrel_f f [hp]) ) par_defs in
+            let fs1 = Gen.BList.remove_dups_eq (fun f1 f2 -> SAU.check_relaxeq_formula args f1 f2) fs in
+            (SAU.mk_unk_hprel_def hp args fs1 no_pos,[])
           else
-            let defs = SAU.mk_hprel_def prog is_pre hpdefs skip_hps unk_svl hp (args0,r,non_r_args) defs5 ogs no_pos in
-          (defs,[])
-          in
-          let _ = Globals.pred_disj_unify := old_disj in
-          if defs <> [] then (defs,elim_ss) else
-            report_error no_pos "shape analysis: FAIL"
+            (*find the root: ins2,ins3: root is the second, not the first*)
+            let args0 = List.map (CP.fresh_spec_var) args in
+            (* DD.ninfo_pprint ((!CP.print_sv hp)^"(" ^(!CP.print_svl args) ^ ")") no_pos; *)
+            let quan_null_svl,_ = get_null_quans f0 in
+            let quan_null_svl0 = List.map (CP.fresh_spec_var) quan_null_svl in
+            let defs,ogs, ls_unk_args = split3 (List.map (obtain_and_norm_def hp args0 quan_null_svl0) par_defs) in
+            let r,non_r_args = SAU.find_root prog skip_hps args0 defs in
+            (*make explicit root*)
+            let defs0 = List.map (SAU.mk_expl_root r) defs in
+            let unk_svl = CP.remove_dups_svl (List.concat (ls_unk_args)) in
+            (*normalize linked ptrs*)
+            let defs1 = SAU.norm_hnodes args0 defs0 in
+            (*remove unkhp of non-node*)
+            let defs2 = (* List.map remove_non_ptr_unk_hp *) defs1 in
+            (*remove duplicate*)
+            let defs3 = SAU.equiv_unify args0 defs2 in
+            let defs4 = SAU.remove_equiv_wo_unkhps hp skip_hps defs3 in
+            let defs5a = SAU.find_closure_eq hp args0 defs4 in
+            (*Perform Conjunctive Unification (without loss) for post-preds. pre-preds are performed separately*)
+            let defs5 =  if is_pre then defs5a else
+              SAU.perform_conj_unify_post prog args0 (unk_hps@link_hps) unk_svl defs5a no_pos
+            in
+            let pr1 = pr_list_ln Cprinter.prtt_string_of_formula in
+            let _ = DD.ninfo_pprint ("defs1: " ^ (pr1 defs1)) no_pos in
+            (*remove duplicate with self-recursive*)
+            (* let base_case_exist,defs4 = SAU.remove_dups_recursive hp args0 unk_hps defs3 in *)
+            (*find longest hnodes common for more than 2 formulas*)
+            (*each hds of hdss is def of a next_root*)
+            (* let defs5 = List.filter (fun f -> have_roots args0 f) defs4 in *)
+            let old_disj = !Globals.pred_disj_unify in
+            let disj_opt = !Globals.pred_elim_useless || !Globals.pred_disj_unify in
+            let defs,elim_ss = if disj_opt then
+              SAU.get_longest_common_hnodes_list prog is_pre hpdefs (skip_hps) unk_svl hp r non_r_args args0 defs5 ogs
+            else
+              let defs = SAU.mk_hprel_def prog is_pre hpdefs skip_hps unk_svl hp (args0,r,non_r_args) defs5 ogs no_pos in
+              (defs,[])
+            in
+            let _ = Globals.pred_disj_unify := old_disj in
+            if defs <> [] then
+              (defs,elim_ss)
+            else
+              report_error no_pos "shape analysis: FAIL"
+        in
+        (********PRINTING***********)
+        let _ = List.iter (fun (_, def) ->
+            Debug.binfo_pprint ((Cprinter.string_of_hp_rel_def_short def)) no_pos)
+          hpdefs
+        in
+        (********END PRINTING***********)
+        (hpdefs, subst_useless)
     end
 
 let generalize_one_hp prog is_pre (defs:(CP.spec_var *CF.hp_rel_def) list) non_ptr_unk_hps unk_hps link_hps par_defs=
@@ -1621,19 +1633,6 @@ and infer_shapes_init_post prog (constrs0: CF.hprel list) non_ptr_unk_hps sel_po
     (*call to infer_shape? proper? or post?*)
 and infer_shapes_from_fresh_obligation_x iprog cprog proc_name is_pre cond_path (constrs0: CF.hprel list) callee_hps non_ptr_unk_hps sel_lhps sel_rhps sel_post_hps
       unk_hpargs link_hpargs need_preprocess hp_rel_unkmap detect_dang pre_defs post_defs def_hps=
-  (* let collect_ho_ass (acc_constrs, post_no_def) cs= *)
-  (*   let lhs_hps = CF.get_hp_rel_name_formula cs.CF.hprel_lhs in *)
-  (*   let rhs_hps = CF.get_hp_rel_name_formula cs.CF.hprel_rhs in *)
-  (*   let linfer_hps = CP.remove_dups_svl (CP.diff_svl (lhs_hps) def_hps) in *)
-  (*   let rinfer_hps =  (CP.diff_svl (rhs_hps) def_hps) in *)
-  (*   let infer_hps = CP.remove_dups_svl (linfer_hps@rinfer_hps) in *)
-  (*   if infer_hps = [] then (acc_constrs, post_no_def) else *)
-  (*    let log_str = if is_pre then PK_Pre_Oblg else PK_Post_Oblg in *)
-  (*    let  _ = DD.binfo_pprint ((string_of_proving_kind log_str) ^ ":\n" ^ (Cprinter.string_of_hprel_short cs)) no_pos in *)
-  (*     let f = wrap_proving_kind log_str (SAC.do_entail_check infer_hps cprog) in *)
-  (*     let new_constrs = f cs in *)
-  (*     (acc_constrs@new_constrs, post_no_def@linfer_hps) *)
-  (* in *)
   let ho_constrs, nondef_post_hps = List.fold_left (collect_ho_ass cprog is_pre def_hps) ([],[]) constrs0 in
   if ho_constrs = [] then ([],[],unk_hpargs,hp_rel_unkmap) else
     (***************  PRINTING*********************)
