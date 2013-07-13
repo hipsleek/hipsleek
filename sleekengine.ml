@@ -715,7 +715,9 @@ let run_infer_one_pass ivars (iante0 : meta_formula) (iconseq0 : meta_formula) =
   let pr = string_of_meta_formula in
   let pr1 = pr_list pr_id in
   let pr_2 = pr_triple string_of_bool Cprinter.string_of_list_context !CP.print_svl in
-  Debug.no_3 "run_infer_one_pass" pr1 pr pr pr_2 run_infer_one_pass ivars iante0 iconseq0
+  let nn = (sleek_proof_counter#get) in
+  let f x = wrap_proving_kind (PK_Sleek_Entail nn) (run_infer_one_pass ivars iante0) x in
+  Debug.no_3 "run_infer_one_pass" pr1 pr pr pr_2 (fun _ _ _ -> f iconseq0) ivars iante0 iconseq0
 
 let process_rel_assume cond_path (ilhs : meta_formula) (igurad_opt : meta_formula option) (irhs: meta_formula)=
   (* let _ = DD.info_pprint "process_rel_assume" no_pos in *)

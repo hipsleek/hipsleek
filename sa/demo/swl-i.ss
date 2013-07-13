@@ -53,6 +53,28 @@ ensures prev'::ll<sent>  & cur'=sent ;
 }
 
 /*
+# swl-i.ss
+
+shape_infer is failing for some reason
+(i) provide an option --sa-dis-infer
+    to disable shape_infer
+(ii) try to fix the problem such that a
+     less accurate result is obtained rather
+     than an exception
+
+Context of Verification Failure: 1 File "swl-i.ss",Line:32,Col:10
+Last Proving Location: 1 File "swl-i.ss",Line:51,Col:2
+
+ERROR: at _0:0_0:0 
+Message: shape analysis: FAIL
+ 
+ExceptionFailure("shape analysis: FAIL")Occurred!
+
+Error(s) detected at main 
+Stop Omega... 101 invocations caught
+(Program not linked with -g, cannot print stack backtrace)
+
+Exception occurred: Failure("shape analysis: FAIL")
 
 HeapPred H(node a, node b, node@NI c).
 HeapPred H_3(node prev, node@NI cur, node@NI sent).

@@ -70,6 +70,7 @@ let find_impt ls =
     | [] -> PK_Unknown
     | [x] -> x
     | x::xs -> (match x with
+        | PK_Sleek_Entail(_)
         | PK_Assert | PK_BIND | PK_PRE | PK_PRE_REC | PK_POST -> x
         | _ -> aux xs
       ) 

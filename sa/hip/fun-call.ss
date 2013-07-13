@@ -23,6 +23,7 @@ int size_helper(node x, ref int n)
   infer[H1,G1]
   requires H1(x) //0<=m
   ensures G1(x);// & SIZEH(res,n);//res=m+n & m>=0
+/*
 {
   if (x==null) 
     return n;
@@ -31,6 +32,7 @@ int size_helper(node x, ref int n)
     return size_helper(x.next, n);
   }
 }
+*/
 
 int size(node x)
   infer[H1,H2,G1,G2]
@@ -40,5 +42,5 @@ int size(node x)
   /* ensures true; */
 {
   int n = 0;
-  return size_helper(x, n);
+  return size_helper(x, n) + size(x.next);
 }
