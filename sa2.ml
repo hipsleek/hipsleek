@@ -244,6 +244,7 @@ let apply_transitive_impl_fix prog post_hps callee_hps (* hp_rel_unkmap *) dang_
         DD.binfo_pprint (" freeze: " ^ (!CP.print_svl equal_hps) )no_pos
       else ()
       in
+      let frozen_hps0 = frozen_hps@equal_hps in
       DD.binfo_pprint ">>>>>> step 3b: do apply_transitive_imp <<<<<<" no_pos;
       (* let constrs2, new_cs2, new_non_unk_hps = subst_cs prog dang_hps constrs new_cs1 in *)
       if equal_hps = [] then
@@ -255,7 +256,8 @@ let apply_transitive_impl_fix prog post_hps callee_hps (* hp_rel_unkmap *) dang_
       else
         let is_changed, constrs2,new_cs2,unfrozen_hps  = subst_cs prog post_hps dang_hps link_hps (frozen_hps@equal_hps)
           complex_hps constrs new_cs1 in
-        let unfrozen_hps1 = CP.remove_dups_svl unfrozen_hps in
+        let unfrozen_hps1 = CP.remove_dups_svl (CP.intersect_svl unfrozen_hps frozen_hps0) in
+        let frozen_hps1 = CP.diff_svl  frozen_hps0 unfrozen_hps1 in
         let _ = if unfrozen_hps1 <> [] then
           DD.binfo_pprint (" unfreeze: " ^ (!CP.print_svl unfrozen_hps) )no_pos
         else ()
@@ -268,7 +270,6 @@ let apply_transitive_impl_fix prog post_hps callee_hps (* hp_rel_unkmap *) dang_
               (fun _ -> helper_x constrs new_cs) new_cs
         in
         (*END for debugging*)
-        let frozen_hps1 = CP.diff_svl  (frozen_hps@equal_hps) unfrozen_hps1 in
         let norm_constrs, non_unk_hps1 =
           let constrs, new_constrs = if is_changed then (new_cs2, constrs2) else (constrs, new_cs1) in
           (* helper new_cs2 constrs2 (frozen_hps@equal_hps) in *)

@@ -5153,7 +5153,7 @@ PROBLEM why is a useless guard next!=null present? It
            next_1!=null |#| cur::node<Anon_11,prev>@M --> H_2(n1_37,cur@NI,sent@NI); 
            ^^^^^^^^^^^
 =====================================================================
-# swl-i3.slk --pred-en-oblg
+# swl-i3.slk --pred-en-oblg: FIXED
 
 relAssume
  (0)H(cur,prev,sent) --> cur::node<val_0,next_1>@M * 

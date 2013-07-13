@@ -73,14 +73,15 @@ let ranking_frozen_mutrec_preds pr_hp_cs=
 *)
 let search_pred_4_equal_x constrs post_hps frozen_hps=
   let ignored_hps = post_hps@frozen_hps in
-  let partition_pre_preds (pre_preds, rem_constrs) cs=
+  let partition_pre_preds (pre_preds, rem_constrs, tupled_hps) cs=
     let l_hpargs = CF.get_HRels_f cs.CF.hprel_lhs in
     let r_hpargs = CF.get_HRels_f cs.CF.hprel_rhs in
     let rhps = List.map fst r_hpargs in
     match l_hpargs with
-      | [] -> (pre_preds, rem_constrs@[cs])
-      | [(hp,_)] -> if CP.mem_svl hp ignored_hps then (pre_preds, rem_constrs@[cs]) else
-          pre_preds@[(hp,cs, CP.diff_svl rhps (ignored_hps))],rem_constrs
+      | [] -> (pre_preds, rem_constrs@[cs],tupled_hps)
+      | [(hp,_)] -> if CP.mem_svl hp ignored_hps then (pre_preds, rem_constrs@[cs],tupled_hps)
+        else
+         (pre_preds@[(hp,cs, CP.diff_svl rhps (ignored_hps))],rem_constrs,tupled_hps)
       | _ -> let linter = List.fold_left (fun ls (hp,args) ->
             if not (CP.mem_svl hp ignored_hps) && List.exists (fun (_,args1) ->
                 SAU.eq_spec_var_order_list args args1
@@ -88,8 +89,9 @@ let search_pred_4_equal_x constrs post_hps frozen_hps=
               ls@[hp]
             else ls
         ) [] l_hpargs in
-            if linter  = [] then (pre_preds, rem_constrs@[cs]) else
-          pre_preds@(List.map (fun hp -> (hp,cs, CP.diff_svl rhps (ignored_hps))) linter), rem_constrs
+            if linter  = [] then (pre_preds, rem_constrs@[cs], tupled_hps@(List.map fst l_hpargs))
+            else
+              (pre_preds@(List.map (fun hp -> (hp,cs, CP.diff_svl rhps (ignored_hps))) linter), rem_constrs,tupled_hps)
   in
   let check_is_guard cs = match cs.CF.hprel_guard with
     | None -> false
@@ -133,12 +135,15 @@ let search_pred_4_equal_x constrs post_hps frozen_hps=
            in
            partition_equal n_res rest1
   in
-  let pr_pre_preds, _ = List.fold_left partition_pre_preds ([],[]) constrs in
-  let pre_preds_cand_equal, complex_nonrec_hps, complex_hps = partition_equal ([],[],[]) pr_pre_preds in
+  (*tupled_hps: will be processed as pre-oblg *)
+  let pr_pre_preds, _, tupled_hps = List.fold_left partition_pre_preds ([],[],[]) constrs in
+  let pre_preds_cand_equal0, complex_nonrec_hps, complex_hps = partition_equal ([],[],[]) pr_pre_preds in
   let pr2 (a,_,_) = !CP.print_sv a in
-  let _ = Debug.ninfo_pprint ("    pre_preds_cand_equal: " ^ ((pr_list pr2) pre_preds_cand_equal)) no_pos in
+  let _ = Debug.ninfo_pprint ("    pre_preds_cand_equal: " ^ ((pr_list pr2) pre_preds_cand_equal0)) no_pos in
+  (*filter the tupled_hps *)
+  let pre_preds_cand_equal1 = List.filter (fun (hp,_,_) -> not (CP.mem_svl hp tupled_hps)) pre_preds_cand_equal0 in
   (*filter frozen candidates that depends on others. they will be synthesized next round.*)
-  let cand_equal_hps = List.map fst3 pre_preds_cand_equal in
+  (* let cand_equal_hps = List.map fst3 pre_preds_cand_equal1 in *)
   let nonrec_complex_guard_hps = List.map fst complex_nonrec_hps in
   (* let pre_preds_4_equal = List.fold_left (fun res (hp, cs, dep_hps) -> *)
   (*     let n_res= *)
@@ -147,7 +152,7 @@ let search_pred_4_equal_x constrs post_hps frozen_hps=
   (*       else [] *)
   (*     in *)
   (*     res@n_res *)
-  (* ) [] pre_preds_cand_equal *)
+  (* ) [] pre_preds_cand_equal1 *)
   (* in *)
   (*remove one that depends on the guard, the guard should go first*)
   let _ = Debug.ninfo_pprint ("    nonrec_complex_guard_hps: " ^ (!CP.print_svl nonrec_complex_guard_hps)) no_pos in
@@ -155,13 +160,13 @@ let search_pred_4_equal_x constrs post_hps frozen_hps=
       if CP.intersect_svl deps nonrec_complex_guard_hps = [] then
         ls_cand@[(hp,cs)]
       else ls_cand
-  ) [] pre_preds_cand_equal in
+  ) [] pre_preds_cand_equal1 in
   (*mut rec dep*)
-  let pre_preds_4_equal1 = (* if pre_preds_4_equal = [] && pre_preds_cand_equal <> [] then *)
+  let pre_preds_4_equal1 = (* if pre_preds_4_equal = [] && pre_preds_cand_equal1 <> [] then *)
     if  pre_preds_4_equal  <> [] then
-    ranking_frozen_mutrec_preds pre_preds_cand_equal
+    ranking_frozen_mutrec_preds pre_preds_cand_equal1
     (* let pre_preds_4_equal_w_size = List.map (fun (hp,cs,deps) -> (hp,cs,deps, CF.get_h_size_f cs.CF.hprel_rhs)) *)
-    (*   pre_preds_cand_equal in *)
+    (*   pre_preds_cand_equal1 in *)
     (* let hp,cs,_,_ = List.fold_left (fun (hp0,cs0,deps0, s0) (hp1,cs1,deps1, s1) -> *)
     (*     if s1<s0 then (hp1,cs1,deps1, s1) else (hp0,cs0,deps0, s0) *)
     (* ) (List.hd pre_preds_4_equal_w_size) (List.tl pre_preds_4_equal_w_size) in *)
