@@ -1728,7 +1728,7 @@ and infer_shapes_from_obligation_x iprog prog proc_name is_pre cond_path (constr
           | _ -> false
     ) (pre_defs@post_defs) in
     (*transform defs to cviews*)
-    let n_cviews,chprels_decl = Astsimp.trans_hprel_2_cview iprog prog proc_name need_trans_hprels in
+    let n_cviews,chprels_decl = Saout.trans_hprel_2_cview iprog prog proc_name need_trans_hprels in
     let in_hp_names = List.map CP.name_of_spec_var dep_def_hps in
     (*for each oblg, subst + simplify*)
     let constrs2 = SAC.trans_constr_hp_2_view_x iprog prog proc_name

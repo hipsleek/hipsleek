@@ -12,6 +12,7 @@ module MCP = Mcpure
 module CEQ = Checkeq
 module TP = Tpdispatcher
 module SAU = Sautility
+module SAO = Saout
 module Inf = Infer
 
 let cmp_hp_pos (hp1,pos1) (hp2,pos2)= (CP.eq_spec_var hp1 hp2) && pos1=pos2
@@ -2080,9 +2081,9 @@ let reverify_cond prog (unk_hps: CP.spec_var list) link_hps hpdefs cond_equivs=
 
 let trans_constr_hp_2_view_x iprog cprog proc_name in_hp_names chprels_decl constrs=
   let process_cs cs=
-    let nlhs = Astsimp.trans_formula_hp_2_view iprog cprog proc_name
+    let nlhs = SAO.trans_formula_hp_2_view iprog cprog proc_name
       in_hp_names chprels_decl cs.CF.hprel_lhs in
-    let nrhs = Astsimp.trans_formula_hp_2_view iprog cprog proc_name
+    let nrhs = SAO.trans_formula_hp_2_view iprog cprog proc_name
       in_hp_names chprels_decl cs.CF.hprel_rhs in
     {cs with CF.hprel_lhs = nlhs;
     CF.hprel_rhs = nrhs;}
