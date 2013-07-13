@@ -30,8 +30,10 @@ type proving_kind =
 	| PK_Assert
 	| PK_BIND
 	| PK_PRE
+	| PK_PRE_REC
 	| PK_POST
 	| PK_Unknown
+
 
 let string_of_proving_kind pk =
   match pk with
@@ -53,6 +55,7 @@ let string_of_proving_kind pk =
     | PK_Assert -> "Assert"
     | PK_BIND -> "BIND"
     | PK_PRE -> "PRE"
+    | PK_PRE_REC -> "PRE_REC"
     | PK_POST -> "POST"
     | PK_Pre_Oblg -> "PRE-OBLIGATION"
     | PK_Post_Oblg -> "POST-OBLIGATION"
@@ -61,6 +64,20 @@ let string_of_proving_kind pk =
 let sleek_kind = new Gen.stack_pr string_of_proving_kind (==)
 
 let proving_kind = new Gen.stack_noexc PK_Unknown string_of_proving_kind (==)
+
+let find_impt ls =
+  let rec aux ls = match ls with
+    | [] -> PK_Unknown
+    | [x] -> x
+    | x::xs -> (match x with
+        | PK_Assert | PK_BIND | PK_PRE | PK_PRE_REC | PK_POST -> x
+        | _ -> aux xs
+      ) 
+  in aux ls
+
+let find_impt_proving_kind () =
+  let stk = proving_kind # get_stk in
+  find_impt stk
 
 let proving_info () = 
   if(proving_kind # is_avail) then

@@ -16,15 +16,18 @@ relAssume
   cur'=cur_909 & prev'=null --> H(cur',prev',sent).
 */
 
+// BIND 
 relAssume
  (0)H(cur,prev,sent) --> cur::node<val_0,next_1>@M * 
   H_2(next_1,prev,sent) * H_3(prev,cur,sent).
 
+// PRE 
 relAssume
  (2;2;0)H_2(next_1,prev,sent) * H_3(prev,cur,sent) * 
   cur::node<val_0,prev>@M&cur=cur_909 & cur'=next_1 & cur'!=sent & 
   cur'!=null --> H(cur',cur_909,sent).
 
+// POST 
 relAssume (1;0)
    H_2(cur',prev,sent) & cur'=sent --> emp.
 
@@ -95,6 +98,3 @@ HeapPred G(node a, node ra, node b, node rb, node@NI c).
 
 
 */
-
-
-

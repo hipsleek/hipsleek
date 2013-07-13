@@ -375,7 +375,7 @@ let mkHprel knd u_svl u_hps pd_svl hprel_l hprel_g hprel_r hprel_p=
     hprel_guard = hprel_g;
     hprel_rhs = hprel_r;
     hprel_path = hprel_p;
-    hprel_proving_kind = Others.proving_kind # last;
+    hprel_proving_kind = Others.find_impt_proving_kind ();
  }
 
 let mkHprel_1 knd hprel_l hprel_g hprel_r hprel_p =
