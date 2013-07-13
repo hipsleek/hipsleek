@@ -135,6 +135,7 @@ and hprel= {
     *)
     hprel_rhs: formula;
     hprel_path: cond_path_type;
+    hprel_proving_kind: Others.proving_kind;
 }
 
 
@@ -374,7 +375,11 @@ let mkHprel knd u_svl u_hps pd_svl hprel_l hprel_g hprel_r hprel_p=
     hprel_guard = hprel_g;
     hprel_rhs = hprel_r;
     hprel_path = hprel_p;
+    hprel_proving_kind = Others.proving_kind # last;
  }
+
+let mkHprel_1 knd hprel_l hprel_g hprel_r hprel_p =
+  mkHprel knd [] [] [] hprel_l hprel_g hprel_r hprel_p
 
  let mk_hprel_def kind hprel guard_opt path_opf opflib=
    {

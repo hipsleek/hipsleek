@@ -31,6 +31,7 @@ type proving_kind =
 	| PK_BIND
 	| PK_PRE
 	| PK_POST
+	| PK_Unknown
 
 let string_of_proving_kind pk =
   match pk with
@@ -55,10 +56,11 @@ let string_of_proving_kind pk =
     | PK_POST -> "POST"
     | PK_Pre_Oblg -> "PRE-OBLIGATION"
     | PK_Post_Oblg -> "POST-OBLIGATION"
+    | PK_Unknown -> "UNKNOWN"
 
 let sleek_kind = new Gen.stack_pr string_of_proving_kind (==)
 
-let proving_kind = new Gen.stack_pr string_of_proving_kind (==)
+let proving_kind = new Gen.stack_noexc PK_Unknown string_of_proving_kind (==)
 
 let proving_info () = 
   if(proving_kind # is_avail) then

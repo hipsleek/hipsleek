@@ -524,6 +524,9 @@ class ['a] stack_noexc (x_init:'a) (epr:'a->string) (eq:'a->'a->bool)  =
      method top_no_exc : 'a = match stk with 
        | [] ->  emp_val
        | x::xs -> x
+     method last : 'a = match stk with 
+       | [] -> emp_val
+       | _ -> List.hd (List.rev stk)
    end;;
 
 (* class ['a] stack_noexc (x_init:'a) (epr:'a->string) (eq:'a->'a->bool)  = *)

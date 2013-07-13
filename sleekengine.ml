@@ -746,16 +746,19 @@ let process_rel_assume cond_path (ilhs : meta_formula) (igurad_opt : meta_formul
   (* let _ =  print_endline ("LHS = " ^ (Cprinter.string_of_formula lhs)) in *)
   (* let _ =  print_endline ("RHS = " ^ (Cprinter.string_of_formula rhs)) in *)
   (*TODO: LOC: hp_id should be cond_path*)
-  let new_rel_ass = {
-      CF.hprel_kind = CP.RelAssume (CP.remove_dups_svl (lhps@rhps));
-      unk_svl = [];(*inferred from norm*)
-      unk_hps = [];
-      predef_svl = [];
-      hprel_lhs = lhs;
-      hprel_guard = guard;
-      hprel_rhs = rhs;
-      hprel_path = cond_path;
-  } in
+  (* why not using mkHprel? *)
+  let knd = CP.RelAssume (CP.remove_dups_svl (lhps@rhps)) in
+  let new_rel_ass = CF.mkHprel_1 knd lhs guard rhs cond_path in
+  (*     CF.hprel_kind = CP.RelAssume (CP.remove_dups_svl (lhps@rhps)); *)
+  (*     unk_svl = [];(\*inferred from norm*\) *)
+  (*     unk_hps = []; *)
+  (*     predef_svl = []; *)
+  (*     hprel_lhs = lhs; *)
+  (*     hprel_guard = guard; *)
+  (*     hprel_rhs = rhs; *)
+  (*     hprel_path = cond_path; *)
+  (*     hprel_proving_kind = Others.proving_kind # top_no_exc; *)
+  (* } in *)
   (*hp_assumes*)
   let _ = Debug.ninfo_pprint (Cprinter.string_of_hprel_short new_rel_ass) no_pos in
   let _ = sleek_hprel_assumes := !sleek_hprel_assumes@[new_rel_ass] in
