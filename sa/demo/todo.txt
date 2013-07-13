@@ -5137,7 +5137,7 @@ Below does not seem to have been called by:
    let infer_collect_hp_rel_classsic i prog (es:entail_state) rhs pos =
 which is the correct place to pick residue unknown pred from the LHS.
 =====================================================================
-# bug-swl-1a.slk
+# bug-swl-1a.slk: FIXED
 
 infer [H_2,H_3] 
  H_2(next_1,prev,sent) * H_3(prev,cur,sent) * 
