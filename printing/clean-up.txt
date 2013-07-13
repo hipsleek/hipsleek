@@ -1,0 +1,30 @@
+Simplifying SLEEK_LOGS & beyond
+===============================
+
+Let us create a new module called cleanUp.ml
+
+  H_lhs & p1 |- ex v . H_rhs & p2
+
+LHS = H_lhs & p1
+RHS = ex v . H_rhs & p2
+Vars_CommonVars = free(H_lhs & p1) /\ free (RHS)
+Vars_LHSHeap = free(H_lhs)
+V2Elim = free(LHS) - (CommonVars U Vars_LHSHeap)
+
+First extract equalities from p1
+  p1 == p1a /\ [v1=v2]*
+
+Second: let (keep,elim) = split_eq [v1=v2]*
+split_eq [] keep elim = (keep,elim)
+split_eq ((v1,v2)::rest) keep elim =
+   if v1 in V2Elim then split_eq rest keep ((v1,v2)::elim)
+   else if v2 in V2Elim then split_eq rest keep ((v2,v1)::elim)
+   else split_eq rest ((v1,v2)::keep) elim
+
+Simplifying LHS
+   apply_renaming elim to (H_lhs & p1a & keep)
+
+Please print original and simplified side-by-side when
+we turn on the option (which is the default)
+
+   --en-print-clean

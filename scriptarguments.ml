@@ -430,7 +430,8 @@ let common_arguments = [
   ("--sa-en-print-decl" , Arg.Set Globals.print_heap_pred_decl, "enable predicates declaration printing");
   ("--sa-dis-print-decl" , Arg.Clear Globals.print_heap_pred_decl, "disable predicates declaration printing");
   ("--en-print-ann" , Arg.Set Globals.print_ann, "enable annotation printing (default)");
-  ("--dis-print-ann", Arg.Clear Globals.print_ann, "disable annotation printing");
+  ("--dis-print-clean", Arg.Clear Globals.print_clean_flag, "disable cleaner printing");
+  ("--en-print-clean" , Arg.Set Globals.print_clean_flag, "enable cleaner printing (default)");
   ("--en-print-derv" , Arg.Set Globals.print_derv, "enable [derv,orig] annotation printing");
   ("--dis-print-derv" , Arg.Clear Globals.print_derv, "disable [derv,orig] annotation printing (default)");
   ("--en-texify", Arg.Set Globals.texify, "output latex formulas");
