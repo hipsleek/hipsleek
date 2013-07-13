@@ -41,6 +41,20 @@ next_1!=null --> G(cur,cur',prev,prev',sent@NI)]
 
 Procedure lscan$node~node~node SUCCESS
 
+[ H_3(prev_936,cur_939,sent_934)&
+  prev_937=null --> H_2(prev_936,prev_937,sent_934),
+
+ emp&prev_937=null --> H_3(prev_937,cur_938,sent_940)]
+
+[ H_2(next_44,prev_943,sent_945) &next_44!=null & 
+  next_44!=sent_945 --> next_44::node<val_46,next_47>@M * 
+  HP_948(next_47,prev_943,sent_945),
+
+ HP_948(next_47,prev_943,sent_945) |#| cur_941::node<val_42,prev_943>@M --> H_2(next_47,cur_941,sent_945),
+
+ H_3(prev_943,cur_941,sent_945) * cur_941::node<val_42,prev_943>@M&
+  next_44!=null & 
+  next_44!=sent_945 --> H_3(cur_941,next_44,sent_945)]
 
 *************************************
 *******relational definition ********

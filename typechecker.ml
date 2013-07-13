@@ -2719,6 +2719,7 @@ and check_proc iprog (prog : prog_decl) (proc : proc_decl) cout_option (mutual_g
                                 in
                                 (* let pr_ty = !CP.Label_Pure.ref_string_of_exp in *)
                                 Infer.fixcalc_rel_stk # push_list tuples;
+                                if not(Infer.fixcalc_rel_stk # is_empty) then
                                 begin
                                   print_endline "\n*************************************";
                                   print_endline "*******fixcalc of pure relation *******";
