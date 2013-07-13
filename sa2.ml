@@ -925,7 +925,11 @@ let generalize_one_hp_x prog is_pre (hpdefs: (CP.spec_var *CF.hp_rel_def) list) 
               (defs,elim_ss)
             else
               (* report_error no_pos "shape analysis: FAIL" *)
-              let body = if is_pre then CF.mkTrue_nf no_pos else CF.mkFalse_nf no_pos in
+              let body = if is_pre then
+                CF.mkHTrue_nf no_pos
+              else
+                  CF.mkFalse_nf no_pos
+              in
               let def = (CP.HPRelDefn (hp, r, non_r_args), (CF.HRel (hp, List.map (fun x -> CP.mkVar x no_pos) args0, no_pos)), None, body) in
               ([(hp, def)],[])
         in
