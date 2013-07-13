@@ -11,18 +11,18 @@ data node {
 /* 	or self::node<_, q> * q::ll<n-1> */
 /*   inv n >= 0; */
 
-HeapPred H(node a).
 HeapPred H1(node a).
-
 HeapPred H2(node a).
-HeapPred H3(node a).
+
+HeapPred G1(node a).
+HeapPred G2(node a).
 
 //The number of elements that conform the list's content.
 //relation SIZEH(int a, int b, int c).
 int size_helper(node x, ref int n)
-  infer[H,H1]
-  requires H(x) //0<=m
-     ensures  H1(x);// & SIZEH(res,n);//res=m+n & m>=0
+  infer[H1,G1]
+  requires H1(x) //0<=m
+  ensures G1(x);// & SIZEH(res,n);//res=m+n & m>=0
 {
   if (x==null) 
     return n;
@@ -33,9 +33,9 @@ int size_helper(node x, ref int n)
 }
 
 int size(node x)
-   infer[H2,H3]
+  infer[H1,H2,G1,G2]
    requires H2(x) //0<=m
-   ensures  H3(x);
+   ensures  G2(x);
   /* requires x::ll1<> */
   /* ensures true; */
 {
