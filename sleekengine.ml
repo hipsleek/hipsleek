@@ -3,6 +3,7 @@
 *)
 
 open Globals
+open Others
 open Sleekcommons
 open Gen.Basic
 (* open Exc.ETABLE_NFLOW *)
@@ -745,16 +746,19 @@ let process_rel_assume cond_path (ilhs : meta_formula) (igurad_opt : meta_formul
   (* let _ =  print_endline ("LHS = " ^ (Cprinter.string_of_formula lhs)) in *)
   (* let _ =  print_endline ("RHS = " ^ (Cprinter.string_of_formula rhs)) in *)
   (*TODO: LOC: hp_id should be cond_path*)
-  let new_rel_ass = {
-      CF.hprel_kind = CP.RelAssume (CP.remove_dups_svl (lhps@rhps));
-      unk_svl = [];(*inferred from norm*)
-      unk_hps = [];
-      predef_svl = [];
-      hprel_lhs = lhs;
-      hprel_guard = guard;
-      hprel_rhs = rhs;
-      hprel_path = cond_path;
-  } in
+  (* why not using mkHprel? *)
+  let knd = CP.RelAssume (CP.remove_dups_svl (lhps@rhps)) in
+  let new_rel_ass = CF.mkHprel_1 knd lhs guard rhs cond_path in
+  (*     CF.hprel_kind = CP.RelAssume (CP.remove_dups_svl (lhps@rhps)); *)
+  (*     unk_svl = [];(\*inferred from norm*\) *)
+  (*     unk_hps = []; *)
+  (*     predef_svl = []; *)
+  (*     hprel_lhs = lhs; *)
+  (*     hprel_guard = guard; *)
+  (*     hprel_rhs = rhs; *)
+  (*     hprel_path = cond_path; *)
+  (*     hprel_proving_kind = Others.proving_kind # top_no_exc; *)
+  (* } in *)
   (*hp_assumes*)
   let _ = Debug.ninfo_pprint (Cprinter.string_of_hprel_short new_rel_ass) no_pos in
   let _ = sleek_hprel_assumes := !sleek_hprel_assumes@[new_rel_ass] in
@@ -1221,15 +1225,15 @@ let print_exc (check_id: string) =
 (*   Some true  -->  always check entailment exactly (no residue in RHS)          *)
 (*   Some false -->  always check entailment inexactly (allow residue in RHS)     *)
 let process_entail_check_x (iante : meta_formula) (iconseq : meta_formula) (etype : entail_type):bool =
-  let nn = "("^(string_of_int (sleek_proof_counter#inc_and_get))^") " in
-  let num_id = "\nEntail "^nn in
+  let nn = (sleek_proof_counter#inc_and_get) in
+  let num_id = "\nEntail "^(string_of_int nn) in
     try 
       let valid, rs, _(*sel_hps*) = 
-        wrap_proving_kind ("SLEEK_ENT"^nn) (run_entail_check iante iconseq) etype in
+        wrap_proving_kind (PK_Sleek_Entail nn) (run_entail_check iante iconseq) etype in
       print_entail_result [] (*sel_hps*) valid rs num_id
     with ex ->
         print_string "caught\n"; Printexc.print_backtrace stdout;
-        let _ = print_string ("\nEntailment Failure "^nn^(Printexc.to_string ex)^"\n") 
+        let _ = print_string ("\nEntailment Failure "^num_id^(Printexc.to_string ex)^"\n") 
         in false
   (* with e -> print_exc num_id *)
 

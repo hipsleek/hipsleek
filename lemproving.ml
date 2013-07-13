@@ -1,4 +1,5 @@
 open Globals
+open Others
 open Label_only
 
 module AS = Astsimp
@@ -214,7 +215,7 @@ let verify_lemma (l2r: C.coercion_decl option) (r2l: C.coercion_decl option) (cp
 
 let verify_lemma (l2r: C.coercion_decl option) (r2l: C.coercion_decl option) (cprog: C.prog_decl)  
       coerc_name coerc_type =
-  wrap_proving_kind "VERIFY_LEMMA" (verify_lemma (l2r: C.coercion_decl option) (r2l: C.coercion_decl option) (cprog: C.prog_decl) coerc_name ) coerc_type
+  wrap_proving_kind PK_Verify_Lemma (verify_lemma (l2r: C.coercion_decl option) (r2l: C.coercion_decl option) (cprog: C.prog_decl) coerc_name ) coerc_type
 
 let verify_lemma (l2r: C.coercion_decl option) (r2l: C.coercion_decl option) (cprog: C.prog_decl)  coerc_name coerc_type =
   let pr c = match c with 

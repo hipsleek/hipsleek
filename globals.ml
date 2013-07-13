@@ -348,21 +348,11 @@ object
        | Some l -> (string_of_pos l.start_pos)
 end;;
 
-class proving_type =
-object
-  inherit [string] store "None" (fun x -> x)
-     (* method string_of_string : string = match lc with *)
-     (*   | None -> "None" *)
-     (*   | Some l -> l *)
-end;;
-
 
 
 (*Some global vars for logging*)
 let proving_loc  = new prog_loc
 let post_pos = new prog_loc
-let proving_kind = new proving_type
-let sleek_kind = new proving_type
 let explain_mode = new failure_mode
 let return_exp_pid = ref ([]: control_path_id list)	
 let z3_proof_log_list = ref ([]: string list)
@@ -370,51 +360,7 @@ let z3_time = ref 0.0
 
 let add_to_z3_proof_log_list (f: string) =
 	z3_proof_log_list := !z3_proof_log_list @ [f]
-	 
-let proving_info () = 
-  if(proving_kind # is_avail) then
-    (
-	let temp= if(explain_mode # is_avail) then "FAILURE EXPLAINATION" else proving_kind # string_of in
-      	if (post_pos # is_avail) 
-        then ("Proving Infor spec:"^(post_pos#string_of_pos) ^" loc:"^(proving_loc#string_of_pos)^" kind::"^temp)
-        else 
-          let loc_info = 
-            if (proving_loc # is_avail) then " loc:"^(proving_loc#string_of_pos)
-            else " loc: NONE" 
-          in ("Proving Infor spec:"^(post_pos#string_of_pos) ^loc_info^" kind::"^temp)
-    )
-  else "..no proving kind.."(*"who called is_sat,imply,simplify to be displayed later..."*)
 
-
-let wrap_proving_kind (str : string) exec_function args =
-  (* if (!sleek_logging_txt || !proof_logging_txt) then *)
-    begin
-      let b = proving_kind # is_avail in
-      let m = proving_kind # get in
-      let _ = proving_kind # set str in
- 	  try 
-        let res = exec_function args in
-        let _ =  
-          if b then proving_kind # set m 
-          else proving_kind # reset
-        in res
-      with _ as e ->
-          begin
-            (if b then proving_kind # set m 
-            else proving_kind # reset);
-            raise e
-          end
-    end
-  (* else 	 *)
-  (*   let res = exec_function args  *)
-  (*   in res *)
- 
-(* let wrap_proving_kind (str : string) exec_function args = *)
-(*   Debug.no_1 "wrap_proving_kind" pr_id pr_none  *)
-(*       (fun _ -> wrap_proving_kind str exec_function args) str *)
-
-(* let post_pos = ref no_pos *)
-(* let set_post_pos p = post_pos := p *)
 
 let entail_pos = ref no_pos
 let set_entail_pos p = entail_pos := p

@@ -1,4 +1,5 @@
 open Globals
+open Others
 open Gen
 
 module DD = Debug
@@ -29,8 +30,8 @@ let collect_ho_ass cprog is_pre def_hps (acc_constrs, post_no_def) cs=
   let rinfer_hps =  (CP.diff_svl (rhs_hps) def_hps) in
   let infer_hps = CP.remove_dups_svl (linfer_hps@rinfer_hps) in
   if infer_hps = [] then (acc_constrs, post_no_def) else
-    let log_str = if is_pre then "PRE OBLIGATION" else "POST OBLIGATION" in
-    let  _ = DD.binfo_pprint (log_str ^ ":\n" ^ (Cprinter.string_of_hprel_short cs)) no_pos in
+    let log_str = if is_pre then PK_Pre_Oblg else PK_Post_Oblg in
+    let  _ = DD.binfo_pprint ((string_of_proving_kind log_str) ^ ":\n" ^ (Cprinter.string_of_hprel_short cs)) no_pos in
     let f = wrap_proving_kind log_str (SAC.do_entail_check infer_hps cprog) in
     let new_constrs = f cs in
     (acc_constrs@new_constrs, post_no_def@linfer_hps)
@@ -63,9 +64,9 @@ let rec find_imply_subst_x prog unk_hps link_hps frozen_hps complex_hps constrs 
       let qvars1, f1 = CF.split_quantifiers cs1.CF.hprel_lhs in
       let qvars2, f2 = CF.split_quantifiers cs2.CF.hprel_rhs in
       match f1,f2 with
-      | CF.Base lhs1, CF.Base rhs2 ->
-            let r = SAU.find_imply prog (List.map fst cs1.CF.unk_hps) (List.map fst cs2.CF.unk_hps)
-              lhs1 cs1.CF.hprel_rhs cs2.CF.hprel_lhs rhs2 cs1.CF.hprel_guard frozen_hps complex_hps in
+        | CF.Base lhs1, CF.Base rhs2 ->
+              let r = SAU.find_imply prog (List.map fst cs1.CF.unk_hps) (List.map fst cs2.CF.unk_hps)
+                lhs1 cs1.CF.hprel_rhs cs2.CF.hprel_lhs rhs2 cs1.CF.hprel_guard frozen_hps complex_hps in
             begin
               match r with
                 | Some (l,r,lhs_ss, rhs_ss) ->
@@ -1627,8 +1628,8 @@ and infer_shapes_from_fresh_obligation_x iprog cprog proc_name is_pre cond_path 
   (*   let rinfer_hps =  (CP.diff_svl (rhs_hps) def_hps) in *)
   (*   let infer_hps = CP.remove_dups_svl (linfer_hps@rinfer_hps) in *)
   (*   if infer_hps = [] then (acc_constrs, post_no_def) else *)
-  (*     let log_str = if is_pre then "PRE OBLIGATION" else "POST OBLIGATION" in *)
-  (*     let  _ = DD.binfo_pprint (log_str ^ ":\n" ^ (Cprinter.string_of_hprel_short cs)) no_pos in *)
+  (*    let log_str = if is_pre then PK_Pre_Oblg else PK_Post_Oblg in *)
+  (*    let  _ = DD.binfo_pprint ((string_of_proving_kind log_str) ^ ":\n" ^ (Cprinter.string_of_hprel_short cs)) no_pos in *)
   (*     let f = wrap_proving_kind log_str (SAC.do_entail_check infer_hps cprog) in *)
   (*     let new_constrs = f cs in *)
   (*     (acc_constrs@new_constrs, post_no_def@linfer_hps) *)

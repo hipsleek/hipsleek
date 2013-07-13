@@ -1660,17 +1660,21 @@ let find_well_eq_defined_hp prog hds hvs lhsb eqs (hp,args)=
   else ([], [(hp,args)])
 
 let generate_hp_ass unk_svl cond_p (hp,args,lfb,rf) =
-  let new_cs = {
-      CF.hprel_kind = CP.RelAssume [hp];
-      unk_svl = unk_svl;(*inferred from norm*)
-      unk_hps = [];
-      predef_svl = [];
-      hprel_lhs = CF.Base lfb;
-      hprel_guard = None; (*guard exists with post-proving*)
-      hprel_rhs = rf;
-      hprel_path = cond_p;
-  }
-  in
+  let knd = CP.RelAssume [hp] in
+  let lhs = CF.Base lfb in
+  let new_cs =  CF.mkHprel knd unk_svl [] [] lhs None rf cond_p in
+  (* { *)
+  (*     CF.hprel_kind = CP.RelAssume [hp]; *)
+  (*     unk_svl = unk_svl;(\*inferred from norm*\) *)
+  (*     unk_hps = []; *)
+  (*     predef_svl = []; *)
+  (*     hprel_lhs = CF.Base lfb; *)
+  (*     hprel_guard = None; (\*guard exists with post-proving*\) *)
+  (*     hprel_rhs = rf; *)
+  (*     hprel_path = cond_p; *)
+  (*     hprel_proving_kind = Others.proving_kind # top_no_exc; *)
+  (* } *)
+  (* in *)
   let _ = Debug.dinfo_pprint ("  new hp_ass " ^ (Cprinter.string_of_hprel_short new_cs)) no_pos in
   new_cs
 

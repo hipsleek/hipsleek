@@ -5,6 +5,7 @@ todo: disable the default logging for omega
 *)
 
 open Globals
+open Others
 open Stat_global
 module DD = Debug
 (* open Exc.ETABLE_NFLOW *)
@@ -4810,7 +4811,7 @@ and early_hp_contra_detection_x hec_num prog estate conseq pos =
 and early_hp_contra_detection hec_num prog estate conseq pos = 
   let contra_str contra = if (contra) then "CONTRADICTION DETECTED" else "no contra" in
   let pr_res (contra, es) = (contra_str contra) ^ ("\n es = " ^ (pr_option Cprinter.string_of_entail_state es)) in
-  let f = wrap_proving_kind "EARLY CONTRA DETECTION" (early_hp_contra_detection_x hec_num prog estate conseq) in
+  let f = wrap_proving_kind PK_Early_Contra_Detect (early_hp_contra_detection_x hec_num prog estate conseq) in
   Debug.no_1_num hec_num "early_hp_contra_detection" Cprinter.string_of_entail_state_short pr_res 
         (fun _ -> f pos) estate
 
@@ -4883,7 +4884,7 @@ and early_pure_contra_detection hec_num prog estate conseq pos msg is_folding =
     match ctx with 
       | Some ctx -> ("\n ctx = " ^ (Cprinter.string_of_list_context ctx))
       | None ->     ("\n estate: " ^ (pr_option Cprinter.string_of_entail_state_short es))  in
-  let f = wrap_proving_kind "CONTRA DETECTION for pure" (early_pure_contra_detection_x hec_num prog estate conseq pos msg) in
+  let f = wrap_proving_kind PK_Contra_Detect_Pure (early_pure_contra_detection_x hec_num prog estate conseq pos msg) in
   Debug.no_1_num hec_num "early_pure_contra_detection" Cprinter.string_of_entail_state_short pr_res 
       (fun _ -> f is_folding) estate 
 
@@ -5096,7 +5097,7 @@ and log_contra_detect hec_num conseq result pos =
     let _ = Log.add_new_sleek_logging_entry es.es_infer_vars !Globals.do_classic_frame_rule caller 
       (* avoid *) false hec_num slk_no orig_ante conseq es.es_heap es.es_evars result pos in
     () in
-  let f = wrap_proving_kind "EARLY CONTRA DETECTION" (new_slk_log result) in
+  let f = wrap_proving_kind PK_Early_Contra_Detect (new_slk_log result) in
   let es_opt = estate_opt_of_list_context result in
   match es_opt with
     | Some es -> f es
@@ -11176,7 +11177,7 @@ and normalize_formula_w_coers_x prog estate (f: formula) (coers: coercion_decl l
       end
 
 and normalize_formula_w_coers i prog estate (f:formula) (coers:coercion_decl list): formula =
-  let fn = wrap_proving_kind "LEMMA-NORM" (normalize_formula_w_coers_x  prog estate f) in
+  let fn = wrap_proving_kind  PK_Lemma_Norm (normalize_formula_w_coers_x  prog estate f) in
     let pr = Cprinter.string_of_formula in
     let pr_c = Cprinter.string_of_coerc_decl_list in
     let pr3 l = string_of_int (List.length l) in
