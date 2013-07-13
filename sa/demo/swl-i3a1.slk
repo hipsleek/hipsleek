@@ -24,6 +24,7 @@ relAssume
 relAssume
    H_2(cur',prev,sent) & cur'=sent --> emp.
 
+
 shape_infer [H_2,H_3,HP_44][].
 
 /*

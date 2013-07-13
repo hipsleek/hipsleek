@@ -48,6 +48,7 @@ ensures prev'::ll<sent>  & cur'=sent ;
       cur = prev;
       prev = null;
   }
+  //dprint;
   lscan(cur,prev,sent);
 
 }
@@ -84,6 +85,17 @@ HeapPred G(node a, node ra, node b, node rb, node@NI c).
  H(cur,prev,sent) --> cur::node<val_0,next_1>@M * 
   H_2(next_1,prev,sent) * H_3(prev,cur,sent).
 
+
+ State:H_2(next_36_901,prev,sent) * H_3(prev,cur,sent) * cur_909::node<val
+_36_900,prev_908>@M&cur=cur_909 & prev=prev_908 & sent=sent' & n_34'=next_36_901
+ & next_36_901=next_38_907 & cur_909=prev_921 & cur_920=n_34' & cur_920!=sent' &
+ !(v_bool_42_880') & cur_920!=sent' & !(v_bool_42_880') & cur_920=null & v_bool_
+46_881' & cur_920=null & v_bool_46_881' & cur'=prev_921 & prev'=null&{FLOW,(22,2
+3)=__norm}[]
+       es_var_measures 2: MayLoop
+       es_trace: empty
+       es_cond_path: [1; 2; 0]
+;
  H_3(prev,cur,sent) * cur::node<val_0,prev>@M&cur_920=null & 
   next_1=null & cur=cur_909 & cur_920=next_1 & cur'=cur_909 & 
   prev'=null --> H(cur',prev',sent).
