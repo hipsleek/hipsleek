@@ -2184,3 +2184,17 @@ let do_entail_check vars cprog cs=
 (*=============**************************================*)
        (*=============END OBLIGATION================*)
 (*=============**************************================*)
+
+(*=============**************************================*)
+       (*=============DNC================*)
+(*=============**************************================*)
+let partition_constrs_4_paths link_hpargs0 constrs0 =
+  let ls_link_hpargs = SAU.dang_partition link_hpargs0 in
+  let ls_constrs_path = SAU.assumption_partition constrs0 in
+  (* matching constrs_path with dang_path*)
+  let ls_cond_danghps_constrs = SAU.pair_dang_constr_path ls_constrs_path ls_link_hpargs (pr_list_ln Cprinter.string_of_hprel_short) in
+  ls_cond_danghps_constrs
+
+(*=============**************************================*)
+       (*=============END DNC================*)
+(*=============**************************================*)

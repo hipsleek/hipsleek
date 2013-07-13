@@ -1888,16 +1888,15 @@ and infer_shapes_divide iprog prog proc_name (constrs0: CF.hprel list) callee_hp
     in
     (cond_path, hp_defs, c, unk_hpargs2, link_hpargs2, equivs)
   in
-  let ls_link_hpargs = SAU.dang_partition link_hpargs0 in
-  let ls_constrs_path = SAU.assumption_partition constrs0 in
-  (* matching constrs_path with dang_path*)
-  let ls_cond_danghps_constrs = SAU.pair_dang_constr_path ls_constrs_path ls_link_hpargs (pr_list_ln Cprinter.string_of_hprel_short) in
+  (* let ls_link_hpargs = SAU.dang_partition link_hpargs0 in *)
+  (* let ls_constrs_path = SAU.assumption_partition constrs0 in *)
+  (* (\* matching constrs_path with dang_path*\) *)
+  (* let ls_cond_danghps_constrs = SAU.pair_dang_constr_path ls_constrs_path ls_link_hpargs (pr_list_ln Cprinter.string_of_hprel_short) in *)
+  let ls_cond_danghps_constrs = SAC.partition_constrs_4_paths link_hpargs0 constrs0 in
+  (*synthesize for each path*)
   let ls_res = List.map process_one_path ls_cond_danghps_constrs in
-  (* let constr, hp_defs, c, unk_hpargs2, link_hpargs2, equivs = infer_shapes_core iprog prog proc_name cond_path constrs1 *)
-  (*   callee_hps sel_hps *)
-  (*   sel_post_hps hp_rel_unkmap unk_hpargs0 link_hpargs need_preprocess detect_dang in *)
-  (* (constr, hp_defs, c,unk_hpargs2, link_hpargs2, equivs) *)
   ls_res
+
 
 and infer_shapes_conquer iprog prog proc_name ls_path_defs_setting sel_hps=
   let process_path_defs_setting (cond_path, hp_defs,c, unk_hpargs0, link_hpargs0, equivs)=

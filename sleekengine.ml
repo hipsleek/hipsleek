@@ -886,28 +886,37 @@ let process_shape_divide pre_hps post_hps=
   let constrs2, sel_hps, sel_post_hps, unk_map, unk_hpargs, link_hpargs=
     shape_infer_pre_process hp_lst_assume pre_hps post_hps
   in
-  let ls_cond_defs_drops =
-    if List.length sel_hps> 0 && List.length hp_lst_assume > 0 then
-      let infer_shape_fnc = Sa2.infer_shapes_divide in
-      infer_shape_fnc iprog !cprog "" constrs2 []
-          sel_hps sel_post_hps unk_map unk_hpargs link_hpargs true false
-    else []
-  in
-  let pr_one (cond, hpdefs,_, _, link_hpargs,_)=
+  (* let ls_cond_defs_drops = *)
+  (*   if List.length sel_hps> 0 && List.length hp_lst_assume > 0 then *)
+  (*     let infer_shape_fnc = Sa2.infer_shapes_divide in *)
+  (*     infer_shape_fnc iprog !cprog "" constrs2 [] *)
+  (*         sel_hps sel_post_hps unk_map unk_hpargs link_hpargs true false *)
+  (*   else [] *)
+  (* in *)
+  (* let pr_one (cond, hpdefs,_, _, link_hpargs,_)= *)
+  (*   begin *)
+  (*     if not(List.length hpdefs = 0) then *)
+  (*       let pr_path_defs = List.map (fun (_, hf,_,f) -> (cond,(hf,f))) hpdefs in *)
+  (*       let pr_path_dangs = List.map (fun (hp,_) -> (cond, hp)) link_hpargs in *)
+  (*       print_endline ""; *)
+  (*     print_endline "\n*************************************"; *)
+  (*     print_endline "*******relational definition ********"; *)
+  (*     print_endline "*************************************"; *)
+  (*     let _ = List.iter (fun pair -> print_endline (Cprinter.string_of_pair_path_def pair) ) pr_path_defs in *)
+  (*     let _ = List.iter (fun pair -> print_endline (Cprinter.string_of_pair_path_dang pair) ) pr_path_dangs in *)
+  (*     print_endline "*************************************" *)
+  (*   end *)
+  (* in *)
+  (* let _ = List.iter pr_one ls_cond_defs_drops in *)
+  let ls_cond_danghps_constrs = SAC.partition_constrs_4_paths link_hpargs hp_lst_assume in
+  let pr_one (cond, _,constrs)=
     begin
-      if not(List.length hpdefs = 0) then
-        let pr_path_defs = List.map (fun (_, hf,_,f) -> (cond,(hf,f))) hpdefs in
-        let pr_path_dangs = List.map (fun (hp,_) -> (cond, hp)) link_hpargs in
-        print_endline "";
-      print_endline "\n*************************************";
-      print_endline "*******relational definition ********";
-      print_endline "*************************************";
-      let _ = List.iter (fun pair -> print_endline (Cprinter.string_of_pair_path_def pair) ) pr_path_defs in
-      let _ = List.iter (fun pair -> print_endline (Cprinter.string_of_pair_path_dang pair) ) pr_path_dangs in
-      print_endline "*************************************"
+      if constrs <> [] then
+        let _ = print_endline ("Group: " ^ (CF.string_of_cond_path cond)) in
+        print_endline ((pr_list_ln Cprinter.string_of_hprel_short) constrs)
     end
   in
-  let _ = List.iter pr_one ls_cond_defs_drops in
+  let _ = List.iter pr_one ls_cond_danghps_constrs in
   ()
 
 let process_shape_conquer sel_ids cond_paths=
