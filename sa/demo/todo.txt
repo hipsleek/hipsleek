@@ -5248,6 +5248,100 @@ Group 2 (1;X;0)
   cur'=cur_909 & prev'=null --> H(cur',prev',sent).
  (1;0) H_2(cur',prev,sent) & cur'=sent --> emp.
 =====================================================================
+# swl-i3.slk
+
+ORDER below is incorrect. Correct order is
+ (1) synthesize H
+ (2) pre-obligation for H
+ (3) synthesize H2
+
+------
+
+!!!  freeze: [H_2]
+!!! >>>>>> step 3b: do apply_transitive_imp <<<<<<
+!!! PRE-OBLIGATION:
+ H_2(next_53,prev_52,sent_54) * cur_50::node<val_51,prev_52>@M&
+  next_53!=null & next_53!=sent_54 --> next_53::node<val_0,next_1>@M * 
+  H_2(next_1,cur_50,sent_54)
+*************************************************
+*******relational assumptions (obligation)********
+****************************************************
+[ H_2(next_53,prev_52,sent_54)&next_53!=null & 
+  next_53!=sent_54 --> next_53::node<val_55,next_56>@M * 
+  HP_57(next_56,prev_52,sent_54),
+ HP_57(next_56,prev_52,sent_54) |#| cur_50::node<val_51,prev_52>@M --> H_2(next_56,cur_50,sent_54)]
+*************************************
+!!!  unfreeze: [H_2]
+!!! >>>>>> step 3a: simplification <<<<<<
+!!!  freeze: [H]
+!!! >>>>>> step 3b: do apply_transitive_imp <<<<<<
+!!! >>>>>> step 3a: simplification <<<<<<
+
+=====================================================================
+# swl-i3.slk --pred-en-oblg
+
+relAssume
+ (0)H(cur,prev,sent) --> cur::node<val_0,next_1>@M * 
+  H_2(next_1,prev,sent) * H_3(prev,cur,sent).
+
+relAssume
+ (2;2;0)H_2(next_1,prev,sent) * H_3(prev,cur,sent) * 
+  cur::node<val_0,prev>@M&cur=cur_909 & cur'=next_1 & cur'!=sent & 
+  cur'!=null --> H(cur',cur_909,sent).
+
+relAssume (1;0)
+   H_2(cur',prev,sent) & cur'=sent --> emp.
+
+shape_infer [H,H_1,H_2][].
+
+We GOT form pre-oblg:
+ H_2(next_53,prev_52,sent_54) * cur_50::node<val_51,prev_52>@M&
+  next_53!=null & next_53!=sent_54 --> next_53::node<val_0,next_1>@M * 
+  H_2(next_1,cur_50,sent_54)
+
+EXPECTING:
+ H_2(next_1,prev,sent) * H_3(prev,cur,sent) * 
+  cur::node<val_0,prev>@M&cur=cur_909 & cur'=next_1 & cur'!=sent & 
+  cur'!=null |-
+     cur'::node<val_0,n1>@M * H_2(n1,cur_909,sent) * H_3(cur_909,cur',sent).
+
+From above, I was expecting:
+(i) FREEZE:
+  H(cur,prev,sent) ::= 
+   cur::node<val_0,next_1>@M * H_2(next_1,prev,sent) * H_3(prev,cur,sent).
+
+(ii) PRE-OBLG
+ H_2(next_1,prev,sent) * H_3(prev,cur,sent) * 
+  cur::node<val_0,prev>@M&cur=cur_909 & cur'=next_1 & cur'!=sent & 
+  cur'!=null --> H(cur',cur_909,sent).
+ UNFOLD first: first H(..):
+ H_2(next_1,prev,sent) * H_3(prev,cur,sent) * 
+  cur::node<val_0,prev>@M&cur=cur_909 & cur'=next_1 & cur'!=sent & 
+  cur'!=null |-
+     cur'::node<val_0,n1>@M * H_2(n1,cur_909,sent) * H_3(cur_909,cur',sent).
+=====================================================================
+# swl-i3.slk
+
+ expected rel ass from pre-oblg entailment in swl-i3.slk
+ can u print the new assumptions generateted from pre/post oblg
+
+ inferred hprel: [
+   H_2(next_1,prev@NI,sent@NI)&next_1!=sent & 
+                   next_1!=null --> next_1::node<val_0,n1_43>@M * 
+                   HP_44(n1_43,prev@NI,sent@NI); 
+  HP_44(n1_43,prev@NI,sent@NI) |#| cur_909::node<val_0,prev>@M --> H_2(n1_43,cur_909@NI,sent@NI); 
+  H_3(prev,cur_909@NI,sent@NI) * cur_909::node<val_0,prev>@M&
+         cur'!=sent & cur'!=null --> H_3(cur_909,cur'@NI,sent@NI)
+
+from testing below in swl-i3a.slk 
+
+infer_exact [H_2,H_3]
+ H_2(next_1,prev,sent) * H_3(prev,cur,sent) * 
+  cur::node<val_0,prev>@M&cur=cur_909 & cur'=next_1 & cur'!=sent & 
+  cur'!=null |-
+     cur'::node<val_0,n1>@M * H_2(n1,cur_909,sent) * H_3(cur_909,cur',sent).
+
+print residue.
 =====================================================================
 =====================================================================
 =====================================================================
