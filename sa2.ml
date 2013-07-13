@@ -94,19 +94,18 @@ let rec find_imply_subst_x prog unk_hps link_hps frozen_hps complex_hps constrs 
                               CF.hprel_rhs = r;
                           }
                           in
-                          let new_cs1 = SAU.simp_match_hp_w_unknown prog unk_hps link_hps new_cs in
-                          let _ = Debug.ninfo_pprint ("    new rhs: " ^ (Cprinter.string_of_hprel_short new_cs1)) no_pos in
-                          (* [new_cs1] *)
-                          let l_hds, l_hvs,lhrels =CF.get_hp_rel_formula new_cs1.CF.hprel_lhs in
-                          let r_hds, r_hvs,rhrels =CF.get_hp_rel_formula new_cs1.CF.hprel_rhs in
+                          let _ = Debug.ninfo_pprint ("    new rhs: " ^ (Cprinter.string_of_hprel_short new_cs)) no_pos in
+                          let l_hds, l_hvs,lhrels =CF.get_hp_rel_formula new_cs.CF.hprel_lhs in
+                          let r_hds, r_hvs,rhrels =CF.get_hp_rel_formula new_cs.CF.hprel_rhs in
                           if (List.length l_hds > 0 || List.length l_hvs > 0) && List.length lhrels > 0 &&
                              (* (List.length r_hds > 0 || List.length r_hvs > 0) && *) List.length rhrels > 0
                           then
-                            let ho_constrs, _ = collect_ho_ass prog true [] ([], []) new_cs1 in
+                            let ho_constrs, _ = collect_ho_ass prog true [] ([], []) new_cs in
                             let ho_constrs1 = SAU.remove_dups_constr ho_constrs in
                             if ho_constrs1==[] ||
-                              check_constr_duplicate (new_cs1.CF.hprel_lhs,new_cs1.CF.hprel_rhs) ho_constrs1 then
-                              ([new_cs1],[])
+                              check_constr_duplicate (new_cs.CF.hprel_lhs,new_cs.CF.hprel_rhs) ho_constrs1 then
+                                let new_cs1 = SAU.simp_match_hp_w_unknown prog unk_hps link_hps new_cs in
+                                ([new_cs1],[])
                             else
                               (***************  PRINTING*********************)
                               let _ =
@@ -123,6 +122,7 @@ let rec find_imply_subst_x prog unk_hps link_hps frozen_hps complex_hps constrs 
                               (ho_constrs1, List.map fst3 lhrels)
                             (***************  END PRINTING*********************)
                           else
+                            let new_cs1 = SAU.simp_match_hp_w_unknown prog unk_hps link_hps new_cs in
                             ([new_cs1],[])
                         end
                 | None -> ([],[])
