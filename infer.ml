@@ -2825,7 +2825,7 @@ let infer_collect_hp_rel_classsic i prog (es:entail_state) rhs pos =
   let pr2 = Cprinter.string_of_h_formula in
   let pr3 = Cprinter.string_of_estate_infer_hp in
   let pr4 =  pr_pair string_of_bool pr3 in
-  Debug.ho_2_num i "infer_collect_hp_rel" pr1 pr2 pr4
+  Debug.no_2_num i "infer_collect_hp_rel" pr1 pr2 pr4
 ( fun _ _ -> infer_collect_hp_rel_classsic_x prog es rhs pos) es.CF.es_formula rhs
 (*=*****************************************************************=*)
          (*=**************INFER REL HP ASS*****************=*)

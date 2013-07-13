@@ -5153,6 +5153,41 @@ PROBLEM why is a useless guard next!=null present? It
            next_1!=null |#| cur::node<Anon_11,prev>@M --> H_2(n1_37,cur@NI,sent@NI); 
            ^^^^^^^^^^^
 =====================================================================
+# swl-i3.slk --pred-en-oblg
+
+relAssume
+ (0)H(cur,prev,sent) --> cur::node<val_0,next_1>@M * 
+  H_2(next_1,prev,sent) * H_3(prev,cur,sent).
+
+relAssume
+ (2;2;0)H_2(next_1,prev,sent) * H_3(prev,cur,sent) * 
+  cur::node<val_0,prev>@M&cur=cur_909 & cur'=next_1 & cur'!=sent & 
+  cur'!=null --> H(cur',cur_909,sent).
+
+relAssume (1;0)
+   H_2(cur',prev,sent) & cur'=sent --> emp.
+
+shape_infer [H,H_1,H_2][].
+
+GOT
+!!!  synthesize: [H_2]
+!!! >>>>>> step 3b: do apply_transitive_imp <<<<<<
+!!! >>>>>> step 3a: simplification <<<<<<
+!!!  synthesize: [H]
+!!! >>>>>> step 3b: do apply_transitive_imp <<<<<<
+!!! >>>>>> step 3a: simplification <<<<<<
+!!! pre-obligation:
+[ H_2(next_53,prev_52,sent_54) * cur_50::node<val_51,prev_52>@M&
+  next_53!=null & next_53!=sent_54 --> next_53::node<val_0,next_1>@M * 
+  H_2(next_1,cur_50,sent_54)]
+
+Two problems:
+ (i)  H_2 must be scheduled after pre-obligation 
+ (ii) view not properly formed:
+!!! >>>>>> post-predicates: step post-61: weaken<<<<<<
+ERROR: at _0:0_0:0 
+Message: self of H_2 cannot have its type determined
+ Fatal error: exception Failure("self of H_2 cannot have its type determined")
 =====================================================================
 =====================================================================
 =====================================================================

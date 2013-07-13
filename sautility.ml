@@ -1674,7 +1674,7 @@ let generate_hp_ass unk_svl cond_p (hp,args,lfb,rf) =
   new_cs
 
 let generate_hp_ass i unk_svl cond_p (hp,args,lfb,rf) =
-  Debug.ho_1_num i "generate_hp_ass" pr_none pr_none (fun _ -> generate_hp_ass unk_svl cond_p (hp,args,lfb,rf)) 1
+  Debug.no_1_num i "generate_hp_ass" pr_none pr_none (fun _ -> generate_hp_ass unk_svl cond_p (hp,args,lfb,rf)) 1
 
 
 (************************************************)
