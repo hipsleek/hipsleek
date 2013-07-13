@@ -1,0 +1,74 @@
+data node{
+	int val;
+	node next;
+}.
+
+
+HeapPred H(node a, node b, node@NI c).
+HeapPred H_3(node prev, node@NI cur, node@NI sent).
+HeapPred H_2(node next_1, node@NI prev, node@NI sent).
+HeapPred G(node a, node ra, node b, node rb, node@NI c).
+
+relAssume
+ (0)H(cur,prev,sent) --> cur::node<val_0,next_1>@M * 
+  H_2(next_1,prev,sent) * H_3(prev,cur,sent).
+
+relAssume
+ (1;2;0)H_3(prev,cur,sent) * cur::node<val_0,prev>@M&
+  cur_920=null & next_1=null & cur=cur_909 & cur_920=next_1 & 
+  cur'=cur_909 & prev'=null --> H(cur',prev',sent).
+
+relAssume
+ (2;2;0)H_2(next_1,prev,sent) * H_3(prev,cur,sent) * 
+  cur::node<val_0,prev>@M&cur=cur_909 & cur'=next_1 & cur'!=sent & 
+  cur'!=null --> H(cur',cur_909,sent).
+
+relAssume (1;0)
+   H_2(cur',prev,sent) & cur'=sent --> emp.
+
+shape_divide [H,H_1,H_2][].
+
+/*
+# div-swl-i3.slk --pred-en-oblg
+
+GOT
+===
+*************************************
+*******relational definition ********
+*************************************
+  H_2(cur_58,prev_59,sent_60)<-> emp&cur_58=sent_60
+  H(cur_61,prev_62,sent_63)<-> cur_61::node<val_0,next_1>@M * H_2(next_1,prev_62,sent_63) * 
+H_3(prev_62,cur_61,sent_63)
+*************************************
+
+
+PROBLEM
+=======
+The purpose of divide is to see how the assumptions
+are being divided. You should not be performing
+shape inference at at all. Instead, I expect that
+you print groups of relatioal assumptions, some
+of which may be duplicated:
+
+EXPECT  X denotes encountering common pre H(...)
+======
+Group 1 (2;X;0)
+
+ (0)H(cur,prev,sent) --> cur::node<val_0,next_1>@M * 
+  H_2(next_1,prev,sent) * H_3(prev,cur,sent).
+ (2;2;0)H_2(next_1,prev,sent) * H_3(prev,cur,sent) * 
+  cur::node<val_0,prev>@M&cur=cur_909 & cur'=next_1 & cur'!=sent & 
+  cur'!=null --> H(cur',cur_909,sent).
+ (1;0) H_2(cur',prev,sent) & cur'=sent --> emp.
+
+Group 2 (1;X;0)
+ (0)H(cur,prev,sent) --> cur::node<val_0,next_1>@M * 
+  H_2(next_1,prev,sent) * H_3(prev,cur,sent).
+ (1;2;0)H_3(prev,cur,sent) * cur::node<val_0,prev>@M&
+  cur_920=null & next_1=null & cur=cur_909 & cur_920=next_1 & 
+  cur'=cur_909 & prev'=null --> H(cur',prev',sent).
+ (1;0) H_2(cur',prev,sent) & cur'=sent --> emp.
+*/
+
+
+

@@ -318,10 +318,11 @@ let pr_wrap_test_nocut hdr (e:'a -> bool) (f: 'a -> unit) (x:'a) =
   if (e x) then ()
   else 
     begin
+      let ff a = f a; fmt_string " " in
       fmt_open_hbox ();
-      fmt_string hdr; 
+      fmt_string hdr;
       (* f x; *)
-      wrap_box ("B",1) f x;
+      wrap_box ("B",1) ff x;
       fmt_close_box()
     end
 
@@ -1928,7 +1929,8 @@ let pr_hprel_short_inst cprog hpa=
   fmt_open_box 1;
   (* fmt_string "hprel(2)"; *)
   (* fmt_string (CP.print_rel_cat hpa.hprel_kind); *)
-  pr_wrap_test_nocut "" skip_cond_path_trace (fun p -> fmt_string ((pr_list_round_sep ";" (fun s -> string_of_int s)) p)) hpa.hprel_path;
+  pr_wrap_test_nocut "" Gen.is_empty (* skip_cond_path_trace *) 
+      (fun p -> fmt_string ((pr_list_round_sep ";" (fun s -> string_of_int s)) p)) hpa.hprel_path;
   prtt_pr_formula_inst cprog hpa.hprel_lhs;
   let _ = match hpa.hprel_guard with
     | None -> ()
