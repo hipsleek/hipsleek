@@ -1,5 +1,6 @@
 module DD = Debug
 open Globals
+open Others
 open Stat_global
 open Global_var
 (* open Exc.ETABLE_NFLOW *)
@@ -296,7 +297,7 @@ let rec check_specs_infer (prog : prog_decl) (proc : proc_decl) (ctx : CF.contex
   (* let pr4 = Cprinter.string_of_spec_var_list in *)
   (* let pr5 = pr_list (pr_pair Cprinter.string_of_spec_var Cprinter.string_of_xpure_view) in *)
   (* let pr3 = pr_hepta pr1 pr2a  pr2 pr2b pr4 pr5 string_of_bool in *)
-  let f = wrap_proving_kind "CHECK-SPECS" (check_specs_infer_a prog proc ctx e0 do_infer) in
+  let f = wrap_proving_kind PK_Check_Specs (check_specs_infer_a prog proc ctx e0 do_infer) in
   (fun _ -> f spec_list) spec_list
 
 (* Termination *)
@@ -369,7 +370,7 @@ and check_bounded_term_x prog ctx post_pos =
 and check_bounded_term prog ctx post_pos =
   let pr = !CF.print_context in
   let pr1 = pr_pair !CF.print_context (pr_list Cprinter.string_of_lhs_rhs) in
-  let f = wrap_proving_kind "TERM-BND" (check_bounded_term_x prog ctx) in
+  let f = wrap_proving_kind PK_Term_Bnd (check_bounded_term_x prog ctx) in
   Debug.no_1 "check_bounded_term" pr pr1 (fun _ -> f post_pos) ctx
 
 (*and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context) (sp:CF.struc_formula) e0 do_infer: 
@@ -1298,7 +1299,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                       (ps@res)
 	        end
 	      in
-              wrap_classic atype (wrap_proving_kind "ASSERT/ASSUME" assert_op) ()
+              wrap_classic atype (wrap_proving_kind PK_Assert assert_op) ()
         | Assign ({ exp_assign_lhs = v;
           exp_assign_rhs = rhs;
           exp_assign_pos = pos}) ->
@@ -1367,7 +1368,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                 end
 	      in
 	      Gen.Profiling.push_time "[check_exp] Assign";  
-	      let res = wrap_proving_kind "ASSIGN" assign_op () in
+	      let res = wrap_proving_kind PK_Assign_Stmt assign_op () in
 	      Gen.Profiling.pop_time "[check_exp] Assign";
 	      res		
 	| Barrier {exp_barrier_recv = b; exp_barrier_pos = pos} ->			
@@ -1635,7 +1636,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                         end
                 end  (*end Bind*)
               in
-              wrap_proving_kind "BIND" bind_op ()
+              wrap_proving_kind PK_BIND bind_op ()
 	          
         | Block ({exp_block_type = t;
           exp_block_body = e;
@@ -1688,7 +1689,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
               end
             in
             Gen.Profiling.push_time "[check_exp] Cast";  
-            let res = wrap_proving_kind "CAST" assign_op () in
+            let res = wrap_proving_kind PK_Cast assign_op () in
             Gen.Profiling.pop_time "[check_exp] Cast";
             res
         | Catch b -> Error.report_error {
@@ -1730,7 +1731,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 	          res
 	        end in
 	      Gen.Profiling.push_time "[check_exp] Cond";
-              let res = wrap_proving_kind "IF" cond_op () in
+              let res = wrap_proving_kind PK_If_Stmt cond_op () in
 	      Gen.Profiling.pop_time "[check_exp] Cond";
 	      res
               ;
@@ -2010,7 +2011,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                     let pr2 = Cprinter.string_of_list_failesc_context in
                     let pr3 = Cprinter.string_of_struc_formula in
                     (* let _ = Log.update_sleek_proving_kind Log.PRE in *)
-                    let f = wrap_proving_kind "PRE-2" (check_pre_post org_spec sctx) in
+                    let f = wrap_proving_kind PK_PRE (check_pre_post org_spec sctx) in
                     Debug.no_2_loop "check_pre_post" pr3 pr2 pr2 (fun _ _ ->  f should_output_html) org_spec sctx in
 		  
 		  let check_pre_post org_spec (sctx:CF.list_failesc_context) should_output_html : CF.list_failesc_context =
@@ -2252,7 +2253,7 @@ and check_post (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_cont
   (* let _ = Debug.info_pprint "CG dont trust 0" pos; flush(stdout) in *)
   (* let _ = Log.update_sleek_proving_kind Log.POST in *)
   (* let _ = Debug.info_pprint "CG dont trust" pos; flush(stdout) in *)
-  let f = wrap_proving_kind "POST" (check_post_x prog proc ctx posts pos pid) in
+  let f = wrap_proving_kind PK_POST (check_post_x prog proc ctx posts pos pid) in
   Debug.no_2(* _loop *) "check_post" pr pr1 pr (fun _ _ -> f etype) ctx posts 
 
 and check_post_x (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_context) (posts : CF.formula*CF.struc_formula) pos (pid:formula_label) (etype: ensures_type) : CF.list_partial_context  =

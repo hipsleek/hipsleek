@@ -1,4 +1,5 @@
 open Globals
+open Others
 open Gen
 
 module DD = Debug
@@ -1575,8 +1576,8 @@ and infer_shapes_from_fresh_obligation_x iprog cprog proc_name is_pre cond_path 
     let rinfer_hps =  (CP.diff_svl (rhs_hps) def_hps) in
     let infer_hps = CP.remove_dups_svl (linfer_hps@rinfer_hps) in
     if infer_hps = [] then (acc_constrs, post_no_def) else
-      let log_str = if is_pre then "PRE OBLIGATION" else "POST OBLIGATION" in
-      let  _ = DD.binfo_pprint (log_str ^ ":\n" ^ (Cprinter.string_of_hprel_short cs)) no_pos in
+      let log_str = if is_pre then PK_Pre_Oblg else PK_Post_Oblg in
+      let  _ = DD.binfo_pprint ((string_of_proving_kind log_str) ^ ":\n" ^ (Cprinter.string_of_hprel_short cs)) no_pos in
       let f = wrap_proving_kind log_str (SAC.do_entail_check infer_hps cprog) in
       let new_constrs = f cs in
       (acc_constrs@new_constrs, post_no_def@linfer_hps)
