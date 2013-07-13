@@ -29,6 +29,12 @@ void lscan(ref node cur, ref node prev, node sentinel)
 requires cur::ls<M1,sentinel> * prev::ls<M2,null> * sentinel::node<_,_>@L & cur!=sentinel
 ensures prev'::ls<M3,null> & cur'=sentinel  & M3=union(M1,M2);
 */
+/* cpy from swl-0b.slk
+requires cur::ll<sent> * prev::lseg<sent> & cur!=null 
+ensures prev'::ll<sent>  & cur'=sent ;
+requires cur::lseg<sent> * prev::ll<sent> & cur!=sent 
+ensures prev'::ll<sent>  & cur'=sent ; 
+ */
   infer [H1,H2,G1,G2]
   requires H1(cur,sentinel) * H2(prev,sentinel)
   ensures G1(cur',sentinel) * G2(prev',sentinel);

@@ -1526,28 +1526,40 @@ let match_hps_views (hp_defs: CF.hp_rel_def list) (vdcls: CA.view_decl list):
 (***************************************************************
                      END LIB MATCHING
 ****************************************************************)
-let partition_constrs_x constrs post_hps=
-  let classify (pre_cs,post_cs,rem) cs =
+let partition_constrs_x constrs post_hps0=
+  let get_post_hp post_hps cs=
+    let ohp = CF.extract_hrel_head cs.CF.hprel_rhs in
+        match ohp with
+          | Some hp -> if (CP.mem_svl hp post_hps) then post_hps else
+              let lhps = CF.get_hp_rel_name_formula cs.CF.hprel_lhs in
+              if CP.mem_svl hp lhps then
+                ( post_hps@[hp])
+              else post_hps
+          | None -> post_hps
+  in
+  let classify new_post_hps (pre_cs,post_cs,rem) cs =
     let is_post =
       try
         let ohp = CF.extract_hrel_head cs.CF.hprel_rhs in
         match ohp with
-          | Some hp -> (CP.mem_svl hp post_hps)
+          | Some hp -> (CP.mem_svl hp new_post_hps)
           | None -> false
       with _ -> false
     in
     if is_post then (pre_cs,post_cs@[cs],rem) else
       let lhs_hps = CF.get_hp_rel_name_formula cs.CF.hprel_lhs in
-      if CP.intersect_svl post_hps lhs_hps = [] then
+      if CP.intersect_svl (new_post_hps) lhs_hps = [] then
         (pre_cs@[cs],post_cs,rem)
       else (pre_cs,post_cs,rem@[cs])
   in
-  List.fold_left classify ([],[],[]) constrs
+  let new_post_hps = List.fold_left get_post_hp [] constrs in
+  let r1,r2,r3 = List.fold_left (classify (post_hps0@new_post_hps)) ([],[],[]) constrs in
+  (r1,r2,r3, new_post_hps)
 
 let partition_constrs constrs post_hps=
   let pr1 = pr_list_ln Cprinter.string_of_hprel_short in
   let pr2 = !CP.print_svl in
-  Debug.no_2 "partition_constrs" pr1 pr2 (pr_triple pr1 pr1 pr1)
+  Debug.no_2 "partition_constrs" pr1 pr2 (pr_quad pr1 pr1 pr1 pr2)
       (fun _ _ -> partition_constrs_x constrs post_hps) constrs post_hps
 
 let rec infer_shapes_init_pre_x prog (constrs0: CF.hprel list) callee_hps non_ptr_unk_hps sel_post_hps unk_hps link_hps
@@ -1760,11 +1772,12 @@ and infer_shapes_proper iprog prog proc_name cond_path (constrs2: CF.hprel list)
   (*TODO: this function may be subsumed by SAU.simp_match_partial_unknown. may be redundant code *)
   let constrs3 = List.map (SAU.simp_match_unknown unk_hps link_hps) constrs3a in
   (*partition constraints into 2 groups: pre-predicates, post-predicates*)
-  let pre_constrs,post_constrs, post_oblg_constrs = partition_constrs constrs3 sel_post_hps in
+  let pre_constrs,post_constrs, post_oblg_constrs, new_post_hps = partition_constrs constrs3 sel_post_hps in
+  let sel_post_hps1 = sel_post_hps@new_post_hps in
   (*find inital sol*)
   let _ = DD.binfo_pprint ">>>>>> pre-predicates<<<<<<" no_pos in
   let pre_hps, pre_defs, unk_hpargs1,unk_map3, pre_equivs, unk_equivs, pre_oblg_constrs = infer_shapes_init_pre prog pre_constrs callee_hps []
-    sel_post_hps unk_hpargs link_hps unk_map2 detect_dang in
+    (sel_post_hps1) unk_hpargs link_hps unk_map2 detect_dang in
   let pre_defs1, unify_equiv_map1 = if !Globals.pred_conj_unify then
     SAC.do_unify prog unk_hps link_hps pre_defs
   else
@@ -1778,14 +1791,15 @@ and infer_shapes_proper iprog prog proc_name cond_path (constrs2: CF.hprel list)
   let _ = DD.binfo_pprint ">>>>>> post-predicates<<<<<<" no_pos in
   let post_constrs1 = SAU.subst_equiv_hprel unify_equiv_map11 post_constrs in
   let post_hps, post_defs,unk_hpargs2,unk_map4  = infer_shapes_init_post prog post_constrs1 []
-    sel_post_hps unk_hpargs1 link_hps unk_map3 detect_dang pre_defs2 in
+    (sel_post_hps1) unk_hpargs1 link_hps unk_map3 detect_dang pre_defs2 in
   let post_defs1,unify_equiv_map2 = if false then (*this just for pre-preds*)
     SAC.do_unify prog unk_hps link_hps post_defs
   else
     (post_defs,unify_equiv_map11)
   in
   let pre_oblg_hps, pre_oblg_defs,unk_hpargs3,unk_map5  = if !Globals.pred_en_oblg then
-    infer_shapes_from_obligation iprog prog proc_name true cond_path (pre_oblg_constrs) callee_hps [] sel_post_hps unk_hpargs2
+    infer_shapes_from_obligation iprog prog proc_name true cond_path (pre_oblg_constrs) callee_hps []
+        (sel_post_hps1) unk_hpargs2
     (* link_hpargs *)[] need_preprocess unk_map4 detect_dang pre_defs2 post_defs1 (pre_hps@post_hps)
   else ([],[],unk_hpargs,  unk_map4)
   in
@@ -1794,7 +1808,8 @@ and infer_shapes_proper iprog prog proc_name cond_path (constrs2: CF.hprel list)
   if post_oblg_constrs !=[] then
     DD.binfo_pprint ("post-obligation:\n" ^ (pr1 post_oblg_constrs)) no_pos;
   let post_oblg_hps, post_oblg_defs,unk_hpargs4,unk_map6  = if !Globals.pred_en_oblg then
-    infer_shapes_from_obligation iprog prog proc_name false cond_path (post_oblg_constrs) callee_hps [] sel_post_hps unk_hpargs3
+    infer_shapes_from_obligation iprog prog proc_name false cond_path (post_oblg_constrs) callee_hps []
+        (sel_post_hps1) unk_hpargs3
     (* link_hpargs *)[] need_preprocess unk_map5 detect_dang (pre_defs2@pre_oblg_defs) post_defs1 (pre_hps@post_hps@pre_oblg_hps)
   else ([],[],unk_hpargs3,  unk_map5 )
   in
@@ -1810,7 +1825,8 @@ and infer_shapes_proper iprog prog proc_name cond_path (constrs2: CF.hprel list)
     else (defs1, unify_equiv_map2)
   in
   let htrue_hpargs, defs2b = SAU.convert_HTrue_2_None defs2a in
-  let defs2 = SAC.generate_hp_def_from_unk_hps defs2b unk_hpargs4 (pre_hps@post_hps@post_oblg_hps@pre_oblg_hps) sel_post_hps unk_map6 unify_equiv_map3 in
+  let defs2 = SAC.generate_hp_def_from_unk_hps defs2b unk_hpargs4 (pre_hps@post_hps@post_oblg_hps@pre_oblg_hps)
+    sel_post_hps1 unk_map6 unify_equiv_map3 in
   let defs3,link_hpargs3 = if !Globals.pred_elim_dangling then
     (* SAU.transform_unk_hps_to_pure (defs3b) unk_hp_frargs *)
     let defs3a = SAC.transform_xpure_to_pure prog defs2 unk_map4 (link_hpargs2@htrue_hpargs) in
