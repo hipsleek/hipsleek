@@ -1205,7 +1205,8 @@ let smart_subst_lhs f lhpargs leqs infer_vars=
           nfb
     | _ -> report_error no_pos "SAU.smart_subst_lhs"
 
-let keep_data_view_hrel_nodes_two_fbs prog f1 f2 hd_nodes hv_nodes hpargs leqs reqs his_ss keep_rootvars
+let keep_data_view_hrel_nodes_two_fbs prog f1 f2 hd_nodes hv_nodes hpargs
+      leqs reqs his_ss keep_rootvars
       lhs_hpargs lkeep_hpargs lhs_args_ni rkeep_hps rhs_svl rhs_args_ni unk_svl prog_vars =
   let eqs = (leqs@reqs@his_ss) in
   let _ = Debug.ninfo_pprint ("keep_vars root: " ^ (!CP.print_svl keep_rootvars)) no_pos in
@@ -1224,14 +1225,14 @@ let keep_data_view_hrel_nodes_two_fbs prog f1 f2 hd_nodes hv_nodes hpargs leqs r
   (*remove dups*)
   let lkeep_nodes = look_up_dups_node prog hd_nodes hv_nodes c_lhs_hpargs keep_vars 
    (List.fold_left close_def rhs_svl eqs ) in
-  (* let _ = Debug.info_pprint ("f1: " ^ (Cprinter.string_of_formula_base f1)) no_pos in *)
+  let _ = Debug.ninfo_pprint ("f1: " ^ (Cprinter.string_of_formula_base f1)) no_pos in
+  let _ = Debug.ninfo_pprint ("f2: " ^ (Cprinter.string_of_formula_base f2)) no_pos in
   let nf1 = CF.drop_data_view_hpargs_nodes_fb f1 check_nbelongsto_dnode check_nbelongsto_vnode check_neq_hpargs
     (* lkeep_nodes *) keep_vars (* lkeep_nodes *) keep_vars lkeep_hpargs (keep_vars@c_lhs_hpargs@lhs_args_ni@rhs_args_ni) in
   let nf2 = CF.drop_data_view_hrel_nodes_fb f2 check_nbelongsto_dnode check_nbelongsto_vnode check_neq_hrelnode
     keep_vars keep_vars rkeep_hps (keep_vars@rhs_args_ni) in
   let _ = Debug.ninfo_pprint ("nf1: " ^ (Cprinter.string_of_formula_base nf1)) no_pos in
   let _ = Debug.ninfo_pprint ("nf2: " ^ (Cprinter.string_of_formula_base nf2)) no_pos in
-
   let lhs_b2,rhs_b2 =  ( nf1, nf2)(* smart_subst nf1 nf2 hpargs eqs reqs unk_svl prog_vars *) in
   (lhs_b2,rhs_b2)
 

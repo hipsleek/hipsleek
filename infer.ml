@@ -2309,7 +2309,8 @@ let simplify_lhs_rhs prog lhs_b rhs_b leqs reqs hds hvs lhrs rhrs lhs_selected_h
           else elim_redun_his tl (res@[hd])
   in
   let filter_his = elim_redun_his (List.concat (List.map get_h_formula_data_fr_hnode history)) [] in
-  (* let _ = Debug.info_pprint ("    prog_vars:" ^(!CP.print_svl prog_vars)) no_pos in *)
+  let _ = Debug.ninfo_pprint ("    lhs_args_ni:" ^(!CP.print_svl lhs_args_ni)) no_pos in
+  let _ = Debug.ninfo_pprint ("    rhs_args_ni:" ^(!CP.print_svl rhs_args_ni)) no_pos in
   let lhs_b1,rhs_b1 = SAU.keep_data_view_hrel_nodes_two_fbs prog lhs_b rhs_b
     (hds@filter_his) hvs (lhp_args@rhp_args) leqs reqs [] (svl@keep_root_hrels@classic_nodes)
     (lhs_keep_rootvars@keep_root_hrels) lhp_args lhs_args_ni
@@ -2331,7 +2332,7 @@ let simplify_lhs_rhs prog lhs_b rhs_b leqs reqs hds hvs lhrs rhrs lhs_selected_h
   (*args of one hp must be diff --
        inside SAU.keep_data_view_hrel_nodes_two_fbs*)
   (* let lhs_b4,rhs_b4 = SAU.rename_hp_args lhs_b3 rhs_b3 in *)
-  (CF.prune_irr_neq_formula prog_vars lhs_b3 rhs_b,rhs_b3)
+  (CF.prune_irr_neq_formula prog_vars lhs_b3 rhs_b3,rhs_b3)
 
 let simplify_lhs_rhs prog lhs_b rhs_b leqs reqs hds hvs lhrs rhrs
       lhs_selected_hpargs rhs_selected_hpargs crt_holes history unk_svl prog_vars lvi_ni_svl =
