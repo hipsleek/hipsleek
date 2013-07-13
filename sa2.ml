@@ -924,7 +924,10 @@ let generalize_one_hp_x prog is_pre (hpdefs: (CP.spec_var *CF.hp_rel_def) list) 
             if defs <> [] then
               (defs,elim_ss)
             else
-              report_error no_pos "shape analysis: FAIL"
+              (* report_error no_pos "shape analysis: FAIL" *)
+              let body = if is_pre then CF.mkTrue_nf no_pos else CF.mkFalse_nf no_pos in
+              let def = (CP.HPRelDefn (hp, r, non_r_args), (CF.HRel (hp, List.map (fun x -> CP.mkVar x no_pos) args0, no_pos)), None, body) in
+              ([(hp, def)],[])
         in
         (********PRINTING***********)
         let _ = List.iter (fun (_, def) ->
@@ -1552,7 +1555,7 @@ let partition_constrs_x constrs post_hps0=
         (pre_cs@[cs],post_cs,rem)
       else (pre_cs,post_cs,rem@[cs])
   in
-  let new_post_hps = List.fold_left get_post_hp [] constrs in
+  let new_post_hps = (* List.fold_left get_post_hp [] constrs *)[] in
   let r1,r2,r3 = List.fold_left (classify (post_hps0@new_post_hps)) ([],[],[]) constrs in
   (r1,r2,r3, new_post_hps)
 
