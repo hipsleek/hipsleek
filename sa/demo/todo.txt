@@ -5395,6 +5395,23 @@ Stop Omega... 108 invocations caught
 Exception occurred: Failure("self of G cannot have its type determined")
 Error(s) detected at main 
 =====================================================================
+# view_simp.ss
+
+ll<> == (self:node)=null
+  inv true;
+
+Parsing file "view_simp.ss" by default parser...
+
+!!!  processing primitives "["prelude.ss"]
+Starting Omega...oc
+
+ERROR: at _0:0_0:0 
+Message: self of ll cannot have its type determined
+ Stop Omega... 0 invocations caught
+(Program not linked with -g, cannot print stack backtrace)
+
+Exception occurred: Failure("self of ll cannot have its type determined")
+
 =====================================================================
 =====================================================================
 =====================================================================

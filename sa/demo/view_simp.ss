@@ -3,7 +3,7 @@ data node {
   node next;
 }
 
-ll<> == self=null
+ll<> == (self:node)=null
   inv true;
 
 /*
