@@ -5378,6 +5378,22 @@ Error(s) detected at main
 Stop Omega... 101 invocations caught
 (Program not linked with -g, cannot print stack backtrace)
 =====================================================================
+# swl-i.ss
+
+Context of Verification Failure: 1 File "swl-i.ss",Line:32,Col:10
+Last Proving Location: 1 File "swl-i.ss",Line:52,Col:2
+
+ERROR: at _0:0_0:0 
+Message: self of G cannot have its type determined
+ 
+ExceptionFailure("self of G cannot have its type determined")Occurred!
+
+Error(s) detected at main 
+Stop Omega... 108 invocations caught
+(Program not linked with -g, cannot print stack backtrace)
+
+Exception occurred: Failure("self of G cannot have its type determined")
+Error(s) detected at main 
 =====================================================================
 =====================================================================
 =====================================================================
