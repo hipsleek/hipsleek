@@ -85,7 +85,7 @@ let pr_proof_log_entry e =
   fmt_string ("; kind: "^(Others.string_of_proving_kind e.log_proving_kind));
   (* fmt_string ("; "^((pr_list pr_id) e.log_other_properties)); *)
   (match e.log_type with
-      Some k ->  fmt_string ("\n type: " ^ (string_of_log_type k)) 
+      Some k ->  fmt_string ("\n " ^ (string_of_log_type k)) 
     | None -> ());
   fmt_string ("\n res: "^(string_of_log_res e.log_res));
   fmt_string ("\n --------------------");
@@ -154,6 +154,7 @@ let get_sleek_proving_id ()=
 (* let proof_log_list  = ref [] (\*For printing to text file with the original order of proof execution*\) *)
 let proof_log_stk : string  Gen.stack_filter 
       = new Gen.stack_filter pr_id (==) (fun e -> true)
+(* not(Others.proving_kind # top_no_exc == PK_Trans_Proc)) *)
 
 let proof_gt5_log_list = ref [] (*Logging proofs require more than 5 secs to be proved*)
 
@@ -298,8 +299,10 @@ let proof_log_to_text_file (src_files) =
 	    |BOOL b -> string_of_bool b
 	    |FORMULA f -> string_of_pure_formula f)^"\n" in
     (* let _ = proof_log_stk # string_of_reverse in *)
-    let _= List.map (fun ix->let log=Hashtbl.find proof_log_tbl ix in
-    let _=fprintf oc "%s" ((* helper *) string_of_proof_log_entry log) in ()) (List.rev (proof_log_stk # get_stk)) in
+    let _= List.map (fun ix->
+        let log=Hashtbl.find proof_log_tbl ix in
+        if log.log_proving_kind != PK_Trans_Proc then
+          fprintf oc "%s" ((* helper *) string_of_proof_log_entry log)) (List.rev (proof_log_stk # get_stk)) in
     let tstoplog = Gen.Profiling.get_time () in
     let _= Globals.proof_logging_time := !Globals.proof_logging_time +. (tstoplog -. tstartlog) in 
     close_out oc;

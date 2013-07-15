@@ -453,6 +453,27 @@ as a type error. The error only appeared during trans_exp
 ERROR: at rose-bug-type2.ss_32:15_32:42 
 Message: trans_exp :: case CallNRecv :: procedure 2 check_child$node~tree~tree is not found
 ===================================================================
+# swl.ss --en-logging-txt -tp om
+
+PROBLEMS (i) could simplifier help push existential inwards
+             and/or eliminate them, e.g nxt can be elim, while
+             Mnt can be pushed inwards
+(ii) Why ante/conseq seems to be wrong way for some examples
+     such as 149 below.
+-------------------- 
+ id: 150; prover: ; loc: swl_ss_12:11_12:43; kind: Pred_Check_Inv
+ Simplify:  exists(Mnxt:exists(nxt:M=union(Mnxt,bag({self})) & s!=self & self!=null & 
+nxt!=s))
+ res:  exists(Mnxt:exists(nxt:M=union(Mnxt,bag({self})) & s!=self & self!=null & 
+nxt!=s))
+ -------------------- 
+ id: 149; prover: ; loc: swl_ss_12:11_12:43; kind: Pred_Check_Inv
+ Imply: ante: s!=self
+	     conseq:  (exists(Mnxt:exists(nxt:M=union(Mnxt,bag({self})) & s!=self & self!=null & 
+nxt!=s)) | (self=null & M=bag() & s!=self))
+ res: false
+ -------------------- 
+ 
 ===================================================================
 ===================================================================
 ===================================================================
