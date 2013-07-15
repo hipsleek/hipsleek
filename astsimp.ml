@@ -5177,7 +5177,7 @@ and trans_pure_exp_x (e0 : IP.exp) (tlist:spec_var_type_list) : CP.exp =
           CP.Var ((trans_var (v,p) tlist pos),pos)
     | IP.Level ((v, p), pos) -> 
           CP.Level ((trans_var (v,p) tlist pos),pos)
-    | IP.Ann_Exp (e, t) -> trans_pure_exp e tlist
+    | IP.Ann_Exp (e, t, pos) -> trans_pure_exp e tlist
     | IP.IConst (c, pos) -> CP.IConst (c, pos)
     | IP.FConst (c, pos) -> CP.FConst (c, pos)
     | IP.Add (e1, e2, pos) -> CP.Add (trans_pure_exp e1 tlist, trans_pure_exp e2 tlist, pos)

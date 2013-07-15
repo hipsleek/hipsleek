@@ -278,12 +278,12 @@ let apply_pure_form2 fct form1 form2 = match (form1,form2) with
       let bool_var1 = (
         match f1 with
         | P.Var (v,_) -> P.BForm (((P.mkBVar v (get_pos 1)), None), None )
-        | P.Ann_Exp (P.Var (v, _), Bool) -> P.BForm (((P.mkBVar v (get_pos 1)), None), None)
+        | P.Ann_Exp (P.Var (v, _), Bool, _) -> P.BForm (((P.mkBVar v (get_pos 1)), None), None)
         | _ -> report_error (get_pos 1) "with 2 expected pure_form in f1, found cexp") in
       let bool_var2 = (
         match f2 with
         | P.Var (v,_) -> P.BForm (((P.mkBVar v (get_pos 1)), None), None )
-        | P.Ann_Exp (P.Var (v, _), Bool) -> P.BForm (((P.mkBVar v (get_pos 1)), None), None)
+        | P.Ann_Exp (P.Var (v, _), Bool, _) -> P.BForm (((P.mkBVar v (get_pos 1)), None), None)
         | _ -> report_error (get_pos 1) "with 2 expected pure_form in f2, found cexp") in
       Pure_f(fct bool_var1 bool_var2)
     )
@@ -1437,7 +1437,7 @@ pure_constr:
        match t with
        | Pure_f f -> f
        | Pure_c (P.Var (v,_)) ->  P.BForm ((P.mkBVar v (get_pos_camlp4 _loc 1), None), None)
-       | Pure_c (P.Ann_Exp (P.Var (v,_), Bool)) ->  P.BForm ((P.mkBVar v (get_pos_camlp4 _loc 1), None), None)
+       | Pure_c (P.Ann_Exp (P.Var (v,_), Bool, _)) ->  P.BForm ((P.mkBVar v (get_pos_camlp4 _loc 1), None), None)
        | _ -> report_error (get_pos_camlp4 _loc 1) "expected pure_constr, found cexp"
   ]];
 
