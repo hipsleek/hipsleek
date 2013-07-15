@@ -1,0 +1,22 @@
+data node {
+  int val;
+  node next;
+}.
+
+data cell {
+  int val;
+}.
+
+/*
+pred ll<> == (self:node)=null
+  inv true.
+*/
+
+pred ll<> == self::node<_,_>
+  or self::cell<_>
+  inv true.
+
+/*
+ERROR: at _0:0_0:0
+Message: self of ll cannot have its type determined
+ */

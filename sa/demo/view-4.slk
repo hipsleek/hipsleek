@@ -1,0 +1,32 @@
+data node {
+  int val;
+  node next;
+}.
+
+data cell {
+  int val;
+}.
+
+/*
+pred ll<> == (self:node)=null
+  inv true.
+*/
+
+pred cl<> == self::cell<_>
+  inv true.
+
+pred ll<> == self::node<_,_>
+  or self::cl<>
+  inv true.
+
+/*
+# view-4.stk
+
+Type error here but the message is crytic..
+
+gather_type_info_struc_f inp2 :[(self:16:node)]
+gather_type_info_struc_f@3 EXIT ExceptionFailure("gather_type_info_var : unexpected exceptionInvalid_argument(\"[ocamlgraph] iter_succ\")")Occurred!
+Fatal error: exception Failure("gather_type_info_var : unexpected exceptionInvalid_argument("[ocamlgraph] iter_succ")")
+
+
+*/
