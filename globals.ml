@@ -349,7 +349,6 @@ object
 end;;
 
 
-
 (*Some global vars for logging*)
 let proving_loc  = new prog_loc
 let post_pos = new prog_loc

@@ -6,6 +6,8 @@ open Globals
 open GlobProver
 module CP = Cpure
 
+let set_prover_type () = Others.last_tp_used # set Others.Mona
+
 let is_mona_running = ref false
 (* let channels = ref (stdin, stdout, stdin) *)
 let last_test_number = ref 0
@@ -189,6 +191,7 @@ and preprocess_formula_x pr_w pr_s (f : CP.formula) : CP.formula =
   in helper f
 
 and preprocess_formula pr_w pr_s (f : CP.formula) : CP.formula =
+  let _ = set_prover_type () in
   Debug.no_1 "preprocess_formula"
       Cprinter.string_of_pure_formula 
       Cprinter.string_of_pure_formula

@@ -23,7 +23,7 @@ type proof_log = {
 	(* log_other_properties : string list; (\* TODO: Should change to integer for performance *\) *)
         log_loc : loc;
         log_proving_kind : Others.proving_kind;
-	log_prover : string;
+	log_prover : Others.tp_type;
 	log_type : proof_type option;
 	log_time : float;
 	log_cache : bool;
@@ -79,7 +79,7 @@ let pr_proof_log_entry e =
   fmt_open_box 1;
   fmt_string ("\n id: " ^ (e.log_id));
   if e.log_cache then fmt_string ("; prover : CACHED ")
-  else fmt_string ("; prover: " ^ (e.log_prover));
+  else fmt_string ("; prover: " ^ (string_of_prover e.log_prover));
   if e.log_time > 0.5 then fmt_string ("; TIME: " ^ (string_of_float e.log_time));
   fmt_string ("; loc: "^(string_of_loc e.log_loc));
   fmt_string ("; kind: "^(Others.string_of_proving_kind e.log_proving_kind));
@@ -244,7 +244,7 @@ let add_proof_log (cache_status:bool) old_no pno tp ptype time res =
                 log_proving_kind = proving_kind # top_no_exc;
 		(* log_other_properties = [proving_info ()]@[trace_info ()]; *)
 		(* log_old_id = old_no; *)
-		log_prover = tp;
+		log_prover = Others.last_tp_used # get;
 		log_type = Some ptype;
 		log_time = time;
 		log_cache = cache_status;
@@ -292,7 +292,7 @@ let proof_log_to_text_file (src_files) =
 	  (* List.fold_left (fun a c->a^c) "" log.log_other_properties^ *)
 	  (* "\nid: "^log.log_id^ *)
       "\nProver: "^
-      (if log.log_cache then "CACHED" else log.log_prover)^
+      (if log.log_cache then "CACHED" else (string_of_prover log.log_prover))^
       "\nType: "^(match log.log_type with | Some x-> string_of_log_type x | None -> "????")^
       (* "\nTime: "^(string_of_float(log.log_time))^ *)
       "\nResult: "^(match log.log_res with

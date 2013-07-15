@@ -399,7 +399,7 @@ let process_source_full source =
 	^ if !Globals.proof_logging || !Globals.proof_logging_txt then 
       "\tTime for logging: "^(string_of_float (!Globals.proof_logging_time))^" second(s)\n"
     else ""
-	^ if(!Tpdispatcher.tp = Tpdispatcher.Z3) then 
+	^ if(!Tpdispatcher.pure_tp = Others.Z3) then 
       "\tZ3 Prover Time: " ^ (string_of_float !Globals.z3_time) ^ " second(s)\n"
     else "\n"
 	)

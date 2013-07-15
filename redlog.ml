@@ -8,6 +8,7 @@ open GlobProver
 open Gen.Basic
 module CP = Cpure
 
+let set_prover_type () = Others.last_tp_used # set Others.Redlog
 
 (* options *)
 let is_presburger = ref false
@@ -354,6 +355,10 @@ let rec rl_of_formula pr_w pr_s f0 =
       | CP.And (f1, f2, _) -> "(" ^ (helper f1) ^ " and " ^ (helper f2) ^ ")"
       | CP.Or (f1, f2, _, _) -> "(" ^ (helper f1) ^ " or " ^ (helper f2) ^ ")"
   in helper f0
+
+let rl_of_formula pr_w pr_s f0 =
+  let _ = set_prover_type() in
+  rl_of_formula pr_w pr_s f0
 
 (***********************************
  pretty printer for pure formula

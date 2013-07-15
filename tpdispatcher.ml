@@ -3,6 +3,7 @@
 *)
 
 open Globals
+open Others
 open GlobProver
 open Gen.Basic
 open Mcpure
@@ -14,35 +15,10 @@ open Printf
 module CP = Cpure
 module MCP = Mcpure
 
-type tp_type =
-  | OmegaCalc
-  | CvcLite
-  | Cvc3
-  | CO (* CVC3 then Omega combination *)
-  | Isabelle
-  | Mona
-  | MonaH
-  | OM
-  | OI
-  | SetMONA
-  | CM (* CVC3 then MONA *)
-  | Coq
-  | Z3
-  | Redlog
-  | Mathematica
-  | RM (* Redlog and Mona *)
-  | PARAHIP (* Redlog, Z3 and Mona *) (*This option is used on ParaHIP website*)
-  | ZM (* Z3 and Mona *)
-  | OZ (* Omega and Z3 *)
-  | AUTO (* Omega, Z3, Mona, Coq *)
-  | DP (*ineq prover for proof slicing experim*)
-  | SPASS
-  | MINISAT
-  | LOG (* Using previous results instead of invoking the actual provers *)
 
 let test_db = false
 
-let tp = ref OmegaCalc
+let pure_tp = ref OmegaCalc
 (* let tp = ref OZ *)
 (* let tp = ref Redlog *)
 (* let tp = ref AUTO *)
@@ -66,31 +42,6 @@ let decr_priority = ref false
 let set_priority = ref false
 let prio_list = ref []
 
-let string_of_prover prover = match prover with
-	| OmegaCalc -> "OMEGA CALCULATOR"
-	| CvcLite -> "CVC Lite"
-	| Cvc3 -> "CVC3"
-	| CO  -> ""
-	| Isabelle -> "ISABELLE"
-	| Mona -> "MONA"
-	| MonaH -> ""
-	| OM -> ""
-	| OI -> ""
-	| SetMONA -> ""
-	| CM  -> ""
-	| Coq -> "COQ"
-	| Z3 -> "Z3"
-	| Redlog -> "REDLOG (REDUCE LOGIC)"
-	| RM -> "Redlog, Mona"
-    | Mathematica -> "Mathematica"
-	| PARAHIP -> "Redlog, Mona, z3" (*This option is used on ParaHIP website*)
-	| ZM -> "Z3, Mona"
-	| OZ -> "Omega, z3"
-	| AUTO -> "AUTO - omega, z3, mona, coq"
-	| DP -> "Disequality Solver"
-	| SPASS -> "SPASS"
-	| MINISAT -> "MINISAT"
-	| LOG -> "LOG"
   
  
 let sat_cache = ref (Hashtbl.create 200)
@@ -297,7 +248,7 @@ class incremMethods : [CP.formula] incremMethodsType = object
   (*creates a new proving process *)
   method start_p () : prover_process_t =
     let proc = 
-      match !tp with
+      match !pure_tp with
       | Cvc3 -> Cvc3.start()
       | _ -> Cvc3.start() (* to be completed for the rest of provers that support incremental proving *) 
     in 
@@ -306,20 +257,20 @@ class incremMethods : [CP.formula] incremMethodsType = object
 
   (*stops the proving process*)
   method stop_p (process: prover_process_t): unit =
-    match !tp with
+    match !pure_tp with
       | Cvc3 -> Cvc3.stop process
       | _ -> () (* to be completed for the rest of provers that support incremental proving *)
 
   (*saves the state of the process and its context *)
   method push (process: prover_process_t): unit = 
     push_no := !push_no + 1;
-      match !tp with
+      match !pure_tp with
         | Cvc3 -> Cvc3.cvc3_push process
         | _ -> () (* to be completed for the rest of provers that support incremental proving *)
 
   (*returns the process to the state it was before the push call *)
   method pop (process: prover_process_t): unit = 
-    match !tp with
+    match !pure_tp with
       | Cvc3 -> Cvc3.cvc3_pop process
       | _ -> () (* to be completed for the rest of provers that support incremental proving *)
 
@@ -331,7 +282,7 @@ class incremMethods : [CP.formula] incremMethodsType = object
         !push_no 
       end
       else n in
-    match !tp with
+    match !pure_tp with
       | Cvc3 -> Cvc3.cvc3_popto process n
       | _ -> () (* to be completed for the rest of provers that support incremental proving *)
 
@@ -381,68 +332,68 @@ let set_tp tp_str =
   (*else if tp_str = "omega" then
 	(tp := OmegaCalc; prover_str := "oc"::!prover_str;)*)
   if (String.sub tp_str 0 2) = "oc" then
-    (Omega.omegacalc := tp_str; tp := OmegaCalc; prover_str := "oc"::!prover_str;)
-  else if tp_str = "dp" then tp := DP
+    (Omega.omegacalc := tp_str; pure_tp := OmegaCalc; prover_str := "oc"::!prover_str;)
+  else if tp_str = "dp" then pure_tp := DP
   else if tp_str = "cvcl" then 
-	(tp := CvcLite; prover_str := "cvcl"::!prover_str;)
+	(pure_tp := CvcLite; prover_str := "cvcl"::!prover_str;)
   else if tp_str = "cvc3" then 
-	(tp := Cvc3; prover_str := "cvc3"::!prover_str;)
+	(pure_tp := Cvc3; prover_str := "cvc3"::!prover_str;)
   else if tp_str = "co" then
-	(tp := CO; prover_str := "cvc3"::!prover_str; 
+	(pure_tp := CO; prover_str := "cvc3"::!prover_str; 
      prover_str := "oc"::!prover_str;)
   else if tp_str = "isabelle" then
-	(tp := Isabelle; prover_str := "isabelle-process"::!prover_str;)
+	(pure_tp := Isabelle; prover_str := "isabelle-process"::!prover_str;)
   else if tp_str = "mona" then
-	(tp := Mona; prover_str := "mona"::!prover_str;)
+	(pure_tp := Mona; prover_str := "mona"::!prover_str;)
   else if tp_str = "monah" then
-	(tp := MonaH; prover_str := "mona"::!prover_str;)
+	(pure_tp := MonaH; prover_str := "mona"::!prover_str;)
   else if tp_str = "om" then
-	(tp := OM; prover_str := "oc"::!prover_str;
+	(pure_tp := OM; prover_str := "oc"::!prover_str;
      prover_str := "mona"::!prover_str;)
   else if tp_str = "oi" then
-	(tp := OI; prover_str := "oc"::!prover_str;
+	(pure_tp := OI; prover_str := "oc"::!prover_str;
      prover_str := "isabelle-process"::!prover_str;)
   else if tp_str = "set" then
-    (tp := SetMONA; prover_str := "mona"::!prover_str;)
+    (pure_tp := SetMONA; prover_str := "mona"::!prover_str;)
   else if tp_str = "cm" then
-	(tp := CM; prover_str := "cvc3"::!prover_str;
+	(pure_tp := CM; prover_str := "cvc3"::!prover_str;
      prover_str := "mona"::!prover_str;)
   else if tp_str = "coq" then
-	(tp := Coq; prover_str := "coqtop"::!prover_str;)
+	(pure_tp := Coq; prover_str := "coqtop"::!prover_str;)
   (*else if tp_str = "z3" then 
-	(tp := Z3; prover_str := "z3"::!prover_str;)*)
+	(pure_tp := Z3; prover_str := "z3"::!prover_str;)*)
    else if (String.sub tp_str 0 2) = "z3" then
-	(Smtsolver.smtsolver_name := tp_str; tp := Z3; prover_str := "z3"::!prover_str;)
+	(Smtsolver.smtsolver_name := tp_str; pure_tp := Z3; prover_str := "z3"::!prover_str;)
   else if tp_str = "redlog" then
-    (tp := Redlog; prover_str := "redcsl"::!prover_str;)
+    (pure_tp := Redlog; prover_str := "redcsl"::!prover_str;)
   else if tp_str = "math" then
-    (tp := Mathematica; prover_str := "mathematica"::!prover_str;)
+    (pure_tp := Mathematica; prover_str := "mathematica"::!prover_str;)
   else if tp_str = "rm" then
-    tp := RM
+    pure_tp := RM
   else if tp_str = "parahip" then
-    tp := PARAHIP
+    pure_tp := PARAHIP
   else if tp_str = "zm" then
-    (tp := ZM; 
+    (pure_tp := ZM; 
     prover_str := "z3"::!prover_str;
     prover_str := "mona"::!prover_str;)
   else if tp_str = "auto" then
-	(tp := AUTO; prover_str := "oc"::!prover_str;
+	(pure_tp := AUTO; prover_str := "oc"::!prover_str;
      prover_str := "z3"::!prover_str;
      prover_str := "mona"::!prover_str;
      prover_str := "coqtop"::!prover_str;
     )
   else if tp_str = "oz" then
-	(tp := AUTO; prover_str := "oc"::!prover_str;
+	(pure_tp := AUTO; prover_str := "oc"::!prover_str;
      prover_str := "z3"::!prover_str;
     )
   else if tp_str = "prm" then
-    (Redlog.is_presburger := true; tp := RM)
+    (Redlog.is_presburger := true; pure_tp := RM)
   else if tp_str = "spass" then
-    (tp := SPASS; prover_str:= "SPASS-MOD"::!prover_str)
+    (pure_tp := SPASS; prover_str:= "SPASS-MOD"::!prover_str)
   else if tp_str = "minisat" then
-    (tp := MINISAT; prover_str := "z3"::!prover_str;)	
+    (pure_tp := MINISAT; prover_str := "z3"::!prover_str;)	
   else if tp_str = "log" then
-    (tp := LOG; prover_str := "log"::!prover_str)
+    (pure_tp := LOG; prover_str := "log"::!prover_str)
   else
 	();
   check_prover_existence !prover_str
@@ -513,12 +464,12 @@ let log_file_of_tp tp = match tp with
   | SPASS -> "allinput.spass"
   | _ -> ""
 
-let get_current_tp_name () = name_of_tp !tp
+let get_current_tp_name () = name_of_tp !pure_tp
 
 let omega_count = ref 0
 
 let start_prover () =
-  match !tp with
+  match !pure_tp with
   | Coq -> Coq.start ();
   | Redlog | RM -> Redlog.start ();
   | Cvc3 -> (
@@ -553,7 +504,7 @@ let start_prover () =
   Gen.Profiling.do_1 "TP.start_prover" start_prover ()
 
 let stop_prover () =
-  match !tp with
+  match !pure_tp with
   | OmegaCalc -> (
       Omega.stop ();
       if !Redlog.is_reduce_running then Redlog.stop ();
@@ -1066,7 +1017,7 @@ let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
 
   (* let _ = Gen.Profiling.push_time "tp_is_sat" in *)
   let res = (
-    match !tp with
+    match !pure_tp with
     | DP -> 
         let r = Dp.is_sat f sat_no in
         if test_db then (
@@ -1286,7 +1237,7 @@ let simplify (f : CP.formula) : CP.formula =
       Gen.Profiling.push_time "simplify";
       try
         if not !tp_batch_mode then start_prover ();
-        let r = match !tp with
+        let r = match !pure_tp with
           | DP -> Dp.simplify f
           | Isabelle -> Isabelle.simplify f
           | Coq -> 
@@ -1353,7 +1304,7 @@ let simplify (f : CP.formula) : CP.formula =
             in CP.set_il_formula_with_dept_list r rel_vars_lst
           else r
         ) in   
-        let _= add_proof_log !cache_status simpl_no simpl_no (string_of_prover !tp) (SIMPLIFY f) (tstop -. tstart) (FORMULA res) in
+        let _= add_proof_log !cache_status simpl_no simpl_no (string_of_prover !pure_tp) (SIMPLIFY f) (tstop -. tstart) (FORMULA res) in
         res
       with | _ -> f
    )
@@ -1443,7 +1394,7 @@ let simplify_a (s:int) (f:CP.formula): CP.formula =
 
 let hull (f : CP.formula) : CP.formula =
   if not !tp_batch_mode then start_prover ();
-  let res = match !tp with
+  let res = match !pure_tp with
     | DP -> Dp.hull  f
     | Isabelle -> Isabelle.hull f
     | Coq -> (* Coq.hull f *)
@@ -1480,7 +1431,7 @@ let hull (f : CP.formula) : CP.formula =
 
 let pairwisecheck (f : CP.formula) : CP.formula =
   if not !tp_batch_mode then start_prover ();
-  let res = match !tp with
+  let res = match !pure_tp with
     | DP -> Dp.pairwisecheck f
     | Isabelle -> Isabelle.pairwisecheck f
     | Coq -> 
@@ -1601,7 +1552,7 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
   let z3_imply a c = Smtsolver.imply_ops pr_weak_z3 pr_strong_z3 a c timeout in
   if not !tp_batch_mode then start_prover ();
   let r = (
-    match !tp with
+    match !pure_tp with
     | DP ->
         let r = Dp.imply ante_w conseq_s (imp_no^"XX") timeout in
         if test_db then
@@ -1745,9 +1696,9 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
   Gen.Profiling.push_time "tp_is_sat"; 
   if should_output () then (
     Prooftracer.push_pure_imply ante conseq r;
-    Prooftracer.push_pop_prover_input (get_generated_prover_input ()) (string_of_prover !tp);
-    Prooftracer.push_pop_prover_output (get_prover_original_output ()) (string_of_prover !tp);
-    Prooftracer.add_pure_imply ante conseq r (string_of_prover !tp) (get_generated_prover_input ()) (get_prover_original_output ());
+    Prooftracer.push_pop_prover_input (get_generated_prover_input ()) (string_of_prover !pure_tp);
+    Prooftracer.push_pop_prover_output (get_prover_original_output ()) (string_of_prover !pure_tp);
+    Prooftracer.add_pure_imply ante conseq r (string_of_prover !pure_tp) (get_generated_prover_input ()) (get_prover_original_output ());
     Prooftracer.pop_div ();
   );
   let _ = Gen.Profiling.pop_time "tp_is_sat" in 
@@ -2035,7 +1986,7 @@ let is_sat (f : CP.formula) (old_sat_no : string): bool =
     (* let f = CP.drop_rel_formula f in *)
 	let res= sat_label_filter (fun c-> tp_is_sat c sat_no) f in
 	let tstop = Gen.Profiling.get_time () in
-	let _= add_proof_log !cache_status old_sat_no sat_no (string_of_prover !tp) (SAT f) (tstop -. tstart) (BOOL res) in
+	let _= add_proof_log !cache_status old_sat_no sat_no (string_of_prover !pure_tp) (SAT f) (tstop -. tstart) (BOOL res) in
 	res
 ;;
 
@@ -2137,7 +2088,7 @@ let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (old_imp_no : stri
 	let tstop = Gen.Profiling.get_time () in
     (* let _ = print_string ("length of pairs: "^(string_of_int (List.length !ante_inner))) in *)
     let ante0 = CP.join_conjunctions !ante_inner in
-	let _= add_proof_log !cache_status old_imp_no imp_no (string_of_prover !tp) (IMPLY (ante0, conseq0)) (tstop -. tstart) (BOOL (match final_res with | r,_,_ -> r)) in
+	let _= add_proof_log !cache_status old_imp_no imp_no (string_of_prover !pure_tp) (IMPLY (ante0, conseq0)) (tstop -. tstart) (BOOL (match final_res with | r,_,_ -> r)) in
 	final_res
 ;;
 
@@ -2814,7 +2765,7 @@ let clear_prover_log () = Buffer.clear prover_log
 
 let change_prover prover =
   clear_prover_log ();
-  tp := prover;
+  pure_tp := prover;
   start_prover ();;
 
 

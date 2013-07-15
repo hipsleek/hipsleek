@@ -9,6 +9,8 @@ open Cpure
 let set_generated_prover_input = ref (fun _ -> ())
 let set_prover_original_output = ref (fun _ -> ())
 
+let set_prover_type () = Others.last_tp_used # set Others.OmegaCalc
+
 let omega_call_count: int ref = ref 0
 let is_omega_running = ref false
 let in_timeout = ref 10.0 (* default timeout is 15 seconds *)
@@ -158,6 +160,7 @@ and omega_of_formula pr_w pr_s f  =
 
 
 let omega_of_formula i pr_w pr_s f  =
+  let _ = set_prover_type () in
   let pr = !print_formula in
   Debug.no_1_num i "omega_of_formula" 
       pr pr_id (fun _ -> omega_of_formula pr_w pr_s f) f
