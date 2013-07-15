@@ -7,7 +7,6 @@ open Cprinter
 
 module CP = Cpure
 module CF = Cformula
-
  
 type proof_type =
 	| IMPLY of (CP.formula * CP.formula)
@@ -21,6 +20,7 @@ type proof_res =
 type proof_log = {
 	log_id : string; (* TODO: Should change to integer for performance *)
 	log_other_properties : string list; (* TODO: Should change to integer for performance *)
+        log_loc : loc;
 	log_prover : string;
 	log_type : proof_type option;
 	log_time : float;
@@ -62,6 +62,31 @@ type sleek_log_entry = {
 
 let string_of_sleek_proving_kind () = Globals.proving_kind#string_of
 
+let string_of_log_type lt =
+  match lt with
+    |IMPLY (ante, conseq) -> "Imply: ante:" ^(string_of_pure_formula ante) ^"\n\t     conseq: " ^(string_of_pure_formula conseq)
+    |SAT f-> "Sat: "^(string_of_pure_formula f) 
+    |SIMPLIFY f -> "Simplify: "^(string_of_pure_formula f)
+
+let string_of_log_res r = 
+  match r with
+    |BOOL b -> string_of_bool b
+    |FORMULA f -> string_of_pure_formula f
+
+let pr_proof_log_entry e =
+  fmt_open_box 1;
+  fmt_string ("\n id: " ^ (e.log_id));
+  if e.log_cache then fmt_string ("; prover : CACHED ")
+  else fmt_string ("; prover: " ^ (e.log_prover));
+  if e.log_time > 0.5 then fmt_string ("; TIME: " ^ (string_of_float e.log_time));
+  fmt_string ("; "^((pr_list pr_id) e.log_other_properties));
+  fmt_string ("\n type: " ^ ((pr_option string_of_log_type) e.log_type)) ;
+  fmt_string ("\n res: "^(string_of_log_res e.log_res));
+  fmt_string ("\n --------------------");
+  fmt_close()
+
+let string_of_proof_log_entry e= Cprinter.poly_string_of_pr pr_proof_log_entry e
+
 let pr_sleek_log_entry e=
   fmt_open_box 1;
   (if (e.sleek_proving_avoid) then
@@ -98,11 +123,11 @@ let string_of_sleek_log_entry e= Cprinter.poly_string_of_pr pr_sleek_log_entry e
 
 let sleek_counter= ref 0
 
+(* how is this hash_table used? *)
 let proof_log_tbl : (string, proof_log) Hashtbl.t = Hashtbl.create 700
 
 let sleek_log_stk : sleek_log_entry  Gen.stack_filter 
-      = new Gen.stack_filter
-  string_of_sleek_log_entry (==) (fun e -> not(e.sleek_proving_avoid))
+      = new Gen.stack_filter string_of_sleek_log_entry (==) (fun e -> not(e.sleek_proving_avoid))
 
 (* let sleek_proving_kind = ref (POST : sleek_proving_kind) *)
 let sleek_proving_id = ref (0 : int)
@@ -120,7 +145,9 @@ let get_sleek_proving_id ()=
   let _ = Globals.add_count sleek_proving_id in
   r
 
-let proof_log_list  = ref [] (*For printing to text file with the original oder of proof execution*)
+(* let proof_log_list  = ref [] (\*For printing to text file with the original order of proof execution*\) *)
+let proof_log_stk : string  Gen.stack_filter 
+      = new Gen.stack_filter pr_id (==) (fun e -> true)
 
 let proof_gt5_log_list = ref [] (*Logging proofs require more than 5 secs to be proved*)
 
@@ -218,7 +245,7 @@ let add_proof_log (cache_status:bool) old_no pno tp ptype time res =
 	  let _= BatString.find (Sys.argv.(0)) "hip" in
 	  if(!Globals.proof_logging_txt && ((proving_kind # string_of)<>"TRANS_PROC")) then
 		begin 
-		  proof_log_list := !proof_log_list @ [pno];
+		  proof_log_stk # push pno;
 		end		
 	with _->
 		if(!Globals.proof_logging_txt) then
@@ -229,7 +256,7 @@ let add_proof_log (cache_status:bool) old_no pno tp ptype time res =
               then BatString.find temp "SLEEK_ENT"
               else 0 in
 			begin 
-			  proof_log_list := !proof_log_list @ [pno];
+			  proof_log_stk # push pno;
 			end		 	
 		  with _->()	
 	in
@@ -262,8 +289,9 @@ let proof_log_to_text_file (src_files) =
       "\nResult: "^(match log.log_res with
 	    |BOOL b -> string_of_bool b
 	    |FORMULA f -> string_of_pure_formula f)^"\n" in
+    (* let _ = proof_log_stk # string_of_reverse in *)
     let _= List.map (fun ix->let log=Hashtbl.find proof_log_tbl ix in
-    let _=fprintf oc "%s" (helper log) in ()) !proof_log_list in
+    let _=fprintf oc "%s" ((* helper *) string_of_proof_log_entry log) in ()) (List.rev (proof_log_stk # get_stk)) in
     let tstoplog = Gen.Profiling.get_time () in
     let _= Globals.proof_logging_time := !Globals.proof_logging_time +. (tstoplog -. tstartlog) in 
     close_out oc;
