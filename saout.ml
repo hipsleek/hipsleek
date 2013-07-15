@@ -42,8 +42,8 @@ in
   List.fold_left (fun acc (rel_cat, hf,_,f_body)->
       match rel_cat with
 	| CP.HPRelDefn (v,r,paras)->
-              let _ = Debug.info_hprint (add_str "hp: " !CP.print_sv) v no_pos in
-              let _ = Debug.info_hprint (add_str "r: " !CP.print_sv) r no_pos in
+              let _ = Debug.binfo_hprint (add_str "hp: " !CP.print_sv) v no_pos in
+              let _ = Debug.binfo_hprint (add_str "r: " !CP.print_sv) r no_pos in
 	      let vname = sv_name v in
 	      let slf, vars, tvars = match hf with
 		| CF.HRel (v1,el,_)->
