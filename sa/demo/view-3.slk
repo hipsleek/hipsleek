@@ -1,0 +1,29 @@
+data node {
+  int val;
+  node next;
+}.
+
+data cell {
+  int val;
+}.
+
+/*
+pred ll<> == (self:node)=null
+  inv true.
+*/
+
+
+pred ll<> == self::node<_,_>
+  or self::ll<>
+  inv true.
+
+/*
+# view-3.stk
+
+This cyclic reference went thru, even though it may loop.
+
+(None,[]): EBase: [][](EX  . (self::ll<>@M[HeapNode1])*(true)( FLOW __flow))  inv true inv_lock: None view_data_name: ,[node],[ll])]
+update_fixpt@1 EXIT out :?
+
+
+*/

@@ -1205,8 +1205,9 @@ let smart_subst_lhs f lhpargs leqs infer_vars=
           nfb
     | _ -> report_error no_pos "SAU.smart_subst_lhs"
 
-let keep_data_view_hrel_nodes_two_fbs prog f1 f2 hd_nodes hv_nodes hpargs leqs reqs his_ss keep_rootvars
-      lhs_hpargs (* lback_keep_ptrs *) lkeep_hpargs rkeep_hps rhs_svl unk_svl prog_vars =
+let keep_data_view_hrel_nodes_two_fbs prog f1 f2 hd_nodes hv_nodes hpargs
+      leqs reqs his_ss keep_rootvars
+      lhs_hpargs lkeep_hpargs lhs_args_ni rkeep_hps rhs_svl rhs_args_ni unk_svl prog_vars =
   let eqs = (leqs@reqs@his_ss) in
   let _ = Debug.ninfo_pprint ("keep_vars root: " ^ (!CP.print_svl keep_rootvars)) no_pos in
   let _ = Debug.ninfo_pprint ("lhs_hpargs: " ^ (!CP.print_svl lhs_hpargs)) no_pos in
@@ -1224,14 +1225,14 @@ let keep_data_view_hrel_nodes_two_fbs prog f1 f2 hd_nodes hv_nodes hpargs leqs r
   (*remove dups*)
   let lkeep_nodes = look_up_dups_node prog hd_nodes hv_nodes c_lhs_hpargs keep_vars 
    (List.fold_left close_def rhs_svl eqs ) in
-  (* let _ = Debug.info_pprint ("f1: " ^ (Cprinter.string_of_formula_base f1)) no_pos in *)
+  let _ = Debug.ninfo_pprint ("f1: " ^ (Cprinter.string_of_formula_base f1)) no_pos in
+  let _ = Debug.ninfo_pprint ("f2: " ^ (Cprinter.string_of_formula_base f2)) no_pos in
   let nf1 = CF.drop_data_view_hpargs_nodes_fb f1 check_nbelongsto_dnode check_nbelongsto_vnode check_neq_hpargs
-    (* lkeep_nodes *) keep_vars (* lkeep_nodes *) keep_vars lkeep_hpargs (keep_vars@c_lhs_hpargs (*lkeep_vars*)) in
+    (* lkeep_nodes *) keep_vars (* lkeep_nodes *) keep_vars lkeep_hpargs (keep_vars@c_lhs_hpargs@lhs_args_ni@rhs_args_ni) in
   let nf2 = CF.drop_data_view_hrel_nodes_fb f2 check_nbelongsto_dnode check_nbelongsto_vnode check_neq_hrelnode
-    keep_vars keep_vars rkeep_hps keep_vars in
+    keep_vars keep_vars rkeep_hps (keep_vars@rhs_args_ni) in
   let _ = Debug.ninfo_pprint ("nf1: " ^ (Cprinter.string_of_formula_base nf1)) no_pos in
   let _ = Debug.ninfo_pprint ("nf2: " ^ (Cprinter.string_of_formula_base nf2)) no_pos in
-
   let lhs_b2,rhs_b2 =  ( nf1, nf2)(* smart_subst nf1 nf2 hpargs eqs reqs unk_svl prog_vars *) in
   (lhs_b2,rhs_b2)
 
@@ -1653,22 +1654,33 @@ let find_well_eq_defined_hp prog hds hvs lhsb eqs (hp,args)=
           ([(hp,args, f)],[])
         else loop_helper rest
   in
-  if List.length args = 2 then loop_helper eqs else ([], [(hp,args)])
+  if List.length args = 2 then
+    let cmp_form = CP.get_cmp_form (MCP.pure_of_mix lhsb.CF.formula_base_pure) in
+    loop_helper (eqs@cmp_form)
+  else ([], [(hp,args)])
 
 let generate_hp_ass unk_svl cond_p (hp,args,lfb,rf) =
-  let new_cs = {
-      CF.hprel_kind = CP.RelAssume [hp];
-      unk_svl = unk_svl;(*inferred from norm*)
-      unk_hps = [];
-      predef_svl = [];
-      hprel_lhs = CF.Base lfb;
-      hprel_guard = None; (*guard exists with post-proving*)
-      hprel_rhs = rf;
-      hprel_path = cond_p;
-  }
-  in
-  let _ = Debug.dinfo_pprint ("  new cs " ^ (Cprinter.string_of_hprel_short new_cs)) no_pos in
+  let knd = CP.RelAssume [hp] in
+  let lhs = CF.Base lfb in
+  let new_cs =  CF.mkHprel knd unk_svl [] [] lhs None rf cond_p in
+  (* { *)
+  (*     CF.hprel_kind = CP.RelAssume [hp]; *)
+  (*     unk_svl = unk_svl;(\*inferred from norm*\) *)
+  (*     unk_hps = []; *)
+  (*     predef_svl = []; *)
+  (*     hprel_lhs = CF.Base lfb; *)
+  (*     hprel_guard = None; (\*guard exists with post-proving*\) *)
+  (*     hprel_rhs = rf; *)
+  (*     hprel_path = cond_p; *)
+  (*     hprel_proving_kind = Others.proving_kind # top_no_exc; *)
+  (* } *)
+  (* in *)
+  let _ = Debug.dinfo_pprint ("  new hp_ass " ^ (Cprinter.string_of_hprel_short new_cs)) no_pos in
   new_cs
+
+let generate_hp_ass i unk_svl cond_p (hp,args,lfb,rf) =
+  Debug.no_1_num i "generate_hp_ass" pr_none pr_none (fun _ -> generate_hp_ass unk_svl cond_p (hp,args,lfb,rf)) 1
+
 
 (************************************************)
 (**aux2.slk**)

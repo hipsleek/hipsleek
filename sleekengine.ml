@@ -3,6 +3,7 @@
 *)
 
 open Globals
+open Others
 open Sleekcommons
 open Gen.Basic
 (* open Exc.ETABLE_NFLOW *)
@@ -714,7 +715,9 @@ let run_infer_one_pass ivars (iante0 : meta_formula) (iconseq0 : meta_formula) =
   let pr = string_of_meta_formula in
   let pr1 = pr_list pr_id in
   let pr_2 = pr_triple string_of_bool Cprinter.string_of_list_context !CP.print_svl in
-  Debug.no_3 "run_infer_one_pass" pr1 pr pr pr_2 run_infer_one_pass ivars iante0 iconseq0
+  let nn = (sleek_proof_counter#get) in
+  let f x = wrap_proving_kind (PK_Sleek_Entail nn) (run_infer_one_pass ivars iante0) x in
+  Debug.no_3 "run_infer_one_pass" pr1 pr pr pr_2 (fun _ _ _ -> f iconseq0) ivars iante0 iconseq0
 
 let process_rel_assume cond_path (ilhs : meta_formula) (igurad_opt : meta_formula option) (irhs: meta_formula)=
   (* let _ = DD.info_pprint "process_rel_assume" no_pos in *)
@@ -745,16 +748,19 @@ let process_rel_assume cond_path (ilhs : meta_formula) (igurad_opt : meta_formul
   (* let _ =  print_endline ("LHS = " ^ (Cprinter.string_of_formula lhs)) in *)
   (* let _ =  print_endline ("RHS = " ^ (Cprinter.string_of_formula rhs)) in *)
   (*TODO: LOC: hp_id should be cond_path*)
-  let new_rel_ass = {
-      CF.hprel_kind = CP.RelAssume (CP.remove_dups_svl (lhps@rhps));
-      unk_svl = [];(*inferred from norm*)
-      unk_hps = [];
-      predef_svl = [];
-      hprel_lhs = lhs;
-      hprel_guard = guard;
-      hprel_rhs = rhs;
-      hprel_path = cond_path;
-  } in
+  (* why not using mkHprel? *)
+  let knd = CP.RelAssume (CP.remove_dups_svl (lhps@rhps)) in
+  let new_rel_ass = CF.mkHprel_1 knd lhs guard rhs cond_path in
+  (*     CF.hprel_kind = CP.RelAssume (CP.remove_dups_svl (lhps@rhps)); *)
+  (*     unk_svl = [];(\*inferred from norm*\) *)
+  (*     unk_hps = []; *)
+  (*     predef_svl = []; *)
+  (*     hprel_lhs = lhs; *)
+  (*     hprel_guard = guard; *)
+  (*     hprel_rhs = rhs; *)
+  (*     hprel_path = cond_path; *)
+  (*     hprel_proving_kind = Others.proving_kind # top_no_exc; *)
+  (* } in *)
   (*hp_assumes*)
   let _ = Debug.ninfo_pprint (Cprinter.string_of_hprel_short new_rel_ass) no_pos in
   let _ = sleek_hprel_assumes := !sleek_hprel_assumes@[new_rel_ass] in
@@ -882,28 +888,37 @@ let process_shape_divide pre_hps post_hps=
   let constrs2, sel_hps, sel_post_hps, unk_map, unk_hpargs, link_hpargs=
     shape_infer_pre_process hp_lst_assume pre_hps post_hps
   in
-  let ls_cond_defs_drops =
-    if List.length sel_hps> 0 && List.length hp_lst_assume > 0 then
-      let infer_shape_fnc = Sa2.infer_shapes_divide in
-      infer_shape_fnc iprog !cprog "" constrs2 []
-          sel_hps sel_post_hps unk_map unk_hpargs link_hpargs true false
-    else []
-  in
-  let pr_one (cond, hpdefs,_, _, link_hpargs,_)=
+  (* let ls_cond_defs_drops = *)
+  (*   if List.length sel_hps> 0 && List.length hp_lst_assume > 0 then *)
+  (*     let infer_shape_fnc = Sa2.infer_shapes_divide in *)
+  (*     infer_shape_fnc iprog !cprog "" constrs2 [] *)
+  (*         sel_hps sel_post_hps unk_map unk_hpargs link_hpargs true false *)
+  (*   else [] *)
+  (* in *)
+  (* let pr_one (cond, hpdefs,_, _, link_hpargs,_)= *)
+  (*   begin *)
+  (*     if not(List.length hpdefs = 0) then *)
+  (*       let pr_path_defs = List.map (fun (_, hf,_,f) -> (cond,(hf,f))) hpdefs in *)
+  (*       let pr_path_dangs = List.map (fun (hp,_) -> (cond, hp)) link_hpargs in *)
+  (*       print_endline ""; *)
+  (*     print_endline "\n*************************************"; *)
+  (*     print_endline "*******relational definition ********"; *)
+  (*     print_endline "*************************************"; *)
+  (*     let _ = List.iter (fun pair -> print_endline (Cprinter.string_of_pair_path_def pair) ) pr_path_defs in *)
+  (*     let _ = List.iter (fun pair -> print_endline (Cprinter.string_of_pair_path_dang pair) ) pr_path_dangs in *)
+  (*     print_endline "*************************************" *)
+  (*   end *)
+  (* in *)
+  (* let _ = List.iter pr_one ls_cond_defs_drops in *)
+  let ls_cond_danghps_constrs = SAC.partition_constrs_4_paths link_hpargs hp_lst_assume in
+  let pr_one (cond, _,constrs)=
     begin
-      if not(List.length hpdefs = 0) then
-        let pr_path_defs = List.map (fun (_, hf,_,f) -> (cond,(hf,f))) hpdefs in
-        let pr_path_dangs = List.map (fun (hp,_) -> (cond, hp)) link_hpargs in
-        print_endline "";
-      print_endline "\n*************************************";
-      print_endline "*******relational definition ********";
-      print_endline "*************************************";
-      let _ = List.iter (fun pair -> print_endline (Cprinter.string_of_pair_path_def pair) ) pr_path_defs in
-      let _ = List.iter (fun pair -> print_endline (Cprinter.string_of_pair_path_dang pair) ) pr_path_dangs in
-      print_endline "*************************************"
+      if constrs <> [] then
+        let _ = print_endline ("Group: " ^ (CF.string_of_cond_path cond)) in
+        print_endline ((pr_list_ln Cprinter.string_of_hprel_short) constrs)
     end
   in
-  let _ = List.iter pr_one ls_cond_defs_drops in
+  let _ = List.iter pr_one ls_cond_danghps_constrs in
   ()
 
 let process_shape_conquer sel_ids cond_paths=
@@ -1221,15 +1236,15 @@ let print_exc (check_id: string) =
 (*   Some true  -->  always check entailment exactly (no residue in RHS)          *)
 (*   Some false -->  always check entailment inexactly (allow residue in RHS)     *)
 let process_entail_check_x (iante : meta_formula) (iconseq : meta_formula) (etype : entail_type):bool =
-  let nn = "("^(string_of_int (sleek_proof_counter#inc_and_get))^") " in
-  let num_id = "\nEntail "^nn in
+  let nn = (sleek_proof_counter#inc_and_get) in
+  let num_id = "\nEntail "^(string_of_int nn) in
     try 
       let valid, rs, _(*sel_hps*) = 
-        wrap_proving_kind ("SLEEK_ENT"^nn) (run_entail_check iante iconseq) etype in
+        wrap_proving_kind (PK_Sleek_Entail nn) (run_entail_check iante iconseq) etype in
       print_entail_result [] (*sel_hps*) valid rs num_id
     with ex ->
         print_string "caught\n"; Printexc.print_backtrace stdout;
-        let _ = print_string ("\nEntailment Failure "^nn^(Printexc.to_string ex)^"\n") 
+        let _ = print_string ("\nEntailment Failure "^num_id^(Printexc.to_string ex)^"\n") 
         in false
   (* with e -> print_exc num_id *)
 

@@ -35,8 +35,8 @@ PostPred G2(node a,node@NI c,tree@NI b).
 
 
 bool check_tree (tree t)
-  //requires t::treep<>@L ensures res;
-  infer [H1,G1,H2,G2] requires H1(t) ensures G1(t) & res;
+//requires t::treep<>@L ensures res;
+infer [H1,G1,H2,G2] requires H1(t) ensures G1(t) & res;
 {
    node n = null;
    if (t.children==null) return true;
@@ -45,8 +45,8 @@ bool check_tree (tree t)
 }
 
 bool check_child (node l, node prv, tree par)
-  //requires l::dll<par, prv>@L ensures  res;
-  infer [H1,G1,H2,G2] requires H2(l,prv,par) ensures G2(l,prv,par) & res;
+//requires l::dll<par, prv>@L ensures  res;
+infer [H1,G1,H2,G2] requires H2(l,prv,par) ensures G2(l,prv,par) & res;
 {
 	if (l==null) return true;
 	else if (l.parent==par && l.prev==prv) 

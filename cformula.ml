@@ -135,6 +135,7 @@ and hprel= {
     *)
     hprel_rhs: formula;
     hprel_path: cond_path_type;
+    hprel_proving_kind: Others.proving_kind;
 }
 
 
@@ -374,7 +375,11 @@ let mkHprel knd u_svl u_hps pd_svl hprel_l hprel_g hprel_r hprel_p=
     hprel_guard = hprel_g;
     hprel_rhs = hprel_r;
     hprel_path = hprel_p;
+    hprel_proving_kind = Others.find_impt_proving_kind ();
  }
+
+let mkHprel_1 knd hprel_l hprel_g hprel_r hprel_p =
+  mkHprel knd [] [] [] hprel_l hprel_g hprel_r hprel_p
 
  let mk_hprel_def kind hprel guard_opt path_opf opflib=
    {
@@ -4158,11 +4163,11 @@ let prune_irr_neq_formula_x must_kept_svl lhs_b rhs_b =
   let r_svl = fv (Base rhs_b) in
   let rec helper fb=
     let ptrs = get_ptrs_w_args fb.formula_base_heap in
-    let _,np2 = CP.prune_irr_neq (MCP.pure_of_mix fb.formula_base_pure) (CP.remove_dups_svl (ptrs@r_svl@must_kept_svl)) in
-    let np= MCP.mix_of_pure np2 in
-    {fb with
-        formula_base_pure =  np;
-    }
+    let keep_svl = (ptrs@r_svl@must_kept_svl) in
+    let _,np2 = CP.prune_irr_neq (MCP.pure_of_mix fb.formula_base_pure) (CP.remove_dups_svl keep_svl) in
+    let np3 = CP.filter_var_new np2 keep_svl in
+    let np4 = MCP.mix_of_pure np3 in
+    {fb with formula_base_pure = np4;}
   in
   helper lhs_b
 
@@ -5817,6 +5822,7 @@ and drop_data_view_hpargs_nodes_fb fb fn_data_select fn_view_select fn_hrel_sele
           fb.formula_base_heap fn_data_select fn_view_select fn_hrel_select
           matched_data_nodes matched_view_nodes matched_hpargs_nodes in
    (*assume keep vars = dnodes*)
+  let _ = DD.ninfo_pprint ("  keep" ^ (!CP.print_svl keep_pure_vars)) no_pos in
   let new_p = CP.filter_var_new (MCP.pure_of_mix fb.formula_base_pure) keep_pure_vars in
   let new_p1 = remove_neqNull_redundant_hnodes_hf new_hf new_p in
   (* DD.info_pprint ("  keep" ^ (!CP.print_svl keep_pure_vars)) no_pos; *)

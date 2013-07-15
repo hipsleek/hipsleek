@@ -1,4 +1,5 @@
 open Globals 
+open Others 
 open GlobProver
 open Stat_global
 open Gen.Basic
@@ -60,7 +61,7 @@ type sleek_log_entry = {
   (*   | BINDING -> "BINDING" *)
   (*   | ASSERTION -> "ASSERTION" *)
 
-let string_of_sleek_proving_kind () = Globals.proving_kind#string_of
+let string_of_sleek_proving_kind () = proving_kind#string_of
 
 let pr_sleek_log_entry e=
   fmt_open_box 1;

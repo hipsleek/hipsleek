@@ -443,7 +443,7 @@ class ['a] stack  =
          stk <- i::stk
        end
      method get_stk  = stk (* return entire content of stack *)
-     method override_stk newstk  = stk <- newstk 
+     method set_stk newstk  = stk <- newstk 
        (* override with a new stack *)
      method pop = match stk with 
        | [] -> print_string "ERROR : popping empty stack"; 
@@ -461,6 +461,9 @@ class ['a] stack  =
        | [] -> () 
        | x::xs -> stk <- xs
      method is_empty = stk == []
+     method is_avail = not(stk == [])
+     method get = self # top
+     (* method set x = self # push x *)
      method len = List.length stk
      method reverse = stk <- List.rev stk
      method reverse_of = List.rev stk
@@ -521,6 +524,9 @@ class ['a] stack_noexc (x_init:'a) (epr:'a->string) (eq:'a->'a->bool)  =
      method top_no_exc : 'a = match stk with 
        | [] ->  emp_val
        | x::xs -> x
+     method last : 'a = match stk with 
+       | [] -> emp_val
+       | _ -> List.hd (List.rev stk)
    end;;
 
 (* class ['a] stack_noexc (x_init:'a) (epr:'a->string) (eq:'a->'a->bool)  = *)
@@ -1391,7 +1397,7 @@ struct
         | [] -> Error.report_error {Error.error_loc = Globals.no_pos; Error.error_text = ("Error special poping "^msg^"from the stack")}
         | (m1,_,_)::t ->  if not ((String.compare m1 msg)==0) then helper t			
 		  else t in
-      profiling_stack#override_stk (helper profiling_stack#get_stk) 
+      profiling_stack#set_stk (helper profiling_stack#get_stk) 
 	else ()
 
   let add_index l = 

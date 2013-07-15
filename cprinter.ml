@@ -318,10 +318,11 @@ let pr_wrap_test_nocut hdr (e:'a -> bool) (f: 'a -> unit) (x:'a) =
   if (e x) then ()
   else 
     begin
+      let ff a = f a; fmt_string " " in
       fmt_open_hbox ();
-      fmt_string hdr; 
+      fmt_string hdr;
       (* f x; *)
-      wrap_box ("B",1) f x;
+      wrap_box ("B",1) ff x;
       fmt_close_box()
     end
 
@@ -1908,6 +1909,7 @@ let skip_cond_path_trace l = Gen.is_empty l || not(!Globals.cond_path_trace)
 
 let pr_hprel_short hpa=
   fmt_open_box 1;
+  (* fmt_string "hprel(1)"; *)
   pr_wrap_test_nocut "" skip_cond_path_trace (fun p -> fmt_string ((pr_list_round_sep ";" (fun s -> string_of_int s)) p)) hpa.hprel_path;
   (* fmt_string (CP.print_rel_cat hpa.hprel_kind); *)
   prtt_pr_formula hpa.hprel_lhs;
@@ -1925,7 +1927,12 @@ let pr_hprel_short hpa=
 
 let pr_hprel_short_inst cprog hpa=
   fmt_open_box 1;
+  (* fmt_string "hprel(2)"; *)
   (* fmt_string (CP.print_rel_cat hpa.hprel_kind); *)
+  fmt_string ("// "^(Others.string_of_proving_kind hpa.hprel_proving_kind));
+  fmt_print_newline();
+  pr_wrap_test_nocut "" Gen.is_empty (* skip_cond_path_trace *) 
+      (fun p -> fmt_string ((pr_list_round_sep ";" (fun s -> string_of_int s)) p)) hpa.hprel_path;
   prtt_pr_formula_inst cprog hpa.hprel_lhs;
   let _ = match hpa.hprel_guard with
     | None -> ()
@@ -1941,6 +1948,7 @@ let pr_hprel_short_inst cprog hpa=
   fmt_close()
 
 let pr_path_of (path, off)=
+   (* fmt_string "PATH format"; *)
    pr_wrap_test_nocut "" skip_cond_path_trace  (fun l -> fmt_string (pr_list_round_sep ";" string_of_int l)) path
   ; (match off with
      | None -> fmt_string " NONE"
@@ -1948,6 +1956,7 @@ let pr_path_of (path, off)=
 
 let pr_hprel_def hpd=
   fmt_open_box 1;
+  (* fmt_string "hprel(3)"; *)
   (* fmt_string (CP.print_rel_cat hpd.hprel_def_kind); *)
   (* fmt_string "\n"; *)
   (pr_h_formula hpd.hprel_def_hrel);
@@ -1975,6 +1984,7 @@ let pr_hprel_def hpd=
 
 let pr_hprel_def_short hpd=
   fmt_open_box 1;
+  (* fmt_string "hprel(4)"; *)
   (* fmt_string (CP.print_rel_cat hpd.hprel_def_kind); *)
   (* fmt_string "\n"; *)
   (pr_h_formula hpd.hprel_def_hrel);
@@ -2002,6 +2012,7 @@ let pr_hprel_def_short hpd=
 
 let pr_hprel_def_lib hpd=
   fmt_open_box 1;
+  (* fmt_string "hprel(5)"; *)
   (* fmt_string (CP.print_rel_cat hpd.hprel_def_kind); *)
   (* fmt_string "\n"; *)
   (pr_h_formula hpd.hprel_def_hrel);

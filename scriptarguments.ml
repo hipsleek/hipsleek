@@ -401,7 +401,7 @@ let common_arguments = [
   ("--pred-dis-oblg", Arg.Clear Globals.pred_en_oblg, "enable sa_en_pre_oblg");
    ("--sa-dnc", Arg.Set Globals.sa_dnc, "algorithm of normalization with divide and conquer");
   (* ("--sa-en-norm", Arg.Set Globals.sa_en_norm, "do normalization"); *)
-  ("--sa-dis", Arg.Clear Globals.sa_en, "donot infer shape");
+  ("--sa-dis-infer", Arg.Clear Globals.sa_en, "donot infer shape");
   (* ("--sa-dangling", Arg.Set Globals.sa_dangling, "elim dangling HP/pointers"); *)
   ("--pred-dis-infer", Arg.Clear Globals.pred_infer_flag, "disable the shape inference stage");
   ("--pred-en-useless-para", Arg.Set Globals.pred_elim_useless, "enable the elimination of useless parameter from HP predicate and user-defined predicates (view)");
@@ -430,7 +430,8 @@ let common_arguments = [
   ("--sa-en-print-decl" , Arg.Set Globals.print_heap_pred_decl, "enable predicates declaration printing");
   ("--sa-dis-print-decl" , Arg.Clear Globals.print_heap_pred_decl, "disable predicates declaration printing");
   ("--en-print-ann" , Arg.Set Globals.print_ann, "enable annotation printing (default)");
-  ("--dis-print-ann", Arg.Clear Globals.print_ann, "disable annotation printing");
+  ("--dis-print-clean", Arg.Clear Globals.print_clean_flag, "disable cleaner printing");
+  ("--en-print-clean" , Arg.Set Globals.print_clean_flag, "enable cleaner printing (default)");
   ("--en-print-derv" , Arg.Set Globals.print_derv, "enable [derv,orig] annotation printing");
   ("--dis-print-derv" , Arg.Clear Globals.print_derv, "disable [derv,orig] annotation printing (default)");
   ("--en-texify", Arg.Set Globals.texify, "output latex formulas");

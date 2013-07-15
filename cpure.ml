@@ -10821,3 +10821,40 @@ let checkeq p1 p2 ss=
   Debug.no_3 "checkeq" pr1 pr1 pr3 (pr_pair string_of_bool pr3)
       (fun _ _ _ -> checkeq_x p1 p2 ss)
       p1 p2 ss
+
+
+let get_cmp_form_exp e1 e2=
+  match e1,e2 with
+    | Var (sv1,_), Var (sv2,_) ->
+          [(sv1,sv2)]
+    | _ -> []
+
+let get_cmp_form_p p=
+  match p with
+    | Lte (e1,e2,_)
+    | Gte (e1,e2,_)
+    | Gt (e1,e2,_)
+    | Lt (e1,e2,_) -> get_cmp_form_exp e1 e2
+    | _ -> []
+
+let get_cmp_form_x p0=
+  let rec helper p=
+    match p with
+      | (BForm ((pf,_),_)) ->
+            get_cmp_form_p pf
+      | And (p1,p2, _) -> (helper p1)@(helper p2)
+      | AndList lp -> List.fold_left (fun r (_,p) -> r@(helper p)) [] lp
+      | Or (p1 , p2 , _, _) -> (helper p1)@(helper p2)
+      | Not (p,_ , _) -> helper p
+      | Forall (_ , p,_,_) -> helper p
+      | Exists (_, p,_,_) -> helper p
+  in
+  helper p0
+
+
+(*x>y; x>= y; x<t; x<=y, x=y*)
+let get_cmp_form p =
+  let pr1 = !print_formula in
+  let pr3 = pr_list (pr_pair !print_sv !print_sv) in
+  Debug.no_1 "get_cmp_form" pr1 pr3
+      (fun _ -> get_cmp_form_x p) p
