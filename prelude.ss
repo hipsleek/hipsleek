@@ -108,7 +108,7 @@ float mult___(float a, float b)
   requires true 
   ensures res = a * b;
 
-
+/*
 float div___(int a, float b)
  case {
   b = 0.0 -> ensures true & flow __DivByZeroErr;
@@ -126,6 +126,7 @@ float div___(float a, float b)
   b = 0.0 -> ensures true & flow __DivByZeroErr;
   b != 0.0 -> ensures res = a / b;
  }
+*/
 
 bool eq___(int a, int b) 
   case {
