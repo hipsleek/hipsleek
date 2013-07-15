@@ -31,7 +31,7 @@ let collect_ho_ass cprog is_pre def_hps (acc_constrs, post_no_def) cs=
   let infer_hps = CP.remove_dups_svl (linfer_hps@rinfer_hps) in
   if infer_hps = [] then (acc_constrs, post_no_def) else
     let log_str = if is_pre then PK_Pre_Oblg else PK_Post_Oblg in
-    let  _ = DD.binfo_pprint ((string_of_proving_kind log_str) ^ ":\n" ^ (Cprinter.string_of_hprel_short cs)) no_pos in
+    let  _ = DD.info_pprint ((string_of_proving_kind log_str) ^ ":\n" ^ (Cprinter.string_of_hprel_short cs)) no_pos in
     let f = wrap_proving_kind log_str (SAC.do_entail_check infer_hps cprog) in
     let new_constrs = f cs in
     (acc_constrs@new_constrs, post_no_def@linfer_hps)
@@ -876,7 +876,7 @@ let generalize_one_hp_x prog is_pre (hpdefs: (CP.spec_var *CF.hp_rel_def) list) 
   if par_defs = [] then ([],[]) else
     begin
         let hp, args, _, f0,_ = (List.hd par_defs) in
-        let _ = Debug.binfo_pprint ("    synthesize: " ^ (!CP.print_sv hp) ) no_pos in
+        let _ = Debug.info_pprint ("    synthesize: " ^ (!CP.print_sv hp) ) no_pos in
         let hpdefs,subst_useless=
           if CP.mem_svl hp skip_hps then
             let fs = List.map (fun (a1,args,og,f,unk_args) -> fst (CF.drop_hrel_f f [hp]) ) par_defs in
@@ -935,7 +935,7 @@ let generalize_one_hp_x prog is_pre (hpdefs: (CP.spec_var *CF.hp_rel_def) list) 
         in
         (********PRINTING***********)
         let _ = List.iter (fun (_, def) ->
-            Debug.binfo_pprint ((Cprinter.string_of_hp_rel_def_short def)) no_pos)
+            Debug.info_pprint ((Cprinter.string_of_hp_rel_def_short def)) no_pos)
           hpdefs
         in
         (********END PRINTING***********)
