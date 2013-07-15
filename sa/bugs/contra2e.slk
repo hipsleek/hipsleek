@@ -1,0 +1,61 @@
+data node {
+	int val; 
+	node next;	
+}.
+
+pred ll<n> == self=null & n=0
+ or self::node<_,q>*q::ll<n-1>
+inv n>=0.
+
+HeapPred P(node a). 
+HeapPred Q(node a). 
+HeapPred Z(node a, node b). 
+
+
+infer [P,Q,Z] P(x)*Q(y)*Z(x,k) & mmm=-1 & x=y |-  mmm=3.
+print residue.
+// why fail?
+
+/*
+# contra2e.slk
+
+Entail (1) : Valid. 
+
+ <1>hfalse&false&{FLOW,(19,20)=__norm}[]
+
+inferred hprel: [P(x) --> emp&x!=y; Q(y) --> emp&x!=y; Z(x,k) --> emp&x!=y]
+
+Above is inaccurate as it os the same as 
+  P(x) --> forall(y: x!=y).
+       --> false
+
+We really need:
+  P(x)*Q(y) --> x!=y
+
+If we get below (contra2c.slk), it is OK:
+
+  P(x) --> emp&(y!=null | x=null); 
+       --> forall(y:y!=null | x=null)
+       --> x=null
+Maybe better to have it simplified, and just pick
+one or more predicate. I suggest you do the following:
+
+Assume I have P1(x)P2(y)P3(y,k)
+and formula f(x,y)
+
+Try LHS:
+   P1(x) and then compute forall(y:F(x,y))
+Try LHS:
+   P2(y) and then compute forall(x:F(x,y))
+Try LHS:
+   P3(y,k) and then compute forall(x:F(x,y))
+
+If any not false, we just pick one of it as our
+solution. If all are false, we just return all terms
+that cover together the vars {x,y}:
+  P1(x)*P2(y) --> F(x,y)
+  P1(x)*P3(y,k) --> F(x,y)
+Only one of them is sufficient; so that we do not
+impose too strong an assumption.
+
+*/

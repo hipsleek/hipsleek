@@ -9,20 +9,20 @@ HeapPred HP_1(node a).
 HeapPred HP_2(node a).
 HeapPred G(node a).
 
-relAssume H
+relAssume 
     H(x)&true --> x::node<_,left,right>@M * HP_1(left) * HP_2(right)&true.
 
-relAssume H
+relAssume 
    HP_2(right)&right!=null --> H(right)&true.
 
-relAssume HP_2
+relAssume 
    HP_2(right)&right=null --> emp&true.
 
-relAssume G
+relAssume
    HP_1(left) * x::node<_,left,right>@M&
      right=null --> G(x)&true.
 
-relAssume G
+relAssume
   HP_1(left) * x::node<_,left,right>@M * 
   G(right)&right!=null --> G(x)&true.
 

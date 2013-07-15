@@ -8,17 +8,17 @@ HeapPred HP_5(node a, node@NI b).
 HeapPred G(node a, node b).
 
 
-relAssume G
+relAssume 
   G(next_29_789,t_32') &
   next_29_789!=null --> t_32'::node<val_34_802,next_34_803>@M * 
   HP_4(next_34_803,next_29_789) * HP_5(next_29_789,t_32').
 
 
-relAssume G
+relAssume 
  x::node<val_29_788,null>@M&res=x 
       --> G(x,res)&true.
 
-relAssume G
+relAssume 
  x::node<val_29_788,next_29_789>@M * HP_5(next_29_789,res) * 
   res::node<val_34_802,null>@M&next_29_789!=null --> G(x,res).
 

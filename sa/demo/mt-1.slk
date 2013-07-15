@@ -1,0 +1,41 @@
+data node {
+ int val;
+ node right;
+}.
+
+HeapPred H(node a).
+relation R1(int a).
+
+
+infer [H] H(x) |- x::node<a,b> .
+print residue.
+
+
+infer [H] H(x) |- x::node<a,b> & a>0.
+print residue.
+
+
+/*
+# mt-1.slk
+
+Entail (1) : Valid. 
+
+ <1>HP_19(b_18)&a=a_17 & b=b_18&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [H(x) --> x::node<a_17,b_18>@M * HP_19(b_18)]
+
+Entail (2) : Fail.
+
+SOLUTION
+========
+--sa-pure-field
+
+(1) would then give:
+ <1>HP_19(b_18)&a=a_17 & b=b_18& T_1(a_17) {FLOW,(19,20)=__norm}[]
+  H(x) --> x::node<a_17,b_18>@M * HP_19(b_18) & R_1(a_17)]
+
+(2) would then also have:
+  R_1(a_17) --> a_17>0
+
+*/
+
+

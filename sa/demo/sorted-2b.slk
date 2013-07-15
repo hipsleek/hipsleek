@@ -1,0 +1,25 @@
+data node {
+ int val;
+ node next;
+}.
+
+HeapPred H(node x, int v).
+PostPred G(node x, int v).
+
+relAssume
+ H(y,_) --> emp & y=null.
+
+shape_infer [H][].
+
+/*
+
+Result below is correct. However,
+a similar code at sorted-1.ss gave a different
+result
+
+*************************************
+*******relational definition ********
+*************************************
+[ H(y_20,Anon_21) ::= emp&y_20=null]
+
+*/

@@ -1,0 +1,19 @@
+========tll-if-conquer-pre.slk ==========
+Starting Omega...oc
+H is defined.
+G is defined.
+H_2 is defined.
+H_3 is defined.
+H_2a is defined.
+H_3a is defined.
+
+
+*************************************
+*******relational definition ********
+*************************************
+[ H_2(a) ::= NONE,
+ H(x_27) ::= x_27::node<left_25_800,right_25_801>@M * H_2(left_25_800)&right_25_801=null
+   \/  x_27::node<left_25_800,right_25_801>@M * H(left_25_800) * H(right_25_801)&
+right_25_801!=null]
+*************************************
+====================

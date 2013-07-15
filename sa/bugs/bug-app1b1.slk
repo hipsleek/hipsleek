@@ -1,0 +1,33 @@
+data node{
+	int val;
+	node next;
+}.
+
+HeapPred H2(node a).
+HeapPred H3(int a).
+relation R(int a).
+
+pred ln<> ==
+    self::node<_,q> & q=null
+  or self::node<_,q> * q::ln<> & q!=null
+ inv self!=null.
+
+pred lseg<p> ==
+    self::node<_,p> 
+  or self::node<_,q> * q::lseg<p> 
+ inv true.
+
+infer [R] R(q) & p=5  |- q>3.
+print residue.
+
+/*
+infer [q] H3(q)   |- q=null.
+print residue.
+*/
+
+/*
+
+ inferred hprel: [H3(q)&true --> emp&q=null]
+
+
+*/

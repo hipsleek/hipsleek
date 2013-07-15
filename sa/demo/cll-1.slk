@@ -1,3 +1,4 @@
+
 data node {
 	int val; 
 	node next;	
@@ -8,25 +9,25 @@ HeapPred G(node a, node b).
 HeapPred HP_6(node a, node@NI b).
 HeapPred HP_7(node a, node@NI b).
 
-Declare_Unknown [HP_7].
+Declare_Unknown ()[HP_7].
 
-relAssume H
+relAssume 
  H(rest,h)&h!=rest --> rest::node<val_36_824,next_36_825> * 
   HP_6(next_36_825,h) * HP_7(h,rest).
 
-relAssume H
- HP_6(next_36_825,h) //* HP_7(h,rest)&h!=rest 
+relAssume 
+ HP_6(next_36_825,h) // * HP_7(h,rest)&h!=rest 
    --> H(next_36_825,h).
 
         //relAssume H H(rest,h)&h=rest --> G(rest,h).
 
-relAssume H
+relAssume 
  H(rest,h)&h=rest --> emp.
 
-relAssume H
+relAssume 
  h=rest --> G(rest,h).
 
-relAssume H
+relAssume 
  rest::node<val_36_824,next_36_825> * G(next_36_825,h) * HP_7(h,rest)
  & h!=rest --> G(rest,h).
 
@@ -34,7 +35,7 @@ shape_infer [H,HP_6,HP_7][G].
 
 /*
 This is a good expected result from cll.ss but it required:
- HP_6(next_36_825,h) //* HP_7(h,rest)&h!=rest 
+ HP_6(next_36_825,h) // * HP_7(h,rest)&h!=rest 
    --> H(next_36_825,h).
 See # cll-1a.slk
 

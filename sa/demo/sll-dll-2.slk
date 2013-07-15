@@ -9,30 +9,30 @@ HeapPred HP_2(node a, node b).
 HeapPred HP_3(node a, node b).
 HeapPred G1(node a, node b).
 
-relAssume H1
+relAssume 
  H1(c,p)&c!=null --> c::node<val_21_809,prev_21_810,next_21_811>@M * 
   HP_2(prev_21_810,p) * HP_3(next_21_811,p)&true.
 
-relAssume H1
+relAssume 
  HP_3(next_20_809,p)&true --> H1(next_20_809,c')&true.
 
-relAssume G1
+relAssume 
  HP_2(prev_20_808,p) * c::node<val_20_807,p,next_20_809>@M * 
   G1(next_20_809,c)&true --> G1(c,p).
 
-relAssume G1
+relAssume
  H1(c,p) & c=null --> G1(c,p).
 // H1(c,p) & XPURE(H1(c,p)) & c=null --> G1(c,p).
 
 
 /*
-relAssume HP_4
+relAssume
   HP_4(n,y) & n=null --> emp.
 
-relAssume G1
+relAssume
   c::node<_,p,y>@M --> G1(c,y)&true.
 
-relAssume G1
+relAssume
  HP_3(p,y) * HP_4(n,y) * c::node<_,p,y>@M & n=null --> G1(c,y)&true.
 */
 

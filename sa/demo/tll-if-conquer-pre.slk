@@ -13,29 +13,47 @@ HeapPred H_3(node a).
 HeapPred H_2a(node a).
 HeapPred H_3a(node a).
 
-relDefn (1.1)
- H_3(right_25_31) ::=  H(right_25_31)&right_25_31!=null.
+relDefn (1;0)
+ H_3(right_25_31) <->  right_25_31=null.
 
-relDefn (1.2)
- H_2(left_25_32)  ::=  H(left_25_32).
+relDefn (2;0)
+ H_3(right_25_31) <->  H(right_25_31)&right_25_31!=null.
 
-relDefn (1.2)
- H(x_33) ::=  x_33::node<left_25_800,right_25_801>@M 
+
+relDefn (2;0)
+ H_2(left_25_32)  <->  H(left_25_32).
+
+relDefn (2;0)
+ H(x_33) <->  x_33::node<left_25_800,right_25_801>@M 
    * H(left_25_800) * H(right_25_801) & right_25_801!=null.
 
-relDefn (1.1)
- H(x_27) ::=  x_27::node<left_25_800,right_25_801>@M 
-                 * H_2(left_25_800)&right_25_801=null.
-relDefn (1.1)
- H_2(a) ::= NONE.
+relDefn (1;0)
+ H(x_27) <->  x_27::node<left_25_800,right_25_801>@M 
+                * H_2(left_25_800)&right_25_801=null.
 
-shape_conquer [1.1,1.2].
+Declare_Unknown (1;0) [H_2].
+/*
+relDefn (1;0)
+ H_2(a) <-> NONE.
+*/
+
+shape_conquer [H][1;0,1;2].
 
 
 /*
 # tll-if-conquer-pre.slk
 
+Not sure if conquer is just combining the cases using
+disjunction. It could be that they are different defns?
+But this is a decent start.
 
+*************************************
+*******relational definition ********
+*************************************
+[ H_2(a) ::=PATH:(1,0)UNKNOWN,
+ H(x_27) ::=PATH:(1,0) x_27::node<left_25_800,right_25_801>@M * H_2(left_25_800)&right_25_801=null
+   \/ PATH:(2,0) x_27::node<left_25_800,right_25_801>@M * H(left_25_800) * H(right_25_801)&
+right_25_801!=null]
 
 
 //[1.1]

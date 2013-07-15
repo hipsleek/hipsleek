@@ -1,0 +1,19 @@
+data tree {
+    node next;
+    }.
+
+data node {
+    tree child; 
+    }.
+
+/*
+pred P<> == self= null or  self::tree<c>* c::Q<>.
+
+
+pred Q<> == self= null or  self::node<c>* c::P<>.
+
+
+
+checkentail x::P<> & x!=null |- x::tree<a,b>.
+print residue.
+*/

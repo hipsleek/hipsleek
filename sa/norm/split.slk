@@ -17,9 +17,10 @@ lemma self::zip<y> -> self::ll<>*y::ll<>.
 checkentail x::zip<y> |- x::ll<> * y::ll<>.
 print residue.
 
+/*
 checkentail x::zip<y> |- x::ll<> .
 print residue.
-
+*/
 
 /*
 

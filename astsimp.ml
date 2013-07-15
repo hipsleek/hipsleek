@@ -1,5 +1,6 @@
 (* Created 21 Feb 2006 Simplify Iast to Cast *)
 open Globals
+open Others
 open Exc.GTable 
 open Printf
 open Gen.Basic
@@ -823,7 +824,12 @@ let rec trans_prog (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_decl
               Norm.norm_elim_useless cviews (List.map (fun vdef -> vdef.C.view_name) cviews)
             else cviews
           in
-          let cviews2 = Norm.cont_para_analysis prog cviews1 in
+          let cviews2 =
+            if !Globals.norm_cont_analysis then
+              Norm.cont_para_analysis prog cviews1
+            else
+              cviews1
+          in
 	  (* let _ = print_string "trans_prog :: trans_view PASSED\n" in *)
 	  let crels0 = List.map (trans_rel prog) prog.I.prog_rel_decls in (* An Hoa *)
           let _ = prog.I.prog_rel_ids <- List.map (fun rd -> (RelT[],rd.I.rel_name)) prog.I.prog_rel_decls in
@@ -950,7 +956,7 @@ and sat_warnings cprog =
     ) cprog.Cast.prog_view_decls in  
     {cprog with Cast.prog_view_decls = n_pred_list;}
   in
-  wrap_proving_kind "SAT WARNINGS" sat_warnings_op ()    
+  wrap_proving_kind PK_Sat_Warning sat_warnings_op ()    
       
 and trans_data (prog : I.prog_decl) (ddef : I.data_decl) : C.data_decl =
   (* Update the list of undefined data types *)
@@ -996,7 +1002,7 @@ and compute_view_x_formula (prog : C.prog_decl) (vdef : C.view_decl) (n : int) =
         (fun x ->   "void")
         (* Cprinter.string_of_view_decl vdef) *)
         (compute_view_x_formula_x prog) vdef n
-  in wrap_proving_kind "PRED CHECK-INVARIANT" foo () 
+  in wrap_proving_kind PK_Pred_Check_Inv foo () 
 
          
 (* and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int) = *)
@@ -1258,7 +1264,8 @@ and trans_view_x (prog : I.prog_decl) (vdef : I.view_decl) : C.view_decl =
           let is_deref_var = CP.is_inter_deference_spec_var v in
           if (is_deref_var) then (
             match v with
-            | CP.SpecVar (_, n, _) -> vdef.I.view_vars <- vdef.I.view_vars @ [n];
+            | CP.
+SpecVar (_, n, _) -> vdef.I.view_vars <- vdef.I.view_vars @ [n];
           );
           not (is_deref_var)
         ) ffv in
@@ -1369,8 +1376,13 @@ and trans_hp (prog : I.prog_decl) (hpdef : I.hp_decl) : (C.hp_decl * C.rel_decl)
   (* Need to collect the type information before translating the formula *)
   let n_tl = gather_type_info_formula prog hpdef.I.hp_formula n_tl false in
   let (n_tl,crf) = trans_formula  prog false [] false hpdef.I.hp_formula n_tl false in
+  (*non-ptrs are @NI by default*)
+  let hp_sv_vars1 = List.map (fun (sv, i_kind) ->
+      let n_i_kind = if not (CP.is_node_typ sv) then NI else i_kind in
+      (sv, n_i_kind)
+  ) hp_sv_vars in
   let chprel = {C.hp_name = hpdef.I.hp_name; 
-  C.hp_vars_inst = hp_sv_vars;
+  C.hp_vars_inst = hp_sv_vars1;
   Cast.hp_root_pos = 0; (*default, reset when def is inferred*)
   C.hp_is_pre = hpdef.I.hp_is_pre;
   C.hp_formula = crf; }
@@ -1454,7 +1466,7 @@ and compute_base_case_x prog cf vars = (*flatten_base_case cf s self_c_var *)
         | []-> None
         | _ -> Some (CP.disj_of_list bcg no_pos,cases)
   in
-  wrap_proving_kind "COMPUTE_BASE_CASE_X" compute_base_case_x_op ()
+  wrap_proving_kind PK_Compute_Base_Case compute_base_case_x_op ()
       
 and set_materialized_prop_x cdef =
   let args = (CP.SpecVar (Named "", self, Unprimed))::cdef.C.view_vars in
@@ -2043,10 +2055,13 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
         let lock_vars = [waitlevel_var;lsmu_var;ls_var] in
         (**************************)
         let ffv = Gen.BList.difference_eq cmp (*(CF.struc_fv_infer final_static_specs_list)*) struc_fv (lock_vars@((cret_type,res_name)::(Named raisable_class,eres_name)::args2)) in
+        let str = Cprinter.string_of_spec_var_list ffv in
         if (ffv!=[]) then 
-          Error.report_error { 
-              Err.error_loc = no_pos;
-              Err.error_text = "error 3: free variables "^(Cprinter.string_of_spec_var_list ffv)^" in proc "^proc.I.proc_name^" "} in
+          Debug.info_pprint ("WARNING : uninterpreted free variables "^str^" in specification.") no_pos
+          (* Error.report_error {  *)
+          (*     Err.error_loc = no_pos; *)
+          (*     Err.error_text = "error 3: free variables "^(Cprinter.string_of_spec_var_list ffv)^" in proc "^proc.I.proc_name^" "}  *)
+      in
       let cproc ={
           C.proc_name = proc.I.proc_mingled_name;
           C.proc_source = proc.I.proc_source;
@@ -2058,6 +2073,10 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
           C.proc_dynamic_specs = final_dynamic_specs_list;
           (* C.proc_static_specs_with_pre =  []; *)
           C.proc_stk_of_static_specs = new Gen.stack (* _noexc Cprinter.string_of_struc_formula (=) *);
+          C.proc_hprel_ass = [];
+          C.proc_hprel_unkmap = [];
+          C.proc_sel_hps = [];
+          C.proc_sel_post_hps = [];
           C.proc_hpdefs = [];
           C.proc_callee_hpdefs = [];
           C.proc_by_name_params = by_names;
@@ -2071,7 +2090,7 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
 	  C.proc_test_comps = trans_test_comps prog proc.I.proc_test_comps} in 
       (E.pop_scope (); cproc)))
   in
-  wrap_proving_kind ("TRANS_PROC"(*^proc.I.proc_name*)) trans_proc_x_op ()
+  wrap_proving_kind (PK_Trans_Proc (*^proc.I.proc_name*)) trans_proc_x_op ()
       
 (** An Hoa : collect important variables in the specification
     Important variables are the ones that appears in the
@@ -2816,6 +2835,15 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
             (* let _ = print_string "trans_exp :: case CallNRecv\n" in*)
             let tmp = List.map (helper) args in
             let (cargs, cts) = List.split tmp in
+            let proc_decl = I.look_up_proc_def_raw prog.I.prog_proc_decls mn in
+            let cts = (
+              List.map2 (fun p1 t2 ->
+                let t1 = p1.I.param_type in
+                match t1, t2 with
+                | Globals.Named _, Globals.Named "" -> t1  (* null case *)
+                | _ -> t2
+              ) proc_decl.I.proc_args cts
+            ) in
             let mingled_mn = C.mingle_name mn cts in (* signature of the function *)
             let this_recv = 
               if Gen.is_some proc.I.proc_data_decl then
@@ -2925,48 +2953,54 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
                 with | Not_found -> 
                     Err.report_error { Err.error_loc = pos; Err.error_text = "trans_exp :: case CallNRecv :: procedure 1 " ^ (mingled_mn ^ " is not found");}))
                     (*======== <<<<INIT ==========*)
-            else (try 
-              let pdef = I.look_up_proc_def_mingled_name prog.I.prog_proc_decls mingled_mn in
-              if ( != ) (List.length args) (List.length pdef.I.proc_args) then
-                Err.report_error { Err.error_loc = pos; Err.error_text = "number of arguments does not match"; }
-              else if (mn=Globals.join_name) &&  ((List.length args) != 1) then
-                (*This check may be redundant*)
-                (*============================*)
-                (*========== JOIN >>>=========*)
-                (*===========================*)
-                (*join is a special function. Its arguments are fixed to only 1*)
-                Err.report_error { Err.error_loc = pos; Err.error_text = "join has other than one argument"; }
-                    (*======== <<<<JOIN ==========*)
-              else
-                (let parg_types = List.map (fun p -> trans_type prog p.I.param_type p.I.param_loc) pdef.I.proc_args in
-                if List.exists2 (fun t1 t2 -> not (sub_type t1 t2)) cts parg_types then
-                  Err.report_error { Err.error_loc = pos; Err.error_text = "argument types do not match 3"; }
-                else if Inliner.is_inlined mn then (let inlined_exp = Inliner.inline prog pdef ie in helper inlined_exp)
-                else 
-                  (let ret_ct = trans_type prog pdef.I.proc_return pdef.I.proc_loc in
-                  let positions = List.map I.get_exp_pos args in
-                  let (local_vars, init_seq, arg_vars) = trans_args (Gen.combine3 cargs cts positions) in
-                  let call_e = C.SCall {
-                      C.exp_scall_type = ret_ct;
-                      C.exp_scall_method_name = mingled_mn;
-                      C.exp_scall_lock = lock;
-                      C.exp_scall_arguments = arg_vars;
-                      (* Termination: Default value - 
-                       * it will be set later in trans_prog
-                       * by mark_rec_and_call_order *)
-                      C.exp_scall_is_rec = false; 
-                      C.exp_scall_pos = pos;
-                      C.exp_scall_path_id = pi; } in
-                  let seq_1 = C.mkSeq ret_ct init_seq call_e pos in
-                  ((C.Block {
-                      C.exp_block_type = ret_ct;
-                      C.exp_block_body = seq_1;
-                      C.exp_block_local_vars = local_vars;
-                      C.exp_block_pos = pos; }),ret_ct)))
-            with | Not_found ->
-                (* let _ = print_endline ("ERROR ie = " ^ (Iprinter.string_of_exp ie)) in *)
-                (* let _ = print_endline ("ERROR prog = " ^ (Iprinter.string_of_program prog)) in *)
-                Err.report_error { Err.error_loc = pos; Err.error_text = "trans_exp :: case CallNRecv :: procedure 2 " ^ (mingled_mn ^ " is not found");})
+            else (
+              try (
+                let pdef = I.look_up_proc_def_mingled_name prog.I.prog_proc_decls mingled_mn in
+                if ( != ) (List.length args) (List.length pdef.I.proc_args) then
+                  Err.report_error { Err.error_loc = pos; Err.error_text = "number of arguments does not match"; }
+                else if (mn=Globals.join_name) &&  ((List.length args) != 1) then
+                  (*This check may be redundant*)
+                  (*============================*)
+                  (*========== JOIN >>>=========*)
+                  (*===========================*)
+                  (*join is a special function. Its arguments are fixed to only 1*)
+                  Err.report_error { Err.error_loc = pos; Err.error_text = "join has other than one argument"; }
+                      (*======== <<<<JOIN ==========*)
+                else
+                  (let parg_types = List.map (fun p -> trans_type prog p.I.param_type p.I.param_loc) pdef.I.proc_args in
+                  if List.exists2 (fun t1 t2 -> not (sub_type t1 t2)) cts parg_types then
+                    Err.report_error { Err.error_loc = pos; Err.error_text = "argument types do not match 3"; }
+                  else if Inliner.is_inlined mn then (let inlined_exp = Inliner.inline prog pdef ie in helper inlined_exp)
+                  else 
+                    (let ret_ct = trans_type prog pdef.I.proc_return pdef.I.proc_loc in
+                    let positions = List.map I.get_exp_pos args in
+                    let (local_vars, init_seq, arg_vars) = trans_args (Gen.combine3 cargs cts positions) in
+                    let call_e = C.SCall {
+                        C.exp_scall_type = ret_ct;
+                        C.exp_scall_method_name = mingled_mn;
+                        C.exp_scall_lock = lock;
+                        C.exp_scall_arguments = arg_vars;
+                        (* Termination: Default value - 
+                         * it will be set later in trans_prog
+                         * by mark_rec_and_call_order *)
+                        C.exp_scall_is_rec = false; 
+                        C.exp_scall_pos = pos;
+                        C.exp_scall_path_id = pi; } in
+                    let seq_1 = C.mkSeq ret_ct init_seq call_e pos in
+                    ((C.Block {
+                        C.exp_block_type = ret_ct;
+                        C.exp_block_body = seq_1;
+                        C.exp_block_local_vars = local_vars;
+                        C.exp_block_pos = pos; }),ret_ct)))
+              )
+              with Not_found -> (
+                try
+                  let _ = I.look_up_proc_def_raw prog.I.prog_proc_decls mn in
+                  report_error pos ("trans_exp :: case CallNRecv :: procedure call " ^ mingled_mn ^ " has invalid argument types")
+                with Not_found -> 
+                  report_error pos ("trans_exp :: case CallNRecv :: procedure " ^ (mingled_mn ^ " is not found"))
+              )
+            )
       | I.Catch { I.exp_catch_var = cv;
         I.exp_catch_flow_type = cvt;
         I.exp_catch_flow_var = cfv;
@@ -7532,7 +7566,7 @@ let rec rev_trans_formula f = match f with
 let transform_hp_rels_to_iviews (hp_rels:(ident* CF.hp_rel_def) list):(ident*ident*I.view_decl) list = 
 (*CP.rel_cat * h_formula * formula*)
 
-  List.fold_left (fun acc (proc_id,(rel_cat, hf,f_body))->
+  List.fold_left (fun acc (proc_id,(rel_cat, hf,_,f_body))->
 	match rel_cat with
 	  | CP.HPRelDefn (v,r,paras)->
 		let vname = sv_n v in
@@ -7662,41 +7696,13 @@ let process_pred_def_4_iast iprog pdef =
       iprog.I.prog_view_decls <- ( new_pdef :: curr_view_decls);
     with
       | _ ->  dummy_exception() ; iprog.I.prog_view_decls <- curr_view_decls
-    else
-      print_string (pdef.I.view_name ^ " is already defined.\n")
+    (* else *)
+      (* print_string (pdef.I.view_name ^ " is already defined.\n") *)
 
 let process_pred_def_4_iast iprog pdef =
   let pr = Iprinter.string_of_view_decl in
   Debug.no_1 "process_pred_def_4_iast" pr pr_no
       (fun _ -> process_pred_def_4_iast iprog pdef) pdef
-
-let syn_hprel_x crem_hprels irem_hprels=
-  let rec process_one chps res=
-    match chps with
-      | [] -> res
-      | chp::rest ->
-            try
-              let _ = I.look_up_hp_def_raw res chp.C.hp_name in
-               process_one rest res
-            with Not_found ->
-                let n_ihp = {
-                    I.hp_name = chp.C.hp_name;
-                    I.hp_typed_inst_vars= List.map
-                        (fun (CP.SpecVar (t,id,_), i) -> (t,id,i)) chp.C.hp_vars_inst;
-                    I.hp_is_pre = chp.C.hp_is_pre;
-                    I.hp_formula = IF.mkBase IF.HEmp (IP.mkTrue no_pos) top_flow [] no_pos;
-                }
-                in
-                process_one rest (res@[n_ihp])
-  in
-  process_one crem_hprels irem_hprels
-
-let syn_hprel crem_hprels irem_hprels =
-  let pr1 = pr_list_ln Iprinter.string_of_hp_decl in
-  let pr2 = pr_list_ln Cprinter.string_of_hp_decl in
-  Debug.no_2 "syn_hprel" pr2 pr1 pr1
-      (fun _ _ -> syn_hprel_x crem_hprels irem_hprels)
-      crem_hprels irem_hprels 
 
 let convert_pred_to_cast new_views iprog cprog =
   let tmp_views = (order_views (iprog.I.prog_view_decls)) in
@@ -7761,6 +7767,7 @@ let hn_trans pname vnames hn = match hn with
         else hn
   | _ -> hn 
 
+(*LOC: this transformation is not quite correct. please improve*)
 let plugin_inferred_iviews views iprog =
   let vnames = List.map (fun (p,n,_)-> p,n) views in
   let vdecls = List.map (fun (pname,_,prd)-> { prd with 
@@ -7781,106 +7788,8 @@ let plugin_inferred_iviews views iprog =
 
 let plugin_inferred_iviews views iprog =
   let pr1 = pr_list (pr_triple pr_id pr_id pr_none) in
-Debug.no_1 "plugin_inferred_iviews" pr1 Iprinter.string_of_program (fun _ -> plugin_inferred_iviews views iprog) views
+  Debug.no_1 "plugin_inferred_iviews" pr1 Iprinter.string_of_program (fun _ -> plugin_inferred_iviews views iprog) views
 
-
-let trans_hprel_2_cview_x iprog cprog proc_name hpdefs:
-      C.view_decl list * C.hp_decl list =
-
-  (*TODO: topo sort hp_rels*)
-  let hpdefs1 = hpdefs in
-  (*convert to iview*)
-  let tripple_iviews = transform_hp_rels_to_iviews (List.map (fun hpdef -> (proc_name, hpdef)) hpdefs1) in
-  (*subst hprel -> view in defs*)
-  let n_iproc = plugin_inferred_iviews tripple_iviews iprog in
-  let _ = iprog.I.prog_view_decls <- n_iproc.I.prog_view_decls in
-  let iviews, new_views = List.fold_left (fun (ls1,ls2) (_,id,iv) -> ((ls1@[iv]), (ls2@[id]))) ([],[]) tripple_iviews in
-  (*remove defined unknown*)
-  let irem_hprels, idef_hprels = List.partition (fun hp1 ->
-      not (List.exists (fun hp2 -> String.compare hp1.I.hp_name hp2 = 0) new_views)
-  ) iprog.I.prog_hp_decls in
-  let crem_hprels, c_hprels_decl= List.partition (fun hp1 ->
-      not (List.exists (fun hp2 -> String.compare hp1.C.hp_name hp2 = 0) new_views)
-  ) cprog.C.prog_hp_decls in
-  (*unknown preds which generated by INFER exist in cprog but iprog.
-    good time to push them in*)
-  let irem_hprels1 = syn_hprel crem_hprels irem_hprels in
-  let _ = iprog.I.prog_hp_decls <- irem_hprels1 in
-  let _ = cprog.C.prog_hp_decls <- crem_hprels in
-  let _ = List.iter (process_pred_def_4_iast iprog) iviews in
-  (* let _ = iprog.Iast.prog_view_decls <- iprog.Iast.prog_view_decls@iviews in *)
-  (*convert to cview*)
-  let cviews = (convert_pred_to_cast new_views iprog cprog) in
-  (*put back*)
-  (* let _ = iprog.I.prog_hp_decls <- iprog.I.prog_hp_decls@idef_hprels in *)
-  (* let _ = cprog.C.prog_hp_decls <- cprog.C.prog_hp_decls@cdef_hprels in *)
-  (cviews,c_hprels_decl)
-
-let trans_hprel_2_cview iprog cprog proc_name hp_rels :
-      C.view_decl list * C.hp_decl list=
-  let pr1 = pr_list_ln ( Cprinter.string_of_hp_rel_def) in
-  let pr2 = pr_list_ln Cprinter.string_of_view_decl in
-  let pr3 = pr_list_ln Cprinter.string_of_hp_decl in
-  Debug.no_1 "trans_hprel_2_view" pr1 (pr_pair pr2 pr3)
-      (fun _ -> trans_hprel_2_cview_x iprog cprog proc_name hp_rels)
-      hp_rels
-
-let trans_formula_hp_2_view_x iprog cprog proc_name in_hp_names chprels_decl f=
-  let rec part_sv_from_pos ls n n_need rem=
-    match ls with
-      | [] -> report_error no_pos "sau.get_sv_from_pos"
-      | sv1::rest -> if n = n_need then (sv1, rem@rest)
-        else part_sv_from_pos rest (n+1) n_need (rem@[sv1])
-  in
-  let retrieve_root hp_name args=
-    let rpos = C.get_proot_hp_def_raw chprels_decl
-      hp_name in
-    let r,paras = part_sv_from_pos args 0 rpos [] in
-    (r,paras)
-  in
-  let hn_trans hn = match hn with
-    | IF.HRel (id,args, pos)->
-	  if (List.exists (fun n -> (String.compare n id)==0) in_hp_names) then
-	    let hvar,tl = retrieve_root id args in
-            let r = match hvar with
-              | (IP.Var (v,_)) -> v
-              | _ -> report_error no_pos "ASTSIMP.trans_formula_hp_2_view"
-            in
-            IF.HeapNode {
-	        IF.h_formula_heap_node = r;
-	        IF.h_formula_heap_name = id(* ^"_"^proc_name *);
-                IF.h_formula_heap_deref = 0;
-	        IF.h_formula_heap_derv = false;
-	        IF.h_formula_heap_imm = IF.ConstAnn(Mutable);
-                IF.h_formula_heap_imm_param = [];
-	        IF.h_formula_heap_full = false;
-	        IF.h_formula_heap_with_inv = false;
-	        IF.h_formula_heap_perm = None;
-	        IF.h_formula_heap_arguments = tl;
-	        IF.h_formula_heap_pseudo_data = false;
-	        IF.h_formula_heap_label = None;
-	        IF.h_formula_heap_pos = pos}
-	  else hn
-    | _ -> hn
-  in
-  (*to improve*)
-  (*revert to iformula*)
-  let if1 = rev_trans_formula f in
-  (*trans hp -> view*)
-  let if2 = IF.formula_trans_heap_node hn_trans if1 in
-  (*trans iformula to cformula*)
-  let if1 = case_normalize_formula iprog [] if2 None in
-  let n_tl = gather_type_info_formula iprog if2 [] false in
-  let _, f2 = trans_formula iprog false [] false if2 n_tl false in
-  f2
-
-let trans_formula_hp_2_view iprog cprog proc_name in_hp_names chprels_decl f=
-  let pr1= !CF.print_formula in
-  let pr2 = pr_list pr_id in
-  Debug.no_2 "trans_formula_hp_2_view" pr2 pr1 pr1
-      (fun _ _ -> trans_formula_hp_2_view_x iprog cprog proc_name
-          in_hp_names chprels_decl f)
-      in_hp_names f
 
 (*
 and normalize_barr_decl cprog p = 

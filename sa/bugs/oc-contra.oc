@@ -1,0 +1,6 @@
+R:={[mmm]:mmm=-1};
+S:={[mmm]:mmm>=0};
+M:={[mmm]:exists(mm: mm>=0 & mm=mmm & mmm>=0)};
+S intersection R;
+M intersection R;
+M; 

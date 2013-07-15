@@ -1,0 +1,37 @@
+========dll-app-bug1d.slk ==========
+Starting Omega...oc
+HP_7 is defined.
+HP_9 is defined.
+
+!!! >>>>>> mismatch ptr is not found (or inst) in the lhs <<<<<<
+!!! >>>>>> mismatch ptr is not found (or inst) in the lhs <<<<<<
+Entail (1) : Fail.
+
+
+Entail (2) : Valid. 
+
+ <1>HP_45(Anon_43,x) * HP_46(Anon_44,x)&x!=null & Anon_13=Anon_43 & Anon_14=Anon_44&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [HP_7(x@NI,l2)&x!=null --> l2::node<Anon_43,Anon_44>@M * 
+                   HP_45(Anon_43,x@NI) * HP_46(Anon_44,x@NI)]
+
+
+Entail (3) : Valid. 
+
+ <1>HP_56(Anon_54,x) * HP_57(Anon_55,x) * HP_58(x,l2)&x!=null & Anon_15=Anon_54 & Anon_16=Anon_55&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [HP_9(x,l2)&x!=null --> l2::node<Anon_54,Anon_55>@M * 
+                   HP_56(Anon_54,x@NI) * HP_57(Anon_55,x@NI) * HP_58(x,l2@NI)]
+
+
+Entail (4) : Valid. 
+
+ <1>HP_68(Anon_66,l2) * HP_69(Anon_67,l2) * HP_70(l2,x)&x!=null & Anon_17=Anon_66 & Anon_18=Anon_67&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [HP_9(x,l2)&x!=null --> x::node<Anon_66,Anon_67>@M * 
+                   HP_68(Anon_66,l2@NI) * HP_69(Anon_67,l2@NI) * 
+                   HP_70(l2,x@NI)]
+
+
+Entail (5) : Valid. 
+
+ <1>hfalse&false&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [HP_9(x,l2) --> emp&x!=null]
+====================

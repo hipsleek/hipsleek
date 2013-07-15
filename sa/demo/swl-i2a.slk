@@ -1,0 +1,71 @@
+data node{
+	int val;
+	node next;
+}.
+
+
+HeapPred H(node a, node b, node@NI c).
+HeapPred H_3(node prev, node@NI cur, node@NI sent).
+HeapPred H_2(node next_1, node@NI prev, node@NI sent).
+HeapPred G(node a, node ra, node b, node rb, node@NI c).
+
+
+relAssume
+ H(cur,prev,sent) --> cur::node<val_0,next_1>@M * 
+  H_2(next_1,prev,sent) * H_3(prev,cur,sent).
+
+relAssume
+ H_3(prev,cur,sent) * cur::node<_,prev>@M
+  & next_1=null 
+  & prev'=null --> H(cur,prev',sent).
+
+relAssume
+ H_2(next_1,prev,sent) * H_3(prev,cur,sent) * 
+  cur::node<_,prev>@M & next_1!=sent & 
+  next_1!=null --> H(next_1,cur,sent).
+
+relAssume
+ H_2(cur',prev,sent) & cur'=sent --> emp.
+
+shape_infer [H,H_2,H_3][].
+
+/*
+# swl-i2a.slk
+
+
+ H(cur,prev,sent) --> cur::node<val_0,next_1>@M * 
+  H_2(next_1,prev,sent) * H_3(prev,cur,sent).
+
+ H_3(prev,cur,sent) * cur::node<_,prev>@M
+  //&cur_920=null & & cur_920=next_1
+  next_1=null 
+  //& cur=cur_909  & cur=cur_909 
+  & prev'=null --> H(cur,prev',sent).
+
+ H_2(next_1,prev,sent) * H_3(prev,cur,sent) * 
+  cur::node<_,prev>@M & next_1!=sent & 
+  next_1!=null --> H(next_1,cur,sent).
+
+ H_2(cur',prev,sent) & cur'=sent --> emp.
+
+---------------------------------
+ 
+
+  H_3(prev,cur,sent) * 
+  cur::node<val_0,prev>@M 
+  //& cur=prev' 
+  //& cur'=next_1 
+  & cur'=sent --> G(cur,cur',prev,cur,sent).
+ --split->
+ H_2(cur',prev,sent) & cur'=sent --> emp.
+
+
+ H_2(next_1,prev,sent) * 
+  G(prev_921,cur',prev_933,prev',sent)&cur=prev_921 & next_1!=sent & 
+  prev_933=null & next_1=null --> G(cur,cur',prev,prev',sent).
+
+ G(next_1,cur',cur,prev',sent)&next_1!=sent & 
+  next_1!=null --> G(cur,cur',prev,prev',sent).
+
+
+*/

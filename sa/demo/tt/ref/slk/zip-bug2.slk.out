@@ -1,0 +1,7 @@
+========zip-bug2.slk ==========
+Starting Omega...oc
+
+Entail (1) : Valid. 
+
+ <1>EXISTS(flted_9_56: emp&flted_9_56=null & x=null & x=null&{FLOW,(19,20)=__norm})[]
+====================

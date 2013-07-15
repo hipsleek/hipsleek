@@ -1,0 +1,37 @@
+data node {
+  node prev;
+  node next;
+}.
+
+HeapPred H(node a).
+PostPred G(node a).
+PostPred G2(node a).
+
+//1.
+infer [G,H] H(a) & b!=null|- G(b).
+print residue.
+
+/* 
+Entail (1) : Valid. 
+
+ <1>H(a)&b!=null&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [emp&b!=null --> G(b)]
+*/
+
+//2.
+infer [G,H] H(a) |- G(b).
+print residue.
+
+/*
+# xisa-bug-2.slk
+
+Why is there a renaming of b here?
+Is it critical? Just ecstatic.
+
+Entail (2) : Valid. 
+
+ <1>H(a)&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [emp --> G(b_24)]
+
+
+*/

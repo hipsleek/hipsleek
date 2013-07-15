@@ -1,0 +1,66 @@
+data node{
+	int val;
+	node next;
+}.
+
+pred ll<> == self=null 
+  or self::node<_,nxt> * nxt::ll<>  
+inv true.
+
+pred lseg<p> == self=p 
+  or self::node<_,nxt> * nxt::lseg<p> & self!=p 
+inv true.
+
+pred ll<> == self=null 
+  or self::node<_,nxt> * nxt::ll<>  
+inv true.
+
+lemma self::lseg<null> -> self::ll<>.
+
+
+checkentail nxt_926::ll<>@M * prev::lseg<sent_927>@M * sent::node<Anon_13,Anon_14>@L 
+* cur_934::node<Anon_925,prev_933>@M & cur=cur_934 & prev=prev_933 & 
+sent=sent' & cur!=null & sent=sent_927 & n_39'=nxt_926 & 
+next_40_932=nxt_926 & cur_934=prev_961 & cur_960=n_39' & cur_960!=sent' & 
+!(v_bool_44_892') & cur_960!=sent' & !(v_bool_44_892') & cur_960=null & 
+v_bool_45_893' & cur_960=null & v_bool_45_893' & cur'=prev_961 & prev'=null
+ |-  (exists sent_970: cur'::ll<>@M * prev'::lseg<sent_970>@M * 
+sent'::node<Anon_962,Anon_963>@L). 
+
+ checkentail nxt_926::ll<>@M * prev::lseg<sent_927>@M * sent::node<Anon_13,Anon_14>@L * 
+cur_934::node<Anon_925,prev_933>@M&cur=cur_934 & prev=prev_933 & 
+sent=sent' & cur!=null & sent=sent_927 & n_39'=nxt_926 & 
+next_40_932=nxt_926 & cur_934=prev_961 & cur_960=n_39' & cur_960!=sent' & 
+!(v_bool_44_892') & cur_960!=sent' & !(v_bool_44_892') & cur_960=null & 
+v_bool_45_893' & cur_960=null & v_bool_45_893' & cur'=prev_961 & 
+prev'=null & Anon_13=Anon_15 & Anon_14=Anon_16
+ |-  (exists sent_987: emp&sent'=sent_987 & cur'=sent_987). 
+
+ checkentail cur'::ll<>@M * prev::lseg<sent_927>@M * sent::node<Anon_13,Anon_14>@L * 
+prev'::node<Anon_925,prev>@M&cur=prev'  & 
+sent=sent' & cur!=null & sent=sent_927 & n_39'=nxt_926 & 
+next_40_932=nxt_926 & cur'=n_39' & cur'!=sent' & 
+!(v_bool_44_892') & cur'!=sent' & !(v_bool_44_892') & cur'!=null & 
+!(v_bool_45_893') & cur'!=null & !(v_bool_45_893')
+ |-  (exists sent_1040: cur'::lseg<sent_1040>@M * prev'::ll<>@M * 
+sent'::node<Anon_15,Anon_16>@L ). 
+
+/*
+# bug-swl-9b.slk
+
+cannot prove sen
+
+ id: 14; caller: []; line: 50; classic: false; kind: PRE-2; hec_num: 5; evars: [sent_970]; infer_vars: []; c_heap: emp
+ checkentail nxt_926::ll@M * prev::lseg<sent_927>@M * sent::node<Anon_13,Anon_14>@L * 
+cur_934::node<Anon_925,prev_933>@M&cur=cur_934 & prev=prev_933 & 
+sent=sent' & cur!=null & sent=sent_927 & n_39'=nxt_926 & 
+next_40_932=nxt_926 & cur_934=prev_961 & cur_960=n_39' & cur_960!=sent' & 
+!(v_bool_44_892') & cur_960!=sent' & !(v_bool_44_892') & cur_960=null & 
+v_bool_45_893' & cur_960=null & v_bool_45_893' & cur'=prev_961 & prev'=null&
+{FLOW,(22,23)=__norm}[]
+ |-  EXISTS(sent_970: cur'::ll@M * prev'::lseg<sent_970>@M * 
+sent'::node<Anon_962,Anon_963>@L&{FLOW,(22,23)=__norm})[]. 
+
+
+
+*/

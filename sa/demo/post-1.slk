@@ -7,15 +7,15 @@ data node{
 HeapPred G(node a).
 
 
-relAssume G
+relAssume 
  x::node<n,null> & n!=null   --> G(x).
 
 /*
-relAssume G
+relAssume 
  yy::node<key_31_797,null>  --> G(yy).
 */
 
-relAssume G
+relAssume 
  x::node<null,right>  & right=null  --> G(x).
 
 

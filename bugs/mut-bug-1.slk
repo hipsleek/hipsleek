@@ -12,6 +12,14 @@ pred A<> == self=null  or  self::tree<c>* c::B<>
 pred B<> == self=null or  self::node<c>* c::A<>
  inv true.
 
+//checkentail x::A<> & x!=null |- x::node<_>.
+
+checkentail x::A<> & x!=null |- x::tree<_>.
+print residue.
+
+checkentail x::A<> & x!=null |- x::tree<>.
+print residue.
+
 /*
 # mut-bug-1.slk
 

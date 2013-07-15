@@ -26,18 +26,18 @@ HeapPred HP_9(node a, node@NI b).
 
 Declare_Unknown [HP_0].
 
-relAssume H
+relAssume 
   H(x,r) --> x::node<left_29_845,right_29_846,next_29_847>@M * 
   HP_8(left_29_845,r) * HP_9(right_29_846,r) * 
   HP_0(next_29_847,r).
 
-relAssume H
+relAssume 
   HP_9(right_29_846,r)&right_29_846!=null --> H(right_29_846,r).
 
-relAssume H
+relAssume 
   HP_8(left_29_845,r)&true --> H(left_29_845,l_47').
 
-relAssume HP_9
+relAssume 
   HP_9(right_29_846,r)&right_29_846=null --> emp.
 
 shape_infer [H,HP_8,HP_9][].

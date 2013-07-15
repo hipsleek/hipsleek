@@ -11,11 +11,22 @@ inv true.
 HeapPred P1(node a).
 HeapPred P2(node a).
 
-lemma self::zip<y> -> P1(self) * P2(y).
+ lemma self::zip<y> -> P1(self) * P2(y).
+
+// lemma self::zip<y> -> P1(self) * P2(y).
+
+//lemma self::zip<y> -> P2(y).
+
 
 checkentail x::zip<y>
      |- P1(x) * P2(y).
 print residue.
+
+/*
+infer [P1,P2] x::zip<y>
+     |- P1(x) * P2(y).
+print residue.
+*/
 
 /*
 # split-1a.slk

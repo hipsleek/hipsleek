@@ -1,4 +1,5 @@
 open Globals 
+open Others 
 open GlobProver
 open Stat_global
 open Gen.Basic
@@ -19,8 +20,9 @@ type proof_res =
 
 type proof_log = {
 	log_id : string; (* TODO: Should change to integer for performance *)
-	log_other_properties : string list; (* TODO: Should change to integer for performance *)
+	(* log_other_properties : string list; (\* TODO: Should change to integer for performance *\) *)
         log_loc : loc;
+        log_proving_kind : Others.proving_kind;
 	log_prover : string;
 	log_type : proof_type option;
 	log_time : float;
@@ -60,7 +62,7 @@ type sleek_log_entry = {
   (*   | BINDING -> "BINDING" *)
   (*   | ASSERTION -> "ASSERTION" *)
 
-let string_of_sleek_proving_kind () = Globals.proving_kind#string_of
+let string_of_sleek_proving_kind () = proving_kind#string_of
 
 let string_of_log_type lt =
   match lt with
@@ -79,8 +81,12 @@ let pr_proof_log_entry e =
   if e.log_cache then fmt_string ("; prover : CACHED ")
   else fmt_string ("; prover: " ^ (e.log_prover));
   if e.log_time > 0.5 then fmt_string ("; TIME: " ^ (string_of_float e.log_time));
-  fmt_string ("; "^((pr_list pr_id) e.log_other_properties));
-  fmt_string ("\n type: " ^ ((pr_option string_of_log_type) e.log_type)) ;
+  fmt_string ("; loc: "^(string_of_loc e.log_loc));
+  fmt_string ("; kind: "^(Others.string_of_proving_kind e.log_proving_kind));
+  (* fmt_string ("; "^((pr_list pr_id) e.log_other_properties)); *)
+  (match e.log_type with
+      Some k ->  fmt_string ("\n type: " ^ (string_of_log_type k)) 
+    | None -> ());
   fmt_string ("\n res: "^(string_of_log_res e.log_res));
   fmt_string ("\n --------------------");
   fmt_close()
@@ -233,7 +239,9 @@ let add_proof_log (cache_status:bool) old_no pno tp ptype time res =
 	let tstartlog = Gen.Profiling.get_time () in
 	let plog = {
 		log_id = pno;
-		log_other_properties = [proving_info ()]@[trace_info ()];
+                log_loc = proving_loc # get;
+                log_proving_kind = proving_kind # top_no_exc;
+		(* log_other_properties = [proving_info ()]@[trace_info ()]; *)
 		(* log_old_id = old_no; *)
 		log_prover = tp;
 		log_type = Some ptype;
@@ -280,7 +288,7 @@ let proof_log_to_text_file (src_files) =
     in
     let helper log=
       "\n--------------\n"^
-	  List.fold_left (fun a c->a^c) "" log.log_other_properties^
+	  (* List.fold_left (fun a c->a^c) "" log.log_other_properties^ *)
 	  (* "\nid: "^log.log_id^ *)
       "\nProver: "^
       (if log.log_cache then "CACHED" else log.log_prover)^

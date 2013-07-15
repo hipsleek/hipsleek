@@ -108,6 +108,7 @@ float mult___(float a, float b)
   requires true 
   ensures res = a * b;
 
+
 /*
 float div___(int a, float b)
  case {

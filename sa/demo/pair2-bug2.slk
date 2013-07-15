@@ -6,13 +6,13 @@ HeapPred H1(cell a, cell b).
 HeapPred HP_4(cell a, cell b).
 HeapPred G1(cell a, cell b).
 
-relAssume H1
+relAssume
  H1(x,y) --> x::cell<val_20_783> * HP_4(y,x).
 
-relAssume HP_4
+relAssume
  HP_4(y,x) --> y::cell<val_21_788> .
 
-relAssume G1
+relAssume
  x::cell<val_20_783> * y::cell<val_21_788> --> G1(x,y).
 
 shape_infer [H1,HP_4][G1].
