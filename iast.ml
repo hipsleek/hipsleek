@@ -1177,7 +1177,7 @@ and collect_formula (f0 : F.formula) : ident list =
     | _ -> []
   ) in
   match f0 with
-    | F.Base f ->  helper f.F.formula_base_heap
+    | F.Base f ->  helper f.F.formula_base_heap (*TODO*)
     | F.Exists f ->  helper f.F.formula_exists_heap
     | F.Or f -> (collect_formula f.F.formula_or_f1) @ (collect_formula f.F.formula_or_f2)
 
@@ -1264,7 +1264,7 @@ and update_fixpt_x (vl:(view_decl * ident list *ident list) list)  =
 and update_fixpt (vl:(view_decl * ident list *ident list) list)  =
   let pr_idl = pr_list pr_id in
   let pr = pr_list (pr_triple !print_view_decl pr_idl pr_idl) in
-  Debug.ho_1 "update_fixpt" pr pr_none update_fixpt_x vl
+  Debug.no_1 "update_fixpt" pr pr_none update_fixpt_x vl
 
 and set_check_fixpt (data_decls : data_decl list) (view_decls: view_decl list)  =
   let pr = pr_list !print_data_decl in 

@@ -900,7 +900,8 @@ b_trans : [[`OPAREN; fs=integer_literal; `COMMA; ts= integer_literal; `COMMA ;`O
  
 view_decl: 
   [[ vh= view_header; `EQEQ; vb=view_body; oi= opt_inv; li= opt_inv_lock; mpb = opt_mem_perm_set
-      -> { vh with view_formula = (fst vb);
+          (* let f = (fst vb) in *)
+          -> { vh with view_formula = (fst vb);
           view_invariant = oi; 
           view_mem = mpb;
           view_is_prim = false; 

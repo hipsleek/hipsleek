@@ -1559,7 +1559,7 @@ let partition_constrs_x constrs post_hps0=
         (pre_cs@[cs],post_cs,rem)
       else (pre_cs,post_cs,rem@[cs])
   in
-  let new_post_hps = (* List.fold_left get_post_hp [] constrs *)[] in
+  let new_post_hps = List.fold_left get_post_hp [] constrs in
   let r1,r2,r3 = List.fold_left (classify (post_hps0@new_post_hps)) ([],[],[]) constrs in
   (r1,r2,r3, new_post_hps)
 
