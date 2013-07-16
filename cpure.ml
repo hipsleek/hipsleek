@@ -1845,18 +1845,18 @@ and mkAnd_x f1 f2 (*b*) pos =
 	      | AndList b, f
 	      | f, AndList b -> ((*print_string ("this br: "^(!print_formula f1)^"\n"^(!print_formula f2)^"\n");*)mkAndList (Label_Pure.merge b [(Lab_List.unlabelled,f)]))
 	      | _ -> And (f1, f2, pos)
-	            
+
 (*and mkAnd_chk f1 f2 pos = mkAnd_dups f1 f2 false pos
   
   and mkAnd_x f1 f2 pos = mkAnd_dups f1 f2 true pos*)
-	            
-and mkAnd f1 f2 pos = Debug.no_2_loop "pure_mkAnd" !print_formula !print_formula !print_formula (fun _ _-> mkAnd_x f1 f2 pos) f1 f2
+
+and mkAnd f1 f2 pos = Debug.no_2(* _loop *) "pure_mkAnd" !print_formula !print_formula !print_formula (fun _ _-> mkAnd_x f1 f2 pos) f1 f2
   
 and mkAndList_x b = 
   if (exists_l_snd isConstFalse b) then mkFalse no_pos
   else AndList (Label_Pure.norm (List.filter (fun (_,c)-> not (isConstTrue c)) b))
     
-and mkAndList b = Debug.no_1 "pure_mkAndList" (fun _ -> "") !print_formula (fun _-> mkAndList_x b) b
+and mkAndList b = Debug.ho_1 "pure_mkAndList" (fun _ -> "") !print_formula (fun _-> mkAndList_x b) b
 
 and and_list_to_and l = match l with
   | [] -> mkTrue no_pos
@@ -2061,7 +2061,7 @@ and mkExists_x (vs : spec_var list) (f : formula) lbel pos = match f with
         ((List.fold_left (fun a v -> push_v v a) f_with_fv vs))))
 
 and mkExists vs f lbel pos = 
-	Debug.no_2 "pure_mkExists" !print_svl !print_formula !print_formula (fun _ _ -> mkExists_x vs f lbel pos) vs f
+	Debug.ho_2 "pure_mkExists" !print_svl !print_formula !print_formula (fun _ _ -> mkExists_x vs f lbel pos) vs f
       
 (*and mkExistsBranches (vs : spec_var list) (f : (branch_label * formula )list) lbl pos =  List.map (fun (c1,c2)-> (c1,(mkExists vs c2 lbl pos))) f*)
       
@@ -2088,7 +2088,8 @@ and mkForall_disjs_deep (vs : spec_var list) (f : formula) lbl pos =
 (* same of list_of_conjs *)
 and split_conjunctions_x =  function
   | And (x, y, _) -> (split_conjunctions_x x) @ (split_conjunctions_x y)
-  | AndList l -> Gen.fold_l_snd split_conjunctions_x l
+  | AndList l -> List.map (fun p -> AndList [p]) l
+        (* Gen.fold_l_snd split_conjunctions_x l *)
   | z -> [z]
         
 and split_conjunctions f =  

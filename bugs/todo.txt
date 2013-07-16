@@ -485,7 +485,47 @@ id: 150; prover: OMEGA CALCULATOR; loc: swl-num_ss_12:11_12:40; kind: Pred_Check
 (self!=null & self<s & 1<=n) | (n=0 & s<self & self=null))
  res: false
 ===================================================================
+# "bug-lbl-1.ss"
+
+lg<"n":s,"b":M> == true & ["n":self = null & self != s; "b":M = {}] 
+	or self::node<_,nxt> * nxt::lg<s,Mnxt> & ["b": M = union(Mnxt,{self}); "n": self != s]
+inv ["n":self!=s];
+
+since inv is supposed to contain just pure, why can't
+we have:
+inv ["n":self!=s];
+
+Parsing file "bug-lbl-1.ss" by default parser...
+File "bug-lbl-1.ss", line 9, characters 4-5
+ --error: Stream.Error("[exl_pure] expected after OSQUARE (in [cexp_w])")
+ at:(Program not linked with -g, cannot print stack backtrace)
 ===================================================================
+# swl-lbl.ss -tp om --en-logging-txt
+
+poor exists formation at expense of labels.
+On the LHS, perhaps existential can be removed by
+simply replacing with free vars. On the RHS,
+existentials must be kept.
+
+ id: 157; prover: MONA; loc: swl-lbl_ss_8:4_8:87; kind: Compute_Base_Case
+ Simplify:  exists(Mnxt:exists(nxt:nxt!=s & nxt!=null & 
+exists(Mnxt_858:Mnxt=union(Mnxt_858,bag({nxt})))) & M=union(Mnxt,
+bag({self})))
+ res:  exists(Mnxt:exists(nxt:nxt!=s & nxt!=null & 
+exists(Mnxt_858:Mnxt=union(Mnxt_858,bag({nxt})))) & M=union(Mnxt,
+bag({self})))
+
+how did we get a [b,n]:
+
+ id: 161; prover: MONA; loc: swl-lbl_ss_8:4_8:87; kind: Compute_Base_Case
+ Sat:  (((AndList ([],self!=null) & ([b],M=union(bag(),bag({self})))
+ & ([n],self=null & s!=self & s!=self & s!=null)) ) | 
+((AndList ([b,n],exists(Mnxt:exists(nxt:nxt!=s & nxt!=null & 
+          exists(Mnxt_858:Mnxt=union(Mnxt_858,bag({nxt})))) & M=union(Mnxt,
+          bag({self}))) & s!=self & self!=null)
+ & ([n],self=null & s!=self)) ))
+ res: UNSAT
+
 ===================================================================
 ===================================================================
 ===================================================================
