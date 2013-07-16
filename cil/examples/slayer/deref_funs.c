@@ -18,8 +18,8 @@ void* malloc(int size) __attribute__ ((noreturn))
 
 void h(int** i)
 /*@
-  requires i::int^^<p>
-  ensures i::int^^<q>;
+  requires i::int**<t>@L * t::int*<p>
+  ensures t::int*<q> &  (q != 0);
 */
 {
   **i = &a;
@@ -27,8 +27,8 @@ void h(int** i)
 
 void g(int** i)
 /*@
-  requires i::int^^<p>
-  ensures i::int^^<q>;
+  requires i::int**<t>@L * t::int*<p>
+  ensures t::int*<q> &  (q != 0);
 */
 {
   h(i);
@@ -36,8 +36,8 @@ void g(int** i)
 
 void f(int* i)
 /*@
-  requires i::int^<p>
-  ensures i::int^<q>;
+  requires i::int*<p>
+  ensures i::int*<q> &  (q != 0);
 */
 {
   int** pi;

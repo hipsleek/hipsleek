@@ -843,32 +843,29 @@ and translate_instr (instr: Cil.instr) : Iast.exp list =
       )
     | Cil.Call (lv_opt, exp, exps, l) -> (
         let pos = translate_location l in
-        let addrof_info = gather_addrof_info_exp_list exps in
-        let update_addrof_args_exps_before = List.map (
-          fun e ->
-            let lv, lv_holder = e in
-            let exp1 = translate_lval lv in
-            let exp2 = Iast.mkMember lv_holder ["pdata"] None pos in
-            let exp3 = Iast.mkAssign Iast.OpAssign exp2 exp1 None pos in
-            exp3
-        ) addrof_info in
-        let update_addrof_args_exps_after = List.map (
-          fun e ->
-            let lv, lv_holder = e in
-            let exp1 = translate_lval lv in
-            let exp2 = Iast.mkMember lv_holder ["pdata"] None pos in
-            let exp3 = Iast.mkAssign Iast.OpAssign exp1 exp2 None pos in
-            exp3
-        ) addrof_info in
+        let _ = gather_addrof_info_exp_list exps in
         let fname = match exp with
           | Cil.Const (Cil.CStr s, _) -> s
           | Cil.Lval ((Cil.Var (v, _), _, _), _) -> v.Cil.vname
           | _ -> report_error pos "translate_intstr: invalid callee's name!" in
         let args = List.map (fun x -> translate_exp x) exps in
+        let update_addrof_args_exps_before = ref [] in
+        let update_addrof_args_exps_after = ref [] in
+        List.iter (
+          fun e ->
+            let e_data = Iast.mkMember e ["pdata"] None pos in
+            try
+              let v = Hashtbl.find tbl_addrof_data (Iprinter.string_of_exp e_data) in
+              let e1 = Iast.mkAssign Iast.OpAssign e_data v None pos in
+              update_addrof_args_exps_before := !update_addrof_args_exps_before @ [e1];
+              let e2 = Iast.mkAssign Iast.OpAssign v e_data None pos in 
+              update_addrof_args_exps_after := !update_addrof_args_exps_after @ [e2];
+            with _ -> ()
+        ) args;
         let callee = Iast.mkCallNRecv fname None args None pos in
         let newexp = (
           match lv_opt with
-          | None -> update_addrof_args_exps_before @ [callee] @ update_addrof_args_exps_after
+          | None -> !update_addrof_args_exps_before @ [callee] @ !update_addrof_args_exps_after
           | Some lv -> (
               (* declare a temp var to store the value return by call *)
               let tmp_var = (
@@ -901,7 +898,7 @@ and translate_instr (instr: Cil.instr) : Iast.exp list =
                   )
                 | _ -> []
               ) in
-              update_addrof_args_exps_before @ [tmp_assign] @ update_addrof_args_exps_after
+              !update_addrof_args_exps_before @ [tmp_assign] @ !update_addrof_args_exps_after
               @ [call_assign] @ aux_addrof_holder_exps @ aux_addrof_data_exp
             )
         ) in

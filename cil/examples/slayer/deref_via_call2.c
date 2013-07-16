@@ -20,12 +20,28 @@ int uninit_g_x ;
 int* uninit_g_py ;
 int uninit_g_z ;
 
+void* malloc(int size) __attribute__ ((noreturn))
+/*@
+  case {
+    size <= 0 -> requires true ensures res = null;
+    size >  0 -> requires true ensures res != null;
+  }
+*/;
+
 void g(int** g_ppi)
+/*@
+  requires g_ppi::int**<t>@L * t::int*<_>
+  ensures t::int*<q> & q != 0;
+*/
 {
   **g_ppi = &a;
 }
 
 void f(int* _f_pi)
+/*@
+  requires _f_pi::int*<_>
+  ensures _f_pi::int*<q> & q != 0;
+*/
 {
   int* f_pi = _f_pi;
   int** f_ppi;
@@ -44,6 +60,8 @@ void main ()
   f(p);
 
   // assert *p != 0
-  FAIL_IF( (*p) == 0 );
+  //FAIL_IF( (*p) == 0 );
+  //@ assert p'::int*<m> &  m!= 0;
+  
   return;
 }

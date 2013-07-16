@@ -665,19 +665,15 @@ let peek_pointer_type =
 
 let get_heap_id_info (cid: ident * primed) (heap_id : (ident * int * int * Camlp4.PreCast.Loc.t)) =
   let (base_heap_id, ref_level, deref_level, l) = heap_id in
-  if ((ref_level == 0) && (deref_level == 0)) then
-    (cid, base_heap_id, 0)
-  else if ((ref_level > 0) && (deref_level = 0) && (!is_cparser_mode)) then (
-    (* reference case, used to parse specs in C programs *)
-    let s = ref base_heap_id in
-    for i = 1 to ref_level do
-      s := !s ^ "__star";
-    done;
+  let s = ref base_heap_id in
+  for i = 1 to ref_level do
+    s := !s ^ "__star";
+  done;
+  if (deref_level == 0) then
     (cid, !s, 0)
-  )
-  else if ((ref_level = 0) && (deref_level > 0) && (!is_cparser_mode)) then
+  else if ((deref_level > 0) && (!is_cparser_mode)) then
     (* dereference case, used to parse specs in C programs *)
-    (cid, base_heap_id, deref_level)
+    (cid, !s, deref_level)
   else
     report_error (get_pos_camlp4 l 1) "unexpected heap_id"
 
@@ -1305,7 +1301,10 @@ heap_id:
    | `IDENTIFIER id; `CARET -> (id, 0, 1, _loc)
    | hid = heap_id; `STAR -> 
        let (h, s, c, l) = hid in
-       (h, s+1, c, l)
+       if (c > 0) then
+         report_error (get_pos_camlp4 _loc 1) "invalid heap_id string"
+       else
+         (h, s+1, c, l)
    | hid = heap_id; `CARET ->
        let (h, s, c, l) = hid in
        (h, s, c+1, l)
