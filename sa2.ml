@@ -95,33 +95,34 @@ let rec find_imply_subst_x prog unk_hps link_hps frozen_hps complex_hps constrs 
                           }
                           in
                           let _ = Debug.ninfo_pprint ("    new rhs: " ^ (Cprinter.string_of_hprel_short new_cs)) no_pos in
-                          let l_hds, l_hvs,lhrels =CF.get_hp_rel_formula new_cs.CF.hprel_lhs in
-                          let r_hds, r_hvs,rhrels =CF.get_hp_rel_formula new_cs.CF.hprel_rhs in
-                          if (List.length l_hds > 0 || List.length l_hvs > 0) && List.length lhrels > 0 &&
-                             (* (List.length r_hds > 0 || List.length r_hvs > 0) && *) List.length rhrels > 0
-                          then
-                            let ho_constrs, _ = collect_ho_ass prog true [] ([], []) new_cs in
-                            let ho_constrs1 = SAU.remove_dups_constr ho_constrs in
-                            if ho_constrs1==[] ||
-                              check_constr_duplicate (new_cs.CF.hprel_lhs,new_cs.CF.hprel_rhs) ho_constrs1 then
-                                let new_cs1 = SAU.simp_match_hp_w_unknown prog unk_hps link_hps new_cs in
-                                ([new_cs1],[])
-                            else
-                              (***************  PRINTING*********************)
-                              let _ =
-                                begin
-                                  let pr = pr_list_ln Cprinter.string_of_hprel_short in
-                                  print_endline "";
-                                  print_endline "\n*************************************************";
-                                  print_endline "*******relational assumptions (obligation)********";
-                                  print_endline "****************************************************";
-                                  print_endline (pr ho_constrs1);
-                                  print_endline "*************************************"
-                                end
-                              in
-                              (ho_constrs1, List.map fst3 lhrels)
-                            (***************  END PRINTING*********************)
-                          else
+                          (*moved after pre-preds synthesized*)
+                          (* let l_hds, l_hvs,lhrels =CF.get_hp_rel_formula new_cs.CF.hprel_lhs in *)
+                          (* let r_hds, r_hvs,rhrels =CF.get_hp_rel_formula new_cs.CF.hprel_rhs in *)
+                          (* if (List.length l_hds > 0 || List.length l_hvs > 0) && List.length lhrels > 0 && *)
+                          (*    (\* (List.length r_hds > 0 || List.length r_hvs > 0) && *\) List.length rhrels > 0 *)
+                          (* then *)
+                          (*   let ho_constrs, _ = collect_ho_ass prog true [] ([], []) new_cs in *)
+                          (*   let ho_constrs1 = SAU.remove_dups_constr ho_constrs in *)
+                          (*   if ho_constrs1==[] || *)
+                          (*     check_constr_duplicate (new_cs.CF.hprel_lhs,new_cs.CF.hprel_rhs) ho_constrs1 then *)
+                          (*       let new_cs1 = SAU.simp_match_hp_w_unknown prog unk_hps link_hps new_cs in *)
+                          (*       ([new_cs1],[]) *)
+                          (*   else *)
+                          (*     (\***************  PRINTING*********************\) *)
+                          (*     let _ = *)
+                          (*       begin *)
+                          (*         let pr = pr_list_ln Cprinter.string_of_hprel_short in *)
+                          (*         print_endline ""; *)
+                          (*         print_endline "\n*************************************************"; *)
+                          (*         print_endline "*******relational assumptions (obligation)********"; *)
+                          (*         print_endline "****************************************************"; *)
+                          (*         print_endline (pr ho_constrs1); *)
+                          (*         print_endline "*************************************" *)
+                          (*       end *)
+                          (*     in *)
+                          (*     (ho_constrs1, List.map fst3 lhrels) *)
+                          (*   (\***************  END PRINTING*********************\) *)
+                          (* else *)
                             let new_cs1 = SAU.simp_match_hp_w_unknown prog unk_hps link_hps new_cs in
                             ([new_cs1],[])
                         end
@@ -1544,7 +1545,7 @@ let partition_constrs_x constrs post_hps0=
               else post_hps
           | None -> post_hps
   in
-  let classify new_post_hps (pre_cs,post_cs,rem) cs =
+  let classify new_post_hps (pre_cs,post_cs,pre_oblg,post_oblg) cs =
     let is_post =
       try
         let ohp = CF.extract_hrel_head cs.CF.hprel_rhs in
@@ -1553,20 +1554,28 @@ let partition_constrs_x constrs post_hps0=
           | None -> false
       with _ -> false
     in
-    if is_post then (pre_cs,post_cs@[cs],rem) else
+    if is_post then (pre_cs,post_cs@[cs],pre_oblg,post_oblg) else
       let lhs_hps = CF.get_hp_rel_name_formula cs.CF.hprel_lhs in
       if CP.intersect_svl (new_post_hps) lhs_hps = [] then
-        (pre_cs@[cs],post_cs,rem)
-      else (pre_cs,post_cs,rem@[cs])
+        (*identify pre-oblg*)
+        let l_hds, l_hvs,lhrels =CF.get_hp_rel_formula cs.CF.hprel_lhs in
+        let r_hds, r_hvs,rhrels =CF.get_hp_rel_formula cs.CF.hprel_rhs in
+        if (List.length l_hds > 0 || List.length l_hvs > 0) && List.length lhrels > 0 &&
+          (* (List.length r_hds > 0 || List.length r_hvs > 0) && *) List.length rhrels > 0
+        then
+          (pre_cs,post_cs,pre_oblg@[cs],post_oblg)
+        else
+        (pre_cs@[cs],post_cs,pre_oblg,post_oblg)
+      else (pre_cs,post_cs,pre_oblg,post_oblg@[cs])
   in
   let new_post_hps = List.fold_left get_post_hp [] constrs in
-  let r1,r2,r3 = List.fold_left (classify (post_hps0@new_post_hps)) ([],[],[]) constrs in
-  (r1,r2,r3, new_post_hps)
+  let pre_constrs,post_constrs,pre_oblg, post_oblg_constrs = List.fold_left (classify (post_hps0@new_post_hps)) ([],[],[],[]) constrs in
+  (pre_constrs,post_constrs, pre_oblg, post_oblg_constrs, new_post_hps)
 
 let partition_constrs constrs post_hps=
   let pr1 = pr_list_ln Cprinter.string_of_hprel_short in
   let pr2 = !CP.print_svl in
-  Debug.no_2 "partition_constrs" pr1 pr2 (pr_quad pr1 pr1 pr1 pr2)
+  Debug.no_2 "partition_constrs" pr1 pr2 (pr_penta pr1 pr1 pr1 pr1 pr2)
       (fun _ _ -> partition_constrs_x constrs post_hps) constrs post_hps
 
 let rec infer_shapes_init_pre_x prog (constrs0: CF.hprel list) callee_hps non_ptr_unk_hps sel_post_hps unk_hps link_hps
@@ -1583,9 +1592,9 @@ let rec infer_shapes_init_pre_x prog (constrs0: CF.hprel list) callee_hps non_pt
   let _ = DD.binfo_pprint ">>>>>> pre-predicates: step pre-5: group & simpl impl<<<<<<" no_pos in
   let pr_par_defs,rem_constr1 = get_par_defs_pre constrs0 in
   let pr1 = pr_list_ln  Cprinter.string_of_hprel_short in
-  if rem_constr1 !=[] then
-    DD.binfo_pprint ("pre-obligation:\n" ^ (pr1 rem_constr1)) no_pos;
-  let _ = DD.binfo_pprint ">>>>>> pre-predicates: step pre-6: combine<<<<<<" no_pos in
+  (* if rem_constr1 !=[] then *)
+  (*   DD.binfo_pprint ("pre-obligation:\n" ^ (pr1 rem_constr1)) no_pos; *)
+  (* let _ = DD.binfo_pprint ">>>>>> pre-predicates: step pre-6: combine<<<<<<" no_pos in *)
   let par_defs, rem_constrs2, hconj_unify_cond = combine_pdefs_pre prog unk_hps1 link_hps pr_par_defs in
   let _ = DD.binfo_pprint ">>>>>> pre-predicates: step pre-7: remove redundant x!=null<<<<<<" no_pos in
   let _ = DD.binfo_pprint ">>>>>> pre-predicates: step pre-8: strengthen<<<<<<" no_pos in
@@ -1711,7 +1720,8 @@ and infer_shapes_from_obligation_x iprog prog proc_name is_pre cond_path (constr
     let rhs_hps = CF.get_hp_rel_name_formula cs.CF.hprel_rhs in
     let dep_define_hps1, rem_lhs = List.partition (fun hp -> CP.mem_svl hp def_hps) lhs_hps in
     let dep_define_hps2, rem_rhs = List.partition (fun hp -> CP.mem_svl hp def_hps) rhs_hps in
-    if (* (rem_lhs = [] && rem_rhs=[]) || *)(is_pre && rem_rhs <> []) || ((not is_pre) && (rem_lhs <> [])) then
+    if (* (rem_lhs = [] && rem_rhs=[]) || *)(is_pre && rem_rhs = [] && rem_lhs = []) ||
+      ((not is_pre) && (rem_lhs <> [])) then
       (r_lhs, r_rhs, dep_def_hps, r_oblg_constrs, r_rem_constrs@[cs])
     else
       (r_lhs@rem_lhs, r_rhs@rem_rhs, dep_def_hps@dep_define_hps1@dep_define_hps2,r_oblg_constrs@[cs], r_rem_constrs)
@@ -1779,11 +1789,11 @@ and infer_shapes_proper iprog prog proc_name cond_path (constrs2: CF.hprel list)
   (*TODO: this function may be subsumed by SAU.simp_match_partial_unknown. may be redundant code *)
   let constrs3 = List.map (SAU.simp_match_unknown unk_hps link_hps) constrs3a in
   (*partition constraints into 2 groups: pre-predicates, post-predicates*)
-  let pre_constrs,post_constrs, post_oblg_constrs, new_post_hps = partition_constrs constrs3 sel_post_hps in
+  let pre_constrs,post_constrs, pre_oblg_constrs, post_oblg_constrs, new_post_hps = partition_constrs constrs3 sel_post_hps in
   let sel_post_hps1 = sel_post_hps@new_post_hps in
   (*find inital sol*)
   let _ = DD.binfo_pprint ">>>>>> pre-predicates<<<<<<" no_pos in
-  let pre_hps, pre_defs, unk_hpargs1,unk_map3, pre_equivs, unk_equivs, pre_oblg_constrs = infer_shapes_init_pre prog pre_constrs callee_hps []
+  let pre_hps, pre_defs, unk_hpargs1,unk_map3, pre_equivs, unk_equivs, _ (*pre_oblg_constrs*) = infer_shapes_init_pre prog pre_constrs callee_hps []
     (sel_post_hps1) unk_hpargs link_hps unk_map2 detect_dang in
   let pre_defs1, unify_equiv_map1 = if !Globals.pred_conj_unify then
     SAC.do_unify prog unk_hps link_hps pre_defs

@@ -1,0 +1,11 @@
+data node{
+	int val;
+	node next;
+}.
+
+HeapPred HP_903(node prev, node@NI cur, node@NI sent).
+
+infer [HP_903] HP_903(prev_942,cur_940,sent_944) * cur_940::node<val_36_941,prev_942>@M&
+  next_36_943!=null & 
+  next_36_943!=sent_944 |- next_36_943::node<val_36_900,next_36_901>@M * 
+  HP_903(cur_940,next_36_943,sent_944).
