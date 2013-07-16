@@ -2086,11 +2086,15 @@ and mkForall_disjs_deep (vs : spec_var list) (f : formula) lbl pos =
   disj_of_list (irr_ps@quan_rele_ps) pos
 
 (* same of list_of_conjs *)
-and split_conjunctions =  function
-  | And (x, y, _) -> (split_conjunctions x) @ (split_conjunctions y)
-  | AndList l -> Gen.fold_l_snd split_conjunctions l
+and split_conjunctions_x =  function
+  | And (x, y, _) -> (split_conjunctions_x x) @ (split_conjunctions_x y)
+  | AndList l -> Gen.fold_l_snd split_conjunctions_x l
   | z -> [z]
         
+and split_conjunctions f =  
+  let pr = !print_formula in
+  Debug.ho_1 "split_conjunctions" pr (pr_list pr) split_conjunctions_x f 
+
 and join_conjunctions fl = conj_of_list fl no_pos
 
 (******************)
