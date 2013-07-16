@@ -1856,7 +1856,7 @@ and mkAndList_x b =
   if (exists_l_snd isConstFalse b) then mkFalse no_pos
   else AndList (Label_Pure.norm (List.filter (fun (_,c)-> not (isConstTrue c)) b))
     
-and mkAndList b = Debug.ho_1 "pure_mkAndList" (fun _ -> "") !print_formula (fun _-> mkAndList_x b) b
+and mkAndList b = Debug.no_1 "pure_mkAndList" (fun _ -> "") !print_formula (fun _-> mkAndList_x b) b
 
 and and_list_to_and l = match l with
   | [] -> mkTrue no_pos
@@ -2061,7 +2061,7 @@ and mkExists_x (vs : spec_var list) (f : formula) lbel pos = match f with
         ((List.fold_left (fun a v -> push_v v a) f_with_fv vs))))
 
 and mkExists vs f lbel pos = 
-	Debug.ho_2 "pure_mkExists" !print_svl !print_formula !print_formula (fun _ _ -> mkExists_x vs f lbel pos) vs f
+	Debug.no_2 "pure_mkExists" !print_svl !print_formula !print_formula (fun _ _ -> mkExists_x vs f lbel pos) vs f
       
 (*and mkExistsBranches (vs : spec_var list) (f : (branch_label * formula )list) lbl pos =  List.map (fun (c1,c2)-> (c1,(mkExists vs c2 lbl pos))) f*)
       
@@ -2094,7 +2094,7 @@ and split_conjunctions_x =  function
         
 and split_conjunctions f =  
   let pr = !print_formula in
-  Debug.ho_1 "split_conjunctions" pr (pr_list pr) split_conjunctions_x f 
+  Debug.no_1 "split_conjunctions" pr (pr_list pr) split_conjunctions_x f 
 
 and join_conjunctions fl = conj_of_list fl no_pos
 

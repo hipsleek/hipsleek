@@ -527,6 +527,80 @@ how did we get a [b,n]:
  res: UNSAT
 
 ===================================================================
+./hip bugs/schorr-waite-list.ss -tp om --en-logging-txt  > a
+
+We have 4 large timeout from the above. Two of them seem to have exceeded
+the 5s timeout we impose on mona proof. Why is this so?
+
+no_eps_proof_log_bugs_schorr-waite-list_ss.txt:358: id: 192; prover: MONA; TIME: 17.149072; loc: bugs_schorr-waite-list_ss_43:2_43:26; kind: PRE_REC
+no_eps_proof_log_bugs_schorr-waite-list_ss.txt:417: id: 196; prover: MONA; TIME: 4.832302; loc: bugs_schorr-waite-list_ss_43:2_43:26; kind: PRE_REC
+no_eps_proof_log_bugs_schorr-waite-list_ss.txt:790: id: 234; prover: MONA; TIME: 26.361647; loc: bugs_schorr-waite-list_ss_43:2_43:26; kind: PRE_REC
+no_eps_proof_log_bugs_schorr-waite-list_ss.txt:806: id: 235; prover: MONA; TIME: 4.880305; loc: bugs_schorr-waite-list_ss_43:2_43:26; kind: PRE_REC
+
+However, when I run it separately as a sleek command;
+it seems to have adhered to the default time limits.
+----------------
+
+
+no_eps_proof_log_bugs_schorr-waite-list_ss.txt:358: id: 192; prover: MONA; TIME: 21.965372; loc: bugs_schorr-waite-list_ss_43:2_43:26; kind: PRE_REC
+no_eps_proof_log_bugs_schorr-waite-list_ss.txt:417: id: 196; prover: MONA; TIME: 9.73661; loc: bugs_schorr-waite-list_ss_43:2_43:26; kind: PRE_REC
+no_eps_proof_log_bugs_schorr-waite-list_ss.txt:790: id: 234; prover: MONA; TIME: 31.249953; loc: bugs_schorr-waite-list_ss_43:2_43:26; kind: PRE_REC
+no_eps_proof_log_bugs_schorr-waite-list_ss.txt:806: id: 235; prover: MONA; TIME: 9.732609; loc: bugs_schorr-waite-list_ss_43:2_43:26; kind: PRE_REC
+
+--------
+
+no_eps_proof_log_bugs_schorr-waite-list_ss.txt:358: id: 192; prover: MONA; TIME: 16.365021; loc: bugs_schorr-waite-list_ss_43:2_43:26; kind: PRE_REC
+no_eps_proof_log_bugs_schorr-waite-list_ss.txt:417: id: 196; prover: MONA; TIME: 3.908244; loc: bugs_schorr-waite-list_ss_43:2_43:26; kind: PRE_REC
+no_eps_proof_log_bugs_schorr-waite-list_ss.txt:790: id: 234; prover: MONA; TIME: 25.205576; loc: bugs_schorr-waite-list_ss_43:2_43:26; kind: PRE_REC
+no_eps_proof_log_bugs_schorr-waite-list_ss.txt:806: id: 235; prover: MONA; TIME: 3.864241; loc: bugs_schorr-waite-list_ss_43:2_43:26; kind: PRE_REC
+no_eps_proof_log_bugs_schorr-waite-list_ss.txt:1749: id: 314; prover: MONA; TIME: 42.110632; loc: bugs_schorr-waite-list_ss_43:2_43:26; kind: PRE_REC
+
+-------
+
+
+----------
+
+which seems to have exceeded the 3 sec timeout we placed
+for imply_timeout. Can we check why these are not being
+enforced by mona prover?
+
+imply_timeout@34
+imply_timeout inp1 : Mc=union(Mnxt_1007,bag({cur_1016})) & cur_1016!=sentinel_1008 & 
+s_1004=sentinel_1008 & cur=cur_1016 & prev=prev_1015 & sentinel=sentinel' & 
+cur!=null & sentinel=sentinel_1008 & sentinel=sentinel_1009 & 
+n_50'=nxt_1006 & next_33_1014=nxt_1006 & cur_1016=prev_1027 & 
+cur_1026=n_50' & cur_1026!=sentinel' & !(v_bool_37_944') & 
+cur_1026!=sentinel' & !(v_bool_37_944') & cur_1026=null & v_bool_38_945' & 
+cur_1026=null & v_bool_38_945' & cur'=prev_1027 & prev'=null & 
+exists(sentinel_1061:cur'=sentinel_1061) & Mc_1030=bag() & 
+exists(sentinel_1062:prev'!=sentinel_1062) & Mp_1031=bag() & 
+(((exists(Mnxt:Mnxt_1007=union(Mnxt,bag({nxt_1006}))) & nxt_1006!=s_1004 & 
+nxt_1006!=null) | (nxt_1006=null & Mnxt_1007=bag() & nxt_1006!=s_1004))) & 
+(((exists(M1:Mp=union(bag({prev}),M1)) & prev!=sentinel_1009 & prev!=null) | 
+(prev=sentinel_1009 & Mp=bag()))) & cur_1016!=null
+imply_timeout inp2 : cur'=sentinel'
+imply_timeout inp3 :timeout:3.
+imply_timeout inp4 :234
+imply_timeout@34 EXIT out :false
+[mona.ml]:Timeout exception
+
+
+ id: 234; prover: MONA; TIME: 31.249953; loc: bugs_schorr-waite-list_ss_43:2_43:26; kind: PRE_REC
+ Imply: ante: Mc=union(Mnxt_1007,bag({cur_1016})) & cur_1016!=sentinel_1008 & 
+s_1004=sentinel_1008 & cur=cur_1016 & prev=prev_1015 & sentinel=sentinel' & 
+cur!=null & sentinel=sentinel_1008 & sentinel=sentinel_1009 & 
+n_50'=nxt_1006 & next_33_1014=nxt_1006 & cur_1016=prev_1027 & 
+cur_1026=n_50' & cur_1026!=sentinel' & !(v_bool_37_944') & cur_1026=null & 
+v_bool_38_945' & cur'=prev_1027 & prev'=null & Mc_1030=bag() & 
+exists(sentinel_1108:prev'!=sentinel_1108) & Mp_1031=bag() & 
+(((exists(Mnxt_1107:Mnxt_1007=union(Mnxt_1107,bag({nxt_1006}))) & 
+nxt_1006!=s_1004 & nxt_1006!=null) | (nxt_1006=null & Mnxt_1007=bag() & 
+nxt_1006!=s_1004))) & (((exists(M1_1106:Mp=union(bag({prev}),M1_1106)) & 
+prev!=sentinel_1009 & prev!=null) | (prev=sentinel_1009 & Mp=bag()))) & 
+cur_1016!=null
+	     conseq:  cur'=sentinel'
+ res: false
+
 ===================================================================
 ===================================================================
 ===================================================================

@@ -13,7 +13,7 @@ let is_mona_running = ref false
 let last_test_number = ref 0
 let test_number = ref 0
 let mona_cycle = ref 90
-let timeout = ref 10.0 (* default timeout is 10 seconds *)
+let mona_timeout = ref 5.0 (* default timeout is 10 seconds *)
 
 let result_file_name = "res"
 let log_all_flag = ref false
@@ -829,7 +829,7 @@ let send_cmd_with_answer str =
     let str = get_answer !process.inchannel in
     str 
   in 
-  let answ = Procutils.PrvComms.maybe_raise_timeout_num 1 fnc () !timeout in
+  let answ = Procutils.PrvComms.maybe_raise_timeout_num 1 fnc () !mona_timeout in
   answ
 
 let send_cmd_with_answer str =
@@ -1080,14 +1080,14 @@ let write_to_file  (is_sat_b: bool) (fv: CP.spec_var list) (f: CP.formula) (imp_
     let res = check_answer file_content mona_answ is_sat_b in
     res
   in
-  (* let res = Procutils.PrvComms.maybe_raise_timeout_num 2 fnc () !timeout in  *)
+  (* let res = Procutils.PrvComms.maybe_raise_timeout_num 2 fnc () !mona_timeout in  *)
   let t = (if is_sat_b then "SAT no :" else "IMPLY no :")^imp_no in
   (* let hproc exc = (print_endline ("Timeout for MONA "^t));true in *)
   let hproc () =   
     print_string ("\n[MONA.ml]:Timeout exception "^t^"\n"); flush stdout;
     restart ("Timeout!");
     is_sat_b in
-  let res = Procutils.PrvComms.maybe_raise_and_catch_timeout_bool fnc () !timeout hproc in 
+  let res = Procutils.PrvComms.maybe_raise_and_catch_timeout_bool fnc () !mona_timeout hproc in 
   Sys.remove mona_filename;
   stop();
   res

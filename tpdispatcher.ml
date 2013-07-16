@@ -27,6 +27,11 @@ let pure_tp = ref OmegaCalc
 let proof_no = ref 0
 let provers_process = ref None
 
+let next_proof_no () =
+  let p_no = !proof_no + 1 in
+  string_of_int p_no
+
+
 type prove_type = Sat of CP.formula | Simplify of CP.formula | Imply of CP.formula * CP.formula
 type result_type = Timeout | Result of string | Failure of string
 
@@ -2231,8 +2236,9 @@ let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (imp_no : string) 
 let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (imp_no : string) timeout do_cache process
 	  : bool*(formula_label option * formula_label option )list * (formula_label option) (*result+successfull matches+ possible fail*)
   = let pf = Cprinter.string_of_pure_formula in
-  Debug.no_2_loop "imply_timeout" pf pf (fun (b,_,_) -> string_of_bool b)
-      (fun a c -> imply_timeout a c imp_no timeout do_cache process) ante0 conseq0
+  let prf = add_str "timeout" string_of_float in
+  Debug.no_4 "imply_timeout" pf pf prf pr_id (fun (b,_,_) -> string_of_bool b)
+      (fun a c _ _ -> imply_timeout a c imp_no timeout do_cache process) ante0 conseq0 timeout (next_proof_no ())
 
 let imply_timeout ante0 conseq0 imp_no timeout do_cache process =
   let s = "imply" in

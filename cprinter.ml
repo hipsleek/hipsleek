@@ -690,9 +690,9 @@ let rec pr_formula_exp (e:P.exp) =
         fmt_string ("(" ^ (Globals.string_of_typ ty) ^ ")");
         pr_formula_exp e1;
     | P.Bag (elist, l) 	-> 
-        fmt_string ("bag("); 
-        pr_set pr_formula_exp elist;
-        fmt_string (")")
+        fmt_string ("{"); 
+        pr_list_none pr_formula_exp elist;
+        fmt_string ("}")
     | P.BagUnion (args, l) -> 
           let args = bin_op_to_list op_union_short exp_assoc_op e in
           pr_fn_args op_union pr_formula_exp args
