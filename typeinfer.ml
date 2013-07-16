@@ -449,7 +449,7 @@ and gather_type_info_var_x (var : ident) tlist (ex_t : spec_var_kind) pos : (spe
       | Not_found -> 
           let vk = fresh_proc_var_kind tlist ex_t in
           ((var,vk)::tlist, vk.sv_info_kind)
-      | ex -> report_error pos ("gather_type_info_var : unexpected exception"^(Printexc.to_string ex))
+      | ex -> report_error pos ("gather_type_info_var : unexpected exception "^(Printexc.to_string ex))
 
 and gather_type_info_exp a0 tlist et =  
   Debug.no_eff_3 "gather_type_info_exp" [false;true] 
@@ -462,7 +462,7 @@ and gather_type_info_exp_x a0 tlist et =
       let t = null_type in
       let (n_tl,n_typ) = must_unify_expect t et tlist pos in
       (n_tl,n_typ)
-  | IP.Ann_Exp (e,t) -> 
+  | IP.Ann_Exp (e,t, _) -> 
       (* TODO WN : check if t<:et *)
       let (n_tl,n_typ) = gather_type_info_exp_x e tlist t in
       (n_tl,n_typ)
@@ -784,7 +784,7 @@ and guess_type_of_exp_arith a0 tlist =
               (* | IP.Div _ -> Known (Float) *)
     | IP.IConst _ -> (tlist,Int)
     | IP.FConst _ -> (tlist,Float)
-    | IP.Ann_Exp (_,t) -> (tlist,t)
+    | IP.Ann_Exp (_,t, _) -> (tlist,t)
     | _ -> (tlist,UNK)
 
 and gather_type_info_pointer (e0 : IP.exp) (k : spec_var_kind) (tlist:spec_var_type_list) : (spec_var_type_list*typ) =

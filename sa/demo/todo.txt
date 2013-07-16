@@ -5413,6 +5413,32 @@ Message: self of ll cannot have its type determined
 Exception occurred: Failure("self of ll cannot have its type determined")
 
 =====================================================================
+# swl-i.ss --dis-ddb
+
+We derived:
+
+HeapPred H(node a, node b, node@NI c).
+HeapPred HP_902(node next_36_901, node@NI prev, node@NI sent).
+HeapPred HP_903(node prev, node@NI cur, node@NI sent).
+PostPred G(node a, node ra, node b, node rb, node@NI c).
+
+It seems we perform the synthesis of H after pre-obligations below
+were processed. This is the wrong order. We should synthesize
+H first, after that we process pre-oblg below which relies
+on H being confirmed.
+
+!!! PRE-OBLIGATION:
+ HP_903(prev_936,cur_939,sent_934) * cur_939::node<val_36_935,prev_936>@M&
+  prev_937=null & 
+  cur_938=cur_939 --> cur_938::node<val_36_900,next_36_901>@M * 
+  HP_902(next_36_901,prev_937,sent_934) * HP_903(prev_937,cur_938,sent_934)
+
+!!! PRE-OBLIGATION:
+ HP_902(next_36_944,prev_943,sent_945) * HP_903(prev_943,cur_941,sent_945) * 
+  cur_941::node<val_36_942,prev_943>@M&next_36_944!=null & 
+  next_36_944!=sent_945 --> next_36_944::node<val_36_900,next_36_901>@M * 
+  HP_902(next_36_901,cur_941,sent_945) * HP_903(cur_941,next_36_944,sent_945)
+
 =====================================================================
 =====================================================================
 =====================================================================

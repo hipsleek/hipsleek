@@ -3,14 +3,9 @@ data node {
   node next;
 }
 
-ll<> == (self:ll1)=null
+ll<> == (self:ll1)=null   // has to detect that ll1 is not a type
   inv true;
 
 ll1<> == self=null
   or self::node<_,_>
   inv true;
-
-/*
-ERROR: at _0:0_0:0
-Message: self of ll cannot have its type determined
- */
