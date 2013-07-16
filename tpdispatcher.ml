@@ -1321,7 +1321,7 @@ let simplify (f:CP.formula):CP.formula =
 
 let simplify (f:CP.formula):CP.formula =
   let pr = !CP.print_formula in
-  Debug.ho_1 "TP.simplify" pr pr simplify f
+  Debug.no_1 "TP.simplify" pr pr simplify f
 	  
 let rec simplify_raw (f: CP.formula) = 
   let is_bag_cnt = is_bag_constraint f in

@@ -984,7 +984,7 @@ and create_memo_group_x
   the constraints are disjoint.
 *)
 and split_mem_grp (g:memoised_group): memo_pure =
-  Debug.ho_1 "split_mem_grp" !print_mg_f !print_mp_f split_mem_grp_x g
+  Debug.no_1 "split_mem_grp" !print_mg_f !print_mp_f split_mem_grp_x g
 
 and split_mem_grp_x (g:memoised_group): memo_pure =
   (* if !do_slicing then AnnoS.split_mem_grp g *)
@@ -1045,7 +1045,7 @@ and memo_pure_push_exists_eq_x (qv: spec_var list) (f0: memo_pure) pos : (memo_p
   (r, r_v)
       
 and memo_pure_push_exists_slice (f_simp,do_split) (qv:spec_var list) (f0:memo_pure) pos : memo_pure =
-  Debug.ho_2 "memo_pure_push_exists_slice" !print_sv_l_f !print_mp_f !print_mp_f
+  Debug.no_2 "memo_pure_push_exists_slice" !print_sv_l_f !print_mp_f !print_mp_f
       (fun qv f0 -> memo_pure_push_exists_slice_x (f_simp,do_split) qv f0 pos) qv f0
       
 (* pushes the exists into the individual groups, 
@@ -1096,7 +1096,7 @@ and memo_pure_push_exists_slice_x (f_simp, do_split) (qv: spec_var list) (f0: me
   in
 
   let helper mg = 
-    Debug.ho_1 "memo_pure_push_exists_slice@heper" !print_mg_f !print_mp_f
+    Debug.no_1 "memo_pure_push_exists_slice@heper" !print_mg_f !print_mp_f
     helper mg
   in 
   
@@ -2228,7 +2228,7 @@ let filter_useless_memo_pure sim_f b fv f = match f with
   | OnePF _ -> f
 
 let filter_useless_memo_pure sim_f b fv f = 
-  Debug.ho_1 "filter_useless_memo_pure"
+  Debug.no_1 "filter_useless_memo_pure"
     !print_mix_f !print_mix_f
     (fun _ -> filter_useless_memo_pure sim_f b fv f) f
  
