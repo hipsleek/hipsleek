@@ -437,27 +437,14 @@ and choose_full_mater_coercion l_vname l_vargs r_aset (c:coercion_decl) =
   let pr (c,_) = string_of_coercion c in
   Debug.no_1 "choose_full_mater_coercion" pr_svl (* (pr_option pr) *) pr_none (fun _ -> choose_full_mater_coercion_x l_vname l_vargs r_aset c) r_aset
 
-and coerc_mater_match_x prog l_vname (l_vargs:P.spec_var list) r_aset (imm : ann) (lhs_f:Cformula.h_formula) (coerc_view: ident option) =
+and coerc_mater_match_x prog l_vname (l_vargs:P.spec_var list) r_aset (imm : ann) (lhs_f:Cformula.h_formula) =
   (* TODO : how about right coercion, Cristina? *)
   let coercs = prog.prog_left_coercions in
   let _ = DD.tinfo_hprint (add_str "coercs" (pr_list Cprinter.string_of_coercion)) coercs no_pos in
   let pos_coercs = List.fold_right (fun c a ->
-      match coerc_view with
-        | None ->
-              begin
-                match (choose_full_mater_coercion l_vname l_vargs r_aset c) with 
-                  | None ->  a 
-                  | Some t -> t::a
-              end
-        | Some v ->  
-              if c.coercion_body_view = v then 
-
-                begin
-                  match (choose_full_mater_coercion l_vname l_vargs r_aset c) with 
-                    | None ->  a 
-                    | Some t -> t::a
-                end
-              else a
+      match (choose_full_mater_coercion l_vname l_vargs r_aset c) with 
+        | None ->  a 
+        | Some t -> t::a
   ) coercs [] in
   let res = List.map (fun (c,mv) -> (HEmp, lhs_f, [], MaterializedArg (mv,c))) pos_coercs in
   (* let pos_coercs = List.fold_left  *)
@@ -470,13 +457,13 @@ and coerc_mater_match_x prog l_vname (l_vargs:P.spec_var list) r_aset (imm : ann
   (*       with  _ ->  a) [] pos_coercs in *)
   (* if produces_hole imm then [] else *) res
 
-and coerc_mater_match prog l_vname (l_vargs:P.spec_var list) r_aset imm (lhs_f:Cformula.h_formula) (coerc_view: ident option) =
+and coerc_mater_match prog l_vname (l_vargs:P.spec_var list) r_aset imm (lhs_f:Cformula.h_formula)  =
   let pr = Cprinter.string_of_h_formula in
   let pr4 (h1,h2,l,mt) = pr_pair pr pr (h1,h2) in
   let pr2 ls = pr_list pr4 ls in
   let pr_svl = Cprinter.string_of_spec_var_list in
   Debug.no_3 "coerc_mater_match" pr_id pr_svl pr_svl pr2
-      (fun _ _ _ -> coerc_mater_match_x prog l_vname l_vargs r_aset imm lhs_f coerc_view) l_vname l_vargs r_aset
+      (fun _ _ _ -> coerc_mater_match_x prog l_vname l_vargs r_aset imm lhs_f) l_vname l_vargs r_aset
       
 (*
   spatial context
@@ -525,15 +512,29 @@ and imm_f_split_lhs_node f l_node r_node = match l_node, r_node with
 
 
 and get_data_nodes_ptrs_to_view prog hd_nodes hv_nodes view_sv =
+  let unlinked_nodes = ref ([]: CP.spec_var list) in
   List.filter (fun node ->
-      let ptrs = Sautility.look_up_closed_ptr_args prog hd_nodes hv_nodes [node.h_formula_data_node] in
-      (List.exists (CP.eq_spec_var view_sv) ptrs)
+      if Gen.BList.mem_eq CP.eq_spec_var (node.h_formula_data_node) !unlinked_nodes then false
+      else
+        let ptrs = Sautility.look_up_closed_ptr_args prog hd_nodes hv_nodes [node.h_formula_data_node] in
+        if not (List.exists (CP.eq_spec_var view_sv) ptrs) then begin
+          unlinked_nodes := !unlinked_nodes @ ptrs;
+          false
+        end
+        else true
   ) hd_nodes
 
 and get_view_nodes_ptrs_to_view prog hd_nodes hv_nodes view_sv =
+  let unlinked_nodes = ref ([]: CP.spec_var list) in
   List.filter (fun node ->
-      let ptrs = Sautility.look_up_closed_ptr_args prog hd_nodes hv_nodes [node.h_formula_view_node] in
-      (List.exists (CP.eq_spec_var view_sv) ptrs)
+      if Gen.BList.mem_eq CP.eq_spec_var (node.h_formula_view_node) !unlinked_nodes then false
+      else
+        let ptrs = Sautility.look_up_closed_ptr_args prog hd_nodes hv_nodes [node.h_formula_view_node] in
+        if not((List.exists (CP.eq_spec_var view_sv) ptrs))then begin
+          unlinked_nodes := !unlinked_nodes @ ptrs;
+          false
+        end
+        else true
   ) hv_nodes
 
 and get_hrels_ptrs_to_view prog hd_nodes hv_nodes hrels view_sv =
@@ -552,9 +553,9 @@ and empty_inters lst1 lst2 =
 
 (* try to find a lemma to be applied only if the view on the lhs is reachable from a node matching
 the node on the rhs *)
-and coerc_mater_match_with_unk_hp prog (l_vname: ident) (l_vargs: P.spec_var list) (r_aset: P.spec_var list) (lhs_node: Cformula.h_formula) (l_f: Cformula.h_formula) view_sv coerc_body =
+and coerc_mater_match_with_unk_hp prog (l_vname: ident) (l_vargs: P.spec_var list) (r_aset: P.spec_var list) (lhs_node: Cformula.h_formula) (l_f: Cformula.h_formula) view_sv =
   let cmm () = 
-    let cmm = coerc_mater_match prog l_vname l_vargs r_aset (ConstAnn(Mutable)) lhs_node (Some coerc_body) in 
+    let cmm = coerc_mater_match prog l_vname l_vargs r_aset (ConstAnn(Mutable)) lhs_node in 
     cmm in
   let hd_nodes, hv_nodes, hrels = get_hp_rel_h_formula l_f in
   let ptrs0 = (List.map (fun v -> v.h_formula_data_node) (get_data_nodes_ptrs_to_view prog hd_nodes hv_nodes view_sv) ) in
@@ -593,8 +594,6 @@ and spatial_ctx_extract_x prog (f0 : h_formula) (aset : CP.spec_var list) (imm :
                       else
                         (*if (!Globals.allow_field_ann) then
                           let new_f = update_ann f pimm1 pimm in
-                        (* let _ = print_string ("\n(andreeac) spatial_ctx_extarct helper initial f: " ^ (Cprinter.string_of_h_formula f)) in *)
-                        (* let _ = print_string ("\n(andreeac) spatial_ctx_extarct helper new f: " ^ (Cprinter.string_of_h_formula new_f)) in *)
 	                  [(new_f,f,[],Root)]
 	                  else*)
                         [(HEmp, f, [], Root)]
@@ -607,7 +606,7 @@ and spatial_ctx_extract_x prog (f0 : h_formula) (aset : CP.spec_var list) (imm :
       h_formula_view_name = c}) ->
           begin
             match rhs_node with
-              | HRel (hp,e,_) ->  let cmm = coerc_mater_match_with_unk_hp prog c vs1 aset f f0 p1  (CP.name_of_spec_var hp) in 
+              | HRel (hp,e,_) ->  let cmm = coerc_mater_match_with_unk_hp prog c vs1 aset f f0 p1 in 
                 cmm
               | _ -> 
                     (* if (subtype_ann imm1 imm) then *)
@@ -622,7 +621,7 @@ and spatial_ctx_extract_x prog (f0 : h_formula) (aset : CP.spec_var list) (imm :
                         [(HEmp, f, [], Root)]
                     else
                       let vmm = view_mater_match prog c (p1::vs1) aset imm f in
-                      let cmm = coerc_mater_match prog c vs1 aset imm f None in 
+                      let cmm = coerc_mater_match prog c vs1 aset imm f in 
                       (*LDK: currently, assume that frac perm does not effect 
                         the choice of lemmas (coercions)*)
                       vmm@cmm
@@ -635,10 +634,6 @@ and spatial_ctx_extract_x prog (f0 : h_formula) (aset : CP.spec_var list) (imm :
           let res1 = List.map (fun (lhs1, node1, hole1, match1) -> (mkStarH lhs1 f2 pos, node1, hole1, match1)) l1 in  
           let l2 = helper f2 in
           let res2 = List.map (fun (lhs2, node2, hole2, match2) -> (mkStarH f1 lhs2 pos, node2, hole2, match2)) l2 in
-	  (* let _ = print_string ("\n(andreeac) context.ml spatial_ctx_extract_x f:"  ^ (Cprinter.string_of_h_formula f)) in *)
-	  (* let helper0 lst = List.fold_left (fun res (a,_,_,_) -> res ^ (Cprinter.string_of_h_formula a) ) "" lst in *)
-	  (* let _ = print_string ("\n(andreeac) context.ml spatial_ctx_extract_x res1:"  ^ helper0 res1) in *)
-	  (* let _ = print_string ("\n(andreeac) context.ml spatial_ctx_extract_x res2:"  ^ helper0 res2) in  *)
           res1 @ res2
     | StarMinus ({h_formula_starminus_h1 = f1;
       h_formula_starminus_h2 = f2;
@@ -647,10 +642,6 @@ and spatial_ctx_extract_x prog (f0 : h_formula) (aset : CP.spec_var list) (imm :
           let res1 = List.map (fun (lhs1, node1, hole1, match1) -> (mkStarMinusH lhs1 f2 pos 12 , node1, hole1, match1)) l1 in  
           let l2 = helper f2 in
           let res2 = List.map (fun (lhs2, node2, hole2, match2) -> (mkStarMinusH f1 lhs2 pos 13, node2, hole2, match2)) l2 in
-	  (* let _ = print_string ("\n(andreeac) context.ml spatial_ctx_extract_x f:"  ^ (Cprinter.string_of_h_formula f)) in *)
-	  (* let helper0 lst = List.fold_left (fun res (a,_,_,_) -> res ^ (Cprinter.string_of_h_formula a) ) "" lst in *)
-	  (* let _ = print_string ("\n(andreeac) context.ml spatial_ctx_extract_x res1:"  ^ helper0 res1) in *)
-	  (* let _ = print_string ("\n(andreeac) context.ml spatial_ctx_extract_x res2:"  ^ helper0 res2) in  *)
           res1 @ res2          
     | Conj({h_formula_conj_h1 = f1;
       h_formula_conj_h2 = f2;
@@ -711,7 +702,6 @@ and spatial_ctx_extract_x prog (f0 : h_formula) (aset : CP.spec_var list) (imm :
   let pr = pr_quad pr1 pr2 pr3 pr4 in
   let _ = DD.tinfo_hprint (add_str "l" (pr_list pr)) l no_pos in 
   List.map (fun (lhs_rest,lhs_node,holes,mt) ->
-      (* let _ = print_string ("\n(andreeac) lhs_rest spatial_ctx_extract " ^ (Cprinter.string_of_h_formula lhs_rest) ^ "\n(andreeac) f0: " ^ (Cprinter.string_of_h_formula f0)) in *)
       { match_res_lhs_node = lhs_node;
       match_res_lhs_rest = lhs_rest;
       match_res_holes = holes;
@@ -816,10 +806,10 @@ and lookup_lemma_action_x prog (c:match_res) :action =
   in
   act
 
-and process_one_match prog is_normalizing (c:match_res) :action_wt =
+and process_one_match prog estate lhs_h is_normalizing (c:match_res) (rhs_node,rhs_rest) :action_wt =
   let pr1 = string_of_match_res in
   let pr2 = string_of_action_wt_res0  in
-  Debug.no_1 "process_one_match" pr1 pr2 (process_one_match_x prog is_normalizing) c 
+  Debug.no_1 "process_one_match" pr1 pr2 (fun _ -> process_one_match_x prog estate lhs_h is_normalizing c (rhs_node,rhs_rest)) c 
 
 (*
 (* return a list of nodes from heap f that appears in *)
@@ -832,7 +822,7 @@ and norm_search_action ls = match ls with
   | [(_,a)] -> a
   | lst -> Search_action lst
 
-and process_one_match_x prog is_normalizing (c:match_res) :action_wt =
+and process_one_match_x prog estate lhs_h is_normalizing (c:match_res) (rhs_node,rhs_rest): action_wt =
   let rhs_node = c.match_res_rhs_node in
   let lhs_node = c.match_res_lhs_node in
   let filter_norm_lemmas l = 
@@ -1075,7 +1065,7 @@ and process_one_match_x prog is_normalizing (c:match_res) :action_wt =
                   let l = left_act@right_act in
                   let res = 
                     match l with
-                      | []     -> (1, M_Nothing_to_do (string_of_match_res c))
+                      | []     -> (1, M_Nothing_to_do (string_of_match_res c)) (* nothing to do or infer? *)
                       | l1::[] -> l1
                       | _      -> (-1, norm_search_action l)
                   in res
@@ -1098,14 +1088,22 @@ and process_one_match_x prog is_normalizing (c:match_res) :action_wt =
                     | Coerc_mater s ->       (1, M_lemma (c,Some s))) in
                   let l1 = [(1,M_base_case_unfold c)] in
                   (-1, (Search_action (a1::l1)))
-           | ViewNode vl, HRel hr -> 
+           | ViewNode vl, HRel (h_name, args, _) ->
                  (* schedule only lemma or nothing *)
-                  let l = match ms with
-                    | Coerc_mater s -> (1, M_lemma (c,Some s))
-                    | Weak_coerc_mater s ->  (2, M_lemma (c,Some s))
-                    | _ -> (1, M_Nothing_to_do (string_of_match_res c) ) in
-                   (* (-1, (Search_action [l])) *)
-                  l
+                  let h_name = Cpure.name_of_spec_var h_name in
+                  let vl_name = vl.h_formula_view_name in
+                  let left_ls = filter_norm_lemmas(look_up_coercion_with_target prog.prog_left_coercions vl_name h_name) in
+                  let right_ls = filter_norm_lemmas(look_up_coercion_with_target prog.prog_right_coercions h_name vl_name) in
+                  let coerc_lst = left_ls@right_ls in
+                  let prio, coerc = match ms with
+                    | Coerc_mater s -> (1,s)
+                    | Weak_coerc_mater s ->  (2, s)
+                    | _ -> failwith("[context.ml]: only lemma cand be fired at this point for UNK pred on rhs\n")
+                  in
+                  if List.exists (fun coerc0 -> coerc0.coercion_name = coerc.coercion_name) coerc_lst then  
+                    (prio, M_lemma (c,Some coerc))
+                  else
+                    process_infer_heap_match prog estate lhs_h is_normalizing (rhs_node,rhs_rest)
             | ViewNode vl, DataNode dr ->
                   let _ = DD.tinfo_pprint "try LHS case analysis here!\n" no_pos in
 
@@ -1183,41 +1181,68 @@ and process_matches prog estate lhs_h is_normalizing ((l:match_res list),(rhs_no
       (fun _ _-> process_matches_x prog estate lhs_h is_normalizing (l, (rhs_node,rhs_rest))) 
       lhs_h (l, (rhs_node,rhs_rest))
 
+and process_infer_heap_match prog estate lhs_h is_normalizing(rhs_node,rhs_rest) =
+  let r0 = (3,M_unmatched_rhs_data_node (rhs_node,rhs_rest)) in
+  let rs = 
+    if estate.es_infer_vars_hp_rel==[] then []
+    else [(3,M_infer_heap (rhs_node,rhs_rest))] in
+  if (is_view rhs_node) && (get_view_original rhs_node) then
+    let r = (3, M_base_case_fold { match_res_lhs_node = HEmp;
+    match_res_lhs_rest = lhs_h;
+    match_res_holes = [];
+    match_res_type = Root;
+    match_res_rhs_node = rhs_node;
+    match_res_rhs_rest = rhs_rest; }) in 
+    (* WN : why do we need to have a fold following a base-case fold?*)
+    (* changing to no_match found *)
+    (*(-1, Search_action [r])*)
+    (* let r1 = (2, M_fold { *)
+    (*     match_res_lhs_node = HTrue;  *)
+    (*     match_res_lhs_rest = lhs_h;  *)
+    (*     match_res_holes = []; *)
+    (*     match_res_type = Root; *)
+    (*     match_res_rhs_node = rhs_node; *)
+    (*     match_res_rhs_rest = rhs_rest; *)
+    (* }) in *)
+    (* temp removal of infer-heap and base-case fold *)
+    (-1, (Cond_action (rs@[r;r0])))
+  else (-1, Cond_action (rs@[r0]))
+
 and process_matches_x prog estate lhs_h is_normalizing ((l:match_res list),(rhs_node,rhs_rest)) = 
   let _ = Debug.tinfo_pprint "**** sel_hp_rel **********************" no_pos in
   let _ = Debug.tinfo_hprint (add_str "hp_rel" Cprinter.string_of_spec_var_list) estate.es_infer_vars_hp_rel no_pos in
   let _ = Debug.tinfo_hprint (add_str "sel_hp_rel" Cprinter.string_of_spec_var_list) estate.es_infer_vars_sel_hp_rel no_pos in
   let _ = Debug.tinfo_hprint (add_str "sel_post_hp_rel" Cprinter.string_of_spec_var_list) estate.es_infer_vars_sel_post_hp_rel no_pos in
   match l with
-    | [] -> 
-          let r0 = (3,M_unmatched_rhs_data_node (rhs_node,rhs_rest)) in
-          let rs = 
-            if estate.es_infer_vars_hp_rel==[] then []
-            else [(3,M_infer_heap (rhs_node,rhs_rest))] in
-          if (is_view rhs_node) && (get_view_original rhs_node) then
-            let r = (3, M_base_case_fold { match_res_lhs_node = HEmp;
-            match_res_lhs_rest = lhs_h;
-            match_res_holes = [];
-            match_res_type = Root;
-            match_res_rhs_node = rhs_node;
-            match_res_rhs_rest = rhs_rest; }) in 
-            (* WN : why do we need to have a fold following a base-case fold?*)
-            (* changing to no_match found *)
-            (*(-1, Search_action [r])*)
-            (* let r1 = (2, M_fold { *)
-            (*     match_res_lhs_node = HTrue;  *)
-            (*     match_res_lhs_rest = lhs_h;  *)
-            (*     match_res_holes = []; *)
-            (*     match_res_type = Root; *)
-            (*     match_res_rhs_node = rhs_node; *)
-            (*     match_res_rhs_rest = rhs_rest; *)
-            (* }) in *)
-            (* temp removal of infer-heap and base-case fold *)
-            (-1, (Cond_action (rs@[r;r0])))
-          else (-1, Cond_action (rs@[r0]))
+    | [] ->  process_infer_heap_match prog estate lhs_h is_normalizing (rhs_node,rhs_rest)
+          (* let r0 = (3,M_unmatched_rhs_data_node (rhs_node,rhs_rest)) in *)
+          (* let rs =  *)
+          (*   if estate.es_infer_vars_hp_rel==[] then [] *)
+          (*   else [(3,M_infer_heap (rhs_node,rhs_rest))] in *)
+          (* if (is_view rhs_node) && (get_view_original rhs_node) then *)
+          (*   let r = (3, M_base_case_fold { match_res_lhs_node = HEmp; *)
+          (*   match_res_lhs_rest = lhs_h; *)
+          (*   match_res_holes = []; *)
+          (*   match_res_type = Root; *)
+          (*   match_res_rhs_node = rhs_node; *)
+          (*   match_res_rhs_rest = rhs_rest; }) in  *)
+          (*   (\* WN : why do we need to have a fold following a base-case fold?*\) *)
+          (*   (\* changing to no_match found *\) *)
+          (*   (\*(-1, Search_action [r])*\) *)
+          (*   (\* let r1 = (2, M_fold { *\) *)
+          (*   (\*     match_res_lhs_node = HTrue;  *\) *)
+          (*   (\*     match_res_lhs_rest = lhs_h;  *\) *)
+          (*   (\*     match_res_holes = []; *\) *)
+          (*   (\*     match_res_type = Root; *\) *)
+          (*   (\*     match_res_rhs_node = rhs_node; *\) *)
+          (*   (\*     match_res_rhs_rest = rhs_rest; *\) *)
+          (*   (\* }) in *\) *)
+          (*   (\* temp removal of infer-heap and base-case fold *\) *)
+          (*   (-1, (Cond_action (rs@[r;r0]))) *)
+          (* else (-1, Cond_action (rs@[r0])) *)
       (* M_Nothing_to_do ("no match found for: "^(string_of_h_formula rhs_node)) *) 
-    | x::[] -> process_one_match prog is_normalizing x
-    | _ ->  (-1,Search_action (List.map (process_one_match prog is_normalizing) l))
+    | x::[] -> process_one_match prog estate lhs_h is_normalizing x (rhs_node,rhs_rest)
+    | _ ->  (-1,Search_action (List.map (fun l -> process_one_match prog estate lhs_h is_normalizing l (rhs_node,rhs_rest)) l))
 
 and choose_closest a ys =
   let similar m o =

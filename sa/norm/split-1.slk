@@ -18,7 +18,8 @@ HeapPred P3(node a).
 
 
 //lemma self::zip<y> -> P1(self) * P3(y). try-error?
-lemma self::zip<y> -> P1(self) * P2(y).
+//lemma self::zip<y> -> P1(self) * P2(y).
+lemma self::zip<y> -> P2(y) * P1(self).
 
 
 
@@ -101,3 +102,4 @@ print residue.
 
 
 */
+

@@ -835,7 +835,7 @@ and gather_type_info_formula_x prog f0 tlist filter_res =
       n_tl
 
 and gather_type_info_struc_f prog (f0:IF.struc_formula) tlist =
-  Debug.ho_eff_2 "gather_type_info_struc_f" [false;true]
+  Debug.no_eff_2 "gather_type_info_struc_f" [false;true]
                  Iprinter.string_of_struc_formula string_of_tlist string_of_tlist
                  (fun _ _ -> gather_type_info_struc_f_x prog f0 tlist) f0 tlist
 

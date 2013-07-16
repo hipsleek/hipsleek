@@ -18,39 +18,42 @@ HeapPred P3(node a).
 
 
 //lemma self::zip<y> -> P1(self) * P3(y). try-error?
-lemma self::zip<y> -> P2(self) * P3(y).
-//lemma self::zip<y> -> P1(self) * P2(y).
+//lemma self::zip<y> -> P2(self) * P3(y).
+lemma self::zip<y> -> P1(self) * P2(y).
 
 
-//5
+//1
 infer [P1,P2]   
   x::node<_,y>*y::node<_,z>*z::zip<q> |- P1(x) * P2(y).
 print residue.
+/**
+
+Entail (1) : Valid.
+
+ <1>P2(q)&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [// Sleek_Entail(1)
+P1(z) * x::node<Anon_15,y>@M * y::node<Anon_16,z>@M --> P1(x);
+// Sleek_Entail(1)
+emp --> P2(y_59)]
 
 
+should it have been smth like this(?):
+ inferred hprel: [// Sleek_Entail(1)
+          P1(z) * x::node<Anon_15,y>@M --> P1(x);
+          // Sleek_Entail(1)
+          y::node<Anon_16,z>@M  --> P2(y)]
 
-//5
+*/
+
+
+//2
+infer [P1,P2]   
+  x::node<_,y>*y::node<_,z> * P1(z) * P2(q) |- P1(x) * P2(y).
+print residue.
+
+
+//3
 infer [P1,P2]   
   x::node<_,p>*y::node<_,q>*r::zip<qq> |- P1(x) * P2(y).
 print residue.
 
-/*
-
- - predicate-splitting
- - equivalence checking
- - useless parameter elimination
- - subsumption checking
-   P(..) --> Q(..)
-   Q(..) --> P(..)
- - refactoring
- - split lemma synthesis
-
-   x::ll<>  --> x::U<p> * p::ll<>
-   x::ll<>  <-- x::U<p> * p::ll<>
-
-   x::ll<B>  --> x::U<p> * p::ll<>
-   x::ll<B>  <-- x::U<p> * p::ll<>
-
-
-
-*/

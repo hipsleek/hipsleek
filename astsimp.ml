@@ -1574,7 +1574,7 @@ and find_node_vars eq_f h =
     | CF.HRel (hp, e, _) ->        
         let l = List.fold_left (fun lst exp ->  
             match exp with
-              | (CP.Var (v,_)) -> [v]@lst
+              | (CP.Var (v,_)) ->  (eq_f v)@lst
               | _ -> lst) [] e in
         Debug.tinfo_hprint (add_str "hrel:l" (Cprinter.string_of_spec_var_list)) l no_pos;
         if l==[] then ([],[])
