@@ -10,13 +10,14 @@ module CP = Cpure
 module CF = Cformula
  
 type proof_type =
-	| IMPLY of (CP.formula * CP.formula)
-	| SAT of CP.formula
-	| SIMPLIFY of CP.formula
+	| PT_IMPLY of (CP.formula * CP.formula)
+	| PT_SAT  of CP.formula
+	| PT_SIMPLIFY of CP.formula
 
 type proof_res =
-	| BOOL of bool
-	| FORMULA of CP.formula
+	| PR_BOOL of bool
+	| PR_FORMULA of CP.formula
+	| PR_exception 
 
 type proof_log = {
 	log_id : string; (* TODO: Should change to integer for performance *)
@@ -66,14 +67,18 @@ let string_of_sleek_proving_kind () = proving_kind#string_of
 
 let string_of_log_type lt =
   match lt with
-    |IMPLY (ante, conseq) -> "Imply: ante:" ^(string_of_pure_formula ante) ^"\n\t     conseq: " ^(string_of_pure_formula conseq)
-    |SAT f-> "Sat: "^(string_of_pure_formula f) 
-    |SIMPLIFY f -> "Simplify: "^(string_of_pure_formula f)
+    |PT_IMPLY (ante, conseq) -> "Imply: ante:" ^(string_of_pure_formula ante) ^"\n\t     conseq: " ^(string_of_pure_formula conseq)
+    |PT_SAT f-> "Sat: "^(string_of_pure_formula f) 
+    |PT_SIMPLIFY f -> "Simplify: "^(string_of_pure_formula f)
 
-let string_of_log_res r = 
+let string_of_log_res lt r = 
   match r with
-    |BOOL b -> string_of_bool b
-    |FORMULA f -> string_of_pure_formula f
+    |PR_BOOL b -> 
+         (match lt with
+           | Some(PT_SAT(_)) -> if b then "SAT" else "UNSAT"
+           | _ -> string_of_bool b )
+    |PR_FORMULA f -> string_of_pure_formula f
+    |PR_exception -> "exception thrown"
 
 let pr_proof_log_entry e =
   fmt_open_box 1;
@@ -87,7 +92,7 @@ let pr_proof_log_entry e =
   (match e.log_type with
       Some k ->  fmt_string ("\n " ^ (string_of_log_type k)) 
     | None -> ());
-  fmt_string ("\n res: "^(string_of_log_res e.log_res));
+  fmt_string ("\n res: "^(string_of_log_res e.log_type e.log_res));
   fmt_string ("\n --------------------");
   fmt_close()
 
@@ -200,7 +205,7 @@ let find_bool_proof_res pno =
 	try 
 		let log = Hashtbl.find proof_log_tbl pno in
 		match log.log_res with
-		| BOOL r -> r
+		| PR_BOOL r -> r
 		| _ -> report_error no_pos "Fatal error with Proof Logging: Unexpected result."
 	with _ -> report_error no_pos "Fatal error with Proof Logging. Do remember to enable proof logging before using LOG."
 
@@ -208,7 +213,7 @@ let find_formula_proof_res pno =
 	try 
 		let log = Hashtbl.find proof_log_tbl pno in
 		match log.log_res with
-		| FORMULA r -> r
+		| PR_FORMULA r -> r
 		| _ -> report_error no_pos "Fatal error with Proof Logging: Unexpected result."
 	with _ -> report_error no_pos "Fatal error with Proof Logging. Do remember to enable proof logging before using LOG."	
 			
@@ -283,9 +288,9 @@ let proof_log_to_text_file (src_files) =
       open_out ("logs/"^with_option^"_proof_log_" ^ (Globals.norm_file_name (List.hd src_files)) ^".txt") in
     let string_of_log_type lt =
       match lt with
-	|IMPLY (ante, conseq) -> "Imply: ante:" ^(string_of_pure_formula ante) ^"\n\t     conseq: " ^(string_of_pure_formula conseq)
-    	|SAT f-> "Sat: "^(string_of_pure_formula f) 
-    	|SIMPLIFY f -> "Simplify: "^(string_of_pure_formula f)
+	|PT_IMPLY (ante, conseq) -> "Imply: ante:" ^(string_of_pure_formula ante) ^"\n\t     conseq: " ^(string_of_pure_formula conseq)
+    	|PT_SAT f-> "Sat: "^(string_of_pure_formula f) 
+    	|PT_SIMPLIFY f -> "Simplify: "^(string_of_pure_formula f)
     in
     let helper log=
       "\n--------------\n"^
@@ -295,9 +300,10 @@ let proof_log_to_text_file (src_files) =
       (if log.log_cache then "CACHED" else (string_of_prover log.log_prover))^
       "\nType: "^(match log.log_type with | Some x-> string_of_log_type x | None -> "????")^
       (* "\nTime: "^(string_of_float(log.log_time))^ *)
-      "\nResult: "^(match log.log_res with
-	    |BOOL b -> string_of_bool b
-	    |FORMULA f -> string_of_pure_formula f)^"\n" in
+      "\nResult: "^(string_of_log_res log.log_type log.log_res)^"\n" in
+ (* with *)
+ (*            |PR_BOOL b -> string_of_bool b *)
+ (*            |PR_FORMULA f -> string_of_pure_formula f)^"\n" in *)
     (* let _ = proof_log_stk # string_of_reverse in *)
     let _= List.map (fun ix->
         let log=Hashtbl.find proof_log_tbl ix in

@@ -474,6 +474,16 @@ nxt!=s)) | (self=null & M=bag() & s!=self))
  res: false
  -------------------- 
 ===================================================================
+# swl-num.ss
+
+Why ante/conseq seem to be reversed here? Is this
+really required since we known inv is just an approx.
+
+id: 150; prover: OMEGA CALCULATOR; loc: swl-num_ss_12:11_12:40; kind: Pred_Check_Inv
+ Imply: ante: 0<=n & s!=self
+	     conseq:  ((n=0 & self=null & self<=(s-1)) | (s<self & self!=null & 1<=n) | 
+(self!=null & self<s & 1<=n) | (n=0 & s<self & self=null))
+ res: false
 ===================================================================
 ===================================================================
 ===================================================================
