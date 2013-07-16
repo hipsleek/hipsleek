@@ -1995,6 +1995,15 @@ and mkTrue pos =  BForm ((BConst (true, pos), None),None)
 
 and mkFalse pos = BForm ((BConst (false, pos), None),None)
 
+
+(* same of list_of_conjs *)
+and split_conjunctions =  function
+  | And (x, y, _) -> (split_conjunctions x) @ (split_conjunctions y)
+  | AndList l -> Gen.fold_l_snd split_conjunctions l
+  | z -> [z]
+        
+and join_conjunctions fl = conj_of_list fl no_pos
+
 and mkExists_with_simpl simpl (vs : spec_var list) (f : formula) lbl pos = 
   Debug.no_2 "mkExists_with_simpl" !print_svl !print_formula !print_formula 
       (fun vs f -> mkExists_with_simpl_x simpl vs f lbl pos) vs f
@@ -2044,12 +2053,24 @@ and mkExists_x (vs : spec_var list) (f : formula) lbel pos = match f with
 	      List.fold_left (fun a v-> Exists (v,a,lbel,pos)) lrelf to_push in
 	      mkAnd_dumb lunrelf lrelf pos*)
   | _ ->
-	let fvs = fv f in
-	let to_push = List.filter (fun c-> mem c fvs) vs in
-	List.fold_left (fun a v-> Exists (v,a,lbel,pos)) f to_push 
+      (* let fvs = fv f in
+       * let to_push = List.filter (fun c-> mem c fvs) vs in
+       * 	List.fold_left (fun a v-> Exists (v,a,lbel,pos)) f to_push *)
+      (* Pushing each ex v to the innermost location *)
+      let fvs = fv f in
+      let vs = List.filter (fun v -> mem v fvs) vs in
+      let fl = split_conjunctions f in 
+      let f_with_fv = List.map (fun f -> (fv f, f)) fl in
+      let push_v v f_with_fv =
+        let rel_f, nonrel_f = List.partition (fun (fvs, f) -> mem v fvs) f_with_fv in
+        let rel_fvs, rel_f = List.split rel_f in
+        ((Gen.BList.difference_eq eq_spec_var (List.concat rel_fvs) [v]), 
+        (Exists (v, join_conjunctions rel_f, lbel, pos)))::nonrel_f
+      in join_conjunctions (snd (List.split 
+        ((List.fold_left (fun a v -> push_v v a) f_with_fv vs))))
 
 and mkExists vs f lbel pos = 
-	Debug.no_2 "pure_mkExists" !print_svl !print_formula !print_formula (fun _ _ -> mkExists_x vs f lbel pos) vs f
+	Debug.ho_2 "pure_mkExists" !print_svl !print_formula !print_formula (fun _ _ -> mkExists_x vs f lbel pos) vs f
       
 (*and mkExistsBranches (vs : spec_var list) (f : (branch_label * formula )list) lbl pos =  List.map (fun (c1,c2)-> (c1,(mkExists vs c2 lbl pos))) f*)
       
@@ -2073,13 +2094,6 @@ and mkForall_disjs_deep (vs : spec_var list) (f : formula) lbl pos =
   let quan_rele_ps = List.map (fun (p, quans) -> mkForall quans p lbl pos) rele_ps in
   disj_of_list (irr_ps@quan_rele_ps) pos
 
-(* same of list_of_conjs *)
-and split_conjunctions =  function
-  | And (x, y, _) -> (split_conjunctions x) @ (split_conjunctions y)
-  | AndList l -> Gen.fold_l_snd split_conjunctions l
-  | z -> [z]
-        
-and join_conjunctions fl = conj_of_list fl no_pos
 
 (******************)
 (* 
