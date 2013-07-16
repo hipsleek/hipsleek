@@ -1786,8 +1786,10 @@ and infer_shapes_proper iprog prog proc_name cond_path (constrs2: CF.hprel list)
   let _ = DD.binfo_pprint ">>>>>> step 3: apply transitive implication<<<<<<" no_pos in
   let constrs3a,_ = apply_transitive_impl_fix prog sel_post_hps callee_hps unk_hps
      link_hps constrs2 in
-  (*TODO: this function may be subsumed by SAU.simp_match_partial_unknown. may be redundant code *)
-  let constrs3 = List.map (SAU.simp_match_unknown unk_hps link_hps) constrs3a in
+  (*TODO: this function may be subsumed by SAU.simp_match_partial_unknown. may be redundant code
+    this makes swl-i.ss failed.
+  *)
+  let constrs3 = (* List.map (SAU.simp_match_unknown unk_hps link_hps) *) constrs3a in
   (*partition constraints into 2 groups: pre-predicates, post-predicates*)
   let pre_constrs,post_constrs, pre_oblg_constrs, post_oblg_constrs, new_post_hps = partition_constrs constrs3 sel_post_hps in
   let sel_post_hps1 = sel_post_hps@new_post_hps in
