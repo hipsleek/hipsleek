@@ -317,11 +317,11 @@ and find_order_b_formula_x (bf : CP.b_formula) vs : bool =
     | CP.Gte(e1, e2, _) -> 
           (* let _ = print_string("find_order_exp for e1=" ^ (Cprinter.string_of_formula_exp e1) ^ " and e2="  ^ (Cprinter.string_of_formula_exp e2) ^ "\n") in *)
       	  let r1 = exp_order e1 vs in 
-	      let r2 = exp_order e2 vs in
-	      if (r1 == 1 || r2 == 1) then
-	        ((find_order_exp e1 1 vs) || (find_order_exp e2 1 vs)) 
-	      else
-	        ((find_order_exp e1 0 vs) || (find_order_exp e2 0 vs)) 
+	  let r2 = exp_order e2 vs in
+	  if (r1 == 1 || r2 == 1) then
+	    ((find_order_exp e1 1 vs) || (find_order_exp e2 1 vs)) 
+	  else
+	    ((find_order_exp e1 0 vs) || (find_order_exp e2 0 vs)) 
     | CP.EqMax(e1, e2, e3, _)
     | CP.EqMin(e1, e2, e3, _) -> 
           let r1 = exp_order e1 vs in
@@ -427,7 +427,7 @@ and is_firstorder_mem_a e vs =
           begin
             try 
 	          let r = Hashtbl.find vs sv1 in 
-	          if (r == 1) then true
+	          if (r == 1) (* || (r == 0) *) then true (* andreeac *)
 	          else false
             with 
 	          | Not_found -> Error.report_error { Error.error_loc = l1; Error.error_text = (" Error during Mona translation for var " ^ (Cprinter.string_of_spec_var sv1) ^ "\n")}
@@ -442,7 +442,7 @@ and part_firstorder_mem e vs =
           begin
             try 
 	          let r = Hashtbl.find vs sv1 in 
-	          if (r == 1) then true
+	          if (r == 1) (* || (r == 0)  *)then true (* andreeac *)
 	          else false
             with 
 	          | Not_found -> false
@@ -1038,7 +1038,7 @@ let read_from_file chn: string =
     | End_of_file ->  close_in chn; !answ
 
 
-let create_file_for_mona (filename: string) (fv: CP.spec_var list) (f: CP.formula) (imp_no: string) vs =
+let create_file_for_mona_x (filename: string) (fv: CP.spec_var list) (f: CP.formula) (imp_no: string) vs =
   let mona_file = open_out filename in
   let mona_pred_file_x = get_mona_predicates_file () in
   output_string mona_file ("include \""^ mona_pred_file_x ^"\";\n");
@@ -1064,6 +1064,9 @@ let create_file_for_mona (filename: string) (fv: CP.spec_var list) (f: CP.formul
   flush mona_file;
   close_out mona_file;
   f_str
+
+let create_file_for_mona (filename: string) (fv: CP.spec_var list) (f: CP.formula) (imp_no: string) vs =
+  Debug.no_1 "create_file_for_mona" Gen.pr_id Gen.pr_id (fun _ -> create_file_for_mona_x filename fv f imp_no vs ) filename
 
 let write_to_file  (is_sat_b: bool) (fv: CP.spec_var list) (f: CP.formula) (imp_no: string) vs : bool =
   let mona_filename = "test" ^ imp_no ^ ".mona" in
@@ -1117,7 +1120,7 @@ let imply_sat_helper_x (is_sat_b: bool) (fv: CP.spec_var list) (f: CP.formula) (
   if not (Gen.is_empty part1) then
     cmd_to_send := first_order_var_decls  ^ (!cmd_to_send) ;
   cmd_to_send := !cmd_to_send ^ ";\n";
-  let content = ("include mona_predicates.mona;\n" ^ !cmd_to_send) in
+  let content = ("include \"" ^ get_mona_predicates_file () ^ "\";\n" ^ !cmd_to_send) in
   try
     begin
       let _ = maybe_restart_mona () in
