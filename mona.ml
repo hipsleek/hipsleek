@@ -230,7 +230,7 @@ and find_order_formula (f : CP.formula) vs : bool  = match f with
 and find_order_b_formula_x (bf : CP.b_formula) vs : bool =
   let rec exp_order e vs =
     match e with
-      (* | CP.Null _ -> 1 *) (* leave it unknown 0*)
+      | CP.Null _ -> 1 (* leave it unknown 0*)
       | CP.Var(sv, l) ->
 	        begin
 	          try
@@ -427,7 +427,7 @@ and is_firstorder_mem_a e vs =
           begin
             try 
 	          let r = Hashtbl.find vs sv1 in 
-	          if (r == 1) (* || (r == 0) *) then true (* andreeac *)
+	          if (r == 1) || (r == 0) then true (* andreeac *)
 	          else false
             with 
 	          | Not_found -> Error.report_error { Error.error_loc = l1; Error.error_text = (" Error during Mona translation for var " ^ (Cprinter.string_of_spec_var sv1) ^ "\n")}
@@ -442,7 +442,7 @@ and part_firstorder_mem e vs =
           begin
             try 
 	          let r = Hashtbl.find vs sv1 in 
-	          if (r == 1) (* || (r == 0)  *)then true (* andreeac *)
+	          if (r == 1) || (r == 0) then true (* andreeac *)
 	          else false
             with 
 	          | Not_found -> false
