@@ -1,0 +1,67 @@
+========single-bug-3.slk ==========
+Starting Omega...oc
+HP_4 is defined.
+HP_5 is defined.
+G is defined.
+
+!!! >>>>>> step 1: find dangling ptrs, link pre and post-preds dangling preds<<<<<<
+!!! >>>>>> step 2: split constraints based on pre and post-preds<<<<<<
+!!! *** NO SPLITTING DONE ***
+!!! >>>>>> step 3: apply transitive implication<<<<<<
+!!! >>>>>> step 3a: simplification <<<<<<
+!!! >>>>>> step 3b: do apply_transitive_imp <<<<<<
+!!! >>>>>> pre-predicates<<<<<<
+!!! >>>>>> step pre-4: remove unused predicates<<<<<<
+!!! >>>>>> pre-predicates: step pre-5: group & simpl impl<<<<<<
+!!! >>>>>> pre-predicates: step pre-6: combine<<<<<<
+!!! >>>>>> pre-predicates: step pre-7: remove redundant x!=null<<<<<<
+!!! >>>>>> pre-predicates: step pre-8: strengthen<<<<<<
+!!! >>>>>> step 6: generalization <<<<<<
+!!! >>>>>> post-predicates<<<<<<
+!!! >>>>>> step post-4: step remove unused predicates<<<<<<
+!!! >>>>>> post-predicates: step post-5: remove redundant x!=null : not implemented yet<<<<<<
+!!! >>>>>> post-predicates: step post-61: weaken<<<<<<
+
+*************************************************
+*******relational assumptions (obligation)********
+****************************************************
+[ emp&next_34_803=null --> HP_4(next_34_803,next_29_789),
+ next_29_789::node<val_29_88,flted_18_89>@M * HP_5(flted_18_89,t_32')&
+  flted_18_89!=null --> HP_5(next_29_789,t_32'),
+ emp&next_34_803=null --> HP_4(next_34_803,next_29_789),
+ emp&next_29_789=t_32' & next_29_789!=null --> HP_5(next_29_789,t_32')]
+*************************************
+
+!!! >>>>>> step 1: find dangling ptrs, link pre and post-preds dangling preds<<<<<<
+!!! >>>>>> step 2: split constraints based on pre and post-preds<<<<<<
+!!! *** NO SPLITTING DONE ***
+!!! >>>>>> step 3: apply transitive implication<<<<<<
+!!! >>>>>> step 3a: simplification <<<<<<
+!!! >>>>>> step 3b: do apply_transitive_imp <<<<<<
+!!! >>>>>> pre-predicates<<<<<<
+!!! >>>>>> step pre-4: remove unused predicates<<<<<<
+!!! >>>>>> pre-predicates: step pre-5: group & simpl impl<<<<<<
+!!! pre-obligation:
+[ next_29_789::node<val_29_88,flted_18_89>@M&flted_18_89!=null --> emp]
+!!! >>>>>> pre-predicates: step pre-6: combine<<<<<<
+!!! >>>>>> pre-predicates: step pre-7: remove redundant x!=null<<<<<<
+!!! >>>>>> pre-predicates: step pre-8: strengthen<<<<<<
+!!! >>>>>> step 6: generalization <<<<<<
+!!! >>>>>> post-predicates<<<<<<
+!!! >>>>>> step post-4: step remove unused predicates<<<<<<
+!!! >>>>>> post-predicates: step post-5: remove redundant x!=null : not implemented yet<<<<<<
+!!! >>>>>> post-predicates: step post-61: weaken<<<<<<
+
+*************************************
+*******relational definition ********
+*************************************
+[ G(x_45,res_46) ::= 
+ EXISTS(flted_23_34: x_45::node<val_29_788,flted_18_26>@M * 
+ HP_5(flted_18_26,res_46) * res_46::node<val_34_802,flted_23_34>@M&
+ flted_18_26!=null & flted_23_34=null)[]
+ or x_45::node<val_29_788,flted_18_26>@M&res_46=x_45 & flted_18_26=null
+ ,
+ HP_4(next_34_94,next_29_95) ::= emp&next_34_94=null,
+ HP_5(a,b) ::= NONE]
+*************************************
+====================

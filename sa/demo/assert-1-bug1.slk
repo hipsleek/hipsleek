@@ -1,0 +1,43 @@
+data node {
+  node next;
+}.
+
+HeapPred H_9(node a).
+HeapPred H_8(node a).
+relation F(node a).
+relation G(node a).
+
+infer [H_9,H_8] H_8(n) * x::node<n> * H_9(t) & n=t |-  t=null.
+print residue.
+
+infer [H_9] H_9(n) * x::node<n> & n=t |-  t=null.
+print residue.
+
+infer [F] x::node<n> & F(n) & n=t |-  t=null.
+print residue.
+
+infer [F,G] x::node<n> & F(n) & n=t & G(t) |-  t=null.
+print residue.
+
+/*
+# assert-1-bug1.slk
+
+BUG
+===
+Need to take into account equality on LHS when doing
+inference for pure formula of heap pred.
+Above two should work the same way..
+
+GOT
+===
+Entail (1) : Fail.
+
+
+Entail (2) : Valid. 
+
+ <1>H_9(t) * x::node<n>@M[Orig]&n=t&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [H_9(t) --> emp&t=null]
+
+
+*/
+  

@@ -1,0 +1,35 @@
+data node{
+	int val;
+	node next;
+}.
+
+HeapPred HL(node a).
+HeapPred H1(node a, node b).
+HeapPred HP_1(node a, node@NI b).
+HeapPred HP_2(node a, node@NI b).
+HeapPred HP_8(node a, node@NI b).
+HeapPred G1(node a, node b, node c).
+
+
+relAssume 
+ //res=x & 
+ x=null & res=null --> G1(x,y,res).
+
+relAssume 
+ y::node<val_25_826,next_25_827> * x::node<val_24_819,rr>
+  * G1(nn,next_25_827,rr) 
+//  & nn=rr
+  & res=x --> G1(x,y,res).
+
+shape_infer[][G1].
+
+/*
+
+# zip1b3.slk
+
+PROBLEMS
+1. x=res  not captured for G1.
+2.  nn=rr in recursive branch
+=====
+
+*/

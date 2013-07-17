@@ -1,0 +1,26 @@
+data node{
+	node next;
+}.
+
+HeapPred H2(node a).
+
+infer [H2] r::node<q> * H2(q)   |- (exists p: r::node<p> & p!=null).
+print residue.
+
+/*
+infer [H2] H2(r)   |- r::node<p> & p!=null.
+print residue.
+
+infer [H2] H2(r)   |- (exists p: r::node<p> & p!=null).
+print residue.
+
+
+infer [H2] H2(r)   |- (exists p: r::node<_,p> & p =null).
+print residue.
+infer [H2] H2(r)   |- r::node<_,null> .
+print residue.
+infer [H2] H2(r)   |- r::node<_,p> & p=null .
+print residue.
+infer [H2] H2(r)   |- [p] r::node<_,p> & p =null.
+print residue.
+*/

@@ -1,0 +1,29 @@
+data node{
+	int val;
+	node next;
+}.
+
+
+HeapPred G(node a).
+
+
+
+
+relAssume
+ x::node<0,right>   --> G(x).
+
+relAssume
+ x::node<n,_> & n>=0   --> G(x).
+
+
+shape_infer [][G].
+
+/*
+# post-1a.slk
+
+[ G(x_23) ::=  x_23::node<b,right>@M&0<b]
+
+Seems a loss of information. Should have 2 disjuncts.
+
+
+*/

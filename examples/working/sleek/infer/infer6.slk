@@ -50,7 +50,8 @@ Message: y is not found in both sides
 //infer [x] n<0   |- x::ll<n>.
 //infer [x] n=0 & x=y  |- y::ll<n>.
 
-infer [x] n=0 & x=y  |- y::ll<n>.
+HeapPred H1(node y).
+infer [H1] H1(x) & n=0 & x=y  |- y::ll<n>.
 
 //infer [x] x=y  |- y::ll<n>.
 //infer [x] x=y  |- [n] y::ll<n>.

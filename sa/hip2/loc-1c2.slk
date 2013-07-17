@@ -1,0 +1,27 @@
+data node{
+ int val;
+ node prev;
+ node next;
+}.
+
+
+HeapPred G(node a, node a).
+
+relAssume  G // (3)
+ next=null --> G(next,y).
+
+shape_infer [][G].
+
+/*
+
+OBTAINED:
+
+ G(next_16,y_17) ::= emp&next_16=null &  XPURE(G(y_17))]
+
+Why is G considered redundant and a dangling predicate?
+Correct answer should just be:
+
+ G(next_16,y_17) ::= emp&next_16=null 
+
+
+*/

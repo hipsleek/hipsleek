@@ -1,0 +1,24 @@
+data node{
+	int val;
+	node next;
+}.
+
+HeapPred HL(node a).
+HeapPred H1(node a, node b).
+HeapPred G1(node a, node b, node c).
+
+
+//relAssume 
+// x=null & res=null --> G1(x,y,res).
+// HL(x) & x=null & res=null --> G1(x,y,res).
+// H1(x,res) & x=null & res=x --> G1(x,y,res).
+
+shape_infer [H1][G1].
+
+/*
+Why isn't splitting invoked?
+
+[ H1(x_30,res_31) ::= G1(x_30,y,res_31)&res_31=null & x_30=null]
+
+
+*/

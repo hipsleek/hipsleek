@@ -1,0 +1,30 @@
+// examples from bi-abduction paper
+
+data node {
+	node next;	
+}.
+
+  
+HeapPred H1(node y).
+
+infer [H1] H1(y) & y=z |- z=null .
+print residue.
+
+infer [H1] H1(z) & y=z |- z=null .
+print residue.
+
+/*
+# infer13c.slk
+
+The first entailment should succeed too.
+
+Entail (1) : Fail.
+
+
+Entail (2) : Valid. 
+
+ <1>H1(z)&y=z&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [H1(z)&true --> emp&z=null]
+
+
+*/

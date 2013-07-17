@@ -1,0 +1,9 @@
+========pair-bug2a.slk ==========
+Starting Omega...oc
+G1 is defined.
+
+Entail (1) : Valid. 
+
+ <1>x::cell<a>@M[Orig]&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [y::cell<b>@M --> G1(x@NI,y)]
+====================

@@ -1126,7 +1126,10 @@ let ht_of_gvdef gvdefs =
   List.iter fun0 gvdefs; 
   h 
 
-let param_of_v ht md lc nm = 
+let param_of_v ht md lc nm =
+  try
+  (* let _ = print_endline ("== ht length = " ^ (string_of_int (Hashtbl.length ht))) in *)
+  Hashtbl.iter (fun a b -> print_endline ("     -- " ^ a ^ "  -->  " ^ (Globals.string_of_typ b));) ht;
   let t = H.find ht nm in
   match t with 
   | Bool | Float | Int | Void | List _  ->
@@ -1141,6 +1144,10 @@ let param_of_v ht md lc nm =
         param_mod = RefMod;
         param_loc = lc;
       }
+  with e ->
+    let _ = print_endline ("Exception!!! in param_of_v") in
+    let _ = print_endline ("== nm = " ^ nm) in
+    raise e
 
 let add_free_var_to_proc gvdefs ht proc = 
   let ght = ht_of_gvdef gvdefs in
@@ -1148,7 +1155,9 @@ let add_free_var_to_proc gvdefs ht proc =
   (* let _ = print_endline ("proc:"^ proc.proc_name) in *)
   (* let _ = print_endline ("proc rs:"^ string_of_IS rs) in *)
   (* let _ = print_endline ("proc ws:"^ string_of_IS ws) in *)
-  let fun0 md is = 
+  let fun0 md is =
+    (* let l = from_IS is in *)
+    (* let _ = print_endline ("== (from_IS is) length = " ^ (string_of_int (List.length l))) in *)
     List.map (param_of_v ght md proc.proc_loc) (from_IS is)
   in
   let ars = fun0 NoMod rs in
@@ -1231,9 +1240,11 @@ let map_body_of_proc f proc =
 
 let add_globalv_to_mth_prog prog = 
   let cg = callgraph_of_prog prog in
+  (* let _ = print_string "1\n" in *)
   let ht = create_progfreeht_of_prog prog in
+  (* let _ = print_endline "add_globalv_to_mth_prog: after create_progfreeht_of_prog\n" in *)
   (* let scclist = List.rev (ngscc_list cg) in *)
-  
+  (* let _ = print_string "2a\n" in *)
   (* let _, fscc = IGC.scc cg in                                       *)
   (* let scclist = IGC.scc_list cg in                                  *)
   (* let scclist = List.map (fun scc ->                                *)
@@ -1290,6 +1301,6 @@ let pre_process_of_iprog iprims prog =
   prog
 
 let pre_process_of_iprog iprims prog = 
-  let pr1 x = (pr_list Iprinter.string_of_rel_decl) x.Iast.prog_rel_decls in
+  (* let pr1 x = (pr_list Iprinter.string_of_rel_decl) x.Iast.prog_rel_decls in *)
   let pr2 x = (pr_list Iprinter.string_of_proc_decl) x.Iast.prog_proc_decls in
   Debug.no_1 "pre_process_of_iprog" pr2 pr2 (fun _ -> pre_process_of_iprog iprims prog) prog

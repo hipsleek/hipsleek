@@ -1,0 +1,23 @@
+For the normalization, I think we need only push the
+outer annotation inside if it is not @M and 
+there exists a field that is not annotated as @M.
+
+For example:
+
+    P(@L,@M,@A)@L ==> P(@L,@L,@A)@M
+
+    P(@M,@M,@M)@L ==> P(@M,@M,@M)@L
+
+This way, we will still support node level
+reasoning when it is feasible to do so.
+x
+However, during the entailment process,
+we may have a mismatch of the form:
+
+   P(@M,@M,@M)@L  |-  P(@L,@A,@A)@M
+
+   P(@L,@L,@L)@M  |-  P(@M,@M,@M)@L
+
+To deal with them, we allow normalization to
+be performed during matching.
+

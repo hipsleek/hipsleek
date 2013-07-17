@@ -1,0 +1,42 @@
+data node {
+	int val; 
+	node next;	
+}.
+
+HeapPred H(node a, node b).
+HeapPred HP_6(node a, node@NI b).
+HeapPred HP_7(node a, node@NI b).
+
+Declare_Unknown [HP_7].
+relAssume //(1)
+ H(rest,h)&h!=rest --> rest::node<val_36_824,next_36_825> * 
+  HP_6(next_36_825,h) * HP_7(h,rest).
+
+relAssume //(2)
+ H(next_36_825,h) --> HP_6(next_36_825,h) * HP_7(h,rest)&h!=rest.
+
+relAssume  //(3)
+ H(rest,h)&h=rest --> emp.
+
+//shape_infer [H,HP_6,HP_7][].
+shape_strengthen_conseq [H,HP_6,HP_7][].
+/*
+# cll-1c.slk
+
+GOT
+===
+ H(rest,h)&h!=rest --> rest::node<val_36_824,next_36_825>@M * 
+  HP_6(next_36_825,h) * HP_7(h,rest)&true,
+ H(next_36_37,h_38)&h_38!=rest_36 --> H(rest_36,h_38)&h_38!=rest_36,
+ H(rest,h)&h=rest --> emp&true]
+*
+EXPECT
+======
+ H(rest,h)&h!=rest --> rest::node<val_36_824,next_36_825> * 
+  H(next_36_825,rest).
+ H(next_36_825,h) --> HP_6(next_36_825,h) * HP_7(h,rest)&h!=rest.
+ H(rest,h)&h=rest --> emp.
+
+
+*/
+

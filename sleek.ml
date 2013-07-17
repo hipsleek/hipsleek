@@ -33,13 +33,14 @@ module AS = Astsimp
 module XF = Xmlfront
 module NF = Nativefront
 
+let _ = Globals.sleek_flag := true
 
 let usage_msg = Sys.argv.(0) ^ " [options] <source files>"
 
-let source_files = ref ([] : string list)
+(* let source_files = ref ([] : string list) *)
 
 let set_source_file arg = 
-  source_files := arg :: !source_files 
+  Globals.source_files := arg :: !Globals.source_files 
 
 let print_version () =
   print_endline ("SLEEK: A Separation Logic Entailment Checker");
@@ -94,8 +95,22 @@ let proc_gen_cmd cmd =
     | HpDef hpdef -> process_hp_def hpdef
     | AxiomDef adef -> process_axiom_def adef
     | EntailCheck (iante, iconseq, etype) -> (process_entail_check iante iconseq etype;())
+    | RelAssume (id, ilhs, iguard, irhs) -> process_rel_assume id ilhs iguard irhs
+    | RelDefn (id, ilhs, irhs) -> process_rel_defn id ilhs irhs
+    | ShapeInfer (pre_hps, post_hps) -> process_shape_infer pre_hps post_hps
+    | ShapeDivide (pre_hps, post_hps) -> process_shape_divide pre_hps post_hps
+    | ShapeConquer (ids, paths) -> process_shape_conquer ids paths
+    | ShapePostObl (pre_hps, post_hps) -> process_shape_postObl pre_hps post_hps
+    | ShapeInferProp (pre_hps, post_hps) -> process_shape_infer_prop pre_hps post_hps
+    | ShapeSplitBase (pre_hps, post_hps) -> process_shape_split pre_hps post_hps
+    | ShapeDeclDang (hp_names) -> process_decl_hpdang hp_names
+    | ShapeDeclUnknown (hp_names) -> process_decl_hpunknown hp_names
+    | ShapeElim (view_names) -> process_shape_elim_useless view_names
+    | ShapeExtract (view_names) -> process_shape_extract view_names
+    | ShapeSConseq (pre_hps, post_hps) -> process_shape_sconseq pre_hps post_hps
+    | ShapeSAnte (pre_hps, post_hps) -> process_shape_sante pre_hps post_hps
     | EqCheck (lv, if1, if2) -> process_eq_check lv if1 if2
-    | Infer (ivars, iante, iconseq) -> (process_infer ivars iante iconseq;())
+    | InferCmd (ivars, iante, iconseq,etype) -> (process_infer ivars iante iconseq etype;())
     | CaptureResidue lvar -> process_capture_residue lvar
     | LemmaDef ldef ->   process_lemma ldef
     | PrintCmd pcmd -> process_print_command pcmd
@@ -126,7 +141,9 @@ let parse_file (parse) (source_file : string) =
       | HpDef hpdef -> process_hp_def hpdef
       | AxiomDef adef -> process_axiom_def adef  (* An Hoa *)
             (* | Infer (ivars, iante, iconseq) -> process_infer ivars iante iconseq *)
-      | LemmaDef _ | Infer _ | CaptureResidue _ | LetDef _ | EntailCheck _ | EqCheck _ | PrintCmd _ | CmpCmd _ 
+      | LemmaDef _ | InferCmd _ | CaptureResidue _ | LetDef _ | EntailCheck _ | EqCheck _ | PrintCmd _ | CmpCmd _ 
+      | RelAssume _ | RelDefn _ | ShapeInfer _ | ShapeDivide _ | ShapeConquer _ | ShapePostObl _ | ShapeInferProp _ | ShapeSplitBase _ | ShapeElim _ | ShapeExtract _ | ShapeDeclDang _ | ShapeDeclUnknown _
+      | ShapeSConseq _ | ShapeSAnte _
       | Time _ | EmptyCmd -> () 
   in
   let proc_one_def c =
@@ -136,16 +153,33 @@ let parse_file (parse) (source_file : string) =
     match c with
       | LemmaDef ldef -> process_lemma ldef
       | DataDef _ | PredDef _ | BarrierCheck _ | FuncDef _ | RelDef _ | HpDef _ | AxiomDef _ (* An Hoa *)
-      | CaptureResidue _ | LetDef _ | EntailCheck _ | EqCheck _ | Infer _ | PrintCmd _  | CmpCmd _| Time _ | EmptyCmd -> () in
+      | CaptureResidue _ | LetDef _ | EntailCheck _ | EqCheck _ | InferCmd _ | PrintCmd _ 
+      | RelAssume _ | RelDefn _ | ShapeInfer _ | ShapeDivide _ | ShapeConquer _ | ShapePostObl _ | ShapeInferProp _ | ShapeSplitBase _ | ShapeElim _ | ShapeExtract _ | ShapeDeclDang _ | ShapeDeclUnknown _
+      | ShapeSConseq _ | ShapeSAnte _
+      | CmpCmd _| Time _ | EmptyCmd -> () in
   let proc_one_cmd c = 
     match c with
       | EntailCheck (iante, iconseq, etype) -> (process_entail_check iante iconseq etype; ())
             (* let pr_op () = process_entail_check_common iante iconseq in  *)
-            (* Log.wrap_calculate_time pr_op !source_files ()               *)
+            (* Log.wrap_calculate_time pr_op !Globals.source_files ()               *)
+      | RelAssume (id, ilhs, iguard, irhs) -> process_rel_assume id ilhs iguard irhs
+      | RelDefn (id, ilhs, irhs) -> process_rel_defn id ilhs irhs
+      | ShapeInfer (pre_hps, post_hps) -> process_shape_infer pre_hps post_hps
+      | ShapeDivide (pre_hps, post_hps) -> process_shape_divide pre_hps post_hps
+      | ShapeConquer (ids, paths) -> process_shape_conquer ids paths
+      | ShapePostObl (pre_hps, post_hps) -> process_shape_postObl pre_hps post_hps
+      | ShapeInferProp (pre_hps, post_hps) -> process_shape_infer_prop pre_hps post_hps
+      | ShapeSplitBase (pre_hps, post_hps) -> process_shape_split pre_hps post_hps
+      | ShapeDeclDang (hp_names) -> process_decl_hpdang hp_names
+      | ShapeDeclUnknown (hp_names) -> process_decl_hpunknown hp_names
+      | ShapeElim (view_names) -> process_shape_elim_useless view_names
+      | ShapeExtract (view_names) -> process_shape_extract view_names
+      | ShapeSConseq (pre_hps, post_hps) -> process_shape_sconseq pre_hps post_hps
+      | ShapeSAnte (pre_hps, post_hps) -> process_shape_sante pre_hps post_hps
       | EqCheck (lv, if1, if2) -> 
             (* let _ = print_endline ("proc_one_cmd: xxx_after parse \n") in *)
             process_eq_check lv if1 if2
-      | Infer (ivars, iante, iconseq) -> (process_infer ivars iante iconseq;())	
+      | InferCmd (ivars, iante, iconseq,etype) -> (process_infer ivars iante iconseq etype;())	
       | CaptureResidue lvar -> process_capture_residue lvar
       | PrintCmd pcmd -> process_print_command pcmd
       | CmpCmd ccmd -> process_cmp_command ccmd
@@ -168,8 +202,8 @@ let parse_file (parse) (source_file : string) =
       Error.error_text = "Data type " ^ udn ^ " is undefined!" }
   in ();
   Debug.tinfo_pprint "sleek : after 2nd parsing" no_pos;
-  convert_pred_to_cast ();
-  Debug.tinfo_pprint "sleek : after convert_pred_to_cast" no_pos;
+  convert_data_and_pred_to_cast ();
+  Debug.tinfo_pprint "sleek : after convert_data_and_pred_to_cast" no_pos;
   List.iter proc_one_lemma cmds;
   Debug.tinfo_pprint "sleek : after proc one lemma" no_pos;
   (*identify universal variables*)
@@ -250,7 +284,7 @@ let main () =
         begin
       (* let _ = print_endline "Prior to parse_file" in *)
             Debug.tinfo_pprint "sleek : batch processing" no_pos;
-            let _ = List.map (parse_file NF.list_parse) !source_files in ()
+            let _ = List.map (parse_file NF.list_parse) !Globals.source_files in ()
         end
   with
     | End_of_file -> 
@@ -262,31 +296,34 @@ let main () =
 (* let main () =  *)
 (*   Debug.loop_1_no "main" (fun () -> "?") (fun () -> "?") main () *)
 let sleek_proof_log_Z3 src_files =
- if !Globals.proof_logging || !Globals.proof_logging_txt then 
-      begin
-	let _=sleek_src_files := src_files in			
-	let tstartlog = Gen.Profiling.get_time ()in	
-	(* let _= Log.proof_log_to_file () in *)
-  let with_option = if(!Globals.en_slc_ps) then "sleek_eps" else "sleek_no_eps" in
-  let with_option_logtxt = if(!Globals.en_slc_ps) then "eps" else "no_eps" in
-  let fname = "logs/"^with_option_logtxt^"_proof_log_" ^ (Globals.norm_file_name (List.hd src_files)) ^".txt"  in
-	let fz3name= ("logs/"^with_option^(Globals.norm_file_name (List.hd src_files)) ^".z3")  in
-	let fnamegt5 = "logs/greater_5sec_"^with_option_logtxt^"_proof_log_" ^ (Globals.norm_file_name (List.hd src_files)) ^".txt"  in
-	let _= if (!Globals.proof_logging_txt) 
-        then 
-          begin
-            Debug.info_pprint ("Logging "^fname^"\n") no_pos;
-						Debug.info_pprint ("Logging "^fz3name^"\n") no_pos;
-						Debug.info_pprint ("Logging "^fnamegt5^"\n") no_pos;
-            Log.proof_log_to_text_file !source_files;
-						Log.z3_proofs_list_to_file !source_files;
-						Log.proof_greater_5secs_to_file !source_files;
-          end
-	in
-			let tstoplog = Gen.Profiling.get_time () in
-			let _= Globals.proof_logging_time := !Globals.proof_logging_time +. (tstoplog -. tstartlog) in ()
-			(* let _=print_endline ("Time for logging: "^(string_of_float (!Globals.proof_logging_time))) in	() *)
-			end
+  let _ = Log.process_proof_logging src_files in  
+  if !Globals.proof_logging || !Globals.proof_logging_txt   then 
+    begin
+      (* let _=sleek_src_files := src_files in *)
+      Debug.info_hprint (add_str "src_files" (pr_list pr_id)) src_files no_pos;
+      let tstartlog = Gen.Profiling.get_time ()in	
+      (* let _= Log.proof_log_to_file () in *)
+      let with_option = if(!Globals.en_slc_ps) then "sleek_eps" else "sleek_no_eps" in
+      let with_option_logtxt = if(!Globals.en_slc_ps) then "eps" else "no_eps" in
+      let fname = "logs/"^with_option_logtxt^"_proof_log_" ^ (Globals.norm_file_name (List.hd src_files)) ^".txt"  in
+      let fz3name= ("logs/"^with_option^(Globals.norm_file_name (List.hd src_files)) ^".z3")  in
+      let fnamegt5 = "logs/greater_5sec_"^with_option_logtxt^"_proof_log_" ^ (Globals.norm_file_name (List.hd src_files)) ^".txt"  in
+      let _= if (!Globals.proof_logging_txt) 
+      then 
+        begin
+          Debug.info_pprint ("Logging "^fname^"\n") no_pos;
+	  Debug.info_pprint ("Logging "^fz3name^"\n") no_pos;
+	  Debug.info_pprint ("Logging "^fnamegt5^"\n") no_pos;
+          Log.proof_log_to_text_file !Globals.source_files;
+	  Log.z3_proofs_list_to_file !Globals.source_files;
+	  Log.proof_greater_5secs_to_file !Globals.source_files;
+        end
+      in
+      let tstoplog = Gen.Profiling.get_time () in
+      let _= Globals.proof_logging_time := !Globals.proof_logging_time +. (tstoplog -. tstartlog) 
+        (* let _=print_endline ("Time for logging: "^(string_of_float (!Globals.proof_logging_time))) in	() *)
+      in ()
+    end
 		
 let _ =
   wrap_exists_implicit_explicit := false ;
@@ -295,7 +332,7 @@ let _ =
   if !Globals.print_version_flag then begin
     print_version ()
   end else (
-    let _ = Printexc.record_backtrace !Globals.trace_failure in
+    (* let _ = Printexc.record_backtrace !Globals.trace_failure in *)
     if (!Tpdispatcher.tp_batch_mode) then Tpdispatcher.start_prover ();
     Gen.Profiling.push_time "Overall";
     (* let _ = print_endline "before main" in *)
@@ -315,29 +352,36 @@ let _ =
         let i_m = !Tpdispatcher.cache_imply_miss in
         if s_c>0 then
           begin
-            print_endline ("\nSAT Count   : "^(string_of_int s_c)); 
-            print_endline ("SAT % Hit   : "^(string_of_hit_percent s_c s_m))
+            print_endline_if !Globals.enable_count_stats ("\nSAT Count   : "^(string_of_int s_c)); 
+            print_endline_if !Globals.enable_time_stats ("SAT % Hit   : "^(string_of_hit_percent s_c s_m))
           end;
         if i_c>0 then
           begin
-            print_endline ("IMPLY Count : "^(string_of_int i_c)); 
-            print_endline ("IMPLY % Hit : "^(string_of_hit_percent i_c i_m))
+            print_endline_if !Globals.enable_count_stats ("IMPLY Count : "^(string_of_int i_c)); 
+            print_endline_if !Globals.enable_time_stats ("IMPLY % Hit : "^(string_of_hit_percent i_c i_m))
            end;
-        if i_c+s_c>0 then (Gen.Profiling.print_info_task "cache overhead")
+        if i_c+s_c>0 then 
+          if !Globals.enable_time_stats 
+          then (Gen.Profiling.print_info_task "cache overhead")
+          else ()
         else ()
      end
           else ()
     in
-    let ptime4 = Unix.times () in
-    let t4 = ptime4.Unix.tms_utime +. ptime4.Unix.tms_cutime +. ptime4.Unix.tms_stime +. ptime4.Unix.tms_cstime in
-    let _ = silenced_print print_string ("\nTotal verification time: " 
-    ^ (string_of_float t4) ^ " second(s)\n"
-    ^ "\tTime spent in main process: " 
-    ^ (string_of_float (ptime4.Unix.tms_utime+.ptime4.Unix.tms_stime)) ^ " second(s)\n"
-    ^ "\tTime spent in child processes: " 
-    ^ (string_of_float (ptime4.Unix.tms_cutime +. ptime4.Unix.tms_cstime)) ^ " second(s)\n")
+    let _ = if !Globals.enable_time_stats then
+      begin
+        let ptime4 = Unix.times () in
+        let t4 = ptime4.Unix.tms_utime +. ptime4.Unix.tms_cutime +. ptime4.Unix.tms_stime +. ptime4.Unix.tms_cstime in
+        silenced_print print_string ("\nTotal verification time: " 
+        ^ (string_of_float t4) ^ " second(s)\n"
+        ^ "\tTime spent in main process: " 
+        ^ (string_of_float (ptime4.Unix.tms_utime+.ptime4.Unix.tms_stime)) ^ " second(s)\n"
+        ^ "\tTime spent in child processes: " 
+        ^ (string_of_float (ptime4.Unix.tms_cutime +. ptime4.Unix.tms_cstime)) ^ " second(s)\n")
+      end
+    else ()
     in
-    let _= sleek_proof_log_Z3 !source_files in
+    let _= sleek_proof_log_Z3 !Globals.source_files in
     let _ = 
       if (!Globals.profiling && not !inter) then 
         ( Gen.Profiling.print_info (); print_string (Gen.Profiling.string_of_counters ())) in

@@ -1,0 +1,23 @@
+data cell{
+	cell val;
+}.
+
+HeapPred P(cell a).
+HeapPred G(cell a, cell r).
+
+Declare_Dangling [].
+Declare_Unknown [].
+
+relAssume
+P(a) & a=res --> G(a,res).
+
+shape_infer [P][G].
+
+/*
+# id.slk
+[ G(a_18,res_19) ::= P(a_18)&a_18=res_19]
+
+WHY is it not splitting?
+
+
+*/

@@ -1,0 +1,42 @@
+data node {
+ int key;
+ node left;
+ node right;
+}.
+
+
+HeapPred H(node a).
+HeapPred G(node a).
+HeapPred HP_0(node a).
+HeapPred HP_1(node a).
+HeapPred HP_4(node a).
+HeapPred HP_5(node a).
+
+relAssume 
+HP_4(left_39_832) * HP_5(right_39_833) * 
+x::node<key_39_831,left_39_832,right_39_833>@M
+& left_39_832=null & v_bool_39_812' 
+ -->  G(x). 
+
+shape_infer [HP_4,HP_5][G].
+
+
+/*
+# heap-bug-3a.slk
+
+There seems a base-case split here which may
+not be needed. The reason is that LHS
+pre-pred is not in a base-case scenario.
+
+[ HP_4(left_39_27) ::= emp&left_39_27=null,
+ HP_5(right_39_28) ::= emp&true,
+ G(x_29) ::= x_29::node<key_39_831,left_39_832,right_39_833>@M&left_39_832=null]
+
+I suggest that we do not trigger a base-case split here.
+But U am not sure on what basis to not trigger it. Maybe
+for base case split, we do need some base-case condition for
+G(x), such as x=null which does not seem to be present in
+this case.
+
+
+*/

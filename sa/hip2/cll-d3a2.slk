@@ -1,0 +1,84 @@
+data node{
+ int val;
+ node next;
+}.
+
+HeapPred HP_6(node a).
+HeapPred G(node a, node a). 
+/*
+infer [H,G] HP_6(n) * x_814::node<Anon_11,n> & n=x_814 & 
+                   xp=null & x=x_814 
+ |-  G(x_814,xp). 
+print residue.
+*/
+
+relAssume G
+   HP_6(n) * x_814::node<Anon_11,n> & n=x_814 & 
+                   xp=null & x=x_814 
+ -->  G(x_814,xp). 
+
+shape_split_base [H][G].
+
+/*
+We obtained:
+<1>HP_6(n)&n=x_814 & xp=null & x=x_814&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [x_814::node<Anon_11,n>@M&n=x_814 & xp=null --> G(x_814,xp)&
+                   true]
+
+How come we did not include HP_6(n)? I think at the very
+least, we should try to include XPURE(HP_6(n)):
+
+<1>HP_6(n)&n=x_814 & xp=null & x=x_814&{FLOW,(19,20)=__norm}[]
+ inferred hprel: 
+   x_814::node<Anon_11,n>@M&n=x_814 & xp=null & XPURE(HP_6(n)) 
+     --> G(x_814,xp)& true]
+
+*/
+
+/*
+relAssume G
+   HP_6(n) * x_814::node<_,n>@M & n=x_814 & xp=null & x=x_814 --> G(x_814,xp) &true.
+
+shape_split_base [H,x][G].
+*/
+/*
+
+ Shouldn't splitted HP_6 be:
+   HP_6(x_814)& x=x_816 --> emp&true]
+
+ RELASS [G] unknown svl: ;  unknown hps: ;  predefined: ; x_814::node<Anon_11,n>@M&
+  n=x_814 & xp=null & x=x_814 --> G(x_814,xp)&true,
+
+ RELASS [HP_6] unknown svl: ;  unknown hps: ;  predefined: ; HP_6(x_814)&
+  true --> emp&true]
+
+
+
+*/
+
+/*
+ <1>emp&xp=null&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [(H(n)) * x::node<Anon_11,n>@M&xp=null --> G(x,xp)&true]
+
+At the sleek level, we do not know if H is a pre-pred or a post-pred.
+Hence, it is not useful to invoke --sa-split-base
+
+This must instead be done by shape_infer; after redundant pred has
+been identified and removed. For relAssume with both pre/post pred,
+we attempt to do a base-case split.
+
+To test it, we could support the following in sleek:
+
+relAssume 
+   (H(n)) * x::node<Anon_11,n>@M&xp=null --> G(x,xp)&true.
+split_base [H][G].
+
+Alternatively, we could use:
+ infer [H@pre,G@post] H(n) * x::node<_,n>  & xp=null
+   |-  G(x,xp). 
+ print residue.
+and then use the pre/post annotation to support
+base-case-split
+
+*/
+

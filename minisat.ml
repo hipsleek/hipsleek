@@ -73,6 +73,7 @@ let rec minisat_of_exp e0 = match e0 with
   | Div (a1, a2, l) -> illegal_format ("eq_logic.eq_logic_of_exp: array, bag or list constraint")
   | Max _
   | Min _ -> illegal_format ("eq_logic.eq_logic_of_exp: min/max should not appear here")
+  | TypeCast _ -> illegal_format ("eq_logic.eq_logic_of_exp: TypeCast should not appear here")
   | FConst _ -> illegal_format ("eq_logic.eq_logic_of_exp: FConst")
   | Func _ -> "0" (* TODO: Need to handle *)
   | _ -> illegal_format ("eq_logic.eq_logic_of_exp: array, bag or list constraint")
@@ -377,7 +378,8 @@ let rec can_minisat_handle_expression (exp: Cpure.exp) : bool =
   | Cpure.Mult _
   | Cpure.Div _
   | Cpure.Max _
-  | Cpure.Min _          -> false
+  | Cpure.Min _
+  | Cpure.TypeCast _     -> false
   (* bag expressions *)
   | Cpure.Bag _
   | Cpure.BagUnion _
@@ -499,7 +501,7 @@ let start () =
 let stop () =
   if !is_minisat_running then (
     let num_tasks = !test_number - !last_test_number in
-    print_string ("\nStop minisat... " ^ (string_of_int !minisat_call_count) ^ " invocations "); flush stdout;
+    print_string_if !Globals.enable_count_stats ("\nStop minisat... " ^ (string_of_int !minisat_call_count) ^ " invocations "); flush stdout;
     let _ = Procutils.PrvComms.stop !log_all_flag log_file !minisat_process num_tasks Sys.sigkill (fun () -> ()) in
     is_minisat_running := false;
   )
@@ -507,11 +509,11 @@ let stop () =
 (* restart Omega system *)
 let restart reason =
   if !is_minisat_running then (
-    let _ = print_string (reason ^ " Restarting minisat after ... " ^ (string_of_int !minisat_call_count) ^ " invocations ") in
+    let _ = print_string_if !Globals.enable_count_stats (reason ^ " Restarting minisat after ... " ^ (string_of_int !minisat_call_count) ^ " invocations ") in
     Procutils.PrvComms.restart !log_all_flag log_file reason "minisat" start stop
   )
   else (
-    let _ = print_string (reason ^ " not restarting minisat ... " ^ (string_of_int !minisat_call_count) ^ " invocations ") in ()
+    let _ = print_string_if !Globals.enable_count_stats (reason ^ " not restarting minisat ... " ^ (string_of_int !minisat_call_count) ^ " invocations ") in ()
   )
     
 (* Runs the specified prover and returns output *)

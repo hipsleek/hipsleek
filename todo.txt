@@ -1,0 +1,57 @@
+Code duplication in mcpure.ml
+=============================
+
+let trans_memo_formula (e: memo_pure) (arg: 'a) f f_arg f_comb : (memo_pure * 'b) = 
+
+but of subtle different types
+
+type: Mcpure_D.memo_pure ->
+  'a ->
+  (Mcpure_D.memoised_group -> 'a -> (Mcpure_D.memoised_group * 'b) option) *
+  (Mcpure_D.memoised_constraint -> 'c -> Mcpure_D.memoised_constraint * 'b) *
+  (Mcpure_D.var_aset -> 'c -> Mcpure_D.var_aset * 'b list) *
+  (Cpure.formula -> 'c -> Cpure.formula * 'b) *
+  (Cpure.spec_var -> 'c -> Cpure.spec_var * 'b) ->
+  ('a -> Mcpure_D.memoised_group -> 'c) ->
+  ('b list -> 'b) -> Mcpure_D.memo_pure * 'b
+
+
+let trans_memo_formula (e: memo_pure) (arg: 'a) f f_arg f_comb : (memo_pure * 'b) = 
+type: Mcpure_D.memo_pure ->
+  'a ->
+  ('a -> Mcpure_D.memoised_group -> (Mcpure_D.memoised_group * 'b) option) *
+  (Mcpure_D.memoised_constraint -> 'c -> Mcpure_D.memoised_constraint * 'b) *
+  ('c -> Mcpure_D.var_aset -> Mcpure_D.var_aset * 'b list) *
+  (Cpure.formula -> 'c -> Cpure.formula * 'b) *
+  (Cpure.spec_var -> 'c -> Cpure.spec_var * 'b) ->
+  ('a -> Mcpure_D.memoised_group -> 'c) ->
+  ('b list -> 'b) -> Mcpure_D.memo_pure * 'b
+Mark set
+
+Type of trans_formula below not correct:
+
+(* 
+  type: formula ->
+  'a ->
+  'c * ('a -> formula -> (formula * 'b) option) *
+  ('a -> h_formula -> (h_formula * 'b) option) *
+  (('a -> Cpure.formula -> (Cpure.formula * 'b) option) *
+   ('a -> Cpure.b_formula -> (Cpure.b_formula * 'b) option) *
+   ('a -> Cpure.exp -> (Cpure.exp * 'b) option)) *
+  (('a -> Mcpure_D.memoised_group -> (Mcpure_D.memoised_group * 'b) option) *
+   (Mcpure_D.memoised_constraint -> 'd -> Mcpure_D.memoised_constraint * 'b) *
+                                    ^^^ why not 'a?
+   ('d -> Mcpure_D.var_aset -> Mcpure_D.var_aset * 'b list) *
+                                    ^^^ why not 'a?
+   (Cpure.formula -> 'd -> Cpure.formula * 'b) *
+                                    ^^^ why not 'a?
+   (Cpure.spec_var -> 'd -> Cpure.spec_var * 'b)) ->
+  'e * ('a -> formula -> 'a) * ('a -> h_formula -> 'a) *
+                                    ^^^ why not 'a?
+  (('a -> Cpure.formula -> 'a) * ('a -> Cpure.b_formula -> 'a) *
+   ('a -> Cpure.exp -> 'a)) *
+  ('a -> Mcpure_D.memoised_group -> 'd) -> ('b list -> 'b) -> formula * 'b
+*)
+
+let trans_formula (e: formula) (arg: 'a) f f_arg f_comb: (formula * 'b) =
+

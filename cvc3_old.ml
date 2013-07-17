@@ -51,6 +51,7 @@ and cvc3_of_exp a = match a with
   | CP.Div (a1, a2, _) -> failwith ("[cvc3.ml]: divide is not supported.")
   | CP.Max _ 
   | CP.Min _ -> failwith ("cvc3.cvc3_of_exp: min/max should not appear here")
+  | CP.TypeCast _ -> failwith ("cvc3_of_exp: TypeCast should not appear here")
   | CP.Bag ([], _) -> ""
   | CP.Bag _ | CP.BagUnion _ | CP.BagIntersect _ | CP.BagDiff _ ->
   	  failwith ("[cvc3.ml]: ERROR in constraints (set should not appear here)");

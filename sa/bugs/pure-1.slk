@@ -1,0 +1,97 @@
+data node {
+    node prev; 
+    node next; 
+    }.
+
+HeapPred H_1(node next_9, node@NI prv).
+HeapPred H1(node a, node@NI b).
+PostPred G1(node a, node@NI b).
+HeapPred H_0(node prev_8, node@NI prv).
+
+//(1)
+infer [H_0,G1]
+H_0(prev28,prv) * 
+l::node<prev28,next29> * G1(next29,l)&l!=null & 
+!(v_bool_18_904') & l!=null & !(v_bool_18_904') & prev28!=prv & 
+!(v_boolean02') & prev28!=prv & next29=next29 & l=l & 
+v_boolean01' & !(v_boolean03') & !(v_boolean02') & res=v_boolean03'
+ |-  G1(l,prv)&res.
+print residue.
+
+//(2)
+infer [G1]
+H_0(prev28,prv) * 
+l::node<prev28,next29> * G1(next29,l)&l!=null & 
+!(v_bool_18_904') & l!=null & !(v_bool_18_904') & prev28!=prv & 
+!(v_boolean02') & prev28!=prv & next29=next29 & l=l & 
+v_boolean01' & !(v_boolean03') & !(v_boolean02') & res=v_boolean03'
+  |-  G1(l,prv)&res.
+print residue.
+
+//(3)
+infer [H_0]
+H_0(prev28,prv) * 
+l::node<prev28,next29> * G1(next29,l)&l!=null & 
+!(v_bool_18_904') & l!=null & !(v_bool_18_904') & prev28!=prv & 
+!(v_boolean02') & prev28!=prv & next29=next29 & l=l & 
+v_boolean01' & !(v_boolean03') & !(v_boolean02') & res=v_boolean03'
+ |-  G1(l,prv)&res.
+print residue.
+
+
+//(4)
+infer [l,H_0]
+H_0(prev28,prv) * 
+l::node<prev28,next29> * G1(next29,l)&l!=null & 
+!(v_bool_18_904') & l!=null & !(v_bool_18_904') & prev28!=prv & 
+!(v_boolean02') & prev28!=prv & next29=next29 & l=l & 
+v_boolean01' & !(v_boolean03') & !(v_boolean02') & res=v_boolean03'
+ |-  G1(l,prv)&res.
+print residue.
+
+/*
+# pure-1.slk
+
+The above proof came from check-dll-1.slk. 
+   H_0 is a pre-predicate
+   G1 is a post-predicate
+I show outcome of the above three variants:
+
+Entail (1) : Valid. 
+ inferred hprel: [H_0(prev28,prv@NI) --> emp&forall(l:(prev28=prv | l=null))]
+
+Entail (2) : Valid. 
+ inferred hprel: [G1(next29,l@NI) --> emp&l=null]
+
+Entail (3) : Valid. 
+ inferred hprel: [H_0(prev28,prv@NI) --> emp&prev28=prv]
+
+The first version is complex as it used vars from H_0 & G1.
+The 2nd version is for post-predicate G1, and is less
+preferred than the 3rd version for pre-predicate H_0.
+
+ALGO
+====
+We will attempt to find early contradiction for
+single predicate rather than multiple predicate.
+We should order the unknown predicates such that
+only pre-pred comes before post-pred
+
+We first choose direct vars to see if we can find
+a contra. If not, we search thru the list to find
+the first unknown predicate that has a satisfiable
+entry. If so, we return that as our solution.
+
+ inferred hprel: [G1(next29,l@NI) --> emp&l=null]
+
+GOT
+===
+Entail (4) : Valid. 
+ <1>hfalse&false&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [H_0(prev28,prv@NI) --> emp&prev28=prv]
+
+EXPECTED:
+ <1>hfalse&false&{FLOW,(19,20)=__norm}[]
+ inferred pure : l=null
+
+*/

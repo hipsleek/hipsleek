@@ -1,0 +1,76 @@
+data node{
+	int val;
+        node prev;
+	node next;
+}.
+
+HeapPred H1(node a, node b).
+HeapPred HP_p(node a, node b).
+HeapPred HP_2(node a, node b).
+HeapPred G1(node a, node b).
+HeapPred K(int a).
+
+relAssume H1
+  H1(c,y) --> c::node<val_17_766',prev_17_767',next_17_768'> * 
+     HP_p(prev_17_767',y) * HP_2(next_17_768',y).
+
+relAssume H1
+   HP_2(t_31',y)&t_31'!=null --> H1(t_31',y)&true.
+
+relAssume HP_2
+  HP_2(n,y) & n=null --> emp.
+
+relAssume G1
+ c::node<_,p,t> * HP_p(p,y) * G1(t,y) &t!=null 
+ --> G1(c,y)&true.
+
+relAssume G1
+  HP_p(p,y) * c::node<_,p,y>@M --> G1(c,y)&true.
+
+shape_infer [H1,HP_2][G1].
+
+/*
+
+# i-app-r.slk  
+
+ Result below has spuriuous HP_P predicate.
+
+[ H1(c_53,y_54) ::= c_53::node<val_17_766',prev_17_767',next_17_768'>@M * 
+(HP_p(prev_17_767',y_54))&next_17_768'=null,
+ HP_2(n_55,y_56) ::= emp&n_55=null,
+ G1(c_57,y_58) ::= c_57::node<Anon_11,p,t>@M * (HP_59(p,t,y_58)) * (HP_p(p,y_58))&true,
+ HP_p(prev_17_767',y) ::= 
+ (HP_2(t_31',y)) * (HP_p(prev_17_767',y)) * (HP_2(next_17_768',y))&true
+ or (H1(c,y)) * (HP_2(next_17_768',y))&true
+ ,
+ HP_59(p,t,y_58) ::= 
+ emp&t=y_58
+ or t::node<Anon_11,p_60,t_61>@M * (HP_59(p_60,t_61,y_58)) * 
+    (HP_p(p_60,y_58))&true
+ ]
+
+However, when I split pre-pred and post-pred into two files
+   i-app-r1.slk for post-pred
+   i-app-r2.slk for pre-pred
+
+I got a much better result with redundant HP_p predicate
+eliminated.
+
+
+[ G1(c_36,y_37) ::= c_36::node<Anon_11,p,t>@M * (HP_38(p,t,y_37))&true,
+ HP_38(p,t,y_37) ::= 
+ emp&t=y_37
+ or t::node<Anon_11,p_39,t_40>@M * (HP_38(p_39,t_40,y_37))&true
+ ]
+
+[ H1(c_37,y_38) ::= c_37::node<val_17_766',prev_17_767',next_17_768'>@M * 
+                     (HP_2(next_17_768',y_38))&true,
+ HP_2(n_39,y_40) ::= 
+ emp&n_39=null
+ or n_39::node<val_17_766',prev_17_767',next_17_768'>@M * 
+    (HP_2(next_17_768',y_40))&true
+ ]
+
+
+*/
+

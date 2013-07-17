@@ -1,0 +1,53 @@
+data node{
+	int val;
+	node next;
+}.
+
+
+PostPred G(node a).
+
+
+relAssume 
+ x::node<b,right> & right=null  --> G(x).
+
+relAssume 
+ x::node<n,q> * q::node<_,r>    --> G(x).
+
+
+shape_infer [][G].
+
+/*
+# post-1c.slk
+
+GOT
+===
+[ G(x_24) ::=  
+ x_24::node<b,right>@M&right=null
+ or x_24::node<b,right>@M * right::node<Anon_11,r>@M&true
+ ]
+
+OPTION
+======
+Could we have an option: --sa-disj-unify
+to obtain. I tried --sa-en-norm but it did 
+not work.
+
+First derive:
+ x::node<b,right> & right=null 
+ or x::node<n,q> * q::node<_,r>  --> G(x).
+
+Then derive:
+ x::node<b,right> * GP_2(right) --> G(x)
+
+ right=null 
+ or right::node<_,r>  --> GP_2(x).
+
+Finally obtain definitions:
+
+ G(x) ::= x::node<b,right> * GP_2(right) 
+
+ GP_2(right) ::= right=null 
+    or right::node<_,r> .
+  --> G(x).
+
+*/

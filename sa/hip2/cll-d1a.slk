@@ -1,0 +1,20 @@
+data node{
+ int val;
+ node next;
+}.
+
+HeapPred HP_6(node a).
+HeapPred HP_6e(node a, node a).
+
+infer [HP_6,x] HP_6(n) & n=v & v!=null & x!=n
+    |-  v::node<_,_> .
+print residue.
+
+
+infer [HP_6,x] HP_6(n) & n=v & v!=null & x!=r & r=v
+    |-  v::node<_,_> .
+print residue.
+
+infer [HP_6,x] HP_6(n) * xp::node<_,n> & n=v & v!=null & x!=r & r=v
+    |-  v::node<_,_> .
+print residue.

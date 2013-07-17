@@ -32,6 +32,9 @@ struct
       | q::qs -> if (List.mem q qs) then remove_dups qs else q::(remove_dups qs)
 
   let pr_id x = x
+  
+  let print_endline_if b s = if b then print_endline s else ()
+  let print_string_if b s = if b then print_string s else ()
 
   let pr_var_prime (id,p) = match p with
     | Globals.Primed -> id^"'"
@@ -65,14 +68,26 @@ struct
   let pr_quad_ln f1 f2 f3 f4 (x,y,z,z2) = "("^(f1 x)^"\n,2:"^(f2 y)^"\n,3:"^(f3 z)^"\n,4:"^(f4 z2)^")"
   let pr_penta_ln f1 f2 f3 f4 f5 (x,y,z,z2,z3) = "("^(f1 x)^"\n,2:"^(f2 y)^"\n,3:"^(f3 z)^"\n,4:"^(f4 z2)^"\n,5:"^(f5 z3)^")"
   let pr_hexa_ln f1 f2 f3 f4 f5 f6 (x,y,z,z2,z3,z4) = "("^(f1 x)^"\n,2:"^(f2 y)^"\n,3:"^(f3 z)^"\n,4:"^(f4 z2)^"\n,5:"^(f5 z3)^"\n,6:"^(f6 z4)^")"
+  let pr_hepta_ln f1 f2 f3 f4 f5 f6 f7 (x,y,z,z2,z3,z4,z5) = "("^(f1 x)^"\n,2:"^(f2 y)^"\n,3:"^(f3 z)^"\n,4:"^(f4 z2)^"\n,5:"^(f5 z3)^"\n,6:"^(f6 z4)^"\n,7:"^(f7 z5)^")"
 
+  let pr_add_num f xs =
+    let rec aux n xs = 
+      match xs with
+        | [] -> []
+        | x::xs -> ("("^(string_of_int n)^"):"^(f x))::(aux (n+1) xs)
+    in aux 1 xs
+ 
   let pr_lst s f xs = String.concat s (List.map f xs)
+  let pr_lst_num s f xs = String.concat s (pr_add_num f xs)
 
- let pr_list_brk open_b close_b f xs  = open_b ^(pr_lst "," f xs)^close_b
+ let pr_list_brk_sep open_b close_b sep f xs  = open_b ^(pr_lst sep f xs)^close_b
+ let pr_list_brk open_b close_b f xs  = pr_list_brk_sep open_b close_b "," f xs
  let pr_list f xs = pr_list_brk "[" "]" f xs
  let pr_list_angle f xs = pr_list_brk "<" ">" f xs
  let pr_list_round f xs = pr_list_brk "(" ")" f xs
+ let pr_list_round_sep sep f xs = pr_list_brk_sep "(" ")" sep f xs
  let pr_list_ln f xs = "["^(pr_lst ",\n" f xs)^"]"
+ let pr_list_num f xs = "["^(pr_lst_num ",\n" f xs)^"]"
 
  let pr_list_mln f xs = (pr_lst "\n--------------\n" f xs)
 
@@ -405,15 +420,30 @@ end;;
 
 exception Stack_Error
 
-class ['a] stack  =
+class change_flag =
    object 
+     val mutable cnt = 0
+     method reset = 
+       begin
+         cnt <- 0
+       end
+     method inc = 
+       begin
+         cnt <- cnt+1
+       end
+     method is_change = cnt>0
+     method no_change = (cnt==0)
+   end;;
+
+class ['a] stack  =
+  object (self)
      val mutable stk = []
      method push (i:'a) = 
        begin
          stk <- i::stk
        end
      method get_stk  = stk (* return entire content of stack *)
-     method override_stk newstk  = stk <- newstk 
+     method set_stk newstk  = stk <- newstk 
        (* override with a new stack *)
      method pop = match stk with 
        | [] -> print_string "ERROR : popping empty stack"; 
@@ -431,8 +461,12 @@ class ['a] stack  =
        | [] -> () 
        | x::xs -> stk <- xs
      method is_empty = stk == []
+     method is_avail = not(stk == [])
+     method get = self # top
+     (* method set x = self # push x *)
      method len = List.length stk
      method reverse = stk <- List.rev stk
+     method reverse_of = List.rev stk
      method mem (i:'a) = List.mem i stk 
      method mem_eq eq (i:'a) = List.exists (fun b -> eq i b) stk 
      (* method exists (i:'a) = List.mem i stk  *)
@@ -442,24 +476,35 @@ class ['a] stack  =
      method pop_list (ls:'a list) = 
        stk <- BList.drop (List.length ls) stk
      method reset = stk <- []
+     method clone =
+       Oo.copy self
+       (* let n = new Gen.stack in *)
+       (*   let lst = self # get_stk in *)
+       (*   let _ = n # push_list lst in *)
+       (* n *)
    end;;
 
 class ['a] stack_pr (epr:'a->string) (eq:'a->'a->bool)  =
-   object 
-     inherit ['a] stack as super
-     val elem_pr = epr 
-     val elem_eq = eq 
-     method string_of = Basic.pr_list_ln elem_pr stk
-     method string_of_no_ln = Basic.pr_list elem_pr stk
-     method string_of_reverse = let _ = super#reverse  in
-                                Basic.pr_list_ln elem_pr stk
-     method string_of_reverse_log = let _ = super#reverse  in
-                                Basic.pr_list_mln elem_pr stk
-     method mem (i:'a) = List.exists (elem_eq i) stk
-     method overlap (ls:'a list) = 
-	   if (ls == []) then false
-	   else List.exists (fun x -> List.exists (elem_eq x) ls) stk
-   end;;
+object 
+  inherit ['a] stack as super
+  val elem_pr = epr 
+  val elem_eq = eq 
+  method string_of = Basic.pr_list_ln elem_pr stk
+  method string_of_no_ln = Basic.pr_list elem_pr stk
+  method string_of_no_ln_rev = 
+    let s = super#reverse_of in
+    Basic.pr_list elem_pr s
+  method string_of_reverse = 
+    let s = super#reverse_of  in
+    Basic.pr_list_ln elem_pr s
+  method string_of_reverse_log = 
+    let s = super#reverse_of  in
+    Basic.pr_list_mln elem_pr s
+  method mem (i:'a) = List.exists (elem_eq i) stk
+  method overlap (ls:'a list) = 
+    if (ls == []) then false
+    else List.exists (fun x -> List.exists (elem_eq x) ls) stk
+end;;
 
 
 class ['a] stack_filter (epr:'a->string) (eq:'a->'a->bool) (fil:'a->bool)  =
@@ -479,6 +524,9 @@ class ['a] stack_noexc (x_init:'a) (epr:'a->string) (eq:'a->'a->bool)  =
      method top_no_exc : 'a = match stk with 
        | [] ->  emp_val
        | x::xs -> x
+     method last : 'a = match stk with 
+       | [] -> emp_val
+       | _ -> List.hd (List.rev stk)
    end;;
 
 (* class ['a] stack_noexc (x_init:'a) (epr:'a->string) (eq:'a->'a->bool)  = *)
@@ -642,7 +690,7 @@ struct
   let string_of (e: emap) : string =
     let f = string_of_elem in
     let ll=partition e in 
-    "[@"^ (String.concat " \n " (List.map (fun cl -> "{"^(String.concat ", "(List.map f cl))^"}") ll))^"]"
+    "emap["^ (String.concat " \n " (List.map (fun cl -> "{"^(String.concat ", "(List.map f cl))^"}") ll))^"]"
 
   let un_partition (ll:epart) : emap =
     let flat xs y = 
@@ -1164,7 +1212,7 @@ struct
 end;;
 
 class mult_counters =
-object (self)
+ object (self)
   val ctrs = Hashtbl.create 10
   method get (s:string) : int = 
     try
@@ -1349,7 +1397,7 @@ struct
         | [] -> Error.report_error {Error.error_loc = Globals.no_pos; Error.error_text = ("Error special poping "^msg^"from the stack")}
         | (m1,_,_)::t ->  if not ((String.compare m1 msg)==0) then helper t			
 		  else t in
-      profiling_stack#override_stk (helper profiling_stack#get_stk) 
+      profiling_stack#set_stk (helper profiling_stack#get_stk) 
 	else ()
 
   let add_index l = 

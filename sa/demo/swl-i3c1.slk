@@ -1,0 +1,40 @@
+data node{
+	int val;
+	node next;
+}.
+
+
+HeapPred H(node a, node b, node@NI c).
+HeapPred H_3(node prev, node@NI cur, node@NI sent).
+HeapPred H_2(node next_1, node@NI prev, node@NI sent).
+HeapPred G(node a, node ra, node b, node rb, node@NI c).
+
+relAssume
+  H_3(prev,cur,sent)&cur=cur' & 
+  prev'=null --> H_2(prev,prev',sent).
+
+relAssume
+  emp&cur=cur' & 
+   prev'=null --> H_3(prev',cur',sent_44).
+
+relAssume
+   H_2(cur',prev,sent) & cur'=sent --> emp.
+
+relAssume
+  H_2(next_1,prev,sent)&next_1=null & next_1!=sent --> emp,
+
+shape_infer [H_2,H_3][].
+
+/*
+# swl-i3c.slk 
+
+ expected rel ass from a 2nd pre-oblg entailment in swl-i3.slk
+
+ <1>emp&cur_920=null & next_1=null & cur=cur_909 & cur_920=next_1 & cur'=cur_909 & prev'=null & n1=prev & n1=prev & sent=sent_44&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [
+// Sleek_Entail(1)
+
+*/
+
+
+

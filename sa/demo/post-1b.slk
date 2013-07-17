@@ -1,0 +1,36 @@
+data node{
+	int val;
+	node next;
+}.
+
+
+PostPred G(node a).
+
+
+relAssume
+ x::node<b,right> & right=null  --> G(x).
+
+relAssume
+ x::node<n,_>    --> G(x).
+
+
+shape_infer [][G].
+
+/*
+# post-1b.slk
+
+GOT
+===
+ G(x_22) ::=  
+ x_22::node<b,right>@M&right=null
+ or x_22::node<b,right>@M&true
+ ]
+
+Could we have an option: --sa-disj-unify
+to obtain:
+
+ G(x_22) ::=  
+ x_22::node<b,right>@M&(right=null or true)
+
+
+*/

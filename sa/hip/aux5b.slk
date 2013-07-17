@@ -1,0 +1,29 @@
+data node {
+	int val; 
+	node prev;
+	node next;
+}.
+
+pred tree<> == self=null
+ or self::node<_,l,r>*l::node<_,_,_>
+inv true.
+
+pred H<> == self=null
+ or self::node<_,l,_>
+inv true.
+
+lemma "strong2" self::H<> -> self::tree<>.
+
+checkentail x::node<_,l,_> |- x::node<_,l,r>*l::node<_,_,_>.
+
+/*
+!!!No combine lemma in left coercion?
+Entailing lemma weak: Valid.
+
+!!!No combine lemma in left coercion?
+Entailing lemma strong: Valid.
+
+!!!No combine lemma in left coercion?
+!!!No combine lemma in left coercion?
+Entailing lemma equal: Valid.
+*/

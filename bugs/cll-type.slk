@@ -1,0 +1,21 @@
+
+infer [] x=3 & x=x'
+ |-  x>4.
+
+infer [x] x=3 & x=y
+ |-  x>4.
+print residue.
+
+// why "could not find coherent-type below" ?
+// x & x' has the same int type
+infer [x] x=3 & x=x'
+ |-  x>4.
+print residue.
+
+infer [x,xp] x=3 & x=xp
+ |-  x>4.
+print residue.
+
+//infer [(x:int)] x=3 & x=x'
+
+

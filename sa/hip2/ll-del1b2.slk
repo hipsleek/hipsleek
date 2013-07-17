@@ -1,0 +1,50 @@
+data node{
+ int val;
+ node next;
+}.
+
+
+HeapPred HP_6(node a).
+HeapPred G(node a, node a).
+
+relAssume  G
+ x::node<_,nn> * HP_6(nn) & x'=null & nn=null  --> G(x,x').
+
+shape_split_base [][G].
+
+/*
+
+[ RELASS [G] unknown svl: ;  unknown hps: ;  predefined: ; x::node<Anon_11,nn>@M&
+  nn=null & x'=null --> G(x,x')&true,
+ RELASS [HP_6] unknown svl: ;  unknown hps: ;  predefined: ; HP_6(nn)&
+  nn=null --> emp&true]
+
+It seems like we have splitted out HP_6 as a base,
+even though we did not indicate HP_6 as a pre-pred
+that need to be splitted in [][G].
+
+Is it possible to perform split-base strictly for 
+only pre-pred that has been specfied:
+
+HP_6(..) is a redundant pred since 
+  (i) it never appears in the RHS of an post-pred defn
+  (ii) it never appears in the LHS of an pre-pred defn
+All redundant predicates are never unfolded, nor folded;
+hence they are dangling references. 
+
+The way to deal with below.
+
+relAssume  G
+ x::node<_,nn> * HP_6(nn) & x'=null & nn=null  --> G(x,x').
+
+is to first extract:
+
+ x::node<_,nn> & x'=null & nn=null  --> G(x,x').
+
+and then to pick also connected redundant predicate,
+so that we have dangling references:
+
+ x::node<_,nn> & x'=null & nn=null & XPURE(HP_6(nn))  --> G(x,x').
+
+
+*/

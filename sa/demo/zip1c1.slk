@@ -1,0 +1,55 @@
+data node{
+	int val;
+	node next;
+}.
+
+HeapPred HL(node a).
+HeapPred H1(node a, node b).
+HeapPred HP_1(node a, node@NI b).
+HeapPred HP_2(node a, node@NI b).
+HeapPred HP_8(node a, node@NI b).
+HeapPred G1(node a, node b, node c).
+
+
+relAssume 
+H1(x,y) & x=null & res=null --> G1(x,y,res).
+
+ 
+shape_infer[H1][G1].
+
+/*
+
+==========================================================
+# zip1c1.slk 
+
+GOT
+====
+
+[ H1(x_35,y_36) ::= HP_29(x_35)&x_35=null,
+ G1(x_37,y_38,res_39) ::= HP_29(x_37)&x_37=null & res_39=null,
+ HP_29(x) ::= H1(x,y)&x=null]
+
+EXPECTING without a defn for HP_29 (maybe NONE for body)
+===========
+
+  H1(x_35,y) ::= HP_29(y)&x_35=null,
+  G1(x_37,y,res_39) ::= HP_29(y)&x_37=null & res_39=null,
+
+
+I guess this should be done during split-base itself. Instead
+of:
+
+ HP_29(x)&res=null & x=null --> G1(x,y,res)&true,
+ H1(x,y)&x=null --> HP_29(x)&true
+
+SHOULD BE:
+==========
+ HP_29(y)&res=null & x=null --> G1(x,y,res)&true,
+ H1(x,y)&x=null --> HP_29(y)&true
+
+
+This is if y is instantiating. If not, do just the
+usual split.
+
+
+*/

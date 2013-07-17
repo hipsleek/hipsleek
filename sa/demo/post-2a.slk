@@ -1,0 +1,24 @@
+data node{
+	int val;
+	node next;
+}.
+
+
+HeapPred G(node a).
+
+
+
+relAssume
+ x=null  --> G(x).
+
+relAssume
+ x=null  --> G(x).
+
+shape_infer [][G].
+
+/*
+# post-2a.slk
+
+OK
+
+*/

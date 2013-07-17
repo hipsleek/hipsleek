@@ -1,0 +1,56 @@
+
+data node {
+	int val; 
+	node next;	
+}.
+
+HeapPred H(node a, node b).
+HeapPred G(node a, node b).
+HeapPred HP_6(node a, node@NI b).
+HeapPred HP_7(node a, node@NI b).
+
+Declare_Unknown ()[HP_7].
+
+relAssume 
+ H(rest,h)&h!=rest --> rest::node<val_36_824,next_36_825> * 
+  HP_6(next_36_825,h) * HP_7(h,rest).
+
+relAssume 
+ HP_6(next_36_825,h) // * HP_7(h,rest)&h!=rest 
+   --> H(next_36_825,h).
+
+        //relAssume H H(rest,h)&h=rest --> G(rest,h).
+
+relAssume 
+ H(rest,h)&h=rest --> emp.
+
+relAssume 
+ h=rest --> G(rest,h).
+
+relAssume 
+ rest::node<val_36_824,next_36_825> * G(next_36_825,h) * HP_7(h,rest)
+ & h!=rest --> G(rest,h).
+
+shape_infer [H,HP_6,HP_7][G].
+
+/*
+This is a good expected result from cll.ss but it required:
+ HP_6(next_36_825,h) // * HP_7(h,rest)&h!=rest 
+   --> H(next_36_825,h).
+See # cll-1a.slk
+
+
+[ H(rest_64,h_65) ::=  
+ emp&h_65=rest_64
+ or H(next_36_49,h_65) * rest_64::node<val_36_48,next_36_49>@M * 
+    HP_7(h_65,rest_64)&h_65!=rest_64
+ ,
+ HP_6(next_36_66,h_67) ::=  H(next_36_66,h_67)&true,
+ G(rest_68,h_69) ::=  
+ emp&h_69=rest_68
+ or rest_68::node<val_36_824,next_36_825>@M * G(next_36_825,h_69) * 
+    HP_7(h_69,rest_68)&h_69!=rest_68
+ ,
+ HP_7(a,b) ::= NONE]
+
+*/

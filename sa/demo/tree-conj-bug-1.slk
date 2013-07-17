@@ -1,0 +1,60 @@
+data node {
+ int key;
+ node left;
+ node right;
+}.
+
+HeapPred H(node a).
+HeapPred G(node a).
+HeapPred HP_0(node a).
+HeapPred HP_1(node a).
+HeapPred HP_3(node a).
+HeapPred HP_4(node a).
+
+Declare_Unknown [HP_0,HP_4].
+
+relAssume 
+ H(x)&x!=null --> x::node<key_29_797,left_29_798,right_29_799>@M * 
+  HP_3(left_29_798) * HP_4(right_29_799).
+ 
+
+relAssume 
+ H(x)&x!=null --> x::node<key_30_807,left_30_808,right_30_809>@M * 
+  HP_0(left_30_808) * HP_1(right_30_809).
+
+/*
+relAssume 
+ HP_3(left_29_798)&true --> H(left_29_798).
+
+relAssume 
+ HP_1(right_30_809)&true --> H(right_30_809).
+
+relAssume 
+ H(x)&x=null --> emp.
+*/
+
+shape_infer [H,HP_1,HP_0,HP_3,HP_4][].
+
+/*
+# tree-conj-1.ss
+
+ H(x)&x!=null --> x::node<key_29_797,left_29_798,right_29_799>@M * 
+  HP_3(left_29_798) * HP_4(right_29_799),
+ 
+ HP_3(left_29_798)&true --> H(left_29_798),
+
+ H(x)&x!=null --> x::node<key_30_807,left_30_808,right_30_809>@M * 
+  HP_0(left_30_808) * HP_1(right_30_809).
+
+ HP_1(right_30_809)&true --> H(right_30_809).
+
+ H(x)&x=null --> emp.
+
+ emp&x=null --> G(x)&true,
+ HP_4(right_29_799) * x::node<key_29_797,left_29_798,right_29_799>@M * 
+  G(left_29_798)&true --> G(x)&true,
+ HP_0(left_30_808) * x::node<key_30_807,left_30_808,right_30_809>@M * 
+  G(right_30_809)&true --> G(x)&true]
+
+
+*/

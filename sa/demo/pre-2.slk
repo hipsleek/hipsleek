@@ -1,0 +1,52 @@
+data node {
+   node n;
+}.
+
+HeapPred P(node x).
+HeapPred P2(node x).
+
+relAssume 
+  P(x) --> x::node<q>*P2(q).
+
+relAssume 
+  P2(x)  --> P(x).
+
+shape_infer[P,P2][].
+
+/*
+
+A predicate is non-dangling if it is being used
+for a pre-pred definition.
+
+
+WRONG:
+[ P(x_28) ::= x_28::node<q_21>@M * (P(q_21)) * (P(q_23)) * q_21::node<q_23>@M&true,
+ P2(x_29) ::= x_29::node<q>@M * (P2(q))&true]
+
+STEPS
+=====
+first confirm P:
+  P(x) <--> x::node<q>*P2(q).
+  P2(x)  --> P(x).
+         --> x::node<q>*P2(q).
+confirm P2
+  P2(x)  <--> x::node<q>*P2(q).
+
+
+Confirm P2
+  P2(x)  --> P(x)
+         <--> P(x)
+  P(x) --> x::node<q>*P2(q).
+       --> x::node<q>*P(q).
+Confirm P
+  P(x) <--> x::node<q>*P(q).
+
+foo(node x)
+  requires P(x)
+  ensures Q(x)
+{  node tmp = x.next;
+   foo(tm);
+}
+
+*/
+

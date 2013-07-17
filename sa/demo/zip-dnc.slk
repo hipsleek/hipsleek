@@ -1,0 +1,40 @@
+
+data node{
+	int val;
+	node next;
+}.
+
+
+HeapPred H(node a, node b).
+HeapPred H1(node a, node b).
+HeapPred H2(node a, node b).
+PostPred G1(node a, node c, node b).
+HeapPred HP_6(node a, node@NI b).
+HeapPred HP_7(node a, node@NI b).
+HeapPred HP_3(node a, node@NI b).
+
+/*
+relAssume (0;1)
+ H(x,y)  --> H1(x,y).
+
+relAssume (0;2)
+ H(x,y)  --> H2(x,y).
+*/
+relAssume (0;1)
+ H(x,y)&res=x & x=null & res=null --> G1(x,y,res).
+
+relAssume (0;2)
+ H(x,y)&x!=null --> x::node<val_31_814,next_31_815>@M * 
+  HP_6(next_31_815,y) * HP_7(y,x).
+
+relAssume (0;2)
+ HP_6(next_31_815,y) * 
+  HP_3(next_32_822,x) --> H(next_31_815,next_32_822).
+
+relAssume (0;2)
+ y::node<val_32_821,next_32_822>@M * 
+  G1(next_31_815,next_32_822,v_node_34_853) * 
+  x::node<v_int_33_837,v_node_34_853>@M&val_31_814=val_33_832 & 
+  v_int_33_837=val_32_821+val_31_814 & res=x --> G1(x,y,res).
+
+ shape_divide [H,H1,H2][G1].

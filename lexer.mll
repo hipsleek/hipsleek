@@ -124,10 +124,26 @@ module Make (Token : SleekTokenS)
 	 ("case",CASE);
    ("catch", CATCH);
    ("checkeq", CHECKEQ);
-	 ("checkentail", CHECKENTAIL);
+   ("checkentail", CHECKENTAIL);
+   ("relAssume", RELASSUME);
+   ("relDefn", RELDEFN);
+   ("shape_infer", SHAPE_INFER );
+   ("shape_infer_proper", SHAPE_INFER_PROP );
+   ( "shape_post_obligation", SHAPE_POST_OBL);
+   ("shape_divide" , SHAPE_DIVIDE);
+   ("shape_conquer" , SHAPE_CONQUER);
+   ( "shape_split_base", SHAPE_SPLIT_BASE);
+   ("shape_elim_useless", SHAPE_ELIM_USELESS );
+   ("shape_extract", SHAPE_EXTRACT );
+   ("Declare_Dangling", SHAPE_DECL_DANG);
+   ("Declare_Unknown", SHAPE_DECL_UNKNOWN);
+   ("shape_strengthen_conseq", SHAPE_STRENGTHEN_CONSEQ );
+   ("shape_weaken_ante", SHAPE_WEAKEN_ANTE );
    ("checkentail_exact", CHECKENTAIL_EXACT);
    ("checkentail_inexact", CHECKENTAIL_INEXACT);
-	 ("capture_residue", CAPTURERESIDUE);
+   ("infer_exact", INFER_EXACT);
+   ("infer_inexact", INFER_INEXACT);
+   ("capture_residue", CAPTURERESIDUE);
 	 ("class", CLASS);
 	 (* ("coercion", COERCION); *)
 	 ("compose", COMPOSE);
@@ -155,8 +171,9 @@ module Make (Token : SleekTokenS)
    ("ranking", FUNC);
    ("global",GLOBAL);
    ("logical", LOGICAL);
-	 ("head",HEAD);
-     ("HeapPred", HP);
+   ("head",HEAD);
+   ("HeapPred", HP);
+   ("PostPred", HPPOST);
    ("ho_pred",HPRED);
    ("htrue", HTRUE);
    ("if", IF);
@@ -170,7 +187,8 @@ module Make (Token : SleekTokenS)
 	 ("inv", INV);
 	 ("inv_lock", INVLOCK);
    ("joinpred", JOIN); (*Changed by 28/12/2011*)
-	 ("lemma", LEMMA);
+	 ("lemma", LEMMA false);
+	 ("lemma_exact", LEMMA true);
    ("len", LENGTH);
 	 ("let", LET);
 	 ("max", MAX);
@@ -185,7 +203,7 @@ module Make (Token : SleekTokenS)
 	 ("and", ANDWORD);
 	 ("macro",PMACRO);
      ("perm",PERM);
-	 ("pred", PRED);
+     ("pred", PRED);
 	 ("pred_prim", PRED_PRIM);
      ("pred_extn", PRED_EXT);
 	 ("hip_include", HIP_INCLUDE);
@@ -193,7 +211,7 @@ module Make (Token : SleekTokenS)
      ("mem", MEM);
      ("memE", MEME);
 	 ("dprint", DPRINT);
-	 ("compare", CMP);
+	 ("sleek_compare", CMP);
    ("raise", RAISE);
 	 ("ref", REF);
 ("relation", REL);
@@ -293,21 +311,26 @@ rule tokenizer file_name = parse
   | "*-" { STARMINUS }
   | "@" { AT }
   | "@@" { ATAT }
+  | "@@[" { ATATSQ }
   | "@I" {IMM}
   | "@L" {LEND}
   | "@A" {ACCS}
   | "@D" { DERV }
   | "@M" { MUT }
+  | "@R" { MAT }
   | "@VAL" {VAL}
   | "@REC" {REC}
+  | "@NI" {NI}
   | "@pre" { PRE }
   | "@xpre" { XPRE }
   | "@post" { POST }
   | "@xpost" { XPOST }
+(*  | "XPURE" {XPURE}*)
   | "@zero" {PZERO}
   | "@full" {PFULL}
   | "@value" {PVALUE}
   (* | "@p_ref" {PREF} *)
+  | '^' { CARET }
   | '}' { CBRACE }
   | "|]" {CLIST}
   | ':' { COLON }
@@ -328,6 +351,7 @@ rule tokenizer file_name = parse
   | '>' { GT }
   | ">=" { GTE }
   | '#' { HASH }
+  | "|#|" {REL_GUARD}
   | "->" { LEFTARROW }
   | '<' { LT }
   | "<=" { LTE }

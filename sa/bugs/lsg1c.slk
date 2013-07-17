@@ -1,0 +1,46 @@
+
+data node2{
+    node2 n;
+    node2 s;
+}.
+
+HeapPred SLSEG(node2 a,node2 b).
+
+// lsg1.slk
+/*
+infer[SLSEG] 
+SLSEG(l,e) 
+ & e!=null
+ & l=null 
+ |-  l::node2<n,s>@L. 
+*/
+
+infer[l,e] 
+ e!=l
+ & l=null 
+ |-  l!=null.
+
+print residue.
+
+/*
+
+Obtained:
+ inferred pure: 
+ [e>=l | l!=null; l!=null | l>(e-1)]
+
+Which seems equivalent to:
+  {[l,e]: 1 <= l} union
+  {[l,l]: l <= 0}
+
+simplifies to:
+ l!=null or l=e & l=null
+
+
+Should it be as weak as possible? Or should
+we use interpolant to get simpler LHS?
+
+ <1>hfalse&false&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [SLSEG(l,e)&true --> emp&l!=null | e=null]
+
+
+*/

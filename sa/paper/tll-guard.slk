@@ -1,0 +1,70 @@
+// simpler tll working example
+
+data node{
+	node left;
+	node right;
+	node next;
+}.
+
+HeapPred H(node a, node@NI b).
+HeapPred H_4(node left_1, node@NI t).
+HeapPred H_5(node right_2, node@NI t).
+HeapPred H_6(node next_3, node@NI t).
+PostPred G(node a, node@NI b, node c).
+
+infer [H,G,H_4,H_5,H_6]
+ H_4(left_1,t) * H_6(next_3,t) *  x::node<left_1,right_2,next_3>@M * 
+ G(right_2,l_47',t')&x=x' & t=t' 
+  & right_2!=null & !(v_bool_2') 
+  //& right_2!=null & !(v_bool_2') & right_2=right_2 
+  & t=t' & left_1=v_node_0'
+  |-  H(v_node_0',l_47').
+
+print residue.
+
+/*
+# tll-guard.slk
+
+  (from tll.ss)
+
+ inferred hprel: [
+  H_4(v_node_0',t'@NI) |#| x::node<v_node_0',right_2,next_3>@M 
+    --> H(v_node_0',l_47'@NI)]
+
+PROBLEM
+=======
+Heap guard here is useless, as it does not serve
+to instantiate l_47'. We should drop such useless
+heap guards.
+
+ALGO
+====
+Given U1(vs) |#| G --> U2(ws)
+
+A guard is selected if:
+  vars(G) /\ vs != []
+
+A guard is useful if
+  vars(G) /\ (ws-vs) != []
+
+=====================
+
+ id: 22; caller: []; line: 41; classic: false; kind: PRE-2; hec_num: 5; evars: []; infer_vars: [H,G,H_4,H_5,H_6]; c_heap: emp
+
+ checkentail 
+H_4(left_1,t) * H_6(next_3,t) * 
+x::node<left_1,right_2,next_3>@M * 
+G(right_2,l_47',t')&x=x' & t=t' & right_2!=null & 
+!(v_bool_2') & right_2!=null & !(v_bool_2') & 
+right_2=right_2 & t=t' & left_1=v_node_0'&
+{FLOW,(22,23)=__norm}[]
+ |-  H(v_node_0',l_47')&{FLOW,(22,23)=__norm}[]. 
+
+hprel_ass: [ H_4(left_1,t) |#| x::node<left_1,right_2,next_3>@M --> H(left_1,l_47')]
+res:  [
+  H_6(next_3,t) * x::node<left_1,right_2,next_3>@M * G(right_2,l_47',t')&x=x' & t=t' & right_2!=null & !(v_bool_2') & right_2!=null & !(v_bool_2') & right_2=right_2 & t=t' & left_1=v_node_0' & left_1=v_node_0'&{FLOW,(22,23)=__norm}[]
+  ]
+
+Declare_Unknown [H_6].
+
+*/

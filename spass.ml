@@ -52,7 +52,8 @@ let rec spass_dfg_of_exp (e0 : Cpure.exp) : (string * string list * string list)
   | Cpure.Div _       -> illegal_format "SPASS don't support Div expresion"
   | Cpure.Max _       -> illegal_format "SPASS don't support Max expresion"
   | Cpure.Min _       -> illegal_format "SPASS don't support Min expresion"
-    (* bag expressions *)
+  | Cpure.TypeCast _       -> illegal_format "SPASS don't support TypeCast expresion"
+  (* bag expressions *)
   | Cpure.Bag _
   | Cpure.BagUnion _
   | Cpure.BagIntersect _
@@ -190,6 +191,7 @@ let rec spass_tptp_of_exp (e0 : Cpure.exp) : string =
   | Cpure.Div _       -> illegal_format "SPASS don't support Div expresion"
   | Cpure.Max _       -> illegal_format "SPASS don't support Max expresion"
   | Cpure.Min _       -> illegal_format "SPASS don't support Min expresion"
+  | Cpure.TypeCast _       -> illegal_format "SPASS don't support TypeCast expresion"
     (* bag expressions *)
   | Cpure.Bag _
   | Cpure.BagUnion _
@@ -271,7 +273,8 @@ let rec can_spass_handle_expression (exp: Cpure.exp) : bool =
   | Cpure.Mult _
   | Cpure.Div _
   | Cpure.Max _
-  | Cpure.Min _          -> false
+  | Cpure.Min _
+  | Cpure.TypeCast _     -> false
   (* bag expressions *)
   | Cpure.Bag _
   | Cpure.BagUnion _
@@ -433,7 +436,7 @@ let start () =
 let stop () =
   if !is_spass_running then (
     let num_tasks = !test_number - !last_test_number in
-    print_string ("Stop SPASS... " ^ (string_of_int !spass_call_count) ^ " invocations "); flush stdout;
+    print_string_if !Globals.enable_count_stats ("Stop SPASS... " ^ (string_of_int !spass_call_count) ^ " invocations "); flush stdout;
     let _ = Procutils.PrvComms.stop !log_all_flag log_file !spass_process num_tasks Sys.sigkill (fun () -> ()) in
     is_spass_running := false;
   )
@@ -442,11 +445,11 @@ let stop () =
 (* restart Omega system *)
 let restart reason =
   if !is_spass_running then (
-    let _ = print_string (reason ^ " Restarting SPASS after ... " ^ (string_of_int !spass_call_count) ^ " invocations ") in
+    let _ = print_string_if !Globals.enable_count_stats (reason ^ " Restarting SPASS after ... " ^ (string_of_int !spass_call_count) ^ " invocations ") in
     Procutils.PrvComms.restart !log_all_flag log_file reason "SPASS" start stop
   )
   else (
-    let _ = print_string (reason ^ " not restarting SPASS ... " ^ (string_of_int !spass_call_count) ^ " invocations ") in 
+    let _ = print_string_if !Globals.enable_count_stats (reason ^ " not restarting SPASS ... " ^ (string_of_int !spass_call_count) ^ " invocations ") in 
     start ()
   )
     

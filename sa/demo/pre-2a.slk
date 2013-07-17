@@ -1,0 +1,36 @@
+data node {
+   node n;
+}.
+
+HeapPred P(node x).
+HeapPred P2(node x).
+
+relAssume   P(x) --> x::node<q>*P2(q).
+
+relAssume   P2(x)  --> P(x).
+
+shape_infer[P][].
+
+/*
+# pre-2a.slk
+
+GOT
+===
+[ P(x_20) ::= x_20::node<q>@M * P2(q),
+ P2(x_21) ::= P(x_21)]
+
+If we confirm P2 first, and then
+proceed to process P; wouldn't P2 be
+unfolded to give:
+
+[ P(x_20) ::= x_20::node<q>@M * P(q),
+ P2(x_21) ::= P(x_21)]
+
+Later P2 can be dropped as --eup.
+We unfold because it ha a very simple RHS.
+
+
+
+
+*/
+

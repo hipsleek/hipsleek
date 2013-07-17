@@ -1,0 +1,31 @@
+data node{
+	node next;
+}.
+
+HeapPred H(node a).
+
+relAssume
+  H(x) --> H(x).
+
+relAssume
+  H(x) --> x=null.
+
+relAssume
+  H(x) --> x!=null.
+
+shape_infer [H][].
+
+
+/*
+# loop-3b3.slk
+
+GOT: 
+  H(x_21) ::= emp&x_21=null]
+
+This is UNSOUND! I was expecting
+  H(x) --> x=null & x!=null
+  H(x) --> false
+
+
+
+*/

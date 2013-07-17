@@ -1,0 +1,63 @@
+data node {
+  int val;
+  node next;
+}
+.
+
+HeapPred H2(node a,node b).
+HeapPred G2(node a, node b).
+HeapPred HP_5(node a, node@NI b).
+HeapPred HP_6(node a, node@NI b).
+HeapPred HP_9(node a, node@NI b).
+
+
+relAssume 
+  HP_6(y,x) --> y::node<val_27_794,next_27_795>@M * HP_9(next_27_795,x)&true.
+
+relAssume 
+  HP_5(n,y) * HP_6(y,x) * 
+  x::node<_,n>@M&n=null --> G2(x,y).
+
+Declare_Unknown [ HP_5, HP_9].
+shape_infer [HP_5,HP_6,HP_9][G2].
+
+
+
+/*
+# two-2.slk
+
+GOOD
+====
+
+[ HP_6(y_44,x_45) ::=  y_44::node<val_27_794,next_27_795>@M * HP_9(next_27_795,x_45)&true,
+ G2(x_47,y_48) ::=  HP_5(n,y_48) * x_47::node<Anon_11,n>@M * 
+y_48::node<val_27_794,next_27_46>@M * HP_9(next_27_46,x_47)&n=null,
+ HP_5(a,b) ::= NONE,
+ HP_9(a,b) ::= NONE]
+
+
+GOT
+===
+for scenarios that are not base-case split; we should allow
+pre-pred to be derived before we proceed with the derivation of 
+post-condition.
+
+[ HP_6(y_44,x_45) ::= y_44::node<val_27_794,next_27_795>@M * HP_9(next_27_795,x_45)&true,
+ G2(x_46,y_47) ::= HP_5(n,y_47) * x_46::node<Anon_11,n>@M&n=null,
+ HP_5(a,b) ::=NONE,
+ HP_9(a,b) ::=NONE]
+
+Was it to to a bad base-case split?
+
+EXPECT
+======
+  HP_6(y,x) <--> y::node<val_27_794,next_27_795>@M * HP_9(next_27_795,x)&true.
+
+  HP_5(n,y) * y::node<val_27_794,next_27_795>@M * HP_9(next_27_795,x) * 
+  x::node<_,n>@M&n=null --> G2(x,y).
+
+  G2(x,y) <->
+     HP_5(n,y) * y::node<val_27_794,next_27_795>@M * HP_9(next_27_795,x) * 
+     x::node<_,n>@M&n=null --> G2(x,y).
+
+*/

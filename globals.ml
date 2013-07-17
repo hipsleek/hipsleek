@@ -13,15 +13,21 @@ type ident = string
 type constant_flow = string
 
 exception Illegal_Prover_Format of string
+exception SA_HP_TUPLED
 
 let reverify_flag = ref false
+let reverify_all_flag = ref false
 let ineq_opt_flag = ref false
 
 let illegal_format s = raise (Illegal_Prover_Format s)
 
 
 (* type nflow = (int*int)(\*numeric representation of flow*\) *)
-
+type flags = 
+	  Flag_str of string
+	| Flag_int of int
+	| Flag_float of float
+	
 type bformula_label = int
 and ho_branch_label = string
 (*and branch_label = spec_label	(*formula branches*)*)
@@ -73,6 +79,14 @@ and term_fail =
   | TermErr_Must
 
 and rel = REq | RNeq | RGt | RGte | RLt | RLte | RSubAnn
+
+type hp_arg_kind=
+  | I
+  | NI
+
+let print_arg_kind i= match i with
+  | I -> ""
+  | NI -> "#"
 
 (* and prim_type =  *)
 (*   | TVar of int *)
@@ -177,7 +191,8 @@ let convert_prim_to_obj (t:typ) : typ =
 
 (*for heap predicate*)
 let hp_default_prefix_name = "HP_"
-let dang_hp_default_prefix_name = "DLING_"
+let hppost_default_prefix_name = "GP_"
+let dang_hp_default_prefix_name = "__DP"
 (*
   Data types for code gen
 *)
@@ -233,12 +248,12 @@ let string_of_vp_ann a =
 
 let string_of_term_ann a =
   match a with
-  | Term -> "Term"
-  | Loop -> "Loop"
-  | MayLoop -> "MayLoop"
-  | Fail f -> match f with
-    | TermErr_May -> "TermErr_May"
-    | TermErr_Must -> "TermErr_Must"
+    | Term -> "Term"
+    | Loop -> "Loop"
+    | MayLoop -> "MayLoop"
+    | Fail f -> match f with
+        | TermErr_May -> "TermErr_May"
+        | TermErr_Must -> "TermErr_Must"
 
 let string_of_loc (p : loc) = 
     Printf.sprintf "1 File \"%s\",Line:%d,Col:%d"
@@ -295,7 +310,7 @@ let string_of_loc_by_char_num (l : loc) =
 let proof_logging = ref false
 let proof_logging_txt = ref false
 let proof_logging_time = ref 0.000
-let sleek_src_files = ref ([]: string list)
+(* let sleek_src_files = ref ([]: string list) *)
 
 (*sleek logging*)
 let sleek_logging_txt = ref false
@@ -333,21 +348,11 @@ object
        | Some l -> (string_of_pos l.start_pos)
 end;;
 
-class proving_type =
-object
-  inherit [string] store "None" (fun x -> x)
-     (* method string_of_string : string = match lc with *)
-     (*   | None -> "None" *)
-     (*   | Some l -> l *)
-end;;
-
 
 
 (*Some global vars for logging*)
 let proving_loc  = new prog_loc
 let post_pos = new prog_loc
-let proving_kind = new proving_type
-let sleek_kind = new proving_type
 let explain_mode = new failure_mode
 let return_exp_pid = ref ([]: control_path_id list)	
 let z3_proof_log_list = ref ([]: string list)
@@ -355,51 +360,7 @@ let z3_time = ref 0.0
 
 let add_to_z3_proof_log_list (f: string) =
 	z3_proof_log_list := !z3_proof_log_list @ [f]
-	 
-let proving_info () = 
-  if(proving_kind # is_avail) then
-    (
-	let temp= if(explain_mode # is_avail) then "FAILURE EXPLAINATION" else proving_kind # string_of in
-      	if (post_pos # is_avail) 
-        then ("Proving Infor spec:"^(post_pos#string_of_pos) ^" loc:"^(proving_loc#string_of_pos)^" kind::"^temp)
-        else 
-          let loc_info = 
-            if (proving_loc # is_avail) then " loc:"^(proving_loc#string_of_pos)
-            else " loc: NONE" 
-          in ("Proving Infor spec:"^(post_pos#string_of_pos) ^loc_info^" kind::"^temp)
-    )
-  else "..no proving kind.."(*"who called is_sat,imply,simplify to be displayed later..."*)
-	
 
-let wrap_proving_kind (str : string) exec_function args =
-  (* if (!sleek_logging_txt || !proof_logging_txt) then *)
-    begin
-      let b = proving_kind # is_avail in
-      let m = proving_kind # get in
-      let _ = proving_kind # set str in
- 	  try 
-        let res = exec_function args in
-        let _ =  
-          if b then proving_kind # set m 
-          else proving_kind # reset
-        in res
-      with _ as e ->
-          begin
-            (if b then proving_kind # set m 
-            else proving_kind # reset);
-            raise e
-          end
-    end
-  (* else 	 *)
-  (*   let res = exec_function args  *)
-  (*   in res *)
- 
-(* let wrap_proving_kind (str : string) exec_function args = *)
-(*   Debug.no_1 "wrap_proving_kind" pr_id pr_none  *)
-(*       (fun _ -> wrap_proving_kind str exec_function args) str *)
-
-(* let post_pos = ref no_pos *)
-(* let set_post_pos p = post_pos := p *)
 
 let entail_pos = ref no_pos
 let set_entail_pos p = entail_pos := p
@@ -444,6 +405,11 @@ let rec string_of_typ (x:typ) : string = match x with
 let is_RelT x =
   match x with
     | RelT _ -> true
+    | _ -> false
+;;
+let is_HpT x =
+  match x with
+    | HpT -> true
     | _ -> false
 ;;
 
@@ -620,6 +586,9 @@ let lib_files = ref ([] : string list)
 
 (* command line options *)
 
+let texify = ref false
+let testing_flag = ref false
+
 let instantiation_variants = ref 0
 
 let omega_simpl = ref true
@@ -636,25 +605,69 @@ let consume_all = ref false
 
 let enable_split_lemma_gen = ref false
 
-let show_diff = ref false
+let dis_show_diff = ref false
 
 let sa_print_inter = ref false
 
-let sa_en_norm = ref true
+let print_heap_pred_decl = ref true
+
+let cond_path_trace = ref false
+
+let sa_old = ref false
+
+let sa_dnc = ref false
+
+(*temp: should be improve*)
+let pred_en_oblg = ref true
+
+(* let sa_en_norm = ref false *)
+
+let sa_en = ref true
 
 let sa_en_split = ref false
 
-let sa_elim_dangling = ref false
+(* let sa_dangling = ref false *)
 
-let sa_elim_useless = ref false
+let sa_refine_dang = ref false
 
-let sa_inlining = ref false
+let pred_elim_useless = ref false
+
+let pred_infer_flag = ref true
+
+let pred_elim_dangling = ref false
+
+(* let sa_inlining = ref false *)
+
+let sa_sp_split_base = ref false
+let sa_pure_field = ref false
+
+let sa_infer_split_base = ref true
+
+let pred_elim_unused_preds = ref true
+
+(* let sa_keep_unused_preds = ref false *)
 
 let sa_unify_dangling = ref false
 
+let pred_conj_unify = ref false
+
+let pred_disj_unify = ref false
+
+let pred_equiv = ref false
+
+let sa_tree_simp = ref false
+
+let sa_subsume = ref false
+
+(* let norm_elim_useless = ref false *)
+
+let norm_extract = ref false
+
+let norm_cont_analysis = ref false
+
 let dis_sem = ref false
 
-let show_diff_constrs = ref false
+(* let show_diff_constrs = ref true *)
 
 let procs_verified = ref ([] : string list)
 
@@ -666,6 +679,8 @@ let verify_callees = ref false
 
 let elim_unsat = ref false
 let disj_compute_flag = ref false
+let lhs_case_flag = ref false
+let lhs_case_search_flag = ref false
 let smart_xpure = ref true
 let super_smart_xpure = ref false
 let precise_perm_xpure = ref true
@@ -679,13 +694,18 @@ let elim_exists_ff = ref true
 
 let allow_imm = ref true (*imm will delay checking guard conditions*)
 
-let allow_field_ann = ref true
+let allow_field_ann = ref false
 
 let allow_mem = ref true
 
 let allow_inf = ref true (*enable support to use infinity (\inf and -\inf) in formulas *)
 
 let ann_derv = ref false
+
+let print_ann = ref true
+let print_derv = ref false
+
+let print_clean_flag = ref true
 
 (*is used during deployment, e.g. on a website*)
 (*Will shorten the error/warning/... message delivered
@@ -726,6 +746,8 @@ let check_all = ref true
   
 let auto_number = ref true
 
+let sleek_flag = ref false
+
 let sleek_log_filter = ref true
 (* flag to filter trivial sleek entailment logs *)
 
@@ -740,6 +762,8 @@ let hull_pre_inv = ref false
 let use_coercion = ref true
 
 let case_split = ref false
+
+let simplified_case_normalize = ref true
 
 let use_set = ref true
 
@@ -811,6 +835,10 @@ let enable_prune_cache = ref true
 
 let enable_counters = ref false
 
+let enable_time_stats = ref true
+
+let enable_count_stats = ref true
+
 let enable_fast_imply = ref false
 
 let failure_analysis = ref false
@@ -820,6 +848,7 @@ let seq_to_try = ref false
 let print_input = ref false
 let print_input_all = ref false
 
+let print_cil_input = ref false
 (* let pass_global_by_value = ref true *)
 
 (* let allow_pred_spec = ref false *)

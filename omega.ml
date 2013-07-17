@@ -78,6 +78,7 @@ let rec omega_of_exp e0 = match e0 with
       (* } *)
   | Max _
   | Min _ -> illegal_format ("Omega.omega_of_exp: min/max should not appear here")
+  | TypeCast _ -> illegal_format ("Omega.omega_of_exp: TypeCast should not appear here")
   | FConst _ -> illegal_format ("Omega.omega_of_exp: FConst")
   | Func _ -> "0" (* TODO: Need to handle *)
   | _ -> illegal_format ("Omega.omega_of_exp: array, bag or list constraint "^(!print_exp e0))
@@ -99,8 +100,14 @@ and omega_of_b_formula b =
   | SubAnn (a1, a2, _) -> (omega_of_exp a1) ^ " <= " ^ (omega_of_exp a2)
   (* | LexVar (_, a1, a2, _) -> "(0=0)" *)
   | Eq (a1, a2, _) -> begin
-        if is_null a2 then	(omega_of_exp a1)^ " < 1"
-        else if is_null a1 then (omega_of_exp a2) ^ " < 1"
+        if is_null a2 then
+          let v= omega_of_exp a1 in
+          ("("^v^" < 1)")
+          (* ("("^v^" < 1 && "^v^" = xxxnull)") *)
+        else if is_null a1 then 
+          let v= omega_of_exp a2 in
+          ("("^v^" < 1)")
+          (* ("("^v^ " < 1 && "^v^" = xxxnull)") *)
         else (omega_of_exp a1) ^ " = " ^ (omega_of_exp a2)
   end
   | Neq (a1, a2, _) -> begin
@@ -206,7 +213,7 @@ let start() =
 let stop () =
   if !is_omega_running then begin
     let num_tasks = !test_number - !last_test_number in
-    print_string ("Stop Omega... "^(string_of_int !omega_call_count)^" invocations "); flush stdout;
+    print_string_if !Globals.enable_count_stats ("Stop Omega... "^(string_of_int !omega_call_count)^" invocations "); flush stdout;
     let _ = Procutils.PrvComms.stop !log_all_flag log_all !process num_tasks Sys.sigkill (fun () -> ()) in
     is_omega_running := false;
   end
@@ -214,11 +221,11 @@ let stop () =
 (* restart Omega system *)
 let restart reason =
   if !is_omega_running then begin
-    let _ = print_string (reason^" Restarting Omega after ... "^(string_of_int !omega_call_count)^" invocations ") in
+    let _ = print_string_if !Globals.enable_count_stats (reason^" Restarting Omega after ... "^(string_of_int !omega_call_count)^" invocations ") in
     Procutils.PrvComms.restart !log_all_flag log_all reason "omega" start stop
   end
   else begin
-    let _ = print_string (reason^" not restarting Omega ... "^(string_of_int !omega_call_count)^" invocations ") in ()
+    let _ = print_string_if !Globals.enable_count_stats (reason^" not restarting Omega ... "^(string_of_int !omega_call_count)^" invocations ") in ()
     end
 
 (*

@@ -1,0 +1,19 @@
+# infx.slk -dd    DONE
+
+Why is infer_heap action invoked?
+
+ ### action =  InferHeap: ( A5::dll<Anon_12,Anon_13>@M[0][Orig][LHSCase], emp)
+ ### estate =  emp&true&{FLOW,(19,20)=__norm}[]
+ ### conseq =  A5::dll<Anon_12,Anon_13>@M[0][Orig][LHSCase]&true&{FLOW,(19,20)=__norm}[]
+
+# infx3.slk -dd   DONE
+
+Why is infer_heap invoked? should check if R[..] present first.
+
+# fold-c.slk  #DONE by Cristian
+
+Minimise implicit var in pred defn to only case 
+construct, e.g. fold-b.slk
+
+This help minimise intermediate vars and lead to better
+completeness

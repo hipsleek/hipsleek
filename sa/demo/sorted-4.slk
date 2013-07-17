@@ -1,0 +1,101 @@
+
+data node {
+ int val;
+ node next;
+}.
+
+HeapPred H(node x, int@NI v).
+PostPred G(node x, int@NI v).
+HeapPred H_0(int@NI x, int@NI v).
+HeapPred H_1(node x, int@NI v).
+HeapPred H_2(int@NI x, int@NI v).
+
+relAssume
+ H(x,v)&x!=null --> x::node<val_16_918,next_16_919>@M * 
+  H_0(val_16_918,v) * H_1(next_16_919,v).
+
+relAssume
+ H_1(next_16_919,v)&v<=val_16_918 --> H(next_16_919,val_16_918).
+
+relAssume
+ H(x,v)&x=null --> emp.
+
+
+relAssume
+ H_0(val_16_918,v) --> emp&val_16_918>=v.
+
+/*
+relAssume
+ emp&x=null --> G(x,v).
+
+relAssume
+ H_0(val_16_918,v) * x::node<val_16_918,next_16_919>@M * 
+  G(next_16_919,val_16_918)&v<=val_16_918 --> G(x,v).
+*/
+
+shape_infer [H,H_0,H_1,H_2][].
+
+/*
+# sorted-4.slk 
+
+GOT
+===
+[ H(x_60,v_61) ::= 
+ x_60::node<val_16_46,next_16_47>@M * H(next_16_47,val_16_58)&
+ v_61<=val_16_46 & v_61<=val_16_58
+ or emp&x_60=null,
+ H_1(next_16_63,v_64) ::= 
+ emp&v_64<=val_16_918 & next_16_63=null
+ or next_16_63::node<val_16_46,next_16_59>@M * H_1(next_16_59,val_16_918)&
+    v_64<=val_16_918 & val_16_918<=val_16_46,
+ H_0(val_16_66,v_67) ::= emp&v_67<=val_16_66]
+
+BETTER ALGO
+===========
+
+Step 1
+------
+Choose simplest which is H_0
+ H_0(val_16_918,v) --> emp&val_16_918>=v.
+ H_0(val_16_918,v) <-> val_16_918>=v.
+
+Step 2
+------
+Choose next simplest which is H_1
+ H_1(n,v)&v<=vv --> H(n,vv).
+
+Confirm equation:
+ H_1(n,v) & v<=vv --> H(n,vv).
+ H_1(n,v) & v<=vv <--> H(n,vv) ----[1]
+
+Step 2
+------
+Choose next simplest which is H
+
+ H(x,v)&x!=null --> x::node<val_16_918,next_16_919>@M * 
+  H_0(val_16_918,v) * H_1(next_16_919,v).
+ H(x,v)&x=null --> emp.  --- [2]
+
+Simplify (by unfolding simple defns only)
+ H(x,v)&x!=null --> x::node<vvv,next_16_919>@M * 
+  H_0(vvv,v) * H_1(next_16_919,v).
+ H(x,v)&x!=null --> x::node<vvv,next_16_919>@M * 
+        vvv>=v * H_1(next_16_919,v).
+ Conditional Unfold of [1] above
+ H(x,v)&x!=null --> x::node<vvv,next_16_919>@M * 
+         * H(next_16_919,vvv) & vvv>=v .--[3]
+
+Conj-unify [2] & [3]
+--------------------
+ H(x,v) --> emp & x=null
+   or x::node<vvv,next_16_919>@M * 
+         * H(next_16_919,vvv) & vvv>=v
+
+Confirm Equation
+----------------
+ H(x,v) <--> emp & x=null
+   or x::node<vvv,next_16_919>@M * 
+         * H(next_16_919,vvv) & vvv>=v
+
+
+*/

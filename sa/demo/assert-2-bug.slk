@@ -1,0 +1,45 @@
+data node {
+  node next;
+}.
+
+HeapPred H_9(node a).
+//1.
+infer [x] H_9(n) * x::node<n>
+  & n=t
+ |-  t=null.
+print residue.
+//2.
+infer [H9] H_9(t) * x::node<n> 
+  & n=t
+ |-  t=null.
+print residue.
+//3.
+infer [H9] H_9(n) * x::node<n> & y=n
+  & n=t
+ |-  t=null.
+print residue.
+/*
+<1>H_9(n) * x::node<n>@M[Orig]&n=y & n=t & y=null&{FLOW,(19,20)=__norm}[]
+ inferred pure: [y=null]
+*/
+
+
+
+/*
+# assert-2-bug.slk
+
+Entail (1) : Valid. 
+
+ <1>H_9(n) * x::node<n>@M[Orig]&n=t & n=null&{FLOW,(19,20)=__norm}[]
+ inferred pure: [n=null]
+
+
+Entail (2) : Valid. 
+
+ <1>H_9(t) * x::node<n>@M[Orig]&n=t & t=null&{FLOW,(19,20)=__norm}[]
+ inferred pure: [t=null]
+
+
+
+*/
+  

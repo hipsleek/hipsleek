@@ -1,0 +1,17 @@
+========tll-bug-2.slk ==========
+Starting Omega...oc
+H is defined.
+G is defined.
+HP_0 is defined.
+HP_8 is defined.
+HP_9 is defined.
+
+Entail (1) : Valid. 
+
+ <1>emp&right_29_846!=null & !(v_bool_29_826') & right_29_846!=null & !(v_bool_29_826') & right_29_846=right_29_846 & r=r & left_29_845=left_29_845 & res=v_node_37_825' & res=v_node_37_825'&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [HP_0(next_29_847,r@NI) * 
+                   x::node<left_29_845,right_29_846,next_29_847>@M * 
+                   G(right_29_846,r@NI,l_878) * 
+                   G(left_29_845,l_878@NI,v_node_37_825')&
+                   right_29_846!=null --> G(x,r@NI,v_node_37_825')]
+====================

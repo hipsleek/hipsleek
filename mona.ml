@@ -478,6 +478,7 @@ and mona_of_exp_x e0 f =
       | CP.Div (a1, a2, p) -> failwith "[mona.ml]: divide is not supported."
       | CP.Max _
       | CP.Min _ -> failwith ("mona.mona_of_exp: min/max can never appear here")
+      | CP.TypeCast _ -> failwith ("mona.mona_of_exp: TypeCast can never appear here")
       | CP.Bag (elist, _) -> "{"^ (mona_of_formula_exp_list elist f) ^ "}"
       | CP.BagUnion ([], _) -> ""
       | CP.BagUnion (e::[], _) -> (helper e)
@@ -966,10 +967,10 @@ let check_answer_x (mona_file_content: string) (answ: string) (is_sat_b: bool)=
             let _ = create_failure_file mona_file_content in
             restart "mona aborted execution";
             if !log_all_flag == true then
-		      output_string log_all ("[mona.ml]: "^ imp_sat_str ^" --> " ^(string_of_bool is_sat_b) ^"(from mona failure 1)\n");
-		      print_endline ("[mona] Warning: "^ imp_sat_str ^" --> " ^(string_of_bool is_sat_b) ^"(from mona failure 1)\n");
+		      output_string log_all ("[mona.ml]: "^ imp_sat_str ^" --> " ^(string_of_bool is_sat_b) ^"(from mona failure 1a)\n");
+		      print_endline ("[mona] Warning: "^ imp_sat_str ^" --> " ^(string_of_bool is_sat_b) ^"(from mona failure 1b)\n");
             is_sat_b
-      | _ ->
+      | s ->
             let _ = create_failure_file mona_file_content in
             try
               let _ = Str.search_forward (Str.regexp "Error in file") answ 0 in

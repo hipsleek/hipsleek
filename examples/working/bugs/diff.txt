@@ -1,0 +1,116 @@
+Latest on sleek
+===============
+Total number of errors: 15 in files:
+  infer/infer1.slk infer/infer2.slk infer/infer5.slk infer/infer6.slk infer/infer7.slk infer/infer8.slk infer/infer13.slk infer/infer14.slk infer/infer15.slk ann1.slk imm/imm1.slk imm/imm3.slk 
+imm/imm4.slk 
+imm/imm-hard.slk
+imm-field/sleek02.slk.
+
+before merge sleek 
+===================
+Total number of errors: 13 in files:
+  infer/infer1.slk infer/infer2.slk infer/infer5.slk infer/infer6.slk infer/infer7.slk infer/infer8.slk infer/infer13.slk infer/infer14.slk infer/infer15.slk ann1.slk imm/imm1.slk imm/imm3.slk 
+imm-field/sleek02.slk.
+
+default (imm4.slk)
+=======
+ <1>EXISTS(flted_3_54: (y::node<Anon_11@L,Anon_12@L>@L[Orig] * Anon_12::ll<flted_3_54>@L[0][Orig] ; x::ll<m>@M[0][Orig][LHSCase] * ((t::ll<a>@L[0][Orig][LHSCase] ; z::ll<m>@M[0][Orig][LHSCase])))&0<=0 & n=flted_3_54+1 & 0<n&{FLOW,(19,20)=__norm})[]
+
+Latest: (imm4.slk)
+=======
+ failed
+
+Latest: (imm4.slk with field-ann)
+=======
+ <1>EXISTS(flted_3_53: (y::node<Anon_11@L,Anon_12@L>@M[Orig] * Anon_12::ll<flted_3_53>@L[0][Orig] ; x::ll<m>@M[0][Orig][LHSCase] * ((t::ll<a>@L[0][Orig][LHSCase] ; z::ll<m>@M[0][Orig][LHSCase])))&n=flted_3_53+1 & 0<n&{FLOW,(19,20)=__norm})[]
+
+Before merge (imm4.slk --field-ann)
+============
+ <1>EXISTS(flted_3_52: (y::node<Anon_11@L,Anon_12@L>@M[Orig] * Anon_12::ll<flted_3_52>@L[0][Orig] ; x::ll<m>@M[0][Orig][LHSCase] * ((t::ll<a>@L[0][Orig][LHSCase] ; z::ll<m>@M[0][Orig][LHSCase])))&n=flted_3_52+1 & 0<n&{FLOW,(19,20)=__norm})[]
+
+
+Before merge (imm4.slk)
+============
+ <1>EXISTS(flted_3_53: (y::node<Anon_11,Anon_12>@L[Orig] * Anon_12::ll<flted_3_53>@L[0][Orig] ; x::ll<m>@M[0][Orig][LHSCase] * ((t::ll<a>@L[0][Orig][LHSCase] ; z::ll<m>@M[0][Orig][LHSCase])))&n=flted_3_53+1 & 0<n&{FLOW,(19,20)=__norm})[]
+
+before merge sleek --field-ann
+==============================
+Total number of errors: 13 in files:
+  infer/infer1.slk infer/infer2.slk infer/infer5.slk infer/infer6.slk infer/infer7.slk infer/infer8.slk infer/infer13.slk infer/infer14.slk infer/infer15.slk ann1.slk imm/imm1.slk imm/imm3.slk imm-field/sleek02.slk.
+
+Lastest with sleek --field-ann
+==============================
+Total number of errors: 13 in files:
+  infer/infer1.slk infer/infer2.slk infer/infer5.slk infer/infer6.slk infer/infer7.slk infer/infer8.slk infer/infer13.slk infer/infer14.slk infer/infer15.slk ann1.slk imm/imm1.slk imm/imm3.slk imm-field/sleek02.slk.
+
+default with sleek --field-ann
+==============================
+Total number of errors: 4 in files:
+  ann1.slk imm/imm1.slk imm/imm3.slk imm-field/sleek02.slk.
+Total verification time: 3.37 second
+	Time spent in main process: 1.22 second
+	Time spent in child processes: 2.15 second
+	Number of false contexts: 0
+
+default with sleek --dis-field-ann
+==============================
+Total number of errors: 5 in files:
+  ann1.slk imm/imm1.slk imm/imm3.slk imm/imm-hard.slk imm-field/sleek02.slk.
+
+default hip --eps
+=======
+All test results were as expected.
+Total verification time: 81.20 second
+	Time spent in main process: 33.61 second
+	Time spent in child processes: 47.59 second
+	Number of false contexts: 423
+
+default hip --eps --dis-field-ann
+=======
+All test results were as expected.
+Total verification time: 78.76 second
+	Time spent in main process: 39.51 second
+	Time spent in child processes: 39.25 second
+	Number of false contexts: 423
+
+Latest  hip --eps 
+======
+All test results were as expected.
+Total verification time: 101.81 second
+	Time spent in main process: 45.49 second
+	Time spent in child processes: 56.31 second
+	Number of false contexts: 423
+
+.
+
+Latest  hip --eps --field-ann
+======
+Total number of errors: 1 in files:
+ error at: qsort-tail.ss qsort
+.
+Total verification time: 56.82 second
+	Time spent in main process: 16.81 second
+	Time spent in child processes: 40.01 second
+	Number of false contexts: 422
+
+--eps
+
+Procedure qsort$node~node SUCCESS
+Termination checking result:
+Stop Omega... 17016 invocations 
+1 false contexts at: ( (67,16) )
+Total verification time: 56.071503 second(s)
+	Time spent in main process: 28.937808 second(s)
+	Time spent in child processes: 27.133695 second(s)
+
+../../hip hip/qsort-tail.ss -p qsort --eps --field-ann 
+--eps --field-ann
+
+Procedure qsort$node~node FAIL-2
+Exception Failure("Buffer.add: cannot grow buffer") Occurred!
+Error(s) detected when checking procedure qsort$node~node
+ExceptionFailure("Buffer.add: cannot grow buffer")Occurred!
+Error(s) detected at main 
+Stop Omega... 11971 invocations caught
+Exception occurred: Failure("Buffer.add: cannot grow buffer")
+Error(s) detected at main 

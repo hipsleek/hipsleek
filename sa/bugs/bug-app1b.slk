@@ -1,0 +1,36 @@
+data node{
+	int val;
+	node next;
+}.
+
+HeapPred H2(node a).
+HeapPred H3(node a).
+
+pred ln<> ==
+    self::node<_,q> & q=null
+  or self::node<_,q> * q::ln<> & q!=null
+ inv self!=null.
+
+pred lseg<p> ==
+    self::node<_,p> 
+  or self::node<_,q> * q::lseg<p> 
+ inv true.
+
+//infer [H2] H2(r)*H2(q)   |- r::lseg<null>*q::ln<>.
+
+infer [H2,H3] H2(r)*H3(q)   |- r::lseg<null>*q::ln<>.
+print residue.
+
+/*
+
+ es_trace:  COND ==>  InferHeap ==> 
+ es_infer_vars_hp_rel: [H2; HP_42]
+ es_infer_hp_rel: [(H2(r)) * (H2(q))&
+                    true --> r::lseg<flted_20_41>@M[LHSCase] * 
+                    (HP_42(flted_20_41))&true]
+ es_unsat_flag: false
+!!! n_lhs: q::ln@M[0][Orig][LHSCase]
+!!! n_lhs: q::ln@M[0][Orig][LHSCase]
+Entail (1) : Fail.
+
+*/

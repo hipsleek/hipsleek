@@ -1,0 +1,78 @@
+// simpler tll working example
+
+data node{
+	node left;
+	node right;
+}.
+
+
+HeapPred H(node a).
+PostPred G(node a, node c).
+HeapPred H_2(node a).
+HeapPred H_3(node a).
+HeapPred H_2a(node a).
+HeapPred H_3a(node a).
+
+//Declare_Unknown(2;1)[H_2]
+
+relAssume (1)
+ H(x) --> x::node<left_25_800,right_25_801>@M * H_2(left_25_800) 
+  * H_3(right_25_801).
+relAssume (1;1)
+ H_3(right_25_801)&right_25_801!=null --> H(right_25_801).
+relAssume (1;1)
+ H_2(left_25_800) --> H(left_25_800).
+relAssume (2;1)
+ H_3(right_25_801)&right_25_801=null --> emp.
+
+shape_divide [H,H_2,H_3][].
+
+
+/*
+# tll-if.slk
+
+*************************************
+*******relational definition ********
+*************************************
+  H_3(right_25_42)<-> H(right_25_42)&right_25_42!=null
+  H_2(left_25_43)<-> H(left_25_38) * left_25_43::node<left_25_38,right_25_39>@M * 
+H_3(right_25_39)
+  H(x_44)<-> H(left_25_38) * x_44::node<left_25_38,right_25_39>@M * H_3(right_25_39)
+*************************************
+
+*************************************
+*******relational definition ********
+*************************************
+  H(x_45)<-> x_45::node<left_25_800,right_25_801>@M * H_2(left_25_800) * 
+H_3(right_25_801)
+  H_3(right_25_46)<-> emp&right_25_46=null
+*************************************
+
+TWO PROBLEMS
+============
+1. The order of processing seems wrong. It should be:
+   1. Confirm H_2
+   2. Confirm H_3
+   3. Confirm H
+However, I saw only, so where is H?
+!!! >>>>>> step 3: apply transitive implication<<<<<<
+!!! >>>>>> step 3a: simplification <<<<<<
+!!!  synthesize: [H_3]
+!!! >>>>>> step 3b: do apply_transitive_imp <<<<<<
+!!! >>>>>> step 3a: simplification <<<<<<
+!!!  synthesize: [H_2]
+
+It seems you confirmed H before H2.
+
+2. When given:
+ H_3(right_25_801)&right_25_801!=null 
+   --> H(right_25_801).
+In DnC mode, we would transform it into:
+ H_3(right_25_801) <-> H(right_25_801) &right_25_801!=null 
+This would allow H3 to be inlined under DnC mode.
+
+In the normal mode, this conversion is not
+allowed.
+
+
+*/
