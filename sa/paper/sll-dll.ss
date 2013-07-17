@@ -13,7 +13,7 @@ HeapPred H1(node a, node@NI b).
 PostPred G1(node a, node b).
 
 void paper_fix (node x, node p)
-../infer[H1,G1] requires H1(x,p) ensures G1(x,p);
+infer[H1,G1] requires H1(x,p) ensures G1(x,p);
 //requires x::ll<> ensures x::dll<p>;
 {
         if (x!=null) 

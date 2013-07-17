@@ -2618,7 +2618,7 @@ and one_formula_subst sst (f : one_formula) =
 and subst sst (f : formula) = 
   let pr1 = pr_list (pr_pair !print_sv !print_sv) in
   let pr2 = !print_formula in
-  Debug.no_2 "subst_one_by_one" pr1 pr2 pr2 subst_x sst f 
+  Debug.ho_2 "subst_one_by_one" pr1 pr2 pr2 subst_x sst f 
 
 and subst_x sst (f : formula) =
   let rec helper f =
