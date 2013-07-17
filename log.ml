@@ -63,13 +63,17 @@ type sleek_log_entry = {
   (*   | BINDING -> "BINDING" *)
   (*   | ASSERTION -> "ASSERTION" *)
 
+
 let string_of_sleek_proving_kind () = proving_kind#string_of
+
 
 let string_of_log_type lt =
   match lt with
     |PT_IMPLY (ante, conseq) -> "Imply: ante:" ^(string_of_pure_formula ante) ^"\n\t     conseq: " ^(string_of_pure_formula conseq)
     |PT_SAT f-> "Sat: "^(string_of_pure_formula f) 
     |PT_SIMPLIFY f -> "Simplify: "^(string_of_pure_formula f)
+
+let last_proof_command = new store (PT_SAT (CP.mkTrue no_pos)) (string_of_log_type )
 
 let string_of_log_res lt r = 
   match r with

@@ -3,6 +3,7 @@
 *)
 
 open Globals
+open Gen
 open GlobProver
 module CP = Cpure
 
@@ -209,17 +210,17 @@ and preprocess_formula pr_w pr_s (f : CP.formula) : CP.formula =
 
 and find_order_x (f : CP.formula) vs = 
   let r = find_order_formula f vs in
-  if r then (find_order f vs) 
+  if r then (find_order_x f vs) 
 (*keep finding until reach fixed point*)
 
 and find_order (f : CP.formula) vs = 
-  Debug.no_2 "find_order" 
-      Cprinter.string_of_pure_formula string_of_hashtbl (fun f->"")
+  Debug.ho_eff_2 "find_order" [false;true]
+      Cprinter.string_of_pure_formula string_of_hashtbl Gen.pr_none
       find_order_x f vs
 
 and find_order_formula (f : CP.formula) vs : bool  = match f with
   | CP.And(f1, f2, _)
-  | CP.Or(f1, f2, _,_) -> ((find_order_formula f1 vs) || (find_order_formula f2 vs))
+  | CP.Or(f1, f2, _,_) -> ((find_order_formula f1 vs) or (find_order_formula f2 vs))
         (* make sure everything is renamed *)
   | CP.Forall(_, f1, _,_)
   | CP.Exists(_, f1, _,_)
@@ -227,16 +228,15 @@ and find_order_formula (f : CP.formula) vs : bool  = match f with
   | CP.AndList b -> List.exists (fun (_,c)-> find_order_formula c vs) b
   | CP.BForm(bf,_) -> (find_order_b_formula bf vs)
 
-and find_order_b_formula_x (bf : CP.b_formula) vs : bool =
-  let rec exp_order e vs =
+and exp_order e vs =
     match e with
-      | CP.Null _ -> 1 (* leave it unknown 0*)
+      | CP.Null _ -> 0 (* leave it unknown 0*)
       | CP.Var(sv, l) ->
 	        begin
 	          try
 	            Hashtbl.find vs sv
 	          with
-	            | Not_found -> 0 (* TO CHECK: 0 or 1*)
+	            | Not_found ->  (Hashtbl.add vs sv 0;0) (* TO CHECK: 0 or 1*)
 	        end
       | CP.Add (e1, e2, l1) 
       | CP.Subtract (e1, e2, l1) ->
@@ -258,7 +258,7 @@ and find_order_b_formula_x (bf : CP.b_formula) vs : bool =
       | CP.BagDiff _ -> 2
       | _ -> 0
 
-  in
+and find_order_b_formula_x (bf : CP.b_formula) vs : bool =
   let (pf,_) = bf in
   match pf with
     | CP.BagNotIn(sv1, e1, l1)
@@ -278,7 +278,7 @@ and find_order_b_formula_x (bf : CP.b_formula) vs : bool =
 	          | Not_found -> ((Hashtbl.add vs sv1 1); true)
 	          | _ -> false
           in
-	      rsv1 || (find_order_exp e1 2 vs)
+	      rsv1 or (find_order_exp e1 2 vs)
     | CP.BagMax(sv1, sv2, l1) 
     | CP.BagMin(sv1, sv2, l1) ->
           let r1 = 
@@ -305,7 +305,7 @@ and find_order_b_formula_x (bf : CP.b_formula) vs : bool =
 	          | Not_found -> ((Hashtbl.add vs sv1 2); true)
           in
           (r1 || r2)
-    | CP.BagSub(e1, e2, _) ->  ((find_order_exp e1 2 vs) || (find_order_exp e2 2 vs)) 
+    | CP.BagSub(e1, e2, _) ->  ((find_order_exp e1 2 vs) or (find_order_exp e2 2 vs)) 
     | CP.ListIn(e1, e2, _)
     | CP.ListNotIn(e1, e2, _) 
     | CP.ListAllN(e1, e2, _)
@@ -319,18 +319,18 @@ and find_order_b_formula_x (bf : CP.b_formula) vs : bool =
       	  let r1 = exp_order e1 vs in 
 	  let r2 = exp_order e2 vs in
 	  if (r1 == 1 || r2 == 1) then
-	    ((find_order_exp e1 1 vs) || (find_order_exp e2 1 vs)) 
+	    ((find_order_exp e1 1 vs) or (find_order_exp e2 1 vs)) 
 	  else
-	    ((find_order_exp e1 0 vs) || (find_order_exp e2 0 vs)) 
+	    ((find_order_exp e1 0 vs) or (find_order_exp e2 0 vs)) 
     | CP.EqMax(e1, e2, e3, _)
     | CP.EqMin(e1, e2, e3, _) -> 
           let r1 = exp_order e1 vs in
-	      let r2 = exp_order e2 vs in
-	      let r3 = exp_order e3 vs in
-	      if (r1 == 1 || r2 == 1 || r3 == 1) then
-	        ((find_order_exp e1 1 vs) || (find_order_exp e2 1 vs) || (find_order_exp e3 1 vs)) 
-	      else
-	        ((find_order_exp e1 0 vs) || (find_order_exp e2 0 vs) || (find_order_exp e3 0 vs)) 
+	  let r2 = exp_order e2 vs in
+	  let r3 = exp_order e3 vs in
+	  if (r1 == 1 || r2 == 1 || r3 == 1) then
+	    ((find_order_exp e1 1 vs) or (find_order_exp e2 1 vs) or (find_order_exp e3 1 vs)) 
+	  else
+	    ((find_order_exp e1 0 vs) or (find_order_exp e2 0 vs) or (find_order_exp e3 0 vs)) 
     | CP.BVar(sv1, l1) -> 
           begin
             try 
@@ -342,20 +342,20 @@ and find_order_b_formula_x (bf : CP.b_formula) vs : bool =
 	              (Hashtbl.replace vs sv1 2; true)
 	            else false
             with
-	          | Not_found -> (Hashtbl.replace vs sv1 2; true)
+	          | Not_found -> (Hashtbl.add vs sv1 2; true)
           end
     | CP.Eq(e1, e2, _)
     | CP.Neq(e1, e2, _) ->
       	  let r1 = exp_order e1 vs in
 	      let r2 = exp_order e2 vs in
 	      if (CP.is_bag e1) || (CP.is_bag e2) || (r1 == 2) || (r2 == 2) then
-	        ((find_order_exp e1 2 vs) || (find_order_exp e2 2 vs)) 
+	        ((find_order_exp e1 2 vs) or (find_order_exp e2 2 vs)) 
 	      else 
 	        if (r1 == 1 || r2 == 1) then
-	          ((find_order_exp e1 1 vs) || (find_order_exp e2 1 vs)) 
+	          ((find_order_exp e1 1 vs) or (find_order_exp e2 1 vs)) 
 	        else
-	          ((find_order_exp e1 0 vs) || (find_order_exp e2 0 vs)) 
-    | CP.RelForm (_ , el, l) -> List.fold_left (fun a b -> a || (find_order_exp b 0 vs)) false el
+	          ((find_order_exp e1 0 vs) or (find_order_exp e2 0 vs)) 
+    | CP.RelForm (_ , el, l) -> List.fold_left (fun a b -> a or (find_order_exp b 0 vs)) false el
     | _ -> false
 
 and find_order_b_formula (bf : CP.b_formula) vs : bool =
@@ -374,7 +374,7 @@ and find_order_exp_x (e : CP.exp) order vs = match e with
           try
 	        let r = Hashtbl.find vs sv1 in 
 	        if (r == 0 && order != 0) then
-              ((Hashtbl.replace vs sv1 order); true) 
+                  ((Hashtbl.replace vs sv1 order); true) 
 	        else
 	          if ((r == 1 && order == 2) || (r == 2 && order == 1)) then
 	            Error.report_error { Error.error_loc = l1; Error.error_text = ("Mona translation failure for variable " ^ (Cprinter.string_of_spec_var sv1) ^ " in Var \n")}
@@ -382,24 +382,24 @@ and find_order_exp_x (e : CP.exp) order vs = match e with
           with
 	        | Not_found -> ((Hashtbl.add vs sv1 order); true)
         end
-  | CP.Bag(el, l) -> List.fold_left (fun a b -> a || (find_order_exp b 1 vs)) false el
+  | CP.Bag(el, l) -> List.fold_left (fun a b -> a or (find_order_exp b 1 vs)) false el
   | CP.BagIntersect(el, l) 
-  | CP.BagUnion(el, l) -> List.fold_left (fun a b -> a || (find_order_exp b 2 vs)) false el
-  | CP.BagDiff(e1, e2, l) -> ((find_order_exp e1 2 vs) || (find_order_exp e2 2 vs))    
+  | CP.BagUnion(el, l) -> List.fold_left (fun a b -> a or (find_order_exp b 2 vs)) false el
+  | CP.BagDiff(e1, e2, l) -> ((find_order_exp e1 2 vs) or (find_order_exp e2 2 vs))    
   | CP.Add(e1, e2, l) ->
         (* let _ = print_string ("e1 = " ^ (Cprinter.string_of_formula_exp e1) ^ " and e2 = " ^ (Cprinter.string_of_formula_exp e2) ^ "\n") in *)
         if (CP.exp_contains_spec_var e1) && (CP.exp_contains_spec_var e2) then (* non-monadic formula ==> need second order *)
-          ((find_order_exp e1 2 vs) || (find_order_exp e2 2 vs))
+          ((find_order_exp e1 2 vs) or (find_order_exp e2 2 vs))
         else
-          ((find_order_exp e1 order vs) || (find_order_exp e2 order vs))
+          ((find_order_exp e1 order vs) or (find_order_exp e2 order vs))
   | CP.Subtract(e1, e2, l)
   | CP.Mult(e1, e2, l)
   | CP.Div(e1, e2, l)
   | CP.Max(e1, e2, l)
   | CP.Min(e1, e2, l) 
-  | CP.ListCons(e1, e2, l) -> ((find_order_exp e1 order vs) || (find_order_exp e2 order vs))
+  | CP.ListCons(e1, e2, l) -> ((find_order_exp e1 order vs) or (find_order_exp e2 order vs))
   | CP.List(el, l)
-  | CP.ListAppend(el, l) -> List.fold_left (fun a b -> a || (find_order_exp b order vs)) false el
+  | CP.ListAppend(el, l) -> List.fold_left (fun a b -> a or (find_order_exp b order vs)) false el
   | CP.ListHead(e, l)
   | CP.ListTail(e, l)
   | CP.ListLength(e, l)
@@ -427,7 +427,7 @@ and is_firstorder_mem_a e vs =
           begin
             try 
 	          let r = Hashtbl.find vs sv1 in 
-	          if (r == 1) || (r == 0) then true (* andreeac *)
+	          if (r == 1) (* || (r == 0)*) then true (* andreeac *)
 	          else false
             with 
 	          | Not_found -> Error.report_error { Error.error_loc = l1; Error.error_text = (" Error during Mona translation for var " ^ (Cprinter.string_of_spec_var sv1) ^ "\n")}
@@ -442,7 +442,7 @@ and part_firstorder_mem e vs =
           begin
             try 
 	          let r = Hashtbl.find vs sv1 in 
-	          if (r == 1) || (r == 0) then true (* andreeac *)
+	          if (r == 1) (*|| (r == 0)*) then true (* andreeac *)
 	          else false
             with 
 	          | Not_found -> false
@@ -939,6 +939,7 @@ let create_failure_file (content: string) =
   let failure_filename = "mona.failure" in
   let fail_file = open_out failure_filename in 
   let _ = output_string fail_file content in
+  Log.last_proof_command # dump;
   flush fail_file;
   close_out fail_file
 
@@ -1048,7 +1049,12 @@ let create_file_for_mona_x (filename: string) (fv: CP.spec_var list) (f: CP.form
         let all_fv = CP.remove_dups_svl fv in
         (* let vs = Hashtbl.create 10 in *)
 	(* let _ = find_order f vs in *)
-        let (part1, part2) = (List.partition (fun (sv) -> (is_firstorder_mem (CP.Var(sv, no_pos)) vs)) all_fv) in
+        let is_var1 sv vs = 
+          let v = Hashtbl.find vs sv in
+          if v==1 then true else false 
+        in
+        (* let (part1, part2) = (List.partition (fun (sv) -> (is_firstorder_mem (CP.Var(sv, no_pos)) vs)) all_fv) in *)
+        let (part1, part2) = (List.partition (fun sv -> is_var1 sv vs) all_fv) in
         let first_order_var_decls =
           if Gen.is_empty part1 then ""
           else "var1 " ^ (String.concat ", " (List.map mona_of_spec_var part1)) ^ ";\n " in

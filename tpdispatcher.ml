@@ -1230,6 +1230,8 @@ let simplify (f : CP.formula) : CP.formula =
   if !Globals.no_simpl then f else
   if !perm=Dperm && CP.has_tscons f<>CP.No_cons then f 
   else 
+    let cmd = PT_SIMPLIFY f in
+    let _ = Log.last_proof_command # set cmd in
     let omega_simplify f = Omega.simplify f in
     (* this simplifcation will first remove complex formula
        as boolean vars but later restore them *)
@@ -1309,10 +1311,10 @@ let simplify (f : CP.formula) : CP.formula =
             in CP.set_il_formula_with_dept_list r rel_vars_lst
           else r
         ) in   
-        let _= add_proof_log !cache_status simpl_no simpl_no (string_of_prover !pure_tp) (PT_SIMPLIFY f) (tstop -. tstart) (PR_FORMULA res) in
+        let _= add_proof_log !cache_status simpl_no simpl_no (string_of_prover !pure_tp) cmd (tstop -. tstart) (PR_FORMULA res) in
         res
       with | _ -> 
-        let _= add_proof_log !cache_status simpl_no simpl_no (string_of_prover !pure_tp) (PT_SIMPLIFY f) 
+        let _= add_proof_log !cache_status simpl_no simpl_no (string_of_prover !pure_tp) cmd 
           (0.0) (PR_exception) in
           f
    )
@@ -1983,19 +1985,21 @@ let simpl_pair rid (ante, conseq) =
 let is_sat (f : CP.formula) (old_sat_no : string): bool =
   proof_no := !proof_no+1 ;
   let sat_no = (string_of_int !proof_no) in
-	let tstart = Gen.Profiling.get_time () in		
+  let tstart = Gen.Profiling.get_time () in		
   Debug.devel_zprint (lazy ("SAT #" ^ sat_no)) no_pos;
   Debug.devel_zprint (lazy (!print_pure f)) no_pos;
   let f = elim_exists f in
   if (CP.isConstTrue f) then true 
   else if (CP.isConstFalse f) then false
   else
-	let (f, _) = simpl_pair true (f, CP.mkFalse no_pos) in
+    let cmd = PT_SAT f in
+    let _ = Log.last_proof_command # set cmd in
+    let (f, _) = simpl_pair true (f, CP.mkFalse no_pos) in
     (* let f = CP.drop_rel_formula f in *)
-	let res= sat_label_filter (fun c-> tp_is_sat c sat_no) f in
-	let tstop = Gen.Profiling.get_time () in
-	let _= add_proof_log !cache_status old_sat_no sat_no (string_of_prover !pure_tp) (PT_SAT f) (tstop -. tstart) (PR_BOOL res) in
-	res
+    let res= sat_label_filter (fun c-> tp_is_sat c sat_no) f in
+    let tstop = Gen.Profiling.get_time () in
+    let _= add_proof_log !cache_status old_sat_no sat_no (string_of_prover !pure_tp) cmd (tstop -. tstart) (PR_BOOL res) in
+    res
 ;;
 
 let is_sat (f : CP.formula) (sat_no : string): bool =
@@ -2012,6 +2016,8 @@ let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (old_imp_no : stri
   Debug.devel_zprint (lazy ("IMP #" ^ imp_no)) no_pos;  
   Debug.devel_zprint (lazy ("imply_timeout: ante: " ^ (!print_pure ante0))) no_pos;
   Debug.devel_zprint (lazy ("imply_timeout: conseq: " ^ (!print_pure conseq0))) no_pos;
+  let cmd = PT_IMPLY(ante0,conseq0) in
+  let _ = Log.last_proof_command # set cmd in
   let final_res=
 		if !external_prover then 
     match Netprover.call_prover (Imply (ante0,conseq0)) with

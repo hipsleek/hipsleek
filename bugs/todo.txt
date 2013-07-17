@@ -622,6 +622,48 @@ Total verification time: 30.165884 second(s)
 when the invariant of a view fail, it did not report
 a view name which could be helpful.
 ===================================================================
+# bug-2-swl.ss
+
+find_order@36
+find_order inp1 : (!((Mc_r36=union(Mnxt_1017_r36,{cur_1026_r36}) & 
+cur_1026_r36!=sentinel_1018_r36 & s_1014_r36=sentinel_1018_r36 & 
+cur_1026_r36=cur_r36 & prev_1025_r36=prev_r36 & sentinel_r36=sentinel_r36' & 
+cur_r36!=null & sentinel_1018_r36=sentinel_r36 & 
+sentinel_1019_r36=sentinel_r36 & n_50_r36'=nxt_1016_r36 & 
+next_39_1024_r36=nxt_1016_r36 & cur_1026_r36=prev_1037_r36 & 
+cur_1036_r36=n_50_r36' & cur_1036_r36!=sentinel_r36' & 
+!(v_bool_43_957_r36') & NULLV_r36=cur_1036_r36 & v_bool_44_958_r36' & 
+cur_r36'=prev_1037_r36 & NULLV_r36=prev_r36' & Mc_1040_r36={} & 
+nxt_1016_r36!=s_1014_r36 & (((NULLV_r36=nxt_1016_r36 & Mnxt_1017_r36={}) | 
+(nxt_1016_r36!=null & Mnxt_1017_r36!=({})))) & 
+(((prev_r36=sentinel_1019_r36 & Mp_r36={}) | (prev_r36!=sentinel_1019_r36 & 
+Mp_r36!=({}) & prev_r36!=null))) & cur_1026_r36!=null & NULLV_r36=null)) | 
+prev_r36'!=sentinel_1064_r36)
+find_order inp2 :
+find_order res2 :; (sentinel_1019_r36 1); (v_bool_43_957_r36' 2); (prev_r36 1); (prev_r36' 1); (Mp_r36 2); (s_1014_r36 1); (prev_1037_r36 1); (cur_1026_r36 1); (Mc_r36 2); (sentinel_r36 1); (sentinel_1018_r36 1); (cur_r36' 1); (cur_1036_r36 1); (prev_1025_r36 1); (Mnxt_1017_r36 2); (n_50_r36' 1); (v_bool_44_958_r36' 2); (nxt_1016_r36 1); (next_39_1024_r36 1); (sentinel_r36' 1); (cur_r36 1); (sentinel_1064_r36 0); (prev_r36' 0); (Mc_1040_r36 2); (NULLV_r36 1)
+find_order@36 EXIT out :?
+
+# bug-2-swl.slk
+
+find_order@3
+find_order inp1 : (!((Mc_r3=union(Mnxt_1017_r3,{cur_1026_r3}) & 
+cur_1026_r3!=sentinel_1018_r3 & s_1014_r3=sentinel_1018_r3 & 
+cur_1026_r3=cur_r3 & prev_1025_r3=prev_r3 & sentinel_r3=sentinel_r3' & 
+cur_r3!=null & sentinel_1018_r3=sentinel_r3 & sentinel_1019_r3=sentinel_r3 & 
+n_50_r3'=nxt_1016_r3 & next_39_1024_r3=nxt_1016_r3 & 
+cur_1026_r3=prev_1037_r3 & cur_1036_r3=n_50_r3' & 
+cur_1036_r3!=sentinel_r3' & !(v_bool_43_957_r3') & NULLV_r3=cur_1036_r3 & 
+v_bool_44_958_r3' & cur_r3'=prev_1037_r3 & NULLV_r3=prev_r3' & 
+Mc_1040_r3={} & nxt_1016_r3!=s_1014_r3 & (((NULLV_r3=nxt_1016_r3 & 
+Mnxt_1017_r3={}) | (nxt_1016_r3!=null & Mnxt_1017_r3!=({})))) & 
+(((prev_r3=sentinel_1019_r3 & Mp_r3={}) | (prev_r3!=sentinel_1019_r3 & 
+Mp_r3!=({}) & prev_r3!=null))) & cur_1026_r3!=null & NULLV_r3=null)) | 
+prev_r3'!=sentinel_1064_r3)
+find_order inp2 :
+find_order res2 :; (sentinel_1018_r3 1); (sentinel_1019_r3 1); (s_1014_r3 1); (Mc_1040_r3 2); (sentinel_r3 1); (cur_r3' 1); (prev_1037_r3 1); (NULLV_r3 1); (sentinel_r3' 1); (v_bool_43_957_r3' 2); (n_50_r3' 1); (prev_r3 1); (cur_r3 1); (cur_1026_r3 1); (v_bool_44_958_r3' 2); (Mp_r3 2); (Mnxt_1017_r3 2); (sentinel_1064_r3 1); (next_39_1024_r3 1); (nxt_1016_r3 1); (cur_1036_r3 1); (prev_r3' 1); (prev_1025_r3 1); (Mc_r3 2)
+find_order@3 EXIT out :?
+
+
 ===================================================================
 ===================================================================
 ===================================================================

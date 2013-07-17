@@ -317,7 +317,7 @@ let sleek_logging_txt = ref false
 
 (*Proof logging facilities*)
 class ['a] store (x_init:'a) (epr:'a->string) =
-   object 
+   object (self)
      val emp_val = x_init
      val mutable lc = None
      method is_avail : bool = match lc with
@@ -331,6 +331,7 @@ class ['a] store (x_init:'a) (epr:'a->string) =
      method string_of : string = match lc with
        | None -> "Why None?"
        | Some l -> (epr l)
+     method dump = print_endline ("\n store dump :"^(self#string_of))
    end;;
 
 (* this will be set to true when we are in error explanation module *)
