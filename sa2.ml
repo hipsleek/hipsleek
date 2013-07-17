@@ -1807,20 +1807,21 @@ and infer_shapes_proper iprog prog proc_name cond_path (constrs2: CF.hprel list)
       SAC.unify_pred prog unk_hps link_hps pre_defs1 unify_equiv_map1
     else (pre_defs1, unify_equiv_map1)
   in
+  (*********PRE-OBLG ********)
+  let pre_oblg_hps, pre_oblg_defs,unk_hpargs2,unk_map4  = if !Globals.pred_en_oblg then
+    infer_shapes_from_obligation iprog prog proc_name true cond_path (pre_oblg_constrs) callee_hps []
+        (sel_post_hps1) unk_hpargs1
+    (* link_hpargs *)[] need_preprocess unk_map3 detect_dang pre_defs2 [] (pre_hps)
+  else ([],[],unk_hpargs1,  unk_map3)
+  in
   let _ = DD.binfo_pprint ">>>>>> post-predicates<<<<<<" no_pos in
   let post_constrs1 = SAU.subst_equiv_hprel unify_equiv_map11 post_constrs in
-  let post_hps, post_defs,unk_hpargs2,unk_map4  = infer_shapes_init_post prog post_constrs1 []
-    (sel_post_hps1) unk_hpargs1 link_hps unk_map3 detect_dang pre_defs2 in
+  let post_hps, post_defs,unk_hpargs3,unk_map5  = infer_shapes_init_post prog post_constrs1 []
+    (sel_post_hps1) unk_hpargs2 link_hps unk_map4 detect_dang pre_defs2 in
   let post_defs1,unify_equiv_map2 = if false then (*this just for pre-preds*)
     SAC.do_unify prog unk_hps link_hps post_defs
   else
     (post_defs,unify_equiv_map11)
-  in
-  let pre_oblg_hps, pre_oblg_defs,unk_hpargs3,unk_map5  = if !Globals.pred_en_oblg then
-    infer_shapes_from_obligation iprog prog proc_name true cond_path (pre_oblg_constrs) callee_hps []
-        (sel_post_hps1) unk_hpargs2
-    (* link_hpargs *)[] need_preprocess unk_map4 detect_dang pre_defs2 post_defs1 (pre_hps@post_hps)
-  else ([],[],unk_hpargs,  unk_map4)
   in
   (*********POST-OBLG ********)
   let pr1 = pr_list_ln  Cprinter.string_of_hprel_short in
