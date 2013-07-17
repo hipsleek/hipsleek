@@ -5452,6 +5452,16 @@ from one of the two pre-oblications below?
  EXISTS(flted_36_993,flted_36_994,
   flted_36_995: HP_903(flted_36_995,flted_36_994,flted_36_993) * 
   cur_939::node<val_36_935,prev_936>@M&flted_36_995=prev_936 & 
+ERROR: at _0:0_0:0 
+Message: self of HP_902 cannot have its type determined
+ 
+ExceptionFailure("self of HP_902 cannot have its type determined")Occurred!
+
+Error(s) detected at main 
+Stop Omega... 89 invocations caught
+(Program not linked with -g, cannot print stack backtrace)
+
+Exception occurred: Failure("self of HP_902 cannot have its type determined"
   cur_939=flted_36_994 & flted_36_993=sent_934 & prev_937=null & 
   cur_938=cur_939)[] --> EXISTS(flted_36_1016,flted_36_1017,flted_36_1018,
   flted_36_1019,flted_36_1020: cur_938::node<val_36_900,next_36_901>@M * 
@@ -5497,6 +5507,19 @@ without --classic, we seem to have a fuller set:
 *************************************
 
 =====================================================================
+# swl-i.ss 
+
+the order of processing is not correct, as post-pred
+should be done only after pre-pred.
+
+a:69:!!!     synthesize: H
+a:76:!!!     synthesize: G
+a:84:!!!  synthesize: [G]
+a:127:!!!     synthesize: HP_902
+a:130:!!!     synthesize: HP_1018
+a:136:!!!     synthesize: HP_903
+a:143:!!!  synthesize: [HP_903]
+
 =====================================================================
 =====================================================================
 =====================================================================
