@@ -442,24 +442,9 @@ and gather_type_info_var_x (var : ident) tlist (ex_t : spec_var_kind) pos : (spe
   else
     try
       let (ident, k) = List.find (fun (a,b) -> a = var )tlist in
-      (* let ls0 =  List.filter (fun (a,b) -> a = var ) tlist in *)
-      (* if ls0 = [] then *)
-      (*   let vk = fresh_proc_var_kind tlist ex_t in *)
-      (*   ((var,vk)::tlist, vk.sv_info_kind) *)
-      (* else *)
-      (*   let ls1 =  List.filter (fun (a,b) -> *)
-      (*       match b.sv_info_kind with *)
-      (*         | Named id -> not(String.compare id "" = 0) *)
-      (*         | _ -> false *)
-      (*   ) ls0 in *)
-      (*   let (ident, k)= *)
-      (*     if ls1 = [] then *)
-      (*     List.hd ls0 *)
-      (*     else List.hd ls1 *)
-      (*   in *)
-        let (n_tlist,tmp) = must_unify k.sv_info_kind ex_t tlist pos in 
-        let n_tlist = type_list_add ident {sv_info_kind = tmp;id=k.id} n_tlist in
-        (n_tlist, tmp )
+      let (n_tlist,tmp) = must_unify k.sv_info_kind ex_t tlist pos in 
+      let n_tlist = type_list_add ident {sv_info_kind = tmp;id=k.id} n_tlist in
+      (n_tlist, tmp )
     with
       | Not_found ->
           let vk = fresh_proc_var_kind tlist ex_t in

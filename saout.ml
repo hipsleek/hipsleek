@@ -39,25 +39,11 @@ let norm_free_svl f0 args=
   in
   helper f0
 in
-(* let rec get_nonnull_typ_self svl r default_typ= *)
-(*   match svl with *)
-(*     | [] ->  default_typ *)
-(*     | sv::rest -> *)
-(*           if CP.eq_spec_var sv r then *)
-(*             begin *)
-(*               match CP.type_of_spec_var sv with *)
-(*                 | Named id1 ->  if (String.compare id1 "" = 0) then *)
-(*                     get_nonnull_typ_self rest r default_typ *)
-(*                   else id1 *)
-(*                 | _ -> get_nonnull_typ_self rest r default_typ *)
-(*             end *)
-(*           else get_nonnull_typ_self rest r default_typ *)
-(* in *)
-  List.fold_left (fun acc (rel_cat, hf,_,f_body)->
+List.fold_left (fun acc (rel_cat, hf,_,f_body)->
       match rel_cat with
 	| CP.HPRelDefn (v,r,paras)->
-              let _ = Debug.binfo_hprint (add_str "hp: " !CP.print_sv) v no_pos in
-              let _ = Debug.binfo_hprint (add_str "r: " !CP.print_sv) r no_pos in
+              let _ = Debug.ninfo_hprint (add_str "hp: " !CP.print_sv) v no_pos in
+              let _ = Debug.ninfo_hprint (add_str "r: " !CP.print_sv) r no_pos in
 	      let vname = sv_name v in
 	      let slf, vars, tvars = match hf with
 		| CF.HRel (v1,el,_)->
@@ -83,12 +69,7 @@ in
                   (*   id *)
                 | _ -> report_error no_pos "should be a data name"
               in
-              (* let _ = Debug.binfo_hprint (add_str "data_name: " pr_id) data_name no_pos in *)
-              (* let nr = CP.SpecVar (Named data_name, CP.name_of_spec_var r, CP.primed_of_spec_var r) in *)
-              (* let ss = [(nr, r)] in *)
-              (* let f_body1 = CF.subst ss f_body1 in *)
-              (*END TEMP*)
-	      let no_prm_body = CF.elim_prm f_body1 in
+              let no_prm_body = CF.elim_prm f_body1 in
 	      let new_body = CF.set_flow_in_formula_override {CF.formula_flow_interval = !top_flow_int; CF.formula_flow_link =None} no_prm_body in
 	      let i_body = AS.rev_trans_formula new_body in
 	      let i_body = IF.subst [((slf,Unprimed),(self,Unprimed))] i_body in
