@@ -5440,6 +5440,62 @@ on H being confirmed.
   HP_902(next_36_901,cur_941,sent_945) * HP_903(cur_941,next_36_944,sent_945)
 
 =====================================================================
+# swl-i.ss --classic
+
+How come we are missing on some relational assumptions
+from one of the two pre-oblications below? 
+
+
+!!! hp: :HP_902
+!!! r: :next_36_963
+!!! PRE-OBLIGATION:
+ EXISTS(flted_36_993,flted_36_994,
+  flted_36_995: HP_903(flted_36_995,flted_36_994,flted_36_993) * 
+  cur_939::node<val_36_935,prev_936>@M&flted_36_995=prev_936 & 
+  cur_939=flted_36_994 & flted_36_993=sent_934 & prev_937=null & 
+  cur_938=cur_939)[] --> EXISTS(flted_36_1016,flted_36_1017,flted_36_1018,
+  flted_36_1019,flted_36_1020: cur_938::node<val_36_900,next_36_901>@M * 
+  next_36_901::HP_902<flted_36_1020,flted_36_1019>@M * 
+  HP_903(flted_36_1018,flted_36_1017,flted_36_1016)&flted_36_1020=prev_937 & 
+  flted_36_1019=sent_934 & flted_36_1018=prev_937 & cur_938=flted_36_1017 & 
+  flted_36_1016=sent_934)[]
+!!! PRE-OBLIGATION:
+ EXISTS(flted_36_1042,flted_36_1043,flted_36_1044,flted_36_1045,
+  flted_36_1046: next_36_943::HP_902<flted_36_1046,flted_36_1045>@M * 
+  HP_903(flted_36_1044,flted_36_1043,flted_36_1042) * 
+  cur_940::node<val_36_941,prev_942>@M&flted_36_1046=prev_942 & 
+  flted_36_1045=sent_944 & flted_36_1044=prev_942 & cur_940=flted_36_1043 & 
+  flted_36_1042=sent_944 & next_36_943!=null & next_36_943!=sent_944)
+  [] --> EXISTS(flted_36_1070,flted_36_1071,flted_36_1072,flted_36_1073,
+  flted_36_1074: next_36_943::node<val_36_900,next_36_901>@M * 
+  next_36_901::HP_902<flted_36_1074,flted_36_1073>@M * 
+  HP_903(flted_36_1072,flted_36_1071,flted_36_1070)&cur_940=flted_36_1074 & 
+  flted_36_1073=sent_944 & cur_940=flted_36_1072 & 
+  flted_36_1071=next_36_943 & flted_36_1070=sent_944)[][Warning] False ctx
+
+
+*************************************************
+*******relational assumptions (obligation)********
+****************************************************
+[ HP_903(prev_936,cur_939,sent_934) --> prev_936::HP_902<prev_937,sent_934>@M * 
+  HP_1098(prev_937,cur_939,sent_934),
+ emp --> HP_903(prev_937,cur_938,sent_934)]
+*************************************
+
+without --classic, we seem to have a fuller set:
+
+*************************************************
+*******relational assumptions (obligation)********
+****************************************************
+[ emp --> HP_902(next_36_901,prev_937,sent_934),
+ emp --> HP_903(prev_937,cur_938,sent_934),
+ HP_902(next_36_943,prev_942,sent_944)&next_36_943!=null & 
+  next_36_943!=sent_944 --> next_36_943::node<val_36_1131,next_36_1132>@M * 
+  HP_1133(next_36_1132,prev_942,sent_944),
+ emp --> HP_902(next_36_901,cur_940,sent_944),
+ emp --> HP_903(cur_940,next_36_943,sent_944)]
+*************************************
+
 =====================================================================
 =====================================================================
 =====================================================================
