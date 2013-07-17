@@ -1079,6 +1079,7 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
     else ())
   in 
   let check_and_compute () = 
+    let vn = vdef.C.view_name in
     if not(vdef.C.view_is_prim) then
       let (xform', _ (*addr_vars'*), ms) = Solver.xpure_symbolic prog (C.formula_of_unstruc_view_f vdef) in	
       (*let addr_vars = CP.remove_dups_svl addr_vars' in*)
@@ -1092,7 +1093,7 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
 	let disj_f = CP.split_disjunctions_deep pf in
         let do_not_recompute_flag = (List.length disj_f>1) && not(!Globals.disj_compute_flag) in
         helper n do_not_recompute_flag
-      else report_error pos "view formula does not entail supplied invariant\n" in ()
+      else report_error pos ("view defn for "^vn^" does not entail supplied invariant\n") in ()
     else ()
   in
   check_and_compute ()
@@ -7384,8 +7385,8 @@ and check_mem_formula_guards_disjoint (fl: CP.formula list) : bool =
     Tpdispatcher.is_sat_sub_no (Cpure.Not (f,None,no_pos)) sat_subno
 
 and validate_mem_spec (prog : C.prog_decl) (vdef: C.view_decl) = 
+    let vn = vdef.C.view_name in
     match vdef.C.view_mem with
-
     | Some a -> let pos = CF.pos_of_struc_formula vdef.C.view_formula in 
             let list_of_disjuncts = fst (List.split vdef.C.view_un_struc_formula) in 
                 let list_of_calcmem = 
@@ -7405,7 +7406,7 @@ and validate_mem_spec (prog : C.prog_decl) (vdef: C.view_decl) =
             Err.error_text = "[mem.ml] : Memory Guards of "^ vdef.C.view_name ^" are not exhaustive ";} 
                 else 
             Err.report_error {Err.error_loc = pos;
-            Err.error_text = "[astsimp.ml] : Mem Spec does not entail supplied invariant";}
+            Err.error_text = "[astsimp.ml] : Mem Spec for "^vn^" does not entail supplied invariant";}
             (*let calcmem = 
             MCP.simpl_memo_pure_formula Solver.simpl_b_formula Solver.simpl_pure_formula calcmem (TP.simplify_a 10) in 
             let lhs = CF.formula_of_mix_formula vdef.C.view_x_formula pos in

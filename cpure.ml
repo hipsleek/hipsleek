@@ -2091,10 +2091,11 @@ and split_conjunctions_x =  function
   | AndList l -> List.map (fun p -> AndList [p]) l
         (* Gen.fold_l_snd split_conjunctions_x l *)
   | z -> [z]
-        
+
 and split_conjunctions f =  
   let pr = !print_formula in
   Debug.no_1 "split_conjunctions" pr (pr_list pr) split_conjunctions_x f 
+
 
 and join_conjunctions fl = conj_of_list fl no_pos
 

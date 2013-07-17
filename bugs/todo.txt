@@ -602,7 +602,25 @@ cur_1016!=null
  res: false
 
 ===================================================================
+# bug-2-swl.ss -tp om -nxpure 0
+
+Procedure lscan$node~node~node FAIL-2
+
+Exception Failure("Mona translation failure!!\nError in file monatemp line  column ") Occurred!
+(Program not linked with -g, cannot print stack backtrace)
+
+Error(s) detected when checking procedure lscan$node~node~node
+Stop Omega... 37 invocations 
+1 false contexts at: ( (42,24) )
+
+Total verification time: 30.165884 second(s)
+	Time spent in main process: 0.380023 second(s)
+	Time spent in child processes: 29.785861 second(s)
 ===================================================================
+# bug-3-view-swl.ss -tp om  # FIXED
+
+when the invariant of a view fail, it did not report
+a view name which could be helpful.
 ===================================================================
 ===================================================================
 ===================================================================

@@ -12,16 +12,19 @@ inv forall(x: x notin M | x != null);
 lg<s,M> == self = null & M = {} & self != s
 	or self::node<_,nxt> * nxt::lg<s,Mnxt> & M = union(Mnxt,{self}) & self != s
 //inv forall(x: x notin M | (x != null & x != s));
-inv self!=s;
+inv self!=s
+  & (self=null & M={} | self!=null)
+ ;
 
 ls<p,M> == self = p & M = {} //& self!=null
 	or self::node<_,nxt> * nxt::ls<p,M1> & self != p & M = union({self},M1) 
   inv true
-  //& (self=p & M={} | self!=p)
+  & (self=p & M={} | self!=p)
   ;
 //self!=null;
 
 //global node SENTINEL;
+
 
 void lscan(ref node cur, ref node prev, node sentinel)
 requires cur::lg<sentinel,Mc> * prev::ls<sentinel,Mp> & cur != null
@@ -47,3 +50,6 @@ ensures prev'::lg<sentinel,union(Mc,Mp)> & cur'=sentinel;
 //dprint;
 }
 
+/*
+
+*/

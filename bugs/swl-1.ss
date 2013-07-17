@@ -9,11 +9,11 @@ ll<M> == self = null & M = {}
 inv forall(x: x notin M | x != null);
 */
 
-lg<s,M> == self = null & M = {} & self != s
-     or self::node<_,nxt> * nxt::lg<s,Mnxt> 
-             & M = union(Mnxt,{self}) & self != s
+lg<s,n> == self = null &n=0 & self != s
+     or self::node<_,nxt> * nxt::lg<s,n1> 
+             & n=n1+1  & self != s
 //inv forall(x: x notin M | (x != null & x != s));
-inv self!=s;
+inv self!=s & n>=0;
 
 /*
 ls<p,M> == self = p & M = {}
