@@ -20,7 +20,7 @@ module TI = Typeinfer
 
 let sv_name = CP.name_of_spec_var
 
-let transform_hp_rels_to_iviews iprog (hp_rels:( CF.hp_rel_def) list):(ident*I.view_decl) list =
+let transform_hp_rels_to_iviews iprog cprog (hp_rels:( CF.hp_rel_def) list):(ident*I.view_decl) list =
 (*CP.rel_cat * h_formula * formula*)
 let norm_free_svl f0 args=
   let rec helper f=
@@ -39,6 +39,20 @@ let norm_free_svl f0 args=
   in
   helper f0
 in
+(* let rec get_nonnull_typ_self svl r default_typ= *)
+(*   match svl with *)
+(*     | [] ->  default_typ *)
+(*     | sv::rest -> *)
+(*           if CP.eq_spec_var sv r then *)
+(*             begin *)
+(*               match CP.type_of_spec_var sv with *)
+(*                 | Named id1 ->  if (String.compare id1 "" = 0) then *)
+(*                     get_nonnull_typ_self rest r default_typ *)
+(*                   else id1 *)
+(*                 | _ -> get_nonnull_typ_self rest r default_typ *)
+(*             end *)
+(*           else get_nonnull_typ_self rest r default_typ *)
+(* in *)
   List.fold_left (fun acc (rel_cat, hf,_,f_body)->
       match rel_cat with
 	| CP.HPRelDefn (v,r,paras)->
@@ -60,15 +74,25 @@ in
               in
               (*mkExist*)
               let f_body1 = norm_free_svl f_body (r::paras) in
+              let data_name  = match CP.type_of_spec_var r with
+                | Named id -> (* if String.compare id "" = 0 then *) id
+                    (* let n_id = C.get_root_typ_hprel cprog.C.prog_hp_decls (CP.name_of_spec_var v) in *)
+                    (* let _ = Debug.binfo_hprint (add_str "n_id: " pr_id) n_id  no_pos in *)
+                    (* (n_id) *)
+                  (* else *)
+                  (*   id *)
+                | _ -> report_error no_pos "should be a data name"
+              in
+              (* let _ = Debug.binfo_hprint (add_str "data_name: " pr_id) data_name no_pos in *)
+              (* let nr = CP.SpecVar (Named data_name, CP.name_of_spec_var r, CP.primed_of_spec_var r) in *)
+              (* let ss = [(nr, r)] in *)
+              (* let f_body1 = CF.subst ss f_body1 in *)
+              (*END TEMP*)
 	      let no_prm_body = CF.elim_prm f_body1 in
 	      let new_body = CF.set_flow_in_formula_override {CF.formula_flow_interval = !top_flow_int; CF.formula_flow_link =None} no_prm_body in
 	      let i_body = AS.rev_trans_formula new_body in
 	      let i_body = IF.subst [((slf,Unprimed),(self,Unprimed))] i_body in
 	      let struc_body = IF.mkEBase [] [] [] i_body None (* false *) no_pos in
-              let data_name = match CP.type_of_spec_var r with
-                | Named id -> id
-                | _ -> report_error no_pos "should be a data name"
-              in
               let n_iview = {  I.view_name = vname;
               I.view_pos = no_pos;
 	      I.view_data_name = data_name;
@@ -90,10 +114,10 @@ in
 	      (vname, n_iview)::acc
 	| _ -> acc) [] hp_rels
 
-let transform_hp_rels_to_iviews iprog hp_rels =
+let transform_hp_rels_to_iviews iprog cprog hp_rels =
   let pr1 = pr_list (pr_pair pr_id Cprinter.string_of_hp_rel_def) in
   let pr2 = pr_list (pr_pair pr_id Iprinter.string_of_view_decl) in
-  Debug.no_1 "transform_hp_rels_to_iviews" pr1 pr2 transform_hp_rels_to_iviews iprog hp_rels
+  Debug.no_1 "transform_hp_rels_to_iviews" pr1 pr2 transform_hp_rels_to_iviews iprog cprog hp_rels
 
 let syn_hprel_x crem_hprels irem_hprels=
   let rec process_one chps res=
@@ -123,12 +147,18 @@ let syn_hprel crem_hprels irem_hprels =
       (fun _ _ -> syn_hprel_x crem_hprels irem_hprels)
       crem_hprels irem_hprels
 
-let hn_trans vnames hn = match hn with
-  | IF.HRel (id,args, pos)->
+let hn_trans cprog vnames hn = match hn with
+  | IF.HRel (id,eargs, pos)->
         if (List.exists (fun n-> (String.compare n id)==0) vnames) then
-          let hvar,tl = match args with
-            | (IP.Var (v,_))::tl-> v,tl
-            | _ -> failwith "reverification failure due to too complex predicate arguments \n" in
+          let hvar,args =
+            let er, args = C.get_root_args_hprel cprog.C.prog_hp_decls id eargs in
+            let r = match er with
+              | (IP.Var (sv,_))-> sv
+              | IP.Ann_Exp (IP.Var (sv, _), _, _) -> sv (*annotated self*)
+              | _ -> failwith "sao.hn_trans: reverification failure due to too complex predicate arguments \n"
+            in
+            (r, args)
+          in
           IF.HeapNode {
               IF.h_formula_heap_node = hvar;
               IF.h_formula_heap_name = id;
@@ -139,28 +169,28 @@ let hn_trans vnames hn = match hn with
               IF.h_formula_heap_full = false;
               IF.h_formula_heap_with_inv = false;
               IF.h_formula_heap_perm = None;
-              IF.h_formula_heap_arguments = tl;
+              IF.h_formula_heap_arguments = args;
               IF.h_formula_heap_pseudo_data = false;
               IF.h_formula_heap_label = None;
               IF.h_formula_heap_pos = pos}
         else hn
   | _ -> hn
 
-let plugin_inferred_iviews views iprog =
+let plugin_inferred_iviews views iprog cprog =
   let vnames = List.map (fun (n,_)-> n) views in
   let vdecls = List.map (fun (_,prd)-> { prd with
       I.view_name = prd.I.view_name;
-      I.view_formula = IF.struc_formula_trans_heap_node (hn_trans vnames) prd.I.view_formula}
+      I.view_formula = IF.struc_formula_trans_heap_node (hn_trans cprog vnames) prd.I.view_formula}
   ) views
   in
   {iprog with
       I.prog_view_decls= iprog.I.prog_view_decls@vdecls;
   }
 
-let plugin_inferred_iviews views iprog =
+let plugin_inferred_iviews views iprog cprog =
   let pr1 = pr_list (pr_pair pr_id pr_none) in
   Debug.no_1 "plugin_inferred_iviews" pr1 Iprinter.string_of_program
-      (fun _ -> plugin_inferred_iviews views iprog) views
+      (fun _ -> plugin_inferred_iviews views iprog cprog) views
 
 let trans_hprel_2_cview_x iprog cprog proc_name hpdefs:
       C.view_decl list * C.hp_decl list =
@@ -188,9 +218,9 @@ let trans_hprel_2_cview_x iprog cprog proc_name hpdefs:
   let irem_hprels1 = syn_hprel crem_hprels irem_hprels in
   let _ = iprog.I.prog_hp_decls <- iprog.I.prog_hp_decls@irem_hprels1 in
   (*convert to iview*)
-  let pair_iviews = transform_hp_rels_to_iviews iprog hpdefs2 in
+  let pair_iviews = transform_hp_rels_to_iviews iprog cprog hpdefs2 in
   (*subst hprel -> view in defs*)
-  let n_iproc = plugin_inferred_iviews pair_iviews iprog in
+  let n_iproc = plugin_inferred_iviews pair_iviews iprog cprog in
   let _ = iprog.I.prog_view_decls <- n_iproc.I.prog_view_decls in
   let iviews, new_views = List.fold_left (fun (ls1,ls2) (id,iv) -> ((ls1@[iv]), (ls2@[id]))) ([],[]) pair_iviews in
   let _ = List.iter (AS.process_pred_def_4_iast iprog) iviews in
@@ -214,22 +244,23 @@ let trans_hprel_2_cview iprog cprog proc_name hp_rels :
 
 
 let trans_formula_hp_2_view_x iprog cprog proc_name in_hp_names chprels_decl f=
-  let rec part_sv_from_pos ls n n_need rem=
-    match ls with
-      | [] -> report_error no_pos "sau.get_sv_from_pos"
-      | sv1::rest -> if n = n_need then (sv1, rem@rest)
-        else part_sv_from_pos rest (n+1) n_need (rem@[sv1])
-  in
-  let retrieve_root hp_name args=
-    let rpos = C.get_proot_hp_def_raw chprels_decl
-      hp_name in
-    let r,paras = part_sv_from_pos args 0 rpos [] in
-    (r,paras)
-  in
+  (* let rec part_sv_from_pos ls n n_need rem= *)
+  (*   match ls with *)
+  (*     | [] -> report_error no_pos "sau.get_sv_from_pos" *)
+  (*     | sv1::rest -> if n = n_need then (sv1, rem@rest) *)
+  (*       else part_sv_from_pos rest (n+1) n_need (rem@[sv1]) *)
+  (* in *)
+  (* let retrieve_root hp_name args= *)
+  (*   let rpos = C.get_proot_hp_def_raw chprels_decl *)
+  (*     hp_name in *)
+  (*   let r,paras = part_sv_from_pos args 0 rpos [] in *)
+  (*   (r,paras) *)
+  (* in *)
   let hn_trans hn = match hn with
     | IF.HRel (id,args, pos)->
 	  if (List.exists (fun n -> (String.compare n id)==0) in_hp_names) then
-	    let hvar,tl = retrieve_root id args in
+	    (* let hvar,tl = retrieve_root id args in *)
+            let hvar,tl = C.get_root_args_hprel chprels_decl id args in
             let r = match hvar with
               | (IP.Var (v,_)) -> v
               | IP.Ann_Exp (IP.Var (v, _), _, _) -> v (*annotated self*)
@@ -261,7 +292,7 @@ let trans_formula_hp_2_view_x iprog cprog proc_name in_hp_names chprels_decl f=
   let if3 = AS.case_normalize_formula iprog [] if2 None in
   let n_tl = TI.gather_type_info_formula iprog if3 [] false in
   let _, f2 = AS.trans_formula iprog false [] false if3 n_tl false in
-  f2
+  CF.elim_exists f2
 
 let trans_formula_hp_2_view iprog cprog proc_name in_hp_names chprels_decl f=
   let pr1= !CF.print_formula in

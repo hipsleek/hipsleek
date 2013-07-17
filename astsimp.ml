@@ -4587,6 +4587,7 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
     | (e, _) :: rest ->
         let e_hvars = match e with
           | IP.Var ((ve, pe), pos_e) -> trans_var_safe (ve, pe) UNK tlist pos_e
+          | IP.Ann_Exp (IP.Var ((ve, pe), pos_e ), t, _) -> trans_var_safe (ve, pe) t tlist pos_e (*annotated self*)
           | _ -> report_error (IF.pos_of_formula f0)("malfunction with float out exp: "^(Iprinter.string_of_formula f0))in
         let rest_hvars = match_exp rest pos in
         let hvars = e_hvars :: rest_hvars in
@@ -4725,7 +4726,11 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
               let rootptr = List.hd tokens in
               let rpsi = snd(List.find(fun (v,en)->v=rootptr) tl) in
               let rootptr_type = rpsi.sv_info_kind in
-              let rootptr_type_name = match rootptr_type with | Named c -> c | _ -> failwith ("[linearize_heap] " ^ rootptr ^ " must be a pointer.") in
+              let rootptr_type_name = match rootptr_type with
+                | Named c1 ->
+                      (* if String.compare c1 "" = 0 then c else  *)c1
+                | _ -> failwith ("[linearize_heap] " ^ rootptr ^ " must be a pointer.")
+              in
               let rootptr, p = 
                 let rl = String.length rootptr in
                 if rootptr.[rl-1] = '\'' then
@@ -7449,7 +7454,9 @@ let sv_n = CP.name_of_spec_var
 let rec rev_trans_exp e = match e with
   | CP.Null p -> IP.Null p 
   (* | CP.Var (v,p) -> IP.Var (rev_trans_spec_var v, p) *)
-  | CP.Var (v,p) -> IP.Ann_Exp (IP.Var (rev_trans_spec_var v, p), CP.type_of_spec_var v, p) (*L2: added annotated sv instead sv here*)
+  | CP.Var (v,p) -> let t =  CP.type_of_spec_var v in
+    (* let _ = print_endline ((!CP.print_sv v)^ ": " ^ (string_of_typ t)) in *)
+    IP.Ann_Exp (IP.Var (rev_trans_spec_var v, p), t, p) (*L2: added annotated sv instead sv here*)
   | CP.IConst b -> IP.IConst b
   | CP.FConst b -> IP.FConst b
   | CP.AConst b -> IP.AConst b
@@ -7563,6 +7570,7 @@ let rec rev_trans_formula f = match f with
 					IF.formula_or_f1 =rev_trans_formula b.CF.formula_or_f1; 
 					IF.formula_or_f2 =rev_trans_formula b.CF.formula_or_f2; 
 					IF.formula_or_pos = b.CF.formula_or_pos;}
+
 
 let transform_hp_rels_to_iviews (hp_rels:(ident* CF.hp_rel_def) list):(ident*ident*I.view_decl) list = 
 (*CP.rel_cat * h_formula * formula*)
@@ -7745,8 +7753,10 @@ let convert_pred_to_cast new_views iprog cprog =
   Debug.no_1 "convert_pred_to_cast" pr1 pr2
       ( fun _ -> convert_pred_to_cast new_views iprog cprog) new_views
 
-let hn_trans pname vnames hn = match hn with 
-  | IF.HRel (id,args, pos)-> 
+(*LOC: this transformation is not quite correct. please improve*)
+let plugin_inferred_iviews views iprog =
+  let hn_trans pname vnames hn = match hn with 
+    | IF.HRel (id,args, pos)-> 
         if (List.exists (fun (_,n)-> (String.compare n id)==0) vnames) then 
           let hvar,tl = match args with
             | (IP.Var (v,_))::tl-> v,tl
@@ -7766,10 +7776,8 @@ let hn_trans pname vnames hn = match hn with
               IF.h_formula_heap_label = None;
               IF.h_formula_heap_pos = pos}
         else hn
-  | _ -> hn 
-
-(*LOC: this transformation is not quite correct. please improve*)
-let plugin_inferred_iviews views iprog =
+    | _ -> hn
+  in
   let vnames = List.map (fun (p,n,_)-> p,n) views in
   let vdecls = List.map (fun (pname,_,prd)-> { prd with 
         I.view_name = prd.I.view_name^"_"^pname;
