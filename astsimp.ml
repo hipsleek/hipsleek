@@ -7448,7 +7448,8 @@ let sv_n = CP.name_of_spec_var
 
 let rec rev_trans_exp e = match e with
   | CP.Null p -> IP.Null p 
-  | CP.Var (v,p) -> IP.Var (rev_trans_spec_var v, p)
+  (* | CP.Var (v,p) -> IP.Var (rev_trans_spec_var v, p) *)
+  | CP.Var (v,p) -> IP.Ann_Exp (IP.Var (rev_trans_spec_var v, p), CP.type_of_spec_var v, p) (*L2: added annotated sv instead sv here*)
   | CP.IConst b -> IP.IConst b
   | CP.FConst b -> IP.FConst b
   | CP.AConst b -> IP.AConst b

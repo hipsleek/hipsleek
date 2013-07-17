@@ -232,7 +232,8 @@ let trans_formula_hp_2_view_x iprog cprog proc_name in_hp_names chprels_decl f=
 	    let hvar,tl = retrieve_root id args in
             let r = match hvar with
               | (IP.Var (v,_)) -> v
-              | _ -> report_error no_pos "ASTSIMP.trans_formula_hp_2_view"
+              | IP.Ann_Exp (IP.Var (v, _), _, _) -> v (*annotated self*)
+              | _ -> report_error no_pos "SAOUT.trans_formula_hp_2_view"
             in
             IF.HeapNode {
 	        IF.h_formula_heap_node = r;
