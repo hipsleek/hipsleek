@@ -902,15 +902,28 @@ and check_dups_svl ls =
       
 and fv_helper (f : formula) : spec_var list = match f with
   | BForm (b,_) -> bfv b
-  | And (p1, p2,_) -> combine_pvars p1 p2
-  | Or (p1, p2, _,_) -> combine_pvars p1 p2
+  | And (p1, p2,_) -> combine_pvars p1 p2 fv_helper
+  | Or (p1, p2, _,_) -> combine_pvars p1 p2 fv_helper
   | Not (nf, _,_) -> fv_helper nf
   | Forall (qid, qf, _,_) -> remove_qvar qid qf
   | Exists (qid, qf, _,_) -> remove_qvar qid qf
   | AndList l -> fold_l_snd fv_helper l
 
-and combine_pvars p1 p2 = (fv_helper p1) @ (fv_helper p2)
+and combine_pvars p1 p2 helper = (helper p1) @ (helper p2)
 
+and all_vars_helper (f : formula) : spec_var list = match f with
+  | BForm (b,_) -> bfv b
+  | And (p1, p2,_) -> combine_pvars p1 p2 all_vars_helper
+  | Or (p1, p2, _,_) -> combine_pvars p1 p2 all_vars_helper
+  | Not (nf, _,_) -> all_vars_helper nf
+  | Forall (qid, qf, _,_) 
+  | Exists (qid, qf, _,_) -> qid::(all_vars_helper qf) 
+  | AndList l -> fold_l_snd all_vars_helper l
+
+and all_vars (f : formula) : spec_var list =
+  let tmp = all_vars_helper f in
+  let res = Gen.BList.remove_dups_eq eq_spec_var tmp in
+  res
 (*typ=None => choose all perm vars
   typ = Some ct => choose certain type
 *)

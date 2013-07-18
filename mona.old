@@ -216,8 +216,8 @@ let compute_order_b_formula (bf:CP.b_formula) : order_atom list =
     | CP.BagMin(sv1, sv2, _) ->
           MO_Var(sv1,1)::[MO_Var(sv2,2)]
     | CP.BagSub(e1, e2, _) -> 
-          let (r2, c2, _) = force_order_exp e2 2 in
-          let (_, c1, _) = force_eq_exp e1 r2 in
+          let (_,c1,_) = force_order_exp e1 2 in
+          let (_,c2,_) = force_order_exp e2 2 in
           c1@c2
     | CP.ListIn(e1, e2, _)
     | CP.ListNotIn(e1, e2, _) 
@@ -227,32 +227,24 @@ let compute_order_b_formula (bf:CP.b_formula) : order_atom list =
     | CP.Lte(e1, e2, _) 
     | CP.SubAnn(e1, e2, _ )
     | CP.Gt(e1, e2, _)
-    | CP.Gte(e1, e2, _)  
-    | CP.Eq(e1, e2, _)
-    | CP.Neq(e1, e2, _) -> 
-          let (r2, c2, ord) = compute_order_exp e2 in
-          let (_, c1, _) = if (ord != 0) then force_order_exp e1 ord 
-          else force_eq_exp e1 r2 in
+    | CP.Gte(e1, e2, _) -> 
+          let (_, c1, _) = compute_order_exp e1 in
+          let (_, c2, _) = compute_order_exp e2 in
           c1@c2
-          (* let (_, c1, _) = compute_order_exp e1 in *)
-          (* let (_, c2, _) = compute_order_exp e2 in *)
-          (* c1@c2 *)
     | CP.EqMax(e1, e2, e3, _)
     | CP.EqMin(e1, e2, e3, _) -> 
-          let (r2, c2, ord2) = compute_order_exp e2 in
-          let (r1, c1, ord1) = if not(ord2 == 0) then force_order_exp e1 ord2 
-          else force_eq_exp e1 r2 in
-          let ord = if (ord1 <= ord2) then ord2 else ord1 in
-          let (r3, c3, _) = if not(ord == 0) then force_order_exp e3 ord 
-          else force_eq_exp e3 r1 in
-
-          (* let (_, c1,_) = compute_order_exp e1 in *)
-          (* let (_, c2,_) = compute_order_exp e2 in *)
-          (* let (_, c3,_) = compute_order_exp e3 in *)
+          let (_, c1,_) = compute_order_exp e1 in
+          let (_, c2,_) = compute_order_exp e2 in
+          let (_, c3,_) = compute_order_exp e3 in
           c1@c2@c3
     | CP.BVar(sv1, l1) ->  
           [MO_Var(sv1,2)]
-
+    | CP.Eq(e1, e2, _)
+    | CP.Neq(e1, e2, _) -> 
+          let (r2, c2, ord) = compute_order_exp e2 in
+          let (r1, c1, _) = if (ord != 0) then force_order_exp e1 ord 
+          else force_eq_exp e1 r2 in
+          c1@c2
     | CP.RelForm (_ , el, _) -> List.flatten (List.map (fun e -> let (_,c,_) = compute_order_exp e in c) el)
     | _ -> failwith ("compute_order_b_formula: not computed yet")
 
@@ -272,7 +264,7 @@ let compute_order_formula_x (f:CP.formula) : order_atom list =
   
 let compute_order_formula (f:CP.formula) : order_atom list = 
   let pr_out = pr_list string_of_order_atom in
-  Debug.no_1 "compute_order_formula" pr_none pr_out compute_order_formula_x f
+  Debug.to_1 "compute_order_formula" pr_none pr_out compute_order_formula_x f
 (* 
 
  0 - unknown
@@ -342,7 +334,7 @@ let solve_constraints (cons: order_atom list) (sv_lst: CP.spec_var list)=
   let pr_1 = pr_list string_of_order_atom in
   let pr_2 = pr_list Cprinter.string_of_spec_var in
   let pr_out = pr_triple pr_2 pr_2 pr_2 in
-  Debug.no_2 "solve_constraints" pr_1 pr_2 pr_out solve_constraints_x cons sv_lst 
+  Debug.to_2 "solve_constraints" pr_1 pr_2 pr_out solve_constraints_x cons sv_lst 
 
 let mkConstraint (constr: order_atom): CP.formula =
   let l,r = 
@@ -374,7 +366,7 @@ let new_order_formula_x (f:CP.formula) : (CP.spec_var list * CP.spec_var list * 
 
 let new_order_formula (f:CP.formula) : (CP.spec_var list * CP.spec_var list * CP.spec_var list) =
   let pr_out = pr_list Cprinter.string_of_spec_var in
-  Debug.no_1 "new_order_formula" pr_none (pr_triple pr_out pr_out pr_out) new_order_formula_x f
+  Debug.to_1 "new_order_formula" pr_none (pr_triple pr_out pr_out pr_out) new_order_formula_x f
 (*
 
   PREPROCESSING:
@@ -522,7 +514,7 @@ and find_order (f : CP.formula) vs =
   let lst = Hashtbl.fold (fun k v acc -> (k, v) :: acc) vs [] in
   let lst = List.sort (fun (k1,v1) (k2,v2) -> v2-v1 ) lst in
   let pr_out a = pr_list (fun (k,v) -> ((Cprinter.string_of_spec_var k)^" " ^(string_of_int v)) ) lst in
-  Debug.no_eff_2 "find_order" [false;true]
+  Debug.ho_eff_2 "find_order" [false;true]
       Cprinter.string_of_pure_formula string_of_hashtbl pr_out
       find_order_x f vs
 
@@ -722,10 +714,12 @@ and find_order_exp (e : CP.exp) order vs =
 
 (*
 
-   INTEROGATION
+  HASH TABLE INTEROGATION
 
 *)
 
+and is_firstorder_mem e vs =
+  Debug.no_1 "is_firstorder_mem" Cprinter.string_of_formula_exp string_of_bool (fun e -> is_firstorder_mem_a e vs) e
 
 and is_firstorder_mem_a e vs =
   match e with
@@ -756,25 +750,10 @@ and part_firstorder_mem e vs =
     | CP.IConst _
     | CP.Null _ -> true
     | _ -> false
-
-(* and is_firstorder_mem e vs = *)
-(*   Debug.no_1 "is_firstorder_mem" Cprinter.string_of_formula_exp string_of_bool (fun e -> is_firstorder_mem_a e vs) e *)
-
-and is_firstorder_mem_x e (var1,var2) =
-  match e with
-    | CP.Var(sv, _) -> List.exists (CP.eq_spec_var sv) var1
-    | CP.IConst _ 
-    | CP.Null _ -> true
-    | _ -> false
-
-and is_firstorder_mem e vs =
-  Debug.no_1 "is_firstorder_mem" Cprinter.string_of_formula_exp string_of_bool (fun e -> is_firstorder_mem_x e vs) e
-
-and is_firstorder_mem_sv sv (var1,var2) =
-  List.exists (CP.eq_spec_var sv) var1
 (*
   Pretty printing
 *)
+
 
 (* pretty printing for spec_vars*)
 and mona_of_spec_var (sv : CP.spec_var) = match sv with
@@ -1368,7 +1347,14 @@ let create_file_for_mona_x (filename: string) (fv: CP.spec_var list) (f: CP.form
     try 
       begin
         let all_fv = CP.remove_dups_svl fv in
-        let (part1, part2) = (List.partition (fun sv -> is_firstorder_mem_sv sv vs) all_fv) in
+        (* let vs = Hashtbl.create 10 in *)
+	(* let _ = find_order f vs in *)
+        let is_var1 sv vs = 
+          let v = Hashtbl.find vs sv in
+          if v==1 then true else false 
+        in
+        (* let (part1, part2) = (List.partition (fun (sv) -> (is_firstorder_mem (CP.Var(sv, no_pos)) vs)) all_fv) in *)
+        let (part1, part2) = (List.partition (fun sv -> is_var1 sv vs) all_fv) in
         let first_order_var_decls =
           if Gen.is_empty part1 then ""
           else "var1 " ^ (String.concat ", " (List.map mona_of_spec_var part1)) ^ ";\n " in
@@ -1388,7 +1374,7 @@ let create_file_for_mona_x (filename: string) (fv: CP.spec_var list) (f: CP.form
 let create_file_for_mona (filename: string) (fv: CP.spec_var list) (f: CP.formula) (imp_no: string) vs =
   Debug.no_1 "create_file_for_mona" Gen.pr_id Gen.pr_id (fun _ -> create_file_for_mona_x filename fv f imp_no vs ) filename
 
-let write_to_file  (is_sat_b: bool) (fv: CP.spec_var list) (f: CP.formula) (imp_no: string) vs: bool =
+let write_to_file  (is_sat_b: bool) (fv: CP.spec_var list) (f: CP.formula) (imp_no: string) vs : bool =
   let mona_filename = "test" ^ imp_no ^ ".mona" in
   let file_content = ((create_file_for_mona mona_filename fv f imp_no vs) ^ ";\n") in
   if !log_all_flag == true then
@@ -1415,7 +1401,7 @@ let write_to_file  (is_sat_b: bool) (fv: CP.spec_var list) (f: CP.formula) (imp_
   stop();
   res
 
-let write_to_file (is_sat_b: bool) (fv: CP.spec_var list) (f: CP.formula) (imp_no: string) vs: bool =
+let write_to_file (is_sat_b: bool) (fv: CP.spec_var list) (f: CP.formula) (imp_no: string) vs : bool =
   Debug.no_2 "[mona.ml]: write_to_file" string_of_bool
 	Cprinter.string_of_pure_formula
 	string_of_bool
@@ -1424,7 +1410,8 @@ let write_to_file (is_sat_b: bool) (fv: CP.spec_var list) (f: CP.formula) (imp_n
 let imply_sat_helper_x (is_sat_b: bool) (fv: CP.spec_var list) (f: CP.formula) (imp_no: string) vs : bool =
   let all_fv = CP.remove_dups_svl fv in
   (* let _ = print_endline("[Mona] imply_sat_helper : vs = " ^ (string_of_hashtbl vs) ) in *)
-  let (part1, part2) = (List.partition (fun (sv) -> (is_firstorder_mem_sv sv vs)) all_fv) in
+  let (part1, part2) = (List.partition (fun (sv) -> ((*is_firstorder_mem*)part_firstorder_mem
+      (CP.Var(sv, no_pos)) vs)) all_fv) in
   let first_order_var_decls =
     if Gen.is_empty part1 then ""
     else "var1 " ^ (String.concat ", " (List.map mona_of_spec_var part1)) ^ "; " in
@@ -1457,13 +1444,13 @@ let imply_sat_helper_x (is_sat_b: bool) (fv: CP.spec_var list) (f: CP.formula) (
           print_string ("\n[mona.ml]:Unexpected exception\n"); flush stdout;
           stop(); raise exc
 
-let imply_sat_helper (is_sat_b: bool) (fv: CP.spec_var list) (f: CP.formula) (imp_no: string) sv : bool =
-  let pr = Cprinter.string_of_spec_var_list in
-  Debug.no_2 "imply_sat_helper"
-      pr
+let imply_sat_helper (is_sat_b: bool) (fv: CP.spec_var list) (f: CP.formula) (imp_no: string) vs : bool =
+  Debug.no_3 "imply_sat_helper"
+      Cprinter.string_of_spec_var_list
       Cprinter.string_of_pure_formula
+      string_of_hashtbl
       string_of_bool
-      (fun _ _  -> imply_sat_helper_x is_sat_b fv f imp_no sv) fv f
+      (fun _ _ _ -> imply_sat_helper_x is_sat_b fv f imp_no vs) fv f vs
 
 let imply_ops pr_w pr_s (ante : CP.formula) (conseq : CP.formula) (imp_no : string) : bool =
   let _ = if not !is_mona_running then start () else () in
@@ -1480,11 +1467,10 @@ let imply_ops pr_w pr_s (ante : CP.formula) (conseq : CP.formula) (imp_no : stri
   let _ = find_order tmp_form vs in     (* deprecated *)
   let (var1,var2,var0) = new_order_formula tmp_form in
   if not !is_mona_running then
-    write_to_file false (ante_fv @ conseq_fv) tmp_form imp_no (var1,var2)
-        (* write_to_file false (ante_fv @ conseq_fv) tmp_form imp_no vs *)
+    write_to_file false (ante_fv @ conseq_fv) tmp_form imp_no vs
   else
-    imply_sat_helper false (ante_fv @ conseq_fv) tmp_form imp_no (var1,var2)
-        (* imply_sat_helper false (ante_fv @ conseq_fv) tmp_form imp_no vs *)
+    imply_sat_helper false (ante_fv @ conseq_fv) tmp_form imp_no vs
+
 let imply_ops pr_w pr_s (ante : CP.formula) (conseq : CP.formula) (imp_no : string) : bool =
   let pr = Cprinter.string_of_pure_formula in
   Debug.no_3 "mona.imply" pr pr (fun x -> x) string_of_bool 
@@ -1503,13 +1489,15 @@ let is_sat_ops_x pr_w pr_s (f : CP.formula) (sat_no :  string) : bool =
   incr test_number;
   let f = CP.drop_varperm_formula f in
   let (f_fv, f) = prepare_formula_for_mona pr_w pr_s f !test_number in
-  let (var1, var2, _) = new_order_formula f in
+  let vs = Hashtbl.create 10 in
+  let _ = find_order f vs in
+  let (var1,var2,var0) = new_order_formula f in
   (* print_endline ("Mona.is_sat: " ^ (string_of_int !test_number) ^ " : " ^ (string_of_bool !is_mona_running)); *)
   let sat = 
     if not !is_mona_running then
-      write_to_file true f_fv f sat_no (var1, var2)
+      write_to_file true f_fv f sat_no vs
     else
-      imply_sat_helper true f_fv f sat_no (var1, var2) in
+      imply_sat_helper true f_fv f sat_no vs in
   sat_optimize := false;
   sat
 ;;
