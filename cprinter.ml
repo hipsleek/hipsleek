@@ -1023,6 +1023,7 @@ let rec pr_h_formula h =
     | DataNode ({h_formula_data_node = sv;
       h_formula_data_name = c;
 	  h_formula_data_derv = dr;
+    h_formula_data_undealloc = uda;
 	  h_formula_data_imm = imm;
 	  h_formula_data_param_imm = ann_param;
       h_formula_data_arguments = svs;
@@ -1054,6 +1055,7 @@ let rec pr_h_formula h =
           pr_spec_var sv; fmt_string "::";
           (if not(!Globals.allow_field_ann) then pr_angle (c^perm_str) (fun x ->  pr_spec_var x) svs 
            else pr_angle (c^perm_str) (fun (x,y) ->  pr_spec_var x; pr_imm y) (List.combine svs ann_param) );
+        if uda then fmt_string "@U";
 	      if (!Globals.allow_imm) then pr_imm imm;
 	      pr_derv dr;
           if (hs!=[]) then (fmt_string "("; fmt_string (pr_list string_of_int hs); fmt_string ")");
@@ -1066,6 +1068,7 @@ let rec pr_h_formula h =
     | ViewNode ({h_formula_view_node = sv; 
       h_formula_view_name = c; 
 	  h_formula_view_derv = dr;
+    h_formula_view_undealloc = uda;
 	  h_formula_view_imm = imm;
       h_formula_view_perm = perm; (*LDK*)
       h_formula_view_arguments = svs; 
@@ -1084,6 +1087,7 @@ let rec pr_h_formula h =
           pr_spec_var sv; 
           fmt_string "::"; 
           pr_angle (c^perm_str) pr_spec_var svs;
+          if uda then fmt_string "@U";
 	      pr_imm imm;
 	      pr_derv dr;
           (* For example, #O[lem_29][Derv] means origins=[lem_29], and the heap node is derived*)
@@ -1138,6 +1142,7 @@ let rec prtt_pr_h_formula h =
     | DataNode ({h_formula_data_node = sv;
       h_formula_data_name = c;
 	  h_formula_data_derv = dr;
+    h_formula_data_undealloc = uda;
 	  h_formula_data_imm = imm;
       h_formula_data_arguments = svs;
 		h_formula_data_holes = hs; (* An Hoa *)
@@ -1167,6 +1172,7 @@ let rec prtt_pr_h_formula h =
 			(* An Hoa : Replace the spec-vars at holes with the symbol '-' *)
           pr_spec_var sv; fmt_string "::";
           pr_angle (c^perm_str) pr_spec_var svs ;
+          if uda then fmt_string "@U";
 	      pr_imm imm;
 	      pr_derv dr;
           if (hs!=[]) then (fmt_string "("; fmt_string (pr_list string_of_int hs); fmt_string ")");
@@ -1179,6 +1185,7 @@ let rec prtt_pr_h_formula h =
     | ViewNode ({h_formula_view_node = sv; 
       h_formula_view_name = c; 
 	  h_formula_view_derv = dr;
+    h_formula_view_undealloc = uda;
 	  h_formula_view_imm = imm;
       h_formula_view_perm = perm; (*LDK*)
       h_formula_view_arguments = svs; 
@@ -1197,6 +1204,7 @@ N " else fmt_string "SS "); *)
           pr_spec_var sv; 
           fmt_string "::"; 
           pr_angle (c^perm_str) pr_spec_var svs;
+          if uda then fmt_string "@U";
 	      pr_imm imm;
 	      pr_derv dr;
           (* For example, #O[lem_29][Derv] means origins=[lem_29], and the heap node is derived*)
@@ -1240,6 +1248,7 @@ let rec prtt_pr_h_formula_inst prog h =
     | DataNode ({h_formula_data_node = sv;
       h_formula_data_name = c;
 	  h_formula_data_derv = dr;
+    h_formula_data_undealloc = uda;
 	  h_formula_data_imm = imm;
       h_formula_data_arguments = svs;
 		h_formula_data_holes = hs; (* An Hoa *)
@@ -1269,6 +1278,7 @@ let rec prtt_pr_h_formula_inst prog h =
 			(* An Hoa : Replace the spec-vars at holes with the symbol '-' *)
           pr_spec_var sv; fmt_string "::";
           pr_angle (c^perm_str) pr_spec_var svs ;
+          if uda then fmt_string "@U";
 	      pr_imm imm;
 	      pr_derv dr;
           if (hs!=[]) then (fmt_string "("; fmt_string (pr_list string_of_int hs); fmt_string ")");
@@ -1281,6 +1291,7 @@ let rec prtt_pr_h_formula_inst prog h =
     | ViewNode ({h_formula_view_node = sv; 
       h_formula_view_name = c; 
 	  h_formula_view_derv = dr;
+    h_formula_view_undealloc = uda;
 	  h_formula_view_imm = imm;
       h_formula_view_perm = perm; (*LDK*)
       h_formula_view_arguments = svs; 
@@ -1299,6 +1310,7 @@ N " else fmt_string "SS "); *)
           pr_spec_var sv; 
           fmt_string "::"; 
           pr_angle (c^perm_str) pr_spec_var svs;
+          if uda then fmt_string "@U";
 	      pr_imm imm;
 	      pr_derv dr;
           (* For example, #O[lem_29][Derv] means origins=[lem_29], and the heap node is derived*)
@@ -1346,6 +1358,7 @@ let rec pr_h_formula_for_spec h =
   | DataNode ({h_formula_data_node = sv;
     h_formula_data_name = c;
     h_formula_data_derv = dr;
+    h_formula_data_undealloc = uda;
     h_formula_data_imm = imm;
     h_formula_data_arguments = svs;
     h_formula_data_holes = hs; (* An Hoa *)
@@ -1375,6 +1388,7 @@ let rec pr_h_formula_for_spec h =
     (* An Hoa : Replace the spec-vars at holes with the symbol '-' *)
     pr_spec_var sv; fmt_string "::";
     pr_angle (c^perm_str) pr_spec_var svs ;
+    if uda then fmt_string "@U";
     pr_imm imm;
     pr_derv dr;
     if (hs!=[]) then (fmt_string "("; fmt_string (pr_list string_of_int hs); fmt_string ")");
@@ -1386,6 +1400,7 @@ let rec pr_h_formula_for_spec h =
   | ViewNode ({h_formula_view_node = sv; 
     h_formula_view_name = c; 
     h_formula_view_derv = dr;
+    h_formula_view_undealloc = uda;
     h_formula_view_imm = imm;
     h_formula_view_perm = perm; (*LDK*)
     h_formula_view_arguments = svs; 
@@ -1404,6 +1419,7 @@ let rec pr_h_formula_for_spec h =
     fmt_string "::"; 
     if svs = [] then fmt_string (c^"<>") else pr_angle (c^perm_str) pr_spec_var svs;
 (*    pr_imm imm;*)
+    if uda then fmt_string "@U";
     pr_derv dr;
     (* For example, #O[lem_29][Derv] means origins=[lem_29], and the heap node is derived*)
     if origs!=[] then pr_seq "#O" pr_ident origs; (* origins of lemma coercion.*)
@@ -3442,6 +3458,7 @@ let rec html_of_h_formula h = match h with
 	| DataNode ({h_formula_data_node = sv;
 				h_formula_data_name = c;
                 h_formula_data_derv = dr;
+                h_formula_data_undealloc = uda;
 				h_formula_data_imm = imm;
                 h_formula_data_param_imm = ann_param; (* (andreeac) add param ann to html printer *)
 				h_formula_data_arguments = svs;

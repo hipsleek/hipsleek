@@ -484,49 +484,46 @@ and spatial_ctx_extract_x prog (f0 : h_formula) (aset : CP.spec_var list) (imm :
     | HRel _ -> []
     | Hole _ -> []
     | DataNode ({h_formula_data_node = p1; 
-      h_formula_data_imm = imm1;
-      h_formula_data_param_imm = pimm1}) ->
-	  (* imm1 = imm annotation on the LHS
-	     imm = imm annotation on the RHS *) 
-	  (* let subtyp = subtype_ann imm1 imm in *)
-          if ((CP.mem p1 aset) (* && (subtyp) *)) then 
-	    (* let field_ann = false in *)
-	    
-            if ( (not !Globals.allow_field_ann) && produces_hole imm) then (* not consuming the node *)
-	      let hole_no = Globals.fresh_int() in 
-	      [((Hole hole_no), f, [(f, hole_no)], Root)]
-            else
-              (*if (!Globals.allow_field_ann) then
-                let new_f = update_ann f pimm1 pimm in
-              (* let _ = print_string ("\n(andreeac) spatial_ctx_extarct helper initial f: " ^ (Cprinter.string_of_h_formula f)) in *)
-              (* let _ = print_string ("\n(andreeac) spatial_ctx_extarct helper new f: " ^ (Cprinter.string_of_h_formula new_f)) in *)
-	        [(new_f,f,[],Root)]
-	        else*)
-              [(HEmp, f, [], Root)]
-          else []
-    | ViewNode ({h_formula_view_node = p1;
-      h_formula_view_imm = imm1;
-      h_formula_view_perm = perm1;
-      h_formula_view_arguments = vs1;
-      h_formula_view_name = c}) ->
-          (* if (subtype_ann imm1 imm) then *)
-          (if (CP.mem p1 aset) then
-            (* let _ = print_string("found match for LHS = " ^ (Cprinter.string_of_h_formula f) ^ "\n") in *)
-            if produces_hole imm (*&& not(!Globals.allow_field_ann)*) then
-	      (* let _ = print_string("imm = Lend " ^ "\n") in *)
-              let hole_no = Globals.fresh_int() in
-              (*[(Hole hole_no, matched_node, hole_no, f, Root, HTrue, [])]*)
-              [(Hole hole_no, f, [(f, hole_no)], Root)]
-            else
-              [(HEmp, f, [], Root)]
+                 h_formula_data_imm = imm1;
+                 h_formula_data_param_imm = pimm1;
+                 h_formula_data_undealloc = uda1}) ->
+        let uda2 = (
+          match rhs_node with
+          | DataNode dn -> dn.h_formula_data_undealloc
+          | ViewNode vn -> vn.h_formula_view_undealloc
+          | _ -> report_error no_pos "spatial_ctx_extract unexpected rhs formula\n"
+        ) in
+        let _ = print_endline ("== 1, uda1, uda2 = " ^ (string_of_bool uda1) ^ " - " ^ (string_of_bool uda2)) in
+        if ((CP.mem p1 aset) && (uda1 = uda2)) then 
+          if ( (not !Globals.allow_field_ann) && produces_hole imm) then (* not consuming the node *)
+            let hole_no = Globals.fresh_int() in 
+            [((Hole hole_no), f, [(f, hole_no)], Root)]
           else
-            let vmm = view_mater_match prog c (p1::vs1) aset imm f in
-            let cmm = coerc_mater_match prog c vs1 aset imm f in 
-            (*LDK: currently, assume that frac perm does not effect 
-              the choice of lemmas (coercions)*)
-            vmm@cmm
-          )
-              (* else [] *)
+            [(HEmp, f, [], Root)]
+        else []
+    | ViewNode ({h_formula_view_node = p1;
+                 h_formula_view_imm = imm1;
+                 h_formula_view_undealloc = uda1;
+                 h_formula_view_perm = perm1;
+                 h_formula_view_arguments = vs1;
+                 h_formula_view_name = c}) ->
+        let uda2 = (
+          match rhs_node with
+          | DataNode dn -> dn.h_formula_data_undealloc
+          | ViewNode vn -> vn.h_formula_view_undealloc
+          | _ -> report_error no_pos "spatial_ctx_extract unexpected rhs formula\n"
+        ) in
+        let _ = print_endline ("== 2, uda1, uda2 = " ^ (string_of_bool uda1) ^ " - " ^ (string_of_bool uda2)) in
+        if ((CP.mem p1 aset) && (uda1 = uda2)) then
+          if produces_hole imm (*&& not(!Globals.allow_field_ann)*) then
+            let hole_no = Globals.fresh_int() in
+            [(Hole hole_no, f, [(f, hole_no)], Root)]
+          else
+            [(HEmp, f, [], Root)]
+        else
+          let vmm = view_mater_match prog c (p1::vs1) aset imm f in
+          let cmm = coerc_mater_match prog c vs1 aset imm f in 
+          vmm@cmm
     | Star ({h_formula_star_h1 = f1;
       h_formula_star_h2 = f2;
       h_formula_star_pos = pos}) ->

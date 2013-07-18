@@ -1549,6 +1549,7 @@ and gen_heap prog (h0 : h_formula) (vmap : var_map) (unbound_vars : CP.spec_var 
       let cls = class_name_of_view c in
       let new_checker = New ({exp_new_class_name = cls;
       exp_new_arguments = [];
+      exp_new_undealloc = false;
       exp_new_pos = pos}) in
       let new_checker_name = CP.name_of_spec_var p in
       let new_checker_var = Var ({exp_var_name = new_checker_name;
@@ -1670,6 +1671,7 @@ and gen_disjunct prog (disj0 : formula) (vmap0 : var_map) (output_vars : CP.spec
 		  (* bind to a "unbound" boxed object *)
 		  New ({exp_new_class_name = aug_class_name ovar_t;
 		  exp_new_arguments = [];
+      exp_new_undealloc = false;
 		  exp_new_pos = pos})
 	in
 	let tmp = List.filter (fun pv -> CP.name_of_spec_var pv = ovar) pbound_vars in
@@ -1678,6 +1680,7 @@ and gen_disjunct prog (disj0 : formula) (vmap0 : var_map) (output_vars : CP.spec
 	    | (CP.SpecVar (t, _, _)) :: _ ->
 		  let new_e = New ({exp_new_class_name = aug_class_name t;
 		  exp_new_arguments = [rhs];
+      exp_new_undealloc = false;
 		  exp_new_pos = pos}) in
 		  Assign ({exp_assign_op = OpAssign;
 		  exp_assign_lhs = v;

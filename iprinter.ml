@@ -358,6 +358,7 @@ let rec string_of_h_formula = function
   | F.HeapNode ({F.h_formula_heap_node = x;
                  F.h_formula_heap_name = id;
                  F.h_formula_heap_deref = deref;
+                 F.h_formula_heap_undealloc = uda;
                  F.h_formula_heap_perm = perm; (*LDK*)
                  F.h_formula_heap_arguments = pl;
                  F.h_formula_heap_imm = imm;
@@ -369,11 +370,14 @@ let rec string_of_h_formula = function
       for i = 1 to deref do
         deref_str := !deref_str ^ "^";
       done;
+      let uda_str = if uda then "@U" else "" in
       ((string_of_id x) ^ "::" ^ id ^ !deref_str ^ perm_str 
-      ^ "<" ^ (string_of_data_param_list pl ann_param) ^ ">" ^ (string_of_imm imm)^"[HeapNode1]")
+      ^ "<" ^ (string_of_data_param_list pl ann_param) ^ ">"
+      ^ uda_str ^ (string_of_imm imm)^"[HeapNode1]")
   | F.HeapNode2 ({F.h_formula_heap2_node = xid;
                   F.h_formula_heap2_name = id;
                   F.h_formula_heap2_deref = deref;
+                  F.h_formula_heap2_undealloc = uda;
                   F.h_formula_heap2_label = pi;
                   F.h_formula_heap2_imm = imm;
                   F.h_formula_heap2_imm_param = ann_param;
@@ -386,9 +390,10 @@ let rec string_of_h_formula = function
       for i = 1 to deref do
         deref_str := !deref_str ^ "^";
       done;
+      let uda_str = if uda then "@U" else "" in
       string_of_formula_label_opt pi
         ((string_of_id xid) ^ "::" ^ id ^ !deref_str ^ perm_str
-        ^ "<" ^ tmp2 ^ ">"  ^ (string_of_imm imm)^"[HeapNode2]")
+        ^ "<" ^ tmp2 ^ ">" ^ uda_str  ^ (string_of_imm imm)^"[HeapNode2]")
   | F.HRel (r, args, _) -> "HRel " ^ r ^ "(" ^ (String.concat "," (List.map string_of_formula_exp args)) ^ ")"
   | F.HTrue -> "htrue"
   | F.HFalse -> "hfalse"

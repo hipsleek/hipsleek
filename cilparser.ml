@@ -428,7 +428,7 @@ let rec gather_addrof_info_exp (e: Cil.exp) : (Cil.lval * Iast.exp) list =
             ) in
             params @ [exp]
         ) [] datadecl.Iast.data_fields in
-        let init_data = Iast.mkNew dataname init_params pos in
+        let init_data = Iast.mkNew dataname init_params true pos in
         let decl = [(vname, Some init_data, pos)] in
         let vardecl = Iast.mkVarDecl datatyp decl pos in
         aux_local_vardecls := !aux_local_vardecls @ [vardecl];
@@ -576,7 +576,7 @@ and translate_var_decl (vinfo: Cil.varinfo) : Iast.exp =
             ) in
             params @ [exp]
         ) [] data_decl.Iast.data_fields in
-        let init_data = Iast.mkNew typ_name init_params pos in
+        let init_data = Iast.mkNew typ_name init_params false pos in
         Iast.mkVarDecl ty [(name, Some init_data, pos)] pos
       )
     | _ -> report_error pos ("translate_var_decl: Unexpected typ 2 - " ^ (Globals.string_of_typ ty))
@@ -858,8 +858,10 @@ and translate_instr (instr: Cil.instr) : Iast.exp list =
               let v = Hashtbl.find tbl_addrof_data (Iprinter.string_of_exp e_data) in
               let e1 = Iast.mkAssign Iast.OpAssign e_data v None pos in
               update_addrof_args_exps_before := !update_addrof_args_exps_before @ [e1];
-              let e2 = Iast.mkAssign Iast.OpAssign v e_data None pos in 
-              update_addrof_args_exps_after := !update_addrof_args_exps_after @ [e2];
+              if (fname <> "free") then ( (* free pointer function *)
+                let e2 = Iast.mkAssign Iast.OpAssign v e_data None pos in 
+                update_addrof_args_exps_after := !update_addrof_args_exps_after @ [e2];
+              );
             with _ -> ()
         ) args;
         let callee = Iast.mkCallNRecv fname None args None pos in
@@ -878,28 +880,31 @@ and translate_instr (instr: Cil.instr) : Iast.exp list =
               let tmp_assign = Iast.mkAssign Iast.OpAssign tmp_var callee None pos in
               let le = translate_lval lv in
               let call_assign = Iast.mkAssign Iast.OpAssign le tmp_var None pos in
-              let aux_addrof_holder_exps = (
-                try
-                  let lv_str = string_of_cil_lval lv in
-                  let lv_holder = Hashtbl.find tbl_addrof_holder lv_str in
-                  let e1 = Iast.mkMember lv_holder ["pdata"] None pos in
-                  let e2 = Iast.mkAssign Iast.OpAssign e1 le None pos in
-                  [e2]
-                with Not_found -> []
-              ) in
-              let aux_addrof_data_exp = (
-                match lv with
-                | (Cil.Mem _, _, _) -> (
-                    try
-                      let e1 = Hashtbl.find tbl_addrof_data (Iprinter.string_of_exp le) in
-                      let e2 = Iast.mkAssign Iast.OpAssign e1 le None pos in
-                      [e2]
-                    with Not_found -> []
-                  )
-                | _ -> []
-              ) in
+              let aux_addrof_holder_exps = ref [] in
+              let aux_addrof_data_exp = ref [] in
+              if (fname <> "free") then (
+                aux_addrof_holder_exps:= (
+                  try
+                    let lv_str = string_of_cil_lval lv in
+                    let lv_holder = Hashtbl.find tbl_addrof_holder lv_str in
+                    let e1 = Iast.mkMember lv_holder ["pdata"] None pos in
+                    let e2 = Iast.mkAssign Iast.OpAssign e1 le None pos in
+                    [e2]
+                  with Not_found -> []
+                );
+                aux_addrof_data_exp := (match lv with
+                  | (Cil.Mem _, _, _) -> (
+                      try
+                        let e1 = Hashtbl.find tbl_addrof_data (Iprinter.string_of_exp le) in
+                        let e2 = Iast.mkAssign Iast.OpAssign e1 le None pos in
+                        [e2]
+                      with Not_found -> []
+                    )
+                  | _ -> []
+                );
+              );
               !update_addrof_args_exps_before @ [tmp_assign] @ !update_addrof_args_exps_after
-              @ [call_assign] @ aux_addrof_holder_exps @ aux_addrof_data_exp
+              @ [call_assign] @ !aux_addrof_holder_exps @ !aux_addrof_data_exp
             )
         ) in
         newexp
@@ -1088,7 +1093,7 @@ and translate_init (init: Cil.init) (lopt: Cil.location option) : Iast.exp =
               ) in
               params @ [finit]
           ) [] data_decl.Iast.data_fields in
-          let init_exp = Iast.mkNew newtyp_name init_params pos in
+          let init_exp = Iast.mkNew newtyp_name init_params false pos in
           init_exp
       | _ -> report_error pos ("translate_init: handle other type later - " 
                                 ^ (Globals.string_of_typ newtyp))

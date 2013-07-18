@@ -141,7 +141,8 @@ and h_formula_phase = { h_formula_phase_rd : h_formula;
 and h_formula_heap = { h_formula_heap_node : (ident * primed);
                        h_formula_heap_name : ident;
                        h_formula_heap_deref : int;
-                       h_formula_heap_derv : bool; 
+                       h_formula_heap_undealloc : bool;      (* undeallocable *)
+                       h_formula_heap_derv : bool;
                        h_formula_heap_imm : ann;
                        h_formula_heap_imm_param : ann option list;
                        h_formula_heap_full : bool;
@@ -155,6 +156,7 @@ and h_formula_heap = { h_formula_heap_node : (ident * primed);
 and h_formula_heap2 = { h_formula_heap2_node : (ident * primed);
                         h_formula_heap2_name : ident;
                         h_formula_heap2_deref : int;
+                        h_formula_heap2_undealloc : bool;     (* undeallocable *)
                         h_formula_heap2_derv : bool;
                         h_formula_heap2_imm : ann;
                         h_formula_heap2_imm_param : ann option list;
@@ -458,10 +460,11 @@ and mkPhase f1 f2 pos =
                    h_formula_phase_rw = f2;
                    h_formula_phase_pos = pos }
 
-and mkHeapNode_x c id deref dr i f inv pd perm hl hl_i ofl l= 
+and mkHeapNode_x c id deref uda dr i f inv pd perm hl hl_i ofl l= 
   HeapNode { h_formula_heap_node = c;
              h_formula_heap_name = id;
              h_formula_heap_deref = deref;
+             h_formula_heap_undealloc = uda;
              h_formula_heap_derv = dr;
              h_formula_heap_imm = i;
              h_formula_heap_imm_param = hl_i;
@@ -473,14 +476,15 @@ and mkHeapNode_x c id deref dr i f inv pd perm hl hl_i ofl l=
              h_formula_heap_label = ofl;
              h_formula_heap_pos = l }
 
-and mkHeapNode  c id deref dr i f inv pd perm hl hl_i ofl l= 
+and mkHeapNode  c id deref uda dr i f inv pd perm hl hl_i ofl l= 
    Debug.no_1 "mkHeapNode" (fun (name, _) -> name) !print_h_formula 
-      (fun _ -> mkHeapNode_x c id deref dr i f inv pd perm hl hl_i ofl l ) c
+      (fun _ -> mkHeapNode_x c id deref uda dr i f inv pd perm hl hl_i ofl l ) c
 
-and mkHeapNode2 c id deref dr i f inv pd perm ohl hl_i ofl l = 
+and mkHeapNode2 c id deref uda dr i f inv pd perm ohl hl_i ofl l = 
   HeapNode2 { h_formula_heap2_node = c;
               h_formula_heap2_name = id;
               h_formula_heap2_deref = deref;
+              h_formula_heap2_undealloc = uda;
               h_formula_heap2_derv = dr;
               h_formula_heap2_imm = i;
               h_formula_heap2_imm_param = hl_i;
@@ -1054,6 +1058,7 @@ and h_apply_one ((fr, t) as s : ((ident*primed) * (ident*primed))) (f : h_formul
   | HeapNode ({h_formula_heap_node = x; 
                h_formula_heap_name = c; 
                h_formula_heap_deref = deref;
+               h_formula_heap_undealloc = uda;
                h_formula_heap_derv = dr; 
                h_formula_heap_imm = imm; 
                h_formula_heap_imm_param = imm_p; 
@@ -1073,6 +1078,7 @@ and h_apply_one ((fr, t) as s : ((ident*primed) * (ident*primed))) (f : h_formul
       HeapNode ({h_formula_heap_node = subst_var s x; 
                  h_formula_heap_name = c;
                  h_formula_heap_deref = deref;
+                 h_formula_heap_undealloc = uda;
                  h_formula_heap_derv = dr; 
                  h_formula_heap_imm = imm; 
                  h_formula_heap_imm_param = imm_p; 
@@ -1086,6 +1092,7 @@ and h_apply_one ((fr, t) as s : ((ident*primed) * (ident*primed))) (f : h_formul
   | HeapNode2 ({h_formula_heap2_node = x;
                 h_formula_heap2_name = c;
                 h_formula_heap2_deref = deref;
+                h_formula_heap2_undealloc = uda;
                 h_formula_heap2_derv = dr; 
                 h_formula_heap2_imm = imm;
                 h_formula_heap2_imm_param = imm_p; 
@@ -1106,6 +1113,7 @@ and h_apply_one ((fr, t) as s : ((ident*primed) * (ident*primed))) (f : h_formul
       HeapNode2 ({h_formula_heap2_node = subst_var s x;
                   h_formula_heap2_name = c;
                   h_formula_heap2_deref = deref;
+                  h_formula_heap2_undealloc = uda;
                   h_formula_heap2_derv = dr; 
                   h_formula_heap2_imm = imm;
                   h_formula_heap2_imm_param = imm_p; 
@@ -1270,6 +1278,7 @@ and h_apply_one_w_data_name ((fr, t) as s : ((ident*primed) * (ident*primed))) (
     | HeapNode ({h_formula_heap_node = x;
                  h_formula_heap_name = c;
                  h_formula_heap_deref = deref;
+                 h_formula_heap_undealloc = uda;
                  h_formula_heap_derv = dr;
                  h_formula_heap_imm = imm;
                  h_formula_heap_imm_param = imm_p; 
@@ -1288,6 +1297,7 @@ and h_apply_one_w_data_name ((fr, t) as s : ((ident*primed) * (ident*primed))) (
         HeapNode ({h_formula_heap_node = subst_var s x;
                    h_formula_heap_name = subst_data_name s c;
                    h_formula_heap_deref = deref;
+                   h_formula_heap_undealloc = uda;
                    h_formula_heap_derv = dr;
                    h_formula_heap_imm = imm;
                    h_formula_heap_imm_param = imm_p; 
@@ -1301,6 +1311,7 @@ and h_apply_one_w_data_name ((fr, t) as s : ((ident*primed) * (ident*primed))) (
     | HeapNode2 ({h_formula_heap2_node = x;
                   h_formula_heap2_name = c;
                   h_formula_heap2_deref = deref;
+                  h_formula_heap2_undealloc = uda;
                   h_formula_heap2_derv = dr;
                   h_formula_heap2_imm = imm;
                   h_formula_heap2_imm_param = imm_p;
@@ -1319,6 +1330,7 @@ and h_apply_one_w_data_name ((fr, t) as s : ((ident*primed) * (ident*primed))) (
         HeapNode2 ({h_formula_heap2_node = subst_var s x;
                     h_formula_heap2_name = subst_data_name s c;
                     h_formula_heap2_deref = deref;
+                    h_formula_heap2_undealloc = uda;
                     h_formula_heap2_derv = dr;
                     h_formula_heap2_imm = imm;
                     h_formula_heap2_imm_param = imm_p;

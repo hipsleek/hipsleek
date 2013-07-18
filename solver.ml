@@ -8628,6 +8628,7 @@ and do_fold_w_ctx_x fold_ctx prog estate conseq ln2 vd resth2 rhs_b is_folding p
       h_formula_view_node = List.hd new_v2 (*var_to_fold*);
       h_formula_view_name = c2;
       h_formula_view_derv = get_view_derv ln2;
+      h_formula_view_undealloc = get_view_undealloc ln2;
       h_formula_view_imm = get_view_imm ln2;
       h_formula_view_original = original2;
       h_formula_view_unfold_num = unfold_num;
@@ -9037,10 +9038,10 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
             Context.match_res_rhs_node = rhs_node;
             Context.match_res_rhs_rest = rhs_rest;
             Context.match_res_holes = holes;} as m_res)->
-            Debug.ninfo_hprint (add_str "lhs_node" (Cprinter.string_of_h_formula)) lhs_node pos;
-            Debug.ninfo_hprint (add_str "lhs_rest" (Cprinter.string_of_h_formula)) lhs_rest pos;
-            Debug.ninfo_hprint (add_str "rhs_node" (Cprinter.string_of_h_formula)) rhs_node pos;
-            Debug.ninfo_hprint (add_str "rhs_rest" (Cprinter.string_of_h_formula)) rhs_rest pos;
+            Debug.info_hprint (add_str "lhs_node" (Cprinter.string_of_h_formula)) lhs_node pos;
+            Debug.info_hprint (add_str "lhs_rest" (Cprinter.string_of_h_formula)) lhs_rest pos;
+            Debug.info_hprint (add_str "rhs_node" (Cprinter.string_of_h_formula)) rhs_node pos;
+            Debug.info_hprint (add_str "rhs_rest" (Cprinter.string_of_h_formula)) rhs_rest pos;
              (*******SPLIT/COMBINE permissions********>>
             if lhs_p |\- perm(lhs_node) != perm(rhs_node) then MATCH
             else SPLIT followed by MATCH or COMBINE followed by MATCH

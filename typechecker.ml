@@ -1412,7 +1412,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
           exp_bind_imm = imm_node; (* imm annotation for the node *)
           exp_bind_param_imm = pimm; (* imm annotation for each field *)
           exp_bind_read_only = read_only;
-	  exp_bind_path_id = pid;
+          exp_bind_path_id = pid;
           exp_bind_pos = pos}) -> 
               (* this creates a new esc_level for the bind construct to capture all
                  exceptions from this construct *)
@@ -1439,6 +1439,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                     let lsv = List.map (fun (t,i) -> CP.SpecVar(t,i,Unprimed)) lvars in
 	            let field_types, vs = List.split lvars in
 	            let v_prim = CP.SpecVar (v_t, v, Primed) in
+              let _ = print_endline ("=== v_prim = " ^ (Cprinter.string_of_spec_var v_prim)) in
 	            let vs_prim = List.map2 (fun v -> fun t -> CP.SpecVar (t, v, Primed)) vs field_types in
 	            let p = CP.fresh_spec_var v_prim in
 	            let link_pv = CF.formula_of_pure_N
@@ -1479,28 +1480,29 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                     (*             None) *)
                     (*     else None) *)
                     (* in *)
-	            let vdatanode = CF.DataNode ({
+              let vdatanode = CF.DataNode ({
                         CF.h_formula_data_node = (if !Globals.large_bind then p else v_prim);
                         CF.h_formula_data_name = c;
-		        CF.h_formula_data_derv = false; (*TO CHECK: assume false*)
-		        CF.h_formula_data_imm = imm_node;
+                        CF.h_formula_data_derv = false; (*TO CHECK: assume false*)
+                        CF.h_formula_data_undealloc = false;
+                        CF.h_formula_data_imm = imm_node;
                         CF.h_formula_data_param_imm = pimm;
                         CF.h_formula_data_perm = if (Perm.allow_perm ()) then Some fresh_frac else None; (*LDK: belong to HIP, deal later ???*)
-
-		        CF.h_formula_data_origins = []; (*deal later ???*)
-		        CF.h_formula_data_original = true; (*deal later ???*)
+                        CF.h_formula_data_origins = []; (*deal later ???*)
+                        CF.h_formula_data_original = true; (*deal later ???*)
                         CF.h_formula_data_arguments = (*t_var :: ext_var ::*) vs_prim;
-		        CF.h_formula_data_holes = []; (* An Hoa : Don't know what to do *)
+                        CF.h_formula_data_holes = []; (* An Hoa : Don't know what to do *)
                         CF.h_formula_data_label = None;
                         CF.h_formula_data_remaining_branches = None;
                         CF.h_formula_data_pruning_conditions = [];
                         CF.h_formula_data_pos = pos}) in
-	            let vheap = CF.formula_of_heap vdatanode pos in
+              let vheap = CF.formula_of_heap vdatanode pos in
                     let _ = DD.tinfo_hprint (add_str "vheap" (Cprinter.string_of_formula)) vheap pos in
                     (*Test whether fresh_frac is full permission or not
                       writable -> fresh_frac = full_perm => normally
                       read-only -> fresh_frac != full_perm => in order to 
-                      detect permission violation
+                
+                            detect permission violation
                       We use exp_bind_read_only. If true -> read only -> 0.0<f<=1.0
                       Othewiese, false -> write -> f=1.0
                     *)
@@ -1765,6 +1767,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
         | New ({exp_new_class_name = c;
           exp_new_parent_name = pname;
           exp_new_arguments = args;
+          exp_new_undealloc = uda;
           exp_new_pos = pos}) -> begin
 	    let field_types, vs = List.split args in
 	    let heap_args = List.map2 (fun n -> fun t -> CP.SpecVar (t, n, Primed))
@@ -1795,13 +1798,13 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                 CF.h_formula_data_node = CP.SpecVar (Named c, res_name, Unprimed);
                 CF.h_formula_data_name = c;
 		CF.h_formula_data_derv = false;
+                CF.h_formula_data_undealloc = uda;
 		CF.h_formula_data_imm = CF.ConstAnn(Mutable);
                 CF.h_formula_data_param_imm = List.map (fun _ -> CF.ConstAnn(Mutable)) heap_args; 
                 (* (andreeac) to check: too weak *)	     
 		        CF.h_formula_data_perm = None; (*None means full permission*)
 			    CF.h_formula_data_origins = [];
 			    CF.h_formula_data_original = true;
-
                 CF.h_formula_data_arguments =(*type_var :: ext_var :: *) new_heap_args;
 		CF.h_formula_data_holes = []; (* An Hoa : Don't know what to do *)
                 CF.h_formula_data_remaining_branches = None;
