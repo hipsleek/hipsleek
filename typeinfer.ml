@@ -121,7 +121,6 @@ let node2_to_node_x prog (h0 : IF.h_formula_heap2) : IF.h_formula_heap =
     let h = { IF.h_formula_heap_node = h0.IF.h_formula_heap2_node;
               IF.h_formula_heap_name = h0.IF.h_formula_heap2_name;
               IF.h_formula_heap_deref = h0.IF.h_formula_heap2_deref;
-              IF.h_formula_heap_undealloc = h0.IF.h_formula_heap2_undealloc;
               IF.h_formula_heap_derv = h0.IF.h_formula_heap2_derv;
               IF.h_formula_heap_imm = h0.IF.h_formula_heap2_imm;
               IF.h_formula_heap_imm_param = hanns;
@@ -144,7 +143,6 @@ let node2_to_node_x prog (h0 : IF.h_formula_heap2) : IF.h_formula_heap =
         let h = { IF.h_formula_heap_node = h0.IF.h_formula_heap2_node;
                   IF.h_formula_heap_name = h0.IF.h_formula_heap2_name;
                   IF.h_formula_heap_deref = h0.IF.h_formula_heap2_deref;
-                  IF.h_formula_heap_undealloc = h0.IF.h_formula_heap2_undealloc;
                   IF.h_formula_heap_derv = h0.IF.h_formula_heap2_derv;
                   IF.h_formula_heap_imm = h0.IF.h_formula_heap2_imm;
                   IF.h_formula_heap_imm_param = hanns;

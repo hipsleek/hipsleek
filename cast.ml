@@ -247,7 +247,6 @@ and exp_bind = {
     exp_bind_bound_var : typed_ident;
     exp_bind_fields : typed_ident list;
     exp_bind_body : exp;
-    (* exp_bind_undealloc : bool; *)
     exp_bind_imm : Cformula.ann;
     exp_bind_param_imm : Cformula.ann list;
     exp_bind_read_only : bool; (*for frac perm, indicate whether the body will read or write to bound vars in exp_bind_fields*)
@@ -300,7 +299,6 @@ and exp_new = {
     exp_new_class_name : ident;
     exp_new_parent_name : ident;
     exp_new_arguments : typed_ident list;
-    exp_new_undealloc : bool;
     exp_new_pos : loc }
 
 and exp_return = { exp_return_type : typ;
@@ -1385,7 +1383,6 @@ let rec generate_extensions (subnode : F.h_formula_data) cdefs0 (pos:loc) : F.h_
 	  let sup_h = F.DataNode ({F.h_formula_data_node = subnode.F.h_formula_data_node;
 							   F.h_formula_data_name = cdef1.data_name;
 							   F.h_formula_data_derv = subnode.F.h_formula_data_derv;
-                 F.h_formula_data_undealloc = subnode.F.h_formula_data_undealloc;
 							   F.h_formula_data_imm = subnode.F.h_formula_data_imm;
                                F.h_formula_data_param_imm = subnode.F.h_formula_data_param_imm;
 							   F.h_formula_data_perm = subnode.F.h_formula_data_perm; (*LDK*)
@@ -1407,7 +1404,6 @@ let rec generate_extensions (subnode : F.h_formula_data) cdefs0 (pos:loc) : F.h_
 				let ext_h = F.DataNode ({F.h_formula_data_node = top_p;
 										 F.h_formula_data_name = ext_name;
 										 F.h_formula_data_derv = subnode.F.h_formula_data_derv;
-                     F.h_formula_data_undealloc = subnode.F.h_formula_data_undealloc;
 										 F.h_formula_data_imm = subnode.F.h_formula_data_imm;
                                          F.h_formula_data_param_imm = subnode.F.h_formula_data_param_imm;
 										 F.h_formula_data_perm = subnode.F.h_formula_data_perm; (*LDK*)
@@ -1430,7 +1426,6 @@ let rec generate_extensions (subnode : F.h_formula_data) cdefs0 (pos:loc) : F.h_
 				let ext_h = F.DataNode ({F.h_formula_data_node = top_p;
 										 F.h_formula_data_name = ext_name;
 										 F.h_formula_data_derv = subnode.F.h_formula_data_derv;
-                     F.h_formula_data_undealloc = subnode.F.h_formula_data_undealloc;
 										 F.h_formula_data_imm = subnode.F.h_formula_data_imm;
                                          F.h_formula_data_param_imm = subnode.F.h_formula_data_param_imm;
 										 F.h_formula_data_perm = subnode.F.h_formula_data_perm;

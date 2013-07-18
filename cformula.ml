@@ -243,8 +243,7 @@ h_formula_phase_pos : loc }
 
 and h_formula_data = {  h_formula_data_node : CP.spec_var;
                         h_formula_data_name : ident;
-                        h_formula_data_derv : bool;
-                        h_formula_data_undealloc : bool;
+						h_formula_data_derv : bool;
                         h_formula_data_imm : ann;
                         h_formula_data_param_imm : ann list;
                         h_formula_data_perm : cperm; (* option; *) (*LDK: permission*)
@@ -252,7 +251,7 @@ and h_formula_data = {  h_formula_data_node : CP.spec_var;
                         h_formula_data_origins : ident list;
                         h_formula_data_original : bool;
                         h_formula_data_arguments : CP.spec_var list;
-                        h_formula_data_holes : int list; (* An Hoa : list of fields not to be considered for partial structures *) (*store positions*)
+						h_formula_data_holes : int list; (* An Hoa : list of fields not to be considered for partial structures *) (*store positions*)
                         h_formula_data_label : formula_label option;
                         h_formula_data_remaining_branches :  (formula_label list) option;
                         h_formula_data_pruning_conditions :  (CP.b_formula * formula_label list ) list;
@@ -261,7 +260,6 @@ and h_formula_data = {  h_formula_data_node : CP.spec_var;
 and h_formula_view = {  h_formula_view_node : CP.spec_var;
                         h_formula_view_name : ident;
                         h_formula_view_derv : bool;
-                        h_formula_view_undealloc : bool;
                         h_formula_view_imm : ann;
                         (* h_formula_view_primitive : bool; (\* indicates if it is primitive view? *\) *)
                         h_formula_view_perm : cperm; (*LDK: permission*)
@@ -1687,10 +1685,6 @@ and get_view_derv (h : h_formula) = match h with
   | ViewNode ({h_formula_view_derv = dr}) -> dr
   | _ -> failwith ("get_view_derv: not a view")
 
-and get_view_undealloc (h : h_formula) = match h with
-  | ViewNode ({h_formula_view_undealloc = uda}) -> uda
-  | _ -> failwith ("get_view_derv: not a view")
-
 and get_data_derv (h : h_formula) = match h with
   | DataNode ({h_formula_data_derv = dr}) -> dr
   | _ -> failwith ("get_data_derv not a data")
@@ -2719,7 +2713,6 @@ and h_subst sst (f : h_formula) =
   | DataNode ({h_formula_data_node = x; 
 							h_formula_data_name = c; 
 							h_formula_data_derv = dr; 
-              h_formula_data_undealloc = uda;
 							h_formula_data_imm = imm; 
 	                        h_formula_data_param_imm = ann_param;
 							h_formula_data_perm = perm; (*LDK*)
@@ -2733,8 +2726,7 @@ and h_subst sst (f : h_formula) =
 							h_formula_data_pos = pos}) -> 
 		DataNode ({h_formula_data_node = CP.subst_var_par sst x; 
 							h_formula_data_name = c; 
-							h_formula_data_derv = dr;
-              h_formula_data_undealloc = uda;
+							h_formula_data_derv = dr; 
 							h_formula_data_imm = subs_imm_par sst imm;  
 	                        h_formula_data_param_imm = List.map (subs_imm_par sst) ann_param;
 							h_formula_data_perm = map_opt (CP.subst_var_par sst) perm;   (*LDK*)
@@ -2939,7 +2931,6 @@ and h_apply_one ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : h_formula) = m
   | DataNode ({h_formula_data_node = x; 
 	h_formula_data_name = c; 
     h_formula_data_derv = dr;
-    h_formula_data_undealloc = uda;
     h_formula_data_imm = imm; 
 	h_formula_data_param_imm = ann_param;
     h_formula_data_perm = perm; (*LDK*)
@@ -2954,7 +2945,6 @@ and h_apply_one ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : h_formula) = m
         DataNode ({h_formula_data_node = subst_var s x; 
 		h_formula_data_name = c; 
         h_formula_data_derv = dr;
-        h_formula_data_undealloc = uda;
     	h_formula_data_perm = subst_var_perm () s perm; (*LDK*)
         h_formula_data_imm = apply_one_imm s imm;  
 	    h_formula_data_param_imm = List.map (apply_one_imm s) ann_param;
@@ -10595,7 +10585,6 @@ and merge_two_nodes dn1 dn2 =
 	| DataNode { h_formula_data_node = dnsv1;
 		h_formula_data_name = n1;
 		h_formula_data_derv = dr1;
-    h_formula_data_undealloc = uda1;
 		h_formula_data_imm = i1;
         h_formula_data_param_imm = ann_p1;
 		h_formula_data_arguments = args1;
@@ -10610,7 +10599,6 @@ and merge_two_nodes dn1 dn2 =
 			| DataNode { h_formula_data_node = dnsv2;
 						h_formula_data_name = n2;
 						h_formula_data_derv = dr2;
-            h_formula_data_undealloc = uda2;
 						h_formula_data_imm = i2;
                         h_formula_data_param_imm = ann_p2;
 						h_formula_data_arguments = args2;
@@ -10648,7 +10636,6 @@ and merge_two_nodes dn1 dn2 =
 							let res = DataNode { h_formula_data_node = dnsv1;
 										h_formula_data_name = n1;
 						                h_formula_data_derv = dr1; (*TO CHECK*)
-                            h_formula_data_undealloc = uda1 || uda2;
 										h_formula_data_imm = i1;
 	                                    h_formula_data_param_imm = combine_param_ann ann_p1 ann_p2;
 										h_formula_data_arguments = args;
@@ -11318,7 +11305,6 @@ let prepost_of_init_x (var:CP.spec_var) sort (args:CP.spec_var list) (lbl:formul
       h_formula_data_node = var;
       h_formula_data_name = lock_name;
 	  h_formula_data_derv = false;
-    h_formula_data_undealloc = true;
 	  h_formula_data_imm = ConstAnn(Mutable);
       h_formula_data_param_imm = []; (* list should have the same size as h_formula_data_arguments *)
 	  h_formula_data_perm = None;
@@ -11336,7 +11322,6 @@ let prepost_of_init_x (var:CP.spec_var) sort (args:CP.spec_var list) (lbl:formul
       h_formula_view_node = var; (*Have to reserve type of view_node to finalize*)
       h_formula_view_name = sort; (*lock_sort*)
       h_formula_view_derv = false;
-      h_formula_view_undealloc = false;
       h_formula_view_imm = ConstAnn(Mutable); 
       h_formula_view_perm = None;
       h_formula_view_arguments = uargs;
@@ -11405,7 +11390,6 @@ let prepost_of_finalize_x (var:CP.spec_var) sort (args:CP.spec_var list) (lbl:fo
       h_formula_data_node = var;
       h_formula_data_name = lock_name;
 	  h_formula_data_derv = false;
-    h_formula_data_undealloc = true;
 	  h_formula_data_imm = ConstAnn(Mutable);
       h_formula_data_param_imm = [];    (* list should have the same size as h_formula_data_arguments *)
 	  h_formula_data_perm = None;
@@ -11423,7 +11407,6 @@ let prepost_of_finalize_x (var:CP.spec_var) sort (args:CP.spec_var list) (lbl:fo
       h_formula_view_node = var; (*Have to reserve type of view_node to finalize*)
       h_formula_view_name = sort; (*lock_sort*)
       h_formula_view_derv = false;
-      h_formula_view_undealloc = false;
       h_formula_view_imm = ConstAnn(Mutable); 
       h_formula_view_perm = None;
       h_formula_view_arguments = uargs;
@@ -11492,7 +11475,6 @@ let prepost_of_acquire_x (var:CP.spec_var) sort (args:CP.spec_var list) (inv:for
       h_formula_view_node = var; (*Have to reserve type of view_node to finalize*)
       h_formula_view_name = sort; (*lock_sort*)
       h_formula_view_derv = false;
-      h_formula_view_undealloc = false;
       h_formula_view_imm = ConstAnn(Mutable); 
       h_formula_view_perm = Some fresh_perm;
       h_formula_view_arguments = uargs;
@@ -12332,7 +12314,6 @@ let mkViewNode view_node view_name view_args pos = ViewNode
   { h_formula_view_node = view_node;
   h_formula_view_name = view_name;
   h_formula_view_derv = false;
-  h_formula_view_undealloc = false;
   h_formula_view_arguments = view_args;
   h_formula_view_imm = ConstAnn Mutable;
   h_formula_view_perm = None;

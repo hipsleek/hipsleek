@@ -3129,7 +3129,6 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
       | I.New {
             I.exp_new_class_name = c;
             I.exp_new_arguments = args;
-            I.exp_new_undealloc = uda;
             I.exp_new_pos = pos } ->
             let data_def = I.look_up_data_def 3 pos prog.I.prog_data_decls c in
             let all_fields = I.look_up_all_fields prog data_def in
@@ -3155,7 +3154,6 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
                   C.exp_new_class_name = c;
                   C.exp_new_parent_name = data_def.I.data_parent_name;
                   C.exp_new_arguments = [arg];
-                  C.exp_new_undealloc = uda;
                   C.exp_new_pos = pos;} in
               let new_t = Named c in
               let seq_e = C.mkSeq new_t fn_decl new_e pos in
@@ -3181,7 +3179,6 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
                   C.exp_new_class_name = c;
                   C.exp_new_parent_name = data_def.I.data_parent_name;
                   C.exp_new_arguments = List.combine parg_types arg_vars;
-                  C.exp_new_undealloc = uda;
                   C.exp_new_pos = pos;} in
               let new_t = Named c in
               let seq_e = C.mkSeq new_t init_seq new_e pos in
@@ -4586,7 +4583,6 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
     | IF.HeapNode {IF.h_formula_heap_node = n;
                    IF.h_formula_heap_name = c;
                    IF.h_formula_heap_deref = deref;
-                   IF.h_formula_heap_undealloc = uda;
                    IF.h_formula_heap_derv = dr;
                    IF.h_formula_heap_imm = imm;
                    IF.h_formula_heap_imm_param = ann_param;
@@ -4617,7 +4613,7 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
                 (* dereference to a basic type *)
                 if (deref = 1) then (
                   let base_heap_id = base_heap_id ^ "__star" in
-                  let hf = IF.mkHeapNode n base_heap_id 0 uda dr imm full inv pd perm exps ann_param pi l in
+                  let hf = IF.mkHeapNode n base_heap_id 0 dr imm full inv pd perm exps ann_param pi l in
                   (hf, [])
                 )
                 else (
@@ -4636,13 +4632,13 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
                     new_vars := !new_vars @ [(fresh_var, Unprimed)];
                     p1 := (fresh_var, Unprimed);
                     s := !s ^ "__star";
-                    let h = IF.mkHeapNode !p1 !s 0 uda dr imm inv full pd perm [!p2] ann_param None l in
+                    let h = IF.mkHeapNode !p1 !s 0 dr imm inv full pd perm [!p2] ann_param None l in
                     heaps := !heaps @ [h];
                   done;
                   s := !s ^ "__star";
                   let e = IF.P.Var (!p1, l) in
-                  let h1 = IF.mkHeapNode n !s 0 uda dr imm full inv pd perm [e] ann_param None l in
-                  let h2 = IF.mkHeapNode p base_heap_id 0 uda dr imm full inv pd perm exps ann_param pi l in
+                  let h1 = IF.mkHeapNode n !s 0 dr imm full inv pd perm [e] ann_param None l in
+                  let h2 = IF.mkHeapNode p base_heap_id 0 dr imm full inv pd perm exps ann_param pi l in
                   let hf = List.fold_left (fun f1 f2 -> IF.mkStar f1 f2 l) h1 (!heaps @ [h2]) in
                   (hf, !new_vars)
                 )
@@ -4663,13 +4659,13 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
                   new_vars := !new_vars @ [(fresh_var, Unprimed)];
                   p1 := (fresh_var, Unprimed);
                   s := !s ^ "__star";
-                  let h = IF.mkHeapNode !p1 !s 0 uda dr imm full inv pd perm [!p2] ann_param None l in
+                  let h = IF.mkHeapNode !p1 !s 0 dr imm full inv pd perm [!p2] ann_param None l in
                   heaps := !heaps @ [h];
                 done;
                 s := !s ^ "__star";
                 let e = IF.P.Var (!p1, l) in
-                let h1 = IF.mkHeapNode n !s 0 uda dr imm full inv pd perm [e] ann_param None l in
-                let h2 = IF.mkHeapNode p c 0 uda dr imm full inv pd perm exps ann_param pi l in
+                let h1 = IF.mkHeapNode n !s 0 dr imm full inv pd perm [e] ann_param None l in
+                let h2 = IF.mkHeapNode p c 0 dr imm full inv pd perm exps ann_param pi l in
                 let hf = List.fold_left (fun f1 f2 -> IF.mkStar f1 f2 l) h1 (!heaps @ [h2]) in
                 (hf, !new_vars)
               )
@@ -4690,7 +4686,6 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
       | IF.HeapNode {IF.h_formula_heap_node = (v, p);
                      IF.h_formula_heap_name = c;
                      IF.h_formula_heap_deref = deref;
-                     IF.h_formula_heap_undealloc = uda;
                      IF.h_formula_heap_derv = dr;
                      IF.h_formula_heap_imm = imm;
                      IF.h_formula_heap_imm_param = ann_param;
@@ -4764,7 +4759,6 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
                 CF.DataNode {CF.h_formula_data_node = CP.SpecVar (rootptr_type,rootptr,p);
                              CF.h_formula_data_name = rootptr_type_name;
                              CF.h_formula_data_derv = dr;
-                             CF.h_formula_data_undealloc = uda;
                              CF.h_formula_data_imm = Immutable.iformula_ann_to_cformula_ann imm;
                              CF.h_formula_data_param_imm = Immutable.iformula_ann_opt_to_cformula_ann_lst ann_param;
                              CF.h_formula_data_perm = permvar; (*??? TO CHECK: temporarily*)
@@ -4804,7 +4798,6 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
                   CF.ViewNode {CF.h_formula_view_node = new_v;
                                CF.h_formula_view_name = c;
                                CF.h_formula_view_derv = dr;
-                               CF.h_formula_view_undealloc = uda;
                                CF.h_formula_view_imm = Immutable.iformula_ann_to_cformula_ann imm;
                                CF.h_formula_view_perm = permvar; (*LDK: TO CHECK*)
                                CF.h_formula_view_arguments = hvars;
@@ -4848,7 +4841,6 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
                   CF.DataNode {CF.h_formula_data_node = new_v;
                                CF.h_formula_data_name = c;
                                CF.h_formula_data_derv = dr;
-                               CF.h_formula_data_undealloc = uda;
                                CF.h_formula_data_imm = Immutable.iformula_ann_to_cformula_ann imm;
                                CF.h_formula_data_param_imm = Immutable.iformula_ann_opt_to_cformula_ann_lst ann_param;
                                CF.h_formula_data_perm = permvar; (*LDK*)
@@ -7170,7 +7162,6 @@ and check_barrier_wf prog bd =
         CF.h_formula_data_original = true;
         CF.h_formula_data_holes =[];
         CF.h_formula_data_derv = false;
-        CF.h_formula_data_undealloc = true;
         CF.h_formula_data_pos = no_pos } in
     let p2 = CP.mkEqVarInt st_v st no_pos in
     let p = Mcpure.mix_of_pure (CP.mkAnd p2 perm no_pos) in
@@ -7520,7 +7511,6 @@ let rec rev_trans_heap f = match f with
       IF.mkHeapNode (rev_trans_spec_var b.CF.h_formula_data_node) 
                     b.CF.h_formula_data_name
                     0
-                    b.CF.h_formula_data_undealloc 
                     b.CF.h_formula_data_derv 
                     (IF.ConstAnn(Mutable))
                     true false false None (List.map (fun c-> IP.Var ((rev_trans_spec_var c),no_pos)) b.CF.h_formula_data_arguments) []
@@ -7529,7 +7519,6 @@ let rec rev_trans_heap f = match f with
       IF.mkHeapNode (rev_trans_spec_var b.CF.h_formula_view_node) 
                     b.CF.h_formula_view_name
                     0
-                    b.CF.h_formula_view_undealloc 
                     b.CF.h_formula_view_derv 
                     (IF.ConstAnn(Mutable))
                     true false false None (List.map (fun c-> IP.Var ((rev_trans_spec_var c),no_pos)) b.CF.h_formula_view_arguments) []
@@ -7779,7 +7768,6 @@ let hn_trans pname vnames hn = match hn with
               IF.h_formula_heap_node = hvar;
               IF.h_formula_heap_name = id^"_"^pname;
               IF.h_formula_heap_deref = 0;
-              IF.h_formula_heap_undealloc = true;
               IF.h_formula_heap_derv = false;
               IF.h_formula_heap_imm = IF.ConstAnn(Mutable);
               IF.h_formula_heap_imm_param = [];
@@ -7879,21 +7867,20 @@ let trans_formula_hp_2_view_x iprog cprog proc_name in_hp_names chprels_decl f=
               | _ -> report_error no_pos "ASTSIMP.trans_formula_hp_2_view"
             in
             IF.HeapNode {
-              IF.h_formula_heap_node = r;
-              IF.h_formula_heap_name = id(* ^"_"^proc_name *);
-              IF.h_formula_heap_deref = 0;
-              IF.h_formula_heap_undealloc = true;
-              IF.h_formula_heap_derv = false;
-              IF.h_formula_heap_imm = IF.ConstAnn(Mutable);
-              IF.h_formula_heap_imm_param = [];
-              IF.h_formula_heap_full = false;
-              IF.h_formula_heap_with_inv = false;
-              IF.h_formula_heap_perm = None;
-              IF.h_formula_heap_arguments = tl;
-              IF.h_formula_heap_pseudo_data = false;
-              IF.h_formula_heap_label = None;
-              IF.h_formula_heap_pos = pos}
-        else hn
+	        IF.h_formula_heap_node = r;
+	        IF.h_formula_heap_name = id(* ^"_"^proc_name *);
+                IF.h_formula_heap_deref = 0;
+	        IF.h_formula_heap_derv = false;
+	        IF.h_formula_heap_imm = IF.ConstAnn(Mutable);
+                IF.h_formula_heap_imm_param = [];
+	        IF.h_formula_heap_full = false;
+	        IF.h_formula_heap_with_inv = false;
+	        IF.h_formula_heap_perm = None;
+	        IF.h_formula_heap_arguments = tl;
+	        IF.h_formula_heap_pseudo_data = false;
+	        IF.h_formula_heap_label = None;
+	        IF.h_formula_heap_pos = pos}
+	  else hn
     | _ -> hn
   in
   (*to improve*)

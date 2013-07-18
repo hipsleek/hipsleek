@@ -313,7 +313,6 @@ rule tokenizer file_name = parse
   | "@L" {LEND}
   | "@A" {ACCS}
   | "@D" { DERV }
-  | "@U" { UNDEALLOC }
   | "@M" { MUT }
   | "@R" { MAT }
   | "@VAL" {VAL}
