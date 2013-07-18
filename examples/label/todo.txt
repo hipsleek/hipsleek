@@ -57,6 +57,27 @@ Issues :
  res: SAT
  
 ============================================================
+# lab2.slk -tp mona --en-proof-logging
+
+checkentail n>=0 & n>0 |- (n>=-1) & n>=0.
+print residue.
+
+Why did it not call MONA?
+
+id: 1; prover: OMEGA CALCULATOR; loc: _0:0_0:0; kind: Sleek_Entail(1)
+ Sat:  0<=n & 0<n
+ res: SAT
+ -------------------- 
+ id: 2; prover: OMEGA CALCULATOR; loc: _0:0_0:0; kind: Sleek_Entail(1)
+ Imply: ante: 0<=n & 0<n
+	     conseq:  0<=(1+n)
+ res: true
+ -------------------- 
+ id: 3; prover: OMEGA CALCULATOR; loc: _0:0_0:0; kind: Sleek_Entail(1)
+ Imply: ante: 0<=n & 0<n
+	     conseq:  0<=n
+ res: true
+ --------------------
 ============================================================
 ============================================================
 ============================================================
