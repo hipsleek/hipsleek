@@ -1462,7 +1462,7 @@ and compute_base_case_x prog cf vars = (*flatten_base_case cf s self_c_var *)
       let bc_impl c = let r,_,_ = TP.imply_sub_no one_bc c "0" false None in r in
       let sat_subno  = ref 0 in
       let bcg = List.filter (fun c->(not (CP.isConstTrue c))&& (bc_impl c)&& List.for_all 
-	  (fun d-> not (TP.is_sat_sub_no (CP.mkAnd c d no_pos) sat_subno)) co ) bcg in
+	  (fun d-> not (TP.is_sat_sub_no 10 (CP.mkAnd c d no_pos) sat_subno)) co ) bcg in
       match bcg with
         | []-> None
         | _ -> Some (CP.disj_of_list bcg no_pos,cases)
@@ -4124,7 +4124,7 @@ and case_coverage_x (instant:Cpure.spec_var list)(f:CF.struc_formula): bool =
           let _ = 
             let coverage_error = 
                 let f_sat = Cpure.mkAnd ctx (Cpure.Not (all,None,no_pos)) no_pos in
-                Tpdispatcher.is_sat_sub_no f_sat sat_subno
+                Tpdispatcher.is_sat_sub_no 11 f_sat sat_subno
                 (*not (Tpdispatcher.simpl_imply_raw ctx all)*) in
             if coverage_error then 
               let s = (Cprinter.string_of_struc_formula f) in
@@ -4137,8 +4137,8 @@ and case_coverage_x (instant:Cpure.spec_var list)(f:CF.struc_formula): bool =
                 let p1 = Cpure.mkAnd p1i ctx no_pos in
                 if (List.fold_left 
                     (fun a c->
-                        if (Tpdispatcher.is_sat_sub_no (Cpure.mkAnd p1i c no_pos) sat_subno) then 
-                            if (Tpdispatcher.is_sat_sub_no (Cpure.mkAnd p1 c no_pos) sat_subno) then 
+                        if (Tpdispatcher.is_sat_sub_no 12 (Cpure.mkAnd p1i c no_pos) sat_subno) then 
+                            if (Tpdispatcher.is_sat_sub_no 13 (Cpure.mkAnd p1 c no_pos) sat_subno) then 
                                 (print_string ("in the context :"^(Cprinter.string_of_pure_formula ctx)^
                                               "\n the guards "^(Cprinter.string_of_pure_formula p1i)^"and"^
                                               (Cprinter.string_of_pure_formula c)^" are not disjoint\n");
@@ -6707,7 +6707,7 @@ and prune_inv_inference_formula_x (cp:C.prog_decl) (v_l : CP.spec_var list) (ini
                 else List.for_all
                   (fun (o_l,o_f) ->
                       let new_f = CP.mkAnd o_f bf no_pos
-                      in (TP.is_sat new_f "get_safe_prune_conds" false)
+                      in (TP.is_sat 2 new_f "get_safe_prune_conds" false)
                   ) remain_ls
               end
     in
@@ -7382,7 +7382,7 @@ and compute_mem_spec (prog : C.prog_decl) (lhs : CF.formula) (rhs : CF.formula) 
 and check_mem_formula_guards_disjoint (fl: CP.formula list) : bool = 
     let sat_subno = ref 0 in
     let f = CP.join_disjunctions fl in
-    Tpdispatcher.is_sat_sub_no (Cpure.Not (f,None,no_pos)) sat_subno
+    Tpdispatcher.is_sat_sub_no 14 (Cpure.Not (f,None,no_pos)) sat_subno
 
 and validate_mem_spec (prog : C.prog_decl) (vdef: C.view_decl) = 
     let vn = vdef.C.view_name in

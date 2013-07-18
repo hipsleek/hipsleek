@@ -2006,7 +2006,7 @@ let is_sat (f : CP.formula) (old_sat_no : string): bool =
 ;;
 
 let is_sat (f : CP.formula) (sat_no : string): bool =
-  Debug.no_1 "[tp]is_sat"  Cprinter.string_of_pure_formula string_of_bool (fun _ -> is_sat f sat_no) f
+  Debug.ho_1 "[tp]is_sat"  Cprinter.string_of_pure_formula string_of_bool (fun _ -> is_sat f sat_no) f
 
    
 let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (old_imp_no : string) timeout process
@@ -2319,7 +2319,8 @@ let is_sat f sat_no do_cache =
   end
 ;;
 
-let is_sat f sat_no do_cache = Debug.no_1 "is_sat" Cprinter.string_of_pure_formula string_of_bool (fun _ -> is_sat f sat_no do_cache) f
+let is_sat i f sat_no do_cache = 
+  Debug.ho_1_num i "is_sat" Cprinter.string_of_pure_formula string_of_bool (fun _ -> is_sat f sat_no do_cache) f
 
 
 let sat_no = ref 1 ;;
@@ -2327,13 +2328,13 @@ let sat_no = ref 1 ;;
 let incr_sat_no () =  sat_no := !sat_no +1  ;;
 
 let is_sat_sub_no_c (f : CP.formula) sat_subno do_cache : bool = 
-  let sat = is_sat f ((string_of_int !sat_no) ^ "." ^ (string_of_int !sat_subno)) do_cache in
+  let sat = is_sat 1 f ((string_of_int !sat_no) ^ "." ^ (string_of_int !sat_subno)) do_cache in
   sat_subno := !sat_subno+1;
   sat
 ;;
 
-let is_sat_sub_no_c (f : CP.formula) sat_subno do_cache : bool =
-  Debug.no_1 "is_sat_sub_no_c" Cprinter.string_of_pure_formula string_of_bool (fun f -> is_sat_sub_no_c f sat_subno do_cache) f
+let is_sat_sub_no_c i (f : CP.formula) sat_subno do_cache : bool =
+  Debug.ho_1_num i "is_sat_sub_no_c" Cprinter.string_of_pure_formula string_of_bool (fun f -> is_sat_sub_no_c f sat_subno do_cache) f
 ;;
 
 let is_sat_sub_no_with_slicing_orig (f:CP.formula) sat_subno : bool =  
@@ -2357,7 +2358,7 @@ let is_sat_sub_no_with_slicing_orig (f:CP.formula) sat_subno : bool =
     let n_l = List.map (fun c-> (CP.fv c , c)) conj_list in
     snd (List.split (fix n_l)) in
   let  n_f_l = split_sub_f f in
-  List.fold_left (fun a f -> if not a then a else is_sat_sub_no_c f sat_subno false) true n_f_l 
+  List.fold_left (fun a f -> if not a then a else is_sat_sub_no_c 1 f sat_subno false) true n_f_l 
 
 let is_sat_sub_no_slicing (f:CP.formula) sat_subno : bool =
   let overlap (nlv1, lv1) (nlv2, lv2) =
@@ -2409,7 +2410,7 @@ let is_sat_sub_no_slicing (f:CP.formula) sat_subno : bool =
 	let n_f_l = split_sub_f f in
 	List.fold_left (fun a f ->
 	  if not a then a
-	  else is_sat_sub_no_c (CP.join_conjunctions (f::(pick_rel_constraints f n_f_l))) sat_subno false) true n_f_l
+	  else is_sat_sub_no_c 2 (CP.join_conjunctions (f::(pick_rel_constraints f n_f_l))) sat_subno false) true n_f_l
   in
 
   (* SAT(A \/ B) = SAT(A) \/ SAT(B) *)
@@ -2425,16 +2426,16 @@ let is_sat_sub_no_slicing (f:CP.formula) sat_subno : bool =
 let is_sat_sub_no (f : CP.formula) sat_subno : bool =
   if !is_sat_slicing then is_sat_sub_no_slicing f sat_subno
   (* else if !do_slicing && !multi_provers then is_sat_sub_no_slicing f sat_subno *)
-  else is_sat_sub_no_c f sat_subno false
+  else is_sat_sub_no_c 3 f sat_subno false
 
-let is_sat_sub_no (f : CP.formula) sat_subno : bool =  
-  Debug.no_2 "is_sat_sub_no " (Cprinter.string_of_pure_formula) (fun x-> string_of_int !x)
+let is_sat_sub_no i (f : CP.formula) sat_subno : bool =  
+  Debug.ho_2_num i "is_sat_sub_no " (Cprinter.string_of_pure_formula) (fun x-> string_of_int !x)
     (string_of_bool ) is_sat_sub_no f sat_subno;;
 
 let is_sat_memo_sub_no_orig (f : memo_pure) sat_subno with_dupl with_inv : bool =
   if !f_2_slice || !dis_slicing then
 		let f_lst = MCP.fold_mem_lst_to_lst f with_dupl with_inv true in
-		(is_sat_sub_no (CP.join_conjunctions f_lst) sat_subno)
+		(is_sat_sub_no 1 (CP.join_conjunctions f_lst) sat_subno)
   else if (MCP.isConstMFalse (MemoF f)) then false
   else
 		(* let f = if !do_slicing                            *)
@@ -2442,7 +2443,7 @@ let is_sat_memo_sub_no_orig (f : memo_pure) sat_subno with_dupl with_inv : bool 
 		(* 	then List.filter (fun c -> c.memo_group_unsat) f *)
 		(* 	else f in                                        *)
 		let f_lst = MCP.fold_mem_lst_to_lst f with_dupl with_inv true in
-		not (List.exists (fun f -> not (is_sat_sub_no f sat_subno)) f_lst)
+		not (List.exists (fun f -> not (is_sat_sub_no 2 f sat_subno)) f_lst)
 
 let is_sat_memo_sub_no_orig (f : memo_pure) sat_subno with_dupl with_inv : bool =
   Debug.no_1 "is_sat_memo_sub_no_orig"
@@ -2454,7 +2455,7 @@ let is_sat_memo_sub_no_slicing (f : memo_pure) sat_subno with_dupl with_inv : bo
   if (not (is_sat_memo_sub_no_orig f sat_subno with_dupl with_inv)) then (* One slice is UNSAT *) false
   else (* Improve completeness of SAT checking *)
 	  let f_l = MCP.fold_mem_lst_to_lst_gen_for_sat_slicing f with_dupl with_inv true true in
-	  not (List.exists (fun f -> not (is_sat_sub_no f sat_subno)) f_l)
+	  not (List.exists (fun f -> not (is_sat_sub_no 3 f sat_subno)) f_l)
     
 let is_sat_memo_sub_no_slicing (f : memo_pure) sat_subno with_dupl with_inv : bool =
   Debug.no_1 "is_sat_memo_sub_no_slicing"
@@ -2484,7 +2485,7 @@ and is_sat_memo_sub_no_ineq_slicing_x1 (mem : memo_pure) sat_subno with_dupl wit
           (MCP.is_ineq_linking_memo_group img) && 
           (Gen.BList.subset_eq eq_spec_var img.memo_group_fv mg.memo_group_fv)) mem in
   		let f = join_conjunctions (MCP.fold_mem_lst_to_lst (mg::related_ineq) with_dupl with_inv true) in
-  		is_sat_sub_no f sat_subno
+  		is_sat_sub_no 4 f sat_subno
   in
   (* List.fold_left (fun acc mg -> if not acc then acc else is_sat_one_slice mg) true mem *)
   not (List.exists (fun mg -> not (is_sat_one_slice mg)) mem)
@@ -2499,7 +2500,7 @@ and is_sat_memo_sub_no_ineq_slicing_x2 (mem : memo_pure) sat_subno with_dupl wit
         (MCP.is_ineq_linking_memo_group img) && 
         (Gen.BList.subset_eq eq_spec_var img.memo_group_fv mg.memo_group_fv)) mem in
       let f = join_conjunctions (MCP.fold_mem_lst_to_lst (mg::related_ineq) with_dupl with_inv true) in
-      is_sat_sub_no f sat_subno
+      is_sat_sub_no 5 f sat_subno
   in
   (* List.fold_left (fun acc mg -> if not acc then acc else is_sat_one_slice mg) true mem *)
   not (List.exists (fun mg -> not (is_sat_one_slice mg)) mem)
@@ -2625,7 +2626,7 @@ let is_sat_memo_sub_no (f : memo_pure) sat_subno with_dupl with_inv : bool =
     (* MCP.is_sat_memo_sub_no_complete f with_dupl with_inv (fun f -> is_sat_sub_no f sat_subno) *)
   (* else if !do_slicing && !infer_lvar_slicing then *)
   else if (not !dis_slc_ann) && !infer_lvar_slicing then
-    MCP.is_sat_memo_sub_no_complete f with_dupl with_inv (fun f -> is_sat_sub_no f sat_subno)
+    MCP.is_sat_memo_sub_no_complete f with_dupl with_inv (fun f -> is_sat_sub_no 5 f sat_subno)
   else is_sat_memo_sub_no_orig f sat_subno with_dupl with_inv
 
 let is_sat_memo_sub_no (f : memo_pure) sat_subno with_dupl with_inv : bool =
@@ -2733,7 +2734,7 @@ let is_sat_memo_sub_no (f : memo_pure) sat_subno with_dupl with_inv : bool =
   
 let is_sat_mix_sub_no (f : MCP.mix_formula) sat_subno with_dupl with_inv : bool = match f with
   | MCP.MemoF f -> is_sat_memo_sub_no f sat_subno with_dupl with_inv
-  | MCP.OnePF f -> (if !do_sat_slice then is_sat_sub_no_with_slicing_orig else is_sat_sub_no) f sat_subno
+  | MCP.OnePF f -> (if !do_sat_slice then is_sat_sub_no_with_slicing_orig else is_sat_sub_no 61) f sat_subno
 
 let is_sat_mix_sub_no (f : MCP.mix_formula) sat_subno with_dupl with_inv =
   Debug.no_1 "is_sat_mix_sub_no"
@@ -2744,7 +2745,7 @@ let is_sat_mix_sub_no (f : MCP.mix_formula) sat_subno with_dupl with_inv =
 let is_sat_msg_no_no prof_lbl (f:CP.formula) do_cache :bool = 
   let sat_subno = ref 0 in
   let _ = Gen.Profiling.push_time prof_lbl in
-  let sat = is_sat_sub_no_c f sat_subno do_cache in
+  let sat = is_sat_sub_no_c 4 f sat_subno do_cache in
   let _ = Gen.Profiling.pop_time prof_lbl in
   sat
   

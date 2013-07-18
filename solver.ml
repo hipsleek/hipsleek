@@ -984,7 +984,7 @@ and xpure_perm_x (prog : prog_decl) (h : h_formula) (p: mix_formula) : MCP.mix_f
 			  let nf, _ = perm_f vars in
 			  Debug.devel_zprint (lazy ("xpure_perm: check: [Begin] check distinct fractional permission constrainst: "^ 
 			      (Cprinter.string_of_pure_formula nf) ^ "\n")) no_pos;
-			  let b =  not (TP.is_sat_sub_no nf (ref 0)) in
+			  let b =  not (TP.is_sat_sub_no 8 nf (ref 0)) in
 			  Debug.devel_zprint (lazy ("xpure_perm: check: [End] check distinct fractional permission constrainst "^(string_of_bool b)^" \n")) no_pos;
 			  b
                     in
@@ -6721,7 +6721,7 @@ and check_maymust_failure (ante:CP.formula) (cons:CP.formula): (CF.failure_kind*
 and check_maymust_failure_x (ante:CP.formula) (cons:CP.formula): (CF.failure_kind*((CP.formula*CP.formula) list * (CP.formula*CP.formula) list * (CP.formula*CP.formula) list))=
   if not !disable_failure_explaining then
     let r = ref (-9999) in
-    let is_sat f = TP.is_sat_sub_no f r in
+    let is_sat f = TP.is_sat_sub_no 9 f r in
     let find_all_failures a c = CP.find_all_failures is_sat a c in
     let find_all_failures a c =
       let pr1 = Cprinter.string_of_pure_formula in
@@ -7748,8 +7748,8 @@ and imply_mix_formula_x ante_m0 ante_m1 conseq_m imp_no memset =
                     List.filter CP.is_sat_eq_ineq (CP.split_disjunctions_deep a1))                    
     	      else if CP.no_andl a0 && CP.no_andl a1 then (CP.split_disjunctions a0,CP.split_disjunctions a1) else
                 (* why andl need to be handled in a special way *)
-	            let r = ref (-8999) in
-	            let is_sat f = TP.is_sat_sub_no f r in
+	            let r = ref (-999) in
+	            let is_sat f = TP.is_sat_sub_no 6 f r in
 	            let a0l = List.filter is_sat (CP.split_disjunctions a0) in
 	            let a1l = List.filter is_sat (CP.split_disjunctions a1) in 
 	            (a0l,a1l) 
@@ -9112,7 +9112,7 @@ and do_unmatched_rhs_x rhs rhs_rest caller prog estate conseq lhs_b rhs_b a (rhs
         let rhs_mix_p_withlsNull = MCP.memoise_add_pure_N rhs_mix_p rhs_neq_nulls in
         let rhs_p = MCP.pure_of_mix rhs_mix_p_withlsNull in
         (*contradiction on RHS?*)
-        if (not is_rel) && not(TP.is_sat_sub_no rhs_p r) then
+        if (not is_rel) && not(TP.is_sat_sub_no 7 rhs_p r) then
           (*contradiction on RHS*)
           let msg = "contradiction in RHS:" ^ (Cprinter.string_of_pure_formula rhs_p) in
           let new_estate = {estate  with CF.es_formula = CF.substitute_flow_into_f
