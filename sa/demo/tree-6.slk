@@ -10,41 +10,41 @@ HeapPred H(node a).
 HeapPred HP_0(node a).
 HeapPred HP_1(node a).
 
-relAssume H
+relAssume 
  H(x)&true --> x::node<key_31_797,left_31_798,right_31_799> * 
   HP_0(left_31_798) * HP_1(right_31_799).
 
-relAssume H
+relAssume 
  HP_0(left_31_798)&left_31_798!=null --> H(left_31_798).
 
-relAssume H
+relAssume 
  HP_1(right_31_799)&right_31_799!=null --> H(right_31_799).
 
 
-relAssume HP_1
+relAssume 
  HP_1(right_31_799)&right_31_799=null --> emp.
 
-relAssume G
+relAssume 
  HP_0(left_31_798) * x::node<key_31_797,left_31_798,right_31_799>@M&
   left_31_798!=null & right_31_799=null --> G(x).
 
-relAssume HP_0
+relAssume 
  HP_0(left_31_798)&left_31_798=null --> emp.
 
-relAssume G
+relAssume 
  HP_1(right_31_799) * x::node<key_31_797,left_31_798,right_31_799>@M&
   left_31_798=null --> G(x).
 
-relAssume HP_0
+relAssume 
  HP_0(left_31_798)&left_31_798=null --> emp.
 
 
-relAssume G
+relAssume 
  HP_1(right_31_799) * x::node<key_31_797,left_31_798,right_31_799>@M&
   left_31_798=null --> G(x).
 
 
-relAssume G
+relAssume 
  x::node<key_31_797,left_31_798,right_31_799>@M * G(left_31_798) * 
  G(right_31_799)&left_31_798!=null & right_31_799!=null --> G(x).
 

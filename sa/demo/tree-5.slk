@@ -7,16 +7,16 @@ data node{
 HeapPred G1(node a).
 HeapPred G2(node a).
 
-relAssume G1
+relAssume 
     l=null  --> G1(l).
 
-relAssume G2
+relAssume 
     r=null  --> G2(r).
 
-relAssume G2
+relAssume 
    r::node<k,left,right>@M * G1(left) * G2(right) --> G2(r).
 
-relAssume G1
+relAssume 
   l::node<k,left,right> * G1(left) * G2(right) & l!=null --> G1(l).
 
 shape_infer [][G1,G2].

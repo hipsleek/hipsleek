@@ -1,0 +1,21 @@
+data tree {
+    int val; 
+    node children;
+    }.
+
+data node {
+    tree child; 
+    node next; 
+    node prev; 
+    tree parent;
+    }.
+    
+pred treep<> == self= null or  self::tree<_,c>* c::dll<self,parent> .
+
+pred dll<parent:tree, prev:node> == 
+    self=null 
+ or self::node<c,n,prev,parent>*c::treep<>* n::dll<parent,self>.
+
+
+checkentail x::treep<> & x!=null |- x::tree<a,b>.
+print residue.

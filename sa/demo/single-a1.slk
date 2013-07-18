@@ -6,17 +6,17 @@ data node{
 HeapPred GP_4(node a, node@NI b).
 HeapPred GP_5(node a, node@NI b).
 
-relAssume GP_4
+relAssume 
    emp&next_34_803=null --> GP_4(next_34_803,next_29_789).
 
-relAssume GP_5
+relAssume 
    emp&next_29_789=t_32' &  next_29_789!=null 
    --> GP_5(next_29_789,t_32').
 
-relAssume GP_4
+relAssume
    emp&next_34_803=null --> GP_4(next_34_803,next_29_789).
 
-relAssume GP_5
+relAssume 
    next_29_789::node<val_29_73,next_29_74>@M * GP_5(next_29_74,t_32')
       --> GP_5(next_29_789,t_32').
 

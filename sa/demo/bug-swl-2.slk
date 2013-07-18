@@ -1,0 +1,30 @@
+data node{
+	int val;
+	node next;
+}.
+
+HeapPred H_3(node prev, node@NI cur, node@NI sent).
+HeapPred H_2(node next_1, node@NI prev, node@NI sent).
+
+infer_exact [H_2,H_3] 
+ H_3(prev,cur,sent) * cur::node<_,prev>@M  & next_1=null  & prev'=null 
+   |-   cur::node<_,n1> * H_2(n1,prev',sent) * H_3(prev',cur,sent)
+ .
+print residue.
+
+/*
+# bug-swl-2.slk
+
+Missing on prev'=null for 1st hprel
+
+GOT
+===
+ <1>emp&next_1=null & prev'=null & Anon_14=Anon_15 
+    & n1=prev & n1=prev & cur=cur_61 & sent=sent_62&{FLOW,(19,20)=__norm}[]
+
+ inferred hprel: [
+   H_3(prev,cur@NI,sent@NI) --> H_2(prev,prev'@NI,sent@NI); 
+          ^^prev'=null^^
+   emp&prev'=null --> H_3(prev',cur_61@NI,sent_62@NI)]
+
+*/

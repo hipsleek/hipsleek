@@ -1,0 +1,52 @@
+data node {
+ int val;
+ node next;
+}.
+
+HeapPred H(node x).
+HeapPred H_8(int x).
+HeapPred H_9(node x).
+PostPred G(node x).
+
+relAssume
+ H(x)&x!=null --> x::node<val_16_916,next_16_917>@M * 
+  H_8(val_16_916) * H_9(next_16_917).
+
+relAssume
+ H_9(next_16_917) --> H(next_16_917).
+
+relAssume
+ H(x)&x=null --> emp.
+
+relAssume
+ H_8(val_16_916) --> emp&val_16_916>0.
+
+/*
+relAssume
+ x=null --> G(x).
+
+relAssume
+ H_8(val_16_916) * x::node<val_16_916,next_16_917>@M * G(next_16_917)&
+  0<val_16_916 --> G(x).
+*/
+
+shape_infer [H,H_9,H_8][].
+
+
+
+/*
+# pos-1.slk
+
+// H_8 has been inlined ..
+
+[ H_9(next_16_37) ::= H(next_16_37),
+ H(x_38) ::= 
+ H(next_16_34) * x_38::node<val_16_35,next_16_34>@M&0<val_16_35
+ or emp&x_38=null
+ ,
+ H_8(val_16_39) ::= emp&0<val_16_39]
+
+
+
+
+*/

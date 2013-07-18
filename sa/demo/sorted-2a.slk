@@ -1,0 +1,23 @@
+data node {
+ int val;
+ node next;
+}.
+
+HeapPred H(node x, int v).
+PostPred G(node x, int v).
+
+relAssume
+ H(y,v) & v=0 --> v>0.
+
+shape_infer [H][].
+
+/*
+
+Result below is correct. However,
+a similar code at sorted-1.ss gave a different
+result
+
+[ H(y,v) ::= emp&v=0 & 0<v]
+
+
+*/

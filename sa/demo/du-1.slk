@@ -12,11 +12,11 @@ PostPred G(node a).
 
 Declare_Unknown [HP_2].
 
-relAssume G
+relAssume
  x::node<k,left,right> 
   & left=null & right!=null--> G(x).
 
-relAssume G
+relAssume
  x::node<k,left,right> 
   & left!=null & right=null--> G(x).
 

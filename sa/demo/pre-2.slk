@@ -5,10 +5,10 @@ data node {
 HeapPred P(node x).
 HeapPred P2(node x).
 
-relAssume P
+relAssume 
   P(x) --> x::node<q>*P2(q).
 
-relAssume P2
+relAssume 
   P2(x)  --> P(x).
 
 shape_infer[P,P2][].

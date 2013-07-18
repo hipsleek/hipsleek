@@ -1,0 +1,25 @@
+data node {
+ int val;
+ node next;
+}.
+
+HeapPred H(node x, int v).
+PostPred G(node x, int v).
+
+
+infer [H] H(y,_) & x=null  |- x::node<>.
+print residue.
+/*
+# sorted-3.slk --en-sleek-logging-txt
+
+Message below a little wrong. Either we introduce:
+  H(y,_) --> false
+or we say we have a LHS contradiction but not allowed
+to introduce H(..) --> false.
+
+!!! >>>>>> mismatch ptr is not found (or inst) in the lhs <<<<<<
+!!! >>>>>> mismatch ptr is not found (or inst) in the lhs <<<<<<
+Entail (1) : Fail.
+
+
+*/

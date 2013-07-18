@@ -44,6 +44,13 @@ lemma "dll_r5_tail2" self::node<_,p,q> * q::dll_r5<self,t,n> & self!=n
       -> self::dll_r5<p,t,n>.
 
 
+//(0)
+//valid without "dll_r5_tail2"
+checkentail 
+   self::node<_,p,q3> * q3::dll_r5<self,t,n> & q3!=n
+     |- t::node<_,q,n> * self::dll_r5<p,q,t>.
+print residue.
+
 //(1)
 //valid after adding case analysis
 checkentail 

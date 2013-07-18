@@ -1,0 +1,65 @@
+data tree {
+    node children;
+    }.
+    
+data node {
+    tree child; 
+    //node prev; 
+    node next; 
+    tree parent;
+    }.
+
+HeapPred H_9(node children_8).
+HeapPred H_6(node next_52_1003, tree@NI par).
+HeapPred H_5(tree child_52_1002, tree@NI par).
+HeapPred H1(tree a).
+HeapPred H2(node a, tree@NI b).
+PostPred G1(tree a).
+PostPred G2(node a, tree@NI b).
+HeapPred H_7(tree parent_52_1004, tree@NI par).
+Declare_Unknown [H_7].
+
+relAssume
+ t::tree<children_8>@M&
+  children_8=null --> G1(t).
+
+relAssume
+ emp & l=null --> G2(l,par).
+
+
+relAssume
+ t::tree<children_8>@M * G2(children_8,t)&
+  children_8!=null --> G1(t).
+
+relAssume
+ H_7(parent_52_1004,par) * 
+  l::node<child_52_1002,next_52_1003,parent_52_1004>@M * 
+  G2(next_52_1003,par) * G1(child_52_1002)&
+  par=parent_52_1004 --> G2(l,par).
+
+relAssume H_7(parent_52_1004,par) --> emp&par=parent_52_1004.
+
+shape_infer [H_7][G1,G2].
+
+/*
+# mcf-3b.slk
+(from check-mcf-2.ss)
+
+Post-Conds (GOOD RESULT)
+
+[ G1(t_49) ::= 
+ t_49::tree<children_8>@M&children_8=null
+ or t_49::tree<children_8>@M * G2(children_8,t_49)&children_8!=null
+ ,
+ G2(l_50,par_51) ::= 
+ H_7(parent_52_1004,par_51) * 
+ l_50::node<child_52_1002,next_52_1003,parent_52_1004>@M * 
+ G2(next_52_1003,par_51) * G1(child_52_1002)&par_51=parent_52_1004
+ or emp&l_50=null
+ ,
+ H_7(parent_52_1004,par) ::= NONE]
+*************************************
+
+
+*/
+

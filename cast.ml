@@ -142,6 +142,10 @@ and proc_decl = {
     (*proc_dynamic_specs_with_pre : Cformula.struc_formula;*)
     (* stack of static specs inferred *)
     proc_stk_of_static_specs : Cformula.struc_formula Gen.stack;
+    mutable proc_hprel_ass: Cformula.hprel list;
+    mutable proc_hprel_unkmap: ((P.spec_var * int list) * P.xpure_view) list;
+    mutable proc_sel_hps: P.spec_var list;
+    mutable proc_sel_post_hps: P.spec_var list;
     mutable proc_hpdefs: Cformula.hp_rel_def list;(*set of heap predicate constraints derived from this method*)
     mutable proc_callee_hpdefs: Cformula.hp_rel_def list;
     (*set of heap predicate constraints derived from calls in this method*)
@@ -583,6 +587,10 @@ let subst_coercion fr t (c:coercion_decl) =
               ; coercion_body = F.subst_avoid_capture fr t c.coercion_body
       }
  
+let subst_coercion fr t (c:coercion_decl) = 
+  let pr = !print_coercion in
+  Debug.no_1 "subst_coercion" pr pr (fun _ -> subst_coercion fr t c ) c
+
 (* process each proc into some data which are then combined,
    e.g. verify each method and collect the failure points
 *)
@@ -923,6 +931,37 @@ let get_proot_hp_def_raw defs name=
   let hpdclr = look_up_hp_def_raw defs name in
   hpdclr.hp_root_pos
 
+let get_root_args_hprel hprels hp_name actual_args=
+  let rec part_sv_from_pos ls n n_need rem=
+    match ls with
+      | [] -> report_error no_pos "sau.get_sv_from_pos"
+      | sv1::rest -> if n = n_need then (sv1, rem@rest)
+        else part_sv_from_pos rest (n+1) n_need (rem@[sv1])
+  in
+  let retrieve_root hp_name args=
+    let rpos = get_proot_hp_def_raw hprels hp_name in
+    let r,paras = part_sv_from_pos args 0 rpos [] in
+    (r,paras)
+  in
+  retrieve_root hp_name actual_args
+
+let get_root_typ_hprel hprels hp_name=
+  let rec part_sv_from_pos ls n n_need rem=
+    match ls with
+      | [] -> report_error no_pos "sau.get_sv_from_pos"
+      | sv1::rest -> if n = n_need then (sv1, rem@rest)
+        else part_sv_from_pos rest (n+1) n_need (rem@[sv1])
+  in
+  let retrieve_root hp_name=
+    let hpdclr = look_up_hp_def_raw hprels hp_name in
+    let rpos = hpdclr.hp_root_pos in
+    let r,_ = part_sv_from_pos (List.map fst hpdclr.hp_vars_inst) 0 rpos [] in
+    match Cpure.type_of_spec_var r with
+      | Named id -> id
+      | _ -> ""
+  in
+  retrieve_root hp_name
+
 let check_pre_post_hp defs hp_name=
   let hpdecl = look_up_hp_def_raw defs hp_name in
   hpdecl.hp_is_pre
@@ -1031,7 +1070,7 @@ let rec look_up_proc_def pos (procs : (ident, proc_decl) Hashtbl.t) (name : stri
   try Hashtbl.find procs name 
 	with Not_found -> Error.report_error {
     Error.error_loc = pos;
-    Error.error_text = "Procedure " ^ name ^ " is not found."}
+    Error.error_text = "look_up_proc_def: Procedure " ^ name ^ " is not found."}
 
 let look_up_hpdefs_proc (procs : (ident, proc_decl) Hashtbl.t) (name : string) = 
   try
@@ -1039,7 +1078,7 @@ let look_up_hpdefs_proc (procs : (ident, proc_decl) Hashtbl.t) (name : string) =
       proc.proc_hpdefs
   with Not_found -> Error.report_error {
       Error.error_loc = no_pos;
-      Error.error_text = "Procedure " ^ name ^ " is not found."}
+      Error.error_text = "look_up_hpdefs_proc: Procedure " ^ name ^ " is not found."}
 
 let update_hpdefs_proc (procs : (ident, proc_decl) Hashtbl.t) hpdefs (name : string) = 
   try
@@ -1049,7 +1088,7 @@ let update_hpdefs_proc (procs : (ident, proc_decl) Hashtbl.t) hpdefs (name : str
       (* Hashtbl.replace procs name proc *)
   with Not_found -> Error.report_error {
       Error.error_loc = no_pos;
-      Error.error_text = "Procedure " ^ name ^ " is not found."}
+      Error.error_text = "update_hpdefs_proc: Procedure " ^ name ^ " is not found."}
 
 let look_up_callee_hpdefs_proc (procs : (ident, proc_decl) Hashtbl.t) (name : string) = 
   try
@@ -1069,7 +1108,7 @@ let update_callee_hpdefs_proc (procs : (ident, proc_decl) Hashtbl.t) caller_name
       (* Hashtbl.replace procs name new_proc *)
   with Not_found -> Error.report_error {
       Error.error_loc = no_pos;
-      Error.error_text = "Procedure " ^ caller_name ^ " is not found."}
+      Error.error_text = "update_callee_hpdefs_proc: Procedure " ^ caller_name ^ " is not found."}
 
 (* Replaced by the new function with Hashtbl *)
 (*
@@ -1089,7 +1128,7 @@ let rec look_up_proc_def_no_mingling pos (procs : (ident, proc_decl) Hashtbl.t) 
   match proc with
   | None -> Error.report_error {
       Error.error_loc = pos;
-      Error.error_text = "Procedure " ^ name ^ " is not found." }
+      Error.error_text = "look_up_proc_def_no_mingling: Procedure " ^ name ^ " is not found." }
   | Some p -> p
   
 (* takes a class and returns the list of all the methods from that class or from any of the parent classes *)
@@ -1175,12 +1214,34 @@ let case_of_coercion_x (lhs:F.formula) (rhs:F.formula) : coercion_case =
   if(flag) then Ramify
   else
   let fct f = match f with
-      | Cformula.Base {F.formula_base_heap=h}
-      | Cformula.Exists {F.formula_exists_heap=h} ->      
+    | Cformula.Base {F.formula_base_heap=h}
+    | Cformula.Exists {F.formula_exists_heap=h} ->      
+          let _ = Debug.tinfo_hprint (add_str "formula_exists_heap" !print_h_formula ) h no_pos in 
           let hs = F.split_star_conjunctions h in
-		  let self_n = List.for_all (fun c-> (P.name_of_spec_var (F.get_node_var c)) = self) hs in
-          (List.length hs),self_n, List.map F.get_node_name hs
-      | _ -> 1,false,[]
+	  let self_n = List.for_all (fun c-> 
+              let _ = Debug.tinfo_hprint (add_str "c" !print_h_formula ) c no_pos in
+              let only_self = match c with
+                | F.DataNode _
+                | F.ViewNode _-> (P.name_of_spec_var (F.get_node_var c)) = self 
+                | F.HRel (sv,exp_lst,_) -> (
+                      let _ = Debug.tinfo_hprint (add_str "sv" !print_sv ) sv no_pos in
+                      match exp_lst with
+                        | [sv] -> (
+                              match sv with
+                                | (P.Var (v,_)) -> (P.name_of_spec_var v) = self
+                                | _ -> false)
+                        | _ -> false
+                  )
+                | _ -> failwith ("Only nodes and HRel allowed after split_star_conjunctions ") 
+              in
+              only_self) hs  in
+          let get_name h = match h with
+            | F.DataNode _
+            | F.ViewNode _-> F.get_node_name h
+            | F.HRel (sv,exp_lst,_) -> P.name_of_spec_var sv
+            | _ -> failwith ("Only nodes and HRel allowed after split_star_conjunctions ") in
+          (List.length hs),self_n, List.map get_name hs
+    | _ -> 1,false,[]
   in
   (*length = #nodes, sn = is there a self node, typ= List of names of nodes*)
   let lhs_length,l_sn,lhs_typ = fct lhs in

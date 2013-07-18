@@ -8,7 +8,7 @@ HeapPred G(cell a, cell r).
 Declare_Dangling [].
 Declare_Unknown [].
 
-relAssume G
+relAssume
 P(a) & a=res --> G(a,res).
 
 shape_infer [P][G].
