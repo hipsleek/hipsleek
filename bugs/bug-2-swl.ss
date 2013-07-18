@@ -13,13 +13,17 @@ lg<s,M> == self = null & M = {} & self != s
 	or self::node<_,nxt> * nxt::lg<s,Mnxt> & M = union(Mnxt,{self}) & self != s
 //inv forall(x: x notin M | (x != null & x != s));
 inv self!=s
+  // & (self=null & M={} | self!=null & (exists(M2,v:M=union(M2,{v}))))
   & (self=null & M={} | self!=null & M!={})
+  //& (self=null & M={} | self!=null)
  ;
 
 ls<p,M> == self = p & M = {} //& self!=null
 	or self::node<_,nxt> * nxt::ls<p,M1> & self != p & M = union({self},M1) 
   inv true
+  //  & (self=p & M={} | self!=p & self!=null &(exists(M2,v:M=union(M2,{v}))))
   & (self=p & M={} | self!=p & M!={} & self!=null)
+  //& (self=p & M={} | self!=p & self!=null )
   ;
 //self!=null;
 

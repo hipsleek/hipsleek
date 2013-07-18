@@ -5,6 +5,7 @@
 open Globals
 open Gen
 open GlobProver
+(* open Cpure *)
 module CP = Cpure
 
 let set_prover_type () = Others.last_tp_used # set Others.Mona
@@ -71,6 +72,98 @@ let rec mkEx l f = match l with
   | sv :: rest -> mkEx rest (CP.Exists(sv, f, None, no_pos))
 
 (*
+  v=2, v=1 or unconstrained
+  or v1=v2
+
+ 2 --> var2
+ 1 --> var1
+
+
+*)
+
+type order_atom =
+  | MO_Var of CP.spec_var * int
+  | MO_EQ of CP.spec_var * CP.spec_var
+  (* | MO_True *)
+  (* | MO_False *)
+
+let string_of_order_atom a =
+  match a with
+    | MO_Var(sv,i) -> ((CP.string_of_spec_var sv) ^ "=" ^ (string_of_int i))
+    | MO_EQ(sv1,sv2) -> ((CP.string_of_spec_var sv1) ^ "=" ^ (CP.string_of_spec_var sv2 ))
+
+
+
+let force_order_lst aux el order =
+  let (rr,cc) as result = 
+    List.fold_left (fun (r2,c2) b -> 
+        let (r1,c1) = aux b in
+        match r1,r2 with
+          | (None,_) -> (r2,c1@c2) 
+          | (_,None) -> (r1,c1@c2) 
+          | (Some v1,Some v2) ->  (r1,MO_EQ(v1,v2)::c1@c2)
+    ) (None,[]) el in
+  match rr with
+    | None -> result
+    | Some v -> (rr,MO_Var(v,order)::cc)
+
+let compute_order_exp (f:CP.exp) : (CP.spec_var option) * order_atom list = 
+  (* (None,[]) *)
+  let rec aux e = match e with
+    | CP.Var(sv, l) -> (Some sv,[])
+    | CP.Subtract (e1, e2, _) 
+    | CP.Add (e1, e2, _) -> force_order_lst aux [e1;e2] 2
+	  (* let (r1,c1) = aux e1 in *)
+	  (* let (r2,c2) = aux e2 in *)
+          (* (match r1,r2 with *)
+          (*   | (None,_) -> (r2,c1@c2) *)
+          (*   | (_,None) -> (r1,c1@c2) *)
+          (*   | (Some v1,Some v2) -> (r1,MO_Var(v1,2)::MO_EQ(v1,v2)::c1@c2)) *)
+    | CP.Bag(el, _) 
+        -> force_order_lst aux el 1
+    | CP.BagUnion(el, _) 
+    | CP.BagIntersect(el, _) 
+        -> force_order_lst aux el 2
+  in aux f
+ 
+
+let force_order_exp (f:CP.exp) order : (CP.spec_var option) * order_atom list = 
+  let (r,c) as result = compute_order_exp f in
+  match r with
+    | None -> result
+    | Some v -> (r,MO_Var(v,order)::c)
+
+let compute_order_b_formula (bf:CP.b_formula) : order_atom list = 
+  let (pf,_) = bf in
+  match pf with
+    | CP.BagNotIn(sv1, e1, l1)
+    | CP.BagIn(sv1, e1, l1) ->
+          let (_,cl) = force_order_exp e1 2 in
+          MO_Var(sv1,1)::cl
+
+
+let compute_order_formula (f:CP.formula) : order_atom list = 
+  let rec aux f =
+    match f with
+      | CP.And(f1, f2, _)
+      | CP.Or(f1, f2, _,_) -> (aux f1)@(aux f2)
+        (* make sure everything is renamed *)
+      | CP.Forall(_, f1, _,_)
+      | CP.Exists(_, f1, _,_)
+      | CP.Not(f1, _,_) -> (aux f1)
+      | CP.AndList b -> List.concat (List.map (fun (_,e) -> aux e) b)
+      | CP.BForm(bf,_) -> (compute_order_b_formula bf)
+  in aux f
+  
+let new_order_formula (f:CP.formula) : (CP.spec_var list * CP.spec_var list * CP.spec_var list) =
+  let cl = compute_order_formula f in
+  (* let vs = all_vars f in *)
+  (* form integer ctr *)
+  (* check for contradiction *)
+  (* extract list of vars v1=1 or v1=2 *)
+  ([],[],[])
+
+(*
 
   PREPROCESSING:
 
@@ -85,7 +178,7 @@ let rec mkEx l f = match l with
 (* 
    Preprocessing expressions 
 *)
-and preprocess_exp (e0 : CP.exp) : (CP.exp * CP.formula * CP.spec_var list) = 
+let rec preprocess_exp (e0 : CP.exp) : (CP.exp * CP.formula * CP.spec_var list) = 
   let reconstr_2arg a1 a2 f l =
     let (e1, constr1, ev1) = preprocess_exp a1 in
     let (e2, constr2, ev2) = preprocess_exp a2 in
@@ -1165,6 +1258,7 @@ let imply_ops pr_w pr_s (ante : CP.formula) (conseq : CP.formula) (imp_no : stri
   let tmp_form = CP.mkOr (CP.mkNot ante None no_pos) conseq None no_pos in
   let vs = Hashtbl.create 10 in
   let _ = find_order tmp_form vs in
+  let (var1,var2,var0) = new_order_formula tmp_form in
   if not !is_mona_running then
     write_to_file false (ante_fv @ conseq_fv) tmp_form imp_no vs
   else
@@ -1190,6 +1284,7 @@ let is_sat_ops_x pr_w pr_s (f : CP.formula) (sat_no :  string) : bool =
   let (f_fv, f) = prepare_formula_for_mona pr_w pr_s f !test_number in
   let vs = Hashtbl.create 10 in
   let _ = find_order f vs in
+  let (var1,var2,var0) = new_order_formula f in
   (* print_endline ("Mona.is_sat: " ^ (string_of_int !test_number) ^ " : " ^ (string_of_bool !is_mona_running)); *)
   let sat = 
     if not !is_mona_running then
