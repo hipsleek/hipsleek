@@ -1196,19 +1196,31 @@ let sat_cache is_sat (f:CP.formula) : bool =
     ^" ans:"^(string_of_bool b)) in
   Debug.no_1 "sat_cache" pr pr2 (sat_cache is_sat) f
 
-let tp_is_sat (f:CP.formula) (sat_no :string) = 
+let tp_is_sat (f:CP.formula) (old_sat_no :string) = 
   (* TODO WN : can below remove duplicate constraints? *)
   (* let f = CP.elim_idents f in *)
   (* this reduces x>=x to true; x>x to false *)
+  proof_no := !proof_no+1 ;
+  let sat_no = (string_of_int !proof_no) in
+  Debug.devel_zprint (lazy ("SAT #" ^ sat_no)) no_pos;
+  Debug.devel_zprint (lazy (!print_pure f)) no_pos;
+  let tstart = Gen.Profiling.get_time () in		
   let fn_sat f = tp_is_sat_perm f sat_no in
-  if !Globals.no_cache_formula then
-    fn_sat f
-  else
-    sat_cache fn_sat f
+  let cmd = PT_SAT f in
+  let _ = Log.last_proof_command # set cmd in
+  let res = 
+    (if !Globals.no_cache_formula then
+      fn_sat f
+    else
+      sat_cache fn_sat f)
+  in
+  let tstop = Gen.Profiling.get_time () in
+  let _= add_proof_log !cache_status old_sat_no sat_no (string_of_prover !pure_tp) cmd (tstop -. tstart) (PR_BOOL res) in 
+  res
 
 let tp_is_sat f sat_no =
   Debug.no_1_loop "tp_is_sat" Cprinter.string_of_pure_formula string_of_bool 
-    (fun f -> tp_is_sat f sat_no) f
+      (fun f -> tp_is_sat f sat_no) f
     
 (* let tp_is_sat (f: CP.formula) (sat_no: string) do_cache = *)
 (*   let pr = Cprinter.string_of_pure_formula in *)
@@ -1983,22 +1995,13 @@ let simpl_pair rid (ante, conseq) =
 ;;
 
 let is_sat (f : CP.formula) (old_sat_no : string): bool =
-  proof_no := !proof_no+1 ;
-  let sat_no = (string_of_int !proof_no) in
-  let tstart = Gen.Profiling.get_time () in		
-  Debug.devel_zprint (lazy ("SAT #" ^ sat_no)) no_pos;
-  Debug.devel_zprint (lazy (!print_pure f)) no_pos;
   let f = elim_exists f in
   if (CP.isConstTrue f) then true 
   else if (CP.isConstFalse f) then false
   else
-    let cmd = PT_SAT f in
-    let _ = Log.last_proof_command # set cmd in
     let (f, _) = simpl_pair true (f, CP.mkFalse no_pos) in
     (* let f = CP.drop_rel_formula f in *)
-    let res= sat_label_filter (fun c-> tp_is_sat c sat_no) f in
-    let tstop = Gen.Profiling.get_time () in
-    let _= add_proof_log !cache_status old_sat_no sat_no (string_of_prover !pure_tp) cmd (tstop -. tstart) (PR_BOOL res) in
+    let res= sat_label_filter (fun c-> tp_is_sat c old_sat_no) f in
     res
 ;;
 

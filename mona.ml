@@ -1477,7 +1477,7 @@ let imply_ops pr_w pr_s (ante : CP.formula) (conseq : CP.formula) (imp_no : stri
   let (conseq_fv, conseq) = prepare_formula_for_mona pr_s pr_w conseq !test_number in
   let tmp_form = CP.mkOr (CP.mkNot ante None no_pos) conseq None no_pos in
   let vs = Hashtbl.create 10 in
-  let _ = find_order tmp_form vs in     (* deprecated *)
+  (* let _ = find_order tmp_form vs in     (\* deprecated *\) *)
   let (var1,var2,var0) = new_order_formula tmp_form in
   if not !is_mona_running then
     write_to_file false (ante_fv @ conseq_fv) tmp_form imp_no (var1,var2)
@@ -1504,6 +1504,7 @@ let is_sat_ops_x pr_w pr_s (f : CP.formula) (sat_no :  string) : bool =
   let f = CP.drop_varperm_formula f in
   let (f_fv, f) = prepare_formula_for_mona pr_w pr_s f !test_number in
   let (var1, var2, _) = new_order_formula f in
+  (* WN : what if var0 is non-empty? *)
   (* print_endline ("Mona.is_sat: " ^ (string_of_int !test_number) ^ " : " ^ (string_of_bool !is_mona_running)); *)
   let sat = 
     if not !is_mona_running then
