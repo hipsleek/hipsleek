@@ -296,7 +296,7 @@ let main () =
 (* let main () =  *)
 (*   Debug.loop_1_no "main" (fun () -> "?") (fun () -> "?") main () *)
 let sleek_proof_log_Z3 src_files =
-  let _ = Log.process_proof_logging src_files in  
+  (* let _ = Log.process_proof_logging src_files in   *)
   if !Globals.proof_logging || !Globals.proof_logging_txt   then 
     begin
       (* let _=sleek_src_files := src_files in *)
@@ -311,11 +311,11 @@ let sleek_proof_log_Z3 src_files =
       let _= if (!Globals.proof_logging_txt) 
       then 
         begin
-          Debug.info_pprint ("Logging "^fname^"\n") no_pos;
-	  Debug.info_pprint ("Logging "^fz3name^"\n") no_pos;
+          (* Debug.info_pprint ("Logging "^fname^"\n") no_pos; *)
+	  (* Debug.info_pprint ("Logging "^fz3name^"\n") no_pos; *)
 	  Debug.info_pprint ("Logging "^fnamegt5^"\n") no_pos;
-          Log.proof_log_to_text_file !Globals.source_files;
-	  Log.z3_proofs_list_to_file !Globals.source_files;
+          Log.proof_log_to_text_file fname !Globals.source_files;
+	  Log.z3_proofs_list_to_file fz3name !Globals.source_files;
 	  Log.proof_greater_5secs_to_file !Globals.source_files;
         end
       in

@@ -1,0 +1,35 @@
+checkentail n>=0 & ["n":n>0; "s":n=0] |- (n>=-1) & ["n":n>=0].
+print residue.
+
+/*
+# lab1.slk 
+
+ Issues: 
+ (i) why is CACHED called twice?
+ (ii)  logging/caching of SAT seems at a higher level?
+       Is splitting down for UNSAT? seems so.
+ (iii)  IMPLY seems to use "" for ante always?
+
+ id: 1; prover: MONA; loc: _0:0_0:0; kind: Sleek_Entail(1)
+ Sat:  (AndList ([],0<=n) & ([n],0<n) & ([s],n=0)) 
+ res: SAT
+ -------------------- 
+ id: 2; prover : CACHED ; loc: _0:0_0:0; kind: Sleek_Entail(1)
+ Sat:  (AndList ([],0<=n) & ([n],0<n) & ([s],n=0)) 
+ res: SAT
+ -------------------- 
+ id: 3; prover : CACHED ; loc: _0:0_0:0; kind: Sleek_Entail(1)
+ Sat:  (AndList ([],0<=n) & ([n],0<n) & ([s],n=0)) 
+ res: SAT
+ -------------------- 
+ id: 4; prover: MONA; loc: _0:0_0:0; kind: Sleek_Entail(1)
+ Imply: ante: 0<=n
+	     conseq:  (AndList ([],0<=(1+n))) 
+ res: true
+ -------------------- 
+ id: 5; prover: MONA; loc: _0:0_0:0; kind: Sleek_Entail(1)
+ Imply: ante: 0<=n & 0<n
+	     conseq:  (AndList ([n],0<=n)) 
+ res: true
+ --------------------
+*/

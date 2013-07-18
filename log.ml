@@ -244,95 +244,106 @@ let file_to_proof_log  src_files =
 	
 (*TO DO: check unique pno??*)
 let add_proof_log (cache_status:bool) old_no pno tp ptype time res =
+  (* let _ = Debug.info_pprint "inside add_proof_log" no_pos in *)
   if !Globals.proof_logging || !Globals.proof_logging_txt then
-	(* let _= print_endline ("loging :"^pno^" "^proving_info () ^"\n"^trace_info ()) in *)
-	let tstartlog = Gen.Profiling.get_time () in
-	let plog = {
-		log_id = pno;
-                log_loc = proving_loc # get;
-                log_proving_kind = proving_kind # top_no_exc;
-		(* log_other_properties = [proving_info ()]@[trace_info ()]; *)
-		(* log_old_id = old_no; *)
-		log_prover = Others.last_tp_used # get;
-		log_type = Some ptype;
-		log_time = time;
-		log_cache = cache_status;
-		log_res = res; } in
-	let _=Hashtbl.add proof_log_tbl pno plog in
-	let _=try
-	  let _= BatString.find (Sys.argv.(0)) "hip" in
-	  if(!Globals.proof_logging_txt && ((proving_kind # string_of)<>"TRANS_PROC")) then
-		begin 
-		  proof_log_stk # push pno;
-		end		
-	with _->
-		if(!Globals.proof_logging_txt) then
-		  try
-			let temp=(proving_kind # string_of) in
-			let _ =
+    (* let _= print_endline ("logging :"^pno^" "^proving_info () ^"\n"^trace_info ()) in *)
+    let tstartlog = Gen.Profiling.get_time () in
+    let plog = {
+	log_id = pno;
+        log_loc = proving_loc # get;
+        log_proving_kind = proving_kind # top_no_exc;
+	(* log_other_properties = [proving_info ()]@[trace_info ()]; *)
+	(* log_old_id = old_no; *)
+	log_prover = Others.last_tp_used # get;
+	log_type = Some ptype;
+	log_time = time;
+	log_cache = cache_status;
+	log_res = res; } in
+    let _=Hashtbl.add proof_log_tbl pno plog in
+    let _=try
+      (* let _= BatString.find (Sys.argv.(0)) "hip" in *)
+      if(!Globals.proof_logging_txt && ((proving_kind # string_of)<>"TRANS_PROC")) then
+	begin 
+	  proof_log_stk # push pno;
+	end		
+    with _->
+	if(!Globals.proof_logging_txt) then
+	  try
+	    let temp=(proving_kind # string_of) in
+	    let _ =
               if !Globals.log_filter
               then BatString.find temp "SLEEK_ENT"
               else 0 in
-			begin 
-			  proof_log_stk # push pno;
-			end		 	
-		  with _->()	
-	in
-	let tstoplog = Gen.Profiling.get_time () in
-	let _= Globals.proof_logging_time := !Globals.proof_logging_time +. (tstoplog -. tstartlog) in ()
-	                                                                                                   (* let _=print_endline ("log time: "^(string_of_float (tstoplog))^" and "^(string_of_float (tstartlog))) in ()	  *)
+	    begin 
+	      proof_log_stk # push pno;
+	    end		 	
+	  with _->()	
+    in
+    let tstoplog = Gen.Profiling.get_time () in
+    let _= Globals.proof_logging_time := !Globals.proof_logging_time +. (tstoplog -. tstartlog) in ()
+	                                                                                               (* let _=print_endline ("log time: "^(string_of_float (tstoplog))^" and "^(string_of_float (tstartlog))) in ()	  *)
   else ()
 					
-let proof_log_to_text_file (src_files) =
+let proof_log_to_text_file fname (src_files) =
+  if !Globals.proof_logging_txt 
+  then
+    begin
+      Debug.info_pprint ("Logging "^fname^"\n") no_pos;
+      let tstartlog = Gen.Profiling.get_time () in
+      let oc = 
+        (try Unix.mkdir "logs" 0o750 with _ -> ());
+        let with_option = if !Globals.en_slc_ps then "eps" else "no_eps" in
+        open_out ("logs/"^with_option^"_proof_log_" ^ (Globals.norm_file_name (List.hd src_files)) ^".txt") in
+      let string_of_log_type lt =
+        match lt with
+          |PT_IMPLY (ante, conseq) -> "Imply: ante:" ^(string_of_pure_formula ante) ^"\n\t     conseq: " ^(string_of_pure_formula conseq)
+          |PT_SAT f-> "Sat: "^(string_of_pure_formula f) 
+          |PT_SIMPLIFY f -> "Simplify: "^(string_of_pure_formula f)
+      in
+      let helper log =
+        "\n--------------\n"^
+	    (* List.fold_left (fun a c->a^c) "" log.log_other_properties^ *)
+	    (* "\nid: "^log.log_id^ *)
+            "\nProver: "^
+            (if log.log_cache then "CACHED" 
+            else (string_of_prover log.log_prover))^
+            "\nType: "^(match log.log_type with | Some x-> string_of_log_type x | None -> "????")^
+            (* "\nTime: "^(string_of_float(log.log_time))^ *)
+            "\nResult: "^(string_of_log_res log.log_type log.log_res)^"\n" 
+      in
+      (* with *)
+      (*            |PR_BOOL b -> string_of_bool b *)
+      (*            |PR_FORMULA f -> string_of_pure_formula f)^"\n" in *)
+      (* let _ = proof_log_stk # string_of_reverse in *)
+      let lgs = (List.rev (proof_log_stk # get_stk)) in
+      let _ = Debug.info_pprint ("Number of log entries "^(string_of_int (List.length lgs))) no_pos in
+      let _= List.map 
+        (fun ix->
+            let log=Hashtbl.find proof_log_tbl ix in
+            if log.log_proving_kind != PK_Trans_Proc then
+              fprintf oc "%s" ((* helper *) string_of_proof_log_entry log)) lgs in
+      let tstoplog = Gen.Profiling.get_time () in
+      let _= Globals.proof_logging_time := !Globals.proof_logging_time +. (tstoplog -. tstartlog) in 
+      close_out oc
+    end
+  else ()	
+
+let z3_proofs_list_to_file fz3name (src_files) =
   if !Globals.proof_logging_txt then
+    let _ = Debug.info_pprint ("Logging "^fz3name^"\n") no_pos in
     let tstartlog = Gen.Profiling.get_time () in
     let oc = 
       (try Unix.mkdir "logs" 0o750 with _ -> ());
-      let with_option = if !Globals.en_slc_ps then "eps" else "no_eps" in
-      open_out ("logs/"^with_option^"_proof_log_" ^ (Globals.norm_file_name (List.hd src_files)) ^".txt") in
-    let string_of_log_type lt =
-      match lt with
-	|PT_IMPLY (ante, conseq) -> "Imply: ante:" ^(string_of_pure_formula ante) ^"\n\t     conseq: " ^(string_of_pure_formula conseq)
-    	|PT_SAT f-> "Sat: "^(string_of_pure_formula f) 
-    	|PT_SIMPLIFY f -> "Simplify: "^(string_of_pure_formula f)
-    in
-    let helper log=
-      "\n--------------\n"^
-	  (* List.fold_left (fun a c->a^c) "" log.log_other_properties^ *)
-	  (* "\nid: "^log.log_id^ *)
-      "\nProver: "^
-      (if log.log_cache then "CACHED" else (string_of_prover log.log_prover))^
-      "\nType: "^(match log.log_type with | Some x-> string_of_log_type x | None -> "????")^
-      (* "\nTime: "^(string_of_float(log.log_time))^ *)
-      "\nResult: "^(string_of_log_res log.log_type log.log_res)^"\n" in
- (* with *)
- (*            |PR_BOOL b -> string_of_bool b *)
- (*            |PR_FORMULA f -> string_of_pure_formula f)^"\n" in *)
-    (* let _ = proof_log_stk # string_of_reverse in *)
-    let _= List.map (fun ix->
-        let log=Hashtbl.find proof_log_tbl ix in
-        if log.log_proving_kind != PK_Trans_Proc then
-          fprintf oc "%s" ((* helper *) string_of_proof_log_entry log)) (List.rev (proof_log_stk # get_stk)) in
+      (* let with_option= if(!Globals.do_slicing) then "slice" else "noslice" in *)
+      let with_option = if(!Globals.en_slc_ps) then "eps" else "no_eps" in
+      let with_option= with_option^"_"^if(!Globals.split_rhs_flag) then "rhs" else "norhs" in
+      let with_option= with_option^"_"^if(not !Globals.elim_exists_ff) then "noee" else "ee" in
+      open_out ("logs/"^with_option^"_"^(Globals.norm_file_name (List.hd src_files)) ^".z3") in
+    let _= List.map (fun ix-> let _=fprintf oc "%s" ix in ()) !z3_proof_log_list in
     let tstoplog = Gen.Profiling.get_time () in
     let _= Globals.proof_logging_time := !Globals.proof_logging_time +. (tstoplog -. tstartlog) in 
     close_out oc;
   else ()	
-
-let z3_proofs_list_to_file (src_files) =
-	if !Globals.proof_logging_txt then
-		let tstartlog = Gen.Profiling.get_time () in
-		let oc = 
-		(try Unix.mkdir "logs" 0o750 with _ -> ());
-		(* let with_option= if(!Globals.do_slicing) then "slice" else "noslice" in *)
-		let with_option = if(!Globals.en_slc_ps) then "eps" else "no_eps" in
-		let with_option= with_option^"_"^if(!Globals.split_rhs_flag) then "rhs" else "norhs" in
-    let with_option= with_option^"_"^if(not !Globals.elim_exists_ff) then "noee" else "ee" in
-		open_out ("logs/"^with_option^"_"^(Globals.norm_file_name (List.hd src_files)) ^".z3") in
-		let _= List.map (fun ix-> let _=fprintf oc "%s" ix in ()) !z3_proof_log_list in
-		let tstoplog = Gen.Profiling.get_time () in
-	  let _= Globals.proof_logging_time := !Globals.proof_logging_time +. (tstoplog -. tstartlog) in 
-		close_out oc;
-	else ()	
 
 let proof_greater_5secs_to_file (src_files) =
 	if !Globals.proof_logging_txt then
@@ -411,10 +422,8 @@ let process_proof_logging src_files  =
         if (!Globals.proof_logging_txt) 
         then 
           begin
-            Debug.info_pprint ("Logging "^fname^"\n") no_pos;
-            Debug.info_pprint ("Logging "^fz3name^"\n") no_pos;
-            proof_log_to_text_file src_files;
-            z3_proofs_list_to_file src_files
+            proof_log_to_text_file fname src_files;
+            z3_proofs_list_to_file fz3name src_files
           end
         else try Sys.remove fname 
           (* ("logs/proof_log_" ^ (Globals.norm_file_name (List.hd src_files))^".txt") *)
