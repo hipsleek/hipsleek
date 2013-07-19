@@ -4818,12 +4818,14 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
                 let vdef = I.look_up_view_def_raw 9 prog.I.prog_view_decls c in
                 let labels = vdef.I.view_labels in
                 let hvars = match_exp (List.combine exps labels) pos in
-                let c0 =
-                  if vdef.I.view_data_name = "" then 
+                let typ = (
+                  if (vdef.I.view_is_prim) then UNK
+                  else if vdef.I.view_data_name = "" then 
                     (fill_view_param_types vdef;
-                    vdef.I.view_data_name)
-                  else vdef.I.view_data_name in
-                let new_v = CP.SpecVar (Named c0, v, p) in
+                    Named vdef.I.view_data_name)
+                  else Named vdef.I.view_data_name 
+                ) in
+                let new_v = CP.SpecVar (typ, v, p) in
                 (*LDK: linearize perm permission as a spec var*)
                 let permvar = (match perm with
                   | None -> None

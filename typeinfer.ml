@@ -165,7 +165,8 @@ let rec dim_unify d1 d2 = if (d1 = d2) then Some d1 else None
 
 and must_unify (k1 : typ) (k2 : typ) tlist pos : (spec_var_type_list * typ) =
   let pr = string_of_typ in
-  Debug.no_2 "must_unify" pr pr pr (fun _ _ -> must_unify_x k1 k2 tlist pos) k1 k2
+  let pr_out (_, t) = string_of_typ t in
+  Debug.no_2 "must_unify" pr pr pr_out (fun _ _ -> must_unify_x k1 k2 tlist pos) k1 k2
 
 and must_unify_x (k1 : typ) (k2 : typ) tlist pos : (spec_var_type_list * typ) =
   let (n_tlist,k) = unify_type k1 k2 tlist in
@@ -937,14 +938,20 @@ and try_unify_view_type_args prog c vdef v deref ies tlist pos =
   let dname = vdef.I.view_data_name in
   let n_tl = (
     if not (dname = "") then
-      let expect_dname = (
-        let s = ref "" in
-        for i = 1 to deref do
-          s := !s ^ "__star";
-        done;
-        dname ^ !s
+      let expect_type = (
+        if (vdef.I.view_is_prim) then UNK
+        else (
+          let expect_dname = (
+            let s = ref "" in
+            for i = 1 to deref do
+              s := !s ^ "__star";
+            done;
+            dname ^ !s
+          ) in
+          Named expect_dname
+        )
       ) in
-      let (n_tl,_) = gather_type_info_var v tlist ( (Named expect_dname)) pos in
+      let (n_tl,_) = gather_type_info_var v tlist expect_type pos in
       n_tl
     else tlist
   ) in
