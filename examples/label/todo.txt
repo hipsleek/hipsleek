@@ -64,6 +64,9 @@ print residue.
 
 Why did it not call MONA?
 
+I could not find any call to omega apart from the one in Mona.new_order_formula_x
+It looks like there is a bug in the logging  and the maintainance of the Others.last_tp_used stack.
+
 id: 1; prover: OMEGA CALCULATOR; loc: _0:0_0:0; kind: Sleek_Entail(1)
  Sat:  0<=n & 0<n
  res: SAT
