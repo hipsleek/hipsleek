@@ -92,6 +92,11 @@ let string_of_log_type lt =
 
 let last_proof_command = new store (PT_SAT (CP.mkTrue no_pos)) (string_of_log_type )
 
+let pr_f = Cprinter.string_of_formula
+
+let last_sleek_command = new store None (pr_option (pr_pair pr_f pr_f))
+
+
 let string_of_log_res lt r = 
   match r with
     |PR_BOOL b -> 
