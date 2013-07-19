@@ -77,7 +77,7 @@ and formula_base = { formula_base_heap : h_formula;
                      formula_base_and: one_formula list;
                      formula_base_pos : loc }
 
-and formula_exists = { formula_exists_qvars : (ident * primed) list;
+and formula_exists = { formula_exists_qvars : (typ option * ident * primed) list; (*annotated typ*)
                        formula_exists_heap : h_formula;
                        formula_exists_pure : P.formula;
                        formula_exists_flow : flow_formula;
@@ -383,7 +383,7 @@ and mkBase (h : h_formula) (p : P.formula) flow (a: one_formula list) pos = matc
 			   formula_base_and = a;
 			   formula_base_pos = pos }
 
-and mkExists (qvars : (ident * primed) list) (h : h_formula) (p : P.formula) flow (a: one_formula list) pos = match h with
+and mkExists (qvars : (typ option * ident * primed) list) (h : h_formula) (p : P.formula) flow (a: one_formula list) pos = match h with
   | HFalse -> mkFalse flow pos
   | _ ->
       if P.isConstFalse p then
@@ -602,7 +602,8 @@ let rec heap_fv (f:formula):(ident*primed) list = match f with
 	| Exists b-> 
         let avars = List.concat (List.map heap_fv_one_formula b.formula_exists_and) in
         let hvars = h_fv b.formula_exists_heap in
-        Gen.BList.difference_eq (=) (Gen.BList.remove_dups_eq (=) hvars@avars) b.formula_exists_qvars 
+        Gen.BList.difference_eq (=) (Gen.BList.remove_dups_eq (=) hvars@avars)
+             b.formula_exists_qvars 
 	| Or b-> Gen.BList.remove_dups_eq (=) ((heap_fv b.formula_or_f1)@(heap_fv b.formula_or_f2))
 	;;
 

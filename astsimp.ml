@@ -7656,7 +7656,7 @@ let check_data_pred_name iprog name : bool =
     let _ = I.look_up_data_def_raw iprog.I.prog_data_decls name in false
   with
     | Not_found -> begin
-	try
+ 	try
 	  let _ = I.look_up_view_def_raw 3 iprog.I.prog_view_decls name in false
 	with
 	  | Not_found -> (*true*) begin
@@ -7685,7 +7685,7 @@ let check_data_pred_name iprog name : bool =
 (*   Debug.no_1 "check_data_pred_name" pr1 pr2 (fun _ -> check_data_pred_name iprog name) name *)
 
 let process_pred_def_4_iast iprog pdef = 
-  if check_data_pred_name iprog pdef.I.view_name then
+  (* if check_data_pred_name iprog pdef.I.view_name then *)
     let curr_view_decls = iprog.I.prog_view_decls in
     try
       let h = (self,Unprimed)::(res_name,Unprimed)::(List.map (fun c-> (c,Unprimed)) pdef.Iast.view_vars ) in
@@ -7706,11 +7706,11 @@ let process_pred_def_4_iast iprog pdef =
     with
       | _ ->  dummy_exception() ; iprog.I.prog_view_decls <- curr_view_decls
     (* else *)
-      (* print_string (pdef.I.view_name ^ " is already defined.\n") *)
+    (*   print_string (pdef.I.view_name ^ " is already defined.\n") *)
 
 let process_pred_def_4_iast iprog pdef =
   let pr = Iprinter.string_of_view_decl in
-  Debug.no_1 "process_pred_def_4_iast" pr pr_no
+  Debug.ho_1 "process_pred_def_4_iast" pr pr_no
       (fun _ -> process_pred_def_4_iast iprog pdef) pdef
 
 let convert_pred_to_cast new_views iprog cprog =

@@ -41,7 +41,7 @@ type formula =
   | Or of (formula * formula *(formula_label option) * loc)
   | Not of (formula *(formula_label option)* loc)
   | Forall of ((ident * primed) * formula *(formula_label option)* loc)
-  | Exists of ((ident * primed) * formula *(formula_label option)* loc)
+  | Exists of (( ident * primed) * formula *(formula_label option)* loc)
 
 (* Boolean constraints *)
 and b_formula = p_formula * ((bool * int * (exp list)) option)

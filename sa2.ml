@@ -1641,9 +1641,9 @@ and infer_shapes_init_post_x prog (constrs0: CF.hprel list) non_ptr_unk_hps sel_
   let pre_defs, pre_hps = SAU.extract_fwd_pre_defs pre_hps_need_fwd pre_defs in
   let pair_names_defs = generalize_hps_par_def prog false non_ptr_unk_hps unk_hps1 link_hps sel_post_hps pre_defs pre_hps par_defs in
   let hp_names,hp_defs = List.split pair_names_defs in
-  let _ = if hp_names = [] then () else
-    DD.binfo_pprint (" synthesize: " ^ (!CP.print_svl hp_names) )no_pos
-  in
+  (* let _ = if hp_names = [] then () else *)
+  (*   DD.binfo_pprint (" synthesize: " ^ (!CP.print_svl hp_names) )no_pos *)
+  (* in *)
   (hp_names,hp_defs,unk_hps1,unk_map1)
 
 and infer_shapes_init_post prog (constrs0: CF.hprel list) non_ptr_unk_hps sel_post_hps unk_hps link_hps hp_rel_unkmap
@@ -1741,7 +1741,7 @@ and infer_shapes_from_obligation_x iprog prog proc_name is_pre cond_path (constr
     let n_cviews,chprels_decl = Saout.trans_hprel_2_cview iprog prog proc_name need_trans_hprels in
     let in_hp_names = List.map CP.name_of_spec_var dep_def_hps in
     (*for each oblg, subst + simplify*)
-    let constrs2 = SAC.trans_constr_hp_2_view_x iprog prog proc_name
+    let constrs2 = SAC.trans_constr_hp_2_view_x iprog prog proc_name (pre_defs@post_defs)
       in_hp_names chprels_decl oblg_constrs in
     (*for each oblg generate new constrs with new hp post in rhs*)
     (*call to infer_shape? proper? or post?*)
