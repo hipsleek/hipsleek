@@ -846,6 +846,8 @@ let enable_strong_invariant = ref false
 let enable_aggressive_prune = ref false
 let enable_redundant_elim = ref false
 
+let enable_constraint_based_filtering = ref false
+
 (* let disable_aggressive_prune = ref false *)
 (* let prune_with_slice = ref false *)
 

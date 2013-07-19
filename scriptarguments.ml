@@ -296,6 +296,7 @@ let common_arguments = [
   ("--esi",Arg.Set Globals.enable_strong_invariant, "enable strong predicate invariant");
   ("--en-red-elim", Arg.Set Globals.enable_redundant_elim, "enable redundant elimination under eps");
   ("--eap", Arg.Set Globals.enable_aggressive_prune, "enable aggressive prunning");
+  ("--constr-filter", Arg.Set Globals.enable_constraint_based_filtering, "Enable assumption filtering based on contraint type");
   (* ("--dap", Arg.Clear Globals.disable_aggressive_prune, "never use aggressive prunning"); *)
   ("--efp",Arg.Set Globals.enable_fast_imply, " enable fast imply only for --eps pruning; incomplete");
   (* ("--dfp",Arg.Clear Globals.enable_fast_imply, " disable syntactic imply only for --eps"); *)

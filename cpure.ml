@@ -7447,11 +7447,24 @@ let mkNot_b_norm (bf : b_formula) : b_formula option =
 		| None -> None
 		| Some bf -> Some (norm_bform_aux bf)
 
+let filter_constraint_type (ante: formula) (conseq: formula) : (formula) = 
+if (!Globals.enable_constraint_based_filtering) then 
+  let antes = list_of_conjs ante in
+  let filtered_antes = 
+  if is_bag_constraint conseq then List.filter is_bag_constraint antes
+  else List.filter (fun c -> not(is_bag_constraint c)) antes in 
+  join_conjunctions filtered_antes 
+else ante
+
+let filter_constraint_type (ante: formula) (conseq: formula) : (formula) = 
+let pr = !print_formula in
+Debug.ho_2 "filter_constraint_type" pr pr pr filter_constraint_type ante conseq
+
 let filter_ante (ante : formula) (conseq : formula) : (formula) =
 	let fvar = fv conseq in
+    let ante = filter_constraint_type ante conseq in
 	let new_ante = filter_var ante fvar in
     new_ante
-
 
 let filter_ante_wo_rel (ante : formula) (conseq : formula) : (formula) =
 	let fvar = fv conseq in

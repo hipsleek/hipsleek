@@ -253,7 +253,7 @@ let proof_log_to_text_file (src_files) =
       "\nProver: "^
       (if log.log_cache then "CACHED" else log.log_prover)^
       "\nType: "^(match log.log_type with | Some x-> string_of_log_type x | None -> "????")^
-      (* "\nTime: "^(string_of_float(log.log_time))^ *)
+      "\nTime: "^(string_of_float(log.log_time))^ 
       "\nResult: "^(match log.log_res with
 	    |BOOL b -> string_of_bool b
 	    |FORMULA f -> string_of_pure_formula f)^"\n" in
