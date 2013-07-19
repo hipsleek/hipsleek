@@ -789,7 +789,7 @@ let sat_label_filter fct f =
   let test f1 = 
 	if no_andl f1 then  fct f1 
 	else report_error no_pos ("unexpected imbricated AndList in tpdispatcher sat: "^(pr f)) in
-  let rec helper f = match f with 
+  let rec helper_x f = match f with 
 		| AndList b -> 
 			let lbls = Label_Pure.get_labels b in
 			let fs = List.map (fun l -> 
@@ -800,7 +800,8 @@ let sat_label_filter fct f =
                         let _ = Debug.dinfo_hprint (add_str "label,fs" (pr_list (pr_pair (pr_list pr_id) pr)))  fs no_pos in
 			List.for_all (fun (_,f) -> test f) fs
 		| Or (f1,f2,_ ,_)-> (helper f1)||(helper f2)
-		| _ -> test f in 
+		| _ -> test f 
+  and helper f = Debug.no_1_loop "sat_label_filter_helper"  !print_formula string_of_bool helper_x f in
 	helper f
 	
 let sat_label_filter fct f = 
@@ -1427,6 +1428,7 @@ let simplify_a (s:int) (f:CP.formula): CP.formula =
   Debug.no_1_num s ("TP.simplify_a") pf pf simplify f
 
 let hull (f : CP.formula) : CP.formula =
+  let _ = if no_andl f then () else report_warning no_pos "trying to do hull over labels!" in
   if not !tp_batch_mode then start_prover ();
   let res = match !pure_tp with
     | DP -> Dp.hull  f
@@ -1463,7 +1465,7 @@ let hull (f : CP.formula) : CP.formula =
   let pr = Cprinter.string_of_pure_formula in
   Debug.no_1 "hull" pr pr hull f
 
-let pairwisecheck (f : CP.formula) : CP.formula =
+let tp_pairwisecheck (f : CP.formula) : CP.formula =
   if not !tp_batch_mode then start_prover ();
   let res = match !pure_tp with
     | DP -> Dp.pairwisecheck f
@@ -1494,10 +1496,22 @@ let pairwisecheck (f : CP.formula) : CP.formula =
     | _ -> (Omega.pairwisecheck f) in
   if not !tp_batch_mode then stop_prover ();
   res
-
-let pairwisecheck (f : CP.formula) : CP.formula =
+  
+let rec pairwisecheck_x (f : CP.formula) : CP.formula = 
+  if no_andl f then  tp_pairwisecheck f 
+  else 
+	  let rec helper f =  match f with 
+	  | Or (p1, p2, lbl , pos) -> Or (pairwisecheck_x p1, pairwisecheck_x p2, lbl, pos)
+	  | AndList l -> AndList (map_l_snd tp_pairwisecheck l)
+	  | _ ->  tp_pairwisecheck f in
+	  helper f
+	  
+  
+let pairwisecheck (f : CP.formula) : CP.formula = 
   let pr = Cprinter.string_of_pure_formula in
-  Debug.no_1 "pairwisecheck" pr pr pairwisecheck f
+  Debug.no_1 "pairwisecheck" pr pr pairwisecheck_x f
+  
+
 
 let pairwisecheck_raw (f : CP.formula) : CP.formula =
   let rels = CP.get_RelForm f in
