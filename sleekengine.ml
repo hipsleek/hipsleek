@@ -173,7 +173,7 @@ let process_pred_def pdef =
 		iprog.I.prog_view_decls <- List.rev tmp_views;
 (* ( new_pdef :: iprog.I.prog_view_decls); *)
 		(*let _ = print_string ("\n------ "^(Iprinter.string_of_struc_formula "\t" pdef.Iast.view_formula)^"\n normalized:"^(Iprinter.string_of_struc_formula "\t" wf)^"\n") in*)
-		let cpdef = AS.trans_view iprog new_pdef in 
+		let cpdef = AS.trans_view iprog [] new_pdef in 
 		let old_vdec = !cprog.C.prog_view_decls in
 		!cprog.C.prog_view_decls <- (cpdef :: !cprog.C.prog_view_decls);
 (* added 07.04.2008	*)	
@@ -220,14 +220,14 @@ let process_pred_def_4_iast pdef =
   let pr = Iprinter.string_of_view_decl in
   Debug.no_1 "process_pred_def_4_iast" pr pr_no process_pred_def_4_iast pdef
 
-
+(*should call AS.convert_pred_to_cast*)
 let convert_pred_to_cast () = 
   let tmp_views = (AS.order_views (iprog.I.prog_view_decls)) in
   Debug.tinfo_pprint "after order_views" no_pos;
   let _ = Iast.set_check_fixpt iprog.I.prog_data_decls tmp_views in
   Debug.tinfo_pprint "after check_fixpt" no_pos;
   iprog.I.prog_view_decls <- tmp_views;
-  let cviews = List.map (AS.trans_view iprog) tmp_views in
+  let cviews = List.map (AS.trans_view iprog []) tmp_views in
   Debug.tinfo_pprint "after trans_view" no_pos;
   let cviews =
     if !Globals.pred_elim_useless then
@@ -383,6 +383,7 @@ let process_data_def ddef =
 let process_data_def ddef =
   Debug.no_1 "process_data_def" pr_no pr_no process_data_def ddef 
 
+(*L2: should call convert_pred_to_cast*)
 let convert_data_and_pred_to_cast_x () =
   (* convert data *)
   List.iter (fun ddef ->
@@ -413,7 +414,7 @@ let convert_data_and_pred_to_cast_x () =
   let _ = Iast.set_check_fixpt iprog.I.prog_data_decls tmp_views in
   Debug.tinfo_pprint "after check_fixpt" no_pos;
   iprog.I.prog_view_decls <- tmp_views;
-  let cviews = List.map (AS.trans_view iprog) tmp_views in
+  let cviews = List.map (AS.trans_view iprog []) tmp_views in
   Debug.tinfo_pprint "after trans_view" no_pos;
   let cviews =
     if !Globals.pred_elim_useless then

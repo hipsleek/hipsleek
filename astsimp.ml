@@ -818,7 +818,7 @@ let rec trans_prog (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_decl
           Debug.tinfo_hprint (add_str "trans_prog(views)" pr_v_decls) tmp_views no_pos;
 	  let _ = Iast.set_check_fixpt prog.I.prog_data_decls tmp_views in
 	  (* let _ = print_string "trans_prog :: going to trans_view \n" in *)
-	  let cviews = List.map (trans_view prog) tmp_views in
+	  let cviews = List.map (trans_view prog []) tmp_views in
           let cviews1 =
             if !Globals.pred_elim_useless then
               Norm.norm_elim_useless cviews (List.map (fun vdef -> vdef.C.view_name) cviews)
@@ -1183,12 +1183,12 @@ and add_param_ann_constraints_struc (cf: CF.struc_formula) : CF.struc_formula = 
   let pr =  Cprinter.string_of_struc_formula in
   Debug.no_1 "add_param_ann_constraints_struc" pr pr  (fun _ -> add_param_ann_constraints_struc_x cf) cf
 
-and trans_view (prog : I.prog_decl) (vdef : I.view_decl) : C.view_decl =
+and trans_view (prog : I.prog_decl) ann_typs (vdef : I.view_decl): C.view_decl =
   let pr = Iprinter.string_of_view_decl in
   let pr_r = Cprinter.string_of_view_decl in
-  Debug.no_1 "trans_view" pr pr_r  (fun _ -> trans_view_x prog vdef) vdef
+  Debug.no_1 "trans_view" pr pr_r  (fun _ -> trans_view_x prog ann_typs vdef) vdef
 
-and trans_view_x (prog : I.prog_decl) (vdef : I.view_decl) : C.view_decl =
+and trans_view_x (prog : I.prog_decl) ann_typs (vdef : I.view_decl): C.view_decl =
   let view_formula1 = vdef.I.view_formula in
   let _ = IF.has_top_flow_struc view_formula1 in
   (*let recs = rec_grp prog in*)
@@ -1198,7 +1198,7 @@ and trans_view_x (prog : I.prog_decl) (vdef : I.view_decl) : C.view_decl =
   let vtv = vdef.I.view_typed_vars in
   let tlist = List.map (fun (t,c) -> (c,{sv_info_kind=t; id=fresh_int() })) vtv in
   let tlist = ([(self,{ sv_info_kind = (Named data_name);id = fresh_int () })]@tlist) in
-  let (n_tl,cf) = trans_I2C_struc_formula 1 prog true (self :: vdef.I.view_vars) vdef.I.view_formula tlist false 
+  let (n_tl,cf) = trans_I2C_struc_formula 1 prog true (self :: vdef.I.view_vars) vdef.I.view_formula (ann_typs@tlist) false 
     true (*check_pre*) in
   (* let _ = print_string ("cf: "^(Cprinter.string_of_struc_formula cf)^"\n") in *)
   let inv_lock = vdef.I.view_inv_lock in
@@ -1206,7 +1206,7 @@ and trans_view_x (prog : I.prog_decl) (vdef : I.view_decl) : C.view_decl =
     (match inv_lock with
       | None -> (n_tl, None)
       | Some f ->
-            let (n_tl_tmp,new_f) = trans_formula prog true (self :: vdef.I.view_vars) true f n_tl false in
+            let (n_tl_tmp,new_f) = trans_formula prog true (self :: vdef.I.view_vars) true f (ann_typs@n_tl) false in
             (*find existential variables*)
             let fvars = CF.fv new_f in
             let evars = List.filter (fun sv -> not (List.exists (fun name -> name = (CP.name_of_spec_var sv)) (self :: vdef.I.view_vars))) fvars in
@@ -7710,16 +7710,30 @@ let process_pred_def_4_iast iprog pdef =
 
 let process_pred_def_4_iast iprog pdef =
   let pr = Iprinter.string_of_view_decl in
-  Debug.ho_1 "process_pred_def_4_iast" pr pr_no
+  Debug.no_1 "process_pred_def_4_iast" pr pr_no
       (fun _ -> process_pred_def_4_iast iprog pdef) pdef
 
-let convert_pred_to_cast new_views iprog cprog =
+let convert_pred_to_cast_x ls_pr_new_view_tis iprog cprog =
+  let rec look_up_view ls_pair_view_name_tis vn0=
+    match ls_pair_view_name_tis with
+      | [] -> None
+      | (vn,tis)::rest -> if String.compare vn vn0 = 0 then Some tis
+        else look_up_view rest vn0
+  in
+  let new_views = List.map fst ls_pr_new_view_tis in
   let tmp_views = (order_views (iprog.I.prog_view_decls)) in
   let _ = Iast.set_check_fixpt iprog.I.prog_data_decls tmp_views in
   iprog.I.prog_view_decls <- tmp_views;
-  let tmp_new_views = List.filter (fun vdcl -> List.exists (fun vn1 ->
-      String.compare vdcl.I.view_name vn1 = 0) new_views) tmp_views in
-  let cviews0 = List.map (trans_view iprog) tmp_new_views in
+  (* let tmp_new_views = List.filter (fun vdcl -> *)
+  (*     List.exists (fun vn1 -> *)
+  (*     String.compare vdcl.I.view_name vn1 = 0) new_views) tmp_views in *)
+  let tmp_new_views = List.fold_left (fun res vdcl ->
+      let otis = look_up_view ls_pr_new_view_tis vdcl.I.view_name in
+      match otis with
+        | None -> res
+        | Some tis -> res@[(vdcl,tis)]
+  ) [] tmp_views in
+  let cviews0 = List.map (fun (vdecl,tis) -> trans_view iprog tis vdecl) tmp_new_views in
   let pr2 = pr_list_ln Cprinter.string_of_view_decl in
   let cviews =
     if !Globals.pred_elim_useless then
@@ -7748,10 +7762,10 @@ let convert_pred_to_cast new_views iprog cprog =
   ) cprog.C.prog_view_decls
 
 let convert_pred_to_cast new_views iprog cprog =
-  let pr1 = pr_list pr_id in
-  let pr2 = pr_list_ln Cprinter.string_of_view_decl in
+  let pr1 = pr_list (pr_pair pr_id string_of_tlist) in
+  let pr2 = pr_list_ln ( Cprinter.string_of_view_decl) in
   Debug.no_1 "convert_pred_to_cast" pr1 pr2
-      ( fun _ -> convert_pred_to_cast new_views iprog cprog) new_views
+      ( fun _ -> convert_pred_to_cast_x new_views iprog cprog) new_views
 
 (*LOC: this transformation is not quite correct. please improve*)
 let plugin_inferred_iviews views iprog =

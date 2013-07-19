@@ -905,7 +905,7 @@ let rec look_up_view_def_raw (defs : view_decl list) (name : ident) = match defs
 let look_up_view_def_raw (defs : view_decl list) (name : ident) = 
   let pr = fun x -> x in
   let pr_out = !print_view_decl in
-  Debug.ho_1 "look_up_view_def_raw" pr pr_out (fun _ -> look_up_view_def_raw defs name) name
+  Debug.no_1 "look_up_view_def_raw" pr pr_out (fun _ -> look_up_view_def_raw defs name) name
 
 
 (* An Hoa *)
