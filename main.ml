@@ -335,6 +335,7 @@ let process_source_full source =
     with _ as e -> begin
       print_string ("\nException"^(Printexc.to_string e)^"Occurred!\n");
       print_string ("\nError(s) detected at main "^"\n");
+      let _ = Log.process_proof_logging !Globals.source_files in
       raise e
     end);
 	if (!Globals.reverify_all_flag)
