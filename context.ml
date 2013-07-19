@@ -426,10 +426,10 @@ and choose_full_mater_coercion_x l_vname l_vargs r_aset (c:coercion_decl) =
       let mv = List.find (fun v -> List.exists (CP.eq_spec_var v.mater_var) r_aset) lmv in
       let _ = Debug.tinfo_hprint (add_str "mv" Cprinter.string_of_mater_prop_list) [mv] no_pos in
       Some (Coerc_mater c,mv)
-    with  _ ->   
-        match lmv with
-          | [] -> None
-          | _  -> Some (Weak_coerc_mater c,List.hd lmv)
+    with  _ ->                          (* andreeac below test is inefficient. to be replaced *)
+        if(( List.length (Cformula.get_HRels_f c.coercion_body)) > 0) then
+          Some (Weak_coerc_mater c,List.hd lmv)
+        else None
 
 
 and choose_full_mater_coercion l_vname l_vargs r_aset (c:coercion_decl) =
