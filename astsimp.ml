@@ -1072,7 +1072,11 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
 	  helper (n - 1) do_not_compute_flag
               (* else report_error pos "view formula does not entail supplied invariant\n" in () *)
       )
-    else (validate_mem_spec prog vdef);(* verify the memory specs using predicate definition *)
+    else 
+      begin
+        (* let _ = Debug.info_pprint "code when -nxpure 0 !" no_pos in *)
+        validate_mem_spec prog vdef (* verify the memory specs using predicate definition *)
+      end;
     if !Globals.print_x_inv && (n = 0)
     then
       (print_string ("\ncomputed invariant for view: " ^ vdef.C.view_name ^"\n" ^(Cprinter.string_of_mix_formula vdef.C.view_x_formula) ^"\n");
@@ -1089,12 +1093,23 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
       let ctx = CF.build_context (CF.true_ctx ( CF.mkTrueFlow ()) Lab2_List.unlabelled pos) formula1 pos in
       let formula = CF.formula_of_mix_formula vdef.C.view_user_inv pos in
       let (rs, _) = Solver.heap_entail_init prog false (CF.SuccCtx [ ctx ]) formula pos in
-      let _ = if not(CF.isFailCtx rs) then
-	let pf = pure_of_mix vdef.C.view_user_inv in
-	let disj_f = CP.split_disjunctions_deep pf in
-        let do_not_recompute_flag = (List.length disj_f>1) && not(!Globals.disj_compute_flag) in
-        helper n do_not_recompute_flag
-      else report_error pos ("view defn for "^vn^" does not entail supplied invariant\n") in ()
+      let _ = 
+        if not(CF.isFailCtx rs) then
+	  let pf = pure_of_mix vdef.C.view_user_inv in
+	  let disj_f = CP.split_disjunctions_deep pf in
+          let do_not_recompute_flag = (List.length disj_f>1) && not(!Globals.disj_compute_flag) in
+          if n>0 then helper n do_not_recompute_flag
+          else 
+            begin
+              let pr = Cprinter.string_of_mix_formula in
+              (* Andreea : change view_1 to a simpler conjunctive form *)
+              (* let sf = simplify_conj vdef.C.view_user_inv in *)
+              (* let _ = vdef.C.view_user_inv <- sf in *)
+	      Debug.info_hprint (add_str "view_1" pr) vdef.C.view_user_inv no_pos;
+	      Debug.info_hprint (add_str "view_2" pr) vdef.C.view_x_formula no_pos
+            end
+        else report_error pos ("view defn for "^vn^" does not entail supplied invariant\n") 
+      in ()
     else ()
   in
   check_and_compute ()
