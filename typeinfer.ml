@@ -445,8 +445,8 @@ and gather_type_info_var_x (var : ident) tlist (ex_t : spec_var_kind) pos : (spe
       let (n_tlist,tmp) = must_unify k.sv_info_kind ex_t tlist pos in 
       let n_tlist = type_list_add ident {sv_info_kind = tmp;id=k.id} n_tlist in
       (n_tlist, tmp )
-    with 
-      | Not_found -> 
+    with
+      | Not_found ->
           let vk = fresh_proc_var_kind tlist ex_t in
           ((var,vk)::tlist, vk.sv_info_kind)
       | ex -> report_error pos ("gather_type_info_var : unexpected exception "^(Printexc.to_string ex))

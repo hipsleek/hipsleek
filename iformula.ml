@@ -602,7 +602,8 @@ let rec heap_fv (f:formula):(ident*primed) list = match f with
 	| Exists b-> 
         let avars = List.concat (List.map heap_fv_one_formula b.formula_exists_and) in
         let hvars = h_fv b.formula_exists_heap in
-        Gen.BList.difference_eq (=) (Gen.BList.remove_dups_eq (=) hvars@avars) b.formula_exists_qvars 
+        Gen.BList.difference_eq (=) (Gen.BList.remove_dups_eq (=) hvars@avars)
+             b.formula_exists_qvars 
 	| Or b-> Gen.BList.remove_dups_eq (=) ((heap_fv b.formula_or_f1)@(heap_fv b.formula_or_f2))
 	;;
 

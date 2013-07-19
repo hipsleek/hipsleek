@@ -41,7 +41,9 @@ ensures prev'::lx<null,sent>  & cur'=sent ;
   if (cur == null) {
       // change direction;
       cur = prev;
+      dprint;
       prev = null;
+      dprint;
   }
   lscan(cur,prev,sent);
 

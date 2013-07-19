@@ -2409,8 +2409,8 @@ let generate_constraints prog es rhs lhs_b ass_guard rhs_b1 defined_hps
       let rargs = List.fold_left (fun ls (_,eargs,_)->
       ls@(List.fold_left List.append [] (List.map CP.afv eargs))) [] r_hrels in
       if (CP.intersect_svl (CF.h_fv guard) (CP.diff_svl rargs largs) = []) then
-       (*  None *)
-      (* else if (CP.intersect_svl (CF.h_fv guard) (CP.intersect_svl (CF.fv (CF.Base lhs_b)) (CF.fv (CF.Base rhs_b))) = []) then *)
+        None
+      else if (CP.intersect_svl (CF.h_fv guard) (CP.intersect_svl (CF.fv (CF.Base lhs_b)) (CF.fv (CF.Base rhs_b))) = []) then
         None
       else
         let l_hd_svl = List.map (fun hd -> hd.CF.h_formula_data_node) l_hds in

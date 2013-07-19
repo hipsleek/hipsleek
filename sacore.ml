@@ -2078,13 +2078,13 @@ let reverify_cond prog (unk_hps: CP.spec_var list) link_hps hpdefs cond_equivs=
 (*=============**************************================*)
        (*=============OBLIGATION================*)
 (*=============**************************================*)
-
-let trans_constr_hp_2_view_x iprog cprog proc_name in_hp_names chprels_decl constrs=
+(*hpdef for gettting root. becuase hp decl may be removed previously*)
+let trans_constr_hp_2_view_x iprog cprog proc_name hpdefs in_hp_names chprels_decl constrs=
   let process_cs cs=
     let nlhs = SAO.trans_formula_hp_2_view iprog cprog proc_name
-      in_hp_names chprels_decl cs.CF.hprel_lhs in
+      in_hp_names chprels_decl hpdefs cs.CF.hprel_lhs in
     let nrhs = SAO.trans_formula_hp_2_view iprog cprog proc_name
-      in_hp_names chprels_decl cs.CF.hprel_rhs in
+      in_hp_names chprels_decl hpdefs cs.CF.hprel_rhs in
     {cs with CF.hprel_lhs = nlhs;
     CF.hprel_rhs = nrhs;}
   in

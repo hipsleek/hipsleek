@@ -450,6 +450,10 @@ let subs_tvar_in_typ t (i:int) nt =
 let null_type = Named ""
 ;;
 
+let is_null_type t=
+  match t with
+    | Named "" -> true
+    | _ -> false
 
 
 let rec s_i_list l c = match l with 
@@ -663,7 +667,7 @@ let sa_subsume = ref false
 
 let norm_extract = ref false
 
-let norm_cont_analysis = ref false
+let norm_cont_analysis = ref true
 
 let dis_sem = ref false
 

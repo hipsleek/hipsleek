@@ -818,7 +818,7 @@ let rec trans_prog (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_decl
           Debug.tinfo_hprint (add_str "trans_prog(views)" pr_v_decls) tmp_views no_pos;
 	  let _ = Iast.set_check_fixpt prog.I.prog_data_decls tmp_views in
 	  (* let _ = print_string "trans_prog :: going to trans_view \n" in *)
-	  let cviews = List.map (trans_view prog) tmp_views in
+	  let cviews = List.map (trans_view prog []) tmp_views in
           let cviews1 =
             if !Globals.pred_elim_useless then
               Norm.norm_elim_useless cviews (List.map (fun vdef -> vdef.C.view_name) cviews)
@@ -1183,12 +1183,12 @@ and add_param_ann_constraints_struc (cf: CF.struc_formula) : CF.struc_formula = 
   let pr =  Cprinter.string_of_struc_formula in
   Debug.no_1 "add_param_ann_constraints_struc" pr pr  (fun _ -> add_param_ann_constraints_struc_x cf) cf
 
-and trans_view (prog : I.prog_decl) (vdef : I.view_decl) : C.view_decl =
+and trans_view (prog : I.prog_decl) ann_typs (vdef : I.view_decl): C.view_decl =
   let pr = Iprinter.string_of_view_decl in
   let pr_r = Cprinter.string_of_view_decl in
-  Debug.no_1 "trans_view" pr pr_r  (fun _ -> trans_view_x prog vdef) vdef
+  Debug.no_1 "trans_view" pr pr_r  (fun _ -> trans_view_x prog ann_typs vdef) vdef
 
-and trans_view_x (prog : I.prog_decl) (vdef : I.view_decl) : C.view_decl =
+and trans_view_x (prog : I.prog_decl) ann_typs (vdef : I.view_decl): C.view_decl =
   let view_formula1 = vdef.I.view_formula in
   let _ = IF.has_top_flow_struc view_formula1 in
   (*let recs = rec_grp prog in*)
@@ -1198,7 +1198,7 @@ and trans_view_x (prog : I.prog_decl) (vdef : I.view_decl) : C.view_decl =
   let vtv = vdef.I.view_typed_vars in
   let tlist = List.map (fun (t,c) -> (c,{sv_info_kind=t; id=fresh_int() })) vtv in
   let tlist = ([(self,{ sv_info_kind = (Named data_name);id = fresh_int () })]@tlist) in
-  let (n_tl,cf) = trans_I2C_struc_formula 1 prog true (self :: vdef.I.view_vars) vdef.I.view_formula tlist false 
+  let (n_tl,cf) = trans_I2C_struc_formula 1 prog true (self :: vdef.I.view_vars) vdef.I.view_formula (ann_typs@tlist) false 
     true (*check_pre*) in
   (* let _ = print_string ("cf: "^(Cprinter.string_of_struc_formula cf)^"\n") in *)
   let inv_lock = vdef.I.view_inv_lock in
@@ -1206,7 +1206,7 @@ and trans_view_x (prog : I.prog_decl) (vdef : I.view_decl) : C.view_decl =
     (match inv_lock with
       | None -> (n_tl, None)
       | Some f ->
-            let (n_tl_tmp,new_f) = trans_formula prog true (self :: vdef.I.view_vars) true f n_tl false in
+            let (n_tl_tmp,new_f) = trans_formula prog true (self :: vdef.I.view_vars) true f (ann_typs@n_tl) false in
             (*find existential variables*)
             let fvars = CF.fv new_f in
             let evars = List.filter (fun sv -> not (List.exists (fun name -> name = (CP.name_of_spec_var sv)) (self :: vdef.I.view_vars))) fvars in
@@ -4609,6 +4609,7 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
     | (e, _) :: rest ->
         let e_hvars = match e with
           | IP.Var ((ve, pe), pos_e) -> trans_var_safe (ve, pe) UNK tlist pos_e
+          | IP.Ann_Exp (IP.Var ((ve, pe), pos_e ), t, _) -> trans_var_safe (ve, pe) t tlist pos_e (*annotated self*)
           | _ -> report_error (IF.pos_of_formula f0)("malfunction with float out exp: "^(Iprinter.string_of_formula f0))in
         let rest_hvars = match_exp rest pos in
         let hvars = e_hvars :: rest_hvars in
@@ -4747,7 +4748,11 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
               let rootptr = List.hd tokens in
               let rpsi = snd(List.find(fun (v,en)->v=rootptr) tl) in
               let rootptr_type = rpsi.sv_info_kind in
-              let rootptr_type_name = match rootptr_type with | Named c -> c | _ -> failwith ("[linearize_heap] " ^ rootptr ^ " must be a pointer.") in
+              let rootptr_type_name = match rootptr_type with
+                | Named c1 ->
+                      (* if String.compare c1 "" = 0 then c else  *)c1
+                | _ -> failwith ("[linearize_heap] " ^ rootptr ^ " must be a pointer.")
+              in
               let rootptr, p = 
                 let rl = String.length rootptr in
                 if rootptr.[rl-1] = '\'' then
@@ -7470,7 +7475,10 @@ let sv_n = CP.name_of_spec_var
 
 let rec rev_trans_exp e = match e with
   | CP.Null p -> IP.Null p 
-  | CP.Var (v,p) -> IP.Var (rev_trans_spec_var v, p)
+  (* | CP.Var (v,p) -> IP.Var (rev_trans_spec_var v, p) *)
+  | CP.Var (v,p) -> let t =  CP.type_of_spec_var v in
+    (* let _ = print_endline ((!CP.print_sv v)^ ": " ^ (string_of_typ t)) in *)
+    IP.Ann_Exp (IP.Var (rev_trans_spec_var v, p), t, p) (*L2: added annotated sv instead sv here*)
   | CP.IConst b -> IP.IConst b
   | CP.FConst b -> IP.FConst b
   | CP.AConst b -> IP.AConst b
@@ -7585,6 +7593,7 @@ let rec rev_trans_formula f = match f with
 					IF.formula_or_f2 =rev_trans_formula b.CF.formula_or_f2; 
 					IF.formula_or_pos = b.CF.formula_or_pos;}
 
+
 let transform_hp_rels_to_iviews (hp_rels:(ident* CF.hp_rel_def) list):(ident*ident*I.view_decl) list = 
 (*CP.rel_cat * h_formula * formula*)
 
@@ -7669,7 +7678,7 @@ let check_data_pred_name iprog name : bool =
     let _ = I.look_up_data_def_raw iprog.I.prog_data_decls name in false
   with
     | Not_found -> begin
-	try
+ 	try
 	  let _ = I.look_up_view_def_raw 3 iprog.I.prog_view_decls name in false
 	with
 	  | Not_found -> (*true*) begin
@@ -7698,7 +7707,7 @@ let check_data_pred_name iprog name : bool =
 (*   Debug.no_1 "check_data_pred_name" pr1 pr2 (fun _ -> check_data_pred_name iprog name) name *)
 
 let process_pred_def_4_iast iprog pdef = 
-  if check_data_pred_name iprog pdef.I.view_name then
+  (* if check_data_pred_name iprog pdef.I.view_name then *)
     let curr_view_decls = iprog.I.prog_view_decls in
     try
       let h = (self,Unprimed)::(res_name,Unprimed)::(List.map (fun c-> (c,Unprimed)) pdef.Iast.view_vars ) in
@@ -7719,20 +7728,34 @@ let process_pred_def_4_iast iprog pdef =
     with
       | _ ->  dummy_exception() ; iprog.I.prog_view_decls <- curr_view_decls
     (* else *)
-      (* print_string (pdef.I.view_name ^ " is already defined.\n") *)
+    (*   print_string (pdef.I.view_name ^ " is already defined.\n") *)
 
 let process_pred_def_4_iast iprog pdef =
   let pr = Iprinter.string_of_view_decl in
   Debug.no_1 "process_pred_def_4_iast" pr pr_no
       (fun _ -> process_pred_def_4_iast iprog pdef) pdef
 
-let convert_pred_to_cast new_views iprog cprog =
+let convert_pred_to_cast_x ls_pr_new_view_tis iprog cprog =
+  let rec look_up_view ls_pair_view_name_tis vn0=
+    match ls_pair_view_name_tis with
+      | [] -> None
+      | (vn,tis)::rest -> if String.compare vn vn0 = 0 then Some tis
+        else look_up_view rest vn0
+  in
+  let new_views = List.map fst ls_pr_new_view_tis in
   let tmp_views = (order_views (iprog.I.prog_view_decls)) in
   let _ = Iast.set_check_fixpt iprog.I.prog_data_decls tmp_views in
   iprog.I.prog_view_decls <- tmp_views;
-  let tmp_new_views = List.filter (fun vdcl -> List.exists (fun vn1 ->
-      String.compare vdcl.I.view_name vn1 = 0) new_views) tmp_views in
-  let cviews0 = List.map (trans_view iprog) tmp_new_views in
+  (* let tmp_new_views = List.filter (fun vdcl -> *)
+  (*     List.exists (fun vn1 -> *)
+  (*     String.compare vdcl.I.view_name vn1 = 0) new_views) tmp_views in *)
+  let tmp_new_views = List.fold_left (fun res vdcl ->
+      let otis = look_up_view ls_pr_new_view_tis vdcl.I.view_name in
+      match otis with
+        | None -> res
+        | Some tis -> res@[(vdcl,tis)]
+  ) [] tmp_views in
+  let cviews0 = List.map (fun (vdecl,tis) -> trans_view iprog tis vdecl) tmp_new_views in
   let pr2 = pr_list_ln Cprinter.string_of_view_decl in
   let cviews =
     if !Globals.pred_elim_useless then
@@ -7763,13 +7786,15 @@ let convert_pred_to_cast new_views iprog cprog =
   ) cprog.C.prog_view_decls
 
 let convert_pred_to_cast new_views iprog cprog =
-  let pr1 = pr_list pr_id in
-  let pr2 = pr_list_ln Cprinter.string_of_view_decl in
+  let pr1 = pr_list (pr_pair pr_id string_of_tlist) in
+  let pr2 = pr_list_ln ( Cprinter.string_of_view_decl) in
   Debug.no_1 "convert_pred_to_cast" pr1 pr2
-      ( fun _ -> convert_pred_to_cast new_views iprog cprog) new_views
+      ( fun _ -> convert_pred_to_cast_x new_views iprog cprog) new_views
 
-let hn_trans pname vnames hn = match hn with 
-  | IF.HRel (id,args, pos)-> 
+(*LOC: this transformation is not quite correct. please improve*)
+let plugin_inferred_iviews views iprog =
+  let hn_trans pname vnames hn = match hn with 
+    | IF.HRel (id,args, pos)-> 
         if (List.exists (fun (_,n)-> (String.compare n id)==0) vnames) then 
           let hvar,tl = match args with
             | (IP.Var (v,_))::tl-> v,tl
@@ -7789,10 +7814,8 @@ let hn_trans pname vnames hn = match hn with
               IF.h_formula_heap_label = None;
               IF.h_formula_heap_pos = pos}
         else hn
-  | _ -> hn 
-
-(*LOC: this transformation is not quite correct. please improve*)
-let plugin_inferred_iviews views iprog =
+    | _ -> hn
+  in
   let vnames = List.map (fun (p,n,_)-> p,n) views in
   let vdecls = List.map (fun (pname,_,prd)-> { prd with 
         I.view_name = prd.I.view_name^"_"^pname;

@@ -116,7 +116,7 @@ let check_coercion_struc coer lhs rhs (cprog: C.prog_decl) =
     let pos = CF.pos_of_formula coer.C.coercion_head in
     let lhs = Solver.unfold_nth 9 (cprog,None) lhs (CP.SpecVar (Named "", self, Unprimed)) true 0 pos in
     (*let _ = print_string("lhs_unfoldfed_struc: "^(Cprinter.string_of_formula lhs)^"\n") in*)
-	let rhs = Solver.unfold_struc_nth 9 (cprog,None) rhs (CP.SpecVar (Named "", self, Unprimed)) true 0 pos in
+	(* let rhs = Solver.unfold_struc_nth 9 (cprog,None) rhs (CP.SpecVar (Named "", self, Unprimed)) true 0 pos in *)
     let lhs = if(coer.C.coercion_case == C.Ramify) then 
     	Mem.ramify_unfolded_formula lhs cprog.C.prog_view_decls 
     	else lhs

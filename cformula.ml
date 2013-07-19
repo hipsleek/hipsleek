@@ -250,7 +250,7 @@ h_formula_phase_pos : loc }
 
 and h_formula_data = {  h_formula_data_node : CP.spec_var;
                         h_formula_data_name : ident;
-						h_formula_data_derv : bool;
+			h_formula_data_derv : bool;
                         h_formula_data_imm : ann;
                         h_formula_data_param_imm : ann list;
                         h_formula_data_perm : cperm; (* option; *) (*LDK: permission*)
@@ -4054,11 +4054,15 @@ let rec check_eq_hrel_node  (rl1, args1 ,_)  (rl2, args2,_)=
     (* let svs2 = List.concat (List.map CP.afv args2) in *)
     (CP.eq_spec_var rl1 rl2) && (helper args1 args2)
 
-and get_ptrs_f (f: formula)=
+and get_ptrs_f (f0: formula)=
+  let rec helper f=
   match f with
     | Base fb ->
         get_ptrs fb.formula_base_heap
-    | _ -> report_error no_pos "SAU.is_empty_f: not handle yet"
+    | Exists fe -> get_ptrs fe.formula_exists_heap
+    | Or orf -> (helper orf.formula_or_f1)@(helper orf.formula_or_f2)
+  in
+  helper f0
 
 and get_pure (f0: formula)=
   let rec helper f=
@@ -4247,6 +4251,29 @@ let check_imm_mis rhs_mis rhs0=
 let check_imm_mis rhs_mis rhs0 =
   let pr = !print_h_formula in
   Debug.no_2 "check_imm_mis" pr pr pr check_imm_mis rhs_mis rhs0
+
+
+let rec heap_trans_heap_node fct f0 =
+  let recf = heap_trans_heap_node fct in
+  let rec helper f=
+    match f with
+      | HRel b -> fct f
+      | HTrue | HFalse | HEmp | Hole _ | DataNode _ | ViewNode _ -> f
+      | Phase b -> Phase {b with h_formula_phase_rd = recf b.h_formula_phase_rd; h_formula_phase_rw = recf b.h_formula_phase_rw}
+      | Conj b -> Conj {b with h_formula_conj_h2 = recf b.h_formula_conj_h2; h_formula_conj_h1 = recf b.h_formula_conj_h1}
+      | Star b -> Star {b with h_formula_star_h2 = recf b.h_formula_star_h2; h_formula_star_h1 = recf b.h_formula_star_h1}
+      | ConjStar _|ConjConj _|StarMinus _ -> report_error no_pos "CF.heap_trans_heap_node: not handle yet"
+  in
+  helper f0
+
+
+let rec formula_trans_heap_node fct f =
+  let recf = formula_trans_heap_node fct in
+  match f with
+    | Base b-> Base{b with  formula_base_heap = heap_trans_heap_node fct b.formula_base_heap}
+    | Exists b-> Exists{b with  formula_exists_heap = heap_trans_heap_node fct b.formula_exists_heap}
+    | Or b-> Or {b with formula_or_f1 = recf b.formula_or_f1;formula_or_f2 = recf b.formula_or_f2}
+
 
 (*node + args is one group*)
 let get_ptrs_group_hf hf0=
