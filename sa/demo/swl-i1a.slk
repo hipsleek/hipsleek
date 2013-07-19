@@ -14,3 +14,15 @@ infer [HP_903,HP_902] HP_903(prev,cur,sent)
   cur=cur' |- cur'::hh<prev',sent>.
 
 print residue.
+
+/*
+infer_exact [HP_903] HP_903(prev,cur,sent) * cur::node<val_36_900,prev>@M&prev'=null & cur=cur'
+ |-  cur'::H<prev',sent>.
+*/
+/*
+
+ERROR: at _0:0_0:0
+Message: fold: view def not found:H
+
+
+*/

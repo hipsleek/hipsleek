@@ -2677,6 +2677,7 @@ and fold_op_x1 prog (ctx : context) (view : h_formula) vd (rhs_p : MCP.mix_formu
           h_formula_view_remaining_branches = r_brs;
           h_formula_view_perm = perm; 
           h_formula_view_arguments = vs}) -> begin
+            (* let _ = print_string ((pr_list_ln Cprinter.string_of_view_decl) prog.Cast.prog_view_decls)  in *)
             try
               let vdef = match vd with 
                 | None -> 
