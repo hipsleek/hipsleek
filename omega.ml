@@ -400,7 +400,7 @@ let get_vars_formula (p : formula):(string list) =
 let is_sat_ops pr_weak pr_strong (pe : formula)  (sat_no : string): bool =
   (*print_endline (Gen.new_line_str^"#is_sat " ^ sat_no ^ Gen.new_line_str);*)
   incr test_number;
-  print_string "going omega\n";
+  (*print_string "going omega\n";*)
   begin
         (*  Cvclite.write_CVCLite pe; *)
         (*  Lash.write pe; *)
