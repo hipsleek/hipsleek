@@ -802,6 +802,7 @@ and process_one_match_x prog is_normalizing (c:match_res) :action_wt =
                   let vl_vdef = look_up_view_def_raw view_decls vl_name in
                   let vr_vdef = look_up_view_def_raw view_decls vr_name in
                   let vl_is_rec = vl_vdef.view_is_rec in
+                  let vl_is_prim = vl_vdef.view_is_prim in
                   let vr_is_rec = vr_vdef.view_is_rec in
                   let vl_self_pts = vl_vdef.view_pt_by_self in
                   let vr_self_pts = vr_vdef.view_pt_by_self in
@@ -841,7 +842,7 @@ and process_one_match_x prog is_normalizing (c:match_res) :action_wt =
                       let a4 = 
                         (*Do not fold/unfold LOCKs*)
                         if (is_l_lock || is_r_lock) then None else 
-                          if not(vl_is_rec) then Some (2,M_unfold (c,0))
+                          if not(vl_is_rec) && not(vl_is_prim) then Some (2,M_unfold (c,0))
                           else if not(vr_is_rec) then Some (2,M_fold c) 
                           else None in
                       let a5 = 
@@ -965,7 +966,10 @@ and process_one_match_x prog is_normalizing (c:match_res) :action_wt =
                   let _ = DD.tinfo_hprint (add_str "left_ls" (pr_list pr_none)) left_ls no_pos in
                   let a1 = 
                     if is_l_lock then [] else
-                      if (new_orig || vl_self_pts==[]) then [(1,M_unfold (c,uf_i))] else [] in
+                      if (new_orig || vl_self_pts==[]) then 
+                        if vl_vdef.view_is_prim then []
+                        else [(1,M_unfold (c,uf_i))] 
+                      else [] in
                   let a2 = if (new_orig & left_ls!=[]) then [(1,M_lemma (c,Some (List.hd left_ls)))] else [] in
                   (* if (left_ls == [] && (vl_view_orig ) then ua *)
                   (* else (1,M_lemma (c,Some (List.hd left_ls))) *)
