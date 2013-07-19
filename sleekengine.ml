@@ -1125,7 +1125,7 @@ let run_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) (etype: e
 let run_entail_check (iante : meta_formula) (iconseq : meta_formula) (etype: entail_type) =
   let pr = string_of_meta_formula in
   let pr_2 = pr_triple string_of_bool Cprinter.string_of_list_context !CP.print_svl in
-  Debug.no_2 "run_entail_check" pr pr pr_2 (fun _ _ -> run_entail_check iante iconseq etype) iante iconseq
+  Debug.to_2 "run_entail_check" pr pr pr_2 (fun _ _ -> run_entail_check iante iconseq etype) iante iconseq
 
 let print_entail_result sel_hps (valid: bool) (residue: CF.list_context) (num_id: string):bool =
   DD.ninfo_hprint (add_str "residue: " !CF.print_list_context) residue no_pos;

@@ -77,7 +77,7 @@ let process_coercion_check iante iconseq iexact (lemma_name: string)  (cprog: C.
 
 let process_coercion_check iante0 iconseq0 iexact(lemma_name: string)  (cprog: C.prog_decl) =
   let pr = string_of_lem_formula in
-  Debug.no_2 "process_coercion_check" pr pr (fun _ -> "?") (fun _ _ -> process_coercion_check iante0 iconseq0 iexact lemma_name cprog) iante0 iconseq0
+  Debug.to_2 "process_coercion_check" pr pr (fun _ -> "?") (fun _ _ -> process_coercion_check iante0 iconseq0 iexact lemma_name cprog) iante0 iconseq0
 
 (* prepares the lhs&rhs of the coercion to be checked 
    - unfold lhs once
@@ -116,7 +116,8 @@ let check_coercion_struc coer lhs rhs (cprog: C.prog_decl) =
     let pos = CF.pos_of_formula coer.C.coercion_head in
     let lhs = Solver.unfold_nth 9 (cprog,None) lhs (CP.SpecVar (Named "", self, Unprimed)) true 0 pos in
     (*let _ = print_string("lhs_unfoldfed_struc: "^(Cprinter.string_of_formula lhs)^"\n") in*)
-	let rhs = Solver.unfold_struc_nth 9 (cprog,None) rhs (CP.SpecVar (Named "", self, Unprimed)) true 0 pos in
+	(* let rhs = Solver.unfold_struc_nth 9 (cprog,None) rhs (CP.SpecVar (Named "", self, Unprimed)) true 0 pos in *)
+        let _ = Debug.tinfo_hprint (Gen.add_str "rhs" Cprinter.string_of_struc_formula) rhs no_pos in
     let lhs = if(coer.C.coercion_case == C.Ramify) then 
     	Mem.ramify_unfolded_formula lhs cprog.C.prog_view_decls 
     	else lhs
@@ -136,7 +137,7 @@ let check_coercion_struc coer lhs rhs (cprog: C.prog_decl) =
   let pr1 = Cprinter.string_of_coercion in
   let pr2 = Cprinter.string_of_formula in
   let pr3 = Cprinter.string_of_struc_formula in
-  Debug.no_3 "check_coercion_struc" pr1 pr2 pr3 (fun (valid,rs) -> string_of_bool valid) (fun _ _ _ -> check_coercion_struc coer lhs rhs cprog ) coer lhs rhs
+  Debug.to_3 "check_coercion_struc" pr1 pr2 pr3 (fun (valid,rs) -> string_of_bool valid) (fun _ _ _ -> check_coercion_struc coer lhs rhs cprog ) coer lhs rhs
 
 (* sets the lhs & rhs of the entailment when proving l2r lemma (coercion), where the rhs (coercion body) is normalized  *)
 let check_left_coercion coer (cprog: C.prog_decl) =
@@ -222,4 +223,4 @@ let verify_lemma (l2r: C.coercion_decl option) (r2l: C.coercion_decl option) (cp
     | Some coerc -> Cprinter.string_of_coercion coerc
     | None -> ""
   in
-  Debug.no_3 "verify_lemma" pr pr (fun x -> x) (Gen.pr_opt Cprinter.string_of_list_context) (fun _ _ _ -> verify_lemma l2r r2l cprog coerc_name coerc_type) l2r r2l coerc_name
+  Debug.to_3 "verify_lemma" pr pr (fun x -> x) (Gen.pr_opt Cprinter.string_of_list_context) (fun _ _ _ -> verify_lemma l2r r2l cprog coerc_name coerc_type) l2r r2l coerc_name

@@ -3635,7 +3635,7 @@ and heap_entail_struc_init (prog : prog_decl) (is_folding : bool)  (has_post: bo
   let pr2 = Cprinter.string_of_struc_formula in
   (* let pr_out (ctx_lst, pf) = string_of_int (length_ctx ctx_lst) in  *)
   let pr_out (ctx_lst, pf) = Cprinter.string_of_list_context ctx_lst in
-  Debug.no_2 "heap_entail_struc_init" pr pr2 pr_out (fun _ _ -> heap_entail_struc_init_x prog is_folding has_post cl conseq pos pid) cl conseq
+  Debug.to_2 "heap_entail_struc_init" pr pr2 pr_out (fun _ _ -> heap_entail_struc_init_x prog is_folding has_post cl conseq pos pid) cl conseq
 
 (* check entailment:                                          *)
 (* each entailment should produce one proof, be it failure or *)
