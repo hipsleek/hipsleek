@@ -2894,6 +2894,16 @@ and apply_subs (sst : (spec_var * spec_var) list) (f : formula) : formula = matc
         else Exists (v, apply_subs sst qf, lbl, pos)
   | AndList b -> AndList (map_l_snd (apply_subs sst) b)
 
+  
+and apply_subs_all (sst : (spec_var * spec_var) list) (f : formula) : formula = match f with
+  | BForm (bf,lbl) -> BForm ((b_apply_subs sst bf),lbl)
+  | And (p1, p2, pos) -> And (apply_subs_all sst p1, apply_subs_all sst p2, pos)
+  | Or (p1, p2, lbl,pos) -> Or (apply_subs_all sst p1, apply_subs_all sst p2, lbl, pos)
+  | Not (p, lbl, pos) -> Not (apply_subs_all sst p, lbl, pos)
+  | Forall (v, qf,lbl, pos)  ->  Forall (subs_one sst v, apply_subs_all sst qf, lbl, pos)
+  | Exists (v, qf, lbl, pos) ->  Exists (subs_one sst v, apply_subs_all sst qf, lbl, pos)
+  | AndList b -> AndList (map_l_snd (apply_subs_all sst) b)
+  
 (* cannot change to a let, why? *)
 and diff (sst : (spec_var * 'b) list) (v:spec_var) : (spec_var * 'b) list
       = List.filter (fun (a,_) -> not(eq_spec_var a v)) sst
@@ -3643,7 +3653,33 @@ and get_subst_equation_b_formula (f : b_formula) (v : spec_var) lbl only_vars: (
   Debug.no_3 "get_subst_equation_b_formula "
       !print_b_formula !print_sv string_of_bool pr_out
       (fun _ _ _ -> get_subst_equation_b_formula_x f v lbl only_vars) f v only_vars
-          
+   
+
+and get_all_vv_eqs (f0 : formula) : ((spec_var * spec_var) list * formula) =
+  let rec helper f0 =  match f0 with
+      | And (f1, f2, pos) ->
+          let st1, rf1 = helper f1  in
+          if not (Gen.is_empty st1) then
+            (st1, mkAnd rf1 f2 pos)
+          else
+            let st2, rf2 = helper f2  in
+            (st2, mkAnd f1 rf2 pos)
+      | AndList b -> 
+		  let r1,r2 = List.fold_left (fun (a1,b1) c-> 
+			  if Gen.is_empty a1 then 
+				let a, b = helper (snd c) in
+				(a,b1@[(fst c, b)])
+			  else (a1, b1@[c]) 
+		  ) ([],[]) b in
+		  (r1, AndList r2)
+      | BForm (((Eq (Var (sv1, _), Var (sv2, _), pos)),_),_) -> ([(sv1, sv2)], mkTrue no_pos )	  
+      | _ -> ([], f0)
+  in helper f0
+
+and get_all_vv_eqs_bform b = match b with
+	| ((Eq (Var (sv1, _), Var (sv2, _), pos)),_) -> [(sv1, sv2)]
+	| _ -> []
+   
 and perm_bounds (e:exp) : bool = match e with
   | Add (e1,e2,_) -> 
 	(match e1 with 

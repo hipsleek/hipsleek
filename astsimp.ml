@@ -870,6 +870,7 @@ let rec trans_prog (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_decl
           ignore (C.build_hierarchy cprog1);
 	  let cprog1 = fill_base_case cprog1 in
           let cprog2 = sat_warnings cprog1 in   
+		  
 	  let cprog2 = Solver.normalize_perm_prog cprog2 in
           let cprog3 = if (!Globals.enable_case_inference || (not !Globals.dis_ps) (* or !Globals.allow_pred_spec *)) 
           then pred_prune_inference cprog2 else cprog2 in
@@ -1343,7 +1344,7 @@ SpecVar (_, n, _) -> vdef.I.view_vars <- vdef.I.view_vars @ [n];
       cvdef)
   )
   )
-and fill_one_base_case prog vd = Debug.no_1 "fill_one_base_case" Cprinter.string_of_view_decl Cprinter.string_of_view_decl (fun vd -> fill_one_base_case_x prog vd) vd
+and fill_one_base_case prog vd = Debug.no_1_loop "fill_one_base_case" Cprinter.string_of_view_decl Cprinter.string_of_view_decl (fun vd -> fill_one_base_case_x prog vd) vd
   
 and fill_one_base_case_x prog vd =
   if vd.C.view_is_prim then 
@@ -1428,7 +1429,7 @@ and compute_base_case prog cf vars =
   let pr1 x = Cprinter.string_of_list_formula (fst (List.split x)) in
   let pr2 = Cprinter.string_of_spec_var_list in
   let pr3 = pr_option (fun (p, _) -> Cprinter.string_of_pure_formula p) in
-  Debug.no_2 "compute_base_case" pr1 pr2 pr3 (fun _ _ -> compute_base_case_x prog cf vars) cf vars
+  Debug.no_2_loop "compute_base_case" pr1 pr2 pr3 (fun _ _ -> compute_base_case_x prog cf vars) cf vars
 
 and compute_base_case_x prog cf vars = (*flatten_base_case cf s self_c_var *)
   let compute_base_case_x_op ()=
@@ -1476,7 +1477,7 @@ and set_materialized_prop_x cdef =
       
 and set_materialized_prop cdef = 
   let pr1 = Cprinter.string_of_view_decl in
-  Debug.no_1 "set_materialized_prop" pr1 pr1 set_materialized_prop_x cdef
+  Debug.no_1_loop  "set_materialized_prop" pr1 pr1 set_materialized_prop_x cdef
       
 and find_m_prop_heap params eq_f h = 
   let pr = Cprinter.string_of_h_formula in

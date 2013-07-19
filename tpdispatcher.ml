@@ -813,7 +813,7 @@ let imply_label_filter ante conseq =
 		(if fc ba && fc bc then () else print_string s;*)
 		 List.map (fun (l, c)-> 
 			let lst = List.filter (fun (c,_)-> Label_only.Lab_List.is_part_compatible c l) ba in 
-			let fr1 = List.fold_left (fun a c-> And (a,snd c,no_pos)) (mkTrue no_pos) lst in
+			let fr1 = List.fold_left (fun a (_,c)-> mkAnd a c no_pos) (mkTrue no_pos) lst in
 			(*(andl_to_and fr1, andl_to_and c)*)
 			(fr1,c)) bc
 	| AndList ba, _ -> [(andl_to_and ante,conseq)]
@@ -824,6 +824,13 @@ let imply_label_filter ante conseq =
 		else 
 		(print_string s;
 		[(andl_to_and ante),(andl_to_and conseq)])*)
+  
+  
+  (*keeps labels only if both sides have labels otherwise do a smart collection.*)
+  (*this applies to term reasoning for example as it seems the termination annotations loose the labels...*)
+let imply_label_filter ante conseq = 
+	let pr = !print_formula in
+	Debug.no_2 "imply_label_filter" pr pr (pr_list (pr_pair pr pr)) imply_label_filter ante conseq
   
 let assumption_filter_slicing (ante : CP.formula) (cons : CP.formula) : (CP.formula * CP.formula) =
   let overlap (nlv1, lv1) (nlv2, lv2) =
@@ -1330,7 +1337,7 @@ let simplify (f : CP.formula) : CP.formula =
           (0.0) (PR_exception) in
           f
    )
-
+(*for AndList it simplifies one batch at a time*)
 let simplify (f:CP.formula):CP.formula =
   let rec helper f = match f with 
    | Or(f1,f2,lbl,pos) -> mkOr (helper f1) (helper f2) lbl pos
@@ -1744,8 +1751,8 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
   
 let tp_imply_no_cache ante conseq imp_no timeout process =
   let pr = Cprinter.string_of_pure_formula in
-  Debug.no_3_loop "tp_imply_no_cache" pr pr (fun s -> s) string_of_bool
-  (fun _ _ _ -> tp_imply_no_cache ante conseq imp_no timeout process) ante conseq imp_no
+  Debug.no_4_loop "tp_imply_no_cache" pr pr (fun s -> s) string_of_prover string_of_bool
+  (fun _ _ _ _ -> tp_imply_no_cache ante conseq imp_no timeout process) ante conseq imp_no !pure_tp
 
 let tp_imply_perm ante conseq imp_no timeout process = 
  if !perm=Dperm then
@@ -2112,6 +2119,7 @@ let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (old_imp_no : stri
 let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (imp_no : string) timeout process
 	  : bool*(formula_label option * formula_label option )list * (formula_label option) (*result+successfull matches+ possible fail*)
   = let pf = Cprinter.string_of_pure_formula in
+  (*let _ = print_string "dubios!!\n" in*)
   Debug.no_2 "imply_timeout 2" pf pf (fun (b,_,_) -> string_of_bool b)
       (fun a c -> imply_timeout a c imp_no timeout process) ante0 conseq0
 
@@ -2246,7 +2254,7 @@ let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (imp_no : string) 
 	  : bool*(formula_label option * formula_label option )list * (formula_label option) (*result+successfull matches+ possible fail*)
   = let pf = Cprinter.string_of_pure_formula in
   let prf = add_str "timeout" string_of_float in
-  Debug.no_4 "imply_timeout" pf pf prf pr_id (fun (b,_,_) -> string_of_bool b)
+  Debug.no_4 "imply_timeout 3" pf pf prf pr_id (fun (b,_,_) -> string_of_bool b)
       (fun a c _ _ -> imply_timeout a c imp_no timeout do_cache process) ante0 conseq0 timeout (next_proof_no ())
 
 let imply_timeout ante0 conseq0 imp_no timeout do_cache process =

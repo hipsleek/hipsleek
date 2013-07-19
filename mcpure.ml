@@ -454,6 +454,23 @@ and get_subst_equation_memo_formula (f0 : memo_pure) (v : spec_var) only_vars: (
       !print_mp_f !print_sv string_of_bool pr_out
       get_subst_equation_memo_formula_x f0 v only_vars
 
+
+and get_all_vv_eqs_memo f = List.fold_left (fun (a1,a2) c ->
+	let v1, ncl = List.fold_left (fun (a1,a2) c -> 
+	      match get_all_vv_eqs_bform c.memo_formula with
+		  | [] -> a1,c::a2
+		  | h::_ -> h::a1,a2) ([],[]) c.memo_group_cons in
+	let v2 = EMapSV.get_equiv c.memo_group_aset in
+	let v3, nsl =  List.fold_left (fun (a1,a2) c -> 
+	      let r1,r2 = get_all_vv_eqs c in
+	      (r1,r2::a2))([],[]) c.memo_group_slice in
+	let rg = { c with 
+	    memo_group_cons=ncl; 
+	    memo_group_slice=nsl; 
+	    memo_group_aset = EMapSV.mkEmpty } in
+	(v1@v2@v3, rg::a2)) ([],[]) f
+	  
+	  
 (* below need to be with_const *)
 (* this applies a substitution v->e on a list of memoised group *)
 (* useful to consider two special cases is v->v2 or v->c for aset *)
@@ -2352,6 +2369,14 @@ let get_subst_equation_mix_formula p qvar only_vars = match p with
     let l,f = get_subst_equation_formula f qvar only_vars in
     (l,OnePF f)
     
+let get_all_vv_eqs_mix f = match f with 
+	| MemoF f -> 
+		let l,f = get_all_vv_eqs_memo f in
+		l, MemoF f
+	| OnePF f -> 
+		let l,f = get_all_vv_eqs f in
+		l, OnePF f
+	
 let mix_cons_filter f fct = match f with
   | MemoF f -> MemoF (cons_filter f fct)
   | OnePF _ -> f

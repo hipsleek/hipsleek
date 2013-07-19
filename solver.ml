@@ -7087,7 +7087,7 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
       stk_estate # push es)
     | _,_ -> report_error pos "Length of relational assumption list > 1"
   in
-  
+  (*let _ = print_string "what is going on?\n" in*)
   (* Termination *)
   let (estate,_,rhs_p,rhs_wf) =
     if not !Globals.dis_term_chk then
@@ -7167,7 +7167,9 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
       DD.devel_hprint (add_str "conseq : " Cprinter.string_of_mix_formula) split_conseq pos;
       let (i_res1,i_res2,i_res3),split_a_opt = 
         if (MCP.isConstMTrue rhs_p)  then ((true,[],None),None)
-	    else let _ = Debug.devel_pprint ("IMP #" ^ (string_of_int !imp_no)) no_pos in
+	    else 
+		let _ = Debug.devel_pprint ("astaq?") no_pos in
+		let _ = Debug.devel_pprint ("IMP #" ^ (string_of_int !imp_no)) no_pos in
         (imply_mix_formula 1 split_ante0 split_ante1 split_conseq imp_no memset) 
       in
       let i_res1,i_res2,i_res3 =
@@ -7297,6 +7299,7 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
                                   let new_pf = MCP.mix_of_pure pf in
                                   let split_ante0 = MCP.merge_mems split_ante0 new_pf true in 
                                   let split_ante1 = MCP.merge_mems split_ante1 new_pf true in
+								  let _ = Debug.devel_pprint ("asta3?") no_pos in
                                   let _ = Debug.devel_pprint ("IMP #" ^ (string_of_int !imp_no)) no_pos in
                                   fst (imply_mix_formula 2 split_ante0 split_ante1 split_conseq imp_no memset)
                                 end
@@ -7749,7 +7752,7 @@ and imply_mix_formula_x ante_m0 ante_m1 conseq_m imp_no memset =
     	      else if CP.no_andl a0 && CP.no_andl a1 then (CP.split_disjunctions a0,CP.split_disjunctions a1) else
                 (* why andl need to be handled in a special way *)
 	            let r = ref (-999) in
-	            let is_sat f = TP.is_sat_sub_no 6 f r in
+	            let is_sat f = CP.is_sat_eq_ineq f (*TP.is_sat_sub_no 6 f r*) in
 	            let a0l = List.filter is_sat (CP.split_disjunctions a0) in
 	            let a1l = List.filter is_sat (CP.split_disjunctions a1) in 
 	            (a0l,a1l) 
@@ -7785,12 +7788,14 @@ and imply_mix_formula_no_memo_x new_ante new_conseq imp_no imp_subno timeout mem
       | None -> TP.mix_imply new_ante new_conseq ((string_of_int imp_no) ^ "." ^ (string_of_int imp_subno))
       | Some t -> TP.mix_imply_timeout new_ante new_conseq ((string_of_int imp_no) ^ "." ^ (string_of_int imp_subno)) t 
   in
+  let _ = Debug.devel_pprint ("asta5?") no_pos in
   Debug.devel_zprint (lazy ("IMP #" ^ (string_of_int imp_no) ^ "." ^ (string_of_int imp_subno))) no_pos;
   (r1,r2,r3)
 
 and imply_formula_no_memo new_ante new_conseq imp_no memset =   
   let new_conseq = solve_ineq_pure_formula new_ante memset new_conseq in
   let res,_,_ = TP.imply new_ante new_conseq ((string_of_int imp_no)) false None in
+  let _ = Debug.devel_pprint ("asta6?") no_pos in
   Debug.devel_zprint (lazy ("IMP #" ^ (string_of_int imp_no))) no_pos;
   res
       (*
