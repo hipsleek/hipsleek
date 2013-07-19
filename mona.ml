@@ -159,7 +159,7 @@ let compute_order_exp (f:CP.exp) : (CP.spec_var option) * order_atom list * int 
     | CP.Div(e1, e2, _)
     | CP.Max(e1, e2, _)
     | CP.Min(e1, e2, _) 
-    | CP.Add (e1, e2, _) ->  let (r,c) = force_order_lst aux [e1;e2] 0 in (None, c, 0)
+    | CP.Add (e1, e2, _) ->  let (r,c) = force_order_lst aux [e1;e2] 0 in (r, c, 0)
 	  (* let (r1,c1) = aux e1 in *)
 	  (* let (r2,c2) = aux e2 in *)
           (* (match r1,r2 with *)
@@ -1408,6 +1408,8 @@ let write_to_file (is_sat_b: bool) (fv: CP.spec_var list) (f: CP.formula) (imp_n
 let imply_sat_helper_x (is_sat_b: bool) (fv: CP.spec_var list) (f: CP.formula) (imp_no: string) vs : bool =
   let all_fv = CP.remove_dups_svl fv in
   (* let _ = print_endline("[Mona] imply_sat_helper : vs = " ^ (string_of_hashtbl vs) ) in *)
+ (* let (part1, part2) = (List.partition (fun (sv) -> ((\*is_firstorder_mem*\)part_firstorder_mem *)
+ (*      (CP.Var(sv, no_pos)) vs)) all_fv) in *)
   let (part1, part2) = (List.partition (fun (sv) -> (is_firstorder_mem_sv sv vs)) all_fv) in
   let first_order_var_decls =
     if Gen.is_empty part1 then ""
@@ -1462,7 +1464,7 @@ let imply_ops pr_w pr_s (ante : CP.formula) (conseq : CP.formula) (imp_no : stri
   let (conseq_fv, conseq) = prepare_formula_for_mona pr_s pr_w conseq !test_number in
   let tmp_form = CP.mkOr (CP.mkNot ante None no_pos) conseq None no_pos in
   let vs = Hashtbl.create 10 in
-  let _ = find_order tmp_form vs in     (* deprecated *)
+  let _ = find_order tmp_form vs in    (* deprecated *)
   let (var1,var2,var0) = new_order_formula tmp_form in
   let _ = set_prover_type () in (* change to MONA logging *)
   if not !is_mona_running then
@@ -1490,7 +1492,7 @@ let is_sat_ops_x pr_w pr_s (f : CP.formula) (sat_no :  string) : bool =
   let f = CP.drop_varperm_formula f in
   let (f_fv, f) = prepare_formula_for_mona pr_w pr_s f !test_number in
   let vs = Hashtbl.create 10 in
-  let _ = find_order f vs in     (* deprecated *)
+  let _ = find_order f vs in   (* deprecated *)
   let (var1, var2, _) = new_order_formula f in
   let _ = set_prover_type () in (* change to MONA logging *)
   (* WN : what if var0 is non-empty? *)

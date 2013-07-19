@@ -1102,9 +1102,10 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
           else 
             begin
               let pr = Cprinter.string_of_mix_formula in
+              let sf = MCP.remove_disj_clauses vdef.C.view_user_inv in
               (* Andreea : change view_1 to a simpler conjunctive form *)
               (* let sf = simplify_conj vdef.C.view_user_inv in *)
-              (* let _ = vdef.C.view_user_inv <- sf in *)
+              let _ = vdef.C.view_user_inv <- sf in
 	      Debug.info_hprint (add_str "view_1" pr) vdef.C.view_user_inv no_pos;
 	      Debug.info_hprint (add_str "view_2" pr) vdef.C.view_x_formula no_pos
             end
