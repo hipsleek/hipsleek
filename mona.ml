@@ -497,8 +497,7 @@ and preprocess_formula_x pr_w pr_s (f : CP.formula) : CP.formula =
   in helper f
 
 and preprocess_formula pr_w pr_s (f : CP.formula) : CP.formula =
-  let _ = set_prover_type () in
-  Debug.no_1 "preprocess_formula"
+  Debug.ho_1 "preprocess_formula"
       Cprinter.string_of_pure_formula 
       Cprinter.string_of_pure_formula
       (fun f -> preprocess_formula_x pr_w pr_s f) f
@@ -1443,6 +1442,7 @@ let imply_sat_helper_x (is_sat_b: bool) (fv: CP.spec_var list) (f: CP.formula) (
   try
     begin
       let _ = maybe_restart_mona () in
+      (* let _  = print_endline "sending to mona prover.." in *)
       let answer = send_cmd_with_answer !cmd_to_send in
       check_answer content answer is_sat_b
     end
@@ -1459,7 +1459,7 @@ let imply_sat_helper_x (is_sat_b: bool) (fv: CP.spec_var list) (f: CP.formula) (
 
 let imply_sat_helper (is_sat_b: bool) (fv: CP.spec_var list) (f: CP.formula) (imp_no: string) sv : bool =
   let pr = Cprinter.string_of_spec_var_list in
-  Debug.no_2 "imply_sat_helper"
+  Debug.ho_2 "imply_sat_helper"
       pr
       Cprinter.string_of_pure_formula
       string_of_bool
@@ -1479,6 +1479,7 @@ let imply_ops pr_w pr_s (ante : CP.formula) (conseq : CP.formula) (imp_no : stri
   let vs = Hashtbl.create 10 in
   (* let _ = find_order tmp_form vs in     (\* deprecated *\) *)
   let (var1,var2,var0) = new_order_formula tmp_form in
+  let _ = set_prover_type () in (* change to MONA logging *)
   if not !is_mona_running then
     write_to_file false (ante_fv @ conseq_fv) tmp_form imp_no (var1,var2)
         (* write_to_file false (ante_fv @ conseq_fv) tmp_form imp_no vs *)
@@ -1504,11 +1505,15 @@ let is_sat_ops_x pr_w pr_s (f : CP.formula) (sat_no :  string) : bool =
   let f = CP.drop_varperm_formula f in
   let (f_fv, f) = prepare_formula_for_mona pr_w pr_s f !test_number in
   let (var1, var2, _) = new_order_formula f in
+  let _ = set_prover_type () in (* change to MONA logging *)
   (* WN : what if var0 is non-empty? *)
   (* print_endline ("Mona.is_sat: " ^ (string_of_int !test_number) ^ " : " ^ (string_of_bool !is_mona_running)); *)
   let sat = 
     if not !is_mona_running then
-      write_to_file true f_fv f sat_no (var1, var2)
+      begin
+        (* print_endline "mona not running?.."; *)
+        write_to_file true f_fv f sat_no (var1, var2)
+      end
     else
       imply_sat_helper true f_fv f sat_no (var1, var2) in
   sat_optimize := false;
@@ -1519,7 +1524,7 @@ let is_sat_ops_x pr_w pr_s (f : CP.formula) (sat_no :  string) : bool =
 
 let is_sat_ops pr_w pr_s (f : CP.formula) (sat_no :  string) : bool =
   let pr = Cprinter.string_of_pure_formula in
-  Debug.no_2 "mona.is_sat_ops" pr (fun x -> x) string_of_bool 
+  Debug.ho_2 "mona.is_sat_ops" pr (fun x -> x) string_of_bool 
   (fun _ _ -> is_sat_ops_x pr_w pr_s f sat_no) f sat_no
 
 let is_sat_ops pr_w pr_s (f : CP.formula) (sat_no :  string) : bool =
