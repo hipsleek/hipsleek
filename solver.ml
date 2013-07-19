@@ -2079,7 +2079,7 @@ and unfold_partial_context (prog:prog_or_branches) (ctx : list_partial_context) 
 and unfold_failesc_context (prog:prog_or_branches) (ctx : list_failesc_context) (v : CP.spec_var) (already_unsat:bool)(pos : loc) : list_failesc_context =
   let pr1 = Cprinter.string_of_list_failesc_context in
   let pr2 = CP.string_of_spec_var in
-  Debug.no_2 "unfold_failesc_context" pr1 pr2 pr1
+  Debug.ho_2 "unfold_failesc_context" pr1 pr2 pr1
       (fun _ _ -> unfold_failesc_context_x prog ctx v already_unsat pos) ctx v
 
 and unfold_failesc_context_x (prog:prog_or_branches) (ctx : list_failesc_context) (v : CP.spec_var) (already_unsat:bool)(pos : loc) : list_failesc_context =
@@ -2300,12 +2300,15 @@ and unfold_heap_x (prog:Cast.prog_or_branches) (f : h_formula) (aset : CP.spec_v
                h_formula_view_remaining_branches = brs;
                h_formula_view_perm = perm;
                h_formula_view_arguments = vs}) ->(*!!Attention: there might be several nodes pointed to by the same pointer as long as they are empty*)
-      let uf = old_uf+uf in
-      if CP.mem p aset then (
+      let prog1 = fst prog in
+      let vdef = Cast.look_up_view_def pos prog1.prog_view_decls lhs_name in
+      if (vdef.view_is_prim) then
+        (* don't unfold primitive predicates *)
+        formula_of_heap_fl f fl pos
+      else if CP.mem p aset then (
         match (snd prog) with
         | None ->
-            let prog = fst prog in
-            let vdef = Cast.look_up_view_def pos prog.prog_view_decls lhs_name in
+            let uf = old_uf+uf in
             (*let _ = print_string "\n y\n" in*)
             let joiner f = formula_of_disjuncts (fst (List.split f)) in
             let forms = match brs with 

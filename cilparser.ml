@@ -196,7 +196,7 @@ let create_void_pointer_casting_proc (typ_name: string) : Iast.proc_decl =
   let re = Str.regexp "\(__star\)" in
   try (
     let _ = Str.search_forward re typ_name 0 in
-    let proc_name = "cast_void_pointer_to_" ^ typ_name in
+    let proc_name = "cast_void_pointer_in_heap_to_" ^ typ_name in
     let proc_decl = (
       try
         Hashtbl.find tbl_aux_proc proc_name
@@ -205,17 +205,17 @@ let create_void_pointer_casting_proc (typ_name: string) : Iast.proc_decl =
         let param = (
           let base_data = Str.global_replace re "" typ_name in
           match base_data with
-          | "int" -> "<_, stored_in_heap> & stored_in_heap"
-          | "bool" -> "<_, stored_in_heap> & stored_in_heap"
-          | "float" -> "<_, stored_in_heap> & stored_in_heap"
-          | "void" -> "<_, stored_in_heap> & stored_in_heap"
+          | "int" -> "<_>"
+          | "bool" -> "<_>"
+          | "float" -> "<_>"
+          | "void" -> "<_>"
           | _ -> (
               try 
                 let data_decl = Hashtbl.find tbl_struct_data_decl (Globals.Named base_data) in
                 match data_decl.Iast.data_fields with
                 | []   -> report_error no_pos "create_void_pointer_casting_proc: Invalid data_decl fields"
-                | [hd] -> "<_, true>"
-                | hd::tl -> "<" ^ (List.fold_left (fun s _ -> s ^ ", _") "_" tl) ^ ", stored_in_heap> & stored_in_heap"
+                | [hd] -> "<_>"
+                | hd::tl -> "<" ^ (List.fold_left (fun s _ -> s ^ ", _") "_" tl) ^ ">"
               with Not_found -> report_error no_pos ("create_void_pointer_casting_proc: Unknown data type: " ^ base_data)
             ) 
         ) in
@@ -223,7 +223,8 @@ let create_void_pointer_casting_proc (typ_name: string) : Iast.proc_decl =
           typ_name ^ " " ^ proc_name ^ " (void__star p)\n" ^
           "  case { \n" ^
           "    p =  null -> ensures res = null; \n" ^
-          "    p != null -> ensures res::" ^ data_name ^ param ^ "; \n" ^
+          "    p != null -> p::memLoc<h,s> & h\n" ^ 
+          "                 ensures res::" ^ data_name ^ param ^ " * res::memLoc<h,s> & h; \n" ^
           "  }\n"
         ) in
         let pd = Parser.parse_c_aux_proc "void_pointer_casting_proc" cast_proc in
@@ -403,13 +404,10 @@ let rec gather_addrof_info_exp (e: Cil.exp) : (Cil.lval * Iast.exp) list =
             (dtyp, dname, ddecl)
           with Not_found -> (
             (* create new Globals.typ and Iast.data_decl, then update to a hash table *)
-            let ftyp1 = pdata_ty in
-            let fname1 = "pdata" in
-            let ftyp2 = Bool in
-            let fname2 = "#plocation" in
-            let dfields = [((ftyp1, fname1), no_pos, false, Iast.F_NO_ANN);
-                           ((ftyp2, fname2), no_pos, false, Iast.F_NO_ANN)] in
-            let dname = (Globals.string_of_typ ftyp1) ^ "__star" in
+            let ftyp = pdata_ty in
+            let fname = "pdata" in
+            let dfields = [((ftyp, fname), no_pos, false, Iast.F_NO_ANN)] in
+            let dname = (Globals.string_of_typ ftyp) ^ "__star" in
             let dtyp = Globals.Named dname in
             Hashtbl.add tbl_pointer_typ lv_ty dtyp;
             let ddecl = Iast.mkDataDecl dname dfields "Object" [] false [] in
@@ -420,16 +418,12 @@ let rec gather_addrof_info_exp (e: Cil.exp) : (Cil.lval * Iast.exp) list =
         (* define new pointer var px that will be used to represent x: {x, &x} --> {*px, px} *)
         let vname = "address__var__" ^ (string_of_int (Hashtbl.length tbl_addrof_holder)) in
         let init_params = (
-          let first_param = (
-            match pdata_ty with
-            | Globals.Int -> Iast.mkIntLit 0 pos;
-            | Globals.Bool -> Iast.mkBoolLit true pos;
-            | Globals.Float -> Iast.mkFloatLit 0. pos;
-            | Globals.Named _ -> Iast.Null pos
-            | _ -> report_error pos ("Unexpected typ 1: " ^ (Globals.string_of_typ pdata_ty))
-          ) in
-          let second_param = Iast.mkBoolLit false pos in  (* stored in stack *)
-          [first_param; second_param]
+          match pdata_ty with
+          | Globals.Int -> [(Iast.mkIntLit 0 pos)];
+          | Globals.Bool -> [(Iast.mkBoolLit true pos)];
+          | Globals.Float -> [(Iast.mkFloatLit 0. pos)];
+          | Globals.Named _ -> [(Iast.Null pos)];
+          | _ -> report_error pos ("Unexpected typ 1: " ^ (Globals.string_of_typ pdata_ty))
         ) in
         let init_data = Iast.mkNew dataname init_params pos in
         let decl = [(vname, Some init_data, pos)] in
@@ -508,13 +502,10 @@ and translate_typ (t: Cil.typ) pos : Globals.typ =
             Hashtbl.find tbl_pointer_typ actual_ty
           with Not_found -> (
             (* create new Globals.typ and Iast.data_decl update to hash tables *)
-            let ftype1 = translate_typ actual_ty pos in
-            let fname1 = "pdata" in
-            let ftype2 = Bool in
-            let fname2 = "#plocation" in
-            let dfields = [((ftype1, fname1), no_pos, false, Iast.F_NO_ANN);
-                           ((ftype2, fname2), no_pos, false, Iast.F_NO_ANN)] in
-            let dname = (Globals.string_of_typ ftype1) ^ "__star" in
+            let ftyp = translate_typ actual_ty pos in
+            let fname = "pdata" in
+            let dfields = [((ftyp, fname), no_pos, false, Iast.F_NO_ANN)] in
+            let dname = (Globals.string_of_typ ftyp) ^ "__star" in
             let dtype = Globals.Named dname in
             Hashtbl.add tbl_pointer_typ actual_ty dtype;
             let ddecl = Iast.mkDataDecl dname dfields "Object" [] false [] in

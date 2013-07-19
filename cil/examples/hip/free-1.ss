@@ -15,13 +15,18 @@ int__star stack_alloc_int_star(int n)
 
 
 void free_heap(int__star p)
- requires p::int__star<n> * p::memLoc<h,_> & h // FAIL here, in "true"
+ //requires p::int__star<n> * p::memLoc<h,_> & h // FAIL here, in "true"
+ requires p::memLoc<h,_> & h // FAIL here, in "true"
  ensures emp;
 
 
 
 void foo ()
 {
-  int__star p = stack_alloc_int_star(1);
+  int__star p = heap_alloc_int_star(1);
+  dprint;
+  p.pdata = 1;
+  //int i = 2;
+  dprint;
   free_heap(p);
 }
