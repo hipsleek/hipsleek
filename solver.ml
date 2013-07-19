@@ -2679,7 +2679,12 @@ and fold_op_x1 prog (ctx : context) (view : h_formula) vd (rhs_p : MCP.mix_formu
           h_formula_view_arguments = vs}) -> begin
             try
               let vdef = match vd with 
-                | None -> look_up_view_def_raw prog.Cast.prog_view_decls c 
+                | None -> 
+                      begin
+                        try 
+                          look_up_view_def_raw 6 prog.Cast.prog_view_decls c
+ 	                with Not_found -> report_error no_pos ("fold: view def not found:"^c^"\n") 
+                      end
                 | Some vd -> vd in
               (* is there a benefit for using case-construct during folding? *)
               let brs = filter_branches r_brs vdef.Cast.view_formula in
@@ -2816,7 +2821,8 @@ and fold_op_x1 prog (ctx : context) (view : h_formula) vd (rhs_p : MCP.mix_formu
                 | SuccCtx l -> SuccCtx (List.map (process_one []) l) in
 	      (res, fold_prf)
             with
-	      | Not_found -> report_error no_pos ("fold: view def not found:"^c^"\n") 
+	      | e -> raise e
+                    (* report_error no_pos ("fold: view def not found:"^c^"\n")  *)
           end
         | _ ->
               Debug.devel_zprint (lazy ("fold: second parameter is not a view: "^ (Cprinter.string_of_h_formula view))) pos;
@@ -7831,7 +7837,7 @@ and do_base_case_unfold_only_x prog ante conseq estate lhs_node rhs_node is_fold
     (* c1,v1,p1 *)
     let lhs_name,lhs_arg,lhs_var = get_node_name lhs_node, get_node_args lhs_node , get_node_var lhs_node in
     let _ = Gen.Profiling.push_time "empty_predicate_testing" in
-    let lhs_vd = (look_up_view_def_raw prog.prog_view_decls lhs_name) in
+    let lhs_vd = (look_up_view_def_raw 7 prog.prog_view_decls lhs_name) in
     let fold_ctx = Ctx {(empty_es (mkTrueFlow ()) estate.es_group_lbl pos) with 
         es_formula = ante;
         es_heap = estate.es_heap;
@@ -7997,7 +8003,7 @@ and do_lhs_case prog ante conseq estate lhs_node rhs_node is_folding pos =
 
 and do_lhs_case_x prog ante conseq estate lhs_node rhs_node is_folding pos=
   let c1,v1,p1 = get_node_name lhs_node, get_node_args lhs_node , get_node_var lhs_node in
-  let vd = (look_up_view_def_raw prog.prog_view_decls c1) in
+  let vd = (look_up_view_def_raw 8 prog.prog_view_decls c1) in
   let na,prf = 
     (match vd.view_base_case with
       | None ->
@@ -8224,7 +8230,7 @@ and generate_rels_formulas prog rels pos=
 and do_match prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) is_folding pos : list_context *proof =
   let pr (e,_) = Cprinter.string_of_list_context e in
   let pr_h = Cprinter.string_of_h_formula in
-  Debug.no_5 "do_match" pr_h pr_h Cprinter.string_of_estate Cprinter.string_of_formula
+  Debug.ho_5 "do_match" pr_h pr_h Cprinter.string_of_estate Cprinter.string_of_formula
       Cprinter.string_of_spec_var_list pr
       (fun _ _ _ _ _ -> do_match_x prog estate l_node r_node rhs rhs_matched_set is_folding pos)
       l_node r_node estate rhs rhs_matched_set
@@ -8400,18 +8406,24 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
                                                         CF.mk_failure_must "99" Globals.sl_error)), NoAlias)
 	    | _ -> 
 	          (* An Hoa : end added code *)
-            let label_list = try 
-                                 let vdef = Cast.look_up_view_def_raw prog.prog_view_decls l_node_name in
-                                 vdef.Cast.view_labels
-                with Not_found -> List.map (fun _ -> Label_only.empty_spec_label) l_args in     
-              (*LDK: using fractional permission introduces 1 more spec var We also need to add 1 more label*)
-              (*renamed and instantiate perm var*)
-              let evars = estate.es_evars in
-              let ivars = estate.es_ivars in
-              let expl_vars = estate.es_gen_expl_vars in
-              let impl_vars = estate.es_gen_impl_vars in
-              let rho_0, label_list, p_ante,p_conseq =
-                do_match_inst_perm_vars l_perm r_perm l_args r_args label_list evars ivars impl_vars expl_vars in
+            let label_list = 
+              try 
+                let vdef = Cast.look_up_view_def_raw 9 prog.prog_view_decls l_node_name in
+                vdef.Cast.view_labels
+              with Not_found ->
+                  begin
+                    print_endline "should be here";
+                    List.map (fun _ -> Label_only.empty_spec_label) l_args
+                  end
+            in     
+            (*LDK: using fractional permission introduces 1 more spec var We also need to add 1 more label*)
+            (*renamed and instantiate perm var*)
+            let evars = estate.es_evars in
+            let ivars = estate.es_ivars in
+            let expl_vars = estate.es_gen_expl_vars in
+            let impl_vars = estate.es_gen_impl_vars in
+            let rho_0, label_list, p_ante,p_conseq =
+              do_match_inst_perm_vars l_perm r_perm l_args r_args label_list evars ivars impl_vars expl_vars in
               (*  let rho_0, label_list = 
                   if (Perm.allow_perm ()) then
                   match l_perm, r_perm with
@@ -8653,7 +8665,7 @@ and existential_eliminator_helper_x prog estate (var_to_fold:Cpure.spec_var) (c2
   let ptr_eq = (List.map (fun c->(c,c)) v2) @ ptr_eq in
   let asets = Context.alias_nth 9 ptr_eq in
   try
-    let vdef = look_up_view_def_raw prog.Cast.prog_view_decls c2 in
+    let vdef = look_up_view_def_raw 10 prog.Cast.prog_view_decls c2 in
     let subs_vars = List.combine vdef.view_vars v2 in
     let sf = (CP.SpecVar (Named vdef.Cast.view_data_name, self, Unprimed)) in
     let subs_vars = (sf,var_to_fold)::subs_vars in

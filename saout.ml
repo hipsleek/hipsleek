@@ -196,7 +196,7 @@ let trans_hprel_2_cview_x iprog cprog proc_name hpdefs:
               let hp_name = CP.name_of_spec_var hp in
               try
                 let _ =  Debug.ninfo_pprint (" hp: " ^ (!CP.print_sv hp)) no_pos in
-                let view = C.look_up_view_def_raw cprog.C.prog_view_decls hp_name in
+                let view = C.look_up_view_def_raw 33 cprog.C.prog_view_decls hp_name in
                 (ls1,ls2, ls3@[view])
               with _ -> (ls1@[hp], ls2@[def], ls3)
           end

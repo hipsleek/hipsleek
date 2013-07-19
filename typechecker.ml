@@ -1102,7 +1102,7 @@ and check_scall_lock_op prog ctx e0 (post_start_label:formula_label) ret_t mn lo
             (*we infer automatically from ctx*)
             infer_lock_invariant lock_var ctx pos
       in
-      let vdef = look_up_view_def_raw prog.prog_view_decls lock_sort in
+      let vdef = look_up_view_def_raw 34 prog.prog_view_decls lock_sort in
       let types = List.map (fun v -> CP.type_of_spec_var v) vdef.view_vars in
       let new_args = List.map2 (fun arg typ ->  CP.SpecVar (typ, arg, Primed) ) lock_args types in
       let self_var =  CP.SpecVar (Named vdef.view_data_name, self, Unprimed) in
