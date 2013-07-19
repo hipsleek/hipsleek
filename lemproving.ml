@@ -39,7 +39,7 @@ let run_entail_check_helper (iante: lem_formula) (iconseq: lem_formula) (cprog: 
   (* let conseq = Solver.prune_pred_struc cprog true conseq in (\* (andreeac) redundant ? *\) *)
   let ectx = CF.empty_ctx (CF.mkTrueFlow ()) Lab2_List.unlabelled no_pos in
   let ctx = CF.build_context ectx ante no_pos in
-  let _ = if !Globals.print_core || !Globals.print_core_all then print_string ("\run_entail_check_helper:\n"^(Cprinter.string_of_formula ante)^" |- "^(Cprinter.string_of_struc_formula conseq)^"\n") else () in
+  let _ = if !Globals.print_core || !Globals.print_core_all then print_string ("\nrun_entail_check_helper:\n"^(Cprinter.string_of_formula ante)^" |- "^(Cprinter.string_of_struc_formula conseq)^"\n") else () in
   let ctx = CF.transform_context (Solver.elim_unsat_es 10 cprog (ref 1)) ctx in
   let rs1, _ = 
   if not !Globals.disable_failure_explaining then

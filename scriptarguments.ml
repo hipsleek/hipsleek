@@ -100,7 +100,7 @@ let common_arguments = [
   ("--dis-sleek-log-filter", Arg.Clear Globals.sleek_log_filter,
    "Sleek Log Filter Flag");
   ("--elp", Arg.Set Globals.check_coercions,
-   "Enable Lemma Proving");
+   "enable lemma proving");
   ("--trace", Arg.Set Debug.trace_on,
    "Turn on brief tracing");
   ("--dis-trace", Arg.Clear Debug.trace_on,
