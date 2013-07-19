@@ -667,7 +667,7 @@ let rec pr_formula_exp (e:P.exp) =
   let f_b e =  pr_bracket exp_wo_paren pr_formula_exp e in
   match e with
     | P.Null l -> fmt_string "null"
-    | P.Var (x, l) -> fmt_string (string_of_spec_var x)
+    | P.Var (x, l) -> fmt_string (string_of_spec_var x) (* fmt_string (string_of_typed_spec_var x) *)
     | P.Level (x, l) -> fmt_string ("level(" ^ (string_of_spec_var x) ^ ")")
     | P.IConst (i, l) -> fmt_int i
     | P.AConst (i, l) -> fmt_string (string_of_heap_ann i)

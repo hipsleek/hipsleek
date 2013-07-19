@@ -1284,6 +1284,7 @@ and drop_data_view_hrel_nodes_hf_from_root prog hf hd_nodes hv_nodes eqs drop_ro
 (***************************************************************)
 (*
   this function may be subsumed by simp_match_partial_unknown
+  this makes swl-i.ss failed
 *)
 let simp_match_unknown_x unk_hps link_hps cs=
   let lhs_hps = CF.get_hp_rel_name_formula cs.CF.hprel_lhs in
@@ -1301,10 +1302,24 @@ let simp_match_unknown unk_hps link_hps cs=
 
 (*da/demo/dll-pap-1.slk*)
 let simp_match_hp_w_unknown_x prog unk_hps link_hps cs=
-  (* check-dll: recusrsive do not check*)
-  let rec_hps = CP.intersect_svl (CF.get_hp_rel_name_formula cs.CF.hprel_lhs)
-    (CF.get_hp_rel_name_formula cs.CF.hprel_rhs) in
-  if List.length rec_hps <= 1 then cs else
+  let l_hds, l_hvs,lhrels =CF.get_hp_rel_formula cs.CF.hprel_lhs in
+  let r_hds, r_hvs,rhrels =CF.get_hp_rel_formula cs.CF.hprel_rhs in
+  let lhps,lhp_args = List.fold_left (fun (r_hps, r_hpargs) (hp, eargs, _) ->
+      let args = (List.fold_left List.append [] (List.map CP.afv eargs)) in
+      ((r_hps@[hp]), (r_hpargs@[(hp,args)]) )
+  ) ([],[]) lhrels
+  in
+  let rhps,rhp_args = List.fold_left (fun (r_hps, r_hpargs) (hp, eargs, _) ->
+      let args = (List.fold_left List.append [] (List.map CP.afv eargs)) in
+      ((r_hps@[hp]), (r_hpargs@[(hp,args)]) )
+  ) ([],[]) rhrels
+  in
+  let rec_hps = CP.intersect_svl lhps rhps in
+  if (List.length rec_hps <= 1)
+    (* check-dll: recusrsive do not check*)
+    || ( (List.length l_hds > 0 || List.length l_hvs > 0) && List.length lhrels > 0 &&
+        (* (List.length r_hds > 0 || List.length r_hvs > 0) && *) List.length rhrels > 0) (*swl-i.ss*)
+  then cs else
   let tot_unk_hps = unk_hps@link_hps in
   let part_helper = (fun (unk_svl,rem) (hp,args)->
         if CP.mem_svl hp tot_unk_hps then
@@ -1323,8 +1338,8 @@ let simp_match_hp_w_unknown_x prog unk_hps link_hps cs=
       | _ -> false
   in
   let tot_unk_hps = unk_hps@link_hps in
-  let lhp_args = CF.get_HRels_f cs.CF.hprel_lhs in
-  let rhp_args = CF.get_HRels_f cs.CF.hprel_rhs in
+  (* let lhp_args = CF.get_HRels_f cs.CF.hprel_lhs in *)
+  (* let rhp_args = CF.get_HRels_f cs.CF.hprel_rhs in *)
   (*get_all ptrs initiated*)
   let l_ptrs = CF.get_ptrs_f cs.CF.hprel_lhs in
   let r_ptrs = CF.get_ptrs_f cs.CF.hprel_rhs in
@@ -2311,6 +2326,8 @@ and get_closed_matched_ptrs ldns rdns rcur_match ss=
   - apply the pattern in rhs2 to get the subsst
   - apply subst in rhs1. return the new rhs1
 assume pattern is ONE datanode. enhance later
+check-dll.ss: YES
+swl-i.ss: NO
 *)
 let pattern_matching_with_guard_x rhs1 rhs2 guard match_svl=
   (************ INTERNAL ***********)

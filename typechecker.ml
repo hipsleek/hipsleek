@@ -1328,12 +1328,17 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                     let fct c1 =
                       (* let _ = Gen.Profiling.push_time "[check_exp] Assign: fct" in *)
                       let res = if (CF.subsume_flow_f !norm_flow_int (CF.flow_formula_of_formula c1.CF.es_formula)) then
-                        let t = Gen.unsome (type_of_exp rhs) in
+                        let t0 = Gen.unsome (type_of_exp rhs) in
+                        let t = if is_null_type t0 then
+                          let svl = CF.fv c1.CF.es_formula in
+                          try
+                            let orig_sv = List.find (fun sv -> String.compare (CP.name_of_spec_var sv) v = 0) svl in
+                            CP.type_of_spec_var orig_sv
+                          with _ -> t0
+                        else t0
+                        in
                         let vsv = CP.SpecVar (t, v, Primed) in (* rhs must be non-void *)
                         let tmp_vsv = CP.fresh_spec_var vsv in
-                        (* let _ = DD.binfo_pprint "*************************************" no_pos in *)
-                        (* let _ = DD.binfo_pprint "LOC: I remove the first element of the subst, please check" no_pos in *)
-                        (* let _ = DD.binfo_pprint "*************************************" no_pos in *)
                         let compose_es = CF.subst [(vsv, tmp_vsv); ((P.mkRes t), vsv)] c1.CF.es_formula in
                         let compose_ctx = (CF.Ctx ({c1 with CF.es_formula = compose_es})) in
                         (* Debug.info_hprint (add_str "vsv" Cprinter.string_of_spec_var) vsv no_pos; *)

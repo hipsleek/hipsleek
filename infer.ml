@@ -2409,6 +2409,8 @@ let generate_constraints prog es rhs lhs_b ass_guard rhs_b1 defined_hps
       let rargs = List.fold_left (fun ls (_,eargs,_)->
       ls@(List.fold_left List.append [] (List.map CP.afv eargs))) [] r_hrels in
       if (CP.intersect_svl (CF.h_fv guard) (CP.diff_svl rargs largs) = []) then
+       (*  None *)
+      (* else if (CP.intersect_svl (CF.h_fv guard) (CP.intersect_svl (CF.fv (CF.Base lhs_b)) (CF.fv (CF.Base rhs_b))) = []) then *)
         None
       else
         let l_hd_svl = List.map (fun hd -> hd.CF.h_formula_data_node) l_hds in
@@ -2713,7 +2715,7 @@ let infer_collect_hp_rel_x prog (es:entail_state) rhs0 rhs_rest (rhs_h_matched_s
             find_undefined_selective_pointers prog lhs_b1 mix_lf1 rhs rhs_rest
                 (rhs_h_matched_set@his_ptrs) leqs1 reqs1 pos es.CF.es_infer_hp_unk_map post_hps subst_prog_vars in
           if not is_found_mis then
-            let _ = Debug.info_pprint ">>>>>> mismatch ptr is not found (or inst) in the lhs <<<<<<" pos in
+            let _ = Debug.info_pprint (">>>>>> mismatch ptr" ^ (Cprinter.prtt_string_of_h_formula rhs) ^" is not found (or inst) in the lhs <<<<<<") pos in
             (false, es, rhs, None)
           else
             let rhs_b1 = CF.formula_base_of_heap rhs pos in

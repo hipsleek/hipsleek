@@ -250,7 +250,7 @@ h_formula_phase_pos : loc }
 
 and h_formula_data = {  h_formula_data_node : CP.spec_var;
                         h_formula_data_name : ident;
-						h_formula_data_derv : bool;
+			h_formula_data_derv : bool;
                         h_formula_data_imm : ann;
                         h_formula_data_param_imm : ann list;
                         h_formula_data_perm : cperm; (* option; *) (*LDK: permission*)
@@ -4051,11 +4051,15 @@ let rec check_eq_hrel_node  (rl1, args1 ,_)  (rl2, args2,_)=
     (* let svs2 = List.concat (List.map CP.afv args2) in *)
     (CP.eq_spec_var rl1 rl2) && (helper args1 args2)
 
-and get_ptrs_f (f: formula)=
+and get_ptrs_f (f0: formula)=
+  let rec helper f=
   match f with
     | Base fb ->
         get_ptrs fb.formula_base_heap
-    | _ -> report_error no_pos "SAU.is_empty_f: not handle yet"
+    | Exists fe -> get_ptrs fe.formula_exists_heap
+    | Or orf -> (helper orf.formula_or_f1)@(helper orf.formula_or_f2)
+  in
+  helper f0
 
 and get_pure (f0: formula)=
   let rec helper f=

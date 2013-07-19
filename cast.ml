@@ -931,6 +931,37 @@ let get_proot_hp_def_raw defs name=
   let hpdclr = look_up_hp_def_raw defs name in
   hpdclr.hp_root_pos
 
+let get_root_args_hprel hprels hp_name actual_args=
+  let rec part_sv_from_pos ls n n_need rem=
+    match ls with
+      | [] -> report_error no_pos "sau.get_sv_from_pos"
+      | sv1::rest -> if n = n_need then (sv1, rem@rest)
+        else part_sv_from_pos rest (n+1) n_need (rem@[sv1])
+  in
+  let retrieve_root hp_name args=
+    let rpos = get_proot_hp_def_raw hprels hp_name in
+    let r,paras = part_sv_from_pos args 0 rpos [] in
+    (r,paras)
+  in
+  retrieve_root hp_name actual_args
+
+let get_root_typ_hprel hprels hp_name=
+  let rec part_sv_from_pos ls n n_need rem=
+    match ls with
+      | [] -> report_error no_pos "sau.get_sv_from_pos"
+      | sv1::rest -> if n = n_need then (sv1, rem@rest)
+        else part_sv_from_pos rest (n+1) n_need (rem@[sv1])
+  in
+  let retrieve_root hp_name=
+    let hpdclr = look_up_hp_def_raw hprels hp_name in
+    let rpos = hpdclr.hp_root_pos in
+    let r,_ = part_sv_from_pos (List.map fst hpdclr.hp_vars_inst) 0 rpos [] in
+    match Cpure.type_of_spec_var r with
+      | Named id -> id
+      | _ -> ""
+  in
+  retrieve_root hp_name
+
 let check_pre_post_hp defs hp_name=
   let hpdecl = look_up_hp_def_raw defs hp_name in
   hpdecl.hp_is_pre

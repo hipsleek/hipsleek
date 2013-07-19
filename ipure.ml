@@ -233,7 +233,7 @@ and afv (af : exp) : (ident * primed) list = match af with
   | Tsconst _ 
   | InfConst _
   | FConst _ -> []
-  | Ann_Exp (e,_) -> afv e
+  | Ann_Exp (e,_,_) -> afv e
   | Add (a1, a2, _) -> combine_avars a1 a2
   | Subtract (a1, a2, _) -> combine_avars a1 a2
   | Mult (a1, a2, _) | Div (a1, a2, _) -> combine_avars a1 a2
@@ -324,7 +324,7 @@ and mkSubtract a1 a2 pos = Subtract (a1, a2, pos)
 
 and mkMult a1 a2 pos = Mult (a1, a2, pos)
 
-and mkAnnExp a1 t pos = Ann_Exp (a1, t)
+and mkAnnExp a1 t pos = Ann_Exp (a1, t, pos)
 
 and mkDiv a1 a2 pos = Div (a1, a2, pos)
 
@@ -544,7 +544,7 @@ and pos_of_exp (e : exp) = match e with
   | Tsconst (_, p)
   | InfConst (_, p)
   | AConst (_, p) -> p
-  | Ann_Exp (e,_) -> pos_of_exp e
+  | Ann_Exp (e,_,p) -> p
   | Add (_, _, p) -> p
   | Subtract (_, _, p) -> p
   | Mult (_, _, p) -> p
@@ -678,7 +678,7 @@ and e_apply_one ((fr, t) as p) e = match e with
   | Tsconst _
   | InfConst _
   | AConst _ -> e
-  | Ann_Exp (e,ty) -> Ann_Exp ((e_apply_one p e), ty)
+  | Ann_Exp (e,ty,pos) -> Ann_Exp ((e_apply_one p e), ty, pos)
   | Var (sv, pos) -> Var (v_apply_one p sv, pos)
   | Level (sv, pos) -> Level (v_apply_one p sv, pos)
   | Add (a1, a2, pos) -> Add (e_apply_one p a1, e_apply_one p a2, pos)
@@ -852,7 +852,7 @@ and find_lexp_exp (e: exp) ls =
   | Tsconst _
   | InfConst _
   | FConst _ -> []
-  | Ann_Exp(e,_) -> find_lexp_exp e ls
+  | Ann_Exp(e,_,_) -> find_lexp_exp e ls
   | Add (e1, e2, _) -> find_lexp_exp e1 ls @ find_lexp_exp e2 ls
   | Subtract (e1, e2, _) -> find_lexp_exp e1 ls @ find_lexp_exp e2 ls
   | Mult (e1, e2, _) -> find_lexp_exp e1 ls @ find_lexp_exp e2 ls
@@ -904,7 +904,7 @@ let rec contain_vars_exp (expr : exp) : bool =
   | AConst _ 
   | Tsconst _
   | FConst _ -> false
-  | Ann_Exp (exp,_) -> (contain_vars_exp exp)
+  | Ann_Exp (exp,_,_) -> (contain_vars_exp exp)
   | Add (exp1, exp2, _) -> (contain_vars_exp exp1) || (contain_vars_exp exp2)
   | Subtract (exp1, exp2, _) -> (contain_vars_exp exp1) || (contain_vars_exp exp2)
   | Mult (exp1, exp2, _) -> (contain_vars_exp exp1) || (contain_vars_exp exp2)
@@ -936,7 +936,9 @@ and float_out_exp_min_max (e: exp): (exp * (formula * (string list) ) option) = 
   | Tsconst _
   | InfConst _ 
   | FConst _ -> (e, None)
-  | Ann_Exp (e,_) -> float_out_exp_min_max e
+  | Ann_Exp (e, t, l) -> 
+      let ne, np = float_out_exp_min_max e in
+      (Ann_Exp (ne, t, l), np) 
   | Add (e1, e2, l) ->
       let ne1, np1 = float_out_exp_min_max e1 in
       let ne2, np2 = float_out_exp_min_max e2 in
@@ -1343,7 +1345,7 @@ let rec typ_of_exp (e: exp) : typ =
           (* Gen.Basic.report_error pos "Ununified type in 2 expressions" *)
   in
   match e with
-  | Ann_Exp (ex, ty)          -> let ty2 = typ_of_exp ex in
+  | Ann_Exp (ex, ty, _)       -> let ty2 = typ_of_exp ex in
                                  merge_types ty2 ty
   | Null _                    -> Globals.UNK               (* Trung: TODO: what is the type of Null? *) 
   | Var  _                    -> Globals.UNK               (* Trung: TODO: what is the type of Var? *)
