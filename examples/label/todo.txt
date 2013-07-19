@@ -57,7 +57,7 @@ Issues :
  res: SAT
  
 ============================================================
-# lab2.slk -tp mona --en-proof-logging
+# lab2.slk -tp mona --en-proof-logging FIXED
 
 checkentail n>=0 & n>0 |- (n>=-1) & n>=0.
 print residue.
@@ -81,7 +81,7 @@ id: 1; prover: OMEGA CALCULATOR; loc: _0:0_0:0; kind: Sleek_Entail(1)
 	     conseq:  0<=n
  res: true
  --------------------
-============================================================
+
 is_sat_sub_no #6@1
 is_sat_sub_no #6 inp1 : (AndList ([],0<=n) & ([n],0<n) & ([s],n=0)) 
 is_sat_sub_no #6 inp2 :1
@@ -97,6 +97,27 @@ is_sat_sub_no #6 inp1 : (AndList ([],0<=n) & ([n],0<n) & ([s],n=0))
 is_sat_sub_no #6 inp2 :-8998
 is_sat_sub_no #6@9 EXIT out :true
 ============================================================
+# lab1.slk
+
+checkentail n>=0 & ["n":n>0; "s":n=0] |- (n>=-1) & ["n":n>=0].
+print residue.
+
+ISSUE :
+
+The first unsat from "" label is redundant since
+it was added to labels for "n","s" already.
+
+ id: 1; prover: MONA; loc: _0:0_0:0; kind: Sleek_Entail(1)
+ Sat:  true & 0<=n
+ res: SAT
+ -------------------- 
+ id: 2; prover: MONA; loc: _0:0_0:0; kind: Sleek_Entail(1)
+ Sat:  true & 0<=n & 0<n
+ res: SAT
+ -------------------- 
+ id: 3; prover: MONA; loc: _0:0_0:0; kind: Sleek_Entail(1)
+ Sat:  true & 0<=n & n=0
+ res: SAT
 ============================================================
 ============================================================
 ============================================================

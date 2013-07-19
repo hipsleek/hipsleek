@@ -289,7 +289,7 @@ let add_proof_log (cache_status:bool) old_no pno tp ptype time res =
 	let _= Hashtbl.add proof_log_tbl pno plog in
 	let _ =  Debug.devel_pprint (string_of_proof_log_entry plog) no_pos in
 	let _=try
-	  let _= BatString.find (Sys.argv.(0)) "hip" in
+	  (* let _= BatString.find (Sys.argv.(0)) "hip" in *)
 	  if(!Globals.proof_logging_txt && ((proving_kind # string_of)<>"TRANS_PROC")) then
 		begin 
 		  proof_log_stk # push pno;
