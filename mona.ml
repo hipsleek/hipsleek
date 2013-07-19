@@ -123,41 +123,32 @@ let string_of_order_atom a =
     | MO_Var(sv,i) -> ((CP.string_of_spec_var sv) ^ "=" ^ (string_of_int i))
     | MO_EQ(sv1,sv2) -> ((CP.string_of_spec_var sv1) ^ "=" ^ (CP.string_of_spec_var sv2 ))
 
+let mkMO_Var sv (order: int option) =
+  match order with
+    | Some i -> [MO_Var(sv,i)]
+    | None   -> []
 
-let same_order_lst aux el =
+let same_order_lst aux el (* (order: int option) *) =
   let (rr,cc) as result = 
     List.fold_left (fun (r2,c2) b -> 
         let (r1,c1,_) = aux b in
         match r1,r2 with
           | (None,_) -> (r2,c1@c2) 
           | (_,None) -> (r1,c1@c2) 
-          | (Some v1,Some v2) ->  (r1, MO_EQ(v1,v2)::c1@c2) 
+          | (Some v1,Some v2) ->  
+                (* let new_c = mkMO_Var v1 order in *)
+                (r1, MO_EQ(v1,v2)::(* new_c@ *)c1@c2) 
     ) (None,[]) el in
   result
 
-let force_order_lst_opt aux el order =
-  let (rr,cc) as result = 
-    List.fold_left (fun (r2,c2) b -> 
-        let (r1,c1,_) = aux b in
-        match r1,r2 with
-          | (None,_) -> (r2,c1@c2) 
-          | (_,None) -> (r1,c1@c2) 
-          | (Some v1,Some v2) ->  (r1,MO_Var(v1,order)::MO_EQ(v1,v2)::c1@c2) (* should order be always 2? *)
-    ) (None,[]) el in
-  result
+(* let force_order_lst_opt aux el order = *)
+(*   same_order_lst aux el (Some order) *)
 
 let force_order_lst aux el order =
-  let (rr,cc) as result = 
-    List.fold_left (fun (r2,c2) b -> 
-        let (r1,c1,_) = aux b in
-        match r1,r2 with
-          | (None,_) -> (r2,c1@c2) 
-          | (_,None) -> (r1,c1@c2) 
-          | (Some v1,Some v2) ->  (r1,MO_EQ(v1,v2)::c1@c2)
-    ) (None,[]) el in
+  let (rr,cc) as result = same_order_lst aux el in
   match rr with
     | None -> result
-    | Some v -> (rr,MO_Var(v,order)::cc)
+    | Some v -> (rr, MO_Var(v,order)::cc)
 
 let compute_order_exp (f:CP.exp) : (CP.spec_var option) * order_atom list * int = 
   (* (None,[]) *)
@@ -168,7 +159,7 @@ let compute_order_exp (f:CP.exp) : (CP.spec_var option) * order_atom list * int 
     | CP.Div(e1, e2, _)
     | CP.Max(e1, e2, _)
     | CP.Min(e1, e2, _) 
-    | CP.Add (e1, e2, _) ->  let (r,c) = force_order_lst_opt aux [e1;e2] 2 in (None, c, 2)
+    | CP.Add (e1, e2, _) ->  let (r,c) = force_order_lst aux [e1;e2] 0 in (None, c, 0)
 	  (* let (r1,c1) = aux e1 in *)
 	  (* let (r2,c2) = aux e2 in *)
           (* (match r1,r2 with *)
@@ -197,7 +188,9 @@ let force_order_exp (f:CP.exp) order : (CP.spec_var option) * order_atom list * 
   let (r, c, exp_ord) as result = compute_order_exp f in
   match r with
     | None -> result
-    | Some v -> (r,MO_Var(v,order)::c, exp_ord)
+    | Some v -> 
+          if not(order == 0) then (r,MO_Var(v,order)::c, exp_ord)
+          else (r,c, exp_ord)
 
 let force_eq_exp (f:CP.exp) (sv: CP.spec_var option) : (CP.spec_var option) * order_atom list * int = 
   let (r, c, exp_ord) as result = compute_order_exp f in
@@ -234,9 +227,6 @@ let compute_order_b_formula (bf:CP.b_formula) : order_atom list =
           let (_, c1, _) = if (ord != 0) then force_order_exp e1 ord 
           else force_eq_exp e1 r2 in
           c1@c2
-          (* let (_, c1, _) = compute_order_exp e1 in *)
-          (* let (_, c2, _) = compute_order_exp e2 in *)
-          (* c1@c2 *)
     | CP.EqMax(e1, e2, e3, _)
     | CP.EqMin(e1, e2, e3, _) -> 
           let (r2, c2, ord2) = compute_order_exp e2 in
@@ -245,10 +235,6 @@ let compute_order_b_formula (bf:CP.b_formula) : order_atom list =
           let ord = if (ord1 <= ord2) then ord2 else ord1 in
           let (r3, c3, _) = if not(ord == 0) then force_order_exp e3 ord 
           else force_eq_exp e3 r1 in
-
-          (* let (_, c1,_) = compute_order_exp e1 in *)
-          (* let (_, c2,_) = compute_order_exp e2 in *)
-          (* let (_, c3,_) = compute_order_exp e3 in *)
           c1@c2@c3
     | CP.BVar(sv1, l1) ->  
           [MO_Var(sv1,2)]
@@ -357,11 +343,10 @@ let mkConstrLabel (constr: order_atom) =
 
 let new_order_formula_x (f:CP.formula) : (CP.spec_var list * CP.spec_var list * CP.spec_var list) =
   let cl = compute_order_formula f in
-  let cl = List.filter (fun c -> not (is_unk_order_atom_constraint c)) cl in
+  let cl = List.filter (fun c -> not (is_unk_order_atom_constraint c)) cl in (* filter out constraints like MO_Var(v,0) *)
   (* let _ = Debug.tinfo_hprint (add_str "cl" pr) cl no_pos in *)
   (* rename quantif vars bef before calling new_order_formula*)
   let all_vars = CP.all_vars f in
-  (* let constr = CP.mkAndList (List.map mkConstrLabel cl) in *)
   let constr = CP.and_list_to_and (List.map mkConstrLabel cl) in
   let sat = Omega.is_sat constr "mona constraints" in 
   if (not sat) then
@@ -369,8 +354,8 @@ let new_order_formula_x (f:CP.formula) : (CP.spec_var list * CP.spec_var list * 
   else
   (* extract list of vars v1=1 or v1=2 *)
     let l1,l2,lunk = solve_constraints cl all_vars in
-    let l2 = l2@lunk in                 (* consider unknown vars as 2nd order vars *)
-    (l1,l2,[])
+    let l2 = l2@lunk in             (* consider unknown vars as 2nd order vars *)
+    (l1,l2,lunk)
 
 let new_order_formula (f:CP.formula) : (CP.spec_var list * CP.spec_var list * CP.spec_var list) =
   let pr_out = pr_list Cprinter.string_of_spec_var in
@@ -1477,7 +1462,7 @@ let imply_ops pr_w pr_s (ante : CP.formula) (conseq : CP.formula) (imp_no : stri
   let (conseq_fv, conseq) = prepare_formula_for_mona pr_s pr_w conseq !test_number in
   let tmp_form = CP.mkOr (CP.mkNot ante None no_pos) conseq None no_pos in
   let vs = Hashtbl.create 10 in
-  (* let _ = find_order tmp_form vs in     (\* deprecated *\) *)
+  let _ = find_order tmp_form vs in     (* deprecated *)
   let (var1,var2,var0) = new_order_formula tmp_form in
   let _ = set_prover_type () in (* change to MONA logging *)
   if not !is_mona_running then
@@ -1504,6 +1489,8 @@ let is_sat_ops_x pr_w pr_s (f : CP.formula) (sat_no :  string) : bool =
   incr test_number;
   let f = CP.drop_varperm_formula f in
   let (f_fv, f) = prepare_formula_for_mona pr_w pr_s f !test_number in
+  let vs = Hashtbl.create 10 in
+  let _ = find_order f vs in     (* deprecated *)
   let (var1, var2, _) = new_order_formula f in
   let _ = set_prover_type () in (* change to MONA logging *)
   (* WN : what if var0 is non-empty? *)
