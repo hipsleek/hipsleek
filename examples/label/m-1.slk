@@ -10,12 +10,29 @@ pred dll<"n":n> ==
 	self::node2<_ , q> * q::dll<n1> & ["n":n1=n-1]
 	inv true & ["n":n >= 0].
 
+/*
 checkentail
   x::dll<m>@M &
   ["": x=x' & MayLoop & t_31'=0 & v_int_22_859'=1;
    "n":0<m] 
   |- emp&Term.
+print residue.
 
+checkentail
+  x::dll<m>@M &
+  x=x' & MayLoop & t_31'=0 & v_int_22_859'=1 & 0<m 
+  |- emp&Term.
+print residue.
+*/
+
+
+checkentail
+  true & ["":x=x' & MayLoop & t_31'=0 & v_int_22_859'=1 & 0<m] 
+  |- emp&Term.
 print residue.
 
 
+checkentail
+  true & x=x' & MayLoop & t_31'=0 & v_int_22_859'=1 & 0<m 
+  |- emp&Term.
+print residue.

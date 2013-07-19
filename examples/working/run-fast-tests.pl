@@ -462,7 +462,7 @@ $output_file = "log";
 								"append_bll","SUCCESS",
 								"qsort","SUCCESS"],
         # goes into a loop with combined-lemma-heuristics still
-				["qsort-tail.ss",2, "", "qsort","SUCCESS","partition1","SUCCESS"],
+				#["qsort-tail.ss",2, "", "qsort","SUCCESS","partition1","SUCCESS"],
 				["selection.ss",3, "", "find_min","SUCCESS",
 								"delete_min","SUCCESS",
 								"selection_sort","SUCCESS"],

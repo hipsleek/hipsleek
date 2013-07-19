@@ -5004,7 +5004,7 @@ and heap_entail_conjunct_lhs_x hec_num prog is_folding  (ctx:context) (conseq:CF
     in (* End of process_entail_state *)
     (* Termination: Strip the LexVar in the pure part of LHS - Move it to es_var_measures *)
     (* Now moving to typechecker for an earlier lexvar strip *)
-    (* let ctx = Term.strip_lexvar_lhs ctx in *)
+    let ctx = Term.strip_lexvar_lhs ctx in
 
     (* Call the internal function to do the unfolding and do the checking *)
     (* Check duplication only when there are no permissions*)

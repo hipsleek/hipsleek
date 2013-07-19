@@ -353,15 +353,63 @@ let norm_term_measures_by_length src dst =
     else Some ((Gen.BList.take dl src)@one_exp, dst@zero_exp)
   else Some (src, Gen.BList.take sl dst)
 
-let strip_lexvar_mix_formula (mf: MCP.mix_formula) =
-  let mf_p = MCP.pure_of_mix mf in
-  let mf_ls = CP.split_conjunctions mf_p in
+let strip_lexvar_pure_only f =
+  let mf_ls = CP.split_conjunctions f in
   let (lexvar, other_p) = List.partition (CP.is_lexvar) mf_ls in
   (lexvar, CP.join_conjunctions other_p)
 
+let def_lbl l =
+  if l==[] then true
+  else List.exists (fun s -> s="") l
+
+let def_lbl l =
+  Debug.no_1 "def_lbl" (pr_list pr_string) string_of_bool def_lbl l
+
+let strip_lexvar_list ls =
+  let rec aux xs =
+    match xs with
+      | [] -> ([],[])
+      | ((l,f) as ff) ::xs ->
+            let (l0,r0) = aux xs in
+            let (l2,r2) = 
+              if def_lbl l then
+                let (l3,f3) = strip_lexvar_pure_only f in
+                (l3,(l,f3))
+              else ([],ff)
+            in
+            (l2@l0,r2::r0)
+  in aux ls
+
+
+let strip_lexvar_from_andlist ls =
+  List.fold_left (fun (l,cj) f ->
+      match f with
+        | CP.AndList ls -> 
+              let (l0,nls) = strip_lexvar_list ls in
+              (l0@l,(CP.AndList nls)::cj)
+        | _ -> if CP.is_lexvar f then (f::l,cj)
+            else (l,f::cj)
+  ) ([],[]) ls
+
+let strip_lexvar_from_pure f =
+  let mf_ls = CP.split_conjunctions f in
+  let (lexvar,fs) = strip_lexvar_from_andlist mf_ls in
+  (* let (lexvar, other_p) = List.partition (CP.is_lexvar) mf_ls in *)
+  (lexvar, CP.join_conjunctions fs)
+
+let strip_lexvar_mix_formula (mf: MCP.mix_formula) =
+  let mf_p = MCP.pure_of_mix mf in
+  let (lexvar, f) = strip_lexvar_from_pure mf_p in
+  (lexvar, f)
+  (* let mf_ls = CP.split_conjunctions mf_p in *)
+  (* Debug.tinfo_hprint (add_str "mf_ls" (pr_list !CP.print_formula)) mf_ls no_pos; *)
+  (* let (lexvar, other_p) = List.partition (CP.is_lexvar) mf_ls in *)
+  (* (lexvar, CP.join_conjunctions other_p) *)
+
 let strip_lexvar_mix_formula mf =
-	let pr = !MCP.print_mix_formula in
-	Debug.no_1 "strip_lexvar_mix_formula" pr (pr_pair (fun _ -> "") !CP.print_formula) strip_lexvar_mix_formula mf
+  let pr0 = !CP.print_formula in
+  let pr = !MCP.print_mix_formula in
+  Debug.no_1 "strip_lexvar_mix_formula" pr (pr_pair (pr_list pr0) !CP.print_formula) strip_lexvar_mix_formula mf
   
 (* Termination: The boundedness checking for HIP has been done before *)  
 let check_term_measures estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p src_lv dst_lv t_ann_trans pos =
