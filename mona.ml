@@ -161,12 +161,6 @@ let compute_order_exp (f:CP.exp) : (CP.spec_var option) * order_atom list * int 
     | CP.Min(e1, e2, _) 
     | CP.Add (e1, e2, _) ->  let (r,c) = force_order_lst aux [e1;e2] 0 in (r, c, 0) (* should return r so that the 
                                                                                        result of the operation would have teh same type as the operands *)
-	  (* let (r1,c1) = aux e1 in *)
-	  (* let (r2,c2) = aux e2 in *)
-          (* (match r1,r2 with *)
-          (*   | (None,_) -> (r2,c1@c2) *)
-          (*   | (_,None) -> (r1,c1@c2) *)
-          (*   | (Some v1,Some v2) -> (r1,MO_Var(v1,2)::MO_EQ(v1,v2)::c1@c2)) *)
     | CP.Bag(el, _) 
         -> let (r,c) = force_order_lst aux el 1 in (None, c, 2)
     | CP.BagUnion(el, _) 
@@ -249,7 +243,6 @@ let compute_order_formula_x (f:CP.formula) : order_atom list =
     match f with
       | CP.And(f1, f2, _)
       | CP.Or(f1, f2, _,_) -> (aux f1)@(aux f2)
-        (* make sure everything is renamed *)
       | CP.Forall(_, f1, _,_)
       | CP.Exists(_, f1, _,_)
       | CP.Not(f1, _,_) -> (aux f1)
@@ -742,8 +735,8 @@ and part_firstorder_mem e vs =
     | CP.Null _ -> true
     | _ -> false
 
-(* and is_firstorder_mem e vs = *)
-(*   Debug.no_1 "is_firstorder_mem" Cprinter.string_of_formula_exp string_of_bool (fun e -> is_firstorder_mem_a e vs) e *)
+(* and is_firstorder_mem e vs = *) (*deprecated*)
+(*   Debug.no_1 "is_firstorder_mem" Cprinter.string_of_formula_exp string_of_bool (fun e -> is_firstorder_mem_a e vs) e *) 
 
 and is_firstorder_mem_x e (var1,var2) =
   match e with
@@ -1410,7 +1403,7 @@ let imply_sat_helper_x (is_sat_b: bool) (fv: CP.spec_var list) (f: CP.formula) (
   let all_fv = CP.remove_dups_svl fv in
   (* let _ = print_endline("[Mona] imply_sat_helper : vs = " ^ (string_of_hashtbl vs) ) in *)
  (* let (part1, part2) = (List.partition (fun (sv) -> ((\*is_firstorder_mem*\)part_firstorder_mem *)
- (*      (CP.Var(sv, no_pos)) vs)) all_fv) in *)
+  (*      (CP.Var(sv, no_pos)) vs)) all_fv) in *)  (*deprecated*)
   let (part1, part2) = (List.partition (fun (sv) -> (is_firstorder_mem_sv sv vs)) all_fv) in
   let first_order_var_decls =
     if Gen.is_empty part1 then ""
@@ -1464,16 +1457,16 @@ let imply_ops pr_w pr_s (ante : CP.formula) (conseq : CP.formula) (imp_no : stri
   let (ante_fv, ante) = prepare_formula_for_mona pr_w pr_s ante !test_number in
   let (conseq_fv, conseq) = prepare_formula_for_mona pr_s pr_w conseq !test_number in
   let tmp_form = CP.mkOr (CP.mkNot ante None no_pos) conseq None no_pos in
-  let vs = Hashtbl.create 10 in
-  let _ = find_order tmp_form vs in    (* deprecated *)
+  (* let vs = Hashtbl.create 10 in *)
+  (* let _ = find_order tmp_form vs in *)    (* deprecated *)
   let (var1,var2,var0) = new_order_formula tmp_form in
   let _ = set_prover_type () in (* change to MONA logging *)
   if not !is_mona_running then
     write_to_file false (ante_fv @ conseq_fv) tmp_form imp_no (var1,var2)
-        (* write_to_file false (ante_fv @ conseq_fv) tmp_form imp_no vs *)
+        (* write_to_file false (ante_fv @ conseq_fv) tmp_form imp_no vs *) (* deprecated *)
   else
     imply_sat_helper false (ante_fv @ conseq_fv) tmp_form imp_no (var1,var2)
-        (* imply_sat_helper false (ante_fv @ conseq_fv) tmp_form imp_no vs *)
+        (* imply_sat_helper false (ante_fv @ conseq_fv) tmp_form imp_no vs *) (* deprecated *) 
 let imply_ops pr_w pr_s (ante : CP.formula) (conseq : CP.formula) (imp_no : string) : bool =
   let pr = Cprinter.string_of_pure_formula in
   Debug.no_3 "mona.imply" pr pr (fun x -> x) string_of_bool 
@@ -1492,8 +1485,8 @@ let is_sat_ops_x pr_w pr_s (f : CP.formula) (sat_no :  string) : bool =
   incr test_number;
   let f = CP.drop_varperm_formula f in
   let (f_fv, f) = prepare_formula_for_mona pr_w pr_s f !test_number in
-  let vs = Hashtbl.create 10 in
-  let _ = find_order f vs in   (* deprecated *)
+  (* let vs = Hashtbl.create 10 in *)
+  (* let _ = find_order f vs in   *) (* deprecated *)
   let (var1, var2, _) = new_order_formula f in
   let _ = set_prover_type () in (* change to MONA logging *)
   (* WN : what if var0 is non-empty? *)
@@ -1503,9 +1496,11 @@ let is_sat_ops_x pr_w pr_s (f : CP.formula) (sat_no :  string) : bool =
       begin
         (* print_endline "mona not running?.."; *)
         write_to_file true f_fv f sat_no (var1, var2)
+        (* write_to_file true f_fv f sat_no vs *) (* deprecated *)
       end
     else
       imply_sat_helper true f_fv f sat_no (var1, var2) in
+  (* imply_sat_helper true f_fv f sat_no vs in *) (* deprecated *)
   sat_optimize := false;
   sat
 ;;
