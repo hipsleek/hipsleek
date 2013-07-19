@@ -497,7 +497,7 @@ and preprocess_formula_x pr_w pr_s (f : CP.formula) : CP.formula =
   in helper f
 
 and preprocess_formula pr_w pr_s (f : CP.formula) : CP.formula =
-  Debug.ho_1 "preprocess_formula"
+  Debug.no_1 "preprocess_formula"
       Cprinter.string_of_pure_formula 
       Cprinter.string_of_pure_formula
       (fun f -> preprocess_formula_x pr_w pr_s f) f
@@ -1459,7 +1459,7 @@ let imply_sat_helper_x (is_sat_b: bool) (fv: CP.spec_var list) (f: CP.formula) (
 
 let imply_sat_helper (is_sat_b: bool) (fv: CP.spec_var list) (f: CP.formula) (imp_no: string) sv : bool =
   let pr = Cprinter.string_of_spec_var_list in
-  Debug.ho_2 "imply_sat_helper"
+  Debug.no_2 "imply_sat_helper"
       pr
       Cprinter.string_of_pure_formula
       string_of_bool
@@ -1524,7 +1524,7 @@ let is_sat_ops_x pr_w pr_s (f : CP.formula) (sat_no :  string) : bool =
 
 let is_sat_ops pr_w pr_s (f : CP.formula) (sat_no :  string) : bool =
   let pr = Cprinter.string_of_pure_formula in
-  Debug.ho_2 "mona.is_sat_ops" pr (fun x -> x) string_of_bool 
+  Debug.no_2 "mona.is_sat_ops" pr (fun x -> x) string_of_bool 
   (fun _ _ -> is_sat_ops_x pr_w pr_s f sat_no) f sat_no
 
 let is_sat_ops pr_w pr_s (f : CP.formula) (sat_no :  string) : bool =

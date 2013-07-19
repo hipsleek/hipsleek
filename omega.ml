@@ -548,7 +548,7 @@ let is_valid_ops_x pr_weak pr_strong (pe : formula) timeout: bool =
 
 let is_valid_ops pr_weak pr_strong (pe : formula) timeout: bool =
   let pf = !print_pure in
-  Debug.ho_1 "Omega.is_valid" pf (string_of_bool) (fun _ -> is_valid_ops_x pr_weak pr_strong pe timeout) pe
+  Debug.no_1 "Omega.is_valid" pf (string_of_bool) (fun _ -> is_valid_ops_x pr_weak pr_strong pe timeout) pe
 
 let is_valid_with_check (pe : formula) timeout : bool option =
   do_with_check "" (fun x -> is_valid_ops (fun _ -> None) (fun _ -> None) x timeout) pe
@@ -587,7 +587,7 @@ let imply_ops pr_weak pr_strong (ante : formula) (conseq : formula) (imp_no : st
 
 let imply_ops pr_weak pr_strong (ante : formula) (conseq : formula) (imp_no : string) timeout : bool =
   let pr = !print_formula in
-  Debug.ho_2 "[omega.ml]imply_ops_1" pr pr string_of_bool
+  Debug.no_2 "[omega.ml]imply_ops_1" pr pr string_of_bool
   (fun _ _ -> imply_ops pr_weak pr_strong ante conseq imp_no timeout) ante conseq
 
 let imply (ante : formula) (conseq : formula) (imp_no : string) timeout : bool =
@@ -614,7 +614,7 @@ let imply_ops pr_weak pr_strong (ante : formula) (conseq : formula) (imp_no : st
 
 let imply_ops pr_weak pr_strong (ante : formula) (conseq : formula) (imp_no : string) timeout : bool =
   let pr = !print_formula in
-  Debug.ho_2 "[omega.ml]imply_ops_1" pr pr string_of_bool
+  Debug.no_2 "[omega.ml]imply_ops_1" pr pr string_of_bool
   (fun _ _ -> imply_ops pr_weak pr_strong ante conseq imp_no timeout) ante conseq
 
 let is_valid (pe : formula) timeout : bool =

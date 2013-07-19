@@ -783,17 +783,21 @@ let elim_exists (f : CP.formula) : CP.formula =
   Debug.no_1 "elim_exists" pr pr elim_exists f
   
 
-let sat_label_filter fct f = 
+let sat_label_filter fct f =
+  let pr = Cprinter.string_of_pure_formula in
   let test f1 = 
 	if no_andl f1 then  fct f1 
-	else report_error no_pos ("unexpected imbricated AndList in tpdispatcher sat: "^(Cprinter.string_of_pure_formula f)) in
+	else report_error no_pos ("unexpected imbricated AndList in tpdispatcher sat: "^(pr f)) in
   let rec helper f = match f with 
 		| AndList b -> 
 			let lbls = Label_Pure.get_labels b in
 			let fs = List.map (fun l -> 
-				let lst = List.filter (fun (c,_)-> Label_only.Lab_List.is_part_compatible c l) b in
-				List.fold_left (fun a c-> And (a,snd c,no_pos)) (mkTrue no_pos) lst) lbls in
-			List.for_all test fs
+			    let lst = List.filter (fun (c,_)-> Label_only.Lab_List.is_part_compatible c l) b in
+			    (l,List.fold_left (fun a c-> mkAnd a (snd c) no_pos) (mkTrue no_pos) lst)) lbls in
+                        let fs2 = List.filter (fun (l,_)-> l!=[]) fs in
+                        let fs = if fs2==[] then fs else fs2 in
+                        let _ = Debug.dinfo_hprint (add_str "label,fs" (pr_list (pr_pair (pr_list pr_id) pr)))  fs no_pos in
+			List.for_all (fun (_,f) -> test f) fs
 		| Or (f1,f2,_ ,_)-> (helper f1)||(helper f2)
 		| _ -> test f in 
 	helper f
@@ -2013,7 +2017,7 @@ let is_sat (f : CP.formula) (old_sat_no : string): bool =
 ;;
 
 let is_sat (f : CP.formula) (sat_no : string): bool =
-  Debug.ho_1 "[tp]is_sat"  Cprinter.string_of_pure_formula string_of_bool (fun _ -> is_sat f sat_no) f
+  Debug.no_1 "[tp]is_sat"  Cprinter.string_of_pure_formula string_of_bool (fun _ -> is_sat f sat_no) f
 
    
 let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (old_imp_no : string) timeout process
@@ -2328,7 +2332,7 @@ let is_sat f sat_no do_cache =
 ;;
 
 let is_sat i f sat_no do_cache = 
-  Debug.ho_1_num i "is_sat" Cprinter.string_of_pure_formula string_of_bool (fun _ -> is_sat f sat_no do_cache) f
+  Debug.no_1_num i "is_sat" Cprinter.string_of_pure_formula string_of_bool (fun _ -> is_sat f sat_no do_cache) f
 
 
 let sat_no = ref 1 ;;
@@ -2342,7 +2346,7 @@ let is_sat_sub_no_c (f : CP.formula) sat_subno do_cache : bool =
 ;;
 
 let is_sat_sub_no_c i (f : CP.formula) sat_subno do_cache : bool =
-  Debug.ho_1_num i "is_sat_sub_no_c" Cprinter.string_of_pure_formula string_of_bool (fun f -> is_sat_sub_no_c f sat_subno do_cache) f
+  Debug.no_1_num i "is_sat_sub_no_c" Cprinter.string_of_pure_formula string_of_bool (fun f -> is_sat_sub_no_c f sat_subno do_cache) f
 ;;
 
 let is_sat_sub_no_with_slicing_orig (f:CP.formula) sat_subno : bool =  
@@ -2437,7 +2441,7 @@ let is_sat_sub_no (f : CP.formula) sat_subno : bool =
   else is_sat_sub_no_c 3 f sat_subno false
 
 let is_sat_sub_no i (f : CP.formula) sat_subno : bool =  
-  Debug.ho_2_num i "is_sat_sub_no " (Cprinter.string_of_pure_formula) (fun x-> string_of_int !x)
+  Debug.no_2_num i "is_sat_sub_no " (Cprinter.string_of_pure_formula) (fun x-> string_of_int !x)
     (string_of_bool ) is_sat_sub_no f sat_subno;;
 
 let is_sat_memo_sub_no_orig (f : memo_pure) sat_subno with_dupl with_inv : bool =
