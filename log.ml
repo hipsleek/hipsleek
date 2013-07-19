@@ -503,3 +503,10 @@ let process_proof_logging src_files  =
 (*     () *)
 (*   else *)
 (*     () *)
+
+let report_error_dump e =
+      print_endline "Last SLEEK FAILURE:";
+      last_sleek_command # dump;
+      print_endline "Last PURE PROOF FAILURE:";
+      last_proof_command # dump;
+      Error.report_error e
