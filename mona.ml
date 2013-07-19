@@ -72,13 +72,16 @@ let rec mkEx l f = match l with
   | sv :: rest -> mkEx rest (CP.Exists(sv, f, None, no_pos))
 
 (*
-  v=2, v=1 or unconstrained
-  or v1=v2
 
- 2 --> var2
- 1 --> var1
-
-
+  ALG for deciding between 1st-order and 2nd-order variables
+  I  -  generate constraints which can have any of the below forms
+        1. var1 = var2 
+        2. var = const, where const can be 
+              1 --> 1st order (var1), 
+              2 --> 2nd order (var2)
+              0 --> unknown
+  II  - verify if the generated constraints are satisfiable
+  III - solve the constraints
 *)
 
 type order_atom =
@@ -253,18 +256,11 @@ let compute_order_formula_x (f:CP.formula) : order_atom list =
 let compute_order_formula (f:CP.formula) : order_atom list = 
   let pr_out = pr_list string_of_order_atom in
   Debug.no_1 "compute_order_formula" pr_none pr_out compute_order_formula_x f
-(* 
-
- 0 - unknown
- 1 - 1st order
- 2 - 2nd order
-
- *)
 
 let get_order var1_lst var2_lst sv =
-  if (List.exists (CP.eq_spec_var sv) var1_lst) then 1
-  else if (List.exists (CP.eq_spec_var sv) var2_lst) then 2
-  else 0
+  if (List.exists (CP.eq_spec_var sv) var1_lst) then 1 (* 1st order *)
+  else if (List.exists (CP.eq_spec_var sv) var2_lst) then 2 (* 2nd order *)
+  else 0                                                    (* unknown *)
 
 let replace_known var1_lst var2_lst unk_lst (c:order_atom): order_atom = 
   match c with
@@ -297,14 +293,14 @@ let solve_constraints_x (cons: order_atom list) (sv_lst: CP.spec_var list)=
     let cons = Gen.BList.remove_dups_eq eq_order_atom cons in 
     let mo_var_constr, eq_var_constr = List.partition is_mo_var cons in
     let var1_constr, var2_constr = List.partition is_first_order_atom_constraint mo_var_constr in 
-    let pr = pr_list string_of_order_atom in
-    let _ = Debug.tinfo_hprint (add_str "cons" pr) cons no_pos in
-    let _ = Debug.tinfo_hprint (add_str "mo_var_constr" pr) mo_var_constr no_pos in
-    let _ = Debug.tinfo_hprint (add_str "var1_constr" pr) var1_constr no_pos in
     let var1_lst0 = List.map get_lhs_order_atom var1_constr in
     let var1_lst = var1_lst@var1_lst0 in
-    let pr = pr_list Cprinter.string_of_spec_var in
-    let _ = Debug.tinfo_hprint (add_str "var1_lst" pr) var1_lst no_pos in
+    (* let pr = pr_list string_of_order_atom in *)
+    (* let _ = Debug.tinfo_hprint (add_str "cons" pr) cons no_pos in *)
+    (* let _ = Debug.tinfo_hprint (add_str "mo_var_constr" pr) mo_var_constr no_pos in *)
+    (* let _ = Debug.tinfo_hprint (add_str "var1_constr" pr) var1_constr no_pos in *)
+    (* let pr = pr_list Cprinter.string_of_spec_var in *)
+    (* let _ = Debug.tinfo_hprint (add_str "var1_lst" pr) var1_lst no_pos in *)
     let var2_lst0 = List.map get_lhs_order_atom var2_constr in
     let var2_lst = var2_lst@var2_lst0 in
     let new_unk_lst = Gen.BList.difference_eq CP.eq_spec_var unk_lst (var1_lst@var2_lst) in
@@ -341,7 +337,7 @@ let new_order_formula_x (f:CP.formula) : (CP.spec_var list * CP.spec_var list * 
   (* let _ = Debug.tinfo_hprint (add_str "cl" pr) cl no_pos in *)
   (* rename quantif vars bef before calling new_order_formula*)
   let all_vars = CP.all_vars f in
-  let constr = CP.join_conjunctions cl in
+  let constr = CP.join_conjunctions (List.map mkConstraint cl) in
   let sat = Omega.is_sat constr "mona constraints" in 
   if (not sat) then
     failwith ("[mona.ml:new_order_formula] mona translation failure")
