@@ -2773,5 +2773,5 @@ let translate_waitlevel_mix_formula (mf : mix_formula) : mix_formula =
 let remove_disj_clauses (mf: mix_formula): mix_formula = 
   let mf_conjs = split_conjunctions (pure_of_mix mf) in 
   let mf_conjs = List.filter (fun f -> not (is_disjunct f)) mf_conjs in
-  let mf = and_list_to_and (List.map (fun f -> (Label_only.empty_spec_label, f) ) mf_conjs) in
+  let mf = join_conjunctions mf_conjs in
   mix_of_pure mf

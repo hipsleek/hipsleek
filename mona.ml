@@ -159,7 +159,8 @@ let compute_order_exp (f:CP.exp) : (CP.spec_var option) * order_atom list * int 
     | CP.Div(e1, e2, _)
     | CP.Max(e1, e2, _)
     | CP.Min(e1, e2, _) 
-    | CP.Add (e1, e2, _) ->  let (r,c) = force_order_lst aux [e1;e2] 0 in (r, c, 0)
+    | CP.Add (e1, e2, _) ->  let (r,c) = force_order_lst aux [e1;e2] 0 in (r, c, 0) (* should return r so that the 
+                                                                                       result of the operation would have teh same type as the operands *)
 	  (* let (r1,c1) = aux e1 in *)
 	  (* let (r2,c2) = aux e2 in *)
           (* (match r1,r2 with *)
@@ -347,7 +348,7 @@ let new_order_formula_x (f:CP.formula) : (CP.spec_var list * CP.spec_var list * 
   (* let _ = Debug.tinfo_hprint (add_str "cl" pr) cl no_pos in *)
   (* rename quantif vars bef before calling new_order_formula*)
   let all_vars = CP.all_vars f in
-  let constr = CP.and_list_to_and (List.map mkConstrLabel cl) in
+  let constr = CP.join_conjunctions cl in
   let sat = Omega.is_sat constr "mona constraints" in 
   if (not sat) then
     failwith ("[mona.ml:new_order_formula] mona translation failure")
