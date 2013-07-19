@@ -245,7 +245,7 @@ let trans_hprel_2_cview iprog cprog proc_name hp_rels :
   let pr1 = pr_list_ln ( Cprinter.string_of_hp_rel_def) in
   let pr2 = pr_list_ln Cprinter.string_of_view_decl in
   let pr3 = pr_list_ln Cprinter.string_of_hp_decl in
-  Debug.no_1 "trans_hprel_2_view" pr1 (pr_pair pr2 pr3)
+  Debug.ho_1 "trans_hprel_2_view" pr1 (pr_pair pr2 pr3)
       (fun _ -> trans_hprel_2_cview_x iprog cprog proc_name hp_rels)
       hp_rels
 
