@@ -7449,22 +7449,36 @@ let mkNot_b_norm (bf : b_formula) : b_formula option =
 
 let filter_constraint_type (ante: formula) (conseq: formula) : (formula) = 
 if (!Globals.enable_constraint_based_filtering) then 
+  let conseq_disjs = list_of_disjs conseq in 
+  if List.length conseq_disjs == 1 then
+  let disjs = list_of_disjs ante in 
+  let helper f = 
   let antes = list_of_conjs ante in
-  let filtered_antes = 
-  if is_bag_constraint conseq then List.filter is_bag_constraint antes
-  else List.filter (fun c -> not(is_bag_constraint c)) antes in 
-  join_conjunctions filtered_antes 
+  (*let _ = List.map (fun c -> print_string ("Antes : "^(!print_formula c)^"\n")) antes in *)
+  let filtered_antes = if List.exists (fun c -> eq_pure_formula conseq c) antes then
+      List.filter (fun c -> eq_pure_formula conseq c) antes else 
+  if is_bag_constraint conseq then antes
+ (*List.filter (fun c -> is_bag_constraint c || contains_exists c)  antes*)
+  else List.filter (fun c -> not(is_bag_constraint c) || contains_exists c) antes in 
+  join_conjunctions filtered_antes in 
+  let filtered_disjs = List.map helper disjs in
+  join_disjunctions filtered_disjs 
+  else ante
 else ante
 
 let filter_constraint_type (ante: formula) (conseq: formula) : (formula) = 
 let pr = !print_formula in
-Debug.ho_2 "filter_constraint_type" pr pr pr filter_constraint_type ante conseq
+Debug.no_2 "filter_constraint_type" pr pr pr filter_constraint_type ante conseq
 
 let filter_ante (ante : formula) (conseq : formula) : (formula) =
 	let fvar = fv conseq in
-    let ante = filter_constraint_type ante conseq in
-	let new_ante = filter_var ante fvar in
+    let ante = filter_var ante fvar in
+	let new_ante = if (!Globals.enable_constraint_based_filtering) then filter_constraint_type ante conseq else ante in
     new_ante
+
+let filter_ante (ante: formula) (conseq: formula) : (formula) = 
+let pr = !print_formula in
+Debug.no_2 "filter_ante" pr pr pr filter_ante ante conseq
 
 let filter_ante_wo_rel (ante : formula) (conseq : formula) : (formula) =
 	let fvar = fv conseq in

@@ -13,10 +13,10 @@ inv self != s;
 
 treeseg<p,M> == self=p & M = {}
 or self::node<v,l,r> * l::treeseg<p,Ml> * r::tree<p,Mr> 
-& M = union(Ml,Mr,{self}) 
+& M = union(Ml,Mr,{self})
 & self != p
 or self::node<v,l,r> * l::tree<p,Ml> * r::treeseg<p,Mr> 
-& M = union(Ml,Mr,{self}) 
+& M = union(Ml,Mr,{self})
 & self != p
 inv true;
 
@@ -31,9 +31,9 @@ ensures prev'::tree<sentinel,union(Mc,Mp)> & cur'=sentinel;
   n = cur.left;
   tmp = cur.right;
   // rotate ptrs
-  cur.right = null;
+  //cur.right = null;
   cur.right = prev;
-  cur.left = null;
+  //cur.left = null;
   cur.left = tmp;
   // move forward
   prev = cur;
