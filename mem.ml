@@ -68,7 +68,7 @@ let rec intersect_list_ann (ann_lst_l: CF.ann list) (ann_lst_r: CF.ann list): CF
 			Err.error_text = "[mem.ml] : Memory Spec should have same number of fields in layout";}
 
 let mem_guards_checking (fl1 : CP.formula) (fl2: CP.formula list) pos =
-	let flag = List.exists (fun x -> let r,_,_  = TP.imply fl1 x "mem_guard_imply" false None in r) fl2 in
+	let flag = List.exists (fun x -> let r,_,_  = TP.imply_one 6 fl1 x "mem_guard_imply" false None in r) fl2 in
 	if flag then ()   
 	else 
 	(*if CP.isConstTrue fl1 then ()
@@ -82,7 +82,7 @@ let mem_guards_checking_reverse (fl1: CP.formula list) (fl2 : CP.formula) pos =
 	let relevant_slice = CP.join_conjunctions (List.filter 
 		(fun c -> if (CP.disjoint x_fvs (CP.fv c)) then false else true)
 		(CP.split_conjunctions fl2)) in
-	let r,_,_  = TP.imply x relevant_slice "mem_guard_imply_reverse" false None in r) fl1 in
+	let r,_,_  = TP.imply_one 11 x relevant_slice "mem_guard_imply_reverse" false None in r) fl1 in
 	if flag then ()   
 	else 
 	Err.report_error { Err.error_loc = pos;
@@ -1175,7 +1175,7 @@ let ramify_star_one (h1: CF.h_formula) (h1mpf: CF.mem_perm_formula option) (h2: 
 		       let compatible_cases2 = List.filter (fun (c,_) ->
 		       let after_sbst_guard = CP.subst sublist2 c in		
 		       let r,_,_ =  
-		       TP.imply pure_p after_sbst_guard "ramify_imply" false None in r) case_and_layouts2 in
+		       TP.imply_one 12 pure_p after_sbst_guard "ramify_imply" false None in r) case_and_layouts2 in
 		       (match h1 with
 			| CF.ViewNode {CF.h_formula_view_node = vn1;
 				CF.h_formula_view_arguments = vargs1} -> 
@@ -1184,7 +1184,7 @@ let ramify_star_one (h1: CF.h_formula) (h1mpf: CF.mem_perm_formula option) (h2: 
        				let compatible_cases1 = List.filter (fun (c,_) ->
        				let after_sbst_guard = CP.subst sublist1 c in		
 			       	let r,_,_ =
-			       	TP.imply pure_p after_sbst_guard "ramify_imply" false None in r) case_and_layouts1 in
+			       	TP.imply_one 13 pure_p after_sbst_guard "ramify_imply" false None in r) case_and_layouts1 in
 			       	let field_names = List.map (fun (_,(id,_)) -> id ) compatible_cases1 in
 			       	let field_names_no_dup = remove_dups field_names in
 			       	if List.exists (fun (_,(id,_)) -> (List.mem id field_names_no_dup)) compatible_cases2 
@@ -1238,7 +1238,7 @@ let ramify_star_one (h1: CF.h_formula) (h1mpf: CF.mem_perm_formula option) (h2: 
 		       				let compatible_cases = List.filter (fun (c,_) ->
 		       				let after_sbst_guard = CP.subst sublist c in		
 					       	let r,_,_ =
-					       	TP.imply pure_p after_sbst_guard "ramify_imply" false None in r) case_and_layouts in
+					       	TP.imply_one 14 pure_p after_sbst_guard "ramify_imply" false None in r) case_and_layouts in
 					       	if List.exists (fun (_,(id,_)) -> (String.compare id dn == 0)) compatible_cases
 						then (if List.exists (fun (_,(id,al)) -> 
 							(is_same_field_layout paimm al)) compatible_cases
@@ -1288,7 +1288,7 @@ let ramify_star_one (h1: CF.h_formula) (h1mpf: CF.mem_perm_formula option) (h2: 
 		       	let r,_,_ =  
 		       	(*let _ = print_string("\nPure :"^(string_of_pure_formula pure_p)^"\n") in
 		       	let _ = print_string("Case :"^(string_of_pure_formula after_sbst_guard)^"\n") in*)
-		       	TP.imply pure_p after_sbst_guard "ramify_imply" false None in r) case_and_layouts in
+		       	TP.imply_one 15 pure_p after_sbst_guard "ramify_imply" false None in r) case_and_layouts in
 		       (match h1 with
 		       	| CF.DataNode { CF.h_formula_data_name = dn;
 			       		CF.h_formula_data_param_imm = paimm} -> 

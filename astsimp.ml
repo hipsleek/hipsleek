@@ -6518,7 +6518,7 @@ and prune_inv_inference_formula_x (cp:C.prog_decl) (v_l : CP.spec_var list) (ini
         | _,_ ->
               let f1r = List.fold_left (fun a c-> CP.mkAnd a (CP.BForm (c,None)) no_pos) (CP.mkTrue no_pos) l1r in
               let f2r = List.fold_left (fun a c-> CP.mkAnd a (CP.BForm (c,None)) no_pos) (CP.mkTrue no_pos) l2r in
-              let tpi = fun f1 f2 -> TP.imply f1 f2 "" false None in
+              let tpi = fun f1 f2 -> TP.imply_one 7 f1 f2 "" false None in
               if ((fun (c,_,_)-> c) (tpi f1r f2r)) then f2r
               else if ((fun (c,_,_)-> c) (tpi f2r f1r)) then f1r
               else  CP.mkOr f1r f2r None no_pos in
@@ -6641,7 +6641,7 @@ and prune_inv_inference_formula_x (cp:C.prog_decl) (v_l : CP.spec_var list) (ini
         : (formula_label * (CP.spec_var list * CP.b_formula list)) =  
     let n_c = List.fold_left (fun a (l,c)  ->  
         if (eq_formula_label l lbl) then a else 
-          let (b,_,_) = TP.imply f (CP.BForm (c,None)) "" false None in
+          let (b,_,_) = TP.imply_one 8 f (CP.BForm (c,None)) "" false None in
           if b then c::a  else
             a) [] neg_br in
     let r = Gen.BList.remove_dups_eq CP.eq_b_formula_no_aset (pl@n_c) in 
@@ -6658,7 +6658,7 @@ and prune_inv_inference_formula_x (cp:C.prog_decl) (v_l : CP.spec_var list) (ini
   let add_needed_inv uinvl (lbl,(_,rl)) =
     let all_r = CP.join_conjunctions (List.map (fun c-> CP.BForm (c,None)) rl) in
     let uinv2 = List.filter (fun c->
-        let r,_,_ = TP.imply all_r (CP.BForm (c,None)) "" false None in
+        let r,_,_ = TP.imply_one 9 all_r (CP.BForm (c,None)) "" false None in
         not r) uinvl in
     (lbl, uinv2)
   in
@@ -6674,7 +6674,7 @@ and prune_inv_inference_formula_x (cp:C.prog_decl) (v_l : CP.spec_var list) (ini
     let neg_br = List.concat (List.map (fun (_,(lbl,_,bl)) -> neg_b_list lbl bl) split_br) in
     let rlist = List.map (collect_constr neg_br) split_br in  
     (* let uinv2 = List.filter (fun c->  *)
-    (*     let r,_,_ = TP.imply all_r (CP.BForm (c,None)) "" false None in *)
+    (*     let r,_,_ = TP.imply_one 10 all_r (CP.BForm (c,None)) "" false None in *)
     (*     not r) uinvl in *)
     (* let uinv2 = imply_by_all all_r uinvl in *)
     let n_inv = List.map (add_needed_inv uinvl) rlist

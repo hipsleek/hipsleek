@@ -6682,7 +6682,7 @@ let rec imply_conj_orig ante_disj0 ante_disj1 conseq_conj t_imply imp_no
    : bool * (Globals.formula_label option * Globals.formula_label option) list *
    Globals.formula_label option=
   let pr = pr_list !print_formula in
-  Debug.no_3 "imply_conj_orig" pr pr pr (fun (b,_,_) -> string_of_bool b)
+  Debug.ho_3 "imply_conj_orig" pr pr pr (fun (b,_,_) -> string_of_bool b)
       (fun ante_disj0 ante_disj1 conseq_conj-> imply_conj_orig_x ante_disj0 ante_disj1 conseq_conj t_imply imp_no)
       ante_disj0 ante_disj1 conseq_conj
 

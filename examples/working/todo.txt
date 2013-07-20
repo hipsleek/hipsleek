@@ -2,7 +2,20 @@
 Total number of errors: 10 in files:
   infer/infer1.slk infer/infer2.slk infer/infer8.slk infer/infer13.slk infer/infer14.slk ann1.slk imm/imm1.slk imm/imm3.slk imm/imm-hard.slk imm-field/sleek02.slk.
 ====================================================================
-====================================================================
+20Jul2013 : more failures due to enabling filter_assumption; why?
+
+ error at: ../../modular_examples/dll-modular.ss append
+error at: ../../modular_examples/dll-modular.ss append1
+error at: ../../modular_examples/dll-modular.ss append2
+error at: ../../modular_examples/dll-modular.ss delete
+error at: ../../modular_examples/dll-modular.ss insert
+error at: ../../modular_examples/dll-modular.ss append
+error at: ../../modular_examples/dll-modular.ss append1
+error at: ../../modular_examples/dll-modular.ss append2
+error at: ../../modular_examples/dll-modular.ss delete
+error at: ../../modular_examples/dll-modular.ss insert
+error at: ../../modular_examples/qsort-modular.ss qsort
+========================================================s============
 ====================================================================
 ====================================================================
 ====================================================================
