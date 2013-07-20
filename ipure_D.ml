@@ -80,7 +80,7 @@ and p_formula =
 
 (* Expression *)
 and exp = 
-  | Ann_Exp of (exp * typ)
+  | Ann_Exp of (exp * typ * loc)
   | Null of loc
   | Level of ((ident * primed) * loc)
   | Var of ((ident * primed) * loc)

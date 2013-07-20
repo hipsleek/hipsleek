@@ -5,7 +5,7 @@ data node{
 
 
 HeapPred H(node a, node@NI b).
-HeapPred G(node a, node@NI b).
+PostPred G(node a, node@NI b).
 
   void set_tail (node x,node y)
   infer[H,G] 

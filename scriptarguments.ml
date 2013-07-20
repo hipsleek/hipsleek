@@ -107,6 +107,10 @@ let common_arguments = [
    "Turn off brief tracing");
   ("-dd", Arg.Set Debug.devel_debug_on,
    "Turn on devel_debug");
+  ("--dis-ddb", Arg.Clear Debug.trace_on,
+   "Turn off experimental trace_on");
+  ("--en-ddb", Arg.Set Debug.trace_on,
+   "Turn on experimental trace_on");
   ("-dd-print-orig-conseq", Arg.Unit Debug.enable_dd_and_orig_conseq_printing,
    "Enable printing of the original consequent while debugging. Automatically enables -dd (debugging) ");
   ("-gist", Arg.Set Globals.show_gist,

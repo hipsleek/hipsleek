@@ -2854,7 +2854,9 @@ and subst (sst : (spec_var * spec_var) list) (f : formula) : formula = apply_sub
 
 (*LDK ???*) 
 and subst_var (fr, t) (o : spec_var) = 
-  if eq_spec_var fr o then t else o
+  if eq_spec_var fr o then
+    t
+  else o
 
 (* should not use = since type of spec_var may have been different *)
 and subst_var_par (sst:(spec_var * spec_var) list) (o : spec_var) : spec_var = 
