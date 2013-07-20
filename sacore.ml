@@ -1547,7 +1547,7 @@ let check_imply prog lhs_b rhs_b=
             let _ = Debug.ninfo_pprint ("    n_rhs_b: " ^ (Cprinter.string_of_formula_base n_rhs_b)) no_pos in
             (* let _ = Debug.info_pprint ("    lmf: " ^ (!CP.print_formula lmf)) no_pos in *)
             (* let _ = Debug.info_pprint ("    rmf: " ^ (!CP.print_formula rmf)) no_pos in *)
-            let b,_,_ = TP.imply lmf rmf "sa:check_hrels_imply" true None in
+            let b,_,_ = TP.imply_one 20 lmf rmf "sa:check_hrels_imply" true None in
             if b then
               let r_res = {n_rhs_b with
                   CF.formula_base_heap = CF.drop_data_view_hrel_nodes_hf

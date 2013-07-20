@@ -26,7 +26,7 @@ struct
   type t = string list
   let unlabelled = []
   let is_unlabelled l = (l==[])
-  let string_of x = pr_list pr_id x
+  let string_of x = pr_list pr_string x
   let singleton s = [s]
 
   let rec overlap xs ys = match xs,ys with
@@ -104,8 +104,11 @@ struct
       (* int replaces __i and may be used to label pre/post *)
   let unlabelled = (None, [])
   let is_unlabelled (n,l) = n==None && l==[]
-  let string_of = pr_pair (pr_opt string_of_int) (pr_list pr_id)
-  let string_of_opt l = if is_unlabelled l then "" else pr_pair (pr_opt string_of_int) (pr_list pr_id) l
+  let string_of = pr_pair (pr_opt string_of_int) (pr_list pr_string)
+  let string_of_opt l = 
+    if is_unlabelled l then "" 
+    else string_of l 
+      (* pr_pair (pr_opt string_of_int) (pr_list pr_id) l *)
   let singleton s = (None,[s])
   let is_comp_opt lx ly = match lx,ly with
                            | Some x1,Some y1 -> x1==y1

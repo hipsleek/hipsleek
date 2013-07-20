@@ -8,21 +8,23 @@ open Cprinter
 
 module CP = Cpure
 module CF = Cformula
-
  
 type proof_type =
-	| IMPLY of (CP.formula * CP.formula)
-	| SAT of CP.formula
-	| SIMPLIFY of CP.formula
+	| PT_IMPLY of (CP.formula * CP.formula)
+	| PT_SAT  of CP.formula
+	| PT_SIMPLIFY of CP.formula
 
 type proof_res =
-	| BOOL of bool
-	| FORMULA of CP.formula
+	| PR_BOOL of bool
+	| PR_FORMULA of CP.formula
+	| PR_exception 
 
 type proof_log = {
 	log_id : string; (* TODO: Should change to integer for performance *)
-	log_other_properties : string list; (* TODO: Should change to integer for performance *)
-	log_prover : string;
+	(* log_other_properties : string list; (\* TODO: Should change to integer for performance *\) *)
+        log_loc : loc;
+        log_proving_kind : Others.proving_kind;
+	log_prover : Others.tp_type;
 	log_type : proof_type option;
 	log_time : float;
 	log_cache : bool;
@@ -61,7 +63,71 @@ type sleek_log_entry = {
   (*   | BINDING -> "BINDING" *)
   (*   | ASSERTION -> "ASSERTION" *)
 
+
 let string_of_sleek_proving_kind () = proving_kind#string_of
+
+
+let string_of_log_type lt =
+  match lt with
+    |PT_IMPLY (ante, conseq) -> 
+	  let clean_str = 
+		if !print_clean_flag then 
+			let ante,conseq = CleanUp.cleanUpPureFormulas ante conseq in
+			"\n   clean ante:"^(Cprinter.string_of_pure_formula ante)^
+			"\n\t clean conseq:"^(Cprinter.string_of_pure_formula conseq)
+		else "" in
+	  "Imply: ante:" ^(string_of_pure_formula ante) ^"\n\t     conseq: " ^(string_of_pure_formula conseq)^clean_str
+    |PT_SAT f-> 
+		let clean_str = 
+			if !print_clean_flag then 
+				"\n clean Sat: "^(Cprinter.string_of_pure_formula (fst (CleanUp.cleanUpPureFormulas f (Cpure.mkTrue no_pos))))
+			else "" in
+		"Sat: "^(string_of_pure_formula f)^clean_str
+    |PT_SIMPLIFY f -> 
+		let clean_str = 
+			if !print_clean_flag then 
+				"\n clean Simplify: "^(Cprinter.string_of_pure_formula (fst (CleanUp.cleanUpPureFormulas f (Cpure.mkTrue no_pos))))
+			else "" in
+		"Simplify: "^(string_of_pure_formula f)^clean_str
+
+let last_proof_command = new store (PT_SAT (CP.mkTrue no_pos)) (string_of_log_type )
+
+let pr_f = Cprinter.string_of_formula
+
+let last_sleek_command = new store None (pr_option (pr_pair pr_f pr_f))
+
+
+let string_of_log_res lt r = 
+  match r with
+    |PR_BOOL b -> 
+         (match lt with
+           | Some(PT_SAT(_)) -> if b then "SAT" else "UNSAT"
+           | _ -> string_of_bool b )
+    |PR_FORMULA f -> 
+		let clean_str = 
+			if !print_clean_flag then 
+				"\n clean res: "^(Cprinter.string_of_pure_formula (fst (CleanUp.cleanUpPureFormulas f (Cpure.mkTrue no_pos))))
+			else "" in
+		(string_of_pure_formula f)^clean_str
+    |PR_exception -> "exception thrown"
+
+let pr_proof_log_entry e =
+  fmt_open_box 1;
+  fmt_string ("\n id: " ^ (e.log_id));
+  if e.log_cache then fmt_string ("; prover : CACHED ")
+  else fmt_string ("; prover: " ^ (string_of_prover e.log_prover));
+  if e.log_time > 0.5 then fmt_string ("; TIME: " ^ (string_of_float e.log_time));
+  fmt_string ("; loc: "^(string_of_loc e.log_loc));
+  fmt_string ("; kind: "^(Others.string_of_proving_kind e.log_proving_kind));
+  (* fmt_string ("; "^((pr_list pr_id) e.log_other_properties)); *)
+  (match e.log_type with
+      Some k ->  fmt_string ("\n " ^ (string_of_log_type k)) 
+    | None -> ());
+  fmt_string ("\n res: "^(string_of_log_res e.log_type e.log_res));
+  fmt_string ("\n --------------------");
+  fmt_close()
+
+let string_of_proof_log_entry e= Cprinter.poly_string_of_pr pr_proof_log_entry e
 
 let pr_sleek_log_entry e=
   fmt_open_box 1;
@@ -82,6 +148,10 @@ let pr_sleek_log_entry e=
   fmt_string "\n |- ";
   fmt_string  (Cprinter.string_of_formula e.sleek_proving_conseq);
   fmt_string ". \n";
+  (if !print_clean_flag then 
+	  let ante,conseq = CleanUp.cleanUpFormulas e.sleek_proving_ante e.sleek_proving_conseq in
+	  fmt_string ("\n clean checkentail"^(Cprinter.string_of_formula ante)^"\n |- "^(Cprinter.string_of_formula conseq)^". \n")
+   else ());
   (match e.sleek_proving_hprel_ass with
         | [] -> ()
         | _  -> let pr = pr_list_ln Cprinter.string_of_hprel_short in
@@ -99,11 +169,11 @@ let string_of_sleek_log_entry e= Cprinter.poly_string_of_pr pr_sleek_log_entry e
 
 let sleek_counter= ref 0
 
+(* how is this hash_table used? *)
 let proof_log_tbl : (string, proof_log) Hashtbl.t = Hashtbl.create 700
 
 let sleek_log_stk : sleek_log_entry  Gen.stack_filter 
-      = new Gen.stack_filter
-  string_of_sleek_log_entry (==) (fun e -> not(e.sleek_proving_avoid))
+      = new Gen.stack_filter string_of_sleek_log_entry (==) (fun e -> not(e.sleek_proving_avoid))
 
 (* let sleek_proving_kind = ref (POST : sleek_proving_kind) *)
 let sleek_proving_id = ref (0 : int)
@@ -121,7 +191,10 @@ let get_sleek_proving_id ()=
   let _ = Globals.add_count sleek_proving_id in
   r
 
-let proof_log_list  = ref [] (*For printing to text file with the original oder of proof execution*)
+(* let proof_log_list  = ref [] (\*For printing to text file with the original order of proof execution*\) *)
+let proof_log_stk : string  Gen.stack_filter 
+      = new Gen.stack_filter pr_id (==) (fun e -> true)
+(* not(Others.proving_kind # top_no_exc == PK_Trans_Proc)) *)
 
 let proof_gt5_log_list = ref [] (*Logging proofs require more than 5 secs to be proved*)
 
@@ -154,6 +227,7 @@ let add_new_sleek_logging_entry infer_vars classic_flag caller avoid hec slk_no 
         sleek_proving_res = result;
     }
     in
+	let _ =  Debug.devel_pprint (string_of_sleek_log_entry sleek_log_entry) no_pos in
     let _ = sleek_log_stk # push sleek_log_entry in
     (if not(avoid) then 
       begin
@@ -167,7 +241,7 @@ let find_bool_proof_res pno =
 	try 
 		let log = Hashtbl.find proof_log_tbl pno in
 		match log.log_res with
-		| BOOL r -> r
+		| PR_BOOL r -> r
 		| _ -> report_error no_pos "Fatal error with Proof Logging: Unexpected result."
 	with _ -> report_error no_pos "Fatal error with Proof Logging. Do remember to enable proof logging before using LOG."
 
@@ -175,7 +249,7 @@ let find_formula_proof_res pno =
 	try 
 		let log = Hashtbl.find proof_log_tbl pno in
 		match log.log_res with
-		| FORMULA r -> r
+		| PR_FORMULA r -> r
 		| _ -> report_error no_pos "Fatal error with Proof Logging: Unexpected result."
 	with _ -> report_error no_pos "Fatal error with Proof Logging. Do remember to enable proof logging before using LOG."	
 			
@@ -202,24 +276,28 @@ let file_to_proof_log  src_files =
 	
 (*TO DO: check unique pno??*)
 let add_proof_log (cache_status:bool) old_no pno tp ptype time res =
+  (* let _ = Debug.info_pprint "inside add_proof_log" no_pos in *)
   if !Globals.proof_logging || !Globals.proof_logging_txt then
 	(* let _= print_endline ("loging :"^pno^" "^proving_info () ^"\n"^trace_info ()) in *)
 	let tstartlog = Gen.Profiling.get_time () in
 	let plog = {
 		log_id = pno;
-		log_other_properties = [proving_info ()]@[trace_info ()];
+                log_loc = proving_loc # get;
+                log_proving_kind = proving_kind # top_no_exc;
+		(* log_other_properties = [proving_info ()]@[trace_info ()]; *)
 		(* log_old_id = old_no; *)
-		log_prover = tp;
+		log_prover = Others.last_tp_used # get;
 		log_type = Some ptype;
 		log_time = time;
 		log_cache = cache_status;
 		log_res = res; } in
-	let _=Hashtbl.add proof_log_tbl pno plog in
+	let _= Hashtbl.add proof_log_tbl pno plog in
+	let _ =  Debug.devel_pprint (string_of_proof_log_entry plog) no_pos in
 	let _=try
-	  let _= BatString.find (Sys.argv.(0)) "hip" in
+	  (* let _= BatString.find (Sys.argv.(0)) "hip" in *)
 	  if(!Globals.proof_logging_txt && ((proving_kind # string_of)<>"TRANS_PROC")) then
 		begin 
-		  proof_log_list := !proof_log_list @ [pno];
+		  proof_log_stk # push pno;
 		end		
 	with _->
 		if(!Globals.proof_logging_txt) then
@@ -230,7 +308,7 @@ let add_proof_log (cache_status:bool) old_no pno tp ptype time res =
               then BatString.find temp "SLEEK_ENT"
               else 0 in
 			begin 
-			  proof_log_list := !proof_log_list @ [pno];
+			  proof_log_stk # push pno;
 			end		 	
 		  with _->()	
 	in
@@ -239,52 +317,67 @@ let add_proof_log (cache_status:bool) old_no pno tp ptype time res =
 	                                                                                                   (* let _=print_endline ("log time: "^(string_of_float (tstoplog))^" and "^(string_of_float (tstartlog))) in ()	  *)
   else ()
 					
-let proof_log_to_text_file (src_files) =
+let proof_log_to_text_file fname (src_files) =
+  if !Globals.proof_logging_txt 
+  then
+    begin
+      Debug.info_pprint ("Logging "^fname^"\n") no_pos;
+      let tstartlog = Gen.Profiling.get_time () in
+      let oc = 
+        (try Unix.mkdir "logs" 0o750 with _ -> ());
+        let with_option = if !Globals.en_slc_ps then "eps" else "no_eps" in
+        open_out ("logs/"^with_option^"_proof_log_" ^ (Globals.norm_file_name (List.hd src_files)) ^".txt") in
+      let string_of_log_type lt =
+        match lt with
+          |PT_IMPLY (ante, conseq) -> "Imply: ante:" ^(string_of_pure_formula ante) ^"\n\t     conseq: " ^(string_of_pure_formula conseq)
+          |PT_SAT f-> "Sat: "^(string_of_pure_formula f) 
+          |PT_SIMPLIFY f -> "Simplify: "^(string_of_pure_formula f)
+      in
+      let helper log =
+        "\n--------------\n"^
+	    (* List.fold_left (fun a c->a^c) "" log.log_other_properties^ *)
+	    (* "\nid: "^log.log_id^ *)
+            "\nProver: "^
+            (if log.log_cache then "CACHED" 
+            else (string_of_prover log.log_prover))^
+            "\nType: "^(match log.log_type with | Some x-> string_of_log_type x | None -> "????")^
+            (* "\nTime: "^(string_of_float(log.log_time))^ *)
+            "\nResult: "^(string_of_log_res log.log_type log.log_res)^"\n" 
+      in
+      (* with *)
+      (*            |PR_BOOL b -> string_of_bool b *)
+      (*            |PR_FORMULA f -> string_of_pure_formula f)^"\n" in *)
+      (* let _ = proof_log_stk # string_of_reverse in *)
+      let lgs = (List.rev (proof_log_stk # get_stk)) in
+      let _ = Debug.info_pprint ("Number of log entries "^(string_of_int (List.length lgs))) no_pos in
+      let _= List.map 
+        (fun ix->
+            let log=Hashtbl.find proof_log_tbl ix in
+            if log.log_proving_kind != PK_Trans_Proc then
+              fprintf oc "%s" ((* helper *) string_of_proof_log_entry log)) lgs in
+      let tstoplog = Gen.Profiling.get_time () in
+      let _= Globals.proof_logging_time := !Globals.proof_logging_time +. (tstoplog -. tstartlog) in 
+      close_out oc
+    end
+  else ()	
+
+let z3_proofs_list_to_file fz3name (src_files) =
   if !Globals.proof_logging_txt then
+    let _ = Debug.info_pprint ("Logging "^fz3name^"\n") no_pos in
     let tstartlog = Gen.Profiling.get_time () in
     let oc = 
       (try Unix.mkdir "logs" 0o750 with _ -> ());
-      let with_option = if !Globals.en_slc_ps then "eps" else "no_eps" in
-      open_out ("logs/"^with_option^"_proof_log_" ^ (Globals.norm_file_name (List.hd src_files)) ^".txt") in
-    let string_of_log_type lt =
-      match lt with
-	|IMPLY (ante, conseq) -> "Imply: ante:" ^(string_of_pure_formula ante) ^"\n\t     conseq: " ^(string_of_pure_formula conseq)
-    	|SAT f-> "Sat: "^(string_of_pure_formula f) 
-    	|SIMPLIFY f -> "Simplify: "^(string_of_pure_formula f)
-    in
-    let helper log=
-      "\n--------------\n"^
-	  List.fold_left (fun a c->a^c) "" log.log_other_properties^
-	  (* "\nid: "^log.log_id^ *)
-      "\nProver: "^
-      (if log.log_cache then "CACHED" else log.log_prover)^
-      "\nType: "^(match log.log_type with | Some x-> string_of_log_type x | None -> "????")^
-      (* "\nTime: "^(string_of_float(log.log_time))^ *)
-      "\nResult: "^(match log.log_res with
-	    |BOOL b -> string_of_bool b
-	    |FORMULA f -> string_of_pure_formula f)^"\n" in
-    let _= List.map (fun ix->let log=Hashtbl.find proof_log_tbl ix in
-    let _=fprintf oc "%s" (helper log) in ()) !proof_log_list in
+      (* let with_option= if(!Globals.do_slicing) then "slice" else "noslice" in *)
+      let with_option = if(!Globals.en_slc_ps) then "eps" else "no_eps" in
+      let with_option= with_option^"_"^if(!Globals.split_rhs_flag) then "rhs" else "norhs" in
+      let with_option= with_option^"_"^if(not !Globals.elim_exists_ff) then "noee" else "ee" in
+      open_out ("logs/"^with_option^"_"^(Globals.norm_file_name (List.hd src_files)) ^".z3") in
+    let _= List.map (fun ix-> let _=fprintf oc "%s" ix in ()) !z3_proof_log_list in
     let tstoplog = Gen.Profiling.get_time () in
     let _= Globals.proof_logging_time := !Globals.proof_logging_time +. (tstoplog -. tstartlog) in 
     close_out oc;
   else ()	
 
-let z3_proofs_list_to_file (src_files) =
-	if !Globals.proof_logging_txt then
-		let tstartlog = Gen.Profiling.get_time () in
-		let oc = 
-		(try Unix.mkdir "logs" 0o750 with _ -> ());
-		(* let with_option= if(!Globals.do_slicing) then "slice" else "noslice" in *)
-		let with_option = if(!Globals.en_slc_ps) then "eps" else "no_eps" in
-		let with_option= with_option^"_"^if(!Globals.split_rhs_flag) then "rhs" else "norhs" in
-    let with_option= with_option^"_"^if(not !Globals.elim_exists_ff) then "noee" else "ee" in
-		open_out ("logs/"^with_option^"_"^(Globals.norm_file_name (List.hd src_files)) ^".z3") in
-		let _= List.map (fun ix-> let _=fprintf oc "%s" ix in ()) !z3_proof_log_list in
-		let tstoplog = Gen.Profiling.get_time () in
-	  let _= Globals.proof_logging_time := !Globals.proof_logging_time +. (tstoplog -. tstartlog) in 
-		close_out oc;
-	else ()	
 
 let proof_greater_5secs_to_file (src_files) =
 	if !Globals.proof_logging_txt then
@@ -363,10 +456,8 @@ let process_proof_logging src_files  =
         if (!Globals.proof_logging_txt) 
         then 
           begin
-            Debug.info_pprint ("Logging "^fname^"\n") no_pos;
-            Debug.info_pprint ("Logging "^fz3name^"\n") no_pos;
-            proof_log_to_text_file src_files;
-            z3_proofs_list_to_file src_files
+            proof_log_to_text_file fname src_files;
+            z3_proofs_list_to_file fz3name src_files
           end
         else try Sys.remove fname 
           (* ("logs/proof_log_" ^ (Globals.norm_file_name (List.hd src_files))^".txt") *)
@@ -412,3 +503,10 @@ let process_proof_logging src_files  =
 (*     () *)
 (*   else *)
 (*     () *)
+
+let report_error_dump e =
+      print_endline "Last SLEEK FAILURE:";
+      last_sleek_command # dump;
+      print_endline "Last PURE PROOF FAILURE:";
+      last_proof_command # dump;
+      Error.report_error e

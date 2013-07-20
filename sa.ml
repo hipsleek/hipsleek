@@ -2220,7 +2220,7 @@ ss: subst from ldns -> ldns
 (*           (\* let _ = Debug.info_pprint ("    n_lhs1: " ^ (Cprinter.string_of_formula_base n_lhs1)) no_pos in *\) *)
 (*           let _ = Debug.ninfo_pprint ("    lmf: " ^ (!CP.print_formula lmf)) no_pos in *)
 (*           let _ = Debug.ninfo_pprint ("    rmf: " ^ (!CP.print_formula rmf)) no_pos in *)
-(*           let b,_,_ = TP.imply rmf lmf "sa:check_hrels_imply" true None in *)
+(*           let b,_,_ = TP.imply_one 21 rmf lmf "sa:check_hrels_imply" true None in *)
 (*           let lpos = (CF.pos_of_formula lhs2) in *)
 (*           if b then *)
 (*             let l_res = {n_lhs1 with *)

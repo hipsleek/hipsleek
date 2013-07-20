@@ -1,0 +1,149 @@
+# lab1.slk 
+
+checkentail n>=0 & ["n":n>0; "s":n=0] |- (n>=-1) & ["n":n>=0].
+print residue.
+
+ Issues: 
+ (i) why is CACHED called twice?
+ (ii)  logging/caching of SAT seems at a higher level?
+       Is splitting down for UNSAT? seems so.
+ (iii)  IMPLY seems to use "" for ante always?
+
+ id: 1; prover: MONA; loc: _0:0_0:0; kind: Sleek_Entail(1)
+ Sat:  (AndList ([],0<=n) & ([n],0<n) & ([s],n=0)) 
+ res: SAT
+ -------------------- 
+ id: 2; prover : CACHED ; loc: _0:0_0:0; kind: Sleek_Entail(1)
+ Sat:  (AndList ([],0<=n) & ([n],0<n) & ([s],n=0)) 
+ res: SAT
+ -------------------- 
+ id: 3; prover : CACHED ; loc: _0:0_0:0; kind: Sleek_Entail(1)
+ Sat:  (AndList ([],0<=n) & ([n],0<n) & ([s],n=0)) 
+ res: SAT
+ -------------------- 
+ id: 4; prover: MONA; loc: _0:0_0:0; kind: Sleek_Entail(1)
+ Imply: ante: 0<=n
+	     conseq:  (AndList ([],0<=(1+n))) 
+ res: true
+ -------------------- 
+ id: 5; prover: MONA; loc: _0:0_0:0; kind: Sleek_Entail(1)
+ Imply: ante: 0<=n & 0<n
+	     conseq:  (AndList ([n],0<=n)) 
+ res: true
+ --------------------
+============================================================
+# lab1.slk
+
+checkentail n>=0 & ["n":n>0; "s":n=0] |- (n>=-1) & ["n":n>=0].
+print residue.
+
+Issues : 
+ (1) why is there "true" on LHS?
+ (2) it seems the first UNSAT is redundant
+ (3) there are now 9 calls to UNSAT, we need to
+     know why is_sat is called 3 times and
+     hence tp_is_sat is called 9 times
+
+ id: 1; prover: OMEGA CALCULATOR; loc: _0:0_0:0; kind: Sleek_Entail(1)
+ Sat:  true & 0<=n
+ res: SAT
+ -------------------- 
+ id: 2; prover: OMEGA CALCULATOR; loc: _0:0_0:0; kind: Sleek_Entail(1)
+ Sat:  true & 0<=n & 0<n
+ res: SAT
+ -------------------- 
+ id: 3; prover: OMEGA CALCULATOR; loc: _0:0_0:0; kind: Sleek_Entail(1)
+ Sat:  true & 0<=n & n=0
+ res: SAT
+ 
+============================================================
+# lab2.slk -tp mona --en-proof-logging FIXED
+
+checkentail n>=0 & n>0 |- (n>=-1) & n>=0.
+print residue.
+
+Why did it not call MONA?
+
+I could not find any call to omega apart from the one in Mona.new_order_formula_x
+It looks like there is a bug in the logging  and the maintainance of the Others.last_tp_used stack.
+
+id: 1; prover: OMEGA CALCULATOR; loc: _0:0_0:0; kind: Sleek_Entail(1)
+ Sat:  0<=n & 0<n
+ res: SAT
+ -------------------- 
+ id: 2; prover: OMEGA CALCULATOR; loc: _0:0_0:0; kind: Sleek_Entail(1)
+ Imply: ante: 0<=n & 0<n
+	     conseq:  0<=(1+n)
+ res: true
+ -------------------- 
+ id: 3; prover: OMEGA CALCULATOR; loc: _0:0_0:0; kind: Sleek_Entail(1)
+ Imply: ante: 0<=n & 0<n
+	     conseq:  0<=n
+ res: true
+ --------------------
+
+is_sat_sub_no #6@1
+is_sat_sub_no #6 inp1 : (AndList ([],0<=n) & ([n],0<n) & ([s],n=0)) 
+is_sat_sub_no #6 inp2 :1
+is_sat_sub_no #6@1 EXIT out :true
+
+is_sat_sub_no #6@5
+is_sat_sub_no #6 inp1 : (AndList ([],0<=n) & ([n],0<n) & ([s],n=0)) 
+is_sat_sub_no #6 inp2 :-8999
+is_sat_sub_no #6@5 EXIT out :true
+
+is_sat_sub_no #6@9
+is_sat_sub_no #6 inp1 : (AndList ([],0<=n) & ([n],0<n) & ([s],n=0)) 
+is_sat_sub_no #6 inp2 :-8998
+is_sat_sub_no #6@9 EXIT out :true
+============================================================
+# lab1.slk
+
+checkentail n>=0 & ["n":n>0; "s":n=0] |- (n>=-1) & ["n":n>=0].
+print residue.
+
+ISSUE :
+
+The first unsat from "" label is redundant since
+it was added to labels for "n","s" already.
+
+ id: 1; prover: MONA; loc: _0:0_0:0; kind: Sleek_Entail(1)
+ Sat:  true & 0<=n
+ res: SAT
+ -------------------- 
+ id: 2; prover: MONA; loc: _0:0_0:0; kind: Sleek_Entail(1)
+ Sat:  true & 0<=n & 0<n
+ res: SAT
+ -------------------- 
+ id: 3; prover: MONA; loc: _0:0_0:0; kind: Sleek_Entail(1)
+ Sat:  true & 0<=n & n=0
+ res: SAT
+============================================================
+# dll-app.ss
+
+failed for --no-filter but succeed for --filter
+============================================================
+============================================================
+============================================================
+============================================================
+============================================================
+============================================================
+============================================================
+============================================================
+============================================================
+============================================================
+============================================================
+============================================================
+============================================================
+============================================================
+============================================================
+============================================================
+============================================================
+============================================================
+============================================================
+============================================================
+============================================================
+============================================================
+============================================================
+============================================================
+============================================================

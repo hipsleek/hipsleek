@@ -317,7 +317,7 @@ let sleek_logging_txt = ref false
 
 (*Proof logging facilities*)
 class ['a] store (x_init:'a) (epr:'a->string) =
-   object 
+   object (self)
      val emp_val = x_init
      val mutable lc = None
      method is_avail : bool = match lc with
@@ -331,6 +331,7 @@ class ['a] store (x_init:'a) (epr:'a->string) =
      method string_of : string = match lc with
        | None -> "Why None?"
        | Some l -> (epr l)
+     method dump = print_endline ("\n store dump :"^(self#string_of))
    end;;
 
 (* this will be set to true when we are in error explanation module *)
@@ -347,7 +348,6 @@ object
        | None -> "None"
        | Some l -> (string_of_pos l.start_pos)
 end;;
-
 
 
 (*Some global vars for logging*)
@@ -709,7 +709,7 @@ let ann_derv = ref false
 let print_ann = ref true
 let print_derv = ref false
 
-let print_clean_flag = ref true
+let print_clean_flag = ref false
 
 (*is used during deployment, e.g. on a website*)
 (*Will shorten the error/warning/... message delivered
@@ -789,7 +789,7 @@ let print_version_flag = ref false
 
 let elim_exists_flag = ref true
 
-let filtering_flag = ref false
+let filtering_flag = ref true
 
 let split_rhs_flag = ref true
 
@@ -1219,3 +1219,20 @@ let wrap_classic et f a =
   with _ as e ->
       (do_classic_frame_rule := flag;
       raise e)
+
+let wrap_general flag new_value f a =
+  (* save old_value *)
+  let old_value = !flag in
+  flag := new_value;
+  try 
+    let res = f a in
+    (* restore old_value *)
+    flag := old_value;
+    res
+  with _ as e ->
+      (flag := old_value;
+      raise e)
+
+let wrap_no_filtering f a =
+  wrap_general filtering_flag false f a
+

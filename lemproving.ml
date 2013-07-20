@@ -1,4 +1,5 @@
 open Globals
+open Gen
 open Others
 open Label_only
 
@@ -39,7 +40,7 @@ let run_entail_check_helper (iante: lem_formula) (iconseq: lem_formula) (cprog: 
   (* let conseq = Solver.prune_pred_struc cprog true conseq in (\* (andreeac) redundant ? *\) *)
   let ectx = CF.empty_ctx (CF.mkTrueFlow ()) Lab2_List.unlabelled no_pos in
   let ctx = CF.build_context ectx ante no_pos in
-  let _ = if !Globals.print_core || !Globals.print_core_all then print_string ("\run_entail_check_helper:\n"^(Cprinter.string_of_formula ante)^" |- "^(Cprinter.string_of_struc_formula conseq)^"\n") else () in
+  let _ = if !Globals.print_core || !Globals.print_core_all then print_string ("\nrun_entail_check_helper:\n"^(Cprinter.string_of_formula ante)^" |- "^(Cprinter.string_of_struc_formula conseq)^"\n") else () in
   let ctx = CF.transform_context (Solver.elim_unsat_es 10 cprog (ref 1)) ctx in
   let rs1, _ = 
   if not !Globals.disable_failure_explaining then
@@ -113,24 +114,25 @@ let check_coercion coer lhs rhs  (cprog: C.prog_decl) =
 
 (* same effect as check_coercion with the difference that the rhs is a struc_formula *)
 let check_coercion_struc coer lhs rhs (cprog: C.prog_decl) =
-    let pos = CF.pos_of_formula coer.C.coercion_head in
-    let lhs = Solver.unfold_nth 9 (cprog,None) lhs (CP.SpecVar (Named "", self, Unprimed)) true 0 pos in
-    (*let _ = print_string("lhs_unfoldfed_struc: "^(Cprinter.string_of_formula lhs)^"\n") in*)
-	let rhs = Solver.unfold_struc_nth 9 (cprog,None) rhs (CP.SpecVar (Named "", self, Unprimed)) true 0 pos in
-    let lhs = if(coer.C.coercion_case == C.Ramify) then 
-    	Mem.ramify_unfolded_formula lhs cprog.C.prog_view_decls 
-    	else lhs
-    in
-   (*let _ = print_string("lhs_unfoldfed_ramified: "^(Cprinter.string_of_formula lhs)^"\n") in*)
-    let lhs = CF.add_original lhs true in
-    let lhs = CF.reset_origins lhs in
-    let rhs = CF.add_struc_original true rhs in
-    let rhs = CF.reset_struc_origins rhs in
-    let self_sv_lst = (CP.SpecVar (Named "", self, Unprimed)) :: [] in
-    let self_sv_renamed_lst = (CP.SpecVar (Named "", (self ^ "_" ^ coer.C.coercion_name), Unprimed)) :: [] in
-    let lhs = CF.subst_avoid_capture self_sv_lst self_sv_renamed_lst lhs in
-    let rhs = CF.subst_struc_avoid_capture self_sv_lst self_sv_renamed_lst rhs in
-    process_coercion_check (CFormula lhs) (CSFormula rhs) coer.C.coercion_exact coer.C.coercion_name  cprog
+  let pos = CF.pos_of_formula coer.C.coercion_head in
+  let lhs = Solver.unfold_nth 9 (cprog,None) lhs (CP.SpecVar (Named "", self, Unprimed)) true 0 pos in
+  (*let _ = print_string("lhs_unfoldfed_struc: "^(Cprinter.string_of_formula lhs)^"\n") in*)
+  let _ = Debug.info_hprint (add_str "rhs" Cprinter.string_of_struc_formula) rhs pos in
+  let rhs = Solver.unfold_struc_nth 9 (cprog,None) rhs (CP.SpecVar (Named "", self, Unprimed)) true 0 pos in
+  let lhs = if(coer.C.coercion_case == C.Ramify) then 
+    Mem.ramify_unfolded_formula lhs cprog.C.prog_view_decls 
+  else lhs
+  in
+  (*let _ = print_string("lhs_unfoldfed_ramified: "^(Cprinter.string_of_formula lhs)^"\n") in*)
+  let lhs = CF.add_original lhs true in
+  let lhs = CF.reset_origins lhs in
+  let rhs = CF.add_struc_original true rhs in
+  let rhs = CF.reset_struc_origins rhs in
+  let self_sv_lst = (CP.SpecVar (Named "", self, Unprimed)) :: [] in
+  let self_sv_renamed_lst = (CP.SpecVar (Named "", (self ^ "_" ^ coer.C.coercion_name), Unprimed)) :: [] in
+  let lhs = CF.subst_avoid_capture self_sv_lst self_sv_renamed_lst lhs in
+  let rhs = CF.subst_struc_avoid_capture self_sv_lst self_sv_renamed_lst rhs in
+  process_coercion_check (CFormula lhs) (CSFormula rhs) coer.C.coercion_exact coer.C.coercion_name  cprog
 
 let check_coercion_struc coer lhs rhs (cprog: C.prog_decl) =
   let pr1 = Cprinter.string_of_coercion in

@@ -1,0 +1,17 @@
+/* representation of a node */
+data node2 {
+	int val; 
+	node2 prev;
+	node2 next;	
+}.
+
+/* view for a doubly linked list with size */
+pred dll<p,n> == 
+	self = null & n = 0 or 
+	self::node2<_ ,p , q> * q::dll<self, n1> & n1=n-1
+	inv true & n >= 0.
+
+ checkentail y ::dll<p,n> * x::dll<q,m>@M & x=null
+ |-  n=m+n.
+
+print residue.
