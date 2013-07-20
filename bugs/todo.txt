@@ -736,9 +736,18 @@ prev_r3'!=sentinel_1064_r3)
 find_order inp2 :
 find_order res2 :; (sentinel_1018_r3 1); (sentinel_1019_r3 1); (s_1014_r3 1); (Mc_1040_r3 2); (sentinel_r3 1); (cur_r3' 1); (prev_1037_r3 1); (NULLV_r3 1); (sentinel_r3' 1); (v_bool_43_957_r3' 2); (n_50_r3' 1); (prev_r3 1); (cur_r3 1); (cur_1026_r3 1); (v_bool_44_958_r3' 2); (Mp_r3 2); (Mnxt_1017_r3 2); (sentinel_1064_r3 1); (next_39_1024_r3 1); (nxt_1016_r3 1); (cur_1036_r3 1); (prev_r3' 1); (prev_1025_r3 1); (Mc_r3 2)
 find_order@3 EXIT out :?
-
-
 ===================================================================
+# ../hip schorr-waite-list-2.ss -tp om --en-logging-txt
+
+The time-out for MONA is currently 5s. However, some tasks
+are taking much longer. Is this due to some batch mode task
+rather than interactive tasks? Is it possible to always
+use interactive MONA proving? Why do we need batch MONA proving?
+
+no_eps_proof_log_schorr-waite-list-2_ss.txt:350: id: 192; prover: MONA; TIME: 15.412962; loc: schorr-waite-list-2_ss_48:2_48:26; kind: PRE_REC
+no_eps_proof_log_schorr-waite-list-2_ss.txt:392: id: 195; prover: MONA; TIME: 4.94431; loc: schorr-waite-list-2_ss_48:2_48:26; kind: PRE_REC
+no_eps_proof_log_schorr-waite-list-2_ss.txt:685: id: 233; prover: MONA; TIME: 13.892869; loc: schorr-waite-list-2_ss_48:2_48:26; kind: PRE_REC
+
 ===================================================================
 ===================================================================
 ===================================================================
