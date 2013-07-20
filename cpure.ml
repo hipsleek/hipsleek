@@ -6649,51 +6649,57 @@ let rec imply_disj_orig_x ante_disj conseq t_imply imp_no =
   Debug.devel_hprint (add_str "coseq : " ( !print_formula)) conseq no_pos;
   match ante_disj with
     | h :: rest ->
-        Debug.devel_hprint (add_str "h : " ( !print_formula)) h no_pos;
-	    let r1,r2,r3 = (t_imply h conseq (string_of_int !imp_no) true None) in
-        Debug.devel_hprint (add_str "res : " (string_of_bool)) r1 no_pos;
-	    if r1 then
-	      let r1,r22,r23 = (imply_disj_orig_x rest conseq t_imply imp_no) in
-	      (r1,r2@r22,r23)
-	    else (r1,r2,r3)
+          Debug.devel_hprint (add_str "h : " ( !print_formula)) h no_pos;
+	  let r1,r2,r3 = (t_imply h conseq (string_of_int !imp_no) true None) in
+          Debug.devel_hprint (add_str "res : " (string_of_bool)) r1 no_pos;
+	  if r1 then
+	    let r1,r22,r23 = (imply_disj_orig_x rest conseq t_imply imp_no) in
+	    (r1,r2@r22,r23)
+	  else (r1,r2,r3)
     | [] -> (true,[],None)
+
+and imply_disj_orig_x0 ante_disj conseq t_imply imp_no =
+  (* disable assumption filtering if ante_disj>1 *)
+  if (List.length ante_disj > 1) 
+  then wrap_no_filtering (imply_disj_orig_x ante_disj conseq t_imply) imp_no
+  else imply_disj_orig_x ante_disj conseq t_imply imp_no
 
 and imply_disj_orig ante_disj conseq t_imply imp_no =
   let pr = !print_formula in
   Debug.no_2 "imply_disj_orig" (pr_list pr) pr (fun (b,_,_) -> string_of_bool b)
-      (fun ante_disj conseq -> imply_disj_orig_x ante_disj conseq t_imply imp_no) ante_disj conseq
+      (fun ante_disj conseq -> imply_disj_orig_x0 ante_disj conseq t_imply imp_no) ante_disj conseq
 
-let rec imply_one_conj_orig ante_disj0 ante_disj1 conseq t_imply imp_no =
+let rec imply_one_conj_orig one_ante_only ante_disj0 ante_disj1 conseq t_imply imp_no =
   let xp01,xp02,xp03 = imply_disj_orig ante_disj0 conseq t_imply imp_no in
-  if not(xp01) && !Globals.super_smart_xpure then
+  if not(xp01) && !Globals.super_smart_xpure && not(one_ante_only) then
     let _ = Debug.devel_pprint ("\nSplitting the antecedent for xpure1:\n") in
     let (xp11,xp12,xp13) = imply_disj_orig ante_disj1 conseq t_imply imp_no in
     let _ = Debug.devel_pprint ("\nDone splitting the antecedent for xpure1:\n") in
 	(xp11,xp12,xp13)
   else (xp01,xp02,xp03)
 
-let imply_one_conj_orig ante_disj0 ante_disj1 conseq t_imply imp_no =
+let imply_one_conj_orig one_ante_only ante_disj0 ante_disj1 conseq t_imply imp_no =
   let pr = !print_formula in
   Debug.no_3 "imply_one_conj_orig" (pr_list pr) (pr_list pr) pr (fun (b,_,_) -> string_of_bool b)
-      (fun _ _ _ -> imply_one_conj_orig ante_disj0 ante_disj1 conseq t_imply imp_no) 
+      (fun _ _ _ -> imply_one_conj_orig one_ante_only ante_disj0 ante_disj1 conseq t_imply imp_no) 
       ante_disj0 ante_disj1 conseq
 
-let rec imply_conj_orig ante_disj0 ante_disj1 conseq_conj t_imply imp_no
+let rec imply_conj_orig one_ante_only ante_disj0 ante_disj1 conseq_conj t_imply imp_no
    : bool * (Globals.formula_label option * Globals.formula_label option) list *
    Globals.formula_label option=
   let pr = pr_list !print_formula in
-  Debug.ho_3 "imply_conj_orig" pr pr pr (fun (b,_,_) -> string_of_bool b)
-      (fun ante_disj0 ante_disj1 conseq_conj-> imply_conj_orig_x ante_disj0 ante_disj1 conseq_conj t_imply imp_no)
+  Debug.no_3 "imply_conj_orig" pr pr pr (fun (b,_,_) -> string_of_bool b)
+      (fun ante_disj0 ante_disj1 conseq_conj-> imply_conj_orig_x one_ante_only ante_disj0 ante_disj1 conseq_conj t_imply imp_no)
       ante_disj0 ante_disj1 conseq_conj
 
-and imply_conj_orig_x ante_disj0 ante_disj1 conseq_conj t_imply imp_no
+and imply_conj_orig_x one_ante_only ante_disj0 ante_disj1 conseq_conj t_imply imp_no
    : bool * (Globals.formula_label option * Globals.formula_label option) list *
    Globals.formula_label option=
   match conseq_conj with
     | h :: rest ->
-	    let (r1,r2,r3)=(imply_one_conj_orig ante_disj0 ante_disj1 h t_imply imp_no) in
+	    let (r1,r2,r3)=(imply_one_conj_orig one_ante_only ante_disj0 ante_disj1 h t_imply imp_no) in
 	    if r1 then
-	      let r1,r22,r23 = (imply_conj_orig_x ante_disj0 ante_disj1 rest t_imply imp_no) in
+	      let r1,r22,r23 = (imply_conj_orig_x one_ante_only ante_disj0 ante_disj1 rest t_imply imp_no) in
 	      (r1,r2@r22,r23)
 	    else (r1,r2,r3)
     | [] -> (true,[],None)

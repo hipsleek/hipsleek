@@ -836,7 +836,7 @@ let imply_label_filter ante conseq =
   (*this applies to term reasoning for example as it seems the termination annotations loose the labels...*)
 let imply_label_filter ante conseq = 
 	let pr = !print_formula in
-	Debug.ho_2 "imply_label_filter" pr pr (pr_list (pr_pair pr pr)) imply_label_filter ante conseq
+	Debug.no_2 "imply_label_filter" pr pr (pr_list (pr_pair pr pr)) imply_label_filter ante conseq
   
 let assumption_filter_slicing (ante : CP.formula) (cons : CP.formula) : (CP.formula * CP.formula) =
   let overlap (nlv1, lv1) (nlv2, lv2) =
@@ -2138,7 +2138,7 @@ let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (imp_no : string) 
 	  : bool*(formula_label option * formula_label option )list * (formula_label option) (*result+successfull matches+ possible fail*)
   = let pf = Cprinter.string_of_pure_formula in
   (*let _ = print_string "dubios!!\n" in*)
-  Debug.ho_2 "imply_timeout 2" pf pf (fun (b,_,_) -> string_of_bool b)
+  Debug.no_2 "imply_timeout 2" pf pf (fun (b,_,_) -> string_of_bool b)
       (fun a c -> imply_timeout a c imp_no timeout process) ante0 conseq0
 
 
@@ -2315,7 +2315,7 @@ let mix_imply_timeout ante0 conseq0 imp_no timeout =
   | _ -> report_error no_pos ("mix_imply_timeout: mismatched mix formulas ")
 
 let rec imply_one i ante0 conseq0 imp_no do_cache process =
-Debug.ho_2_num i "imply_one" (Cprinter.string_of_pure_formula) (Cprinter.string_of_pure_formula) 
+Debug.no_2_num i "imply_one" (Cprinter.string_of_pure_formula) (Cprinter.string_of_pure_formula) 
       (fun (r, _, _) -> string_of_bool r)
       (fun ante0 conseq0 -> imply_x ante0 conseq0 imp_no do_cache process) ante0 conseq0
 

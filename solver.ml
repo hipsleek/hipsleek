@@ -6671,7 +6671,7 @@ and heap_entail_build_mix_formula_check_a (evars : CP.spec_var list) (ante : MCP
 
 and heap_entail_build_mix_formula_check i (evars : CP.spec_var list) (ante : MCP.mix_formula) (conseq : MCP.mix_formula) pos : (MCP.mix_formula * MCP.mix_formula) =
   let pr = Cprinter.string_of_mix_formula in
-  Debug.ho_3_num i "heap_entail_build_mix_formula_check"  
+  Debug.no_3_num i "heap_entail_build_mix_formula_check"  
       (add_str "evars" (fun l -> Cprinter.string_of_spec_var_list l)) 
       (add_str "ante" pr) (add_str "conseq" pr) (pr_pair pr pr)
       ( fun c1 ante c2 -> heap_entail_build_mix_formula_check_a c1 ante c2 pos) evars ante conseq       
@@ -6985,7 +6985,7 @@ and subst_rel_by_def_mix rel_w_defs mf =
 
 and heap_entail_empty_rhs_heap i p i_f es lhs rhs pos =
   let pr (e,_) = Cprinter.string_of_list_context e in
-  Debug.to_3_num i "heap_entail_empty_rhs_heap" Cprinter.string_of_entail_state (fun c-> Cprinter.string_of_formula(Base c)) Cprinter.string_of_mix_formula pr
+  Debug.no_3_num i "heap_entail_empty_rhs_heap" Cprinter.string_of_entail_state (fun c-> Cprinter.string_of_formula(Base c)) Cprinter.string_of_mix_formula pr
       (fun _ _ _ -> heap_entail_empty_rhs_heap_x p i_f es lhs rhs pos) es lhs rhs
 
 and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_orig lhs (rhs_p:MCP.mix_formula) pos : (list_context * proof) =
@@ -7209,55 +7209,55 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
                 )
               | Some (split1,split2) -> 
                     let pr = Cprinter.string_of_pure_formula in
-                    let _ = Debug.info_hprint (add_str "split-1" (pr_list pr)) split1 no_pos in
-                    let _ = Debug.info_hprint (add_str "split-2" (pr_list pr)) split2 no_pos in
-                let split_mix1 = List.map MCP.mix_of_pure split1 in
-                let split_mix2 = List.map MCP.mix_of_pure split2 in
-                let split_mix3 = if List.length split1 = List.length split2
-                  then split_mix1 else split_mix2 in
-                (* why do we put same split_mix2; what happen to the use of XPure0? *)
-                let res = List.map2 (fun f f2 -> 
+                    let _ = Debug.tinfo_hprint (add_str "split-1" (pr_list pr)) split1 no_pos in
+                    let _ = Debug.tinfo_hprint (add_str "split-2" (pr_list pr)) split2 no_pos in
+                    let split_mix1 = List.map MCP.mix_of_pure split1 in
+                    let split_mix2 = List.map MCP.mix_of_pure split2 in
+                    let split_mix3 = if List.length split1 = List.length split2
+                    then split_mix1 else split_mix2 in
+                    (* why do we put same split_mix2; what happen to the use of XPure0? *)
+                    let res = List.map2 (fun f f2 -> 
                     (* TODO: lhs_wo_heap *)
-                    let lhs_wo_heap = f in
-                    let r1,r2,r3 = Inf.infer_pure_m 2 unk_heaps estate f f2 lhs_wo_heap split_conseq pos in
-                    let estate_f = {estate with es_formula = 
-                        (match estate.es_formula with
-                        | Base b -> CF.mkBase_simp b.formula_base_heap f
-                        | _ -> report_error pos "infer_pure_m: Not supported")
-                      } 
+                        let lhs_wo_heap = f in
+                        let r1,r2,r3 = Inf.infer_pure_m 2 unk_heaps estate f f2 lhs_wo_heap split_conseq pos in
+                        let estate_f = {estate with es_formula = 
+                                (match estate.es_formula with
+                                  | Base b -> CF.mkBase_simp b.formula_base_heap f
+                                  | _ -> report_error pos "infer_pure_m: Not supported")
+                        } 
+                        in
+                        (* let estate_f = {estate with es_formula = mkBase_simp HEmp f} in*)
+                        (match r1,r3 with 
+                          | None,[] -> None,r2,[],[estate_f],false,f
+                          | None,[(h1,h2,h3)] -> None,r2,h2,[h1],h3,f
+                          | Some(es,p),[] -> Some p,r2,[],[es],true,f
+                          | Some(es,p),[(h1,h2,h3)] -> Some p,r2,h2,[es],true,f
+                          | _,_ -> report_error pos "Length of relational assumption list > 1"
+                        )) split_mix2 split_mix3 in
+                    let or_option (o1,o2) = (match o1,o2 with
+                      | None,_ -> o2
+                      | _,None -> o1
+                      | Some pf1,Some pf2 -> Some (CP.mkOr pf1 pf2 None pos))
                     in
-(*                    let estate_f = {estate with es_formula = mkBase_simp HEmp f} in*)
-                    (match r1,r3 with 
-                      | None,[] -> None,r2,[],[estate_f],false,f
-                      | None,[(h1,h2,h3)] -> None,r2,h2,[h1],h3,f
-                      | Some(es,p),[] -> Some p,r2,[],[es],true,f
-                      | Some(es,p),[(h1,h2,h3)] -> Some p,r2,h2,[es],true,f
-                      | _,_ -> report_error pos "Length of relational assumption list > 1"
-                    )) split_mix2 split_mix3 in
-                let or_option (o1,o2) = (match o1,o2 with
-                  | None,_ -> o2
-                  | _,None -> o1
-                  | Some pf1,Some pf2 -> Some (CP.mkOr pf1 pf2 None pos))
-                in
-                let merge_rel_ass (rs1,rs2) = 
-(*                  let ps1 = List.map (fun (_,a,_) -> a) rs1 in*)
-(*                  let ps2 = List.map (fun (_,a,_) -> a) rs2 in*)
-(*                  if Gen.BList.intersect_eq CP.equalFormula ps1 ps2 != [] then *)
-(*                    report_error pos "merge_rel_ass: Not supported yet" *)
-(*                  else  *)
-                  rs1 @ rs2 
-                in
-                let is_fail = List.exists (fun (neg,pure,rel,_,_,ante) ->
-                  match neg,pure,rel with
-                  | None,None,[] -> (fun ((a,_,_),_) -> not a)
-                        (* WN : inefficient to use same antecedent *)
-                        (imply_mix_formula 0 ante ante split_conseq imp_no memset)
-                  | _,_,_ -> false) res in
-                if is_fail then None,None,[],[],false
-                else
-                  List.fold_left (fun (a,b,c,d,e) (a1,b1,c1,d1,e1,_) -> 
-                    (or_option (a,a1),or_option (b,b1),merge_rel_ass (c,c1),d@d1,e||e1)) 
-                    (None,None,[],[],false) res
+                    let merge_rel_ass (rs1,rs2) = 
+                      (*                  let ps1 = List.map (fun (_,a,_) -> a) rs1 in*)
+                      (*                  let ps2 = List.map (fun (_,a,_) -> a) rs2 in*)
+                      (*                  if Gen.BList.intersect_eq CP.equalFormula ps1 ps2 != [] then *)
+                      (*                    report_error pos "merge_rel_ass: Not supported yet" *)
+                      (*                  else  *)
+                      rs1 @ rs2 
+                    in
+                    let is_fail = List.exists (fun (neg,pure,rel,_,_,ante) ->
+                        match neg,pure,rel with
+                          | None,None,[] -> (fun ((a,_,_),_) -> not a)
+                                (* WN : inefficient to use same antecedent *)
+                                (imply_mix_formula 0 ante ante split_conseq imp_no memset)
+                          | _,_,_ -> false) res in
+                    if is_fail then None,None,[],[],false
+                    else
+                      List.fold_left (fun (a,b,c,d,e) (a1,b1,c1,d1,e1,_) -> 
+                          (or_option (a,a1),or_option (b,b1),merge_rel_ass (c,c1),d@d1,e||e1)) 
+                          (None,None,[],[],false) res
             end
             in
             begin
@@ -7715,12 +7715,13 @@ and solve_ineq_b_formula sem_eq memset conseq : Cpure.formula =
   | _ -> report_error no_pos ("imply_mix_formula: mix_formula mismatch")
 *)
 and imply_mix_formula i ante_m0 ante_m1 conseq_m imp_no memset =
-  Debug.ho_4_num i "imply_mix_formula" Cprinter.string_of_mix_formula
-      Cprinter.string_of_mix_formula Cprinter.string_of_mix_formula 
-      Cprinter.string_of_mem_formula
+  let new_ante_m1 = if ante_m0==ante_m1 then None else Some ante_m1 in
+  let pr = Cprinter.string_of_mix_formula in
+  Debug.no_4_num i "imply_mix_formula" pr
+      (pr_option pr) pr Cprinter.string_of_mem_formula
       (fun ((r,_,_),_) -> string_of_bool r)
-      (fun ante_m0 ante_m1 conseq_m memset -> imply_mix_formula_x ante_m0 ante_m1 conseq_m imp_no memset)
-      ante_m0 ante_m1 conseq_m memset
+      (fun _ _ _ _ -> imply_mix_formula_x ante_m0 new_ante_m1 conseq_m imp_no memset)
+      ante_m0 new_ante_m1 conseq_m memset
 (*
 type: MCP.mix_formula -> MCP.mix_formula -> MCP.mix_formula -> int ref ->
   CF.mem_formula ->
@@ -7736,8 +7737,8 @@ and imply_mix_formula_x ante_m0 ante_m1 conseq_m imp_no memset =
   (* detect whether memset contradicts with any of the ptr equalities from antecedent *)
   let ante_m0 = if detect_false ante_m0 memset then MCP.mkMFalse no_pos else ante_m0 in
   let conseq_m = solve_ineq ante_m0 memset conseq_m in
-  match ante_m0,ante_m1,conseq_m with
-    | MCP.MemoF a, MCP.MemoF a1, MCP.MemoF c ->
+  match ante_m0, conseq_m with
+    | MCP.MemoF a, MCP.MemoF c ->
           begin
             DD.devel_pprint ">>>>>> imply_mix_formula: memo <<<<<<" no_pos;
             (*print_endline "imply_mix_formula: first";*)
@@ -7745,35 +7746,46 @@ and imply_mix_formula_x ante_m0 ante_m1 conseq_m imp_no memset =
             else 
               let r1,r2,r3 = MCP.imply_memo 1 a c (TP.imply_one 27) imp_no in
               if r1 || not(!Globals.super_smart_xpure) then ((r1,r2,r3),None)
-              else (MCP.imply_memo 2 a1 c (TP.imply_one 28) imp_no,None)
+              else 
+                begin
+                  match ante_m1 with
+                    | None -> ((r1,r2,r3),None)
+                    | Some (MCP.MemoF a1) -> (MCP.imply_memo 2 a1 c (TP.imply_one 28) imp_no,None)
+                    | _ -> report_error no_pos ("imply_mix_formula: mix_formula mismatch")
+                end
                 (* TODO : This to be avoided if a1 is the same as a0; also pick just complex constraints *)
           end
-    | MCP.OnePF a0, MCP.OnePF a1 ,MCP.OnePF c ->
+    | MCP.OnePF a0, MCP.OnePF c ->
           begin
-            DD.devel_pprint ">>>>>> imply_mix_formula: pure <<<<<<" no_pos;             
-              let a0l,a1l = 
-                if CP.no_andl a0 && CP.no_andl a1 && !Globals.deep_split_disjuncts
+            DD.devel_pprint ">>>>>> imply_mix_formula: pure <<<<<<" no_pos;
+            let a1 = match ante_m1 with
+              | Some (MCP.OnePF a1) -> a1
+              | None -> CP.mkTrue no_pos 
+              | _ -> report_error no_pos ("imply_mix_formula: mix_formula mismatch")
+            in
+            let a0l,a1l = 
+              if CP.no_andl a0 && CP.no_andl a1 && !Globals.deep_split_disjuncts
+              then 
+                let a0 = CP.drop_exists a0 in 
+              	(List.filter CP.is_sat_eq_ineq (CP.split_disjunctions_deep a0),
+                List.filter CP.is_sat_eq_ineq (CP.split_disjunctions_deep a1))                    
+    	      else 
+                if CP.no_andl a0 && CP.no_andl a1 
                 then 
-                  let a0 = CP.drop_exists a0 in 
-              	  (List.filter CP.is_sat_eq_ineq (CP.split_disjunctions_deep a0),
-                  List.filter CP.is_sat_eq_ineq (CP.split_disjunctions_deep a1))                    
-    	        else 
-                  if CP.no_andl a0 && CP.no_andl a1 
-                  then 
-                    (CP.split_disjunctions a0,CP.split_disjunctions a1) 
-                  else
-                    (* why andl need to be handled in a special way *)
-	            let r = ref (-999) in
-	            let is_sat f = CP.is_sat_eq_ineq f (*TP.is_sat_sub_no 6 f r*) in
-	            let a0l = List.filter is_sat (CP.split_disjunctions a0) in
-	            let a1l = List.filter is_sat (CP.split_disjunctions a1) in 
-	            (a0l,a1l) 
-              in
-              let pr = Cprinter.string_of_pure_formula in 
-              DD.tinfo_hprint (add_str "ante-a0l" (pr_list pr)) a0l no_pos;
-              DD.tinfo_hprint (add_str "ante-a1l" (pr_list pr)) a1l no_pos;
-              let new_rhs = if !Globals.split_rhs_flag then (CP.split_conjunctions c) else [c] in
-	      (CP.imply_conj_orig a0l a1l new_rhs (TP.imply_one 29) imp_no, Some (a0l,a1l))
+                  (CP.split_disjunctions a0,CP.split_disjunctions a1) 
+                else
+                  (* why andl need to be handled in a special way *)
+	          let r = ref (-999) in
+	          let is_sat f = CP.is_sat_eq_ineq f (*TP.is_sat_sub_no 6 f r*) in
+	          let a0l = List.filter is_sat (CP.split_disjunctions a0) in
+	          let a1l = List.filter is_sat (CP.split_disjunctions a1) in 
+	          (a0l,a1l) 
+            in
+            let pr = Cprinter.string_of_pure_formula in 
+            DD.tinfo_hprint (add_str "ante-a0l" (pr_list pr)) a0l no_pos;
+            DD.tinfo_hprint (add_str "ante-a1l" (pr_list pr)) a1l no_pos;
+            let new_rhs = if !Globals.split_rhs_flag then (CP.split_conjunctions c) else [c] in
+	    (CP.imply_conj_orig (ante_m1==None) a0l a1l new_rhs (TP.imply_one 29) imp_no, Some (a0l,a1l))
                 (* original code	        
 	               CP.imply_conj_orig
                    (CP.split_disjunctions a0) 

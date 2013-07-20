@@ -1215,3 +1215,20 @@ let wrap_classic et f a =
   with _ as e ->
       (do_classic_frame_rule := flag;
       raise e)
+
+let wrap_general flag new_value f a =
+  (* save old_value *)
+  let old_value = !flag in
+  flag := new_value;
+  try 
+    let res = f a in
+    (* restore old_value *)
+    flag := old_value;
+    res
+  with _ as e ->
+      (flag := old_value;
+      raise e)
+
+let wrap_no_filtering f a =
+  wrap_general filtering_flag false f a
+
