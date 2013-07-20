@@ -9393,7 +9393,7 @@ let rec andl_to_and f = match f with
 	| Exists (v,f,l,p) -> Exists (v, andl_to_and f, l, p)
 	| AndList b ->
 		let l = List.map (fun (_,c)-> andl_to_and c) b in
-		List.fold_left (fun a c-> And (a,c,no_pos)) (mkTrue no_pos) l 
+		List.fold_left (fun a c-> mkAnd a c no_pos) (mkTrue no_pos) l 
 
 and extractLS_b_formula (bf : b_formula) : b_formula =
   let (pf,_) = bf in

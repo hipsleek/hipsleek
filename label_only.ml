@@ -26,6 +26,7 @@ struct
   type t = string list
   let unlabelled = []
   let is_unlabelled l = (l==[])
+  let is_top_label l = match l with | [""]-> true | _-> false 
   let string_of x = pr_list pr_string x
   let singleton s = [s]
 
@@ -44,10 +45,13 @@ struct
     if (is_unlabelled xs) || (is_unlabelled ys) then true
     else overlap xs ys
 
-  let is_part_compatible xs ys =
-    if (is_unlabelled xs) then true
+  let is_part_compatible_x xs ys =
+    if (is_unlabelled xs)||(is_top_label xs) then true
     else overlap xs ys
 
+  let is_part_compatible xs ys = 
+	let pr = pr_list pr_id  in
+	Debug.ho_2 "is_part_compatible" pr pr string_of_bool is_part_compatible_x xs ys 	
 	
   let is_compatible_rec = is_compatible
 
