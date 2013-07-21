@@ -2602,7 +2602,7 @@ let infer_collect_hp_rel_x prog (es:entail_state) rhs0 rhs_rest (rhs_h_matched_s
         let v_lhs = (CF.fv (CF.Base lhs_b0)) in
         let v_rhs = (CF.h_fv (rhs0)) in
         let v_hp_rel = es.CF.es_infer_vars_hp_rel in
-        let v_2_rename = Gen.BList.difference_eq CP.eq_spec_var v_rhs (v_lhs@v_hp_rel) in
+        let v_2_rename = List.filter (fun sv -> not (CP.is_hprel_typ sv)) (CP.diff_svl v_rhs (v_lhs@v_hp_rel)) in
         let fr_svl = CP.fresh_spec_vars v_2_rename in
         let sst0 = List.combine v_2_rename fr_svl in
         let rhs = CF.h_subst sst0 rhs0 in
