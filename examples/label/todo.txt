@@ -123,7 +123,7 @@ it was added to labels for "n","s" already.
 
 failed for --no-filter but succeed for --filter
 ============================================================
-# swll-1.slk
+# swll-1.slk   FIXED (using UNSAT on disj ante)
 
 1st version did not work; but 2nd did due to the absence of
 UNSAT on the disj ante on "empty_RHS". Need to refine
@@ -135,6 +135,11 @@ checkentail true & ["n":x=p; "s":M={}]
     or x!=null & ["n":x=p & x!=p; "s":M!={}] |- true & ["s":M={}].
 
 ============================================================
+# swll-1.ss   
+
+ UNSAT should not mix common "" with other labels
+ to speed-up further
+
 ============================================================
 ============================================================
 ============================================================

@@ -1232,7 +1232,7 @@ let tp_is_sat (f:CP.formula) (old_sat_no :string) =
   res
 
 let tp_is_sat f sat_no =
-  Debug.no_1_loop "tp_is_sat" Cprinter.string_of_pure_formula string_of_bool 
+  Debug.no_1 "tp_is_sat" Cprinter.string_of_pure_formula string_of_bool 
       (fun f -> tp_is_sat f sat_no) f
     
 (* let tp_is_sat (f: CP.formula) (sat_no: string) do_cache = *)

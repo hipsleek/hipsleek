@@ -6645,6 +6645,8 @@ let rec replace_pure_formula_label nl f = match f with
   | Not (b1,b2,b3) -> Not ((replace_pure_formula_label nl b1),(nl()),b3)
   | Forall (b1,b2,b3,b4) -> Forall (b1,(replace_pure_formula_label nl b2),(nl()),b4)
   | Exists (b1,b2,b3,b4) -> Exists (b1,(replace_pure_formula_label nl b2),(nl()),b4)
+
+let store_tp_is_sat : (formula -> bool) ref = ref (fun _ -> true)
   
 let rec imply_disj_orig_x ante_disj conseq t_imply imp_no =
   Debug.devel_hprint (add_str "ante: " (pr_list !print_formula)) ante_disj no_pos;
@@ -6661,9 +6663,29 @@ let rec imply_disj_orig_x ante_disj conseq t_imply imp_no =
     | [] -> (true,[],None)
 
 and imply_disj_orig_x0 ante_disj conseq t_imply imp_no =
-  (* disable assumption filtering if ante_disj>1 *)
-  if (List.length ante_disj > 1) 
-  then wrap_no_filtering (imply_disj_orig_x ante_disj conseq t_imply) imp_no
+  let i = List.length ante_disj in
+  if (i > 1) 
+  then 
+    begin
+      let pr = !print_formula in
+      (* perform unsat checking if i>1 *)
+      let f = !store_tp_is_sat in
+      (* removing unsatisfiable LHS disjunct *)
+      let (ante_disj,false_st) = List.partition f ante_disj in
+      let i = List.length false_st in
+      let j = List.length ante_disj in
+      let _ = 
+        if (i>0) 
+        then
+          let pri = string_of_int in
+          let _ = Debug.info_hprint (add_str "(unsat ante, sat ante)" (pr_pair pri pri)) (i,j) no_pos in
+          Debug.tinfo_hprint (add_str "unsat ante removed" (pr_list pr)) false_st no_pos
+        else () 
+      in
+      (* disable assumption filtering if ante_disj>1 *)
+      (* wrap_no_filtering (imply_disj_orig_x ante_disj conseq t_imply) imp_no *)
+      (imply_disj_orig_x ante_disj conseq t_imply) imp_no
+    end
   else imply_disj_orig_x ante_disj conseq t_imply imp_no
 
 and imply_disj_orig ante_disj conseq t_imply imp_no =

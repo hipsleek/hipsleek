@@ -7785,6 +7785,7 @@ and imply_mix_formula_x ante_m0 ante_m1 conseq_m imp_no memset =
             DD.tinfo_hprint (add_str "ante-a0l" (pr_list pr)) a0l no_pos;
             DD.tinfo_hprint (add_str "ante-a1l" (pr_list pr)) a1l no_pos;
             let new_rhs = if !Globals.split_rhs_flag then (CP.split_conjunctions c) else [c] in
+            let _ = CP.store_tp_is_sat := (fun f -> TP.is_sat 77 f "store_tp_is_sat" true) in
 	    (CP.imply_conj_orig (ante_m1==None) a0l a1l new_rhs (TP.imply_one 29) imp_no, Some (a0l,a1l))
                 (* original code	        
 	               CP.imply_conj_orig
