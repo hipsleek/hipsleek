@@ -135,12 +135,35 @@ checkentail true & ["n":x=p; "s":M={}]
     or x!=null & ["n":x=p & x!=p; "s":M!={}] |- true & ["s":M={}].
 
 ============================================================
-# swll-1.ss   
+# swll-1.ss   (does not work well esp for implication)
 
  UNSAT should not mix common "" with other labels
  to speed-up further
 
 ============================================================
+# lab3.slk
+
+checkentail n>=0 & ["n":n>0; "s":n=0] |- true & ["n":n>0; "s":n=1].
+print residue.
+
+Expecting 2 implications rather than 3. The last one below
+redundant.
+
+ id: 3; prover: OMEGA CALCULATOR; loc: _0:0_0:0; kind: Sleek_Entail(1)
+ Imply: ante: 0<=n & 0<n
+	     conseq:  AndList[ ["n"]:0<n] 
+ res: true
+ -------------------- 
+ id: 4; prover: OMEGA CALCULATOR; loc: _0:0_0:0; kind: Sleek_Entail(1)
+ Imply: ante: 0<=n & n=0
+	     conseq:  AndList[ ["s"]:n=1] 
+ res: false
+ -------------------- 
+ id: 5; prover: OMEGA CALCULATOR; loc: _0:0_0:0; kind: Sleek_Entail(1)
+ Imply: ante: true
+	     conseq:  AndList[ ["n"]:0<n] 
+ res: false
+
 ============================================================
 ============================================================
 ============================================================

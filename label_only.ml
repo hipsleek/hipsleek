@@ -27,6 +27,7 @@ struct
   let unlabelled = []
   let is_unlabelled l = (l==[])
   let is_top_label l = match l with | [""]-> true | _-> false 
+  let is_common l = (is_unlabelled l) or (is_top_label l)
   let string_of x = pr_list pr_string x
   let singleton s = [s]
 
@@ -38,6 +39,10 @@ struct
             if v==0 then true
             else if v<0 then overlap xs1 ys
             else overlap xs ys1
+
+  let is_fully_compatible xs ys =
+    if (is_common xs) && (is_common ys) then true
+    else overlap xs ys
 
   (* assumes that xs and ys are normalized *)
   (* returns true if they overlap in some ways *)

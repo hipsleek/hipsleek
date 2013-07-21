@@ -583,6 +583,7 @@ let rec is_true_conj_eq (f1:formula) : bool = match f1 with
                     let b1 = eq_spec_var v1 v2 in
                     b1
                 | _ -> false)
+	  | BConst (true, pos), _ -> true
           | _ -> false
         )
 	| AndList b-> all_l_snd is_true_conj_eq b

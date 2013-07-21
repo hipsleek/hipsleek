@@ -792,12 +792,20 @@ let sat_label_filter fct f =
   let rec helper_x f = match f with 
 		| AndList b -> 
 			let lbls = Label_Pure.get_labels b in
+                        let (comp,fil) = 
+                          if false (* !Globals.label_aggressive_flag || !Globals.label_aggressive_sat *) 
+                          then (Label_only.Lab_List.is_fully_compatible,fun fs -> fs)
+                          else (Label_only.Lab_List.is_part_compatible,
+                             List.filter (fun (l,_)-> not(Label_only.Lab_List.is_common l)) ) 
+                        in
 			let fs = List.map (fun l -> 
-			    let lst = List.filter (fun (c,_)-> Label_only.Lab_List.is_part_compatible c l) b in
+			    let lst = List.filter (fun (c,_)-> comp c l) b in
 			    (l,List.fold_left (fun a c-> mkAnd a (snd c) no_pos) (mkTrue no_pos) lst)) lbls in
-                        let fs2 = List.filter (fun (l,_)-> l!=[]) fs in
+                        let _ = Debug.ninfo_hprint (add_str "fs" Label_Pure.string_of) fs no_pos in
+                        (* let fs2 = List.filter (fun (l,_)-> l!=[]) fs in *)
+                        let fs2 = fil fs in
                         let fs = if fs2==[] then fs else fs2 in
-                        let _ = Debug.dinfo_hprint (add_str "label,fs" (pr_list (pr_pair (pr_list pr_id) pr)))  fs no_pos in
+                        let _ = Debug.ninfo_hprint (add_str "label,fs" (pr_list (pr_pair (pr_list pr_id) pr)))  fs no_pos in
 			List.for_all (fun (_,f) -> test f) fs
 		| Or (f1,f2,_ ,_)-> (helper f1)||(helper f2)
 		| _ -> test f 
@@ -810,33 +818,38 @@ let sat_label_filter fct f =
 let sat_label_filter fct f =  Debug.no_1 "sat_label_filter" !print_formula string_of_bool (fun _ -> sat_label_filter fct f) f
   
 let imply_label_filter ante conseq = 
-	(*let s = "unexpected imbricated AndList in tpdispatcher impl: "^(Cprinter.string_of_pure_formula ante)^"|-"^(Cprinter.string_of_pure_formula conseq)^"\n" in*)
-	match ante,conseq with
-	| Or _,_  
-	| _ , Or _ -> [(andl_to_and ante, andl_to_and conseq)]
-	| AndList ba, AndList bc -> 
-		(*let fc = List.for_all (fun (_,c)-> no_andl c) in
-		(if fc ba && fc bc then () else print_string s;*)
-		 List.map (fun (l, c)-> 
-			let lst = List.filter (fun (c,_)-> Label_only.Lab_List.is_part_compatible c l) ba in 
-			let fr1 = List.fold_left (fun a (_,c)-> mkAnd a c no_pos) (mkTrue no_pos) lst in
-			(*(andl_to_and fr1, andl_to_and c)*)
-			(fr1,c)) bc
-	| AndList ba, _ -> [(andl_to_and ante,conseq)]
-			(*if (List.for_all (fun (_,c)-> no_andl c) ba)&& no_andl conseq then () else print_string s;*)
-	| _ , AndList bc -> List.map (fun (_,c)-> (ante,c)) bc 
-	| _ -> [ante,conseq]
-		(*if (no_andl ante && no_andl conseq) then [ante,conseq]
-		else 
-		(print_string s;
-		[(andl_to_and ante),(andl_to_and conseq)])*)
-  
+  (*let s = "unexpected imbricated AndList in tpdispatcher impl: "^(Cprinter.string_of_pure_formula ante)^"|-"^(Cprinter.string_of_pure_formula conseq)^"\n" in*)
+  let comp = 
+    if false (* !Globals.label_aggressive_flag *)
+    then Label_only.Lab_List.is_fully_compatible
+    else Label_only.Lab_List.is_part_compatible
+  in
+  match ante,conseq with
+    | Or _,_  
+    | _ , Or _ -> [(andl_to_and ante, andl_to_and conseq)]
+    | AndList ba, AndList bc -> 
+	  (*let fc = List.for_all (fun (_,c)-> no_andl c) in
+	    (if fc ba && fc bc then () else print_string s;*)
+	  List.map (fun (l, c)-> 
+	      let lst = List.filter (fun (c,_)-> comp (* Label_only.Lab_List.is_part_compatible *) c l) ba in 
+	      let fr1 = List.fold_left (fun a (_,c)-> mkAnd a c no_pos) (mkTrue no_pos) lst in
+	      (*(andl_to_and fr1, andl_to_and c)*)
+	      (fr1,c)) bc
+    | AndList ba, _ -> [(andl_to_and ante,conseq)]
+	  (*if (List.for_all (fun (_,c)-> no_andl c) ba)&& no_andl conseq then () else print_string s;*)
+    | _ , AndList bc -> List.map (fun (_,c)-> (ante,c)) bc 
+    | _ -> [ante,conseq]
+	    (*if (no_andl ante && no_andl conseq) then [ante,conseq]
+	      else 
+	      (print_string s;
+	      [(andl_to_and ante),(andl_to_and conseq)])*)
+            
   
   (*keeps labels only if both sides have labels otherwise do a smart collection.*)
   (*this applies to term reasoning for example as it seems the termination annotations loose the labels...*)
-let imply_label_filter ante conseq = 
-	let pr = !print_formula in
-	Debug.no_2 "imply_label_filter" pr pr (pr_list (pr_pair pr pr)) imply_label_filter ante conseq
+    let imply_label_filter ante conseq = 
+      let pr = !print_formula in
+      Debug.no_2 "imply_label_filter" pr pr (pr_list (pr_pair pr pr)) imply_label_filter ante conseq
   
 let assumption_filter_slicing (ante : CP.formula) (cons : CP.formula) : (CP.formula * CP.formula) =
   let overlap (nlv1, lv1) (nlv2, lv2) =

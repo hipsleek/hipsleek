@@ -868,6 +868,8 @@ let disable_elim_redundant_ctr = ref false
 
 let enable_strong_invariant = ref false
 let enable_aggressive_prune = ref false
+let label_aggressive_flag = ref false
+let label_aggressive_sat = ref false
 let enable_redundant_elim = ref false
 
 (* let disable_aggressive_prune = ref false *)

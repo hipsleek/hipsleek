@@ -1,0 +1,26 @@
+
+checkentail n>=0 & ["n":n>0; "s":n=0] |- true & ["n":n>0; "s":n=1].
+print residue.
+
+/*
+# lab3.slk
+
+Expecting 2 implications rather than 3. The last one below
+redundant.
+
+ id: 3; prover: OMEGA CALCULATOR; loc: _0:0_0:0; kind: Sleek_Entail(1)
+ Imply: ante: 0<=n & 0<n
+	     conseq:  AndList[ ["n"]:0<n] 
+ res: true
+ -------------------- 
+ id: 4; prover: OMEGA CALCULATOR; loc: _0:0_0:0; kind: Sleek_Entail(1)
+ Imply: ante: 0<=n & n=0
+	     conseq:  AndList[ ["s"]:n=1] 
+ res: false
+ -------------------- 
+ id: 5; prover: OMEGA CALCULATOR; loc: _0:0_0:0; kind: Sleek_Entail(1)
+ Imply: ante: true
+	     conseq:  AndList[ ["n"]:0<n] 
+ res: false
+
+*/

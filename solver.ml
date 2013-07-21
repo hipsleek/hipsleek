@@ -7166,6 +7166,7 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
       DD.devel_hprint (add_str "ante0 : " Cprinter.string_of_mix_formula) split_ante0 pos;
       DD.devel_hprint (add_str "ante1 : " Cprinter.string_of_mix_formula) split_ante1 pos;
       DD.devel_hprint (add_str "conseq : " Cprinter.string_of_mix_formula) split_conseq pos;
+      (* what exactly is split_a_opt??? *)
       let (i_res1,i_res2,i_res3),split_a_opt = 
         if (MCP.isConstMTrue rhs_p)  then ((true,[],None),None)
 	    else 
@@ -7208,9 +7209,18 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
                   | _,_ -> report_error pos "Length of relational assumption list > 1"
                 )
               | Some (split1,split2) -> 
+                    (* Why is split-2 true? lab3.slk *)
+                    (* !!! split-1:[ AndList[ []:0<=n ; ["n"]:0<n ; ["s"]:n=0] ] *)
+                    (* !!! split-2:[ true] *)
                     let pr = Cprinter.string_of_pure_formula in
                     let _ = Debug.tinfo_hprint (add_str "split-1" (pr_list pr)) split1 no_pos in
                     let _ = Debug.tinfo_hprint (add_str "split-2" (pr_list pr)) split2 no_pos in
+                    let no_split2 = match split2 with
+                      | [f] -> CP.isConstTrue f 
+                      | [] -> true 
+                      | _ -> false
+                    in
+                    let _ = Debug.tinfo_hprint (add_str "no_split2" (string_of_bool)) no_split2 no_pos in
                     let split_mix1 = List.map MCP.mix_of_pure split1 in
                     let split_mix2 = List.map MCP.mix_of_pure split2 in
                     let split_mix3 = if List.length split1 = List.length split2
@@ -7249,9 +7259,12 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
                     in
                     let is_fail = List.exists (fun (neg,pure,rel,_,_,ante) ->
                         match neg,pure,rel with
-                          | None,None,[] -> (fun ((a,_,_),_) -> not a)
-                                (* WN : inefficient to use same antecedent *)
-                                (imply_mix_formula 0 ante ante split_conseq imp_no memset)
+                          | None,None,[] ->
+                                if no_split2 then true (* skip imply if split-2 is trivially true? *)
+                                else
+                                  (fun ((a,_,_),_) -> not a)
+                                      (* WN : inefficient to use same antecedent *)
+                                      (imply_mix_formula 0 ante ante split_conseq imp_no memset)
                           | _,_,_ -> false) res in
                     if is_fail then None,None,[],[],false
                     else
