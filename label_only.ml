@@ -51,7 +51,7 @@ struct
 
   let is_part_compatible xs ys = 
 	let pr = pr_list pr_id  in
-	Debug.ho_2 "is_part_compatible" pr pr string_of_bool is_part_compatible_x xs ys 	
+	Debug.no_2 "is_part_compatible" pr pr string_of_bool is_part_compatible_x xs ys 	
 	
   let is_compatible_rec = is_compatible
 

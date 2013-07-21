@@ -1,0 +1,8 @@
+
+
+checkentail true &
+ ["": x=5;
+  "n","m": y>x]
+ |- true & 
+     ["n":y>5].
+

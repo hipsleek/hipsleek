@@ -836,7 +836,7 @@ let imply_label_filter ante conseq =
   (*this applies to term reasoning for example as it seems the termination annotations loose the labels...*)
 let imply_label_filter ante conseq = 
 	let pr = !print_formula in
-	Debug.ho_2 "imply_label_filter" pr pr (pr_list (pr_pair pr pr)) imply_label_filter ante conseq
+	Debug.no_2 "imply_label_filter" pr pr (pr_list (pr_pair pr pr)) imply_label_filter ante conseq
   
 let assumption_filter_slicing (ante : CP.formula) (cons : CP.formula) : (CP.formula * CP.formula) =
   let overlap (nlv1, lv1) (nlv2, lv2) =

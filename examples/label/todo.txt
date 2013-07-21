@@ -119,10 +119,21 @@ it was added to labels for "n","s" already.
  Sat:  true & 0<=n & n=0
  res: SAT
 ============================================================
-# dll-app.ss
+# dll-app.ss  FIXED with wrap_no_filter
 
 failed for --no-filter but succeed for --filter
 ============================================================
+# swll-1.slk
+
+1st version did not work; but 2nd did due to the absence of
+UNSAT on the disj ante on "empty_RHS". Need to refine
+wrap_no_filter to support more UNSATs.
+
+checkentail x::ls<p,M> & ["n":x=p] |- true & ["s":M={}].
+
+checkentail true & ["n":x=p; "s":M={}] 
+    or x!=null & ["n":x=p & x!=p; "s":M!={}] |- true & ["s":M={}].
+
 ============================================================
 ============================================================
 ============================================================
