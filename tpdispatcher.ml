@@ -1236,12 +1236,12 @@ let tp_is_sat (f:CP.formula) (old_sat_no :string) =
   let _ = Log.last_proof_command # set cmd in
   let res = 
     (if !Globals.no_cache_formula then
-      Log.logtime_wrapper "SAT-nocache" fn_sat f
+      Timelog.logtime_wrapper "SAT-nocache" fn_sat f
     else
-      (Log.logtime_wrapper "SAT" sat_cache fn_sat) f)
+      (Timelog.logtime_wrapper "SAT" sat_cache fn_sat) f)
   in
   (* let tstop = Gen.Profiling.get_time () in *)
-  let _= add_proof_log !cache_status old_sat_no sat_no (string_of_prover !pure_tp) cmd (Log.logtime # last_time) (PR_BOOL res) in 
+  let _= add_proof_log !cache_status old_sat_no sat_no (string_of_prover !pure_tp) cmd (Timelog.logtime # get_last_time) (PR_BOOL res) in 
   res
 
 let tp_is_sat f sat_no =
@@ -1266,98 +1266,102 @@ let simplify (f : CP.formula) : CP.formula =
   proof_no := !proof_no + 1;
   let simpl_no = (string_of_int !proof_no) in
   if !Globals.no_simpl then f else
-  if !perm=Dperm && CP.has_tscons f<>CP.No_cons then f 
-  else 
-    let cmd = PT_SIMPLIFY f in
-    let _ = Log.last_proof_command # set cmd in
-    let omega_simplify f = Omega.simplify f in
-    (* this simplifcation will first remove complex formula
-       as boolean vars but later restore them *)
-    if !external_prover then 
-      match Netprover.call_prover (Simplify f) with
-      | Some res -> res
-      | None -> f
-    else (
-      let tstart = Gen.Profiling.get_time () in
-      Gen.Profiling.push_time "simplify";
-      try
-        if not !tp_batch_mode then start_prover ();
-        let r = match !pure_tp with
-          | DP -> Dp.simplify f
-          | Isabelle -> Isabelle.simplify f
-          | Coq -> 
-              if (is_list_constraint f) then
-                (Coq.simplify f)
-              else ((*Omega*)Smtsolver.simplify f)
-          | Mona | MonaH ->
-              if (is_bag_constraint f) then
-                (Mona.simplify f)
-              else
-                (* exist x, f0 ->  eexist x, x>0 /\ f0*)
-                let f1 = CP.add_gte0_for_mona f in
-                let f=(omega_simplify f1) in
-                CP.arith_simplify 12 f
-          | OM ->
-              if (is_bag_constraint f) then (Mona.simplify f)
-              else
-                let f=(omega_simplify f) in
-                CP.arith_simplify 12 f
-          | OI ->
-              if (is_bag_constraint f) then (Isabelle.simplify f)
-              else (omega_simplify f)
-          | SetMONA -> Mona.simplify f
-          | CM ->
-              if is_bag_constraint f then Mona.simplify f
-              else omega_simplify f
-          | Z3 -> Smtsolver.simplify f
-          | Redlog -> Redlog.simplify f
-          | RM ->
-              if is_bag_constraint f then Mona.simplify f
-              else Redlog.simplify f
-          | PARAHIP ->
-                if is_bag_constraint f then
-                  Mona.simplify f
-                else
-                  Redlog.simplify f
-          | ZM -> 
-              if is_bag_constraint f then Mona.simplify f
-              else Smtsolver.simplify f
-          | AUTO ->
-              if (is_bag_constraint f) then (Mona.simplify f)
-              else if (is_list_constraint f) then (Coq.simplify f)
-              else if (is_array_constraint f) then (Smtsolver.simplify f)
-              else (omega_simplify f)
-          | OZ ->
-              if (is_array_constraint f) then (Smtsolver.simplify f)
-              else (omega_simplify f)
-          | SPASS -> Spass.simplify f
-          | LOG -> find_formula_proof_res simpl_no
-          | _ -> omega_simplify f in
-        Gen.Profiling.pop_time "simplify";
-        let tstop = Gen.Profiling.get_time () in
-        if not !tp_batch_mode then stop_prover ();
-        (*let _ = print_string ("\nsimplify: f after"^(Cprinter.string_of_pure_formula r)) in*)
-        (* To recreate <IL> relation after simplifying *)
-        let res = ( 
-          (* if !Globals.do_slicing then *)
-          if not !Globals.dis_slc_ann then
-            let rel_vars_lst =
-              let bfl = CP.break_formula f in
-              (* let bfl_no_il = List.filter (fun (_,il) -> match il with *)
-              (* | None -> true | _ -> false) bfl in                      *)
-              (List.map (fun (svl,lkl,_) -> (svl,lkl)) (CP.group_related_vars bfl))
-            in CP.set_il_formula_with_dept_list r rel_vars_lst
-          else r
-        ) in   
-        (* TODO : add logtime for simplify *)
-        (* Why start/stop prver when interactive? *)
-        let _= add_proof_log !cache_status simpl_no simpl_no (string_of_prover !pure_tp) cmd (tstop -. tstart) (PR_FORMULA res) in
-        res
-      with | _ -> 
-        let _= add_proof_log !cache_status simpl_no simpl_no (string_of_prover !pure_tp) cmd 
-          (0.0) (PR_exception) in
-          f
-   )
+    if !perm=Dperm && CP.has_tscons f<>CP.No_cons then f 
+    else 
+      let cmd = PT_SIMPLIFY f in
+      let _ = Log.last_proof_command # set cmd in
+      let omega_simplify f = Omega.simplify f in
+      (* this simplifcation will first remove complex formula as boolean
+         vars but later restore them *)
+      if !external_prover then 
+        match Netprover.call_prover (Simplify f) with
+          | Some res -> res
+          | None -> f
+      else 
+        begin
+          let tstart = Gen.Profiling.get_time () in
+          try
+            if not !tp_batch_mode then start_prover ();
+              Gen.Profiling.push_time "simplify";
+              let fn f = 
+                match !pure_tp with
+                  | DP -> Dp.simplify f
+                  | Isabelle -> Isabelle.simplify f
+                  | Coq -> 
+                        if (is_list_constraint f) then
+                          (Coq.simplify f)
+                        else ((*Omega*)Smtsolver.simplify f)
+                  | Mona | MonaH ->
+                        if (is_bag_constraint f) then
+                          (Mona.simplify f)
+                        else
+                          (* exist x, f0 ->  eexist x, x>0 /\ f0*)
+                          let f1 = CP.add_gte0_for_mona f in
+                          let f=(omega_simplify f1) in
+                          CP.arith_simplify 12 f
+                  | OM ->
+                        if (is_bag_constraint f) then (Mona.simplify f)
+                        else
+                          let f=(omega_simplify f) in
+                          CP.arith_simplify 12 f
+                  | OI ->
+                        if (is_bag_constraint f) then (Isabelle.simplify f)
+                        else (omega_simplify f)
+                  | SetMONA -> Mona.simplify f
+                  | CM ->
+                        if is_bag_constraint f then Mona.simplify f
+                        else omega_simplify f
+                  | Z3 -> Smtsolver.simplify f
+                  | Redlog -> Redlog.simplify f
+                  | RM ->
+                        if is_bag_constraint f then Mona.simplify f
+                        else Redlog.simplify f
+                  | PARAHIP ->
+                        if is_bag_constraint f then
+                          Mona.simplify f
+                        else
+                          Redlog.simplify f
+                  | ZM -> 
+                        if is_bag_constraint f then Mona.simplify f
+                        else Smtsolver.simplify f
+                  | AUTO ->
+                        if (is_bag_constraint f) then (Mona.simplify f)
+                        else if (is_list_constraint f) then (Coq.simplify f)
+                        else if (is_array_constraint f) then (Smtsolver.simplify f)
+                        else (omega_simplify f)
+                  | OZ ->
+                        if (is_array_constraint f) then (Smtsolver.simplify f)
+                        else (omega_simplify f)
+                  | SPASS -> Spass.simplify f
+                  | LOG -> find_formula_proof_res simpl_no
+                  | _ -> omega_simplify f 
+              in
+              let r = Timelog.logtime_wrapper "simplify" fn f in
+              Gen.Profiling.pop_time "simplify";
+              let tstop = Gen.Profiling.get_time () in
+              if not !tp_batch_mode then stop_prover ();
+              (*let _ = print_string ("\nsimplify: f after"^(Cprinter.string_of_pure_formula r)) in*)
+              (* To recreate <IL> relation after simplifying *)
+              let res = ( 
+                  (* if !Globals.do_slicing then *)
+                  if not !Globals.dis_slc_ann then
+                    let rel_vars_lst =
+                      let bfl = CP.break_formula f in
+                      (* let bfl_no_il = List.filter (fun (_,il) -> match il with *)
+                      (* | None -> true | _ -> false) bfl in                      *)
+                      (List.map (fun (svl,lkl,_) -> (svl,lkl)) (CP.group_related_vars bfl))
+                    in CP.set_il_formula_with_dept_list r rel_vars_lst
+                  else r
+              ) in   
+              (* TODO : add logtime for simplify *)
+              (* Why start/stop prver when interactive? *)
+              let _= add_proof_log !cache_status simpl_no simpl_no (string_of_prover !pure_tp) cmd (Timelog.logtime # get_last_time) (PR_FORMULA res) in
+              res
+          with | _ -> 
+              let _= add_proof_log !cache_status simpl_no simpl_no (string_of_prover !pure_tp) cmd 
+                (0.0) (PR_exception) in
+              f
+        end
 (*for AndList it simplifies one batch at a time*)
 let simplify (f:CP.formula):CP.formula =
   let rec helper f = match f with 
@@ -2144,12 +2148,12 @@ let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (old_imp_no : stri
 	  List.fold_left fold_fun (true,[],None) pairs
     end;
   in 
-  let final_res = Log.logtime_wrapper "imply" fn () in
+  let final_res = Timelog.logtime_wrapper "imply" fn () in
   (* let tstop = Gen.Profiling.get_time () in *)
   (* let _ = print_string ("length of pairs: "^(string_of_int (List.length !ante_inner))) in *)
   let ante0 = CP.join_conjunctions !ante_inner in
   let conseq0 = CP.join_conjunctions !conseq_inner in
-  let _= add_proof_log !cache_status old_imp_no imp_no (string_of_prover !pure_tp) (PT_IMPLY (ante0, conseq0)) (Log.logtime # last_time) (PR_BOOL (match final_res with | r,_,_ -> r)) in
+  let _= add_proof_log !cache_status old_imp_no imp_no (string_of_prover !pure_tp) (PT_IMPLY (ante0, conseq0)) (Timelog.logtime # get_last_time) (PR_BOOL (match final_res with | r,_,_ -> r)) in
   final_res
 ;;
 

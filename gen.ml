@@ -515,7 +515,8 @@ class ['a] stack_filter (epr:'a->string) (eq:'a->'a->bool) (fil:'a->bool)  =
      method filter = stk <- List.filter fil stk
      method string_of_reverse_log_filter = 
        stk <- List.filter fil stk;
-       super#string_of_reverse_log
+       super#string_of_no_ln_rev
+           (* string_of_reverse_log *)
    end;;
 
 class ['a] stack_noexc (x_init:'a) (epr:'a->string) (eq:'a->'a->bool)  =

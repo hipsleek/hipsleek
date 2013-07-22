@@ -97,40 +97,6 @@ let pr_f = Cprinter.string_of_formula
 
 let last_sleek_command = new store None (pr_option (pr_pair pr_f pr_f))
 
-class timelog =
-object (self)
-  val time_stk = new Gen.stack_noexc ("dummy",0.) (pr_pair pr_id string_of_float) (==)
-  val hist_stk = new Gen.stack_filter (pr_pair pr_id string_of_float) (==) (fun (_,x) ->  5.00 <= x )
-  val mutable last_time = 0. 
-  method start_time s = 
-    let t = Gen.Profiling.get_time() 
-    in time_stk # push (s,t)
-  method stop_time = 
-    begin
-      let t = Gen.Profiling.get_time() in
-      let (s,st) = time_stk # pop_top in
-      let tt = t -. st in
-      let _ = hist_stk # push (s,tt) in
-      last_time <- tt ; tt
-    end
-  method dump = 
-    (* Debug.info_pprint ("all timelog: " ^ hist_stk # string_of) no_pos *)
-    Debug.info_pprint ("all timelog: " ^ hist_stk # string_of_reverse_log_filter) no_pos
-  method last_time = last_time
-end;;
-
-let logtime = new timelog
-
-let logtime_wrapper s f x =
-    try
-      let _ = logtime # start_time s in
-      let res = f x in
-      let _ = logtime # stop_time in
-      res
-    with e ->
-        let tt = logtime # stop_time in 
-        let _ = Debug.info_hprint (add_str "WARNING logtime exception" string_of_float) tt no_pos in
-        raise e
 
 let string_of_log_res lt r = 
   match r with

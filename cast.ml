@@ -1732,7 +1732,7 @@ let vdef_fold_use_bc prog ln2  =
   let pr2 x = match x with
     | None -> "None"
     | Some f -> !print_struc_formula f.view_formula in
-  Debug.no_1 "vdef_fold_use_bc" pr1 pr2 (fun _ -> vdef_fold_use_bc prog ln2) ln2
+  Debug.ho_1 "vdef_fold_use_bc" pr1 pr2 (fun _ -> vdef_fold_use_bc prog ln2) ln2
 
 
 let get_xpure_one vdef rm_br  =

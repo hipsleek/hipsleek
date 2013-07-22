@@ -8957,7 +8957,7 @@ and do_fold prog vd estate conseq rhs_node rhs_rest rhs_b is_folding pos =
 and do_base_fold_x prog estate conseq rhs_node rhs_rest rhs_b is_folding pos=
   let (estate,iv,ivr) = Inf.remove_infer_vars_all estate (* rt *)in
   let vd = (vdef_fold_use_bc prog rhs_node) in
-  let (cl,prf) = 
+  let (cl,prf) =
     match vd with
         (* CF.mk_failure_must "99" Globals.sl_error)), NoAlias) *)
       | None ->

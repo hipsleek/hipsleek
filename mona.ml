@@ -338,7 +338,7 @@ let new_order_formula_x (f:CP.formula) : (CP.spec_var list * CP.spec_var list * 
   (* rename quantif vars bef before calling new_order_formula*)
   let all_vars = CP.all_vars f in
   let constr = CP.join_conjunctions (List.map mkConstraint cl) in
-  let sat = Omega.is_sat constr "mona constraints" in 
+  let sat = Timelog.logtime_wrapper "mona-om" (Omega.is_sat constr) "mona constraints" in 
   if (not sat) then
     failwith ("[mona.ml:new_order_formula] mona translation failure")
   else
@@ -1404,8 +1404,8 @@ let write_to_file (is_sat_b: bool) (fv: CP.spec_var list) (f: CP.formula) (imp_n
 let imply_sat_helper_x (is_sat_b: bool) (fv: CP.spec_var list) (f: CP.formula) (imp_no: string) vs : bool =
   let all_fv = CP.remove_dups_svl fv in
   (* let _ = print_endline("[Mona] imply_sat_helper : vs = " ^ (string_of_hashtbl vs) ) in *)
- (* let (part1, part2) = (List.partition (fun (sv) -> ((\*is_firstorder_mem*\)part_firstorder_mem *)
- (*       (CP.Var(sv, no_pos)) vs)) all_fv) in  (\*deprecated*\) *)
+  (* let (part1, part2) = (List.partition (fun (sv) -> ((\*is_firstorder_mem*\)part_firstorder_mem *)
+  (*       (CP.Var(sv, no_pos)) vs)) all_fv) in  (\*deprecated*\) *)
   let (part1, part2) = (List.partition (fun (sv) -> (is_firstorder_mem_sv sv vs)) all_fv) in
   let first_order_var_decls =
     if Gen.is_empty part1 then ""
@@ -1431,11 +1431,11 @@ let imply_sat_helper_x (is_sat_b: bool) (fv: CP.spec_var list) (f: CP.formula) (
     end
   with
     |Procutils.PrvComms.Timeout ->
-	     begin
+	 begin
            print_string ("\n[mona.ml]:Timeout exception\n"); flush stdout;
            restart ("Timeout when checking #" ^ imp_no ^ "!");
            is_sat_b
-		 end
+	 end
     | exc ->
           print_string ("\n[mona.ml]:Unexpected exception\n"); flush stdout;
           stop(); raise exc
