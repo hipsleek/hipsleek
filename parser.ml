@@ -1012,7 +1012,7 @@ one_branch_single : [[ `STRING (_,id); `COLON; pc=pure_constr -> (Lab_List.singl
 
 one_string: [[`STRING (_,id)-> id]];
 
-one_branch : [[ lbl=LIST1 one_string SEP `COMMA ; `COLON; pc=pure_constr -> (lbl,pc)]];
+one_branch : [[ lbl=LIST1 one_string SEP `COMMA ; `COLON; pc=pure_constr -> (Lab_List.norm lbl,pc)]];
 
 opt_branch:[[t=OPT branch -> un_option t empty_spec_label]];
 
