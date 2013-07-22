@@ -1196,6 +1196,10 @@ let cache_sat_miss = ref 0
 let cache_imply_count = ref 0 
 let cache_imply_miss = ref 0 
 
+let last_prover () =
+  if !cache_status then "CACHED"
+  else  Others.last_tp_used # string_of
+
 let sat_cache is_sat (f:CP.formula) : bool  = 
   let _ = Gen.Profiling.push_time_always "cache overhead" in
   let sf = norm_var_name f in
@@ -1657,7 +1661,7 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
         if (is_array_constraint ante) || (is_array_constraint conseq) then
           ((* called_prover :="smtsolver "; *) z3_imply ante conseq)
         else
-          (called_prover :="omega "; omega_imply ante conseq)
+          ((* called_prover :="omega "; *) omega_imply ante conseq)
     | Mona | MonaH -> mona_imply ante_w conseq_s 
     | CO -> (
         let result1 = Cvc3.imply_helper_separate_process ante conseq imp_no in
@@ -1869,14 +1873,29 @@ let tp_imply ante conseq imp_no timeout process =
     (*     r *)
     (* in res *)
 
+let tp_imply ante conseq old_imp_no timeout process =	
+  proof_no := !proof_no + 1 ;
+  let imp_no = (string_of_int !proof_no) in
+  Debug.devel_zprint (lazy ("IMP #" ^ imp_no)) no_pos;  
+  Debug.devel_zprint (lazy ("imply_timeout: ante: " ^ (!print_pure ante))) no_pos;
+  Debug.devel_zprint (lazy ("imply_timeout: conseq: " ^ (!print_pure conseq))) no_pos;
+  let cmd = PT_IMPLY(ante,conseq) in
+  let _ = Log.last_proof_command # set cmd in
+  let fn () = tp_imply ante conseq imp_no timeout process in
+  let final_res = Timelog.logtime_wrapper "imply" fn () in
+  let _= add_proof_log !cache_status old_imp_no imp_no (string_of_prover !pure_tp) cmd (Timelog.logtime # get_last_time) (PR_BOOL (match final_res with | r -> r)) in
+  final_res
+;;
+
 let tp_imply ante conseq imp_no timeout process =	
   let pr1 = Cprinter.string_of_pure_formula in
-  let prout x = string_of_bool x in
+  let prout x = (last_prover())^": "^(string_of_bool x) in
   Debug.ho_2 "tp_imply" 
       (add_str "ante" pr1) 
       (add_str "conseq" pr1) 
-      (add_str ("solver:"^(Others.last_tp_used # string_of)) prout) (fun _ _ -> tp_imply ante conseq imp_no timeout process) ante conseq
-         
+      (add_str "solver" prout) (fun _ _ -> tp_imply ante conseq imp_no timeout process) ante conseq
+
+
 (* renames all quantified variables *)
 let rec requant = function
   | CP.And (f, g, l) -> CP.And (requant f, requant g, l)
@@ -2055,17 +2074,18 @@ let is_sat (f : CP.formula) (sat_no : string): bool =
    
 let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (old_imp_no : string) timeout process
       : bool*(formula_label option * formula_label option )list * (formula_label option) = (*result+successfull matches+ possible fail*)
-  proof_no := !proof_no + 1 ;
-  let imp_no = (string_of_int !proof_no) in
+  (* proof_no := !proof_no + 1 ; *)
+  (* let imp_no = (string_of_int !proof_no) in *)
   (* let count_inner = ref 0 in *)
+  let imp_no = old_imp_no in
   let ante_inner = ref [] in
   let conseq_inner = ref [] in
   (* let tstart = Gen.Profiling.get_time () in		 *)
-  Debug.devel_zprint (lazy ("IMP #" ^ imp_no)) no_pos;  
-  Debug.devel_zprint (lazy ("imply_timeout: ante: " ^ (!print_pure ante0))) no_pos;
-  Debug.devel_zprint (lazy ("imply_timeout: conseq: " ^ (!print_pure conseq0))) no_pos;
-  let cmd = PT_IMPLY(ante0,conseq0) in
-  let _ = Log.last_proof_command # set cmd in
+  (* Debug.devel_zprint (lazy ("IMP #" ^ imp_no)) no_pos;   *)
+  (* Debug.devel_zprint (lazy ("imply_timeout: ante: " ^ (!print_pure ante0))) no_pos; *)
+  (* Debug.devel_zprint (lazy ("imply_timeout: conseq: " ^ (!print_pure conseq0))) no_pos; *)
+  (* let cmd = PT_IMPLY(ante0,conseq0) in *)
+  (* let _ = Log.last_proof_command # set cmd in *)
   let fn () =
     if !external_prover then 
       match Netprover.call_prover (Imply (ante0,conseq0)) with
@@ -2147,12 +2167,12 @@ let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (old_imp_no : stri
 	  List.fold_left fold_fun (true,[],None) pairs
     end;
   in 
-  let final_res = Timelog.logtime_wrapper "imply" fn () in
+  let final_res = (* Timelog.logtime_wrapper "imply" *) fn () in
   (* let tstop = Gen.Profiling.get_time () in *)
   (* let _ = print_string ("length of pairs: "^(string_of_int (List.length !ante_inner))) in *)
-  let ante0 = CP.join_conjunctions !ante_inner in
-  let conseq0 = CP.join_conjunctions !conseq_inner in
-  let _= add_proof_log !cache_status old_imp_no imp_no (string_of_prover !pure_tp) cmd (* (PT_IMPLY (ante0, conseq0)) *) (Timelog.logtime # get_last_time) (PR_BOOL (match final_res with | r,_,_ -> r)) in
+  (* let ante0 = CP.join_conjunctions !ante_inner in *)
+  (* let conseq0 = CP.join_conjunctions !conseq_inner in *)
+  (* let _= add_proof_log !cache_status old_imp_no imp_no (string_of_prover !pure_tp) cmd (\* (PT_IMPLY (ante0, conseq0)) *\) (Timelog.logtime # get_last_time) (PR_BOOL (match final_res with | r,_,_ -> r)) in *)
   final_res
 ;;
 
