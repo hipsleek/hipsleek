@@ -10956,3 +10956,8 @@ let get_cmp_form p =
   let pr3 = pr_list (pr_pair !print_sv !print_sv) in
   Debug.no_1 "get_cmp_form" pr1 pr3
       (fun _ -> get_cmp_form_x p) p
+
+	  
+let rhs_needs_or_split f = 	match f with
+	| Or _ -> not(no_andl f)
+	| _-> false

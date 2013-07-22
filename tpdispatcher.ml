@@ -2071,6 +2071,55 @@ let is_sat (f : CP.formula) (old_sat_no : string): bool =
 let is_sat (f : CP.formula) (sat_no : string): bool =
   Debug.no_1 "[tp]is_sat"  Cprinter.string_of_pure_formula string_of_bool (fun _ -> is_sat f sat_no) f
 
+  
+let imply_timeout_helper ante conseq process ante_inner conseq_inner imp_no timeout =  
+	  let acpairs = imply_label_filter ante conseq in
+	  let pairs = List.map (fun (ante,conseq) -> 
+              let _ = Debug.devel_hprint (add_str "ante 1: " Cprinter.string_of_pure_formula) ante no_pos in
+              (* RHS split already done outside *)
+	      (* let cons = split_conjunctions conseq in *)
+	      let cons = [conseq] in
+	      List.map (fun cons-> 
+                  let (ante,cons) = simpl_pair false (requant ante, requant cons) in
+                  let _ = Debug.devel_hprint (add_str "ante 3: " Cprinter.string_of_pure_formula) ante no_pos in
+		  let ante = CP.remove_dup_constraints ante in
+                  let _ = Debug.devel_hprint (add_str "ante 4: " Cprinter.string_of_pure_formula) ante no_pos in
+		  match process with
+		    | Some (Some proc, true) -> (ante, cons) (* don't filter when in incremental mode - need to send full ante to prover *)
+		    | _ -> assumption_filter ante cons  ) cons) acpairs in
+	  let pairs = List.concat pairs in
+	  let pairs_length = List.length pairs in
+          let _ = (ante_inner := List.map fst pairs) in
+          let _ = (conseq_inner := List.map snd pairs) in
+	  let imp_sub_no = ref 0 in
+          (* let _ = (let _ = print_string("\n!!!!!!! bef\n") in flush stdout ;) in *)
+	  let fold_fun (res1,res2,res3) (ante, conseq) =
+	    (incr imp_sub_no;
+	    if res1 then 
+	      let imp_no = 
+		if pairs_length > 1 then ( (* let _ = print_string("\n!!!!!!! \n") in flush stdout ; *) (imp_no ^ "." ^ string_of_int (!imp_sub_no)))
+		else imp_no in
+              (*DROP VarPerm formula before checking*)
+              let conseq = CP.drop_varperm_formula conseq in
+              let ante = CP.drop_varperm_formula ante in
+	      let res1 =
+		if (not (CP.is_formula_arith ante))&& (CP.is_formula_arith conseq) then
+		  let res1 = tp_imply(*_debug*) (CP.drop_bag_formula ante) conseq imp_no timeout process in
+		  if res1 then res1
+		  else tp_imply(*_debug*) ante conseq imp_no timeout process
+		else 
+                  tp_imply(*_debug*) ante conseq imp_no timeout process 
+              in
+              let _ = Debug.devel_hprint (add_str "res: " string_of_bool) res1 no_pos in
+	      let l1 = CP.get_pure_label ante in
+              let l2 = CP.get_pure_label conseq in
+	      if res1 then (res1,(l1,l2)::res2,None)
+	      else (res1,res2,l2)
+	    else 
+              (res1,res2,res3) )
+	  in
+	  List.fold_left fold_fun (true,[],None) pairs;;
+  
    
 let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (old_imp_no : string) timeout process
       : bool*(formula_label option * formula_label option )list * (formula_label option) = (*result+successfull matches+ possible fail*)
@@ -2119,52 +2168,13 @@ let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (old_imp_no : stri
 	  let ante = elim_exists ante in
 	  let conseq = elim_exists conseq in
 	  (*let _ = print_string ("imply_timeout: new_conseq: " ^ (Cprinter.string_of_pure_formula conseq) ^ "\n") in*)
-	  let acpairs = imply_label_filter ante conseq in
-	  let pairs = List.map (fun (ante,conseq) -> 
-              let _ = Debug.devel_hprint (add_str "ante 1: " Cprinter.string_of_pure_formula) ante no_pos in
-              (* RHS split already done outside *)
-	      (* let cons = split_conjunctions conseq in *)
-	      let cons = [conseq] in
-	      List.map (fun cons-> 
-                  let (ante,cons) = simpl_pair false (requant ante, requant cons) in
-                  let _ = Debug.devel_hprint (add_str "ante 3: " Cprinter.string_of_pure_formula) ante no_pos in
-		  let ante = CP.remove_dup_constraints ante in
-                  let _ = Debug.devel_hprint (add_str "ante 4: " Cprinter.string_of_pure_formula) ante no_pos in
-		  match process with
-		    | Some (Some proc, true) -> (ante, cons) (* don't filter when in incremental mode - need to send full ante to prover *)
-		    | _ -> assumption_filter ante cons  ) cons) acpairs in
-	  let pairs = List.concat pairs in
-	  let pairs_length = List.length pairs in
-          let _ = (ante_inner := List.map fst pairs) in
-          let _ = (conseq_inner := List.map snd pairs) in
-	  let imp_sub_no = ref 0 in
-          (* let _ = (let _ = print_string("\n!!!!!!! bef\n") in flush stdout ;) in *)
-	  let fold_fun (res1,res2,res3) (ante, conseq) =
-	    (incr imp_sub_no;
-	    if res1 then 
-	      let imp_no = 
-		if pairs_length > 1 then ( (* let _ = print_string("\n!!!!!!! \n") in flush stdout ; *) (imp_no ^ "." ^ string_of_int (!imp_sub_no)))
-		else imp_no in
-              (*DROP VarPerm formula before checking*)
-              let conseq = CP.drop_varperm_formula conseq in
-              let ante = CP.drop_varperm_formula ante in
-	      let res1 =
-		if (not (CP.is_formula_arith ante))&& (CP.is_formula_arith conseq) then
-		  let res1 = tp_imply(*_debug*) (CP.drop_bag_formula ante) conseq imp_no timeout process in
-		  if res1 then res1
-		  else tp_imply(*_debug*) ante conseq imp_no timeout process
-		else 
-                  tp_imply(*_debug*) ante conseq imp_no timeout process 
-              in
-              let _ = Debug.devel_hprint (add_str "res: " string_of_bool) res1 no_pos in
-	      let l1 = CP.get_pure_label ante in
-              let l2 = CP.get_pure_label conseq in
-	      if res1 then (res1,(l1,l2)::res2,None)
-	      else (res1,res2,l2)
-	    else 
-              (res1,res2,res3) )
-	  in
-	  List.fold_left fold_fun (true,[],None) pairs
+	  (*if no_andl conseq || *)
+	  if CP.rhs_needs_or_split conseq then
+		let conseq_disj = CP.split_disjunctions conseq in
+		List.fold_left (fun (r1,r2,r3) d -> 
+		   if not r1 then imply_timeout_helper ante d process ante_inner conseq_inner imp_no timeout
+		   else (r1,r2,r3) ) (false,[],None) conseq_disj 
+	  else imply_timeout_helper ante conseq process ante_inner conseq_inner imp_no timeout
     end;
   in 
   let final_res = (* Timelog.logtime_wrapper "imply" *) fn () in
