@@ -1548,7 +1548,7 @@ let partition_constrs_x constrs post_hps0=
               else post_hps
           | None -> post_hps
   in
-  let classify new_post_hps (pre_cs,post_cs,pre_oblg,post_oblg) cs =
+  let classify new_post_hps (pre_cs,post_cs,pre_oblg,tupled_hps, post_oblg) cs =
     let is_post =
       try
         let ohp = CF.extract_hrel_head cs.CF.hprel_rhs in
@@ -1557,7 +1557,7 @@ let partition_constrs_x constrs post_hps0=
           | None -> false
       with _ -> false
     in
-    if is_post then (pre_cs,post_cs@[cs],pre_oblg,post_oblg) else
+    if is_post then (pre_cs,post_cs@[cs],pre_oblg,tupled_hps,post_oblg) else
       let lhs_hps = CF.get_hp_rel_name_formula cs.CF.hprel_lhs in
       if CP.intersect_svl (new_post_hps) lhs_hps = [] then
         (*identify pre-oblg*)
@@ -1566,14 +1566,19 @@ let partition_constrs_x constrs post_hps0=
         if (List.length l_hds > 0 || List.length l_hvs > 0) && List.length lhrels > 0 &&
           (* (List.length r_hds > 0 || List.length r_hvs > 0) && *) List.length rhrels > 0
         then
-          (pre_cs,post_cs,pre_oblg@[cs],post_oblg)
+          (pre_cs,post_cs,pre_oblg@[cs],tupled_hps@lhs_hps,post_oblg)
         else
-        (pre_cs@[cs],post_cs,pre_oblg,post_oblg)
-      else (pre_cs,post_cs,pre_oblg,post_oblg@[cs])
+        (pre_cs@[cs],post_cs,pre_oblg,tupled_hps,post_oblg)
+      else (pre_cs,post_cs,pre_oblg,tupled_hps,post_oblg@[cs])
   in
   let new_post_hps = List.fold_left get_post_hp [] constrs in
-  let pre_constrs,post_constrs,pre_oblg, post_oblg_constrs = List.fold_left (classify (post_hps0@new_post_hps)) ([],[],[],[]) constrs in
-  (pre_constrs,post_constrs, pre_oblg, post_oblg_constrs, new_post_hps)
+  let pre_constrs,post_constrs,pre_oblg, tupled_hps, post_oblg_constrs = List.fold_left (classify (post_hps0@new_post_hps)) ([],[],[],[],[]) constrs in
+  (*partition pre-constrs, filter ones in pre-obligation*)
+  let pre_constrs1, pre_oblg_ext = List.partition (fun cs ->
+      let lhs_hps = CF.get_hp_rel_name_formula cs.CF.hprel_lhs in
+      CP.intersect_svl lhs_hps tupled_hps = []
+  ) pre_constrs in
+  (pre_constrs1,post_constrs, pre_oblg@pre_oblg_ext, post_oblg_constrs, new_post_hps)
 
 let partition_constrs constrs post_hps=
   let pr1 = pr_list_ln Cprinter.string_of_hprel_short in
@@ -1665,7 +1670,10 @@ and infer_shapes_init_post prog (constrs0: CF.hprel list) non_ptr_unk_hps sel_po
     (*call to infer_shape? proper? or post?*)
 and infer_shapes_from_fresh_obligation_x iprog cprog proc_name is_pre cond_path (constrs0: CF.hprel list) callee_hps non_ptr_unk_hps sel_lhps sel_rhps sel_post_hps
       unk_hpargs link_hpargs need_preprocess hp_rel_unkmap detect_dang pre_defs post_defs def_hps=
-  let ho_constrs, nondef_post_hps = List.fold_left (collect_ho_ass cprog is_pre def_hps) ([],[]) constrs0 in
+  (*if rhs is emp heap, should retain the constraint*)
+  let pre_constrs, pre_oblg = List.partition (fun cs -> SAU.is_empty_heap_f cs.CF.hprel_rhs) constrs0 in
+  let ho_constrs0, nondef_post_hps = List.fold_left (collect_ho_ass cprog is_pre def_hps) ([],[]) pre_oblg in
+  let ho_constrs = ho_constrs0@pre_constrs in
   if ho_constrs = [] then ([],[],unk_hpargs,hp_rel_unkmap) else
     (***************  PRINTING*********************)
     let _ =

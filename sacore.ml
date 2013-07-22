@@ -145,13 +145,14 @@ let search_pred_4_equal_x constrs post_hps frozen_hps=
   in
   let pr2 (a,_,_) = !CP.print_sv a in
   let _ = Debug.ninfo_pprint ("    pre_preds_cand_equal: " ^ ((pr_list pr2) pre_preds_cand_equal0)) no_pos in
+  let _ = Debug.ninfo_pprint ("    tupled_hps: " ^ (!CP.print_svl tupled_hps)) no_pos in
   (*filter the tupled_hps *)
   let pre_preds_cand_equal1 = List.filter (fun (hp,_,_) -> not (CP.mem_svl hp tupled_hps)) pre_preds_cand_equal0 in
   (*filter frozen candidates that depends on others. they will be synthesized next round.*)
   (* let cand_equal_hps = List.map fst3 pre_preds_cand_equal1 in *)
   let nonrec_complex_guard_hps = List.map fst complex_nonrec_guard_grps in
   (*remove one that depends on the guard, the guard should go first*)
-  let _ = Debug.info_pprint ("    nonrec_complex_guard_hps: " ^ (!CP.print_svl nonrec_complex_guard_hps)) no_pos in
+  let _ = Debug.ninfo_pprint ("    nonrec_complex_guard_hps: " ^ (!CP.print_svl nonrec_complex_guard_hps)) no_pos in
   let pre_preds_4_equal = List.fold_left (fun ls_cand (hp,cs,deps) ->
       if CP.intersect_svl deps nonrec_complex_guard_hps = [] then
         ls_cand@[(hp,cs)]
@@ -167,7 +168,9 @@ let search_pred_4_equal_x constrs post_hps frozen_hps=
     testcases: check-dll.ss; check-sorted
   *)
   let pre_preds_4_equal2 = if pre_preds_4_equal1 = [] then
-    match complex_nrec_ndep with
+    (*remove the tupled ones*)
+    let complex_nrec_ndep1 = List.filter (fun (hp,_) -> not(CP.mem_svl hp tupled_hps)) complex_nrec_ndep in
+    match complex_nrec_ndep1 with
       | (hp,constrs)::_ ->  [(hp,constrs)]
       | _ -> []
   else pre_preds_4_equal1

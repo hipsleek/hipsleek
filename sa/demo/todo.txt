@@ -5378,7 +5378,7 @@ Error(s) detected at main
 Stop Omega... 101 invocations caught
 (Program not linked with -g, cannot print stack backtrace)
 =====================================================================
-# swl-i.ss
+# swl-i.ss: FIXED
 
 Context of Verification Failure: 1 File "swl-i.ss",Line:32,Col:10
 Last Proving Location: 1 File "swl-i.ss",Line:52,Col:2
@@ -5395,7 +5395,7 @@ Stop Omega... 108 invocations caught
 Exception occurred: Failure("self of G cannot have its type determined")
 Error(s) detected at main 
 =====================================================================
-# view_simp.ss
+# view_simp.ss: FIXED (by Trung)
 
 ll<> == (self:node)=null
   inv true;
@@ -5413,7 +5413,7 @@ Message: self of ll cannot have its type determined
 Exception occurred: Failure("self of ll cannot have its type determined")
 
 =====================================================================
-# swl-i.ss --dis-ddb
+# swl-i.ss --dis-ddb: FIXED
 
 We derived:
 
@@ -5440,7 +5440,7 @@ on H being confirmed.
   HP_902(next_36_901,cur_941,sent_945) * HP_903(cur_941,next_36_944,sent_945)
 
 =====================================================================
-# swl-i.ss --classic
+# swl-i.ss --classic: FIXED
 
 How come we are missing on some relational assumptions
 from one of the two pre-oblications below? 
