@@ -1683,7 +1683,18 @@ and infer_shapes_from_fresh_obligation_x iprog cprog proc_name is_pre cond_path 
       print_endline "\n*************************************************";
       print_endline "*******relational assumptions (obligation)********";
       print_endline "****************************************************";
-      print_endline (pr ho_constrs);
+      print_endline (pr ho_constrs0);
+      print_endline "*************************************"
+    end
+    in
+    let _ =
+    begin
+      let pr = pr_list_ln Cprinter.string_of_hprel_short in
+      print_endline "";
+      print_endline "\n*************************************************";
+      print_endline "*******relational assumptions (pre-assumptions)********";
+      print_endline "****************************************************";
+      print_endline (pr pre_constrs);
       print_endline "*************************************"
     end
     in

@@ -1,0 +1,16 @@
+data node{
+	int val;
+	node next;
+}.
+
+ pred HP_902<prev_995:node,sent_996:node> == p::HP_902<self,sent_996> * self::node<val_36_989,p>@M
+   or emp&self=sent_996
+   or emp&self=null & self!=sent_996
+   or p::HP_902<self,sent_996> * self::node<val_36_989,p>@M &self!=sent_996.
+
+HeapPred HP_903(node prev, node@NI cur, node@NI sent).
+
+infer [HP_903] HP_903(prev_936,cur_939,sent_934)&
+  prev_937=null |- prev_936::HP_902<prev_937,sent_934>@M.
+
+print residue.
