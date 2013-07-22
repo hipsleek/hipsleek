@@ -26,7 +26,7 @@ struct
   type t = string list
   let unlabelled = []
   let is_unlabelled l = (l==[])
-  let is_top_label l = match l with | [""]-> true | _-> false 
+  let is_top_label l = List.exists (fun c-> c="") l
   let is_common l = (is_unlabelled l) or (is_top_label l)
   let string_of x = pr_list pr_string x
   let singleton s = [s]
