@@ -71,12 +71,12 @@ let rel_ass_stk : hprel Gen.stack_pr = new Gen.stack_pr
 let scc_rel_ass_stk : hprel Gen.stack_pr = new Gen.stack_pr 
   Cprinter.string_of_hprel_short (==)
 
-let dump_rel_ass s = 
-  DD.info_pprint "==========================================";
-  DD.info_pprint (" Relational Assumption "^s);
-  DD.info_pprint "==========================================";
-  DD.info_pprint (rel_ass_stk # string_of_reverse_log);
-  DD.info_pprint "=========================================="
+(* let dump_rel_ass s =  *)
+(*   DD.info_pprint "=========================================="; *)
+(*   DD.info_pprint (" Relational Assumption "^s); *)
+(*   DD.info_pprint "=========================================="; *)
+(*   DD.info_pprint (rel_ass_stk # string_of_reverse_log); *)
+(*   DD.info_pprint "==========================================" *)
 
 let no_infer estate = (estate.es_infer_vars == [])
 
@@ -2181,7 +2181,7 @@ out: list of program variables of mismatching node
 let get_prog_vars_x prog_hps rhs_unmatch proving_kind =
   match rhs_unmatch with
     | CF.HRel (hp, eargs,_) ->
-        if proving_kind = "POST" && CP.mem_svl hp prog_hps then
+        if proving_kind = PK_POST && CP.mem_svl hp prog_hps then
           ([hp],(List.fold_left List.append [] (List.map CP.afv eargs)))
         else [],[]
     | _ -> [],[]
@@ -2189,7 +2189,7 @@ let get_prog_vars_x prog_hps rhs_unmatch proving_kind =
 let get_prog_vars prog_hps rhs_unmatch proving_kind =
   let pr1 = !CP.print_svl in
   let pr2 = Cprinter.string_of_h_formula in
-  let pr3 s= s (* Log.string_of_sleek_proving_kind *) in
+  let pr3 =  Others.string_of_proving_kind in
   Debug.no_3 "get_prog_vars" pr1 pr2 pr3 (pr_pair pr1 pr1)
       (fun _ _ _ -> get_prog_vars_x prog_hps rhs_unmatch proving_kind) prog_hps rhs_unmatch proving_kind
 
@@ -2409,8 +2409,8 @@ let generate_constraints prog es rhs lhs_b ass_guard rhs_b1 defined_hps
       let rargs = List.fold_left (fun ls (_,eargs,_)->
       ls@(List.fold_left List.append [] (List.map CP.afv eargs))) [] r_hrels in
       if (CP.intersect_svl (CF.h_fv guard) (CP.diff_svl rargs largs) = []) then
-        None
-      else if (CP.intersect_svl (CF.h_fv guard) (CP.intersect_svl (CF.fv (CF.Base lhs_b)) (CF.fv (CF.Base rhs_b))) = []) then
+       (*  None *)
+      (* else if (CP.intersect_svl (CF.h_fv guard) (CP.intersect_svl (CF.fv (CF.Base lhs_b)) (CF.fv (CF.Base rhs_b))) = []) then *)
         None
       else
         let l_hd_svl = List.map (fun hd -> hd.CF.h_formula_data_node) l_hds in
@@ -2631,7 +2631,7 @@ let infer_collect_hp_rel_x prog (es:entail_state) rhs0 rhs_rest (rhs_h_matched_s
           | _ -> report_error pos "Expect a node or a hrel"
                 (* CF.get_ptr_from_data_w_hrel *)
         in
-        let post_hps,prog_vars = get_prog_vars es.CF.es_infer_vars_sel_hp_rel rhs proving_kind#string_of in
+        let post_hps,prog_vars = get_prog_vars es.CF.es_infer_vars_sel_hp_rel rhs proving_kind#top in
         (********** BASIC INFO LHS, RHS **********)
         let l_hpargs = CF.get_HRels lhs_b0.CF.formula_base_heap in
         let l_non_infer_hps = CP.diff_svl lhrs ivs in
