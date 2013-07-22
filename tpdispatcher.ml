@@ -2056,6 +2056,7 @@ let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (old_imp_no : stri
   let imp_no = (string_of_int !proof_no) in
   (* let count_inner = ref 0 in *)
   let ante_inner = ref [] in
+  let conseq_inner = ref [] in
   (* let tstart = Gen.Profiling.get_time () in		 *)
   Debug.devel_zprint (lazy ("IMP #" ^ imp_no)) no_pos;  
   Debug.devel_zprint (lazy ("imply_timeout: ante: " ^ (!print_pure ante0))) no_pos;
@@ -2112,6 +2113,7 @@ let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (old_imp_no : stri
 	  let pairs = List.concat pairs in
 	  let pairs_length = List.length pairs in
           let _ = (ante_inner := List.map fst pairs) in
+          let _ = (conseq_inner := List.map snd pairs) in
 	  let imp_sub_no = ref 0 in
           (* let _ = (let _ = print_string("\n!!!!!!! bef\n") in flush stdout ;) in *)
 	  let fold_fun (res1,res2,res3) (ante, conseq) =
@@ -2146,6 +2148,7 @@ let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (old_imp_no : stri
   (* let tstop = Gen.Profiling.get_time () in *)
   (* let _ = print_string ("length of pairs: "^(string_of_int (List.length !ante_inner))) in *)
   let ante0 = CP.join_conjunctions !ante_inner in
+  let conseq0 = CP.join_conjunctions !conseq_inner in
   let _= add_proof_log !cache_status old_imp_no imp_no (string_of_prover !pure_tp) (PT_IMPLY (ante0, conseq0)) (Log.logtime # last_time) (PR_BOOL (match final_res with | r,_,_ -> r)) in
   final_res
 ;;

@@ -171,8 +171,10 @@ ISSUES
 ------
 * Why disj conseq?
    conseq:  ((AndList[ ["s"]:MpX={}] ) | (AndList[ ["n"]:prev=sentinel_1000] ))
-* why no labels on LHS?
+-> The disj is due to base case guard. It is checked during folding for base case.
 
+* why no labels on LHS?
+->  it was a problem with printing, i fixed it in tpdispatcher.ml 
 
  id: 242; prover: MONA; TIME: 5.032313; loc: schorr-waite-list-lbl_ss_43:2_43:26; kind: PRE_REC
  Imply: ante: ((cur=cur_1007 & prev=prev_1006 & sentinel=sentinel' & n_42'=nxt_997 & 
