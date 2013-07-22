@@ -1657,7 +1657,7 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
         if (is_array_constraint ante) || (is_array_constraint conseq) then
           ((* called_prover :="smtsolver "; *) z3_imply ante conseq)
         else
-          (called_prover :="omega "; omega_imply ante conseq)
+          ((*called_prover :="omega ";*) omega_imply ante conseq)
     | Mona | MonaH -> mona_imply ante_w conseq_s 
     | CO -> (
         let result1 = Cvc3.imply_helper_separate_process ante conseq imp_no in
