@@ -7736,7 +7736,7 @@ and imply_mix_formula i ante_m0 ante_m1 conseq_m imp_no memset =
   let pr2 = pr_list Cprinter.string_of_pure_formula in
   let prr ((r,_,_),sp) = (pr_pair string_of_bool (pr_option (pr_pair pr2 pr2))) (r,sp) in
   let pr = Cprinter.string_of_mix_formula in
-  Debug.no_4_num i "imply_mix_formula" pr
+  Debug.ho_4_num i "imply_mix_formula" pr
       (pr_option pr) pr Cprinter.string_of_mem_formula
       prr
       (fun _ _ _ _ -> imply_mix_formula_x ante_m0 new_ante_m1 conseq_m imp_no memset)

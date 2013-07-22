@@ -1890,7 +1890,7 @@ let tp_imply ante conseq old_imp_no timeout process =
 let tp_imply ante conseq imp_no timeout process =	
   let pr1 = Cprinter.string_of_pure_formula in
   let prout x = (last_prover())^": "^(string_of_bool x) in
-  Debug.ho_2 "tp_imply" 
+  Debug.no_2 "tp_imply" 
       (add_str "ante" pr1) 
       (add_str "conseq" pr1) 
       (add_str "solver" prout) (fun _ _ -> tp_imply ante conseq imp_no timeout process) ante conseq
@@ -2190,7 +2190,7 @@ let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (imp_no : string) 
 	  : bool*(formula_label option * formula_label option )list * (formula_label option) (*result+successfull matches+ possible fail*)
   = let pf = Cprinter.string_of_pure_formula in
   (*let _ = print_string "dubios!!\n" in*)
-  Debug.no_2 "imply_timeout 2" pf pf (fun (b,_,_) -> string_of_bool b)
+  Debug.ho_2 "imply_timeout 2" pf pf (fun (b,_,_) -> string_of_bool b)
       (fun a c -> imply_timeout a c imp_no timeout process) ante0 conseq0
 
 
