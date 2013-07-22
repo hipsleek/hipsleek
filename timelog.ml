@@ -4,12 +4,12 @@ open Globals
 class timelog =
 object (self)
   val time_stk = new Gen.stack_noexc ("dummy",0.) (pr_pair pr_id string_of_float) (==)
-  val hist_stk = new Gen.stack_filter (pr_pair pr_id string_of_float) (==) 
-    (fun (s,x) ->  s="kill" || x>=0.5 )
+  val hist_stk = new Gen.stack_pr (pr_pair pr_id string_of_float) (==) 
+    (* (fun (s,x) ->  s="kill" || x>=0.5 ) *)
   val stk_t = new Gen.stack_noexc 0. string_of_float (==)
   val mutable last_time = 0. 
   val mutable timer_val = None
-  method print_timer = "unsure"
+  (* method print_timer = "unsure" *)
     (* add_str "timer status" (pr_pair string_of_float (pr_option string_of_int)) (timer,timer_exc) *)
   method timer_start s =
     begin
@@ -47,11 +47,14 @@ object (self)
       last_time <- tt ; tt
     end
   method dump = 
-    let pr = pr_pair (add_str "num" string_of_int) 
-      (add_str "selected(>0.5s)" pr_id) in
+    let prL = (pr_list (fun (_,f) -> string_of_float f)) in
     let c = hist_stk # len in
-    Debug.info_hprint (add_str "time_log" pr) 
-        (c,hist_stk # string_of_reverse_log_filter) no_pos
+    let ls = List.rev (hist_stk # get_stk) in
+    let (big,small) = List.partition (fun (_,x) -> x>=0.5) ls in
+    let b = List.fold_left (fun c (_,x1) -> c +. x1) 0. big in 
+    let s= List.fold_left (fun c (_,x1) -> c +. x1)  0. small in 
+    Debug.info_hprint (add_str "time_log (small)" (pr_pair string_of_float string_of_int )) (s,List.length small) no_pos;
+    Debug.info_hprint (add_str "log (>.5s)" (pr_pair string_of_float prL)) (b,big) no_pos
   method get_last_time = last_time
 end;;
 

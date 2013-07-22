@@ -1873,7 +1873,7 @@ let tp_imply ante conseq imp_no timeout process =
 let tp_imply ante conseq imp_no timeout process =	
   let pr1 = Cprinter.string_of_pure_formula in
   let prout x = string_of_bool x in
-  Debug.no_2_loop "tp_imply" 
+  Debug.ho_2 "tp_imply" 
       (add_str "ante" pr1) 
       (add_str "conseq" pr1) 
       (add_str ("solver:"^(!called_prover)) prout) (fun _ _ -> tp_imply ante conseq imp_no timeout process) ante conseq
@@ -2153,7 +2153,7 @@ let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (old_imp_no : stri
   (* let _ = print_string ("length of pairs: "^(string_of_int (List.length !ante_inner))) in *)
   let ante0 = CP.join_conjunctions !ante_inner in
   let conseq0 = CP.join_conjunctions !conseq_inner in
-  let _= add_proof_log !cache_status old_imp_no imp_no (string_of_prover !pure_tp) (PT_IMPLY (ante0, conseq0)) (Timelog.logtime # get_last_time) (PR_BOOL (match final_res with | r,_,_ -> r)) in
+  let _= add_proof_log !cache_status old_imp_no imp_no (string_of_prover !pure_tp) cmd (* (PT_IMPLY (ante0, conseq0)) *) (Timelog.logtime # get_last_time) (PR_BOOL (match final_res with | r,_,_ -> r)) in
   final_res
 ;;
 
