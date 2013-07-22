@@ -411,7 +411,7 @@ let split_constr prog cond_path constrs post_hps prog_vars unk_map unk_hps link_
       ([n_cs],total_unk_map,[])
   in
   let split_one cs total_unk_map =
-    let pr1 = Cprinter.string_of_hprel_short in
+    (* let pr1 = Cprinter.string_of_hprel_short in *)
     (* let pr2 = (pr_list (pr_pair (pr_pair !CP.print_sv (pr_list string_of_int)) CP.string_of_xpure_view)) in *)
     let res = split_one cs total_unk_map in
     let (new_cs,new_umap,link_hpargs) = res in
@@ -1594,7 +1594,7 @@ let rec infer_shapes_init_pre_x prog (constrs0: CF.hprel list) callee_hps non_pt
   let unk_hps1 = (List.map fst unk_hpargs1) in
   let _ = DD.binfo_pprint ">>>>>> pre-predicates: step pre-5: group & simpl impl<<<<<<" no_pos in
   let pr_par_defs,rem_constr1 = get_par_defs_pre constrs0 in
-  let pr1 = pr_list_ln  Cprinter.string_of_hprel_short in
+  (* let pr1 = pr_list_ln  Cprinter.string_of_hprel_short in *)
   (* if rem_constr1 !=[] then *)
   (*   DD.binfo_pprint ("pre-obligation:\n" ^ (pr1 rem_constr1)) no_pos; *)
   (* let _ = DD.binfo_pprint ">>>>>> pre-predicates: step pre-6: combine<<<<<<" no_pos in *)
@@ -2118,7 +2118,7 @@ let infer_shapes_new iprog prog proc_name (hp_constrs: CF.hprel list) sel_hp_rel
   (* let pr4 = pr_list (pr_pair (pr_list (pr_pair !CP.print_sv string_of_int)) CP.string_of_xpure_view) in *)
   let pr4 = (pr_list (pr_pair (pr_pair !CP.print_sv (pr_list string_of_int)) CP.string_of_xpure_view)) in
   let pr5 = pr_list (pr_pair !CP.print_sv !CP.print_svl) in
-  let pr6 = (pr_triple CF.string_of_cond_path pr2 pr3) in
+  (* let pr6 = (pr_triple CF.string_of_cond_path pr2 pr3) in *)
   let _ = if !Globals.print_heap_pred_decl then
     let all_hps = CF.get_hp_rel_name_assumption_set hp_constrs in
     let all_hp_decls = List.map (fun hp ->

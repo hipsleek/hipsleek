@@ -99,19 +99,19 @@ let search_pred_4_equal_x constrs post_hps frozen_hps=
     | Some _ -> true
   in
   let pr1 = Cprinter.string_of_hprel_short in
-  let rec partition_equal (cand_equal, complex_non_rec, complex_hps) ls_pre=
+  let rec partition_equal (cand_equal, complex_nrec_ndep, complex_non_rec, complex_hps) ls_pre=
    match ls_pre with
-     | [] -> (cand_equal, complex_non_rec, complex_hps)
+     | [] -> (cand_equal, complex_nrec_ndep, complex_non_rec, complex_hps)
      | (hp0, cs0, dep_hps0)::rest ->
            (* let _ = Debug.info_pprint ("   cs0: " ^ (pr1 cs0)) no_pos in *)
            let _ = Debug.ninfo_pprint ("   hp0: " ^ (!CP.print_sv hp0)) no_pos in
-           let is_rec, is_guard ,grp,rest1 = List.fold_left (fun (r_rec,r_guard, ls1,ls2) (hp1,cs1,dep_hps1) ->
+           let is_rec, is_guard, dep_hps, grp,rest1 = List.fold_left (fun (r_rec,r_guard, r_deps, ls1,ls2) (hp1,cs1,dep_hps1) ->
                (* let _ = Debug.info_pprint ("   cs1: " ^ (pr1 cs1)) no_pos in *)
                if CP.eq_spec_var hp1 hp0 then
-                 (r_rec || CP.mem_svl hp1 dep_hps1, r_guard || ( check_is_guard cs1), ls1@[cs1], ls2)
+                 (r_rec || CP.mem_svl hp1 dep_hps1, r_guard || ( check_is_guard cs1), r_deps@dep_hps1,  ls1@[cs1], ls2)
                else
-                 (r_rec, r_guard, ls1, ls2@[(hp1,cs1,dep_hps1)])
-           ) (CP.mem_svl hp0 dep_hps0,  check_is_guard cs0, [],[]) rest in
+                 (r_rec, r_guard,r_deps, ls1, ls2@[(hp1,cs1,dep_hps1)])
+           ) (CP.mem_svl hp0 dep_hps0,  check_is_guard cs0, dep_hps0, [],[]) rest in
            let grp1 = (cs0::grp) in
            (* let _ = Debug.info_pprint ("   is_guard: " ^ (string_of_bool is_guard)) no_pos in *)
            (* let _ = Debug.info_pprint ("   is_rec: " ^ (string_of_bool is_rec)) no_pos in *)
@@ -119,44 +119,39 @@ let search_pred_4_equal_x constrs post_hps frozen_hps=
            let n_res = if List.length grp1 > 1 then
              if not is_rec && is_guard then
                (* let _ = Debug.info_pprint ("   0: ") no_pos in *)
-               (cand_equal, complex_non_rec@[(hp0,grp1)], complex_hps)
+               (cand_equal, complex_nrec_ndep, complex_non_rec@[(hp0,grp1)], complex_hps)
+             else if  not is_rec && dep_hps = [] then
+               (cand_equal, complex_nrec_ndep@[(hp0,grp1)], complex_non_rec, complex_hps)
              else
                (* let _ = Debug.info_pprint ("   1: ") no_pos in *)
-               (cand_equal, complex_non_rec, complex_hps@[hp0])
+               (cand_equal, complex_nrec_ndep, complex_non_rec, complex_hps@[hp0])
            else
              if is_guard then
                (* let _ = Debug.info_pprint ("   2: ") no_pos in *)
-               (cand_equal, complex_non_rec@[(hp0,grp1)], complex_hps)
+               (cand_equal, complex_nrec_ndep, complex_non_rec@[(hp0,grp1)], complex_hps)
              else if is_rec then
                (* let _ = Debug.info_pprint ("   3: ") no_pos in *)
-               (cand_equal, complex_non_rec, complex_hps@[hp0])
+               (cand_equal, complex_nrec_ndep, complex_non_rec, complex_hps@[hp0])
              else
                (* let _ = Debug.info_pprint ("   4: ") no_pos in *)
-               (cand_equal@[(hp0,cs0, dep_hps0)], complex_non_rec, complex_hps)
+               (cand_equal@[(hp0,cs0, dep_hps0)],complex_nrec_ndep, complex_non_rec, complex_hps)
            in
            partition_equal n_res rest1
   in
   (*tupled_hps: will be processed as pre-oblg *)
   let pr_pre_preds, _, tupled_hps = List.fold_left partition_pre_preds ([],[],[]) constrs in
-  let pre_preds_cand_equal0, complex_nonrec_hps, complex_hps = partition_equal ([],[],[]) pr_pre_preds in
+  let pre_preds_cand_equal0, complex_nrec_ndep, complex_nonrec_guard_grps, complex_hps =
+    partition_equal ([],[],[],[]) pr_pre_preds
+  in
   let pr2 (a,_,_) = !CP.print_sv a in
   let _ = Debug.ninfo_pprint ("    pre_preds_cand_equal: " ^ ((pr_list pr2) pre_preds_cand_equal0)) no_pos in
   (*filter the tupled_hps *)
   let pre_preds_cand_equal1 = List.filter (fun (hp,_,_) -> not (CP.mem_svl hp tupled_hps)) pre_preds_cand_equal0 in
   (*filter frozen candidates that depends on others. they will be synthesized next round.*)
   (* let cand_equal_hps = List.map fst3 pre_preds_cand_equal1 in *)
-  let nonrec_complex_guard_hps = List.map fst complex_nonrec_hps in
-  (* let pre_preds_4_equal = List.fold_left (fun res (hp, cs, dep_hps) -> *)
-  (*     let n_res= *)
-  (*       if CP.intersect_svl dep_hps cand_equal_hps = [] then *)
-  (*       [(hp,cs)] *)
-  (*       else [] *)
-  (*     in *)
-  (*     res@n_res *)
-  (* ) [] pre_preds_cand_equal1 *)
-  (* in *)
+  let nonrec_complex_guard_hps = List.map fst complex_nonrec_guard_grps in
   (*remove one that depends on the guard, the guard should go first*)
-  let _ = Debug.ninfo_pprint ("    nonrec_complex_guard_hps: " ^ (!CP.print_svl nonrec_complex_guard_hps)) no_pos in
+  let _ = Debug.info_pprint ("    nonrec_complex_guard_hps: " ^ (!CP.print_svl nonrec_complex_guard_hps)) no_pos in
   let pre_preds_4_equal = List.fold_left (fun ls_cand (hp,cs,deps) ->
       if CP.intersect_svl deps nonrec_complex_guard_hps = [] then
         ls_cand@[(hp,cs)]
@@ -166,22 +161,25 @@ let search_pred_4_equal_x constrs post_hps frozen_hps=
   let pre_preds_4_equal1 = (* if pre_preds_4_equal = [] && pre_preds_cand_equal1 <> [] then *)
     if  pre_preds_4_equal  <> [] then
     ranking_frozen_mutrec_preds pre_preds_cand_equal1
-    (* let pre_preds_4_equal_w_size = List.map (fun (hp,cs,deps) -> (hp,cs,deps, CF.get_h_size_f cs.CF.hprel_rhs)) *)
-    (*   pre_preds_cand_equal1 in *)
-    (* let hp,cs,_,_ = List.fold_left (fun (hp0,cs0,deps0, s0) (hp1,cs1,deps1, s1) -> *)
-    (*     if s1<s0 then (hp1,cs1,deps1, s1) else (hp0,cs0,deps0, s0) *)
-    (* ) (List.hd pre_preds_4_equal_w_size) (List.tl pre_preds_4_equal_w_size) in *)
-    (* [(hp,cs)] *)
     else []
   in
+  (*process_complex, nonrec, non depend on others
+    testcases: check-dll.ss; check-sorted
+  *)
   let pre_preds_4_equal2 = if pre_preds_4_equal1 = [] then
-    (*process_complex, nonrec*)
-    match complex_nonrec_hps with
+    match complex_nrec_ndep with
       | (hp,constrs)::_ ->  [(hp,constrs)]
       | _ -> []
   else pre_preds_4_equal1
   in
-  (pre_preds_4_equal2, complex_hps)
+  let pre_preds_4_equal3 = if pre_preds_4_equal2 = [] then
+    (*process_complex, nonrec*)
+    match complex_nonrec_guard_grps with
+      | (hp,constrs)::_ ->  [(hp,constrs)]
+      | _ -> []
+  else pre_preds_4_equal2
+  in
+  (pre_preds_4_equal3, complex_hps)
 
 let search_pred_4_equal constrs post_hps frozen_hps=
   let pr1 = Cprinter.string_of_hprel_short in
