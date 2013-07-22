@@ -171,6 +171,8 @@ ISSUES
 ------
 * Why disj conseq?
    conseq:  ((AndList[ ["s"]:MpX={}] ) | (AndList[ ["n"]:prev=sentinel_1000] ))
+-> The disj is due to base case guard. It is checked during folding for base case.
+
 * why no labels on LHS?
 
 
