@@ -171,7 +171,9 @@ ISSUES
 ------
 * Why disj conseq?
    conseq:  ((AndList[ ["s"]:MpX={}] ) | (AndList[ ["n"]:prev=sentinel_1000] ))
--> The disj is due to base case guard. It is checked during folding for base case.
+-> The disj is due to base case guard. It is checked during unfolding for base case.
+in  do_base_case_unfold_only_x (solver.ml)               
+	let (nctx,b) = sem_imply_add prog is_folding  fold_ctx bc1 !enable_syn_base_case in
 
 * why no labels on LHS?
 ->  it was a problem with printing, i fixed it in tpdispatcher.ml 
