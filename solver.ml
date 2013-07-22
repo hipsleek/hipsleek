@@ -7211,42 +7211,43 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
                   | Some (es,p),[(h1,h2,h3)] -> Some p,r2,h2,[es],true
                   | _,_ -> report_error pos "Length of relational assumption list > 1"
                 )
-              | Some (split1,split2) -> 
+              | Some (split1,_)(* ,split2 *) -> 
                     (* Why is split-2 true? lab3.slk *)
                     (* !!! split-1:[ AndList[ []:0<=n ; ["n"]:0<n ; ["s"]:n=0] ] *)
                     (* !!! split-2:[ true] *)
                     let pr = Cprinter.string_of_pure_formula in
-                    let _ = Debug.tinfo_hprint (add_str "split-1" (pr_list pr)) split1 no_pos in
-                    let _ = Debug.tinfo_hprint (add_str "split-2" (pr_list pr)) split2 no_pos in
-                    let no_split2 = match split2 with
-                      | [f] -> CP.isConstTrue f 
-                      | [] -> true 
-                      | _ -> false
-                    in
-                    let _ = Debug.tinfo_hprint (add_str "no_split2" (string_of_bool)) no_split2 no_pos in
+                    let _ = Debug.info_hprint (add_str "split-1" (pr_list pr)) split1 no_pos in
+                    (* let _ = Debug.info_hprint (add_str "split-2" (pr_list pr)) split2 no_pos in *)
+                    (* let no_split2 = false in *)
+                    (* let no_split2 = match split2 with *)
+                    (*   | [f] -> CP.isConstTrue f  *)
+                    (*   | [] -> false  *)
+                    (*   | _ -> false *)
+                    (* in *)
+                    (* let _ = Debug.tinfo_hprint (add_str "no_split2" (string_of_bool)) no_split2 no_pos in *)
                     let split_mix1 = List.map MCP.mix_of_pure split1 in
-                    let split_mix2 = List.map MCP.mix_of_pure split2 in
-                    let split_mix3 = if List.length split1 = List.length split2
-                    then split_mix1 else split_mix2 in
+                    (* let split_mix2 = List.map MCP.mix_of_pure split2 in *)
+                    (* let split_mix2a =  *)
+                    (*   if List.length split1 = List.length split2 then split_mix2 else split_mix1 in *)
                     (* why do we put same split_mix2; what happen to the use of XPure0? *)
-                    let res = List.map2 (fun f f2 -> 
+                    let res = List.map (fun lhs_xp -> 
                     (* TODO: lhs_wo_heap *)
-                        let lhs_wo_heap = f in
-                        let r1,r2,r3 = Inf.infer_pure_m 2 unk_heaps estate f f2 lhs_wo_heap split_conseq pos in
+                        let lhs_wo_heap = lhs_xp in
+                        let r1,r2,r3 = Inf.infer_pure_m 2 unk_heaps estate lhs_xp lhs_xp lhs_wo_heap split_conseq pos in
                         let estate_f = {estate with es_formula = 
                                 (match estate.es_formula with
-                                  | Base b -> CF.mkBase_simp b.formula_base_heap f
+                                  | Base b -> CF.mkBase_simp b.formula_base_heap lhs_xp
                                   | _ -> report_error pos "infer_pure_m: Not supported")
                         } 
                         in
                         (* let estate_f = {estate with es_formula = mkBase_simp HEmp f} in*)
                         (match r1,r3 with 
-                          | None,[] -> None,r2,[],[estate_f],false,f
-                          | None,[(h1,h2,h3)] -> None,r2,h2,[h1],h3,f
-                          | Some(es,p),[] -> Some p,r2,[],[es],true,f
-                          | Some(es,p),[(h1,h2,h3)] -> Some p,r2,h2,[es],true,f
+                          | None,[] -> None,r2,[],[estate_f],false,lhs_xp
+                          | None,[(h1,h2,h3)] -> None,r2,h2,[h1],h3,lhs_xp
+                          | Some(es,p),[] -> Some p,r2,[],[es],true,lhs_xp
+                          | Some(es,p),[(h1,h2,h3)] -> Some p,r2,h2,[es],true,lhs_xp
                           | _,_ -> report_error pos "Length of relational assumption list > 1"
-                        )) split_mix2 split_mix3 in
+                        )) split_mix1 in
                     let or_option (o1,o2) = (match o1,o2 with
                       | None,_ -> o2
                       | _,None -> o1
@@ -7263,8 +7264,8 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
                     let is_fail = List.exists (fun (neg,pure,rel,_,_,ante) ->
                         match neg,pure,rel with
                           | None,None,[] ->
-                                if no_split2 then true (* skip imply if split-2 is trivially true? *)
-                                else
+                                (* if no_split2 then true (\* skip imply if split-2 is trivially true? *\) *)
+                                (* else *)
                                   (fun ((a,_,_),_) -> not a)
                                       (* WN : inefficient to use same antecedent *)
                                       (imply_mix_formula 0 ante ante split_conseq imp_no memset)
@@ -7732,10 +7733,12 @@ and solve_ineq_b_formula sem_eq memset conseq : Cpure.formula =
 *)
 and imply_mix_formula i ante_m0 ante_m1 conseq_m imp_no memset =
   let new_ante_m1 = if ante_m0==ante_m1 then None else Some ante_m1 in
+  let pr2 = pr_list Cprinter.string_of_pure_formula in
+  let prr ((r,_,_),sp) = (pr_pair string_of_bool (pr_option (pr_pair pr2 pr2))) (r,sp) in
   let pr = Cprinter.string_of_mix_formula in
   Debug.no_4_num i "imply_mix_formula" pr
       (pr_option pr) pr Cprinter.string_of_mem_formula
-      (fun ((r,_,_),_) -> string_of_bool r)
+      prr
       (fun _ _ _ _ -> imply_mix_formula_x ante_m0 new_ante_m1 conseq_m imp_no memset)
       ante_m0 new_ante_m1 conseq_m memset
 (*
@@ -7774,35 +7777,35 @@ and imply_mix_formula_x ante_m0 ante_m1 conseq_m imp_no memset =
     | MCP.OnePF a0, MCP.OnePF c ->
           begin
             DD.devel_pprint ">>>>>> imply_mix_formula: pure <<<<<<" no_pos;
-            let a1 = match ante_m1 with
-              | Some (MCP.OnePF a1) -> a1
-              | None -> CP.mkTrue no_pos 
-              | _ -> report_error no_pos ("imply_mix_formula: mix_formula mismatch")
-            in
-            let a0l,a1l = 
-              if CP.no_andl a0 && CP.no_andl a1 && !Globals.deep_split_disjuncts
+            let f a0 = 
+              if CP.no_andl a0 && !Globals.deep_split_disjuncts
               then 
                 let a0 = CP.drop_exists a0 in 
-              	(List.filter CP.is_sat_eq_ineq (CP.split_disjunctions_deep a0),
-                List.filter CP.is_sat_eq_ineq (CP.split_disjunctions_deep a1))                    
-    	      else 
-                if CP.no_andl a0 && CP.no_andl a1 
-                then 
-                  (CP.split_disjunctions a0,CP.split_disjunctions a1) 
+              	List.filter CP.is_sat_eq_ineq (CP.split_disjunctions_deep a0)
+    	      else
+                if CP.no_andl a0  
+                then
+                  (* let _ = print_endline "no deep split" in *)
+                  CP.split_disjunctions a0 
                 else
                   (* why andl need to be handled in a special way *)
 	          let r = ref (-999) in
 	          let is_sat f = CP.is_sat_eq_ineq f (*TP.is_sat_sub_no 6 f r*) in
-	          let a0l = List.filter is_sat (CP.split_disjunctions a0) in
-	          let a1l = List.filter is_sat (CP.split_disjunctions a1) in 
-	          (a0l,a1l) 
+	          let a0l = List.filter is_sat (CP.split_disjunctions a0) in a0l
             in
+            let a0l = f a0 in
+            let a1l = match ante_m1 with
+              | Some (MCP.OnePF a1) -> f a1
+              | None -> []
+              | _ -> report_error no_pos ("imply_mix_formula: mix_formula mismatch")
+            in
+            let extra_step = if List.length a0l>1 then Some (a0l,a1l) else None in
             let pr = Cprinter.string_of_pure_formula in 
             DD.tinfo_hprint (add_str "ante-a0l" (pr_list pr)) a0l no_pos;
             DD.tinfo_hprint (add_str "ante-a1l" (pr_list pr)) a1l no_pos;
             let new_rhs = if !Globals.split_rhs_flag then (CP.split_conjunctions c) else [c] in
             let _ = CP.store_tp_is_sat := (fun f -> TP.is_sat 77 f "store_tp_is_sat" true) in
-	    (CP.imply_conj_orig (ante_m1==None) a0l a1l new_rhs (TP.imply_one 29) imp_no, Some (a0l,a1l))
+	    (CP.imply_conj_orig (ante_m1==None) a0l a1l new_rhs (TP.imply_one 29) imp_no, extra_step)
                 (* original code	        
 	               CP.imply_conj_orig
                    (CP.split_disjunctions a0) 
