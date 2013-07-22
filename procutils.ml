@@ -57,26 +57,26 @@ struct
 
   (*checks for timeout when calling the fnc function (fnc has one argument - arg). If fnc runs for more than tsec seconds, a Timeout exception will be raised. 
     Otherwise, this method returns the result given by fnc. *)
-  let maybe_raise_timeout (fnc: 'a -> 'b) (arg: 'a) (tsec:float) : 'b =
+
+  let maybe_raise_timeout (fn: 'a -> 'b) (arg: 'a) (limit:float) : 'b =
     let old_handler = Sys.signal Sys.sigalrm sigalrm_handler in
     let reset_sigalrm () = Sys.set_signal Sys.sigalrm old_handler in
-    let _ = set_timer tsec in
+    let _ = set_timer limit in
     try
-      let _ = Timelog.logtime # timer_start tsec in
-      let answ = fnc arg in
+      let _ = Timelog.logtime # timer_start limit in
+      let res = fn arg in
       let x = Unix.getitimer Unix.ITIMER_REAL in
-      let nt = tsec -. x.Unix.it_value in
+      (* let nt = limit -. x.Unix.it_value in *)
+      let nt = limit -. x.Unix.it_value in
       let _ = Timelog.logtime # timer_stop nt in
-      (* let prf = string_of_float in *)
-      (* if nt>0.5 then *)
-      (*   Debug.info_hprint (add_str "timer" prf) nt no_pos; *)
       set_timer 0.0;
       reset_sigalrm ();
-      answ
+      res
     with e ->
         begin
+          let _ = Timelog.logtime # timer_stop limit in
           Debug.info_pprint (Timelog.logtime # print_timer)  no_pos;
-          Debug.info_pprint (Printexc.to_string e) no_pos;
+          Debug.info_pprint ("TIMEOUT"^(Printexc.to_string e)) no_pos;
           raise e
         end
 
