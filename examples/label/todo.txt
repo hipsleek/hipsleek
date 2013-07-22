@@ -221,6 +221,25 @@ exists(Mnxt_1043:Mnxt_998=union(Mnxt_1043,{nxt_997})) & MpX={}))
  res: false
 
 ============================================================
+# lab5a.slk
+
+checkentail  AndList("n":n>0; "s":n=0) |- 
+  (AndList("n":n>0; "s":n=0) | AndList("": n<0; "n":n>=0; "s":n=1)).
+print residue.
+
+Currently, the disjunct on RHS is not split. If we detect conseq
+is of form:
+
+  AndList(...) | AndList(..) | ..
+
+We should perform a labelling search on proving RHS, and terminate
+with the first successful proof.
+
+-------------------- 
+ id: 3; prover: OMEGA CALCULATOR; loc: _0:0_0:0; kind: Sleek_Entail(1)
+ Imply: ante: 0<n & n=0
+	     conseq:  ((0<n & n=0) | (n<0 & 0<=n & n=1))
+ res: true
 ============================================================
 ============================================================
 ============================================================
