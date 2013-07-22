@@ -2086,8 +2086,13 @@ let infer_shapes iprog prog proc_name (hp_constrs: CF.hprel list) sel_hp_rels se
   let pr5a = pr_list (pr_pair CF.string_of_cond_path (pr_pair !CP.print_sv !CP.print_svl)) in
   let _ = if !Globals.print_heap_pred_decl then
     let all_hps = CF.get_hp_rel_name_assumption_set hp_constrs in
-    let all_hp_decls = List.map (fun hp ->
-        Cast.look_up_hp_def_raw prog.Cast.prog_hp_decls (CP.name_of_spec_var hp)) all_hps in
+    let all_hp_decls = List.fold_left (fun ls hp ->
+        try
+          let hp_decl = Cast.look_up_hp_def_raw prog.Cast.prog_hp_decls (CP.name_of_spec_var hp) in
+          ls@[hp_decl]
+        with _ -> ls
+    ) [] all_hps
+    in
     if !Globals.sleek_flag then () 
     else
       let _ = print_endline "\nHeap Predicate Declarations" in

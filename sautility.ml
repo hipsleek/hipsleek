@@ -288,7 +288,7 @@ let add_raw_hp_rel prog is_pre unknown_args pos=
   let pr1 = pr_list (pr_pair !CP.print_sv print_arg_kind) in
   let pr2 = Cprinter.string_of_h_formula in
   let pr4 (hf,_) = pr2 hf in
-  Debug.ho_1 "add_raw_hp_rel" pr1 pr4
+  Debug.no_1 "add_raw_hp_rel" pr1 pr4
       (fun _ -> add_raw_hp_rel_x prog is_pre unknown_args pos) unknown_args
 
 
@@ -631,7 +631,6 @@ let get_root_ptrs prog hf0=
       | CF.ViewNode hv -> [hv.CF.h_formula_view_node]
       | CF.HRel (hp, eargs, _) ->
             let hp_name= CP.name_of_spec_var hp in
-             print_endline ("hp_name: " ^ (hp_name));
             let hprel = Cast.look_up_hp_def_raw prog.C.prog_hp_decls hp_name in
             let ss = List.combine eargs hprel.C.hp_vars_inst in
             let root_eargs = List.fold_left (fun ls (e,(_,i)) -> if i = I then ls@[e] else ls ) [] ss in
