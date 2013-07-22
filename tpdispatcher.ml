@@ -1230,18 +1230,18 @@ let tp_is_sat (f:CP.formula) (old_sat_no :string) =
   let sat_no = (string_of_int !proof_no) in
   Debug.devel_zprint (lazy ("SAT #" ^ sat_no)) no_pos;
   Debug.devel_zprint (lazy (!print_pure f)) no_pos;
-  let tstart = Gen.Profiling.get_time () in		
-  let fn_sat f = tp_is_sat_perm f sat_no in
+  (* let tstart = Gen.Profiling.get_time () in		 *)
+  let fn_sat f = (tp_is_sat_perm f) sat_no in
   let cmd = PT_SAT f in
   let _ = Log.last_proof_command # set cmd in
   let res = 
     (if !Globals.no_cache_formula then
-      fn_sat f
+      Log.logtime_wrapper "SAT-nocache" fn_sat f
     else
-      sat_cache fn_sat f)
+      (Log.logtime_wrapper "SAT" sat_cache fn_sat) f)
   in
-  let tstop = Gen.Profiling.get_time () in
-  let _= add_proof_log !cache_status old_sat_no sat_no (string_of_prover !pure_tp) cmd (tstop -. tstart) (PR_BOOL res) in 
+  (* let tstop = Gen.Profiling.get_time () in *)
+  let _= add_proof_log !cache_status old_sat_no sat_no (string_of_prover !pure_tp) cmd (Log.logtime # last_time) (PR_BOOL res) in 
   res
 
 let tp_is_sat f sat_no =
@@ -1349,6 +1349,8 @@ let simplify (f : CP.formula) : CP.formula =
             in CP.set_il_formula_with_dept_list r rel_vars_lst
           else r
         ) in   
+        (* TODO : add logtime for simplify *)
+        (* Why start/stop prver when interactive? *)
         let _= add_proof_log !cache_status simpl_no simpl_no (string_of_prover !pure_tp) cmd (tstop -. tstart) (PR_FORMULA res) in
         res
       with | _ -> 
@@ -2054,13 +2056,13 @@ let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (old_imp_no : stri
   let imp_no = (string_of_int !proof_no) in
   (* let count_inner = ref 0 in *)
   let ante_inner = ref [] in
-  let tstart = Gen.Profiling.get_time () in		
+  (* let tstart = Gen.Profiling.get_time () in		 *)
   Debug.devel_zprint (lazy ("IMP #" ^ imp_no)) no_pos;  
   Debug.devel_zprint (lazy ("imply_timeout: ante: " ^ (!print_pure ante0))) no_pos;
   Debug.devel_zprint (lazy ("imply_timeout: conseq: " ^ (!print_pure conseq0))) no_pos;
   let cmd = PT_IMPLY(ante0,conseq0) in
   let _ = Log.last_proof_command # set cmd in
-  let final_res=
+  let fn () =
     if !external_prover then 
       match Netprover.call_prover (Imply (ante0,conseq0)) with
           Some res -> (res,[],None)       
@@ -2140,10 +2142,11 @@ let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (old_imp_no : stri
 	  List.fold_left fold_fun (true,[],None) pairs
     end;
   in 
-  let tstop = Gen.Profiling.get_time () in
+  let final_res = Log.logtime_wrapper "imply" fn () in
+  (* let tstop = Gen.Profiling.get_time () in *)
   (* let _ = print_string ("length of pairs: "^(string_of_int (List.length !ante_inner))) in *)
   let ante0 = CP.join_conjunctions !ante_inner in
-  let _= add_proof_log !cache_status old_imp_no imp_no (string_of_prover !pure_tp) (PT_IMPLY (ante0, conseq0)) (tstop -. tstart) (PR_BOOL (match final_res with | r,_,_ -> r)) in
+  let _= add_proof_log !cache_status old_imp_no imp_no (string_of_prover !pure_tp) (PT_IMPLY (ante0, conseq0)) (Log.logtime # last_time) (PR_BOOL (match final_res with | r,_,_ -> r)) in
   final_res
 ;;
 

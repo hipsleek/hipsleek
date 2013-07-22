@@ -53,6 +53,7 @@ type sleek_log_entry = {
     sleek_proving_infer_vars: CP.spec_var list;
     sleek_proving_hprel_ass: CF.hprel list;
     sleek_proving_rel_ass: CP.infer_rel_type list;
+    sleek_time : float;
     sleek_proving_res : CF.list_context;
 }
 
@@ -96,6 +97,39 @@ let pr_f = Cprinter.string_of_formula
 
 let last_sleek_command = new store None (pr_option (pr_pair pr_f pr_f))
 
+class timelog =
+object (self)
+  val time_stk = new Gen.stack_noexc ("dummy",0.) (pr_pair pr_id string_of_float) (==)
+  val hist_stk = new Gen.stack_pr (pr_pair pr_id string_of_float) (==)
+  val mutable last_time = 0. 
+  method start_time s = 
+    let t = Gen.Profiling.get_time() 
+    in time_stk # push (s,t)
+  method stop_time = 
+    begin
+      let t = Gen.Profiling.get_time() in
+      let (s,st) = time_stk # pop_top in
+      let tt = t -. st in
+      let _ = hist_stk # push (s,tt) in
+      last_time <- tt ; tt
+    end
+  method dump = 
+    Debug.info_pprint ("all timelog: "^hist_stk # string_of) no_pos
+  method last_time = last_time
+end;;
+
+let logtime = new timelog
+
+let logtime_wrapper s f x =
+    try
+      let _ = logtime # start_time s in
+      let res = f x in
+      let _ = logtime # stop_time in
+      res
+    with e ->
+        let tt = logtime # stop_time in 
+        let _ = Debug.info_hprint (add_str "WARNING logtime exception" string_of_float) tt no_pos in
+        raise e
 
 let string_of_log_res lt r = 
   match r with
@@ -137,6 +171,7 @@ let pr_sleek_log_entry e=
   fmt_string ("id: " ^ (string_of_int e.sleek_proving_id));
   fmt_string ("; caller: " ^ (e.sleek_proving_caller));
   fmt_string ("; line: " ^ (Globals.line_number_of_pos e.sleek_proving_pos)) ;
+  if e.sleek_time > 0.5 then fmt_string ("; TIME: " ^ (string_of_float e.sleek_time));
   fmt_string ("; classic: " ^ (string_of_bool e.sleek_proving_classic_flag)) ;
   fmt_string ("; kind: " ^ (e.sleek_proving_kind)) ;
   fmt_string ("; hec_num: " ^ (string_of_int e.sleek_proving_hec)) ;
@@ -202,7 +237,7 @@ let proof_gt5_log_list = ref [] (*Logging proofs require more than 5 secs to be 
 
 (* TODO : add result into the log printing *)
 (* wrong order number indicates recursive invocations *)
-let add_new_sleek_logging_entry infer_vars classic_flag caller avoid hec slk_no ante conseq 
+let add_new_sleek_logging_entry stime infer_vars classic_flag caller avoid hec slk_no ante conseq 
       consumed_heap evars (result:CF.list_context) pos=
   (* let _ = Debug.info_pprint ("avoid: "^(string_of_bool avoid)) no_pos in *)
   if !Globals.sleek_logging_txt then
@@ -224,6 +259,7 @@ let add_new_sleek_logging_entry infer_vars classic_flag caller avoid hec slk_no 
         sleek_proving_c_heap = consumed_heap;
         sleek_proving_evars = evars;
         sleek_proving_infer_vars = infer_vars;
+        sleek_time = stime;
         sleek_proving_res = result;
     }
     in

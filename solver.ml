@@ -4843,7 +4843,7 @@ and early_pure_contra_detection_x hec_num prog estate conseq pos msg is_folding 
     (* let _ = hec_stack # push slk_no in *)
     (* let r = hec a b c in *)
     (* let _ = hec_stack # pop in *)
-    let _ = Log.add_new_sleek_logging_entry esv !Globals.do_classic_frame_rule caller (* avoid *) false hec_num slk_no estate.es_formula
+    let _ = Log.add_new_sleek_logging_entry 0. esv !Globals.do_classic_frame_rule caller (* avoid *) false hec_num slk_no estate.es_formula
       conseq es.es_heap es.es_evars result pos in
     () in
 
@@ -5094,7 +5094,7 @@ and log_contra_detect hec_num conseq result pos =
     let orig_ante = match es.es_orig_ante with
       | Some f -> f
       | None   -> es.es_formula in 
-    let _ = Log.add_new_sleek_logging_entry es.es_infer_vars !Globals.do_classic_frame_rule caller 
+    let _ = Log.add_new_sleek_logging_entry 0. es.es_infer_vars !Globals.do_classic_frame_rule caller 
       (* avoid *) false hec_num slk_no orig_ante conseq es.es_heap es.es_evars result pos in
     () in
   let f = wrap_proving_kind PK_Early_Contra_Detect (new_slk_log result) in
@@ -6286,10 +6286,13 @@ and heap_entail_conjunct hec_num (prog : prog_decl) (is_folding : bool)  (ctx0 :
     let slk_no = (* if avoid then 0 else *) Log.get_sleek_proving_id () in
     let _ = Log.last_sleek_command # set (Some (ante,conseq)) in
     let _ = hec_stack # push slk_no in
+    let tstart = Gen.Profiling.get_time () in		
     let r = hec a b c in
+    let tstop = Gen.Profiling.get_time () in
+    let ttime = tstop -. tstart in
     let _ = hec_stack # pop in
     let (lc,_) = r in
-    let _ = Log.add_new_sleek_logging_entry infer_vars !Globals.do_classic_frame_rule caller avoid hec_num slk_no ante conseq consumed_heap evars lc pos in
+    let _ = Log.add_new_sleek_logging_entry ttime infer_vars !Globals.do_classic_frame_rule caller avoid hec_num slk_no ante conseq consumed_heap evars lc pos in
     let _ = Debug.ninfo_hprint (add_str "avoid" string_of_bool) avoid no_pos in
     let _ = Debug.ninfo_hprint (add_str "slk no" string_of_int) slk_no no_pos in
     let _ = Debug.ninfo_hprint (add_str "lc" Cprinter.string_of_list_context) lc no_pos in

@@ -21,8 +21,8 @@ inv true;
 global node SENTINEL;
 
 void lscan(ref node cur, ref node prev, node sentinel)
-requires cur::lg<sentinel,Mc> * prev::ls<sentinel,Mp> & ["n": cur != null]
-ensures prev'::lg<sentinel,M> & ["n": cur'=sentinel; "s": M = union(Mc,Mp)];
+requires cur::lg<sentinel,Mc> * prev::ls<sentinel,MpX> & ["n": cur != null]
+ensures prev'::lg<sentinel,M> & ["n": cur'=sentinel; "s": M = union(Mc,MpX)];
 requires cur::ls<sentinel,Mc> * prev::lg<sentinel,Mp> & ["n": cur != sentinel]
 ensures prev'::lg<sentinel,M> & ["n": cur'=sentinel; "s": M = union(Mc,Mp)];
 {
@@ -40,6 +40,7 @@ ensures prev'::lg<sentinel,M> & ["n": cur'=sentinel; "s": M = union(Mc,Mp)];
       cur = prev;
       prev = null;
   }
+  dprint;
   lscan(cur,prev,sentinel);
 //dprint;
 }

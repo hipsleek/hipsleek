@@ -165,6 +165,57 @@ redundant.
  res: false
 
 ============================================================
+# schorr-waite-list-lbl.ss -tp om --en-logging-txt
+
+ISSUES
+------
+* Why disj conseq?
+   conseq:  ((AndList[ ["s"]:MpX={}] ) | (AndList[ ["n"]:prev=sentinel_1000] ))
+* why no labels on LHS?
+
+
+ id: 242; prover: MONA; TIME: 5.032313; loc: schorr-waite-list-lbl_ss_43:2_43:26; kind: PRE_REC
+ Imply: ante: ((cur=cur_1007 & prev=prev_1006 & sentinel=sentinel' & n_42'=nxt_997 & 
+next_33_1005=nxt_997 & cur_1007=prev_1018 & cur_1017=n_42' & 
+cur_1017!=sentinel' & !(v_bool_37_934') & cur_1017!=sentinel' & 
+!(v_bool_37_934') & cur_1017=null & v_bool_38_935' & cur_1017=null & 
+v_bool_38_935' & cur'=prev_1018 & prev'=null & cur_1007!=null & 
+s_995=sentinel_999 & cur_1007!=sentinel_999 & cur!=null & 
+sentinel=sentinel_999 & sentinel=sentinel_1000 & ((((s_995+1)<=nxt_997 & 
+nxt_997=null) | (nxt_997=null & nxt_997<=(s_995-1)))) & prev=sentinel_1000 & 
+Mc=union(Mnxt_998,{cur_1007}) & Mnxt_998={} & MpX={}) | (cur=cur_1007 & 
+prev=prev_1006 & sentinel=sentinel' & n_42'=nxt_997 & next_33_1005=nxt_997 & 
+cur_1007=prev_1018 & cur_1017=n_42' & cur_1017!=sentinel' & 
+!(v_bool_37_934') & cur_1017!=sentinel' & !(v_bool_37_934') & 
+cur_1017=null & v_bool_38_935' & cur_1017=null & v_bool_38_935' & 
+cur'=prev_1018 & prev'=null & nxt_997!=null & prev!=null & cur_1007!=null & 
+s_995=sentinel_999 & cur_1007!=sentinel_999 & cur!=null & 
+sentinel=sentinel_999 & sentinel=sentinel_1000 & ((s_995<nxt_997 | 
+nxt_997<s_995)) & ((sentinel_1000<prev | prev<sentinel_1000)) & 
+Mc=union(Mnxt_998,{cur_1007}) & exists(Mnxt_1046:Mnxt_998=union(Mnxt_1046,
+{nxt_997})) & exists(M1_1045:MpX=union({prev},M1_1045))) | (cur=cur_1007 & 
+prev=prev_1006 & sentinel=sentinel' & n_42'=nxt_997 & next_33_1005=nxt_997 & 
+cur_1007=prev_1018 & cur_1017=n_42' & cur_1017!=sentinel' & 
+!(v_bool_37_934') & cur_1017!=sentinel' & !(v_bool_37_934') & 
+cur_1017=null & v_bool_38_935' & cur_1017=null & v_bool_38_935' & 
+cur'=prev_1018 & prev'=null & prev!=null & cur_1007!=null & 
+s_995=sentinel_999 & cur_1007!=sentinel_999 & cur!=null & 
+sentinel=sentinel_999 & sentinel=sentinel_1000 & ((((s_995+1)<=nxt_997 & 
+nxt_997=null) | (nxt_997=null & nxt_997<=(s_995-1)))) & 
+((sentinel_1000<prev | prev<sentinel_1000)) & Mc=union(Mnxt_998,
+{cur_1007}) & Mnxt_998={} & exists(M1_1044:MpX=union({prev},M1_1044))) | 
+(cur=cur_1007 & prev=prev_1006 & sentinel=sentinel' & n_42'=nxt_997 & 
+next_33_1005=nxt_997 & cur_1007=prev_1018 & cur_1017=n_42' & 
+cur_1017!=sentinel' & !(v_bool_37_934') & cur_1017!=sentinel' & 
+!(v_bool_37_934') & cur_1017=null & v_bool_38_935' & cur_1017=null & 
+v_bool_38_935' & cur'=prev_1018 & prev'=null & nxt_997!=null & 
+cur_1007!=null & s_995=sentinel_999 & cur_1007!=sentinel_999 & cur!=null & 
+sentinel=sentinel_999 & sentinel=sentinel_1000 & ((s_995<nxt_997 | 
+nxt_997<s_995)) & prev=sentinel_1000 & Mc=union(Mnxt_998,{cur_1007}) & 
+exists(Mnxt_1043:Mnxt_998=union(Mnxt_1043,{nxt_997})) & MpX={}))
+	     conseq:  ((AndList[ ["s"]:MpX={}] ) | (AndList[ ["n"]:prev=sentinel_1000] ))
+ res: false
+
 ============================================================
 ============================================================
 ============================================================
