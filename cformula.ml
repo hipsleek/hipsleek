@@ -5351,7 +5351,19 @@ let remove_neqNull_redundant_andNOT_x f0 p=
             let null_ptrs1 = find_close null_ptrs eqs in
             let null_diff = CP.diff_svl null_ptrs1 node_ptrs in
             let np = CP.remove_redundant (CP.filter_var p null_diff) in
-            if CP.isConstTrue np then (CP.mkFalse (CP.pos_of_formula np)) else np
+            let pos = (CP.pos_of_formula np) in
+            if CP.isConstTrue np then (CP.mkFalse pos) else
+              (*!(a!=b /\ p) /\ a=b ===> a=b *)
+              let ps1 = CP.list_of_conjs np in
+              let neqs1_added, _ = List.partition CP.is_neq_exp ps1 in
+              let cur_eqs = MCP.ptr_equations_without_null fb.formula_base_pure in
+              if List.exists (fun (sv1,sv2) -> (List.exists (fun neq ->
+                  let svl = CP.fv neq in
+                  if List.length svl != 2 then false else
+                    CP.diff_svl [sv1;sv2] svl = [])) neqs1_added
+              ) cur_eqs then CP.mkFalse pos
+              else
+                np
       | Exists _ -> let _, base1 = split_quantifiers f in
         helper base1
       | Or orf -> report_error no_pos "CF.remove_neqNull_redundant_andNOT: should not OR"
