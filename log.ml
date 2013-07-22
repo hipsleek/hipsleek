@@ -100,7 +100,7 @@ let last_sleek_command = new store None (pr_option (pr_pair pr_f pr_f))
 class timelog =
 object (self)
   val time_stk = new Gen.stack_noexc ("dummy",0.) (pr_pair pr_id string_of_float) (==)
-  val hist_stk = new Gen.stack_pr (pr_pair pr_id string_of_float) (==)
+  val hist_stk = new Gen.stack_filter (pr_pair pr_id string_of_float) (==) (fun (_,x) ->  5.00 <= x )
   val mutable last_time = 0. 
   method start_time s = 
     let t = Gen.Profiling.get_time() 
@@ -114,7 +114,8 @@ object (self)
       last_time <- tt ; tt
     end
   method dump = 
-    Debug.info_pprint ("all timelog: "^hist_stk # string_of) no_pos
+    (* Debug.info_pprint ("all timelog: " ^ hist_stk # string_of) no_pos *)
+    Debug.info_pprint ("all timelog: " ^ hist_stk # string_of_reverse_log_filter) no_pos
   method last_time = last_time
 end;;
 

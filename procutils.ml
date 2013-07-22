@@ -153,8 +153,8 @@ struct
     flush log_file;
     close_pipes process;
     try 
-        Unix.kill process.pid killing_signal;
-        ignore (Unix.waitpid [] process.pid)
+        Unix.kill process.pid killing_signal
+        (* ignore (Unix.waitpid [] process.pid) *)
     with
       | e -> 
           (ignore e;

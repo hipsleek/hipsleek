@@ -1199,27 +1199,30 @@ let start () =
   Debug.no_1 "[mona.ml] start" pr pr start ()
 
 let start () =
+  (* Log.logtime_wrapper "start mona"  start ()  *)
   Gen.Profiling.do_1 "mona.start" start ()
 
 let stop () = 
   let killing_signal = 
     match !is_mona_running with
-      |true -> is_mona_running := false;  2
+      |true -> is_mona_running := false;  Sys.sigterm (* *)
       |false -> 9 in
   let num_tasks = !test_number - !last_test_number in
   let _ = Procutils.PrvComms.stop !log_all_flag log_all !process num_tasks killing_signal (fun () -> ()) in
   is_mona_running := false
 
 let stop () =
+  (* Log.logtime_wrapper "stop mona"  stop ()  *)
   Gen.Profiling.do_1 "mona.stop" stop ()
 
 let restart reason =
   if !is_mona_running then
 	(* let _ = print_string ("\n[mona.ml]: Mona is preparing to restart because of " ^ reason ^ "\nRestarting Mona ...\n"); flush stdout; in *)
-	let _ = print_endline ("\nMona is running ... "); flush stdout; in
-    Procutils.PrvComms.restart !log_all_flag log_all reason "mona" start stop
+	let _ = print_endline ("\nMona is running ... " ^ reason); flush stdout; in
+        Procutils.PrvComms.restart !log_all_flag log_all reason "mona" start stop
 
 let restart reason =
+  (* Log.logtime_wrapper "restart mona" restart reason  *)
   Gen.Profiling.do_1 "mona.restart" restart reason
 
 let check_if_mona_is_alive () : bool = 
