@@ -621,7 +621,7 @@ let combine_pdefs_pre_x prog unk_hps link_hps pr_pdefs=
             let n_cond = CP.remove_redundant cond in
             let nf = (CF.mkAnd_pure rhs (MCP.mix_of_pure n_cond) (CF.pos_of_formula rhs)) in
             if SAU.is_unsat nf then [] else
-            [(hp,args,unk_svl, n_cond, lhs, og, Some nf)]
+            [(hp,args,unk_svl, n_cond, lhs, og, Some (CF.simplify_pure_f nf))]
       | None -> report_error no_pos "sa2.combine_pdefs_pre: should not None 1"
   in
   let mkAnd_w_opt args (* ss *) of1 of2=
@@ -718,7 +718,7 @@ let combine_pdefs_pre_x prog unk_hps link_hps pr_pdefs=
           (* else cond1 *)
           cond1
         in
-        (Some nf, cond2)
+        (Some (CF.mkAnd_pure nf (MCP.mix_of_pure cond2) (CF.pos_of_formula nf)), cond2)
       | None -> None, cond1
     in
     let nolhs = match olhs with
@@ -785,7 +785,12 @@ let combine_pdefs_pre_x prog unk_hps link_hps pr_pdefs=
                     let fst_ls = List.map fst rem_pr_defs1 in
                     let pdefs = (* combine_helper_list fst_ls [] *)
                       List.fold_left (fun res_pdefs pdef ->
-                        res_pdefs@(List.fold_left (fun res pdef1 -> res@(combine_helper2 pdef pdef1)) [] res_pdefs)
+                          let pdefs = res_pdefs@(List.fold_left (fun res pdef1 ->
+                            let pdefs = res@(combine_helper2 pdef pdef1) in
+                            pdefs
+                          ) [] res_pdefs) in
+                          let pdefs2 = Gen.BList.remove_dups_eq cmp_pdef_grp pdefs in
+                          pdefs2
                       ) [List.hd fst_ls] (List.tl fst_ls)
                     in
                     (pdefs,[])
