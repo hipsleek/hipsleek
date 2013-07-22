@@ -1557,7 +1557,6 @@ let simplify_with_pairwise (s:int) (f:CP.formula): CP.formula =
   let pf = Cprinter.string_of_pure_formula in
   Debug.no_1_num s ("TP.simplify_with_pairwise") pf pf simplify_with_pairwise f
 
-let called_prover = ref ""
 
 let should_output () = !print_proof && not !suppress_imply_out
 
@@ -1643,20 +1642,20 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
     | Isabelle -> Isabelle.imply ante_w conseq_s imp_no
     | Coq ->
         if (is_list_constraint ante) || (is_list_constraint conseq) then
-         (called_prover :="coq " ; coq_imply ante_w conseq_s)
-        else (called_prover :="smtsolver " ; z3_imply ante conseq)
+         ( coq_imply ante_w conseq_s)
+        else ( z3_imply ante conseq)
     | AUTO ->
         if (is_bag_constraint ante) || (is_bag_constraint conseq) then
-          (called_prover :="Mona "; mona_imply ante_w conseq_s)
+          (mona_imply ante_w conseq_s)
         else if (is_list_constraint ante) || (is_list_constraint conseq) then
-          (called_prover :="Coq "; coq_imply ante_w conseq_s)
+          (coq_imply ante_w conseq_s)
         else if (is_array_constraint ante) || (is_array_constraint conseq) then
-          (called_prover :="smtsolver "; z3_imply ante conseq)
+          ( z3_imply ante conseq)
         else
-          (called_prover :="omega "; omega_imply ante conseq);
+          (omega_imply ante conseq);
     | OZ ->
         if (is_array_constraint ante) || (is_array_constraint conseq) then
-          (called_prover :="smtsolver "; z3_imply ante conseq)
+          ((* called_prover :="smtsolver "; *) z3_imply ante conseq)
         else
           (called_prover :="omega "; omega_imply ante conseq)
     | Mona | MonaH -> mona_imply ante_w conseq_s 
@@ -1681,8 +1680,8 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
         )
     | OM ->
         if (is_bag_constraint ante) || (is_bag_constraint conseq) then
-          (called_prover :="mona " ; mona_imply ante_w conseq_s)
-        else (called_prover :="omega " ; omega_imply ante conseq)
+          ((* called_prover :="mona " ; *) mona_imply ante_w conseq_s)
+        else ((* called_prover :="omega " ; *) omega_imply ante conseq)
     | OI ->
         if (is_bag_constraint ante) || (is_bag_constraint conseq) then
           (Isabelle.imply ante_w conseq_s imp_no)
@@ -1752,7 +1751,7 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
               else redlog_imply ante_w conseq_s
     | ZM -> 
         if (is_bag_constraint ante) || (is_bag_constraint conseq) then
-          (called_prover := "mona "; mona_imply ante_w conseq_s)
+          ((* called_prover := "mona "; *) mona_imply ante_w conseq_s)
         else z3_imply ante conseq
     | SPASS -> Spass.imply ante conseq timeout
     | MINISAT -> Minisat.imply ante conseq timeout
@@ -1876,7 +1875,7 @@ let tp_imply ante conseq imp_no timeout process =
   Debug.ho_2 "tp_imply" 
       (add_str "ante" pr1) 
       (add_str "conseq" pr1) 
-      (add_str ("solver:"^(!called_prover)) prout) (fun _ _ -> tp_imply ante conseq imp_no timeout process) ante conseq
+      (add_str ("solver:"^(Others.last_tp_used # string_of)) prout) (fun _ _ -> tp_imply ante conseq imp_no timeout process) ante conseq
          
 (* renames all quantified variables *)
 let rec requant = function
