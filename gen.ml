@@ -1,4 +1,4 @@
-
+ 
 module type INC_TYPE =
 sig
   type t
