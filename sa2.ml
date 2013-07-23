@@ -1578,7 +1578,7 @@ let partition_constrs_x constrs post_hps0=
         (pre_cs@[cs],post_cs,pre_oblg,tupled_hps,post_oblg)
       else (pre_cs,post_cs,pre_oblg,tupled_hps,post_oblg@[cs])
   in
-  let new_post_hps = (* List.fold_left get_post_hp [] constrs  *) [] in
+  let new_post_hps = (* List.fold_left get_post_hp [] constrs *) [] in
   let pre_constrs,post_constrs,pre_oblg, tupled_dep_on_hps, post_oblg_constrs = List.fold_left (classify (post_hps0@new_post_hps)) ([],[],[],[],[]) constrs in
   (*partition pre-constrs, filter ones in pre-obligation*)
   let pre_constrs1, pre_oblg_ext = List.partition (fun cs ->
