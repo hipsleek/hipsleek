@@ -1022,6 +1022,7 @@ view_header:
   [[ `IDENTIFIER vn; `LT; l= opt_ann_cid_list; `GT ->
       let cids, anns = List.split l in
       let cids_t, br_labels = List.split cids in
+	  let has_labels = List.exists (fun c-> not (Label_only.Lab_List.is_unlabelled c)) br_labels in
       (* DD.info_hprint (add_str "parser-view_header(cids_t)" (pr_list (pr_pair string_of_typ pr_id))) cids_t no_pos; *)
       let _, cids = List.split cids_t in
       (* if List.exists (fun x -> match snd x with | Primed -> true | Unprimed -> false) cids then *)
@@ -1034,7 +1035,7 @@ view_header:
           view_data_name = "";
           view_vars = (* List.map fst *) cids;
           (* view_frac_var = empty_iperm; *)
-          view_labels = br_labels;
+          view_labels = br_labels,has_labels;
           view_modes = modes;
           view_typed_vars = cids_t;
           view_pt_by_self  = [];
@@ -1053,6 +1054,7 @@ view_header_ext:
   [[ `IDENTIFIER vn;`OSQUARE;sl= id_list;`CSQUARE; `LT; l= opt_ann_cid_list; `GT ->
       let cids, anns = List.split l in
       let cids_t, br_labels = List.split cids in
+	  let has_labels = List.exists (fun c-> not (Label_only.Lab_List.is_unlabelled c)) br_labels in
       (* DD.info_hprint (add_str "parser-view_header(cids_t)" (pr_list (pr_pair string_of_typ pr_id))) cids_t no_pos; *)
       let _, cids = List.split cids_t in
       (* if List.exists (fun x -> match snd x with | Primed -> true | Unprimed -> false) cids then *)
@@ -1065,7 +1067,7 @@ view_header_ext:
           view_data_name = "";
           view_vars = (* List.map fst *) cids;
           (* view_frac_var = empty_iperm; *)
-          view_labels = br_labels;
+          view_labels = br_labels,has_labels;
           view_modes = modes;
           view_typed_vars = cids_t;
           view_pt_by_self  = [];

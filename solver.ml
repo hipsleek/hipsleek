@@ -7800,7 +7800,8 @@ and imply_mix_formula_x ante_m0 ante_m1 conseq_m imp_no memset =
                   (* why andl need to be handled in a special way *)
 	          let r = ref (-999) in
 	          let is_sat f = CP.is_sat_eq_ineq f (*TP.is_sat_sub_no 6 f r*) in
-	          let a0l = List.filter is_sat (CP.split_disjunctions a0) in a0l
+			  let a0l = if !label_split_ante then CP.split_disjunctions a0 else [a0] in
+	          let a0l = List.filter is_sat a0l in a0l
             in
             let a0l = f a0 in
             let a1l = match ante_m1 with

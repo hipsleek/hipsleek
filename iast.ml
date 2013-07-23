@@ -68,7 +68,7 @@ and view_decl =
     (* view_frac_var : iperm; (\*LDK: frac perm ??? think about it later*\) *)
     mutable view_vars : ident list;
     view_pos : loc;
-    view_labels : Label_only.spec_label list;
+    view_labels : Label_only.spec_label list * bool;
     view_modes : mode list;
     mutable view_typed_vars : (typ * ident) list;
     view_kind : view_kind;
@@ -2475,3 +2475,15 @@ let trans_to_exp_form exp0=
       | _ -> report_error no_pos "iast.trans_exp_to_form: not handle yet"
   in
   helper exp0
+
+let lbl_getter prog vn id = 
+  try 
+	let vd = look_up_view_def_raw 15 prog.prog_view_decls vn in
+	let vl, v_has_l = vd.view_labels in
+	if v_has_l then
+	 try
+	  Some (List.nth vl id )
+	 with Failure _ -> report_error no_pos "lbl_getter, index out of range"
+	else None
+  with 
+   | Not_found -> None 

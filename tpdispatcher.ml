@@ -2186,7 +2186,7 @@ let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (old_imp_no : stri
 	  let conseq = elim_exists conseq in
 	  (*let _ = print_string ("imply_timeout: new_conseq: " ^ (Cprinter.string_of_pure_formula conseq) ^ "\n") in*)
 	  (*if no_andl conseq || *)
-	  if (CP.rhs_needs_or_split conseq)&& not (no_andl ante) then
+	  if (CP.rhs_needs_or_split conseq)&& not (no_andl ante) && !label_split_conseq then
 		let conseq_disj = CP.split_disjunctions conseq in
 		List.fold_left (fun (r1,r2,r3) d -> 
 		   if not r1 then imply_timeout_helper ante d process ante_inner conseq_inner imp_no timeout

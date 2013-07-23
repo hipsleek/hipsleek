@@ -1335,7 +1335,7 @@ SpecVar (_, n, _) -> vdef.I.view_vars <- vdef.I.view_vars @ [n];
           C.view_vars = view_sv_vars;
           C.view_cont_vars = [];
           C.view_uni_vars = [];
-          C.view_labels = vdef.I.view_labels;
+          C.view_labels = fst vdef.I.view_labels;
           C.view_modes = vdef.I.view_modes;
           C.view_partially_bound_vars = [];
           C.view_materialized_vars = mvars;
@@ -4817,7 +4817,7 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
               (* Not a field access, proceed with the original code *)
               try (
                 let vdef = I.look_up_view_def_raw 9 prog.I.prog_view_decls c in
-                let labels = vdef.I.view_labels in
+                let labels = fst vdef.I.view_labels in
                 let hvars = match_exp (List.combine exps labels) pos in
                 let c0 =
                   if vdef.I.view_data_name = "" then 
@@ -5410,7 +5410,7 @@ and case_normalize_renamed_formula_x prog (avail_vars:(ident*primed) list) posib
                 | None -> false
                 | Some _ -> true
               in
-              (flag,vdef.I.view_labels,vdef.I.view_typed_vars)
+              (flag,(fst vdef.I.view_labels),vdef.I.view_typed_vars)
             with
               | Not_found -> (false,List.map (fun _ -> Label_only.empty_spec_label) b.IF.h_formula_heap_arguments,[])
             in
@@ -5604,7 +5604,7 @@ and case_normalize_formula_x prog (h:(ident*primed) list)(f:IF.formula) (rel0: r
   let f = convert_heap2 prog f in
   (* let _ = print_string ("case_normalize_formula :: CHECK POINT 1 ==> f = " ^ Iprinter.string_of_formula f ^ "\n") in *)
   let f = IF.float_out_thread f in
-  let f = IF.float_out_exps_from_heap f rel0 in (*andreeac - check rel*)
+  let f = IF.float_out_exps_from_heap (I.lbl_getter prog) f rel0 in (*andreeac - check rel*)
   let f = IF.float_out_min_max f in
   let f = IF.rename_bound_vars f in
   (* let _ = print_string ("case_normalize_formula :: CHECK POINT 2 ==> f = " ^ Iprinter.string_of_formula f ^ "\n") in *)
@@ -5618,7 +5618,7 @@ and case_normalize_formula_not_rename prog (h:(ident*primed) list)(f:IF.formula)
   (* let _ = print_string ("case_normalize_formula :: CHECK POINT 0 ==> f = " ^ Iprinter.string_of_formula f ^ "\n") in *)
   let f = convert_heap2 prog f in
   let f = IF.float_out_thread f in
-  let f = IF.float_out_exps_from_heap f None in
+  let f = IF.float_out_exps_from_heap (I.lbl_getter prog) f None in
   let f = IF.float_out_min_max f in
   let f = IF.rename_bound_vars f in
   (* let f,_,_ = case_normalize_renamed_formula prog h [] f in *)
@@ -5658,9 +5658,9 @@ and case_normalize_struc_formula_x prog (h_vars:(ident*primed) list)(p_vars:(ide
   (* let _ = print_string ("case_normalize_struc_formula :: CHECK POINT 0 ==> f = " ^ Iprinter.string_of_struc_formula f ^ "\n") in *)
   let nf = convert_struc2 prog f in
   (* let _ = print_string ("\ncase_normalize_struc_formula :: CHECK POINT 0.5 ==> f = " ^ Iprinter.string_of_struc_formula nf) in *)
-  let nf = IF.float_out_thread_struc_formula nf None in 
+  let nf = IF.float_out_thread_struc_formula (I.lbl_getter prog) nf None in 
   (* let _ = print_string ("\ncase_normalize_struc_formula :: CHECK POINT 1 ==> nf = " ^ Iprinter.string_of_struc_formula nf ) in *)
-  let nf = IF.float_out_exps_from_heap_struc nf None in 
+  let nf = IF.float_out_exps_from_heap_struc (I.lbl_getter prog) nf None in 
   (* let _ = print_string ("\ncase_normalize_struc_formula :: CHECK POINT 2 ==> nf = " ^ Iprinter.string_of_struc_formula nf) in *)
   let nf = IF.float_out_struc_min_max nf in
   (* let _ = print_string ("case_normalize_struc_formula :: CHECK POINT 3 ==> nf = " ^ Iprinter.string_of_struc_formula nf ^ "\n") in *)
@@ -5777,8 +5777,8 @@ and simpl_case_normalize_struc_formula id prog (h_vars:(ident*primed) list)(f:IF
   let pos = IF.pos_of_struc_formula f in
 				
   let nf = convert_struc2 prog f in
-  let nf = IF.float_out_thread_struc_formula nf None in 
-  let nf = IF.float_out_exps_from_heap_struc nf None in 
+  let nf = IF.float_out_thread_struc_formula (I.lbl_getter prog) nf None in 
+  let nf = IF.float_out_exps_from_heap_struc (I.lbl_getter prog) nf None in 
   let nf = IF.float_out_struc_min_max nf in
   let nf = IF.rename_bound_var_struc_formula nf in
   
@@ -7629,7 +7629,7 @@ let transform_hp_rels_to_iviews (hp_rels:(ident* CF.hp_rel_def) list):(ident*ide
                                          I.view_pos = no_pos;
 		I.view_data_name = "";
 		I.view_vars = vars;
-		I.view_labels = List.map (fun _ -> empty_spec_label) vars;
+		I.view_labels = List.map (fun _ -> empty_spec_label) vars, false;
 		I.view_modes = List.map (fun _ -> ModeOut) vars ;
 		I.view_typed_vars =  tvars;
                 I.view_kind = I.View_NORM;

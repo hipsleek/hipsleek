@@ -398,10 +398,16 @@ and mkAnd f1 f2 pos = match f1 with
 		| AndList b1, AndList b2 -> mkAndList (Label_Pure.merge b1 b2)
 		| AndList b, f -> mkAndList (Label_Pure.merge b [(Lab_List.unlabelled,f)])
 		| f, AndList b -> mkAndList (Label_Pure.merge b [(Lab_List.unlabelled,f)])
-		| _ -> And (f1, f2, pos)
+		| _ -> if no_andl f1 && no_andl f2 then And (f1, f2, pos) 
+			   else report_error no_pos "Ipure: unhandled/unexpected mkAnd with andList case"
 
 and mkAndList b = (*print_string "ipure_list_gen\n";*) AndList b
-		
+	
+and no_andl  = function
+  | BForm _ | And _ | Not _ | Forall _ | Exists _  -> true
+  | Or (f1,f2,_,_) -> no_andl f1 && no_andl f2
+  | AndList _ -> false 
+	
 and mkOr f1 f2 lbl pos = match f1 with
   | BForm ((BConst (false, _), _), _) -> f2
   | BForm ((BConst (true, _), _), _) -> f1

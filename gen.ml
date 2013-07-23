@@ -370,7 +370,11 @@ struct
     | x::xs -> match f x with
         | None -> list_find f xs
         | Some s -> Some s
-
+  let add_index l =
+	let rec helper id l = match l with 
+		| [] -> []
+		| h::t -> (id,h)::(helper (id+1) t) in
+	helper 0 l
 end;;
 
 module BListEQ =
