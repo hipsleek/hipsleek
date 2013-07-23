@@ -2208,7 +2208,7 @@ let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (imp_no : string) 
 	  : bool*(formula_label option * formula_label option )list * (formula_label option) (*result+successfull matches+ possible fail*)
   = let pf = Cprinter.string_of_pure_formula in
   (*let _ = print_string "dubios!!\n" in*)
-  Debug.ho_2 "imply_timeout 2" pf pf (fun (b,_,_) -> string_of_bool b)
+  Debug.no_2 "imply_timeout 2" pf pf (fun (b,_,_) -> string_of_bool b)
       (fun a c -> imply_timeout a c imp_no timeout process) ante0 conseq0
 
 

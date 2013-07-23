@@ -6710,7 +6710,7 @@ and xpure_imply_x (prog : prog_decl) (is_folding : bool)   lhs rhs_p timeout : b
   let tmp1 = MCP.merge_mems lhs_p xpure_lhs_h true in
   let new_ante, new_conseq = heap_entail_build_mix_formula_check 1 (estate.es_evars@estate.es_gen_expl_vars@estate.es_gen_impl_vars@estate.es_ivars) tmp1 
     (MCP.memoise_add_pure_N (MCP.mkMTrue pos) rhs_p) pos in
-  let (res,_,_) = imply_mix_formula_no_memo new_ante new_conseq !imp_no !imp_subno (Some timeout) memset in
+  let (res,_,_) = imply_mix_formula_no_memo 1 new_ante new_conseq !imp_no !imp_subno (Some timeout) memset in
   imp_subno := !imp_subno+1;  
   res
 
@@ -7746,8 +7746,15 @@ and imply_mix_formula i ante_m0 ante_m1 conseq_m imp_no memset =
 (*
 type: MCP.mix_formula -> MCP.mix_formula -> MCP.mix_formula -> int ref ->
   CF.mem_formula ->
-  bool * (Globals.formula_label option * Globals.formula_label option) list *
-  Globals.formula_label option * (split_ante0,split_ante1) option
+  (bool *
+   (Globals.formula_label option * Globals.formula_label option) list *
+   Globals.formula_label option) *
+  (Cpure.Label_Pure.exp_ty list * CP.formula list) option
+
+
+ bool * (Globals.formula_label option * Globals.formula_label option) list *
+  Globals.formula_label option
+
 *)
 and imply_mix_formula_x ante_m0 ante_m1 conseq_m imp_no memset =
       (* :bool *(formula_label option * formula_label option) list * formula_label option  *)
@@ -7820,20 +7827,26 @@ and imply_mix_formula_x ante_m0 ante_m1 conseq_m imp_no memset =
           end
     | _ -> report_error no_pos ("imply_mix_formula: mix_formula mismatch")
 
-and imply_mix_formula_no_memo new_ante new_conseq imp_no imp_subno timeout memset =   
-  Debug.no_3_loop "imply_mix_formula_no_memo" Cprinter.string_of_mix_formula Cprinter.string_of_mix_formula Cprinter.string_of_mem_formula
+and imply_mix_formula_no_memo i new_ante new_conseq imp_no imp_subno timeout memset =   
+  Debug.no_3_num i "imply_mix_formula_no_memo" Cprinter.string_of_mix_formula Cprinter.string_of_mix_formula Cprinter.string_of_mem_formula
       (fun (r,_,_) -> string_of_bool r) 
       (fun new_ante new_conseq memset -> imply_mix_formula_no_memo_x new_ante new_conseq imp_no imp_subno timeout memset) 
       new_ante new_conseq memset 
 
+(* WN TODO : temporary change to call imply_mix_formula; need to redo properly *)
 and imply_mix_formula_no_memo_x new_ante new_conseq imp_no imp_subno timeout memset =   
   (* detect whether memset contradicts with any of the ptr equalities from antecedent *)
+  let drop_last_item ((b,l,o1),_) = (b,l,o1) in
   let new_ante = if detect_false new_ante memset then MCP.mkMFalse no_pos else new_ante in
   let new_conseq = solve_ineq new_ante memset new_conseq in
-  let (r1,r2,r3) =  
+  let (r1,r2,r3) =
+    let xx = ref imp_no in
     match timeout with
-      | None -> TP.mix_imply new_ante new_conseq ((string_of_int imp_no) ^ "." ^ (string_of_int imp_subno))
-      | Some t -> TP.mix_imply_timeout new_ante new_conseq ((string_of_int imp_no) ^ "." ^ (string_of_int imp_subno)) t 
+      | None -> drop_last_item (imply_mix_formula 98 new_ante new_ante new_conseq xx memset)
+            (* TP.mix_imply new_ante new_conseq ((string_of_int imp_no) ^ "." ^ (string_of_int imp_subno)) *)
+      | Some t -> drop_last_item ( imply_mix_formula 99 new_ante new_ante new_conseq xx memset ) 
+            (* TODO : lost timeout here *)
+            (* TP.mix_imply_timeout new_ante new_conseq ((string_of_int imp_no) ^ "." ^ (string_of_int imp_subno)) t *)
   in
   let _ = Debug.devel_pprint ("asta5?") no_pos in
   Debug.devel_zprint (lazy ("IMP #" ^ (string_of_int imp_no) ^ "." ^ (string_of_int imp_subno))) no_pos;
@@ -9522,7 +9535,7 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
                           w/o any constraint on the rhs*)
                         false 
                       else
-                        let res,_,_ = imply_mix_formula_no_memo split_ante split_conseq !imp_no !imp_subno None memset in
+                        let res,_,_ = imply_mix_formula_no_memo 2 split_ante split_conseq !imp_no !imp_subno None memset in
                         res
                   in
                   let _ = Debug.devel_zprint (lazy ("process_action: Context.M_match : deciding MATCH (res=true) or SPLIT (res=false): \n ### lhs_frac = " ^ (Cprinter.string_of_mix_formula lhs_frac) ^ "\n ### rhs_frac = " ^ (Cprinter.string_of_mix_formula rhs_frac) ^ "\n ### exists_vars = " ^ (Cprinter.string_of_spec_var_list exists_vars) ^ "\n ### split_ante = " ^ (Cprinter.string_of_mix_formula split_ante) ^ "\n ### split_conseq = " ^ (Cprinter.string_of_mix_formula split_conseq) ^ "\n ### res = " ^ (string_of_bool res) ^ "\n\n")) no_pos in
