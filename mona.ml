@@ -338,7 +338,7 @@ let new_order_formula_x (f:CP.formula) : (CP.spec_var list * CP.spec_var list * 
   (* rename quantif vars bef before calling new_order_formula*)
   let all_vars = CP.all_vars f in
   let constr = CP.join_conjunctions (List.map mkConstraint cl) in
-  let sat = Omega.is_sat constr "mona constraints" in 
+  let sat = Timelog.logtime_wrapper "mona-om" (Omega.is_sat constr) "mona constraints" in 
   if (not sat) then
     failwith ("[mona.ml:new_order_formula] mona translation failure")
   else
@@ -1199,27 +1199,30 @@ let start () =
   Debug.no_1 "[mona.ml] start" pr pr start ()
 
 let start () =
+  (* Log.logtime_wrapper "start mona"  start ()  *)
   Gen.Profiling.do_1 "mona.start" start ()
 
 let stop () = 
   let killing_signal = 
     match !is_mona_running with
-      |true -> is_mona_running := false;  2
+      |true -> is_mona_running := false;  Sys.sigterm (* *)
       |false -> 9 in
   let num_tasks = !test_number - !last_test_number in
   let _ = Procutils.PrvComms.stop !log_all_flag log_all !process num_tasks killing_signal (fun () -> ()) in
   is_mona_running := false
 
 let stop () =
+  (* Log.logtime_wrapper "stop mona"  stop ()  *)
   Gen.Profiling.do_1 "mona.stop" stop ()
 
 let restart reason =
   if !is_mona_running then
 	(* let _ = print_string ("\n[mona.ml]: Mona is preparing to restart because of " ^ reason ^ "\nRestarting Mona ...\n"); flush stdout; in *)
-	let _ = print_endline ("\nMona is running ... "); flush stdout; in
-    Procutils.PrvComms.restart !log_all_flag log_all reason "mona" start stop
+	let _ = print_endline ("\nMona is running ... " ^ reason); flush stdout; in
+        Procutils.PrvComms.restart !log_all_flag log_all reason "mona" start stop
 
 let restart reason =
+  (* Log.logtime_wrapper "restart mona" restart reason  *)
   Gen.Profiling.do_1 "mona.restart" restart reason
 
 let check_if_mona_is_alive () : bool = 
@@ -1401,8 +1404,8 @@ let write_to_file (is_sat_b: bool) (fv: CP.spec_var list) (f: CP.formula) (imp_n
 let imply_sat_helper_x (is_sat_b: bool) (fv: CP.spec_var list) (f: CP.formula) (imp_no: string) vs : bool =
   let all_fv = CP.remove_dups_svl fv in
   (* let _ = print_endline("[Mona] imply_sat_helper : vs = " ^ (string_of_hashtbl vs) ) in *)
- (* let (part1, part2) = (List.partition (fun (sv) -> ((\*is_firstorder_mem*\)part_firstorder_mem *)
- (*       (CP.Var(sv, no_pos)) vs)) all_fv) in  (\*deprecated*\) *)
+  (* let (part1, part2) = (List.partition (fun (sv) -> ((\*is_firstorder_mem*\)part_firstorder_mem *)
+  (*       (CP.Var(sv, no_pos)) vs)) all_fv) in  (\*deprecated*\) *)
   let (part1, part2) = (List.partition (fun (sv) -> (is_firstorder_mem_sv sv vs)) all_fv) in
   let first_order_var_decls =
     if Gen.is_empty part1 then ""
@@ -1428,11 +1431,11 @@ let imply_sat_helper_x (is_sat_b: bool) (fv: CP.spec_var list) (f: CP.formula) (
     end
   with
     |Procutils.PrvComms.Timeout ->
-	     begin
+	 begin
            print_string ("\n[mona.ml]:Timeout exception\n"); flush stdout;
            restart ("Timeout when checking #" ^ imp_no ^ "!");
            is_sat_b
-		 end
+	 end
     | exc ->
           print_string ("\n[mona.ml]:Unexpected exception\n"); flush stdout;
           stop(); raise exc

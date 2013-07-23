@@ -113,6 +113,10 @@ let common_arguments = [
    "Turn on experimental trace_on");
   ("-dd-print-orig-conseq", Arg.Unit Debug.enable_dd_and_orig_conseq_printing,
    "Enable printing of the original consequent while debugging. Automatically enables -dd (debugging) ");
+  ("--en-imp-top", Arg.Set Globals.imply_top_flag,
+   "Enable proof logging of Imply_Top");
+  ("--dis-imp-top", Arg.Clear Globals.imply_top_flag,
+   "Disable proof logging of Imply_Top");
   ("-gist", Arg.Set Globals.show_gist,
    "Show gist when implication fails");
   ("--hull-pre-inv", Arg.Set Globals.hull_pre_inv,
@@ -320,6 +324,18 @@ let common_arguments = [
   ("--esi",Arg.Set Globals.enable_strong_invariant, "enable strong predicate invariant");
   ("--en-red-elim", Arg.Set Globals.enable_redundant_elim, "enable redundant elimination under eps");
   ("--eap", Arg.Set Globals.enable_aggressive_prune, "enable aggressive prunning");
+  ("--en-label-aggr", Arg.Set Globals.label_aggressive_flag, "enable aggressive splitting of labels");
+  ("--dis-label-aggr", Arg.Clear Globals.label_aggressive_flag, "disable aggressive splitting of labels");
+  (* UNSAT("":cf,"a":af,"b":bf) 
+          --> UNSAT(cf&af) | UNSAT(cf & bf) *)
+  (* aggressive UNSAT("":cf,"a":af,"b":bf) 
+          --> UNSAT(cd) | UNSAT(af) & UNSAT(bf) *)
+  (* IMPLY("":cf,"a":af,"b":bf --> "a":ta,"b":tb) 
+          --> IMPLY(cf&af -->ta) & IMPLY (cf&bf-->tb) *)
+  (* aggressive IMPLY("":cf,"a":af,"b":bf --> "a":ta,"b":tb) 
+          --> IMPLY(af -->ta) & IMPLY (bf-->tb) *)
+  ("--en-label-aggr-sat", Arg.Set Globals.label_aggressive_sat, "enable aggressive splitting of labels during unsat");
+  ("--dis-label-aggr-sat", Arg.Clear Globals.label_aggressive_sat, "disable aggressive splitting of labels during unsat");
   (* ("--dap", Arg.Clear Globals.disable_aggressive_prune, "never use aggressive prunning"); *)
   ("--efp",Arg.Set Globals.enable_fast_imply, " enable fast imply only for --eps pruning; incomplete");
   (* ("--dfp",Arg.Clear Globals.enable_fast_imply, " disable syntactic imply only for --eps"); *)

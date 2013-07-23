@@ -57,14 +57,29 @@ struct
 
   (*checks for timeout when calling the fnc function (fnc has one argument - arg). If fnc runs for more than tsec seconds, a Timeout exception will be raised. 
     Otherwise, this method returns the result given by fnc. *)
-  let maybe_raise_timeout (fnc: 'a -> 'b) (arg: 'a) (tsec:float) : 'b =
+
+  let maybe_raise_timeout (fn: 'a -> 'b) (arg: 'a) (limit:float) : 'b =
     let old_handler = Sys.signal Sys.sigalrm sigalrm_handler in
     let reset_sigalrm () = Sys.set_signal Sys.sigalrm old_handler in
-    let _ = set_timer tsec in
-    let answ = fnc arg in
-    set_timer 0.0;
-    reset_sigalrm ();
-    answ 
+    let _ = set_timer limit in
+    try
+      let _ = Timelog.logtime # timer_start limit in
+      let res = fn arg in
+      let x = Unix.getitimer Unix.ITIMER_REAL in
+      (* let nt = limit -. x.Unix.it_value in *)
+      let nt = limit -. x.Unix.it_value in
+      let _ = Timelog.logtime # timer_stop nt in
+      set_timer 0.0;
+      reset_sigalrm ();
+      res
+    with e ->
+        begin
+          let _ = Timelog.logtime # timer_stop limit in
+          (* Debug.info_pprint (Timelog.logtime # print_timer)  no_pos; *)
+          (* Debug.info_pprint ("TIMEOUT"^(Printexc.to_string e)) no_pos; *)
+          raise e
+        end
+
 
   let maybe_raise_timeout_num i (fnc: 'a -> 'b) (arg: 'a) (tsec:float) : 'b =
     Debug.no_1_num i "maybe_raise_timeout" string_of_float pr_no (fun _ -> maybe_raise_timeout fnc arg tsec) tsec 
@@ -76,7 +91,7 @@ struct
         res
     with 
       | Timeout ->  
-            Printf.eprintf " maybe_raise_and_catch_timeout : UNEXPECTED Timeout after %s secs" (string_of_float tsec);
+            Printf.eprintf " Timeout after %s secs" (string_of_float tsec);
           (with_timeout ())
       | exc -> begin
           Printf.eprintf " maybe_raise_and_catch_timeout : Unexpected exception : %s" (Printexc.to_string exc);
@@ -152,9 +167,14 @@ struct
     let _ = log_to_file log_all_flag log_file ("\n[" ^ process.name  ^ ".ml]: >> Stop " ^ process.name ^ " after ... " ^ (string_of_int invocations) ^ " invocations\n") in
     flush log_file;
     close_pipes process;
+    let fn () =
+      (* print_endline "start kill"; *)
+      Unix.kill process.pid killing_signal;
+      ignore (Unix.waitpid [] process.pid)
+      (* ;print_endline "end kill" *)
+    in
     try 
-        Unix.kill process.pid killing_signal;
-        ignore (Unix.waitpid [] process.pid)
+        (* Timelog.logtime_wrapper "kill" *) fn ()
     with
       | e -> 
           (ignore e;

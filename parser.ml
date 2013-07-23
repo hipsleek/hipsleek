@@ -1008,7 +1008,11 @@ opt_branches:[[t=OPT branches -> un_option t (P.mkTrue no_pos)]];
 
 branches : [[`AND; `OSQUARE; b= LIST1 one_branch SEP `SEMICOLON ; `CSQUARE -> P.mkAndList b ]];
 
-one_branch : [[ `STRING (_,id); `COLON; pc=pure_constr -> (Lab_List.singleton id,pc)]];
+one_branch_single : [[ `STRING (_,id); `COLON; pc=pure_constr -> (Lab_List.singleton id,pc)]];
+
+one_string: [[`STRING (_,id)-> id]];
+
+one_branch : [[ lbl=LIST1 one_string SEP `COMMA ; `COLON; pc=pure_constr -> (Lab_List.norm lbl,pc)]];
 
 opt_branch:[[t=OPT branch -> un_option t empty_spec_label]];
 
@@ -1473,6 +1477,8 @@ cexp_w:
     [ ofl= pure_label ; spc=SELF -> apply_pure_form1 (fun c-> label_formula c ofl) spc]
   | "slicing_label"
     [ sl=slicing_label; f=SELF -> set_slicing_utils_pure_double f sl ]
+  | "AndList"
+	[`ANDLIST;`OPAREN;t= LIST1 one_branch SEP `SEMICOLON ;`CPAREN -> Pure_f(P.mkAndList t)(*to be used only for sleek testing*)]
   | "pure_or" RIGHTA
     [ pc1=SELF; `OR; pc2=SELF ->apply_pure_form2 (fun c1 c2-> P.mkOr c1 c2 None (get_pos_camlp4 _loc 2)) pc1 pc2]
   | "pure_and" RIGHTA

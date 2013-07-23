@@ -10,6 +10,7 @@ module CP = Cpure
 module CF = Cformula
  
 type proof_type =
+	| PT_IMPLY_TOP of (CP.formula * CP.formula)
 	| PT_IMPLY of (CP.formula * CP.formula)
 	| PT_SAT  of CP.formula
 	| PT_SIMPLIFY of CP.formula
@@ -18,6 +19,9 @@ type proof_res =
 	| PR_BOOL of bool
 	| PR_FORMULA of CP.formula
 	| PR_exception 
+
+(* superceded by Others.last_tp_used *)
+(* let called_prover = ref "" *)
 
 type proof_log = {
 	log_id : string; (* TODO: Should change to integer for performance *)
@@ -53,6 +57,7 @@ type sleek_log_entry = {
     sleek_proving_infer_vars: CP.spec_var list;
     sleek_proving_hprel_ass: CF.hprel list;
     sleek_proving_rel_ass: CP.infer_rel_type list;
+    sleek_time : float;
     sleek_proving_res : CF.list_context;
 }
 
@@ -69,6 +74,9 @@ let string_of_sleek_proving_kind () = proving_kind#string_of
 
 let string_of_log_type lt =
   match lt with
+    |PT_IMPLY_TOP (ante, conseq) -> 
+	  "ImplyTOP: ante:" ^(string_of_pure_formula ante) ^"\n\t     conseqTOP: " 
+         ^(string_of_pure_formula conseq)
     |PT_IMPLY (ante, conseq) -> 
 	  let clean_str = 
 		if !print_clean_flag then 
@@ -137,6 +145,7 @@ let pr_sleek_log_entry e=
   fmt_string ("id: " ^ (string_of_int e.sleek_proving_id));
   fmt_string ("; caller: " ^ (e.sleek_proving_caller));
   fmt_string ("; line: " ^ (Globals.line_number_of_pos e.sleek_proving_pos)) ;
+  if e.sleek_time > 0.5 then fmt_string ("; TIME: " ^ (string_of_float e.sleek_time));
   fmt_string ("; classic: " ^ (string_of_bool e.sleek_proving_classic_flag)) ;
   fmt_string ("; kind: " ^ (e.sleek_proving_kind)) ;
   fmt_string ("; hec_num: " ^ (string_of_int e.sleek_proving_hec)) ;
@@ -202,7 +211,7 @@ let proof_gt5_log_list = ref [] (*Logging proofs require more than 5 secs to be 
 
 (* TODO : add result into the log printing *)
 (* wrong order number indicates recursive invocations *)
-let add_new_sleek_logging_entry infer_vars classic_flag caller avoid hec slk_no ante conseq 
+let add_new_sleek_logging_entry stime infer_vars classic_flag caller avoid hec slk_no ante conseq 
       consumed_heap evars (result:CF.list_context) pos=
   (* let _ = Debug.info_pprint ("avoid: "^(string_of_bool avoid)) no_pos in *)
   if !Globals.sleek_logging_txt then
@@ -224,6 +233,7 @@ let add_new_sleek_logging_entry infer_vars classic_flag caller avoid hec slk_no 
         sleek_proving_c_heap = consumed_heap;
         sleek_proving_evars = evars;
         sleek_proving_infer_vars = infer_vars;
+        sleek_time = stime;
         sleek_proving_res = result;
     }
     in
@@ -329,7 +339,8 @@ let proof_log_to_text_file fname (src_files) =
         open_out ("logs/"^with_option^"_proof_log_" ^ (Globals.norm_file_name (List.hd src_files)) ^".txt") in
       let string_of_log_type lt =
         match lt with
-          |PT_IMPLY (ante, conseq) -> "Imply: ante:" ^(string_of_pure_formula ante) ^"\n\t     conseq: " ^(string_of_pure_formula conseq)
+          |PT_IMPLY (ante, conseq) |PT_IMPLY_TOP (ante, conseq)
+                -> "Imply: ante:" ^(string_of_pure_formula ante) ^"\n\t     conseq: " ^(string_of_pure_formula conseq)
           |PT_SAT f-> "Sat: "^(string_of_pure_formula f) 
           |PT_SIMPLIFY f -> "Simplify: "^(string_of_pure_formula f)
       in

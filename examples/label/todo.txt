@@ -119,15 +119,143 @@ it was added to labels for "n","s" already.
  Sat:  true & 0<=n & n=0
  res: SAT
 ============================================================
-# dll-app.ss
+# dll-app.ss  FIXED with wrap_no_filter
 
 failed for --no-filter but succeed for --filter
 ============================================================
+# swll-1.slk   FIXED (using UNSAT on disj ante)
+
+1st version did not work; but 2nd did due to the absence of
+UNSAT on the disj ante on "empty_RHS". Need to refine
+wrap_no_filter to support more UNSATs.
+
+checkentail x::ls<p,M> & ["n":x=p] |- true & ["s":M={}].
+
+checkentail true & ["n":x=p; "s":M={}] 
+    or x!=null & ["n":x=p & x!=p; "s":M!={}] |- true & ["s":M={}].
+
 ============================================================
+# swll-1.ss   (does not work well esp for implication)
+
+ UNSAT should not mix common "" with other labels
+ to speed-up further
+
 ============================================================
+# lab3.slk
+
+checkentail n>=0 & ["n":n>0; "s":n=0] |- true & ["n":n>0; "s":n=1].
+print residue.
+
+Expecting 2 implications rather than 3. The last one below
+redundant.
+
+ id: 3; prover: OMEGA CALCULATOR; loc: _0:0_0:0; kind: Sleek_Entail(1)
+ Imply: ante: 0<=n & 0<n
+	     conseq:  AndList[ ["n"]:0<n] 
+ res: true
+ -------------------- 
+ id: 4; prover: OMEGA CALCULATOR; loc: _0:0_0:0; kind: Sleek_Entail(1)
+ Imply: ante: 0<=n & n=0
+	     conseq:  AndList[ ["s"]:n=1] 
+ res: false
+ -------------------- 
+ id: 5; prover: OMEGA CALCULATOR; loc: _0:0_0:0; kind: Sleek_Entail(1)
+ Imply: ante: true
+	     conseq:  AndList[ ["n"]:0<n] 
+ res: false
+
 ============================================================
+# schorr-waite-list-lbl.ss -tp om --en-logging-txt
+
+ISSUES
+------
+* Why disj conseq?
+   conseq:  ((AndList[ ["s"]:MpX={}] ) | (AndList[ ["n"]:prev=sentinel_1000] ))
+-> The disj is due to base case guard. It is checked during unfolding for base case.
+in  do_base_case_unfold_only_x (solver.ml)               
+	let (nctx,b) = sem_imply_add prog is_folding  fold_ctx bc1 !enable_syn_base_case in
+
+* why no labels on LHS?
+->  it was a problem with printing, i fixed it in tpdispatcher.ml 
+
+ id: 242; prover: MONA; TIME: 5.032313; loc: schorr-waite-list-lbl_ss_43:2_43:26; kind: PRE_REC
+ Imply: ante: ((cur=cur_1007 & prev=prev_1006 & sentinel=sentinel' & n_42'=nxt_997 & 
+next_33_1005=nxt_997 & cur_1007=prev_1018 & cur_1017=n_42' & 
+cur_1017!=sentinel' & !(v_bool_37_934') & cur_1017!=sentinel' & 
+!(v_bool_37_934') & cur_1017=null & v_bool_38_935' & cur_1017=null & 
+v_bool_38_935' & cur'=prev_1018 & prev'=null & cur_1007!=null & 
+s_995=sentinel_999 & cur_1007!=sentinel_999 & cur!=null & 
+sentinel=sentinel_999 & sentinel=sentinel_1000 & ((((s_995+1)<=nxt_997 & 
+nxt_997=null) | (nxt_997=null & nxt_997<=(s_995-1)))) & prev=sentinel_1000 & 
+Mc=union(Mnxt_998,{cur_1007}) & Mnxt_998={} & MpX={}) | (cur=cur_1007 & 
+prev=prev_1006 & sentinel=sentinel' & n_42'=nxt_997 & next_33_1005=nxt_997 & 
+cur_1007=prev_1018 & cur_1017=n_42' & cur_1017!=sentinel' & 
+!(v_bool_37_934') & cur_1017!=sentinel' & !(v_bool_37_934') & 
+cur_1017=null & v_bool_38_935' & cur_1017=null & v_bool_38_935' & 
+cur'=prev_1018 & prev'=null & nxt_997!=null & prev!=null & cur_1007!=null & 
+s_995=sentinel_999 & cur_1007!=sentinel_999 & cur!=null & 
+sentinel=sentinel_999 & sentinel=sentinel_1000 & ((s_995<nxt_997 | 
+nxt_997<s_995)) & ((sentinel_1000<prev | prev<sentinel_1000)) & 
+Mc=union(Mnxt_998,{cur_1007}) & exists(Mnxt_1046:Mnxt_998=union(Mnxt_1046,
+{nxt_997})) & exists(M1_1045:MpX=union({prev},M1_1045))) | (cur=cur_1007 & 
+prev=prev_1006 & sentinel=sentinel' & n_42'=nxt_997 & next_33_1005=nxt_997 & 
+cur_1007=prev_1018 & cur_1017=n_42' & cur_1017!=sentinel' & 
+!(v_bool_37_934') & cur_1017!=sentinel' & !(v_bool_37_934') & 
+cur_1017=null & v_bool_38_935' & cur_1017=null & v_bool_38_935' & 
+cur'=prev_1018 & prev'=null & prev!=null & cur_1007!=null & 
+s_995=sentinel_999 & cur_1007!=sentinel_999 & cur!=null & 
+sentinel=sentinel_999 & sentinel=sentinel_1000 & ((((s_995+1)<=nxt_997 & 
+nxt_997=null) | (nxt_997=null & nxt_997<=(s_995-1)))) & 
+((sentinel_1000<prev | prev<sentinel_1000)) & Mc=union(Mnxt_998,
+{cur_1007}) & Mnxt_998={} & exists(M1_1044:MpX=union({prev},M1_1044))) | 
+(cur=cur_1007 & prev=prev_1006 & sentinel=sentinel' & n_42'=nxt_997 & 
+next_33_1005=nxt_997 & cur_1007=prev_1018 & cur_1017=n_42' & 
+cur_1017!=sentinel' & !(v_bool_37_934') & cur_1017!=sentinel' & 
+!(v_bool_37_934') & cur_1017=null & v_bool_38_935' & cur_1017=null & 
+v_bool_38_935' & cur'=prev_1018 & prev'=null & nxt_997!=null & 
+cur_1007!=null & s_995=sentinel_999 & cur_1007!=sentinel_999 & cur!=null & 
+sentinel=sentinel_999 & sentinel=sentinel_1000 & ((s_995<nxt_997 | 
+nxt_997<s_995)) & prev=sentinel_1000 & Mc=union(Mnxt_998,{cur_1007}) & 
+exists(Mnxt_1043:Mnxt_998=union(Mnxt_1043,{nxt_997})) & MpX={}))
+	     conseq:  ((AndList[ ["s"]:MpX={}] ) | (AndList[ ["n"]:prev=sentinel_1000] ))
+ res: false
+
 ============================================================
+# lab5a.slk
+
+checkentail  AndList("n":n>0; "s":n=0) |- 
+  (AndList("n":n>0; "s":n=0) | AndList("": n<0; "n":n>=0; "s":n=1)).
+print residue.
+
+Currently, the disjunct on RHS is not split. If we detect conseq
+is of form:
+
+  AndList(...) | AndList(..) | ..
+
+We should perform a labelling search on proving RHS, and terminate
+with the first successful proof.
+
+-------------------- 
+ id: 3; prover: OMEGA CALCULATOR; loc: _0:0_0:0; kind: Sleek_Entail(1)
+ Imply: ante: 0<n & n=0
+	     conseq:  ((0<n & n=0) | (n<0 & 0<=n & n=1))
+ res: true
 ============================================================
+# swll-1.ss 
+
+l-sw-1.slk was proof 252 extracted from 
+   swll-1.ss --en-imp-top --en-logging-txt
+
+When run as sleek, it will decompose ante (LHS) prior to
+decomposing conseq.
+
+However, in hip; it was decomposing conseq and then
+dropping the labels from the LHS. Why is there such
+inconsistency? 
+
+trace:
+let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (imp_no : string) timeout process
+
 ============================================================
 ============================================================
 ============================================================

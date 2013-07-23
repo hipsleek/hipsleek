@@ -811,6 +811,7 @@ let num_self_fold_search = ref 0
 let self_fold_search_flag = ref false
 
 let show_gist = ref false
+let imply_top_flag = ref false
 
 let trace_failure = ref false
 
@@ -868,6 +869,8 @@ let disable_elim_redundant_ctr = ref false
 
 let enable_strong_invariant = ref false
 let enable_aggressive_prune = ref false
+let label_aggressive_flag = ref false
+let label_aggressive_sat = ref false
 let enable_redundant_elim = ref false
 
 (* let disable_aggressive_prune = ref false *)

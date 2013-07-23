@@ -1095,18 +1095,23 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
       let (rs, _) = Solver.heap_entail_init prog false (CF.SuccCtx [ ctx ]) formula pos in
       let _ = 
         if not(CF.isFailCtx rs) then
-	  let pf = pure_of_mix vdef.C.view_user_inv in
-	  let disj_f = CP.split_disjunctions_deep pf in
-          let do_not_recompute_flag = (List.length disj_f>1) && not(!Globals.disj_compute_flag) in
-          if n>0 then helper n do_not_recompute_flag
-          else 
-            begin
-              let pr = Cprinter.string_of_mix_formula in
-              let sf = MCP.remove_disj_clauses vdef.C.view_user_inv in
-              let _ = vdef.C.view_user_inv <- sf in
-	      Debug.info_hprint (add_str "view_1" pr) vdef.C.view_user_inv no_pos;
-	      Debug.info_hprint (add_str "view_2" pr) vdef.C.view_x_formula no_pos
-            end
+          begin
+	    let pf = pure_of_mix vdef.C.view_user_inv in
+	    let disj_f = CP.split_disjunctions_deep pf in
+            let do_not_recompute_flag = (List.length disj_f>1) && not(!Globals.disj_compute_flag) in
+            if n>0 then helper n do_not_recompute_flag;
+            if vdef.C.view_xpure_flag then
+              begin
+                let pr = Cprinter.string_of_mix_formula in
+                let (sf,disj_flag) = MCP.remove_disj_clauses vdef.C.view_user_inv in
+                if disj_flag then
+                  (vdef.C.view_user_inv <- sf; vdef.C.view_xpure_flag <- false);
+	        Debug.info_pprint ("Using a simpler inv for xpure0 of "^vdef.C.view_name) pos;
+                Debug.info_hprint (add_str "inv(xpure0)" pr) vdef.C.view_user_inv pos;
+
+	        Debug.info_hprint (add_str "inv(xpure1)" pr) vdef.C.view_x_formula pos
+              end
+          end
         else report_error pos ("view defn for "^vn^" does not entail supplied invariant\n") 
       in ()
     else ()

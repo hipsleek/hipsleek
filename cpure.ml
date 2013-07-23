@@ -583,6 +583,7 @@ let rec is_true_conj_eq (f1:formula) : bool = match f1 with
                     let b1 = eq_spec_var v1 v2 in
                     b1
                 | _ -> false)
+	  | BConst (true, pos), _ -> true
           | _ -> false
         )
 	| AndList b-> all_l_snd is_true_conj_eq b
@@ -6645,6 +6646,8 @@ let rec replace_pure_formula_label nl f = match f with
   | Not (b1,b2,b3) -> Not ((replace_pure_formula_label nl b1),(nl()),b3)
   | Forall (b1,b2,b3,b4) -> Forall (b1,(replace_pure_formula_label nl b2),(nl()),b4)
   | Exists (b1,b2,b3,b4) -> Exists (b1,(replace_pure_formula_label nl b2),(nl()),b4)
+
+let store_tp_is_sat : (formula -> bool) ref = ref (fun _ -> true)
   
 let rec imply_disj_orig_x ante_disj conseq t_imply imp_no =
   Debug.devel_hprint (add_str "ante: " (pr_list !print_formula)) ante_disj no_pos;
@@ -6661,9 +6664,29 @@ let rec imply_disj_orig_x ante_disj conseq t_imply imp_no =
     | [] -> (true,[],None)
 
 and imply_disj_orig_x0 ante_disj conseq t_imply imp_no =
-  (* disable assumption filtering if ante_disj>1 *)
-  if (List.length ante_disj > 1) 
-  then wrap_no_filtering (imply_disj_orig_x ante_disj conseq t_imply) imp_no
+  let i = List.length ante_disj in
+  if (i > 1) 
+  then 
+    begin
+      let pr = !print_formula in
+      (* perform unsat checking if i>1 *)
+      let f = !store_tp_is_sat in
+      (* removing unsatisfiable LHS disjunct *)
+      let (ante_disj,false_st) = List.partition f ante_disj in
+      let i = List.length false_st in
+      let j = List.length ante_disj in
+      let _ = 
+        if (i>0) 
+        then
+          let pri = string_of_int in
+          let _ = Debug.info_hprint (add_str "(unsat ante, sat ante)" (pr_pair pri pri)) (i,j) no_pos in
+          Debug.tinfo_hprint (add_str "unsat ante removed" (pr_list pr)) false_st no_pos
+        else () 
+      in
+      (* disable assumption filtering if ante_disj>1 *)
+      (* wrap_no_filtering (imply_disj_orig_x ante_disj conseq t_imply) imp_no *)
+      (imply_disj_orig_x ante_disj conseq t_imply) imp_no
+    end
   else imply_disj_orig_x ante_disj conseq t_imply imp_no
 
 and imply_disj_orig ante_disj conseq t_imply imp_no =
@@ -9393,7 +9416,7 @@ let rec andl_to_and f = match f with
 	| Exists (v,f,l,p) -> Exists (v, andl_to_and f, l, p)
 	| AndList b ->
 		let l = List.map (fun (_,c)-> andl_to_and c) b in
-		List.fold_left (fun a c-> And (a,c,no_pos)) (mkTrue no_pos) l 
+		List.fold_left (fun a c-> mkAnd a c no_pos) (mkTrue no_pos) l 
 
 and extractLS_b_formula (bf : b_formula) : b_formula =
   let (pf,_) = bf in
@@ -10933,3 +10956,12 @@ let get_cmp_form p =
   let pr3 = pr_list (pr_pair !print_sv !print_sv) in
   Debug.no_1 "get_cmp_form" pr1 pr3
       (fun _ -> get_cmp_form_x p) p
+
+	  
+let rhs_needs_or_split f = 	match f with
+	| Or _ -> not(no_andl f)
+	| _-> false
+
+let count_disj f =
+  let k = split_disjunctions f
+  in List.length k
