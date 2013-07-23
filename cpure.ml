@@ -6679,10 +6679,10 @@ and imply_disj_orig_x0 ante_disj conseq t_imply imp_no =
         if (i>0) 
         then
           let pri = string_of_int in
-          let _ = Debug.info_hprint (add_str "(unsat ante, sat ante)" (pr_pair pri pri)) (i,j) no_pos in
+          let _ = Debug.ninfo_hprint (add_str "(unsat ante, sat ante)" (pr_pair pri pri)) (i,j) no_pos in
           Debug.tinfo_hprint (add_str "unsat ante removed" (pr_list pr)) false_st no_pos
         else () 
-      in
+      in 
       (* disable assumption filtering if ante_disj>1 *)
       (* wrap_no_filtering (imply_disj_orig_x ante_disj conseq t_imply) imp_no *)
       (imply_disj_orig_x ante_disj conseq t_imply) imp_no
