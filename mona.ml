@@ -1311,7 +1311,7 @@ let check_answer (mona_file_content: string) (answ: string) (is_sat_b: bool)=
 let maybe_restart_mona () : unit =
   if !is_mona_running then begin
     let num_tasks = !test_number - !last_test_number in
-    if num_tasks >=(!mona_cycle) then restart "upper limit reached"
+    if num_tasks >=(!mona_cycle) then restart "restart (limit reached)"
   end
 
 let prepare_formula_for_mona pr_w pr_s (f: CP.formula) (test_no: int): CP.spec_var list * CP.formula =
