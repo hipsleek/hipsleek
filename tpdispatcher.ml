@@ -820,7 +820,7 @@ let sat_label_filter fct f =  Debug.no_1 "sat_label_filter" !print_formula strin
 let imply_label_filter ante conseq = 
   (*let s = "unexpected imbricated AndList in tpdispatcher impl: "^(Cprinter.string_of_pure_formula ante)^"|-"^(Cprinter.string_of_pure_formula conseq)^"\n" in*)
   let comp = 
-    if  !Globals.label_aggressive_flag
+    if  !Globals.label_aggressive_imply
     then Label_only.Lab_List.is_fully_compatible
     else Label_only.Lab_List.is_part_compatible
   in

@@ -69,6 +69,8 @@ let common_arguments = [
    "Enable aggressive splitting of label for sat.");
   ("--lbl-en-aggr-imply", Arg.Set Globals.label_aggressive_imply,
    "Enable aggressive splitting of label for implications.");
+  (* ("--en-label-aggr", Arg.Set Globals.label_aggressive_flag, "enable aggressive splitting of labels"); *)
+  (* ("--dis-label-aggr", Arg.Clear Globals.label_aggressive_flag, "disable aggressive splitting of labels"); *)
   ("--dis-ufdp", Arg.Clear Solver.unfold_duplicated_pointers,
    "Disable unfolding of predicates with duplicated pointers."); (* An Hoa *)
   ("--ahwytdi", Arg.Set Smtsolver.try_induction,
@@ -335,8 +337,6 @@ let common_arguments = [
   ("--esi",Arg.Set Globals.enable_strong_invariant, "enable strong predicate invariant");
   ("--en-red-elim", Arg.Set Globals.enable_redundant_elim, "enable redundant elimination under eps");
   ("--eap", Arg.Set Globals.enable_aggressive_prune, "enable aggressive prunning");
-  ("--en-label-aggr", Arg.Set Globals.label_aggressive_flag, "enable aggressive splitting of labels");
-  ("--dis-label-aggr", Arg.Clear Globals.label_aggressive_flag, "disable aggressive splitting of labels");
   (* UNSAT("":cf,"a":af,"b":bf) 
           --> UNSAT(cf&af) | UNSAT(cf & bf) *)
   (* aggressive UNSAT("":cf,"a":af,"b":bf) 
