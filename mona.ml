@@ -16,6 +16,7 @@ let last_test_number = ref 0
 let test_number = ref 0
 let mona_cycle = ref 90
 let mona_timeout = ref 5.0 (* default timeout is 10 seconds *)
+let max_BUF_SIZE = 16384
 
 let result_file_name = "res"
 let log_all_flag = ref false
@@ -163,21 +164,20 @@ let compute_order_exp (f:CP.exp) : (CP.spec_var option) * order_atom list * int 
     | CP.Max(e1, e2, _)
     | CP.Min(e1, e2, _) 
     | CP.Add (e1, e2, _) ->  let (r,c) = force_order_lst aux [e1;e2] 0 in (r, c, 0) (* should return r so that the 
-                                                                                       result of the operation would have teh same type as the operands *)
+                                               result of the operation would have teh same type as the operands *)
     | CP.Bag(el, _) 
         -> let (r,c) = force_order_lst aux el 1 in (None, c, 2)
     | CP.BagUnion(el, _) 
     | CP.BagIntersect(el, _) -> let (r,c) =  force_order_lst aux el 2 in (None, c, 2)
     | CP.BagDiff(e1, e2, _) -> let (r,c) =  force_order_lst aux [e1;e2] 2 in (None, c, 2)
-
-    | CP.ListCons(e1, e2, _) -> let (r,c) =  same_order_lst aux [e1;e2] in (None, c, 2)
-    | CP.List(el, _)
-    | CP.ListAppend(el, _) -> let (r,c) = same_order_lst aux el in (None, c, 2)
-    | CP.ListHead(e, _)
-    | CP.ListTail(e, _)
-    | CP.ListLength(e, _)
-    | CP.ListReverse(e, _) -> let (r,c) =  same_order_lst aux [e] in (None, c, 2)
-    (* | CP.ArrayAt(sv, el, l) -> Error.report_error { Error.error_loc = l; Error.error_text = (" Mona does not handle arrays!\n")} *)
+    | CP.ListCons _
+    | CP.List _
+    | CP.ListAppend _
+    | CP.ListHead _
+    | CP.ListTail _
+    | CP.ListLength _
+    | CP.ListReverse _ -> failwith ("Lists are not supported in Mona")
+    | CP.ArrayAt _ -> failwith ("Mona does not handle arrays!")
     | _ -> (None, [],0)                   (* null and iconst *)
   in aux f
  
@@ -210,10 +210,10 @@ let compute_order_b_formula (bf:CP.b_formula) : order_atom list =
           let (r2, c2, _) = force_order_exp e2 2 in
           let (_, c1, _) = force_eq_exp e1 r2 in
           c1@c2
-    | CP.ListIn(e1, e2, _)
-    | CP.ListNotIn(e1, e2, _) 
-    | CP.ListAllN(e1, e2, _)
-    | CP.ListPerm(e1, e2, _)
+    | CP.ListIn _
+    | CP.ListNotIn _
+    | CP.ListAllN _
+    | CP.ListPerm _ -> failwith ("Lists are not supported in Mona")
     | CP.Lt(e1, e2, _)
     | CP.Lte(e1, e2, _) 
     | CP.SubAnn(e1, e2, _ )
@@ -1120,10 +1120,13 @@ let send_cmd_with_answer str =
   if!log_all_flag==true then
     output_string log_all str;
   let fnc () = 
-    let _ = (output_string !process.outchannel str;
-             flush !process.outchannel) in
-    let str = get_answer !process.inchannel in
-    str 
+    if (String.length str < max_BUF_SIZE) then
+      let _ = (output_string !process.outchannel str;
+      flush !process.outchannel) in
+      let str = get_answer !process.inchannel in
+      str 
+    else
+      "Formula is too large"
   in 
   let answ = Procutils.PrvComms.maybe_raise_timeout_num 1 fnc () !mona_timeout in
   answ
@@ -1264,6 +1267,13 @@ let check_answer_x (mona_file_content: string) (answ: string) (is_sat_b: bool)=
             if !log_all_flag == true then
 		      output_string log_all ("[mona.ml]:" ^ imp_sat_str ^" --> false \n");
             false;
+      | "Formula is too large" -> 
+            begin
+    	      if !log_all_flag == true then
+		output_string log_all ("[mona.ml]: "^ imp_sat_str ^" --> " ^(string_of_bool is_sat_b) ^"(formula too large - not sent to mona)\n");
+	      print_endline ("[mona] Warning: "^ imp_sat_str ^" --> " ^(string_of_bool is_sat_b) ^"(formula too large  - not sent to mona)\n");
+              is_sat_b;
+            end
       | "" ->
             (* process might have died. maybe BDD was too large - restart mona*)
             (* print_string "MONA aborted execution! Restarting..."; *)
