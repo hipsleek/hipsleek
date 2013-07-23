@@ -692,6 +692,8 @@ let precise_perm_xpure = ref true
      smart_xpure and xpure0!=xpure1 *)
 let smart_memo = ref false
 
+let enable_constraint_based_filtering = ref false
+
 (* let lemma_heuristic = ref false *)
 
 let elim_exists_ff = ref true

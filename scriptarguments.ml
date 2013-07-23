@@ -91,6 +91,7 @@ let common_arguments = [
   "No assumption filtering.");
   ("--filter", Arg.Set Globals.filtering_flag,
    "Enable assumption filtering.");
+  ("--constr-filter", Arg.Set Globals.enable_constraint_based_filtering, "Enable assumption filtering based on contraint type");
   ("--no-split-rhs", Arg.Clear Globals.split_rhs_flag,
    "No Splitting of RHS(conseq).");
   ("--dlp", Arg.Clear Globals.check_coercions,
