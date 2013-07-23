@@ -7768,13 +7768,18 @@ let convert_pred_to_cast new_views iprog cprog =
       ( fun _ -> convert_pred_to_cast_x new_views iprog cprog) new_views
 
 (*LOC: this transformation is not quite correct. please improve*)
-let plugin_inferred_iviews views iprog =
+let plugin_inferred_iviews views iprog cprog=
   let hn_trans pname vnames hn = match hn with 
-    | IF.HRel (id,args, pos)-> 
+    | IF.HRel (id,eargs, pos)-> 
         if (List.exists (fun (_,n)-> (String.compare n id)==0) vnames) then 
-          let hvar,tl = match args with
-            | (IP.Var (v,_))::tl-> v,tl
-            | _ -> failwith "reverification failure due to too complex predicate arguments \n" in
+          let hvar,tl =
+            let er, args = C.get_root_args_hprel cprog.C.prog_hp_decls id eargs in
+            let r = match er with
+              | (IP.Var (v,_))-> v
+              | IP.Ann_Exp (IP.Var (sv, _), _, _) -> sv (*annotated self*)
+              | _ -> failwith "reverification failure due to too complex predicate arguments \n" in
+            (r, args)
+          in
           IF.HeapNode { 
               IF.h_formula_heap_node = hvar;
               IF.h_formula_heap_name = id^"_"^pname;
@@ -7809,9 +7814,9 @@ let plugin_inferred_iviews views iprog =
     I.prog_hp_ids = []; 
     I.prog_hp_decls=[];} 
 
-let plugin_inferred_iviews views iprog =
+let plugin_inferred_iviews views iprog cprog=
   let pr1 = pr_list (pr_triple pr_id pr_id pr_none) in
-  Debug.no_1 "plugin_inferred_iviews" pr1 Iprinter.string_of_program (fun _ -> plugin_inferred_iviews views iprog) views
+  Debug.no_1 "plugin_inferred_iviews" pr1 Iprinter.string_of_program (fun _ -> plugin_inferred_iviews views iprog cprog) views
 
 
 (*

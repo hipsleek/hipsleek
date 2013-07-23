@@ -191,7 +191,7 @@ let process_lib_file prog =
 
 let reverify_with_hp_rel old_cprog iprog =
 	let new_iviews = Astsimp.transform_hp_rels_to_iviews (Cast.collect_hp_rels old_cprog) in
-	let cprog = Astsimp.trans_prog (Astsimp.plugin_inferred_iviews new_iviews iprog) in
+	let cprog = Astsimp.trans_prog (Astsimp.plugin_inferred_iviews new_iviews iprog old_cprog) in
 	ignore (Typechecker.check_prog iprog cprog)
 
 	  
@@ -338,8 +338,9 @@ let process_source_full source =
       raise e
     end);
 	if (!Globals.reverify_all_flag)
-	then 
-		reverify_with_hp_rel cprog intermediate_prog(*_reverif *)
+	then
+          let _ =  Debug.info_pprint "re-verify" no_pos; in
+	  reverify_with_hp_rel cprog intermediate_prog(*_reverif *)
 	else ();
 	
     (* Stopping the prover *)
