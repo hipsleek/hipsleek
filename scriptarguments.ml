@@ -59,6 +59,7 @@ let common_arguments = [
    "Print all the verification conditions, the input to external prover and its output.");
   (* ("--ufdp", Arg.Set Solver.unfold_duplicated_pointers, *)
   (* "Do unfolding of predicates with duplicated pointers."); (\* An Hoa *\) *)
+  (* Labelling Options *)
   ("--dis-lbl", Arg.Set Globals.remove_label_flag,
    "Disable Labelling of Formula be removing AndList."); 
   ("--lbl-dis-split-conseq", Arg.Clear Globals.label_split_conseq,
@@ -69,6 +70,20 @@ let common_arguments = [
    "Enable aggressive splitting of label for sat.");
   ("--lbl-en-aggr-imply", Arg.Set Globals.label_aggressive_imply,
    "Enable aggressive splitting of label for implications.");
+  ("--lbl-en-aggr", Arg.Unit (fun _ -> 
+     Globals.label_aggressive_imply := true;
+     Globals.label_aggressive_sat := true ),
+   "Enable aggressive splitting of label.");
+   (* UNSAT("":cf,"a":af,"b":bf) 
+          --> UNSAT(cf&af) | UNSAT(cf & bf) *)
+  (* aggressive UNSAT("":cf,"a":af,"b":bf) 
+          --> UNSAT(cd) | UNSAT(af) & UNSAT(bf) *)
+  (* IMPLY("":cf,"a":af,"b":bf --> "a":ta,"b":tb) 
+          --> IMPLY(cf&af -->ta) & IMPLY (cf&bf-->tb) *)
+  (* aggressive IMPLY("":cf,"a":af,"b":bf --> "a":ta,"b":tb) 
+          --> IMPLY(af -->ta) & IMPLY (bf-->tb) *)
+  (* ("--en-label-aggr-sat", Arg.Set Globals.label_aggressive_sat, "enable aggressive splitting of labels during unsat"); *)
+  (* ("--dis-label-aggr-sat", Arg.Clear Globals.label_aggressive_sat, "disable aggressive splitting of labels during unsat"); *)
   (* ("--en-label-aggr", Arg.Set Globals.label_aggressive_flag, "enable aggressive splitting of labels"); *)
   (* ("--dis-label-aggr", Arg.Clear Globals.label_aggressive_flag, "disable aggressive splitting of labels"); *)
   ("--dis-ufdp", Arg.Clear Solver.unfold_duplicated_pointers,
@@ -337,16 +352,7 @@ let common_arguments = [
   ("--esi",Arg.Set Globals.enable_strong_invariant, "enable strong predicate invariant");
   ("--en-red-elim", Arg.Set Globals.enable_redundant_elim, "enable redundant elimination under eps");
   ("--eap", Arg.Set Globals.enable_aggressive_prune, "enable aggressive prunning");
-  (* UNSAT("":cf,"a":af,"b":bf) 
-          --> UNSAT(cf&af) | UNSAT(cf & bf) *)
-  (* aggressive UNSAT("":cf,"a":af,"b":bf) 
-          --> UNSAT(cd) | UNSAT(af) & UNSAT(bf) *)
-  (* IMPLY("":cf,"a":af,"b":bf --> "a":ta,"b":tb) 
-          --> IMPLY(cf&af -->ta) & IMPLY (cf&bf-->tb) *)
-  (* aggressive IMPLY("":cf,"a":af,"b":bf --> "a":ta,"b":tb) 
-          --> IMPLY(af -->ta) & IMPLY (bf-->tb) *)
-  ("--en-label-aggr-sat", Arg.Set Globals.label_aggressive_sat, "enable aggressive splitting of labels during unsat");
-  ("--dis-label-aggr-sat", Arg.Clear Globals.label_aggressive_sat, "disable aggressive splitting of labels during unsat");
+
   (* ("--dap", Arg.Clear Globals.disable_aggressive_prune, "never use aggressive prunning"); *)
   ("--efp",Arg.Set Globals.enable_fast_imply, " enable fast imply only for --eps pruning; incomplete");
   (* ("--dfp",Arg.Clear Globals.enable_fast_imply, " disable syntactic imply only for --eps"); *)

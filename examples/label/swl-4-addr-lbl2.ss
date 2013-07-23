@@ -6,7 +6,12 @@ data node{
 
 lx<"n":g,"n":s,"S":M> == true & ["n":self=g & self!=s; "S": M={}]
   or self::node<v,nxt> * nxt::lx<g,s,M1> & ["n":self!=g & self!=s; "S": M=union(M1,{self})]
-  inv true & ["n":self!=s]  ;
+  inv (AndList("S":exists(M1:M=union(M1,{self}))
+            ; "n":self!=null & g!=self & s!=self) ) 
+      | (AndList( "S":M={}
+            ; "n":g=self & s!=self) ))
+//true & ["n":self!=s]  
+;
 
 void lscan(ref node cur, ref node prev, node sent)
  requires cur::lx<a,b,M1> * prev::lx<b,a,M2> & ["n":cur!=a & (a=null & b=sent | a=sent & b=null)]
@@ -35,7 +40,12 @@ void lscan(ref node cur, ref node prev, node sent)
 
 /*
 # swl-4-addr-llb2.ss -tp om --pcp
- 
+
+
+ xform: ((AndList( "":self!=null ; "S":exists(M1:M=union(M1,{self}))
+            ; "n":g!=self & s!=self) ) | (AndList( "S":M={}
+            ; "n":g=self & s!=self) ))
+  
 translation below is wrong:
 void lscan$node~node~node(  node cur,  node prev,  node sent) rec
 static  :EBase exists (Expl)(Impl)[M1; b; a; M2](ex)EXISTS(b_36,
