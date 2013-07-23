@@ -28,7 +28,9 @@ struct
   let is_unlabelled l = (l==[])
   let is_top_label l = List.exists (fun c-> c="") l
   let is_common l = (is_unlabelled l) or (is_top_label l)
-  let string_of x = pr_list pr_string x
+  let string_of x = 
+    if x=[] then "\"\""
+    else pr_list_no_brk pr_string x
   let singleton s = [s]
 
   let rec overlap xs ys = match xs,ys with
@@ -43,6 +45,10 @@ struct
   let is_fully_compatible xs ys =
     if (is_common xs) && (is_common ys) then true
     else overlap xs ys
+  
+  let is_fully_compatible xs ys =
+    let pr = pr_list pr_id  in
+    Debug.no_2 "is_fully_compatible" pr pr string_of_bool is_fully_compatible xs ys 	
 
   (* assumes that xs and ys are normalized *)
   (* returns true if they overlap in some ways *)
@@ -50,13 +56,13 @@ struct
     if (is_unlabelled xs) || (is_unlabelled ys) then true
     else overlap xs ys
 
-  let is_part_compatible_x xs ys =
+  let is_part_compatible xs ys =
     if (is_unlabelled xs)||(is_top_label xs) then true
     else overlap xs ys
 
   let is_part_compatible xs ys = 
-	let pr = pr_list pr_id  in
-	Debug.no_2 "is_part_compatible" pr pr string_of_bool is_part_compatible_x xs ys 	
+    let pr = pr_list pr_id  in
+    Debug.no_2 "is_part_compatible" pr pr string_of_bool is_part_compatible xs ys 	
 	
   let is_compatible_rec = is_compatible
 

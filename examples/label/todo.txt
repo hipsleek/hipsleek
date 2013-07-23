@@ -241,6 +241,21 @@ with the first successful proof.
 	     conseq:  ((0<n & n=0) | (n<0 & 0<=n & n=1))
  res: true
 ============================================================
+# swll-1.ss 
+
+l-sw-1.slk was proof 252 extracted from 
+   swll-1.ss --en-imp-top --en-logging-txt
+
+When run as sleek, it will decompose ante (LHS) prior to
+decomposing conseq.
+
+However, in hip; it was decomposing conseq and then
+dropping the labels from the LHS. Why is there such
+inconsistency? 
+
+trace:
+let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (imp_no : string) timeout process
+
 ============================================================
 ============================================================
 ============================================================

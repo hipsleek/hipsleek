@@ -856,6 +856,15 @@ let pairwisecheck (pe : formula) : formula =
 	        match_vars (fv pe) rel 
   end
 
+let pairwisecheck (pe : formula) : formula =
+  let r = pairwisecheck pe in
+  if count_disj r > count_disj pe then pe
+  else r
+
+let pairwisecheck (pe : formula) : formula =
+  let pf = !print_pure in
+  Debug.no_1 "Omega.pairwisecheck" pf pf pairwisecheck pe
+
 let hull (pe : formula) : formula =
   (*print_endline "LOCLE: hull";*)
   begin

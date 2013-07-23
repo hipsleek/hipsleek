@@ -969,11 +969,17 @@ let norm_var_name (e: CP.formula) : CP.formula =
     | CP.Or (f1, f2, lbl, l) ->
         let nf1 = simplify f1 vnames in
         let nf2 = simplify f2 vnames in
-        CP.mkOr nf1 nf2 lbl l
+        let r = CP.mkOr nf1 nf2 lbl l in
+        r
     | CP.Not (f1, lbl, l) ->
         CP.Not (simplify f1 vnames, lbl, l)
     | CP.BForm (bf, lbl) ->
         CP.BForm (CP.map_b_formula_arg bf vnames (f_bf, f_e) (idf2, idf2), lbl)
+  in
+  (* renaming free vars to unique vars for better caching *)
+  let simplify f0 vnames = 
+    let pr = Cprinter.string_of_pure_formula in
+    Debug.no_1 "simplify-syn" pr pr (fun _ -> simplify f0 vnames) f0
   in
   simplify e (Hashtbl.create 100)
 
@@ -1876,6 +1882,10 @@ let tp_imply ante conseq imp_no timeout process =
 let tp_imply ante conseq old_imp_no timeout process =	
   proof_no := !proof_no + 1 ;
   let imp_no = (string_of_int !proof_no) in
+  let imp_no = 
+    if !Globals.imply_top_flag then imp_no^":"^old_imp_no 
+    else imp_no
+  in
   Debug.devel_zprint (lazy ("IMP #" ^ imp_no)) no_pos;  
   Debug.devel_zprint (lazy ("imply_timeout: ante: " ^ (!print_pure ante))) no_pos;
   Debug.devel_zprint (lazy ("imply_timeout: conseq: " ^ (!print_pure conseq))) no_pos;
@@ -2123,8 +2133,15 @@ let imply_timeout_helper ante conseq process ante_inner conseq_inner imp_no time
    
 let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (old_imp_no : string) timeout process
       : bool*(formula_label option * formula_label option )list * (formula_label option) = (*result+successfull matches+ possible fail*)
-  (* proof_no := !proof_no + 1 ; *)
-  (* let imp_no = (string_of_int !proof_no) in *)
+  let old_imp_no = 
+     if !Globals.imply_top_flag 
+     then
+     begin
+       proof_no := !proof_no + 1 ;
+       (string_of_int !proof_no)
+     end
+     else old_imp_no
+  in
   (* let count_inner = ref 0 in *)
   let imp_no = old_imp_no in
   let ante_inner = ref [] in
@@ -2133,7 +2150,7 @@ let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (old_imp_no : stri
   (* Debug.devel_zprint (lazy ("IMP #" ^ imp_no)) no_pos;   *)
   (* Debug.devel_zprint (lazy ("imply_timeout: ante: " ^ (!print_pure ante0))) no_pos; *)
   (* Debug.devel_zprint (lazy ("imply_timeout: conseq: " ^ (!print_pure conseq0))) no_pos; *)
-  (* let cmd = PT_IMPLY(ante0,conseq0) in *)
+  let cmd = PT_IMPLY_TOP(ante0,conseq0) in
   (* let _ = Log.last_proof_command # set cmd in *)
   let fn () =
     if !external_prover then 
@@ -2182,7 +2199,8 @@ let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (old_imp_no : stri
   (* let _ = print_string ("length of pairs: "^(string_of_int (List.length !ante_inner))) in *)
   (* let ante0 = CP.join_conjunctions !ante_inner in *)
   (* let conseq0 = CP.join_conjunctions !conseq_inner in *)
-  (* let _= add_proof_log !cache_status old_imp_no imp_no (string_of_prover !pure_tp) cmd (\* (PT_IMPLY (ante0, conseq0)) *\) (Timelog.logtime # get_last_time) (PR_BOOL (match final_res with | r,_,_ -> r)) in *)
+  if !Globals.imply_top_flag then
+    add_proof_log false old_imp_no imp_no "funny" cmd (* (PT_IMPLY (ante0, conseq0)) *) (Timelog.logtime # get_last_time) (PR_BOOL (match final_res with | r,_,_ -> r));
   final_res
 ;;
 

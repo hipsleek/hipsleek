@@ -811,6 +811,7 @@ let num_self_fold_search = ref 0
 let self_fold_search_flag = ref false
 
 let show_gist = ref false
+let imply_top_flag = ref false
 
 let trace_failure = ref false
 

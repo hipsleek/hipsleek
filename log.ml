@@ -10,6 +10,7 @@ module CP = Cpure
 module CF = Cformula
  
 type proof_type =
+	| PT_IMPLY_TOP of (CP.formula * CP.formula)
 	| PT_IMPLY of (CP.formula * CP.formula)
 	| PT_SAT  of CP.formula
 	| PT_SIMPLIFY of CP.formula
@@ -73,6 +74,9 @@ let string_of_sleek_proving_kind () = proving_kind#string_of
 
 let string_of_log_type lt =
   match lt with
+    |PT_IMPLY_TOP (ante, conseq) -> 
+	  "ImplyTOP: ante:" ^(string_of_pure_formula ante) ^"\n\t     conseqTOP: " 
+         ^(string_of_pure_formula conseq)
     |PT_IMPLY (ante, conseq) -> 
 	  let clean_str = 
 		if !print_clean_flag then 
@@ -335,7 +339,8 @@ let proof_log_to_text_file fname (src_files) =
         open_out ("logs/"^with_option^"_proof_log_" ^ (Globals.norm_file_name (List.hd src_files)) ^".txt") in
       let string_of_log_type lt =
         match lt with
-          |PT_IMPLY (ante, conseq) -> "Imply: ante:" ^(string_of_pure_formula ante) ^"\n\t     conseq: " ^(string_of_pure_formula conseq)
+          |PT_IMPLY (ante, conseq) |PT_IMPLY_TOP (ante, conseq)
+                -> "Imply: ante:" ^(string_of_pure_formula ante) ^"\n\t     conseq: " ^(string_of_pure_formula conseq)
           |PT_SAT f-> "Sat: "^(string_of_pure_formula f) 
           |PT_SIMPLIFY f -> "Simplify: "^(string_of_pure_formula f)
       in

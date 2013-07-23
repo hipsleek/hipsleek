@@ -10961,3 +10961,7 @@ let get_cmp_form p =
 let rhs_needs_or_split f = 	match f with
 	| Or _ -> not(no_andl f)
 	| _-> false
+
+let count_disj f =
+  let k = split_disjunctions f
+  in List.length k

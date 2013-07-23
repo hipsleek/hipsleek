@@ -113,6 +113,10 @@ let common_arguments = [
    "Turn on experimental trace_on");
   ("-dd-print-orig-conseq", Arg.Unit Debug.enable_dd_and_orig_conseq_printing,
    "Enable printing of the original consequent while debugging. Automatically enables -dd (debugging) ");
+  ("--en-imp-top", Arg.Set Globals.imply_top_flag,
+   "Enable proof logging of Imply_Top");
+  ("--dis-imp-top", Arg.Clear Globals.imply_top_flag,
+   "Disable proof logging of Imply_Top");
   ("-gist", Arg.Set Globals.show_gist,
    "Show gist when implication fails");
   ("--hull-pre-inv", Arg.Set Globals.hull_pre_inv,
