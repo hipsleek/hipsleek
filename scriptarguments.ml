@@ -59,6 +59,16 @@ let common_arguments = [
    "Print all the verification conditions, the input to external prover and its output.");
   (* ("--ufdp", Arg.Set Solver.unfold_duplicated_pointers, *)
   (* "Do unfolding of predicates with duplicated pointers."); (\* An Hoa *\) *)
+  ("--dis-lbl", Arg.Set Globals.remove_label_flag,
+   "Disable Labelling of Formula be removing AndList."); 
+  ("--lbl-dis-split-conseq", Arg.Clear Globals.label_split_conseq,
+   "Disable the splitting of consequent to expose labels."); 
+  ("--lbl-dis-split-ante", Arg.Clear Globals.label_split_ante,
+   "Disable the splitting of antecedent to expose labels."); 
+  ("--lbl-en-aggr-sat", Arg.Set Globals.label_aggressive_sat,
+   "Enable aggressive splitting of label for sat.");
+  ("--lbl-en-aggr-imply", Arg.Set Globals.label_aggressive_imply,
+   "Enable aggressive splitting of label for implications.");
   ("--dis-ufdp", Arg.Clear Solver.unfold_duplicated_pointers,
    "Disable unfolding of predicates with duplicated pointers."); (* An Hoa *)
   ("--ahwytdi", Arg.Set Smtsolver.try_induction,
