@@ -98,7 +98,7 @@ let search_pred_4_equal_x constrs post_hps frozen_hps=
     | None -> false
     | Some _ -> true
   in
-  let pr1 = Cprinter.string_of_hprel_short in
+  (* let pr1 = Cprinter.string_of_hprel_short in *)
   let rec partition_equal (cand_equal, complex_nrec_ndep, complex_non_rec, complex_hps) ls_pre=
    match ls_pre with
      | [] -> (cand_equal, complex_nrec_ndep, complex_non_rec, complex_hps)
@@ -1271,7 +1271,7 @@ let transform_xpure_to_pure_x prog hp_defs unk_map link_hpargs=
   let link_fr_map = List.map (fun ((hp,args)) ->
       let locs_i = SAU.get_pos_of_hp_args_inst prog hp in
       let args_inst = SAU.retrieve_args_from_locs args locs_i in
-      let (CP.SpecVar (t, _, p)) = hp in
+      let (CP.SpecVar (_, _, p)) = hp in
       let (CP.SpecVar (t, _, p)) = List.hd args_inst in
       (hp,
       let dang_name = dang_hp_default_prefix_name ^ "_" ^ (CP.name_of_spec_var hp) (* ^ "_" ^dang_hp_default_prefix_name *)  in
@@ -2083,9 +2083,9 @@ let reverify_cond prog (unk_hps: CP.spec_var list) link_hps hpdefs cond_equivs=
 let trans_constr_hp_2_view_x iprog cprog proc_name hpdefs in_hp_names chprels_decl constrs=
   let process_cs cs=
     let nlhs = SAO.trans_formula_hp_2_view iprog cprog proc_name
-      in_hp_names chprels_decl hpdefs cs.CF.hprel_lhs in
+       chprels_decl hpdefs cs.CF.hprel_lhs in
     let nrhs = SAO.trans_formula_hp_2_view iprog cprog proc_name
-      in_hp_names chprels_decl hpdefs cs.CF.hprel_rhs in
+      chprels_decl hpdefs cs.CF.hprel_rhs in
     {cs with CF.hprel_lhs = nlhs;
     CF.hprel_rhs = nrhs;}
   in

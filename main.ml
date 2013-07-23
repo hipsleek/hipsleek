@@ -190,11 +190,26 @@ let process_lib_file prog =
       Iast.prog_view_decls = prog.Iast.prog_view_decls @ vdecls;}
 
 let reverify_with_hp_rel old_cprog iprog =
-	let new_iviews = Astsimp.transform_hp_rels_to_iviews (Cast.collect_hp_rels old_cprog) in
-	let cprog = Astsimp.trans_prog (Astsimp.plugin_inferred_iviews new_iviews iprog old_cprog) in
-	ignore (Typechecker.check_prog iprog cprog)
+  (* let new_iviews = Astsimp.transform_hp_rels_to_iviews (Cast.collect_hp_rels old_cprog) in *)
+  (* let cprog = Astsimp.trans_prog (Astsimp.plugin_inferred_iviews new_iviews iprog old_cprog) in *)
+  let hp_defs = Saout.collect_hp_defs old_cprog in
+  let need_trans_hprels = List.filter (fun (hp_kind, _,_,_) ->
+        match hp_kind with
+          |  Cpure.HPRelDefn (hp,_,_) -> begin
+                 try
+                   let _ = Cast.look_up_view_def_raw 33 old_cprog.Cast.prog_view_decls
+                     (Cpure.name_of_spec_var hp)
+                   in
+                   false
+                 with Not_found -> true
+             end
+          | _ -> false
+  ) hp_defs in
+  let proc_name = "" in
+  let n_cviews,chprels_decl = Saout.trans_hprel_2_cview iprog old_cprog proc_name need_trans_hprels in
+  let cprog = Saout.trans_specs_hprel_2_cview iprog old_cprog proc_name need_trans_hprels chprels_decl in
+  ignore (Typechecker.check_prog iprog cprog)
 
-	  
 (***************end process compare file*****************)
 (*Working*)
 let process_source_full source =
@@ -339,7 +354,7 @@ let process_source_full source =
     end);
 	if (!Globals.reverify_all_flag)
 	then
-          let _ =  Debug.info_pprint "re-verify" no_pos; in
+          let _ =  Debug.binfo_pprint "re-verify\n" no_pos; in
 	  reverify_with_hp_rel cprog intermediate_prog(*_reverif *)
 	else ();
 	

@@ -177,13 +177,14 @@ let plugin_inferred_iviews views iprog cprog =
       I.view_formula = IF.struc_formula_trans_heap_node (hn_trans cprog vnames) prd.I.view_formula}
   ) views
   in
-  {iprog with
-      I.prog_view_decls= iprog.I.prog_view_decls@vdecls;
-  }
+  ({iprog with
+      I.prog_view_decls= iprog.I.prog_view_decls(* @vdecls *);
+  },vdecls)
 
 let plugin_inferred_iviews views iprog cprog =
   let pr1 = pr_list (pr_pair (pr_pair pr_id pr_none) pr_none) in
-  Debug.no_1 "plugin_inferred_iviews" pr1 Iprinter.string_of_program
+  Debug.no_1 "plugin_inferred_iviews" pr1
+      (pr_pair Iprinter.string_of_program pr_none)
       (fun _ -> plugin_inferred_iviews views iprog cprog) views
 
 let trans_hprel_2_cview_x iprog cprog proc_name hpdefs:
@@ -224,9 +225,9 @@ let trans_hprel_2_cview_x iprog cprog proc_name hpdefs:
   (*convert to iview*)
   let pair_iviews = transform_hp_rels_to_iviews iprog cprog hpdefs2 in
   (*subst hprel -> view in defs*)
-  let n_iproc = plugin_inferred_iviews pair_iviews iprog cprog in
-  let _ = iprog.I.prog_view_decls <- n_iproc.I.prog_view_decls in
-  let iviews, new_views = List.fold_left (fun (ls1,ls2) (id,iv) -> ((ls1@[iv]), (ls2@[id]))) ([],[]) pair_iviews in
+  let iviews0, new_views = List.fold_left (fun (ls1,ls2) (id,iv) -> ((ls1@[iv]), (ls2@[id]))) ([],[]) pair_iviews in
+  let n_iproc,iviews = plugin_inferred_iviews pair_iviews iprog cprog in
+  (* let _ = iprog.I.prog_view_decls <- n_iproc.I.prog_view_decls in *)
   let _ = List.iter (AS.process_pred_def_4_iast iprog) iviews in
   (* let _ = iprog.Iast.prog_view_decls <- iprog.Iast.prog_view_decls@iviews in *)
   (*convert to cview*)
@@ -236,7 +237,7 @@ let trans_hprel_2_cview_x iprog cprog proc_name hpdefs:
   (* let _ = iprog.I.prog_hp_decls <- iprog.I.prog_hp_decls@idef_hprels in *)
   (* let _ = cprog.C.prog_hp_decls <- cprog.C.prog_hp_decls@cdef_hprels in *)
   let _ = if def_hps = [] then () else
-    Debug.info_pprint (" transform: " ^ (!CP.print_svl def_hps) )no_pos
+    Debug.info_pprint (" transform: " ^ (!CP.print_svl def_hps) ^ "\n" )no_pos
   in
   (cviews,c_hprels_decl)
 
@@ -250,7 +251,7 @@ let trans_hprel_2_cview iprog cprog proc_name hp_rels :
       hp_rels
 
 
-let trans_formula_hp_2_view_x iprog cprog proc_name in_hp_names chprels_decl hpdefs f=
+let trans_formula_hp_2_view_x iprog cprog proc_name chprels_decl hpdefs f=
   (* let rec part_sv_from_pos ls n n_need rem= *)
   (*   match ls with *)
   (*     | [] -> report_error no_pos "sau.get_sv_from_pos" *)
@@ -291,33 +292,6 @@ let trans_formula_hp_2_view_x iprog cprog proc_name in_hp_names chprels_decl hpd
             | _ -> look_up_root rest hp act_args
           end
   in
-  (* let hn_trans hn = match hn with *)
-  (*   | IF.HRel (id,args, pos)-> *)
-  (*         if (List.exists (fun n -> (String.compare n id)==0) in_hp_names) then *)
-  (*           (\* let hvar,tl = retrieve_root id args in *\) *)
-  (*           let hvar,tl = C.get_root_args_hprel chprels_decl id args in *)
-  (*           let r = match hvar with *)
-  (*             | (IP.Var (v,_)) -> v *)
-  (*             | IP.Ann_Exp (IP.Var (v, _), _, _) -> v (\*annotated self*\) *)
-  (*             | _ -> report_error no_pos "SAOUT.trans_formula_hp_2_view" *)
-  (*           in *)
-  (*           IF.HeapNode { *)
-  (*               IF.h_formula_heap_node = r; *)
-  (*               IF.h_formula_heap_name = id(\* ^"_"^proc_name *\); *)
-  (*               IF.h_formula_heap_deref = 0; *)
-  (*               IF.h_formula_heap_derv = false; *)
-  (*               IF.h_formula_heap_imm = IF.ConstAnn(Mutable); *)
-  (*               IF.h_formula_heap_imm_param = []; *)
-  (*               IF.h_formula_heap_full = false; *)
-  (*               IF.h_formula_heap_with_inv = false; *)
-  (*               IF.h_formula_heap_perm = None; *)
-  (*               IF.h_formula_heap_arguments = tl; *)
-  (*               IF.h_formula_heap_pseudo_data = false; *)
-  (*               IF.h_formula_heap_label = None; *)
-  (*               IF.h_formula_heap_pos = pos} *)
-  (*         else hn *)
-  (*   | _ -> hn *)
-  (* in *)
   let hn_c_trans hn = match hn with
     | CF.HRel (hp,eargs, pos)-> begin
         let view_name = (CP.name_of_spec_var hp) in
@@ -358,10 +332,49 @@ let trans_formula_hp_2_view_x iprog cprog proc_name in_hp_names chprels_decl hpd
   (* CF.elim_exists f2 *)
   CF.formula_trans_heap_node hn_c_trans f
 
-let trans_formula_hp_2_view iprog cprog proc_name in_hp_names chprels_decl hpdefs f=
+let trans_formula_hp_2_view iprog cprog proc_name chprels_decl hpdefs f=
   let pr1= !CF.print_formula in
-  let pr2 = pr_list pr_id in
-  Debug.no_2 "trans_formula_hp_2_view" pr2 pr1 pr1
-      (fun _ _ -> trans_formula_hp_2_view_x iprog cprog proc_name
-          in_hp_names chprels_decl hpdefs f)
-      in_hp_names f
+  Debug.no_1 "trans_formula_hp_2_view" pr1 pr1
+      (fun _ -> trans_formula_hp_2_view_x iprog cprog proc_name
+          chprels_decl hpdefs f)
+       f
+
+(*******************************)
+(***********REVERIFY************)
+(*******************************)
+let collect_hp_defs cprog= Hashtbl.fold (fun i p acc->
+    (p.C.proc_hpdefs@acc)) cprog.C.new_proc_decls []
+
+let trans_specs_hprel_2_cview iprog cprog proc_name hpdefs chprels_decl =
+  let plug_views_proc proc =
+    if proc.C.proc_hpdefs = [] then proc else
+      let name = C.unmingle_name proc.C.proc_name in
+      let _ = print_endline ("proc_name: "^name) in
+      let hn_trans_formula = trans_formula_hp_2_view iprog cprog name chprels_decl proc.C.proc_hpdefs in
+      let n_static_spec = CF.struc_formula_trans_heap_node hn_trans_formula (CF.struc_formula_drop_infer proc.C.proc_static_specs) in
+      let _ =  Debug.ninfo_pprint ("trans static spec: " ^ (Cprinter.string_of_struc_formula n_static_spec)) no_pos; in
+      let n_dynamic_spec = CF.struc_formula_trans_heap_node hn_trans_formula (CF.struc_formula_drop_infer proc.C.proc_dynamic_specs) in
+      let proc_stk_of_static_specs = proc.C.proc_stk_of_static_specs  in
+      let n_proc_stk_of_static_specs = List.map (fun s ->
+          CF.struc_formula_trans_heap_node hn_trans_formula (CF.struc_formula_drop_infer s)
+      ) proc_stk_of_static_specs # get_stk in
+      let _ = proc_stk_of_static_specs # reset in
+      let _ = proc_stk_of_static_specs # push_list n_proc_stk_of_static_specs in
+      { proc with C.proc_static_specs= n_static_spec;
+          C.proc_dynamic_specs= n_dynamic_spec;
+          C.proc_stk_of_static_specs = proc_stk_of_static_specs;
+      }
+  in
+  let old_procs = cprog.C.new_proc_decls in
+  let proc_decls = Hashtbl.fold (fun i p acc ->
+      let np = plug_views_proc p in
+      acc@[(i,np)]
+  ) old_procs [] in
+  let _ = Hashtbl.reset old_procs in
+  let _ = List.iter (fun (i,p) -> Hashtbl.add old_procs i p) proc_decls in
+  {cprog with
+      C.new_proc_decls = old_procs;
+  }
+(*******************************)
+(********END REVERIFY**********)
+(*******************************)

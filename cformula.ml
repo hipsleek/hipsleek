@@ -4271,6 +4271,31 @@ let rec formula_trans_heap_node fct f =
     | Exists b-> Exists{b with  formula_exists_heap = heap_trans_heap_node fct b.formula_exists_heap}
     | Or b-> Or {b with formula_or_f1 = recf b.formula_or_f1;formula_or_f2 = recf b.formula_or_f2}
 
+let rec struc_formula_drop_infer f =
+ let recf = struc_formula_drop_infer in
+ match f with
+   | ECase b-> ECase {b with formula_case_branches= Gen.map_l_snd recf b.formula_case_branches}
+   | EBase b -> EBase {b with formula_struc_continuation = Gen.map_opt recf b.formula_struc_continuation}
+   | EAssume _ -> f
+   | EInfer b-> b.formula_inf_continuation
+   | EList l-> EList (Gen.map_l_snd recf l)
+
+let rec struc_formula_trans_heap_node formula_fct f =
+ let recf = struc_formula_trans_heap_node formula_fct in
+  match f with
+    | ECase b-> ECase {b with formula_case_branches= Gen.map_l_snd recf b.formula_case_branches}
+    | EBase b -> EBase {b with
+	  formula_struc_continuation = Gen.map_opt recf b.formula_struc_continuation;
+	  formula_struc_base=(* formula_trans_heap_node fct *)formula_fct b.formula_struc_base;}
+    | EAssume ea-> EAssume {ea with  formula_assume_simpl = (* formula_trans_heap_node fct *) formula_fct ea.formula_assume_simpl;
+          formula_assume_struc = recf ea.formula_assume_struc}
+          (* (formula_trans_heap_node fct f, fl, et) *)
+    | EInfer _ -> f
+    | EList l -> EList (Gen.map_l_snd recf l)
+
+let struc_formula_trans_heap_node fct f =
+  let pr = !print_struc_formula in
+  Debug.no_1 "struc_formula_trans_heap_node" pr pr (struc_formula_trans_heap_node fct) f
 
 (*node + args is one group*)
 let get_ptrs_group_hf hf0=
