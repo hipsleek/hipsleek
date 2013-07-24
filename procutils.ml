@@ -74,7 +74,7 @@ struct
       res
     with e ->
         begin
-          let _ = Timelog.logtime # timer_stop limit in
+          let _ = Timelog.logtime # timer_timeout limit in
           (* Debug.info_pprint (Timelog.logtime # print_timer)  no_pos; *)
           (* Debug.info_pprint ("TIMEOUT"^(Printexc.to_string e)) no_pos; *)
           raise e

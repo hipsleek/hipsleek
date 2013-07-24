@@ -58,7 +58,7 @@ ensures prev'::lx<null,sent>  & cur'=sent ;
   if (cur == null) {
       // change direction;
       cur = prev;
-      dprint;
+      //dprint;
       prev = null;
       //dprint;
   }

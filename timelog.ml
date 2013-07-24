@@ -8,7 +8,9 @@ object (self)
     (* (fun (s,x) ->  s="kill" || x>=0.5 ) *)
   val stk_t = new Gen.stack_noexc 0. string_of_float (==)
   val mutable last_time = 0. 
+  val mutable last_timeout = false
   val mutable timer_val = None
+  val mutable timer_timeout = false
   (* method print_timer = "unsure" *)
     (* add_str "timer status" (pr_pair string_of_float (pr_option string_of_int)) (timer,timer_exc) *)
   method timer_start s =
@@ -17,12 +19,22 @@ object (self)
     end
   method timer_stop s =
     begin
+      timer_timeout <- false;
       let r = stk_t # pop_top in
       if stk_t # is_empty then 
         (if timer_val==None then timer_val <- Some s)
-      else print_endline "Nested Timer"
+      else print_endline "Nested Timer(stop)"
+    end
+  method timer_timeout s =
+    begin
+      timer_timeout <- true;
+      let r = stk_t # pop_top in
+      if stk_t # is_empty then 
+        (if timer_val==None then timer_val <- Some s)
+      else print_endline "Nested Timer(timeout)"
     end
   method start_time s = 
+    timer_timeout <- false;
     let t = Gen.Profiling.get_time() in
     let _ = time_stk # push (s,t) in
     ()
@@ -44,7 +56,9 @@ object (self)
                 (s,t -. st)
       in
       let _ = hist_stk # push (s,tt) in
-      last_time <- tt ; tt
+      last_time <- tt ; 
+      last_timeout <- timer_timeout; 
+      tt
     end
   method dump = 
     let prL = (pr_list (fun (_,f) -> string_of_float f)) in
@@ -56,6 +70,7 @@ object (self)
     Debug.info_hprint (add_str "time_log (small)" (pr_pair string_of_float string_of_int )) (s,List.length small) no_pos;
     Debug.info_hprint (add_str "log (>.5s)" (pr_pair string_of_float prL)) (b,big) no_pos
   method get_last_time = last_time
+  method get_last_timeout = last_timeout
 end;;
 
 let logtime = new timelog
@@ -71,3 +86,15 @@ let logtime_wrapper s f x =
         let _ = Debug.info_hprint (add_str "WARNING logtime exception" string_of_float) tt no_pos in
         raise e
 
+let log_wrapper s logger f x  =
+    try
+      let _ = logtime # start_time s in
+      let res = f x in
+      let r = logtime # stop_time in
+      logger (Some res) r (logtime # get_last_timeout) ;
+      res
+    with e ->
+        let tt = logtime # stop_time in 
+        logger None tt (logtime # get_last_timeout);
+        let _ = Debug.info_hprint (add_str "WARNING logtime exception" string_of_float) tt no_pos in
+        raise e
