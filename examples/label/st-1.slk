@@ -1,0 +1,92 @@
+data node {
+ int mark;
+ node left;
+ node right;
+}.
+
+
+pred tx<g,s> == self = g & s!=null & (g=null | g=s)
+   or self::node<_,l,r> * l::tx<g,s> * r::tx<null,s> & self != g & self != s 
+   or self::node<_,l,r> * l::tx<null,s> * r::tx<g,s> & self != g & self != s 
+inv s!=null & (g=null | g=s)
+.
+
+checkentail l_1085::tx<flted_10_1083,s_1080>@M&flted_10_1083=null & 
+cur_1110!=flted_16_1090 & cur_1110!=sent_1087 & s_1080=sent_1087 & 
+flted_16_1090=g_1081 & s_1082=sent_1087 & sent=sent_1089 & sent=sent_1088 & 
+sent=sent_1087 & cur!=null & flted_16_1090=null & prev=prev_1108 & 
+cur=cur_1110 & l_1085=n_64' & r_1086=tmp_65' & r_1086=right_31_1102 & 
+l_1085=left_32_1106 & cur_1110=prev' & cur'=n_64' & cur'=sent & 
+v_bool_36_969' & cur'=sent & v_bool_36_969' & 
+exists(sent_2057:prev'!=sent_2057 & s_1082=sent_2057 & 
+sent_1089=sent_2057) & exists(flted_17_2058:flted_17_2058!=prev' & 
+flted_17_2058=sent_1088)
+ |-  (exists sent_2057,flted_17_2058: emp&
+flted_17_2058=null & cur'=sent 
+& flted_17_2058!=prev' & prev'!=sent
+& s_1082=sent & flted_17_2058=sent_1088 & sent_1089=sent
+)
+.
+/*
+Entailment Failure 
+Entail 1Failure("type table does not contain an entry for sent_90 in [(sent:66:n
+
+
+Exception Failure("Post condition cannot be derived by the system.") Occurred!
+(Program not linked with -g, cannot print stack backtrace)
+
+Error(s) detected when checking procedure lscan$node~node~node
+
+!!! dumping for lscan$node~node~node FAIL2
+!!!  
+ id: 718; prover: OMEGA CALCULATOR; loc: swt-4a.ss_36:19_36:25; kind: POST
+ Imply: ante: s_1058!=null & flted_16_1067=null & flted_16_1067=g_1057 & 
+cur_1111!=flted_16_1067 & cur_1111!=sent_1064 & s_1058=sent_1064 & 
+s_1059=sent_1064 & cur!=null & cur=cur_1111 & l_1062=left_32_1107 & 
+cur_1111!=s_1059 & sent!=null & cur'=sent & cur_1111!=null & s_1059!=null & 
+sent_1066!=null & cur_1111!=sent_1065 & s_1059=sent_1066 & l_1062!=null & 
+l_1062!=sent & sent=sent_1064 & sent=sent_1065 & sent=sent_1066 & 
+prev=prev_1109 & flted_17_2169=null & ((flted_17_2169=null | 
+flted_17_2169=sent))
+	     conseq:  flted_17_2169=prev'
+ res: false
+ --------------------
+!!!  
+id: 264; caller: []; line: 17; classic: false; kind: [POST,
+Check_Specs]; hec_num: 4; evars: [sent_2057,flted_17_2058]; infer_vars: []; c_heap: prev::tx<sent_1088,sent_1089>@M * r_1086::tx<g_1081,s_1082>@M * 
+cur_1110::node<Anon_1084,tmp_65',prev_1108>@M
+ checkentail l_1085::tx<flted_10_1083,s_1080>@M&flted_10_1083=null & 
+cur_1110!=flted_16_1090 & cur_1110!=sent_1087 & s_1080=sent_1087 & 
+flted_16_1090=g_1081 & s_1082=sent_1087 & sent=sent_1089 & sent=sent_1088 & 
+sent=sent_1087 & cur!=null & flted_16_1090=null & prev=prev_1108 & 
+cur=cur_1110 & l_1085=n_64' & r_1086=tmp_65' & r_1086=right_31_1102 & 
+l_1085=left_32_1106 & cur_1110=prev' & cur'=n_64' & cur'=sent & 
+v_bool_36_969' & cur'=sent & v_bool_36_969' & 
+exists(sent_2057:prev'!=sent_2057 & s_1082=sent_2057 & 
+sent_1089=sent_2057) & exists(flted_17_2058:flted_17_2058!=prev' & 
+flted_17_2058=sent_1088)&{FLOW,(22,23)=__norm}[]
+ |-  EXISTS(sent_2057,flted_17_2058: emp&flted_17_2058=null & cur'=sent & 
+sent=sent_2057 & flted_17_2058!=prev' & prev'!=sent_2057 & 
+s_1082=sent_2057 & flted_17_2058=sent_1088 & sent_1089=sent_2057&
+{FLOW,(22,23)=__norm})[]. 
+res:  failctx
+         fe_kind: MAY
+         fe_name: logical bug
+         fe_locs: {
+                   fc_message: failed in entailing pure formula(s) in conseq
+                   fc_current_lhs_flow: {FLOW,(22,23)=__norm}}Stop Omega... 353 invocations 
+!!! Logging logs/no_eps_proof_log_swt-4a_ss.txt
+
+!!! Number of log entries 726
+!!! Logging logs/sleek_log_swt-4a_ss.txt
+
+0 false contexts at: ()
+
+!!! time_log (small):(4.319686,1003)
+!!! log (>.5s):(0.,[])
+Total verification time: 2.968184 second(s)
+	Time spent in main process: 2.512156 second(s)
+	Time spent in child processes: 0.456028 second(s)
+	Time for logging: 0.568035 second(s)
+loris@loris-desktop:/home2/loris/hg/sl_infer/examples/label$ 
+*/

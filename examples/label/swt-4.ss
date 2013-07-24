@@ -42,7 +42,8 @@ lx<g,s> == self=g & self!=s
 */
 
 void lscan(ref node cur, ref node prev, node sentinel)
-requires cur::tx<null,a,b> * prev::tx<null,b,a> & cur != a & (a=null & b=sentinel | a=sentinel & b=null)
+requires cur::tx<null,a,b> * prev::tx<null,b,a> & cur != a & 
+        (a=null & b=sentinel | a=sentinel & b=null)
 ensures prev'::tx<null,null,sentinel>  & cur' = sentinel; 
 {
 

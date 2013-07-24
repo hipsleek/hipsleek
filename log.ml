@@ -187,7 +187,7 @@ class last_commands =
 object (self)
   val mutable last_proof = None (* simplify?,prover? sat? *)
   val mutable last_proof_fail = None (* with timeout/exception *)
-  val mutable last_imply_fail = None (* prover, failure *)
+  (* val mutable last_imply_fail = None (\* prover, failure *\) *)
   val mutable last_sleek = None
   val mutable last_sleek_fail = None
   method set entry =
@@ -202,7 +202,7 @@ object (self)
       | PT_IMPLY _ -> 
             (match res with
               | PR_BOOL true  -> ()
-              | _ -> last_imply_fail <-ans
+              | _ -> if not(entry.log_cache) then last_proof_fail <-ans
             )
       | _ -> () 
     in ()
@@ -217,7 +217,7 @@ object (self)
       | None -> last_sleek_fail <- cmd
   method dumping no =
     Debug.info_pprint ("dumping for "^no) no_pos;
-    if !proof_logging || !proof_logging_txt || !sleek_logging_txt then
+    if  !proof_logging_txt (*|| !sleek_logging_txt *) then
       begin
       match last_proof_fail with
         | Some e -> Debug.info_hprint string_of_proof_log_entry e no_pos 
@@ -346,8 +346,8 @@ let file_to_proof_log  src_files =
 (*TO DO: check unique pno??*)
 let add_proof_logging timeout_flag (cache_status:bool) old_no pno tp ptype time res =
   (* let _ = Debug.info_pprint "inside add_proof_log" no_pos in *)
-  if !Globals.proof_logging || !Globals.proof_logging_txt 
-    || !Globals.sleek_logging_txt then
+  if (* !Globals.proof_logging || *) !Globals.proof_logging_txt 
+    (* || !Globals.sleek_logging_txt *) then
       (* let _= print_endline ("logging :"^pno^" "^proving_info () ^"\n"^trace_info ()) in *)
       let tstartlog = Gen.Profiling.get_time () in
       let plog = {
@@ -367,7 +367,7 @@ let add_proof_logging timeout_flag (cache_status:bool) old_no pno tp ptype time 
       let _ =  Debug.devel_pprint (string_of_proof_log_entry plog) no_pos in
       let _ = try
 	(* let _= BatString.find (Sys.argv.(0)) "hip" in *)
-	if((!Globals.proof_logging_txt || !Globals.sleek_logging_txt) && ((proving_kind # string_of)<>"TRANS_PROC")) then
+	if((!Globals.proof_logging_txt (* || !Globals.sleek_logging_txt *)) && ((proving_kind # string_of)<>"TRANS_PROC")) then
 	  begin 
 	    proof_log_stk # push pno;
 	  end		
@@ -390,7 +390,7 @@ let add_proof_logging timeout_flag (cache_status:bool) old_no pno tp ptype time 
   else ()
 					
 let proof_log_to_text_file fname (src_files) =
-  if !Globals.proof_logging_txt || !Globals.sleek_logging_txt 
+  if !Globals.proof_logging_txt (* || !Globals.sleek_logging_txt *) 
   then
     begin
       Debug.info_pprint ("Logging "^fname^"\n") no_pos;
@@ -517,7 +517,7 @@ let sleek_log_to_text_file (src_files) =
 
 let process_proof_logging src_files  =
   (* Debug.info_pprint ("process_proof_logging\n") no_pos; *)
-  if !Globals.proof_logging || !Globals.proof_logging_txt || !Globals.sleek_logging_txt then 
+  if !Globals.proof_logging (* || !Globals.proof_logging_txt || !Globals.sleek_logging_txt *) then 
     begin
       let tstartlog = Gen.Profiling.get_time () in
       let _= proof_log_to_file src_files in
