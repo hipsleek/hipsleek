@@ -182,11 +182,3 @@ let last_tp_used = new Globals.store LOG string_of_prover
    should perhaps be integrated with the logging command
    option to avoid duplication?
 *)
-class ['a] commands (epr:'a -> string) =
-object (self)
- val mutable last_imply = None
- val mutable last_cmd = None
- val mutable last_imply_fail = None
- val mutable last_timeout = None
- val mutable last_sleek = None
-end;;

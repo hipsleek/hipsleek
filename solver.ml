@@ -4843,7 +4843,7 @@ and early_pure_contra_detection_x hec_num prog estate conseq pos msg is_folding 
     (* let _ = hec_stack # push slk_no in *)
     (* let r = hec a b c in *)
     (* let _ = hec_stack # pop in *)
-    let _ = Log.add_new_sleek_logging_entry 0. esv !Globals.do_classic_frame_rule caller (* avoid *) false hec_num slk_no estate.es_formula
+    let _ = Log.add_sleek_logging_entry 0. esv !Globals.do_classic_frame_rule caller (* avoid *) false hec_num slk_no estate.es_formula
       conseq es.es_heap es.es_evars result pos in
     () in
 
@@ -5094,7 +5094,7 @@ and log_contra_detect hec_num conseq result pos =
     let orig_ante = match es.es_orig_ante with
       | Some f -> f
       | None   -> es.es_formula in 
-    let _ = Log.add_new_sleek_logging_entry 0. es.es_infer_vars !Globals.do_classic_frame_rule caller 
+    let _ = Log.add_sleek_logging_entry 0. es.es_infer_vars !Globals.do_classic_frame_rule caller 
       (* avoid *) false hec_num slk_no orig_ante conseq es.es_heap es.es_evars result pos in
     () in
   let f = wrap_proving_kind PK_Early_Contra_Detect (new_slk_log result) in
@@ -6292,7 +6292,7 @@ and heap_entail_conjunct hec_num (prog : prog_decl) (is_folding : bool)  (ctx0 :
     let ttime = tstop -. tstart in
     let _ = hec_stack # pop in
     let (lc,_) = r in
-    let _ = Log.add_new_sleek_logging_entry ttime infer_vars !Globals.do_classic_frame_rule caller avoid hec_num slk_no ante conseq consumed_heap evars lc pos in
+    let _ = Log.add_sleek_logging_entry ttime infer_vars !Globals.do_classic_frame_rule caller avoid hec_num slk_no ante conseq consumed_heap evars lc pos in
     let _ = Debug.ninfo_hprint (add_str "avoid" string_of_bool) avoid no_pos in
     let _ = Debug.ninfo_hprint (add_str "slk no" string_of_int) slk_no no_pos in
     let _ = Debug.ninfo_hprint (add_str "lc" Cprinter.string_of_list_context) lc no_pos in
@@ -6310,7 +6310,7 @@ and heap_entail_conjunct_x (prog : prog_decl) (is_folding : bool)  (ctx0 : conte
     (*   | OCtx _ -> report_error pos ("heap_entail_conjunct_helper: context is disjunctive or fail!!!") *)
     (*   | Ctx estate -> estate.es_formula *)
     (* in *)
-    (* let _ = Log.add_new_sleek_logging_entry ante conseq pos in *)
+    (* let _ = Log.add_sleek_logging_entry ante conseq pos in *)
     (* let _ = DD.info_pprint ("       sleek-logging: Line " ^ (line_number_of_pos pos) ^ "\n" ^ (Cprinter.prtt_string_of_formula ante) ^ " |- " ^ *)
     (*                                  (Cprinter.prtt_string_of_formula conseq)) pos in *)
     heap_entail_conjunct_helper 3 prog is_folding  ctx0 conseq rhs_matched_set pos
@@ -9818,7 +9818,7 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
               (*     (\* let _ = hec_stack # push slk_no in *\) *)
               (*     (\* let r = hec a b c in *\) *)
               (*     (\* let _ = hec_stack # pop in *\) *)
-              (*     let _ = Log.add_new_sleek_logging_entry esv !Globals.do_classic_frame_rule caller (\* avoid *\) false hec_num slk_no estate.es_formula *)
+              (*     let _ = Log.add_sleek_logging_entry esv !Globals.do_classic_frame_rule caller (\* avoid *\) false hec_num slk_no estate.es_formula *)
               (*       conseq es.es_heap es.es_evars result pos in *)
               (*     () in *)
 
@@ -9829,7 +9829,7 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
               (*         let new_estate = {new_estate with es_infer_vars = esv} in *)
 	      (*         (\* let _ = Debug.info_hprint (add_str "inferred contradiction : " Cprinter.string_of_pure_formula) pf pos in *\) *)
               (*         let _ = Debug.info_pprint ("Do we need to add_new_sleek_logging_entry to do sleek_logging") no_pos in *)
-              (*         (\* add_new_sleek_logging_entry infer_vars classic_flag caller avoid hec slk_no ante conseq  *\) *)
+              (*         (\* add_sleek_logging_entry infer_vars classic_flag caller avoid hec slk_no ante conseq  *\) *)
               (*         (\*     consumed_heap evars (result:CF.list_context) pos *\) *)
 	      (*         if (List.length relass)>1 then report_error pos "Length of relational assumption list > 1" *)
 	      (*         else *)

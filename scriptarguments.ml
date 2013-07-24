@@ -125,7 +125,7 @@ let common_arguments = [
    "Disable Lemma Proving");
   ("--dis-auto-num", Arg.Clear Globals.auto_number,
    "Disable Auto Numbering");
-  ("--dis-sleek-log-filter", Arg.Clear Globals.sleek_log_filter,
+  ("--dis-slk-log-filter", Arg.Clear Globals.sleek_log_filter,
    "Sleek Log Filter Flag");
   ("--elp", Arg.Set Globals.check_coercions,
    "enable lemma proving");
@@ -153,7 +153,7 @@ let common_arguments = [
    "Timeout for sat checking");
   ("--imply-timeout", Arg.Set_float Globals.imply_timeout_limit,
    "Timeout for imply checking");
-  ("--sleek-timeout", Arg.Set_float Globals.sleek_timeout_limit,
+  ("--slk-timeout", Arg.Set_float Globals.sleek_timeout_limit,
    "Timeout for SLEEK entailment");
   ("--ds-provers-timeout", Arg.Set Globals.dis_provers_timeout,
    "Disable timeout on provers");
@@ -413,9 +413,9 @@ let common_arguments = [
   ("--en-precond-sat", Arg.Clear Globals.disable_pre_sat, "Enable unsat checking of method preconditions");
   
   (* Proof Logging *)
-  ("--en-logging", Arg.Set Globals.proof_logging, "Enable proof logging");
-  ("--en-logging-txt", Arg.Set Globals.proof_logging_txt, "Enable proof logging output text file in addition");
-  ("--en-sleek-logging-txt", Arg.Set Globals.sleek_logging_txt, "Enable sleek logging output text file in addition");
+  ("--en-logging-only", Arg.Set Globals.proof_logging, "Enable proof loggingonly");
+  ("--en-logging", Arg.Set Globals.proof_logging_txt, "Enable proof logging with text file");
+  ("--en-slk-logging", Arg.Set Globals.sleek_logging_txt, "Enable sleek and proof logging with text file");
 
   (* abduce pre from post *)
   ("--abdfpost", Arg.Set Globals.do_abd_from_post, "Enable abduction from post-condition");
