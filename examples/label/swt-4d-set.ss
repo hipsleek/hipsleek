@@ -4,36 +4,36 @@ data node {
  node right;
 }
 
-/*
 tx<g,s,M> == self = g & s!=null & (g=null | g=s) & M={}
    or self::node<v,l,r> * l::tx<g,s,M1> * r::tx<null,s,M2> & self != g & self != s & M=union({v},M1,M2)
    or self::node<v,l,r> * l::tx<null,s,M1> * r::tx<g,s,M2> & self != g & self != s & M=union({v},M1,M2)
 inv s!=null & (g=null & self!=s | g=s & self!=null)
  ;
-*/
-
-tx<g,s> == self = g & s!=null & (g=null | g=s)
-   or self::node<_,l,r> * l::tx<g,s> * r::tx<null,s> & self != g & self != s 
-   or self::node<_,l,r> * l::tx<null,s> * r::tx<g,s> & self != g & self != s 
-inv s!=null & (g=null & self!=s | g=s & self!=null)
- ;
 
 
 void lscan(ref node cur, ref node prev, node sent)
-/*
-requires cur::tx<null,sent> * prev::tx<sent,sent> & cur != null
-ensures prev'::tx<null,sent>  & cur' = sent; 
-requires cur::tx<sent,sent> * prev::tx<null,sent> & cur != sent
-ensures prev'::tx<null,sent>  & cur' = sent; 
-*/
-requires cur::tx<a,sent> * prev::tx<b,sent> 
+requires cur::tx<a,sent,M1> * prev::tx<b,sent,M2> 
  case { 
     a=null ->
-       requires cur!=null & b=sent 
-       ensures prev'::tx<null,sent>  & cur' = sent & prev'!=null; 
+       case { 
+         b=sent -> 
+            requires cur!=null  
+            ensures prev'::tx<null,sent,M3>  & cur' = sent & M3=union(M1,M2) 
+              & prev'!=null; 
+         b!=sent -> 
+            requires false
+            ensures false;
+        }
     a!=null ->
-       requires a=sent & cur!=sent & b=null 
-       ensures prev'::tx<null,sent>  & cur' = sent & prev'!=null; 
+       case { 
+         b=null -> 
+            requires cur!=sent & a=sent
+             ensures prev'::tx<null,sent,M3>  & cur' = sent & M3=union(M1,M2)
+              & prev'!=null; 
+          b!=null -> 
+            requires false
+            ensures false;
+        }
   }
 {
 

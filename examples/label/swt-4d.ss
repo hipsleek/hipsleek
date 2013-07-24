@@ -29,11 +29,23 @@ ensures prev'::tx<null,sent>  & cur' = sent;
 requires cur::tx<a,sent> * prev::tx<b,sent> 
  case { 
     a=null ->
-       requires cur!=null & b=sent 
-       ensures prev'::tx<null,sent>  & cur' = sent & prev'!=null; 
+       case { 
+         b=sent -> 
+            requires cur!=null  
+            ensures prev'::tx<null,sent>  & cur' = sent & prev'!=null;
+         b!=sent -> 
+            requires false
+            ensures false;
+        }
     a!=null ->
-       requires a=sent & cur!=sent & b=null 
-       ensures prev'::tx<null,sent>  & cur' = sent & prev'!=null; 
+       case { 
+         b=null -> 
+            requires cur!=sent & a=sent
+            ensures prev'::tx<null,sent>  & cur' = sent & prev'!=null;
+         b!=null -> 
+            requires false
+            ensures false;
+        }
   }
 {
 
