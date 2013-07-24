@@ -793,11 +793,11 @@ let sat_label_filter fct f =
 		| AndList b -> 
 			let lbls = Label_Pure.get_labels b in
                         (* Andreea : this is to pick equality from all branches *)
-                        let pick_eq f = [] in
-                        let (pick_eq_subs,comp,fil) = 
+                        let pick_eq f = CP.extract_eq_clauses_lbl_lst f in
+                        let (b,comp,fil) = 
                           if !Globals.label_aggressive_sat
                           then (pick_eq b,Label_only.Lab_List.is_fully_compatible,fun fs -> fs)
-                          else ([],Label_only.Lab_List.is_part_compatible,
+                          else (b,Label_only.Lab_List.is_part_compatible,
                              List.filter (fun (l,_)-> not(Label_only.Lab_List.is_common l)) ) 
                         in
 			let fs = List.map (fun l -> 
