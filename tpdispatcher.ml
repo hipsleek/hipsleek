@@ -2201,6 +2201,7 @@ let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (old_imp_no : stri
   (* let _ = print_string ("length of pairs: "^(string_of_int (List.length !ante_inner))) in *)
   (* let ante0 = CP.join_conjunctions !ante_inner in *)
   (* let conseq0 = CP.join_conjunctions !conseq_inner in *)
+  (* let _ = Log.last_cmd # dumping imp_no in *)
   if !Globals.imply_top_flag then
     add_proof_logging false old_imp_no imp_no "funny" cmd (* (PT_IMPLY (ante0, conseq0)) *) (Timelog.logtime # get_last_time) (PR_BOOL (match final_res with | r,_,_ -> r));
   final_res

@@ -99,11 +99,11 @@ object (self)
     let res = entry.sleek_proving_res in
     if CF.isFailCtx(res) then
       last_sleek_fail <- cmd
-  method dumping =
+  method dumping no =
     if !proof_logging || !proof_logging_txt || !sleek_logging_txt then
-      print_endline "WARNING : last proof log";
+      print_endline ("!!!! WARNING : last proof log " ^ (pr_id no));
     if !sleek_logging_txt then
-      print_endline "WARNING : last sleek log";
+      print_endline ("!!!! WARNING : last sleek log " ^ (pr_id no));
 
 end;;
 
@@ -558,7 +558,7 @@ let process_proof_logging src_files  =
 (*     () *)
 
 let report_error_dump e =
-      last_cmd # dumping;
+      last_cmd # dumping "";
       (* print_endline "Last SLEEK FAILURE:"; *)
       (* last_sleek_command # dump; *)
       (* print_endline "Last PURE PROOF FAILURE:"; *)
