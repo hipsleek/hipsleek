@@ -5557,7 +5557,7 @@ proving using classic=true, since no residues should be lost.
 Please make rectifications.
 
 =====================================================================
-# dll-dll.ss: 
+# sll-dll.ss: FIXED (reverify)
 # check-sorted
 
 reverify

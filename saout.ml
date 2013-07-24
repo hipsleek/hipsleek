@@ -28,11 +28,23 @@ let norm_free_svl f0 args=
       | CF.Base fb -> let fr_svl = CP.diff_svl (List.filter (fun sv -> not (CP.is_hprel_typ sv)) (CF.h_fv fb.CF.formula_base_heap)) args in
         if fr_svl = [] then (CF.Base fb),[]
         else
-          let nf = CF.add_quantifiers fr_svl (CF.Base fb) in
+          (*rename primed quantifiers*)
+          let fr_svl1,ss = List.fold_left (fun (r_svl, r_ss) ((CP.SpecVar(t,id,p)) as sv) ->
+              if p = Unprimed then
+                (r_svl@[sv], r_ss)
+              else
+                let fr_sv = CP.fresh_spec_var sv in
+                (r_svl@[fr_sv], r_ss@[(sv,fr_sv)])
+          ) ([],[]) fr_svl
+          in
+          let nf0 = if ss = [] then (CF.Base fb) else
+            CF.subst ss (CF.Base fb)
+          in
+          let nf = CF.add_quantifiers fr_svl1 nf0 in
           let tis = List.fold_left (fun ls (CP.SpecVar(t,sv,_)) ->
               let vk = TI.fresh_proc_var_kind ls t in
               ls@[(sv,vk)]
-          ) [] fr_svl in
+          ) [] fr_svl1 in
           (nf, tis)
       | CF.Exists _ ->
             let qvars1, base1 = CF.split_quantifiers f in
@@ -82,6 +94,7 @@ List.fold_left (fun acc (rel_cat, hf,_,f_body)->
 	      let new_body = CF.set_flow_in_formula_override {CF.formula_flow_interval = !top_flow_int; CF.formula_flow_link =None} no_prm_body in
 	      let i_body = AS.rev_trans_formula new_body in
 	      let i_body = IF.subst [((slf,Unprimed),(self,Unprimed))] i_body in
+              let _ = Debug.ninfo_hprint (add_str "i_body1: " Iprinter.string_of_formula) i_body no_pos in
 	      let struc_body = IF.mkEBase [] [] [] i_body None (* false *) no_pos in
               let n_iview = {  I.view_name = vname;
               I.view_pos = no_pos;
@@ -230,7 +243,7 @@ let trans_hprel_2_cview_x iprog cprog proc_name hpdefs:
   (* let _ = iprog.I.prog_view_decls <- n_iproc.I.prog_view_decls in *)
   let _ = List.iter (AS.process_pred_def_4_iast iprog) iviews in
   (* let _ = iprog.Iast.prog_view_decls <- iprog.Iast.prog_view_decls@iviews in *)
-  (*convert to cview*)
+  (*convert to cview. new_views: view with annotated types*)
   let cviews = (AS.convert_pred_to_cast new_views iprog cprog) in
   let _ = cprog.C.prog_hp_decls <- crem_hprels in
   (*put back*)
