@@ -11,7 +11,7 @@ inv true&["n": self != s & n != s];
 
 void lscan(ref node cur, ref node prev, node sentinel)
 requires cur::tx<null,a,b,Mc> * prev::tx<null,b,a,Mp> & ["n": cur != a & (a=null & b=sentinel | a=sentinel & b=null)]
-ensures prev'::tx<null,null,sentinel,M)>  & ["n": cur' = sentinel; "s": M = union(Mc,Mp)]; 
+ensures prev'::tx<null,null,sentinel,M>  & ["n": cur' = sentinel; "s": M = union(Mc,Mp)]; 
 {
 
   node n,tmp;
