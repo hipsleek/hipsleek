@@ -2838,7 +2838,7 @@ and check_proc iprog (prog : prog_decl) (proc : proc_decl) cout_option (mutual_g
                     begin
 		      if pp then print_string ("\nProcedure "^proc.proc_name^" SUCCESS\n")
 	              else 
-                        let _ = Log.last_cmd # dumping (proc.proc_name) in
+                        let _ = Log.last_cmd # dumping (proc.proc_name^" FAIL-1") in
                         print_string ("\nProcedure "^proc.proc_name^" result FAIL-1\n")
                     end;
 	      	  pp
@@ -2896,7 +2896,7 @@ let check_proc_wrapper iprog prog proc cout_option mutual_grp =
       print_string ("\nException "^(Printexc.to_string e)^" Occurred!\n");
       Printexc.print_backtrace(stdout);
       print_string ("\nError(s) detected when checking procedure " ^ proc.proc_name ^ "\n");
-      Log.last_cmd # dumping "proc.proc_name - fail2";
+      Log.last_cmd # dumping (proc.proc_name^" FAIL2");
       (* print_endline "Last PURE PROOF FAILURE:"; *)
       (* Log.last_proof_command # dump; *)
       false
