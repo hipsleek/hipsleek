@@ -1277,16 +1277,17 @@ and collect_data_view_from_pure_bformula (data_names: ident list) (bf : P.b_form
   | P.ListIn _ | P.ListNotIn _ | P.ListAllN _ | P.ListPerm _ -> ([], [])
   | P.VarPerm _ | P.RelForm _ -> ([], [])
 
-and collect_data_view_from_pure_exp (data_names: ident list) (e0 : P.exp) : (ident list) * (ident list) =
+and collect_data_view_from_pure_exp_x (data_names: ident list) (e0 : P.exp) : (ident list) * (ident list) =
   match e0 with
   | P.Ann_Exp (e, t, pos) -> (
       match e with
-      | P.Var ((self, _), _) -> 
-          let t_id = string_of_typ t in
-          if (List.mem t_id data_names) then
-            ([t_id], [])       (* type annotation of self to view decl *)
-          else
-            report_error pos ("self has invalid type: " ^ t_id)
+      | P.Var ((id, _), _) ->
+            if String.compare id self != 0 then ([],[]) else
+              let t_id = string_of_typ t in
+              if (List.mem t_id data_names) then
+                ([t_id], [])       (* type annotation of self to view decl *)
+              else
+                report_error pos ("self has invalid type: " ^ t_id)
       | _ -> ([], [])
     )
   | P.Null _ | P.Level _  | P.Var _ -> ([], [])
@@ -1298,7 +1299,13 @@ and collect_data_view_from_pure_exp (data_names: ident list) (e0 : P.exp) : (ide
   | P.ListLength _ | P.ListAppend _ | P.ListReverse _ -> ([], [])
   | P.ArrayAt _ | P.Func _ -> ([], [])
 
-  
+and collect_data_view_from_pure_exp (data_names: ident list) (e0 : P.exp) : (ident list) * (ident list) =
+  let pr1 = !P.print_formula_exp in
+  let pr2 = pr_list pr_id in
+  let pr3 = pr_pair pr2 pr2 in
+  Debug.no_1 "collect_data_view_from_pure_exp" pr1 pr3
+      (fun _ -> collect_data_view_from_pure_exp_x data_names e0) e0
+
 and find_data_view_x (data_names: ident list) (f:Iformula.struc_formula) pos :  (ident list) * (ident list) =
   let (dl,el) = collect_data_view_from_struc data_names f in
   if (List.length dl>1) then report_error pos ("self points to different data node types")
@@ -1382,8 +1389,8 @@ and update_fixpt (vl:(view_decl * ident list *ident list) list)  =
   Debug.no_1 "update_fixpt" pr pr_none update_fixpt_x vl
 
 and set_check_fixpt (data_decls : data_decl list) (view_decls: view_decl list)  =
-  let pr = pr_list !print_data_decl in 
-  let pr2 = pr_list !print_view_decl in 
+  let pr = pr_list_ln !print_data_decl in 
+  let pr2 = pr_list_ln !print_view_decl in 
   Debug.no_2 "set_check_fixpt" pr pr2 pr_none (fun _ _ -> set_check_fixpt_x data_decls view_decls )  data_decls view_decls
 
 and set_check_fixpt_x  (data_decls : data_decl list) (view_decls : view_decl list)  =

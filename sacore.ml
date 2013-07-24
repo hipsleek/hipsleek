@@ -1271,7 +1271,7 @@ let transform_xpure_to_pure_x prog hp_defs unk_map link_hpargs=
   let link_fr_map = List.map (fun ((hp,args)) ->
       let locs_i = SAU.get_pos_of_hp_args_inst prog hp in
       let args_inst = SAU.retrieve_args_from_locs args locs_i in
-      let (CP.SpecVar (_, _, p)) = hp in
+      (* let (CP.SpecVar (_, _, p)) = hp in *)
       let (CP.SpecVar (t, _, p)) = List.hd args_inst in
       (hp,
       let dang_name = dang_hp_default_prefix_name ^ "_" ^ (CP.name_of_spec_var hp) (* ^ "_" ^dang_hp_default_prefix_name *)  in

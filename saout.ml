@@ -69,7 +69,7 @@ List.fold_left (fun acc (rel_cat, hf,_,f_body)->
 		| CF.HRel (v1,el,_)->
 		      if ((String.compare (sv_name v1) vname)!=0) then failwith "hrel name inconsistency\n"
 		      else  (
-                          let tvars = List.map (fun (CP.SpecVar (t, v, _))-> (t,v)) (r::paras) in
+                          let tvars = (List.map (fun (CP.SpecVar (t, v, _))-> (t,v)) (r::paras)) in
 			  let vars  = List.map (fun (CP.SpecVar (_, v, p))-> (v^(match p with Primed -> "PRM"| _ -> ""))
                           ) (r::paras) in
 			  match vars with

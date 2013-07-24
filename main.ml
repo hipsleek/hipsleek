@@ -195,13 +195,15 @@ let reverify_with_hp_rel old_cprog iprog =
   let hp_defs = Saout.collect_hp_defs old_cprog in
   let need_trans_hprels = List.filter (fun (hp_kind, _,_,_) ->
         match hp_kind with
-          |  Cpure.HPRelDefn (hp,_,_) -> begin
+          |  Cpure.HPRelDefn (hp,r,args) -> begin
                  try
                    let _ = Cast.look_up_view_def_raw 33 old_cprog.Cast.prog_view_decls
                      (Cpure.name_of_spec_var hp)
                    in
                    false
-                 with Not_found -> true
+                 with Not_found ->
+                     (*at least one is node typ*)
+                     List.exists (fun sv -> Cpure.is_node_typ sv) (r::args)
              end
           | _ -> false
   ) hp_defs in
