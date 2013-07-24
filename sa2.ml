@@ -12,7 +12,7 @@ module CEQ = Checkeq
 module TP = Tpdispatcher
 module SAC = Sacore
 module SAU = Sautility
-
+module IC = Icontext
 let step_change = new Gen.change_flag
 
 (* outcome from shape_infer *)
