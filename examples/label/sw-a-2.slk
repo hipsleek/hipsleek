@@ -1,0 +1,34 @@
+data node{
+	int val;
+	node next;
+}.
+
+
+pred lx<"n":g,"n":s,"S":M> == true & ["n":self=g & self!=s; "S": M={}]
+  or self::node<v,nxt> * nxt::lx<g,s,M1> & ["n":self!=g & self!=s; "S": M=union(M1,{self})]
+  inv true & ["n":self!=s]  .
+
+checkentail 
+  prev::lx<b_968,a_969,M2>@M&
+   AndList( "":cur=cur' & prev=prev' & sent=sent'
+ ; "S":M1={}
+ ; "n":a=cur' & b!=cur' & a!=cur & (((a=null & b=sent) | (a=sent & 
+   b=null))) & b=b_968 & a=a_969) 
+ |-  cur'::node<val_47_911',next_47_912'>@L. 
+
+print residue.
+
+/*
+id: 1; caller: []; line: 47; classic: false; kind: [BIND,
+Assign_Stmt,
+Check_Specs]; hec_num: 5; evars: []; infer_vars: []; c_heap: emp
+
+ checkentail prev::lx<b_968,a_969,M2>@M & 
+  AndList( "":cur=cur' & prev=prev' & sent=sent'
+   ; "S":M1={}
+   ; "n":a=cur' & b!=cur' & a!=cur & (((a=null & b=sent) | (a=sent & 
+   b=null))) & b=b_968 & a=a_969) &
+{FLOW,(22,23)=__norm}[]
+ |-  cur'::node<val_47_911',next_47_912'>@L&{FLOW,(1,25)=__flow}[]. 
+
+*/

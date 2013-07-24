@@ -792,10 +792,12 @@ let sat_label_filter fct f =
   let rec helper_x f = match f with 
 		| AndList b -> 
 			let lbls = Label_Pure.get_labels b in
-                        let (comp,fil) = 
+                        (* Andreea : this is to pick equality from all branches *)
+                        let pick_eq f = [] in
+                        let (pick_eq_subs,comp,fil) = 
                           if !Globals.label_aggressive_sat
-                          then (Label_only.Lab_List.is_fully_compatible,fun fs -> fs)
-                          else (Label_only.Lab_List.is_part_compatible,
+                          then (pick_eq b,Label_only.Lab_List.is_fully_compatible,fun fs -> fs)
+                          else ([],Label_only.Lab_List.is_part_compatible,
                              List.filter (fun (l,_)-> not(Label_only.Lab_List.is_common l)) ) 
                         in
 			let fs = List.map (fun l -> 
@@ -1251,7 +1253,7 @@ let tp_is_sat (f:CP.formula) (old_sat_no :string) =
       (Timelog.logtime_wrapper "SAT" sat_cache fn_sat) f)
   in
   (* let tstop = Gen.Profiling.get_time () in *)
-  let _= add_proof_log !cache_status old_sat_no sat_no (string_of_prover !pure_tp) cmd (Timelog.logtime # get_last_time) (PR_BOOL res) in 
+  let _= add_proof_logging !cache_status old_sat_no sat_no (string_of_prover !pure_tp) cmd (Timelog.logtime # get_last_time) (PR_BOOL res) in 
   res
 
 let tp_is_sat f sat_no =
@@ -1365,10 +1367,10 @@ let simplify (f : CP.formula) : CP.formula =
               ) in   
               (* TODO : add logtime for simplify *)
               (* Why start/stop prver when interactive? *)
-              let _= add_proof_log !cache_status simpl_no simpl_no (string_of_prover !pure_tp) cmd (Timelog.logtime # get_last_time) (PR_FORMULA res) in
+              let _= add_proof_logging !cache_status simpl_no simpl_no (string_of_prover !pure_tp) cmd (Timelog.logtime # get_last_time) (PR_FORMULA res) in
               res
           with | _ -> 
-              let _= add_proof_log !cache_status simpl_no simpl_no (string_of_prover !pure_tp) cmd 
+              let _= add_proof_logging !cache_status simpl_no simpl_no (string_of_prover !pure_tp) cmd 
                 (0.0) (PR_exception) in
               f
         end
@@ -1893,7 +1895,7 @@ let tp_imply ante conseq old_imp_no timeout process =
   let _ = Log.last_proof_command # set cmd in
   let fn () = tp_imply ante conseq imp_no timeout process in
   let final_res = Timelog.logtime_wrapper "imply" fn () in
-  let _= add_proof_log !cache_status old_imp_no imp_no (string_of_prover !pure_tp) cmd (Timelog.logtime # get_last_time) (PR_BOOL (match final_res with | r -> r)) in
+  let _= add_proof_logging !cache_status old_imp_no imp_no (string_of_prover !pure_tp) cmd (Timelog.logtime # get_last_time) (PR_BOOL (match final_res with | r -> r)) in
   final_res
 ;;
 
@@ -2200,7 +2202,7 @@ let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (old_imp_no : stri
   (* let ante0 = CP.join_conjunctions !ante_inner in *)
   (* let conseq0 = CP.join_conjunctions !conseq_inner in *)
   if !Globals.imply_top_flag then
-    add_proof_log false old_imp_no imp_no "funny" cmd (* (PT_IMPLY (ante0, conseq0)) *) (Timelog.logtime # get_last_time) (PR_BOOL (match final_res with | r,_,_ -> r));
+    add_proof_logging false old_imp_no imp_no "funny" cmd (* (PT_IMPLY (ante0, conseq0)) *) (Timelog.logtime # get_last_time) (PR_BOOL (match final_res with | r,_,_ -> r));
   final_res
 ;;
 

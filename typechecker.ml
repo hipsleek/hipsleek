@@ -2893,7 +2893,7 @@ let check_proc_wrapper iprog prog proc cout_option mutual_grp =
       print_string ("\nException "^(Printexc.to_string e)^" Occurred!\n");
       Printexc.print_backtrace(stdout);
       print_string ("\nError(s) detected when checking procedure " ^ proc.proc_name ^ "\n");
-      Log.last_cmd # dump;
+      Log.last_cmd # dumping;
       (* print_endline "Last PURE PROOF FAILURE:"; *)
       (* Log.last_proof_command # dump; *)
       false

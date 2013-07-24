@@ -99,11 +99,11 @@ object (self)
     let res = entry.sleek_proving_res in
     if CF.isFailCtx(res) then
       last_sleek_fail <- cmd
-  method dump =
+  method dumping =
     if !proof_logging || !proof_logging_txt || !sleek_logging_txt then
-      print_endline "last proof log";
+      print_endline "WARNING : last proof log";
     if !sleek_logging_txt then
-      print_endline "last sleek log";
+      print_endline "WARNING : last sleek log";
 
 end;;
 
@@ -177,6 +177,7 @@ let string_of_proof_log_entry e= Cprinter.poly_string_of_pr pr_proof_log_entry e
 
 let pr_sleek_log_entry e=
   fmt_open_box 1;
+  fmt_string("\n");
   (if (e.sleek_proving_avoid) then
    fmt_string ("HIDE! ")
   );
@@ -249,7 +250,7 @@ let proof_gt5_log_list = ref [] (*Logging proofs require more than 5 secs to be 
 
 (* TODO : add result into the log printing *)
 (* wrong order number indicates recursive invocations *)
-let add_sleek_logging_entry stime infer_vars classic_flag caller avoid hec slk_no ante conseq 
+let add_sleek_logging stime infer_vars classic_flag caller avoid hec slk_no ante conseq 
       consumed_heap evars (result:CF.list_context) pos=
   (* let _ = Debug.info_pprint ("avoid: "^(string_of_bool avoid)) no_pos in *)
   if !Globals.sleek_logging_txt then
@@ -324,7 +325,7 @@ let file_to_proof_log  src_files =
 (*   with _-> () *)
 	
 (*TO DO: check unique pno??*)
-let add_proof_log (cache_status:bool) old_no pno tp ptype time res =
+let add_proof_logging (cache_status:bool) old_no pno tp ptype time res =
   (* let _ = Debug.info_pprint "inside add_proof_log" no_pos in *)
   if !Globals.proof_logging || !Globals.proof_logging_txt 
     || !Globals.sleek_logging_txt then
@@ -369,7 +370,7 @@ let add_proof_log (cache_status:bool) old_no pno tp ptype time res =
   else ()
 					
 let proof_log_to_text_file fname (src_files) =
-  if !Globals.proof_logging_txt 
+  if !Globals.proof_logging_txt || !Globals.sleek_logging_txt 
   then
     begin
       Debug.info_pprint ("Logging "^fname^"\n") no_pos;
@@ -414,7 +415,7 @@ let proof_log_to_text_file fname (src_files) =
   else ()	
 
 let z3_proofs_list_to_file fz3name (src_files) =
-  if !Globals.proof_logging_txt then
+  if !Globals.proof_logging_txt || !Globals.sleek_logging_txt then
     let _ = Debug.info_pprint ("Logging "^fz3name^"\n") no_pos in
     let tstartlog = Gen.Profiling.get_time () in
     let oc = 
@@ -505,15 +506,15 @@ let process_proof_logging src_files  =
       let fz3name= ("logs/"^with_option^"_z3_proof_log_"^ (Globals.norm_file_name (List.hd src_files)) ^".txt") in
       let slfn = "logs/sleek_log_" ^ (Globals.norm_file_name (List.hd src_files)) ^".txt" in
       let _= 
-        if (!Globals.proof_logging_txt) 
-        then 
+        (* if (!Globals.sleek_logging_txt || !Globals.proof_logging_txt)  *)
+        (* then  *)
           begin
-            proof_log_to_text_file fname src_files;
-            z3_proofs_list_to_file fz3name src_files
+            proof_log_to_text_file fname src_files
+            (* z3_proofs_list_to_file fz3name src_files *)
           end
-        else try Sys.remove fname 
-          (* ("logs/proof_log_" ^ (Globals.norm_file_name (List.hd src_files))^".txt") *)
-        with _ -> ()
+        (* else try Sys.remove fname  *)
+        (*   (\* ("logs/proof_log_" ^ (Globals.norm_file_name (List.hd src_files))^".txt") *\) *)
+        (* with _ -> () *)
       in
       let _= if (!Globals.sleek_logging_txt) 
       then 
@@ -557,7 +558,7 @@ let process_proof_logging src_files  =
 (*     () *)
 
 let report_error_dump e =
-      last_cmd # dump;
+      last_cmd # dumping;
       (* print_endline "Last SLEEK FAILURE:"; *)
       (* last_sleek_command # dump; *)
       (* print_endline "Last PURE PROOF FAILURE:"; *)
