@@ -99,6 +99,12 @@ object (self)
     let res = entry.sleek_proving_res in
     if CF.isFailCtx(res) then
       last_sleek_fail <- cmd
+  method dump =
+    if !proof_logging || !proof_logging_txt || !sleek_logging_txt then
+      print_endline "last proof log";
+    if !sleek_logging_txt then
+      print_endline "last sleek log";
+
 end;;
 
 let last_cmd = new last_commands
@@ -136,7 +142,7 @@ let last_proof_command = new store (PT_SAT (CP.mkTrue no_pos)) (string_of_log_ty
 
 let pr_f = Cprinter.string_of_formula
 
-let last_sleek_command = new store None (pr_option (pr_pair pr_f pr_f))
+(* let last_sleek_command = new store None (pr_option (pr_pair pr_f pr_f)) *)
 
 let string_of_log_res lt r = 
   match r with
@@ -551,8 +557,9 @@ let process_proof_logging src_files  =
 (*     () *)
 
 let report_error_dump e =
-      print_endline "Last SLEEK FAILURE:";
-      last_sleek_command # dump;
-      print_endline "Last PURE PROOF FAILURE:";
-      last_proof_command # dump;
+      last_cmd # dump;
+      (* print_endline "Last SLEEK FAILURE:"; *)
+      (* last_sleek_command # dump; *)
+      (* print_endline "Last PURE PROOF FAILURE:"; *)
+      (* last_proof_command # dump; *)
       Error.report_error e

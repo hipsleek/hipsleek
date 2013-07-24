@@ -271,9 +271,10 @@ let main () =
                                 | _ -> dummy_exception();
                                     print_string ("Error.\n");
                                     print_endline "Last SLEEK FAILURE:";
-                                    Log.last_sleek_command # dump;
-                                    print_endline "Last PURE PROOF FAILURE:";
-                                    Log.last_proof_command # dump;
+                                    Log.last_cmd # dump;
+                                    (*     sleek_command # dump; *)
+                                    (* print_endline "Last PURE PROOF FAILURE:"; *)
+                                    (* Log.last_proof_command # dump; *)
                                     Buffer.clear buffer;
                                     if !inter then prompt := "SLEEK> "
                       with 

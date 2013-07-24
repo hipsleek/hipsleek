@@ -7706,7 +7706,7 @@ else ante
 
 let filter_constraint_type (ante: formula) (conseq: formula) : (formula) = 
 let pr = !print_formula in
-Debug.ho_2 "filter_constraint_type" pr pr pr filter_constraint_type ante conseq
+Debug.no_2 "filter_constraint_type" pr pr pr filter_constraint_type ante conseq
 
 let filter_ante (ante : formula) (conseq : formula) : (formula) =
 	let fvar = fv conseq in
@@ -10987,3 +10987,10 @@ let rhs_needs_or_split f = 	match f with
 let count_disj f =
   let k = split_disjunctions f
   in List.length k
+
+
+let mkAndList_opt f =
+  (* let f = mkAndList f in *)
+  if !Globals.remove_label_flag then 
+    join_conjunctions (List.map snd f)
+  else mkAndList f

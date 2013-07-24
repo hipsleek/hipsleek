@@ -61,7 +61,7 @@ let common_arguments = [
   (* "Do unfolding of predicates with duplicated pointers."); (\* An Hoa *\) *)
   (* Labelling Options *)
   ("--dis-lbl", Arg.Set Globals.remove_label_flag,
-   "Disable Labelling of Formula be removing AndList."); 
+   "Disable Labelling of Formula by removing AndList."); 
   ("--lbl-dis-split-conseq", Arg.Clear Globals.label_split_conseq,
    "Disable the splitting of consequent to expose labels."); 
   ("--lbl-dis-split-ante", Arg.Clear Globals.label_split_ante,

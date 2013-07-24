@@ -590,7 +590,7 @@ let lib_files = ref ([] : string list)
 
 (* command line options *)
 
-let remove_label_flag = ref true
+let remove_label_flag = ref false
 let label_split_conseq = ref true
 let label_split_ante = ref true
 let label_aggressive_sat = ref false

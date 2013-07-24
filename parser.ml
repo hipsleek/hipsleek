@@ -232,7 +232,7 @@ let error_on_dups f l p = if (Gen.BList.check_dups_eq f l) then report_error p (
 let label_formula f ofl = (match f with 
           | P.BForm (b,_) -> P.BForm (b,ofl)
           | P.And _ -> f
-		  | P.AndList b -> f
+	  | P.AndList b -> f
           | P.Or  (b1,b2,_,l)  -> P.Or(b1,b2,ofl,l)
           | P.Not (b1,_,l)     -> P.Not(b1,ofl,l)
           | P.Forall (q,b1,_,l)-> P.Forall(q,b1,ofl,l)
@@ -1006,7 +1006,7 @@ ann_heap_list: [[ b=LIST0 ann_heap -> b ]];
 
 opt_branches:[[t=OPT branches -> un_option t (P.mkTrue no_pos)]];
 
-branches : [[`AND; `OSQUARE; b= LIST1 one_branch SEP `SEMICOLON ; `CSQUARE -> P.mkAndList b ]];
+branches : [[`AND; `OSQUARE; b= LIST1 one_branch SEP `SEMICOLON ; `CSQUARE -> P.mkAndList_opt b ]];
 
 one_branch_single : [[ `STRING (_,id); `COLON; pc=pure_constr -> (Lab_List.singleton id,pc)]];
 
@@ -1016,7 +1016,9 @@ one_branch : [[ lbl=LIST1 one_string SEP `COMMA ; `COLON; pc=pure_constr -> (Lab
 
 opt_branch:[[t=OPT branch -> un_option t empty_spec_label]];
 
-branch: [[ `STRING (_,id);`COLON -> Lab_List.singleton id ]];
+branch: [[ `STRING (_,id);`COLON -> 
+    if !Globals.remove_label_flag then empty_spec_label
+    else Lab_List.singleton id ]];
 
 view_header:
   [[ `IDENTIFIER vn; `LT; l= opt_ann_cid_list; `GT ->
@@ -1149,7 +1151,7 @@ cid_typ:
         (ut,id)
    ]];
 
-ann_cid:[[ ob=opt_branch; c = cid_typ; al=opt_ann_list ->((c, ob), al)]];
+ann_cid:[[ ob= opt_branch; c = cid_typ; al=opt_ann_list ->((c, ob), al)]];
 
 
 opt_ann_list: [[t=LIST0 ann -> t]];
@@ -1480,7 +1482,8 @@ cexp_w:
   | "slicing_label"
     [ sl=slicing_label; f=SELF -> set_slicing_utils_pure_double f sl ]
   | "AndList"
-	[`ANDLIST;`OPAREN;t= LIST1 one_branch SEP `SEMICOLON ;`CPAREN -> Pure_f(P.mkAndList t)(*to be used only for sleek testing*)]
+	[`ANDLIST;`OPAREN;t= LIST1 one_branch SEP `SEMICOLON ;`CPAREN ->
+            Pure_f(P.mkAndList_opt t)(*to be used only for sleek testing*)]
   | "pure_or" RIGHTA
     [ pc1=SELF; `OR; pc2=SELF ->apply_pure_form2 (fun c1 c2-> P.mkOr c1 c2 None (get_pos_camlp4 _loc 2)) pc1 pc2]
   | "pure_and" RIGHTA
