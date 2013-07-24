@@ -782,7 +782,54 @@ let elim_exists (f : CP.formula) : CP.formula =
 let elim_exists (f : CP.formula) : CP.formula =
   let pr = Cprinter.string_of_pure_formula in
   Debug.no_1 "elim_exists" pr pr elim_exists f
-  
+
+let extract_eq_clauses_formula f = 
+  let lst = split_conjunctions f in
+  List.filter is_eq_between_no_bag_vars lst
+
+(*
+ E1=eq(S1) E2=eq(S2) E=E1&E2 W=fv(E)
+ V1=fv(S1) V2=fv(S2)
+ R1=ex(W-V1.E) R2=ex(W-V2.E)
+ SAT(R1 & S1) | SAT(R2 & S2)
+-----------------------------
+ SAT(S1 & S2)
+*)
+
+let extract_eq_clauses_lbl_lst lst =
+  let ls = List.map (fun (l,f) -> 
+      if Label_only.Lab_List.is_common l then extract_eq_clauses_formula f
+      else []
+  ) lst in
+  let eq_all = CP.join_conjunctions (List.concat ls) in
+  let es = CP.fv eq_all in
+  let n_lst = List.map (fun (l,f) ->
+      if Label_only.Lab_List.is_common l then (l,f)
+      else 
+        let vs = CP.fv f in
+        let ws = Gen.BList.difference_eq CP.eq_spec_var es vs in
+        let r = wrap_exists_svl eq_all ws in
+        let nf = mkAnd r f no_pos in
+        (l,nf)
+  ) lst 
+  in n_lst
+  (* let rec aux conjs lst =  *)
+  (*   match lst with *)
+  (*     | []   -> (conjs, []) *)
+  (*     | (lbl,f)::t -> *)
+  (*           let eq_f_lst = extract_eq_clauses_formula f in *)
+  (*           let (all_eq, tail) = aux (conjs@eq_f_lst) t in *)
+  (*           let eqs_to_add = Gen.BList.difference_eq (equalFormula) all_eq eq_f_lst in *)
+  (*           let conj = join_conjunctions eqs_to_add in *)
+  (*           (\* let new_f = mkAnd f conj no_pos in *\) *)
+  (*           (all_eq, (lbl,conj)::tail) *)
+  (* in  *)
+  (* snd (aux [] lst) *)
+
+let extract_eq_clauses_lbl_lst lst =
+  let pr = pr_list (pr_pair pr_none !print_formula) in
+  let pr2 = pr_list (!print_formula) in
+  Debug.no_1 "extract_eq_clauses_lbl_lst"  pr pr  extract_eq_clauses_lbl_lst lst  
 
 let sat_label_filter fct f =
   let pr = Cprinter.string_of_pure_formula in
@@ -793,12 +840,16 @@ let sat_label_filter fct f =
 		| AndList b -> 
 			let lbls = Label_Pure.get_labels b in
                         (* Andreea : this is to pick equality from all branches *)
-                        let pick_eq f = CP.extract_eq_clauses_lbl_lst f in
-                        let (b,comp,fil) = 
+                        let (comp,fil) = 
                           if !Globals.label_aggressive_sat
-                          then (pick_eq b,Label_only.Lab_List.is_fully_compatible,fun fs -> fs)
-                          else (b,Label_only.Lab_List.is_part_compatible,
+                          then (Label_only.Lab_List.is_fully_compatible,fun fs -> fs)
+                          else (Label_only.Lab_List.is_part_compatible,
                              List.filter (fun (l,_)-> not(Label_only.Lab_List.is_common l)) ) 
+                        in
+                        let b = 
+                          if !Globals.label_aggressive_sat
+                          then extract_eq_clauses_lbl_lst b
+                          else b 
                         in
 			let fs = List.map (fun l -> 
 			    let lst = List.filter (fun (c,_)-> comp c l) b in
