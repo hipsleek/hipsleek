@@ -176,3 +176,9 @@ let string_of_prover prover = match prover with
 
 let last_tp_used = new Globals.store LOG string_of_prover
 
+(* 
+   this is meant to record the last commands in the
+   different category encounterd by sleek/hip; but it
+   should perhaps be integrated with the logging command
+   option to avoid duplication?
+*)

@@ -15,9 +15,6 @@ ll1<s> == self = null & self != s
 inv self!= s;
 */
 
-lx<g,s> == self=g & self!=s 
-  or self::node<_,nxt> * nxt::lx<g,s> & self!=g & self!=s 
- inv self!=s ;
 
 /*
 lx<null,s> == self=null &  self!=s
@@ -26,10 +23,14 @@ lx<s,null> == self=s &  self!=null
   or self::node<_,nxt> * nxt::lx<s,null> & self!=null inv self!=null ;
 */
 
+lx<g,s,M> == self=g & self!=s & M={} 
+  or self::node<v,nxt> * nxt::lx<g,s,M1> & self!=g & self!=s & M=union(M1,{v})
+  inv self!=s  ;
+
 void lscan(ref node cur, ref node prev, node sent)
- requires cur::lx<a,b> * prev::lx<b,a> & cur!=a 
+ requires cur::lx<a,b,M1> * prev::lx<b,a,M2> & cur!=a 
    & (a=null & b=sent | a=sent & b=null)
- ensures prev'::lx<null,sent>  & cur'=sent ;
+ ensures prev'::lx<null,sent,union(M1,M2)>  & cur'=sent ;
 
 /*
 requires cur::lx<null,sent> * prev::lx<sent,sent> & cur!=null 
@@ -57,7 +58,7 @@ ensures prev'::lx<null,sent>  & cur'=sent ;
   if (cur == null) {
       // change direction;
       cur = prev;
-      dprint;
+      //dprint;
       prev = null;
       //dprint;
   }

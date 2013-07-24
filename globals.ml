@@ -590,6 +590,12 @@ let lib_files = ref ([] : string list)
 
 (* command line options *)
 
+let remove_label_flag = ref false
+let label_split_conseq = ref true
+let label_split_ante = ref true
+let label_aggressive_sat = ref false
+let label_aggressive_imply = ref false
+
 let texify = ref false
 let testing_flag = ref false
 
@@ -691,6 +697,8 @@ let precise_perm_xpure = ref true
   (* this flag is dynamically set depending on
      smart_xpure and xpure0!=xpure1 *)
 let smart_memo = ref false
+
+let enable_constraint_based_filtering = ref false
 
 (* let lemma_heuristic = ref false *)
 

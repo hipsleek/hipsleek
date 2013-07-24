@@ -4843,8 +4843,8 @@ and early_pure_contra_detection_x hec_num prog estate conseq pos msg is_folding 
     (* let _ = hec_stack # push slk_no in *)
     (* let r = hec a b c in *)
     (* let _ = hec_stack # pop in *)
-    let _ = Log.add_new_sleek_logging_entry 0. esv !Globals.do_classic_frame_rule caller (* avoid *) false hec_num slk_no estate.es_formula
-      conseq es.es_heap es.es_evars result pos in
+    let _ = Log.add_sleek_logging false 0. esv !Globals.do_classic_frame_rule caller (* avoid *) false hec_num slk_no estate.es_formula
+      conseq es.es_heap es.es_evars (Some result) pos in
     () in
 
 
@@ -5094,8 +5094,8 @@ and log_contra_detect hec_num conseq result pos =
     let orig_ante = match es.es_orig_ante with
       | Some f -> f
       | None   -> es.es_formula in 
-    let _ = Log.add_new_sleek_logging_entry 0. es.es_infer_vars !Globals.do_classic_frame_rule caller 
-      (* avoid *) false hec_num slk_no orig_ante conseq es.es_heap es.es_evars result pos in
+    let _ = Log.add_sleek_logging false 0. es.es_infer_vars !Globals.do_classic_frame_rule caller 
+      (* avoid *) false hec_num slk_no orig_ante conseq es.es_heap es.es_evars (Some result) pos in
     () in
   let f = wrap_proving_kind PK_Early_Contra_Detect (new_slk_log result) in
   let es_opt = estate_opt_of_list_context result in
@@ -6284,18 +6284,22 @@ and heap_entail_conjunct hec_num (prog : prog_decl) (is_folding : bool)  (ctx0 :
     let avoid = avoid or (not (hec_stack # is_empty)) in
     let caller = hec_stack # string_of_no_ln in
     let slk_no = (* if avoid then 0 else *) Log.get_sleek_proving_id () in
-    let _ = Log.last_sleek_command # set (Some (ante,conseq)) in
+    (* let _ = Log.last_sleek_command # set (Some (ante,conseq)) in *)
     let _ = hec_stack # push slk_no in
-    let tstart = Gen.Profiling.get_time () in		
-    let r = hec a b c in
-    let tstop = Gen.Profiling.get_time () in
-    let ttime = tstop -. tstart in
+    let logger fr tt timeout = Log.add_sleek_logging timeout tt infer_vars !Globals.do_classic_frame_rule 
+      caller avoid hec_num slk_no ante conseq consumed_heap evars 
+      (match fr with Some (lc,_) -> Some lc | None -> None) pos in
+    let r =Timelog.log_wrapper "hec" logger (hec a b) c in
+    (* let tstart = Gen.Profiling.get_time () in		 *)
+    (* let r = hec a b c in *)
+    (* let tstop = Gen.Profiling.get_time () in *)
+    (* let ttime = tstop -. tstart in *)
     let _ = hec_stack # pop in
     let (lc,_) = r in
-    let _ = Log.add_new_sleek_logging_entry ttime infer_vars !Globals.do_classic_frame_rule caller avoid hec_num slk_no ante conseq consumed_heap evars lc pos in
+    (* let _ = Log.add_sleek_logging false ttime infer_vars !Globals.do_classic_frame_rule caller avoid hec_num slk_no ante conseq consumed_heap evars lc pos in *)
     let _ = Debug.ninfo_hprint (add_str "avoid" string_of_bool) avoid no_pos in
     let _ = Debug.ninfo_hprint (add_str "slk no" string_of_int) slk_no no_pos in
-    let _ = Debug.ninfo_hprint (add_str "lc" Cprinter.string_of_list_context) lc no_pos in
+    (* let _ = Debug.ninfo_hprint (add_str "lc" Cprinter.string_of_list_context) lc no_pos in *)
     r
   in
   Debug.no_3_num hec_num "heap_entail_conjunct" string_of_bool Cprinter.string_of_context Cprinter.string_of_formula
@@ -6310,7 +6314,7 @@ and heap_entail_conjunct_x (prog : prog_decl) (is_folding : bool)  (ctx0 : conte
     (*   | OCtx _ -> report_error pos ("heap_entail_conjunct_helper: context is disjunctive or fail!!!") *)
     (*   | Ctx estate -> estate.es_formula *)
     (* in *)
-    (* let _ = Log.add_new_sleek_logging_entry ante conseq pos in *)
+    (* let _ = Log.add_sleek_logging ante conseq pos in *)
     (* let _ = DD.info_pprint ("       sleek-logging: Line " ^ (line_number_of_pos pos) ^ "\n" ^ (Cprinter.prtt_string_of_formula ante) ^ " |- " ^ *)
     (*                                  (Cprinter.prtt_string_of_formula conseq)) pos in *)
     heap_entail_conjunct_helper 3 prog is_folding  ctx0 conseq rhs_matched_set pos
@@ -6710,7 +6714,7 @@ and xpure_imply_x (prog : prog_decl) (is_folding : bool)   lhs rhs_p timeout : b
   let tmp1 = MCP.merge_mems lhs_p xpure_lhs_h true in
   let new_ante, new_conseq = heap_entail_build_mix_formula_check 1 (estate.es_evars@estate.es_gen_expl_vars@estate.es_gen_impl_vars@estate.es_ivars) tmp1 
     (MCP.memoise_add_pure_N (MCP.mkMTrue pos) rhs_p) pos in
-  let (res,_,_) = imply_mix_formula_no_memo new_ante new_conseq !imp_no !imp_subno (Some timeout) memset in
+  let (res,_,_) = imply_mix_formula_no_memo 1 new_ante new_conseq !imp_no !imp_subno (Some timeout) memset in
   imp_subno := !imp_subno+1;  
   res
 
@@ -7746,8 +7750,15 @@ and imply_mix_formula i ante_m0 ante_m1 conseq_m imp_no memset =
 (*
 type: MCP.mix_formula -> MCP.mix_formula -> MCP.mix_formula -> int ref ->
   CF.mem_formula ->
-  bool * (Globals.formula_label option * Globals.formula_label option) list *
-  Globals.formula_label option * (split_ante0,split_ante1) option
+  (bool *
+   (Globals.formula_label option * Globals.formula_label option) list *
+   Globals.formula_label option) *
+  (Cpure.Label_Pure.exp_ty list * CP.formula list) option
+
+
+ bool * (Globals.formula_label option * Globals.formula_label option) list *
+  Globals.formula_label option
+
 *)
 and imply_mix_formula_x ante_m0 ante_m1 conseq_m imp_no memset =
       (* :bool *(formula_label option * formula_label option) list * formula_label option  *)
@@ -7793,7 +7804,8 @@ and imply_mix_formula_x ante_m0 ante_m1 conseq_m imp_no memset =
                   (* why andl need to be handled in a special way *)
 	          let r = ref (-999) in
 	          let is_sat f = CP.is_sat_eq_ineq f (*TP.is_sat_sub_no 6 f r*) in
-	          let a0l = List.filter is_sat (CP.split_disjunctions a0) in a0l
+			  let a0l = if !label_split_ante then CP.split_disjunctions a0 else [a0] in
+	          let a0l = List.filter is_sat a0l in a0l
             in
             let a0l = f a0 in
             let a1l = match ante_m1 with
@@ -7820,20 +7832,26 @@ and imply_mix_formula_x ante_m0 ante_m1 conseq_m imp_no memset =
           end
     | _ -> report_error no_pos ("imply_mix_formula: mix_formula mismatch")
 
-and imply_mix_formula_no_memo new_ante new_conseq imp_no imp_subno timeout memset =   
-  Debug.no_3_loop "imply_mix_formula_no_memo" Cprinter.string_of_mix_formula Cprinter.string_of_mix_formula Cprinter.string_of_mem_formula
+and imply_mix_formula_no_memo i new_ante new_conseq imp_no imp_subno timeout memset =   
+  Debug.no_3_num i "imply_mix_formula_no_memo" Cprinter.string_of_mix_formula Cprinter.string_of_mix_formula Cprinter.string_of_mem_formula
       (fun (r,_,_) -> string_of_bool r) 
       (fun new_ante new_conseq memset -> imply_mix_formula_no_memo_x new_ante new_conseq imp_no imp_subno timeout memset) 
       new_ante new_conseq memset 
 
+(* WN TODO : temporary change to call imply_mix_formula; need to redo properly *)
 and imply_mix_formula_no_memo_x new_ante new_conseq imp_no imp_subno timeout memset =   
   (* detect whether memset contradicts with any of the ptr equalities from antecedent *)
+  let drop_last_item ((b,l,o1),_) = (b,l,o1) in
   let new_ante = if detect_false new_ante memset then MCP.mkMFalse no_pos else new_ante in
   let new_conseq = solve_ineq new_ante memset new_conseq in
-  let (r1,r2,r3) =  
+  let (r1,r2,r3) =
+    let xx = ref imp_no in
     match timeout with
-      | None -> TP.mix_imply new_ante new_conseq ((string_of_int imp_no) ^ "." ^ (string_of_int imp_subno))
-      | Some t -> TP.mix_imply_timeout new_ante new_conseq ((string_of_int imp_no) ^ "." ^ (string_of_int imp_subno)) t 
+      | None -> drop_last_item (imply_mix_formula 98 new_ante new_ante new_conseq xx memset)
+            (* TP.mix_imply new_ante new_conseq ((string_of_int imp_no) ^ "." ^ (string_of_int imp_subno)) *)
+      | Some t -> drop_last_item ( imply_mix_formula 99 new_ante new_ante new_conseq xx memset ) 
+            (* TODO : lost timeout here *)
+            (* TP.mix_imply_timeout new_ante new_conseq ((string_of_int imp_no) ^ "." ^ (string_of_int imp_subno)) t *)
   in
   let _ = Debug.devel_pprint ("asta5?") no_pos in
   Debug.devel_zprint (lazy ("IMP #" ^ (string_of_int imp_no) ^ "." ^ (string_of_int imp_subno))) no_pos;
@@ -9522,7 +9540,7 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
                           w/o any constraint on the rhs*)
                         false 
                       else
-                        let res,_,_ = imply_mix_formula_no_memo split_ante split_conseq !imp_no !imp_subno None memset in
+                        let res,_,_ = imply_mix_formula_no_memo 2 split_ante split_conseq !imp_no !imp_subno None memset in
                         res
                   in
                   let _ = Debug.devel_zprint (lazy ("process_action: Context.M_match : deciding MATCH (res=true) or SPLIT (res=false): \n ### lhs_frac = " ^ (Cprinter.string_of_mix_formula lhs_frac) ^ "\n ### rhs_frac = " ^ (Cprinter.string_of_mix_formula rhs_frac) ^ "\n ### exists_vars = " ^ (Cprinter.string_of_spec_var_list exists_vars) ^ "\n ### split_ante = " ^ (Cprinter.string_of_mix_formula split_ante) ^ "\n ### split_conseq = " ^ (Cprinter.string_of_mix_formula split_conseq) ^ "\n ### res = " ^ (string_of_bool res) ^ "\n\n")) no_pos in
@@ -9804,7 +9822,7 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
               (*     (\* let _ = hec_stack # push slk_no in *\) *)
               (*     (\* let r = hec a b c in *\) *)
               (*     (\* let _ = hec_stack # pop in *\) *)
-              (*     let _ = Log.add_new_sleek_logging_entry esv !Globals.do_classic_frame_rule caller (\* avoid *\) false hec_num slk_no estate.es_formula *)
+              (*     let _ = Log.add_sleek_logging_entry esv !Globals.do_classic_frame_rule caller (\* avoid *\) false hec_num slk_no estate.es_formula *)
               (*       conseq es.es_heap es.es_evars result pos in *)
               (*     () in *)
 
@@ -9815,7 +9833,7 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
               (*         let new_estate = {new_estate with es_infer_vars = esv} in *)
 	      (*         (\* let _ = Debug.info_hprint (add_str "inferred contradiction : " Cprinter.string_of_pure_formula) pf pos in *\) *)
               (*         let _ = Debug.info_pprint ("Do we need to add_new_sleek_logging_entry to do sleek_logging") no_pos in *)
-              (*         (\* add_new_sleek_logging_entry infer_vars classic_flag caller avoid hec slk_no ante conseq  *\) *)
+              (*         (\* add_sleek_logging_entry infer_vars classic_flag caller avoid hec slk_no ante conseq  *\) *)
               (*         (\*     consumed_heap evars (result:CF.list_context) pos *\) *)
 	      (*         if (List.length relass)>1 then report_error pos "Length of relational assumption list > 1" *)
 	      (*         else *)

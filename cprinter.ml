@@ -550,6 +550,12 @@ let pr_spec_var x = fmt_string (string_of_spec_var x)
 
 let pr_typed_spec_var x = fmt_string (* (string_of_spec_var x) *) (string_of_typed_spec_var x)
 
+let pr_typed_spec_var_lbl (l,x) = 
+  let s = 
+    if Lab_List.is_common l then ""
+    else (Lab_List.string_of l)^":"
+  in fmt_string (s^(string_of_typed_spec_var x))
+
 let pr_list_of_spec_var xs = pr_list_none pr_spec_var xs
   
 let pr_imm x = fmt_string (string_of_imm x)
@@ -2882,7 +2888,8 @@ let pr_view_decl v =
     | View_NORM -> " "
     | View_PRIM -> "_prim "
     | View_EXTN -> "_extn " in
-  wrap_box ("B",0) (fun ()-> pr_angle  ("view"^s^v.view_name) pr_typed_spec_var v.view_vars; fmt_string "= ") ();
+  wrap_box ("B",0) (fun ()-> pr_angle  ("view"^s^v.view_name) pr_typed_spec_var_lbl 
+      (List.combine v.view_labels v.view_vars); fmt_string "= ") ();
   fmt_cut (); wrap_box ("B",0) pr_struc_formula v.view_formula; 
   pr_vwrap  "cont vars: "  pr_list_of_spec_var v.view_cont_vars;
   pr_vwrap  "inv: "  pr_mix_formula v.view_user_inv;

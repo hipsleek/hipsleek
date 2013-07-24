@@ -253,7 +253,7 @@ However, in hip; it was decomposing conseq and then
 dropping the labels from the LHS. Why is there such
 inconsistency? 
 
-trace:
+to trace:
 let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (imp_no : string) timeout process
 
 ============================================================

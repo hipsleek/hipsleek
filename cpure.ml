@@ -6679,10 +6679,10 @@ and imply_disj_orig_x0 ante_disj conseq t_imply imp_no =
         if (i>0) 
         then
           let pri = string_of_int in
-          let _ = Debug.info_hprint (add_str "(unsat ante, sat ante)" (pr_pair pri pri)) (i,j) no_pos in
+          let _ = Debug.ninfo_hprint (add_str "(unsat ante, sat ante)" (pr_pair pri pri)) (i,j) no_pos in
           Debug.tinfo_hprint (add_str "unsat ante removed" (pr_list pr)) false_st no_pos
         else () 
-      in
+      in 
       (* disable assumption filtering if ante_disj>1 *)
       (* wrap_no_filtering (imply_disj_orig_x ante_disj conseq t_imply) imp_no *)
       (imply_disj_orig_x ante_disj conseq t_imply) imp_no
@@ -7685,12 +7685,34 @@ let mkNot_b_norm (bf : b_formula) : b_formula option =
 	match r with 
 		| None -> None
 		| Some bf -> Some (norm_bform_aux bf)
+let filter_constraint_type (ante: formula) (conseq: formula) : (formula) = 
+if (!Globals.enable_constraint_based_filtering) then 
+  let conseq_disjs = list_of_disjs conseq in 
+  if List.length conseq_disjs == 1 then
+  let disjs = list_of_disjs ante in 
+  let helper f = 
+  let antes = list_of_conjs ante in
+  (*let _ = List.map (fun c -> print_string ("Antes : "^(!print_formula c)^"\n")) antes in *)
+  let filtered_antes = if List.exists (fun c -> eq_pure_formula conseq c) antes then
+      List.filter (fun c -> eq_pure_formula conseq c) antes else 
+  if is_bag_constraint conseq then antes
+ (*List.filter (fun c -> is_bag_constraint c || contains_exists c)  antes*)
+  else List.filter (fun c -> not(is_bag_constraint c) (*|| contains_exists c*)) antes in 
+  join_conjunctions filtered_antes in 
+  let filtered_disjs = List.map helper disjs in
+  join_disjunctions filtered_disjs 
+  else ante
+else ante
+
+let filter_constraint_type (ante: formula) (conseq: formula) : (formula) = 
+let pr = !print_formula in
+Debug.no_2 "filter_constraint_type" pr pr pr filter_constraint_type ante conseq
 
 let filter_ante (ante : formula) (conseq : formula) : (formula) =
 	let fvar = fv conseq in
-	let new_ante = filter_var ante fvar in
+    let ante = filter_var ante fvar in
+	let new_ante = if (!Globals.enable_constraint_based_filtering) then filter_constraint_type ante conseq else ante in
     new_ante
-
 
 let filter_ante_wo_rel (ante : formula) (conseq : formula) : (formula) =
 	let fvar = fv conseq in
@@ -10965,3 +10987,10 @@ let rhs_needs_or_split f = 	match f with
 let count_disj f =
   let k = split_disjunctions f
   in List.length k
+
+
+let mkAndList_opt f =
+  (* let f = mkAndList f in *)
+  if !Globals.remove_label_flag then 
+    join_conjunctions (List.map snd f)
+  else mkAndList f
