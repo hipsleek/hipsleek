@@ -7,22 +7,21 @@ data node {
 tx<g,s,M> == self = g & s!=null & (g=null | g=s) & M={}
    or self::node<v,l,r> * l::tx<g,s,M1> * r::tx<null,s,M2> & self != g & self != s & M=union({v},M1,M2)
    or self::node<v,l,r> * l::tx<null,s,M1> * r::tx<g,s,M2> & self != g & self != s & M=union({v},M1,M2)
-inv s!=null & (g=null & self!=s | g=s & self!=null)
-  & (self=g & M={} | self!=g & M!={})
- ;
+inv s!=null & (g=null & self!=s | g=s & self!=null) & (self=g & M={} | self!=g & M!={});
 
 
 void lscan(ref node cur, ref node prev, node sent)
+/*
 requires cur::tx<a,sent,M1> * prev::tx<b,sent,M2> & cur != a & a=null & b=sent 
 ensures prev'::tx<null,sent,union(M1,M2)>  & cur' = sent & prev'!=null; 
 requires cur::tx<a,sent,M1> * prev::tx<b,sent,M2> & cur != a & a=sent & b=null
 ensures prev'::tx<null,sent,union(M1,M2)>  & cur' = sent & prev'!=null; 
 
-/*
+
 requires cur::tx<a,sent,M1> * prev::tx<b,sent,M2> & cur != a &
         (a=null & b=sent | a=sent & b=null)
 ensures prev'::tx<null,sent,union(M1,M2)>  & cur' = sent & prev'!=null; 
-
+*/
 requires cur::tx<a,sent,M1> * prev::tx<b,sent,M2> 
  case { 
     a=null ->
@@ -44,7 +43,7 @@ requires cur::tx<a,sent,M1> * prev::tx<b,sent,M2>
             ensures false;
         }
   }
-*/
+
 {
 
   node n,tmp;
@@ -60,7 +59,7 @@ requires cur::tx<a,sent,M1> * prev::tx<b,sent,M2>
         return;
   }
   if (cur == null) {
-      assume false;
+      //assume false;
       // change direction;
       cur = prev;
       prev = null;
