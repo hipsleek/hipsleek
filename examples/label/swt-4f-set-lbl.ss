@@ -7,7 +7,7 @@ data node {
 tx<"n":g,"n":s,"s":M> == true&["n":self = g & s!=null & (g=null | g=s) ; "s": M={}]
    or self::node<v,l,r> * l::tx<g,s,M1> * r::tx<null,s,M2> & ["n": self != g & self != s ;"s": M=union({v},M1,M2)]
    or self::node<v,l,r> * l::tx<null,s,M1> * r::tx<g,s,M2> & ["n": self != g & self != s ;"s": M=union({v},M1,M2)]
-inv true&["n","s": s!=null & (g=null & self!=s | g=s & self!=null) & (self=g & M={} | self!=g & M!={})];
+inv true&["n": s!=null & (g=null & self!=s | g=s & self!=null); "n","s":(self=g & M={} | self!=g & M!={})];
 
 
 void lscan(ref node cur, ref node prev, node sent)

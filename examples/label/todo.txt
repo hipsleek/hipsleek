@@ -284,9 +284,25 @@ Total verification time: 153.689603 second(s)
  SAT(R1 & S1) | SAT(R2 & S2)
 -----------------------------
  SAT(S1 & S2)
-
-
 ============================================================
+# t-f.slk  -tp om --lbl-en-aggr-sat
+
+checkentail 
+   prev::tx<b,sent_1313,M2>@M&
+  AndList( 
+  "":cur=cur' & prev=prev' & sent=sent' & a!=null & b=null & 
+         cur!=sent & a=sent
+ ; "n": a=cur' & sent_1312!=null 
+//& ((a=null | a=sent_1312)) 
+//&  sent=sent_1312 & sent=sent_1313
+ ; "s":M1={}) 
+ |-  cur'::node<mark_48_986',left_48_987',right_48_988'>@L.
+
+Currently fails:
+  Entail 1: Fail.
+
+It should not have failed if equalities were properly propagated.
+
 ============================================================
 ============================================================
 ============================================================

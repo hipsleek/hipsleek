@@ -1294,9 +1294,15 @@ struct
 
   let string_of_counters () =  counters#string_of
 
-  let get_time () = 
+  let get_all_time () = 
 	let r = Unix.times () in
 	r.Unix.tms_utime +. r.Unix.tms_stime +. r.Unix.tms_cutime +. r.Unix.tms_cstime
+
+  let get_main_time () = 
+	let r = Unix.times () in
+	r.Unix.tms_utime +. r.Unix.tms_stime (* +. r.Unix.tms_cutime +. r.Unix.tms_cstime *)
+
+  let get_time () = get_all_time()
 
   let push_time_no_cnt msg = 
     if (!Globals.profiling) then

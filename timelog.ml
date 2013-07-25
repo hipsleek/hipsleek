@@ -35,7 +35,7 @@ object (self)
     end
   method start_time s = 
     timer_timeout <- false;
-    let t = Gen.Profiling.get_time() in
+    let t = Gen.Profiling.get_main_time() in
     let _ = time_stk # push (s,t) in
     ()
 
@@ -51,7 +51,7 @@ object (self)
                   (s,t2)
                 end
           | None ->
-                let t = Gen.Profiling.get_time() in
+                let t = Gen.Profiling.get_main_time() in
                 let (s,st) = time_stk # pop_top in
                 (s,t -. st)
       in
