@@ -783,6 +783,58 @@ let elim_exists (f : CP.formula) : CP.formula =
   let pr = Cprinter.string_of_pure_formula in
   Debug.no_1 "elim_exists" pr pr elim_exists f
 
+let is_eq_between_no_bag_vars (f:formula) = 
+  match f with
+    | BForm (bf,_) ->
+          (match bf with
+            | (Eq (Var (v,_), Var (_,_), _),_) -> if (is_bag_typ v) then false else true
+            | _ -> false)
+    | _ -> false
+
+let build_eset_of_conj_formula f =
+  let lst = split_conjunctions f in
+  List.fold_left (fun e f -> match f with
+    | BForm (bf,_) ->
+          (match bf with
+            | (Eq (Var (v1,_), Var (v2,_), _),_) -> 
+                  if (is_bag_typ v1) then EMapSV.add_equiv e v1 v2
+                  else e
+            | _ -> e)
+    | _ -> e
+  ) EMapSV.mkEmpty lst
+
+let join_esets es =
+  match es with
+    | [] -> EMapSV.mkEmpty
+    | e::es -> List.fold_left (fun e1 e2 -> EMapSV.merge_eset e1 e2) e es
+
+(* Andreea : to implement mk_exists for eset *)
+let mk_exists_eset eset ws = eset
+  
+let formula_of_eset eset pos =
+  let ep = EMapSV.get_equiv eset in
+  List.fold_left (fun f (v1,v2) -> mkAnd f (mkEqVar v1 v2 pos) pos)
+      (mkTrue no_pos) ep
+
+let extract_eset_of_lbl_lst lst =
+  let ls = List.map (fun (l,f) -> 
+      if Label_only.Lab_List.is_common l then build_eset_of_conj_formula f
+      else []
+  ) lst in
+  let eq_all = join_esets ls in
+  let es = EMapSV.get_elems (* CP.fv *) eq_all in
+  let n_lst = List.map (fun (l,f) ->
+      if Label_only.Lab_List.is_common l then (l,f)
+      else 
+        let vs = CP.fv f in
+        let ws = Gen.BList.difference_eq CP.eq_spec_var es vs in
+        let r = mk_exists_eset (* wrap_exists_svl*) eq_all ws in
+        let r = formula_of_eset r no_pos in
+        let nf = mkAnd r f no_pos in
+        (l,nf)
+  ) lst 
+  in n_lst
+
 let extract_eq_clauses_formula f = 
   let lst = split_conjunctions f in
   List.filter is_eq_between_no_bag_vars lst
@@ -795,6 +847,7 @@ let extract_eq_clauses_formula f =
 -----------------------------
  SAT(S1 & S2)
 *)
+
 
 let extract_eq_clauses_lbl_lst lst =
   let ls = List.map (fun (l,f) -> 
