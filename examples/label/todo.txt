@@ -241,7 +241,7 @@ with the first successful proof.
 	     conseq:  ((0<n & n=0) | (n<0 & 0<=n & n=1))
  res: true
 ============================================================
-# swll-1.ss 
+# swll-1.ss  FIXED due to hip calling wrong imply method
 
 l-sw-1.slk was proof 252 extracted from 
    swll-1.ss --en-imp-top --en-logging-txt
@@ -257,7 +257,7 @@ to trace:
 let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (imp_no : string) timeout process
 
 ============================================================
-# swt-4f-set.ss 
+# swt-4f-set.ss (INFO)
 
 multi pre/post is sufficient for swt algo
 
@@ -285,7 +285,7 @@ Total verification time: 153.689603 second(s)
 -----------------------------
  SAT(S1 & S2)
 ============================================================
-# t-f.slk  -tp om --lbl-en-aggr-sat
+# t-f.slk  -tp om --lbl-en-aggr-sat  FIXED
 
 checkentail 
    prev::tx<b,sent_1313,M2>@M&
@@ -304,6 +304,18 @@ Currently fails:
 It should not have failed if equalities were properly propagated.
 
 ============================================================
+# t-f-2.slk -tp om --lbl-en-aggr-sat
+
+WHY is there a MONA limit reach for this simple example?
+How many invocations to MONA did we have? Can we print
+it just like omega
+
+Starting Omega...oc
+Mona is running ... restart (limit reached)
+
+Entail 1: Fail.
+Stop Omega... 50 invocations 
+SAT Count   : 200
 ============================================================
 ============================================================
 ============================================================

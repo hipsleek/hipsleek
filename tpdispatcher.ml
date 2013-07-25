@@ -815,6 +815,7 @@ let join_esets es =
 
 
 (* Andreea : to implement mk_exists for eset *)
+(* To be moved later to cpure.ml *)
 let mk_exists_eset eset ws =
   EMapSV.elim_elems eset ws
   
@@ -856,8 +857,34 @@ let filter_redundant_eset_pairs ep em_i =
 let formula_of_filtered_eset eset em_i pos =
   let ep = EMapSV.get_equiv eset in
   let ep = filter_redundant_eset_pairs ep em_i in
-  List.fold_left (fun f (v1,v2) -> mkAnd f (mkEqVar v1 v2 pos) pos)
-      (mkTrue no_pos) ep
+  (not(ep==[]),List.fold_left (fun f (v1,v2) -> mkAnd f (mkEqVar v1 v2 pos) pos)
+      (mkTrue no_pos) ep)
+
+(* operations on list of labelled formula *)
+(* to ensure that they are normalized? *)
+
+let combine_lbl_lst ls =
+  let rec aux l f ls =
+    match ls with
+      | [] -> [(l,f)]
+      | (l2,f2)::ls -> 
+            if Label_only.Lab_List.is_equal l l2
+            then aux l (mkAnd f f2 no_pos) ls
+            else (l,f)::(aux l2 f2 ls)
+  in match ls with
+    | [] -> []
+    | (l,f)::ls -> aux l f ls
+
+let norm_lbl_lst lst = 
+  let pr = pr_list (pr_pair Label_only.Lab_List.string_of !print_formula) in
+  let nl = List.sort (fun (l1,_) (l2,_) -> Label_only.Lab_List.compare l1 l2) lst in
+  let r = combine_lbl_lst nl in
+  if not(List.length r==List.length lst) then
+    begin
+      Debug.info_hprint (add_str "lbl_norm(before)" pr) lst no_pos;
+      Debug.info_hprint (add_str "lbl_norm(after)" pr) r no_pos;
+    end
+  ;r
 
 let map_lbl_lst_to_eset lst =
    List.map (fun (l,f) -> 
@@ -867,6 +894,7 @@ let map_lbl_lst_to_eset lst =
   ) lst 
 
 let extract_eset_of_lbl_lst lst =
+  let lst = norm_lbl_lst lst in
   let ls = map_lbl_lst_to_eset lst in
   let eq_all = join_esets (List.map fst ls) in
   let es = EMapSV.get_elems (* CP.fv *) eq_all in
@@ -875,20 +903,23 @@ let extract_eset_of_lbl_lst lst =
       (* else *)
         let vs = CP.fv f in
         let ws = Gen.BList.difference_eq CP.eq_spec_var es vs in
-        let _ = Debug.info_hprint (add_str "mkE eqall" EMapSV.string_of) eq_all no_pos in
-        let _ = Debug.info_hprint (add_str "mkE f" !print_formula) f no_pos in
-        let _ = Debug.info_hprint (add_str "mkE ws" string_of_spec_var_list) ws no_pos in
+        (* let _ = Debug.info_hprint (add_str "mkE eqall" EMapSV.string_of) eq_all no_pos in *)
+        (* let _ = Debug.info_hprint (add_str "mkE ws" string_of_spec_var_list) ws no_pos in *)
         let r = mk_exists_eset (* wrap_exists_svl*) eq_all ws in
         (* let r = formula_of_eset r no_pos in *)
-        let r = formula_of_filtered_eset r em_f no_pos in
-        let _ = Debug.info_hprint (add_str "mkE(after)" !print_formula) r no_pos in
+        let (flag,r) = formula_of_filtered_eset r em_f no_pos in
+        if flag then
+          begin
+            Debug.tinfo_hprint (add_str "\n f" !print_formula) f no_pos;
+            Debug.tinfo_hprint (add_str "eq_to_add" !print_formula) r no_pos
+          end;
         let nf = mkAnd r f no_pos in
         (l,nf)
   ) ls
   in n_lst
 
 let extract_eset_of_lbl_lst lst =
-  let pr = pr_list (pr_pair pr_none !print_formula) in
+  let pr = pr_list (pr_pair Label_only.Lab_List.string_of !print_formula) in
   (* let pr2 = pr_list (!print_formula) in *)
   Debug.no_1 "extract_eset_of_lbl_lst"  pr pr  extract_eset_of_lbl_lst lst  
 

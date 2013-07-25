@@ -15,8 +15,8 @@ checkentail
   "":cur=cur' & prev=prev' & sent=sent' & a!=null & b=null & 
          cur!=sent & a=sent
  ; "n": a=cur' & sent_1312!=null 
-//& ((a=null | a=sent_1312)) 
-//&  sent=sent_1312 & sent=sent_1313
+& ((a=null | a=sent_1312)) 
+&  sent=sent_1312 & sent=sent_1313
  ; "s":M1={}) 
  |-  cur'::node<mark_48_986',left_48_987',right_48_988'>@L.
 

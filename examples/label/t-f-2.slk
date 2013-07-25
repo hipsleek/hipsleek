@@ -1,0 +1,50 @@
+data node {
+ int mark;
+ node left;
+ node right;
+}.
+
+pred tx<"n":g,"n":s,"s":M> == true&["n":self = g & s!=null & (g=null | g=s) ; "s": M={}]
+   or self::node<v,l,r> * l::tx<g,s,M1> * r::tx<null,s,M2> & ["n": self != g & self != s ;"s": M=union({v},M1,M2)]
+   or self::node<v,l,r> * l::tx<null,s,M1> * r::tx<g,s,M2> & ["n": self != g & self != s ;"s": M=union({v},M1,M2)]
+inv true&["n": s!=null & (g=null & self!=s | g=s & self!=null); "n","s":(self=g & M={} | self!=g & M!={})].
+
+ checkentail 
+prev::tx<b,sent_1214,M2>@M * r_1211::tx<g_1205,s_1206,M2_1212>@M * 
+cur_1262::node<v_1208,tmp_55',prev_1260>@M * 
+l_1209::tx<flted_9_1207,s_1204,M1_1210>@M
+& AndList( "":cur=cur_1262 & prev=prev_1260 & sent=sent' & a=null & b=sent & 
+         cur!=null & l_1209=n_54' & r_1211=tmp_55' & r_1211=right_51_1246 & 
+         l_1209=left_52_1258 & cur_1262=prev' & cur'=n_54' & cur'!=sent' & 
+         !(v_bool_56_998') & cur'!=sent' & !(v_bool_56_998') & cur'!=null & 
+         !(v_bool_59_999') & cur'!=null & !(v_bool_59_999') & a_1353!=null & 
+         ((b_1355!=null | cur'=sent' | a_1353!=sent'))
+ ; "n":flted_9_1207=null & a!=cur_1262 & cur_1262!=sent_1213 & 
+   s_1204=sent_1213 & a=g_1205 & s_1206=sent_1213 & sent=sent_1213 & 
+   sent=sent_1214 & a_1353=flted_9_1207 & g_1205=null & b!=prev' & 
+   prev'!=s_1206 & s_1206=sent_1214 & exists(sent_2294:b_1355!=prev' & 
+   prev'!=sent_2294 & s_1206=sent_2294 & b=b_1355 & sent_1214=sent_2294)
+ ; "s":M1=union({v_1208},M1_1210,M2_1212) & M1_1210=M1_1354 & 
+   M2_1356=union({v_1208},M2_1212,M2)) 
+ |-  false.
+
+/*
+# t-f-2.slk -tp om --lbl-en-aggr-sat
+
+WHY is there a MONA limit reach for this simple example?
+How many invocations to MONA did we have? Can we print
+it just like omega
+
+Starting Omega...oc
+Mona is running ... restart (limit reached)
+
+Entail 1: Fail.
+Stop Omega... 50 invocations 
+SAT Count   : 200
+SAT % Hit   : 34.%
+IMPLY Count : 16
+IMPLY % Hit : 12.5%
+Time(cache overhead) : 0.064005 (seconds)
+
+  
+*/
