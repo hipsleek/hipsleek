@@ -797,19 +797,26 @@ let build_eset_of_conj_formula f =
     | BForm (bf,_) ->
           (match bf with
             | (Eq (Var (v1,_), Var (v2,_), _),_) -> 
-                  if (is_bag_typ v1) then EMapSV.add_equiv e v1 v2
-                  else e
+                  if (is_bag_typ v1) then e
+                  else EMapSV.add_equiv e v1 v2
             | _ -> e)
     | _ -> e
   ) EMapSV.mkEmpty lst
+
+let build_eset_of_conj_formula f =
+  let pr = !print_formula in
+  let pr2 = EMapSV.string_of in
+  Debug.no_1 "build_eset_of_conj_formula"  pr pr2  build_eset_of_conj_formula f  
 
 let join_esets es =
   match es with
     | [] -> EMapSV.mkEmpty
     | e::es -> List.fold_left (fun e1 e2 -> EMapSV.merge_eset e1 e2) e es
 
+
 (* Andreea : to implement mk_exists for eset *)
-let mk_exists_eset eset ws = eset
+let mk_exists_eset eset ws =
+  EMapSV.elim_elems eset ws
   
 let formula_of_eset eset pos =
   let ep = EMapSV.get_equiv eset in
@@ -818,8 +825,9 @@ let formula_of_eset eset pos =
 
 let extract_eset_of_lbl_lst lst =
   let ls = List.map (fun (l,f) -> 
-      if Label_only.Lab_List.is_common l then build_eset_of_conj_formula f
-      else []
+      (* if Label_only.Lab_List.is_common l then  *)
+        build_eset_of_conj_formula f
+      (* else [] *)
   ) lst in
   let eq_all = join_esets ls in
   let es = EMapSV.get_elems (* CP.fv *) eq_all in
@@ -828,12 +836,22 @@ let extract_eset_of_lbl_lst lst =
       else 
         let vs = CP.fv f in
         let ws = Gen.BList.difference_eq CP.eq_spec_var es vs in
+        (* let _ = Debug.info_hprint (add_str "mkE eqall" EMapSV.string_of) eq_all no_pos in *)
+        (* let _ = Debug.info_hprint (add_str "mkE f" !print_formula) f no_pos in *)
+        (* let _ = Debug.info_hprint (add_str "mkE ws" string_of_spec_var_list) ws no_pos in *)
         let r = mk_exists_eset (* wrap_exists_svl*) eq_all ws in
         let r = formula_of_eset r no_pos in
+        (* let _ = Debug.info_hprint (add_str "mkE(after)" !print_formula) r no_pos in *)
         let nf = mkAnd r f no_pos in
         (l,nf)
   ) lst 
   in n_lst
+
+let extract_eset_of_lbl_lst lst =
+  let pr = pr_list (pr_pair pr_none !print_formula) in
+  (* let pr2 = pr_list (!print_formula) in *)
+  Debug.no_1 "extract_eset_of_lbl_lst"  pr pr  extract_eset_of_lbl_lst lst  
+
 
 let extract_eq_clauses_formula f = 
   let lst = split_conjunctions f in
@@ -901,7 +919,8 @@ let sat_label_filter fct f =
                         in
                         let b = 
                           if !Globals.label_aggressive_sat
-                          then extract_eq_clauses_lbl_lst b
+                          then extract_eset_of_lbl_lst b
+                            (* extract_eq_clauses_lbl_lst b *)
                           else b 
                         in
 			let fs = List.map (fun l -> 
