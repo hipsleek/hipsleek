@@ -823,28 +823,68 @@ let formula_of_eset eset pos =
   List.fold_left (fun f (v1,v2) -> mkAnd f (mkEqVar v1 v2 pos) pos)
       (mkTrue no_pos) ep
 
-let extract_eset_of_lbl_lst lst =
-  let ls = List.map (fun (l,f) -> 
-      (* if Label_only.Lab_List.is_common l then  *)
-        build_eset_of_conj_formula f
-      (* else [] *)
-  ) lst in
-  let eq_all = join_esets ls in
-  let es = EMapSV.get_elems (* CP.fv *) eq_all in
-  let n_lst = List.map (fun (l,f) ->
-      if Label_only.Lab_List.is_common l then (l,f)
+let emap_eq_keys key1 key2 =
+  Gen.BList.list_setequal_eq EMapSV.eq key1 key2
+
+let emap_eq_pair_keys (key_1a,key_1b)  (key_2a, key_2b) =
+  (emap_eq_keys key_1a key_2a && emap_eq_keys key_1b key_2b) ||
+      (emap_eq_keys key_1a key_2b && emap_eq_keys key_1b key_2a)
+
+let emap_key_pair_in_list pair_keys list_pair_keys = 
+  Gen.BList.mem_eq emap_eq_pair_keys  pair_keys list_pair_keys
+
+(* filters ep by eliminating those pairs which 
+   (i)  are already present in em_i or 
+   (ii) capture an alias between vars from two different partitions in em_i, but this info is already captured by other pair(s) *)
+let filter_redundant_eset_pairs ep em_i = 
+  let covered_keys = ref [] in
+  List.filter (fun (v1,v2) -> 
+      let key1 = (EMapSV.find em_i v1) in
+      let key2 = (EMapSV.find em_i v2) in
+      (* same non-empy keys --> same partition in em_i *)
+      if (List.length (key1@key2) > 0) && (emap_eq_keys key1 key2) then false
       else 
+        (* different non-empty partitions from em_i for which alias info is already available *)
+        if (List.length key1 > 0 && List.length key2 > 0) && (emap_key_pair_in_list (key1,key2) !covered_keys ) then false
+        else
+          begin
+            covered_keys := (key1,key2)::(!covered_keys);
+            true
+          end
+  )  ep
+
+let formula_of_filtered_eset eset em_i pos =
+  let ep = EMapSV.get_equiv eset in
+  let ep = filter_redundant_eset_pairs ep em_i in
+  List.fold_left (fun f (v1,v2) -> mkAnd f (mkEqVar v1 v2 pos) pos)
+      (mkTrue no_pos) ep
+
+let map_lbl_lst_to_eset lst =
+   List.map (fun (l,f) -> 
+      (* if Label_only.Lab_List.is_common l then  *)
+        (build_eset_of_conj_formula f, (l, f))
+      (* else ([]. l, f) *)
+  ) lst 
+
+let extract_eset_of_lbl_lst lst =
+  let ls = map_lbl_lst_to_eset lst in
+  let eq_all = join_esets (List.map fst ls) in
+  let es = EMapSV.get_elems (* CP.fv *) eq_all in
+  let n_lst = List.map (fun (em_f,(l,f)) ->
+      (* if Label_only.Lab_List.is_common l then (l,f) *)
+      (* else  *)
         let vs = CP.fv f in
         let ws = Gen.BList.difference_eq CP.eq_spec_var es vs in
         (* let _ = Debug.info_hprint (add_str "mkE eqall" EMapSV.string_of) eq_all no_pos in *)
         (* let _ = Debug.info_hprint (add_str "mkE f" !print_formula) f no_pos in *)
         (* let _ = Debug.info_hprint (add_str "mkE ws" string_of_spec_var_list) ws no_pos in *)
         let r = mk_exists_eset (* wrap_exists_svl*) eq_all ws in
-        let r = formula_of_eset r no_pos in
+        (* let r = formula_of_eset r no_pos in *)
+        let r = formula_of_filtered_eset r em_f no_pos in
         (* let _ = Debug.info_hprint (add_str "mkE(after)" !print_formula) r no_pos in *)
         let nf = mkAnd r f no_pos in
         (l,nf)
-  ) lst 
+  ) ls
   in n_lst
 
 let extract_eset_of_lbl_lst lst =
