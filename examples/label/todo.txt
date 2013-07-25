@@ -316,9 +316,55 @@ Mona is running ... restart (limit reached)
 Entail 1: Fail.
 Stop Omega... 50 invocations 
 SAT Count   : 200
+
+MONA seems to be restarted quite often.
+One possibility is to restart mona only
+and re-execute a proof only if
+  (i) there were 100 previous working computation
+ (ii) we have an unknown failure (e.g. time-out, exception etc)
+If it fails again, we do not re-execute.
+ 
 ============================================================
+# t-f-3.slk
+
+What is a 1b failure? Can we have a better error message?
+Can such proof be split again?
+
+Mona is running ... mona aborted execution
+[mona] Warning: sat --> true(from mona failure 1b)
+
+Entail 1: Fail.
 ============================================================
+# swt-4g-set-lbl.ss -tp om --lbl-en-aggr --esl 
+
+What is the cause of below? Is it Omega or MONA problem?
+
+IMPLY : End_of_file when checking 
+ Restarting Omega after ... 173 invocations Stop Omega... 173 invocations Starting Omega...oc
 ============================================================
+# swt-4g-set-lbl.ss -tp om --lbl-en-aggr --esl 
+
+schor-waitte tree (g-version) now works with the aggressive
+option but there are some timeouts below to investigate
+for performance improvements:
+
+!!! log (>.5s)():(213.773794,[10.,10.,10.,10.,10.,10.,10.,5.,10.,5.,10.,10.,10.,10.,10.,10.,10.,5.,10.,5.,10.,5.])
+
+Procedure lscan$node~node~node SUCCESS
+Stop Omega... 378 invocations 
+!!! Logging logs/no_eps_proof_log_swt-4g-set-lbl_ss.txt
+
+!!! Number of log entries 6627
+!!! Logging logs/sleek_log_swt-4g-set-lbl_ss.txt
+
+2 false contexts at: ( (57,8)  (56,19) )
+
+!!! time_log (small):(133.909343,6785)
+!!! log (>.5s)():(213.773794,[10.,10.,10.,10.,10.,10.,10.,5.,10.,5.,10.,10.,10.,10.,10.,10.,10.,5.,10.,5.,10.,5.])
+Total verification time: 403.169194 second(s)
+	Time spent in main process: 40.154508 second(s)
+	Time spent in child processes: 363.014686 second(s)
+	Time for logging: 25.453608 second(s)
 ============================================================
 ============================================================
 ============================================================

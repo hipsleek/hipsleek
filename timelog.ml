@@ -65,10 +65,15 @@ object (self)
     let c = hist_stk # len in
     let ls = List.rev (hist_stk # get_stk) in
     let (big,small) = List.partition (fun (_,x) -> x>=0.5) ls in
+    let (bigger,big) = List.partition (fun (_,x) -> x>=5.0) big in
+    let s_big = string_of_int (List.length big) in
+    let s_bigger = string_of_int (List.length bigger) in
     let b = List.fold_left (fun c (_,x1) -> c +. x1) 0. big in 
     let s= List.fold_left (fun c (_,x1) -> c +. x1)  0. small in 
     Debug.info_hprint (add_str "time_log (small)" (pr_pair string_of_float string_of_int )) (s,List.length small) no_pos;
-    Debug.info_hprint (add_str "log (>.5s)" (pr_pair string_of_float prL)) (b,big) no_pos
+    if not(big==[]) then Debug.info_hprint (add_str ("log (>.5s)("^s_big^")") (pr_pair string_of_float prL)) (b,big) no_pos;
+    if not(bigger==[]) then Debug.info_hprint (add_str ("log (>.5s)("^s_bigger^")") (pr_pair string_of_float prL)) (b,bigger) no_pos;
+    ()
   method get_last_time = last_time
   method get_last_timeout = last_timeout
 end;;
