@@ -1444,7 +1444,7 @@ let tp_is_sat (f:CP.formula) (old_sat_no :string) =
     let tp = (string_of_prover !pure_tp) in
     let _ = add_proof_logging timeout !cache_status old_sat_no sat_no tp  cmd tt
       (match fr with Some res -> PR_BOOL res | None -> PR_exception) in
-    (tp,sat_no)
+    (Others.last_tp_used # string_of,sat_no)
   in
   let res = 
     (if !Globals.no_cache_formula then
@@ -2106,7 +2106,7 @@ let tp_imply ante conseq old_imp_no timeout process =
     let tp = (string_of_prover !pure_tp) in
     let _ =  add_proof_logging timeout !cache_status old_imp_no imp_no (string_of_prover !pure_tp) cmd tt 
     (match fr with Some b -> PR_BOOL b | None -> PR_exception) in
-    (tp,imp_no)
+    (Others.last_tp_used # string_of,imp_no)
   in
   let final_res = Timelog.log_wrapper "imply" logger fn () in
   (* let _= add_proof_logging !cache_status old_imp_no imp_no (string_of_prover !pure_tp) cmd (Timelog.logtime # get_last_time) (PR_BOOL (match final_res with | r -> r))  *)

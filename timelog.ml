@@ -67,7 +67,7 @@ object (self)
                 let (s,st) = time_stk # pop_top in
                 (s,t -. st)
       in
-      if tt>3.0 then last_big <- Some (s,tt)
+      if tt>4.0 then last_big <- Some (s,tt)
       else hist_stk # push (s,tt);
       last_time <- tt ; 
       last_timeout <- timer_timeout; 
@@ -87,8 +87,8 @@ object (self)
     let b = List.fold_left (fun c (_,x1) -> c +. x1) 0. big in 
     let s= List.fold_left (fun c (_,x1) -> c +. x1)  0. small in 
     Debug.info_hprint (add_str "log(small)" (pr_pair string_of_float string_of_int )) (s,List.length small) no_pos;
-    if not(big==[]) then Debug.info_hprint (add_str ("log(big)(>.5s)("^s_big^")") (pr_pair string_of_float prL)) (b,big) no_pos;
-    if not(bigger==[]) then Debug.info_hprint (add_str ("log(bigger)(>5s)("^s_bigger^")") (pr_pair string_of_float prL2)) (b,bigger) no_pos;
+    if not(big==[]) then Debug.info_hprint (add_str ("log(big)(>0.5s)("^s_big^")") (pr_pair string_of_float prL)) (b,big) no_pos;
+    if not(bigger==[]) then Debug.info_hprint (add_str ("log(bigger)(>4s)("^s_bigger^")") (pr_pair string_of_float prL2)) (b,bigger) no_pos;
     ()
   method get_last_time = last_time
   method get_last_timeout = last_timeout
