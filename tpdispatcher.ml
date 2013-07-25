@@ -861,9 +861,9 @@ let formula_of_filtered_eset eset em_i pos =
 
 let map_lbl_lst_to_eset lst =
    List.map (fun (l,f) -> 
-      if Label_only.Lab_List.is_common l then
+      (* if Label_only.Lab_List.is_common l then *)
         (build_eset_of_conj_formula f, (l, f))
-      else ([],(l, f))
+      (* else ([],(l, f)) *)
   ) lst 
 
 let extract_eset_of_lbl_lst lst =
@@ -871,17 +871,17 @@ let extract_eset_of_lbl_lst lst =
   let eq_all = join_esets (List.map fst ls) in
   let es = EMapSV.get_elems (* CP.fv *) eq_all in
   let n_lst = List.map (fun (em_f,(l,f)) ->
-      if Label_only.Lab_List.is_common l then (l,f)
-      else
+      (* if Label_only.Lab_List.is_common l then (l,f) *)
+      (* else *)
         let vs = CP.fv f in
         let ws = Gen.BList.difference_eq CP.eq_spec_var es vs in
-        (* let _ = Debug.info_hprint (add_str "mkE eqall" EMapSV.string_of) eq_all no_pos in *)
-        (* let _ = Debug.info_hprint (add_str "mkE f" !print_formula) f no_pos in *)
-        (* let _ = Debug.info_hprint (add_str "mkE ws" string_of_spec_var_list) ws no_pos in *)
+        let _ = Debug.info_hprint (add_str "mkE eqall" EMapSV.string_of) eq_all no_pos in
+        let _ = Debug.info_hprint (add_str "mkE f" !print_formula) f no_pos in
+        let _ = Debug.info_hprint (add_str "mkE ws" string_of_spec_var_list) ws no_pos in
         let r = mk_exists_eset (* wrap_exists_svl*) eq_all ws in
         (* let r = formula_of_eset r no_pos in *)
         let r = formula_of_filtered_eset r em_f no_pos in
-        (* let _ = Debug.info_hprint (add_str "mkE(after)" !print_formula) r no_pos in *)
+        let _ = Debug.info_hprint (add_str "mkE(after)" !print_formula) r no_pos in
         let nf = mkAnd r f no_pos in
         (l,nf)
   ) ls

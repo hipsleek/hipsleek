@@ -11028,4 +11028,4 @@ let extract_eq_clauses_lbl_lst lst =
 
 let extract_eq_clauses_lbl_lst lst =
   let pr = pr_list (pr_pair pr_none !print_formula) in
-  Debug.ho_1 "extract_eq_clauses_lbl_lst"  pr pr  extract_eq_clauses_lbl_lst lst
+  Debug.no_1 "extract_eq_clauses_lbl_lst"  pr pr  extract_eq_clauses_lbl_lst lst
