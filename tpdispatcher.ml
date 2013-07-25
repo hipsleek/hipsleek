@@ -1440,8 +1440,11 @@ let tp_is_sat (f:CP.formula) (old_sat_no :string) =
   let fn_sat f = (tp_is_sat_perm f) sat_no in
   let cmd = PT_SAT f in
   let _ = Log.last_proof_command # set cmd in
-  let logger fr tt timeout = add_proof_logging timeout !cache_status old_sat_no sat_no (string_of_prover !pure_tp) cmd tt
-    (match fr with Some res -> PR_BOOL res | None -> PR_exception) 
+  let logger fr tt timeout = 
+    let tp = (string_of_prover !pure_tp) in
+    let _ = add_proof_logging timeout !cache_status old_sat_no sat_no tp  cmd tt
+      (match fr with Some res -> PR_BOOL res | None -> PR_exception) in
+    (tp,sat_no)
   in
   let res = 
     (if !Globals.no_cache_formula then
@@ -1559,8 +1562,12 @@ let simplify (f : CP.formula) : CP.formula =
                 )
                 in res
               in
-              let logger fr tt timeout = add_proof_logging timeout !cache_status simpl_no simpl_no (string_of_prover !pure_tp) cmd tt 
-                (match fr with Some res -> PR_FORMULA res | None -> PR_exception) in
+              let logger fr tt timeout = 
+                let tp = (string_of_prover !pure_tp) in
+                let _ = add_proof_logging timeout !cache_status simpl_no simpl_no tp cmd tt 
+                  (match fr with Some res -> PR_FORMULA res | None -> PR_exception) in
+                (tp,simpl_no)
+              in
               let res = Timelog.log_wrapper "simplify" logger fn f in
               Gen.Profiling.pop_time "simplify";
               let tstop = Gen.Profiling.get_time () in
@@ -2095,8 +2102,12 @@ let tp_imply ante conseq old_imp_no timeout process =
   let cmd = PT_IMPLY(ante,conseq) in
   let _ = Log.last_proof_command # set cmd in
   let fn () = tp_imply ante conseq imp_no timeout process in
-  let logger fr tt timeout = add_proof_logging timeout !cache_status old_imp_no imp_no (string_of_prover !pure_tp) cmd tt 
+  let logger fr tt timeout = 
+    let tp = (string_of_prover !pure_tp) in
+    let _ =  add_proof_logging timeout !cache_status old_imp_no imp_no (string_of_prover !pure_tp) cmd tt 
     (match fr with Some b -> PR_BOOL b | None -> PR_exception) in
+    (tp,imp_no)
+  in
   let final_res = Timelog.log_wrapper "imply" logger fn () in
   (* let _= add_proof_logging !cache_status old_imp_no imp_no (string_of_prover !pure_tp) cmd (Timelog.logtime # get_last_time) (PR_BOOL (match final_res with | r -> r))  *)
   final_res

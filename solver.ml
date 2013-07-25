@@ -6286,10 +6286,14 @@ and heap_entail_conjunct hec_num (prog : prog_decl) (is_folding : bool)  (ctx0 :
     let slk_no = (* if avoid then 0 else *) Log.get_sleek_proving_id () in
     (* let _ = Log.last_sleek_command # set (Some (ante,conseq)) in *)
     let _ = hec_stack # push slk_no in
-    let logger fr tt timeout = Log.add_sleek_logging timeout tt infer_vars !Globals.do_classic_frame_rule 
-      caller avoid hec_num slk_no ante conseq consumed_heap evars 
-      (match fr with Some (lc,_) -> Some lc | None -> None) pos in
-    let r =Timelog.log_wrapper "hec" logger (hec a b) c in
+    let logger fr tt timeout = 
+      let _ =
+        Log.add_sleek_logging timeout tt infer_vars !Globals.do_classic_frame_rule 
+            caller avoid hec_num slk_no ante conseq consumed_heap evars 
+            (match fr with Some (lc,_) -> Some lc | None -> None) pos in
+      ("sleek",(string_of_int slk_no))
+    in
+    let r = Timelog.log_wrapper "sleek-hec" logger (hec a b) c in
     (* let tstart = Gen.Profiling.get_time () in		 *)
     (* let r = hec a b c in *)
     (* let tstop = Gen.Profiling.get_time () in *)

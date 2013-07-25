@@ -190,7 +190,9 @@ object (self)
   (* val mutable last_imply_fail = None (\* prover, failure *\) *)
   val mutable last_sleek = None
   val mutable last_sleek_fail = None
+  val mutable last_is_sleek = false
   method set entry =
+    last_is_sleek <- false;
     let cmd = entry.log_type in
     let ans = Some entry in
     let _ = last_proof <- ans in
@@ -207,6 +209,7 @@ object (self)
       | _ -> () 
     in ()
   method set_sleek entry =
+    last_is_sleek <- true;
     let cmd = Some entry in
     let _ = last_sleek <- cmd in
     let res = entry.sleek_proving_res in
@@ -470,14 +473,14 @@ let proof_log_to_text_file fname (src_files) =
 
 let wrap_calculate_time exec_func src_file args =
   (* if !Globals.proof_logging_txt then  *)
-	  let _= sleek_counter := !sleek_counter +1 in
-		let tstartlog = Gen.Profiling.get_time () in
-    let _ = exec_func args in
-		let tstoplog = Gen.Profiling.get_time () in 
-		let period = (tstoplog -. tstartlog) in
-	  if (period> 0.7) then
-			proof_gt5_log_list :=  
-			(!proof_gt5_log_list@[(Globals.norm_file_name (List.hd src_file))^"-check-entail-num-"^string_of_int !sleek_counter^"--Time--"^string_of_float (period)^"\n"])
+  let _= sleek_counter := !sleek_counter +1 in
+  let tstartlog = Gen.Profiling.get_time () in
+  let _ = exec_func args in
+  let tstoplog = Gen.Profiling.get_time () in 
+  let period = (tstoplog -. tstartlog) in
+  if (period> 0.7) then
+    proof_gt5_log_list :=  
+	(!proof_gt5_log_list@[(Globals.norm_file_name (List.hd src_file))^"-check-entail-num-"^string_of_int !sleek_counter^"--Time--"^string_of_float (period)^"\n"])
   (* else exec_func args *)
 	
 (* let sleek_z3_proofs_list_to_file source_files =                                                    *)
