@@ -793,6 +793,11 @@ let build_eset_of_conj_formula f =
             | (Eq (Var (v1,_), Var (v2,_), _),_) -> 
                   if (is_bag_typ v1) then e
                   else EMapSV.add_equiv e v1 v2
+            | (Eq (ex, Var (v1,_), _),_) 
+            | (Eq (Var (v1,_), ex, _),_) -> 
+                  (match conv_exp_to_var ex with
+                    | Some (v2,_) -> EMapSV.add_equiv e v1 v2
+                    | None -> e)
             | _ -> e)
     | _ -> e
   ) EMapSV.mkEmpty lst
@@ -807,12 +812,18 @@ let join_esets es =
     | [] -> EMapSV.mkEmpty
     | e::es -> List.fold_left (fun e1 e2 -> EMapSV.merge_eset e1 e2) e es
 
+(* let is_const (s:spec_var) : bool =  *)
 
 (* Andreea : to implement mk_exists for eset *)
 (* To be moved later to cpure.ml *)
 let mk_exists_eset eset ws =
   EMapSV.elim_elems eset ws
-  
+
+let mk_exists_eset eset ws =
+  let pr = string_of_spec_var_list in
+  let pr2 = EMapSV.string_of in
+  Debug.no_2 "mk_exists_eset"  pr2 pr pr2  mk_exists_eset eset ws
+
 let formula_of_eset eset pos =
   let ep = EMapSV.get_equiv eset in
   List.fold_left (fun f (v1,v2) -> mkAnd f (mkEqVar v1 v2 pos) pos)
@@ -875,34 +886,34 @@ let norm_lbl_lst lst =
   let r = combine_lbl_lst nl in
   if not(List.length r==List.length lst) then
     begin
-      Debug.info_hprint (add_str "lbl_norm(before)" pr) lst no_pos;
-      Debug.info_hprint (add_str "lbl_norm(after)" pr) r no_pos;
+      Debug.tinfo_hprint (add_str "lbl_norm(before)" pr) lst no_pos;
+      Debug.tinfo_hprint (add_str "lbl_norm(after)" pr) r no_pos;
     end
   ;r
 
+let norm_lbl_lst lst = 
+   let pr = pr_list (pr_pair Label_only.Lab_List.string_of !print_formula) in
+   Debug.no_1 "norm_lbl_lst" pr pr norm_lbl_lst lst
+
 let map_lbl_lst_to_eset lst =
    List.map (fun (l,f) -> 
-      (* if Label_only.Lab_List.is_common l then *)
         (build_eset_of_conj_formula f, (l, f))
-      (* else ([],(l, f)) *)
   ) lst 
 
 let extract_eset_of_lbl_lst lst =
-  let lst = norm_lbl_lst lst in
-  let ls = map_lbl_lst_to_eset lst in
-  let eq_all = join_esets (List.map fst ls) in
-  let es = EMapSV.get_elems (* CP.fv *) eq_all in
-  let n_lst = List.map (fun (em_f,(l,f)) ->
-      (* if Label_only.Lab_List.is_common l then (l,f) *)
-      (* else *)
-        let vs = CP.fv f in
-        let ws = Gen.BList.difference_eq CP.eq_spec_var es vs in
-        (* let _ = Debug.info_hprint (add_str "mkE eqall" EMapSV.string_of) eq_all no_pos in *)
-        (* let _ = Debug.info_hprint (add_str "mkE ws" string_of_spec_var_list) ws no_pos in *)
-        let r = mk_exists_eset (* wrap_exists_svl*) eq_all ws in
-        (* let r = formula_of_eset r no_pos in *)
-        let (flag,r) = formula_of_filtered_eset r em_f no_pos in
-        if flag then
+   let lst = norm_lbl_lst lst in
+   let ls = map_lbl_lst_to_eset lst in
+   let eq_all = join_esets (List.map fst ls) in
+   let es = EMapSV.get_elems  eq_all in
+   let n_lst = List.map 
+   (fun (em_f,(l,f)) ->
+   let vs = CP.fv f in
+   Debug.tinfo_hprint (add_str "vars_from_fv" string_of_spec_var_list) vs no_pos;
+   let vs = List.filter (fun v -> not(is_const v)) vs in
+   let ws = Gen.BList.difference_eq CP.eq_spec_var es vs in
+   let r = mk_exists_eset eq_all ws in
+   let (flag,r) = formula_of_filtered_eset r em_f no_pos in
+   if flag then
           begin
             Debug.tinfo_hprint (add_str "\n f" !print_formula) f no_pos;
             Debug.tinfo_hprint (add_str "eq_to_add" !print_formula) r no_pos
@@ -911,6 +922,9 @@ let extract_eset_of_lbl_lst lst =
         (l,nf)
   ) ls
   in n_lst
+(* let _ = Debug.info_hprint (add_str "mkE eqall" EMapSV.string_of) eq_all no_pos in *)
+(* let _ = Debug.info_hprint (add_str "mkE ws" string_of_spec_var_list) ws no_pos in *)
+(* let r = formula_of_eset r no_pos in *)
 
 let extract_eset_of_lbl_lst lst =
   let pr = pr_list (pr_pair Label_only.Lab_List.string_of !print_formula) in
@@ -1018,8 +1032,13 @@ let imply_label_filter ante conseq =
     | Or _,_  
     | _ , Or _ -> [(andl_to_and ante, andl_to_and conseq)]
     | AndList ba, AndList bc -> 
-	  (*let fc = List.for_all (fun (_,c)-> no_andl c) in
-	    (if fc ba && fc bc then () else print_string s;*)
+	  (* let fc = List.for_all (fun (_,c)-> no_andl c) in *)
+	  (*   (if fc ba && fc bc then () else print_string s; *)
+          let ba = 
+            if !Globals.label_aggressive_imply
+            then extract_eset_of_lbl_lst ba
+            else ba
+          in
 	  List.map (fun (l, c)-> 
 	      let lst = List.filter (fun (c,_)-> comp (* Label_only.Lab_List.is_part_compatible *) c l) ba in 
 	      let fr1 = List.fold_left (fun a (_,c)-> mkAnd a c no_pos) (mkTrue no_pos) lst in

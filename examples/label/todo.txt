@@ -371,10 +371,28 @@ Total verification time: 89.265577 second(s)
 # swt-4g-set-lbl.ss -tp om --lea
 
 does not work as need to propagate x=c too
+FIXED propagation of x=null ctr
 
 schor-waitte tree (g-version) now works with the aggressive
 option but there are some timeouts below to investigate
 for performance improvements:
+
+Procedure lscan$node~node~node SUCCESS
+Stop Omega... 275 invocations 
+!!! Number of log entries 1185
+!!! Logging logs/no_eps_proof_log_swt-4g-set-lbl_ss.txt
+
+!!! Number of sleek log entries 319
+!!! Logging logs/sleek_log_swt-4g-set-lbl_ss.txt
+
+2 false contexts at: ( (58,8)  (57,19) )
+
+!!! log(small):(24.939634,1487)
+!!! log(big)(>0.5s)(17):(15.600239,[(imply,0.791806),(imply,1.4352),(imply,1.18232),(imply,1.032658),(imply,0.585485),(imply,0.816166),(imply,1.608251),(imply,1.10327),(imply,1.136742),(imply,0.536958),(imply,0.809376),(imply,0.96437),(imply,0.842262),(imply,0.783089),(imply,0.552327),(imply,0.814423),(imply,0.605536)])
+Total verification time: 37.762359 second(s)
+	Time spent in main process: 5.108319 second(s)
+	Time spent in child processes: 32.65404 second(s)
+	Time for logging: 2.004122 second(s)
 
 
 --------
@@ -687,6 +705,33 @@ mona_inter[0x8076944]
 mona_inter[0x804b6f1]
 ======= Memory map: ========
 
+============================================================
+let mk_sp_const (i:int) = 
+  let n= const_prefix^(string_of_int i)
+  in SpecVar ((Int), n , Unprimed) 
+
+let conv_exp_to_var (e:exp) : (spec_var * loc) option = 
+  match e with
+    | IConst(i,loc) -> Some (mk_sp_const i,loc)
+    | Null loc -> Some (null_var,loc)
+    | _ -> None
+
+(* convert exp to var representation where possible *)
+let conv_exp_with_const e = match conv_exp_to_var e with
+    | Some (v,loc) -> Var(v,loc)
+    | _ -> e
+
+============================================================
+============================================================
+============================================================
+============================================================
+============================================================
+============================================================
+============================================================
+============================================================
+============================================================
+============================================================
+============================================================
 ============================================================
 ============================================================
 ============================================================

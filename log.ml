@@ -26,16 +26,17 @@ type proof_res =
 
 
 type proof_log = {
-	log_id : string; (* TODO: Should change to integer for performance *)
-	(* log_other_properties : string list; (\* TODO: Should change to integer for performance *\) *)
-        log_loc : loc;
-        log_proving_kind : Others.proving_kind;
-	log_prover : Others.tp_type;
-	log_type : proof_type;
-	log_time : float;
-        log_timeout : bool;
-	log_cache : bool;
-	log_res : proof_res;
+    log_id : string; (* TODO: Should change to integer for performance *)
+    (* log_other_properties : string list; (\* TODO: Should change to integer for performance *\) *)
+    log_loc : loc;
+    log_sleek_no : int;
+    log_proving_kind : Others.proving_kind;
+    log_prover : Others.tp_type;
+    log_type : proof_type;
+    log_time : float;
+    log_timeout : bool;
+    log_cache : bool;
+    log_res : proof_res;
 }
 
 (* type sleek_proving_kind = *)
@@ -125,7 +126,7 @@ let string_of_log_res lt r =
 
 let pr_proof_log_entry e =
   fmt_open_box 1;
-  fmt_string ("\n id: " ^ (e.log_id));
+  fmt_string ("\n id: " ^ (e.log_id)^"<:"^(string_of_int e.log_sleek_no));
   if e.log_cache then fmt_string ("; prover : CACHED ")
   else fmt_string ("; prover: " ^ (string_of_prover e.log_prover));
   let x = if e.log_timeout then "(TIMEOUT)" else "" in
@@ -201,13 +202,22 @@ object (self)
     let _ = last_proof <- ans in
     let res = entry.log_res in
     let _ = match res with
-      | PR_exception | PR_timeout -> last_proof_fail <- ans
+      | PR_exception | PR_timeout -> 
+            begin
+              last_proof_fail <- ans;
+              set_last_sleek_fail ()
+            end
+
       | _ -> () in
     let _ = match cmd with 
       | PT_IMPLY _ -> 
             (match res with
               | PR_BOOL true  -> ()
-              | _ -> if not(entry.log_cache) then last_proof_fail <-ans
+              | _ -> if not(entry.log_cache) then 
+                  begin
+                    last_proof_fail <-ans;
+                    set_last_sleek_fail ()
+                  end
             )
       | _ -> () 
     in ()
@@ -359,6 +369,7 @@ let add_proof_logging timeout_flag (cache_status:bool) old_no pno tp ptype time 
       let plog = {
 	  log_id = pno;
           log_loc = proving_loc # get;
+          log_sleek_no = get_sleek_no ();
           log_proving_kind = proving_kind # top_no_exc;
 	  (* log_other_properties = [proving_info ()]@[trace_info ()]; *)
 	  (* log_old_id = old_no; *)

@@ -1257,7 +1257,14 @@ let get_proof_no () = !proof_no
 
 let sleek_proof_no = ref 0
 
+let last_sleek_fail_no = ref 0
+
 let get_sleek_no () = !sleek_proof_no
+
+let get_last_sleek_fail () = !last_sleek_fail_no
+
+let set_last_sleek_fail () = 
+  last_sleek_fail_no := !sleek_proof_no
 
 let next_sleek_int () : int =
   sleek_proof_no := !sleek_proof_no + 1; 

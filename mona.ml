@@ -1258,7 +1258,7 @@ let stop () =
 let restart reason =
   if !is_mona_running then
 	(* let _ = print_string ("\n[mona.ml]: Mona is preparing to restart because of " ^ reason ^ "\nRestarting Mona ...\n"); flush stdout; in *)
-	let _ = print_endline ("\nMona is running ... " ^ reason); flush stdout; in
+	let _ = print_endline ("\nMona is restarting ... " ^ reason); flush stdout; in
         Procutils.PrvComms.restart !log_all_flag log_all reason "mona" start stop
 
 let restart reason =
@@ -1348,7 +1348,7 @@ let check_answer (mona_file_content: string) (answ: string) (is_sat_b: bool)=
 let maybe_restart_mona () : unit =
   if !is_mona_running then begin
     let num_tasks = !test_number - !last_test_number in
-    if num_tasks >=(!mona_cycle) then restart "restart (limit reached)"
+    if num_tasks >=(!mona_cycle) then restart "cycle limit reached"
   end
 
 let prepare_formula_for_mona pr_w pr_s (f: CP.formula) (test_no: int): CP.spec_var list * CP.formula =
