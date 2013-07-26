@@ -371,6 +371,62 @@ Total verification time: 403.169194 second(s)
 	Time spent in main process: 40.154508 second(s)
 	Time spent in child processes: 363.014686 second(s)
 	Time for logging: 25.453608 second(s)
+
+--------
+# swt-4g-set-lbl.ss -tp om 
+
+FAIL
+
+Message: Proving precondition in method failed.
+ 
+Procedure lscan$node~node~node FAIL-2
+
+Exception Failure("Proving precondition in method failed.") Occurred!
+(Program not linked with -g, cannot print stack backtrace)
+
+Error(s) detected when checking procedure lscan$node~node~node
+
+!!! dumping for lscan$node~node~node FAIL2Stop Omega... 165 invocations 
+2 false contexts at: ( (57,8)  (56,19) )
+
+!!! log(small):(49.069625,1528)
+!!! log(big)(>0.5s)(67):(91.385181,[(imply,1.090743),(imply,2.385336),(imply,1.259491),(imply,1.470128),(imply,2.145795),(sleek-hec,1.200075),(imply,2.006839),(imply,0.89604),(imply,1.076681),(imply,2.117287),(imply,1.175422),(imply,1.433818),(imply,2.21592),(imply,3.921027),(sleek-hec,1.200075),(imply,1.980392),(imply,0.753459),(imply,3.839387),(imply,1.993835),(SAT,0.501172),(imply,3.900558),(SAT,0.784158),(SAT,0.818971),(SAT,0.907111),(SAT,0.751309),(SAT,0.776283),(SAT,0.744149),(SAT,0.987415),(SAT,0.798705),(imply,2.044981),(imply,0.549654),(imply,1.057255),(imply,1.120493),(imply,0.558635),(SAT,1.194922),(SAT,0.935646),(SAT,1.051101),(SAT,1.349538),(SAT,0.924815),(SAT,0.923327),(SAT,1.136122),(SAT,0.931782),(sleek-hec,1.140071),(sleek-hec,1.352085),(imply,0.758421),(imply,3.822665),(SAT,1.094729),(SAT,1.069067),(SAT,1.062562),(SAT,0.909376),(SAT,1.212696),(SAT,0.975134),(SAT,0.926124),(SAT,1.13451),(imply,1.967394),(SAT,0.563787),(imply,1.549672),(SAT,0.593348),(imply,1.091114),(imply,2.486732),(imply,0.609543),(imply,2.806013),(SAT,0.63813),(sleek-hec,1.132072),(sleek-hec,1.356085),(imply,1.629734),(SAT,0.594265)])
+!!! 
+ log(bigger)(>4s)(20):(127.31865,[(imply:698:NO:MONA,4.042592),(imply:731:NO:MONA,4.154684),(imply:974:NO:MONA,4.247115),(imply:1013:TIMEOUT::T2:OMEGA CALCULATOR,10.),(imply:1048:NO:MONA,5.),(imply:1049:TIMEOUT::T2:OMEGA CALCULATOR,10.),(imply:1080:NO:OMEGA CALCULATOR,4.336328),(imply:1111:NO:OMEGA CALCULATOR,6.225389),(imply:1183:NO:MONA,5.),(imply:1211:NO:MONA,5.),(imply:1241:TIMEOUT::T2:OMEGA CALCULATOR,10.),(imply:1242:NO:MONA,5.),(imply:1270:NO:MONA,4.312542),(imply:1271:TIMEOUT::T2:OMEGA CALCULATOR,10.),(imply:1306:NO:MONA,5.),(imply:1307:TIMEOUT::T2:OMEGA CALCULATOR,10.),(imply:1441:NO:MONA,5.),(imply:1469:NO:MONA,5.),(imply:1499:TIMEOUT::T2:OMEGA CALCULATOR,10.),(imply:1500:NO:MONA,5.)])
+Total verification time: 169.366583 second(s)
+	Time spent in main process: 8.932557 second(s)
+	Time spent in child processes: 160.434026 second(s)
+
+--------
+# swt-4g-set-lbl.ss -tp om --dis-lbl 
+
+Procedure lscan$node~node~node SUCCESS
+Stop Omega... 306 invocations 
+2 false contexts at: ( (57,8)  (56,19) )
+
+!!! log(small):(24.834106,1247)
+!!! log(big)(>0.5s)(42):(60.028745,[(SAT,0.9075),(SAT,0.830824),(SAT,0.960853),(SAT,1.120504),(SAT,0.929907),(SAT,0.882563),(SAT,0.59488),(SAT,0.976136),(SAT,0.971558),(imply,0.535787),(imply,2.128843),(imply,2.50709),(SAT,0.653235),(imply,2.859232),(SAT,0.501082),(imply,1.956999),(imply,1.866824),(SAT,0.697262),(imply,2.754967),(imply,2.786689),(imply,3.262005),(SAT,0.554071),(imply,0.965409),(imply,0.723478),(SAT,0.996605),(SAT,0.981591),(SAT,0.965097),(SAT,1.243386),(SAT,0.942139),(SAT,0.967702),(SAT,0.520336),(SAT,1.113601),(SAT,0.976433),(imply,3.396129),(SAT,0.522825),(SAT,0.890533),(imply,1.909927),(imply,0.537586),(imply,3.544684),(imply,2.63796),(imply,3.770126),(imply,1.184387)])
+!!! 
+ log(bigger)(>4s)(15):(71.331398,[(imply:382:NO:MONA,5.)
+,(imply:390:NO:MONA,4.296295)
+,(imply:419:NO:MONA,5.)
+,(imply:431:NO:MONA,5.)
+,(imply:438:NO:MONA,4.682909)
+,(imply:439:NO:MONA,4.793206)
+,(imply:442:NO:MONA,4.294982)
+,(imply:468:NO:MONA,5.)
+,(imply:603:NO:MONA,4.869589)
+,(imply:618:NO:MONA,5.)
+,(imply:626:NO:MONA,5.)
+,(imply:662:NO:MONA,4.238385)
+,(imply:692:NO:MONA,4.156032)
+,(imply:693:NO:MONA,5.)
+,(imply:703:NO:MONA,5.)])
+Total verification time: 135.312455 second(s)
+	Time spent in main process: 3.572222 second(s)
+	Time spent in child processes: 131.740233 second(s)
+
+
 ============================================================
 # swt-4g-set-lbl.ss -tp om --lbl-en-aggr --esl 
 
@@ -476,9 +532,10 @@ Total verification time: 73.524594 second(s)
 PRIORITY
 -----------------------
 
-# t-f-2.slk --lbl-en-aggr-sat
+# t-f-2.slk --lea
 
-better than non-aggressive but worst than t-f-2a.slk
+better than non-aggressive but worst than t-f-2a.slk;
+cannot prove!
 
 Entail 1: Fail.
 
@@ -487,13 +544,16 @@ SAT Count   : 168
 SAT % Hit   : 31.54%
 IMPLY Count : 16
 IMPLY % Hit : 6.25%
-Time(cache overhead) : 0.160007 (seconds)
+Time(cache overhead) : 0.132009 (seconds)
 
-!!! log(small):(2.36959,213)
-!!! log(big)(>0.5s)(21):(29.271046,[(SAT,0.816119),(SAT,2.491544),(SAT,0.723605),(SAT,0.93768),(SAT,2.296391),(SAT,0.841883),(SAT,2.512535),(SAT,0.567169),(SAT,0.815026),(SAT,2.458119),(SAT,0.81167),(SAT,2.464257),(SAT,0.558812),(SAT,0.794554),(SAT,2.484909),(SAT,0.929318),(SAT,2.428048),(SAT,0.579604),(SAT,0.819784),(SAT,2.407985),(sleek-hec,0.532034)])
-Total verification time: 28.005749 second(s)
-	Time spent in main process: 1.092068 second(s)
-	Time spent in child processes: 26.913681 second(s)
+!!! log(small):(6.555705,207)
+!!! log(big)(>0.5s)(18):(38.285673,[(SAT,3.281492),(SAT,0.618304),(SAT,2.957846),(SAT,0.537327),(SAT,0.503874),(SAT,3.629954),(SAT,0.598163),(SAT,2.399063),(SAT,3.228469),(SAT,3.578705),(SAT,0.548049),(SAT,2.663743),(SAT,0.602945),(SAT,3.640506),(SAT,3.358186),(SAT,0.505946),(SAT,2.350553),(SAT,3.282548)])
+!!! 
+ log(bigger)(>4s)(9):(44.507532,[(SAT:129:NO:MONA,5.),(SAT:158:NO:MONA,4.507532),(SAT:160:NO:MONA,5.),(SAT:165:NO:MONA,5.),(SAT:175:NO:MONA,5.),(SAT:180:NO:MONA,5.),(SAT:205:NO:MONA,5.),(SAT:210:NO:MONA,5.),(SAT:229:NO:MONA,5.)])
+Total verification time: 22.773421 second(s)
+	Time spent in main process: 0.920056 second(s)
+	Time spent in child processes: 21.853365 second(s)
+
 
 
 ============================================================
@@ -549,8 +609,76 @@ Total verification time: 0.332019 second(s)
 
 
 ============================================================
+# swt-4g-addr-lbl.ss --lea -tp om --esl
 
+ id: 4121; prover: MONA; loc: swt-4g-addr-lbl.ss_26:23_26:29; kind: POST
+ Imply: ante: exists(Mr_3325:exists(Ml_3326:Mp=union({prev},Ml_3326,Mr_3325))) & 
+Mp_1198={} & Mc_1195=union({cur_3292},{},{}) & M_3291=union(Mc_1195,
+Mp_1198) & exists(Mr_3323:exists(Ml_3324:M_3291=union({prev'},Ml_3324,
+Mr_3323)))
+	     conseq:  M_3291={}
+ res: false
+ --------------------
+!!!  
+id: 365; caller: []; line: 14; classic: false; kind: [POST,
+Check_Specs]; hec_num: 4; evars: [sentinel_3355,flted_14_3356,flted_14_3357,M_3358]; infer_vars: []; c_heap: emp
 
+checkentail l_1148::tx<n_1141,n_1142,s_1143,Ml_1149>@M * 
+r_1150::tx<n_1144,g_1145,s_1146,Mr_1151>@M * 
+prev::tx<flted_13_1154,b_1152,a_1153,Mp>@M * 
+cur_1175::node<v_1147,r_1150,prev_1173>@M&
+((AndList( "":flted_13_1155=n_1141 & flted_13_1155=n_1142 & b=s_1143 & 
+           flted_13_1155=n_1144 & a=g_1145 & b=s_1146 & flted_13_1155=null & 
+           flted_13_1154=null & b=b_1152 & a=a_1153 & cur=cur_1175 & 
+           prev=prev_1173 & r_1150=right_21_1167 & l_1148=left_22_1171 & 
+           cur_1175=prev_1193 & cur_1191=l_1148 & cur_1191!=sentinel & 
+           !(v_bool_26_980') & cur_1191!=sentinel & !(v_bool_26_980') & 
+           cur_1191=null & v_bool_27_981' & cur_1191=null & v_bool_27_981' & 
+           flted_14_3353=null & flted_14_3354=null
+ ; "":flted_14_3354=prev' & prev'!=sentinel & flted_14_3353!=sentinel & 
+   a!=cur_1175 & b!=cur_1175 & b!=flted_13_1155 & a!=cur & (((a=null & 
+   b=sentinel) | (a=sentinel & b=null))) & 
+   exists(flted_13_1442:a_1197=prev_1193 & b_1196!=prev_1193 & 
+   b_1196!=flted_13_1442) & 
+   exists(a_1440:exists(flted_13_1441:exists(b_1439:b_1439=null & 
+   a_1440!=null & a_1440!=flted_13_1441))) & cur'=sentinel & 
+   exists(flted_13_53:b_1196!=flted_13_53) & 
+   exists(flted_13_52:exists(a_55:a_55!=null & a_55!=flted_13_52)) & 
+   b_1196!=prev_1193 & flted_14_3354=prev' & prev'!=sentinel & 
+   flted_14_3353!=sentinel & 
+   exists(sentinel_3355:exists(flted_14_3357:exists(flted_14_3356:flted_14_3356=prev' & 
+   prev'!=sentinel_3355 & flted_14_3357!=sentinel_3355)))
+ ; "s":M_3352={} & Mc=union({cur_1175},Ml_1149,Mr_1151) & Mc_1195={} & 
+   Mp_1198={} & M_3352=union(Mc_1195,Mp_1198) & exists(M_3358:M_3358={})) ) | 
+(AndList( "":flted_13_1155=n_1141 & flted_13_1155=n_1142 & b=s_1143 & 
+          flted_13_1155=n_1144 & a=g_1145 & b=s_1146 & flted_13_1155=null & 
+          flted_13_1154=null & b=b_1152 & a=a_1153 & cur=cur_1175 & 
+          prev=prev_1173 & r_1150=right_21_1167 & l_1148=left_22_1171 & 
+          cur_1175=prev_1193 & cur_1191=l_1148 & cur_1191!=sentinel & 
+          !(v_bool_26_980') & cur_1191!=sentinel & !(v_bool_26_980') & 
+          cur_1191=null & v_bool_27_981' & cur_1191=null & v_bool_27_981' & 
+          flted_14_3353=null & flted_14_3354=null
+ ; "":flted_14_3354=prev' & prev'!=sentinel & flted_14_3353!=sentinel & 
+   a!=cur_1175 & b!=cur_1175 & b!=flted_13_1155 & a!=cur & (((a=null & 
+   b=sentinel) | (a=sentinel & b=null))) & 
+   exists(flted_13_1442:a_1197=prev_1193 & b_1196!=prev_1193 & 
+   b_1196!=flted_13_1442) & 
+   exists(a_1440:exists(flted_13_1441:exists(b_1439:b_1439=null & 
+   a_1440!=null & a_1440!=flted_13_1441))) & cur'=sentinel & 
+   exists(flted_13_53:b_1196!=flted_13_53) & 
+   exists(flted_13_52:exists(a_55:a_55!=null & a_55!=flted_13_52)) & 
+   b_1196!=prev_1193 & 
+   exists(sentinel_3355:exists(flted_14_3357:exists(flted_14_3356:flted_14_3356=prev' & 
+   prev'!=sentinel_3355 & flted_14_3357!=sentinel_3355)))
+ ; "s":M_3352={} & Mc=union({cur_1175},Ml_1149,Mr_1151) & Mc_1195={} & 
+   Mp_1198={} & M_3352=union(Mc_1195,Mp_1198) & M_3352={} & 
+   exists(M_3358:M_3358={})) ))&
+{FLOW,(22,23)=__norm}[]
+ |-  (exists sentinel_3355,flted_14_3356,flted_14_3357,M_3358: emp&
+AndList( "":flted_14_3357=null & flted_14_3356=null & sentinel=sentinel_3355
+ ; "":cur'=sentinel & flted_14_3356=prev' & prev'!=sentinel_3355 & 
+   flted_14_3357!=sentinel_3355
+ ; "s":M_3358=union(Mc,Mp) & M_3358={}) &{FLOW,(22,23)=__norm})[]. 
 ============================================================
 ============================================================
 ============================================================

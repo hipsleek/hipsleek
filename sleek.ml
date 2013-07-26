@@ -271,7 +271,7 @@ let main () =
                                 | _ -> dummy_exception();
                                     print_string ("Error.\n");
                                     print_endline "Last SLEEK FAILURE:";
-                                    Log.last_cmd # dumping "sleek failure";
+                                    Log.last_cmd # dumping "sleek_dump(interactive)";
                                     (*     sleek_command # dump; *)
                                     (* print_endline "Last PURE PROOF FAILURE:"; *)
                                     (* Log.last_proof_command # dump; *)
