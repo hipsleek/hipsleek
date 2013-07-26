@@ -28,8 +28,7 @@ let sat_optimize = ref false
 let mona_pred_file = "mona_predicates.mona"
 let mona_pred_file_alternative_path = "/usr/local/lib/"
 
-(* let mona_prog = "mona_inter" *)
-let mona_prog = "/home/andreeac/local/new_mona/bin/mona"
+let mona_prog = "mona_inter"
 
 let process = ref {name = "mona"; pid = 0;  inchannel = stdin; outchannel = stdout; errchannel = stdin}
 
