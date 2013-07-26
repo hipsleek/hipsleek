@@ -499,7 +499,6 @@ Total verification time: 8.696542 second(s)
 
 ===========================================================
 # t-f-2.slk -tp om --esl
-
 --dis-lbl
 
 Stop Omega... 8 invocations 
@@ -534,60 +533,28 @@ PRIORITY
 
 # t-f-2.slk --lea
 
-better than non-aggressive but worst than t-f-2a.slk;
-cannot prove!
-
-Entail 1: Fail.
-
-Stop Omega... 39 invocations 
-SAT Count   : 168
-SAT % Hit   : 31.54%
-IMPLY Count : 16
-IMPLY % Hit : 6.25%
-Time(cache overhead) : 0.132009 (seconds)
-
-!!! log(small):(6.555705,207)
-!!! log(big)(>0.5s)(18):(38.285673,[(SAT,3.281492),(SAT,0.618304),(SAT,2.957846),(SAT,0.537327),(SAT,0.503874),(SAT,3.629954),(SAT,0.598163),(SAT,2.399063),(SAT,3.228469),(SAT,3.578705),(SAT,0.548049),(SAT,2.663743),(SAT,0.602945),(SAT,3.640506),(SAT,3.358186),(SAT,0.505946),(SAT,2.350553),(SAT,3.282548)])
-!!! 
- log(bigger)(>4s)(9):(44.507532,[(SAT:129:NO:MONA,5.),(SAT:158:NO:MONA,4.507532),(SAT:160:NO:MONA,5.),(SAT:165:NO:MONA,5.),(SAT:175:NO:MONA,5.),(SAT:180:NO:MONA,5.),(SAT:205:NO:MONA,5.),(SAT:210:NO:MONA,5.),(SAT:229:NO:MONA,5.)])
-Total verification time: 22.773421 second(s)
-	Time spent in main process: 0.920056 second(s)
-	Time spent in child processes: 21.853365 second(s)
-
-
-
-============================================================
-# t-f-2.slk
-
-Starting Omega...oc
-[Warning] False ctx
+slighly slower that --dis-lbl
 
 Entail 1: Valid. 
 
-Stop Omega... 40 invocations 
-SAT Count   : 80
-SAT % Hit   : 12.5%
+Stop Omega... 37 invocations 
+SAT Count   : 91
+SAT % Hit   : 14.28%
 IMPLY Count : 14
-IMPLY % Hit : 7.14%
-Time(cache overhead) : 0.084005 (seconds)
+IMPLY % Hit : 0.%
+Time(cache overhead) : 0.072008 (seconds)
 
-!!! log(small):(0.759882,143)
-Total verification time: 1.384085 second(s)
-	Time spent in main process: 0.684042 second(s)
-	Time spent in child processes: 0.700043 second(s)
+!!! log(small):(1.324866,154)
+Total verification time: 1.656101 second(s)
+	Time spent in main process: 0.752046 second(s)
+	Time spent in child processes: 0.904055 second(s)
 
-!!! src_files:[t-f-2a.slk]
-!!! Logging logs/no_eps_proof_log_t-f-2a_slk.txt
+!!! log(small):(1.324866,154)
+Total verification time: 1.656101 second(s)
+	Time spent in main process: 0.752046 second(s)
+	Time spent in child processes: 0.904055 second(s)
 
-!!! Number of log entries 142
-
---en-lbl-aggr
-
-RROR: at t-f-2a.slk_7:30_7:88 
-Message: view defn for tx does not entail supplied invariant
-
- Fatal error: exception Failure("view defn for tx does not entail supplied invariant
-")
+----
 
 --dis-lbl
 
@@ -607,6 +574,27 @@ Total verification time: 0.332019 second(s)
 	Time spent in main process: 0.156009 second(s)
 	Time spent in child processes: 0.17601 second(s)
 
+-----
+
+-tp om
+
+loris@loris-desktop:/home2/loris/hg/sl_infer/examples/label$ ../../sleek t-f-2.slk  -tp om --esl 
+Starting Omega...oc
+[Warning] False ctx
+
+Entail 1: Valid. 
+
+Stop Omega... 31 invocations 
+SAT Count   : 77
+SAT % Hit   : 11.68%
+IMPLY Count : 14
+IMPLY % Hit : 0.%
+Time(cache overhead) : 0.060002 (seconds)
+
+!!! log(small):(1.01297,140)
+Total verification time: 1.500092 second(s)
+	Time spent in main process: 0.732045 second(s)
+	Time spent in child processes: 0.768047 second(s)
 
 ============================================================
 # swt-4g-addr-lbl.ss --lea -tp om --esl
@@ -680,6 +668,39 @@ AndList( "":flted_14_3357=null & flted_14_3356=null & sentinel=sentinel_3355
    flted_14_3357!=sentinel_3355
  ; "s":M_3358=union(Mc,Mp) & M_3358={}) &{FLOW,(22,23)=__norm})[]. 
 ============================================================
+./../sleek t-swt-2656.slk -tp om --esl
+
+
+IMPLY : End_of_file when checking 
+ Restarting Omega after ... 4 invocations Stop Omega... 4 invocations Starting Omega...oc
+
+[mona.ml]:Timeout exception
+
+Mona is running ... Timeout when checking #10!
+
+!!! dumping for sleek_dump(fail)
+Entail 1: Fail.
+
+Stop Omega... 4 invocations 
+SAT Count   : 1
+SAT % Hit   : 0.%
+IMPLY Count : 5
+IMPLY % Hit : 0.%
+Time(cache overhead) : 0.012001 (seconds)
+
+!!! log(small):(0.065911,5)
+!!! 
+ log(bigger)(>4s)(2):(15.,[(imply:9<:1:TIMEOUT:OMEGA CALCULATOR,10.),(imply:10<:1:NO:MONA,5.)])
+Total verification time: 8.928556 second(s)
+	Time spent in main process: 0.128007 second(s)
+	Time spent in child processes: 8.800549 second(s)
+
+ maybe_raise_and_catch_timeout : Unexpected exception : End_of_file[3]   Done                    emacs g-s  (wd: /home2/loris/hg/sl_infer)
+(wd now: /home2/loris/hg/sl_infer/examples/label)
+[4]   Done                    emacs logs/no_eps_proof_log_examples_label_swt-4g-set-lbl_ss.txt  (wd: /home2/loris/hg/sl_infer)
+(wd now: /home2/loris/hg/sl_infer/examples/label)
+[7]+  Done                    emacs todo.txt
+
 ============================================================
 ============================================================
 ============================================================
