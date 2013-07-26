@@ -14,7 +14,7 @@ let is_mona_running = ref false
 (* let channels = ref (stdin, stdout, stdin) *)
 let last_test_number = ref 0
 let test_number = ref 0
-let mona_cycle = ref 90
+let mona_cycle = ref 10000
 let mona_timeout = ref 5.0 (* default timeout is 10 seconds *)
 let max_BUF_SIZE = 16384
 
@@ -27,6 +27,9 @@ let automaton_completed = ref false
 let sat_optimize = ref false
 let mona_pred_file = "mona_predicates.mona"
 let mona_pred_file_alternative_path = "/usr/local/lib/"
+
+(* let mona_prog = "mona_inter" *)
+let mona_prog = "/home/andreeac/local/new_mona/bin/mona"
 
 let process = ref {name = "mona"; pid = 0;  inchannel = stdin; outchannel = stdout; errchannel = stdin}
 
@@ -1226,8 +1229,8 @@ let rec check_prover_existence prover_cmd_str: bool =
 
 let start () = 
   last_test_number := !test_number;
-  if(check_prover_existence "mona_inter")then begin
-      let _ = Procutils.PrvComms.start !log_all_flag log_all ("mona", "mona_inter", [|"mona_inter"; "-v";|]) set_process prelude in
+  if(check_prover_existence mona_prog)then begin
+      let _ = Procutils.PrvComms.start !log_all_flag log_all ("mona", mona_prog, [|mona_prog; "-v";|]) set_process prelude in
       is_mona_running := true
   end
 
