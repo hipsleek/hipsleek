@@ -25,13 +25,7 @@ let pure_tp = ref OmegaCalc
 (* let tp = ref AUTO *)
 (* let tp = ref PARAHIP *)
 
-let proof_no = ref 0
 let provers_process = ref None
-
-let next_proof_no () =
-  let p_no = !proof_no + 1 in
-  string_of_int p_no
-
 
 type prove_type = Sat of CP.formula | Simplify of CP.formula | Imply of CP.formula * CP.formula
 type result_type = Timeout | Result of string | Failure of string

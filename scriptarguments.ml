@@ -66,14 +66,18 @@ let common_arguments = [
    "Disable the splitting of consequent to expose labels."); 
   ("--lbl-dis-split-ante", Arg.Clear Globals.label_split_ante,
    "Disable the splitting of antecedent to expose labels."); 
-  ("--lbl-en-aggr-sat", Arg.Set Globals.label_aggressive_sat,
+  ("--lea-sat", Arg.Set Globals.label_aggressive_sat,
    "Enable aggressive splitting of label for sat.");
-  ("--lbl-en-aggr-imply", Arg.Set Globals.label_aggressive_imply,
+  ("--lea-imply", Arg.Set Globals.label_aggressive_imply,
    "Enable aggressive splitting of label for implications.");
   ("--lbl-en-aggr", Arg.Unit (fun _ -> 
      Globals.label_aggressive_imply := true;
      Globals.label_aggressive_sat := true ),
    "Enable aggressive splitting of label.");
+  ("--lea", Arg.Unit (fun _ -> 
+     Globals.label_aggressive_imply := true;
+     Globals.label_aggressive_sat := true ),
+   "Shorthand for --lbl-en-aggr.");
    (* UNSAT("":cf,"a":af,"b":bf) 
           --> UNSAT(cf&af) | UNSAT(cf & bf) *)
   (* aggressive UNSAT("":cf,"a":af,"b":bf) 

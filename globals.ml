@@ -1247,3 +1247,8 @@ let wrap_general flag new_value f a =
 let wrap_no_filtering f a =
   wrap_general filtering_flag false f a
 
+let proof_no = ref 0
+let next_proof_no () =
+  let p_no = !proof_no + 1 in
+  string_of_int p_no
+

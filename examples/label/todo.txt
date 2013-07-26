@@ -304,8 +304,10 @@ Currently fails:
 It should not have failed if equalities were properly propagated.
 
 ============================================================
-# t-f-2.slk -tp om --lbl-en-aggr-sat
+# t-f-2a.slk -tp om --lbl-en-aggr-sat
 
+PRIORITY
+ 
 WHY is there a MONA limit reach for this simple example?
 How many invocations to MONA did we have? Can we print
 it just like omega
@@ -327,6 +329,8 @@ If it fails again, we do not re-execute.
 ============================================================
 # t-f-3.slk
 
+PRIORITY
+
 What is a 1b failure? Can we have a better error message?
 Can such proof be split again?
 
@@ -343,6 +347,8 @@ IMPLY : End_of_file when checking
  Restarting Omega after ... 173 invocations Stop Omega... 173 invocations Starting Omega...oc
 ============================================================
 # swt-4g-set-lbl.ss -tp om --lbl-en-aggr --esl 
+
+PRIORITY
 
 schor-waitte tree (g-version) now works with the aggressive
 option but there are some timeouts below to investigate
@@ -373,10 +379,178 @@ be applied to omega and sleek timeouts.
 
 Mona is running ... Timeout when checking #2656!
 ============================================================
+# t-to-432.slk -tp om --esl
+
+timeout exception info not logged by add_proof_info
+even though inside_timeout method was executed due
+to a prior timer_start?
+why? see current code below:
+------
+  method add_proof_info new_s no =
+    print_endline "inside add_proof_info";
+    match last_big with
+      | None -> ()
+      | Some(s,t) -> 
+            begin
+              print_endline "adding last_big";
+              let to_flag = timer_timeout_flag in
+              last_big<-None;
+              let s2 = if to_flag then ":TIMEOUT:" else ":NO:" in
+              let s2 = if last_timeout_flag then s2^":T2:" else s2 in
+               hist_big # push(s^":"^no^s2^new_s,t)
+            end
+------
+
+inside timer_start 0
+inside timer_stop 0
+inside timer_start 1
+inside timer_stop 1
+inside add_proof_info
+inside timer_start 2
+inside timer_stop 2
+inside add_proof_info
+inside timer_start 3
+inside timer_timeout 3
+
+[mona.ml]:Timeout exception
+
+Mona is running ... Timeout when checking #3!
+inside timer_start 3
+inside timer_stop 3
+inside add_proof_info
+adding last_big
+inside add_proof_info
+
+Entail 1: Fail.
+
+
+SAT Count   : 1
+SAT % Hit   : 0.%
+IMPLY Count : 2
+IMPLY % Hit : 0.%
+Time(cache overhead) : 0.004001 (seconds)
+
+!!! log(small):(0.395107,3)
+!!! log(bigger)(>4s)(1):(0.,[(imply:3:NO:MONA,5.)])
+Total verification time: 8.696542 second(s)
+	Time spent in main process: 0.080004 second(s)
+	Time spent in child processes: 8.616538 second(s)
+
+!!! src_files:[t-to-432.slk]
+!!! Logging logs/no_eps_proof_log_t-to-432_slk.txt
+
+!!! Number of log entries 3
+
+===========================================================
+# t-f-2.slk -tp om --esl
+
+--dis-lbl
+
+Stop Omega... 8 invocations 
+SAT Count   : 21
+SAT % Hit   : 52.38%
+IMPLY Count : 14
+IMPLY % Hit : 7.14%
+Time(cache overhead) : 0.012001 (seconds)
+
+!!! log(small):(0.231865,44)
+Total verification time: 0.336019 second(s)
+	Time spent in main process: 0.160009 second(s)
+	Time spent in child processes: 0.17601 second(s)
+
+!!! src_files:[t-f-2.slk]
+!!! Logging logs/no_eps_proof_log_t-f-2_slk.txt
+
+!!! Number of log entries 43
+
+--------------------------------------------
+
+!!! log(small):(1.009156,125)
+!!! log(big)(>0.5s)(12):(9.756082,[(SAT,0.865794),(SAT,1.006212),(SAT,1.036937),(SAT,0.64791),(SAT,0.74909),(SAT,1.162425),(SAT,1.054024),(SAT,0.572506),(SAT,0.572178),(SAT,0.635461),(SAT,0.562629),(SAT,0.890916)])
+
+!!! log(bigger)(>4s)(16):(9.756082,[(SAT:113:NO:MONA,5.),(SAT:114:NO:MONA,4.682976),(SAT:122:NO:MONA,4.745412),(SAT:123:NO:MONA,4.539973),(SAT:124:NO:MONA,4.912821),(SAT:125:NO:MONA,5.),(SAT:127:NO:MONA,5.),(SAT:128:NO:MONA,5.),(SAT:129:NO:MONA,4.899909),(SAT:130:NO:MONA,4.659544),(SAT:135:NO:MONA,4.804025),(SAT:136:NO:MONA,4.723027),(SAT:137:NO:MONA,4.89216),(SAT:138:NO:MONA,4.873554),(SAT:149:NO:MONA,4.960797),(SAT:150:NO:MONA,4.726344)])
+Total verification time: 73.524594 second(s)
+	Time spent in main process: 0.848052 second(s)
+	Time spent in child processes: 72.676542 second(s)
+
+PRIORITY
+-----------------------
+
+# t-f-2.slk --lbl-en-aggr-sat
+
+better than non-aggressive but worst than t-f-2a.slk
+
+Entail 1: Fail.
+
+Stop Omega... 39 invocations 
+SAT Count   : 168
+SAT % Hit   : 31.54%
+IMPLY Count : 16
+IMPLY % Hit : 6.25%
+Time(cache overhead) : 0.160007 (seconds)
+
+!!! log(small):(2.36959,213)
+!!! log(big)(>0.5s)(21):(29.271046,[(SAT,0.816119),(SAT,2.491544),(SAT,0.723605),(SAT,0.93768),(SAT,2.296391),(SAT,0.841883),(SAT,2.512535),(SAT,0.567169),(SAT,0.815026),(SAT,2.458119),(SAT,0.81167),(SAT,2.464257),(SAT,0.558812),(SAT,0.794554),(SAT,2.484909),(SAT,0.929318),(SAT,2.428048),(SAT,0.579604),(SAT,0.819784),(SAT,2.407985),(sleek-hec,0.532034)])
+Total verification time: 28.005749 second(s)
+	Time spent in main process: 1.092068 second(s)
+	Time spent in child processes: 26.913681 second(s)
+
+
 ============================================================
+# t-f-2.slk
+
+Starting Omega...oc
+[Warning] False ctx
+
+Entail 1: Valid. 
+
+Stop Omega... 40 invocations 
+SAT Count   : 80
+SAT % Hit   : 12.5%
+IMPLY Count : 14
+IMPLY % Hit : 7.14%
+Time(cache overhead) : 0.084005 (seconds)
+
+!!! log(small):(0.759882,143)
+Total verification time: 1.384085 second(s)
+	Time spent in main process: 0.684042 second(s)
+	Time spent in child processes: 0.700043 second(s)
+
+!!! src_files:[t-f-2a.slk]
+!!! Logging logs/no_eps_proof_log_t-f-2a_slk.txt
+
+!!! Number of log entries 142
+
+--en-lbl-aggr
+
+RROR: at t-f-2a.slk_7:30_7:88 
+Message: view defn for tx does not entail supplied invariant
+
+ Fatal error: exception Failure("view defn for tx does not entail supplied invariant
+")
+
+--dis-lbl
+
+This option seems to work very well for this example!!
+
+Entail 1: Valid. 
+
+Stop Omega... 8 invocations 
+SAT Count   : 21
+SAT % Hit   : 52.38%
+IMPLY Count : 14
+IMPLY % Hit : 7.14%
+Time(cache overhead) : 0.008002 (seconds)
+
+!!! log(small):(0.190088,44)
+Total verification time: 0.332019 second(s)
+	Time spent in main process: 0.156009 second(s)
+	Time spent in child processes: 0.17601 second(s)
+
+
 ============================================================
-============================================================
-============================================================
+
+
 ============================================================
 ============================================================
 ============================================================
