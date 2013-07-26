@@ -55,10 +55,11 @@ object (self)
             begin
               if trace_timer then print_endline "adding last_big";
               let to_flag = timer_timeout_flag in
+              let slk_no = string_of_int (get_sleek_no ()) in 
               last_big<-None;
               let s2 = if to_flag then ":TIMEOUT:" else ":NO:" in
-              let s2 = if last_timeout_flag then s2^":T2:" else s2 in
-               hist_big # push(s^":"^no^s2^new_s,t)
+              (* let s2 = if last_timeout_flag then s2^":T2:" else s2 in *)
+               hist_big # push((s^":"^no^"<:"^slk_no^s2^new_s),t)
             end
 
 
@@ -78,7 +79,7 @@ object (self)
                 let (s,st) = time_stk # pop_top in
                 (s,t -. st)
       in
-      if tt>4.0 then last_big <- Some (s,tt)
+      if tt>3.0 then last_big <- Some (s,tt)
       else hist_stk # push (s,tt);
       last_time <- tt ; 
       last_timeout_flag <- timer_timeout_flag; 

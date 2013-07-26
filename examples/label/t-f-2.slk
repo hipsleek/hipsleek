@@ -19,7 +19,7 @@ l_1209::tx<flted_9_1207,s_1204,M1_1210>@M
          !(v_bool_56_998') & cur'!=sent' & !(v_bool_56_998') & cur'!=null & 
          !(v_bool_59_999') & cur'!=null & !(v_bool_59_999') & a_1353!=null & 
          ((b_1355!=null | cur'=sent' | a_1353!=sent'))
- ; "n":flted_9_1207=null & a!=cur_1262 & cur_1262!=sent_1213 & 
+ ; "":flted_9_1207=null & a!=cur_1262 & cur_1262!=sent_1213 & 
    s_1204=sent_1213 & a=g_1205 & s_1206=sent_1213 & sent=sent_1213 & 
    sent=sent_1214 & a_1353=flted_9_1207 & g_1205=null & b!=prev' & 
    prev'!=s_1206 & s_1206=sent_1214 & exists(sent_2294:b_1355!=prev' & 

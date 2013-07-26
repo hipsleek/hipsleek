@@ -320,6 +320,7 @@ let sleek_proof_log_Z3 src_files =
 	  (* Debug.info_pprint ("Logging "^fz3name^"\n") no_pos; *)
 	  (* Debug.info_pprint ("Logging "^fnamegt5^"\n") no_pos; *)
           Log.proof_log_to_text_file fname !Globals.source_files;
+          Log.sleek_log_to_text_file2 !Globals.source_files;
 	  (* Log.z3_proofs_list_to_file fz3name !Globals.source_files; *)
 	  (* Log.proof_greater_5secs_to_file !Globals.source_files; *)
         end

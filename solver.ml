@@ -4835,11 +4835,11 @@ and early_pure_contra_detection_x hec_num prog estate conseq pos msg is_folding 
   let h_inf_args, hinf_args_map = get_heap_inf_args estate in
   let esv = estate.es_infer_vars in
 
-  let new_slk_log result es = 
+  let new_slk_log slk_no result es = 
     let avoid = CF.is_emp_term conseq in
     let avoid = avoid or (not (hec_stack # is_empty)) in
     let caller = hec_stack # string_of_no_ln in
-    let slk_no = (* if avoid then 0 else *) Log.get_sleek_proving_id () in
+    (* let slk_no = (\* if avoid then 0 else *\) (next_sleek_int ()) in *)
     (* let _ = hec_stack # push slk_no in *)
     (* let r = hec a b c in *)
     (* let _ = hec_stack # pop in *)
@@ -4863,6 +4863,7 @@ and early_pure_contra_detection_x hec_num prog estate conseq pos msg is_folding 
 	    let r1, prf = heap_entail_one_context 9 prog is_folding ctx1 conseq None None None pos in
             let _ = Debug.tinfo_hprint (add_str "r1"  Cprinter.string_of_list_context) r1 pos in
             let _ = Debug.info_pprint ("*********2********") no_pos in
+            let slk_no = next_sleek_int () in
  	    let r1 = Infer.add_infer_hp_contr_to_list_context hinf_args_map [pf] r1 in
 	    begin 
 	      (*r1 might be None if the inferred contradiction might span several predicates or if it includes non heap pred arguments*)
@@ -4871,7 +4872,7 @@ and early_pure_contra_detection_x hec_num prog estate conseq pos msg is_folding 
 		      let r1 = match relass with
 			| [(_,h,_)] -> add_infer_rel_to_list_context h r1 
 			| _ -> r1 in
-                      let _ = new_slk_log r1 new_estate in
+                      let _ = new_slk_log slk_no r1 new_estate in
 		      (true, None, Some r1, Some prf)
 		| None -> (false, None, None, None)
 	    end
@@ -5087,7 +5088,7 @@ and log_contra_detect hec_num conseq result pos =
     let avoid = CF.is_emp_term conseq in
     let avoid = avoid or (not (hec_stack # is_empty)) in
     let caller = hec_stack # string_of_no_ln in
-    let slk_no = (* if avoid then 0 else *) Log.get_sleek_proving_id () in
+    let slk_no = (* if avoid then 0 else *) (next_sleek_int ()) in
     (* let _ = hec_stack # push slk_no in *)
     (* let r = hec a b c in *)
     (* let _ = hec_stack # pop in *)
@@ -6283,7 +6284,7 @@ and heap_entail_conjunct hec_num (prog : prog_decl) (is_folding : bool)  (ctx0 :
     let avoid = avoid or ((hec_num=1 || hec_num=2) && CF.is_emp_term conseq) in
     let avoid = avoid or (not (hec_stack # is_empty)) in
     let caller = hec_stack # string_of_no_ln in
-    let slk_no = (* if avoid then 0 else *) Log.get_sleek_proving_id () in
+    let slk_no = (* if avoid then 0 else *) (next_sleek_int ()) in
     (* let _ = Log.last_sleek_command # set (Some (ante,conseq)) in *)
     let _ = hec_stack # push slk_no in
     let logger fr tt timeout = 

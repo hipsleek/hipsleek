@@ -1248,7 +1248,17 @@ let wrap_no_filtering f a =
   wrap_general filtering_flag false f a
 
 let proof_no = ref 0
-let next_proof_no () =
-  let p_no = !proof_no + 1 in
-  string_of_int p_no
 
+let next_proof_no_str () =
+  proof_no := !proof_no + 1;
+  string_of_int !proof_no
+
+let get_proof_no () = !proof_no
+
+let sleek_proof_no = ref 0
+
+let get_sleek_no () = !sleek_proof_no
+
+let next_sleek_int () : int =
+  sleek_proof_no := !sleek_proof_no + 1; 
+  (!sleek_proof_no)

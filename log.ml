@@ -191,6 +191,9 @@ object (self)
   val mutable last_sleek = None
   val mutable last_sleek_fail = None
   val mutable last_is_sleek = false
+  val mutable sleek_no = -1
+  method set_mum_sleek no = sleek_no <- no
+  method get_num_sleek = sleek_no 
   method set entry =
     last_is_sleek <- false;
     let cmd = entry.log_type in
@@ -255,10 +258,10 @@ let current_hprel_ass_stk : CF.hprel  Gen.stack_pr
       = new Gen.stack_pr Cprinter.string_of_hprel_short (==) 
 
 
-let get_sleek_proving_id ()=
-  let r = !sleek_proving_id in
-  let _ = Globals.add_count sleek_proving_id in
-  r
+(* let get_sleek_proving_id () = *)
+(*   let r = !sleek_proving_id in *)
+(*   let _ = Globals.add_count sleek_proving_id in *)
+(*   r *)
 
 (* let proof_log_list  = ref [] (\*For printing to text file with the original order of proof execution*\) *)
 let proof_log_stk : string  Gen.stack_filter 
@@ -396,6 +399,8 @@ let proof_log_to_text_file fname (src_files) =
   if !Globals.proof_logging_txt (* || !Globals.sleek_logging_txt *) 
   then
     begin
+      let lgs = (List.rev (proof_log_stk # get_stk)) in
+      let _ = Debug.info_pprint ("Number of log entries "^(string_of_int (List.length lgs))) no_pos in
       Debug.info_pprint ("Logging "^fname^"\n") no_pos;
       let tstartlog = Gen.Profiling.get_time () in
       let oc = 
@@ -424,8 +429,6 @@ let proof_log_to_text_file fname (src_files) =
       (*            |PR_BOOL b -> string_of_bool b *)
       (*            |PR_FORMULA f -> string_of_pure_formula f)^"\n" in *)
       (* let _ = proof_log_stk # string_of_reverse in *)
-      let lgs = (List.rev (proof_log_stk # get_stk)) in
-      let _ = Debug.info_pprint ("Number of log entries "^(string_of_int (List.length lgs))) no_pos in
       let _= List.map 
         (fun ix->
             let log=Hashtbl.find proof_log_tbl ix in
@@ -497,12 +500,17 @@ let wrap_calculate_time exec_func src_file args =
 (* 		close_out oc;                                                                                  *)
 (* 	else ()                                                                                          *)
 
-let sleek_log_to_text_file (src_files) =
+let sleek_log_to_text_file slfn (src_files) =
     (* let tstartlog = Gen.Profiling.get_time () in *)
+  let lgs = sleek_log_stk # len in
+  let _ = Debug.info_pprint ("Number of sleek log entries "^(string_of_int (lgs))) no_pos in
+  Debug.info_pprint ("Logging "^slfn^"\n") no_pos;
+  (* let fn = "logs/sleek_log_" ^ (Globals.norm_file_name (List.hd src_files)) ^".txt" in *)
+  let fn = slfn in
     let oc =
       (try Unix.mkdir "logs" 0o750 with _ -> ());
       (* let with_option = if !Globals.en_slc_ps then "eps" else "no_eps" in *)
-      open_out ("logs/sleek_log_" ^ (Globals.norm_file_name (List.hd src_files)) ^".txt")
+      open_out fn
     in
     let str = 
       if (!Globals.sleek_log_filter)
@@ -514,9 +522,10 @@ let sleek_log_to_text_file (src_files) =
     (* let _= Globals.proof_logging_time := !Globals.proof_logging_time +. (tstoplog -. tstartlog) in  *)
     close_out oc
 
-let sleek_log_to_text_file (src_files) =
+let sleek_log_to_text_file2 (src_files) =
+  let fn = "logs/sleek_log_" ^ (Globals.norm_file_name (List.hd src_files)) ^".txt" in
   let pr = pr_list pr_id in
-  Debug.no_1 "sleek_log_to_text_file" pr pr_none sleek_log_to_text_file (src_files)
+  Debug.no_1 "sleek_log_to_text_file" pr pr_none (sleek_log_to_text_file fn) (src_files)
 
 let process_proof_logging src_files  =
   (* Debug.info_pprint ("process_proof_logging\n") no_pos; *)
@@ -543,8 +552,7 @@ let process_proof_logging src_files  =
       let _= if (!Globals.sleek_logging_txt) 
       then 
         begin
-          Debug.info_pprint ("Logging "^slfn^"\n") no_pos;
-          sleek_log_to_text_file src_files;
+          sleek_log_to_text_file slfn src_files;
         end
       else try Sys.remove slfn 
         (* ("logs/proof_log_" ^ (Globals.norm_file_name (List.hd src_files))^".txt") *)

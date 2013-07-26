@@ -2554,7 +2554,7 @@ let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (imp_no : string) 
   = let pf = Cprinter.string_of_pure_formula in
   let prf = add_str "timeout" string_of_float in
   Debug.no_4 "imply_timeout 3" pf pf prf pr_id (fun (b,_,_) -> string_of_bool b)
-      (fun a c _ _ -> imply_timeout a c imp_no timeout do_cache process) ante0 conseq0 timeout (next_proof_no ())
+      (fun a c _ _ -> imply_timeout a c imp_no timeout do_cache process) ante0 conseq0 timeout (next_proof_no_str ())
 
 let imply_timeout ante0 conseq0 imp_no timeout do_cache process =
   let s = "imply" in
