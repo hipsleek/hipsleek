@@ -1,0 +1,58 @@
+/*
+Check_Specs]; hec_num: 4; evars: [sent_1691,flted_31_1692,M3_1693]; infer_vars: []; c_heap: 
+prev'::tx<flted_39_1690,sent,M3_1689>@M
+*/
+data node {
+ int mark;
+ node left;
+ node right;
+}.
+
+pred tx<g,s,"s":M> == true&["":self = g & s!=null & (g=null | g=s) ; "s": M={}]
+   or self::node<v,l,r> * l::tx<g,s,M1> * r::tx<null,s,M2> & ["": self != g & self != s ;"s": M=union({v},M1,M2)]
+   or self::node<v,l,r> * l::tx<null,s,M1> * r::tx<g,s,M2> & ["": self != g & self != s ;"s": M=union({v},M1,M2)]
+inv true&["": s!=null
+ & (g=null & self!=s | g=s & self!=null)
+  ; "","s":(self=g & M={} | self!=g & M!={})
+]
+.
+
+checkentail 
+prev'::tx<flted_39_1690,sent,M3_1689>@M *
+l_1149::tx<flted_9_1147,s_1144,M1_1150>@M&
+AndList( "":flted_9_1147=null & s_1144=sent_1153 & a=g_1145 & 
+         s_1146=sent_1153 & cur!=null & b=sent & a=null & sent=sent_1154 & 
+         sent=sent_1153 & prev=prev_1172 & cur=cur_1174 & 
+         r_1151=right_52_1166 & l_1149=left_53_1170 & cur_1174=prev_1190 & 
+         cur_1188=l_1149 & cur_1188!=sent & !(v_bool_57_998') & 
+         cur_1188!=sent & !(v_bool_57_998') & cur_1188=null & 
+         v_bool_60_999' & cur_1188=null & v_bool_60_999' & a_1192!=null & 
+         b_1194=null & prev_1190!=sent & a_1192=sent & cur_1174!=null & 
+         flted_39_1690=null & a_1192!=null & b_1194=null & prev_1190!=sent & 
+         a_1192=sent
+   & a!=cur_1174 & cur_1174!=sent_1153 & g_1145=null & b!=prev_1190 & 
+   s_1146=sent_1154 & prev_1190!=s_1146 & 
+   exists(sent_1323:s_1146=sent_1323 & a_1192=b & sent_1154=sent_1323 & 
+   a_1192!=prev_1190 & prev_1190!=sent_1323) & ((null=null | null!=null)) & 
+   exists(sent_1324:b_1194=null & sent_1324!=null & ((b_1194=null | 
+   b_1194=sent_1324))) & sent_1154!=null & s_1146!=null & cur'=sent & 
+   prev'!=null & exists(sent_49:sent_49!=null) & 
+   exists(sent_48:sent_48!=null)
+// ; "s":l_1149=flted_9_1147
+ ; "s":M1=union({v_1148},M1_1150,M2_1152) 
+    & M1_1193=union({v_1148},M2_1152,M2) 
+    & M2_1195={} & M3_1689=union(M1_1193,M2_1195)) 
+//&{FLOW,(22,23)=__norm}[]
+ |-  emp&AndList( 
+  "":flted_39_1690=null & sent=sent ; 
+  "":cur'=sent & prev'!=null 
+  ; "s": true 
+      //& l_1149=flted_9_1147
+  //& M1_1150={}
+  &M3_1689=union(M1,M2)
+) 
+. 
+/*
+  need to propagate also equality constraint of the
+  form x=null or x=const
+*/

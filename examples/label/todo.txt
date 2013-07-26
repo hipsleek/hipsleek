@@ -346,86 +346,51 @@ What is the cause of below? Is it Omega or MONA problem?
 IMPLY : End_of_file when checking 
  Restarting Omega after ... 173 invocations Stop Omega... 173 invocations Starting Omega...oc
 ============================================================
-# swt-4g-set-lbl.ss -tp om --lbl-en-aggr --esl 
+# swt-4g-set-lbl.ss -tp om 
 
-PRIORITY
+Procedure lscan$node~node~node SUCCESS
+Stop Omega... 246 invocations 
+!!! Number of log entries 818
+!!! Logging logs/no_eps_proof_log_swt-4g-set-lbl_ss.txt
+
+!!! Number of sleek log entries 319
+!!! Logging logs/sleek_log_swt-4g-set-lbl_ss.txt
+
+2 false contexts at: ( (58,8)  (57,19) )
+
+!!! log(small):(24.968163,1103)
+!!! log(big)(>0.5s)(27):(39.390115,[(imply,2.925499),(imply,2.372803),(imply,1.939754),(imply,1.554712),(imply,0.777756),(imply,0.763984),(imply,1.424533),(imply,2.01822),(imply,1.603307),(imply,2.453657),(imply,0.990725),(imply,0.817517),(imply,1.297117),(imply,0.892379),(imply,0.884132),(imply,1.134175),(imply,2.360318),(imply,0.594739),(imply,1.407681),(imply,1.51012),(imply,1.039994),(imply,2.17741),(imply,0.759051),(imply,0.551018),(imply,0.757007),(imply,2.371109),(imply,2.011398)])
+!!! 
+ log(bigger)(>4s)(7):(27.500453,[(imply:224<:42:NO:MONA,3.008791),(imply:400<:89:NO:MONA,5.),(imply:460<:107:NO:MONA,5.),(imply:662<:191:NO:MONA,5.),(imply:664<:191:NO:MONA,3.34148),(imply:743<:216:NO:MONA,3.029326),(imply:747<:217:NO:MONA,3.120856)])
+Total verification time: 89.265577 second(s)
+	Time spent in main process: 4.512281 second(s)
+	Time spent in child processes: 84.753296 second(s)
+	Time for logging: 1.300077 second(s)
+
+-------
+# swt-4g-set-lbl.ss -tp om --lea
+
+does not work as need to propagate x=c too
 
 schor-waitte tree (g-version) now works with the aggressive
 option but there are some timeouts below to investigate
 for performance improvements:
 
-!!! log (>.5s)():(213.773794,[10.,10.,10.,10.,10.,10.,10.,5.,10.,5.,10.,10.,10.,10.,10.,10.,10.,5.,10.,5.,10.,5.])
-
-Procedure lscan$node~node~node SUCCESS
-Stop Omega... 378 invocations 
-!!! Logging logs/no_eps_proof_log_swt-4g-set-lbl_ss.txt
-
-!!! Number of log entries 6627
-!!! Logging logs/sleek_log_swt-4g-set-lbl_ss.txt
-
-2 false contexts at: ( (57,8)  (56,19) )
-
-!!! time_log (small):(133.909343,6785)
-!!! log (>.5s)():(213.773794,[10.,10.,10.,10.,10.,10.,10.,5.,10.,5.,10.,10.,10.,10.,10.,10.,10.,5.,10.,5.,10.,5.])
-Total verification time: 403.169194 second(s)
-	Time spent in main process: 40.154508 second(s)
-	Time spent in child processes: 363.014686 second(s)
-	Time for logging: 25.453608 second(s)
-
---------
-# swt-4g-set-lbl.ss -tp om 
-
-FAIL
-
-Message: Proving precondition in method failed.
- 
-Procedure lscan$node~node~node FAIL-2
-
-Exception Failure("Proving precondition in method failed.") Occurred!
-(Program not linked with -g, cannot print stack backtrace)
-
-Error(s) detected when checking procedure lscan$node~node~node
-
-!!! dumping for lscan$node~node~node FAIL2Stop Omega... 165 invocations 
-2 false contexts at: ( (57,8)  (56,19) )
-
-!!! log(small):(49.069625,1528)
-!!! log(big)(>0.5s)(67):(91.385181,[(imply,1.090743),(imply,2.385336),(imply,1.259491),(imply,1.470128),(imply,2.145795),(sleek-hec,1.200075),(imply,2.006839),(imply,0.89604),(imply,1.076681),(imply,2.117287),(imply,1.175422),(imply,1.433818),(imply,2.21592),(imply,3.921027),(sleek-hec,1.200075),(imply,1.980392),(imply,0.753459),(imply,3.839387),(imply,1.993835),(SAT,0.501172),(imply,3.900558),(SAT,0.784158),(SAT,0.818971),(SAT,0.907111),(SAT,0.751309),(SAT,0.776283),(SAT,0.744149),(SAT,0.987415),(SAT,0.798705),(imply,2.044981),(imply,0.549654),(imply,1.057255),(imply,1.120493),(imply,0.558635),(SAT,1.194922),(SAT,0.935646),(SAT,1.051101),(SAT,1.349538),(SAT,0.924815),(SAT,0.923327),(SAT,1.136122),(SAT,0.931782),(sleek-hec,1.140071),(sleek-hec,1.352085),(imply,0.758421),(imply,3.822665),(SAT,1.094729),(SAT,1.069067),(SAT,1.062562),(SAT,0.909376),(SAT,1.212696),(SAT,0.975134),(SAT,0.926124),(SAT,1.13451),(imply,1.967394),(SAT,0.563787),(imply,1.549672),(SAT,0.593348),(imply,1.091114),(imply,2.486732),(imply,0.609543),(imply,2.806013),(SAT,0.63813),(sleek-hec,1.132072),(sleek-hec,1.356085),(imply,1.629734),(SAT,0.594265)])
-!!! 
- log(bigger)(>4s)(20):(127.31865,[(imply:698:NO:MONA,4.042592),(imply:731:NO:MONA,4.154684),(imply:974:NO:MONA,4.247115),(imply:1013:TIMEOUT::T2:OMEGA CALCULATOR,10.),(imply:1048:NO:MONA,5.),(imply:1049:TIMEOUT::T2:OMEGA CALCULATOR,10.),(imply:1080:NO:OMEGA CALCULATOR,4.336328),(imply:1111:NO:OMEGA CALCULATOR,6.225389),(imply:1183:NO:MONA,5.),(imply:1211:NO:MONA,5.),(imply:1241:TIMEOUT::T2:OMEGA CALCULATOR,10.),(imply:1242:NO:MONA,5.),(imply:1270:NO:MONA,4.312542),(imply:1271:TIMEOUT::T2:OMEGA CALCULATOR,10.),(imply:1306:NO:MONA,5.),(imply:1307:TIMEOUT::T2:OMEGA CALCULATOR,10.),(imply:1441:NO:MONA,5.),(imply:1469:NO:MONA,5.),(imply:1499:TIMEOUT::T2:OMEGA CALCULATOR,10.),(imply:1500:NO:MONA,5.)])
-Total verification time: 169.366583 second(s)
-	Time spent in main process: 8.932557 second(s)
-	Time spent in child processes: 160.434026 second(s)
 
 --------
 # swt-4g-set-lbl.ss -tp om --dis-lbl 
 
 Procedure lscan$node~node~node SUCCESS
 Stop Omega... 306 invocations 
-2 false contexts at: ( (57,8)  (56,19) )
+2 false contexts at: ( (58,8)  (57,19) )
 
-!!! log(small):(24.834106,1247)
-!!! log(big)(>0.5s)(42):(60.028745,[(SAT,0.9075),(SAT,0.830824),(SAT,0.960853),(SAT,1.120504),(SAT,0.929907),(SAT,0.882563),(SAT,0.59488),(SAT,0.976136),(SAT,0.971558),(imply,0.535787),(imply,2.128843),(imply,2.50709),(SAT,0.653235),(imply,2.859232),(SAT,0.501082),(imply,1.956999),(imply,1.866824),(SAT,0.697262),(imply,2.754967),(imply,2.786689),(imply,3.262005),(SAT,0.554071),(imply,0.965409),(imply,0.723478),(SAT,0.996605),(SAT,0.981591),(SAT,0.965097),(SAT,1.243386),(SAT,0.942139),(SAT,0.967702),(SAT,0.520336),(SAT,1.113601),(SAT,0.976433),(imply,3.396129),(SAT,0.522825),(SAT,0.890533),(imply,1.909927),(imply,0.537586),(imply,3.544684),(imply,2.63796),(imply,3.770126),(imply,1.184387)])
+!!! log(small):(23.454227,1254)
+!!! log(big)(>0.5s)(36):(45.975793,[(SAT,0.683766),(SAT,0.672923),(SAT,0.734657),(SAT,0.716517),(SAT,0.714193),(SAT,0.716932),(SAT,0.77277),(SAT,0.789857),(imply,1.719451),(imply,1.821174),(SAT,0.528527),(imply,2.188367),(imply,1.568875),(imply,1.621138),(SAT,0.537591),(imply,2.198906),(imply,2.326614),(imply,2.707787),(imply,2.985323),(imply,0.599133),(imply,0.597069),(SAT,0.774352),(SAT,0.678462),(SAT,0.744959),(SAT,0.727461),(SAT,0.754659),(SAT,0.739041),(SAT,0.778397),(SAT,0.786239),(imply,2.511089),(SAT,0.52471),(imply,1.702914),(imply,2.69588),(imply,1.824985),(imply,2.65411),(imply,0.876965)])
 !!! 
- log(bigger)(>4s)(15):(71.331398,[(imply:382:NO:MONA,5.)
-,(imply:390:NO:MONA,4.296295)
-,(imply:419:NO:MONA,5.)
-,(imply:431:NO:MONA,5.)
-,(imply:438:NO:MONA,4.682909)
-,(imply:439:NO:MONA,4.793206)
-,(imply:442:NO:MONA,4.294982)
-,(imply:468:NO:MONA,5.)
-,(imply:603:NO:MONA,4.869589)
-,(imply:618:NO:MONA,5.)
-,(imply:626:NO:MONA,5.)
-,(imply:662:NO:MONA,4.238385)
-,(imply:692:NO:MONA,4.156032)
-,(imply:693:NO:MONA,5.)
-,(imply:703:NO:MONA,5.)])
-Total verification time: 135.312455 second(s)
-	Time spent in main process: 3.572222 second(s)
-	Time spent in child processes: 131.740233 second(s)
-
+ log(bigger)(>4s)(14):(55.036859,[(imply:499<:84:NO:MONA,4.123157),(imply:510<:89:NO:MONA,3.188763),(imply:561<:99:NO:MONA,3.679863),(imply:581<:102:NO:MONA,3.990717),(imply:590<:106:NO:MONA,3.554903),(imply:592<:107:NO:MONA,3.419138),(imply:643<:117:NO:MONA,3.686981),(imply:852<:188:NO:MONA,3.767111),(imply:878<:191:NO:MONA,4.038386),(imply:889<:196:NO:MONA,5.),(imply:954<:207:NO:MONA,3.37706),(imply:1001<:216:NO:MONA,3.21078),(imply:1003<:217:NO:MONA,5.),(imply:1021<:224:NO:MONA,5.)])
+Total verification time: 119.159446 second(s)
+	Time spent in main process: 3.732233 second(s)
+	Time spent in child processes: 115.427213 second(s)
 
 ============================================================
 # swt-4g-set-lbl.ss -tp om --lbl-en-aggr --esl 
@@ -702,6 +667,26 @@ Total verification time: 8.928556 second(s)
 [7]+  Done                    emacs todo.txt
 
 ============================================================
+# swt-4g-set-lbl.ss -tp om --lea -mona-cycle 1000
+
+buffer overflow disappears with default cycle of 90
+
+Checking procedure lscan$node~node~node... *** buffer overflow detected ***: mona_inter terminated
+======= Backtrace: =========
+/lib/tls/i686/cmov/libc.so.6(__fortify_fail+0x50)[0x1f2390]
+/lib/tls/i686/cmov/libc.so.6(+0xe12ca)[0x1f12ca]
+/lib/tls/i686/cmov/libc.so.6(+0xe0a08)[0x1f0a08]
+/lib/tls/i686/cmov/libc.so.6(_IO_default_xsputn+0x9e)[0x179afe]
+/lib/tls/i686/cmov/libc.so.6(_IO_vfprintf+0xe24)[0x14da34]
+/lib/tls/i686/cmov/libc.so.6(__vsprintf_chk+0xad)[0x1f0abd]
+/lib/tls/i686/cmov/libc.so.6(__sprintf_chk+0x2d)[0x1f09fd]
+mona_inter[0x808024e]
+mona_inter[0x8074671]
+mona_inter[0x8076944]
+/lib/tls/i686/cmov/libc.so.6(__libc_start_main+0xe6)[0x126bd6]
+mona_inter[0x804b6f1]
+======= Memory map: ========
+
 ============================================================
 ============================================================
 ============================================================

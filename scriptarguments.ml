@@ -229,6 +229,8 @@ let common_arguments = [
    "Replace Cond_action by Search for LHS Case Analysis");
   ("-nxpure", Arg.Set_int Globals.n_xpure,
    "Number of unfolding using XPure");
+  ("-mona-cycle", Arg.Set_int Mona.mona_cycle,
+   "Number of times mona can be called before it restarts (default 90)");
   ("-v:", Arg.Set_int Globals.verbose_num,
    "Verbosity level for Debugging");
   ("-fixcalc-disj", Arg.Set_int Globals.fixcalc_disj,

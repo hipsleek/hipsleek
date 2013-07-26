@@ -2770,8 +2770,22 @@ let translate_waitlevel_mix_formula (mf : mix_formula) : mix_formula =
   Debug.no_1 "translate_waitlevel_mix_formula" !print_mix_formula !print_mix_formula 
       translate_waitlevel_mix_formula_x mf
 
-let remove_disj_clauses (mf: mix_formula): mix_formula * bool = 
-  let mf_conjs = split_conjunctions (pure_of_mix mf) in 
-  let (disj,mf_conjs) = List.partition is_disjunct mf_conjs in
-  let mf = join_conjunctions mf_conjs in
-  (mix_of_pure mf,not(disj==[]))
+let remove_disj_clauses (mf: mix_formula): mix_formula = 
+  let pf = pure_of_mix mf in
+  let rm_disj f = 
+    let mf_conjs = split_conjunctions f in
+    let (disj,mf_conjs) = List.partition is_disjunct mf_conjs in
+      mf_conjs 
+  in
+  let mf_conjs = rm_disj pf in
+  let mf_conjs = List.map (fun x -> match x with 
+    | AndList xs -> 
+          let ys = List.map (fun (l,a) -> (l,join_conjunctions (rm_disj a))) xs in
+          AndList ys
+    | y -> y) mf_conjs in
+  let mf = join_conjunctions (mf_conjs) in
+  mix_of_pure mf
+
+let remove_disj_clauses (mf: mix_formula): mix_formula = 
+  let pr = !print_mix_formula in
+  Debug.no_1 "remove_disj_clauses" pr pr remove_disj_clauses mf
