@@ -1707,7 +1707,7 @@ and infer_shapes_from_fresh_obligation_x iprog cprog proc_name is_pre cond_path 
     end
     in
     (***************  END PRINTING*********************)
-    let constr, hp_defs, c, unk_hpargs2, link_hpargs2, equivs = infer_shapes_core iprog cprog proc_name cond_path
+    let constr, hp_defs, unk_hpargs2, link_hpargs2, equivs = infer_shapes_core iprog cprog proc_name cond_path
       ho_constrs callee_hps (sel_lhps@sel_rhps)
       (*post-preds in lhs which dont have ad definition should be considered as pre-preds*)
       (CP.diff_svl (sel_post_hps@sel_rhps) nondef_post_hps)
@@ -1830,7 +1830,8 @@ and infer_shapes_from_obligation iprog prog proc_name is_pre cond_path (constrs0
 
 and infer_shapes_proper iprog prog proc_name cond_path (constrs2: CF.hprel list) callee_hps sel_hp_rels sel_post_hps
       (unk_map2: ((CP.spec_var * int list) * CP.xpure_view) list)
-      prog_vars unk_hpargs link_hpargs need_preprocess detect_dang: (CF.hprel list * CF.hp_rel_def list* (CP.spec_var*CP.exp list * CP.exp list) list * (CP.spec_var * CP.spec_var list) list *  (CP.spec_var *CP.spec_var list) list * (CP.spec_var *CP.spec_var) list)=
+      prog_vars unk_hpargs link_hpargs need_preprocess detect_dang: (CF.hprel list * CF.hp_rel_def list *
+          (CP.spec_var * CP.spec_var list) list *  (CP.spec_var *CP.spec_var list) list * (CP.spec_var *CP.spec_var) list)=
   let unk_hps = List.map fst unk_hpargs in
   let link_hps = List.map fst link_hpargs in
   let _ = DD.binfo_pprint ">>>>>> step 3: apply transitive implication<<<<<<" no_pos in
@@ -1902,11 +1903,11 @@ and infer_shapes_proper iprog prog proc_name cond_path (constrs2: CF.hprel list)
     (defs3a, [])
   else (defs2,link_hpargs2@htrue_hpargs)
   in
-  (constrs2, defs3,[], unk_hpargs4, link_hpargs3,(pre_equivs@unify_equiv_map2@unk_equivs))
+  (constrs2, defs3, unk_hpargs4, link_hpargs3,(pre_equivs@unify_equiv_map2@unk_equivs))
 
 and infer_shapes_core iprog prog proc_name cond_path (constrs0: CF.hprel list) callee_hps sel_hp_rels sel_post_hps hp_rel_unkmap
       unk_hpargs0a link_hpargs need_preprocess detect_dang:
-      (CF.hprel list * CF.hp_rel_def list * (CP.spec_var*CP.exp list * CP.exp list) list *
+      (CF.hprel list * CF.hp_rel_def list  *
           (CP.spec_var * CP.spec_var list) list * (CP.spec_var *CP.spec_var list) list * (CP.spec_var * CP.spec_var) list)=
   (*move to outer func*)
   let prog_vars = [] in (*TODO: improve for hip*)
@@ -1963,13 +1964,13 @@ and infer_shapes_core iprog prog proc_name cond_path (constrs0: CF.hprel list) c
 
 and infer_shapes_divide iprog prog proc_name (constrs0: CF.hprel list) callee_hps sel_hps sel_post_hps
       hp_rel_unkmap unk_hpargs0 link_hpargs0 need_preprocess detect_dang:
-      ((CF.cond_path_type * CF.hp_rel_def list * (CP.spec_var*CP.exp list * CP.exp list) list *
+      ((CF.cond_path_type * CF.hp_rel_def list *
       (CP.spec_var * CP.spec_var list) list * (CP.spec_var * CP.spec_var list) list * (CP.spec_var * CP.spec_var) list ) list) =
   let process_one_path (cond_path, link_hpargs, constrs1)=
-    let constr, hp_defs, c, unk_hpargs2, link_hpargs2, equivs = infer_shapes_core iprog prog proc_name cond_path constrs1
+    let constr, hp_defs, unk_hpargs2, link_hpargs2, equivs = infer_shapes_core iprog prog proc_name cond_path constrs1
       callee_hps sel_hps sel_post_hps hp_rel_unkmap unk_hpargs0 link_hpargs need_preprocess detect_dang
     in
-    (cond_path, hp_defs, c, unk_hpargs2, link_hpargs2, equivs)
+    (cond_path, hp_defs, unk_hpargs2, link_hpargs2, equivs)
   in
   (* let ls_link_hpargs = SAU.dang_partition link_hpargs0 in *)
   (* let ls_constrs_path = SAU.assumption_partition constrs0 in *)
@@ -1982,7 +1983,7 @@ and infer_shapes_divide iprog prog proc_name (constrs0: CF.hprel list) callee_hp
 
 
 and infer_shapes_conquer iprog prog proc_name ls_path_defs_setting sel_hps=
-  let process_path_defs_setting (cond_path, hp_defs,c, unk_hpargs0, link_hpargs0, equivs)=
+  let process_path_defs_setting (cond_path, hp_defs, unk_hpargs0, link_hpargs0, equivs)=
     let hp_defs1,tupled_defs = SAU.partition_tupled hp_defs in
     let cl_sel_hps, defs, tupled_defs2=
       if !Globals.pred_elim_unused_preds then
@@ -2065,7 +2066,7 @@ and infer_shapes_new_x iprog prog proc_name (constrs0: CF.hprel list) sel_hps se
   r
 
 and infer_shapes_x iprog prog proc_name (constrs0: CF.hprel list) sel_hps post_hps hp_rel_unkmap unk_hpargs link_hpargs0 need_preprocess detect_dang:
-      (CF.hprel list * CF.hp_rel_def list* (CP.spec_var*CP.exp list * CP.exp list) list ) =
+      (CF.hprel list * CF.hp_rel_def list) =
   (*move to outer func*)
   (* let callee_hpdefs = *)
   (*   try *)
@@ -2090,7 +2091,7 @@ and infer_shapes_x iprog prog proc_name (constrs0: CF.hprel list) sel_hps post_h
     | [] -> []
     | (_, a)::_ -> a
   in
-  let constr, hp_defs, c, unk_hpargs2, link_hpargs2, equivs = infer_shapes_core iprog prog proc_name cond_path constrs0
+  let constr, hp_defs, unk_hpargs2, link_hpargs2, equivs = infer_shapes_core iprog prog proc_name cond_path constrs0
     callee_hps sel_hps
     all_post_hps hp_rel_unkmap unk_hpargs link_hpargs need_preprocess detect_dang in
   let link_hp_defs = SAC.generate_hp_def_from_link_hps prog cond_path equivs link_hpargs2 in
@@ -2113,13 +2114,13 @@ and infer_shapes_x iprog prog proc_name (constrs0: CF.hprel list) sel_hps post_h
     sel_hp_defs@tupled_defs1@link_hp_defs
   in
   let _ = List.iter (fun hp_def -> rel_def_stk # push hp_def) shown_defs in
-  (constr, hp_defs, c)
+  (constr, hp_defs)
 
 
 let infer_shapes iprog prog proc_name (hp_constrs: CF.hprel list) sel_hp_rels sel_post_hp_rels
       hp_rel_unkmap unk_hpargs link_hpargs need_preprocess detect_dang:
  (* (CF.cond_path_type * CF.hp_rel_def list*(CP.spec_var*CP.exp list * CP.exp list) list) = *)
-  (CF.hprel list * CF.hp_rel_def list*(CP.spec_var*CP.exp list * CP.exp list) list) =
+  (CF.hprel list * CF.hp_rel_def list) =
   let pr0 = pr_list !CP.print_exp in
   let pr1 = pr_list_ln Cprinter.string_of_hprel_short in
   let pr2 = pr_list_ln Cprinter.string_of_hp_rel_def in
@@ -2145,7 +2146,7 @@ let infer_shapes iprog prog proc_name (hp_constrs: CF.hprel list) sel_hp_rels se
       ()
   else ()
   in
-  Debug.no_6 "infer_shapes" pr_id pr1 !CP.print_svl pr4 pr5 pr5a (pr_triple pr1 pr2 pr3)
+  Debug.no_6 "infer_shapes" pr_id pr1 !CP.print_svl pr4 pr5 pr5a (pr_pair pr1 pr2)
       (fun _ _ _ _ _ _ -> infer_shapes_x iprog prog proc_name hp_constrs sel_hp_rels
           sel_post_hp_rels hp_rel_unkmap unk_hpargs link_hpargs
           need_preprocess detect_dang)

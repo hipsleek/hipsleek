@@ -2099,6 +2099,14 @@ let pr_only_lhs_rhs (lhs,rhs) =
 
 let string_of_only_lhs_rhs (e) : string =  poly_string_of_pr  pr_only_lhs_rhs e
 
+let pr_infer_state_short is =
+  fmt_open_box 1;
+  fmt_string (pr_list_ln string_of_hprel_short is.is_constrs);
+  fmt_string (pr_list_ln string_of_hp_rel_def is.is_hp_defs);
+  fmt_close()
+
+let string_of_infer_state_short is: string =  poly_string_of_pr  pr_infer_state_short is
+
 let rec pr_numbered_list_formula_trace_ho (e:(context * (formula*formula_trace)) list) (count:int) f =
   match e with
     | [] -> ()

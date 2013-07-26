@@ -854,21 +854,21 @@ let process_shape_infer pre_hps post_hps=
   let constrs2, sel_hps, sel_post_hps, unk_map, unk_hpargs, link_hpargs=
     shape_infer_pre_process hp_lst_assume pre_hps post_hps
   in
-  let ls_hprel, ls_inferred_hps, dropped_hps =
+  let ls_hprel, ls_inferred_hps =
     if List.length sel_hps> 0 && List.length hp_lst_assume > 0 then
-      let infer_shape_fnc =  if not (!Globals.sa_old) then
+      let infer_shape_fnc =  if not (!Globals.sa_new) then
         Sa2.infer_shapes
-      else Sa2.infer_shapes (* Sa.infer_hps *)
+      else Sa3.infer_shapes (* Sa.infer_hps *)
       in
       infer_shape_fnc iprog !cprog "" constrs2
           sel_hps sel_post_hps unk_map unk_hpargs link_hpargs true false
-    else [],[],[]
+    else [],[]
   in
-  let _ = if not (!Globals.sa_old) then
+  let _ = if not (!Globals.sa_new) then
     begin
-      let rel_defs = if not (!Globals.sa_old) then
+      let rel_defs = if not (!Globals.sa_new) then
         Sa2.rel_def_stk
-      else Sa.rel_def_stk
+      else Sa3.rel_def_stk
       in
       if not(rel_defs# is_empty) then
         print_endline "";
@@ -937,7 +937,7 @@ let process_shape_conquer sel_ids cond_paths=
   let ls_path_link_defs = SAU.pair_dang_constr_path ls_path_defs ls_path_link
     (pr_list_ln Cprinter.string_of_hp_rel_def_short) in
   let ls_path_defs_settings = List.map (fun (path,link_hpargs, defs) ->
-      (path, defs,[], [],link_hpargs,[])) ls_path_link_defs in
+      (path, defs, [],link_hpargs,[])) ls_path_link_defs in
   let defs = Sa2.infer_shapes_conquer iprog !cprog "" ls_path_defs_settings sel_hps in
   let _ =
     begin
@@ -1032,15 +1032,15 @@ let process_shape_infer_prop pre_hps post_hps=
   let constrs2, sel_hps, sel_post_hps, unk_map, unk_hpargs, link_hpargs=
     shape_infer_pre_process hp_lst_assume pre_hps post_hps
   in
-  let ls_hprel, ls_inferred_hps, dropped_hps =
-    let infer_shape_fnc =  if not (!Globals.sa_old) then
+  let ls_hprel, ls_inferred_hps=
+    let infer_shape_fnc =  if not (!Globals.sa_new) then
       Sa2.infer_shapes
-    else Sa2.infer_shapes (* Sa.infer_hps *)
+    else Sa3.infer_shapes (* Sa.infer_hps *)
     in
     infer_shape_fnc iprog !cprog "" hp_lst_assume
         sel_hps sel_post_hps unk_map unk_hpargs link_hpargs false false
   in
-  let _ = if not (!Globals.sa_old) then
+  let _ = if not (!Globals.sa_new) then
     begin
       let rel_defs =  Sa2.rel_def_stk in
       if not(rel_defs# is_empty) then

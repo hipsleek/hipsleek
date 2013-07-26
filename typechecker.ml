@@ -2432,28 +2432,36 @@ let proc_mutual_scc_shape_infer iprog prog scc_procs =
     let scc_hprel_unkmap =  List.fold_left (fun r_map proc -> r_map@proc.Cast.proc_hprel_unkmap) [] scc_procs in
     let scc_sel_hps = List.fold_left (fun r_hps proc -> r_hps@proc.Cast.proc_sel_hps) [] scc_procs in
     let scc_sel_post_hps = List.fold_left (fun r_hps proc -> r_hps@proc.Cast.proc_sel_post_hps) [] scc_procs in
-    let scc_hprel, scc_inferred_hps, scc_dropped_hps =
+    let scc_hprel, scc_inferred_hps =
       if !Globals.sa_en && List.length scc_sel_hps> 0 && List.length scc_hprel_ass > 0 then
         let res =  if not (!Globals.sa_dnc) then
-          Sa2.infer_shapes iprog prog (* proc.proc_name *)"" scc_hprel_ass
-              scc_sel_hps scc_sel_post_hps (Gen.BList.remove_dups_eq
-                  (fun ((hp1,_),_) ((hp2, _),_) ->
-                      (CP.eq_spec_var hp1 hp2 )) scc_hprel_unkmap) [] [] true true
+          if not (!Globals.sa_new) then
+            Sa2.infer_shapes iprog prog (* proc.proc_name *)"" scc_hprel_ass
+            scc_sel_hps scc_sel_post_hps (Gen.BList.remove_dups_eq
+                (fun ((hp1,_),_) ((hp2, _),_) ->
+                    (CP.eq_spec_var hp1 hp2 )) scc_hprel_unkmap) [] [] true true
+          else
+            Sa3.infer_shapes iprog prog (* proc.proc_name *)"" scc_hprel_ass
+            scc_sel_hps scc_sel_post_hps (Gen.BList.remove_dups_eq
+                (fun ((hp1,_),_) ((hp2, _),_) ->
+                    (CP.eq_spec_var hp1 hp2 )) scc_hprel_unkmap) [] [] true true
         else
           let _= Sa2.infer_shapes_new iprog prog (* proc.proc_name *)"" scc_hprel_ass
             scc_sel_hps scc_sel_post_hps (Gen.BList.remove_dups_eq
                 (fun ((hp1,_),_) ((hp2, _),_) ->
                     (CP.eq_spec_var hp1 hp2 )) scc_hprel_unkmap) [] [] true true
-          in ([],[],[])
+          in ([],[])
         in res
-      else [],[],[]
+      else [],[]
     in
     (*update hpdefs for func call*)
     let _ = List.iter (fun proc ->
         let _ = Cast.update_hpdefs_proc prog.Cast.new_proc_decls scc_inferred_hps proc.proc_name in
         ()) scc_procs
     in
-    let rel_defs = Sa2.rel_def_stk in
+    let rel_defs = if not (!Globals.sa_new) then Sa2.rel_def_stk
+    else Sa3.rel_def_stk
+    in
     if not(rel_defs# is_empty) then
       begin
         print_endline "\n*************************************";

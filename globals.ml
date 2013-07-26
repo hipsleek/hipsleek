@@ -617,7 +617,7 @@ let print_heap_pred_decl = ref true
 
 let cond_path_trace = ref false
 
-let sa_old = ref false
+let sa_new = ref false
 
 let sa_dnc = ref false
 

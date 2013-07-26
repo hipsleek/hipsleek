@@ -1051,8 +1051,7 @@ let analize_unk_x prog post_hps constrs total_unk_map unk_hpargs link_hpargs=
      ()
    else ()
    in
-   (new_cs, tot_unk_hpargs, new_map,
-   link_hpargs4, punk_map)
+   (new_cs, tot_unk_hpargs, new_map, link_hpargs4, punk_map)
 
 let analize_unk prog post_hps constrs total_unk_map unk_hpargs link_hpargs =
   let pr1 = pr_list_ln Cprinter.string_of_hprel in
