@@ -3,6 +3,7 @@
 *)
 
 open Globals
+open Wrapper
 open Others
 open Sleekcommons
 open Gen.Basic

@@ -800,7 +800,7 @@ Fatal error: exception Failure("expected cid")
 # swt-4g-318b.slk
 
 why is there a type error here? 
-Can Trung fix?
+Can Trung fix this?
 
 ERROR: at _0:-1_0:-1 
 Message: with 2 convert expected the same cexp types, found different types
@@ -809,6 +809,24 @@ Message: with 2 convert expected the same cexp types, found different types
  at:(Program not linked with -g, cannot print stack backtrace)
 Fatal error: exception Failure("with 2 convert expected the same cexp types, found different types")
 ============================================================
+# swt-4h-addr-lbl.ss (INFO)
+
+Both multi pre/post (4h) and case-spec (4g) are now
+working with addr-lbl.ss with --lea (aggressive labelling);
+running in seconds
+
+!!!  processing primitives "["prelude.ss"]
+Starting Omega...oc
+
+Checking procedure lscan$node~node~node... 
+Procedure lscan$node~node~node SUCCESS
+Stop Omega... 434 invocations 
+1 false contexts at: ( (31,19) )
+
+!!! log(small):(9.406437,1761)
+Total verification time: 6.076379 second(s)
+	Time spent in main process: 3.920245 second(s)
+	Time spent in child processes: 2.156134 second(s)
 ============================================================
 ============================================================
 ============================================================

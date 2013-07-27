@@ -17,27 +17,6 @@ requires cur::tx<a,sent,M1> * prev::tx<b,sent,M2> & cur != a & a=null & b=sent
 ensures prev'::tx<null,sent,union(M1,M2)>  & cur' = sent & prev'!=null; 
 requires cur::tx<a,sent,M1> * prev::tx<b,sent,M2> & cur != a & a=sent & b=null
 ensures prev'::tx<null,sent,union(M1,M2)>  & cur' = sent & prev'!=null; 
-/*
-requires cur::tx<a,sent,M1> * prev::tx<b,sent,M2> 
- case { 
-    a=null ->
-       case { 
-         b=sent & cur!=null ->
-            ensures prev'::tx<null,sent,M3>  & ["": cur' = sent & prev'!=null ; "s": M3=union(M1,M2)]; 
-         b!=sent | cur=null -> 
-            requires false
-            ensures false;
-        }
-    a!=null ->
-       case { 
-         b=null & cur!=sent & a=sent ->
-             ensures prev'::tx<null,sent,M3>  & ["": cur' = sent & prev'!=null ;"s": M3=union(M1,M2)];
-         b!=null | cur=sent | a!=sent -> 
-            requires false
-            ensures false;
-        }
-  }
-*/
 {
 
   node n,tmp;
@@ -57,4 +36,23 @@ requires cur::tx<a,sent,M1> * prev::tx<b,sent,M2>
   }
   lscan(cur,prev,sent);
 }
+/*
+# swt-4h-addr-lbl.ss (INFO)
 
+Both multi pre/post (4h) and case-spec (4g) are now
+working with addr-lbl.ss with --lea (aggressive labelling);
+running in seconds
+
+!!!  processing primitives "["prelude.ss"]
+Starting Omega...oc
+
+Checking procedure lscan$node~node~node... 
+Procedure lscan$node~node~node SUCCESS
+Stop Omega... 434 invocations 
+1 false contexts at: ( (31,19) )
+
+!!! log(small):(9.406437,1761)
+Total verification time: 6.076379 second(s)
+	Time spent in main process: 3.920245 second(s)
+	Time spent in child processes: 2.156134 second(s)
+*/

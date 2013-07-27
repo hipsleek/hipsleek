@@ -1,5 +1,6 @@
 module DD = Debug
 open Globals
+open Wrapper
 open Others
 open Stat_global
 open Global_var

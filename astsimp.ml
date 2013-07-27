@@ -1,5 +1,6 @@
 (* Created 21 Feb 2006 Simplify Iast to Cast *)
 open Globals
+open Wrapper
 open Others
 open Exc.GTable 
 open Printf
@@ -1108,10 +1109,10 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
                 (* Debug.info_hprint (add_str "disj_form" string_of_bool) disj_form no_pos; *)
                 if disj_form then
                   (vdef.C.view_user_inv <- sf; vdef.C.view_xpure_flag <- false);
-	        Debug.info_pprint ("Using a simpler inv for xpure0 of "^vdef.C.view_name) pos;
-                Debug.info_hprint (add_str "inv(xpure0)" pr) vdef.C.view_user_inv pos;
+	        Debug.tinfo_pprint ("Using a simpler inv for xpure0 of "^vdef.C.view_name) pos;
+                Debug.tinfo_hprint (add_str "inv(xpure0)" pr) vdef.C.view_user_inv pos;
 
-	        Debug.info_hprint (add_str "inv(xpure1)" pr) vdef.C.view_x_formula pos
+	        Debug.tinfo_hprint (add_str "inv(xpure1)" pr) vdef.C.view_x_formula pos
               end
           end
         else report_error pos ("view defn for "^vn^" does not entail supplied invariant\n") 

@@ -900,36 +900,50 @@ let map_lbl_lst_to_eset lst =
         (build_eset_of_conj_formula f, (l, f))
   ) lst 
 
-let extract_eset_of_lbl_lst lst =
-   let lst = norm_lbl_lst lst in
-   let ls = map_lbl_lst_to_eset lst in
-   let eq_all = join_esets (List.map fst ls) in
-   let es = EMapSV.get_elems  eq_all in
-   let n_lst = List.map 
-   (fun (em_f,(l,f)) ->
-   let vs = CP.fv f in
-   Debug.tinfo_hprint (add_str "vars_from_fv" string_of_spec_var_list) vs no_pos;
-   let vs = List.filter (fun v -> not(is_const v)) vs in
-   let ws = Gen.BList.difference_eq CP.eq_spec_var es vs in
-   let r = mk_exists_eset eq_all ws in
-   let (flag,r) = formula_of_filtered_eset r em_f no_pos in
-   if flag then
+let merge_in_rhs lhs rhs =
+  let rec aux lhs rhs =
+    match lhs,rhs with
+      | [],rhs -> []
+      | lhs,[] -> List.map (fun (a,b) -> (a,b,[])) lhs
+      | (eq,((l1,f1) as n1))::lhs2,(l2,f2)::rhs2 ->
+            let n = Label_only.Lab_List.compare l1 l2 in
+            if n<0 then (eq,n1,[])::(aux lhs2 rhs)
+            else if n>0 then aux lhs rhs2
+            else (eq,n1,(CP.fv f2))::(aux lhs2 rhs)
+  in aux lhs rhs
+
+let extract_eset_of_lbl_lst lst rhs =
+  let lst = norm_lbl_lst lst in
+  let rhs = norm_lbl_lst rhs in
+  let ls = map_lbl_lst_to_eset lst in
+  let ls2 = merge_in_rhs ls rhs in
+  let eq_all = join_esets (List.map fst ls) in
+  let es = EMapSV.get_elems  eq_all in
+  let n_lst = List.map 
+    (fun (em_f,(l,f),rhs_vs) ->
+        let vs = (CP.fv f)@rhs_vs in
+        Debug.tinfo_hprint (add_str "vars_from_fv" string_of_spec_var_list) vs no_pos;
+        let vs = List.filter (fun v -> not(is_const v)) vs in
+        let ws = Gen.BList.difference_eq CP.eq_spec_var es vs in
+        let r = mk_exists_eset eq_all ws in
+        let (flag,r) = formula_of_filtered_eset r em_f no_pos in
+        if flag then
           begin
             Debug.tinfo_hprint (add_str "\n f" !print_formula) f no_pos;
             Debug.tinfo_hprint (add_str "eq_to_add" !print_formula) r no_pos
           end;
         let nf = mkAnd r f no_pos in
         (l,nf)
-  ) ls
+    ) ls2
   in n_lst
 (* let _ = Debug.info_hprint (add_str "mkE eqall" EMapSV.string_of) eq_all no_pos in *)
 (* let _ = Debug.info_hprint (add_str "mkE ws" string_of_spec_var_list) ws no_pos in *)
 (* let r = formula_of_eset r no_pos in *)
 
-let extract_eset_of_lbl_lst lst =
+let extract_eset_of_lbl_lst lst rhs =
   let pr = pr_list (pr_pair Label_only.Lab_List.string_of !print_formula) in
   (* let pr2 = pr_list (!print_formula) in *)
-  Debug.no_1 "extract_eset_of_lbl_lst"  pr pr  extract_eset_of_lbl_lst lst  
+  Debug.no_1 "extract_eset_of_lbl_lst"  pr pr  (fun _ -> extract_eset_of_lbl_lst lst rhs) lst  
 
 
 let extract_eq_clauses_formula f = 
@@ -998,7 +1012,7 @@ let sat_label_filter fct f =
                         in
                         let b = 
                           if !Globals.label_aggressive_sat
-                          then extract_eset_of_lbl_lst b
+                          then extract_eset_of_lbl_lst b []
                             (* extract_eq_clauses_lbl_lst b *)
                           else b 
                         in
@@ -1036,7 +1050,7 @@ let imply_label_filter ante conseq =
 	  (*   (if fc ba && fc bc then () else print_string s; *)
           let ba = 
             if !Globals.label_aggressive_imply
-            then extract_eset_of_lbl_lst ba
+            then extract_eset_of_lbl_lst ba bc
             else ba
           in
 	  List.map (fun (l, c)-> 
