@@ -26,7 +26,7 @@ type proof_res =
 
 
 type proof_log = {
-    log_id : string; (* TODO: Should change to integer for performance *)
+    log_id : int; (* TODO: Should change to integer for performance *)
     (* log_other_properties : string list; (\* TODO: Should change to integer for performance *\) *)
     log_loc : loc;
     log_sleek_no : int;
@@ -126,7 +126,7 @@ let string_of_log_res lt r =
 
 let pr_proof_log_entry e =
   fmt_open_box 1;
-  fmt_string ("\n id: " ^ (e.log_id)^"<:"^(string_of_int e.log_sleek_no));
+  fmt_string ("\n id: " ^ (string_of_int e.log_id)^"<:"^(string_of_int e.log_sleek_no));
   if e.log_cache then fmt_string ("; prover : CACHED ")
   else fmt_string ("; prover: " ^ (string_of_prover e.log_prover));
   let x = if e.log_timeout then "(TIMEOUT)" else "" in
@@ -195,9 +195,9 @@ object (self)
   val mutable sleek_no = -1
   method set_sleek_num no = sleek_no <- no
   method get_sleek_num = sleek_no 
-  method get_proof_str = 
+  method get_proof_num = 
     match last_proof with
-      | None -> "0"
+      | None -> 0
       | Some n -> n.log_id
   method set entry =
     last_is_sleek <- false;
@@ -278,8 +278,8 @@ let current_hprel_ass_stk : CF.hprel  Gen.stack_pr
 (*   r *)
 
 (* let proof_log_list  = ref [] (\*For printing to text file with the original order of proof execution*\) *)
-let proof_log_stk : string  Gen.stack_filter 
-      = new Gen.stack_filter pr_id (==) (fun e -> true)
+let proof_log_stk : int  Gen.stack_filter 
+      = new Gen.stack_filter string_of_int (==) (fun e -> true)
 (* not(Others.proving_kind # top_no_exc == PK_Trans_Proc)) *)
 
 let proof_gt5_log_list = ref [] (*Logging proofs require more than 5 secs to be proved*)
@@ -384,7 +384,8 @@ let add_proof_logging timeout_flag (cache_status:bool) old_no pno tp ptype time 
 	  log_cache = cache_status;
 	  log_res = res; } in
       let _ = last_cmd # set plog in
-      let _ = Hashtbl.add proof_log_tbl pno plog in
+      let pno_str = string_of_int pno in
+      let _ = Hashtbl.add proof_log_tbl pno_str plog in
       let _ =  Debug.devel_pprint (string_of_proof_log_entry plog) no_pos in
       let _ = try
 	(* let _= BatString.find (Sys.argv.(0)) "hip" in *)
@@ -446,7 +447,7 @@ let proof_log_to_text_file fname (src_files) =
       (* let _ = proof_log_stk # string_of_reverse in *)
       let _= List.map 
         (fun ix->
-            let log=Hashtbl.find proof_log_tbl ix in
+            let log=Hashtbl.find proof_log_tbl (string_of_int ix) in
             if log.log_proving_kind != PK_Trans_Proc then
               fprintf oc "%s" ((* helper *) string_of_proof_log_entry log)) lgs in
       let tstoplog = Gen.Profiling.get_time () in

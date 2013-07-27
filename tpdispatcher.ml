@@ -1460,7 +1460,8 @@ let tp_is_sat (f:CP.formula) (old_sat_no :string) =
   (* let f = CP.elim_idents f in *)
   (* this reduces x>=x to true; x>x to false *)
   proof_no := !proof_no+1 ;
-  let sat_no = (string_of_int !proof_no) in
+  let sat_num = !proof_no in
+  let sat_no = (string_of_int sat_num) in
   Debug.devel_zprint (lazy ("SAT #" ^ sat_no)) no_pos;
   Debug.devel_zprint (lazy (!print_pure f)) no_pos;
   (* let tstart = Gen.Profiling.get_time () in		 *)
@@ -1469,7 +1470,7 @@ let tp_is_sat (f:CP.formula) (old_sat_no :string) =
   let _ = Log.last_proof_command # set cmd in
   let logger fr tt timeout = 
     let tp = (string_of_prover !pure_tp) in
-    let _ = add_proof_logging timeout !cache_status old_sat_no sat_no tp  cmd tt
+    let _ = add_proof_logging timeout !cache_status old_sat_no sat_num tp  cmd tt
       (match fr with Some res -> PR_BOOL res | None -> PR_exception) in
     (Others.last_tp_used # string_of,sat_no)
   in
@@ -1502,7 +1503,8 @@ let tp_is_sat f sat_no =
 
 let simplify (f : CP.formula) : CP.formula =
   proof_no := !proof_no + 1;
-  let simpl_no = (string_of_int !proof_no) in
+  let simpl_num = !proof_no in
+  let simpl_no = (string_of_int simpl_num) in
   if !Globals.no_simpl then f else
     if !perm=Dperm && CP.has_tscons f<>CP.No_cons then f 
     else 
@@ -1591,7 +1593,7 @@ let simplify (f : CP.formula) : CP.formula =
               in
               let logger fr tt timeout = 
                 let tp = (string_of_prover !pure_tp) in
-                let _ = add_proof_logging timeout !cache_status simpl_no simpl_no tp cmd tt 
+                let _ = add_proof_logging timeout !cache_status simpl_no simpl_num tp cmd tt 
                   (match fr with Some res -> PR_FORMULA res | None -> PR_exception) in
                 (tp,simpl_no)
               in
@@ -1605,7 +1607,7 @@ let simplify (f : CP.formula) : CP.formula =
               (* Why start/stop prver when interactive? *)
               res
           with | _ -> 
-              let _= add_proof_logging false !cache_status simpl_no simpl_no (string_of_prover !pure_tp) cmd 
+              let _= add_proof_logging false !cache_status simpl_no simpl_num (string_of_prover !pure_tp) cmd 
                 (0.0) (PR_exception) in
               f
         end
@@ -2118,7 +2120,8 @@ let tp_imply ante conseq imp_no timeout process =
 
 let tp_imply ante conseq old_imp_no timeout process =	
   proof_no := !proof_no + 1 ;
-  let imp_no = (string_of_int !proof_no) in
+  let imp_num = !proof_no in
+  let imp_no = (string_of_int imp_num) in
   let imp_no = 
     if !Globals.imply_top_flag then imp_no^":"^old_imp_no 
     else imp_no
@@ -2131,7 +2134,7 @@ let tp_imply ante conseq old_imp_no timeout process =
   let fn () = tp_imply ante conseq imp_no timeout process in
   let logger fr tt timeout = 
     let tp = (string_of_prover !pure_tp) in
-    let _ =  add_proof_logging timeout !cache_status old_imp_no imp_no (string_of_prover !pure_tp) cmd tt 
+    let _ =  add_proof_logging timeout !cache_status old_imp_no imp_num (string_of_prover !pure_tp) cmd tt 
     (match fr with Some b -> PR_BOOL b | None -> PR_exception) in
     (Others.last_tp_used # string_of,imp_no)
   in
@@ -2376,14 +2379,14 @@ let imply_timeout_helper ante conseq process ante_inner conseq_inner imp_no time
    
 let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (old_imp_no : string) timeout process
       : bool*(formula_label option * formula_label option )list * (formula_label option) = (*result+successfull matches+ possible fail*)
-  let old_imp_no = 
+  let (imp_num,old_imp_no) = 
      if !Globals.imply_top_flag 
      then
      begin
        proof_no := !proof_no + 1 ;
-       (string_of_int !proof_no)
+       (!proof_no,string_of_int !proof_no)
      end
-     else old_imp_no
+     else (0,old_imp_no)
   in
   (* let count_inner = ref 0 in *)
   let imp_no = old_imp_no in
@@ -2444,7 +2447,7 @@ let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (old_imp_no : stri
   (* let conseq0 = CP.join_conjunctions !conseq_inner in *)
   (* let _ = Log.last_cmd # dumping imp_no in *)
   if !Globals.imply_top_flag then
-    add_proof_logging false false old_imp_no imp_no "funny" cmd (* (PT_IMPLY (ante0, conseq0)) *) (Timelog.logtime # get_last_time) (PR_BOOL (match final_res with | r,_,_ -> r));
+    add_proof_logging false false old_imp_no imp_num "funny" cmd (* (PT_IMPLY (ante0, conseq0)) *) (Timelog.logtime # get_last_time) (PR_BOOL (match final_res with | r,_,_ -> r));
   final_res
 ;;
 
