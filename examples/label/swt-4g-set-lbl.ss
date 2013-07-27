@@ -29,7 +29,7 @@ requires cur::tx<a,sent,M1> * prev::tx<b,sent,M2>
        case { 
          b=sent & cur!=null ->
             ensures prev'::tx<null,sent,M3>  & ["": cur' = sent 
-            //& prev'!=null
+            & prev'!=null
             ; "s": M3=union(M1,M2)]; 
          b!=sent | cur=null -> 
             requires false
@@ -39,7 +39,7 @@ requires cur::tx<a,sent,M1> * prev::tx<b,sent,M2>
        case { 
          b=null & cur!=sent & a=sent ->
              ensures prev'::tx<null,sent,M3>  & ["": cur' = sent 
-             //& prev'!=null 
+             & prev'!=null 
              ;"s": M3=union(M1,M2)];
          b!=null | cur=sent | a!=sent -> 
             requires false

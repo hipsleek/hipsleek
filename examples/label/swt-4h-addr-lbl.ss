@@ -4,14 +4,14 @@ data node {
  node right;
 }
 
-tx<"":g,"":s,"s":M> == true&["":self = g & s!=null & (g=null | g=s) ; "s": M={}]
+tx<g,s,"s":M> == true&["":self = g & s!=null & (g=null | g=s) ; "s": M={}]
    or self::node<v,l,r> * l::tx<g,s,M1> * r::tx<null,s,M2> & ["": self != g & self != s ;"s": M=union({self},M1,M2)]
    or self::node<v,l,r> * l::tx<null,s,M1> * r::tx<g,s,M2> & ["": self != g & self != s ;"s": M=union({self},M1,M2)]
 inv true&["": s!=null & (g=null & self!=s | g=s & self!=null); 
        "s":(self=g & M={} | self!=g & M!={})];
 
 
-void lscan(ref node cur, ref node prev, node sentinel)
+void lscan(ref node cur, ref node prev, node sent)
 
 requires cur::tx<a,sent,M1> * prev::tx<b,sent,M2> & cur != a & a=null & b=sent 
 ensures prev'::tx<null,sent,union(M1,M2)>  & cur' = sent & prev'!=null; 
@@ -49,12 +49,12 @@ requires cur::tx<a,sent,M1> * prev::tx<b,sent,M2>
   // move forward
   prev = cur;
   cur = n;
-  if (cur == sentinel) return;
+  if (cur == sent) return;
   if (cur == null) {
       // change direction;
       cur = prev;
       prev = null;
   }
-  lscan(cur,prev,sentinel);
+  lscan(cur,prev,sent);
 }
 

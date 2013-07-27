@@ -377,7 +377,6 @@ schor-waitte tree (g-version) now works with the aggressive
 option but there are some timeouts below to investigate
 for performance improvements:
 
-
 Checking procedure lscan$node~node~node... 
 Procedure lscan$node~node~node SUCCESS
 Stop Omega... 368 invocations 
@@ -781,6 +780,21 @@ Total verification time: 13.240826 second(s)
 	Time spent in child processes: 13.060815 second(s)
 
 ============================================================
+# swt-4g-310-a.slk
+
+Why do we have parser error for below:
+
+    // why below gives syntax error 
+    (null notin M) & 
+    (self=g & M={} | self!=g & M!={} & self in M)
+
+ERROR: at swt-4g-310-a.slk_18:5_18:17 
+Message: expected cid
+ File "swt-4g-310-a.slk", line 18, characters 16-17
+ error: Failure("expected cid")
+ at:(Program not linked with -g, cannot print stack backtrace)
+Fatal error: exception Failure("expected cid")
+
 ============================================================
 ============================================================
 ============================================================
