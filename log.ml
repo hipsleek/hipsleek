@@ -193,8 +193,12 @@ object (self)
   val mutable last_sleek_fail = None
   val mutable last_is_sleek = false
   val mutable sleek_no = -1
-  method set_mum_sleek no = sleek_no <- no
-  method get_num_sleek = sleek_no 
+  method set_sleek_num no = sleek_no <- no
+  method get_sleek_num = sleek_no 
+  method get_proof_str = 
+    match last_proof with
+      | None -> "0"
+      | Some n -> n.log_id
   method set entry =
     last_is_sleek <- false;
     let cmd = entry.log_type in
