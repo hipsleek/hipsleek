@@ -119,45 +119,6 @@ and formula =
   | Exists of formula_exists
 
 
-(*(*intermediary structure for heap predicate inference, stores a constraint on heap predicates*)
-(*    used in the context fields: es_infer_hp_rel and returned by various methods in particular*)
-(*	check_specs_infer*)*)
-(* and hprel= { *)
-(*     hprel_kind: CP.rel_cat; *)
-(*     unk_svl: CP.spec_var list; (\* unknown and dangling *\) *)
-(*     unk_hps:(CP.spec_var*CP.spec_var list) list; (\* not needed *\) *)
-(*     predef_svl: CP.spec_var list; (\* not needed *\) *)
-(*     hprel_lhs: formula; *)
-(*     hprel_guard: h_formula option; *)
-(*     (\*capture the ctx when we want to capture relations *)
-(*       of more than one field. ususally it is heap nodes *)
-(*       guard is used in unfolding pre-preds *)
-(*     *\) *)
-(*     hprel_rhs: formula; *)
-(*     hprel_path: cond_path_type; *)
-(*     hprel_proving_kind: Others.proving_kind; *)
-(* } *)
-
-
-(*seems to be finished inferred relations, used in the rel_def_stk structure*)
-(*although that stack seems more internal to the inference than anything else, *)
- (*the results are never picked from the stack, rather they are returned by the inference method*)
-(* and hprel_def= { *)
-(*     hprel_def_kind: CP.rel_cat; *)
-(*     hprel_def_hrel: h_formula; (\* LHS *\) *)
-(*     hprel_def_guard:  h_formula option; *)
-(*     hprel_def_body: (cond_path_type * formula option) list; (\* RHS *\) *)
-(*     hprel_def_body_lib: formula option; (\* reuse of existing pred *\) *)
-(*     (\* hprel_def_path: cond_path_type; *\) *)
-(* } *)
-
-(*temporal: name * hrel * guard option * definition body*)
-(*actually used to store the constraints on heap predicates inference*)
-(* and hp_rel_def = CP.rel_cat * h_formula * (h_formula option) * formula *)
-
-(* and infer_rel_type =  (CP.rel_cat * CP.formula * CP.formula) *)
-
-
 and list_formula = formula list
 
 and formula_base = {  formula_base_heap : h_formula;
@@ -367,29 +328,6 @@ let mkETrue flowt pos = EBase({
 	formula_struc_continuation = None;
 	formula_struc_pos = pos})
 
-(* let mkHprel knd u_svl u_hps pd_svl hprel_l hprel_g hprel_r hprel_p= *)
-(*  {  hprel_kind = knd; *)
-(*     unk_svl = u_svl; *)
-(*     unk_hps = u_hps ; *)
-(*     predef_svl = pd_svl; *)
-(*     hprel_lhs = hprel_l; *)
-(*     hprel_guard = hprel_g; *)
-(*     hprel_rhs = hprel_r; *)
-(*     hprel_path = hprel_p; *)
-(*     hprel_proving_kind = Others.find_impt_proving_kind (); *)
-(*  } *)
-
-(* let mkHprel_1 knd hprel_l hprel_g hprel_r hprel_p = *)
-(*   mkHprel knd [] [] [] hprel_l hprel_g hprel_r hprel_p *)
-
-(*  let mk_hprel_def kind hprel guard_opt path_opf opflib= *)
-(*    { *)
-(*        hprel_def_kind = kind; *)
-(*        hprel_def_hrel = hprel; *)
-(*        hprel_def_guard = guard_opt; *)
-(*        hprel_def_body =  path_opf; *)
-(*        hprel_def_body_lib = opflib; *)
-(*    } *)
 
 let isAnyConstFalse f = match f with
   | Exists ({formula_exists_heap = h;
