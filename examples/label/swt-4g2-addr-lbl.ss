@@ -18,21 +18,21 @@ requires cur::tx<a,sent,M1> * prev::tx<b,sent,M2>
  case { 
     a=null ->
        case { 
-         b=sent & cur!=null ->
-            ensures prev'::tx<null,sent,M3>  & ["": cur' = sent 
-            & prev'!=null 
-            ; "s": M3=union(M1,M2)]; 
-         b!=sent | cur=null -> 
+         b=sent ->
+            requires cur!=null
+            ensures prev'::tx<null,sent,union(M1,M2)>  & ["": cur' = sent 
+            & prev'!=null ]; 
+         b!=sent -> 
             requires false
             ensures false;
         }
     a!=null ->
        case { 
-         b=null & cur!=sent & a=sent ->
-             ensures prev'::tx<null,sent,M3>  & ["": cur' = sent 
-               & prev'!=null 
-              ;"s": M3=union(M1,M2)];
-         b!=null | cur=sent | a!=sent -> 
+         b=null & a=sent ->
+             requires cur!=sent
+             ensures prev'::tx<null,sent,union(M1,M2)>  & ["": cur' = sent 
+               & prev'!=null ];
+         b!=null | a!=sent -> 
             requires false
             ensures false;
         }

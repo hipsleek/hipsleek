@@ -797,6 +797,17 @@ Message: expected cid
 Fatal error: exception Failure("expected cid")
 
 ============================================================
+# swt-4g-318b.slk
+
+why is there a type error here? 
+Can Trung fix?
+
+ERROR: at _0:-1_0:-1 
+Message: with 2 convert expected the same cexp types, found different types
+ File "swt-4g-318b.slk", line 14, characters 51-52
+ error: Failure("with 2 convert expected the same cexp types, found different types")
+ at:(Program not linked with -g, cannot print stack backtrace)
+Fatal error: exception Failure("with 2 convert expected the same cexp types, found different types")
 ============================================================
 ============================================================
 ============================================================
