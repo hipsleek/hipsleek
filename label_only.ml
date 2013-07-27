@@ -25,9 +25,10 @@ struct
   type a = string
   type t = string list
   let unlabelled = []
-  let is_unlabelled l = (l==[])
-  let is_top_label l = List.exists (fun c-> c="") l
-  let is_common l = (is_unlabelled l) or (is_top_label l)
+  (* let is_top_label l = List.for_all (fun c-> c="") l *)
+  let is_common l = (l==[]) or (List.for_all (fun c-> c="") l)
+  let is_unlabelled l = is_common l
+  let has_common l = (is_unlabelled l) or (List.exists (fun c-> c="") l)
   let string_of x = 
     if x=[] then "\"\""
     else pr_list_no_brk pr_string x
@@ -59,7 +60,7 @@ struct
             else overlap xs ys1
 
   let is_fully_compatible xs ys =
-    if (is_common xs) && (is_common ys) then true
+    if (has_common xs) && (has_common ys) then true
     else overlap xs ys
   
   let is_fully_compatible xs ys =
@@ -73,8 +74,9 @@ struct
     else overlap xs ys
 
   let is_part_compatible xs ys =
-    if (is_unlabelled xs)||(is_top_label xs) then true
-    else overlap xs ys
+    is_compatible xs ys
+    (* if (is_unlabelled xs)  then true *)
+    (* else overlap xs ys *)
 
   let is_part_compatible xs ys = 
     let pr = pr_list pr_id  in
@@ -99,18 +101,25 @@ struct
 
   (* assumes that xs and ys are normalized *)
   (* returns 0 if two labels are considered identical *)
-  let rec compare_x xs ys =
-    match xs,ys with
-      | [],[] -> 0
-      | [],y::_ -> -1
-      | x::_,[] -> 1
-      | x::xs1,y::ys1 -> 
-            let v = String.compare x y in
-            if v==0 then compare_x xs1 ys1
-            else v
+  let compare xs ys =
+    let n1=List.length xs in
+    let n2=List.length ys in
+    let rec aux xs ys =
+      match xs,ys with
+        | [],[] -> 0
+        | [],y::_ -> -1
+        | x::_,[] -> 1
+        | x::xs1,y::ys1 -> 
+              let v = String.compare x y in
+              if v==0 then aux xs1 ys1
+              else v
+    in if n1<n2 then -1
+    else if n1>n2 then 1
+    else aux xs ys
+
   let compare xs ys = 
 	let pr = pr_list pr_id  in
-	Debug.no_2 "Label_compare" pr pr string_of_int compare_x xs ys 
+	Debug.no_2 "Label_compare" pr pr string_of_int compare xs ys 
   (* assumes that xs and ys are normalized *)
   (* combine two labels that are considered identical *)
   (* let comb_identical xs ys = xs *)

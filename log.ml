@@ -255,7 +255,9 @@ let last_cmd = new last_commands
 
 let sleek_counter= ref 0
 
-(* how is this hash_table used? *)
+(* this part is not properly maintained *)
+(* to create a hash_table from proof_stk *)
+(* also to read a hastbl from file *)
 let proof_log_tbl : (string, proof_log) Hashtbl.t = Hashtbl.create 700
 
 let add_proof_tbl pno plog =
@@ -282,11 +284,15 @@ let current_hprel_ass_stk : CF.hprel  Gen.stack_pr
 (*   r *)
 
 (* let proof_log_list  = ref [] (\*For printing to text file with the original order of proof execution*\) *)
-let proof_log_stk : int  Gen.stack_filter 
-      = new Gen.stack_filter string_of_int (==) (fun e -> true)
+let proof_log_stk : proof_log  Gen.stack_filter 
+      = new Gen.stack_filter string_of_proof_log_entry (fun e1 e2 -> e1.log_id==e2.log_id) (fun e -> true)
+(* 	if (proving_kind # string_of)<>"TRANS_PROC" then *)
+(* true) *)
+(*     log_proving_kind : Others.proving_kind; *)
+
 (* not(Others.proving_kind # top_no_exc == PK_Trans_Proc)) *)
 
-let proof_gt5_log_list = ref [] (*Logging proofs require more than 5 secs to be proved*)
+(* let proof_gt5_log_list = ref [] (\*Logging proofs require more than 5 secs to be proved*\) *)
 
 (* let update_sleek_proving_kind k= let _ = sleek_proving_kind:= k in () *)
 
@@ -388,28 +394,29 @@ let add_proof_logging timeout_flag (cache_status:bool) old_no pno tp ptype time 
 	  log_cache = cache_status;
 	  log_res = res; } in
       let _ = last_cmd # set plog in
+      proof_log_stk # push plog;
       let pno_str = string_of_int pno in
-      let _ = add_proof_tbl pno_str plog in
+      (* let _ = add_proof_tbl pno_str plog in *)
       let _ =  Debug.devel_pprint (string_of_proof_log_entry plog) no_pos in
-      let _ = try
-	(* let _= BatString.find (Sys.argv.(0)) "hip" in *)
-	if((!Globals.proof_logging_txt (* || !Globals.sleek_logging_txt *)) && ((proving_kind # string_of)<>"TRANS_PROC")) then
-	  begin 
-	    proof_log_stk # push pno;
-	  end		
-      with _->
-	  if(!Globals.proof_logging_txt) then
-	    try
-	      let temp=(proving_kind # string_of) in
-	      let _ =
-                if !Globals.log_filter
-                then BatString.find temp "SLEEK_ENT"
-                else 0 in
-	      begin 
-		proof_log_stk # push pno;
-	      end		 	
-	    with _->()	
-      in
+      (* let _ = try *)
+      (*   (\* let _= BatString.find (Sys.argv.(0)) "hip" in *\) *)
+      (*   if (proving_kind # string_of)<>"TRANS_PROC" then *)
+      (*     begin  *)
+      (*       proof_log_stk # push plog; *)
+      (*     end		 *)
+      (* with _-> *)
+      (*     if(!Globals.proof_logging_txt) then *)
+      (*       try *)
+      (*         let temp=(proving_kind # string_of) in *)
+      (*         let _ = *)
+      (*           if !Globals.log_filter *)
+      (*           then BatString.find temp "SLEEK_ENT" *)
+      (*           else 0 in *)
+      (*         begin  *)
+      (*   	proof_log_stk # push pno; *)
+      (*         end		 	 *)
+      (*       with _->()	 *)
+      (* in *)
       let tstoplog = Gen.Profiling.get_time () in
       let _= Globals.proof_logging_time := !Globals.proof_logging_time +. (tstoplog -. tstartlog) in ()
 	                                                                                                 (* let _=print_endline ("log time: "^(string_of_float (tstoplog))^" and "^(string_of_float (tstartlog))) in ()	  *)
@@ -450,8 +457,8 @@ let proof_log_to_text_file fname (src_files) =
       (*            |PR_FORMULA f -> string_of_pure_formula f)^"\n" in *)
       (* let _ = proof_log_stk # string_of_reverse in *)
       let _= List.map 
-        (fun ix->
-            let log=Hashtbl.find proof_log_tbl (string_of_int ix) in
+        (fun log ->
+            (* let log=Hashtbl.find proof_log_tbl (string_of_int ix) in *)
             if log.log_proving_kind != PK_Trans_Proc then
               fprintf oc "%s" ((* helper *) string_of_proof_log_entry log)) lgs in
       let tstoplog = Gen.Profiling.get_time () in
@@ -459,6 +466,9 @@ let proof_log_to_text_file fname (src_files) =
       close_out oc
     end
   else ()	
+
+let proof_log_to_text_file fname (src_files) =
+  Debug.no_1 "proof_log_to_text_file" pr_id pr_none (fun _ -> proof_log_to_text_file fname src_files) fname
 
 (* let z3_proofs_list_to_file fz3name (src_files) = *)
 (*   if !Globals.proof_logging_txt || !Globals.sleek_logging_txt then *)
@@ -501,9 +511,10 @@ let wrap_calculate_time exec_func src_file args =
   let _ = exec_func args in
   let tstoplog = Gen.Profiling.get_time () in 
   let period = (tstoplog -. tstartlog) in
-  if (period> 0.7) then
-    proof_gt5_log_list :=  
-	(!proof_gt5_log_list@[(Globals.norm_file_name (List.hd src_file))^"-check-entail-num-"^string_of_int !sleek_counter^"--Time--"^string_of_float (period)^"\n"])
+  ()
+  (* if (period> 0.7) then *)
+  (*   proof_gt5_log_list :=   *)
+  (*       (!proof_gt5_log_list@[(Globals.norm_file_name (List.hd src_file))^"-check-entail-num-"^string_of_int !sleek_counter^"--Time--"^string_of_float (period)^"\n"]) *)
   (* else exec_func args *)
 	
 (* let sleek_z3_proofs_list_to_file source_files =                                                    *)

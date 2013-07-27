@@ -107,8 +107,13 @@ object (self)
     if not(big==[]) then Debug.info_hprint (add_str ("log(big)(>0.5s)("^s_big^")") (pr_pair string_of_float prL)) (b,big) no_pos;
     if not(bigger==[]) then Debug.info_hprint (add_str ("\n log(bigger)(>4s)("^s_bigger^")") (pr_pair string_of_float prL2)) (bb,bigger) no_pos;
     ()
+
+  (* method dump =  *)
+  (*   Debug.no_1 "dump" pr_none pr_none (fun _ -> self # dump) () *)
+
   method get_last_time =
     last_time
+
   method get_last_timeout = 
     last_timeout_flag
   method get_timeout () =
