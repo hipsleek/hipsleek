@@ -705,9 +705,9 @@ let enable_constraint_based_filtering = ref false
 
 let elim_exists_ff = ref true
 
-let allow_imm = ref true (*imm will delay checking guard conditions*)
+let allow_imm = ref true (*imm will delglobalsay checking guard conditions*)
 
-let allow_field_ann = ref false
+let allow_field_ann = ref true
 
 let allow_mem = ref true
 
