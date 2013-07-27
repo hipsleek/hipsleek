@@ -24,6 +24,8 @@ error at: ../../modular_examples/selection-modular.ss selection_sort
 error at: ../../modular_examples/qsort-modular.ss append_bll
 error at: ../../modular_examples/qsort-modular.ss partition
 error at: ../../modular_examples/qsort-modular.ss qsort
+
+# temporarily added --lda to disable aggressive labels
 ====================================================================
 ====================================================================
 ====================================================================

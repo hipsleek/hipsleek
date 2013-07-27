@@ -429,15 +429,15 @@ let common_arguments = [
   
   (* Proof Logging *)
   ("--en-logging-only", Arg.Set Globals.proof_logging, "Enable proof loggingonly");
-  ("--en-logging", Arg.Unit (fun _ ->
-      Globals.proof_logging_txt:=true;Globals.proof_logging:=true ), "Enable proof logging with text file");
+  ("--en-prf-logging", Arg.Unit (fun _ ->
+      Globals.proof_logging_txt:=true ), "Enable proof logging with text file");
   ("--epl", Arg.Unit (fun _ ->
-      Globals.proof_logging_txt:=true;Globals.proof_logging:=true ), "Shorthand for --en-logging");
+      Globals.proof_logging_txt:=true ), "Shorthand for --en-logging");
   ("--en-slk-logging", Arg.Unit (fun _ ->
-      Globals.proof_logging_txt:=true;Globals.proof_logging:=true; 
+      Globals.proof_logging_txt:=true; 
       Globals.sleek_logging_txt:=true), "Enable sleek and proof logging with text file");
   ("--esl", Arg.Unit (fun _ ->
-      Globals.proof_logging_txt:=true;Globals.proof_logging:=true; 
+      Globals.proof_logging_txt:=true; 
       Globals.sleek_logging_txt:=true), "Shorthand for --en-slk-logging");
   (* abduce pre from post *)
   ("--abdfpost", Arg.Set Globals.do_abd_from_post, "Enable abduction from post-condition");
