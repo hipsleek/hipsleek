@@ -1,0 +1,45 @@
+data node {
+ int mark;
+ node left;
+ node right;
+}.
+
+pred tx<g,s,"s":M> == true&["":self = g & s!=null & (g=null | g=s) ; "s": M={}]
+   or self::node<v,l,r> * l::tx<g,s,M1> * r::tx<null,s,M2> & ["": self != g & self != s ;"s": M=union({self},M1,M2)]
+   or self::node<v,l,r> * l::tx<null,s,M1> * r::tx<g,s,M2> & ["": self != g & self != s ;"s": M=union({self},M1,M2)]
+inv true&["": s!=null & (g=null & self!=s | g=s & self!=null); "","s":(self=g & M={} | self!=g & M!={})].
+
+/*
+id: 189; caller: []; line: 19; classic: false; kind: [POST,
+Check_Specs]; hec_num: 4; evars: [sent_1932,flted_19_1933,M3_1934]; infer_vars: []; c_heap: 
+*/
+
+checkentail 
+prev::tx<b,sent_1143,M2>@M * r_1141::tx<g_1135,s_1136,M2_1142>@M * 
+cur_1163::node<v_1138,tmp_54',prev_1161>@M *
+l_1139::tx<flted_9_1137,s_1134,M1_1140>@M&
+AndList( "":cur=cur_1163 & prev=prev_1161 & a=null & b=sent & cur!=null & 
+         l_1139=n_53' & r_1141=tmp_54' & r_1141=right_39_1155 & 
+         l_1139=left_40_1159 & cur_1163=prev' & cur'=n_53' & cur'=sentinel & 
+         v_bool_44_996' & cur'=sentinel & v_bool_44_996'
+ & flted_9_1137=null & a!=cur_1163 & cur_1163!=sent & s_1134=sent & 
+   a=g_1135 & s_1136=sent & sent=sent_1143 & 
+   exists(sent_1932:exists(flted_19_1933:flted_19_1933!=prev' & 
+   prev'!=sent_1932 & s_1136=sent_1932 & b=flted_19_1933 & 
+   sent_1143=sent_1932))
+ ; "s":M1=union({cur_1163},M1_1140,M2_1142) & 
+   exists(M3_1934:M3_1934=union({prev'},M2_1142,M2))) 
+ |-  //(exists sent_1932,flted_19_1933,M3_1934: 
+  emp&
+AndList( 
+  "": true 
+ & prev=b
+   /* flted_19_1933=null & cur'=sent & prev'!=null & sent=sent_1932 & 
+         flted_19_1933!=prev' & prev'!=sent_1932 & s_1136=sent_1932 & 
+         b=flted_19_1933 & sent_1143=sent_1932 */
+ ; "s": true
+  //M3_1934=union(M1,M2) & M3_1934=union({prev'},M2_1142,M2)
+)
+//)
+.
+

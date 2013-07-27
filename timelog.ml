@@ -57,7 +57,7 @@ object (self)
               let to_flag = timer_timeout_flag in
               (* let slk_no = stget_sleek_no ()) in  *)
               last_big<-None;
-              let s2 = if to_flag then ":TIMEOUT:" else ":NO:" in
+              let s2 = if to_flag then ":TIMEOUT:" else ":" in
               (* let s2 = if last_timeout_flag then s2^":T2:" else s2 in *)
                hist_big # push((s^":"^no^"<:"^slk_no^s2^new_s),t)
             end
