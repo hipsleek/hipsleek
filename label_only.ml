@@ -33,6 +33,22 @@ struct
     else pr_list_no_brk pr_string x
   let singleton s = [s]
 
+  (* this assumes the label has been normalized *)
+  let compare l1 l2 =
+    let rec aux l1 l2 =
+      match l1,l2 with
+        | [],[] -> 0
+        | [],x::_ -> -1
+        | x::_,[] -> 1
+        | x::l1,y::l2 -> 
+              let r = String.compare x y in
+              if r==0 then aux l1 l2
+              else r
+    in aux l1 l2
+
+  let is_equal l1 l2 =
+    compare l1 l2 == 0
+
   let rec overlap xs ys = match xs,ys with
       | [],ys -> false
       | x::xs1,[]-> false
@@ -78,7 +94,8 @@ struct
 
   let norm t =
     let r = List.sort (String.compare) t in
-    remove_dups r
+    if r == [] then [""]
+    else remove_dups r
 
   (* assumes that xs and ys are normalized *)
   (* returns 0 if two labels are considered identical *)

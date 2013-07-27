@@ -882,7 +882,7 @@ let bag_type = BagT Int
 
 (* free variables *)
 
-let null_var = SpecVar (Named "", "null", Unprimed)
+let null_var = SpecVar (Named "", null_name, Unprimed)
 
 let flow_var = SpecVar ((Int), flow , Unprimed)
 
@@ -2141,7 +2141,6 @@ and disj_of_list (xs : formula list) pos : formula =
   match xs with
     | [] -> mkTrue pos
     | x::xs -> helper xs x
-
 	  
 and no_andl  = function
   | BForm _ | And _ | Not _ | Forall _ | Exists _  -> true
@@ -8501,6 +8500,20 @@ let is_eq_null_exp (f:formula) = match f with
     | _ -> false)
   | _ -> false
 
+let is_eq_between_vars (f:formula) = match f with
+  | BForm (bf,_) ->
+    (match bf with
+    | (Eq (Var (_,_), Var (_,_), _),_) -> true
+    | _ -> false)
+  | _ -> false
+
+let is_eq_between_no_bag_vars (f:formula) = match f with
+  | BForm (bf,_) ->
+    (match bf with
+    | (Eq (Var (v,_), Var (_,_), _),_) -> if (is_bag_typ v) then false else true
+    | _ -> false)
+  | _ -> false
+
 let is_neq_exp (f:formula) = match f with
   | BForm (bf,_) ->
     (match bf with
@@ -9659,7 +9672,8 @@ deep_split_disjuncts@4
 deep_split_disjuncts inp1 : x=null & r=v & ((x=null & m=\inf(ZInfinity)) | x!=null)
 deep_split_disjuncts@4 EXIT out :[ x=null & r=v & x=null & m=\inf(ZInfinity), x=null & r=v & x!=null]
 *)
-let deep_split_disjuncts (f:formula) : formula list =
+let deep_split_disjuncts (f:formula) : (bool * formula list) =
+  let disj_inside_andlist = ref false in
   let rec helper f =
     let f_f f = 
     	(match f with
@@ -9674,6 +9688,12 @@ let deep_split_disjuncts (f:formula) : formula list =
               let ls= distr_d l2 r2 p in
               (* join_disjunctions ls *)
               Some (ls)
+    	| AndList(ls) -> 
+              (* checks for disjs inside AndList *)
+              let l2= List.map (fun (l,f) -> helper f) ls in
+              let k = List.exists (fun f ->(List.length f)>1) l2 in
+              if k then disj_inside_andlist := true;
+              Some([f])
         (* currently do not split inside AndList *)
         (* | AndList _ -> report_error no_pos "met an AndList" *)
     	| _ -> Some [f])
@@ -9681,19 +9701,30 @@ let deep_split_disjuncts (f:formula) : formula list =
     let f_bf bf = Some [] in
     let f_e e = Some [] in
     fold_formula f (f_f,f_bf,f_e) List.concat
-  in helper f
+  in let res = helper f 
+  in (!disj_inside_andlist || List.length res>1, res)
 
-let deep_split_disjuncts (f:formula) : formula list =
-  let pr = !print_formula in
-  Debug.no_1 "deep_split_disjuncts" pr (pr_list pr) deep_split_disjuncts f
+(* let deep_split_disjuncts (f:formula) : formula list = *)
+ 
+(* let deep_split_disjuncts (f:formula) : formula list = *)
+(*   Gen.Profiling.no_1 "INF-deep-split" deep_split_disjuncts f *)
 
-let deep_split_disjuncts (f:formula) : formula list =
-  Gen.Profiling.no_1 "INF-deep-split" deep_split_disjuncts f
+let split_disjunctions_deep_sp (f:formula) : bool * (formula list) =
+  (* split_disjunctions(distribute_disjuncts f) *)
+  deep_split_disjuncts f
+
+let split_disjunctions_deep_sp (f:formula) : (bool * formula list) =
+ let pr = !print_formula in
+  Debug.no_1 "split_disjunctions_deep" pr (pr_pair string_of_bool (pr_list pr)) split_disjunctions_deep_sp f
 
 (* TODO WN : improve efficiency of distribute_disjuncts *)
 let split_disjunctions_deep (f:formula) : formula list =
   (* split_disjunctions(distribute_disjuncts f) *)
-  deep_split_disjuncts f
+  let (_,ans) = deep_split_disjuncts f in ans
+
+let split_disjunctions_deep (f:formula) : formula list =
+ let pr = !print_formula in
+  Debug.no_1 "split_disjunctions_deep" pr (pr_list pr) split_disjunctions_deep f
 
 let drop_exists (f:formula) :formula = 
   let rec helper f =
@@ -10999,3 +11030,25 @@ let mkAndList_opt f =
   if !Globals.remove_label_flag then 
     join_conjunctions (List.map snd f)
   else mkAndList f
+
+let extract_eq_clauses_formula f = 
+  let lst = split_conjunctions f in
+  List.filter is_eq_between_no_bag_vars lst
+
+let extract_eq_clauses_lbl_lst lst = 
+  let rec aux conjs lst = 
+    match lst with
+      | []   -> (conjs, [])
+      | (lbl,f)::t ->
+            let eq_f_lst = extract_eq_clauses_formula f in
+            let (all_eq, tail) = aux (conjs@eq_f_lst) t in
+            let eqs_to_add = Gen.BList.difference_eq (equalFormula) all_eq eq_f_lst in
+            let conj = join_conjunctions eqs_to_add in
+            let new_f = mkAnd f conj no_pos in
+            (all_eq, (lbl,new_f)::tail)
+  in 
+  snd (aux [] lst)
+
+let extract_eq_clauses_lbl_lst lst =
+  let pr = pr_list (pr_pair pr_none !print_formula) in
+  Debug.no_1 "extract_eq_clauses_lbl_lst"  pr pr  extract_eq_clauses_lbl_lst lst

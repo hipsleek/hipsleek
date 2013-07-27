@@ -1697,7 +1697,7 @@ let rec pr_formula e =
       formula_exists_label = lbl;
 	  formula_exists_pos = pos}) ->
           (match lbl with | None -> () | Some l -> fmt_string ("{"^(string_of_int (fst l))^"}->"));
-          fmt_string "EXISTS("; pr_list_of_spec_var svs; fmt_string ": ";
+          fmt_string "(exists "; pr_list_of_spec_var svs; fmt_string ": ";
           pr_h_formula h; 
           (if not(MP.isConstMTrue p) then 
             (pr_cut_after "&" ; pr_mix_formula p))

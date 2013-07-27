@@ -1,0 +1,14 @@
+data node {
+ int mark;
+ node left;
+ node right;
+}.
+
+
+pred tx<g,s> == self = g & s!=null & (g=null | g=s)
+   or self::node<_,l,r> * l::tx<g,s> * r::tx<null,s> & self != g & self != s 
+   or self::node<_,l,r> * l::tx<null,s> * r::tx<g,s> & self != g & self != s 
+inv s!=null & (g=null | g=s)
+ .
+
+

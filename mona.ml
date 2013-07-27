@@ -14,6 +14,7 @@ let is_mona_running = ref false
 (* let channels = ref (stdin, stdout, stdin) *)
 let last_test_number = ref 0
 let test_number = ref 0
+(* let mona_cycle = ref 10000 *)
 let mona_cycle = ref 90
 let mona_timeout = ref 5.0 (* default timeout is 10 seconds *)
 let max_BUF_SIZE = 16384
@@ -27,6 +28,8 @@ let automaton_completed = ref false
 let sat_optimize = ref false
 let mona_pred_file = "mona_predicates.mona"
 let mona_pred_file_alternative_path = "/usr/local/lib/"
+
+let mona_prog = "mona_inter"
 
 let process = ref {name = "mona"; pid = 0;  inchannel = stdin; outchannel = stdout; errchannel = stdin}
 
@@ -111,6 +114,11 @@ let get_lhs_order_atom ord_atom =
   match ord_atom with
     | MO_Var (v, _) 
     | MO_EQ  (v, _) -> v
+
+let get_mo_vars ord_atom =
+  match ord_atom with
+    | MO_EQ (v1, v2) -> (v1, v2)
+    | MO_Var  _       -> failwith ("[mona.ml] should only call det_mo_vars on mo_eq")
 
 let is_first_order_atom_constraint ord_atom =
   match ord_atom with
@@ -276,6 +284,7 @@ let replace_known var1_lst var2_lst unk_lst (c:order_atom): order_atom =
             MO_Var (sv2, order)
 
 (* 
+   @deprecated
    1. separate the constraints into two differnet lists: list1 for "var = const" constraints and list2 for "var = var"
    2. compute the lists containing 1st order and 2nd order vars, respectively (from list1)
    3. compute the list containing unknown order vars 
@@ -331,19 +340,47 @@ let mkConstrLabel (constr: order_atom) =
   let bf = mkConstraint constr in
   (Label_only.empty_spec_label, bf) 
 
+let is_intersect_non_empty lst1 lst2 = 
+   not(Gen.is_empty (Gen.BList.intersect_eq CP.eq_spec_var lst1 lst2)) 
+
+let sat_constraints_x cons = 
+  let mo_var_constr, eq_var_constr = List.partition is_mo_var cons in
+  let eq_var_constr = List.map get_mo_vars eq_var_constr in
+  let emap = CP.EMapSV.build_eset eq_var_constr in
+  let epart = CP.EMapSV.partition emap in 
+  let var1_constr, var2_constr = List.partition is_first_order_atom_constraint mo_var_constr in 
+  let var1_lst = List.map get_lhs_order_atom var1_constr in
+  let var2_lst = List.map get_lhs_order_atom var2_constr in
+  let not_sat = List.exists (fun elist ->  is_intersect_non_empty elist var1_lst  &&  is_intersect_non_empty elist var2_lst) epart in
+  if (not_sat) then 
+    (not_sat, var1_lst, var2_lst)
+  else
+    let var1_lst, var2_lst = List.fold_left (fun (l1,l2) elist -> 
+        if (is_intersect_non_empty elist l1) then (l1@elist,l2)
+        else if (is_intersect_non_empty elist l2) then (l1, elist@l2)
+        else (l1,l2)
+    ) (var1_lst, var2_lst) epart in 
+    (not(not_sat), var1_lst, var2_lst)
+
+let sat_constraints (cons: order_atom list)=
+  let pr_1 = pr_list string_of_order_atom in
+  let pr_2 = pr_list Cprinter.string_of_spec_var in
+  let pr_out = pr_triple string_of_bool pr_2 pr_2 in
+  Debug.no_1 "sat_constraints" pr_1 pr_out sat_constraints_x cons
+
+
 let new_order_formula_x (f:CP.formula) : (CP.spec_var list * CP.spec_var list * CP.spec_var list) =
   let cl = compute_order_formula f in
   let cl = List.filter (fun c -> not (is_unk_order_atom_constraint c)) cl in (* filter out constraints like MO_Var(v,0) *)
-  (* let _ = Debug.tinfo_hprint (add_str "cl" pr) cl no_pos in *)
-  (* rename quantif vars bef before calling new_order_formula*)
   let all_vars = CP.all_vars f in
-  let constr = CP.join_conjunctions (List.map mkConstraint cl) in
-  let sat = Timelog.logtime_wrapper "mona-om" (Omega.is_sat constr) "mona constraints" in 
+  (* let constr = CP.join_conjunctions (List.map mkConstraint cl) in *)
+  (* let sat = Timelog.logtime_wrapper "mona-om" (Omega.is_sat constr) "mona constraints" in  *)  
+  let (sat, l1, l2) = sat_constraints cl in
   if (not sat) then
     failwith ("[mona.ml:new_order_formula] mona translation failure")
   else
-  (* extract list of vars v1=1 or v1=2 *)
-    let l1,l2,lunk = solve_constraints cl all_vars in
+    let lunk =  Gen.BList.difference_eq CP.eq_spec_var all_vars (l1@l2) in
+    (* let l1,l2,lunk = solve_constraints cl all_vars in *)
     let l2 = l2@lunk in             (* consider unknown vars as 2nd order vars *)
     (l1,l2,lunk)
 
@@ -1192,8 +1229,8 @@ let rec check_prover_existence prover_cmd_str: bool =
 
 let start () = 
   last_test_number := !test_number;
-  if(check_prover_existence "mona_inter")then begin
-      let _ = Procutils.PrvComms.start !log_all_flag log_all ("mona", "mona_inter", [|"mona_inter"; "-v";|]) set_process prelude in
+  if(check_prover_existence mona_prog)then begin
+      let _ = Procutils.PrvComms.start !log_all_flag log_all ("mona", mona_prog, [|mona_prog; "-v";|]) set_process prelude in
       is_mona_running := true
   end
 
@@ -1221,7 +1258,7 @@ let stop () =
 let restart reason =
   if !is_mona_running then
 	(* let _ = print_string ("\n[mona.ml]: Mona is preparing to restart because of " ^ reason ^ "\nRestarting Mona ...\n"); flush stdout; in *)
-	let _ = print_endline ("\nMona is running ... " ^ reason); flush stdout; in
+	let _ = print_endline ("\nMona is restarting ... " ^ reason); flush stdout; in
         Procutils.PrvComms.restart !log_all_flag log_all reason "mona" start stop
 
 let restart reason =
@@ -1281,7 +1318,7 @@ let check_answer_x (mona_file_content: string) (answ: string) (is_sat_b: bool)=
             restart "mona aborted execution";
             if !log_all_flag == true then
 		      output_string log_all ("[mona.ml]: "^ imp_sat_str ^" --> " ^(string_of_bool is_sat_b) ^"(from mona failure 1a)\n");
-		      print_endline ("[mona] Warning: "^ imp_sat_str ^" --> " ^(string_of_bool is_sat_b) ^"(from mona failure 1b)\n");
+	    print_endline ("[mona] Warning: "^ imp_sat_str ^" --> " ^(string_of_bool is_sat_b) ^"(from mona failure 1b)\n");
             is_sat_b
       | s ->
             let _ = create_failure_file mona_file_content in
@@ -1293,8 +1330,8 @@ let check_answer_x (mona_file_content: string) (answ: string) (is_sat_b: bool)=
               | Not_found ->
                     begin
     	              if !log_all_flag == true then
-		                output_string log_all ("[mona.ml]: "^ imp_sat_str ^" --> " ^(string_of_bool is_sat_b) ^"(from mona failure 2)\n");
-		                print_endline ("[mona] Warning: "^ imp_sat_str ^" --> " ^(string_of_bool is_sat_b) ^"(from mona failure 2)\n");
+		        output_string log_all ("[mona.ml]: "^ imp_sat_str ^" --> " ^(string_of_bool is_sat_b) ^"(from mona failure 2)\n");
+		      print_endline ("[mona] Warning: "^ imp_sat_str ^" --> " ^(string_of_bool is_sat_b) ^"(from mona failure 2)\n");
                       is_sat_b;
                     end
   in
@@ -1311,7 +1348,7 @@ let check_answer (mona_file_content: string) (answ: string) (is_sat_b: bool)=
 let maybe_restart_mona () : unit =
   if !is_mona_running then begin
     let num_tasks = !test_number - !last_test_number in
-    if num_tasks >=(!mona_cycle) then restart "restart (limit reached)"
+    if num_tasks >=(!mona_cycle) then restart "cycle limit reached"
   end
 
 let prepare_formula_for_mona pr_w pr_s (f: CP.formula) (test_no: int): CP.spec_var list * CP.formula =

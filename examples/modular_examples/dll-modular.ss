@@ -9,8 +9,8 @@ data node2 {
 
 /* view for a doubly linked list with size */
 /*
-dll<"p":p,"n":n> == 
-	true&["p":self = null; "n":n = 0] or 
+dll<p,"n":n> == 
+	true&[self = null; "n":n = 0] or 
 	self::node2<_ ,p , q> * q::dll<self, n1> & ["n":n1=n-1]
 	inv true & ["n":n >= 0];
 */
@@ -35,7 +35,7 @@ void insert(node2 x, int a)
 
 /* delete a node from a doubly linked list */
 void delete(node2 x, int a)
-	requires x::dll<p, n> & ["n":n > a & a > 0] 
+	requires x::dll<p, n> & ["n","":n > a & a > 0] 
 	ensures x::dll<p, n1> & ["n":n1=n-1];
 {
 	node2 tmp;
@@ -59,7 +59,7 @@ void delete(node2 x, int a)
 
 /* NOT WORKING */
 void delete1(node2 x, int a)
-	requires x::dll<p, n> & ["n":n > a > 0] 
+	requires x::dll<p, n> & ["n","":n > a > 0] 
 	ensures x::dll<p, n1> & ["n":n1=n-1];
 
 {

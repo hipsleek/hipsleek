@@ -25,13 +25,7 @@ let pure_tp = ref OmegaCalc
 (* let tp = ref AUTO *)
 (* let tp = ref PARAHIP *)
 
-let proof_no = ref 0
 let provers_process = ref None
-
-let next_proof_no () =
-  let p_no = !proof_no + 1 in
-  string_of_int p_no
-
 
 type prove_type = Sat of CP.formula | Simplify of CP.formula | Imply of CP.formula * CP.formula
 type result_type = Timeout | Result of string | Failure of string
@@ -782,7 +776,224 @@ let elim_exists (f : CP.formula) : CP.formula =
 let elim_exists (f : CP.formula) : CP.formula =
   let pr = Cprinter.string_of_pure_formula in
   Debug.no_1 "elim_exists" pr pr elim_exists f
-  
+
+let is_eq_between_no_bag_vars (f:formula) = 
+  match f with
+    | BForm (bf,_) ->
+          (match bf with
+            | (Eq (Var (v,_), Var (_,_), _),_) -> if (is_bag_typ v) then false else true
+            | _ -> false)
+    | _ -> false
+
+let build_eset_of_conj_formula f =
+  let lst = split_conjunctions f in
+  List.fold_left (fun e f -> match f with
+    | BForm (bf,_) ->
+          (match bf with
+            | (Eq (Var (v1,_), Var (v2,_), _),_) -> 
+                  if (is_bag_typ v1) then e
+                  else EMapSV.add_equiv e v1 v2
+            | (Eq (ex, Var (v1,_), _),_) 
+            | (Eq (Var (v1,_), ex, _),_) -> 
+                  (match conv_exp_to_var ex with
+                    | Some (v2,_) -> EMapSV.add_equiv e v1 v2
+                    | None -> e)
+            | _ -> e)
+    | _ -> e
+  ) EMapSV.mkEmpty lst
+
+let build_eset_of_conj_formula f =
+  let pr = !print_formula in
+  let pr2 = EMapSV.string_of in
+  Debug.no_1 "build_eset_of_conj_formula"  pr pr2  build_eset_of_conj_formula f  
+
+let join_esets es =
+  match es with
+    | [] -> EMapSV.mkEmpty
+    | e::es -> List.fold_left (fun e1 e2 -> EMapSV.merge_eset e1 e2) e es
+
+(* let is_const (s:spec_var) : bool =  *)
+
+(* Andreea : to implement mk_exists for eset *)
+(* To be moved later to cpure.ml *)
+let mk_exists_eset eset ws =
+  EMapSV.elim_elems eset ws
+
+let mk_exists_eset eset ws =
+  let pr = string_of_spec_var_list in
+  let pr2 = EMapSV.string_of in
+  Debug.no_2 "mk_exists_eset"  pr2 pr pr2  mk_exists_eset eset ws
+
+let formula_of_eset eset pos =
+  let ep = EMapSV.get_equiv eset in
+  List.fold_left (fun f (v1,v2) -> mkAnd f (mkEqVar v1 v2 pos) pos)
+      (mkTrue no_pos) ep
+
+let emap_eq_keys key1 key2 =
+  Gen.BList.list_setequal_eq EMapSV.eq key1 key2
+
+let emap_eq_pair_keys (key_1a,key_1b)  (key_2a, key_2b) =
+  (emap_eq_keys key_1a key_2a && emap_eq_keys key_1b key_2b) ||
+      (emap_eq_keys key_1a key_2b && emap_eq_keys key_1b key_2a)
+
+let emap_key_pair_in_list pair_keys list_pair_keys = 
+  Gen.BList.mem_eq emap_eq_pair_keys  pair_keys list_pair_keys
+
+(* filters ep by eliminating those pairs which 
+   (i)  are already present in em_i or 
+   (ii) capture an alias between vars from two different partitions in em_i, but this info is already captured by other pair(s) *)
+let filter_redundant_eset_pairs ep em_i = 
+  let covered_keys = ref [] in
+  List.filter (fun (v1,v2) -> 
+      let key1 = (EMapSV.find em_i v1) in
+      let key2 = (EMapSV.find em_i v2) in
+      (* same non-empy keys --> same partition in em_i *)
+      if (List.length (key1@key2) > 0) && (emap_eq_keys key1 key2) then false
+      else 
+        (* different non-empty partitions from em_i for which alias info is already available *)
+        if (List.length key1 > 0 && List.length key2 > 0) && (emap_key_pair_in_list (key1,key2) !covered_keys ) then false
+        else
+          begin
+            covered_keys := (key1,key2)::(!covered_keys);
+            true
+          end
+  )  ep
+
+let formula_of_filtered_eset eset em_i pos =
+  let ep = EMapSV.get_equiv eset in
+  let ep = filter_redundant_eset_pairs ep em_i in
+  (not(ep==[]),List.fold_left (fun f (v1,v2) -> mkAnd f (mkEqVar v1 v2 pos) pos)
+      (mkTrue no_pos) ep)
+
+(* operations on list of labelled formula *)
+(* to ensure that they are normalized? *)
+
+let combine_lbl_lst ls =
+  let rec aux l f ls =
+    match ls with
+      | [] -> [(l,f)]
+      | (l2,f2)::ls -> 
+            if Label_only.Lab_List.is_equal l l2
+            then aux l (mkAnd f f2 no_pos) ls
+            else (l,f)::(aux l2 f2 ls)
+  in match ls with
+    | [] -> []
+    | (l,f)::ls -> aux l f ls
+
+let norm_lbl_lst lst = 
+  let pr = pr_list (pr_pair Label_only.Lab_List.string_of !print_formula) in
+  let nl = List.sort (fun (l1,_) (l2,_) -> Label_only.Lab_List.compare l1 l2) lst in
+  let r = combine_lbl_lst nl in
+  if not(List.length r==List.length lst) then
+    begin
+      Debug.tinfo_hprint (add_str "lbl_norm(before)" pr) lst no_pos;
+      Debug.tinfo_hprint (add_str "lbl_norm(after)" pr) r no_pos;
+    end
+  ;r
+
+let norm_lbl_lst lst = 
+   let pr = pr_list (pr_pair Label_only.Lab_List.string_of !print_formula) in
+   Debug.no_1 "norm_lbl_lst" pr pr norm_lbl_lst lst
+
+let map_lbl_lst_to_eset lst =
+   List.map (fun (l,f) -> 
+        (build_eset_of_conj_formula f, (l, f))
+  ) lst 
+
+let merge_in_rhs lhs rhs =
+  let rec aux lhs rhs =
+    match lhs,rhs with
+      | [],rhs -> []
+      | lhs,[] -> List.map (fun (a,b) -> (a,b,[])) lhs
+      | (eq,((l1,f1) as n1))::lhs2,(l2,f2)::rhs2 ->
+            let n = Label_only.Lab_List.compare l1 l2 in
+            if n<0 then (eq,n1,[])::(aux lhs2 rhs)
+            else if n>0 then aux lhs rhs2
+            else (eq,n1,(CP.fv f2))::(aux lhs2 rhs)
+  in aux lhs rhs
+
+let extract_eset_of_lbl_lst lst rhs =
+  let lst = norm_lbl_lst lst in
+  let rhs = norm_lbl_lst rhs in
+  let ls = map_lbl_lst_to_eset lst in
+  let ls2 = merge_in_rhs ls rhs in
+  let eq_all = join_esets (List.map fst ls) in
+  let es = EMapSV.get_elems  eq_all in
+  let n_lst = List.map 
+    (fun (em_f,(l,f),rhs_vs) ->
+        let vs = (CP.fv f)@rhs_vs in
+        Debug.tinfo_hprint (add_str "vars_from_fv" string_of_spec_var_list) vs no_pos;
+        let vs = List.filter (fun v -> not(is_const v)) vs in
+        let ws = Gen.BList.difference_eq CP.eq_spec_var es vs in
+        let r = mk_exists_eset eq_all ws in
+        let (flag,r) = formula_of_filtered_eset r em_f no_pos in
+        if flag then
+          begin
+            Debug.tinfo_hprint (add_str "\n f" !print_formula) f no_pos;
+            Debug.tinfo_hprint (add_str "eq_to_add" !print_formula) r no_pos
+          end;
+        let nf = mkAnd r f no_pos in
+        (l,nf)
+    ) ls2
+  in n_lst
+(* let _ = Debug.info_hprint (add_str "mkE eqall" EMapSV.string_of) eq_all no_pos in *)
+(* let _ = Debug.info_hprint (add_str "mkE ws" string_of_spec_var_list) ws no_pos in *)
+(* let r = formula_of_eset r no_pos in *)
+
+let extract_eset_of_lbl_lst lst rhs =
+  let pr = pr_list (pr_pair Label_only.Lab_List.string_of !print_formula) in
+  (* let pr2 = pr_list (!print_formula) in *)
+  Debug.no_1 "extract_eset_of_lbl_lst"  pr pr  (fun _ -> extract_eset_of_lbl_lst lst rhs) lst  
+
+
+let extract_eq_clauses_formula f = 
+  let lst = split_conjunctions f in
+  List.filter is_eq_between_no_bag_vars lst
+
+(*
+ E1=eq(S1) E2=eq(S2) E=E1&E2 W=fv(E)
+ V1=fv(S1) V2=fv(S2)
+ R1=ex(W-V1.E) R2=ex(W-V2.E)
+ SAT(R1 & S1) | SAT(R2 & S2)
+-----------------------------
+ SAT(S1 & S2)
+*)
+
+
+let extract_eq_clauses_lbl_lst lst =
+  let ls = List.map (fun (l,f) -> 
+      if Label_only.Lab_List.is_common l then extract_eq_clauses_formula f
+      else []
+  ) lst in
+  let eq_all = CP.join_conjunctions (List.concat ls) in
+  let es = CP.fv eq_all in
+  let n_lst = List.map (fun (l,f) ->
+      if Label_only.Lab_List.is_common l then (l,f)
+      else 
+        let vs = CP.fv f in
+        let ws = Gen.BList.difference_eq CP.eq_spec_var es vs in
+        let r = wrap_exists_svl eq_all ws in
+        let nf = mkAnd r f no_pos in
+        (l,nf)
+  ) lst 
+  in n_lst
+  (* let rec aux conjs lst =  *)
+  (*   match lst with *)
+  (*     | []   -> (conjs, []) *)
+  (*     | (lbl,f)::t -> *)
+  (*           let eq_f_lst = extract_eq_clauses_formula f in *)
+  (*           let (all_eq, tail) = aux (conjs@eq_f_lst) t in *)
+  (*           let eqs_to_add = Gen.BList.difference_eq (equalFormula) all_eq eq_f_lst in *)
+  (*           let conj = join_conjunctions eqs_to_add in *)
+  (*           (\* let new_f = mkAnd f conj no_pos in *\) *)
+  (*           (all_eq, (lbl,conj)::tail) *)
+  (* in  *)
+  (* snd (aux [] lst) *)
+
+let extract_eq_clauses_lbl_lst lst =
+  let pr = pr_list (pr_pair pr_none !print_formula) in
+  let pr2 = pr_list (!print_formula) in
+  Debug.no_1 "extract_eq_clauses_lbl_lst"  pr pr  extract_eq_clauses_lbl_lst lst  
 
 let sat_label_filter fct f =
   let pr = Cprinter.string_of_pure_formula in
@@ -793,12 +1004,17 @@ let sat_label_filter fct f =
 		| AndList b -> 
 			let lbls = Label_Pure.get_labels b in
                         (* Andreea : this is to pick equality from all branches *)
-                        let pick_eq f = [] in
-                        let (pick_eq_subs,comp,fil) = 
+                        let (comp,fil) = 
                           if !Globals.label_aggressive_sat
-                          then (pick_eq b,Label_only.Lab_List.is_fully_compatible,fun fs -> fs)
-                          else ([],Label_only.Lab_List.is_part_compatible,
+                          then (Label_only.Lab_List.is_fully_compatible,fun fs -> fs)
+                          else (Label_only.Lab_List.is_part_compatible,
                              List.filter (fun (l,_)-> not(Label_only.Lab_List.is_common l)) ) 
+                        in
+                        let b = 
+                          if !Globals.label_aggressive_sat
+                          then extract_eset_of_lbl_lst b []
+                            (* extract_eq_clauses_lbl_lst b *)
+                          else b 
                         in
 			let fs = List.map (fun l -> 
 			    let lst = List.filter (fun (c,_)-> comp c l) b in
@@ -830,8 +1046,13 @@ let imply_label_filter ante conseq =
     | Or _,_  
     | _ , Or _ -> [(andl_to_and ante, andl_to_and conseq)]
     | AndList ba, AndList bc -> 
-	  (*let fc = List.for_all (fun (_,c)-> no_andl c) in
-	    (if fc ba && fc bc then () else print_string s;*)
+	  (* let fc = List.for_all (fun (_,c)-> no_andl c) in *)
+	  (*   (if fc ba && fc bc then () else print_string s; *)
+          let ba = 
+            if !Globals.label_aggressive_imply
+            then extract_eset_of_lbl_lst ba bc
+            else ba
+          in
 	  List.map (fun (l, c)-> 
 	      let lst = List.filter (fun (c,_)-> comp (* Label_only.Lab_List.is_part_compatible *) c l) ba in 
 	      let fr1 = List.fold_left (fun a (_,c)-> mkAnd a c no_pos) (mkTrue no_pos) lst in
@@ -1239,15 +1460,19 @@ let tp_is_sat (f:CP.formula) (old_sat_no :string) =
   (* let f = CP.elim_idents f in *)
   (* this reduces x>=x to true; x>x to false *)
   proof_no := !proof_no+1 ;
-  let sat_no = (string_of_int !proof_no) in
+  let sat_num = !proof_no in
+  let sat_no = (string_of_int sat_num) in
   Debug.devel_zprint (lazy ("SAT #" ^ sat_no)) no_pos;
   Debug.devel_zprint (lazy (!print_pure f)) no_pos;
   (* let tstart = Gen.Profiling.get_time () in		 *)
   let fn_sat f = (tp_is_sat_perm f) sat_no in
   let cmd = PT_SAT f in
   let _ = Log.last_proof_command # set cmd in
-  let logger fr tt timeout = add_proof_logging timeout !cache_status old_sat_no sat_no (string_of_prover !pure_tp) cmd tt
-    (match fr with Some res -> PR_BOOL res | None -> PR_exception) 
+  let logger fr tt timeout = 
+    let tp = (string_of_prover !pure_tp) in
+    let _ = add_proof_logging timeout !cache_status old_sat_no sat_num tp  cmd tt
+      (match fr with Some res -> PR_BOOL res | None -> PR_exception) in
+    (Others.last_tp_used # string_of,sat_no)
   in
   let res = 
     (if !Globals.no_cache_formula then
@@ -1278,7 +1503,8 @@ let tp_is_sat f sat_no =
 
 let simplify (f : CP.formula) : CP.formula =
   proof_no := !proof_no + 1;
-  let simpl_no = (string_of_int !proof_no) in
+  let simpl_num = !proof_no in
+  let simpl_no = (string_of_int simpl_num) in
   if !Globals.no_simpl then f else
     if !perm=Dperm && CP.has_tscons f<>CP.No_cons then f 
     else 
@@ -1365,8 +1591,12 @@ let simplify (f : CP.formula) : CP.formula =
                 )
                 in res
               in
-              let logger fr tt timeout = add_proof_logging timeout !cache_status simpl_no simpl_no (string_of_prover !pure_tp) cmd tt 
-                (match fr with Some res -> PR_FORMULA res | None -> PR_exception) in
+              let logger fr tt timeout = 
+                let tp = (string_of_prover !pure_tp) in
+                let _ = add_proof_logging timeout !cache_status simpl_no simpl_num tp cmd tt 
+                  (match fr with Some res -> PR_FORMULA res | None -> PR_exception) in
+                (tp,simpl_no)
+              in
               let res = Timelog.log_wrapper "simplify" logger fn f in
               Gen.Profiling.pop_time "simplify";
               let tstop = Gen.Profiling.get_time () in
@@ -1377,7 +1607,7 @@ let simplify (f : CP.formula) : CP.formula =
               (* Why start/stop prver when interactive? *)
               res
           with | _ -> 
-              let _= add_proof_logging false !cache_status simpl_no simpl_no (string_of_prover !pure_tp) cmd 
+              let _= add_proof_logging false !cache_status simpl_no simpl_num (string_of_prover !pure_tp) cmd 
                 (0.0) (PR_exception) in
               f
         end
@@ -1890,7 +2120,8 @@ let tp_imply ante conseq imp_no timeout process =
 
 let tp_imply ante conseq old_imp_no timeout process =	
   proof_no := !proof_no + 1 ;
-  let imp_no = (string_of_int !proof_no) in
+  let imp_num = !proof_no in
+  let imp_no = (string_of_int imp_num) in
   let imp_no = 
     if !Globals.imply_top_flag then imp_no^":"^old_imp_no 
     else imp_no
@@ -1901,8 +2132,12 @@ let tp_imply ante conseq old_imp_no timeout process =
   let cmd = PT_IMPLY(ante,conseq) in
   let _ = Log.last_proof_command # set cmd in
   let fn () = tp_imply ante conseq imp_no timeout process in
-  let logger fr tt timeout = add_proof_logging timeout !cache_status old_imp_no imp_no (string_of_prover !pure_tp) cmd tt 
+  let logger fr tt timeout = 
+    let tp = (string_of_prover !pure_tp) in
+    let _ =  add_proof_logging timeout !cache_status old_imp_no imp_num (string_of_prover !pure_tp) cmd tt 
     (match fr with Some b -> PR_BOOL b | None -> PR_exception) in
+    (Others.last_tp_used # string_of,imp_no)
+  in
   let final_res = Timelog.log_wrapper "imply" logger fn () in
   (* let _= add_proof_logging !cache_status old_imp_no imp_no (string_of_prover !pure_tp) cmd (Timelog.logtime # get_last_time) (PR_BOOL (match final_res with | r -> r))  *)
   final_res
@@ -2144,14 +2379,14 @@ let imply_timeout_helper ante conseq process ante_inner conseq_inner imp_no time
    
 let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (old_imp_no : string) timeout process
       : bool*(formula_label option * formula_label option )list * (formula_label option) = (*result+successfull matches+ possible fail*)
-  let old_imp_no = 
+  let (imp_num,old_imp_no) = 
      if !Globals.imply_top_flag 
      then
      begin
        proof_no := !proof_no + 1 ;
-       (string_of_int !proof_no)
+       (!proof_no,string_of_int !proof_no)
      end
-     else old_imp_no
+     else (0,old_imp_no)
   in
   (* let count_inner = ref 0 in *)
   let imp_no = old_imp_no in
@@ -2212,7 +2447,7 @@ let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (old_imp_no : stri
   (* let conseq0 = CP.join_conjunctions !conseq_inner in *)
   (* let _ = Log.last_cmd # dumping imp_no in *)
   if !Globals.imply_top_flag then
-    add_proof_logging false false old_imp_no imp_no "funny" cmd (* (PT_IMPLY (ante0, conseq0)) *) (Timelog.logtime # get_last_time) (PR_BOOL (match final_res with | r,_,_ -> r));
+    add_proof_logging false false old_imp_no imp_num "funny" cmd (* (PT_IMPLY (ante0, conseq0)) *) (Timelog.logtime # get_last_time) (PR_BOOL (match final_res with | r,_,_ -> r));
   final_res
 ;;
 
@@ -2355,7 +2590,7 @@ let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (imp_no : string) 
   = let pf = Cprinter.string_of_pure_formula in
   let prf = add_str "timeout" string_of_float in
   Debug.no_4 "imply_timeout 3" pf pf prf pr_id (fun (b,_,_) -> string_of_bool b)
-      (fun a c _ _ -> imply_timeout a c imp_no timeout do_cache process) ante0 conseq0 timeout (next_proof_no ())
+      (fun a c _ _ -> imply_timeout a c imp_no timeout do_cache process) ante0 conseq0 timeout (next_proof_no_str ())
 
 let imply_timeout ante0 conseq0 imp_no timeout do_cache process =
   let s = "imply" in

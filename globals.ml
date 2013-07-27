@@ -527,6 +527,7 @@ let no_pos1 = { Lexing.pos_fname = "";
 				   Lexing.pos_cnum = 0 } 
 
 let res_name = "res"
+let null_name = "null"
 
 let sl_error = "separation entailment"
 let logical_error = "logical bug"
@@ -593,8 +594,8 @@ let lib_files = ref ([] : string list)
 let remove_label_flag = ref false
 let label_split_conseq = ref true
 let label_split_ante = ref true
-let label_aggressive_sat = ref false
-let label_aggressive_imply = ref false
+let label_aggressive_sat = ref true
+let label_aggressive_imply = ref true
 
 let texify = ref false
 let testing_flag = ref false
@@ -704,9 +705,9 @@ let enable_constraint_based_filtering = ref false
 
 let elim_exists_ff = ref true
 
-let allow_imm = ref true (*imm will delay checking guard conditions*)
+let allow_imm = ref true (*imm will delglobalsay checking guard conditions*)
 
-let allow_field_ann = ref false
+let allow_field_ann = ref true
 
 let allow_mem = ref true
 
@@ -877,8 +878,6 @@ let disable_elim_redundant_ctr = ref false
 
 let enable_strong_invariant = ref false
 let enable_aggressive_prune = ref false
-let label_aggressive_flag = ref false
-let label_aggressive_sat = ref false
 let enable_redundant_elim = ref false
 
 (* let disable_aggressive_prune = ref false *)
@@ -1217,33 +1216,83 @@ let norm_file_name str =
 	done;
 	str
 
-let wrap_classic et f a =
-  let flag = !do_classic_frame_rule in
-  do_classic_frame_rule := (match et with
-    | None -> !opt_classic
-    | Some b -> b);
-  try 
-    let res = f a in
-    (* restore flag do_classic_frame_rule  *)
-    do_classic_frame_rule := flag;
-    res
-  with _ as e ->
-      (do_classic_frame_rule := flag;
-      raise e)
+(* let wrap_classic et f a = *)
+(*   let flag = !do_classic_frame_rule in *)
+(*   do_classic_frame_rule := (match et with *)
+(*     | None -> !opt_classic *)
+(*     | Some b -> b); *)
+(*   try  *)
+(*     let res = f a in *)
+(*     (\* restore flag do_classic_frame_rule  *\) *)
+(*     do_classic_frame_rule := flag; *)
+(*     res *)
+(*   with _ as e -> *)
+(*       (do_classic_frame_rule := flag; *)
+(*       raise e) *)
 
-let wrap_general flag new_value f a =
-  (* save old_value *)
-  let old_value = !flag in
-  flag := new_value;
-  try 
-    let res = f a in
-    (* restore old_value *)
-    flag := old_value;
-    res
-  with _ as e ->
-      (flag := old_value;
-      raise e)
+(* let wrap_gen save_fn set_fn restore_fn flags f a = *)
+(*   (\* save old_value *\) *)
+(*   let old_values = save_fn flags in *)
+(*   let _ = set_fn flags in *)
+(*   try  *)
+(*     let res = f a in *)
+(*     (\* restore old_value *\) *)
+(*     restore_fn old_values; *)
+(*     res *)
+(*   with _ as e -> *)
+(*       (restore_fn old_values; *)
+(*       raise e) *)
 
-let wrap_no_filtering f a =
-  wrap_general filtering_flag false f a
+(* let wrap_one_bool flag new_value f a = *)
+(*   let save_fn flag = (flag,!flag) in *)
+(*   let set_fn flag = flag := new_value in *)
+(*   let restore_fn (flag,old_value) = flag := old_value in *)
+(*   wrap_gen save_fn set_fn restore_fn flag f a *)
 
+(* let wrap_two_bools flag1 flag2 new_value f a = *)
+(*   let save_fn (flag1,flag2) = (flag1,flag2,!flag1,!flag2) in *)
+(*   let set_fn (flag1,flag2) = flag1 := new_value; flag2:=new_value in *)
+(*   let restore_fn (flag1,flag2,old1,old2) = flag1 := old1; flag2:=old2 in *)
+(*   wrap_gen save_fn set_fn restore_fn (flag1,flag2) f a *)
+
+(* (\* let wrap_general flag new_value f a = *\) *)
+(* (\*   (\\* save old_value *\\) *\) *)
+(* (\*   let old_value = !flag in *\) *)
+(* (\*   flag := new_value; *\) *)
+(* (\*   try  *\) *)
+(* (\*     let res = f a in *\) *)
+(* (\*     (\\* restore old_value *\\) *\) *)
+(* (\*     flag := old_value; *\) *)
+(* (\*     res *\) *)
+(* (\*   with _ as e -> *\) *)
+(* (\*       (flag := old_value; *\) *)
+(* (\*       raise e) *\) *)
+
+(* let wrap_no_filtering f a = *)
+(*   wrap_one_bool filtering_flag false f a *)
+
+(* let wrap_lbl_dis_aggr f a = *)
+(*   wrap_two_bools label_aggressive_sat label_aggressive_imply false f a *)
+
+let proof_no = ref 0
+
+let next_proof_no_str () =
+  proof_no := !proof_no + 1;
+  string_of_int !proof_no
+
+let get_proof_no () = !proof_no
+
+let sleek_proof_no = ref 0
+
+let last_sleek_fail_no = ref 0
+
+let get_sleek_no () = !sleek_proof_no
+
+let get_last_sleek_fail () = !last_sleek_fail_no
+
+let set_last_sleek_fail () = 
+  last_sleek_fail_no := !sleek_proof_no
+
+let next_sleek_int () : int =
+  sleek_proof_no := !sleek_proof_no + 1; 
+  (!sleek_proof_no)

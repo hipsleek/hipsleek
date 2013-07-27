@@ -1,0 +1,42 @@
+data node {
+ int mark;
+ node left;
+ node right;
+}.
+
+
+pred tx<g,s,M> == self = g & s!=null & (g=null | g=s) & M={}
+   or self::node<v,l,r> * l::tx<g,s,M1> * r::tx<null,s,M2> & self != g & self != s & M=union({v},M1,M2)
+   or self::node<v,l,r> * l::tx<null,s,M1> * r::tx<g,s,M2> & self != g & self != s & M=union({v},M1,M2)
+inv s!=null & (g=null & self!=s | g=s & self!=null)
+.
+
+checkentail
+ s_1119!=null & a=null & a=g_1120 & a!=cur_1149 & cur_1149!=sent_1128 
+& M1=union({v_1123},M1_1125,M2_1127) 
+& s_1119=sent_1128 & s_1121=sent_1128 & 
+cur!=null & cur=cur_1149 & l_1124=left_31_1145 & sent!=null & cur'=sent & 
+cur_1149!=null & s_1121!=null & sent_1129!=null & b=b_1169 
+& M2_1170=union({v_1123},M2_1127,M2) & b_1169!=cur_1149 & s_1121=sent_1129 
+& cur_1149!=s_1121 & b!=cur_1149 & M1_1125=M1_1168 & l_1124!=null 
+& l_1124!=sent & sent=sent_1128 & sent=sent_1129 & b=sent & prev=prev_1147 & 
+flted_19_1833=null 
+& M3_1834=union(M1_1168,M2_1170) 
+& (((flted_19_1833=null & prev'!=sent) | (flted_19_1833=sent & prev'!=null)))
+|-  flted_19_1833=prev'
+.
+
+/*
+checkentail
+ s_1119!=null & a=null & a=g_1120 & a!=cur_1149 & cur_1149!=sent_1128 & 
+M1=union({v_1123},M1_1125,M2_1127) & s_1119=sent_1128 & s_1121=sent_1128 & 
+cur!=null & cur=cur_1149 & l_1124=left_31_1145 & sent!=null & cur'=sent & 
+cur_1149!=null & s_1121!=null & sent_1129!=null & b=b_1169 & 
+M2_1170=union({v_1123},M2_1127,M2) & b_1169!=cur_1149 & s_1121=sent_1129 & 
+cur_1149!=s_1121 & b!=cur_1149 & M1_1125=M1_1168 & l_1124!=null & 
+l_1124!=sent & sent=sent_1128 & sent=sent_1129 & b=sent & prev=prev_1147 & 
+flted_19_1833=null & M3_1834=union(M1_1168,M2_1170) & 
+(((flted_19_1833=null & prev'!=sent) | (flted_19_1833=sent & prev'!=null)))
+|-  (M3_1834={} | flted_19_1833=prev')
+*/
+

@@ -1,5 +1,6 @@
 (* Created 21 Feb 2006 Simplify Iast to Cast *)
 open Globals
+open Wrapper
 open Others
 open Exc.GTable 
 open Printf
@@ -1002,8 +1003,9 @@ and compute_view_x_formula (prog : C.prog_decl) (vdef : C.view_decl) (n : int) =
         string_of_int 
         (fun x ->   "void")
         (* Cprinter.string_of_view_decl vdef) *)
-        (compute_view_x_formula_x prog) vdef n
-  in wrap_proving_kind PK_Pred_Check_Inv foo () 
+        (compute_view_x_formula_x prog) vdef n in
+  let foo = wrap_lbl_dis_aggr foo in
+  wrap_proving_kind PK_Pred_Check_Inv foo () 
 
          
 (* and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int) = *)
@@ -1097,19 +1099,20 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
         if not(CF.isFailCtx rs) then
           begin
 	    let pf = pure_of_mix vdef.C.view_user_inv in
-	    let disj_f = CP.split_disjunctions_deep pf in
-            let do_not_recompute_flag = (List.length disj_f>1) && not(!Globals.disj_compute_flag) in
+	    let (disj_form,disj_f) = CP.split_disjunctions_deep_sp pf in
+            let do_not_recompute_flag = disj_form (* (List.length disj_f>1) *) && not(!Globals.disj_compute_flag) in
             if n>0 then helper n do_not_recompute_flag;
             if vdef.C.view_xpure_flag then
               begin
                 let pr = Cprinter.string_of_mix_formula in
-                let (sf,disj_flag) = MCP.remove_disj_clauses vdef.C.view_user_inv in
-                if disj_flag then
+                let sf = MCP.remove_disj_clauses vdef.C.view_user_inv in
+                (* Debug.info_hprint (add_str "disj_form" string_of_bool) disj_form no_pos; *)
+                if disj_form then
                   (vdef.C.view_user_inv <- sf; vdef.C.view_xpure_flag <- false);
-	        Debug.info_pprint ("Using a simpler inv for xpure0 of "^vdef.C.view_name) pos;
-                Debug.info_hprint (add_str "inv(xpure0)" pr) vdef.C.view_user_inv pos;
+	        Debug.tinfo_pprint ("Using a simpler inv for xpure0 of "^vdef.C.view_name) pos;
+                Debug.tinfo_hprint (add_str "inv(xpure0)" pr) vdef.C.view_user_inv pos;
 
-	        Debug.info_hprint (add_str "inv(xpure1)" pr) vdef.C.view_x_formula pos
+	        Debug.tinfo_hprint (add_str "inv(xpure1)" pr) vdef.C.view_x_formula pos
               end
           end
         else report_error pos ("view defn for "^vn^" does not entail supplied invariant\n") 
@@ -1269,9 +1272,10 @@ and trans_view_x (prog : I.prog_decl) ann_typs (vdef : I.view_decl): C.view_decl
       let pos = IF.pos_of_struc_formula view_formula1 in
       let view_sv_vars = List.map (fun c-> trans_var (c,Unprimed) n_tl pos) vdef.I.view_vars in
       let self_c_var = Cpure.SpecVar ((Named data_name), self, Unprimed) in
+      let null_c_var = Cpure.null_var in 
       let _ =
         let vs1 = (CF.struc_fv cf) in
-        let vs2 = (self_c_var::view_sv_vars) in
+        let vs2 = (null_c_var::self_c_var::view_sv_vars) in
         let vs1a = CP.fv inv_pf in
         Debug.tinfo_hprint (add_str "vs1a" Cprinter.string_of_spec_var_list) vs1a no_pos;
         let vs1 = vs1@vs1a in

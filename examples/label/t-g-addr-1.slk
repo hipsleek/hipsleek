@@ -1,0 +1,22 @@
+
+checkentail
+true & exists(Mr_3325:exists(Ml_3326:Mp=union({prev},Ml_3326,Mr_3325))) & 
+Mp_1198={} & Mc_1195=union({cur_3292},{},{}) & M_3291=union(Mc_1195,
+Mp_1198) & exists(Mr_3323:exists(Ml_3324:M_3291=union({prev'},Ml_3324,
+Mr_3323)))
+|- 
+M_3291={}
+// M_3291!={}
+.
+
+/*
+above fail due to a contradition. Hence LHS must be false.
+
+
+id: 4121; prover: MONA; loc: swt-4g-addr-lbl.ss_26:23_26:29; kind: POST
+ Imply: ante: exists(Mr_3325:exists(Ml_3326:Mp=union({prev},Ml_3326,Mr_3325))) & 
+Mp_1198={} & Mc_1195=union({cur_3292},{},{}) & M_3291=union(Mc_1195,
+Mp_1198) & exists(Mr_3323:exists(Ml_3324:M_3291=union({prev'},Ml_3324,
+Mr_3323)))
+	     conseq:  M_3291={}
+*/
