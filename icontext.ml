@@ -226,23 +226,23 @@ let icompute_action_pre_x constrs post_hps frozen_hps=
     match complex_nonrec_guard_grps with
       | (hp,constrs)::_ ->  [(hp,constrs)]
       | _ -> []
-  else []
+  else pre_preds_4_equal2
   in
   (*find rem_constrs for weaken*)
-  let is_not_in_frozenh frozen_hps cs=
+  let is_not_in_frozen frozen_hps cs=
     let lhps = CF.get_hp_rel_name_formula cs.CF.hprel_lhs in
-    if List.length lhps<2 && CP.diff_svl lhps frozen_hps = [] then true else false
+    if CP.intersect_svl lhps frozen_hps = [] then true else false
   in
   let rem_constrs = if pre_preds_4_equal3 =[] then constrs else
     let hps = List.map fst pre_preds_4_equal3 in
-    List.filter (is_not_in_frozenh frozen_hps) constrs
+    List.filter (is_not_in_frozen hps) constrs
   in
   (pre_preds_4_equal3, complex_hps,rem_constrs)
 
 let icompute_action_pre constrs post_hps frozen_hps=
   let pr1 = pr_list_ln Cprinter.string_of_hprel_short in
   let pr2 = pr_list_ln (pr_pair !CP.print_sv  pr1) in
-  Debug.ho_3 "icompute_action_pre" pr1 !CP.print_svl !CP.print_svl
+  Debug.no_3 "icompute_action_pre" pr1 !CP.print_svl !CP.print_svl
       (pr_triple pr2 !CP.print_svl pr1)
       (fun _ _ _ -> icompute_action_pre_x constrs post_hps frozen_hps)
       constrs post_hps frozen_hps
