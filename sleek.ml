@@ -271,7 +271,7 @@ let main () =
                                 | _ -> dummy_exception();
                                     print_string ("Error.\n");
                                     print_endline "Last SLEEK FAILURE:";
-                                    Log.last_cmd # dumping "sleek failure";
+                                    Log.last_cmd # dumping "sleek_dump(interactive)";
                                     (*     sleek_command # dump; *)
                                     (* print_endline "Last PURE PROOF FAILURE:"; *)
                                     (* Log.last_proof_command # dump; *)
@@ -311,15 +311,16 @@ let sleek_proof_log_Z3 src_files =
       let with_option = if(!Globals.en_slc_ps) then "sleek_eps" else "sleek_no_eps" in
       let with_option_logtxt = if(!Globals.en_slc_ps) then "eps" else "no_eps" in
       let fname = "logs/"^with_option_logtxt^"_proof_log_" ^ (Globals.norm_file_name (List.hd src_files)) ^".txt"  in
-      let fz3name= ("logs/"^with_option^(Globals.norm_file_name (List.hd src_files)) ^".z3")  in
-      let fnamegt5 = "logs/greater_5sec_"^with_option_logtxt^"_proof_log_" ^ (Globals.norm_file_name (List.hd src_files)) ^".txt"  in
+      (* let fz3name= ("logs/"^with_option^(Globals.norm_file_name (List.hd src_files)) ^".z3")  in *)
+      (* let fnamegt5 = "logs/greater_5sec_"^with_option_logtxt^"_proof_log_" ^ (Globals.norm_file_name (List.hd src_files)) ^".txt"  in *)
       let _= if (!Globals.proof_logging_txt) 
       then 
         begin
           (* Debug.info_pprint ("Logging "^fname^"\n") no_pos; *)
 	  (* Debug.info_pprint ("Logging "^fz3name^"\n") no_pos; *)
-	  Debug.info_pprint ("Logging "^fnamegt5^"\n") no_pos;
+	  (* Debug.info_pprint ("Logging "^fnamegt5^"\n") no_pos; *)
           Log.proof_log_to_text_file fname !Globals.source_files;
+          Log.sleek_log_to_text_file2 !Globals.source_files;
 	  (* Log.z3_proofs_list_to_file fz3name !Globals.source_files; *)
 	  (* Log.proof_greater_5secs_to_file !Globals.source_files; *)
         end
@@ -377,6 +378,7 @@ let _ =
       begin
         let ptime4 = Unix.times () in
         let t4 = ptime4.Unix.tms_utime +. ptime4.Unix.tms_cutime +. ptime4.Unix.tms_stime +. ptime4.Unix.tms_cstime in
+        Timelog.logtime # dump;
         silenced_print print_string ("\nTotal verification time: " 
         ^ (string_of_float t4) ^ " second(s)\n"
         ^ "\tTime spent in main process: " 

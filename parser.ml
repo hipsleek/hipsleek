@@ -1517,12 +1517,14 @@ cexp_w:
     | lc=SELF; `IN_T;   cl=SELF ->
         let cid, pos = match lc with
           | Pure_c (P.Var (t, l)) -> (t, l)
+          | Pure_c (P.Null l) -> ((null_name, Unprimed), l)
           | _ -> report_error (get_pos_camlp4 _loc 1) "expected cid" in
         let f = cexp_to_pure1 (fun c2 -> P.BagIn (cid,c2,pos)) cl in
         set_slicing_utils_pure_double f false
     | lc=SELF(*cid*); `NOTIN;  cl=SELF ->
         let cid, pos = match lc with
           | Pure_c (P.Var (t, l)) -> (t, l)
+          | Pure_c (P.Null l) -> ((null_name,Unprimed), l)
           | _ -> report_error (get_pos_camlp4 _loc 1) "expected cid" in
         let f = cexp_to_pure1 (fun c2 -> P.BagNotIn(cid,c2,pos)) cl in
         set_slicing_utils_pure_double f false

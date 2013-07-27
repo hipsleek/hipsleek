@@ -3,6 +3,7 @@
 *)
 
 open Globals
+open Wrapper
 open Others
 open Sleekcommons
 open Gen.Basic
@@ -1160,6 +1161,7 @@ let print_entail_result sel_hps (valid: bool) (residue: CF.list_context) (num_id
             | _ -> ""
         else ""
       in
+      Log.last_cmd # dumping "sleek_dump(fail)";
       silenced_print print_string (num_id^": Fail."^timeout^s^"\n"^term_output^"\n"); flush stdout;
 	  false
       (*if !Globals.print_err_sleek then *)
@@ -1176,7 +1178,13 @@ let print_entail_result sel_hps (valid: bool) (residue: CF.list_context) (num_id
         else ""
       in
       if t_valid then (silenced_print print_string (num_id^": Valid. "^s^"\n"^term_output^"\n"); true)
-      else (silenced_print print_string (num_id^": Fail. "^s^"\n"^term_output^"\n");false)
+      else 
+        begin
+          Log.last_cmd # dumping "sleek_dump(fail2)";
+          silenced_print print_string (num_id^": Fail. "^s^"\n"^term_output^"\n");
+          false
+        end
+
       (* let hp_lst_assume = Infer.rel_ass_stk # get_stk in *)
       (* if not(Infer.rel_ass_stk# is_empty) then *)
       (*   begin *)

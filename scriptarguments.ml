@@ -66,14 +66,26 @@ let common_arguments = [
    "Disable the splitting of consequent to expose labels."); 
   ("--lbl-dis-split-ante", Arg.Clear Globals.label_split_ante,
    "Disable the splitting of antecedent to expose labels."); 
-  ("--lbl-en-aggr-sat", Arg.Set Globals.label_aggressive_sat,
+  ("--lea-sat", Arg.Set Globals.label_aggressive_sat,
    "Enable aggressive splitting of label for sat.");
-  ("--lbl-en-aggr-imply", Arg.Set Globals.label_aggressive_imply,
+  ("--lea-imply", Arg.Set Globals.label_aggressive_imply,
    "Enable aggressive splitting of label for implications.");
   ("--lbl-en-aggr", Arg.Unit (fun _ -> 
      Globals.label_aggressive_imply := true;
      Globals.label_aggressive_sat := true ),
    "Enable aggressive splitting of label.");
+  ("--lbl-dis-aggr", Arg.Unit (fun _ -> 
+     Globals.label_aggressive_imply := false;
+     Globals.label_aggressive_sat := false ),
+   "Disable aggressive splitting of label.");
+  ("--lda", Arg.Unit (fun _ -> 
+     Globals.label_aggressive_imply := false;
+     Globals.label_aggressive_sat := false ),
+   "Shorthand for --lbl-dis-aggr splitting of label.");
+  ("--lea", Arg.Unit (fun _ -> 
+     Globals.label_aggressive_imply := true;
+     Globals.label_aggressive_sat := true ),
+   "Shorthand for --lbl-en-aggr.");
    (* UNSAT("":cf,"a":af,"b":bf) 
           --> UNSAT(cf&af) | UNSAT(cf & bf) *)
   (* aggressive UNSAT("":cf,"a":af,"b":bf) 
@@ -225,6 +237,8 @@ let common_arguments = [
    "Replace Cond_action by Search for LHS Case Analysis");
   ("-nxpure", Arg.Set_int Globals.n_xpure,
    "Number of unfolding using XPure");
+  ("-mona-cycle", Arg.Set_int Mona.mona_cycle,
+   "Number of times mona can be called before it restarts (default 90)");
   ("-v:", Arg.Set_int Globals.verbose_num,
    "Verbosity level for Debugging");
   ("-fixcalc-disj", Arg.Set_int Globals.fixcalc_disj,
@@ -340,6 +354,7 @@ let common_arguments = [
   ("-version", Arg.Set Globals.print_version_flag,"current version of software");
   (* ("--dfe", Arg.Set Globals.disable_failure_explaining,"disable failure explaining"); *)
   ("--en-failure-analysis", Arg.Clear Globals.disable_failure_explaining,"enable failure explanation analysis");
+  ("--efa", Arg.Clear Globals.disable_failure_explaining,"shorthand for --en-failure-analysis");
   ("--refine-error", Arg.Set Globals.simplify_error,
    "Simplify the error");
   (*("--redlog-int-relax", Arg.Set Redlog.integer_relax_mode, "use redlog real q.e to prove intefer formula  *experiment*");*)
@@ -414,9 +429,16 @@ let common_arguments = [
   
   (* Proof Logging *)
   ("--en-logging-only", Arg.Set Globals.proof_logging, "Enable proof loggingonly");
-  ("--en-logging", Arg.Set Globals.proof_logging_txt, "Enable proof logging with text file");
-  ("--en-slk-logging", Arg.Set Globals.sleek_logging_txt, "Enable sleek and proof logging with text file");
-
+  ("--en-prf-logging", Arg.Unit (fun _ ->
+      Globals.proof_logging_txt:=true ), "Enable proof logging with text file");
+  ("--epl", Arg.Unit (fun _ ->
+      Globals.proof_logging_txt:=true ), "Shorthand for --en-logging");
+  ("--en-slk-logging", Arg.Unit (fun _ ->
+      Globals.proof_logging_txt:=true; 
+      Globals.sleek_logging_txt:=true), "Enable sleek and proof logging with text file");
+  ("--esl", Arg.Unit (fun _ ->
+      Globals.proof_logging_txt:=true; 
+      Globals.sleek_logging_txt:=true), "Shorthand for --en-slk-logging");
   (* abduce pre from post *)
   ("--abdfpost", Arg.Set Globals.do_abd_from_post, "Enable abduction from post-condition");
   (* incremental spec *)

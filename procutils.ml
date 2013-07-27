@@ -62,19 +62,20 @@ struct
     let old_handler = Sys.signal Sys.sigalrm sigalrm_handler in
     let reset_sigalrm () = Sys.set_signal Sys.sigalrm old_handler in
     let _ = set_timer limit in
+    let proof_no = (string_of_int !proof_no) in
     try
-      let _ = Timelog.logtime # timer_start limit in
+      let _ = Timelog.logtime # timer_start proof_no limit in
       let res = fn arg in
       let x = Unix.getitimer Unix.ITIMER_REAL in
       (* let nt = limit -. x.Unix.it_value in *)
       let nt = limit -. x.Unix.it_value in
-      let _ = Timelog.logtime # timer_stop nt in
+      let _ = Timelog.logtime # timer_stop proof_no nt in
       set_timer 0.0;
       reset_sigalrm ();
       res
     with e ->
         begin
-          let _ = Timelog.logtime # timer_timeout limit in
+          let _ = Timelog.logtime # timer_timeout proof_no limit in
           (* Debug.info_pprint (Timelog.logtime # print_timer)  no_pos; *)
           (* Debug.info_pprint ("TIMEOUT"^(Printexc.to_string e)) no_pos; *)
           raise e

@@ -700,7 +700,7 @@ struct
   let string_of (e: emap) : string =
     let f = string_of_elem in
     let ll=partition e in 
-    "emap["^ (String.concat " \n " (List.map (fun cl -> "{"^(String.concat ", "(List.map f cl))^"}") ll))^"]"
+    "emap["^ (String.concat ";" (List.map (fun cl -> "{"^(String.concat ","(List.map f cl))^"}") ll))^"]"
 
   let un_partition (ll:epart) : emap =
     let flat xs y = 
@@ -805,6 +805,9 @@ struct
   (* remove key e from e_set  *)
   let elim_elems_one  (s:emap) (e:elem) : emap = 
     List.filter (fun (a,k2) -> not(eq a e)) s
+
+  let elim_elems  (s:emap) (e:elem list) : emap = 
+    List.filter (fun (a,k2) -> not(mem a e)) s
 
   (* return all elements equivalent to e, including itself *)
   let find_equiv_all  (e:elem) (s:emap) : elist  =
@@ -1291,9 +1294,15 @@ struct
 
   let string_of_counters () =  counters#string_of
 
-  let get_time () = 
+  let get_all_time () = 
 	let r = Unix.times () in
 	r.Unix.tms_utime +. r.Unix.tms_stime +. r.Unix.tms_cutime +. r.Unix.tms_cstime
+
+  let get_main_time () = 
+	let r = Unix.times () in
+	r.Unix.tms_utime +. r.Unix.tms_stime (* +. r.Unix.tms_cutime +. r.Unix.tms_cstime *)
+
+  let get_time () = get_all_time()
 
   let push_time_no_cnt msg = 
     if (!Globals.profiling) then

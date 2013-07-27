@@ -16,6 +16,16 @@ Total number of errors: 9 in files:
   imm/imm1.slk imm/imm3.slk imm/imm-hard.slk imm-field/sleek02.slk.
 Total verification time: 5.76 second
 ====================================================================
+27Jul
+Total number of errors: 6 in files:
+ error at: ../../modular_examples/selection-modular.ss delete_min
+error at: ../../modular_examples/selection-modular.ss find_min
+error at: ../../modular_examples/selection-modular.ss selection_sort
+error at: ../../modular_examples/qsort-modular.ss append_bll
+error at: ../../modular_examples/qsort-modular.ss partition
+error at: ../../modular_examples/qsort-modular.ss qsort
+
+# temporarily added --lda to disable aggressive labels
 ====================================================================
 ====================================================================
 ====================================================================
