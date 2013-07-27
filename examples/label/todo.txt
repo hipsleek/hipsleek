@@ -377,6 +377,18 @@ schor-waitte tree (g-version) now works with the aggressive
 option but there are some timeouts below to investigate
 for performance improvements:
 
+
+Checking procedure lscan$node~node~node... 
+Procedure lscan$node~node~node SUCCESS
+Stop Omega... 368 invocations 
+2 false contexts at: ( (58,8)  (57,19) )
+Total verification time: 6.020375 second(s)
+	Time spent in main process: 4.072254 second(s)
+	Time spent in child processes: 1.948121 second(s)
+	Time for logging: 1.312084 second(s)
+
+!!! log(small):(7.649072,1315)
+
 Procedure lscan$node~node~node SUCCESS
 Stop Omega... 275 invocations 
 !!! Number of log entries 1185

@@ -1002,8 +1002,9 @@ and compute_view_x_formula (prog : C.prog_decl) (vdef : C.view_decl) (n : int) =
         string_of_int 
         (fun x ->   "void")
         (* Cprinter.string_of_view_decl vdef) *)
-        (compute_view_x_formula_x prog) vdef n
-  in wrap_proving_kind PK_Pred_Check_Inv foo () 
+        (compute_view_x_formula_x prog) vdef n in
+  let foo = wrap_lbl_dis_aggr foo in
+  wrap_proving_kind PK_Pred_Check_Inv foo () 
 
          
 (* and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int) = *)

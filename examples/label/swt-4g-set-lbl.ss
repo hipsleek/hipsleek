@@ -8,7 +8,7 @@ tx<g,s,"s":M> == true&["":self = g & s!=null & (g=null | g=s) ; "s": M={}]
    or self::node<v,l,r> * l::tx<g,s,M1> * r::tx<null,s,M2> & ["": self != g & self != s ;"s": M=union({v},M1,M2)]
    or self::node<v,l,r> * l::tx<null,s,M1> * r::tx<g,s,M2> & ["": self != g & self != s ;"s": M=union({v},M1,M2)]
 inv true&["": s!=null & (g=null & self!=s | g=s & self!=null); 
-    "","s":(self=g & M={} | self!=g & M!={})];
+    "s":(self=g & M={} | self!=g & M!={})];
 
 
 void lscan(ref node cur, ref node prev, node sent)
@@ -28,7 +28,9 @@ requires cur::tx<a,sent,M1> * prev::tx<b,sent,M2>
     a=null ->
        case { 
          b=sent & cur!=null ->
-            ensures prev'::tx<null,sent,M3>  & ["": cur' = sent & prev'!=null ; "s": M3=union(M1,M2)]; 
+            ensures prev'::tx<null,sent,M3>  & ["": cur' = sent 
+            //& prev'!=null
+            ; "s": M3=union(M1,M2)]; 
          b!=sent | cur=null -> 
             requires false
             ensures false;
@@ -36,7 +38,9 @@ requires cur::tx<a,sent,M1> * prev::tx<b,sent,M2>
     a!=null ->
        case { 
          b=null & cur!=sent & a=sent ->
-             ensures prev'::tx<null,sent,M3>  & ["": cur' = sent & prev'!=null ;"s": M3=union(M1,M2)];
+             ensures prev'::tx<null,sent,M3>  & ["": cur' = sent 
+             //& prev'!=null 
+             ;"s": M3=union(M1,M2)];
          b!=null | cur=sent | a!=sent -> 
             requires false
             ensures false;
