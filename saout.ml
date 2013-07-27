@@ -100,7 +100,7 @@ List.fold_left (fun acc (rel_cat, hf,_,f_body)->
               I.view_pos = no_pos;
 	      I.view_data_name = data_name;
 	      I.view_vars = vars;
-	      I.view_labels = List.map (fun _ -> empty_spec_label) vars;
+	      I.view_labels = List.map (fun _ -> empty_spec_label) vars, false;
 	      I.view_modes = List.map (fun _ -> ModeOut) vars ;
 	      I.view_typed_vars =  tvars;
               I.view_kind = I.View_NORM;

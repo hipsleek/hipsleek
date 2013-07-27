@@ -1,4 +1,4 @@
-
+ 
 module type INC_TYPE =
 sig
   type t
@@ -32,6 +32,7 @@ struct
       | q::qs -> if (List.mem q qs) then remove_dups qs else q::(remove_dups qs)
 
   let pr_id x = x
+  let pr_string x = "\""^x^"\""
   
   let print_endline_if b s = if b then print_endline s else ()
   let print_string_if b s = if b then print_string s else ()
@@ -83,6 +84,7 @@ struct
  let pr_list_brk_sep open_b close_b sep f xs  = open_b ^(pr_lst sep f xs)^close_b
  let pr_list_brk open_b close_b f xs  = pr_list_brk_sep open_b close_b "," f xs
  let pr_list f xs = pr_list_brk "[" "]" f xs
+ let pr_list_no_brk f xs = pr_list_brk "" "" f xs
  let pr_list_angle f xs = pr_list_brk "<" ">" f xs
  let pr_list_round f xs = pr_list_brk "(" ")" f xs
  let pr_list_round_sep sep f xs = pr_list_brk_sep "(" ")" sep f xs
@@ -368,7 +370,11 @@ struct
     | x::xs -> match f x with
         | None -> list_find f xs
         | Some s -> Some s
-
+  let add_index l =
+	let rec helper id l = match l with 
+		| [] -> []
+		| h::t -> (id,h)::(helper (id+1) t) in
+	helper 0 l
 end;;
 
 module BListEQ =
@@ -514,7 +520,8 @@ class ['a] stack_filter (epr:'a->string) (eq:'a->'a->bool) (fil:'a->bool)  =
      method filter = stk <- List.filter fil stk
      method string_of_reverse_log_filter = 
        stk <- List.filter fil stk;
-       super#string_of_reverse_log
+       super#string_of_no_ln_rev
+           (* string_of_reverse_log *)
    end;;
 
 class ['a] stack_noexc (x_init:'a) (epr:'a->string) (eq:'a->'a->bool)  =
@@ -527,6 +534,9 @@ class ['a] stack_noexc (x_init:'a) (epr:'a->string) (eq:'a->'a->bool)  =
      method last : 'a = match stk with 
        | [] -> emp_val
        | _ -> List.hd (List.rev stk)
+     method pop_top = match stk with 
+       | [] -> emp_val
+       | x::xs -> stk <- xs; x
    end;;
 
 (* class ['a] stack_noexc (x_init:'a) (epr:'a->string) (eq:'a->'a->bool)  = *)

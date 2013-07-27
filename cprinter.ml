@@ -65,9 +65,10 @@ let texify l nl = if !Globals.texify then l else nl
 let pr_int i = fmt_int i
 
 let pr_pair_aux pr_1 pr_2 (a,b) =
-  fmt_string "(";
-  pr_1 a; fmt_string ",";
-  pr_2 b; fmt_string ")"
+  (* fmt_string "("; *)
+  pr_1 a; fmt_string ":";
+  pr_2 b
+  (* ;fmt_string ")" *)
 
 let pr_opt f x = match x with
     | None -> fmt_string "None"
@@ -549,6 +550,12 @@ let pr_spec_var x = fmt_string (string_of_spec_var x)
 
 let pr_typed_spec_var x = fmt_string (* (string_of_spec_var x) *) (string_of_typed_spec_var x)
 
+let pr_typed_spec_var_lbl (l,x) = 
+  let s = 
+    if Lab_List.is_common l then ""
+    else (Lab_List.string_of l)^":"
+  in fmt_string (s^(string_of_typed_spec_var x))
+
 let pr_list_of_spec_var xs = pr_list_none pr_spec_var xs
   
 let pr_imm x = fmt_string (string_of_imm x)
@@ -690,9 +697,9 @@ let rec pr_formula_exp (e:P.exp) =
         fmt_string ("(" ^ (Globals.string_of_typ ty) ^ ")");
         pr_formula_exp e1;
     | P.Bag (elist, l) 	-> 
-        fmt_string ("bag("); 
-        pr_set pr_formula_exp elist;
-        fmt_string (")")
+        fmt_string ("{"); 
+        pr_list_none pr_formula_exp elist;
+        fmt_string ("}")
     | P.BagUnion (args, l) -> 
           let args = bin_op_to_list op_union_short exp_assoc_op e in
           pr_fn_args op_union pr_formula_exp args
@@ -891,8 +898,8 @@ let rec pr_pure_formula  (e:P.formula) =
           let arg2 = bin_op_to_list op_and_short pure_formula_assoc_op f2 in
           let args = arg1@arg2 in
           pr_list_op op_and f_b args
-    | P.AndList b -> fmt_string "(AndList ";
-		pr_list_op_none " & " (wrap_box ("B",0) (pr_pair_aux pr_spec_label pr_pure_formula)) b;fmt_string ") "
+    | P.AndList b -> fmt_string "AndList( ";
+		pr_list_op_none " ; " (wrap_box ("B",0) (pr_pair_aux pr_spec_label pr_pure_formula)) b;fmt_string ") "
     | P.Or (f1, f2, lbl,l) -> 
           pr_formula_label_opt lbl; 
           let arg1 = bin_op_to_list op_or_short pure_formula_assoc_op f1 in
@@ -2889,7 +2896,8 @@ let pr_view_decl v =
     | View_NORM -> " "
     | View_PRIM -> "_prim "
     | View_EXTN -> "_extn " in
-  wrap_box ("B",0) (fun ()-> pr_angle  ("view"^s^v.view_name) pr_typed_spec_var v.view_vars; fmt_string "= ") ();
+  wrap_box ("B",0) (fun ()-> pr_angle  ("view"^s^v.view_name) pr_typed_spec_var_lbl 
+      (List.combine v.view_labels v.view_vars); fmt_string "= ") ();
   fmt_cut (); wrap_box ("B",0) pr_struc_formula v.view_formula; 
   pr_vwrap  "cont vars: "  pr_list_of_spec_var v.view_cont_vars;
   pr_vwrap  "inv: "  pr_mix_formula v.view_user_inv;

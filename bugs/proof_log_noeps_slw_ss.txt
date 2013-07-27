@@ -1,0 +1,171 @@
+
+--------------
+..no proving kind.....
+Prover: 
+Type: Imply: ante: s!=self
+	     conseq:  s!=self
+Result: true
+
+--------------
+Proving Infor spec:None loc:(Line:12,Col:11) kind::PRED CHECK-INVARIANT...
+Prover: CACHED
+Type: Simplify:  exists(Mnxt:exists(nxt:M=union(Mnxt,bag({self})) & s!=self & self!=null & 
+nxt!=s))
+Result:  exists(Mnxt:exists(nxt:M=union(Mnxt,bag({self})) & s!=self & self!=null & 
+nxt!=s))
+
+--------------
+Proving Infor spec:None loc:(Line:12,Col:11) kind::PRED CHECK-INVARIANT
+Trace::[]
+
+Prover: 
+Type: Sat:  ((self=null & M=bag() & s!=self) | exists(Mnxt:exists(nxt:M=union(Mnxt,
+bag({self})) & s!=self & self!=null & nxt!=s)))
+Result: true
+
+--------------
+Proving Infor spec:None loc:(Line:12,Col:11) kind::PRED CHECK-INVARIANT
+Trace::[]
+
+Prover: 
+Type: Imply: ante: self=null & M=bag() & s!=self
+	     conseq:  s!=self
+Result: true
+
+--------------
+Proving Infor spec:None loc:(Line:12,Col:11) kind::PRED CHECK-INVARIANT
+Trace::[]
+
+Prover: 
+Type: Simplify:  exists(Mnxt:exists(nxt:M=union(Mnxt,bag({self})) & s!=self & self!=null & 
+nxt!=s))
+Result:  exists(Mnxt:exists(nxt:M=union(Mnxt,bag({self})) & s!=self & self!=null & 
+nxt!=s))
+
+--------------
+Proving Infor spec:None loc:(Line:12,Col:11) kind::PRED CHECK-INVARIANT
+Trace::[]
+
+Prover: 
+Type: Imply: ante: exists(Mnxt_857:exists(nxt_858:M=union(Mnxt_857,bag({self})) & s!=self & 
+self!=null & nxt_858!=s))
+	     conseq:  s!=self
+Result: true
+
+--------------
+Proving Infor spec:None loc:(Line:12,Col:11) kind::PRED CHECK-INVARIANT...
+Prover: 
+Type: Simplify:  exists(Mnxt:exists(nxt:M=union(Mnxt,bag({self})) & s!=self & self!=null & 
+nxt!=s))
+Result:  exists(Mnxt:exists(nxt:M=union(Mnxt,bag({self})) & s!=self & self!=null & 
+nxt!=s))
+
+--------------
+Proving Infor spec:None loc:(Line:12,Col:11) kind::PRED CHECK-INVARIANT...
+Prover: 
+Type: Simplify:  exists(Mnxt:exists(nxt:M=union(Mnxt,bag({self})) & s!=self & self!=null & 
+nxt!=s))
+Result:  exists(Mnxt:exists(nxt:M=union(Mnxt,bag({self})) & s!=self & self!=null & 
+nxt!=s))
+
+--------------
+Proving Infor spec:None loc:(Line:12,Col:11) kind::PRED CHECK-INVARIANT...
+Prover: 
+Type: Simplify:  exists(Mnxt:exists(nxt:M=union(Mnxt,bag({self})) & s!=self & self!=null & 
+nxt!=s))
+Result:  exists(Mnxt:exists(nxt:M=union(Mnxt,bag({self})) & s!=self & self!=null & 
+nxt!=s))
+
+--------------
+Proving Infor spec:None loc:(Line:12,Col:11) kind::PRED CHECK-INVARIANT...
+Prover: 
+Type: Imply: ante: s!=self
+	     conseq:  (exists(Mnxt:exists(nxt:M=union(Mnxt,bag({self})) & s!=self & self!=null & 
+nxt!=s)) | (self=null & M=bag() & s!=self))
+Result: false
+
+--------------
+Proving Infor spec:None loc:(Line:13,Col:4) kind::COMPUTE_BASE_CASE_X...
+Prover: 
+Type: Simplify:  exists(Mnxt:exists(nxt:M=union(Mnxt,bag({self})) & s!=self & self!=null & 
+((exists(Mnxt_861:exists(nxt_862:Mnxt=union(Mnxt_861,bag({nxt})) & nxt!=s & 
+nxt!=null & nxt_862!=s)) | (nxt=null & Mnxt=bag() & nxt!=s)))))
+Result:  exists(Mnxt:exists(nxt:M=union(Mnxt,bag({self})) & s!=self & self!=null & 
+((exists(Mnxt_861:exists(nxt_862:Mnxt=union(Mnxt_861,bag({nxt})) & nxt!=s & 
+nxt!=null & nxt_862!=s)) | (nxt=null & Mnxt=bag() & nxt!=s)))))
+
+--------------
+Proving Infor spec:None loc:(Line:13,Col:4) kind::COMPUTE_BASE_CASE_X...
+Prover: 
+Type: Imply: ante: self=null & M=bag() & s!=self
+	     conseq:  self=null
+Result: true
+
+--------------
+Proving Infor spec:None loc:(Line:13,Col:4) kind::COMPUTE_BASE_CASE_X...
+Prover: 
+Type: Sat:  self=null & exists(Mnxt:exists(nxt:M=union(Mnxt,bag({self})) & s!=self & 
+self!=null & ((exists(Mnxt_861:exists(nxt_862:Mnxt=union(Mnxt_861,
+bag({nxt})) & nxt!=s & nxt!=null & nxt_862!=s)) | (nxt=null & Mnxt=bag() & 
+nxt!=s)))))
+Result: false
+
+--------------
+Proving Infor spec:None loc:(Line:13,Col:4) kind::COMPUTE_BASE_CASE_X...
+Prover: 
+Type: Imply: ante: self=null & M=bag() & s!=self
+	     conseq:  M=bag()
+Result: true
+
+--------------
+Proving Infor spec:None loc:(Line:13,Col:4) kind::COMPUTE_BASE_CASE_X...
+Prover: 
+Type: Sat:  M=bag() & exists(Mnxt:exists(nxt:M=union(Mnxt,bag({self})) & s!=self & 
+self!=null & ((exists(Mnxt_861:exists(nxt_862:Mnxt=union(Mnxt_861,
+bag({nxt})) & nxt!=s & nxt!=null & nxt_862!=s)) | (nxt=null & Mnxt=bag() & 
+nxt!=s)))))
+Result: false
+
+--------------
+Proving Infor spec:None loc:(Line:13,Col:4) kind::COMPUTE_BASE_CASE_X...
+Prover: CACHED
+Type: Imply: ante: self=null & M=bag() & s!=self
+	     conseq:  s!=self
+Result: true
+
+--------------
+Proving Infor spec:None loc:(Line:13,Col:4) kind::COMPUTE_BASE_CASE_X...
+Prover: 
+Type: Sat:  s!=self & exists(Mnxt:exists(nxt:M=union(Mnxt,bag({self})) & s!=self & 
+self!=null & ((exists(Mnxt_861:exists(nxt_862:Mnxt=union(Mnxt_861,
+bag({nxt})) & nxt!=s & nxt!=null & nxt_862!=s)) | (nxt=null & Mnxt=bag() & 
+nxt!=s)))))
+Result: true
+
+--------------
+Proving Infor spec:None loc:(Line:12,Col:11) kind::SAT WARNINGS...
+Prover: CACHED
+Type: Sat:  self=null & M=bag() & s!=self
+Result: true
+
+--------------
+Proving Infor spec:None loc:(Line:13,Col:4) kind::SAT WARNINGS...
+Prover: 
+Type: Sat:  exists(Mnxt:exists(nxt:M=union(Mnxt,bag({self})) & s!=self & self!=null & 
+((exists(Mnxt_863:exists(nxt_864:Mnxt=union(Mnxt_863,bag({nxt})) & nxt!=s & 
+nxt!=null & nxt_864!=s)) | (nxt=null & Mnxt=bag() & nxt!=s)))))
+Result: true
+
+--------------
+Proving Infor spec:None loc:(Line:13,Col:4) kind::SAT WARNINGS...
+Prover: CACHED
+Type: Sat:  self=null & M=bag() & s!=self
+Result: true
+
+--------------
+Proving Infor spec:None loc:(Line:13,Col:4) kind::SAT WARNINGS...
+Prover: CACHED
+Type: Sat:  exists(Mnxt:exists(nxt:M=union(Mnxt,bag({self})) & s!=self & self!=null & 
+((exists(Mnxt_865:exists(nxt_866:Mnxt=union(Mnxt_865,bag({nxt})) & nxt!=s & 
+nxt!=null & nxt_866!=s)) | (nxt=null & Mnxt=bag() & nxt!=s)))))
+Result: true

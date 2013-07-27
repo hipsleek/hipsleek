@@ -1,8 +1,20 @@
 ==============================================
 Total number of errors: 10 in files:
-  infer/infer1.slk infer/infer2.slk infer/infer8.slk infer/infer13.slk infer/infer14.slk ann1.slk imm/imm1.slk imm/imm3.slk imm/imm-hard.slk imm-field/sleek02.slk.
+  infer/infer1.slk infer/infer2.slk infer/infer8.slk 
+  infer/infer13.slk infer/infer14.slk 
+  ann1.slk 
+  imm/imm1.slk imm/imm3.slk imm/imm-hard.slk imm-field/sleek02.slk.
 ====================================================================
-====================================================================
+20Jul2013 : more failures due to enabling filter_assumption; FIXED
+
+========================================================s============
+20Jul2013
+Total number of errors: 9 in files:
+  infer/infer8.slk infer/infer12.slk 
+  infer/infer13.slk infer/infer14.slk
+  ann1.slk
+  imm/imm1.slk imm/imm3.slk imm/imm-hard.slk imm-field/sleek02.slk.
+Total verification time: 5.76 second
 ====================================================================
 ====================================================================
 ====================================================================

@@ -59,6 +59,33 @@ let common_arguments = [
    "Print all the verification conditions, the input to external prover and its output.");
   (* ("--ufdp", Arg.Set Solver.unfold_duplicated_pointers, *)
   (* "Do unfolding of predicates with duplicated pointers."); (\* An Hoa *\) *)
+  (* Labelling Options *)
+  ("--dis-lbl", Arg.Set Globals.remove_label_flag,
+   "Disable Labelling of Formula by removing AndList."); 
+  ("--lbl-dis-split-conseq", Arg.Clear Globals.label_split_conseq,
+   "Disable the splitting of consequent to expose labels."); 
+  ("--lbl-dis-split-ante", Arg.Clear Globals.label_split_ante,
+   "Disable the splitting of antecedent to expose labels."); 
+  ("--lbl-en-aggr-sat", Arg.Set Globals.label_aggressive_sat,
+   "Enable aggressive splitting of label for sat.");
+  ("--lbl-en-aggr-imply", Arg.Set Globals.label_aggressive_imply,
+   "Enable aggressive splitting of label for implications.");
+  ("--lbl-en-aggr", Arg.Unit (fun _ -> 
+     Globals.label_aggressive_imply := true;
+     Globals.label_aggressive_sat := true ),
+   "Enable aggressive splitting of label.");
+   (* UNSAT("":cf,"a":af,"b":bf) 
+          --> UNSAT(cf&af) | UNSAT(cf & bf) *)
+  (* aggressive UNSAT("":cf,"a":af,"b":bf) 
+          --> UNSAT(cd) | UNSAT(af) & UNSAT(bf) *)
+  (* IMPLY("":cf,"a":af,"b":bf --> "a":ta,"b":tb) 
+          --> IMPLY(cf&af -->ta) & IMPLY (cf&bf-->tb) *)
+  (* aggressive IMPLY("":cf,"a":af,"b":bf --> "a":ta,"b":tb) 
+          --> IMPLY(af -->ta) & IMPLY (bf-->tb) *)
+  (* ("--en-label-aggr-sat", Arg.Set Globals.label_aggressive_sat, "enable aggressive splitting of labels during unsat"); *)
+  (* ("--dis-label-aggr-sat", Arg.Clear Globals.label_aggressive_sat, "disable aggressive splitting of labels during unsat"); *)
+  (* ("--en-label-aggr", Arg.Set Globals.label_aggressive_flag, "enable aggressive splitting of labels"); *)
+  (* ("--dis-label-aggr", Arg.Clear Globals.label_aggressive_flag, "disable aggressive splitting of labels"); *)
   ("--dis-ufdp", Arg.Clear Solver.unfold_duplicated_pointers,
    "Disable unfolding of predicates with duplicated pointers."); (* An Hoa *)
   ("--ahwytdi", Arg.Set Smtsolver.try_induction,
@@ -91,16 +118,17 @@ let common_arguments = [
   "No assumption filtering.");
   ("--filter", Arg.Set Globals.filtering_flag,
    "Enable assumption filtering.");
+  ("--constr-filter", Arg.Set Globals.enable_constraint_based_filtering, "Enable assumption filtering based on contraint type");
   ("--no-split-rhs", Arg.Clear Globals.split_rhs_flag,
    "No Splitting of RHS(conseq).");
   ("--dlp", Arg.Clear Globals.check_coercions,
    "Disable Lemma Proving");
   ("--dis-auto-num", Arg.Clear Globals.auto_number,
    "Disable Auto Numbering");
-  ("--dis-sleek-log-filter", Arg.Clear Globals.sleek_log_filter,
+  ("--dis-slk-log-filter", Arg.Clear Globals.sleek_log_filter,
    "Sleek Log Filter Flag");
   ("--elp", Arg.Set Globals.check_coercions,
-   "Enable Lemma Proving");
+   "enable lemma proving");
   ("--trace", Arg.Set Debug.trace_on,
    "Turn on brief tracing");
   ("--dis-trace", Arg.Clear Debug.trace_on,
@@ -113,6 +141,10 @@ let common_arguments = [
    "Turn on experimental trace_on");
   ("-dd-print-orig-conseq", Arg.Unit Debug.enable_dd_and_orig_conseq_printing,
    "Enable printing of the original consequent while debugging. Automatically enables -dd (debugging) ");
+  ("--en-imp-top", Arg.Set Globals.imply_top_flag,
+   "Enable proof logging of Imply_Top");
+  ("--dis-imp-top", Arg.Clear Globals.imply_top_flag,
+   "Disable proof logging of Imply_Top");
   ("-gist", Arg.Set Globals.show_gist,
    "Show gist when implication fails");
   ("--hull-pre-inv", Arg.Set Globals.hull_pre_inv,
@@ -121,7 +153,7 @@ let common_arguments = [
    "Timeout for sat checking");
   ("--imply-timeout", Arg.Set_float Globals.imply_timeout_limit,
    "Timeout for imply checking");
-  ("--sleek-timeout", Arg.Set_float Globals.sleek_timeout_limit,
+  ("--slk-timeout", Arg.Set_float Globals.sleek_timeout_limit,
    "Timeout for SLEEK entailment");
   ("--ds-provers-timeout", Arg.Set Globals.dis_provers_timeout,
    "Disable timeout on provers");
@@ -320,6 +352,7 @@ let common_arguments = [
   ("--esi",Arg.Set Globals.enable_strong_invariant, "enable strong predicate invariant");
   ("--en-red-elim", Arg.Set Globals.enable_redundant_elim, "enable redundant elimination under eps");
   ("--eap", Arg.Set Globals.enable_aggressive_prune, "enable aggressive prunning");
+
   (* ("--dap", Arg.Clear Globals.disable_aggressive_prune, "never use aggressive prunning"); *)
   ("--efp",Arg.Set Globals.enable_fast_imply, " enable fast imply only for --eps pruning; incomplete");
   (* ("--dfp",Arg.Clear Globals.enable_fast_imply, " disable syntactic imply only for --eps"); *)
@@ -380,9 +413,9 @@ let common_arguments = [
   ("--en-precond-sat", Arg.Clear Globals.disable_pre_sat, "Enable unsat checking of method preconditions");
   
   (* Proof Logging *)
-  ("--en-logging", Arg.Set Globals.proof_logging, "Enable proof logging");
-  ("--en-logging-txt", Arg.Set Globals.proof_logging_txt, "Enable proof logging output text file in addition");
-  ("--en-sleek-logging-txt", Arg.Set Globals.sleek_logging_txt, "Enable sleek logging output text file in addition");
+  ("--en-logging-only", Arg.Set Globals.proof_logging, "Enable proof loggingonly");
+  ("--en-logging", Arg.Set Globals.proof_logging_txt, "Enable proof logging with text file");
+  ("--en-slk-logging", Arg.Set Globals.sleek_logging_txt, "Enable sleek and proof logging with text file");
 
   (* abduce pre from post *)
   ("--abdfpost", Arg.Set Globals.do_abd_from_post, "Enable abduction from post-condition");

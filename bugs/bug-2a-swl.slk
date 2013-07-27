@@ -1,0 +1,13 @@
+
+checkentail Mc=union(Mnxt_1017,{cur_1026}) & cur_1026!=sentinel_1018 & 
+s_1014=sentinel_1018 & cur=cur_1026 & prev=prev_1025 & sentinel=sentinel' & 
+cur!=null & sentinel=sentinel_1018 & sentinel=sentinel_1019 & 
+n_50'=nxt_1016 & next_39_1024=nxt_1016 & cur_1026=prev_1037 & 
+cur_1036=n_50' & cur_1036!=sentinel' & !(v_bool_43_957') & 
+cur_1036!=sentinel' & !(v_bool_43_957') & cur_1036=null & v_bool_44_958' & 
+cur_1036=null & v_bool_44_958' & cur'=prev_1037 & prev'=null & 
+exists(sentinel_1063:cur'=sentinel_1063) & Mc_1040={} & nxt_1016!=s_1014 & 
+(((nxt_1016=null & Mnxt_1017={}) | (nxt_1016!=null & Mnxt_1017!=({})))) & 
+(((prev=sentinel_1019 & Mp={}) | (prev!=sentinel_1019 & Mp!=({}) & 
+prev!=null))) & cur_1026!=null
+|-  prev'!=sentinel_1064.

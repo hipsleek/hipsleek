@@ -105,3 +105,12 @@ error at: rb_bags.ss del_2r_1
 error at: rb_bags.ss del_2_1
 error at: rb.scp.ss del_2r_1
 error at: rb.scp.ss del_2_1
+
+=====================================================
+# 19Jul2013
+
+Starting hip-sleek tests:
+Total number of errors: 8 in files:
+  infer/infer8.slk infer/infer13.slk infer/infer14.slk ann1.slk imm/imm1.slk imm/imm3.slk imm/imm-hard.slk imm-field/sleek02.slk.
+
+=====================================================

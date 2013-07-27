@@ -26,7 +26,11 @@ struct
   type t = string list
   let unlabelled = []
   let is_unlabelled l = (l==[])
-  let string_of x = pr_list pr_id x
+  let is_top_label l = List.exists (fun c-> c="") l
+  let is_common l = (is_unlabelled l) or (is_top_label l)
+  let string_of x = 
+    if x=[] then "\"\""
+    else pr_list_no_brk pr_string x
   let singleton s = [s]
 
   let rec overlap xs ys = match xs,ys with
@@ -38,6 +42,14 @@ struct
             else if v<0 then overlap xs1 ys
             else overlap xs ys1
 
+  let is_fully_compatible xs ys =
+    if (is_common xs) && (is_common ys) then true
+    else overlap xs ys
+  
+  let is_fully_compatible xs ys =
+    let pr = pr_list pr_id  in
+    Debug.no_2 "is_fully_compatible" pr pr string_of_bool is_fully_compatible xs ys 	
+
   (* assumes that xs and ys are normalized *)
   (* returns true if they overlap in some ways *)
   let is_compatible xs ys =
@@ -45,9 +57,12 @@ struct
     else overlap xs ys
 
   let is_part_compatible xs ys =
-    if (is_unlabelled xs) then true
+    if (is_unlabelled xs)||(is_top_label xs) then true
     else overlap xs ys
 
+  let is_part_compatible xs ys = 
+    let pr = pr_list pr_id  in
+    Debug.no_2 "is_part_compatible" pr pr string_of_bool is_part_compatible xs ys 	
 	
   let is_compatible_rec = is_compatible
 
@@ -104,8 +119,11 @@ struct
       (* int replaces __i and may be used to label pre/post *)
   let unlabelled = (None, [])
   let is_unlabelled (n,l) = n==None && l==[]
-  let string_of = pr_pair (pr_opt string_of_int) (pr_list pr_id)
-  let string_of_opt l = if is_unlabelled l then "" else pr_pair (pr_opt string_of_int) (pr_list pr_id) l
+  let string_of = pr_pair (pr_opt string_of_int) (pr_list pr_string)
+  let string_of_opt l = 
+    if is_unlabelled l then "" 
+    else string_of l 
+      (* pr_pair (pr_opt string_of_int) (pr_list pr_id) l *)
   let singleton s = (None,[s])
   let is_comp_opt lx ly = match lx,ly with
                            | Some x1,Some y1 -> x1==y1

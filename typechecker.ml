@@ -2733,13 +2733,13 @@ and check_proc iprog (prog : prog_decl) (proc : proc_decl) cout_option (mutual_g
                                 (* let pr_ty = !CP.Label_Pure.ref_string_of_exp in *)
                                 Infer.fixcalc_rel_stk # push_list tuples;
                                 if not(Infer.fixcalc_rel_stk # is_empty) then
-                                begin
-                                  print_endline "\n*************************************";
-                                  print_endline "*******fixcalc of pure relation *******";
-                                  print_endline "*************************************";
-                                  print_endline (Infer.fixcalc_rel_stk # string_of_reverse);
-                                  print_endline "*************************************"
-                                end;
+                                  begin
+                                    print_endline "\n*************************************";
+                                    print_endline "*******fixcalc of pure relation *******";
+                                    print_endline "*************************************";
+                                    print_endline (Infer.fixcalc_rel_stk # string_of_reverse);
+                                    print_endline "*************************************"
+                                  end;
                                 Infer.fixcalc_rel_stk # reset;
                                 let tuples = List.map (fun (rel_post,post,rel_pre,pre) ->
                                     let pre_new = if CP.isConstTrue rel_pre then
@@ -2845,7 +2845,9 @@ and check_proc iprog (prog : prog_decl) (proc : proc_decl) cout_option (mutual_g
                   if pr_flag then
                     begin
 		      if pp then print_string ("\nProcedure "^proc.proc_name^" SUCCESS\n")
-	              else print_string ("\nProcedure "^proc.proc_name^" result FAIL-1\n")
+	              else 
+                        let _ = Log.last_cmd # dumping (proc.proc_name^" FAIL-1") in
+                        print_string ("\nProcedure "^proc.proc_name^" result FAIL-1\n")
                     end;
 	      	  pp
 	        end
@@ -2893,6 +2895,7 @@ let check_proc_wrapper iprog prog proc cout_option mutual_grp =
     (*   end *)
     (*   else res *)
     (* in n_res *)
+    (* Log.last_cmd # dumping; *)
     res
   with _ as e ->
     if !Globals.check_all then begin
@@ -2901,6 +2904,9 @@ let check_proc_wrapper iprog prog proc cout_option mutual_grp =
       print_string ("\nException "^(Printexc.to_string e)^" Occurred!\n");
       Printexc.print_backtrace(stdout);
       print_string ("\nError(s) detected when checking procedure " ^ proc.proc_name ^ "\n");
+      Log.last_cmd # dumping (proc.proc_name^" FAIL2");
+      (* print_endline "Last PURE PROOF FAILURE:"; *)
+      (* Log.last_proof_command # dump; *)
       false
     end else
       raise e

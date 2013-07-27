@@ -2011,10 +2011,10 @@ let check_stricteq_h_fomula stricted_eq hf1 hf2=
 let checkeq_pure_x qvars1 qvars2 p1 p2=
   if CP.equalFormula p1 p2 then true else
      let p2 = CP.mkExists qvars2 p2 None no_pos in
-     let b1,_,_ = TP.imply p1 p2 "sa:checkeq_pure" true None in
+     let b1,_,_ = TP.imply_one 3 p1 p2 "sa:checkeq_pure" true None in
     if b1 then
       let p1 = CP.mkExists qvars1 p1 None no_pos in
-      let b2,_,_ = TP.imply p2 p1 "sa:checkeq_pure" true None in
+      let b2,_,_ = TP.imply_one 4 p2 p1 "sa:checkeq_pure" true None in
       b2
     else false
 
@@ -2527,7 +2527,7 @@ let rec find_imply prog lunk_hps runk_hps lhs1 rhs1 lhs2 rhs2 lguard1 equal_hps 
             (*ptrs: cmpare node. pure --> quantifiers*)
             let _ = Debug.ninfo_pprint ("    lmf: " ^ (!CP.print_formula lmf)) no_pos in
             let _ = Debug.ninfo_pprint ("    rmf1: " ^ (!CP.print_formula rmf1)) no_pos in
-            let b,_,_ = TP.imply rmf1 lmf "sa:check_hrels_imply" true None in
+            let b,_,_ = TP.imply_one 5 rmf1 lmf "sa:check_hrels_imply" true None in
             let lpos = (CF.pos_of_formula lhs2) in
             if b then
               (*node match *)

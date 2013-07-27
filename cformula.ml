@@ -462,6 +462,10 @@ let mkEList_flatten l =
 	let l = List.map (fun c -> match c with | EList l->l | _ -> [mkSingle c]) l in
 	mkEList_no_flatten (List.concat l)	
 
+let is_or_formula f = match f with 
+| Or _ -> true
+| _ -> false
+	
 module Exp_Heap =
 struct 
   type e = h_formula
@@ -2650,6 +2654,32 @@ and subst_x sst (f : formula) =
 									formula_exists_flow = fl;
 									formula_exists_label = lbl;
 									formula_exists_pos = pos})
+  in helper f
+  
+  
+and subst_all sst (f : formula) =
+  let rec helper f = match f with
+  | Or ({formula_or_f1 = f1; formula_or_f2 = f2; formula_or_pos = pos}) -> 
+    Or ({formula_or_f1 = helper f1; formula_or_f2 =  helper f2; formula_or_pos = pos})
+  | Base b-> Base ({b with formula_base_heap = h_subst sst b.formula_base_heap; 
+					formula_base_pure =MCP.regroup_memo_group (MCP.m_apply_par sst b.formula_base_pure); 
+                    formula_base_and = (List.map (fun f -> one_formula_subst sst f) b.formula_base_and);})
+  | Exists ({formula_exists_qvars = qsv; 
+			 formula_exists_heap = qh; 
+			 formula_exists_pure = qp; 
+			 formula_exists_type = tconstr;
+			 formula_exists_and = a; (*TO CHECK*)
+			 formula_exists_flow = fl;
+			 formula_exists_label = lbl;
+			 formula_exists_pos = pos}) -> 
+			Exists ({formula_exists_qvars = CP.subst_var_list_par sst qsv; 
+			 		 formula_exists_heap =  h_subst sst qh; 
+					 formula_exists_pure = MCP.regroup_memo_group (MCP.m_apply_par sst qp);
+					 formula_exists_type = tconstr;
+					 formula_exists_and = (List.map (fun f -> one_formula_subst sst f) a);
+					 formula_exists_flow = fl;
+					 formula_exists_label = lbl;
+					 formula_exists_pos = pos})
   in helper f
 
 and subst_b_x sst (b:formula_base): formula_base =

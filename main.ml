@@ -352,6 +352,7 @@ let process_source_full source =
     with _ as e -> begin
       print_string ("\nException"^(Printexc.to_string e)^"Occurred!\n");
       print_string ("\nError(s) detected at main "^"\n");
+      let _ = Log.process_proof_logging !Globals.source_files in
       raise e
     end);
 	if (!Globals.reverify_all_flag)
@@ -408,6 +409,7 @@ let process_source_full source =
     print_string ("\n"^(string_of_int (List.length !Globals.false_ctx_line_list))^" false contexts at: ("^
 		(List.fold_left (fun a c-> a^" ("^(string_of_int c.Globals.start_pos.Lexing.pos_lnum)^","^
 		    ( string_of_int (c.Globals.start_pos.Lexing.pos_cnum-c.Globals.start_pos.Lexing.pos_bol))^") ") "" !Globals.false_ctx_line_list)^")\n");
+    Timelog.logtime # dump;
     print_string ("\nTotal verification time: " 
 	^ (string_of_float t4) ^ " second(s)\n"
 	^ "\tTime spent in main process: " 
@@ -417,7 +419,7 @@ let process_source_full source =
 	^ if !Globals.proof_logging || !Globals.proof_logging_txt then 
       "\tTime for logging: "^(string_of_float (!Globals.proof_logging_time))^" second(s)\n"
     else ""
-	^ if(!Tpdispatcher.tp = Tpdispatcher.Z3) then 
+	^ if(!Tpdispatcher.pure_tp = Others.Z3) then 
       "\tZ3 Prover Time: " ^ (string_of_float !Globals.z3_time) ^ " second(s)\n"
     else "\n"
 	)
