@@ -16,8 +16,6 @@ requires cur::tx<a,sent,M1> * prev::tx<b,sent,M2> & cur != a & a=null & b=sent
 ensures prev'::tx<null,sent,union(M1,M2)>  & cur' = sent & prev'!=null; 
 requires cur::tx<a,sent,M1> * prev::tx<b,sent,M2> & cur != a & a=sent & b=null
 ensures prev'::tx<null,sent,union(M1,M2)>  & cur' = sent & prev'!=null; 
-
-
 requires cur::tx<a,sent,M1> * prev::tx<b,sent,M2> & cur != a &
         (a=null & b=sent | a=sent & b=null)
 ensures prev'::tx<null,sent,union(M1,M2)>  & cur' = sent & prev'!=null; 

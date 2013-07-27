@@ -1271,9 +1271,10 @@ and trans_view_x (prog : I.prog_decl) (vdef : I.view_decl) : C.view_decl =
       let pos = IF.pos_of_struc_formula view_formula1 in
       let view_sv_vars = List.map (fun c-> trans_var (c,Unprimed) n_tl pos) vdef.I.view_vars in
       let self_c_var = Cpure.SpecVar ((Named data_name), self, Unprimed) in
+      let null_c_var = Cpure.null_var in 
       let _ =
         let vs1 = (CF.struc_fv cf) in
-        let vs2 = (self_c_var::view_sv_vars) in
+        let vs2 = (null_c_var::self_c_var::view_sv_vars) in
         let vs1a = CP.fv inv_pf in
         Debug.tinfo_hprint (add_str "vs1a" Cprinter.string_of_spec_var_list) vs1a no_pos;
         let vs1 = vs1@vs1a in

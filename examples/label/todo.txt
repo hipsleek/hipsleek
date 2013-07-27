@@ -780,7 +780,8 @@ Total verification time: 13.240826 second(s)
 	Time spent in child processes: 13.060815 second(s)
 
 ============================================================
-# swt-4g-310-a.slk
+# swt-4g-310-a.slk - FIXED
+Parser was not accepting null for in/notin constraints.
 
 Why do we have parser error for below:
 

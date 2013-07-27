@@ -882,7 +882,7 @@ let bag_type = BagT Int
 
 (* free variables *)
 
-let null_var = SpecVar (Named "", "null", Unprimed)
+let null_var = SpecVar (Named "", null_name, Unprimed)
 
 let flow_var = SpecVar ((Int), flow , Unprimed)
 

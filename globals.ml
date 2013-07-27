@@ -527,6 +527,7 @@ let no_pos1 = { Lexing.pos_fname = "";
 				   Lexing.pos_cnum = 0 } 
 
 let res_name = "res"
+let null_name = "null"
 
 let sl_error = "separation entailment"
 let logical_error = "logical bug"
