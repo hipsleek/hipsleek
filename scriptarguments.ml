@@ -428,11 +428,12 @@ let common_arguments = [
   ("--en-precond-sat", Arg.Clear Globals.disable_pre_sat, "Enable unsat checking of method preconditions");
   
   (* Proof Logging *)
-  ("--en-logging-only", Arg.Set Globals.proof_logging, "Enable proof loggingonly");
-  ("--en-prf-logging", Arg.Unit (fun _ ->
-      Globals.proof_logging_txt:=true ), "Enable proof logging with text file");
+  ("--en-logging", Arg.Unit (fun _ ->
+      Globals.proof_logging_txt:=true; Globals.proof_logging:=true ), "Enable proof logging");
+  ("--en-logging-txt", Arg.Unit (fun _ ->
+      Globals.proof_logging_txt:=true ), "Enable proof logging into text file");
   ("--epl", Arg.Unit (fun _ ->
-      Globals.proof_logging_txt:=true ), "Shorthand for --en-logging");
+      Globals.proof_logging_txt:=true ), "Shorthand for --en-logging-txt");
   ("--en-slk-logging", Arg.Unit (fun _ ->
       Globals.proof_logging_txt:=true; 
       Globals.sleek_logging_txt:=true), "Enable sleek and proof logging with text file");

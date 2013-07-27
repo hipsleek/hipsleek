@@ -258,6 +258,10 @@ let sleek_counter= ref 0
 (* how is this hash_table used? *)
 let proof_log_tbl : (string, proof_log) Hashtbl.t = Hashtbl.create 700
 
+let add_proof_tbl pno plog =
+  if !Globals.proof_logging then
+    Hashtbl.add proof_log_tbl pno plog
+
 let sleek_log_stk : sleek_log_entry  Gen.stack_filter 
       = new Gen.stack_filter string_of_sleek_log_entry (==) (fun e -> not(e.sleek_proving_avoid))
 
@@ -385,7 +389,7 @@ let add_proof_logging timeout_flag (cache_status:bool) old_no pno tp ptype time 
 	  log_res = res; } in
       let _ = last_cmd # set plog in
       let pno_str = string_of_int pno in
-      let _ = Hashtbl.add proof_log_tbl pno_str plog in
+      let _ = add_proof_tbl pno_str plog in
       let _ =  Debug.devel_pprint (string_of_proof_log_entry plog) no_pos in
       let _ = try
 	(* let _= BatString.find (Sys.argv.(0)) "hip" in *)
