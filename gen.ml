@@ -84,6 +84,7 @@ struct
  let pr_list_brk_sep open_b close_b sep f xs  = open_b ^(pr_lst sep f xs)^close_b
  let pr_list_brk open_b close_b f xs  = pr_list_brk_sep open_b close_b "," f xs
  let pr_list f xs = pr_list_brk "[" "]" f xs
+ let pr_list_semi f xs = pr_list_brk_sep "[" "]" ";" f xs
  let pr_list_no_brk f xs = pr_list_brk "" "" f xs
  let pr_list_angle f xs = pr_list_brk "<" ">" f xs
  let pr_list_round f xs = pr_list_brk "(" ")" f xs

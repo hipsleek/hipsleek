@@ -61,27 +61,29 @@ let wrap_no_filtering f a =
   wrap_one_bool filtering_flag false f a
 
 let wrap_lbl_dis_aggr f a =
-  wrap_two_bools label_aggressive_sat label_aggressive_imply false f a
+  if !Globals.inv_wrap_flag
+  then wrap_two_bools label_aggressive_sat label_aggressive_imply false f a
+  else f a
 
-let proof_no = ref 0
+(* let proof_no = ref 0 *)
 
-let next_proof_no_str () =
-  proof_no := !proof_no + 1;
-  string_of_int !proof_no
+(* let next_proof_no_str () = *)
+(*   proof_no := !proof_no + 1; *)
+(*   string_of_int !proof_no *)
 
-let get_proof_no () = !proof_no
+(* let get_proof_no () = !proof_no *)
 
-let sleek_proof_no = ref 0
+(* let sleek_proof_no = ref 0 *)
 
-let last_sleek_fail_no = ref 0
+(* let last_sleek_fail_no = ref 0 *)
 
-let get_sleek_no () = !sleek_proof_no
+(* let get_sleek_no () = !sleek_proof_no *)
 
-let get_last_sleek_fail () = !last_sleek_fail_no
+(* let get_last_sleek_fail () = !last_sleek_fail_no *)
 
-let set_last_sleek_fail () = 
-  last_sleek_fail_no := !sleek_proof_no
+(* let set_last_sleek_fail () =  *)
+(*   last_sleek_fail_no := !sleek_proof_no *)
 
-let next_sleek_int () : int =
-  sleek_proof_no := !sleek_proof_no + 1; 
-  (!sleek_proof_no)
+(* let next_sleek_int () : int = *)
+(*   sleek_proof_no := !sleek_proof_no + 1;  *)
+(*   (!sleek_proof_no) *)

@@ -1,19 +1,8 @@
-function one 
-{
-	sll_out=`../../../sleek --dis-time-stat --dis-count-stat ../$1 --en-testing  $2`
-	#rels=`echo "$sll_out" | awk '/rstart/,/rstop/'`
-	#defs=`echo "$sll_out" | awk '/dstart/,/dstop/'`
-	echo "========$1 $2=========="
-	#echo "$rels"
-	#echo "$defs"
-        echo "$sll_out"
-	echo "===================="
-}
 function two 
 {
-   one $1 $2 >& tests/slk/$1.out
+ cp tests/slk/$1.out ref/slk/$1.out
 }
-mkdir -p tests/slk
+
 two app5-bug-1.slk
 two app.slk
 two assert-1-bug1.slk
@@ -185,3 +174,5 @@ two zip-bug5b.slk
 two zip-bug5c.slk
 two zip-bug5.slk
 two zip.slk
+
+
