@@ -828,6 +828,15 @@ Total verification time: 6.076379 second(s)
 	Time spent in main process: 3.920245 second(s)
 	Time spent in child processes: 2.156134 second(s)
 ============================================================
+hip swt-4g-set-lbl.ss --lda
+
+!!! log(small):(24.746556,1085)
+!!! log(big)(>0.5s)(35):(59.159321,[(imply,0.967926),(imply,0.518967),(imply,1.170377),(imply,1.400985),(imply,1.149412),(imply,2.436337),(imply,1.504063),(imply,2.269941),(imply,2.8108),(imply,2.03219),(imply,2.131817),(imply,2.605044),(imply,0.694315),(imply,0.791236),(imply,2.549423),(imply,1.676183),(imply,0.941581),(imply,2.632619),(imply,2.651773),(imply,1.094885),(imply,2.797416),(imply,2.373707),(imply,2.301834),(imply,0.810135),(imply,1.577758),(imply,2.867507),(imply,1.787331),(imply,2.461037),(imply,2.371836),(imply,0.772189),(imply,1.184892),(imply,0.928179),(imply,0.548221),(imply,1.63412),(imply,0.713285)])
+!!! 
+ log(bigger)(>4s)(17):(73.0942,[(imply:224<:42:MONA,3.114488),(imply:310<:65:MONA,3.013627),(imply:387<:84:MONA,3.745446),(imply:398<:88:MONA,4.79288),(imply:400<:89:MONA,5.),(imply:435<:99:MONA,3.940665),(imply:447<:102:MONA,5.),(imply:458<:106:MONA,5.),(imply:460<:107:MONA,5.),(imply:467<:109:MONA,3.057275),(imply:495<:117:MONA,3.644123),(imply:662<:191:MONA,5.),(imply:714<:207:MONA,4.586654),(imply:734<:212:MONA,5.),(imply:747<:217:MONA,3.199042),(imply:782<:227:MONA,5.),(imply:833<:245:MONA,5.)])
+Total verification time: 145.441088 second(s)
+	Time spent in main process: 3.360209 second(s)
+	Time spent in child processes: 142.080879 second(s)
 ============================================================
 ============================================================
 ============================================================

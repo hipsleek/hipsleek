@@ -1,0 +1,47 @@
+// (1)
+checkentail true & ["":x=y; "x":y>0] |- true & ["x":x>0].
+
+// (2)
+checkentail x=y & ["x":y>0] |- true & ["x":x>0].
+// same as above
+
+// (3)
+checkentail true & ["","y":x=y; "x":y>0] |- true & ["x":x>0].
+// "","y" has common but is not common itself
+
+// (4)
+checkentail true & ["":x=0 & y=0; "x":y>0] |- true & ["x":x>0].
+// x=y is propagated from common 
+
+// (5)
+checkentail true & ["":x=1; "x":y>0] |- true & ["x":x>0].
+// x=c not propagated from common yet
+
+// (6)
+checkentail true & ["x":x=y; "":y>0] |- true & ["":x>0].
+// note that eq from labelled does not flow to common branches
+
+// (7)
+checkentail true & ["y":y=0; "":y>0] |- false.
+// common and labelled branch not combined
+
+// (8)
+checkentail true & ["y","":y=0; "":y>0] |- false.
+// overlapping branches (including common) are combined
+
+/*
+
+Normal Labelling
+  UNSAT(fc&f1) | UNSAT(fc&f2)
+--------------------------------
+ UNSAT("":fc, "a":f1, "b":f2)
+
+Aggressive Labelling (with equality propagated)
+
+  UNSAT(fc) | UNSAT(e2&f1) | UNSAT(e3&f2)
+----------------------------------------------
+          UNSAT("":fc, "a":f1, "b":f2)
+
+
+
+*/

@@ -27,6 +27,187 @@ error at: ../../modular_examples/qsort-modular.ss qsort
 
 # temporarily added --lda to disable aggressive labels
 ====================================================================
+============================================================
+Issues with run-fast-test imm,vperm,infinity, and parahip
+
+# Bind failure with imm (some clash since now field-ann are turned on by default)
+
+asankhs@loris-7:~/hg/sleekex$ ./hip examples/working/hip/imm/bigint_imm.ss -tp redlog --eps --esl -p sub_c
+
+!!! Full processing file "examples/working/hip/imm/bigint_imm.ss"
+Parsing file "examples/working/hip/imm/bigint_imm.ss" by default parser...
+
+!!!  processing primitives "["prelude.ss"]
+Starting Omega...oc
+rl_input 2 = rlall((((flted_242_36 <> (v1 * v2))) or ((0 <> flted_242_36))))
+Nested Timer(stop)
+rl_input 2 = rlall(((((flted_242_36 <> (v1 * v2))) or ((0 > flted_242_36))) or ((0 <> flted_242_36))))
+Nested Timer(stop)
+rl_input 2 = rlall((((flted_208_53 <> (c + (v * d)))) or ((0 <> flted_208_53))))
+Nested Timer(stop)
+rl_input 2 = rlall(((((flted_208_53 <> (c + (v * d)))) or ((0 > flted_208_53))) or ((0 <> flted_208_53))))
+Nested Timer(stop)
+
+Checking procedure sub_c$node~node~int... 
+( [(,1 ); (,2 ); (,1 ); (,2 )]) :examples/working/hip/imm/bigint_imm.ss:190: 18: bind: node  y'::node<val_190_1233'@L,next_190_1234'@A>@L cannot be derived from context
+
+
+(Cause of Bind Failure):examples/working/hip/imm/bigint_imm.ss:190: 18:  List of Failesc Context: [FEC(1, 0, 0 )]
+Failed States:
+[
+ Label: [(,1 ); (,2 ); (,1 ); (,2 )]
+ State:
+        fe_kind: MUST
+        fe_name: separation entailment
+        fe_locs: {
+                  fc_message: infer_heap_node
+                  fc_current_lhs_flow: {FLOW,(22,23)=__norm}}
+ ]
+
+!!! dumping for sub_c$node~node~int FAIL-1
+!!!  
+ id: 432<21; prover: OMEGA CALCULATOR; loc: examples/working/hip/imm/bigint_imm.ss_190:10_190:15; kind: BIND
+ Imply: ante: c=c' & c<=1 & 0<=v2 & 0<=c & (c+v2)<=v1 & 0<=v1 & p_1548<=9 & 0<=p_1548 & 
+p_1548=res & p_1548=val_190_1231' & v1=(10*v1_1550)+p_1548 & 0<=v1_1550
+	     conseq:  v1_1550!=0
+ res: false
+ --------------------
+!!!  
+id: 22; caller: []; line: 190; classic: false; kind: [BIND,
+Assign_Stmt,
+Assign_Stmt,
+Assign_Stmt,
+Check_Specs]; hec_num: 5; evars: []; infer_vars: []; c_heap: emp
+ checkentail x'::node<p_1548@L,q_1549@L>@M@ rem br[{1}] * 
+q_1549::bigint<v1_1550>@L@ rem br[{438,439}]&(
+([p_1548=v_int_190_1236' & c=c' & 0<=v1_1550 & v1=(10*v1_1550)+p_1548 & 
+   c<=1 & 0<=v2 & 0<=c & (c+v2)<=v1 & 0<=v1 & p_1548<=9 & 0<=p_1548]
+ [x=x' & x!=null][!(v_bool_189_1230')][!(v_bool_175_1228')][y=y' & y!=null]))&
+{FLOW,(22,23)=__norm}[]
+ |-  y'::node<val_190_1233'@L,next_190_1234'@A>@M@ rem br[{1}]&
+{FLOW,(1,25)=__flow}[]. 
+res:  failctx
+         fe_kind: MUST
+         fe_name: separation entailment
+         fe_locs: {
+                   fc_message: infer_heap_node
+                   fc_current_lhs_flow: {FLOW,(22,23)=__norm}}
+Procedure sub_c$node~node~int result FAIL-1
+
+
+# Exception with vperm and parahip
+
+- asankhs@loris-7:~/hg/sleekex$ ./hip examples/working/hip/vperm/mergesort.ss --ann-vp
+
+!!! Full processing file "examples/working/hip/vperm/mergesort.ss"
+Parsing file "examples/working/hip/vperm/mergesort.ss" by default parser...
+
+!!!  processing primitives "["prelude.ss"]
+Starting Omega...oc
+
+!!! dumping for finalize on hipStop Omega... 28 invocations caught
+(Program not linked with -g, cannot print stack backtrace)
+
+Exception occurred: Invalid_argument("List.map2")
+Error3(s) detected at main 
+
+- asankhs@loris-7:~/hg/sleekex$ ./hip examples/working/hip/parahip/cell.ss 
+
+!!! Full processing file "examples/working/hip/parahip/cell.ss"
+Parsing file "examples/working/hip/parahip/cell.ss" by default parser...
+
+!!!  processing primitives "["prelude.ss"]
+Starting Omega...oc
+
+!!! dumping for finalize on hipStop Omega... 27 invocations caught
+(Program not linked with -g, cannot print stack backtrace)
+
+Exception occurred: Invalid_argument("List.map2")
+
+# Failure with infinity
+./hip examples/working/hip/infinity/inf-selsort.ss --dsd
+Omega Error format: exists(mx_1425:mx_1425+(\inf)=0)
+Omega Error format: exists(mx_1425:mx_1425+(\inf)=0)
+Omega Error format: exists(mx_1469:mx_1469+(\inf)=0)
+Omega Error format: exists(mx_1469:mx_1469+(\inf)=0)
+
+( [(,0 ); (,1 )]) :examples/working/hip/infinity/inf-selsort.ss:26: 13: Postcondition cannot be derived from context
+
+
+(Cause of PostCond Failure):examples/working/hip/infinity/inf-selsort.ss:26: 13:  List of Partial Context: [PC(1, 0)]
+Failed States:
+[
+ Label: [(,0 ); (,1 )]
+ State:
+        fe_kind: MAY
+        fe_name: logical bug
+        fe_locs: {
+                  fc_message: failed in entailing pure formula(s) in conseq
+                  fc_current_lhs_flow: {FLOW,(22,23)=__norm}}
+ ]
+Successful States:
+
+
+Context of Verification Failure: 1 File "examples/working/hip/infinity/inf-selsort.ss",Line:26,Col:13
+Last Proving Location: 1 File "examples/working/hip/infinity/inf-selsort.ss",Line:36,Col:10
+
+ERROR: at examples/working/hip/infinity/inf-selsort.ss_26:13_26:58 
+Message: Post condition cannot be derived by the system.
+ 
+Procedure find_min$node FAIL-2
+
+Exception Failure("Post condition cannot be derived by the system.") Occurred!
+(Program not linked with -g, cannot print stack backtrace)
+
+Error(s) detected when checking procedure find_min$node
+
+!!! dumping for find_min$node FAIL2
+Checking procedure selection_sort$node... ^[[AOmega Error format: exists(mx_1559:mx_1559+(\inf)=0)
+Omega Error format: exists(mx_1559:mx_1559+(\inf)=0)
+Omega Error format: exists(mx_1559:mx_1559+(\inf)=0)
+Omega Error format: exists(mx_1559:mx_1559+(\inf)=0)
+Omega Error format: exists(mx_1559:mx_1559+(\inf)=0)
+Omega Error format: exists(mx_1559:mx_1559+(\inf)=0)
+Omega Error format: exists(mx_1570:mx_1570+(\inf)=0)
+Omega Error format: exists(mx_1591:mx_1591+(\inf)=0)
+Omega Error format: exists(mx_1591:mx_1591+(\inf)=0)
+Omega Error format: exists(mx_1591:mx_1591+(\inf)=0)
+Omega Error format: exists(mx_1591:mx_1591+(\inf)=0)
+Omega Error format: exists(mx_1570:mx_1570+(\inf)=0)
+Omega Error format: exists(mx_1619:mx_1619+(\inf)=0)
+Omega Error format: exists(mx_1619:mx_1619+(\inf)=0)
+
+( [(,0 ); (,1 ); (,1 ); (,2 )]) :examples/working/hip/infinity/inf-selsort.ss:63: 9: Postcondition cannot be derived from context
+
+
+(Cause of PostCond Failure):examples/working/hip/infinity/inf-selsort.ss:63: 9:  List of Partial Context: [PC(1, 0)]
+Failed States:
+[
+ Label: [(,0 ); (,1 ); (,1 ); (,2 )]
+ State:
+        fe_kind: MAY
+        fe_name: logical bug
+        fe_locs: {
+                  fc_message: failed in entailing pure formula(s) in conseq
+                  fc_current_lhs_flow: {FLOW,(22,23)=__norm}}
+ ]
+Successful States:
+
+
+Context of Verification Failure: 1 File "examples/working/hip/infinity/inf-selsort.ss",Line:63,Col:9
+Last Proving Location: 1 File "examples/working/hip/infinity/inf-selsort.ss",Line:76,Col:11
+
+ERROR: at examples/working/hip/infinity/inf-selsort.ss_63:9_63:26 
+Message: Post condition cannot be derived by the system.
+ 
+Procedure selection_sort$node FAIL-2
+
+Exception Failure("Post condition cannot be derived by the system.") Occurred!
+(Program not linked with -g, cannot print stack backtrace)
+
+
+# Failure with imm
+
 ====================================================================
 ====================================================================
 ====================================================================
