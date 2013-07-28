@@ -800,7 +800,7 @@ let build_labels_sat is_comp lbs =
 let build_labels_sat is_comp lbs = 
   let pr1 = pr_list_semi Label_only.Lab_List.string_of in
   let pr2 = pr_list (pr_pair Label_only.Lab_List.string_of pr1) in
-  Debug.ho_1 "build_labels_sat" pr1 pr2 (build_labels_sat is_comp) lbs
+  Debug.no_1 "build_labels_sat" pr1 pr2 (build_labels_sat is_comp) lbs
 
 let merge_lbls used labs =
   let flag = ref false in
@@ -837,7 +837,7 @@ let prune_labels_sat lbs =
 let prune_labels_sat lbs =
   let pr1 = pr_list_semi Label_only.Lab_List.string_of in
   let pr2 = pr_list (pr_pair Label_only.Lab_List.string_of pr1) in
-  Debug.ho_1 "prune_labels_sat" pr2 pr2 (prune_labels_sat) lbs
+  Debug.no_1 "prune_labels_sat" pr2 pr2 (prune_labels_sat) lbs
 
 let build_branches_sat br lbs = 
   let nlbs = prune_labels_sat lbs in
@@ -851,7 +851,7 @@ let build_branches_sat br lbs =
   let pr1 = pr_list_semi Label_only.Lab_List.string_of in
   let pr2 = pr_list (pr_pair Label_only.Lab_List.string_of pr1) in
   let pr3 = pr_list (pr_pair Label_only.Lab_List.string_of !print_formula) in
-  Debug.ho_2 "build_branches_sat" (add_str "br" pr3) (add_str "lbs" pr2) pr3 (build_branches_sat) br lbs
+  Debug.no_2 "build_branches_sat" (add_str "br" pr3) (add_str "lbs" pr2) pr3 (build_branches_sat) br lbs
 
 let sat_label_filter fct f =
   let pr = Cprinter.string_of_pure_formula in
