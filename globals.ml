@@ -710,7 +710,9 @@ let elim_exists_ff = ref true
 
 let allow_imm = ref true (*imm will delglobalsay checking guard conditions*)
 
-let allow_field_ann = ref true
+let allow_field_ann = ref false 
+  (* disabled by default as it is unstable and
+     other features, such as shape analysis are affected by it *)
 
 let allow_mem = ref true
 
