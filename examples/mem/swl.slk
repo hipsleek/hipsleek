@@ -1,0 +1,64 @@
+data node{
+	int val;
+	node next;
+}.
+
+/*
+ll<M> == self = null & M = {}
+	or self::node<_,nxt> * nxt::ll<Mnxt> & M = union(Mnxt,{self})
+inv forall(x: x notin M | x != null);
+*/
+
+pred lg<s,M> == self = null & M = {} & self != s
+	or self::node<_,nxt> * nxt::lg<s,Mnxt> & M = union(Mnxt,{self}) & self != s
+//inv forall(x: x notin M | (x != null & x != s));
+inv self!=s.
+
+pred ls<p,M> == self = p & M = {}
+	or self::node<_,nxt> * nxt::ls<p,M1> & self != p & M = union({self},M1)
+inv true.
+
+checkentail  right_35_1188=tmp_57' & r_1176=tmp_57' & l_1174=n_56' & 
+left_37_1191=n_56' & cur!=null & cur_1193!=sentinel_1178 & cur'!=null & 
+((exists(Mr_1605:exists(r_1606:exists(Ml_1607:exists(l_1608:Ml_1175=union(Ml_1607,
+Mr_1605,{l_1174}) & r_1606!=s_1171 & l_1608!=s_1171)))) & 
+l_1174!=s_1171 & l_1174!=null) | (l_1174=null & l_1174!=s_1171 & 
+Ml_1175={})) & 
+((exists(Mr_1623:exists(r_1624:exists(Ml_1625:exists(l_1626:Mr_1177=union(Ml_1625,
+Mr_1623,{r_1176}) & r_1624!=s_1172 & l_1626!=s_1172)))) & 
+r_1176!=s_1172 & r_1176!=null) | (r_1176=null & r_1176!=s_1172 & 
+Mr_1177={})) & cur=cur_1193 & cur'=n_56' & prev=prev_1192 & cur=prev' & 
+sentinel=sentinel' & s_1171=sentinel & s_1172=sentinel & 
+sentinel=sentinel_1178 & sentinel=sentinel_1179 & 
+((exists(Mr_1616:exists(r_1617:exists(Ml_1618:Mp=union(Ml_1618,Mr_1616,
+{prev}) & 
+((exists(Mr_1619:exists(r_1620:exists(Ml_1621:exists(l_1622:Mr_1616=union(Ml_1621,
+Mr_1619,{r_1617}) & r_1620!=sentinel_1179 & l_1622!=sentinel_1179)))) & 
+r_1617!=sentinel_1179 & r_1617!=null) | (r_1617=null & 
+r_1617!=sentinel_1179 & Mr_1616={})))) & prev!=null & 
+prev!=sentinel_1179) | 
+(exists(Mr_1609:exists(Ml_1610:exists(l_1611:Mp=union(Ml_1610,Mr_1609,
+{prev}) & 
+((exists(Mr_1612:exists(r_1613:exists(Ml_1614:exists(l_1615:Ml_1610=union(Ml_1614,
+Mr_1612,{l_1611}) & r_1613!=sentinel_1179 & l_1615!=sentinel_1179)))) & 
+l_1611!=sentinel_1179 & l_1611!=null) | (l_1611=null & 
+l_1611!=sentinel_1179 & Ml_1610={}))))) & prev!=null & 
+prev!=sentinel_1179) | (Mp={} & prev=sentinel_1179)) & cur'!=sentinel'
+|-  prev'=sentinel'.
+
+/*
+checkentail M1_1057=Mp & Mc_970=Mnxt_949 & Mc=union(Mnxt_949,{cur_958}) & 
+Mp_971=union({cur_958},M1_1057) & flted_25_1121=union(Mc_970,Mp_971)
+|- flted_25_1121=union(Mc,Mp).
+
+
+(exists(Mnxt_1113:exists(nxt_1114:0<=0 & Mnxt_922=union(Mnxt_1113,
+bag({nxt_921})) & nxt_921!=s_919 & nxt_921!=null & nxt_1114!=s_919)) | 
+(nxt_921=null & Mnxt_922=bag() & nxt_921!=s_919)) & 
+exists(sentinel_1116:Mp_946=bag() & sentinel_1116!=null) & 
+Mc_945=union(bag({prev_942}),M1_979) & Mc=union(Mnxt_922,bag({cur_931})) & 
+M1_979=Mp & flted_27_1094=union(Mc_945,Mp_946) & 
+(exists(Mnxt_1111:exists(nxt_1112:0<=0 & flted_27_1094=union(Mnxt_1111,
+bag({prev'})) & prev'!=sentinel & prev'!=null & nxt_1112!=sentinel)) | 
+(prev'=null & flted_27_1094=bag() & prev'!=sentinel))
+*/
