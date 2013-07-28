@@ -7,5 +7,14 @@
 //checkentail true & ["y","x":y>2; "x":y>1; "z":y>0] |- true & ["x":y>2; "z":y>6].
 //checkentail y=8 & ["y","x":y>2; "x":y>1; "z":y>0] |- true & ["x":y>2; "z":y>6].
 //checkentail y=8 & ["y","x":y>2; "x":y>1; "z":y>0] |- true & ["x":y>2; "","z":y>6].
-checkentail y=8 & ["y","x":y>2; "x":y>1; "z":y>0] |- true & ["x":y>2; "z":y>6].
+//checkentail y=8 & ["y","x":y>2; "x":y>1; "z":y>0] |- true & ["x":y>2; "z":y>6].
+//checkentail y=8 & ["y":y>2; "x":y>1; "z":y>0] |- true & ["x":y>2; "z":y>6].
+checkentail y=8 & ["y","":y>2; "x","":y>3; "z":y>0] |- true & ["z","":y>6].
+
+/*
+
+
+"x",.. |-   
+
+*/
 

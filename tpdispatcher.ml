@@ -842,7 +842,7 @@ let prune_labels_sat lbs =
 let build_branches_sat br lbs = 
   let nlbs = prune_labels_sat lbs in
   let mbr = List.map (fun (l,ls) -> 
-      let nf = List.filter (fun (l2,f) -> List.memq l2 ls) br in
+      let nf = List.filter (fun (l2,f) -> List.mem l2 ls) br in
       let nf = List.fold_left (fun a (_,f) -> mkAnd a f no_pos) (mkTrue no_pos) nf in
       (l,nf)) nlbs in
   mbr
@@ -851,7 +851,7 @@ let build_branches_sat br lbs =
   let pr1 = pr_list_semi Label_only.Lab_List.string_of in
   let pr2 = pr_list (pr_pair Label_only.Lab_List.string_of pr1) in
   let pr3 = pr_list (pr_pair Label_only.Lab_List.string_of !print_formula) in
-  Debug.no_2 "build_branches_sat" pr3 pr2 pr3 (build_branches_sat) br lbs
+  Debug.no_2 "build_branches_sat" (add_str "br" pr3) (add_str "lbs" pr2) pr3 (build_branches_sat) br lbs
 
 let sat_label_filter fct f =
   let pr = Cprinter.string_of_pure_formula in
@@ -901,7 +901,7 @@ let imply_label_filter ante conseq =
   (*let s = "unexpected imbricated AndList in tpdispatcher impl: "^(Cprinter.string_of_pure_formula ante)^"|-"^(Cprinter.string_of_pure_formula conseq)^"\n" in*)
   let comp = 
     if  !Globals.label_aggressive_imply
-    then Label_only.Lab_List.is_fully_compatible
+    then Label_only.Lab_List.is_fully_compatible_imply
     else Label_only.Lab_List.is_part_compatible
   in
   match ante,conseq with

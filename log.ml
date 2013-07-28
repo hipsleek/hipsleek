@@ -24,7 +24,6 @@ type proof_res =
 (* superceded by Others.last_tp_used *)
 (* let called_prover = ref "" *)
 
-
 type proof_log = {
     log_id : int; (* TODO: Should change to integer for performance *)
     (* log_other_properties : string list; (\* TODO: Should change to integer for performance *\) *)
@@ -460,7 +459,12 @@ let proof_log_to_text_file fname (src_files) =
         (fun log ->
             (* let log=Hashtbl.find proof_log_tbl (string_of_int ix) in *)
             if log.log_proving_kind != PK_Trans_Proc then
-              fprintf oc "%s" ((* helper *) string_of_proof_log_entry log)) lgs in
+              begin
+                let str = ((* helper *) string_of_proof_log_entry log) in
+                fprintf oc "%s" str;
+                if !Globals.dump_proof then printf "%s" str;
+              end
+        ) lgs in
       let tstoplog = Gen.Profiling.get_time () in
       let _= Globals.proof_logging_time := !Globals.proof_logging_time +. (tstoplog -. tstartlog) in 
       close_out oc
@@ -548,7 +552,8 @@ let sleek_log_to_text_file slfn (src_files) =
         then sleek_log_stk # string_of_reverse_log_filter 
         else sleek_log_stk # string_of_reverse_log
     in
-    let _=fprintf oc "%s" str in
+    let _= fprintf oc "%s" str in
+    if !Globals.dump_sleek_proof then printf "%s" str;
     (* let tstoplog = Gen.Profiling.get_time () in *)
     (* let _= Globals.proof_logging_time := !Globals.proof_logging_time +. (tstoplog -. tstartlog) in  *)
     close_out oc
@@ -560,7 +565,7 @@ let sleek_log_to_text_file2 (src_files) =
 
 let process_proof_logging src_files  =
   (* Debug.info_pprint ("process_proof_logging\n") no_pos; *)
-  if !Globals.proof_logging (* || !Globals.proof_logging_txt || !Globals.sleek_logging_txt *) then 
+  if !Globals.proof_logging_txt (* || !Globals.proof_logging_txt || !Globals.sleek_logging_txt *) then 
     begin
       let tstartlog = Gen.Profiling.get_time () in
       let _= proof_log_to_file src_files in

@@ -50,22 +50,56 @@ struct
   let is_equal l1 l2 =
     compare l1 l2 == 0
 
-  let rec overlap xs ys = match xs,ys with
-      | [],ys -> false
-      | x::xs1,[]-> false
-      | x::xs1,y::ys1 ->
-            let v = String.compare x y in
-            if v==0 then true
-            else if v<0 then overlap xs1 ys
-            else overlap xs ys1
+  let overlap xs ys = 
+    let xs = List.sort String.compare xs in
+    let ys = List.sort String.compare ys in
+    let rec aux xs ys =
+      match xs,ys with
+        | [],ys -> false
+        | x::xs1,[]-> false
+        | x::xs1,y::ys1 ->
+              let v = String.compare x y in
+              if v==0 then true
+              else if v<0 then aux xs1 ys
+              else aux xs ys1
+    in 
+    aux xs ys
 
-  let is_fully_compatible xs ys =
-    if (has_common xs) && (has_common ys) then true
-    else overlap xs ys
+  let overlap xs ys = 
+    let pr = pr_list pr_id  in
+    Debug.no_2 "overlap" pr pr string_of_bool overlap xs ys 	
+
+  let first_label xs =
+    match xs with
+      | [] ->[""]
+      | x::_ -> [x]
+
+  (* this is for aggressive imply sat *)
+  let is_fully_compatible_imply xs ys =
+    let x = first_label xs in
+    if (has_common x) && (has_common ys) then true
+    else overlap x ys
+
+  let is_fully_compatible_imply xs ys =
+    let pr = pr_list pr_id  in
+    Debug.no_2 "is_fully_compatible_imply" pr pr string_of_bool is_fully_compatible_imply xs ys 	
+
+
+  let is_fully_compatible_sat xs ys =
+    let x = first_label xs in
+    let y = first_label ys in
+    if (has_common x) && (has_common ys) || (has_common y && has_common xs) 
+    then true
+    else overlap x ys || overlap y xs
   
   let is_fully_compatible xs ys =
+    (* if (has_common xs) && (has_common ys) then true *)
+    (* else overlap xs ys *)
+    is_fully_compatible_sat xs ys
+
+  let is_fully_compatible xs ys =
     let pr = pr_list pr_id  in
-    Debug.no_2 "is_fully_compatible" pr pr string_of_bool is_fully_compatible xs ys 	
+    Debug.no_2 "is_fully_compatible_sat" pr pr string_of_bool is_fully_compatible xs ys 	
 
   (* assumes that xs and ys are normalized *)
   (* returns true if they overlap in some ways *)
@@ -95,9 +129,12 @@ struct
       | x::xs -> helper x xs
 
   let norm t =
-    let r = List.sort (String.compare) t in
-    if r == [] then [""]
-    else remove_dups r
+    match t with
+      | [] -> [""]
+      | x::ls ->
+            let r = List.sort (String.compare) ls in
+            let r = remove_dups r in
+            x::r
 
   (* assumes that xs and ys are normalized *)
   (* returns 0 if two labels are considered identical *)

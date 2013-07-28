@@ -334,7 +334,7 @@ let process_source_full source =
        ignore (Typechecker.check_prog intermediate_prog cprog);
     with _ as e -> begin
       print_string ("\nException"^(Printexc.to_string e)^"Occurred!\n");
-      print_string ("\nError(s) detected at main "^"\n");
+      print_string ("\nError1(s) detected at main "^"\n");
       let _ = Log.process_proof_logging !Globals.source_files in
       raise e
     end);
@@ -542,7 +542,7 @@ let process_source_full_after_parser source (prog, prims_list) =
     ignore (Typechecker.check_prog intermediate_prog cprog);
   with _ as e -> begin
     print_string ("\nException"^(Printexc.to_string e)^"Occurred!\n");
-    print_string ("\nError(s) detected at main "^"\n");
+    print_string ("\nError2 (s) detected at main "^"\n");
     raise e
   end);
   (* Stopping the prover *)
@@ -635,6 +635,8 @@ let loop_cmd parsed_content =
   ()
 
 let finalize () =
+  Log.last_cmd # dumping "finalize on hip";
+  Log.process_proof_logging !Globals.source_files;
   if (!Tpdispatcher.tp_batch_mode) then Tpdispatcher.stop_prover ()
 
 let old_main () = 
@@ -651,7 +653,7 @@ let old_main () =
     finalize ();
     print_string "caught\n"; Printexc.print_backtrace stdout;
     print_string ("\nException occurred: " ^ (Printexc.to_string e));
-    print_string ("\nError(s) detected at main \n");
+    print_string ("\nError3(s) detected at main \n");
   end
 
 let _ = 
@@ -678,7 +680,7 @@ let _ =
           finalize ();
           print_string "caught\n"; Printexc.print_backtrace stdout;
           print_string ("\nException occurred: " ^ (Printexc.to_string e));
-          print_string ("\nError(s) detected at main \n");
+          print_string ("\nError4(s) detected at main \n");
         end
     done
 

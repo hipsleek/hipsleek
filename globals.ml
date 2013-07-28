@@ -314,6 +314,8 @@ let proof_logging_time = ref 0.000
 
 (*sleek logging*)
 let sleek_logging_txt = ref false
+let dump_proof = ref false
+let dump_sleek_proof = ref false
 
 (*Proof logging facilities*)
 class ['a] store (x_init:'a) (epr:'a->string) =
@@ -690,6 +692,7 @@ let verify_callees = ref false
 
 let elim_unsat = ref false
 let disj_compute_flag = ref false
+let inv_wrap_flag = ref true
 let lhs_case_flag = ref false
 let lhs_case_search_flag = ref false
 let smart_xpure = ref true

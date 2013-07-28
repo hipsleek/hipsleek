@@ -1,5 +1,5 @@
 ========================================================
-# basic-2a.slk --esl
+# basic-2a.slk --esl  FIXED
 
 checkentail true & ["y","x":y>1; "x":y>2; "z":y>3] |- false.
 
@@ -18,7 +18,7 @@ id: 1<:0; prover: OMEGA CALCULATOR; loc: _0:0_0:0; kind: Sleek_Entail(1)
  Sat:  3<y
  res: SAT
 ========================================================
-# basic-2b.slk --esl
+# basic-2b.slk --esl  FIXED
 
 checkentail true & ["y","x":y>1; "x":y>2; "y":y>3] |- false.
 

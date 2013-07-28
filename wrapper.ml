@@ -61,7 +61,9 @@ let wrap_no_filtering f a =
   wrap_one_bool filtering_flag false f a
 
 let wrap_lbl_dis_aggr f a =
-  wrap_two_bools label_aggressive_sat label_aggressive_imply false f a
+  if !Globals.inv_wrap_flag
+  then wrap_two_bools label_aggressive_sat label_aggressive_imply false f a
+  else f a
 
 let proof_no = ref 0
 

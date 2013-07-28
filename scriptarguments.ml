@@ -235,6 +235,8 @@ let common_arguments = [
    "Turn on unsatisfiable formulae elimination during type-checking");
   ("--en-disj-compute", Arg.Set Globals.disj_compute_flag,
    "Enable re-computation of user-supplied disj. invariant");
+  ("--dis-inv-wrap", Arg.Clear Globals.inv_wrap_flag,
+   "Disable the wrapping of --lda for pred invariant proving");
   ("--dis-lhs-case", Arg.Clear Globals.lhs_case_flag,
    "Disable LHS Case Analysis");
   ("--en-lhs-case", Arg.Set Globals.lhs_case_flag,
@@ -438,6 +440,9 @@ let common_arguments = [
       Globals.proof_logging_txt:=true; Globals.proof_logging:=true ), "Enable proof logging");
   ("--en-logging-txt", Arg.Unit (fun _ ->
       Globals.proof_logging_txt:=true ), "Enable proof logging into text file");
+  ("--dump-proof", Arg.Unit (fun _ ->
+      Globals.proof_logging_txt:=true; Globals.dump_proof:=true
+  ), "Dump proof log at end of command");
   ("--epl", Arg.Unit (fun _ ->
       Globals.proof_logging_txt:=true ), "Shorthand for --en-logging-txt");
   ("--en-slk-logging", Arg.Unit (fun _ ->
@@ -445,7 +450,13 @@ let common_arguments = [
       Globals.sleek_logging_txt:=true), "Enable sleek and proof logging with text file");
   ("--esl", Arg.Unit (fun _ ->
       Globals.proof_logging_txt:=true; 
-      Globals.sleek_logging_txt:=true), "Shorthand for --en-slk-logging");
+      Globals.sleek_logging_txt:=true
+  ), "Shorthand for --en-slk-logging");
+  ("--dump-slk-proof", Arg.Unit (fun _ ->
+      Globals.proof_logging_txt:=true; 
+      Globals.sleek_logging_txt:=true;
+      Globals.dump_sleek_proof:=true
+  ), "Dump sleek proof log at end of command");
   (* abduce pre from post *)
   ("--abdfpost", Arg.Set Globals.do_abd_from_post, "Enable abduction from post-condition");
   (* incremental spec *)
