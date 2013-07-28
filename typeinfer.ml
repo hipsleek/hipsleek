@@ -936,7 +936,10 @@ and fill_view_param_types (vdef : I.view_decl) =
 and try_unify_view_type_args prog c vdef v deref ies tlist pos =
   let dname = vdef.I.view_data_name in
   let n_tl = (
-    if not (dname = "") then
+    if not (dname = "") then (*asankhs: Changed this as I think when danme = "" you need to check for dereference names with __star else revert back ...*)
+     let (n_tl,_) = gather_type_info_var v tlist ( (Named dname)) pos in
+      n_tl
+    else 
       let expect_dname = (
         let s = ref "" in
         for i = 1 to deref do
@@ -946,7 +949,6 @@ and try_unify_view_type_args prog c vdef v deref ies tlist pos =
       ) in
       let (n_tl,_) = gather_type_info_var v tlist ( (Named expect_dname)) pos in
       n_tl
-    else tlist
   ) in
   let _ = if (String.length vdef.I.view_data_name) = 0  then fill_view_param_types vdef in
   let vt = vdef.I.view_typed_vars in
