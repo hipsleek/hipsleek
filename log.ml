@@ -187,66 +187,81 @@ class last_commands =
 object (self)
   val mutable last_proof = None (* simplify?,prover? sat? *)
   val mutable last_proof_fail = None (* with timeout/exception *)
-  (* val mutable last_imply_fail = None (\* prover, failure *\) *)
+    (* val mutable last_imply_fail = None (\* prover, failure *\) *)
   val mutable last_sleek = None
   val mutable last_sleek_fail = None
   val mutable last_is_sleek = false
   val mutable sleek_no = -1
+  val mutable mona_cnt = 0
+  val mutable oc_cnt = 0
+  val mutable cache_cnt = 0
   method set_sleek_num no = sleek_no <- no
   method get_sleek_num = sleek_no 
   method get_proof_num = 
     match last_proof with
       | None -> 0
       | Some n -> n.log_id
+  method count_prover pt =
+    match pt with
+      | OmegaCalc -> oc_cnt <- oc_cnt+1 
+      | Mona -> mona_cnt <- mona_cnt+1
+      | _ -> ()
   method set entry =
     last_is_sleek <- false;
-    let cmd = entry.log_type in
-    let ans = Some entry in
-    let _ = last_proof <- ans in
-    let res = entry.log_res in
-    let _ = match res with
-      | PR_exception | PR_timeout -> 
-            begin
-              last_proof_fail <- ans;
-              set_last_sleek_fail ()
-            end
+      let cmd = entry.log_type in
+      let ans = Some entry in
+      let _ = last_proof <- ans in
+      let res = entry.log_res in
+      self # count_prover entry.log_prover;
+      let _ = match res with
+        | PR_exception | PR_timeout -> 
+              begin
+                last_proof_fail <- ans;
+                set_last_sleek_fail ()
+              end
 
-      | _ -> () in
-    let _ = match cmd with 
-      | PT_IMPLY _ -> 
-            (match res with
-              | PR_BOOL true  -> ()
-              | _ -> if not(entry.log_cache) then 
-                  begin
-                    last_proof_fail <-ans;
-                    set_last_sleek_fail ()
-                  end
-            )
-      | _ -> () 
-    in ()
+        | _ -> () in
+      let _ = match cmd with 
+        | PT_IMPLY _ -> 
+              (match res with
+                | PR_BOOL true  -> ()
+                | _ -> if not(entry.log_cache) then 
+                    begin
+                      last_proof_fail <-ans;
+                      set_last_sleek_fail ()
+                    end
+              )
+        | _ -> () 
+      in ()
   method set_sleek entry =
     last_is_sleek <- true;
-    let cmd = Some entry in
-    let _ = last_sleek <- cmd in
-    let res = entry.sleek_proving_res in
-    match res with
-      | Some res -> 
-            if CF.isFailCtx(res) then
-              last_sleek_fail <- cmd
-      | None -> last_sleek_fail <- cmd
+      let cmd = Some entry in
+      let _ = last_sleek <- cmd in
+      let res = entry.sleek_proving_res in
+      match res with
+        | Some res -> 
+              if CF.isFailCtx(res) then
+                last_sleek_fail <- cmd
+        | None -> last_sleek_fail <- cmd
   method dumping no =
     Debug.info_pprint ("dumping for "^no) no_pos;
-    if  !proof_logging_txt (*|| !sleek_logging_txt *) then
-      begin
-      match last_proof_fail with
-        | Some e -> Debug.info_hprint string_of_proof_log_entry e no_pos 
-        | _ -> Debug.info_pprint "Cannot find imply proof failure" no_pos
-      end;
-    if !sleek_logging_txt then
-      match last_sleek_fail with
-        | Some e -> Debug.info_hprint string_of_sleek_log_entry e no_pos 
-        | _ -> Debug.info_pprint "Cannot find sleek failure" no_pos
-      (* print_endline ("!!!! WARNING : last sleek log " ^ (pr_id no)); *)
+      if  !proof_logging_txt (*|| !sleek_logging_txt *) then
+        begin
+          match last_proof_fail with
+            | Some e -> Debug.info_hprint string_of_proof_log_entry e no_pos 
+            | _ -> Debug.info_pprint "Cannot find imply proof failure" no_pos
+        end;
+      if !sleek_logging_txt then
+        match last_sleek_fail with
+          | Some e -> Debug.info_hprint string_of_sleek_log_entry e no_pos 
+          | _ -> Debug.info_pprint "Cannot find sleek failure" no_pos
+                (* print_endline ("!!!! WARNING : last sleek log " ^ (pr_id no)); *)
+  method dump_prover_cnt =
+    begin
+      Debug.info_hprint (add_str "Number of MONA calls" string_of_int) mona_cnt no_pos;
+      Debug.info_hprint (add_str "Number of Omega calls" string_of_int) oc_cnt no_pos;
+      print_endline ""
+    end
 
 end;;
 
@@ -465,6 +480,7 @@ let proof_log_to_text_file fname (src_files) =
                 if !Globals.dump_proof then printf "%s" str;
               end
         ) lgs in
+      let _ = last_cmd # dump_prover_cnt in
       let tstoplog = Gen.Profiling.get_time () in
       let _= Globals.proof_logging_time := !Globals.proof_logging_time +. (tstoplog -. tstartlog) in 
       close_out oc
