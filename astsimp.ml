@@ -5804,8 +5804,10 @@ and simpl_case_normalize_struc_formula id prog (h_vars:(ident*primed) list)(f:IF
 				let all_expl = rdups (new_expl @ init_expl) in
 				let v_no_inst = rdups (hv@all_expl) in 
 				let nb_fv = IF.heap_fv nb in
-				let impl_var = diff (inters nb_fv (fold_opt IF.struc_case_fv cont))
-								 v_no_inst in
+				(*let impl_var = diff (inters nb_fv (fold_opt IF.struc_case_fv cont))
+								 v_no_inst in*)
+(* asankhs: Changed to below to avoid type error*)
+let impl_var = diff (IF.unbound_heap_fv onb) v_no_inst in
 				let new_v_no_inst = rdups (impl_var@v_no_inst) in
 				let _ = Debug.tinfo_hprint (add_str "new_expl" pr_l_v)  new_expl pos in
 				let _ = Debug.tinfo_hprint (add_str "h3" pr_l_v)  h3 pos in

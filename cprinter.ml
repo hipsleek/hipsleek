@@ -1191,6 +1191,21 @@ let rec prtt_pr_h_formula h =
           let arg2 = bin_op_to_list op_conjsep_short h_formula_assoc_op h2 in
           let args = arg1@arg2 in
           pr_list_op op_conjsep_short f_b args
+    | ConjConj ({h_formula_conjconj_h1 = h1; h_formula_conjconj_h2 = h2; h_formula_conjconj_pos = pos}) -> 
+	      let arg1 = bin_op_to_list op_conjconj_short h_formula_assoc_op h1 in
+          let arg2 = bin_op_to_list op_conjconj_short h_formula_assoc_op h2 in
+          let args = arg1@arg2 in
+          pr_list_op op_conjconj_short f_b args
+    | ConjStar ({h_formula_conjstar_h1 = h1; h_formula_conjstar_h2 = h2; h_formula_conjstar_pos = pos}) -> 
+	      let arg1 = bin_op_to_list op_conjstar_short h_formula_assoc_op h1 in
+          let arg2 = bin_op_to_list op_conjstar_short h_formula_assoc_op h2 in
+          let args = arg1@arg2 in
+          pr_list_op op_conjstar_short f_b args
+    | StarMinus ({h_formula_starminus_h1 = h1; h_formula_starminus_h2 = h2; h_formula_starminus_pos = pos}) -> 
+	      let arg1 = bin_op_to_list op_starminus_short h_formula_assoc_op h1 in
+          let arg2 = bin_op_to_list op_starminus_short h_formula_assoc_op h2 in
+          let args = arg1@arg2 in
+          pr_list_op op_starminus_short f_b args
     | DataNode ({h_formula_data_node = sv;
       h_formula_data_name = c;
 	  h_formula_data_derv = dr;
@@ -1294,7 +1309,6 @@ N " else fmt_string "SS "); *)
     | HFalse -> fmt_string "hfalse"
     | HEmp -> fmt_string (texify "\emp" "emp")
     | Hole m -> fmt_string ("Hole[" ^ (string_of_int m) ^ "]")
-	| StarMinus _ | ConjStar _ | ConjConj _  -> Error.report_no_pattern ()
 
 let rec prtt_pr_h_formula_inst prog h = 
   let f_b e =  pr_bracket h_formula_wo_paren (prtt_pr_h_formula_inst prog) e 

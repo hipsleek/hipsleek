@@ -461,24 +461,21 @@ and update_ann_x (f : h_formula) (pimm1 : ann list) (pimm : ann list) : h_formul
   let new_field_ann_lnode = Immutable.replace_list_ann pimm1 pimm in
   (* asankhs: If node has all field annotations as @A make it HEmp *)
   if (isAccsList new_field_ann_lnode) then HEmp else
-    let updated_f = match f with 
-      | DataNode d -> DataNode ( {d with h_formula_data_param_imm = new_field_ann_lnode} )
-      | _          -> report_error no_pos ("[context.ml] : only data node should allow field annotations \n")
-    in
-    updated_f
+  let updated_f = match f with 
+    | DataNode d -> DataNode ( {d with h_formula_data_param_imm = new_field_ann_lnode} )
+    | _          -> report_error no_pos ("[context.ml] : only data node should allow field annotations \n")
+  in
+  updated_f
 
 
-and imm_split_lhs_node estate l_node r_node =
-  {estate with es_formula = imm_f_split_lhs_node estate.es_formula l_node r_node}
-
-and imm_f_split_lhs_node f l_node r_node = match l_node, r_node with
-  | DataNode dl, DataNode dr ->
-	if (!Globals.allow_field_ann) then 
-	  let n_f = update_ann l_node dl.h_formula_data_param_imm dr.h_formula_data_param_imm in
-	  mkStar (formula_of_heap n_f no_pos) f Flow_combine no_pos
-        else f
-  | _ -> f 
-        
+and imm_split_lhs_node estate l_node r_node = match l_node, r_node with
+	| DataNode dl, DataNode dr ->
+		if (!Globals.allow_field_ann) then 
+		 let n_f = update_ann l_node dl.h_formula_data_param_imm dr.h_formula_data_param_imm in
+		 {estate with es_formula = mkStar (formula_of_heap n_f no_pos) estate.es_formula Flow_combine no_pos}
+        else estate
+	| _ -> estate 
+  
 and spatial_ctx_extract_x prog (f0 : h_formula) (aset : CP.spec_var list) (imm : ann) (pimm : ann list) rhs_node rhs_rest : match_res list  =
   let rec helper f = match f with
     | HTrue -> []
@@ -492,12 +489,12 @@ and spatial_ctx_extract_x prog (f0 : h_formula) (aset : CP.spec_var list) (imm :
 	  (* imm1 = imm annotation on the LHS
 	     imm = imm annotation on the RHS *) 
 	  (* let subtyp = subtype_ann imm1 imm in *)
-          if ((CP.mem p1 aset) (* && (subtyp) *)) then 
-	    (* let field_ann = false in *)
-	    
-            if ( (not !Globals.allow_field_ann) && produces_hole imm) then (* not consuming the node *)
-	      let hole_no = Globals.fresh_int() in 
-	      [((Hole hole_no), f, [(f, hole_no)], Root)]
+        if ((CP.mem p1 aset) (* && (subtyp) *)) then 
+	(* let field_ann = false in *)
+	      
+            if produces_hole imm then (* not consuming the node *)
+	          let hole_no = Globals.fresh_int() in 
+	          [((Hole hole_no), f, [(f, hole_no)], Root)]
             else
               (*if (!Globals.allow_field_ann) then
                 let new_f = update_ann f pimm1 pimm in
