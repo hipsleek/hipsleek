@@ -1279,11 +1279,17 @@ let norm_file_name str =
 
 let proof_no = ref 0
 
-let next_proof_no_str () =
+let next_proof_no () =
   proof_no := !proof_no + 1;
-  string_of_int !proof_no
+  !proof_no
+
+(* let next_proof_no_str () = *)
+(*   proof_no := !proof_no + 1; *)
+(*   string_of_int !proof_no *)
 
 let get_proof_no () = !proof_no
+
+let get_proof_no_str () = string_of_int !proof_no
 
 let sleek_proof_no = ref 0
 

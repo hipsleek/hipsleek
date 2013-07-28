@@ -838,6 +838,21 @@ Total verification time: 145.441088 second(s)
 	Time spent in main process: 3.360209 second(s)
 	Time spent in child processes: 142.080879 second(s)
 ============================================================
+# t-1.slk --dump-proof  FIXED
+
+checkentail x>5 |- x>4.
+
+why are proof no skipped?
+
+ id: 1<0; prover: OMEGA CALCULATOR; loc: _0:0_0:0; kind: Sleek_Entail(1)
+ Sat:  5<x
+ res: SAT
+ -------------------- 
+ id: 3<1; prover: OMEGA CALCULATOR; loc: _0:0_0:0; kind: Sleek_Entail(1)
+ Imply: ante: 5<x
+	     conseq:  4<x
+ res: true
+ --------------------
 ============================================================
 ============================================================
 ============================================================

@@ -800,7 +800,7 @@ let build_labels_sat is_comp lbs =
 let build_labels_sat is_comp lbs = 
   let pr1 = pr_list_semi Label_only.Lab_List.string_of in
   let pr2 = pr_list (pr_pair Label_only.Lab_List.string_of pr1) in
-  Debug.no_1 "build_labels_sat" pr1 pr2 (build_labels_sat is_comp) lbs
+  Debug.ho_1 "build_labels_sat" pr1 pr2 (build_labels_sat is_comp) lbs
 
 let merge_lbls used labs =
   let flag = ref false in
@@ -837,7 +837,7 @@ let prune_labels_sat lbs =
 let prune_labels_sat lbs =
   let pr1 = pr_list_semi Label_only.Lab_List.string_of in
   let pr2 = pr_list (pr_pair Label_only.Lab_List.string_of pr1) in
-  Debug.no_1 "prune_labels_sat" pr2 pr2 (prune_labels_sat) lbs
+  Debug.ho_1 "prune_labels_sat" pr2 pr2 (prune_labels_sat) lbs
 
 let build_branches_sat br lbs = 
   let nlbs = prune_labels_sat lbs in
@@ -851,46 +851,46 @@ let build_branches_sat br lbs =
   let pr1 = pr_list_semi Label_only.Lab_List.string_of in
   let pr2 = pr_list (pr_pair Label_only.Lab_List.string_of pr1) in
   let pr3 = pr_list (pr_pair Label_only.Lab_List.string_of !print_formula) in
-  Debug.no_2 "build_branches_sat" (add_str "br" pr3) (add_str "lbs" pr2) pr3 (build_branches_sat) br lbs
+  Debug.ho_2 "build_branches_sat" (add_str "br" pr3) (add_str "lbs" pr2) pr3 (build_branches_sat) br lbs
 
 let sat_label_filter fct f =
   let pr = Cprinter.string_of_pure_formula in
   let test f1 = 
-	if no_andl f1 then  fct f1 
-	else report_error no_pos ("unexpected imbricated AndList in tpdispatcher sat: "^(pr f)) in
+    if no_andl f1 then  fct f1 
+    else report_error no_pos ("unexpected imbricated AndList in tpdispatcher sat: "^(pr f)) in
   let rec helper_x f = match f with 
-		| AndList b -> 
-			let lbls = Label_Pure.get_labels b in
-                        (* Andreea : this is to pick equality from all branches *)
-                        let (comp,fil) = 
-                          if !Globals.label_aggressive_sat
-                          then (Label_only.Lab_List.is_fully_compatible,fun fs -> fs)
-                          else (Label_only.Lab_List.is_part_compatible,
-                             List.filter (fun (l,_)-> not(Label_only.Lab_List.is_common l)) ) 
-                        in
-                        let b = 
-                          if !Globals.label_aggressive_sat
-                          then extract_eset_of_lbl_lst b []
-                            (* extract_eq_clauses_lbl_lst b *)
-                          else b 
-                        in
-                        let sat_lbls = build_labels_sat comp lbls in
-                        let sat_branches = build_branches_sat b sat_lbls in
-			(* let fs = List.map (fun l ->  *)
-			(*     let lst = List.filter (fun (c,_)-> comp c l) b in *)
-			(*     (l,List.fold_left (fun a c-> mkAnd a (snd c) no_pos) (mkTrue no_pos) lst)) lbls in *)
-                        (* let _ = Debug.ninfo_hprint (add_str "fs" Label_Pure.string_of) fs no_pos in *)
-                        (* (\* let fs2 = List.filter (fun (l,_)-> l!=[]) fs in *\) *)
-                        (* let fs2 = fil fs in *)
-                        (* let fs = if fs2==[] then fs else fs2 in *)
-                        let fs = sat_branches in
-                        let _ = Debug.ninfo_hprint (add_str "label,fs" (pr_list (pr_pair (pr_list pr_id) pr)))  fs no_pos in
-			let res = List.exists (fun (_,f) -> (test f)=false) fs in
-                        not(res)
-		| Or (f1,f2,_ ,_)-> (helper f1)||(helper f2)
-		| _ -> test f 
+    | AndList b -> 
+	  let lbls = Label_Pure.get_labels b in
+          (* Andreea : this is to pick equality from all branches *)
+          let (comp,fil) = 
+            if !Globals.label_aggressive_sat
+            then (Label_only.Lab_List.is_fully_compatible,fun fs -> fs)
+            else (Label_only.Lab_List.is_part_compatible,
+            List.filter (fun (l,_)-> not(Label_only.Lab_List.is_common l)) ) 
+          in
+          let b = 
+            if !Globals.label_aggressive_sat
+            then extract_eset_of_lbl_lst b []
+              (* extract_eq_clauses_lbl_lst b *)
+            else b 
+          in
+          let sat_lbls = build_labels_sat comp lbls in
+          let sat_branches = build_branches_sat b sat_lbls in
+	  (* let fs = List.map (fun l ->  *)
+	  (*     let lst = List.filter (fun (c,_)-> comp c l) b in *)
+	  (*     (l,List.fold_left (fun a c-> mkAnd a (snd c) no_pos) (mkTrue no_pos) lst)) lbls in *)
+          (* let _ = Debug.ninfo_hprint (add_str "fs" Label_Pure.string_of) fs no_pos in *)
+          (* (\* let fs2 = List.filter (fun (l,_)-> l!=[]) fs in *\) *)
+          (* let fs2 = fil fs in *)
+          (* let fs = if fs2==[] then fs else fs2 in *)
+          let fs = sat_branches in
+          let _ = Debug.ninfo_hprint (add_str "label,fs" (pr_list (pr_pair (pr_list pr_id) pr)))  fs no_pos in
+	  let res = List.exists (fun (_,f) -> (test f)=false) fs in
+          not(res)
+    | Or (f1,f2,_ ,_)-> (helper f1)||(helper f2)
+    | _ -> test f 
   and helper f = Debug.no_1_loop "sat_label_filter_helper"  !print_formula string_of_bool helper_x f in
-	helper f
+  helper f
 	
 let sat_label_filter fct f = 
 	Gen.Profiling.do_1 "sat_label_filter" (sat_label_filter fct) f
@@ -1321,8 +1321,7 @@ let tp_is_sat (f:CP.formula) (old_sat_no :string) =
   (* TODO WN : can below remove duplicate constraints? *)
   (* let f = CP.elim_idents f in *)
   (* this reduces x>=x to true; x>x to false *)
-  proof_no := !proof_no+1 ;
-  let sat_num = !proof_no in
+  let sat_num = next_proof_no () in
   let sat_no = (string_of_int sat_num) in
   Debug.devel_zprint (lazy ("SAT #" ^ sat_no)) no_pos;
   Debug.devel_zprint (lazy (!print_pure f)) no_pos;
@@ -1364,8 +1363,8 @@ let tp_is_sat f sat_no =
 (* 	simplify_omega f *)
 
 let simplify (f : CP.formula) : CP.formula =
-  proof_no := !proof_no + 1;
-  let simpl_num = !proof_no in
+  (* proof_no := !proof_no + 1; *)
+  let simpl_num = next_proof_no () in
   let simpl_no = (string_of_int simpl_num) in
   if !Globals.no_simpl then f else
     if !perm=Dperm && CP.has_tscons f<>CP.No_cons then f 
@@ -1981,8 +1980,7 @@ let tp_imply ante conseq imp_no timeout process =
     (* in res *)
 
 let tp_imply ante conseq old_imp_no timeout process =	
-  proof_no := !proof_no + 1 ;
-  let imp_num = !proof_no in
+  let imp_num = next_proof_no () in
   let imp_no = (string_of_int imp_num) in
   let imp_no = 
     if !Globals.imply_top_flag then imp_no^":"^old_imp_no 
@@ -2245,8 +2243,8 @@ let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (old_imp_no : stri
      if !Globals.imply_top_flag 
      then
      begin
-       proof_no := !proof_no + 1 ;
-       (!proof_no,string_of_int !proof_no)
+       let pno = next_proof_no () in
+       (pno,string_of_int pno)
      end
      else (0,old_imp_no)
   in
@@ -2451,8 +2449,9 @@ let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (imp_no : string) 
 	  : bool*(formula_label option * formula_label option )list * (formula_label option) (*result+successfull matches+ possible fail*)
   = let pf = Cprinter.string_of_pure_formula in
   let prf = add_str "timeout" string_of_float in
+  let nxt = get_proof_no ()+1 in
   Debug.no_4 "imply_timeout 3" pf pf prf pr_id (fun (b,_,_) -> string_of_bool b)
-      (fun a c _ _ -> imply_timeout a c imp_no timeout do_cache process) ante0 conseq0 timeout (next_proof_no_str ())
+      (fun a c _ _ -> imply_timeout a c imp_no timeout do_cache process) ante0 conseq0 timeout (string_of_int nxt)
 
 let imply_timeout ante0 conseq0 imp_no timeout do_cache process =
   let s = "imply" in

@@ -62,7 +62,7 @@ struct
     let old_handler = Sys.signal Sys.sigalrm sigalrm_handler in
     let reset_sigalrm () = Sys.set_signal Sys.sigalrm old_handler in
     let _ = set_timer limit in
-    let proof_no = (string_of_int !proof_no) in
+    let proof_no = get_proof_no_str () in
     try
       let _ = Timelog.logtime # timer_start proof_no limit in
       let res = fn arg in
