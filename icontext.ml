@@ -237,7 +237,8 @@ let icompute_action_pre_x constrs post_hps frozen_hps=
     let hps = List.map fst pre_preds_4_equal3 in
     List.filter (is_not_in_frozen hps) constrs
   in
-  (pre_preds_4_equal3, complex_hps,rem_constrs)
+  (pre_preds_4_equal3,
+  List.filter (fun hp -> not (CP.mem_svl hp tupled_hps)) complex_hps,rem_constrs)
 
 let icompute_action_pre constrs post_hps frozen_hps=
   let pr1 = pr_list_ln Cprinter.string_of_hprel_short in

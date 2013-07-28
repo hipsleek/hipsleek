@@ -2105,6 +2105,7 @@ let trans_constr_hp_2_view iprog cprog proc_name in_hp_names chprels_decl constr
 (* List of vars needed for abduction process *)
 *)
 let do_entail_check_x vars cprog cs=
+  let _ = Infer.rel_ass_stk # reset in
   let ante = cs.CF.hprel_lhs in
   let conseq = CF.struc_formula_of_formula cs.CF.hprel_rhs (CF.pos_of_formula  cs.CF.hprel_rhs) in
   let conseq = Solver.prune_pred_struc cprog true conseq in
@@ -2140,9 +2141,9 @@ let do_entail_check_x vars cprog cs=
   (*********PRINTING*****************)
   (* let _ = if !Globals.print_core || !Globals.print_core_all *)
   (*   then print_string ("\nrun_infer:\n"^(Cprinter.string_of_formula ante) *)
-  (*       ^" "^(pr_list pr_id ivars) *)
-  (*     ^" |- "^(Cprinter.string_of_struc_formula conseq)^"\n")  *)
-  (*   else ()  *)
+  (*       (\* ^" "^(!CP.print_svl vars) *\) *)
+  (*     ^" |- "^(Cprinter.string_of_struc_formula conseq)^"\n") *)
+  (*   else () *)
   (* in *)
   (*********PRINTING*****************)
   let ctx =
@@ -2177,8 +2178,8 @@ let do_entail_check_x vars cprog cs=
 
 let do_entail_check vars cprog cs=
   let pr1 = Cprinter.string_of_hprel_short in
-  Debug.no_1 "do_entail_check" pr1 (pr_list_ln pr1)
-      (fun _ -> do_entail_check_x vars cprog cs) cs
+  Debug.no_2 "do_entail_check" pr1 !CP.print_svl (pr_list_ln pr1)
+      (fun _ _-> do_entail_check_x vars cprog cs) cs vars
 
 
 
