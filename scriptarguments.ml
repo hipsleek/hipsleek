@@ -78,6 +78,12 @@ let common_arguments = [
      Globals.label_aggressive_imply := false;
      Globals.label_aggressive_sat := false ),
    "Disable aggressive splitting of label.");
+  ("--lbl-dis-aggr-imply", Arg.Unit (fun _ -> 
+     Globals.label_aggressive_imply := false),
+   "Disable aggressive splitting of label for imply.");
+  ("--lbl-dis-aggr-sat", Arg.Unit (fun _ -> 
+     Globals.label_aggressive_sat := false),
+   "Disable aggressive splitting of label for sat.");
   ("--lda", Arg.Unit (fun _ -> 
      Globals.label_aggressive_imply := false;
      Globals.label_aggressive_sat := false ),

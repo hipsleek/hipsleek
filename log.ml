@@ -126,7 +126,7 @@ let string_of_log_res lt r =
 
 let pr_proof_log_entry e =
   fmt_open_box 1;
-  fmt_string ("\n id: " ^ (string_of_int e.log_id)^"<:"^(string_of_int e.log_sleek_no));
+  fmt_string ("\n id: " ^ (string_of_int e.log_id)^"<"^(string_of_int e.log_sleek_no));
   if e.log_cache then fmt_string ("; prover : CACHED ")
   else fmt_string ("; prover: " ^ (string_of_prover e.log_prover));
   let x = if e.log_timeout then "(TIMEOUT)" else "" in
