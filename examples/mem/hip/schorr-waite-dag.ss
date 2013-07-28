@@ -4,19 +4,22 @@ data node {
  node right;
 }
 
-dag<M> == self=null & M = {}
-	or self::node<_,l,r> * l::dag<Ml> U* r::dag<Mr> & M = union(Ml,Mr,{self})
-	inv true
-	memE M->();
+dag<s,M> == self=null & M = {} & s!=self
+	or self::node<_,l,r> * l::dag<s,Ml> U* r::dag<s,Mr> & M = union(Ml,Mr,{self}) & s != self
+	inv self!=s
+	memE M->(node<@M,@M,@M>);
 
-dagG<> == self::node<_,l,r> * l::dagG<> U* r::dagG<>
-inv true;
+dagseg<p,M> == self = p & M = {}
+	or self::node<_,l,r> * l::dagseg<p,Ml> U* r::dag<p,Mr> & M = union(Ml,Mr,{self}) & self != p
+	or self::node<_,l,r> * l::dag<p,Ml> U* r::dagseg<p,Mr> & M = union(Ml,Mr,{self}) & self != p
+	inv true
+	memE M->(node<@M,@M,@M>);
 
 void lscan(ref node cur, ref node prev, node sentinel)
-requires cur::dagG<> * prev::dagG<> * sentinel::node<_,_,_>@L
-ensures prev'::dagG<> & cur'=sentinel;
-requires cur::dagG<> * prev::dagG<> * sentinel::node<_,_,_>@L
-ensures prev'::dagG<> & cur'=sentinel;
+requires cur::dag<sentinel,Mc> * prev::dagseg<sentinel,Mp> & cur != null
+ensures prev'::dag<sentinel,union(Mc,Mp)> & cur'=sentinel;
+requires cur::dagseg<sentinel,Mc> * prev::dag<sentinel,Mp> & cur != sentinel
+ensures prev'::dag<sentinel,union(Mc,Mp)> & cur'=sentinel;
 {
 
   node n,tmp;
@@ -36,38 +39,5 @@ ensures prev'::dagG<> & cur'=sentinel;
   }
   lscan(cur,prev,sentinel);
 //  dprint;
-}
-
-void traverse(ref node c,ref node p)
-requires c::dag<Mc> * p::dag<Mp>
-ensures p'::dag<M> & M = union(Mc,Mp) & c' = null;
-
-{ 
-  if (c == null) return;
-  else {
-  	node n = c.left;
- 	node tmp = c.right;
-	c.right = p;
-	c.left = tmp;
-	p = c;
-	c = n;
-	traverse(c,p);
-  }
-}
-
-void trav(ref node root)
-requires root::dag<M>
-ensures root'::dag<M>;
-{
-	if (root == null) return;
-	else {
-		node prev = null;
-		node curr = root;
-		traverse(curr,prev);
-		curr = prev;
-		prev = null;
-		traverse(curr,prev);
-		root = prev;
-	}
 }
 
