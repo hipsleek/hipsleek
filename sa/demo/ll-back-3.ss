@@ -2,12 +2,22 @@ data node {
   node next;
 }
 
+ls<p> == self = p
+  or self::node<q>* q::ls<p>;
+
+cll<> == self::node<q> * q::ls<self>
+  inv self!=null;
+
 ll<> == self = null
 	or self::node<q> * q::ll<>
   inv true;
 
 infll<> == self::node<q>*q::infll<>
   inv self!=null;
+
+lasso<> == self::node<q>*q::lasso<>
+      or self::cll<>
+  inv self!=null; 
 
 HeapPred H1(node a).
 HeapPred G1(node b, node c).
@@ -21,6 +31,11 @@ int loop(ref node ptr)
    ensures ptr'::infll<> ;//'
    requires ptr::ll<>
    ensures ptr'::ll<> ;//'
+/*
+   requires ptr::lasso<>
+   ensures ptr'::lasso<> ;//'
+*/
+
 /*
   infer[H1,G1]
   requires H1(ptr)
@@ -47,10 +62,10 @@ H1(ptr)& ptr=ptr' --> G1(ptr',ptr),
  // POST
 G1(ptr',tmp_903) --> G1(ptr',ptr)]
 
-This is similar to ll-back-1.ss.
+This example is similar to ll-back-1.ss.
 
-We first attempt to deal with pre-H1, and is
-immediately saddled with a pre-obligation of the form:
+We first attempt to deal with relational assumption of H1,
+and is immediately saddled with a pre-obligation of the form:
 
   H1(ptr) * tmp_31'::node<ptr>@M --> H1(tmp_31'),
 
@@ -67,7 +82,17 @@ choose to weaken it further to:
  H1(tmp_31') <--  tmp_31'::node<ptr> * H1(ptr)
                   or tmp_31'=null
 
-(We need to tighten the above reasoning.)
+Now, one issue is how to perform such weakening;
+as there could be more than one ways for weakening.
+For example, one could weaken this to:
+
+ H1(tmp_31') <--  tmp_31'::node<ptr> * H1(ptr)
+                  or tmp_31'::clist<>
+
+which is actually a lasso with a cyclic end. Such
+a list would be finite and would also be an acceptable
+pre-condition for this method.
+
 
 Once, we have a defn for H1:
 
