@@ -637,6 +637,8 @@ let pred_en_oblg = ref true
 
 let sa_en = ref true
 
+let sa_syn = ref true
+
 let sa_en_split = ref false
 
 (* let sa_dangling = ref false *)

@@ -479,6 +479,7 @@ let common_arguments = [
    ("--sa-dnc", Arg.Set Globals.sa_dnc, "algorithm of normalization with divide and conquer");
   (* ("--sa-en-norm", Arg.Set Globals.sa_en_norm, "do normalization"); *)
   ("--sa-dis-infer", Arg.Clear Globals.sa_en, "donot infer shape");
+  ("--sa-dis-pred", Arg.Clear Globals.sa_en, "donot synthesize shape");
   (* ("--sa-dangling", Arg.Set Globals.sa_dangling, "elim dangling HP/pointers"); *)
   ("--pred-dis-infer", Arg.Clear Globals.pred_infer_flag, "disable the shape inference stage");
   ("--pred-en-useless-para", Arg.Set Globals.pred_elim_useless, "enable the elimination of useless parameter from HP predicate and user-defined predicates (view)");

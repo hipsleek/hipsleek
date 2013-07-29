@@ -1742,15 +1742,17 @@ and infer_core iprog prog proc_name callee_hps is need_preprocess detect_dang =
   let act = IC.icompute_action_init need_preprocess detect_dang in
   iprocess_action iprog prog proc_name callee_hps is act need_preprocess detect_dang
 
-let infer_shapes_divide iprog prog proc_name (constrs0: CF.hprel list) callee_hps sel_hps all_post_hps
+let infer_shapes_divide_x iprog prog proc_name (constrs0: CF.hprel list) callee_hps sel_hps all_post_hps
       hp_rel_unkmap unk_hpargs0 link_hpargs_w_path need_preprocess detect_dang =
-      (* ((CF.cond_path_type * CF.hp_rel_def list * *)
-  (* (CP.spec_var * CP.spec_var list) list * (CP.spec_var * CP.spec_var list) list * (CP.spec_var * CP.spec_var) list ) list)  = *)
   let process_one_path (cond_path, link_hpargs, constrs1)=
     let is0 = infer_init iprog prog proc_name cond_path constrs1
       callee_hps sel_hps all_post_hps hp_rel_unkmap unk_hpargs0
       link_hpargs need_preprocess detect_dang in
-    let is = infer_core iprog prog proc_name callee_hps is0  need_preprocess detect_dang in
+    let is = if !Globals.sa_syn then
+      infer_core iprog prog proc_name callee_hps is0 need_preprocess detect_dang
+    else
+      is0
+    in
     is
   in
   let ls_cond_danghps_constrs = if !Globals.sa_dnc then
@@ -1767,6 +1769,14 @@ let infer_shapes_divide iprog prog proc_name (constrs0: CF.hprel list) callee_hp
   let ls_res = List.map process_one_path ls_cond_danghps_constrs in
   ls_res
 
+let infer_shapes_divide iprog prog proc_name (constrs0: CF.hprel list) callee_hps sel_hps all_post_hps
+      hp_rel_unkmap unk_hpargs0 link_hpargs_w_path need_preprocess detect_dang =
+  let pr1 = pr_list_ln Cprinter.string_of_hprel_short in
+  let pr2 = pr_list_ln Cprinter.string_of_infer_state_short in
+  Debug.ho_1 "infer_shapes_divide" pr1 pr2
+      (fun _ ->  infer_shapes_divide_x iprog prog proc_name (constrs0) callee_hps sel_hps all_post_hps
+      hp_rel_unkmap unk_hpargs0 link_hpargs_w_path need_preprocess detect_dang)
+      constrs0
 
 let infer_shapes_conquer iprog prog proc_name ls_is sel_hps=
   let process_path_defs_setting is=
@@ -1831,11 +1841,12 @@ let infer_shapes_x iprog prog proc_name (constrs0: CF.hprel list) sel_hps post_h
   let ls_path_is = infer_shapes_divide iprog prog proc_name constrs0
     callee_hps sel_hps all_post_hps hp_rel_unkmap unk_hpargs link_hpargs0 need_preprocess detect_dang
   in
-  let r =
+  let r = if !Globals.sa_syn then
     match ls_path_is with
       | [] -> ([],[])
       | _ -> (*conquer HERE*)
             infer_shapes_conquer iprog prog proc_name ls_path_is sel_hps
+  else ([],[])
   in
   r
 
