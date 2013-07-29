@@ -17,16 +17,15 @@ node malloc(int s)
   ensures res::node<_> or res=null;
 
 int for_aux(ref node ptr)
-
+/*
    requires ptr::ll<>
    ensures ptr'::ll<>;//'
+*/
+   //ensures false;
 
-//  ensures false;
-/*
   infer[H1,G1]
   requires H1(ptr)
   ensures G1(ptr'); //'
-*/
 {
   node old_ptr = ptr;
   // ptr = new node(old_ptr);
@@ -41,32 +40,3 @@ int for_aux(ref node ptr)
   return 0;
 }
 
-HeapPred H2(node a).
-HeapPred G2(node b).
-
-int main(ref node ptr)
-
-  requires true
-  ensures ptr'::ll<>;//'
-
-/*
-  infer [H1,G1,G2]
-  requires true
-  ensures G2(ptr');//'
-*/
-{
-   ptr = null;
-  for_aux(ptr);
-
-  return 0;
-}
-
-
-             /*
-[ // PRE_REC
-(2;0) H1(ptr) * ptr'::node<old_31'>@M & old_31'=ptr --> H1(ptr'),
- // POST
-(1;0) H1(ptr) & ptr=ptr' --> G1(ptr'),
- // POST
-(2;0) G1(ptr') --> G1(ptr')]
-              */
