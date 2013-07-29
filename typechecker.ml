@@ -2437,23 +2437,24 @@ let proc_mutual_scc_shape_infer iprog prog scc_procs =
     let scc_sel_post_hps = List.fold_left (fun r_hps proc -> r_hps@proc.Cast.proc_sel_post_hps) [] scc_procs in
     let scc_hprel, scc_inferred_hps =
       if !Globals.sa_en && List.length scc_sel_hps> 0 && List.length scc_hprel_ass > 0 then
-        let res =  if not (!Globals.sa_dnc) then
+        let res =
           if not (!Globals.sa_new) then
-            Sa2.infer_shapes iprog prog (* proc.proc_name *)"" scc_hprel_ass
-            scc_sel_hps scc_sel_post_hps (Gen.BList.remove_dups_eq
-                (fun ((hp1,_),_) ((hp2, _),_) ->
-                    (CP.eq_spec_var hp1 hp2 )) scc_hprel_unkmap) [] [] true true
+            if not (!Globals.sa_dnc) then
+              Sa2.infer_shapes iprog prog (* proc.proc_name *)"" scc_hprel_ass
+                  scc_sel_hps scc_sel_post_hps (Gen.BList.remove_dups_eq
+                      (fun ((hp1,_),_) ((hp2, _),_) ->
+                          (CP.eq_spec_var hp1 hp2 )) scc_hprel_unkmap) [] [] true true
+            else
+              let _ = Sa2.infer_shapes_new iprog prog (* proc.proc_name *)"" scc_hprel_ass
+                scc_sel_hps scc_sel_post_hps (Gen.BList.remove_dups_eq
+                    (fun ((hp1,_),_) ((hp2, _),_) ->
+                        (CP.eq_spec_var hp1 hp2 )) scc_hprel_unkmap) [] [] true true
+              in ([],[])
           else
             Sa3.infer_shapes iprog prog (* proc.proc_name *)"" scc_hprel_ass
-            scc_sel_hps scc_sel_post_hps (Gen.BList.remove_dups_eq
-                (fun ((hp1,_),_) ((hp2, _),_) ->
-                    (CP.eq_spec_var hp1 hp2 )) scc_hprel_unkmap) [] [] true true
-        else
-          let _= Sa2.infer_shapes_new iprog prog (* proc.proc_name *)"" scc_hprel_ass
-            scc_sel_hps scc_sel_post_hps (Gen.BList.remove_dups_eq
-                (fun ((hp1,_),_) ((hp2, _),_) ->
-                    (CP.eq_spec_var hp1 hp2 )) scc_hprel_unkmap) [] [] true true
-          in ([],[])
+                scc_sel_hps scc_sel_post_hps (Gen.BList.remove_dups_eq
+                    (fun ((hp1,_),_) ((hp2, _),_) ->
+                        (CP.eq_spec_var hp1 hp2 )) scc_hprel_unkmap) [] [] true true
         in res
       else [],[]
     in
