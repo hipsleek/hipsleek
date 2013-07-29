@@ -10,7 +10,7 @@ ll<> == self = null
   inv true;
 
 HeapPred H1(node a).
-HeapPred G1(node b).
+HeapPred G1(node b, node c).
 
 node malloc(int s)
   requires true
@@ -25,7 +25,7 @@ int for_aux(ref node ptr)
 
   infer[H1,G1]
   requires H1(ptr)
-  ensures G1(ptr'); //'
+  ensures G1(ptr',ptr); //'
 {
   node old_ptr = ptr;
   // ptr = new node(old_ptr);
