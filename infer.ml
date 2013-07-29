@@ -2539,25 +2539,35 @@ let update_es prog es hds hvs ass_lhs_b rhs rhs_rest r_new_hfs defined_hps lsele
      let check_consumed_node h f=
        match h with
          | DataNode hd -> 
-               if (!Globals.allow_field_ann) then
-                 (f,h)
-               else 
-                 if  not(CF.isLend (hd.CF.h_formula_data_imm)) then (f,h) else
-                   let n_param_imm = List.map (fun _ -> CF.ConstAnn Mutable) hd.CF.h_formula_data_param_imm in
-                   let new_h = DataNode {hd with CF.h_formula_data_imm = (CF.ConstAnn(Mutable));
-                       CF.h_formula_data_param_imm = n_param_imm} in
-                   (CF.mkAnd_f_hf f new_h pos, new_h)
-         | _ -> (f,h)
+               (* if (!Globals.allow_field_ann) then *)
+               (*   (f,h) *)
+               (* else  *)
+                 (* if  not(CF.isLend (hd.CF.h_formula_data_imm)) then (f,h) else *)
+               let n_param_imm = if (!Globals.allow_field_ann) then
+                 List.map (fun _ -> CF.ConstAnn Mutable) hd.CF.h_formula_data_param_imm
+               else hd.CF.h_formula_data_param_imm
+               in
+               let new_h = DataNode {hd with CF.h_formula_data_imm = (CF.ConstAnn(Mutable));
+                   CF.h_formula_data_param_imm = n_param_imm} in
+               (*generate new hole*)
+               let nf, nholes = if Immutable.produces_hole (hd.CF.h_formula_data_imm) then
+                 let hole_no = Globals.fresh_int() in
+               let h_hole = CF.Hole hole_no  in
+                 (CF.mkAnd_f_hf f h_hole pos,[(new_h, hole_no)])
+               else (f,[])
+               in
+               (nf , new_h, nholes)
+         | _ -> (f,h,[])
      in
-     let new_es_formula, new_rhs = check_consumed_node rhs new_es_formula in
+     let new_es_formula, new_lhs, new_holes = check_consumed_node rhs new_es_formula in
      let new_es_formula1 = CF.subst m new_es_formula in
      let new_es = {es with CF. es_infer_vars_hp_rel = es.CF.es_infer_vars_hp_rel@rvhp_rels;
          CF.es_infer_hp_rel = es.CF.es_infer_hp_rel @ hp_rel_list;
          CF.es_infer_hp_unk_map = (es.CF.es_infer_hp_unk_map@unk_map);
          CF.es_infer_vars_sel_post_hp_rel = (es.CF.es_infer_vars_sel_post_hp_rel @ post_hps);
+         CF.es_crt_holes = es.CF.es_crt_holes@new_holes;
          CF.es_formula = new_es_formula1} in
-     DD.tinfo_pprint ("  new residue: " ^ (Cprinter.string_of_formula new_es.CF.es_formula)) pos;
-     let new_lhs = CF.convert_hf_to_mut new_rhs in
+     DD.tinfo_pprint ("  residue before matching: " ^ (Cprinter.string_of_formula new_es.CF.es_formula)) pos;
      (new_es, new_lhs)
    end
 

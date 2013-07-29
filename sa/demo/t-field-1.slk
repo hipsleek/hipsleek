@@ -5,24 +5,34 @@ data node {
 }.
 
 HeapPred H(node a).
-
+/*
+checkentail x::node<_,y>@M |- x::node<_,y>@L.
+print residue.
+*/
+/*
 infer [H] H(x) |- x::node<_,y>@L.
 print residue.
+*/
 /*
 <1>HP_29(y_28) * x::node<Anon_27,y_28>@M&Anon_12=Anon_27 & y=y_28&{FLOW,(19,20)=__norm}[]
  inferred hprel: [// Sleek_Entail(1)
 H(x) --> x::node<Anon_27,y_28>@M * HP_29(y_28)]
 */
-
+/*
 infer [] x::node<a,b> |- x::node<z@A,y@L>.
 print residue.
+*/
 /*
 <1>x::node<a@M,b@M>@M&b=y&{FLOW,(19,20)=__norm}[]
 */
 
+checkentail x::node<z,y> |- x::node<z@A,y@L>.
+print residue.
+
 
 infer [H] H(x) |- x::node<z@A,y@L>.
 print residue.
+
 /*
 # t-field-1.slk --field-ann
 
@@ -35,9 +45,10 @@ HP_34(y_33)]
 
 */
 
-
+/*
 infer [H] H(x) |- x::node<z,y@L>.
 print residue.
+*/
 /*
 # t-field-1.slk --field-ann
 
