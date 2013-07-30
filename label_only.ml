@@ -1,5 +1,5 @@
 open Gen
-(* open Globals *)
+open Globals
 (* module CF = Cformula *)
 (* module CP = Cpure *)
 
@@ -26,13 +26,19 @@ struct
   type t = string list
   let unlabelled = []
   (* let is_top_label l = List.for_all (fun c-> c="") l *)
-  let is_common l = (l==[]) or (List.for_all (fun c-> c="") l)
+  let is_common l = match l with
+    | [] -> true
+    | x::_ -> x=""
   let is_unlabelled l = is_common l
   let has_common l = (is_unlabelled l) or (List.exists (fun c-> c="") l)
   let string_of x = 
     if x=[] then "\"\""
     else pr_list_no_brk pr_string x
   let singleton s = [s]
+
+  let get_id ls = match ls with
+    | [] -> ("",[])
+    | x::xs -> (x,xs)
 
   (* this assumes the label has been normalized *)
   let compare l1 l2 =
@@ -45,10 +51,20 @@ struct
               let r = String.compare x y in
               if r==0 then aux l1 l2
               else r
-    in aux l1 l2
+    in 
+    let (id1,r1) = get_id l1 in
+    let (id2,r2) = get_id l2 in
+    let r1 = String.compare id1 id2 in
+    if r1==0 then aux l1 l2
+    else r1
 
   let is_equal l1 l2 =
     compare l1 l2 == 0
+
+  let is_same_key l1 l2 =
+    let (id1,r1) = get_id l1 in
+    let (id2,r2) = get_id l2 in
+    id1=id2
 
   let overlap xs ys = 
     let xs = List.sort String.compare xs in
@@ -172,6 +188,26 @@ struct
             else if v<0 then x::(helper xs1 ys)
             else y::(helper xs ys1)
     in helper xs ys
+
+  (* pre : both xs ys must be of the same id *)
+  let merge xs ys = 
+    let rec aux xs ys = match xs,ys with
+      | [],_ -> ys
+      | _,[] ->  xs
+      | (x::xs1),y::ys1 ->
+            let v = String.compare x y in
+            if v==0 then x::(aux xs1 ys1)
+            else if v<0 then x::(aux xs1 ys)
+            else y::(aux xs ys1)
+    in match xs,ys with
+      | [],[] -> []
+      | [],x::xs1 | x::xs1,[] 
+            -> if x="" then xs 
+              else report_error no_pos "violate pre of Label_Only.Lab_list.merge"
+      | x::xs1,y::ys1 
+            -> if x=y then x::(aux xs1 ys1)
+              else report_error no_pos "violate pre of Label_Only.Lab_list.merge"
+
 end;;
 
 (* this labelling is for outermost disjuncts only *)

@@ -26,6 +26,7 @@ module H = Hashtbl
 module TP = Tpdispatcher
 module Chk = Checks
 module PRED = Predicate
+module LO = Label_only.Lab_List
 
 
 type trans_exp_type =
@@ -544,20 +545,73 @@ let rec seq_elim (e:C.exp):C.exp = match e with
   | C.VarDecl _ -> e
   | C.While b -> C.While {b with Cast.exp_while_body = seq_elim b.Cast.exp_while_body}
 
+let hull f1 f2 = f1 (* fix *)
+
+let join_hull a f =
+  match a,f with
+    | CP.AndList f1,CP.AndList f2 
+          -> CP.mkTrue no_pos (* fix *)
+    | _,_ -> hull a f
+
+let join_hull_andlist_lst ls =
+  match ls with
+    | [] -> CP.mkTrue no_pos
+    | f::fs -> List.fold_left (fun a f -> join_hull a f) f fs
+
+let is_AndList f =
+  match f with
+    | CP.AndList _ -> true
+    | _ -> false
+
+let norm_andlist_br ls =
+  let ls = List.sort (fun (l,_) (l2,_) -> LO.compare l l2) ls in
+  let rec aux l f ls = match ls with
+    | [] -> [(l,f)]
+    | (l2,f2)::rest -> 
+          if LO.is_equal l l2 
+          then aux (LO.merge l l2) (CP.mkAnd f f2 no_pos) rest
+            else (l,f)::(aux l2 f2 rest)
+  in match ls with
+    | [] -> ls
+    | (l,f)::ls -> aux l f ls
+        
+
+let strip_andlist af =
+  match af with
+    | CP.AndList br -> br
+    | _ -> report_error no_pos "expecting andList as argument of strip_andlist"
+
+let to_andlist_form f =
+  let fs = CP.split_conjunctions f in
+  let (af,f2) = List.partition (is_AndList) fs in
+  let f2 = CP.join_conjunctions f2 in
+  if af==[] then f2
+  else CP.AndList (norm_andlist_br ((LO.unlabelled,f2)::
+      (List.concat (List.map strip_andlist af))))
+
+let hull_disj f =
+  let df = CP.split_disjunctions f in
+  let df2 = List.map to_andlist_form df in
+  let df3 = join_hull_andlist_lst df2 in
+  [df3]
 
 let remove_disj_clauses (mf: mix_formula): mix_formula = 
   let pf = pure_of_mix mf in
   let rm_disj f = 
     let mf_conjs = CP.split_conjunctions f in
-    let (disj,mf_conjs) = List.partition CP.is_disjunct mf_conjs in
+    if mf_conjs==[] then hull_disj f
+    else 
+      let (disj,mf_conjs) = List.partition CP.is_disjunct mf_conjs in
       mf_conjs 
   in
   let mf_conjs = rm_disj pf in
+  Debug.info_hprint (add_str "mf_conjs1" (pr_list !CP.print_formula)) mf_conjs no_pos;
   let mf_conjs = List.map (fun x -> match x with 
     | CP.AndList xs -> 
           let ys = List.map (fun (l,a) -> (l,CP.join_conjunctions (rm_disj a))) xs in
           CP.AndList ys
     | y -> y) mf_conjs in
+  Debug.info_hprint (add_str "mf_conjs2" (pr_list !CP.print_formula)) mf_conjs no_pos;
   let mf = CP.join_conjunctions (mf_conjs) in
   mix_of_pure mf
 
