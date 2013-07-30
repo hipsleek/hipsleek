@@ -678,7 +678,7 @@ let sa_subsume = ref false
 
 let norm_extract = ref false
 
-let norm_cont_analysis = ref true
+let norm_cont_analysis = ref false
 
 let dis_sem = ref false
 
