@@ -83,10 +83,37 @@ defn of the form:
 
 If we freeze at this point, we may obtain a pre-condition
 that is too strong as it is an infinite list. Thus, we
-choose to weaken it further with an unknown predicate:
+choose to weaken it further by applying a (greatest)fixpoint
+computation technique. with an unknown predicate:
 
  H1(tmp_31') <--  tmp_31'::node<ptr> * H1(ptr)
                   or UNK(tmp_31')
+
+How is this weakening applied? For least fixed point, we start
+with false, and progressively weaken to a fix-point.
+
+For greatest fix-point, we start with:
+  H1(tmp) <- UNK(tmp)
+
+and then weaken by disjunction to:
+
+ H1(tmp_31') <--  tmp_31'::node<ptr> * H1(ptr)
+                  or UNK(tmp_31')
+
+(PS We need to formalise this weakening and
+fix-point process)
+
+Assume:
+
+  UNK(t) --> H1(t) 
+
+Add:
+  t::node<p> * H1(p) --> H(t)
+
+Result:
+  UNK(t)
+  or t::node<p>* H1(p) --> H1(t)
+
 
 This weakening is general and would cover both ll and
 lasso-like structure. In addition, it can also be
