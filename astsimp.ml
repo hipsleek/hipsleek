@@ -543,7 +543,28 @@ let rec seq_elim (e:C.exp):C.exp = match e with
   | C.Var _ -> e
   | C.VarDecl _ -> e
   | C.While b -> C.While {b with Cast.exp_while_body = seq_elim b.Cast.exp_while_body}
-   
+
+
+let remove_disj_clauses (mf: mix_formula): mix_formula = 
+  let pf = pure_of_mix mf in
+  let rm_disj f = 
+    let mf_conjs = CP.split_conjunctions f in
+    let (disj,mf_conjs) = List.partition CP.is_disjunct mf_conjs in
+      mf_conjs 
+  in
+  let mf_conjs = rm_disj pf in
+  let mf_conjs = List.map (fun x -> match x with 
+    | CP.AndList xs -> 
+          let ys = List.map (fun (l,a) -> (l,CP.join_conjunctions (rm_disj a))) xs in
+          CP.AndList ys
+    | y -> y) mf_conjs in
+  let mf = CP.join_conjunctions (mf_conjs) in
+  mix_of_pure mf
+
+let remove_disj_clauses (mf: mix_formula): mix_formula = 
+  let pr = !print_mix_formula in
+  Debug.no_1 "remove_disj_clauses" pr pr remove_disj_clauses mf
+
 (*transform labels into exceptions, remove the finally clause,
 should also check that 
 *)
@@ -1105,14 +1126,14 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
             if vdef.C.view_xpure_flag then
               begin
                 let pr = Cprinter.string_of_mix_formula in
-                let sf = MCP.remove_disj_clauses vdef.C.view_user_inv in
+                let sf = remove_disj_clauses vdef.C.view_user_inv in
                 (* Debug.info_hprint (add_str "disj_form" string_of_bool) disj_form no_pos; *)
                 if disj_form then
                   (vdef.C.view_user_inv <- sf; vdef.C.view_xpure_flag <- false);
-	        Debug.tinfo_pprint ("Using a simpler inv for xpure0 of "^vdef.C.view_name) pos;
-                Debug.tinfo_hprint (add_str "inv(xpure0)" pr) vdef.C.view_user_inv pos;
+	        Debug.info_pprint ("Using a simpler inv for xpure0 of "^vdef.C.view_name) pos;
+                Debug.info_hprint (add_str "inv(xpure0)" pr) vdef.C.view_user_inv pos;
 
-	        Debug.tinfo_hprint (add_str "inv(xpure1)" pr) vdef.C.view_x_formula pos
+	        Debug.info_hprint (add_str "inv(xpure1)" pr) vdef.C.view_x_formula pos
               end
           end
         else report_error pos ("view defn for "^vn^" does not entail supplied invariant\n") 
