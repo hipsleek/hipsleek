@@ -357,7 +357,7 @@ and view_mater_match prog c vs1 aset imm f =
   Debug.no_3 "view_mater_match" pr1 pr2 pr2 pr (fun _ _ _ -> view_mater_match_x prog c vs1 aset imm f) c vs1 aset
 
 and view_mater_match_x prog c vs1 aset imm f =
-  let vdef = look_up_view_def_raw prog.prog_view_decls c in
+  let vdef = look_up_view_def_raw 11 prog.prog_view_decls c in
   let vdef_param = (self_param vdef)::(vdef.view_vars) in
   let mvs = subst_mater_list_nth 1 vdef_param vs1 vdef.view_materialized_vars in
   let vars =  vdef.view_vars in
@@ -666,8 +666,8 @@ and lookup_lemma_action_x prog (c:match_res) :action =
             | ViewNode vl, ViewNode vr ->
                   let vl_name = vl.h_formula_view_name in
                   let vr_name = vr.h_formula_view_name in
-                  let vl_vdef = look_up_view_def_raw view_decls vl_name in
-                  let vr_vdef = look_up_view_def_raw view_decls vr_name in
+                  let vl_vdef = look_up_view_def_raw 12 view_decls vl_name in
+                  let vr_vdef = look_up_view_def_raw 13 view_decls vr_name in
                   let vl_view_orig = vl.h_formula_view_original in
                   let vr_view_orig = vr.h_formula_view_original in
                   let vl_view_derv =  vl.h_formula_view_derv in
@@ -796,8 +796,8 @@ and process_one_match_x prog is_normalizing (c:match_res) :action_wt =
                   (* let l1 = [(1,M_base_case_unfold c)] in *)
                   let vl_name = vl.h_formula_view_name in
                   let vr_name = vr.h_formula_view_name in
-                  let vl_vdef = look_up_view_def_raw view_decls vl_name in
-                  let vr_vdef = look_up_view_def_raw view_decls vr_name in
+                  let vl_vdef = look_up_view_def_raw 14 view_decls vl_name in
+                  let vr_vdef = look_up_view_def_raw 14 view_decls vr_name in
                   let vl_is_rec = vl_vdef.view_is_rec in
                   let vr_is_rec = vr_vdef.view_is_rec in
                   let vl_self_pts = vl_vdef.view_pt_by_self in
@@ -924,7 +924,7 @@ and process_one_match_x prog is_normalizing (c:match_res) :action_wt =
                   src (*Seq_action [l1;src]*)
             | DataNode dl, ViewNode vr -> 
                   let vr_name = vr.h_formula_view_name in
-                  let vr_vdef = look_up_view_def_raw view_decls vr_name in
+                  let vr_vdef = look_up_view_def_raw 15 view_decls vr_name in
                   let vr_self_pts = vr_vdef.view_pt_by_self in
                   let vr_view_orig = vr.h_formula_view_original in
                   let vr_view_derv = vr.h_formula_view_derv in
@@ -945,7 +945,7 @@ and process_one_match_x prog is_normalizing (c:match_res) :action_wt =
                   else (1,M_Nothing_to_do (" matched data with derived self-rec RHS node "^(string_of_match_res c)))
             | ViewNode vl, DataNode dr -> 
                   let vl_name = vl.h_formula_view_name in
-                  let vl_vdef = look_up_view_def_raw view_decls vl_name in
+                  let vl_vdef = look_up_view_def_raw 16 view_decls vl_name in
                   let vl_self_pts = vl_vdef.view_pt_by_self in
                   let vl_view_orig = vl.h_formula_view_original in
                   let vl_view_derv = vl.h_formula_view_derv in
@@ -1392,7 +1392,7 @@ and compute_actions prog estate es (* list of right aliases *)
   let pr1 x = pr_list (fun (c1,_)-> Cprinter.string_of_h_formula c1) x in
   let pr4 = pr_list Cprinter.string_of_spec_var in
   let pr2 = string_of_action_res_simpl in
-  Debug.no_5 "compute_actions" 
+  Debug.no_5 "compute_actions"
       (add_str "EQ ptr" pr0) 
       (add_str "LHS heap" pr) 
       (add_str "LHS pure" pr3)

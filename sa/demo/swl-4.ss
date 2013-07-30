@@ -40,6 +40,17 @@ ensures prev'::lx<null,sent>  & cur'=sent ;
   infer [H,G]
   requires H(cur,prev,sent)
   ensures G(cur,cur',prev,prev',sent);
+
+/*
+lx<g,s> == self=g & self!=s 
+  or self::node<_,nxt> * nxt::lx<g,s> & self!=s 
+inv self!=s ;
+
+void lscan(ref node cur, ref node prev, node sent)
+ requires cur::lx<a,sent> * prev::lx<b,sent> & cur!=a 
+   & (a=null & b=sent | a=sent & b=null)
+ ensures prev'::lx<null,sent>  & cur'=sent ;
+*/
 */
 {
 
@@ -57,7 +68,7 @@ ensures prev'::lx<null,sent>  & cur'=sent ;
   if (cur == null) {
       // change direction;
       cur = prev;
-      dprint;
+      //dprint;
       prev = null;
       //dprint;
   }

@@ -10851,6 +10851,11 @@ let prune_irr_neq_b_form b irr_svl=
                 if (List.exists (fun sv -> (eq_spec_var sv sv1) || (eq_spec_var sv sv2)) irr_svl) then
                   (true,  (BConst (true,pos),c))
                 else (false,b)
+          | Var (sv,pos), Null _
+          | Null _, Var (sv,pos) ->
+                if (List.exists (fun sv1 -> (eq_spec_var sv sv1)) irr_svl) then
+                  (true,  (BConst (true,pos),c))
+                else (false,b)
           | _ -> (false,b)
       end
     | _ -> (false,b)

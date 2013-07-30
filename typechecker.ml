@@ -709,7 +709,7 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
 (*						   (print_string "check 1 ok\n";*)
                           (impl_vs,new_post,new_post_struc)
 						  else (*temp fixing*)
-                            if not (!Globals.sa_en) then report_error pos "Assume struc impl error"
+                            if not (!Globals.pred_syn_flag) then report_error pos "Assume struc impl error"
                             else
                             (print_string "check 1 fail\n";
                             (impl_vs,new_post,new_post_struc))
@@ -1103,7 +1103,7 @@ and check_scall_lock_op prog ctx e0 (post_start_label:formula_label) ret_t mn lo
             (*we infer automatically from ctx*)
             infer_lock_invariant lock_var ctx pos
       in
-      let vdef = look_up_view_def_raw prog.prog_view_decls lock_sort in
+      let vdef = look_up_view_def_raw 34 prog.prog_view_decls lock_sort in
       let types = List.map (fun v -> CP.type_of_spec_var v) vdef.view_vars in
       let new_args = List.map2 (fun arg typ ->  CP.SpecVar (typ, arg, Primed) ) lock_args types in
       let self_var =  CP.SpecVar (Named vdef.view_data_name, self, Unprimed) in
@@ -2434,28 +2434,37 @@ let proc_mutual_scc_shape_infer iprog prog scc_procs =
     let scc_hprel_unkmap =  List.fold_left (fun r_map proc -> r_map@proc.Cast.proc_hprel_unkmap) [] scc_procs in
     let scc_sel_hps = List.fold_left (fun r_hps proc -> r_hps@proc.Cast.proc_sel_hps) [] scc_procs in
     let scc_sel_post_hps = List.fold_left (fun r_hps proc -> r_hps@proc.Cast.proc_sel_post_hps) [] scc_procs in
-    let scc_hprel, scc_inferred_hps, scc_dropped_hps =
-      if !Globals.sa_en && List.length scc_sel_hps> 0 && List.length scc_hprel_ass > 0 then
-        let res =  if not (!Globals.sa_dnc) then
-          Sa2.infer_shapes iprog prog (* proc.proc_name *)"" scc_hprel_ass
-              scc_sel_hps scc_sel_post_hps (Gen.BList.remove_dups_eq
-                  (fun ((hp1,_),_) ((hp2, _),_) ->
-                      (CP.eq_spec_var hp1 hp2 )) scc_hprel_unkmap) [] [] true true
-        else
-          let _= Sa2.infer_shapes_new iprog prog (* proc.proc_name *)"" scc_hprel_ass
-            scc_sel_hps scc_sel_post_hps (Gen.BList.remove_dups_eq
-                (fun ((hp1,_),_) ((hp2, _),_) ->
-                    (CP.eq_spec_var hp1 hp2 )) scc_hprel_unkmap) [] [] true true
-          in ([],[],[])
+    let scc_hprel, scc_inferred_hps =
+      if !Globals.pred_syn_flag && List.length scc_sel_hps> 0 && List.length scc_hprel_ass > 0 then
+        let res =
+          if not (!Globals.pred_syn_modular) then
+            if not (!Globals.sa_dnc) then
+              Sa2.infer_shapes iprog prog (* proc.proc_name *)"" scc_hprel_ass
+                  scc_sel_hps scc_sel_post_hps (Gen.BList.remove_dups_eq
+                      (fun ((hp1,_),_) ((hp2, _),_) ->
+                          (CP.eq_spec_var hp1 hp2 )) scc_hprel_unkmap) [] [] true true
+            else
+              let _ = Sa2.infer_shapes_new iprog prog (* proc.proc_name *)"" scc_hprel_ass
+                scc_sel_hps scc_sel_post_hps (Gen.BList.remove_dups_eq
+                    (fun ((hp1,_),_) ((hp2, _),_) ->
+                        (CP.eq_spec_var hp1 hp2 )) scc_hprel_unkmap) [] [] true true
+              in ([],[])
+          else
+            Sa3.infer_shapes iprog prog (* proc.proc_name *)"" scc_hprel_ass
+                scc_sel_hps scc_sel_post_hps (Gen.BList.remove_dups_eq
+                    (fun ((hp1,_),_) ((hp2, _),_) ->
+                        (CP.eq_spec_var hp1 hp2 )) scc_hprel_unkmap) [] [] true true
         in res
-      else [],[],[]
+      else [],[]
     in
     (*update hpdefs for func call*)
     let _ = List.iter (fun proc ->
         let _ = Cast.update_hpdefs_proc prog.Cast.new_proc_decls scc_inferred_hps proc.proc_name in
         ()) scc_procs
     in
-    let rel_defs = Sa2.rel_def_stk in
+    let rel_defs = if not (!Globals.pred_syn_modular) then Sa2.rel_def_stk
+    else Sa3.rel_def_stk
+    in
     if not(rel_defs# is_empty) then
       begin
         print_endline "\n*************************************";
@@ -2607,7 +2616,7 @@ and check_proc iprog (prog : prog_decl) (proc : proc_decl) cout_option (mutual_g
                       (********************END SHAPE INFER*****************************)
                       (****************************************************************)
 		      (* let s_hprel, ls_inferred_hps, dropped_hps = *)
-                      (*   if !Globals.sa_en && List.length sel_hp_rels> 0 && List.length hp_lst_assume > 0 then *)
+                      (*   if !Globals.pred_syn_flag && List.length sel_hp_rels> 0 && List.length hp_lst_assume > 0 then *)
                       (*     let res =  if not (!Globals.sa_dnc) then *)
                       (*       Sa2.infer_shapes iprog prog proc.proc_name hp_lst_assume *)
                       (*           sel_hp_rels sel_post_hp_rels (Gen.BList.remove_dups_eq *)
