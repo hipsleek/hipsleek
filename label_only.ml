@@ -26,11 +26,15 @@ struct
   type t = string list
   let unlabelled = []
   (* let is_top_label l = List.for_all (fun c-> c="") l *)
+
   let is_common l = match l with
     | [] -> true
     | x::_ -> x=""
+
   let is_unlabelled l = is_common l
-  let has_common l = (is_unlabelled l) or (List.exists (fun c-> c="") l)
+
+  (* let has_common l = (is_unlabelled l) or (List.exists (fun c-> c="") l) *)
+
   let string_of x = 
     if x=[] then "\"\""
     else pr_list_no_brk pr_string x
@@ -58,6 +62,7 @@ struct
     if r1==0 then aux l1 l2
     else r1
 
+  (* pre: label is normalized *)
   let is_equal l1 l2 =
     compare l1 l2 == 0
 
@@ -67,46 +72,56 @@ struct
     id1=id2
 
   let overlap xs ys = 
-    let xs = List.sort String.compare xs in
-    let ys = List.sort String.compare ys in
-    let rec aux xs ys =
-      match xs,ys with
-        | [],ys -> false
-        | x::xs1,[]-> false
-        | x::xs1,y::ys1 ->
-              let v = String.compare x y in
-              if v==0 then true
-              else if v<0 then aux xs1 ys
-              else aux xs ys1
-    in 
-    aux xs ys
+    let (id1,r1) = get_id xs in
+    let (id2,r2) = get_id ys in
+    (* let xs = List.sort String.compare xs in *)
+    (* let ys = List.sort String.compare ys in *)
+    if id1=id2 then true
+    else (List.mem id1 r2) || (List.mem id2 r1)
+    (* let rec aux xs ys = *)
+    (*   match xs,ys with *)
+    (*     | [],ys -> false *)
+    (*     | x::xs1,[]-> false *)
+    (*     | x::xs1,y::ys1 -> *)
+    (*           let v = String.compare x y in *)
+    (*           if v==0 then true *)
+    (*           else if v<0 then aux xs1 ys *)
+    (*           else aux xs ys1 *)
+    (* in  *)
+    (* aux xs ys *)
 
   let overlap xs ys = 
     let pr = pr_list pr_id  in
     Debug.no_2 "overlap" pr pr string_of_bool overlap xs ys 	
 
-  let first_label xs =
-    match xs with
-      | [] ->[""]
-      | x::_ -> [x]
+  (* let first_label xs = *)
+  (*   fst(get_id xs) *)
+(* match xs with *)
+(*       | [] ->[""] *)
+(*       | x::_ -> [x] *)
 
-  (* this is for aggressive imply sat *)
-  let is_fully_compatible_imply xs ys =
-    let x = first_label xs in
-    if (has_common x) && (has_common ys) then true
-    else overlap x ys
+  (* this is for aggressive imply check *)
+  let is_fully_compatible_imply ante_l conseq_l =
+    let (id1,r1) = get_id ante_l in
+    let (id2,r2) = get_id conseq_l in
+    if id1=id2 then true
+    else List.mem id1 r2
 
-  let is_fully_compatible_imply xs ys =
+ let is_fully_compatible_imply xs ys =
     let pr = pr_list pr_id  in
     Debug.no_2 "is_fully_compatible_imply" pr pr string_of_bool is_fully_compatible_imply xs ys 	
 
 
   let is_fully_compatible_sat xs ys =
-    let x = first_label xs in
-    let y = first_label ys in
-    if (has_common x) && (has_common ys) || (has_common y && has_common xs) 
-    then true
-    else overlap x ys || overlap y xs
+    let (id1,r1) = get_id xs in
+    let (id2,r2) = get_id ys in
+    if id1=id2 then true
+    else (List.mem id2 r1) (* || (List.mem id2 r1) *)
+    (* let x = first_label xs in *)
+    (* let y = first_label ys in *)
+    (* if (has_common x) && (has_common ys) || (has_common y && has_common xs)  *)
+    (* then true *)
+    (* else overlap x ys || overlap y xs *)
   
   let is_fully_compatible xs ys =
     (* if (has_common xs) && (has_common ys) then true *)
@@ -120,8 +135,12 @@ struct
   (* assumes that xs and ys are normalized *)
   (* returns true if they overlap in some ways *)
   let is_compatible xs ys =
-    if (is_unlabelled xs) || (is_unlabelled ys) then true
-    else overlap xs ys
+    let (id1,r1) = get_id xs in
+    let (id2,r2) = get_id ys in
+    if id1=id2 || id1="" || id2="" then true
+    else (List.mem id1 r2) || (List.mem id2 r1)
+    (* if (is_unlabelled xs) || (is_unlabelled ys) then true *)
+    (* else overlap xs ys *)
 
   let is_part_compatible xs ys =
     is_compatible xs ys
@@ -135,28 +154,28 @@ struct
   let is_compatible_rec = is_compatible
 
   (* assumes that xs is sorted *)
-  let remove_dups xs =
+  let remove_dups id r =
     let rec helper l xs = match xs with
       | [] -> [l]
       | x::xs1 -> if l=x then helper l xs1
         else l::(helper x xs1)
-    in match xs with
-      | [] -> []
-      | x::xs -> helper x xs
+    in match r with
+      | [] -> id::[]
+      | x::xs -> id::(helper x xs)
 
   let norm t =
-    match t with
-      | [] -> [""]
-      | x::ls ->
-            let r = List.sort (String.compare) ls in
-            let r = remove_dups r in
-            x::r
+    let (id,r) = get_id t in
+    let r = List.sort (String.compare) r in
+    remove_dups id r
 
   (* assumes that xs and ys are normalized *)
   (* returns 0 if two labels are considered identical *)
   let compare xs ys =
-    let n1=List.length xs in
-    let n2=List.length ys in
+    let (id1,r1) = get_id xs in
+    let (id2,r2) = get_id ys in
+    let n1=List.length r1 in
+    let n2=List.length r2 in
+    let sr=String.compare id1 id2 in
     let rec aux xs ys =
       match xs,ys with
         | [],[] -> 0
@@ -166,9 +185,13 @@ struct
               let v = String.compare x y in
               if v==0 then aux xs1 ys1
               else v
-    in if n1<n2 then -1
-    else if n1>n2 then 1
-    else aux xs ys
+    in 
+    if sr==0 then
+      if n1==n2 then aux r1 r2
+      else 
+        if n1<n2 then -1
+        else 1
+    else sr
 
   let compare xs ys = 
 	let pr = pr_list pr_id  in
@@ -177,20 +200,8 @@ struct
   (* combine two labels that are considered identical *)
   (* let comb_identical xs ys = xs *)
 
-  (* combine two labels that may not be identical *)
+  (* pre : two labels must have the same id and sorted*)
   let comb_norm xs ys = 
-    let rec helper xs ys = match xs,ys with
-      | [],ys -> ys
-      | (x::xs1),[] ->  xs
-      | (x::xs1),y::ys1 ->
-            let v = String.compare x y in
-            if v==0 then x::(helper xs1 ys1)
-            else if v<0 then x::(helper xs1 ys)
-            else y::(helper xs ys1)
-    in helper xs ys
-
-  (* pre : both xs ys must be of the same id *)
-  let merge xs ys = 
     let rec aux xs ys = match xs,ys with
       | [],_ -> ys
       | _,[] ->  xs
@@ -198,15 +209,31 @@ struct
             let v = String.compare x y in
             if v==0 then x::(aux xs1 ys1)
             else if v<0 then x::(aux xs1 ys)
-            else y::(aux xs ys1)
-    in match xs,ys with
-      | [],[] -> []
-      | [],x::xs1 | x::xs1,[] 
-            -> if x="" then xs 
-              else report_error no_pos "violate pre of Label_Only.Lab_list.merge"
-      | x::xs1,y::ys1 
-            -> if x=y then x::(aux xs1 ys1)
-              else report_error no_pos "violate pre of Label_Only.Lab_list.merge"
+            else y::(aux xs ys1) in
+    let (id1,r1) = get_id xs in
+    let (id2,r2) = get_id ys in
+    if id1=id2 then
+      id1::(aux r1 r2)
+    else report_error no_pos "violate pre of Label_Only.Lab_list.comb_norm" 
+
+  (* pre : both xs ys must be of the same id *)
+  (* let merge xs ys =  *)
+  (*   let rec aux xs ys = match xs,ys with *)
+  (*     | [],_ -> ys *)
+  (*     | _,[] ->  xs *)
+  (*     | (x::xs1),y::ys1 -> *)
+  (*           let v = String.compare x y in *)
+  (*           if v==0 then x::(aux xs1 ys1) *)
+  (*           else if v<0 then x::(aux xs1 ys) *)
+  (*           else y::(aux xs ys1) *)
+  (*   in match xs,ys with *)
+  (*     | [],[] -> [] *)
+  (*     | [],x::xs1 | x::xs1,[]  *)
+  (*           -> if x="" then xs  *)
+  (*             else report_error no_pos "violate pre of Label_Only.Lab_list.merge" *)
+  (*     | x::xs1,y::ys1  *)
+  (*           -> if x=y then x::(aux xs1 ys1) *)
+  (*             else report_error no_pos "violate pre of Label_Only.Lab_list.merge" *)
 
 end;;
 

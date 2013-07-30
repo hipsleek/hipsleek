@@ -569,7 +569,7 @@ let norm_andlist_br ls =
     | [] -> [(l,f)]
     | (l2,f2)::rest -> 
           if LO.is_equal l l2 
-          then aux (LO.merge l l2) (CP.mkAnd f f2 no_pos) rest
+          then aux (LO.comb_norm l l2) (CP.mkAnd f f2 no_pos) rest
             else (l,f)::(aux l2 f2 rest)
   in match ls with
     | [] -> ls
