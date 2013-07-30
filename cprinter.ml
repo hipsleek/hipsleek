@@ -2122,6 +2122,7 @@ let string_of_only_lhs_rhs (e) : string =  poly_string_of_pr  pr_only_lhs_rhs e
 
 let pr_infer_state_short is =
   fmt_open_box 1;
+  fmt_string (pr_list_round string_of_int is.is_cond_path);
   fmt_string (pr_list_ln string_of_hprel_short is.is_constrs);
   fmt_string (pr_list_ln string_of_hp_rel_def is.is_hp_defs);
   fmt_close()

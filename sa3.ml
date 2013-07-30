@@ -1751,6 +1751,7 @@ let infer_shapes_divide_x iprog prog proc_name (constrs0: CF.hprel list) callee_
     let is = if !Globals.sa_syn then
       infer_core iprog prog proc_name callee_hps is0 need_preprocess detect_dang
     else
+      (* let _ =  print_endline (CF.string_of_cond_path is0.CF.is_cond_path) in *)
       is0
     in
     is
@@ -1773,7 +1774,7 @@ let infer_shapes_divide iprog prog proc_name (constrs0: CF.hprel list) callee_hp
       hp_rel_unkmap unk_hpargs0 link_hpargs_w_path need_preprocess detect_dang =
   let pr1 = pr_list_ln Cprinter.string_of_hprel_short in
   let pr2 = pr_list_ln Cprinter.string_of_infer_state_short in
-  Debug.ho_1 "infer_shapes_divide" pr1 pr2
+  Debug.no_1 "infer_shapes_divide" pr1 pr2
       (fun _ ->  infer_shapes_divide_x iprog prog proc_name (constrs0) callee_hps sel_hps all_post_hps
       hp_rel_unkmap unk_hpargs0 link_hpargs_w_path need_preprocess detect_dang)
       constrs0

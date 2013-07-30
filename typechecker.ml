@@ -2426,7 +2426,6 @@ and proc_mutual_scc (prog: prog_decl) (proc_lst : proc_decl list) (fn:prog_decl 
   ()
 
 let proc_mutual_scc_shape_infer iprog prog scc_procs =
-  let _ =  print_endline "\n****************mutrec*******************" in
   if not(!Globals.pred_infer_flag) then ()
   else
     (*solve the set of assumptions for scc*)
