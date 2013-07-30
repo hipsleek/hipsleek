@@ -33,10 +33,12 @@ requires true
 ensures res or !res;
 
 int loop(ref node ptr)
+/*
    requires ptr::infll<>
    ensures ptr'::infll<> ;//'
    requires ptr::ll<>
    ensures ptr'::ll<> ;//'
+*/
    requires ptr::lasso2<>
    ensures ptr'::lasso2<> ;//'
 
@@ -139,8 +141,11 @@ In 2nd iteration:
 
 In 3rd iteration:
 
-  H1(ptr)& ptr=ptr' \/  H1(ptr') --> G1(ptr',ptr)]
-  H1(ptr') --> G1(ptr',ptr)]
+  H1(ptr)& ptr=ptr' \/  G1(ptr',tmp_903) --> G1(ptr',ptr)]
+  H1(ptr)& ptr=ptr' \/  H1(tmp_903) & tmp_903=ptr' --> G1(ptr',ptr)]
+  H1(ptr)& ptr=ptr' \/  H1(ptr') & true --> G1(ptr',ptr)]
+  H1(ptr') & (ptr'=ptr | true) --> G1(ptr',ptr)]
+  H1(ptr')  --> G1(ptr',ptr)]
 
 In 4th iteration:
 

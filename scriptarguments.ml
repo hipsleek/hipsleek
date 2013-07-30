@@ -473,13 +473,17 @@ let common_arguments = [
   ("--en-cp-trace", Arg.Set Globals.cond_path_trace, "Enable the tracing of conditional paths");
   ("--dis-cp-trace", Arg.Clear Globals.cond_path_trace, "Disable the tracing of conditional paths");
   ("--sa-print-inter", Arg.Set Globals.sa_print_inter, "Print intermediate results of normalization");
-  ("--sa-new", Arg.Set Globals.sa_new, "old algorithm of normalization");
+  ("--pred-dis-mod", Arg.Clear Globals.pred_syn_modular, "disable modular predicate synthesis (use old algo)");
+  ("--pred-en-mod", Arg.Set Globals.pred_syn_modular, "using modular predicate synthesis");
   ("--pred-en-oblg", Arg.Set Globals.pred_en_oblg, "enable sa_en_pre_oblg");
   ("--pred-dis-oblg", Arg.Clear Globals.pred_en_oblg, "enable sa_en_pre_oblg");
    ("--sa-dnc", Arg.Set Globals.sa_dnc, "algorithm of normalization with divide and conquer");
   (* ("--sa-en-norm", Arg.Set Globals.sa_en_norm, "do normalization"); *)
-  ("--sa-dis-infer", Arg.Clear Globals.sa_en, "do not infer shape");
-  ("--sa-dis-pred", Arg.Clear Globals.sa_en, "do not synthesize shape");
+  (* ("--sa-dis-infer", Arg.Clear Globals.sa_en, "do not infer shape"); *)
+  (* ("--sa-dis-pred", Arg.Clear Globals.sa_en, "do not synthesize shape"); *)
+  ("--en-pred-syn", Arg.Set Globals.pred_syn_flag, "enable predicate synthesis");
+  ("--dis-pred-syn", Arg.Clear Globals.pred_syn_flag, "disable predicate synthesis");
+  ("--dps", Arg.Clear Globals.pred_syn_flag, "shorthand for --dis-pred-syn");
   (* ("--sa-dangling", Arg.Set Globals.sa_dangling, "elim dangling HP/pointers"); *)
   ("--pred-dis-infer", Arg.Clear Globals.pred_infer_flag, "disable the shape inference stage");
   ("--pred-en-useless-para", Arg.Set Globals.pred_elim_useless, "enable the elimination of useless parameter from HP predicate and user-defined predicates (view)");

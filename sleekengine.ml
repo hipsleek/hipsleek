@@ -857,7 +857,7 @@ let process_shape_infer pre_hps post_hps=
   in
   let ls_hprel, ls_inferred_hps =
     if List.length sel_hps> 0 && List.length hp_lst_assume > 0 then
-      let infer_shape_fnc =  if not (!Globals.sa_new) then
+      let infer_shape_fnc =  if not (!Globals.pred_syn_modular) then
         Sa2.infer_shapes
       else Sa3.infer_shapes (* Sa.infer_hps *)
       in
@@ -865,9 +865,9 @@ let process_shape_infer pre_hps post_hps=
           sel_hps sel_post_hps unk_map unk_hpargs link_hpargs true false
     else [],[]
   in
-  let _ = if not (!Globals.sa_new) then
+  let _ = if not (!Globals.pred_syn_modular) then
     begin
-      let rel_defs = if not (!Globals.sa_new) then
+      let rel_defs = if not (!Globals.pred_syn_modular) then
         Sa2.rel_def_stk
       else Sa3.rel_def_stk
       in
@@ -1034,14 +1034,14 @@ let process_shape_infer_prop pre_hps post_hps=
     shape_infer_pre_process hp_lst_assume pre_hps post_hps
   in
   let ls_hprel, ls_inferred_hps=
-    let infer_shape_fnc =  if not (!Globals.sa_new) then
+    let infer_shape_fnc =  if not (!Globals.pred_syn_modular) then
       Sa2.infer_shapes
     else Sa3.infer_shapes (* Sa.infer_hps *)
     in
     infer_shape_fnc iprog !cprog "" hp_lst_assume
         sel_hps sel_post_hps unk_map unk_hpargs link_hpargs false false
   in
-  let _ = if not (!Globals.sa_new) then
+  let _ = if not (!Globals.pred_syn_modular) then
     begin
       let rel_defs =  Sa2.rel_def_stk in
       if not(rel_defs# is_empty) then
@@ -1198,7 +1198,7 @@ let print_entail_result sel_hps (valid: bool) (residue: CF.list_context) (num_id
       (*   end; *)
       (* (\* let _ = Debug.info_pprint (" sel_hps:" ^ (!CP.print_svl sel_hps)) no_pos in *\) *)
       (* let ls_hprel, _(\* ls_inferred_hps *\), _ (\* dropped_hps *\) = *)
-      (*   if !Globals.sa_en && (hp_lst_assume <> []) then *)
+      (*   if !Globals.pred_syn_flag && (hp_lst_assume <> []) then *)
       (*     Sa.infer_hps !cprog num_id hp_lst_assume *)
       (*         sel_hps [] [] *)
       (*   else [],[],[] *)

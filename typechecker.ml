@@ -709,7 +709,7 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
 (*						   (print_string "check 1 ok\n";*)
                           (impl_vs,new_post,new_post_struc)
 						  else (*temp fixing*)
-                            if not (!Globals.sa_en) then report_error pos "Assume struc impl error"
+                            if not (!Globals.pred_syn_flag) then report_error pos "Assume struc impl error"
                             else
                             (print_string "check 1 fail\n";
                             (impl_vs,new_post,new_post_struc))
@@ -2436,9 +2436,9 @@ let proc_mutual_scc_shape_infer iprog prog scc_procs =
     let scc_sel_hps = List.fold_left (fun r_hps proc -> r_hps@proc.Cast.proc_sel_hps) [] scc_procs in
     let scc_sel_post_hps = List.fold_left (fun r_hps proc -> r_hps@proc.Cast.proc_sel_post_hps) [] scc_procs in
     let scc_hprel, scc_inferred_hps =
-      if !Globals.sa_en && List.length scc_sel_hps> 0 && List.length scc_hprel_ass > 0 then
+      if !Globals.pred_syn_flag && List.length scc_sel_hps> 0 && List.length scc_hprel_ass > 0 then
         let res =
-          if not (!Globals.sa_new) then
+          if not (!Globals.pred_syn_modular) then
             if not (!Globals.sa_dnc) then
               Sa2.infer_shapes iprog prog (* proc.proc_name *)"" scc_hprel_ass
                   scc_sel_hps scc_sel_post_hps (Gen.BList.remove_dups_eq
@@ -2463,7 +2463,7 @@ let proc_mutual_scc_shape_infer iprog prog scc_procs =
         let _ = Cast.update_hpdefs_proc prog.Cast.new_proc_decls scc_inferred_hps proc.proc_name in
         ()) scc_procs
     in
-    let rel_defs = if not (!Globals.sa_new) then Sa2.rel_def_stk
+    let rel_defs = if not (!Globals.pred_syn_modular) then Sa2.rel_def_stk
     else Sa3.rel_def_stk
     in
     if not(rel_defs# is_empty) then
@@ -2617,7 +2617,7 @@ and check_proc iprog (prog : prog_decl) (proc : proc_decl) cout_option (mutual_g
                       (********************END SHAPE INFER*****************************)
                       (****************************************************************)
 		      (* let s_hprel, ls_inferred_hps, dropped_hps = *)
-                      (*   if !Globals.sa_en && List.length sel_hp_rels> 0 && List.length hp_lst_assume > 0 then *)
+                      (*   if !Globals.pred_syn_flag && List.length sel_hp_rels> 0 && List.length hp_lst_assume > 0 then *)
                       (*     let res =  if not (!Globals.sa_dnc) then *)
                       (*       Sa2.infer_shapes iprog prog proc.proc_name hp_lst_assume *)
                       (*           sel_hp_rels sel_post_hp_rels (Gen.BList.remove_dups_eq *)

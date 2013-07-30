@@ -626,7 +626,7 @@ let print_heap_pred_decl = ref true
 
 let cond_path_trace = ref false
 
-let sa_new = ref false
+let pred_syn_modular = ref true
 
 let sa_dnc = ref false
 
@@ -635,7 +635,7 @@ let pred_en_oblg = ref true
 
 (* let sa_en_norm = ref false *)
 
-let sa_en = ref true
+let pred_syn_flag = ref true
 
 let sa_syn = ref true
 
