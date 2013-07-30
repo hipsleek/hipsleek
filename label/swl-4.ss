@@ -16,7 +16,8 @@ inv self!= s;
 */
 
 lx<g,s> == self=g & self!=s 
-  or self::node<_,nxt> * nxt::lx<g,s> & self!=g & self!=s inv self!=s;
+  or self::node<_,nxt> * nxt::lx<g,s> & self!=g & self!=s 
+inv self!=s;
 
 /*
 lx<null,s> == self=null &  self!=s
