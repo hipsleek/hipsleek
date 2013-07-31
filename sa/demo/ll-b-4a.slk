@@ -1,0 +1,19 @@
+data node{
+  node next;
+}.
+
+HeapPred H1(node a).
+HeapPred G1(node b, node c).
+
+relAssume (2;0)
+H1(ptr) * tmp_32'::node<ptr>@M --> H1(tmp_32').
+
+ // POST
+relAssume 
+(1;0)H1(ptr)&
+ptr=ptr' --> G1(ptr',ptr).
+ // POST
+relAssume 
+(2;0)G1(ptr',tmp_914) --> G1(ptr',ptr).
+
+shape_infer [H1][G1].
