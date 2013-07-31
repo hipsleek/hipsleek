@@ -391,7 +391,7 @@ and mkEq a1 a2 pos =
   else 
 	Eq (a1, a2, pos)
 
-and mkAnd f1 f2 pos = match f1 with
+and mkAnd_x f1 f2 pos = match f1 with
   | BForm ((BConst (false, _), _), _) -> f1
   | BForm ((BConst (true, _), _), _) -> f2
   | _ -> match f2 with
@@ -404,11 +404,15 @@ and mkAnd f1 f2 pos = match f1 with
 		| _ -> if no_andl f1 && no_andl f2 then And (f1, f2, pos) 
 			   else report_error no_pos "Ipure: unhandled/unexpected mkAnd with andList case"
 
+and mkAnd f1 f2 pos = 
+  let pr = !print_formula in
+  Debug.no_2 "mkAnd" pr pr pr (fun _ _ -> mkAnd_x f1 f2 pos) f1 f2
+
 and mkAndList b = (*print_string "ipure_list_gen\n";*) AndList b
 	
 and no_andl  = function
   | BForm _ | And _ | Not _ | Forall _ | Exists _  -> true
-  | Or (f1,f2,_,_) -> no_andl f1 && no_andl f2
+  | Or (f1,f2,_,_) -> true(* no_andl f1 && no_andl f2 *)
   | AndList _ -> false 
 	
 and mkOr f1 f2 lbl pos = match f1 with

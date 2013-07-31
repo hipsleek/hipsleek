@@ -12,10 +12,13 @@ bnd1<"n":n, "v":sm, "v":bg, "v":mi> ==
 
   inv self!=null & ((AndList("n":n >= 2; "v":sm <= mi < bg))
                     | (AndList ("n":n = 1; "v":sm <= mi < bg)));
-/*
-  inv AndList("":self!=null; "n":n >= 2; "v":sm <= mi < bg)
-     | AndList ("":self!=null; "n":n = 1; "v":sm <= mi < bg);
-*/
+
+  /* inv self!=null & ((n >= 2 & sm <= mi < bg) */
+  /*                   | (n = 1 & sm <= mi < bg)); */
+
+  /* inv AndList("":self!=null; "n":n >= 2; "v":sm <= mi < bg) */
+  /*    | AndList ("":self!=null; "n":n = 1; "v":sm <= mi < bg); */
+
 
 /*
 sll<"n":n, "v":sm, "v":lg> == 

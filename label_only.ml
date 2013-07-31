@@ -238,7 +238,7 @@ struct
       (* report_error no_pos "violate pre of Label_Only.Lab_list.comb_norm"  *)
 
   let comb_norm i xs ys =
-    Debug.ho_2_num i "comb_norm" string_of string_of string_of comb_norm xs ys 
+    Debug.no_2_num i "comb_norm" string_of string_of string_of comb_norm xs ys 
 
   (* pre : both xs ys must be of the same id *)
   (* let merge xs ys =  *)
@@ -429,7 +429,7 @@ struct
       (* report_error no_pos "violate pre of Label_Only.Lab_list.comb_norm"  *)
 
   let comb_norm i xs ys =
-    Debug.ho_2_num i "comb_norm" string_of string_of string_of comb_norm xs ys 
+    Debug.no_2_num i "comb_norm" string_of string_of string_of comb_norm xs ys 
 
   (* assumes that xs and ys are normalized *)
   (* returns 0 if two labels are considered identical *)
@@ -510,7 +510,7 @@ struct
     (opt1,Lab_List.comb_norm 4 xs ys)
 
   let comb_norm i xs ys =
-    Debug.ho_2_num i "comb_norm" string_of string_of string_of comb_norm xs ys 
+    Debug.no_2_num i "comb_norm" string_of string_of string_of comb_norm xs ys 
 
   (* assumes that xs and ys are normalized *)
   let compare (opt1,xs) (opt2,ys) =
