@@ -2287,7 +2287,105 @@ let compute_gfp prog is_pre is pdefs=
   Debug.no_1 "compute_gfp" pr3 pr4
       (fun _ -> compute_gfp_x prog is_pre is pdefs) pdefs
 
+let lfp_gen_init_x nonrec_fs=
+  nonrec_fs
+
+let lfp_gen_init nonrec_fs=
+  let pr1 = pr_list_ln Cprinter.prtt_string_of_formula in
+  Debug.no_1 "lfp_gen_init" pr1 pr1
+      (fun _ -> lfp_gen_init_x nonrec_fs) nonrec_fs
+
+let simplify_disj_set prog args unk_hps unk_svl pdefs pos=
+  let rec helper2 pdefs res=
+    match pdefs with
+      | [] -> res
+      | [pdef] -> res@[pdef]
+      | (hp1,args1, g1, f1, svl1)::((hp2,args2, g2, f2, svl2)::rest) -> begin
+          let b, nfs = SAU.simplify_disj prog args unk_hps unk_svl f1 f2 pos in
+          if b then
+            let npdefs=
+              [(hp2,args2, g2, List.hd nfs, svl2)]
+            in
+            helper2 (res@npdefs@rest) []
+          else
+            helper2 rest (res@[(hp1,args1, g1, f1, svl1);(hp2,args2, g2, f2, svl2)])
+        end
+  in
+  helper2 pdefs []
+
+let lfp_iter_x prog hp args dang_hps fix_0 nonrec_fs rec_fs=
+  let apply_fix fix_i r_fs pdef_f=
+    let _, fs = SAU.succ_subst prog [fix_i] dang_hps true pdef_f in
+    r_fs@fs
+  in
+  let pdef_rec_fs = List.map (fun f -> (hp,args, None, f, [])) rec_fs in
+  let pdef_nonrec_fs = List.map (fun f -> (hp,args, None, f, [])) nonrec_fs in
+  (*INTERNAL*)
+  let rec rec_helper_x pdef_fix_i=
+    (*apply rec for cur fix*)
+    let fix_i_plus = pdef_nonrec_fs@(List.fold_left (apply_fix pdef_fix_i) [] pdef_rec_fs) in
+    (*check whether it reaches the fixpoint*)
+    (* let fix_i_plus1 = Gen.BList.remove_dups_eq (fun (_,_, _, f1, _) (_,_, _, f2, _) -> *)
+    (*     SAU.check_relaxeq_formula args f1 f2) fix_i_plus in *)
+    let fix_i_plus1 = simplify_disj_set prog args dang_hps [] fix_i_plus no_pos in
+    let diff = Gen.BList.difference_eq (fun (_,_, _, f1, _) (_,_, _, f2, _) ->
+        SAU.check_relaxeq_formula args f1 f2) fix_i_plus1 pdef_fix_i in
+    let rec_helper pdef_fix_i=
+      let pr1 (_,_, _, f, _) = Cprinter.prtt_string_of_formula f in
+      let pr2 = pr_list_ln pr1 in
+      Debug.no_1 "rec_helper" pr2 pr2
+          (fun _ -> rec_helper_x pdef_fix_i) pdef_fix_i
+    in
+    (*recusive call*)
+    if diff = [] then fix_i_plus1 else
+    rec_helper fix_i_plus1
+  in
+  (*END INTERNAL*)
+  let pdef_fix_0 = List.map (fun f -> (hp,args, None, f, [])) fix_0 in
+  let r = rec_helper_x pdef_fix_0 in
+  List.map (fun (_,_, _, f, _) -> f) r
+
+let lfp_iter prog hp args dang_hps fix_0 nonrec_fs rec_fs=
+  let pr1 = pr_list_ln Cprinter.prtt_string_of_formula in
+  Debug.no_5 "lfp_iter" !CP.print_sv !CP.print_svl pr1 pr1 pr1 pr1
+      (fun _ _ _ _ _ -> lfp_iter_x prog hp args dang_hps fix_0 nonrec_fs rec_fs)
+      hp args fix_0 nonrec_fs rec_fs
+
+let mk_expl_root_fnc hp ss r hf=
+  let rec subst_root r ss eargs res=
+    match eargs with
+      | [] -> res
+      | e::rest -> begin
+          match e with
+            | CP.Var (sv, p) ->
+                  let args = [r;sv] in
+                  if List.exists (fun (sv1,sv2) -> CP.diff_svl args [sv1;sv2] = []) ss then
+                    (res@((CP.Var (r, p))::rest))
+                  else subst_root r ss rest (res@[e])
+            | _ -> subst_root r ss rest (res@[e])
+
+        end
+  in
+  match hf with
+    | CF.HRel (hp1, eargs, pos) ->
+          let args = (List.fold_left List.append [] (List.map CP.afv eargs)) in
+          if CP.mem_svl r args then hf else
+            let n_eargs = subst_root r ss eargs [] in
+            CF.HRel (hp1, n_eargs, pos)
+    | _ -> hf
+
 let compute_lfp_x prog is_pre is pdefs=
+  (********INTERNAL*******)
+  let mk_exp_root_x hp r f =
+    let _, mf, _, _, _ = CF.split_components f in
+    let ss = MCP.ptr_equations_without_null mf in
+    (CF.trans_heap (mk_expl_root_fnc hp ss r) f)
+  in
+  let mk_exp_root hp r f =
+    let pr1 = Cprinter.prtt_string_of_formula in
+    Debug.no_2 "mk_exp_root" !CP.print_sv pr1 pr1
+        (fun _ _ -> mk_exp_root_x hp r f) r f
+  in
   let skip_hps = List.map fst (is.CF.is_dang_hpargs@is.CF.is_link_hpargs) in
   (********END INTERNAL*******)
   let hp,def=
@@ -2296,14 +2394,17 @@ let compute_lfp_x prog is_pre is pdefs=
           let pos = CF.pos_of_formula f0 in
           (*normalize*)
           let norm_pdefs = (hp0,args0,f0)::(List.map (norm args0) rest) in
-          let norm_fs = (List.map (fun (_,_,f) -> f) norm_pdefs) in
-          let r,non_r_args = SAU.find_root prog skip_hps args0 norm_fs in
+          let norm_fs0 = (List.map (fun (_,_,f) -> f) norm_pdefs) in
+          let r,non_r_args = SAU.find_root prog skip_hps args0 norm_fs0 in
+          let norm_fs = List.map (mk_exp_root hp0 r) norm_fs0 in
+          (* let _ =  DD.info_pprint ("   r: " ^(!CP.print_sv r)) no_pos in *)
           let base_fs, rec_fs, dep_fs = List.fold_left (classify hp0) ([],[],[]) norm_fs in
           (*init*)
-          (* let fix0 = lfp_gen_init prog is_pre r rec_fs in *)
+          let fix_0 = (base_fs@dep_fs) in
           (*iterate*)
-          let fixn = (* lfp_iter prog rec_fs fix0 *)  CF.mkTrue (CF.mkNormalFlow ()) pos in
-          (hp0, CF.mk_hp_rel_def hp0 (args0, r, non_r_args) None fixn pos)
+          let fixn = lfp_iter prog hp0 args0 skip_hps fix_0 (base_fs@dep_fs) rec_fs in
+          let def = CF.formula_of_disjuncts fixn in
+          (hp0, CF.mk_hp_rel_def hp0 (args0, r, non_r_args) None def pos)
     | [] -> report_error no_pos "sac.compute gfp: sth wrong"
   in
   let _ = Debug.binfo_pprint ("    synthesize: " ^ (!CP.print_sv hp) ) no_pos in
@@ -2315,7 +2416,7 @@ let compute_lfp prog is_pre is pdefs=
   let pr2 = Cprinter.prtt_string_of_formula in
   let pr3 = pr_list_ln (pr_triple !CP.print_sv pr1 pr2) in
   let pr4 = Cprinter.string_of_hp_rel_def in
-  Debug.ho_1 "compute_lfp" pr3 pr4
+  Debug.no_1 "compute_lfp" pr3 pr4
       (fun _ -> compute_lfp_x prog is_pre is pdefs) pdefs
 
 (*=============**************************================*)

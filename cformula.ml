@@ -3905,6 +3905,60 @@ let is_HRel_f (f0:formula) =
   in
   helper f0
 
+let trans_heap_hf fn hf0=
+  let rec helper hf=
+    match hf with
+      | Star { h_formula_star_h1 = hf1;
+        h_formula_star_h2 = hf2;
+        h_formula_star_pos = pos} ->
+            Star {h_formula_star_h1 = helper hf1;
+            h_formula_star_h2 = helper hf2;
+            h_formula_star_pos = pos}
+      |  Conj { h_formula_conj_h1 = hf1;
+         h_formula_conj_h2 = hf2;
+         h_formula_conj_pos = pos} ->
+             Conj { h_formula_conj_h1 = helper hf1;
+             h_formula_conj_h2 = helper hf2;
+             h_formula_conj_pos = pos}
+      | Phase { h_formula_phase_rd = hf1;
+        h_formula_phase_rw = hf2;
+        h_formula_phase_pos = pos} ->
+            Phase { h_formula_phase_rd = helper hf1;
+            h_formula_phase_rw = helper hf2;
+            h_formula_phase_pos = pos}
+      | StarMinus { h_formula_starminus_h1 = hf1;
+        h_formula_starminus_h2 = hf2;
+        h_formula_starminus_pos = pos} ->
+            StarMinus { h_formula_starminus_h1 = helper hf1;
+            h_formula_starminus_h2 = helper hf2;
+            h_formula_starminus_pos = pos}
+      | ConjStar { h_formula_conjstar_h1 = hf1;
+        h_formula_conjstar_h2 = hf2;
+        h_formula_conjstar_pos =pos } ->
+            ConjStar { h_formula_conjstar_h1 = helper hf1;
+            h_formula_conjstar_h2 = helper hf2;
+            h_formula_conjstar_pos =pos }
+      | ConjConj { h_formula_conjconj_h1 = hf1;
+        h_formula_conjconj_h2 = hf2;
+        h_formula_conjconj_pos = pos } ->
+            ConjConj { h_formula_conjconj_h1 = helper hf1;
+            h_formula_conjconj_h2 = helper hf2;
+            h_formula_conjconj_pos = pos }
+      | _ -> fn hf
+  in
+  helper hf0
+
+let trans_heap fn f0=
+  let rec helper f=
+  match f with
+    | Base fb -> Base {fb with formula_base_heap = trans_heap_hf fn fb.formula_base_heap}
+    | Exists fe -> Exists {fe with formula_exists_heap = trans_heap_hf fn fe.formula_exists_heap}
+    | Or orf -> Or {orf with formula_or_f1 = helper orf.formula_or_f1;
+          formula_or_f2 = helper orf.formula_or_f2
+      }
+  in
+  helper f0
+
 let get_HRel hf=
   match hf with
     | HRel (hp, eargs, _ ) -> Some (hp, List.concat (List.map CP.afv eargs))

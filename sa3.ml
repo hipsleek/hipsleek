@@ -1499,7 +1499,7 @@ let infer_post_fix_x iprog prog proc_name callee_hps is_pre is need_preprocess d
 
 let infer_post_fix iprog prog proc_name callee_hps is_pre is need_preprocess detect_dang post_fix_hps=
   let pr1 = Cprinter.string_of_infer_state_short in
-  Debug.ho_2 "infer_post_fix" pr1 !CP.print_svl pr1
+  Debug.no_2 "infer_post_fix" pr1 !CP.print_svl pr1
       (fun _ _ -> infer_post_fix_x iprog prog proc_name callee_hps is_pre is need_preprocess detect_dang post_fix_hps)
       is post_fix_hps
 

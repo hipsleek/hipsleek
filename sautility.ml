@@ -2955,7 +2955,7 @@ let classify_post_fix_x constrs=
 let classify_post_fix constrs=
   let pr1 = pr_list_ln Cprinter.string_of_hprel_short in
   let pr2 = !CP.print_svl in
-  Debug.ho_1 " classify_post_fix" pr1 (pr_triple pr1 pr2 pr1)
+  Debug.no_1 " classify_post_fix" pr1 (pr_triple pr1 pr2 pr1)
       (fun _ -> classify_post_fix_x constrs) constrs
 
 let weaken_strengthen_special_constr_pre is_pre cs=
@@ -4502,7 +4502,7 @@ let get_sharing prog unk_hps r other_args args sh_ldns eqNulls eqPures hprels un
       (fun _ _ _ _ _ _ -> get_sharing_x prog unk_hps r other_args args sh_ldns eqNulls eqPures hprels unk_svl)
       unk_hps args sh_ldns eqNulls eqPures hprels
 
-let partittion_common_diff prog args unk_hps unk_svl f1 f2 pos=
+let partition_common_diff prog args unk_hps unk_svl f1 f2 pos=
   let fs = [f1;f2] in
   let r,non_r_args = find_root prog unk_hps args fs in
   let lldns = List.map (fun f -> (get_hdnodes f, f)) fs in
@@ -4515,7 +4515,7 @@ let partittion_common_diff prog args unk_hps unk_svl f1 f2 pos=
     (true, sharing_f,n_fs)
 
 let mkConjH_and_norm_x prog args unk_hps unk_svl f1 f2 pos=
-  let is_common, sharing_f, n_fs = partittion_common_diff prog args unk_hps unk_svl f1 f2 pos in
+  let is_common, sharing_f, n_fs = partition_common_diff prog args unk_hps unk_svl f1 f2 pos in
   if not is_common then (CF.mkConj_combine f1 f2 CF.Flow_combine pos) else
   (* let fs = [f1;f2] in *)
   (* let r,non_r_args = find_root args fs in *)
@@ -4555,9 +4555,37 @@ let mkConjH_and_norm prog args unk_hps unk_svl f1 f2 pos=
   Debug.no_2 "mkConjH_and_norm" pr1 pr1 pr1
       (fun _ _ -> mkConjH_and_norm_x prog args unk_hps unk_svl f1 f2 pos) f1 f2
 
+let simplify_disj_x prog args unk_hps unk_svl f1 f2 pos=
+  (*todo: revise partition_common_diff*)
+  let helper f1 f2=
+    let fs = [f1;f2] in
+    let r,non_r_args = find_root prog unk_hps args fs in
+    let lldns = List.map (fun f -> (get_hdnodes f, f)) fs in
+    let min,sh_ldns,eqNulls,eqPures,hprels = get_min_common prog args unk_hps lldns in
+    if min = 0  && eqNulls = [] && eqPures= [] && hprels=[] then
+      (false,CF.mkTrue (CF.mkTrueFlow()) pos ,fs)
+    else
+      let sharing_f, n_args , sh_ldns2,next_roots = get_sharing prog unk_hps r non_r_args args sh_ldns eqNulls eqPures hprels unk_svl in
+      let n_fs = List.map (norm_conjH_f prog args n_args next_roots sh_ldns2 eqNulls eqPures hprels) lldns in
+      (true, sharing_f,n_fs)
+  in
+  let is_common, sharing_f, n_fs = helper f1 f2 in
+  if not is_common then (false, [f1;f2]) else
+    if List.for_all (fun f -> is_empty_heap_f f) n_fs then
+      if List.exists is_empty_f n_fs then
+        (true, [sharing_f])
+      else (false, [f1;f2])
+    else (false, [f1;f2])
+
+let simplify_disj prog args unk_hps unk_svl f1 f2 pos=
+  let pr1 = Cprinter.prtt_string_of_formula in
+  let pr2 = pr_list_ln pr1 in
+  Debug.no_2 "simplify_disj" pr1 pr1 (pr_pair string_of_bool pr2)
+      (fun _ _ -> simplify_disj_x prog args unk_hps unk_svl f1 f2 pos) f1 f2
+
 let perform_conj_unify_post_x prog args unk_hps unk_svl fs pos=
   match fs with
-    | [f1;f2] -> let is_common, sharing_f, n_fs = partittion_common_diff prog args unk_hps unk_svl f1 f2 pos in
+    | [f1;f2] -> let is_common, sharing_f, n_fs = partition_common_diff prog args unk_hps unk_svl f1 f2 pos in
       if not is_common then fs else
         if List.for_all (fun f ->  is_empty_heap_f f) n_fs then
           let ps = List.map (fun f -> CF.get_pure f) n_fs in
@@ -4695,7 +4723,7 @@ let norm_formula_x prog args unk_hps unk_svl f1 f2 equivs=
   else if CF.isStrictConstTrue f1 then Some (f2, equivs)
   else if CF.isStrictConstTrue f2 then Some (f1, equivs)
   else
-    let is_common, sharing_f, n_fs = partittion_common_diff prog args unk_hps unk_svl f1 f2 no_pos in
+    let is_common, sharing_f, n_fs = partition_common_diff prog args unk_hps unk_svl f1 f2 no_pos in
     if not is_common then None else
       match n_fs with
         | [] -> None
