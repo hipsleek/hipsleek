@@ -412,7 +412,7 @@ and mkAndList b = (*print_string "ipure_list_gen\n";*) AndList b
 	
 and no_andl  = function
   | BForm _ | And _ | Not _ | Forall _ | Exists _  -> true
-  | Or (f1,f2,_,_) -> true(* no_andl f1 && no_andl f2 *)
+  | Or (f1,f2,_,_) -> (* true *)no_andl f1 && no_andl f2
   | AndList _ -> false 
 	
 and mkOr f1 f2 lbl pos = match f1 with

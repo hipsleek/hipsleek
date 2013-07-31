@@ -235,7 +235,7 @@ struct
     if id1=id2 then
       id1::rr
     else 
-      let (id1,id2) = if id1="" then (id2,id1) else (id1,id2) in
+      let (id1,id2) = if id1="" then (id1,id2) else (id2,id1) in
       id1::(aux [id2] rr) (* to fix *)
 
   let comb_norm i xs ys =
@@ -438,7 +438,7 @@ struct
     let rr = aux r1 r2 in
     if id1=id2 then (id1,rr)
     else 
-      let (id1,id2) = if id1="" then (id2,id1) else (id1,id2) in
+      let (id1,id2) = if id1="" then (id1,id2) else (id2,id1) in
       (id1, aux [(id2,LA_Both)] rr) 
       (* report_error no_pos "violate pre of Label_Only.Lab_list.comb_norm"  *)
 
