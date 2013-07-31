@@ -14,6 +14,7 @@ module F = Iformula
 module P = Ipure
 module Err = Error
 module CP = Cpure
+module LO = Label_only.LOne
 
 type typed_ident = (typ * ident)
 
@@ -68,7 +69,7 @@ and view_decl =
     (* view_frac_var : iperm; (\*LDK: frac perm ??? think about it later*\) *)
     mutable view_vars : ident list;
     view_pos : loc;
-    view_labels : Label_only.spec_label list * bool;
+    view_labels : LO.t list * bool;
     view_modes : mode list;
     mutable view_typed_vars : (typ * ident) list;
     view_kind : view_kind;

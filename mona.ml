@@ -336,9 +336,9 @@ let mkConstraint (constr: order_atom): CP.formula =
       | MO_EQ  (sv1,sv2)  -> CP.Var(sv1,no_pos), CP.Var(sv2,no_pos) in
    CP.BForm ((CP.Eq(l,r,no_pos),None), None)
 
-let mkConstrLabel (constr: order_atom) = 
-  let bf = mkConstraint constr in
-  (Label_only.empty_spec_label, bf) 
+(* let mkConstrLabel (constr: order_atom) =  *)
+(*   let bf = mkConstraint constr in *)
+(*   (LO.unlabelled, bf)  *)
 
 let is_intersect_non_empty lst1 lst2 = 
    not(Gen.is_empty (Gen.BList.intersect_eq CP.eq_spec_var lst1 lst2)) 

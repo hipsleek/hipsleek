@@ -26,7 +26,7 @@ module H = Hashtbl
 module TP = Tpdispatcher
 module Chk = Checks
 module PRED = Predicate
-module LO = Label_only.Lab_List
+module LO = Label_only.LOne
 
 
 type trans_exp_type =
@@ -569,7 +569,7 @@ let norm_andlist_br ls =
     | [] -> [(l,f)]
     | (l2,f2)::rest -> 
           if LO.is_equal l l2 
-          then aux (LO.comb_norm l l2) (CP.mkAnd f f2 no_pos) rest
+          then aux (LO.comb_norm 1 l l2) (CP.mkAnd f f2 no_pos) rest
             else (l,f)::(aux l2 f2 rest)
   in match ls with
     | [] -> ls
@@ -4682,7 +4682,7 @@ and linearize_formula (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_var_
 
 and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_var_type_list) 
                         : (spec_var_type_list * CF.formula * (Globals.ident * Globals.primed) list) =
-  let rec match_exp (hargs : (IP.exp * Label_only.spec_label) list) pos : (CP.spec_var list) =
+  let rec match_exp (hargs : (IP.exp * LO.t) list) pos : (CP.spec_var list) =
     match hargs with
     | (e, _) :: rest ->
         let e_hvars = match e with
@@ -4840,7 +4840,7 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
               let field_offset = I.compute_field_seq_offset prog.I.prog_data_decls rootptr_type_name field_access_seq in
               let num_ptrs = I.get_typ_size prog.I.prog_data_decls rootptr_type in
               (* An Hoa : The rest are copied from the original code with modification to account for the holes *)
-              let labels = List.map (fun _ -> Label_only.empty_spec_label) exps in
+              let labels = List.map (fun _ -> LO.unlabelled) exps in
               let hvars = match_exp (List.combine exps labels) pos in
               (* [Internal] Create a list [x,x+1,...,x+n-1] *)
               let rec first_naturals n x = 
@@ -4870,7 +4870,7 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
                 | None -> None
                 | Some f -> 
                     let perms = [f] in
-                    let permlabels = List.map (fun _ -> Label_only.empty_spec_label) perms in
+                    let permlabels = List.map (fun _ -> LO.unlabelled) perms in
                     let permvars = match_exp (List.combine perms permlabels) pos in
                     Some (List.nth permvars 0) 
               ) in
@@ -4909,7 +4909,7 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
                   | None -> None
                   | Some f -> 
                       let perms = f :: [] in
-                      let permlabels = List.map (fun _ -> Label_only.empty_spec_label) perms in
+                      let permlabels = List.map (fun _ -> LO.unlabelled) perms in
                       let permvars = match_exp (List.combine perms permlabels) pos in
                       Some (List.nth permvars 0)
                 ) in
@@ -4934,7 +4934,7 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
                 (new_h, CF.TypeTrue, [], tl)
               )
               with Not_found ->
-                let labels = List.map (fun _ -> Label_only.empty_spec_label) exps in
+                let labels = List.map (fun _ -> LO.unlabelled) exps in
                 let hvars = match_exp (List.combine exps labels) pos in
                 let new_v = CP.SpecVar (Named c, v, p) in
                 (* An Hoa : find the holes here! *)
@@ -4951,7 +4951,7 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
                   | None -> None
                   | Some f -> 
                       let perms = f :: [] in
-                      let permlabels = List.map (fun _ -> Label_only.empty_spec_label) perms in
+                      let permlabels = List.map (fun _ -> LO.unlabelled) perms in
                       let permvars = match_exp (List.combine perms permlabels) pos in
                       Some (List.nth permvars 0) 
                 in
@@ -5363,7 +5363,7 @@ and case_normalize_renamed_formula_x prog (avail_vars:(ident*primed) list) posib
       IF.formula* ((ident*primed)list) * ((ident*primed)list) = 
   (*existential wrapping and other magic tricks, avail_vars -> program variables, function arguments...*)
   (*returns the new formula, used variables and vars to be explicitly instantiated*)
-  let rec match_exp (used_names : (ident*primed) list) (hargs : ((IP.exp * bool) * Label_only.spec_label) list) pos :
+  let rec match_exp (used_names : (ident*primed) list) (hargs : ((IP.exp * bool) * LO.t) list) pos :
         ((ident*primed) list) * ((ident*primed) list) * ((ident*primed) list) * IP.formula = 
     match hargs with
       | ((e,rel_flag), label) :: rest ->
@@ -5383,7 +5383,7 @@ and case_normalize_renamed_formula_x prog (avail_vars:(ident*primed) list) posib
                             in
                         (* let _ = print_endline ("l2: old=" ^ (fst v) ^ " new=" ^ (fst fresh_v)) in *)
                             let link_f = IP.mkEqExp (IP.Var (fresh_v,pos_e)) e pos_e in
-                            (used_names, [ fresh_v ], [ fresh_v ], if Lab_List.is_unlabelled label then link_f else IP.mkAndList [label, link_f])
+                            (used_names, [ fresh_v ], [ fresh_v ], if LO.is_unlabelled label then link_f else IP.mkAndList [label, link_f])
                       else
                         if rel_flag then
                           ((v :: used_names), [ v ], [],IP.mkTrue pos_e)
@@ -5491,7 +5491,7 @@ and case_normalize_renamed_formula_x prog (avail_vars:(ident*primed) list) posib
               in
               (flag,(fst vdef.I.view_labels),vdef.I.view_typed_vars)
             with
-              | Not_found -> (false,List.map (fun _ -> Label_only.empty_spec_label) b.IF.h_formula_heap_arguments,[])
+              | Not_found -> (false,List.map (fun _ -> LO.unlabelled) b.IF.h_formula_heap_arguments,[])
             in
             let _ = if (List.length b.IF.h_formula_heap_arguments) != (List.length labels) then
                   report_error pos ("predicate "^b.IF.h_formula_heap_name^" does not have the correct number of arguments")
@@ -5503,7 +5503,7 @@ and case_normalize_renamed_formula_x prog (avail_vars:(ident*primed) list) posib
             let perm_labels,perm_var = 
               match b.IF.h_formula_heap_perm with
                 | None -> [],[]
-                | Some f -> [Label_only.empty_spec_label], [f]
+                | Some f -> [LO.unlabelled], [f]
             in
             let args = b.IF.h_formula_heap_arguments in
             Debug.tinfo_hprint (add_str "ty_vars" (pr_list (pr_pair string_of_typ pr_id))) tp_vars pos;
@@ -7710,7 +7710,7 @@ let transform_hp_rels_to_iviews (hp_rels:(ident* CF.hp_rel_def) list):(ident*ide
                                          I.view_pos = no_pos;
 		I.view_data_name = "";
 		I.view_vars = vars;
-		I.view_labels = List.map (fun _ -> empty_spec_label) vars, false;
+		I.view_labels = List.map (fun _ -> LO.unlabelled) vars, false;
 		I.view_modes = List.map (fun _ -> ModeOut) vars ;
 		I.view_typed_vars =  tvars;
                 I.view_kind = I.View_NORM;

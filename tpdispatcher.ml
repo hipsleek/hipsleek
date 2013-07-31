@@ -16,7 +16,8 @@ open Label_aggr
 module CP = Cpure
 module MCP = Mcpure
 
-module LO = Label_only.Lab_List
+(* module LO = Label_only.Lab_List *)
+module LO = Label_only.LOne
 
 let test_db = false
 

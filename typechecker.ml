@@ -10,7 +10,7 @@ open Solver
 open Cast
 open Gen.Basic
 open Perm
-open Label_only
+(* open Label_only *)
 open Label
 module CF = Cformula
 module CP = Cpure
@@ -23,9 +23,9 @@ module AS = Astsimp
 module CEQ = Checkeq
 module M = Lexer.Make(Token.Token)
 module H = Hashtbl
+module LO2 = Label_only.Lab2_List
 
-
-let store_label = new store Lab2_List.unlabelled Lab2_List.string_of
+let store_label = new store LO2.unlabelled LO2.string_of
 let save_flags = ref (fun ()->()) ;;
 let restore_flags = ref (fun ()->());;
 let parse_flags = ref (fun (s:(string*(flags option)) list)-> ());;
@@ -2531,7 +2531,7 @@ and check_proc iprog (prog : prog_decl) (proc : proc_decl) cout_option (mutual_g
                   (* in *)
 		  let nox = CF.formula_of_pure_N  pf proc.proc_loc in 
 		  let init_form = nox in
-		  let init_ctx1 = CF.empty_ctx (CF.mkTrueFlow ()) Lab2_List.unlabelled  proc.proc_loc in
+		  let init_ctx1 = CF.empty_ctx (CF.mkTrueFlow ()) LO2.unlabelled  proc.proc_loc in
                   (*add default full permission = 1.0 to ante; 
                     need to add type of full perm to stab
                   *)

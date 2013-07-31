@@ -3,6 +3,9 @@ open Globals
 (* module CF = Cformula *)
 (* module CP = Cpure *)
 
+type label_ann = LA_Both | LA_Sat | LA_Imply
+type lst_pair = (string * label_ann) list
+
 module type LABEL_TYPE =
     sig
       type a
@@ -13,10 +16,11 @@ module type LABEL_TYPE =
       val is_compatible : t -> t -> bool
       val is_compatible_rec : t -> t -> bool
       (* val comb_identical : t -> t -> t (\* combine two identical labels *\) *)
-      val comb_norm : t -> t -> t (* combine two normalised labels *)
+      val comb_norm : int -> t -> t -> t (* combine two normalised labels *)
       val string_of : t -> string
       val compare : t -> t -> int
       val singleton : a -> t
+      val convert : string -> lst_pair -> t
     end;;
 
 module Lab_List  =
@@ -181,6 +185,8 @@ struct
     let r = List.sort (String.compare) r in
     remove_dups id r
 
+  let convert i lst = norm (i::List.map fst lst)
+
   (* assumes that xs and ys are normalized *)
   (* returns 0 if two labels are considered identical *)
   let compare xs ys =
@@ -225,9 +231,14 @@ struct
             else y::(aux xs ys1) in
     let (id1,r1) = get_id xs in
     let (id2,r2) = get_id ys in
+    let rr = aux r1 r2 in
     if id1=id2 then
-      id1::(aux r1 r2)
-    else report_error no_pos "violate pre of Label_Only.Lab_list.comb_norm" 
+      id1::rr
+    else id1::rr (* to fix *)
+      (* report_error no_pos "violate pre of Label_Only.Lab_list.comb_norm"  *)
+
+  let comb_norm i xs ys =
+    Debug.ho_2_num i "comb_norm" string_of string_of string_of comb_norm xs ys 
 
   (* pre : both xs ys must be of the same id *)
   (* let merge xs ys =  *)
@@ -251,26 +262,25 @@ struct
 end;;
 
 (* this labelling is for outermost disjuncts only *)
-type label_ann = LA_Both | LA_Sat | LA_Imply
 
 module Lab_LAnn  =
 struct
   (* type a = string *)
   type a = string
-  type t = (string * ((string * label_ann) list)) 
+  type t = (string * lst_pair)
   let unlabelled = ("",[])
   (* let is_top_label l = List.for_all (fun c-> c="") l *)
   let is_common (id,ls) = (id="") 
   let is_unlabelled l = is_common l
 
-  let string_of x = 
-    let pr = pr_list (fun (i,l) ->
-        i^(match l with 
+  let string_of (id,lst) = 
+    let pr = pr_list_no_brk (fun (i,l) ->
+        (pr_string i)^(match l with 
           | LA_Sat -> "@S"
           | LA_Imply -> "@I"
           | LA_Both -> ""
         )) in
-    pr_pair (pr_id pr) x
+    (pr_string id)^(if lst==[] then "" else ","^(pr lst))
 
   let singleton s = (s,[])
 
@@ -358,17 +368,20 @@ struct
 
   (* assumes that xs and ys are normalized *)
   (* returns true if they overlap in some ways *)
-  let is_compatible_part_sat xs ys =
+  let is_part_compatible_sat xs ys =
     let (id1,r1) = xs in
     let (id2,r2) = ys in
     if id1="" || id1=id2 then true
     else overlap_sat id2 r1
 
-  let is_compatible_part_imply xs ys =
+  let is_part_compatible_imply xs ys =
     let (id1,r1) = xs in
     let (id2,r2) = ys in
     if id1="" || id1=id2 then true
     else overlap_imply id2 r1
+
+  let is_compatible xs ys =
+    is_part_compatible_sat xs ys
 
   (* let is_part_compatible xs ys = *)
   (*   is_compatible xs ys *)
@@ -379,7 +392,7 @@ struct
   (*   let pr = pr_list pr_id  in *)
   (*   Debug.no_2 "is_part_compatible" pr pr string_of_bool is_part_compatible xs ys 	 *)
 	
-  let is_compatible_rec = is_compatible_part_sat
+  let is_compatible_rec = is_part_compatible_sat
 
   (* assumes that xs is sorted *)
   let remove_dups id r =
@@ -396,6 +409,27 @@ struct
     let r = List.sort (fun (i,_) (j,_) -> String.compare i j) r in
     remove_dups id r
 
+  let convert i lst = norm (i,lst)
+
+  (* pre : two labels must have the same id and sorted*)
+  let comb_norm xs ys = 
+    let rec aux xs ys = match xs,ys with
+      | [],_ -> ys
+      | _,[] ->  xs
+      | (((x,_) as x1)::xs1),((y,_) as y1)::ys1 ->
+            let v = String.compare x y in
+            if v==0 then x1::(aux xs1 ys1)
+            else if v<0 then x1::(aux xs1 ys)
+            else y1::(aux xs ys1) in
+    let (id1,r1) = xs in
+    let (id2,r2) = ys in
+    let rr = aux r1 r2 in
+    if id1=id2 then (id1,rr)
+    else (id1, rr) (* id2 dropped here *)
+      (* report_error no_pos "violate pre of Label_Only.Lab_list.comb_norm"  *)
+
+  let comb_norm i xs ys =
+    Debug.ho_2_num i "comb_norm" string_of string_of string_of comb_norm xs ys 
 
   (* assumes that xs and ys are normalized *)
   (* returns 0 if two labels are considered identical *)
@@ -466,12 +500,17 @@ struct
 
   let norm (opt,t) = (opt,Lab_List.norm t)
 
+  let convert i s = (None,Lab_List.norm (i::(List.map fst s)))
+
   (* assumes that xs and ys are normalized *)
   (* let comb_identical(opt1,xs) (opt2,ys) = *)
   (*   (opt1,Lab_List.comb_identical xs ys) *)
 
   let comb_norm (opt1,xs) (opt2,ys) =
-    (opt1,Lab_List.comb_norm xs ys)
+    (opt1,Lab_List.comb_norm 4 xs ys)
+
+  let comb_norm i xs ys =
+    Debug.ho_2_num i "comb_norm" string_of string_of string_of comb_norm xs ys 
 
   (* assumes that xs and ys are normalized *)
   let compare (opt1,xs) (opt2,ys) =
@@ -487,9 +526,15 @@ end;;
 (*       val string_of : e -> string *)
 (*     end;; *)
 
-type spec_label =  Lab_List.t 
-let empty_spec_label = Lab_List.unlabelled
+(* type spec_label =  Lab_List.t  *)
+(* let empty_spec_label = Lab_List.unlabelled *)
+
+(* type spec_label =  Lab_LAnn.t (\* t *\) *)
+(* let empty_spec_label = Lab_LAnn.unlabelled (\* unlabelled *\) *)
 
 (* this spec label has default integer *)
 type spec_label_def =  Lab2_List.t 
 let empty_spec_label_def = Lab2_List.unlabelled
+
+(* module LOne = Lab_LAnn *)
+module LOne = Lab_List

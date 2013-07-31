@@ -12,7 +12,7 @@ open Gen.Basic
 (* open Label_only *)
 open Printf
 
-module LO = Label_only.Lab_List
+module LO = Label_only.LOne
 module LO2 = Label_only.Lab2_List
 module P = Cpure
 module MP = Mcpure

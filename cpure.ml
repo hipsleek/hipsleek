@@ -10,7 +10,7 @@ open Globals
 open Gen.Basic
 (* open Exc.ETABLE_NFLOW *)
 open Exc.GTable
-module LO=Label_only.Lab_List
+module LO=Label_only.LOne
 open Label
 
 (* spec var *)
@@ -109,7 +109,7 @@ type xpure_view = {
 type formula =
   | BForm of (b_formula * (formula_label option))
   | And of (formula * formula * loc)
-  | AndList of (Label_only.spec_label * formula) list
+  | AndList of (LO.t * formula) list
   | Or of (formula * formula * (formula_label option) * loc)
   | Not of (formula * (formula_label option) * loc)
   | Forall of (spec_var * formula * (formula_label option) * loc)
@@ -1898,7 +1898,7 @@ and mkOr_x f1 f2 lbl pos=
   else (*match f1, f2 with 
 	 | AndList l1, AndList l2 -> AndList (or_branches l1 l2 lbl pos)
 	 | AndList l, f
-	 | f, AndList l -> AndList (or_branches l [(empty_spec_label,f)] lbl pos)
+	 | f, AndList l -> AndList (or_branches l [(LO.unlabelled,f)] lbl pos)
 	 | _ -> *)Or (f1, f2, lbl ,pos)
 
 and mkOr f1 f2 lbl pos = Debug.no_2 "pure_mkOr" !print_formula !print_formula !print_formula (fun _ _ -> mkOr_x f1 f2 lbl pos) f1 f2
@@ -2023,7 +2023,7 @@ and mkExists_with_simpl_x simpl (vs : spec_var list) (f : formula) lbl pos =
 and mkExists_x (vs : spec_var list) (f : formula) lbel pos = match f with
   | AndList b ->
 	let pusher v lf lrest= 	
-	  let rl,vl,rf = List.fold_left (fun (al,avs,af) (cl,cvs,cf)-> (LO.comb_norm al cl,avs@cvs, mkAnd af cf pos)) (List.hd lf) (List.tl lf) in
+	  let rl,vl,rf = List.fold_left (fun (al,avs,af) (cl,cvs,cf)-> (LO.comb_norm 2 al cl,avs@cvs, mkAnd af cf pos)) (List.hd lf) (List.tl lf) in
 	  (rl,vl, Exists (v,rf,lbel,pos))::lrest in
 	let lst = List.map (fun (l,c)-> (l,fv c,c)) b in
 	let lst1 = List.fold_left (fun lbl v-> 

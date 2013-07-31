@@ -29,7 +29,8 @@ module MCP = Mcpure
 module Err = Error
 module TP = Tpdispatcher
 
-module LO = Label_only.Lab_List
+(* module LO = Label_only.Lab_List *)
+module LO = Label_only.LOne
 
 
 (** An Hoa : switch to do unfolding on duplicated pointers **)
@@ -3193,7 +3194,7 @@ and elim_unsat_all_x prog (f : formula): formula = match f with
 and elim_unsat_all_debug prog (f : formula): formula = 
   Debug.no_2 "elim_unsat " (fun c-> "?") (Cprinter.string_of_formula) (Cprinter.string_of_formula) elim_unsat_all prog f
 
-and get_eqns_free (st : ((CP.spec_var * CP.spec_var) * Label_only.spec_label) list) (evars : CP.spec_var list) (expl_inst : CP.spec_var list) 
+and get_eqns_free (st : ((CP.spec_var * CP.spec_var) * LO.t) list) (evars : CP.spec_var list) (expl_inst : CP.spec_var list) 
       (struc_expl_inst : CP.spec_var list) pos : CP.formula*CP.formula* (CP.spec_var * CP.spec_var) list = 
   let pr_svl = Cprinter.string_of_spec_var_list in
   let pr_p =  Cprinter.string_of_pure_formula in
@@ -3204,7 +3205,7 @@ and get_eqns_free (st : ((CP.spec_var * CP.spec_var) * Label_only.spec_label) li
 
 (* extracts those involve free vars from a set of equations  - here free means that it is not existential and it is not meant for explicit instantiation *)
 (*NOTE: should (fr,t) be added for (CP.mem fr expl_inst)*)
-and get_eqns_free_x (st : ((CP.spec_var * CP.spec_var) * Label_only.spec_label) list) (evars : CP.spec_var list) (expl_inst : CP.spec_var list) 
+and get_eqns_free_x (st : ((CP.spec_var * CP.spec_var) * LO.t) list) (evars : CP.spec_var list) (expl_inst : CP.spec_var list) 
       (struc_expl_inst : CP.spec_var list) pos : CP.formula*CP.formula* (CP.spec_var * CP.spec_var) list = 
   match st with
     | ((fr, t), br_label) :: rest ->
@@ -3232,9 +3233,9 @@ and get_eqns_free_x (st : ((CP.spec_var * CP.spec_var) * Label_only.spec_label) 
   returns  [(tvar->ivar)] [fvar->tvar]
 *)
 
-and subs_to_inst_vars (st : ((CP.spec_var * CP.spec_var) * Label_only.spec_label) list) (ivars : CP.spec_var list) 
+and subs_to_inst_vars (st : ((CP.spec_var * CP.spec_var) * LO.t) list) (ivars : CP.spec_var list) 
       (impl_vars: CP.spec_var list) pos 
-      : (( CP.spec_var list * CP.spec_var list * (CP.spec_var * CP.spec_var) list) *   ((CP.spec_var * CP.spec_var)* Label_only.spec_label) list) =
+      : (( CP.spec_var list * CP.spec_var list * (CP.spec_var * CP.spec_var) list) *   ((CP.spec_var * CP.spec_var)* LO.t) list) =
   let pr_svl = Cprinter.string_of_spec_var_list in
   let pr_sv = Cprinter.string_of_spec_var in
   let pr_subs xs = pr_list (pr_pair pr_sv pr_sv) xs in
@@ -3243,9 +3244,9 @@ and subs_to_inst_vars (st : ((CP.spec_var * CP.spec_var) * Label_only.spec_label
   let pr_r ((l1,l2,s1),s2)  = "("^(pr_svl l1)^","^(pr_svl l2)^","^(pr_subs s1)^","^(pr2 s2)^")" in
   Debug.no_3 "subs_to_inst_vars" pr2 pr_svl pr_svl pr_r (fun _ _ _-> subs_to_inst_vars_x st ivars impl_vars pos) st ivars impl_vars
 
-and subs_to_inst_vars_x (st : ((CP.spec_var * CP.spec_var) * Label_only.spec_label) list) (ivars : CP.spec_var list) 
+and subs_to_inst_vars_x (st : ((CP.spec_var * CP.spec_var) * LO.t) list) (ivars : CP.spec_var list) 
       (impl_vars: CP.spec_var list) pos 
-      : (( CP.spec_var list * CP.spec_var list * (CP.spec_var * CP.spec_var) list) *   ((CP.spec_var * CP.spec_var)* Label_only.spec_label) list) =
+      : (( CP.spec_var list * CP.spec_var list * (CP.spec_var * CP.spec_var) list) *   ((CP.spec_var * CP.spec_var)* LO.t) list) =
   let rec helper st nsubs iv impl_v = match st with
     | ((rv, lv),_) :: rest ->
           let f = helper rest ((lv,rv)::nsubs) (lv::iv) in
@@ -8480,7 +8481,7 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
             let label_list = try 
                                  let vdef = Cast.look_up_view_def_raw prog.prog_view_decls l_node_name in
                                  vdef.Cast.view_labels
-                with Not_found -> List.map (fun _ -> Label_only.empty_spec_label) l_args in     
+                with Not_found -> List.map (fun _ -> LO.unlabelled) l_args in     
               (*LDK: using fractional permission introduces 1 more spec var We also need to add 1 more label*)
               (*renamed and instantiate perm var*)
               let evars = estate.es_evars in
@@ -8492,9 +8493,9 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
               (*  let rho_0, label_list = 
                   if (Perm.allow_perm ()) then
                   match l_perm, r_perm with
-                  | Some f1, Some f2 -> (List.combine (f2::r_args) (f1::l_args), (Label_only.empty_spec_label::label_list))
-                  | None, Some f2 ->    (List.combine (f2::r_args) (full_perm_var::l_args), (Label_only.empty_spec_label::label_list))
-                  | Some f1, None ->	  (List.combine (full_perm_var::r_args) (f1::l_args), (Label_only.empty_spec_label::label_list))
+                  | Some f1, Some f2 -> (List.combine (f2::r_args) (f1::l_args), (LO.unlabelled::label_list))
+                  | None, Some f2 ->    (List.combine (f2::r_args) (full_perm_var::l_args), (LO.unlabelled::label_list))
+                  | Some f1, None ->	  (List.combine (full_perm_var::r_args) (f1::l_args), (LO.unlabelled::label_list))
                   | _ -> 				  (List.combine r_args l_args, label_list)
                   else   (List.combine r_args l_args, label_list)
                   in*)

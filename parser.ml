@@ -16,7 +16,7 @@ module P = Ipure
 module E1 = Error
 module I = Iast
 module Ts = Tree_shares.Ts
-module LO = Label_only.Lab_LAnn
+module LO = Label_only.LOne
 (* module LO = Label_only.Lab_List *)
 module Lbl = Label_only
 
@@ -1030,12 +1030,12 @@ string_w_ann_list: [[`COMMA; lbl_lst = LIST0 one_string_w_ann SEP `COMMA -> lbl_
 opt_string_w_ann_list: [[lbl_lst = OPT string_w_ann_list -> un_option lbl_lst [] ]];
 
 (* one_branch : [[ lbl = LIST1 one_string SEP `COMMA ; `COLON; pc=pure_constr -> (LO.norm lbl,pc)]]; *)
-one_branch : [[ lbl = one_string; lblA = opt_string_w_ann_list ; `COLON; pc=pure_constr -> (LO.norm (lbl,lblA),pc)]];
+one_branch : [[ lbl = one_string; lblA = opt_string_w_ann_list ; `COLON; pc=pure_constr -> (LO.convert lbl lblA,pc)]];
 
-opt_branch:[[t=OPT branch -> un_option t Lbl.empty_spec_label]];
+opt_branch:[[t=OPT branch -> un_option t LO.unlabelled]];
 
 branch: [[ `STRING (_,id);`COLON -> 
-    if !Globals.remove_label_flag then Lbl.empty_spec_label
+    if !Globals.remove_label_flag then  LO.unlabelled
     else LO.singleton id ]];
 
 view_header:

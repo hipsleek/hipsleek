@@ -6,11 +6,12 @@
 
 open Globals
 open Gen.Basic
-open Label_only
+(* open Label_only *)
 open Label
 include Ipure_D
 
-module LO = Label_only.Lab_List
+(* module LO = Label_only.Lab_List *)
+(* module LO = Label_only.Lab_LAnn *)
 
 (* type xpure_view = { *)
 (*     xpure_view_node : ident option; *)

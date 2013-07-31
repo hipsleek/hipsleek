@@ -5,7 +5,7 @@ created by L2
 open Globals
 open Gen
 open Exc.GTable
-open Label_only
+(* open Label_only *)
 
 module C = Cast
 module Err = Error
@@ -17,6 +17,7 @@ module CF = Cformula
 module CP = Cpure
 module MCP = Mcpure
 module TI = Typeinfer
+module LO = Label_only.LOne
 
 let sv_name = CP.name_of_spec_var
 
@@ -78,7 +79,7 @@ List.fold_left (fun acc (rel_cat, hf,_,f_body)->
               I.view_pos = no_pos;
 	      I.view_data_name = data_name;
 	      I.view_vars = vars;
-	      I.view_labels = List.map (fun _ -> empty_spec_label) vars, false;
+	      I.view_labels = List.map (fun _ -> LO.unlabelled) vars, false;
 	      I.view_modes = List.map (fun _ -> ModeOut) vars ;
 	      I.view_typed_vars =  tvars;
               I.view_kind = I.View_NORM;

@@ -5,11 +5,12 @@ open Iast
 open Globals
 open Lexing
 open Gen.Basic
-open Label_only
+(* open Label_only *)
 
 module F = Iformula
 module P = Ipure
-module LO=Label_only.Lab_List
+(* module LO=Label_only.Lab_List *)
+module LO=Label_only.LOne
 module LO2=Label_only.Lab2_List
 
 (* function to enclose a string s into parenthesis *)

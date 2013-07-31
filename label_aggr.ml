@@ -5,7 +5,8 @@ open GlobProver
 open Mcpure
 open Cpure
 
-module LO = Label_only.Lab_List
+(* module LO = Label_only.Lab_List *)
+module LO = Label_only.LOne
 (* open Mcpure_D *)
 (* open Log *)
 (* open Printf *)
