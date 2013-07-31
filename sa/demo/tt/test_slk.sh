@@ -13,6 +13,7 @@ function two
 {
    one $1 $2 >& tests/slk/$1.out
 }
+mkdir -p tests/slk
 two app5-bug-1.slk
 two app.slk
 two assert-1-bug1.slk

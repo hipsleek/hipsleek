@@ -232,7 +232,7 @@ let error_on_dups f l p = if (Gen.BList.check_dups_eq f l) then report_error p (
 let label_formula f ofl = (match f with 
           | P.BForm (b,_) -> P.BForm (b,ofl)
           | P.And _ -> f
-		  | P.AndList b -> f
+	  | P.AndList b -> f
           | P.Or  (b1,b2,_,l)  -> P.Or(b1,b2,ofl,l)
           | P.Not (b1,_,l)     -> P.Not(b1,ofl,l)
           | P.Forall (q,b1,_,l)-> P.Forall(q,b1,ofl,l)
@@ -278,12 +278,12 @@ let apply_pure_form2 fct form1 form2 = match (form1,form2) with
       let bool_var1 = (
         match f1 with
         | P.Var (v,_) -> P.BForm (((P.mkBVar v (get_pos 1)), None), None )
-        | P.Ann_Exp (P.Var (v, _), Bool) -> P.BForm (((P.mkBVar v (get_pos 1)), None), None)
+        | P.Ann_Exp (P.Var (v, _), Bool, _) -> P.BForm (((P.mkBVar v (get_pos 1)), None), None)
         | _ -> report_error (get_pos 1) "with 2 expected pure_form in f1, found cexp") in
       let bool_var2 = (
         match f2 with
         | P.Var (v,_) -> P.BForm (((P.mkBVar v (get_pos 1)), None), None )
-        | P.Ann_Exp (P.Var (v, _), Bool) -> P.BForm (((P.mkBVar v (get_pos 1)), None), None)
+        | P.Ann_Exp (P.Var (v, _), Bool, _) -> P.BForm (((P.mkBVar v (get_pos 1)), None), None)
         | _ -> report_error (get_pos 1) "with 2 expected pure_form in f2, found cexp") in
       Pure_f(fct bool_var1 bool_var2)
     )
@@ -900,7 +900,8 @@ b_trans : [[`OPAREN; fs=integer_literal; `COMMA; ts= integer_literal; `COMMA ;`O
  
 view_decl: 
   [[ vh= view_header; `EQEQ; vb=view_body; oi= opt_inv; li= opt_inv_lock; mpb = opt_mem_perm_set
-      -> { vh with view_formula = (fst vb);
+          (* let f = (fst vb) in *)
+          -> { vh with view_formula = (fst vb);
           view_invariant = oi; 
           view_mem = mpb;
           view_is_prim = false; 
@@ -1005,18 +1006,25 @@ ann_heap_list: [[ b=LIST0 ann_heap -> b ]];
 
 opt_branches:[[t=OPT branches -> un_option t (P.mkTrue no_pos)]];
 
-branches : [[`AND; `OSQUARE; b= LIST1 one_branch SEP `SEMICOLON ; `CSQUARE -> P.mkAndList b ]];
+branches : [[`AND; `OSQUARE; b= LIST1 one_branch SEP `SEMICOLON ; `CSQUARE -> P.mkAndList_opt b ]];
 
-one_branch : [[ `STRING (_,id); `COLON; pc=pure_constr -> (Lab_List.singleton id,pc)]];
+one_branch_single : [[ `STRING (_,id); `COLON; pc=pure_constr -> (Lab_List.singleton id,pc)]];
+
+one_string: [[`STRING (_,id)-> id]];
+
+one_branch : [[ lbl=LIST1 one_string SEP `COMMA ; `COLON; pc=pure_constr -> (Lab_List.norm lbl,pc)]];
 
 opt_branch:[[t=OPT branch -> un_option t empty_spec_label]];
 
-branch: [[ `STRING (_,id);`COLON -> Lab_List.singleton id ]];
+branch: [[ `STRING (_,id);`COLON -> 
+    if !Globals.remove_label_flag then empty_spec_label
+    else Lab_List.singleton id ]];
 
 view_header:
   [[ `IDENTIFIER vn; `LT; l= opt_ann_cid_list; `GT ->
       let cids, anns = List.split l in
       let cids_t, br_labels = List.split cids in
+	  let has_labels = List.exists (fun c-> not (Label_only.Lab_List.is_unlabelled c)) br_labels in
       (* DD.info_hprint (add_str "parser-view_header(cids_t)" (pr_list (pr_pair string_of_typ pr_id))) cids_t no_pos; *)
       let _, cids = List.split cids_t in
       (* if List.exists (fun x -> match snd x with | Primed -> true | Unprimed -> false) cids then *)
@@ -1029,7 +1037,7 @@ view_header:
           view_data_name = "";
           view_vars = (* List.map fst *) cids;
           (* view_frac_var = empty_iperm; *)
-          view_labels = br_labels;
+          view_labels = br_labels,has_labels;
           view_modes = modes;
           view_typed_vars = cids_t;
           view_pt_by_self  = [];
@@ -1048,6 +1056,7 @@ view_header_ext:
   [[ `IDENTIFIER vn;`OSQUARE;sl= id_list;`CSQUARE; `LT; l= opt_ann_cid_list; `GT ->
       let cids, anns = List.split l in
       let cids_t, br_labels = List.split cids in
+	  let has_labels = List.exists (fun c-> not (Label_only.Lab_List.is_unlabelled c)) br_labels in
       (* DD.info_hprint (add_str "parser-view_header(cids_t)" (pr_list (pr_pair string_of_typ pr_id))) cids_t no_pos; *)
       let _, cids = List.split cids_t in
       (* if List.exists (fun x -> match snd x with | Primed -> true | Unprimed -> false) cids then *)
@@ -1060,7 +1069,7 @@ view_header_ext:
           view_data_name = "";
           view_vars = (* List.map fst *) cids;
           (* view_frac_var = empty_iperm; *)
-          view_labels = br_labels;
+          view_labels = br_labels,has_labels;
           view_modes = modes;
           view_typed_vars = cids_t;
           view_pt_by_self  = [];
@@ -1142,7 +1151,7 @@ cid_typ:
         (ut,id)
    ]];
 
-ann_cid:[[ ob=opt_branch; c = cid_typ; al=opt_ann_list ->((c, ob), al)]];
+ann_cid:[[ ob= opt_branch; c = cid_typ; al=opt_ann_list ->((c, ob), al)]];
 
 
 opt_ann_list: [[t=LIST0 ann -> t]];
@@ -1436,7 +1445,7 @@ pure_constr:
        match t with
        | Pure_f f -> f
        | Pure_c (P.Var (v,_)) ->  P.BForm ((P.mkBVar v (get_pos_camlp4 _loc 1), None), None)
-       | Pure_c (P.Ann_Exp (P.Var (v,_), Bool)) ->  P.BForm ((P.mkBVar v (get_pos_camlp4 _loc 1), None), None)
+       | Pure_c (P.Ann_Exp (P.Var (v,_), Bool, _)) ->  P.BForm ((P.mkBVar v (get_pos_camlp4 _loc 1), None), None)
        | _ -> report_error (get_pos_camlp4 _loc 1) "expected pure_constr, found cexp"
   ]];
 
@@ -1472,6 +1481,9 @@ cexp_w:
     [ ofl= pure_label ; spc=SELF -> apply_pure_form1 (fun c-> label_formula c ofl) spc]
   | "slicing_label"
     [ sl=slicing_label; f=SELF -> set_slicing_utils_pure_double f sl ]
+  | "AndList"
+	[`ANDLIST;`OPAREN;t= LIST1 one_branch SEP `SEMICOLON ;`CPAREN ->
+            Pure_f(P.mkAndList_opt t)(*to be used only for sleek testing*)]
   | "pure_or" RIGHTA
     [ pc1=SELF; `OR; pc2=SELF ->apply_pure_form2 (fun c1 c2-> P.mkOr c1 c2 None (get_pos_camlp4 _loc 2)) pc1 pc2]
   | "pure_and" RIGHTA
@@ -1505,12 +1517,14 @@ cexp_w:
     | lc=SELF; `IN_T;   cl=SELF ->
         let cid, pos = match lc with
           | Pure_c (P.Var (t, l)) -> (t, l)
+          | Pure_c (P.Null l) -> ((null_name, Unprimed), l)
           | _ -> report_error (get_pos_camlp4 _loc 1) "expected cid" in
         let f = cexp_to_pure1 (fun c2 -> P.BagIn (cid,c2,pos)) cl in
         set_slicing_utils_pure_double f false
     | lc=SELF(*cid*); `NOTIN;  cl=SELF ->
         let cid, pos = match lc with
           | Pure_c (P.Var (t, l)) -> (t, l)
+          | Pure_c (P.Null l) -> ((null_name,Unprimed), l)
           | _ -> report_error (get_pos_camlp4 _loc 1) "expected cid" in
         let f = cexp_to_pure1 (fun c2 -> P.BagNotIn(cid,c2,pos)) cl in
         set_slicing_utils_pure_double f false

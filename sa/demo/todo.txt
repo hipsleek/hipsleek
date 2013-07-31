@@ -5378,6 +5378,272 @@ Error(s) detected at main
 Stop Omega... 101 invocations caught
 (Program not linked with -g, cannot print stack backtrace)
 =====================================================================
+# swl-i.ss: FIXED
+
+Context of Verification Failure: 1 File "swl-i.ss",Line:32,Col:10
+Last Proving Location: 1 File "swl-i.ss",Line:52,Col:2
+
+ERROR: at _0:0_0:0 
+Message: self of G cannot have its type determined
+ 
+ExceptionFailure("self of G cannot have its type determined")Occurred!
+
+Error(s) detected at main 
+Stop Omega... 108 invocations caught
+(Program not linked with -g, cannot print stack backtrace)
+
+Exception occurred: Failure("self of G cannot have its type determined")
+Error(s) detected at main 
+=====================================================================
+# view_simp.ss: FIXED (by Trung)
+
+ll<> == (self:node)=null
+  inv true;
+
+Parsing file "view_simp.ss" by default parser...
+
+!!!  processing primitives "["prelude.ss"]
+Starting Omega...oc
+
+ERROR: at _0:0_0:0 
+Message: self of ll cannot have its type determined
+ Stop Omega... 0 invocations caught
+(Program not linked with -g, cannot print stack backtrace)
+
+Exception occurred: Failure("self of ll cannot have its type determined")
+
+=====================================================================
+# swl-i.ss --dis-ddb: FIXED
+
+We derived:
+
+HeapPred H(node a, node b, node@NI c).
+HeapPred HP_902(node next_36_901, node@NI prev, node@NI sent).
+HeapPred HP_903(node prev, node@NI cur, node@NI sent).
+PostPred G(node a, node ra, node b, node rb, node@NI c).
+
+It seems we perform the synthesis of H after pre-obligations below
+were processed. This is the wrong order. We should synthesize
+H first, after that we process pre-oblg below which relies
+on H being confirmed.
+
+!!! PRE-OBLIGATION:
+ HP_903(prev_936,cur_939,sent_934) * cur_939::node<val_36_935,prev_936>@M&
+  prev_937=null & 
+  cur_938=cur_939 --> cur_938::node<val_36_900,next_36_901>@M * 
+  HP_902(next_36_901,prev_937,sent_934) * HP_903(prev_937,cur_938,sent_934)
+
+!!! PRE-OBLIGATION:
+ HP_902(next_36_944,prev_943,sent_945) * HP_903(prev_943,cur_941,sent_945) * 
+  cur_941::node<val_36_942,prev_943>@M&next_36_944!=null & 
+  next_36_944!=sent_945 --> next_36_944::node<val_36_900,next_36_901>@M * 
+  HP_902(next_36_901,cur_941,sent_945) * HP_903(cur_941,next_36_944,sent_945)
+
+=====================================================================
+# swl-i.ss --classic: FIXED
+
+How come we are missing on some relational assumptions
+from one of the two pre-oblications below? 
+
+
+!!! hp: :HP_902
+!!! r: :next_36_963
+!!! PRE-OBLIGATION:
+ EXISTS(flted_36_993,flted_36_994,
+  flted_36_995: HP_903(flted_36_995,flted_36_994,flted_36_993) * 
+  cur_939::node<val_36_935,prev_936>@M&flted_36_995=prev_936 & 
+ERROR: at _0:0_0:0 
+Message: self of HP_902 cannot have its type determined
+ 
+ExceptionFailure("self of HP_902 cannot have its type determined")Occurred!
+
+Error(s) detected at main 
+Stop Omega... 89 invocations caught
+(Program not linked with -g, cannot print stack backtrace)
+
+Exception occurred: Failure("self of HP_902 cannot have its type determined"
+  cur_939=flted_36_994 & flted_36_993=sent_934 & prev_937=null & 
+  cur_938=cur_939)[] --> EXISTS(flted_36_1016,flted_36_1017,flted_36_1018,
+  flted_36_1019,flted_36_1020: cur_938::node<val_36_900,next_36_901>@M * 
+  next_36_901::HP_902<flted_36_1020,flted_36_1019>@M * 
+  HP_903(flted_36_1018,flted_36_1017,flted_36_1016)&flted_36_1020=prev_937 & 
+  flted_36_1019=sent_934 & flted_36_1018=prev_937 & cur_938=flted_36_1017 & 
+  flted_36_1016=sent_934)[]
+!!! PRE-OBLIGATION:
+ EXISTS(flted_36_1042,flted_36_1043,flted_36_1044,flted_36_1045,
+  flted_36_1046: next_36_943::HP_902<flted_36_1046,flted_36_1045>@M * 
+  HP_903(flted_36_1044,flted_36_1043,flted_36_1042) * 
+  cur_940::node<val_36_941,prev_942>@M&flted_36_1046=prev_942 & 
+  flted_36_1045=sent_944 & flted_36_1044=prev_942 & cur_940=flted_36_1043 & 
+  flted_36_1042=sent_944 & next_36_943!=null & next_36_943!=sent_944)
+  [] --> EXISTS(flted_36_1070,flted_36_1071,flted_36_1072,flted_36_1073,
+  flted_36_1074: next_36_943::node<val_36_900,next_36_901>@M * 
+  next_36_901::HP_902<flted_36_1074,flted_36_1073>@M * 
+  HP_903(flted_36_1072,flted_36_1071,flted_36_1070)&cur_940=flted_36_1074 & 
+  flted_36_1073=sent_944 & cur_940=flted_36_1072 & 
+  flted_36_1071=next_36_943 & flted_36_1070=sent_944)[][Warning] False ctx
+
+
+*************************************************
+*******relational assumptions (obligation)********
+****************************************************
+[ HP_903(prev_936,cur_939,sent_934) --> prev_936::HP_902<prev_937,sent_934>@M * 
+  HP_1098(prev_937,cur_939,sent_934),
+ emp --> HP_903(prev_937,cur_938,sent_934)]
+*************************************
+
+without --classic, we seem to have a fuller set:
+
+*************************************************
+*******relational assumptions (obligation)********
+****************************************************
+[ emp --> HP_902(next_36_901,prev_937,sent_934),
+ emp --> HP_903(prev_937,cur_938,sent_934),
+ HP_902(next_36_943,prev_942,sent_944)&next_36_943!=null & 
+  next_36_943!=sent_944 --> next_36_943::node<val_36_1131,next_36_1132>@M * 
+  HP_1133(next_36_1132,prev_942,sent_944),
+ emp --> HP_902(next_36_901,cur_940,sent_944),
+ emp --> HP_903(cur_940,next_36_943,sent_944)]
+*************************************
+
+=====================================================================
+# swl-i.ss 
+
+the order of processing is not correct, as post-pred
+should be done only after pre-pred.
+
+a:69:!!!     synthesize: H
+a:76:!!!     synthesize: G
+a:84:!!!  synthesize: [G]
+a:127:!!!     synthesize: HP_902
+a:130:!!!     synthesize: HP_1018
+a:136:!!!     synthesize: HP_903
+a:143:!!!  synthesize: [HP_903]
+
+=====================================================================
+# swl-i.slk --classic --en-sleek-logging-txt
+
+For the pre-obligations below, I traced the sleek-log
+
+!!! PRE-OBLIGATION:
+ HP_903(prev_936,cur_939,sent_934) * cur_939::node<val_36_935,prev_936>@M&
+  prev_937=null & 
+  cur_938=cur_939 --> cur_938::node<val_36_900,next_36_901>@M * 
+  next_36_901::HP_902<prev_937,sent_934>@M * 
+  HP_903(prev_937,cur_938,sent_934)
+!!! PRE-OBLIGATION:
+ next_36_943::HP_902<prev_942,sent_944>@M * 
+  HP_903(prev_942,cur_940,sent_944) * cur_940::node<val_36_941,prev_942>@M&
+  next_36_943!=null & 
+  next_36_943!=sent_944 --> next_36_943::node<val_36_900,next_36_901>@M * 
+  next_36_901::HP_902<cur_940,sent_944>@M * 
+  HP_903(cur_940,next_36_943,sent_944)[Warning] False ctx
+
+And found that only one was invoked under --classic but
+
+aa:263: id: 35; caller: []; line: 0; classic: false; kind: [PRE-OBLIGATION]; hec_num: 5; evars: []; infer_vars: [HP_903]; c_heap: emp
+aa:276: id: 39; caller: []; line: 0; classic: false; kind: [PRE-OBLIGATION]; hec_num: 4; evars: []; infer_vars: [HP_903]; c_heap: HP_903(prev_937,cur_938,sent_1091) * 
+
+but two were invoked under non-classic, as follows:
+
+bb:262: id: 35; caller: []; line: 0; classic: false; kind: [PRE-OBLIGATION]; hec_num: 5; evars: []; infer_vars: [HP_902,HP_903]; c_heap: emp
+bb:275: id: 39; caller: []; line: 0; classic: false; kind: [PRE-OBLIGATION]; hec_num: 4; evars: []; infer_vars: [HP_902,HP_903]; c_heap: HP_903(prev_937,cur_938,sent_1095) * HP_902(prev_936,prev_937,sent_934) * 
+bb:285: id: 40; caller: []; line: 0; classic: false; kind: [PRE-OBLIGATION]; hec_num: 5; evars: []; infer_vars: [HP_902,HP_903]; c_heap: emp
+bb:303: id: 44; caller: []; line: 0; classic: false; kind: [PRE-OBLIGATION]; hec_num: 4; evars: []; infer_vars: [HP_902,HP_903,HP_1098]; c_heap: HP_903(cur_940,next_36_943,sent_944) * 
+
+The main difference seems to be the set of inferable vars which is
+more complete under non-classic. Also, you need to call pre-obligation
+proving using classic=true, since no residues should be lost.
+Please make rectifications.
+
+=====================================================================
+# sll-dll.ss: FIXED (reverify)
+# check-sorted: FIXED
+
+reverify
+------------------------------------------------------------------
+# swl-4-addr-llb2.ss -tp om --pcp
+ 
+translation below is wrong:
+void lscan$node~node~node(  node cur,  node prev,  node sent) rec
+static  :EBase exists (Expl)(Impl)[M1; b; a; M2](ex)EXISTS(b_36,
+        a_37: cur::lx<a,b,M1>@M * prev::lx<b_36,a_37,M2>@M&
+        AndList( "n":a!=cur & (((a=null & b=sent) | (a=sent & b=null))) & 
+                 b=b_36 & a=a_37) &
+        {FLOW,(22,23)=__norm})[]
+          EBase emp&MayLoop&{FLOW,(1,25)=__flow}[]
+                  EAssume ref [cur;prev]
+                    EXISTS(sent_38,flted_32_35,
+                    c: prev'::lx<c,sent_38,flted_32_35>@M&
+                    AndList( "":flted_32_35=union(M1,M2)
+                     ; "n":c=null & cur'=sent & sent=sent_38) &
+                    {FLOW,(22,23)=__norm})[]
+
+Since we pre-declare:
+  lx<"n":g,"n":s,"S":M> == ...
+
+Should be:
+           AndList( "M":flted_32_35=union(M1,M2)
+
+=====================================================================
+#ll-back.ss:
+
+=====================================================================
+# swl-i.ss --field-ann --esl
+
+--field-ann currently do not work properly with shape analysis
+
+triggered l-1.slk which fails under --classic
+
+infer [HP_902,HP_903]
+ cur_939::node<val_36_934@M,prev_935@M>@M * 
+HP_903(prev_935,cur_939,sent_936)&prev_937=null & cur_938=cur_939
+ |-  cur_938::node<val_36_900@A,next_36_901@L>@M * 
+HP_902(next_36_901,prev_937,sent_936) * HP_903(prev_937,cur_938,sent_936)
+.
+
+Exception occurred: Failure("Can not prove:\n cur_939::node<val_36_934,prev_935>@M * HP_903(prev_935,cur_939,sent_936)&\n  prev_937=null & \n  cur_938=cur_939 --> cur_938::node<val_36_900,next_36_901>@M * \n  HP_902(next_36_901,prev_937,sent_936) * HP_903(prev_937,cur_938,sent_936)")
+Error3(s) detected at main 
+=====================================================================
+# ll-back-3a.ss
+
+(this example works in default but not sa_logging branch!)
+
+ls<p> == self = p
+  or self::node<q>* q::ls<p>;
+
+clist<> == self::node<q> * q::ls<self>
+  inv self!=null;
+
+lasso<> == self::node<q>*q::lasso<>
+      or self::clist<>
+  inv self!=null; 
+
+This lasso data structure is not currently supported.
+
+!!! dumping for finalize on hipStop Omega... 1 invocations caught
+(Program not linked with -g, cannot print stack backtrace)
+Exception occurred: Not_found
+
+I suppose the exception is thrown when we read a
+data table and found "clist" to be missing. I think
+we can firstly give a better error message; and
+secondly allow such examples to be accepted.
+
+*/
+
+=====================================================================
+=====================================================================
+=====================================================================
+=====================================================================
+=====================================================================
+=====================================================================
+=====================================================================
+=====================================================================
+=====================================================================
+=====================================================================
+=====================================================================
+=====================================================================
 =====================================================================
 =====================================================================
 =====================================================================

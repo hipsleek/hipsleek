@@ -190,11 +190,28 @@ let process_lib_file prog =
       Iast.prog_view_decls = prog.Iast.prog_view_decls @ vdecls;}
 
 let reverify_with_hp_rel old_cprog iprog =
-	let new_iviews = Astsimp.transform_hp_rels_to_iviews (Cast.collect_hp_rels old_cprog) in
-	let cprog = Astsimp.trans_prog (Astsimp.plugin_inferred_iviews new_iviews iprog) in
-	ignore (Typechecker.check_prog iprog cprog)
+  (* let new_iviews = Astsimp.transform_hp_rels_to_iviews (Cast.collect_hp_rels old_cprog) in *)
+  (* let cprog = Astsimp.trans_prog (Astsimp.plugin_inferred_iviews new_iviews iprog old_cprog) in *)
+  let hp_defs = Saout.collect_hp_defs old_cprog in
+  let need_trans_hprels = List.filter (fun (hp_kind, _,_,_) ->
+        match hp_kind with
+          |  Cpure.HPRelDefn (hp,r,args) -> begin
+                 try
+                   let _ = Cast.look_up_view_def_raw 33 old_cprog.Cast.prog_view_decls
+                     (Cpure.name_of_spec_var hp)
+                   in
+                   false
+                 with Not_found ->
+                     (*at least one is node typ*)
+                     List.exists (fun sv -> Cpure.is_node_typ sv) (r::args)
+             end
+          | _ -> false
+  ) hp_defs in
+  let proc_name = "" in
+  let n_cviews,chprels_decl = Saout.trans_hprel_2_cview iprog old_cprog proc_name need_trans_hprels in
+  let cprog = Saout.trans_specs_hprel_2_cview iprog old_cprog proc_name need_trans_hprels chprels_decl in
+  ignore (Typechecker.check_prog iprog cprog)
 
-	  
 (***************end process compare file*****************)
 (*Working*)
 let process_source_full source =
@@ -334,12 +351,14 @@ let process_source_full source =
        ignore (Typechecker.check_prog intermediate_prog cprog);
     with _ as e -> begin
       print_string ("\nException"^(Printexc.to_string e)^"Occurred!\n");
-      print_string ("\nError(s) detected at main "^"\n");
+      print_string ("\nError1(s) detected at main "^"\n");
+      let _ = Log.process_proof_logging !Globals.source_files in
       raise e
     end);
 	if (!Globals.reverify_all_flag)
-	then 
-		reverify_with_hp_rel cprog intermediate_prog(*_reverif *)
+	then
+          let _ =  Debug.binfo_pprint "re-verify\n" no_pos; in
+	  reverify_with_hp_rel cprog intermediate_prog(*_reverif *)
 	else ();
 	
     (* Stopping the prover *)
@@ -390,6 +409,7 @@ let process_source_full source =
     print_string ("\n"^(string_of_int (List.length !Globals.false_ctx_line_list))^" false contexts at: ("^
 		(List.fold_left (fun a c-> a^" ("^(string_of_int c.Globals.start_pos.Lexing.pos_lnum)^","^
 		    ( string_of_int (c.Globals.start_pos.Lexing.pos_cnum-c.Globals.start_pos.Lexing.pos_bol))^") ") "" !Globals.false_ctx_line_list)^")\n");
+    Timelog.logtime # dump;
     print_string ("\nTotal verification time: " 
 	^ (string_of_float t4) ^ " second(s)\n"
 	^ "\tTime spent in main process: " 
@@ -399,7 +419,7 @@ let process_source_full source =
 	^ if !Globals.proof_logging || !Globals.proof_logging_txt then 
       "\tTime for logging: "^(string_of_float (!Globals.proof_logging_time))^" second(s)\n"
     else ""
-	^ if(!Tpdispatcher.tp = Tpdispatcher.Z3) then 
+	^ if(!Tpdispatcher.pure_tp = Others.Z3) then 
       "\tZ3 Prover Time: " ^ (string_of_float !Globals.z3_time) ^ " second(s)\n"
     else "\n"
 	)
@@ -540,7 +560,7 @@ let process_source_full_after_parser source (prog, prims_list) =
     ignore (Typechecker.check_prog intermediate_prog cprog);
   with _ as e -> begin
     print_string ("\nException"^(Printexc.to_string e)^"Occurred!\n");
-    print_string ("\nError(s) detected at main "^"\n");
+    print_string ("\nError2 (s) detected at main "^"\n");
     raise e
   end);
   (* Stopping the prover *)
@@ -633,6 +653,8 @@ let loop_cmd parsed_content =
   ()
 
 let finalize () =
+  Log.last_cmd # dumping "finalize on hip";
+  Log.process_proof_logging !Globals.source_files;
   if (!Tpdispatcher.tp_batch_mode) then Tpdispatcher.stop_prover ()
 
 let old_main () = 
@@ -649,7 +671,7 @@ let old_main () =
     finalize ();
     print_string "caught\n"; Printexc.print_backtrace stdout;
     print_string ("\nException occurred: " ^ (Printexc.to_string e));
-    print_string ("\nError(s) detected at main \n");
+    print_string ("\nError3(s) detected at main \n");
   end
 
 let _ = 
@@ -676,7 +698,7 @@ let _ =
           finalize ();
           print_string "caught\n"; Printexc.print_backtrace stdout;
           print_string ("\nException occurred: " ^ (Printexc.to_string e));
-          print_string ("\nError(s) detected at main \n");
+          print_string ("\nError4(s) detected at main \n");
         end
     done
 

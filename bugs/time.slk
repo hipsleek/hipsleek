@@ -1,0 +1,84 @@
+
+checkentail 
+ //Mc=union(Mnxt_1007,{cur_1016}) & 
+cur_1016!=sentinel_1008 & 
+s_1004=sentinel_1008 & cur=cur_1016 & prev=prev_1015 & sentinel=sentinel' & 
+cur!=null & sentinel=sentinel_1008 & sentinel=sentinel_1009 & 
+n_50'=nxt_1006 & next_33_1014=nxt_1006 & cur_1016=prev_1027 & 
+cur_1026=n_50' & cur_1026!=sentinel' & !(v_bool_37_944') & cur_1026=null & 
+v_bool_38_945' & cur'=prev_1027 & prev'=null 
+exists(sentinel_1108:prev'!=sentinel_1108) 
+//& Mp_1031={} 
+// & (((exists(Mnxt_1107:Mnxt_1007=union(Mnxt_1107,{nxt_1006})) & nxt_1006!=s_1004 & nxt_1006!=null) | (nxt_1006=null & Mnxt_1007={} & nxt_1006!=s_1004))) 
+//& (((exists(M1_1106:Mp=union({prev},M1_1106)) & prev!=sentinel_1009 & prev!=null) | (prev=sentinel_1009 & Mp={}))) 
+& cur_1016!=null
+|-  cur'=sentinel'
+.
+
+/*
+checkentail 
+//Mc=union(Mnxt_1007,{cur_1016}) & 
+cur_1016!=sentinel_1008 & 
+s_1004=sentinel_1008 & cur=cur_1016 & prev=prev_1015 & sentinel=sentinel' & 
+cur!=null & sentinel=sentinel_1008 & sentinel=sentinel_1009 & 
+n_50'=nxt_1006 & next_33_1014=nxt_1006 & cur_1016=prev_1027 & 
+cur_1026=n_50' & cur_1026!=sentinel' & !(v_bool_37_944') & cur_1026=null & 
+v_bool_38_945' & cur'=prev_1027 & prev'=null 
+//& (((exists(Mnxt_1048:Mnxt_1007=union(Mnxt_1048,{nxt_1006})) & nxt_1006!=s_1004 & nxt_1006!=null) | (nxt_1006=null & Mnxt_1007={} & nxt_1006!=s_1004))) 
+//& (((exists(M1_1047:Mp=union({prev},M1_1047)) & prev!=sentinel_1009 & prev!=null) | (prev=sentinel_1009 & Mp={}))) 
+& cur_1016!=null
+	     |-  cur'=null
+.
+
+/*
+
+checkentail 
+ Mc=union(Mnxt_1007,{cur_1016}) & cur_1016!=sentinel_1008 & 
+s_1004=sentinel_1008 & cur=cur_1016 & prev=prev_1015 & sentinel=sentinel' & 
+cur!=null & sentinel=sentinel_1008 & sentinel=sentinel_1009 & 
+n_50'=nxt_1006 & next_33_1014=nxt_1006 & cur_1016=prev_1027 & 
+cur_1026=n_50' & cur_1026!=sentinel' & !(v_bool_37_944') & cur_1026=null & 
+v_bool_38_945' & cur'=prev_1027 & prev'=null & Mc_1030={} & 
+exists(sentinel_1108:prev'!=sentinel_1108) & Mp_1031={} & 
+(((exists(Mnxt_1107:Mnxt_1007=union(Mnxt_1107,{nxt_1006})) & 
+nxt_1006!=s_1004 & nxt_1006!=null) | (nxt_1006=null & Mnxt_1007={} & 
+nxt_1006!=s_1004))) & (((exists(M1_1106:Mp=union({prev},M1_1106)) & 
+prev!=sentinel_1009 & prev!=null) | (prev=sentinel_1009 & Mp={}))) & 
+cur_1016!=null
+	     |-  cur'=sentinel'
+.
+
+checkentail 
+ Mc=union(Mnxt_1007,{cur_1016}) & cur_1016!=sentinel_1008 & 
+s_1004=sentinel_1008 & cur=cur_1016 & prev=prev_1015 & sentinel=sentinel' & 
+cur!=null & sentinel=sentinel_1008 & sentinel=sentinel_1009 & 
+n_50'=nxt_1006 & next_33_1014=nxt_1006 & cur_1016=prev_1027 & 
+cur_1026=n_50' & cur_1026!=sentinel' & !(v_bool_37_944') & cur_1026=null & 
+v_bool_38_945' & cur'=prev_1027 & prev'=null & Mc_1030={} & 
+exists(sentinel_1111:prev'!=sentinel_1111) & Mp_1031={} & 
+(((exists(Mnxt_1110:Mnxt_1007=union(Mnxt_1110,{nxt_1006})) & 
+nxt_1006!=s_1004 & nxt_1006!=null) | (nxt_1006=null & Mnxt_1007={} & 
+nxt_1006!=s_1004))) & (((exists(M1_1109:Mp=union({prev},M1_1109)) & 
+prev!=sentinel_1009 & prev!=null) | (prev=sentinel_1009 & Mp={}))) & 
+cur_1016!=null
+	     |-  Mc_1030={}
+.
+*/
+/*
+running it by itself; the proof seem to adher to
+the timeout requirement.
+
+with 5s timeout
+Total verification time: 6.824424 second(s)
+	Time spent in main process: 0.084004 second(s)
+	Time spent in child processes: 6.74042 second(s)
+
+with 10s timeout
+
+Time(cache overhead) : 0. (seconds)
+Total verification time: 11.572722 second(s)
+	Time spent in main process: 0.088005 second(s)
+	Time spent in child processes: 11.484717 second(s)
+
+
+*/

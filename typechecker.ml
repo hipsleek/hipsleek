@@ -1,5 +1,6 @@
 module DD = Debug
 open Globals
+open Wrapper
 open Others
 open Stat_global
 open Global_var
@@ -708,7 +709,7 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
 (*						   (print_string "check 1 ok\n";*)
                           (impl_vs,new_post,new_post_struc)
 						  else (*temp fixing*)
-                            if not (!Globals.sa_en) then report_error pos "Assume struc impl error"
+                            if not (!Globals.pred_syn_flag) then report_error pos "Assume struc impl error"
                             else
                             (print_string "check 1 fail\n";
                             (impl_vs,new_post,new_post_struc))
@@ -1102,7 +1103,7 @@ and check_scall_lock_op prog ctx e0 (post_start_label:formula_label) ret_t mn lo
             (*we infer automatically from ctx*)
             infer_lock_invariant lock_var ctx pos
       in
-      let vdef = look_up_view_def_raw prog.prog_view_decls lock_sort in
+      let vdef = look_up_view_def_raw 34 prog.prog_view_decls lock_sort in
       let types = List.map (fun v -> CP.type_of_spec_var v) vdef.view_vars in
       let new_args = List.map2 (fun arg typ ->  CP.SpecVar (typ, arg, Primed) ) lock_args types in
       let self_var =  CP.SpecVar (Named vdef.view_data_name, self, Unprimed) in
@@ -1328,12 +1329,17 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                     let fct c1 =
                       (* let _ = Gen.Profiling.push_time "[check_exp] Assign: fct" in *)
                       let res = if (CF.subsume_flow_f !norm_flow_int (CF.flow_formula_of_formula c1.CF.es_formula)) then
-                        let t = Gen.unsome (type_of_exp rhs) in
+                        let t0 = Gen.unsome (type_of_exp rhs) in
+                        let t = if is_null_type t0 then
+                          let svl = CF.fv c1.CF.es_formula in
+                          try
+                            let orig_sv = List.find (fun sv -> String.compare (CP.name_of_spec_var sv) v = 0) svl in
+                            CP.type_of_spec_var orig_sv
+                          with _ -> t0
+                        else t0
+                        in
                         let vsv = CP.SpecVar (t, v, Primed) in (* rhs must be non-void *)
                         let tmp_vsv = CP.fresh_spec_var vsv in
-                        (* let _ = DD.binfo_pprint "*************************************" no_pos in *)
-                        (* let _ = DD.binfo_pprint "LOC: I remove the first element of the subst, please check" no_pos in *)
-                        (* let _ = DD.binfo_pprint "*************************************" no_pos in *)
                         let compose_es = CF.subst [(vsv, tmp_vsv); ((P.mkRes t), vsv)] c1.CF.es_formula in
                         let compose_ctx = (CF.Ctx ({c1 with CF.es_formula = compose_es})) in
                         (* Debug.info_hprint (add_str "vsv" Cprinter.string_of_spec_var) vsv no_pos; *)
@@ -1608,9 +1614,10 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                           (* let f_esc = proc_esc_stack pid in *)
                           (* TODO WN : Does this work for field level access? *)
                           let tmp_res2 = 
-		            if not(CF.isLend imm_node) && not(CF.isAccs imm_node) && not(!Globals.allow_field_ann) then 
+		            if not(CF.isLend imm_node) && not(CF.isAccs imm_node) (* asankhs: Do not change this please&& not(!Globals.allow_field_ann)*) then 
 		              CF.normalize_max_renaming_list_failesc_context_4_bind pid vheap pos true tmp_res1 
-    			          (* for Lend, Accs and field level annotations it should not be added back *)
+    			          (* for Lend, Accs it should not be added back and 
+								field level annotations should be added back and compacted *)
 		            else tmp_res1 
 		          in 
                           Debug.tinfo_pprint "WN : adding vheap to exception too" no_pos;
@@ -2427,28 +2434,37 @@ let proc_mutual_scc_shape_infer iprog prog scc_procs =
     let scc_hprel_unkmap =  List.fold_left (fun r_map proc -> r_map@proc.Cast.proc_hprel_unkmap) [] scc_procs in
     let scc_sel_hps = List.fold_left (fun r_hps proc -> r_hps@proc.Cast.proc_sel_hps) [] scc_procs in
     let scc_sel_post_hps = List.fold_left (fun r_hps proc -> r_hps@proc.Cast.proc_sel_post_hps) [] scc_procs in
-    let scc_hprel, scc_inferred_hps, scc_dropped_hps =
-      if !Globals.sa_en && List.length scc_sel_hps> 0 && List.length scc_hprel_ass > 0 then
-        let res =  if not (!Globals.sa_dnc) then
-          Sa2.infer_shapes iprog prog (* proc.proc_name *)"" scc_hprel_ass
-              scc_sel_hps scc_sel_post_hps (Gen.BList.remove_dups_eq
-                  (fun ((hp1,_),_) ((hp2, _),_) ->
-                      (CP.eq_spec_var hp1 hp2 )) scc_hprel_unkmap) [] [] true true
-        else
-          let _= Sa2.infer_shapes_new iprog prog (* proc.proc_name *)"" scc_hprel_ass
-            scc_sel_hps scc_sel_post_hps (Gen.BList.remove_dups_eq
-                (fun ((hp1,_),_) ((hp2, _),_) ->
-                    (CP.eq_spec_var hp1 hp2 )) scc_hprel_unkmap) [] [] true true
-          in ([],[],[])
+    let scc_hprel, scc_inferred_hps =
+      if !Globals.pred_syn_flag && List.length scc_sel_hps> 0 && List.length scc_hprel_ass > 0 then
+        let res =
+          if not (!Globals.pred_syn_modular) then
+            if not (!Globals.sa_dnc) then
+              Sa2.infer_shapes iprog prog (* proc.proc_name *)"" scc_hprel_ass
+                  scc_sel_hps scc_sel_post_hps (Gen.BList.remove_dups_eq
+                      (fun ((hp1,_),_) ((hp2, _),_) ->
+                          (CP.eq_spec_var hp1 hp2 )) scc_hprel_unkmap) [] [] true true
+            else
+              let _ = Sa2.infer_shapes_new iprog prog (* proc.proc_name *)"" scc_hprel_ass
+                scc_sel_hps scc_sel_post_hps (Gen.BList.remove_dups_eq
+                    (fun ((hp1,_),_) ((hp2, _),_) ->
+                        (CP.eq_spec_var hp1 hp2 )) scc_hprel_unkmap) [] [] true true
+              in ([],[])
+          else
+            Sa3.infer_shapes iprog prog (* proc.proc_name *)"" scc_hprel_ass
+                scc_sel_hps scc_sel_post_hps (Gen.BList.remove_dups_eq
+                    (fun ((hp1,_),_) ((hp2, _),_) ->
+                        (CP.eq_spec_var hp1 hp2 )) scc_hprel_unkmap) [] [] true true
         in res
-      else [],[],[]
+      else [],[]
     in
     (*update hpdefs for func call*)
     let _ = List.iter (fun proc ->
         let _ = Cast.update_hpdefs_proc prog.Cast.new_proc_decls scc_inferred_hps proc.proc_name in
         ()) scc_procs
     in
-    let rel_defs = Sa2.rel_def_stk in
+    let rel_defs = if not (!Globals.pred_syn_modular) then Sa2.rel_def_stk
+    else Sa3.rel_def_stk
+    in
     if not(rel_defs# is_empty) then
       begin
         print_endline "\n*************************************";
@@ -2600,7 +2616,7 @@ and check_proc iprog (prog : prog_decl) (proc : proc_decl) cout_option (mutual_g
                       (********************END SHAPE INFER*****************************)
                       (****************************************************************)
 		      (* let s_hprel, ls_inferred_hps, dropped_hps = *)
-                      (*   if !Globals.sa_en && List.length sel_hp_rels> 0 && List.length hp_lst_assume > 0 then *)
+                      (*   if !Globals.pred_syn_flag && List.length sel_hp_rels> 0 && List.length hp_lst_assume > 0 then *)
                       (*     let res =  if not (!Globals.sa_dnc) then *)
                       (*       Sa2.infer_shapes iprog prog proc.proc_name hp_lst_assume *)
                       (*           sel_hp_rels sel_post_hp_rels (Gen.BList.remove_dups_eq *)
@@ -2720,13 +2736,13 @@ and check_proc iprog (prog : prog_decl) (proc : proc_decl) cout_option (mutual_g
                                 (* let pr_ty = !CP.Label_Pure.ref_string_of_exp in *)
                                 Infer.fixcalc_rel_stk # push_list tuples;
                                 if not(Infer.fixcalc_rel_stk # is_empty) then
-                                begin
-                                  print_endline "\n*************************************";
-                                  print_endline "*******fixcalc of pure relation *******";
-                                  print_endline "*************************************";
-                                  print_endline (Infer.fixcalc_rel_stk # string_of_reverse);
-                                  print_endline "*************************************"
-                                end;
+                                  begin
+                                    print_endline "\n*************************************";
+                                    print_endline "*******fixcalc of pure relation *******";
+                                    print_endline "*************************************";
+                                    print_endline (Infer.fixcalc_rel_stk # string_of_reverse);
+                                    print_endline "*************************************"
+                                  end;
                                 Infer.fixcalc_rel_stk # reset;
                                 let tuples = List.map (fun (rel_post,post,rel_pre,pre) ->
                                     let pre_new = if CP.isConstTrue rel_pre then
@@ -2832,7 +2848,9 @@ and check_proc iprog (prog : prog_decl) (proc : proc_decl) cout_option (mutual_g
                   if pr_flag then
                     begin
 		      if pp then print_string ("\nProcedure "^proc.proc_name^" SUCCESS\n")
-	              else print_string ("\nProcedure "^proc.proc_name^" result FAIL-1\n")
+	              else 
+                        let _ = Log.last_cmd # dumping (proc.proc_name^" FAIL-1") in
+                        print_string ("\nProcedure "^proc.proc_name^" result FAIL-1\n")
                     end;
 	      	  pp
 	        end
@@ -2880,6 +2898,7 @@ let check_proc_wrapper iprog prog proc cout_option mutual_grp =
     (*   end *)
     (*   else res *)
     (* in n_res *)
+    (* Log.last_cmd # dumping; *)
     res
   with _ as e ->
     if !Globals.check_all then begin
@@ -2888,6 +2907,9 @@ let check_proc_wrapper iprog prog proc cout_option mutual_grp =
       print_string ("\nException "^(Printexc.to_string e)^" Occurred!\n");
       Printexc.print_backtrace(stdout);
       print_string ("\nError(s) detected when checking procedure " ^ proc.proc_name ^ "\n");
+      Log.last_cmd # dumping (proc.proc_name^" FAIL2");
+      (* print_endline "Last PURE PROOF FAILURE:"; *)
+      (* Log.last_proof_command # dump; *)
       false
     end else
       raise e

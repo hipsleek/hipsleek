@@ -1,0 +1,69 @@
+/*
+Check_Specs]; hec_num: 4; evars: [sent_1691,flted_31_1692,M3_1693]; infer_vars: []; c_heap: 
+prev'::tx<flted_39_1690,sent,M3_1689>@M
+*/
+data node {
+ int mark;
+ node left;
+ node right;
+}.
+
+pred tx<g,s,"s":M> == true&["":self = g & s!=null & (g=null | g=s) ; "s": M={}]
+   or self::node<v,l,r> * l::tx<g,s,M1> * r::tx<null,s,M2> & ["": self != g & self != s ;"s": M=union({self},M1,M2)]
+   or self::node<v,l,r> * l::tx<null,s,M1> * r::tx<g,s,M2> & ["": self != g & self != s ;"s": M=union({self},M1,M2)]
+inv true&["": s!=null
+ & (g=null & self!=s | g=s & self!=null)
+  ; "s": 
+    (self=g & M={} | self!=g & M!={} //& self in M
+)
+]
+.
+/*
+id: 318; caller: []; line: 33; classic: false; kind: [POST,
+Check_Specs]; hec_num: 4; evars: [sent_2636,flted_33_2637,flted_33_2638]; infer_vars: []; c_heap: 
+*/
+
+ checkentail l_1846::tx<g_1841,s_1842,M1_1847>@M
+* prev::tx<b,sent_1851,M2>@M * r_1848::tx<flted_8_1844,s_1843,M2_1849>@M * 
+cur_1895::node<v_1845,tmp_63',prev_1893>@M
+&
+AndList( "":flted_8_1844=null & a=g_1841 & s_1842=sent_1850 & 
+         s_1843=sent_1850 & cur!=sent & a=sent & b=null & a!=null & 
+         sent=sent_1851 & sent=sent_1850 & prev=prev_1893 & cur=cur_1895 & 
+         l_1846=n_62' & r_1848=tmp_63' & r_1848=right_46_1887 & 
+         l_1846=left_47_1891 & cur_1895=prev' & cur'=n_62' & cur'=sent & 
+         v_bool_51_1007' & cur'=sent & v_bool_51_1007'
+ & a!=cur_1895 & cur_1895!=sent_1850 & 
+   exists(sent_2636:exists(flted_33_2638:s_1843=sent_2636 & 
+   b=flted_33_2638 & sent_1851=sent_2636 & flted_33_2638!=prev' & 
+   prev'!=sent_2636))
+ ; "s":M1=union({cur_1895},M1_1847,M2_1849) & 
+   exists(flted_33_2637:
+   flted_33_2637=union({prev'},M2_1849,M2)
+   )
+) 
+ |-  (exists sent_2636,flted_33_2638
+,flted_33_2637
+: 
+emp&
+AndList( "":flted_33_2638=null & sent=sent_2636 & s_1843=sent_2636 & 
+         b=flted_33_2638 & sent_1851=sent_2636
+ ; "":cur'=sent & prev'!=null & flted_33_2638!=prev' & prev'!=sent_2636
+ ; "s":
+   M1_1847={} & 
+   //M2_1849!={} &
+   //M2={} &
+flted_33_2637=union(M1,M2) & flted_33_2637=union({prev'},M2_1849,M2)
+)).
+
+/*
+ ; "s":M1=union({cur_1895},M2_1849) & 
+   //exists(flted_33_2637:
+   flted_33_2637=union({prev'},M2_1849,M2)
+|-
+
+; "s":flted_33_2637=union(M1,M2) 
+  & flted_33_2637=union({prev'},M2_1849,M2)
+
+M1=
+)*/

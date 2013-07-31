@@ -1,0 +1,29 @@
+/*
+data node {
+	int val; 
+	node next; 
+}.
+
+pred ll<n> == self=null & n=0
+  or self::node<v,p> * p::ll<n-1> 
+inv n>=0.
+
+infer [n,R] x::ll<n> & R(v1) |- x=null & v1>=0 .
+print residue.
+*/
+
+relation R(int a).
+
+
+/*
+infer [n,R] R(v1) & x=null & n=0 or R(v1) & x!=null & 1<=n |- x=null & v1>=0 .
+ inferred pure: [n<=0]
+ inferred rel: [RELASS [R]: ( R(v1)) -->  0<=v1]
+
+*/
+
+infer [n,R] R(v1) & ((x=null & n=0) | (x!=null & 1<=n)) & v1=2 |- v1>=0 .
+print residue.
+
+
+

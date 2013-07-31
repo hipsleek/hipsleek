@@ -18,7 +18,7 @@ lseg<p> == self=p
 inv true;
 
 HeapPred H(node a, node b, node@NI c).
-HeapPred G(node a, node ra, node b, node rb, node@NI c).
+PostPred G(node a, node ra, node b, node rb, node@NI c).
 
 void lscan(ref node cur, ref node prev, node sent)
 /*

@@ -121,6 +121,7 @@ include Ipure_D
 
 
 let print_formula = ref (fun (c:formula) -> "cpure printer has not been initialized")
+let print_formula_exp = ref (fun (c:exp) -> "cpure printer has not been initialized")
 let print_id = ref (fun (c:(ident*primed)) -> "cpure printer has not been initialized")
 
 module Exp_Pure =
@@ -233,7 +234,7 @@ and afv (af : exp) : (ident * primed) list = match af with
   | Tsconst _ 
   | InfConst _
   | FConst _ -> []
-  | Ann_Exp (e,_) -> afv e
+  | Ann_Exp (e,_,_) -> afv e
   | Add (a1, a2, _) -> combine_avars a1 a2
   | Subtract (a1, a2, _) -> combine_avars a1 a2
   | Mult (a1, a2, _) | Div (a1, a2, _) -> combine_avars a1 a2
@@ -324,7 +325,7 @@ and mkSubtract a1 a2 pos = Subtract (a1, a2, pos)
 
 and mkMult a1 a2 pos = Mult (a1, a2, pos)
 
-and mkAnnExp a1 t pos = Ann_Exp (a1, t)
+and mkAnnExp a1 t pos = Ann_Exp (a1, t, pos)
 
 and mkDiv a1 a2 pos = Div (a1, a2, pos)
 
@@ -398,10 +399,16 @@ and mkAnd f1 f2 pos = match f1 with
 		| AndList b1, AndList b2 -> mkAndList (Label_Pure.merge b1 b2)
 		| AndList b, f -> mkAndList (Label_Pure.merge b [(Lab_List.unlabelled,f)])
 		| f, AndList b -> mkAndList (Label_Pure.merge b [(Lab_List.unlabelled,f)])
-		| _ -> And (f1, f2, pos)
+		| _ -> if no_andl f1 && no_andl f2 then And (f1, f2, pos) 
+			   else report_error no_pos "Ipure: unhandled/unexpected mkAnd with andList case"
 
 and mkAndList b = (*print_string "ipure_list_gen\n";*) AndList b
-		
+	
+and no_andl  = function
+  | BForm _ | And _ | Not _ | Forall _ | Exists _  -> true
+  | Or (f1,f2,_,_) -> no_andl f1 && no_andl f2
+  | AndList _ -> false 
+	
 and mkOr f1 f2 lbl pos = match f1 with
   | BForm ((BConst (false, _), _), _) -> f2
   | BForm ((BConst (true, _), _), _) -> f1
@@ -544,7 +551,7 @@ and pos_of_exp (e : exp) = match e with
   | Tsconst (_, p)
   | InfConst (_, p)
   | AConst (_, p) -> p
-  | Ann_Exp (e,_) -> pos_of_exp e
+  | Ann_Exp (e,_,p) -> p
   | Add (_, _, p) -> p
   | Subtract (_, _, p) -> p
   | Mult (_, _, p) -> p
@@ -678,7 +685,7 @@ and e_apply_one ((fr, t) as p) e = match e with
   | Tsconst _
   | InfConst _
   | AConst _ -> e
-  | Ann_Exp (e,ty) -> Ann_Exp ((e_apply_one p e), ty)
+  | Ann_Exp (e,ty,pos) -> Ann_Exp ((e_apply_one p e), ty, pos)
   | Var (sv, pos) -> Var (v_apply_one p sv, pos)
   | Level (sv, pos) -> Level (v_apply_one p sv, pos)
   | Add (a1, a2, pos) -> Add (e_apply_one p a1, e_apply_one p a2, pos)
@@ -702,7 +709,7 @@ and e_apply_one ((fr, t) as p) e = match e with
   | Func (a, ind, pos) -> Func (a, (e_apply_one_list p ind), pos)
   | ArrayAt (a, ind, pos) -> ArrayAt (v_apply_one p a, (e_apply_one_list p ind), pos) (* An Hoa *)
 
-and v_apply_one ((fr, t) as p) v = (if eq_var v fr then t else v)
+and v_apply_one ((fr, t)) v = (if eq_var v fr then t else v)
 
 and e_apply_one_list ((fr, t) as p) alist = match alist with
   |[] -> []
@@ -712,8 +719,8 @@ and e_apply_one_list ((fr, t) as p) alist = match alist with
 and e_apply_one_list_of_pair ((fr, t) as p) list_of_pair = match list_of_pair with
   | [] -> []
   | (expr, bound)::rest -> match bound with
-							| None -> ((e_apply_one p expr), None)::(e_apply_one_list_of_pair p rest)
-							| Some b_expr ->  ((e_apply_one p expr), Some (e_apply_one p b_expr))::(e_apply_one_list_of_pair p rest)
+      | None -> ((e_apply_one p expr), None)::(e_apply_one_list_of_pair p rest)
+      | Some b_expr ->  ((e_apply_one p expr), Some (e_apply_one p b_expr))::(e_apply_one_list_of_pair p rest)
 
 and subst_list_of_pair sst ls = match sst with
   | [] -> ls
@@ -852,7 +859,7 @@ and find_lexp_exp (e: exp) ls =
   | Tsconst _
   | InfConst _
   | FConst _ -> []
-  | Ann_Exp(e,_) -> find_lexp_exp e ls
+  | Ann_Exp(e,_,_) -> find_lexp_exp e ls
   | Add (e1, e2, _) -> find_lexp_exp e1 ls @ find_lexp_exp e2 ls
   | Subtract (e1, e2, _) -> find_lexp_exp e1 ls @ find_lexp_exp e2 ls
   | Mult (e1, e2, _) -> find_lexp_exp e1 ls @ find_lexp_exp e2 ls
@@ -904,7 +911,7 @@ let rec contain_vars_exp (expr : exp) : bool =
   | AConst _ 
   | Tsconst _
   | FConst _ -> false
-  | Ann_Exp (exp,_) -> (contain_vars_exp exp)
+  | Ann_Exp (exp,_,_) -> (contain_vars_exp exp)
   | Add (exp1, exp2, _) -> (contain_vars_exp exp1) || (contain_vars_exp exp2)
   | Subtract (exp1, exp2, _) -> (contain_vars_exp exp1) || (contain_vars_exp exp2)
   | Mult (exp1, exp2, _) -> (contain_vars_exp exp1) || (contain_vars_exp exp2)
@@ -936,7 +943,9 @@ and float_out_exp_min_max (e: exp): (exp * (formula * (string list) ) option) = 
   | Tsconst _
   | InfConst _ 
   | FConst _ -> (e, None)
-  | Ann_Exp (e,_) -> float_out_exp_min_max e
+  | Ann_Exp (e, t, l) -> 
+      let ne, np = float_out_exp_min_max e in
+      (Ann_Exp (ne, t, l), np) 
   | Add (e1, e2, l) ->
       let ne1, np1 = float_out_exp_min_max e1 in
       let ne2, np2 = float_out_exp_min_max e2 in
@@ -1343,7 +1352,7 @@ let rec typ_of_exp (e: exp) : typ =
           (* Gen.Basic.report_error pos "Ununified type in 2 expressions" *)
   in
   match e with
-  | Ann_Exp (ex, ty)          -> let ty2 = typ_of_exp ex in
+  | Ann_Exp (ex, ty, _)       -> let ty2 = typ_of_exp ex in
                                  merge_types ty2 ty
   | Null _                    -> Globals.UNK               (* Trung: TODO: what is the type of Null? *) 
   | Var  _                    -> Globals.UNK               (* Trung: TODO: what is the type of Var? *)
@@ -1490,3 +1499,26 @@ let trans_special_formula s (p:formula) vars =
         )
     | _ -> p
   )
+
+
+
+(* 
+   Make a formula from a list of conjuncts, namely
+   [F1,F2,..,FN]  ==> F1 & F2 & .. & Fn 
+*)
+(* let conj_of_list (fs : formula list) pos : formula = *)
+(*   match fs with *)
+(*     | [] -> mkTrue pos *)
+(*     | x::xs -> List.fold_left (fun a c-> mkAnd a c no_pos) x xs *)
+
+let join_conjunctions fl = conj_of_list fl
+
+let mkAndList_opt f =
+  if !Globals.remove_label_flag then 
+    join_conjunctions (List.map snd f)
+  else mkAndList f
+
+let mkAndList_opt f =
+  let pr = pr_list (pr_pair pr_none !print_formula) in
+  let pr2 = !print_formula in
+  Debug.no_1 "mkAndList_opt" pr pr2 mkAndList_opt f 

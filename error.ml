@@ -42,19 +42,20 @@ let report_error_msg (error_msg: string) =
   failwith error_msg
 
 let report_error e =
- (if post_pos#is_avail then
-       Printf.printf "\nContext of Verification Failure: %s"
-           post_pos#string_of);
- (if proving_loc#is_avail then
-       Printf.printf "\nLast Proving Location: %s\n"
-           proving_loc#string_of);
- (Printf.printf "\nERROR: at %s \nMessage: %s\n " 
-    (string_of_loc e.error_loc)
-    e.error_text);
+  (if post_pos#is_avail then
+    Printf.printf "\nContext of Verification Failure: %s"
+        post_pos#string_of);
+  (if proving_loc#is_avail then
+    Printf.printf "\nLast Proving Location: %s\n"
+        proving_loc#string_of);
+  (Printf.printf "\nERROR: at %s \nMessage: %s\n " 
+      (string_of_loc e.error_loc)
+      e.error_text);
   flush stdout;
   failwith e.error_text
 
-let report_no_pattern () = report_error {error_loc=no_pos; error_text="HIP/SLEEK error, unhandled pattern - very poor coding, lazy programmers !!!"}
+let report_no_pattern () = report_error {error_loc=no_pos; error_text="HIP/SLEEK error, unhandled pattern"}
+(*asankhs: Lets not use such wording in external errors and exceptions - very poor coding, lazy programmers !!!*)
   
 let report_error1 e s=
   (Printf.printf "%s\n" e.error_text);

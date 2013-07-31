@@ -1,0 +1,93 @@
+==============================================================
+# view-2.stk
+
+pred ll<> == self::node<_,_>
+  or (self:cell)=null
+  inv true.
+
+It seems that cast operation is lost and type-infer
+is doe only after "self" has been determined.
+
+update_fixpt@1
+update_fixpt inp1 :[(ll[]<> == 
+
+(None,[]): EBase: [][](EX Anon_11 Anon_12 . (self::node<Anon_11, Anon_12>@M[HeapNode1])*(true)( FLOW __flow)) 
+||
+(None,[]): EBase: [][](EX  . (emp)*(self = null)( FLOW __flow))  inv true inv_lock: None view_data_name: ,[node],[])]
+update_fixpt@1 EXIT out :?
+
+
+(None,[]): EBase: [][](EX Anon_11 Anon_12 . (self::node<Anon_11, Anon_12>@M[HeapNode1])*(true)( FLOW __flow)) 
+||
+(None,[]): EBase: [][](EX  . (emp)*(self = null)( FLOW __flow)) 
+gather_type_info_struc_f inp2 :[(self:13:node)]
+gather_type_info_struc_f@2 EXIT out :[(self:13:node)(TVar__16:16:null)(Anon_12:1
+
+==============================================================
+# view-4.stk
+
+pred cl<> == self::cell<_>
+  inv true.
+
+pred ll<> == self::node<_,_>
+  or self::cl<>
+  inv true.
+
+Type error here but the message is crytic..
+
+gather_type_info_struc_f inp2 :[(self:16:node)]
+gather_type_info_struc_f@3 EXIT ExceptionFailure("gather_type_info_var : unexpected exceptionInvalid_argument(\"[ocamlgraph] iter_succ\")")Occurred!
+Fatal error: exception Failure("gather_type_info_var : unexpected exceptionInvalid_argument("[ocamlgraph] iter_succ")")
+===============================================================
+# view-3.stk
+
+pred ll<> == self::node<_,_>
+  or self::ll<>
+  inv true.
+
+This cyclic reference went thru, even though it may loop.
+
+(None,[]): EBase: [][](EX  . (self::ll<>@M[HeapNode1])*(true)( FLOW __flow))  inv true inv_lock: None view_data_name: ,[node],[ll])]
+update_fixpt@1 EXIT out :?
+
+=============================================================
+# view-1.stk
+
+pred ll<> == self::node<_,_>
+  or self::cell<_>
+  inv true.
+
+ERROR is detected prior to type-checking
+
+ERROR: at _0:0_0:0 
+Message: self points to different data node types
+ Fatal error: exception Failure("self points to different data node types")
+
+==============================================================
+==============================================================
+==============================================================
+==============================================================
+==============================================================
+==============================================================
+==============================================================
+==============================================================
+==============================================================
+==============================================================
+==============================================================
+==============================================================
+==============================================================
+==============================================================
+==============================================================
+==============================================================
+==============================================================
+==============================================================
+==============================================================
+==============================================================
+==============================================================
+==============================================================
+==============================================================
+==============================================================
+==============================================================
+==============================================================
+==============================================================
+==============================================================

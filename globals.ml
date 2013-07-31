@@ -314,10 +314,12 @@ let proof_logging_time = ref 0.000
 
 (*sleek logging*)
 let sleek_logging_txt = ref false
+let dump_proof = ref false
+let dump_sleek_proof = ref false
 
 (*Proof logging facilities*)
 class ['a] store (x_init:'a) (epr:'a->string) =
-   object 
+   object (self)
      val emp_val = x_init
      val mutable lc = None
      method is_avail : bool = match lc with
@@ -331,6 +333,7 @@ class ['a] store (x_init:'a) (epr:'a->string) =
      method string_of : string = match lc with
        | None -> "Why None?"
        | Some l -> (epr l)
+     method dump = print_endline ("\n store dump :"^(self#string_of))
    end;;
 
 (* this will be set to true when we are in error explanation module *)
@@ -347,7 +350,6 @@ object
        | None -> "None"
        | Some l -> (string_of_pos l.start_pos)
 end;;
-
 
 
 (*Some global vars for logging*)
@@ -450,6 +452,10 @@ let subs_tvar_in_typ t (i:int) nt =
 let null_type = Named ""
 ;;
 
+let is_null_type t=
+  match t with
+    | Named "" -> true
+    | _ -> false
 
 
 let rec s_i_list l c = match l with 
@@ -523,6 +529,7 @@ let no_pos1 = { Lexing.pos_fname = "";
 				   Lexing.pos_cnum = 0 } 
 
 let res_name = "res"
+let null_name = "null"
 
 let sl_error = "separation entailment"
 let logical_error = "logical bug"
@@ -586,6 +593,12 @@ let lib_files = ref ([] : string list)
 
 (* command line options *)
 
+let remove_label_flag = ref false
+let label_split_conseq = ref true
+let label_split_ante = ref true
+let label_aggressive_sat = ref true
+let label_aggressive_imply = ref true
+
 let texify = ref false
 let testing_flag = ref false
 
@@ -613,7 +626,7 @@ let print_heap_pred_decl = ref true
 
 let cond_path_trace = ref false
 
-let sa_old = ref false
+let pred_syn_modular = ref true
 
 let sa_dnc = ref false
 
@@ -622,7 +635,9 @@ let pred_en_oblg = ref true
 
 (* let sa_en_norm = ref false *)
 
-let sa_en = ref true
+let pred_syn_flag = ref true
+
+let sa_syn = ref true
 
 let sa_en_split = ref false
 
@@ -679,6 +694,7 @@ let verify_callees = ref false
 
 let elim_unsat = ref false
 let disj_compute_flag = ref false
+let inv_wrap_flag = ref true
 let lhs_case_flag = ref false
 let lhs_case_search_flag = ref false
 let smart_xpure = ref true
@@ -688,13 +704,17 @@ let precise_perm_xpure = ref true
      smart_xpure and xpure0!=xpure1 *)
 let smart_memo = ref false
 
+let enable_constraint_based_filtering = ref false
+
 (* let lemma_heuristic = ref false *)
 
 let elim_exists_ff = ref true
 
-let allow_imm = ref true (*imm will delay checking guard conditions*)
+let allow_imm = ref true (*imm will delglobalsay checking guard conditions*)
 
-let allow_field_ann = ref false
+let allow_field_ann = ref false 
+  (* disabled by default as it is unstable and
+     other features, such as shape analysis are affected by it *)
 
 let allow_mem = ref true
 
@@ -705,7 +725,7 @@ let ann_derv = ref false
 let print_ann = ref true
 let print_derv = ref false
 
-let print_clean_flag = ref true
+let print_clean_flag = ref false
 
 (*is used during deployment, e.g. on a website*)
 (*Will shorten the error/warning/... message delivered
@@ -785,7 +805,7 @@ let print_version_flag = ref false
 
 let elim_exists_flag = ref true
 
-let filtering_flag = ref false
+let filtering_flag = ref true
 
 let split_rhs_flag = ref true
 
@@ -807,6 +827,7 @@ let num_self_fold_search = ref 0
 let self_fold_search_flag = ref false
 
 let show_gist = ref false
+let imply_top_flag = ref false
 
 let trace_failure = ref false
 
@@ -1202,16 +1223,89 @@ let norm_file_name str =
 	done;
 	str
 
-let wrap_classic et f a =
-  let flag = !do_classic_frame_rule in
-  do_classic_frame_rule := (match et with
-    | None -> !opt_classic
-    | Some b -> b);
-  try 
-    let res = f a in
-    (* restore flag do_classic_frame_rule  *)
-    do_classic_frame_rule := flag;
-    res
-  with _ as e ->
-      (do_classic_frame_rule := flag;
-      raise e)
+(* let wrap_classic et f a = *)
+(*   let flag = !do_classic_frame_rule in *)
+(*   do_classic_frame_rule := (match et with *)
+(*     | None -> !opt_classic *)
+(*     | Some b -> b); *)
+(*   try  *)
+(*     let res = f a in *)
+(*     (\* restore flag do_classic_frame_rule  *\) *)
+(*     do_classic_frame_rule := flag; *)
+(*     res *)
+(*   with _ as e -> *)
+(*       (do_classic_frame_rule := flag; *)
+(*       raise e) *)
+
+(* let wrap_gen save_fn set_fn restore_fn flags f a = *)
+(*   (\* save old_value *\) *)
+(*   let old_values = save_fn flags in *)
+(*   let _ = set_fn flags in *)
+(*   try  *)
+(*     let res = f a in *)
+(*     (\* restore old_value *\) *)
+(*     restore_fn old_values; *)
+(*     res *)
+(*   with _ as e -> *)
+(*       (restore_fn old_values; *)
+(*       raise e) *)
+
+(* let wrap_one_bool flag new_value f a = *)
+(*   let save_fn flag = (flag,!flag) in *)
+(*   let set_fn flag = flag := new_value in *)
+(*   let restore_fn (flag,old_value) = flag := old_value in *)
+(*   wrap_gen save_fn set_fn restore_fn flag f a *)
+
+(* let wrap_two_bools flag1 flag2 new_value f a = *)
+(*   let save_fn (flag1,flag2) = (flag1,flag2,!flag1,!flag2) in *)
+(*   let set_fn (flag1,flag2) = flag1 := new_value; flag2:=new_value in *)
+(*   let restore_fn (flag1,flag2,old1,old2) = flag1 := old1; flag2:=old2 in *)
+(*   wrap_gen save_fn set_fn restore_fn (flag1,flag2) f a *)
+
+(* (\* let wrap_general flag new_value f a = *\) *)
+(* (\*   (\\* save old_value *\\) *\) *)
+(* (\*   let old_value = !flag in *\) *)
+(* (\*   flag := new_value; *\) *)
+(* (\*   try  *\) *)
+(* (\*     let res = f a in *\) *)
+(* (\*     (\\* restore old_value *\\) *\) *)
+(* (\*     flag := old_value; *\) *)
+(* (\*     res *\) *)
+(* (\*   with _ as e -> *\) *)
+(* (\*       (flag := old_value; *\) *)
+(* (\*       raise e) *\) *)
+
+(* let wrap_no_filtering f a = *)
+(*   wrap_one_bool filtering_flag false f a *)
+
+(* let wrap_lbl_dis_aggr f a = *)
+(*   wrap_two_bools label_aggressive_sat label_aggressive_imply false f a *)
+
+let proof_no = ref 0
+
+let next_proof_no () =
+  proof_no := !proof_no + 1;
+  !proof_no
+
+(* let next_proof_no_str () = *)
+(*   proof_no := !proof_no + 1; *)
+(*   string_of_int !proof_no *)
+
+let get_proof_no () = !proof_no
+
+let get_proof_no_str () = string_of_int !proof_no
+
+let sleek_proof_no = ref 0
+
+let last_sleek_fail_no = ref 0
+
+let get_sleek_no () = !sleek_proof_no
+
+let get_last_sleek_fail () = !last_sleek_fail_no
+
+let set_last_sleek_fail () = 
+  last_sleek_fail_no := !sleek_proof_no
+
+let next_sleek_int () : int =
+  sleek_proof_no := !sleek_proof_no + 1; 
+  (!sleek_proof_no)

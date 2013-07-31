@@ -5,6 +5,8 @@ module CP = Cpure
 
 module StringSet = Set.Make(String)
 
+let set_prover_type () = Others.last_tp_used # set Others.Z3
+
 let set_generated_prover_input = ref (fun _ -> ())
 let set_prover_original_output = ref (fun _ -> ())
 
@@ -220,6 +222,7 @@ let rec smt_of_formula pr_w pr_s f =
   helper f
 
 let smt_of_formula pr_w pr_s f =
+  let _ = set_prover_type () in
   Debug.no_1 "smt_of_formula"  !CP.print_formula (fun s -> s)
     (fun _ -> smt_of_formula pr_w pr_s f) f
 

@@ -65,9 +65,10 @@ let texify l nl = if !Globals.texify then l else nl
 let pr_int i = fmt_int i
 
 let pr_pair_aux pr_1 pr_2 (a,b) =
-  fmt_string "(";
-  pr_1 a; fmt_string ",";
-  pr_2 b; fmt_string ")"
+  (* fmt_string "("; *)
+  pr_1 a; fmt_string ":";
+  pr_2 b
+  (* ;fmt_string ")" *)
 
 let pr_opt f x = match x with
     | None -> fmt_string "None"
@@ -549,6 +550,12 @@ let pr_spec_var x = fmt_string (string_of_spec_var x)
 
 let pr_typed_spec_var x = fmt_string (* (string_of_spec_var x) *) (string_of_typed_spec_var x)
 
+let pr_typed_spec_var_lbl (l,x) = 
+  let s = 
+    if Lab_List.is_common l then ""
+    else (Lab_List.string_of l)^":"
+  in fmt_string (s^(string_of_typed_spec_var x))
+
 let pr_list_of_spec_var xs = pr_list_none pr_spec_var xs
   
 let pr_imm x = fmt_string (string_of_imm x)
@@ -667,7 +674,7 @@ let rec pr_formula_exp (e:P.exp) =
   let f_b e =  pr_bracket exp_wo_paren pr_formula_exp e in
   match e with
     | P.Null l -> fmt_string "null"
-    | P.Var (x, l) -> fmt_string (string_of_spec_var x)
+    | P.Var (x, l) -> fmt_string (string_of_spec_var x) (* fmt_string (string_of_typed_spec_var x) *)
     | P.Level (x, l) -> fmt_string ("level(" ^ (string_of_spec_var x) ^ ")")
     | P.IConst (i, l) -> fmt_int i
     | P.AConst (i, l) -> fmt_string (string_of_heap_ann i)
@@ -690,9 +697,9 @@ let rec pr_formula_exp (e:P.exp) =
         fmt_string ("(" ^ (Globals.string_of_typ ty) ^ ")");
         pr_formula_exp e1;
     | P.Bag (elist, l) 	-> 
-        fmt_string ("bag("); 
-        pr_set pr_formula_exp elist;
-        fmt_string (")")
+        fmt_string ("{"); 
+        pr_list_none pr_formula_exp elist;
+        fmt_string ("}")
     | P.BagUnion (args, l) -> 
           let args = bin_op_to_list op_union_short exp_assoc_op e in
           pr_fn_args op_union pr_formula_exp args
@@ -891,8 +898,8 @@ let rec pr_pure_formula  (e:P.formula) =
           let arg2 = bin_op_to_list op_and_short pure_formula_assoc_op f2 in
           let args = arg1@arg2 in
           pr_list_op op_and f_b args
-    | P.AndList b -> fmt_string "(AndList ";
-		pr_list_op_none " & " (wrap_box ("B",0) (pr_pair_aux pr_spec_label pr_pure_formula)) b;fmt_string ") "
+    | P.AndList b -> fmt_string "\n AndList( ";
+		pr_list_op_none " ; " (wrap_box ("B",0) (pr_pair_aux pr_spec_label pr_pure_formula)) b;fmt_string ") "
     | P.Or (f1, f2, lbl,l) -> 
           pr_formula_label_opt lbl; 
           let arg1 = bin_op_to_list op_or_short pure_formula_assoc_op f1 in
@@ -1119,7 +1126,7 @@ let rec pr_h_formula h =
               (* (if pid==None then fmt_string "NN " else fmt_string "SS "); *)
               (* pr_formula_label_opt pid;  *)
               pr_spec_var sv; 
-              fmt_string "::"; 
+              fmt_string "::%"; (* to distinguish pred from data *)
               pr_angle (c^perm_str) pr_spec_var svs;
 	      pr_imm imm;
 	      pr_derv dr;
@@ -1184,6 +1191,21 @@ let rec prtt_pr_h_formula h =
           let arg2 = bin_op_to_list op_conjsep_short h_formula_assoc_op h2 in
           let args = arg1@arg2 in
           pr_list_op op_conjsep_short f_b args
+    | ConjConj ({h_formula_conjconj_h1 = h1; h_formula_conjconj_h2 = h2; h_formula_conjconj_pos = pos}) -> 
+	      let arg1 = bin_op_to_list op_conjconj_short h_formula_assoc_op h1 in
+          let arg2 = bin_op_to_list op_conjconj_short h_formula_assoc_op h2 in
+          let args = arg1@arg2 in
+          pr_list_op op_conjconj_short f_b args
+    | ConjStar ({h_formula_conjstar_h1 = h1; h_formula_conjstar_h2 = h2; h_formula_conjstar_pos = pos}) -> 
+	      let arg1 = bin_op_to_list op_conjstar_short h_formula_assoc_op h1 in
+          let arg2 = bin_op_to_list op_conjstar_short h_formula_assoc_op h2 in
+          let args = arg1@arg2 in
+          pr_list_op op_conjstar_short f_b args
+    | StarMinus ({h_formula_starminus_h1 = h1; h_formula_starminus_h2 = h2; h_formula_starminus_pos = pos}) -> 
+	      let arg1 = bin_op_to_list op_starminus_short h_formula_assoc_op h1 in
+          let arg2 = bin_op_to_list op_starminus_short h_formula_assoc_op h2 in
+          let args = arg1@arg2 in
+          pr_list_op op_starminus_short f_b args
     | DataNode ({h_formula_data_node = sv;
       h_formula_data_name = c;
 	  h_formula_data_derv = dr;
@@ -1287,7 +1309,6 @@ N " else fmt_string "SS "); *)
     | HFalse -> fmt_string "hfalse"
     | HEmp -> fmt_string (texify "\emp" "emp")
     | Hole m -> fmt_string ("Hole[" ^ (string_of_int m) ^ "]")
-	| StarMinus _ | ConjStar _ | ConjConj _  -> Error.report_no_pattern ()
 
 let rec prtt_pr_h_formula_inst prog h = 
   let f_b e =  pr_bracket h_formula_wo_paren (prtt_pr_h_formula_inst prog) e 
@@ -1690,7 +1711,7 @@ let rec pr_formula e =
       formula_exists_label = lbl;
 	  formula_exists_pos = pos}) ->
           (match lbl with | None -> () | Some l -> fmt_string ("{"^(string_of_int (fst l))^"}->"));
-          fmt_string "EXISTS("; pr_list_of_spec_var svs; fmt_string ": ";
+          fmt_string "(exists "; pr_list_of_spec_var svs; fmt_string ": ";
           pr_h_formula h; 
           (if not(MP.isConstMTrue p) then 
             (pr_cut_after "&" ; pr_mix_formula p))
@@ -2098,6 +2119,15 @@ let pr_only_lhs_rhs (lhs,rhs) =
   fmt_close()
 
 let string_of_only_lhs_rhs (e) : string =  poly_string_of_pr  pr_only_lhs_rhs e
+
+let pr_infer_state_short is =
+  fmt_open_box 1;
+  fmt_string (pr_list_round string_of_int is.is_cond_path);
+  fmt_string (pr_list_ln string_of_hprel_short is.is_constrs);
+  fmt_string (pr_list_ln string_of_hp_rel_def is.is_hp_defs);
+  fmt_close()
+
+let string_of_infer_state_short is: string =  poly_string_of_pr  pr_infer_state_short is
 
 let rec pr_numbered_list_formula_trace_ho (e:(context * (formula*formula_trace)) list) (count:int) f =
   match e with
@@ -2881,7 +2911,8 @@ let pr_view_decl v =
     | View_NORM -> " "
     | View_PRIM -> "_prim "
     | View_EXTN -> "_extn " in
-  wrap_box ("B",0) (fun ()-> pr_angle  ("view"^s^v.view_name) pr_typed_spec_var v.view_vars; fmt_string "= ") ();
+  wrap_box ("B",0) (fun ()-> pr_angle  ("view"^s^v.view_name) pr_typed_spec_var_lbl 
+      (List.combine v.view_labels v.view_vars); fmt_string "= ") ();
   fmt_cut (); wrap_box ("B",0) pr_struc_formula v.view_formula; 
   pr_vwrap  "cont vars: "  pr_list_of_spec_var v.view_cont_vars;
   pr_vwrap  "inv: "  pr_mix_formula v.view_user_inv;

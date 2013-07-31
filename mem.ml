@@ -68,7 +68,7 @@ let rec intersect_list_ann (ann_lst_l: CF.ann list) (ann_lst_r: CF.ann list): CF
 			Err.error_text = "[mem.ml] : Memory Spec should have same number of fields in layout";}
 
 let mem_guards_checking (fl1 : CP.formula) (fl2: CP.formula list) pos =
-	let flag = List.exists (fun x -> let r,_,_  = TP.imply fl1 x "mem_guard_imply" false None in r) fl2 in
+	let flag = List.exists (fun x -> let r,_,_  = TP.imply_one 6 fl1 x "mem_guard_imply" false None in r) fl2 in
 	if flag then ()   
 	else 
 	(*if CP.isConstTrue fl1 then ()
@@ -82,7 +82,7 @@ let mem_guards_checking_reverse (fl1: CP.formula list) (fl2 : CP.formula) pos =
 	let relevant_slice = CP.join_conjunctions (List.filter 
 		(fun c -> if (CP.disjoint x_fvs (CP.fv c)) then false else true)
 		(CP.split_conjunctions fl2)) in
-	let r,_,_  = TP.imply x relevant_slice "mem_guard_imply_reverse" false None in r) fl1 in
+	let r,_,_  = TP.imply_one 11 x relevant_slice "mem_guard_imply_reverse" false None in r) fl1 in
 	if flag then ()   
 	else 
 	Err.report_error { Err.error_loc = pos;
@@ -248,7 +248,7 @@ let rec xmem_heap (f: CF.h_formula) (vl: C.view_decl list) : CF.mem_perm_formula
 			 CF.h_formula_view_pos = pos;}) -> 
 			 	(*let new_var = CP.Var(CP.SpecVar((BagT (Named name)),"Anon"^(fresh_trailer()),Unprimed),pos) in 
 			 	mk_mem_perm_formula (CP.Bag([new_var],pos)) false []*)
-			 	let vdef = C.look_up_view_def_raw vl name in
+			 	let vdef = C.look_up_view_def_raw 20 vl name in
 			 	let mpf = vdef.C.view_mem in
 			 	(match mpf with
 				| Some mpf -> 
@@ -1175,7 +1175,7 @@ let ramify_star_one (h1: CF.h_formula) (h1mpf: CF.mem_perm_formula option) (h2: 
 		       let compatible_cases2 = List.filter (fun (c,_) ->
 		       let after_sbst_guard = CP.subst sublist2 c in		
 		       let r,_,_ =  
-		       TP.imply pure_p after_sbst_guard "ramify_imply" false None in r) case_and_layouts2 in
+		       TP.imply_one 12 pure_p after_sbst_guard "ramify_imply" false None in r) case_and_layouts2 in
 		       (match h1 with
 			| CF.ViewNode {CF.h_formula_view_node = vn1;
 				CF.h_formula_view_arguments = vargs1} -> 
@@ -1184,7 +1184,7 @@ let ramify_star_one (h1: CF.h_formula) (h1mpf: CF.mem_perm_formula option) (h2: 
        				let compatible_cases1 = List.filter (fun (c,_) ->
        				let after_sbst_guard = CP.subst sublist1 c in		
 			       	let r,_,_ =
-			       	TP.imply pure_p after_sbst_guard "ramify_imply" false None in r) case_and_layouts1 in
+			       	TP.imply_one 13 pure_p after_sbst_guard "ramify_imply" false None in r) case_and_layouts1 in
 			       	let field_names = List.map (fun (_,(id,_)) -> id ) compatible_cases1 in
 			       	let field_names_no_dup = remove_dups field_names in
 			       	if List.exists (fun (_,(id,_)) -> (List.mem id field_names_no_dup)) compatible_cases2 
@@ -1238,7 +1238,7 @@ let ramify_star_one (h1: CF.h_formula) (h1mpf: CF.mem_perm_formula option) (h2: 
 		       				let compatible_cases = List.filter (fun (c,_) ->
 		       				let after_sbst_guard = CP.subst sublist c in		
 					       	let r,_,_ =
-					       	TP.imply pure_p after_sbst_guard "ramify_imply" false None in r) case_and_layouts in
+					       	TP.imply_one 14 pure_p after_sbst_guard "ramify_imply" false None in r) case_and_layouts in
 					       	if List.exists (fun (_,(id,_)) -> (String.compare id dn == 0)) compatible_cases
 						then (if List.exists (fun (_,(id,al)) -> 
 							(is_same_field_layout paimm al)) compatible_cases
@@ -1288,7 +1288,7 @@ let ramify_star_one (h1: CF.h_formula) (h1mpf: CF.mem_perm_formula option) (h2: 
 		       	let r,_,_ =  
 		       	(*let _ = print_string("\nPure :"^(string_of_pure_formula pure_p)^"\n") in
 		       	let _ = print_string("Case :"^(string_of_pure_formula after_sbst_guard)^"\n") in*)
-		       	TP.imply pure_p after_sbst_guard "ramify_imply" false None in r) case_and_layouts in
+		       	TP.imply_one 15 pure_p after_sbst_guard "ramify_imply" false None in r) case_and_layouts in
 		       (match h1 with
 		       	| CF.DataNode { CF.h_formula_data_name = dn;
 			       		CF.h_formula_data_param_imm = paimm} -> 
@@ -1364,7 +1364,7 @@ match p with
                        List.fold_left (fun (h,f) q  -> 
 		       let q_mpf, q_vars  = 
 		       if (CF.is_view q) then
-		       let q_vdef = C.look_up_view_def_raw vl (CF.get_node_name q) in
+		       let q_vdef = C.look_up_view_def_raw 21 vl (CF.get_node_name q) in
 		       let q_viewvars = q_vdef.C.view_vars in
 		       q_vdef.C.view_mem,q_viewvars 
 		       else None,[] in
@@ -1377,14 +1377,14 @@ match p with
 		       CF.h_formula_view_imm = imm;
 		       CF.h_formula_view_arguments = vargs;
 		       CF.h_formula_view_pos = pos} -> 
-		       let p_vdef = C.look_up_view_def_raw vl name in
+		       let p_vdef = C.look_up_view_def_raw 22 vl name in
 		       let p_mpf = p_vdef.C.view_mem in
 		       let p_vars = p_vdef.C.view_vars in
 		       if(CF.isMutable imm) then
 		       List.fold_left (fun (h,f) q -> 
 		       let q_mpf,q_vars = 
 		       if (CF.is_view q) then
-		       let q_vdef = C.look_up_view_def_raw vl (CF.get_node_name q) in
+		       let q_vdef = C.look_up_view_def_raw 23 vl (CF.get_node_name q) in
 		       let q_vars = q_vdef.C.view_vars in
 		       q_vdef.C.view_mem, q_vars
 		       else None,[] in  
@@ -1499,7 +1499,7 @@ if (CF.is_data h) then
      	let p1 = CP.mkNeqVar (CF.get_node_var r) (CF.get_node_var h) pos in
 	CP.mkAnd p1 p pos
 	else (* r is a view *) 
-        let vdef =  C.look_up_view_def_raw vl (CF.get_node_name r) in
+        let vdef =  C.look_up_view_def_raw 24 vl (CF.get_node_name r) in
         let args = vdef.C.view_vars in
         let rargs = (CF.get_node_args r) in
         let sst = List.combine args rargs in 
@@ -1508,7 +1508,7 @@ if (CF.is_data h) then
         let p1 = CP.BForm((CP.BagNotIn((CF.get_node_var h),mexp,pos),None),None) in
         CP.mkAnd p1 p pos
 else if (CF.is_view h) then
-	let vdef = C.look_up_view_def_raw vl (CF.get_node_name h) in
+	let vdef = C.look_up_view_def_raw 25 vl (CF.get_node_name h) in
 	let mpf = Gen.unsome vdef.C.view_mem in
 	let args = vdef.C.view_vars in
         let hargs = (CF.get_node_args h) in
@@ -1518,7 +1518,7 @@ else if (CF.is_view h) then
 	let p1 = CP.BForm((CP.BagNotIn((CF.get_node_var r),mexp,pos),None),None) in
         CP.mkAnd p1 p pos
         else (* r is a view *) 
-	let vdef_r =  C.look_up_view_def_raw vl (CF.get_node_name r) in
+	let vdef_r =  C.look_up_view_def_raw 26 vl (CF.get_node_name r) in
 	let mpf_r = Gen.unsome vdef_r.C.view_mem in
         let args_r = vdef_r.C.view_vars in
         let rargs_r = (CF.get_node_args r) in
@@ -1595,7 +1595,7 @@ match h with
         CF.h_formula_view_imm = rimm;
         CF.h_formula_view_arguments = rvargs;
         CF.h_formula_view_pos = rpos} -> 
-        let vdef =  C.look_up_view_def_raw vl rname in
+        let vdef =  C.look_up_view_def_raw 27 vl rname in
         let args = vdef.C.view_vars in
         let sst = List.combine args rvargs in 
         let mpf = Gen.unsome vdef.C.view_mem in
@@ -1616,7 +1616,7 @@ match h with
      CF.h_formula_view_imm = imm;
      CF.h_formula_view_arguments = vargs;
      CF.h_formula_view_pos = pos} ->
-     let vdef =  C.look_up_view_def_raw vl name in
+     let vdef =  C.look_up_view_def_raw 28 vl name in
      let mpf = Gen.unsome vdef.C.view_mem in
      let args = vdef.C.view_vars in
      let sst = List.combine args vargs in
@@ -1642,7 +1642,7 @@ match h with
         CF.h_formula_view_imm = rimm;
         CF.h_formula_view_arguments = rvargs;
         CF.h_formula_view_pos = rpos} ->
-        let vdef_r =  C.look_up_view_def_raw vl name in
+        let vdef_r =  C.look_up_view_def_raw 29 vl name in
 	let mpf_r = Gen.unsome vdef_r.C.view_mem in
         let args_r = vdef_r.C.view_vars in
 	let sst_r = List.combine args_r rvargs in
