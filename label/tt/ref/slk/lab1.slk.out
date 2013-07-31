@@ -36,7 +36,7 @@ Entail 2: Valid.
  res: true
  -------------------- 
  id: 5<1; prover: OMEGA CALCULATOR; loc: _0:0_0:0; kind: Sleek_Entail(2)
- Sat:  n=0
+ Sat:  MayLoop
  res: SAT
  -------------------- 
  id: 6<1; prover: OMEGA CALCULATOR; loc: _0:0_0:0; kind: Sleek_Entail(2)
@@ -44,7 +44,7 @@ Entail 2: Valid.
  res: SAT
  -------------------- 
  id: 7<1; prover: OMEGA CALCULATOR; loc: _0:0_0:0; kind: Sleek_Entail(2)
- Sat:  MayLoop
+ Sat:  n=0
  res: SAT
  --------------------
 !!! Number of MONA calls:0

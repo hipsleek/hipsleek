@@ -793,9 +793,16 @@ let elim_exists (f : CP.formula) : CP.formula =
  
 *)
 let build_labels_sat is_comp lbs = 
-  let lbs = List.sort Label_only.Lab_List.compare lbs in
+  (* let lbs = List.sort Label_only.Lab_List.compare lbs in *)
   let res = List.map (fun l1 -> (l1,List.filter (is_comp l1) lbs)) lbs in
-  (List.rev res) 
+  let res = List.sort (fun (_,l1) (_,l2) -> 
+      let n1=List.length l1 in
+      let n2=List.length l2 in
+      if n1==n2 then 0
+      else if n1<n2 then 1
+      else -1
+  ) res in
+  res 
 
 let build_labels_sat is_comp lbs = 
   let pr1 = pr_list_semi Label_only.Lab_List.string_of in
@@ -864,8 +871,8 @@ let sat_label_filter fct f =
           (* Andreea : this is to pick equality from all branches *)
           let (comp,fil) = 
             if !Globals.label_aggressive_sat
-            then (Label_only.Lab_List.is_fully_compatible,fun fs -> fs)
-            else (Label_only.Lab_List.is_part_compatible,
+            then (Label_only.Lab_List.is_fully_compatible_sat,fun fs -> fs)
+            else (Label_only.Lab_List.is_part_compatible_sat,
             List.filter (fun (l,_)-> not(Label_only.Lab_List.is_common l)) ) 
           in
           let b = 
@@ -874,7 +881,7 @@ let sat_label_filter fct f =
               (* extract_eq_clauses_lbl_lst b *)
             else b 
           in
-          let sat_lbls = build_labels_sat comp lbls in
+          let sat_lbls = build_labels_sat (fun x y -> comp y x) lbls in
           let sat_branches = build_branches_sat b sat_lbls in
 	  (* let fs = List.map (fun l ->  *)
 	  (*     let lst = List.filter (fun (c,_)-> comp c l) b in *)
@@ -902,7 +909,7 @@ let imply_label_filter ante conseq =
   let comp = 
     if  !Globals.label_aggressive_imply
     then Label_only.Lab_List.is_fully_compatible_imply
-    else Label_only.Lab_List.is_part_compatible
+    else Label_only.Lab_List.is_part_compatible_imply
   in
   match ante,conseq with
     | Or _,_  
@@ -915,11 +922,11 @@ let imply_label_filter ante conseq =
             then extract_eset_of_lbl_lst ba bc
             else ba
           in
-	  List.map (fun (l, c)-> 
-	      let lst = List.filter (fun (c,_)-> comp (* Label_only.Lab_List.is_part_compatible *) c l) ba in 
-	      let fr1 = List.fold_left (fun a (_,c)-> mkAnd a c no_pos) (mkTrue no_pos) lst in
+	  List.map (fun (lconseq, fconseq)-> 
+	      let lst = List.filter (fun (lante,_)-> comp (* Label_only.Lab_List.is_part_compatible *) lante lconseq) ba in 
+	      let fs_ante = List.fold_left (fun a (_,c)-> mkAnd a c no_pos) (mkTrue no_pos) lst in
 	      (*(andl_to_and fr1, andl_to_and c)*)
-	      (fr1,c)) bc
+	      (fs_ante,fconseq)) bc
     | AndList ba, _ -> [(andl_to_and ante,conseq)]
 	  (*if (List.for_all (fun (_,c)-> no_andl c) ba)&& no_andl conseq then () else print_string s;*)
     | _ , AndList bc -> List.map (fun (_,c)-> (ante,c)) bc 

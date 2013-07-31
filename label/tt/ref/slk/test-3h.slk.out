@@ -1,45 +1,40 @@
-========lab3.slk --dump-proof==========
+========test-3h.slk --dump-proof==========
 Starting Omega...oc
 
 !!! dumping for sleek_dump(fail)
 !!!  
- id: 5<1; prover: OMEGA CALCULATOR; loc: _0:0_0:0; kind: Sleek_Entail(1)
- Imply: ante: n=0
-	     conseq:  n=1
+ id: 4<1; prover: OMEGA CALCULATOR; loc: _0:0_0:0; kind: Sleek_Entail(1)
+ Imply: ante: true
+	     conseq:  false
  res: false
  --------------------
 Entail 1: Fail.
 
 
-!!! src_files:[../lab3.slk]
-!!! Number of log entries 5
-!!! Logging logs/no_eps_proof_log____lab3_slk.txt
+!!! src_files:[../test-3h.slk]
+!!! Number of log entries 4
+!!! Logging logs/no_eps_proof_log____test-3h_slk.txt
  
  id: 1<0; prover: OMEGA CALCULATOR; loc: _0:0_0:0; kind: Sleek_Entail(1)
- Sat:  0<=n
+ Sat:  y=8 & 1<y
  res: SAT
  -------------------- 
  id: 2<0; prover: OMEGA CALCULATOR; loc: _0:0_0:0; kind: Sleek_Entail(1)
- Sat:  0<n
+ Sat:  1<y & 2<y
  res: SAT
  -------------------- 
  id: 3<0; prover: OMEGA CALCULATOR; loc: _0:0_0:0; kind: Sleek_Entail(1)
- Sat:  n=0
+ Sat:  1<y & 0<y
  res: SAT
  -------------------- 
  id: 4<1; prover: OMEGA CALCULATOR; loc: _0:0_0:0; kind: Sleek_Entail(1)
- Imply: ante: 0<n
-	     conseq:  0<n
- res: true
- -------------------- 
- id: 5<1; prover: OMEGA CALCULATOR; loc: _0:0_0:0; kind: Sleek_Entail(1)
- Imply: ante: n=0
-	     conseq:  n=1
+ Imply: ante: true
+	     conseq:  false
  res: false
  --------------------
 !!! Number of MONA calls:0
-!!! Number of Omega calls:5
+!!! Number of Omega calls:4
 
 !!! Number of sleek log entries 0
-!!! Logging logs/sleek_log____lab3_slk.txt
+!!! Logging logs/sleek_log____test-3h_slk.txt
 ====================
