@@ -1857,7 +1857,7 @@ and mkAnd_x f1 f2 (*b*) pos =
 		    join_disjunctions (List.concat lrd)
 	      | AndList b1, AndList b2 ->  mkAndList (Label_Pure.merge b1 b2)
 	      | AndList b, f
-	      | f, AndList b -> ((*print_string ("this br: "^(!print_formula f1)^"\n"^(!print_formula f2)^"\n");*)mkAndList (Label_Pure.merge b [(LO.unlabelled,f)]))
+	      | f, AndList b -> ((*print_string ("this br: "^(!print_formula f1)^"\n"^(!print_formula f2)^"\n");*) mkAndList (Label_Pure.merge b [(LO.unlabelled,f)]))
 	      | _ -> And (f1, f2, pos)
 
 (*and mkAnd_chk f1 f2 pos = mkAnd_dups f1 f2 false pos

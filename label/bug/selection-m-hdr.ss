@@ -10,8 +10,8 @@ bnd1<"n":n, "v":sm, "v":bg, "v":mi> ==
 	self::node<d, p> * p::bnd1<n1, sm, bg, tmi> & ["n":n1=n-1; "v":sm <= d < bg & mi = min(d, tmi)]
   //  inv self!=null & ["n":n>=1; "v":sm<=mi<bg];
 
-  inv self!=null & ((AndList("n":n >= 2; "v":sm <= mi < bg))
-                    | (AndList ("n":n = 1; "v":sm <= mi < bg)));
+  inv self!=null & (( AndList("n":n >= 2; "v":sm <= mi < bg))
+                    | ((AndList ("n":n = 1; "v":sm <= mi < bg))));
 
   /* inv self!=null & ((n >= 2 & sm <= mi < bg) */
   /*                   | (n = 1 & sm <= mi < bg)); */
