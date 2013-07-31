@@ -16,7 +16,10 @@ module P = Ipure
 module E1 = Error
 module I = Iast
 module Ts = Tree_shares.Ts
-module LO = Label_only.Lab_List
+module LO = Label_only.Lab_LAnn
+(* module LO = Label_only.Lab_List *)
+module Lbl = Label_only
+
 module LO2 = Label_only.Lab2_List
 
 module SHGram = Camlp4.Struct.Grammar.Static.Make(Lexer.Make(Token))
@@ -202,13 +205,13 @@ let rec split_members mbrs = match mbrs with
 let rec remove_spec_qualifier (_, pre, post) = (pre, post)
   
 
-let label_struc_list (lgrp:(Label_only.spec_label_def*F.struc_formula) list list) : (Label_only.spec_label_def*F.struc_formula) list = 
+let label_struc_list (lgrp:(Lbl.spec_label_def*F.struc_formula) list list) : (Lbl.spec_label_def*F.struc_formula) list = 
   List.concat lgrp
 
-let label_struc_groups (lgrp:(Label_only.spec_label_def*F.struc_formula) list list) : F.struc_formula =
+let label_struc_groups (lgrp:(Lbl.spec_label_def*F.struc_formula) list list) : F.struc_formula =
   F.EList (label_struc_list lgrp)
 
-let label_struc_list_auto (lgrp:(Label_only.spec_label_def*F.struc_formula) list list)  = 
+let label_struc_list_auto (lgrp:(Lbl.spec_label_def*F.struc_formula) list list)  = 
   let n = List.length lgrp in
   let fl = List.concat lgrp in
   let all_unlab = List.for_all (fun (l,_) -> LO2.is_unlabelled l) fl in
@@ -221,7 +224,7 @@ let label_struc_list_auto (lgrp:(Label_only.spec_label_def*F.struc_formula) list
     in lgr
 
 (* auto insertion of numeric if unlabelled *)
-let label_struc_groups_auto (lgrp:(Label_only.spec_label_def*F.struc_formula) list list) : F.struc_formula =
+let label_struc_groups_auto (lgrp:(Lbl.spec_label_def*F.struc_formula) list list) : F.struc_formula =
   F.EList (label_struc_list_auto lgrp)
 
 
@@ -994,6 +997,12 @@ transpec:
   ]];
 
 
+ann_label: 
+  [[
+     `SAT  -> Lbl.LA_Sat
+   | `IMM  -> Lbl.LA_Imply
+   ]];
+
 ann_heap: 
   [[
     `MUT -> Some (F.ConstAnn(Mutable))
@@ -1014,12 +1023,19 @@ one_branch_single : [[ `STRING (_,id); `COLON; pc=pure_constr -> (LO.singleton i
 
 one_string: [[`STRING (_,id)-> id]];
 
-one_branch : [[ lbl=LIST1 one_string SEP `COMMA ; `COLON; pc=pure_constr -> (LO.norm lbl,pc)]];
+one_string_w_ann: [[  id = one_string; ann_lbl = OPT ann_label -> (id, un_option ann_lbl (Lbl.LA_Both) )]];
 
-opt_branch:[[t=OPT branch -> un_option t Label_only.empty_spec_label]];
+string_w_ann_list: [[`COMMA; lbl_lst = LIST0 one_string_w_ann SEP `COMMA -> lbl_lst]];
+
+opt_string_w_ann_list: [[lbl_lst = OPT string_w_ann_list -> un_option lbl_lst [] ]];
+
+(* one_branch : [[ lbl = LIST1 one_string SEP `COMMA ; `COLON; pc=pure_constr -> (LO.norm lbl,pc)]]; *)
+one_branch : [[ lbl = one_string; lblA = opt_string_w_ann_list ; `COLON; pc=pure_constr -> (LO.norm (lbl,lblA),pc)]];
+
+opt_branch:[[t=OPT branch -> un_option t Lbl.empty_spec_label]];
 
 branch: [[ `STRING (_,id);`COLON -> 
-    if !Globals.remove_label_flag then Label_only.empty_spec_label
+    if !Globals.remove_label_flag then Lbl.empty_spec_label
     else LO.singleton id ]];
 
 view_header:
@@ -1184,7 +1200,7 @@ extended_l:
    | h=extended_constr_grp -> label_struc_groups [h]]];
    
 extended_constr_grp:
-   [[ c=extended_constr -> [(Label_only.empty_spec_label_def,c)]
+   [[ c=extended_constr -> [(Lbl.empty_spec_label_def,c)]
     | `IDENTIFIER id; `COLON; `OSQUARE; t = LIST0 extended_constr SEP `ORWORD; `CSQUARE -> List.map (fun c-> (LO2.singleton id,c)) t]];
 
 extended_constr:
@@ -1249,18 +1265,13 @@ opt_flow_constraints: [[t=OPT flow_constraints -> un_option t stub_flow]];
 
 flow_constraints: [[ `AND; `FLOW _; `IDENTIFIER id -> id]]; 
 
-
-ann_label: 
-  [[
-    `MUT -> Some (F.ConstAnn(Mutable))
-   | `IMM  -> Some (F.ConstAnn(Imm))
-   ]];
-
 opt_formula_label: [[t=OPT formula_label -> un_option t None]];		
 
 opt_label: [[t= OPT label->un_option t ""]]; 
 
-label : [[  `STRING (_,id); `COLON -> id]];
+label : [[  `STRING (_,id);  `COLON -> id ]];
+
+label_w_ann : [[  `STRING (_,id); ann_lbl = OPT ann_label; `COLON -> (id, un_option ann_lbl (Lbl.LA_Both)) ]];
 
 (* opt_pure_label :[[t=Opure_label -> un_option t (fresh_branch_point_id "")]]; *)
 
@@ -2274,7 +2285,7 @@ spec_list_outer : [[t= LIST1 spec_list_grp -> label_struc_groups_auto t ]];
 spec_list_grp:
   [[
       (* c=spec -> [(empty_spec_label_def,c)] *)
-     t= LIST1 spec -> List.map (fun c -> (Label_only.empty_spec_label_def,c)) t
+     t= LIST1 spec -> List.map (fun c -> (Lbl.empty_spec_label_def,c)) t
     | `IDENTIFIER id; `COLON; `OSQUARE; 
           t = spec_list_only 
           (* LIST0 spec SEP `ORWORD *)

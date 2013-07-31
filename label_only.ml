@@ -388,8 +388,8 @@ struct
       | x::xs1 -> if l=x then helper l xs1
         else l::(helper x xs1)
     in match r with
-      | [] -> id::[]
-      | x::xs -> id::(helper x xs)
+      | [] -> (id, [])
+      | x::xs -> (id, (helper x xs))
 
   let norm t =
     let (id,r) = t in

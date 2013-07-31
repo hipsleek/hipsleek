@@ -319,6 +319,7 @@ rule tokenizer file_name = parse
   | "@D" { DERV }
   | "@M" { MUT }
   | "@R" { MAT }
+  | "@S" { SAT }
   | "@VAL" {VAL}
   | "@REC" {REC}
   | "@NI" {NI}
