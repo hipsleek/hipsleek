@@ -2315,7 +2315,8 @@ let simplify_disj_set prog args unk_hps unk_svl pdefs pos=
 
 let lfp_iter_x prog hp args dang_hps fix_0 nonrec_fs rec_fs=
   let apply_fix fix_i r_fs pdef_f=
-    let _, fs = SAU.succ_subst prog [fix_i] dang_hps true pdef_f in
+    let _, fs = if fix_i = [] then (false, [pdef_f ]) else
+      SAU.succ_subst prog [fix_i] dang_hps true pdef_f in
     r_fs@fs
   in
   let pdef_rec_fs = List.map (fun f -> (hp,args, None, f, [])) rec_fs in

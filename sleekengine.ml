@@ -876,7 +876,7 @@ let process_shape_infer pre_hps post_hps=
       print_endline "\n*************************************";
       print_endline "*******relational definition ********";
       print_endline "*************************************";
-      print_endline (Sa2.rel_def_stk # string_of_reverse);
+      print_endline (rel_defs # string_of_reverse);
       print_endline "*************************************"
     end
   in

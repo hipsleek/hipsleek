@@ -4788,11 +4788,12 @@ let rec look_up_subst_group hp args nrec_grps=
   match nrec_grps with
     | [] -> [](* report_error no_pos "sau.look_up_groups" *)
     | grp::gs -> begin
-        let hp1,_,_,_,_ = (List.hd grp) in
-        if CP.eq_spec_var hp hp1 then
-           [(hp1,susbt_group [] grp)]
-        else
-          look_up_subst_group hp args gs
+        if grp = [] then look_up_subst_group hp args gs else
+          let hp1,_,_,_,_ = (List.hd grp) in
+          if CP.eq_spec_var hp hp1 then
+            [(hp1,susbt_group [] grp)]
+          else
+            look_up_subst_group hp args gs
     end
 
 

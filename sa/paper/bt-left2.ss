@@ -28,13 +28,13 @@ int count(node2 z)
 		return 0;
 	else
 	{
-                if (rand()) {
-                  cleft = z.left;
-                  }
-                else {
-                  cleft = z.right;
-                  };
-		return (1 + count(cleft));
+          if (rand()) {
+            cleft = z.left;
+          }
+          else {
+            cleft = z.right;
+          };
+          return (1 + count(cleft));
 	}
 }
 
