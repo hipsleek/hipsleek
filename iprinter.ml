@@ -9,6 +9,74 @@ open Label_only
 
 module F = Iformula
 module P = Ipure
+module LO=Label_only.Lab_List
+module LO2=Label_only.Lab2_List
+
+(* function to enclose a string s into parenthesis *)
+let parenthesis s = "(" ^ s ^ ")"
+;;
+
+(* function to concatenate the elements of a list of strings and puts c betwwen then (for field access)*)
+let rec concatenate_string_list l c = match l with 
+ | [] -> ""
+ | h::[] -> h 
+ | h::t -> h ^ c ^ (concatenate_string_list t c)
+;;
+
+(* pretty printing for unary operators *)
+let string_of_unary_op = function 
+  | OpUMinus       -> "-"
+  | OpPreInc       -> "++"
+  | OpPreDec       -> "--"
+  | OpPostInc      -> "++"
+  | OpPostDec      -> "--"
+  | OpNot          -> "!"
+  (*For pointers: *v and &v *)
+  | OpVal -> "*"
+  | OpAddr -> "&"
+;;    
+
+(* pretty priting for binary operators *)
+let string_of_binary_op = function 
+  | OpPlus         -> " + "
+  | OpMinus        -> " - "
+  | OpMult         -> " * "
+  | OpDiv          -> " / "
+  | OpMod          -> " % "
+  | OpEq           -> " == "
+  | OpNeq          -> " != "                                 
+  | OpLt           -> " < "
+  | OpLte          -> " <= "
+  | OpGt           -> " > "
+  | OpGte          -> " >= "
+  | OpLogicalAnd   -> " && "                                 
+  | OpLogicalOr    -> " || "
+  | OpIsNull       -> " == "
+  | OpIsNotNull    -> " != "
+;;
+
+(* pretty printing for assign operators *)
+let string_of_assign_op = function 
+  | OpAssign      -> " = "
+  | OpPlusAssign  -> " += "
+  | OpMinusAssign -> " -= "
+  | OpMultAssign  -> " *= "
+  | OpDivAssign   -> " /= "
+  | OpModAssign   -> " %= "
+;;
+
+let string_of_primed = function 
+	| Unprimed -> ""
+	| Primed -> "'";;
+
+(* function used to decide if parentrhesis are needed or not *)
+let need_parenthesis = function 
+    | P.Null _ | P.Var _ | P.IConst _ | P.Max _ | P.Min _  -> false
+    | _                                                    -> true
+;; 
+
+(* let string_of_label = function  *)
+
 
 (* function to enclose a string s into parenthesis *)
 let parenthesis s = "(" ^ s ^ ")"
@@ -79,8 +147,8 @@ let string_of_label = function
 ;;
 
 let string_of_formula_label (i,s) s2:string = ("("^(string_of_int i)^", "^s^"):"^s2)
-let string_of_spec_label = Lab_List.string_of
-let string_of_spec_label_def = Lab2_List.string_of
+let string_of_spec_label = LO.string_of
+let string_of_spec_label_def = LO2.string_of
 
 let string_of_formula_label_opt h s2:string = match h with | None-> s2 | Some s -> string_of_formula_label s s2
 let string_of_control_path_id (i,s) s2:string = string_of_formula_label (i,s) s2

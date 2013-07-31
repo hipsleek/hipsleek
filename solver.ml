@@ -29,6 +29,8 @@ module MCP = Mcpure
 module Err = Error
 module TP = Tpdispatcher
 
+module LO = Label_only.Lab_List
+
 
 (** An Hoa : switch to do unfolding on duplicated pointers **)
 let unfold_duplicated_pointers = ref true
@@ -3210,11 +3212,11 @@ and get_eqns_free_x (st : ((CP.spec_var * CP.spec_var) * Label_only.spec_label) 
 	  if (CP.mem fr evars) || (CP.mem fr expl_inst)  (*TODO: should this be uncommented? || List.mem t evars *) then
 	    (rest_left_eqns,rest_right_eqns,(fr, t)::s_list)
 	  else if (CP.mem fr struc_expl_inst) then
-	    let tmp = if (Label_only.Lab_List.is_unlabelled br_label) then CP.mkEqVar fr t pos else CP.mkAndList [(br_label,CP.mkEqVar fr t pos)] in
+	    let tmp = if (LO.is_unlabelled br_label) then CP.mkEqVar fr t pos else CP.mkAndList [(br_label,CP.mkEqVar fr t pos)] in
 	    let res = CP.mkAnd tmp rest_right_eqns pos in
 	    (rest_left_eqns,res,s_list)
 	  else
-	    let tmp = if (Label_only.Lab_List.is_unlabelled br_label) then CP.mkEqVar fr t pos else  CP.mkAndList [(br_label,CP.mkEqVar fr t pos)] in
+	    let tmp = if (LO.is_unlabelled br_label) then CP.mkEqVar fr t pos else  CP.mkAndList [(br_label,CP.mkEqVar fr t pos)] in
 	    let res = CP.mkAnd tmp rest_left_eqns pos in
 	    (res,rest_right_eqns,s_list)
     | [] -> (CP.mkTrue pos,CP.mkTrue pos,[])
@@ -8157,17 +8159,17 @@ and do_match_inst_perm_vars_x (l_perm:P.spec_var option) (r_perm:P.spec_var opti
       (match l_perm, r_perm with
         | Some f1, Some f2 ->
               let rho_0 = List.combine (f2::r_args) (f1::l_args) in
-              let label_list = (Label_only.Lab_List.unlabelled::label_list) in
+              let label_list = (LO.unlabelled::label_list) in
               (rho_0, label_list,CP.mkTrue no_pos,CP.mkTrue no_pos)
         | None, Some f2 ->
 	          let rho_0 = List.combine (f2::r_args) (full_perm_var ()::l_args) in
-              let label_list = (Label_only.Lab_List.unlabelled::label_list) in
+              let label_list = (LO.unlabelled::label_list) in
               (rho_0, label_list,CP.mkTrue no_pos,CP.mkTrue no_pos)
 		          
         (*(if (List.mem f2 evars) then
         (*rename only*)
           let rho_0 = List.combine (f2::r_args) (full_perm_var () ::l_args) in
-          let label_list = (Label_only.Lab_List.unlabelled::label_list) in
+          let label_list = (LO.unlabelled::label_list) in
           (rho_0, label_list,CP.mkTrue no_pos,CP.mkTrue no_pos)
           else if (List.mem f2 expl_vars) then
         (*f2=full to RHS to inst later*)

@@ -10,7 +10,7 @@ open Globals
 open Gen.Basic
 (* open Exc.ETABLE_NFLOW *)
 open Exc.GTable
-open Label_only
+module LO=Label_only.Lab_List
 open Label
 
 (* spec var *)
@@ -109,7 +109,7 @@ type xpure_view = {
 type formula =
   | BForm of (b_formula * (formula_label option))
   | And of (formula * formula * loc)
-  | AndList of (spec_label * formula) list
+  | AndList of (Label_only.spec_label * formula) list
   | Or of (formula * formula * (formula_label option) * loc)
   | Not of (formula * (formula_label option) * loc)
   | Forall of (spec_var * formula * (formula_label option) * loc)
@@ -300,7 +300,7 @@ struct
   let ref_string_of = print_formula
 end;;
 
-module Label_Pure = LabelExpr(Lab_List)(Exp_Pure);; 
+module Label_Pure = LabelExpr(LO)(Exp_Pure);; 
   
 let is_self_var = function
   | Var (x,_) -> is_self_spec_var x
@@ -1839,7 +1839,7 @@ and mkAnd_x f1 f2 (*b*) pos =
   else 
     let rec helper fal fnl = match fal with 
       | Or _ -> join_disjunctions (List.map (fun d->helper d fnl) (split_disjunctions fal))
-      | AndList b ->  mkAndList (Label_Pure.merge b [(Lab_List.unlabelled,fnl)])
+      | AndList b ->  mkAndList (Label_Pure.merge b [(LO.unlabelled,fnl)])
       | _ -> And (fal,fnl, pos) in
     match no_andl f1 , no_andl f2 with 
       | true, true -> And (f1, f2, pos) 
@@ -1857,7 +1857,7 @@ and mkAnd_x f1 f2 (*b*) pos =
 		    join_disjunctions (List.concat lrd)
 	      | AndList b1, AndList b2 ->  mkAndList (Label_Pure.merge b1 b2)
 	      | AndList b, f
-	      | f, AndList b -> ((*print_string ("this br: "^(!print_formula f1)^"\n"^(!print_formula f2)^"\n");*)mkAndList (Label_Pure.merge b [(Lab_List.unlabelled,f)]))
+	      | f, AndList b -> ((*print_string ("this br: "^(!print_formula f1)^"\n"^(!print_formula f2)^"\n");*)mkAndList (Label_Pure.merge b [(LO.unlabelled,f)]))
 	      | _ -> And (f1, f2, pos)
 
 (*and mkAnd_chk f1 f2 pos = mkAnd_dups f1 f2 false pos
@@ -2023,14 +2023,14 @@ and mkExists_with_simpl_x simpl (vs : spec_var list) (f : formula) lbl pos =
 and mkExists_x (vs : spec_var list) (f : formula) lbel pos = match f with
   | AndList b ->
 	let pusher v lf lrest= 	
-	  let rl,vl,rf = List.fold_left (fun (al,avs,af) (cl,cvs,cf)-> (Lab_List.comb_norm al cl,avs@cvs, mkAnd af cf pos)) (List.hd lf) (List.tl lf) in
+	  let rl,vl,rf = List.fold_left (fun (al,avs,af) (cl,cvs,cf)-> (LO.comb_norm al cl,avs@cvs, mkAnd af cf pos)) (List.hd lf) (List.tl lf) in
 	  (rl,vl, Exists (v,rf,lbel,pos))::lrest in
 	let lst = List.map (fun (l,c)-> (l,fv c,c)) b in
 	let lst1 = List.fold_left (fun lbl v-> 
 	    let l1,l2 = List.partition (fun (_,vl,_)-> List.mem v vl) lbl in 
 	    if l1=[] then l2 
 	    else  pusher v l1 l2 				
-	      (*let lul, ll = List.partition (fun (lb,_,_)-> Lab_List.is_unlabelled lb) l1 in
+	      (*let lul, ll = List.partition (fun (lb,_,_)-> LO.is_unlabelled lb) l1 in
 		if lul=[] || ll=[] then pusher v l1 l2 				
 		else
 		let lrel = split_conjunctions ((fun (_,_,f)-> f) (List.hd lul)) in
@@ -2038,7 +2038,7 @@ and mkExists_x (vs : spec_var list) (f : formula) lbel pos = match f with
 		let lrelf = join_conjunctions lrel in
 		let lunrelf = join_conjunctions lunrel in
 		let lrel = ((fun (l,_,_)-> l)(List.hd ll),fv lrelf, lrelf) in
-		let lunrel = (Lab_List.unlabelled, fv lunrelf, lunrelf) in
+		let lunrel = (LO.unlabelled, fv lunrelf, lunrelf) in
 		pusher v (lrel::ll) (lunrel::l2) *)
 	)lst vs in
 	let l = List.map (fun (l,_,f)-> (l,f)) lst1 in
@@ -2169,7 +2169,7 @@ and equalFormula_f (eq:spec_var -> spec_var -> bool) (f01:formula)(f02:formula):
         || ((helper f1 f4) & (helper f2 f3))
     | AndList b1, AndList b2 -> 
 	  if (List.length b1)= List.length b2 
-	  then List.for_all2 (fun (l1,c1)(l2,c2)-> Lab_List.compare l1 l2 = 0 && helper c1 c2) b1 b2 
+	  then List.for_all2 (fun (l1,c1)(l2,c2)-> LO.compare l1 l2 = 0 && helper c1 c2) b1 b2 
 	  else false
     | (Exists(sv1, f1, _,_), Exists(sv2, f2, _,_))
     | (Forall(sv1, f1,_, _), Forall(sv2, f2, _,_)) -> (eq sv1 sv2) & (helper f1 f2)

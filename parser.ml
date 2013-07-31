@@ -7,7 +7,7 @@ open Iast
 open Token
 open Sleekcommons
 open Gen.Basic
-open Label_only
+(* open Label_only *)
 
 open Perm
 
@@ -16,6 +16,8 @@ module P = Ipure
 module E1 = Error
 module I = Iast
 module Ts = Tree_shares.Ts
+module LO = Label_only.Lab_List
+module LO2 = Label_only.Lab2_List
 
 module SHGram = Camlp4.Struct.Grammar.Static.Make(Lexer.Make(Token))
 
@@ -200,16 +202,16 @@ let rec split_members mbrs = match mbrs with
 let rec remove_spec_qualifier (_, pre, post) = (pre, post)
   
 
-let label_struc_list (lgrp:(spec_label_def*F.struc_formula) list list) : (spec_label_def*F.struc_formula) list = 
+let label_struc_list (lgrp:(Label_only.spec_label_def*F.struc_formula) list list) : (Label_only.spec_label_def*F.struc_formula) list = 
   List.concat lgrp
 
-let label_struc_groups (lgrp:(spec_label_def*F.struc_formula) list list) : F.struc_formula =
+let label_struc_groups (lgrp:(Label_only.spec_label_def*F.struc_formula) list list) : F.struc_formula =
   F.EList (label_struc_list lgrp)
 
-let label_struc_list_auto (lgrp:(spec_label_def*F.struc_formula) list list)  = 
+let label_struc_list_auto (lgrp:(Label_only.spec_label_def*F.struc_formula) list list)  = 
   let n = List.length lgrp in
   let fl = List.concat lgrp in
-  let all_unlab = List.for_all (fun (l,_) -> Lab2_List.is_unlabelled l) fl in
+  let all_unlab = List.for_all (fun (l,_) -> LO2.is_unlabelled l) fl in
   if n<=1 || not(all_unlab) then fl 
   else 
     (* automatically insert numeric label if spec is completely unlabelled *)
@@ -219,7 +221,7 @@ let label_struc_list_auto (lgrp:(spec_label_def*F.struc_formula) list list)  =
     in lgr
 
 (* auto insertion of numeric if unlabelled *)
-let label_struc_groups_auto (lgrp:(spec_label_def*F.struc_formula) list list) : F.struc_formula =
+let label_struc_groups_auto (lgrp:(Label_only.spec_label_def*F.struc_formula) list list) : F.struc_formula =
   F.EList (label_struc_list_auto lgrp)
 
 
@@ -1008,23 +1010,23 @@ opt_branches:[[t=OPT branches -> un_option t (P.mkTrue no_pos)]];
 
 branches : [[`AND; `OSQUARE; b= LIST1 one_branch SEP `SEMICOLON ; `CSQUARE -> P.mkAndList_opt b ]];
 
-one_branch_single : [[ `STRING (_,id); `COLON; pc=pure_constr -> (Lab_List.singleton id,pc)]];
+one_branch_single : [[ `STRING (_,id); `COLON; pc=pure_constr -> (LO.singleton id,pc)]];
 
 one_string: [[`STRING (_,id)-> id]];
 
-one_branch : [[ lbl=LIST1 one_string SEP `COMMA ; `COLON; pc=pure_constr -> (Lab_List.norm lbl,pc)]];
+one_branch : [[ lbl=LIST1 one_string SEP `COMMA ; `COLON; pc=pure_constr -> (LO.norm lbl,pc)]];
 
-opt_branch:[[t=OPT branch -> un_option t empty_spec_label]];
+opt_branch:[[t=OPT branch -> un_option t Label_only.empty_spec_label]];
 
 branch: [[ `STRING (_,id);`COLON -> 
-    if !Globals.remove_label_flag then empty_spec_label
-    else Lab_List.singleton id ]];
+    if !Globals.remove_label_flag then Label_only.empty_spec_label
+    else LO.singleton id ]];
 
 view_header:
   [[ `IDENTIFIER vn; `LT; l= opt_ann_cid_list; `GT ->
       let cids, anns = List.split l in
       let cids_t, br_labels = List.split cids in
-	  let has_labels = List.exists (fun c-> not (Label_only.Lab_List.is_unlabelled c)) br_labels in
+	  let has_labels = List.exists (fun c-> not (LO.is_unlabelled c)) br_labels in
       (* DD.info_hprint (add_str "parser-view_header(cids_t)" (pr_list (pr_pair string_of_typ pr_id))) cids_t no_pos; *)
       let _, cids = List.split cids_t in
       (* if List.exists (fun x -> match snd x with | Primed -> true | Unprimed -> false) cids then *)
@@ -1056,7 +1058,7 @@ view_header_ext:
   [[ `IDENTIFIER vn;`OSQUARE;sl= id_list;`CSQUARE; `LT; l= opt_ann_cid_list; `GT ->
       let cids, anns = List.split l in
       let cids_t, br_labels = List.split cids in
-	  let has_labels = List.exists (fun c-> not (Label_only.Lab_List.is_unlabelled c)) br_labels in
+	  let has_labels = List.exists (fun c-> not (LO.is_unlabelled c)) br_labels in
       (* DD.info_hprint (add_str "parser-view_header(cids_t)" (pr_list (pr_pair string_of_typ pr_id))) cids_t no_pos; *)
       let _, cids = List.split cids_t in
       (* if List.exists (fun x -> match snd x with | Primed -> true | Unprimed -> false) cids then *)
@@ -1182,8 +1184,8 @@ extended_l:
    | h=extended_constr_grp -> label_struc_groups [h]]];
    
 extended_constr_grp:
-   [[ c=extended_constr -> [(empty_spec_label_def,c)]
-    | `IDENTIFIER id; `COLON; `OSQUARE; t = LIST0 extended_constr SEP `ORWORD; `CSQUARE -> List.map (fun c-> (Lab2_List.singleton id,c)) t]];
+   [[ c=extended_constr -> [(Label_only.empty_spec_label_def,c)]
+    | `IDENTIFIER id; `COLON; `OSQUARE; t = LIST0 extended_constr SEP `ORWORD; `CSQUARE -> List.map (fun c-> (LO2.singleton id,c)) t]];
 
 extended_constr:
 	[[ `CASE; `OBRACE; il= impl_list; `CBRACE -> 
@@ -1246,6 +1248,13 @@ core_constr:
 opt_flow_constraints: [[t=OPT flow_constraints -> un_option t stub_flow]];
 
 flow_constraints: [[ `AND; `FLOW _; `IDENTIFIER id -> id]]; 
+
+
+ann_label: 
+  [[
+    `MUT -> Some (F.ConstAnn(Mutable))
+   | `IMM  -> Some (F.ConstAnn(Imm))
+   ]];
 
 opt_formula_label: [[t=OPT formula_label -> un_option t None]];		
 
@@ -2265,7 +2274,7 @@ spec_list_outer : [[t= LIST1 spec_list_grp -> label_struc_groups_auto t ]];
 spec_list_grp:
   [[
       (* c=spec -> [(empty_spec_label_def,c)] *)
-     t= LIST1 spec -> List.map (fun c -> (empty_spec_label_def,c)) t
+     t= LIST1 spec -> List.map (fun c -> (Label_only.empty_spec_label_def,c)) t
     | `IDENTIFIER id; `COLON; `OSQUARE; 
           t = spec_list_only 
           (* LIST0 spec SEP `ORWORD *)

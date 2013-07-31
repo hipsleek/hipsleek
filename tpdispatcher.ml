@@ -16,7 +16,7 @@ open Label_aggr
 module CP = Cpure
 module MCP = Mcpure
 
-
+module LO = Label_only.Lab_List
 
 let test_db = false
 
@@ -793,7 +793,7 @@ let elim_exists (f : CP.formula) : CP.formula =
  
 *)
 let build_labels_sat is_comp lbs = 
-  (* let lbs = List.sort Label_only.Lab_List.compare lbs in *)
+  (* let lbs = List.sort LO.compare lbs in *)
   let res = List.map (fun l1 -> (l1,List.filter (is_comp l1) lbs)) lbs in
   let res = List.sort (fun (_,l1) (_,l2) -> 
       let n1=List.length l1 in
@@ -805,8 +805,8 @@ let build_labels_sat is_comp lbs =
   res 
 
 let build_labels_sat is_comp lbs = 
-  let pr1 = pr_list_semi Label_only.Lab_List.string_of in
-  let pr2 = pr_list (pr_pair Label_only.Lab_List.string_of pr1) in
+  let pr1 = pr_list_semi LO.string_of in
+  let pr2 = pr_list (pr_pair LO.string_of pr1) in
   Debug.no_1 "build_labels_sat" pr1 pr2 (build_labels_sat is_comp) lbs
 
 let merge_lbls used labs =
@@ -817,7 +817,7 @@ let merge_lbls used labs =
       | [],_ -> (flag:=true; bb)
       | _,[] -> aa
       | (x::xs),y::ys -> 
-            let r = Label_only.Lab_List.compare x y in
+            let r = LO.compare x y in
             if r<0 then x::(aux xs bb)
             else if r=0 then x::(aux xs ys)
             else (flag:=true; y::(aux aa ys))
@@ -826,8 +826,8 @@ let merge_lbls used labs =
   (res,!flag)
 
 let merge_lbls used labs =
-  let pr1 = pr_list_semi Label_only.Lab_List.string_of in
-  (* let pr2 = pr_list (pr_pair Label_only.Lab_List.string_of pr1) in *)
+  let pr1 = pr_list_semi LO.string_of in
+  (* let pr2 = pr_list (pr_pair LO.string_of pr1) in *)
   Debug.no_2 "merge_lbls"  pr1 pr1 (pr_pair pr1 string_of_bool) merge_lbls used labs
 
 let prune_labels_sat lbs =
@@ -842,8 +842,8 @@ let prune_labels_sat lbs =
   in aux [] lbs 
 
 let prune_labels_sat lbs =
-  let pr1 = pr_list_semi Label_only.Lab_List.string_of in
-  let pr2 = pr_list (pr_pair Label_only.Lab_List.string_of pr1) in
+  let pr1 = pr_list_semi LO.string_of in
+  let pr2 = pr_list (pr_pair LO.string_of pr1) in
   Debug.no_1 "prune_labels_sat" pr2 pr2 (prune_labels_sat) lbs
 
 let build_branches_sat br lbs = 
@@ -855,9 +855,9 @@ let build_branches_sat br lbs =
   mbr
 
 let build_branches_sat br lbs = 
-  let pr1 = pr_list_semi Label_only.Lab_List.string_of in
-  let pr2 = pr_list (pr_pair Label_only.Lab_List.string_of pr1) in
-  let pr3 = pr_list (pr_pair Label_only.Lab_List.string_of !print_formula) in
+  let pr1 = pr_list_semi LO.string_of in
+  let pr2 = pr_list (pr_pair LO.string_of pr1) in
+  let pr3 = pr_list (pr_pair LO.string_of !print_formula) in
   Debug.no_2 "build_branches_sat" (add_str "br" pr3) (add_str "lbs" pr2) pr3 (build_branches_sat) br lbs
 
 let sat_label_filter fct f =
@@ -871,9 +871,9 @@ let sat_label_filter fct f =
           (* Andreea : this is to pick equality from all branches *)
           let (comp,fil) = 
             if !Globals.label_aggressive_sat
-            then (Label_only.Lab_List.is_fully_compatible_sat,fun fs -> fs)
-            else (Label_only.Lab_List.is_part_compatible_sat,
-            List.filter (fun (l,_)-> not(Label_only.Lab_List.is_common l)) ) 
+            then (LO.is_fully_compatible_sat,fun fs -> fs)
+            else (LO.is_part_compatible_sat,
+            List.filter (fun (l,_)-> not(LO.is_common l)) ) 
           in
           let b = 
             if !Globals.label_aggressive_sat
@@ -908,8 +908,8 @@ let imply_label_filter ante conseq =
   (*let s = "unexpected imbricated AndList in tpdispatcher impl: "^(Cprinter.string_of_pure_formula ante)^"|-"^(Cprinter.string_of_pure_formula conseq)^"\n" in*)
   let comp = 
     if  !Globals.label_aggressive_imply
-    then Label_only.Lab_List.is_fully_compatible_imply
-    else Label_only.Lab_List.is_part_compatible_imply
+    then LO.is_fully_compatible_imply
+    else LO.is_part_compatible_imply
   in
   match ante,conseq with
     | Or _,_  
@@ -923,7 +923,7 @@ let imply_label_filter ante conseq =
             else ba
           in
 	  List.map (fun (lconseq, fconseq)-> 
-	      let lst = List.filter (fun (lante,_)-> comp (* Label_only.Lab_List.is_part_compatible *) lante lconseq) ba in 
+	      let lst = List.filter (fun (lante,_)-> comp (* LO.is_part_compatible *) lante lconseq) ba in 
 	      let fs_ante = List.fold_left (fun a (_,c)-> mkAnd a c no_pos) (mkTrue no_pos) lst in
 	      (*(andl_to_and fr1, andl_to_and c)*)
 	      (fs_ante,fconseq)) bc
@@ -1005,7 +1005,7 @@ let assumption_filter_slicing (ante : CP.formula) (cons : CP.formula) : (CP.form
     (List.fold_left (fun acc f -> acc ^ "+++++++++\n" ^ (Cprinter.string_of_pure_formula f) ^ "\n") "" l_ante)) in*)
 
   (CP.join_conjunctions (pick_rel_constraints cons l_ante), cons)
-	   
+
 let assumption_filter (ante : CP.formula) (cons : CP.formula) : (CP.formula * CP.formula) =
   let conseq_vars = CP.fv cons in
   if (List.exists (fun v -> CP.name_of_spec_var v = waitlevel_name) conseq_vars) then

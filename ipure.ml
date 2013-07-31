@@ -10,6 +10,8 @@ open Label_only
 open Label
 include Ipure_D
 
+module LO = Label_only.Lab_List
+
 (* type xpure_view = { *)
 (*     xpure_view_node : ident option; *)
 (*     xpure_view_name : ident; *)
@@ -131,7 +133,7 @@ struct
   let ref_string_of = print_formula
 end;;
 
-module Label_Pure = LabelExpr(Lab_List)(Exp_Pure);; 
+module Label_Pure = LabelExpr(LO)(Exp_Pure);; 
 
 let linking_exp_list = ref (Hashtbl.create 100)
 let _ = let zero = IConst (0, no_pos)
@@ -396,8 +398,8 @@ and mkAnd f1 f2 pos = match f1 with
       | BForm ((BConst (true, _), _), _) -> f1
       | _ -> match f1,f2 with 
 		| AndList b1, AndList b2 -> mkAndList (Label_Pure.merge b1 b2)
-		| AndList b, f -> mkAndList (Label_Pure.merge b [(Lab_List.unlabelled,f)])
-		| f, AndList b -> mkAndList (Label_Pure.merge b [(Lab_List.unlabelled,f)])
+		| AndList b, f -> mkAndList (Label_Pure.merge b [(LO.unlabelled,f)])
+		| f, AndList b -> mkAndList (Label_Pure.merge b [(LO.unlabelled,f)])
 		| _ -> if no_andl f1 && no_andl f2 then And (f1, f2, pos) 
 			   else report_error no_pos "Ipure: unhandled/unexpected mkAnd with andList case"
 
