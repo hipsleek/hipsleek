@@ -1,0 +1,58 @@
+data node {
+ int val;
+ node next;
+}.
+
+HeapPred H(node a, node b, node@NI c).
+HeapPred HP_903(node prev, node@NI cur, node@NI sent).
+HeapPred HP_902(node next_36_901, node@NI prev, node@NI sent).
+PostPred G(node a, node ra, node b, node rb, node@NI c).
+
+relAssume (0)
+ H(cur,prev,sent) --> cur::node<val_36_900,next_36_901>@M 
+   * HP_902(next_36_901,prev,sent) * HP_903(prev,cur,sent).
+
+relAssume (1;2;0)
+ HP_903(prev,cur,sent) 
+  * cur::node<val_36_900,prev>@M & cur=cur_910 & cur'=cur_910 
+     & prev'=null --> H(cur',prev',sent).
+
+relAssume (2;2;0)
+ HP_902(next_36_901,prev,sent) * HP_903(prev,cur,sent) 
+  * cur::node<val_36_900,prev>@M&cur=cur_910 & cur'=next_36_901 
+  & cur'!=sent & cur'!=null --> H(cur',cur_910,sent).
+
+relAssume (1;0)
+ HP_902(next_36_901,prev,sent) * HP_903(prev,cur,sent) 
+  * cur::node<val_36_900,prev>@M&cur=prev' & cur'=next_36_901 
+  & cur'=sent --> G(cur,cur',prev,prev',sent).
+
+relAssume (1;0)
+ HP_902(next_36_901,prev,sent) * HP_903(prev,cur,sent)
+  * cur::node<val_36_900,prev>@M&cur=prev' & cur'=next_36_901 
+  & cur'=sent --> G(cur,cur',prev,prev',sent).
+
+relAssume (1;2;0)
+ HP_902(next_36_901,prev,sent) * 
+ G(prev_922,cur',prev_934,prev',sent)&cur=prev_922 
+  & next_36_901!=sent & prev_934=null & next_36_901=null 
+  --> G(cur,cur',prev,prev',sent).
+
+relAssume (2;2;0)
+ G(next_36_901,cur',cur,prev',sent)
+  &next_36_901!=sent & next_36_901!=null 
+  --> G(cur,cur',prev,prev',sent).
+
+[ HP_903(prev_940,cur_943,sent_938)&
+  prev_941=null --> HP_902(prev_940,prev_941,sent_938),
+ emp&prev_941=null --> HP_903(prev_941,cur_942,sent_964),
+ HP_902(next_36_947,prev_946,sent_948)&next_36_947!=null & 
+  next_36_947!=sent_948 --> next_36_947::node<val_36_965,next_36_966>@M * 
+  HP_967(next_36_966,prev_946,sent_948),
+ HP_967(next_36_966,prev_946,sent_948) |#| cur_944::node<val_36_945,prev_946>@M --> HP_902(next_36_966,cur_944,sent_948),
+ HP_903(prev_946,cur_944,sent_948) * cur_944::node<val_36_945,prev_946>@M&
+  next_36_947!=null & 
+  next_36_947!=sent_948 --> HP_903(cur_944,next_36_947,sent_948)]
+
+shape_infer [H,HP_903,HP_902][G].
+

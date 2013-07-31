@@ -1,0 +1,24 @@
+data node {
+ int val;
+ node next;
+}.
+
+HeapPred H(node a, node b, node@NI c).
+HeapPred HP_903(node prev, node@NI cur, node@NI sent).
+HeapPred HP_902(node next_36_901, node@NI prev, node@NI sent).
+PostPred G(node a, node ra, node b, node rb, node@NI c).
+
+//pred HP_903<c,s> == HP_902(self,null,s).
+
+infer [HP_902]
+  emp&prev_941=null & f=null |- HP_902(prev_941,f,sent_964).
+print residue.
+
+
+infer [HP_903,HP_902]  HP_903(prev_946,cur_944,sent_948) 
+     * cur_944::node<val_36_945,prev_946>@M& next_36_947!=null 
+     & f=null &
+      next_36_947!=sent_948 |- HP_902(cur_944,f,sent_948).
+print residue.
+
+
