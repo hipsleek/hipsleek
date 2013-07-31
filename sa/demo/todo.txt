@@ -5633,7 +5633,7 @@ secondly allow such examples to be accepted.
 */
 
 =====================================================================
-# ll-back-4.ss --sa-dnc
+# ll-back-4.ss --sa-dnc FIXED
 
 ExceptionFailure("hd")Occurred!
 
@@ -5653,10 +5653,39 @@ Same error with --sa-dnc option.
 
 !!! >>>>>> post-predicates: step post-4: weaken<<<<<<Fatal error: exception Failure("hd")
 
-
-
-
 =====================================================================
+# ll-back-4
+
+I saw only:
+
+!!! >>>>>> post-predicates: step post-4: weaken<<<<<<
+!!!     synthesize: G1
+!!!  G1(ptr',ptr) ::=  H1(ptr')
+
+Please print 
+
+>>>> fix-point step for post-pred G1.
+
+Initial recurrence:
+ G1(ptr',ptr) ::= G1(ptr',tmp_916) or  H1(ptr')&ptr=ptr']
+
+Least fixed point computed:
+ G1(ptr',ptr) ::=  H1(ptr')
+
+--sa-dnc
+
+Got:
+
+ H1(tmp_32') ::= 
+ H1(ptr) * tmp_32'::node<ptr>@M
+ or HP_915(tmp_32')
+ ,
+ G1(ptr',ptr) ::= G1(ptr',tmp_916) \/  H1(ptr')&ptr=ptr']
+
+This means that least-fixed point for post-pred has to be 
+performed during the conquer step, and not in the divide
+step.
+
 =====================================================================
 =====================================================================
 =====================================================================
