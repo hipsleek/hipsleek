@@ -18,7 +18,7 @@ sll<"n":n, "v":sm, "v":lg> ==
                  
 int find_min(node x)
   requires x::bnd1<n, s, l, mi> & ["n":n>0]
-  ensures x::bnd1<n, s, l, mi> & ["v":res = mi];
+  ensures x::bnd1<n, s, l, mi> & ["v",""@I:res = mi];
 {
 	int tmp; 
 
@@ -35,9 +35,9 @@ int find_min(node x)
 }
 
 void delete_min(ref node x, int a)
-	requires x::bnd1<n, s, l, mi> & ["n":n >= 1; "v":a = mi] 
-	ensures x' = null & ["n":n = 1; "v":s <= mi < l] or 
-                x'::bnd1<n1, s, l, mi1> & x' != null & ["n":n>1 & n1=n-1; "v":mi1 >= mi];
+  requires x::bnd1<n, s, l, mi> & ["n",""@I:n >= 1; "v","":a = mi] 
+  ensures x' = null & ["n":n = 1; "v":s <= mi < l] or 
+            x'::bnd1<n1, s, l, mi1> & x' != null & ["n":n>1 & n1=n-1; "v":mi1 >= mi];
 
 {
 	if (x.val == a)

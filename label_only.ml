@@ -149,14 +149,14 @@ struct
   let is_part_compatible_sat xs ys =
     let (id1,r1) = get_id xs in
     let (id2,r2) = get_id ys in
-    if id1=id2 || id1="" then true
-    else (List.mem id2 r1)
+    if id1=id2 || id1="" || id2=""  then true
+    else (List.mem id1 r2)
 
   let is_part_compatible_imply xs ys =
     let (id1,r1) = get_id xs in
     let (id2,r2) = get_id ys in
     if id1=id2 || id1="" then true
-    else (List.mem id2 r1)
+    else (List.mem id1 r2)
 
 
   let is_part_compatible xs ys =
@@ -234,8 +234,9 @@ struct
     let rr = aux r1 r2 in
     if id1=id2 then
       id1::rr
-    else id1::rr (* to fix *)
-      (* report_error no_pos "violate pre of Label_Only.Lab_list.comb_norm"  *)
+    else 
+      let (id1,id2) = if id1="" then (id2,id1) else (id1,id2) in
+      id1::(aux [id2] rr) (* to fix *)
 
   let comb_norm i xs ys =
     Debug.no_2_num i "comb_norm" string_of string_of string_of comb_norm xs ys 
@@ -371,14 +372,23 @@ struct
   let is_part_compatible_sat xs ys =
     let (id1,r1) = xs in
     let (id2,r2) = ys in
-    if id1="" || id1=id2 then true
-    else overlap_sat id2 r1
+    if id1="" || id2="" || id1=id2 then true
+    else overlap_sat id1 r2
+
+  let is_part_compatible_sat xs ys =
+    let pr = string_of  in
+    Debug.no_2 "is_part_compatible_sat" pr pr string_of_bool is_part_compatible_sat xs ys 	
+
 
   let is_part_compatible_imply xs ys =
     let (id1,r1) = xs in
     let (id2,r2) = ys in
     if id1="" || id1=id2 then true
-    else overlap_imply id2 r1
+    else overlap_imply id1 r2
+
+  let is_part_compatible_imply xs ys =
+    let pr = string_of  in
+    Debug.no_2 "is_part_compatible_imply" pr pr string_of_bool is_part_compatible_imply xs ys 	
 
   let is_compatible xs ys =
     is_part_compatible_sat xs ys
@@ -411,6 +421,8 @@ struct
 
   let convert i lst = norm (i,lst)
 
+  let add_label id lst = (id,LA_Both)::lst
+
   (* pre : two labels must have the same id and sorted*)
   let comb_norm xs ys = 
     let rec aux xs ys = match xs,ys with
@@ -425,7 +437,9 @@ struct
     let (id2,r2) = ys in
     let rr = aux r1 r2 in
     if id1=id2 then (id1,rr)
-    else (id1, rr) (* id2 dropped here *)
+    else 
+      let (id1,id2) = if id1="" then (id2,id1) else (id1,id2) in
+      (id1, aux [(id2,LA_Both)] rr) 
       (* report_error no_pos "violate pre of Label_Only.Lab_list.comb_norm"  *)
 
   let comb_norm i xs ys =
@@ -537,4 +551,5 @@ type spec_label_def =  Lab2_List.t
 let empty_spec_label_def = Lab2_List.unlabelled
 
 (* module LOne = Lab_LAnn *)
-module LOne = Lab_List
+(* module LOne = Lab_List *)
+module LOne = Lab_LAnn
