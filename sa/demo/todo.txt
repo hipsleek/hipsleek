@@ -5633,7 +5633,29 @@ secondly allow such examples to be accepted.
 */
 
 =====================================================================
+# ll-back-4.ss --sa-dnc
+
+ExceptionFailure("hd")Occurred!
+
+Error1(s) detected at main 
+
+!!! dumping for finalize on hipStop Omega... 83 invocations caught
+(Program not linked with -g, cannot print stack backtrace)
+
+Exception occurred: Failure("hd")
+Error3(s) detected at main 
 =====================================================================
+# ll-b-4a.slk
+
+Why isn't the results printed for sleek?
+
+Same error with --sa-dnc option.
+
+!!! >>>>>> post-predicates: step post-4: weaken<<<<<<Fatal error: exception Failure("hd")
+
+
+
+
 =====================================================================
 =====================================================================
 =====================================================================
