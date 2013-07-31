@@ -2931,15 +2931,17 @@ let collect_post_preds prog constrs=
 
 let classify_post_fix_x constrs=
   let helper r_post_fix_hps cs=
-    let l_hpargs =  CF.get_HRels_f cs.CF.hprel_lhs in
-    let r_hpargs =  CF.get_HRels_f cs.CF.hprel_rhs in
-    let inter_hpargs = List.filter (fun (r_hp,r_args) ->
-        List.exists (fun (l_hp,l_args) -> CP.eq_spec_var l_hp r_hp &&
-            not (eq_spec_var_order_list l_args r_args) ) l_hpargs
-    ) r_hpargs in
-    match inter_hpargs with
-      | [] -> (r_post_fix_hps)
-      | (hp,_)::_ -> (r_post_fix_hps@[hp])
+    let lhds, lhvs, _ = CF.get_hp_rel_formula cs.CF.hprel_lhs in
+    if lhds != [] || lhvs != [] then r_post_fix_hps else
+      let l_hpargs =  CF.get_HRels_f cs.CF.hprel_lhs in
+      let r_hpargs =  CF.get_HRels_f cs.CF.hprel_rhs in
+      let inter_hpargs = List.filter (fun (r_hp,r_args) ->
+          List.exists (fun (l_hp,l_args) -> CP.eq_spec_var l_hp r_hp &&
+              not (eq_spec_var_order_list l_args r_args) ) l_hpargs
+      ) r_hpargs in
+      match inter_hpargs with
+        | [] -> (r_post_fix_hps)
+        | (hp,_)::_ -> (r_post_fix_hps@[hp])
   in
   let part_helper post_fix_hps (r_post, r_post_fix) cs=
     let rhs_hps = CF.get_hp_rel_name_formula cs.CF.hprel_rhs in
