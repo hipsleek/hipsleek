@@ -3831,6 +3831,10 @@ and infer_state = {
     is_hp_defs: hp_rel_def list;
 }
 
+let mk_hp_rel_def hp (args, r, paras) g f pos=
+  let hf = HRel (hp, List.map (fun x -> CP.mkVar x no_pos) args, pos) in
+  (CP.HPRelDefn (hp, r, paras), hf, g, f)
+
 let mkHprel knd u_svl u_hps pd_svl hprel_l hprel_g hprel_r hprel_p=
  {  hprel_kind = knd;
     unk_svl = u_svl;

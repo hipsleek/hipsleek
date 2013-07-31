@@ -5605,7 +5605,7 @@ HP_902(next_36_901,prev_937,sent_936) * HP_903(prev_937,cur_938,sent_936)
 Exception occurred: Failure("Can not prove:\n cur_939::node<val_36_934,prev_935>@M * HP_903(prev_935,cur_939,sent_936)&\n  prev_937=null & \n  cur_938=cur_939 --> cur_938::node<val_36_900,next_36_901>@M * \n  HP_902(next_36_901,prev_937,sent_936) * HP_903(prev_937,cur_938,sent_936)")
 Error3(s) detected at main 
 =====================================================================
-# ll-back-3a.ss
+# ll-back-3a.ss: FIXED
 
 (this example works in default but not sa_logging branch!)
 
