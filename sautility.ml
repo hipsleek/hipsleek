@@ -2929,6 +2929,35 @@ let collect_post_preds prog constrs=
   let post_hps = List.fold_left collect_one [] constrs in
   CP.remove_dups_svl (post_hps)
 
+let classify_post_fix_x constrs=
+  let helper r_post_fix_hps cs=
+    let l_hpargs =  CF.get_HRels_f cs.CF.hprel_lhs in
+    let r_hpargs =  CF.get_HRels_f cs.CF.hprel_rhs in
+    let inter_hpargs = List.filter (fun (r_hp,r_args) ->
+        List.exists (fun (l_hp,l_args) -> CP.eq_spec_var l_hp r_hp &&
+            not (eq_spec_var_order_list l_args r_args) ) l_hpargs
+    ) r_hpargs in
+    match inter_hpargs with
+      | [] -> (r_post_fix_hps)
+      | (hp,_)::_ -> (r_post_fix_hps@[hp])
+  in
+  let part_helper post_fix_hps (r_post, r_post_fix) cs=
+    let rhs_hps = CF.get_hp_rel_name_formula cs.CF.hprel_rhs in
+    if CP.intersect_svl rhs_hps post_fix_hps <> [] then
+      (r_post, r_post_fix@[cs])
+    else
+      (r_post@[cs], r_post_fix)
+  in
+  let post_fix_hps = List.fold_left helper [] constrs in
+  let post_constrs, post_fix_constrs = List.fold_left (part_helper post_fix_hps) ([],[]) constrs in
+  (post_constrs, post_fix_hps, post_fix_constrs)
+
+let classify_post_fix constrs=
+  let pr1 = pr_list_ln Cprinter.string_of_hprel_short in
+  let pr2 = !CP.print_svl in
+  Debug.ho_1 " classify_post_fix" pr1 (pr_triple pr1 pr2 pr1)
+      (fun _ -> classify_post_fix_x constrs) constrs
+
 let weaken_strengthen_special_constr_pre is_pre cs=
   if is_trivial_constr cs then
     if is_pre then

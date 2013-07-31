@@ -1477,6 +1477,32 @@ let infer_pre_fix iprog prog proc_name callee_hps is_pre is need_preprocess dete
       (fun _ _ -> infer_pre_fix_x iprog prog proc_name callee_hps is_pre is need_preprocess detect_dang pre_fix_hps)
       is pre_fix_hps
 
+(*compute least fixpoint for each set of constraints*)
+let infer_post_fix_x iprog prog proc_name callee_hps is_pre is need_preprocess detect_dang post_fix_hps=
+  let rec partition_grp rem_pdefs grps=
+    match rem_pdefs with
+      | [] -> grps
+      | (hp0,args0, f0)::rest ->
+            let grp,rest = List.partition (fun (hp1,_, _) ->
+                CP.eq_spec_var hp0 hp1
+            ) rest in
+            partition_grp rest (grps@[((hp0,args0, f0)::grp)])
+  in
+  (*partition constraints*)
+  let pdefs = get_par_defs_pre_fix is.CF.is_constrs in
+  let pdefs_grps = partition_grp pdefs [] in
+  (*for each set of constraints, compure greatest fixpoint*)
+  let fix_defs = List.map (SAC.compute_lfp prog true is) pdefs_grps in
+  {is with CF.is_constrs = [];
+      CF.is_hp_defs = is.CF.is_hp_defs@fix_defs
+  }
+
+let infer_post_fix iprog prog proc_name callee_hps is_pre is need_preprocess detect_dang post_fix_hps=
+  let pr1 = Cprinter.string_of_infer_state_short in
+  Debug.ho_2 "infer_post_fix" pr1 !CP.print_svl pr1
+      (fun _ _ -> infer_post_fix_x iprog prog proc_name callee_hps is_pre is need_preprocess detect_dang post_fix_hps)
+      is post_fix_hps
+
 let infer_post_synthesize_x prog proc_name callee_hps is need_preprocess detect_dang=
   let _ = DD.binfo_pprint ">>>>>> post-predicates: step post-4: weaken<<<<<<" no_pos in
   let constrs1 = List.map (SAU.weaken_strengthen_special_constr_pre false) is.CF.is_constrs in
@@ -1708,7 +1734,7 @@ and infer_shapes_proper iprog prog proc_name callee_hps is need_preprocess detec
   let unk_hps = List.map fst is.CF.is_dang_hpargs in
   let link_hps = List.map fst is.CF.is_link_hpargs in
   (*partition constraints into 4 groups: pre-predicates, pre-oblg,post-predicates, post-oblg*)
-  let pre_constrs,post_constrs, pre_fix_constrs, pre_oblg_constrs0, post_oblg_constrs, pre_fix_hps =
+  let pre_constrs,post_constrs0, pre_fix_constrs, pre_oblg_constrs0, post_oblg_constrs, pre_fix_hps =
     partition_constrs is.CF.is_constrs is.CF.is_post_hps
   in
   let post_hps1 = is.CF.is_post_hps in
@@ -1732,13 +1758,20 @@ and infer_shapes_proper iprog prog proc_name callee_hps is need_preprocess detec
     iprocess_action iprog prog proc_name callee_hps is_pre_fix pre_fix_act need_preprocess detect_dang
   in
   (*post-synthesize*)
+  let post_constrs, post_fix_hps, post_fix_constrs = SAU.classify_post_fix post_constrs0 in
   let is_post = {is_pre2 with CF.is_constrs = post_constrs } in
   let post_act = IC.icompute_action_post () in
   let is_post1 = iprocess_action iprog prog proc_name callee_hps is_post post_act need_preprocess detect_dang in
+  (*post-fix-synthesize*)
+  let is_post2 = if post_fix_constrs = [] then is_post1 else
+    let is_post_fix = {is_post1 with CF.is_constrs = post_fix_constrs} in
+    let post_fix_act = IC.icompute_action_post_fix post_fix_hps in
+    iprocess_action iprog prog proc_name callee_hps is_post_fix post_fix_act need_preprocess detect_dang
+  in
   (*post-oblg*)
-  let is_post_oblg1 = if post_oblg_constrs = [] then is_post1
+  let is_post_oblg1 = if post_oblg_constrs = [] then is_post2
   else
-    let is_post_oblg = {is_post1 with CF.is_constrs = post_oblg_constrs } in
+    let is_post_oblg = {is_post2 with CF.is_constrs = post_oblg_constrs } in
     let post_obl_act = IC.icompute_action_post_oblg () in
     iprocess_action iprog prog proc_name callee_hps is_post_oblg post_obl_act need_preprocess detect_dang
   in
@@ -1758,6 +1791,7 @@ and iprocess_action_x iprog prog proc_name callee_hps is act need_preprocess det
     | IC.I_pre_fix hps -> infer_pre_fix iprog prog proc_name callee_hps true is need_preprocess detect_dang hps
     | IC.I_pre_oblg -> infer_shapes_from_obligation iprog prog proc_name callee_hps true is need_preprocess  detect_dang
     | IC.I_post_synz -> infer_post_synthesize prog proc_name callee_hps is need_preprocess detect_dang
+    | IC.I_post_fix hps -> infer_post_fix iprog prog proc_name callee_hps false is need_preprocess detect_dang hps
     | IC.I_post_oblg -> infer_shapes_from_obligation iprog prog proc_name callee_hps false is need_preprocess  detect_dang
     | IC.I_seq ls_act -> List.fold_left (fun is (_,act) -> rec_fct is act) is ls_act
  
