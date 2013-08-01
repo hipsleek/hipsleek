@@ -1,0 +1,77 @@
+    
+data node {
+    node prev; 
+    node next; 
+    }.
+
+HeapPred H_1(node next_9, node@NI prv).
+HeapPred H1(node a, node@NI b).
+PostPred G1(node a, node@NI b).
+HeapPred H_0(node prev_8, node@NI prv).
+
+Declare_Unknown [H_0].
+
+infer [H1,G1,H_0,H_1]
+ H_0(prev8,prv) * H_1(next9,prv) * l::node<prev8,next9>@M&l=l' 
+ & prv=prv' & l'!=null 
+ //& !(v_bool_4') & l'!=null & !(v_bool_4') 
+ //& prev8=prv' & v_boolean2' 
+ & prev8=prv' & next9=v_node0'
+ |-  H1(v_node0',l').
+print residue.
+
+/*
+ <1>H_0(prev8,prv) * l::node<prev8,next9>@M[Orig]&l=l' & prv=prv' & l'!=null & prev8=prv' & next9=v_node0'&{FLOW,(19,20)=__norm}[]
+
+ inferred hprel: [H_1(v_node0',prv@NI)&prev8=prv --> H1(v_node0',l'@NI)]
+ Add context for l'
+     H_1(v_node0',prv@NI)&prev8=prv & l=l'
+        & l'=l & l'!=null & next9=vnode0' --> l::node<prev8,next9> --* H1(v_node0',l'@NI)]
+ Apply  [prev8->prv; l->l'; next9->vnode0'
+    H_1(v_node0',prv@NI) --> l'::node<prev8,vnode0> --* H1(v_node0',l'@NI) & l'!=null
+ 
+
+relAssume
+ l=null --> G1(l,prv).
+
+relAssume
+ H_0(prev_8,prv) * l::node<prev_8,next_9>@M * 
+   G1(next_9,l)&prev_8=prv --> G1(l,prv).
+
+
+ H_0(prev_8,prv) --> emp&forall(l:((prv>=prev_8 | l=null)) & 
+  ((prev_8>=prv | l=null)))]
+
+*/
+
+
+/*
+# dll-2.ss
+
+ id: 17; caller: []; line: 19; classic: false; kind: PRE-2; hec_num: 5; evars: []; infer_vars: [H1,G1,H_0,H_1]; c_heap: emp
+ 
+infer [H1,G1,H_0,H_1]
+ H_0(prev8,prv) * H_1(next9,prv) * 
+ l::node<prev8,next9>@M&l=l' & prv=prv' & l'!=null & 
+ !(v_bool_4') & l'!=null & !(v_bool_4') & prev8=prv' & 
+ v_boolean2' & prev8=prv' & next9=v_node0'
+ |-  H1(v_node0',l').
+
+hprel_ass: [ H_1(next9,prv)&prev8=prv --> H1(next9,l)]
+res:  [
+  H_0(prev8,prv) * l::node<prev8,next9>@M&l=l' & prv=prv' & l'!=null & !(v_bool_4') & l'!=null & !(v_bool_4') & prev8=prv' & v_boolean2' & prev8=prv' & next9=v_node0' & next9=v_node0' & l=l'&{FLOW,(22,23)=__norm}[]
+  ]
+
+infer  [H1,G1,H_0,H_1]
+H_0(prev8,prv) * H_1(next9,prv) * 
+l::node<prev8,next9>@M&l=l' & prv=prv' & l'!=null & 
+!(v_bool_4') & l'!=null & !(v_bool_4') & prev8!=prv' & 
+!(v_boolean2') & prev8!=prv' & next9=v_node0'
+ |-  H1(v_node0',l')
+
+hprel_ass: [ H_1(next9,prv) --> H1(next9,l)]
+res:  [
+  H_0(prev8,prv) * l::node<prev8,next9>@M&l=l' & prv=prv' & l'!=null & !(v_bool_4') & l'!=null & !(v_bool_4') & prev8!=prv' & !(v_boolean2') & prev8!=prv' & next9=v_node0' & next9=v_node0' & l=l'&{FLOW,(22,23)=__norm}[]
+  ]
+
+*/

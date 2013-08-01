@@ -1,0 +1,50 @@
+
+data node{
+	int val;
+	node next;
+}.
+
+
+HeapPred H(node a, node b, node@NI c).
+HeapPred H_3(node prev, node@NI cur, node@NI sent).
+HeapPred H_2(node next_1, node@NI prev, node@NI sent).
+HeapPred G(node a, node ra, node b, node rb, node@NI c).
+
+/*
+relAssume
+ (1;2;0)H_3(prev,cur,sent) * cur::node<val_0,prev>@M&
+  cur_920=null & next_1=null & cur=cur_909 & cur_920=next_1 & 
+  cur'=cur_909 & prev'=null --> H(cur',prev',sent).
+*/
+
+// BIND 
+relAssume
+ (0)H(cur,prev,sent) --> cur::node<val_0,next_1>@M * 
+  H_2(next_1,prev,sent) * H_3(prev,cur,sent).
+
+// PRE 
+relAssume
+ (2;2;0)H_2(next_1,prev,sent) * H_3(prev,cur,sent) * 
+  cur::node<val_0,prev>@M&cur=cur_909 & cur'=next_1 & cur'!=sent & 
+  cur'!=null --> H(cur',cur_909,sent).
+
+// POST 
+relAssume (1;0)
+   H_2(cur',prev,sent) & cur'=sent --> emp.
+
+shape_infer [H,H_1,H_2][].
+
+/*
+# swl-i3.slk --pred-en-oblg
+
+GOT
+!!!  synthesize: [H_2]
+!!! >>>>>> step 3b: do apply_transitive_imp <<<<<<
+!!! >>>>>> step 3a: simplification <<<<<<
+!!!  synthesize: [H]
+!!! >>>>>> step 3b: do apply_transitive_imp <<<<<<
+!!! >>>>>> step 3a: simplification <<<<<<
+!!! pre-obligation:
+[ H_2(next_53,prev_52,sent_54) * cur_50::node<val_51,prev_52>@M&
+  next_53!=null & next_53!=sent_54 --> next_53::node<val_0,next_1>@M * 
+  H_2(next_1,cur_50,sent_54)]

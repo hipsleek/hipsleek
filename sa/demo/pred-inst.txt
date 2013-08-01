@@ -1,0 +1,80 @@
+Given:
+HeapPred HP_7(node a,node b).
+
+infer [HP_7] 
+HP_7(x,l2) & x!=null
+ |-  x::node<_,_>@M.
+
+We currently obtained:
+ inferred hprel: [HP_7(x,l2)&x!=null --> x::node<Anon_25,Anon_26>@M * 
+                   (HP_27(Anon_25,l2)) * (HP_28(Anon_26,l2))&true]
+
+which seems to lose the ability to instantiate l2. I would like
+to suggest that we support a more general instantiation of the form:
+
+ HP_7(x,l2)&x!=null --> x::node<Anon_25,Anon_26>@M * 
+            HP_27(Anon_25,l2#) * HP_28(Anon_26,l2#) * HP_29(l2,x#).
+
+which creates an extra predicate HP_29(l2,x#) which allows l2 to
+be instantiated later. Since each pointer can be instantiated only once,
+we will use the notation l2# to denote the fact that the location
+cannot be instantiated. This can be marked at the heap predicate
+level. We may wish to declare the following for a predicate:
+
+HeapPred HP_7(node a,node# b).
+
+to indicate that only the first parameter of HP_7 can be instantiated.
+Parameters that cannot be instantiated could either become useless or
+serve as dangling reference. Parameter that has been instantiated
+will serve as the self parameter.
+
+With these changes, I expect it to be able to handle dll-append.ss
+example. I have constructed a number of dll-app-bug*slk file for testing
+the idea. 
+
+dll-app-bug1d.slk contain some examples:
+
+HeapPred HP_7(node@NI a,node b).
+HeapPred HP_9(node a,node b).
+
+infer [HP_7] // (1)
+HP_7(x,l2) & x!=null |-  x::node<_,_>@M.
+print residue.
+// should fail
+
+infer [HP_7] //(2)
+HP_7(x,l2) & x!=null |-  l2::node<_,_>@M.
+print residue.
+// should succeed
+// HP_7(x,l2) --> l2::node<p,q>*HP_10(p,x#)*HP_11(q,x#)
+
+infer [HP_9] //(3)
+HP_9(x,l2) & x!=null |-  x::node<_,_>@M.
+print residue.
+// should succeed
+// HP_9(x,l2) --> x::node<p,q>*HP_10(p,l2#)*HP_11(q,l2#)
+
+infer [HP_9] //(4)
+HP_9(x,l2) & x!=null |-  l2::node<_,_>@M.
+print residue.
+// should succeed
+// HP_9(x,l2) --> l2::node<p,q>*HP_10(p,x#)*HP_11(q,x#)
+
+=======
+Another simpler idea is perhaps to have just the first parameter
+as the instantiating parameter; and to write two unknown predicate
+instead.
+
+void dll_append(node l1, node l2)
+// infer [H1,H2,G] requires H1(l1)*H2(l2) ensures G(l1);
+infer [H3a,H3b,G3] 
+  requires H3a(l1,l2) * H3b(l2,l2)
+  ensures G3(l1,l2);
+
+However, this makes the template spec looks complicated; and
+place an extra assumption on "*" on precondition. It also may
+trigger other problems in post-condition resolution.
+
+
+
+ 

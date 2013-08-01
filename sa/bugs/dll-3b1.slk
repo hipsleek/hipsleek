@@ -1,0 +1,69 @@
+
+data node{
+	int val;
+	node prev;
+	node next;
+}.
+
+HeapPred H1(node a, node b).
+HeapPred G1(node a, node b).
+HeapPred HP_6(node a, node b).
+HeapPred HP_7(node a, node b).
+
+Declare_Unknown [HP_6].
+
+relAssume H1
+  H1(c,p)&c!=null --> c::node<_,prev_19_766',next_19>@M *
+    HP_7(next_19,p)&true.
+
+relAssume H1
+  HP_7(next_19,p) & true --> H1(next_19,c')&true.
+
+relAssume H1
+  H1(c,p)&c=null --> emp.
+
+shape_infer [H1,HP_7][].//[pre_hps][post_hps]
+
+/*
+# dll-3b1.slk 
+
+without --pred-useless
+
+ [ HP_7(next_45,p_46) ::=  H1(next_45,c')&true,
+  H1(c_47,p_48) ::=  
+     H1(next_42,c') * c_47::node<Anon_40,prev_19_41,next_42>@M&true
+      or emp&c_47=null,
+  HP_6(a,b) ::= NONE]
+
+======
+--pred-useless
+ 
+ HP_7(next_45,p_46) ::=  HP_47(next_45)&true,
+ H1(c_48,p_49) ::=  HP_50(c_48)&true,
+ HP_47(next_45) ::=  HP_50(next_45)&true,
+ HP_50(c_48) ::=  
+ HP_50(next_42) * c_48::node<Anon_40,prev_19_41,next_42>@M&true
+ or emp&c_48=null
+ ,
+ HP_6(a,b) ::= NONE]
+
+==============
+ PROBLEM : HP_47 seems unnecessary; 
+ simpler to have just below. I guess we only
+ one to eliminate useless parameters of
+ recursive predicates. For non-rec predicates,
+ I think they can be easily eliminated
+ by unfolding.
+==============
+EXPECTING: 
+
+ HP_7(next_45,p_46) ::=  H1(next_45,c')
+ H1(c_48,p_49) ::=  HP_50(c_48)&true,
+ HP_50(c_48) ::=  
+   HP_50(next_42) * c_48::node<Anon_40,prev_19_41,next_42>@M&true
+   or emp&c_48=null
+ ,
+ HP_6(a,b) ::= NONE]
+
+
+*/

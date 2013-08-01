@@ -1,0 +1,36 @@
+data node{
+	int val;
+	node prev;
+	node next;
+}.
+
+HeapPred H1(node a).
+HeapPred G1(node a, node b).
+
+infer [H1] H1(c) |- c::node<_@A,_@A,y@L>.
+print residue.
+
+infer [H1] H1(c) |- c::node<_@A,_@A,y@L>@L.
+print residue.
+
+infer [H1] H1(c) |- c::node<_@A,_@A,y@M>@M.
+print residue.
+
+infer [H1] H1(c) |- c::node<_@A,r@L,y@M>@M.
+print residue.
+
+
+checkentail c::node<a,b,c> |- c::node<_@A,_@A,y@L>.
+print residue.
+
+checkentail c::node<a,b,c> |- c::node<_@A,_@A,y@L>@L.
+print residue.
+
+checkentail c::node<a,b,c> |- c::node<_@A,_@A,y@M>@M.
+print residue.
+
+checkentail c::node<a,b,c> |- c::node<_@A,r@L,y@M>@M.
+print residue.
+
+checkentail c::node<a,b,c> |- c::node<_,r,y>@L.
+print residue.

@@ -45,6 +45,7 @@ module E = Errormsg
 module H = Hashtbl
 module IH = Inthash
 module AL = Alpha
+module IF = Iformula
 
 open Cabs
 open Cabshelper
@@ -53,6 +54,7 @@ open Cil
 open Cilint
 open Trace
 
+exception HipSpecsError of string
 
 let mydebugfunction () = 
   E.s (error "mydebugfunction")
@@ -319,12 +321,12 @@ let makeCast ~(e: exp) ~(newt: typ) =
  * keep track of local scopes we also maintain a list of scopes (represented
  * as lists).  *)
 type envdata =
-    EnvVar of varinfo                   (* The name refers to a variable
+    EnvVar of Cil.varinfo                   (* The name refers to a variable
                                          * (which could also be a function) *)
-  | EnvEnum of exp * typ                (* The name refers to an enumeration
+  | EnvEnum of Cil.exp * Cil.typ                (* The name refers to an enumeration
                                          * tag for which we know the value
                                          * and the host type *)
-  | EnvTyp of typ                       (* The name is of the form  "struct
+  | EnvTyp of Cil.typ                       (* The name is of the form  "struct
                                          * foo", or "union foo" or "enum foo"
                                          * and refers to a type. Note that
                                          * the name of the actual type might
@@ -902,13 +904,14 @@ module BlockChunk =
           (fun s -> 
             if s.labels != [] then 
               raise (Failure "cannot duplicate: has labels");
-            (match s.skind with 
-              If _ | Switch _ | Loop _ | Block _ -> 
-                raise (Failure "cannot duplicate: complex stmt")
-            | Instr il -> 
-                pCount := !pCount + List.length il
-            | _ -> incr pCount);
-            if !pCount > 5 then raise (Failure ("cannot duplicate: too many instr"));
+            (* TRUNG: comment bellow code to allow duplicateChunk                        *)
+            (* (match s.skind with                                                       *)
+            (*   If _ | Switch _ | Loop _ | Block _ ->                                   *)
+            (*     raise (Failure "cannot duplicate: complex stmt")                      *)
+            (* | Instr il ->                                                             *)
+            (*     pCount := !pCount + List.length il                                    *)
+            (* | _ -> incr pCount);                                                      *)
+            (* if !pCount > 5 then raise (Failure ("cannot duplicate: too many instr")); *)
             (* We can just copy it because there is nothing to share here. 
              * Except maybe for the ref cell in Goto but it is Ok to share 
              * that, I think *)
@@ -925,7 +928,7 @@ module BlockChunk =
     let canDrop (c: chunk) =
       List.for_all canDropStatement c.stmts
 
-    let loopChunk (body: chunk) (hspecs: Iformula.struc_formula) : chunk = 
+    let loopChunk (body: chunk) (hspecs: IF.struc_formula) : chunk = 
       (* Make the statement *)
       let loop = mkStmt (Loop (c2block body, hspecs, !currentLoc, None, None)) in
       { stmts = [ loop (* ; n *) ];
@@ -2650,7 +2653,6 @@ and doAttr (a: A.attribute) : attribute list =
                         (a: A.expression) : attrparam =
         match a with
         | A.VARIABLE (n, l) -> begin
-            let _ = print_endline (" == n 1 = " ^ n ^ " -- loc = " ^ (Cprint.string_of_loc l)) in
             let n' = if strip then stripUnderscore n else n in
             (** See if this is an enumeration *)
             try
@@ -3269,8 +3271,8 @@ and doExp (asconst: bool)   (* This expression is used as a constant *)
     (* Do the potential lvalues first *)
     | A.VARIABLE (n, l) -> begin
         (* Look up in the environment *)
+        let p = convLoc l in
         try
-          let p = convLoc l in
           let envdata = H.find env n in
           match envdata with
             EnvVar vi, _ ->
@@ -3290,12 +3292,27 @@ and doExp (asconst: bool)   (* This expression is used as a constant *)
                 in
                 finishExp empty (Const (CEnum(tag, n, ei), p)) (typeOf tag)
               end
-
           | _ -> raise Not_found
         with Not_found -> begin
-          if isOldStyleVarArgName n then 
+          if (n = "NULL") then (
+            (* TRUNG: consider NULL as a built-in variable and pass through *)
+            let vi = {vname = "NULL";
+                      vtype = TPtr (TVoid [], []);
+                      vattr = [];
+                      vstorage = NoStorage;
+                      vglob = true;
+                      vinline = false;
+                      vdecl = lu;
+                      vid = -1;
+                      vaddrof = false;
+                      vreferenced = false;
+                      vdescr = nil;
+                      vdescrpure = false} in
+            finishExp empty (Lval(var vi p, p)) vi.vtype
+          )
+          else if isOldStyleVarArgName n then
             E.s (error "Cannot resolve variable %s. This could be a CIL bug due to the handling of old-style variable argument functions." n)
-          else 
+          else
             E.s (error "Cannot resolve variable %s." n)
         end
     end
@@ -3575,7 +3592,7 @@ and doExp (asconst: bool)   (* This expression is used as a constant *)
         finishExp empty (AlignOfE(e'', p)) !typeOfSizeOf
 
     | A.CAST ((specs, dt), ie, l) ->
-        let p = convLoc l in
+        (* let p = convLoc l in *)
         let s', dt', ie' = preprocessCast specs dt ie in
         (* We know now that we can do s' and dt' many times *)
         let typ = doOnlyType s' dt' in
@@ -5609,8 +5626,8 @@ and doAliasFun vtype (thisname:string) (othername:string)
                               else A.RETURN(call, loc)
   in
   let body = { A.blabels = []; A.battrs = []; A.bstmts = [stmt]; A.bloc = loc } in
-  let specs = Iformula.EList [] in
-  let fdef = A.FUNDEF (sname, specs, body, loc) in
+  let hspecs = None in
+  let fdef = A.FUNDEF (sname, hspecs, body, loc) in
   ignore (doDecl true fdef);
   (* get the new function *)
   let v,_ = try lookupGlobalVar thisname
@@ -5742,7 +5759,7 @@ and doDecl (isglobal: bool) : A.definition -> chunk = function
                  sbody    = dummyFunDec.sbody; (* Not final yet *)
                  smaxstmtid = None;
                  sallstmts = [];
-                 sspecs = hspecs;
+                 hipfuncspec = IF.EList [];
                };
             !currentFunctionFDEC.svar.vdecl <- funloc;
 
@@ -5852,33 +5869,33 @@ and doDecl (isglobal: bool) : A.definition -> chunk = function
               
               
               (* Create the formals and add them to the environment. *)
-	      (* sfg: extract locations for the formals from dt *)
-	      let doFormal (loc : location) (fn, ft, fa) =
-		let f = makeVarinfo false fn ft in
-		(* makeVarinfo removes const qualifier even on formals *)
-		f.vtype <- ft;
-		  (f.vdecl <- loc;
-		   f.vattr <- fa;
-		   alphaConvertVarAndAddToEnv true f)
-	      in
-	      let rec doFormals fl' ll' = 
-		begin
-		  match (fl', ll') with
-		    | [], _ -> [] 
-			
-		    | fl, [] -> (* no more locs available *)
-			  List.map (doFormal !currentLoc) fl 
-			
-		    | f::fl, (_,(_,_,_,l))::ll ->  
-			(* sfg: these lets seem to be necessary to
-			 *  force the right order of evaluation *)
-			let f' = doFormal (convLoc l) f in
-			let fl' = doFormals fl ll in
-			  f' :: fl'
-		end
-	      in
-	      let fmlocs = (match dt with PROTO(_, fml, _) -> fml | _ -> []) in
-	      let formals = doFormals (argsToList formals_t) fmlocs in
+              (* sfg: extract locations for the formals from dt *)
+              let doFormal (loc : location) (fn, ft, fa) =
+                let f = makeVarinfo false fn ft in
+                (* makeVarinfo removes const qualifier even on formals *)
+                f.vtype <- ft;
+                (f.vdecl <- loc;
+                 f.vattr <- fa;
+                 alphaConvertVarAndAddToEnv true f)
+              in
+              let rec doFormals fl' ll' = 
+                begin
+                  match (fl', ll') with
+                  | [], _ -> [] 
+                     
+                  | fl, [] -> (* no more locs available *)
+                    List.map (doFormal !currentLoc) fl 
+                
+                  | f::fl, (_,(_,_,_,l))::ll ->  
+                  (* sfg: these lets seem to be necessary to
+                   *  force the right order of evaluation *)
+                  let f' = doFormal (convLoc l) f in
+                  let fl' = doFormals fl ll in
+                  f' :: fl'
+                end
+              in
+              let fmlocs = (match dt with PROTO(_, fml, _) -> fml | _ -> []) in
+              let formals = doFormals (argsToList formals_t) fmlocs in
 
               (* Recreate the type based on the formals. *)
               let ftype = TFun(returnType, 
@@ -5913,6 +5930,9 @@ and doDecl (isglobal: bool) : A.definition -> chunk = function
               fixbackFormals 0 !currentFunctionFDEC.sformals;
               transparentUnionArgs := [];
             in
+
+            (********** Now do the HIP specification *************)
+            !currentFunctionFDEC.hipfuncspec <- doHipSpecs hspecs;
 
             (********** Now do the BODY *************)
             let _ = 
@@ -6078,7 +6098,7 @@ and doDecl (isglobal: bool) : A.definition -> chunk = function
               | Block b -> blockFallsThrough b
               | TryFinally (b, h, _) -> blockFallsThrough h
               | TryExcept (b, _, h, _) -> true (* Conservative *)
-              | HipStmt _ -> false
+              | HipStmtSpec _ -> false
             and blockFallsThrough b = 
               let rec fall = function
                   [] -> true
@@ -6126,7 +6146,7 @@ and doDecl (isglobal: bool) : A.definition -> chunk = function
               | Block b -> blockCanBreak b
               | TryFinally (b, h, _) -> blockCanBreak b || blockCanBreak h
               | TryExcept (b, _, h, _) -> blockCanBreak b || blockCanBreak h
-              | HipStmt _ -> false
+              | HipStmtSpec _ -> false
             and blockCanBreak b = 
               List.exists stmtCanBreak b.bstmts
             in
@@ -6135,10 +6155,10 @@ and doDecl (isglobal: bool) : A.definition -> chunk = function
                 match unrollType !currentReturnType with
                   TVoid _ -> None
                 | (TInt _ | TEnum _ | TFloat _ | TPtr _) as rt -> 
-                    ignore (warn "Body of function %s falls-through. Adding a return statement"  !currentFunctionFDEC.svar.vname);
+                    (* ignore (warn "Body of function %s falls-through. Adding a return statement"  !currentFunctionFDEC.svar.vname); *)
                     Some (makeCastT (zero lu) intType rt)
                 | _ ->
-                    ignore (warn "Body of function %s falls-through and cannot find an appropriate return value" !currentFunctionFDEC.svar.vname);
+                    (* ignore (warn "Body of function %s falls-through and cannot find an appropriate return value" !currentFunctionFDEC.svar.vname); *)
                     None
               in
               if not (hasAttribute "noreturn" 
@@ -6152,12 +6172,10 @@ and doDecl (isglobal: bool) : A.definition -> chunk = function
                         n docEnv); *)
             cabsPushGlobal (GFun (!currentFunctionFDEC, funloc));
             empty
-          with e when continueOnError -> begin
-            ignore (E.log "error in collectFunction %s: %s"
-                      n (Printexc.to_string e));
-            cabsPushGlobal (GAsm("error in function " ^ n, !currentLoc));
-            empty
-          end)
+          with e -> (
+            E.s (error "Error in collectFunction %s: %s" n (Printexc.to_string e));
+          )
+        )
         () (* argument of E.withContext *)
     end (* FUNDEF *)
 
@@ -6174,6 +6192,20 @@ and doDecl (isglobal: bool) : A.definition -> chunk = function
           if isNotEmpty s then 
             E.s (bug "doDecl returns non-empty statement for global"))
         dl;
+      empty
+
+  | HIP_PROG_SPEC (hspec, loc) ->
+      currentLoc := convLoc loc;
+      let base_loc = {Parser.line_num = loc.A.start_pos.A.lineno;
+                      Parser.line_start = loc.A.start_pos.A.linestart;
+                      Parser.byte_num = loc.A.start_pos.A.byteno} in
+      let fname = loc.A.start_pos.A.filename in
+      let progspec = (
+        try
+          Parser.parse_c_program_spec fname hspec base_loc
+        with _ -> raise (HipSpecsError "Program specs error!")
+      ) in
+      cabsPushGlobal (GHipProgSpec (progspec, !currentLoc));
       empty
 
   | _ -> E.s (error "unexpected form of declaration")
@@ -6310,7 +6342,7 @@ and assignInit (lv: lval)
                   let inci = Set(ctrlval, BinOp(PlusA, Lval (ctrlval, l), Const(CInt64(1L, IUInt, None), l), uintType, l), !currentLoc) in
                   (ifc @@ assignc) +++ inci in
                 exitLoop ();
-                let loopc = loopChunk bodyc (Iformula.EList []) in
+                let loopc = loopChunk bodyc (IF.EList []) in
                 b +++ init @@ loopc
           | _ -> E.s (bug "Array length is not a constant expression")
         end
@@ -6390,8 +6422,20 @@ and doStatement (s : A.statement) : chunk =
         let break_cond = breakChunk loc' in
         exitLoop ();
         currentLoc := loc';
+        let hspec = (
+          match hs with
+          | None -> Iformula.EList [];
+          | Some (s, hsloc) ->
+              let base_loc = {Parser.line_num = hsloc.A.start_pos.A.lineno;
+                              Parser.line_start = hsloc.A.start_pos.A.linestart;
+                              Parser.byte_num = hsloc.A.start_pos.A.byteno} in
+              let fname = hsloc.A.start_pos.A.filename in
+              try
+                Parser.parse_c_function_spec fname s base_loc
+              with _ ->  raise (HipSpecsError "Loop specs error!")
+        ) in
         loopChunk ((doCondition false e skipChunk break_cond)
-                   @@ s') hs
+                   @@ s') hspec
           
     | A.DOWHILE(e,s,hs,loc) -> 
         startLoop false;
@@ -6402,7 +6446,19 @@ and doStatement (s : A.statement) : chunk =
           consLabContinue (doCondition false e skipChunk (breakChunk loc'))
         in
         exitLoop ();
-        loopChunk (s' @@ s'') hs
+        let hspec = (
+          match hs with
+          | None -> Iformula.EList [];
+          | Some (s, hsloc) ->
+              let base_loc = {Parser.line_num = hsloc.A.start_pos.A.lineno;
+                              Parser.line_start = hsloc.A.start_pos.A.linestart;
+                              Parser.byte_num = hsloc.A.start_pos.A.byteno} in
+              let fname = hsloc.A.start_pos.A.filename in
+              try
+                Parser.parse_c_function_spec fname s base_loc
+              with _ ->  raise (HipSpecsError "Loop specs error!")
+        ) in
+        loopChunk (s' @@ s'') hspec
           
     | A.FOR(fc1,e2,e3,s,hs,loc) -> begin
         let loc' = convLoc loc in
@@ -6420,13 +6476,25 @@ and doStatement (s : A.statement) : chunk =
         let s'' = consLabContinue se3 in
         let break_cond = breakChunk loc' in
         exitLoop ();
+        let hspec = (
+          match hs with
+          | None -> Iformula.EList [];
+          | Some (s, hsloc) ->
+              let base_loc = {Parser.line_num = hsloc.A.start_pos.A.lineno;
+                              Parser.line_start = hsloc.A.start_pos.A.linestart;
+                              Parser.byte_num = hsloc.A.start_pos.A.byteno} in
+              let fname = hsloc.A.start_pos.A.filename in
+              try
+                Parser.parse_c_function_spec fname s base_loc
+              with _ ->  raise (HipSpecsError "Loop specs error!")
+        ) in
         let res = 
           match e2 with
             A.NOTHING -> (* This means true *)
-              se1 @@ (loopChunk (s' @@ s'') hs)
+              se1 @@ (loopChunk (s' @@ s'') hspec)
           | _ -> 
               se1 @@ (loopChunk ((doCondition false e2 skipChunk break_cond)
-                                @@ s' @@ s'') hs)
+                                @@ s' @@ s'') hspec)
         in
         exitScope ();
         res
@@ -6649,10 +6717,19 @@ and doStatement (s : A.statement) : chunk =
         in
         s2c (mkStmt (TryExcept (c2block b', (il', e'), c2block h', loc'))) loc'
 
-    | HIP_STMT (iast_exp, loc) ->
+    | HIP_STMT_SPEC (hs, loc) ->
         let loc' = convLoc loc in
         currentLoc := loc';
-        s2c (mkStmt (HipStmt (iast_exp, loc'))) loc'
+        let base_loc = {Parser.line_num = loc.A.start_pos.A.lineno;
+                        Parser.line_start = loc.A.start_pos.A.linestart;
+                        Parser.byte_num = loc.A.start_pos.A.byteno} in
+        let fname = loc.A.start_pos.A.filename in
+        let hspec = (
+          try
+            Parser.parse_c_statement_spec fname hs base_loc
+          with _ ->  raise (HipSpecsError "Statement specs error!")
+        ) in
+        s2c (mkStmt (HipStmtSpec (hspec, loc'))) loc'
 
   with e when continueOnError -> begin
     (ignore (E.log "Error in doStatement (%s)\n" (Printexc.to_string e)));
@@ -6660,6 +6737,32 @@ and doStatement (s : A.statement) : chunk =
     consLabel "booo_statement" empty (convLoc (C.get_statementloc s)) false
   end
 
+and doHipSpecs (hs: (string * Cabs.cabsloc) option) : IF.struc_formula =
+  let hspec = (
+    match hs with
+    | None -> Iformula.EList [];
+    | Some (s, hsloc) ->
+        let base_loc = {Parser.line_num = hsloc.A.start_pos.A.lineno;
+                        Parser.line_start = hsloc.A.start_pos.A.linestart;
+                        Parser.byte_num = hsloc.A.start_pos.A.byteno} in
+        let fname = hsloc.A.start_pos.A.filename in
+        try
+          Parser.parse_c_function_spec fname s base_loc
+        with _ -> raise (HipSpecsError "Function specs error!")
+  ) in
+  let vars = IF.struc_free_vars true hspec in
+  let substitutes = ref [] in
+  List.iter (fun (v,p) ->
+    try
+      let x = Hashtbl.find env v in
+      match x with
+      | EnvVar y, _ ->
+          if (y.vname != v) then substitutes := !substitutes @ [((v, p), (y.vname, p))];
+      | _ -> ()
+    with _ -> ()
+  ) vars;
+  (* return *)
+  IF.subst_struc !substitutes hspec
 
 let rec stripParenLocal e = match e with
   | A.PAREN (e2, _) -> stripParenLocal e2

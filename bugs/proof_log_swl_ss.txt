@@ -1,0 +1,59 @@
+
+--------------
+..no proving kind.....
+Prover: 
+Type: Imply: ante: true
+	     conseq:  true
+Result: true
+
+--------------
+Proving Infor spec:None loc:(Line:12,Col:11) kind::PRED CHECK-INVARIANT...
+Prover: CACHED
+Type: Simplify:  exists(Mnxt:exists(nxt:M=union(Mnxt,bag({self})) & nxt!=s))
+Result:  exists(Mnxt:exists(nxt:M=union(Mnxt,bag({self})) & nxt!=s))
+
+--------------
+Proving Infor spec:None loc:(Line:12,Col:11) kind::PRED CHECK-INVARIANT
+Trace::[]
+
+Prover: 
+Type: Sat:  ((self=null & s!=self & M=bag()) | (exists(Mnxt:exists(nxt:M=union(Mnxt,
+bag({self})) & nxt!=s)) & s!=self & self!=null))
+Result: true
+
+// why isn't eps splitting?
+
+--------------
+Proving Infor spec:None loc:(Line:12,Col:11) kind::PRED CHECK-INVARIANT
+Trace::[]
+
+Prover: 
+Type: Imply: ante: ((self=null & s!=self & M=bag()) | 
+(exists(Mnxt_859:exists(nxt_860:M=union(Mnxt_859,bag({self})) & 
+nxt_860!=s)) & s!=self & self!=null))
+	     conseq:  s!=self
+Result: true
+
+// why isn't --eps slicing done?
+
+--------------
+Proving Infor spec:None loc:(Line:12,Col:11) kind::PRED CHECK-INVARIANT...
+Prover: 
+Type: Simplify:  exists(Mnxt:exists(nxt:M=union(Mnxt,bag({self})) & nxt!=s))
+Result:  exists(Mnxt:exists(nxt:M=union(Mnxt,bag({self})) & nxt!=s))
+
+--------------
+Proving Infor spec:None loc:(Line:12,Col:11) kind::PRED CHECK-INVARIANT...
+Prover: 
+Type: Simplify:  exists(Mnxt:exists(nxt:M=union(Mnxt,bag({self})) & nxt!=s))
+Result:  exists(Mnxt:exists(nxt:M=union(Mnxt,bag({self})) & nxt!=s))
+
+--------------
+Proving Infor spec:None loc:(Line:12,Col:11) kind::PRED CHECK-INVARIANT...
+Prover: 
+Type: Imply: ante: s!=self
+	     conseq:  ((exists(Mnxt:exists(nxt:M=union(Mnxt,bag({self})) & nxt!=s)) & s!=self & 
+self!=null) | (self=null & s!=self & M=bag()))
+Result: false
+
+// why are ante/conseq it reversed?

@@ -1,0 +1,47 @@
+
+data node {
+ int val;
+ node next;
+}.
+
+HeapPred H(node x, int@NI v).
+HeapPred H_1(node x, int@NI v).
+
+relAssume
+ H(x,v)&x!=null --> x::node<val_16_918,next_16_919>@M 
+         * H_1(next_16_919,v) & val_16_918>=v.
+
+relAssume
+ H_1(next_16_919,v)&v<=val_16_918 --> H(next_16_919,val_16_918).
+ //H_1(next_16_919,v) |#| v<=val_16_918 --> H(next_16_919,val_16_918).
+
+relAssume
+ H(x,v)&x=null --> emp.
+
+
+shape_infer [H,H_1][].
+
+/*
+# sorted-4c.slk 
+
+GOT
+===
+[ H_1(next_16_36,v_37) ::= 
+          H(next_16_36,val_16_918)&v_37<=val_16_918,
+
+ H(x_38,v_39) ::= 
+   H(next_16_32,val_16_33) * x_38::node<val_16_33,next_16_32>@M
+         &v_39<=val_16_33
+   or emp&x_38=null
+
+PROBLEM
+=======
+H_1 is a guarded equation, and should we printed as:
+
+H_1(next_16_36,v_37) |#| v_37<=val_16_918 
+      ::= H(next_16_36,val_16_918)&,
+
+
+
+
+*/

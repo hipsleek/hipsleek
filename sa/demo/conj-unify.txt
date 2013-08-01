@@ -1,0 +1,120 @@
+
+
+     H(vs) & p1 --> D1
+     H(vs) & p2 --> D2
+     p1/\p2!=false
+ ---------------------------------------
+  H(vs) & p1 & not(p2) --> D1
+  H(vs) & p2 & not(p1) --> D1
+  H(vs) & p1 & p2 --> conj-unify[vs](D1,D2)
+
+
+     H(vs) & p1 --> D1
+     H(vs) & p1 --> D2
+ ---------------------------------------
+  H(vs) & p1 --> conj-unify[vs](D1,D2)
+
+==================================================
+
+
+ conj-unify[vs](pure,D) --> D & pure
+
+ conj-unify[vs](D,pure) --> D & pure
+
+
+      x in vs
+    \rho = [ys->xs]
+ conj_unify[vs+xs][E+(P1,P2),N](D1,\rho D2) --> D3,R
+   (P1,P2) \not\in N
+   R2 = if (P1,P2) in E then [] 
+        else [(P1,P2)]
+---------------------------------------------------------
+conj-unify[vs][E,N](x::P1(xs)*D1,x::P2(ys)*D2) --> x::P(xs)*D3,R+R2
+
+
+   conj_unify[vs](D1,D3) --> D4
+   conj_unify[vs](D2,D4) --> D6
+--------------------------------------------------
+conj-unify[vs](D1 or D2, D3 or D4) --> D4 or D6
+
+=============================================================
+
+// both for pre and post-pred
+
+this is used to identify equivalent terms, so as
+to eliminate repeated formula. We can use it
+to identify both  equivalent formula
+and equivalent predicate.
+
+equivalent formula:
+
+ ex1 = vars(p1)-vs
+ ex2 = vars(p2)-vs
+ exists ex1. p1 <-> exists ex2.p2
+-----------------------------------
+ equiv-unify[vs][E,N](p1, p2) --> p1,[]
+
+
+ equiv-unify[vs][E,N](pure,D) --> BOT
+
+ equiv-unify[vs][E,N](D,pure) --> BOT
+
+E = sets of mutually equivalent {{p1,p2,p3}, {p5,p7}}
+N = pairs of non-equivalent pred {(p2,p5),..}
+
+      x in vs
+    \rho = [ys->xs]
+ equiv_unify[vs+xs][E+(P1,P2),N](D1,\rho D2) --> D3,R
+   (P1,P2) \not\in N
+   R2 = if (P1,P2) in E then [] 
+        else [(P1,P2)]
+----------------------------------------------
+equiv-unify[vs][E,N](x::P1(xs)*D1,x::P2(ys)*D2) 
+     --> x::P2(xs)*D3,R+R2
+
+
+  equiv_unify[vs][E,N](D1,D3) ---> D5,R1
+  equiv_unify[vs][E,N](D2,D4) ---> D6,R2
+---------------------------------------------------
+ equiv-unify[vs][E,N](D1 \/ D2,D3 \/ D4) ---> D3,R1+R2
+
+
+ equiv-unify-pred[E,N][] --> E
+
+   (P1,P2) \not\in (N U E)
+   P1(vs) <-> D1
+   P2(vs) <-> D2
+   E1=E+(P1,P2)
+   equiv-unify[vs][E1,N](D1,D2) --> D3,R1
+   equiv-unify-pred[E1,N] RS+R1 --> R2
+----------------------------------------
+ equiv-unify-pred[E,N](P1,P2):RS --> R2
+    P1(vs)<-> D3; 
+    P2(vs)<->P1(vs)
+
+
+ equiv-unify[vs][R,N](D1,D2) ---> D3,R
+           R=[]
+-----------------------------------------
+    elim_disj[E,N](D1 or D2) ---> D3
+===================================
+
+  equiv-unify[x,b](x::node<a2,b>,x::node<a1,b>) 
+     ==> x::node<a1,b> 
+-----------------------------------------
+       x::node<a2,b>
+    or x::node<a1,b>  ==> x::node<a1,b>
+
+=============================================================
+
+Do we need to perform disj-unify?
+
+ disj-unify[vs](D1 or D2, D3 or D4) --> D4 or D6
+
+ x::node<_,null> \/ x::node<_,q>*q::node<_,r> --> G(x,r)
+ ==> 
+   x::node<_,q> * G2(q,r) --> G(x,r)
+   q=null or q::node<_,r> --> G2(q,r)
+ which parameter should we choose first?
+
+

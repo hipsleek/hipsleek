@@ -1,0 +1,70 @@
+    
+data node {
+    node prev; 
+    node next; 
+    }.
+
+HeapPred H_1(node next_9, node@NI prv).
+HeapPred H1(node a, node@NI b).
+PostPred G1(node a, node@NI b).
+HeapPred H_0(node prev_8, node@NI prv).
+//Declare_Unknown [H_0].
+
+infer [H_0,H_1,H1]
+ H_0(prev_8,prv) * H_1(next_9,prv) * l::node<prev_8,next_9>
+ & l=l' & prv=prv' & l'!=null 
+ //& !(v_bool_18_904') & l'!=null & !(v_bool_18_904') 
+ & next_9=v_node_9'
+ |-  H1(v_node_9',l').
+print residue.
+
+/*
+# dll-mw-1.slk
+
+GOT
+===
+<1>H_0(prev_8,prv) * l::node<prev_8,next_9>@M&l=l' & prv=prv' & l'!=null & next_9=v_node_9'&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [H_1(v_node_9',prv@NI) --> H1(v_node_9',l'@NI)]
+
+EXPECT
+======
+  H_1(v_node_9',prv@NI)&l=l' & prv=prv'  & l'!=null & next_9=v_node_9'
+      ^^^^^^^^^^^^^^^^
+    | l::node<prev_8,next_9>@M
+     --> H1(v_node_9',l'@NI)]
+            ^^^^^^^^^^^^^^^^
+  H_1(v_node_9',prv@NI) | l'::node<_,v_node_9'>@M
+               --> H1(v_node_9',l'@NI)]
+--------
+
+ id: 7; caller: []; line: 19; classic: false; kind: PRE-2; hec_num: 5; evars: []; infer_vars: [H1,G1,H_0,H_1]; c_heap: emp
+ checkentail H_0(prev_8,prv) * H_1(next_9,prv) * 
+l::node<prev_8,next_9>@&l=l' & prv=prv' & l'!=null & 
+!(v_bool_18_904') & l'!=null & !(v_bool_18_904') & 
+next_9=v_node_9'.
+ |-  H1(v_node_9',l').
+hprel_ass: [ H_1(next_9,prv) --> H1(next_9,l)]
+res:  [
+  H_0(prev_8,prv) * l::node<prev_8,next_9>&l=l' & prv=prv' & l'!=null & !(v_bool_18_904') & l'!=null & !(v_bool_18_904') & next_9=v_node_9' & next_9=v_node_9' & l=l'&{FLOW,(22,23)=__norm}[]
+  ]
+--------------
+
+
+
+
+[ H1(l,prv@NI)&l!=null --> l::node<prev_8,next_9>@M * 
+  H_0(prev_8,prv@NI) * H_1(next_9,prv@NI),
+
+ H_1(next_9,prv@NI) --> H1(next_9,l@NI). // l??
+
+ H1(l,prv@NI)&l=null --> G1(l,prv@NI),
+
+ H_0(prev_8,prv@NI) * l::node<prev_8,next_9>@M * 
+  G1(next_9,l@NI)&prev_8=prv --> G1(l,prv@NI),
+
+ H_0(prev_8,prv@NI) --> emp&forall(l:(prev_8=prv | l=null))]
+
+
+
+
+*/

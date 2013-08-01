@@ -1,0 +1,30 @@
+data node2 {
+	int val; 
+	node2 prev;
+	node2 next;	
+}.
+
+pred dll<p,"n":n> == 
+	self = null &["n":n = 0] or 
+	self::node2<_ ,p , q> * q::dll<self, n1> & ["n":n1=n-1]
+	inv true & ["n":n >= 0].
+
+
+/*
+Check_Specs]; hec_num: 4; evars: []; infer_vars: []; c_heap: 
+*/
+
+ checkentail x'::node2<Anon_1157,p_1155,q_1158>@M
+  * q_1158::dll<self_1156,n1_1159>@M
+   &
+ AndList( "":p=p_1155 & self_1156=x' & x=x' & a=a' & tmp_39'=null 
+         & a'!=1 
+         & !(v_bool_32_981') & a'!=1 
+         & !(v_bool_32_981') 
+        & q_1158=v_node2_44_980' 
+        & a'=v_int_44_979'+1 
+        & p_1169=self_1156
+ ; "n":n=n1_1159+1 & a<n & 0<a & n1_1159=n_1170
+  ) 
+|-  emp&AndList( "n":v_int_44_979'<n_1170 & 0<v_int_44_979')
+. 

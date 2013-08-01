@@ -1,0 +1,62 @@
+data node{
+	int val;
+        node prev;
+	node next;
+}.
+
+HeapPred G1(node a, node b).
+HeapPred HP1(node a, node b).
+
+Declare_Unknown [HP1].
+/*
+relAssume G1
+ c::node<_,pp,t>@M * HP1(pp, y)*  G1(t,y) &t!=null 
+ --> G1(c,y)&true.
+*/
+
+relAssume G1
+ c::node<_,pp,t>@M *  G1(t,y) &t!=null 
+ --> G1(c,y)&true.
+
+relAssume G1
+  c::node<_,p,y>@M --> G1(c,y)&true.
+
+/*
+relAssume G1
+ HP_3(p,y) * HP_4(n,y) * c::node<_,p,y>@M & n=null --> G1(c,y)&true.
+*/
+
+shape_infer [][G1].
+
+/*
+# i-app3.slk
+
+ G1(c_27,y_28) ::=  
+    c_27::node<Anon_11,pp,t>@M * G1(t,y_28)&t!=null
+ or c_27::node<Anon_11,pp,y_28>@M&true
+ 
+--pred-disj-unify
+
+GOT
+===
+  G1(c_27,y_28) ::=  c_27::node<Anon_11,pp,t>@M 
+     * HP_29(pp,y_28) * HP_30(t,y_28)&true,
+  HP_29(pp,y_28) ::=  emp&t=y_28, 
+                          ### why pp? and then t=y_28?
+  HP_30(t,y_28) ::=  
+        emp&t=y_28
+    or t::node<Anon_35,pp_36,t_37>@M * HP_29(pp_36,y_28) 
+       * HP_30(t_37,y_28)&true
+
+EXPECT:
+=========
+  G1(c_27,y_28) ::=  c_27::node<Anon_11,pp,t>@M 
+                     * HP_30(t,y_28)&true,
+  HP_30(t,y_28) ::=  
+        emp&t=y_28
+    or t::node<Anon_35,pp_36,t_37>@M * HP_30(t_37,y_28)&true
+
+
+
+*/
+

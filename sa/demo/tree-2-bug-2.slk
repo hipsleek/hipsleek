@@ -1,0 +1,50 @@
+data node{
+	int val;
+	node prev;
+	node next;
+}.
+
+HeapPred H(node a).
+HeapPred HP_0(node a).
+HeapPred HP_1(node a).
+HeapPred G(node a).
+
+//Declare_Dangling [HP_2].
+//Declare_Unknown [HP_2].
+
+relAssume 
+ H(x)&true --> x::node<key_25_797,left_25_798,right_25_799>@M * 
+  HP_0(left_25_798) * HP_1(right_25_799).
+
+relAssume 
+ HP_0(left_25_798)&left_25_798!=null --> H(left_25_798).
+
+relAssume 
+ HP_1(right_25_799)&right_25_799!=null --> H(right_25_799).
+
+relAssume 
+ HP_1(right_25_799)&right_25_799=null --> emp.
+
+relAssume 
+ HP_0(left_25_798)&left_25_798=null --> emp.
+
+
+shape_infer [H,HP_0,HP_1][].
+
+/* 
+
+ HP_0(left_25_798) * x::node<key_25_797,left_25_798,right_25_799>@M&
+  left_25_798!=null & right_25_799=null --> G(x).
+
+
+ HP_1(right_25_799) * x::node<key_25_797,left_25_798,right_25_799>@M&
+  left_25_798=null --> G(x).
+
+
+ HP_1(right_25_799) * x::node<key_25_797,left_25_798,right_25_799>@M&
+  left_25_798=null --> G(x).
+
+ x::node<key_25_797,left_25_798,right_25_799>@M * G(left_25_798) * 
+  G(right_25_799)&left_25_798!=null & right_25_799!=null --> G(x).
+
+*/

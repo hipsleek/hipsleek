@@ -1,0 +1,5 @@
+
+checkentail  
+  AndList("n","r":n>0; "s":n=0) |- true.
+print residue.
+

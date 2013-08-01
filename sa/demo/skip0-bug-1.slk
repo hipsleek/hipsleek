@@ -1,0 +1,45 @@
+data node2{
+	node2 n;
+	node2 s;
+}.
+
+HeapPred SLSEG(node2 a,node2@NI b).
+
+infer [l,e]
+ SLSEG(l,e)&e!=l & l=null 
+ & !(v_boolean_32_770') & res=v_boolean_32_770'
+ |-  res.
+print residue.
+
+infer [SLSEG]
+ SLSEG(l,e)&e!=l & l=null 
+ & !(v_boolean_32_770') & res=v_boolean_32_770'
+ |-  res.
+print residue.
+
+/*
+# skip0-bug-1.slk
+
+lhs_contra for heap_pred not working properly;
+please check if the fix by Andreea solved this problem.
+Cristian did a patch before but not sure why this isn't workin
+
+Entail (1) : Valid. 
+ <1>hfalse&false&{FLOW,(19,20)=__norm}[]
+ inferred pure: [(e>=l | l!=null); (l!=null | l>(e-1))]
+
+Entail (2) : Fail.
+
+
+id: 23; caller: []; line: 28; classic: false; kind: POST; hec_num: 2; evars: []; infer_vars: [SLSEG]; c_heap: emp
+ checkentail SLSEG(l,e)&e!=l & !(v_bool_31_781') & e!=l & !(v_bool_31_781') & l=null & 
+v_bool_32_780' & l=null & v_bool_32_780' & !(v_boolean_32_770') & 
+res=v_boolean_32_770'&{FLOW,(22,23)=__norm}[]
+ |-  emp&res&{FLOW,(22,23)=__norm}[]. 
+res:  failctx
+         fe_kind: MAY
+         fe_name: logical bug
+         fe_locs: {
+                   fc_message: failed in entailing pure formula(s) in conseq
+                   fc_current_lhs_flow: {FLOW,(22,23)=__norm}}
+*/

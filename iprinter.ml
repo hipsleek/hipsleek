@@ -121,7 +121,7 @@ let string_of_loc p =
 (* pretty printing for an expression for a formula *)
 let rec string_of_formula_exp = function 
   | P.Null l                  -> "null"
-  | P.Ann_Exp (e,t) -> (string_of_formula_exp e)^":"^(string_of_typ t)
+  | P.Ann_Exp (e,t,l) -> "(" ^ (string_of_formula_exp e)^":"^(string_of_typ t) ^ ")"
   | P.Var (x, l)        -> string_of_id x
   | P.Level (x, l)        -> ("level(" ^ (string_of_id x) ^ ")")
   | P.IConst (i, l)           -> string_of_int i
@@ -152,7 +152,8 @@ let rec string_of_formula_exp = function
   | P.Div (e1, e2, _) ->
         "(" ^ (string_of_formula_exp e1) ^ ") / (" ^ (string_of_formula_exp e2) ^ ")"
   | P.Max (e1, e2, l)         -> "max(" ^ (string_of_formula_exp e1) ^ "," ^ (string_of_formula_exp e2) ^ ")"
-  | P.Min (e1, e2, l)         -> "min(" ^ (string_of_formula_exp e1) ^ "," ^ (string_of_formula_exp e2) ^ ")" 
+  | P.Min (e1, e2, l)         -> "min(" ^ (string_of_formula_exp e1) ^ "," ^ (string_of_formula_exp e2) ^ ")"
+  | P.TypeCast (ty, e1, l) -> "(" ^ (Globals.string_of_typ ty) ^ ")" ^ (string_of_formula_exp e1)
   | P.List (elist, l)		-> "[|" ^ (string_of_formula_exp_list elist) ^ "|]"
   | P.ListAppend (elist, l) -> "app(" ^ (string_of_formula_exp_list elist) ^ ")"
   | P.ListCons (e1, e2, l)	-> (string_of_formula_exp e1) ^ ":::" ^ (string_of_formula_exp e2)
@@ -356,28 +357,38 @@ let rec string_of_h_formula = function
         "(" ^ (string_of_h_formula f1) ^ ") ; (" ^ (string_of_h_formula f2) ^ ")"
   | F.HeapNode ({F.h_formula_heap_node = x;
                  F.h_formula_heap_name = id;
+                 F.h_formula_heap_deref = deref;
                  F.h_formula_heap_perm = perm; (*LDK*)
                  F.h_formula_heap_arguments = pl;
                  F.h_formula_heap_imm = imm;
-         F.h_formula_heap_imm_param = ann_param;
+                 F.h_formula_heap_imm_param = ann_param;
                  F.h_formula_heap_label = pi;
                  F.h_formula_heap_pos = l}) ->
       let perm_str = string_of_iperm perm in
-      ((string_of_id x)
-    ^ "::" ^ id ^ perm_str ^ "<" ^ (string_of_data_param_list pl ann_param) ^ ">" ^ (string_of_imm imm)^"[HeapNode1]")
+      let deref_str = ref "" in
+      for i = 1 to deref do
+        deref_str := !deref_str ^ "^";
+      done;
+      ((string_of_id x) ^ "::" ^ id ^ !deref_str ^ perm_str 
+      ^ "<" ^ (string_of_data_param_list pl ann_param) ^ ">" ^ (string_of_imm imm)^"[HeapNode1]")
   | F.HeapNode2 ({F.h_formula_heap2_node = xid;
                   F.h_formula_heap2_name = id;
+                  F.h_formula_heap2_deref = deref;
                   F.h_formula_heap2_label = pi;
                   F.h_formula_heap2_imm = imm;
-		  F.h_formula_heap2_imm_param = ann_param;
+                  F.h_formula_heap2_imm_param = ann_param;
                   F.h_formula_heap2_perm = perm; (*LDK*)
                   F.h_formula_heap2_arguments = args}) ->
       let tmp1 = List.map (fun (f, e) -> f ^ "=" ^ (string_of_formula_exp e)) args in
       let tmp2 = String.concat ", " tmp1 in
       let perm_str = string_of_iperm perm in
+      let deref_str = ref "" in
+      for i = 1 to deref do
+        deref_str := !deref_str ^ "^";
+      done;
       string_of_formula_label_opt pi
-        ((string_of_id xid)
-         ^ "::" ^ id ^perm_str ^  "<" ^ tmp2 ^ ">"  ^ (string_of_imm imm)^"[HeapNode2]")
+        ((string_of_id xid) ^ "::" ^ id ^ !deref_str ^ perm_str
+        ^ "<" ^ tmp2 ^ ">"  ^ (string_of_imm imm)^"[HeapNode2]")
   | F.HRel (r, args, _) -> "HRel " ^ r ^ "(" ^ (String.concat "," (List.map string_of_formula_exp args)) ^ ")"
   | F.HTrue -> "htrue"
   | F.HFalse -> "hfalse"
@@ -501,7 +512,7 @@ let need_parenthesis2 = function
 
 
 (* pretty printing for expressions *)
-let rec string_of_exp_x = function 
+let rec string_of_exp = function 
 	| ArrayAt ({exp_arrayat_array_base = a;
 	     exp_arrayat_index = e}) ->
 				(string_of_exp a) ^ "[" ^ (string_of_exp_list e ",") ^ "]" (* An Hoa *)
@@ -636,47 +647,47 @@ let rec string_of_exp_x = function
 				-> "try {"^(string_of_exp bl)^"\n}"^(List.fold_left (fun a b -> a^"\n"^(string_of_exp b)) "" cl)^
 									(List.fold_left (fun a b -> a^"\n"^(string_of_exp b)) "" fl)
 
-(* pretty printing for expressions *)
-and string_of_exp e = match e with 
-  | ArrayAt ({exp_arrayat_pos = p}) -> (string_of_exp_x e) ^ "<loc_arrayat:" ^ (string_of_loc p)^">"
-  | Unfold ({exp_unfold_pos = p}) -> (string_of_exp_x e) ^ "<loc_unfold:" ^ (string_of_loc p)^">"
-  | Java ({exp_java_pos = p}) -> (string_of_exp_x e) ^ "<loc_java:" ^ (string_of_loc p)^">"
-  | Label (_, e) -> string_of_exp e
-  | Bind ({exp_bind_pos = p}) -> (string_of_exp_x e) ^ "<loc_bind:" ^ (string_of_loc p)^">"
-  | Block ({exp_block_pos = p}) -> (string_of_exp_x e) ^ "<loc_block:" ^ (string_of_loc p)^">"
-  | Break ({exp_break_pos = p}) -> (string_of_exp_x e) ^ "<loc_break:" ^ (string_of_loc p)^">"
-  | Barrier ({exp_barrier_pos = p}) -> (string_of_exp_x e) ^ "<loc_barrier:" ^ (string_of_loc p)^">"
-  | Cast ({exp_cast_pos = p}) -> (string_of_exp_x e) ^ "<loc_cast:" ^ (string_of_loc p)^">"
-  | Continue ({exp_continue_pos = p}) -> (string_of_exp_x e) ^ "<loc_continue:" ^ (string_of_loc p)^">"
-  | Catch ({exp_catch_pos = p}) -> (string_of_exp_x e) ^ "<loc_catch:" ^ (string_of_loc p)^">"
-  | Empty p -> (string_of_exp_x e) ^ "<loc_empty:" ^ (string_of_loc p)^">"
-  | Finally ({exp_finally_pos = p}) -> (string_of_exp_x e) ^ "<loc_finally:" ^ (string_of_loc p)^">"
-  | Unary ({exp_unary_pos = p}) -> (string_of_exp_x e) ^ "<loc_unary:" ^ (string_of_loc p)^">"
-  | Binary ({exp_binary_pos = p}) -> (string_of_exp_x e) ^ "<loc_binary:" ^ (string_of_loc p)^">"
-  | CallNRecv ({exp_call_nrecv_pos = p}) -> (string_of_exp_x e) ^ "<loc_callnrecv:" ^ (string_of_loc p)^">"
-  | CallRecv ({exp_call_recv_pos = p}) -> (string_of_exp_x e) ^ "<loc_callrecv:" ^ (string_of_loc p)^">"
-  | ArrayAlloc ({exp_aalloc_pos = p}) -> (string_of_exp_x e) ^ "<loc_arrayalloc:" ^ (string_of_loc p)^">"
-  | New ({exp_new_pos = p}) -> (string_of_exp_x e) ^ "<loc_new:" ^ (string_of_loc p)^">"
-  | Var ({exp_var_pos = p}) -> (string_of_exp_x e) ^ "<loc_var:" ^ (string_of_loc p)^">"
-  | Member ({exp_member_pos = p}) -> (string_of_exp_x e) ^ "<loc_member:" ^ (string_of_loc p)^">"
-  | Assign ({exp_assign_pos = p}) -> (string_of_exp_x e) ^ "<loc_assign:" ^ (string_of_loc p)^">"
-  | Cond ({exp_cond_pos = p}) -> (string_of_exp_x e) ^ "<loc_cond:" ^ (string_of_loc p)^">"
-  | While ({exp_while_pos = p}) -> (string_of_exp_x e) ^ "<loc_while:" ^ (string_of_loc p)^">"
-  | Return ({exp_return_pos = p}) -> (string_of_exp_x e) ^ "<loc_return:" ^ (string_of_loc p)^">"
-  | Seq ({exp_seq_pos = p}) -> (string_of_exp_x e) ^ "<loc_seq:" ^ (string_of_loc p)^">"
-  | VarDecl ({exp_var_decl_pos = p}) -> (string_of_exp_x e) ^ "<loc_vardecl:" ^ (string_of_loc p)^">"
-  | ConstDecl ({exp_const_decl_pos = p}) -> (string_of_exp_x e) ^ "<loc_constdecl:" ^ (string_of_loc p)^">"
-  | BoolLit ({exp_bool_lit_pos = p})  -> (string_of_exp_x e) ^ "<loc_boollit:" ^ (string_of_loc p)^">"
-  | IntLit ({exp_int_lit_pos = p}) -> (string_of_exp_x e) ^ "<loc_intlit:" ^ (string_of_loc p)^">"
-  | FloatLit ({exp_float_lit_pos = p}) -> (string_of_exp_x e) ^ "<loc_floatlit:" ^ (string_of_loc p)^">"
-  | Null p -> (string_of_exp_x e) ^ "<loc_null:" ^ (string_of_loc p)^">"
-  | Assert ({exp_assert_pos = p}) -> (string_of_exp_x e) ^ "<loc_assert:" ^ (string_of_loc p)^">"
-  | Dprint ({exp_dprint_pos = p})  -> (string_of_exp_x e) ^ "<loc_dprint:" ^ (string_of_loc p)^">"
-  | Debug ({exp_debug_pos = p}) -> (string_of_exp_x e) ^ "<loc_debug:" ^ (string_of_loc p)^">"
-  | This ({exp_this_pos = p}) -> (string_of_exp_x e) ^ "<loc_this:" ^ (string_of_loc p)^">"
-  | Time (_,_,p) -> (string_of_exp_x e) ^ "<loc_time:" ^ (string_of_loc p)^">"
-  | Raise ({exp_raise_pos = p}) -> (string_of_exp_x e) ^ "<loc_raise:" ^ (string_of_loc p)^">"
-  | Try ({exp_try_pos = p}) -> (string_of_exp_x e) ^ "<loc_try:" ^ (string_of_loc p)^">"
+(* (* pretty printing for expressions *)                                                                       *)
+(* and string_of_exp e = match e with                                                                          *)
+(*   | ArrayAt ({exp_arrayat_pos = p}) -> (string_of_exp_x e) ^ "<loc_arrayat:" ^ (string_of_loc p)^">"        *)
+(*   | Unfold ({exp_unfold_pos = p}) -> (string_of_exp_x e) ^ "<loc_unfold:" ^ (string_of_loc p)^">"           *)
+(*   | Java ({exp_java_pos = p}) -> (string_of_exp_x e) ^ "<loc_java:" ^ (string_of_loc p)^">"                 *)
+(*   | Label (_, e) -> string_of_exp e                                                                         *)
+(*   | Bind ({exp_bind_pos = p}) -> (string_of_exp_x e) ^ "<loc_bind:" ^ (string_of_loc p)^">"                 *)
+(*   | Block ({exp_block_pos = p}) -> (string_of_exp_x e) ^ "<loc_block:" ^ (string_of_loc p)^">"              *)
+(*   | Break ({exp_break_pos = p}) -> (string_of_exp_x e) ^ "<loc_break:" ^ (string_of_loc p)^">"              *)
+(*   | Barrier ({exp_barrier_pos = p}) -> (string_of_exp_x e) ^ "<loc_barrier:" ^ (string_of_loc p)^">"        *)
+(*   | Cast ({exp_cast_pos = p}) -> (string_of_exp_x e) ^ "<loc_cast:" ^ (string_of_loc p)^">"                 *)
+(*   | Continue ({exp_continue_pos = p}) -> (string_of_exp_x e) ^ "<loc_continue:" ^ (string_of_loc p)^">"     *)
+(*   | Catch ({exp_catch_pos = p}) -> (string_of_exp_x e) ^ "<loc_catch:" ^ (string_of_loc p)^">"              *)
+(*   | Empty p -> (string_of_exp_x e) ^ "<loc_empty:" ^ (string_of_loc p)^">"                                  *)
+(*   | Finally ({exp_finally_pos = p}) -> (string_of_exp_x e) ^ "<loc_finally:" ^ (string_of_loc p)^">"        *)
+(*   | Unary ({exp_unary_pos = p}) -> (string_of_exp_x e) ^ "<loc_unary:" ^ (string_of_loc p)^">"              *)
+(*   | Binary ({exp_binary_pos = p}) -> (string_of_exp_x e) ^ "<loc_binary:" ^ (string_of_loc p)^">"           *)
+(*   | CallNRecv ({exp_call_nrecv_pos = p}) -> (string_of_exp_x e) ^ "<loc_callnrecv:" ^ (string_of_loc p)^">" *)
+(*   | CallRecv ({exp_call_recv_pos = p}) -> (string_of_exp_x e) ^ "<loc_callrecv:" ^ (string_of_loc p)^">"    *)
+(*   | ArrayAlloc ({exp_aalloc_pos = p}) -> (string_of_exp_x e) ^ "<loc_arrayalloc:" ^ (string_of_loc p)^">"   *)
+(*   | New ({exp_new_pos = p}) -> (string_of_exp_x e) ^ "<loc_new:" ^ (string_of_loc p)^">"                    *)
+(*   | Var ({exp_var_pos = p}) -> (string_of_exp_x e) ^ "<loc_var:" ^ (string_of_loc p)^">"                    *)
+(*   | Member ({exp_member_pos = p}) -> (string_of_exp_x e) ^ "<loc_member:" ^ (string_of_loc p)^">"           *)
+(*   | Assign ({exp_assign_pos = p}) -> (string_of_exp_x e) ^ "<loc_assign:" ^ (string_of_loc p)^">"           *)
+(*   | Cond ({exp_cond_pos = p}) -> (string_of_exp_x e) ^ "<loc_cond:" ^ (string_of_loc p)^">"                 *)
+(*   | While ({exp_while_pos = p}) -> (string_of_exp_x e) ^ "<loc_while:" ^ (string_of_loc p)^">"              *)
+(*   | Return ({exp_return_pos = p}) -> (string_of_exp_x e) ^ "<loc_return:" ^ (string_of_loc p)^">"           *)
+(*   | Seq ({exp_seq_pos = p}) -> (string_of_exp_x e) ^ "<loc_seq:" ^ (string_of_loc p)^">"                    *)
+(*   | VarDecl ({exp_var_decl_pos = p}) -> (string_of_exp_x e) ^ "<loc_vardecl:" ^ (string_of_loc p)^">"       *)
+(*   | ConstDecl ({exp_const_decl_pos = p}) -> (string_of_exp_x e) ^ "<loc_constdecl:" ^ (string_of_loc p)^">" *)
+(*   | BoolLit ({exp_bool_lit_pos = p})  -> (string_of_exp_x e) ^ "<loc_boollit:" ^ (string_of_loc p)^">"      *)
+(*   | IntLit ({exp_int_lit_pos = p}) -> (string_of_exp_x e) ^ "<loc_intlit:" ^ (string_of_loc p)^">"          *)
+(*   | FloatLit ({exp_float_lit_pos = p}) -> (string_of_exp_x e) ^ "<loc_floatlit:" ^ (string_of_loc p)^">"    *)
+(*   | Null p -> (string_of_exp_x e) ^ "<loc_null:" ^ (string_of_loc p)^">"                                    *)
+(*   | Assert ({exp_assert_pos = p}) -> (string_of_exp_x e) ^ "<loc_assert:" ^ (string_of_loc p)^">"           *)
+(*   | Dprint ({exp_dprint_pos = p})  -> (string_of_exp_x e) ^ "<loc_dprint:" ^ (string_of_loc p)^">"          *)
+(*   | Debug ({exp_debug_pos = p}) -> (string_of_exp_x e) ^ "<loc_debug:" ^ (string_of_loc p)^">"              *)
+(*   | This ({exp_this_pos = p}) -> (string_of_exp_x e) ^ "<loc_this:" ^ (string_of_loc p)^">"                 *)
+(*   | Time (_,_,p) -> (string_of_exp_x e) ^ "<loc_time:" ^ (string_of_loc p)^">"                              *)
+(*   | Raise ({exp_raise_pos = p}) -> (string_of_exp_x e) ^ "<loc_raise:" ^ (string_of_loc p)^">"              *)
+(*   | Try ({exp_try_pos = p}) -> (string_of_exp_x e) ^ "<loc_try:" ^ (string_of_loc p)^">"                    *)
 
 and 
    (* function to transform a list of expression in a string *)
@@ -860,6 +871,11 @@ let rec string_of_global_var_decl_list l =
 let string_of_rel_decl_list rdecls = 
 	String.concat "\n" (List.map (fun r -> "relation " ^ r.rel_name) rdecls)
 
+let string_of_hp_decl hpdecl =
+  let name = hpdecl.Iast.hp_name in
+  name
+
+
 (* An Hoa : print axioms *)
 let string_of_axiom_decl_list adecls = 
 	String.concat "\n" (List.map (fun a -> "axiom " ^ (string_of_pure_formula a.axiom_hypothesis) ^ " |- " ^ (string_of_pure_formula a.axiom_conclusion)) adecls)
@@ -914,6 +930,8 @@ Iformula.print_struc_formula :=string_of_struc_formula;;
 Iast.print_struc_formula := string_of_struc_formula;;
 Iast.print_view_decl := string_of_view_decl;
 Iast.print_data_decl := string_of_data_decl;
+Iast.print_exp := string_of_exp;
 Ipure.print_formula :=string_of_pure_formula;
+Ipure.print_formula_exp := string_of_formula_exp;
 Ipure.print_id := string_of_id;
 

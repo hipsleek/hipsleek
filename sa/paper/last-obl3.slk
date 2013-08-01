@@ -1,0 +1,50 @@
+data node{
+	int val;
+	node next;
+}.
+
+HeapPred H(node a).
+HeapPred H4(node next_3).
+PostPred G_1(node next_0, node@NI next_3).
+PostPred G_2(node next_3, node@NI t_37').
+
+
+infer [G_1]
+  next_3::node<val_20_59,next_20_60>@M *
+  G_1(next_62,next_20_60)&next_0=next_62 & next_62=null & 
+         next_0=null  |- G_1(next_0,next_3).
+print residue.
+/*
+infer [G_1]
+  next_3::node<val_20_59,next_20_60>@M *
+  G_1(null,next_20_60)&next_0=null & 
+         next_0=null  |- G_1(next_0,next_3).
+print residue.
+*/
+/*
+# last-obl3.slk
+
+ISSUE
+=====
+The first example gave a longer answer because we were traversing
+NULL ptr. Can we avoid traversing null when we perform folding
+against unknowns? This may cause some base-case split to be automatically
+done, but --classic will pick them up.
+
+Entail (1) : Valid. 
+
+ <1>next_3::node<val_20_59,next_20_60>@M[Orig]&next_0=next_62 & next_62=null & next_0=null&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [G_1(next_62,next_20_60@NI)&next_0=next_62 & next_62=null & 
+                   next_0=null |#| next_3::node<val_20_59,next_20_60>@M --> G_1(next_0,next_3@NI)]
+
+
+Entail (2) : Valid. 
+
+ <1>EXISTS(flted_20_38: next_3::node<val_20_59,next_20_60>@M[Orig] * G_1(flted_20_38,next_20_60)&flted_20_38=null & next_0=null & next_0=null&{FLOW,(19,20)=__norm})[]
+ inferred hprel: [emp&next_0=null --> G_1(next_0,next_3@NI)]
+
+
+
+
+
+*/

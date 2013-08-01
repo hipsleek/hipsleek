@@ -1,0 +1,14 @@
+data node{
+ int val;
+ node next;
+}.
+
+HeapPred H(node a).
+
+infer [H] H(x) |-  x::node<_,_>.
+print residue.
+
+infer [H] H(x) |-  x::node<_,_>@L.
+print residue.
+
+

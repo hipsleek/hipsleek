@@ -1,0 +1,42 @@
+// simpler tll working example
+
+data node{
+	node left;
+	node right;
+}.
+
+HeapPred H(node a).
+PostPred G(node a, node c).
+HeapPred H_2(node a).
+HeapPred H_3(node a).
+HeapPred H_2a(node a).
+HeapPred H_3a(node a).
+
+Declare_Unknown [H_2a].
+
+relAssume 
+ G(right_25_801,v_node_31_823) * G(left_25_800,v_node_32_833) * 
+  x::node<v_node_32_833,v_node_31_823> &right_25_801!=null & 
+  res=x --> G(x,res).
+relAssume 
+ H_2a(left_25_800) * x::node<left_25_800,right_25_801> &res=x & 
+  right_25_801=null --> G(x,res).
+
+shape_infer [][G].
+
+
+/*
+# tll-if3.slk
+
+
+ G(x_33,res_34) ::=  
+   H_2a(v_node_32_833) * res_34::node<v_node_32_833,v_node_31_823>@M&
+     v_node_31_823=null & res_34=x_33
+ or G(right_25_801,v_node_31_823) * G(left_25_800,v_node_32_833) * 
+    res_34::node<v_node_32_833,v_node_31_823>@M&left_25_800=v_node_32_833 & 
+    right_25_801=v_node_31_823 & res_34=x_33 & right_25_801!=null,
+ H_2a(a) ::= NONE]
+
+
+
+*/

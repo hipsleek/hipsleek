@@ -1,0 +1,44 @@
+data node{
+	int val;
+	node next;
+}.
+
+HeapPred H(node a, node b, node@NI c).
+HeapPred H_3(node prev, node@NI cur, node@NI sent).
+HeapPred H_2(node next_1, node@NI prev, node@NI sent).
+HeapPred G(node a, node ra, node b, node rb, node@NI c).
+
+// BIND 
+relAssume
+ (0)H(cur,prev,sent) --> cur::node<val_0,next_1>@M * 
+  H_2(next_1,prev,sent) * H_3(prev,cur,sent).
+
+// PRE-REC
+relAssume
+ (1;2;0)H_3(prev,cur,sent) * cur::node<val_0,prev>@M&
+  cur_920=null & next_1=null & cur=cur_909 & cur_920=next_1 & 
+  cur'=cur_909 & prev'=null --> H(cur',prev',sent).
+
+// POST 
+relAssume (1;0)
+   H_2(cur',prev,sent) & cur'=sent --> emp.
+
+shape_infer [H,H_1,H_2][].
+
+/*
+# swl-i3b.slk 
+
+It seems that H view is not properly formed here..
+
+!! >>>>>> post-predicates: step post-5: remove redundant x!=null : not implemented yet<<<<<<
+!!! >>>>>> post-predicates: step post-61: weaken<<<<<<
+!!! PRE-OBLIGATION:
+ H_3(prev,cur,sent) * cur::node<val_0,prev>@M&prev'=null & cur=cur' & 
+  cur_920=next_1 & next_1=null & cur_920=null --> cur'::H<prev',sent>@M
+Last Proving Location: 1 File "swl-i3b.slk",Line:13,Col:25
+
+ERROR: at _0:0_0:0 
+Message: fold: view def not found:H
+
+
+*/

@@ -1,0 +1,44 @@
+data node {
+	int val; 
+	node next;	
+}.
+
+pred ll<n> == self = null & n = 0 
+	or self::node<_, q> * q::ll<n-1> 
+  inv n >= 0.
+
+HeapPred H1(node y,int b).
+
+// (28)
+infer [H1] H1(y) |- y::node<a,b> * b::ll<m>.
+print residue.
+
+// (28)
+infer [m] m=-1 |- m>=0.
+print residue.
+
+// (28)
+infer [y,m] m=-1 |- y::node<a,b> * b::ll<m>.
+print residue.
+// Old inferred pure: (m!=-1 | inf_m_37<=-1)
+// (m!=-1 | inf_m_37<=-1) doesn't cause contradiction
+// Eliminate inf_m_37<=-1 only.
+// Not sure about the inferred heap?
+/*
+Entail  (28): Valid. 
+<1>false & false & {FLOW,(17,18)=__norm}
+inferred heap: [y::node<inf_a_34,inf_b_35>@inf_ann_33[Orig]; 
+               inf_b_35::ll<inf_m_37>@inf_ann_36[Orig][LHSCase]]
+inferred pure: [m!=-1; inf_ann_33<=0; inf_ann_36<=0]
+*/
+/*
+Inferred Heap:[ y::node<inf_351,inf_352>[Orig], b::ll<inf_m_356>[Orig][LHSCase]]
+Inferred Pure:[ b=inf_352, a=inf_351 & b=inf_352 & inf_m_356=0 - 1 & m=0 - 1]
+<1>true & m+1=0 & a=inf_351 & b=inf_352 & a=inf_351 & b=inf_352 & 
+inf_m_356=0 - 1 & m=0 - 1 &
+{FLOW,(17,18)=__norm}
+*/
+
+
+
+

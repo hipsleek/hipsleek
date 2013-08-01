@@ -1,0 +1,33 @@
+data node{
+     int val;
+	node prev;
+	node next;
+}.
+
+HeapPred H(node a).
+HeapPred HP_1(node a).
+HeapPred HP_0(node a).
+HeapPred G(node a).
+
+relAssume 
+ HP_0(left_25_798) * HP_1(right_25_799) * 
+ x::node<key_25_797,left_25_798,right_25_799>
+ &left_25_798=null 
+ -->  G(x).
+
+shape_infer [H,HP_0,HP_1][G].
+
+/* 
+
+There ssems to be split which may be wrong in some sense
+since there are scenarios where we cannot split cleanly
+between pre and post-pred.
+
+[ HP_0(left_25_23) ::= emp&left_25_23=null,
+ HP_1(right_25_24) ::= emp&true,
+ G(x_25) ::= x_25::node<key_25_797,left_25_798,right_25_799>@M&left_25_798=null]
+
+
+
+
+*/

@@ -1,0 +1,77 @@
+data node{
+	int val;
+	node prev;
+	node next;
+}.
+
+HeapPred H(node a).
+HeapPred HP_0(node a).
+HeapPred HP_1(node a).
+HeapPred G(node a).
+
+//Declare_Dangling [HP_2].
+//Declare_Unknown [HP_2].
+
+relAssume 
+ H(x)&true --> x::node<key_25_797,left_25_798,right_25_799>@M * 
+  HP_0(left_25_798) * HP_1(right_25_799).
+
+relAssume 
+ HP_0(left_25_798)&left_25_798!=null --> H(left_25_798).
+
+relAssume 
+ HP_1(right_25_799)&right_25_799!=null --> H(right_25_799).
+
+relAssume 
+ HP_1(right_25_799)&right_25_799=null --> emp.
+
+relAssume 
+ HP_0(left_25_798)&left_25_798=null --> emp.
+
+
+shape_infer [H,HP_0,HP_1][].
+
+/* 
+
+# tree-2-bug-1.slk
+
+WRONG!
+======
+
+[ HP_0(left_25_64) ::= emp&left_25_64=null,
+ HP_1(right_25_65) ::= emp&right_25_65=null,
+ H(x_66) ::= x_66::node<key_25_797,left_25_798,right_25_799>@M
+   &left_25_798=null & right_25_799=null]
+
+EXPECT
+======
+ H(x)&true <--> x::node<key_25_797,left_25_798,right_25_799>@M * 
+  HP_0(left_25_798) * HP_1(right_25_799).
+
+ HP_1(right_25_799)&right_25_799=null --> emp.
+ HP_1(right)&right!=null --> 
+   right::node<key_25_797,left_25_798,right_25_799>@M * 
+  HP_0(left_25_798) * HP_1(right_25_799)
+
+ HP_0(left_25_798)&left_25_798=null --> emp.
+ HP_0(left)&left!=null --> 
+   left::node<key_25_797,left_25_798,right_25_799>@M * 
+  HP_0(left_25_798) * HP_1(right_25_799)
+
+
+THUS:
+=====
+
+ H(x)&true <--> x::node<key_25_797,left_25_798,right_25_799>@M * 
+  HP_0(left_25_798) * HP_1(right_25_799).
+ HP_1(right) = right=null
+   or    right::node<key_25_797,left_25_798,right_25_799>@M * 
+         HP_0(left_25_798) * HP_1(right_25_799)
+ HP_0(left) = left=null
+   or    left::node<key_25_797,left_25_798,right_25_799>@M * 
+         HP_0(left_25_798) * HP_1(right_25_799)
+
+
+
+
+*/

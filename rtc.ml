@@ -223,6 +223,7 @@ and compile_pre (prog : C.prog_decl) (proc : C.proc_decl) (pre : CF.formula) jav
     let check_proc = 
       { I.proc_name = "traverse";
       I.proc_source = "source_file";
+	  I.proc_flags = [];
       I.proc_mingled_name = "";
       I.proc_data_decl = None;
       I.proc_constructor = false;
@@ -238,6 +239,7 @@ and compile_pre (prog : C.prog_decl) (proc : C.proc_decl) (pre : CF.formula) jav
       I.proc_test_comps = None } in
     let ddef = { I.data_name = (C.unmingle_name proc.C.proc_name) ^ "_PRE";
     I.data_fields = fields;
+    I.data_pos = no_pos;
     I.data_parent_name = "Object";
     I.data_invs = [];
     I.data_is_template = false;
@@ -297,6 +299,7 @@ and compile_post (prog : C.prog_decl) (proc : C.proc_decl) (post : CF.formula) (
     let check_proc = 
       { I.proc_name = "traverse";
       I.proc_source = "source_file";
+	  I.proc_flags = [];
       I.proc_mingled_name = "";
       I.proc_data_decl = None;
       I.proc_constructor = false;
@@ -312,6 +315,7 @@ and compile_post (prog : C.prog_decl) (proc : C.proc_decl) (post : CF.formula) (
       I.proc_test_comps =None } in
     let ddef = { I.data_name = (C.unmingle_name proc.C.proc_name) ^ "_POST";
     I.data_fields = fields;
+    I.data_pos = no_pos;
     I.data_parent_name = "Object";
     I.data_invs = [];
     I.data_is_template = false;

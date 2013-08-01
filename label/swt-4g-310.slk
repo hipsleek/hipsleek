@@ -1,0 +1,54 @@
+/*
+Check_Specs]; hec_num: 4; evars: [sent_1691,flted_31_1692,M3_1693]; infer_vars: []; c_heap: 
+prev'::tx<flted_39_1690,sent,M3_1689>@M
+*/
+data node {
+ int mark;
+ node left;
+ node right;
+}.
+
+pred tx<g,s,"s":M> == true&["":self = g & s!=null & (g=null | g=s) ; "s": M={}]
+   or self::node<v,l,r> * l::tx<g,s,M1> * r::tx<null,s,M2> & ["": self != g & self != s ;"s": M=union({self},M1,M2)]
+   or self::node<v,l,r> * l::tx<null,s,M1> * r::tx<g,s,M2> & ["": self != g & self != s ;"s": M=union({self},M1,M2)]
+inv true&["": s!=null
+ & (g=null & self!=s | g=s & self!=null)
+  ; "s":(self=g & M={} | self!=g & M!={})
+]
+.
+
+ checkentail l_1835::tx<g_1830,s_1831,M1_1836>@M
+ * cur_1884::node<v_1834,tmp_55',prev_1882>@M
+ * prev::tx<b,sent_1840,M2>@M 
+ * r_1837::tx<flted_8_1833,s_1832,M2_1838>@M 
+& AndList( "":flted_8_1833=null & a=g_1830 & s_1831=sent_1839 & 
+         s_1832=sent_1839 & a=sent & cur!=sent & b=null & a!=null & 
+         sent=sent_1840 & sent=sent_1839 & sent=sent' & prev=prev_1882 & 
+         cur=cur_1884 & l_1835=n_54' & r_1837=tmp_55' & 
+         r_1837=right_43_1876 & l_1835=left_44_1880 & cur_1884=prev' & 
+         cur'=n_54' & cur'=sent' & v_bool_48_998' & cur'=sent' & 
+         v_bool_48_998'
+ ; "":a!=cur_1884 & cur_1884!=sent_1839 & 
+   exists(sent_2624:exists(flted_29_2625:s_1832=sent_2624 & 
+   b=flted_29_2625 & sent_1840=sent_2624 & flted_29_2625!=prev' & 
+   prev'!=sent_2624))
+ ; "s":M1=union({cur_1884},M1_1836,M2_1838) & 
+   exists(M3_2626:M3_2626=union({prev'},M2_1838,M2))) 
+ |-  (exists sent_2624,flted_29_2625
+//,M3_2626
+: emp&
+AndList( "":flted_29_2625=null & sent=sent_2624 & s_1832=sent_2624 & 
+         b=flted_29_2625 & sent_1840=sent_2624
+ ; "":cur'=sent & prev'!=null & flted_29_2625!=prev' & prev'!=sent_2624
+   & cur_1884=prev'
+ ; "s":true 
+   //& M3_2626=union(M1,M2) & M3_2626=union({prev'},M2_1838,M2)
+) 
+)
+.
+/*
+id: 310; caller: []; line: 29; classic: false; kind: [POST,
+Check_Specs]; hec_num: 4; evars: [sent_2624,flted_29_2625,M3_2626]; infer_vars: []; c_heap: 
+
+)
+*/

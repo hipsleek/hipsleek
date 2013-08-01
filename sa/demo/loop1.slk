@@ -1,0 +1,36 @@
+data cell{
+	int val;
+}.
+
+
+HeapPred P(cell a).
+HeapPred G(cell a).
+
+relAssume 
+ P(x) --> P(x).
+
+relAssume 
+ G(x) --> x::cell<_>.
+
+shape_infer [P][G].
+
+/*
+
+*************************************
+*******relational definition ********
+*************************************
+[ G(x_19) ::= x_19::cell<Anon_11>@M&true]
+
+
+EXPECTS
+=======
+ P(x) ::= false
+ G(x) ::= x::cell<_>
+
+
+SIMPLIFY
+========
+ P(x) ::= true
+ G(x) ::= false
+
+*/

@@ -43,9 +43,23 @@ type command =
   | LemmaDef of I.coercion_decl
   | LetDef of (ident * meta_formula)
   | EntailCheck of (meta_formula * meta_formula * entail_type)
+  | RelAssume of (CF.cond_path_type * meta_formula * meta_formula option * meta_formula)
+  | RelDefn of (CF.cond_path_type * meta_formula * meta_formula)
+  | ShapeInfer of (ident list * ident list)
+  | ShapeDivide of (ident list * ident list)
+  | ShapeConquer of (ident list * CF.cond_path_type list)
+  | ShapePostObl of (ident list * ident list)
+  | ShapeInferProp of (ident list * ident list)
+  | ShapeSplitBase of (ident list * ident list)
+  | ShapeElim of (ident list)
+  | ShapeExtract of (ident list)
+  | ShapeDeclDang of (ident list)
+  | ShapeDeclUnknown of (CF.cond_path_type * ident list)
+  | ShapeSConseq of (ident list * ident list)
+  | ShapeSAnte of (ident list * ident list)
   | EqCheck of (ident list * meta_formula * meta_formula)
   | BarrierCheck of I.barrier_decl
-  | Infer of (ident list * meta_formula * meta_formula)
+  | InferCmd of (ident list * meta_formula * meta_formula * entail_type)
   | CaptureResidue of ident
   | PrintCmd of print_cmd
   | CmpCmd of (ident list * ident * meta_formula list)
@@ -87,9 +101,23 @@ let string_of_command c = match c with
   | LemmaDef  _ -> "LemmaDef"
   | LetDef  _ -> "LetDef"   
   | EntailCheck _ -> "EntailCheck"
+  | RelAssume _ -> "RelAssume"
+  | RelDefn _ -> "RelDefn"
+  | ShapeInfer _ -> "ShapeInfer"
+  | ShapeDivide _ -> "ShapeDivide"
+  | ShapeConquer _ -> "ShapeConquer"
+  | ShapePostObl _ -> "| ShapePostObl"
+  | ShapeInferProp _ -> "ShapeInferProper"
+  | ShapeSplitBase _ -> "ShapeSplitbase"
+  | ShapeDeclDang _ -> "ShapeDeclDang"
+  | ShapeDeclUnknown _ -> "ShapeDeclUnknown"
+  | ShapeElim _ -> "ShapeElim"
+  | ShapeExtract _ -> "ShapeExtract"
+  | ShapeSConseq _ -> "ShapeSConseq"
+  | ShapeSAnte _ -> "ShapeSAnte"
   | EqCheck _ -> "EqCheck"
   | BarrierCheck _ -> "BarrierCheck"
-  | Infer _ -> "Infer"
+  | InferCmd _ -> "Infer"
   | CaptureResidue _ -> "CaptureResidue"  
   | PrintCmd _ -> "PrintCmd"  
   | CmpCmd _ -> "CmpCmd"  

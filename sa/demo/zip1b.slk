@@ -1,0 +1,106 @@
+data node{
+	int val;
+	node next;
+}.
+
+HeapPred HL(node a).
+HeapPred H1(node a, node b).
+HeapPred HP_1(node a, node@NI b).
+HeapPred HP_2(node a, node@NI b).
+HeapPred HP_8(node a, node@NI b).
+HeapPred G1(node a, node b, node c).
+
+relAssume
+ H1(x,y)&x!=null --> x::node<val_24_819,next_24_820>@M * 
+  HP_1(next_24_820,y) * HP_2(y,x).
+
+relAssume 
+ HP_2(y,x)
+   --> y::node<val_25_826,next_25_827> * HP_8(next_25_827,x).
+
+relAssume 
+ HP_8(next_25_827,x) * HP_1(next_24_820,y) & true 
+ --> H1(next_24_820,next_25_827).
+
+relAssume 
+ HL(y) & x=null & res=null --> G1(x,y,res).
+
+relAssume 
+ H1(x,y)&x=null  --> HL(y).
+
+relAssume 
+ y::node<val_25_826,next_25_827> * x::node<val_24_819,nn>
+  * G1(nn,next_25_827,rr) 
+  & nn=rr
+  & res=x --> G1(x,y,res).
+ 
+//shape_infer[H1,HP_2,HP_1,HP_8][G1].
+shape_infer[H1,HP_2,HP_1,HP_8,HL][G1].
+
+/*
+============================================================
+# zip1b.slk
+
+PROBLEMS
+ (i) where is base case for H1?
+ H1(x_181,y_182) ::= (H1(next_24_106,next_25_104)) * y_182::node<val_25_103,next_25_104>@M * 
+x_181::node<val_24_105,next_24_106>@M&x_181!=null,
+
+(ii) Instead of:
+   HP_1(next_24_820,y) ::= (H1(x,y)) * (HP_2(y,x))&true,
+   HP_8(next_25_827,x) ::= HP_2(y,x)&true,
+Can we just have:
+  HP_8(next_25_827,x) * HP_1(next_24_820,y)  
+     <--> H1(next_24_820,next_25_827).
+
+[ HP_2(y_179,x_180) ::= y_179::node<val_25_826,next_25_827>@M * (HP_8(next_25_827,x_180))&true,
+
+ H1(x_181,y_182) ::= (H1(next_24_106,next_25_104)) * y_182::node<val_25_103,next_25_104>@M * 
+x_181::node<val_24_105,next_24_106>@M&x_181!=null,
+
+ HP_1(next_24_820,y) ::= (H1(x,y)) * (HP_2(y,x))&true,
+ HP_8(next_25_827,x) ::= HP_2(y,x)&true,
+ HL(y) ::= H1(x,y)&true,
+ G1(x_183,y_184,res_185) ::= HP_186(x_183,y_184,res_185)&res_185=x_183,
+ HP_186(x_183,y_184,res_185) ::= 
+ HL(y_184)&x_183=null & res_185=null
+ or y_184::node<val_25_826,next_25_827>@M * x_183::node<val_24_819,nn>@M * 
+    (HP_186(nn,next_25_827,nn))&true
+ ]
+
+============
+
+[ HP_2(y_242,x_243) ::= y_242::node<val_25_826,next_25_827>@M * (HP_8(next_25_827,x_243))&true,
+ H1(x_244,y_245) ::= 
+ emp&x_244=null
+ or (H1(next_24_109,next_25_107)) * y_245::node<val_25_106,next_25_107>@M * 
+    x_244::node<val_24_108,next_24_109>@M&true
+ ,
+ HL(y_246) ::= emp&true,
+ HP_1(next_24_820,y) ::= (H1(x,y)) * (HP_2(y,x))&true,
+ HP_8(next_25_827,x) ::= HP_2(y,x)&true,
+ G1(x_247,y_248,res_250) ::= 
+ emp&x_247=null
+ or y_248::node<val_25_826,next_25_827>@M * x_247::node<val_24_819,nn>@M * 
+    (G1(nn,next_25_827,nn))&true
+ ]
+
+When HL is dangling:
+
+[ HP_2(y_179,x_180) ::= y_179::node<val_25_826,next_25_827>@M * (HP_8(next_25_827,x_180))&true,
+ H1(x_181,y_182) ::= 
+ emp& XPURE(HL(y_182)) & x_181=null
+ or (H1(next_24_106,next_25_104)) * y_182::node<val_25_103,next_25_104>@M * 
+    x_181::node<val_24_105,next_24_106>@M&true
+ ,
+ HP_1(next_24_820,y) ::= (H1(x,y)) * (HP_2(y,x))&true,
+ HP_8(next_25_827,x) ::= HP_2(y,x)&true,
+ G1(x_183,y_184,res_186) ::= 
+ emp& XPURE(HL(y_184)) & x_183=null
+ or y_184::node<val_25_826,next_25_827>@M * x_183::node<val_24_819,nn>@M * 
+    (G1(nn,next_25_827,nn))&true
+ ]
+
+
+
+*/

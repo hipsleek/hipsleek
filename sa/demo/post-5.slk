@@ -1,0 +1,30 @@
+data node{
+	int val;
+	node next;
+}.
+
+
+HeapPred G(node a).
+
+
+
+relAssume 
+ x::node<_,yy>  --> G(x).
+
+relAssume 
+ x::node<_,y> * y::node<_,null>  --> G(x).
+
+shape_infer [][G].
+
+/*
+
+Printing of EXIST lack ")".
+
+[ G(x_25) ::=  
+ EXISTS(flted_12_26: x_25::node<Anon_11,flted_12_26>@M&flted_12_26=null&[]
+ or x_25::node<Anon_11,flted_12_26>@M&true
+ ]
+
+
+
+*/

@@ -1,0 +1,26 @@
+data node {
+   node n;
+}.
+
+HeapPred P(node x).
+HeapPred P2(node x).
+
+relAssume 
+  P(x) --> x::node<q>*P2(q).
+
+relAssume 
+  P2(x) & x!=null --> P(x).
+
+relAssume 
+  P2(x) & x=null --> emp.
+
+shape_infer[P,P2][].
+
+/*
+[ P(x_36) ::= x_36::node<q>@M * (P2(q))&true,
+ P2(x_37) ::= 
+ emp&x_37=null
+ or x_37::node<q>@M * (P2(q))&true
+ ]
+*/
+

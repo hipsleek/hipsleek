@@ -129,6 +129,7 @@ and mona_of_exp_break e0 =
   | CP.Subtract(a1, a2, l1) -> CP.Subtract( (mona_of_exp_break a1), (mona_of_exp_break a2), l1) (* As above *)
   | CP.Min (a1, a2, l1) ->  CP.Min((mona_of_exp_break a1), (mona_of_exp_break a2), l1)
   | CP.Max (a1, a2, l1) ->  CP.Max((mona_of_exp_break a1), (mona_of_exp_break a2), l1)
+  | CP.TypeCast (ty, a1, l) ->  CP.TypeCast(ty, (mona_of_exp_break a1), l)
   | _ -> e0
 
 (* breaking boolean formulas *)
@@ -497,6 +498,7 @@ and mona_of_exp_secondorder_x e0 f = 	match e0 with
         ((tmp :: (exs1 @ exs2)), tmp, add_string2)
   | CP.Max _
   | CP.Min _ -> failwith ("mona.mona_of_exp_secondorder: min/max can never appear here")
+  | CP.TypeCast _ -> failwith ("mona.mona_of_exp_secondorder: TypeCast can never appear here")
   | CP.Mult (a1, a2, p) ->
         (match a1 with
           | CP.IConst(i, _) -> 

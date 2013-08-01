@@ -92,6 +92,10 @@ struct
   let get_labels (xs:label_list) : lab_type list =
     List.map fst xs
 
+  let get_labels (xs:label_list) : lab_type list =
+    Debug.no_1 "get_labels" (fun x -> string_of_int (List.length x))
+        (pr_list Lbl.string_of) get_labels xs
+
   let filter_aux  f (fid:lab_type) (xs:label_list) :  (label_list) = 
     let pr_len xs= string_of_int (List.length xs) in
     let rs = List.filter (fun (l,_) -> f fid l) xs in

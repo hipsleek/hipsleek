@@ -1,0 +1,38 @@
+
+data node {
+ int val;
+ node next;
+}.
+
+HeapPred H(node x, int@NI v).
+PostPred G(node x, int@NI v).
+HeapPred H_0(int@NI x, int@NI v).
+HeapPred H_1(node x, int@NI v).
+HeapPred H_2(int@NI x, int@NI v).
+
+
+relAssume
+ H_0(val_16_918,v) --> emp&val_16_918>=v.
+
+relAssume
+ emp&x=null --> G(x,v).
+
+relAssume
+ H_0(val_16_918,v) * x::node<val_16_918,next_16_919>@M * 
+  G(next_16_919,val_16_918)&v<=val_16_918 --> G(x,v).
+
+shape_infer [H_0][G].
+
+/*
+# sorted-4a.slk (GOOD)
+
+GOT
+===
+[ H_0(val_16_35,v_36) ::= emp&v_36<=val_16_35,
+ G(x_37,v_38) ::= 
+ emp&x_37=null
+ or x_37::node<val_16_918,next_16_919>@M * G(next_16_919,val_16_918)&
+    v_38<=val_16_918
+ ]
+
+*/

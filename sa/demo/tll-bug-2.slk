@@ -1,0 +1,57 @@
+// simpler tll working example
+
+data node{
+	node left;
+	node right;
+	node next;
+}.
+
+
+// initializes the linked list fields
+
+HeapPred H(node a, node@NI b).
+HeapPred G(node a, node@NI b, node c).
+HeapPred HP_0(node a, node@NI b).
+HeapPred HP_8(node a, node@NI b).
+HeapPred HP_9(node a, node@NI b).
+
+infer [HP_0,G] HP_0(next_29_847,r) * 
+x::node<left_29_845,right_29_846,next_29_847>@M * 
+G(right_29_846,r,l_878) * G(left_29_845,l_878,v_node_37_825')&
+right_29_846!=null & !(v_bool_29_826') & right_29_846!=null & 
+!(v_bool_29_826') & right_29_846=right_29_846 & r=r & 
+left_29_845=left_29_845 & res=v_node_37_825'
+ |-  G(x,r,res).
+
+print residue.
+/*
+# tll-bug-2.slk
+
+WHY answer here different from hip?
+
+ <1>emp&right_29_846!=null & !(v_bool_29_826') & right_29_846!=null & !(v_bool_29_826') & right_29_846=right_29_846 & r=r & left_29_845=left_29_845 & res=v_node_37_825' & res=v_node_37_825'&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [HP_0(next_29_847,r@NI) * 
+                   x::node<left_29_845,right_29_846,next_29_847>@M * 
+                   G(right_29_846,r@NI,l_878) * 
+                   G(left_29_845,l_878@NI,v_node_37_825')&
+                   right_29_846!=null --> G(x,r@NI,v_node_37_825')&true]
+*/
+
+/*
+
+ checkentail HP_0(next_29_847,r) * 
+x::node<left_29_845,right_29_846,next_29_847>@M[Orig] * 
+G(right_29_846,r,l_878) * G(left_29_845,l_878,v_node_37_825')&
+right_29_846!=null & !(v_bool_29_826') & right_29_846!=null & 
+!(v_bool_29_826') & right_29_846=right_29_846 & r=r & 
+left_29_845=left_29_845 & res=v_node_37_825'&{FLOW,(22,23)=__norm}[]
+ |-  G(x,r,res)&true&{FLOW,(22,23)=__norm}[]. 
+hprel_ass: [ HP_0(next_29_847,r) * x::node<left_29_845,right_29_846,next_29_847>@M * 
+  G(right_29_846,r,l_878) * G(left_29_845,l_878,res)&
+  right_29_846!=null --> G(x,r,res)&true]
+res:  [
+  G(left_29_845,l_878,v_node_37_825')&right_29_846!=null & !(v_bool_29_826') & right_29_846!=null & !(v_bool_29_826') & right_29_846=right_29_846 & r=r & left_29_845=left_29_845 & res=v_node_37_825'&{FLOW,(22,23)=__norm}[]
+  ]
+
+
+*/

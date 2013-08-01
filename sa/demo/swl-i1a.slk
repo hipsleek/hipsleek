@@ -1,0 +1,35 @@
+data node{
+   int val;
+   node next;
+}.
+
+HeapPred HP_902(node next_36_901, node@NI prev, node@NI sent).
+HeapPred HP_903(node prev, node@NI cur, node@NI sent).
+
+pred hh<prev_56,sent_57> ==  self::node<val_36_900,next_36_901>@M *
+     HP_902(next_36_901,prev_56,sent_57) * HP_903(prev_56,self,sent_57).
+
+/*
+infer [HP_903,HP_902] HP_903(prev,cur,sent) 
+ * cur::node<val_36_900,prev>@M&prev'=null &
+  cur=cur' |- cur'::node<val_36_900,next_36_901>@M *
+     HP_902(next_36_901,prev_56,sent_57) * HP_903(prev_56,cur',sent_57).
+*/
+
+infer [HP_903,HP_902] HP_903(prev,cur,sent) 
+ * cur::node<val_36_900,prev>@M&prev'=null &
+  cur=cur' |- cur'::hh<prev',sent>.
+
+print residue.
+
+/*
+infer_exact [HP_903] HP_903(prev,cur,sent) * cur::node<val_36_900,prev>@M&prev'=null & cur=cur'
+ |-  cur'::H<prev',sent>.
+*/
+/*
+
+ERROR: at _0:0_0:0
+Message: fold: view def not found:H
+
+
+*/

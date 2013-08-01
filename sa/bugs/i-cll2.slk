@@ -1,0 +1,38 @@
+data node{
+	int val;
+	node next;
+}.
+
+HeapPred H1(node a, node b).
+HeapPred HP_8(node a, node b).
+HeapPred G1(node a, node b).
+
+relAssume H1
+ H1(rest,h)&h!=rest --> rest::node<val_31_824,next_31_825>@M * 
+  HP_8(next_31_825,h).
+
+relAssume H1
+ HP_8(next_31_825,h) -->
+     H1(next_31_825,h).
+
+relAssume H1
+   H1(rest,h)&h=rest --> emp.
+
+
+
+/*
+
+
+
+relAssume G1
+ H1(rest,h)&h=rest --> G1(rest,h).
+
+ H1(rest,h)&h=rest --> emp.
+
+ h=rest --> G1(rest,h).
+
+*/
+
+shape_infer [H1,HP_8][].
+
+

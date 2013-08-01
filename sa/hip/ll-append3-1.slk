@@ -1,0 +1,8 @@
+data node {
+  int val;
+  node next;
+}.
+
+HeapPred H1(node a).
+
+infer [H1]  H1(x) * y::node<a,flted_65_571> & flted_65_571=null |- x::node<c1,c2>@L.

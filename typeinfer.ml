@@ -111,55 +111,49 @@ let node2_to_node_x prog (h0 : IF.h_formula_heap2) : IF.h_formula_heap =
       | [] -> []
   in
   try
-      let vdef =
-      I.look_up_view_def_raw 6 prog.I.prog_view_decls
-            h0.IF.h_formula_heap2_name in
-      let args = h0.IF.h_formula_heap2_arguments in
-      let hargs, hanns =
-        if args==[] then ([],[]) (* don't convert if empty *)
-        else
-          let args_ann = List.combine  h0.IF.h_formula_heap2_arguments h0.IF.h_formula_heap2_imm_param in
-          List.split (match_args vdef.I.view_vars args_ann) in
-      let h =
-        {
-            IF.h_formula_heap_node = h0.IF.h_formula_heap2_node;
-            IF.h_formula_heap_name = h0.IF.h_formula_heap2_name;
-            IF.h_formula_heap_derv = h0.IF.h_formula_heap2_derv;
-            IF.h_formula_heap_imm = h0.IF.h_formula_heap2_imm;
-            IF.h_formula_heap_imm_param = hanns;
-            IF.h_formula_heap_full = h0.IF.h_formula_heap2_full;
-            IF.h_formula_heap_with_inv = h0.IF.h_formula_heap2_with_inv;
-            IF.h_formula_heap_perm = h0.IF.h_formula_heap2_perm;
-            IF.h_formula_heap_arguments = hargs;
-            IF.h_formula_heap_pseudo_data = h0.IF.h_formula_heap2_pseudo_data;
-            IF.h_formula_heap_pos = h0.IF.h_formula_heap2_pos;
-            IF.h_formula_heap_label = h0.IF.h_formula_heap2_label;
-        }
-      in h
-  with
-    | Not_found ->
-        let ddef =
-            I.look_up_data_def 6 h0.IF.h_formula_heap2_pos prog.I.prog_data_decls
-              h0.IF.h_formula_heap2_name in
-        let params = List.map I.get_field_name ddef.I.data_fields (* An Hoa : un-hard-code *) in
+    let vdef = I.look_up_view_def_raw 6 prog.I.prog_view_decls h0.IF.h_formula_heap2_name in
+    let args = h0.IF.h_formula_heap2_arguments in
+    let hargs, hanns =
+      if args==[] then ([],[]) (* don't convert if empty *)
+      else
         let args_ann = List.combine  h0.IF.h_formula_heap2_arguments h0.IF.h_formula_heap2_imm_param in
-        let hargs, hanns = List.split (match_args params args_ann) in
-        let h =
-          {
-              IF.h_formula_heap_node = h0.IF.h_formula_heap2_node;
+        List.split (match_args vdef.I.view_vars args_ann) in
+    let h = { IF.h_formula_heap_node = h0.IF.h_formula_heap2_node;
               IF.h_formula_heap_name = h0.IF.h_formula_heap2_name;
+              IF.h_formula_heap_deref = h0.IF.h_formula_heap2_deref;
               IF.h_formula_heap_derv = h0.IF.h_formula_heap2_derv;
               IF.h_formula_heap_imm = h0.IF.h_formula_heap2_imm;
               IF.h_formula_heap_imm_param = hanns;
               IF.h_formula_heap_full = h0.IF.h_formula_heap2_full;
               IF.h_formula_heap_with_inv = h0.IF.h_formula_heap2_with_inv;
-              IF.h_formula_heap_arguments = hargs;
               IF.h_formula_heap_perm = h0.IF.h_formula_heap2_perm;
+              IF.h_formula_heap_arguments = hargs;
               IF.h_formula_heap_pseudo_data = h0.IF.h_formula_heap2_pseudo_data;
               IF.h_formula_heap_pos = h0.IF.h_formula_heap2_pos;
-              IF.h_formula_heap_label = h0.IF.h_formula_heap2_label;
-          }
-        in h
+              IF.h_formula_heap_label = h0.IF.h_formula_heap2_label; } in
+    h
+  with
+    | Not_found ->
+        let ddef =
+          I.look_up_data_def 6 h0.IF.h_formula_heap2_pos prog.I.prog_data_decls
+            h0.IF.h_formula_heap2_name in
+        let params = List.map I.get_field_name ddef.I.data_fields (* An Hoa : un-hard-code *) in
+        let args_ann = List.combine  h0.IF.h_formula_heap2_arguments h0.IF.h_formula_heap2_imm_param in
+        let hargs, hanns = List.split (match_args params args_ann) in
+        let h = { IF.h_formula_heap_node = h0.IF.h_formula_heap2_node;
+                  IF.h_formula_heap_name = h0.IF.h_formula_heap2_name;
+                  IF.h_formula_heap_deref = h0.IF.h_formula_heap2_deref;
+                  IF.h_formula_heap_derv = h0.IF.h_formula_heap2_derv;
+                  IF.h_formula_heap_imm = h0.IF.h_formula_heap2_imm;
+                  IF.h_formula_heap_imm_param = hanns;
+                  IF.h_formula_heap_full = h0.IF.h_formula_heap2_full;
+                  IF.h_formula_heap_with_inv = h0.IF.h_formula_heap2_with_inv;
+                  IF.h_formula_heap_arguments = hargs;
+                  IF.h_formula_heap_perm = h0.IF.h_formula_heap2_perm;
+                  IF.h_formula_heap_pseudo_data = h0.IF.h_formula_heap2_pseudo_data;
+                  IF.h_formula_heap_pos = h0.IF.h_formula_heap2_pos;
+                  IF.h_formula_heap_label = h0.IF.h_formula_heap2_label; } in
+        h
 
 let node2_to_node i prog (h0 : IF.h_formula_heap2) : IF.h_formula_heap =
   Debug.no_1_num i "node2_to_node"
@@ -430,7 +424,8 @@ and trans_type_back (te : typ) : typ =
 
 and sub_type_x (t1 : typ) (t2 : typ) =
   let it1 = trans_type_back t1 in
-  let it2 = trans_type_back t2 in I.sub_type it1 it2
+  let it2 = trans_type_back t2 in
+  I.sub_type it1 it2
 
 and sub_type (t1 : typ) (t2 : typ) =
   let pr = string_of_typ in
@@ -450,11 +445,11 @@ and gather_type_info_var_x (var : ident) tlist (ex_t : spec_var_kind) pos : (spe
       let (n_tlist,tmp) = must_unify k.sv_info_kind ex_t tlist pos in 
       let n_tlist = type_list_add ident {sv_info_kind = tmp;id=k.id} n_tlist in
       (n_tlist, tmp )
-    with 
-      | Not_found -> 
+    with
+      | Not_found ->
           let vk = fresh_proc_var_kind tlist ex_t in
           ((var,vk)::tlist, vk.sv_info_kind)
-      | ex -> report_error pos ("gather_type_info_var : unexpected exception"^(Printexc.to_string ex))
+      | ex -> report_error pos ("gather_type_info_var : unexpected exception "^(Printexc.to_string ex))
 
 and gather_type_info_exp a0 tlist et =  
   Debug.no_eff_3 "gather_type_info_exp" [false;true] 
@@ -467,7 +462,7 @@ and gather_type_info_exp_x a0 tlist et =
       let t = null_type in
       let (n_tl,n_typ) = must_unify_expect t et tlist pos in
       (n_tl,n_typ)
-  | IP.Ann_Exp (e,t) -> 
+  | IP.Ann_Exp (e,t, _) -> 
       (* TODO WN : check if t<:et *)
       let (n_tl,n_typ) = gather_type_info_exp_x e tlist t in
       (n_tl,n_typ)
@@ -519,6 +514,15 @@ and gather_type_info_exp_x a0 tlist et =
       let (n_tlist2,t2) = must_unify_expect t2 t1 n_tlist1 pos in
       let n_tl = List.filter (fun (v,en) -> v<>tmp1) n_tlist2 in
       (n_tl,t2)
+  | IP.TypeCast (ty, a1, pos) ->
+      let _ = must_unify_expect_test et ty tlist pos in
+      let (new_et, n_tl) = fresh_tvar tlist in
+      let nt = List.find (fun (v,en) -> en.sv_info_kind = new_et) n_tl in 
+      let (tmp1,tmp2)=nt in
+      let (n_tl1,t1) = gather_type_info_exp a1 n_tl new_et in
+      let (n_tlist1,t1) = must_unify_expect t1 et n_tl1 pos in
+      let n_tl = List.filter (fun (v,en) -> v<>tmp1) n_tl1 in
+      (n_tl,t1)
   | IP.BagDiff (a1,a2,pos) ->
       let (el_t, n_tl) = fresh_tvar tlist in
       let new_et = must_unify_expect_test (BagT el_t) et n_tl pos in 
@@ -526,8 +530,8 @@ and gather_type_info_exp_x a0 tlist et =
       let (n_tlist,t2) = gather_type_info_exp_x a2 n_tlist new_et in
       let (n_tlist,n_typ) = must_unify t1 t2 n_tlist pos in
       (n_tlist,n_typ)
-  | IP.BagIntersect (es,pos) | IP.BagUnion (es,pos) -> (*Need to consider*)
-      let (el_t,n_tl) = fresh_tvar tlist in         
+  | IP.BagIntersect (es,pos) | IP.BagUnion (es,pos) ->
+      let (el_t,n_tl) = fresh_tvar tlist in
       let new_et = must_unify_expect_test (BagT el_t) et n_tl pos in 
       let rec aux es_list type_list =
         match es_list with
@@ -735,8 +739,8 @@ and gather_type_info_b_formula_x prog b0 tlist =
               IP.xpure_view_pos = pos}) -> (
       try
         let hpdef = I.look_up_hp_def_raw prog.I.prog_hp_decls r in
-        if (List.length args) == (List.length hpdef.I.hp_typed_vars) then
-          let args_ctypes = List.map (fun (t,n) -> trans_type prog t pos) hpdef.I.hp_typed_vars in
+        if (List.length args) == (List.length hpdef.I.hp_typed_inst_vars) then
+          let args_ctypes = List.map (fun (t,n, i) -> trans_type prog t pos) hpdef.I.hp_typed_inst_vars in
           let args_exp_types = List.map (fun t -> (t)) args_ctypes in
           let (n_tl,_) = gather_type_info_var r tlist HpT pos in (*Need to consider about pos*)
           let tmp_list = List.combine args args_exp_types in
@@ -780,7 +784,7 @@ and guess_type_of_exp_arith a0 tlist =
               (* | IP.Div _ -> Known (Float) *)
     | IP.IConst _ -> (tlist,Int)
     | IP.FConst _ -> (tlist,Float)
-    | IP.Ann_Exp (_,t) -> (tlist,t)
+    | IP.Ann_Exp (_,t, _) -> (tlist,t)
     | _ -> (tlist,UNK)
 
 and gather_type_info_pointer (e0 : IP.exp) (k : spec_var_kind) (tlist:spec_var_type_list) : (spec_var_type_list*typ) =
@@ -869,23 +873,58 @@ and gather_type_info_struc_f_x prog (f0:IF.struc_formula) tlist =
     (* check_shallow_var := true *)
   end
 
-and try_unify_data_type_args prog c ddef v ies tlist pos =
+and try_unify_data_type_args prog c v deref ies tlist pos =
   (* An Hoa : problem detected - have to expand the inline fields as well, fix in look_up_all_fields. *)
-  let (n_tl,_) = gather_type_info_var v tlist ((Named c)) pos in
-  let fields = I.look_up_all_fields prog ddef
-  in 
-  (try 
-    let f tl arg ((ty,_),_,_,_)=
-      (let (n_tl,_) = gather_type_info_exp arg tl ty in n_tl)
-    in (List.fold_left2 f n_tl ies fields)
-  with | Invalid_argument _ ->
-      Err.report_error
-          {
-              Err.error_loc = pos;
-              Err.error_text =
-                  "number of arguments for data " ^
-                      c ^ " does not match"^(pr_list (fun c->c)(List.map Iprinter.string_of_formula_exp ies));
-          }
+  if (deref = 0) then (
+    try (
+      let ddef = I.look_up_data_def_raw prog.I.prog_data_decls c in
+      let (n_tl,_) = gather_type_info_var v tlist ((Named c)) pos in
+      let fields = I.look_up_all_fields prog ddef in
+      try
+        let f tl arg ((ty,_),_,_,_)=
+          (let (n_tl,_) = gather_type_info_exp arg tl ty in n_tl)
+        in (List.fold_left2 f n_tl ies fields)
+      with | Invalid_argument _ ->
+        Err.report_error {
+           Err.error_loc = pos;
+           Err.error_text = "number of arguments for data " ^ c
+             ^ " does not match"^(pr_list (fun c->c)(List.map Iprinter.string_of_formula_exp ies));
+        }
+    )
+    with Not_found -> raise Not_found
+  )
+  else (
+    (* dereference cases *)
+    try (
+      let base_ddecl = (
+        let dname = (
+          match c with
+          | "int" | "float" | "void" | "bool" -> c ^ "__star"
+          | _ -> c
+        ) in
+        I.look_up_data_def_raw prog.I.prog_data_decls dname
+      ) in
+      let holder_name = (
+        let deref_str = ref "" in
+        for i = 1 to deref do
+          deref_str := !deref_str ^ "__star";
+        done;
+        c ^ !deref_str
+      ) in
+      let (n_tl,_) = gather_type_info_var v tlist ((Named holder_name)) pos in
+      let fields = I.look_up_all_fields prog base_ddecl in
+      try 
+        let f tl arg ((ty,_),_,_,_)=
+          (let (n_tl,_) = gather_type_info_exp arg tl ty in n_tl)
+        in (List.fold_left2 f n_tl ies fields)
+      with | Invalid_argument _ ->
+        Err.report_error {
+           Err.error_loc = pos;
+           Err.error_text = "number of arguments for data " ^ c 
+             ^ " does not match"^(pr_list (fun c->c)(List.map Iprinter.string_of_formula_exp ies));
+        }
+    )
+    with Not_found -> raise Not_found
   )
 
 (* TODO WN : this is not doing anything *)
@@ -894,13 +933,22 @@ and fill_view_param_types (vdef : I.view_decl) =
   else ()
 
 (* ident, args, table *)
-and try_unify_view_type_args prog c vdef v ies tlist pos =
+and try_unify_view_type_args prog c vdef v deref ies tlist pos =
   let dname = vdef.I.view_data_name in
   let n_tl = (
-    if not (dname = "") then 
-      let (n_tl,_) = gather_type_info_var v tlist ( (Named dname)) pos in
+    if not (dname = "") then (*asankhs: Changed this as I think when danme = "" you need to check for dereference names with __star else revert back ...*)
+     let (n_tl,_) = gather_type_info_var v tlist ( (Named dname)) pos in
       n_tl
-    else tlist
+    else 
+      let expect_dname = (
+        let s = ref "" in
+        for i = 1 to deref do
+          s := !s ^ "__star";
+        done;
+        dname ^ !s
+      ) in
+      let (n_tl,_) = gather_type_info_var v tlist ( (Named expect_dname)) pos in
+      n_tl
   ) in
   let _ = if (String.length vdef.I.view_data_name) = 0  then fill_view_param_types vdef in
   let vt = vdef.I.view_typed_vars in
@@ -978,26 +1026,32 @@ and get_spec_var_type_list (v : ident) tlist pos =
     | Not_found -> Err.report_error { Err.error_loc = pos;
                                       Err.error_text = v ^ " is undefined"; }
 
-and get_spec_var_type_list_infer (v : ident) fvs pos =
+and get_spec_var_type_list_infer (v : ident * primed) fvs pos =
   let pr_sv = Cprinter.string_of_spec_var in
   Debug.no_2 "get_spec_var_type_list_infer" 
     pr_id (pr_list pr_sv) pr_sv
     (fun _ _ -> get_spec_var_type_list_infer_x v fvs pos) v fvs
 
-and get_spec_var_type_list_infer_x (v : ident) fvs pos =
+and get_spec_var_type_list_infer_x ((v, p) : ident * primed) fvs pos =
   let get_var_type v fv_list: (typ * bool) = 
-    let res_list = CP.remove_dups_svl (List.filter (fun c -> v = CP.name_of_spec_var c) fv_list) in
+    let res_list = 
+      CP.remove_dups_svl (List.filter (
+        fun c -> (v = CP.name_of_spec_var c) && (p = CP.primed_of_spec_var c)
+      ) fv_list ) in
     match res_list with
     | [] -> (Void,false)
     | [sv] -> (CP.type_of_spec_var sv,true)
-    | _ -> Err.report_error { Err.error_loc = pos;
-                              Err.error_text = "could not find a coherent "^v^" type"}
+    | _ -> Err.report_error {
+             Err.error_loc = pos;
+             Err.error_text = "could not find a coherent " ^ v ^ " type";
+           }
   in
   let vtyp, check = get_var_type v fvs in
-  if check = false then
-    Err.report_error { Err.error_loc = pos;
-                       Err.error_text = v ^ " is not found in both sides"; }
-  else
+ (* WN TODO : this is a quick patch to type infer problem *)
+  (* if check = false then *)
+  (*   Err.report_error { Err.error_loc = pos; *)
+  (*                      Err.error_text = v ^ " is not found in both sides"; } *)
+  (* else *)
     match vtyp with
     | UNK -> Err.report_error { Err.error_loc = pos;
                                 Err.error_text = v ^ " is undefined"; }
@@ -1038,6 +1092,7 @@ and gather_type_info_heap_x prog (h0 : IF.h_formula) tlist =
       n_tl
   | IF.HeapNode { IF.h_formula_heap_node = (v, p); (* ident, primed *)
                   IF.h_formula_heap_arguments = ies; (* arguments *)
+                  IF.h_formula_heap_deref = deref;
                   IF.h_formula_heap_perm = perm;
                   IF.h_formula_heap_name = c; (* data/pred name *)
                   IF.h_formula_heap_imm = ann; (* data/pred name *)
@@ -1133,13 +1188,12 @@ and gather_type_info_heap_x prog (h0 : IF.h_formula) tlist =
             let _ = if not (IF.is_param_ann_list_empty ann_param) then
           (* let _ = print_string ("\n(andreeac) searching for: "^(\* c^ *\)" got: "^vdef.I.view_data_name^"-"^vdef.I.view_name^" ann_param length:"^ (string_of_int (List.length ann_param))  ^"\n") in *)
             report_error pos (" predicate parameters are not allowed to have imm annotations") in
-            try_unify_view_type_args prog c vdef v ies n_tl pos 
+            try_unify_view_type_args prog c vdef v deref ies n_tl pos 
         with
         | Not_found ->
           (try
-            let ddef = I.look_up_data_def_raw prog.I.prog_data_decls c in 
-            let n_tl = try_unify_data_type_args prog c ddef v ies n_tl pos in 
-                            n_tl
+            let n_tl = try_unify_data_type_args prog c v deref ies n_tl pos in 
+            n_tl
           with
           | Not_found ->
             (*let _ = print_string (Iprinter.string_of_program prog) in*)
@@ -1152,8 +1206,8 @@ and gather_type_info_heap_x prog (h0 : IF.h_formula) tlist =
     | IF.HRel (r, args, pos) ->
       (try
         let hpdef = I.look_up_hp_def_raw prog.I.prog_hp_decls r in
-        if (List.length args) == (List.length hpdef.I.hp_typed_vars) then
-          let args_ctypes = List.map (fun (t,n) -> trans_type prog t pos) hpdef.I.hp_typed_vars in
+        if (List.length args) == (List.length hpdef.I.hp_typed_inst_vars) then
+          let args_ctypes = List.map (fun (t,n,i) -> trans_type prog t pos) hpdef.I.hp_typed_inst_vars in
           let args_exp_types = List.map (fun t -> (t)) args_ctypes in
           let (n_tl,_) = gather_type_info_var r tlist HpT pos in (*Need to consider about  pos*)
           let args_expt = List.combine args args_exp_types in

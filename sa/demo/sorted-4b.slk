@@ -1,0 +1,42 @@
+
+data node {
+ int val;
+ node next;
+}.
+
+// only ptr type can be instantiating...
+
+HeapPred H(node x, int v).
+HeapPred H2(node x, int@NI v).
+
+infer [H] H(x,v) & x!=null |- x::node<a,n>.
+print residue.
+
+infer [H2] H2(x,v) & x!=null |- x::node<a,n>.
+print residue.
+
+/*
+# sorted-4b.slk 
+
+non-ptr types are @NI by default
+
+There is no point in instantiating integer
+type, such as HP_23(v,x@NI). By default,
+H(x,v) ought to be H(x,v@NI).
+
+Thus both entailments should cause the
+same outcome!
+
+
+Entail (1) : Valid. 
+ <1>HP_22(n_21,v) * HP_23(v,x)&x!=null & a=a_20 & n=n_21&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [H(x,v)&x!=null --> x::node<a_20,n_21>@M * 
+                   HP_22(n_21,v@NI) * HP_23(v,x@NI)]
+
+Entail (2) : Valid. 
+ <1>HP_35(n_34,v)&x!=null & a=a_33 & n=n_34&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [H2(x,v@NI)&x!=null --> x::node<a_33,n_34>@M * 
+                   HP_35(n_34,v@NI)]
+
+
+*/

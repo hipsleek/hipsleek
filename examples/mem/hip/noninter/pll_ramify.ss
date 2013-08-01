@@ -5,9 +5,9 @@ data node {
 
 ll<v,M,n,S> == self = null & M = {} & n = 0 & S = 0 
 	or self::node<value@v,p> * p::ll<v,Mp,n-1,Sp> 
-		& M = union(Mp,{self}) & S = value + Sp & v = @L
+		& M = union(Mp,{self}) & S = value + Sp & v = @L & value >=0
 	or self::node<value@v,p> * p::ll<v,Mp,n-1,Sp> 
-		& M = union(Mp,{self}) & S = value + Sp & v != @L
+		& M = union(Mp,{self}) & S = value + Sp & v != @L & value >=0
 		inv n >= 0 & S >= 0
 		memE M->(node<@L,@M> & v = @L; node<@A,@M> & v != @L);
 

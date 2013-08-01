@@ -1,0 +1,70 @@
+data node {
+ int val;
+ node next;
+}.
+
+HeapPred H30(node next_28, int@NI v).
+HeapPred H(node x, int@NI v).
+PostPred G(node x, int@NI v).
+HeapPred H29(int@NI val_27, int@NI v).
+
+
+infer [H,G,H29,H30]
+H29(val_27,v) * H30(next_28,v) * x::node<val_27,next_28>@M
+ &x=x' & v=v' & t_31'=val_27 & t_31'<v' & next_28=v_node_9'
+ |-  H(v_node_9',t_31'). 
+print residue.
+
+
+/*
+# sorted-2c.slk 
+  
+  (taken from check-sorted-2.ss)
+
+Design Issue:
+
+GOT
+===
+ inferred hprel: 
+  [H30(v_node_9',v@NI)&
+     val_27<v |#| x::node<val_27,v_node_9'>@M --> H(v_node_9',val_27@NI)]
+
+DESIGN CONSIDERATION
+====================
+
+ Either pure guard var_27<v or heap-guard
+   x::node<val_27,v_node_9'>@M is sufficient
+ since it would help provide the val_27 instantiation.
+
+ There is no need for both to be present.
+
+ It is better to heap guard, as it is easier to locate
+ the instantiation. Hence, I suggest dropping the
+ pure guard. This would be helpful if we had a different
+ scenario:
+
+ H30(next_8,v)&
+  val_7<v |#| x::node<val_7,next_8>@M --> H(next_8,val_7).
+
+ which appears to have a contradiction to previous.
+ Heap guard would still pick the expected value;
+ and would be identical to previous form.
+ 
+--------------------
+
+id: 19; caller: []; line: 17; classic: false; kind: PRE-2; hec_num: 5; evars: []; infer_vars: [H,G,H29,H30]; c_heap: emp
+ checkentail 
+H29(val_27,v) * H30(next_28,v) * 
+x::node<val_27,next_28>@M&x=x' & v=v' & x'!=null & 
+!(v_bool_3') & x'!=null & !(v_bool_3') & t_31'=val_27 & 
+t_31'<v' & !(v_boolean_01') & t_31'<v' & next_28=v_node_9'&
+{FLOW,(22,23)=__norm}[]
+ |-  H(v_node_9',t_31')&{FLOW,(22,23)=__norm}[]. 
+hprel_ass: [ H30(next_28,v)&
+  val_27<v |#| x::node<val_27,next_28>@M --> H(next_28,val_27)]
+res:  [
+  H29(val_27,v) * x::node<val_27,next_28>@M&x=x' & v=v' & x'!=null & !(v_bool_3') & x'!=null & !(v_bool_3') & t_31'=val_27 & t_31'<v' & !(v_boolean_01') & t_31'<v' & next_28=v_node_9' & next_28=v_node_9' & t_31'=val_27&{FLOW,(22,23)=__norm}[]
+  ]
+
+
+*/

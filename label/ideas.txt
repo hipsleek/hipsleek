@@ -1,0 +1,24 @@
+say we have:
+
+ (i)  e_1 = {a,b}
+      e_2 = {b,c}
+
+(ii) eq_all = e_1 /\ e_2
+            = {a,b,c}
+ 
+Then, for each e_i; we just want to
+add just the difference
+
+       eq_all - e_i
+
+which can be computed using either:
+
+   r_1 = exists (b: eq_all)  giving a=c
+or r_1 = exists (a: eq_all)  giving b=c
+
+   r_2 = exists (c: eq_all) giving a=b
+or r_2 = exists (b: eq_all) giving a=c
+
+This will ensure that we do not have
+redundant constraints.
+

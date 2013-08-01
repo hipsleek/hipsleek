@@ -1,0 +1,18 @@
+data node{
+ int val;
+ node next;
+}.
+
+infer [] x::node<_,_> |-  x::node<a,b>@L. 
+print residue.
+
+/*
+Why is there a false on conseq?
+
+INPUT: 
+ ### ante =  x::node<Anon_11,Anon_12>@M[Orig]&true&{FLOW,(19,20)=__norm}[]
+ ### conseq =  EBase exists (Expl)(Impl)[a; b](ex)x::node<a,b>@L[Orig]&false&
+       {FLOW,(19,20)=__norm}[]
+
+*/
+

@@ -1,0 +1,102 @@
+data node {
+  int val;
+  node next;
+}
+.
+
+HeapPred H2(node a,node b).
+HeapPred G2(node a, node b).
+HeapPred HP_5(node a, node@NI b).
+HeapPred HP_6(node a, node@NI b).
+HeapPred HP_9(node a, node@NI b).
+
+relAssume
+   H2(x,y)&true --> x::node<val_24_783,next_24_784>@M * 
+     HP_5(next_24_784,y) * HP_6(y,x)&true.
+
+relAssume 
+  HP_6(y,x) --> y::node<val_27_794,next_27_795>@M * HP_9(next_27_795,x)&true.
+
+relAssume 
+  HP_5(n,y) * HP_6(y,x) * 
+  x::node<_,n>@M&n=null --> G2(x,y).
+
+/*
+relAssume 
+   y::node<_,nn> *  HP_9(nn,x) *
+  x::node<_,n> & n=null  --> G2(x,y).
+*/
+
+relAssume 
+  HP_5(n4,y) * x::node<val_24_783,n4>@M * 
+  HP_9(n5,x) * y::node<val_27_794,n5>@M&
+  n4!=null --> G2(x,y)&true.
+
+//Declare_Dangling [ HP_5, HP_9].
+Declare_Unknown [ HP_5, HP_9].
+
+shape_infer [H2,HP_5,HP_6,HP_9][G2].
+
+/*
+# two-1a.slk
+
+Basically from two-2.slk + two-1.slk. GOT
+
+[ H2(x_137,y_138) ::=  y_138::node<val_27_794,next_27_795>@M * HP_9(next_27_795,x_137) * 
+x_137::node<val_24_67,next_24_68>@M * HP_5(next_24_68,y_138)&true,
+ HP_6(y_139,x_140) ::=  y_139::node<val_27_794,next_27_795>@M * HP_9(next_27_795,x_140)&true,
+ G2(x_142,y_143) ::=  x_142::node<Anon_11,n>@M * y_143::node<val_27_794,next_27_141>@M * 
+HP_144(n,y_143) * HP_5(n,y_143) * HP_9(next_27_141,x_142)&true,
+ HP_144(n,y_143) ::=  emp&n=null,
+ HP_5(a,b) ::= NONE,
+ HP_9(a,b) ::= NONE]
+
+CORRECT except for: 
+===================
+
+ G2(x_151,y_152) ::=  x_151::node<Anon_12,n>@M * y_152::node<Anon_11,nn>@M * HP_153(n,y_152) * 
+HP_9(nn,x_151)&true,
+ HP_153(n,y_152) ::=  
+ emp&n=null
+ or HP_5(n,y_152)&n!=null
+
+===============================
+
+ H2(x_136,y_137) ::= y_137::node<val_27_794,next_27_795>@M * HP_9(next_27_795,x_136) * 
+x_136::node<val_24_66,next_24_67>@M * HP_5(next_24_67,y_137)&true,
+
+ HP_6(y_138,x_139) ::= y_138::node<val_27_794,next_27_795>@M * HP_9(next_27_795,x_139)&true,
+
+ G2(x_140,y_141) ::= x_140::node<val_24_783,next_24_784>@M * 
+  HP_142(next_24_784,y_141) * HP_5(next_24_784,y_141)&true,
+
+ HP_142(next_24_784,y_141) ::= emp&next_24_784=null
+   or HP_9(next_27_795,x_140) * y_141::node<val_27_794,next_27_795>@M&
+       next_24_784!=null
+ ,
+ HP_5(a,b) ::=NONE,
+ HP_9(a,b) ::=NONE]
+
+===============================
+
+better version below:
+
+--sa-en-eup not working
+
+[ 
+
+H2(x_147,y_148) ::= y_148::node<val_27_794,next_27_795>@M 
+    * HP_9(next_27_795,x_147) * 
+     x_147::node<val_24_71,next_24_72>@M * HP_5(next_24_72,y_148)&true,
+HP_6(y_149,x_150) ::= y_149::node<val_27_794,next_27_795>@M * HP_9(next_27_795,x_150)&true,
+
+G2(x_151,y_152) ::= x_151::node<Anon_12,n>@M * y_152::node<Anon_11,nn>@M * HP_153(n,y_152) * HP_9(nn,x_151)&true,
+
+ HP_153(n,y_152) ::= 
+ emp&n=null
+ or HP_5(n,y_152)&n!=null
+ ,
+ HP_5(a,b) ::=NONE,
+ HP_9(a,b) ::=NONE]
+
+*/

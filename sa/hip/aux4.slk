@@ -1,0 +1,17 @@
+data node {
+	int val; 
+	node next;	
+}.
+
+HeapPred HP2(node a).
+HeapPred G2(node a, node b).
+HeapPred G(node a, node b).
+
+/*
+ this is to elim a redundant parameter.
+ using HP(p,y) ==> HP2(p)
+*/
+
+infer[HP2] p=null 
+     or p::node<_,p1>*HP2(p1) |- HP2(p).
+

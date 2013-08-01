@@ -1,0 +1,48 @@
+data node{
+	int val;
+	node next;
+}.
+
+HeapPred H_3(node prev, node@NI cur, node@NI sent).
+HeapPred H_2(node next_1, node@NI prev, node@NI sent).
+HeapPred G(node a, node ra, node b, node rb, node@NI c).
+
+infer [H_2,H_3] 
+ H_2(next_1,prev,sent) * H_3(prev,cur,sent) * 
+  cur::node<_,prev>@M & next_1!=sent & 
+   next_1!=null |- 
+     next_1::node<_,n1> * H_2(n1,cur,sent) * H_3(cur,next_1,sent)
+  .
+print residue.
+
+
+/*
+
+# bug-swl-1a.slk
+
+PROBLEM why is a useless guard next!=null present? It
+ should be eliminated
+
+    HP_38(n1_37,prev@NI,sent@NI)&
+           next_1!=null |#| cur::node<Anon_11,prev>@M --> H_2(n1_37,cur@NI,sent@NI); 
+           ^^^^^^^^^^^
+
+
+GOT
+===
+ inferred hprel: [H_2(next_1,prev@NI,sent@NI)&next_1!=sent & 
+                   next_1!=null --> next_1::node<Anon_36,n1_37>@M * 
+                   HP_38(n1_37,prev@NI,sent@NI); 
+                  HP_38(n1_37,prev@NI,sent@NI)&
+                   next_1!=null |#| cur::node<Anon_11,prev>@M --> H_2(n1_37,cur@NI,sent@NI); 
+                  H_3(prev,cur@NI,sent@NI) * cur::node<Anon_11,prev>@M&
+                   next_1!=sent & next_1!=null --> H_3(cur,next_1@NI,sent@NI)]
+
+
+
+
+
+*/
+
+
+

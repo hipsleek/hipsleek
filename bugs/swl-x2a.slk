@@ -1,0 +1,25 @@
+
+checkentail
+ cur_1262!=null & nxt_1252=p_1250 & p_1250=sentinel_1254 & 
+cur_1262!=sentinel_1254 & cur!=sentinel & sentinel=sentinel_1254 & 
+sentinel=sentinel_1255 & prev'!=sentinel_1255 & prev=null 
+|- true & exists(sentinel_1404: sentinel=sentinel_1404 & 
+          sentinel_1255=sentinel_1404 & prev'!=sentinel_1404) 
+  //& cur'=sentinel //(* why is cur' missing? *)
+.
+
+checkentail  
+M1_1253={} & cur_1262!=null & Mc=union({cur_1262},M1_1253) & Mp={}
+ & cur_1262=prev' // (* why is this missing? *)
+|-  true & exists(M_1405:M_1405=union(Mc,Mp) & M_1405=union(Mp,{prev'})) 
+.
+
+checkentail true &
+ ["": x=5;
+  "n": y>x]
+ |- true & 
+     ["n":y>5].
+
+checkentail x=5 & y>x
+ |- true & 
+     ["n":y>5].

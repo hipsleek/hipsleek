@@ -1,0 +1,14 @@
+data node{
+	int val;
+	node next;
+}.
+
+
+pred ll<n> == self = null & n=0
+	or self::node<_,nxt> * nxt::ll<n-1> 
+inv n>=0.
+
+pred ld<n> == self = null & n=0
+	or self::node<_,nxt> * nxt::ld<n-1> 
+  inv n>=0 & (self=null & n=0 | self!=null & n>0).
+

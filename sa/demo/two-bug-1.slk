@@ -1,0 +1,52 @@
+data node {
+  int val;
+  node next;
+}.
+
+
+HeapPred H2(node a,node b).
+HeapPred G2(node a, node b).
+HeapPred HP_5(node a, node@NI b).
+HeapPred HP_6(node a, node@NI b).
+
+
+infer [HP_5,HP_6]
+ HP_5(next_24_784,y) * 
+ HP_6(y,x) * x::node<val_24_783,next_24_784> 
+ & next_24_784!=null 
+ // &x=x' & y=y' 
+ //& !(v_bool_24_764') & next_24_784!=null & !(v_bool_24_764')
+ |-  y::node<val_27_762',next_27_763'>@L.
+
+print residue.
+
+
+
+/*
+# two-bug-1.slk
+
+WHY next_24_784!=null when not related to y,x.
+
+ inferred hprel: [HP_6(y,x@NI)&
+                   next_24_784!=null --> y::node<val_27_31,next_27_32>@M * 
+                   HP_33(next_27_32,x@NI)&true]
+
+==========
+
+ id: 7; caller: []; line: 27; classic: false; kind: BIND; hec_num: 5; evars: []; infer_vars: [H2,G2,HP_785,HP_786]; c_heap: emp
+ checkentail 
+HP_5(next_24_784,y) * HP_6(y,x) * 
+x::node<val_24_783,next_24_784>@M[Orig]&x=x' & y=y' & next_24_784!=null & 
+!(v_bool_24_764') & next_24_784!=null & !(v_bool_24_764')&
+{FLOW,(22,23)=__norm}[]
+ |-  y'::node<val_27_762',next_27_763'>@L[Orig]&true&{FLOW,(1,25)=__flow}[]. 
+
+
+hprel_ass: [ HP_6(y,x)&next_24_784!=null --> y::node<val_27_794,next_27_795>@M * 
+  HP_796(next_27_795,x)&true]
+res:  [
+  HP_5(next_24_784,y) * x::node<val_24_783,next_24_784>@M[Orig] * HP_796(next_27_795,x) * y::node<val_27_794,next_27_795>@M[Orig]&x=x' & y=y' & next_24_784!=null & !(v_bool_24_764') & next_24_784!=null & !(v_bool_24_764') & val_27_762'=val_27_794 & next_27_763'=next_27_795&{FLOW,(22,23)=__norm}[]
+  ]
+
+
+ */

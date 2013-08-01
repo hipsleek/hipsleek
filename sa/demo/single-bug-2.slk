@@ -1,0 +1,26 @@
+data node{
+	int val;
+	node next;
+}.
+
+HeapPred HP_4(node a, node@NI b).
+HeapPred HP_5(node a, node@NI b).
+HeapPred G(node a, node b).
+
+relAssume 
+  G(next_29_789,t_32')&
+  next_29_789!=null --> t_32'::node<val_34_802,next_34_803>@M * 
+  HP_4(next_34_803,next_29_789) * HP_5(next_29_789,t_32')&true.
+
+relAssume 
+x::node<val_29_788,next_29_789>@M&res=x & next_29_789=null --> G(x,res)&true.
+
+relAssume 
+  x::node<val_29_788,next_29_789>@M * HP_5(next_29_789,res) * 
+  res::node<val_34_802,v_null_34_808>@M&next_29_789!=null & 
+  v_null_34_808=null --> G(x,res)&true.
+
+
+Declare_Unknown [HP_4].
+Declare_Unknown [HP_5].
+shape_infer [HP_4,HP_5][G].

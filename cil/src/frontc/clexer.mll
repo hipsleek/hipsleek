@@ -441,10 +441,10 @@ rule initial = parse
                 let il = comment lexbuf in
                 let endPos = currentPos () in
                 let loc = Cabs.makeLoc startPos endPos in
-                let hspecs = intlist_to_string il in
-                addComment hspecs loc;
+                let hipspec = intlist_to_string il in
+                addComment hipspec loc;
                 addWhite lexbuf;
-                HIPSPECS (hspecs, loc) }
+                HIPSPEC (hipspec, loc) }
 | "/*"        { let startPos = currentPos () in
                 let il = comment lexbuf in
                 let endPos = currentPos () in
@@ -457,11 +457,11 @@ rule initial = parse
                 let il = onelinecomment lexbuf in
                 let endPos = currentPos () in
                 let loc = Cabs.makeLoc startPos endPos in
-                let hspecs = intlist_to_string il in
-                addComment hspecs loc;
+                let hipspec = intlist_to_string il in
+                addComment hipspec loc;
                 E.newline();
                 addWhite lexbuf;
-                HIPSPECS (hspecs, loc) }
+                HIPSPEC (hipspec, loc) }
 | "//"        { let startPos = currentPos () in
                 let il = onelinecomment lexbuf in
                 let endPos = currentPos () in

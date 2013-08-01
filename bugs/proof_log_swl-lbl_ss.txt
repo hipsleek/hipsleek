@@ -1,0 +1,135 @@
+
+--------------
+..no proving kind.....
+Prover: 
+Type: Imply: ante: s!=self
+	     conseq:  (AndList ([n],s!=self)) 
+Result: true
+
+## how is ANDList used?
+
+--------------
+Proving Infor spec:None loc:(Line:12,Col:19) kind::PRED CHECK-INVARIANT...
+Prover: CACHED
+Type: Simplify:  exists(nxt:s!=self & nxt!=s)
+Result:  (s<self | self<s)
+
+--------------
+Proving Infor spec:None loc:(Line:12,Col:19) kind::PRED CHECK-INVARIANT...
+Prover: CACHED
+Type: Simplify:  exists(Mnxt:M=union(Mnxt,bag({self})))
+Result:  exists(Mnxt:M=union(Mnxt,bag({self})))
+
+--------------
+Proving Infor spec:None loc:(Line:12,Col:19) kind::PRED CHECK-INVARIANT
+Trace::[]
+
+Prover: 
+Type: Sat:  (((AndList ([n],self=null & s!=self) & ([s],M=bag())) ) | 
+((AndList ([],self!=null) & ([n],(s<self | self<s))
+ & ([s],exists(Mnxt:M=union(Mnxt,bag({self}))))) ))
+Result: true
+
+## has this been properly split?
+
+--------------
+Proving Infor spec:None loc:(Line:12,Col:19) kind::PRED CHECK-INVARIANT
+Trace::[]
+
+Prover: CACHED
+Type: Sat:  (AndList ([n],self=null & s!=self) & ([s],M=bag())) 
+Result: true
+
+--------------
+Proving Infor spec:None loc:(Line:12,Col:19) kind::PRED CHECK-INVARIANT
+Trace::[]
+
+Prover: 
+Type: Sat:  (AndList ([],self!=null) & ([n],(s<self | self<s))
+ & ([s],exists(Mnxt:M=union(Mnxt,bag({self}))))) 
+Result: true
+
+## can I see things at a lower-level where they are really split?
+
+--------------
+Proving Infor spec:None loc:(Line:12,Col:19) kind::PRED CHECK-INVARIANT
+Trace::[]
+
+Prover: CACHED
+Type: Sat:  (AndList ([n],self=null & s!=self) & ([s],M=bag())) 
+Result: true
+
+--------------
+Proving Infor spec:None loc:(Line:12,Col:19) kind::PRED CHECK-INVARIANT
+Trace::[]
+
+Prover: CACHED
+Type: Sat:  (AndList ([],self!=null) & ([n],(s<self | self<s))
+ & ([s],exists(Mnxt:M=union(Mnxt,bag({self}))))) 
+Result: true
+
+--------------
+Proving Infor spec:None loc:(Line:12,Col:19) kind::PRED CHECK-INVARIANT
+Trace::[]
+
+Prover: 
+Type: Imply: ante: self=null & s!=self & M=bag()
+	     conseq:  s!=self
+Result: true
+
+--------------
+Proving Infor spec:None loc:(Line:12,Col:19) kind::PRED CHECK-INVARIANT
+Trace::[]
+
+Prover: 
+Type: Simplify:  exists(Mnxt:M=union(Mnxt,bag({self})))
+Result:  exists(Mnxt:M=union(Mnxt,bag({self})))
+
+--------------
+Proving Infor spec:None loc:(Line:12,Col:19) kind::PRED CHECK-INVARIANT
+Trace::[]
+
+Prover: 
+Type: Imply: ante: self!=null & ((s<self | self<s)) & exists(Mnxt_857:M=union(Mnxt_857,
+bag({self})))
+	     conseq:  s!=self
+Result: true
+
+## why isn't this imply split? where is ANDlist?
+
+
+--------------
+Proving Infor spec:None loc:(Line:12,Col:19) kind::PRED CHECK-INVARIANT...
+Prover: 
+Type: Simplify:  exists(nxt:s!=self & nxt!=s)
+Result:  (s<self | self<s)
+
+--------------
+Proving Infor spec:None loc:(Line:12,Col:19) kind::PRED CHECK-INVARIANT...
+Prover: 
+Type: Simplify:  exists(Mnxt:M=union(Mnxt,bag({self})))
+Result:  exists(Mnxt:M=union(Mnxt,bag({self})))
+
+--------------
+Proving Infor spec:None loc:(Line:12,Col:19) kind::PRED CHECK-INVARIANT...
+Prover: 
+Type: Simplify:  exists(Mnxt:M=union(Mnxt,bag({self})))
+Result:  exists(Mnxt:M=union(Mnxt,bag({self})))
+
+--------------
+Proving Infor spec:None loc:(Line:12,Col:19) kind::PRED CHECK-INVARIANT...
+Prover: 
+Type: Simplify:  exists(Mnxt:M=union(Mnxt,bag({self})))
+Result:  exists(Mnxt:M=union(Mnxt,bag({self})))
+
+--------------
+Proving Infor spec:None loc:(Line:12,Col:19) kind::PRED CHECK-INVARIANT...
+Prover: 
+Type: Imply: ante: s!=self
+	     conseq:  (((AndList ([],self!=null) & ([n],(s<self | self<s))
+ & ([s],exists(Mnxt:M=union(Mnxt,bag({self}))))) ) | 
+((AndList ([n],self=null & s!=self) & ([s],M=bag())) ))
+Result: false
+
+## are the ante and conseq reversed?
+

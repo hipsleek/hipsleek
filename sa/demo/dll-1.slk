@@ -1,0 +1,110 @@
+    
+data node {
+    node prev; 
+    node next; 
+    }.
+
+HeapPred H_1(node next_9, node@NI prv).
+HeapPred H1(node a, node@NI b).
+PostPred G1(node a, node@NI b).
+HeapPred H_0(node prev_8, node@NI prv).
+
+Declare_Unknown [H_0].
+
+relAssume
+ H1(l,prv)&l!=null --> l::node<prev_8,next_9>@M * 
+   H_0(prev_8,prv) * H_1(next_9,prv) & prev_8=prv.
+
+relAssume H_1(next_9,prv) |#| l::node<_,next_9> --> H1(next_9,l).
+
+relAssume H1(l,prv)&l=null --> emp.
+
+//relAssume H_0(prev_19_928,prv) --> prev_19_928=prv.
+//relAssume H_0(prev_19_928,prv) --> emp&forall(l:(prev_19_928=prv | l=null)).
+
+//shape_infer [H1,H_1,H_0][].
+shape_infer [H1][].
+
+
+
+/*
+# dll-1.slk
+
+PROBLEMS
+========
+
+1. H_1 should be presented in guarded form
+  Instead of:
+     H_1(next_46,prv_47) ::= H1(next_46,l)
+  EXPECT:
+    H_1(next_9,prv) |#| l::node<_,next_9> ::= H1(next_9,l).
+
+
+(extracted fro hip check-dll.ss)
+[ H1(l_1011,prv_1012) ::= 
+ H1(next_19_984,l_983) * l_1011::node<prev_19_985,next_19_984>@M&
+ forall(l:((prv_1012>=prev_19_985 | l=null)) & ((prev_19_985>=prv_1012 | 
+ l=null)))
+ or emp&l_1011=null
+
+URGENT (inconsistency between sleek/hip)
+
+GOT
+===
+[ H_1(next_45,prv_46) ::= H1(next_45,l),
+  H1(l_47,prv_48) ::= 
+    H1(next_42,l) * l_47::node<prev_41,next_42>@M * H_0(prev_41,prv_48)
+    or emp&l_47=null,
+  H_0(prev_8,prv) ::= NONE]
+
+
+2. The above result seems to have lost the link between l,l_47
+   and is inconsistent with the outcome from check-dll.ss.
+   Expecting:
+   H1(l_47,prv_48) ::= 
+    H1(next_42,l) * l_47::node<prev_41,next_42>@M * H_0(prev_41,prv_48)
+    or emp&l_47=null,
+
+[ H1(l_968,prv_969) ::= 
+ H1(next_19_962,l_968) * l_968::node<prev_19_963,next_19_962>@M&
+ prev_19_963=prv_969
+ or emp&l_968=null
+
+
+
+
+============
+
+ ,
+ G1(l_1014,prv_1015) ::= 
+ H_0(prev_8,prv_1015) * l_1014::node<prev_8,next_9>@M * 
+ G1(next_9,l_1014)&prev_8=prv_1015
+ or emp&l_1014=null
+ ,
+ H_0(prev_8,prv) ::= NONE]
+
+*/
+
+/*
+
+ H_1(next_9,prv) |#| l::node<prev_8,next_9>@M 
+ --> H1(next_9,l).
+
+
+ H1(l,prv)&l=null --> G1(l,prv),
+ H_0(prev_8,prv) * l::node<prev_8,next_9>@M * 
+  G1(next_9,l)&prev_8=prv --> G1(l,prv),
+ H_0(prev_8,prv) --> emp&forall(l:(prev_8=prv | l=null))]
+
+relAssume
+ l=null --> G1(l,prv).
+
+relAssume
+ H_0(prev_8,prv) * l::node<prev_8,next_9>@M * 
+   G1(next_9,l)&prev_8=prv --> G1(l,prv).
+
+
+ H_0(prev_8,prv) --> emp&forall(l:((prv>=prev_8 | l=null)) & 
+  ((prev_8>=prv | l=null)))]
+
+*/

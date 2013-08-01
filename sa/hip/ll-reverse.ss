@@ -7,7 +7,7 @@ ll<> == self = null
 	or self::node<_, q>* q::ll<> 
   inv true;
 
-HeapPred H1(node a).
+HeapPred H1(node a, node b).
 HeapPred H2(node a).
 HeapPred HX(node a).
 HeapPred HY(node a).
@@ -28,9 +28,9 @@ HP_RELDEFN G1:  G1(x,y)::  HP_571(x) * HP_572(y)&true]
 
  */
 void reverse(ref node x, ref node y)
-  infer[H1,H2,G]
-  requires H1(x)*H2(y)
-  ensures G(x,x',y,y');
+  infer[H1,G1]
+  requires H1(x,y)
+  ensures G1(x',y');
 
 /*
   infer[H1,H2]

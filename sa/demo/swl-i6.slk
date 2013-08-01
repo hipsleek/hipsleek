@@ -1,0 +1,34 @@
+data node{
+	int val;
+	node next;
+}.
+
+ pred HP_902<prev_995:node,sent_996:node> == p::HP_902<self,sent_996> * self::node<val_36_989,p>@M
+   or emp&self=sent_996
+   or emp&self=null & self!=sent_996
+   or p::HP_902<self,sent_996> * self::node<val_36_989,p>@M &self!=sent_996.
+
+HeapPred HP_903(node prev, node@NI cur, node@NI sent).
+/*
+checkentail prev_942::HP_902<cur_940,sent_944> * cur_940::node<val_36_941,prev_942>@M&
+  next_36_943!=null & 
+  next_36_943!=sent_944 |- cur_940::HP_902<next_36_943,sent_944>.
+*/
+
+infer [HP_903] HP_903(prev_936,cur_939,sent)&
+  prev_995=null |- prev_936::node<val_36_989,p>@M * p::HP_902<prev_936,sent> &  prev_936!=sent.
+print residue.
+
+
+
+/*
+infer [HP_903] HP_903(prev_936,cur_939,sent)&
+  prev_995=null |- prev_936=sent.
+print residue.
+*/
+/*
+infer [HP_903] HP_903(prev_936,cur_939,sent)&
+  prev_995=null |- prev_936=null & prev_936!=sent.
+
+print residue.
+*/

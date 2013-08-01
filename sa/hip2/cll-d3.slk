@@ -1,0 +1,66 @@
+data node{
+ int val;
+ node next;
+}.
+
+HeapPred H(node a).
+HeapPred HP_6(node a).
+HeapPred HP_6e(node a, node a).
+HeapPred G(node a, node a).
+
+
+infer [HP_6,x]
+HP_6(n) * x_814::node<val_35_804,n>@M&
+x=x_814 & n=x_814 & v_bool_35_785' & n=x_814 & 
+v_bool_35_785' & xp=null
+ |-  G(x,xp). 
+print residue.
+
+/*
+hprel_ass: [ x::node<val_35_804,x>@M&x'=null --> G(x,x')&true,
+ HP_6(x_814)&x=x_814 --> emp&true]
+res:  [
+  emp&x=x_814 & next_35_805=x_814 & v_bool_35_785' & next_35_805=x_814 & v_bool_35_785' & x'=null&{FLOW,(22,23)=__norm}[]
+  ]
+
+ checkentail (HP_823(next_39_822)) * next_35_805::node<val_39_821,next_39_822>@M[Orig] * 
+x'::node<val_35_804,next_39_822>@M[Orig]&x=x' & next_35_805!=x' & 
+!(v_bool_35_785') & next_35_805!=x' & !(v_bool_35_785') & 
+next_35_805=next_40_827&{FLOW,(22,23)=__norm}[]
+ |-  G(x,x')&true&{FLOW,(22,23)=__norm}[]. 
+
+
+ id: 0; caller: []; line: 35; classic: false; kind: BIND; hec_num: 5; evars: []; c_heap: emp
+ checkentail H(x)&x=x'&{FLOW,(22,23)=__norm}[]
+ |-  x'::node<val_35_775',next_35_776'>@L[Orig]&true&{FLOW,(1,25)=__flow}[]. 
+hprel_ass: [ H(x)&true --> x::node<val_35_804,next_35_805>@M * (HP_806(next_35_805))&true]
+res:  [
+  (HP_806(next_35_805)) * x'::node<val_35_804,next_35_805>@M[Orig]&x=x' & val_35_775'=val_35_804 & next_35_776'=next_35_805&{FLOW,(22,23)=__norm}[]
+  ]
+
+
+
+ checkentail (HP_806(next_35_805)) * x'::node<val_35_804,next_35_805>@M[Orig]&x=x' & 
+next_35_805!=x' & !(v_bool_35_785') & next_35_805!=x' & !(v_bool_35_785') & 
+next_35_805=v_node_39_780'&{FLOW,(22,23)=__norm}[]
+ |-  v_node_39_780'::node<val_39_781',next_39_782'>@L[Orig]&true&
+{FLOW,(1,25)=__flow}[]. 
+hprel_ass: [ HP_806(next_35_805)&true --> next_35_805::node<val_39_821,next_39_822>@M * 
+  (HP_823(next_39_822))&true]
+
+ checkentail (HP_806(next_35_805)) * x_814::node<val_35_804,next_35_805>@M[Orig]&
+x=x_814 & next_35_805=x_814 & v_bool_35_785' & next_35_805=x_814 & 
+v_bool_35_785' & x'=null&{FLOW,(22,23)=__norm}[]
+ |-  G(x,x')&true&{FLOW,(22,23)=__norm}[]. 
+hprel_ass: [ x::node<val_35_804,x>@M&x'=null --> G(x,x')&true,
+ HP_806(x_814)&x=x_814 --> emp&true]
+res:  [
+  emp&x=x_814 & next_35_805=x_814 & v_bool_35_785' & next_35_805=x_814 & v_bool_35_785' & x'=null&{FLOW,(22,23)=__norm}[]
+  ]
+
+ checkentail (HP_823(next_39_822)) * next_35_805::node<val_39_821,next_39_822>@M[Orig] * 
+x'::node<val_35_804,next_39_822>@M[Orig]&x=x' & next_35_805!=x' & 
+!(v_bool_35_785') & next_35_805!=x' & !(v_bool_35_785') & 
+next_35_805=next_40_827&{FLOW,(22,23)=__norm}[]
+ |-  G(x,x')&true&{FLOW,(22,23)=__norm}[]. 
+*/

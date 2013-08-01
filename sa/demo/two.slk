@@ -1,0 +1,32 @@
+data node {
+  int val;
+  node next;
+}
+.
+
+HeapPred H2(node a,node b).
+HeapPred G2(node a, node b).
+HeapPred HP_5(node a, node@NI b).
+HeapPred HP_6(node a, node@NI b).
+HeapPred HP_9(node a, node@NI b).
+
+relAssume 
+   H2(x,y)&true --> x::node<val_24_783,next_24_784>@M * 
+     HP_5(next_24_784,y) * HP_6(y,x)&true.
+
+relAssume 
+  HP_6(y,x)--> y::node<val_27_794,next_27_795>@M * HP_9(next_27_795,x)&true.
+
+relAssume 
+  HP_5(next_24_784,y) * HP_6(y,x) * 
+  x::node<val_24_783,next_24_784>@M&next_24_784=null --> G2(x,y)&true.
+
+relAssume 
+  HP_5(next_24_784,y) * x::node<val_24_783,next_24_784>@M * 
+  HP_9(next_27_795,x) * y::node<val_27_794,next_27_795>@M&
+  next_24_784!=null --> G2(x,y)&true.
+
+//Declare_Dangling [ HP_5, HP_9].
+Declare_Unknown [ HP_5, HP_9].
+
+shape_infer [H2,HP_5,HP_6,HP_9][G2].
