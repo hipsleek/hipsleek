@@ -1,0 +1,34 @@
+data node{
+	int val;
+	node next;
+}.
+
+HeapPred H1(node a).
+HeapPred HP_9(node a).
+HeapPred G1(node a, node r).
+
+//Declare_Unknown [HP_9].
+Declare_Dangling [HP_9].
+
+relAssume
+ H1(c)&true --> c::node<val_14_777,next_14_778> * HP_9(next_14_778).
+
+relAssume 
+ HP_9(next_14_778) * c::node<val_14_777,next_14_778> &
+  next_14_778=res --> G1(res,c).
+
+shape_infer [H1,HP_9][G1].
+
+/* 
+# tail-bug-1.slk
+
+Yields
+======
+[ H1(c_38) ::= c_38::node<val_14_777,next_14_778>@M * HP_9(next_14_778)&true,
+ G1(res_39,c_40) ::= HP_9(res_39) * c_40::node<val_14_777,res_39>@M&true,
+ HP_9(a) ::=NONE]
+
+
+QUESTION : When would dangling be better than UNKNOWN?
+
+*/

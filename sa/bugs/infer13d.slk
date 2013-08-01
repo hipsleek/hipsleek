@@ -1,0 +1,32 @@
+// examples from bi-abduction paper
+
+data node {
+	node next;	
+}.
+
+pred lseg<p> == self = p 
+	or self::node<q> * q::lseg<p> & self!=p 
+  inv true.
+  
+HeapPred H1(node y).
+
+infer [H1] H1(y)  |-y::lseg<null> .
+print residue.
+
+/*
+# infer13d.slk
+
+LOG indicate failure but this contradict with the
+result from infer13b.slk!
+
+ id: 2; caller: []; line: 13; classic: false; kind: Why None?; hec_num: 4; evars: [flted_13_27]; infer_vars: [H1,HP_29]; c_heap: y::lseg<flted_13_28>@M[0][Orig][LHSCase]
+ checkentail HP_29(flted_13_28)&true&{FLOW,(19,20)=__norm}[]
+ |-  emp&flted_13_28=null&{FLOW,(19,20)=__norm}[]. 
+res:  failctx
+         fe_kind: MAY
+         fe_name: logical bug
+         fe_locs: {
+                   fc_message: failed in entailing pure formula(s) in conseq
+                   fc_current_lhs_flow: {FLOW,(19,20)=__norm}}
+w
+*/

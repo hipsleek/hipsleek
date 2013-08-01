@@ -1,0 +1,420 @@
+data node {
+ int mark;
+ node left;
+ node right;
+}.
+
+pred tx<"n":g,"n":s,"s":M> == true&["n":self = g & s!=null & (g=null | g=s) ; "s": M={}]
+   or self::node<v,l,r> * l::tx<g,s,M1> * r::tx<null,s,M2> & ["n": self != g & self != s ;"s": M=union({v},M1,M2)]
+   or self::node<v,l,r> * l::tx<null,s,M1> * r::tx<g,s,M2> & ["n": self != g & self != s ;"s": M=union({v},M1,M2)]
+inv true&["n": s!=null & (g=null & self!=s | g=s & self!=null); "n","s":(self=g & M={} | self!=g & M!={})].
+
+ checkentail 
+prev::tx<b,sent_1214,M2>@M * r_1211::tx<g_1205,s_1206,M2_1212>@M * 
+cur_1262::node<v_1208,tmp_55',prev_1260>@M * 
+l_1209::tx<flted_9_1207,s_1204,M1_1210>@M
+& AndList( "":cur=cur_1262 & prev=prev_1260 & sent=sent' & a=null & b=sent & 
+         cur!=null & l_1209=n_54' & r_1211=tmp_55' & r_1211=right_51_1246 & 
+         l_1209=left_52_1258 & cur_1262=prev' & cur'=n_54' & cur'!=sent' & 
+         !(v_bool_56_998') & cur'!=sent' & !(v_bool_56_998') & cur'!=null & 
+         !(v_bool_59_999') & cur'!=null & !(v_bool_59_999') & a_1353!=null & 
+         ((b_1355!=null | cur'=sent' | a_1353!=sent'))
+ ; "n":flted_9_1207=null & a!=cur_1262 & cur_1262!=sent_1213 & 
+   s_1204=sent_1213 & a=g_1205 & s_1206=sent_1213 & sent=sent_1213 & 
+   sent=sent_1214 & a_1353=flted_9_1207 & g_1205=null & b!=prev' & 
+   prev'!=s_1206 & s_1206=sent_1214 & exists(sent_2294:b_1355!=prev' & 
+   prev'!=sent_2294 & s_1206=sent_2294 & b=b_1355 & sent_1214=sent_2294)
+ ; "s":M1=union({v_1208},M1_1210,M2_1212) & M1_1210=M1_1354 & 
+   M2_1356=union({v_1208},M2_1212,M2)) 
+ |-  false.
+
+/*
+# t-f-2a.slk -tp om --lbl-en-aggr-sat
+
+WHY is t-f-2.slk much worse than t-f-2a.slk?
+
+inside timer_start 0
+inside timer_stop 0
+Starting Omega...oc
+inside timer_start 1
+inside timer_stop 1
+inside add_proof_info
+inside timer_start 2
+inside timer_stop 2
+inside add_proof_info
+inside add_proof_info
+inside add_proof_info
+inside timer_start 5
+inside timer_stop 5
+inside add_proof_info
+inside timer_start 6
+inside timer_stop 6
+inside add_proof_info
+inside add_proof_info
+inside add_proof_info
+inside timer_start 9
+inside timer_stop 9
+inside add_proof_info
+inside timer_start 10
+inside timer_stop 10
+inside add_proof_info
+inside timer_start 11
+inside timer_stop 11
+inside add_proof_info
+inside timer_start 12
+inside timer_stop 12
+inside add_proof_info
+inside timer_start 13
+inside timer_stop 13
+inside add_proof_info
+inside add_proof_info
+inside add_proof_info
+inside add_proof_info
+inside add_proof_info
+inside timer_start 18
+inside timer_stop 18
+inside add_proof_info
+inside timer_start 19
+inside timer_stop 19
+inside add_proof_info
+inside timer_start 20
+inside timer_stop 20
+inside add_proof_info
+inside add_proof_info
+inside add_proof_info
+inside add_proof_info
+inside add_proof_info
+inside add_proof_info
+inside timer_start 24
+inside timer_stop 24
+inside timer_start 24
+inside timer_stop 24
+inside timer_start 24
+inside timer_stop 24
+inside timer_start 25
+inside timer_stop 25
+inside add_proof_info
+inside add_proof_info
+inside timer_start 27
+inside timer_stop 27
+inside add_proof_info
+inside timer_start 28
+inside timer_stop 28
+inside add_proof_info
+inside add_proof_info
+inside timer_start 30
+inside timer_stop 30
+inside add_proof_info
+inside timer_start 31
+inside timer_stop 31
+inside add_proof_info
+inside add_proof_info
+inside timer_start 33
+inside timer_stop 33
+inside add_proof_info
+inside timer_start 34
+inside timer_stop 34
+inside add_proof_info
+inside add_proof_info
+inside timer_start 36
+inside timer_stop 36
+inside add_proof_info
+inside add_proof_info
+inside timer_start 38
+inside timer_stop 38
+inside add_proof_info
+inside timer_start 39
+inside timer_stop 39
+inside add_proof_info
+inside timer_start 40
+inside timer_stop 40
+inside add_proof_info
+inside add_proof_info
+inside add_proof_info
+inside timer_start 43
+inside timer_stop 43
+inside add_proof_info
+inside add_proof_info
+inside add_proof_info
+inside timer_start 46
+inside timer_stop 46
+inside add_proof_info
+inside timer_start 47
+inside timer_stop 47
+inside add_proof_info
+inside add_proof_info
+inside timer_start 49
+inside timer_stop 49
+inside add_proof_info
+inside add_proof_info
+inside timer_start 51
+inside timer_stop 51
+inside add_proof_info
+inside timer_start 52
+inside timer_stop 52
+inside add_proof_info
+inside add_proof_info
+inside timer_start 54
+inside timer_stop 54
+inside add_proof_info
+inside timer_start 55
+inside timer_stop 55
+inside add_proof_info
+inside add_proof_info
+inside timer_start 57
+inside timer_stop 57
+inside add_proof_info
+inside add_proof_info
+inside timer_start 59
+inside timer_stop 59
+inside add_proof_info
+inside timer_start 60
+inside timer_stop 60
+inside add_proof_info
+inside timer_start 61
+inside timer_stop 61
+inside add_proof_info
+inside add_proof_info
+inside add_proof_info
+inside timer_start 64
+inside timer_stop 64
+inside add_proof_info
+inside add_proof_info
+inside add_proof_info
+inside timer_start 67
+inside timer_stop 67
+inside add_proof_info
+inside timer_start 68
+inside timer_stop 68
+inside add_proof_info
+inside add_proof_info
+inside timer_start 70
+inside timer_stop 70
+inside add_proof_info
+inside timer_start 71
+inside timer_stop 71
+inside add_proof_info
+inside timer_start 72
+inside timer_stop 72
+inside add_proof_info
+inside timer_start 73
+inside timer_stop 73
+inside add_proof_info
+inside timer_start 74
+inside timer_stop 74
+inside add_proof_info
+inside timer_start 75
+inside timer_stop 75
+inside add_proof_info
+inside timer_start 76
+inside timer_stop 76
+inside add_proof_info
+inside timer_start 77
+inside timer_stop 77
+inside add_proof_info
+inside timer_start 78
+inside timer_stop 78
+inside add_proof_info
+inside timer_start 79
+inside timer_stop 79
+inside add_proof_info
+inside timer_start 80
+inside timer_stop 80
+inside add_proof_info
+inside timer_start 81
+inside timer_stop 81
+inside add_proof_info
+inside timer_start 82
+inside timer_stop 82
+inside add_proof_info
+inside timer_start 83
+inside timer_stop 83
+inside add_proof_info
+inside timer_start 84
+inside timer_stop 84
+inside add_proof_info
+inside timer_start 85
+inside timer_stop 85
+inside add_proof_info
+inside timer_start 86
+inside timer_stop 86
+inside add_proof_info
+inside timer_start 87
+inside timer_stop 87
+inside add_proof_info
+inside timer_start 88
+inside timer_stop 88
+inside add_proof_info
+inside timer_start 89
+inside timer_stop 89
+inside add_proof_info
+inside timer_start 90
+inside timer_stop 90
+inside add_proof_info
+inside timer_start 91
+inside timer_stop 91
+inside add_proof_info
+inside timer_start 92
+inside timer_stop 92
+inside add_proof_info
+inside timer_start 93
+inside timer_stop 93
+inside add_proof_info
+inside timer_start 94
+inside timer_stop 94
+inside add_proof_info
+inside timer_start 95
+inside timer_stop 95
+inside add_proof_info
+inside timer_start 96
+inside timer_stop 96
+inside add_proof_info
+inside timer_start 97
+inside timer_stop 97
+inside add_proof_info
+inside timer_start 98
+inside timer_stop 98
+inside add_proof_info
+inside timer_start 99
+inside timer_stop 99
+inside add_proof_info
+inside timer_start 100
+inside timer_stop 100
+inside add_proof_info
+inside timer_start 101
+inside timer_stop 101
+inside add_proof_info
+inside timer_start 102
+inside timer_stop 102
+inside add_proof_info
+inside timer_start 103
+inside timer_stop 103
+inside add_proof_info
+inside timer_start 104
+inside timer_stop 104
+inside add_proof_info
+inside timer_start 105
+inside timer_stop 105
+inside add_proof_info
+inside add_proof_info
+inside timer_start 107
+inside timer_stop 107
+inside add_proof_info
+inside timer_start 108
+inside timer_stop 108
+inside add_proof_info
+inside timer_start 109
+inside timer_stop 109
+inside add_proof_info
+inside timer_start 110
+inside timer_stop 110
+inside add_proof_info
+inside add_proof_info
+inside add_proof_info
+inside timer_start 113
+inside timer_stop 113
+inside add_proof_info
+inside timer_start 114
+inside timer_stop 114
+inside add_proof_info
+inside add_proof_info
+inside timer_start 116
+inside timer_stop 116
+inside add_proof_info
+inside timer_start 117
+inside timer_stop 117
+inside add_proof_info
+inside timer_start 118
+inside timer_stop 118
+inside add_proof_info
+inside timer_start 119
+inside timer_stop 119
+inside add_proof_info
+inside timer_start 120
+inside timer_stop 120
+inside add_proof_info
+inside timer_start 121
+inside timer_stop 121
+inside add_proof_info
+inside timer_start 122
+inside timer_stop 122
+inside add_proof_info
+inside timer_start 123
+inside timer_stop 123
+inside add_proof_info
+inside timer_start 124
+inside timer_stop 124
+inside add_proof_info
+inside timer_start 125
+inside timer_stop 125
+inside add_proof_info
+inside timer_start 126
+inside timer_stop 126
+inside add_proof_info
+inside timer_start 127
+inside timer_stop 127
+inside add_proof_info
+inside timer_start 128
+inside timer_stop 128
+inside add_proof_info
+inside timer_start 129
+inside timer_stop 129
+inside add_proof_info
+inside timer_start 130
+inside timer_stop 130
+inside add_proof_info
+inside timer_start 131
+inside timer_stop 131
+inside add_proof_info
+inside timer_start 132
+inside timer_stop 132
+inside add_proof_info
+inside timer_start 133
+inside timer_stop 133
+inside add_proof_info
+inside timer_start 134
+inside timer_stop 134
+inside add_proof_info
+inside timer_start 135
+inside timer_stop 135
+inside add_proof_info
+inside timer_start 136
+inside timer_stop 136
+inside add_proof_info
+inside timer_start 137
+inside timer_stop 137
+inside add_proof_info
+inside timer_start 138
+inside timer_stop 138
+inside add_proof_info
+inside timer_start 139
+inside timer_stop 139
+inside add_proof_info
+inside timer_start 140
+inside timer_stop 140
+inside add_proof_info
+inside timer_start 141
+inside timer_stop 141
+inside add_proof_info
+inside timer_start 142
+inside timer_stop 142
+inside add_proof_info
+[Warning] False ctx
+
+Entail 1: Valid. 
+
+Stop Omega... 40 invocations 
+SAT Count   : 80
+SAT % Hit   : 12.5%
+IMPLY Count : 14
+IMPLY % Hit : 7.14%
+Time(cache overhead) : 0.040001 (seconds)
+
+!!! Logging logs/no_eps_proof_log_t-f-2a_slk.txt
+
+!!! log(small):(0.750285,143)
+Total verification time: 1.212074 second(s)
+	Time spent in main process: 0.552034 second(s)
+	Time spent in child processes: 0.66004 second(s)
+
+*/

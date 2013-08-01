@@ -1,0 +1,43 @@
+/* representation of a node */
+data node {
+	int val; 
+	node left;
+	node right;	
+}.
+
+// G = (V,D,L,E) mathematical graphs
+relation E(node x, node l, node r).
+relation L(node x, int d).
+
+// x ~> y node reachability
+relation reach(node x, node y).
+axiom reach(x,y) ==> E(x,y,_) | E(x,_,y). //reachability predicate
+axiom E(x,y,z) ==> reach(x,y) & reach(x,z). // Edges are reachable
+axiom reach(x,y) ==> reach(y,x). // reflexive
+axiom reach(x,y) & reach(y,z) ==> reach(x,z). // transitive
+
+// x in V  ^ S reachability set
+relation RS(node x, bag(node) V, bag(node) S) == forall (y: y notin S | (reach(x,y) & y in V)). //Set of all nodes reachable from x
+relation NRS(node x, bag(node) V, bag(node) S) == forall (y: y notin S | !(reach(x,y) & y in V)). //Set of all nodes NOT reachable from x
+
+/* view for a graph */
+pred dag<V,D,L,E> == self = null
+	or self::node<m,l,r> * l::dag<V,D,L,E> U* r::dag<V,D,L,E> 
+	& m in D & self in V & L(self,m) & E(self,l,r).
+//lem l::dag<V1,D1,L,E> -* (l::dag<V1,D1,L,E> U* r::dag<V1,D1,L,E>) * l::dag<V2,D2,L,E> -> l::dag<V2,D2,L,E> U* r::dag<V2,D2,L,E>.
+
+checkentail reach(x,y) & reach (y,z) |- reach(x,z).
+print residue.
+// 1
+
+checkentail reach(x,x) |- true.
+print residue.
+// 2
+
+checkentail  RS(x,V,Rx) & RS(x,{x},{x}) & NRS(x,V,NRx) & NRS(x,V,diff(V,{x})) & {x} subset Rx & NRx = diff(V,{x}) & x in V |- true.
+print residue.
+// 3
+
+checkentail  RS(x,V,Rx) & RS(x,{x},{x}) & NRS(x,V,NRx) & NRS(x,V,diff(V,{x})) & Rx subset {x} & NRx = diff(V,{x}) & x in V |- true.
+print residue.
+// 4

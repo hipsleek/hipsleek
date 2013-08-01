@@ -1,0 +1,42 @@
+data node{
+	int val;
+	node prev;
+	node next;
+}.
+
+HeapPred H1(node a,node b).
+HeapPred HP_5(node a,node b).
+HeapPred HP_6(node a,node b).
+HeapPred G1(node a, node b).
+HeapPred K(int a).
+
+/*
+relAssume H1
+ H1(c,y) --> c::node<v,prev_19_765',next_19_766'>@M * 
+  K(v) * HP_5(prev_19_765',y) * HP_6(next_19_766',y)&true.
+
+relAssume G1
+ c::node<v,prev_14_771,y>@M * HP_5(prev_14_771,y) * K(v) * 
+  HP_6(next_16_768,y)&true --> G1(c,y)&true.
+
+*/
+relAssume H1
+ H1(c,y) --> c::node<v,prev,next>@M * 
+   HP_5(prev,y) * HP_6(next,y)&true.
+
+relAssume G1
+ c::node<v,prev7,y>@M * HP_5(prev7,y) *
+  HP_6(next_16_768,y)&true --> G1(c,y)&true.
+
+shape_infer [H1,HP_6,HP_5][G1].
+
+/*
+ What happen to HP_5 & HP_6?
+ They seem to have been renamed to HP_36,HP_37?
+ Why is there a H1_38?
+
+[ H1(c_49,y_50) ::= c_49::node<v,prev,next>@M& 
+     XPURE(HP_36(prev)) &  XPURE(HP_37(next)) & XPURE(H1_38(y_50)),
+ G1(c_51,y_52) ::= c_51::node<v,prev7,y_52>@M
+     & XPURE(HP_36(prev7)) &  XPURE(H1_38(y_52))]
+*/

@@ -1,0 +1,95 @@
+// simpler tll working example
+
+data node{
+	node left;
+	node right;
+}.
+
+
+HeapPred H(node a).
+PostPred G(node a, node c).
+HeapPred H_2(node a).
+HeapPred H_3(node a).
+HeapPred H_2a(node a).
+HeapPred H_3a(node a).
+
+//Declare_Unknown (1;2) [H_2]
+
+relDefn (1;1)
+ H_3(right_25_31) <->  H(right_25_31)&right_25_31!=null.
+
+relDefn (1;1)
+ H_2(left_25_32)  <->  H(left_25_32).
+
+relDefn (1;1)
+ H(x_33) <->  x_33::node<left_25_800,right_25_801>@M 
+   * H(left_25_800) * H(right_25_801) & right_25_801!=null.
+
+relDefn (1;2)
+ H(x_27) <->  x_27::node<left_25_800,right_25_801>@M 
+                 * H_2(left_25_800)&right_25_801=null.
+relDefn (1;2)
+ H_2(a) <-> NONE.
+
+shape_conquer [H][1;1,1;2].
+
+
+/*
+# tll-if-conquer.slk
+
+
+
+
+//[1.1]
+ H_3(right_25_31) <->  H(right_25_31)&right_25_31!=null.
+ H_2(left_25_32)  <->  H(left_25_32).
+ H(x_33) <->  x_33::node<left_25_800,right_25_801>@M 
+   * H(left_25_800) * H(right_25_801) & right_25_801!=null.
+(++)
+//[1.2]
+ H(x_27) <->  x_27::node<left_25_800,right_25_801>@M 
+                 * H_2(left_25_800)&right_25_801=null.
+ H_2(a) <-> NONE.
+
+
+==>
+//{1}
+
+ H{1}(x_27) <->  x_27::node<left_25_800,right_25_801>@M 
+            * H_2{1.2}(left_25_800)&right_25_801=null
+      or x_33::node<left_25_800,right_25_801>@M 
+       * H{1}(left_25_800) * H{1}(right_25_801) & right_25_801!=null
+
+ H_2{1.1}(a) <-> NONE]
+
+
+=========
+
+ //(1)
+ H(x) --> x::node<left_25_800,right_25_801>@M * H_2(left_25_800) 
+  * H_3(right_25_801).
+ //(2)
+ H_3(right_25_801)&right_25_801!=null --> H(right_25_801).
+ //(3)
+ H_2(left_25_800) --> H(left_25_800).
+ //(4)
+ G(right_25_801,v_node_31_823) * G(left_25_800,v_node_32_833) * 
+  x::node<v_node_32_833,v_node_31_823>@M&right_25_801!=null & 
+  res=x --> G(x,res).
+ //(5)
+ H_3(right_25_801)&right_25_801=null --> emp.
+ //(6)
+ H_2(left_25_800) * x::node<left_25_800,right_25_801>@M&res=x & 
+  right_25_801=null --> G(x,res).
+
+ //(1a)
+ H(x) --> x::node<left_25_800,right_25_801>@M * H_2a(left_25_800) 
+  * H_3a(right_25_801).
+ //(5a)
+ H_3a(right_25_801)&right_25_801=null --> emp.
+ //(6a)
+ H_2a(left_25_800) * x::node<left_25_800,right_25_801>@M&res=x & 
+  right_25_801=null --> G(x,res).
+
+
+*/

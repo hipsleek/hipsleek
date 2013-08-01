@@ -1,0 +1,35 @@
+data node {
+	int val; 
+	node next;
+}.
+
+pred tree<> == self=null
+ or self::node<_,l>*l::node<_,_>
+inv true.
+
+pred H<> == self=null
+ or self::node<_,l>
+inv true.
+
+pred H2<> == self::node<_,l>*l::node<_,_>
+inv true.
+
+lemma "strong" self::tree<> -> self::H<>.
+
+lemma_exact "exact" self::tree<> -> self::H<>. 
+
+lemma "sstrong" self::tree<> <- self::H<>.
+
+lemma_exact "sexact" self::tree<> <- self::H<>. 
+// should fail
+
+lemma "strong2" self::H2<> -> self::tree<>.
+
+lemma_exact "exact2" self::H2<> -> self::tree<>.
+// should succeed
+
+checkentail x::node<_,q>*q::node<_,_> |- x::node<_,_>.
+print residue.
+// check exact ensures the absence of residue.
+checkentail_exact x::node<_,q>*q::node<_,_> |- x::node<_,_>.
+checkentail_exact x::node<_,q>*q::node<_,_> |- x::node<_,r>*r::node<_,_>.

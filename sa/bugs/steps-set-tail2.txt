@@ -1,0 +1,80 @@
+data node{
+	int val;
+	node prev;
+	node next;
+}.
+
+HeapPred H1(node a,node b).
+HeapPred G1(node a, node b).
+
+void set_tail (node c,node y)
+  infer[H1,G1] 
+  requires H1(c,y) 
+  ensures G1(c,y);
+  requires c::node<@A,@A,_@M>
+  ensures  c::node<@A,@A,y>
+{
+   c.next = y;
+}
+
+ @M<:@I<@A
+
+HeapPred H1(node a,node b).
+HeapPred HP_5(node a,node b).
+HeapPred HP_6(node a,node b).
+HeapPred G1(node a, node b).
+HeapPred K(int a).
+
+relAssume H1
+ H1(c,y) --> c::node<link_v@ann1,prev_19_765'@ann2,next_19_766'@ann3>@M * 
+   HP_5(prev_19_765',y) * HP_6(next_19_766',y)&true.
+
+relAssume G1
+ c::node<link_v@ann1,prev_14_771@ann2,y@ann3>@M 
+   * HP_5(prev_14_771,y) * K(v) * true & ann3<:M
+    --> G1(c,y)&true.
+
+shape_infer [H1][G1].
+
+
+Step 1
+======
+Remove redundant pre-predicate HP_6
+
+A pre-predicate p(..) is unused if it never appears on
+the LHS. Correspondingly, a post-predicate p(..) is unused
+if it never appears on the RHS
+
+ H1(c,y) --> c::node<v,prev_19_765',next_19_766'>@M * 
+  K(v) * HP_5(prev_19_765',y) & true.
+
+Step 1
+======
+Convert Linking predicate.
+
+A predicate p(..) is said to be linking if it is a pre-predicate
+that also appears in the LHS of post-predicate.
+
+We replace each linking pre-predicate by a special name.
+
+ H1(c,y) --> c::node<link_k,link_HP_5,_>@M 
+ c::node<link_k,link_HP_5,y>@M --> G1(c,y)&true.
+
+Step 3
+======
+Strengthen pre-pred and weaken post-pred.
+
+ H1(c,y) <--> c::node<link_k,link_HP_5,_>@M 
+ G1(c,y) <--> c::node<link_k,link_HP_5,y>@M 
+
+Step 4
+======
+Remove redundant parameter y from H1
+
+A parameter p is redundant in a predicate if it is never
+used in the body of the predicate.
+
+ H1(c,y) <--> H1a(c) 
+ H1a(c)  <--> c::node<link_k,link_HP_5,_>@M 
+
+

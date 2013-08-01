@@ -1,0 +1,53 @@
+data node {
+	int val; 
+	node next;	
+}.
+
+data node2 {
+	int val; 
+	node2 left;	
+	node2 right;
+}.
+
+//pred ll<M> == self = null & M = {} 
+//	or self::node<_,p> * p::ll<Mp> & M = union(Mp,{self})
+//	inv true
+//	mem M->(node<@M,@M>).
+
+
+//relation R(bag M1, bag M2).
+
+pred ll<n> == self = null & n = 0
+	or self::node<_,_> & n=1
+	or self::node<_,p> * p::ll<n-1>
+	inv true.
+	
+	
+pred ll2<S> == self = null & S ={}
+	or self::node<_,_> & S={self}
+	or self::node<_,p> * p::ll2<Sp> & S =union(Sp,{self})
+	inv true.
+	
+pred tree<S> == self = null //& S= {}
+	or self::node2<_,l,r> * l::tree<Sl> * r::tree<Sr> //& S = union(Sl,Sr,{self})
+	inv true
+	mem S->()
+	.
+	
+	
+pred ll1<S> == self = null
+	or self::node<_@I,p> * p::ll1<Sp>
+	inv true
+	mem S->()
+	.
+	
+		
+checkentail x::ll2<Mx> |- Mx != {}.
+print residue.
+
+checkentail x::ll<n> |- n >= 1.
+print residue.
+
+checkentail y::node<_,p> * p::ll1<S> |- y::ll1<Sy> & Sy = union(S,{y}).
+print residue.
+//checkentail forall(x: x notin S | p = x) |- p = null.

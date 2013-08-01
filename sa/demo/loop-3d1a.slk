@@ -1,0 +1,26 @@
+data node{
+	node next;
+}.
+
+HeapPred P(node a).
+HeapPred G(node a).
+HeapPred H_2(node a).
+
+pred PP<> == self::node<q>*H_2(q) inv self!=null.
+
+infer [H_2]
+ x::node<q> * H_2(q) |- x::PP<> & q!=null.
+print residue.
+
+/*
+# loop-3b1a.slk
+
+GOOD:
+
+Entail (1) : Valid. 
+ <1>emp&q!=null&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [H_2(q) --> H_2(q); H_2(q) --> emp&q!=null]
+
+
+*/
+

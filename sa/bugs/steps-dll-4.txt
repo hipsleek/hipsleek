@@ -1,0 +1,142 @@
+Given:
+
+relAssume H1
+ H1(c)&c!=null --> c::node<_,prev_19_765',next_19_766'>@M * 
+  HP_795(prev_19_765') * HP_796(next_19_766')&true.
+
+relAssume H1
+ HP_796(n)&true --> H1(n)&true.
+
+relAssume H1
+ H1(c)&c=null --> emp&true.
+
+Shape inference on H1 precondition results in:
+
+ shape_infer [H1,HP_796,HP_795][]
+
+
+Step 1
+======
+Apply transitive implication:
+
+  P -> Q & Q -> R
+==>
+  P -> R
+
+ H1(c)&c!=null --> c::node<_,prev_19_765',next_19_766'>@M * 
+  HP_795(prev_19_765') * H1(next_19_766')&true.
+
+Step 2
+======
+Simplify LHS using
+  H & p -> R  ===> H --> p -> R
+
+ H1(c) --> c!=null -> c::node<_,prev_19_765',next_19_766'>@M *  HP_795(prev_19_765') *
+           H1(next_19_766') .
+ H1(c) --> c=null -> emp&true.
+
+Step 3
+======
+Drop unused predicate HP_796.
+A pre-predicate p(..) is unused if it never appears on
+the LHS. Correspondingly, a post-predicate p(..) is unused
+if it never appears on the RHS
+
+Given:
+ H1(c) --> c!=null -> c::node<_,prev_19_765',next_19_766'>@M *  HP_795(prev_19_765') *
+           H1(next_19_766') .
+Derive:
+ H1(c)&c!=null --> c::node<_,prev_19_765',next_19_766'>@M * H1(next_19_766')&true.
+
+
+Step 4
+======
+Combine two pre-implications:
+  H -> R1
+  H -> R2
+===>
+  H -> R1 /\ R2
+
+ H1(c) --> c!=null -> c::node<_,prev_19_765',next_19_766'>@M * 
+           H1(next_19_766')
+        /\ c=null -> emp&true
+
+Step 5
+======
+Combining pre-implications p(..) -> R :
+
+Convert to case-spec given that 
+    p1 \/ p2 = true ; p1/\p2=false
+
+  p1 -> R1 /\ p2 -> R2
+===>
+  case {p1 -> R1; p2 -> R2}
+
+Weaken to disjunction if p1/\p2=false
+  p1 -> R1 /\ p2 -> R2
+===>
+  R1 & p1 \/ R2 & p2 
+
+Removing overlaps if p1/\p2!=false:
+  p1 -> R1 /\ p2 -> R2
+===>
+  p1 & not(p2) -> R1 /\ p2 & not(p1) -> R2 /\ p1 & p2 -> R1 /\ R2
+
+
+ H1(c) --> c!=null -> c::node<_,prev_19_765',next_19_766'>@M * H1(next_19_766') & c!=null 
+           \/ emp&c=null
+
+Step 6
+======
+Remove redundant predicate c!=null:
+
+ H1(c) --> c!=null -> c::node<_,prev_19_765',next_19_766'>@M * H1(next_19_766')  
+           \/ emp&c=null
+
+
+Step 7
+======
+
+Strengthen H1 pre:
+
+ H1(c) <--> c!=null -> c::node<_,prev_19_765',next_19_766'>@M * H1(next_19_766')  
+            \/ emp&c=null
+
+
+=========================================================================
+
+Given:
+
+relAssume G1
+ c::node<_,p,n>@M * G1(n,c)&true  --> G1(c,p)&true.
+
+relAssume G1
+ emp&c=null --> G1(c,p)&true.
+
+Shape inference on G1 post-condition results in:
+  shape_infer [][G1].//[pre_hps][post_hps]
+
+Step 1
+======
+Combining post-implication L -> p(..):
+
+Convert to disjunction on LHS
+
+  L1 -> R /\ L2 --> R
+===>
+  L1 \/ L2 --> R
+
+ c::node<_,p,n>@M * G1(n,c)&true or emp & c=null
+   --> G1(c,p)&true.
+
+Step 2
+======
+Strengthen post-condition p(..):
+  L --> p(..)
+===>
+  p(..) <--> L
+
+   G1(c,p) <--> c::node<_,p,n>@M * G1(n,c)&true  or emp & c=null
+
+
+

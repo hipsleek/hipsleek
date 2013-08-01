@@ -160,7 +160,7 @@ and cfgStmt (s: stmt) (next:stmt option) (break:stmt option) (cont:stmt option)
     | hd::_ -> addSucc hd
   in
   let instrFallsThrough (i : instr) : bool = match i with
-      Call (_, Lval (Var vf, NoOffset), _, _) -> 
+      Call (_, Lval ((Var (vf, _), NoOffset, _), _), _, _) -> 
         (* See if this has the noreturn attribute *)
         not (hasAttribute "noreturn" vf.vattr)
     | Call (_, f, _, _) -> 
@@ -198,15 +198,15 @@ and cfgStmt (s: stmt) (next:stmt option) (break:stmt option) (cont:stmt option)
       then 
         addOptionSucc next;
       cfgBlock blk next next cont nodeList
-  | Loop(blk, loc, s1, s2) ->
-      s.skind <- Loop(blk, loc, (Some s), next);
+  | Loop(blk, hs, loc, s1, s2) ->
+      s.skind <- Loop(blk, hs, loc, (Some s), next);
       addBlockSucc blk (Some s);
       cfgBlock blk (Some s) next (Some s) nodeList
       (* Since all loops have terminating condition true, we don't put
          any direct successor to stmt following the loop *)
   | TryExcept _ | TryFinally _ -> 
       E.s (E.unimp "try/except/finally")
-  | HipStmt _ -> ()
+  | HipStmtSpec _ -> ()
 
 (*------------------------------------------------------------*)
 
@@ -231,7 +231,7 @@ and fasStmt (todo) (s : stmt) =
       | Loop (b, _, _, _, _) -> fasBlock todo b
       | (Return _ | Break _ | Continue _ | Goto _ | Instr _) -> ()
       | TryExcept _ | TryFinally _ -> E.s (E.unimp "try/except/finally")
-      | HipStmt _ -> ()
+      | HipStmtSpec _ -> ()
   end
 ;;
 
@@ -256,7 +256,7 @@ let d_cfgnodelabel () (s : stmt) =
       | Return _ -> "return"
       | TryExcept _ -> "try-except"
       | TryFinally _ -> "try-finally"
-      | HipStmt _ -> "hip-stmt"
+      | HipStmtSpec _ -> "hip-stmt"
   end in
     dprintf "%d: %s" s.sid label
 

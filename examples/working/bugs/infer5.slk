@@ -7,10 +7,20 @@ pred ll<n> == self = null & n = 0
 	or self::node<_, q> * q::ll<n-1> 
   inv n >= 0.
 
+HeapPred H1(node y).
+HeapPred H2(node y).
+
+//(1)
+infer [x] x=null & n=0 |- x::node<a,b>.
+print residue.
+
+//(2)
+infer [n] x=null & n=0 |- x::node<_,_>.
+print residue.
 
 //(3)
-//infer [x,y] b::node<1,y>   |- x::node<_,b>*b::node<_,y>*y::node<_,null>.
-//print residue.
+infer [x,y] b::node<1,y>   |- x::node<_,b>*b::node<_,y>*y::node<_,null>.
+print residue.
 // TODO : "b" part of the inferred?
 // I suppose this is OK?
 /*
@@ -19,10 +29,9 @@ Inferred Pure:[ inf_b_75=b & inf_flted_20_79=null]
 */
 
 //(4)
-//infer [x,y,b] b::node<1,y>   |- x::node<_,b>*b::node<_,y>*y::node<_,null>.
-//print residue.
-
-
-infer [y] b::node<1,y>   |- b::node<a,y>*y::node<_,null>.
-//infer [y] true   |- y::node<_,q>*q::node<c,d>.
+infer [H1,H2] b::node<1,y> * H2(y)*H1(x)   |- x::node<_,b>*b::node<_,y>*y::node<_,null>.
 print residue.
+
+//(5)
+//infer [y] true   |- x::node<a,b>.
+//print residue.

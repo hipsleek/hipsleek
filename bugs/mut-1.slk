@@ -1,0 +1,18 @@
+data tree {
+    node next;
+    }.
+
+data node {
+    tree child; 
+    }.
+
+pred P<n:int> == self=null & n=0 or  self::tree<c>* c::Q<n-1>
+ inv n>=0.
+pred Q<n:int> == self=null & n=0 or  self::node<c>* c::P<n-1>
+ inv n>=0.
+
+checkentail x::P<n> & n>0 |- x::tree<a>.
+print residue.
+
+checkentail x::P<n> & n=3 |- x::tree<a> * a::node<r>.
+print residue.

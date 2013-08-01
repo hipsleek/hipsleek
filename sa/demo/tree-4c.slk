@@ -1,0 +1,50 @@
+data node{
+	int val;
+	node prev;
+	node next;
+}.
+
+HeapPred H(node a).
+HeapPred HP_0(node a).
+HeapPred HP_1(node a).
+HeapPred G(node a).
+
+//Declare_Dangling [HP_2].
+//Declare_Unknown [HP_2].
+
+relAssume 
+ HP_0(x)&x!=null --> x::node<_,_,right_25_799>@M * 
+  HP_0(right_25_799).
+
+relAssume 
+ HP_1(x)&x!=null --> x::node<key_25_797,left_25_798,right_25_799>@M * 
+  HP_1(right_25_799).
+
+relAssume 
+ HP_1(right_25_799)&right_25_799=null --> emp.
+
+relAssume 
+ HP_0(left_25_798)&left_25_798=null --> emp.
+
+
+shape_infer [HP_0,HP_1][].
+
+/* 
+
+# tree-4c.slk --pred-equiv : OK
+
+PROBLEM : we should have unified as dfference in local names
+like Anon_12, left_25_798 should be tolerated.
+
+[ HP_0(x_35) ::=  
+ emp&x_35=null
+ or x_35::node<Anon_11,Anon_12,right_25_799>@M * HP_0(right_25_799)&true
+ ,
+ HP_1(x_36) ::=  
+ emp&x_36=null
+ or x_36::node<key_25_797,left_25_798,right_25_799>@M * HP_1(right_25_799)&
+    true
+ ]
+
+
+*/

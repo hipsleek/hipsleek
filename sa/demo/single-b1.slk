@@ -1,0 +1,35 @@
+data node{
+	int val;
+	node next;
+}.
+
+PostPred GP_3(node a, node@NI b).
+PostPred GP_4(node a, node@NI b).
+
+pred G<x> ==
+     self::node<val_29_788,null>@M&self=x 
+or x::node<val_29_788,next_29_789> * GP_4(next_29_789,self) * 
+     self::node<val_34_802,null>
+inv self!=null.
+
+
+relAssume 
+ GP_3(next_34_803,next_29_789)
+ --> next_34_803 = null.
+
+shape_post_obligation [][GP_3]. // loop
+//shape_infer [][GP_3]. // loop
+shape_infer [GP_3][]. // terminates
+
+//print residue.
+
+/*
+# single-b1.slk
+
+Above is a proof obligation on a post-pred
+which can be used to provide a definition 
+for GP_3. Currently, it goes into a LOOP.
+
+Can we prevent it going into a LOOP?
+
+*/

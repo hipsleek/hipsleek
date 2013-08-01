@@ -1,5 +1,6 @@
 open Globals
 open GlobProver
+open Gen.Basic
 module CP = Cpure
 
 let log_cvc3_formula = ref false
@@ -64,7 +65,8 @@ and cvc3_of_exp a = match a with
   | CP.Mult (a1, a2, _) -> (cvc3_of_exp a1) ^ " * " ^ (cvc3_of_exp a2)
   | CP.Div (a1, a2, _) -> failwith ("[cvc3.ml]: divide is not supported.")
   | CP.Max _ 
-  | CP.Min _ -> failwith ("cvc3.cvc3_of_exp: min/max should not appear here")
+  | CP.Min _ -> failwith ("cvc3_of_exp: min/max should not appear here")
+  | CP.TypeCast _ -> failwith "cvc3_of_exp : TypeCast cannot be handled"
   | CP.Bag ([], _) -> ""
   | CP.Bag _ | CP.BagUnion _ | CP.BagIntersect _ | CP.BagDiff _ ->
   	    failwith ("[cvc3.ml]: ERROR in constraints (set should not appear here)");
@@ -304,7 +306,7 @@ let start () : prover_process_t =
 (*stop the "cvc3 +int" process*)
 let stop (process: prover_process_t) : unit = 
   let _ = Procutils.PrvComms.stop !log_cvc3_formula !cvc3_log process !test_number 9 (fun () -> ()) in
-  let _ = print_string ("\nCVC3 stop process: " ^ (string_of_int !test_number) ^ " invocations \n") in 
+  let _ = print_string_if !Globals.enable_count_stats ("\nCVC3 stop process: " ^ (string_of_int !test_number) ^ " invocations \n") in 
   ()
 
 (*all the formulas that shall be send to cvc3 process have to be transformed in cvc3 input language *)

@@ -1,0 +1,34 @@
+data node{
+	int val;
+	node prev;
+	node next;
+}.
+
+checkentail c::node<_,_,c@A> |- c::node<_,_,y@L>.
+print residue.
+// fail
+
+checkentail c::node<_,_,c@v> & v=@A |- c::node<_,_,y@L>.
+print residue.
+// valid (should have failed)
+
+
+
+
+checkentail v=@M |- v<:@A.
+checkentail v=@A |- v<:@M.
+checkentail v=@M |- v=@A. // fail
+checkentail v<:@M |- v=@M. 
+checkentail v<:@A |- v=@A. 
+checkentail @A<:v |- v=@A. 
+//@M<:@I<:@L<:@A
+
+checkentail c::node<_,_,c@v> & @M<:v & v<:@A  |- c::node<_,_,y@L>.
+print residue.
+// valid (should have failed since v could be @A)
+
+checkentail c::node<_,_,c@v>  |- c::node<_@A,_@A,y@L>.
+print residue.
+
+checkentail c::node<_,_,c@v>  |- c::node<_@A,_@A,y@M>.
+print residue.

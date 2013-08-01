@@ -1,0 +1,371 @@
+=============
+tmp_cp cll-1b.slk  
+=============
+1d0
+< Fatal error: exception Failure("iast.gather_type_info_heap :gather_type_info_heap: relation H cannot be found")
+19,20d17
+< !!! pre-obligation:
+< [ HP_6(next_36_825,h) * HP_7(h,rest)&h!=rest --> H(next_36_825,h)]
+29a27,36
+> 
+> *************************************
+> *******relational definition ********
+> *************************************
+> [ H(rest_43,h_44) ::= 
+>  H(next_36_40,h_44) * rest_43::node<val_36_39,next_36_40>@M&h_44!=rest_43
+>  or emp&h_44=rest_43
+>  ,
+>  HP_7(a,b) ::= NONE]
+> *************************************
+=============
+tmp_cp dll-append2.slk  
+=============
+1d0
+< Fatal error: exception Failure("self of H2 cannot have its type determined")
+27c26
+< !!! AFTER:[(1): H1(l1) * H2(l2)&l1=null & l2!=null --> l2::node<n,p>@M * HP_2(n) * HP_1(p),
+---
+> !!! AFTER:[(1): H1(l1) * H2(l2)&l2!=null & l1=null --> l2::node<n,p>@M * HP_2(n) * HP_1(p),
+48,49d46
+< !!! pre-obligation:
+< [ H1(l1) * H2(l2)&l1=null & l2!=null --> l2::node<n,p>@M * HP_2(n) * HP_1(p)]
+58,59d54
+< ERROR: at _0:0_0:0 
+< Message: self of H2 cannot have its type determined
+60a56,68
+> *************************************
+> *******relational definition ********
+> *************************************
+> [ H1(l1_72) ::= 
+>  H1(n_65) * l1_72::node<n_65,p_66>@M * HP_826(p_66)
+>  or emp&l1_72=null
+>  ,
+>  H2(l2_74) ::= emp&l2_74=null,
+>  G(l1_75) ::= 
+>  emp&l1_75=null
+>  or HP_826(p) * l1_75::node<n,p>@M * G(n)
+>  ]
+> *************************************
+=============
+tmp_cp dll-pap-1.slk  
+=============
+1d0
+< Fatal error: exception Failure("self of HP_9 cannot have its type determined")
+23,28d21
+< !!! pre-obligation:
+< [ HP_9(next_15_58,y_56) * HP_1(y_56,x_57)&
+<   next_15_58!=null --> y_56::node<next_21_820,prev_21_821>@M * 
+<   HP_2(next_21_820,next_15_58) * HP_3(prev_21_821,next_15_58) * 
+<   next_15_58::node<next_15_54,prev_15_55>@M * HP_9(next_15_54,y_56) * 
+<   HP_0(prev_15_55,y_56)]
+37,38d29
+< ERROR: at _0:0_0:0 
+< Message: self of HP_9 cannot have its type determined
+39a31,47
+> *************************************
+> *******relational definition ********
+> *************************************
+> [ HP_9(next_15_56,y_57) ::= 
+>  next_15_56::node<next_15_797,prev_15_798>@M * HP_9(next_15_797,y_57) * 
+>  HP_0(prev_15_798,y_57)
+>  or emp&next_15_56=null
+>  ,
+>  H(x_58,y_59) ::= x_58::node<next_15_797,prev_15_798>@M * HP_9(next_15_797,y_59) * 
+> HP_0(prev_15_798,y_59) * y_59::node<next_21_54,prev_21_55>@M * 
+> HP_2(next_21_54,x_58) * HP_3(prev_21_55,x_58),
+>  HP_1(y_60,x_61) ::= y_60::node<next_21_820,prev_21_821>@M * HP_2(next_21_820,x_61) * 
+> HP_3(prev_21_821,x_61),
+>  HP_2(a,b) ::= NONE,
+>  HP_3(a,b) ::= NONE,
+>  HP_0(a,b) ::= NONE]
+> *************************************
+=============
+tmp_cp dll-pap-2.slk  
+=============
+1d0
+< Fatal error: exception Failure("self of HP_3_ cannot have its type determined")
+23,28d21
+< !!! pre-obligation:
+< [ HP_9(next_15_75,y_73) * HP_1(y_73,x_74)&
+<   next_15_75!=null --> y_73::node<next_21_820,prev_21_821>@M * 
+<   HP_2(next_21_820,next_15_75) * HP_3(prev_21_821,next_15_75) * 
+<   next_15_75::node<next_15_71,prev_15_72>@M * HP_9(next_15_71,y_73) * 
+<   HP_0(prev_15_72,y_73)]
+37,38d29
+< ERROR: at _0:0_0:0 
+< Message: self of HP_3_ cannot have its type determined
+39a31,52
+> *************************************
+> *******relational definition ********
+> *************************************
+> [ HP_9(next_15_73,y_74) ::= 
+>  next_15_73::node<next_15_797,prev_15_798>@M * HP_9(next_15_797,y_74) * 
+>  HP_0(prev_15_798,y_74)
+>  or emp&next_15_73=null
+>  ,
+>  H(x_75,y_76) ::= x_75::node<next_15_797,prev_15_798>@M * HP_9(next_15_797,y_76) * 
+> HP_0(prev_15_798,y_76) * y_76::node<next_21_72,prev_21_71>@M * 
+> HP_2(next_21_72,x_75),
+>  HP_1(y_77,x_78) ::= y_77::node<next_21_820,prev_21_821>@M * HP_2(next_21_820,x_78),
+>  HP_3(prev_21_79,x_80) ::= emp,
+>  G(x_81,y_82) ::= 
+>  HP_0(prev_15_798,y_82) * x_81::node<next_15_797,prev_15_798>@M * 
+>  G(next_15_797,y_82)&next_15_797!=null
+>  or HP_0(prev_15_798,y_82) * x_81::node<y_82,prev_15_798>@M * 
+>     HP_2(next_21_820,x_81) * y_82::node<next_21_820,x_81>@M
+>  ,
+>  HP_2(a,b) ::= NONE,
+>  HP_0(a,b) ::= NONE]
+> *************************************
+=============
+tmp_cp pre-2a.slk  
+=============
+27,28c27
+< [ P(x_20) ::= x_20::node<q>@M * P2(q),
+<  P2(x_21) ::= P(x_21)]
+---
+> [ P(x_21) ::= x_21::node<q>@M * P(q)]
+=============
+tmp_cp tll-if.slk  
+=============
+50,51c50,51
+<   H(x_36)<-> x_36::node<left_25_800,right_25_801>@M * H_2(left_25_800) * 
+< H_3(right_25_801)
+---
+>   H(x_36)<-> x_36::node<left_25_800,right_25_801>@M * H(left_25_800) * H(right_25_801)&
+> right_25_801!=null
+=============
+tmp_cp tree-1.slk  
+=============
+1d0
+< Fatal error: exception Failure("iast.gather_type_info_heap :gather_type_info_heap: relation H cannot be found")
+20,21d18
+< !!! pre-obligation:
+< [ x::node<l,r>@M * H(l) * H(r) --> H(x)]
+29a27,37
+> 
+> *************************************
+> *******relational definition ********
+> *************************************
+> [ HP_1(l_41) ::= H(l_41),
+>  HP_2(r_42) ::= H(r_42),
+>  H(x_43) ::= 
+>  H(r_39) * H(l_38) * x_43::node<l_38,r_39>@M
+>  or H(x_43)&x_43=null
+>  ]
+> *************************************
+=============
+tmp_cp zip1b1.slk  
+=============
+1d0
+< Fatal error: exception Failure("iast.gather_type_info_heap :gather_type_info_heap: relation H1 cannot be found")
+22,23d20
+< !!! pre-obligation:
+< [ HP_8(next_25_827,x) * HP_1(next_24_820,y) --> H1(next_24_820,next_25_827)]
+32a30,44
+> 
+> *************************************
+> *******relational definition ********
+> *************************************
+> [ H1(x_86,y_87) ::= 
+>  H1(next_24_77,next_25_75) * y_87::node<val_25_74,next_25_75>@M * 
+>  x_86::node<val_24_76,next_24_77>@M
+>  or emp&x_86=null
+>  ,
+>  G1(x_88,y_89,res_90) ::= 
+>  emp&res_90=x_88 & res_90=null & x_88=null
+>  or y_89::node<val_25_826,next_25_827>@M * res_90::node<val_24_819,nn>@M * 
+>     G1(nn,next_25_827,rr)&nn=rr & res_90=x_88
+>  ]
+> *************************************
+=============
+tmp_cp zip1b2.slk  
+=============
+1d0
+< Fatal error: exception Failure("iast.gather_type_info_heap :gather_type_info_heap: relation H1 cannot be found")
+46,47d44
+< !!! pre-obligation:
+< [ HP_8(next_25_827,x) * HP_1(next_24_820,y) --> H1(next_24_820,next_25_827)]
+56a54,68
+> 
+> *************************************
+> *******relational definition ********
+> *************************************
+> [ H1(x_84,y_85) ::= 
+>  H1(next_24_75,next_25_73) * y_85::node<val_25_72,next_25_73>@M * 
+>  x_84::node<val_24_74,next_24_75>@M
+>  or emp&x_84=null
+>  ,
+>  G1(x_86,y_87,res_88) ::= 
+>  emp&x_86=null & res_88=null & res_88=x_86
+>  or y_87::node<val_25_826,next_25_827>@M * res_88::node<val_24_819,nn>@M * 
+>     G1(nn,next_25_827,rr)&nn=rr & res_88=x_86
+>  ]
+> *************************************
+=============
+tmp_cp zip1b3.slk  
+=============
+32c32
+<  emp&x_36=null & res_38=null & res_38=x_36
+---
+>  emp&res_38=x_36 & res_38=null & x_36=null
+=============
+tmp_cp zip1b4.slk  
+=============
+32c32
+<  emp&x_37=null & res_39=null & res_39=x_37
+---
+>  emp&res_39=x_37 & res_39=null & x_37=null
+=============
+tmp_cp zip1b5.slk  
+=============
+32c32
+<  emp&x_36=null & res_38=null & res_38=x_36
+---
+>  emp&res_38=x_36 & res_38=null & x_36=null
+=============
+tmp_cp zip1b.slk  
+=============
+1d0
+< Fatal error: exception Failure("iast.gather_type_info_heap :gather_type_info_heap: relation H1 cannot be found")
+22,23d20
+< !!! pre-obligation:
+< [ HP_8(next_25_827,x) * HP_1(next_24_820,y) --> H1(next_24_820,next_25_827)]
+32a30,44
+> 
+> *************************************
+> *******relational definition ********
+> *************************************
+> [ H1(x_110,y_111) ::= 
+>  HL(y_111)&x_110=null
+>  or H1(next_24_85,next_25_83) * y_111::node<val_25_82,next_25_83>@M * 
+>     x_110::node<val_24_84,next_24_85>@M
+>  ,
+>  G1(x_114,y_115,res_116) ::= 
+>  HL(y_115)&x_114=null & res_116=null & res_116=x_114
+>  or y_115::node<val_25_826,next_25_827>@M * res_116::node<val_24_819,nn>@M * 
+>     G1(nn,next_25_827,nn)&res_116=x_114
+>  ]
+> *************************************
+=============
+tmp_cp zip1c.slk  
+=============
+1d0
+< Fatal error: exception Failure("iast.gather_type_info_heap :gather_type_info_heap: relation H1 cannot be found")
+46,47d44
+< !!! pre-obligation:
+< [ HP_8(next_25_827,x) * HP_1(next_24_820,y) --> H1(next_24_820,next_25_827)]
+56a54,68
+> 
+> *************************************
+> *******relational definition ********
+> *************************************
+> [ H1(x_84,y_85) ::= 
+>  H1(next_24_75,next_25_73) * y_85::node<val_25_72,next_25_73>@M * 
+>  x_84::node<val_24_74,next_24_75>@M
+>  or emp&x_84=null
+>  ,
+>  G1(x_86,y_87,res_88) ::= 
+>  emp&x_86=null & res_88=null & res_88=x_86
+>  or y_87::node<val_25_826,next_25_827>@M * res_88::node<val_24_819,nn>@M * 
+>     G1(nn,next_25_827,rr)&nn=rr & res_88=x_86
+>  ]
+> *************************************
+=============
+tmp_cp zip1e.slk  
+=============
+1d0
+< Fatal error: exception Failure("iast.gather_type_info_heap :gather_type_info_heap: relation H1 cannot be found")
+46,47d44
+< !!! pre-obligation:
+< [ HP_8(next_25_827,x) * HP_1(next_24_820,y) --> H1(next_24_820,next_25_827)]
+56a54,68
+> 
+> *************************************
+> *******relational definition ********
+> *************************************
+> [ H1(x_84,y_85) ::= 
+>  H1(next_24_75,next_25_73) * y_85::node<val_25_72,next_25_73>@M * 
+>  x_84::node<val_24_74,next_24_75>@M
+>  or emp&x_84=null
+>  ,
+>  G1(x_86,y_87,res_88) ::= 
+>  emp&x_86=null & res_88=null & res_88=x_86
+>  or y_87::node<val_25_826,next_25_827>@M * res_88::node<val_24_819,nn>@M * 
+>     G1(nn,next_25_827,rr)&nn=rr & res_88=x_86
+>  ]
+> *************************************
+=============
+tmp_cp zip1f.slk  
+=============
+1d0
+< Fatal error: exception Failure("iast.gather_type_info_heap :gather_type_info_heap: relation H cannot be found")
+47,48d45
+< !!! pre-obligation:
+< [ HP_6(next_31_5,y) * HP_8(next_32_822,x) --> H(next_31_5,next_32_822)]
+57a55,71
+> 
+> *************************************
+> *******relational definition ********
+> *************************************
+> [ H(x_83,y_84) ::= 
+>  H(next_31_74,next_32_72) * y_84::node<val_32_71,next_32_72>@M * 
+>  x_83::node<val_31_73,next_31_74>@M
+>  or emp&x_83=null
+>  ,
+>  G1(x_85,y_86,res_87) ::= 
+>  emp&res_87=x_85 & x_85=null & res_87=null
+>  or y_86::node<val_32_821,next_32_822>@M * 
+>     G1(next_31_5,next_32_822,v_node_34_853) * 
+>     res_87::node<v_int_33_837,v_node_34_853>@M&next_31_5=v_node_34_853 & 
+>     res_87=x_85
+>  ]
+> *************************************
+=============
+tmp_cp zip1.slk  
+=============
+1d0
+< Fatal error: exception Failure("iast.gather_type_info_heap :gather_type_info_heap: relation H1 cannot be found")
+22,23d20
+< !!! pre-obligation:
+< [ HP_8(next_25_827,x) * HP_1(next_24_820,y) --> H1(next_24_820,next_25_827)]
+32a30,44
+> 
+> *************************************
+> *******relational definition ********
+> *************************************
+> [ H1(x_110,y_111) ::= 
+>  HL(y_111)&x_110=null
+>  or H1(next_24_85,next_25_83) * y_111::node<val_25_82,next_25_83>@M * 
+>     x_110::node<val_24_84,next_24_85>@M
+>  ,
+>  G1(x_114,y_115,res_116) ::= 
+>  HL(y_115)&x_114=null & res_116=null & res_116=x_114
+>  or y_115::node<val_25_826,next_25_827>@M * res_116::node<val_24_819,nn>@M * 
+>     G1(nn,next_25_827,nn)&res_116=x_114
+>  ]
+> *************************************
+=============
+tmp_cp zip.slk  
+=============
+1d0
+< Fatal error: exception Failure("iast.gather_type_info_heap :gather_type_info_heap: relation H1 cannot be found")
+21,22d19
+< !!! pre-obligation:
+< [ HP_8(next_25_827,x) * HP_1(next_24_820,y) --> H1(next_24_820,next_25_827)]
+31a29,43
+> 
+> *************************************
+> *******relational definition ********
+> *************************************
+> [ H1(x_85,y_86) ::= 
+>  H1(next_24_76,next_25_74) * y_86::node<val_25_73,next_25_74>@M * 
+>  x_85::node<val_24_75,next_24_76>@M
+>  or emp&x_85=null
+>  ,
+>  G1(x_87,y_88,res_89) ::= 
+>  emp&res_89=x_87 & res_89=null & x_87=null
+>  or y_88::node<val_25_826,next_25_827>@M * res_89::node<val_24_819,nn>@M * 
+>     G1(nn,next_25_827,rr)&nn=rr & res_89=x_87
+>  ]
+> *************************************

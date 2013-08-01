@@ -1,0 +1,29 @@
+
+data node {
+ int key;
+ node left;
+ node right;
+}.
+
+HeapPred H(node a).
+HeapPred HP_1(node a).
+HeapPred HP_2(node a).
+PostPred G(node a).
+
+Declare_Unknown [HP_2].
+
+relAssume
+ x::node<k,left,right> 
+  & left=null & right!=null--> G(x).
+
+relAssume
+ x::node<k,left,right> 
+  & left!=null & right=null--> G(x).
+
+
+shape_infer [][G].
+
+/*
+# du-1.slk
+
+*/

@@ -1,0 +1,39 @@
+data node {
+  int val;
+  node next;
+}.
+
+data cell {
+  int val;
+}.
+
+/*
+pred ll<> == (self:node)=null
+  inv true.
+*/
+
+pred ll<> == self=null
+  inv true.
+
+/*
+# view-2.stk
+
+It seems that cast operation is lost and type-infer
+is doe only after "self" has been determined.
+
+update_fixpt@1
+update_fixpt inp1 :[(ll[]<> == 
+
+(None,[]): EBase: [][](EX Anon_11 Anon_12 . (self::node<Anon_11, Anon_12>@M[HeapNode1])*(true)( FLOW __flow)) 
+||
+(None,[]): EBase: [][](EX  . (emp)*(self = null)( FLOW __flow))  inv true inv_lock: None view_data_name: ,[node],[])]
+update_fixpt@1 EXIT out :?
+
+
+(None,[]): EBase: [][](EX Anon_11 Anon_12 . (self::node<Anon_11, Anon_12>@M[HeapNode1])*(true)( FLOW __flow)) 
+||
+(None,[]): EBase: [][](EX  . (emp)*(self = null)( FLOW __flow)) 
+gather_type_info_struc_f inp2 :[(self:13:node)]
+gather_type_info_struc_f@2 EXIT out :[(self:13:node)(TVar__16:16:null)(Anon_12:1
+
+*/

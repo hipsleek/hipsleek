@@ -1,0 +1,37 @@
+data node{
+ int val;
+ node next;
+}.
+
+HeapPred H(node a).
+HeapPred HP_6(node a).
+HeapPred HP_6e(node a, node a).
+
+infer [HP_6,x]
+HP_6(v) * xp::node<val_35_804,v> & n!=x & n=v 
+ |-  v::node<_,_> .
+print residue.
+
+/*
+ inferred hprel: [HP_6(v)&v!=x --> v::node<Anon_31,Anon_32>@M * 
+                   (HP_33(Anon_32))&true]
+*/
+
+
+infer [HP_6,x]
+HP_6(v) * xp::node<val_35_804,v> & n!=x & n=v & x=xp
+ |-  v::node<_,_> .
+print residue.
+
+/*
+Why isn't x!=v captured here?
+
+ inferred hprel: [HP_6(v)&true --> v::node<Anon_47,Anon_48>@M * 
+                   (HP_49(Anon_48))&true]
+*/
+
+infer [HP_6,x]
+HP_6(n) * xp::node<val_35_804,n> & x=xp & n!=x & n=v
+
+ |-  v::node<_,_> .
+print residue.

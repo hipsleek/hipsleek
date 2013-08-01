@@ -1,0 +1,47 @@
+data cell{
+	int val;
+}.
+
+HeapPred H1(cell a, cell b).
+HeapPred HP_4(cell a, cell b).
+HeapPred G1(cell a, cell b).
+
+relAssume
+ H1(x,y) --> x::cell<val_20_783> * HP_4(y,x).
+
+relAssume
+ HP_4(y,x) --> y::cell<val_21_788> .
+
+relAssume
+ x::cell<val_20_783> * y::cell<val_21_788> --> G1(x,y).
+
+shape_infer [H1,HP_4][G1].
+
+/*
+# pair2-bug2.slk
+
+[ H1(x_64,y_65) ::= y_65::cell<val_21_788>@M&true,
+ HP_4(y_66,x_67) ::= y_66::cell<val_21_788>@M&true,
+ G1(x_68,y_69) ::= x_68::cell<val_20_783>@M * y_69::cell<val_21_788>@M&true]
+
+Steps
+=====
+Confirm HP_4 as an equation:
+ HP_4(y,x) --> y::cell<val_21_788> .
+to:
+ HP_4(y,x) <--> y::cell<val_21_788> .
+
+Strengthen consequent of H1:
+ H1(x,y) --> x::cell<val_20_783> * y::cell<val_21_788>
+
+Confirm H1 as an equation:
+ H1(x,y) <--> x::cell<val_20_783> * y::cell<val_21_788>
+
+Confirm G1 as an equation:
+ x::cell<val_20_783> * y::cell<val_21_788> <--> G1(x,y).
+
+
+*/
+
+
+

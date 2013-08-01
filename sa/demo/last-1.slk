@@ -1,0 +1,36 @@
+ data node{
+	int val;
+	node next;
+}.
+
+// ll<> == self = null  or self::node<_, q> * q::ll<>;
+
+// lseg<p> == self = p & self!=null  or self::node<_, q> * q::lseg<p>& self!=p;
+// lshd<p> == p::lseg<self>*self::node<_,null>;
+
+HeapPred H(node a).
+HeapPred HP_1(node a).
+HeapPred G(node a, node b).
+HeapPred HP_2(node a, node b).
+HeapPred HP_3(node a, node b).
+
+//with next=null
+relAssume      H(x) --> x::node<_,n> * HP_1(n).
+relAssume      HP_1(n)&n!=null --> H(n).
+relAssume      G(t,n)& n!=null --> t::node<_,tn> * HP_2(tn,n) * HP_3(n,t).
+relAssume    HP_1(n)&n=null --> emp.
+relAssume      x::node<_,null>& res=x  --> G(res,x).
+relAssume	     x::node<_,n> * HP_3(n,res) * res::node<_,null> & n!=null --> G(res,x).
+ 
+// with val++
+//relAssume H  H(x) --> x::node<_,n> * HP_1(n).
+//relAssume H HP_1(n)&n!=null --> H(n).
+//relAssume G G(t,n)& n!=null --> t::node<_,nn> * HP_2(nn,n) * HP_3(n,t).
+//relAssume HP_1  HP_1(n)&n=null --> emp.
+//relAssume G x::node<_,n> & res=x & n=null --> G(res,x).
+//relAssume G x::node<_,n> * HP_2(nn,n) * HP_3(n,res) * res::node<rv,nn> & n!=null & rv= 1 + w --> G(res,x).
+
+Declare_Unknown [HP_2].
+Declare_Unknown [HP_3].
+
+shape_infer [H][G,HP_2,HP_3].

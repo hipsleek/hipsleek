@@ -1,0 +1,28 @@
+========assert-1-bug1.slk ==========
+Starting Omega...oc
+H_9 is defined.
+H_8 is defined.
+
+Entail (1) : Valid. 
+
+ <1>H_8(n) * x::node<n>@M[Orig] * H_9(t)&n=t & n=null&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [H_8(n) --> emp&n=null]
+
+
+Entail (2) : Valid. 
+
+ <1>H_9(n) * x::node<n>@M[Orig]&n=t & t=null&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [H_9(n) --> emp&n=null]
+
+
+Entail (3) : Valid. 
+
+ <1>x::node<n>@M[Orig]&F(n) & n=t & n=null&{FLOW,(19,20)=__norm}[]
+ inferred rel: [RELASS [F]: ( F(n)) -->  n=null]
+
+
+Entail (4) : Valid. 
+
+ <1>x::node<n>@M[Orig]&F(n) & n=t & G(t) & n=null&{FLOW,(19,20)=__norm}[]
+ inferred rel: [RELASS [F]: ( F(n)) -->  n=null]
+====================

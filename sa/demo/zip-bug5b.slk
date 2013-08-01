@@ -1,0 +1,51 @@
+data node{
+	int val;
+	node next;
+}.
+
+HeapPred H1(node a, node b).
+HeapPred HP_1(node a, node@NI b).
+HeapPred HP_2(node a, node@NI b).
+HeapPred HP_8(node a, node@NI b).
+HeapPred G1(node a, node b, node c).
+
+infer [HP_1,HP_2,HP_8,H1,G1] 
+y::node<val_25_826,next_25_827> * 
+G1(next_24_820,next_25_827,next_24_820) * 
+x::node<val_24_819,next_24_820>@M
+&x!=null 
+//& !(v_bool_21_795') & x!=null & !(v_bool_21_795') 
+//& val_24_819=val_25_826+val_24_819 & next_24_820=next_24_820 & next_25_827=next_25_827 
+& res=x
+ |-  G1(x,y,res). 
+
+print residue.
+
+/*
+# zip-bug5b.slk
+
+GOT
+ inferred hprel: [y::node<val_25_826,next_25_827>@M * 
+                   x::node<val_24_819,next_24_820>@M&res=x --> G1(x,y,res)&
+                   true]
+
+Why isn't G1(next_24_820,next_25_827,next_24_820) 
+picked up?
+
+===========================
+
+ checkentail y::node<val_25_826,next_25_827>@M[Orig] * 
+(G1(next_24_820,next_25_827,next_24_820)) * 
+x::node<val_24_819,next_24_820>@M[Orig]&x!=null & !(v_bool_21_795') & 
+x!=null & !(v_bool_21_795') & val_24_819=val_25_826+val_24_819 & 
+next_24_820=next_24_820 & next_25_827=next_25_827 & res=x&
+{FLOW,(22,23)=__norm}[]
+ |-  G1(x,y,res)&true&{FLOW,(22,23)=__norm}[]. 
+hprel_ass: [ y::node<val_25_826,next_25_827>@M * x::node<val_24_819,next_24_820>@M&
+  res=x --> G1(x,y,res)&true]
+res:  [
+  emp&x!=null & !(v_bool_21_795') & x!=null & !(v_bool_21_795') & val_24_819=val_25_826+val_24_819 & next_24_820=next_24_820 & next_25_827=next_25_827 & res=x&{FLOW,(22,23)=__norm}[]
+  ]
+
+
+*/

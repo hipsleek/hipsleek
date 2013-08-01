@@ -1,0 +1,31 @@
+data node{
+ int val;
+ node pre;
+ node next;
+}.
+
+
+HeapPred H(node a, node b).
+HeapPred HP_2(node a, node b).
+HeapPred HP_1(node a, node b).
+
+
+relAssume  H
+ x::node<_,prev, next> * HP_1(prev,y) *  HP_2(next,y) -->
+  H(x,y).
+
+relAssume  H
+ HP_2(next,y) & next!=null 
+      --> H(next,y).
+
+shape_strengthen_conseq [H,HP_2][].
+
+/*
+Looks Correct:
+
+[ x::node<Anon_11,prev,next>@M * (HP_1(prev,y)) * (HP_2(next,y))&
+  true --> H(x,y)&true,
+ HP_2(next_32,y_31)&next_32!=null --> next_32::node<Anon_11,prev,next>@M * 
+  (HP_1(prev,y_31)) * (HP_2(next,y_31))&true]
+
+*/

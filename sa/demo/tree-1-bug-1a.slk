@@ -1,0 +1,62 @@
+
+data node {
+ int key;
+ node left;
+ node right;
+}.
+
+HeapPred H(node a).
+HeapPred HP_1(node a).
+HeapPred HP_2(node a).
+PostPred G(node a).
+
+Declare_Unknown [HP_2].
+
+relAssume
+ HP_2(right_25_790) * x::node<key_25_788,left_25_789,right_25_790> 
+  & left_25_789=null --> G(x).
+
+relAssume
+ HP_2(right_25_790) * x::node<key_25_788,left_25_789,right_25_790> * 
+  G(left_25_789) & left_25_789!=null --> G(x).
+
+shape_infer [HP_1,HP_2][G].
+
+/*
+# tree-1-bug-1a.slk   FIXED
+
+OK without --pred-disj-unify
+
+[ G(x_29) ::=  HP_2(right_25_790) * 
+ x_29::node<key_25_788,left_25_789,right_25_790>@M& left_25_789=null
+ or HP_2(right_25_790) * x_29::node<key_25_788,left_25_789,right_25_790>@M * 
+    G(left_25_789)&left_25_789!=null
+ ,
+ HP_2(a) ::= NONE]
+
+======
+--pred-disj-unify below is wrong as it has extra GP_31(..)
+
+[ G(x_29) ::=  x_29::node<key_25_788,left_25_789,right_25_790>@M 
+   * GP_30(left_25_789) * GP_31(right_25_790) * HP_2(right_25_790)&true,
+                          ^^^^^^^^^^^^^^^^^^^
+ GP_30(left_25_789) ::=  
+ emp&left_25_789=null
+ or left_25_789::node<key_25_37,left_25_38,right_25_39>@M * 
+    GP_30(left_25_38) * GP_31(right_25_39) * HP_2(right_25_39)&true
+                        ^^^^^^^^^^^^^^^^^^
+ ,
+ HP_2(a) ::= NONE]
+
+========
+EXPECTING:
+==========
+
+[ G(x_29) ::=  x_29::node<key_25_788,left_25_789,right_25_790>@M 
+   * GP_30(left_25_789) * HP_2(right_25_790)&true,
+
+  GP_30(left) = left=null
+    or left_25_789::node<key_25_37,left_25_38,right_25_39>@M * 
+    GP_30(left_25_38) *  HP_2(right_25_39)&true
+
+*/

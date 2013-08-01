@@ -1158,7 +1158,7 @@ begin
         67 + 83*(stmtListSum b.bstmts) + 97*(stmtListSum h.bstmts)
     | TryFinally (b, h, _) -> 
         103 + 113*(stmtListSum b.bstmts) + 119*(stmtListSum h.bstmts)
-    | HipStmt _ -> 0
+    | HipStmtSpec _ -> 0
   in
   
   (* disabled 2nd and 3rd measure because they appear to get different

@@ -1,0 +1,151 @@
+data node{
+ int val;
+ node next;
+}.
+
+
+HeapPred H(node a).
+HeapPred HP_7(node a).
+HeapPred G(node a, node a).
+
+relAssume  H // (1)
+ H(x) --> x::node<val_31_786,next_31_787>@M * HP_7(next_31_787).
+relAssume  G // (2)
+ HP_7(res) * x::node<val_31_786,res>@M&true --> G(x,res).
+relAssume  G // (3)
+ H(x)&res=x 
+   //& x=null 
+ --> G(x,res).
+
+shape_infer [H][G].
+
+/*
+
+
+[ H(x_45) ::= x_45::node<val_31_786,next_31_787>@M& XPURE(HP_7(next_31_787)),
+ G(x_46,res_47) ::= 
+ emp&res_47=x_46 &  XPURE(H(x_46))
+ or x_46::node<val_31_786,res_47>@M& XPURE(HP_7(res_47))
+ ]
+
+Base-Case Split
+===============
+
+Consider an inferred relational assumption with
+both a pre-pred and a post-pred.
+
+ H(x) & A --> G(x,..)
+
+If we have an unconditional defn:
+ H(x) --> Y
+
+We shall immediately apply modus-ponen
+to give:
+ Y & A --> G(x,..)
+
+If this cannot be ascertained, we will proceed
+with a base-case-split thru:
+
+ H(x) & pre(x) --> emp
+ A --> G(x,..)
+
+
+We can perform a base-case split, if detect
+on the LHS, a property such as:
+ H(x) & pre(x)
+
+
+
+Given
+=====
+
+P(x) -> Q
+Q & K --> G
+===============
+P(x) -> Q
+P(x) & K --> G
+
+
+ H(x) --> x::node<val_31_786,next_31_787>@M * HP_7(next_31_787).
+ x::node<val_31_786,next_31_787>@M * HP_7(next_31_787)
+       & res=x --> G(x,res).
+================================================================
+ H(x) --> x::node<val_31_786,next_31_787>@M * HP_7(next_31_787).
+ H(x)&res=x --> G(x,res).
+
+
+
+H(x) --> Q
+P    --> H(x)
+==============
+H(x) --> Q
+P    --> Q
+
+
+H(x) <-- Q
+P    --> Q
+==============
+H(x) <-- Q
+P    --> H(x)
+
+ H  --> Q
+ S  --> T
+---------------
+ H*S --> Q*T
+
+
+ HP_2(next,y) <--> ....
+===============================================================
+ HP_2(next,y) --> ....
+===============================================================
+ H(x,y) <--> x::node<_,prev, next> * HP_1(prev,y) *  HP_2(next,y) .
+ HP_2(next,y) & next!=null --> 
+      x::node<_,prev, next> * HP_1(prev,y) *  HP_2(next,y)
+ HP_2(next,y) & next=null  -->  emp
+ next=null --> G(next,y).
+=================================================================
+ H(x,y) <--> x::node<_,prev, next> * HP_1(prev,y) *  HP_2(next,y) .
+ HP_2(next,y) & next!=null --> 
+      x::node<_,prev, next> * HP_1(prev,y) *  HP_2(next,y)
+ HP_2(next,y) & next=null  -->  G(next,y).
+==================================================================
+ H(x,y) <--> x::node<_,prev, next> * HP_1(prev,y) *  HP_2(next,y) .
+ HP_2(next,y) & next!=null --> H(next,y).
+ HP_2(next,y) & next=null  -->  G(next,y).
+==================================================================
+ H(x,y) --> x::node<_,prev, next> * HP_1(prev,y) *  HP_2(next,y) .
+ HP_2(next,y) & next!=null --> H(next,y).
+ HP_2(next,y) & next=null  -->  G(next,y).
+
+
+P --> Q
+
+
+P -> Q(x)
+Q(x) -> G
+===============
+H(x) -> G(...)
+K(x) -> H(x)
+
+
+
+Modus-ponen gives:
+
+P -> Q
+P -> K -> G
+-----------
+Q -> K -> G
+
+P -> Q
+
+------
+P -> R
+Q -> P
+
+
+Q -> R
+P -> Q
+----------
+P -> Q
+P -> R
+*/

@@ -1,0 +1,26 @@
+
+checkentail 
+a=null & flted_9_1137=null 
+//& (((flted_9_1137=l_1139 & M1_1140={}) | (flted_9_1137!=l_1139 & M1_1140!=({})))) 
+//& (((g_1135=r_1141 & M2_1142={}) | (g_1135!=r_1141 & M2_1142!=({})))) 
+& flted_9_1137=g_1135 & 
+(((flted_9_1137=null & l_1139!=s_1134) | (flted_9_1137=s_1134 & 
+l_1139!=null))) & s_1134!=null & a=g_1135 & a!=cur_1163 & 
+l_1139=left_40_1159 & r_1141=right_39_1155 & r_1141=tmp_54' & l_1139=n_53' & 
+cur_1163!=null & cur=cur_1163 & prev=prev_1161 & b=sent & cur!=null & 
+cur_1163=prev' & cur'=n_53' & cur'=sentinel & cur_1163!=sent & s_1134=sent & 
+s_1136=sent & sent=sent_1143 & prev'!=s_1136 & s_1136=sent_1143 & b!=prev' & 
+sent_1143!=null & (((b=null & prev!=sent_1143) | (b=sent_1143 & 
+prev!=null))) & s_1136!=null & (((g_1135=null & r_1141!=s_1136) | 
+(g_1135=s_1136 & r_1141!=null))) 
+//& (((b=prev & M2={}) | (b!=prev & M2!=({}))))
+	     |- true
+//& cur'=sent 
+//& cur'!=sent
+& prev'!=null 
+& prev'!=sent & s_1136=sent 
+& sent=sent_1143 & prev'!=null 
+//& b=null
+//& b!=null
+.
+

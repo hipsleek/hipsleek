@@ -1,0 +1,12 @@
+
+/*
+checkentail
+  true & ["":x=x' & MayLoop & t_31'=0 & v_int_22_859'=1 & 0<m] 
+  |- emp&Term.
+print residue.
+*/
+
+checkentail
+  true & x=x' & MayLoop & t_31'=0 & v_int_22_859'=1 & 0<m 
+  |- emp&x>4.
+print residue.

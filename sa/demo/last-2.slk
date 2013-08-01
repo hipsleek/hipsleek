@@ -1,0 +1,54 @@
+ data node{
+	int val;
+	node next;
+}.
+
+
+HeapPred H(node a).
+HeapPred HP_1(node a).
+HeapPred HP_4(node a).
+HeapPred G(node a, node b).
+HeapPred HP_2(node a, node b).
+HeapPred HP_3(node a, node b).
+
+//with next=null
+relAssume       
+ //H(x) --> x::node<_,n> * HP_1(n).
+ H(x)&true --> x::node<val_18_812,next_18_813>@M * HP_4(next_18_813).
+
+relAssume       
+ //HP_1(n)&n!=null --> H(n).
+ HP_4(next_18_813)&next_18_813!=null --> H(next_18_813).
+
+relAssume   
+ //HP_1(n)&n=null --> emp.
+ HP_4(next_18_813)&next_18_813=null --> emp.
+
+/*
+relAssume       
+G(t,n)& n!=null --> t::node<_,tn> * HP_2(tn,n) * HP_3(n,t).
+
+relAssume       x::node<_,null>& res=x  --> G(res,x).
+relAssume 	     x::node<_,n> * HP_3(n,res) * res::node<_,null> & n!=null --> G(res,x).
+*/
+
+Declare_Unknown [HP_2].
+Declare_Unknown [HP_3].
+
+shape_infer [H][G,HP_2,HP_3].
+
+/*
+
+
+ G(t_37',next_18_813)&
+  next_18_813!=null --> t_37'::node<val_23_830,next_23_831>@M * 
+  GP_2(next_23_831,next_18_813@NI) * GP_3(next_18_813,t_37'@NI).
+
+ x::node<val_18_812,next_18_813>@M&res=x & next_18_813=null 
+   --> G(res,x).
+
+ x::node<val_18_812,next_18_813>@M * GP_3(next_18_813,res@NI) * 
+  res::node<val_23_830,v_null_23_836>@M&next_18_813!=null & 
+  v_null_23_836=null --> G(res,x).
+
+*/

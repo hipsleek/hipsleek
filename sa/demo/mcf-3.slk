@@ -1,0 +1,195 @@
+data tree {
+    node children;
+    }.
+    
+data node {
+    tree child; 
+    //node prev; 
+    node next; 
+    tree parent;
+    }.
+
+HeapPred H_9(node children_8).
+HeapPred H_6(node next_52_1003, tree@NI par).
+HeapPred H_5(tree child_52_1002, tree@NI par).
+HeapPred H1(tree a).
+HeapPred H2(node a, tree@NI b).
+PostPred G1(tree a).
+PostPred G2(node a, tree@NI b).
+HeapPred H_7(tree parent_52_1004, tree@NI par).
+Declare_Unknown [H_7].
+
+
+relAssume
+ H1(t) --> t::tree<children_8>@M * H_9(children_8).
+
+relAssume
+ H_9(children_8)&
+  children_8!=null --> H2(children_8,t).
+/*
+ H_9(children_8)&
+  children_8!=null |#| t::tree<children_8>@M --> H2(children_8,t).
+*/
+
+relAssume
+  H2(l,par)& l!=null --> 
+    l::node<child_52_1002,next_52_1003,parent_52_1004>@M * 
+    H_5(child_52_1002,par) * H_6(next_52_1003,par) * 
+    H_7(parent_52_1004,par).
+
+relAssume
+ H_6(next_52_1003,par)&par=par' --> H2(next_52_1003,par).
+
+relAssume
+ H_5(child_52_1002,par)&par=par' --> H1(child_52_1002).
+
+relAssume
+ H2(l,par)&l=null --> emp.
+
+relAssume
+ H_9(children_8) &
+  children_8=null --> emp.
+
+shape_infer [H1,H2,H_5,H_6,H_9,H_7][].
+
+/*
+# mcf-3.slk
+(from check-mcf-2.ss)
+
+
+--------------
+
+ t::tree<children_8>@M&
+  children_8=null --> G1(t).
+
+ emp & l=null --> G2(l,par).
+
+
+ t::tree<children_8>@M * G2(children_8,t)&
+  children_8!=null --> G1(t).
+
+ H_7(parent_52_1004,par) * 
+  l::node<child_52_1002,next_52_1003,parent_52_1004>@M * 
+  G2(next_52_1003,par) * G1(child_52_1002)&
+  par=parent_52_1004 --> G2(l,par).
+
+ H_7(parent_52_1004,par) --> emp&par=parent_52_1004.
+
+
+ALGO
+====
+Step 1: Confirm H1
+ H_1(child_07,prv,par) //&par=par' & prev_08=prv 
+   --> H1(child_07).
+ // make equality
+ H_1(child_07,prv,par) <-> H1(child_07).
+
+Step 2: Confirm H_3
+
+ H_3(next_09,prv,par)&par=par' & 
+  prev_08=prv --> H2(next_09,l,par). // what should l be?
+
+ H_3(v_node_43_958',prv,par') <-> l'::node<_,_,v_node_43_958',_> --* H2(v_node_43_958',l',par')]
+
+Step 3: Confirm H2
+
+ H2(l,prv,par)& l!=null --> l::node<child_07,prev_08,next_09,parent_10>@M * 
+  H_1(child_07,prv,par) * H_2(prev_08,prv,par) * H_3(next_09,prv,par) * H_4(parent_10,prv,par).
+ H2(l,prv,par)&l=null --> emp.
+ // unfold H_1
+ H2(l,prv,par)& l!=null --> l::node<child_07,prev_08,next_09,parent_10>@M * 
+     H1(child_07) * H_2(prev_08,prv,par) * H_3(next_09,prv,par) * H_4(parent_10,prv,par).
+ // contextual unfold of H_3
+ H2(l,prv,par)& l!=null --> l::node<child_07,prev_08,next_09,parent_10>@M * 
+     H1(child_07) * H_2(prev_08,prv,par) * H2(next_09,l,par) * H_4(parent_10,prv,par).
+ // Make equal
+ H2(l,prv,par)<--> l::node<child_07,prev_08,next_09,parent_10>@M * 
+     H1(child_07) * H_2(prev_08,prv,par) * H2(next_09,l,par) * H_4(parent_10,prv,par)
+     or l=null
+
+Step 3: Confirm H1
+
+ H1(t) --> t::tree<children_84> * H_5(children_84).
+ // make equal
+ H1(t) <-> t::tree<children_84> * H_5(children_84).
+
+Step 4: Confirm H_5
+ H_5(v_node) & v_node!=null 
+   --> t::tree<v_node> --* H2(v_node,n_38',t) & n_38'=null
+ H_5(children_84) &  children_84=null --> emp.
+
+ H_5(v_node) = t::tree<v_node> --* H2(v_node,n_38',t) & n_38'=null & v_node!=null
+               \/ v_node=null
+
+
+==========
+Remove H_5
+==========
+ H1(t) <-> t::tree<children> & H_5(children).
+   // unfold children
+    <-> t::tree<children> & children=null
+      or t::tree<children> * (tt::tree<children> --* H2(children,n_38',tt) & n_38'=null & children!=null) 
+   // match tt to t
+    <-> t::tree<children> & children=null
+      or t::tree<children> * H2(children,n_38',t) & n_38'=null & children!=null 
+    <-> t::tree<children> & children=null
+      or t::tree<children> * H2(children,n_38',t) & n_38'=null & children!=null 
+
+========
+
+ H2(l,prv,par)<--> l::node<child_07,prev_08,next_09,parent_10> * 
+     H1(child_07) * H_2(prev_08,prv,par) * H2(next_09,l,par) * H_4(parent_10,prv,par)
+     or l=null
+
+ H1(t) <-> t::tree<children> & children=null
+      or t::tree<children> * H2(children,n_38',t) & n_38'=null & children!=null 
+
+
+
+
+
+ H1(t) --> t::tree<children_84> * H_5(children_84).
+
+ H_5(children_84)&
+  children_84!=null --> H2(children_84,n_38',t).
+// what are n_39' and t?
+
+ H_5(children_84) &
+  children_84=null --> emp.
+
+*/
+
+/*
+relAssume
+ H_2(prev_08,prv,par) --> emp&
+  forall(parent_10:((par!=parent_10 | prv>=prev_08)) & 
+  ((par!=parent_10 | prev_08>=prv))).
+
+relAssume
+ H_2(prev_08,prv,par) --> emp&
+  forall(parent_10:((prev_08!=prv | par>=parent_10)) & 
+  ((prev_08!=prv | parent_10>=par))).
+
+relAssume
+ H_2(prev_08,prv,par) --> emp&
+  forall(parent_10:((par>=parent_10 | prv>=prev_08)) & 
+  ((parent_10>=par | prv>=prev_08)) & ((par>=parent_10 | 
+  prev_08>=prv)) & ((parent_10>=par | prev_08>=prv))).
+
+ H2(l,prv,par)&l=null --> G2(l,prv,par).
+
+ H_5(children_84) * t::tree<children_84>@M&
+  children_84=null --> G1(t).
+
+ H_2(prev_08,prv,par) * 
+  H_4(parent_10,prv,par) * 
+  l::node<child_07,prev_08,next_09,parent_10>@M * 
+  G2(next_09,l,par) * G1(child_07)&par=parent_10 & 
+  prev_08=prv --> G2(l,prv,par).
+
+ t::tree<children_84>@M * 
+  G2(children_84,n_1105,t)&children_84!=null & 
+  n_1105=null --> G1(t).
+
+*/
+

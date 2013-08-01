@@ -1,0 +1,12 @@
+# sleek02.slk
+
+// (2) Valid - ok 
+checkentail x::ll<n,@A,@M> |- x::ll<n,@A,@L>.
+print residue.
+
+Currently fails? Should it succeed. Why is the RHS imm annotation absent?
+
+ ### estate =  x::ll<n,flted_22_56,flted_22_55>@M[0][Orig][LHSCase]&flted_22_56=@A & flted_22_55=@M&{FLOW,(19,20)=__norm}[]
+ ### conseq =  x::ll<n_57,flted_22_59,flted_22_58>@M[0][Orig][LHSCase]&true&
+{FLOW,(19,20)=__norm}[]
+

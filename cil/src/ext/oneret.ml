@@ -149,7 +149,7 @@ let oneret (f: Cil.fundec) : unit =
         s.skind <- Block (scanBlock false b);
         s :: scanStmts mainbody rests
     | ({skind=(Goto _ | Instr _ | Continue _ | Break _ 
-               | TryExcept _ | TryFinally _ | HipStmt _)} as s)
+               | TryExcept _ | TryFinally _ | HipStmtSpec _)} as s)
       :: rests -> s :: scanStmts mainbody rests
 
   and scanBlock (mainbody: bool) (b: block) = 

@@ -1,0 +1,24 @@
+data node {
+	int val; 
+	node next;	
+}.
+
+HeapPred H(node a, node b).
+HeapPred G(node a, node b).
+HeapPred HP_6(node a, node@NI b).
+HeapPred HP_7(node a, node@NI b).
+
+Declare_Unknown [HP_7].
+
+infer [H,HP_6,HP_7]
+ HP_6(next_36_825,h) * HP_7(h,rest)&h!=rest 
+   |- H(next_36_825,h).
+print residue.
+
+/*
+Three Solutions
+(i) Use HeapPred H(node a, node@NI b).
+(ii) Avoid HP_7 if there is an exact match?
+(iii) Handling more complex implications..
+*/
+

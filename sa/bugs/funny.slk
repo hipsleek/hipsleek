@@ -1,0 +1,11 @@
+
+data node{
+    node next;
+}.
+
+HeapPred H(node a).
+
+infer [H] H(x)&x=x' & x'=null & v_bool_14_756' & x'=null & v_bool_14_756'
+ |-  x'::node<next_15_754'>@L.
+print residue.
+

@@ -1,0 +1,69 @@
+========zip1b2.slk ==========
+Starting Omega...oc
+HL is defined.
+H1 is defined.
+HP_1 is defined.
+HP_2 is defined.
+HP_8 is defined.
+G1 is defined.
+
+!!! >>>>>> step 1: find dangling ptrs, link pre and post-preds dangling preds<<<<<<
+!!! >>>>>> step 2: split constraints based on pre and post-preds<<<<<<
+!!! **********************************
+!!! **** split_base ****
+!!! **********************************
+!!! post_hps:[G1]
+!!! prog_vars:[]
+!!! BEFORE:[(1): H1(x,y)&x!=null --> x::node<val_24_819,next_24_820>@M * 
+  HP_1(next_24_820,y) * HP_2(y,x),
+(2): HP_2(y,x) --> y::node<val_25_826,next_25_827>@M * HP_8(next_25_827,x),
+(3): HP_8(next_25_827,x) * HP_1(next_24_820,y) --> H1(next_24_820,next_25_827),
+(4): H1(x,y)&x=null & res=null --> G1(x,y,res),
+(5): y::node<val_25_826,next_25_827>@M * x::node<val_24_819,nn>@M * 
+  G1(nn,next_25_827,rr)&nn=rr & res=x --> G1(x,y,res)]
+!!! =============>>>>
+!!! AFTER:[(1): H1(x,y)&x!=null --> x::node<val_24_819,next_24_820>@M * 
+  HP_1(next_24_820,y) * HP_2(y,x),
+(2): HP_2(y,x) --> y::node<val_25_826,next_25_827>@M * HP_8(next_25_827,x),
+(3): HP_8(next_25_827,x) * HP_1(next_24_820,y) --> H1(next_24_820,next_25_827),
+(4): emp&res=x & res=null & x=null --> G1(x,y,res),
+(5): H1(x,y)&x=null --> emp,
+(6): y::node<val_25_826,next_25_827>@M * x::node<val_24_819,nn>@M * 
+  G1(nn,next_25_827,rr)&res=x & nn=rr --> G1(x,y,res)]
+!!! UNKNOWN added:[]
+!!! **********************************
+!!! **** end of split_base ****
+!!! **********************************
+!!! >>>>>> step 3: apply transitive implication<<<<<<
+!!! >>>>>> step 3a: simplification <<<<<<
+!!! >>>>>> step 3b: do apply_transitive_imp <<<<<<
+!!! >>>>>> step 3a: simplification <<<<<<
+!!! >>>>>> step 3b: do apply_transitive_imp <<<<<<
+!!! >>>>>> pre-predicates<<<<<<
+!!! >>>>>> step pre-4: remove unused predicates<<<<<<
+!!! >>>>>> pre-predicates: step pre-5: group & simpl impl<<<<<<
+!!! >>>>>> pre-predicates: step pre-6: combine<<<<<<
+!!! >>>>>> pre-predicates: step pre-7: remove redundant x!=null<<<<<<
+!!! >>>>>> pre-predicates: step pre-8: strengthen<<<<<<
+!!! >>>>>> step 6: generalization <<<<<<
+!!! >>>>>> generalize_one_cs_hp: <<<<<<
+!!! >>>>>> post-predicates<<<<<<
+!!! >>>>>> step post-4: step remove unused predicates<<<<<<
+!!! >>>>>> post-predicates: step post-5: remove redundant x!=null : not implemented yet<<<<<<
+!!! >>>>>> post-predicates: step post-61: weaken<<<<<<
+
+*************************************
+*******relational definition ********
+*************************************
+[ H1(x_84,y_85) ::= 
+ H1(next_24_75,next_25_73) * y_85::node<val_25_72,next_25_73>@M * 
+ x_84::node<val_24_74,next_24_75>@M
+ or emp&x_84=null
+ ,
+ G1(x_86,y_87,res_88) ::= 
+ emp&x_86=null & res_88=null & res_88=x_86
+ or y_87::node<val_25_826,next_25_827>@M * res_88::node<val_24_819,nn>@M * 
+    G1(nn,next_25_827,rr)&nn=rr & res_88=x_86
+ ]
+*************************************
+====================

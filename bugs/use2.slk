@@ -1,0 +1,17 @@
+data node{
+	int val;
+        node prev;
+	node next;
+}.
+
+pred H1<y> == self::node<_,p,t> * t::H2<y>.
+
+pred H2<y> == self=null
+ or self::node<_,p,n> * n::H2<y>.
+
+
+/*
+
+
+*/
+

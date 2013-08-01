@@ -1,0 +1,39 @@
+checkentail
+b=b_2926 & cur=cur_2845 & prev=prev_2843 & a!=null & b=null & cur!=sent & 
+a=sent & r_2766=right_51_2829 & l_2764=left_52_2841 & l_2764!=sent & 
+!(v_bool_56_998') & l_2764!=sent & !(v_bool_56_998') & l_2764!=null & 
+!(v_bool_59_999') & l_2764!=null & !(v_bool_59_999') & a_2924!=null & 
+b_2926=null & l_2764!=sent & a_2924=sent & cur_2845!=null & a_2924!=null & 
+b_2926=null & l_2764!=sent & a_2924=sent & prev'!=null & a=sent_2768 & 
+flted_8_2762=null & a!=cur_2845 & cur_2845!=sent_2768 & a=g_2759 & 
+s_2760=sent_2768 & s_2761=sent_2768 & sent=sent_2768 & sent=sent_2769 & 
+a_2924=g_2759 & flted_8_2762=null & b!=cur_2845 & cur_2845!=s_2761 & 
+s_2761=sent_2769 & b_2926!=cur_2845 & b=b_2926 & cur_2845!=s_2761 & 
+s_2761=sent_2769 & sent_2769!=null & (((b=null & prev!=sent_2769) | 
+(b=sent_2769 & prev!=null))) & s_2761!=null & (((flted_8_2762=null & 
+r_2766!=s_2761) | (flted_8_2762=s_2761 & r_2766!=null))) & s_2760!=null & 
+(((g_2759=null & l_2764!=s_2760) | (g_2759=s_2760 & l_2764!=null))) & 
+flted_38_3526=null & cur'=sent & prev'!=null 
+& exists(sent_49:sent_49!=null & (((b_2926=null & cur_2845!=sent_49) | 
+(b_2926=sent_49 & cur_2845!=null)))) 
+& exists(sent_48:sent_48!=null & (((a_2924 =null & l_2764!=sent_48) | (a_2924=sent_48 & l_2764!=null)))) 
+& b=b_2926 & g_2759=sent & a_2924=g_2759 & 
+(((b=prev & M2={}) | (b!=prev & M2!=({})))) 
+& (((flted_8_2762=r_2766 & M2_2767={}) | (flted_8_2762!=r_2766 & 
+M2_2767!=({})))) 
+& (((g_2759=l_2764 & M1_2765={}) | (g_2759!=l_2764 & 
+M1_2765!=({})))) 
+& (((a_2924=l_2764 & M1_2925={}) | (a_2924!=l_2764 & 
+M1_2925!=({})))) 
+& (((b_2926=cur_2845 & M2_2927={}) | (b_2926!=cur_2845 & 
+M2_2927!=({})))) 
+
+& exists(M2:exists(r:(((flted_38_3526=r & M2={}) | (flted_38_3526!=r & M2!=({})))) & (((flted_38_3526=null & r!=sent) | (flted_38_3526=sent & r!=null)))) & exists(M1:exists(l:(((null=null & l!=sent) | (sent=null & l!=null))) & (((l=null & M1={}) | (l!=null & M1!=({}))))) & exists(v:M3_3527=union({v},M1,M2)))) 
+& flted_38_3526!=prev' & prev'!=sent & sent!=null & sent!=null 
+& M1=union({v_2763},M1_2765,M2_2767) & 
+M1_2765=M1_2925 & M2_2927=union({v_2763},M2_2767,M2) & M3_3527=union(M1_2925,
+M2_2927)
+|- false.
+
+
+

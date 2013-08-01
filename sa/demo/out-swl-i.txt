@@ -1,0 +1,82 @@
+Heap Predicate Declarations
+===========================
+HeapPred H(node a, node b, node@NI c).
+HeapPred H_3(node prev, node@NI cur, node@NI sent).
+HeapPred H_2(node next_1, node@NI prev, node@NI sent).
+HeapPred G(node a, node ra, node b, node rb, node@NI c).
+
+*************************************
+*******relational assumptions (4) ********
+*************************************
+[ // BIND
+(0)H(cur,prev,sent@NI) --> cur::node<val_0,next_1>@M * 
+H_2(next_1,prev@NI,sent@NI) * 
+H_3(prev,cur@NI,sent@NI),
+ // PRE_REC
+(1;2;0)H_3(prev,cur@NI,sent@NI) * cur::node<val_0,prev>@M&
+cur=cur_909 & cur'=cur_909 & 
+prev'=null --> H(cur',prev',sent@NI),
+ // PRE_REC
+(2;2;0)H_2(next_1,prev@NI,sent@NI) * H_3(prev,cur@NI,sent@NI) * 
+cur::node<val_0,prev>@M&cur=cur_909 & cur'=next_1 & cur'!=sent & 
+cur'!=null --> H(cur',cur_909,sent@NI),
+ // POST
+(1;0)H_2(next_1,prev@NI,sent@NI) * H_3(prev,cur@NI,sent@NI) * 
+cur::node<val_0,prev>@M&cur=cur_909 & cur'=next_1 & 
+cur'=sent --> G(cur,cur',prev,cur_909,sent@NI),
+ // POST
+(1;0)H_2(next_1,prev@NI,sent@NI) * H_3(prev,cur@NI,sent@NI) * 
+cur::node<val_0,prev>@M&cur=cur_909 & cur'=next_1 & 
+cur'=sent --> G(cur,cur',prev,cur_909,sent@NI),
+ // POST
+(1;2;0)H_2(next_1,prev@NI,sent@NI)&next_1=null & 
+next_1!=sent --> emp,
+ // POST
+(1;2;0)G(prev_921,cur',prev_933,prev',sent@NI)&cur=prev_921 & 
+prev_933=null --> G(cur,cur',prev,prev',sent@NI),
+ // POST
+(2;2;0)G(next_1,cur',cur,prev',sent@NI)&next_1!=sent & 
+next_1!=null --> G(cur,cur',prev,prev',sent@NI)]
+
+
+Procedure lscan$node~node~node SUCCESS
+
+[ H_3(prev_936,cur_939,sent_934)&
+  prev_937=null --> H_2(prev_936,prev_937,sent_934),
+
+ emp&prev_937=null --> H_3(prev_937,cur_938,sent_940)]
+
+[ H_2(next_44,prev_943,sent_945) &next_44!=null & 
+  next_44!=sent_945 --> next_44::node<val_46,next_47>@M * 
+  HP_948(next_47,prev_943,sent_945),
+
+ HP_948(next_47,prev_943,sent_945) |#| cur_941::node<val_42,prev_943>@M --> H_2(next_47,cur_941,sent_945),
+
+ H_3(prev_943,cur_941,sent_945) * cur_941::node<val_42,prev_943>@M&
+  next_44!=null & 
+  next_44!=sent_945 --> H_3(cur_941,next_44,sent_945)]
+
+*************************************
+*******relational definition ********
+*************************************
+H(cur_1221,prev_1222,sent_1223) ::= cur_1221::node<val_0,next_1>@M 
+* H_2(next_1,prev_1222,sent_1223) * H_3(prev_1222,cur_1221,sent_1223).
+
+G(cur_1233,cur_1234,prev_1235,prev_1236,sent_1237) ::= 
+ G(cur_1233,cur_1234,prev,prev_1236,sent_1237)&prev_1235=null
+ or G(prev_1235,cur_1234,prev,prev_1236,sent_1237)&prev_1235!=null & 
+    cur_1233!=null & cur_1233!=sent_1237
+ or G(cur_1233,cur_1234,prev,prev_1236,sent_1237)/&\
+    G(prev_1235,cur_1234,prev,prev_1236,sent_1237)&cur_1233!=null & 
+    cur_1233!=sent_1237 & prev_1235=null.
+
+H_3(prev_1224,cur_1225,sent_1226) ::= H_2(prev_1224,prev_937,sent_1226)&prev_937=null.
+
+H_2(next_27,prev_1228,sent_1229) ::= 
+ H_2(next_64,next_27,sent_1229) * 
+ next_27::node<val_63,next_64>@M&next_27!=sent_1229
+ or emp&next_27=null & next_27!=sent_1229.
+
+*************************************
+
+

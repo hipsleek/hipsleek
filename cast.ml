@@ -23,7 +23,7 @@ and prog_decl = {
     mutable prog_logical_vars : P.spec_var list;
     mutable prog_view_decls : view_decl list;
     mutable prog_rel_decls : rel_decl list; (* An Hoa : relation definitions *)
-    mutable prog_hp_decls : hp_decl list;
+    mutable prog_hp_decls : hp_decl list; (*only used to compare against some expected output????*)
     mutable prog_axiom_decls : axiom_decl list; (* An Hoa : axiom definitions *)
     (*old_proc_decls : proc_decl list;*) (* To be removed completely *)
     new_proc_decls : (ident, proc_decl) Hashtbl.t; (* Mingled name with proc_delc *)
@@ -42,6 +42,7 @@ and data_field_ann =
 
 and data_decl = { 
     data_name : ident;
+    data_pos : loc;
     data_fields : (typed_ident * data_field_ann) list;
     data_parent_name : ident;
     data_invs : F.formula list;
@@ -77,6 +78,7 @@ and view_kind =
 and view_decl = { 
     view_name : ident; 
     view_vars : P.spec_var list;
+    view_cont_vars : P.spec_var list;
     view_case_vars : P.spec_var list; (* predicate parameters that are bound to guard of case, but excluding self; subset of view_vars*)
     view_uni_vars : P.spec_var list; (*predicate parameters that may become universal variables of universal lemmas*)
     view_labels : Label_only.spec_label list;
@@ -87,7 +89,7 @@ and view_decl = {
     mutable view_materialized_vars : mater_property list; (* view vars that can point to objects *)
     view_data_name : ident;
     view_formula : F.struc_formula; (* case-structured formula *)
-    view_user_inv : MP.mix_formula; (* XPURE 0 -> revert to P.formula*)
+    mutable view_user_inv : MP.mix_formula; (* XPURE 0 -> revert to P.formula*)
     view_mem : F.mem_perm_formula option; (* Memory Region Spec *)
     view_inv_lock : F.formula option;
     mutable view_x_formula : (MP.mix_formula); (*XPURE 1 -> revert to P.formula*)
@@ -104,6 +106,7 @@ and view_decl = {
     view_prune_conditions: (P.b_formula * (formula_label list)) list;
     view_prune_conditions_baga: ba_prun_cond list;
     view_prune_invariants : (formula_label list * (Gen.Baga(P.PtrSV).baga * P.b_formula list )) list ;
+    view_pos : loc;
     view_raw_base_case: Cformula.formula option;}
 
 (* An Hoa : relation *)					
@@ -113,13 +116,15 @@ and rel_decl = {
     rel_formula : P.formula;}
 
 and hp_decl = { 
-    hp_name : ident; 
-    hp_vars : P.spec_var list;
+    hp_name : ident;
+    hp_vars_inst : (P.spec_var * Globals.hp_arg_kind) list;
+    mutable hp_root_pos: int;
+    hp_is_pre: bool;
     hp_formula : F.formula;}
 
 (** An Hoa : axiom *)
 and axiom_decl = {
-	  axiom_id : int;
+    axiom_id : int;
     axiom_hypothesis : P.formula;
     axiom_conclusion : P.formula; }
 
@@ -128,6 +133,7 @@ and proc_decl = {
     proc_args : typed_ident list;
     proc_source : ident; (* source file *)
     proc_return : typ;
+    proc_flags : (ident*ident*(flags option)) list;
     mutable proc_important_vars : P.spec_var list; (* An Hoa : pre-computed list of important variables; namely the program parameters & logical variables in the specification that need to be retained during the process of verification i.e. such variables should not be removed when we perform simplification. Remark - all primed variables are important. *)
     proc_static_specs : Cformula.struc_formula;
     (* proc_static_specs_with_pre : Cformula.struc_formula; *)
@@ -136,6 +142,14 @@ and proc_decl = {
     (*proc_dynamic_specs_with_pre : Cformula.struc_formula;*)
     (* stack of static specs inferred *)
     proc_stk_of_static_specs : Cformula.struc_formula Gen.stack;
+    mutable proc_hprel_ass: Cformula.hprel list;
+    mutable proc_hprel_unkmap: ((P.spec_var * int list) * P.xpure_view) list;
+    mutable proc_sel_hps: P.spec_var list;
+    mutable proc_sel_post_hps: P.spec_var list;
+    mutable proc_hpdefs: Cformula.hp_rel_def list;(*set of heap predicate constraints derived from this method*)
+    mutable proc_callee_hpdefs: Cformula.hp_rel_def list;
+    (*set of heap predicate constraints derived from calls in this method*)
+    (*due to the bottom up inference they are always just copyed from the proc_hpdefs of called methods*)
     proc_by_name_params : P.spec_var list;
     proc_body : exp option;
     (* Termination: Set of logical variables of the proc's scc group *)
@@ -162,19 +176,20 @@ and coercion_case =
   | Complex
   | Ramify
   | Normalize of bool 
-(* 
-   |LHS| > |RHS| --> Normalize of true --> combine
-   |LHS| < |RHS| --> Normalize of false --> split
-   Otherwise, simple or complex
-*)
+        (* 
+           |LHS| > |RHS| --> Normalize of true --> combine
+           |LHS| < |RHS| --> Normalize of false --> split
+           Otherwise, simple or complex
+        *)
 
 and coercion_decl = { 
     coercion_type : coercion_type;
+    coercion_exact : bool;
     coercion_name : ident;
-    coercion_head : F.formula;
-    coercion_head_norm : F.formula;
-    coercion_body : F.formula;
-    coercion_body_norm : F.struc_formula;
+    coercion_head : F.formula; (* used as antecedent during --elp *)
+    coercion_head_norm : F.formula; (* used as consequent during --elp *)
+    coercion_body : F.formula; (* used as antecedent during --elp *)
+    coercion_body_norm : F.struc_formula; (* used as consequent during --elp *)
     coercion_impl_vars : P.spec_var list; (* list of implicit vars *)
     coercion_univ_vars : P.spec_var list; (* list of universally quantified variables. *)
     (* coercion_proof : exp; *)
@@ -442,6 +457,7 @@ let print_mater_prop_list = ref (fun (c:mater_property list) -> "cast printer ha
 (*single node -> simple (true), otherwise -> complex (false*)
 (* let is_simple_formula x = true *)
 let print_view_decl = ref (fun (c:view_decl) -> "cast printer has not been initialized")
+let print_hp_decl = ref (fun (c:hp_decl) -> "cast printer has not been initialized")
 let print_coercion = ref (fun (c:coercion_decl) -> "cast printer has not been initialized")
 let print_coerc_decl_list = ref (fun (c:coercion_decl list) -> "cast printer has not been initialized")
 let print_mater_prop_list = ref (fun (c:mater_property list) -> "cast printer has not been initialized")
@@ -526,6 +542,8 @@ let re_proc_mutual_from_prog cp : (proc_decl list * ((proc_decl list) list) ) =
   let lst = list_of_procs cp
   in re_proc_mutual lst
 
+let mater_prop_var a = a.mater_var 
+let mater_prop_cmp_var a c = P.eq_spec_var_ident a.mater_var c.mater_var 
 let mk_mater_prop v ff tv = {mater_var=v; mater_full_flag = ff; mater_target_view = tv}
 let mater_prop_cmp c1 c2 = P.spec_var_cmp c1.mater_var c2.mater_var
 let merge_mater_views v1 v2 = match v1,v2 with
@@ -569,6 +587,10 @@ let subst_coercion fr t (c:coercion_decl) =
               ; coercion_body = F.subst_avoid_capture fr t c.coercion_body
       }
  
+let subst_coercion fr t (c:coercion_decl) = 
+  let pr = !print_coercion in
+  Debug.no_1 "subst_coercion" pr pr (fun _ -> subst_coercion fr t c ) c
+
 (* process each proc into some data which are then combined,
    e.g. verify each method and collect the failure points
 *)
@@ -757,7 +779,7 @@ let mkEAssume pos =
  
 let mkEAssume_norm pos = 
 	let f = Cformula.mkTrue (Cformula.mkNormalFlow ()) pos in
-	let sf = Cformula.mkEBase f None no_pos in
+	(* let sf = Cformula.mkEBase f None no_pos in *)
 	Cformula.mkEAssume [] f (Cformula.mkEBase f None no_pos) (stub_branch_point_id "") None
 	
 let mkSeq t e1 e2 pos = match e1 with
@@ -880,16 +902,69 @@ let rec look_up_view_def_raw (defs : view_decl list) (name : ident) = match defs
   | d :: rest -> if d.view_name = name then d else look_up_view_def_raw rest name
   | [] -> raise Not_found
 
-let look_up_view_def_raw (defs : view_decl list) (name : ident) = 
+let look_up_view_def_raw i (defs : view_decl list) (name : ident) = 
   let pr = fun x -> x in
   let pr_out = !print_view_decl in
-  Debug.no_1 "look_up_view_def_raw" pr pr_out (fun _ -> look_up_view_def_raw defs name) name
+  Debug.no_1_num i "look_up_view_def_raw" pr pr_out (fun _ -> look_up_view_def_raw defs name) name
 
 
 (* An Hoa *)
 let rec look_up_rel_def_raw (defs : rel_decl list) (name : ident) = match defs with
   | d :: rest -> if d.rel_name = name then d else look_up_rel_def_raw rest name
   | [] -> raise Not_found
+
+let rec look_up_hp_def_raw_x (defs : hp_decl list) (name : ident) = match defs with
+  | d :: rest -> if d.hp_name = name then d else look_up_hp_def_raw_x rest name
+  | [] -> raise Not_found
+
+let look_up_hp_def_raw defs name=
+  let pr1 = !print_hp_decl in
+  Debug.no_1 "look_up_hp_def_raw" pr_id pr1
+      (fun _ -> look_up_hp_def_raw_x defs name) name
+
+let set_proot_hp_def_raw r_pos defs name=
+  let hpdclr = look_up_hp_def_raw defs name in
+  let _ = hpdclr.hp_root_pos <- r_pos in
+  hpdclr
+
+let get_proot_hp_def_raw defs name=
+  let hpdclr = look_up_hp_def_raw defs name in
+  hpdclr.hp_root_pos
+
+let get_root_args_hprel hprels hp_name actual_args=
+  let rec part_sv_from_pos ls n n_need rem=
+    match ls with
+      | [] -> report_error no_pos "sau.get_sv_from_pos"
+      | sv1::rest -> if n = n_need then (sv1, rem@rest)
+        else part_sv_from_pos rest (n+1) n_need (rem@[sv1])
+  in
+  let retrieve_root hp_name args=
+    let rpos = get_proot_hp_def_raw hprels hp_name in
+    let r,paras = part_sv_from_pos args 0 rpos [] in
+    (r,paras)
+  in
+  retrieve_root hp_name actual_args
+
+let get_root_typ_hprel hprels hp_name=
+  let rec part_sv_from_pos ls n n_need rem=
+    match ls with
+      | [] -> report_error no_pos "sau.get_sv_from_pos"
+      | sv1::rest -> if n = n_need then (sv1, rem@rest)
+        else part_sv_from_pos rest (n+1) n_need (rem@[sv1])
+  in
+  let retrieve_root hp_name=
+    let hpdclr = look_up_hp_def_raw hprels hp_name in
+    let rpos = hpdclr.hp_root_pos in
+    let r,_ = part_sv_from_pos (List.map fst hpdclr.hp_vars_inst) 0 rpos [] in
+    match Cpure.type_of_spec_var r with
+      | Named id -> id
+      | _ -> ""
+  in
+  retrieve_root hp_name
+
+let check_pre_post_hp defs hp_name=
+  let hpdecl = look_up_hp_def_raw defs hp_name in
+  hpdecl.hp_is_pre
 
 let rec look_up_view_def (pos : loc) (defs : view_decl list) (name : ident) = match defs with
   | d :: rest -> 
@@ -931,13 +1006,13 @@ let is_rec_view_def prog (name : ident) : bool =
 
 (*check whether a view is a lock invariant*)
 let get_lock_inv prog (name : ident) : (bool * F.formula) =
-  let vdef = look_up_view_def_raw prog.prog_view_decls name in
+  let vdef = look_up_view_def_raw 1 prog.prog_view_decls name in
   match vdef.view_inv_lock with
     | None -> (false, (F.mkTrue (F.mkTrueFlow ()) no_pos))
     | Some f -> (true, f)
 
 let is_lock_inv prog (name : ident) : bool =
-  let vdef = look_up_view_def_raw prog.prog_view_decls name in
+  let vdef = look_up_view_def_raw 2 prog.prog_view_decls name in
   match vdef.view_inv_lock with
     | None -> false
     | Some f -> true
@@ -995,7 +1070,45 @@ let rec look_up_proc_def pos (procs : (ident, proc_decl) Hashtbl.t) (name : stri
   try Hashtbl.find procs name 
 	with Not_found -> Error.report_error {
     Error.error_loc = pos;
-    Error.error_text = "Procedure " ^ name ^ " is not found."}
+    Error.error_text = "look_up_proc_def: Procedure " ^ name ^ " is not found."}
+
+let look_up_hpdefs_proc (procs : (ident, proc_decl) Hashtbl.t) (name : string) = 
+  try
+      let proc = Hashtbl.find procs name in
+      proc.proc_hpdefs
+  with Not_found -> Error.report_error {
+      Error.error_loc = no_pos;
+      Error.error_text = "look_up_hpdefs_proc: Procedure " ^ name ^ " is not found."}
+
+let update_hpdefs_proc (procs : (ident, proc_decl) Hashtbl.t) hpdefs (name : string) = 
+  try
+      let proc = Hashtbl.find procs name in
+      (* let new_proc = {proc with proc_hpdefs = proc.proc_hpdefs@hpdefs} in *)
+      let _ = proc.proc_hpdefs <- proc.proc_hpdefs@hpdefs in ()
+      (* Hashtbl.replace procs name proc *)
+  with Not_found -> Error.report_error {
+      Error.error_loc = no_pos;
+      Error.error_text = "update_hpdefs_proc: Procedure " ^ name ^ " is not found."}
+
+let look_up_callee_hpdefs_proc (procs : (ident, proc_decl) Hashtbl.t) (name : string) = 
+  try
+      let proc = Hashtbl.find procs name in
+      proc.proc_callee_hpdefs
+  with Not_found -> []
+(* Error.report_error { *)
+      (* Error.error_loc = no_pos; *)
+      (* Error.error_text = "Procedure " ^ name ^ " is not found."} *)
+
+let update_callee_hpdefs_proc (procs : (ident, proc_decl) Hashtbl.t) caller_name (callee_name : string) = 
+  try
+      let hpdefs = look_up_hpdefs_proc procs callee_name in
+      let proc = Hashtbl.find procs caller_name in
+      (* let new_proc = {proc with proc_callee_hpdefs = proc.proc_callee_hpdefs@hpdefs} in *)
+      let _ = proc.proc_callee_hpdefs <- proc.proc_callee_hpdefs@hpdefs in ()
+      (* Hashtbl.replace procs name new_proc *)
+  with Not_found -> Error.report_error {
+      Error.error_loc = no_pos;
+      Error.error_text = "update_callee_hpdefs_proc: Procedure " ^ caller_name ^ " is not found."}
 
 (* Replaced by the new function with Hashtbl *)
 (*
@@ -1015,7 +1128,7 @@ let rec look_up_proc_def_no_mingling pos (procs : (ident, proc_decl) Hashtbl.t) 
   match proc with
   | None -> Error.report_error {
       Error.error_loc = pos;
-      Error.error_text = "Procedure " ^ name ^ " is not found." }
+      Error.error_text = "look_up_proc_def_no_mingling: Procedure " ^ name ^ " is not found." }
   | Some p -> p
   
 (* takes a class and returns the list of all the methods from that class or from any of the parent classes *)
@@ -1101,12 +1214,34 @@ let case_of_coercion_x (lhs:F.formula) (rhs:F.formula) : coercion_case =
   if(flag) then Ramify
   else
   let fct f = match f with
-      | Cformula.Base {F.formula_base_heap=h}
-      | Cformula.Exists {F.formula_exists_heap=h} ->      
+    | Cformula.Base {F.formula_base_heap=h}
+    | Cformula.Exists {F.formula_exists_heap=h} ->      
+          let _ = Debug.tinfo_hprint (add_str "formula_exists_heap" !print_h_formula ) h no_pos in 
           let hs = F.split_star_conjunctions h in
-		  let self_n = List.for_all (fun c-> (P.name_of_spec_var (F.get_node_var c)) = self) hs in
-          (List.length hs),self_n, List.map F.get_node_name hs
-      | _ -> 1,false,[]
+	  let self_n = List.for_all (fun c-> 
+              let _ = Debug.tinfo_hprint (add_str "c" !print_h_formula ) c no_pos in
+              let only_self = match c with
+                | F.DataNode _
+                | F.ViewNode _-> (P.name_of_spec_var (F.get_node_var c)) = self 
+                | F.HRel (sv,exp_lst,_) -> (
+                      let _ = Debug.tinfo_hprint (add_str "sv" !print_sv ) sv no_pos in
+                      match exp_lst with
+                        | [sv] -> (
+                              match sv with
+                                | (P.Var (v,_)) -> (P.name_of_spec_var v) = self
+                                | _ -> false)
+                        | _ -> false
+                  )
+                | _ -> failwith ("Only nodes and HRel allowed after split_star_conjunctions ") 
+              in
+              only_self) hs  in
+          let get_name h = match h with
+            | F.DataNode _
+            | F.ViewNode _-> F.get_node_name h
+            | F.HRel (sv,exp_lst,_) -> P.name_of_spec_var sv
+            | _ -> failwith ("Only nodes and HRel allowed after split_star_conjunctions ") in
+          (List.length hs),self_n, List.map get_name hs
+    | _ -> 1,false,[]
   in
   (*length = #nodes, sn = is there a self node, typ= List of names of nodes*)
   let lhs_length,l_sn,lhs_typ = fct lhs in
@@ -1584,7 +1719,7 @@ let formula_of_unstruc_view_f vd = F.formula_of_disjuncts (fst (List.split vd.vi
 let vdef_fold_use_bc prog ln2  = match ln2 with
   | F.ViewNode vn -> 
     (try 
-      let vd = look_up_view_def_raw prog.prog_view_decls vn.F.h_formula_view_name in
+      let vd = look_up_view_def_raw 3 prog.prog_view_decls vn.F.h_formula_view_name in
       match vd.view_raw_base_case with
         | None -> None
         | Some f-> Some {vd with view_formula = F.formula_to_struc_formula f}
@@ -1711,7 +1846,7 @@ let rec add_uni_vars_to_view_x cprog (l2r_coers:coercion_decl list) (view:view_d
 		| F.ViewNode vn ->
             if ((String.compare vn.F.h_formula_view_name view.view_name)=0) then []
 			else
-				let vdef = look_up_view_def_raw cprog.prog_view_decls vn.F.h_formula_view_name in
+				let vdef = look_up_view_def_raw 4 cprog.prog_view_decls vn.F.h_formula_view_name in
 				let vdef = add_uni_vars_to_view_x cprog l2r_coers vdef in
 				let vdef_uni_vars = vdef.view_uni_vars in
 				let fr = vdef.view_vars in
@@ -1894,3 +2029,16 @@ and add_term_nums_proc (proc: proc_decl) log_vars add_call add_phase =
     }, pvl1 @ pvl2)
 
 
+let collect_hp_rels prog= Hashtbl.fold (fun i p acc-> 
+	let name = unmingle_name p.proc_name in
+	(List.map (fun c-> name,c) p.proc_hpdefs)@acc) prog.new_proc_decls []
+
+let look_up_cont_args_x a_args vname cviews=
+  let vdef = look_up_view_def_raw 5 cviews vname in
+  let pr_args = List.combine vdef.view_vars a_args in
+  List.fold_left (fun ls cont_sv -> ls@[List.assoc cont_sv pr_args]) [] vdef.view_cont_vars
+
+let look_up_cont_args a_args vname cviews=
+  let pr1 = !Cpure.print_svl in
+  Debug.no_2 "look_up_cont_args" pr1 pr_id pr1
+      (fun _ _ -> look_up_cont_args_x a_args vname cviews) a_args vname

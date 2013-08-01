@@ -1,0 +1,57 @@
+data node{
+	node next;
+}.
+
+HeapPred P(node a).
+HeapPred G(node a).
+HeapPred H_2(node a).
+
+relAssume
+ P(x) --> x::node<next_1> * H_2(next_1).
+
+relAssume
+ x::node<next_1> * H_2(next_1)  --> P(x) & next_1!=null.
+
+shape_infer [P,H_2][].
+
+/*
+# loop-3b1.slk
+
+(came from loop-3.ss)
+
+PROBLEM : there seems to be a missing sleek step.
+When I invoke --en-sleek-logging-txt, there wasn't
+any sleek invocation. Have you called sleek for
+pre-obligation?
+
+How should we handle pre-obligation of the form:
+ x::node<next_1> * H_2(next_1)  --> P(x).
+
+It has a complex LHS that has to be delayed until we have 
+obtained a pre-pred defn for P. Hence, the steps are:
+
+Step 1
+======
+Process P(..)
+ P(x) --> x::node<next_1> * H_2(next_1).
+Simplify and confirm as a defn:
+ P(x) <-> x::node<next_1> * H_2(next_1).
+
+Step 2
+======
+ x::node<next_1> * H_2(next_1)  --> P(x).
+Use the Defn of P(..) & pass to sleek:
+ x::node<next_1> * H_2(next_1)  |- P(x).
+which succeds with:
+  H_2(next_1) --> H_2(next_1)
+which then simplifies to:
+  H_2(next_1) --> true
+and then:
+  H_2(next_1) ::= true
+
+Did we do this SLEEK proof obligation for
+pre-predicate? We need to for soundness.
+
+
+*/
+

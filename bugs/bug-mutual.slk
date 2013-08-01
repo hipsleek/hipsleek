@@ -1,6 +1,6 @@
 data node {
-        int val;
-        node next;
+  int val;
+  node next;
 }.
 
 /* mutual-recursive predicate not supported in sleek */

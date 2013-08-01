@@ -1,0 +1,28 @@
+/* representation of a node */
+data node {
+	int val; 
+	node left;
+	node right;	
+}.
+
+relation L(node x, int m). //Label
+relation E(node x, node y, node z). //Edge
+//G = (V,D,L,E)
+
+pred dag<M,V,D,L,E> == self = null & V = {} & M = {} & D = {}
+     or self::node<m,l,r> * l::dag<Ml,V,D,L,E> U* r::dag<Mr,V,D,L,E>
+     & M = union(Ml,Mr,{self}) & self in V & m in D & L(self,m) & E(self,l,r).
+
+
+lemma "subdag update" 
+l::dag<Ml,V,D,L,E> -* (l::dag<Ml,V,D,L,E> U* r::dag<Mr,V,D,L,E>) * l::dag<Ml1,V1,D1,L,E> 
+	-> l::dag<Ml1,V1,D1,L,E> U* r::<Mr,V1,D1,L,E>.
+
+// 	Mp subset Mp' & V\Mp = V\Mp'
+//------------------------------------------------
+// P(G) -* P(G) U* Q(G) * P(G') |- P(G') U* Q(G')
+
+checkentail x::dag<M,V,D,L,E> & forall(i: i notin D | i = 0) & x!=null |- x::node<0,l,r>.
+print residue.
+
+

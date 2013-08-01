@@ -1,0 +1,72 @@
+data node{
+	int val;
+	node prev;
+	node next;
+}.
+
+HeapPred H(node a).
+HeapPred HP_1(node a).
+HeapPred HP_2(node a).
+HeapPred G(node a).
+
+//Declare_Dangling [HP_2].
+Declare_Unknown [HP_2].
+
+relAssume 
+ H(x)&true --> x::node<key_25_788,left_25_789,right_25_790>@M * 
+  HP_1(left_25_789) * HP_2(right_25_790).
+
+relAssume 
+ HP_1(left_25_789)&left_25_789!=null --> H(left_25_789).
+
+relAssume 
+ HP_1(left_25_789)&left_25_789=null --> emp.
+
+relAssume 
+ HP_2(right_25_790) * x::node<key_25_788,left_25_789,right_25_790> &
+  left_25_789=null --> G(x)&true.
+
+relAssume 
+ HP_2(right_25_790) * x::node<key_25_788,left_25_789,right_25_790>@M * 
+  G(left_25_789)&left_25_789!=null --> G(x).
+
+shape_infer [H,HP_1,HP_2][G].
+
+/* 
+
+This outcome seems wrong.
+
+[ HP_1(left_25_69) ::= emp&left_25_69=null,
+ HP_2(right_25_70) ::= emp&true,
+ H(x_71) ::= x_71::node<key_25_788,left_25_789,right_25_790>@M&left_25_789=null,
+ G(x_72) ::= x_72::node<key_25_788,left_25_789,right_25_790>@M * 
+HP_73(left_25_789,right_25_790)&true,
+ HP_73(left_25_789,right_25_790) ::= 
+ emp&left_25_789=null
+ or left_25_789::node<key_25_788,left_25_74,right_25_75>@M * 
+    HP_73(left_25_74,right_25_75)&true
+ ]
+
+Declaring HP_2 as Unknown seem to produce a more 
+correct result:
+ 
+[ HP_1(left_25_69) ::= 
+   emp&left_25_69=null
+   or left_25_69::node<key_25_788,left_25_789,right_25_790>@M * 
+    HP_1(left_25_789) * HP_2(right_25_790)&true
+ ,
+ H(x_70) ::= 
+  x_70::node<key_25_788,left_25_789,right_25_790>@M * HP_1(left_25_789) * 
+   HP_2(right_25_790)&true,
+
+ G(x_71) ::= x_71::node<key_25_788,left_25_789,right_25_790>@M * 
+  HP_72(left_25_789,right_25_790) * HP_2(right_25_790)&true,
+
+ HP_72(left_25_789,right_25_790) ::= 
+ emp&left_25_789=null
+ or left_25_789::node<key_25_788,left_25_73,right_25_74>@M * 
+    HP_72(left_25_73,right_25_74) * HP_2(right_25_74)&true
+
+ HP_2(a) ::=NONE]
+
+*/

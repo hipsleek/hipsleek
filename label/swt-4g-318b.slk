@@ -1,0 +1,30 @@
+/*
+ id: 52<:2; prover: MONA; loc: swt-4g-318.slk_13:6_13:116; kind: Sleek_Entail(1)
+ Imply: ante: 
+*/
+checkentail
+(b:int)=flted_8_1844 & 
+(g_1841:int)=l_1846 & 
+//cur_1895=prev' &
+M1=union({prev'},M1_1847,M2_1849) 
+& ((g_1841=l_1846 & M1_1847={}) | (g_1841!=l_1846 & M1_1847!=({}))) 
+//& ((b=prev & M2={}) | (b!=prev & M2!=({}))) 
+& (flted_8_1844=r_1848 & M2_1849={}) | (flted_8_1844!=r_1848 & M2_1849!=({}))
+|-  
+ M1_1847={} & union(M1,M2)=union({prev'},M2_1849,M2)
+.
+
+/*
+# swt-4g-318b.slk
+
+why is there a type error here?
+
+ERROR: at _0:-1_0:-1 
+Message: with 2 convert expected the same cexp types, found different types
+ File "swt-4g-318b.slk", line 14, characters 51-52
+ error: Failure("with 2 convert expected the same cexp types, found different types")
+ at:(Program not linked with -g, cannot print stack backtrace)
+Fatal error: exception Failure("with 2 convert expected the same cexp types, found different types")
+
+*/
+

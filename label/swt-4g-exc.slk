@@ -1,0 +1,59 @@
+/*
+checkentail
+a_1192=sent_1153 & b_1194=prev' & flted_9_1147=null & s_1144=sent_1153 & 
+a=g_1145 & s_1146=sent_1153 & cur!=null & b=sent & a=null & sent=sent_1154 & 
+sent=sent_1153 & sent=sent' & prev=prev_1172 & cur=cur_1174 & l_1149=n_54' & 
+r_1151=tmp_55' & r_1151=right_52_1166 & l_1149=left_53_1170 & 
+cur_1174=prev_1190 & cur_1188=n_54' & cur_1188!=sent' & !(v_bool_57_998') & 
+cur_1188!=sent' & !(v_bool_57_998') & cur_1188=null & v_bool_60_999' & 
+cur_1188=null & v_bool_60_999' & cur'=prev_1190 & prev'=null & 
+a_1192!=null & ((b_1194!=null | cur'=sent' | a_1192!=sent')) & 
+s_1144=sent_1153 & s_1146=sent_1153 & b=sent_1153 & sent_1153=sent_1154 & 
+a_1192=sent_1153 & cur'=cur_1174 & a=g_1145 & a!=cur_1174 & 
+cur_1174!=sent_1153 & g_1145=null & b!=cur' & s_1146=sent_1154 & 
+cur'!=s_1146 & a_1192=b & a_1192!=cur' & s_1146=sent_1154 & cur'!=s_1146 & 
+((prev'=null | prev'!=null)) & exists(sent_1324:sent_1324!=null & 
+((b_1194=null | b_1194=sent_1324))) & b_1194=prev' & s_1144!=null & 
+(((flted_9_1147=null & l_1149!=s_1144) | (flted_9_1147=s_1144 & 
+l_1149!=null))) & (((flted_9_1147=l_1149 & M1_1150={}) | 
+(flted_9_1147!=l_1149 & M1_1150!=({}))))
+ |- false.
+*/
+data node {
+ int mark;
+ node left;
+ node right;
+}.
+
+pred tx<g,s,"s":M> == true&["":self = g & s!=null & (g=null | g=s) ; "s": M={}]
+   or self::node<v,l,r> * l::tx<g,s,M1> * r::tx<null,s,M2> & ["": self != g & self != s ;"s": M=union({v},M1,M2)]
+   or self::node<v,l,r> * l::tx<null,s,M1> * r::tx<g,s,M2> & ["": self != g & self != s ;"s": M=union({v},M1,M2)]
+inv true&["": s!=null
+ & (g=null & self!=s | g=s & self!=null)
+  ; "","s":(self=g & M={} | self!=g & M!={})
+]
+.
+
+ checkentail l_1149::tx<flted_9_1147,s_1144,M1_1150>@M * 
+r_1151::tx<g_1145,s_1146,M2_1152>@M * prev::tx<b,sent_1154,M2>@M * 
+cur_1174::node<v_1148,tmp_55',prev_1172>@M&
+AndList( "":flted_9_1147=null & s_1144=sent_1153 & a=g_1145 & 
+         s_1146=sent_1153 & cur!=null & b=sent & a=null & sent=sent_1154 & 
+         sent=sent_1153 & sent=sent' & prev=prev_1172 & cur=cur_1174 & 
+         l_1149=n_54' & r_1151=tmp_55' & r_1151=right_52_1166 & 
+         l_1149=left_53_1170 & cur_1174=prev_1190 & cur_1188=n_54' & 
+         cur_1188!=sent' & !(v_bool_57_998') & cur_1188!=sent' & 
+         !(v_bool_57_998') & cur_1188=null & v_bool_60_999' & 
+         cur_1188=null & v_bool_60_999' & cur'=prev_1190 & prev'=null
+ ; "":a!=cur_1174 & cur_1174!=sent_1153 & ((cur'=null | cur'!=null)) & 
+   exists(sent_1323:a_1192=cur' & sent_1323!=null & ((a_1192=null | 
+   a_1192=sent_1323))) & ((prev'=null | prev'!=null)) & 
+   exists(sent_1324:b_1194=prev' & sent_1324!=null & ((b_1194=null | 
+   b_1194=sent_1324)))
+ ; "s":M1=union({v_1148},M1_1150,M2_1152) & M1_1193={} & M2_1195={}) 
+ |-  (exists sent_1323,sent_1324: emp&
+AndList( "":sent'=sent_1323 & sent'=sent_1324
+ ; "":b_1194=prev' & sent_1324!=null & ((b_1194=null | b_1194=sent_1324)) & 
+   a_1192=cur' & sent_1323!=null & ((a_1192=null | a_1192=sent_1323))
+ ; "s":M2_1195={} & M1_1193={}))
+.

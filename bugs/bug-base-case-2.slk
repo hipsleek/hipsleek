@@ -1,0 +1,153 @@
+data node {
+	int val; 
+	node prev;	
+	node next;	
+}.
+
+
+pred dll_r5<p,t,n> == 
+  self=n & p=t
+  or self::node<_,p,q> * q::dll_r5<self,t,n> & self!=n
+  inv true.
+
+lemma "dll_r5_tail" self::dll_r5<p,t,n> & self!=n 
+  <-> self::dll_r5<p,q,t> * t::node<_,q,n>.
+/*
+left:
+ Lemma "dll_r5_tail":  self::dll_r5<p,t,n>@M#O[dll_r5_tail][0][Derv][LHSCase]&n!=self&
+{FLOW,(1,22)=__flow}[]==> EXISTS(q_34,Anon_12,q: self::dll_r5<p,q,t>@M#O[dll_r5_tail][0][Derv] * 
+t::node<Anon_12,q_34,n>@M[Derv]&q=q_34&{FLOW,(1,22)=__flow})[]
+ head match:dll_r5
+ body view:dll_r5
+ coercion_univ_vars: []
+ materialized vars:  
+    [(n,full,[dll_r5]); (p,full,[dll_r5]); 
+    (self,full,[dll_r5]); (t,partial,)]
+  # why is t partial, n & p full???
+ coercion_case: Simple
+ head_norm:  EXISTS(p_56,t_57,n_58: 
+         self::dll_r5<p_56,t_57,n_58>@M[0][Orig][LHSCase]&
+         p=p_56 & t=t_57 & n=n_58&{FLOW,(1,22)=__flow})[]
+  # why EXISTS
+  # why n!=self missing?
+ body_norm:  EBase exists (Expl)(Impl)[q](ex)EXISTS(p_45,t_46,n_47,Anon_12,
+       q_44: self::dll_r5<p_45,q,t_46>@M[0][Orig][LHSCase] * 
+       t::node<Anon_12,q_44,n_47>@M[Orig]&q=q_44 & p=p_45 & t=t_46 & n=n_47&
+       {FLOW,(1,22)=__flow})[]
+ coercion_univ_vars: []
+ coercion_case: Simple
+*/
+
+//add this lemma could avoid lhs_case for (1)
+
+lemma "dll_r5_tail2" self::node<_,p,q> * q::dll_r5<self,t,n> & self!=n
+      -> self::dll_r5<p,t,n>.
+
+
+//(0)
+//valid without "dll_r5_tail2"
+checkentail 
+   self::node<_,p,q3> * q3::dll_r5<self,t,n> & q3!=n
+     |- t::node<_,q,n> * self::dll_r5<p,q,t>.
+print residue.
+
+//(1)
+//valid after adding case analysis
+checkentail 
+   self::node<_,p,q3> * q3::dll_r5<self,t,n> & self!=n
+     |- t::node<_,q,n> * self::dll_r5<p,q,t>.
+print residue.
+
+/*
+checkentail 
+   self::node<_,p,q3> * q3::dll_r5<self,t,n> 
+     |- t::node<_,q,n> * self::dll_r5<p,q,t>.
+print residue.
+*/
+
+
+//(2)
+checkentail 
+   self::node<_,p,q3> * q3::dll_r5<self,q,t> * t::node<_,q,n> & self!=n
+     |- t::node<_,q,n> * self::dll_r5<p,q,t>.
+print residue.
+
+/*
+
+# bug-base-case-2.slk
+
+lhs-case-analysis seem to have triggered many alternatives:
+Is there a way to apply lemma wo resorting to LHS case analysis,
+so that (1) would work
+
+Entail (2) : Valid. 
+
+ <1>
+    emp&q3=t & q=self & n!=self & q3=t & Anon_16=Anon_17 & q3!=self&
+    {FLOW,(19,20)=__norm}[]
+    or emp&n!=self & q3!=t & Anon_16=Anon_17 & self!=t&
+       {FLOW,(19,20)=__norm}[]
+    
+<2>
+   emp&q3=t & q=self & n!=self & q3=t & Anon_16=Anon_17&
+   {FLOW,(19,20)=__norm}[]
+   or emp&n!=self & q3!=t & Anon_16=Anon_17 & self!=t&{FLOW,(19,20)=__norm}[]
+   
+<3>emp&n!=self & Anon_16=Anon_17 & self!=t&{FLOW,(19,20)=__norm}[]
+<4>
+   emp&q3=t & q=self & n!=self & Anon_16=Anon_17 & q3=t & q3!=self&
+   {FLOW,(19,20)=__norm}[]
+   or emp&n!=self & Anon_16=Anon_17 & q3!=t & self!=t&{FLOW,(19,20)=__norm}[]
+   
+<5>
+   emp&q3=t & q=self & n!=self & Anon_16=Anon_17 & q3=t & q3!=self&
+   {FLOW,(19,20)=__norm}[]
+   or emp&n!=self & Anon_16=Anon_17 & q3!=t & self!=t&{FLOW,(19,20)=__norm}[]
+
+--dis-lhs-case
+
+Entail (2) : Valid. 
+
+ <1>emp&n!=self & Anon_16=Anon_17 & self!=t&{FLOW,(19,20)=__norm}[]
+
+
+*/
+
+
+/*
+
+LDK:
+
+For the two entailments in bug-base-case-2.slk,
+case analysis seems to be neccessary for the first entailment
+while such as analysis is exploded in the second entailment.
+
+The answer to the question "Is there a way to apply lemma
+wo resorting to LHS case analysis, so that (1) would work"
+seems to be NO. In order to apply the lemma (from left to right),
+one needs to satisfy its guard (which is to prove that q3!=n).
+In the entailment of (1), we could not prove that q3!=n.
+
+Another solution w/o using case analysis is to use the
+following lemma to guide the search process:
+
+lemma "dll_r5_tail2" self::node<_,p,q> * q::dll_r5<self,t,n>
+      -> self::dll_r5<p,t,n>.
+
+ With the above lemma, (1) is valid.
+
+==================================
+../sleek bug-base-case-2.slk --dis-lhs-case 
+Starting Omega...oc
+
+Entail (1) : Valid. 
+
+ <1>emp&n!=self & n!=self & t=t_235 & n=n_236&{FLOW,(19,20)=__norm}[]
+
+
+Entail (2) : Valid. 
+
+ <1>emp&n!=self & Anon_17=Anon_18 & self!=t&{FLOW,(19,20)=__norm}[]
+<2>emp&n!=self & Anon_17=Anon_18 & n!=self & Anon_17=Anon_18 & q=t_586 & n_587=t&{FLOW,(19,20)=__norm}[]
+
+*/

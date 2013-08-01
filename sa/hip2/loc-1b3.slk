@@ -1,0 +1,36 @@
+data node{
+ int val;
+ node next;
+}.
+
+
+HeapPred H(node a,node b).
+HeapPred HP_1(node a,node b).
+HeapPred HP_2(node a,node b).
+HeapPred G(node a, node a).
+
+relAssume  H // (1)
+ H(x,y) --> x::node<_,next> * HP_2(next,y).
+
+relAssume  G // (3)
+  x::node<_,y> *
+  HP_2(next, y) 
+   //& next=null 
+  --> G(x,y).
+
+shape_infer_proper [H][G].
+
+/*
+WE GOT:
+
+[ H(x_49,y_50) ::= x_49::node<Anon_11,next>@M& XPURE(HP_2(next,y_50)),
+ G(x,y_40) ::= (H(x_39,y_40)) * x::node<Anon_12,y_40>@M&true,
+ G(x_51,y_52) ::= x_51::node<Anon_12,y_52>@M& XPURE(HP_2(next,y_52))]
+
+Why is there an extra equation:
+
+ G(x,y_40) ::= (H(x_39,y_40)) * x::node<Anon_12,y_40>@M&true,
+
+Where did H(..) come from?
+
+*/

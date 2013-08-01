@@ -1,0 +1,112 @@
+data node{
+	node next;
+	node prev;
+}.
+
+
+PostPred G(node a,node b).
+HeapPred H(node a,node b).
+HeapPred HP_9(node a,node@NI b).
+HeapPred HP_0(node a,node@NI b).
+HeapPred HP_1(node a,node@NI b).
+HeapPred HP_2(node a,node@NI b).
+HeapPred HP_3(node a,node@NI b).
+
+Declare_Unknown [HP_2].
+//Declare_Unknown [HP_3].
+Declare_Unknown [HP_0].
+
+relAssume
+  H(x,y)&true --> x::node<next_15_797,prev_15_798>@M * 
+  HP_9(next_15_797,y) * HP_0(prev_15_798,y) * HP_1(y,x).
+
+relAssume 
+ HP_9(next_15_797,y) * HP_1(y,x)&
+  next_15_797!=null --> H(next_15_797,y).
+
+relAssume 
+ HP_9(next_15_797,y) & next_15_797=null --> emp.
+
+relAssume 
+ HP_1(y,x) --> y::node<next_21_820,prev_21_821>@M * 
+  HP_2(next_21_820,x) * HP_3(prev_21_821,x).
+
+
+relAssume 
+ HP_0(prev_15_798,y) * x::node<next_15_797,prev_15_798>@M * 
+  G(next_15_797,y)&next_15_797!=null --> G(x,y).
+
+relAssume
+ HP_0(prev_15_798,y) * x::node<y,prev_15_798>@M * 
+  HP_2(next_21_820,x) * y::node<next_21_820,x>@M --> G(x,y).
+
+relAssume
+ HP_3(prev_21_821,x) --> emp.
+
+shape_infer [HP_1,HP_9,HP_3,H,HP_0,HP_2][G].
+//shape_infer [HP_0,HP_2][G].
+
+
+
+/*
+# dll-pap-2.slk
+
+
+ HP_3(prev_21_821,x@NI) --> emp,
+
+
+
+GOT which is incorrect
+===
+H(x_85,y_86) ::=  
+   y_86::node<next_21_820,prev_21_821>@M * HP_2(next_21_820,x_85) * 
+   HP_3(prev_21_821,x_85) * x_85::node<next_15_66,prev_15_67>@M * 
+   HP_0(prev_15_67,y_86)&next_15_66=null,
+  // need to refrain from unrolling HP_9 & HP_1 unless strictly needed
+
+HP_1(y_87,x_88) ::=  y_87::node<next_21_820,prev_21_821>@M * 
+   HP_2(next_21_820,x_88) * HP_3(prev_21_821,x_88),
+HP_9(next_15_89,y_90) ::=  emp&next_15_89=null,
+  // defn for HP_9 is incorrect
+
+
+POSSIBLE ALGORITM
+=================
+
+Confirm Equality first:
+  H(x,y)&true <--> x::node<next_15_797,prev_15_798>@M * 
+      HP_9(next_15_797,y) * HP_0(prev_15_798,y) * HP_1(y,x).
+  HP_1(y,x) <--> y::node<next_21_820,prev_21_821>@M * 
+     HP_2(next_21_820,x) * HP_3(prev_21_821,x).
+
+Trasform HP_9 with complex LHS
+  HP_9(n,y) * HP_1(y,x)&
+    n!=null --> H(n,y).
+  //replace H(..)
+  HP_9(n,y) * HP_1(y,x) & n!=null --> 
+     n::node<next_15_797,prev_15_798>@M * 
+      HP_9(next_15_797,y) * HP_0(prev_15_798,y) * HP_1(y,n).
+  Drop HP_1(y,_) on both sides assummig that parameter is useless on x.
+  //abstract commom HP_1(..)
+  // this can be confirmed by the definition of HP_1 itself
+  // where x is not accessed
+  HP_9(n,y) & n!=null --> 
+     n::node<nexts_15_797,prev_15_798>@M * 
+      HP_9(next_15_797,y) * HP_0(prev_15_798,y).
+  // add missing base-case (missed by post-cond proving)
+  HP_9(n,y) & n=null --> emp
+  // Can now transform HP_9 into ll list.
+
+When to unfold? Only if it helps make it self-recursive
+and during the transformation of implication:
+  H(..) = ...G(..)..
+
+If we have implication:
+  G(..) & pure --> ..H(..)...
+
+To make it recursive, we unfold:
+  G(..) & pure --> ..[..G(..)..]...
+
+
+
+*/

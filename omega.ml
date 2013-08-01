@@ -9,6 +9,8 @@ open Cpure
 let set_generated_prover_input = ref (fun _ -> ())
 let set_prover_original_output = ref (fun _ -> ())
 
+let set_prover_type () = Others.last_tp_used # set Others.OmegaCalc
+
 let omega_call_count: int ref = ref 0
 let is_omega_running = ref false
 let in_timeout = ref 10.0 (* default timeout is 15 seconds *)
@@ -78,6 +80,7 @@ let rec omega_of_exp e0 = match e0 with
       (* } *)
   | Max _
   | Min _ -> illegal_format ("Omega.omega_of_exp: min/max should not appear here")
+  | TypeCast _ -> illegal_format ("Omega.omega_of_exp: TypeCast should not appear here")
   | FConst _ -> illegal_format ("Omega.omega_of_exp: FConst")
   | Func _ -> "0" (* TODO: Need to handle *)
   | _ -> illegal_format ("Omega.omega_of_exp: array, bag or list constraint "^(!print_exp e0))
@@ -99,8 +102,14 @@ and omega_of_b_formula b =
   | SubAnn (a1, a2, _) -> (omega_of_exp a1) ^ " <= " ^ (omega_of_exp a2)
   (* | LexVar (_, a1, a2, _) -> "(0=0)" *)
   | Eq (a1, a2, _) -> begin
-        if is_null a2 then	(omega_of_exp a1)^ " < 1"
-        else if is_null a1 then (omega_of_exp a2) ^ " < 1"
+        if is_null a2 then
+          let v= omega_of_exp a1 in
+          ("("^v^" < 1)")
+          (* ("("^v^" < 1 && "^v^" = xxxnull)") *)
+        else if is_null a1 then 
+          let v= omega_of_exp a2 in
+          ("("^v^" < 1)")
+          (* ("("^v^ " < 1 && "^v^" = xxxnull)") *)
         else (omega_of_exp a1) ^ " = " ^ (omega_of_exp a2)
   end
   | Neq (a1, a2, _) -> begin
@@ -127,7 +136,7 @@ and omega_of_b_formula b =
   | LexVar _ -> illegal_format ("Omega.omega_of_exp: LexVar 3")
   | _ -> illegal_format ("Omega.omega_of_exp: bag or list constraint")
 
-and omega_of_formula pr_w pr_s f  =
+and omega_of_formula_x pr_w pr_s f  =
   let rec helper f = 
     match f with
   | BForm ((b,_) as bf,_) -> 		
@@ -136,29 +145,36 @@ and omega_of_formula pr_w pr_s f  =
             | None -> "(" ^ (omega_of_b_formula bf) ^ ")"
             | Some f -> helper f
         end
-  | AndList _ -> report_error no_pos "omega.ml: encountered AndList, should have been already handled"
+  | AndList _ ->
+        begin
+          let _ = print_endline ("AndList:?"^(!print_formula f)) in
+          report_error no_pos "omega.ml: encountered AndList, should have been already handled"
+        end
   | And (p1, p2, _) -> 	"(" ^ (helper p1) ^ " & " ^ (helper p2 ) ^ ")"
   | Or (p1, p2,_ , _) -> let _ = is_complex_form:= true in	"(" ^ (helper p1) ^ " | " ^ (helper p2) ^ ")"
-  | Not (p,_ , _) ->       " (not (" ^ (omega_of_formula pr_s pr_w p) ^ ")) "	
+  | Not (p,_ , _) ->       " (not (" ^ (omega_of_formula_x pr_s pr_w p) ^ ")) "	
   | Forall (sv, p,_ , _) -> " (forall (" ^ (omega_of_spec_var sv) ^ ":" ^ (helper p) ^ ")) "
   | Exists (sv, p,_ , _) -> " (exists (" ^ (omega_of_spec_var sv) ^ ":" ^ (helper p) ^ ")) "
   in 
   try
 	helper f
   with _ as e -> 
+	  let _ = print_string ("Omega Error format:"^(!print_formula f)^"\n") in
       let _ = Debug.trace_hprint (add_str "Omega Error format:" !print_formula) f in
       raise e
 
 
 let omega_of_formula i pr_w pr_s f  =
-  let pr = !print_formula in
-  Debug.no_1_num i "omega_of_formula" 
-      pr pr_id (fun _ -> omega_of_formula pr_w pr_s f) f
+  let _ = set_prover_type () in
+  let pr = !print_formula in 
+  (*let _ = print_string ("source:"^(string_of_int i)^": "^(pr f)^"\n"); flush_all in*)
+  Debug.no_1_loop_num i "omega_of_formula" 
+      pr pr_id (fun _ -> omega_of_formula_x pr_w pr_s f) f
 
-and omega_of_formula_old f  =
+let omega_of_formula_old i f  =
   let (pr_w,pr_s) = no_drop_ops in
   try 
-    Some(omega_of_formula pr_w pr_s f)
+    Some(omega_of_formula i pr_w pr_s f)
   with | _ -> None
 
 
@@ -206,7 +222,7 @@ let start() =
 let stop () =
   if !is_omega_running then begin
     let num_tasks = !test_number - !last_test_number in
-    print_string ("Stop Omega... "^(string_of_int !omega_call_count)^" invocations "); flush stdout;
+    print_string_if !Globals.enable_count_stats ("Stop Omega... "^(string_of_int !omega_call_count)^" invocations "); flush stdout;
     let _ = Procutils.PrvComms.stop !log_all_flag log_all !process num_tasks Sys.sigkill (fun () -> ()) in
     is_omega_running := false;
   end
@@ -214,11 +230,11 @@ let stop () =
 (* restart Omega system *)
 let restart reason =
   if !is_omega_running then begin
-    let _ = print_string (reason^" Restarting Omega after ... "^(string_of_int !omega_call_count)^" invocations ") in
+    let _ = print_string_if !Globals.enable_count_stats (reason^" Restarting Omega after ... "^(string_of_int !omega_call_count)^" invocations ") in
     Procutils.PrvComms.restart !log_all_flag log_all reason "omega" start stop
   end
   else begin
-    let _ = print_string (reason^" not restarting Omega ... "^(string_of_int !omega_call_count)^" invocations ") in ()
+    let _ = print_string_if !Globals.enable_count_stats (reason^" not restarting Omega ... "^(string_of_int !omega_call_count)^" invocations ") in ()
     end
 
 (*
@@ -390,6 +406,7 @@ let get_vars_formula (p : formula):(string list) =
 let is_sat_ops pr_weak pr_strong (pe : formula)  (sat_no : string): bool =
   (*print_endline (Gen.new_line_str^"#is_sat " ^ sat_no ^ Gen.new_line_str);*)
   incr test_number;
+  (*print_string ("going omega-> "^(!print_formula pe)^"\n");*)
   begin
         (*  Cvclite.write_CVCLite pe; *)
         (*  Lash.write pe; *)
@@ -820,7 +837,7 @@ let pairwisecheck (pe : formula) : formula =
   begin
 	omega_subst_lst := [];
     let pe = drop_varperm_formula pe in
-    match (omega_of_formula_old pe) with
+    match (omega_of_formula_old 21 pe) with
       | None -> pe
       | Some fstr ->
             let vars_list = get_vars_formula pe in
@@ -839,12 +856,21 @@ let pairwisecheck (pe : formula) : formula =
 	        match_vars (fv pe) rel 
   end
 
+let pairwisecheck (pe : formula) : formula =
+  let r = pairwisecheck pe in
+  if count_disj r > count_disj pe then pe
+  else r
+
+let pairwisecheck (pe : formula) : formula =
+  let pf = !print_pure in
+  Debug.no_1 "Omega.pairwisecheck" pf pf pairwisecheck pe
+
 let hull (pe : formula) : formula =
   (*print_endline "LOCLE: hull";*)
   begin
 	omega_subst_lst := [];
     let pe = drop_varperm_formula pe in
-    match omega_of_formula_old pe with
+    match omega_of_formula_old 22 pe with
       | None -> pe
       | Some fstr ->
             let vars_list = get_vars_formula pe in
@@ -868,8 +894,9 @@ let gist (pe1 : formula) (pe2 : formula) : formula =
   begin
 	omega_subst_lst := [];
     let pe1 = drop_varperm_formula pe1 in
-    let fstr1 = omega_of_formula_old pe1 in
-    let fstr2 = omega_of_formula_old pe2 in
+	let _ = if no_andl pe1 && no_andl pe2 then () else report_warning no_pos "trying to do hull over labels!" in
+    let fstr1 = omega_of_formula_old 23 pe1 in
+    let fstr2 = omega_of_formula_old 24 pe2 in
     match fstr1,fstr2 with
       | Some fstr1, Some fstr2 ->
             begin

@@ -1,0 +1,30 @@
+ata node{
+	int val;
+	node next;
+}.
+
+HeapPred H(node a, node b, node@NI c).
+HeapPred H_3(node prev, node@NI cur).
+HeapPred H_2(node next_1, node@NI prev, node@NI sent).
+HeapPred G(node a, node ra, node b, node rb, node@NI c).
+
+infer [H,G]
+ H(cur,prev,sent)&cur=cur' & prev=prev' & sent=sent'
+ |-  cur'::node<val_76',next_77'>@L.
+print residue.
+
+
+/*
+# swl-i2.slk
+
+GOT:
+<1>HP_39(next_38,prev',sent') * HP_40(prev',cur) * cur::node<val_37,next_38>@M&prev=prev' & sent=sent' & val_37=val_76' & next_38=next_77'&{FLOW,(19,20)=__norm}[]
+ inferred hprel: 
+    [H(cur',prev,sent@NI) --> cur'::node<val_37,next_38>@M * 
+             HP_39(next_38,prev@NI,sent@NI) * HP_40(prev,cur'@NI)]
+                                                            ^^^^^^
+
+PROBLEM : sent' is missing in the last unknown predicate generated.
+
+
+*/

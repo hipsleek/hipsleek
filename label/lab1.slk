@@ -1,0 +1,22 @@
+/*
+checkentail n>=0 & ["n":n>0; "s":n=0] |- (n>=-1) & ["n":n>=0; "x":n>=0] .
+print residue.
+
+checkentail n>=0 & ["n":n>0; "s":n=0] |- (n>0) & n>=0 & n>=0.
+print residue.
+*/
+
+checkentail n>=0 & n>0 |- (n>=-1) & ["n":n>=0; "x":n>=0] .
+print residue.
+
+/*
+checkentail n>=0 & ["":MayLoop; "n":n>0; "s":n=0] |- Term.
+print residue.
+
+ <1>emp&(AndList ([],0<=n) & ([],MayLoop) & ([n],0<n) & ([s],n=0)) &{FLOW,(19,20)=__norm}[]
+
+S
+*/
+
+checkentail MayLoop & ["n":n>0; "s":n=0] |- Term.
+print residue.

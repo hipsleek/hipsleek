@@ -1,0 +1,39 @@
+data node {
+ int key;
+ node left;
+ node right;
+}.
+
+HeapPred HP_0(node a).
+HeapPred HP_1(node a).
+HeapPred HP_3(node a).
+HeapPred HP_4(node a).
+
+Declare_Unknown [HP_0,HP_4]. 
+
+shape_infer [H,HP_1,HP_0,HP_3,HP_4][].
+
+/*
+# tree-conj-bug-1b.slk
+
+PROBLEM : How come no error message even though H is
+undefined?
+
+Starting Omega...oc
+HP_0 is defined.
+HP_1 is defined.
+HP_3 is defined.
+HP_4 is defined.
+
+*************************************
+*******relational definition ********
+*************************************
+[]
+*************************************
+Stop Omega... 0 invocations 
+Total verification time: 0.068002 second(s)
+	Time spent in main process: 0.056002 second(s)
+	Time spent in child processes: 0.012 second(s)
+
+
+*/

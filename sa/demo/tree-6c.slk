@@ -1,0 +1,51 @@
+data node{
+	int val;
+	node prev;
+	node next;
+}.
+
+
+HeapPred G(node a).
+HeapPred H(node a).
+HeapPred HP_0(node a).
+HeapPred HP_1(node a).
+
+Declare_Unknown [HP_1].
+
+relAssume 
+ H(x)&true --> x::node<key_31_797,left_31_798,right_31_799> * 
+  HP_0(left_31_798) * HP_1(right_31_799).
+
+relAssume 
+ HP_0(left_31_798)&left_31_798!=null --> H(left_31_798).
+
+relAssume 
+ HP_0(l)&l!=null --> H(l).
+
+relAssume 
+ HP_0(left_31_798)&left_31_798=null --> emp.
+
+/*
+relAssume 
+ HP_0(left_31_798)&left_31_798=null --> emp.
+*/
+
+shape_infer [H,HP_0][].
+
+/*
+
+# tree-6c.slk
+
+GOT:
+
+[ HP_0(left_31_51) ::=  
+ emp&left_31_51=null
+ or left_31_51::node<key_31_797,left_31_798,right_31_799>@M * 
+    HP_0(left_31_798) * HP_1(right_31_799)&true
+ ,
+ H(x_52) ::=  x_52::node<key_31_797,left_31_798,right_31_799>@M * HP_0(left_31_798) * 
+HP_1(right_31_799)&true,
+ HP_1(a) ::= NONE]
+
+
+*/

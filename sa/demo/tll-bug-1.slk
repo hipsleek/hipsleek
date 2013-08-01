@@ -1,0 +1,85 @@
+// simpler tll working example
+
+data node{
+	node left;
+	node right;
+	node next;
+}.
+
+/* 
+ tll<ll,lr> == self::node<null,null,lr> & self = ll
+	or self::node<l,r,null> * l::tll<ll,z> * r::tll<z,lr>
+	inv self!=null;
+
+ tree<> == self::node<null,null,_>
+	or self::node<l,r,null> * l::tree<> * r::tree<>
+	inv self!=null;
+*/
+
+// initializes the linked list fields
+
+HeapPred H(node a, node@NI b).
+HeapPred G(node a, node@NI b, node c).
+HeapPred HP_0(node a, node@NI b).
+HeapPred HP_8(node a, node@NI b).
+HeapPred HP_9(node a, node@NI b).
+
+Declare_Unknown [HP_0].
+
+relAssume 
+  H(x,r) --> x::node<left_29_845,right_29_846,next_29_847>@M * 
+  HP_8(left_29_845,r) * HP_9(right_29_846,r) * 
+  HP_0(next_29_847,r).
+
+relAssume 
+  HP_9(right_29_846,r)&right_29_846!=null --> H(right_29_846,r).
+
+relAssume 
+  HP_8(left_29_845,r)&true --> H(left_29_845,l_47').
+
+relAssume 
+  HP_9(right_29_846,r)&right_29_846=null --> emp.
+
+shape_infer [H,HP_8,HP_9][].
+
+/*
+
+Confirm HP_8(l) <-> H(l)
+
+
+  H(x,r) --> x::node<left_29_845,right_29_846,next_29_847>@M * 
+  H(left_29_845,r) * HP_9(right_29_846,r) * 
+  HP_0(next_29_847,r).
+
+ 
+[ HP_9(right_29_71,r_72) ::=  
+ emp&right_29_71=null
+ or left_29_66::node<left_29_845,right_29_846,next_29_847>@M * 
+    HP_8(left_29_845,l_47) * HP_9(right_29_846,l_47) * 
+    HP_0(next_29_847,l_47) * 
+    right_29_71::node<left_29_66,right_29_67,next_29_68>@M * 
+    HP_9(right_29_67,r_72) * HP_0(next_29_68,r_72)&true
+ ,
+ HP_8(left_29_73,r_74) ::=  
+  left_29_73::node<left_29_845,right_29_846,next_29_847>@M * 
+  HP_8(left_29_845,l_47) * HP_9(right_29_846,l_47) * HP_0(next_29_847,l_47)&
+true,
+
+ H(x_75,r_76) ::=  
+  left_29_61::node<left_29_845,right_29_846,next_29_847>@M * 
+  HP_8(left_29_845,l_47) * HP_9(right_29_846,l_47) * HP_0(next_29_847,l_47) 
+  * x_75::node<left_29_61,right_29_62,next_29_63>@M 
+  * HP_9(right_29_62,r_76) * HP_0(next_29_63,r_76)&true,
+
+ HP_0(a,b) ::= NONE]
+
+========================================== 
+
+ HP_8(left_29_845,r) * x::node<left_29_845,right_29_846,r>@M&res=x & 
+  right_29_846=null --> G(x,r,res).
+
+ HP_0(next_29_847,r) * 
+  x::node<left_29_845,right_29_846,next_29_847>@M * 
+  G(right_29_846,r,l_878) * G(left_29_845,l_878,res)&
+  right_29_846!=null --> G(x,r,res).
+*/

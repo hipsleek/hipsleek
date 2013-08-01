@@ -24,13 +24,13 @@ else
 endif
 
 #  number of parallel jobs, 0 means unlimited.
-JOBS = 0
+JOBS = 16
 
 # dynlink should precede camlp4lib
 LIBSB = unix,str,xml-light,dynlink,camlp4lib,nums,$(LIBBATLIB),$(LIBELIB),$(LIBGLIB)
 LIBSN = unix,str,xml-light,dynlink,camlp4lib,nums,$(LIBBATLIB),$(LIBELIB),$(LIBGLIB)
 #,z3
-LIBS2 = unix,str,xml-light,lablgtk,lablgtksourceview2,dynlink,camlp4lib
+LIBS2 = unix,str,xml-light,lablgtk,lablgtksourceview2,dynlink,camlp4lib,libcamlidl
 
 INCLUDES = -I,$(CURDIR)/xml,-I,+lablgtk2,-I,+camlp4,-I,$(INCLPRE)/batteries,-I,$(INCLPRE)/extlib,-I,$(LIBIGRAPH)
 

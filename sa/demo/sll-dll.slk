@@ -1,0 +1,68 @@
+data node{
+	int val;
+	node prev;
+	node next;
+}.
+
+HeapPred H1(node a, node b).
+HeapPred HP_2(node a, node b).
+HeapPred HP_3(node a, node b).
+HeapPred G1(node a, node b).
+
+relAssume 
+ H1(c,p)&c!=null --> c::node<val_21_809,prev_21_810,next_21_811>@M * 
+  HP_2(prev_21_810,p) * HP_3(next_21_811,p)&true.
+
+relAssume
+ HP_3(next_20_809,p)&true --> H1(next_20_809,c')&true.
+
+relAssume
+ HP_2(prev_20_808,p) * c::node<val_20_807,p,next_20_809>@M * 
+  G1(next_20_809,c)&true --> G1(c,p).
+
+relAssume
+ H1(c,p) & c=null --> G1(c,p).
+// H1(c,p) & XPURE(H1(c,p)) & c=null --> G1(c,p).
+
+
+/*
+relAssume
+  HP_4(n,y) & n=null --> emp.
+
+relAssume
+  c::node<_,p,y>@M --> G1(c,y)&true.
+
+relAssume
+ HP_3(p,y) * HP_4(n,y) * c::node<_,p,y>@M & n=null --> G1(c,y)&true.
+*/
+
+shape_infer [H1,HP_3][G1].
+
+/*
+
+ HP_3(next_20_93,p_94) ::= H1(next_20_93,c')&true,
+ H1(c_95,p_97) ::= 
+ emp&c_95=null
+ or (H1(next_21_54,c')) * c_95::node<val_21_52,prev_21_53,next_21_54>@M&
+     XPURE(HP_2(prev_21_53,p_96))
+ ,
+ G1(c_98,p_99) ::= 
+ emp&c_98=null
+ or c_98::node<val_20_807,p_99,next_20_809>@M * (G1(next_20_809,c_98))&
+     XPURE(HP_2(prev_20_808,p_99))
+ ]
+
+--sa-inlining
+
+[ HP_3(next_20_93,p_94) ::= H1(next_20_93,c')&true,
+ H1(c_95,p_97) ::= 
+ (H1(next_21_54,c')) * c_95::node<val_21_52,UU_HP_2_UU,next_21_54>@M&true
+ or emp&c_95=null
+ ,
+ G1(c_98,p_99) ::= 
+ c_98::node<val_20_807,p_99,next_20_809>@M * (G1(next_20_809,c_98))&true
+ or emp&c_98=null
+ ]
+
+*/
+

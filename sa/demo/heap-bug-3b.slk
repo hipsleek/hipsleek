@@ -1,0 +1,47 @@
+data node {
+ int key;
+ node left;
+ node right;
+}.
+
+
+HeapPred H(node a).
+HeapPred G(node a).
+HeapPred HP_4(node a).
+HeapPred HP_5(node a).
+
+infer [H,G,HP_4,HP_5] 
+HP_4(left_39_832) * HP_5(right_39_833) * 
+x::node<key_39_831,left_39_832,right_39_833>@M
+& left_39_832=null & v_bool_39_812' 
+ |-  G(x). 
+print residue.
+
+infer [H,G,HP_4,HP_5] 
+HP_4(left_39_832) * HP_5(right_39_833) * 
+x::node<key_39_831,null,right_39_833>@M
+& left_39_832=null & v_bool_39_812' 
+ |-  G(x). 
+print residue.
+
+/*
+# heap-bug-3b.slk
+
+Can the first entailment produce the same outcome
+as 2nd entailment.
+
+First version produce:
+<1>emp&left_39_832=null & v_bool_39_812'&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [HP_4(left_39_832) * HP_5(right_39_833) * 
+                   x::node<key_39_831,left_39_832,right_39_833>@M&
+                   left_39_832=null --> G(x)&true]
+
+Second version:
+
+ <1>EXISTS(flted_24_43: HP_4(left_39_832)&flted_24_43=null & left_39_832=null & v_bool_39_812'&{FLOW,(19,20)=__norm})[]
+ inferred hprel: [HP_5(right_39_833) * 
+                   x::node<key_39_831,flted_24_43,right_39_833>@M&
+                   flted_24_43=null --> G(x)&true]
+
+
+*/
