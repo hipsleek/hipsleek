@@ -215,9 +215,14 @@ let common_arguments = [
   ("--field-ann", Arg.Set Globals.allow_field_ann,"enable the use of immutability annotations for data fields");
   ("--memset-opt", Arg.Set Globals.ineq_opt_flag,"to optimize the inequality set enable");
   ("--dis-field-ann", Arg.Clear Globals.allow_field_ann,"disable the use of immutability annotations for data fields");
-  (*("--mem", Arg.Set Globals.allow_mem,"Enable the use of Memory Specifications");*)
+  ("--mem", Arg.Unit (fun _ -> 
+    Globals.allow_mem := true; 
+    Globals.allow_field_ann := true;),
+  "Enable the use of Memory Specifications");
   ("--dis-mem", Arg.Clear Globals.allow_mem,"Disable the use of Memory Specifications");
   ("--ramify", Arg.Clear Solver.unfold_duplicated_pointers,"Use Ramification (turns off unfold on dup pointers)");
+    ("--infer-mem",Arg.Set Globals.infer_mem,"Enable inference of memory specifications");
+    ("--pa",Arg.Set Globals.pa,"Program analysis with memory specifications");
   ("--reverify", Arg.Set Globals.reverify_flag,"enable re-verification after specification inference");
   ("--reverify-all", Arg.Set Globals.reverify_all_flag,"enable re-verification after heap specification inference");
   ("--dis-imm", Arg.Clear Globals.allow_imm,"disable the use of immutability annotations");
@@ -375,7 +380,7 @@ let common_arguments = [
   ("--esi",Arg.Set Globals.enable_strong_invariant, "enable strong predicate invariant");
   ("--en-red-elim", Arg.Set Globals.enable_redundant_elim, "enable redundant elimination under eps");
   ("--eap", Arg.Set Globals.enable_aggressive_prune, "enable aggressive prunning");
-
+  ("--constr-filter", Arg.Set Globals.enable_constraint_based_filtering, "Enable assumption filtering based on contraint type");
   (* ("--dap", Arg.Clear Globals.disable_aggressive_prune, "never use aggressive prunning"); *)
   ("--efp",Arg.Set Globals.enable_fast_imply, " enable fast imply only for --eps pruning; incomplete");
   (* ("--dfp",Arg.Clear Globals.enable_fast_imply, " disable syntactic imply only for --eps"); *)
@@ -412,7 +417,6 @@ let common_arguments = [
 
   (* Slicing *)
   ("--eps", Arg.Set Globals.en_slc_ps, "Enable slicing with predicate specialization");
-  ("--dpall", Arg.Clear Globals.no_prune_all, "Disable specialization all the way");  
   ("--overeps", Arg.Set Globals.override_slc_ps, "Override --eps, for run-fast-tests testing of modular examples");
   ("--dis-ps", Arg.Set Globals.dis_ps, "Disable predicate specialization");
   ("--dis-ann", Arg.Set Globals.dis_slc_ann, "Disable aggressive slicing with annotation scheme (not default)");
