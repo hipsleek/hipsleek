@@ -2326,7 +2326,7 @@ let simplify_lhs_rhs prog lhs_b rhs_b leqs reqs hds hvs lhrs rhrs lhs_selected_h
   let rhs_b1 = {rhs_b1 with CF.formula_base_heap = IMM.apply_subs_h_formula crt_holes rhs_b1.CF.formula_base_heap} in
   let lhs_b2 = (* CF.subst_b (leqs) *) lhs_b1 in (*m_apply_par*)
   let rhs_b2 = (* CF.subst_b (leqs@reqs) *) rhs_b1 in
-  let _ = Debug.info_pprint ("lhs_b1: " ^ (Cprinter.string_of_formula_base lhs_b1)) no_pos in
+  let _ = Debug.ninfo_pprint ("lhs_b1: " ^ (Cprinter.string_of_formula_base lhs_b1)) no_pos in
   let _ = Debug.ninfo_pprint ("rhs_b2: " ^ (Cprinter.string_of_formula_base rhs_b2)) no_pos in
   (*remove redundant: x=x*)
   let lhs_b3 = {lhs_b2 with CF.formula_base_pure = MCP.mix_of_pure
@@ -2342,7 +2342,7 @@ let simplify_lhs_rhs prog lhs_b rhs_b leqs reqs hds hvs lhrs rhrs
       lhs_selected_hpargs rhs_selected_hpargs crt_holes history unk_svl prog_vars lvi_ni_svl classic_nodes=
   let pr = Cprinter.string_of_formula_base in
   let pr1 = pr_list (pr_pair !CP.print_sv !CP.print_svl) in
-  DD.ho_3 "simplify_lhs_rhs" pr1 pr pr (pr_pair pr pr)
+  DD.no_3 "simplify_lhs_rhs" pr1 pr pr (pr_pair pr pr)
       (fun _ _ _ -> simplify_lhs_rhs prog lhs_b rhs_b
           leqs reqs hds hvs lhrs rhrs lhs_selected_hpargs rhs_selected_hpargs crt_holes history unk_svl prog_vars lvi_ni_svl classic_nodes )
       lhs_selected_hpargs lhs_b rhs_b
@@ -2500,7 +2500,7 @@ let generate_constraints prog es rhs lhs_b ass_guard rhs_b1 defined_hps
   (* let _ = DD.info_pprint ("  rvhp_rels: " ^ (!CP.print_svl rvhp_rels)) pos in *)
   (* let _ = DD.info_pprint ("  new_post_hps: " ^ (!CP.print_svl new_post_hps)) pos in *)
   let _ = DD.tinfo_pprint ("  hp_rels: " ^ (let pr = pr_list_ln Cprinter.string_of_hprel in pr hp_rels)) pos in
-  let _ = DD.info_pprint ("  hp_rel_list: " ^ (let pr = pr_list_ln Cprinter.string_of_hprel in pr hp_rel_list)) pos in
+  let _ = DD.tinfo_pprint ("  hp_rel_list: " ^ (let pr = pr_list_ln Cprinter.string_of_hprel in pr hp_rel_list)) pos in
   r_new_hfs, new_lhs_b,m,rvhp_rels,new_post_hps, hp_rel_list
 
 
@@ -2573,7 +2573,7 @@ let update_es prog es hds hvs ass_lhs_b rhs rhs_rest r_new_hfs defined_hps lsele
          CF.es_infer_vars_sel_post_hp_rel = (es.CF.es_infer_vars_sel_post_hp_rel @ post_hps);
          CF.es_crt_holes = es.CF.es_crt_holes@new_holes;
          CF.es_formula = new_es_formula1} in
-     DD.info_pprint ("  residue before matching: " ^ (Cprinter.string_of_formula new_es.CF.es_formula)) pos;
+     DD.tinfo_pprint ("  residue before matching: " ^ (Cprinter.string_of_formula new_es.CF.es_formula)) pos;
      (new_es, new_lhs)
    end
 
@@ -2632,12 +2632,12 @@ let infer_collect_hp_rel_x prog (es:entail_state) rhs0 rhs_rest (rhs_h_matched_s
         let reqs = List.combine (CP.subst_var_list sst0 rls1) (CP.subst_var_list sst0 rls2)
           (* (MCP.ptr_equations_without_null mix_rf) *)  in
         let _ =
-          DD.info_pprint ">>>>>> infer_hp_rel <<<<<<" pos;
+          DD.tinfo_pprint ">>>>>> infer_hp_rel <<<<<<" pos;
           DD.tinfo_pprint ("  es_heap: " ^ (Cprinter.string_of_h_formula es.CF.es_heap)) pos;
           (* DD.tinfo_pprint ("  es_history: " ^ (let pr=pr_list_ln Cprinter.string_of_h_formula in pr es.CF.es_history)) pos; *)
-          DD.info_pprint ("  lhs: " ^ (Cprinter.string_of_formula_base lhs_b0)) pos;
+          DD.tinfo_pprint ("  lhs: " ^ (Cprinter.string_of_formula_base lhs_b0)) pos;
           DD.tinfo_pprint ("  rhs_rest: " ^ ((Cprinter.prtt_string_of_h_formula) rhs_rest)) pos;
-          DD.info_pprint ("  unmatch: " ^ (Cprinter.string_of_h_formula rhs)) pos;
+          DD.tinfo_pprint ("  unmatch: " ^ (Cprinter.string_of_h_formula rhs)) pos;
           DD.tinfo_pprint ("  classic: " ^ (string_of_bool !Globals.do_classic_frame_rule)) pos
         in
         let mis_nodes =  match rhs with
