@@ -1045,16 +1045,138 @@ let tp_is_sat f sat_no do_cache =
 let tp_is_sat (f: CP.formula) (sat_no: string) do_cache =
   let pr = Cprinter.string_of_pure_formula in
   Gen.Debug.no_1 "tp_is_sat" pr string_of_bool (fun _ -> tp_is_sat f sat_no do_cache) f
-    
+
+let comm_null a1 a2 =
+  let f1 = is_null a1 in
+  let f2 = is_null a2 in
+  if f1 && f2 then (false,a1,a2)
+  else if f1 then (f1,a2,a1)
+  else (f2,a1,a2)
+
+(*
+  strong
+  ======
+  x=null  --> x=0
+  x!=null --> x>0
+
+  weak
+  ====
+  x=null  --> x<=0
+  x!=null --> x>0  (to avoid inequality)
+*)
+
+let cnv_ptr_to_int f flag = 
+  let f_f arg e = None in
+  let f_bf arg bf = 
+    let (pf, l) = bf in
+    match pf with
+      | Eq (a1, a2, ll) -> 
+          let (is_null_flag,a1,a2) = comm_null a1 a2 in
+          if is_null_flag then
+            if arg (*strengthen *) then
+              Some (Eq(a1,IConst(0,ll),ll),l)
+            else Some (Lte(a1,IConst(0,ll),ll),l)
+          else None
+      | Neq (a1, a2, ll) -> 
+          let (is_null_flag,a1,a2) = comm_null a1 a2 in
+          if is_null_flag then
+              Some (Gt(a1,IConst(0,ll),ll),l)
+          else None
+      | _ -> None
+  in
+  let f_e arg e = (Some e) in
+  let a_f a f =
+      match f with
+        | Not _ -> not(a)
+        | _ -> a
+  in
+  let a_bf a _ = a in
+  let a_e a _ = a in
+  map_formula_arg f flag (f_f, f_bf, f_e) (a_f, a_bf, a_e) 
+
+(*
+x=0 --> x=null
+x<=0 --> x=null
+x>0  --> x!=null
+x>=0 --> true
+x<0  --> false
+*)
+
+let comm_is_null a1 a2 =
+  match a1,a2 with
+    | Var(v,_),IConst(0,_) ->
+          (is_otype (type_of_spec_var v),a1,a2)
+    | IConst(0,_),Var(v,_) ->
+          (is_otype (type_of_spec_var v),a2,a1)
+    | _ -> (false,a1,a2)
+
+let is_null a1 a2 =
+  match a1,a2 with
+    | Var(v,_),IConst(0,_) ->
+          (is_otype (type_of_spec_var v),a1,a2)
+    | _ -> (false,a1,a2)
+
+let cnv_int_to_ptr f flag = 
+  let f_f e = None in
+  let f_bf bf = 
+    let (pf, l) = bf in
+    match pf with
+      | Eq (a1, a2, ll) -> 
+          let (is_null_flag,a1,a2) = comm_is_null a1 a2 in
+          if is_null_flag then
+              Some(Eq(a1,Null ll,ll),l)
+          else Some bf
+      | Lte (a1, a2, ll) | Gte (a2, a1, ll) -> 
+          let (is_null_flag,a1,a2) = is_null a1 a2 in
+          if is_null_flag then
+              Some(Eq(a1,Null ll,ll),l)
+          else Some bf
+      | Lt (a1, a2, ll) | Gt (a2, a1, ll) -> 
+          let (is_null_flag,a1,a2) = is_null a1 a2 in
+          if is_null_flag then
+              Some(Neq(a1,Null ll,ll),l)
+          else Some bf
+      | Gte (a1, a2, ll) | Lte (a2, a1, ll) -> 
+          let (is_null_flag,a1,a2) = is_null a1 a2 in
+          if is_null_flag then
+              Some (BConst(true,ll),l)
+          else None
+      | Lt (a1, a2, ll) | Gt (a2, a1, ll) -> 
+          let (is_null_flag,a1,a2) = is_null a1 a2 in
+          if is_null_flag then
+              Some (BConst(false,ll),l)
+          else None
+      | _ -> Some bf
+  in
+  let f_e e = (Some e) in
+  map_formula f (f_f, f_bf, f_e) 
+
+let cnv_ptr_to_int f = 
+  cnv_ptr_to_int f true
+ 
+let cnv_int_to_ptr f = 
+  cnv_int_to_ptr f true
+
+let om_simplify f = 
+  let f = cnv_ptr_to_int f in
+  let r = Omega.simplify f in
+  cnv_int_to_ptr r
+
+let om_simplify f =
+  Gen.Debug.ho_1 "simplify_omega"
+	Cprinter.string_of_pure_formula
+	Cprinter.string_of_pure_formula
+	om_simplify f
+
 let simplify_omega (f:CP.formula): CP.formula = 
   if is_bag_constraint f then f
   else Omega.simplify f   
             
-let simplify_omega f =
-  Gen.Debug.no_1 "simplify_omega"
-	Cprinter.string_of_pure_formula
-	Cprinter.string_of_pure_formula
-	simplify_omega f
+(* let simplify_omega f = *)
+(*   Gen.Debug.no_1 "simplify_omega" *)
+(* 	Cprinter.string_of_pure_formula *)
+(* 	Cprinter.string_of_pure_formula *)
+(* 	simplify_omega f *)
 
 let simplify (f : CP.formula) : CP.formula =
   if !Globals.no_simpl then f else

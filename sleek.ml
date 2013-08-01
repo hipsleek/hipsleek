@@ -100,30 +100,32 @@ let parse_file (parse) (source_file : string) =
       | AxiomDef adef -> process_axiom_def adef  (* An Hoa *)
       (* | Infer (ivars, iante, iconseq) -> process_infer ivars iante iconseq *)
 	  | LemmaDef _
-      | Infer _
+          | Infer _
 	  | CaptureResidue _
 	  | LetDef _
 	  | EntailCheck _
 	  | PrintCmd _ 
-      | Time _
-	  | EmptyCmd -> () in
+          | Time _
+	  | _ -> () in
   let proc_one_lemma c = 
     match c with
 	  | LemmaDef ldef -> process_lemma ldef
 	  | DataDef _
 	  | PredDef _
-      | RelDef _
-      | AxiomDef _ (* An Hoa *)
+          | RelDef _
+          | AxiomDef _ (* An Hoa *)
 	  | CaptureResidue _
 	  | LetDef _
 	  | EntailCheck _
-    | Infer _
+          | Infer _
 	  | PrintCmd _ 
-      | Time _
-	  | EmptyCmd -> () in
+          | Time _
+	  | _ -> () in
   let proc_one_cmd c = 
     match c with
-	  | EntailCheck (iante, iconseq) -> 
+      | Simplify f ->
+          process_simplify f
+      | EntailCheck (iante, iconseq) -> 
           (* let _ = print_endline ("proc_one_cmd: xxx_after parse \n") in *)
           process_entail_check iante iconseq
       | Infer (ivars, iante, iconseq) -> process_infer ivars iante iconseq
@@ -206,6 +208,7 @@ let main () =
                      | RelDef rdef -> process_rel_def rdef
                      | AxiomDef adef -> process_axiom_def adef
                      | EntailCheck (iante, iconseq) -> process_entail_check iante iconseq
+                     | Simplify f -> process_simplify f
                      | Infer (ivars, iante, iconseq) -> process_infer ivars iante iconseq
                      | CaptureResidue lvar -> process_capture_residue lvar
                      | LemmaDef ldef ->   process_lemma ldef

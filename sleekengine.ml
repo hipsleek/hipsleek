@@ -450,6 +450,18 @@ let rec meta_to_formula (mf0 : meta_formula) quant fv_idents stab : CF.formula =
 (*   in *)
 (*   (res, rs) *)
 
+let run_simplify (iante0 : meta_formula) =
+  let stab = H.create 103 in
+  let ante = meta_to_formula iante0 false [] stab in
+  let ante = Solver.prune_preds !cprog true ante in
+  let ante =
+    if (Perm.allow_perm ()) then
+      (*add default full permission to ante;
+        need to add type of full perm to stab *)
+      CF.add_mix_formula_to_formula (Perm.full_perm_constraint ()) ante
+    else ante
+  in CP.mkTrue no_pos
+
 let run_infer_one_pass (ivars: ident list) (iante0 : meta_formula) (iconseq0 : meta_formula) =
   let _ = residues := None in
   let stab = H.create 103 in
@@ -582,6 +594,16 @@ let process_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
   try 
     let valid, rs = run_entail_check iante0 iconseq0 in
     print_entail_result valid rs num_id
+  with _ -> print_exc num_id
+
+let print_result f =
+      Debug.info_hprint (add_str "Simplified Result" Cprinter.string_of_pure_formula) f no_pos
+
+let process_simplify (f : meta_formula) =
+  let num_id = "Simplify  ("^(string_of_int (sleek_proof_counter#inc_and_get))^")" in  
+  try 
+    let rs = run_simplify f in
+    print_result rs num_id
   with _ -> print_exc num_id
 
 let process_infer (ivars: ident list) (iante0 : meta_formula) (iconseq0 : meta_formula) = 
