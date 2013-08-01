@@ -1658,7 +1658,7 @@ let split_base prog hds hvs ls_r_hpargs prog_vars post_hps (hp,args) def_ptrs lh
       lhsb (hp,args) def_ptrs prog_vars
 
 
-let find_well_eq_defined_hp prog hds hvs lhsb eqs (hp,args)=
+let find_well_eq_defined_hp_x prog hds hvs lhsb eqs (hp,args)=
   let rec loop_helper rem_eqs=
     match rem_eqs with
       | [] -> ([], [(hp,args)])
@@ -1671,6 +1671,16 @@ let find_well_eq_defined_hp prog hds hvs lhsb eqs (hp,args)=
     let cmp_form = CP.get_cmp_form (MCP.pure_of_mix lhsb.CF.formula_base_pure) in
     loop_helper (eqs@cmp_form)
   else ([], [(hp,args)])
+
+let find_well_eq_defined_hp prog hds hvs lhsb eqs (hp,args)=
+  let pr1 = !CP.print_sv in
+  let pr2 = !CP.print_svl in
+  let pr3 = pr_triple pr1 pr2 Cprinter.string_of_formula_base in
+  let pr4 = (pr_pair pr1 pr2) in
+  Debug.no_3 "find_well_eq_defined_hp" Cprinter.string_of_formula_base pr4 
+      (pr_list (pr_pair pr1 pr1)) (pr_pair (pr_list_ln pr3) (pr_list pr4))
+      (fun _ _ _ -> find_well_eq_defined_hp_x prog hds hvs lhsb eqs (hp,args))
+      lhsb (hp,args) eqs
 
 let generate_hp_ass unk_svl cond_p (hp,args,lfb,rf) =
   let knd = CP.RelAssume [hp] in

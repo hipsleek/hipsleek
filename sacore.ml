@@ -529,30 +529,38 @@ let build_hp_unk_locs known_svl unk_hps fn_cmp (hp_name, args)=
   get_unk_ptr known_svl (hp_name, args)
 
 let check_equality_constr lhpargs lhs_f_rem rhs svl2=
+  let helper args f=
+    match args with
+      | sv::_ ->
+            let ( _,mix_f,_,_,_) = CF.split_components f in
+            let reqs2 = (MCP.ptr_equations_without_null mix_f) in
+            let cl_svl = CP.remove_dups_svl (CF.find_close [sv] (reqs2)) in
+            let _ = Debug.info_pprint ("   cl_svl: " ^ (!CP.print_svl cl_svl)) no_pos in
+            if (* List.length cl_svl >1 && *)
+              CP.diff_svl cl_svl args = [] then
+                args
+            else svl2
+      | _ -> svl2
+  in
   (*handle equality*)
-  (* let _ = Debug.info_pprint ("   svl2: " ^ (!CP.print_svl svl2)) no_pos in *)
+  let _ = Debug.info_pprint ("   svl2: " ^ (!CP.print_svl svl2)) no_pos in
   if svl2 <> [] then svl2 else
     match lhpargs with
       | [(_,args)] ->
+            (* let _ = Debug.info_pprint ("   lhs_f_rem: " ^ (!CF.print_formula lhs_f_rem)) no_pos in *)
             (* let _ = Debug.info_pprint ("   rhs: " ^ (!CF.print_formula rhs)) no_pos in *)
-            if SAU.is_empty_heap_f lhs_f_rem && SAU.is_empty_heap_f rhs then
-              match args with
-                | sv::_ ->
-                      let ( _,mix_f,_,_,_) = CF.split_components rhs in
-                      let reqs2 = (MCP.ptr_equations_without_null mix_f) in
-                      let cl_svl = CP.remove_dups_svl (CF.find_close [sv] reqs2) in
-                      (* let _ = Debug.info_pprint ("   cl_svl: " ^ (!CP.print_svl cl_svl)) no_pos in *)
-                      if (* List.length cl_svl >1 && *)
-                        CP.diff_svl cl_svl args = [] then
-                        args
-                      else svl2
-                | _ -> svl2
-            else svl2
+            if SAU.is_empty_heap_f lhs_f_rem then
+              let svl = helper args lhs_f_rem in
+              if svl == [] && SAU.is_empty_heap_f rhs then
+                helper args rhs
+              else svl
+            else
+              svl2
       | _ -> svl2
 
 (*analysis unknown information*)
 let rec analize_unk_one prog unk_hps constr =
-  let _ = Debug.ninfo_pprint ("   hrel: " ^ (Cprinter.string_of_hprel constr)) no_pos in
+  let _ = Debug.info_pprint ("   hrel: " ^ (Cprinter.string_of_hprel_short constr)) no_pos in
  (*elim hrel in the formula and returns hprel_args*)
   (*lhs*)
   let lhs1,lhrels = SAU.drop_get_hrel constr.CF.hprel_lhs in

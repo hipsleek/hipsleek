@@ -280,6 +280,7 @@ let split_base_constr prog cond_path constrs post_hps prog_vars unk_map unk_hps 
               (r1@[(hp,args)],r2)
             else (r1,r2)
         ) ([],[]) ls_lhp_args in
+        (* let _ = Debug.info_pprint ("   non_split_hps: " ^ (!CP.print_svl  non_split_hps)) no_pos in *)
         (* let _ = Debug.info_pprint ("  ls_lhp_args1: " ^ *)
         (* (let pr1 = pr_list (pr_pair !CP.print_sv !CP.print_svl) in pr1 ls_lhp_args1)) no_pos in *)
         (* let _ = Debug.info_pprint ("  ls_lhs_non_node_hpargs: " ^ *)
@@ -1397,19 +1398,21 @@ let partition_constrs constrs post_hps=
 ****************************************************************)
 
 let infer_analize_dang prog is=
-   let constrs1, unk_hpargs1, unk_map1, link_hpargs1, _ = SAC.analize_unk prog is.CF.is_post_hps is.CF.is_constrs
+  let _ = DD.binfo_pprint ">>>>>> step 1: find dangling ptrs, link pre and post-preds dangling preds<<<<<<" no_pos in
+  let constrs1, unk_hpargs1, unk_map1, link_hpargs1, _ = SAC.analize_unk prog is.CF.is_post_hps is.CF.is_constrs
     is.CF.is_unk_map is.CF.is_dang_hpargs is.CF.is_link_hpargs in
-   { is with
-       CF.is_constrs = constrs1;
-       CF.is_link_hpargs = link_hpargs1;
-       CF.is_dang_hpargs = unk_hpargs1;
-       CF.is_unk_map = unk_map1
-   }
+  { is with
+      CF.is_constrs = constrs1;
+      CF.is_link_hpargs = link_hpargs1;
+      CF.is_dang_hpargs = unk_hpargs1;
+      CF.is_unk_map = unk_map1
+  }
 
 let infer_split_base prog is=
   if !Globals.sa_sp_split_base || !Globals.sa_infer_split_base then
     (* let unk_hps1 = List.map fst is.IC.is_dang_hpargs in *)
     (* let link_hps1 = List.map fst is.IC.is_link_hpargs in *)
+    let _ = DD.binfo_pprint ">>>>>> step 2: split constraints based on pre and post-preds<<<<<<" no_pos in
     let n_constrs, n_unk_map, n_link_hpargs =
       split_base_constr prog is.CF.is_cond_path is.CF.is_constrs is.CF.is_post_hps [] is.CF.is_unk_map
           (List.map fst is.CF.is_dang_hpargs) (List.map fst is.CF.is_link_hpargs)
