@@ -2510,17 +2510,44 @@ let compute_lfp_def_x prog post_hps dang_hps hp_defs hpdefs=
                 | _ -> partition_helper rest grps (non_post_defs@[(hp_kind, hf, g, def)])
             end
   in
+  let unify_disjuncts (r_grp, r_hpdefs) grp=
+    match grp with
+      | [] -> (r_grp,r_hpdefs)
+      | [x] ->  (r_grp@[grp],r_hpdefs)
+      | (hp_kind, hf, g, def)::_ -> begin
+          match hp_kind with
+            | CP.HPRelDefn (hp, r, paras) ->
+                  let grp1 = Gen.BList.remove_dups_eq (fun (hp_kind1, hf1, g1, def1) (hp_kind2, hf2, g2, def2) ->
+                      let _, args1 = CF.extract_HRel hf1 in
+                      let _, args2 = CF.extract_HRel hf2 in
+                      let ss = List.combine args1 args2 in
+                       SAU.check_relaxeq_formula args2 (CF.subst ss def1) def2
+                  ) grp in
+                  if List.length grp1 < List.length grp then
+                    let n_hpdefs = update r_hpdefs hp (List.fold_left (fun ls (hp_kind, hf, g, def) ->
+                    ls@(CF.list_of_disjs def)) [] grp1) [] in
+                    (r_grp@[grp1], n_hpdefs)
+                  else
+                    (r_grp@[grp],r_hpdefs)
+            | _ -> (r_grp@[grp],r_hpdefs)
+        end
+  in
   (********END INTERNAL*******)
   (*group hp_defs*)
-  let grp_hp_defs, non_post_fix_defs = partition_helper hp_defs [] [] in
+  let grp_hp_defs0, non_post_fix_defs = partition_helper hp_defs [] [] in
+  let grp_hp_defs,hpdefs1 = List.fold_left (unify_disjuncts) ([],hpdefs) grp_hp_defs0 in
+  let pr1 = pr_list_ln (pr_list_ln Cprinter.string_of_hp_rel_def) in
+  (* let _ =  DD.info_pprint ("   grp_hp_defs0: " ^(pr1 grp_hp_defs0)) no_pos in *)
+  (* let _ =  DD.info_pprint ("   grp_hp_defs: " ^(pr1 grp_hp_defs)) no_pos in *)
   let n_hp_defs, n_hpdefs = List.fold_left (fun (r_hp_defs, r_hpdefs) hp_defs ->
       let r, grp = process_one_grp hp_defs in
       if r then
+        (*if success, fold in one*)
         let (hp_kind, hf, g, def) = List.hd grp in
         let n_hpdefs = update r_hpdefs (CF.get_hpdef_name hp_kind) (CF.list_of_disjs def) [] in
         (r_hp_defs@[(hp_kind, hf, g, def)], n_hpdefs)
       else (r_hp_defs@hp_defs, r_hpdefs)
-  ) ([], hpdefs) grp_hp_defs in
+  ) ([], hpdefs1) grp_hp_defs in
   (n_hp_defs@non_post_fix_defs), n_hpdefs
 
 let compute_lfp_def prog post_hps dang_hps hp_defs hpdefs=
