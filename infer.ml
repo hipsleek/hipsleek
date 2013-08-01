@@ -2371,7 +2371,7 @@ let lookup_eq_hprel_ass hps hprel_ass lhs rhs=
   let pr2 = Cprinter.prtt_string_of_formula in
   let pr3 = pr_list (pr_pair !CP.print_sv !CP.print_sv) in
   let pr4 = pr_pair string_of_bool pr3 in
-  Debug.ho_4 "lookup_eq_hprel_ass" !CP.print_svl pr1 pr2 pr2 pr4
+  Debug.no_4 "lookup_eq_hprel_ass" !CP.print_svl pr1 pr2 pr2 pr4
       (fun _ _ _ _ -> lookup_eq_hprel_ass_x hps hprel_ass lhs rhs) hps hprel_ass lhs rhs
 
 let constant_checking prog rhs lhs_b rhs_b es=
@@ -2468,14 +2468,15 @@ let generate_constraints prog es rhs lhs_b ass_guard rhs_b1 defined_hps
   let new_rhs = CF.Base new_rhs_b in
   DD.ninfo_hprint (add_str "new_lhs" Cprinter.string_of_formula) new_lhs no_pos;
   DD.ninfo_hprint (add_str "new_rhs" Cprinter.string_of_formula) new_rhs no_pos;
-  let b,m = if rvhp_rels = [] then (false,[]) else
-    let ass = if rel_ass_stk # is_empty then [] else
-      [(rel_ass_stk # top)]
-    in
-    lookup_eq_hprel_ass rvhp_rels ass new_lhs new_rhs
-  in
+  (* let b,m = if rvhp_rels = [] then (false,[]) else *)
+  (*   let ass = if rel_ass_stk # is_empty then [] else *)
+  (*     [(rel_ass_stk # top)] *)
+  (*   in *)
+  (*   lookup_eq_hprel_ass rvhp_rels ass new_lhs new_rhs *)
+  (* in *)
+  let m = [] in
   let hp_rels=
-    if b && m <> [] then [] else
+    (* if b && m <> [] then [] else *)
       let knd = CP.RelAssume (CP.remove_dups_svl (lhrs@rhrs@rvhp_rels)) in
       let lhs = CF.remove_neqNull_svl matched_svl (CF.Base new_lhs_b) in
       let grd = check_guard ass_guard new_lhs_b new_rhs_b in

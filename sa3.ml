@@ -1403,9 +1403,9 @@ let infer_analize_dang prog is=
     is.CF.is_unk_map is.CF.is_dang_hpargs is.CF.is_link_hpargs in
   { is with
       CF.is_constrs = constrs1;
-      CF.is_link_hpargs = link_hpargs1;
-      CF.is_dang_hpargs = unk_hpargs1;
-      CF.is_unk_map = unk_map1
+      CF.is_link_hpargs = is.CF.is_link_hpargs@link_hpargs1;
+      CF.is_dang_hpargs = is.CF.is_dang_hpargs@unk_hpargs1;
+      CF.is_unk_map = is.CF.is_unk_map@unk_map1
   }
 
 let infer_split_base prog is=
@@ -1419,8 +1419,8 @@ let infer_split_base prog is=
     in
     { is with
         CF.is_constrs = n_constrs;
-        CF.is_link_hpargs = n_link_hpargs;
-        CF.is_unk_map = n_unk_map;
+        CF.is_link_hpargs = is.CF.is_link_hpargs@n_link_hpargs;
+        CF.is_unk_map = is.CF.is_unk_map@n_unk_map;
     }
   else is
 
@@ -1435,14 +1435,16 @@ let infer_pre_synthesize_x prog proc_name callee_hps is pre_constrs need_preproc
   let _ = DD.binfo_pprint ">>>>>> pre-predicates: step pre-8: strengthen<<<<<<" no_pos in
   let rem_constrs3, hp_defs, defined_hps = generalize_hps prog true callee_hps is.CF.is_dang_hpargs link_hps is.CF.is_post_hps [] [] constrs0 par_defs in
   (* check hconj_unify_cond*)
-  let hp_defs1, new_equivs, unk_equivs = if hconj_unify_cond = [] then
-    (hp_defs,[], [])
+  let hp_defs1, new_equivs, unk_equivs, non_dang_hps = if hconj_unify_cond = [] then
+    (hp_defs,[], [], [])
   else
-    let is_sat, new_hpdefs, equivs, unk_equivs = SAC.reverify_cond prog unk_hps1 link_hps hp_defs hconj_unify_cond in
+    let is_sat, new_hpdefs, equivs, unk_equivs,punk_equivs = SAC.reverify_cond prog unk_hps1 link_hps hp_defs hconj_unify_cond in
     if not is_sat then report_error no_pos "SA.infer_shapes_init_pre: HEAP CONJS do not SAT"
-    else (new_hpdefs, equivs,  unk_equivs)
+    else (new_hpdefs, equivs@punk_equivs, unk_equivs, List.map fst punk_equivs)
   in
   { is with
+      CF.is_dang_hpargs = List.filter (fun (hp,_) -> not (CP.mem_svl hp non_dang_hps)) is.CF.is_dang_hpargs ;
+      CF.is_link_hpargs = List.filter (fun (hp,_) -> not (CP.mem_svl hp non_dang_hps)) is.CF.is_link_hpargs ;
       CF.is_hp_equivs = new_equivs@unk_equivs;
       CF.is_hp_defs = is.CF.is_hp_defs@hp_defs1;
   }
@@ -1470,8 +1472,17 @@ let infer_pre_fix_x iprog prog proc_name callee_hps is_pre is need_preprocess de
   let pdefs = get_par_defs_pre_fix is.CF.is_constrs in
   let pdefs_grps = partition_grp pdefs [] in
   (*for each set of constraints, compure greatest fixpoint*)
-  let fix_defs = List.map (SAC.compute_gfp prog true is) pdefs_grps in
+  let fix_defs, n_unk_hpargs = List.fold_left (fun (r_defs, r_unk_hpargs) pdefs ->
+      let def, n_unk_hpargs = SAC.compute_gfp prog true is pdefs in
+      (r_defs@[def], r_unk_hpargs@n_unk_hpargs)
+  ) ([],[]) pdefs_grps in
+  let n_dang_hpargs, n_link_hpargs = if !Globals.pred_elim_dangling then
+    (is.CF.is_dang_hpargs@n_unk_hpargs, is.CF.is_link_hpargs)
+  else (is.CF.is_dang_hpargs, is.CF.is_link_hpargs@n_unk_hpargs)
+  in
   {is with CF.is_constrs = [];
+      CF.is_dang_hpargs = n_dang_hpargs;
+      CF.is_link_hpargs = n_link_hpargs;
       CF.is_hp_defs = is.CF.is_hp_defs@fix_defs
   }
 
@@ -1511,7 +1522,14 @@ let infer_post_fix iprog prog proc_name callee_hps is_pre is need_preprocess det
 
 let infer_post_synthesize_x prog proc_name callee_hps is need_preprocess detect_dang=
   let _ = DD.binfo_pprint ">>>>>> post-predicates: step post-4: weaken<<<<<<" no_pos in
-  let constrs1 = List.map (SAU.weaken_strengthen_special_constr_pre false) is.CF.is_constrs in
+  let constrs0 = List.map (SAU.weaken_strengthen_special_constr_pre false) is.CF.is_constrs in
+  let dang_hps = List.map fst (is.CF.is_dang_hpargs@is.CF.is_link_hpargs) in
+  let ss = List.filter (fun (hp1, hp2) -> CP.intersect_svl [hp1;hp2] dang_hps == []) is.CF.is_hp_equivs in
+  let constrs1 = if ss = [] then constrs0 else
+    List.map (fun cs -> {cs with CF.hprel_lhs = CF.subst ss cs.CF.hprel_lhs;
+        CF.hprel_rhs = CF.subst ss cs.CF.hprel_rhs;
+    }) constrs0
+  in
   let par_defs = get_par_defs_post constrs1 in
   (*subst pre-preds into if they are not recursive -do with care*)
   let pre_hps_need_fwd= SAU.get_pre_fwd is.CF.is_post_hps par_defs in
@@ -1519,8 +1537,19 @@ let infer_post_synthesize_x prog proc_name callee_hps is need_preprocess detect_
   let pair_names_defs = generalize_hps_par_def prog false [] is.CF.is_dang_hpargs (List.map fst is.CF.is_link_hpargs) is.CF.is_post_hps
     pre_defs pre_hps par_defs in
   let hp_names,hp_defs = List.split pair_names_defs in
+  let n_hp_defs = is.CF.is_hp_defs@hp_defs in
+  (*consj_post_unify??*)
+  (* let dang_hps = List.map fst (is.CF.is_dang_hpargs@is.CF.is_link_hpargs) in *)
+  (* let ss = List.filter (fun (hp1, hp2) -> CP.intersect_svl [hp1;hp2] dang_hps == []) is.CF.is_hp_equivs in *)
+  (* let n_hp_defs1 = if ss = [] then n_hp_defs else *)
+  (*   List.map (fun (a,hf,g, def) -> let f = CF.subst ss def in *)
+  (*   let fs = CF.list_of_disjs f in *)
+  (*   let _, args = CF.extract_HRel hf in *)
+  (*   let fs1 = Gen.BList.remove_dups_eq (SAU.check_relaxeq_formula args) fs in *)
+  (*   (a,hf,g, CF.disj_of_list fs1 (CF.pos_of_formula def))) n_hp_defs *)
+  (* in *)
   {is with CF.is_constrs = [];
-      CF.is_hp_defs = is.CF.is_hp_defs@hp_defs}
+      CF.is_hp_defs = n_hp_defs}
 
 let infer_post_synthesize prog proc_name callee_hps is need_preprocess detect_dang=
   let pr1 = Cprinter.string_of_infer_state_short in
@@ -1739,6 +1768,8 @@ and infer_process_pre_preds iprog prog proc_name callee_hps is_pre is need_prepr
 and infer_shapes_proper iprog prog proc_name callee_hps is need_preprocess detect_dang=
   let unk_hps = List.map fst is.CF.is_dang_hpargs in
   let link_hps = List.map fst is.CF.is_link_hpargs in
+  let _ = DD.ninfo_hprint (add_str "unk_hps" !CP.print_svl) unk_hps no_pos in
+  let _ = DD.ninfo_hprint (add_str "link_hps" !CP.print_svl) link_hps no_pos in
   (*partition constraints into 4 groups: pre-predicates, pre-oblg,post-predicates, post-oblg*)
   let pre_constrs,post_constrs0, pre_fix_constrs, pre_oblg_constrs0, post_oblg_constrs, pre_fix_hps =
     partition_constrs is.CF.is_constrs is.CF.is_post_hps

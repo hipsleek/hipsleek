@@ -535,7 +535,7 @@ let check_equality_constr lhpargs lhs_f_rem rhs svl2=
             let ( _,mix_f,_,_,_) = CF.split_components f in
             let reqs2 = (MCP.ptr_equations_without_null mix_f) in
             let cl_svl = CP.remove_dups_svl (CF.find_close [sv] (reqs2)) in
-            let _ = Debug.info_pprint ("   cl_svl: " ^ (!CP.print_svl cl_svl)) no_pos in
+            let _ = Debug.ninfo_pprint ("   cl_svl: " ^ (!CP.print_svl cl_svl)) no_pos in
             if (* List.length cl_svl >1 && *)
               CP.diff_svl cl_svl args = [] then
                 args
@@ -543,7 +543,7 @@ let check_equality_constr lhpargs lhs_f_rem rhs svl2=
       | _ -> svl2
   in
   (*handle equality*)
-  let _ = Debug.info_pprint ("   svl2: " ^ (!CP.print_svl svl2)) no_pos in
+  let _ = Debug.ninfo_pprint ("   svl2: " ^ (!CP.print_svl svl2)) no_pos in
   if svl2 <> [] then svl2 else
     match lhpargs with
       | [(_,args)] ->
@@ -560,7 +560,7 @@ let check_equality_constr lhpargs lhs_f_rem rhs svl2=
 
 (*analysis unknown information*)
 let rec analize_unk_one prog unk_hps constr =
-  let _ = Debug.info_pprint ("   hrel: " ^ (Cprinter.string_of_hprel_short constr)) no_pos in
+  let _ = Debug.ninfo_pprint ("   hrel: " ^ (Cprinter.string_of_hprel_short constr)) no_pos in
  (*elim hrel in the formula and returns hprel_args*)
   (*lhs*)
   let lhs1,lhrels = SAU.drop_get_hrel constr.CF.hprel_lhs in
@@ -2057,23 +2057,38 @@ let do_unify prog unk_hps link_hps hp_defs=
       (fun _ _ _ -> do_unify_x prog unk_hps link_hps hp_defs)
       unk_hps link_hps hp_defs
 
-let reverify_cond prog (unk_hps: CP.spec_var list) link_hps hpdefs cond_equivs=
+let reverify_cond_x prog (unk_hps: CP.spec_var list) link_hps hpdefs cond_equivs=
   let skip_hps = unk_hps@link_hps in
-  let cond_equivs1, unk_equivs = List.partition (fun (hp1, hp2) -> not(CP.mem_svl hp1 skip_hps
-    || CP.mem_svl hp2 skip_hps)) cond_equivs in
+  let cond_equivs1, unk_equivs, punk_equivs = List.fold_left (fun (ls1,ls2,ls3) (hp1, hp2) -> let b1 = CP.mem_svl hp1 skip_hps in
+  let b2 = CP.mem_svl hp2 skip_hps in
+  match b1,b2 with
+    | true,true -> (ls1,ls2@[(hp1,hp2)],ls3)
+    | false, false -> (ls1@[(hp1,hp2)],ls2,ls3)
+    | false, true -> (ls1,ls2,ls3@[(hp2,hp1)])
+    | true, false -> (ls1,ls2,ls3@[(hp1,hp2)])
+  ) ([],[],[]) cond_equivs in
   if cond_equivs1 <> [] then
     let defs1, equivs1 = do_unify prog unk_hps link_hps hpdefs in
     let diff = Gen.BList.difference_eq equiv_cmp cond_equivs1 equivs1 in
     if diff == [] then
-      (true, defs1, equivs1, unk_equivs)
+      (true, defs1, equivs1, unk_equivs, punk_equivs)
     else
       let defs2, equivs2 = unify_shape_equiv prog unk_hps link_hps defs1 equivs1 in
       let diff2 = Gen.BList.difference_eq equiv_cmp cond_equivs equivs2 in
       if diff2 == [] then
-        (true, defs2, equivs2, unk_equivs)
-      else (false, hpdefs, cond_equivs, unk_equivs)
+        (true, defs2, equivs2, unk_equivs, punk_equivs)
+      else (false, hpdefs, cond_equivs, unk_equivs, punk_equivs)
   else
-    (true, hpdefs, [], unk_equivs)
+    (true, hpdefs, [], unk_equivs, punk_equivs)
+
+let reverify_cond prog (unk_hps: CP.spec_var list) link_hps hpdefs cond_equivs=
+  let pr1 = !CP.print_svl in
+  let pr2 = pr_list_ln Cprinter.string_of_hp_rel_def in
+  let pr3 = pr_list (pr_pair !CP.print_sv !CP.print_sv) in
+  let pr4 = pr_penta string_of_bool pr2 pr3 pr3 pr3 in
+  Debug.no_4 "reverify_cond" pr1 pr1 pr2 pr3 pr4
+      (fun _ _ _ _ -> reverify_cond_x prog unk_hps link_hps hpdefs cond_equivs)
+       unk_hps link_hps hpdefs cond_equivs
 
 (*************************************************)
 (**********       DISJ-UNIFY       ***************)
@@ -2213,24 +2228,26 @@ let partition_constrs_4_paths link_hpargs0 constrs0 =
        (*=============FIXPOINT================*)
 (*=============**************************================*)
 let gfp_gen_init_x prog is_pre r rec_fs=
-  let find_greates_neg f=
+  let find_greates_neg (r_fs, r_unk_hpargs)f=
     let svl = CF.get_ptrs_f f in
     let pos = (CF.pos_of_formula f) in
     if CP.mem_svl r svl then
       (*neg for sl is not well defined. use unkhp*)
       let (hf, n_hp) = SAU.add_raw_hp_rel prog is_pre [(r, I)] pos in
-      CF.formula_of_heap_w_normal_flow hf pos
+      let f = CF.formula_of_heap_w_normal_flow hf pos in
+      (r_fs@[f], r_unk_hpargs@[(n_hp, [r])])
     else
       let p = CP.filter_var (CF.get_pure f) [r] in
-      CF.formula_of_pure_N (CP.mkNot_s p) pos
+      let f = CF.formula_of_pure_N (CP.mkNot_s p) pos in
+      (r_fs@[f], r_unk_hpargs)
   in
-  let n_fs = List.map find_greates_neg rec_fs in
-  CF.formula_of_disjuncts (rec_fs@n_fs)
+  let n_fs, n_unk_hpargs = List.fold_left find_greates_neg ([],[]) rec_fs in
+  (CF.formula_of_disjuncts (rec_fs@n_fs), n_unk_hpargs)
 
 let gfp_gen_init prog is_pre r rec_fs=
   let pr1 = Cprinter.prtt_string_of_formula in
   let pr2 = pr_list_ln pr1 in
-  Debug.no_2 "gfp_gen_init" !CP.print_sv pr2 pr1
+  Debug.no_2 "gfp_gen_init" !CP.print_sv pr2 (pr_pair pr1 !CP.print_svl)
       (fun _ _ -> gfp_gen_init_x prog is_pre r rec_fs)
       r rec_fs
 
@@ -2264,7 +2281,7 @@ let compute_gfp_x prog is_pre is pdefs=
   (********INTERNAL*******)
   let skip_hps = List.map fst (is.CF.is_dang_hpargs@is.CF.is_link_hpargs) in
   (********END INTERNAL*******)
-  let hp,def=
+  let hp,def,n_unk_hpargs=
   match pdefs with
     | (hp0,args0,f0)::rest ->
           (*normalize*)
@@ -2275,23 +2292,23 @@ let compute_gfp_x prog is_pre is pdefs=
           (*now assume base_fs =[] and dep_fs = [] and rec_fs != [] *)
           if base_fs =[] && dep_fs = [] then
             (*init*)
-            let fix0 = gfp_gen_init prog is_pre r rec_fs in
+            let fix0, n_unk_hpargs = gfp_gen_init prog is_pre r rec_fs in
             (*iterate*)
             let fixn = gfp_iter prog rec_fs fix0 in
-            (hp0, CF.mk_hp_rel_def hp0 (args0, r, non_r_args) None fixn (CF.pos_of_formula f0))
+            (hp0, CF.mk_hp_rel_def hp0 (args0, r, non_r_args) None fixn (CF.pos_of_formula f0), n_unk_hpargs)
           else
             report_error no_pos "sac.compute gfp: not support yet"
     | [] -> report_error no_pos "sac.compute gfp: sth wrong"
   in
   let _ = Debug.binfo_pprint ("    synthesize: " ^ (!CP.print_sv hp) ) no_pos in
   let _ = Debug.binfo_pprint ((Cprinter.string_of_hp_rel_def_short def)) no_pos in
-  def
+  (def,n_unk_hpargs)
 
 let compute_gfp prog is_pre is pdefs=
   let pr1 = !CP.print_svl in
   let pr2 = Cprinter.prtt_string_of_formula in
   let pr3 = pr_list_ln (pr_triple !CP.print_sv pr1 pr2) in
-  let pr4 = Cprinter.string_of_hp_rel_def in
+  let pr4 = pr_pair Cprinter.string_of_hp_rel_def !CP.print_svl in
   Debug.no_1 "compute_gfp" pr3 pr4
       (fun _ -> compute_gfp_x prog is_pre is pdefs) pdefs
 
@@ -2485,7 +2502,7 @@ let compute_lfp_def_x prog post_hps dang_hps hp_defs hpdefs=
   in
   let rec update r_hpdefs hp new_fs done_hpdefs=
     match r_hpdefs with
-      | [] -> report_error no_pos "sac.compute_lfp_def.update: why can not find?"
+      | [] -> (* report_error no_pos "sac.compute_lfp_def.update: why can not find?" *) done_hpdefs
       | hpdef::rest ->
             try
               let hp1 = CF.get_hpdef_name hpdef.CF.hprel_def_kind in
@@ -2561,7 +2578,7 @@ let compute_lfp_def_x prog post_hps dang_hps hp_defs hpdefs=
 let compute_lfp_def prog post_hps dang_hps hp_defs hpdefs=
   let pr1 = pr_list_ln Cprinter.string_of_hp_rel_def in
   let pr2 = pr_list_ln Cprinter.string_of_hprel_def_short in
-  Debug.no_3 "compute_lfp_def" !CP.print_svl pr1 pr2 (pr_pair pr1 pr2)
+  Debug.ho_3 "compute_lfp_def" !CP.print_svl pr1 pr2 (pr_pair pr1 pr2)
       (fun _ _ _ -> compute_lfp_def_x prog post_hps dang_hps hp_defs hpdefs)
       post_hps hp_defs hpdefs
 (*=============**************************================*)

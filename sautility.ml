@@ -5339,7 +5339,8 @@ let extract_fwd_pre_defs_x fwd_pre_hps defs=
   let get_pre_def (cur_grps,cur_hps) (def_kind,hf,og, def)=
     match def_kind with
       | CP.HPRelDefn (hp,_,_) ->
-            if CP.mem_svl hp fwd_pre_hps then
+            (*do not subst rec*)
+            if CP.mem_svl hp fwd_pre_hps && not (CP.mem_svl hp (CF.get_hp_rel_name_formula def)) then
               let _, args =  CF.extract_HRel hf in
               ((cur_grps@[(List.map (fun f -> (hp, args, og, f, [])) (CF.list_of_disjs def))]), cur_hps@[hp])
             else (cur_grps,cur_hps)
