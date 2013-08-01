@@ -865,7 +865,7 @@ let process_shape_infer pre_hps post_hps=
           sel_hps sel_post_hps unk_map unk_hpargs link_hpargs true false
     else [],[]
   in
-  let _ = if not (!Globals.pred_syn_modular) then
+  let _ =
     begin
       let rel_defs = if not (!Globals.pred_syn_modular) then
         Sa2.rel_def_stk
@@ -927,19 +927,25 @@ let process_shape_conquer sel_ids cond_paths=
   let _ = DD.ninfo_pprint "process_shape_conquer\n" no_pos in
   let ls_pr_defs = !sleek_hprel_defns in
   let link_hpargs = !sleek_hprel_unknown in
-  let orig_vars = List.fold_left (fun ls (_,(_,hf,_,_))-> ls@(CF.h_fv hf)) [] ls_pr_defs in
-  let sel_hps = List.map (fun v -> TI.get_spec_var_type_list_infer (v, Unprimed) orig_vars no_pos) (sel_ids) in
-  let sel_hps  = List.filter (fun sv ->
-      let t = CP.type_of_spec_var sv in
-       ((* is_RelT t || *) is_HpT t )) sel_hps in
-  let ls_path_link = SAU.dang_partition link_hpargs in
-  let ls_path_defs = SAU.defn_partition ls_pr_defs in
-  (*pairing*)
-  let ls_path_link_defs = SAU.pair_dang_constr_path ls_path_defs ls_path_link
-    (pr_list_ln Cprinter.string_of_hp_rel_def_short) in
-  let ls_path_defs_settings = List.map (fun (path,link_hpargs, defs) ->
-      (path, defs, [],link_hpargs,[])) ls_path_link_defs in
-  let defs = Sa2.infer_shapes_conquer iprog !cprog "" ls_path_defs_settings sel_hps in
+  let defs =
+    (* if not (!Globals.pred_syn_modular) then *)
+      let orig_vars = List.fold_left (fun ls (_,(_,hf,_,_))-> ls@(CF.h_fv hf)) [] ls_pr_defs in
+      let sel_hps = List.map (fun v -> TI.get_spec_var_type_list_infer (v, Unprimed) orig_vars no_pos) (sel_ids) in
+      let sel_hps  = List.filter (fun sv ->
+          let t = CP.type_of_spec_var sv in
+          ((* is_RelT t || *) is_HpT t )) sel_hps in
+      let ls_path_link = SAU.dang_partition link_hpargs in
+      let ls_path_defs = SAU.defn_partition ls_pr_defs in
+      (*pairing*)
+      let ls_path_link_defs = SAU.pair_dang_constr_path ls_path_defs ls_path_link
+        (pr_list_ln Cprinter.string_of_hp_rel_def_short) in
+      let ls_path_defs_settings = List.map (fun (path,link_hpargs, defs) ->
+          (path, defs, [],link_hpargs,[])) ls_path_link_defs in
+      Sa2.infer_shapes_conquer iprog !cprog "" ls_path_defs_settings sel_hps
+    (* else *)
+    (*   Sa3.infer_shapes iprog !cprog "" constrs2 *)
+    (*       sel_hps sel_post_hps unk_map unk_hpargs link_hpargs true false *)
+  in
   let _ =
     begin
       let rel_defs =  Sa2.rel_def_stk in
