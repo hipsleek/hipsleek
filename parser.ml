@@ -522,8 +522,8 @@ SHGram.Entry.of_parser "peek_print"
              | [FORALL,_;OPAREN,_;_] -> ()
              | [EXISTS,_;OPAREN,_;_] -> ()
              | [UNION,_;OPAREN,_;_] -> ()
-	         | [XPURE,_;OPAREN,_;IDENTIFIER id,_] -> ()
-             (*| [IDENTIFIER id,_;OPAREN,_;_] -> if hp_names # mem id then raise Stream.Failure else ()*)
+	     (* | [XPURE,_;OPAREN,_;_] -> () *)
+             | [IDENTIFIER id,_;OPAREN,_;_] -> if hp_names # mem id then raise Stream.Failure else ()
              | [_;COLONCOLON,_;_] -> raise Stream.Failure
              | [_;PRIME,_;COLONCOLON,_] -> raise Stream.Failure
              | [OPAREN,_;_;COLONCOLON,_] -> raise Stream.Failure
@@ -1613,7 +1613,7 @@ cexp_w:
     | `HASH ->
         let _ = hash_count := !hash_count + 1 in 
         Pure_c (P.Var (("#" ^ (string_of_int !hash_count),Unprimed),(get_pos_camlp4 _loc 1)))
-       | `XPURE;`OPAREN; `IDENTIFIER id; `OPAREN; cl = id_list; `CPAREN ; `CPAREN-> (* xpure *)
+    | `IDENTIFIER id1;`OPAREN; `IDENTIFIER id; `OPAREN; cl = id_list; `CPAREN ; `CPAREN ->
         if hp_names # mem id then Pure_f(P.BForm ((P.mkXPure id cl (get_pos_camlp4 _loc 1), None), None))
         else
           begin
@@ -1629,8 +1629,8 @@ cexp_w:
        * in our formula.
        *)
         if func_names # mem id then Pure_c (P.Func (id, cl, get_pos_camlp4 _loc 1))
-          else if hp_names # mem id then  Pure_f(P.BForm ((P.RelForm (id, cl, get_pos_camlp4 _loc 1), None), None)) 
-            (*report_error (get_pos 1) ("should be a heap pred, not pure a relation here")*)
+          else if hp_names # mem id then (* Pure_f(P.BForm ((P.RelForm (id, cl, get_pos_camlp4 _loc 1), None), None)) *)
+            report_error (get_pos 1) ("should be a heap pred, not pure a relation here")
           else
             begin
               if not(rel_names # mem id) then print_endline ("WARNING : parsing problem "^id^" is neither a ranking function nor a relation nor a heap predicate");
