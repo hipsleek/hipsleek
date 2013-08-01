@@ -2915,7 +2915,11 @@ let is_trivial_constr cs=
   let l_ohp = CF.extract_hrel_head cs.CF.hprel_lhs in
   let r_ohp = CF.extract_hrel_head cs.CF.hprel_rhs in
   match l_ohp,r_ohp with
-    | Some hp1, Some hp2 -> CP.eq_spec_var hp1 hp2
+    | Some hp1, Some hp2 -> (* if *) CP.eq_spec_var hp1 hp2 (* then *)
+        (* let _,largs = CF.extract_HRel_f cs.CF.hprel_lhs in *)
+        (* let _,rargs = CF.extract_HRel_f cs.CF.hprel_rhs in *)
+        (* eq_spec_var_order_list largs rargs *)
+      (* else false *)
     | _ -> false
 
 let collect_post_preds prog constrs=
@@ -2960,13 +2964,19 @@ let classify_post_fix constrs=
   Debug.no_1 " classify_post_fix" pr1 (pr_triple pr1 pr2 pr1)
       (fun _ -> classify_post_fix_x constrs) constrs
 
-let weaken_strengthen_special_constr_pre is_pre cs=
+ let weaken_strengthen_special_constr_pre_x is_pre cs=
   if is_trivial_constr cs then
     if is_pre then
     {cs with CF.hprel_rhs = CF.mkHTrue (CF. mkTrueFlow ()) (CF.pos_of_formula cs.CF.hprel_rhs)}
     else
       {cs with CF.hprel_lhs = CF.mkFalse (CF.flow_formula_of_formula cs.CF.hprel_rhs) (CF.pos_of_formula cs.CF.hprel_rhs)}
   else cs
+
+let weaken_strengthen_special_constr_pre is_pre cs=
+  let pr1 = Cprinter.string_of_hprel_short in
+  Debug.no_2 "weaken_strengthen_special_constr_pre" string_of_bool pr1 pr1
+      (fun _ _ -> weaken_strengthen_special_constr_pre_x is_pre cs)
+      is_pre cs
 
 let convert_HTrue_2_None hpdefs=
   let do_convert (res_link_hps, res_hpdefs) ((kind, hf, og, f) as orig)=

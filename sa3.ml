@@ -1494,7 +1494,8 @@ let infer_post_fix_x iprog prog proc_name callee_hps is_pre is need_preprocess d
   let pdefs = get_par_defs_pre_fix is.CF.is_constrs in
   let pdefs_grps = partition_grp pdefs [] in
   (*for each set of constraints, compure greatest fixpoint*)
-  let fix_defs = List.map (SAC.compute_lfp prog true is) pdefs_grps in
+  let dang_hps = List.map fst (is.CF.is_dang_hpargs@is.CF.is_link_hpargs) in
+  let fix_defs = List.map (SAC.compute_lfp prog dang_hps) pdefs_grps in
   {is with CF.is_constrs = [];
       CF.is_hp_defs = is.CF.is_hp_defs@fix_defs
   }
@@ -1900,8 +1901,14 @@ let infer_shapes_conquer iprog prog proc_name ls_is sel_hps=
   in
   let cl_sel_hps1 = CP.remove_dups_svl cl_sel_hps in
   let cmb_defs = SAU.combine_path_defs cl_sel_hps1 path_defs in
-  let _ = List.iter (fun hp_def -> rel_def_stk # push hp_def) (cmb_defs@tupled_defs) in
-  ([],(* cmb_defs, *) SAU.combine_hpdefs all_hpdefs)
+  let post_hps, dang_hps = List.fold_left (fun (ls1,ls2) is ->
+      (ls1@ is.CF.is_post_hps , ls2 @ (List.map fst (is.CF.is_dang_hpargs@is.CF.is_link_hpargs))))
+    ([],[])ls_is
+  in
+  let n_all_hpdefs, n_cmb_defs = SAC.compute_lfp_def prog (CP.remove_dups_svl post_hps)
+    (CP.remove_dups_svl dang_hps) all_hpdefs cmb_defs in
+  let _ = List.iter (fun hp_def -> rel_def_stk # push hp_def) (n_cmb_defs@tupled_defs) in
+  ([],(* cmb_defs, *) SAU.combine_hpdefs n_all_hpdefs)
 
 let infer_shapes_x iprog prog proc_name (constrs0: CF.hprel list) sel_hps post_hps hp_rel_unkmap unk_hpargs0a link_hpargs0 need_preprocess detect_dang: (CF.hprel list * CF.hp_rel_def list)
       (* (CF.hprel list * CF.hp_rel_def list* (CP.spec_var*CP.exp list * CP.exp list) list ) *) =
