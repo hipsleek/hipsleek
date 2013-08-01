@@ -2480,7 +2480,7 @@ let compute_lfp_def_x prog post_hps dang_hps hp_defs hpdefs=
       | [] -> report_error no_pos "sac.compute_lfp_def.update: why can not find?"
       | hpdef::rest ->
             try
-              let hp1 = SAU.get_hpdef_name hpdef.CF.hprel_def_kind in
+              let hp1 = CF.get_hpdef_name hpdef.CF.hprel_def_kind in
               if CP.eq_spec_var hp hp1 then
                 let n_hpdef = {hpdef with CF.hprel_def_body = List.map (fun f -> ([], Some f)) new_fs;
                     CF.hprel_def_body_lib = None;
@@ -2517,7 +2517,7 @@ let compute_lfp_def_x prog post_hps dang_hps hp_defs hpdefs=
       let r, grp = process_one_grp hp_defs in
       if r then
         let (hp_kind, hf, g, def) = List.hd grp in
-        let n_hpdefs = update r_hpdefs (SAU.get_hpdef_name hp_kind) (CF.list_of_disjs def) [] in
+        let n_hpdefs = update r_hpdefs (CF.get_hpdef_name hp_kind) (CF.list_of_disjs def) [] in
         (r_hp_defs@[(hp_kind, hf, g, def)], n_hpdefs)
       else (r_hp_defs@hp_defs, r_hpdefs)
   ) ([], hpdefs) grp_hp_defs in

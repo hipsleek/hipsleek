@@ -3831,6 +3831,21 @@ and infer_state = {
     is_hp_defs: hp_rel_def list;
 }
 
+let get_hpdef_name hpdef=
+   match hpdef with
+     | CP.HPRelDefn (hp,_,_) -> hp
+     (* | CP.HPRelNDefn hp -> hp *)
+     | _ -> report_error no_pos "sau.get_hpdef_name"
+
+let hpdef_cmp d1 d2 =
+  try
+    let hp1 = get_hpdef_name d1.hprel_def_kind in
+    try
+      let hp2 = get_hpdef_name d2.hprel_def_kind in
+      String.compare (CP.name_of_spec_var hp1) (CP.name_of_spec_var hp2)
+    with _ -> 1
+  with _ -> -1
+
 let mk_hp_rel_def hp (args, r, paras) g f pos=
   let hf = HRel (hp, List.map (fun x -> CP.mkVar x no_pos) args, pos) in
   (CP.HPRelDefn (hp, r, paras), hf, g, f)

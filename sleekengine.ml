@@ -872,11 +872,14 @@ let process_shape_infer pre_hps post_hps=
       else Sa3.rel_def_stk
       in
       if not(rel_defs# is_empty) then
+        let defs = List.sort CF.hpdef_cmp (rel_defs # get_stk) in
         print_endline "";
       print_endline "\n*************************************";
       print_endline "*******relational definition ********";
       print_endline "*************************************";
-      print_endline (rel_defs # string_of_reverse);
+      (* print_endline (rel_defs # string_of_reverse); *)
+       let pr1 = pr_list_ln Cprinter.string_of_hprel_def_short in
+       print_endline (pr1 defs);
       print_endline "*************************************"
     end
   in
@@ -950,11 +953,14 @@ let process_shape_conquer sel_ids cond_paths=
     begin
       let rel_defs =  Sa2.rel_def_stk in
       if not(rel_defs# is_empty) then
+        let defs = List.sort CF.hpdef_cmp (rel_defs # get_stk) in
         print_endline "";
       print_endline "\n*************************************";
       print_endline "*******relational definition ********";
       print_endline "*************************************";
-      print_endline (rel_defs # string_of_reverse);
+      (* print_endline (rel_defs # string_of_reverse); *)
+       let pr1 = pr_list_ln Cprinter.string_of_hprel_def_short in
+       print_endline (pr1 defs);
       print_endline "*************************************"
     end
   in

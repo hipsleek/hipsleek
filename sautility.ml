@@ -142,13 +142,6 @@ let rec combine_multiple_length ls1 orig_args=
   in
   helper ls1 orig_args []
 
- let get_hpdef_name hpdef=
-   match hpdef with
-     | CP.HPRelDefn (hp,_,_) -> hp
-     (* | CP.HPRelNDefn hp -> hp *)
-     | _ -> report_error no_pos "sau.get_hpdef_name"
-
-
 let rec is_empty_f f0=
   let rec helper f=
     match f with
@@ -5180,7 +5173,7 @@ let rec look_up_subst_hpdef hp args nrec_hpdefs=
   match nrec_hpdefs with
     | [] -> [](* report_error no_pos "sau.look_up_groups" *)
     | (a1,hprel1,f1)::gs -> begin
-        let hp1 = get_hpdef_name a1 in
+        let hp1 = CF.get_hpdef_name a1 in
         (* DD.info_pprint ("       hp: " ^ (!CP.print_sv hp)) no_pos; *)
         (* DD.info_pprint ("       succ_susbt_def hp1: " ^ (!CP.print_sv hp1)) no_pos; *)
         if CP.eq_spec_var hp hp1 then
@@ -5270,8 +5263,8 @@ let combine_hpdefs_x hpdefs=
       | [] -> parts
       | (a1,a2,og,a3)::xs -> begin
           let part,remains= List.partition (fun (a2,_,_,_) ->
-              let hp1 = get_hpdef_name a1 in
-              let hp2 = get_hpdef_name a2 in
+              let hp1 = CF.get_hpdef_name a1 in
+              let hp2 = CF.get_hpdef_name a2 in
               CP.eq_spec_var hp1 hp2) xs
           in
           partition_hpdefs_by_hp_name remains (parts@[[(a1,a2,og,a3)]@part])

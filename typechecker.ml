@@ -2467,11 +2467,14 @@ let proc_mutual_scc_shape_infer iprog prog scc_procs =
     in
     if not(rel_defs# is_empty) then
       begin
+        let defs = List.sort CF.hpdef_cmp (rel_defs # get_stk) in
         print_endline "\n*************************************";
         print_endline "*******relational definition ********";
         print_endline "*************************************";
-        if !Globals.testing_flag then print_endline "<dstart>"; 
-        print_endline (rel_defs # string_of_reverse);
+        if !Globals.testing_flag then print_endline "<dstart>";
+        let pr1 = pr_list_ln Cprinter.string_of_hprel_def_short in
+        (* print_endline (rel_defs # string_of_reverse); *)
+        print_endline (pr1 defs);
         if !Globals.testing_flag then print_endline "<dstop>"; 
         print_endline "*************************************";
         let _ = Sa2.rel_def_stk # reset in

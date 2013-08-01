@@ -5645,7 +5645,7 @@ Error1(s) detected at main
 Exception occurred: Failure("hd")
 Error3(s) detected at main 
 =====================================================================
-# ll-b-4a.slk
+# ll-b-4a.slk: FIXED
 
 Why isn't the results printed for sleek?
 
@@ -5654,7 +5654,7 @@ Same error with --sa-dnc option.
 !!! >>>>>> post-predicates: step post-4: weaken<<<<<<Fatal error: exception Failure("hd")
 
 =====================================================================
-# ll-back-4
+# ll-back-4: DONE
 
 I saw only:
 

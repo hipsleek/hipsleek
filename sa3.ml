@@ -1299,7 +1299,7 @@ let collect_sel_hp_def_x cond_path defs sel_hps unk_hps m=
   let inter_lib = Gen.BList.difference_eq CP.eq_spec_var mlib sel_hps in
   List.filter (fun hdef ->
       let a1 = hdef.CF.hprel_def_kind in
-      let hp = SAU.get_hpdef_name a1 in
+      let hp = CF.get_hpdef_name a1 in
       not (CP.mem_svl hp inter_lib))
       all_sel_defw
 
@@ -1905,8 +1905,11 @@ let infer_shapes_conquer iprog prog proc_name ls_is sel_hps=
       (ls1@ is.CF.is_post_hps , ls2 @ (List.map fst (is.CF.is_dang_hpargs@is.CF.is_link_hpargs))))
     ([],[])ls_is
   in
-  let n_all_hpdefs, n_cmb_defs = SAC.compute_lfp_def prog (CP.remove_dups_svl post_hps)
-    (CP.remove_dups_svl dang_hps) all_hpdefs cmb_defs in
+  let n_all_hpdefs, n_cmb_defs = if !Globals.sa_dnc then
+    SAC.compute_lfp_def prog (CP.remove_dups_svl post_hps)
+    (CP.remove_dups_svl dang_hps) all_hpdefs cmb_defs
+  else (all_hpdefs, cmb_defs)
+  in
   let _ = List.iter (fun hp_def -> rel_def_stk # push hp_def) (n_cmb_defs@tupled_defs) in
   ([],(* cmb_defs, *) SAU.combine_hpdefs n_all_hpdefs)
 
@@ -1918,7 +1921,7 @@ let infer_shapes_x iprog prog proc_name (constrs0: CF.hprel list) sel_hps post_h
   (*       Cast.look_up_callee_hpdefs_proc prog.Cast.new_proc_decls proc_name *)
   (*   with _ -> [] *)
   (* in *)
-  (* let callee_hps = List.map (fun (hpname,_,_) -> SAU.get_hpdef_name hpname) callee_hpdefs in *)
+  (* let callee_hps = List.map (fun (hpname,_,_) -> CF.get_hpdef_name hpname) callee_hpdefs in *)
   let callee_hps = [] in
   let _ = DD.binfo_pprint ("  sel_hps:" ^ !CP.print_svl sel_hps) no_pos in
   let _ = DD.binfo_pprint ("  sel post_hps:" ^ (!CP.print_svl post_hps)) no_pos in
