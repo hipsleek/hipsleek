@@ -551,8 +551,8 @@ let eres_name = "eres"
 let self = "self"
 
 let constinfinity = "ZInfinity"
-
 let deep_split_disjuncts = ref false
+let check_integer_overflow = ref false
 
 let this = "this"
 
