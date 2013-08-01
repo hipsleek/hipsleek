@@ -2313,16 +2313,25 @@ let simplify_disj_set prog args unk_hps unk_svl pdefs pos=
   in
   helper2 pdefs []
 
-let lfp_iter_x prog hp args dang_hps fix_0 nonrec_fs rec_fs=
+let lfp_iter_x prog step hp args dang_hps fix_0 nonrec_fs rec_fs=
   let apply_fix fix_i r_fs pdef_f=
-    let _, fs = if fix_i = [] then (false, [pdef_f ]) else
+    let _, fs = if fix_i = [] then (false, []) else
       SAU.succ_subst prog [fix_i] dang_hps true pdef_f in
     r_fs@fs
   in
   let pdef_rec_fs = List.map (fun f -> (hp,args, None, f, [])) rec_fs in
   let pdef_nonrec_fs = List.map (fun f -> (hp,args, None, f, [])) nonrec_fs in
   (*INTERNAL*)
-  let rec rec_helper_x pdef_fix_i=
+  let rec rec_helper_x i pdef_fix_i=
+    (**********PRINTING***********)
+    let _ = DD.binfo_pprint ("   fix: " ^ (string_of_int i) ^ (
+        let pr1  = Cprinter.prtt_string_of_formula in
+        let fs = List.map (fun (_,_, _, f, _) -> f) pdef_fix_i in
+        let f = if fs = [] then CF.mkFalse (CF.mkTrueFlow ())  no_pos else (CF.formula_of_disjuncts fs) in
+        pr1 f )
+    ) no_pos
+    in
+    (*******END PRINTING*********)
     (*apply rec for cur fix*)
     let fix_i_plus = pdef_nonrec_fs@(List.fold_left (apply_fix pdef_fix_i) [] pdef_rec_fs) in
     (*check whether it reaches the fixpoint*)
@@ -2339,17 +2348,17 @@ let lfp_iter_x prog hp args dang_hps fix_0 nonrec_fs rec_fs=
     in
     (*recusive call*)
     if diff = [] then fix_i_plus1 else
-    rec_helper fix_i_plus1
+    rec_helper (i+1) fix_i_plus1
   in
   (*END INTERNAL*)
   let pdef_fix_0 = List.map (fun f -> (hp,args, None, f, [])) fix_0 in
-  let r = rec_helper_x pdef_fix_0 in
+  let r = rec_helper_x step pdef_fix_0 in
   List.map (fun (_,_, _, f, _) -> f) r
 
-let lfp_iter prog hp args dang_hps fix_0 nonrec_fs rec_fs=
+let lfp_iter prog step hp args dang_hps fix_0 nonrec_fs rec_fs=
   let pr1 = pr_list_ln Cprinter.prtt_string_of_formula in
   Debug.no_5 "lfp_iter" !CP.print_sv !CP.print_svl pr1 pr1 pr1 pr1
-      (fun _ _ _ _ _ -> lfp_iter_x prog hp args dang_hps fix_0 nonrec_fs rec_fs)
+      (fun _ _ _ _ _ -> lfp_iter_x prog step hp args dang_hps fix_0 nonrec_fs rec_fs)
       hp args fix_0 nonrec_fs rec_fs
 
 let mk_expl_root_fnc hp ss r hf=
@@ -2401,9 +2410,9 @@ let compute_lfp_x prog is_pre is pdefs=
           (* let _ =  DD.info_pprint ("   r: " ^(!CP.print_sv r)) no_pos in *)
           let base_fs, rec_fs, dep_fs = List.fold_left (classify hp0) ([],[],[]) norm_fs in
           (*init*)
-          let fix_0 = (base_fs@dep_fs) in
+          let fix_0 = (* (base_fs@dep_fs) *) [] in
           (*iterate*)
-          let fixn = lfp_iter prog hp0 args0 skip_hps fix_0 (base_fs@dep_fs) rec_fs in
+          let fixn = lfp_iter prog 0 hp0 args0 skip_hps fix_0 (base_fs@dep_fs) rec_fs in
           let def = CF.formula_of_disjuncts fixn in
           (hp0, CF.mk_hp_rel_def hp0 (args0, r, non_r_args) None def pos)
     | [] -> report_error no_pos "sac.compute gfp: sth wrong"

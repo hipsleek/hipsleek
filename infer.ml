@@ -2371,7 +2371,7 @@ let lookup_eq_hprel_ass hps hprel_ass lhs rhs=
   let pr2 = Cprinter.prtt_string_of_formula in
   let pr3 = pr_list (pr_pair !CP.print_sv !CP.print_sv) in
   let pr4 = pr_pair string_of_bool pr3 in
-  Debug.no_4 "lookup_eq_hprel_ass" !CP.print_svl pr1 pr2 pr2 pr4
+  Debug.ho_4 "lookup_eq_hprel_ass" !CP.print_svl pr1 pr2 pr2 pr4
       (fun _ _ _ _ -> lookup_eq_hprel_ass_x hps hprel_ass lhs rhs) hps hprel_ass lhs rhs
 
 let constant_checking prog rhs lhs_b rhs_b es=

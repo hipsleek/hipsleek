@@ -1453,6 +1453,7 @@ let infer_pre_synthesize prog proc_name callee_hps is pre_constrs need_preproces
 
 (*compute greatest fixpoint for each set of constraints*)
 let infer_pre_fix_x iprog prog proc_name callee_hps is_pre is need_preprocess detect_dang pre_fix_hps=
+  let _ = DD.binfo_pprint ">>>>>> gfp computation for pre-preds <<<<<" no_pos in
   let rec partition_grp rem_pdefs grps=
     match rem_pdefs with
       | [] -> grps
@@ -1479,6 +1480,7 @@ let infer_pre_fix iprog prog proc_name callee_hps is_pre is need_preprocess dete
 
 (*compute least fixpoint for each set of constraints*)
 let infer_post_fix_x iprog prog proc_name callee_hps is_pre is need_preprocess detect_dang post_fix_hps=
+  let _ = DD.binfo_pprint ">>>>>> lfp computation for post-preds <<<<<" no_pos in
   let rec partition_grp rem_pdefs grps=
     match rem_pdefs with
       | [] -> grps
@@ -1759,9 +1761,12 @@ and infer_shapes_proper iprog prog proc_name callee_hps is need_preprocess detec
   in
   (*post-synthesize*)
   let post_constrs, post_fix_hps, post_fix_constrs = SAU.classify_post_fix post_constrs0 in
-  let is_post = {is_pre2 with CF.is_constrs = post_constrs } in
-  let post_act = IC.icompute_action_post () in
-  let is_post1 = iprocess_action iprog prog proc_name callee_hps is_post post_act need_preprocess detect_dang in
+  let is_post1 = if post_constrs =[] then is_pre2 else
+    let is_post = {is_pre2 with CF.is_constrs = post_constrs } in
+    let post_act = IC.icompute_action_post () in
+    let is_post = iprocess_action iprog prog proc_name callee_hps is_post post_act need_preprocess detect_dang in
+    is_post
+  in
   (*post-fix-synthesize*)
   let is_post2 = if post_fix_constrs = [] then is_post1 else
     let is_post_fix = {is_post1 with CF.is_constrs = post_fix_constrs} in
