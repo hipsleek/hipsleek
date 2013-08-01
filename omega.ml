@@ -686,7 +686,7 @@ let rec match_vars (vars_list0 : spec_var list) rel =
 
 let match_vars (vars_list0 : spec_var list) rel =
   let pr = !print_svl in
-  Debug.ho_2 "match_vars" pr string_of_relation !print_formula (fun _ _ -> match_vars vars_list0 rel) vars_list0 rel
+  Debug.no_2 "match_vars" pr string_of_relation !print_formula (fun _ _ -> match_vars vars_list0 rel) vars_list0 rel
 
 let simplify_ops pr_weak pr_strong (pe : formula) : formula =
   (* print_endline "LOCLE: simplify";*)
@@ -857,7 +857,7 @@ let wrap_ptr_to_int_exact =
 
 let simplify (pe : formula) : formula =
   let pr = !print_formula in
-  Debug.ho_1 "Omega.simplify" pr pr (wrap_ptr_to_int_exact simplify) pe 
+  Debug.no_1 "Omega.simplify" pr pr (wrap_ptr_to_int_exact simplify) pe 
 
 let pairwisecheck (pe : formula) : formula =
   (* print_endline "LOCLE: pairwisecheck"; *)

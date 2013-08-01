@@ -1329,7 +1329,7 @@ and infer_pure_m unk_heaps estate lhs_rels lhs_xpure_orig lhs_xpure0 lhs_wo_heap
   let pr_res_lst = pr_list (fun (es,r,b) -> (pr_pair (pr2) (pr_list CP.print_lhs_rhs)) (es,r)) in
   let pr_res = pr_triple (pr_option (pr_pair pr2 !print_pure_f)) (pr_option pr_p) pr_res_lst in
   let pr0 es = pr_pair pr2 !CP.print_svl (es,es.es_infer_vars) in
-  Debug.to_5 "infer_pure_m_1" 
+  Debug.no_5 "infer_pure_m_1" 
       (add_str "estate " pr0) 
       (add_str "lhs xpure " pr_p) 
       (add_str "lhs xpure0 " pr1)
