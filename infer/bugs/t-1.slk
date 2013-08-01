@@ -1,0 +1,12 @@
+/*
+checkentail x=null |- x!=null.
+
+simplify x=null & x!=null.
+
+simplify x=null.
+
+simplify x>0 & x>=0.
+*/
+
+simplify x!=null.
+

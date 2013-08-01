@@ -1,0 +1,19 @@
+I think this can be done at tp-dispatcher
+so that they need not be handle by other provers.
+
+strong
+======
+x=null  --> x=0
+x!=null --> x>0
+
+weak
+====
+x=null  --> x<=0
+x!=null --> x>0  (to avoid inequality)
+
+// for simplifier
+x=0 --> x=null
+x<=0 --> x=null
+x>0  --> x!=null
+x>=0 --> true
+x<0  --> false

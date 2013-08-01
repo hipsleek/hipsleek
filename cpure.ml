@@ -2392,66 +2392,11 @@ and equalBFormula (f1:b_formula)(f2:b_formula):bool = equalBFormula_f eq_spec_va
 
 and eqExp (f1:exp)(f2:exp):bool = eqExp_f eq_spec_var  f1 f2
 
-(*
-(* build relation from list of expressions, for example a,b,c < d,e, f *)
-  and build_relation relop alist10 alist20 lbl pos=
-  let rec helper1 ae alist =
-  let a = List.hd alist in
-  let rest = List.tl alist in
-  let check_upper r e ub pos = if ub<=1 then Eq (e,(Null no_pos),pos) else r in
-  let check_lower r e lb pos = if lb>=0 then Neq (e,(Null no_pos),pos) else r in
-  let rec tt relop ae a pos = 
-  let r = (relop ae a pos) in
-  match r with
-  | Lte (e1,e2,l) 
-  | Gte (e2,e1,l) -> 
-  ( match e1,e2 with
-  | Var (v,_), IConst(i,l) -> if (is_otype (type_of_spec_var v)) then check_upper r e1 (i+1) l else r
-  | IConst(i,l), Var (v,_) -> if (is_otype (type_of_spec_var v)) then check_lower r e2 (i-1) l else r
-  | _ -> r)
-  | Gt (e1,e2,l) 
-  | Lt (e2,e1,l) -> 
-  ( match e1,e2 with
-  | Var (v,_), IConst(i,l) -> if (is_otype (type_of_spec_var v)) then check_lower r e1 i l else r
-  | IConst(i,l), Var (v,_) -> if (is_otype (type_of_spec_var v)) then check_upper r e2 i l else r
-  | _ -> r)
-  | Eq (e1,e2,l) ->
-  ( match e1,e2 with
-  | Var (v,_), IConst(0,l) -> if (is_otype (type_of_spec_var v)) then Eq (e1,(Null no_pos),pos) else r
-  | IConst(0,l), Var (v,_) -> if (is_otype (type_of_spec_var v)) then Eq (e2,(Null no_pos),pos) else r
-  | _ -> r)
-  | Neq (e1,e2,l) ->
-  ( match e1,e2 with
-  | Var (v,_), IConst(0,l) -> if (is_otype (type_of_spec_var v)) then Neq (e1,(Null no_pos),pos) else r
-  | IConst(0,l), Var (v,_) -> if (is_otype (type_of_spec_var v)) then Neq (e2,(Null no_pos),pos) else r
-  | _ -> r)
-  | _ -> r in 
-  let tmp = BForm ((tt relop ae a pos),lbl) in
-  if Gen.is_empty rest then
-  tmp
-  else
-  let tmp1 = helper1 ae rest in
-  let tmp2 = mkAnd tmp tmp1 pos in
-  tmp2 in
-  let rec helper2 alist1 alist2 =
-  let a = List.hd alist1 in
-  let rest = List.tl alist1 in
-  let tmp = helper1 a alist2 in
-  if Gen.is_empty rest then
-  tmp
-  else
-  let tmp1 = helper2 rest alist2 in
-  let tmp2 = mkAnd tmp tmp1 pos in
-  tmp2 in
-  if List.length alist10 = 0 || List.length alist20 = 0 then
-  failwith ("build_relation: zero-length list")
-  else
-  helper2 alist10 alist20*)
   
 (* build relation from list of expressions, for example a,b,c < d,e, f *)
 and build_relation relop alist10 alist20 lbl pos =
   let prt = fun al -> List.fold_left (fun r a -> r ^ "; " ^ (!print_exp a)) "" al in
-  Debug.no_2 "build_relation" prt prt (!print_formula) (fun al1 al2 -> build_relation_x relop al1 al2 lbl pos) alist10 alist20
+  Debug.ho_2 "build_relation" prt prt (!print_formula) (fun al1 al2 -> build_relation_x relop al1 al2 lbl pos) alist10 alist20
       
 and build_relation_x relop alist10 alist20 lbl pos =
   let rec helper1 ae alist =
@@ -2461,30 +2406,31 @@ and build_relation_x relop alist10 alist20 lbl pos =
     let check_lower r e lb pos = if lb>0 then Neq (e,(Null no_pos),pos) else r in
     let rec tt relop ae a pos = 
       let r = (relop ae a pos) in
-      match r with
-        | Lte (e1,e2,l) 
-        | Gte (e2,e1,l) -> 
-              ( match e1,e2 with
-                | Var (v,_), IConst(i,l) -> if (is_otype (type_of_spec_var v)) then check_upper r e1 (i+1) l else r
-                | IConst(i,l), Var (v,_) -> if (is_otype (type_of_spec_var v)) then check_lower r e2 (i-1) l else r
-                | _ -> r)
-        | Gt (e1,e2,l) 
-        | Lt (e2,e1,l) -> 
-              ( match e1,e2 with
-                | Var (v,_), IConst(i,l) -> if (is_otype (type_of_spec_var v)) then check_lower r e1 i l else r
-                | IConst(i,l), Var (v,_) -> if (is_otype (type_of_spec_var v)) then check_upper r e2 i l else r
-                | _ -> r)
-        | Eq (e1,e2,l) ->
-              ( match e1,e2 with
-                | Var (v,_), IConst(0,l) -> if (is_otype (type_of_spec_var v)) then Eq (e1,(Null no_pos),pos) else r
-                | IConst(0,l), Var (v,_) -> if (is_otype (type_of_spec_var v)) then Eq (e2,(Null no_pos),pos) else r
-                | _ -> r)
-        | Neq (e1,e2,l) ->
-              ( match e1,e2 with
-                | Var (v,_), IConst(0,l) -> if (is_otype (type_of_spec_var v)) then Neq (e1,(Null no_pos),pos) else r
-                | IConst(0,l), Var (v,_) -> if (is_otype (type_of_spec_var v)) then Neq (e2,(Null no_pos),pos) else r
-                | _ -> r)
-        | _ -> r in  
+      r in
+      (* match r with *)
+      (*   | Lte (e1,e2,l)  *)
+      (*   | Gte (e2,e1,l) ->  *)
+      (*         ( match e1,e2 with *)
+      (*           | Var (v,_), IConst(i,l) -> if (is_otype (type_of_spec_var v)) then check_upper r e1 (i+1) l else r *)
+      (*           | IConst(i,l), Var (v,_) -> if (is_otype (type_of_spec_var v)) then check_lower r e2 (i-1) l else r *)
+      (*           | _ -> r) *)
+      (*   | Gt (e1,e2,l)  *)
+      (*   | Lt (e2,e1,l) ->  *)
+      (*         ( match e1,e2 with *)
+      (*           | Var (v,_), IConst(i,l) -> if (is_otype (type_of_spec_var v)) then check_lower r e1 i l else r *)
+      (*           | IConst(i,l), Var (v,_) -> if (is_otype (type_of_spec_var v)) then check_upper r e2 i l else r *)
+      (*           | _ -> r) *)
+      (*   | Eq (e1,e2,l) -> *)
+      (*         ( match e1,e2 with *)
+      (*           | Var (v,_), IConst(0,l) -> if (is_otype (type_of_spec_var v)) then Eq (e1,(Null no_pos),pos) else r *)
+      (*           | IConst(0,l), Var (v,_) -> if (is_otype (type_of_spec_var v)) then Eq (e2,(Null no_pos),pos) else r *)
+      (*           | _ -> r) *)
+      (*   | Neq (e1,e2,l) -> *)
+      (*         ( match e1,e2 with *)
+      (*           | Var (v,_), IConst(0,l) -> if (is_otype (type_of_spec_var v)) then Neq (e1,(Null no_pos),pos) else r *)
+      (*           | IConst(0,l), Var (v,_) -> if (is_otype (type_of_spec_var v)) then Neq (e2,(Null no_pos),pos) else r *)
+      (*           | _ -> r) *)
+      (*   | _ -> r in   *)
     let tmp = BForm (((tt relop ae a pos), None),lbl) in
     if Gen.is_empty rest then
       tmp
