@@ -1248,7 +1248,7 @@ let print_exc (check_id: string) =
 (*   None       -->  forbid residue in RHS when the option --classic is turned on *)
 (*   Some true  -->  always check entailment exactly (no residue in RHS)          *)
 (*   Some false -->  always check entailment inexactly (allow residue in RHS)     *)
-let process_entail_check_x (iante : meta_formula) (iconseq : meta_formula) (etype : entail_type):bool =
+let process_entail_check_x (iante : meta_formula) (iconseq : meta_formula) (etype : entail_type) =
   let nn = (sleek_proof_counter#inc_and_get) in
   let num_id = "\nEntail "^(string_of_int nn) in
     try 
@@ -1265,7 +1265,7 @@ let process_entail_check_x (iante : meta_formula) (iconseq : meta_formula) (etyp
 (*   None       -->  forbid residue in RHS when the option --classic is turned on *)
 (*   Some true  -->  always check entailment exactly (no residue in RHS)          *)
 (*   Some false -->  always check entailment inexactly (allow residue in RHS)     *)
-let process_entail_check (iante : meta_formula) (iconseq : meta_formula) (etype: entail_type):bool =
+let process_entail_check (iante : meta_formula) (iconseq : meta_formula) (etype: entail_type) =
   let pr = string_of_meta_formula in
   Debug.no_2 "process_entail_check_helper" pr pr (fun _ -> "?") process_entail_check_x iante iconseq etype
 

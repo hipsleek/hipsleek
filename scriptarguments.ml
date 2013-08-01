@@ -228,6 +228,7 @@ let common_arguments = [
   ("--dis-imm", Arg.Clear Globals.allow_imm,"disable the use of immutability annotations");
   ("--dis-inf", Arg.Clear Globals.allow_inf,"disable support for infinity ");
   ("--dsd", Arg.Set Globals.deep_split_disjuncts,"enable deep splitting of disjunctions");
+  ("--ioc", Arg.Set Globals.check_integer_overflow,"Enable Integer Overflow Checker");
   ("--no-coercion", Arg.Clear Globals.use_coercion,
    "Turn off coercion mechanism");
   ("--no-exists-elim", Arg.Clear Globals.elim_exists_ff,

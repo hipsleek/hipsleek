@@ -156,7 +156,15 @@ let _ =
 let array_update_call = "update___"
 let array_access_call = "array_get_elm_at___"
 let array_allocate_call = "aalloc___"
-      
+
+let get_binop_call_safe_int (bop : I.bin_op) : ident =
+  match bop with
+  | I.OpPlus -> "safe_sadd___"
+  | _ -> (try Hashtbl.find op_map bop
+         with
+           | Not_found -> failwith
+               ("binary operator " ^ ((Iprinter.string_of_binary_op bop) ^ " is not supported")))
+	  
 let get_binop_call (bop : I.bin_op) : ident =
   try Hashtbl.find op_map bop
   with
@@ -169,7 +177,7 @@ let assign_op_to_bin_op_map =
   [ (I.OpPlusAssign, I.OpPlus); (I.OpMinusAssign, I.OpMinus);
     (I.OpMultAssign, I.OpMult); (I.OpDivAssign, I.OpDiv);
     (I.OpModAssign, I.OpMod) ]
-  
+
 let bin_op_of_assign_op (aop : I.assign_op) =
   List.assoc aop assign_op_to_bin_op_map
 
@@ -2723,7 +2731,21 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
                   I.exp_call_nrecv_pos = pos;}in 
               helper new_e)
             else
-              (let b_call = get_binop_call b_op in
+              (let b_call = if !Globals.check_integer_overflow then (let func exp = match exp with
+                | I.Var v -> Some([v.I.exp_var_name])
+                | _ -> Some([]) in
+              let e1_vars = I.fold_exp e1 func List.flatten [] in
+              (*let _ = print_string ("\ne1_vars: "^(String.concat " " e1_vars)) in*)
+              let e2_vars = I.fold_exp e2 func List.flatten [] in
+              (*let _ = print_string ("\ne2_vars: "^(String.concat " " e2_vars)) in*)
+              let local_vars = List.map (fun (t,id) -> id) (E.names_on_top ()) in
+              (*let _ = print_string ("\nlocal_vars: "^(String.concat " " local_vars)) in*)
+              let flag1 = List.for_all (fun c -> List.mem c local_vars) e1_vars in
+              let flag2 = List.for_all (fun c -> List.mem c local_vars) e2_vars in
+              if flag1 && flag2 then get_binop_call b_op
+              else get_binop_call_safe_int b_op
+               )
+              else get_binop_call b_op in
               let new_e = I.CallNRecv {
                   I.exp_call_nrecv_method = b_call;
                   I.exp_call_nrecv_lock = None;
@@ -3365,6 +3387,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
                         I.exp_call_nrecv_path_id = pid;
                         I.exp_call_nrecv_pos = pos;} in helper call_e
               | I.OpPostInc ->
+                  if not (!Globals.check_integer_overflow) then 
                     let fn = (fresh_var_name "int" pos.start_pos.Lexing.pos_lnum) in
                     let fn_decl = I.VarDecl{
                         I.exp_var_decl_type = I.int_type;
@@ -3391,6 +3414,19 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
                         I.exp_seq_exp2 = seq1;
                         I.exp_seq_pos = pos; } in
                     helper (I.Block { I.exp_block_local_vars = [];I.exp_block_body = seq2; I.exp_block_jump_label = I.NoJumpLabel; I.exp_block_pos = pos;})
+                  else 
+                    let add1_e = I.Binary {
+                        I.exp_binary_op = I.OpPlus;
+                        I.exp_binary_oper1 = e;
+                        I.exp_binary_oper2 = I.IntLit { I.exp_int_lit_val = 1; I.exp_int_lit_pos = pos; };
+                        I.exp_binary_path_id = pid;
+                        I.exp_binary_pos = pos; } in
+                     helper (I.Assign {
+                        I.exp_assign_op = I.OpAssign;
+                        I.exp_assign_lhs = e;
+                        I.exp_assign_rhs = add1_e;
+                        I.exp_assign_path_id = None;
+                        I.exp_assign_pos = pos;})                     
               | I.OpPostDec -> 
                     let fn = (fresh_var_name "int" pos.start_pos.Lexing.pos_lnum) in
                     let fn_decl = I.VarDecl {
