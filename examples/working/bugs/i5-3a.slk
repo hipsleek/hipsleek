@@ -10,7 +10,11 @@ Entail (1) : Valid.
 
 */
 
+
 infer [k]  b=null  |-  b=k.
+
+
+//infer []  b=null & k=null  |-  b=k.
 print residue.
 
 

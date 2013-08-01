@@ -45,18 +45,55 @@ print residue.
                  x::node<inf_Anon_61@M,inf_q_62@M>@inf_ann_60]
  inferred pure: [inf_ann_60<=0; inf_ann_63<=0]
 
-*/
-
+---
 
 infer [x] b=null |- x::node<_,b>.
 print residue.
 
+ <1>emp&b=null & Anon_12=inf_Anon_36 & inf_ann_35<=0 & inf_b_37=null&{FLOW,(19,20)=__norm}[]
+ inferred heap: [x::node<inf_Anon_36@M,inf_b_37@M>@inf_ann_35]
+ inferred pure: [inf_b_37=null; inf_ann_35<=0]
+
+
+infer [k] b=null |- k=b.
+ <1>emp&b=null & k=null&{FLOW,(19,20)=__norm}[]
+ inferred pure: [k=null]
+
+infer [k] b!=null |- k=b.
+print residue.
+// should fail since we cannot express without b
+
+
+infer [x] b::node<_,_> |- x::node<_,b>.
+print residue.
+// fails
+
+
+
+infer [x,b] b::node<_,_> |- x::node<_,b>.
+print residue.
+
+ <1>b::node<Anon_15@M,Anon_16@M>@M&Anon_17=inf_Anon_61 & inf_ann_60<=0 & b=inf_b_62&{FLOW,(19,20)=__norm}[]
+ inferred heap: [x::node<inf_Anon_61@M,inf_b_62@M>@inf_ann_60]
+ inferred pure: [b=inf_b_62; inf_ann_60<=0]
+
+*/
+
+
+infer [x,y] b::node<1,y>   |- x::node<_,b>*b::node<_,y>*y::node<_,null>.
+print residue.
+
 
 /*
-infer [x] b::node<1,y> |- x::node<_,b>.
+infer [x] b!=null |- x::node<_,b>.
+print residue.
+// x::node<f1,f2> & f2=b
+
+infer [x] b::node<_,_> |- x::node<_,b>.
 print residue.
 
 */
+
 
 //(3)
 //infer [x,y] b::node<1,y>   |- x::node<_,b>*b::node<_,y>*y::node<_,null>.

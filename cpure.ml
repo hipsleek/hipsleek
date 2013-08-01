@@ -1925,6 +1925,11 @@ and mkLteExp (ae1 : exp) (ae2 : exp) pos :formula =
   BForm ((Lte (ae1, ae2, pos), None),None)
 
 and mkEqExp (ae1 : exp) (ae2 : exp) pos :formula =
+  let ae1,ae2 = 
+    match ae1,ae2 with
+      | Var (v1,_), IConst(0,l) 
+            -> ae1,(if (is_otype (type_of_spec_var v1)) then Null no_pos else ae2)
+      | _ -> ae1,ae2 in
   match (ae1, ae2) with
     | (Var v1, Var v2) ->
           if eq_spec_var (fst v1) (fst v2) then
@@ -2451,16 +2456,18 @@ and eqExp (f1:exp)(f2:exp):bool = eqExp_f eq_spec_var  f1 f2
 (* build relation from list of expressions, for example a,b,c < d,e, f *)
 and build_relation relop alist10 alist20 lbl pos =
   let prt = fun al -> List.fold_left (fun r a -> r ^ "; " ^ (!print_exp a)) "" al in
-  Debug.no_2 "build_relation" prt prt (!print_formula) (fun al1 al2 -> build_relation_x relop al1 al2 lbl pos) alist10 alist20
+  Debug.ho_2 "build_relation" prt prt (!print_formula) (fun al1 al2 -> build_relation_x relop al1 al2 lbl pos) alist10 alist20
       
 and build_relation_x relop alist10 alist20 lbl pos =
   let rec helper1 ae alist =
+    print_endline "inside helper1";
     let a = List.hd alist in
     let rest = List.tl alist in
     let check_upper r e ub pos = if ub>1 then r else  Eq (e,(Null no_pos),pos) in
     let check_lower r e lb pos = if lb>0 then Neq (e,(Null no_pos),pos) else r in
     let rec tt relop ae a pos = 
       let r = (relop ae a pos) in
+      Debug.info_hprint (add_str "relop" !print_p_formula) r no_pos;
       match r with
         | Lte (e1,e2,l) 
         | Gte (e2,e1,l) -> 
@@ -2484,7 +2491,8 @@ and build_relation_x relop alist10 alist20 lbl pos =
                 | Var (v,_), IConst(0,l) -> if (is_otype (type_of_spec_var v)) then Neq (e1,(Null no_pos),pos) else r
                 | IConst(0,l), Var (v,_) -> if (is_otype (type_of_spec_var v)) then Neq (e2,(Null no_pos),pos) else r
                 | _ -> r)
-        | _ -> r in  
+        | _ -> r in
+    print_endline "before tt";
     let tmp = BForm (((tt relop ae a pos), None),lbl) in
     if Gen.is_empty rest then
       tmp
@@ -2493,6 +2501,7 @@ and build_relation_x relop alist10 alist20 lbl pos =
       let tmp2 = mkAnd tmp tmp1 pos in
       tmp2 in
   let rec helper2 alist1 alist2 =
+    print_endline "inside helper2";
     let a = List.hd alist1 in
     let rest = List.tl alist1 in
     let tmp = helper1 a alist2 in

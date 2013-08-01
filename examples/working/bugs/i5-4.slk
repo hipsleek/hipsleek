@@ -1,0 +1,45 @@
+data node {
+	int val; 
+	node next;	
+}.
+
+pred ll<n> == self = null & n = 0 
+	or self::node<_, q> * q::ll<n-1> 
+  inv n >= 0.
+
+HeapPred H1(node y).
+HeapPred H2(node y).
+
+/*
+
+infer [y] true   |- y!=0.
+print residue.
+
+ <1>emp&((y+1)<=0 | 1<=y)&{FLOW,(19,20)=__norm}[]
+ inferred pure: [((y+1)<=0 | 1<=y)]
+
+# can we have simpler result, naemly y!=0
+
+*/
+
+infer [y] true   |- y!=null.
+print residue.
+
+
+/*
+
+
+infer [H2] H2(y)   |- y!=null.
+print residue.
+
+infer [H2] H2(y)   |- y::node<_,null>.
+print residue.
+
+infer [H2] b::node<1,y> * H2(y)   |- b::node<_,y>*y::node<_,null>.
+print residue.
+
+infer [H1,H2] b::node<1,y> * H2(y)*H1(x)   |- x::node<_,b>*b::node<_,y>*y::node<_,null>.
+print residue.
+
+
+*/
