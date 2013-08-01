@@ -1,0 +1,37 @@
+data node {
+ int val;
+ node next;
+}.
+
+HeapPred HP_2(node next_36_1, node@NI prev, node@NI sent).
+
+infer [HP_2]
+  emp&prev=null |- HP_2(prev,null,sent_964).
+print residue.
+
+/*
+ 
+should be valid with either:
+
+ HP_903(p,cur_943,s) --> HP_902(p,null,s),
+
+HP_3(p,_,s) ::= H2a(p,s)
+H2a(p,s) ::= H2(p,null,s)
+
+(i) prev=null ->  HP_2(prev,r,sent_964) & r=null.
+(ii) prev=null & r=null ->  HP_2(prev,r,sent_964).
+
+But these seem different?
+
+  p=null -> H(p,null,_)
+    H(p,null,_) = p=null \/ ..
+
+  p=null & r=null  -> H(p,r,_)
+    H(p,r,_) = p=null & r=null \/ ...
+
+
+
+  not(p=null) or H(p,null,_)
+
+  not(p=null & r=null) or H(p,r,_)
+*/
