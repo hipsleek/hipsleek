@@ -67,6 +67,10 @@ let is_int_typ sv = match sv with
   | SpecVar (Int,_,_) -> true
   | _ -> false
   
+let is_tmp_int sv = match sv with
+  | SpecVar (Int,str,_) ->  ((String.length str) > 5) && ((String.compare (String.sub str 0 5) "v_int") == 0)
+  | _ -> false
+
 let is_inf_sv sv = match sv with
   | SpecVar (Int,"ZInfinity",_) -> true
   | _ -> false
@@ -455,6 +459,12 @@ let is_const_or_var (f:exp) = match f with
 let is_const_exp (f:exp) = match f with
   | IConst _ -> true
   | FConst _ -> true
+  | _ -> false 
+
+let is_const_or_tmp (f:exp) = match f with
+  | IConst _ -> true
+  | FConst _ -> true
+  | Var(sv,_) -> is_tmp_int sv
   | _ -> false 
 
 (* is exp an infinity const *)
@@ -7707,12 +7717,38 @@ let filter_constraint_type (ante: formula) (conseq: formula) : (formula) =
 let pr = !print_formula in
 Debug.no_2 "filter_constraint_type" pr pr pr filter_constraint_type ante conseq
 
+let filter_constraint_type (ante: formula) (conseq: formula) : (formula) = 
+if (!Globals.enable_constraint_based_filtering) then 
+  let conseq_disjs = list_of_disjs conseq in 
+  if List.length conseq_disjs == 1 then
+  let disjs = list_of_disjs ante in 
+  let helper f = 
+  let antes = list_of_conjs ante in
+  (*let _ = List.map (fun c -> print_string ("Antes : "^(!print_formula c)^"\n")) antes in *)
+  let filtered_antes = if List.exists (fun c -> eq_pure_formula conseq c) antes then
+      List.filter (fun c -> eq_pure_formula conseq c) antes else 
+  if is_bag_constraint conseq then antes
+ (*List.filter (fun c -> is_bag_constraint c || contains_exists c)  antes*)
+  else List.filter (fun c -> not(is_bag_constraint c) || contains_exists c) antes in 
+  join_conjunctions filtered_antes in 
+  let filtered_disjs = List.map helper disjs in
+  join_disjunctions filtered_disjs 
+  else ante
+else ante
+
+let filter_constraint_type (ante: formula) (conseq: formula) : (formula) = 
+let pr = !print_formula in
+Debug.no_2 "filter_constraint_type" pr pr pr filter_constraint_type ante conseq
+
 let filter_ante (ante : formula) (conseq : formula) : (formula) =
 	let fvar = fv conseq in
     let ante = filter_var ante fvar in
 	let new_ante = if (!Globals.enable_constraint_based_filtering) then filter_constraint_type ante conseq else ante in
     new_ante
 
+let filter_ante (ante: formula) (conseq: formula) : (formula) = 
+let pr = !print_formula in
+Debug.no_2 "filter_ante" pr pr pr filter_ante ante conseq
 let filter_ante_wo_rel (ante : formula) (conseq : formula) : (formula) =
 	let fvar = fv conseq in
 	let fvar = List.filter (fun v -> not(is_rel_var v)) fvar in

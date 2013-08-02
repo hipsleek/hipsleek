@@ -245,6 +245,7 @@ module Make (Token : SleekTokenS)
    (*("variance", VARIANCE);*)
 	 ("while", WHILE);
    ("with", WITH);
+   ("XPURE",XPURE);
 	 (flow, FLOW flow);]
 }
   
@@ -309,7 +310,8 @@ rule tokenizer file_name = parse
   | '&' { AND }
   | "&*" { ANDSTAR }
   | "&&" { ANDAND }
-  | "*-" { STARMINUS }
+  | "U*" { UNIONSTAR }
+  | "-*" { STARMINUS }
   | "@" { AT }
   | "@@" { ATAT }
   | "@@[" { ATATSQ }

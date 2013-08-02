@@ -35,6 +35,7 @@ type typed_ident = (typ * ident)
 
 and mem_perm_formula = {mem_formula_exp : CP.exp;
 			mem_formula_exact : bool;
+            mem_formula_field_values : (ident * (CP.exp list)) list;
 			mem_formula_field_layout : (ident * (ann list)) list;
 			mem_formula_guards : CP.formula list; 
 }
@@ -191,6 +192,7 @@ and h_formula_star = {  h_formula_star_h1 : h_formula;
                         
 and h_formula_starminus = {  h_formula_starminus_h1 : h_formula;
                         h_formula_starminus_h2 : h_formula;
+                        h_formula_starminus_aliasing : aliasing_scenario;
                         h_formula_starminus_pos : loc }
 
 and h_formula_conj = { h_formula_conj_h1 : h_formula;
@@ -1240,11 +1242,11 @@ and mkStarH (f1 : h_formula) (f2 : h_formula) (pos : loc) = match f1 with
                        h_formula_star_h2 = f2;
                        h_formula_star_pos = pos }
                        
-and mkStarMinusH (f1 : h_formula) (f2 : h_formula) (pos : loc) (no: int) = 
+and mkStarMinusH (f1 : h_formula) (f2 : h_formula) (al: aliasing_scenario) (pos : loc) (no: int) = 
   let pr = !print_h_formula in
-  Debug.no_3 "mkStarMinusH" string_of_int pr pr pr (fun _ _ _ -> mkStarMinusH_x f1 f2 pos) no f1 f2
+  Debug.no_3 "mkStarMinusH" string_of_int pr pr pr (fun _ _ _ -> mkStarMinusH_x f1 f2 al pos) no f1 f2
 
-and mkStarMinusH_x (f1 : h_formula) (f2 : h_formula) (pos : loc) = match f1 with
+and mkStarMinusH_x (f1 : h_formula) (f2 : h_formula) (al: aliasing_scenario) (pos : loc) = match f1 with
   | HFalse -> HFalse
   | HEmp -> f2
   | _ -> match f2 with
@@ -1253,6 +1255,7 @@ and mkStarMinusH_x (f1 : h_formula) (f2 : h_formula) (pos : loc) = match f1 with
     | _ -> if (f1 = HTrue) && (f2 = HTrue) then HTrue 
            else StarMinus { h_formula_starminus_h1 = f1;
                        h_formula_starminus_h2 = f2;
+                       h_formula_starminus_aliasing = al;
                        h_formula_starminus_pos = pos }                       
 
 and mkConjH (f1 : h_formula) (f2 : h_formula) (pos : loc) = 
@@ -1353,7 +1356,7 @@ and combine_and_pure (f1:formula)(p:MCP.mix_formula)(f2:MCP.mix_formula):MCP.mix
 
 (*and combine_and_pure (f1:formula)(p:MCP.mix_formula)(f2:MCP.mix_formula):MCP.mix_formula*bool = 
 	let pr = pr_pair !print_mix_formula  (string_of_bool) in
-	Debug.no_3 "combine_and_pure" (!print_formula) (!print_mix_formula) (!print_mix_formula) pr 
+	Debug.ho_3 "combine_and_pure" (!print_formula) (!print_mix_formula) (!print_mix_formula) pr 
 	combine_and_pure_x f1 p f2 *)
 
 and sintactic_search (f:formula)(p:Cpure.formula):bool = match f with
@@ -1412,10 +1415,10 @@ and contains_phase (f : h_formula) : bool =  match f with
   | _ -> false
 
 
-and mkStarMinus_combine (f1 : formula) (f2 : formula) flow_tr (pos : loc) = 
+and mkStarMinus_combine (f1 : formula) (f2 : formula) flow_tr al (pos : loc) = 
   let h1, p1, fl1, t1, a1 = split_components f1 in
   let h2, p2, fl2, t2, a2 = split_components f2 in
-  let h = mkStarMinusH h1 h2 pos 9 in
+  let h = mkStarMinusH h1 h2 al pos 9 in
   let p,_ = combine_and_pure f1 p1 p2 in
   let t = mkAndType t1 t2 in
   let fl =  mkAndFlow fl1 fl2 flow_tr in
@@ -2651,9 +2654,11 @@ and h_subst sst (f : h_formula) =
 		h_formula_star_pos = pos})
   | StarMinus ({h_formula_starminus_h1 = f1; 
 					h_formula_starminus_h2 = f2; 
+                    h_formula_starminus_aliasing = al;
 					h_formula_starminus_pos = pos}) -> 
 		StarMinus ({h_formula_starminus_h1 = h_subst sst f1; 
 		h_formula_starminus_h2 = h_subst sst f2; 
+        h_formula_starminus_aliasing =  al;
 		h_formula_starminus_pos = pos})		
   | Phase ({h_formula_phase_rd = f1; 
 						h_formula_phase_rw = f2; 
@@ -2870,9 +2875,11 @@ and h_apply_one ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : h_formula) = m
 	    h_formula_star_pos = pos})
   | StarMinus ({h_formula_starminus_h1 = f1; 
 	h_formula_starminus_h2 = f2; 
+    h_formula_starminus_aliasing = al;
 	h_formula_starminus_pos = pos}) -> 
         StarMinus ({h_formula_starminus_h1 = h_apply_one s f1; 
 	    h_formula_starminus_h2 = h_apply_one s f2; 
+        h_formula_starminus_aliasing =  al;
 	    h_formula_starminus_pos = pos})	    
   | Phase ({h_formula_phase_rd = f1; 
 	h_formula_phase_rw = f2; 
@@ -3025,23 +3032,23 @@ and normalize_combine_star (f1 : formula) (f2 : formula) (pos : loc) =
   Debug.no_2 "normalize_combine_star" pr pr pr 
       (fun _ _ -> Gen.Profiling.no_1 "10_norm_comb_st"(normalize_combine_star_x f1 f2) pos) f1 f2
 
-and normalize_combine_starminus (f1 : formula) (f2 : formula) (pos : loc) = match f1 with
+and normalize_combine_starminus (f1 : formula) (f2 : formula) (al: aliasing_scenario) (pos : loc) = match f1 with
   | Or ({formula_or_f1 = o11; formula_or_f2 = o12; formula_or_pos = _}) ->
-        let eo1 = normalize_combine_starminus o11 f2 pos in
-        let eo2 = normalize_combine_starminus o12 f2 pos in
+        let eo1 = normalize_combine_starminus o11 f2 al pos in
+        let eo2 = normalize_combine_starminus o12 f2 al pos in
 		mkOr eo1 eo2 pos
   | _ -> begin
       match f2 with
 		| Or ({formula_or_f1 = o21; formula_or_f2 = o22; formula_or_pos = _}) ->
-			  let eo1 = normalize_combine_starminus f1 o21 pos in
-			  let eo2 = normalize_combine_starminus f1 o22 pos in
+			  let eo1 = normalize_combine_starminus f1 o21 al pos in
+			  let eo2 = normalize_combine_starminus f1 o22 al pos in
 			  mkOr eo1 eo2 pos
 		| _ -> begin
 			let rf1 = rename_bound_vars f1 in
 			let rf2 = rename_bound_vars f2 in
 			let qvars1, base1 = split_quantifiers rf1 in
 			let qvars2, base2 = split_quantifiers rf2 in
-			let new_base = mkStarMinus_combine base1 base2 Flow_combine pos in
+			let new_base = mkStarMinus_combine base1 base2 Flow_combine al pos in
 			let new_h, new_p, new_fl, new_t, new_a = split_components new_base in
 			let resform = mkExists (qvars1 @ qvars2) new_h new_p new_t new_fl new_a pos in (* qvars[1|2] are fresh vars, hence no duplications *)
 			resform
@@ -3943,9 +3950,11 @@ let trans_heap_hf fn hf0=
             h_formula_phase_pos = pos}
       | StarMinus { h_formula_starminus_h1 = hf1;
         h_formula_starminus_h2 = hf2;
+        h_formula_starminus_aliasing = a;
         h_formula_starminus_pos = pos} ->
             StarMinus { h_formula_starminus_h1 = helper hf1;
             h_formula_starminus_h2 = helper hf2;
+            h_formula_starminus_aliasing = a;
             h_formula_starminus_pos = pos}
       | ConjStar { h_formula_conjstar_h1 = hf1;
         h_formula_conjstar_h2 = hf2;
@@ -4556,6 +4565,7 @@ let partition_heap_consj_hf hf0=
             (ls1@ls2, n_rem)
     | StarMinus { h_formula_starminus_h1 = hf1;
       h_formula_starminus_h2 = hf2;
+      h_formula_starminus_aliasing = al;
       h_formula_starminus_pos = pos} ->
           let ls1, rem1 = helper hf1 in
           let ls2, rem2 = helper hf2 in
@@ -4565,6 +4575,7 @@ let partition_heap_consj_hf hf0=
             | (_,HEmp) -> rem1
             | _ -> StarMinus { h_formula_starminus_h1 = rem1;
               h_formula_starminus_h2 = rem2;
+              h_formula_starminus_aliasing = al;
               h_formula_starminus_pos = pos}
           ) in
           (ls1@ls2, n_rem)
@@ -4781,11 +4792,13 @@ and filter_irr_hp_lhs_hf hf relevant_vars=
         )
     | StarMinus { h_formula_starminus_h1 = hf1;
              h_formula_starminus_h2 = hf2;
+             h_formula_starminus_aliasing = al;
              h_formula_starminus_pos = pos} ->
         let n_hf1 = filter_irr_hp_lhs_hf hf1 relevant_vars in
         let n_hf2 = filter_irr_hp_lhs_hf hf2 relevant_vars in
         StarMinus { h_formula_starminus_h1 = n_hf1;
                h_formula_starminus_h2 = n_hf2;
+               h_formula_starminus_aliasing = al;
                h_formula_starminus_pos = pos}
     | Conj { h_formula_conj_h1 = hf1;
              h_formula_conj_h2 = hf2;
@@ -4846,11 +4859,13 @@ and filter_vars_hf hf rvs=
         )
     | StarMinus { h_formula_starminus_h1 = hf1;
              h_formula_starminus_h2 = hf2;
+             h_formula_starminus_aliasing = al;
              h_formula_starminus_pos = pos} ->
         let n_hf1 = filter_vars_hf hf1 rvs in
         let n_hf2 = filter_vars_hf hf2 rvs in
         StarMinus { h_formula_starminus_h1 = n_hf1;
                h_formula_starminus_h2 = n_hf2;
+               h_formula_starminus_aliasing = al;
                h_formula_starminus_pos = pos}        
     | Conj { h_formula_conj_h1 = hf1;
              h_formula_conj_h2 = hf2;
@@ -5055,11 +5070,13 @@ and subst_hprel_hf hf0 from_hps to_hp=
                 h_formula_star_pos = pos}
       | StarMinus {h_formula_starminus_h1 = hf1;
               h_formula_starminus_h2 = hf2;
+             h_formula_starminus_aliasing = al;
               h_formula_starminus_pos = pos} ->
           let n_hf1 = helper hf1 in
           let n_hf2 = helper hf2 in
           StarMinus {h_formula_starminus_h1 = n_hf1;
                 h_formula_starminus_h2 = n_hf2;
+             h_formula_starminus_aliasing = al;
                 h_formula_starminus_pos = pos}                
       | Conj { h_formula_conj_h1 = hf1;
              h_formula_conj_h2 = hf2;
@@ -5627,6 +5644,7 @@ and drop_hrel_hf hf hp_names=
         (newf, argsl1@argsl2)
     | StarMinus { h_formula_starminus_h1 = hf1;
              h_formula_starminus_h2 = hf2;
+             h_formula_starminus_aliasing = al;
              h_formula_starminus_pos = pos} ->
         let n_hf1,argsl1 = drop_hrel_hf hf1 hp_names in
         let n_hf2,argsl2 = drop_hrel_hf hf2 hp_names in
@@ -5637,6 +5655,7 @@ and drop_hrel_hf hf hp_names=
             | (_,HEmp) -> n_hf1
             | _ -> (StarMinus { h_formula_starminus_h1 = n_hf1;
               h_formula_starminus_h2 = n_hf2;
+             h_formula_starminus_aliasing = al;
               h_formula_starminus_pos = pos})
           ) in
         (newf, argsl1@argsl2)
@@ -5832,6 +5851,7 @@ and drop_hnodes_hf hf0 hn_names=
         (newf)
     | StarMinus { h_formula_starminus_h1 = hf1;
       h_formula_starminus_h2 = hf2;
+             h_formula_starminus_aliasing = al;
       h_formula_starminus_pos = pos} ->
           let n_hf1 = helper hf1 in
           let n_hf2 = helper hf2 in
@@ -5842,6 +5862,7 @@ and drop_hnodes_hf hf0 hn_names=
               | (_,HEmp) -> n_hf1
               | _ -> StarMinus { h_formula_starminus_h1 = n_hf1;
                 h_formula_starminus_h2 = n_hf2;
+             h_formula_starminus_aliasing = al;
                 h_formula_starminus_pos = pos}
             ) in
           (newf)
@@ -6044,11 +6065,13 @@ and drop_data_view_hrel_nodes_hf hf0 fn_data_select fn_view_select fn_hrel_selec
           res
     | StarMinus { h_formula_starminus_h1 = hf1;
       h_formula_starminus_h2 = hf2;
+             h_formula_starminus_aliasing = al;
       h_formula_starminus_pos = pos} ->
           let n_hf1 = helper hf1 in
           let n_hf2 = helper hf2 in
           StarMinus { h_formula_starminus_h1 = n_hf1;
           h_formula_starminus_h2 = n_hf2;
+             h_formula_starminus_aliasing = al;
           h_formula_starminus_pos = pos}
     | Conj { h_formula_conj_h1 = hf1;
       h_formula_conj_h2 = hf2;
@@ -6117,11 +6140,13 @@ and drop_data_view_hpargs_nodes_hf hf0 fn_data_select fn_view_select fn_hrel_sel
           res
     | StarMinus { h_formula_starminus_h1 = hf1;
       h_formula_starminus_h2 = hf2;
+      h_formula_starminus_aliasing = al;
       h_formula_starminus_pos = pos} ->
           let n_hf1 = helper hf1 in
           let n_hf2 = helper hf2 in
           StarMinus { h_formula_starminus_h1 = n_hf1;
           h_formula_starminus_h2 = n_hf2;
+          h_formula_starminus_aliasing = al;
           h_formula_starminus_pos = pos}
     | Conj { h_formula_conj_h1 = hf1;
       h_formula_conj_h2 = hf2;
@@ -6243,11 +6268,13 @@ let rec subst_hrel_hf hf hprel_subst=
               h_formula_star_pos = pos}
     | StarMinus {h_formula_starminus_h1 = hf1;
             h_formula_starminus_h2 = hf2;
+             h_formula_starminus_aliasing = al;
             h_formula_starminus_pos = pos} ->
         let n_hf1 = subst_hrel_hf hf1 hprel_subst in
         let n_hf2 = subst_hrel_hf hf2 hprel_subst in
         StarMinus {h_formula_starminus_h1 = n_hf1;
               h_formula_starminus_h2 = n_hf2;
+             h_formula_starminus_aliasing = al;
               h_formula_starminus_pos = pos}              
     | Conj { h_formula_conj_h1 = hf1;
              h_formula_conj_h2 = hf2;
@@ -6349,11 +6376,13 @@ and subst_hrel_hview_hf hf0 subst=
               h_formula_star_pos = pos}
      | StarMinus {h_formula_starminus_h1 = hf1;
               h_formula_starminus_h2 = hf2;
+             h_formula_starminus_aliasing = al;
               h_formula_starminus_pos = pos} ->
           let n_hf1 = helper2 hf1 in
           let n_hf2 = helper2 hf2 in
         StarMinus {h_formula_starminus_h1 = n_hf1;
               h_formula_starminus_h2 = n_hf2;
+             h_formula_starminus_aliasing = al;
               h_formula_starminus_pos = pos}              
     | Conj { h_formula_conj_h1 = hf1;
              h_formula_conj_h2 = hf2;
@@ -7666,6 +7695,8 @@ let add_infer_rel_to_list_context cp (l : list_context) : list_context  =
 let add_infer_pre f_ctx ctx =
   let ch = collect_pre_heap f_ctx in
   if (ch!=[]) then
+    if(!Globals.pa) then add_infer_heap_to_ctx ch ctx
+    else 
     let _ = print_endline "ERROR : non-pure heap inferred for false" in
     report_error no_pos ("add_infer_pre: non-pure inferred heap :"^(!print_context f_ctx))
   else

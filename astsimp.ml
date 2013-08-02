@@ -156,7 +156,15 @@ let _ =
 let array_update_call = "update___"
 let array_access_call = "array_get_elm_at___"
 let array_allocate_call = "aalloc___"
-      
+
+let get_binop_call_safe_int (bop : I.bin_op) : ident =
+  match bop with
+  | I.OpPlus -> "safe_sadd___"
+  | _ -> (try Hashtbl.find op_map bop
+         with
+           | Not_found -> failwith
+               ("binary operator " ^ ((Iprinter.string_of_binary_op bop) ^ " is not supported")))
+	  
 let get_binop_call (bop : I.bin_op) : ident =
   try Hashtbl.find op_map bop
   with
@@ -169,7 +177,7 @@ let assign_op_to_bin_op_map =
   [ (I.OpPlusAssign, I.OpPlus); (I.OpMinusAssign, I.OpMinus);
     (I.OpMultAssign, I.OpMult); (I.OpDivAssign, I.OpDiv);
     (I.OpModAssign, I.OpMod) ]
-  
+
 let bin_op_of_assign_op (aop : I.assign_op) =
   List.assoc aop assign_op_to_bin_op_map
 
@@ -811,7 +819,13 @@ let rec trans_prog (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_decl
               let _ = print_string ("Eliminating pointers...PASSED \n"); flush stdout in
               new_prog
             else prog
-          in
+          in 
+          let prog = 
+            if (!Globals.infer_mem) then 
+              let infer_views =  List.map (fun c -> Mem.infer_mem_specs c prog) prog.I.prog_view_decls in
+              {prog with I.prog_view_decls = infer_views}
+            else prog 
+          in 
           (***************************************************)
 	  (* let _ =  print_endline " after case normalize" in *)
           (* let _ = I.find_empty_static_specs prog in *)
@@ -1254,7 +1268,7 @@ and trans_view_x (prog : I.prog_decl) ann_typs (vdef : I.view_decl): C.view_decl
               (n_tl,trans_view_mem vdef.I.view_mem n_tl)
         | None -> (n_tl,None)
   ) in 
-  let inv = Mem.add_mem_invariant inv vdef.I.view_mem in
+  let inv = if(!Globals.allow_mem) then Mem.add_mem_invariant inv vdef.I.view_mem else inv in
   let n_tl = gather_type_info_pure prog inv n_tl in 
   let inv_pf = trans_pure_formula inv n_tl in   
   (* Thai : pf - user given invariant in core form *) 
@@ -1324,7 +1338,7 @@ SpecVar (_, n, _) -> vdef.I.view_vars <- vdef.I.view_vars @ [n];
       let cf = CF.struc_formula_set_lhs_case false cf in
       (* Thai : we can compute better pure inv named new_pf here that 
          should be stronger than pf *)
-      let new_pf = (*Fixcalc.compute_inv vdef.I.view_name view_sv_vars n_un_str*) inv_pf in
+      let new_pf = Fixcalc.compute_inv vdef.I.view_name view_sv_vars n_un_str inv_pf in
       let memo_pf_P = MCP.memoise_add_pure_P (MCP.mkMTrue pos) new_pf in
       let memo_pf_N = MCP.memoise_add_pure_N (MCP.mkMTrue pos) new_pf in
       let xpure_flag = TP.check_diff memo_pf_N memo_pf_P in
@@ -2717,7 +2731,21 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
                   I.exp_call_nrecv_pos = pos;}in 
               helper new_e)
             else
-              (let b_call = get_binop_call b_op in
+              (let b_call = if !Globals.check_integer_overflow then (let func exp = match exp with
+                | I.Var v -> Some([v.I.exp_var_name])
+                | _ -> Some([]) in
+              let e1_vars = I.fold_exp e1 func List.flatten [] in
+              (*let _ = print_string ("\ne1_vars: "^(String.concat " " e1_vars)) in*)
+              let e2_vars = I.fold_exp e2 func List.flatten [] in
+              (*let _ = print_string ("\ne2_vars: "^(String.concat " " e2_vars)) in*)
+              let local_vars = List.map (fun (t,id) -> id) (E.names_on_top ()) in
+              (*let _ = print_string ("\nlocal_vars: "^(String.concat " " local_vars)) in*)
+              let flag1 = List.for_all (fun c -> List.mem c local_vars) e1_vars in
+              let flag2 = List.for_all (fun c -> List.mem c local_vars) e2_vars in
+              if flag1 && flag2 then get_binop_call b_op
+              else get_binop_call_safe_int b_op
+               )
+              else get_binop_call b_op in
               let new_e = I.CallNRecv {
                   I.exp_call_nrecv_method = b_call;
                   I.exp_call_nrecv_lock = None;
@@ -3359,6 +3387,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
                         I.exp_call_nrecv_path_id = pid;
                         I.exp_call_nrecv_pos = pos;} in helper call_e
               | I.OpPostInc ->
+                  if not (!Globals.check_integer_overflow) then 
                     let fn = (fresh_var_name "int" pos.start_pos.Lexing.pos_lnum) in
                     let fn_decl = I.VarDecl{
                         I.exp_var_decl_type = I.int_type;
@@ -3385,6 +3414,19 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
                         I.exp_seq_exp2 = seq1;
                         I.exp_seq_pos = pos; } in
                     helper (I.Block { I.exp_block_local_vars = [];I.exp_block_body = seq2; I.exp_block_jump_label = I.NoJumpLabel; I.exp_block_pos = pos;})
+                  else 
+                    let add1_e = I.Binary {
+                        I.exp_binary_op = I.OpPlus;
+                        I.exp_binary_oper1 = e;
+                        I.exp_binary_oper2 = I.IntLit { I.exp_int_lit_val = 1; I.exp_int_lit_pos = pos; };
+                        I.exp_binary_path_id = pid;
+                        I.exp_binary_pos = pos; } in
+                     helper (I.Assign {
+                        I.exp_assign_op = I.OpAssign;
+                        I.exp_assign_lhs = e;
+                        I.exp_assign_rhs = add1_e;
+                        I.exp_assign_path_id = None;
+                        I.exp_assign_pos = pos;})                     
               | I.OpPostDec -> 
                     let fn = (fresh_var_name "int" pos.start_pos.Lexing.pos_lnum) in
                     let fn_decl = I.VarDecl {
@@ -4913,7 +4955,7 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
                       IF.h_formula_starminus_pos = pos} ->
           let (lf1, type1, newvars1, n_tl) = linearize_heap f1 pos tl in
           let (lf2, type2, newvars2, n_tl) = linearize_heap f2 pos n_tl in
-          let tmp_h = CF.mkStarMinusH lf1 lf2 pos 1 in
+              let tmp_h = CF.mkStarMinusH lf1 lf2 Not_Aliased pos 1 in
           let tmp_type = CF.mkAndType type1 type2 in 
           (tmp_h, tmp_type, newvars1 @ newvars2, n_tl)
       | IF.Phase { IF.h_formula_phase_rd = f1;
@@ -7388,9 +7430,16 @@ and trans_mem_formula (imem : IF.mem_formula) (tlist:spec_var_type_list) : CF.me
     let helpl1, helpl2 = List.split imem.IF.mem_formula_field_layout in
     let helpl2 = List.map trans_field_layout helpl2 in
     let guards = List.map (fun c -> trans_pure_formula c tlist) imem.IF.mem_formula_guards in 
+    let field_values = List.map (fun c -> (fst c), 
+      (List.map (fun a -> match a with
+        | IP.Var ((ve, pe), pos_e) -> CP.Var(trans_var_safe (ve, pe) UNK tlist pos_e,pos_e)
+        | IP.IConst(i,pos) -> CP.IConst(i,pos)
+        | _ -> raise Not_found
+       ) (snd c))) imem.IF.mem_formula_field_values in
     let meml = List.combine helpl1 helpl2 in
             {CF.mem_formula_exp  = mem_exp;
             CF.mem_formula_exact = imem.IF.mem_formula_exact;
+            CF.mem_formula_field_values = field_values;
             CF.mem_formula_field_layout =  meml;
             CF.mem_formula_guards = guards}
             
@@ -7416,7 +7465,7 @@ and check_mem_formula_guards_disjoint (fl: CP.formula list) : bool =
     Tpdispatcher.is_sat_sub_no 14 (Cpure.Not (f,None,no_pos)) sat_subno
 
 and validate_mem_spec (prog : C.prog_decl) (vdef: C.view_decl) = 
-    let vn = vdef.C.view_name in
+    if not(!Globals.allow_mem) then () else
     match vdef.C.view_mem with
     | Some a -> let pos = CF.pos_of_struc_formula vdef.C.view_formula in 
             let list_of_disjuncts = fst (List.split vdef.C.view_un_struc_formula) in 
@@ -7434,10 +7483,10 @@ and validate_mem_spec (prog : C.prog_decl) (vdef: C.view_decl) =
                 if flag then if not (check_mem_formula_guards_disjoint a.CF.mem_formula_guards) then () 
               else Err.report_error {
             Err.error_loc = pos;
-            Err.error_text = "[mem.ml] : Memory Guards of "^ vdef.C.view_name ^" are not exhaustive ";} 
+			Err.error_text = "[astsimp.ml] : Memory Guards of "^ vdef.C.view_name ^" are not exhaustive ";} 
                 else 
             Err.report_error {Err.error_loc = pos;
-            Err.error_text = "[astsimp.ml] : Mem Spec for "^vn^" does not entail supplied invariant";}
+            Err.error_text = "[astsimp.ml] : Mem Spec for "^vdef.C.view_name^" does not entail supplied invariant";}
             (*let calcmem = 
             MCP.simpl_memo_pure_formula Solver.simpl_b_formula Solver.simpl_pure_formula calcmem (TP.simplify_a 10) in 
             let lhs = CF.formula_of_mix_formula vdef.C.view_x_formula pos in

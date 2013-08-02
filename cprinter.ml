@@ -127,12 +127,12 @@ let op_and_short = "&"
 let op_or_short = "|"  
 let op_not_short = "!"  
 let op_star_short = "*"  
-let op_starminus_short = "*-" 
+let op_starminus_short = "-*" 
 let op_phase_short = ";"  
-let op_conj_short = "&"  
+let op_conj_short = "U*"  
 let op_conjsep_short = "/&\\"  
 let op_conjstar_short = "&*" 
-let op_conjconj_short = "&&" 
+let op_conjconj_short = "&" 
 let op_f_or_short = "or"  
 let op_lappend_short = "APP"
 let op_cons_short = ":::"
@@ -158,11 +158,11 @@ let op_and = " & "
 let op_or = " | "  
 let op_not = "!"  
 let op_star = " * "  
-let op_starminus = " *- " 
+let op_starminus = " -* " 
 let op_phase = " ; "  
-let op_conj = " & "  
+let op_conj = " U* "  
 let op_conjstar = " &* " 
-let op_conjconj = " && " 
+let op_conjconj = " & " 
 let op_f_or = "or" 
 let op_lappend = "append"
 let op_cons = ":::"
@@ -877,7 +877,7 @@ let string_of_iast_label_table table =
   in
   List.fold_right (fun row res -> (string_of_row row) ^ res) table ""
 
-let pr_int_label (i,s) = fmt_string (string_of_int i)
+
 let pr_formula_label_br l = fmt_string (string_of_formula_label_pr_br l "")
 let pr_formula_label l  = fmt_string (string_of_formula_label l "")
 let pr_formula_label_list l  = fmt_string ("{"^(String.concat "," (List.map (fun (i,_)-> (string_of_int i)) l))^"}")
@@ -1000,6 +1000,13 @@ let string_of_ms (m:(P.spec_var list) list) : string =
 let pr_mem_formula  (e : mem_formula) = 
   fmt_string (string_of_ms e.mem_formula_mset)
 
+let pr_aliasing_scenario (al :aliasing_scenario) = 
+ match al with
+   | Not_Aliased -> fmt_string "[Not]"
+   | May_Aliased -> fmt_string "[May]"
+   | Must_Aliased -> fmt_string "[Must]"
+   | Partial_Aliased -> fmt_string "[Partial]"
+
 (** print a mem formula to formatter *)
 (* let rec pr_mem_formula  (e : mem_formula) =  *)
 (*   match e.mem_formula_mset with *)
@@ -1023,11 +1030,12 @@ let rec pr_h_formula h =
           let arg2 = bin_op_to_list op_star_short h_formula_assoc_op h2 in
           let args = arg1@arg2 in
           pr_list_op op_star f_b args
-    | StarMinus ({h_formula_starminus_h1 = h1; h_formula_starminus_h2 = h2; h_formula_starminus_pos = pos}) -> 
-	      let arg1 = bin_op_to_list op_starminus_short h_formula_assoc_op h1 in
-          let arg2 = bin_op_to_list op_starminus_short h_formula_assoc_op h2 in
+    | StarMinus ({h_formula_starminus_h1 = h1; h_formula_starminus_h2 = h2; h_formula_starminus_aliasing = al;
+                  h_formula_starminus_pos = pos}) -> 
+	      let arg1 = bin_op_to_list op_starminus_short h_formula_assoc_op h2 in
+          let arg2 = bin_op_to_list op_starminus_short h_formula_assoc_op h1 in
           let args = arg1@arg2 in
-          pr_list_op op_starminus f_b args          
+          pr_aliasing_scenario al; pr_list_op op_starminus f_b args          
     | Phase ({h_formula_phase_rd = h1; h_formula_phase_rw = h2; h_formula_phase_pos = pos}) -> 
 	      let arg1 = bin_op_to_list op_phase_short h_formula_assoc_op h1 in
           let arg2 = bin_op_to_list op_phase_short h_formula_assoc_op h2 in
@@ -2239,7 +2247,7 @@ let string_of_mix_formula_list l = "["^(string_of_mix_formula_list_noparen l)^"]
 
 let pr_case_guard c = 
   fmt_string "{";
-  pr_seq "\n" (fun (c1,c2)-> pr_b_formula c1 ;fmt_string "->"; pr_seq_nocut "," pr_int_label c2) c;
+  pr_seq "\n" (fun (c1,c2)-> pr_b_formula c1 ;fmt_string "->"; pr_seq_nocut "," pr_formula_label c2) c;
   fmt_string "}"
 
 let string_of_case_guard c = poly_string_of_pr pr_case_guard c
@@ -3519,11 +3527,11 @@ let html_op_and = " &and; "
 let html_op_or = " &or; "  
 let html_op_not = " &not; "  
 let html_op_star = " &lowast; "
-let html_op_starminus = " &lowast;- "   
+let html_op_starminus = " -&lowast; "   
 let html_op_phase = " ; "  
-let html_op_conj = " &and; "  
+let html_op_conj = " U&and; "  
 let html_op_conjstar = " &and;&lowast; " 
-let html_op_conjconj = " &and;&and; " 
+let html_op_conjconj = " &and; " 
 let html_op_f_or = " <b>or</b> " 
 let html_op_lappend = "<b>append</b>"
 let html_op_cons = " ::: "
@@ -3664,8 +3672,8 @@ let rec html_of_h_formula h = match h with
 	| StarMinus ({h_formula_starminus_h1 = h1;
 			h_formula_starminus_h2 = h2;
 			h_formula_starminus_pos = pos}) -> 
-		let arg1 = bin_op_to_list op_starminus_short h_formula_assoc_op h1 in
-		let arg2 = bin_op_to_list op_starminus_short h_formula_assoc_op h2 in
+		let arg1 = bin_op_to_list op_starminus_short h_formula_assoc_op h2 in
+		let arg2 = bin_op_to_list op_starminus_short h_formula_assoc_op h1 in
 		let args = arg1@arg2 in
 			String.concat html_op_starminus (List.map html_of_h_formula args)			
 	| Phase ({h_formula_phase_rd = h1;

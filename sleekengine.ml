@@ -153,9 +153,9 @@ let check_data_pred_name name :bool =
   let pr1 x = x in
   let pr2 = string_of_bool in
   Debug.no_1 "check_data_pred_name" pr1 pr2 (fun _ -> check_data_pred_name name) name
-    
+
 let silenced_print f s = if !Globals.silence_output then () else f s 
-	
+
 let process_pred_def pdef = 
   (* TODO : how come this method not called? *)
   (* let _ = print_string ("process_pred_def:" *)
@@ -223,6 +223,10 @@ let process_pred_def_4_iast pdef =
 
 (*should call AS.convert_pred_to_cast*)
 let convert_pred_to_cast () = 
+  let infer_views = if (!Globals.infer_mem) 
+    then List.map (fun c -> Mem.infer_mem_specs c iprog) iprog.I.prog_view_decls 
+    else iprog.I.prog_view_decls in 
+  iprog.I.prog_view_decls <- infer_views; 
   let tmp_views = (AS.order_views (iprog.I.prog_view_decls)) in
   Debug.tinfo_pprint "after order_views" no_pos;
   let _ = Iast.set_check_fixpt iprog.I.prog_data_decls tmp_views in
@@ -1256,7 +1260,7 @@ let print_exc (check_id: string) =
 (*   None       -->  forbid residue in RHS when the option --classic is turned on *)
 (*   Some true  -->  always check entailment exactly (no residue in RHS)          *)
 (*   Some false -->  always check entailment inexactly (allow residue in RHS)     *)
-let process_entail_check_x (iante : meta_formula) (iconseq : meta_formula) (etype : entail_type):bool =
+let process_entail_check_x (iante : meta_formula) (iconseq : meta_formula) (etype : entail_type) =
   let nn = (sleek_proof_counter#inc_and_get) in
   let num_id = "\nEntail "^(string_of_int nn) in
     try 
@@ -1273,7 +1277,7 @@ let process_entail_check_x (iante : meta_formula) (iconseq : meta_formula) (etyp
 (*   None       -->  forbid residue in RHS when the option --classic is turned on *)
 (*   Some true  -->  always check entailment exactly (no residue in RHS)          *)
 (*   Some false -->  always check entailment inexactly (allow residue in RHS)     *)
-let process_entail_check (iante : meta_formula) (iconseq : meta_formula) (etype: entail_type):bool =
+let process_entail_check (iante : meta_formula) (iconseq : meta_formula) (etype: entail_type) =
   let pr = string_of_meta_formula in
   Debug.no_2 "process_entail_check_helper" pr pr (fun _ -> "?") process_entail_check_x iante iconseq etype
 
