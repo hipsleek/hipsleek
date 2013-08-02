@@ -113,28 +113,30 @@ and omega_of_b_formula b =
   | SubAnn (a1, a2, _) -> (omega_of_exp a1) ^ " <= " ^ (omega_of_exp a2)
   (* | LexVar (_, a1, a2, _) -> "(0=0)" *)
   | Eq (a1, a2, _) -> begin
-        if is_null a2 then
-          omega_ptr_eq_null a1
-          (* let v= omega_of_exp a1 in *)
-          (* if !Globals.ptr_to_int_exact then *)
-          (*   ("("^v^" < 1)") *)
-          (* else ("("^v^" = 0)") *)
-          (* ("("^v^" < 1 && "^v^" = xxxnull)") *)
-        else if is_null a1 then 
-          omega_ptr_eq_null a2
-          (* let v= omega_of_exp a2 in *)
-          (* ("("^v^" < 1)") *)
-          (* ("("^v^ " < 1 && "^v^" = xxxnull)") *)
-        else (omega_of_exp a1) ^ " = " ^ (omega_of_exp a2)
+        (* if is_null a2 then *)
+        (*   omega_ptr_eq_null a1 *)
+        (*   (\* let v= omega_of_exp a1 in *\) *)
+        (*   (\* if !Globals.ptr_to_int_exact then *\) *)
+        (*   (\*   ("("^v^" < 1)") *\) *)
+        (*   (\* else ("("^v^" = 0)") *\) *)
+        (*   (\* ("("^v^" < 1 && "^v^" = xxxnull)") *\) *)
+        (* else if is_null a1 then  *)
+        (*   omega_ptr_eq_null a2 *)
+        (*   (\* let v= omega_of_exp a2 in *\) *)
+        (*   (\* ("("^v^" < 1)") *\) *)
+        (*   (\* ("("^v^ " < 1 && "^v^" = xxxnull)") *\) *)
+        (* else  *)
+          (omega_of_exp a1) ^ " = " ^ (omega_of_exp a2)
   end
   | Neq (a1, a2, _) -> begin
-        if is_null a2 then
-          omega_ptr_neq_null a1
-              (* (omega_of_exp a1) ^ " > 0" *)
-        else if is_null a1 then
-          omega_ptr_neq_null a2
-          (* (omega_of_exp a2) ^ " > 0" *)
-        else (omega_of_exp a1)^ " != " ^ (omega_of_exp a2)
+        (* if is_null a2 then *)
+        (*   omega_ptr_neq_null a1 *)
+        (*       (\* (omega_of_exp a1) ^ " > 0" *\) *)
+        (* else if is_null a1 then *)
+        (*   omega_ptr_neq_null a2 *)
+        (*   (\* (omega_of_exp a2) ^ " > 0" *\) *)
+        (* else  *)
+          (omega_of_exp a1)^ " != " ^ (omega_of_exp a2)
     end
   | EqMax (a1, a2, a3, _) ->
       let a1str = omega_of_exp a1 in

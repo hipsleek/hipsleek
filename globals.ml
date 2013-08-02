@@ -734,7 +734,7 @@ let infer_mem = ref false
 
 let pa = ref false
 
-let allow_inf = ref true (*enable support to use infinity (\inf and -\inf) in formulas *)
+let allow_inf = ref false (*enable support to use infinity (\inf and -\inf) in formulas *)
 
 let ann_derv = ref false
 

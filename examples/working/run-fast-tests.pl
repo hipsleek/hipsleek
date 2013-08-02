@@ -206,10 +206,10 @@ $output_file = "log";
 	],
 	# END OF ARRAY TESTING EXAMPLES
 	"hip_tr"=>[["trees.ss",1,"insert"]],
-	"infinity" =>[["bst-inf.ss",2,"--dsd","delete","SUCCESS","remove_min","SUCCESS"],
-	["inf-selsort.ss",3,"--dsd --en-disj-compute","find_min","SUCCESS","delete_min","SUCCESS","selection_sort","SUCCESS"],
-	["inf-ins.ss",1,"--dsd","insert","SUCCESS"],
-	["inf-sel.ss",3,"--dsd","find_min","SUCCESS","delete_min","SUCCESS","selection_sort","SUCCESS"],
+	"infinity" =>[["bst-inf.ss",2,"--dsd --en-inf","delete","SUCCESS","remove_min","SUCCESS"],
+	["inf-selsort.ss",3,"--dsd --en-disj-compute --en-inf","find_min","SUCCESS","delete_min","SUCCESS","selection_sort","SUCCESS"],
+	["inf-ins.ss",1,"--dsd --en-inf","insert","SUCCESS"],
+	["inf-sel.ss",3,"--dsd --en-inf","find_min","SUCCESS","delete_min","SUCCESS","selection_sort","SUCCESS"],
 	],
     "imm" =>[ 
         ["bigint.ss",17,  " --imm -tp redlog",
@@ -1239,7 +1239,7 @@ $output_file = "log";
                       ["classic/classic2.slk", "", "", "Fail.Valid.Valid.Valid.Fail.Valid.Fail.Fail."],
                       ["classic/classic3.slk", "", "", "Valid.Valid.Valid.Valid.Valid.Valid.Fail.Fail."],
                       ["classic/classic4.slk", "", "", "Valid.Fail.Valid.Fail.Valid.Fail.Valid.Fail."],
-                      ["infinity.slk","--dsd","",                      "Fail.Valid.Valid.Fail.Valid.Valid.Fail.Valid.Valid.Valid.Fail.Valid.Valid.Fail.Fail.Valid.Fail.Valid.Fail.Fail.Valid.Valid.Fail.Valid.Fail.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Fail.Valid.Valid.Valid.Fail.Valid.Valid.Valid.Fail.Fail.Fail.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Valid.Fail.Fail.Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Fail.Valid.Valid.Valid.Valid.Valid."]
+                      ["infinity.slk","--dsd --en-inf","",                      "Fail.Valid.Valid.Fail.Valid.Valid.Fail.Valid.Valid.Valid.Fail.Valid.Valid.Fail.Fail.Valid.Fail.Valid.Fail.Fail.Valid.Valid.Fail.Valid.Fail.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Fail.Valid.Valid.Valid.Fail.Valid.Valid.Valid.Fail.Fail.Fail.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Valid.Fail.Fail.Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Fail.Valid.Valid.Valid.Valid.Valid."]
                       ],
 		"sleek_barr"=>[["../tree_shares/barrier.slk", "--eps --dis-field-ann --dis-precise-xpure -perm dperm", "Barrrier b1n Success.Barrrier b3n Fail:  frames do not match (1->2).Barrrier b2n Fail:  contradiction in post for transition (1->2).Barrrier b4n Fail:  no contradiction found in preconditions of transitions from 1  for preconditions: .", ""],
 				  ["../tree_shares/barrier3.slk", "--eps --dis-field-ann --dis-precise-xpure -perm dperm", "Barrrier b1n Success.Barrrier b3n Fail:  frames do not match (1->2).Barrrier b2n Fail:  contradiction in post for transition (1->2).", ""]

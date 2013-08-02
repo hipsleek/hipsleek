@@ -230,6 +230,7 @@ let process_source_full source =
   let _ = Gen.Profiling.pop_time "Process compare file" in
   (* Remove all duplicated declared prelude *)
   let header_files = Gen.BList.remove_dups_eq (=) !Globals.header_file_list in (*prelude.ss*)
+  let header_files = if (!Globals.allow_inf) then "\"prelude_inf.ss\""::header_files else header_files in
   let new_h_files = process_header_with_pragma header_files !Globals.pragma_list in
   let prims_list = process_primitives new_h_files in (*list of primitives in header files*)
   let prims_incls = process_include_files prog.Iast.prog_include_decls source in
