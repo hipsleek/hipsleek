@@ -1777,7 +1777,7 @@ let infer_collect_rel is_sat estate lhs_h_mix lhs_mix rhs_mix pos =
   let pr_neg_lhs = pr_option (pr_pair pr2 !CP.print_formula) in
   let pr2 (es,l,r,p,a) = 
     pr_penta pr1 pr1 (pr_list CP.print_lhs_rhs) pr_neg_lhs pr_rel_ass (l,r,es.es_infer_rel,p,a) in
-  Debug.no_4 "infer_collect_rel" pr0 pr1 pr1 pr1 pr2
+  Debug.ho_4 "infer_collect_rel" pr0 pr1 pr1 pr1 pr2
     (fun _ _ _ _ -> 
       infer_collect_rel is_sat estate lhs_h_mix lhs_mix rhs_mix pos) 
     estate.es_infer_vars_rel lhs_h_mix lhs_mix rhs_mix
