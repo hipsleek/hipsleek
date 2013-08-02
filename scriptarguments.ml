@@ -227,6 +227,7 @@ let common_arguments = [
   ("--reverify-all", Arg.Set Globals.reverify_all_flag,"enable re-verification after heap specification inference");
   ("--dis-imm", Arg.Clear Globals.allow_imm,"disable the use of immutability annotations");
   ("--dis-inf", Arg.Clear Globals.allow_inf,"disable support for infinity ");
+  ("--en-inf", Arg.Set Globals.allow_inf,"enable support for infinity ");
   ("--dsd", Arg.Set Globals.deep_split_disjuncts,"enable deep splitting of disjunctions");
   ("--ioc", Arg.Set Globals.check_integer_overflow,"Enable Integer Overflow Checker");
   ("--no-coercion", Arg.Clear Globals.use_coercion,
