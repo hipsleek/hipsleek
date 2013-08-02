@@ -792,6 +792,21 @@ checkentail true &
  |- true & 
      ["n":y>5].
 ===================================================================
+# ll-back-3a.ss
+
+This example works in default but not sa_logging branch!
+
+Parsing file "ll-back-3a.ss" by default parser...
+
+!!!  processing primitives "["prelude.ss"]
+Starting Omega...oc
+
+!!! dumping for finalize on hipStop Omega... 1 invocations caught
+(Program not linked with -g, cannot print stack backtrace)
+
+Exception occurred: Not_found
+Error3(s) detected at main 
+
 ====================================================================
 ===================================================================
 ===================================================================

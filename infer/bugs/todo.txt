@@ -23,6 +23,32 @@ print residue.
 # can we have simpler result, namely y!=0
 
 ========================================================================
+# i7-6a.slk
+
+Below needs to split the disjunct more deeply,
+and return Some(..)
+
+infer [n] q::ll<m>@M&n=m+1 |-  emp&q=null.
+
+imply_mix_formula#1@2
+imply_mix_formula#1 inp1 : n=1+m & 0<=m
+imply_mix_formula#1 inp2 :Some( n=1+m & (((1<=m & q!=null) | (m=0 & q=null))))
+imply_mix_formula#1 inp3 : q=null
+imply_mix_formula#1 inp4 : []
+imply_mix_formula#1@2 EXIT out :(false,None)
+
+# i7-6b.slk split outer disj on LHS
+
+infer [n] (q=null & m=0 & m=n-1 & n>=0 | q!=null & m>0 & m=n-1 & n>=0) |- q=null.
+
+imply_mix_formula#1@1
+imply_mix_formula#1 inp1 : ((q=null & m=0 & n=m+1 & 0<=n) | (q!=null & 0<m & n=m+1 & 0<=n))
+imply_mix_formula#1 inp2 :None
+imply_mix_formula#1 inp3 : q=null
+imply_mix_formula#1 inp4 : []
+imply_mix_formula#1@1 EXIT out :(false,Some(([ q=null & m=0 & n=m+1 & 0<=n, q!=null & 0<m & n=m+1 & 0<=n],[])))
+
+
 ========================================================================
 ========================================================================
 ========================================================================

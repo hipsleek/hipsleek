@@ -71,12 +71,12 @@ let rel_ass_stk : hprel Gen.stack_pr = new Gen.stack_pr
 let scc_rel_ass_stk : hprel Gen.stack_pr = new Gen.stack_pr 
   Cprinter.string_of_hprel_short (==)
 
-let dump_rel_ass s = 
-  DD.info_pprint "==========================================";
-  DD.info_pprint (" Relational Assumption "^s);
-  DD.info_pprint "==========================================";
-  DD.info_pprint (rel_ass_stk # string_of_reverse_log);
-  DD.info_pprint "=========================================="
+(* let dump_rel_ass s =  *)
+(*   DD.info_pprint "=========================================="; *)
+(*   DD.info_pprint (" Relational Assumption "^s); *)
+(*   DD.info_pprint "=========================================="; *)
+(*   DD.info_pprint (rel_ass_stk # string_of_reverse_log); *)
+(*   DD.info_pprint "==========================================" *)
 
 let no_infer_vars estate = (estate.es_infer_vars == []) 
 
@@ -315,7 +315,8 @@ let get_args_h_formula aset (h:h_formula) =
           if (!Globals.allow_imm) then
             Some (root, arg,new_arg, [av],
             DataNode {h with h_formula_data_arguments=new_arg;
-              h_formula_data_imm = mkPolyAnn av})
+              h_formula_data_imm = mkPolyAnn av;
+              h_formula_data_param_imm = List.map (fun c -> mkConstAnn 0) h.h_formula_data_param_imm })
           else
             Some (root, arg,new_arg, [],
             DataNode {h with h_formula_data_arguments=new_arg})
@@ -2183,7 +2184,7 @@ out: list of program variables of mismatching node
 let get_prog_vars_x prog_hps rhs_unmatch proving_kind =
   match rhs_unmatch with
     | CF.HRel (hp, eargs,_) ->
-        if proving_kind = "POST" && CP.mem_svl hp prog_hps then
+        if proving_kind = PK_POST && CP.mem_svl hp prog_hps then
           ([hp],(List.fold_left List.append [] (List.map CP.afv eargs)))
         else [],[]
     | _ -> [],[]
@@ -2191,7 +2192,7 @@ let get_prog_vars_x prog_hps rhs_unmatch proving_kind =
 let get_prog_vars prog_hps rhs_unmatch proving_kind =
   let pr1 = !CP.print_svl in
   let pr2 = Cprinter.string_of_h_formula in
-  let pr3 s= s (* Log.string_of_sleek_proving_kind *) in
+  let pr3 =  Others.string_of_proving_kind in
   Debug.no_3 "get_prog_vars" pr1 pr2 pr3 (pr_pair pr1 pr1)
       (fun _ _ _ -> get_prog_vars_x prog_hps rhs_unmatch proving_kind) prog_hps rhs_unmatch proving_kind
 
@@ -2541,25 +2542,35 @@ let update_es prog es hds hvs ass_lhs_b rhs rhs_rest r_new_hfs defined_hps lsele
      let check_consumed_node h f=
        match h with
          | DataNode hd -> 
-               if (!Globals.allow_field_ann) then
-                 (f,h)
-               else 
-                 if  not(CF.isLend (hd.CF.h_formula_data_imm)) then (f,h) else
-                   let n_param_imm = List.map (fun _ -> CF.ConstAnn Mutable) hd.CF.h_formula_data_param_imm in
-                   let new_h = DataNode {hd with CF.h_formula_data_imm = (CF.ConstAnn(Mutable));
-                       CF.h_formula_data_param_imm = n_param_imm} in
-                   (CF.mkAnd_f_hf f new_h pos, new_h)
-         | _ -> (f,h)
+               (* if (!Globals.allow_field_ann) then *)
+               (*   (f,h) *)
+               (* else  *)
+                 (* if  not(CF.isLend (hd.CF.h_formula_data_imm)) then (f,h) else *)
+               let n_param_imm = if (!Globals.allow_field_ann) then
+                 List.map (fun _ -> CF.ConstAnn Mutable) hd.CF.h_formula_data_param_imm
+               else hd.CF.h_formula_data_param_imm
+               in
+               let new_h = DataNode {hd with CF.h_formula_data_imm = (CF.ConstAnn(Mutable));
+                   CF.h_formula_data_param_imm = n_param_imm} in
+               (*generate new hole*)
+               let nf, nholes = if Immutable.produces_hole (hd.CF.h_formula_data_imm) then
+                 let hole_no = Globals.fresh_int() in
+               let h_hole = CF.Hole hole_no  in
+                 (CF.mkAnd_f_hf f h_hole pos,[(new_h, hole_no)])
+               else (f,[])
+               in
+               (nf , new_h, nholes)
+         | _ -> (f,h,[])
      in
-     let new_es_formula, new_rhs = check_consumed_node rhs new_es_formula in
+     let new_es_formula, new_lhs, new_holes = check_consumed_node rhs new_es_formula in
      let new_es_formula1 = CF.subst m new_es_formula in
      let new_es = {es with CF. es_infer_vars_hp_rel = es.CF.es_infer_vars_hp_rel@rvhp_rels;
          CF.es_infer_hp_rel = es.CF.es_infer_hp_rel @ hp_rel_list;
          CF.es_infer_hp_unk_map = (es.CF.es_infer_hp_unk_map@unk_map);
          CF.es_infer_vars_sel_post_hp_rel = (es.CF.es_infer_vars_sel_post_hp_rel @ post_hps);
+         CF.es_crt_holes = es.CF.es_crt_holes@new_holes;
          CF.es_formula = new_es_formula1} in
-     DD.tinfo_pprint ("  new residue: " ^ (Cprinter.string_of_formula new_es.CF.es_formula)) pos;
-     let new_lhs = CF.convert_hf_to_mut new_rhs in
+     DD.tinfo_pprint ("  residue before matching: " ^ (Cprinter.string_of_formula new_es.CF.es_formula)) pos;
      (new_es, new_lhs)
    end
 
@@ -2604,7 +2615,7 @@ let infer_collect_hp_rel_x prog (es:entail_state) rhs0 rhs_rest (rhs_h_matched_s
         let v_lhs = (CF.fv (CF.Base lhs_b0)) in
         let v_rhs = (CF.h_fv (rhs0)) in
         let v_hp_rel = es.CF.es_infer_vars_hp_rel in
-        let v_2_rename = Gen.BList.difference_eq CP.eq_spec_var v_rhs (v_lhs@v_hp_rel) in
+        let v_2_rename = List.filter (fun sv -> not (CP.is_hprel_typ sv)) (CP.diff_svl v_rhs (v_lhs@v_hp_rel)) in
         let fr_svl = CP.fresh_spec_vars v_2_rename in
         let sst0 = List.combine v_2_rename fr_svl in
         let rhs = CF.h_subst sst0 rhs0 in
@@ -2620,9 +2631,9 @@ let infer_collect_hp_rel_x prog (es:entail_state) rhs0 rhs_rest (rhs_h_matched_s
         let _ =
           DD.tinfo_pprint ">>>>>> infer_hp_rel <<<<<<" pos;
           DD.tinfo_pprint ("  es_heap: " ^ (Cprinter.string_of_h_formula es.CF.es_heap)) pos;
-          DD.tinfo_pprint ("  es_history: " ^ (let pr=pr_list_ln Cprinter.string_of_h_formula in pr es.CF.es_history)) pos;
+          (* DD.tinfo_pprint ("  es_history: " ^ (let pr=pr_list_ln Cprinter.string_of_h_formula in pr es.CF.es_history)) pos; *)
           DD.tinfo_pprint ("  lhs: " ^ (Cprinter.string_of_formula_base lhs_b0)) pos;
-          DD.tinfo_pprint ("  rhs: " ^ (Cprinter.string_of_formula_base rhs_b)) pos;
+          DD.tinfo_pprint ("  rhs_rest: " ^ ((Cprinter.prtt_string_of_h_formula) rhs_rest)) pos;
           DD.tinfo_pprint ("  unmatch: " ^ (Cprinter.string_of_h_formula rhs)) pos;
           DD.tinfo_pprint ("  classic: " ^ (string_of_bool !Globals.do_classic_frame_rule)) pos
         in
@@ -2633,7 +2644,7 @@ let infer_collect_hp_rel_x prog (es:entail_state) rhs0 rhs_rest (rhs_h_matched_s
           | _ -> report_error pos "Expect a node or a hrel"
                 (* CF.get_ptr_from_data_w_hrel *)
         in
-        let post_hps,prog_vars = get_prog_vars es.CF.es_infer_vars_sel_hp_rel rhs proving_kind#string_of in
+        let post_hps,prog_vars = get_prog_vars es.CF.es_infer_vars_sel_hp_rel rhs proving_kind#top in
         (********** BASIC INFO LHS, RHS **********)
         let l_hpargs = CF.get_HRels lhs_b0.CF.formula_base_heap in
         let l_non_infer_hps = CP.diff_svl lhrs ivs in
@@ -2704,7 +2715,7 @@ let infer_collect_hp_rel_x prog (es:entail_state) rhs0 rhs_rest (rhs_h_matched_s
           (*********TODO: REMOVE HIS*****************)
           let no_es_history =  [] (* replacing es.CF.es_history *) in
           (* let no_es_history = es.CF.es_history in *)
-          let his_ptrs = List.concat (List.map SAU.get_ptrs no_es_history) in
+          (* let his_ptrs = List.concat (List.map SAU.get_ptrs no_es_history) in *)
           (************** END HIS **************)
           let ( _,mix_lf1,_,_,_) = CF.split_components (CF.Base lhs_b1) in
           let leqs1 = (MCP.ptr_equations_without_null mix_lf1) in
@@ -2715,7 +2726,7 @@ let infer_collect_hp_rel_x prog (es:entail_state) rhs0 rhs_rest (rhs_h_matched_s
           let is_found_mis, ls_unknown_ptrs,hds,hvs,lhras,rhras,eqNull,
             lselected_hpargs,rselected_hpargs,defined_hps, unk_svl,unk_pure,unk_map,new_lhs_hps,lvi_ni_svl, classic_nodes, ass_guard =
             find_undefined_selective_pointers prog lhs_b1 mix_lf1 rhs rhs_rest
-                (rhs_h_matched_set@his_ptrs) leqs1 reqs1 pos es.CF.es_infer_hp_unk_map post_hps subst_prog_vars in
+                (rhs_h_matched_set) leqs1 reqs1 pos es.CF.es_infer_hp_unk_map post_hps subst_prog_vars in
           if not is_found_mis then
             let _ = Debug.info_pprint (">>>>>> mismatch ptr" ^ (Cprinter.prtt_string_of_h_formula rhs) ^" is not found (or inst) in the lhs <<<<<<") pos in
             (false, es, rhs, None)

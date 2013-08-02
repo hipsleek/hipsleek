@@ -5378,7 +5378,7 @@ Error(s) detected at main
 Stop Omega... 101 invocations caught
 (Program not linked with -g, cannot print stack backtrace)
 =====================================================================
-# swl-i.ss
+# swl-i.ss: FIXED
 
 Context of Verification Failure: 1 File "swl-i.ss",Line:32,Col:10
 Last Proving Location: 1 File "swl-i.ss",Line:52,Col:2
@@ -5395,7 +5395,7 @@ Stop Omega... 108 invocations caught
 Exception occurred: Failure("self of G cannot have its type determined")
 Error(s) detected at main 
 =====================================================================
-# view_simp.ss
+# view_simp.ss: FIXED (by Trung)
 
 ll<> == (self:node)=null
   inv true;
@@ -5413,7 +5413,7 @@ Message: self of ll cannot have its type determined
 Exception occurred: Failure("self of ll cannot have its type determined")
 
 =====================================================================
-# swl-i.ss --dis-ddb
+# swl-i.ss --dis-ddb: FIXED
 
 We derived:
 
@@ -5440,7 +5440,7 @@ on H being confirmed.
   HP_902(next_36_901,cur_941,sent_945) * HP_903(cur_941,next_36_944,sent_945)
 
 =====================================================================
-# swl-i.ss --classic
+# swl-i.ss --classic: FIXED
 
 How come we are missing on some relational assumptions
 from one of the two pre-oblications below? 
@@ -5557,6 +5557,11 @@ proving using classic=true, since no residues should be lost.
 Please make rectifications.
 
 =====================================================================
+# sll-dll.ss: FIXED (reverify)
+# check-sorted: FIXED
+
+reverify
+------------------------------------------------------------------
 # swl-4-addr-llb2.ss -tp om --pcp
  
 translation below is wrong:
@@ -5580,6 +5585,71 @@ Since we pre-declare:
 Should be:
            AndList( "M":flted_32_35=union(M1,M2)
 
+=====================================================================
+#ll-back.ss:
+
+=====================================================================
+# swl-i.ss --field-ann --esl
+
+--field-ann currently do not work properly with shape analysis
+
+triggered l-1.slk which fails under --classic
+
+infer [HP_902,HP_903]
+ cur_939::node<val_36_934@M,prev_935@M>@M * 
+HP_903(prev_935,cur_939,sent_936)&prev_937=null & cur_938=cur_939
+ |-  cur_938::node<val_36_900@A,next_36_901@L>@M * 
+HP_902(next_36_901,prev_937,sent_936) * HP_903(prev_937,cur_938,sent_936)
+.
+
+Exception occurred: Failure("Can not prove:\n cur_939::node<val_36_934,prev_935>@M * HP_903(prev_935,cur_939,sent_936)&\n  prev_937=null & \n  cur_938=cur_939 --> cur_938::node<val_36_900,next_36_901>@M * \n  HP_902(next_36_901,prev_937,sent_936) * HP_903(prev_937,cur_938,sent_936)")
+Error3(s) detected at main 
+=====================================================================
+# ll-back-3a.ss
+
+(this example works in default but not sa_logging branch!)
+
+ls<p> == self = p
+  or self::node<q>* q::ls<p>;
+
+clist<> == self::node<q> * q::ls<self>
+  inv self!=null;
+
+lasso<> == self::node<q>*q::lasso<>
+      or self::clist<>
+  inv self!=null; 
+
+This lasso data structure is not currently supported.
+
+!!! dumping for finalize on hipStop Omega... 1 invocations caught
+(Program not linked with -g, cannot print stack backtrace)
+Exception occurred: Not_found
+
+I suppose the exception is thrown when we read a
+data table and found "clist" to be missing. I think
+we can firstly give a better error message; and
+secondly allow such examples to be accepted.
+
+*/
+
+=====================================================================
+=====================================================================
+=====================================================================
+=====================================================================
+=====================================================================
+=====================================================================
+=====================================================================
+=====================================================================
+=====================================================================
+=====================================================================
+=====================================================================
+=====================================================================
+=====================================================================
+=====================================================================
+=====================================================================
+=====================================================================
+=====================================================================
+=====================================================================
 =====================================================================
 =====================================================================
 =====================================================================

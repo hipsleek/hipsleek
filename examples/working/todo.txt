@@ -209,6 +209,14 @@ Exception Failure("Post condition cannot be derived by the system.") Occurred!
 # Failure with imm
 
 ====================================================================
+2Aug2013
+
+Total number of errors: 11 in files:
+  infer/infer7.slk infer/infer8.slk infer/infer10.slk infer/infer13.slk infer/infer14.slk infer/infer15.slk ann1.slk imm/imm1.slk imm/imm3.slk imm/imm-hard.slk imm-field/sleek02.slk.
+Total verification time: 6.60 second
+	Time spent in main process: 4.65 second
+	Time spent in child processes: 1.95 second
+	Number of false contexts: 0
 ====================================================================
 ====================================================================
 ====================================================================

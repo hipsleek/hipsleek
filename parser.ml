@@ -51,7 +51,7 @@ type decl =
   | Logical_var of exp_var_decl (* Globally logical vars *)
   | Proc of proc_decl
   | Coercion of coercion_decl
-		| Include of string
+  | Include of string
 		
 
 type member = 
@@ -397,6 +397,7 @@ let peek_try =
          | [GT,_;INV,_] -> raise Stream.Failure
          | [GT,_;AND,_] -> raise Stream.Failure
          | [GT,_;ANDSTAR,_] -> raise Stream.Failure
+         | [GT,_;UNIONSTAR,_] -> raise Stream.Failure
          | [GT,_;ANDAND,_] -> raise Stream.Failure
          | [GT,_;OR,_] -> raise Stream.Failure
          | [GT,_;ORWORD,_] -> raise Stream.Failure
@@ -632,15 +633,15 @@ let peek_heap_andstar =
              |[ANDSTAR,_;RES t,_; COLONCOLON,_; _,_] -> ()
              | _ -> raise Stream.Failure)
              
-let peek_heap_andand = 
-   SHGram.Entry.of_parser "peek_heap_andand"
+let peek_heap_unionstar = 
+   SHGram.Entry.of_parser "peek_heap_unionstar"
        (fun strm ->
            match Stream.npeek 4 strm with
-             |[ANDAND,_;OPAREN ,_; IDENTIFIER id,_; COLONCOLON,_] -> ()
-             |[ANDAND,_;IDENTIFIER id,_; COLONCOLON,_; _,_] -> ()
-             |[ANDAND,_;SELFT t,_; COLONCOLON,_; _,_] -> ()
-             |[ANDAND,_;THIS t,_; COLONCOLON,_; _,_] -> ()
-             |[ANDAND,_;RES t,_; COLONCOLON,_; _,_] -> ()
+             |[UNIONSTAR,_;OPAREN ,_; IDENTIFIER id,_; COLONCOLON,_] -> ()
+             |[UNIONSTAR,_;IDENTIFIER id,_; COLONCOLON,_; _,_] -> ()
+             |[UNIONSTAR,_;SELFT t,_; COLONCOLON,_; _,_] -> ()
+             |[UNIONSTAR,_;THIS t,_; COLONCOLON,_; _,_] -> ()
+             |[UNIONSTAR,_;RES t,_; COLONCOLON,_; _,_] -> ()
              | _ -> raise Stream.Failure)   
              
 let peek_heap_starminus = 
@@ -944,24 +945,36 @@ opt_inv: [[t=OPT inv -> un_option t (P.mkTrue no_pos)]];
 opt_mem_perm_set: [[t=OPT mem_perm_set -> t ]];
 
 mem_perm_set: [[ `MEM; e = cexp; `LEFTARROW; `OPAREN;  mpl = LIST0 mem_perm_layout SEP `SEMICOLON; `CPAREN 
-				->  {	F.mem_formula_exp = e;
+				-> let fal,g = List.split mpl in
+				   let fv,al = List.split fal in   
+					{	F.mem_formula_exp = e;
 					F.mem_formula_exact = false;
-					F.mem_formula_field_layout = (fst (List.split mpl));
-					F.mem_formula_guards = (snd (List.split mpl))}				
+					F.mem_formula_field_values = fv;
+					F.mem_formula_field_layout = al;
+					F.mem_formula_guards = g}				
 		| `MEME; e = cexp; `LEFTARROW; `OPAREN; mpl = LIST0 mem_perm_layout SEP `SEMICOLON; `CPAREN 
-				->  {	F.mem_formula_exp = e;
+				-> let fal,g = List.split mpl in
+				   let fv,al = List.split fal in   
+					{	F.mem_formula_exp = e;
 					F.mem_formula_exact = true;
-					F.mem_formula_field_layout = (fst (List.split mpl));
-					F.mem_formula_guards = (snd (List.split mpl))} ]];
+					F.mem_formula_field_values = fv;
+					F.mem_formula_field_layout = al;
+					F.mem_formula_guards = g} ]];
 					
 mem_perm_layout:[[ 
 `IDENTIFIER dn; `LT; annl = ann_list; `GT; guard = OPT pure_guard -> 
-let perml = get_heap_ann_list annl in (dn,perml),(un_option guard (P.mkTrue no_pos)) ]];
+let fv,annl = List.split annl in 
+let perml = get_heap_ann_list annl in ((dn,fv),(dn,perml)),(un_option guard (P.mkTrue no_pos)) ]];
 
 pure_guard: [[ `AND; e = pure_constr -> e
 ]];
 
-ann_list:[[b = LIST0 ann_heap SEP `COMMA -> b]];
+ann_list:[[b = LIST0 cexp_ann SEP `COMMA -> b]];
+
+cexp_ann: [[ `INT_LITER (i,_) ; ah = ann_heap ->  (P.IConst(i,no_pos),ah)
+           | e = OPT cid ; ah = ann_heap -> 
+           let evar = (un_option e ("Anon_"^(fresh_trailer()),Unprimed) ) in (P.Var(evar,no_pos),ah)   
+          ]];
 
 opt_derv: [[t=OPT derv -> un_option t false ]];
 
@@ -1216,7 +1229,7 @@ extended_constr:
 impl_list:[[t=LIST1 impl -> t]];
 
 impl: [[ pc=pure_constr; `LEFTARROW; ec=extended_l; `SEMICOLON ->
-			if(List.length (Ipure.look_for_anonymous_pure_formula pc))>0 then report_error (get_pos_camlp4 _loc 1) ("anonimous variables in case guard are disalowed")
+			if(List.length (Ipure.look_for_anonymous_pure_formula pc))>0 then report_error (get_pos_camlp4 _loc 1) ("anonymous variables in case guard are disalowed")
 		  else (pc,ec)]];
 
 (* seem _loc 2 is empty *)
@@ -1304,14 +1317,14 @@ heap_rd:
 
 heap_rw:
   [[ hrd=heap_wr; `STAR; `OPAREN; hc=heap_constr; `CPAREN -> F.mkStar hrd hc (get_pos_camlp4 _loc 2)
-   | hrd=heap_wr; peek_heap_starminus; `STARMINUS; `OPAREN; hc=heap_constr; `CPAREN -> F.mkStarMinus hrd hc (get_pos_camlp4 _loc 2)
-   | shc=heap_wr; peek_heap_andand; `ANDAND; `OPAREN; wr = heap_constr; `CPAREN -> F.mkConjConj shc wr (get_pos_camlp4 _loc 2)
+   | hrd=heap_wr; peek_heap_starminus; `STARMINUS; `OPAREN; hc=heap_constr; `CPAREN -> F.mkStarMinus hc hrd (get_pos_camlp4 _loc 2)
+   | shc=heap_wr; peek_heap_and; `AND; `OPAREN; wr = heap_constr; `CPAREN -> F.mkConjConj shc wr (get_pos_camlp4 _loc 2)
    | shc=heap_wr; peek_heap_andstar; `ANDSTAR; `OPAREN; wr = heap_constr; `CPAREN -> F.mkConjStar shc wr (get_pos_camlp4 _loc 2)
-   | shc=heap_wr; peek_heap_and; `AND; `OPAREN; wr = heap_constr; `CPAREN -> F.mkConj shc wr (get_pos_camlp4 _loc 2)
-   | shc=heap_wr; peek_heap_starminus; `STARMINUS; wr = simple_heap_constr -> F.mkStarMinus shc wr (get_pos_camlp4 _loc 2) 
-   | shc=heap_wr; peek_heap_andand; `ANDAND; wr = simple_heap_constr -> F.mkConjConj shc wr (get_pos_camlp4 _loc 2) 
+   | shc=heap_wr; peek_heap_unionstar; `UNIONSTAR; `OPAREN; wr = heap_constr; `CPAREN -> F.mkConj shc wr (get_pos_camlp4 _loc 2)
+   | shc=heap_wr; peek_heap_starminus; `STARMINUS; wr = simple_heap_constr -> F.mkStarMinus wr shc (get_pos_camlp4 _loc 2) 
+   | shc=heap_wr; peek_heap_and; `AND; wr = simple_heap_constr -> F.mkConjConj shc wr (get_pos_camlp4 _loc 2)
    | shc=heap_wr; peek_heap_andstar; `ANDSTAR; wr = simple_heap_constr -> F.mkConjStar shc wr (get_pos_camlp4 _loc 2)
-   | shc=heap_wr; peek_heap_and; `AND; wr = simple_heap_constr -> F.mkConj shc wr (get_pos_camlp4 _loc 2)
+   | shc=heap_wr; peek_heap_unionstar; `UNIONSTAR; wr = simple_heap_constr -> F.mkConj shc wr (get_pos_camlp4 _loc 2) 
    | hwr=heap_wr                                          -> F.mkPhase F.HEmp hwr (get_pos_camlp4 _loc 2)]];
 
 heap_wr:
@@ -1924,11 +1937,10 @@ non_array_type:
    | `FLOAT              -> float_type 
    | `INFINT_TYPE        -> infint_type 
    | `BOOL               -> bool_type
-   | `BAG                -> bag_type
+   | `BAG               -> bag_type
+   | `BAG; `OPAREN; t = non_array_type ; `CPAREN -> BagT t
    | `IDENTIFIER id      -> Named id
-   | t=rel_header_view   ->
-       let tl,_ = List.split t.Iast.rel_typed_vars in
-       RelT tl ]];
+   | t=rel_header_view   -> let tl,_ = List.split t.Iast.rel_typed_vars in RelT tl ]];
 
 pointer_type:
   [[ t=non_array_type; r = star_list -> 
