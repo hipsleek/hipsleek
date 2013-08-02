@@ -10,7 +10,7 @@ open Globals
 open Gen.Basic
 (* open Exc.ETABLE_NFLOW *)
 open Exc.GTable
-open Label_only
+module LO=Label_only.LOne
 open Label
 
 (* spec var *)
@@ -113,7 +113,7 @@ type xpure_view = {
 type formula =
   | BForm of (b_formula * (formula_label option))
   | And of (formula * formula * loc)
-  | AndList of (spec_label * formula) list
+  | AndList of (LO.t * formula) list
   | Or of (formula * formula * (formula_label option) * loc)
   | Not of (formula * (formula_label option) * loc)
   | Forall of (spec_var * formula * (formula_label option) * loc)
@@ -304,7 +304,7 @@ struct
   let ref_string_of = print_formula
 end;;
 
-module Label_Pure = LabelExpr(Lab_List)(Exp_Pure);; 
+module Label_Pure = LabelExpr(LO)(Exp_Pure);; 
   
 let is_self_var = function
   | Var (x,_) -> is_self_spec_var x
@@ -1849,7 +1849,7 @@ and mkAnd_x f1 f2 (*b*) pos =
   else 
     let rec helper fal fnl = match fal with 
       | Or _ -> join_disjunctions (List.map (fun d->helper d fnl) (split_disjunctions fal))
-      | AndList b ->  mkAndList (Label_Pure.merge b [(Lab_List.unlabelled,fnl)])
+      | AndList b ->  mkAndList (Label_Pure.merge b [(LO.unlabelled,fnl)])
       | _ -> And (fal,fnl, pos) in
     match no_andl f1 , no_andl f2 with 
       | true, true -> And (f1, f2, pos) 
@@ -1867,7 +1867,7 @@ and mkAnd_x f1 f2 (*b*) pos =
 		    join_disjunctions (List.concat lrd)
 	      | AndList b1, AndList b2 ->  mkAndList (Label_Pure.merge b1 b2)
 	      | AndList b, f
-	      | f, AndList b -> ((*print_string ("this br: "^(!print_formula f1)^"\n"^(!print_formula f2)^"\n");*)mkAndList (Label_Pure.merge b [(Lab_List.unlabelled,f)]))
+	      | f, AndList b -> ((*print_string ("this br: "^(!print_formula f1)^"\n"^(!print_formula f2)^"\n");*) mkAndList (Label_Pure.merge b [(LO.unlabelled,f)]))
 	      | _ -> And (f1, f2, pos)
 
 (*and mkAnd_chk f1 f2 pos = mkAnd_dups f1 f2 false pos
@@ -1908,7 +1908,7 @@ and mkOr_x f1 f2 lbl pos=
   else (*match f1, f2 with 
 	 | AndList l1, AndList l2 -> AndList (or_branches l1 l2 lbl pos)
 	 | AndList l, f
-	 | f, AndList l -> AndList (or_branches l [(empty_spec_label,f)] lbl pos)
+	 | f, AndList l -> AndList (or_branches l [(LO.unlabelled,f)] lbl pos)
 	 | _ -> *)Or (f1, f2, lbl ,pos)
 
 and mkOr f1 f2 lbl pos = Debug.no_2 "pure_mkOr" !print_formula !print_formula !print_formula (fun _ _ -> mkOr_x f1 f2 lbl pos) f1 f2
@@ -1935,6 +1935,11 @@ and mkLteExp (ae1 : exp) (ae2 : exp) pos :formula =
   BForm ((Lte (ae1, ae2, pos), None),None)
 
 and mkEqExp (ae1 : exp) (ae2 : exp) pos :formula =
+  (* let ae1,ae2 =  *)
+  (*   match ae1,ae2 with *)
+  (*     | Var (v1,_), IConst(0,l)  *)
+  (*           -> ae1,(if (is_otype (type_of_spec_var v1)) then Null no_pos else ae2) *)
+  (*     | _ -> ae1,ae2 in *)
   match (ae1, ae2) with
     | (Var v1, Var v2) ->
           if eq_spec_var (fst v1) (fst v2) then
@@ -2033,14 +2038,14 @@ and mkExists_with_simpl_x simpl (vs : spec_var list) (f : formula) lbl pos =
 and mkExists_x (vs : spec_var list) (f : formula) lbel pos = match f with
   | AndList b ->
 	let pusher v lf lrest= 	
-	  let rl,vl,rf = List.fold_left (fun (al,avs,af) (cl,cvs,cf)-> (Lab_List.comb_norm al cl,avs@cvs, mkAnd af cf pos)) (List.hd lf) (List.tl lf) in
+	  let rl,vl,rf = List.fold_left (fun (al,avs,af) (cl,cvs,cf)-> (LO.comb_norm 2 al cl,avs@cvs, mkAnd af cf pos)) (List.hd lf) (List.tl lf) in
 	  (rl,vl, Exists (v,rf,lbel,pos))::lrest in
 	let lst = List.map (fun (l,c)-> (l,fv c,c)) b in
 	let lst1 = List.fold_left (fun lbl v-> 
 	    let l1,l2 = List.partition (fun (_,vl,_)-> List.mem v vl) lbl in 
 	    if l1=[] then l2 
 	    else  pusher v l1 l2 				
-	      (*let lul, ll = List.partition (fun (lb,_,_)-> Lab_List.is_unlabelled lb) l1 in
+	      (*let lul, ll = List.partition (fun (lb,_,_)-> LO.is_unlabelled lb) l1 in
 		if lul=[] || ll=[] then pusher v l1 l2 				
 		else
 		let lrel = split_conjunctions ((fun (_,_,f)-> f) (List.hd lul)) in
@@ -2048,7 +2053,7 @@ and mkExists_x (vs : spec_var list) (f : formula) lbel pos = match f with
 		let lrelf = join_conjunctions lrel in
 		let lunrelf = join_conjunctions lunrel in
 		let lrel = ((fun (l,_,_)-> l)(List.hd ll),fv lrelf, lrelf) in
-		let lunrel = (Lab_List.unlabelled, fv lunrelf, lunrelf) in
+		let lunrel = (LO.unlabelled, fv lunrelf, lunrelf) in
 		pusher v (lrel::ll) (lunrel::l2) *)
 	)lst vs in
 	let l = List.map (fun (l,_,f)-> (l,f)) lst1 in
@@ -2179,7 +2184,7 @@ and equalFormula_f (eq:spec_var -> spec_var -> bool) (f01:formula)(f02:formula):
         || ((helper f1 f4) & (helper f2 f3))
     | AndList b1, AndList b2 -> 
 	  if (List.length b1)= List.length b2 
-	  then List.for_all2 (fun (l1,c1)(l2,c2)-> Lab_List.compare l1 l2 = 0 && helper c1 c2) b1 b2 
+	  then List.for_all2 (fun (l1,c1)(l2,c2)-> LO.compare l1 l2 = 0 && helper c1 c2) b1 b2 
 	  else false
     | (Exists(sv1, f1, _,_), Exists(sv2, f2, _,_))
     | (Forall(sv1, f1,_, _), Forall(sv2, f2, _,_)) -> (eq sv1 sv2) & (helper f1 f2)
@@ -2402,61 +2407,6 @@ and equalBFormula (f1:b_formula)(f2:b_formula):bool = equalBFormula_f eq_spec_va
 
 and eqExp (f1:exp)(f2:exp):bool = eqExp_f eq_spec_var  f1 f2
 
-(*
-(* build relation from list of expressions, for example a,b,c < d,e, f *)
-  and build_relation relop alist10 alist20 lbl pos=
-  let rec helper1 ae alist =
-  let a = List.hd alist in
-  let rest = List.tl alist in
-  let check_upper r e ub pos = if ub<=1 then Eq (e,(Null no_pos),pos) else r in
-  let check_lower r e lb pos = if lb>=0 then Neq (e,(Null no_pos),pos) else r in
-  let rec tt relop ae a pos = 
-  let r = (relop ae a pos) in
-  match r with
-  | Lte (e1,e2,l) 
-  | Gte (e2,e1,l) -> 
-  ( match e1,e2 with
-  | Var (v,_), IConst(i,l) -> if (is_otype (type_of_spec_var v)) then check_upper r e1 (i+1) l else r
-  | IConst(i,l), Var (v,_) -> if (is_otype (type_of_spec_var v)) then check_lower r e2 (i-1) l else r
-  | _ -> r)
-  | Gt (e1,e2,l) 
-  | Lt (e2,e1,l) -> 
-  ( match e1,e2 with
-  | Var (v,_), IConst(i,l) -> if (is_otype (type_of_spec_var v)) then check_lower r e1 i l else r
-  | IConst(i,l), Var (v,_) -> if (is_otype (type_of_spec_var v)) then check_upper r e2 i l else r
-  | _ -> r)
-  | Eq (e1,e2,l) ->
-  ( match e1,e2 with
-  | Var (v,_), IConst(0,l) -> if (is_otype (type_of_spec_var v)) then Eq (e1,(Null no_pos),pos) else r
-  | IConst(0,l), Var (v,_) -> if (is_otype (type_of_spec_var v)) then Eq (e2,(Null no_pos),pos) else r
-  | _ -> r)
-  | Neq (e1,e2,l) ->
-  ( match e1,e2 with
-  | Var (v,_), IConst(0,l) -> if (is_otype (type_of_spec_var v)) then Neq (e1,(Null no_pos),pos) else r
-  | IConst(0,l), Var (v,_) -> if (is_otype (type_of_spec_var v)) then Neq (e2,(Null no_pos),pos) else r
-  | _ -> r)
-  | _ -> r in 
-  let tmp = BForm ((tt relop ae a pos),lbl) in
-  if Gen.is_empty rest then
-  tmp
-  else
-  let tmp1 = helper1 ae rest in
-  let tmp2 = mkAnd tmp tmp1 pos in
-  tmp2 in
-  let rec helper2 alist1 alist2 =
-  let a = List.hd alist1 in
-  let rest = List.tl alist1 in
-  let tmp = helper1 a alist2 in
-  if Gen.is_empty rest then
-  tmp
-  else
-  let tmp1 = helper2 rest alist2 in
-  let tmp2 = mkAnd tmp tmp1 pos in
-  tmp2 in
-  if List.length alist10 = 0 || List.length alist20 = 0 then
-  failwith ("build_relation: zero-length list")
-  else
-  helper2 alist10 alist20*)
   
 (* build relation from list of expressions, for example a,b,c < d,e, f *)
 and build_relation relop alist10 alist20 lbl pos =
@@ -2465,36 +2415,39 @@ and build_relation relop alist10 alist20 lbl pos =
       
 and build_relation_x relop alist10 alist20 lbl pos =
   let rec helper1 ae alist =
+    (* print_endline "inside helper1"; *)
     let a = List.hd alist in
     let rest = List.tl alist in
     let check_upper r e ub pos = if ub>1 then r else  Eq (e,(Null no_pos),pos) in
     let check_lower r e lb pos = if lb>0 then Neq (e,(Null no_pos),pos) else r in
     let rec tt relop ae a pos = 
       let r = (relop ae a pos) in
-      match r with
-        | Lte (e1,e2,l) 
-        | Gte (e2,e1,l) -> 
-              ( match e1,e2 with
-                | Var (v,_), IConst(i,l) -> if (is_otype (type_of_spec_var v)) then check_upper r e1 (i+1) l else r
-                | IConst(i,l), Var (v,_) -> if (is_otype (type_of_spec_var v)) then check_lower r e2 (i-1) l else r
-                | _ -> r)
-        | Gt (e1,e2,l) 
-        | Lt (e2,e1,l) -> 
-              ( match e1,e2 with
-                | Var (v,_), IConst(i,l) -> if (is_otype (type_of_spec_var v)) then check_lower r e1 i l else r
-                | IConst(i,l), Var (v,_) -> if (is_otype (type_of_spec_var v)) then check_upper r e2 i l else r
-                | _ -> r)
-        | Eq (e1,e2,l) ->
-              ( match e1,e2 with
-                | Var (v,_), IConst(0,l) -> if (is_otype (type_of_spec_var v)) then Eq (e1,(Null no_pos),pos) else r
-                | IConst(0,l), Var (v,_) -> if (is_otype (type_of_spec_var v)) then Eq (e2,(Null no_pos),pos) else r
-                | _ -> r)
-        | Neq (e1,e2,l) ->
-              ( match e1,e2 with
-                | Var (v,_), IConst(0,l) -> if (is_otype (type_of_spec_var v)) then Neq (e1,(Null no_pos),pos) else r
-                | IConst(0,l), Var (v,_) -> if (is_otype (type_of_spec_var v)) then Neq (e2,(Null no_pos),pos) else r
-                | _ -> r)
-        | _ -> r in  
+      r in
+      (* match r with *)
+      (*   | Lte (e1,e2,l)  *)
+      (*   | Gte (e2,e1,l) ->  *)
+      (*         ( match e1,e2 with *)
+      (*           | Var (v,_), IConst(i,l) -> if (is_otype (type_of_spec_var v)) then check_upper r e1 (i+1) l else r *)
+      (*           | IConst(i,l), Var (v,_) -> if (is_otype (type_of_spec_var v)) then check_lower r e2 (i-1) l else r *)
+      (*           | _ -> r) *)
+      (*   | Gt (e1,e2,l)  *)
+      (*   | Lt (e2,e1,l) ->  *)
+      (*         ( match e1,e2 with *)
+      (*           | Var (v,_), IConst(i,l) -> if (is_otype (type_of_spec_var v)) then check_lower r e1 i l else r *)
+      (*           | IConst(i,l), Var (v,_) -> if (is_otype (type_of_spec_var v)) then check_upper r e2 i l else r *)
+      (*           | _ -> r) *)
+      (*   | Eq (e1,e2,l) -> *)
+      (*         ( match e1,e2 with *)
+      (*           | Var (v,_), IConst(0,l) -> if (is_otype (type_of_spec_var v)) then Eq (e1,(Null no_pos),pos) else r *)
+      (*           | IConst(0,l), Var (v,_) -> if (is_otype (type_of_spec_var v)) then Eq (e2,(Null no_pos),pos) else r *)
+      (*           | _ -> r) *)
+      (*   | Neq (e1,e2,l) -> *)
+      (*         ( match e1,e2 with *)
+      (*           | Var (v,_), IConst(0,l) -> if (is_otype (type_of_spec_var v)) then Neq (e1,(Null no_pos),pos) else r *)
+      (*           | IConst(0,l), Var (v,_) -> if (is_otype (type_of_spec_var v)) then Neq (e2,(Null no_pos),pos) else r *)
+      (*           | _ -> r) *)
+      (*   | _ -> r in   *)
+    (* print_endline "before tt"; *)
     let tmp = BForm (((tt relop ae a pos), None),lbl) in
     if Gen.is_empty rest then
       tmp
@@ -2503,6 +2456,7 @@ and build_relation_x relop alist10 alist20 lbl pos =
       let tmp2 = mkAnd tmp tmp1 pos in
       tmp2 in
   let rec helper2 alist1 alist2 =
+    (* print_endline "inside helper2"; *)
     let a = List.hd alist1 in
     let rest = List.tl alist1 in
     let tmp = helper1 a alist2 in

@@ -1,0 +1,19 @@
+checkentail x>5 |- x>4.
+
+/*
+# t-1.slk --dump-proof
+
+checkentail x>5 |- x>4.
+
+why are proof no skipped?
+
+ id: 1<0; prover: OMEGA CALCULATOR; loc: _0:0_0:0; kind: Sleek_Entail(1)
+ Sat:  5<x
+ res: SAT
+ -------------------- 
+ id: 3<1; prover: OMEGA CALCULATOR; loc: _0:0_0:0; kind: Sleek_Entail(1)
+ Imply: ante: 5<x
+	     conseq:  4<x
+ res: true
+ --------------------
+*/

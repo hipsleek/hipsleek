@@ -967,6 +967,10 @@ struct
     else 
       let v1 = dd_stk # top in
       let v2 = debug_stk # top in
+      (* let l1 = dd_stk # get_stk in *)
+      (* let l2 = debug_stk # get_stk in *)
+      (* let pr = Basic.pr_list string_of_int in *)
+      (* let _ = print_endline ("ddstk:"^(pr l1)^" hostk:"^(pr l2)) in  *)
        if (v1==v2) then Some v1 else None
 
   let is_same_dd () =
@@ -988,10 +992,12 @@ struct
 
   (* call f and pop its trace in call stack of ho debug *)
   let pop_aft_apply_with_exc_no (f:'a->'b) (e:'a) : 'b =
-    let r = (try 
-      (f e)
-    with exc -> (debug_stk # pop; raise exc))
-    in debug_stk # pop; r
+    try 
+      let r = (f e) in
+      (* debug_stk # pop;  *)
+      r
+    with exc -> ((* debug_stk # pop;  *)raise exc)
+
 
   (* string representation of call stack of ho_debug *)
   let string_of () : string =
@@ -1000,7 +1006,8 @@ struct
     String.concat "@" (List.map string_of_int (List.filter (fun n -> n>0) h) )
 
   let push_no_call () =
-    debug_stk # push (-1)
+    ()
+    (* debug_stk # push (-3) *)
 
   (* returns @n and @n1;n2;.. for a new call being debugged *)
   let push_call_gen (os:string) (flag:bool) : (string * string) = 

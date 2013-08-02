@@ -1,0 +1,27 @@
+/*
+checkentail x=null |- x!=null.
+
+simplify x=null & x!=null.
+
+simplify x=null.
+
+simplify x>0 & x>=0.
+*/
+
+//simplify x!=null.
+
+simplify x=null.
+
+//simplify true & (x=null | x!=null).
+
+
+
+/*
+why parser error?
+
+simplify not(x=null).
+
+simplify not(not(x=null)).
+
+simplify not(not(x!=null)).
+*/

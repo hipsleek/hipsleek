@@ -600,6 +600,8 @@ let lib_files = ref ([] : string list)
 
 (* command line options *)
 
+let ptr_to_int_exact = ref false
+
 let remove_label_flag = ref false
 let label_split_conseq = ref true
 let label_split_ante = ref true
@@ -790,6 +792,7 @@ let use_field = ref false
 let large_bind = ref false
 
 let print_x_inv = ref false
+let print_cnv_null = ref false
 
 let hull_pre_inv = ref false
 

@@ -1,0 +1,239 @@
+avl.ss
+
+./hip examples/working/hip/bags/avl-lbl.ss -tp om -p get_max -p height 
+
+to check why is is the ante false?
+
+============================================================
+avl.ss
+
+./hip examples/working/hip/bags/avl.ss -tp om -p get_max -p rotate_left
+
+FAIL --- wrong implementation/ specification? 
+
+
+============================================================
+label/slk/basic-3a.slk
+
+
+//Fails -- to check
+checkentail true & ["y","":y>7; "x","":y>3; "z":y>0] |- true & ["z","":y>6].
+
+//Fails -- to check
+checkentail true & ["y","":y>7; "x","":y>3; "z":y>0] |- true & ["":y>6].
+
+//Valid - ok
+checkentail true & ["":y>7; "x","":y>3; "z":y>0] |- true & ["":y>6].
+
+
+============================================================
+../hip avl-all-lbl.ss -tp om -p remove_min_add
+
+Error(s) detected when checking procedure remove_min_add$node~myint
+
+!!! dumping for remove_min_add$node~myint FAIL2Stop Omega... 1552 invocations
+0 false contexts at: ()
+
+!!! log(small):(40.928498,5095)
+!!! log(big)(>0.5s)(33):(59.18,[(sleek-hec,1.86),(sleek-hec,0.68),(sleek-hec,2.61),(sleek-hec,2.61),(sleek-hec,1.82),(sleek-hec,0.62),(sleek-hec,2.51),(sleek-hec,2.52),(sleek-hec,2.71),(sleek-hec,1.8),(sleek-hec,0.63),(sleek-hec,2.49),(sleek-hec,2.49),(sleek-hec,1.69),(sleek-hec,0.59),(sleek-hec,2.35),(sleek-hec,2.35),(sleek-hec,2.53),(sleek-hec,1.81),(sleek-hec,0.65),(sleek-hec,2.53),(sleek-hec,2.53),(sleek-hec,1.75),(sleek-hec,0.61),(sleek-hec,2.44),(sleek-hec,2.44),(sleek-hec,2.63),(sleek-hec,1.01),(sleek-hec,1.01),(sleek-hec,0.81),(sleek-hec,0.81),(sleek-hec,1.02),(sleek-hec,2.27)])
+!!!
+ log(bigger)(>4s)(3):(16.13,[(sleek-hec:240<281:sleek,5.52),(sleek-hec:282<325:sleek,5.24),(sleek-hec:327<368:sleek,5.37)])
+Total verification time: 39.7 second(s)
+        Time spent in main process: 21.52 second(s)
+        Time spent in child processes: 18.18 second(s)
+
+-----------> a lot of this messages: [mona] Warning: imply --> false(formula too large  - not sent to mona)
+
+-----------> to check label/logs/no_eps_proof_log_avl-all-lbl_ss_p_remove_min_add.txt
+
+-----------> also fails with  ../hip avl-all-lbl.ss -tp om -p remove_min_add --dis-lbl with:
+Total verification time: 956.89 second(s)
+        Time spent in main process: 10.84 second(s)
+        Time spent in child processes: 946.05 second(s)
+
+
+-----------> but succeeds with ../hip avl-all-lbl.ss -tp om -p remove_min_add --dis-lbl --eps
+Total verification time: 31.66 second(s)
+        Time spent in main process: 5.15 second(s)
+        Time spent in child processes: 26.51 second(s)
+
+
+============================================================
+
+ ../hip avl-all-lbl.ss -tp om -p insert
+
+-----------> to check label/logs/no_eps_proof_log_avl-all-lbl_ss_p_insert.txt
+
+Procedure insert$node~int FAIL-2
+
+!!! log(small):(17.77756,1846)
+!!! log(big)(>0.5s)(20):(37.195887,[(SAT,1.071248),(SAT,1.58193),(SAT,1.021767),(SAT,2.023689),(SAT,2.492183),(SAT,2.695884),(SAT,1.04383),(SAT,1.38722),(SAT,1.772289),(SAT,1.168199),(SAT,2.358338),(SAT,2.77486),(SAT,2.24929),(SAT,0.980441),(SAT,1.177836),(SAT,2.749031),(SAT,1.401883),(SAT,2.861812),(SAT,2.245047),(SAT,2.13911)])
+!!!
+ log(bigger)(>4s)(42):(199.469543,[(SAT:428<78:MONA,5.),(SAT:563<179:MONA,3.308047),(SAT:565<179:MONA,5.),(SAT:737<246:MONA,5.),(SAT:898<355:MONA,5.),(SAT:901<355:MONA,5.),(SAT:907<362:MONA,5.),(SAT:910<362:MONA,5.),(SAT:1056<403:MONA,5.),(SAT:1058<405:MONA,5.),(SAT:1062<405:MONA,5.),(SAT:1064<405:MONA,5.),(SAT:1071<406:MONA,3.381804),(SAT:1073<406:MONA,5.),(SAT:1083<408:MONA,3.623368),(SAT:1085<408:MONA,3.375712),(SAT:1087<408:MONA,4.987596),(SAT:1089<408:MONA,5.),(SAT:1132<415:MONA,5.),(SAT:1135<416:MONA,5.),(SAT:1138<418:MONA,5.),(SAT:1141<418:MONA,5.),(SAT:1146<419:MONA,5.),(SAT:1148<419:MONA,5.),(SAT:1162<421:MONA,5.),(SAT:1164<421:MONA,4.996729),(SAT:1326<453:MONA,5.),(SAT:1328<455:MONA,5.),(SAT:1334<455:MONA,3.85501),(SAT:1341<456:MONA,5.),(SAT:1343<456:MONA,3.870879),(SAT:1353<458:MONA,5.),(SAT:1355<458:MONA,5.),(SAT:1359<458:MONA,4.496578),(SAT:1402<465:MONA,3.861404),(SAT:1408<465:MONA,5.),(SAT:1410<467:MONA,5.),(SAT:1412<467:MONA,5.),(SAT:1421<468:MONA,4.939855),(SAT:1424<468:MONA,4.954854),(SAT:1433<470:MONA,4.883791),(SAT:1436<470:MONA,4.933916)])
+Total verification time: 252.84 second(s)
+        Time spent in main process: 6.95 second(s)
+        Time spent in child processes: 245.89 second(s)
+
+
+============================================================
+/hip avl-all-lbl.ss -tp om -p remove_max_add
+
+-----------> to check label/logs/logs/no_eps_proof_log_avl-all-lbl_ss_p_remove_max_add.txt
+
+Procedure remove_max_add$node~myint FAIL-2
+
+Exception Failure("Post condition cannot be derived by the system.") Occurred!
+(Program not linked with -g, cannot print stack backtrace)
+
+Error(s) detected when checking procedure remove_max_add$node~myint
+
+!!! dumping for remove_max_add$node~myint FAIL2Stop Omega... 1478 invocations
+0 false contexts at: ()
+
+!!! log(small):(38.335277,4885)
+!!! log(big)(>0.5s)(29):(39.71,[(sleek-hec,0.5),(sleek-hec,0.5),(sleek-hec,1.04),(sleek-hec,1.04),(sleek-hec,0.83),(sleek-hec,0.83),(sleek-hec,1.05),(sleek-hec,2.34),(sleek-hec,0.96),(sleek-hec,0.96),(sleek-hec,0.77),(sleek-hec,0.77),(sleek-hec,1.02),(sleek-hec,2.6),(sleek-hec,1.01),(sleek-hec,1.01),(sleek-hec,0.81),(sleek-hec,0.81),(sleek-hec,1.03),(sleek-hec,2.28),(sleek-hec,1.83),(sleek-hec,0.66),(sleek-hec,2.56),(sleek-hec,2.57),(sleek-hec,1.76),(sleek-hec,0.62),(sleek-hec,2.45),(sleek-hec,2.45),(sleek-hec,2.65)])
+!!!
+ log(bigger)(>4s)(2):(15.42,[(imply:2057<294:TIMEOUT:OMEGA CALCULATOR,10.),(sleek-hec:351<392:sleek,5.42)])
+Total verification time: 32.55 second(s)
+        Time spent in main process: 15.85 second(s)
+        Time spent in child processes: 16.7 second(s)
+
+
+
+============================================================
+../hip avl-all-lbl.ss -tp om -p delete_top --esl
+
+-----------> to check label/logs/no_eps_proof_log_avl-all-lbl_ss_p_delete_top.txt
+
+Procedure delete_top$node FAIL-2
+
+Exception Failure("Post condition cannot be derived by the system.") Occurred!
+(Program not linked with -g, cannot print stack backtrace)
+
+Error(s) detected when checking procedure delete_top$node
+
+!!! dumping for delete_top$node FAIL2Stop Omega... 429 invocations
+0 false contexts at: ()
+
+!!! log(small):(21.336761,1212)
+!!! log(big)(>0.5s)(40):(33.382374,[(SAT,0.520292),(SAT,0.5848),(SAT,0.659303),(SAT,1.110722),(SAT,0.522346),(SAT,0.644864),(SAT,0.519419),(SAT,1.021841),(SAT,0.524558),(SAT,1.027409),(SAT,0.535649),(SAT,1.056259),(SAT,1.093658),(SAT,0.678711),(SAT,0.659389),(SAT,0.532669),(SAT,0.590277),(SAT,0.542415),(SAT,1.044335),(SAT,1.060155),(SAT,0.567335),(SAT,0.674149),(SAT,0.659729),(SAT,1.045998),(SAT,1.091825),(SAT,0.546621),(SAT,0.546737),(SAT,0.553443),(SAT,0.709913),(SAT,1.062829),(SAT,1.110197),(SAT,0.555099),(SAT,1.105376),(SAT,0.553676),(SAT,0.70788),(sleek-hec,0.76),(sleek-hec,1.07),(sleek-hec,1.4),(SAT,1.856899),(SAT,1.875597)])
+!!!
+ log(bigger)(>4s)(10):(37.718235,[(SAT:696<217:OMEGA CALCULATOR,3.068464),(SAT:755<218:OMEGA CALCULATOR,3.124077),(SAT:788<219:OMEGA CALCULATOR,3.119126),(SAT:813<220:OMEGA CALCULATOR,3.162522),(SAT:902<250:MONA,3.521361),(SAT:904<251:MONA,3.459331),(SAT:906<251:MONA,3.263354),(SAT:919<253:MONA,5.),(SAT:921<254:MONA,5.),(SAT:923<254:MONA,5.)])
+Total verification time: 91.12 second(s)
+        Time spent in main process: 7.34 second(s)
+        Time spent in child processes: 83.78 second(s)
+
+============================================================
+../hip avl-all-lbl.ss -tp om -p delete --esl
+
+-----------> to check label/logs/sleek_log_avl-all-lbl_ss_p_delete.txt
+
+!!! dumping for delete$node~int FAIL2
+!!!
+ id: 626<141; prover: OMEGA CALCULATOR; loc: avl-all-lbl.ss_460:14_460:81; kind: PRE
+ Imply: ante: n=n_3589 & n2_3597=n_3668 & 0<=n2_3597 & n2_4031=n_4180 & 0<=n2_4031 &
+0<=n_4180 & 1<=n_4035 & 1<=n_4180 & exists(max_5580:n=max_5580+1 &
+max_5580=max(n1_3593,n2_3597)) & n1_3593<=(1+n2_3597) & (0+
+n2_3597)<=(n1_3593+1) & exists(max_5581:n_3706=max_5581+1 &
+max_5581=max(n1_4027,n2_4031)) & n1_4027<=(1+n2_4031) & (0+
+n2_4031)<=(n1_4027+1) & lrn=n_4180 & n_4180!=v_int_459_4414 &
+n_4035=v_int_459_4414+1 & 0<=n_4035 & 0<=n1_4027 & n1_4027=n_4035 &
+0<=nn_3695 & 0<=n_3706 & 0<=n1_3593 & n1_3593=n_3706 & 0<=n_3668 &
+nn_3695<=n_3668 & n_3668<=(1+nn_3695) & n_3706=n_4023 & n_3759=nn_3695 &
+0<=n_3759 & n_3706=2+n_3759 & lln=n_4035 & 1<=n_3759
+             conseq:  lln=n_3759+1
+ res: false
+ --------------------
+!!!
+id: 141; caller: []; line: 460; classic: false; kind: [PRE,
+Assign_Stmt,
+If_Stmt,
+If_Stmt,
+If_Stmt,
+If_Stmt,
+If_Stmt,
+If_Stmt,
+Check_Specs]; hec_num: 4; evars: [flted_65_5017]; infer_vars: []; c_heap: v_node_455_3703::avl<m_3758,n_3759,S_3760>@M *
+q_4029::avl<m_4179,n_4180,S_4181>@M * p_4025::avl<m_4034,n_4035,S_4036>@M
+ checkentail x'::node<v_3590@M,n_3589@M,p_3591@M,v_node_455_3703@M>@M *
+p_3591::node<v_4024@M,n_4023@M,p_4025@M,q_4029@M>@M&
+
+ AndList( "":n_3706=n_4023 & p_3591!=null & n=n_3589 & x'!=null & a=a' &
+           x=x' & x'!=null & !(v_bool_448_1616') & x'!=null &
+           !(v_bool_448_1616') & a'!=v_3590 & !(v_bool_449_1615') &
+           a'!=v_3590 & !(v_bool_449_1615') & v_3590<a' & v_bool_451_1614' &
+           v_3590<a' & v_bool_451_1614' & q_3595!=null &
+           !(v_bool_452_1347') & q_3595!=null & !(v_bool_452_1347') &
+           n2_3597=n_3668 & m2_3596=m_3667 & 0<=m2_3596 & 0<=n2_3597 &
+           n_3668<=(1+nn_3695) & nn_3695<=n_3668 & m_3667<=(1+mm_3696) &
+           mm_3696<=m_3667 & Sn_3697<subset> S_3669  &
+           forall(xx:(xx <notin> S_3669  | a'=xx | xx <in> Sn_3697 )) &
+           0<=m_3667 & 0<=n_3668 & q_3595=right_455_3698 & n1_3593=n_3706 &
+           m1_3592=m_3705 & 0<=m1_3592 & 0<=n1_3593 & 0<=m_3705 &
+           0<=n_3706 & n_3759=nn_3695 & m_3758=mm_3696 & 0<=mm_3696 &
+           0<=nn_3695 & 0<=m_3758 & 0<=n_3759 & n_3706=2+n_3759 &
+           v_bool_456_1346' & 2=2 & v_bool_456_1346' & p_3591=tmp_35' &
+           n1_4027=n_4035 & m1_4026=m_4034 & 0<=m1_4026 & 0<=n1_4027 &
+           0<=m_4034 & 0<=n_4035 & n_4035=v_int_459_4414+1 &
+           n2_4031=n_4180 & m2_4030=m_4179 & 0<=m2_4030 & 0<=n2_4031 &
+           0<=m_4179 & 0<=n_4180 & n_4180!=v_int_459_4414 &
+           !(v_bool_459_1326') & n_4180!=v_int_459_4414 & v_bool_459_1326' &
+           p_4025=v_node_460_1178' & q_4029=v_node_460_1177' &
+           v_node_455_3703=v_node_460_1176' & v_4024=v_int_460_1175' &
+           v_3590=v_int_460_1174' & lln=n_4035 & llm=m_4034 & lrn=n_4180 &
+           lrm=m_4179 & m_3758=rm
+ ; "":m_3705=m2_4030+1+m1_4026 & (0+n2_4031)<=(n1_4027+1) & n1_4027<=(1+
+   n2_4031) & exists(max_15:n_3706=max_15+1 & max_15=max(n1_4027,n2_4031)) &
+   m=m2_3596+1+m1_3592 & (0+n2_3597)<=(n1_3593+1) & n1_3593<=(1+n2_3597) &
+   exists(max_15:n=max_15+1 & max_15=max(n1_3593,n2_3597))
+ ; "s":S_3707=union(S1_4028,S2_4032,{v_4024}) & forall(x:(x <notin> S1_4028
+    | x<=v_4024)) & forall(y:(y <notin> S2_4032  | v_4024<=y)) &
+   S=union(S1_3594,S2_3598,{v_3590}) & forall(x:(x <notin> S1_3594  |
+   x<=v_3590)) & forall(y:(y <notin> S2_3598  | v_3590<=y)) &
+   S2_3598=S_3669 & S1_3594=S_3707 & S_3760=Sn_3697 & S1_4028=S_4036 &
+   S2_4032=S_4181 & S_4036=Sll & S_4181=Slr & S_3760=Sr) &
+{FLOW,(22,23)=__norm}[]
+ |-  emp&
+ AndList( "":lln=n_3759+1 ; "":lrn<=lln & lln<=(1+lrn)
+ ; "s":forall(x:(x <notin> Sll  | x<=v_int_460_1175')) &
+   forall(y:(y <notin> Slr  | v_int_460_1175'<=y)) & forall(z:(z <notin> Slr
+    | z<=v_int_460_1174')) & forall(w:(w <notin> Sr  |
+   v_int_460_1174'<=w)) & v_int_460_1175'<=v_int_460_1174') &
+{FLOW,(22,23)=__norm}[].
+res:  failctx
+         fe_kind: MAY
+         fe_name: logical bug
+         fe_locs: {
+                   fc_message: failed in entailing pure formula(s) in conseq
+                   fc_current_lhs_flow: {FLOW,(22,23)=__norm}}Stop Omega... 161 invocations
+!!! Number of log entries 626
+!!! Logging logs/no_eps_proof_log_avl-all-lbl_ss.txt
+
+!!! Number of MONA calls:275
+!!! Number of Omega calls:350
+
+!!! Number of sleek log entries 141
+!!! Logging logs/sleek_log_avl-all-lbl_ss.txt
+
+0 false contexts at: ()
+
+!!! log(small):(5.752527,677)
+!!! log(big)(>0.5s)(17):(30.838256,[(SAT,1.083439),(SAT,1.845096),(SAT,2.297728),(SAT,2.091552),(SAT,0.715573),(SAT,0.818321),(SAT,0.64504),(SAT,1.691372),(SAT,1.936971),(SAT,2.184617),(SAT,2.310236),(SAT,2.999685),(SAT,2.997947),(SAT,2.99296),(SAT,2.987719),(sleek-hec,0.6),(sleek-hec,0.64)])
+!!!
+ log(bigger)(>4s)(73):(261.782715,[(SAT:413<66:MONA,3.046767),(SAT:421<66:MONA,5.),(SAT:428<78:MONA,5.),(SAT:432<78:MONA,5.),(SAT:436<78:MONA,3.281578),(SAT:440<78:MONA,5.),(SAT:442<78:MONA,4.504404),(SAT:447<81:MONA,4.859922),(SAT:449<82:MONA,4.077269),(SAT:451<83:MONA,3.992849),(SAT:453<83:MONA,3.282387),(SAT:455<83:MONA,3.99593),(SAT:457<83:MONA,3.474807),(SAT:459<132:MONA,3.044676),(SAT:461<132:MONA,3.004132),(SAT:463<132:MONA,3.024009),(SAT:467<132:MONA,3.022544),(SAT:469<132:MONA,3.016144),(SAT:471<132:MONA,3.274513),(SAT:473<132:MONA,3.045099),(SAT:481<133:MONA,3.309194),(SAT:483<133:MONA,3.009153),(SAT:485<133:MONA,3.01262),(SAT:489<133:MONA,3.019923),(SAT:491<133:MONA,3.031118),(SAT:493<133:MONA,3.027258),(SAT:495<133:MONA,3.002922),(SAT:500<134:MONA,3.059207),(SAT:506<134:MONA,3.29683),(SAT:508<134:MONA,3.025357),(SAT:510<134:MONA,3.065693),(SAT:512<134:MONA,3.00111),(SAT:514<134:MONA,3.027804),(SAT:525<136:MONA,3.019407),(SAT:527<136:MONA,3.035563),(SAT:529<136:MONA,3.289846),(SAT:531<136:MONA,3.031823),(SAT:533<136:MONA,3.036531),(SAT:535<136:MONA,3.003813),(SAT:537<136:MONA,3.031315),(SAT:539<136:MONA,3.024692),(SAT:542<137:MONA,3.757592),(SAT:544<137:MONA,3.703823),(SAT:546<137:MONA,3.769273),(SAT:548<137:MONA,3.713182),(SAT:550<137:MONA,3.720948),(SAT:552<137:MONA,3.721313),(SAT:554<137:MONA,4.019418),(SAT:556<137:MONA,3.741955),(SAT:567<138:MONA,4.05713),(SAT:569<138:MONA,3.721885),(SAT:571<138:MONA,3.740008),(SAT:573<138:MONA,3.718114),(SAT:575<138:MONA,3.743204),(SAT:577<138:MONA,3.7634),(SAT:579<138:MONA,3.746431),(SAT:581<138:MONA,3.765847),(SAT:586<139:MONA,3.769775),(SAT:588<139:MONA,3.753105),(SAT:590<139:MONA,3.756969),(SAT:592<139:MONA,4.090416),(SAT:594<139:MONA,3.805116),(SAT:596<139:MONA,3.808952),(SAT:598<139:MONA,3.770298),(SAT:600<139:MONA,3.787313),(SAT:609<141:MONA,4.003184),(SAT:611<141:MONA,3.792435),(SAT:613<141:MONA,4.062127),(SAT:615<141:MONA,3.768325),(SAT:617<141:MONA,3.72958),(SAT:619<141:MONA,3.710348),(SAT:621<141:MONA,3.740333),(SAT:623<141:MONA,3.722707)])
+Total verification time: 299.55 second(s)
+        Time spent in main process: 4.28 second(s)
+        Time spent in child processes: 295.27 second(s)
+        Time for logging: 0.84 second(s)
+
+============================================================
+============================================================
+============================================================
+============================================================
+============================================================
+============================================================
+============================================================
+============================================================
+============================================================
+============================================================
+============================================================

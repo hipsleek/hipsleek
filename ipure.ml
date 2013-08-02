@@ -6,9 +6,12 @@
 
 open Globals
 open Gen.Basic
-open Label_only
+(* open Label_only *)
 open Label
 include Ipure_D
+
+(* module LO = Label_only.Lab_List *)
+(* module LO = Label_only.Lab_LAnn *)
 
 (* type xpure_view = { *)
 (*     xpure_view_node : ident option; *)
@@ -132,7 +135,7 @@ struct
   let ref_string_of = print_formula
 end;;
 
-module Label_Pure = LabelExpr(Lab_List)(Exp_Pure);; 
+module Label_Pure = LabelExpr(LO)(Exp_Pure);; 
 
 let linking_exp_list = ref (Hashtbl.create 100)
 let _ = let zero = IConst (0, no_pos)
@@ -389,18 +392,25 @@ and mkEq a1 a2 pos =
   else 
 	Eq (a1, a2, pos)
 
-and mkAnd f1 f2 pos = match f1 with
+and mkAnd_x f1 f2 pos = match f1 with
   | BForm ((BConst (false, _), _), _) -> f1
   | BForm ((BConst (true, _), _), _) -> f2
   | _ -> match f2 with
       | BForm ((BConst (false, _), _), _) -> f2
       | BForm ((BConst (true, _), _), _) -> f1
-      | _ -> match f1,f2 with 
+      | _ ->
+            (* let rec helper f1 f2 =  *)
+            match f1,f2 with 
 		| AndList b1, AndList b2 -> mkAndList (Label_Pure.merge b1 b2)
-		| AndList b, f -> mkAndList (Label_Pure.merge b [(Lab_List.unlabelled,f)])
-		| f, AndList b -> mkAndList (Label_Pure.merge b [(Lab_List.unlabelled,f)])
-		| _ -> if no_andl f1 && no_andl f2 then And (f1, f2, pos) 
-			   else report_error no_pos "Ipure: unhandled/unexpected mkAnd with andList case"
+		| AndList b, f -> mkAndList (Label_Pure.merge b [(LO.unlabelled,f)])
+		| f, AndList b -> mkAndList (Label_Pure.merge b [(LO.unlabelled,f)])
+		| _ -> And (f1, f2, pos) (* it's ok not to check for disjs containing AndList, this will be solved later, during the translation to cpure *)
+                      (* if no_andl f1 && no_andl f2 then And (f1, f2, pos)  *)
+		      (*      else report_error no_pos "Ipure: unhandled/unexpected mkAnd with andList case" *)
+
+and mkAnd f1 f2 pos = 
+  let pr = !print_formula in
+  Debug.no_2 "mkAnd" pr pr pr (fun _ _ -> mkAnd_x f1 f2 pos) f1 f2
 
 and mkAndList b = (*print_string "ipure_list_gen\n";*) AndList b
 	
@@ -880,6 +890,26 @@ and find_lexp_exp (e: exp) ls =
   | ListReverse (e, _) -> find_lexp_exp e ls
   | Func (_, el, _) -> List.fold_left (fun acc e -> acc @ find_lexp_exp e ls) [] el
   | ArrayAt (_, el, _) -> List.fold_left (fun acc e -> acc @ find_lexp_exp e ls) [] el
+
+and list_of_conjs (f: formula) : formula list =
+  match f with
+	| And (f1, f2, _) -> (list_of_conjs f1) @ (list_of_conjs f2)
+    | _ -> [f]
+
+and list_of_disjunctions (f: formula) : formula list =
+  match f with
+    | Or (f1, f2, _, _) -> (list_of_disjunctions f1) @ (list_of_disjunctions f2)
+    | _ -> [f]
+
+and conj_of_list (fs:formula list) : formula =
+  match fs with
+    | [] -> mkTrue no_pos
+    | x::xs -> List.fold_left (fun a c-> mkAnd a c no_pos) x xs
+
+(* and disj_of_list (fs:formula list) : formula = *)
+(*   match fs with *)
+(*     | [] -> mkTrue no_pos *)
+(*     | x::xs -> List.fold_left (fun a c-> mkOr a c no_pos) x xs *)
 ;;
 
 let rec break_pure_formula (f: formula) : b_formula list =
@@ -892,15 +922,7 @@ let rec break_pure_formula (f: formula) : b_formula list =
 	| Forall (_, f, _, _) -> break_pure_formula f
 	| Exists (_, f, _, _) -> break_pure_formula f
 
-let rec list_of_conjs (f: formula) : formula list =
-  match f with
-	| And (f1, f2, _) -> (list_of_conjs f1) @ (list_of_conjs f2)
-    | _ -> [f]
 
-let rec conj_of_list (fs:formula list) : formula =
-  match fs with
-    | [] -> mkTrue no_pos
-    | x::xs -> List.fold_left (fun a c-> mkAnd a c no_pos) x xs
 
 let rec contain_vars_exp (expr : exp) : bool =
   match expr with
@@ -1512,6 +1534,8 @@ let trans_special_formula s (p:formula) vars =
 (*     | x::xs -> List.fold_left (fun a c-> mkAnd a c no_pos) x xs *)
 
 let join_conjunctions fl = conj_of_list fl
+
+(* let join_disjunctions fl = disj_of_list fl *)
 
 let mkAndList_opt f =
   if !Globals.remove_label_flag then 

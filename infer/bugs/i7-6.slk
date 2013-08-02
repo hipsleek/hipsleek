@@ -1,0 +1,60 @@
+data node {
+	int val; 
+	node next;	
+}.
+
+pred ll<n> == self = null & n = 0 
+	or self::node<_, q> * q::ll<n-1> 
+  inv n >= 0.
+
+/*
+infer [n] x::ll<n> |- x=null.
+print residue.
+
+infer [x] x::ll<n> |- x=null.
+print residue.
+
+infer [x] x::ll<n> |- x::node<_,_>.
+print residue.
+
+infer [n] x::ll<n> |- x::node<_,_>.
+print residue.
+*/
+/*
+infer [n] (q=null & m=0 | q!=null & m>0) & m=n-1 & n>=0 |- q=null.
+print residue.
+
+infer [n] q=null & m=0 & m=n-1 & n>=0 |- q=null.
+print residue.
+
+infer [n] q=null & m=0 & m=n-1 & n>=0 or
+              q!=null & m>0 & n>=0 & m=n-1 |- q=null.
+print residue.
+
+infer [n] (q=null & m=0 & m=n-1 & n>=0 | q!=null & m>0 & m=n-1 & n>=0) |- q=null.
+print residue.
+
+infer [n] (q=null & m=0 | q!=null & m>0) & m=n-1 & n>=0 |- q=null.
+print residue.
+
+infer [n] x::ll<n> |- x::node<_,null>.
+print residue.
+
+*/
+
+infer [n] (q=null & m=0 | q!=null & m>0) & m>=0 & m=n-1 |- q=null.
+print residue.
+
+
+/*
+infer [n] (q=null & m=0 | q!=null & m>0) & m=n-1 & n>=0 |- q=null.
+print residue.
+
+// (6)
+infer [n] x::ll<n> |- x::node<_,null>.
+print residue.
+
+// (7)
+infer [n] x::ll<n> & n>0 |- x::node<_,null>.
+print residue.
+*/

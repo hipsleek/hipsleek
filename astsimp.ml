@@ -26,6 +26,7 @@ module H = Hashtbl
 module TP = Tpdispatcher
 module Chk = Checks
 module PRED = Predicate
+module LO = Label_only.LOne
 
 
 type trans_exp_type =
@@ -551,7 +552,81 @@ let rec seq_elim (e:C.exp):C.exp = match e with
   | C.Var _ -> e
   | C.VarDecl _ -> e
   | C.While b -> C.While {b with Cast.exp_while_body = seq_elim b.Cast.exp_while_body}
-   
+
+let hull f1 f2 = f1 (* fix *)
+
+let join_hull a f =
+  match a,f with
+    | CP.AndList f1,CP.AndList f2 
+          -> CP.mkTrue no_pos (* fix *)
+    | _,_ -> hull a f
+
+let join_hull_andlist_lst ls =
+  match ls with
+    | [] -> CP.mkTrue no_pos
+    | f::fs -> List.fold_left (fun a f -> join_hull a f) f fs
+
+let is_AndList f =
+  match f with
+    | CP.AndList _ -> true
+    | _ -> false
+
+let norm_andlist_br ls =
+  let ls = List.sort (fun (l,_) (l2,_) -> LO.compare l l2) ls in
+  let rec aux l f ls = match ls with
+    | [] -> [(l,f)]
+    | (l2,f2)::rest -> 
+          if LO.is_equal l l2 
+          then aux (LO.comb_norm 1 l l2) (CP.mkAnd f f2 no_pos) rest
+            else (l,f)::(aux l2 f2 rest)
+  in match ls with
+    | [] -> ls
+    | (l,f)::ls -> aux l f ls
+        
+
+let strip_andlist af =
+  match af with
+    | CP.AndList br -> br
+    | _ -> report_error no_pos "expecting andList as argument of strip_andlist"
+
+let to_andlist_form f =
+  let fs = CP.split_conjunctions f in
+  let (af,f2) = List.partition (is_AndList) fs in
+  let f2 = CP.join_conjunctions f2 in
+  if af==[] then f2
+  else CP.AndList (norm_andlist_br ((LO.unlabelled,f2)::
+      (List.concat (List.map strip_andlist af))))
+
+let hull_disj f =
+  let df = CP.split_disjunctions f in
+  let df2 = List.map to_andlist_form df in
+  let df3 = join_hull_andlist_lst df2 in
+  [df3]
+
+let remove_disj_clauses (mf: mix_formula): mix_formula = 
+  let pf = pure_of_mix mf in
+  let rm_disj f = 
+    let mf_conjs = CP.split_conjunctions f in
+    if mf_conjs==[] then hull_disj f
+    else 
+      let (disj,mf_conjs) = List.partition CP.is_disjunct mf_conjs in
+      mf_conjs 
+  in
+  let mf_conjs = rm_disj pf in
+  Debug.info_hprint (add_str "mf_conjs1" (pr_list !CP.print_formula)) mf_conjs no_pos;
+  let mf_conjs = List.map (fun x -> match x with 
+    | CP.AndList xs -> 
+          let ys = List.map (fun (l,a) -> (l,CP.join_conjunctions (rm_disj a))) xs in
+          CP.AndList ys
+    | y -> y) mf_conjs in
+  Debug.info_hprint (add_str "mf_conjs2" (pr_list !CP.print_formula)) mf_conjs no_pos;
+  let mf = CP.join_conjunctions (mf_conjs) in
+  mix_of_pure mf
+
+let remove_disj_clauses (mf: mix_formula): mix_formula = 
+  let pr = !print_mix_formula in
+  Debug.no_1 "remove_disj_clauses" pr pr remove_disj_clauses mf
+
 (*transform labels into exceptions, remove the finally clause,
 should also check that 
 *)
@@ -1119,14 +1194,14 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
             if vdef.C.view_xpure_flag then
               begin
                 let pr = Cprinter.string_of_mix_formula in
-                let sf = MCP.remove_disj_clauses vdef.C.view_user_inv in
+                let sf = remove_disj_clauses vdef.C.view_user_inv in
                 (* Debug.info_hprint (add_str "disj_form" string_of_bool) disj_form no_pos; *)
                 if disj_form then
                   (vdef.C.view_user_inv <- sf; vdef.C.view_xpure_flag <- false);
-	        Debug.tinfo_pprint ("Using a simpler inv for xpure0 of "^vdef.C.view_name) pos;
-                Debug.tinfo_hprint (add_str "inv(xpure0)" pr) vdef.C.view_user_inv pos;
+	        Debug.info_pprint ("Using a simpler inv for xpure0 of "^vdef.C.view_name) pos;
+                Debug.info_hprint (add_str "inv(xpure0)" pr) vdef.C.view_user_inv pos;
 
-	        Debug.tinfo_hprint (add_str "inv(xpure1)" pr) vdef.C.view_x_formula pos
+	        Debug.info_hprint (add_str "inv(xpure1)" pr) vdef.C.view_x_formula pos
               end
           end
         else report_error pos ("view defn for "^vn^" does not entail supplied invariant\n") 
@@ -4649,7 +4724,7 @@ and linearize_formula (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_var_
 
 and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_var_type_list) 
                         : (spec_var_type_list * CF.formula * (Globals.ident * Globals.primed) list) =
-  let rec match_exp (hargs : (IP.exp * Label_only.spec_label) list) pos : (CP.spec_var list) =
+  let rec match_exp (hargs : (IP.exp * LO.t) list) pos : (CP.spec_var list) =
     match hargs with
     | (e, _) :: rest ->
         let e_hvars = match e with
@@ -4807,7 +4882,7 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
               let field_offset = I.compute_field_seq_offset prog.I.prog_data_decls rootptr_type_name field_access_seq in
               let num_ptrs = I.get_typ_size prog.I.prog_data_decls rootptr_type in
               (* An Hoa : The rest are copied from the original code with modification to account for the holes *)
-              let labels = List.map (fun _ -> Label_only.empty_spec_label) exps in
+              let labels = List.map (fun _ -> LO.unlabelled) exps in
               let hvars = match_exp (List.combine exps labels) pos in
               (* [Internal] Create a list [x,x+1,...,x+n-1] *)
               let rec first_naturals n x = 
@@ -4837,7 +4912,7 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
                 | None -> None
                 | Some f -> 
                     let perms = [f] in
-                    let permlabels = List.map (fun _ -> Label_only.empty_spec_label) perms in
+                    let permlabels = List.map (fun _ -> LO.unlabelled) perms in
                     let permvars = match_exp (List.combine perms permlabels) pos in
                     Some (List.nth permvars 0) 
               ) in
@@ -4876,7 +4951,7 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
                   | None -> None
                   | Some f -> 
                       let perms = f :: [] in
-                      let permlabels = List.map (fun _ -> Label_only.empty_spec_label) perms in
+                      let permlabels = List.map (fun _ -> LO.unlabelled) perms in
                       let permvars = match_exp (List.combine perms permlabels) pos in
                       Some (List.nth permvars 0)
                 ) in
@@ -4901,7 +4976,7 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
                 (new_h, CF.TypeTrue, [], tl)
               )
               with Not_found ->
-                let labels = List.map (fun _ -> Label_only.empty_spec_label) exps in
+                let labels = List.map (fun _ -> LO.unlabelled) exps in
                 let hvars = match_exp (List.combine exps labels) pos in
                 let new_v = CP.SpecVar (Named c, v, p) in
                 (* An Hoa : find the holes here! *)
@@ -4918,7 +4993,7 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
                   | None -> None
                   | Some f -> 
                       let perms = f :: [] in
-                      let permlabels = List.map (fun _ -> Label_only.empty_spec_label) perms in
+                      let permlabels = List.map (fun _ -> LO.unlabelled) perms in
                       let permvars = match_exp (List.combine perms permlabels) pos in
                       Some (List.nth permvars 0) 
                 in
@@ -5330,7 +5405,7 @@ and case_normalize_renamed_formula_x prog (avail_vars:(ident*primed) list) posib
       IF.formula* ((ident*primed)list) * ((ident*primed)list) = 
   (*existential wrapping and other magic tricks, avail_vars -> program variables, function arguments...*)
   (*returns the new formula, used variables and vars to be explicitly instantiated*)
-  let rec match_exp (used_names : (ident*primed) list) (hargs : ((IP.exp * bool) * Label_only.spec_label) list) pos :
+  let rec match_exp (used_names : (ident*primed) list) (hargs : ((IP.exp * bool) * LO.t) list) pos :
         ((ident*primed) list) * ((ident*primed) list) * ((ident*primed) list) * IP.formula = 
     match hargs with
       | ((e,rel_flag), label) :: rest ->
@@ -5350,7 +5425,7 @@ and case_normalize_renamed_formula_x prog (avail_vars:(ident*primed) list) posib
                             in
                         (* let _ = print_endline ("l2: old=" ^ (fst v) ^ " new=" ^ (fst fresh_v)) in *)
                             let link_f = IP.mkEqExp (IP.Var (fresh_v,pos_e)) e pos_e in
-                            (used_names, [ fresh_v ], [ fresh_v ], if Lab_List.is_unlabelled label then link_f else IP.mkAndList [label, link_f])
+                            (used_names, [ fresh_v ], [ fresh_v ], if LO.is_unlabelled label then link_f else IP.mkAndList [label, link_f])
                       else
                         if rel_flag then
                           ((v :: used_names), [ v ], [],IP.mkTrue pos_e)
@@ -5458,7 +5533,7 @@ and case_normalize_renamed_formula_x prog (avail_vars:(ident*primed) list) posib
               in
               (flag,(fst vdef.I.view_labels),vdef.I.view_typed_vars)
             with
-              | Not_found -> (false,List.map (fun _ -> Label_only.empty_spec_label) b.IF.h_formula_heap_arguments,[])
+              | Not_found -> (false,List.map (fun _ -> LO.unlabelled) b.IF.h_formula_heap_arguments,[])
             in
             let _ = if (List.length b.IF.h_formula_heap_arguments) != (List.length labels) then
                   report_error pos ("predicate "^b.IF.h_formula_heap_name^" does not have the correct number of arguments")
@@ -5470,7 +5545,7 @@ and case_normalize_renamed_formula_x prog (avail_vars:(ident*primed) list) posib
             let perm_labels,perm_var = 
               match b.IF.h_formula_heap_perm with
                 | None -> [],[]
-                | Some f -> [Label_only.empty_spec_label], [f]
+                | Some f -> [LO.unlabelled], [f]
             in
             let args = b.IF.h_formula_heap_arguments in
             Debug.tinfo_hprint (add_str "ty_vars" (pr_list (pr_pair string_of_typ pr_id))) tp_vars pos;
@@ -7684,7 +7759,7 @@ let transform_hp_rels_to_iviews (hp_rels:(ident* CF.hp_rel_def) list):(ident*ide
                                          I.view_pos = no_pos;
 		I.view_data_name = "";
 		I.view_vars = vars;
-		I.view_labels = List.map (fun _ -> empty_spec_label) vars, false;
+		I.view_labels = List.map (fun _ -> LO.unlabelled) vars, false;
 		I.view_modes = List.map (fun _ -> ModeOut) vars ;
 		I.view_typed_vars =  tvars;
                 I.view_kind = I.View_NORM;

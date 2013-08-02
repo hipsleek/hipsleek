@@ -1,0 +1,11 @@
+HeapPred H3(int y).
+relation R(int y).
+
+infer [H3] H3(y)   |- true.
+print residue.
+
+infer [H3] H3(y)   |- z>0.
+print residue.
+
+
+

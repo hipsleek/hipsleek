@@ -9,9 +9,11 @@ open Cast
 open Cformula
 open Mcpure_D
 open Gen.Basic 
-open Label_only
+(* open Label_only *)
 open Printf
 
+module LO = Label_only.LOne
+module LO2 = Label_only.Lab2_List
 module P = Cpure
 module MP = Mcpure
 
@@ -552,8 +554,8 @@ let pr_typed_spec_var x = fmt_string (* (string_of_spec_var x) *) (string_of_typ
 
 let pr_typed_spec_var_lbl (l,x) = 
   let s = 
-    if Lab_List.is_common l then ""
-    else (Lab_List.string_of l)^":"
+    if LO.is_common l then ""
+    else (LO.string_of l)^":"
   in fmt_string (s^(string_of_typed_spec_var x))
 
 let pr_list_of_spec_var xs = pr_list_none pr_spec_var xs
@@ -883,9 +885,9 @@ let pr_formula_label l  = fmt_string (string_of_formula_label l "")
 let pr_formula_label_list l  = fmt_string ("{"^(String.concat "," (List.map (fun (i,_)-> (string_of_int i)) l))^"}")
 let pr_formula_label_opt l = fmt_string (string_of_formula_label_opt l "")
 let string_of_formula_label_list l :string =  poly_string_of_pr pr_formula_label_list l
-let pr_spec_label_def l  = fmt_string (Lab2_List.string_of l)
-let pr_spec_label_def_opt l = fmt_string (Lab2_List.string_of_opt l)
-let pr_spec_label l  = fmt_string (Lab_List.string_of l)
+let pr_spec_label_def l  = fmt_string (LO2.string_of l)
+let pr_spec_label_def_opt l = fmt_string (LO2.string_of_opt l)
+let pr_spec_label l  = fmt_string (LO.string_of l)
 
 (** print a pure formula to formatter *)
 let rec pr_pure_formula  (e:P.formula) = 
