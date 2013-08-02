@@ -3120,7 +3120,7 @@ and unsat_base_x prog (sat_subno:  int ref) f  : bool=
 
 and unsat_base_nth (n:int) prog (sat_subno:  int ref) f  : bool = 
   (*unsat_base_x prog sat_subno f*)
-  Debug.ho_1_num n "unsat_base_nth" 
+  Debug.no_1_num n "unsat_base_nth" 
       Cprinter.string_of_formula string_of_bool
       (fun _ -> unsat_base_x prog sat_subno f) f
 
@@ -3143,7 +3143,7 @@ and elim_unsat_ctx (prog : prog_decl) (sat_subno:  int ref) (ctx : context) : co
 and elim_unsat_es_now i (prog : prog_decl) (sat_subno:  int ref) (es : entail_state) : context =
   let pr1 = Cprinter.string_of_entail_state in
   let pr2 = Cprinter.string_of_context in
-  Debug.ho_1_num i "elim_unsat_es_now" pr1 pr2 (fun _ -> elim_unsat_es_now_x prog sat_subno es) es
+  Debug.no_1_num i "elim_unsat_es_now" pr1 pr2 (fun _ -> elim_unsat_es_now_x prog sat_subno es) es
 
 and elim_unsat_es_now_x (prog : prog_decl) (sat_subno:  int ref) (es : entail_state) : context =
   let f = (* match es.es_orig_ante with *)
@@ -7108,15 +7108,18 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
   let _ = match neg_lhs,rel_ass with
     | None,[] -> ()
     | None,[(h1,h2,_)] ->
-      (stk_rel_ass # push_list h2;
-      stk_estate # push h1)
+          let _ = print_endline "WARNING : pushing stk_estate (1)" in
+          (stk_rel_ass # push_list h2;
+          stk_estate # push h1)
     | Some (es,p),[] -> 
-      (stk_inf_pure # push p;
-      stk_estate # push es)
-    | Some (es,p),[(h1,h2,_)] -> 
-      (stk_inf_pure # push p;
-      stk_rel_ass # push_list h2;
-      stk_estate # push es)
+          let _ = print_endline "WARNING : pushing stk_estate (2)" in
+          (stk_inf_pure # push p;
+          stk_estate # push es)
+    | Some (es,p),[(h1,h2,_)] ->
+          let _ = print_endline "WARNING : pushing stk_estate (3)" in
+          (stk_inf_pure # push p;
+          stk_rel_ass # push_list h2;
+          stk_estate # push es)
     | _,_ -> report_error pos "Length of relational assumption list > 1"
   in
   (*let _ = print_string "what is going on?\n" in*)
@@ -7321,7 +7324,11 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
                                   let _ = 
                                     if entail_states = [] then 
                                       report_error pos "Expecting a non-empty list of entail states"
-                                    else stk_estate # push_list entail_states in
+                                    else
+                                      let n = List.length entail_states in
+                                      let _ = print_endline ("WARNING : Pushing "^(string_of_int n)^" stk_estate (4)") in
+                                      stk_estate # push_list entail_states 
+                                  in
                                   (true,[],None))
                             | _ ->
                                   (stk_inf_pure # push p;
@@ -7329,7 +7336,11 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
                                   let _ = 
                                     if entail_states = [] then
                                       report_error pos "Expecting a non-empty list of entail states"
-                                    else stk_estate # push_list entail_states in
+                                    else 
+                                      let n = List.length entail_states in
+                                      let _ = print_endline ("WARNING : Pushing  "^(string_of_int n)^"stk_estate (5)") in
+                                      stk_estate # push_list entail_states
+                                  in
                                   (true,[],None))
                         end
                   | None ->
@@ -7347,7 +7358,10 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
                                                 report_error pos "Expecting a non-empty list of entail states"
                                               else 
                                                 if not(false_es) then ()
-                                                else stk_estate # push_list entail_states in
+                                                else 
+                                                  let n = List.length entail_states in
+                                                  let _ = print_endline ("WARNING : Pushing "^(string_of_int n)^"stk_estate (6)") in
+                                                  stk_estate # push_list entail_states in
                                             (true,[],None)
                                   end
                             | Some pf ->
@@ -7770,7 +7784,7 @@ and imply_mix_formula i ante_m0 ante_m1 conseq_m imp_no memset =
   let pr2 = pr_list Cprinter.string_of_pure_formula in
   let prr ((r,_,_),sp) = (pr_pair string_of_bool (pr_option (pr_pair pr2 pr2))) (r,sp) in
   let pr = Cprinter.string_of_mix_formula in
-  Debug.ho_4_num i "imply_mix_formula" pr
+  Debug.no_4_num i "imply_mix_formula" pr
       (pr_option pr) pr Cprinter.string_of_mem_formula
       prr
       (fun _ _ _ _ -> imply_mix_formula_x ante_m0 new_ante_m1 conseq_m imp_no memset)
@@ -7827,7 +7841,7 @@ and imply_mix_formula_x ante_m0 ante_m1 conseq_m imp_no memset =
                 if CP.no_andl a0  
                 then
                   (* let _ = print_endline "no deep split" in *)
-                  CP.split_disjunctions_deep a0 
+                  CP.split_disjunctions a0 
                 else
                   (* why andl need to be handled in a special way *)
 	          let r = ref (-999) in

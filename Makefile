@@ -24,7 +24,7 @@ else
 endif
 
 #  number of parallel jobs, 0 means unlimited.
-JOBS = 16
+JOBS = 0
 
 # dynlink should precede camlp4lib
 LIBSB = unix,str,xml-light,dynlink,camlp4lib,nums,$(LIBBATLIB),$(LIBELIB),$(LIBGLIB)

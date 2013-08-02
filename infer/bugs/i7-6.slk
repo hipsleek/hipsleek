@@ -36,11 +36,15 @@ print residue.
 
 infer [n] (q=null & m=0 | q!=null & m>0) & m=n-1 & n>=0 |- q=null.
 print residue.
-*/
-
 
 infer [n] x::ll<n> |- x::node<_,null>.
 print residue.
+
+*/
+
+infer [n] (q=null & m=0 | q!=null & m>0) & m>=0 & m=n-1 |- q=null.
+print residue.
+
 
 /*
 infer [n] (q=null & m=0 | q!=null & m>0) & m=n-1 & n>=0 |- q=null.
