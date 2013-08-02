@@ -1395,7 +1395,10 @@ let cnv_ptr_to_int f flag =
       | Neq (a1, a2, ll) -> 
           let (is_null_flag,a1,a2) = comm_null a1 a2 in
           if is_null_flag then
+            if arg (*strengthen *) then
               Some (Gt(a1,IConst(0,ll),ll),l)
+            else 
+              Some (Neq(a1,IConst(0,ll),ll),l)
           else None
       | _ -> None
   in
@@ -1403,6 +1406,7 @@ let cnv_ptr_to_int f flag =
   let a_f a f =
       match f with
         | Not _ -> not(a)
+        | Forall _ -> not(a)
         | _ -> a
   in
   let a_bf a _ = a in
@@ -1479,14 +1483,14 @@ let cnv_ptr_to_int f =
 
 let cnv_ptr_to_int f =
   let pr = Cprinter.string_of_pure_formula in
-  Debug.ho_1 "cnv_ptr_to_int" pr pr cnv_ptr_to_int f
+  Debug.no_1 "cnv_ptr_to_int" pr pr cnv_ptr_to_int f
 
 let cnv_int_to_ptr f = 
   cnv_int_to_ptr f true
 
 let cnv_int_to_ptr f =
   let pr = Cprinter.string_of_pure_formula in
-  Debug.ho_1 "cnv_int_to_ptr" pr pr cnv_int_to_ptr f
+  Debug.no_1 "cnv_int_to_ptr" pr pr cnv_int_to_ptr f
 
 let wrap_pre_post pre post f a =
   let a = pre a in

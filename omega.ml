@@ -402,7 +402,7 @@ let rec send_and_receive f timeout=
 let send_and_receive f timeout =
   let pr x = x in
   let pr2 = Cpure.string_of_relation in
-  Debug.ho_2 "Omega:send_and_receive" pr string_of_float pr2 send_and_receive f timeout 
+  Debug.no_2 "Omega:send_and_receive" pr string_of_float pr2 send_and_receive f timeout 
 
 (********************************************************************)
 let rec omega_of_var_list (vars : ident list) : string = match vars with
@@ -767,7 +767,7 @@ let simplify (pe : formula) : formula =
 
 let simplify (pe : formula) : formula =
   let pf = !print_pure in
-  Debug.ho_1 "Omega.simplify" pf pf simplify pe
+  Debug.no_1 "Omega.simplify" pf pf simplify pe
 
 (* let simplify_ho is_complex (orig_pe : formula) : formula = *)
 (*  (\* print_endline "LOCLE: simplify";*\) *)

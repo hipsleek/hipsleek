@@ -1,18 +1,4 @@
-# t-2.slk
 
-simplify not(x=null).
-
-loris@loris-desktop:/home2/loris/hg/sl_clean/infer/bugs$ ../../sleek t-2.slk 
-Starting Omega...oc
-
-ERROR: at t-2.slk_1:13_1:19 
-Message: expected cexp, found pure_constr
- File "t-2.slk", line 1, characters 15-19
- error: Failure("expected cexp, found pure_constr")
- at:(Program not linked with -g, cannot print stack backtrace)
-Fatal error: exception Failure("expected cexp, found pure_constr")
-
-========================================================================
 # t-2.slk
 
 simplify true & not(x>0).
@@ -26,6 +12,16 @@ Message: expected cexp, found pure_constr
  at:(Program not linked with -g, cannot print stack backtrace)
 Fatal error: exception Failure("expected cexp, found pure_constr")
 ========================================================================
+# i5-4a.slk
+
+infer [y] true   |- y!=0.
+print residue.
+
+ <1>emp&((y+1)<=0 | 1<=y)&{FLOW,(19,20)=__norm}[]
+ inferred pure: [((y+1)<=0 | 1<=y)]
+
+# can we have simpler result, namely y!=0
+
 ========================================================================
 ========================================================================
 ========================================================================

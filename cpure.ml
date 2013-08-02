@@ -2405,7 +2405,7 @@ and build_relation relop alist10 alist20 lbl pos =
       
 and build_relation_x relop alist10 alist20 lbl pos =
   let rec helper1 ae alist =
-    print_endline "inside helper1";
+    (* print_endline "inside helper1"; *)
     let a = List.hd alist in
     let rest = List.tl alist in
     let check_upper r e ub pos = if ub>1 then r else  Eq (e,(Null no_pos),pos) in
@@ -2446,7 +2446,7 @@ and build_relation_x relop alist10 alist20 lbl pos =
       let tmp2 = mkAnd tmp tmp1 pos in
       tmp2 in
   let rec helper2 alist1 alist2 =
-    print_endline "inside helper2";
+    (* print_endline "inside helper2"; *)
     let a = List.hd alist1 in
     let rest = List.tl alist1 in
     let tmp = helper1 a alist2 in
