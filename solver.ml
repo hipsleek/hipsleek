@@ -7836,7 +7836,13 @@ and imply_mix_formula_x ante_m0 ante_m1 conseq_m imp_no memset =
               | None -> []
               | _ -> report_error no_pos ("imply_mix_formula: mix_formula mismatch")
             in
-            let extra_step = if List.length a0l>1 then Some (a0l,a1l) else None in
+            let ln0 = List.length a0l in
+            let ln1 = List.length a1l in
+
+            let extra_step = 
+              if ln0>1 || ln1>1   
+              then if ln0>ln1 then Some (a0l,[]) else Some(a1l,[]) 
+              else None in
             let pr = Cprinter.string_of_pure_formula in 
             DD.tinfo_hprint (add_str "ante-a0l" (pr_list pr)) a0l no_pos;
             DD.tinfo_hprint (add_str "ante-a1l" (pr_list pr)) a1l no_pos;
