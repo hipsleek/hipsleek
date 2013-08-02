@@ -1,5 +1,17 @@
 
-simplify true & not(x>0).
+slk_hull true & (x=0 | x=3).
+
+
+slk_pairwise true & (x=0 | x=1).
+
+slk_pairwise true & (x=null | x!=null).
+
+slk_hull true & (x=null | x=null).
+
+slk_hull true & (x!=null | x=null).
+
+slk_hull true & (x!=null | x!=null).
+
 /*
 ERROR: at t-2.slk_9:20_9:23 
 Message: expected cexp, found pure_constr

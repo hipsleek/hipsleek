@@ -804,6 +804,8 @@ non_empty_command:
       | t=shape_sconseq_cmd     -> ShapeSConseq t
       | t=shape_sante_cmd     -> ShapeSAnte t
       | t=simplify_cmd        -> Simplify t
+      | t=hull_cmd        -> Slk_Hull t
+      | t=pairwise_cmd        -> Slk_PairWise t
       | t= infer_cmd           -> InferCmd t  
       | t=captureresidue_cmd  -> CaptureResidue t
       | t=print_cmd           -> PrintCmd t
@@ -1810,6 +1812,12 @@ shape_sante_cmd:
 
 simplify_cmd:
   [[ `SIMPLIFY; t=meta_constr -> t]];
+
+hull_cmd:
+  [[ `SLK_HULL; t=meta_constr -> t]];
+
+pairwise_cmd:
+  [[ `SLK_PAIRWISE; t=meta_constr -> t]];
 
 shapeinfer_proper_cmd:
    [[ `SHAPE_INFER_PROP; `OSQUARE;il1=OPT id_list;`CSQUARE; `OSQUARE; il2=OPT id_list;`CSQUARE ->

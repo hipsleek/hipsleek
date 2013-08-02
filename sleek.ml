@@ -115,6 +115,8 @@ let proc_gen_cmd cmd =
     | LemmaDef ldef ->   process_lemma ldef
     | PrintCmd pcmd -> process_print_command pcmd
     | Simplify f -> process_simplify f
+    | Slk_Hull f -> process_hull f
+    | Slk_PairWise f -> process_pairwise f
     | CmpCmd pcmd -> process_cmp_command pcmd
     | LetDef (lvar, lbody) -> put_var lvar lbody
     | Time (b,s,_) -> if b then Gen.Profiling.push_time s else Gen.Profiling.pop_time s
@@ -166,6 +168,8 @@ let parse_file (parse) (source_file : string) =
       | RelAssume (id, ilhs, iguard, irhs) -> process_rel_assume id ilhs iguard irhs
       | RelDefn (id, ilhs, irhs) -> process_rel_defn id ilhs irhs
       | Simplify f -> process_simplify f
+      | Slk_Hull f -> process_hull f
+      | Slk_PairWise f -> process_pairwise f
       | ShapeInfer (pre_hps, post_hps) -> process_shape_infer pre_hps post_hps
       | ShapeDivide (pre_hps, post_hps) -> process_shape_divide pre_hps post_hps
       | ShapeConquer (ids, paths) -> process_shape_conquer ids paths

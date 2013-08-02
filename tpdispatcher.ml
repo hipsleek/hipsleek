@@ -1488,16 +1488,21 @@ let cnv_int_to_ptr f =
   let pr = Cprinter.string_of_pure_formula in
   Debug.ho_1 "cnv_int_to_ptr" pr pr cnv_int_to_ptr f
 
-let om_simplify f = 
-  let f = cnv_ptr_to_int f in
-  let r = Omega.simplify f in
-  cnv_int_to_ptr r
+let wrap_pre_post pre post f a =
+  let a = pre a in
+  let r = f a in
+  post r
 
 let om_simplify f =
-  Debug.no_1 "simplify_omega"
-	Cprinter.string_of_pure_formula
-	Cprinter.string_of_pure_formula
-	om_simplify f
+  wrap_pre_post cnv_ptr_to_int cnv_int_to_ptr 
+      Omega.simplify f 
+  (* let f = cnv_ptr_to_int f in *)
+  (* let r = Omega.simplify f in *)
+  (* cnv_int_to_ptr r *)
+
+let om_simplify f =
+  let pr = Cprinter.string_of_pure_formula in
+  Debug.no_1 "simplify_omega" pr pr om_simplify f
 
 let simplify_omega (f:CP.formula): CP.formula = 
   if is_bag_constraint f then f
@@ -1708,6 +1713,10 @@ let simplify_a (s:int) (f:CP.formula): CP.formula =
   let pf = Cprinter.string_of_pure_formula in
   Debug.no_1_num s ("TP.simplify_a") pf pf simplify f
 
+let om_hull f =
+  wrap_pre_post cnv_ptr_to_int cnv_int_to_ptr 
+      Omega.hull f 
+
 let hull (f : CP.formula) : CP.formula =
   let _ = if no_andl f then () else report_warning no_pos "trying to do hull over labels!" in
   if not !tp_batch_mode then start_prover ();
@@ -1721,14 +1730,14 @@ let hull (f : CP.formula) : CP.formula =
     | MonaH
     | OM ->
         if (is_bag_constraint f) then (Mona.hull f)
-        else (Omega.hull f)
+        else (om_hull f)
     | OI ->
         if (is_bag_constraint f) then (Isabelle.hull f)
-        else (Omega.hull f)
+        else (om_hull f)
     | SetMONA -> Mona.hull f
     | CM ->
         if is_bag_constraint f then Mona.hull f
-        else Omega.hull f
+        else om_hull f
     | Z3 -> Smtsolver.hull f
     | Redlog -> Redlog.hull f
     | Mathematica -> Mathematica.hull f
@@ -1738,13 +1747,21 @@ let hull (f : CP.formula) : CP.formula =
     | ZM ->
         if is_bag_constraint f then Mona.hull f
         else Smtsolver.hull f
-    | _ -> (Omega.hull f) in
+    | _ -> (om_hull f) in
   if not !tp_batch_mode then stop_prover ();
   res
 
 let hull (f : CP.formula) : CP.formula =
   let pr = Cprinter.string_of_pure_formula in
   Debug.no_1 "hull" pr pr hull f
+
+let om_pairwisecheck f =
+  wrap_pre_post cnv_ptr_to_int cnv_int_to_ptr 
+      Omega.pairwisecheck f 
+
+let om_pairwisecheck f =
+  let pr = Cprinter.string_of_pure_formula in
+  Debug.no_1 "simplify_omega" pr pr om_pairwisecheck f
 
 let tp_pairwisecheck (f : CP.formula) : CP.formula =
   if not !tp_batch_mode then start_prover ();
@@ -1757,14 +1774,14 @@ let tp_pairwisecheck (f : CP.formula) : CP.formula =
     | Mona 
     | OM ->
         if (is_bag_constraint f) then (Mona.pairwisecheck f)
-        else (Omega.pairwisecheck f)
+        else (om_pairwisecheck f)
     | OI ->
         if (is_bag_constraint f) then (Isabelle.pairwisecheck f)
-        else (Omega.pairwisecheck f)
+        else (om_pairwisecheck f)
     | SetMONA -> Mona.pairwisecheck f
     | CM ->
         if is_bag_constraint f then Mona.pairwisecheck f
-        else Omega.pairwisecheck f
+        else om_pairwisecheck f
     | Z3 -> Smtsolver.pairwisecheck f
     | Redlog -> Redlog.pairwisecheck f
     | Mathematica -> Mathematica.pairwisecheck f
@@ -1774,7 +1791,7 @@ let tp_pairwisecheck (f : CP.formula) : CP.formula =
     | ZM ->
         if is_bag_constraint f then Mona.pairwisecheck f
         else Smtsolver.pairwisecheck f
-    | _ -> (Omega.pairwisecheck f) in
+    | _ -> (om_pairwisecheck f) in
   if not !tp_batch_mode then stop_prover ();
   res
   
