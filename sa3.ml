@@ -1776,12 +1776,12 @@ and infer_shapes_proper iprog prog proc_name callee_hps is need_preprocess detec
     partition_constrs is.CF.is_constrs is.CF.is_post_hps
   in
   let post_hps1 = is.CF.is_post_hps in
-  let pre_constrs1 = List.map (SAU.simp_match_unknown unk_hps link_hps) pre_constrs in
   (*pre-synthesize*)
-  let is_pre = {is with CF.is_constrs = pre_constrs1@pre_oblg_constrs0;
+  let is_pre = {is with CF.is_constrs = pre_constrs@pre_oblg_constrs0;
       CF.is_post_hps = post_hps1;
   } in
-  let is_pre1, _=  infer_process_pre_preds iprog prog proc_name callee_hps is_pre is_pre need_preprocess detect_dang in
+  let is_pre0, _=  infer_process_pre_preds iprog prog proc_name callee_hps is_pre is_pre need_preprocess detect_dang in
+  let is_pre1 = {is_pre0 with CF.is_constrs = List.map (SAU.simp_match_unknown unk_hps link_hps) is_pre0.CF.is_constrs} in
   (*pre-oblg*)
   let is_pre_oblg1 = if is_pre1.CF.is_constrs = [] then is_pre1
   else
