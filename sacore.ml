@@ -2358,7 +2358,12 @@ let lfp_iter_x prog step hp args dang_hps fix_0 nonrec_fs rec_fs=
     in
     (*******END PRINTING*********)
     (*apply rec for cur fix*)
-    let fix_i_plus = pdef_nonrec_fs@(List.fold_left (apply_fix pdef_fix_i) [] pdef_rec_fs) in
+    let n_pdefs = (List.fold_left (apply_fix pdef_fix_i) [] pdef_rec_fs) in
+    let n_pdefs1 = Gen.BList.remove_dups_eq (fun (_, args1, _, f1, _) (_, args2, _, f2,_) ->
+        let ss = List.combine args1 args2 in
+        SAU.check_relaxeq_formula args2 (CF.subst ss f1) f2
+    ) n_pdefs in
+    let fix_i_plus = pdef_nonrec_fs@n_pdefs1 in
     (*check whether it reaches the fixpoint*)
     (* let fix_i_plus1 = Gen.BList.remove_dups_eq (fun (_,_, _, f1, _) (_,_, _, f2, _) -> *)
     (*     SAU.check_relaxeq_formula args f1 f2) fix_i_plus in *)
@@ -2578,7 +2583,7 @@ let compute_lfp_def_x prog post_hps dang_hps hp_defs hpdefs=
 let compute_lfp_def prog post_hps dang_hps hp_defs hpdefs=
   let pr1 = pr_list_ln Cprinter.string_of_hp_rel_def in
   let pr2 = pr_list_ln Cprinter.string_of_hprel_def_short in
-  Debug.ho_3 "compute_lfp_def" !CP.print_svl pr1 pr2 (pr_pair pr1 pr2)
+  Debug.no_3 "compute_lfp_def" !CP.print_svl pr1 pr2 (pr_pair pr1 pr2)
       (fun _ _ _ -> compute_lfp_def_x prog post_hps dang_hps hp_defs hpdefs)
       post_hps hp_defs hpdefs
 (*=============**************************================*)

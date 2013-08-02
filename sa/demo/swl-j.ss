@@ -11,13 +11,30 @@ HeapPred G(node a, node@NI ra, node b, node@NI rb, node@NI c).
   or self::node<_,nxt> * nxt::lx<_,s> & self!=s 
 inv true ;
 
+HP_994<sent_1086> ==  emp&self=sent_1086
+ or emp&self!=sent_1086 & self=null
+   or p::HP_994<sent_1086> *
+   self::node<val_36_1076,p>@M&self!=sent_1086
+   inv true;
+
+HP_995<sent_1062> == self::HP_994<sent_1062>;
+
 //lemma self::node<_,p> * p::lx<_,s> -> self::node<_,p> * p::lx<_,s> & self!=s;
 
 void lscan(ref node cur, ref node prev, node sent)
+/*
   requires cur::node<_,n> * n::lx<_,sent> * prev::lx<_,sent> & cur!=sent
 // ensures prev'::lx<_,sent>  & cur'=sent &prev'!=sent ;//'
   ensures prev'::node<_,p> * p::lx<_,sent>  & cur'=sent &prev'!=sent ;//'
 // ensures cur::node<_,prev> * prev::lx<_,sent>  &cur=prev' & cur'=sent;// &prev'!=sent ;//'
+*/
+/*
+     requires cur::node<val_36_992,n>@M * n::HP_994<sent> *  prev::HP_995<sent> & cur!=sent
+     ensures cur::node<val_36_992,prev>@M * prev::HP_994<sent> & cur'=sent & prev' = cur;
+*/
+
+     requires cur::node<_,n>@M * n::HP_994<sent> *  prev::HP_994<sent> & cur!=sent
+     ensures prev'::node<_,p>@M * p::HP_994<sent> & cur'=sent & prev'!=sent;
 
 /*
 lx<g,s> == self=g & self!=s 
