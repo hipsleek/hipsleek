@@ -1,7 +1,6 @@
 #!/bin/bash
 # you can add to this script the same arguments that you would add to run-fast-tests.pl
 
-
 echo -e "\n##################### sleek tests ###################"
 time ./run-fast-tests.pl sleek $@
 # imm1.slk and imm3.slk fail due to omitted base_case_fold
@@ -44,12 +43,7 @@ time ./run-fast-tests.pl hip_vperm $@
 echo -e "\n##################### parahip tests ###################"
 time ./run-fast-tests.pl parahip $@
 
-echo -e "\n##################### dfracperm tests+barriers ###################"
-time ./run-fast-tests.pl hip_barr $@
-time ./run-fast-tests.pl sleek_barr $@
-time ./run-fast-tests.pl sleek_dfrac $@
-
-echo -e "\n##################### lists tests #####################"
+echo -e "\n##################### lemmas tests #####################"
 time ./run-fast-tests.pl lemmas $@ 
 
 # problem to be fixed!
@@ -57,7 +51,7 @@ echo -e "\n##################### lists tests #####################"
 time ./run-fast-tests.pl lists $@ -tp coq
 # takes a long time for lr.ss!
 
-echo -e "\n##################### NO slicing tests ?? ###################"
+#echo -e "\n##################### NO slicing tests ?? ###################"
 #time ./run-fast-tests.pl hip_slicing $@
 
 # soundness check for no eps
@@ -65,6 +59,10 @@ echo -e "\n##################### imm tests no eps ###################"
 time ./run-fast-tests.pl imm $@ -tp redlog
 
 echo -e "\n##################### bags tests (runs with -tp mona) ###very slow!##################"
-
 time ./run-fast-tests.pl bags -flags "--eps" $@ -tp mona
+
+echo -e "\n##################### dfracperm tests+barriers ###################"
+time ./run-fast-tests.pl hip_barr $@
+time ./run-fast-tests.pl sleek_barr $@
+time ./run-fast-tests.pl sleek_dfrac $@
 

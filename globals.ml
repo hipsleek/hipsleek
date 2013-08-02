@@ -2,8 +2,15 @@
 (* module Lb = Label_only *)
     (* circular with Lb *)
     
-(*let ramification_entailments = ref 0
-let total_entailments = ref 0 *)
+let ramification_entailments = ref 0
+let noninter_entailments = ref 0
+let total_entailments = ref 0
+
+type aliasing_scenario = 
+  | Not_Aliased
+  | May_Aliased
+  | Must_Aliased
+  | Partial_Aliased
 
 type ('a,'b) twoAns = 
   | FstAns of 'a
@@ -544,8 +551,8 @@ let eres_name = "eres"
 let self = "self"
 
 let constinfinity = "ZInfinity"
-
 let deep_split_disjuncts = ref false
+let check_integer_overflow = ref false
 
 let this = "this"
 
@@ -593,6 +600,8 @@ let lib_files = ref ([] : string list)
 
 (* command line options *)
 
+let ptr_to_int_exact = ref false
+
 let remove_label_flag = ref false
 let label_split_conseq = ref true
 let label_split_ante = ref true
@@ -626,7 +635,7 @@ let print_heap_pred_decl = ref true
 
 let cond_path_trace = ref false
 
-let sa_old = ref false
+let pred_syn_modular = ref true
 
 let sa_dnc = ref false
 
@@ -635,7 +644,9 @@ let pred_en_oblg = ref true
 
 (* let sa_en_norm = ref false *)
 
-let sa_en = ref true
+let pred_syn_flag = ref true
+
+let sa_syn = ref true
 
 let sa_en_split = ref false
 
@@ -710,9 +721,18 @@ let elim_exists_ff = ref true
 
 let allow_imm = ref true (*imm will delglobalsay checking guard conditions*)
 
-let allow_field_ann = ref true
+(*Since this flag is disabled by default if you use this ensure that 
+run-fast-test mem test cases pass *)
+let allow_field_ann = ref false 
+  (* disabled by default as it is unstable and
+     other features, such as shape analysis are affected by it *)
 
-let allow_mem = ref true
+let allow_mem = ref false
+(*enabling allow_mem will turn on field ann as well *)
+
+let infer_mem = ref false
+
+let pa = ref false
 
 let allow_inf = ref true (*enable support to use infinity (\inf and -\inf) in formulas *)
 
@@ -772,6 +792,7 @@ let use_field = ref false
 let large_bind = ref false
 
 let print_x_inv = ref false
+let print_cnv_null = ref false
 
 let hull_pre_inv = ref false
 
@@ -883,6 +904,8 @@ let enable_strong_invariant = ref false
 let enable_aggressive_prune = ref false
 let enable_redundant_elim = ref false
 
+let enable_constraint_based_filtering = ref false
+
 (* let disable_aggressive_prune = ref false *)
 (* let prune_with_slice = ref false *)
 
@@ -939,7 +962,6 @@ let log_filter = ref true
   
 (* Options for slicing *)
 let en_slc_ps = ref false
-let no_prune_all = ref true
 let override_slc_ps = ref false (*used to force disabling of en_slc_ps, for run-fast-tests testing of modular examples*)
 let dis_ps = ref false
 let dis_slc_ann = ref false

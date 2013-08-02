@@ -1,0 +1,47 @@
+/*
+
+infer [k] b=0 |-  b=k.
+print residue.
+
+Entail (1) : Valid. 
+
+ <1>emp&b=0 & k=0&{FLOW,(19,20)=__norm}[]
+ inferred pure: [k=0]
+
+*/
+
+
+infer [k]  b=null  |-  b=k.
+
+
+//infer []  b=null & k=null  |-  b=k.
+print residue.
+
+
+/* 
+# i5-3a.slk
+
+FAIL but expecting:
+pre: k=null
+
+REASON
+======
+We currently translate
+ x=null --> x<=0
+ x!=null --> x>0
+
+This is good for implication
+and UNSAT check but not good
+for simplifcation
+
+ Simplify:  forall(b:(b!=null | b=k))
+ res:  false
+
+For simplification, we should translate
+ b=null  --> b=0
+ b!=null --> b!=0
+ 
+That way we can infer k=0 (which is
+translated to k=null) for this example.
+
+*/

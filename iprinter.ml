@@ -388,18 +388,18 @@ let rec string_of_h_formula = function
              F.h_formula_starminus_h2 = f2;
              F.h_formula_starminus_pos = l} ) ->
       if is_bool_f f1 then 
-        if is_bool_f f2 then (string_of_h_formula f1) ^ " * " ^ (string_of_h_formula f2)
-        else (string_of_h_formula f1) ^ " *- (" ^ (string_of_h_formula f2) ^ ")"
+        if is_bool_f f2 then (string_of_h_formula f2) ^ " -* " ^ (string_of_h_formula f1)
+        else (string_of_h_formula f2) ^ " -* (" ^ (string_of_h_formula f1) ^ ")"
       else
-        "(" ^ (string_of_h_formula f1) ^ ") *- (" ^ (string_of_h_formula f2) ^ ")"        
+        "(" ^ (string_of_h_formula f2) ^ ") -* (" ^ (string_of_h_formula f1) ^ ")"        
   | F.Conj ({F.h_formula_conj_h1 = f1;
              F.h_formula_conj_h2 = f2;
              F.h_formula_conj_pos = l} ) ->
       if is_bool_f f1 then 
-        if is_bool_f f2 then (string_of_h_formula f1) ^ " & " ^ (string_of_h_formula f2)
-        else (string_of_h_formula f1) ^ " & (" ^ (string_of_h_formula f2) ^ ")"
+        if is_bool_f f2 then (string_of_h_formula f1) ^ " U* " ^ (string_of_h_formula f2)
+        else (string_of_h_formula f1) ^ " U* (" ^ (string_of_h_formula f2) ^ ")"
       else
-        "(" ^ (string_of_h_formula f1) ^ ") & (" ^ (string_of_h_formula f2) ^ ")"
+        "(" ^ (string_of_h_formula f1) ^ ") U* (" ^ (string_of_h_formula f2) ^ ")"
   | F.ConjStar ({F.h_formula_conjstar_h1 = f1;
              F.h_formula_conjstar_h2 = f2;
              F.h_formula_conjstar_pos = l} ) ->
@@ -412,10 +412,10 @@ let rec string_of_h_formula = function
              F.h_formula_conjconj_h2 = f2;
              F.h_formula_conjconj_pos = l} ) ->
       if is_bool_f f1 then 
-        if is_bool_f f2 then (string_of_h_formula f1) ^ " && " ^ (string_of_h_formula f2)
-        else (string_of_h_formula f1) ^ " && (" ^ (string_of_h_formula f2) ^ ")"
+        if is_bool_f f2 then (string_of_h_formula f1) ^ " & " ^ (string_of_h_formula f2)
+        else (string_of_h_formula f1) ^ " & (" ^ (string_of_h_formula f2) ^ ")"
       else
-        "(" ^ (string_of_h_formula f1) ^ ") && (" ^ (string_of_h_formula f2) ^ ")"                
+        "(" ^ (string_of_h_formula f1) ^ ") & (" ^ (string_of_h_formula f2) ^ ")"                
   | F.Phase ({F.h_formula_phase_rd = f1;
               F.h_formula_phase_rw = f2;
               F.h_formula_phase_pos = l} ) ->
@@ -1001,5 +1001,6 @@ Iast.print_view_decl := string_of_view_decl;
 Iast.print_data_decl := string_of_data_decl;
 Iast.print_exp := string_of_exp;
 Ipure.print_formula :=string_of_pure_formula;
+Ipure.print_formula_exp := string_of_formula_exp;
 Ipure.print_id := string_of_id;
 

@@ -1,0 +1,4 @@
+
+infer [n] (q=null & m=0 & m=n-1 & n>=0 | q!=null & m>0 & m=n-1 & n>=0) |- q=null.
+print residue.
+

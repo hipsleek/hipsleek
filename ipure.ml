@@ -124,6 +124,7 @@ include Ipure_D
 
 
 let print_formula = ref (fun (c:formula) -> "cpure printer has not been initialized")
+let print_formula_exp = ref (fun (c:exp) -> "cpure printer has not been initialized")
 let print_id = ref (fun (c:(ident*primed)) -> "cpure printer has not been initialized")
 
 module Exp_Pure =
@@ -717,7 +718,7 @@ and e_apply_one ((fr, t) as p) e = match e with
   | Func (a, ind, pos) -> Func (a, (e_apply_one_list p ind), pos)
   | ArrayAt (a, ind, pos) -> ArrayAt (v_apply_one p a, (e_apply_one_list p ind), pos) (* An Hoa *)
 
-and v_apply_one ((fr, t) as p) v = (if eq_var v fr then t else v)
+and v_apply_one ((fr, t)) v = (if eq_var v fr then t else v)
 
 and e_apply_one_list ((fr, t) as p) alist = match alist with
   |[] -> []
@@ -727,8 +728,8 @@ and e_apply_one_list ((fr, t) as p) alist = match alist with
 and e_apply_one_list_of_pair ((fr, t) as p) list_of_pair = match list_of_pair with
   | [] -> []
   | (expr, bound)::rest -> match bound with
-							| None -> ((e_apply_one p expr), None)::(e_apply_one_list_of_pair p rest)
-							| Some b_expr ->  ((e_apply_one p expr), Some (e_apply_one p b_expr))::(e_apply_one_list_of_pair p rest)
+      | None -> ((e_apply_one p expr), None)::(e_apply_one_list_of_pair p rest)
+      | Some b_expr ->  ((e_apply_one p expr), Some (e_apply_one p b_expr))::(e_apply_one_list_of_pair p rest)
 
 and subst_list_of_pair sst ls = match sst with
   | [] -> ls

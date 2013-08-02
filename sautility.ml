@@ -284,12 +284,12 @@ let add_raw_hp_rel_x prog is_pre unknown_ptrs pos=
     (hf, CP.SpecVar (HpT,hp_decl.Cast.hp_name, Unprimed))
   else report_error pos "sau.add_raw_hp_rel: args should be not empty"
 
-let add_raw_hp_rel prog unknown_args pos=
-  let pr1 = !CP.print_svl in
+let add_raw_hp_rel prog is_pre unknown_args pos=
+  let pr1 = pr_list (pr_pair !CP.print_sv print_arg_kind) in
   let pr2 = Cprinter.string_of_h_formula in
   let pr4 (hf,_) = pr2 hf in
   Debug.no_1 "add_raw_hp_rel" pr1 pr4
-      (fun _ -> add_raw_hp_rel_x prog unknown_args pos) unknown_args
+      (fun _ -> add_raw_hp_rel_x prog is_pre unknown_args pos) unknown_args
 
 
 let find_close_hpargs_x hpargs eqs0=
@@ -1283,8 +1283,10 @@ and drop_data_view_hrel_nodes_hf_from_root prog hf hd_nodes hv_nodes eqs drop_ro
            (*========SIMPLIFICATION============*)
 (***************************************************************)
 (*
-  this function may be subsumed by simp_match_partial_unknown
-  this makes swl-i.ss failed
+  this function is diff to simp_match_partial_unknown.
+ apply for pre-assumptions
+  - this makes swl-i.ss failed
+  - sa/hip/ll-append5.ss
 *)
 let simp_match_unknown_x unk_hps link_hps cs=
   let lhs_hps = CF.get_hp_rel_name_formula cs.CF.hprel_lhs in
@@ -1300,8 +1302,10 @@ let simp_match_unknown unk_hps link_hps cs=
       (fun _ _ _ -> simp_match_unknown_x unk_hps link_hps cs)
       unk_hps link_hps cs
 
-(*da/demo/dll-pap-1.slk*)
+(*sa/demo/dll-pap-1.slk
+*)
 let simp_match_hp_w_unknown_x prog unk_hps link_hps cs=
+  (* let ignored_hps = unk_hps@link_hps in *)
   let l_hds, l_hvs,lhrels =CF.get_hp_rel_formula cs.CF.hprel_lhs in
   let r_hds, r_hvs,rhrels =CF.get_hp_rel_formula cs.CF.hprel_rhs in
   let lhps,lhp_args = List.fold_left (fun (r_hps, r_hpargs) (hp, eargs, _) ->
@@ -1315,6 +1319,7 @@ let simp_match_hp_w_unknown_x prog unk_hps link_hps cs=
   ) ([],[]) rhrels
   in
   let rec_hps = CP.intersect_svl lhps rhps in
+  (* let rec_hps = List.filter (fun hp -> not (CP.mem_svl hp ignored_hps)) rec_hps0 in *)
   if (List.length rec_hps <= 1)
     (* check-dll: recusrsive do not check*)
     || ( (List.length l_hds > 0 || List.length l_hvs > 0) && List.length lhrels > 0 &&
@@ -2668,9 +2673,10 @@ let rec elim_irr_eq_exps prog args f=
           let keep_ptrs = look_up_closed_ptr_args prog hd_nodes hv_nodes args in
           let keep_ptrs1 = CP.remove_dups_svl keep_ptrs in
           let new_p,ss = remove_irr_eqs keep_ptrs1 (MCP.pure_of_mix fb.CF.formula_base_pure) in
+          let _,new_p1 =  CP.prune_irr_neq new_p keep_ptrs1 in
           let new_h1 = CF.h_subst ss fb.CF.formula_base_heap in
           let new_h2 = filter_unconnected_hf args new_h1 in
-          CF.Base {fb with CF.formula_base_pure = MCP.mix_of_pure new_p;
+          CF.Base {fb with CF.formula_base_pure = MCP.mix_of_pure new_p1;
               CF.formula_base_heap = new_h2}
     | CF.Exists fe ->
         let qvars, base1 = CF.split_quantifiers f in
@@ -2973,10 +2979,42 @@ let is_inconsistent_heap f =
   let ptrs = CF.get_ptrs hf in
   if CP.intersect_svl eqNulls (neqNull_svl@ptrs) <> [] then true else false
 
-let simplify_one_formula prog args f=
+let simplify_one_formula_x prog args f=
   let f1 = elim_irr_eq_exps prog args f in
   (* let f1 = filter_var prog args f in *)
   f1
+
+let simplify_one_formula prog args f=
+  let pr1 = !CP.print_svl in
+  let pr2 = Cprinter.prtt_string_of_formula in
+  Debug.no_2 "simplify_one_formula" pr1 pr2 pr2
+      (fun _ _ ->simplify_one_formula_x prog args f)
+      args f
+let elim_useless_rec_preds_x prog hp args fs=
+  let process_one f=
+    let hpargs = CF.get_HRels_f f in
+    let rec_hpargs = List.filter (fun (hp0,_) -> CP.eq_spec_var hp hp0) hpargs in
+    if rec_hpargs = [] then [f] else
+      let hds, hvs,_ = CF.get_hp_rel_formula f in
+      let args_i = get_hp_args_inst prog hp args in
+      (* let cl_args = look_up_closed_ptr_args prog hds hvs args_i in *)
+      (* if CP.intersect_svl cl_args (List.fold_left (fun ls (_,rec_args) -> *)
+      (*     let rec_args_i = get_hp_args_inst prog hp rec_args in *)
+      (*     ls@rec_args_i) [] rec_hpargs) = [] then *)
+      if args_i = [] || (hds = [] && hvs = []) then
+        let nf,_ = CF.drop_hrel_f f [hp] in
+        let nf1 = simplify_one_formula prog args nf in
+        if is_empty_f nf1 then [] else [nf1]
+      else [f]
+  in
+  List.fold_left (fun r f -> r@(process_one f)) [] fs
+
+let elim_useless_rec_preds prog hp args fs=
+  let pr1 = !CP.print_svl in
+  let pr2 = pr_list_ln Cprinter.prtt_string_of_formula in
+  Debug.no_3 "elim_useless_rec_preds" !CP.print_sv pr1 pr2 pr2
+      (fun _ _ _ -> elim_useless_rec_preds_x prog hp args fs)
+      hp args fs
 
 (************************************************************)
     (****************END SIMPL HP PARDEF/CF.formula************)
@@ -4775,7 +4813,7 @@ let succ_subst_x prog nrec_grps unk_hps allow_rec_subst (hp,args,og,f,unk_svl)=
 
 let succ_subst prog nrec_grps unk_hps allow_rec_subst (hp,args,og,f,unk_svl)=
    let pr1 = pr_list_ln (pr_list_ln string_of_par_def_w_name_short) in
-   let pr2 = pr_quad !CP.print_sv !CP.print_svl Cprinter.prtt_string_of_formula !CP.print_svl in
+   let pr2 = pr_penta !CP.print_sv !CP.print_svl pr_none Cprinter.prtt_string_of_formula !CP.print_svl in
    let pr3 = pr_pair string_of_bool (pr_list_ln pr2) in
    Debug.no_4 "succ_subst" pr1 string_of_bool !CP.print_svl pr2 pr3
        (fun _ _ _  _ -> succ_subst_x prog nrec_grps unk_hps allow_rec_subst (hp,args,og,f,unk_svl))

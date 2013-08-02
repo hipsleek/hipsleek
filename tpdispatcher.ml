@@ -1360,6 +1360,203 @@ let tp_is_sat f sat_no =
 (*   let pr = Cprinter.string_of_pure_formula in *)
 (*   Debug.no_1 "tp_is_sat" pr string_of_bool (fun _ -> tp_is_sat f sat_no do_cache) f *)
 
+
+let comm_null a1 a2 =
+  let f1 = is_null a1 in
+  let f2 = is_null a2 in
+  if f1 && f2 then (false,a1,a2)
+  else if f1 then (f1,a2,a1)
+  else (f2,a1,a2)
+
+(*
+  strong
+  ======
+  x=null  --> x=0
+  x!=null --> x>0
+
+  weak
+  ====
+  x=null  --> x<=0
+  x!=null --> x>0  (to avoid inequality)
+*)
+
+let cnv_ptr_to_int f (ex_flag,st_flag) = 
+  let f_f arg e = None in
+  let f_bf (ex_flag,st_flag) bf = 
+    let (pf, l) = bf in
+    match pf with
+      | Eq (a1, a2, ll) -> 
+          let (is_null_flag,a1,a2) = comm_null a1 a2 in
+          if is_null_flag then
+            if st_flag (*strengthen *) then
+              Some (Eq(a1,IConst(0,ll),ll),l)
+            else Some (Lte(a1,IConst(0,ll),ll),l)
+          else None
+      | Neq (a1, a2, ll) -> 
+          let (is_null_flag,a1,a2) = comm_null a1 a2 in
+          if is_null_flag then
+            if st_flag (*strengthen *) then
+              Some (Gt(a1,IConst(0,ll),ll),l)
+            else 
+              Some (Neq(a1,IConst(0,ll),ll),l)
+          else None
+      | _ -> None
+  in
+  let f_e arg e = (Some e) in
+  let a_f ((ex_flag,st_flag) as flag) f =
+      match f with
+        | Not _ -> (not(ex_flag),not(st_flag))
+        | Forall _ -> 
+              if ex_flag then (false,not(st_flag))
+              else flag
+        | Exists _ -> 
+              if ex_flag then flag
+              else (true,not(st_flag))
+        | _ -> flag
+  in
+  let a_bf a _ = a in
+  let a_e a _ = a in
+  map_formula_arg f (ex_flag,st_flag) (f_f, f_bf, f_e) (a_f, a_bf, a_e) 
+
+(*
+x=0 --> x=null
+x<=0 --> x=null
+x<1
+x>0  --> x!=null
+x>=1
+x>=0 --> true
+x>-1
+x<0  --> false
+x<=-1
+*)
+
+let comm_is_null a1 a2 =
+  match a1,a2 with
+    | Var(v,_),IConst(0,_) ->
+          (is_otype (type_of_spec_var v),a1,a2)
+    | IConst(0,_),Var(v,_) ->
+          (is_otype (type_of_spec_var v),a2,a1)
+    | _ -> (false,a1,a2)
+
+let is_null a1 a2 =
+  match a1,a2 with
+    | Var(v,_),IConst(0,_) ->
+          (is_otype (type_of_spec_var v),a1,a2)
+    | _ -> (false,a1,a2)
+
+let cnv_int_to_ptr f flag = 
+  let f_f e = None in
+  let f_bf bf = 
+    let (pf, l) = bf in
+    match pf with
+      | Eq (a1, a2, ll) -> 
+          let (is_null_flag,a1,a2) = comm_is_null a1 a2 in
+          if is_null_flag then
+              Some(Eq(a1,Null ll,ll),l)
+          else Some bf
+      | Lte ((Var(v,_) as a1), IConst(0,_), ll) | Gte (IConst(0,_), (Var(v,_) as a1), ll) -> 
+          if is_otype (type_of_spec_var v) then
+              Some(Eq(a1,Null ll,ll),l)
+          else Some bf
+      | Lt ((Var(v,_) as a1), IConst(1,_), ll) | Gt (IConst(1,_), (Var(v,_) as a1), ll) -> 
+          if is_otype (type_of_spec_var v) then
+              Some(Eq(a1,Null ll,ll),l)
+          else Some bf
+      | Gte (Var(v,_), IConst(0,_), ll) | Lte (IConst(0,_), Var(v,_), ll) -> 
+          if is_otype (type_of_spec_var v) then
+              Some(BConst(true,ll),l)
+          else Some bf
+      | Gte ((Var(v,_) as a1), IConst(1,_), ll) | Lte (IConst(1,_), (Var(v,_) as a1), ll) -> 
+          if is_otype (type_of_spec_var v) then
+              Some(Neq(a1,Null ll,ll),l)
+          else Some bf
+      | Gt ((Var(v,_) as a1), IConst(0,_), ll) | Lt (IConst(0,_), (Var(v,_) as a1), ll) -> 
+          if is_otype (type_of_spec_var v) then
+              Some(Neq(a1,Null ll,ll),l)
+          else Some bf
+      | Lt (Var(v,_), IConst(0,_), ll) | Gt (IConst(0,_), Var(v,_), ll) -> 
+          if is_otype (type_of_spec_var v) then
+              Some (BConst(false,ll),l)
+          else Some bf
+      | _ -> Some bf
+  in
+  let f_e e = (Some e) in
+  map_formula f (f_f, f_bf, f_e) 
+
+
+let wrap_pre_post_gen pre post f a =
+  let s1 = pre a in
+  let r2 = f a in
+  post s1 r2
+
+let cnv_ptr_to_int f = 
+  let pr = Cprinter.string_of_pure_formula in
+  let pre f = 
+    if !Globals.print_cnv_null then pr f
+    else "" in 
+  let post s1 r2 = 
+    if !Globals.print_cnv_null 
+    then 
+      let s2 = pr r2 in
+      if String.compare s1 s2 == 0 then r2
+      else 
+        begin
+          print_endline "cnv_ptr_to_int";
+          print_endline ("input :"^s1);
+          print_endline ("output:"^s2);
+          r2
+        end
+    else r2
+  in wrap_pre_post_gen pre post (fun _ -> cnv_ptr_to_int f (true,true)) f
+
+let cnv_ptr_to_int f =
+  let pr = Cprinter.string_of_pure_formula in
+   Debug.no_1 "cnv_ptr_to_int" pr pr cnv_ptr_to_int f
+
+let cnv_int_to_ptr f = 
+  let pr = Cprinter.string_of_pure_formula in
+  let pre f = 
+    if !Globals.print_cnv_null then pr f
+    else "" in 
+  let post s1 r2 = 
+    if !Globals.print_cnv_null 
+    then 
+      let s2 = pr r2 in
+      if String.compare s1 s2 == 0 then r2
+      else 
+        begin
+          print_endline "cnv_int_to_ptr";
+          print_endline ("input :"^s1);
+          print_endline ("output:"^s2);
+          r2
+        end
+    else r2
+  in wrap_pre_post_gen pre post (fun _ -> cnv_int_to_ptr f true) f
+
+let cnv_int_to_ptr f =
+  let pr = Cprinter.string_of_pure_formula in
+  Debug.no_1 "cnv_int_to_ptr" pr pr cnv_int_to_ptr f
+
+let wrap_pre_post pre post f a =
+  let a = pre a in
+  let r = f a in
+  post r
+
+let om_simplify f =
+  wrap_pre_post cnv_ptr_to_int cnv_int_to_ptr 
+      Omega.simplify f 
+  (* let f = cnv_ptr_to_int f in *)
+  (* let r = Omega.simplify f in *)
+  (* cnv_int_to_ptr r *)
+
+let om_simplify f =
+  let pr = Cprinter.string_of_pure_formula in
+  Debug.no_1 "simplify_omega" pr pr om_simplify f
+
+let simplify_omega (f:CP.formula): CP.formula = 
+  if is_bag_constraint f then f
+  else om_simplify f   
+
 (* let simplify_omega (f:CP.formula): CP.formula =  *)
 (*   if is_bag_constraint f then f *)
 (*   else Omega.simplify f    *)
@@ -1379,7 +1576,8 @@ let simplify (f : CP.formula) : CP.formula =
     else 
       let cmd = PT_SIMPLIFY f in
       let _ = Log.last_proof_command # set cmd in
-      let omega_simplify f = Omega.simplify f in
+      let omega_simplify f = simplify_omega f
+        (* Omega.simplify f  *)in
       (* this simplifcation will first remove complex formula as boolean
          vars but later restore them *)
       if !external_prover then 
@@ -1488,7 +1686,7 @@ let simplify (f:CP.formula):CP.formula =
    | _ -> simplify f in
   helper f
 
-let simplify (f:CP.formula):CP.formula =
+let simplify_tp (f:CP.formula):CP.formula =
   let pr = !CP.print_formula in
   Debug.no_1 "TP.simplify" pr pr simplify f
 	  
@@ -1564,6 +1762,10 @@ let simplify_a (s:int) (f:CP.formula): CP.formula =
   let pf = Cprinter.string_of_pure_formula in
   Debug.no_1_num s ("TP.simplify_a") pf pf simplify f
 
+let om_hull f =
+  wrap_pre_post cnv_ptr_to_int cnv_int_to_ptr 
+      Omega.hull f 
+
 let hull (f : CP.formula) : CP.formula =
   let _ = if no_andl f then () else report_warning no_pos "trying to do hull over labels!" in
   if not !tp_batch_mode then start_prover ();
@@ -1577,14 +1779,14 @@ let hull (f : CP.formula) : CP.formula =
     | MonaH
     | OM ->
         if (is_bag_constraint f) then (Mona.hull f)
-        else (Omega.hull f)
+        else (om_hull f)
     | OI ->
         if (is_bag_constraint f) then (Isabelle.hull f)
-        else (Omega.hull f)
+        else (om_hull f)
     | SetMONA -> Mona.hull f
     | CM ->
         if is_bag_constraint f then Mona.hull f
-        else Omega.hull f
+        else om_hull f
     | Z3 -> Smtsolver.hull f
     | Redlog -> Redlog.hull f
     | Mathematica -> Mathematica.hull f
@@ -1594,13 +1796,21 @@ let hull (f : CP.formula) : CP.formula =
     | ZM ->
         if is_bag_constraint f then Mona.hull f
         else Smtsolver.hull f
-    | _ -> (Omega.hull f) in
+    | _ -> (om_hull f) in
   if not !tp_batch_mode then stop_prover ();
   res
 
 let hull (f : CP.formula) : CP.formula =
   let pr = Cprinter.string_of_pure_formula in
-  Debug.ho_1 "hull" pr pr hull f
+  Debug.no_1 "hull" pr pr hull f
+
+let om_pairwisecheck f =
+  wrap_pre_post cnv_ptr_to_int cnv_int_to_ptr 
+      Omega.pairwisecheck f 
+
+let om_pairwisecheck f =
+  let pr = Cprinter.string_of_pure_formula in
+  Debug.no_1 "simplify_omega" pr pr om_pairwisecheck f
 
 let tp_pairwisecheck (f : CP.formula) : CP.formula =
   if not !tp_batch_mode then start_prover ();
@@ -1613,14 +1823,14 @@ let tp_pairwisecheck (f : CP.formula) : CP.formula =
     | Mona 
     | OM ->
         if (is_bag_constraint f) then (Mona.pairwisecheck f)
-        else (Omega.pairwisecheck f)
+        else (om_pairwisecheck f)
     | OI ->
         if (is_bag_constraint f) then (Isabelle.pairwisecheck f)
-        else (Omega.pairwisecheck f)
+        else (om_pairwisecheck f)
     | SetMONA -> Mona.pairwisecheck f
     | CM ->
         if is_bag_constraint f then Mona.pairwisecheck f
-        else Omega.pairwisecheck f
+        else om_pairwisecheck f
     | Z3 -> Smtsolver.pairwisecheck f
     | Redlog -> Redlog.pairwisecheck f
     | Mathematica -> Mathematica.pairwisecheck f
@@ -1630,7 +1840,7 @@ let tp_pairwisecheck (f : CP.formula) : CP.formula =
     | ZM ->
         if is_bag_constraint f then Mona.pairwisecheck f
         else Smtsolver.pairwisecheck f
-    | _ -> (Omega.pairwisecheck f) in
+    | _ -> (om_pairwisecheck f) in
   if not !tp_batch_mode then stop_prover ();
   res
   
