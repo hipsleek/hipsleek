@@ -1,4 +1,16 @@
-simplify not(x=null).
+simplify true & x=null.
+
+simplify (x=null).
+
+simplify true & exists(x:x=null).
+
+simplify true & exists(x:x!=null).
+
+simplify true & not(x>0).
+
+/*
+
+simplify exists(x:x=null).
 
 simplify not(x!=null).
-
+*/

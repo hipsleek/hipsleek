@@ -13,6 +13,18 @@ Message: expected cexp, found pure_constr
 Fatal error: exception Failure("expected cexp, found pure_constr")
 
 ========================================================================
+# t-2.slk
+
+simplify true & not(x>0).
+
+Why is there a parser error?
+
+ERROR: at t-2.slk_9:20_9:23 
+Message: expected cexp, found pure_constr
+ File "t-2.slk", line 9, characters 22-23
+ error: Failure("expected cexp, found pure_constr")
+ at:(Program not linked with -g, cannot print stack backtrace)
+Fatal error: exception Failure("expected cexp, found pure_constr")
 ========================================================================
 ========================================================================
 ========================================================================
