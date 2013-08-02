@@ -1588,12 +1588,13 @@ let rec infer_shapes_from_fresh_obligation_x iprog cprog proc_name callee_hps is
     end
     in
     (***************  END PRINTING*********************)
-    let is2 = infer_init iprog cprog proc_name is.CF.is_cond_path ho_constrs callee_hps (sel_lhps@sel_rhps)
+    let is1 = infer_init iprog cprog proc_name is.CF.is_cond_path ho_constrs callee_hps (sel_lhps@sel_rhps)
       (*post-preds in lhs which dont have ad definition should be considered as pre-preds*)
       (CP.diff_svl (is.CF.is_post_hps@sel_rhps) nondef_post_hps)
       is.CF.is_unk_map is.CF.is_dang_hpargs is.CF.is_link_hpargs
       need_preprocess detect_dang
     in
+    let is2 = infer_core iprog cprog proc_name callee_hps is1 need_preprocess detect_dang in
     {is2 with CF.is_constrs = [];
         CF.is_hp_defs = is.CF.is_hp_defs@is2.CF.is_hp_defs;
     }
@@ -1839,8 +1840,8 @@ and iprocess_action_x iprog prog proc_name callee_hps is act need_preprocess det
 and iprocess_action iprog prog proc_name callee_hps is act need_preprocess detect_dang=
   let pr1 = IC.string_of_iaction in
   let pr2 = Cprinter.string_of_infer_state_short in
-  Debug.no_2 "iprocess_action" pr2 pr1 pr2
-      (fun _ _ -> iprocess_action_x iprog prog proc_name callee_hps is act need_preprocess detect_dang) is act
+  Debug.no_2 "iprocess_action" pr1 pr2 pr2
+      (fun _ _ -> iprocess_action_x iprog prog proc_name callee_hps is act need_preprocess detect_dang) act is
 
 and infer_init iprog prog proc_name cond_path constrs0 callee_hps sel_hps
     post_hps unk_map unk_hpargs0a link_hpargs need_preprocess detect_dang =

@@ -2589,7 +2589,7 @@ type: Cast.prog_decl ->
 let infer_collect_hp_rel_x prog (es:entail_state) rhs0 rhs_rest (rhs_h_matched_set:CP.spec_var list) lhs_b0 rhs_b pos =
   (*for debugging*)
   (* DD.info_pprint ("  es: " ^ (Cprinter.string_of_formula es.CF.es_formula)) pos; *)
-  let _ = Debug.info_pprint ("es_infer_vars_hp_rel: " ^ (!CP.print_svl es.es_infer_vars_hp_rel)) no_pos in
+  let _ = Debug.ninfo_pprint ("es_infer_vars_hp_rel: " ^ (!CP.print_svl es.es_infer_vars_hp_rel)) no_pos in
   let _ = Debug.ninfo_pprint ("es_infer_vars: " ^ (!CP.print_svl es.es_infer_vars)) no_pos in
   let _ = Debug.ninfo_pprint ("es_infer_vars_sel_hp_rel: " ^ (!CP.print_svl es.es_infer_vars_sel_hp_rel)) no_pos in
   (*end for debugging*)

@@ -2227,7 +2227,7 @@ let partition_constrs_4_paths link_hpargs0 constrs0 =
 (*=============**************************================*)
        (*=============FIXPOINT================*)
 (*=============**************************================*)
-let gfp_gen_init_x prog is_pre r rec_fs=
+let gfp_gen_init_x prog is_pre r base_fs rec_fs=
   let find_greates_neg (r_fs, r_unk_hpargs)f=
     let svl = CF.get_ptrs_f f in
     let pos = (CF.pos_of_formula f) in
@@ -2242,22 +2242,22 @@ let gfp_gen_init_x prog is_pre r rec_fs=
       (r_fs@[f], r_unk_hpargs)
   in
   let n_fs, n_unk_hpargs = List.fold_left find_greates_neg ([],[]) rec_fs in
-  (CF.formula_of_disjuncts (rec_fs@n_fs), n_unk_hpargs)
+  (CF.formula_of_disjuncts (base_fs@rec_fs@n_fs), n_unk_hpargs)
 
-let gfp_gen_init prog is_pre r rec_fs=
+let gfp_gen_init prog is_pre r base_fs rec_fs=
   let pr1 = Cprinter.prtt_string_of_formula in
   let pr2 = pr_list_ln pr1 in
   Debug.no_2 "gfp_gen_init" !CP.print_sv pr2 (pr_pair pr1 !CP.print_svl)
-      (fun _ _ -> gfp_gen_init_x prog is_pre r rec_fs)
+      (fun _ _ -> gfp_gen_init_x prog is_pre r base_fs rec_fs)
       r rec_fs
 
-let gfp_iter_x prog rec_fs fixn=
+let gfp_iter_x prog base_fs rec_fs fixn=
   fixn
 
-let gfp_iter prog rec_fs fixn=
+let gfp_iter prog base_fs rec_fs fixn=
   let pr1 = Cprinter.prtt_string_of_formula in
   Debug.no_1 "gfp_iter" pr1 pr1
-      (fun _ -> gfp_iter_x prog rec_fs fixn)
+      (fun _ -> gfp_iter_x prog base_fs rec_fs fixn)
       fixn
 (*
  now suppose the set of constraints include
@@ -2290,17 +2290,17 @@ let compute_gfp_x prog is_pre is pdefs=
           let r,non_r_args = SAU.find_root prog skip_hps args0 norm_fs in
           let base_fs, rec_fs, dep_fs = List.fold_left (classify hp0) ([],[],[]) norm_fs in
           (*now assume base_fs =[] and dep_fs = [] and rec_fs != [] *)
-          if base_fs =[] && dep_fs = [] then
+          if (* base_fs =[] && *) dep_fs = [] then
             (*init*)
-            let fix0, n_unk_hpargs = gfp_gen_init prog is_pre r rec_fs in
+            let fix0, n_unk_hpargs = gfp_gen_init prog is_pre r base_fs rec_fs in
             (*iterate*)
-            let fixn = gfp_iter prog rec_fs fix0 in
+            let fixn = gfp_iter prog base_fs rec_fs fix0 in
             (hp0, CF.mk_hp_rel_def hp0 (args0, r, non_r_args) None fixn (CF.pos_of_formula f0), n_unk_hpargs)
           else
             report_error no_pos "sac.compute gfp: not support yet"
     | [] -> report_error no_pos "sac.compute gfp: sth wrong"
   in
-  let _ = Debug.binfo_pprint ("    synthesize: " ^ (!CP.print_sv hp) ) no_pos in
+  let _ = Debug.binfo_pprint ("    synthesize (gfp): " ^ (!CP.print_sv hp) ) no_pos in
   let _ = Debug.binfo_pprint ((Cprinter.string_of_hp_rel_def_short def)) no_pos in
   (def,n_unk_hpargs)
 
@@ -2308,7 +2308,7 @@ let compute_gfp prog is_pre is pdefs=
   let pr1 = !CP.print_svl in
   let pr2 = Cprinter.prtt_string_of_formula in
   let pr3 = pr_list_ln (pr_triple !CP.print_sv pr1 pr2) in
-  let pr4 = pr_pair Cprinter.string_of_hp_rel_def !CP.print_svl in
+  let pr4 = pr_pair Cprinter.string_of_hp_rel_def (pr_list (pr_pair !CP.print_sv pr1)) in
   Debug.no_1 "compute_gfp" pr3 pr4
       (fun _ -> compute_gfp_x prog is_pre is pdefs) pdefs
 
@@ -2342,7 +2342,7 @@ let lfp_iter_x prog step hp args dang_hps fix_0 nonrec_fs rec_fs=
   let apply_fix fix_i r_fs pdef_f=
     let _, fs = if fix_i = [] then (false, []) else
       SAU.succ_subst prog [fix_i] dang_hps true pdef_f in
-    r_fs@fs
+    r_fs@(List.filter (fun (_,_,_,f,_) -> not (SAU.is_unsat f)) fs)
   in
   let pdef_rec_fs = List.map (fun f -> (hp,args, None, f, [])) rec_fs in
   let pdef_nonrec_fs = List.map (fun f -> (hp,args, None, f, [])) nonrec_fs in
