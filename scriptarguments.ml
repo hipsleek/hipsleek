@@ -453,6 +453,12 @@ let common_arguments = [
   ), "Dump proof log at end of command");
   ("--epl", Arg.Unit (fun _ ->
       Globals.proof_logging_txt:=true ), "Shorthand for --en-logging-txt");
+  ("--dis-proof-details", Arg.Unit (fun _ ->
+      Globals.log_proof_details:=false ), "Disable proof strings to be recorded");
+  ("--en-proof-details", Arg.Unit (fun _ ->
+      Globals.log_proof_details:=true ), "Enable proof strings to be recorded");
+  ("--epd", Arg.Unit (fun _ ->
+      Globals.log_proof_details:=true ), "Shorthand for --en-proof-details");
   ("--en-slk-logging", Arg.Unit (fun _ ->
       Globals.proof_logging_txt:=true; 
       Globals.sleek_logging_txt:=true), "Enable sleek and proof logging with text file");

@@ -90,15 +90,15 @@ let rec omega_of_exp e0 = match e0 with
 ListCons _|List _|BagDiff _|BagIntersect _|BagUnion _|Bag _|FConst _)
 *)
 
-and omega_ptr_eq_null a1 =
-  let v= omega_of_exp a1 in
-  if !Globals.ptr_to_int_exact then ("("^v^" = 0)")
-  else ("("^v^" < 1)")
+(* and omega_ptr_eq_null a1 = *)
+(*   let v= omega_of_exp a1 in *)
+(*   if !Globals.ptr_to_int_exact then ("("^v^" = 0)") *)
+(*   else ("("^v^" < 1)") *)
 
-and omega_ptr_neq_null a1 =
-  let v= omega_of_exp a1 in
-  if !Globals.ptr_to_int_exact then (v^" != 0")
-  else (v^" > 0")
+(* and omega_ptr_neq_null a1 = *)
+(*   let v= omega_of_exp a1 in *)
+(*   if !Globals.ptr_to_int_exact then (v^" != 0") *)
+(*   else (v^" > 0") *)
 
 and omega_of_b_formula b =
   let (pf, _) = b in
@@ -528,7 +528,7 @@ let is_valid_ops_x pr_weak pr_strong (pe : formula) timeout: bool =
     (*test*)
 	(*print_endline (Gen.break_lines fomega);*)
 			(* An Hoa : set generated input *)
-			let _ = !set_generated_prover_input fomega in
+	    let _ = !set_generated_prover_input fomega in
             if !log_all_flag then begin
                 (*output_string log_all ("YYY" ^ (Cprinter.string_of_pure_formula pe) ^ "\n");*)
                 output_string log_all (Gen.new_line_str^"#is_valid" ^Gen.new_line_str);
@@ -854,12 +854,12 @@ let simplify (pe : formula) : formula =
     | None -> pe
     | Some f -> f
 
-let wrap_ptr_to_int_exact =
-  Wrapper.wrap_one_bool Globals.ptr_to_int_exact true
+(* let wrap_ptr_to_int_exact = *)
+(*   Wrapper.wrap_one_bool Globals.ptr_to_int_exact true *)
 
-let simplify (pe : formula) : formula =
-  let pr = !print_formula in
-  Debug.no_1 "Omega.simplify" pr pr (wrap_ptr_to_int_exact simplify) pe 
+(* let simplify (pe : formula) : formula = *)
+(*   let pr = !print_formula in *)
+(*   Debug.no_1 "Omega.simplify" pr pr (wrap_ptr_to_int_exact simplify) pe  *)
 
 let pairwisecheck (pe : formula) : formula =
   (* print_endline "LOCLE: pairwisecheck"; *)

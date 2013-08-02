@@ -316,6 +316,7 @@ let string_of_loc_by_char_num (l : loc) =
 (* Option for proof logging *)
 let proof_logging = ref false
 let proof_logging_txt = ref false
+let log_proof_details = ref true
 let proof_logging_time = ref 0.000
 (* let sleek_src_files = ref ([]: string list) *)
 
