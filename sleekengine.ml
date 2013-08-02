@@ -222,7 +222,10 @@ let process_pred_def_4_iast pdef =
   let pr = Iprinter.string_of_view_decl in
   Debug.no_1 "process_pred_def_4_iast" pr pr_no process_pred_def_4_iast pdef
 
-(*should call AS.convert_pred_to_cast*)
+(*should call AS.convert_pred_to_cast
+it seems that the following method is no longer used.
+It is replaced by convert_data_and_pred_to_cast
+*)
 let convert_pred_to_cast () = 
   let infer_views = if (!Globals.infer_mem) 
     then List.map (fun c -> Mem.infer_mem_specs c iprog) iprog.I.prog_view_decls 
@@ -268,7 +271,7 @@ let convert_pred_to_cast () =
   cprog := cprog5
 
 let convert_pred_to_cast () = 
-  Debug.no_1 "convert_pred_to_cast" pr_no pr_no convert_pred_to_cast ()
+  Debug.ho_1 "convert_pred_to_cast" pr_no pr_no convert_pred_to_cast ()
 
 (* TODO: *)
 let process_func_def fdef =
@@ -433,10 +436,16 @@ let convert_data_and_pred_to_cast_x () =
       Norm.norm_extract_common !cprog cviews (List.map (fun vdef -> vdef.C.view_name) cviews)
     else cviews
   in
-  let _ = !cprog.C.prog_view_decls <- cviews1 in
-  let _ =  (List.map (fun vdef -> AS.compute_view_x_formula !cprog vdef !Globals.n_xpure) cviews1) in
+  let cviews2 =
+    if !Globals.norm_cont_analysis then
+      Norm.cont_para_analysis !cprog cviews1
+    else
+      cviews1
+  in
+  let _ = !cprog.C.prog_view_decls <- cviews2 in
+  let _ =  (List.map (fun vdef -> AS.compute_view_x_formula !cprog vdef !Globals.n_xpure) cviews2) in
   Debug.tinfo_pprint "after compute_view" no_pos;
-  let _ = (List.map (fun vdef -> AS.set_materialized_prop vdef) cviews1) in
+  let _ = (List.map (fun vdef -> AS.set_materialized_prop vdef) cviews2) in
   Debug.tinfo_pprint "after materialzed_prop" no_pos;
   let cprog1 = AS.fill_base_case !cprog in
   let cprog2 = AS.sat_warnings cprog1 in        

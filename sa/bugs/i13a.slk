@@ -9,6 +9,11 @@ pred lseg<p:node> == self = p
 
 HeapPred H1(node x).
 
+//1
+infer [H1] H1(y)  |- y::lseg<p> .
+print residue.
+
+//2
 infer [H1] H1(y)  |- y::lseg<p> * p::node<null> .
 print residue.
 
