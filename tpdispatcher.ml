@@ -1406,7 +1406,7 @@ let cnv_ptr_to_int f flag =
   let a_f a f =
       match f with
         | Not _ -> not(a)
-        | Forall _ -> not(a)
+        | Forall _ -> false
         | _ -> a
   in
   let a_bf a _ = a in
@@ -1478,15 +1478,55 @@ let cnv_int_to_ptr f flag =
   let f_e e = (Some e) in
   map_formula f (f_f, f_bf, f_e) 
 
+
+let wrap_pre_post_gen pre post f a =
+  let s1 = pre a in
+  let r2 = f a in
+  post s1 r2
+
 let cnv_ptr_to_int f = 
-  cnv_ptr_to_int f true
+  let pr = Cprinter.string_of_pure_formula in
+  let pre f = 
+    if !Globals.print_cnv_null then pr f
+    else "" in 
+  let post s1 r2 = 
+    if !Globals.print_cnv_null 
+    then 
+      let s2 = pr r2 in
+      if String.compare s1 s2 == 0 then r2
+      else 
+        begin
+          print_endline "cnv_ptr_to_int";
+          print_endline ("input :"^s1);
+          print_endline ("output:"^s2);
+          r2
+        end
+    else r2
+  in wrap_pre_post_gen pre post (fun _ -> cnv_ptr_to_int f true) f
 
 let cnv_ptr_to_int f =
   let pr = Cprinter.string_of_pure_formula in
-  Debug.no_1 "cnv_ptr_to_int" pr pr cnv_ptr_to_int f
+   Debug.no_1 "cnv_ptr_to_int" pr pr cnv_ptr_to_int f
 
 let cnv_int_to_ptr f = 
-  cnv_int_to_ptr f true
+  let pr = Cprinter.string_of_pure_formula in
+  let pre f = 
+    if !Globals.print_cnv_null then pr f
+    else "" in 
+  let post s1 r2 = 
+    if !Globals.print_cnv_null 
+    then 
+      let s2 = pr r2 in
+      if String.compare s1 s2 == 0 then r2
+      else 
+        begin
+          print_endline "cnv_int_to_ptr";
+          print_endline ("input :"^s1);
+          print_endline ("output:"^s2);
+          r2
+        end
+    else r2
+  in wrap_pre_post_gen pre post (fun _ -> cnv_int_to_ptr f true) f
 
 let cnv_int_to_ptr f =
   let pr = Cprinter.string_of_pure_formula in

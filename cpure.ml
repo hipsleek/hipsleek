@@ -9714,7 +9714,7 @@ let split_disjunctions_deep (f:formula) : formula list =
 
 let split_disjunctions_deep (f:formula) : formula list =
  let pr = !print_formula in
-  Debug.ho_1 "split_disjunctions_deep" pr (pr_list pr) split_disjunctions_deep f
+  Debug.no_1 "split_disjunctions_deep" pr (pr_list pr) split_disjunctions_deep f
 
 let drop_exists (f:formula) :formula = 
   let rec helper f =
