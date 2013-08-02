@@ -1600,7 +1600,7 @@ let hull (f : CP.formula) : CP.formula =
 
 let hull (f : CP.formula) : CP.formula =
   let pr = Cprinter.string_of_pure_formula in
-  Debug.no_1 "hull" pr pr hull f
+  Debug.ho_1 "hull" pr pr hull f
 
 let tp_pairwisecheck (f : CP.formula) : CP.formula =
   if not !tp_batch_mode then start_prover ();

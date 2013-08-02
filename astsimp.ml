@@ -27,6 +27,7 @@ module TP = Tpdispatcher
 module Chk = Checks
 module PRED = Predicate
 module LO = Label_only.LOne
+module LP = CP.Label_Pure
 
 
 type trans_exp_type =
@@ -545,13 +546,172 @@ let rec seq_elim (e:C.exp):C.exp = match e with
   | C.VarDecl _ -> e
   | C.While b -> C.While {b with Cast.exp_while_body = seq_elim b.Cast.exp_while_body}
 
-let hull f1 f2 = f1 (* fix *)
+
+let conv_exp_to_var e = 
+  match e with
+    | CP.IConst(i, _) -> Some CP.mk_sp_const i
+    | CP.Null _ -> Some CP.null_var
+    | CP.Var(v, _) -> Some v
+    | _ -> None
+
+let merge_ieq_w_eq emap ie_lst =
+  let req = ref [] in        
+  let new_ie_lst =  List.map (fun ieq ->
+      match ieq with
+        | CP.BForm (b, lb) ->
+              begin
+                match b with
+                  | (CP.Lt (ex1, ex2, s), l) -> 
+                        begin
+                          match conv_exp_to_var ex1, conv_exp_to_var ex2 with
+                            |  Some v1, Some v2 ->
+                                   if CP.EMapSV.is_equiv emap v1 v2 then 
+                                     begin
+                                       req  := (v1, v2) :: !req;
+                                       CP.BForm ((CP.Lte (ex1,  ex2, s), l), lb)
+                                     end
+                                   else ieq
+                            | _, _ -> ieq
+                        end
+                  | (CP.Gt (ex1, ex2, s), l) ->
+                        begin
+                          match conv_exp_to_var ex1, conv_exp_to_var ex2 with
+                            |  Some v1, Some v2 ->
+                                   if CP.EMapSV.is_equiv emap v1 v2 then 
+                                     begin
+                                       req  := (v1, v2) :: !req;
+                                       CP.BForm ((CP.Gte (ex1,  ex2, s), l), lb)
+                                     end
+                                   else ieq
+                            | _, _ -> ieq
+                        end
+                  | (CP.Neq (ex1, ex2, _), _) ->
+                        begin
+                          match conv_exp_to_var ex1, conv_exp_to_var ex2 with
+                            |  Some v1, Some v2 ->
+                                   if CP.EMapSV.is_equiv emap v1 v2 then 
+                                     begin
+                                       req  := (v1, v2) :: !req;
+                                       CP.mkTrue no_pos
+                                     end
+                                   else ieq
+                            | _, _ -> ieq
+                        end
+                  | (CP.Lte (ex1, ex2, _), _)
+                  | (CP.Gte (ex1, ex2, _), _)
+                  | (CP.Eq  (ex1, ex2, _), _) ->
+                        begin
+                          match conv_exp_to_var ex1, conv_exp_to_var ex2 with
+                            |  v1, Some v2 ->
+                                   if CP.EMapSV.is_equiv emap v1 v2 then req := (v1, v2) :: !req;
+                                   ieq
+                            | _, _ -> ieq
+                        end
+                  | _ -> ieq
+              end
+        | _ -> ieq
+  ) ie_lst in
+  (!req, new_ie_lst)
+
+let make_srtict_ieq ieq =
+  match ieq with
+    | CP.BForm (b, lb) ->
+          begin
+            match b with
+              | (CP.Lte (CP.IConst (i, loci), (CP.Var(v,_) as var), s), l)
+              | (CP.Gte ((CP.Var(v,_) as var),CP.IConst (i, loci),  s), l) ->  CP.BForm ((CP.Lt (CP.IConst ((i-1), loci), var, s), l), lb)
+              | (CP.Lte ((CP.Var(v,_) as var), CP.IConst (i, loci), s), l)
+              | (CP.Gte (CP.IConst (i, loci), (CP.Var(v,_) as var), s), l) ->  CP.BForm ((CP.Lt (var, CP.IConst ((i+1), loci), s), l), lb)
+              | _ -> ieq
+          end
+    | _ -> ieq
+
+let fv_in_common fv f =
+  let comm =  Gen.BList.intersect_eq CP.eq_spec_var fv (CP.fv f) in
+  match comm with 
+    | [] -> false
+    | _  -> true
+
+let eq_pair eq (e11,e12) (e21,e22) = 
+  eq e11 e21 && eq e12 e22
+
+let is_common_and_not_consumed consumed lst c =
+  if Gen.BList.mem_eq CP.equalFormula c lst then 
+    match c with
+      | CP.BForm (b, _) ->
+            begin
+              match b with
+                | (CP.Eq  (CP.Var(v1,_) , CP.Var(v2,_), _), _) -> 
+                      if (Gen.BList.mem_eq (eq_pair CP.eq_spec_var) (v1,v2) consumed) || (Gen.BList.mem_eq  (eq_pair CP.eq_spec_var) (v2,v1) consumed) then false
+                      else true
+                | _ -> true
+            end
+      | _ -> true
+  else
+    false
+
+let hull f1 f2 =  (* TP.hull (CP.mkOr f1 f2 None no_pos)  *)(* f1 *) (* fix *)
+  if CP.equalFormula f1 f2 then f1
+  else
+    let all1 = CP.fv f1 in
+    let all2 = CP.fv f2 in
+
+    let emap1 = Label_aggr.build_eset_of_conj_formula f1 in
+    let emap2 = Label_aggr.build_eset_of_conj_formula f2 in
+
+    let f1_conj = (CP.split_conjunctions f1) in   
+    let f1_conj = List.filter (fv_in_common all2) f1_conj in
+    let f2_conj = (CP.split_conjunctions f2) in
+    let f2_conj = List.filter (fv_in_common all1) f2_conj in
+
+    (*  todo: replace vars with constants where possible*)
+    let (ie1_conj, conj1) = List.partition CP.is_ieq f1_conj in
+    let (ie2_conj, conj2) = List.partition CP.is_ieq f2_conj in
+
+    let ie1 = List.map make_srtict_ieq ie1_conj in
+    let ie2 = List.map make_srtict_ieq ie2_conj in
+
+    let (consumed1, new_ieq2) =  merge_ieq_w_eq emap1 ie2 in
+    let (_, new_ieq1) =  merge_ieq_w_eq emap2 ie1 in
+
+    let conj1 = List.filter (is_common_and_not_consumed req1 conj2) conj1 in
+    (* let conj2 = List.filter (is_common_and_not_consumed req2 conj1) conj2 in *)
+
+    (* add extra guards: eg hull(x=0 & z>2 | x>0 & z=2) = 0<=x & 2<=z & 3 < x+z *)
+    let hull_f = CP.join_conjunctions (new_ieq1@new_ieq2@conj1) in
+    (* to remove dupl and req1 and req2 *)
+    hull_f
+    (* TP.hull (CP.mkOr f1 f2 None no_pos) *)
 
 let join_hull a f =
   match a,f with
-    | CP.AndList f1,CP.AndList f2 
-          -> CP.mkTrue no_pos (* fix *)
+    | CP.AndList f1,CP.AndList f2
+          -> 
+          let l1 = LP.sort f1 in
+          let l2 = LP.sort f2 in
+          let lst = 
+            if LP.is_zippable l1 l2 then
+              begin
+                let rec aux lb1 lb2 = 
+                  match lb1, lb2 with
+                    | [], []       ->  []
+                    | (lx,fx)::xs, (ly,fy)::ys -> 
+                          let new_f = hull fx fy in
+                          (lx, new_f):: (aux xs ys)
+                    | _, _ -> failwith "should not reach here as lists are zippable"
+                in 
+                let res = CP.mkAndList (aux l1 l2) in
+                res
+              end
+          else
+            if List.length l1 > List.length l2  then f else a
+          (* CP.mkTrue no_pos *) (* fix *) in
+          lst
     | _,_ -> hull a f
+
+let join_hull a f =
+  let pr = Cprinter.string_of_pure_formula in
+  Debug.ho_2 "join_hull"  pr pr pr join_hull a f 
 
 let join_hull_andlist_lst ls =
   match ls with
@@ -599,9 +759,11 @@ let remove_disj_clauses (mf: mix_formula): mix_formula =
   let pf = pure_of_mix mf in
   let rm_disj f = 
     let mf_conjs = CP.split_conjunctions f in
-    if mf_conjs==[] then hull_disj f
+    Debug.info_hprint (add_str "mf_conjs0" (pr_list !CP.print_formula)) mf_conjs no_pos;
+    if List.length mf_conjs == 1 then hull_disj f
     else 
       let (disj,mf_conjs) = List.partition CP.is_disjunct mf_conjs in
+      Debug.info_hprint (add_str "mf_conjs3" (pr_list !CP.print_formula)) mf_conjs no_pos;
       mf_conjs 
   in
   let mf_conjs = rm_disj pf in
@@ -617,7 +779,7 @@ let remove_disj_clauses (mf: mix_formula): mix_formula =
 
 let remove_disj_clauses (mf: mix_formula): mix_formula = 
   let pr = !print_mix_formula in
-  Debug.no_1 "remove_disj_clauses" pr pr remove_disj_clauses mf
+  Debug.ho_1 "remove_disj_clauses" pr pr remove_disj_clauses mf
 
 (*transform labels into exceptions, remove the finally clause,
 should also check that 
@@ -6589,7 +6751,7 @@ and prune_inv_inference_formula_x (cp:C.prog_decl) (v_l : CP.spec_var list) (ini
   let hull_invs v_l (f:CP.formula):CP.formula list =
     let pr2 = Cprinter.string_of_pure_formula in
     let pr3 = pr_list Cprinter.string_of_pure_formula in
-    Debug.no_2 "hull_invs" Cprinter.string_of_spec_var_list pr2  pr3 hull_invs v_l f in
+    Debug.ho_2 "hull_invs" Cprinter.string_of_spec_var_list pr2  pr3 hull_invs v_l f in
 
   let compute_invariants v_l (pure_list:(formula_label * (CP.baga_sv * CP.b_formula list)) list) : (formula_label list * (CP.baga_sv * CP.b_formula list)) list= 
     let combine_pures (l1:CP.b_formula list) (l2:CP.b_formula list) :CP.b_formula list = 
