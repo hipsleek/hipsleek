@@ -1380,22 +1380,22 @@ let comm_null a1 a2 =
   x!=null --> x>0  (to avoid inequality)
 *)
 
-let cnv_ptr_to_int f flag = 
+let cnv_ptr_to_int f (ex_flag,st_flag) = 
   let f_f arg e = None in
-  let f_bf arg bf = 
+  let f_bf (ex_flag,st_flag) bf = 
     let (pf, l) = bf in
     match pf with
       | Eq (a1, a2, ll) -> 
           let (is_null_flag,a1,a2) = comm_null a1 a2 in
           if is_null_flag then
-            if arg (*strengthen *) then
+            if st_flag (*strengthen *) then
               Some (Eq(a1,IConst(0,ll),ll),l)
             else Some (Lte(a1,IConst(0,ll),ll),l)
           else None
       | Neq (a1, a2, ll) -> 
           let (is_null_flag,a1,a2) = comm_null a1 a2 in
           if is_null_flag then
-            if arg (*strengthen *) then
+            if st_flag (*strengthen *) then
               Some (Gt(a1,IConst(0,ll),ll),l)
             else 
               Some (Neq(a1,IConst(0,ll),ll),l)
@@ -1403,15 +1403,20 @@ let cnv_ptr_to_int f flag =
       | _ -> None
   in
   let f_e arg e = (Some e) in
-  let a_f a f =
+  let a_f ((ex_flag,st_flag) as flag) f =
       match f with
-        | Not _ -> not(a)
-        | Forall _ -> false
-        | _ -> a
+        | Not _ -> (not(ex_flag),not(st_flag))
+        | Forall _ -> 
+              if ex_flag then (false,not(st_flag))
+              else flag
+        | Exists _ -> 
+              if ex_flag then flag
+              else (true,not(st_flag))
+        | _ -> flag
   in
   let a_bf a _ = a in
   let a_e a _ = a in
-  map_formula_arg f flag (f_f, f_bf, f_e) (a_f, a_bf, a_e) 
+  map_formula_arg f (ex_flag,st_flag) (f_f, f_bf, f_e) (a_f, a_bf, a_e) 
 
 (*
 x=0 --> x=null
@@ -1502,7 +1507,7 @@ let cnv_ptr_to_int f =
           r2
         end
     else r2
-  in wrap_pre_post_gen pre post (fun _ -> cnv_ptr_to_int f true) f
+  in wrap_pre_post_gen pre post (fun _ -> cnv_ptr_to_int f (true,true)) f
 
 let cnv_ptr_to_int f =
   let pr = Cprinter.string_of_pure_formula in
