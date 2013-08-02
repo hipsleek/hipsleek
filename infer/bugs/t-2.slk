@@ -1,0 +1,4 @@
+simplify not(x=null).
+
+simplify not(x!=null).
+

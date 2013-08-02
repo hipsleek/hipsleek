@@ -29,6 +29,7 @@ module CEQ = Checkeq
 module TI = Typeinfer
 module SAU = Sautility
 module SAC = Sacore
+module MCP = Mcpure
 
 let sleek_proof_counter = new Gen.counter 0
 
@@ -604,6 +605,23 @@ let rec meta_to_formula_not_rename (mf0 : meta_formula) quant fv_idents (tlist:T
 			(n_tl,res)
     end
   | MetaEForm _ | MetaEFormCF _ -> report_error no_pos ("cannot have structured formula in antecedent")
+
+let run_simplify (iante0 : meta_formula) =
+  let (n_tl,ante) = meta_to_formula iante0 false [] [] in
+  let ante = Solver.prune_preds !cprog true ante in
+  let ante =
+    if (Perm.allow_perm ()) then
+      (*add default full permission to ante;
+        need to add type of full perm to stab *)
+      CF.add_mix_formula_to_formula (Perm.full_perm_constraint ()) ante
+    else ante
+  in
+  let (h,p,_,_,_) = CF.split_components ante in
+  let pf = MCP.pure_of_mix p in
+  (* print_endline "calling tp_dispatcher?"; *)
+  let r = Tpdispatcher.simplify_tp pf in
+  r
+
 
 let run_infer_one_pass (ivars: ident list) (iante0 : meta_formula) (iconseq0 : meta_formula) =
   let _ = residues := None in
@@ -1303,6 +1321,17 @@ let process_eq_check (ivars: ident list)(if1 : meta_formula) (if2 : meta_formula
     let _ = if(res) then Debug.info_pprint (CEQ.string_of_map_table (List.hd mt_list) ^ "\n") no_pos in
     ()
    )
+
+let print_result f m =
+      print_endline (((add_str m Cprinter.string_of_pure_formula) f)^"\n")
+
+let process_simplify (f : meta_formula) =
+  let num_id = "Simplify  ("^(string_of_int (sleek_proof_counter#inc_and_get))^")" in  
+  try 
+    let rs = run_simplify f in
+    print_result rs num_id
+  with _ -> print_exc num_id
+
 let process_infer (ivars: ident list) (iante0 : meta_formula) (iconseq0 : meta_formula) etype =
   let nn = "("^(string_of_int (sleek_proof_counter#inc_and_get))^") " in
   let num_id = "\nEntail "^nn in

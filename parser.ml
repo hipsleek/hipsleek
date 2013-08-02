@@ -803,6 +803,7 @@ non_empty_command:
       | t= decl_unknown_cmd        -> ShapeDeclUnknown t
       | t=shape_sconseq_cmd     -> ShapeSConseq t
       | t=shape_sante_cmd     -> ShapeSAnte t
+      | t=simplify_cmd        -> Simplify t
       | t= infer_cmd           -> InferCmd t  
       | t=captureresidue_cmd  -> CaptureResidue t
       | t=print_cmd           -> PrintCmd t
@@ -1806,6 +1807,9 @@ shape_sante_cmd:
    let il2 = un_option il2 [] in
    (il1,il2)
    ]];
+
+simplify_cmd:
+  [[ `SIMPLIFY; t=meta_constr -> t]];
 
 shapeinfer_proper_cmd:
    [[ `SHAPE_INFER_PROP; `OSQUARE;il1=OPT id_list;`CSQUARE; `OSQUARE; il2=OPT id_list;`CSQUARE ->

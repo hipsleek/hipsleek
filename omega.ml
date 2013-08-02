@@ -402,7 +402,7 @@ let rec send_and_receive f timeout=
 let send_and_receive f timeout =
   let pr x = x in
   let pr2 = Cpure.string_of_relation in
-  Debug.no_2 "Omega:send_and_receive" pr string_of_float pr2 send_and_receive f timeout 
+  Debug.ho_2 "Omega:send_and_receive" pr string_of_float pr2 send_and_receive f timeout 
 
 (********************************************************************)
 let rec omega_of_var_list (vars : ident list) : string = match vars with
@@ -655,34 +655,34 @@ let is_valid (pe : formula) timeout : bool =
 let rec match_vars (vars_list0 : spec_var list) rel =
   (* let vars_list0 = vars_list0 in *)
   match rel with
-| ConstRel b ->
-    if b then
-      mkTrue no_pos
-    else
-      mkFalse no_pos
-| BaseRel (aelist0, f0) ->
-    let rec match_helper vlist aelist f  = match aelist with
-    | [] -> f
-    | ae :: rest ->
-        let v = List.hd vlist in
-        let restvars = List.tl vlist in
-        let restf = match_helper restvars rest f in
-        let tmp1 = mkEqExp (Var (v, no_pos)) ae no_pos in
-        let tmp2 = mkAnd_dumb tmp1 restf no_pos in
-        tmp2
-    in
-    if List.length aelist0 != List.length vars_list0 then
-      begin
-      Debug.info_pprint ("vlist:"^(!print_svl vars_list0)^" aelist:"^(pr_list !print_exp aelist0)) no_pos;
-      illegal_format ("match_var: numbers of arguments do not match")
-      end
-    else
-      match_helper vars_list0 aelist0 f0
-| UnionRel (r1, r2) ->
-    let f1 = match_vars vars_list0 r1 in
-    let f2 = match_vars vars_list0 r2 in
-    let tmp = mkOr f1 f2 None no_pos in
-    tmp
+    | ConstRel b ->
+          if b then
+            mkTrue no_pos
+          else
+            mkFalse no_pos
+    | BaseRel (aelist0, f0) ->
+          let rec match_helper vlist aelist f  = match aelist with
+            | [] -> f
+            | ae :: rest ->
+                  let v = List.hd vlist in
+                  let restvars = List.tl vlist in
+                  let restf = match_helper restvars rest f in
+                  let tmp1 = mkEqExp (Var (v, no_pos)) ae no_pos in
+                  let tmp2 = mkAnd_dumb tmp1 restf no_pos in
+                  tmp2
+          in
+          if List.length aelist0 != List.length vars_list0 then
+            begin
+              Debug.info_pprint ("vlist:"^(!print_svl vars_list0)^" aelist:"^(pr_list !print_exp aelist0)) no_pos;
+              illegal_format ("match_var: numbers of arguments do not match")
+            end
+          else
+            match_helper vars_list0 aelist0 f0
+    | UnionRel (r1, r2) ->
+          let f1 = match_vars vars_list0 r1 in
+          let f2 = match_vars vars_list0 r2 in
+          let tmp = mkOr f1 f2 None no_pos in
+          tmp
 
 let match_vars (vars_list0 : spec_var list) rel =
   let pr = !print_svl in
@@ -767,7 +767,7 @@ let simplify (pe : formula) : formula =
 
 let simplify (pe : formula) : formula =
   let pf = !print_pure in
-  Debug.no_1 "Omega.simplify" pf pf simplify pe
+  Debug.ho_1 "Omega.simplify" pf pf simplify pe
 
 (* let simplify_ho is_complex (orig_pe : formula) : formula = *)
 (*  (\* print_endline "LOCLE: simplify";*\) *)
