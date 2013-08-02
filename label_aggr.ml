@@ -4,6 +4,9 @@ open Gen.Basic
 open GlobProver
 open Mcpure
 open Cpure
+
+(* module LO = Label_only.Lab_List *)
+module LO = Label_only.LOne
 (* open Mcpure_D *)
 (* open Log *)
 (* open Printf *)
@@ -107,7 +110,7 @@ let combine_lbl_lst ls =
     match ls with
       | [] -> [(l,f)]
       | (l2,f2)::ls -> 
-            if Label_only.Lab_List.is_equal l l2
+            if LO.is_equal l l2
             then aux l (mkAnd f f2 no_pos) ls
             else (l,f)::(aux l2 f2 ls)
   in match ls with
@@ -115,8 +118,8 @@ let combine_lbl_lst ls =
     | (l,f)::ls -> aux l f ls
 
 let norm_lbl_lst lst = 
-  let pr = pr_list (pr_pair Label_only.Lab_List.string_of !print_formula) in
-  let nl = List.sort (fun (l1,_) (l2,_) -> Label_only.Lab_List.compare l1 l2) lst in
+  let pr = pr_list (pr_pair LO.string_of !print_formula) in
+  let nl = List.sort (fun (l1,_) (l2,_) -> LO.compare l1 l2) lst in
   let r = combine_lbl_lst nl in
   if not(List.length r==List.length lst) then
     begin
@@ -127,7 +130,7 @@ let norm_lbl_lst lst =
   ;r
 
 let norm_lbl_lst lst = 
-   let pr = pr_list (pr_pair Label_only.Lab_List.string_of !print_formula) in
+   let pr = pr_list (pr_pair LO.string_of !print_formula) in
    Debug.no_1 "norm_lbl_lst" pr pr norm_lbl_lst lst
 
 let merge_in_rhs lhs rhs =
@@ -136,7 +139,7 @@ let merge_in_rhs lhs rhs =
       | [],rhs -> []
       | lhs,[] -> List.map (fun (a,b) -> (a,b,[])) lhs
       | (eq,((l1,f1) as n1))::lhs2,(l2,f2)::rhs2 ->
-            let n = Label_only.Lab_List.compare l1 l2 in
+            let n = LO.compare l1 l2 in
             if n<0 then (eq,n1,[])::(aux lhs2 rhs)
             else if n>0 then aux lhs rhs2
             else (eq,n1,(fv f2))::(aux lhs2 rhs)
@@ -145,7 +148,7 @@ let merge_in_rhs lhs rhs =
 let map_lbl_lst_to_eset lst =
    List.map (fun (l,f) ->
        let es = 
-         if Label_only.Lab_List.is_common l then build_eset_of_conj_formula f
+         if LO.is_common l then build_eset_of_conj_formula f
          else EMapSV.mkEmpty
        in
         (es, (l, f))
@@ -160,7 +163,7 @@ let extract_eset_of_lbl_lst lst rhs =
   let es = EMapSV.get_elems  eq_all in
   let n_lst = List.map 
     (fun (em_f,(l,f),rhs_vs) ->
-        if Label_only.Lab_List.is_common l then (l,f)
+        if LO.is_common l then (l,f)
         else
           let vs = (fv f)@rhs_vs in
           Debug.tinfo_hprint (add_str "vars_from_fv" string_of_spec_var_list) vs no_pos;
@@ -182,7 +185,7 @@ let extract_eset_of_lbl_lst lst rhs =
 (* let r = formula_of_eset r no_pos in *)
 
 let extract_eset_of_lbl_lst lst rhs =
-  let pr = pr_list (pr_pair Label_only.Lab_List.string_of !print_formula) in
+  let pr = pr_list (pr_pair LO.string_of !print_formula) in
   (* let pr2 = pr_list (!print_formula) in *)
   Debug.no_1 "extract_eset_of_lbl_lst"  pr pr  (fun _ -> extract_eset_of_lbl_lst lst rhs) lst  
 
@@ -203,7 +206,7 @@ let extract_eset_of_lbl_lst lst rhs =
 
 (* let extract_eq_clauses_lbl_lst lst = *)
 (*   let ls = List.map (fun (l,f) ->  *)
-(*       if Label_only.Lab_List.is_common l then extract_eq_clauses_formula f *)
+(*       if LO.is_common l then extract_eq_clauses_formula f *)
 (*       else [] *)
 (*   ) lst in *)
 (*   let eq_all = join_conjunctions (List.concat ls) in *)

@@ -38,6 +38,7 @@ let init_files () =
 	resultfilename := "result.txt." ^ (string_of_int (Unix.getpid()));
   end
 
+
 let omega_of_spec_var (sv : spec_var):string = match sv with
   | SpecVar (t, v, p) -> 
 		let r = match (List.filter (fun (a,b,_)-> ((String.compare v b)==0) )!omega_subst_lst) with
@@ -89,6 +90,16 @@ let rec omega_of_exp e0 = match e0 with
 ListCons _|List _|BagDiff _|BagIntersect _|BagUnion _|Bag _|FConst _)
 *)
 
+and omega_ptr_eq_null a1 =
+  let v= omega_of_exp a1 in
+  if !Globals.ptr_to_int_exact then ("("^v^" = 0)")
+  else ("("^v^" < 1)")
+
+and omega_ptr_neq_null a1 =
+  let v= omega_of_exp a1 in
+  if !Globals.ptr_to_int_exact then (v^" != 0")
+  else (v^" > 0")
+
 and omega_of_b_formula b =
   let (pf, _) = b in
   match pf with
@@ -103,20 +114,26 @@ and omega_of_b_formula b =
   (* | LexVar (_, a1, a2, _) -> "(0=0)" *)
   | Eq (a1, a2, _) -> begin
         if is_null a2 then
-          let v= omega_of_exp a1 in
-          ("("^v^" < 1)")
+          omega_ptr_eq_null a1
+          (* let v= omega_of_exp a1 in *)
+          (* if !Globals.ptr_to_int_exact then *)
+          (*   ("("^v^" < 1)") *)
+          (* else ("("^v^" = 0)") *)
           (* ("("^v^" < 1 && "^v^" = xxxnull)") *)
         else if is_null a1 then 
-          let v= omega_of_exp a2 in
-          ("("^v^" < 1)")
+          omega_ptr_eq_null a2
+          (* let v= omega_of_exp a2 in *)
+          (* ("("^v^" < 1)") *)
           (* ("("^v^ " < 1 && "^v^" = xxxnull)") *)
         else (omega_of_exp a1) ^ " = " ^ (omega_of_exp a2)
   end
   | Neq (a1, a2, _) -> begin
         if is_null a2 then
-          (omega_of_exp a1) ^ " > 0"
+          omega_ptr_neq_null a1
+              (* (omega_of_exp a1) ^ " > 0" *)
         else if is_null a1 then
-          (omega_of_exp a2) ^ " > 0"
+          omega_ptr_neq_null a2
+          (* (omega_of_exp a2) ^ " > 0" *)
         else (omega_of_exp a1)^ " != " ^ (omega_of_exp a2)
     end
   | EqMax (a1, a2, a3, _) ->
@@ -638,35 +655,38 @@ let is_valid (pe : formula) timeout : bool =
 let rec match_vars (vars_list0 : spec_var list) rel =
   (* let vars_list0 = vars_list0 in *)
   match rel with
-| ConstRel b ->
-    if b then
-      mkTrue no_pos
-    else
-      mkFalse no_pos
-| BaseRel (aelist0, f0) ->
-    let rec match_helper vlist aelist f  = match aelist with
-    | [] -> f
-    | ae :: rest ->
-        let v = List.hd vlist in
-        let restvars = List.tl vlist in
-        let restf = match_helper restvars rest f in
-        let tmp1 = mkEqExp (Var (v, no_pos)) ae no_pos in
-        let tmp2 = mkAnd_dumb tmp1 restf no_pos in
-        tmp2
-    in
-    if List.length aelist0 != List.length vars_list0 then
-      begin
-      Debug.info_pprint ("vlist:"^(!print_svl vars_list0)^" aelist:"^(pr_list !print_exp aelist0)) no_pos;
-      illegal_format ("match_var: numbers of arguments do not match")
-      end
-    else
-      match_helper vars_list0 aelist0 f0
-| UnionRel (r1, r2) ->
-    let f1 = match_vars vars_list0 r1 in
-    let f2 = match_vars vars_list0 r2 in
-    let tmp = mkOr f1 f2 None no_pos in
-    tmp
+    | ConstRel b ->
+          if b then
+            mkTrue no_pos
+          else
+            mkFalse no_pos
+    | BaseRel (aelist0, f0) ->
+          let rec match_helper vlist aelist f  = match aelist with
+            | [] -> f
+            | ae :: rest ->
+                  let v = List.hd vlist in
+                  let restvars = List.tl vlist in
+                  let restf = match_helper restvars rest f in
+                  let tmp1 = mkEqExp (Var (v, no_pos)) ae no_pos in
+                  let tmp2 = mkAnd_dumb tmp1 restf no_pos in
+                  tmp2
+          in
+          if List.length aelist0 != List.length vars_list0 then
+            begin
+              Debug.info_pprint ("vlist:"^(!print_svl vars_list0)^" aelist:"^(pr_list !print_exp aelist0)) no_pos;
+              illegal_format ("match_var: numbers of arguments do not match")
+            end
+          else
+            match_helper vars_list0 aelist0 f0
+    | UnionRel (r1, r2) ->
+          let f1 = match_vars vars_list0 r1 in
+          let f2 = match_vars vars_list0 r2 in
+          let tmp = mkOr f1 f2 None no_pos in
+          tmp
 
+let match_vars (vars_list0 : spec_var list) rel =
+  let pr = !print_svl in
+  Debug.no_2 "match_vars" pr string_of_relation !print_formula (fun _ _ -> match_vars vars_list0 rel) vars_list0 rel
 
 let simplify_ops pr_weak pr_strong (pe : formula) : formula =
   (* print_endline "LOCLE: simplify";*)
@@ -708,10 +728,10 @@ let simplify_ops pr_weak pr_strong (pe : formula) : formula =
                                 20.0
                               else !in_timeout
                             in
-	                        let rel = send_and_receive fomega timeo (* (!in_timeout) *) (* 0.0  *)in
+	                    let rel = send_and_receive fomega timeo (* (!in_timeout) *) (* 0.0  *)in
                             let _ = is_complex_form := false in
                         (* let _ = print_endline ("after simplification: " ^ (Cpure.string_of_relation rel)) in *)
-	                        match_vars (fv pe) rel
+	                    match_vars (fv pe) rel
 	                  end
 	                with
                       | Procutils.PrvComms.Timeout as exc ->
@@ -831,6 +851,13 @@ let simplify (pe : formula) : formula =
   with 
     | None -> pe
     | Some f -> f
+
+let wrap_ptr_to_int_exact =
+  Wrapper.wrap_one_bool Globals.ptr_to_int_exact true
+
+let simplify (pe : formula) : formula =
+  let pr = !print_formula in
+  Debug.no_1 "Omega.simplify" pr pr (wrap_ptr_to_int_exact simplify) pe 
 
 let pairwisecheck (pe : formula) : formula =
   (* print_endline "LOCLE: pairwisecheck"; *)

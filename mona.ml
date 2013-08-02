@@ -336,9 +336,9 @@ let mkConstraint (constr: order_atom): CP.formula =
       | MO_EQ  (sv1,sv2)  -> CP.Var(sv1,no_pos), CP.Var(sv2,no_pos) in
    CP.BForm ((CP.Eq(l,r,no_pos),None), None)
 
-let mkConstrLabel (constr: order_atom) = 
-  let bf = mkConstraint constr in
-  (Label_only.empty_spec_label, bf) 
+(* let mkConstrLabel (constr: order_atom) =  *)
+(*   let bf = mkConstraint constr in *)
+(*   (LO.unlabelled, bf)  *)
 
 let is_intersect_non_empty lst1 lst2 = 
    not(Gen.is_empty (Gen.BList.intersect_eq CP.eq_spec_var lst1 lst2)) 
@@ -1317,8 +1317,8 @@ let check_answer_x (mona_file_content: string) (answ: string) (is_sat_b: bool)=
             let _ = create_failure_file mona_file_content in
             restart "mona aborted execution";
             if !log_all_flag == true then
-		      output_string log_all ("[mona.ml]: "^ imp_sat_str ^" --> " ^(string_of_bool is_sat_b) ^"(from mona failure 1a)\n");
-	    print_endline ("[mona] Warning: "^ imp_sat_str ^" --> " ^(string_of_bool is_sat_b) ^"(from mona failure 1b)\n");
+		      output_string log_all ("[mona.ml]: "^ imp_sat_str ^" --> " ^(string_of_bool is_sat_b) ^"(from failure - formula too complex --> Mona aborted)\n");
+	    print_endline ("[mona] Warning: "^ imp_sat_str ^" --> " ^(string_of_bool is_sat_b) ^"(from mona failure - formula too complex --> Mona aborted)\n");
             is_sat_b
       | s ->
             let _ = create_failure_file mona_file_content in
@@ -1330,8 +1330,8 @@ let check_answer_x (mona_file_content: string) (answ: string) (is_sat_b: bool)=
               | Not_found ->
                     begin
     	              if !log_all_flag == true then
-		        output_string log_all ("[mona.ml]: "^ imp_sat_str ^" --> " ^(string_of_bool is_sat_b) ^"(from mona failure 2)\n");
-		      print_endline ("[mona] Warning: "^ imp_sat_str ^" --> " ^(string_of_bool is_sat_b) ^"(from mona failure 2)\n");
+		        output_string log_all ("[mona.ml]: "^ imp_sat_str ^" --> " ^(string_of_bool is_sat_b) ^"(from mona failure --> Mona aborted)\n");
+		      print_endline ("[mona] Warning: "^ imp_sat_str ^" --> " ^(string_of_bool is_sat_b) ^"(from mona failure --> Mona aborted)\n");
                       is_sat_b;
                     end
   in

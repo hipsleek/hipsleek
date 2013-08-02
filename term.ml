@@ -359,11 +359,12 @@ let strip_lexvar_pure_only f =
   (lexvar, CP.join_conjunctions other_p)
 
 let def_lbl l =
-  if l==[] then true
-  else List.exists (fun s -> s="") l
+  LO.is_common l
+  (*     if l==[] then true *)
+  (* else List.exists (fun s -> s="") l *)
 
 let def_lbl l =
-  Debug.no_1 "def_lbl" (pr_list pr_string) string_of_bool def_lbl l
+  Debug.no_1 "def_lbl" (LO.string_of) string_of_bool def_lbl l
 
 let strip_lexvar_list ls =
   let rec aux xs =

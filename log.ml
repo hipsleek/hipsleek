@@ -73,8 +73,11 @@ type sleek_log_entry = {
   (*   | ASSERTION -> "ASSERTION" *)
 
 
-let string_of_sleek_proving_kind () = proving_kind#string_of
+let string_of_sleek_proving_kind () 
+      = proving_kind#string_of
 
+let string_of_top_proving_kind () 
+      = string_of_proving_kind (proving_kind#top)
 
 let string_of_log_type lt =
   match lt with
@@ -325,7 +328,7 @@ let add_sleek_logging timeout_flag stime infer_vars classic_flag caller avoid he
         sleek_proving_classic_flag = classic_flag;
         sleek_proving_hec = hec;
         sleek_proving_pos = pos;
-        sleek_proving_kind = proving_kind # string_of;
+        sleek_proving_kind = string_of_top_proving_kind ();
         (* !sleek_proving_kind; *)
         sleek_proving_ante = ante;
         sleek_proving_conseq = conseq;

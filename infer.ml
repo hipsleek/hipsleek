@@ -78,7 +78,7 @@ let scc_rel_ass_stk : hprel Gen.stack_pr = new Gen.stack_pr
 (*   DD.info_pprint (rel_ass_stk # string_of_reverse_log); *)
 (*   DD.info_pprint "==========================================" *)
 
-let no_infer estate = (estate.es_infer_vars == [])
+let no_infer_vars estate = (estate.es_infer_vars == []) 
 
 let no_infer_rel estate = (estate.es_infer_vars_rel == [])
 
@@ -87,7 +87,9 @@ let no_infer_hp_rel estate = (estate.es_infer_vars_hp_rel == [])
 let no_infer_all estate = (estate.es_infer_vars == [] && estate.es_infer_vars_rel == [])
 
 let no_infer_all_all estate = no_infer_all estate && (no_infer_hp_rel estate)
-  
+
+let no_infer estate = (estate.es_infer_vars == []) && (estate.es_infer_vars_rel == [])
+
 let remove_infer_vars_all estate =
   let iv = estate.es_infer_vars in
   let ivr = estate.es_infer_vars_rel in

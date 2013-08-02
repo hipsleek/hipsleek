@@ -126,6 +126,9 @@ module Make (Token : SleekTokenS)
    ("catch", CATCH);
    ("checkeq", CHECKEQ);
    ("checkentail", CHECKENTAIL);
+   ("slk_hull", SLK_HULL);
+   ("slk_pairwise", SLK_PAIRWISE);
+   ("slk_simplify", SIMPLIFY);
    ("relAssume", RELASSUME);
    ("relDefn", RELDEFN);
    ("shape_infer", SHAPE_INFER );
@@ -321,6 +324,7 @@ rule tokenizer file_name = parse
   | "@D" { DERV }
   | "@M" { MUT }
   | "@R" { MAT }
+  | "@S" { SAT }
   | "@VAL" {VAL}
   | "@REC" {REC}
   | "@NI" {NI}

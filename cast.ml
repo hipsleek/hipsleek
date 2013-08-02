@@ -15,6 +15,7 @@ module F = Cformula
 module P = Cpure
 module MP = Mcpure
 module Err = Error
+module LO = Label_only.LOne
 
 type typed_ident = (typ * ident)
 
@@ -81,7 +82,7 @@ and view_decl = {
     view_cont_vars : P.spec_var list;
     view_case_vars : P.spec_var list; (* predicate parameters that are bound to guard of case, but excluding self; subset of view_vars*)
     view_uni_vars : P.spec_var list; (*predicate parameters that may become universal variables of universal lemmas*)
-    view_labels : Label_only.spec_label list;
+    view_labels : LO.t list;
     view_modes : mode list;
     view_is_prim : bool;
     view_kind : view_kind;

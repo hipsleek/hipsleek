@@ -17,8 +17,8 @@ sll<"n":n, "v":sm, "v":lg> ==
 
                  
 int find_min(node x)
-	requires x::bnd1<n, s, l, mi> & ["n":n>0]
-        ensures x::bnd1<n, s, l, mi> & ["v":res = mi];
+  requires x::bnd1<n, s, l, mi> & ["n":n>0]
+  ensures x::bnd1<n, s, l, mi> & ["v":res = mi];
 {
 	int tmp; 
 
