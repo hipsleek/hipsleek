@@ -577,21 +577,33 @@ let infer_lhs_contra pre_thus lhs_xpure ivars pos msg =
       let ptrs_ps, non_ptrs_ps = List.partition (fun p -> List.for_all (CP.is_node_typ) (CP.fv p)) ps in
       (* let _ = DD.info_hprint (add_str " ptrs_ps: " (pr_list !print_formula)) ptrs_ps pos in *)
       (* let _ = DD.info_hprint (add_str " non_ptrs_ps: " (pr_list !print_formula)) non_ptrs_ps pos in *)
-      let non_ptr_f = simplify_helper (CP.mkExists (non_ptrs0_qvars0@exists_var) (CP.conj_of_list non_ptrs_ps pos) None pos) in
+      let non_ptr_f = simplify_helper 
+        (CP.mkExists (non_ptrs0_qvars0@exists_var) 
+          (CP.conj_of_list non_ptrs_ps pos) None pos) in
+      let _ = DD.tinfo_hprint (add_str "evars: " !print_svl) (non_ptrs0_qvars0@exists_var) pos in
+      let _ = DD.tinfo_hprint (add_str "non_ptr_f: " !print_formula) non_ptr_f pos in 
       let qvars1, non_ptr_bare_f = split_ex_quantifiers non_ptr_f in
-      let f = CP.mkExists (qvars1@ptr_qvars0) (CP.conj_of_list (ptrs_ps@[non_ptr_bare_f]) pos) None pos in
+      let e_ptr_vars = CP.diff_svl (List.concat (List.map CP.fv ptrs_ps)) ivars in
+      let _ = DD.tinfo_hprint (add_str "e_ptr_vars: " !print_svl) e_ptr_vars pos in
+      let exists_vars = qvars1@ptr_qvars0@e_ptr_vars in
+      let a_fml = CP.conj_of_list (non_ptr_bare_f::ptrs_ps) pos in
+      let f = CP.mkExists exists_vars a_fml None pos in
+      let _ = DD.tinfo_hprint (add_str "exists_vars: " !print_svl) exists_vars pos in
+      let _ = DD.tinfo_hprint (add_str "f: " !print_formula) f pos in 
       (* let f = simplify_helper (CP.mkExists exists_var f None pos) in *)
       if CP.isConstTrue f || CP.isConstFalse f then None
       else 
         let ps2 = CP.list_of_conjs f in
-        let neg_f = if List.for_all (fun p -> (CP.is_neq_exp p) ) ps2 then
-          let ps3 = List.map (CP.neg_neq ) ps2 in
-          disj_of_list ps3 pos
-        else
-          let f = TP.pairwisecheck_raw f in
-          Redlog.negate_formula f
+        let neg_f = 
+          if List.for_all (fun p -> CP.is_neq_exp p) ps2 
+          then
+            let ps3 = List.map CP.neg_neq ps2 in
+            disj_of_list ps3 pos
+          else
+            let f = TP.pairwisecheck_raw f in
+            Redlog.negate_formula f
         in
-        (* let _ = DD.info_hprint (add_str "neg_f: " !print_formula) neg_f pos in *)
+        let _ = DD.tinfo_hprint (add_str "neg_f: " !print_formula) neg_f pos in 
         (* Thai: Remove disjs contradicting with pre_thus *)
         let new_neg_f = 
           if CP.isConstTrue pre_thus then neg_f
