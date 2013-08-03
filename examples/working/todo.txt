@@ -218,6 +218,9 @@ Total verification time: 6.60 second
 	Time spent in child processes: 1.95 second
 	Number of false contexts: 0
 ====================================================================
+Total number of errors: 7 in files:
+  infer/infer8.slk infer/infer13.slk ann1.slk imm/imm1.slk imm/imm3.slk imm/imm-hard.slk imm-field/sleek02.slk.
+Total verification time: 5.71 second
 ====================================================================
 ====================================================================
 ====================================================================

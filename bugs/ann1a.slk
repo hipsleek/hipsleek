@@ -1,0 +1,43 @@
+data node {
+  int val;
+  node next;
+}.
+
+
+// (5)
+infer [] @A<:v & k>4 |- v=@A.
+
+//infer [] @A<:v & @M<:v & v<:@A |- v=@A.
+
+/*
+# ann1a.slk
+infer [] @L<:v |- v=@L.
+
+We denote:
+  @M = 0
+  @I = 1
+  @L = 2
+  @A = 3
+
+However in raw proof below, I notice that we did not
+add  0<=v<=3 on the LHS of implication.
+
+This seems necessary for us to prove equality on the RHS.
+It could be done at TPdispatcher, as follows:
+compute free ann vars on LHS and RHS. After that add
+the constraint @A<:v & v<:@M to each of the ann_vars found.
+
+We could do it under a flag:
+  --en-ann-inv
+
+!!! dumping for sleek_dump(fail)
+!!!  
+ id: 2<0; prover: OMEGA CALCULATOR; loc: _0:0_0:0; kind: Early_Contra_Detect
+ raw proof:IMPLY:
+   complement {[v] : (( (not ((2 <= v)))  | (v = 2)))};
+ raw result:{[v]: 3 <= v}
+ Imply: ante: @L<:v
+	     conseq:  v=@L
+ res: false
+
+*/

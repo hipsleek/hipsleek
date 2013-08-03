@@ -226,7 +226,10 @@ let common_arguments = [
   ("--reverify", Arg.Set Globals.reverify_flag,"enable re-verification after specification inference");
   ("--reverify-all", Arg.Set Globals.reverify_all_flag,"enable re-verification after heap specification inference");
   ("--dis-imm", Arg.Clear Globals.allow_imm,"disable the use of immutability annotations");
+  ("--en-imm-inv", Arg.Set Globals.allow_imm_inv,"enable the additionof of immutability invariant for implication");
+  ("--dis-imm-inv", Arg.Clear Globals.allow_imm_inv,"disable the additionof of immutability invariant for implication");
   ("--dis-inf", Arg.Clear Globals.allow_inf,"disable support for infinity ");
+  ("--en-inf", Arg.Set Globals.allow_inf,"enable support for infinity ");
   ("--dsd", Arg.Set Globals.deep_split_disjuncts,"enable deep splitting of disjunctions");
   ("--ioc", Arg.Set Globals.check_integer_overflow,"Enable Integer Overflow Checker");
   ("--no-coercion", Arg.Clear Globals.use_coercion,
@@ -452,6 +455,12 @@ let common_arguments = [
   ), "Dump proof log at end of command");
   ("--epl", Arg.Unit (fun _ ->
       Globals.proof_logging_txt:=true ), "Shorthand for --en-logging-txt");
+  ("--dis-proof-details", Arg.Unit (fun _ ->
+      Globals.log_proof_details:=false ), "Disable proof strings to be recorded");
+  ("--en-proof-details", Arg.Unit (fun _ ->
+      Globals.log_proof_details:=true ), "Enable proof strings to be recorded");
+  ("--epd", Arg.Unit (fun _ ->
+      Globals.log_proof_details:=true ), "Shorthand for --en-proof-details");
   ("--en-slk-logging", Arg.Unit (fun _ ->
       Globals.proof_logging_txt:=true; 
       Globals.sleek_logging_txt:=true), "Enable sleek and proof logging with text file");
