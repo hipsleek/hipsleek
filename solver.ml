@@ -31,6 +31,7 @@ module TP = Tpdispatcher
 
 (* module LO = Label_only.Lab_List *)
 module LO = Label_only.LOne
+module ME = Musterr
 
 
 (** An Hoa : switch to do unfolding on duplicated pointers **)
@@ -4781,7 +4782,7 @@ and early_hp_contra_detection_x hec_num prog estate conseq pos =
   (* if (List.length estate.es_infer_vars_hp_rel == 0 ) then  (false, None) *)
   (* else *)
     begin
-      let r_inf_contr, relass = solver_detect_lhs_rhs_contra 1 prog estate conseq pos "EARLY CONTRA DETECTION" in
+      let (r_inf_contr,real_c), relass = solver_detect_lhs_rhs_contra 1 prog estate conseq pos "EARLY CONTRA DETECTION" in
       let h_inf_args, hinf_args_map = get_heap_inf_args estate in
       let orig_inf_vars = estate.es_infer_vars in
       let orig_ante = estate.es_formula in
@@ -4812,7 +4813,7 @@ and early_hp_contra_detection_x hec_num prog estate conseq pos =
                                 res_es
                           | None -> new_estate (* andreeac to check this one --- cand it ever get here? *)
               in
-              (true, Some es)
+              (real_c,true, Some es)
         | None ->  
               match relass with
 		| [(es,h,_)] -> 
@@ -4820,36 +4821,37 @@ and early_hp_contra_detection_x hec_num prog estate conseq pos =
                       let new_estate = add_infer_rel_to_estate h new_estate in
                       let _ = Debug.tinfo_hprint (add_str "new_estate(with inf rel)" Cprinter.string_of_entail_state) new_estate pos in
                       (* let _ = new_slk_log r1 new_estate in *)
-                      (true, Some new_estate)
-		| _ ->(false, None)
+                      (real_c,true, Some new_estate)
+		| _ ->(real_c,false, None)
     end
 
 and early_hp_contra_detection hec_num prog estate conseq pos = 
   let contra_str contra = if (contra) then "CONTRADICTION DETECTED" else "no contra" in
-  let pr_res (contra, es) = (contra_str contra) ^ ("\n es = " ^ (pr_option Cprinter.string_of_entail_state es)) in
+  let pr_res (real_c,contra, es) = (contra_str contra) ^(if real_c then "" else "REAL_CONTRA")
+    ^ ("\n es = " ^ (pr_option Cprinter.string_of_entail_state es)) in
   let pr2 = Cprinter.string_of_formula in
   let f = wrap_proving_kind PK_Early_Contra_Detect (early_hp_contra_detection_x hec_num prog estate conseq) in
   Debug.no_2_num hec_num "early_hp_contra_detection" Cprinter.string_of_entail_state_short pr2 pr_res 
         (fun _ _ -> f pos) estate conseq
 
 and early_hp_contra_detection_add_to_list_context_x hec_num prog estate conseq pos = 
-  let contra, es = early_hp_contra_detection 1 prog estate conseq pos in
+  let real_c,contra, es = early_hp_contra_detection 1 prog estate conseq pos in
   if contra then
     match es with
-      | Some es -> (contra, Some (CF.SuccCtx[CF.Ctx es]), Some UnsatAnte)
-      | None    -> (contra, None, None)    (* andreeac: to check this case. is it ever possible to reach this? *)
+      | Some es -> (real_c,contra, Some (CF.SuccCtx[CF.Ctx es]), Some UnsatAnte)
+      | None    -> (real_c,contra, None, None)    (* andreeac: to check this case. is it ever possible to reach this? *)
   else
-    (contra, None, None)
+    (real_c,contra, None, None)
 
 and early_hp_contra_detection_add_to_list_context hec_num prog estate conseq pos = 
-  let pr_res = pr_triple string_of_bool (pr_option (Cprinter.string_of_list_context )) pr_none in
+  let pr_res = pr_quad (add_str "real_c" string_of_bool) string_of_bool (pr_option (Cprinter.string_of_list_context )) pr_none in
   let pr2 = Cprinter.string_of_formula in
   Debug.no_2_num hec_num "early_hp_contra_detection_add_to_list_context" Cprinter.string_of_entail_state_short pr2 pr_res 
         (fun _ _ -> early_hp_contra_detection_add_to_list_context_x hec_num prog estate conseq pos) estate conseq
 
 and early_pure_contra_detection_x hec_num prog estate conseq pos msg is_folding = 
   (* andreeac: check if this step is redundant *)
-  let r_inf_contr,relass = solver_detect_lhs_rhs_contra 2 prog estate conseq pos msg  in
+  let (r_inf_contr,real_c),relass = solver_detect_lhs_rhs_contra 2 prog estate conseq pos msg  in
   let h_inf_args, hinf_args_map = get_heap_inf_args estate in
   let esv = estate.es_infer_vars in
 
@@ -5082,22 +5084,55 @@ and heap_entail_conjunct_lhs_x hec_num prog is_folding  (ctx:context) (conseq:CF
 	      else
                 heap_entail_conjunct 1 prog is_folding  ctx conseq [] pos in
 
-            let (contra, r1, prf) = 
+            let (real_c,contra, r1, prf) = 
               let es = get_estate_from_context ctx in
               match es with
                 | Some estate ->
                       early_hp_contra_detection_add_to_list_context hec_num prog estate conseq pos 
                 | None ->
                       let _ = DD.info_pprint "WARNING : presence of disj context at EARLY CONTRA DETECTION" no_pos in
-                      (false, None, None)
+                      (true,false, None, None)
             in
             let _ = Debug.tinfo_hprint (add_str "early contra detect" string_of_bool) contra no_pos in
             if not(contra) then 
-              heap_entail()
-            else 
+              if real_c then 
+                heap_entail()
+              else (* early failure due to real lhs-rhs contra detected *)
+                let pr = Cprinter.string_of_formula in
+                let pr2 = Cprinter.string_of_context in
+                let ante, prf, estate = match ctx with 
+                  | Ctx es -> es.es_formula,mkPure es (CP.mkTrue no_pos) (CP.mkTrue no_pos) true None, es
+                  | _ -> report_error no_pos "impossible to be multiple ctx" in
+                (* let _ = Debug.info_pprint "early failure due to lhs-rhs contra detected" no_pos in *)
+                (* let _ = Debug.info_pprint "between ante and conseq" no_pos in *)
+                (* let _ = Debug.info_hprint (add_str "ante (in ctx)" pr) ante no_pos in *)
+                (* let _ = Debug.info_hprint (add_str "conseq" pr) conseq no_pos in *)
+                (* let _ = Debug.info_pprint "Loc : please add suitable must-error message" no_pos  in *)
+                let (fc, (contra_list, must_list, may_list)) = ME.check_maymust_failure (CF.get_pure ante) (CF.get_pure conseq) in
+                let new_estate = {
+                    estate with es_formula =
+                        match fc with
+                          | CF.Failure_Must _ -> CF.substitute_flow_into_f !error_flow_int estate.es_formula
+                          | CF.Failure_May _ -> CF.substitute_flow_into_f !top_flow_int estate.es_formula
+                                (* this denotes a maybe error *)
+                          | CF.Failure_Bot _
+                          | CF.Failure_Valid -> estate.es_formula
+                } in
+                let fc_template = mkFailContext "" new_estate conseq None pos in
+                let lc = ME.build_and_failures 5 "early contra detect: "
+                  Globals.logical_error (contra_list, must_list, may_list) fc_template in
+                let _ = Debug.ninfo_pprint ("lc:" ^ (Cprinter.string_of_list_context lc) )no_pos  in
+            (lc,prf)
+                (* let ls_ctx,prf = heap_entail() in *)
+                (* let _ = Debug.info_pprint ("ls_ctx:" ^ (Cprinter.string_of_list_context ls_ctx) )no_pos  in *)
+                (* (ls_ctx, prf) *)
+            else
               match (r1,prf) with
                 | Some r1, Some prf -> let _ = log_contra_detect 1 conseq r1 pos in (r1,prf)
-                | _ ->  heap_entail()
+                | _ ->  
+                        let _ = Debug.info_pprint "Andreea : why contra detected but not estate?" no_pos  in
+                        let _ = Debug.info_pprint "should we fail instead?" no_pos  in
+                        heap_entail()
           in
 	  (r1,p1)
  end
@@ -5442,8 +5477,8 @@ and heap_entail_split_rhs_phases_x (prog : prog_decl) (is_folding : bool) (ctx_0
 		                in 
 		                let new_conseq = CF.mkStar new_conseq1 aux_conseq_from_fold Flow_combine pos in
                         let _ = Debug.tinfo_hprint (add_str "new_conseq" (Cprinter.string_of_formula)) new_conseq pos in
-                        let _ = DD.info_hprint (add_str "new_conseq" Cprinter.string_of_formula) new_conseq no_pos in
-                        let _ = DD.info_hprint (add_str "new_conseq1" Cprinter.string_of_formula) new_conseq1 no_pos in
+                        let _ = DD.tinfo_hprint (add_str "new_conseq" Cprinter.string_of_formula) new_conseq no_pos in
+                        let _ = DD.tinfo_hprint (add_str "new_conseq1" Cprinter.string_of_formula) new_conseq1 no_pos in
                         (* let _ = print_endline ("**********************************") in *)
 		                heap_entail_conjunct 3 prog is_folding  c new_conseq []  pos) cl 
 	                in
@@ -6746,117 +6781,117 @@ and xpure_imply_x (prog : prog_decl) (is_folding : bool)   lhs rhs_p timeout : b
   res
 
 (*maximising must bug with RAND (error information)*)
-and check_maymust_failure (ante:CP.formula) (cons:CP.formula): (CF.failure_kind*((CP.formula*CP.formula) list * (CP.formula*CP.formula) list * (CP.formula*CP.formula) list))=
-  let pr1 = Cprinter.string_of_pure_formula in
-  let pr3 = pr_list (pr_pair pr1 pr1) in
-  let pr2 = pr_pair (Cprinter.string_of_failure_kind) (pr_triple pr3 pr3 pr3) in
-  Debug.no_2 "check_maymust_failure" pr1 pr1 pr2 (fun _ _ -> check_maymust_failure_x ante cons) ante cons
+(* and check_maymust_failure (ante:CP.formula) (cons:CP.formula): (CF.failure_kind*((CP.formula*CP.formula) list * (CP.formula*CP.formula) list * (CP.formula*CP.formula) list))= *)
+(*   let pr1 = Cprinter.string_of_pure_formula in *)
+(*   let pr3 = pr_list (pr_pair pr1 pr1) in *)
+(*   let pr2 = pr_pair (Cprinter.string_of_failure_kind) (pr_triple pr3 pr3 pr3) in *)
+(*   Debug.no_2 "check_maymust_failure" pr1 pr1 pr2 (fun _ _ -> check_maymust_failure_x ante cons) ante cons *)
 
 (*maximising must bug with RAND (error information)*)
-and check_maymust_failure_x (ante:CP.formula) (cons:CP.formula): (CF.failure_kind*((CP.formula*CP.formula) list * (CP.formula*CP.formula) list * (CP.formula*CP.formula) list))=
-  if not !disable_failure_explaining then
-    let r = ref (-9999) in
-    let is_sat f = TP.is_sat_sub_no 9 f r in
-    let find_all_failures a c = CP.find_all_failures is_sat a c in
-    let find_all_failures a c =
-      let pr1 = Cprinter.string_of_pure_formula in
-      let pr2 = pr_list (pr_pair pr1 pr1) in
-      let pr3 = pr_triple pr2 pr2 pr2 in
-      Debug.no_2 "find_all_failures" pr1 pr1 pr3 find_all_failures a c in
-    let filter_redundant a c = CP.simplify_filter_ante TP.simplify_always a c in
-    (* Check MAY/MUST: if being invalid and (exists (ante & conseq)) = true then that's MAY failure,
-       otherwise MUST failure *)
-    let ante_filter = filter_redundant ante cons in
-    let (r1, r2, r3) = find_all_failures ante_filter cons in
-    if List.length (r1@r2) = 0 then
-      begin
-        (CF.mk_failure_may_raw "", (r1, r2, r3))
-      end
-    else
-      begin
-        (*compute lub of must bug and current fc_flow*)
-        (CF.mk_failure_must_raw "", (r1, r2, r3))
-      end
-  else
-    (CF.mk_failure_may_raw "", ([], [], [(ante, cons)]))
+(* and check_maymust_failure_x (ante:CP.formula) (cons:CP.formula): (CF.failure_kind*((CP.formula*CP.formula) list * (CP.formula*CP.formula) list * (CP.formula*CP.formula) list))= *)
+(*   if not !disable_failure_explaining then *)
+(*     let r = ref (-9999) in *)
+(*     let is_sat f = TP.is_sat_sub_no 9 f r in *)
+(*     let find_all_failures a c = CP.find_all_failures is_sat a c in *)
+(*     let find_all_failures a c = *)
+(*       let pr1 = Cprinter.string_of_pure_formula in *)
+(*       let pr2 = pr_list (pr_pair pr1 pr1) in *)
+(*       let pr3 = pr_triple pr2 pr2 pr2 in *)
+(*       Debug.no_2 "find_all_failures" pr1 pr1 pr3 find_all_failures a c in *)
+(*     let filter_redundant a c = CP.simplify_filter_ante TP.simplify_always a c in *)
+(*     (\* Check MAY/MUST: if being invalid and (exists (ante & conseq)) = true then that's MAY failure, *)
+(*        otherwise MUST failure *\) *)
+(*     let ante_filter = filter_redundant ante cons in *)
+(*     let (r1, r2, r3) = find_all_failures ante_filter cons in *)
+(*     if List.length (r1@r2) = 0 then *)
+(*       begin *)
+(*         (CF.mk_failure_may_raw "", (r1, r2, r3)) *)
+(*       end *)
+(*     else *)
+(*       begin *)
+(*         (\*compute lub of must bug and current fc_flow*\) *)
+(*         (CF.mk_failure_must_raw "", (r1, r2, r3)) *)
+(*       end *)
+(*   else *)
+(*     (CF.mk_failure_may_raw "", ([], [], [(ante, cons)])) *)
 
-and build_and_failures i (failure_code:string) (failure_name:string) ((contra_list, must_list, may_list)
-    :((CP.formula*CP.formula) list * (CP.formula*CP.formula) list * (CP.formula*CP.formula) list)) 
-      (fail_ctx_template: fail_context): list_context=
-  let pr1 = Cprinter.string_of_pure_formula in
-  let pr3 = pr_list (pr_pair pr1 pr1) in
-  let pr4 = pr_triple pr3 pr3 pr3 in
-  let pr2 = (fun _ -> "OUT") in
-  Debug.no_1_num i "build_and_failures" pr4 pr2 
-      (fun triple_list -> build_and_failures_x failure_code failure_name triple_list fail_ctx_template)
-      (contra_list, must_list, may_list)
+(* and build_and_failures i (failure_code:string) (failure_name:string) ((contra_list, must_list, may_list) *)
+(*     :((CP.formula*CP.formula) list * (CP.formula*CP.formula) list * (CP.formula*CP.formula) list))  *)
+(*       (fail_ctx_template: fail_context): list_context= *)
+(*   let pr1 = Cprinter.string_of_pure_formula in *)
+(*   let pr3 = pr_list (pr_pair pr1 pr1) in *)
+(*   let pr4 = pr_triple pr3 pr3 pr3 in *)
+(*   let pr2 = (fun _ -> "OUT") in *)
+(*   Debug.no_1_num i "build_and_failures" pr4 pr2  *)
+(*       (fun triple_list -> build_and_failures_x failure_code failure_name triple_list fail_ctx_template) *)
+(*       (contra_list, must_list, may_list) *)
 
 (*maximising must bug with AND (error information)*)
 (* to return fail_type with AND_reason *)
-and build_and_failures_x (failure_code:string) (failure_name:string) ((contra_list, must_list, may_list)
-    :((CP.formula*CP.formula) list * (CP.formula*CP.formula) list * (CP.formula*CP.formula) list)) (fail_ctx_template: fail_context): list_context=
-  if not !disable_failure_explaining then
-    let build_and_one_kind_failures (failure_string:string) (fk: CF.failure_kind) (failure_list:(CP.formula*CP.formula) list):CF.fail_type option=
-      (*build must/may msg*)
-      let build_failure_msg (ante, cons) =
-        let ll = (CP.list_pos_of_formula ante []) @ (CP.list_pos_of_formula cons []) in
-        (*let _ = print_endline (Cprinter.string_of_list_loc ll) in*)
-        let lli = CF.get_lines ll in
-        (*possible to eliminate unnecessary intermediate that are defined by equality.*)
-        (*not sure it is better*)
-        let ante = CP.elim_equi_ante ante cons in
-        ((Cprinter.string_of_pure_formula ante) ^ " |- "^
-            (Cprinter.string_of_pure_formula cons) ^ ". LOCS:[" ^ (Cprinter.string_of_list_int lli) ^ "]", ll) in
-      match failure_list with
-        | [] -> None
-        | _ ->
-              let strs,locs= List.split (List.map build_failure_msg failure_list) in
-              (*get line number only*)
-              (* let rec get_line_number ll rs= *)
-              (*   match ll with *)
-              (*     | [] -> rs *)
-              (*     | l::ls -> get_line_number ls (rs @ [l.start_pos.Lexing.pos_lnum]) *)
-              (* in *)
+(* and build_and_failures_x (failure_code:string) (failure_name:string) ((contra_list, must_list, may_list) *)
+(*     :((CP.formula*CP.formula) list * (CP.formula*CP.formula) list * (CP.formula*CP.formula) list)) (fail_ctx_template: fail_context): list_context= *)
+(*   if not !disable_failure_explaining then *)
+(*     let build_and_one_kind_failures (failure_string:string) (fk: CF.failure_kind) (failure_list:(CP.formula*CP.formula) list):CF.fail_type option= *)
+(*       (\*build must/may msg*\) *)
+(*       let build_failure_msg (ante, cons) = *)
+(*         let ll = (CP.list_pos_of_formula ante []) @ (CP.list_pos_of_formula cons []) in *)
+(*         (\*let _ = print_endline (Cprinter.string_of_list_loc ll) in*\) *)
+(*         let lli = CF.get_lines ll in *)
+(*         (\*possible to eliminate unnecessary intermediate that are defined by equality.*\) *)
+(*         (\*not sure it is better*\) *)
+(*         let ante = CP.elim_equi_ante ante cons in *)
+(*         ((Cprinter.string_of_pure_formula ante) ^ " |- "^ *)
+(*             (Cprinter.string_of_pure_formula cons) ^ ". LOCS:[" ^ (Cprinter.string_of_list_int lli) ^ "]", ll) in *)
+(*       match failure_list with *)
+(*         | [] -> None *)
+(*         | _ -> *)
+(*               let strs,locs= List.split (List.map build_failure_msg failure_list) in *)
+(*               (\*get line number only*\) *)
+(*               (\* let rec get_line_number ll rs= *\) *)
+(*               (\*   match ll with *\) *)
+(*               (\*     | [] -> rs *\) *)
+(*               (\*     | l::ls -> get_line_number ls (rs @ [l.start_pos.Lexing.pos_lnum]) *\) *)
+(*               (\* in *\) *)
 
-              (*shoudl use ll in future*)
-              (* let ll = Gen.Basic.remove_dups (get_line_number (List.concat locs) []) in*)
-              let msg =
-                match strs with
-                  | [] -> ""
-                  | [s] -> s ^ " ("  ^ failure_string ^ ")"
-                  | _ -> (* "(failure_code="^failure_code ^ ") AndR[" ^ *)
-                        "AndR[" ^ (String.concat "; " strs) ^ " ("  ^ failure_string ^ ").]"
-              in
-              let fe = match fk with
-                |  Failure_May _ -> mk_failure_may msg failure_name
-                | Failure_Must _ -> (mk_failure_must msg failure_name)
-                | _ -> {fe_kind = fk; fe_name = failure_name ;fe_locs=[]}
-              in
-              Some (Basic_Reason ({fail_ctx_template with fc_message = msg }, fe))
-    in
-    let contra_fail_type = build_and_one_kind_failures "RHS: contradiction" (Failure_Must "") contra_list in
-    let must_fail_type = build_and_one_kind_failures "must-bug" (Failure_Must "") must_list in
-    let may_fail_type = build_and_one_kind_failures "may-bug" (Failure_May "") may_list in
-    (*
-      let pr oft =
-      match oft with
-      | Some ft -> Cprinter.string_of_fail_type ft
-      | None -> "None"
-      in
-      let _ = print_endline ("locle contrad:" ^ (pr contra_fail_type)) in
-      let _ = print_endline ("locle must:" ^ (pr must_fail_type)) in
-      let _ = print_endline ("locle may:" ^ (pr may_fail_type)) in
-    *)
-    let oft = List.fold_left CF.mkAnd_Reason contra_fail_type [must_fail_type; may_fail_type] in
-    match oft with
-      | Some ft -> FailCtx ft
-      | None -> (*report_error no_pos "Solver.build_and_failures: should be a failure here"*)
-            let msg =  "use different strategies in proof searching (slicing)" in
-            let fe =  mk_failure_may msg failure_name in
-            FailCtx (Basic_Reason ({fail_ctx_template with fc_message = msg }, fe))
-  else
-    let msg = "failed in entailing pure formula(s) in conseq" in
-    CF.mkFailCtx_in (Basic_Reason ({fail_ctx_template with fc_message = msg }, mk_failure_may msg failure_name))
+(*               (\*shoudl use ll in future*\) *)
+(*               (\* let ll = Gen.Basic.remove_dups (get_line_number (List.concat locs) []) in*\) *)
+(*               let msg = *)
+(*                 match strs with *)
+(*                   | [] -> "" *)
+(*                   | [s] -> s ^ " ("  ^ failure_string ^ ")" *)
+(*                   | _ -> (\* "(failure_code="^failure_code ^ ") AndR[" ^ *\) *)
+(*                         "AndR[" ^ (String.concat "; " strs) ^ " ("  ^ failure_string ^ ").]" *)
+(*               in *)
+(*               let fe = match fk with *)
+(*                 |  Failure_May _ -> mk_failure_may msg failure_name *)
+(*                 | Failure_Must _ -> (mk_failure_must msg failure_name) *)
+(*                 | _ -> {fe_kind = fk; fe_name = failure_name ;fe_locs=[]} *)
+(*               in *)
+(*               Some (Basic_Reason ({fail_ctx_template with fc_message = msg }, fe)) *)
+(*     in *)
+(*     let contra_fail_type = build_and_one_kind_failures "RHS: contradiction" (Failure_Must "") contra_list in *)
+(*     let must_fail_type = build_and_one_kind_failures "must-bug" (Failure_Must "") must_list in *)
+(*     let may_fail_type = build_and_one_kind_failures "may-bug" (Failure_May "") may_list in *)
+(*     (\* *)
+(*       let pr oft = *)
+(*       match oft with *)
+(*       | Some ft -> Cprinter.string_of_fail_type ft *)
+(*       | None -> "None" *)
+(*       in *)
+(*       let _ = print_endline ("locle contrad:" ^ (pr contra_fail_type)) in *)
+(*       let _ = print_endline ("locle must:" ^ (pr must_fail_type)) in *)
+(*       let _ = print_endline ("locle may:" ^ (pr may_fail_type)) in *)
+(*     *\) *)
+(*     let oft = List.fold_left CF.mkAnd_Reason contra_fail_type [must_fail_type; may_fail_type] in *)
+(*     match oft with *)
+(*       | Some ft -> FailCtx ft *)
+(*       | None -> (\*report_error no_pos "Solver.build_and_failures: should be a failure here"*\) *)
+(*             let msg =  "use different strategies in proof searching (slicing)" in *)
+(*             let fe =  mk_failure_may msg failure_name in *)
+(*             FailCtx (Basic_Reason ({fail_ctx_template with fc_message = msg }, fe)) *)
+(*   else *)
+(*     let msg = "failed in entailing pure formula(s) in conseq" in *)
+(*     CF.mkFailCtx_in (Basic_Reason ({fail_ctx_template with fc_message = msg }, mk_failure_may msg failure_name)) *)
 
 (** An Hoa : Extract the relations that appears in the input formula
     *  RETURN : a list of b_formula, each of which is a RelForm  
@@ -7239,7 +7274,9 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
               let (ip1,ip2,relass,entail_states,false_es) =
                 if (Inf.no_infer_all_all estate) then (None,None,[],[],false)
                 else
-                  begin 
+                  begin
+                    (* infer_deep_ante_issues : turned on by flag *)
+                    let split_a_opt = if !Globals.infer_deep_ante_flag then split_a_opt else None in
                     match split_a_opt with 
                       | None -> 
                             let r1,r2,r3 = Inf.infer_pure_m 1 unk_heaps estate split_ante1 split_ante0 m_lhs split_conseq pos in
@@ -7251,13 +7288,15 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
                               | Some (es,p),[(h1,h2,h3)] -> Some p,r2,h2,[es],true
                               | _,_ -> report_error pos "Length of relational assumption list > 1"
                             )
-                      | Some (split1,_)(* ,split2 *) -> 
+                      | Some (split1,split2)(* ,split2 *) -> 
+                            (* infer_deep_ante_issues : can we try single infer before deep infer? *)
                             (* Why is split-2 true? lab3.slk *)
                             (* !!! split-1:[ AndList[ []:0<=n ; ["n"]:0<n ; ["s"]:n=0] ] *)
                             (* !!! split-2:[ true] *)
                             let pr = Cprinter.string_of_pure_formula in
-                            let _ = Debug.tinfo_hprint (add_str "split-1" (pr_list pr)) split1 no_pos in
-                            (* let _ = Debug.info_hprint (add_str "split-2" (pr_list pr)) split2 no_pos in *)
+                            let _ = Debug.info_pprint "WARNING : deep-ante-split activated" no_pos in
+                            let _ = Debug.info_hprint (add_str "split-1" (pr_list pr)) split1 no_pos in
+                            let _ = Debug.info_hprint (add_str "split-2" (pr_list pr)) split2 no_pos in
                             (* let no_split2 = false in *)
                             (* let no_split2 = match split2 with *)
                             (*   | [f] -> CP.isConstTrue f  *)
@@ -7265,6 +7304,8 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
                             (*   | _ -> false *)
                             (* in *)
                             (* let _ = Debug.tinfo_hprint (add_str "no_split2" (string_of_bool)) no_split2 no_pos in *)
+                            let ante1 = MCP.mix_of_pure (List.hd split1) in
+                            let r1,r2,r3 = Inf.infer_pure_m 1 unk_heaps estate ante1 ante1 m_lhs split_conseq pos in
                             let split_mix1 = List.map MCP.mix_of_pure split1 in
                             (* let split_mix2 = List.map MCP.mix_of_pure split2 in *)
                             (* let split_mix2a =  *)
@@ -7387,9 +7428,9 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
               let cons4 = (MCP.pure_of_mix split_conseq) in
               (* Check MAY/MUST: if being invalid and (exists (ante & conseq)) = true then that's MAY failure,otherwise MUST failure *)
               (*check maymust for ante0*)
-              let (fc, (contra_list, must_list, may_list)) = check_maymust_failure (MCP.pure_of_mix split_ante0) cons4 in
+              let (fc, (contra_list, must_list, may_list)) = ME.check_maymust_failure (MCP.pure_of_mix split_ante0) cons4 in
               match fc with
-                | Failure_May _ -> check_maymust_failure (MCP.pure_of_mix split_ante1) cons4
+                | Failure_May _ -> ME.check_maymust_failure (MCP.pure_of_mix split_ante1) cons4
                 | _ -> (fc, (contra_list, must_list, may_list)) in
             (false,[],None, (new_fc_kind, (new_contra_list, new_must_list, new_may_list))) 
           end
@@ -7410,11 +7451,19 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
   if r_rez then begin (* Entailment is valid *)
     (*let lhs_p = MCP.remove_dupl_conj_mix_formula lhs_p in*)
     if not(stk_estate # is_empty) then
+      let pr = Cprinter.string_of_entail_state_short in
+      let _ = Debug.info_hprint (add_str "stk_estate: " (pr_list pr)) (stk_estate # get_stk) no_pos in
       let new_estate = stk_estate # top in
       let new_ante_fmls = List.map (fun es -> es.es_formula) (stk_estate # get_stk) in
       let new_estate = {new_estate with es_formula = disj_of_list new_ante_fmls pos} in
       let _ = DD.tinfo_hprint (add_str "new_estate" Cprinter.string_of_entail_state) new_estate no_pos in
       let orig_ante = new_estate.es_orig_ante in
+      (* infer_deep_ante_issues : unsat fail unless we have single ctx *)
+      (* soln : as heap is same, convert into disj pure *)
+      let _ = Debug.info_pprint "infer_deep_ante_issues triggered by --iesa" no_pos in
+      let _ = Debug.info_pprint "if stk_estate > 1, can cause unsat_xpure exception" no_pos in
+      let _ = Debug.info_pprint "Thai : can we convert below to single ctx by using pure or rather than CtxOr" no_pos in
+      let _ = Debug.info_hprint (add_str "new_ante_fmls" (pr_list Cprinter.string_of_formula)) new_ante_fmls no_pos in
       let ctx1 = (elim_unsat_es_now 8 prog (ref 1) new_estate) in
       let ctx1 = match ctx1 with
         | Ctx es -> Ctx {es with es_orig_ante = orig_ante}
@@ -7596,7 +7645,7 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
 	        fc_orig_conseq  = struc_formula_of_formula (formula_of_mix_formula rhs_p pos) pos;
 	        fc_current_conseq = CF.formula_of_heap HFalse pos;
 	        fc_failure_pts = match r_fail_match with | Some s -> [s]| None-> [];} in
-        (build_and_failures 1 "213" Globals.logical_error (contra_list, must_list, may_list) fc_template, prf)
+        (ME.build_and_failures 1 "213" Globals.logical_error (contra_list, must_list, may_list) fc_template, prf)
       else
         (CF.mkFailCtx_in (Basic_Reason ({
 	        fc_message = "failed in entailing pure formula(s) in conseq";
@@ -7844,6 +7893,7 @@ and imply_mix_formula_x ante_m0 ante_m1 conseq_m imp_no memset =
                 if CP.no_andl a0  
                 then
                   (* let _ = print_endline "no deep split" in *)
+                  (* infer_deep_ante_issues : WN : why not we handle deep? *)
                   CP.split_disjunctions a0 
                 else
                   (* why andl need to be handled in a special way *)
@@ -7860,10 +7910,9 @@ and imply_mix_formula_x ante_m0 ante_m1 conseq_m imp_no memset =
             in
             let ln0 = List.length a0l in
             let ln1 = List.length a1l in
-
             let extra_step = 
-              if ln0>1 || ln1>1   
-              then if ln0>ln1 then Some (a0l,[]) else Some(a1l,[]) 
+              if ln0>1 || ln1>1 then Some(a0l,a1l)  
+              (* then if ln0>ln1 then Some (a0l,[]) else Some(a1l,[])  *)
               else None in
             let pr = Cprinter.string_of_pure_formula in 
             DD.tinfo_hprint (add_str "ante-a0l" (pr_list pr)) a0l no_pos;
@@ -9254,7 +9303,7 @@ and do_unmatched_rhs_x rhs rhs_rest caller prog estate conseq lhs_b rhs_b a (rhs
           *)
           if (not is_rel) && not(simple_imply lhs_p rhs_p) then
             (*should check may-must here*)
-            let (fc, (contra_list, must_list, may_list)) = check_maymust_failure lhs_p rhs_p in
+            let (fc, (contra_list, must_list, may_list)) = ME.check_maymust_failure lhs_p rhs_p in
             let new_estate = {
                 estate with es_formula =
                     match fc with
@@ -9265,7 +9314,7 @@ and do_unmatched_rhs_x rhs rhs_rest caller prog estate conseq lhs_b rhs_b a (rhs
                       | CF.Failure_Valid -> estate.es_formula
             } in
             let fc_template = mkFailContext "" new_estate (Base rhs_b) None pos in
-            let olc = build_and_failures 3 "15.3 no match for rhs data node: "
+            let olc = ME.build_and_failures 3 "15.3 no match for rhs data node: "
               Globals.logical_error (contra_list, must_list, may_list) fc_template in
             let lc =
               ( match olc with
@@ -9362,7 +9411,7 @@ and solver_detect_lhs_rhs_contra_all_x prog estate conseq pos msg =
           let contr_lst, rel = solver_infer_lhs_contra_list prog estate lhs_xpure pos msg in
           (contr_lst, rel)
       end
-  in (r_inf_contr,relass)
+  in ((r_inf_contr,lhs_rhs_contra_flag),relass)
 
 and solver_detect_lhs_rhs_contra_all i prog estate conseq pos msg =
   let pr_estate = Cprinter.string_of_entail_state_short in
@@ -9371,16 +9420,17 @@ and solver_detect_lhs_rhs_contra_all i prog estate conseq pos msg =
   let pr = CP.print_lhs_rhs in
   let pr_3 (_,lr,b) =  pr_pair (pr_list pr) string_of_bool (lr,b) in
   Debug.no_3_num i "solver_detect_lhs_rhs_contra_all" 
-      pr_estate pr_f pr_id  (pr_pair (pr_list (pr_option pr_es)) (pr_list pr_3)) (fun _ _ _ -> 
+      pr_estate pr_f pr_id  (pr_pair (pr_pair 
+          (pr_list (pr_option pr_es)) (add_str "real_contra" string_of_bool)) (pr_list pr_3)) (fun _ _ _ -> 
           solver_detect_lhs_rhs_contra_all_x prog estate conseq pos msg) estate conseq msg
 
 and solver_detect_lhs_rhs_contra_x i prog estate conseq pos msg =
-  let contr_lst, rel = solver_detect_lhs_rhs_contra_all 1 prog estate conseq pos msg in
+  let (contr_lst,real_c), rel = solver_detect_lhs_rhs_contra_all 1 prog estate conseq pos msg in
   match contr_lst with
     | h::t ->
           let h = choose_best_candidate contr_lst in
-          (h, rel)
-    | []   -> (None,rel)
+          ((h,real_c), rel)
+    | []   -> ((None,real_c),rel)
 
   (* (Inf.CF.entail_state * Cprinter.P.formula) option * *)
   (* (Inf.CF.entail_state * Cformula.CP.infer_rel_type list * bool) list *) 
@@ -9391,7 +9441,7 @@ and solver_detect_lhs_rhs_contra i prog estate conseq pos msg =
   let pr = CP.print_lhs_rhs in
   let pr_3 (_,lr,b) =  pr_pair (pr_list pr) string_of_bool (lr,b) in
   Debug.no_3_num i "solver_detect_lhs_rhs_contra" 
-      pr_estate pr_f pr_id  (pr_pair (pr_option pr_es) (pr_list pr_3)) (fun _ _ _ -> 
+      pr_estate pr_f pr_id  (pr_pair (pr_pair (pr_option pr_es) string_of_bool) (pr_list pr_3)) (fun _ _ _ -> 
           solver_detect_lhs_rhs_contra_x i prog estate conseq pos msg) estate conseq msg
 
 (*
