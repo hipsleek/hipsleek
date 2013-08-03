@@ -839,6 +839,10 @@ let cnv_ptr_to_int (ex_flag,st_flag) f =
   let a_e a _ = a in
   map_formula_arg f (ex_flag,st_flag) (f_f, f_bf, f_e) (a_f, a_bf, a_e) 
 
+let cnv_ptr_to_int flag f = 
+  let pr = Cprinter.string_of_pure_formula in
+  Debug.no_2 "cnv_ptr_to_int" (pr_pair string_of_bool string_of_bool) pr pr (fun _ _ -> cnv_ptr_to_int flag f) flag f
+
 (*
 x=0 --> x=null
 x<=0 --> x=null
@@ -867,33 +871,39 @@ let is_ptr_ctr a1 a2 =
           is_otype (type_of_spec_var v)
     | _ -> false
 
+let is_ptr_ctr a1 a2 =
+  let pr = Cprinter.string_of_formula_exp in
+  Debug.no_2 "is_ptr_ctr" pr pr string_of_bool is_ptr_ctr a1 a2
+
 let is_null a1 a2 =
   match a1,a2 with
     | Var(v,_),IConst(0,_) ->
           (is_otype (type_of_spec_var v),a1,a2)
     | _ -> (false,a1,a2)
-
+(* s>0 -> 0<s -> 1<=s *)
 let to_ptr pf =
   let rec norm pf = 
     match pf with
       | Lt(a,IConst(i,l),ll) -> Lte(a,IConst(i-1,l),ll)
+      | Lt(IConst(i,l),a,ll) -> Lte(IConst(i+1,l),a,ll)
       | Gt(a,b,ll) -> norm (Lt(b,a,ll))
       | Gte(a,b,ll) -> Lte(b,a,ll)
       | _ -> pf
-  in let nf = norm pf in
+  in let pf = norm pf in
   match pf with
     | Lte((Var(v,_) as a1), IConst(i,_),ll) ->
-          if is_otype (type_of_spec_var v) then
             if i<=(-1) then BConst(false,ll)
             else if i>0 then BConst(true,ll)
             else Eq(a1,Null ll,ll)
-          else pf
     | Lte(IConst(i,_),(Var(v,_) as a1),ll) ->
-          if is_otype (type_of_spec_var v) then
             if i>=1 then Neq(a1,Null ll,ll)
             else BConst(true,ll)
-          else pf
     | _ -> pf
+
+let to_ptr pf =
+  let pr f = Cprinter.string_of_b_formula (f,None) in
+  Debug.no_1 "to_ptr" pr pr to_ptr pf
+
 
 let cnv_int_to_ptr flag f = 
   let f_f e = None in
@@ -936,6 +946,9 @@ let cnv_int_to_ptr flag f =
   let f_e e = (Some e) in
   map_formula f (f_f, f_bf, f_e) 
 
+let cnv_int_to_ptr flag f = 
+  let pr = Cprinter.string_of_pure_formula in
+  Debug.no_1 "cnv_int_to_ptr" pr pr (fun _ -> cnv_int_to_ptr flag f) f
 
 let wrap_pre_post_gen pre post f a =
   let s1 = pre a in
@@ -951,8 +964,8 @@ let wrap_pre_post_print s fn x =
     if !Globals.print_cnv_null 
     then 
       let s2 = pr r2 in
-      if String.compare s1 s2 == 0 then r2
-      else 
+      (* if String.compare s1 s2 == 0 then r2 *)
+      (* else  *)
         begin
           print_endline s;
           print_endline ("input :"^s1);
@@ -979,12 +992,8 @@ let add_imm_inv f1 f2 =
 let cnv_ptr_to_int_weak f =
   wrap_pre_post_print "cnv_ptr_to_int_weak" (cnv_ptr_to_int (true,false)) f
 
-let cnv_ptr_to_int_strong f =
+let cnv_ptr_to_int(* _strong *) f =
   wrap_pre_post_print "cnv_ptr_to_int" (cnv_ptr_to_int (true,true)) f
-
-let cnv_ptr_to_int f =
-  (* let f2 = add_imm_inv f in *)
-  cnv_ptr_to_int_strong f
 
 let cnv_int_to_ptr f =
   wrap_pre_post_print "cnv_int_to_ptr" (cnv_int_to_ptr true) f
@@ -1877,7 +1886,7 @@ let om_pairwisecheck f =
 
 let om_pairwisecheck f =
   let pr = Cprinter.string_of_pure_formula in
-  Debug.no_1 "simplify_omega" pr pr om_pairwisecheck f
+  Debug.no_1 "om_pairwisecheck" pr pr om_pairwisecheck f
 
 let tp_pairwisecheck (f : CP.formula) : CP.formula =
   if not !tp_batch_mode then start_prover ();

@@ -10,8 +10,25 @@ pred ll<n> == self = null & n = 0
 HeapPred H1(node y).
 
 infer [y] m=-1 |- y::node<a,b> & m>=0.
+print residue.
 
 /*
+# i8-3.slk
+
+!!! early contra detect:false
+!!! early failure due to lhs-rhs contra detected
+!!! between ante and conseq
+!!! ante (in ctx): es_formula: emp&m+1=0&{FLOW,(19,20)=__norm}[]
+!!! conseq: y::node<a,b>@M&0<=m&{FLOW,(19,20)=__norm}[]
+!!! Loc : please add suitable must-error message
+
+infer [y] m=1 |- y::node<a,b> & m>=0.
+print residue.
+
+ <1>emp&m=1 & a=inf_a_32 & b=inf_b_33 & inf_ann_31<=0&{FLOW,(19,20)=__norm}[]
+ inferred heap: [y::node<inf_a_32,inf_b_33>@inf_ann_31]
+ inferred pure: [inf_ann_31<=0]
+
 # i8-3.slk 
 
 GOT

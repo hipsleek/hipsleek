@@ -577,21 +577,33 @@ let infer_lhs_contra pre_thus lhs_xpure ivars pos msg =
       let ptrs_ps, non_ptrs_ps = List.partition (fun p -> List.for_all (CP.is_node_typ) (CP.fv p)) ps in
       (* let _ = DD.info_hprint (add_str " ptrs_ps: " (pr_list !print_formula)) ptrs_ps pos in *)
       (* let _ = DD.info_hprint (add_str " non_ptrs_ps: " (pr_list !print_formula)) non_ptrs_ps pos in *)
-      let non_ptr_f = simplify_helper (CP.mkExists (non_ptrs0_qvars0@exists_var) (CP.conj_of_list non_ptrs_ps pos) None pos) in
+      let non_ptr_f = simplify_helper 
+        (CP.mkExists (non_ptrs0_qvars0@exists_var) 
+          (CP.conj_of_list non_ptrs_ps pos) None pos) in
+      let _ = DD.tinfo_hprint (add_str "evars: " !print_svl) (non_ptrs0_qvars0@exists_var) pos in
+      let _ = DD.tinfo_hprint (add_str "non_ptr_f: " !print_formula) non_ptr_f pos in 
       let qvars1, non_ptr_bare_f = split_ex_quantifiers non_ptr_f in
-      let f = CP.mkExists (qvars1@ptr_qvars0) (CP.conj_of_list (ptrs_ps@[non_ptr_bare_f]) pos) None pos in
+      let e_ptr_vars = CP.diff_svl (List.concat (List.map CP.fv ptrs_ps)) ivars in
+      let _ = DD.tinfo_hprint (add_str "e_ptr_vars: " !print_svl) e_ptr_vars pos in
+      let exists_vars = qvars1@ptr_qvars0@e_ptr_vars in
+      let a_fml = CP.conj_of_list (non_ptr_bare_f::ptrs_ps) pos in
+      let f = CP.mkExists exists_vars a_fml None pos in
+      let _ = DD.tinfo_hprint (add_str "exists_vars: " !print_svl) exists_vars pos in
+      let _ = DD.tinfo_hprint (add_str "f: " !print_formula) f pos in 
       (* let f = simplify_helper (CP.mkExists exists_var f None pos) in *)
       if CP.isConstTrue f || CP.isConstFalse f then None
       else 
         let ps2 = CP.list_of_conjs f in
-        let neg_f = if List.for_all (fun p -> (CP.is_neq_exp p) ) ps2 then
-          let ps3 = List.map (CP.neg_neq ) ps2 in
-          disj_of_list ps3 pos
-        else
-          let f = TP.pairwisecheck_raw f in
-          Redlog.negate_formula f
+        let neg_f = 
+          if List.for_all (fun p -> CP.is_neq_exp p) ps2 
+          then
+            let ps3 = List.map CP.neg_neq ps2 in
+            disj_of_list ps3 pos
+          else
+            let f = TP.pairwisecheck_raw f in
+            Redlog.negate_formula f
         in
-        (* let _ = DD.info_hprint (add_str "neg_f: " !print_formula) neg_f pos in *)
+        let _ = DD.tinfo_hprint (add_str "neg_f: " !print_formula) neg_f pos in 
         (* Thai: Remove disjs contradicting with pre_thus *)
         let new_neg_f = 
           if CP.isConstTrue pre_thus then neg_f
@@ -1086,21 +1098,27 @@ let rec infer_pure_m_x unk_heaps estate lhs_rels lhs_xpure_orig lhs_xpure0 lhs_w
                                 in
                                 if rel_ass = [] then (None,None,[])
                                 else
+                                  let pf1 = (CP.mkAnd lhs_xpure (CP.conj_of_list (ps@rs) pos) pos) in
+                                  let pf2 = TP.simplify_with_pairwise 2 pf1 in
+                                  let pf = MCP.mix_of_pure pf2 in
+                                  (* let pf = (MCP.mix_of_pure (TP.simplify_raw pf)) in *)
                                   let new_estate = {estate with es_formula = 
                                           (match estate.es_formula with
-                                            | Base b -> CF.mkBase_simp b.formula_base_heap 
-                                                  (MCP.mix_of_pure (TP.simplify_raw (CP.mkAnd lhs_xpure (CP.conj_of_list (ps@rs) pos) pos)))
+                                            | Base b -> CF.mkBase_simp b.formula_base_heap pf
                                             | _ -> report_error pos "infer_pure_m: Not supported")
                                   } 
                                   in
-                                  let _ = DD.ninfo_hprint (add_str "LHS : " !CP.print_formula) lhs_xpure pos in           
+                                  let pr = Cprinter.string_of_pure_formula in
+                                  let _ = DD.tinfo_hprint (add_str "LHS : " !CP.print_formula) lhs_xpure pos in           
                                   let _ = DD.devel_hprint (add_str "rel_ass_final: " (pr_list print_lhs_rhs)) rel_ass pos in
+                                  let _ = DD.devel_hprint (add_str "pure(before)" pr) pf1 pos in
+                                  let _ = DD.devel_hprint (add_str "pure(simplified)" pr) pf2 pos in
                                   let _ = DD.devel_hprint (add_str "New estate : " !print_entail_state_short) new_estate pos in
                                   (* WN : infer_pure_of_heap_pred *)
                                   let rel_ass,heap_ass,new_estate =
                                     if unk_heaps!=[] then
                                       let _ = DD.ninfo_pprint "WN : to convert unk_heaps to corresponding pure relation using __pure_of_" no_pos in
-                                      let _ = DD.ninfo_hprint (add_str "unk_heaps" (pr_list !CF.print_h_formula)) unk_heaps no_pos in
+                                      let _ = DD.tinfo_hprint (add_str "unk_heaps" (pr_list !CF.print_h_formula)) unk_heaps no_pos in
                                       (* PURE_RELATION_OF_HEAP_PRED *)
                                       (* WN infer_pure_heap_pred : to implement below *)
                                       (* for rel_ass of heap_pred, convert to hprel form *)
