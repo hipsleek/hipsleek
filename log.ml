@@ -33,6 +33,7 @@ type proof_log = {
     log_prover : Others.tp_type;
     log_type : proof_type;
     log_proof_string : string;
+    log_proof_result : string;
     log_time : float;
     log_timeout : bool;
     log_cache : bool;
@@ -137,7 +138,8 @@ let pr_proof_log_entry e =
   fmt_string ("; loc: "^(string_of_loc e.log_loc));
   fmt_string ("; kind: "^(Others.string_of_proving_kind e.log_proving_kind));
   (* fmt_string ("; "^((pr_list pr_id) e.log_other_properties)); *)
-  if !Globals.log_proof_details then fmt_string ("\n " ^ e.log_proof_string);
+  if !Globals.log_proof_details then fmt_string ("\n raw proof:" ^ e.log_proof_string);
+  if !Globals.log_proof_details then fmt_string (" raw result:" ^ e.log_proof_result);
   fmt_string ("\n " ^ (string_of_log_type e.log_type));
   fmt_string ("\n res: "^(string_of_log_res e.log_type e.log_res));
   fmt_string ("\n --------------------");
@@ -409,7 +411,8 @@ let add_proof_logging timeout_flag (cache_status:bool) old_no pno tp ptype time 
 	  log_prover = Others.last_tp_used # get;
 	  log_type = ptype;
 	  log_time = time;
-	  log_proof_string = "here";
+	  log_proof_string = Others.last_proof_string # get;
+	  log_proof_result = Others.last_proof_result # get;
 	  log_timeout = timeout_flag;
 	  log_cache = cache_status;
 	  log_res = res; } in

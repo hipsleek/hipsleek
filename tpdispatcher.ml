@@ -859,11 +859,36 @@ let comm_is_null a1 a2 =
           (is_otype (type_of_spec_var v),a2,a1)
     | _ -> (false,a1,a2)
 
+let is_ptr_ctr a1 a2 =
+  match a1,a2 with
+    | Var(v,_),IConst(_,_) ->
+          is_otype (type_of_spec_var v)
+    | IConst(_,_),Var(v,_) ->
+          is_otype (type_of_spec_var v)
+    | _ -> false
+
 let is_null a1 a2 =
   match a1,a2 with
     | Var(v,_),IConst(0,_) ->
           (is_otype (type_of_spec_var v),a1,a2)
     | _ -> (false,a1,a2)
+
+let to_ptr pf =
+  let rec norm pf = 
+    match pf with
+      | Lt(a,IConst(i,l),ll) -> Lte(a,IConst(i-1,l),ll)
+      | Gt(a,b,ll) -> norm (Lt(b,a,ll))
+      | Gte(a,b,ll) -> Lte(b,a,ll)
+      | _ -> pf
+  in match norm pf with
+    | Lte((Var(v,_) as a1), IConst(i,_),ll) ->
+          if i<=(-1) then BConst(false,ll)
+          else if i>0 then BConst(true,ll)
+          else Eq(a1,Null ll,ll) 
+    | Lte(IConst(i,_),(Var(v,_) as a1),ll) ->
+          if i>=1 then Neq(a1,Null ll,ll)
+          else BConst(true,ll)
+    | _ -> report_error  no_pos "pre-cond error at to_ptr@tpdispatcher"
 
 let cnv_int_to_ptr flag f = 
   let f_f e = None in
@@ -871,34 +896,36 @@ let cnv_int_to_ptr flag f =
     let (pf, l) = bf in
     match pf with
       | Eq (a1, a2, ll) -> 
-          let (is_null_flag,a1,a2) = comm_is_null a1 a2 in
+            let (is_null_flag,a1,a2) = comm_is_null a1 a2 in
           if is_null_flag then
               Some(Eq(a1,Null ll,ll),l)
           else Some bf
-      | Lte ((Var(v,_) as a1), IConst(0,_), ll) | Gte (IConst(0,_), (Var(v,_) as a1), ll) -> 
-          if is_otype (type_of_spec_var v) then
-              Some(Eq(a1,Null ll,ll),l)
-          else Some bf
-      | Lt ((Var(v,_) as a1), IConst(1,_), ll) | Gt (IConst(1,_), (Var(v,_) as a1), ll) -> 
-          if is_otype (type_of_spec_var v) then
-              Some(Eq(a1,Null ll,ll),l)
-          else Some bf
-      | Gte (Var(v,_), IConst(0,_), ll) | Lte (IConst(0,_), Var(v,_), ll) -> 
-          if is_otype (type_of_spec_var v) then
-              Some(BConst(true,ll),l)
-          else Some bf
-      | Gte ((Var(v,_) as a1), IConst(1,_), ll) | Lte (IConst(1,_), (Var(v,_) as a1), ll) -> 
-          if is_otype (type_of_spec_var v) then
+      | Neq (a1, a2, ll) -> 
+          let (is_null_flag,a1,a2) = comm_is_null a1 a2 in
+          if is_null_flag then
               Some(Neq(a1,Null ll,ll),l)
           else Some bf
-      | Gt ((Var(v,_) as a1), IConst(0,_), ll) | Lt (IConst(0,_), (Var(v,_) as a1), ll) -> 
-          if is_otype (type_of_spec_var v) then
-              Some(Neq(a1,Null ll,ll),l)
+      | Lte (a1, a2,_) | Gte(a1,a2,_) | Gt(a1,a2,_) | Lt(a1,a2,_) ->
+          if is_ptr_ctr a1 a2 then Some(to_ptr(pf),l)
           else Some bf
-      | Lt (Var(v,_), IConst(0,_), ll) | Gt (IConst(0,_), Var(v,_), ll) -> 
-          if is_otype (type_of_spec_var v) then
-              Some (BConst(false,ll),l)
-          else Some bf
+      (* | Lte ((Var(v,_) as a1), IConst(0,_), ll) | Gte (IConst(0,_), (Var(v,_) as a1), ll)  *)
+      (* | Lt ((Var(v,_) as a1), IConst(1,_), ll) | Gt (IConst(1,_), (Var(v,_) as a1), ll) ->  *)
+      (*     if is_otype (type_of_spec_var v) then *)
+      (*         Some(Eq(a1,Null ll,ll),l) *)
+      (*     else Some bf *)
+      (* | Gte ((Var(v,_) as a1), IConst(1,_), ll) | Lte (IConst(1,_), (Var(v,_) as a1), ll)   *)
+      (* | Gt ((Var(v,_) as a1), IConst(0,_), ll) | Lt (IConst(0,_), (Var(v,_) as a1), ll) -> *)
+      (*       if is_otype (type_of_spec_var v) then *)
+      (*         Some(Neq(a1,Null ll,ll),l) *)
+      (*       else Some bf *)
+      (* | Gte (Var(v,_), IConst(0,_), ll) | Lte (IConst(0,_), Var(v,_), ll) ->  *)
+      (*     if is_otype (type_of_spec_var v) then *)
+      (*         Some(BConst(true,ll),l) *)
+      (*     else Some bf *)
+      (* | Lt (Var(v,_), IConst(0,_), ll) | Gt (IConst(0,_), Var(v,_), ll) ->  *)
+      (*     if is_otype (type_of_spec_var v) then *)
+      (*         Some (BConst(false,ll),l) *)
+      (*     else Some bf *)
       | _ -> Some bf
   in
   let f_e e = (Some e) in
@@ -931,14 +958,32 @@ let wrap_pre_post_print s fn x =
   in wrap_pre_post_gen pre post (fun _ -> fn x) x
 
 
+let add_imm_inv f1 f2 = 
+(* find immutability vars *)
+(* form a list of imm_inv to add *)
+  let vs = fv (mkAnd f1 f2 no_pos) in
+  let vs = List.filter (fun v -> CP.is_ann_type (CP.type_of_spec_var v)) vs in
+  let inv = List.map (fun v -> 
+      let vp=Var(v,no_pos) in 
+      mkAnd (mkSubAnn const_mut vp) (mkSubAnn vp const_abs) no_pos ) vs in
+  let f1_inv = join_conjunctions (f1::inv) in
+  let _ = Debug.ninfo_hprint (add_str "Ann Vars" Cprinter.string_of_spec_var_list) vs no_pos in
+  let _ = Debug.ninfo_hprint (add_str "Inv" Cprinter.string_of_pure_formula) f1_inv no_pos in
+  f1_inv
+
 let cnv_ptr_to_int_weak f =
   wrap_pre_post_print "cnv_ptr_to_int_weak" (cnv_ptr_to_int (true,false)) f
 
-let cnv_ptr_to_int f =
+let cnv_ptr_to_int_strong f =
   wrap_pre_post_print "cnv_ptr_to_int" (cnv_ptr_to_int (true,true)) f
+
+let cnv_ptr_to_int f =
+  (* let f2 = add_imm_inv f in *)
+  cnv_ptr_to_int_strong f
 
 let cnv_int_to_ptr f =
   wrap_pre_post_print "cnv_int_to_ptr" (cnv_int_to_ptr true) f
+
 
 (* let cnv_ptr_to_int f = *)
 (*   let pr = Cprinter.string_of_pure_formula in *)
@@ -2117,6 +2162,9 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
 
 
 let tp_imply_no_cache ante conseq imp_no timeout process =
+  let ante = 
+    if !Globals.allow_imm_inv then add_imm_inv ante conseq
+    else ante in
   let ante = cnv_ptr_to_int ante in
   let conseq = cnv_ptr_to_int_weak conseq in
   tp_imply_no_cache ante conseq imp_no timeout process

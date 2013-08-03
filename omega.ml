@@ -11,6 +11,9 @@ let set_prover_original_output = ref (fun _ -> ())
 
 let set_prover_type () = Others.last_tp_used # set Others.OmegaCalc
 
+let set_proof_string str = Others.last_proof_string # set str
+let set_proof_result str = Others.last_proof_result # set str
+
 let omega_call_count: int ref = ref 0
 let is_omega_running = ref false
 let in_timeout = ref 10.0 (* default timeout is 15 seconds *)
@@ -338,6 +341,7 @@ let check_formula f timeout =
         let str = read_last_line_from_in_channel (!process.inchannel) in
         (* An Hoa : set original output *)
         let _ = !set_prover_original_output str in
+        let _ = set_proof_result str in
         let n = String.length str in
         if n > 7 then
           begin
@@ -438,6 +442,7 @@ let is_sat_ops pr_weak pr_strong (pe : formula)  (sat_no : string): bool =
           let fstr = omega_of_formula  1 pr_weak  pr_strong  pe in
           let fomega =  "{[" ^ vstr ^ "] : (" ^ fstr ^ ")};" ^ Gen.new_line_str in
 
+            let _ = set_proof_string ("SAT:"^fomega) in
           if !log_all_flag then begin
               output_string log_all (Gen.new_line_str^"#is_sat " ^ sat_no ^ Gen.new_line_str);
               output_string log_all (Gen.break_lines_1024 fomega);
@@ -449,17 +454,21 @@ let is_sat_ops pr_weak pr_strong (pe : formula)  (sat_no : string): bool =
                 check_formula 1 fomega !in_timeout
             with
               | Procutils.PrvComms.Timeout as exc ->
-                if !Globals.dis_provers_timeout then (stop (); raise exc)
-                else begin
-                  Printf.eprintf "SAT Unexpected exception : %s" (Printexc.to_string exc);
-                  stop (); raise exc end
+                    let _ = set_proof_result ("TIMEOUT") in
+                    if !Globals.dis_provers_timeout then (stop (); raise exc)
+                    else begin
+                      Printf.eprintf "SAT Unexpected exception : %s" (Printexc.to_string exc);
+                      stop (); raise exc end
               | End_of_file ->
-                  (*let _ = print_endline "SAT: End_of_file" in*)
-                  restart ("End_of_file when checking #SAT \n");
-                  true
+                    let _ = set_proof_result ("END_OF_FILE") in
+                    (*let _ = print_endline "SAT: End_of_file" in*)
+                    restart ("End_of_file when checking #SAT \n");
+                    true
               | exc ->
                   begin
-                      Printf.eprintf "SAT Unexpected exception : %s" (Printexc.to_string exc);
+                      let exs = Printexc.to_string exc in
+                      let _ = set_proof_result ("EXCEPTION :"^exs) in
+                      Printf.eprintf "SAT Unexpected exception : %s" exs;
                       stop (); raise exc
                       (* restart ("Unexpected exception when doing IMPLY "); *)
                       (* true *)
@@ -529,6 +538,7 @@ let is_valid_ops_x pr_weak pr_strong (pe : formula) timeout: bool =
 	(*print_endline (Gen.break_lines fomega);*)
 			(* An Hoa : set generated input *)
 	    let _ = !set_generated_prover_input fomega in
+            let _ = set_proof_string ("IMPLY:"^fomega) in
             if !log_all_flag then begin
                 (*output_string log_all ("YYY" ^ (Cprinter.string_of_pure_formula pe) ^ "\n");*)
                 output_string log_all (Gen.new_line_str^"#is_valid" ^Gen.new_line_str);
@@ -541,18 +551,22 @@ let is_valid_ops_x pr_weak pr_strong (pe : formula) timeout: bool =
                 not (check_formula 2 (fomega ^ "\n") !in_timeout)
               with
                 | Procutils.PrvComms.Timeout as exc -> 
-                  if !Globals.dis_provers_timeout then (stop (); raise exc)
-                  else begin
-                    Printf.eprintf "IMPLY : Unexpected exception : %s" (Printexc.to_string exc);
-                    stop (); raise exc end
+                      let _ = set_proof_result ("TIMEOUT") in
+                      if !Globals.dis_provers_timeout then (stop (); raise exc)
+                      else begin
+                        Printf.eprintf "IMPLY : Unexpected exception : %s" (Printexc.to_string exc);
+                        stop (); raise exc end
                 | End_of_file ->
+                      let _ = set_proof_result ("END_OF_FILE") in
                     (*let _ = print_endline "IMPLY: End_of_file" in*)
 					(*let _ = print_string ("\n"^fomega^"\n") in*)
                     restart ("IMPLY : End_of_file when checking \n");
                     false
                 | exc ->
                     begin
-                        Printf.eprintf "IMPLY : Unexpected exception : %s" (Printexc.to_string exc);
+                      let exs = Printexc.to_string exc in
+                      let _ = set_proof_result ("EXCEPTION :"^exs) in
+                        Printf.eprintf "IMPLY : Unexpected exception : %s" exs;
                         stop (); raise exc
           (* restart ("Unexpected exception when doing IMPLY "); *)
             (* false *)
