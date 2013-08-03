@@ -5099,7 +5099,9 @@ and heap_entail_conjunct_lhs_x hec_num prog is_folding  (ctx:context) (conseq:CF
               else (* early failure due to real lhs-rhs contra detected *)
                 let pr = Cprinter.string_of_formula in
                 let pr2 = Cprinter.string_of_context in
-                let ante = match ctx with Ctx es -> es.es_formula | _ -> mkTrue no_pos in
+                let ante = match ctx with 
+                  | Ctx es -> es.es_formula 
+                  | _ -> report_error no_pos "impossible to be multiple ctx" in
                 let _ = Debug.info_pprint "early failure due to lhs-rhs contra detected" no_pos in
                 let _ = Debug.info_pprint "between ante and conseq" no_pos in
                 let _ = Debug.info_hprint (add_str "ante (in ctx)" pr) ante no_pos in
