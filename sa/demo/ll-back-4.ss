@@ -38,15 +38,15 @@ int loop(ref node ptr)
    ensures ptr'::infll<> ;//'
    requires ptr::ll<>
    ensures ptr'::ll<> ;//'
-*/
+
    requires ptr::lasso2<>
    ensures ptr'::lasso2<> ;//'
+*/
 
-/*
   infer[H1,G1]
   requires H1(ptr)
   ensures G1(ptr',ptr); //'
-*/
+
 
 {
   if (randB()) {
@@ -85,7 +85,7 @@ defn of the form:
 
 If we freeze at this point, we may obtain a pre-condition
 that is too strong as it is an infinite list. Thus, we
-choose to weaken it further by applying a (greatest)fixpoint
+choose to weaken it further by applying a (greatest) fixpoint
 computation technique. with an unknown predicate:
 
  H1(tmp_31') <--  tmp_31'::node<ptr> * H1(ptr)
@@ -94,14 +94,28 @@ computation technique. with an unknown predicate:
 How is this weakening applied? For least fixed point, we start
 with false, and progressively weaken to a fix-point.
 
+fix rules = \{ H1(tmp_31') <--  tmp_31'::node<ptr> * H1(ptr) \}
+
 For greatest fix-point, we start with:
-  H1(tmp) <- UNK(tmp)
+//  H1(tmp) <- UNK(tmp)
+//0
+H1(tmp) <- HTrue & true
 
-and then weaken by disjunction to:
-
+and then strengthen = apply fix to the current set + weaken (widening)
+ by disjunction to:
+//1
  H1(tmp_31') <--  tmp_31'::node<ptr> * H1(ptr)
                   or UNK(tmp_31')
+//2
+H1(tmp_31') <--  tmp_31'::node<ptr> * ptr::node<ptr1> * H1(ptr1)
+                 tmp_31'::node<ptr> * H1(ptr)
+                  or UNK(tmp_31')
 
+normalize (extract recurrence points):
+H1(tmp_31') <--  tmp_31'::node<ptr> * H1(ptr)
+                  or UNK(tmp_31')
+
+==> fixpoint
 (PS We need to formalise this weakening and
 fix-point process)
 

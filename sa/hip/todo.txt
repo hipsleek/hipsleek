@@ -243,3 +243,4 @@ for sleek; it is only relevant for hip.
 # twolevel.ss: nested lists
 
 *************************************
+sa_heaps.ss (infer)

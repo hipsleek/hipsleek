@@ -808,6 +808,16 @@ Exception occurred: Not_found
 Error3(s) detected at main 
 
 ====================================================================
+# 13-5.slk --sa-en-cont
+
+infer [H1] H1(y)  |- y::lseg<null> .
+print residue.
+
+WARNING : Pushing 2 stk_estate (4)
+Message: unsat_xpure : encountered a disjunctive formula 
+!!! WARNING logtime exception:0.004caught
+(Program not linked with -g, cannot print stack backtrace)
+Entailment Failure (1) Failure("unsat_xpure : encountered a disjunctive formula \n")
 ===================================================================
 ===================================================================
 ===================================================================

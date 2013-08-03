@@ -634,7 +634,7 @@ let sa_print_inter = ref false
 
 let print_heap_pred_decl = ref true
 
-let cond_path_trace = ref false
+let cond_path_trace = ref true
 
 let pred_syn_modular = ref true
 

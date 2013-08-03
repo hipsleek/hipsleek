@@ -5605,7 +5605,7 @@ HP_902(next_36_901,prev_937,sent_936) * HP_903(prev_937,cur_938,sent_936)
 Exception occurred: Failure("Can not prove:\n cur_939::node<val_36_934,prev_935>@M * HP_903(prev_935,cur_939,sent_936)&\n  prev_937=null & \n  cur_938=cur_939 --> cur_938::node<val_36_900,next_36_901>@M * \n  HP_902(next_36_901,prev_937,sent_936) * HP_903(prev_937,cur_938,sent_936)")
 Error3(s) detected at main 
 =====================================================================
-# ll-back-3a.ss
+# ll-back-3a.ss: FIXED
 
 (this example works in default but not sa_logging branch!)
 
@@ -5633,11 +5633,126 @@ secondly allow such examples to be accepted.
 */
 
 =====================================================================
+# ll-back-4.ss --sa-dnc FIXED
+
+ExceptionFailure("hd")Occurred!
+
+Error1(s) detected at main 
+
+!!! dumping for finalize on hipStop Omega... 83 invocations caught
+(Program not linked with -g, cannot print stack backtrace)
+
+Exception occurred: Failure("hd")
+Error3(s) detected at main 
 =====================================================================
+# ll-b-4a.slk: FIXED
+
+Why isn't the results printed for sleek?
+
+Same error with --sa-dnc option.
+
+!!! >>>>>> post-predicates: step post-4: weaken<<<<<<Fatal error: exception Failure("hd")
+
 =====================================================================
+# ll-back-4: DONE
+
+I saw only:
+
+!!! >>>>>> post-predicates: step post-4: weaken<<<<<<
+!!!     synthesize: G1
+!!!  G1(ptr',ptr) ::=  H1(ptr')
+
+Please print 
+
+>>>> fix-point step for post-pred G1.
+
+Initial recurrence:
+ G1(ptr',ptr) ::= G1(ptr',tmp_916) or  H1(ptr')&ptr=ptr']
+
+Least fixed point computed:
+ G1(ptr',ptr) ::=  H1(ptr')
+
+--sa-dnc
+
+Got:
+
+ H1(tmp_32') ::= 
+ H1(ptr) * tmp_32'::node<ptr>@M
+ or HP_915(tmp_32')
+ ,
+ G1(ptr',ptr) ::= G1(ptr',tmp_916) \/  H1(ptr')&ptr=ptr']
+
+This means that least-fixed point for post-pred has to be 
+performed during the conquer step, and not in the divide
+step.
+
 =====================================================================
+# check-cll.ss: FIXED
+
+[ H1(l_904,p_905) ::=  H1(next_20_901,p_905)
+   * l_904::node<val_20_900,next_20_901>@M&l_904!=p_905
+   or emp&l_904=p_905,
+  G1(l_906,p_907) ::=
+ emp&l_906=p_907
+ or l_906::node<val_20_889,next_20_890>@M
+    * G1(next_20_890,p_907)& l_906!=p_907]
+
+--sa-dnc
+
+Why is sa-dnc missing on a base-case equation?
+
+[ H1(l_904,p_905) ::= H1(next_20_901,p_905)
+      * l_904::node<val_20_900,next_20_901>@M&l_904!=p_905,
+ G1(l_906,p_907) ::= l_906::node<val_20_889,next_20_890>@M
+      * G1(next_20_890,p_907)&l_906!=p_907
+   \/  H1(l_906,l_906)&l_906=p_907]
 =====================================================================
+# tree.ss --sa-dnc FIXED
+
+Further simplification seems important after --sa-dnc
+
+  H(x_929) ::=
+       x_929::node<key_31_887,left_31_888,right_31_889>@M
+          * HP_890(left_31_888) * HP_891(right_31_889)
+   \/  x_929::node<key_31_887,left_31_888,right_31_889>@M
+          * HP_890(left_31_888) * HP_891(right_31_889)
+   \/  x_929::node<key_31_887,left_31_888,right_31_889>@M
+          * HP_890(left_31_888) * HP_891(right_31_889),
+
+For above perform unify-disjuncts to give:
+
+  H(x_929) ::=
+       x_929::node<key_31_887,left_31_888,right_31_889>@M
+          * HP_890(left_31_888) * HP_891(right_31_889)
+
+
+GOT:
+
+[ HP_891(right_31_930)
+   ::= right_31_930::node<key_31_887,left_31_888,right_31_889>@M
+         * HP_890(left_31_888) * HP_891(right_31_889)
+   \/  emp&right_31_930=null,
+
+H(x_929) ::=
+       x_929::node<key_31_887,left_31_888,right_31_889>@M
+          * HP_890(left_31_888) * HP_891(right_31_889)
+   \/  x_929::node<key_31_887,left_31_888,right_31_889>@M
+          * HP_890(left_31_888) * HP_891(right_31_889)
+   \/  x_929::node<key_31_887,left_31_888,right_31_889>@M
+          * HP_890(left_31_888) * HP_891(right_31_889),
+
+G(x_931) ::=
+   x_931::node<key_31_887,left_31_888,right_31_889>@M
+          * G(left_31_888) * G(right_31_889)&left_31_888!=null
+            & right_31_889!=null
+   \/  HP_890(left_31_888) * x_931::node<key_31_887,left_31_888,right_31_889>@M& left_31_888!=null & right_31_889=null
+   \/  HP_891(right_31_889) * x_931::node<key_31_887,left_31_888,right_31_889>@M& left_31_888=null,
+
+HP_890(left_31_918) ::= H(left_31_918)&left_31_918!=null
+   \/  emp&left_31_918=null]
 =====================================================================
+# bt-left2.ss: binding. FIXED
+
 =====================================================================
 =====================================================================
 =====================================================================

@@ -25,8 +25,6 @@ void foo(node x)
  infer [H,G] requires H(x)
  ensures G(x);
 
-
-
 {
   if (x.left==null) return;
   if (x.right==null) return;
@@ -35,7 +33,75 @@ void foo(node x)
 }
 
 /*
-# tree.ss
+# tree.ss --sa-dnc
+
+Further simplification seems important after --sa-dnc
+
+  H(x_929) ::= 
+       x_929::node<key_31_887,left_31_888,right_31_889>@M 
+          * HP_890(left_31_888) * HP_891(right_31_889)
+   \/  x_929::node<key_31_887,left_31_888,right_31_889>@M 
+          * HP_890(left_31_888) * HP_891(right_31_889)
+   \/  x_929::node<key_31_887,left_31_888,right_31_889>@M 
+          * HP_890(left_31_888) * HP_891(right_31_889),
+
+Please perform unify-disjuncts to give:
+
+  H(x_929) ::= 
+       x_929::node<key_31_887,left_31_888,right_31_889>@M 
+          * HP_890(left_31_888) * HP_891(right_31_889)
+
+
+GOT:
+
+[ HP_891(right_31_930) 
+   ::= right_31_930::node<key_31_887,left_31_888,right_31_889>@M 
+         * HP_890(left_31_888) * HP_891(right_31_889)
+   \/  emp&right_31_930=null,
+ 
+H(x_929) ::= 
+       x_929::node<key_31_887,left_31_888,right_31_889>@M 
+          * HP_890(left_31_888) * HP_891(right_31_889)
+   \/  x_929::node<key_31_887,left_31_888,right_31_889>@M 
+          * HP_890(left_31_888) * HP_891(right_31_889)
+   \/  x_929::node<key_31_887,left_31_888,right_31_889>@M 
+          * HP_890(left_31_888) * HP_891(right_31_889),
+
+G(x_931) ::=
+   x_931::node<key_31_887,left_31_888,right_31_889>@M 
+          * G(left_31_888) * G(right_31_889)&left_31_888!=null 
+            & right_31_889!=null
+   \/  HP_890(left_31_888) * x_931::node<key_31_887,left_31_888,right_31_889>@M& left_31_888!=null & right_31_889=null
+   \/  HP_891(right_31_889) * x_931::node<key_31_887,left_31_888,right_31_889>@M& left_31_888=null,
+
+HP_890(left_31_918) ::= H(left_31_918)&left_31_918!=null
+   \/  emp&left_31_918=null]
+
+-------------
+without --sa-dnc
+
+ H(x_918) ::= x_918::node<key_31_887,left_31_888,right_31_889>@M * HP_890(left_31_888) * 
+HP_891(right_31_889),
+
+ G(x_931) ::= 
+    HP_890(left_31_888) * x_931::node<key_31_887,left_31_888,right_31_889>@M
+    & left_31_888!=null & right_31_889=null
+ or HP_891(right_31_889) * x_931::node<key_31_887,left_31_888,right_31_889>@M
+    &left_31_888=null
+ or x_931::node<key_31_887,left_31_888,right_31_889>@M * G(left_31_888) * 
+    G(right_31_889)&left_31_888!=null & right_31_889!=null,
+
+ HP_890(left_31_929) ::= 
+ left_31_929::node<key_31_887,left_31_888,right_31_889>@M
+      * HP_890(left_31_888) * HP_891(right_31_889)
+ or emp&left_31_929=null
+ ,
+ HP_891(right_31_930) ::= 
+ right_31_930::node<key_31_887,left_31_888,right_31_889>@M 
+      * HP_890(left_31_888) * HP_891(right_31_889)
+ or emp&right_31_930=null
+ ]
+
 
 GOT
 ===
