@@ -64,7 +64,7 @@ early_hp_contra_detection#1 inp2 : y::node<Anon_12,Anon_13>@M&0<=m&{FLOW,(19,20)
 early_hp_contra_detection#1@4 EXIT out :no contra
  es = None
 ========================================================================
-# i8-3.slk 
+# i8-3.slk  (i) FIXED by Thai
 
 GOT
 ===
@@ -89,6 +89,17 @@ This seems to be triggered here due to an incorrect infer_lhs_contra
 (ii) why did we not fail earlier as there was already a
     contradiction that could not be resolved by lhs_contra.
 ========================================================================
+# i8-3.slk
+
+!!! early contra detect:false
+!!! early failure due to lhs-rhs contra detected
+!!! between ante and conseq
+!!! ante (in ctx): es_formula: emp&m+1=0&{FLOW,(19,20)=__norm}[]
+!!! conseq: y::node<a,b>@M&0<=m&{FLOW,(19,20)=__norm}[]
+!!! Loc : please add suitable must-error message
+
+infer [y] m=1 |- y::node<a,b> & m>=0.
+print residue.
 ========================================================================
 ========================================================================
 ========================================================================

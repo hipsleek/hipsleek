@@ -4781,7 +4781,7 @@ and early_hp_contra_detection_x hec_num prog estate conseq pos =
   (* if (List.length estate.es_infer_vars_hp_rel == 0 ) then  (false, None) *)
   (* else *)
     begin
-      let r_inf_contr, relass = solver_detect_lhs_rhs_contra 1 prog estate conseq pos "EARLY CONTRA DETECTION" in
+      let (r_inf_contr,real_c), relass = solver_detect_lhs_rhs_contra 1 prog estate conseq pos "EARLY CONTRA DETECTION" in
       let h_inf_args, hinf_args_map = get_heap_inf_args estate in
       let orig_inf_vars = estate.es_infer_vars in
       let orig_ante = estate.es_formula in
@@ -4812,7 +4812,7 @@ and early_hp_contra_detection_x hec_num prog estate conseq pos =
                                 res_es
                           | None -> new_estate (* andreeac to check this one --- cand it ever get here? *)
               in
-              (true, Some es)
+              (real_c,true, Some es)
         | None ->  
               match relass with
 		| [(es,h,_)] -> 
@@ -4820,36 +4820,37 @@ and early_hp_contra_detection_x hec_num prog estate conseq pos =
                       let new_estate = add_infer_rel_to_estate h new_estate in
                       let _ = Debug.tinfo_hprint (add_str "new_estate(with inf rel)" Cprinter.string_of_entail_state) new_estate pos in
                       (* let _ = new_slk_log r1 new_estate in *)
-                      (true, Some new_estate)
-		| _ ->(false, None)
+                      (real_c,true, Some new_estate)
+		| _ ->(real_c,false, None)
     end
 
 and early_hp_contra_detection hec_num prog estate conseq pos = 
   let contra_str contra = if (contra) then "CONTRADICTION DETECTED" else "no contra" in
-  let pr_res (contra, es) = (contra_str contra) ^ ("\n es = " ^ (pr_option Cprinter.string_of_entail_state es)) in
+  let pr_res (real_c,contra, es) = (contra_str contra) ^(if real_c then "" else "REAL_CONTRA")
+    ^ ("\n es = " ^ (pr_option Cprinter.string_of_entail_state es)) in
   let pr2 = Cprinter.string_of_formula in
   let f = wrap_proving_kind PK_Early_Contra_Detect (early_hp_contra_detection_x hec_num prog estate conseq) in
   Debug.no_2_num hec_num "early_hp_contra_detection" Cprinter.string_of_entail_state_short pr2 pr_res 
         (fun _ _ -> f pos) estate conseq
 
 and early_hp_contra_detection_add_to_list_context_x hec_num prog estate conseq pos = 
-  let contra, es = early_hp_contra_detection 1 prog estate conseq pos in
+  let real_c,contra, es = early_hp_contra_detection 1 prog estate conseq pos in
   if contra then
     match es with
-      | Some es -> (contra, Some (CF.SuccCtx[CF.Ctx es]), Some UnsatAnte)
-      | None    -> (contra, None, None)    (* andreeac: to check this case. is it ever possible to reach this? *)
+      | Some es -> (real_c,contra, Some (CF.SuccCtx[CF.Ctx es]), Some UnsatAnte)
+      | None    -> (real_c,contra, None, None)    (* andreeac: to check this case. is it ever possible to reach this? *)
   else
-    (contra, None, None)
+    (real_c,contra, None, None)
 
 and early_hp_contra_detection_add_to_list_context hec_num prog estate conseq pos = 
-  let pr_res = pr_triple string_of_bool (pr_option (Cprinter.string_of_list_context )) pr_none in
+  let pr_res = pr_quad (add_str "real_c" string_of_bool) string_of_bool (pr_option (Cprinter.string_of_list_context )) pr_none in
   let pr2 = Cprinter.string_of_formula in
   Debug.no_2_num hec_num "early_hp_contra_detection_add_to_list_context" Cprinter.string_of_entail_state_short pr2 pr_res 
         (fun _ _ -> early_hp_contra_detection_add_to_list_context_x hec_num prog estate conseq pos) estate conseq
 
 and early_pure_contra_detection_x hec_num prog estate conseq pos msg is_folding = 
   (* andreeac: check if this step is redundant *)
-  let r_inf_contr,relass = solver_detect_lhs_rhs_contra 2 prog estate conseq pos msg  in
+  let (r_inf_contr,real_c),relass = solver_detect_lhs_rhs_contra 2 prog estate conseq pos msg  in
   let h_inf_args, hinf_args_map = get_heap_inf_args estate in
   let esv = estate.es_infer_vars in
 
@@ -5082,22 +5083,36 @@ and heap_entail_conjunct_lhs_x hec_num prog is_folding  (ctx:context) (conseq:CF
 	      else
                 heap_entail_conjunct 1 prog is_folding  ctx conseq [] pos in
 
-            let (contra, r1, prf) = 
+            let (real_c,contra, r1, prf) = 
               let es = get_estate_from_context ctx in
               match es with
                 | Some estate ->
                       early_hp_contra_detection_add_to_list_context hec_num prog estate conseq pos 
                 | None ->
                       let _ = DD.info_pprint "WARNING : presence of disj context at EARLY CONTRA DETECTION" no_pos in
-                      (false, None, None)
+                      (true,false, None, None)
             in
-            let _ = Debug.tinfo_hprint (add_str "early contra detect" string_of_bool) contra no_pos in
+            let _ = Debug.info_hprint (add_str "early contra detect" string_of_bool) contra no_pos in
             if not(contra) then 
-              heap_entail()
+              if real_c then 
+                heap_entail()
+              else (* early failure due to real lhs-rhs contra detected *)
+                let pr = Cprinter.string_of_formula in
+                let pr2 = Cprinter.string_of_context in
+                let ante = match ctx with Ctx es -> es.es_formula | _ -> mkTrue no_pos in
+                let _ = Debug.info_pprint "early failure due to lhs-rhs contra detected" no_pos in
+                let _ = Debug.info_pprint "between ante and conseq" no_pos in
+                let _ = Debug.info_hprint (add_str "ante (in ctx)" pr) ante no_pos in
+                let _ = Debug.info_hprint (add_str "conseq" pr) conseq no_pos in
+                let _ = Debug.info_pprint "Loc : please add suitable must-error message" no_pos  in
+                heap_entail()
             else 
               match (r1,prf) with
                 | Some r1, Some prf -> let _ = log_contra_detect 1 conseq r1 pos in (r1,prf)
-                | _ ->  heap_entail()
+                | _ ->  
+                        let _ = Debug.info_pprint "Andreea : why contra detected but not estate?" no_pos  in
+                        let _ = Debug.info_pprint "should we fail instead?" no_pos  in
+                        heap_entail()
           in
 	  (r1,p1)
  end
@@ -9362,7 +9377,7 @@ and solver_detect_lhs_rhs_contra_all_x prog estate conseq pos msg =
           let contr_lst, rel = solver_infer_lhs_contra_list prog estate lhs_xpure pos msg in
           (contr_lst, rel)
       end
-  in (r_inf_contr,relass)
+  in ((r_inf_contr,lhs_rhs_contra_flag),relass)
 
 and solver_detect_lhs_rhs_contra_all i prog estate conseq pos msg =
   let pr_estate = Cprinter.string_of_entail_state_short in
@@ -9371,16 +9386,17 @@ and solver_detect_lhs_rhs_contra_all i prog estate conseq pos msg =
   let pr = CP.print_lhs_rhs in
   let pr_3 (_,lr,b) =  pr_pair (pr_list pr) string_of_bool (lr,b) in
   Debug.no_3_num i "solver_detect_lhs_rhs_contra_all" 
-      pr_estate pr_f pr_id  (pr_pair (pr_list (pr_option pr_es)) (pr_list pr_3)) (fun _ _ _ -> 
+      pr_estate pr_f pr_id  (pr_pair (pr_pair 
+          (pr_list (pr_option pr_es)) (add_str "real_contra" string_of_bool)) (pr_list pr_3)) (fun _ _ _ -> 
           solver_detect_lhs_rhs_contra_all_x prog estate conseq pos msg) estate conseq msg
 
 and solver_detect_lhs_rhs_contra_x i prog estate conseq pos msg =
-  let contr_lst, rel = solver_detect_lhs_rhs_contra_all 1 prog estate conseq pos msg in
+  let (contr_lst,real_c), rel = solver_detect_lhs_rhs_contra_all 1 prog estate conseq pos msg in
   match contr_lst with
     | h::t ->
           let h = choose_best_candidate contr_lst in
-          (h, rel)
-    | []   -> (None,rel)
+          ((h,real_c), rel)
+    | []   -> ((None,real_c),rel)
 
   (* (Inf.CF.entail_state * Cprinter.P.formula) option * *)
   (* (Inf.CF.entail_state * Cformula.CP.infer_rel_type list * bool) list *) 
@@ -9391,7 +9407,7 @@ and solver_detect_lhs_rhs_contra i prog estate conseq pos msg =
   let pr = CP.print_lhs_rhs in
   let pr_3 (_,lr,b) =  pr_pair (pr_list pr) string_of_bool (lr,b) in
   Debug.no_3_num i "solver_detect_lhs_rhs_contra" 
-      pr_estate pr_f pr_id  (pr_pair (pr_option pr_es) (pr_list pr_3)) (fun _ _ _ -> 
+      pr_estate pr_f pr_id  (pr_pair (pr_pair (pr_option pr_es) string_of_bool) (pr_list pr_3)) (fun _ _ _ -> 
           solver_detect_lhs_rhs_contra_x i prog estate conseq pos msg) estate conseq msg
 
 (*
