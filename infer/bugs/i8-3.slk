@@ -13,6 +13,7 @@ infer [y] m=-1 |- y::node<a,b> & m>=0.
 print residue.
 
 /*
+# i8-3.slk
 
 !!! early contra detect:false
 !!! early failure due to lhs-rhs contra detected

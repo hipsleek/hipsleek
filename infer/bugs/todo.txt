@@ -89,7 +89,7 @@ This seems to be triggered here due to an incorrect infer_lhs_contra
 (ii) why did we not fail earlier as there was already a
     contradiction that could not be resolved by lhs_contra.
 ========================================================================
-# i8-3.slk: FIXED
+# i8-3.slk: FIXED 
 
 !!! early contra detect:false
 !!! early failure due to lhs-rhs contra detected
@@ -101,6 +101,31 @@ This seems to be triggered here due to an incorrect infer_lhs_contra
 infer [y] m=1 |- y::node<a,b> & m>=0.
 print residue.
 ========================================================================
+# i13-5.slk --sa-en-cont
+
+infer [z,H1] x::node<z> * H1(y)  |- x::lseg<z> * y::lseg<null>.
+
+Succeeds individually but fails when put together
+
+!!! >>>>>> mismatch ptr z::lseg<z_32>@M is not found (or inst) in the lhs <<<<<<
+!!! dumping for sleek_dump(fail)
+Entail (1) : Fail.
+
+infer [z,H1] x::node<z>   |- x::lseg<z>.
+print residue.
+--> OK
+
+infer [z,H1] H1(y)  |- y::lseg<null> .
+print residue.
+--> OK
+
+infer [z,H1] x::node<z> * H1(y)  |- x::lseg<z>.
+print residue.
+--> OK
+
+infer [z,H1] H1(y)*x::node<z>  |- x::lseg<z> * y::lseg<null> .
+print residue.
+--> fails
 ========================================================================
 ========================================================================
 ========================================================================

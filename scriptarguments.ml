@@ -502,6 +502,9 @@ let common_arguments = [
   ("--dis-pred-syn", Arg.Clear Globals.pred_syn_flag, "disable predicate synthesis");
   ("--dps", Arg.Clear Globals.pred_syn_flag, "shorthand for --dis-pred-syn");
   (* ("--sa-dangling", Arg.Set Globals.sa_dangling, "elim dangling HP/pointers"); *)
+  ("--inf-en-split-ante", Arg.Set Globals.infer_deep_ante_flag, "enable deep split of ante for pure inference");
+  ("--iesa", Arg.Set Globals.infer_deep_ante_flag, "shorthand for --inf-en-split-ante");
+  ("--inf-dis-split-ante", Arg.Clear Globals.infer_deep_ante_flag, "disable deep split of ante for pure inference");
   ("--pred-dis-infer", Arg.Clear Globals.sa_syn, "disable the shape inference stage");
   ("--pred-en-useless-para", Arg.Set Globals.pred_elim_useless, "enable the elimination of useless parameter from HP predicate and user-defined predicates (view)");
   ("--pred-dis-useless-para", Arg.Clear Globals.pred_elim_useless, "disable the elimination of useless parameter from HP predicate and user-defined predicates (view)");

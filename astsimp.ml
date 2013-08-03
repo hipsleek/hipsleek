@@ -1141,8 +1141,8 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
           let xform1 = (TP.simplify_with_pairwise 1 (CP.drop_rel_formula (MCP.pure_of_mix xform))) in
           let ls_disj = CP.list_of_disjs xform1 in
           let xform2 = MCP.mix_of_pure (CP.disj_of_list (Gen.BList.remove_dups_eq CP.equalFormula ls_disj) pos) in
-          (* Debug.info_hprint (add_str "xform1" !CP.print_formula) xform1 pos; *)
-          (* Debug.info_hprint (add_str "xform2" !MCP.print_mix_formula) xform2 pos; *)
+          Debug.tinfo_hprint (add_str "xform1" !CP.print_formula) xform1 pos;
+          Debug.tinfo_hprint (add_str "xform2" !MCP.print_mix_formula) xform2 pos;
           
           (* let _ = print_endline ("\n xform1: " ^ (Cprinter.string_of_pure_formula xform1)) in *)
           (* let _ = print_endline ("\n xform2: " ^ (Cprinter.string_of_mix_formula xform2)) in *)

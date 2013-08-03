@@ -5093,7 +5093,7 @@ and heap_entail_conjunct_lhs_x hec_num prog is_folding  (ctx:context) (conseq:CF
                       let _ = DD.info_pprint "WARNING : presence of disj context at EARLY CONTRA DETECTION" no_pos in
                       (true,false, None, None)
             in
-            let _ = Debug.info_hprint (add_str "early contra detect" string_of_bool) contra no_pos in
+            let _ = Debug.tinfo_hprint (add_str "early contra detect" string_of_bool) contra no_pos in
             if not(contra) then 
               if real_c then 
                 heap_entail()
@@ -7274,7 +7274,9 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
               let (ip1,ip2,relass,entail_states,false_es) =
                 if (Inf.no_infer_all_all estate) then (None,None,[],[],false)
                 else
-                  begin 
+                  begin
+                    (* infer_deep_ante_issues : turned on by flag *)
+                    let split_a_opt = if !Globals.infer_deep_ante_flag then split_a_opt else None in
                     match split_a_opt with 
                       | None -> 
                             let r1,r2,r3 = Inf.infer_pure_m 1 unk_heaps estate split_ante1 split_ante0 m_lhs split_conseq pos in
@@ -7286,13 +7288,15 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
                               | Some (es,p),[(h1,h2,h3)] -> Some p,r2,h2,[es],true
                               | _,_ -> report_error pos "Length of relational assumption list > 1"
                             )
-                      | Some (split1,_)(* ,split2 *) -> 
+                      | Some (split1,split2)(* ,split2 *) -> 
+                            (* infer_deep_ante_issues : can we try single infer before deep infer? *)
                             (* Why is split-2 true? lab3.slk *)
                             (* !!! split-1:[ AndList[ []:0<=n ; ["n"]:0<n ; ["s"]:n=0] ] *)
                             (* !!! split-2:[ true] *)
                             let pr = Cprinter.string_of_pure_formula in
-                            let _ = Debug.tinfo_hprint (add_str "split-1" (pr_list pr)) split1 no_pos in
-                            (* let _ = Debug.info_hprint (add_str "split-2" (pr_list pr)) split2 no_pos in *)
+                            let _ = Debug.info_pprint "WARNING : deep-ante-split activated" no_pos in
+                            let _ = Debug.info_hprint (add_str "split-1" (pr_list pr)) split1 no_pos in
+                            let _ = Debug.info_hprint (add_str "split-2" (pr_list pr)) split2 no_pos in
                             (* let no_split2 = false in *)
                             (* let no_split2 = match split2 with *)
                             (*   | [f] -> CP.isConstTrue f  *)
@@ -7300,6 +7304,8 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
                             (*   | _ -> false *)
                             (* in *)
                             (* let _ = Debug.tinfo_hprint (add_str "no_split2" (string_of_bool)) no_split2 no_pos in *)
+                            let ante1 = MCP.mix_of_pure (List.hd split1) in
+                            let r1,r2,r3 = Inf.infer_pure_m 1 unk_heaps estate ante1 ante1 m_lhs split_conseq pos in
                             let split_mix1 = List.map MCP.mix_of_pure split1 in
                             (* let split_mix2 = List.map MCP.mix_of_pure split2 in *)
                             (* let split_mix2a =  *)
@@ -7445,11 +7451,19 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
   if r_rez then begin (* Entailment is valid *)
     (*let lhs_p = MCP.remove_dupl_conj_mix_formula lhs_p in*)
     if not(stk_estate # is_empty) then
+      let pr = Cprinter.string_of_entail_state_short in
+      let _ = Debug.info_hprint (add_str "stk_estate: " (pr_list pr)) (stk_estate # get_stk) no_pos in
       let new_estate = stk_estate # top in
       let new_ante_fmls = List.map (fun es -> es.es_formula) (stk_estate # get_stk) in
       let new_estate = {new_estate with es_formula = disj_of_list new_ante_fmls pos} in
       let _ = DD.tinfo_hprint (add_str "new_estate" Cprinter.string_of_entail_state) new_estate no_pos in
       let orig_ante = new_estate.es_orig_ante in
+      (* infer_deep_ante_issues : unsat fail unless we have single ctx *)
+      (* soln : as heap is same, convert into disj pure *)
+      let _ = Debug.info_pprint "infer_deep_ante_issues triggered by --iesa" no_pos in
+      let _ = Debug.info_pprint "if stk_estate > 1, can cause unsat_xpure exception" no_pos in
+      let _ = Debug.info_pprint "Thai : can we convert below to single ctx by using pure or rather than CtxOr" no_pos in
+      let _ = Debug.info_hprint (add_str "new_ante_fmls" (pr_list Cprinter.string_of_formula)) new_ante_fmls no_pos in
       let ctx1 = (elim_unsat_es_now 8 prog (ref 1) new_estate) in
       let ctx1 = match ctx1 with
         | Ctx es -> Ctx {es with es_orig_ante = orig_ante}
@@ -7879,6 +7893,7 @@ and imply_mix_formula_x ante_m0 ante_m1 conseq_m imp_no memset =
                 if CP.no_andl a0  
                 then
                   (* let _ = print_endline "no deep split" in *)
+                  (* infer_deep_ante_issues : WN : why not we handle deep? *)
                   CP.split_disjunctions a0 
                 else
                   (* why andl need to be handled in a special way *)
@@ -7895,10 +7910,9 @@ and imply_mix_formula_x ante_m0 ante_m1 conseq_m imp_no memset =
             in
             let ln0 = List.length a0l in
             let ln1 = List.length a1l in
-
             let extra_step = 
-              if ln0>1 || ln1>1   
-              then if ln0>ln1 then Some (a0l,[]) else Some(a1l,[]) 
+              if ln0>1 || ln1>1 then Some(a0l,a1l)  
+              (* then if ln0>ln1 then Some (a0l,[]) else Some(a1l,[])  *)
               else None in
             let pr = Cprinter.string_of_pure_formula in 
             DD.tinfo_hprint (add_str "ante-a0l" (pr_list pr)) a0l no_pos;
