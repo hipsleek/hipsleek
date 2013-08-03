@@ -1,0 +1,44 @@
+// examples from bi-abduction paper
+
+data node {
+	node next;	
+}.
+
+pred ll<n> == self = null & n = 0 
+	or self::node<q> * q::ll<n-1> 
+  inv n >= 0.
+
+pred lseg<p> == self = p 
+	or self::node<q> * q::lseg<p> & self!=p 
+  inv true.
+
+HeapPred H1(node a ).
+
+
+infer [H1] H1(y) & (x=2 | x>5)  |- y::lseg<null> .
+print residue.
+
+
+/*
+
+# i13-5a.slk
+
+WARNING : Pushing 2 stk_estate (4)
+
+!!! stk_estate: :[ HP_42(flted_18_41)&flted_18_41=null&{FLOW,(19,20)=__norm}[], HP_42(flted_18_41)&flted_18_41=null&{FLOW,(19,20)=__norm}[]]
+!!! infer_deep_ante_issues triggered by --iesa
+!!! if stk_estate > 1, can cause unsat exception
+!!! Thai : can we convert below to single ctx by using pure or rather than CtxOr
+!!! new_ante_fmls:[ HP_42(flted_18_41)&flted_18_41=null&{FLOW,(19,20)=__norm}[], HP_42(flted_18_41)&flted_18_41=null&{FLOW,(19,20)=__norm}[]]
+Last Proving Location: 1 File "i13-5.slk",Line:8,Col:4
+
+ERROR: at _0:0_0:0 
+Message: unsat_xpure : encountered a disjunctive formula 
+
+!!! WARNING logtime exception:0.000196000000001caught
+(Program not linked with -g, cannot print stack backtrace)
+
+Entailment Failure (1) Failure("unsat_xpure : encountered a disjunctive formula \n")
+: no residue 
+
+*/

@@ -1,0 +1,39 @@
+/*
+@M - mutable   (0)
+@I - immutable (1)
+@L - lending   (2)
+@A - no access (3)
+*/
+
+//data cell {int val;}.
+data node {
+	int val; 
+	node next;	
+}.
+
+pred ll<n, v1, v2> == self = null & n = 0 
+	or self::node<a@v2, q> * 
+    q::ll<n-1, v1, v2>@v1
+  inv n >= 0.
+
+// WN : should this succeed or fail?
+// imm-field/sleek02.slk
+// (2) Valid - ok 
+checkentail x::ll<n,@A,@M> |- x::ll<n,@A,@L>.
+print residue.
+// fail
+
+checkentail x::ll<n,@A,@M> |- x::ll<n,@A,@A>.
+print residue.
+// valid but consumes node
+
+checkentail x::ll<n,@A,@L> |- x::ll<n,@A,@L>.
+print residue.
+
+checkentail x::ll<n,@A,@M> |- x::ll<n,@A,@M>.
+print residue.
+
+// (8) Fail ????? why is valid?
+checkentail x::node<_, null> * y::ll<_,_,@M> |- x::ll<m, _, @M> & m = 2.
+print residue.
+
