@@ -1136,7 +1136,7 @@ let rec pr_h_formula h =
               (* (if pid==None then fmt_string "NN " else fmt_string "SS "); *)
               (* pr_formula_label_opt pid;  *)
               pr_spec_var sv; 
-              fmt_string "::%"; (* to distinguish pred from data *)
+              fmt_string "::"; (* to distinguish pred from data *)
               pr_angle (c^perm_str) pr_spec_var svs;
 	      pr_imm imm;
 	      pr_derv dr;

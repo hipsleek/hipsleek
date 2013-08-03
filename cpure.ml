@@ -296,6 +296,8 @@ and mkAnd_dumb f1 f2 pos =
   else if (isConstTrue f2) then f1
   else And (f1, f2, pos)
 
+let mkSubAnn a1 a2 = BForm ((SubAnn(a1,a2,no_pos),None),None)
+
 module Exp_Pure =
 struct 
   type e = formula
@@ -6478,6 +6480,11 @@ let is_gt eq e1 e2 =
     | AConst (i1,_), AConst(i2,_) 
           -> (int_of_heap_ann i1)>(int_of_heap_ann i2)
     | _,_ -> false
+
+let const_lend = AConst (Lend,no_pos)
+let const_imm = AConst (Imm,no_pos)
+let const_mut = AConst (Mutable,no_pos)
+let const_abs = AConst (Accs,no_pos)
 
 let is_diff e1 e2 =
   match e1,e2 with
