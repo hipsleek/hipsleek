@@ -1505,7 +1505,7 @@ let collect_sel_hp_def_x cond_path defs sel_hps unk_hps m=
   let inter_lib = Gen.BList.difference_eq CP.eq_spec_var mlib sel_hps in
   List.filter (fun hdef ->
       let a1 = hdef.CF.hprel_def_kind in
-      let hp = SAU.get_hpdef_name a1 in
+      let hp = CF.get_hpdef_name a1 in
       not (CP.mem_svl hp inter_lib))
       all_sel_defw
 
@@ -1618,7 +1618,7 @@ let rec infer_shapes_init_pre_x prog (constrs0: CF.hprel list) callee_hps non_pt
     constrs0 par_defs in
   (* check hconj_unify_cond*)
   let hp_defs1, new_equivs, unk_equivs = if hconj_unify_cond = [] then (hp_defs,[], []) else
-    let is_sat, new_hpdefs, equivs, unk_equivs = SAC.reverify_cond prog unk_hps1 link_hps hp_defs hconj_unify_cond in
+    let is_sat, new_hpdefs, equivs, unk_equivs,punk_equivs = SAC.reverify_cond prog unk_hps1 link_hps hp_defs hconj_unify_cond in
     if not is_sat then report_error no_pos "SA.infer_shapes_init_pre: HEAP CONJS do not SAT"
     else (new_hpdefs, equivs,  unk_equivs)
   in
@@ -2028,7 +2028,7 @@ and infer_shapes_new_x iprog prog proc_name (constrs0: CF.hprel list) sel_hps se
   (*       Cast.look_up_callee_hpdefs_proc prog.Cast.new_proc_decls proc_name *)
   (*   with _ -> [] *)
   (* in *)
-  (* let callee_hps = List.map (fun (hpname,_,_) -> SAU.get_hpdef_name hpname) callee_hpdefs in *)
+  (* let callee_hps = List.map (fun (hpname,_,_) -> CF.get_hpdef_name hpname) callee_hpdefs in *)
   let callee_hps = [] in
   let _ = DD.binfo_pprint ("  sel_hps:" ^ !CP.print_svl sel_hps) no_pos in
   let _ = DD.binfo_pprint ("  sel post_hps:" ^ !CP.print_svl sel_post_hps) no_pos in
@@ -2047,7 +2047,7 @@ and infer_shapes_new_x iprog prog proc_name (constrs0: CF.hprel list) sel_hps se
                 (* (\*decide what to show: DO NOT SHOW hps relating to tupled defs*\) *)
                 (* let m = match_hps_views hp_defs1 prog.CA.prog_view_decls in *)
           (* let sel_hps1 = if !Globals.pred_elim_unused_preds then sel_hps else *)
-                (*   CP.remove_dups_svl ((List.map (fun (a,_,_) -> SAU.get_hpdef_name a) hp_defs1)@sel_hps) *)
+                (*   CP.remove_dups_svl ((List.map (fun (a,_,_) -> CF.get_hpdef_name a) hp_defs1)@sel_hps) *)
                 (* in *)
                 (* let sel_hp_defs = collect_sel_hp_def cond_path hp_defs1 sel_hps1 unk_hpargs2 m in *)
                 (* let tupled_defs1 = List.map (fun (a, hf, f) -> { *)
@@ -2073,7 +2073,7 @@ and infer_shapes_x iprog prog proc_name (constrs0: CF.hprel list) sel_hps post_h
   (*       Cast.look_up_callee_hpdefs_proc prog.Cast.new_proc_decls proc_name *)
   (*   with _ -> [] *)
   (* in *)
-  (* let callee_hps = List.map (fun (hpname,_,_) -> SAU.get_hpdef_name hpname) callee_hpdefs in *)
+  (* let callee_hps = List.map (fun (hpname,_,_) -> CF.get_hpdef_name hpname) callee_hpdefs in *)
   let callee_hps = [] in
   let _ = DD.binfo_pprint ("  sel_hps:" ^ !CP.print_svl sel_hps) no_pos in
   let _ = DD.binfo_pprint ("  sel post_hps:" ^ !CP.print_svl post_hps) no_pos in
@@ -2099,7 +2099,7 @@ and infer_shapes_x iprog prog proc_name (constrs0: CF.hprel list) sel_hps post_h
   (*decide what to show: DO NOT SHOW hps relating to tupled defs*)
   let m = match_hps_views hp_defs1 prog.CA.prog_view_decls in
   let sel_hps1 = if !Globals.pred_elim_unused_preds then sel_hps else
-    CP.remove_dups_svl ((List.map (fun (a,_,_,_) -> SAU.get_hpdef_name a) hp_defs1)@sel_hps)
+    CP.remove_dups_svl ((List.map (fun (a,_,_,_) -> CF.get_hpdef_name a) hp_defs1)@sel_hps)
   in
   let sel_hp_defs = collect_sel_hp_def cond_path hp_defs1 sel_hps1 unk_hpargs2 m in
   let tupled_defs1 = List.map (fun (a, hf,og, f) -> {

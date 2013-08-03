@@ -1,0 +1,34 @@
+// examples from bi-abduction paper
+
+data node {
+	node next;	
+}.
+
+
+pred lseg<p> == self = p 
+	or self::node<q> * q::lseg<p> & self!=p 
+  inv true.
+
+//checkentail x::node<q> & x!=q |- x::lseg<r>.
+
+//checkentail x::node<q> & x!=q |- x::lseg<q>.
+
+//checkentail x::node<q> & x!=q |- x::lseg<q>.
+
+checkentail x::node<q> & q::node<r> & x!=q & x!=r |- x::lseg<q>.
+
+print residue.
+
+/*
+# imm-ls-1.slk
+
+checkentail x::node<q> & q::node<r> & x!=q & x!=r |- x::lseg<q>.
+
+Why is there another emp?
+Can normalization remove 2nd emp?
+
+Entail 1: Valid. 
+ <1>((emp) ; ((q::node<r>@M ; (emp))))&q!=x & r!=x & q=q_29 & q_29!=x&{FLOW,(19,20)=__norm}[]
+
+
+*/

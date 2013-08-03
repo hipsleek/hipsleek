@@ -2751,12 +2751,12 @@ let def_subst_fix_x prog unk_hps hpdefs=
   (*remove dups*)
   (* let unk_hps = CP.remove_dups_svl unk_hps in *)
   let is_rec_hpdef (a1,_,f)=
-    let hp = SAU.get_hpdef_name a1 in
+    let hp = CF.get_hpdef_name a1 in
     let hps = CF.get_hp_rel_name_formula f in
     (CP.mem_svl hp hps)
   in
   let is_independ_hpdef (a1,_,f)=
-    let hp = SAU.get_hpdef_name a1 in
+    let hp = CF.get_hpdef_name a1 in
     let hps = CF.get_hp_rel_name_formula f in
     let hps = CP.remove_dups_svl hps in
     (* DD.ninfo_pprint ("       rec hp: " ^ (!CP.print_sv hp)) no_pos; *)
@@ -2766,7 +2766,7 @@ let def_subst_fix_x prog unk_hps hpdefs=
   in
   let process_dep_hpdef hpdef rec_hps nrec_hpdefs=
     let (a1,hprel,f) = hpdef in
-    let hp = SAU.get_hpdef_name a1 in
+    let hp = CF.get_hpdef_name a1 in
     let fs = CF.list_of_disjs f in
     (* DD.ninfo_pprint ("       process_dep_group hp: " ^ (!CP.print_sv hp)) no_pos; *)
     let succ_hp_args =  List.concat (List.map CF.get_HRels_f fs) in
@@ -2824,7 +2824,7 @@ let def_subst_fix_x prog unk_hps hpdefs=
     let lrec_deps,l_nrec_deps = List.partition is_rec_hpdef deps in
     (*find deps on non_recs*)
     let rec_hps = List.map
-      (fun (a1,_,_) -> SAU.get_hpdef_name a1)
+      (fun (a1,_,_) -> CF.get_hpdef_name a1)
       (res_rec_inds@lrec_deps) in
     (*find the first depend grp in deps to subst,
     if can not find, return false for terminating*)
@@ -3642,7 +3642,7 @@ let collect_sel_hp_def_x defs sel_hps unk_hps m=
   let inter_lib = Gen.BList.difference_eq CP.eq_spec_var mlib sel_hps in
   List.filter (fun hdef ->
       let a1 = hdef.CF.hprel_def_kind in
-      let hp = SAU.get_hpdef_name a1 in
+      let hp = CF.get_hpdef_name a1 in
       not (CP.mem_svl hp inter_lib))
       all_sel_defw
 
@@ -3693,7 +3693,7 @@ let infer_hps_x prog proc_name (hp_constrs: CF.hprel list) sel_hp_rels sel_post_
         Cast.look_up_callee_hpdefs_proc prog.Cast.new_proc_decls proc_name
     with _ -> []
   in
-  let callee_hps = List.map (fun (hpname,_,_,_) -> SAU.get_hpdef_name hpname) callee_hpdefs in
+  let callee_hps = List.map (fun (hpname,_,_,_) -> CF.get_hpdef_name hpname) callee_hpdefs in
   (* let _ = DD.info_pprint (" callee_hps: " ^ (!CP.print_svl callee_hps)) no_pos in *)
   let _ =
     if !Globals.sa_print_inter then
@@ -3770,7 +3770,7 @@ let infer_hps_x prog proc_name (hp_constrs: CF.hprel list) sel_hp_rels sel_post_
     else ()
   in
   let constr3, hp_defs, new_unk_hps,unk_rels = generalize_hps prog callee_hps unk_hpargs0 sel_post_hps cs par_defs in
-  let hp_def_names =  List.map (fun (a1,_,_,_) -> SAU.get_hpdef_name a1) hp_defs in
+  let hp_def_names =  List.map (fun (a1,_,_,_) -> CF.get_hpdef_name a1) hp_defs in
   let unk_hps1 = (* List.filter (fun (hp,_) -> not (CP.mem_svl hp hp_def_names)) *) new_unk_hps in
   let unk_hp_svl = (List.map (fun (hp,_) -> hp) unk_hps1) in
   (*get unk_hps def from constraints*)
@@ -3782,8 +3782,8 @@ let infer_hps_x prog proc_name (hp_constrs: CF.hprel list) sel_hp_rels sel_post_
   DD.ninfo_pprint (" remains: " ^
      (let pr1 = pr_list_ln Cprinter.string_of_hprel in pr1 constr3) ) no_pos;
   let hp_defs1 =  (Gen.BList.remove_dups_eq (fun (a1,_,_,_) (b1,_,_,_) ->
-      let hp1 = SAU.get_hpdef_name a1 in
-      let hp2 = SAU.get_hpdef_name b1 in
+      let hp1 = CF.get_hpdef_name a1 in
+      let hp2 = CF.get_hpdef_name b1 in
       CP.eq_spec_var hp1 hp2) (hp_defs))
   in
   let hp_defs2 = (* (def_subst_fix prog unk_hp_svl (hp_defs1)) *) hp_defs1 in
@@ -3856,7 +3856,7 @@ let infer_hps_x prog proc_name (hp_constrs: CF.hprel list) sel_hp_rels sel_post_
   (*     ( String.concat " OR " view_names)) in pr m)) no_pos in *)
   let sel_hpdefs, rems = List.partition
     (fun (hprc, _, _, _) ->
-        let hp = SAU.get_hpdef_name hprc in
+        let hp = CF.get_hpdef_name hprc in
         CP.mem_svl hp sel_hp_rels
     ) hp_defs5 in
   let sel_hpdefs1 = (* SAU.recover_dropped_args drop_hp_args *) sel_hpdefs in

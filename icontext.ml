@@ -19,8 +19,10 @@ type iaction =
   | I_split_base
   | I_partition (* pre, pre-oblg, post, post-oblg *)
   | I_pre_synz of (CP.spec_var list * CF.hprel list)
+  | I_pre_fix of ( CP.spec_var list)
   | I_pre_oblg
   | I_post_synz
+  | I_post_fix of ( CP.spec_var list)
   | I_post_oblg
   | I_seq of iaction_wt list
 
@@ -35,8 +37,10 @@ let rec string_of_iaction act=
     | I_split_base ->  "split base"
     | I_partition -> "pre, pre-oblg, post, post-oblg"
     | I_pre_synz (hps,_) -> ("(pre) synthesize:" ^ (!CP.print_svl hps))
+    | I_pre_fix hps -> ("(pre fix) synthesize:" ^ (!CP.print_svl hps))
     | I_pre_oblg -> "pre-oblg"
     | I_post_synz -> "post-preds synthesize"
+    | I_post_fix hps -> ("(post fix) synthesize:" ^ (!CP.print_svl hps))
     | I_post_oblg -> "post-oblg"
     | I_seq ls_act -> "seq:" ^ (String.concat ";" (List.map (pr_pair string_of_int string_of_iaction) ls_act))
 
@@ -257,6 +261,12 @@ let igen_action_pre equal_hps new_frozen_constrs =
 
 let icompute_action_pre_oblg ()=
   I_pre_oblg
+
+let icompute_action_pre_fix pre_fix_hps=
+  I_pre_fix pre_fix_hps
+
+let icompute_action_post_fix post_fix_hps=
+  I_post_fix post_fix_hps
 
 let icompute_action_post ()=
   I_post_synz

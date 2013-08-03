@@ -880,15 +880,20 @@ let to_ptr pf =
       | Gt(a,b,ll) -> norm (Lt(b,a,ll))
       | Gte(a,b,ll) -> Lte(b,a,ll)
       | _ -> pf
-  in match norm pf with
+  in let nf = norm pf in
+  match pf with
     | Lte((Var(v,_) as a1), IConst(i,_),ll) ->
-          if i<=(-1) then BConst(false,ll)
-          else if i>0 then BConst(true,ll)
-          else Eq(a1,Null ll,ll) 
+          if is_otype (type_of_spec_var v) then
+            if i<=(-1) then BConst(false,ll)
+            else if i>0 then BConst(true,ll)
+            else Eq(a1,Null ll,ll)
+          else pf
     | Lte(IConst(i,_),(Var(v,_) as a1),ll) ->
-          if i>=1 then Neq(a1,Null ll,ll)
-          else BConst(true,ll)
-    | _ -> report_error  no_pos "pre-cond error at to_ptr@tpdispatcher"
+          if is_otype (type_of_spec_var v) then
+            if i>=1 then Neq(a1,Null ll,ll)
+            else BConst(true,ll)
+          else pf
+    | _ -> pf
 
 let cnv_int_to_ptr flag f = 
   let f_f e = None in

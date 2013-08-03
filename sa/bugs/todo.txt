@@ -1542,8 +1542,23 @@ EXPECTED:
  inferred pure : l=null
 
 */
-======================================================================
-======================================================================
+=======================================================================
+# i13a.slk
+
+infer [H1] H1(y)  |- y::lseg<p> * p::node<null> .
+
+ H1(y) --> y::lseg<p> * p::node<null>.
+
+This example currently fails as it did not produce a
+a continuation heap pred. I remember we were analysing the
+parameters of pred defn to see if they were continuation parameters?
+
+Would we be able to infer something like
+
+  H1(y) --> y::lseg<k> * H2(k) 
+
+So that this example would succeed?
+=====================================================================
 ======================================================================
 ======================================================================
 ======================================================================

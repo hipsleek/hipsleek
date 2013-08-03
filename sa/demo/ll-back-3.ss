@@ -27,14 +27,15 @@ requires true
 ensures res or !res;
 
 int loop(ref node ptr)
+
    requires ptr::infll<>
    ensures ptr'::infll<> ;//'
    requires ptr::ll<>
    ensures ptr'::ll<> ;//'
-/*
+
    requires ptr::lasso<>
    ensures ptr'::lasso<> ;//'
-*/
+
 
 /*
   infer[H1,G1]

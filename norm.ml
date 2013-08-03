@@ -463,13 +463,15 @@ let cont_para_analysis_view cprog vdef other_vds=
       ) args rec_vns
       in
       (* process other_vns*)
-      let cont_paras1 = List.fold_left (fun cur_cont_paras vn ->
-          let cont_args = Cast.look_up_cont_args vn.CF.h_formula_view_arguments vn.CF.h_formula_view_name other_vds in
-          let closed_rec_args = CF.find_close cont_args eqs in
-          CP.intersect_svl cur_cont_paras closed_rec_args
-      ) cont_paras other_vns
-      in
-      cont_paras1
+      try
+        let cont_paras1 = List.fold_left (fun cur_cont_paras vn ->
+            let cont_args = Cast.look_up_cont_args vn.CF.h_formula_view_arguments vn.CF.h_formula_view_name other_vds in
+            let closed_rec_args = CF.find_close cont_args eqs in
+            CP.intersect_svl cur_cont_paras closed_rec_args
+        ) cont_paras other_vns
+        in
+        cont_paras1
+      with Not_found -> []
   in
   let vname = vdef.Cast.view_name in
   let args = vdef.Cast.view_vars in
