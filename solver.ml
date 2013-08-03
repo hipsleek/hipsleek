@@ -4778,8 +4778,8 @@ and heap_entail_after_sat_x prog is_folding  (ctx:CF.context) (conseq:CF.formula
 
 and early_hp_contra_detection_x hec_num prog estate conseq pos = 
   (* if there is no hp inf, post pone contra detection *)
-  if (List.length estate.es_infer_vars_hp_rel == 0 ) then  (false, None)
-  else
+  (* if (List.length estate.es_infer_vars_hp_rel == 0 ) then  (false, None) *)
+  (* else *)
     begin
       let r_inf_contr, relass = solver_detect_lhs_rhs_contra 1 prog estate conseq pos "EARLY CONTRA DETECTION" in
       let h_inf_args, hinf_args_map = get_heap_inf_args estate in
@@ -4827,9 +4827,10 @@ and early_hp_contra_detection_x hec_num prog estate conseq pos =
 and early_hp_contra_detection hec_num prog estate conseq pos = 
   let contra_str contra = if (contra) then "CONTRADICTION DETECTED" else "no contra" in
   let pr_res (contra, es) = (contra_str contra) ^ ("\n es = " ^ (pr_option Cprinter.string_of_entail_state es)) in
+  let pr2 = Cprinter.string_of_formula in
   let f = wrap_proving_kind PK_Early_Contra_Detect (early_hp_contra_detection_x hec_num prog estate conseq) in
-  Debug.no_1_num hec_num "early_hp_contra_detection" Cprinter.string_of_entail_state_short pr_res 
-        (fun _ -> f pos) estate
+  Debug.no_2_num hec_num "early_hp_contra_detection" Cprinter.string_of_entail_state_short pr2 pr_res 
+        (fun _ _ -> f pos) estate conseq
 
 and early_hp_contra_detection_add_to_list_context_x hec_num prog estate conseq pos = 
   let contra, es = early_hp_contra_detection 1 prog estate conseq pos in
@@ -4842,8 +4843,9 @@ and early_hp_contra_detection_add_to_list_context_x hec_num prog estate conseq p
 
 and early_hp_contra_detection_add_to_list_context hec_num prog estate conseq pos = 
   let pr_res = pr_triple string_of_bool (pr_option (Cprinter.string_of_list_context )) pr_none in
-  Debug.no_1_num hec_num "early_hp_contra_detection_add_to_list_context" Cprinter.string_of_entail_state_short pr_res 
-        (fun _ -> early_hp_contra_detection_add_to_list_context_x hec_num prog estate conseq pos) estate
+  let pr2 = Cprinter.string_of_formula in
+  Debug.no_2_num hec_num "early_hp_contra_detection_add_to_list_context" Cprinter.string_of_entail_state_short pr2 pr_res 
+        (fun _ _ -> early_hp_contra_detection_add_to_list_context_x hec_num prog estate conseq pos) estate conseq
 
 and early_pure_contra_detection_x hec_num prog estate conseq pos msg is_folding = 
   (* andreeac: check if this step is redundant *)
@@ -4878,7 +4880,7 @@ and early_pure_contra_detection_x hec_num prog estate conseq pos msg is_folding 
             let _ = Debug.tinfo_hprint (add_str "ctx1"  Cprinter.string_of_context) ctx1 pos in
 	    let r1, prf = heap_entail_one_context 9 prog is_folding ctx1 conseq None None None pos in
             let _ = Debug.tinfo_hprint (add_str "r1"  Cprinter.string_of_list_context) r1 pos in
-            let _ = Debug.info_pprint ("*********2********") no_pos in
+            let _ = Debug.binfo_pprint ("*********2********") no_pos in
             let slk_no = next_sleek_int () in
  	    let r1 = Infer.add_infer_hp_contr_to_list_context hinf_args_map [pf] r1 in
 	    begin 
@@ -5089,6 +5091,7 @@ and heap_entail_conjunct_lhs_x hec_num prog is_folding  (ctx:context) (conseq:CF
                       let _ = DD.info_pprint "WARNING : presence of disj context at EARLY CONTRA DETECTION" no_pos in
                       (false, None, None)
             in
+            let _ = Debug.tinfo_hprint (add_str "early contra detect" string_of_bool) contra no_pos in
             if not(contra) then 
               heap_entail()
             else 

@@ -316,6 +316,7 @@ let string_of_loc_by_char_num (l : loc) =
 (* Option for proof logging *)
 let proof_logging = ref false
 let proof_logging_txt = ref false
+let log_proof_details = ref true
 let proof_logging_time = ref 0.000
 (* let sleek_src_files = ref ([]: string list) *)
 
@@ -720,6 +721,8 @@ let enable_constraint_based_filtering = ref false
 let elim_exists_ff = ref true
 
 let allow_imm = ref true (*imm will delglobalsay checking guard conditions*)
+
+let allow_imm_inv = ref false (*imm inv to add of form @M<:v<:@A*)
 
 (*Since this flag is disabled by default if you use this ensure that 
 run-fast-test mem test cases pass *)

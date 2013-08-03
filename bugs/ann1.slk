@@ -1,0 +1,24 @@
+data node {
+  int val;
+  node next;
+}.
+
+
+// (5)
+infer [] @L<:v |- v=@L.
+// should fail
+
+// (6)
+infer [] v<:@M |- v=@M.
+// valid with --en-imm-inv
+
+// (11) Fail (due to incompleteness)
+infer [] y::node<_,_>@M |- y::node<a,b>@v & v<:@M.
+// valid
+
+// (17)
+infer [] y::node<_,_>@v |- y::node<a,b>@L.
+// should fail cos v can be @A
+
+// (17)
+infer [] y::node<_,_>@v |- y::node<a,b>@A.
