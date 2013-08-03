@@ -275,8 +275,8 @@ It is replaced by convert_data_and_pred_to_cast
 (*   let _ = if (!Globals.print_core || !Globals.print_core_all) then print_string (Cprinter.string_of_program cprog5) else () in *)
 (*   cprog := cprog5 *)
 
-(* let convert_pred_to_cast () =  *)
-(*   Debug.ho_1 "convert_pred_to_cast" pr_no pr_no convert_pred_to_cast () *)
+(* let convert_pred_to_cast () =   *)
+(*   Debug.no_1 "convert_pred_to_cast" pr_no pr_no convert_pred_to_cast () *)
 
 (* TODO: *)
 let process_func_def fdef =
