@@ -89,7 +89,7 @@ This seems to be triggered here due to an incorrect infer_lhs_contra
 (ii) why did we not fail earlier as there was already a
     contradiction that could not be resolved by lhs_contra.
 ========================================================================
-# i8-3.slk
+# i8-3.slk: FIXED
 
 !!! early contra detect:false
 !!! early failure due to lhs-rhs contra detected
