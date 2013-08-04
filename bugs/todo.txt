@@ -855,6 +855,8 @@ ISSUES
 
 keyword in code :  infer_deep_ante_issues 
 
+For i13-5a example, the following are points to note:
+
 This example added:
 
 !!! WARNING : deep-ante-split activated
