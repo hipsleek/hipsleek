@@ -1001,7 +1001,7 @@ let finalize_norm f1_conj f2_conj common_conj =
   let disj = CP.mkOr f1 f2 None no_pos in
   CP.join_conjunctions (common_conj@[disj])
 
-let make_srtict_ieq ieq =
+let make_strict_ieq ieq =
   match ieq with
     | CP.BForm (b, lb) ->
           begin
@@ -1047,7 +1047,7 @@ let neq_conj_n n bot var =
   let f = List.fold_left (fun f i -> CP.join_conjunctions (f::[BForm((CP.mkNeq var (CP.mkIConst i no_pos) no_pos, None), None)]) ) (CP.mkTrue no_pos) lst_n in
   f
 
-let merge_ieq_ieq f1 f2 =  (* merge_other f1 f2 *)
+let merge_ieq_ieq f1 f2 f1o f2o =  (* merge_other f1 f2 *)
   match f1, f2 with
     | CP.BForm (b1, _), CP.BForm (b2, _) ->
           begin
@@ -1055,11 +1055,11 @@ let merge_ieq_ieq f1 f2 =  (* merge_other f1 f2 *)
             | (CP.Lt (CP.IConst (i1, _), CP.Var(v1,_), _), _), (CP.Lt (CP.IConst (i2, loci), CP.Var(v2,_), _), _) ->
                   if (CP.eq_spec_var v1 v2) then
                     if i1<=i2 then f1 else f2
-                  else merge_other f1 f2
+                  else merge_other f1o f2o
             | (CP.Lt (CP.Var(v1,_) , CP.IConst (i1, _), _), _), (CP.Lt (CP.Var(v2,_), CP.IConst (i2, loci), _), _) ->
                   if (CP.eq_spec_var v1 v2) then
                     if i1<=i2 then f2 else f1
-                  else merge_other f1 f2
+                  else merge_other f1o f2o
             | (CP.Lt (CP.IConst (i1, _), CP.Var(v1,_), _), _), (CP.Lt ((CP.Var(v2,_) as var), CP.IConst (i2, loci), _), _)
             | (CP.Lt ((CP.Var(v2,_) as var), CP.IConst (i2, loci), _), _), (CP.Lt (CP.IConst (i1, _), CP.Var(v1,_), _), _) ->
                   if (CP.eq_spec_var v1 v2) then
@@ -1067,28 +1067,28 @@ let merge_ieq_ieq f1 f2 =  (* merge_other f1 f2 *)
                     (* else if (i1==i2) then neq_conj_n 1 i1 var *)
                     else 
                       if((i1-i2+1) <= limit_conj) then neq_conj_n (i1-i2+1) i1 var
-                      else merge_other f1 f2
-                  else merge_other f1 f2
-            | _ -> merge_other f1 f2
+                      else merge_other f1o f2o
+                  else merge_other f1o f2o
+            | _ -> merge_other f1o f2o
           end
-    | _ -> merge_other f1 f2
+    | _ -> merge_other f1o f2o
 
       
 
-let merge_eq_ieq f1 f2 = merge_other f1 f2
+let merge_eq_ieq f1 f2 f1o f2o = merge_other f1o f2o
 
-let merge_eq_eq f1 f2 = merge_other f1 f2
+let merge_eq_eq f1 f2 f1o f2o = merge_other f1o f2o
 
-let merge_two_disj f1 f2 = 
-  let f1 = simplif_arith f1 in
-  let f2 = simplif_arith f2 in
-  let f1 = make_srtict_ieq f1 in
-  let f2 = make_srtict_ieq f2 in
+let merge_two_disj f1o f2o = 
+  let f1 = simplif_arith f1o in
+  let f2 = simplif_arith f2o in
+  let f1 = make_strict_ieq f1 in
+  let f2 = make_strict_ieq f2 in
   match CP.is_ieq f1, CP.is_ieq f2 with
-    | true, true ->   merge_ieq_ieq  f1 f2 
-    | false, true ->  if CP.is_eq_exp f1 then merge_eq_ieq f1 f2 else  merge_other f1 f2
-    | true, false ->  if CP.is_eq_exp f2 then merge_eq_ieq f2 f1 else  merge_other f1 f2
-    | false, false -> if (CP.is_eq_exp f1) && (CP.is_eq_exp f2) then merge_eq_eq f1 f2 else  merge_other f1 f2
+    | true, true ->   merge_ieq_ieq  f1 f2 f1o f2o
+    | false, true ->  if CP.is_eq_exp f1 then merge_eq_ieq f1 f2 f1o f2o else  merge_other f1o f2o
+    | true, false ->  if CP.is_eq_exp f2 then merge_eq_ieq f2 f1 f1o f2o else  merge_other f1o f2o
+    | false, false -> if (CP.is_eq_exp f1) && (CP.is_eq_exp f2) then merge_eq_eq f1 f2 f1o f2o else  merge_other f1o f2o
   
 
 let norm_disj_lsts f1_conj f2_conj =
