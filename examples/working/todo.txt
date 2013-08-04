@@ -243,7 +243,19 @@ run-fast-test  script miscounting infinity.slk due to
 Entailment Fail. 
 Entail 45Failure("Mona translation failure!!\nError in file monatemp line  column ")
 ====================================================================
+../../sleek sleek/sleek2.slk --dump-proof -tp z3
+
+- raw proof not logged for z3
+   (using old simplify result!)
+- z3 count not tabulated
 ====================================================================
+../../sleek sleek/sleek2.slk --dump-proof -tp redlog
+
+- raw proof not logged for redlog
+   (using old simplify result!)
+- redlog count not tabulated
+- redlog is invoking oc
+   (should use -tp ocred for combination)
 ====================================================================
 ====================================================================
 ====================================================================

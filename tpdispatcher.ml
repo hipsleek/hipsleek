@@ -369,7 +369,7 @@ let set_tp tp_str =
    else if (String.sub tp_str 0 2) = "z3" then
 	(Smtsolver.smtsolver_name := tp_str; pure_tp := Z3; prover_str := "z3"::!prover_str;)
   else if tp_str = "redlog" then
-    (pure_tp := Redlog; prover_str := "redcsl"::!prover_str;)
+    (pure_tp := OCRed; prover_str := "redcsl"::!prover_str;)
   else if tp_str = "math" then
     (pure_tp := Mathematica; prover_str := "mathematica"::!prover_str;)
   else if tp_str = "rm" then
@@ -417,6 +417,7 @@ let string_of_tp tp = match tp with
   | Coq -> "coq"
   | Z3 -> "z3"
   | Redlog -> "redlog"
+  | OCRed -> "OC/redlog"
   | Mathematica -> "mathematica"
   | RM -> "rm"
   | PARAHIP -> "parahip"
@@ -443,6 +444,7 @@ let name_of_tp tp = match tp with
   | Coq -> "Coq"
   | Z3 -> "Z3"
   | Redlog -> "Redlog"
+  | OCRed -> "OC/Redlog"
   | Mathematica -> "Mathematica"
   | RM -> "Redlog and Mona"
   | PARAHIP -> "Redlog, Z3, and Mona"
@@ -461,6 +463,7 @@ let log_file_of_tp tp = match tp with
   | Mona -> "allinput.mona"
   | Coq -> "allinput.v"
   | Redlog -> "allinput.rl"
+  | OCRed -> "allinput.rl"
   | Mathematica -> "allinput.math"
   | Z3 -> "allinput.z3"
   | AUTO -> "allinput.auto"
@@ -475,7 +478,7 @@ let omega_count = ref 0
 let start_prover () =
   match !pure_tp with
   | Coq -> Coq.start ();
-  | Redlog | RM -> Redlog.start ();
+  | Redlog | OCRed | RM -> Redlog.start ();
   | Cvc3 -> (
       provers_process := Some (Cvc3.start ()); (* because of incremental *)
       let _ = match !provers_process with 
@@ -514,7 +517,7 @@ let stop_prover () =
       if !Redlog.is_reduce_running then Redlog.stop ();
     )
   | Coq -> Coq.stop ();
-  | Redlog | RM -> (
+  | OCRed | Redlog | RM -> (
       Redlog.stop();
       Omega.stop();
     )
@@ -1647,6 +1650,7 @@ let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
         else (omega_is_sat f)
     | SetMONA -> Setmona.is_sat wf
     | Redlog -> redlog_is_sat wf
+    | OCRed -> redlog_is_sat wf
     | Mathematica -> mathematica_is_sat wf
     | RM ->
         if (is_bag_constraint wf) && (CP.is_float_formula wf) then
@@ -1888,6 +1892,7 @@ let simplify (f : CP.formula) : CP.formula =
                         else omega_simplify f
                   | Z3 -> Smtsolver.simplify f
                   | Redlog -> Redlog.simplify f
+                  | OCRed -> Redlog.simplify f
                   | RM ->
                         if is_bag_constraint f then Mona.simplify f
                         else Redlog.simplify f
@@ -2061,6 +2066,7 @@ let hull (f : CP.formula) : CP.formula =
           else om_hull f
     | Z3 -> Smtsolver.hull f
     | Redlog -> Redlog.hull f
+    | OCRed -> Redlog.hull f
     | Mathematica -> Mathematica.hull f
     | RM ->
           if is_bag_constraint f then Mona.hull f
@@ -2116,6 +2122,7 @@ let tp_pairwisecheck (f : CP.formula) : CP.formula =
         else om_pairwisecheck f
     | Z3 -> Smtsolver.pairwisecheck f
     | Redlog -> Redlog.pairwisecheck f
+    | OCRed -> Redlog.pairwisecheck f
     | Mathematica -> Mathematica.pairwisecheck f
     | RM ->
         if is_bag_constraint f then Mona.pairwisecheck f
@@ -2309,6 +2316,7 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
         else (omega_imply ante conseq)
     | SetMONA -> Setmona.imply ante_w conseq_s 
     | Redlog -> redlog_imply ante_w conseq_s  
+    | OCRed -> redlog_imply ante_w conseq_s  
     | Mathematica -> mathematica_imply ante_w conseq_s  
     | RM ->
           (*use UNSOUND approximation
