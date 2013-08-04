@@ -316,6 +316,7 @@ let string_of_loc_by_char_num (l : loc) =
 (* Option for proof logging *)
 let proof_logging = ref false
 let proof_logging_txt = ref false
+let log_proof_details = ref true
 let proof_logging_time = ref 0.000
 (* let sleek_src_files = ref ([]: string list) *)
 
@@ -633,7 +634,7 @@ let sa_print_inter = ref false
 
 let print_heap_pred_decl = ref true
 
-let cond_path_trace = ref false
+let cond_path_trace = ref true
 
 let pred_syn_modular = ref true
 
@@ -655,6 +656,7 @@ let sa_en_split = ref false
 let sa_refine_dang = ref false
 
 let pred_elim_useless = ref false
+let infer_deep_ante_flag = ref false
 
 let pred_infer_flag = ref true
 
@@ -719,7 +721,9 @@ let enable_constraint_based_filtering = ref false
 
 let elim_exists_ff = ref true
 
-let allow_imm = ref true (*imm will delglobalsay checking guard conditions*)
+let allow_imm = ref true (*imm will delay checking guard conditions*)
+
+let allow_imm_inv = ref true (*imm inv to add of form @M<:v<:@A*)
 
 (*Since this flag is disabled by default if you use this ensure that 
 run-fast-test mem test cases pass *)
@@ -734,7 +738,7 @@ let infer_mem = ref false
 
 let pa = ref false
 
-let allow_inf = ref true (*enable support to use infinity (\inf and -\inf) in formulas *)
+let allow_inf = ref false (*enable support to use infinity (\inf and -\inf) in formulas *)
 
 let ann_derv = ref false
 

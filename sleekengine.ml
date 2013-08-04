@@ -222,7 +222,10 @@ let process_pred_def_4_iast pdef =
   let pr = Iprinter.string_of_view_decl in
   Debug.no_1 "process_pred_def_4_iast" pr pr_no process_pred_def_4_iast pdef
 
-(*should call AS.convert_pred_to_cast*)
+(*should call AS.convert_pred_to_cast
+it seems that the following method is no longer used.
+It is replaced by convert_data_and_pred_to_cast
+*)
 let convert_pred_to_cast () = 
   let infer_views = if (!Globals.infer_mem) 
     then List.map (fun c -> Mem.infer_mem_specs c iprog) iprog.I.prog_view_decls 
@@ -433,10 +436,16 @@ let convert_data_and_pred_to_cast_x () =
       Norm.norm_extract_common !cprog cviews (List.map (fun vdef -> vdef.C.view_name) cviews)
     else cviews
   in
-  let _ = !cprog.C.prog_view_decls <- cviews1 in
-  let _ =  (List.map (fun vdef -> AS.compute_view_x_formula !cprog vdef !Globals.n_xpure) cviews1) in
+  let cviews2 =
+    if !Globals.norm_cont_analysis then
+      Norm.cont_para_analysis !cprog cviews1
+    else
+      cviews1
+  in
+  let _ = !cprog.C.prog_view_decls <- cviews2 in
+  let _ =  (List.map (fun vdef -> AS.compute_view_x_formula !cprog vdef !Globals.n_xpure) cviews2) in
   Debug.tinfo_pprint "after compute_view" no_pos;
-  let _ = (List.map (fun vdef -> AS.set_materialized_prop vdef) cviews1) in
+  let _ = (List.map (fun vdef -> AS.set_materialized_prop vdef) cviews2) in
   Debug.tinfo_pprint "after materialzed_prop" no_pos;
   let cprog1 = AS.fill_base_case !cprog in
   let cprog2 = AS.sat_warnings cprog1 in        
@@ -919,18 +928,21 @@ let process_shape_infer pre_hps post_hps=
           sel_hps sel_post_hps unk_map unk_hpargs link_hpargs true false
     else [],[]
   in
-  let _ = if not (!Globals.pred_syn_modular) then
+  let _ =
     begin
       let rel_defs = if not (!Globals.pred_syn_modular) then
         Sa2.rel_def_stk
       else Sa3.rel_def_stk
       in
       if not(rel_defs# is_empty) then
+        let defs = List.sort CF.hpdef_cmp (rel_defs # get_stk) in
         print_endline "";
       print_endline "\n*************************************";
       print_endline "*******relational definition ********";
       print_endline "*************************************";
-      print_endline (Sa2.rel_def_stk # string_of_reverse);
+      (* print_endline (rel_defs # string_of_reverse); *)
+       let pr1 = pr_list_ln Cprinter.string_of_hprel_def_short in
+       print_endline (pr1 defs);
       print_endline "*************************************"
     end
   in
@@ -981,28 +993,37 @@ let process_shape_conquer sel_ids cond_paths=
   let _ = DD.ninfo_pprint "process_shape_conquer\n" no_pos in
   let ls_pr_defs = !sleek_hprel_defns in
   let link_hpargs = !sleek_hprel_unknown in
-  let orig_vars = List.fold_left (fun ls (_,(_,hf,_,_))-> ls@(CF.h_fv hf)) [] ls_pr_defs in
-  let sel_hps = List.map (fun v -> TI.get_spec_var_type_list_infer (v, Unprimed) orig_vars no_pos) (sel_ids) in
-  let sel_hps  = List.filter (fun sv ->
-      let t = CP.type_of_spec_var sv in
-       ((* is_RelT t || *) is_HpT t )) sel_hps in
-  let ls_path_link = SAU.dang_partition link_hpargs in
-  let ls_path_defs = SAU.defn_partition ls_pr_defs in
-  (*pairing*)
-  let ls_path_link_defs = SAU.pair_dang_constr_path ls_path_defs ls_path_link
-    (pr_list_ln Cprinter.string_of_hp_rel_def_short) in
-  let ls_path_defs_settings = List.map (fun (path,link_hpargs, defs) ->
-      (path, defs, [],link_hpargs,[])) ls_path_link_defs in
-  let defs = Sa2.infer_shapes_conquer iprog !cprog "" ls_path_defs_settings sel_hps in
+  let defs =
+    (* if not (!Globals.pred_syn_modular) then *)
+      let orig_vars = List.fold_left (fun ls (_,(_,hf,_,_))-> ls@(CF.h_fv hf)) [] ls_pr_defs in
+      let sel_hps = List.map (fun v -> TI.get_spec_var_type_list_infer (v, Unprimed) orig_vars no_pos) (sel_ids) in
+      let sel_hps  = List.filter (fun sv ->
+          let t = CP.type_of_spec_var sv in
+          ((* is_RelT t || *) is_HpT t )) sel_hps in
+      let ls_path_link = SAU.dang_partition link_hpargs in
+      let ls_path_defs = SAU.defn_partition ls_pr_defs in
+      (*pairing*)
+      let ls_path_link_defs = SAU.pair_dang_constr_path ls_path_defs ls_path_link
+        (pr_list_ln Cprinter.string_of_hp_rel_def_short) in
+      let ls_path_defs_settings = List.map (fun (path,link_hpargs, defs) ->
+          (path, defs, [],link_hpargs,[])) ls_path_link_defs in
+      Sa2.infer_shapes_conquer iprog !cprog "" ls_path_defs_settings sel_hps
+    (* else *)
+    (*   Sa3.infer_shapes iprog !cprog "" constrs2 *)
+    (*       sel_hps sel_post_hps unk_map unk_hpargs link_hpargs true false *)
+  in
   let _ =
     begin
       let rel_defs =  Sa2.rel_def_stk in
       if not(rel_defs# is_empty) then
+        let defs = List.sort CF.hpdef_cmp (rel_defs # get_stk) in
         print_endline "";
       print_endline "\n*************************************";
       print_endline "*******relational definition ********";
       print_endline "*************************************";
-      print_endline (rel_defs # string_of_reverse);
+      (* print_endline (rel_defs # string_of_reverse); *)
+       let pr1 = pr_list_ln Cprinter.string_of_hprel_def_short in
+       print_endline (pr1 defs);
       print_endline "*************************************"
     end
   in

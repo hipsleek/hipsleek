@@ -38,7 +38,7 @@ let set_file_cp arg =
    Globals.cp_test := true
 
 let set_gen_cpfile arg =
-  Globals.cpfile := arg;
+ Globals.cpfile := arg;
    Globals.gen_cpfile := true
 
 let set_lib_file arg =
@@ -226,7 +226,10 @@ let common_arguments = [
   ("--reverify", Arg.Set Globals.reverify_flag,"enable re-verification after specification inference");
   ("--reverify-all", Arg.Set Globals.reverify_all_flag,"enable re-verification after heap specification inference");
   ("--dis-imm", Arg.Clear Globals.allow_imm,"disable the use of immutability annotations");
+  ("--en-imm-inv", Arg.Set Globals.allow_imm_inv,"enable the additionof of immutability invariant for implication");
+  ("--dis-imm-inv", Arg.Clear Globals.allow_imm_inv,"disable the additionof of immutability invariant for implication");
   ("--dis-inf", Arg.Clear Globals.allow_inf,"disable support for infinity ");
+  ("--en-inf", Arg.Set Globals.allow_inf,"enable support for infinity ");
   ("--dsd", Arg.Set Globals.deep_split_disjuncts,"enable deep splitting of disjunctions");
   ("--ioc", Arg.Set Globals.check_integer_overflow,"Enable Integer Overflow Checker");
   ("--no-coercion", Arg.Clear Globals.use_coercion,
@@ -452,6 +455,12 @@ let common_arguments = [
   ), "Dump proof log at end of command");
   ("--epl", Arg.Unit (fun _ ->
       Globals.proof_logging_txt:=true ), "Shorthand for --en-logging-txt");
+  ("--dis-proof-details", Arg.Unit (fun _ ->
+      Globals.log_proof_details:=false ), "Disable proof strings to be recorded");
+  ("--en-proof-details", Arg.Unit (fun _ ->
+      Globals.log_proof_details:=true ), "Enable proof strings to be recorded");
+  ("--epd", Arg.Unit (fun _ ->
+      Globals.log_proof_details:=true ), "Shorthand for --en-proof-details");
   ("--en-slk-logging", Arg.Unit (fun _ ->
       Globals.proof_logging_txt:=true; 
       Globals.sleek_logging_txt:=true), "Enable sleek and proof logging with text file");
@@ -480,6 +489,7 @@ let common_arguments = [
   ("--en-cp-trace", Arg.Set Globals.cond_path_trace, "Enable the tracing of conditional paths");
   ("--dis-cp-trace", Arg.Clear Globals.cond_path_trace, "Disable the tracing of conditional paths");
   ("--sa-print-inter", Arg.Set Globals.sa_print_inter, "Print intermediate results of normalization");
+  ("--sa-en-cont", Arg.Set Globals.norm_cont_analysis, "enable cont analysis for views");
   ("--pred-dis-mod", Arg.Clear Globals.pred_syn_modular, "disable modular predicate synthesis (use old algo)");
   ("--pred-en-mod", Arg.Set Globals.pred_syn_modular, "using modular predicate synthesis");
   ("--pred-en-oblg", Arg.Set Globals.pred_en_oblg, "enable sa_en_pre_oblg");
@@ -492,6 +502,9 @@ let common_arguments = [
   ("--dis-pred-syn", Arg.Clear Globals.pred_syn_flag, "disable predicate synthesis");
   ("--dps", Arg.Clear Globals.pred_syn_flag, "shorthand for --dis-pred-syn");
   (* ("--sa-dangling", Arg.Set Globals.sa_dangling, "elim dangling HP/pointers"); *)
+  ("--inf-en-split-ante", Arg.Set Globals.infer_deep_ante_flag, "enable deep split of ante for pure inference");
+  ("--iesa", Arg.Set Globals.infer_deep_ante_flag, "shorthand for --inf-en-split-ante");
+  ("--inf-dis-split-ante", Arg.Clear Globals.infer_deep_ante_flag, "disable deep split of ante for pure inference");
   ("--pred-dis-infer", Arg.Clear Globals.sa_syn, "disable the shape inference stage");
   ("--pred-en-useless-para", Arg.Set Globals.pred_elim_useless, "enable the elimination of useless parameter from HP predicate and user-defined predicates (view)");
   ("--pred-dis-useless-para", Arg.Clear Globals.pred_elim_useless, "disable the elimination of useless parameter from HP predicate and user-defined predicates (view)");
@@ -511,7 +524,8 @@ let common_arguments = [
   ("--sa-unify-dangling", Arg.Set Globals.sa_unify_dangling, "unify branches of definition to instantiate dangling predicate");
   ("--pred-disj-unify", Arg.Set Globals.pred_disj_unify, "attempt to unify two similar predicates among inferred pred defs");
    ("--pred-conj-unify", Arg.Set Globals.pred_conj_unify, "attempt to conj-unify among inferred assumption");
-  ("--pred-equiv", Arg.Set Globals.pred_equiv, "attempt to reuse predicates with identical definition");
+  ("--pred-en-equiv", Arg.Set Globals.pred_equiv, "attempt to reuse predicates with identical definition");
+  ("--pred-dis-equiv", Arg.Clear Globals.pred_equiv, "disable reuse of predicates with identical definition");
   ("--sa-tree-simp", Arg.Set Globals.sa_tree_simp, "simplify a tree branches of definition");
   ("--sa-subsume", Arg.Set Globals.sa_subsume, "use subsume when comparing definitions after infering");
   (* ("--norm-useless", Arg.Set Globals.norm_elim_useless, "elim useless parameters of user-defined predicates (view)"); *)

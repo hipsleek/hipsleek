@@ -3838,6 +3838,25 @@ and infer_state = {
     is_hp_defs: hp_rel_def list;
 }
 
+let get_hpdef_name hpdef=
+   match hpdef with
+     | CP.HPRelDefn (hp,_,_) -> hp
+     (* | CP.HPRelNDefn hp -> hp *)
+     | _ -> report_error no_pos "sau.get_hpdef_name"
+
+let hpdef_cmp d1 d2 =
+  try
+    let hp1 = get_hpdef_name d1.hprel_def_kind in
+    try
+      let hp2 = get_hpdef_name d2.hprel_def_kind in
+      String.compare (CP.name_of_spec_var hp1) (CP.name_of_spec_var hp2)
+    with _ -> 1
+  with _ -> -1
+
+let mk_hp_rel_def hp (args, r, paras) g f pos=
+  let hf = HRel (hp, List.map (fun x -> CP.mkVar x no_pos) args, pos) in
+  (CP.HPRelDefn (hp, r, paras), hf, g, f)
+
 let mkHprel knd u_svl u_hps pd_svl hprel_l hprel_g hprel_r hprel_p=
  {  hprel_kind = knd;
     unk_svl = u_svl;
@@ -3905,6 +3924,62 @@ let is_HRel_f (f0:formula) =
         )
     | Or orf  ->
        (helper orf.formula_or_f1) && (helper orf.formula_or_f2)
+  in
+  helper f0
+
+let trans_heap_hf fn hf0=
+  let rec helper hf=
+    match hf with
+      | Star { h_formula_star_h1 = hf1;
+        h_formula_star_h2 = hf2;
+        h_formula_star_pos = pos} ->
+            Star {h_formula_star_h1 = helper hf1;
+            h_formula_star_h2 = helper hf2;
+            h_formula_star_pos = pos}
+      |  Conj { h_formula_conj_h1 = hf1;
+         h_formula_conj_h2 = hf2;
+         h_formula_conj_pos = pos} ->
+             Conj { h_formula_conj_h1 = helper hf1;
+             h_formula_conj_h2 = helper hf2;
+             h_formula_conj_pos = pos}
+      | Phase { h_formula_phase_rd = hf1;
+        h_formula_phase_rw = hf2;
+        h_formula_phase_pos = pos} ->
+            Phase { h_formula_phase_rd = helper hf1;
+            h_formula_phase_rw = helper hf2;
+            h_formula_phase_pos = pos}
+      | StarMinus { h_formula_starminus_h1 = hf1;
+        h_formula_starminus_h2 = hf2;
+        h_formula_starminus_aliasing = a;
+        h_formula_starminus_pos = pos} ->
+            StarMinus { h_formula_starminus_h1 = helper hf1;
+            h_formula_starminus_h2 = helper hf2;
+            h_formula_starminus_aliasing = a;
+            h_formula_starminus_pos = pos}
+      | ConjStar { h_formula_conjstar_h1 = hf1;
+        h_formula_conjstar_h2 = hf2;
+        h_formula_conjstar_pos =pos } ->
+            ConjStar { h_formula_conjstar_h1 = helper hf1;
+            h_formula_conjstar_h2 = helper hf2;
+            h_formula_conjstar_pos =pos }
+      | ConjConj { h_formula_conjconj_h1 = hf1;
+        h_formula_conjconj_h2 = hf2;
+        h_formula_conjconj_pos = pos } ->
+            ConjConj { h_formula_conjconj_h1 = helper hf1;
+            h_formula_conjconj_h2 = helper hf2;
+            h_formula_conjconj_pos = pos }
+      | _ -> fn hf
+  in
+  helper hf0
+
+let trans_heap fn f0=
+  let rec helper f=
+  match f with
+    | Base fb -> Base {fb with formula_base_heap = trans_heap_hf fn fb.formula_base_heap}
+    | Exists fe -> Exists {fe with formula_exists_heap = trans_heap_hf fn fe.formula_exists_heap}
+    | Or orf -> Or {orf with formula_or_f1 = helper orf.formula_or_f1;
+          formula_or_f2 = helper orf.formula_or_f2
+      }
   in
   helper f0
 

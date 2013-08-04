@@ -176,6 +176,10 @@ let string_of_prover prover = match prover with
 
 let last_tp_used = new Globals.store LOG string_of_prover
 
+let last_proof_string = new Globals.store "no proof yet" pr_id
+
+let last_proof_result = new Globals.store "no result yet" pr_id
+
 (* 
    this is meant to record the last commands in the
    different category encounterd by sleek/hip; but it

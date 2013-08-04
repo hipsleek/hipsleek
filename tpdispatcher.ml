@@ -781,6 +781,300 @@ let elim_exists (f : CP.formula) : CP.formula =
   let pr = Cprinter.string_of_pure_formula in
   Debug.no_1 "elim_exists" pr pr elim_exists f
 
+
+let comm_null a1 a2 =
+  let f1 = is_null a1 in
+  let f2 = is_null a2 in
+  if f1 && f2 then (false,a1,a2)
+  else if f1 then (f1,a2,a1)
+  else (f2,a1,a2)
+
+(*
+  strong
+  ======
+  x=null  --> x=0
+  x!=null --> x>0
+
+  weak
+  ====
+  x=null  --> x<=0
+  x!=null --> x>0  (to avoid inequality)
+*)
+
+let cnv_ptr_to_int (ex_flag,st_flag) f = 
+  let f_f arg e = None in
+  let f_bf (ex_flag,st_flag) bf = 
+    let (pf, l) = bf in
+    match pf with
+      | Eq (a1, a2, ll) -> 
+          let (is_null_flag,a1,a2) = comm_null a1 a2 in
+          if is_null_flag then
+            if st_flag (*strengthen *) then
+              Some (Eq(a1,IConst(0,ll),ll),l)
+            else Some (Lte(a1,IConst(0,ll),ll),l)
+          else None
+      | Neq (a1, a2, ll) -> 
+          let (is_null_flag,a1,a2) = comm_null a1 a2 in
+          if is_null_flag then
+            if st_flag (*strengthen *) then
+              Some (Gt(a1,IConst(0,ll),ll),l)
+            else 
+              Some (Neq(a1,IConst(0,ll),ll),l)
+          else None
+      | _ -> None
+  in
+  let f_e arg e = (Some e) in
+  let a_f ((ex_flag,st_flag) as flag) f =
+      match f with
+        | Not _ -> (not(ex_flag),not(st_flag))
+        | Forall _ -> 
+              if ex_flag then (false,not(st_flag))
+              else flag
+        | Exists _ -> 
+              if ex_flag then flag
+              else (true,not(st_flag))
+        | _ -> flag
+  in
+  let a_bf a _ = a in
+  let a_e a _ = a in
+  map_formula_arg f (ex_flag,st_flag) (f_f, f_bf, f_e) (a_f, a_bf, a_e) 
+
+let cnv_ptr_to_int flag f = 
+  let pr = Cprinter.string_of_pure_formula in
+  Debug.no_2 "cnv_ptr_to_int" (pr_pair string_of_bool string_of_bool) pr pr (fun _ _ -> cnv_ptr_to_int flag f) flag f
+
+(*
+x=0 --> x=null
+x<=0 --> x=null
+x<1
+x>0  --> x!=null
+x>=1
+x>=0 --> true
+x>-1
+x<0  --> false
+x<=-1
+*)
+
+let comm_is_null a1 a2 =
+  match a1,a2 with
+    | Var(v,_),IConst(0,_) ->
+          (is_otype (type_of_spec_var v),a1,a2)
+    | IConst(0,_),Var(v,_) ->
+          (is_otype (type_of_spec_var v),a2,a1)
+    | _ -> (false,a1,a2)
+
+let comm_is_ann a1 a2 =
+  match a1,a2 with
+    | Var(v,_),IConst(i,_) ->
+          (is_ann_type (type_of_spec_var v),a1,i)
+    | IConst(i,_),Var(v,_) ->
+          (is_ann_type (type_of_spec_var v),a2,i)
+    | _ -> (false,a1,0)
+
+let is_ptr_ctr a1 a2 =
+  match a1,a2 with
+    | Var(v,_),IConst(_,_) ->
+          let t=type_of_spec_var v in
+          (is_otype t,is_ann_type t)
+    | IConst(_,_),Var(v,_) ->
+          let t=type_of_spec_var v in
+          (is_otype t,is_ann_type t)
+    | _ -> (false,false)
+
+let is_ptr_ctr a1 a2 =
+  let pr = Cprinter.string_of_formula_exp in
+  let pb = string_of_bool in
+  Debug.no_2 "is_ptr_ctr" pr pr (pr_pair pb pb) is_ptr_ctr a1 a2
+
+(* pre 0<=v<=3 *)
+let int_to_ann v = 
+  if v=0 then const_ann_mut
+  else if v=1 then const_ann_imm
+  else if v=2 then const_ann_lend
+  else const_ann_abs
+
+let is_valid_ann v = 0<=v && v<=3 
+
+let is_null a1 a2 =
+  match a1,a2 with
+    | Var(v,_),IConst(0,_) ->
+          (is_otype (type_of_spec_var v),a1,a2)
+    | _ -> (false,a1,a2)
+
+(* s>0 -> 0<s -> 1<=s *)
+let to_ptr ptr_flag pf =
+  let rec norm pf = 
+    match pf with
+      | Lt(a,IConst(i,l),ll) -> Lte(a,IConst(i-1,l),ll)
+      | Lt(IConst(i,l),a,ll) -> Lte(IConst(i+1,l),a,ll)
+      | Gt(a,b,ll) -> norm (Lt(b,a,ll))
+      | Gte(a,b,ll) -> Lte(b,a,ll)
+      | _ -> pf
+  in let pf = norm pf in
+  match pf with
+    | Lte((Var(v,_) as a1), IConst(i,_),ll) ->
+          if ptr_flag then
+            if i<=(-1) then BConst(false,ll)   (* v<=0 --> v=M; v<=1 --> @L<:v *)
+            else if i>0 then BConst(true,ll)
+            else Eq(a1,Null ll,ll)
+          else (* ann_flag *)
+            if i<=(-1)  then BConst(false,ll)
+            else if i>2 then BConst(true,ll)
+            else if i=0 then Eq(a1,int_to_ann i,ll)
+            else SubAnn(a1,int_to_ann i,ll)
+    | Lte(IConst(i,_),(Var(v,_) as a1),ll) ->
+          if ptr_flag then
+            if i>=1 then Neq(a1,Null ll,ll)
+            else BConst(true,ll)
+          else (* ann_flag *)
+            if i<=(0)  then BConst(true,ll)
+            else if i>3 then BConst(false,ll)
+            else if i=3 then Eq(a1,int_to_ann i,ll)
+            else SubAnn(int_to_ann i,a1,ll)
+    | _ -> pf
+
+let to_ptr ptr_flag pf =
+  let pr f = Cprinter.string_of_b_formula (f,None) in
+  Debug.no_1 "to_ptr" pr pr (to_ptr ptr_flag)  pf
+
+
+let cnv_int_to_ptr flag f = 
+  let f_f e = None in
+  let f_bf bf = 
+    let (pf, l) = bf in
+    match pf with
+      | Eq (a1, a2, ll) -> 
+            let (is_null_flag,a1,a2) = comm_is_null a1 a2 in
+            if is_null_flag then
+              Some(Eq(a1,Null ll,ll),l)
+            else 
+              let (is_ann_flag,a1,i) = comm_is_ann a1 a2 in
+              if is_ann_flag then
+                if is_valid_ann i then Some(Eq(a1,int_to_ann i,ll),l)
+                else  Some(BConst (false,ll),l) (* contradiction *)
+            else  Some bf
+      | Neq (a1, a2, ll) -> 
+            let (is_null_flag,a1,a2) = comm_is_null a1 a2 in
+            if is_null_flag then
+              Some(Neq(a1,Null ll,ll),l)
+            else let (is_ann_flag,a1,i) = comm_is_ann a1 a2 in
+              if is_valid_ann i then
+                if is_ann_flag then Some(Neq(a1,int_to_ann i,ll),l)
+                else  Some(BConst (true,ll),l) (* of course *)
+            else Some bf
+      | Lte (a1, a2,_) | Gte(a1,a2,_) | Gt(a1,a2,_) | Lt(a1,a2,_) ->
+            let ptr_flag,ann_flag = is_ptr_ctr a1 a2 in
+            if ptr_flag || ann_flag then Some(to_ptr ptr_flag pf,l)
+            else Some bf
+              (* | Lte ((Var(v,_) as a1), IConst(0,_), ll) | Gte (IConst(0,_), (Var(v,_) as a1), ll)  *)
+              (* | Lt ((Var(v,_) as a1), IConst(1,_), ll) | Gt (IConst(1,_), (Var(v,_) as a1), ll) ->  *)
+              (*     if is_otype (type_of_spec_var v) then *)
+              (*         Some(Eq(a1,Null ll,ll),l) *)
+              (*     else Some bf *)
+              (* | Gte ((Var(v,_) as a1), IConst(1,_), ll) | Lte (IConst(1,_), (Var(v,_) as a1), ll)   *)
+              (* | Gt ((Var(v,_) as a1), IConst(0,_), ll) | Lt (IConst(0,_), (Var(v,_) as a1), ll) -> *)
+              (*       if is_otype (type_of_spec_var v) then *)
+              (*         Some(Neq(a1,Null ll,ll),l) *)
+              (*       else Some bf *)
+              (* | Gte (Var(v,_), IConst(0,_), ll) | Lte (IConst(0,_), Var(v,_), ll) ->  *)
+              (*     if is_otype (type_of_spec_var v) then *)
+              (*         Some(BConst(true,ll),l) *)
+              (*     else Some bf *)
+              (* | Lt (Var(v,_), IConst(0,_), ll) | Gt (IConst(0,_), Var(v,_), ll) ->  *)
+              (*     if is_otype (type_of_spec_var v) then *)
+              (*         Some (BConst(false,ll),l) *)
+              (*     else Some bf *)
+      | _ -> Some bf
+  in
+  let f_e e = (Some e) in
+  map_formula f (f_f, f_bf, f_e) 
+
+let cnv_int_to_ptr flag f = 
+  let pr = Cprinter.string_of_pure_formula in
+  Debug.no_1 "cnv_int_to_ptr" pr pr (fun _ -> cnv_int_to_ptr flag f) f
+
+let wrap_pre_post_gen pre post f a =
+  let s1 = pre a in
+  let r2 = f a in
+  post s1 r2
+
+let wrap_pre_post_print s fn x =
+  let pr = Cprinter.string_of_pure_formula in
+  let pre f = 
+    if !Globals.print_cnv_null then pr f
+    else "" in 
+  let post s1 r2 = 
+    if !Globals.print_cnv_null 
+    then 
+      let s2 = pr r2 in
+      (* if String.compare s1 s2 == 0 then r2 *)
+      (* else  *)
+        begin
+          print_endline s;
+          print_endline ("input :"^s1);
+          print_endline ("output:"^s2);
+          r2
+        end
+    else r2
+  in wrap_pre_post_gen pre post (fun _ -> fn x) x
+
+
+let add_imm_inv f1 f2 = 
+(* find immutability vars *)
+(* form a list of imm_inv to add *)
+  let vs = fv (mkAnd f1 f2 no_pos) in
+  let vs = List.filter (fun v -> CP.is_ann_type (CP.type_of_spec_var v)) vs in
+  let inv = List.map (fun v -> 
+      let vp=Var(v,no_pos) in 
+      mkAnd (mkSubAnn const_ann_bot vp) (mkSubAnn vp const_ann_top) no_pos ) vs in
+  let f1_inv = join_conjunctions (f1::inv) in
+  let _ = Debug.ninfo_hprint (add_str "Ann Vars" Cprinter.string_of_spec_var_list) vs no_pos in
+  let _ = Debug.ninfo_hprint (add_str "Inv" Cprinter.string_of_pure_formula) f1_inv no_pos in
+  f1_inv
+
+let cnv_ptr_to_int_weak f =
+  wrap_pre_post_print "cnv_ptr_to_int_weak" (cnv_ptr_to_int (true,false)) f
+
+let cnv_ptr_to_int(* _strong *) f =
+  wrap_pre_post_print "cnv_ptr_to_int" (cnv_ptr_to_int (true,true)) f
+
+let cnv_int_to_ptr f =
+  wrap_pre_post_print "cnv_int_to_ptr" (cnv_int_to_ptr true) f
+
+
+(* let cnv_ptr_to_int f = *)
+(*   let pr = Cprinter.string_of_pure_formula in *)
+(*    Debug.no_1 "cnv_ptr_to_int" pr pr cnv_ptr_to_int f *)
+
+(* let cnv_int_to_ptr f =  *)
+(*   let pr = Cprinter.string_of_pure_formula in *)
+(*   let pre f =  *)
+(*     if !Globals.print_cnv_null then pr f *)
+(*     else "" in  *)
+(*   let post s1 r2 =  *)
+(*     if !Globals.print_cnv_null  *)
+(*     then  *)
+(*       let s2 = pr r2 in *)
+(*       if String.compare s1 s2 == 0 then r2 *)
+(*       else  *)
+(*         begin *)
+(*           print_endline "cnv_int_to_ptr"; *)
+(*           print_endline ("input :"^s1); *)
+(*           print_endline ("output:"^s2); *)
+(*           r2 *)
+(*         end *)
+(*     else r2 *)
+(*   in wrap_pre_post_gen pre post (fun _ -> cnv_int_to_ptr f true) f *)
+
+let cnv_int_to_ptr f =
+  let pr = Cprinter.string_of_pure_formula in
+  Debug.no_1 "cnv_int_to_ptr" pr pr cnv_int_to_ptr f
+
+let wrap_pre_post pre post f a =
+  let a = pre a in
+  let r = f a in
+  post r
+
 (*  
    [["a","b"]:f1; "a":f2; "b":f3; "c":f4]
 
@@ -1129,9 +1423,12 @@ let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
         (* let f = CP.drop_locklevel_pure f in *)
         f
   in
-  let vrs = Cpure.fv f in
-  let imm_vrs = List.filter (fun x -> (CP.type_of_spec_var x) == AnnT) vrs in 
-  let f = Cpure.add_ann_constraints imm_vrs f in
+  (* ============================================================== *)
+  (* superceded by add_imm_inv which is only done for ante of imply *)
+  (* ============================================================== *)
+  (* let vrs = Cpure.fv f in *)
+  (* let imm_vrs = List.filter (fun x -> (CP.type_of_spec_var x) == AnnT) vrs in  *)
+  (* let f = Cpure.add_ann_constraints imm_vrs f in *)
   let _ = disj_cnt f None "sat_no_cache" in
   let (pr_weak,pr_strong) = CP.drop_complex_ops in
   let (pr_weak_z3,pr_strong_z3) = CP.drop_complex_ops_z3 in
@@ -1268,6 +1565,11 @@ let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
   if not !tp_batch_mode then stop_prover ();
   res
 
+let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
+  let f = cnv_ptr_to_int f in
+  tp_is_sat_no_cache f sat_no
+  
+
 let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) = 
   Gen.Profiling.do_1 "tp_is_sat_no_cache" (tp_is_sat_no_cache f) sat_no
 	
@@ -1361,186 +1663,6 @@ let tp_is_sat f sat_no =
 (*   Debug.no_1 "tp_is_sat" pr string_of_bool (fun _ -> tp_is_sat f sat_no do_cache) f *)
 
 
-let comm_null a1 a2 =
-  let f1 = is_null a1 in
-  let f2 = is_null a2 in
-  if f1 && f2 then (false,a1,a2)
-  else if f1 then (f1,a2,a1)
-  else (f2,a1,a2)
-
-(*
-  strong
-  ======
-  x=null  --> x=0
-  x!=null --> x>0
-
-  weak
-  ====
-  x=null  --> x<=0
-  x!=null --> x>0  (to avoid inequality)
-*)
-
-let cnv_ptr_to_int f (ex_flag,st_flag) = 
-  let f_f arg e = None in
-  let f_bf (ex_flag,st_flag) bf = 
-    let (pf, l) = bf in
-    match pf with
-      | Eq (a1, a2, ll) -> 
-          let (is_null_flag,a1,a2) = comm_null a1 a2 in
-          if is_null_flag then
-            if st_flag (*strengthen *) then
-              Some (Eq(a1,IConst(0,ll),ll),l)
-            else Some (Lte(a1,IConst(0,ll),ll),l)
-          else None
-      | Neq (a1, a2, ll) -> 
-          let (is_null_flag,a1,a2) = comm_null a1 a2 in
-          if is_null_flag then
-            if st_flag (*strengthen *) then
-              Some (Gt(a1,IConst(0,ll),ll),l)
-            else 
-              Some (Neq(a1,IConst(0,ll),ll),l)
-          else None
-      | _ -> None
-  in
-  let f_e arg e = (Some e) in
-  let a_f ((ex_flag,st_flag) as flag) f =
-      match f with
-        | Not _ -> (not(ex_flag),not(st_flag))
-        | Forall _ -> 
-              if ex_flag then (false,not(st_flag))
-              else flag
-        | Exists _ -> 
-              if ex_flag then flag
-              else (true,not(st_flag))
-        | _ -> flag
-  in
-  let a_bf a _ = a in
-  let a_e a _ = a in
-  map_formula_arg f (ex_flag,st_flag) (f_f, f_bf, f_e) (a_f, a_bf, a_e) 
-
-(*
-x=0 --> x=null
-x<=0 --> x=null
-x<1
-x>0  --> x!=null
-x>=1
-x>=0 --> true
-x>-1
-x<0  --> false
-x<=-1
-*)
-
-let comm_is_null a1 a2 =
-  match a1,a2 with
-    | Var(v,_),IConst(0,_) ->
-          (is_otype (type_of_spec_var v),a1,a2)
-    | IConst(0,_),Var(v,_) ->
-          (is_otype (type_of_spec_var v),a2,a1)
-    | _ -> (false,a1,a2)
-
-let is_null a1 a2 =
-  match a1,a2 with
-    | Var(v,_),IConst(0,_) ->
-          (is_otype (type_of_spec_var v),a1,a2)
-    | _ -> (false,a1,a2)
-
-let cnv_int_to_ptr f flag = 
-  let f_f e = None in
-  let f_bf bf = 
-    let (pf, l) = bf in
-    match pf with
-      | Eq (a1, a2, ll) -> 
-          let (is_null_flag,a1,a2) = comm_is_null a1 a2 in
-          if is_null_flag then
-              Some(Eq(a1,Null ll,ll),l)
-          else Some bf
-      | Lte ((Var(v,_) as a1), IConst(0,_), ll) | Gte (IConst(0,_), (Var(v,_) as a1), ll) -> 
-          if is_otype (type_of_spec_var v) then
-              Some(Eq(a1,Null ll,ll),l)
-          else Some bf
-      | Lt ((Var(v,_) as a1), IConst(1,_), ll) | Gt (IConst(1,_), (Var(v,_) as a1), ll) -> 
-          if is_otype (type_of_spec_var v) then
-              Some(Eq(a1,Null ll,ll),l)
-          else Some bf
-      | Gte (Var(v,_), IConst(0,_), ll) | Lte (IConst(0,_), Var(v,_), ll) -> 
-          if is_otype (type_of_spec_var v) then
-              Some(BConst(true,ll),l)
-          else Some bf
-      | Gte ((Var(v,_) as a1), IConst(1,_), ll) | Lte (IConst(1,_), (Var(v,_) as a1), ll) -> 
-          if is_otype (type_of_spec_var v) then
-              Some(Neq(a1,Null ll,ll),l)
-          else Some bf
-      | Gt ((Var(v,_) as a1), IConst(0,_), ll) | Lt (IConst(0,_), (Var(v,_) as a1), ll) -> 
-          if is_otype (type_of_spec_var v) then
-              Some(Neq(a1,Null ll,ll),l)
-          else Some bf
-      | Lt (Var(v,_), IConst(0,_), ll) | Gt (IConst(0,_), Var(v,_), ll) -> 
-          if is_otype (type_of_spec_var v) then
-              Some (BConst(false,ll),l)
-          else Some bf
-      | _ -> Some bf
-  in
-  let f_e e = (Some e) in
-  map_formula f (f_f, f_bf, f_e) 
-
-
-let wrap_pre_post_gen pre post f a =
-  let s1 = pre a in
-  let r2 = f a in
-  post s1 r2
-
-let cnv_ptr_to_int f = 
-  let pr = Cprinter.string_of_pure_formula in
-  let pre f = 
-    if !Globals.print_cnv_null then pr f
-    else "" in 
-  let post s1 r2 = 
-    if !Globals.print_cnv_null 
-    then 
-      let s2 = pr r2 in
-      if String.compare s1 s2 == 0 then r2
-      else 
-        begin
-          print_endline "cnv_ptr_to_int";
-          print_endline ("input :"^s1);
-          print_endline ("output:"^s2);
-          r2
-        end
-    else r2
-  in wrap_pre_post_gen pre post (fun _ -> cnv_ptr_to_int f (true,true)) f
-
-let cnv_ptr_to_int f =
-  let pr = Cprinter.string_of_pure_formula in
-   Debug.no_1 "cnv_ptr_to_int" pr pr cnv_ptr_to_int f
-
-let cnv_int_to_ptr f = 
-  let pr = Cprinter.string_of_pure_formula in
-  let pre f = 
-    if !Globals.print_cnv_null then pr f
-    else "" in 
-  let post s1 r2 = 
-    if !Globals.print_cnv_null 
-    then 
-      let s2 = pr r2 in
-      if String.compare s1 s2 == 0 then r2
-      else 
-        begin
-          print_endline "cnv_int_to_ptr";
-          print_endline ("input :"^s1);
-          print_endline ("output:"^s2);
-          r2
-        end
-    else r2
-  in wrap_pre_post_gen pre post (fun _ -> cnv_int_to_ptr f true) f
-
-let cnv_int_to_ptr f =
-  let pr = Cprinter.string_of_pure_formula in
-  Debug.no_1 "cnv_int_to_ptr" pr pr cnv_int_to_ptr f
-
-let wrap_pre_post pre post f a =
-  let a = pre a in
-  let r = f a in
-  post r
 
 let om_simplify f =
   wrap_pre_post cnv_ptr_to_int cnv_int_to_ptr 
@@ -1769,34 +1891,45 @@ let om_hull f =
 let hull (f : CP.formula) : CP.formula =
   let _ = if no_andl f then () else report_warning no_pos "trying to do hull over labels!" in
   if not !tp_batch_mode then start_prover ();
-  let res = match !pure_tp with
+  let simpl_num = next_proof_no () in
+  let simpl_no = (string_of_int simpl_num) in
+  let cmd = PT_HULL f in
+  let _ = Log.last_proof_command # set cmd in
+  let fn f = match !pure_tp with
     | DP -> Dp.hull  f
     | Isabelle -> Isabelle.hull f
     | Coq -> (* Coq.hull f *)
-        if (is_list_constraint f) then (Coq.hull f)
-        else ((*Omega*)Smtsolver.hull f)
+          if (is_list_constraint f) then (Coq.hull f)
+          else ((*Omega*)Smtsolver.hull f)
     | Mona   -> Mona.hull f  
     | MonaH
     | OM ->
-        if (is_bag_constraint f) then (Mona.hull f)
-        else (om_hull f)
+          if (is_bag_constraint f) then (Mona.hull f)
+          else (om_hull f)
     | OI ->
-        if (is_bag_constraint f) then (Isabelle.hull f)
-        else (om_hull f)
+          if (is_bag_constraint f) then (Isabelle.hull f)
+          else (om_hull f)
     | SetMONA -> Mona.hull f
     | CM ->
-        if is_bag_constraint f then Mona.hull f
-        else om_hull f
+          if is_bag_constraint f then Mona.hull f
+          else om_hull f
     | Z3 -> Smtsolver.hull f
     | Redlog -> Redlog.hull f
     | Mathematica -> Mathematica.hull f
     | RM ->
-        if is_bag_constraint f then Mona.hull f
-        else Redlog.hull f
+          if is_bag_constraint f then Mona.hull f
+          else Redlog.hull f
     | ZM ->
-        if is_bag_constraint f then Mona.hull f
-        else Smtsolver.hull f
+          if is_bag_constraint f then Mona.hull f
+          else Smtsolver.hull f
     | _ -> (om_hull f) in
+  let logger fr tt timeout = 
+    let tp = (string_of_prover !pure_tp) in
+    let _ = add_proof_logging timeout !cache_status simpl_no simpl_num tp cmd tt 
+      (match fr with Some res -> PR_FORMULA res | None -> PR_exception) in
+    (tp,simpl_no)
+  in
+  let res = Timelog.log_wrapper "hull" logger fn f in
   if not !tp_batch_mode then stop_prover ();
   res
 
@@ -1810,11 +1943,15 @@ let om_pairwisecheck f =
 
 let om_pairwisecheck f =
   let pr = Cprinter.string_of_pure_formula in
-  Debug.no_1 "simplify_omega" pr pr om_pairwisecheck f
+  Debug.no_1 "om_pairwisecheck" pr pr om_pairwisecheck f
 
 let tp_pairwisecheck (f : CP.formula) : CP.formula =
   if not !tp_batch_mode then start_prover ();
-  let res = match !pure_tp with
+  let simpl_num = next_proof_no () in
+  let simpl_no = (string_of_int simpl_num) in
+  let cmd = PT_PAIRWISE f in
+  let _ = Log.last_proof_command # set cmd in
+  let fn f = match !pure_tp with
     | DP -> Dp.pairwisecheck f
     | Isabelle -> Isabelle.pairwisecheck f
     | Coq -> 
@@ -1841,6 +1978,13 @@ let tp_pairwisecheck (f : CP.formula) : CP.formula =
         if is_bag_constraint f then Mona.pairwisecheck f
         else Smtsolver.pairwisecheck f
     | _ -> (om_pairwisecheck f) in
+  let logger fr tt timeout = 
+    let tp = (string_of_prover !pure_tp) in
+    let _ = add_proof_logging timeout !cache_status simpl_no simpl_num tp cmd tt 
+      (match fr with Some res -> PR_FORMULA res | None -> PR_exception) in
+    (tp,simpl_no)
+  in
+  let res = Timelog.log_wrapper "pairwise" logger fn f in
   if not !tp_batch_mode then stop_prover ();
   res
   
@@ -1921,12 +2065,15 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
         (* let conseq = CP.drop_locklevel_pure conseq in *)
         (ante,conseq)
   in
-  let vrs = Cpure.fv ante in
-  let vrs = (Cpure.fv conseq)@vrs in
-  let imm_vrs = List.filter (fun x -> (CP.type_of_spec_var x) == AnnT) vrs in 
-  let imm_vrs = CP.remove_dups_svl imm_vrs in
-  (* add invariant constraint @M<:v<:@A for each annotation var *)
-  let ante = CP.add_ann_constraints imm_vrs ante in
+  (* ============================================================== *)
+  (* superceded by add_imm_inv which is only done for ante of imply *)
+  (* ============================================================== *)
+  (* let vrs = Cpure.fv ante in *)
+  (* let vrs = (Cpure.fv conseq)@vrs in *)
+  (* let imm_vrs = List.filter (fun x -> (CP.type_of_spec_var x) == AnnT) vrs in  *)
+  (* let imm_vrs = CP.remove_dups_svl imm_vrs in *)
+  (* (\* add invariant constraint @M<:v<:@A for each annotation var *\) *)
+  (* let ante = CP.add_ann_constraints imm_vrs ante in *)
   (* Handle Infinity Constraints *)
   let ante,conseq  = if !Globals.allow_inf then Infinity.normalize_inf_formula_imply ante conseq 
   else ante,conseq in
@@ -2098,19 +2245,28 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
   let _ = Gen.Profiling.pop_time "tp_is_sat" in 
   r
 
+
 let tp_imply_no_cache ante conseq imp_no timeout process =
-	(*wrapper for capturing equalities due to transitive equality with null*)
-	let enull = CP.Var (CP.SpecVar(Void,"NULLV",Unprimed),no_pos) in
-	let f_e _ (e,r) = match e with 
-		| CP.Eq(CP.Null _,CP.Var v,p2) -> Some ( (CP.Eq(enull, CP.Var v,p2),r), true)
-		| CP.Eq(CP.Var v,CP.Null _,p2) -> Some ( (CP.Eq(CP.Var v, enull,p2),r), true)
-		| _ -> None in
-	let transformer_fct = (fun _ _ -> None),f_e,(fun _ _ -> None) in
-	let tr_arg = (fun _ _->()),(fun _ _->()),(fun _ _->()) in
-	let ante,did = trans_formula ante ()  transformer_fct tr_arg (fun x -> List.exists (fun x->x) x) in
-	let ante = if did then  And(ante, (CP.mkNull (CP.SpecVar(Void,"NULLV",Unprimed)) no_pos) ,no_pos) 
-			   else ante in
-	tp_imply_no_cache ante conseq imp_no timeout process
+  let ante = 
+    if !Globals.allow_imm_inv then add_imm_inv ante conseq
+    else ante in
+  let ante = cnv_ptr_to_int ante in
+  let conseq = cnv_ptr_to_int_weak conseq in
+  tp_imply_no_cache ante conseq imp_no timeout process
+
+(* let tp_imply_no_cache ante conseq imp_no timeout process = *)
+(* 	(\*wrapper for capturing equalities due to transitive equality with null*\) *)
+(* 	let enull = CP.Var (CP.SpecVar(Void,"NULLV",Unprimed),no_pos) in *)
+(* 	let f_e _ (e,r) = match e with  *)
+(* 		| CP.Eq(CP.Null _,CP.Var v,p2) -> Some ( (CP.Eq(enull, CP.Var v,p2),r), true) *)
+(* 		| CP.Eq(CP.Var v,CP.Null _,p2) -> Some ( (CP.Eq(CP.Var v, enull,p2),r), true) *)
+(* 		| _ -> None in *)
+(* 	let transformer_fct = (fun _ _ -> None),f_e,(fun _ _ -> None) in *)
+(* 	let tr_arg = (fun _ _->()),(fun _ _->()),(fun _ _->()) in *)
+(* 	let ante,did = trans_formula ante ()  transformer_fct tr_arg (fun x -> List.exists (fun x->x) x) in *)
+(* 	let ante = if did then  And(ante, (CP.mkNull (CP.SpecVar(Void,"NULLV",Unprimed)) no_pos) ,no_pos)  *)
+(* 			   else ante in *)
+(* 	tp_imply_no_cache ante conseq imp_no timeout process *)
 
   
   

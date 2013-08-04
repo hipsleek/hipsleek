@@ -50,9 +50,82 @@ imply_mix_formula#1@1 EXIT out :(false,Some(([ q=null & m=0 & n=m+1 & 0<=n, q!=n
 
 
 ========================================================================
+# i8-2.slk
+
+infer [m] m=-1 |- y::node<_,_> & m>=0.
+
+There is a contradiction but why isn't it being picked?
+
+!!! early contra detect:false
+early_hp_contra_detection#1@4@3
+early_hp_contra_detection#1 inp1 : emp&m+1=0&{FLOW,(19,20)=__norm}[]
+  es_infer_vars: [m]
+early_hp_contra_detection#1 inp2 : y::node<Anon_12,Anon_13>@M&0<=m&{FLOW,(19,20)=__norm}[]
+early_hp_contra_detection#1@4 EXIT out :no contra
+ es = None
 ========================================================================
+# i8-3.slk  (i) FIXED by Thai
+
+GOT
+===
+infer [y] m=-1 |- y::node<a,b> & m>=0.
+ <1>hfalse&false&{FLOW,(19,20)=__norm}[]
+ inferred heap: [y::node<inf_a_33,inf_b_34>@inf_ann_32]
+ inferred pure: [b!=inf_b_34; inf_ann_32<=0]
+
+TWO PROBLEMS
+(i) why is b inferred for pure?
+
+This seems to be triggered here due to an incorrect infer_lhs_contra
+
+!!!:0: 0: >>>>>> infer_lhs_contra <<<<<<
+!!!:0: 0: trigger cond   : :ante contradict with conseq
+!!!:0: 0: LHS pure       : : m+1=0 & a=inf_a_33 & b=inf_b_34 & inf_ann_32<=0 & y!=null
+!!!:0: 0: ovrlap inf vars: :[inf_a_33,inf_b_34,inf_ann_32,y]
+!!!:0: 0: pre infer   : : (b!=inf_b_34 | inf_ann_32>0 | y=null)
+!!!:0: 0: new pre infer   : : b!=inf_b_34
+!!!:0: 0: pre thus   : : y!=null & inf_ann_32<=0 & inf_ann_32<=0
+
+(ii) why did we not fail earlier as there was already a
+    contradiction that could not be resolved by lhs_contra.
 ========================================================================
+# i8-3.slk: FIXED 
+
+!!! early contra detect:false
+!!! early failure due to lhs-rhs contra detected
+!!! between ante and conseq
+!!! ante (in ctx): es_formula: emp&m+1=0&{FLOW,(19,20)=__norm}[]
+!!! conseq: y::node<a,b>@M&0<=m&{FLOW,(19,20)=__norm}[]
+!!! Loc : please add suitable must-error message
+
+infer [y] m=1 |- y::node<a,b> & m>=0.
+print residue.
 ========================================================================
+# i13-5.slk --sa-en-cont
+
+infer [z,H1] x::node<z> * H1(y)  |- x::lseg<z> * y::lseg<null>.
+
+Succeeds individually but fails when put together
+
+!!! >>>>>> mismatch ptr z::lseg<z_32>@M is not found (or inst) in the lhs <<<<<<
+!!! dumping for sleek_dump(fail)
+Entail (1) : Fail.
+
+infer [z,H1] x::node<z>   |- x::lseg<z>.
+print residue.
+--> OK
+
+infer [z,H1] H1(y)  |- y::lseg<null> .
+print residue.
+--> OK
+
+infer [z,H1] x::node<z> * H1(y)  |- x::lseg<z>.
+print residue.
+--> OK
+
+infer [z,H1] H1(y)*x::node<z>  |- x::lseg<z> * y::lseg<null> .
+print residue.
+--> fails
 ========================================================================
 ========================================================================
 ========================================================================

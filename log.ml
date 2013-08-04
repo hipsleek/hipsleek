@@ -14,6 +14,8 @@ type proof_type =
 	| PT_IMPLY of (CP.formula * CP.formula)
 	| PT_SAT  of CP.formula
 	| PT_SIMPLIFY of CP.formula
+	| PT_HULL of CP.formula
+	| PT_PAIRWISE of CP.formula
 
 type proof_res =
 	| PR_BOOL of bool
@@ -32,6 +34,8 @@ type proof_log = {
     log_proving_kind : Others.proving_kind;
     log_prover : Others.tp_type;
     log_type : proof_type;
+    log_proof_string : string;
+    log_proof_result : string;
     log_time : float;
     log_timeout : bool;
     log_cache : bool;
@@ -104,6 +108,18 @@ let string_of_log_type lt =
 				"\n clean Simplify: "^(Cprinter.string_of_pure_formula (fst (CleanUp.cleanUpPureFormulas f (Cpure.mkTrue no_pos))))
 			else "" in
 		"Simplify: "^(string_of_pure_formula f)^clean_str
+    |PT_HULL f -> 
+		let clean_str = 
+			if !print_clean_flag then 
+				"\n clean Hull: "^(Cprinter.string_of_pure_formula (fst (CleanUp.cleanUpPureFormulas f (Cpure.mkTrue no_pos))))
+			else "" in
+		"Hull: "^(string_of_pure_formula f)^clean_str
+    |PT_PAIRWISE f -> 
+		let clean_str = 
+			if !print_clean_flag then 
+				"\n clean PairWise: "^(Cprinter.string_of_pure_formula (fst (CleanUp.cleanUpPureFormulas f (Cpure.mkTrue no_pos))))
+			else "" in
+		"PairWise: "^(string_of_pure_formula f)^clean_str
 
 let last_proof_command = new store (PT_SAT (CP.mkTrue no_pos)) (string_of_log_type )
 
@@ -136,6 +152,8 @@ let pr_proof_log_entry e =
   fmt_string ("; loc: "^(string_of_loc e.log_loc));
   fmt_string ("; kind: "^(Others.string_of_proving_kind e.log_proving_kind));
   (* fmt_string ("; "^((pr_list pr_id) e.log_other_properties)); *)
+  if !Globals.log_proof_details then fmt_string ("\n raw proof:" ^ e.log_proof_string);
+  if !Globals.log_proof_details then fmt_string (" raw result:" ^ e.log_proof_result);
   fmt_string ("\n " ^ (string_of_log_type e.log_type));
   fmt_string ("\n res: "^(string_of_log_res e.log_type e.log_res));
   fmt_string ("\n --------------------");
@@ -407,6 +425,8 @@ let add_proof_logging timeout_flag (cache_status:bool) old_no pno tp ptype time 
 	  log_prover = Others.last_tp_used # get;
 	  log_type = ptype;
 	  log_time = time;
+	  log_proof_string = Others.last_proof_string # get;
+	  log_proof_result = Others.last_proof_result # get;
 	  log_timeout = timeout_flag;
 	  log_cache = cache_status;
 	  log_res = res; } in
@@ -456,7 +476,9 @@ let proof_log_to_text_file fname (src_files) =
           |PT_IMPLY (ante, conseq) |PT_IMPLY_TOP (ante, conseq)
                 -> "Imply: ante:" ^(string_of_pure_formula ante) ^"\n\t     conseq: " ^(string_of_pure_formula conseq)
           |PT_SAT f-> "Sat: "^(string_of_pure_formula f) 
-          |PT_SIMPLIFY f -> "Simplify: "^(string_of_pure_formula f)
+          | PT_SIMPLIFY f -> "Simplify: "^(string_of_pure_formula f)
+          |PT_HULL f -> "Hull: "^(string_of_pure_formula f)
+          |PT_PAIRWISE f -> "PairWise: "^(string_of_pure_formula f)
       in
       let helper log =
         "\n--------------\n"^
