@@ -1891,34 +1891,45 @@ let om_hull f =
 let hull (f : CP.formula) : CP.formula =
   let _ = if no_andl f then () else report_warning no_pos "trying to do hull over labels!" in
   if not !tp_batch_mode then start_prover ();
-  let res = match !pure_tp with
+  let simpl_num = next_proof_no () in
+  let simpl_no = (string_of_int simpl_num) in
+  let cmd = PT_HULL f in
+  let _ = Log.last_proof_command # set cmd in
+  let fn f = match !pure_tp with
     | DP -> Dp.hull  f
     | Isabelle -> Isabelle.hull f
     | Coq -> (* Coq.hull f *)
-        if (is_list_constraint f) then (Coq.hull f)
-        else ((*Omega*)Smtsolver.hull f)
+          if (is_list_constraint f) then (Coq.hull f)
+          else ((*Omega*)Smtsolver.hull f)
     | Mona   -> Mona.hull f  
     | MonaH
     | OM ->
-        if (is_bag_constraint f) then (Mona.hull f)
-        else (om_hull f)
+          if (is_bag_constraint f) then (Mona.hull f)
+          else (om_hull f)
     | OI ->
-        if (is_bag_constraint f) then (Isabelle.hull f)
-        else (om_hull f)
+          if (is_bag_constraint f) then (Isabelle.hull f)
+          else (om_hull f)
     | SetMONA -> Mona.hull f
     | CM ->
-        if is_bag_constraint f then Mona.hull f
-        else om_hull f
+          if is_bag_constraint f then Mona.hull f
+          else om_hull f
     | Z3 -> Smtsolver.hull f
     | Redlog -> Redlog.hull f
     | Mathematica -> Mathematica.hull f
     | RM ->
-        if is_bag_constraint f then Mona.hull f
-        else Redlog.hull f
+          if is_bag_constraint f then Mona.hull f
+          else Redlog.hull f
     | ZM ->
-        if is_bag_constraint f then Mona.hull f
-        else Smtsolver.hull f
+          if is_bag_constraint f then Mona.hull f
+          else Smtsolver.hull f
     | _ -> (om_hull f) in
+  let logger fr tt timeout = 
+    let tp = (string_of_prover !pure_tp) in
+    let _ = add_proof_logging timeout !cache_status simpl_no simpl_num tp cmd tt 
+      (match fr with Some res -> PR_FORMULA res | None -> PR_exception) in
+    (tp,simpl_no)
+  in
+  let res = Timelog.log_wrapper "hull" logger fn f in
   if not !tp_batch_mode then stop_prover ();
   res
 
@@ -1936,7 +1947,11 @@ let om_pairwisecheck f =
 
 let tp_pairwisecheck (f : CP.formula) : CP.formula =
   if not !tp_batch_mode then start_prover ();
-  let res = match !pure_tp with
+  let simpl_num = next_proof_no () in
+  let simpl_no = (string_of_int simpl_num) in
+  let cmd = PT_PAIRWISE f in
+  let _ = Log.last_proof_command # set cmd in
+  let fn f = match !pure_tp with
     | DP -> Dp.pairwisecheck f
     | Isabelle -> Isabelle.pairwisecheck f
     | Coq -> 
@@ -1963,6 +1978,13 @@ let tp_pairwisecheck (f : CP.formula) : CP.formula =
         if is_bag_constraint f then Mona.pairwisecheck f
         else Smtsolver.pairwisecheck f
     | _ -> (om_pairwisecheck f) in
+  let logger fr tt timeout = 
+    let tp = (string_of_prover !pure_tp) in
+    let _ = add_proof_logging timeout !cache_status simpl_no simpl_num tp cmd tt 
+      (match fr with Some res -> PR_FORMULA res | None -> PR_exception) in
+    (tp,simpl_no)
+  in
+  let res = Timelog.log_wrapper "pairwise" logger fn f in
   if not !tp_batch_mode then stop_prover ();
   res
   

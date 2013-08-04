@@ -1398,7 +1398,7 @@ let process_hull (f : meta_formula) =
   with _ -> print_exc num_id
 
 let process_pairwise (f : meta_formula) =
-  let num_id = "Hull  ("^(string_of_int (sleek_proof_counter#inc_and_get))^")" in  
+  let num_id = "PairWise  ("^(string_of_int (sleek_proof_counter#inc_and_get))^")" in  
   try 
     let rs = run_pairwise f in
     print_result rs num_id
