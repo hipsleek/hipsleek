@@ -246,7 +246,7 @@ let compute_order_b_formula (bf:CP.b_formula) : order_atom list =
          [MO_Var(sv1,2)]
     | CP.BConst(b, loc) -> []
     | CP.RelForm (_ , el, _) -> List.flatten (List.map (fun e -> let (_,c,_) = compute_order_exp e in c) el)
-    | _ -> failwith ("compute_order_b_formula: not computed yet" ^(Cprinter.string_of_b_formula bf))
+    | _ -> failwith ("compute_order_b_formula not supporting :" ^(Cprinter.string_of_b_formula bf))
 
 
 let compute_order_formula_x (f:CP.formula) : order_atom list = 
