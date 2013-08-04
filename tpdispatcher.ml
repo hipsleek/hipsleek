@@ -993,11 +993,115 @@ let cnv_int_to_ptr f =
   let pr = Cprinter.string_of_pure_formula in
   Debug.ho_1 "cnv_int_to_ptr" pr pr (fun _ -> cnv_int_to_ptr f) f
 
-let norm_disj_lsts f1_conj f2_conj =
+(* let ex22 =  CP.norm_exp ex2 in *)
+
+let finalize_norm f1_conj f2_conj common_conj =
   let f1   = CP.join_conjunctions f1_conj in
   let f2   = CP.join_conjunctions f2_conj in
-  let disj = CP.mkOr f1 f2 None no_pos in 
-  disj
+  let disj = CP.mkOr f1 f2 None no_pos in
+  CP.join_conjunctions (common_conj@[disj])
+
+let make_srtict_ieq ieq =
+  match ieq with
+    | CP.BForm (b, lb) ->
+          begin
+            match b with
+              | (CP.Lte (CP.IConst (i, loci), (CP.Var(v,_) as var), s), l)
+              | (CP.Gte ((CP.Var(v,_) as var),CP.IConst (i, loci),  s), l) ->  CP.BForm ((CP.Lt (CP.IConst ((i-1), loci), var, s), l), lb)
+              | (CP.Lte ((CP.Var(v,_) as var), CP.IConst (i, loci), s), l)
+              | (CP.Gte (CP.IConst (i, loci), (CP.Var(v,_) as var), s), l) ->  CP.BForm ((CP.Lt (var, CP.IConst ((i+1), loci), s), l), lb)
+              | _ -> ieq
+          end
+    | _ -> ieq
+
+
+let simplif_arith f =
+  match f with
+    | CP.BForm (b, lb) ->
+          begin
+            let b = 
+              match b with
+                | (CP.Lte (e1, e2, s), l) ->  (CP.Lte (CP.norm_exp e1,CP.norm_exp e2, s), l)
+                | (CP.Lt (e1, e2, s), l) ->  (CP.Lt (CP.norm_exp e1,CP.norm_exp e2, s), l)
+                | (CP.Gte (e1, e2, s), l) ->  (CP.Gte (CP.norm_exp e1,CP.norm_exp e2, s), l)
+                | (CP.Gt (e1, e2, s), l) ->  (CP.Gt (CP.norm_exp e1,CP.norm_exp e2, s), l)
+                | (CP.Eq  (e1, e2, s), l) ->  (CP.Eq  (CP.norm_exp e1,CP.norm_exp e2, s), l)
+                | (CP.Neq (e1, e2, s), l) ->  (CP.Neq (CP.norm_exp e1,CP.norm_exp e2, s), l)
+                | _ -> b
+            in CP.BForm(b, lb)
+          end
+    | _ -> f
+
+let merge_other f1 f2 = CP.mkOr f1 f2 None no_pos
+
+let limit_conj = 3
+
+let list_of_n n start =
+  let rec aux n top lst =
+    if n == 0 then lst
+    else (aux (n-1) (top+1) lst@[top]) 
+  in aux n start []
+
+let neq_conj_n n bot var =
+  let lst_n = list_of_n n bot in
+  let f = List.fold_left (fun f i -> CP.join_conjunctions (f::[BForm((CP.mkNeq var (CP.mkIConst i no_pos) no_pos, None), None)]) ) (CP.mkTrue no_pos) lst_n in
+  f
+
+let merge_ieq_ieq f1 f2 =  (* merge_other f1 f2 *)
+  match f1, f2 with
+    | CP.BForm (b1, _), CP.BForm (b2, _) ->
+          begin
+          match b1,b2 with
+            | (CP.Lt (CP.IConst (i1, _), CP.Var(v1,_), _), _), (CP.Lt (CP.IConst (i2, loci), CP.Var(v2,_), _), _) ->
+                  if (CP.eq_spec_var v1 v2) then
+                    if i1<=i2 then f1 else f2
+                  else merge_other f1 f2
+            | (CP.Lt (CP.Var(v1,_) , CP.IConst (i1, _), _), _), (CP.Lt (CP.Var(v2,_), CP.IConst (i2, loci), _), _) ->
+                  if (CP.eq_spec_var v1 v2) then
+                    if i1<=i2 then f2 else f1
+                  else merge_other f1 f2
+            | (CP.Lt (CP.IConst (i1, _), CP.Var(v1,_), _), _), (CP.Lt ((CP.Var(v2,_) as var), CP.IConst (i2, loci), _), _)
+            | (CP.Lt ((CP.Var(v2,_) as var), CP.IConst (i2, loci), _), _), (CP.Lt (CP.IConst (i1, _), CP.Var(v1,_), _), _) ->
+                  if (CP.eq_spec_var v1 v2) then
+                    if i1<i2 then  CP.mkTrue no_pos 
+                    (* else if (i1==i2) then neq_conj_n 1 i1 var *)
+                    else 
+                      if((i1-i2+1) <= limit_conj) then neq_conj_n (i1-i2+1) i1 var
+                      else merge_other f1 f2
+                  else merge_other f1 f2
+            | _ -> merge_other f1 f2
+          end
+    | _ -> merge_other f1 f2
+
+      
+
+let merge_eq_ieq f1 f2 = merge_other f1 f2
+
+let merge_eq_eq f1 f2 = merge_other f1 f2
+
+let merge_two_disj f1 f2 = 
+  let f1 = simplif_arith f1 in
+  let f2 = simplif_arith f2 in
+  let f1 = make_srtict_ieq f1 in
+  let f2 = make_srtict_ieq f2 in
+  match CP.is_ieq f1, CP.is_ieq f2 with
+    | true, true ->   merge_ieq_ieq  f1 f2 
+    | false, true ->  if CP.is_eq_exp f1 then merge_eq_ieq f1 f2 else  merge_other f1 f2
+    | true, false ->  if CP.is_eq_exp f2 then merge_eq_ieq f2 f1 else  merge_other f1 f2
+    | false, false -> if (CP.is_eq_exp f1) && (CP.is_eq_exp f2) then merge_eq_eq f1 f2 else  merge_other f1 f2
+  
+
+let norm_disj_lsts f1_conj f2_conj =
+  match f1_conj, f2_conj with
+    | [], [] -> CP.mkTrue no_pos        (* should not reach this branch *)
+    | _ -> CP.mkTrue no_pos 
+
+let can_further_norm f1_conj f2_conj =
+  let f1_sv = List.fold_left (fun a f ->  (CP.all_vars f)@a) [] f1_conj in
+  let f2_sv = List.fold_left (fun a f ->  (CP.all_vars f)@a) [] f2_conj in
+  if Gen.BList.list_equiv_eq CP.eq_spec_var f1_sv f2_sv then true
+  else false
+
 
 let norm_disj f1 f2 =
   let f1_conj = (CP.split_conjunctions f1) in
@@ -1008,9 +1112,20 @@ let norm_disj f1 f2 =
     | [], [] -> f1                      (* identical formulas *)
     | _, []
     | [], _  -> CP.join_conjunctions common_conj 
+    | f1::[], f2::[] -> 
+          if can_further_norm [f1] [f2] then 
+            let new_f = merge_two_disj f1 f2 in
+            CP.join_conjunctions (common_conj@[new_f])
+            
+          else
+            finalize_norm f1_conj f2_conj common_conj
     | _, _   -> 
-          let norm = norm_disj_lsts f1_conj f2_conj in
-          CP.join_conjunctions (common_conj@[norm])
+          if can_further_norm f1_conj f2_conj then 
+            let norm = norm_disj_lsts f1_conj f2_conj in
+            CP.join_conjunctions (common_conj@[norm])
+            (* finalize_norm f1_conj f2_conj common_conj *)
+          else                          (* formulas can not be further normalized *)
+            finalize_norm f1_conj f2_conj common_conj
 
 
 (* this is to normalize result from simplify/hull/gist *)
@@ -1019,6 +1134,10 @@ let norm_pure_result f =
   let disj = CP.split_disjunctions f in (* size at least 1 *)
   let f = List.fold_left (fun a f -> norm_disj a f) (List.hd disj) (List.tl disj) in
   f
+
+let norm_pure_result f =
+  let pr = Cprinter.string_of_pure_formula in
+  Debug.ho_1 "norm_pure_result" pr pr (fun _ -> norm_pure_result f) f
 
 let wrap_pre_post_gen pre post f a =
   let s1 = pre a in

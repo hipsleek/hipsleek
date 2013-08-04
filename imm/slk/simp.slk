@@ -20,6 +20,10 @@ slk_simplify v<:@I & @L<:v.
 //Simplify  (7): false
 
 slk_simplify x!=0 & y>0.
+
+slk_simplify (x+1)<=0.
+
+slk_hull ((1<=y & 1<=x) | ((x+1)<=0 & 1<=y)).
 /*
 # imm/slk/simp.slk --dump-proof
 
