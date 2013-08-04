@@ -1121,9 +1121,9 @@ let norm_disj f1 f2 =
             finalize_norm f1_conj f2_conj common_conj
     | _, _   -> 
           if can_further_norm f1_conj f2_conj then 
-            let norm = norm_disj_lsts f1_conj f2_conj in
-            CP.join_conjunctions (common_conj@[norm])
-            (* finalize_norm f1_conj f2_conj common_conj *)
+            (* let norm = norm_disj_lsts f1_conj f2_conj in *)
+            (* CP.join_conjunctions (common_conj@[norm]) *)
+            finalize_norm f1_conj f2_conj common_conj
           else                          (* formulas can not be further normalized *)
             finalize_norm f1_conj f2_conj common_conj
 
