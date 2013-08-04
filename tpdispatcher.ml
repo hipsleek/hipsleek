@@ -938,7 +938,7 @@ let to_ptr ptr_flag pf =
   Debug.no_1 "to_ptr" pr pr (to_ptr ptr_flag)  pf
 
 
-let cnv_int_to_ptr flag f = 
+let cnv_int_to_ptr f = 
   let f_f e = None in
   let f_bf bf = 
     let (pf, l) = bf in
@@ -989,9 +989,14 @@ let cnv_int_to_ptr flag f =
   let f_e e = (Some e) in
   map_formula f (f_f, f_bf, f_e) 
 
-let cnv_int_to_ptr flag f = 
+let cnv_int_to_ptr f = 
   let pr = Cprinter.string_of_pure_formula in
-  Debug.no_1 "cnv_int_to_ptr" pr pr (fun _ -> cnv_int_to_ptr flag f) f
+  Debug.no_1 "cnv_int_to_ptr" pr pr (fun _ -> cnv_int_to_ptr f) f
+
+(* this is to normalize result from simplify/hull/gist *)
+let norm_pure_result f =
+  let f = cnv_int_to_ptr f in
+  f
 
 let wrap_pre_post_gen pre post f a =
   let s1 = pre a in
@@ -1038,8 +1043,8 @@ let cnv_ptr_to_int_weak f =
 let cnv_ptr_to_int(* _strong *) f =
   wrap_pre_post_print "cnv_ptr_to_int" (cnv_ptr_to_int (true,true)) f
 
-let cnv_int_to_ptr f =
-  wrap_pre_post_print "cnv_int_to_ptr" (cnv_int_to_ptr true) f
+let norm_pure_result f =
+  wrap_pre_post_print "norm_pure_result" norm_pure_result f
 
 
 (* let cnv_ptr_to_int f = *)
@@ -1066,9 +1071,9 @@ let cnv_int_to_ptr f =
 (*     else r2 *)
 (*   in wrap_pre_post_gen pre post (fun _ -> cnv_int_to_ptr f true) f *)
 
-let cnv_int_to_ptr f =
-  let pr = Cprinter.string_of_pure_formula in
-  Debug.no_1 "cnv_int_to_ptr" pr pr cnv_int_to_ptr f
+(* let cnv_int_to_ptr f = *)
+(*   let pr = Cprinter.string_of_pure_formula in *)
+(*   Debug.no_1 "cnv_int_to_ptr" pr pr cnv_int_to_ptr f *)
 
 let wrap_pre_post pre post f a =
   let a = pre a in
@@ -1665,7 +1670,7 @@ let tp_is_sat f sat_no =
 
 
 let om_simplify f =
-  wrap_pre_post cnv_ptr_to_int cnv_int_to_ptr 
+  wrap_pre_post cnv_ptr_to_int norm_pure_result
       Omega.simplify f 
   (* let f = cnv_ptr_to_int f in *)
   (* let r = Omega.simplify f in *)
@@ -1885,7 +1890,7 @@ let simplify_a (s:int) (f:CP.formula): CP.formula =
   Debug.no_1_num s ("TP.simplify_a") pf pf simplify f
 
 let om_hull f =
-  wrap_pre_post cnv_ptr_to_int cnv_int_to_ptr 
+  wrap_pre_post cnv_ptr_to_int norm_pure_result
       Omega.hull f 
 
 let hull (f : CP.formula) : CP.formula =
@@ -1938,7 +1943,7 @@ let hull (f : CP.formula) : CP.formula =
   Debug.no_1 "hull" pr pr hull f
 
 let om_pairwisecheck f =
-  wrap_pre_post cnv_ptr_to_int cnv_int_to_ptr 
+  wrap_pre_post cnv_ptr_to_int norm_pure_result
       Omega.pairwisecheck f 
 
 let om_pairwisecheck f =
