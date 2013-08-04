@@ -658,38 +658,38 @@ let is_common_and_not_consumed consumed lst c =
   else
     false
 
-let hull f1 f2 =  (* TP.hull (CP.mkOr f1 f2 None no_pos)  *)(* f1 *) (* fix *)
-  if CP.equalFormula f1 f2 then f1
-  else
-    let all1 = CP.fv f1 in
-    let all2 = CP.fv f2 in
+let hull f1 f2 =  TP.hull (CP.mkOr f1 f2 None no_pos)(* f1 *) (* fix *)
+  (* if CP.equalFormula f1 f2 then f1 *)
+  (* else *)
+  (*   let all1 = CP.fv f1 in *)
+  (*   let all2 = CP.fv f2 in *)
 
-    let emap1 = Label_aggr.build_eset_of_conj_formula f1 in
-    let emap2 = Label_aggr.build_eset_of_conj_formula f2 in
+  (*   let emap1 = Label_aggr.build_eset_of_conj_formula f1 in *)
+  (*   let emap2 = Label_aggr.build_eset_of_conj_formula f2 in *)
 
-    let f1_conj = (CP.split_conjunctions f1) in   
-    let f1_conj = List.filter (fv_in_common all2) f1_conj in
-    let f2_conj = (CP.split_conjunctions f2) in
-    let f2_conj = List.filter (fv_in_common all1) f2_conj in
+  (*   let f1_conj = (CP.split_conjunctions f1) in    *)
+  (*   let f1_conj = List.filter (fv_in_common all2) f1_conj in *)
+  (*   let f2_conj = (CP.split_conjunctions f2) in *)
+  (*   let f2_conj = List.filter (fv_in_common all1) f2_conj in *)
 
-    (*  todo: replace vars with constants where possible*)
-    let (ie1_conj, conj1) = List.partition CP.is_ieq f1_conj in
-    let (ie2_conj, conj2) = List.partition CP.is_ieq f2_conj in
+  (*   (\*  todo: replace vars with constants where possible*\) *)
+  (*   let (ie1_conj, conj1) = List.partition CP.is_ieq f1_conj in *)
+  (*   let (ie2_conj, conj2) = List.partition CP.is_ieq f2_conj in *)
 
-    let ie1 = List.map make_srtict_ieq ie1_conj in
-    let ie2 = List.map make_srtict_ieq ie2_conj in
+  (*   let ie1 = List.map make_srtict_ieq ie1_conj in *)
+  (*   let ie2 = List.map make_srtict_ieq ie2_conj in *)
 
-    let (consumed1, new_ieq2) =  merge_ieq_w_eq emap1 ie2 in
-    let (_, new_ieq1) =  merge_ieq_w_eq emap2 ie1 in
+  (*   let (consumed1, new_ieq2) =  merge_ieq_w_eq emap1 ie2 in *)
+  (*   let (_, new_ieq1) =  merge_ieq_w_eq emap2 ie1 in *)
 
-    let conj1 = List.filter (is_common_and_not_consumed consumed1 conj2) conj1 in
-    (* let conj2 = List.filter (is_common_and_not_consumed req2 conj1) conj2 in *)
+  (*   let conj1 = List.filter (is_common_and_not_consumed consumed1 conj2) conj1 in *)
+  (*   (\* let conj2 = List.filter (is_common_and_not_consumed req2 conj1) conj2 in *\) *)
 
-    (* add extra guards: eg hull(x=0 & z>2 | x>0 & z=2) = 0<=x & 2<=z & 3 < x+z *)
-    let hull_f = CP.join_conjunctions (new_ieq1@new_ieq2@conj1) in
-    (* to remove dupl and req1 and req2 *)
-    hull_f
-    (* TP.hull (CP.mkOr f1 f2 None no_pos) *)
+  (*   (\* add extra guards: eg hull(x=0 & z>2 | x>0 & z=2) = 0<=x & 2<=z & 3 < x+z *\) *)
+  (*   let hull_f = CP.join_conjunctions (new_ieq1@new_ieq2@conj1) in *)
+  (*   (\* to remove dupl and req1 and req2 *\) *)
+  (*   hull_f *)
+  (*   (\* TP.hull (CP.mkOr f1 f2 None no_pos) *\) *)
 
 let join_hull a f =
   match a,f with
@@ -697,6 +697,8 @@ let join_hull a f =
           -> 
           let l1 = LP.sort f1 in
           let l2 = LP.sort f2 in
+          (* grep only those labels which are common in both lists. It's not mandatory to be zippable *)
+          (* let common_lbls1 = List.filter (fun (l,_) -> if () then true else false ) l1 in *)
           let lst = 
             if LP.is_zippable l1 l2 then
               begin

@@ -991,11 +991,33 @@ let cnv_int_to_ptr f =
 
 let cnv_int_to_ptr f = 
   let pr = Cprinter.string_of_pure_formula in
-  Debug.no_1 "cnv_int_to_ptr" pr pr (fun _ -> cnv_int_to_ptr f) f
+  Debug.ho_1 "cnv_int_to_ptr" pr pr (fun _ -> cnv_int_to_ptr f) f
+
+let norm_disj_lsts f1_conj f2_conj =
+  let f1   = CP.join_conjunctions f1_conj in
+  let f2   = CP.join_conjunctions f2_conj in
+  let disj = CP.mkOr f1 f2 None no_pos in 
+  disj
+
+let norm_disj f1 f2 =
+  let f1_conj = (CP.split_conjunctions f1) in
+  let f2_conj = (CP.split_conjunctions f2) in
+  let common_conj, f1_conj = List.partition (fun f -> Gen.BList.mem_eq CP.equalFormula f f2_conj) f1_conj in
+  let f2_conj = Gen.BList.difference_eq CP.equalFormula f2_conj common_conj in
+  match f1_conj, f2_conj with
+    | [], [] -> f1                      (* identical formulas *)
+    | _, []
+    | [], _  -> CP.join_conjunctions common_conj 
+    | _, _   -> 
+          let norm = norm_disj_lsts f1_conj f2_conj in
+          CP.join_conjunctions (common_conj@[norm])
+
 
 (* this is to normalize result from simplify/hull/gist *)
 let norm_pure_result f =
   let f = cnv_int_to_ptr f in
+  let disj = CP.split_disjunctions f in (* size at least 1 *)
+  let f = List.fold_left (fun a f -> norm_disj a f) (List.hd disj) (List.tl disj) in
   f
 
 let wrap_pre_post_gen pre post f a =
