@@ -5853,10 +5853,15 @@ let fold_formula (e: formula) (f_f, f_bf, f_e) (f_comb: 'b list -> 'b) : 'b =
     snd (trans_formula e () new_f f_arg f_comb)
 
 (* map functions to formula with argument
- * f_f: 'a -> formula -> formula option
- * f_bf: 'a -> b_formula -> b_formula option
- * f_e: 'a -> exp -> exp option
+type: formula ->
+  'a ->
+  f_f : ('a -> formula -> formula option) * 
+  f_bf: ('a -> b_formula -> b_formula option) *
+  f_e: ('a -> exp -> exp option) ->
+  ('a -> formula -> 'a) * ('a -> b_formula -> 'a) * ('a -> exp -> 'a) ->
+  formula
  *)
+
 let map_formula_arg (e: formula) (arg: 'a) (f_f, f_bf, f_e) f_arg : formula =
     let trans_func f = (fun a e -> push_opt_void_pair (f a e)) in
     let new_f = trans_func f_f, trans_func f_bf, trans_func f_e in
@@ -6481,10 +6486,12 @@ let is_gt eq e1 e2 =
           -> (int_of_heap_ann i1)>(int_of_heap_ann i2)
     | _,_ -> false
 
-let const_lend = AConst (Lend,no_pos)
-let const_imm = AConst (Imm,no_pos)
-let const_mut = AConst (Mutable,no_pos)
-let const_abs = AConst (Accs,no_pos)
+let const_ann_lend = AConst (Lend,no_pos)
+let const_ann_imm = AConst (Imm,no_pos)
+let const_ann_mut = AConst (Mutable,no_pos)
+let const_ann_abs = AConst (Accs,no_pos)
+let const_ann_top = const_ann_abs
+let const_ann_bot = const_ann_mut
 
 let is_diff e1 e2 =
   match e1,e2 with

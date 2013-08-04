@@ -14,6 +14,8 @@ type proof_type =
 	| PT_IMPLY of (CP.formula * CP.formula)
 	| PT_SAT  of CP.formula
 	| PT_SIMPLIFY of CP.formula
+	| PT_HULL of CP.formula
+	| PT_PAIRWISE of CP.formula
 
 type proof_res =
 	| PR_BOOL of bool
@@ -106,6 +108,18 @@ let string_of_log_type lt =
 				"\n clean Simplify: "^(Cprinter.string_of_pure_formula (fst (CleanUp.cleanUpPureFormulas f (Cpure.mkTrue no_pos))))
 			else "" in
 		"Simplify: "^(string_of_pure_formula f)^clean_str
+    |PT_HULL f -> 
+		let clean_str = 
+			if !print_clean_flag then 
+				"\n clean Hull: "^(Cprinter.string_of_pure_formula (fst (CleanUp.cleanUpPureFormulas f (Cpure.mkTrue no_pos))))
+			else "" in
+		"Hull: "^(string_of_pure_formula f)^clean_str
+    |PT_PAIRWISE f -> 
+		let clean_str = 
+			if !print_clean_flag then 
+				"\n clean PairWise: "^(Cprinter.string_of_pure_formula (fst (CleanUp.cleanUpPureFormulas f (Cpure.mkTrue no_pos))))
+			else "" in
+		"PairWise: "^(string_of_pure_formula f)^clean_str
 
 let last_proof_command = new store (PT_SAT (CP.mkTrue no_pos)) (string_of_log_type )
 
@@ -462,7 +476,9 @@ let proof_log_to_text_file fname (src_files) =
           |PT_IMPLY (ante, conseq) |PT_IMPLY_TOP (ante, conseq)
                 -> "Imply: ante:" ^(string_of_pure_formula ante) ^"\n\t     conseq: " ^(string_of_pure_formula conseq)
           |PT_SAT f-> "Sat: "^(string_of_pure_formula f) 
-          |PT_SIMPLIFY f -> "Simplify: "^(string_of_pure_formula f)
+          | PT_SIMPLIFY f -> "Simplify: "^(string_of_pure_formula f)
+          |PT_HULL f -> "Hull: "^(string_of_pure_formula f)
+          |PT_PAIRWISE f -> "PairWise: "^(string_of_pure_formula f)
       in
       let helper log =
         "\n--------------\n"^
