@@ -983,7 +983,7 @@ let add_imm_inv f1 f2 =
   let vs = List.filter (fun v -> CP.is_ann_type (CP.type_of_spec_var v)) vs in
   let inv = List.map (fun v -> 
       let vp=Var(v,no_pos) in 
-      mkAnd (mkSubAnn const_mut vp) (mkSubAnn vp const_abs) no_pos ) vs in
+      mkAnd (mkSubAnn const_ann_bot vp) (mkSubAnn vp const_ann_top) no_pos ) vs in
   let f1_inv = join_conjunctions (f1::inv) in
   let _ = Debug.ninfo_hprint (add_str "Ann Vars" Cprinter.string_of_spec_var_list) vs no_pos in
   let _ = Debug.ninfo_hprint (add_str "Inv" Cprinter.string_of_pure_formula) f1_inv no_pos in
@@ -1380,9 +1380,12 @@ let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
         (* let f = CP.drop_locklevel_pure f in *)
         f
   in
-  let vrs = Cpure.fv f in
-  let imm_vrs = List.filter (fun x -> (CP.type_of_spec_var x) == AnnT) vrs in 
-  let f = Cpure.add_ann_constraints imm_vrs f in
+  (* ============================================================== *)
+  (* superceded by add_imm_inv which is only done for ante of imply *)
+  (* ============================================================== *)
+  (* let vrs = Cpure.fv f in *)
+  (* let imm_vrs = List.filter (fun x -> (CP.type_of_spec_var x) == AnnT) vrs in  *)
+  (* let f = Cpure.add_ann_constraints imm_vrs f in *)
   let _ = disj_cnt f None "sat_no_cache" in
   let (pr_weak,pr_strong) = CP.drop_complex_ops in
   let (pr_weak_z3,pr_strong_z3) = CP.drop_complex_ops_z3 in
@@ -1997,12 +2000,15 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
         (* let conseq = CP.drop_locklevel_pure conseq in *)
         (ante,conseq)
   in
-  let vrs = Cpure.fv ante in
-  let vrs = (Cpure.fv conseq)@vrs in
-  let imm_vrs = List.filter (fun x -> (CP.type_of_spec_var x) == AnnT) vrs in 
-  let imm_vrs = CP.remove_dups_svl imm_vrs in
-  (* add invariant constraint @M<:v<:@A for each annotation var *)
-  let ante = CP.add_ann_constraints imm_vrs ante in
+  (* ============================================================== *)
+  (* superceded by add_imm_inv which is only done for ante of imply *)
+  (* ============================================================== *)
+  (* let vrs = Cpure.fv ante in *)
+  (* let vrs = (Cpure.fv conseq)@vrs in *)
+  (* let imm_vrs = List.filter (fun x -> (CP.type_of_spec_var x) == AnnT) vrs in  *)
+  (* let imm_vrs = CP.remove_dups_svl imm_vrs in *)
+  (* (\* add invariant constraint @M<:v<:@A for each annotation var *\) *)
+  (* let ante = CP.add_ann_constraints imm_vrs ante in *)
   (* Handle Infinity Constraints *)
   let ante,conseq  = if !Globals.allow_inf then Infinity.normalize_inf_formula_imply ante conseq 
   else ante,conseq in

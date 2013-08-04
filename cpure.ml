@@ -6486,10 +6486,12 @@ let is_gt eq e1 e2 =
           -> (int_of_heap_ann i1)>(int_of_heap_ann i2)
     | _,_ -> false
 
-let const_lend = AConst (Lend,no_pos)
-let const_imm = AConst (Imm,no_pos)
-let const_mut = AConst (Mutable,no_pos)
-let const_abs = AConst (Accs,no_pos)
+let const_ann_lend = AConst (Lend,no_pos)
+let const_ann_imm = AConst (Imm,no_pos)
+let const_ann_mut = AConst (Mutable,no_pos)
+let const_ann_abs = AConst (Accs,no_pos)
+let const_ann_top = const_ann_abs
+let const_ann_bot = const_ann_mut
 
 let is_diff e1 e2 =
   match e1,e2 with
