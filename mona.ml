@@ -948,12 +948,12 @@ and mona_of_b_formula_x b f vs =
 	          "(" ^ (mona_of_exp a1 f) ^ " ~= " ^ (string_of_int i) ^ ")"
             else
 	          "(" ^ (mona_of_exp a1 f) ^ " ~= pconst(" ^ (string_of_int i) ^ "))"
-      | CP.Neq (a, CP.Null _, _) 
-      | CP.Neq (CP.Null _, a, _) ->
-            if (is_firstorder_mem a vs) then
-              "(" ^ (mona_of_exp a f) ^ " > 0)"
-            else
-              " greater(" ^ (mona_of_exp a f) ^ ", pconst(0))"
+      (* | CP.Neq (a, CP.Null _, _)  *)
+      (* | CP.Neq (CP.Null _, a, _) -> *)
+      (*       if (is_firstorder_mem a vs) then *)
+      (*         "(" ^ (mona_of_exp a f) ^ " > 0)" *)
+      (*       else *)
+      (*         " greater(" ^ (mona_of_exp a f) ^ ", pconst(0))" *)
       | CP.Neq (a1, a2, _) ->
 	        if (is_firstorder_mem a1 vs)&& (is_firstorder_mem a2 vs) then
 	          "(" ^ (mona_of_exp a1 f) ^ " ~= " ^ (mona_of_exp a2 f) ^ ")"
@@ -979,12 +979,12 @@ and mona_of_b_formula_x b f vs =
 	          "(" ^ (mona_of_exp a1 f) ^ " = " ^ (string_of_int i) ^ ")"
             else
 	          "(" ^ (mona_of_exp a1 f) ^ " = pconst(" ^ (string_of_int i) ^ "))"
-      | CP.Eq (a1, CP.Null _, _) 
-      | CP.Eq (CP.Null _, a1, _) ->
-            if (is_firstorder_mem a1 vs) then
-	          "(" ^ (mona_of_exp a1 f) ^ " = 0)"
-            else
-	          "(" ^ (mona_of_exp a1 f) ^ " = pconst(0))"
+      (* | CP.Eq (a1, CP.Null _, _)  *)
+      (* | CP.Eq (CP.Null _, a1, _) -> *)
+      (*       if (is_firstorder_mem a1 vs) then *)
+      (*             "(" ^ (mona_of_exp a1 f) ^ " = 0)" *)
+      (*       else *)
+      (*             "(" ^ (mona_of_exp a1 f) ^ " = pconst(0))" *)
       | CP.Eq (a1, a2, _) -> 
             if (is_firstorder_mem a1 vs)&& (is_firstorder_mem a2 vs) then
               "(" ^ (mona_of_exp a1 f) ^ " = " ^ (mona_of_exp a2 f) ^ ")"
@@ -1037,8 +1037,8 @@ and mona_of_b_formula_x b f vs =
       | CP.ListAllN _
       | CP.ListPerm _ -> failwith ("Lists are not supported in Mona")
       | CP.LexVar _ -> failwith ("LexVar is not supported in Mona")
-	  | CP.VarPerm _ -> failwith ("VarPerm is not supported in Mona")
-	  | CP.RelForm _ -> failwith ("Relations are not supported in Mona") (* An Hoa *) 
+      | CP.VarPerm _ -> failwith ("VarPerm is not supported in Mona")
+      | CP.RelForm _ -> failwith ("Relations are not supported in Mona") (* An Hoa *) 
   in
   ret
 
