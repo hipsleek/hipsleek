@@ -991,7 +991,7 @@ let cnv_int_to_ptr f =
 
 let cnv_int_to_ptr f = 
   let pr = Cprinter.string_of_pure_formula in
-  Debug.ho_1 "cnv_int_to_ptr" pr pr (fun _ -> cnv_int_to_ptr f) f
+  Debug.no_1 "cnv_int_to_ptr" pr pr (fun _ -> cnv_int_to_ptr f) f
 
 (* let ex22 =  CP.norm_exp ex2 in *)
 
@@ -1137,7 +1137,7 @@ let norm_pure_result f =
 
 let norm_pure_result f =
   let pr = Cprinter.string_of_pure_formula in
-  Debug.ho_1 "norm_pure_result" pr pr (fun _ -> norm_pure_result f) f
+  Debug.no_1 "norm_pure_result" pr pr (fun _ -> norm_pure_result f) f
 
 let wrap_pre_post_gen pre post f a =
   let s1 = pre a in
