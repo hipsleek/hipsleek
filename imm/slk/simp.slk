@@ -1,0 +1,12 @@
+slk_simplify v<:@M & @M<:v.
+
+slk_simplify v<:@L.
+
+
+slk_simplify v<:@M.
+
+slk_simplify @M<:v.
+
+slk_simplify @A<:v.
+
+slk_simplify @L<:v.

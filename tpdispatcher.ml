@@ -863,25 +863,46 @@ let comm_is_null a1 a2 =
           (is_otype (type_of_spec_var v),a2,a1)
     | _ -> (false,a1,a2)
 
+let comm_is_ann a1 a2 =
+  match a1,a2 with
+    | Var(v,_),IConst(i,_) ->
+          (is_ann_type (type_of_spec_var v),a1,i)
+    | IConst(i,_),Var(v,_) ->
+          (is_ann_type (type_of_spec_var v),a2,i)
+    | _ -> (false,a1,0)
+
 let is_ptr_ctr a1 a2 =
   match a1,a2 with
     | Var(v,_),IConst(_,_) ->
-          is_otype (type_of_spec_var v)
+          let t=type_of_spec_var v in
+          (is_otype t,is_ann_type t)
     | IConst(_,_),Var(v,_) ->
-          is_otype (type_of_spec_var v)
-    | _ -> false
+          let t=type_of_spec_var v in
+          (is_otype t,is_ann_type t)
+    | _ -> (false,false)
 
 let is_ptr_ctr a1 a2 =
   let pr = Cprinter.string_of_formula_exp in
-  Debug.no_2 "is_ptr_ctr" pr pr string_of_bool is_ptr_ctr a1 a2
+  let pb = string_of_bool in
+  Debug.no_2 "is_ptr_ctr" pr pr (pr_pair pb pb) is_ptr_ctr a1 a2
+
+(* pre 0<=v<=3 *)
+let int_to_ann v = 
+  if v=0 then const_ann_mut
+  else if v=1 then const_ann_imm
+  else if v=2 then const_ann_lend
+  else const_ann_abs
+
+let is_valid_ann v = 0<=v && v<=3 
 
 let is_null a1 a2 =
   match a1,a2 with
     | Var(v,_),IConst(0,_) ->
           (is_otype (type_of_spec_var v),a1,a2)
     | _ -> (false,a1,a2)
+
 (* s>0 -> 0<s -> 1<=s *)
-let to_ptr pf =
+let to_ptr ptr_flag pf =
   let rec norm pf = 
     match pf with
       | Lt(a,IConst(i,l),ll) -> Lte(a,IConst(i-1,l),ll)
@@ -892,17 +913,29 @@ let to_ptr pf =
   in let pf = norm pf in
   match pf with
     | Lte((Var(v,_) as a1), IConst(i,_),ll) ->
-            if i<=(-1) then BConst(false,ll)
+          if ptr_flag then
+            if i<=(-1) then BConst(false,ll)   (* v<=0 --> v=M; v<=1 --> @L<:v *)
             else if i>0 then BConst(true,ll)
             else Eq(a1,Null ll,ll)
+          else (* ann_flag *)
+            if i<=(-1)  then BConst(false,ll)
+            else if i>2 then BConst(true,ll)
+            else if i=0 then Eq(a1,int_to_ann i,ll)
+            else SubAnn(a1,int_to_ann i,ll)
     | Lte(IConst(i,_),(Var(v,_) as a1),ll) ->
+          if ptr_flag then
             if i>=1 then Neq(a1,Null ll,ll)
             else BConst(true,ll)
+          else (* ann_flag *)
+            if i<=(0)  then BConst(true,ll)
+            else if i>3 then BConst(false,ll)
+            else if i=3 then Eq(a1,int_to_ann i,ll)
+            else SubAnn(int_to_ann i,a1,ll)
     | _ -> pf
 
-let to_ptr pf =
+let to_ptr ptr_flag pf =
   let pr f = Cprinter.string_of_b_formula (f,None) in
-  Debug.no_1 "to_ptr" pr pr to_ptr pf
+  Debug.no_1 "to_ptr" pr pr (to_ptr ptr_flag)  pf
 
 
 let cnv_int_to_ptr flag f = 
@@ -912,35 +945,45 @@ let cnv_int_to_ptr flag f =
     match pf with
       | Eq (a1, a2, ll) -> 
             let (is_null_flag,a1,a2) = comm_is_null a1 a2 in
-          if is_null_flag then
+            if is_null_flag then
               Some(Eq(a1,Null ll,ll),l)
-          else Some bf
+            else 
+              let (is_ann_flag,a1,i) = comm_is_ann a1 a2 in
+              if is_ann_flag then
+                if is_valid_ann i then Some(Eq(a1,int_to_ann i,ll),l)
+                else  Some(BConst (false,ll),l) (* contradiction *)
+            else  Some bf
       | Neq (a1, a2, ll) -> 
-          let (is_null_flag,a1,a2) = comm_is_null a1 a2 in
-          if is_null_flag then
+            let (is_null_flag,a1,a2) = comm_is_null a1 a2 in
+            if is_null_flag then
               Some(Neq(a1,Null ll,ll),l)
-          else Some bf
+            else let (is_ann_flag,a1,i) = comm_is_ann a1 a2 in
+              if is_valid_ann i then
+                if is_ann_flag then Some(Neq(a1,int_to_ann i,ll),l)
+                else  Some(BConst (true,ll),l) (* of course *)
+            else Some bf
       | Lte (a1, a2,_) | Gte(a1,a2,_) | Gt(a1,a2,_) | Lt(a1,a2,_) ->
-          if is_ptr_ctr a1 a2 then Some(to_ptr(pf),l)
-          else Some bf
-      (* | Lte ((Var(v,_) as a1), IConst(0,_), ll) | Gte (IConst(0,_), (Var(v,_) as a1), ll)  *)
-      (* | Lt ((Var(v,_) as a1), IConst(1,_), ll) | Gt (IConst(1,_), (Var(v,_) as a1), ll) ->  *)
-      (*     if is_otype (type_of_spec_var v) then *)
-      (*         Some(Eq(a1,Null ll,ll),l) *)
-      (*     else Some bf *)
-      (* | Gte ((Var(v,_) as a1), IConst(1,_), ll) | Lte (IConst(1,_), (Var(v,_) as a1), ll)   *)
-      (* | Gt ((Var(v,_) as a1), IConst(0,_), ll) | Lt (IConst(0,_), (Var(v,_) as a1), ll) -> *)
-      (*       if is_otype (type_of_spec_var v) then *)
-      (*         Some(Neq(a1,Null ll,ll),l) *)
-      (*       else Some bf *)
-      (* | Gte (Var(v,_), IConst(0,_), ll) | Lte (IConst(0,_), Var(v,_), ll) ->  *)
-      (*     if is_otype (type_of_spec_var v) then *)
-      (*         Some(BConst(true,ll),l) *)
-      (*     else Some bf *)
-      (* | Lt (Var(v,_), IConst(0,_), ll) | Gt (IConst(0,_), Var(v,_), ll) ->  *)
-      (*     if is_otype (type_of_spec_var v) then *)
-      (*         Some (BConst(false,ll),l) *)
-      (*     else Some bf *)
+            let ptr_flag,ann_flag = is_ptr_ctr a1 a2 in
+            if ptr_flag || ann_flag then Some(to_ptr ptr_flag pf,l)
+            else Some bf
+              (* | Lte ((Var(v,_) as a1), IConst(0,_), ll) | Gte (IConst(0,_), (Var(v,_) as a1), ll)  *)
+              (* | Lt ((Var(v,_) as a1), IConst(1,_), ll) | Gt (IConst(1,_), (Var(v,_) as a1), ll) ->  *)
+              (*     if is_otype (type_of_spec_var v) then *)
+              (*         Some(Eq(a1,Null ll,ll),l) *)
+              (*     else Some bf *)
+              (* | Gte ((Var(v,_) as a1), IConst(1,_), ll) | Lte (IConst(1,_), (Var(v,_) as a1), ll)   *)
+              (* | Gt ((Var(v,_) as a1), IConst(0,_), ll) | Lt (IConst(0,_), (Var(v,_) as a1), ll) -> *)
+              (*       if is_otype (type_of_spec_var v) then *)
+              (*         Some(Neq(a1,Null ll,ll),l) *)
+              (*       else Some bf *)
+              (* | Gte (Var(v,_), IConst(0,_), ll) | Lte (IConst(0,_), Var(v,_), ll) ->  *)
+              (*     if is_otype (type_of_spec_var v) then *)
+              (*         Some(BConst(true,ll),l) *)
+              (*     else Some bf *)
+              (* | Lt (Var(v,_), IConst(0,_), ll) | Gt (IConst(0,_), Var(v,_), ll) ->  *)
+              (*     if is_otype (type_of_spec_var v) then *)
+              (*         Some (BConst(false,ll),l) *)
+              (*     else Some bf *)
       | _ -> Some bf
   in
   let f_e e = (Some e) in
