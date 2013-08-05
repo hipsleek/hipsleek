@@ -975,7 +975,7 @@ and mona_of_b_formula_x b f vs =
               str ^ " nequal(" ^ a1name ^ ", " ^ a2name ^ ") "^ end_str
       | CP.Eq((CP.Add(a1, a2, _)), a3, _)
       | CP.Eq(a3, (CP.Add(a1, a2, _)), _) ->
-            let _ = Debug.info_pprint "add and eq" no_pos in
+            let _ = Debug.ninfo_pprint "add and eq" no_pos in
             if (is_firstorder_mem a1 vs) && (is_firstorder_mem a2 vs) && (is_firstorder_mem a3 vs) then
               let a1str = (mona_of_exp a1 f) in
               let a2str = (mona_of_exp a2 f) in

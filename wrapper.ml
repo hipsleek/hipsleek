@@ -18,11 +18,11 @@ let wrap_classic et f a =
 let wrap_gen save_fn set_fn restore_fn flags f a =
   (* save old_value *)
   let old_values = save_fn flags in
-  let _ = set_fn flags in
+  let () = set_fn flags in
   try 
     let res = f a in
     (* restore old_value *)
-    restore_fn old_values;
+    let () = restore_fn old_values in
     res
   with _ as e ->
       (restore_fn old_values;
