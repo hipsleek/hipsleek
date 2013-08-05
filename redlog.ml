@@ -10,6 +10,9 @@ module CP = Cpure
 
 let set_prover_type () = Others.last_tp_used # set Others.Redlog
 
+let set_proof_string str = Others.last_proof_string # set str
+let set_proof_result str = Others.last_proof_result # set str
+
 (* options *)
 let is_presburger = ref false
 let no_pseudo_ops = ref false
@@ -95,6 +98,7 @@ let rec read_till_prompt (channel: in_channel) : string =
  *)
 let send_cmd cmd =
   if !is_reduce_running then 
+    let _ = set_proof_string (cmd) in
     let cmd = cmd ^ ";\n" in
     let _ = output_string !process.outchannel cmd in
     let _ = flush !process.outchannel in
@@ -167,6 +171,7 @@ let send_and_receive f =
   if !is_reduce_running then
     try
         let fnc () =
+          let _ = set_proof_string f in
           let _ = send_cmd f in
           input_line !process.inchannel
         in
@@ -178,6 +183,7 @@ let send_and_receive f =
             Procutils.PrvComms.maybe_raise_and_catch_timeout fnc () !timeout fail_with_timeout
           else fnc ()
         in
+        let _ = set_proof_result answ in
         answ
     with
         (* Timeout exception is not expected here except for dis_provers_timeout *)
