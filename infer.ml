@@ -1101,7 +1101,10 @@ let rec infer_pure_m_x unk_heaps estate lhs_rels lhs_xpure_orig lhs_xpure0 lhs_w
                                   let pf1 = (CP.mkAnd lhs_xpure (CP.conj_of_list (ps@rs) pos) pos) in
                                   let pf2 = TP.simplify_with_pairwise 2 pf1 in
                                   let pf = MCP.mix_of_pure pf2 in
-                                  (* let pf = (MCP.mix_of_pure (TP.simplify_raw pf)) in *)
+                                  (* let _ = DD.info_hprint (add_str "pf1" !CP.print_formula) pf1 pos in *)
+                                  (* let pf2 = TP.simplify_raw pf1 in *)
+                                  (* let pf = (MCP.mix_of_pure pf2) in *)
+                                  (* let _ = DD.info_hprint (add_str "pf2(simplify_raw)" !CP.print_formula) pf2 pos in  *)
                                   let new_estate = {estate with es_formula = 
                                           (match estate.es_formula with
                                             | Base b -> CF.mkBase_simp b.formula_base_heap pf
@@ -1350,7 +1353,7 @@ and infer_pure_m unk_heaps estate lhs_rels lhs_xpure_orig lhs_xpure0 lhs_wo_heap
   let pr_res_lst = pr_list (fun (es,r,b) -> (pr_pair (pr2) (pr_list CP.print_lhs_rhs)) (es,r)) in
   let pr_res = pr_triple (pr_option (pr_pair pr2 !print_pure_f)) (pr_option pr_p) pr_res_lst in
   let pr0 es = pr_pair pr2 !CP.print_svl (es,es.es_infer_vars) in
-  Debug.no_5 "infer_pure_m_1" 
+  Debug.to_5 "infer_pure_m_1" 
       (add_str "estate " pr0) 
       (add_str "lhs xpure " pr_p) 
       (add_str "lhs xpure0 " pr1)
@@ -1403,7 +1406,7 @@ let infer_pure_m i unk_heaps estate lhs_xpure lhs_xpure0 lhs_wo_heap rhs_xpure p
   (* let pr_len = fun l -> (string_of_int (List.length l)) in *)
   let pr_res = pr_triple (pr_option (pr_pair pr2 !print_pure_f)) (pr_option pr_p) pr_res_lst in
   let pr0 es = pr_pair pr2 !CP.print_svl (es,es.es_infer_vars) in
-  Debug.no_4_num i "infer_pure_m_2" 
+  Debug.to_4_num i "infer_pure_m_2" 
     (add_str "estate " pr0) 
     (add_str "lhs xpure " pr1) 
     (add_str "lhs xpure0 " pr1)

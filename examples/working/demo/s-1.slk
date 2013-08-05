@@ -1,11 +1,11 @@
+
+/*
+
 data node { int val ; node next }.
 
 pred ll<n> == self = null & n = 0
 	or self::node<next = r> * r::ll<n - 1>
 	inv n >= 0.
-
-/*
-
 
 */
 /*
@@ -15,19 +15,20 @@ checkentail x::node<_,q> * q::ll<n> & n > 2
 
 
 
-checkentail x!=null
-      |- x=null.
-
 
 checkentail x::ll<n> & n > 2 
       |- x=null.
 
-*/
-
-
 checkentail x::node<_,_>
       |- x=null.
 
+
+*/
+
+
+
+checkentail x!=null
+      |- x!=null.
 
 
 

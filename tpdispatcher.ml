@@ -2177,8 +2177,8 @@ let pairwisecheck_raw (f : CP.formula) : CP.formula =
 
 let simplify_with_pairwise (f : CP.formula) : CP.formula =
   let pf = Cprinter.string_of_pure_formula in
-  let f1 = simplify f in
-  let f2 = pairwisecheck f1 in
+  let f1 = simplify_raw f in
+  let f2 = pairwisecheck_raw f1 in
   Debug.ninfo_hprint (add_str "simplifyX(input)" pf) f no_pos;
   Debug.ninfo_hprint (add_str "simplifyX(output)" pf) f1 no_pos;
   Debug.ninfo_hprint (add_str "simplifyX(pairwise)" pf) f2 no_pos;
@@ -2186,7 +2186,7 @@ let simplify_with_pairwise (f : CP.formula) : CP.formula =
 
 let simplify_with_pairwise (s:int) (f:CP.formula): CP.formula = 
   let pf = Cprinter.string_of_pure_formula in
-  Debug.no_1_num s ("TP.simplify_with_pairwise") pf pf simplify_with_pairwise f
+  Debug.ho_1_num s ("TP.simplify_with_pairwise") pf pf simplify_with_pairwise f
 
 
 let should_output () = !print_proof && not !suppress_imply_out
