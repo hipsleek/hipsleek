@@ -24,7 +24,7 @@ else
 endif
 
 #  number of parallel jobs, 0 means unlimited.
-JOBS = 0
+JOBS = 16
 
 # dynlink should precede camlp4lib
 LIBSB = unix,str,xml-light,dynlink,camlp4lib,nums,$(LIBBATLIB),$(LIBELIB),$(LIBGLIB)
@@ -51,8 +51,9 @@ OBG_FLAGS = -no-links -libs $(LIBS2) -cflags $(FLAGS) -lflags $(FLAGS) -lexflag 
 
 XML = cd $(CURDIR)/xml; make all; make opt; cd ..
 
-all: byte decidez.vo 
-#gui
+all: byte 
+# decidez.vo 
+# gui
 byte: sleek.byte hip.byte
 
 gbyte: sleek.gbyte hip.gbyte

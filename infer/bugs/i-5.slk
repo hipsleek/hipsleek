@@ -1,0 +1,7 @@
+relation K(int x).
+infer [K] K(n) & n>0 |- n>2.
+print residue.
+
+/*
+!!! stk_estate:[]Omega Error format: K(n) & 0<n & 3<=n
+*/

@@ -7173,6 +7173,9 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
   in
   (*let _ = print_string "what is going on?\n" in*)
   (* Termination *)
+  let pr = Cprinter.string_of_formula in
+  (* let _ = Debug.info_hprint (add_str "stk_estate" (pr_list pr))  *)
+  (*   (List.map (fun es -> es.es_formula) (stk_estate # get_stk)) no_pos in *)
   let (estate,_,rhs_p,rhs_wf) =
     if not !Globals.dis_term_chk then
       Term.check_term_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos

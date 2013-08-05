@@ -1101,7 +1101,10 @@ let rec infer_pure_m_x unk_heaps estate lhs_rels lhs_xpure_orig lhs_xpure0 lhs_w
                                   let pf1 = (CP.mkAnd lhs_xpure (CP.conj_of_list (ps@rs) pos) pos) in
                                   let pf2 = TP.simplify_with_pairwise 2 pf1 in
                                   let pf = MCP.mix_of_pure pf2 in
-                                  (* let pf = (MCP.mix_of_pure (TP.simplify_raw pf)) in *)
+                                  (* let _ = DD.info_hprint (add_str "pf1" !CP.print_formula) pf1 pos in *)
+                                  (* let pf2 = TP.simplify_raw pf1 in *)
+                                  (* let pf = (MCP.mix_of_pure pf2) in *)
+                                  (* let _ = DD.info_hprint (add_str "pf2(simplify_raw)" !CP.print_formula) pf2 pos in  *)
                                   let new_estate = {estate with es_formula = 
                                           (match estate.es_formula with
                                             | Base b -> CF.mkBase_simp b.formula_base_heap pf
