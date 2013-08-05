@@ -1042,7 +1042,7 @@ let simplif_arith f =
 
 
 (* ===========================================================================  *)
-
+(* simplify/hul/pairwise check normalizatio *)
 
 type disj_tree = Empty | Node of  (CP.Label_Pure.exp_ty list) * (disj_tree list)
 
@@ -1233,6 +1233,10 @@ let formula_of_tree tree =
           let disj_clause = CP.join_disjunctions (List.map aux disj) in
           CP.join_conjunctions (common::[disj_clause] )
   in aux tree
+
+
+(* end of simplify/hul/pairwise check normalizatio *)
+(* ===========================================================================  *)
 
 (* this is to normalize result from simplify/hull/gist *)
 let norm_pure_result f =
