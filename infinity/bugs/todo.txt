@@ -33,6 +33,23 @@ cnv_int_to_ptr inp1 : (v<ZInfinity | ZInfinity<v)
 cnv_int_to_ptr@6 EXIT out : (v!=(\inf) | ZInfinity<v)
 Simplify  (6): (ZInfinity<v | v!=(\inf))
 =======================================================================
+# inf75a.slk
+
+slk_simplify x=null & mi=\inf.
+
+Gives:
+ Simplify  (1): x=null
+
+
+Reason is that normalization converts mi=\inf to true!
+Can we do this:
+   mi=\inf --> mi=ZInfinity
+   mi!=Int --> mi<ZInfinity
+
+norm_pure_input@20@19
+norm_pure_input inp1 : x=null & mi=\inf
+norm_pure_input@20 EXIT out : x=0 & true
+
 =======================================================================
 =======================================================================
 =======================================================================

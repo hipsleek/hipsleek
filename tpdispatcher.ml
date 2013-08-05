@@ -1005,7 +1005,7 @@ let cnv_int_to_ptr f =
 
 let cnv_int_to_ptr f = 
   let pr = Cprinter.string_of_pure_formula in
-  Debug.ho_1 "cnv_int_to_ptr" pr pr (fun _ -> cnv_int_to_ptr f) f
+  Debug.no_1 "cnv_int_to_ptr" pr pr (fun _ -> cnv_int_to_ptr f) f
 
 (* let ex22 =  CP.norm_exp ex2 in *)
 
@@ -1931,8 +1931,12 @@ let tp_is_sat f sat_no =
 
 let norm_pure_input f =
   let f = cnv_ptr_to_int f in
-  let f = if !Globals.allow_inf then Infinity.normalize_inf_formula_sat f else f in
+  let f = if !Globals.allow_inf then Infinity.normalize_inf_formula(* _sat *) f else f in
   f
+
+let norm_pure_input f =
+  let pr = Cprinter.string_of_pure_formula in
+  Debug.no_1 "norm_pure_input" pr pr norm_pure_input f
 
 let om_simplify f =
   (* wrap_pre_post cnv_ptr_to_int norm_pure_result *)

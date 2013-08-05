@@ -71,8 +71,10 @@ let is_tmp_int sv = match sv with
   | SpecVar (Int,str,_) ->  ((String.length str) > 5) && ((String.compare (String.sub str 0 5) "v_int") == 0)
   | _ -> false
 
+let zinf_str = constinfinity
+
 let is_inf_sv sv = match sv with
-  | SpecVar (Int,"ZInfinity",_) -> true
+  | SpecVar (Int,zinf_str,_) -> true
   | _ -> false
 
 type rel_cat = 
@@ -1724,7 +1726,7 @@ and mkSubtract a1 a2 pos = Subtract (a1, a2, pos)
 
 and mkIConst a pos = IConst (a, pos)
 
-and mkInfConst pos = InfConst ("XXXInf", pos)
+and mkInfConst pos = InfConst (zinf_str, pos)
 
 and mkFConst a pos = FConst (a, pos)
 
