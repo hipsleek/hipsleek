@@ -828,8 +828,8 @@ let cnv_ptr_to_int (ex_flag,st_flag) f =
               Some (Gt(a1,IConst(0,ll),ll),l)
             else 
               Some (Neq(a1,IConst(0,ll),ll),l)
-          else None
-      | _ -> None
+          else Some(bf)
+      | _ -> Some(bf)
   in
   let f_e arg e = (Some e) in
   let a_f ((ex_flag,st_flag) as flag) f =

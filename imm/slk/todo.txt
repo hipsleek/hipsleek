@@ -52,6 +52,35 @@ slk_pairwise x=1 | x=2.
  res:  1<=x & x<=2
 
 ===============================================================
+# simp.slk
+
+Wrong proof type for simplify & hull & pairwise!
+Should be Omega..
+
+ -------------------- 
+ id: 13<1; prover : CACHED ; loc: _0:0_0:0; kind: Sleek_Entail(11)
+ raw proof:no proof raw result:no result
+ Imply: ante: x=null & y=null
+             conseq:  x=y
+ res: true
+ -------------------- 
+ id: 14<1; prover : CACHED ; loc: _0:0_0:0; kind: UNKNOWN
+ raw proof:SIMPLIFY:{[x, y] : (((x != 0) & (0 < y)))};
+ raw result:{[x,y]: 1 <= y && 1 <= x} union {[x,y]: x <= -1 && 1 <= y}
+ Simplify:  x!=0 & 0<y
+ res:  ((1<=y & 1<=x) | (x<=(0-1) & 1<=y))
+ -------------------- 
+ id: 15<1; prover : CACHED ; loc: _0:0_0:0; kind: UNKNOWN
+ raw proof:SIMPLIFY:{[x] : ((1 + x <= 0))};
+ raw result:{[x]: x <= -1}
+ Simplify:  (1+x)<=0
+ res:  x<=(0-1)
+ -------------------- 
+ id: 16<1; prover : CACHED ; loc: _0:0_0:0; kind: UNKNOWN
+ raw proof:HULL:hull {[x, y] : ((((1 <= y) & (1 <= x)) | ((1 + x <= 0) & (1 <= y))))};
+ raw result:{[x,y]: 1 <= y}
+ Hull:  ((1<=y & 1<=x) | ((1+x)<=0 & 1<=y))
+ res:  1<=y
 ===============================================================
 ===============================================================
 ===============================================================

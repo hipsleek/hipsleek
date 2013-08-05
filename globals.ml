@@ -338,6 +338,9 @@ class ['a] store (x_init:'a) (epr:'a->string) =
        | None -> emp_val
        | Some p -> p
      method reset = lc <- None
+     method get_rm :'a = match lc with
+       | None -> emp_val
+       | Some p -> (self#reset; p)
      method string_of : string = match lc with
        | None -> "Why None?"
        | Some l -> (epr l)

@@ -425,8 +425,8 @@ let add_proof_logging timeout_flag (cache_status:bool) old_no pno tp ptype time 
 	  log_prover = Others.last_tp_used # get;
 	  log_type = ptype;
 	  log_time = time;
-	  log_proof_string = Others.last_proof_string # get;
-	  log_proof_result = Others.last_proof_result # get;
+	  log_proof_string = Others.last_proof_string # get_rm;
+	  log_proof_result = Others.last_proof_result # get_rm;
 	  log_timeout = timeout_flag;
 	  log_cache = cache_status;
 	  log_res = res; } in
