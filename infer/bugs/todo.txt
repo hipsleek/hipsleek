@@ -103,6 +103,7 @@ print residue.
 ========================================================================
 # i13-5.slk --sa-en-cont
 
+
 infer [z,H1] x::node<z> * H1(y)  |- x::lseg<z> * y::lseg<null>.
 
 Succeeds individually but fails when put together
@@ -127,6 +128,13 @@ infer [z,H1] H1(y)*x::node<z>  |- x::lseg<z> * y::lseg<null> .
 print residue.
 --> fails
 ========================================================================
+# i13-5.slk --sa-en-cont
+
+infer [z] x::node<z>   |- x::lseg<z>.
+
+<1>emp&q_27=z & z=null & q_27!=x&{FLOW,(19,20)=__norm}[]
+ inferred pure: [z=null]
+why the res contains z=null??
 ========================================================================
 ========================================================================
 ========================================================================

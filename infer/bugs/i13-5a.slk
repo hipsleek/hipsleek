@@ -1,0 +1,26 @@
+// examples from bi-abduction paper
+
+data node {
+	node next;	
+}.
+
+pred lseg<p> == self = p 
+	or self::node<q> * q::lseg<p> & self!=p 
+  inv true.
+
+HeapPred H1(node a).
+
+//(5)
+
+//checkentail x::node<z>   |- x::lseg<z>.
+//print residue.
+
+infer [z] x::node<z>   |- x::lseg<z>.
+print residue.
+
+/*
+Why z=null?
+<1>emp&q_27=z & z=null & q_27!=x&{FLOW,(19,20)=__norm}[]
+ inferred pure: [z=null]
+
+*/

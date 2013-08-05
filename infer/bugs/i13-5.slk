@@ -12,8 +12,8 @@ HeapPred H1(node a).
 
 //(5)
 
-checkentail x::node<z>   |- x::lseg<z>.
-print residue.
+//checkentail x::node<z>   |- x::lseg<z>.
+//print residue.
 
 infer [z] x::node<z>   |- x::lseg<z>.
 print residue.
