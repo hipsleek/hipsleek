@@ -4780,7 +4780,8 @@ and heap_entail_after_sat_x prog is_folding  (ctx:CF.context) (conseq:CF.formula
 and early_hp_contra_detection_x hec_num prog estate conseq pos = 
   (* if there is no hp inf, post pone contra detection *)
   (* if (List.length estate.es_infer_vars_hp_rel == 0 ) then  (false, None) *)
-  (* else *)
+  if (Infer.no_infer_all_all estate) then  (true,false, None)
+  else
     begin
       let (r_inf_contr,real_c), relass = solver_detect_lhs_rhs_contra 1 prog estate conseq pos "EARLY CONTRA DETECTION" in
       let h_inf_args, hinf_args_map = get_heap_inf_args estate in
@@ -4833,7 +4834,7 @@ and early_hp_contra_detection hec_num prog estate conseq pos =
     ^ ("\n es = " ^ (pr_option Cprinter.string_of_entail_state es)) in
   let pr2 = Cprinter.string_of_formula in
   let f = wrap_proving_kind PK_Early_Contra_Detect (early_hp_contra_detection_x hec_num prog estate conseq) in
-  Debug.to_2_num hec_num "early_hp_contra_detection" Cprinter.string_of_entail_state_short pr2 pr_res 
+  Debug.no_2_num hec_num "early_hp_contra_detection" Cprinter.string_of_entail_state_short pr2 pr_res 
         (fun _ _ -> f pos) estate conseq
 
 and early_hp_contra_detection_add_to_list_context_x hec_num prog estate conseq pos = 

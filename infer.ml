@@ -802,7 +802,7 @@ let detect_lhs_rhs_contra_x (*lhs_xpure*) lhs_xpure_orig rhs_xpure pos =
 
 let detect_lhs_rhs_contra lhs rhs pos =
 	let pr = !CP.print_formula in
-	Debug.to_2 "detect_lhs_rhs_contra" pr pr (pr_pair string_of_bool !CP.print_formula) 
+	Debug.no_2 "detect_lhs_rhs_contra" pr pr (pr_pair string_of_bool !CP.print_formula) 
 		(fun _ _ -> detect_lhs_rhs_contra_x lhs rhs pos) lhs rhs
 	  
 (* let infer_h prog estate conseq lhs_b rhs_b lhs_rels*)

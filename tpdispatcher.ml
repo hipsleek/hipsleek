@@ -1914,7 +1914,7 @@ let tp_is_sat (f:CP.formula) (old_sat_no :string) =
   res
 
 let tp_is_sat f sat_no =
-  Debug.ho_1 "tp_is_sat" Cprinter.string_of_pure_formula string_of_bool 
+  Debug.no_1 "tp_is_sat" Cprinter.string_of_pure_formula string_of_bool 
       (fun f -> tp_is_sat f sat_no) f
     
 (* let tp_is_sat (f: CP.formula) (sat_no: string) do_cache = *)
@@ -2349,7 +2349,7 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
   let conseq_s = conseq in
   let omega_imply a c = Omega.imply_ops pr_weak pr_strong a c imp_no timeout in
   let redlog_imply a c = wrap_redlog (Redlog.imply_ops pr_weak pr_strong a c) imp_no (* timeout *) in
-  let redlog_imply a c = wrap_ocredlog (Redlog.imply_ops pr_weak pr_strong a c) imp_no (* timeout *) in
+  let oc_redlog_imply a c = wrap_ocredlog (Redlog.imply_ops pr_weak pr_strong a c) imp_no (* timeout *) in
   let mathematica_imply a c = Mathematica.imply_ops pr_weak pr_strong a c imp_no (* timeout *) in
   let mona_imply a c = Mona.imply_ops pr_weak pr_strong a c imp_no in
   let coq_imply a c = Coq.imply_ops pr_weak pr_strong a c in
@@ -2426,7 +2426,7 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
         else (omega_imply ante conseq)
     | SetMONA -> Setmona.imply ante_w conseq_s 
     | Redlog -> redlog_imply ante_w conseq_s  
-    | OCRed -> redlog_imply ante_w conseq_s  
+    | OCRed -> oc_redlog_imply ante_w conseq_s  
     | Mathematica -> mathematica_imply ante_w conseq_s  
     | RM ->
           (*use UNSOUND approximation
@@ -2536,7 +2536,7 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
   
 let tp_imply_no_cache ante conseq imp_no timeout process =
   let pr = Cprinter.string_of_pure_formula in
-  Debug.ho_4_loop "tp_imply_no_cache" pr pr (fun s -> s) string_of_prover string_of_bool
+  Debug.no_4_loop "tp_imply_no_cache" pr pr (fun s -> s) string_of_prover string_of_bool
   (fun _ _ _ _ -> tp_imply_no_cache ante conseq imp_no timeout process) ante conseq imp_no !pure_tp
 
 let tp_imply_perm ante conseq imp_no timeout process = 
