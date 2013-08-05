@@ -20,6 +20,8 @@ checkentail x!=null
 
 
 */
+checkentail x::node<_,_>
+      |- x=null.
 
 checkentail x::ll<n> & n > 2 
       |- x=null.

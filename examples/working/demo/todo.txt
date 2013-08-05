@@ -1,4 +1,4 @@
-# s-1.slk
+# s-1.slk :FIXED (use xpure 1 instead of xpure 0)
 
 checkentail x::ll<n> & n > 2 
       |- x=null.

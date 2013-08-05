@@ -4787,7 +4787,8 @@ and early_hp_contra_detection_x hec_num prog estate conseq pos =
       let orig_inf_vars = estate.es_infer_vars in
       let orig_ante = estate.es_formula in
       match r_inf_contr with
-        | Some (new_estate, pf) -> 
+        | Some (new_estate, pf) ->
+              let _ = Debug.tinfo_pprint "..in Some" pos in
               let new_estate = {new_estate with es_infer_vars = orig_inf_vars; es_orig_ante = Some orig_ante} in
               let temp_ctx = SuccCtx[false_ctx_with_orig_ante new_estate orig_ante pos] in
               (* let _ = Debug.info_pprint ("*********1********") no_pos in *)
@@ -4815,6 +4816,7 @@ and early_hp_contra_detection_x hec_num prog estate conseq pos =
               in
               (real_c,true, Some es)
         | None ->  
+              let _ = Debug.tinfo_pprint "..in None" pos in
               match relass with
 		| [(es,h,_)] -> 
                       let new_estate = { es with es_infer_vars = orig_inf_vars; es_orig_ante = Some orig_ante } in
@@ -4831,7 +4833,7 @@ and early_hp_contra_detection hec_num prog estate conseq pos =
     ^ ("\n es = " ^ (pr_option Cprinter.string_of_entail_state es)) in
   let pr2 = Cprinter.string_of_formula in
   let f = wrap_proving_kind PK_Early_Contra_Detect (early_hp_contra_detection_x hec_num prog estate conseq) in
-  Debug.no_2_num hec_num "early_hp_contra_detection" Cprinter.string_of_entail_state_short pr2 pr_res 
+  Debug.to_2_num hec_num "early_hp_contra_detection" Cprinter.string_of_entail_state_short pr2 pr_res 
         (fun _ _ -> f pos) estate conseq
 
 and early_hp_contra_detection_add_to_list_context_x hec_num prog estate conseq pos = 
@@ -5108,16 +5110,7 @@ and heap_entail_conjunct_lhs_x hec_num prog is_folding  (ctx:context) (conseq:CF
                 (* let _ = Debug.info_hprint (add_str "ante (in ctx)" pr) ante no_pos in *)
                 (* let _ = Debug.info_hprint (add_str "conseq" pr) conseq no_pos in *)
                 (* let _ = Debug.info_pprint "Loc : please add suitable must-error message" no_pos  in *)
-                let rec extract_pure f=
-                  match f with
-                    | CF.Base fb ->
-                          let (mix_lf,lsvl,mem_lf) = xpure_heap_symbolic 18 prog fb.CF.formula_base_heap 0 in
-                          MCP.pure_of_mix (MCP.merge_mems mix_lf fb.CF.formula_base_pure true)
-                    | CF.Exists _ ->
-                          let _,  base_f = CF.split_quantifiers f in
-                          extract_pure base_f
-                    | _ -> report_error no_pos "Solver.extract_pure"
-                in
+                let rec extract_pure f= let (mf,_,_) = xpure prog f in (MCP.pure_of_mix mf)  in
                 let (fc, (contra_list, must_list, may_list)) = ME.check_maymust_failure (extract_pure ante)
                   (extract_pure conseq) in
                 let new_estate = {
