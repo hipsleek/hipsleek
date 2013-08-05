@@ -5152,7 +5152,7 @@ and log_contra_detect hec_num conseq result pos =
     let _ = Log.add_sleek_logging false 0. es.es_infer_vars !Globals.do_classic_frame_rule caller 
       (* avoid *) false hec_num slk_no orig_ante conseq es.es_heap es.es_evars (Some result) pos in
     () in
-  let f = wrap_proving_kind PK_Early_Contra_Detect (new_slk_log result) in
+  let f = wrap_proving_kind PK_Unknown (* Early_Contra_Detect *) (new_slk_log result) in
   let es_opt = estate_opt_of_list_context result in
   match es_opt with
     | Some es -> f es
