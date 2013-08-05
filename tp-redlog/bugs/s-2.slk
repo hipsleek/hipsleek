@@ -1,3 +1,6 @@
 checkentail true & (x+x=y & x>0) |- y>1.
 print residue.
 
+
+checkentail true & (a*b=y & a>0 & b>0) |- y>=1.
+print residue.

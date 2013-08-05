@@ -98,11 +98,11 @@ let rec read_till_prompt (channel: in_channel) : string =
  *)
 let send_cmd cmd =
   if !is_reduce_running then 
-    let _ = set_proof_string (cmd) in
     let cmd = cmd ^ ";\n" in
     let _ = output_string !process.outchannel cmd in
     let _ = flush !process.outchannel in
-    let _ = read_till_prompt !process.inchannel in
+    let k = read_till_prompt !process.inchannel in
+    let _ = set_proof_result ("3:"^k) in
     ()
 
 let set_rl_mode mode =
@@ -171,7 +171,7 @@ let send_and_receive f =
   if !is_reduce_running then
     try
         let fnc () =
-          let _ = set_proof_string f in
+          let _ = set_proof_string ("2:"^f^"\n") in
           let _ = send_cmd f in
           input_line !process.inchannel
         in
