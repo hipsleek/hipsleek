@@ -157,6 +157,10 @@ let common_arguments = [
    "Turn off experimental trace_on");
   ("--en-ddb", Arg.Set Debug.trace_on,
    "Turn on experimental trace_on");
+  ("--en-early-contra", Arg.Set Globals.early_contra_flag,
+   "Enable early contra detection always");
+  ("--dis-early-contra", Arg.Clear Globals.early_contra_flag,
+   "Diable early contra detection which now only happens with inference");
   ("-dd-print-orig-conseq", Arg.Unit Debug.enable_dd_and_orig_conseq_printing,
    "Enable printing of the original consequent while debugging. Automatically enables -dd (debugging) ");
   ("--en-imp-top", Arg.Set Globals.imply_top_flag,
