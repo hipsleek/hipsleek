@@ -7,6 +7,8 @@ slk_pairwise x=1 | x=3.
 
 slk_pairwise x=1 | x=2.
 
+slk_simplify ((1<=y & 1<=x) | (z<=0 & 1<=y)).
+
 
 /*
 # imm/slk/simp-2.slk --dump-proof
