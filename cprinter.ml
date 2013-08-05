@@ -2959,6 +2959,27 @@ let pr_view_decl v =
   fmt_close_box ();
   pr_mem:=true
 
+
+let pr_view_decl_short v =
+  pr_mem:=false;
+  let f bc =
+    match bc with
+	  | None -> ()
+      | Some (s1,s2) -> pr_vwrap "base case: " (fun () -> pr_pure_formula s1;fmt_string "->"; pr_mix_formula s2) ()
+  in
+  fmt_open_vbox 1;
+  wrap_box ("B",0) (fun ()-> pr_angle  ("view"^v.view_name) pr_typed_spec_var_lbl 
+      (List.combine v.view_labels v.view_vars); fmt_string "= ") ();
+  fmt_cut (); wrap_box ("B",0) pr_struc_formula v.view_formula; 
+  pr_vwrap  "cont vars: "  pr_list_of_spec_var v.view_cont_vars;
+  pr_vwrap  "inv: "  pr_mix_formula v.view_user_inv;
+  pr_vwrap  "unstructured formula: "  (pr_list_op_none "|| " (wrap_box ("B",0) (fun (c,_)-> pr_formula c))) v.view_un_struc_formula;
+  pr_vwrap  "xform: " pr_mix_formula v.view_x_formula;
+  pr_vwrap  "is_recursive?: " fmt_string (string_of_bool v.view_is_rec);
+  pr_vwrap  "view_data_name: " fmt_string v.view_data_name;
+  fmt_close_box ();
+  pr_mem:=true
+
 let pr_prune_invs inv_lst = 
   "prune invs: " ^ (String.concat "," (List.map 
       (fun c-> (fun (c1,c2)-> 
@@ -2971,6 +2992,8 @@ let string_of_prune_invs inv_lst : string = pr_prune_invs inv_lst
 let string_of_view_base_case (bc:(P.formula *MP.mix_formula) option): string =  poly_string_of_pr pr_view_base_case bc
 
 let string_of_view_decl (v: Cast.view_decl): string =  poly_string_of_pr pr_view_decl v
+
+let string_of_view_decl_short (v: Cast.view_decl): string =  poly_string_of_pr pr_view_decl_short v
 
 let string_of_barrier_decl (v: Cast.barrier_decl): string = poly_string_of_pr pr_barrier_decl v
 

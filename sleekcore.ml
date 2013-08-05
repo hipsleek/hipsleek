@@ -30,7 +30,7 @@ module TI = Typeinfer
 module MCP = Mcpure
 
 
-let sleek_entail_check isvl (cprog: C.prog_decl) ante conseq=
+let sleek_entail_check_x isvl (cprog: C.prog_decl) ante conseq=
   let pr = Cprinter.string_of_struc_formula in
   let conseq = Solver.prune_pred_struc cprog true conseq in
   let _ = DD.tinfo_hprint (add_str "conseq(after prune)" pr) conseq no_pos in 
@@ -97,6 +97,14 @@ let sleek_entail_check isvl (cprog: C.prog_decl) ante conseq=
     else ((not (CF.isFailCtx rs))) in
   (* residues := Some (rs, res); *)
   (res, rs,v_hp_rel)
+
+let sleek_entail_check isvl (cprog: C.prog_decl) ante conseq=
+  let pr1 = Cprinter.prtt_string_of_formula in
+  let pr2 = Cprinter.string_of_struc_formula in
+  let pr3 = pr_triple string_of_bool Cprinter.string_of_list_context !CP.print_svl in
+  Debug.no_2 "sleek_entail_check" pr1 pr2 pr3
+      (fun _ _ -> sleek_entail_check_x isvl cprog ante conseq)
+      ante conseq
 
 let sleek_sat_check isvl cprog f=
   true

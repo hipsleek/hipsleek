@@ -1,0 +1,20 @@
+#eq-view-1.slk: DONE
+
+equivalent definition. generate two lemmas:
+ - left
+ - right
+
+===================================================================
+#sem-mat.slk
+
+two views is not the same length of paras
+
+ - need check cont parameter
+ - search to matching cont parameter with real termination value
+===================================================================
+
+===================================================================
+
+===================================================================
+
+===================================================================

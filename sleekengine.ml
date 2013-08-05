@@ -31,6 +31,7 @@ module SAU = Sautility
 module SAC = Sacore
 module MCP = Mcpure
 module SC = Sleekcore
+module LEM = Lemma
 
 let sleek_proof_counter = new Gen.counter 0
 
@@ -459,6 +460,9 @@ let convert_data_and_pred_to_cast_x () =
   let cprog5 = (*if !Globals.enable_case_inference then AS.case_inference iprog cprog4 else*) cprog4 in
   let _ = if (!Globals.print_input || !Globals.print_input_all) then print_string (Iprinter.string_of_program iprog) else () in
   let _ = if (!Globals.print_core || !Globals.print_core_all) then print_string (Cprinter.string_of_program cprog5) else () in
+  let l2r, r2l = LEM.generate_lemma_4_views iprog cprog5 in
+  let _ = cprog5.C.prog_left_coercions <- l2r @ cprog5.C.prog_left_coercions in
+  let _ = cprog5.C.prog_right_coercions <- r2l @ cprog5.C.prog_right_coercions in
   cprog := cprog5
 
 let convert_data_and_pred_to_cast () = 
