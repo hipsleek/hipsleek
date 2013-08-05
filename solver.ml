@@ -5110,16 +5110,7 @@ and heap_entail_conjunct_lhs_x hec_num prog is_folding  (ctx:context) (conseq:CF
                 (* let _ = Debug.info_hprint (add_str "ante (in ctx)" pr) ante no_pos in *)
                 (* let _ = Debug.info_hprint (add_str "conseq" pr) conseq no_pos in *)
                 (* let _ = Debug.info_pprint "Loc : please add suitable must-error message" no_pos  in *)
-                let rec extract_pure f=
-                  match f with
-                    | CF.Base fb ->
-                          let (mix_lf,lsvl,mem_lf) = xpure_heap_symbolic 18 prog fb.CF.formula_base_heap 0 in
-                          MCP.pure_of_mix (MCP.merge_mems mix_lf fb.CF.formula_base_pure true)
-                    | CF.Exists _ ->
-                          let _,  base_f = CF.split_quantifiers f in
-                          extract_pure base_f
-                    | _ -> report_error no_pos "Solver.extract_pure"
-                in
+                let rec extract_pure f= let (mf,_,_) = xpure prog f in (MCP.pure_of_mix mf)  in
                 let (fc, (contra_list, must_list, may_list)) = ME.check_maymust_failure (extract_pure ante)
                   (extract_pure conseq) in
                 let new_estate = {
