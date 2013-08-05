@@ -1724,6 +1724,8 @@ and mkSubtract a1 a2 pos = Subtract (a1, a2, pos)
 
 and mkIConst a pos = IConst (a, pos)
 
+and mkInfConst pos = InfConst ("XXXInf", pos)
+
 and mkFConst a pos = FConst (a, pos)
 
 and mkMult a1 a2 pos = Mult (a1, a2, pos)

@@ -731,6 +731,10 @@ let rec normalize_inf_formula_sat (f: CP.formula): CP.formula =
   (*let _ = DD.vv_trace("Normalized: "^ (string_of_pure_formula pf_norm)) in*)
   
 let normalize_inf_formula_sat (f: CP.formula) : CP.formula = 
+  let pr = Cprinter.string_of_pure_formula in
+  Debug.no_1 "normalize_inf_formula_sat " pr pr normalize_inf_formula_sat f
+
+let normalize_inf_formula_sat (f: CP.formula) : CP.formula = 
   Gen.Profiling.do_1 "INF-norm-sat" (normalize_inf_formula_sat) f
 
  let normalize_inf_formula (f: CP.formula): CP.formula = 
@@ -760,6 +764,11 @@ let normalize_inf_formula_imply (ante: CP.formula) (conseq: CP.formula) : CP.for
     let new_c = join_conjunctions (List.map normalize_inf_formula new_c_lst) in
   	new_a,new_c
   else new_a,new_c
+
+let normalize_inf_formula_imply (ante: CP.formula) (conseq: CP.formula) : CP.formula * CP.formula = 
+  let pr = Cprinter.string_of_pure_formula in
+  Debug.no_2 "INF-norm-imply" pr pr (pr_pair pr pr)
+    normalize_inf_formula_imply ante conseq
 
 let normalize_inf_formula_imply (ante: CP.formula) (conseq: CP.formula) : CP.formula * CP.formula = 
   Gen.Profiling.do_1 "INF-norm-imply" (normalize_inf_formula_imply ante) conseq

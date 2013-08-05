@@ -960,7 +960,8 @@ let cnv_int_to_ptr f =
               if is_ann_flag then
                 if is_valid_ann i then Some(Eq(a1,int_to_ann i,ll),l)
                 else  Some(BConst (false,ll),l) (* contradiction *)
-            else  Some bf
+            else if is_inf a1 then Some(Eq(a2,mkInfConst ll,ll),l)
+            else Some bf
       | Neq (a1, a2, ll) -> 
             let (is_null_flag,a1,a2) = comm_is_null a1 a2 in
             if is_null_flag then
@@ -970,7 +971,12 @@ let cnv_int_to_ptr f =
                 if is_ann_flag then Some(Neq(a1,int_to_ann i,ll),l)
                 else  Some(BConst (true,ll),l) (* of course *)
             else Some bf
-      | Lte (a1, a2,_) | Gte(a1,a2,_) | Gt(a1,a2,_) | Lt(a1,a2,_) ->
+      | Gt(a2,a1,ll) | Lt(a1,a2,ll) ->
+            let ptr_flag,ann_flag = is_ptr_ctr a1 a2 in
+            if ptr_flag || ann_flag then Some(to_ptr ptr_flag pf,l)
+            else if CP.is_inf a2 then Some(Neq(a1,mkInfConst ll,ll),l)
+            else Some bf
+      | Lte (a1, a2,_) | Gte(a1,a2,_) ->
             let ptr_flag,ann_flag = is_ptr_ctr a1 a2 in
             if ptr_flag || ann_flag then Some(to_ptr ptr_flag pf,l)
             else Some bf
@@ -999,7 +1005,7 @@ let cnv_int_to_ptr f =
 
 let cnv_int_to_ptr f = 
   let pr = Cprinter.string_of_pure_formula in
-  Debug.no_1 "cnv_int_to_ptr" pr pr (fun _ -> cnv_int_to_ptr f) f
+  Debug.ho_1 "cnv_int_to_ptr" pr pr (fun _ -> cnv_int_to_ptr f) f
 
 (* let ex22 =  CP.norm_exp ex2 in *)
 
@@ -1237,6 +1243,7 @@ let formula_of_tree tree =
 
 (* end of simplify/hul/pairwise check normalizatio *)
 (* ===========================================================================  *)
+
 
 (* this is to normalize result from simplify/hull/gist *)
 let norm_pure_result f =
@@ -1922,9 +1929,14 @@ let tp_is_sat f sat_no =
 (*   Debug.no_1 "tp_is_sat" pr string_of_bool (fun _ -> tp_is_sat f sat_no do_cache) f *)
 
 
+let norm_pure_input f =
+  let f = cnv_ptr_to_int f in
+  let f = if !Globals.allow_inf then Infinity.normalize_inf_formula_sat f else f in
+  f
 
 let om_simplify f =
-  wrap_pre_post cnv_ptr_to_int norm_pure_result
+  (* wrap_pre_post cnv_ptr_to_int norm_pure_result *)
+  wrap_pre_post norm_pure_input norm_pure_result
       Omega.simplify f 
   (* let f = cnv_ptr_to_int f in *)
   (* let r = Omega.simplify f in *)
@@ -2145,7 +2157,7 @@ let simplify_a (s:int) (f:CP.formula): CP.formula =
   Debug.no_1_num s ("TP.simplify_a") pf pf simplify f
 
 let om_hull f =
-  wrap_pre_post cnv_ptr_to_int norm_pure_result
+  wrap_pre_post norm_pure_input norm_pure_result
       Omega.hull f 
 
 let hull (f : CP.formula) : CP.formula =
@@ -2199,7 +2211,8 @@ let hull (f : CP.formula) : CP.formula =
   Debug.no_1 "hull" pr pr hull f
 
 let om_pairwisecheck f =
-  wrap_pre_post cnv_ptr_to_int norm_pure_result
+  wrap_pre_post norm_pure_input norm_pure_result
+  (* wrap_pre_post cnv_ptr_to_int norm_pure_result *)
       Omega.pairwisecheck f 
 
 let om_pairwisecheck f =
