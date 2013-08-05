@@ -60,6 +60,12 @@ let wrap_two_bools flag1 flag2 new_value f a =
 let wrap_no_filtering f a =
   wrap_one_bool filtering_flag false f a
 
+let wrap_redlog_only f a =
+  wrap_one_bool Redlog.dis_omega true f a
+
+let wrap_oc_redlog f a =
+  wrap_one_bool Redlog.dis_omega false f a
+
 let wrap_lbl_dis_aggr f a =
   if !Globals.inv_wrap_flag
   then wrap_two_bools label_aggressive_sat label_aggressive_imply false f a

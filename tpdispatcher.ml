@@ -19,6 +19,9 @@ module MCP = Mcpure
 (* module LO = Label_only.Lab_List *)
 module LO = Label_only.LOne
 
+let wrap_redlog = Wrapper.wrap_redlog_only
+let wrap_ocredlog = Wrapper.wrap_oc_redlog
+
 let test_db = false
 
 (* let pure_tp = ref OmegaCalc *)
@@ -369,7 +372,9 @@ let set_tp tp_str =
    else if (String.sub tp_str 0 2) = "z3" then
 	(Smtsolver.smtsolver_name := tp_str; pure_tp := Z3; prover_str := "z3"::!prover_str;)
   else if tp_str = "redlog" then
-    (pure_tp := OCRed; prover_str := "redcsl"::!prover_str;)
+    (pure_tp := Redlog; prover_str := "redcsl"::!prover_str;)
+  else if tp_str = "OCRed" then
+    (pure_tp := OCRed; prover_str := "oc"::"redcsl"::!prover_str;)
   else if tp_str = "math" then
     (pure_tp := Mathematica; prover_str := "mathematica"::!prover_str;)
   else if tp_str = "rm" then
@@ -1585,7 +1590,8 @@ let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
   let f = if !Globals.allow_inf then Infinity.normalize_inf_formula_sat f else f in
   let wf = f in
   let omega_is_sat f = Omega.is_sat_ops pr_weak pr_strong f sat_no in
-  let redlog_is_sat f = Redlog.is_sat_ops pr_weak pr_strong f sat_no in
+  let redlog_is_sat f = wrap_redlog (Redlog.is_sat_ops pr_weak pr_strong f) sat_no in
+  let ocredlog_is_sat f = wrap_ocredlog (Redlog.is_sat_ops pr_weak pr_strong f) sat_no in
   let mathematica_is_sat f = Mathematica.is_sat_ops pr_weak pr_strong f sat_no in
   let mona_is_sat f = Mona.is_sat_ops pr_weak pr_strong f sat_no in
   let coq_is_sat f = Coq.is_sat_ops pr_weak pr_strong f sat_no in
@@ -1650,7 +1656,7 @@ let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
         else (omega_is_sat f)
     | SetMONA -> Setmona.is_sat wf
     | Redlog -> redlog_is_sat wf
-    | OCRed -> redlog_is_sat wf
+    | OCRed -> ocredlog_is_sat wf
     | Mathematica -> mathematica_is_sat wf
     | RM ->
         if (is_bag_constraint wf) && (CP.is_float_formula wf) then
@@ -2239,7 +2245,8 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
   let ante_w = ante in
   let conseq_s = conseq in
   let omega_imply a c = Omega.imply_ops pr_weak pr_strong a c imp_no timeout in
-  let redlog_imply a c = Redlog.imply_ops pr_weak pr_strong a c imp_no (* timeout *) in
+  let redlog_imply a c = wrap_redlog (Redlog.imply_ops pr_weak pr_strong a c) imp_no (* timeout *) in
+  let redlog_imply a c = wrap_ocredlog (Redlog.imply_ops pr_weak pr_strong a c) imp_no (* timeout *) in
   let mathematica_imply a c = Mathematica.imply_ops pr_weak pr_strong a c imp_no (* timeout *) in
   let mona_imply a c = Mona.imply_ops pr_weak pr_strong a c imp_no in
   let coq_imply a c = Coq.imply_ops pr_weak pr_strong a c in
