@@ -1,9 +1,63 @@
 
-
 slk_simplify x=null & mi=\inf.
+//Simplify  (1): x=null  // lose m=\inf
+
+slk_simplify  mi=\inf.
+//Simplify  (2): true // lose info
+
+slk_simplify  mi!=\inf. 
+//Simplify  (3): false // unsound
+
+slk_simplify  mi<\inf. 
+//Simplify  (4): true // lose info
+
+slk_simplify  mi<=\inf. 
+//Simplify  (5): true // OK
+
+slk_simplify  \inf<m. 
+//Simplify  (6): false OK
+
+slk_simplify  \inf<=m. 
+//Simplify  (7): m=\inf  OK
+
+slk_simplify  \inf<=\inf+1. 
+//Simplify  (8): (\inf)<=(\inf)
+
+slk_simplify  \inf<=\inf-1. 
+//Simplify  (9): (\inf)<=(\inf) // sound?
+
 
 /*
-# inf75a.slk
+# inf75a.slk --en-inf
+
+slk_simplify x=null & mi=\inf.
+//Simplify  (1): x=null  // lose m=\inf
+
+slk_simplify  mi=\inf.
+//Simplify  (2): true // lose info
+
+slk_simplify  mi!=\inf. 
+//Simplify  (3): false // unsound
+
+slk_simplify  mi<\inf. 
+//Simplify  (4): true // lose info
+
+slk_simplify  mi<=\inf. 
+//Simplify  (5): true // OK
+
+slk_simplify  \inf<m. 
+//Simplify  (6): false OK
+
+slk_simplify  \inf<=m. 
+//Simplify  (7): m=\inf  OK
+
+slk_simplify  \inf<=\inf+1. 
+//Simplify  (8): (\inf)<=(\inf)
+
+slk_simplify  \inf<=\inf-1. 
+//Simplify  (9): (\inf)<=(\inf) // sound?
+
+-------------------------
 
 slk_simplify x=null & mi=\inf.
 
