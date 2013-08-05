@@ -773,12 +773,15 @@ let detect_lhs_rhs_contra_x (*lhs_xpure*) lhs_xpure_orig rhs_xpure pos =
       (* let lhs_xpure = CP.filter_ante lhs_xpure rhs_xpure in *)
       (* let rhs_xpure = MCP.pure_of_mix rhs_xpure_orig in  *)
       (* let lhs_xpure = MCP.pure_of_mix lhs_xpure0 in  *)
-      let split_rhs = CP.split_conjunctions rhs_xpure in
-      let rem_rhs = List.filter (fun c -> not(TP.imply_raw lhs_xpure_orig c)) split_rhs in
-      let rhs_xpure = CP.join_conjunctions rem_rhs in
+      (* ===================================================== *)
+      (* below seems to trigger unnecessary implication checks! *)
+      (* let split_rhs = CP.split_conjunctions rhs_xpure in *)
+      (* let rem_rhs = List.filter (fun c -> not(TP.imply_raw lhs_xpure_orig c)) split_rhs in *)
+      (* let rhs_xpure = CP.join_conjunctions rem_rhs in *)
+      (* ===================================================== *)
       (*let _ = DD.tinfo_hprint (add_str "lhs_xpure: " (!CP.print_formula)) lhs_xpure pos in*)
-      let _ = DD.tinfo_hprint (add_str "split_rhs: " (pr_list !CP.print_formula)) split_rhs pos in
-      let _ = DD.tinfo_hprint (add_str "rem_rhs: " (pr_list !CP.print_formula)) rem_rhs pos in
+      (* let _ = DD.tinfo_hprint (add_str "split_rhs: " (pr_list !CP.print_formula)) split_rhs pos in *)
+      (* let _ = DD.tinfo_hprint (add_str "rem_rhs: " (pr_list !CP.print_formula)) rem_rhs pos in *)
       let _ = DD.trace_hprint (add_str "lhs(orig): " !CP.print_formula) lhs_xpure_orig pos in
       (* let _ = DD.trace_hprint (add_str "lhs0(orig): " !print_mix_formula) lhs_xpure0 pos in *)
       let _ = DD.trace_hprint (add_str "rhs(orig): " !CP.print_formula) rhs_xpure pos in
@@ -799,7 +802,7 @@ let detect_lhs_rhs_contra_x (*lhs_xpure*) lhs_xpure_orig rhs_xpure pos =
 
 let detect_lhs_rhs_contra lhs rhs pos =
 	let pr = !CP.print_formula in
-	Debug.no_2 "detect_lhs_rhs_contra" pr pr (pr_pair string_of_bool !CP.print_formula) 
+	Debug.to_2 "detect_lhs_rhs_contra" pr pr (pr_pair string_of_bool !CP.print_formula) 
 		(fun _ _ -> detect_lhs_rhs_contra_x lhs rhs pos) lhs rhs
 	  
 (* let infer_h prog estate conseq lhs_b rhs_b lhs_rels*)

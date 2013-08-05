@@ -1811,7 +1811,7 @@ let tp_is_sat (f:CP.formula) (old_sat_no :string) =
   res
 
 let tp_is_sat f sat_no =
-  Debug.no_1 "tp_is_sat" Cprinter.string_of_pure_formula string_of_bool 
+  Debug.ho_1 "tp_is_sat" Cprinter.string_of_pure_formula string_of_bool 
       (fun f -> tp_is_sat f sat_no) f
     
 (* let tp_is_sat (f: CP.formula) (sat_no: string) do_cache = *)
@@ -2433,7 +2433,7 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
   
 let tp_imply_no_cache ante conseq imp_no timeout process =
   let pr = Cprinter.string_of_pure_formula in
-  Debug.no_4_loop "tp_imply_no_cache" pr pr (fun s -> s) string_of_prover string_of_bool
+  Debug.ho_4_loop "tp_imply_no_cache" pr pr (fun s -> s) string_of_prover string_of_bool
   (fun _ _ _ _ -> tp_imply_no_cache ante conseq imp_no timeout process) ante conseq imp_no !pure_tp
 
 let tp_imply_perm ante conseq imp_no timeout process = 
