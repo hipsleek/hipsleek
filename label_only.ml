@@ -336,9 +336,9 @@ struct
     if id1=id2 then true
     else overlap_imply id1 r2
 
- let is_fully_compatible_imply xs ys =
-    let pr = pr_list pr_id  in
-    Debug.no_2 "is_fully_compatible_imply" pr pr string_of_bool is_fully_compatible_imply xs ys 	
+ (* let is_fully_compatible_imply xs ys = *)
+ (*    let pr = pr_list (pr_pair pr_id pr_none)  in *)
+ (*    Debug.no_2 "is_fully_compatible_imply" pr pr string_of_bool is_fully_compatible_imply xs ys 	 *)
 
 
   (* (\* this is for aggressive imply sat *\) *)
@@ -363,9 +363,9 @@ struct
     (* else overlap xs ys *)
     is_fully_compatible_sat xs ys
 
-  let is_fully_compatible xs ys =
-    let pr = pr_list pr_id  in
-    Debug.no_2 "is_fully_compatible_sat" pr pr string_of_bool is_fully_compatible xs ys 	
+  (* let is_fully_compatible xs ys = *)
+  (*   let pr = pr_list pr_none  in *)
+  (*   Debug.no_2 "is_fully_compatible_sat" pr pr string_of_bool is_fully_compatible xs ys 	 *)
 
   (* assumes that xs and ys are normalized *)
   (* returns true if they overlap in some ways *)
@@ -444,6 +444,37 @@ struct
 
   let comb_norm i xs ys =
     Debug.no_2_num i "comb_norm" string_of string_of string_of comb_norm xs ys 
+
+  let merge_ann ann1 ann2 =
+    match ann1, ann2 with
+      | LA_Both, _
+      | _, LA_Both
+      | LA_Sat, LA_Imply
+      | LA_Imply, LA_Sat -> LA_Both
+      | x,_ -> x
+
+  let norm_ann_lst lst =
+    let rec aux lst norm_lst = 
+      match lst with
+        |[]     -> norm_lst
+        | (x,ax)::xs -> 
+              let l = Gen.BList.list_find (fun (y,ay) -> if (String.compare x y == 0) then (Some (y,ay)) else None ) norm_lst in
+              let norm_lst = 
+              match l with
+                | Some _ -> List.map (fun (y,ay) -> if (String.compare x y == 0) then  (y, merge_ann ax ay) else  (y,ay)) norm_lst
+                | None -> (x,ax)::norm_lst
+              in
+              aux xs norm_lst
+    in aux lst []
+
+  let merge x y =
+    if (is_equal x y) then
+      let (x_id,x_lst) =  x in
+      let (_,y_lst) =  y in
+      let lst = x_lst@y_lst in
+      (x_id,x_lst@y_lst)
+    else
+      failwith ("cannot merge labels" ^ (string_of x) ^ " and " ^ (string_of y))
 
   (* assumes that xs and ys are normalized *)
   (* returns 0 if two labels are considered identical *)

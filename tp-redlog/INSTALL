@@ -1,0 +1,8 @@
+Install REDUCE
+1. sudo apt-get install libxext-dev libncurses5-dev libxft-dev
+2. cp -r /usr/local/etc/reduce/ $CURRENT_DIR
+or scp -r user@loris-7.ddns.comp.nus.edu.sg:/usr/local/etc/reduce/ $CURRENT_DIR
+3. ./configure --with-csl
+4. make
+5. sudo ln $CURRENT_DIR/bin/redcsl /usr/local/bin/redcsl
+6. sudo ln -s $CURRENT_DIR/scripts/ /usr/local/scripts

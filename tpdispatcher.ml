@@ -15,9 +15,13 @@ open Label_aggr
 
 module CP = Cpure
 module MCP = Mcpure
+module NM = Auxnorm
 
 (* module LO = Label_only.Lab_List *)
 module LO = Label_only.LOne
+
+let wrap_redlog = Wrapper.wrap_redlog_only
+let wrap_ocredlog = Wrapper.wrap_oc_redlog
 
 let test_db = false
 
@@ -370,6 +374,8 @@ let set_tp tp_str =
 	(Smtsolver.smtsolver_name := tp_str; pure_tp := Z3; prover_str := "z3"::!prover_str;)
   else if tp_str = "redlog" then
     (pure_tp := Redlog; prover_str := "redcsl"::!prover_str;)
+  else if tp_str = "OCRed" then
+    (pure_tp := OCRed; prover_str := "oc"::"redcsl"::!prover_str;)
   else if tp_str = "math" then
     (pure_tp := Mathematica; prover_str := "mathematica"::!prover_str;)
   else if tp_str = "rm" then
@@ -417,6 +423,7 @@ let string_of_tp tp = match tp with
   | Coq -> "coq"
   | Z3 -> "z3"
   | Redlog -> "redlog"
+  | OCRed -> "OC/redlog"
   | Mathematica -> "mathematica"
   | RM -> "rm"
   | PARAHIP -> "parahip"
@@ -443,6 +450,7 @@ let name_of_tp tp = match tp with
   | Coq -> "Coq"
   | Z3 -> "Z3"
   | Redlog -> "Redlog"
+  | OCRed -> "OC/Redlog"
   | Mathematica -> "Mathematica"
   | RM -> "Redlog and Mona"
   | PARAHIP -> "Redlog, Z3, and Mona"
@@ -461,6 +469,7 @@ let log_file_of_tp tp = match tp with
   | Mona -> "allinput.mona"
   | Coq -> "allinput.v"
   | Redlog -> "allinput.rl"
+  | OCRed -> "allinput.rl"
   | Mathematica -> "allinput.math"
   | Z3 -> "allinput.z3"
   | AUTO -> "allinput.auto"
@@ -475,7 +484,7 @@ let omega_count = ref 0
 let start_prover () =
   match !pure_tp with
   | Coq -> Coq.start ();
-  | Redlog | RM -> Redlog.start ();
+  | Redlog | OCRed | RM -> Redlog.start ();
   | Cvc3 -> (
       provers_process := Some (Cvc3.start ()); (* because of incremental *)
       let _ = match !provers_process with 
@@ -514,7 +523,7 @@ let stop_prover () =
       if !Redlog.is_reduce_running then Redlog.stop ();
     )
   | Coq -> Coq.stop ();
-  | Redlog | RM -> (
+  | OCRed | Redlog | RM -> (
       Redlog.stop();
       Omega.stop();
     )
@@ -789,6 +798,13 @@ let comm_null a1 a2 =
   else if f1 then (f1,a2,a1)
   else (f2,a1,a2)
 
+let comm_inf a1 a2 =
+  let f1 = is_inf a1 in
+  let f2 = is_inf a2 in
+  if f1 && f2 then (false,a1,a2)
+  else if f1 then (f1,a2,a1)
+  else (f2,a1,a2)
+
 (*
   strong
   ======
@@ -812,6 +828,11 @@ let cnv_ptr_to_int (ex_flag,st_flag) f =
             if st_flag (*strengthen *) then
               Some (Eq(a1,IConst(0,ll),ll),l)
             else Some (Lte(a1,IConst(0,ll),ll),l)
+         (* else let (is_inf_flag,a1,a2) = comm_inf a1 a2 in
+          if is_inf_flag then
+            if st_flag (*strengthen *) then
+              Some (Eq(a1,mkInfConst ll,ll),l)
+            else Some (Lte(a1,mkInfConst ll,ll),l)*)
           else None
       | Neq (a1, a2, ll) -> 
           let (is_null_flag,a1,a2) = comm_null a1 a2 in
@@ -820,8 +841,14 @@ let cnv_ptr_to_int (ex_flag,st_flag) f =
               Some (Gt(a1,IConst(0,ll),ll),l)
             else 
               Some (Neq(a1,IConst(0,ll),ll),l)
-          else None
-      | _ -> None
+          else  let (is_inf_flag,a1,a2) = comm_inf a1 a2 in
+          if is_inf_flag then
+              Some (Lt(a1,CP.Var(CP.SpecVar(Int,constinfinity,Unprimed),ll),ll),l)
+          else Some(bf)
+     (* | Lte(a1,a2,ll) -> if is_inf a1 && not(is_inf a2) then Some(BConst(false,ll),l)  
+        else if is_inf a2 && not(is_inf a1) then Some(BConst(true,ll),l) 
+        else Some(bf)*)
+      | _ -> Some(bf)
   in
   let f_e arg e = (Some e) in
   let a_f ((ex_flag,st_flag) as flag) f =
@@ -938,7 +965,7 @@ let to_ptr ptr_flag pf =
   Debug.no_1 "to_ptr" pr pr (to_ptr ptr_flag)  pf
 
 
-let cnv_int_to_ptr flag f = 
+let cnv_int_to_ptr f = 
   let f_f e = None in
   let f_bf bf = 
     let (pf, l) = bf in
@@ -952,7 +979,8 @@ let cnv_int_to_ptr flag f =
               if is_ann_flag then
                 if is_valid_ann i then Some(Eq(a1,int_to_ann i,ll),l)
                 else  Some(BConst (false,ll),l) (* contradiction *)
-            else  Some bf
+            else if is_inf a1 then Some(Eq(a2,mkInfConst ll,ll),l)
+            else Some bf
       | Neq (a1, a2, ll) -> 
             let (is_null_flag,a1,a2) = comm_is_null a1 a2 in
             if is_null_flag then
@@ -962,7 +990,12 @@ let cnv_int_to_ptr flag f =
                 if is_ann_flag then Some(Neq(a1,int_to_ann i,ll),l)
                 else  Some(BConst (true,ll),l) (* of course *)
             else Some bf
-      | Lte (a1, a2,_) | Gte(a1,a2,_) | Gt(a1,a2,_) | Lt(a1,a2,_) ->
+      | Gt(a2,a1,ll) | Lt(a1,a2,ll) ->
+            let ptr_flag,ann_flag = is_ptr_ctr a1 a2 in
+            if ptr_flag || ann_flag then Some(to_ptr ptr_flag pf,l)
+            (*else if CP.is_inf a2 then Some(Neq(a1,mkInfConst ll,ll),l)*)
+            else Some bf
+      | Lte (a1, a2,_) | Gte(a1,a2,_) ->
             let ptr_flag,ann_flag = is_ptr_ctr a1 a2 in
             if ptr_flag || ann_flag then Some(to_ptr ptr_flag pf,l)
             else Some bf
@@ -989,9 +1022,22 @@ let cnv_int_to_ptr flag f =
   let f_e e = (Some e) in
   map_formula f (f_f, f_bf, f_e) 
 
-let cnv_int_to_ptr flag f = 
+let cnv_int_to_ptr f = 
   let pr = Cprinter.string_of_pure_formula in
-  Debug.no_1 "cnv_int_to_ptr" pr pr (fun _ -> cnv_int_to_ptr flag f) f
+  Debug.no_1 "cnv_int_to_ptr" pr pr (fun _ -> cnv_int_to_ptr f) f
+
+(* let ex22 =  CP.norm_exp ex2 in *)
+
+(* this is to normalize result from simplify/hull/gist *)
+let norm_pure_result f =
+  let f = cnv_int_to_ptr f in    
+  let f = if !Globals.allow_inf then Infinity.convert_var_to_inf f else f in 
+  let f = NM.norm_disj f in
+  f
+
+let norm_pure_result f =
+  let pr = Cprinter.string_of_pure_formula in
+  Debug.no_1 "norm_pure_result" pr pr (fun _ -> norm_pure_result f) f
 
 let wrap_pre_post_gen pre post f a =
   let s1 = pre a in
@@ -1038,8 +1084,8 @@ let cnv_ptr_to_int_weak f =
 let cnv_ptr_to_int(* _strong *) f =
   wrap_pre_post_print "cnv_ptr_to_int" (cnv_ptr_to_int (true,true)) f
 
-let cnv_int_to_ptr f =
-  wrap_pre_post_print "cnv_int_to_ptr" (cnv_int_to_ptr true) f
+let norm_pure_result f =
+  wrap_pre_post_print "norm_pure_result" norm_pure_result f
 
 
 (* let cnv_ptr_to_int f = *)
@@ -1066,9 +1112,9 @@ let cnv_int_to_ptr f =
 (*     else r2 *)
 (*   in wrap_pre_post_gen pre post (fun _ -> cnv_int_to_ptr f true) f *)
 
-let cnv_int_to_ptr f =
-  let pr = Cprinter.string_of_pure_formula in
-  Debug.no_1 "cnv_int_to_ptr" pr pr cnv_int_to_ptr f
+(* let cnv_int_to_ptr f = *)
+(*   let pr = Cprinter.string_of_pure_formula in *)
+(*   Debug.no_1 "cnv_int_to_ptr" pr pr cnv_int_to_ptr f *)
 
 let wrap_pre_post pre post f a =
   let a = pre a in
@@ -1436,7 +1482,8 @@ let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
   let f = if !Globals.allow_inf then Infinity.normalize_inf_formula_sat f else f in
   let wf = f in
   let omega_is_sat f = Omega.is_sat_ops pr_weak pr_strong f sat_no in
-  let redlog_is_sat f = Redlog.is_sat_ops pr_weak pr_strong f sat_no in
+  let redlog_is_sat f = wrap_redlog (Redlog.is_sat_ops pr_weak pr_strong f) sat_no in
+  let ocredlog_is_sat f = wrap_ocredlog (Redlog.is_sat_ops pr_weak pr_strong f) sat_no in
   let mathematica_is_sat f = Mathematica.is_sat_ops pr_weak pr_strong f sat_no in
   let mona_is_sat f = Mona.is_sat_ops pr_weak pr_strong f sat_no in
   let coq_is_sat f = Coq.is_sat_ops pr_weak pr_strong f sat_no in
@@ -1501,6 +1548,7 @@ let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
         else (omega_is_sat f)
     | SetMONA -> Setmona.is_sat wf
     | Redlog -> redlog_is_sat wf
+    | OCRed -> ocredlog_is_sat wf
     | Mathematica -> mathematica_is_sat wf
     | RM ->
         if (is_bag_constraint wf) && (CP.is_float_formula wf) then
@@ -1663,9 +1711,18 @@ let tp_is_sat f sat_no =
 (*   Debug.no_1 "tp_is_sat" pr string_of_bool (fun _ -> tp_is_sat f sat_no do_cache) f *)
 
 
+let norm_pure_input f =
+  let f = if !Globals.allow_inf then Infinity.normalize_inf_formula_sat(* _sat *) f else f in
+  let f = cnv_ptr_to_int f in
+  f
+
+let norm_pure_input f =
+  let pr = Cprinter.string_of_pure_formula in
+  Debug.no_1 "norm_pure_input" pr pr norm_pure_input f
 
 let om_simplify f =
-  wrap_pre_post cnv_ptr_to_int cnv_int_to_ptr 
+  (* wrap_pre_post cnv_ptr_to_int norm_pure_result *)
+  wrap_pre_post norm_pure_input norm_pure_result
       Omega.simplify f 
   (* let f = cnv_ptr_to_int f in *)
   (* let r = Omega.simplify f in *)
@@ -1745,6 +1802,7 @@ let simplify (f : CP.formula) : CP.formula =
                         else omega_simplify f
                   | Z3 -> Smtsolver.simplify f
                   | Redlog -> Redlog.simplify f
+                  | OCRed -> Redlog.simplify f
                   | RM ->
                         if is_bag_constraint f then Mona.simplify f
                         else Redlog.simplify f
@@ -1888,7 +1946,7 @@ let simplify_a (s:int) (f:CP.formula): CP.formula =
   Debug.no_1_num s ("TP.simplify_a") pf pf simplify f
 
 let om_hull f =
-  wrap_pre_post cnv_ptr_to_int cnv_int_to_ptr 
+  wrap_pre_post norm_pure_input norm_pure_result
       Omega.hull f 
 
 let hull (f : CP.formula) : CP.formula =
@@ -1921,6 +1979,7 @@ let hull (f : CP.formula) : CP.formula =
           else om_hull f
     | Z3 -> Smtsolver.hull f
     | Redlog -> Redlog.hull f
+    | OCRed -> Redlog.hull f
     | Mathematica -> Mathematica.hull f
     | RM ->
           if is_bag_constraint f then Mona.hull f
@@ -1944,7 +2003,8 @@ let hull (f : CP.formula) : CP.formula =
   Debug.no_1 "hull" pr pr hull f
 
 let om_pairwisecheck f =
-  wrap_pre_post cnv_ptr_to_int cnv_int_to_ptr 
+  wrap_pre_post norm_pure_input norm_pure_result
+  (* wrap_pre_post cnv_ptr_to_int norm_pure_result *)
       Omega.pairwisecheck f 
 
 let om_pairwisecheck f =
@@ -1978,6 +2038,7 @@ let tp_pairwisecheck (f : CP.formula) : CP.formula =
         else om_pairwisecheck f
     | Z3 -> Smtsolver.pairwisecheck f
     | Redlog -> Redlog.pairwisecheck f
+    | OCRed -> Redlog.pairwisecheck f
     | Mathematica -> Mathematica.pairwisecheck f
     | RM ->
         if is_bag_constraint f then Mona.pairwisecheck f
@@ -2026,8 +2087,8 @@ let pairwisecheck_raw (f : CP.formula) : CP.formula =
 
 let simplify_with_pairwise (f : CP.formula) : CP.formula =
   let pf = Cprinter.string_of_pure_formula in
-  let f1 = simplify f in
-  let f2 = pairwisecheck f1 in
+  let f1 = simplify_raw f in
+  let f2 = pairwisecheck_raw f1 in
   Debug.ninfo_hprint (add_str "simplifyX(input)" pf) f no_pos;
   Debug.ninfo_hprint (add_str "simplifyX(output)" pf) f1 no_pos;
   Debug.ninfo_hprint (add_str "simplifyX(pairwise)" pf) f2 no_pos;
@@ -2094,7 +2155,8 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
   let ante_w = ante in
   let conseq_s = conseq in
   let omega_imply a c = Omega.imply_ops pr_weak pr_strong a c imp_no timeout in
-  let redlog_imply a c = Redlog.imply_ops pr_weak pr_strong a c imp_no (* timeout *) in
+  let redlog_imply a c = wrap_redlog (Redlog.imply_ops pr_weak pr_strong a c) imp_no (* timeout *) in
+  let oc_redlog_imply a c = wrap_ocredlog (Redlog.imply_ops pr_weak pr_strong a c) imp_no (* timeout *) in
   let mathematica_imply a c = Mathematica.imply_ops pr_weak pr_strong a c imp_no (* timeout *) in
   let mona_imply a c = Mona.imply_ops pr_weak pr_strong a c imp_no in
   let coq_imply a c = Coq.imply_ops pr_weak pr_strong a c in
@@ -2171,6 +2233,7 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
         else (omega_imply ante conseq)
     | SetMONA -> Setmona.imply ante_w conseq_s 
     | Redlog -> redlog_imply ante_w conseq_s  
+    | OCRed -> oc_redlog_imply ante_w conseq_s  
     | Mathematica -> mathematica_imply ante_w conseq_s  
     | RM ->
           (*use UNSOUND approximation

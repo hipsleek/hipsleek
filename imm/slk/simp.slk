@@ -19,7 +19,21 @@ slk_simplify @L<:v.
 slk_simplify v<:@I & @L<:v.
 //Simplify  (7): false
 
+
+slk_simplify x=null & y=null.
+
+slk_pairwise x=null & y!=null.
+
+
+slk_pairwise x=null & (y=null | y!=null).
+
+checkentail x=null & y=null |- x=y.
+
 slk_simplify x!=0 & y>0.
+
+slk_simplify (x+1)<=0.
+
+slk_hull ((1<=y & 1<=x) | ((x+1)<=0 & 1<=y)).
 /*
 # imm/slk/simp.slk --dump-proof
 

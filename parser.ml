@@ -1685,7 +1685,7 @@ cexp_w:
     | `INT_LITER (i,_) ; ann0 = LIST1 ann_heap ->
         Pure_t((P.IConst (i, get_pos_camlp4 _loc 1)) ,(get_heap_ann_opt ann0 ))
     | `INFINITY ->
-        Pure_c (P.InfConst("ZInfinity",get_pos_camlp4 _loc 1))
+        Pure_c (P.InfConst(constinfinity,get_pos_camlp4 _loc 1))
     | `FLOAT_LIT (f,_) ; ann0 = LIST1 ann_heap ->
         Pure_t((P.FConst (f, get_pos_camlp4 _loc 1)), (get_heap_ann_opt ann0 ))
     | `INT_LITER (i,_) -> Pure_c (P.IConst (i, get_pos_camlp4 _loc 1)) 

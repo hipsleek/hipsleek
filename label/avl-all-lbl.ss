@@ -403,8 +403,8 @@ node remove_min(node x, ref myint a)
 node delete_top(node x)
   requires x::node<v, n, p, q> * p::avl<m1, n1, S1> * q::avl<m2, n2, S2>
   & ["": n <= n1 + 2 & n <= n2 + 2 & exists (tmps : tmps=max(n1, n2) & n = tmps + 1);
-     "s": forall (xx : (xx notin S1 | xx <= v)) & forall (y : (y notin S2 | y >= v))]
-  ensures res::avl<m1+m2, nn, Sn> & Sn = union(S1, S2) & n <= nn + 1 & nn <= n;
+     "s","": forall (xx : (xx notin S1 | xx <= v)) & forall (y : (y notin S2 | y >= v))]
+  ensures res::avl<m1+m2, nn, Sn> & ["s":Sn = union(S1, S2); "": n <= nn + 1 & nn <= n];
 {
   node tmp;
   myint ti = new myint(0);

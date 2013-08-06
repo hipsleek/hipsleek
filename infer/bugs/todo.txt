@@ -101,7 +101,8 @@ This seems to be triggered here due to an incorrect infer_lhs_contra
 infer [y] m=1 |- y::node<a,b> & m>=0.
 print residue.
 ========================================================================
-# i13-5.slk --sa-en-cont
+# i13-5.slk --sa-en-cont see i13-5a.slk
+
 
 infer [z,H1] x::node<z> * H1(y)  |- x::lseg<z> * y::lseg<null>.
 
@@ -127,8 +128,30 @@ infer [z,H1] H1(y)*x::node<z>  |- x::lseg<z> * y::lseg<null> .
 print residue.
 --> fails
 ========================================================================
+# i13-5a.slk --sa-en-cont. FIXED: remove do_infer_heap
+
+infer [z,H1] x::node<z> * H1(y)  |- x::lseg<z> * y::lseg<null>.
 ========================================================================
+# i2.slk FIXED
+
+fails but should succeed..
+
+//(3)
+infer [q] true |- q::ll<n> .
+print residue.
 ========================================================================
+# i2a.slk
+
+checkentail already succeeds; so why do we still
+infer q=null? It is really redundant!
+
+Entail 1: Valid. 
+
+
+Entail (2) : Valid. 
+
+ <1>emp&q=null & n=0&{FLOW,(19,20)=__norm}[]
+ inferred pure: [n=0]
 ========================================================================
 ========================================================================
 ========================================================================

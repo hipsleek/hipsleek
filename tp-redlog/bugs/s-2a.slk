@@ -1,0 +1,30 @@
+checkentail true & (x+x=y & x>0) |- y>1.
+print residue.
+
+/*
+# s-2a.slk 
+
+Why is implication called twice? Is it due to
+xpure0, xpure1? This occurs for Omega as well,
+isn't there a smart-xpure?
+
+id: 1<0; prover: REDLOG (REDUCE LOGIC); TIME: 10.; loc: _0:0_0:0; kind: Sleek_Entail(1)
+ raw proof:2:rlqe rlex(((((a * b) = y)) and (((0 <= (a + -1))) and ((0 <= (b + -1))))))
+ raw result:true$
+ Sat:  y=a*b & 0<a & 0<b
+ res: SAT
+ -------------------- 
+ id: 2<0; prover: REDLOG (REDUCE LOGIC); TIME: 10.; loc: _0:0_0:0; kind: Early_Contra_Detect
+ raw proof:2:rlqe rlall((((((0 > (b + -1))) or ((0 > (a + -1)))) or (((a * b) <> y))) or ((1 < (y + 1)))))
+ raw result:true$
+ Imply: ante: 0<b & 0<a & y=a*b
+	     conseq:  1<=y
+ res: true
+ -------------------- 
+ id: 3<1; prover : CACHED ; loc: _0:0_0:0; kind: Sleek_Entail(1)
+ raw proof:2:rlqe rlall((((((0 > (b + -1))) or ((0 > (a + -1)))) or (((a * b) <> y))) or ((1 < (y + 1)))))
+ raw result:true$
+ Imply: ante: 0<b & 0<a & y=a*b
+	     conseq:  1<=y
+ res: true
+*/

@@ -247,11 +247,11 @@ let collect_hp_rel_list_partial_context (ctx:list_partial_context) =
   let r = List.map (fun (_,cl) -> List.concat (List.map (fun (_,c) -> collect_hp_rel c) cl))  ctx in
   List.concat r
 
-let collect_hp_rel_list_partial_context (ctx:list_partial_context) =
-  let pr1 = !CF.print_list_partial_context in
-  let pr2 =  Cprinter.string_of_hp_rels in
-  Debug.no_1 "collect_hp_rel_list_partial_context"  pr1 pr2
-      collect_hp_rel_list_partial_context ctx
+(* let collect_hp_rel_list_partial_context (ctx:list_partial_context) = *)
+(*   let pr1 = !CF.print_list_partial_context in *)
+(*   let pr2 =  Cprinter.string_of_hp_rels in *)
+(*   Debug.no_1 "collect_hp_rel_list_partial_context"  pr1 pr2 *)
+(*       collect_hp_rel_list_partial_context ctx *)
 
 let collect_hp_unk_map_list_partial_context (ctx:list_partial_context) =
   let r = List.map (fun (_,cl) -> List.concat (List.map (fun (_,c) -> collect_hp_unk_map c) cl))  ctx in
@@ -773,12 +773,15 @@ let detect_lhs_rhs_contra_x (*lhs_xpure*) lhs_xpure_orig rhs_xpure pos =
       (* let lhs_xpure = CP.filter_ante lhs_xpure rhs_xpure in *)
       (* let rhs_xpure = MCP.pure_of_mix rhs_xpure_orig in  *)
       (* let lhs_xpure = MCP.pure_of_mix lhs_xpure0 in  *)
+      (* ===================================================== *)
+      (* below seems to trigger unnecessary implication checks! *)
       let split_rhs = CP.split_conjunctions rhs_xpure in
       let rem_rhs = List.filter (fun c -> not(TP.imply_raw lhs_xpure_orig c)) split_rhs in
       let rhs_xpure = CP.join_conjunctions rem_rhs in
+      (* ===================================================== *)
       (*let _ = DD.tinfo_hprint (add_str "lhs_xpure: " (!CP.print_formula)) lhs_xpure pos in*)
-      let _ = DD.tinfo_hprint (add_str "split_rhs: " (pr_list !CP.print_formula)) split_rhs pos in
-      let _ = DD.tinfo_hprint (add_str "rem_rhs: " (pr_list !CP.print_formula)) rem_rhs pos in
+      (* let _ = DD.tinfo_hprint (add_str "split_rhs: " (pr_list !CP.print_formula)) split_rhs pos in *)
+      (* let _ = DD.tinfo_hprint (add_str "rem_rhs: " (pr_list !CP.print_formula)) rem_rhs pos in *)
       let _ = DD.trace_hprint (add_str "lhs(orig): " !CP.print_formula) lhs_xpure_orig pos in
       (* let _ = DD.trace_hprint (add_str "lhs0(orig): " !print_mix_formula) lhs_xpure0 pos in *)
       let _ = DD.trace_hprint (add_str "rhs(orig): " !CP.print_formula) rhs_xpure pos in
@@ -1101,7 +1104,10 @@ let rec infer_pure_m_x unk_heaps estate lhs_rels lhs_xpure_orig lhs_xpure0 lhs_w
                                   let pf1 = (CP.mkAnd lhs_xpure (CP.conj_of_list (ps@rs) pos) pos) in
                                   let pf2 = TP.simplify_with_pairwise 2 pf1 in
                                   let pf = MCP.mix_of_pure pf2 in
-                                  (* let pf = (MCP.mix_of_pure (TP.simplify_raw pf)) in *)
+                                  (* let _ = DD.info_hprint (add_str "pf1" !CP.print_formula) pf1 pos in *)
+                                  (* let pf2 = TP.simplify_raw pf1 in *)
+                                  (* let pf = (MCP.mix_of_pure pf2) in *)
+                                  (* let _ = DD.info_hprint (add_str "pf2(simplify_raw)" !CP.print_formula) pf2 pos in  *)
                                   let new_estate = {estate with es_formula = 
                                           (match estate.es_formula with
                                             | Base b -> CF.mkBase_simp b.formula_base_heap pf

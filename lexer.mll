@@ -128,7 +128,7 @@ module Make (Token : SleekTokenS)
    ("checkentail", CHECKENTAIL);
    ("slk_hull", SLK_HULL);
    ("slk_pairwise", SLK_PAIRWISE);
-   ("simplify", SIMPLIFY);
+   ("slk_simplify", SIMPLIFY);
    ("relAssume", RELASSUME);
    ("relDefn", RELDEFN);
    ("shape_infer", SHAPE_INFER );

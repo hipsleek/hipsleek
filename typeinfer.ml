@@ -164,7 +164,7 @@ let node2_to_node i prog (h0 : IF.h_formula_heap2) : IF.h_formula_heap =
 let rec dim_unify d1 d2 = if (d1 = d2) then Some d1 else None
 
 and must_unify (k1 : typ) (k2 : typ) tlist pos : (spec_var_type_list * typ) =
-  let pr = string_of_typ in
+  let pr = (* string_of_typ *) pr_none in
   Debug.no_2 "must_unify" pr pr pr (fun _ _ -> must_unify_x k1 k2 tlist pos) k1 k2
 
 and must_unify_x (k1 : typ) (k2 : typ) tlist pos : (spec_var_type_list * typ) =
@@ -176,7 +176,7 @@ and must_unify_x (k1 : typ) (k2 : typ) tlist pos : (spec_var_type_list * typ) =
       ^" and "^(string_of_typ (get_type_entire tlist k2))^" are inconsistent")
 
 and must_unify_expect (k1 : typ) (k2 : typ) tlist pos : (spec_var_type_list * typ)  =
-  let pr = string_of_typ in
+  let pr = (* string_of_typ *) pr_none in
   Debug.no_2 "must_unify_expect" pr pr pr (fun _ _ -> must_unify_expect_x k1 k2 tlist pos) k1 k2
 
 and must_unify_expect_x (k1 : typ) (k2 : typ) tlist pos : (spec_var_type_list * typ) =
@@ -189,7 +189,7 @@ and must_unify_expect_x (k1 : typ) (k2 : typ) tlist pos : (spec_var_type_list * 
 
 and unify_type (k1 : spec_var_kind) (k2 : spec_var_kind)  tlist : (spec_var_type_list * (typ option)) =
   let pr = string_of_spec_var_kind in
-  let pr2 = pr_option pr in
+  let pr2 = (* pr_option pr *) pr_none in
   Debug.no_2 "unify_type" pr pr pr2 (fun _ _ -> unify_type_x k1 k2 tlist) k1 k2
 
 and unify_type_x (k1 : spec_var_kind) (k2 : spec_var_kind) tlist : (spec_var_type_list * (typ option)) =
@@ -1029,7 +1029,7 @@ and get_spec_var_type_list (v : ident) tlist pos =
 and get_spec_var_type_list_infer (v : ident * primed) fvs pos =
   let pr_sv = Cprinter.string_of_spec_var in
   Debug.no_2 "get_spec_var_type_list_infer" 
-    pr_id (pr_list pr_sv) pr_sv
+    pr_none (* (pr_list pr_sv) *) pr_none pr_none
     (fun _ _ -> get_spec_var_type_list_infer_x v fvs pos) v fvs
 
 and get_spec_var_type_list_infer_x ((v, p) : ident * primed) fvs pos =

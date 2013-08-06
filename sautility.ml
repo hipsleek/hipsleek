@@ -4047,7 +4047,7 @@ let get_sharing_multiple new_h_preds dnss eqNulls eqPures hprels =
    let orig_def3 = CF.simplify_pure_f orig_def2 in
    (orig_def3, orig_defs_h)
 
-let mk_orig_hprel_def_x prog is_pre cdefs unk_hps hp r other_args args sh_ldns eqNulls eqPures hprels unk_svl quans=
+let mk_orig_hprel_def prog is_pre cdefs unk_hps hp r other_args args sh_ldns eqNulls eqPures hprels unk_svl quans=
   let next_roots, dnss = extract_common prog hp r other_args args sh_ldns hprels in
   match next_roots with
     | [] -> report_error no_pos "sau.generalize_one_hp: sth wrong 2"
@@ -4078,24 +4078,24 @@ let mk_orig_hprel_def_x prog is_pre cdefs unk_hps hp r other_args args sh_ldns e
       CP.diff_svl next_roots unk_svl)
           (* | _ -> report_error no_pos "sau.generalize_one_hp: now we does not handle more than two ptr fields" *)
 
-let mk_orig_hprel_def prog is_pre defs unk_hps hp r other_args args sh_ldns eqNulls eqPures hprels unk_svl quans=
-  let pr1 = !CP.print_sv in
-  let pr2 = !CP.print_svl in
-  let pr2a = pr_triple !CP.print_svl !CP.print_sv !CP.print_svl in
-  let pr3 = fun hd -> Cprinter.prtt_string_of_h_formula (CF.DataNode hd) in
-  let pr4 =  pr_list !CP.print_formula in
-  let pr5 = pr_list (pr_pair pr1 string_of_hp_rel_def) in
-  let pr7 = pr_list (pr_pair pr1 pr2a) in
-  let pr6 (d,_,ls_n_hpargs,dns,_) =
-    let pr = pr_triple pr5 pr7 (pr_list pr3) in
-    pr (d, ls_n_hpargs, dns)
-  in
-  let pr7a hrel = Cprinter.string_of_hrel_formula (CF.HRel hrel) in
-  let pr7 = pr_list pr7a in
-  Debug.no_7 "mk_orig_hprel_def" pr2 pr1 pr2 (pr_list pr3) pr2 pr4 pr7 pr6
-      (fun _ _ _ _ _ _ _ -> mk_orig_hprel_def_x prog is_pre defs unk_hps hp r other_args args sh_ldns
-           eqNulls eqPures hprels unk_svl quans)
-      unk_hps hp args sh_ldns eqNulls eqPures hprels
+(* let mk_orig_hprel_def prog is_pre defs unk_hps hp r other_args args sh_ldns eqNulls eqPures hprels unk_svl quans= *)
+(*   let pr1 = !CP.print_sv in *)
+(*   let pr2 = !CP.print_svl in *)
+(*   let pr2a = pr_triple !CP.print_svl !CP.print_sv !CP.print_svl in *)
+(*   let pr3 = fun hd -> Cprinter.prtt_string_of_h_formula (CF.DataNode hd) in *)
+(*   let pr4 =  pr_list !CP.print_formula in *)
+(*   let pr5 = pr_list (pr_pair pr1 string_of_hp_rel_def) in *)
+(*   let pr7 = pr_list (pr_pair pr1 pr2a) in *)
+(*   let pr6 (d,_,ls_n_hpargs,dns,_) = *)
+(*     let pr = pr_triple pr5 pr7 (pr_list pr3) in *)
+(*     pr (d, ls_n_hpargs, dns) *)
+(*   in *)
+(*   let pr7a hrel = Cprinter.string_of_hrel_formula (CF.HRel hrel) in *)
+(*   let pr7 = pr_list pr7a in *)
+(*   Debug.no_7 "mk_orig_hprel_def" pr2 pr1 pr2 (pr_list pr3) pr2 pr4 pr7 pr6 *)
+(*       (fun _ _ _ _ _ _ _ -> mk_orig_hprel_def_x prog is_pre defs unk_hps hp r other_args args sh_ldns *)
+(*            eqNulls eqPures hprels unk_svl quans) *)
+(*       unk_hps hp args sh_ldns eqNulls eqPures hprels *)
 (*
   args = {r} \union paras
 *)
@@ -5361,7 +5361,7 @@ let extract_fwd_pre_defs fwd_pre_hps defs=
     (****************END SUBST HP DEF*****************)
 (************************************************************)
 
-let recover_dropped_args_x drop_hp_args hp_defs=
+let recover_dropped_args drop_hp_args hp_defs=
   let helper hrel=
     match hrel with
       | CF.HRel (hp, eargs, p ) -> (hp, eargs, p )
@@ -5393,17 +5393,17 @@ let recover_dropped_args_x drop_hp_args hp_defs=
   in
   helper1 drop_hp_args hp_defs []
 
-let recover_dropped_args drop_hp_args hp_defs=
-  let pr0 = pr_list !CP.print_exp in
-  let pr1 = pr_list (pr_triple !CP.print_sv pr0 pr0) in
-  let pr2 = pr_list_ln Cprinter.string_of_hp_rel_def in
-  Debug.no_2 "recover_dropped_args" pr1 pr2 pr2
-      (fun _ _ -> recover_dropped_args_x drop_hp_args hp_defs) drop_hp_args hp_defs
+(* let recover_dropped_args drop_hp_args hp_defs= *)
+(*   let pr0 = pr_list !CP.print_exp in *)
+(*   let pr1 = pr_list (pr_triple !CP.print_sv pr0 pr0) in *)
+(*   let pr2 = pr_list_ln Cprinter.string_of_hp_rel_def in *)
+(*   Debug.no_2 "recover_dropped_args" pr1 pr2 pr2 *)
+(*       (fun _ _ -> recover_dropped_args_x drop_hp_args hp_defs) drop_hp_args hp_defs *)
 
 (************************************************************)
     (****************(*UNK HPS*)*****************)
 (************************************************************)
-let drop_non_node_unk_hps_x hp_defs ls_non_node_unk_hpargs =
+let drop_non_node_unk_hps hp_defs ls_non_node_unk_hpargs =
   let drop_one_hpdef lnon_node_hp_names (rc, hf, f)=
     let f1,_ = CF.drop_hrel_f f lnon_node_hp_names in
     (rc, hf, f1)
@@ -5411,11 +5411,11 @@ let drop_non_node_unk_hps_x hp_defs ls_non_node_unk_hpargs =
   let non_node_hp_names = List.map fst ls_non_node_unk_hpargs in
   List.map (drop_one_hpdef non_node_hp_names) hp_defs
 
-let drop_non_node_unk_hps hp_defs non_node_unk_hps =
-  let pr1 = pr_list_ln Cprinter.string_of_hp_rel_def in
-  let pr2 = pr_list_ln (pr_pair !CP.print_sv !CP.print_svl) in
-  Debug.no_2 "drop_non_node_unk_hps" pr1 pr2 pr1
-      (fun _ _ -> drop_non_node_unk_hps_x hp_defs non_node_unk_hps) hp_defs non_node_unk_hps
+(* let drop_non_node_unk_hps hp_defs non_node_unk_hps = *)
+(*   let pr1 = pr_list_ln Cprinter.string_of_hp_rel_def in *)
+(*   let pr2 = pr_list_ln (pr_pair !CP.print_sv !CP.print_svl) in *)
+(*   Debug.no_2 "drop_non_node_unk_hps" pr1 pr2 pr1 *)
+(*       (fun _ _ -> drop_non_node_unk_hps_x hp_defs non_node_unk_hps) hp_defs non_node_unk_hps *)
 
 let generate_hp_def_from_unk_hps_x hpdefs unk_hpargs hp_defs post_hps gunk_rels=
   let mk_unkdef pos (hp,args)=
