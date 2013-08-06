@@ -672,7 +672,7 @@ let rec spass_imply (ante : Cpure.formula) (conseq : Cpure.formula) timeout : bo
   (* let _ = "** In function Spass.spass_imply" in *)
   let pr = Cprinter.string_of_pure_formula in
   let result = 
-    Debug.no_2_loop "spass_imply" (pr_pair pr pr) string_of_float string_of_bool
+    Debug.no_2(* _loop *) "spass_imply" (pr_pair pr pr) string_of_float string_of_bool
     (fun _ _ -> spass_imply_x ante conseq timeout) (ante, conseq) timeout in
   (* let omega_result = Omega.imply ante conseq "" timeout in
   let _ = print_endline ("-- spass_imply result: " ^ (if result then "TRUE" else "FALSE")) in
@@ -750,7 +750,7 @@ let imply (ante : Cpure.formula) (conseq : Cpure.formula) (timeout: float) : boo
 
 let imply (ante : Cpure.formula) (conseq : Cpure.formula) (timeout: float) : bool =
   (* let _ = print_endline "** In function Spass.imply:" in *)
-  Debug.no_1_loop "smt.imply" string_of_float string_of_bool
+  Debug.no_1(* _loop *) "smt.imply" string_of_float string_of_bool
     (fun _ -> imply ante conseq timeout) timeout
 
 (**

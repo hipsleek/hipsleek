@@ -8472,7 +8472,7 @@ let list_partial_context_or (l1:list_partial_context) (l2:list_partial_context) 
 
 let list_partial_context_or (l1:list_partial_context) (l2:list_partial_context) : list_partial_context = 
   let pr x = string_of_int (List.length x) in 
-  Debug.no_2_loop "list_partial_context_or" pr pr pr list_partial_context_or l1 l2 
+  Debug.no_2(*_loop*) "list_partial_context_or" pr pr pr list_partial_context_or l1 l2 
 
 let list_failesc_context_or f (l1:list_failesc_context) (l2:list_failesc_context) : list_failesc_context = 
   List.concat (List.map (fun pc1-> (List.map (fun pc2 -> remove_dupl_false_fe (merge_failesc_context_or f pc1 pc2)) l2)) l1)

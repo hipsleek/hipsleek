@@ -1400,7 +1400,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 			      let helper c bd_spec = 
 						let pr1 c = Cprinter.string_of_context (CF.Ctx c) in
 						let pr2 f = Cprinter.string_of_struc_formula f in
-						Debug.no_2_loop "barrier entail" pr1 pr2 (fun c-> "") 
+						Debug.no_2(* _loop *) "barrier entail" pr1 pr2 (fun c-> "") 
 							(fun _ _ -> heap_entail_struc_init prog false true (CF.SuccCtx [CF.Ctx c]) bd_spec pos None) c bd_spec (*r,proof*) 
 							(*try
 							  Printexc.record_backtrace true ;
@@ -1422,7 +1422,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 	      let barr_failesc_context (f,e,n) =
 		let pr1 (_,_,n) = pr_list (fun (_,c)-> Cprinter.string_of_context c) n in   
 		let pr2 (l,_) = String.concat "\n result: " (List.map (fun (_,_,c)-> pr_list (fun c-> Cprinter.string_of_context (snd c)) c) l) in
-		Debug.no_1_loop "barrier_failesc_context" pr1 pr2 barr_failesc_context (f,e,n) in
+		Debug.no_1(* _loop *) "barrier_failesc_context" pr1 pr2 barr_failesc_context (f,e,n) in
 	      
               let to_print = ("\nVerification Context:"^(post_pos#string_of_pos)^"\nBarrier call \n") in
               Debug.devel_zprint (lazy (to_print^"\n")) pos;
@@ -2024,7 +2024,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                     (* let _ = Log.update_sleek_proving_kind Log.PRE in *)
                     let pk = if ir then PK_PRE_REC else PK_PRE in
                     let f = wrap_proving_kind pk (check_pre_post_orig org_spec sctx) in
-                    Debug.no_2_loop "check_pre_post" pr3 pr2 pr2 (fun _ _ ->  f should_output_html) org_spec sctx in
+                    Debug.no_2(* _loop *) "check_pre_post" pr3 pr2 pr2 (fun _ _ ->  f should_output_html) org_spec sctx in
 		  
 		  let check_pre_post ir org_spec (sctx:CF.list_failesc_context) should_output_html : CF.list_failesc_context =
 		    Gen.Profiling.do_1 "check_pre_post" (check_pre_post ir org_spec sctx) should_output_html

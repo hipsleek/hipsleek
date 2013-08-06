@@ -1611,7 +1611,7 @@ SpecVar (_, n, _) -> vdef.I.view_vars <- vdef.I.view_vars @ [n];
       cvdef)
   )
   )
-and fill_one_base_case prog vd = Debug.no_1_loop "fill_one_base_case" Cprinter.string_of_view_decl Cprinter.string_of_view_decl (fun vd -> fill_one_base_case_x prog vd) vd
+and fill_one_base_case prog vd = Debug.no_1 "fill_one_base_case" Cprinter.string_of_view_decl Cprinter.string_of_view_decl (fun vd -> fill_one_base_case_x prog vd) vd
   
 and fill_one_base_case_x prog vd =
   if vd.C.view_is_prim then 
@@ -1696,7 +1696,7 @@ and compute_base_case prog cf vars =
   let pr1 x = Cprinter.string_of_list_formula (fst (List.split x)) in
   let pr2 = Cprinter.string_of_spec_var_list in
   let pr3 = pr_option (fun (p, _) -> Cprinter.string_of_pure_formula p) in
-  Debug.no_2_loop "compute_base_case" pr1 pr2 pr3 (fun _ _ -> compute_base_case_x prog cf vars) cf vars
+  Debug.no_2(* _loop *) "compute_base_case" pr1 pr2 pr3 (fun _ _ -> compute_base_case_x prog cf vars) cf vars
 
 and compute_base_case_x prog cf vars = (*flatten_base_case cf s self_c_var *)
   let compute_base_case_x_op ()=
@@ -1744,7 +1744,7 @@ and set_materialized_prop_x cdef =
       
 and set_materialized_prop cdef = 
   let pr1 = Cprinter.string_of_view_decl in
-  Debug.no_1_loop  "set_materialized_prop" pr1 pr1 set_materialized_prop_x cdef
+  Debug.no_1(* _loop *)  "set_materialized_prop" pr1 pr1 set_materialized_prop_x cdef
       
 and find_m_prop_heap params eq_f h = 
   let pr = Cprinter.string_of_h_formula in
@@ -6040,7 +6040,7 @@ and case_normalize_struc_formula_x prog (h_vars:(ident*primed) list)(p_vars:(ide
             "\n allow_post_vars: "^(string_of_bool allow_post_vars)^
             "\n lax_implicit: "^(string_of_bool lax_implicit)
             ^"\n strad_vs: "^(prl strad_vs)^"\n" in
-    Debug.no_1_loop "case_normalize_helper2" pr (pr_pair !IF.print_struc_formula (fun _ -> "")) (helper h_vars strad_vs [])  nf in
+    Debug.no_1 "case_normalize_helper2" pr (pr_pair !IF.print_struc_formula (fun _ -> "")) (helper h_vars strad_vs [])  nf in
   helper2 h_vars p_vars nf allow_primes allow_post_vars lax_implicit strad_vs
  
 
@@ -6102,7 +6102,7 @@ let impl_var = diff (IF.unbound_heap_fv onb) v_no_inst in
 	and	 helper (h_vars:(ident*primed) list)(nf:IF.struc_formula) =   
 		let pr l= "h_vars: "^(pr_list !IP.print_id l) in
 		let pr2 = Iprinter.string_of_struc_formula in
-		Debug.no_2_loop "case_normalize_helper" pr pr2 pr2 helper_x h_vars  nf in
+		Debug.no_2(* _loop *) "case_normalize_helper" pr pr2 pr2 helper_x h_vars  nf in
 	helper h_vars nf
  
 and case_normalize_struc_formula_view i prog (h:(ident*primed) list)(p:(ident*primed) list)(f:IF.struc_formula) allow_primes allow_post_vars  (lax_implicit:bool) strad_vs :IF.struc_formula= 
@@ -7515,7 +7515,7 @@ and check_barrier_wf prog bd =
       | CF.FailCtx _ -> ((*print_string "result : failed \n";*) false) in
   (*end auxes*)
   
-  let one_ctx_entail c1 c2 = Debug.no_2_loop "one_ctx_entail" Cprinter.string_of_formula Cprinter.string_of_formula string_of_bool one_ctx_entail c1 c2 in
+  let one_ctx_entail c1 c2 = Debug.no_2(* _loop *) "one_ctx_entail" Cprinter.string_of_formula Cprinter.string_of_formula string_of_bool one_ctx_entail c1 c2 in
   
   let prep_t (fs,ts,fl) = 
     let t_str = "("^(string_of_int fs)^"->"^(string_of_int ts)^")" in
