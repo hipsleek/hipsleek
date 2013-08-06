@@ -260,5 +260,5 @@ let norm_disj f =
   let pr = Cprinter.string_of_pure_formula in
   Debug.no_1 "norm_disj" pr pr norm_disj f
 (*****************************************************************)
-   (**END simplify/hul/pairwise check - disjuncts normalization **)
+ (**END simplify/hul/pairwise check - disjuncts normalization **)
 (*****************************************************************)

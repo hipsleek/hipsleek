@@ -695,28 +695,19 @@ let join_hull a f =
   match a,f with
     | CP.AndList f1,CP.AndList f2
           -> 
-          let l1 = LP.sort f1 in
-          let l2 = LP.sort f2 in
-          (* grep only those labels which are common in both lists. It's not mandatory to be zippable *)
-          (* let common_lbls1 = List.filter (fun (l,_) -> if () then true else false ) l1 in *)
-          let lst = 
-            if LP.is_zippable l1 l2 then
-              begin
-                let rec aux lb1 lb2 = 
-                  match lb1, lb2 with
-                    | [], []       ->  []
-                    | (lx,fx)::xs, (ly,fy)::ys -> 
-                          let new_f = hull fx fy in
-                          (lx, new_f):: (aux xs ys)
-                    | _, _ -> failwith "should not reach here as lists are zippable"
-                in 
-                let res = CP.mkAndList (aux l1 l2) in
-                res
-              end
-          else
-            if List.length l1 > List.length l2  then f else a
-          (* CP.mkTrue no_pos *) (* fix *) in
-          lst
+          let l2_labels =  LP.get_labels f2 in
+          let common = List.filter (fun l -> Gen.BList.mem_eq LO.is_equal l l2_labels ) (LP.get_labels f1) in
+          let l1 = LP.sort (List.filter (fun (l,_) -> Gen.BList.mem_eq  LO.is_equal l common) f1) in
+          let l2 = LP.sort (List.filter (fun (l,_) -> Gen.BList.mem_eq  LO.is_equal l common) f2) in
+          let res = 
+          match l1, l2 with
+            | [], [] ->  if List.length f1 > List.length f2  then f else a (* hull one of the branches *)
+            | _ -> 
+                  let pairs = List.combine l1 l2 in
+                  let merged = List.map (fun ((lx,fx),(ly,fy) ) -> let new_f = hull fx fy in (LO.merge lx ly, new_f)) pairs in
+                  let res = CP.mkAndList merged in 
+                  res
+          in res
     | _,_ -> hull a f
 
 let join_hull a f =
