@@ -1005,7 +1005,7 @@ let cnv_int_to_ptr f =
 
 let cnv_int_to_ptr f = 
   let pr = Cprinter.string_of_pure_formula in
-  Debug.ho_1 "cnv_int_to_ptr" pr pr (fun _ -> cnv_int_to_ptr f) f
+  Debug.no_1 "cnv_int_to_ptr" pr pr (fun _ -> cnv_int_to_ptr f) f
 
 (* let ex22 =  CP.norm_exp ex2 in *)
 
