@@ -1248,6 +1248,7 @@ let formula_of_tree tree =
 (* this is to normalize result from simplify/hull/gist *)
 let norm_pure_result f =
   let f = cnv_int_to_ptr f in
+  let f = if !Globals.allow_inf then Infinity.convert_var_to_inf f else f in 
   let disj = List.map CP.split_conjunctions (CP.split_disjunctions f) in (* size at least 1 *)
   (* let f = List.fold_left (fun a f -> norm_disj a f) (List.hd disj) (List.tl disj) in (\* fold_left is not enough. should do a fix point *\) *)
   let f = formula_of_tree (norm_disj_tree disj) in
