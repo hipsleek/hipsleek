@@ -798,6 +798,13 @@ let comm_null a1 a2 =
   else if f1 then (f1,a2,a1)
   else (f2,a1,a2)
 
+let comm_inf a1 a2 =
+  let f1 = is_inf a1 in
+  let f2 = is_inf a2 in
+  if f1 && f2 then (false,a1,a2)
+  else if f1 then (f1,a2,a1)
+  else (f2,a1,a2)
+
 (*
   strong
   ======
@@ -821,6 +828,11 @@ let cnv_ptr_to_int (ex_flag,st_flag) f =
             if st_flag (*strengthen *) then
               Some (Eq(a1,IConst(0,ll),ll),l)
             else Some (Lte(a1,IConst(0,ll),ll),l)
+         (* else let (is_inf_flag,a1,a2) = comm_inf a1 a2 in
+          if is_inf_flag then
+            if st_flag (*strengthen *) then
+              Some (Eq(a1,mkInfConst ll,ll),l)
+            else Some (Lte(a1,mkInfConst ll,ll),l)*)
           else None
       | Neq (a1, a2, ll) -> 
           let (is_null_flag,a1,a2) = comm_null a1 a2 in
@@ -829,7 +841,16 @@ let cnv_ptr_to_int (ex_flag,st_flag) f =
               Some (Gt(a1,IConst(0,ll),ll),l)
             else 
               Some (Neq(a1,IConst(0,ll),ll),l)
+          (*else  let (is_inf_flag,a1,a2) = comm_inf a1 a2 in
+          if is_inf_flag then
+            if st_flag (*strengthen *) then
+              Some (Gt(a1,mkInfConst ll,ll),l)
+            else 
+              Some (Neq(a1,mkInfConst ll,ll),l)*)
           else Some(bf)
+     (* | Lte(a1,a2,ll) -> if is_inf a1 && not(is_inf a2) then Some(BConst(false,ll),l)  
+        else if is_inf a2 && not(is_inf a1) then Some(BConst(true,ll),l) 
+        else Some(bf)*)
       | _ -> Some(bf)
   in
   let f_e arg e = (Some e) in
