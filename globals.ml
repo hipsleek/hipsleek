@@ -1345,6 +1345,7 @@ type debug_option =
   | DO_Normal
 
 
+(*let debug_file = open_in_gen [Open_creat] 0o666 ("z-debug.log")*)
 let debug_file ()=
   let get_path s = 
     if String.contains s '/' then
