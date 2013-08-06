@@ -24,5 +24,9 @@ slk_simplify  \inf<=\inf-1.
 //Simplify  (6): false
 // expect: true
 
+slk_simplify  \inf<\inf. 
+
+slk_simplify  \inf=x. 
+
 
 
