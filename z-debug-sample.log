@@ -1,5 +1,1 @@
-#compute_actions
-cnv_ptr_to_int,Trace
-#heap_entail_empty_rhs_heap
-process_action,Loop
-assumption_filter
+compute_actions

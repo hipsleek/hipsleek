@@ -307,7 +307,7 @@ let common_arguments = [
    "Use field construct instead of bind");
   ("--use-large-bind", Arg.Set Globals.large_bind,
    "Use large bind construct, where the bound variable may be changed in the body of bind");
-  ("-debug", Arg.Set Globals.read_debug_flag,
+  ("-debug", Arg.Set_string Globals.z_debug_file,
    "Read from a debug log file");
   ("-v", Arg.Set Debug.debug_on,
    "Verbose");

@@ -1336,7 +1336,7 @@ let next_sleek_int () : int =
   sleek_proof_no := !sleek_proof_no + 1; 
   (!sleek_proof_no)
 
-
+let z_debug_file = ref ""
 
 type debug_option =
   | DO_None
@@ -1345,7 +1345,21 @@ type debug_option =
   | DO_Normal
 
 
-let debug_file = open_in("z-debug.log")
+let debug_file ()=
+  let get_path s = 
+    if String.contains s '/' then
+      let i = String.rindex s '/' in
+      String.sub s 0 (i+1)
+    else ""
+  in
+  let debug_conf = "./" ^ !z_debug_file in
+  let _ = print_endline (debug_conf) in
+  let global_debug_conf =
+    if (Sys.file_exists debug_conf) then
+    debug_conf
+    else (get_path Sys.executable_name) ^ (String.sub debug_conf 2 ((String.length debug_conf) -2))
+  in
+  open_in (global_debug_conf)
 
 let read_from_debug_file chn : string list =
   let line = ref [] in
@@ -1361,12 +1375,10 @@ let read_from_debug_file chn : string list =
   with _ -> ());
   !line
 
-let read_debug_flag = ref true
-
 let debug_map = Hashtbl.create 20
 
-let read_main =
-  let xs = read_from_debug_file debug_file in
+let read_main () =
+  let xs = read_from_debug_file (debug_file ()) in
   let _ = print_endline ((pr_list (fun x -> x)) xs) in
   List.iter (fun x -> Hashtbl.add debug_map x DO_Normal) xs
 

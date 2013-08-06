@@ -175,6 +175,7 @@ let main1 () =
 	  
 let _ =  
   process_cmd_line ();
+  let _ = read_main () in
   if !Gui.enable_gui then main_gui () 
   else 
     main1 ();

@@ -406,7 +406,8 @@ let ho_6 s = ho_6_opt_aux false [] false (fun _ -> true) None s
 let ho_7 s = ho_7_opt_aux false [] false (fun _ -> true) None s
 
 let splitter s f_norm f_trace f_loop f_none =
-  if !read_debug_flag then
+  (* if !read_debug_flag then *)
+  if String.compare !z_debug_file "" != 0 then
     match (in_debug s) with
       | DO_Normal -> f_norm
       | DO_Trace -> f_trace 
