@@ -1140,7 +1140,7 @@ and memo_pure_push_exists_slice_x (f_simp, do_split) (qv: spec_var list) (f0: me
    ands them and sends them to simplify
 *)
 and memo_pure_push_exists_all fs qv f0 pos =
-  Debug.no_3_loop "memo_pure_push_exists_all" !print_sv_l_f !print_mp_f (fun _ -> "")
+  Debug.no_3 "memo_pure_push_exists_all" !print_sv_l_f !print_mp_f (fun _ -> "")
       !print_mp_f (memo_pure_push_exists_all_x fs) qv f0 pos
       
 and memo_pure_push_exists_all_x (f_simp,do_split) (qv:spec_var list) (f0:memo_pure) pos : memo_pure=

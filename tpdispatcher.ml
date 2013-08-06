@@ -1237,7 +1237,7 @@ let sat_label_filter fct f =
           not(res)
     | Or (f1,f2,_ ,_)-> (helper f1)||(helper f2)
     | _ -> test f 
-  and helper f = Debug.no_1_loop "sat_label_filter_helper"  !print_formula string_of_bool helper_x f in
+  and helper f = Debug.no_1(* _loop *) "sat_label_filter_helper"  !print_formula string_of_bool helper_x f in
   helper f
 	
 let sat_label_filter fct f = 
@@ -1637,7 +1637,7 @@ let tp_is_sat_perm f sat_no =
 		List.exists (fun f-> tp_wrap (CP.tpd_drop_perm f) && ss_wrap ([],CP.tpd_drop_nperm f)) (snd (CP.dnf_to_list f)) 
   else tp_is_sat_no_cache f sat_no
  
-let tp_is_sat_perm f sat_no =  Debug.no_1_loop "tp_is_sat_perm" Cprinter.string_of_pure_formula string_of_bool (fun _ -> tp_is_sat_perm f sat_no) f
+let tp_is_sat_perm f sat_no =  Debug.no_1(* _loop *) "tp_is_sat_perm" Cprinter.string_of_pure_formula string_of_bool (fun _ -> tp_is_sat_perm f sat_no) f
 
 let cache_status = ref false 
 let cache_sat_count = ref 0 
@@ -2343,7 +2343,7 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
   
 let tp_imply_no_cache ante conseq imp_no timeout process =
   let pr = Cprinter.string_of_pure_formula in
-  Debug.no_4_loop "tp_imply_no_cache" pr pr (fun s -> s) string_of_prover string_of_bool
+  Debug.no_4(* _loop *) "tp_imply_no_cache" pr pr (fun s -> s) string_of_prover string_of_bool
   (fun _ _ _ _ -> tp_imply_no_cache ante conseq imp_no timeout process) ante conseq imp_no !pure_tp
 
 let tp_imply_perm ante conseq imp_no timeout process = 
@@ -2363,14 +2363,14 @@ let tp_imply_perm ante conseq imp_no timeout process =
 			let antes = List.map (fun a-> CP.tpd_drop_perm a, (ante_lex,CP.tpd_drop_nperm a)) antes in
 			let conseqs = List.map (fun c-> CP.mkExists conseq_lex (CP.tpd_drop_perm c) None no_pos, (conseq_lex,CP.tpd_drop_nperm c)) conseqs in
 			let tp_wrap fa fc = if CP.isConstTrue fc then true else tp_imply_no_cache fa fc imp_no timeout process in
-			let tp_wrap fa fc = Debug.no_2_loop "tp_wrap"  Cprinter.string_of_pure_formula  Cprinter.string_of_pure_formula string_of_bool tp_wrap fa fc in
+			let tp_wrap fa fc = Debug.no_2(* _loop *) "tp_wrap"  Cprinter.string_of_pure_formula  Cprinter.string_of_pure_formula string_of_bool tp_wrap fa fc in
 			let ss_wrap (ea,fa) (ec,fc) = if fc=[] then true else Share_prover_w.sleek_imply_wrapper (ea,fa) (ec,fc) in
 			List.for_all( fun (npa,pa) -> List.exists (fun (npc,pc) -> tp_wrap npa npc && ss_wrap pa pc ) conseqs) antes
   else tp_imply_no_cache ante conseq imp_no timeout process
 	
 let tp_imply_perm ante conseq imp_no timeout process =  
 	let pr =  Cprinter.string_of_pure_formula in
-	Debug.no_2_loop "tp_imply_perm" pr pr string_of_bool (fun _ _ -> tp_imply_perm ante conseq imp_no timeout process ) ante conseq
+	Debug.no_2(* _loop *) "tp_imply_perm" pr pr string_of_bool (fun _ _ -> tp_imply_perm ante conseq imp_no timeout process ) ante conseq
   
 let imply_cache fn_imply ante conseq : bool  = 
   let _ = Gen.Profiling.push_time_always "cache overhead" in

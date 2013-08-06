@@ -3034,13 +3034,13 @@ let parse_sleek n s =
   SHGram.parse sprog (PreCast.Loc.mk n) s
 
 let parse_sleek n s =
-  DD.no_1_loop "parse_sleek" (fun x -> x) (pr_list string_of_command) (fun n -> parse_sleek n s) n
+  DD.no_1(* _loop *) "parse_sleek" (fun x -> x) (pr_list string_of_command) (fun n -> parse_sleek n s) n
 
 let parse_hip n s =
   SHGram.parse hprog (PreCast.Loc.mk n) s
 
 let parse_hip n s =
-  DD.no_1_loop "parse_hip" (fun x -> x) (fun _ -> "?") (fun n -> parse_hip n s) n
+  DD.no_1(* _loop *) "parse_hip" (fun x -> x) (fun _ -> "?") (fun n -> parse_hip n s) n
 
 let parse_sleek_int n s =
   SHGram.parse_string sprog_int (PreCast.Loc.mk n) s

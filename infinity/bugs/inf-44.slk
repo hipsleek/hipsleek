@@ -1,0 +1,23 @@
+
+
+//(44) Valid
+checkentail true |- \inf+7 !=\inf.
+/*
+  simplify to
+    true |- \inf != \inf
+         |- false
+
+   Fails
+*/
+
+
+//(53) Valid
+checkentail true |- \inf+3 !=\inf.
+/*
+  simplify to
+    true |- \inf != \inf
+         |- false
+
+   Fails
+*/
+

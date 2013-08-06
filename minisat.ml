@@ -747,7 +747,7 @@ let imply (ante : Cpure.formula) (conseq : Cpure.formula) (timeout: float) : boo
 
 let imply (ante : Cpure.formula) (conseq : Cpure.formula) (timeout: float) : bool =
   (* let _ = pint_endline "** In function minisat.imply:" in *)
-  Debug.no_1_loop "smt.imply" string_of_float string_of_bool
+  Debug.no_1(* _loop *) "smt.imply" string_of_float string_of_bool
     (fun _ -> imply ante conseq timeout) timeout
 
 let imply_with_check (ante : Cpure.formula) (conseq : Cpure.formula) (imp_no : string) (timeout: float) : bool option =

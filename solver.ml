@@ -2222,7 +2222,7 @@ and unfold_nth (n:int) (prog:prog_or_branches) (f : formula) (v : CP.spec_var) (
   let pr = Cprinter.string_of_formula in
   let pr2 = Cprinter.string_of_prog_or_branches in
   let prs = Cprinter.string_of_spec_var in
-  Debug.no_4_loop_num n "unfold" string_of_bool prs pr pr2 pr 
+  Debug.no_4_num (*loop*) n "unfold" string_of_bool prs pr pr2 pr 
       (fun _ _ _ _ -> unfold_x prog f v already_unsat uf pos) already_unsat v f prog
 
 and unfold_x (prog:prog_or_branches) (f : formula) (v : CP.spec_var) (already_unsat:bool) (uf:int) (pos : loc) : formula = 
@@ -3809,7 +3809,7 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
       (conseq : struc_formula) (tid: CP.spec_var option) (delayed_f: MCP.mix_formula option) (join_id: CP.spec_var option) pos pid : (list_context * proof) =
   let rec helper_inner i (ctx11: context) (f: struc_formula) : list_context * proof =
     (* let _= print_endline ("calling heap entail conjunct lhs") in			 *)
-    Debug.no_2_loop_num i "helper_inner" Cprinter.string_of_context Cprinter.string_of_struc_formula (fun (lc, _) -> Cprinter.string_of_list_context lc)
+    Debug.no_2_num i (*loop*) "helper_inner" Cprinter.string_of_context Cprinter.string_of_struc_formula (fun (lc, _) -> Cprinter.string_of_list_context lc)
 	(helper_inner_x) ctx11 f
 
   and helper_inner_x (ctx11 : context) (f:struc_formula) : list_context * proof = 
@@ -4736,7 +4736,7 @@ and heap_entail_one_context_a i (prog : prog_decl) (is_folding : bool)  (ctx : c
 
 and heap_entail_after_sat prog is_folding  (ctx:CF.context) (conseq:CF.formula) pos
       (ss:CF.steps) : (list_context * proof) =
-  Debug.no_2_loop "heap_entail_after_sat"
+  Debug.no_2(* _loop *) "heap_entail_after_sat"
       (Cprinter.string_of_context)
       (Cprinter.string_of_formula)
       (fun (l,p) -> Cprinter.string_of_list_context l)
@@ -6399,7 +6399,7 @@ and heap_entail_conjunct_helper i (prog : prog_decl) (is_folding : bool)  (ctx0 
   let pr1 = Cprinter.string_of_context in
   let pr2 (r,_) = Cprinter.string_of_list_context r in
   let pr3  = Cprinter.string_of_formula in
-  Debug.no_2_loop_num i "heap_entail_conjunct_helper" pr1  pr3 pr2
+  Debug.no_2_num(* _loop *) i "heap_entail_conjunct_helper" pr1  pr3 pr2
       (fun _ _ -> heap_entail_conjunct_helper_x prog is_folding ctx0 conseq rhs_h_matched_set pos) ctx0 conseq
 
 and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 : context) (conseq : formula)
@@ -8801,7 +8801,7 @@ and heap_entail_non_empty_rhs_heap_x prog is_folding  ctx0 estate ante conseq lh
 
 and heap_entail_non_empty_rhs_heap prog is_folding  ctx0 estate ante conseq lhs_b rhs_b (rhs_h_matched_set:CP.spec_var list) pos : (list_context * proof) =
   (*LDK*)
-  Debug.no_3_loop "heap_entail_non_empty_rhs_heap" 
+  Debug.no_3(* _loop *) "heap_entail_non_empty_rhs_heap" 
       Cprinter.string_of_formula_base 
       Cprinter.string_of_formula
       Cprinter.string_of_spec_var_list 
@@ -11013,7 +11013,7 @@ and test_frac_subsume prog lhs rhs_p l_perm r_perm =
   let pr1 = Cprinter.string_of_estate in
   let pr2 = Cprinter.string_of_mix_formula in
   let pr3 c = match c with | None -> "Top" | Some v -> Cprinter.string_of_spec_var v in
-  Debug.no_4_loop "test_frac_subsume" pr1 pr2 pr3 pr3 string_of_bool (test_frac_subsume_x prog) lhs rhs_p l_perm r_perm
+  Debug.no_4(* _loop *) "test_frac_subsume" pr1 pr2 pr3 pr3 string_of_bool (test_frac_subsume_x prog) lhs rhs_p l_perm r_perm
       
 and test_frac_eq_x prog lhs rhs_p l_perm r_perm = (*if false, do match *)
   if !perm =NoPerm then true
