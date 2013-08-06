@@ -1354,7 +1354,7 @@ let debug_file ()=
     else ""
   in
   let debug_conf = "./" ^ !z_debug_file in
-  let _ = print_endline (debug_conf) in
+  (* let _ = print_endline (debug_conf) in *)
   let global_debug_conf =
     if (Sys.file_exists debug_conf) then
     debug_conf
@@ -1369,7 +1369,8 @@ let read_from_debug_file chn : string list =
     while true do
       let xs = (input_line chn) in
       let n = String.length xs in
-      if n > 0 then begin
+      let s = String.sub xs 0 1 in
+      if n > 0 && String.compare s "#" !=0 then begin
         line := xs::!line;
       end;
     done;
@@ -1380,8 +1381,22 @@ let debug_map = Hashtbl.create 20
 
 let read_main () =
   let xs = read_from_debug_file (debug_file ()) in
-  let _ = print_endline ((pr_list (fun x -> x)) xs) in
-  List.iter (fun x -> Hashtbl.add debug_map x DO_Normal) xs
+  (* let _ = print_endline ((pr_list (fun x -> x)) xs) in *)
+  List.iter (fun x ->
+      try
+        let l = String.index x ',' in
+        let m = String.sub x 0 l in
+        let split = String.sub x (l+1) ((String.length x) -l -1) in
+        let _ = print_endline (m) in
+        let _ = print_endline (split) in
+        let kind = if String.compare split "Trace" == 0 then DO_Trace else
+          if String.compare split "Loop" == 0 then DO_Loop else
+            DO_Normal
+        in
+        Hashtbl.add debug_map m kind
+      with _ ->
+      Hashtbl.add debug_map x DO_Normal
+  ) xs
 
 let in_debug x =
   try
