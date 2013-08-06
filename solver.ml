@@ -1320,7 +1320,7 @@ and xpure_heap_symbolic_i_x (prog : prog_decl) (h0 : h_formula) xp_no: (MCP.mix_
 (*xpure heap in the presence of imm and permissions*)
 and xpure_heap_symbolic_perm_i (prog : prog_decl) (h0 : h_formula) i: (MCP.mix_formula * CP.spec_var list) = 
   let pr (mf,bl,_) = pr_pair Cprinter.string_of_mix_formula (pr_list (fun (_,f) -> Cprinter.string_of_pure_formula f)) (mf,bl) in
-  Debug.no_1 "xpure_heap_symbolic_perm_i" Cprinter.string_of_h_formula pr
+  Debug.no_1 "xpure_heap_symbolic_perm_i" Cprinter.string_of_h_formula pr_none
       (fun h0 -> xpure_heap_symbolic_perm_i_x prog h0 i) h0
 
 and xpure_heap_symbolic_perm_i_x (prog : prog_decl) (h0 : h_formula) xp_no: (MCP.mix_formula * CP.spec_var list) = 
@@ -4780,7 +4780,8 @@ and heap_entail_after_sat_x prog is_folding  (ctx:CF.context) (conseq:CF.formula
 and early_hp_contra_detection_x hec_num prog estate conseq pos = 
   (* if there is no hp inf, post pone contra detection *)
   (* if (List.length estate.es_infer_vars_hp_rel == 0 ) then  (false, None) *)
-  if (Infer.no_infer_all_all estate) then  (true,false, None)
+  if (Infer.no_infer_all_all estate) && not(!Globals.early_contra_flag)
+  then  (true,false, None)
   else
     begin
       let (r_inf_contr,real_c), relass = solver_detect_lhs_rhs_contra 1 prog estate conseq pos "EARLY CONTRA DETECTION" in
@@ -11687,7 +11688,7 @@ let heap_entail_struc_list_failesc_context_init (prog : prog_decl) (is_folding :
 	(fun (cl, _) -> Cprinter.string_of_list_failesc_context cl)
 	(fun _ _ -> heap_entail_struc_list_failesc_context_init prog is_folding has_post cl conseq tid delayed_f join_id pos pid) cl conseq
 
-let heap_entail_list_partial_context_init_x (prog : prog_decl) (is_folding : bool)  (cl : list_partial_context)
+let heap_entail_list_partial_context_init (prog : prog_decl) (is_folding : bool)  (cl : list_partial_context)
         (conseq:formula) (tid: CP.spec_var option) (delayed_f: MCP.mix_formula option) (join_id: CP.spec_var option) pos (pid:control_path_id) : (list_partial_context * proof) = 
   let _ = set_entail_pos pos in
   Debug.devel_zprint (lazy ("heap_entail_init list_partial_context_init:"
@@ -11718,13 +11719,13 @@ let heap_entail_list_partial_context_init_x (prog : prog_decl) (is_folding : boo
   heap_entail_agressive_prunning entail_fct (prune_ctx_list prog) (fun (c,_)-> isSuccessListPartialCtx_new c) norm_cl 
   end
 
-let heap_entail_list_partial_context_init (prog : prog_decl) (is_folding : bool)  (cl : list_partial_context)
-        (conseq:formula) (tid: CP.spec_var option) (delayed_f: MCP.mix_formula option) (join_id: CP.spec_var option) pos (pid:control_path_id) : (list_partial_context * proof) = 
-  (*let pr x = (string_of_int(List.length x))^"length" in*)
-  let pr2 = Cprinter.string_of_list_partial_context in 
-  Debug.no_2 "heap_entail_list_partial_context_init" pr2 (Cprinter.string_of_formula) 
-      (fun (x,_) -> pr2 )
-      (fun _ _ -> heap_entail_list_partial_context_init_x prog is_folding  cl conseq tid delayed_f join_id pos pid) cl conseq
+(* let heap_entail_list_partial_context_init (prog : prog_decl) (is_folding : bool)  (cl : list_partial_context) *)
+(*         (conseq:formula) (tid: CP.spec_var option) (delayed_f: MCP.mix_formula option) (join_id: CP.spec_var option) pos (pid:control_path_id) : (list_partial_context * proof) =  *)
+(*   (\*let pr x = (string_of_int(List.length x))^"length" in*\) *)
+(*   let pr2 = Cprinter.string_of_list_partial_context in  *)
+(*   Debug.no_2 "heap_entail_list_partial_context_init" pr2 (Cprinter.string_of_formula)  *)
+(*       (fun (x,_) -> pr2 ) *)
+(*       (fun _ _ -> heap_entail_list_partial_context_init_x prog is_folding  cl conseq tid delayed_f join_id pos pid) cl conseq *)
 
 (*this does not have thread id*)
 let heap_entail_list_failesc_context_init_x (prog : prog_decl) (is_folding : bool)  (cl : list_failesc_context)
@@ -12019,7 +12020,7 @@ let rec simplify_pre pre_fml lst_assume = match pre_fml with
 		
 let simplify_pre pre_fml lst_assume =
 	let pr = !CF.print_formula in
-	Debug.no_1 "simplify_pre" pr pr simplify_pre pre_fml lst_assume
+	Debug.no_1 "simplify_pre" pr pr (fun _ -> simplify_pre pre_fml lst_assume)  pre_fml
 	
 let rec simplify_relation_x (sp:struc_formula) subst_fml pre_vars post_vars prog inf_post evars lst_assume
   : struc_formula * CP.formula list = 

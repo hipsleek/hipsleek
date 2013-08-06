@@ -2514,7 +2514,7 @@ let generalize_one_hp prog defs non_ptr_unk_hps unk_hps par_defs=
   Debug.no_1 "generalize_one_hp" pr1 (pr_pair pr2 pr3)
       (fun _ -> generalize_one_hp_x prog defs non_ptr_unk_hps unk_hps par_defs) par_defs
 
-let get_pdef_body_x unk_hps post_hps (a1,args,unk_args,a3,olf,og,orf)=
+let get_pdef_body unk_hps post_hps (a1,args,unk_args,a3,olf,og,orf)=
   let exchane_unk_post hp1 args f unk_args=
     let hpargs2 = CF.get_HRels_f f in
     match hpargs2 with
@@ -2545,11 +2545,11 @@ let get_pdef_body_x unk_hps post_hps (a1,args,unk_args,a3,olf,og,orf)=
           [(a1,args,og,f_body,unk_args)]
     | None, None -> report_error no_pos "sa.obtain_def: can't happen 2"
 
-let get_pdef_body unk_hps post_hps (a1,args,unk_args,a3,olf,og,orf)=
-  let pr1 = SAU.string_of_par_def_w_name in
-  let pr2 = pr_list (pr_quad !CP.print_sv !CP.print_svl Cprinter.prtt_string_of_formula !CP.print_svl) in
-  Debug.no_1 "get_pdef_body" pr1 pr2
-      (fun _ -> get_pdef_body_x unk_hps post_hps (a1,args,unk_args,a3,olf,og,orf) )(a1,args,unk_args,a3,olf,og,orf)
+(* let get_pdef_body unk_hps post_hps (a1,args,unk_args,a3,olf,og,orf)= *)
+(*   let pr1 = SAU.string_of_par_def_w_name in *)
+(*   let pr2 = pr_list (pr_quad !CP.print_sv !CP.print_svl Cprinter.prtt_string_of_formula !CP.print_svl) in *)
+(*   Debug.no_1 "get_pdef_body" pr1 pr2 *)
+(*       (fun _ -> get_pdef_body unk_hps post_hps (a1,args,unk_args,a3,olf,og,orf) )(a1,args,unk_args,a3,olf,og,orf) *)
 
 (*=========SUBST DEF and PARDEF FIX==========*)
 (*
@@ -2747,7 +2747,7 @@ let pardef_subst_fix prog unk_hps groups=
       - depend on non-recursive groups: susbst
       - depend on recusive groups: wait
 *)
-let def_subst_fix_x prog unk_hps hpdefs=
+let def_subst_fix prog unk_hps hpdefs=
   (*remove dups*)
   (* let unk_hps = CP.remove_dups_svl unk_hps in *)
   let is_rec_hpdef (a1,_,f)=
@@ -2851,14 +2851,14 @@ let def_subst_fix_x prog unk_hps hpdefs=
 
 (*this subst is to elim intermediate hps in final inferred hprel def
  *)
-let def_subst_fix prog unk_hps hpdefs=
-  let pr1 = pr_list_ln Cprinter.string_of_hp_rel_def in
-  Debug.no_1 "def_subst_fix" pr1 pr1
-      (fun _ -> def_subst_fix_x prog unk_hps hpdefs) hpdefs
+(* let def_subst_fix prog unk_hps hpdefs= *)
+(*   let pr1 = pr_list_ln Cprinter.string_of_hp_rel_def in *)
+(*   Debug.no_1 "def_subst_fix" pr1 pr1 *)
+(*       (fun _ -> def_subst_fix prog unk_hps hpdefs) hpdefs *)
 
   (*=========END SUBST FIX==========*)
 
-let subst_lhs_pdefs_w_impl_x hppdefs=
+let subst_lhs_pdefs_w_impl hppdefs=
   let classify (hp1,args1,unk_args,a3,olf,orf)=
     match olf,orf with
         | Some f, None ->
@@ -2927,10 +2927,10 @@ let subst_lhs_pdefs_w_impl_x hppdefs=
   let not_subst = get_remain_from_subst subst (List.concat ls_matched) in
   ((List.concat ls_pdefs0)@( new_to_be_substed)@not_subst)
 
-let subst_lhs_pdefs_w_impl hppdefs=
-  let pr1 = pr_list_ln SAU.string_of_par_def_w_name in
-  Debug.no_1 "subst_lhs_pdefs_w_impl" pr1 pr1
-      (fun _ -> subst_lhs_pdefs_w_impl_x hppdefs) hppdefs
+(* let subst_lhs_pdefs_w_impl hppdefs= *)
+(*   let pr1 = pr_list_ln SAU.string_of_par_def_w_name in *)
+(*   Debug.no_1 "subst_lhs_pdefs_w_impl" pr1 pr1 *)
+(*       (fun _ -> subst_lhs_pdefs_w_impl hppdefs) hppdefs *)
 
 let is_valid_pardef (_,args,_,f,_)=
   let ls_succ_args = snd (List.split (CF.get_HRels_f f)) in
@@ -3285,7 +3285,7 @@ let generalize_hps prog callee_hps unk_hps sel_post_hps cs par_defs=
 (*===========fix point==============*)
 let infer_hps_fix prog callee_hps hp_rel_unkmap unk_hps (constrs: CF.hprel list) =
   let dang_hps = List.fold_left (fun ls (hps,_)-> ls@ (List.map fst hps)) [] hp_rel_unkmap in
-  let rec helper_x (constrs: CF.hprel list) par_defs non_unk_hps=
+  let rec helper (constrs: CF.hprel list) par_defs non_unk_hps=
     DD.ninfo_pprint ">>>>>> step 3: simplification <<<<<<" no_pos;
     let constrs1 = simplify_constrs prog unk_hps constrs in
      Debug.ninfo_hprint (add_str "constr each LOOP: " (pr_list_ln Cprinter.string_of_hprel)) constrs1 no_pos;
@@ -3307,17 +3307,17 @@ let infer_hps_fix prog callee_hps hp_rel_unkmap unk_hps (constrs: CF.hprel list)
           (*step 5: subst new partial def into constrs*)
           let constrs4,new_non_unk_hps = subst_cs prog dang_hps constrs3 (par_defs@par_defs_diff) in
           (*for debugging*)
-          let helper (constrs: CF.hprel list) par_defs non_unk_hps=
-            let pr = pr_list_ln SAU.string_of_par_def_w_name in
-            Debug.no_1 "infer_hps_fix" pr (fun (_,pdefs) -> pr pdefs)
-                (fun _ -> helper_x constrs par_defs non_unk_hps) par_defs
-          in
+          (* let helper (constrs: CF.hprel list) par_defs non_unk_hps= *)
+          (*   let pr = pr_list_ln SAU.string_of_par_def_w_name in *)
+          (*   Debug.no_1 "infer_hps_fix" pr (fun (_,pdefs) -> pr pdefs) *)
+          (*       (fun _ -> helper constrs par_defs non_unk_hps) par_defs *)
+          (* in *)
           (*END for debugging*)
           let norm_constrs, par_defs,non_unk_hps1 = helper constrs4 (par_defs@par_defs_diff) (non_unk_hps@new_non_unk_hps) in
           ((* simplify_constrs prog *) norm_constrs,  par_defs, CP.remove_dups_svl non_unk_hps1)
       end
   in
-  helper_x constrs [] []
+  helper constrs [] []
 
 let generate_hp_def_from_split_x prog hpdefs hp_defs_split unk_hpargs=
   let is_rec_hpdef hp f=

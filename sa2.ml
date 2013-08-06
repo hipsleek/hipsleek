@@ -237,7 +237,7 @@ let apply_transitive_impl_fix prog post_hps callee_hps (* hp_rel_unkmap *) dang_
     in the new algo, those will be generalized as equiv. do not need to substed
   *)
   (*frozen_hps: it is synthesized already*)
-  let rec helper_x (constrs: CF.hprel list) new_cs frozen_hps =
+  let rec helper (constrs: CF.hprel list) new_cs frozen_hps =
     DD.binfo_pprint ">>>>>> step 3a: simplification <<<<<<" no_pos;
     let new_cs1 = (* SAU.simplify_constrs prog unk_hps *) new_cs in
     (*  Debug.ninfo_hprint (add_str "apply_transitive_imp LOOP: " (pr_list_ln Cprinter.string_of_hprel)) constrs no_pos; *)
@@ -268,11 +268,11 @@ let apply_transitive_impl_fix prog post_hps callee_hps (* hp_rel_unkmap *) dang_
         in
         (*for debugging*)
         let _ = DD.ninfo_pprint ("   new constrs:" ^ (let pr = pr_list_ln Cprinter.string_of_hprel_short in pr constrs2)) no_pos in
-        let helper (constrs: CF.hprel list) new_cs=
-          let pr = pr_list_ln Cprinter.string_of_hprel_short in
-          Debug.no_1 "apply_transitive_imp_fix" pr (fun (cs,_) -> pr cs)
-              (fun _ -> helper_x constrs new_cs) new_cs
-        in
+        (* let helper (constrs: CF.hprel list) new_cs= *)
+        (*   let pr = pr_list_ln Cprinter.string_of_hprel_short in *)
+        (*   Debug.no_1 "apply_transitive_imp_fix" pr (fun (cs,_) -> pr cs) *)
+        (*       (fun _ -> helper_x constrs new_cs) new_cs *)
+        (* in *)
         (*END for debugging*)
         let norm_constrs, non_unk_hps1 =
           let constrs, new_constrs = if is_changed then (new_cs2, constrs2) else (constrs, new_cs1) in
@@ -283,7 +283,7 @@ let apply_transitive_impl_fix prog post_hps callee_hps (* hp_rel_unkmap *) dang_
     end
   in
   let _ = DD.ninfo_pprint ("   constrs:" ^ (let pr = pr_list_ln Cprinter.string_of_hprel_short in pr constrs)) no_pos in
-  helper_x [] constrs []
+  helper [] constrs []
 
 (***************************************************************
                       END APPLY TRANS IMPL
@@ -1430,7 +1430,7 @@ let generalize_hps prog is_pre callee_hps unk_hps link_hps sel_post_hps pre_defs
 (***************************************************************
                       LIB MATCHING
 ****************************************************************)
-let collect_sel_hp_def_x cond_path defs sel_hps unk_hps m=
+let collect_sel_hp_def cond_path defs sel_hps unk_hps m=
   (*currently, use the first lib matched*)
   let m = List.map (fun (hp, l) -> (hp, List.hd l)) m in
   let mlib = List.map (fun (hp, _) -> hp) m in
@@ -1509,16 +1509,16 @@ let collect_sel_hp_def_x cond_path defs sel_hps unk_hps m=
       not (CP.mem_svl hp inter_lib))
       all_sel_defw
 
-let collect_sel_hp_def defs sel_hps unk_hps m=
-  let pr1 = pr_list_ln Cprinter.string_of_hp_rel_def in
-  let pr2 = !CP.print_svl in
-  let pr3b = pr_list_ln Cprinter.prtt_string_of_h_formula in
-  let pr3a = fun (hp,vns) -> (!CP.print_sv hp) ^ " === " ^
-      (* ( String.concat " OR " view_names) *) (pr3b vns) in
-  let pr3 = pr_list_ln pr3a in
-  let pr4 = (pr_list_ln Cprinter.string_of_hprel_def) in
-  Debug.no_3 "collect_sel_hp_def" pr1 pr2 pr3 pr4
-      (fun _ _ _ -> collect_sel_hp_def_x defs sel_hps unk_hps m) defs sel_hps m
+(* let collect_sel_hp_def defs sel_hps unk_hps m= *)
+(*   let pr1 = pr_list_ln Cprinter.string_of_hp_rel_def in *)
+(*   let pr2 = !CP.print_svl in *)
+(*   let pr3b = pr_list_ln Cprinter.prtt_string_of_h_formula in *)
+(*   let pr3a = fun (hp,vns) -> (!CP.print_sv hp) ^ " === " ^ *)
+(*       (\* ( String.concat " OR " view_names) *\) (pr3b vns) in *)
+(*   let pr3 = pr_list_ln pr3a in *)
+(*   let pr4 = (pr_list_ln Cprinter.string_of_hprel_def) in *)
+(*   Debug.no_3 "collect_sel_hp_def" pr1 pr2 pr3 pr4 *)
+(*       (fun _ _ _ -> collect_sel_hp_def defs sel_hps unk_hps m) defs sel_hps m *)
 
 let match_hps_views_x (hp_defs: CF.hp_rel_def list) (vdcls: CA.view_decl list):
 (CP.spec_var* CF.h_formula list) list=
@@ -1791,7 +1791,7 @@ and infer_shapes_from_obligation_x iprog prog proc_name is_pre cond_path (constr
     let n_cviews,chprels_decl = Saout.trans_hprel_2_cview iprog prog proc_name need_trans_hprels in
     let in_hp_names = List.map CP.name_of_spec_var dep_def_hps in
     (*for each oblg, subst + simplify*)
-    let constrs2 = SAC.trans_constr_hp_2_view_x iprog prog proc_name (pre_defs@post_defs)
+    let constrs2 = SAC.trans_constr_hp_2_view iprog prog proc_name (pre_defs@post_defs)
       in_hp_names chprels_decl oblg_constrs in
     (*for each oblg generate new constrs with new hp post in rhs*)
     (*call to infer_shape? proper? or post?*)
@@ -2172,7 +2172,7 @@ let infer_shapes_new iprog prog proc_name (hp_constrs: CF.hprel list) sel_hp_rel
     ()
   else ()
   in
-  Debug.no_6 "infer_shapes_new" pr_id pr1 !CP.print_svl pr4 pr5 pr5 pr2
+  Debug.no_6 "infer_shapes_new" pr_id pr1 !CP.print_svl pr4 pr5 pr_none pr2
       (fun _ _ _ _ _ _ -> infer_shapes_new_x iprog prog proc_name hp_constrs sel_hp_rels
           sel_post_hp_rels hp_rel_unkmap unk_hpargs link_hpargs
           need_preprocess detect_dang)

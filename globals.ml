@@ -1335,3 +1335,46 @@ let set_last_sleek_fail () =
 let next_sleek_int () : int =
   sleek_proof_no := !sleek_proof_no + 1; 
   (!sleek_proof_no)
+
+
+
+type debug_option =
+  | DO_None
+  | DO_Trace
+  | DO_Loop
+  | DO_Normal
+
+
+let debug_file = open_in("z-debug.log")
+
+let read_from_debug_file chn : string list =
+  let line = ref [] in
+  let quitloop = ref false in
+  (try
+    while true do
+      let xs = (input_line chn) in
+      let n = String.length xs in
+      if n > 0 then begin
+        line := xs::!line;
+      end;
+    done;
+  with _ -> ());
+  !line
+
+let read_debug_flag = ref true
+
+let debug_map = Hashtbl.create 20
+
+let read_main =
+  let xs = read_from_debug_file debug_file in
+  let _ = print_endline ((pr_list (fun x -> x)) xs) in
+  List.iter (fun x -> Hashtbl.add debug_map x DO_Normal) xs
+
+let in_debug x =
+  try
+    Hashtbl.find debug_map x
+  with _ -> DO_None
+
+
+
+

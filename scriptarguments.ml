@@ -307,6 +307,8 @@ let common_arguments = [
    "Use field construct instead of bind");
   ("--use-large-bind", Arg.Set Globals.large_bind,
    "Use large bind construct, where the bound variable may be changed in the body of bind");
+  ("-debug", Arg.Set Globals.read_debug_flag,
+   "Read from a debug log file");
   ("-v", Arg.Set Debug.debug_on,
    "Verbose");
   ("--pipe", Arg.Unit Tpdispatcher.Netprover.set_use_pipe,
