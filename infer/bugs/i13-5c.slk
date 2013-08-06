@@ -1,0 +1,26 @@
+// examples from bi-abduction paper
+
+data node {
+	node next;	
+}.
+
+pred lseg<p> == self = p 
+	or self::node<q> * q::lseg<p> & self!=p 
+  inv true.
+
+HeapPred H1(node a).
+
+
+infer [z] x::node<z> & z=null  |- x::lseg<z>.
+print residue.
+/*
+
+Unsound : why did we infer a LHS contradiction?
+
+ <1>hfalse&false&{FLOW,(19,20)=__norm}[]
+ inferred pure: [z!=null]
+
+
+
+*/
+
