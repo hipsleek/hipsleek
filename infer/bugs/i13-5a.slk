@@ -12,15 +12,9 @@ HeapPred H1(node a).
 
 //(5)
 
-//checkentail x::node<z>   |- x::lseg<z>.
-//print residue.
-
-infer [z] x::node<z>   |- x::lseg<z>.
+infer [z,H1] x::node<z> * H1(y)  |- x::lseg<z> * y::lseg<null>.
 print residue.
 
-/*
-Why z=null?
-<1>emp&q_27=z & z=null & q_27!=x&{FLOW,(19,20)=__norm}[]
- inferred pure: [z=null]
+//infer [z] x::node<z>   |- x::lseg<z>.
+//print residue.
 
-*/

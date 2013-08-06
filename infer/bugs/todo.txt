@@ -101,7 +101,7 @@ This seems to be triggered here due to an incorrect infer_lhs_contra
 infer [y] m=1 |- y::node<a,b> & m>=0.
 print residue.
 ========================================================================
-# i13-5.slk --sa-en-cont
+# i13-5.slk --sa-en-cont see i13-5a.slk
 
 
 infer [z,H1] x::node<z> * H1(y)  |- x::lseg<z> * y::lseg<null>.
@@ -128,13 +128,9 @@ infer [z,H1] H1(y)*x::node<z>  |- x::lseg<z> * y::lseg<null> .
 print residue.
 --> fails
 ========================================================================
-# i13-5.slk --sa-en-cont
+# i13-5a.slk --sa-en-cont. FIXED: remove do_infer_heap
 
-infer [z] x::node<z>   |- x::lseg<z>.
-
-<1>emp&q_27=z & z=null & q_27!=x&{FLOW,(19,20)=__norm}[]
- inferred pure: [z=null]
-why the res contains z=null??
+infer [z,H1] x::node<z> * H1(y)  |- x::lseg<z> * y::lseg<null>.
 ========================================================================
 ========================================================================
 ========================================================================
