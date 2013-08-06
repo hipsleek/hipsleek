@@ -74,7 +74,9 @@ let is_tmp_int sv = match sv with
 let zinf_str = constinfinity
 
 let is_inf_sv sv = match sv with
-  | SpecVar (Int,zinf_str,_) -> true
+  (*| SpecVar (Int,zinf_str,_) -> true*)
+  (* Above doesn't work as it matches against all integer spec vars *)
+  | SpecVar (Int,"ZInfinity",_) -> true
   | _ -> false
 
 type rel_cat = 
