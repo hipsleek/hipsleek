@@ -1427,7 +1427,7 @@ let infer_pure_top_level_aux estate unk_heaps
   )
   in [res]
 
-let infer_pure_top_level estate split_a_opt unk_heaps
+let infer_pure_top_level estate unk_heaps
   split_ante1 split_ante0 m_lhs split_conseq pos = 
   if no_infer_all_all estate then [(None,None,[],[],false,split_ante1)]
   else

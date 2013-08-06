@@ -7275,7 +7275,7 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
             else
               let estate = Gen.unsome_safe !smart_unsat_estate estate in
               let res = 
-                Inf.infer_pure_top_level estate split_a_opt unk_heaps
+                Inf.infer_pure_top_level estate unk_heaps
                 split_ante1 split_ante0 m_lhs split_conseq pos
               in
               let or_option (o1,o2) = (match o1,o2 with
