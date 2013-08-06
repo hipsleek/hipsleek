@@ -14,7 +14,9 @@ HeapPred H2(node q, int n).
 infer [q] true |- q::ll<n> .
 print residue.
 
-/*
+infer [q] q!=null |- q::ll<n> .
+print residue.
+
 //(7)
 infer [n,q] n=0 |- q::ll<n> .
 print residue.
@@ -22,7 +24,10 @@ print residue.
 //(8)
 infer [q,n] n=0 |- q::ll<n> .
 print residue.
-*/
+
+infer [n] q=null |- q::ll<n> .
+print residue.
+
 /*
 // equiv to q=null
 Inferred Heap:[ q::ll<inf_n_101>[Orig][LHSCase]]
