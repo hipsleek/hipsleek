@@ -117,7 +117,7 @@ let process_source_full source =
 	  
 let main () =
   process_cmd_line ();
-  let _ = read_main () in
+  let _ = Debug.read_main () in
   if List.length (!Globals.source_files) = 0 then begin
 	(* print_string (Sys.argv.(0) ^ " -help for usage information\n") *)
 	Globals.procs_verified := ["f3"];

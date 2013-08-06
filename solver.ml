@@ -9433,7 +9433,7 @@ and solver_detect_lhs_rhs_contra_all i prog estate conseq pos msg =
   let pr_3 (_,lr,b) =  pr_pair (pr_list pr) string_of_bool (lr,b) in
   Debug.no_3_num i "solver_detect_lhs_rhs_contra_all" 
       pr_estate pr_f pr_id  (pr_pair (pr_pair 
-          (pr_list (pr_option pr_es)) (add_str "real_contra" string_of_bool)) (pr_list pr_3)) (fun _ _ _ -> 
+          (pr_list (pr_es)) (add_str "real_contra" string_of_bool)) (pr_list pr_3)) (fun _ _ _ -> 
           solver_detect_lhs_rhs_contra_all_x prog estate conseq pos msg) estate conseq msg
 
 and solver_detect_lhs_rhs_contra_x i prog estate conseq pos msg =

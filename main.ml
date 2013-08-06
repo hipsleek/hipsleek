@@ -618,7 +618,7 @@ let main1 () =
   (* Cprinter.fmt_string "TEST7.................................."; *)
   (*  Cprinter.fmt_cut (); *)
   process_cmd_line ();
-  let _ = read_main () in
+  let _ = Debug.read_main () in
   Scriptarguments.check_option_consistency ();
   if !Globals.print_version_flag then begin
 	print_version ()
