@@ -167,8 +167,8 @@ and spass_dfg_of_formula f : (string * string list * string list) =
       (new_s, new_func_list, new_pred_list)
     ) 
 
-let spass_dfg_of_formula f =
-  Debug.no_1 "spass_of_formula" Cprinter.string_of_pure_formula pr_id spass_dfg_of_formula f
+(* let spass_dfg_of_formula f = *)
+(*   Debug.no_1 "spass_of_formula" Cprinter.string_of_pure_formula pr_id spass_dfg_of_formula f *)
 
 (***************************************************************
 TRANSLATE CPURE FORMULA TO PROBLEM IN TPTP FORMAT

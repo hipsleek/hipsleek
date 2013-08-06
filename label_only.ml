@@ -336,9 +336,9 @@ struct
     if id1=id2 then true
     else overlap_imply id1 r2
 
- let is_fully_compatible_imply xs ys =
-    let pr = pr_list pr_id  in
-    Debug.no_2 "is_fully_compatible_imply" pr pr string_of_bool is_fully_compatible_imply xs ys 	
+ (* let is_fully_compatible_imply xs ys = *)
+ (*    let pr = pr_list (pr_pair pr_id pr_none)  in *)
+ (*    Debug.no_2 "is_fully_compatible_imply" pr pr string_of_bool is_fully_compatible_imply xs ys 	 *)
 
 
   (* (\* this is for aggressive imply sat *\) *)
@@ -363,9 +363,9 @@ struct
     (* else overlap xs ys *)
     is_fully_compatible_sat xs ys
 
-  let is_fully_compatible xs ys =
-    let pr = pr_list pr_id  in
-    Debug.no_2 "is_fully_compatible_sat" pr pr string_of_bool is_fully_compatible xs ys 	
+  (* let is_fully_compatible xs ys = *)
+  (*   let pr = pr_list pr_none  in *)
+  (*   Debug.no_2 "is_fully_compatible_sat" pr pr string_of_bool is_fully_compatible xs ys 	 *)
 
   (* assumes that xs and ys are normalized *)
   (* returns true if they overlap in some ways *)

@@ -895,7 +895,7 @@ and checkeq_formulas_with_diff_mt_x ivars rvars f1 f2 mtl =
   let (r,fs) = match f1,f2 with 
     |CF.Or _ ,
   CF.Or _  -> (
-    check_or_with_diff f1 f2 ivars mtl
+    check_or_with_diff_x f1 f2 ivars mtl
   )
     | _ -> (
       let re_order mt = List.map (fun (a,b) -> (b,a)) mt in
@@ -1033,12 +1033,12 @@ and checkeq_formulas_one_with_diff_x (hvars: ident list) rvars (f1: CF.formula) 
   )
   else (res,new_mtl)
 
-and check_or_with_diff f1 f2 hvars mtl =
-  let pr1 = Cprinter.prtt_string_of_formula in
-  let pr2 b = if(b) then "VALID" else "INVALID" in
-  let pr3 = string_of_map_table_list in
-  Debug.no_2 "check_or_with_diff" pr1 pr1 (pr_pair pr2 pr3)
-      (fun _ _ ->  check_or_with_diff_x f1 f2 hvars mtl) f1 f2
+(* and check_or_with_diff f1 f2 hvars mtl = *)
+(*   let pr1 = Cprinter.prtt_string_of_formula in *)
+(*   let pr2 b = if(b) then "VALID" else "INVALID" in *)
+(*   let pr3 = string_of_map_table_list in *)
+(*   Debug.no_2 "check_or_with_diff" pr1 pr1 (pr_pair pr2 pr3) *)
+(*       (fun _ _ ->  check_or_with_diff_x f1 f2 hvars mtl) f1 f2 *)
 
 and check_or_with_diff_x f1 f2 hvars mtl =
   let new_mtl mtl1 d1 d2 f = List.map (fun mt -> (mt,d1,d2, f)) mtl1 in
@@ -1752,7 +1752,7 @@ let match_def hvars defs def (hp_map,spairs) =
   let pr_string str = str in
   let pr5 = pr_list_ln (pr_pair  pr_string pr_spec_var_option) in
   let pr3 = pr_pair pr4 pr5 in
-  Debug.no_2 "match_def" pr2 pr1 (pr3)
+  Debug.no_2 "match_def" pr_none pr1 (pr3)
     (fun _ _ -> match_def_x hvars defs def (hp_map,spairs)) defs def
   
 
@@ -1784,7 +1784,7 @@ let checkeq_defs hvars svars (defs: (CP.rel_cat * CF.h_formula * CF.formula) lis
   let pr5 = pr_list_ln (pr_pair Cprinter.string_of_spec_var_list Cprinter.string_of_spec_var) in
   let pr4 = pr_list_ln (pr_pair Cprinter.string_of_spec_var Cprinter.string_of_spec_var) in
   let pr3 = (pr_pair pr5 pr4) in
-  Debug.no_2 "check_defs" pr2 pr1 (pr3)
+  Debug.no_2 "check_defs" pr_none pr1 (pr3)
     (fun _ _ -> checkeq_defs_x hvars svars defs infile_defs) defs infile_defs
 
 let checkeq_defs_bool hvars svars (defs: (CP.rel_cat * CF.h_formula * CF.formula) list) ( infile_defs: (CF.formula * CF.formula) list) inf_vars=
@@ -1952,7 +1952,7 @@ let checkeq_defs_with_diff hvars svars (defs: (CP.rel_cat * CF.h_formula * CF.fo
   let pr5 = pr_pair Cprinter.prtt_string_of_formula Cprinter.prtt_string_of_formula in
   let pr6 = pr_list_ln (pr_triple string_of_map_table pr5 pr5) in
   let pr7 =pr_list_ln (pr_triple pr5 pr5 pr6) in
-  Debug.no_2 "checkeq_defs_with_diff" pr2 pr1 (pr_pair pr4 pr7)
+  Debug.no_2 "checkeq_defs_with_diff" pr_none pr1 (pr_pair pr4 pr7)
     (fun _ _ -> checkeq_defs_with_diff_x hvars svars defs infile_defs inf_vars) defs infile_defs
 
 let check_subsume hvars def1 def2 =
@@ -2044,7 +2044,7 @@ let check_subsume_defs hvars svars (defs: (CP.rel_cat * CF.h_formula * CF.formul
   let pr4 b = if(b) then ">=" else "<=" in
   let pr3 = pr_list_ln (pr_triple Cprinter.string_of_spec_var Cprinter.string_of_spec_var pr4 ) in (*a >= b*)
   let pr5 b = let (_,_,c) = b in pr3 c in 
-  Debug.no_2 "check_subsume_defs" pr2 pr1 (pr5)
+  Debug.no_2 "check_subsume_defs" pr_none pr1 (pr5)
     (fun _ _ -> check_subsume_defs_x hvars svars defs infile_defs inf_vars) defs infile_defs
 
 let check_subsume_defs_tmp hvars svars (defs: (CP.rel_cat * CF.h_formula * CF.formula) list) ( infile_defs: (CF.formula * CF.formula) list) inf_vars =

@@ -6562,10 +6562,13 @@ let check_imply_neq eq lhs e1 e2 =
     | _ -> false
   in if ((eqExp_f eq) e1 e2) then -2
   else helper lhs 
+
+(* type: (spec_var -> spec_var -> bool) -> p_formula list -> exp -> exp -> int *)
+
 let check_imply_neq_debug eq lhs e1 e2 = 
 Debug.no_3 
     "check_imply_neq" 
-    (fun c-> String.concat "&" (List.map !print_b_formula c))
+    (fun c-> String.concat "&" (List.map !print_p_formula c))
     !print_exp 
     !print_exp 
     string_of_int (check_imply_neq eq ) lhs e1 e2

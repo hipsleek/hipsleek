@@ -405,6 +405,15 @@ let ho_5 s = ho_5_opt_aux false [] false (fun _ -> true) None s
 let ho_6 s = ho_6_opt_aux false [] false (fun _ -> true) None s
 let ho_7 s = ho_7_opt_aux false [] false (fun _ -> true) None s
 
+let splitter s f_norm f_trace f_loop f_none =
+  if !read_debug_flag then
+    match (in_debug s) with
+      | DO_Normal -> f_norm
+      | DO_Trace -> f_trace 
+      | DO_Loop -> f_loop 
+      | DO_None -> f_none
+  else f_none
+
 let to_1 s = ho_1_opt_aux true [] false (fun _ -> true) None s
 let to_2 s = ho_2_opt_aux true [] false (fun _ -> true) None s
 let to_3 s = ho_3_opt_aux true [] false (fun _ -> true) None s
@@ -412,21 +421,67 @@ let to_4 s = ho_4_opt_aux true [] false (fun _ -> true) None s
 let to_5 s = ho_5_opt_aux true [] false (fun _ -> true) None s
 let to_6 s = ho_6_opt_aux true [] false (fun _ -> true) None s
 
-let no_1 _ _ _ f 
-      = ho_aux_no f
-let no_2 _ _ _ _ f e1 
-      = ho_aux_no (f e1)
-let no_3 _ _ _ _ _ f e1 e2 
-      = ho_aux_no (f e1 e2)
-let no_4 _ _ _ _ _ _ f e1 e2 e3 
-      = ho_aux_no (f e1 e2 e3)
-let no_5 _ _ _ _ _ _ _ f e1 e2 e3 e4 
-      = ho_aux_no (f e1 e2 e3 e4)
-let no_6 _ _ _ _ _ _ _ _ f e1 e2 e3 e4 e5 
-      = ho_aux_no (f e1 e2 e3 e4 e5)
+let ho_1_loop s = ho_1_opt_aux false [] true (fun _ -> true) None s
+let ho_2_loop s = ho_2_opt_aux false [] true (fun _ -> true) None s
+let ho_3_loop s = ho_3_opt_aux false [] true (fun _ -> true) None s
+let ho_4_loop s = ho_4_opt_aux false [] true (fun _ -> true) None s
+let ho_5_loop s = ho_5_opt_aux false [] true (fun _ -> true) None s
+let ho_6_loop s = ho_6_opt_aux false [] true (fun _ -> true) None s
 
-let no_7 _ _ _ _ _ _ _ _ _ f e1 e2 e3 e4 e5 e6
-      = ho_aux_no (f e1 e2 e3 e4 e5 e6)
+
+let no_1 s p1 p0 f =
+  let code_gen fn = fn s p1 p0 f in
+  let code_ho = code_gen ho_1 in
+  let code_none = ho_aux_no f in
+  let code_trace = code_gen to_1 in
+  let code_loop = code_gen ho_1_loop in
+  splitter s code_ho code_trace code_loop code_none
+
+let no_2 s p1 p2 p0 f e1 =
+  let code_ho = ho_2 s p1 p2 p0 f e1 in
+  let code_none = ho_aux_no (f e1) in
+  let code_trace = code_ho in
+  let code_loop = code_ho in
+  splitter s code_ho code_trace code_loop code_none
+
+
+let no_3 s p1 p2 p3 p0 f e1 e2 =
+  let code_ho = ho_3 s p1 p2 p3 p0 f e1 e2 in
+  let code_none = ho_aux_no (f e1 e2) in
+  let code_trace = code_ho in
+  let code_loop = code_ho in
+  splitter s code_ho code_trace code_loop code_none
+
+let no_4 s p1 p2 p3 p4 p0 f e1 e2 e3 =
+  let code_ho = ho_4 s p1 p2 p3 p4 p0 f e1 e2 e3 in
+  let code_none = ho_aux_no (f e1 e2 e3) in
+  let code_trace = code_ho in
+  let code_loop = code_ho in
+  splitter s code_ho code_trace code_loop code_none
+
+let no_5 s p1 p2 p3 p4 p5 p0 f e1 e2 e3 e4 =
+  let code_ho = ho_5 s p1 p2 p3 p4 p5 p0 f e1 e2 e3 e4 in
+  let code_none = ho_aux_no (f e1 e2 e3 e4) in
+  let code_trace = code_ho in
+  let code_loop = code_ho in
+  splitter s code_ho code_trace code_loop code_none
+
+let no_6 s p1 p2 p3 p4 p5 p6 p0 f e1 e2 e3 e4 e5 =
+  let code_ho = ho_6 s p1 p2 p3 p4 p5 p6 p0 f e1 e2 e3 e4 e5 in
+  let code_none = ho_aux_no (f e1 e2 e3 e4 e5) in
+  let code_trace = code_ho in
+  let code_loop = code_ho in
+  splitter s code_ho code_trace code_loop code_none
+
+let no_7 s p1 p2 p3 p4 p5 p6 p7 p0 f e1 e2 e3 e4 e5 e6 =
+  let code_ho = ho_7 s p1 p2 p3 p4 p5 p6 p7 p0 f e1 e2 e3 e4 e5 e6 in
+  let code_none = ho_aux_no (f e1 e2 e3 e4 e5 e6) in
+  let code_trace = code_ho in
+  let code_loop = code_ho in
+  splitter s code_ho code_trace code_loop code_none
+
+
+
 
 let ho_1_opt f = ho_1_opt_aux false [] false f None
 let ho_2_opt f = ho_2_opt_aux false [] false f None
@@ -564,13 +619,6 @@ let to_3_loop s = ho_3_opt_aux true [] true (fun _ -> true) None s
 let to_4_loop s = ho_4_opt_aux true [] true (fun _ -> true) None s
 let to_5_loop s = ho_5_opt_aux true [] true (fun _ -> true) None s
 let to_6_loop s = ho_6_opt_aux true [] true (fun _ -> true) None s
-
-let ho_1_loop s = ho_1_opt_aux false [] true (fun _ -> true) None s
-let ho_2_loop s = ho_2_opt_aux false [] true (fun _ -> true) None s
-let ho_3_loop s = ho_3_opt_aux false [] true (fun _ -> true) None s
-let ho_4_loop s = ho_4_opt_aux false [] true (fun _ -> true) None s
-let ho_5_loop s = ho_5_opt_aux false [] true (fun _ -> true) None s
-let ho_6_loop s = ho_6_opt_aux false [] true (fun _ -> true) None s
 
 
 let no_1_loop _ _ _ f 

@@ -50,7 +50,7 @@ ss: subst from ldns -> ldns
 (*
 equal_hps: are preds that are going to be generalized. DO NOT subst them
 *)
-let rec find_imply_subst_x prog unk_hps link_hps frozen_hps frozen_constrs complex_hps constrs=
+let rec find_imply_subst prog unk_hps link_hps frozen_hps frozen_constrs complex_hps constrs=
   let rec check_constr_duplicate (lhs,rhs) constrs=
     match constrs with
       | [] -> false
@@ -183,10 +183,10 @@ let rec find_imply_subst_x prog unk_hps link_hps frozen_hps frozen_constrs compl
   in
   (is_changed,new_cs1,unfrozen_hps)
 
-and find_imply_subst prog unk_hps link_hps frozen_hps complex_hps constrs=
-  let pr1 = pr_list_ln Cprinter.string_of_hprel_short in
-  Debug.no_1 "find_imply_subst" pr1 (pr_triple string_of_bool pr1 !CP.print_svl)
-      (fun _ -> find_imply_subst_x prog unk_hps link_hps frozen_hps complex_hps constrs) constrs
+(* and find_imply_subst prog unk_hps link_hps frozen_hps complex_hps constrs= *)
+(*   let pr1 = pr_list_ln Cprinter.string_of_hprel_short in *)
+(*   Debug.no_1 "find_imply_subst" pr1 (pr_triple string_of_bool pr1 !CP.print_svl) *)
+(*       (fun _ -> find_imply_subst_x prog unk_hps link_hps frozen_hps complex_hps constrs) constrs *)
 
 and is_trivial cs= (SAU.is_empty_f cs.CF.hprel_rhs) ||
   (SAU.is_empty_f cs.CF.hprel_lhs || SAU.is_empty_f cs.CF.hprel_rhs)
@@ -1225,7 +1225,7 @@ let generalize_hps prog is_pre callee_hps unk_hps link_hps sel_post_hps pre_defs
 (***************************************************************
                       LIB MATCHING
 ****************************************************************)
-let collect_sel_hp_def_x cond_path defs sel_hps unk_hps m=
+let collect_sel_hp_def cond_path defs sel_hps unk_hps m=
   (*currently, use the first lib matched*)
   let m = List.map (fun (hp, l) -> (hp, List.hd l)) m in
   let mlib = List.map (fun (hp, _) -> hp) m in
@@ -1304,16 +1304,16 @@ let collect_sel_hp_def_x cond_path defs sel_hps unk_hps m=
       not (CP.mem_svl hp inter_lib))
       all_sel_defw
 
-let collect_sel_hp_def defs sel_hps unk_hps m=
-  let pr1 = pr_list_ln Cprinter.string_of_hp_rel_def in
-  let pr2 = !CP.print_svl in
-  let pr3b = pr_list_ln Cprinter.prtt_string_of_h_formula in
-  let pr3a = fun (hp,vns) -> (!CP.print_sv hp) ^ " === " ^
-      (* ( String.concat " OR " view_names) *) (pr3b vns) in
-  let pr3 = pr_list_ln pr3a in
-  let pr4 = (pr_list_ln Cprinter.string_of_hprel_def) in
-  Debug.no_3 "collect_sel_hp_def" pr1 pr2 pr3 pr4
-      (fun _ _ _ -> collect_sel_hp_def_x defs sel_hps unk_hps m) defs sel_hps m
+(* let collect_sel_hp_def defs sel_hps unk_hps m= *)
+(*   let pr1 = pr_list_ln Cprinter.string_of_hp_rel_def in *)
+(*   let pr2 = !CP.print_svl in *)
+(*   let pr3b = pr_list_ln Cprinter.prtt_string_of_h_formula in *)
+(*   let pr3a = fun (hp,vns) -> (!CP.print_sv hp) ^ " === " ^ *)
+(*       (\* ( String.concat " OR " view_names) *\) (pr3b vns) in *)
+(*   let pr3 = pr_list_ln pr3a in *)
+(*   let pr4 = (pr_list_ln Cprinter.string_of_hprel_def) in *)
+(*   Debug.no_3 "collect_sel_hp_def" pr1 pr2 pr3 pr4 *)
+(*       (fun _ _ _ -> collect_sel_hp_def_x defs sel_hps unk_hps m) defs sel_hps m *)
 
 let match_hps_views_x (hp_defs: CF.hp_rel_def list) (vdcls: CA.view_decl list):
 (CP.spec_var* CF.h_formula list) list=
@@ -1659,7 +1659,7 @@ and infer_shapes_from_obligation_x iprog prog proc_name callee_hps is_pre is nee
     let n_cviews,chprels_decl = Saout.trans_hprel_2_cview iprog prog proc_name need_trans_hprels in
     let in_hp_names = List.map CP.name_of_spec_var dep_def_hps in
     (*for each oblg, subst + simplify*)
-    let constrs2 = SAC.trans_constr_hp_2_view_x iprog prog proc_name is.CF.is_hp_defs
+    let constrs2 = SAC.trans_constr_hp_2_view iprog prog proc_name is.CF.is_hp_defs
       in_hp_names chprels_decl oblg_constrs in
     (*for each oblg generate new constrs with new hp post in rhs*)
     (*call to infer_shape? proper? or post?*)

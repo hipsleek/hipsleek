@@ -4875,7 +4875,9 @@ and trans_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : ident list) 
 and linearize_formula (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_var_type_list) 
                       : (spec_var_type_list * CF.formula * (Globals.ident * Globals.primed) list) =
   let pr1 prog = (add_str "view_decls" pr_v_decls) prog.I.prog_view_decls in
-  Debug.no_3 "linearize_formula" pr1 Iprinter.string_of_formula string_of_tlist Cprinter.string_of_formula linearize_formula_x prog f0 tlist
+  let prR (_,f,_) =Cprinter.string_of_formula f in
+  Debug.no_3 "linearize_formula" pr1 Iprinter.string_of_formula string_of_tlist 
+       prR linearize_formula_x prog f0 tlist
 
 and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_var_type_list) 
                         : (spec_var_type_list * CF.formula * (Globals.ident * Globals.primed) list) =
@@ -5231,7 +5233,7 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
     ) in 
     res
   ) in
-  let linearize_one_formula_x f pos (tl:spec_var_type_list) = (
+  let linearize_one_formula f pos (tl:spec_var_type_list) = (
     let h = f.IF.formula_heap in
     let p = f.IF.formula_pure in
     let id = f.IF.formula_thread in
@@ -5264,12 +5266,12 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
     CF.formula_pos = pos} in
     (new_f,type_f, newvars, n_tl)
   ) in
-  let linearize_one_formula f pos = (
-    let pr (a,b) = Cprinter.string_of_one_formula a in
-    Debug.no_1 "linearize_one_formula" 
-        Iprinter.string_of_one_formula pr
-        (fun _ -> linearize_one_formula_x f pos) f
-  ) in
+  (* let linearize_one_formula f pos = ( *)
+  (*   let pr (a,b) = Cprinter.string_of_one_formula a in *)
+  (*   Debug.no_1 "linearize_one_formula"  *)
+  (*       Iprinter.string_of_one_formula pr *)
+  (*       (fun _ -> linearize_one_formula f pos) f *)
+  (* ) in *)
   let linearize_base base pos (tl:spec_var_type_list) = (
     let h = base.IF.formula_base_heap in
     let p = base.IF.formula_base_pure in

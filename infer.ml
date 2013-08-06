@@ -247,11 +247,11 @@ let collect_hp_rel_list_partial_context (ctx:list_partial_context) =
   let r = List.map (fun (_,cl) -> List.concat (List.map (fun (_,c) -> collect_hp_rel c) cl))  ctx in
   List.concat r
 
-let collect_hp_rel_list_partial_context (ctx:list_partial_context) =
-  let pr1 = !CF.print_list_partial_context in
-  let pr2 =  Cprinter.string_of_hp_rels in
-  Debug.no_1 "collect_hp_rel_list_partial_context"  pr1 pr2
-      collect_hp_rel_list_partial_context ctx
+(* let collect_hp_rel_list_partial_context (ctx:list_partial_context) = *)
+(*   let pr1 = !CF.print_list_partial_context in *)
+(*   let pr2 =  Cprinter.string_of_hp_rels in *)
+(*   Debug.no_1 "collect_hp_rel_list_partial_context"  pr1 pr2 *)
+(*       collect_hp_rel_list_partial_context ctx *)
 
 let collect_hp_unk_map_list_partial_context (ctx:list_partial_context) =
   let r = List.map (fun (_,cl) -> List.concat (List.map (fun (_,c) -> collect_hp_unk_map c) cl))  ctx in
@@ -775,9 +775,9 @@ let detect_lhs_rhs_contra_x (*lhs_xpure*) lhs_xpure_orig rhs_xpure pos =
       (* let lhs_xpure = MCP.pure_of_mix lhs_xpure0 in  *)
       (* ===================================================== *)
       (* below seems to trigger unnecessary implication checks! *)
-      (* let split_rhs = CP.split_conjunctions rhs_xpure in *)
-      (* let rem_rhs = List.filter (fun c -> not(TP.imply_raw lhs_xpure_orig c)) split_rhs in *)
-      (* let rhs_xpure = CP.join_conjunctions rem_rhs in *)
+      let split_rhs = CP.split_conjunctions rhs_xpure in
+      let rem_rhs = List.filter (fun c -> not(TP.imply_raw lhs_xpure_orig c)) split_rhs in
+      let rhs_xpure = CP.join_conjunctions rem_rhs in
       (* ===================================================== *)
       (*let _ = DD.tinfo_hprint (add_str "lhs_xpure: " (!CP.print_formula)) lhs_xpure pos in*)
       (* let _ = DD.tinfo_hprint (add_str "split_rhs: " (pr_list !CP.print_formula)) split_rhs pos in *)
