@@ -4783,7 +4783,7 @@ and early_hp_contra_detection_x hec_num prog estate conseq pos =
   if (Infer.no_infer_all_all estate) && not (!Globals.early_contra_flag) 
   then (true,false, None)
   else
-    if (isEmpFormula estate.es_formula) && (isEmpFormula conseq) 
+    if (* (isEmpFormula estate.es_formula) && *) (is_trivial_heap_formula conseq) 
     then (true, false, None)
     else
     begin
