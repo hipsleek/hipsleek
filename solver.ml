@@ -7146,15 +7146,15 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
   let _ = match neg_lhs,rel_ass with
     | None,[] -> ()
     | None,[(h1,h2,_)] ->
-          let _ = print_endline "WARNING : pushing stk_estate (1)" in
+          let _ = print_endline "\nWARNING : pushing stk_estate (1)" in
           (stk_rel_ass # push_list h2;
           stk_estate # push h1)
     | Some (es,p),[] -> 
-          let _ = print_endline "WARNING : pushing stk_estate (2)" in
+          let _ = print_endline "\nWARNING : pushing stk_estate (2)" in
           (stk_inf_pure # push p;
           stk_estate # push es)
     | Some (es,p),[(h1,h2,_)] ->
-          let _ = print_endline "WARNING : pushing stk_estate (3)" in
+          let _ = print_endline "\nWARNING : pushing stk_estate (3)" in
           (stk_inf_pure # push p;
           stk_rel_ass # push_list h2;
           stk_estate # push es)
@@ -7242,7 +7242,7 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
       DD.devel_hprint (add_str "ante1 : " Cprinter.string_of_mix_formula) split_ante1 pos;
       DD.devel_hprint (add_str "conseq : " Cprinter.string_of_mix_formula) split_conseq pos;
       (* what exactly is split_a_opt??? *)
-      let (i_res1,i_res2,i_res3),split_a_opt = 
+      let (i_res1,i_res2,i_res3),_ = 
         if (MCP.isConstMTrue rhs_p)  then ((true,[],None),None)
 	    else 
 		let _ = Debug.devel_pprint ("astaq?") no_pos in
@@ -7295,8 +7295,8 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
                     match neg,pure,rel with
                     | None,None,[] ->
                       (fun ((a,_,_),_) -> not a)
-                          (* WN : inefficient to use same antecedent *)
-                          (imply_mix_formula 0 ante ante split_conseq imp_no memset)
+                        (* WN : inefficient to use same antecedent *)
+                        (imply_mix_formula 0 ante ante split_conseq imp_no memset)
                     | _,_,_ -> false) res in
                 if is_fail then None,None,[],[],false
                 else
@@ -7316,7 +7316,7 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
                                       report_error pos "Expecting a non-empty list of entail states"
                                     else
                                       let n = List.length entail_states in
-                                      let _ = print_endline ("WARNING : Pushing "^(string_of_int n)^" stk_estate (4)") in
+                                      let _ = print_endline ("\nWARNING : Pushing "^(string_of_int n)^" stk_estate (4)") in
                                       stk_estate # push_list entail_states 
                                   in
                                   (true,[],None))
@@ -7328,7 +7328,7 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
                                       report_error pos "Expecting a non-empty list of entail states"
                                     else 
                                       let n = List.length entail_states in
-                                      let _ = print_endline ("WARNING : Pushing  "^(string_of_int n)^"stk_estate (5)") in
+                                      let _ = print_endline ("\nWARNING : Pushing  "^(string_of_int n)^"stk_estate (5)") in
                                       stk_estate # push_list entail_states
                                   in
                                   (true,[],None))
@@ -7350,7 +7350,7 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
                                                 if not(false_es) then ()
                                                 else 
                                                   let n = List.length entail_states in
-                                                  let _ = print_endline ("WARNING : Pushing "^(string_of_int n)^"stk_estate (6)") in
+                                                  let _ = print_endline ("\nWARNING : Pushing "^(string_of_int n)^"stk_estate (6)") in
                                                   stk_estate # push_list entail_states in
                                             (true,[],None)
                                   end
@@ -7398,18 +7398,18 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
     (*let lhs_p = MCP.remove_dupl_conj_mix_formula lhs_p in*)
     if not(stk_estate # is_empty) then
       let pr = Cprinter.string_of_entail_state_short in
-      let _ = Debug.info_hprint (add_str "stk_estate: " (pr_list pr)) (stk_estate # get_stk) no_pos in
+      let _ = Debug.ninfo_hprint (add_str "stk_estate: " (pr_list pr)) (stk_estate # get_stk) no_pos in
       let new_estate = stk_estate # top in
       let new_ante_fmls = List.map (fun es -> es.es_formula) (stk_estate # get_stk) in
-      let new_estate = {new_estate with es_formula = disj_of_list new_ante_fmls pos} in
+      let new_estate = {new_estate with es_formula = disj_of_list_pure new_ante_fmls pos} in
       let _ = DD.tinfo_hprint (add_str "new_estate" Cprinter.string_of_entail_state) new_estate no_pos in
       let orig_ante = new_estate.es_orig_ante in
       (* infer_deep_ante_issues : unsat fail unless we have single ctx *)
       (* soln : as heap is same, convert into disj pure *)
-      let _ = Debug.info_pprint "infer_deep_ante_issues triggered by --iesa" no_pos in
-      let _ = Debug.info_pprint "if stk_estate > 1, can cause unsat_xpure exception" no_pos in
-      let _ = Debug.info_pprint "Thai : can we convert below to single ctx by using pure or rather than CtxOr" no_pos in
-      let _ = Debug.info_hprint (add_str "new_ante_fmls" (pr_list Cprinter.string_of_formula)) new_ante_fmls no_pos in
+      let _ = Debug.ninfo_pprint "infer_deep_ante_issues triggered by --iesa" no_pos in
+      let _ = Debug.ninfo_pprint "if stk_estate > 1, can cause unsat_xpure exception" no_pos in
+      let _ = Debug.ninfo_pprint "Thai : can we convert below to single ctx by using pure or rather than CtxOr" no_pos in
+      let _ = Debug.ninfo_hprint (add_str "new_ante_fmls" (pr_list Cprinter.string_of_formula)) new_ante_fmls no_pos in
       let ctx1 = (elim_unsat_es_now 8 prog (ref 1) new_estate) in
       let ctx1 = match ctx1 with
         | Ctx es -> Ctx {es with es_orig_ante = orig_ante}
