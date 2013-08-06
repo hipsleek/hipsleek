@@ -1415,6 +1415,55 @@ let infer_pure_m i unk_heaps estate lhs_xpure lhs_xpure0 lhs_wo_heap rhs_xpure p
   (fun _ _ _ _ -> infer_pure_m unk_heaps estate lhs_xpure lhs_xpure0 lhs_wo_heap rhs_xpure pos) 
     estate lhs_xpure lhs_xpure0 rhs_xpure   
 
+let infer_pure_top_level_aux estate unk_heaps
+  split_ante1 split_ante0 m_lhs split_conseq pos =
+  let r1,r2,r3 = infer_pure_m 1 unk_heaps estate split_ante1 split_ante0 m_lhs split_conseq pos in
+  let res = (match r1,r3 with
+    | None,[] -> None,r2,[],[],false,split_ante1
+    | None,[(h1,h2,h3)] -> None,r2,h2,[h1],h3,split_ante1
+    | Some (es,p),[] -> Some p,r2,[],[es],true,split_ante1
+    | Some (es,p),[(h1,h2,h3)] -> Some p,r2,h2,[es],true,split_ante1
+    | _,_ -> report_error pos "Length of relational assumption list > 1"
+  )
+  in [res]
+
+let infer_pure_top_level estate split_a_opt unk_heaps
+  split_ante1 split_ante0 m_lhs split_conseq pos = 
+  if no_infer_all_all estate then [(None,None,[],[],false,split_ante1)]
+  else
+    match split_a_opt with 
+    | None -> infer_pure_top_level_aux estate unk_heaps
+              split_ante1 split_ante0 m_lhs split_conseq pos
+    | Some (split1,_) -> 
+      let split1 = Gen.BList.remove_dups_eq (CP.equalFormula) split1 in
+      let need_split = 
+        List.exists (fun p -> List.exists is_rel_typ (CP.fv p)) split1 in
+      if not(need_split) then
+        infer_pure_top_level_aux estate unk_heaps
+        split_ante1 split_ante0 m_lhs split_conseq pos
+      else
+        let pr = Cprinter.string_of_pure_formula in
+        let _ = Debug.info_hprint (add_str "split-1" (pr_list pr)) split1 no_pos in
+        let split_mix1 = List.map MCP.mix_of_pure split1 in
+        let res = List.map (fun lhs_xp -> 
+            (* TODO: lhs_wo_heap *)
+            let lhs_wo_heap = lhs_xp in
+            let r1,r2,r3 = infer_pure_m 2 unk_heaps estate lhs_xp lhs_xp lhs_wo_heap split_conseq pos in
+            let estate_f = 
+              {estate with 
+                es_formula = (match estate.es_formula with
+                  | Base b -> CF.mkBase_simp b.formula_base_heap lhs_xp
+                  | _ -> report_error pos "infer_pure_m: Not supported")} 
+            in
+            (match r1,r3 with 
+              | None,[] -> None,r2,[],[estate_f],false,lhs_xp
+              | None,[(h1,h2,h3)] -> None,r2,h2,[h1],h3,lhs_xp
+              | Some(es,p),[] -> Some p,r2,[],[es],true,lhs_xp
+              | Some(es,p),[(h1,h2,h3)] -> Some p,r2,h2,[es],true,lhs_xp
+              | _,_ -> report_error pos "Length of relational assumption list > 1"
+            )) split_mix1
+        in res
+
 (*let remove_contra_disjs f1s f2 =*)
 (*  let helper c1 c2 = *)
 (*    let conjs1 = CP.list_of_conjs c1 in*)

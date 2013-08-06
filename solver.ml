@@ -7274,92 +7274,35 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
             then (true,[],None)
             else
               let estate = Gen.unsome_safe !smart_unsat_estate estate in
-              let (ip1,ip2,relass,entail_states,false_es) =
-                if (Inf.no_infer_all_all estate) then (None,None,[],[],false)
+              let res = 
+                Inf.infer_pure_top_level estate split_a_opt unk_heaps
+                split_ante1 split_ante0 m_lhs split_conseq pos
+              in
+              let or_option (o1,o2) = (match o1,o2 with
+                | None,_ -> o2
+                | _,None -> o1
+                | Some pf1,Some pf2 -> Some (CP.mkOr pf1 pf2 None pos))
+              in
+              let merge_rel_ass (rs1,rs2) = 
+              (*  let ps1 = List.map (fun (_,a,_) -> a) rs1 in*)
+              (*  let ps2 = List.map (fun (_,a,_) -> a) rs2 in*)
+              (*  if Gen.BList.intersect_eq CP.equalFormula ps1 ps2 != [] then *)
+              (*    report_error pos "merge_rel_ass: Not supported yet" *)
+              (*  else  *)
+                rs1 @ rs2 in
+              let (ip1,ip2,relass,entail_states,false_es) = 
+                let is_fail = List.exists (fun (neg,pure,rel,_,_,ante) ->
+                    match neg,pure,rel with
+                    | None,None,[] ->
+                      (fun ((a,_,_),_) -> not a)
+                          (* WN : inefficient to use same antecedent *)
+                          (imply_mix_formula 0 ante ante split_conseq imp_no memset)
+                    | _,_,_ -> false) res in
+                if is_fail then None,None,[],[],false
                 else
-                  begin
-                    (* infer_deep_ante_issues : turned on by flag *)
-                    let split_a_opt = if !Globals.infer_deep_ante_flag then split_a_opt else None in
-                    match split_a_opt with 
-                      | None -> 
-                            let r1,r2,r3 = Inf.infer_pure_m 1 unk_heaps estate split_ante1 split_ante0 m_lhs split_conseq pos in
-                            (*                r1,r2,List.concat (List.map (fun (_,b,_) -> b) r3),[],false*)
-                            (match r1,r3 with
-                              | None,[] -> None,r2,[],[],false
-                              | None,[(h1,h2,h3)] -> None,r2,h2,[h1],h3
-                              | Some (es,p),[] -> Some p,r2,[],[es],true
-                              | Some (es,p),[(h1,h2,h3)] -> Some p,r2,h2,[es],true
-                              | _,_ -> report_error pos "Length of relational assumption list > 1"
-                            )
-                      | Some (split1,split2)(* ,split2 *) -> 
-                            (* infer_deep_ante_issues : can we try single infer before deep infer? *)
-                            (* Why is split-2 true? lab3.slk *)
-                            (* !!! split-1:[ AndList[ []:0<=n ; ["n"]:0<n ; ["s"]:n=0] ] *)
-                            (* !!! split-2:[ true] *)
-                            let pr = Cprinter.string_of_pure_formula in
-                            let _ = Debug.info_pprint "WARNING : deep-ante-split activated" no_pos in
-                            let _ = Debug.info_hprint (add_str "split-1" (pr_list pr)) split1 no_pos in
-                            let _ = Debug.info_hprint (add_str "split-2" (pr_list pr)) split2 no_pos in
-                            (* let no_split2 = false in *)
-                            (* let no_split2 = match split2 with *)
-                            (*   | [f] -> CP.isConstTrue f  *)
-                            (*   | [] -> false  *)
-                            (*   | _ -> false *)
-                            (* in *)
-                            (* let _ = Debug.tinfo_hprint (add_str "no_split2" (string_of_bool)) no_split2 no_pos in *)
-                            let ante1 = MCP.mix_of_pure (List.hd split1) in
-                            let r1,r2,r3 = Inf.infer_pure_m 1 unk_heaps estate ante1 ante1 m_lhs split_conseq pos in
-                            let split_mix1 = List.map MCP.mix_of_pure split1 in
-                            (* let split_mix2 = List.map MCP.mix_of_pure split2 in *)
-                            (* let split_mix2a =  *)
-                            (*   if List.length split1 = List.length split2 then split_mix2 else split_mix1 in *)
-                            (* why do we put same split_mix2; what happen to the use of XPure0? *)
-                            let res = List.map (fun lhs_xp -> 
-                                (* TODO: lhs_wo_heap *)
-                                let lhs_wo_heap = lhs_xp in
-                                let r1,r2,r3 = Inf.infer_pure_m 2 unk_heaps estate lhs_xp lhs_xp lhs_wo_heap split_conseq pos in
-                                let estate_f = {estate with es_formula = 
-                                        (match estate.es_formula with
-                                          | Base b -> CF.mkBase_simp b.formula_base_heap lhs_xp
-                                          | _ -> report_error pos "infer_pure_m: Not supported")
-                                } 
-                                in
-                                (* let estate_f = {estate with es_formula = mkBase_simp HEmp f} in*)
-                                (match r1,r3 with 
-                                  | None,[] -> None,r2,[],[estate_f],false,lhs_xp
-                                  | None,[(h1,h2,h3)] -> None,r2,h2,[h1],h3,lhs_xp
-                                  | Some(es,p),[] -> Some p,r2,[],[es],true,lhs_xp
-                                  | Some(es,p),[(h1,h2,h3)] -> Some p,r2,h2,[es],true,lhs_xp
-                                  | _,_ -> report_error pos "Length of relational assumption list > 1"
-                                )) split_mix1 in
-                            let or_option (o1,o2) = (match o1,o2 with
-                              | None,_ -> o2
-                              | _,None -> o1
-                              | Some pf1,Some pf2 -> Some (CP.mkOr pf1 pf2 None pos))
-                            in
-                            let merge_rel_ass (rs1,rs2) = 
-                              (*                  let ps1 = List.map (fun (_,a,_) -> a) rs1 in*)
-                              (*                  let ps2 = List.map (fun (_,a,_) -> a) rs2 in*)
-                              (*                  if Gen.BList.intersect_eq CP.equalFormula ps1 ps2 != [] then *)
-                              (*                    report_error pos "merge_rel_ass: Not supported yet" *)
-                              (*                  else  *)
-                              rs1 @ rs2 
-                            in
-                            let is_fail = List.exists (fun (neg,pure,rel,_,_,ante) ->
-                                match neg,pure,rel with
-                                  | None,None,[] ->
-                                        (* if no_split2 then true (\* skip imply if split-2 is trivially true? *\) *)
-                                        (* else *)
-                                        (fun ((a,_,_),_) -> not a)
-                                            (* WN : inefficient to use same antecedent *)
-                                            (imply_mix_formula 0 ante ante split_conseq imp_no memset)
-                                  | _,_,_ -> false) res in
-                            if is_fail then None,None,[],[],false
-                            else
-                              List.fold_left (fun (a,b,c,d,e) (a1,b1,c1,d1,e1,_) -> 
-                                  (or_option (a,a1),or_option (b,b1),merge_rel_ass (c,c1),d@d1,e||e1)) 
-                                  (None,None,[],[],false) res
-                  end
+                  List.fold_left (fun (a,b,c,d,e) (a1,b1,c1,d1,e1,_) -> 
+                      (or_option (a,a1),or_option (b,b1),merge_rel_ass (c,c1),d@d1,e||e1)) 
+                      (None,None,[],[],false) res
               in
               begin
                 match ip1 with
