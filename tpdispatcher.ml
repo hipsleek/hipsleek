@@ -841,12 +841,9 @@ let cnv_ptr_to_int (ex_flag,st_flag) f =
               Some (Gt(a1,IConst(0,ll),ll),l)
             else 
               Some (Neq(a1,IConst(0,ll),ll),l)
-          (*else  let (is_inf_flag,a1,a2) = comm_inf a1 a2 in
+          else  let (is_inf_flag,a1,a2) = comm_inf a1 a2 in
           if is_inf_flag then
-            if st_flag (*strengthen *) then
-              Some (Gt(a1,mkInfConst ll,ll),l)
-            else 
-              Some (Neq(a1,mkInfConst ll,ll),l)*)
+              Some (Lt(a1,CP.Var(CP.SpecVar(Int,constinfinity,Unprimed),ll),ll),l)
           else Some(bf)
      (* | Lte(a1,a2,ll) -> if is_inf a1 && not(is_inf a2) then Some(BConst(false,ll),l)  
         else if is_inf a2 && not(is_inf a1) then Some(BConst(true,ll),l) 
@@ -996,7 +993,7 @@ let cnv_int_to_ptr f =
       | Gt(a2,a1,ll) | Lt(a1,a2,ll) ->
             let ptr_flag,ann_flag = is_ptr_ctr a1 a2 in
             if ptr_flag || ann_flag then Some(to_ptr ptr_flag pf,l)
-            else if CP.is_inf a2 then Some(Neq(a1,mkInfConst ll,ll),l)
+            (*else if CP.is_inf a2 then Some(Neq(a1,mkInfConst ll,ll),l)*)
             else Some bf
       | Lte (a1, a2,_) | Gte(a1,a2,_) ->
             let ptr_flag,ann_flag = is_ptr_ctr a1 a2 in
@@ -1715,8 +1712,8 @@ let tp_is_sat f sat_no =
 
 
 let norm_pure_input f =
+  let f = if !Globals.allow_inf then Infinity.normalize_inf_formula_sat(* _sat *) f else f in
   let f = cnv_ptr_to_int f in
-  let f = if !Globals.allow_inf then Infinity.convert_inf_to_var(* _sat *) f else f in
   f
 
 let norm_pure_input f =
