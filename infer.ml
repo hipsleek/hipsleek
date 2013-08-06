@@ -1434,7 +1434,10 @@ let infer_pure_top_level estate unk_heaps
     let split1 = List.filter CP.is_sat_eq_ineq (CP.split_disjunctions_deep (MCP.pure_of_mix split_ante0)) in
     let split1 = Gen.BList.remove_dups_eq (CP.equalFormula) split1 in
     let need_split = List.length split1 > 1 &&
-      List.exists (fun p -> List.exists is_rel_typ (CP.fv p)) split1 in
+      List.exists (fun p -> 
+        let rel_vars = List.filter is_rel_typ (CP.fv p) in
+        CP.intersect estate.es_infer_vars_rel rel_vars <> []
+      ) split1 in
     if not(need_split) then
       infer_pure_top_level_aux estate unk_heaps
       split_ante1 split_ante0 m_lhs split_conseq pos
