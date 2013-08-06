@@ -80,6 +80,63 @@ slk_simplify  \inf<=\inf+1.
 slk_simplify  \inf<=\inf-1. 
 //Simplify  (9): (\inf)<=(\inf) // sound?
 =======================================================================
+# inf75b.slk --en-inf -debug zdebug
+
+slk_simplify  mi!=\inf. 
+//Simplify  (1): (mi!=(\inf) | (\inf)<mi)
+// expects mi<\inf
+
+slk_simplify  mi<=\inf. 
+//Simplify  (2): mi<=(\inf)
+// expects true 
+
+slk_simplify  \inf<m. 
+// Simplify  (3): (\inf)<m
+//   expects false
+
+slk_simplify  \inf<=m. 
+//Simplify  (4): (\inf)<=m
+/// expect: m=\inf
+
+
+slk_simplify  \inf<=\inf+1. 
+//Simplify  (5): true
+// expect: true
+
+slk_simplify  \inf<=\inf-1. 
+//Simplify  (6): false
+// expect: true
+
+norm_pure_input@5
+norm_pure_input inp1 : mi!=(\inf)
+norm_pure_input@5 EXIT out : ZInfinity!=mi
+  --> mi<ZInfinity
+
+norm_pure_input@9
+norm_pure_input inp1 : mi<=(\inf)
+norm_pure_input@9 EXIT out : mi<=ZInfinity
+  --> true
+
+norm_pure_input@11
+norm_pure_input inp1 : (\inf)<m
+norm_pure_input@11 EXIT out : ZInfinity<m
+  --> false
+
+norm_pure_input@13
+norm_pure_input inp1 : (\inf)<=m
+norm_pure_input@13 EXIT out : ZInfinity<=m
+  --> ZInfinity=m
+
+norm_pure_input@15
+norm_pure_input inp1 : (\inf)<=(1+(\inf))
+norm_pure_input@15 EXIT out : ZInfinity<=(1+ZInfinity)
+  --> true
+
+norm_pure_input@17
+norm_pure_input inp1 : ((\inf)+1)<=(\inf)
+norm_pure_input@17 EXIT out : (ZInfinity+1)<=ZInfinity
+  --> true
+
 =======================================================================
 =======================================================================
 =======================================================================

@@ -1360,6 +1360,7 @@ let debug_file ()=
     debug_conf
     else (get_path Sys.executable_name) ^ (String.sub debug_conf 2 ((String.length debug_conf) -2))
   in
+  let _ = print_endline global_debug_conf in
   open_in (global_debug_conf)
 
 let read_from_debug_file chn : string list =
