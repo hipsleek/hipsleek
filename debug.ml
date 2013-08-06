@@ -444,9 +444,9 @@ let rec get_words str =
     m::(get_words rest)
   with _ -> if len<4 then [] else [str] 
 
-let get_words str =
-  let pr_id x = x in
-  ho_1 "get_words" pr_id (pr_list pr_id) get_words str
+(* let get_words str = *)
+(*   let pr_id x = x in *)
+(*   ho_1 "get_words" pr_id (pr_list pr_id) get_words str *)
 
 let read_main () =
   let xs = read_from_debug_file (debug_file ()) in
