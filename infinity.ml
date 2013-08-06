@@ -433,6 +433,16 @@ let convert_inf_to_var (pf:CP.formula) : CP.formula =
   in
   map_formula pf (f_f,f_bf,f_e)
 
+let convert_var_to_inf (pf:CP.formula) : CP.formula =
+  let f_f f = None in
+  let f_bf bf = None in
+  let f_e e = 
+    match e with
+      | Var(sv,pos) -> if is_inf e then Some (mkInfConst pos) else None
+      | _ -> None
+  in
+  map_formula pf (f_f,f_bf,f_e)
+
 let rec contains_inf_eq_b_formula (bf: CP.b_formula) : bool = 
   let (p_f,bf_ann) = bf in
   match p_f with 
