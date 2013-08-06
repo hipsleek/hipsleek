@@ -4780,9 +4780,12 @@ and heap_entail_after_sat_x prog is_folding  (ctx:CF.context) (conseq:CF.formula
 and early_hp_contra_detection_x hec_num prog estate conseq pos = 
   (* if there is no hp inf, post pone contra detection *)
   (* if (List.length estate.es_infer_vars_hp_rel == 0 ) then  (false, None) *)
-  if (Infer.no_infer_all_all estate) && not(!Globals.early_contra_flag)
-  then  (true,false, None)
+  if (Infer.no_infer_all_all estate) && not (!Globals.early_contra_flag) 
+  then (true,false, None)
   else
+    if (isEmpFormula estate.es_formula) && (isEmpFormula conseq) 
+    then (true, false, None)
+    else
     begin
       let (r_inf_contr,real_c), relass = solver_detect_lhs_rhs_contra 1 prog estate conseq pos "EARLY CONTRA DETECTION" in
       let h_inf_args, hinf_args_map = get_heap_inf_args estate in

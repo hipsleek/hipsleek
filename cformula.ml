@@ -759,6 +759,15 @@ and isStrictConstHTrue f = match f with
 	        (* don't need to care about formula_base_type  *)
   | _ -> false
 
+and isEmpFormula f = 
+  match f with
+  | Base ({formula_base_heap = HEmp}) -> true
+  | Exists ({formula_exists_heap = HEmp}) -> true
+  | Or ({formula_or_f1 = f1; formula_or_f2 = f2}) ->
+      (isEmpFormula f1) && (isEmpFormula f2)
+  | _ -> false
+
+
 and isTrivTerm_x f = match f with
   | Base ({formula_base_heap = HEmp;formula_base_pure = p; formula_base_flow = fl;})
   | Exists ({formula_exists_heap = HEmp;formula_exists_pure = p; formula_exists_flow = fl;}) ->  MCP.isTrivMTerm p && is_top_flow fl.formula_flow_interval
