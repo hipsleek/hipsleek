@@ -1931,7 +1931,7 @@ let tp_is_sat f sat_no =
 
 let norm_pure_input f =
   let f = cnv_ptr_to_int f in
-  let f = if !Globals.allow_inf then Infinity.normalize_inf_formula(* _sat *) f else f in
+  let f = if !Globals.allow_inf then Infinity.convert_inf_to_var(* _sat *) f else f in
   f
 
 let norm_pure_input f =
