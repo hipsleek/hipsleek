@@ -767,6 +767,18 @@ and isEmpFormula f =
       (isEmpFormula f1) && (isEmpFormula f2)
   | _ -> false
 
+and is_trivial_h_formula h =
+  match h with
+    | HTrue | HFalse | HEmp -> true
+    | _ -> false
+
+and is_trivial_heap_formula f = 
+  match f with
+  | Base ({formula_base_heap = h}) 
+  | Exists ({formula_exists_heap = h}) 
+      -> is_trivial_h_formula h
+  | _ -> false
+
 
 and isTrivTerm_x f = match f with
   | Base ({formula_base_heap = HEmp;formula_base_pure = p; formula_base_flow = fl;})
