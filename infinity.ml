@@ -432,13 +432,32 @@ let rec normalize_inf_formula (pf: CP.formula) : CP.formula =
 
 let convert_inf_to_var (pf:CP.formula) : CP.formula =
   let f_f f = None in
-  let f_bf bf = None in
+  let f_bf_neg bf = let (f,l) = bf in 
+    match f with
+    | Eq(e1,e2,pos) -> if check_neg_inf2 e1 e2 
+      then let e1 = (match e1 with 
+        | Add(a1,a2,pos) -> if is_inf a1 then CP.Add(CP.Var(CP.SpecVar(Int,constinfinity,Primed),pos),a2,pos)
+            else CP.Add(a1,CP.Var(CP.SpecVar(Int,constinfinity,Primed),pos),pos)
+        | _ -> e1) in Some(Eq(e1,e2,pos),l)
+      else if check_neg_inf2 e2 e1
+      then let e2 = (match e2 with 
+        | Add(a1,a2,pos) -> if is_inf a1 then CP.Add(CP.Var(CP.SpecVar(Int,constinfinity,Primed),pos),a2,pos)
+            else CP.Add(a1,CP.Var(CP.SpecVar(Int,constinfinity,Primed),pos),pos)
+        | _ -> e2) in Some(Eq(e1,e2,pos),l)
+      else None
+    | _ -> None in
+  let f_bf bf = None in 
   let f_e e = 
     match e with
       | InfConst (i,pos) -> Some (CP.Var(CP.SpecVar(Int,i,Unprimed),pos))
       | _ -> None
   in
-  map_formula pf (f_f,f_bf,f_e)
+  let pf = map_formula pf (f_f,f_bf_neg,f_e) in
+  map_formula pf (f_f,f_bf,f_e) 
+
+let convert_inf_to_var (pf:CP.formula) : CP.formula =
+Debug.no_1 "convert_inf_to_var" string_of_pure_formula string_of_pure_formula 
+ convert_inf_to_var pf 
 
 let convert_var_to_inf (pf:CP.formula) : CP.formula =
   let f_f f = None in
