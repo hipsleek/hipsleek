@@ -384,9 +384,9 @@ let set_entail_pos p = entail_pos := p
 (* let clear_proving_loc () = proving_loc#reset *)
 (*   (\* proving_loc := None *\) *)
 
-  let pr_lst s f xs = String.concat s (List.map f xs)
+ let pr_lst s f xs = String.concat s (List.map f xs)
 
- let pr_list_brk open_b close_b f xs  = open_b ^(pr_lst "," f xs)^close_b
+ let pr_list_brk open_b close_b f xs  = open_b ^(pr_lst ";" f xs)^close_b
  let pr_list f xs = pr_list_brk "[" "]" f xs
  let pr_list_angle f xs = pr_list_brk "<" ">" f xs
  let pr_list_round f xs = pr_list_brk "(" ")" f xs
@@ -692,7 +692,7 @@ let sa_subsume = ref false
 
 let norm_extract = ref false
 
-let norm_cont_analysis = ref false
+let norm_cont_analysis = ref true
 
 let dis_sem = ref false
 
@@ -852,6 +852,7 @@ let self_fold_search_flag = ref false
 
 let show_gist = ref false
 let imply_top_flag = ref false
+let early_contra_flag = ref false
 
 let trace_failure = ref false
 
@@ -1334,3 +1335,71 @@ let set_last_sleek_fail () =
 let next_sleek_int () : int =
   sleek_proof_no := !sleek_proof_no + 1; 
   (!sleek_proof_no)
+
+let z_debug_file = ref ""
+
+let z_debug_flag = ref false
+
+
+(*let debug_file = open_in_gen [Open_creat] 0o666 ("z-debug.log")*)
+let debug_file ()=
+  let get_path s = 
+    if String.contains s '/' then
+      let i = String.rindex s '/' in
+      String.sub s 0 (i+1)
+    else ""
+  in
+  let debug_conf = "./" ^ !z_debug_file in
+  (* let _ = print_endline (debug_conf) in *)
+  let global_debug_conf =
+    if (Sys.file_exists debug_conf) then
+    debug_conf
+    else (get_path Sys.executable_name) ^ (String.sub debug_conf 2 ((String.length debug_conf) -2))
+  in
+  (* let _ = print_endline global_debug_conf in *)
+  open_in (global_debug_conf)
+
+(* let read_from_debug_file chn : string list = *)
+(*   let line = ref [] in *)
+(*   let quitloop = ref false in *)
+(*   (try *)
+(*     while true do *)
+(*       let xs = (input_line chn) in *)
+(*       let n = String.length xs in *)
+(*       (\* let s = String.sub xs 0 1 in *\) *)
+(*       if n > 0 && xs.[0]=='#' (\* String.compare s "#" !=0 *\) then begin *)
+(*         line := xs::!line; *)
+(*       end; *)
+(*     done; *)
+(*   with _ -> ()); *)
+(*   !line *)
+
+(* let debug_map = Hashtbl.create 50 *)
+
+(* let read_main () = *)
+(*   let xs = read_from_debug_file (debug_file ()) in *)
+(*   (\* let _ = print_endline ((pr_list (fun x -> x)) xs) in *\) *)
+(*   List.iter (fun x -> *)
+(*       try *)
+(*         let l = String.index x ',' in *)
+(*         let m = String.sub x 0 l in *)
+(*         let split = String.sub x (l+1) ((String.length x) -l -1) in *)
+(*         let _ = print_endline (m) in *)
+(*         let _ = print_endline (split) in *)
+(*         let kind = if String.compare split "Trace" == 0 then DO_Trace else *)
+(*           if String.compare split "Loop" == 0 then DO_Loop else *)
+(*             DO_Normal *)
+(*         in *)
+(*         Hashtbl.add debug_map m kind *)
+(*       with _ -> *)
+(*       Hashtbl.add debug_map x DO_Normal *)
+(*   ) xs *)
+
+(* let in_debug x = *)
+(*   try *)
+(*     Hashtbl.find debug_map x *)
+(*   with _ -> DO_None *)
+
+
+
+

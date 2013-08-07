@@ -157,6 +157,10 @@ let common_arguments = [
    "Turn off experimental trace_on");
   ("--en-ddb", Arg.Set Debug.trace_on,
    "Turn on experimental trace_on");
+  ("--en-early-contra", Arg.Set Globals.early_contra_flag,
+   "Enable early contra detection always");
+  ("--dis-early-contra", Arg.Clear Globals.early_contra_flag,
+   "Diable early contra detection which now only happens with inference");
   ("-dd-print-orig-conseq", Arg.Unit Debug.enable_dd_and_orig_conseq_printing,
    "Enable printing of the original consequent while debugging. Automatically enables -dd (debugging) ");
   ("--en-imp-top", Arg.Set Globals.imply_top_flag,
@@ -303,6 +307,9 @@ let common_arguments = [
    "Use field construct instead of bind");
   ("--use-large-bind", Arg.Set Globals.large_bind,
    "Use large bind construct, where the bound variable may be changed in the body of bind");
+  ("-debug", Arg.String (fun s ->
+      Globals.z_debug_file:=s; Globals.z_debug_flag:=true),
+   "Read from a debug log file");
   ("-v", Arg.Set Debug.debug_on,
    "Verbose");
   ("--pipe", Arg.Unit Tpdispatcher.Netprover.set_use_pipe,
@@ -490,6 +497,7 @@ let common_arguments = [
   ("--dis-cp-trace", Arg.Clear Globals.cond_path_trace, "Disable the tracing of conditional paths");
   ("--sa-print-inter", Arg.Set Globals.sa_print_inter, "Print intermediate results of normalization");
   ("--sa-en-cont", Arg.Set Globals.norm_cont_analysis, "enable cont analysis for views");
+  ("--sa-dis-cont", Arg.Clear Globals.norm_cont_analysis, "disable cont analysis for views");
   ("--pred-dis-mod", Arg.Clear Globals.pred_syn_modular, "disable modular predicate synthesis (use old algo)");
   ("--pred-en-mod", Arg.Set Globals.pred_syn_modular, "using modular predicate synthesis");
   ("--pred-en-oblg", Arg.Set Globals.pred_en_oblg, "enable sa_en_pre_oblg");

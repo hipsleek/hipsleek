@@ -1,5 +1,4 @@
 
-/*
 
 data node { int val ; node next }.
 
@@ -7,31 +6,47 @@ pred ll<n> == self = null & n = 0
 	or self::node<next = r> * r::ll<n - 1>
 	inv n >= 0.
 
-*/
 /*
 
 checkentail x::node<_,q> * q::ll<n> & n > 2 
       |- (exists m: x::ll<m> & m > 3).
 
-
-
-
-checkentail x::ll<n> & n > 2 
-      |- x=null.
-
 checkentail x::node<_,_>
       |- x=null.
-
-
-*/
-
-
 
 checkentail x!=null
       |- x!=null.
 
 
 
+*/
+checkentail x::node<_,_>
+      |- x=null.
+
+checkentail x::ll<n> & n > 2 
+      |- x=null.
+
 print residue.
 
+/*
+
+# s-1.slk
+
+ --------------------
+!!! Cannot find sleek failure
+Entail 1: Fail.(may) cause: true |-  x=null. LOCS:[0;25] (may-bug)
+
+Why is this a may-bug and not must-bug? Also, there is no
+proof trace here. Did you use xpure0 rather than xpure1?
+
+Below was logged though..
+
+id: 25<1; prover: OMEGA CALCULATOR; loc: s-1_slk_6:4_6:39; kind: Early_Contra_Detect
+ raw proof:SAT:{[n, x] : ((((2 < n) & (((1 <= n) & (x > 0)) | ((n = 0) & (x = 0)))) & (x = 0)))};
+ raw result:{[n,x]  : FALSE }
+ Sat:  2<n & (((1<=n & x!=null) | (n=0 & x=null))) & x=null
+ res: UNSAT
+
+
+*/
 

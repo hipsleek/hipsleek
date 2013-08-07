@@ -181,8 +181,9 @@ and omega_of_formula_x pr_w pr_s f  =
   try
 	helper f
   with _ as e -> 
-	  let _ = print_string ("Omega Error format:"^(!print_formula f)^"\n") in
-      let _ = Debug.trace_hprint (add_str "Omega Error format:" !print_formula) f in
+      let s = Printexc.to_string e in
+      let _ = print_string ("Omega Error Exp:"^s^"\n Formula:"^(!print_formula f)^"\n") in
+      (* let _ = Debug.trace_hprint (add_str "Omega Error format:" !print_formula) f in *)
       raise e
 
 
@@ -190,7 +191,7 @@ let omega_of_formula i pr_w pr_s f  =
   let _ = set_prover_type () in
   let pr = !print_formula in 
   (*let _ = print_string ("source:"^(string_of_int i)^": "^(pr f)^"\n"); flush_all in*)
-  Debug.no_1_loop_num i "omega_of_formula" 
+  Debug.no_1_num i "omega_of_formula" 
       pr pr_id (fun _ -> omega_of_formula_x pr_w pr_s f) f
 
 let omega_of_formula_old i f  =

@@ -838,5 +838,5 @@ let compute_fixpoint (i:int) input_pairs pre_vars is_rec =
   let pr0 = !CP.print_formula in
   let pr1 = pr_list (pr_pair pr0 pr0) in
   let pr2 = !CP.print_svl in
-  Debug.no_2_num i "compute_fixpoint" pr1 pr2 (pr_list (pr_triple pr0 pr0 pr0)) 
+  Debug.no_2_num i "compute_fixpoint" pr1 pr2 (pr_list (pr_pair pr0 pr0)) 
       (fun _ _ -> compute_fixpoint input_pairs pre_vars is_rec) input_pairs pre_vars

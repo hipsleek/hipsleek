@@ -759,6 +759,27 @@ and isStrictConstHTrue f = match f with
 	        (* don't need to care about formula_base_type  *)
   | _ -> false
 
+and isEmpFormula f = 
+  match f with
+  | Base ({formula_base_heap = HEmp}) -> true
+  | Exists ({formula_exists_heap = HEmp}) -> true
+  | Or ({formula_or_f1 = f1; formula_or_f2 = f2}) ->
+      (isEmpFormula f1) && (isEmpFormula f2)
+  | _ -> false
+
+and is_trivial_h_formula h =
+  match h with
+    | HTrue | HFalse | HEmp -> true
+    | _ -> false
+
+and is_trivial_heap_formula f = 
+  match f with
+  | Base ({formula_base_heap = h}) 
+  | Exists ({formula_exists_heap = h}) 
+      -> is_trivial_h_formula h
+  | _ -> false
+
+
 and isTrivTerm_x f = match f with
   | Base ({formula_base_heap = HEmp;formula_base_pure = p; formula_base_flow = fl;})
   | Exists ({formula_exists_heap = HEmp;formula_exists_pure = p; formula_exists_flow = fl;}) ->  MCP.isTrivMTerm p && is_top_flow fl.formula_flow_interval
@@ -4281,10 +4302,10 @@ let elim_unused_pure_x (f0:formula) rhs =
   in
   helper f0
 
-let elim_unused_pure (f0:formula) =
+let elim_unused_pure (f0:formula) rhs =
   let pr= !print_formula in
   Debug.no_1 " elim_unused_pure" pr pr
-      (fun _ -> elim_unused_pure_x f0) f0
+      (fun _ -> elim_unused_pure_x f0 rhs) f0
 
 let prune_irr_neq_formula_x must_kept_svl lhs_b rhs_b =
   let r_svl = fv (Base rhs_b) in
@@ -7447,6 +7468,11 @@ let rec is_inferred_pre_ctx ctx =
   | Ctx estate -> is_inferred_pre estate 
   | OCtx (ctx1, ctx2) -> (is_inferred_pre_ctx ctx1) || (is_inferred_pre_ctx ctx2)
 
+let is_inferred_pre_ctx ctx =
+  let pr = !print_context in
+  let pr2 = string_of_bool in
+  Debug.no_1 "is_inferred_pre_ctx" pr pr2 is_inferred_pre_ctx ctx
+
 let remove_dupl_false (sl:branch_ctx list) = 
   let (fl,nl) = (List.partition (fun (_,oc) -> 
       (isAnyFalseCtx oc && not(is_inferred_pre_ctx oc)) ) sl) in
@@ -7996,6 +8022,26 @@ let repl_label_list_partial_context (lab:path_trace) (cl:list_partial_context) :
     = List.map (fun (fl,sl) -> (fl, List.map (fun (_,c) -> (lab,c)) sl)) cl
 
 
+
+let isAnyFalseCtx (ctx:context) : bool = match ctx with
+  | Ctx es -> isAnyConstFalse es.es_formula
+  | _ -> false  
+
+(* WN : need to choose the weaker pre of the two *)
+let merge_false es1 es2 = es1
+    (* { es1 with *)
+    (*     (\* all inferred must be concatenated from different false *\) *)
+    (*     es_infer_pure = es1.es_infer_pure@es2.es_infer_pure; *)
+    (*     es_infer_rel = es1.es_infer_rel@es2.es_infer_rel; *)
+    (*     es_infer_heap = es1.es_infer_heap@es2.es_infer_heap; *)
+    (*     es_infer_hp_rel = es1.es_infer_hp_rel@es2.es_infer_hp_rel *)
+    (*  } *)
+
+let merge_false_ctx c1 c2 =
+  match c1,c2 with
+    | Ctx e1, Ctx e2 -> Ctx (merge_false e1 e2)
+    | _,_ -> (Debug.info_pprint "warning on merge_false" no_pos; c1)
+
 (* let anyPreInCtx c = is_inferred_pre_ctx c *)
 
 (* let proc_left t1 t2 = *)
@@ -8004,33 +8050,14 @@ let repl_label_list_partial_context (lab:path_trace) (cl:list_partial_context) :
 (*       | [c1] -> *)
 (*             if isAnyFalseCtx c1 then *)
 (*               (\* let _ = print_endline ("FalseCtx") in *\) *)
-(*               if is_inferred_pre_ctx c1 then  *)
+(*               if is_inferred_pre_ctx c1 then *)
 (*                 (\* let _ = print_endline ("Inferred") in *\) *)
 (*                 Some t2 (\* drop FalseCtx with Pre *\) *)
-(*               else  *)
+(*               else *)
 (*                 (\* let _ = print_endline ("NOT Inferred") in *\) *)
 (*                 Some t1 (\* keep FalseCtx wo Pre *\) *)
 (*             else None *)
 (*       | _ -> None *)
-
-let isAnyFalseCtx (ctx:context) : bool = match ctx with
-  | Ctx es -> isAnyConstFalse es.es_formula
-  | _ -> false  
-
-let merge_false es1 es2 = 
-    { es1 with
-        (* all inferred must be concatenated from different false *)
-        es_infer_pure = es1.es_infer_pure@es2.es_infer_pure;
-        es_infer_rel = es1.es_infer_rel@es2.es_infer_rel;
-        es_infer_heap = es1.es_infer_heap@es2.es_infer_heap;
-        es_infer_hp_rel = es1.es_infer_hp_rel@es2.es_infer_hp_rel
-     }
-
-let merge_false_ctx c1 c2 =
-  match c1,c2 with
-    | Ctx e1, Ctx e2 -> Ctx (merge_false e1 e2)
-    | _,_ -> (Debug.info_pprint "warning on merge_false" no_pos; c1)
-
 
 let proc_left t1 t2 =
     match t1 with
@@ -8044,7 +8071,7 @@ let proc_left t1 t2 =
                           && is_inferred_pre_ctx c2
                         (* both t1 and t2 are FalseCtx with Pre *)
                         then Some [merge_false_ctx c1 c2]
-                        else Some t1 (* only t1 is FalseCtx with Pre *)
+                        else Some t2 (* drop FalseCtx t1 with Pre *)
                   | _ -> Some t1 (* only t1 is FalseCtx with Pre *)
               else Some t1 (* keep FalseCtx wo Pre *)
             else None
@@ -8063,7 +8090,7 @@ let simplify_ctx_elim_false_dupl t1 t2 =
 
 let simplify_ctx_elim_false_dupl t1 t2 =
   let pr = !print_context_list_short in
-  Debug.no_2 "simplify_ctx_elim_flse_dupl" pr pr pr simplify_ctx_elim_false_dupl t1 t2 
+  Debug.no_2 "simplify_ctx_elim_false_dupl" pr pr pr simplify_ctx_elim_false_dupl t1 t2 
 
   (*context set union*)
 
@@ -8451,7 +8478,7 @@ let list_partial_context_or (l1:list_partial_context) (l2:list_partial_context) 
 
 let list_partial_context_or (l1:list_partial_context) (l2:list_partial_context) : list_partial_context = 
   let pr x = string_of_int (List.length x) in 
-  Debug.no_2_loop "list_partial_context_or" pr pr pr list_partial_context_or l1 l2 
+  Debug.no_2(*_loop*) "list_partial_context_or" pr pr pr list_partial_context_or l1 l2 
 
 let list_failesc_context_or f (l1:list_failesc_context) (l2:list_failesc_context) : list_failesc_context = 
   List.concat (List.map (fun pc1-> (List.map (fun pc2 -> remove_dupl_false_fe (merge_failesc_context_or f pc1 pc2)) l2)) l1)
@@ -9549,7 +9576,7 @@ let transform_formula_w_perm_x (f:formula -> formula option) (e:formula) (permva
 let transform_formula_w_perm (f:formula -> formula option) (e:formula) (permvar:cperm):formula =
   let pr = !print_formula in
   Debug.no_3 "transform_formula_w_perm" 
-      (fun _ -> "f") pr !print_spec_var pr 
+      (fun _ -> "f") pr (pr_none) pr 
       transform_formula_w_perm_x f e permvar
 
 let transform_formula_w_perm_x (f:formula -> formula option) (e:formula) (permvar:cperm_var):formula =
@@ -11767,7 +11794,7 @@ let prepost_of_finalize_x (var:CP.spec_var) sort (args:CP.spec_var list) (lbl:fo
 
 (*automatically generate pre/post conditions of finalize[lock_sort](lock_var,lock_args) *)
 let prepost_of_finalize (var:CP.spec_var) sort (args:CP.spec_var list) (lbl:formula_label) pos : struc_formula = 
-  Debug.no_3 "prepost_of_finalize" !print_sv (fun str -> str) print_svl
+  Debug.no_3 "prepost_of_finalize" !print_sv pr_none !print_svl
       !print_struc_formula       (fun _ _ _ -> prepost_of_finalize_x var sort args lbl pos) var sort args
 
 let prepost_of_acquire_x (var:CP.spec_var) sort (args:CP.spec_var list) (inv:formula) (lbl:formula_label) pos : struc_formula =

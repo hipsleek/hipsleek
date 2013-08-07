@@ -257,6 +257,12 @@ Entail 45Failure("Mona translation failure!!\nError in file monatemp line  colum
 - redlog is invoking oc
    (should use -tp ocred for combination)
 ====================================================================
+Total number of errors: 7 in files:
+  infer/infer2.slk(3,7,8) infer/infer8.slk(30) infer/infer9.slk(3,4,5) imm/imm1.slk(2) imm/imm3.slk(6) imm/imm-hard.slk(11) imm-field/sleek02.slk(2,8).
+Total verification time: 6.18 second
+	Time spent in main process: 4.76 second
+	Time spent in child processes: 1.42 second
+	Number of false contexts: 0
 ====================================================================
 ====================================================================
 ====================================================================

@@ -15,6 +15,7 @@ open Label_aggr
 
 module CP = Cpure
 module MCP = Mcpure
+module NM = Auxnorm
 
 (* module LO = Label_only.Lab_List *)
 module LO = Label_only.LOne
@@ -797,6 +798,13 @@ let comm_null a1 a2 =
   else if f1 then (f1,a2,a1)
   else (f2,a1,a2)
 
+let comm_inf a1 a2 =
+  let f1 = is_inf a1 in
+  let f2 = is_inf a2 in
+  if f1 && f2 then (false,a1,a2)
+  else if f1 then (f1,a2,a1)
+  else (f2,a1,a2)
+
 (*
   strong
   ======
@@ -820,6 +828,11 @@ let cnv_ptr_to_int (ex_flag,st_flag) f =
             if st_flag (*strengthen *) then
               Some (Eq(a1,IConst(0,ll),ll),l)
             else Some (Lte(a1,IConst(0,ll),ll),l)
+         (* else let (is_inf_flag,a1,a2) = comm_inf a1 a2 in
+          if is_inf_flag then
+            if st_flag (*strengthen *) then
+              Some (Eq(a1,mkInfConst ll,ll),l)
+            else Some (Lte(a1,mkInfConst ll,ll),l)*)
           else None
       | Neq (a1, a2, ll) -> 
           let (is_null_flag,a1,a2) = comm_null a1 a2 in
@@ -828,7 +841,13 @@ let cnv_ptr_to_int (ex_flag,st_flag) f =
               Some (Gt(a1,IConst(0,ll),ll),l)
             else 
               Some (Neq(a1,IConst(0,ll),ll),l)
+          else  let (is_inf_flag,a1,a2) = comm_inf a1 a2 in
+          if is_inf_flag then
+              Some (Lt(a1,CP.Var(CP.SpecVar(Int,constinfinity,Unprimed),ll),ll),l)
           else Some(bf)
+     (* | Lte(a1,a2,ll) -> if is_inf a1 && not(is_inf a2) then Some(BConst(false,ll),l)  
+        else if is_inf a2 && not(is_inf a1) then Some(BConst(true,ll),l) 
+        else Some(bf)*)
       | _ -> Some(bf)
   in
   let f_e arg e = (Some e) in
@@ -960,7 +979,8 @@ let cnv_int_to_ptr f =
               if is_ann_flag then
                 if is_valid_ann i then Some(Eq(a1,int_to_ann i,ll),l)
                 else  Some(BConst (false,ll),l) (* contradiction *)
-            else  Some bf
+            else if is_inf a1 then Some(Eq(a2,mkInfConst ll,ll),l)
+            else Some bf
       | Neq (a1, a2, ll) -> 
             let (is_null_flag,a1,a2) = comm_is_null a1 a2 in
             if is_null_flag then
@@ -970,7 +990,12 @@ let cnv_int_to_ptr f =
                 if is_ann_flag then Some(Neq(a1,int_to_ann i,ll),l)
                 else  Some(BConst (true,ll),l) (* of course *)
             else Some bf
-      | Lte (a1, a2,_) | Gte(a1,a2,_) | Gt(a1,a2,_) | Lt(a1,a2,_) ->
+      | Gt(a2,a1,ll) | Lt(a1,a2,ll) ->
+            let ptr_flag,ann_flag = is_ptr_ctr a1 a2 in
+            if ptr_flag || ann_flag then Some(to_ptr ptr_flag pf,l)
+            (*else if CP.is_inf a2 then Some(Neq(a1,mkInfConst ll,ll),l)*)
+            else Some bf
+      | Lte (a1, a2,_) | Gte(a1,a2,_) ->
             let ptr_flag,ann_flag = is_ptr_ctr a1 a2 in
             if ptr_flag || ann_flag then Some(to_ptr ptr_flag pf,l)
             else Some bf
@@ -1003,144 +1028,11 @@ let cnv_int_to_ptr f =
 
 (* let ex22 =  CP.norm_exp ex2 in *)
 
-let finalize_norm f1_conj f2_conj common_conj =
-  let f1   = CP.join_conjunctions f1_conj in
-  let f2   = CP.join_conjunctions f2_conj in
-  let disj = CP.mkOr f1 f2 None no_pos in
-  CP.join_conjunctions (common_conj@[disj])
-
-let make_strict_ieq ieq =
-  match ieq with
-    | CP.BForm (b, lb) ->
-          begin
-            match b with
-              | (CP.Lte (CP.IConst (i, loci), (CP.Var(v,_) as var), s), l)
-              | (CP.Gte ((CP.Var(v,_) as var),CP.IConst (i, loci),  s), l) ->  CP.BForm ((CP.Lt (CP.IConst ((i-1), loci), var, s), l), lb)
-              | (CP.Lte ((CP.Var(v,_) as var), CP.IConst (i, loci), s), l)
-              | (CP.Gte (CP.IConst (i, loci), (CP.Var(v,_) as var), s), l) ->  CP.BForm ((CP.Lt (var, CP.IConst ((i+1), loci), s), l), lb)
-              | _ -> ieq
-          end
-    | _ -> ieq
-
-
-let simplif_arith f =
-  match f with
-    | CP.BForm (b, lb) ->
-          begin
-            let b = 
-              match b with
-                | (CP.Lte (e1, e2, s), l) ->  (CP.Lte (CP.norm_exp e1,CP.norm_exp e2, s), l)
-                | (CP.Lt (e1, e2, s), l) ->  (CP.Lt (CP.norm_exp e1,CP.norm_exp e2, s), l)
-                | (CP.Gte (e1, e2, s), l) ->  (CP.Gte (CP.norm_exp e1,CP.norm_exp e2, s), l)
-                | (CP.Gt (e1, e2, s), l) ->  (CP.Gt (CP.norm_exp e1,CP.norm_exp e2, s), l)
-                | (CP.Eq  (e1, e2, s), l) ->  (CP.Eq  (CP.norm_exp e1,CP.norm_exp e2, s), l)
-                | (CP.Neq (e1, e2, s), l) ->  (CP.Neq (CP.norm_exp e1,CP.norm_exp e2, s), l)
-                | _ -> b
-            in CP.BForm(b, lb)
-          end
-    | _ -> f
-
-let merge_other f1 f2 = CP.mkOr f1 f2 None no_pos
-
-let limit_conj = 3
-
-let list_of_n n start =
-  let rec aux n top lst =
-    if n == 0 then lst
-    else (aux (n-1) (top+1) lst@[top]) 
-  in aux n start []
-
-let neq_conj_n n bot var =
-  let lst_n = list_of_n n bot in
-  let f = List.fold_left (fun f i -> CP.join_conjunctions (f::[BForm((CP.mkNeq var (CP.mkIConst i no_pos) no_pos, None), None)]) ) (CP.mkTrue no_pos) lst_n in
-  f
-
-let merge_ieq_ieq f1 f2 f1o f2o =  (* merge_other f1 f2 *)
-  match f1, f2 with
-    | CP.BForm (b1, _), CP.BForm (b2, _) ->
-          begin
-          match b1,b2 with
-            | (CP.Lt (CP.IConst (i1, _), CP.Var(v1,_), _), _), (CP.Lt (CP.IConst (i2, loci), CP.Var(v2,_), _), _) ->
-                  if (CP.eq_spec_var v1 v2) then
-                    if i1<=i2 then f1 else f2
-                  else merge_other f1o f2o
-            | (CP.Lt (CP.Var(v1,_) , CP.IConst (i1, _), _), _), (CP.Lt (CP.Var(v2,_), CP.IConst (i2, loci), _), _) ->
-                  if (CP.eq_spec_var v1 v2) then
-                    if i1<=i2 then f2 else f1
-                  else merge_other f1o f2o
-            | (CP.Lt (CP.IConst (i1, _), CP.Var(v1,_), _), _), (CP.Lt ((CP.Var(v2,_) as var), CP.IConst (i2, loci), _), _)
-            | (CP.Lt ((CP.Var(v2,_) as var), CP.IConst (i2, loci), _), _), (CP.Lt (CP.IConst (i1, _), CP.Var(v1,_), _), _) ->
-                  if (CP.eq_spec_var v1 v2) then
-                    if i1<i2 then  CP.mkTrue no_pos 
-                    (* else if (i1==i2) then neq_conj_n 1 i1 var *)
-                    else 
-                      if((i1-i2+1) <= limit_conj) then neq_conj_n (i1-i2+1) i1 var
-                      else merge_other f1o f2o
-                  else merge_other f1o f2o
-            | _ -> merge_other f1o f2o
-          end
-    | _ -> merge_other f1o f2o
-
-      
-
-let merge_eq_ieq f1 f2 f1o f2o = merge_other f1o f2o
-
-let merge_eq_eq f1 f2 f1o f2o = merge_other f1o f2o
-
-let merge_two_disj f1o f2o = 
-  let f1 = simplif_arith f1o in
-  let f2 = simplif_arith f2o in
-  let f1 = make_strict_ieq f1 in
-  let f2 = make_strict_ieq f2 in
-  match CP.is_ieq f1, CP.is_ieq f2 with
-    | true, true ->   merge_ieq_ieq  f1 f2 f1o f2o
-    | false, true ->  if CP.is_eq_exp f1 then merge_eq_ieq f1 f2 f1o f2o else  merge_other f1o f2o
-    | true, false ->  if CP.is_eq_exp f2 then merge_eq_ieq f2 f1 f1o f2o else  merge_other f1o f2o
-    | false, false -> if (CP.is_eq_exp f1) && (CP.is_eq_exp f2) then merge_eq_eq f1 f2 f1o f2o else  merge_other f1o f2o
-  
-
-let norm_disj_lsts f1_conj f2_conj =
-  match f1_conj, f2_conj with
-    | [], [] -> CP.mkTrue no_pos        (* should not reach this branch *)
-    | _ -> CP.mkTrue no_pos 
-
-let can_further_norm f1_conj f2_conj =
-  let f1_sv = List.fold_left (fun a f ->  (CP.all_vars f)@a) [] f1_conj in
-  let f2_sv = List.fold_left (fun a f ->  (CP.all_vars f)@a) [] f2_conj in
-  if Gen.BList.list_equiv_eq CP.eq_spec_var f1_sv f2_sv then true
-  else false
-
-
-let norm_disj f1 f2 =
-  let f1_conj = (CP.split_conjunctions f1) in
-  let f2_conj = (CP.split_conjunctions f2) in
-  let common_conj, f1_conj = List.partition (fun f -> Gen.BList.mem_eq CP.equalFormula f f2_conj) f1_conj in
-  let f2_conj = Gen.BList.difference_eq CP.equalFormula f2_conj common_conj in
-  match f1_conj, f2_conj with
-    | [], [] -> f1                      (* identical formulas *)
-    | _, []
-    | [], _  -> CP.join_conjunctions common_conj 
-    | f1::[], f2::[] -> 
-          if can_further_norm [f1] [f2] then 
-            let new_f = merge_two_disj f1 f2 in
-            CP.join_conjunctions (common_conj@[new_f])
-            
-          else
-            finalize_norm f1_conj f2_conj common_conj
-    | _, _   -> 
-          if can_further_norm f1_conj f2_conj then 
-            (* let norm = norm_disj_lsts f1_conj f2_conj in *)
-            (* CP.join_conjunctions (common_conj@[norm]) *)
-            finalize_norm f1_conj f2_conj common_conj
-          else                          (* formulas can not be further normalized *)
-            finalize_norm f1_conj f2_conj common_conj
-
-
 (* this is to normalize result from simplify/hull/gist *)
 let norm_pure_result f =
-  let f = cnv_int_to_ptr f in
-  let disj = CP.split_disjunctions f in (* size at least 1 *)
-  let f = List.fold_left (fun a f -> norm_disj a f) (List.hd disj) (List.tl disj) in
+  let f = cnv_int_to_ptr f in    
+  let f = if !Globals.allow_inf then Infinity.convert_var_to_inf f else f in 
+  let f = NM.norm_disj f in
   f
 
 let norm_pure_result f =
@@ -1345,7 +1237,7 @@ let sat_label_filter fct f =
           not(res)
     | Or (f1,f2,_ ,_)-> (helper f1)||(helper f2)
     | _ -> test f 
-  and helper f = Debug.no_1_loop "sat_label_filter_helper"  !print_formula string_of_bool helper_x f in
+  and helper f = Debug.no_1(* _loop *) "sat_label_filter_helper"  !print_formula string_of_bool helper_x f in
   helper f
 	
 let sat_label_filter fct f = 
@@ -1745,7 +1637,7 @@ let tp_is_sat_perm f sat_no =
 		List.exists (fun f-> tp_wrap (CP.tpd_drop_perm f) && ss_wrap ([],CP.tpd_drop_nperm f)) (snd (CP.dnf_to_list f)) 
   else tp_is_sat_no_cache f sat_no
  
-let tp_is_sat_perm f sat_no =  Debug.no_1_loop "tp_is_sat_perm" Cprinter.string_of_pure_formula string_of_bool (fun _ -> tp_is_sat_perm f sat_no) f
+let tp_is_sat_perm f sat_no =  Debug.no_1(* _loop *) "tp_is_sat_perm" Cprinter.string_of_pure_formula string_of_bool (fun _ -> tp_is_sat_perm f sat_no) f
 
 let cache_status = ref false 
 let cache_sat_count = ref 0 
@@ -1819,9 +1711,18 @@ let tp_is_sat f sat_no =
 (*   Debug.no_1 "tp_is_sat" pr string_of_bool (fun _ -> tp_is_sat f sat_no do_cache) f *)
 
 
+let norm_pure_input f =
+  let f = if !Globals.allow_inf then Infinity.normalize_inf_formula_sat(* _sat *) f else f in
+  let f = cnv_ptr_to_int f in
+  f
+
+let norm_pure_input f =
+  let pr = Cprinter.string_of_pure_formula in
+  Debug.no_1 "norm_pure_input" pr pr norm_pure_input f
 
 let om_simplify f =
-  wrap_pre_post cnv_ptr_to_int norm_pure_result
+  (* wrap_pre_post cnv_ptr_to_int norm_pure_result *)
+  wrap_pre_post norm_pure_input norm_pure_result
       Omega.simplify f 
   (* let f = cnv_ptr_to_int f in *)
   (* let r = Omega.simplify f in *)
@@ -2042,7 +1943,7 @@ let simplify_a (s:int) (f:CP.formula): CP.formula =
   Debug.no_1_num s ("TP.simplify_a") pf pf simplify f
 
 let om_hull f =
-  wrap_pre_post cnv_ptr_to_int norm_pure_result
+  wrap_pre_post norm_pure_input norm_pure_result
       Omega.hull f 
 
 let hull (f : CP.formula) : CP.formula =
@@ -2096,7 +1997,8 @@ let hull (f : CP.formula) : CP.formula =
   Debug.no_1 "hull" pr pr hull f
 
 let om_pairwisecheck f =
-  wrap_pre_post cnv_ptr_to_int norm_pure_result
+  wrap_pre_post norm_pure_input norm_pure_result
+  (* wrap_pre_post cnv_ptr_to_int norm_pure_result *)
       Omega.pairwisecheck f 
 
 let om_pairwisecheck f =
@@ -2246,7 +2148,7 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
   let conseq_s = conseq in
   let omega_imply a c = Omega.imply_ops pr_weak pr_strong a c imp_no timeout in
   let redlog_imply a c = wrap_redlog (Redlog.imply_ops pr_weak pr_strong a c) imp_no (* timeout *) in
-  let redlog_imply a c = wrap_ocredlog (Redlog.imply_ops pr_weak pr_strong a c) imp_no (* timeout *) in
+  let oc_redlog_imply a c = wrap_ocredlog (Redlog.imply_ops pr_weak pr_strong a c) imp_no (* timeout *) in
   let mathematica_imply a c = Mathematica.imply_ops pr_weak pr_strong a c imp_no (* timeout *) in
   let mona_imply a c = Mona.imply_ops pr_weak pr_strong a c imp_no in
   let coq_imply a c = Coq.imply_ops pr_weak pr_strong a c in
@@ -2323,7 +2225,7 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
         else (omega_imply ante conseq)
     | SetMONA -> Setmona.imply ante_w conseq_s 
     | Redlog -> redlog_imply ante_w conseq_s  
-    | OCRed -> redlog_imply ante_w conseq_s  
+    | OCRed -> oc_redlog_imply ante_w conseq_s  
     | Mathematica -> mathematica_imply ante_w conseq_s  
     | RM ->
           (*use UNSOUND approximation
@@ -2433,7 +2335,7 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
   
 let tp_imply_no_cache ante conseq imp_no timeout process =
   let pr = Cprinter.string_of_pure_formula in
-  Debug.no_4_loop "tp_imply_no_cache" pr pr (fun s -> s) string_of_prover string_of_bool
+  Debug.no_4(* _loop *) "tp_imply_no_cache" pr pr (fun s -> s) string_of_prover string_of_bool
   (fun _ _ _ _ -> tp_imply_no_cache ante conseq imp_no timeout process) ante conseq imp_no !pure_tp
 
 let tp_imply_perm ante conseq imp_no timeout process = 
@@ -2453,14 +2355,14 @@ let tp_imply_perm ante conseq imp_no timeout process =
 			let antes = List.map (fun a-> CP.tpd_drop_perm a, (ante_lex,CP.tpd_drop_nperm a)) antes in
 			let conseqs = List.map (fun c-> CP.mkExists conseq_lex (CP.tpd_drop_perm c) None no_pos, (conseq_lex,CP.tpd_drop_nperm c)) conseqs in
 			let tp_wrap fa fc = if CP.isConstTrue fc then true else tp_imply_no_cache fa fc imp_no timeout process in
-			let tp_wrap fa fc = Debug.no_2_loop "tp_wrap"  Cprinter.string_of_pure_formula  Cprinter.string_of_pure_formula string_of_bool tp_wrap fa fc in
+			let tp_wrap fa fc = Debug.no_2(* _loop *) "tp_wrap"  Cprinter.string_of_pure_formula  Cprinter.string_of_pure_formula string_of_bool tp_wrap fa fc in
 			let ss_wrap (ea,fa) (ec,fc) = if fc=[] then true else Share_prover_w.sleek_imply_wrapper (ea,fa) (ec,fc) in
 			List.for_all( fun (npa,pa) -> List.exists (fun (npc,pc) -> tp_wrap npa npc && ss_wrap pa pc ) conseqs) antes
   else tp_imply_no_cache ante conseq imp_no timeout process
 	
 let tp_imply_perm ante conseq imp_no timeout process =  
 	let pr =  Cprinter.string_of_pure_formula in
-	Debug.no_2_loop "tp_imply_perm" pr pr string_of_bool (fun _ _ -> tp_imply_perm ante conseq imp_no timeout process ) ante conseq
+	Debug.no_2(* _loop *) "tp_imply_perm" pr pr string_of_bool (fun _ _ -> tp_imply_perm ante conseq imp_no timeout process ) ante conseq
   
 let imply_cache fn_imply ante conseq : bool  = 
   let _ = Gen.Profiling.push_time_always "cache overhead" in

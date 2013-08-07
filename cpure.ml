@@ -71,7 +71,11 @@ let is_tmp_int sv = match sv with
   | SpecVar (Int,str,_) ->  ((String.length str) > 5) && ((String.compare (String.sub str 0 5) "v_int") == 0)
   | _ -> false
 
+let zinf_str = constinfinity
+
 let is_inf_sv sv = match sv with
+  (*| SpecVar (Int,zinf_str,_) -> true*)
+  (* Above doesn't work as it matches against all integer spec vars *)
   | SpecVar (Int,"ZInfinity",_) -> true
   | _ -> false
 
@@ -1723,6 +1727,8 @@ and mkAdd a1 a2 pos = Add (a1, a2, pos)
 and mkSubtract a1 a2 pos = Subtract (a1, a2, pos)
 
 and mkIConst a pos = IConst (a, pos)
+
+and mkInfConst pos = InfConst (zinf_str, pos)
 
 and mkFConst a pos = FConst (a, pos)
 
@@ -6556,10 +6562,13 @@ let check_imply_neq eq lhs e1 e2 =
     | _ -> false
   in if ((eqExp_f eq) e1 e2) then -2
   else helper lhs 
+
+(* type: (spec_var -> spec_var -> bool) -> p_formula list -> exp -> exp -> int *)
+
 let check_imply_neq_debug eq lhs e1 e2 = 
 Debug.no_3 
     "check_imply_neq" 
-    (fun c-> String.concat "&" (List.map !print_b_formula c))
+    (fun c-> String.concat "&" (List.map !print_p_formula c))
     !print_exp 
     !print_exp 
     string_of_int (check_imply_neq eq ) lhs e1 e2
