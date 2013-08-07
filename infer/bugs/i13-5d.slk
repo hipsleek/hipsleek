@@ -18,10 +18,10 @@ pred lseg<p> ==
 */
 HeapPred H1(node a).
 
-//infer [z,H1] x::node<z> * H1(y)  |- x::lseg<z> * y::lseg<null>.
+infer [z,H1] x::node<z> * H1(y)  |- x::lseg<z> * y::lseg<null>.
 //infer [z,H1] H1(y) & x=r  |- x::lseg<z> * y::lseg<null>.
 //infer [z,H1] H1(y) & x=r  |- y::lseg<null> * x::lseg<z> .
-infer [z] x::node<z>  |- x::lseg<z> .
+//infer [z] x::node<z>  |- x::lseg<z> .
 print residue.
 
 /*
