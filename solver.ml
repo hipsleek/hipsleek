@@ -7155,18 +7155,18 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
   let _ = match neg_lhs,rel_ass with
     | None,[] -> ()
     | None,[(h1,h2,_)] ->
-          let _ = print_endline "\nWARNING : pushing stk_estate (1)" in
-          (stk_rel_ass # push_list h2;
-          stk_estate # push h1)
+      let _ = Debug.ninfo_pprint "WARNING : pushing stk_estate (1)" pos in
+      (stk_rel_ass # push_list h2;
+      stk_estate # push h1)
     | Some (es,p),[] -> 
-          let _ = print_endline "\nWARNING : pushing stk_estate (2)" in
-          (stk_inf_pure # push p;
-          stk_estate # push es)
+      let _ = Debug.ninfo_pprint "WARNING : pushing stk_estate (2)" pos in
+      (stk_inf_pure # push p;
+      stk_estate # push es)
     | Some (es,p),[(h1,h2,_)] ->
-          let _ = print_endline "\nWARNING : pushing stk_estate (3)" in
-          (stk_inf_pure # push p;
-          stk_rel_ass # push_list h2;
-          stk_estate # push es)
+      let _ = Debug.ninfo_pprint "WARNING : pushing stk_estate (3)" pos in
+      (stk_inf_pure # push p;
+      stk_rel_ass # push_list h2;
+      stk_estate # push es)
     | _,_ -> report_error pos "Length of relational assumption list > 1"
   in
   (*let _ = print_string "what is going on?\n" in*)
@@ -7325,7 +7325,7 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
                                       report_error pos "Expecting a non-empty list of entail states"
                                     else
                                       let n = List.length entail_states in
-                                      let _ = print_endline ("\nWARNING : Pushing "^(string_of_int n)^" stk_estate (4)") in
+                                      let _ = Debug.ninfo_pprint ("WARNING : Pushing "^(string_of_int n)^" stk_estate (4)") pos in
                                       stk_estate # push_list entail_states 
                                   in
                                   (true,[],None))
@@ -7337,7 +7337,7 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
                                       report_error pos "Expecting a non-empty list of entail states"
                                     else 
                                       let n = List.length entail_states in
-                                      let _ = print_endline ("\nWARNING : Pushing  "^(string_of_int n)^"stk_estate (5)") in
+                                      let _ = Debug.ninfo_pprint ("WARNING : Pushing  "^(string_of_int n)^"stk_estate (5)") pos in
                                       stk_estate # push_list entail_states
                                   in
                                   (true,[],None))
@@ -7359,7 +7359,7 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
                                                 if not(false_es) then ()
                                                 else 
                                                   let n = List.length entail_states in
-                                                  let _ = print_endline ("\nWARNING : Pushing "^(string_of_int n)^"stk_estate (6)") in
+                                                  let _ = Debug.ninfo_pprint ("WARNING : Pushing "^(string_of_int n)^"stk_estate (6)") pos in
                                                   stk_estate # push_list entail_states in
                                             (true,[],None)
                                   end

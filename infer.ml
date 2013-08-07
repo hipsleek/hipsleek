@@ -1420,22 +1420,28 @@ let infer_pure_m i unk_heaps estate lhs_xpure lhs_xpure0 lhs_wo_heap rhs_xpure p
     estate lhs_xpure lhs_xpure0 rhs_xpure   
 
 let infer_pure_top_level_aux estate unk_heaps
-  split_ante1 split_ante0 m_lhs split_conseq pos =
-  let r1,r2,r3 = infer_pure_m 1 unk_heaps estate split_ante1 split_ante0 m_lhs split_conseq pos in
+  ante1 ante0 m_lhs split_conseq pos =
+  let r1,r2,r3 = infer_pure_m 1 unk_heaps estate ante1 ante0 m_lhs split_conseq pos in
   let res = (match r1,r3 with
-    | None,[] -> None,r2,[],[],false,split_ante1
-    | None,[(h1,h2,h3)] -> None,r2,h2,[h1],h3,split_ante1
-    | Some (es,p),[] -> Some p,r2,[],[es],true,split_ante1
-    | Some (es,p),[(h1,h2,h3)] -> Some p,r2,h2,[es],true,split_ante1
+    | None,[] -> None,r2,[],[],false,ante1
+    | None,[(h1,h2,h3)] -> None,r2,h2,[h1],h3,ante1
+    | Some (es,p),[] -> Some p,r2,[],[es],true,ante1
+    | Some (es,p),[(h1,h2,h3)] -> Some p,r2,h2,[es],true,ante1
     | _,_ -> report_error pos "Length of relational assumption list > 1"
   )
   in [res]
 
 let infer_pure_top_level estate unk_heaps
-  split_ante1 split_ante0 m_lhs split_conseq pos = 
-  if no_infer_all_all estate then [(None,None,[],[],false,split_ante1)]
+  ante1 ante0 m_lhs split_conseq pos = 
+  if no_infer_all_all estate then [(None,None,[],[],false,ante1)]
   else
-    let split1 = List.filter CP.is_sat_eq_ineq (CP.split_disjunctions_deep (MCP.pure_of_mix split_ante0)) in
+    let ante0_pure = MCP.pure_of_mix ante0 in
+    (* TODO: filter_var with relations *)
+(*    let all_inf_vars = estate.es_infer_vars @ *)
+(*      estate.es_infer_vars_rel @ estate.es_infer_vars_hp_rel in*)
+(*    let split1 = CP.filter_var ante0_pure all_inf_vars in*)
+(*    let _ = Debug.info_hprint (add_str "split1" Cprinter.string_of_pure_formula) split1 no_pos in*)
+    let split1 = List.filter CP.is_sat_eq_ineq (CP.split_disjunctions_deep ante0_pure) in
     let split1 = Gen.BList.remove_dups_eq (CP.equalFormula) split1 in
     let need_split = List.length split1 > 1 &&
       List.exists (fun p -> 
@@ -1444,7 +1450,7 @@ let infer_pure_top_level estate unk_heaps
       ) split1 in
     if not(need_split) then
       infer_pure_top_level_aux estate unk_heaps
-      split_ante1 split_ante0 m_lhs split_conseq pos
+      ante1 ante0 m_lhs split_conseq pos
     else
       let pr = Cprinter.string_of_pure_formula in
       let _ = Debug.info_hprint (add_str "split-1" (pr_list pr)) split1 no_pos in
