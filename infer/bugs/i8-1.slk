@@ -1,0 +1,75 @@
+data node {
+	int val; 
+	node next;	
+}.
+
+pred ll<n> == self = null & n = 0 
+	or self::node<_, q> * q::ll<n-1> 
+  inv n >= 0.
+
+HeapPred H1(node y).
+
+
+// (28)
+infer [m] m=-1 |- y::node<_,_> & m>=0.
+
+//infer [m] m=-1 & y=null |- y::node<_,_> & m>=0.
+
+print residue.
+// Old inferred pure: (m!=-1 | inf_m_37<=-1)
+// (m!=-1 | inf_m_37<=-1) doesn't cause contradiction
+// Eliminate inf_m_37<=-1 only.
+// Not sure about the inferred heap?
+/*
+infer [m] m=-1 & y=null |- y::node<_,_> & m>=0.
+//works!
+
+infer [m] m=-1 |- y::node<_,_> & m>=0.
+// fails
+
+infer [m] m=-1 |- y::ll<m> & m>=0.
+
+fail?
+
+infer [m] m=-1 |- y::ll<m>.
+print residue.
+
+// fail?
+
+infer [y,m] m=-1 |- y::ll<m>.
+
+<1>hfalse&false&{FLOW,(19,20)=__norm}[]
+ inferred heap: [y::ll<inf_m_36>@inf_ann_35]
+ inferred pure: [m!=(0-1); inf_ann_35<=0]
+
+
+infer [y,m] m=-1 |- y::node<a,b>.
+
+ <1>emp&m+1=0 & a=inf_a_32 & b=inf_b_33 & inf_ann_31<=0&{FLOW,(19,20)=__norm}[]
+ inferred heap: [y::node<inf_a_32,inf_b_33>@inf_ann_31]
+ inferred pure: [inf_ann_31<=0]
+
+infer [y,m] m=-1 |- y::node<a,b> * b::ll<m>.
+print residue.
+
+ <1>hfalse&false&{FLOW,(19,20)=__norm}[]
+ inferred heap: [inf_b_37::ll<inf_m_41>@inf_ann_40; 
+                 y::node<inf_a_36,inf_b_37>@inf_ann_35]
+ inferred pure: [(b!=inf_b_37 | m!=(0-1)); inf_ann_35<=0; inf_ann_40<=0]
+
+Why is "b" picked?
+
+Entail (2) : Valid. 
+
+ <1>hfalse&false&{FLOW,(19,20)=__norm}[]
+ inferred heap: [inf_b_41::ll<inf_m_45>@inf_ann_44[0][Orig][LHSCase]; 
+                 y::node<inf_a_40,inf_b_41>@inf_ann_39[Orig]]
+ inferred pure: [m!=(0-1); inf_ann_39<=0; inf_ann_44<=0]
+
+but priority to be given to contradiction!
+
+*/
+
+
+
+

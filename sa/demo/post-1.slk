@@ -1,0 +1,34 @@
+data node{
+	node val;
+	node next;
+}.
+
+
+HeapPred G(node a).
+
+
+relAssume 
+ x::node<n,null> & n!=null   --> G(x).
+
+/*
+relAssume 
+ yy::node<key_31_797,null>  --> G(yy).
+*/
+
+relAssume 
+ x::node<null,right>  & right=null  --> G(x).
+
+
+shape_infer [][G].
+
+/*
+# post-1.slk
+
+ G(x_22) ::=  x_22::node<key_31_797,xx>@M&xx=null]
+
+Above is unsound. too strong.
+should have two disjuncts.
+
+
+
+*/

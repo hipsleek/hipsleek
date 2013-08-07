@@ -79,6 +79,7 @@ void qsort(ref int[] a, int i, int j)
 	{
 		int k, t;
         int x = a[i];
+//		assert matchinp(l,h);
 		assume matchinp(l,h);
 		arraypart(a, i, j, x, k, t);
 		qsort(a, i, k);

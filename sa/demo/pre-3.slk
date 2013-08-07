@@ -1,0 +1,24 @@
+data node{
+	int val;
+	node next;
+}.
+
+
+HeapPred H(node a).
+
+
+
+relAssume 
+ H(x) --> x=null.
+
+relAssume 
+ H(x) --> true.
+
+shape_infer [H][].
+
+/*
+
+ H(x) --> x=null 
+
+
+*/

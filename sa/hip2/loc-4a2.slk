@@ -1,0 +1,93 @@
+// pre-2.slk
+
+data node{
+ int val;
+ node prev;
+ node next;
+}.
+
+
+HeapPred H(node a,node b).
+HeapPred HP_1(node a,node b).
+HeapPred HP_2(node a,node b).
+HeapPred G(node a, node a).
+
+relAssume  G // (3)
+  HP_2(next,y) & x::node<_,_, null>  & next=null  -->  G(x,y).
+
+shape_infer [HP_2][G].
+
+/*
+
+Expecting:
+
+After pre-process (dangling predicate detecting, spliting):
+  HP_2(next,y) & next=null  -->  emp.
+  x::node<_,_, null>  -->  G(x,y).
+
+
+Final solution:
+ HP_2(next,y) ::= emp & next=null 
+ G(x_40,y_41) ::= EXISTS(flted_14_22: x_40::node<Anon_11,Anon_12,flted_14_22>@M&
+flted_14_22=null&[]]
+
+BUT why did we get: so many "emp" below!
+========================================
+[ HP_2(next,y) ::= (emp) & (emp)&next=null,
+ G(x_40,y_41) ::= EXISTS(flted_14_22: (emp) & x_40::node<Anon_11,Anon_12,flted_14_22>@M&
+flted_14_22=null&[]]
+S
+
+
+
+P --> A1->B1 
+P --> A2->B2
+-----------------------
+P --> A1->B1 /\ A2->B2
+
+
+P --> A1->B1 /\ not(A2)->B2
+-----------------------------
+P --> B1 & A1 \/ B2 & A2
+
+
+P --> A1->B1
+--------------
+P --> A1->B1
+P --> not(A1)->false  (a strengthening)
+------------------------
+P --> A1->B1 /\ not(A1)->false
+----------------------------------
+P --> B1 & A1 \/ false & not(A1)
+----------------------------------
+P --> B1 & A1 
+
+We cannot simply do below as it 
+step marked as (*) is a weakening
+which is unsound for pre-pred.
+
+
+P --> A1->B1 
+P --> A2->B2
+-----------------------
+P --> A1->B1 /\ A2->B2
+-----------------------(*)
+P --> A1->B1 \/ A2->B2
+-----------------------
+P --> B1 & A1 \/ B2 & A2
+
+CORRECT STEPS
+=============
+
+P --> A1->B1 
+P --> A2->B2
+-----------------------
+P --> A1->B1 /\ A2->B2
+------------------------------------------
+P --> A1 & A2 ->B1 /\ A1 & not(A2)->B1 
+      /\ A2 & not(a1) ->B2 /\ A2 & A1 ->B2
+------------------------------------------------
+P -->  B1 & A1 & A2 \/ B1 & A1 & not(A2)
+      \/  B2 & A2 & not(a1)  \/  B2 & A2 & A1
+
+*/

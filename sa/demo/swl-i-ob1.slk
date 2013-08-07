@@ -1,0 +1,16 @@
+data node{
+	int val;
+	node next;
+}.
+HeapPred H(node a, node b, node@NI c).
+HeapPred HP_902(node next_36_901, node@NI prev, node@NI sent).
+HeapPred HP_903(node prev, node@NI cur, node@NI sent).
+
+
+
+infer [HP_902,HP_903] cur_942::node<val_36_937,prev_938>@M * HP_903(prev_938,cur_942,sent_939)&
+  prev_940=null & 
+  cur_941=cur_942 |- cur_941::node<val_36_900,next_36_901>@M * 
+  HP_902(next_36_901,prev_940,sent_939) * HP_903(prev_940,cur_941,sent_939).
+
+print residue.

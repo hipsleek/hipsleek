@@ -1,0 +1,26 @@
+data node{
+	node prev;
+	node next; 
+}.
+
+HeapPred G3(node a,node b).
+HeapPred HP_4(node a,node@NI b).
+HeapPred HP_5(node a,node@NI b).
+
+relAssume
+ l1::node<l2,p> * HP_4(n3,l1) * HP_5(p,l1) * l2::node<n3,l1> --> G3(l1,l2).
+ 
+shape_infer [HP_4,HP_5][G3].
+
+/*
+# dll-app-bug2.slk
+
+Why were HP_4 and HP_5 classified as dangling?
+
+[ HP_4(n3,l1) ::= emp& XPURE(HP_4(n3,l1)),
+ HP_5(p,l1) ::= emp& XPURE(HP_5(p,l1)),
+ G3(l1_24,l2_25) ::= l1_24::node<l2_25,p>@M * l2_25::node<n3,l1_24>@M& XPURE(HP_4(n3,l1_24)) & 
+ XPURE(HP_5(p,l1_24))]
+
+
+*/

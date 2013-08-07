@@ -57,8 +57,8 @@ let process_cmd_list cmds :bool=
       Error.error_text = "Data type " ^ udn ^ " is undefined!" }
   in ();
   Debug.tinfo_pprint "sleek : after 2nd parsing" no_pos;
-  convert_pred_to_cast ();
-  Debug.tinfo_pprint "sleek : after convert_pred_to_cast" no_pos;
+  convert_data_and_pred_to_cast ();
+  Debug.tinfo_pprint "sleek : after convert_data_and_pred_to_cast" no_pos;
    (*proc_one_lemma*)
   List.iter (fun c->  match c with
       | LemmaDef ldef -> process_lemma ldef

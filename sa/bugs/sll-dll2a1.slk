@@ -1,0 +1,30 @@
+data node{
+	int val;
+	node prev;
+	node next;
+}.
+
+HeapPred H1(node a, node b).
+HeapPred G1(node a, node b).
+
+
+infer [H1,G1]
+ H1(c,p)&c=null & !(v_bool_18_760') & c=null & !(v_bool_18_760') & c=res
+ |-  G1(c,p).
+
+print residue.
+
+/*
+Below is wrong:
+ inferred hprel: [H1(c,p)&c=null --> G1(c,p)&true; 
+                  H1(res,p)&res=null --> emp&true]
+WE should just have:
+ H1(c,p)&c=null --> G1(c,p)
+which will later be base-case spitted separately 
+into pre-pred and post-pred:
+ H1(c,p)&c=null --> emp
+ c=null --> G1(c,p)
+
+
+*/
+

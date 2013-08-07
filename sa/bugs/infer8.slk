@@ -1,0 +1,35 @@
+data node {
+	int val; 
+	node next;	
+}.
+
+pred ll<n> == self = null & n = 0 
+	or self::node<_, q> * q::ll<n-1> 
+  inv n >= 0.
+
+HeapPred H1(node y).
+
+
+// (28)
+infer [y,m] m=-1 |- y::node<a,b> * b::ll<m>.
+print residue.
+// Old inferred pure: (m!=-1 | inf_m_37<=-1)
+// (m!=-1 | inf_m_37<=-1) doesn't cause contradiction
+// Eliminate inf_m_37<=-1 only.
+// Not sure about the inferred heap?
+/*
+
+Entail (2) : Valid. 
+
+ <1>hfalse&false&{FLOW,(19,20)=__norm}[]
+ inferred heap: [inf_b_41::ll<inf_m_45>@inf_ann_44[0][Orig][LHSCase]; 
+                 y::node<inf_a_40,inf_b_41>@inf_ann_39[Orig]]
+ inferred pure: [m!=(0-1); inf_ann_39<=0; inf_ann_44<=0]
+
+but priority to be given to contradiction!
+
+*/
+
+
+
+

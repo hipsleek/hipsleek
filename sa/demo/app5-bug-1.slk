@@ -1,0 +1,51 @@
+data node{
+     int val;
+	node next;
+}.
+
+HeapPred H2(node a, node b).
+HeapPred HP_3(node a, node@NI b).
+HeapPred HP_4(node a, node@NI b).
+HeapPred HP_0(node a).
+HeapPred G2(node a, node b).
+
+
+relAssume 
+ H2(x,y) --> x::node<val_34_821,next_34_822>@M * 
+  HP_3(next_34_822,y). //* HP_4(y,x).
+
+
+relAssume 
+ HP_3(next_34_822,y) 
+ //* HP_4(y,x)
+ & next_34_822!=null --> H2(next_34_822,y).
+
+relAssume 
+ //HP_4(y,x) * 
+ x::node<val_34_821,y>&true --> G2(x,y).
+
+relAssume 
+ HP_3(n,y) & n=null --> emp.
+
+relAssume 
+ x::node<val_34_821,next_34_822> * G2(next_34_822,y) &
+  next_34_822!=null --> G2(x,y).
+
+Declare_Unknown [HP_4].
+
+shape_infer [H2,HP_3][G2].
+
+/*
+
+There ssems to be split which may be wrong in some sense
+since there are scenarios where we cannot split cleanly
+between pre and post-pred.
+
+[ HP_0(left_25_23) ::= emp&left_25_23=null,
+ HP_1(right_25_24) ::= emp&true,
+ G(x_25) ::= x_25::node<key_25_797,left_25_798,right_25_799>@M&left_25_798=null]
+
+
+
+
+*/

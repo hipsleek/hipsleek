@@ -1,0 +1,22 @@
+data node{
+ int val;
+ node next;
+}.
+
+
+HeapPred HP_6(node a).
+HeapPred G(node a, node a).
+
+relAssume  G
+ x::node<_,nn> * HP_6(nn) & nn=null & x'=null  --> G(x,x').
+
+shape_infer [][G].
+
+/*
+ Obtained:
+
+  G(x_23,x_24) ::= x_23::node<Anon_11,nn>@M&nn=null & x_24=null]
+
+ Why was XPURE(HP_6(..)) dropped?
+
+*/

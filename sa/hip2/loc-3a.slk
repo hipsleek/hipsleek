@@ -1,0 +1,51 @@
+data node{
+ int val;
+ node prev;
+ node next;
+}.
+
+
+HeapPred H(node a,node b).
+HeapPred HP_1(node a,node b).
+HeapPred HP_2(node a,node b).
+HeapPred G(node a, node a).
+
+relAssume  H // (1)
+ H(x,y) --> x::node<_,prev, next> * HP_1(prev,y) *  HP_2(next,y) .
+relAssume  HP_2 // (2)
+  HP_2(next,y) & next!=null --> H(next,y).
+relAssume  HP_2 // (3)
+  HP_2(next,y) & next=null  -->  G(next,y).
+
+shape_infer [H,HP_2][G].
+
+/*
+SOLUTION for shape_infer:
+(1) determine dangling predicates
+    and convert to using XPURE(..)
+(2) split pre/post predicate for base cases
+(3) call shape_infer_proper for 
+     pre/post-pred derivation
+
+
+Expecting:
+
+After pre-process (dangling predicate detecting, spliting):
+
+  H(x,y) --> x::node<_,prev, next> *  HP_2(next,y) & XPURE(HP_1(prev,y) .
+  HP_2(next,y) & next!=null --> H(next,y).
+  HP_2(next,y) & next=null  -->  emp
+  next=null --> G(next,y).
+
+
+Final solution:
+
+[ H(x_86,y_87) ::= x_86::node<Anon_11,prev,next>@M 
+                * (HP_2(next,y_87))& XPURE(HP_1(prev,y_87)),
+ HP_2(next_88,y_89) ::= 
+ emp&next_88=null
+ or next_88::node<Anon_11,prev,next>@M * (HP_2(next,y_89))&
+     XPURE(HP_1(prev,y_89))
+ ,
+ G(next_90,y_91) ::= emp&next_90=null]
+*/

@@ -1,0 +1,127 @@
+
+//slk_simplify self=null & mi=\inf.
+//slk_pairwise self=null & mi=\inf | self=null & mi=\inf.
+
+//checkentail 3<\inf |- false.
+//checkentail 3>\inf |- false.
+//checkentail x=\inf |- false.
+//checkentail x<=\inf |- false.
+//checkentail 1+\inf > \inf |- false.
+//checkentail \inf > \inf |- false.
+//checkentail \inf >= \inf |- false.
+//checkentail \inf > v |- v<=\inf.
+//checkentail v < \inf |- v<=\inf.
+
+//slk_simplify 3<\inf.
+//slk_simplify 3>\inf.
+
+slk_simplify v=\inf.
+slk_simplify \inf=v.
+slk_simplify v=-\inf.
+slk_simplify v<\inf. 
+slk_simplify v!=\inf. 
+slk_simplify \inf!=v. 
+slk_pairwise v=\inf & x=1 | \inf=v & x=2. 
+slk_pairwise v=\inf & x=1 | \inf=v & x=3. 
+slk_hull v=\inf & x=1 | \inf=v & x=3. 
+
+
+/*
+# infinity/bugs/inf-4b.slk --en-inf
+
+capture         v!=\inf 
+internally as   v<\inf
+
+PROBLEM HERE!
+-------------
+// weird
+cnv_int_to_ptr@2
+cnv_int_to_ptr inp1 : ZInfinity=v
+cnv_int_to_ptr@2 EXIT out : ZInfinity=v
+Simplify  (2): ZInfinity=v
+
+// -ve inf
+cnv_int_to_ptr@3
+cnv_int_to_ptr inp1 : v=0-ZInfinity
+cnv_int_to_ptr@3 EXIT out : v=0-ZInfinity
+Simplify  (3): v+ZInfinity=0
+
+// use v<\inf
+cnv_int_to_ptr@4
+cnv_int_to_ptr inp1 : (ZInfinity<v | v<ZInfinity)
+cnv_int_to_ptr@4 EXIT out : (ZInfinity<v | v!=(\inf))
+Simplify  (4): (v!=(\inf) | ZInfinity<v)
+
+cnv_int_to_ptr@5
+cnv_int_to_ptr inp1 : (ZInfinity<v | v<ZInfinity)
+cnv_int_to_ptr@5 EXIT out : (ZInfinity<v | v!=(\inf))
+Simplify  (5): (v!=(\inf) | ZInfinity<v)
+
+cnv_int_to_ptr@6
+cnv_int_to_ptr inp1 : (v<ZInfinity | ZInfinity<v)
+cnv_int_to_ptr@6 EXIT out : (v!=(\inf) | ZInfinity<v)
+Simplify  (6): (ZInfinity<v | v!=(\inf))
+
+===================
+
+cnv_int_to_ptr@1
+cnv_int_to_ptr inp1 : ZInfinity=v
+cnv_int_to_ptr@1 EXIT out : v=\inf
+Simplify  (1): v=\inf
+
+cnv_int_to_ptr@7
+cnv_int_to_ptr inp1 : ZInfinity=v & 1<=x & x<=2
+cnv_int_to_ptr@7 EXIT out : v=\inf & 1<=x & x<=2
+PairWise  (7): v=\inf & 1<=x & x<=2
+
+cnv_int_to_ptr@8
+cnv_int_to_ptr inp1 : ((ZInfinity=v & x=3) | (ZInfinity=v & x=1))
+cnv_int_to_ptr@8 EXIT out : ((v=\inf & x=3) | (v=\inf & x=1))
+PairWise  (8): ((v=\inf & x=1) | (v=\inf & x=3))
+
+cnv_int_to_ptr@9
+cnv_int_to_ptr inp1 : ZInfinity=v & 1<=x & x<=3
+cnv_int_to_ptr@9 EXIT out : v=\inf & 1<=x & x<=3
+Hull  (9): v=\inf & 1<=x & x<=3
+========================================
+
+c<\inf --> true
+c=\inf --> false
+c>\inf --> false
+c>\inf --> false
+\inf>\inf --> false
+v<=\inf --> true
+\inf+1<=\inf --> false
+
+to internal
+===========
+x!=\inf --> x<Zinf
+x<\inf --> x<Zinf
+x=\inf --> Zinf=x
+
+
+to external
+===========
+Zinf=v --> v=\inf
+v<Zinf --> v!=\inf
+Zinf!=v --> v!=\inf
+
+
+checkentail self=null & mi=\inf |- false.
+
+OK
+
+omega_of_formula#8@3@2@1
+omega_of_formula#8 inp1 : 3<(\inf)
+omega_of_formula#8@3 EXIT ExceptionGlobals.Illegal_Prover_Format("Omega.omega_of_exp: array, bag or list constraint  \\inf")Occurred!
+
+Omega.simplify@2@1
+Omega.simplify inp1 : 3<(\inf)
+Omega.simplify@2 EXIT out : 3<(\inf)
+
+simplify_omega@1
+simplify_omega inp1 : 3<(\inf)
+simplify_omega@1 EXIT out : 3<(\inf)
+Simplify  (1): 3<(\inf)
+
+*/

@@ -1,0 +1,74 @@
+data node{
+	int val;
+	node next;
+}.
+
+PostPred GP_3(node a, node@NI b).
+PostPred GP_4(node a, node@NI b).
+
+pred G<x> ==
+     self::node<val_29_788,null>@M&self=x 
+or x::node<val_29_788,next_29_789> * GP_4(next_29_789,self) * 
+     self::node<val_34_802,null>
+inv self!=null.
+
+
+relAssume
+ t_32'::G<next_29_789> & next_29_789!=null 
+ --> t_32'::node<val_34_802,next_34_803>@M * 
+    GP_3(next_34_803,next_29_789) * GP_4(next_29_789,t_32').
+
+shape_post_obligation [][GP_3,GP_4].
+//shape_infer [][GP_4,GP_5].
+
+//print residue.
+
+/*
+# single-b.slk
+
+GOT:
+====
+[HP_RELDEFN GP_5:  GP_4(next_29_64,t_65) ::=  
+ emp&next_29_64!=null & next_29_64=t_65
+ or next_29_64::node<val_29_61,next_29_62>@M * GP_4(next_29_62,t_65)&true
+ ,
+HP_RELDEFN GP_4:  GP_3(next_34_66,next_29_67) ::=  emp&next_34_66=null]
+
+Please print the relational assumptions gathered.
+
+EXPECT:
+=======
+inferred hprel: [
+   emp&next_34_803=null --> GP_4(next_34_803,next_29_789@NI);
+   emp&next_29_789=t_32' &  next_29_789!=null --> GP_5(next_29_789,t_32'@NI)&true; 
+   emp&next_34_803=null --> GP_4(next_34_803,next_29_789@NI)&
+   next_29_789::node<val_29_73,next_29_74>@M * GP_5(next_29_74,t_32'@NI)
+      --> GP_5(next_29_789,t_32'@NI)&true]
+
+========================================================
+
+infer [GP_4,GP_5]
+ t_32'::G<next_29_789> & next_29_789!=null 
+  |- t_32'::node<val_34_802,next_34_803>@M * 
+    GP_4(next_34_803,next_29_789) * GP_5(next_29_789,t_32').
+
+
+# single-a.slk
+
+inferred hprel: [
+   emp&next_34_803=null --> GP_4(next_34_803,next_29_789@NI);
+   emp&next_29_789=t_32' &  next_29_789!=null --> GP_5(next_29_789,t_32'@NI)&true; 
+   emp&next_34_803=null --> GP_4(next_34_803,next_29_789@NI)&
+   next_29_789::node<val_29_73,next_29_74>@M * GP_5(next_29_74,t_32'@NI)
+      --> GP_5(next_29_789,t_32'@NI)&true]
+
+# single-a1.slk produces:
+
+GP_5(next_29_29,t_30) ::=  
+ emp&next_29_29!=null & next_29_29=t_30
+ or next_29_29::node<val_29_73,next_29_74>@M * GP_5(next_29_74,t_30)&true
+
+GP_4(next_34_31,next_29_32) ::=  emp&next_34_31=null]
+
+*
+*/

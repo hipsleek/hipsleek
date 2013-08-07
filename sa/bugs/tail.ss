@@ -1,6 +1,5 @@
 data node{
 	int val;
-	node prev;
 	node next;
 }
 
@@ -16,8 +15,8 @@ node foo (node c)
 }
 
 /*
-
-
+[ H1(c_787) ::= c_787::node<val_14_777,next_14_778>@M& XPURE(HP_779(next_14_778)),
+ G1(next_14_788,c_789) ::= c_789::node<val_14_777,next_14_788>@M& XPURE(HP_779(next_14_788))]
 
 Instead of:
 

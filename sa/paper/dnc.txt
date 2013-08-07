@@ -1,0 +1,56 @@
+bt-count-1.ss
+bt-left2.ss
+bt-search-2.ss
+bt-trav.ss
+bug-imm-set-tail-2.ss
+check-cdll.ss
+check-cll.ss  --sa-dnc missing on  base-case equation
+check-dll-1.ss
+check-dll-2a.ss
+check-dll-2b.ss
+check-dll.ss
+check-mcf-2.ss
+check-mcf-4.ss
+check-mcf.ss
+check-multi-tree.ss
+check-pos.ss
+check-sll-head.ss
+check-sll-head-v.ss
+check-sorted-2.ss
+check-sorted.ss
+check-tll-2.ss
+check-tll.ss
+check-zip-eq.ss
+check-zip-leq.ss
+cll.ss
+dll-append_paper.ss
+last-2.ss
+qsort-2.ss
+rose-sll-1.ss
+set-tail-2.ss
+single_paper.ss
+skip0b.ss
+skip0.ss
+skip0-tree.ss
+skip1.ss
+skip-list-1-1.ss
+skip-list.ss
+sll-01-slls.ss
+sll-append_paper.ss
+sll-append.ss
+sll-bubble.ss
+sll-creat.ss
+sll-delete-all.ss
+sll-delete-if.ss
+sll-dll.ss                   SAME
+sll-get-next-next.ss
+sll-get-next.ss
+sll-insertsort.ss
+sll-insert.ss
+sll-last-2.ss
+sll-reverse.ss
+tll.ss     BETTER with --sa-dnc
+tree.ss    SAME but --sa-dnc requires simplification
+zip_paper_eq.ss       SAME
+zip_paper_leq.ss
+

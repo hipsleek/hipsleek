@@ -1,0 +1,129 @@
+data tree {
+  node children;
+}.
+
+data node {
+  tree child;
+  node sibling;
+}.
+
+/*
+ptree<> ==
+  self::tree<c>*c::sll<>;
+
+sll<> ==
+  self=null
+or  self::node<c,n>*c::ptree<> * n::sll<>;
+*/
+
+HeapPred H(tree a).
+PostPred G(tree a).
+HeapPred H2(node a).
+PostPred G2(node a).
+HeapPred H_7(tree a).
+HeapPred H_8(node a).
+HeapPred H_9(node a).
+
+
+relAssume
+ l::node<child_38_955,sibling_38_956>@M * G2(sibling_38_956) * 
+  G(child_38_955) --> G2(l).
+
+relAssume
+ emp & l=null --> G2(l).
+
+relAssume
+ t::tree<children_30_986>@M * G2(children_30_986)&
+  children_30_986=null --> G(t).
+
+relAssume
+ t::tree<children_30_986>@M * G2(children_30_986)&
+  children_30_986!=null --> G(t).
+
+
+/*
+relAssume
+ H(t) --> emp&t!=null. // this seems spurious!
+
+*/
+
+shape_infer [][G,G2].
+
+
+/*
+# multi-tree-3.slk
+
+GOT below which is too complex:
+
+[ G(t_53) ::= 
+ t_53::tree<children_30_986>@M&children_30_986=null
+ or t_53::tree<children_30_986>@M * 
+    children_30_986::node<child_38_44,sibling_38_43>@M * G(sibling_38_43) * 
+    child_38_44::tree<children_30_45>@M * G(children_30_45)&
+    children_30_45=null
+ or t_53::tree<children_30_986>@M * 
+    children_30_986::node<child_38_47,sibling_38_46>@M * G(sibling_38_46) * 
+    child_38_47::tree<children_30_48>@M * G(children_30_48)
+ ,
+ G2(l_54) ::= 
+ l_54::node<child_38_955,sibling_38_956>@M * G2(sibling_38_956) * 
+ child_38_955::tree<children_30_35>@M * G2(children_30_35)&
+ children_30_35=null
+ or l_54::node<child_38_955,sibling_38_956>@M * G2(sibling_38_956) * 
+    child_38_955::tree<children_30_35>@M * G2(children_30_35)&
+    children_30_35!=null
+ or emp&l_54=null
+ ]
+
+ALGO
+====
+
+Do not unfold disjunctie form.
+
+Step 1
+======
+ l::node<child_38_955,sibling_38_956>@M * G2(sibling_38_956) * 
+  G(child_38_955) --> G2(l).
+
+ emp & l=null --> G2(l).
+
+Simplify and combine the disjunct:
+
+ l::node<child_38_955,sibling_38_956>@M * G2(sibling_38_956) * 
+  G(child_38_955) 
+ or & l=null --> G2(l).
+
+Confirm equation
+================
+ G2(l) ::=  
+  l::node<child_38_955,sibling_38_956>@M * G2(sibling_38_956) * 
+    G(child_38_955) 
+  or & l=null 
+
+Step 2 (process G)
+======
+Simplify (no change, as G2 is disj, so DO NOT unfold)
+ t::tree<children_30_986>@M * G2(children_30_986)&
+  children_30_986=null --> G(t).
+ t::tree<children_30_986>@M * G2(children_30_986)&
+  children_30_986!=null --> G(t).
+
+Combine disjunct:
+ t::tree<children_30_986>@M * G2(children_30_986)&
+  children_30_986=null
+ or t::tree<children_30_986>@M * G2(children_30_986)&
+  children_30_986!=null --> G(t).
+
+Perform Conjunctive Unification (without loss)
+ t::tree<children_30_986>@M * G2(children_30_986)&
+  (children_30_986=null|children_30_986!=null)
+   --> G(t).
+ t::tree<children_30_986>@M * G2(children_30_986)
+   --> G(t).
+
+Confirm Equation:
+ G(t) ::= t::tree<children_30_986>@M * G2(children_30_986)
+
+*/
+
+

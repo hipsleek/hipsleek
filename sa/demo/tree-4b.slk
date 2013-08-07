@@ -1,0 +1,62 @@
+data node{
+	int val;
+	node prev;
+	node next;
+}.
+
+HeapPred H(node a).
+HeapPred HP_0(node a).
+HeapPred HP_1(node a).
+HeapPred G(node a).
+
+//Declare_Dangling [HP_2].
+//Declare_Unknown [HP_2].
+
+relAssume 
+ HP_0(x)&x!=null --> x::node<key_25_797,left_25_798,right_25_799>@M * 
+  HP_0(left_25_798) * HP_0(right_25_799).
+
+relAssume 
+ HP_1(x)&x!=null --> x::node<key_25_797,left_25_798,right_25_799>@M * 
+  HP_1(left_25_798) * HP_1(right_25_799).
+
+relAssume 
+ HP_1(right_25_799)&right_25_799=null --> emp.
+
+relAssume 
+ HP_0(left_25_798)&left_25_798=null --> emp.
+
+
+shape_infer [HP_0,HP_1][].
+
+/* 
+
+# tree-4b.slk :
+
+GOT --sa-unify
+===
+[ HP_0(x_33) ::=  
+ emp&x_33=null
+ or x_33::node<key_25_797,left_25_798,right_25_799>@M * HP_0(left_25_798) * 
+    HP_0(right_25_799)&true
+ ,
+ HP_1(x_34) ::=  
+ emp&x_34=null
+ or x_34::node<key_25_797,left_25_798,right_25_799>@M * HP_1(left_25_798) * 
+    HP_1(right_25_799)&true
+ 
+I wondered why we did not get the same answer as tree-4.slk
+which obtained a mutual-recursive HP_0,HP_1 which
+was then unified. For tree-4b.slk, we have two indenpendent
+recursion which are similar; and may be subject to unification; 
+let us say pred-unify, as opposed to conj-unify or disj-unify?
+
+[ HP_0(x_35) ::=  HP_1(x_35)&true,
+ HP_1(x_36) ::=  
+ emp&x_36=null
+ or x_36::node<key_25_797,left_25_798,right_25_799>@M * HP_1(left_25_798) * 
+    HP_1(right_25_799)&true
+ ]
+
+
+*/

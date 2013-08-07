@@ -1,0 +1,35 @@
+
+data node {
+	int val; 
+	node next; 
+}.
+
+pred  sortll<mi> == self=null & mi=\inf
+   or self::node<mi, p> * p::sortll<m2> & mi<=m2
+inv true.
+
+/*
+# inf-4a.slk
+
+Triggerred during Omega.simplify but handled later.
+
+omega_of_formula#8@17@16@15
+omega_of_formula#8 inp1 : exists(m2:((m2=\inf | exists(p:p>0))) & mi<=m2)
+omega_of_formula#8@17 EXIT ExceptionGlobals.Illegal_Prover_Format("Omega.omega_of_exp: array, bag or list constraint  \\inf")Occurred!
+
+Omega.simplify@16@15
+Omega.simplify inp1 : exists(m2:((m2=\inf | exists(p:p>0))) & mi<=m2)
+Omega.simplify@16 EXIT out : exists(m2:((m2=\inf | exists(p:p>0))) & mi<=m2)
+
+-------------------------
+  is-sat performed a proper translation first.
+
+omega_of_formula#1@20@19
+omega_of_formula#1 inp1 : self=0 & exists(m2:((ZInfinity=m2 | exists(p:0<p))) & mi<=m2) & 0<self
+omega_of_formula#1@20 EXIT out :((self = 0) & ( (exists (m2:(((m2 = ZInfinity) |  (exists (p:(0 < p))) ) & (mi <= m2))))  & (0 < self)))
+
+[tp]is_sat@19
+[tp]is_sat inp1 : self=null & exists(m2:((m2=\inf | exists(p:p!=null))) & mi<=m2) & self!=null
+[tp]is_sat@19 EXIT out :false
+
+*/

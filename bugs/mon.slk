@@ -1,0 +1,38 @@
+checkentail x+y>2 & 2>=y & k=1 |- x+y>y & k>0.
+/*
+// x,y:2  k:0
+find_order@3
+find_order inp1 : (!((exists(v_int_1_22:2<v_int_1_22 & v_int_1_22=x_r3+y_r3) & y_r3<=2 & 
+k_r3=1)) | 0<k_r3)
+find_order inp2 :
+find_order res2 :; (x_r3 2); (k_r3 0); (v_int_1_22 2); (y_r3 2)
+find_order@3 EXIT out :?
+*/
+
+checkentail x>2 & 2>=y |- x>y.
+// x,y:0
+ 
+checkentail S={k} & k=2 |- S!={} & k>0.
+/*
+// S:2,k:1 
+find_order inp1 : S_r6={k_r6} & k_r6=2
+find_order inp2 :
+find_order res2 :; (S_r6 2); (k_r6 1)
+
+// k:0
+find_order@8
+find_order inp1 : (k_r8!=2 | 0<k_r8)
+find_order inp2 :
+find_order res2 :; (k_r8 0)
+find_order@8 EXIT out :?
+*/
+
+checkentail !res & res |- false.
+/*
+// res:2
+find_order@9
+find_order inp1 : !(res_r9) & res_r9
+find_order inp2 :
+find_order res2 :; (res_r9 2)
+find_order@9 EXIT out :?
+*/

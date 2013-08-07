@@ -1,0 +1,13 @@
+dll<l>
+
+checker_cyclic<l>
+
+list_segment<..>
+
+positive_list
+
+increasing_list
+
+
+
+

@@ -1,0 +1,18 @@
+data node {
+	int val; 
+	node next;	
+}.
+
+pred ll<n> == self = null & n = 0 
+	or self::node<_, q> * q::ll<n-1> 
+  inv n >= 0.
+
+infer [n] q::ll<m>@M&n=m+1 |-  emp&q=null.
+
+/*
+id: 8; caller: []; line: 42; classic: false; kind: Sleek_Entail(1); hec_num: 4; evars: [flted_42_33]; infer_vars: [n]; c_heap: x::node<Anon_46,q_47>@M
+ checkentail q_47::%ll<flted_7_45>@M&n=flted_7_45+1 & Anon_12=Anon_46&
+{FLOW,(19,20)=__norm}[]
+ |-  emp&q_47=null&{FLOW,(19,20)=__norm}[]. 
+
+*/

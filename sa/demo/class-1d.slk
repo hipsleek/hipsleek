@@ -1,0 +1,20 @@
+data node{
+	node next;
+	node prev;
+}.
+
+
+HeapPred H(node a).
+HeapPred G(node b).
+HeapPred K(node b).
+
+infer_exact [H,G,K] G(b) * H(c) & a=null & b!=null |- K(c).
+print residue.
+
+/*
+# class-1d.slk
+
+<1>emp&a=null & b!=null&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [H(c) --> K(c); G(b) --> emp]
+
+*/

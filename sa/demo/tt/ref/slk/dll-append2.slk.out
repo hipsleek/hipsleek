@@ -1,0 +1,69 @@
+========dll-append2.slk ==========
+Starting Omega...oc
+H1 is defined.
+H2 is defined.
+HP_1 is defined.
+HP_2 is defined.
+HP_825 is defined.
+HP_826 is defined.
+G is defined.
+
+!!! >>>>>> step 1: find dangling ptrs, link pre and post-preds dangling preds<<<<<<
+!!! >>>>>> step 2: split constraints based on pre and post-preds<<<<<<
+!!! **********************************
+!!! **** split_base ****
+!!! **********************************
+!!! post_hps:[G]
+!!! prog_vars:[]
+!!! BEFORE:[(1): H1(l1) * H2(l2)&l2!=null & l1=null --> l2::node<n,p>@M * HP_2(n) * HP_1(p),
+(2): H1(l1)&l1!=null --> l1::node<n,p>@M * HP_825(n) * HP_826(p),
+(3): HP_825(n) --> H1(n),
+(4): H2(l2) --> H2(l2),
+(5): emp&l1=null --> G(l1),
+(6): H1(l1) * H2(l2)&l2=null & l1=null --> G(l1),
+(7): HP_826(p) * l1::node<n,p>@M * G(n) --> G(l1)]
+!!! =============>>>>
+!!! AFTER:[(1): H1(l1) * H2(l2)&l2!=null & l1=null --> l2::node<n,p>@M * HP_2(n) * HP_1(p),
+(2): H1(l1)&l1!=null --> l1::node<n,p>@M * HP_825(n) * HP_826(p),
+(3): HP_825(n) --> H1(n),
+(4): H2(l2) --> H2(l2),
+(5): emp&l1=null --> G(l1),
+(6): emp&l1=null --> G(l1),
+(7): H1(l1)&l1=null --> emp,
+(8): H2(l2)&l2=null --> emp,
+(9): HP_826(p) * l1::node<n,p>@M * G(n) --> G(l1)]
+!!! UNKNOWN added:[]
+!!! **********************************
+!!! **** end of split_base ****
+!!! **********************************
+!!! >>>>>> step 3: apply transitive implication<<<<<<
+!!! >>>>>> step 3a: simplification <<<<<<
+!!! >>>>>> step 3b: do apply_transitive_imp <<<<<<
+!!! >>>>>> step 3a: simplification <<<<<<
+!!! >>>>>> step 3b: do apply_transitive_imp <<<<<<
+!!! >>>>>> pre-predicates<<<<<<
+!!! >>>>>> step pre-4: remove unused predicates<<<<<<
+!!! >>>>>> pre-predicates: step pre-5: group & simpl impl<<<<<<
+!!! >>>>>> pre-predicates: step pre-6: combine<<<<<<
+!!! >>>>>> pre-predicates: step pre-7: remove redundant x!=null<<<<<<
+!!! >>>>>> pre-predicates: step pre-8: strengthen<<<<<<
+!!! >>>>>> step 6: generalization <<<<<<
+!!! >>>>>> post-predicates<<<<<<
+!!! >>>>>> step post-4: step remove unused predicates<<<<<<
+!!! >>>>>> post-predicates: step post-5: remove redundant x!=null : not implemented yet<<<<<<
+!!! >>>>>> post-predicates: step post-61: weaken<<<<<<
+
+*************************************
+*******relational definition ********
+*************************************
+[ H1(l1_72) ::= 
+ H1(n_65) * l1_72::node<n_65,p_66>@M * HP_826(p_66)
+ or emp&l1_72=null
+ ,
+ H2(l2_74) ::= emp&l2_74=null,
+ G(l1_75) ::= 
+ emp&l1_75=null
+ or HP_826(p) * l1_75::node<n,p>@M * G(n)
+ ]
+*************************************
+====================

@@ -1,0 +1,42 @@
+data node{
+ int val;
+ node pre;
+ node next;
+}.
+
+
+HeapPred H(node a, node b).
+HeapPred HP_2(node a, node b).
+HeapPred HP_1(node a, node b).
+
+// # s_conseq-1.slk
+
+relAssume  H
+ x::node<_,prev, next> * HP_1(prev,y) *  HP_2(next,y) -->
+  H(x,y).
+relAssume  H
+ HP_2(next,y) & next!=null 
+      --> H(next,y).
+shape_strengthen_post [H,HP_2][].
+
+/*
+GOT
+
+
+[ HP_2(next_32,y_31)&next_32!=null --> next_32::node<Anon_11,prev,next>@M * 
+  (HP_1(prev,y_31)) * (HP_2(next,y_31))&true,
+  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ x_33::node<Anon_34,prev_35,next_36>@M * (HP_1(prev_35,y_37)) * 
+  (HP_2(next_36,y_37))&true --> HP_2(x_33,y_37)&x_33!=null]
+
+
+Expecting
+=========
+
+ x::node<_,prev, next> * HP_1(prev,y) *  HP_2(next,y) -->
+  H(x,y).
+ HP_2(next,y) & next!=null 
+      --> next::node<_,prev, nn> * HP_1(prev,y) *  HP_2(nn,y) 
+
+
+*/

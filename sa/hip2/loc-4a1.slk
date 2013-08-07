@@ -1,0 +1,45 @@
+data node{
+ int val;
+ node prev;
+ node next;
+}.
+
+
+HeapPred H(node a,node b).
+HeapPred HP_1(node a,node b).
+HeapPred HP_2(node a,node b).
+HeapPred G(node a, node a).
+
+relAssume  H // (1)
+ H(x,y) --> x::node<_,prev, next> * HP_1(prev,y) *  HP_2(next,y) .
+relAssume  HP_2 // (2)
+  HP_2(next,y) & next!=null --> H(next,y).
+relAssume  HP_2 // (3)
+  HP_2(next,y) & next=null  -->  emp.
+relAssume  G // (3)
+  x::node<_,_, null> 
+    //& next=null 
+   -->  G(x,y).
+
+shape_infer [H,HP_2][G].
+
+/*
+Expecting:
+
+After pre-process (dangling predicate detecting, spliting):
+ H(x,y) --> x::node<_,prev, next> * HP_1(prev,y) *  HP_2(next,y) .
+  HP_2(next,y) & next!=null --> H(next,y).
+
+
+Final solution:
+[ H(x_102,y_103) ::= x_102::node<Anon_11,prev,next>@M * (HP_2(next,y_103))&
+ XPURE(HP_1(prev,y_103)),
+ HP_2(next_104,y_105) ::= 
+ emp&next_104=null
+ or next_104::node<Anon_11,prev,next>@M * (HP_2(next,y_105))&
+     XPURE(HP_1(prev,y_105))
+ ,
+ G(x_106,y_107) ::= EXISTS(flted_20_40: x_106::node<Anon_12,Anon_13,flted_20_40>@M&
+flted_20_40=null&[]]
+
+*/

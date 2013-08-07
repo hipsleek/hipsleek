@@ -1,0 +1,46 @@
+data node{
+	int val;
+	node next;
+}.
+
+HeapPred HL(node a).
+HeapPred H(node a).
+HeapPred G(node a, node b).
+
+infer [G] x::node<val_29_788,next_29_789> * G(y_31',t_32')
+ &x=x' & next_29_789=y_31' & y_31'!=null & !(v_bool_30_769') 
+ & y_31'!=null &  !(v_bool_30_769') & next_29_789=y_31' 
+ & v_null_34_766'=null
+ |-  t_32'::node<val_34_767',next_34_768'>. 
+print residue.
+
+/*
+================================================================
+# single-bug-1.slk
+# conflicts with --en-sleek-logging-txt from single.ss
+
+GOT
+===
+ <1>EXISTS(t_32': x::node<val_29_788,next_29_789>@M[Orig] * HP_33(next_34_32,y_31') * HP_34(y_31',t_32')&x=x' & next_29_789=y_31' & y_31'!=null & !(v_bool_30_769') & y_31'!=null & !(v_bool_30_769') & next_29_789=y_31' & v_null_34_766'=null & val_34_31=val_34_767' & next_34_32=next_34_768'&{FLOW,(19,20)=__norm})[]
+ inferred hprel: [G(y_31',t_32')&
+                   y_31'!=null --> t_32'::node<val_34_31,next_34_32>@M * 
+                   HP_33(next_34_32,y_31'@NI) * HP_34(y_31',t_32'@NI)&true]
+
+but this seem different from below with residue G(..): WHY?
+======================================================
+
+ id: 11; caller: []; line: 34; classic: false; kind: BIND; hec_num: 5; evars: []; infer_vars: [H,G,HP_0]; c_heap: emp
+ checkentail x::node<val_29_788,next_29_789>@M[Orig] * G(y_31',t_32')&x=x' & 
+next_29_789=y_31' & y_31'!=null & !(v_bool_30_769') & y_31'!=null & 
+!(v_bool_30_769') & next_29_789=y_31' & v_null_34_766'=null&
+{FLOW,(22,23)=__norm}[]
+ |-  t_32'::node<val_34_767',next_34_768'>@M[Orig]&true&{FLOW,(1,25)=__flow}[]. 
+hprel_ass: [ G(next_29_789,t_32')&
+  next_29_789!=null --> t_32'::node<val_34_802,next_34_803>@M * 
+  HP_804(next_34_803,next_29_789) * HP_805(next_29_789,t_32')&true]
+res:  [
+  x::node<val_29_788,next_29_789>@M[Orig] * G(y_31',t_32') * HP_804(next_34_803,next_29_789) * HP_805(next_29_789,t_32')&x=x' & next_29_789=y_31' & y_31'!=null & !(v_bool_30_769') & y_31'!=null & !(v_bool_30_769') & next_29_789=y_31' & v_null_34_766'=null & val_34_767'=val_34_802 & next_34_768'=next_34_803&{FLOW,(22,23)=__norm}[]
+  ]
+*/
+
+

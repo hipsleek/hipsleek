@@ -1,0 +1,20 @@
+========zip1d.slk ==========
+Starting Omega...oc
+HL is defined.
+H1 is defined.
+HP_1 is defined.
+HP_2 is defined.
+HP_8 is defined.
+G1 is defined.
+
+Entail (1) : Valid. 
+
+ <1>emp&x=null & res=x&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [H1(x,y)&res=x & x=null & res=null --> G1(x,y,res)]
+
+
+Entail (2) : Valid. 
+
+ <1>emp&x=null & res=null&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [H1(x,y)&x=null & res=null & res=x --> G1(x,y,res)]
+====================

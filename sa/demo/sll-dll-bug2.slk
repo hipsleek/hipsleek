@@ -1,0 +1,30 @@
+data node{
+	int val;
+	node prev;
+	node next;
+}.
+
+HeapPred H1(node a, node b).
+HeapPred HP_2(node a, node b).
+HeapPred HP_3(node a, node b).
+HeapPred G1(node a, node b).
+
+// sll-dll-bug2.slk
+
+infer [H1,HP_2,HP_3,G1]
+ HP_2(pp,p) * HP_3(nn,p) * c::node<_,p,nn>@M 
+  |-  H1(nn,c).
+
+print residue.
+/*
+GOT:
+====
+ <1>emp&true&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [(HP_2(pp,p)) * (HP_3(nn,p)) * c::node<Anon_11,p,nn>@M&
+                   true --> H1(nn,c)&true]
+Expecting:
+==========
+   HP_3(nn,p) --> H1(nn,c)
+   residue: HP_2(pp,p) * c::node<_,p,nn>@M
+
+*/

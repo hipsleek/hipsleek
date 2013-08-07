@@ -1,0 +1,113 @@
+// examples from bi-abduction paper
+
+data node {
+	node next;	
+}.
+
+pred lseg<p> == self = p 
+	or self::node<q> * q::lseg<p> & self!=p 
+  inv true.
+
+HeapPred H1(node a).
+
+//(5)
+
+//(1)
+infer [] x::node<z> & z=null   |- x::lseg<z>.
+print residue.
+/*
+This will fold since we have x!=z
+*/
+
+//(2)
+checkentail x::node<z>   |- x::lseg<z>.
+print residue.
+/*
+!!! dumping for sleek_dump(fail)
+Entail 1: Fail.
+
+This cannot fold, as we need x!=z.
+*/
+
+
+infer [z] x::node<z>   |- x::lseg<z>.
+print residue.
+/*
+ <1>emp&q_56=z & z=null & q_56!=x&{FLOW,(19,20)=__norm}[]
+ inferred pure: [z=null]
+
+This folding succeeds when x!=z which we can confirm.
+when z=null
+
+*/
+
+infer [H1] H1(y)  |- y::lseg<null>.
+print residue.
+/*
+WARNING : Pushing 1 stk_estate (4)
+
+!!! stk_estate: :[ HP_72(flted_42_71)&flted_42_71=null&{FLOW,(19,20)=__norm}[]]
+!!! infer_deep_ante_issues triggered by --iesa
+!!! if stk_estate > 1, can cause unsat_xpure exception
+!!! Thai : can we convert below to single ctx by using pure or rather than CtxOr
+!!! new_ante_fmls:[ HP_72(flted_42_71)&flted_42_71=null&{FLOW,(19,20)=__norm}[]]
+Entail (4) : Valid. 
+
+ <1>HP_72(flted_42_71)&flted_42_71=null&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [// Sleek_Entail(4)
+H1(y) --> y::lseg<flted_42_71>@M * HP_72(flted_42_71); 
+// Sleek_Entail(4)
+HP_72(flted_42_71) --> emp&
+flted_42_71=null]
+*/
+
+infer [z,H1] x::node<z> * H1(y)  |- x::lseg<z> * y::lseg<null>.
+print residue.
+/*
+problem:
+
+!!! >>>>>> mismatch ptr z::lseg<z_88>@M is not found (or inst) in the lhs <<<<<<
+!!! dumping for sleek_dump(fail)
+*/
+  
+
+//infer [H1] x::node<z> * H1(y)  |- x::lseg<z> * y::lseg<null>.
+
+/*
+ <1>emp&q_41=z & z=null & q_41!=x&{FLOW,(19,20)=__norm}[]
+ inferred pure: [z=null]
+*/
+
+//infer [z,H1] x::node<z> * H1(y)  |- x::lseg<z> * y::lseg<null>.
+//print residue.
+
+/*
+# i13-5.slk
+
+infer [z,H1] x::node<z> * H1(y)  |- x::lseg<z> * y::lseg<null>.
+
+Succeeds individually but fails when put together
+
+!!! >>>>>> mismatch ptr z::lseg<z_32>@M is not found (or inst) in the lhs <<<<<<
+!!! dumping for sleek_dump(fail)
+Entail (1) : Fail.
+
+infer [z,H1] x::node<z>   |- x::lseg<z>.
+print residue.
+--> OK
+
+infer [z,H1] H1(y)  |- y::lseg<null> .
+print residue.
+--> OK
+
+infer [z,H1] x::node<z> * H1(y)  |- x::lseg<z>.
+print residue.
+--> OK
+
+infer [z,H1] H1(y)*x::node<z>  |- x::lseg<z> * y::lseg<null> .
+print residue.
+
+*/
+
+infer [z,x] x::node<z>   |- x::lseg<z>.
+print residue.

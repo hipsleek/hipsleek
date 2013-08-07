@@ -20,6 +20,7 @@ let to_data xml : I.data_decl =
 	  | "" -> Error.report_error {Error.error_loc = no_pos; Error.error_text = "malfunction, pattern mismatch in to_data"}
   in*)
 	{ I.data_name = !dname;
+        I.data_pos = no_pos;
 	  I.data_fields = [];
 	  I.data_parent_name = "";
 	  I.data_invs = [];

@@ -1,0 +1,25 @@
+data cell{
+	int val;
+}.
+
+HeapPred G1(cell a,cell b).
+
+infer [G1] x::cell<a> * y::cell<b> |-  G1(x,y). 
+print residue.
+/*
+<1>y::cell<b>@M[Orig]&true&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [x::cell<a>@M&true --> G1(x,y)&true]
+
+which seems to have lost y::cell<a>. I suppose, we may need to
+try capture both sets of links from x,y for folding; so that we
+will have:
+
+ x::cell<a>@M * y::cell<b> --> G1(x,y)&true]
+
+We probably can try to traverse separately, each parameter
+that can be instantiated. Thus, for post-pred, we also determine
+the parameters that can be instantiated to pick set of heap state
+from that parameter.
+
+*/
+

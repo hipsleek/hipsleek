@@ -1,0 +1,30 @@
+data node{
+	node prev;
+	node next;
+}.
+
+HeapPred HP_7(node a,node b).
+HeapPred HP_8(node a,node b).
+HeapPred HP_9(node a).
+
+infer [HP_7] 
+HP_7(x,l2) & x!=null
+ |-  x::node<_,_>@M.
+
+print residue.
+/*
+GOT
+===
+ <1>(HP_27(Anon_25,l2)) * (HP_28(Anon_26,l2))&x!=null & Anon_11=Anon_25 & Anon_12=Anon_26&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [HP_7(x,l2)&x!=null --> x::node<Anon_25,Anon_26>@M * 
+                   (HP_27(Anon_25,l2)) * (HP_28(Anon_26,l2))&true]
+
+NEW STRATEGY
+=============
+ <1>(HP_27(Anon_25,l2#)) * (HP_28(Anon_26,l2#))&x!=null & Anon_11=Anon_25 & Anon_12=Anon_26&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [HP_7(x,l2)&x!=null --> x::node<Anon_25,Anon_26>@M * 
+                   HP_27(Anon_25,l2#) * HP_28(Anon_26,l2#) * HP_29(l2).
+
+l2# means that l2# is not to be instantiated
+
+*/

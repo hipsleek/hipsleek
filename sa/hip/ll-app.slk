@@ -7,6 +7,7 @@ HeapPred H1(node a).
 HeapPred H2(node a,node b).
 HeapPred G2(node a, node b).
 
+infer [H1]  H1(x) * y::node<a,flted_65_571> & flted_65_571=null |- x::node<c1,c2>@L.
 
 /* OK
 infer [H1]  H1(x) * y::node<a,flted_65_571> & flted_65_571=null |- x::node<c1,c2>@L.
@@ -75,5 +76,4 @@ print residue.
 
 infer [H1,H2] x::node<_,q>*H2(q,x) |- H1(q) .
 print residue.
-
 

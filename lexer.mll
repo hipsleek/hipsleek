@@ -114,6 +114,7 @@ module Make (Token : SleekTokenS)
 	 ("axiom", AXIOM); (* [4/10/2011] An Hoa : new keyword *)
    ("alln", ALLN);
    ("app", APPEND);
+   ("AndList", ANDLIST);
    ("bagmax", BAGMAX);
 	 ("bagmin", BAGMIN);
    ("bag", BAG);
@@ -125,13 +126,28 @@ module Make (Token : SleekTokenS)
    ("catch", CATCH);
    ("checkeq", CHECKEQ);
    ("checkentail", CHECKENTAIL);
+   ("slk_hull", SLK_HULL);
+   ("slk_pairwise", SLK_PAIRWISE);
+   ("slk_simplify", SIMPLIFY);
    ("relAssume", RELASSUME);
+   ("relDefn", RELDEFN);
    ("shape_infer", SHAPE_INFER );
+   ("shape_infer_proper", SHAPE_INFER_PROP );
+   ( "shape_post_obligation", SHAPE_POST_OBL);
+   ("shape_divide" , SHAPE_DIVIDE);
+   ("shape_conquer" , SHAPE_CONQUER);
+   ( "shape_split_base", SHAPE_SPLIT_BASE);
    ("shape_elim_useless", SHAPE_ELIM_USELESS );
    ("shape_extract", SHAPE_EXTRACT );
+   ("Declare_Dangling", SHAPE_DECL_DANG);
+   ("Declare_Unknown", SHAPE_DECL_UNKNOWN);
+   ("shape_strengthen_conseq", SHAPE_STRENGTHEN_CONSEQ );
+   ("shape_weaken_ante", SHAPE_WEAKEN_ANTE );
    ("checkentail_exact", CHECKENTAIL_EXACT);
    ("checkentail_inexact", CHECKENTAIL_INEXACT);
-	 ("capture_residue", CAPTURERESIDUE);
+   ("infer_exact", INFER_EXACT);
+   ("infer_inexact", INFER_INEXACT);
+   ("capture_residue", CAPTURERESIDUE);
 	 ("class", CLASS);
 	 (* ("coercion", COERCION); *)
 	 ("compose", COMPOSE);
@@ -159,8 +175,9 @@ module Make (Token : SleekTokenS)
    ("ranking", FUNC);
    ("global",GLOBAL);
    ("logical", LOGICAL);
-	 ("head",HEAD);
-     ("HeapPred", HP);
+   ("head",HEAD);
+   ("HeapPred", HP);
+   ("PostPred", HPPOST);
    ("ho_pred",HPRED);
    ("htrue", HTRUE);
    ("if", IF);
@@ -190,7 +207,7 @@ module Make (Token : SleekTokenS)
 	 ("and", ANDWORD);
 	 ("macro",PMACRO);
      ("perm",PERM);
-	 ("pred", PRED);
+     ("pred", PRED);
 	 ("pred_prim", PRED_PRIM);
      ("pred_extn", PRED_EXT);
 	 ("hip_include", HIP_INCLUDE);
@@ -231,6 +248,7 @@ module Make (Token : SleekTokenS)
    (*("variance", VARIANCE);*)
 	 ("while", WHILE);
    ("with", WITH);
+   ("XPURE",XPURE);
 	 (flow, FLOW flow);]
 }
   
@@ -295,7 +313,8 @@ rule tokenizer file_name = parse
   | '&' { AND }
   | "&*" { ANDSTAR }
   | "&&" { ANDAND }
-  | "*-" { STARMINUS }
+  | "U*" { UNIONSTAR }
+  | "-*" { STARMINUS }
   | "@" { AT }
   | "@@" { ATAT }
   | "@@[" { ATATSQ }
@@ -304,16 +323,21 @@ rule tokenizer file_name = parse
   | "@A" {ACCS}
   | "@D" { DERV }
   | "@M" { MUT }
+  | "@R" { MAT }
+  | "@S" { SAT }
   | "@VAL" {VAL}
   | "@REC" {REC}
+  | "@NI" {NI}
   | "@pre" { PRE }
   | "@xpre" { XPRE }
   | "@post" { POST }
   | "@xpost" { XPOST }
+(*  | "XPURE" {XPURE}*)
   | "@zero" {PZERO}
   | "@full" {PFULL}
   | "@value" {PVALUE}
   (* | "@p_ref" {PREF} *)
+  | '^' { CARET }
   | '}' { CBRACE }
   | "|]" {CLIST}
   | ':' { COLON }
@@ -334,6 +358,7 @@ rule tokenizer file_name = parse
   | '>' { GT }
   | ">=" { GTE }
   | '#' { HASH }
+  | "|#|" {REL_GUARD}
   | "->" { LEFTARROW }
   | '<' { LT }
   | "<=" { LTE }

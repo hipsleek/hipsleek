@@ -1,0 +1,32 @@
+data node{
+	int val;
+	node next;
+}.
+
+HeapPred H1(node a, node@NI b).
+HeapPred G1(node a, node b, node c).
+
+
+relAssume 
+H1(x,y) & x=null & res=null --> G1(x,y,res).
+ 
+shape_infer[H1][G1].
+
+/*
+
+==========================================================
+# zip1c2.slk 
+
+GOT
+====
+
+[ G1(x_22,y_23,res_24) ::= H1(x_22,y_23)&x_22=null & res_24=null & res_24=x_22]
+
+WHY is it NOT splitting?
+EXPECTING
+=========
+
+H1(x,y) & x=null & res=null --> emp.
+emp & x=null & res=null --> G1(x,y,res).
+
+*/

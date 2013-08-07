@@ -1,0 +1,25 @@
+data node{
+	int val;
+	node next;
+}.
+
+pred ls<p,"s":M> == true & ["":self = p; "s":M = {}]
+	or self::node<_,nxt> * nxt::ls<p,M1> & ["": self != p ; "s": M = union({self},M1)]
+inv true.
+
+checkentail 
+ nxt::ls<p,M1>@M & [ "": nxt=p]
+ |-  emp 
+    //& ["n": nxt=p]
+    & ["s": M1={}]
+.
+
+/*
+
+  xform: ((AndList[ []:self!=null ; ["n"]:(p<self | self<p)
+            ; ["s"]:exists(M1:M=union({self},M1))] ) | (AndList[ ["n"]:p=self
+            ; ["s"]:M={}] ))
+
+
+*/
+

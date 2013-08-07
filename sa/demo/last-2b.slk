@@ -1,0 +1,50 @@
+ data node{
+	int val;
+	node next;
+}.
+
+
+HeapPred H(node a).
+HeapPred HP_1(node a).
+HeapPred HP_4(node a).
+PostPred G(node a, node b).
+PostPred GP_2(node a, node@NI b).
+PostPred GP_3(node a, node@NI b).
+
+infer [G,GP_2,GP_3]
+ x::node<val_18_812,next_18_813> * GP_2(next_23_831,next_18_813) * 
+  GP_3(next_18_813,res) * res::node<val_23_830,v_null_23_836>
+   & next_18_813!=null 
+   //& !(v_bool_18_793') & next_18_813!=null 
+   //& !(v_bool_18_793') 
+   //& next_18_813=next_18_813 ??
+   & v_null_23_836=null 
+   //& next_23_831=next_23_834  ??
+ |-  G(res,x). 
+print residue.
+
+/*
+ <1>GP_2(next_23_831,next_18_813)&next_18_813!=null & v_null_23_836=null&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [x::node<val_18_812,next_18_813>@M * 
+                   GP_3(next_18_813,res@NI) * 
+                   res::node<val_23_830,v_null_23_836>@M&next_18_813!=null & 
+                   v_null_23_836=null --> G(res,x)&true]
+
+
+--------------
+ id: 20; caller: []; line: 24; classic: false; kind: POST; hec_num: 5; evars: []; infer_vars: [H,G,HP_4,GP_2,GP_3]; c_heap: emp
+ checkentail x::node<val_18_812,next_18_813>@M * GP_2(next_23_831,next_18_813) * 
+GP_3(next_18_813,res) * res::node<val_23_830,v_null_23_836>@M&
+next_18_813!=null & !(v_bool_18_793') & next_18_813!=null & 
+!(v_bool_18_793') & next_18_813=next_18_813 & v_null_23_836=null & 
+next_23_831=next_23_834&{FLOW,(22,23)=__norm}[]
+ |-  G(res,x)&true&{FLOW,(22,23)=__norm}[]. 
+hprel_ass: [ x::node<val_18_812,next_18_813>@M * GP_3(next_18_813,res) * 
+  res::node<val_23_830,v_null_23_836>@M&next_18_813!=null & 
+  v_null_23_836=null --> G(res,x)&true]
+res:  [
+  GP_2(next_23_831,next_18_813)&next_18_813!=null & !(v_bool_18_793') & next_18_813!=null & !(v_bool_18_793') & next_18_813=next_18_813 & v_null_23_836=null & next_23_831=next_23_834&{FLOW,(22,23)=__norm}[]
+  ]
+
+
+*/

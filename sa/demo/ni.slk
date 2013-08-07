@@ -1,0 +1,21 @@
+data node {
+  node next;
+}.
+
+HeapPred H1(node a, node b).
+HeapPred H2(node a, node@NI b).
+
+infer [H1] H1(x,y) |- x::node<_>*y::node<_>.
+print residue.
+
+
+infer [H2] H2(x,y) |- x::node<_>*y::node<_>.
+print residue.
+
+
+infer [H1] H1(x,y) |- x::node<_>.
+print residue.
+
+
+infer [H2] H2(x,y) |- x::node<_>.
+print residue.

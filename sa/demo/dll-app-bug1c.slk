@@ -1,0 +1,28 @@
+data node{
+	node prev;
+	node next;
+}.
+
+HeapPred HP_7(node a,node b).
+HeapPred HP_8(node a,node b).
+HeapPred HP_9(node a).
+
+infer [HP_7] 
+HP_7(x,l2) & x!=null
+ |-  l2::node<_,_>@M.
+
+print residue.
+/*
+GOT
+===
+ <1>(HP_27(Anon_25,x)) * (HP_28(Anon_26,x))&x!=null & Anon_11=Anon_25 & Anon_12=Anon_26&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [HP_7(x,l2)&x!=null --> (HP_27(Anon_25,x)) * 
+                   (HP_28(Anon_26,x))&true]
+
+This seems unsound.
+
+SUGGESTION
+===========
+   HP_7(x,l2) --> l2::node<_,p,n>*H8(p,x#)*H9(n,x#)*H10(x,l2#)
+
+*/

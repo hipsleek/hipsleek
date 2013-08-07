@@ -1,0 +1,25 @@
+data node {
+	int val; 
+	node next;	
+}.
+
+pred ll<n> == self=null & n=0
+ or self::node<_,q>*q::ll<n-1>
+inv n>=0.
+
+HeapPred P(node a). 
+HeapPred Q(node a). 
+
+/*
+infer [P,Q] P(x) * Q(y) & mmm=-1 & x!=null & y=null |-  mmm=3.
+print residue.
+// P(x)*Q(y) --> x=null | y=null
+*/
+/*
+infer [P]  P(x) & mmm=-1 & x!=null |-  mmm>=0.
+print residue.
+// x=null
+*/
+infer [x]  P(x) & mmm=-1 & x!=null |-  mmm>=0.
+print residue.
+// x=null

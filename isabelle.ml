@@ -7,6 +7,7 @@
 
 open Globals
 open GlobProver
+open Gen.Basic
 module CP = Cpure
 
 let isabelle_file_number = ref 0
@@ -116,6 +117,7 @@ let rec isabelle_of_exp e0 = match e0 with
   | CP.Div (a1, a2, _) -> failwith "[isabelle.ml]: divide is not supported."
   | CP.Max _
   | CP.Min _ -> failwith ("isabelle.isabelle_of_exp: min/max can never appear here")
+  | CP.TypeCast _ -> failwith ("isabelle.isabelle_of_exp: TypeCast can never appear here")
   | CP.Bag (elist, _) ->
       if !bag_flag then "{#"^ (isabelle_of_formula_exp_list elist) ^ "}"
       else "{"^ (isabelle_of_formula_exp_list elist) ^ "}"
@@ -344,7 +346,7 @@ let ending_remarks () =
 let stop () = 
   let num_tasks = !test_number - !last_test_number in
   let _  = Procutils.PrvComms.stop !log_all_flag log_all !process num_tasks 3 ending_remarks in
-  print_string ("Stop Isabelle after ... "^(string_of_int num_tasks)^" invocations\n")
+  print_string_if !Globals.enable_count_stats ("Stop Isabelle after ... "^(string_of_int num_tasks)^" invocations\n")
 
 
 (* restart isabelle system *)

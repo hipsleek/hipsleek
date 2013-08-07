@@ -1,0 +1,24 @@
+data node {
+  node next;
+}.
+
+HeapPred H_9(node a).
+//1.
+infer [H_9,n] H_9(n) * x::node<n>  & n=t |-  t=null.
+print residue.
+
+/*
+# assert-2-bug-1.slk
+
+GOT
+===
+Entail (1) : Valid. 
+
+ <1>H_9(n) * x::node<n>@M[Orig]&n=t&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [H_9(n) --> emp&n=null]
+
+BUT should FAIL. Please only add those __pure_relation 
+from the inferable list.
+
+*/
+  

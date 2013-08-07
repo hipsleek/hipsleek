@@ -1,0 +1,24 @@
+data node{
+ int val;
+ node next;
+}.
+
+
+HeapPred H(node a).
+HeapPred HP_6(node a).
+HeapPred G(node a, node a).
+
+relAssume H
+  H(x)&true --> x::node<val_26_784,next_26_785>@M * HP_6(next_26_785).
+ 
+shape_infer [H][].
+
+/*
+
+H(x_20) ::= x_20::node<val_26_784,next_26_785>@M& XPURE(HP_6(next_26_785))]
+
+--sa-inlining
+
+ H(x_20) ::= x_20::node<val_26_784,UU_HP_6_UU>@M&true]
+
+*/

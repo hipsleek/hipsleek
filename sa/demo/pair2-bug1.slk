@@ -1,0 +1,24 @@
+data cell{
+	int val;
+}.
+
+HeapPred H1(cell a, cell b).
+
+infer [H1] H1(x,y) |- x::cell<a>.
+print residue.
+
+/*
+
+# pair2-bug1.slk
+
+GOT
+===
+ <1>emp&a=a_18&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [H1(x,y)&true --> x::cell<a_18>@M&true]
+
+SHOULD BE
+=========
+ H1(x,y)&true --> x::cell<a_18>@M * HP_2(y,x@NI)
+
+*/
+

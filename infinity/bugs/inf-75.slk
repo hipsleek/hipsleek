@@ -1,0 +1,19 @@
+
+data node {
+	int val; 
+	node next; 
+}.
+
+pred  sortll<mi> == self=null & mi=\inf
+   or self::node<mi, p> * p::sortll<m2> & mi<=m2
+inv true.
+
+
+
+// (75) Valid
+checkentail y::node<v,null> * x::sortll<m> & x=null |- y::sortll<r> & r=min(v,m).
+print residue.
+
+// (76) Valid
+checkentail x::sortll<m> & x=null & r=v |- r=min(v,m).
+

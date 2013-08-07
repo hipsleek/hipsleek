@@ -21,17 +21,17 @@ module C  = Cast
 
 
 
-let rec split_phase_debug_lhs h = Debug.no_1 "split_phase(lhs)"
-  Cprinter.string_of_h_formula 
-  (fun (a,b,c) -> "RD = " ^ (Cprinter.string_of_h_formula a) ^ "; WR = " ^ (Cprinter.string_of_h_formula b) ^ "; NEXT = " ^ (Cprinter.string_of_h_formula c) ^ "\n") 
-  split_phase h
+(* let rec split_phase_debug_lhs h = Debug.no_1 "split_phase(lhs)" *)
+(*   Cprinter.string_of_h_formula  *)
+(*   (fun (a,b,c) -> "RD = " ^ (Cprinter.string_of_h_formula a) ^ "; WR = " ^ (Cprinter.string_of_h_formula b) ^ "; NEXT = " ^ (Cprinter.string_of_h_formula c) ^ "\n")  *)
+(*   split_phase h *)
 
-and split_phase_debug_rhs h = Debug.no_1 "split_phase(rhs)"
-  Cprinter.string_of_h_formula 
-  (fun (a,b,c) -> "RD = " ^ (Cprinter.string_of_h_formula a) ^ "; WR = " ^ (Cprinter.string_of_h_formula b) ^ "; NEXT = " ^ (Cprinter.string_of_h_formula c) ^ "\n") 
-  split_phase 0 h
+(* and split_phase_debug_rhs h = Debug.no_1 "split_phase(rhs)" *)
+(*   Cprinter.string_of_h_formula  *)
+(*   (fun (a,b,c) -> "RD = " ^ (Cprinter.string_of_h_formula a) ^ "; WR = " ^ (Cprinter.string_of_h_formula b) ^ "; NEXT = " ^ (Cprinter.string_of_h_formula c) ^ "\n")  *)
+(*   split_phase 0 h *)
 
-and split_phase i (h : h_formula) : (h_formula * h_formula * h_formula )= 
+let rec split_phase i (h : h_formula) : (h_formula * h_formula * h_formula )= 
   let pr = Cprinter.string_of_h_formula in
   let pr2 = pr_triple pr pr pr in
   Debug.no_1_num i "split_phase" pr pr2 split_phase_x h
@@ -512,7 +512,7 @@ and propagate_imm_h_formula_x (f : h_formula) (imm : ann) : h_formula =
 	              | _ -> f1.Cformula.h_formula_data_imm 
 	          end);
 	  h_formula_data_param_imm = 
-	      List.map (fun c -> if (subtype_ann imm c) then c else imm) f1.Cformula.h_formula_data_param_imm})
+	      List.map (fun c -> if (subtype_ann 1 imm c) then c else imm) f1.Cformula.h_formula_data_param_imm})
     | Star f1 ->
 	  let h1 = propagate_imm_h_formula f1.h_formula_star_h1 imm in
 	  let h2 = propagate_imm_h_formula f1.h_formula_star_h2 imm in
@@ -544,12 +544,10 @@ and propagate_imm_h_formula (f : h_formula) (imm : ann) : h_formula =
 
 (* return true if imm1 <: imm2 *)	
 (* M <: I <: L <: A*)
-and subtype_ann (imm1 : ann) (imm2 : ann) : bool = 
-  Debug.no_2 "subtype_ann" 
-      (Cprinter.string_of_imm) 
-      (Cprinter.string_of_imm) 
-      string_of_bool 
-      (fun _ _ -> subtype_ann_x imm1 imm2) imm1 imm2  
+and subtype_ann caller (imm1 : ann) (imm2 : ann) : bool = 
+  let pr_imm = Cprinter.string_of_imm in
+  let pr1 (imm1,imm2) =  (pr_imm imm1) ^ " <: " ^ (pr_imm imm2) ^ "?" in
+  Debug.no_1_num caller "subtype_ann"  pr1 string_of_bool (fun _ -> subtype_ann_x imm1 imm2) (imm1,imm2)
 
 (* bool denotes possible subyping *)
 (* return true if imm1 <: imm2 *)	
@@ -558,26 +556,32 @@ and subtype_ann_x (imm1 : ann) (imm2 : ann) : bool =
   let (r,op) = subtype_ann_pair imm1 imm2 in r
                
 (* result: res:bool * (ann constraint = relation between lhs_ann and rhs_ann) *)
-and subtype_ann_pair (imm1 : ann) (imm2 : ann) : bool * ((CP.exp * CP.exp) option) =
+and subtype_ann_pair_x (imm1 : ann) (imm2 : ann) : bool * ((CP.exp * CP.exp) option) =
   match imm1 with
     | PolyAnn v1 ->
           (match imm2 with
             | PolyAnn v2 -> (true, Some (CP.Var(v1, no_pos), CP.Var(v2, no_pos)))
             | ConstAnn k2 -> 
                   (true, Some (CP.Var(v1,no_pos), CP.AConst(k2,no_pos)))
-	    | TempAnn t2 -> (subtype_ann_pair imm1 (ConstAnn(Accs)))
-            | TempRes (al,ar) -> (subtype_ann_pair imm1 ar)  (* andreeac should it be Accs? *)
+	    | TempAnn t2 -> (subtype_ann_pair_x imm1 (ConstAnn(Accs)))
+            | TempRes (al,ar) -> (subtype_ann_pair_x imm1 ar)  (* andreeac should it be Accs? *)
           )
     | ConstAnn k1 ->
           (match imm2 with
             | PolyAnn v2 -> (true, Some (CP.AConst(k1,no_pos), CP.Var(v2,no_pos)))
             | ConstAnn k2 -> ((int_of_heap_ann k1)<=(int_of_heap_ann k2),None) 
-	    | TempAnn t2 -> (subtype_ann_pair imm1 (ConstAnn(Accs)))
-            | TempRes (al,ar) -> (subtype_ann_pair imm1 ar)  (* andreeac should it be Accs? *)
+	    | TempAnn t2 -> (subtype_ann_pair_x imm1 (ConstAnn(Accs)))
+            | TempRes (al,ar) -> (subtype_ann_pair_x imm1 ar)  (* andreeac should it be Accs? *)
           ) 
-    | TempAnn t1 -> (subtype_ann_pair (ConstAnn(Accs)) imm2) 
-    | TempRes (l,ar) -> (subtype_ann_pair (ConstAnn(Accs)) imm2)  (* andreeac should it be ar-al? or Accs? *)
+    | TempAnn t1 -> (subtype_ann_pair_x (ConstAnn(Accs)) imm2) 
+    | TempRes (l,ar) -> (subtype_ann_pair_x (ConstAnn(Accs)) imm2)  (* andreeac should it be ar-al? or Accs? *)
           
+and subtype_ann_pair (imm1 : ann) (imm2 : ann) : bool * ((CP.exp * CP.exp) option) =
+  let pr_imm = Cprinter.string_of_imm in
+  let pr1 (imm1,imm2) =  (pr_imm imm1) ^ " <: " ^ (pr_imm imm2) ^ "?" in
+  let pr_exp = CP.ArithNormalizer.string_of_exp in
+  let pr_out = pr_pair string_of_bool (pr_option (pr_pair (add_str "l" pr_exp) (add_str "r" pr_exp)) ) in
+  Debug.no_1 "subtype_ann_pair" pr1 pr_out (fun _ -> subtype_ann_pair_x imm1 imm2) (imm1,imm2)
 
 and subtype_ann_gen_x impl_vars evars (imm1 : ann) (imm2 : ann) : bool * (CP.formula option) * (CP.formula option) * (CP.formula option) =
   let (f,op) = subtype_ann_pair imm1 imm2 in
@@ -603,7 +607,7 @@ and subtype_ann_gen_x impl_vars evars (imm1 : ann) (imm2 : ann) : bool * (CP.for
 
 and subtype_ann_gen impl_vars evars (imm1 : ann) (imm2 : ann) : bool * (CP.formula option) * (CP.formula option) * (CP.formula option) =
   let pr1 = !CP.print_svl in
-  let pr2 = pr_no in
+  let pr2 = (Cprinter.string_of_imm)  in
   let pr2a = pr_option !CP.print_formula in
   let prlst =  (pr_pair (pr_list Cprinter.string_of_spec_var) (pr_list Cprinter.string_of_spec_var)) in
   let pr3 = pr_quad string_of_bool pr2a pr2a pr2a  in
@@ -1124,8 +1128,9 @@ and normalize_h_formula_dn auxf (h : CF.h_formula) : CF.h_formula =
 	  CF.h_formula_phase_pos = pos})
     | CF.DataNode hn -> auxf h 
     | _ -> h
+;;
 
-and push_node_imm_to_field_imm_x (h: CF.h_formula):  CF.h_formula =
+let push_node_imm_to_field_imm_x (h: CF.h_formula):  CF.h_formula =
   match h with
     | CF.DataNode dn -> 
           let ann_node = dn.CF.h_formula_data_imm in
@@ -1133,31 +1138,33 @@ and push_node_imm_to_field_imm_x (h: CF.h_formula):  CF.h_formula =
               match ann_node with
 	        | CF.ConstAnn(Mutable) -> p_ann
                 | CF.ConstAnn(Accs)    -> CF.ConstAnn(Accs)
-                | ann_n -> if (subtype_ann  ann_n  p_ann ) then p_ann else  ann_node ) dn.CF.h_formula_data_param_imm in  
+                | ann_n -> if (subtype_ann 2  ann_n  p_ann ) then p_ann else  ann_node ) dn.CF.h_formula_data_param_imm in  
           let new_ann_node =  if (List.length  dn.CF.h_formula_data_param_imm > 0) then CF.ConstAnn(Mutable) else ann_node in
           CF.DataNode{dn with  CF.h_formula_data_imm = new_ann_node;
  	      CF.h_formula_data_param_imm = new_ann_param;}
     | _ -> h
 
-and push_node_imm_to_field_imm (h:CF.h_formula) : CF.h_formula =
+let push_node_imm_to_field_imm caller (h:CF.h_formula) : CF.h_formula =
   let pr = Cprinter.string_of_h_formula in
-  Debug.no_1 "push_node_imm_to_field_imm" pr pr push_node_imm_to_field_imm_x h 
+  Debug.no_1_num caller "push_node_imm_to_field_imm" pr pr push_node_imm_to_field_imm_x h 
 
-and normalize_field_ann_heap_node_x (h:CF.h_formula): CF.h_formula =
+let normalize_field_ann_heap_node_x (h:CF.h_formula): CF.h_formula =
   if (!Globals.allow_field_ann) then
-    normalize_h_formula_dn push_node_imm_to_field_imm h
+  (* if false then *)
+    normalize_h_formula_dn (push_node_imm_to_field_imm 1) h
   else h
 
-and normalize_field_ann_heap_node (h:CF.h_formula): CF.h_formula =
+let normalize_field_ann_heap_node (h:CF.h_formula): CF.h_formula =
   let pr = Cprinter.string_of_h_formula in
-  Debug.no_1 "normalize_field_ann_data_node" pr pr normalize_field_ann_heap_node_x h
+  Debug.no_1 "normalize_field_ann_heap_node" pr pr normalize_field_ann_heap_node_x h
 
-and normalize_field_ann_formula_x (h:CF.formula): CF.formula =
+let normalize_field_ann_formula_x (h:CF.formula): CF.formula =
   if (!Globals.allow_field_ann) then
-    normalize_formula_dn push_node_imm_to_field_imm h
+  (* if (false) then *)
+    normalize_formula_dn (push_node_imm_to_field_imm 2) h
   else h
 
-and normalize_field_ann_formula (h:CF.formula): CF.formula =
+let normalize_field_ann_formula (h:CF.formula): CF.formula =
   let pr = Cprinter.string_of_formula in
   Debug.no_1 "normalize_field_ann_formula" pr pr normalize_field_ann_formula_x h
 
@@ -1167,7 +1174,7 @@ let get_strongest_imm  (ann_lst: CF.ann list): CF.ann =
     match ann_lst with
       | []   -> ann
       | (ConstAnn(Mutable)) :: t -> (ConstAnn(Mutable))
-      | x::t -> if subtype_ann x ann then helper x t else helper ann t
+      | x::t -> if subtype_ann 3 x ann then helper x t else helper ann t
   in helper (ConstAnn(Accs)) ann_lst
 
 let get_weakest_imm  (ann_lst: CF.ann list): CF.ann = 
@@ -1175,7 +1182,7 @@ let get_weakest_imm  (ann_lst: CF.ann list): CF.ann =
     match ann_lst with
       | []   -> ann
       | (ConstAnn(Accs)) :: t -> (ConstAnn(Accs))
-      | x::t -> if subtype_ann ann x then helper x t else helper ann t
+      | x::t -> if subtype_ann 4 ann x then helper x t else helper ann t
   in helper (ConstAnn(Mutable)) ann_lst
 
 let update_read_write_ann (ann_from: CF.ann) (ann_to: CF.ann): CF.ann  =
@@ -1185,7 +1192,7 @@ let update_read_write_ann (ann_from: CF.ann) (ann_to: CF.ann): CF.ann  =
     | ConstAnn(Imm)
     | ConstAnn(Lend)
     | TempAnn _
-    | PolyAnn(_)        -> if subtype_ann ann_from ann_to then ann_from else ann_to
+    | PolyAnn(_)        -> if subtype_ann 5 ann_from ann_to then ann_from else ann_to
     | TempRes _         -> ann_to
 
 let read_write_exp_analysis (ex: C.exp)  (field_ann_lst: (ident * CF.ann) list) =

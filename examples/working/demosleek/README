@@ -1,0 +1,51 @@
+Installation Guide for hip/sleek
+================================
+
+1. Compile Omega modified as follows:
+
+   cd omega_modified
+   make oc
+   
+   The omega executable is now in omega_calc/obj/oc
+   Please move it to some default location,
+   such as /usr/local/bin
+
+2. Compile Mona modified as follows:
+
+   tar -xvf mona-1.4-modif.tar
+   cd mona-1.4
+   ./install.sh
+
+   The mona executable mona_inter is now placed in
+   /usr/local/bin
+
+3. Please install latest Ocaml compiler in your directory
+   Please also install Coq prover.
+
+4. You are now ready to install hip/sleek, as follows:
+
+   cd ..
+   make
+
+   The excutables hip/sleek can now be used (or moved
+   to /usr/local/bin)
+
+5. Sleek examples can be found in examples/working/sleek
+   subdirectory. You can test it as follows:
+
+   Entailment using default Omega
+   ==============================
+   ./sleek examples/working/sleek/sleek2.slk 
+
+   Entailment using Mona
+   =====================
+   ./sleek -tp mona examples/working/sleek/sleek2.slk 
+
+   Verification using default Omega
+   ==============================
+   ./hip examples/working/hip/ll.ss 
+
+   Verification using Mona
+   =======================
+   ./hip -tp mona examples/working/hip/ll.ss 
+

@@ -1,0 +1,90 @@
+data node{
+	int val;
+	node next;
+}.
+
+HeapPred H1(node a, node b).
+HeapPred H2(node a, node@NI b).
+HeapPred H3(node@NI a, node b).
+/*
+//(1)
+infer [H1] 
+y::node<_,n> |-  H1(x,y). 
+print residue.
+// inferred hprel: [y::node<Anon_11,n>@M&true --> H1(x_37,y)&true]
+*/
+/*
+//(2)
+infer [H1] 
+x::node<_,_> * y::node<_,_> |-  H1(x,y). 
+print residue.
+*/
+/*
+inferred hprel: [x::node<Anon_12,Anon_13>@M * y::node<Anon_14,Anon_15>@M&
+                   true --> H1(x,y)&true]
+*/
+
+//(3)
+infer [H1,H2] 
+x::node<_,n1> * y::node<_,n2> * H2(n1,_) |-  H1(x,y). 
+print residue.
+
+/*
+
+FIXED 
+
+WRONG : missing H2(n1,_)
+
+ <1>H2(n1,Anon_18)&true&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [x::node<Anon_16,n1>@M * y::node<Anon_17,n2>@M&
+                   true --> H1(x,y)&true]
+*/
+
+//(4)
+infer [H1,H2,H3] 
+x::node<_,n1> * y::node<_,n2> * H2(n1,_) * H3(_,n2) |-  H1(x,y). 
+print residue.
+
+/*
+
+FIXED 
+
+WRONG : missing H2(n1,_)*H3(_,n2)
+
+ <1>H2(n1,Anon_18)&true&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [x::node<Anon_16,n1>@M * y::node<Anon_17,n2>@M&
+                   true --> H1(x,y)&true]
+*/
+/*
+//(5)
+infer [H1,H2] 
+x::node<_,n1> * y::node<_,null> * H2(n1,_) |-  H2(x,y). 
+print residue.
+*/
+/*
+ inferred hprel: [x::node<Anon_19,n1>@M * (H2(n1,Anon_21@NI))&
+                   true --> H2(x,y@NI)&true]
+
+*/
+/*
+//(6)
+infer [H1,H2] 
+x::node<_,n1> * y::node<_,null> * H2(n1,_) |-  H2(y,x). 
+print residue.
+*/
+/*
+ inferred hprel: [y::node<Anon_23,flted_32_84>@M&
+                   flted_32_84=null --> H2(y,x@NI)&true]
+*/
+
+/*
+//(7)
+infer [H1,H2] 
+y::node<_,n1> * H2(n1,_) |-  H2(y,x). 
+print residue.
+*/
+/*
+ inferred hprel: [y::node<Anon_23,flted_32_84>@M&
+                   flted_32_84=null --> H2(y,x@NI)&true]
+*/
+

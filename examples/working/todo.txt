@@ -1,39 +1,274 @@
-BUGS with hip --eps
+==============================================
+Total number of errors: 10 in files:
+  infer/infer1.slk infer/infer2.slk infer/infer8.slk 
+  infer/infer13.slk infer/infer14.slk 
+  ann1.slk 
+  imm/imm1.slk imm/imm3.slk imm/imm-hard.slk imm-field/sleek02.slk.
+====================================================================
+20Jul2013 : more failures due to enabling filter_assumption; FIXED
 
-Warning 26: unused variable rhs_xpure.
-File "solver.ml", line 3206, characters 4-8091:
-Warning 8: this pattern-matching is not exhaustive.
-Here is an example of a value that is not matched:
-EInfer _
-File "solver.ml", line 6383, characters 22-488:
-Warning 8: this pattern-matching is not exhaustive.
-Here is an example of a value that is not matched:
-AConst _
-File "solver.ml", line 8489, characters 6-5368:
-Warning 25: bad style, all clauses in this pattern-matching are guarded.
-File "solver.ml", line 8825, characters 25-1033:
-Warning 8: this pattern-matching is not exhaustive.
-Here is an example of a value that is not matched:
-EInfer _
-File "solver.ml", line 8842, characters 25-1016:
-Warning 8: this pattern-matching is not exhaustive.
-Here is an example of a value that is not matched:
-EInfer _
-File "solver.ml", line 8857, characters 43-301:
-Warning 8: this pattern-matching is not exhaustive.
-Here is an example of a value that is not matched:
-EInfer _
-File "solver.ml", line 8863, characters 26-734:
-Warning 8: this pattern-matching is not exhaustive.
-Here is an example of a value that is not matched:
-EInfer _
-File "solver.ml", line 8824, characters 75-3240:
-Warning 8: this pattern-matching is not exhaustive.
-Here is an example of a value that is not matched:
-EInfer _
-+ /usr/local/bin/ocamlc.opt -c -I +ocamlgraph -I /home2/loris/hg/sl_infer/xml -I +lablgtk2 -I +camlp4 -g -annot -pp camlp4of -o parser.cmo parser.ml
-File "parser.ml", line 445, characters 6-16:
-Warning 11: this match case is unused.
-/usr/local/bin/ocamlc.opt -c -I +ocamlgraph -I /home2/loris/hg/sl_infer/xml -I +lablgtk2 -I +camlp4 -g -annot -o astsimp.cmo astsimp.ml
-+ /usr/local/bin/ocamlc.opt -c -I +ocamlgraph -I /home2/loris/hg/sl_infer/xml -I +lablgtk2 -I +camlp4 -g -annot -o astsimp.cmo astsimp.ml
+========================================================s============
+20Jul2013
+Total number of errors: 9 in files:
+  infer/infer8.slk infer/infer12.slk 
+  infer/infer13.slk infer/infer14.slk
+  ann1.slk
+  imm/imm1.slk imm/imm3.slk imm/imm-hard.slk imm-field/sleek02.slk.
+Total verification time: 5.76 second
+====================================================================
+27Jul
+Total number of errors: 6 in files:
+ error at: ../../modular_examples/selection-modular.ss delete_min
+error at: ../../modular_examples/selection-modular.ss find_min
+error at: ../../modular_examples/selection-modular.ss selection_sort
+error at: ../../modular_examples/qsort-modular.ss append_bll
+error at: ../../modular_examples/qsort-modular.ss partition
+error at: ../../modular_examples/qsort-modular.ss qsort
 
+# temporarily added --lda to disable aggressive labels
+====================================================================
+============================================================
+Issues with run-fast-test imm,vperm,infinity, and parahip
+
+# Bind failure with imm (some clash since now field-ann are turned on by default)
+
+asankhs@loris-7:~/hg/sleekex$ ./hip examples/working/hip/imm/bigint_imm.ss -tp redlog --eps --esl -p sub_c
+
+!!! Full processing file "examples/working/hip/imm/bigint_imm.ss"
+Parsing file "examples/working/hip/imm/bigint_imm.ss" by default parser...
+
+!!!  processing primitives "["prelude.ss"]
+Starting Omega...oc
+rl_input 2 = rlall((((flted_242_36 <> (v1 * v2))) or ((0 <> flted_242_36))))
+Nested Timer(stop)
+rl_input 2 = rlall(((((flted_242_36 <> (v1 * v2))) or ((0 > flted_242_36))) or ((0 <> flted_242_36))))
+Nested Timer(stop)
+rl_input 2 = rlall((((flted_208_53 <> (c + (v * d)))) or ((0 <> flted_208_53))))
+Nested Timer(stop)
+rl_input 2 = rlall(((((flted_208_53 <> (c + (v * d)))) or ((0 > flted_208_53))) or ((0 <> flted_208_53))))
+Nested Timer(stop)
+
+Checking procedure sub_c$node~node~int... 
+( [(,1 ); (,2 ); (,1 ); (,2 )]) :examples/working/hip/imm/bigint_imm.ss:190: 18: bind: node  y'::node<val_190_1233'@L,next_190_1234'@A>@L cannot be derived from context
+
+
+(Cause of Bind Failure):examples/working/hip/imm/bigint_imm.ss:190: 18:  List of Failesc Context: [FEC(1, 0, 0 )]
+Failed States:
+[
+ Label: [(,1 ); (,2 ); (,1 ); (,2 )]
+ State:
+        fe_kind: MUST
+        fe_name: separation entailment
+        fe_locs: {
+                  fc_message: infer_heap_node
+                  fc_current_lhs_flow: {FLOW,(22,23)=__norm}}
+ ]
+
+!!! dumping for sub_c$node~node~int FAIL-1
+!!!  
+ id: 432<21; prover: OMEGA CALCULATOR; loc: examples/working/hip/imm/bigint_imm.ss_190:10_190:15; kind: BIND
+ Imply: ante: c=c' & c<=1 & 0<=v2 & 0<=c & (c+v2)<=v1 & 0<=v1 & p_1548<=9 & 0<=p_1548 & 
+p_1548=res & p_1548=val_190_1231' & v1=(10*v1_1550)+p_1548 & 0<=v1_1550
+	     conseq:  v1_1550!=0
+ res: false
+ --------------------
+!!!  
+id: 22; caller: []; line: 190; classic: false; kind: [BIND,
+Assign_Stmt,
+Assign_Stmt,
+Assign_Stmt,
+Check_Specs]; hec_num: 5; evars: []; infer_vars: []; c_heap: emp
+ checkentail x'::node<p_1548@L,q_1549@L>@M@ rem br[{1}] * 
+q_1549::bigint<v1_1550>@L@ rem br[{438,439}]&(
+([p_1548=v_int_190_1236' & c=c' & 0<=v1_1550 & v1=(10*v1_1550)+p_1548 & 
+   c<=1 & 0<=v2 & 0<=c & (c+v2)<=v1 & 0<=v1 & p_1548<=9 & 0<=p_1548]
+ [x=x' & x!=null][!(v_bool_189_1230')][!(v_bool_175_1228')][y=y' & y!=null]))&
+{FLOW,(22,23)=__norm}[]
+ |-  y'::node<val_190_1233'@L,next_190_1234'@A>@M@ rem br[{1}]&
+{FLOW,(1,25)=__flow}[]. 
+res:  failctx
+         fe_kind: MUST
+         fe_name: separation entailment
+         fe_locs: {
+                   fc_message: infer_heap_node
+                   fc_current_lhs_flow: {FLOW,(22,23)=__norm}}
+Procedure sub_c$node~node~int result FAIL-1
+
+
+# Exception with vperm and parahip
+
+- asankhs@loris-7:~/hg/sleekex$ ./hip examples/working/hip/vperm/mergesort.ss --ann-vp
+
+!!! Full processing file "examples/working/hip/vperm/mergesort.ss"
+Parsing file "examples/working/hip/vperm/mergesort.ss" by default parser...
+
+!!!  processing primitives "["prelude.ss"]
+Starting Omega...oc
+
+!!! dumping for finalize on hipStop Omega... 28 invocations caught
+(Program not linked with -g, cannot print stack backtrace)
+
+Exception occurred: Invalid_argument("List.map2")
+Error3(s) detected at main 
+
+- asankhs@loris-7:~/hg/sleekex$ ./hip examples/working/hip/parahip/cell.ss 
+
+!!! Full processing file "examples/working/hip/parahip/cell.ss"
+Parsing file "examples/working/hip/parahip/cell.ss" by default parser...
+
+!!!  processing primitives "["prelude.ss"]
+Starting Omega...oc
+
+!!! dumping for finalize on hipStop Omega... 27 invocations caught
+(Program not linked with -g, cannot print stack backtrace)
+
+Exception occurred: Invalid_argument("List.map2")
+
+# Failure with infinity
+./hip examples/working/hip/infinity/inf-selsort.ss --dsd
+Omega Error format: exists(mx_1425:mx_1425+(\inf)=0)
+Omega Error format: exists(mx_1425:mx_1425+(\inf)=0)
+Omega Error format: exists(mx_1469:mx_1469+(\inf)=0)
+Omega Error format: exists(mx_1469:mx_1469+(\inf)=0)
+
+( [(,0 ); (,1 )]) :examples/working/hip/infinity/inf-selsort.ss:26: 13: Postcondition cannot be derived from context
+
+
+(Cause of PostCond Failure):examples/working/hip/infinity/inf-selsort.ss:26: 13:  List of Partial Context: [PC(1, 0)]
+Failed States:
+[
+ Label: [(,0 ); (,1 )]
+ State:
+        fe_kind: MAY
+        fe_name: logical bug
+        fe_locs: {
+                  fc_message: failed in entailing pure formula(s) in conseq
+                  fc_current_lhs_flow: {FLOW,(22,23)=__norm}}
+ ]
+Successful States:
+
+
+Context of Verification Failure: 1 File "examples/working/hip/infinity/inf-selsort.ss",Line:26,Col:13
+Last Proving Location: 1 File "examples/working/hip/infinity/inf-selsort.ss",Line:36,Col:10
+
+ERROR: at examples/working/hip/infinity/inf-selsort.ss_26:13_26:58 
+Message: Post condition cannot be derived by the system.
+ 
+Procedure find_min$node FAIL-2
+
+Exception Failure("Post condition cannot be derived by the system.") Occurred!
+(Program not linked with -g, cannot print stack backtrace)
+
+Error(s) detected when checking procedure find_min$node
+
+!!! dumping for find_min$node FAIL2
+Checking procedure selection_sort$node... ^[[AOmega Error format: exists(mx_1559:mx_1559+(\inf)=0)
+Omega Error format: exists(mx_1559:mx_1559+(\inf)=0)
+Omega Error format: exists(mx_1559:mx_1559+(\inf)=0)
+Omega Error format: exists(mx_1559:mx_1559+(\inf)=0)
+Omega Error format: exists(mx_1559:mx_1559+(\inf)=0)
+Omega Error format: exists(mx_1559:mx_1559+(\inf)=0)
+Omega Error format: exists(mx_1570:mx_1570+(\inf)=0)
+Omega Error format: exists(mx_1591:mx_1591+(\inf)=0)
+Omega Error format: exists(mx_1591:mx_1591+(\inf)=0)
+Omega Error format: exists(mx_1591:mx_1591+(\inf)=0)
+Omega Error format: exists(mx_1591:mx_1591+(\inf)=0)
+Omega Error format: exists(mx_1570:mx_1570+(\inf)=0)
+Omega Error format: exists(mx_1619:mx_1619+(\inf)=0)
+Omega Error format: exists(mx_1619:mx_1619+(\inf)=0)
+
+( [(,0 ); (,1 ); (,1 ); (,2 )]) :examples/working/hip/infinity/inf-selsort.ss:63: 9: Postcondition cannot be derived from context
+
+
+(Cause of PostCond Failure):examples/working/hip/infinity/inf-selsort.ss:63: 9:  List of Partial Context: [PC(1, 0)]
+Failed States:
+[
+ Label: [(,0 ); (,1 ); (,1 ); (,2 )]
+ State:
+        fe_kind: MAY
+        fe_name: logical bug
+        fe_locs: {
+                  fc_message: failed in entailing pure formula(s) in conseq
+                  fc_current_lhs_flow: {FLOW,(22,23)=__norm}}
+ ]
+Successful States:
+
+
+Context of Verification Failure: 1 File "examples/working/hip/infinity/inf-selsort.ss",Line:63,Col:9
+Last Proving Location: 1 File "examples/working/hip/infinity/inf-selsort.ss",Line:76,Col:11
+
+ERROR: at examples/working/hip/infinity/inf-selsort.ss_63:9_63:26 
+Message: Post condition cannot be derived by the system.
+ 
+Procedure selection_sort$node FAIL-2
+
+Exception Failure("Post condition cannot be derived by the system.") Occurred!
+(Program not linked with -g, cannot print stack backtrace)
+
+
+# Failure with imm
+
+====================================================================
+2Aug2013
+
+Total number of errors: 11 in files:
+  infer/infer7.slk infer/infer8.slk infer/infer10.slk infer/infer13.slk infer/infer14.slk infer/infer15.slk ann1.slk imm/imm1.slk imm/imm3.slk imm/imm-hard.slk imm-field/sleek02.slk.
+Total verification time: 6.60 second
+	Time spent in main process: 4.65 second
+	Time spent in child processes: 1.95 second
+	Number of false contexts: 0
+====================================================================
+Total number of errors: 7 in files:
+  infer/infer8.slk infer/infer13.slk ann1.slk imm/imm1.slk imm/imm3.slk imm/imm-hard.slk imm-field/sleek02.slk.
+Total verification time: 5.71 second
+====================================================================
+-tp mona
+Total number of errors: 11 in files:
+  infer/infer8.slk(27) infer/infer10.slk(9,10,12) infer/infer12.slk(1,15) infer/infer13.slk(5) imm/imm1.slk(2) imm/imm3.slk(6) imm/imm-hard.slk(11) imm-field/sleek01.slk(14) imm-field/sleek02.slk(2,8) imm-field/sleek03.slk(3,5,6,8,9,11,12) infinity.slk(3,7,8,9,10,11,13,14,15,16,18,21,22,24,26,27,28,30,31,32,33,34,35,36,37,38,39,42,43,44,46,47,48,52,53,55,56,57,58,59,62,63,64,66,67,68,70,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90,91,92,93,94,95,96,97,98,99,100,101,102,103,104,105,106,107,108,109,110,111,112,113,114,115,116,117,118,119,120,121).
+
+Total number of errors: 11 in files:
+  infer/infer8.slk(27) infer/infer10.slk(9,10,12) infer/infer12.slk(1,15) infer/infer13.slk(5) imm/imm1.slk(2) imm/imm3.slk(6) imm/imm-hard.slk(11) imm-field/sleek01.slk(14) imm-field/sleek02.slk(2,8) imm-field/sleek03.slk(3,5,6,8,9,11,12) infinity.slk(3,7,8,9,10,11,13,14,15,16,18,21,22,24,26,27,28,30,31,32,33,34,35,36,37,38,39,42,43,44,46,47,48,52,53,55,56,57,58,59,62,63,64,66,67,68,70,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90,91,92,93,94,95,96,97,98,99,100,101,102,103,104,105,106,107,108,109,110,111,112,113,114,115,116,117,118,119,120,121).
+====================================================================
+Total number of errors: 8 in files: --tp mona
+  infer/infer8.slk(27) infer/infer12.slk(15) infer/infer13.slk(5) imm/imm1.slk(2) imm/imm3.slk(6) imm/imm-hard.slk(11) imm-field/sleek02.slk(2,8) 
+  infinity.slk(4,46,49,52,54,55,56,60,61,62,63,65,67,71,75,79,80).
+  ---> 4 & 46
+Total verification time: 8.38 second
+
+  infer/infer8.slk(27) infer/infer12.slk(15) 
+  n<0 is false in MONA
+
+run-fast-test  script miscounting infinity.slk due to
+
+Entailment Fail. 
+Entail 45Failure("Mona translation failure!!\nError in file monatemp line  column ")
+====================================================================
+../../sleek sleek/sleek2.slk --dump-proof -tp z3
+
+- raw proof not logged for z3
+   (using old simplify result!)
+- z3 count not tabulated
+====================================================================
+../../sleek sleek/sleek2.slk --dump-proof -tp redlog
+
+- raw proof not logged for redlog
+   (using old simplify result!)
+- redlog count not tabulated
+- redlog is invoking oc
+   (should use -tp ocred for combination)
+====================================================================
+Total number of errors: 7 in files:
+  infer/infer2.slk(3,7,8) infer/infer8.slk(30) infer/infer9.slk(3,4,5) imm/imm1.slk(2) imm/imm3.slk(6) imm/imm-hard.slk(11) imm-field/sleek02.slk(2,8).
+Total verification time: 6.18 second
+	Time spent in main process: 4.76 second
+	Time spent in child processes: 1.42 second
+	Number of false contexts: 0
+====================================================================
+====================================================================
+====================================================================
+====================================================================
+====================================================================
+====================================================================
+====================================================================
+====================================================================
+====================================================================

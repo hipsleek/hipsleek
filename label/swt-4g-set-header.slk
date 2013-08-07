@@ -1,0 +1,15 @@
+data node {
+ int mark;
+ node left;
+ node right;
+}.
+
+pred tx<g,s,"s":M> == true&["":self = g & s!=null & (g=null | g=s) ; "s": M={}]
+   or self::node<v,l,r> * l::tx<g,s,M1> * r::tx<null,s,M2> & ["": self != g & self != s ;"s": M=union({v},M1,M2)]
+   or self::node<v,l,r> * l::tx<null,s,M1> * r::tx<g,s,M2> & ["": self != g & self != s ;"s": M=union({v},M1,M2)]
+inv true&["": s!=null
+ & (g=null & self!=s | g=s & self!=null); "s":(self=g & M={} | self!=g & M!={})
+]
+.
+
+

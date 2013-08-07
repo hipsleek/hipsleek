@@ -1,0 +1,70 @@
+data tree {
+  node children;
+}.
+
+data node {
+  tree child;
+  node sibling;
+}.
+
+/*
+ptree<> ==
+  self::tree<c>*c::sll<>;
+
+sll<> ==
+  self=null
+or  self::node<c,n>*c::ptree<> * n::sll<>;
+*/
+
+HeapPred H(tree a).
+PostPred G(tree a).
+HeapPred H2(node a).
+PostPred G2(node a).
+HeapPred H_7(tree a).
+HeapPred H_8(node a).
+HeapPred H_9(node a).
+
+relAssume
+ H2(l)&l!=null --> l::node<child_38_955,sibling_38_956>@M * 
+  H_7(child_38_955) * H_8(sibling_38_956).
+
+relAssume
+ H_8(sibling_38_956) --> H2(sibling_38_956).
+
+relAssume
+ H_7(child_38_955) --> H(child_38_955).
+
+relAssume
+ H2(l)&l=null --> emp.
+
+relAssume
+ H(t)&t!=null --> t::tree<children_30_986>@M * H_9(children_30_986).
+
+relAssume
+ H_9(children_30_986) --> H2(children_30_986).
+
+relAssume
+ H(t) --> emp&t!=null. // this is just pre-obligation
+
+
+shape_infer [H,H2,H_7,H_8,H_9][].
+
+
+/*
+# multi-tree-2.slk
+
+How come:
+
+ H(t_95) ::= 
+ emp&t_95!=null
+ or t_95::tree<children_30_68>@M&children_30_68=null
+ or t_95::tree<children_30_68>@M * H(sibling_38_92) * 
+    children_30_68::node<child_38_91,sibling_38_92>@M
+
+This is unsound!
+
+
+
+*/
+
+

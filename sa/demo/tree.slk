@@ -1,0 +1,43 @@
+data node{
+	node prev;
+	node next;
+}.
+
+HeapPred H(node a).
+HeapPred HP_1(node a).
+HeapPred HP_2(node a).
+HeapPred G(node a).
+
+relAssume 
+ H(x)&x!=null --> x::node<l,r> * HP_1(l) * HP_2(r).
+  
+relAssume 
+ HP_1(l) --> H(l).
+ 
+relAssume 
+ HP_2(r) --> H(r).
+ 
+relAssume 
+ H(x)&x=null --> H(x).
+ 
+relAssume 
+ x::node<l,r> * H(l) * H(r) --> H(x).
+
+shape_infer [H][H].
+
+/* 
+# tree.slk
+
+!!! >>>>>> post-predicates: step post-61: weaken<<<<<<Fatal error: exception Failure("iast.gather_type_info_heap :gather_type_info_heap: relation H cannot be found")
+
+Why got two definitions for H?
+Got: 
+[ H(x) ::= x::node<l,r>@M& XPURE(HP_2(r)) &  XPURE(HP_1(l)),
+ H(l_48) ::= l_48::node<l,r>@M * (H(l)) * (H(r))&true]
+
+
+Expecting: [ H(x_119) ::= 
+ emp&x_119=null
+ or (H(r_63)) * (H(l_62)) * x_119::node<l_62,r_63>@M&true ]
+
+*/

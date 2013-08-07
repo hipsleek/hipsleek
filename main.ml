@@ -26,6 +26,8 @@ let print_version () =
   print_endline ("IT IS FREE FOR NON-COMMERCIAL USE");
   print_endline ("Copyright @ PLS2 @ NUS")
 
+
+
 (******************************************)
 (* main function                          *)
 (******************************************)
@@ -63,7 +65,8 @@ let parse_file_full file_name (primitive: bool) =
     let _ = Gen.Profiling.push_time "Parsing" in
     let prog = (
       if parser_to_use = "cil" then
-        Cilparser.parse_hip file_name
+        let cil_prog = Cilparser.parse_hip file_name in
+        cil_prog
       else
         Parser.parse_hip file_name (Stream.of_channel org_in_chnl)
     ) in
@@ -104,7 +107,7 @@ let process_includes (file_list: string list) (curdir: string) : Iast.prog_decl 
 let process_includes (file_list: string list) (curdir: string): Iast.prog_decl list =
   let pr1 = pr_list (fun x -> x) in
   let pr2 = pr_list (fun x -> (pr_list Iprinter.string_of_rel_decl) x.Iast.prog_rel_decls)  in
-  Debug.no_1 "process_includes" pr1 pr2 process_includes file_list curdir
+  Debug.no_1 "process_includes" pr1 pr2 (fun _ -> process_includes file_list curdir) file_list
 			
 (* Process all intermediate primitives which receive after parsing *)
 let rec process_intermediate_prims prims_list =
@@ -189,9 +192,28 @@ let process_lib_file prog =
       Iast.prog_view_decls = prog.Iast.prog_view_decls @ vdecls;}
 
 let reverify_with_hp_rel old_cprog iprog =
-	let new_iviews = Astsimp.transform_hp_rels_to_iviews (Cast.collect_hp_rels old_cprog) in
-	let cprog = Astsimp.trans_prog (Astsimp.plugin_inferred_iviews new_iviews iprog) in
-	ignore (Typechecker.check_prog cprog)
+  (* let new_iviews = Astsimp.transform_hp_rels_to_iviews (Cast.collect_hp_rels old_cprog) in *)
+  (* let cprog = Astsimp.trans_prog (Astsimp.plugin_inferred_iviews new_iviews iprog old_cprog) in *)
+  let hp_defs = Saout.collect_hp_defs old_cprog in
+  let need_trans_hprels = List.filter (fun (hp_kind, _,_,_) ->
+        match hp_kind with
+          |  Cpure.HPRelDefn (hp,r,args) -> begin
+                 try
+                   let _ = Cast.look_up_view_def_raw 33 old_cprog.Cast.prog_view_decls
+                     (Cpure.name_of_spec_var hp)
+                   in
+                   false
+                 with Not_found ->
+                     (*at least one is node typ*)
+                     List.exists (fun sv -> Cpure.is_node_typ sv) (r::args)
+             end
+          | _ -> false
+  ) hp_defs in
+  let proc_name = "" in
+  let n_cviews,chprels_decl = Saout.trans_hprel_2_cview iprog old_cprog proc_name need_trans_hprels in
+  let cprog = Saout.trans_specs_hprel_2_cview iprog old_cprog proc_name need_trans_hprels chprels_decl in
+  ignore (Typechecker.check_prog iprog cprog)
+
 (***************end process compare file*****************)
 (*Working*)
 let process_source_full source =
@@ -199,6 +221,7 @@ let process_source_full source =
   flush stdout;
   let _ = Gen.Profiling.push_time "Preprocessing" in
   let prog = parse_file_full source false in
+  let _ = Debug.ninfo_pprint ("       iprog:" ^ (Iprinter.string_of_program prog)) no_pos in
   let _ = Gen.Profiling.push_time "Process compare file" in
   let prog = if(!Globals.cp_test || !Globals.cp_prefile) then (
     process_cp_file prog 
@@ -209,6 +232,7 @@ let process_source_full source =
   let _ = Gen.Profiling.pop_time "Process compare file" in
   (* Remove all duplicated declared prelude *)
   let header_files = Gen.BList.remove_dups_eq (=) !Globals.header_file_list in (*prelude.ss*)
+  let header_files = if (!Globals.allow_inf) then "\"prelude_inf.ss\""::header_files else header_files in
   let new_h_files = process_header_with_pragma header_files !Globals.pragma_list in
   let prims_list = process_primitives new_h_files in (*list of primitives in header files*)
   let prims_incls = process_include_files prog.Iast.prog_include_decls source in
@@ -224,6 +248,13 @@ let process_source_full source =
     (* print_string (" done-1.\n"); flush stdout; *)
     exit 0
   end;
+  (* Dump prog into ss file  *)
+  if (!Scriptarguments.dump_ss) then (
+    let dump_file = "logs/" ^ (Filename.basename source) ^ ".gen-ss" in
+    let oc = open_out dump_file in
+    Printf.fprintf  oc "%s\n" (Iprinter.string_of_program prog);
+    close_out oc;
+  );
   if (!Scriptarguments.parse_only) then
     let _ = Gen.Profiling.pop_time "Preprocessing" in
     print_string (Iprinter.string_of_program prog)
@@ -242,9 +273,10 @@ let process_source_full source =
 		(* let _=print_endline ("PROG: "^Iprinter.string_of_program prog) in *)
 		let prog=Iast.append_iprims_list_head ([prog]@prims_incls) in
     let intermediate_prog = Globalvars.trans_global_to_param prog in
-    (* let _ = print_endline ("process_source_full: before pre_process_of_iprog") in *)
+    (* let _ = print_endline ("process_source_full: before pre_process_of_iprog" ^(Iprinter.string_of_program intermediate_prog)) in *)
+    (* let _ = print_endline ("== gvdecls 2 length = " ^ (string_of_int (List.length intermediate_prog.Iast.prog_global_var_decls))) in *)
     let intermediate_prog=IastUtil.pre_process_of_iprog iprims intermediate_prog in
-		(* let _= print_string ("\n*After pre process iprog* "(*^Iprinter.string_of_program intermediate_prog*)) in *)
+	(* let _= print_string ("\n*After pre process iprog* "^ (Iprinter.string_of_program intermediate_prog)) in *)
     let intermediate_prog = Iast.label_procs_prog intermediate_prog true in
 	(*let intermediate_prog_reverif = 
 			if (!Globals.reverify_all_flag) then 
@@ -262,6 +294,7 @@ let process_source_full source =
        let t1 = ptime1.Unix.tms_utime +. ptime1.Unix.tms_cutime in *)
     let _ = Gen.Profiling.push_time "Translating to Core" in
 (*    let _ = print_string ("Translating to core language...\n"); flush stdout in *)
+    (* let _ = print_endline (Iprinter.string_of_program intermediate_prog) in *)
     let cprog = Astsimp.trans_prog intermediate_prog (*iprims*) in
 		(* let cprog = Astsimp.trans_prog intermediate_prog (*iprims*) in *)
     (* let _ = print_string ("Translating to core language...\n"); flush stdout in *)
@@ -318,16 +351,19 @@ let process_source_full source =
     if (!Scriptarguments.typecheck_only) 
     then print_string (Cprinter.string_of_program cprog)
     else (try
-       ignore (Typechecker.check_prog cprog);
+       ignore (Typechecker.check_prog intermediate_prog cprog);
     with _ as e -> begin
       print_string ("\nException"^(Printexc.to_string e)^"Occurred!\n");
-      print_string ("\nError(s) detected at main "^"\n");
+      print_string ("\nError1(s) detected at main "^"\n");
+      let _ = Log.process_proof_logging !Globals.source_files in
       raise e
     end);
 	if (!Globals.reverify_all_flag)
-	then 
-		reverify_with_hp_rel cprog intermediate_prog(*_reverif *)
+	then
+          let _ =  Debug.binfo_pprint "re-verify\n" no_pos; in
+	  reverify_with_hp_rel cprog intermediate_prog(*_reverif *)
 	else ();
+	
     (* Stopping the prover *)
     if (!Tpdispatcher.tp_batch_mode) then Tpdispatcher.stop_prover ();
     (* Get the total verification time *)
@@ -376,16 +412,22 @@ let process_source_full source =
     print_string ("\n"^(string_of_int (List.length !Globals.false_ctx_line_list))^" false contexts at: ("^
 		(List.fold_left (fun a c-> a^" ("^(string_of_int c.Globals.start_pos.Lexing.pos_lnum)^","^
 		    ( string_of_int (c.Globals.start_pos.Lexing.pos_cnum-c.Globals.start_pos.Lexing.pos_bol))^") ") "" !Globals.false_ctx_line_list)^")\n");
+    Timelog.logtime # dump;
     print_string ("\nTotal verification time: " 
 	^ (string_of_float t4) ^ " second(s)\n"
 	^ "\tTime spent in main process: " 
 	^ (string_of_float (ptime4.Unix.tms_utime+.ptime4.Unix.tms_stime)) ^ " second(s)\n"
 	^ "\tTime spent in child processes: " 
 	^ (string_of_float (ptime4.Unix.tms_cutime +. ptime4.Unix.tms_cstime)) ^ " second(s)\n"
+	^ if !Globals.allow_mem then "\nTotal Entailments : " 
+	^ (string_of_int !Globals.total_entailments) ^ "\n" 
+	^ "Ramification Entailments : "^ (string_of_int !Globals.ramification_entailments) ^"\n"
+	^ "Noninter Entailments : "^ (string_of_int !Globals.noninter_entailments) ^"\n"
+      else ""
 	^ if !Globals.proof_logging || !Globals.proof_logging_txt then 
       "\tTime for logging: "^(string_of_float (!Globals.proof_logging_time))^" second(s)\n"
     else ""
-	^ if(!Tpdispatcher.tp = Tpdispatcher.Z3) then 
+	^ if(!Tpdispatcher.pure_tp = Others.Z3) then 
       "\tZ3 Prover Time: " ^ (string_of_float !Globals.z3_time) ^ " second(s)\n"
     else "\n"
 	)
@@ -523,10 +565,10 @@ let process_source_full_after_parser source (prog, prims_list) =
   if (!Scriptarguments.typecheck_only) 
   then print_string (Cprinter.string_of_program cprog)
   else (try
-    ignore (Typechecker.check_prog cprog);
+    ignore (Typechecker.check_prog intermediate_prog cprog);
   with _ as e -> begin
     print_string ("\nException"^(Printexc.to_string e)^"Occurred!\n");
-    print_string ("\nError(s) detected at main "^"\n");
+    print_string ("\nError2 (s) detected at main "^"\n");
     raise e
   end);
   (* Stopping the prover *)
@@ -554,9 +596,6 @@ let process_source_full_after_parser source (prog, prims_list) =
   ^ (string_of_float (ptime4.Unix.tms_utime+.ptime4.Unix.tms_stime)) ^ " second(s)\n"
   ^ "\tTime spent in child processes: " 
   ^ (string_of_float (ptime4.Unix.tms_cutime +. ptime4.Unix.tms_cstime)) ^ " second(s)\n")
-	(*;print_string ("\nTotal Entailments : " 
-	^ (string_of_int !Globals.total_entailments) ^ "\n" 
-	^ "Ramification Entailments : "^ (string_of_int !Globals.ramification_entailments) ^"\n")*)
 
 let main1 () =
   (* Cprinter.fmt_set_margin 40; *)
@@ -579,6 +618,7 @@ let main1 () =
   (* Cprinter.fmt_string "TEST7.................................."; *)
   (*  Cprinter.fmt_cut (); *)
   process_cmd_line ();
+  let _ = Debug.read_main () in
   Scriptarguments.check_option_consistency ();
   if !Globals.print_version_flag then begin
 	print_version ()
@@ -619,9 +659,11 @@ let loop_cmd parsed_content =
   ()
 
 let finalize () =
+  Log.last_cmd # dumping "finalize on hip";
+  Log.process_proof_logging !Globals.source_files;
   if (!Tpdispatcher.tp_batch_mode) then Tpdispatcher.stop_prover ()
 
-let old_main = 
+let old_main () = 
   try
     main1 ();
     (* let _ =  *)
@@ -635,11 +677,11 @@ let old_main =
     finalize ();
     print_string "caught\n"; Printexc.print_backtrace stdout;
     print_string ("\nException occurred: " ^ (Printexc.to_string e));
-    print_string ("\nError(s) detected at main \n");
+    print_string ("\nError3(s) detected at main \n");
   end
 
 let _ = 
-  if not(!Globals.do_infer_inc) then old_main
+  if not(!Globals.do_infer_inc) then old_main ()
   else
     let res = pre_main () in
     while true do
@@ -662,7 +704,7 @@ let _ =
           finalize ();
           print_string "caught\n"; Printexc.print_backtrace stdout;
           print_string ("\nException occurred: " ^ (Printexc.to_string e));
-          print_string ("\nError(s) detected at main \n");
+          print_string ("\nError4(s) detected at main \n");
         end
     done
 

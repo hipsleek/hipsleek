@@ -1,0 +1,32 @@
+data node{
+ int val;
+ node next;
+}.
+
+
+HeapPred H(node a).
+HeapPred HP_7(node a).
+HeapPred G(node a, node b).
+
+
+relAssume  H
+ H(x) -->
+  x::node<val_31_786,next_31_787>@M * HP_7(next_31_787).
+
+relAssume G
+ H(x)&res=x
+      --> G(x,res).
+
+//shape_strengthen_ante [H,G][].
+shape_weaken_ante [H,G][].
+
+/*
+It should be called shape_weaken_ante
+
+Looks Correct:
+
+[ H(x)&true --> x::node<val_31_786,next_31_787>@M * (HP_7(next_31_787))&true,
+ x_24::node<val_31_786,next_31_787>@M * (HP_7(next_31_787))&
+  res_25=x_24 --> G(x_24,res_25)&true]
+
+*/

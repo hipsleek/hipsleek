@@ -4,6 +4,9 @@ data node {
   node next;
 }
 /*
+H<> == self::node<_,p> * p::ll<>
+  inv true;
+
 ll<> == self=null
 	or self::node<_, q> * q::ll<>
 	inv true;
@@ -11,20 +14,31 @@ ll<> == self=null
 lseg<p> == self=p
   or self::node<_, q> * q::lseg<p>
   inv true;
+
+H1<> == self::node<_,p> & p=null
+	or self::node<_, q> * q::H1<>
+	inv true;
 */
 HeapPred H(node a).
 HeapPred H1(node a).
 HeapPred G(node a, node b).
 HeapPred HP_537(node a, node b).
 void foo(node x)
+
  infer [H,H1]
  requires H(x)
- ensures  H1(x); //'
+ ensures  H1(x);
+
+/*
+  requires x::H<>
+  ensures x::H1<>;
+*/
  {
    bool b;
    x = x.next;
    b = x!=null;
    if (b) {
+     dprint;
      foo(x);
    }
  }

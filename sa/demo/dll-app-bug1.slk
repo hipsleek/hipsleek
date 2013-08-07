@@ -1,0 +1,34 @@
+data node{
+	node prev;
+	node next;
+}.
+
+HeapPred HP_7(node a,node b).
+HeapPred HP_8(node a,node b).
+
+infer [HP_7,HP_8] 
+HP_7(next_46_815,l2) * HP_8(prev_46_816,l2) * 
+l1::node<l2,prev_46_816> 
+& next_46_815=null 
+& next_46_815=next_50_834 
+& l2!=null 
+ |-  l2::node<next_51_793',prev_51_794'>@M.
+
+print residue.
+/*
+GOT
+===
+ <1>l1::node<l2,prev_46_816>@M[Orig] * (HP_29(next_51_27,next_50_834)) * (HP_30(prev_51_28,next_50_834))&next_46_815=null & next_46_815=next_50_834 & l2!=null & next_51_27=next_51_793' & prev_51_28=prev_51_794'&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [(HP_7(next_46_815,l2)) * (HP_8(prev_46_816,l2))&l2!=null & 
+                   next_46_815=null --> (HP_29(next_51_27,next_46_815)) * 
+                   (HP_30(prev_51_28,next_46_815))&true]
+
+This seems unsound as the l2::node<_,_> was consumed without reason.
+I think it should just have failed.
+On the LHS, we have
+  HP_7(next,l2)  denotes a predicate where next can be instantiated
+  HP_8(prev,l2)  denotes a predicate where prev can be instantiated
+  l1::node<l2,prev_46_816> denotes a node
+Hence, there isn't a matching between the LHS and the node l2::node<...>.
+
+*/

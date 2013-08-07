@@ -1,0 +1,44 @@
+HeapPred H(int y).
+relation R(int y).
+
+//infer [R] R(y)   |- y>0.
+infer [H] H(y)   |- y>0.
+
+print residue.
+
+/*
+# i5-4b.slk
+
+Why aren't we collecting relass?
+
+!!! dumping for sleek_dump(fail)
+!!!  
+ id: 2<1; prover: OMEGA CALCULATOR; loc: _0:0_0:0; kind: Sleek_Entail(1)
+ Imply: ante: R(y)
+	     conseq:  0<y
+ res: false
+ --------------------
+!!!  
+id: 1; caller: []; line: 0; classic: false; kind: Sleek_Entail(1); hec_num: 2; evars: []; infer_vars: [R]; c_heap: emp
+ checkentail emp&R(y)&{FLOW,(19,20)=__norm}[]
+ |-  emp&0<y&{FLOW,(19,20)=__norm}[]. 
+res:  failctx
+         fe_kind: MAY
+         fe_name: logical bug
+         fe_locs: {
+                   fc_message: failed in entailing pure formula(s) in conseq
+                   fc_current_lhs_flow: {FLOW,(19,20)=__norm}}
+Entail (1) : Fail.
+
+
+*/
+
+
+/*
+infer [H3] H3(y)   |- y>0.
+print residue.
+
+infer [y] true   |- y>0.
+print residue.
+*/
+

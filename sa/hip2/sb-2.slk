@@ -1,0 +1,23 @@
+data node{
+ int val;
+ node prev;
+ node next;
+}.
+
+
+HeapPred H(node a,node b).
+HeapPred HP_1(node a,node b).
+HeapPred HP_2(node a,node b).
+HeapPred G(node a, node a).
+
+relAssume  G // (3)
+  HP_1(prev, y) & next=null --> G(next,y).
+
+shape_split_base [H,HP_2][G].
+
+/*
+GOT:
+[ RELASS [G] unknown svl: [prev; y];  unknown hps: [HP_1];  predefined: ; emp&
+  next=null &  XPURE(HP_1(prev,y)) --> G(next,y)&true]
+
+*/

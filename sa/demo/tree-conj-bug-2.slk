@@ -1,0 +1,50 @@
+data node {
+ int key;
+ node left;
+ node right;
+}.
+
+HeapPred H(node a).
+HeapPred G(node a).
+HeapPred HP_0(node a).
+HeapPred HP_1(node a).
+HeapPred HP_3(node a).
+HeapPred HP_4(node a).
+
+Declare_Unknown [HP_0,HP_4].
+
+relAssume 
+ H(x)&x!=null --> x::node<key_29_797,left_29_798,right_29_799>@M * 
+  HP_3(left_29_798) * HP_4(right_29_799).
+
+relAssume 
+ H(x)&x!=null --> x::node<key_30_807,left_30_808,right_30_809>@M * 
+  HP_0(left_30_808) * HP_1(right_30_809).
+
+shape_infer [H,HP_1,HP_0,HP_3,HP_4][].
+
+/*
+# tree-conj-bug-2.ss
+
+GOT
+===
+H(x_41) ::=  x_41::node<key_29_797,left_29_798,right_29_799>@M 
+  * HP_0(left_29_798) * HP_1(right_29_799)&true,
+HP_4(a) ::=  HP_1(a)&true,
+HP_0(a) ::= NONE]
+
+Conj unification between HP_3 and HP_0; and HP_4 and HP_1.
+As HP_0 and HP_4 are UNKNOWN, these unification should have resulted
+in 
+   HP_0(..) = HP_3(..)
+   HP_4(..) = HP_1(..)
+Furthermore, we should return the result of known predicates, namely:
+
+EXPECTS:
+========
+H(x_41) ::=  x_41::node<key_29_797,left_29_798,right_29_799>@M 
+  * HP_3(left_29_798) * HP_1(right_29_799)&true,
+HP_4(a) ::=  HP_1(a)&true,
+HP_0(a) ::= HP_3(a)
+
+*/

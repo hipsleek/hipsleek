@@ -1,0 +1,21 @@
+data node{
+	int val;
+	node next;
+}.
+
+HeapPred H(node a, node b, node@NI c).
+HeapPred HP_903(node prev, node@NI cur, node@NI sent).
+HeapPred HP_902(node next3_901, node@NI prev, node@NI sent).
+PostPred G(node a, node ra, node b, node rb, node@NI c).
+
+infer [HP_902,HP_903]
+ cur8::node<val34@M,prev5@M>@M * 
+HP_903(prev5,cur8,sent6)&prev7=null 
+ |-  cur8::node<val3_900@A,next3_901@L>@M * 
+HP_902(next3_901,prev7,sent6) * HP_903(prev7,cur8,sent6)
+.
+print residue.
+
+/*
+ field ann fails under classic reasoning
+*/
