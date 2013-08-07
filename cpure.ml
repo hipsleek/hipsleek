@@ -8489,15 +8489,17 @@ let add_rel_to_infer_state (lhs:formula) (rhs:formula) (is:infer_state)
 let is_eq_with_aconst (f:formula) = match f with
   | BForm (bf,_) ->
     (match bf with
-    | (Eq (Var (_,_), AConst _, _),_) -> true
-    | _ -> false)
-  | _ -> false
+    | (Eq (Var (_,_), AConst _, _),_) 
+    | (Eq (AConst _, Var (_,_), _),_) -> true
+    | _ ->  false)
+  | _ ->  false
 
 (* checks if formula is of form var = annotation constant *)
 let get_aconst (f:formula) = match f with
   | BForm (bf,_) ->
     (match bf with
-    | (Eq (Var (_,_), AConst (ann,_), _),_) -> Some ann
+    | (Eq (Var (_,_), AConst (ann,_), _),_) 
+    | (Eq (AConst (ann,_), Var (_,_), _),_) -> Some ann
     | _ -> None)
   | _ -> None
 

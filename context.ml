@@ -488,8 +488,11 @@ and imm_split_lhs_node_x estate l_node r_node = match l_node, r_node with
 	  let n_f = update_field_imm l_node dl.h_formula_data_param_imm dr.h_formula_data_param_imm in
 	  {estate with es_formula = mkStar (formula_of_heap n_f no_pos) estate.es_formula Flow_combine no_pos}
         else if(!Globals.allow_imm) then
-          let n_f = update_imm l_node dl.h_formula_data_imm dr.h_formula_data_imm in
-          {estate with es_formula = mkStar (formula_of_heap n_f no_pos) estate.es_formula Flow_combine no_pos}
+          if not(produces_hole  dr.h_formula_data_imm) then
+            let n_f = update_imm l_node dl.h_formula_data_imm dr.h_formula_data_imm in
+            {estate with es_formula = mkStar (formula_of_heap n_f no_pos) estate.es_formula Flow_combine no_pos}
+          else 
+            estate
         else
           estate
   | _ -> estate 
@@ -517,7 +520,8 @@ and spatial_ctx_extract_x prog (f0 : h_formula) (aset : CP.spec_var list) (imm :
 	    
             if ( (not !Globals.allow_field_ann) && produces_hole imm) then (* not consuming the node *)
 	      let hole_no = Globals.fresh_int() in 
-	      [((Hole hole_no), f, [(f, hole_no)], Root)]
+              let new_f = Immutable.update_ann f imm1 imm in
+	      [((Hole hole_no), f, [(new_f, hole_no)], Root)]
             else
               (*if (!Globals.allow_field_ann) then
                 let new_f = update_ann f pimm1 pimm in

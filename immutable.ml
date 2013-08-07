@@ -31,29 +31,26 @@ module C  = Cast
 (*   (fun (a,b,c) -> "RD = " ^ (Cprinter.string_of_h_formula a) ^ "; WR = " ^ (Cprinter.string_of_h_formula b) ^ "; NEXT = " ^ (Cprinter.string_of_h_formula c) ^ "\n")  *)
 (*   split_phase 0 h *)
 
-let rec split_phase i (h : h_formula) : (h_formula * h_formula * h_formula )= 
-  let pr = Cprinter.string_of_h_formula in
-  let pr2 = pr_triple pr pr pr in
-  Debug.no_1_num i "split_phase" pr pr2 split_phase_x h
-
-and split_phase_x (h : h_formula) : (h_formula * h_formula * h_formula ) = 
-  let h = remove_true_rd_phase h in
+let rec remove_true_rd_phase (h : CF.h_formula) : CF.h_formula = 
   match h with
-    | Phase ({h_formula_phase_rd = h1;
-	  h_formula_phase_rw = h2;
-	  h_formula_phase_pos = pos}) -> 
-	      let h3, h4 = split_wr_phase h2 in
-	      (h1, h3, h4)
-    | Star _ ->
-	      let h3, h4 = split_wr_phase h in
-	      (HEmp, h3, h4)
-    | _ ->
-	      if (consume_heap_h_formula h) then
-	        (HEmp, h, HEmp)
-	      else
-	        (h, HEmp, HEmp)
+    | CF.Phase ({CF.h_formula_phase_rd = h1;
+	  CF.h_formula_phase_rw = h2;
+	  CF.h_formula_phase_pos = pos
+	 }) -> 
+      if (h1 == CF.HEmp) then h2
+      else if (h2 == CF.HEmp) then h1
+      else h
+    | CF.Star ({CF.h_formula_star_h1 = h1;
+	  CF.h_formula_star_h2 = h2;
+	  CF.h_formula_star_pos = pos
+	 }) -> 
+      let h1r = remove_true_rd_phase h1 in
+      let h2r = remove_true_rd_phase h2 in
+      CF.mkStarH h1r h2r pos
+    | _ -> h
 
-and split_wr_phase (h : h_formula) : (h_formula * h_formula) = 
+
+let rec split_wr_phase (h : h_formula) : (h_formula * h_formula) = 
   match h with 
     | Star ({h_formula_star_h1 = h1;
 	  h_formula_star_h2 = h2;
@@ -80,34 +77,8 @@ and split_wr_phase (h : h_formula) : (h_formula * h_formula) =
 	      (HEmp, h)
     | _ -> (h, HEmp)
 
-and remove_true_rd_phase (h : CF.h_formula) : CF.h_formula = 
-  match h with
-    | CF.Phase ({CF.h_formula_phase_rd = h1;
-	  CF.h_formula_phase_rw = h2;
-	  CF.h_formula_phase_pos = pos
-	 }) -> 
-      if (h1 == CF.HEmp) then h2
-      else if (h2 == CF.HEmp) then h1
-      else h
-    | CF.Star ({CF.h_formula_star_h1 = h1;
-	  CF.h_formula_star_h2 = h2;
-	  CF.h_formula_star_pos = pos
-	 }) -> 
-      let h1r = remove_true_rd_phase h1 in
-      let h2r = remove_true_rd_phase h2 in
-      CF.mkStarH h1r h2r pos
-    | _ -> h
-
-
-and consume_heap (f : formula) : bool =  match f with
-  | Base(bf) -> consume_heap_h_formula bf.formula_base_heap
-  | Exists(ef) -> consume_heap_h_formula ef.formula_exists_heap
-  | Or({formula_or_f1 = f1;
-    formula_or_f2 = f2;
-    formula_or_pos = pos}) ->
-        (consume_heap f1) or (consume_heap f2)
             
-and consume_heap_h_formula (f : h_formula) : bool =  match f with
+let rec consume_heap_h_formula (f : h_formula) : bool =  match f with
   | DataNode (h1) -> ((isMutable h1.h_formula_data_imm) || (isImm h1.h_formula_data_imm))
   | ViewNode (h1) -> ((isMutable h1.h_formula_view_imm) || (isImm h1.h_formula_view_imm))
   | Conj({h_formula_conj_h1 = h1;
@@ -127,32 +98,85 @@ and consume_heap_h_formula (f : h_formula) : bool =  match f with
 	h_formula_star_pos = pos}) -> (consume_heap_h_formula h1) or (consume_heap_h_formula h2)
   | _ -> false
 
-and isAccsList (al : ann list) : bool = List.for_all isAccs al
 
-and isExistsLendList (al : ann list) : bool = List.exists isLend al
-
-and is_lend_debug f = 
-  Debug.no_1 "is_lend"
-      (!print_formula)
-      (string_of_bool)
-      is_lend f
-
-and is_lend (f : formula) : bool =  match f with
-  | Base(bf) -> is_lend_h_formula bf.formula_base_heap
-  | Exists(ef) -> is_lend_h_formula ef.formula_exists_heap
+let rec consume_heap (f : formula) : bool =  match f with
+  | Base(bf) -> consume_heap_h_formula bf.formula_base_heap
+  | Exists(ef) -> consume_heap_h_formula ef.formula_exists_heap
   | Or({formula_or_f1 = f1;
     formula_or_f2 = f2;
     formula_or_pos = pos}) ->
-        (is_lend f1) or (is_lend f2)
-            
-and is_lend_h_formula_debug f = 
-  Debug.no_1 "is_lend_h_formula"
-      (!print_h_formula)
-      (string_of_bool)
-      is_lend_h_formula f
+        (consume_heap f1) or (consume_heap f2)
+
+let rec split_phase_x (h : h_formula) : (h_formula * h_formula * h_formula ) = 
+  let h = remove_true_rd_phase h in
+  match h with
+    | Phase ({h_formula_phase_rd = h1;
+	  h_formula_phase_rw = h2;
+	  h_formula_phase_pos = pos}) -> 
+	      let h3, h4 = split_wr_phase h2 in
+	      (h1, h3, h4)
+    | Star _ ->
+	      let h3, h4 = split_wr_phase h in
+	      (HEmp, h3, h4)
+    | _ ->
+	      if (consume_heap_h_formula h) then
+	        (HEmp, h, HEmp)
+	      else
+	        (h, HEmp, HEmp)
+
+let split_phase i (h : h_formula) : (h_formula * h_formula * h_formula )= 
+  let pr = Cprinter.string_of_h_formula in
+  let pr2 = pr_triple pr pr pr in
+  Debug.no_1_num i "split_phase" pr pr2 split_phase_x h
+
+let isAccsList (al : ann list) : bool = List.for_all isAccs al
+
+let isExistsLendList (al : ann list) : bool = List.exists isLend al
+
+(* should be the opposite of consumes produces_hole x = not(consumes x); 
+   depending on the LHS ann, PolyAnn might consume after a match, but it is considered to
+   initialy create a hole. *)
+let produces_hole (a: ann): bool = 
+  if isLend a || isAccs  a (* || isPoly a *) then true
+  else false
+
+let maybe_replace_w_empty h = 
+  match h with
+    | CF.DataNode dn -> 
+          let node_imm = dn.CF.h_formula_data_imm in
+          let param_imm = dn.CF.h_formula_data_param_imm in
+          let new_h = 
+            match !Globals.allow_field_ann, !Globals.allow_imm with
+              | true, _     -> if (isAccsList param_imm) then HEmp else h
+              | false, true -> if (isAccs node_imm) then HEmp else h
+              | _,_         -> HEmp
+          in new_h
+    | _ -> h
+
+let ann_opt_to_ann (ann_opt: IF.ann option) (default_ann: IF.ann): IF.ann = 
+  match ann_opt with
+    | Some ann0 -> ann0
+    | None      -> default_ann
+
+let rec ann_opt_to_ann_lst (ann_opt_lst: IF.ann option list) (default_ann: IF.ann): IF.ann list = 
+  match ann_opt_lst with
+    | [] -> []
+    | ann0 :: t -> (ann_opt_to_ann ann0 default_ann) :: (ann_opt_to_ann_lst t default_ann)
+
+let iformula_ann_to_cformula_ann (iann : IF.ann) : CF.ann = 
+  match iann with
+    | IF.ConstAnn(x) -> CF.ConstAnn(x)
+    | IF.PolyAnn((id,p), l) -> 
+          CF.PolyAnn(CP.SpecVar (AnnT, id, p))
+
+let iformula_ann_to_cformula_ann_lst (iann_lst : IF.ann list) : CF.ann list = 
+  List.map iformula_ann_to_cformula_ann iann_lst
+
+let iformula_ann_opt_to_cformula_ann_lst (iann_lst : IF.ann option list) : CF.ann list = 
+  List.map iformula_ann_to_cformula_ann (ann_opt_to_ann_lst iann_lst  (IF.ConstAnn(Mutable)))
 
 
-and is_lend_h_formula (f : h_formula) : bool =  match f with
+let rec is_lend_h_formula (f : h_formula) : bool =  match f with
   | DataNode (h1) -> 
         if (isLend h1.h_formula_data_imm) then
           (* let _ = print_string("true for h = " ^ (!print_h_formula f) ^ "\n\n")  in *) true
@@ -182,6 +206,25 @@ and is_lend_h_formula (f : h_formula) : bool =  match f with
   | Hole _ -> false
   | _ -> false
 
+let is_lend_h_formula_debug f = 
+  Debug.no_1 "is_lend_h_formula"
+      (!print_h_formula)
+      (string_of_bool)
+      is_lend_h_formula f
+
+let rec is_lend (f : formula) : bool =  match f with
+  | Base(bf) -> is_lend_h_formula bf.formula_base_heap
+  | Exists(ef) -> is_lend_h_formula ef.formula_exists_heap
+  | Or({formula_or_f1 = f1;
+    formula_or_f2 = f2;
+    formula_or_pos = pos}) ->
+        (is_lend f1) or (is_lend f2)
+
+let is_lend_debug f = 
+  Debug.no_1 "is_lend"
+      (!print_formula)
+      (string_of_bool)
+      is_lend f
 
 (* and contains_phase_debug (f : h_formula) : bool =   *)
 (*   Debug.no_1 "contains_phase" *)
@@ -196,7 +239,7 @@ and is_lend_h_formula (f : h_formula) : bool =  match f with
 (* KR & KR ==> KR ; (KR ; true) *)
 
 
-and normalize_h_formula (h : IF.h_formula) (wr_phase : bool) : IF.h_formula =
+let rec normalize_h_formula (h : IF.h_formula) (wr_phase : bool) : IF.h_formula =
   Debug.no_1 "normalize_h_formula"
       (IP.string_of_h_formula)
       (IP.string_of_h_formula)
@@ -593,6 +636,7 @@ and subtype_ann_gen_x impl_vars evars (imm1 : ann) (imm2 : ann) : bool * (CP.for
           (* two examples in ann1.slk fail otherwise; unsound when we have *)
           (* multiple implicit being instantiated ; use explicit if needed *)
           let to_lhs = CP.BForm ((CP.Eq(l,r,no_pos),None), None) in
+          (* let to_lhs = CP.BForm ((CP.SubAnn(l,r,no_pos),None), None) in *)
           (* let lhs = c in *)
           begin
             match r with
@@ -697,7 +741,7 @@ and consumed_list_ann (ann_lst_l: ann list) (ann_lst_r: ann list): ann list =
   Debug.no_2 "consumed_list_ann" pr pr pr (fun _ _-> consumed_list_ann_x ann_lst_l ann_lst_r) ann_lst_l ann_lst_r
 
 
-and merge_ann_formula_list(conjs: CP.formula list): heap_ann option = 
+and merge_ann_formula_list_x(conjs: CP.formula list): heap_ann option = 
   (* form a list with the constants on the lhs of "var=AConst.." formulae *)
   let rec helper conjs =
     match conjs with
@@ -722,23 +766,40 @@ and merge_ann_formula_list(conjs: CP.formula list): heap_ann option =
   in
   ann
 
-and collect_ann_info_from_formula (a: CF.ann) (conjs: CP.formula list) (pure: CP.formula): heap_ann option =
+and merge_ann_formula_list(conjs: CP.formula list): heap_ann option = 
+  let pr1 = pr_list Cprinter.string_of_pure_formula in
+  let pr_out = pr_opt string_of_heap_ann in
+  Debug.no_1 "merge_ann_formula_list" pr1 pr_out merge_ann_formula_list_x conjs
+
+and collect_ann_info_from_formula_x (a: CF.ann) (conjs: CP.formula list) (pure: CP.formula): heap_ann option =
   let lst = 
     match a with
       | PolyAnn sv -> CP.find_closure_pure_formula sv pure 
       | _ -> []
   in
+  Debug.tinfo_hprint (add_str "conjs bef:" (pr_list Cprinter.string_of_pure_formula)) conjs no_pos;
   (* keep only Eq formulae of form var = AConst, where var is in lst *)
-  let conjs = List.filter (fun f -> (CP.is_eq_with_aconst f) && not(CP.disjoint (CP.fv f) lst )) conjs in
+  let conjs = List.filter (fun f -> 
+      (CP.is_eq_with_aconst f) && not(CP.disjoint (CP.fv f) lst )) conjs in
+ Debug.tinfo_hprint (add_str "conjs:" (pr_list Cprinter.string_of_pure_formula)) conjs no_pos;
   let ann = merge_ann_formula_list conjs in
   ann
+
+and collect_ann_info_from_formula (a: CF.ann) (conjs: CP.formula list) (pure: CP.formula): heap_ann option =
+  
+  Debug.no_3 "collect_ann_info_from_formula" 
+      Cprinter.string_of_imm 
+      (pr_list Cprinter.string_of_pure_formula)
+      Cprinter.string_of_pure_formula
+      (pr_opt string_of_heap_ann)
+      collect_ann_info_from_formula_x a conjs pure 
 
 (* restore ann for residue * consumed *)
 and restore_tmp_res_ann_x (annl: ann) (annr: ann) (pure0: MCP.mix_formula): ann =
     let pure = MCP.pure_of_mix pure0 in
-    let pairs = CP.pure_ptr_equations pure in
+    (* let pairs = CP.pure_ptr_equations pure in *)
     Debug.tinfo_hprint (add_str "pure:" (Cprinter.string_of_pure_formula)) pure no_pos;
-    Debug.tinfo_hprint (add_str "pairs:" (pr_list (pr_pair Cprinter.string_of_spec_var Cprinter.string_of_spec_var))) pairs no_pos;
+    (* Debug.tinfo_hprint (add_str "pairs:" (pr_list (pr_pair Cprinter.string_of_spec_var Cprinter.string_of_spec_var))) pairs no_pos; *)
     let conjs = CP.split_conjunctions pure in
     Debug.tinfo_hprint (add_str "conjs:" (pr_list Cprinter.string_of_pure_formula)) conjs no_pos;
     let ann_r0 = collect_ann_info_from_formula annr conjs pure in
@@ -786,7 +847,7 @@ and update_field_ann (f : h_formula) (pimm1 : ann list) (pimm : ann list) : h_fo
 and update_field_ann_x (f : h_formula) (pimm1 : ann list) (pimm : ann list) : h_formula = 
   let new_field_ann_lnode = replace_list_ann pimm1 pimm in
   (* asankhs: If node has all field annotations as @A make it HEmp *)
-  (* if (isAccsList new_field_ann_lnode) then HEmp else *) (*andreea temporarily allow nodes only with @A fields*)
+  if (isAccsList new_field_ann_lnode) then HEmp else (*andreea temporarily allow nodes only with @A fields*)
   let updated_f = match f with 
     | DataNode d -> DataNode ( {d with h_formula_data_param_imm = new_field_ann_lnode} )
     | _          -> report_error no_pos ("[context.ml] : only data node should allow field annotations \n")
@@ -800,7 +861,7 @@ and update_ann (f : h_formula) (ann_l: ann) (ann_r: ann) : h_formula =
 and update_ann_x (f : h_formula) (ann_l: ann) (ann_r: ann) : h_formula = 
   let new_ann_lnode = remaining_ann ann_l ann_r in
   (* asankhs: If node has all field annotations as @A make it HEmp *)
-  (* if (isAccs new_ann_lnode) then HEmp else *) (*andreea temporarily allow nodes only with @A fields*)
+  if (isAccs new_ann_lnode) then HEmp else 
   let updated_f = match f with 
     | DataNode d -> DataNode ( {d with h_formula_data_imm = new_ann_lnode} )
     | ViewNode v -> ViewNode ( {v with h_formula_view_imm = new_ann_lnode} )
@@ -906,8 +967,13 @@ and restore_tmp_ann_h_formula (f: h_formula) pure0: h_formula =
 	  h_formula_conjconj_h2 = restore_tmp_ann_h_formula h.CF.h_formula_conjconj_h2 pure0; }
     | CF.Phase h -> CF.Phase  {h with h_formula_phase_rd = restore_tmp_ann_h_formula h.CF.h_formula_phase_rd pure0; 
 	  h_formula_phase_rw = restore_tmp_ann_h_formula h.CF.h_formula_phase_rw pure0;}
-    | CF.DataNode h -> CF.DataNode {h with h_formula_data_param_imm = restore_tmp_ann h.CF.h_formula_data_param_imm pure0;
-         h_formula_data_imm = List.hd (restore_tmp_ann [h.CF.h_formula_data_imm] pure0)}
+    | CF.DataNode h -> 
+          let new_f = 
+            CF.DataNode {h with h_formula_data_param_imm = restore_tmp_ann h.CF.h_formula_data_param_imm pure0;
+                h_formula_data_imm = List.hd (restore_tmp_ann [h.CF.h_formula_data_imm] pure0);
+            } in
+          let new_f = maybe_replace_w_empty new_f in
+          new_f
     | CF.ViewNode h -> CF.ViewNode {h with h_formula_view_imm = List.hd (restore_tmp_ann [h.CF.h_formula_view_imm] pure0)}
     | _          -> f
 
@@ -1024,12 +1090,7 @@ and consumes (a: ann): bool =
   if isMutable a || isImm a then true
   else false
 
-(* should be the opposite of consumes produces_hole x = not(consumes x); 
-   depending on the LHS ann, PolyAnn might consume after a match, but it is considered to
-   initialy create a hole. *)
-and produces_hole (a: ann): bool = 
-  if isLend a || isAccs  a (* || isPoly a *) then true
-  else false
+
 
 and compute_ann_list all_fields (diff_fields : ident list) (default_ann : CF.ann) : CF.ann list =
   let pr1 ls =
@@ -1048,43 +1109,10 @@ and compute_ann_list_x all_fields (diff_fields : ident list) (default_ann : CF.a
       if (List.mem h diff_fields) then default_ann :: (compute_ann_list_x r diff_fields default_ann)
       else let ann = if(!Globals.allow_field_ann) then (CF.ConstAnn(Accs)) else default_ann in ann:: (compute_ann_list_x r diff_fields default_ann)
     | [] -> []
+;; 
 
-and iformula_ann_to_cformula_ann (iann : IF.ann) : CF.ann = 
-  match iann with
-    | IF.ConstAnn(x) -> CF.ConstAnn(x)
-    | IF.PolyAnn((id,p), l) -> 
-          CF.PolyAnn(CP.SpecVar (AnnT, id, p))
 
-and iformula_ann_to_cformula_ann_lst (iann_lst : IF.ann list) : CF.ann list = 
-  List.map iformula_ann_to_cformula_ann iann_lst
-
-and iformula_ann_opt_to_cformula_ann_lst (iann_lst : IF.ann option list) : CF.ann list = 
-  List.map iformula_ann_to_cformula_ann (ann_opt_to_ann_lst iann_lst  (IF.ConstAnn(Mutable)))
-
-and ann_opt_to_ann_lst (ann_opt_lst: IF.ann option list) (default_ann: IF.ann): IF.ann list = 
-  match ann_opt_lst with
-    | [] -> []
-    | ann0 :: t -> (ann_opt_to_ann ann0 default_ann) :: (ann_opt_to_ann_lst t default_ann)
-
-and ann_opt_to_ann (ann_opt: IF.ann option) (default_ann: IF.ann): IF.ann = 
-  match ann_opt with
-    | Some ann0 -> ann0
-    | None      -> default_ann
-
-and normalize_formula_dn aux_f (f : formula): formula = match f with
-  | Or ({formula_or_f1 = f1; formula_or_f2 = f2; formula_or_pos = pos}) ->
-	let rf1 = normalize_formula_dn aux_f f1 in
-	let rf2 = normalize_formula_dn aux_f f2 in
-	let resform = mkOr rf1 rf2 pos in
-	resform
-  | Base f1 ->
-        let f1_heap = normalize_h_formula_dn aux_f f1.formula_base_heap in
-        Base({f1 with formula_base_heap = f1_heap})
-  | Exists f1 ->
-        let f1_heap = normalize_h_formula_dn aux_f f1.formula_exists_heap in
-        Exists({f1 with formula_exists_heap = f1_heap})
-
-and normalize_h_formula_dn auxf (h : CF.h_formula) : CF.h_formula = 
+let rec normalize_h_formula_dn auxf (h : CF.h_formula) : CF.h_formula = 
   match h with
     | CF.Star({CF.h_formula_star_h1 = h1;
       CF.h_formula_star_h2 = h2;
@@ -1128,7 +1156,19 @@ and normalize_h_formula_dn auxf (h : CF.h_formula) : CF.h_formula =
 	  CF.h_formula_phase_pos = pos})
     | CF.DataNode hn -> auxf h 
     | _ -> h
-;;
+
+let rec normalize_formula_dn aux_f (f : formula): formula = match f with
+  | Or ({formula_or_f1 = f1; formula_or_f2 = f2; formula_or_pos = pos}) ->
+	let rf1 = normalize_formula_dn aux_f f1 in
+	let rf2 = normalize_formula_dn aux_f f2 in
+	let resform = mkOr rf1 rf2 pos in
+	resform
+  | Base f1 ->
+        let f1_heap = normalize_h_formula_dn aux_f f1.formula_base_heap in
+        Base({f1 with formula_base_heap = f1_heap})
+  | Exists f1 ->
+        let f1_heap = normalize_h_formula_dn aux_f f1.formula_exists_heap in
+        Exists({f1 with formula_exists_heap = f1_heap})
 
 let push_node_imm_to_field_imm_x (h: CF.h_formula):  CF.h_formula =
   match h with
