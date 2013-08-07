@@ -11,7 +11,7 @@ slk_simplify \inf = -\inf.
 // ok to be false
 
 /*
-
+- FIXED
 \inf+c --> \inf
 
 \inf-c --> \inf
