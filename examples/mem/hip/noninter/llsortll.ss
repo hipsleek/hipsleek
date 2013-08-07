@@ -154,8 +154,8 @@ node get_tail(node x)
 /* transform a normal singly linked list in a sorted list */
 void insertion_sort(node x, ref node y)
 
-	requires x::ll<n,Rll> * y::sll<m1, ys1, yl1,Rsll>
-	ensures y'::sll<n + m1, _, _,R1> * x::ll<n,Rll> & R1 = union(Rsll,Rll) ;
+	requires x::ll<n,Rll> &* y::sll<m1, ys1, yl1,Rsll>
+	ensures y'::sll<n + m1, _, _,R1> &* x::ll<n,Rll> & R1 = union(Rsll,Rll) ;
 
 {
 	if (x != null)
