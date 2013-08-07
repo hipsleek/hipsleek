@@ -538,6 +538,7 @@ and propagate_imm_h_formula (f : h_formula) (imm : ann) : h_formula =
 (* return true if imm1 <: imm2 *)	
 (* M <: I <: L <: A*)
 and subtype_ann (imm1 : ann) (imm2 : ann) : bool = 
+  let _ = print_string "subtype_ann" in
   Debug.no_2 "subtype_ann" 
       (Cprinter.string_of_imm) 
       (Cprinter.string_of_imm) 
