@@ -36,14 +36,17 @@ checkentail x::ll<> |- x::ll1<>.
 
 print residue.
 
+/*
 //2b
 checkentail x::ll1<> |- x::ll<>.
-
 print residue.
+*/
 
 //3a should FAIL
-checkentail x::ll<> |- x::ll2<>.
+//checkentail x::ll<> |- x::ll2<>.
 
+/*
 //3b subsume
 checkentail x::ll2<> |- x::ll<>.
 print residue.
+*/

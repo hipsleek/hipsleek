@@ -786,7 +786,7 @@ let run_infer_one_pass (ivars: ident list) (iante0 : meta_formula) (iconseq0 : m
   let orig_vars = CF.fv ante @ CF.struc_fv conseq in
   (* List of vars needed for abduction process *)
   let vars = List.map (fun v -> TI.get_spec_var_type_list_infer (v, Unprimed) orig_vars no_pos) ivars in
-  let (res, rs,v_hp_rel) = SC.sleek_entail_check vars !cprog ante conseq in
+  let (res, rs,v_hp_rel) = SC.sleek_entail_check vars !cprog [] ante conseq in
   residues := Some (rs, res);
   (res, rs,v_hp_rel)
 

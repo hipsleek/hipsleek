@@ -2181,7 +2181,7 @@ let do_entail_check_x vars cprog cs=
   (* in *)
   (* let _ = print_endline ("WN# 1:"^(Cprinter.string_of_list_context rs1)) in *)
   (* let rs = CF.transform_list_context (Solver.elim_ante_evars,(fun c->c)) rs1 in *)
-  let (valid, rs,v_hp_rel) = SC.sleek_entail_check vars cprog ante conseq in
+  let (valid, rs,v_hp_rel) = SC.sleek_entail_check vars cprog [] ante conseq in
   let valid = ((not (CF.isFailCtx rs))) in
   if not valid then
     report_error no_pos ("Can not prove:\n" ^ (Cprinter.string_of_hprel_short cs))

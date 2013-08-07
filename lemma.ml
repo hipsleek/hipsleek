@@ -15,19 +15,19 @@ module H  = Hashtbl
 module I  = Iast
 module SC = Sleekcore
 
-let generate_ilemma iprog cprog lemma_n coer_type lhs rhs head body=
+let generate_ilemma iprog cprog lemma_n coer_type lhs rhs ihead chead ibody cbody=
   (*check entailment*)
   let (res,_,_) =  if coer_type = I.Left then
-    SC.sleek_entail_check [] cprog lhs (CF.struc_formula_of_formula rhs no_pos)
-  else SC.sleek_entail_check [] cprog rhs (CF.struc_formula_of_formula lhs no_pos)
+    SC.sleek_entail_check [] cprog [(chead,cbody)] lhs (CF.struc_formula_of_formula rhs no_pos)
+  else SC.sleek_entail_check [] cprog [(cbody,chead)] rhs (CF.struc_formula_of_formula lhs no_pos)
   in
   if res then
     (*generate ilemma*)
     let ilemma = { I.coercion_type = coer_type;
     I.coercion_exact = false;
     I.coercion_name = (fresh_any_name lemma_n);
-    I.coercion_head = (IF.subst_stub_flow IF.top_flow head);
-    I.coercion_body = (IF.subst_stub_flow IF.top_flow body);
+    I.coercion_head = (IF.subst_stub_flow IF.top_flow ihead);
+    I.coercion_body = (IF.subst_stub_flow IF.top_flow ibody);
     I.coercion_proof = I.Return ({ I.exp_return_val = None;
     I.exp_return_path_id = None ;
     I.exp_return_pos = no_pos })}
@@ -68,7 +68,7 @@ let final_inst_analysis_view cprog vdef=
   Debug.ho_1 "final_inst_analysis_view" pr1 (pr_pair (pr_list pr2) !CP.print_svl)
       (fun _ -> final_inst_analysis_view_x cprog vdef) vdef
 
-let subst_cont vn cont_args f hf self_hns self_null=
+let subst_cont vn cont_args f ihf chf self_hns self_null pos=
   let rec subst_helper ss f0=
     match f0 with
       | CF.Base _ -> let _, vns, _ = CF.get_hp_rel_formula f0 in
@@ -91,56 +91,66 @@ let subst_cont vn cont_args f hf self_hns self_null=
     in
     let null_sv = CP.SpecVar (CP.type_of_spec_var cont, null_name, Unprimed) in
     let ss = [(cont, null_sv)] in
-    let ss1 = ((CP.name_of_spec_var cont, CP.primed_of_spec_var cont), (null_name, Unprimed) ) in
-    (subst_helper ss f, IF.h_apply_one ss1 hf)
+    let n = IP.Null no_pos in
+    let ip = IP.mkEqExp (IP.Var (((CP.name_of_spec_var cont, CP.primed_of_spec_var cont)), no_pos)) (IP.Null no_pos) no_pos in
+    let cp = CP.mkNull cont pos in
+    (subst_helper ss f, IF.mkBase ihf ip IF.n_flow [] pos,
+    CF.mkBase chf (MCP.mix_of_pure cp) CF.TypeTrue (CF.mkNormalFlow()) [] pos)
   else if self_hns <> [] then
     let _ = report_warning no_pos ("Lemma.subst_cont: to handle") in
-    (f, hf)
-  else (f,hf)
+    (f, IF.formula_of_heap_1 ihf pos, CF.formula_of_heap chf pos)
+  else (f, IF.formula_of_heap_1 ihf pos, CF.formula_of_heap chf pos)
 
-(*if two views are equiv, generate an equiv lemma*)
+(*if two views are equiv (subsume), generate an equiv (left/right) lemma*)
 let check_view_subsume iprog cprog view1 view2 need_cont_ana=
   (*todo, subst parameters if any*)
-  let hn_c_trans (sv1, sv2) hf = match hf with
-    | CF.ViewNode vn ->
-          let nhf =
-            if String.compare sv1 vn.CF.h_formula_view_name = 0 then
-              CF.ViewNode {vn with CF.h_formula_view_name = sv2 }
-            else hf
-          in
-          nhf
-    | _ -> hf
-  in
+  (* let hn_c_trans (sv1, sv2) hf = match hf with *)
+  (*   | CF.ViewNode vn -> *)
+  (*         let nhf = *)
+  (*           if String.compare sv1 vn.CF.h_formula_view_name = 0 then *)
+  (*             CF.ViewNode {vn with CF.h_formula_view_name = sv2 } *)
+  (*           else hf *)
+  (*         in *)
+  (*         nhf *)
+  (*   | _ -> hf *)
+  (* in *)
   let v_f1 = CF.formula_of_disjuncts (List.map fst view1.C.view_un_struc_formula) in
   let v_f2 = CF.formula_of_disjuncts (List.map fst view2.C.view_un_struc_formula) in
   let v_f11 = (* CF.formula_trans_heap_node (hn_c_trans (view1.C.view_name, view2.C.view_name)) *) v_f1 in
   let pos1 = (CF.pos_of_formula v_f1) in
   let pos2 = (CF.pos_of_formula v_f2) in
-  let hf1 = IF.mkHeapNode (self, Unprimed) (view1.C.view_name)
+  let ihf1 = IF.mkHeapNode (self, Unprimed) (view1.C.view_name)
     0  false  (IF.ConstAnn Mutable) false false false None
     (List.map (fun (CP.SpecVar (_,id,p)) -> IP.Var ((id,p), pos1)) view1.C.view_vars) []  None pos1 in
-  let hf2 = IF.mkHeapNode (self, Unprimed) (view2.C.view_name)
+  let chf1 = CF.mkViewNode (CP.SpecVar (Named view1.C.view_name,self, Unprimed)) view1.C.view_name
+    view1.C.view_vars no_pos in
+  let ihf2 = IF.mkHeapNode (self, Unprimed) (view2.C.view_name)
     0  false (IF.ConstAnn Mutable) false false false None
     (List.map (fun (CP.SpecVar (_,id,p)) -> IP.Var ((id,p), pos1)) view2.C.view_vars) [] None pos2 in
-  let v_f1, v_f2, hf1,hf2=
+  let chf2 = CF.mkViewNode (CP.SpecVar (Named view2.C.view_name,self, Unprimed)) view2.C.view_name
+    view1.C.view_vars no_pos in
+  let v_f1, v_f2, iform_hf1, cform_hf1, iform_hf2, cform_hf2=
     if not need_cont_ana then
-      (v_f11, v_f2, hf1,hf2)
+      (v_f11, v_f2, IF.formula_of_heap_1 ihf1 pos1, CF.formula_of_heap chf1 pos1,
+      IF.formula_of_heap_1 ihf2 pos2, CF.formula_of_heap chf2 pos2)
     else
       if List.length view1.C.view_vars > List.length view2.C.view_vars && view1.C.view_cont_vars != [] then
         let self_hds, self_null = final_inst_analysis_view cprog view2 in
-        let v_f12, hf_12 = subst_cont view1.C.view_name view1.C.view_cont_vars v_f11 hf1 self_hds self_null in
-        (v_f12, v_f2, hf_12, hf2)
+        let v_f12, ihf_12, cform_chf12 = subst_cont view1.C.view_name view1.C.view_cont_vars
+          v_f11 ihf1 chf1 self_hds self_null pos1 in
+        (v_f12, v_f2, ihf_12, cform_chf12, IF.formula_of_heap_1 ihf2 pos2, CF.formula_of_heap chf2 pos2)
       else if List.length view1.C.view_vars < List.length view2.C.view_vars && view2.C.view_cont_vars != [] then
         let self_hds, self_null = final_inst_analysis_view cprog view1 in
-        let v_f22, hf_22 = subst_cont view2.C.view_name view2.C.view_cont_vars v_f2 hf2 self_hds self_null in
-        (v_f11, v_f22, hf1, hf_22)
-      else (v_f11, v_f2, hf1,hf2)
+        let v_f22, ihf_22, cform_chf22 = subst_cont view2.C.view_name view2.C.view_cont_vars v_f2 ihf2 chf2 self_hds self_null pos2 in
+        (v_f11, v_f22, IF.formula_of_heap_1 ihf1 pos1, CF.formula_of_heap chf1 pos1, ihf_22, cform_chf22)
+      else (v_f11, v_f2, IF.formula_of_heap_1 ihf1 pos1, CF.formula_of_heap chf1 pos1,
+      IF.formula_of_heap_1 ihf2 pos2, CF.formula_of_heap chf2 pos2)
   in
   let lemma_n = view1.C.view_name ^"_"^ view2.C.view_name in
   let l2r1, r2l1 = generate_ilemma iprog cprog lemma_n I.Left v_f1 v_f2
-    (IF.formula_of_heap_1 hf1 pos1) (IF.formula_of_heap_1 hf2 pos2) in
+    iform_hf1 cform_hf1 iform_hf2 cform_hf2 in
   let l2r2, r2l2 = generate_ilemma iprog cprog lemma_n I.Right v_f1 v_f2
-    (IF.formula_of_heap_1 hf1 pos1) (IF.formula_of_heap_1 hf2 pos2) in
+    iform_hf1 cform_hf1 iform_hf2 cform_hf2 in
   (l2r1@l2r2, r2l1@r2l2)
 
 let generate_lemma_4_views_x iprog cprog=

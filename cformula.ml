@@ -6536,7 +6536,8 @@ think it is used to instantiate when folding.
   (* from this context *)
   es_term_err: string option;
 
-
+  (*for cyclic proof*)
+  es_proof_trace: (formula*formula) list;
   (* for IMMUTABILITY *)
 (* INPUT : this is an alias set for the RHS conseq *)
 (* to be used by matching strategy for imm *)
