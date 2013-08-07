@@ -1,0 +1,11 @@
+// examples from bi-abduction paper
+
+data node {
+	node next;	
+}.
+
+pred lseg<p> == self = p 
+	or self::node<q> * q::lseg<p> & self!=p 
+  inv true.
+
+

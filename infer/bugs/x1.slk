@@ -1,0 +1,13 @@
+infer [inf_ann_39, inf_p_40, z]
+q_34=z & inf_ann_39=@M & inf_p_40=null & inf_p_40!=x & x!=null
+|- //flt=null & 
+   x!=z & inf_p_40=z.
+
+infer [inf_ann_39, inf_p_40, z]
+q_34=z & inf_ann_39=@M & inf_p_40=null & inf_p_40!=x & ((flt=y | 
+(y!=null & ((y!=flt))))) & ((inf_p_40=z | (z!=null & 
+((z!=inf_p_40))))) & x!=null 
+//q_34=z & inf_ann_39=@M & inf_p_40=null & inf_p_40!=x & x!=null
+|- flt=null & // flt=null cannot be proven 
+   x!=z & inf_p_40=z.
+

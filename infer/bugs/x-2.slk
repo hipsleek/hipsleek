@@ -1,0 +1,2 @@
+slk_simplify x=null & x!=y.
+slk_simplify x!=null & x!=y.
