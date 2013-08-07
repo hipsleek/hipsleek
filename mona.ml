@@ -243,10 +243,10 @@ let compute_order_b_formula (bf:CP.b_formula) : order_atom list =
           else force_eq_exp e3 r1 in
           c1@c2@c3
     | CP.BVar(sv1, l1) ->  
-          [MO_Var(sv1,2)]
-
+         [MO_Var(sv1,2)]
+    | CP.BConst(b, loc) -> []
     | CP.RelForm (_ , el, _) -> List.flatten (List.map (fun e -> let (_,c,_) = compute_order_exp e in c) el)
-    | _ -> failwith ("compute_order_b_formula: not computed yet")
+    | _ -> failwith ("compute_order_b_formula not supporting :" ^(Cprinter.string_of_b_formula bf))
 
 
 let compute_order_formula_x (f:CP.formula) : order_atom list = 
@@ -942,18 +942,31 @@ and mona_of_b_formula_x b f vs =
             (*| CP.Gte((CP.Subtract(a3, a1, pos1)), a2, pos2) -> (mona_of_b_formula (CP.Gte(a3, CP.Add(a2, a1, pos1), pos2)) f vs)	 
               | CP.Gte(a2, (CP.Subtract(a3, a1, pos1)), pos2) -> (mona_of_b_formula (CP.Gte(CP.Add(a2, a1, pos1), a3, pos2)) f vs)	 *)
       | CP.Gte (a1, a2, _) -> (equation a1 a2 f "greaterEq" ">=" vs)
+      | CP.Neq((CP.Add(a1, a2, _)), a3, _)
+      | CP.Neq(a3, (CP.Add(a1, a2, _)), _) ->
+               if (is_firstorder_mem a1 vs) && (is_firstorder_mem a2 vs) && (is_firstorder_mem a3 vs) then
+              let a1str = (mona_of_exp a1 f) in
+              let a2str = (mona_of_exp a2 f) in
+              let a3str = (mona_of_exp a3 f) in
+              match a1 with
+                | CP.IConst _ -> "(" ^ a3str ^ " ~= " ^ a2str ^ " + " ^ a1str ^ ") "
+                | _ ->  
+                      "(" ^ a3str ^ " ~= " ^ a1str ^ " + " ^ a2str ^ ") "
+            else
+              let (a1name,a2name,a3name,str,end_str) = second_order_composite a1 a2 a3 f in
+              str ^ " ~(plus(" ^ a1name ^ ", " ^ a2name ^ ", " ^ a3name ^ ")) "^ end_str
       | CP.Neq (CP.IConst(i, _), a1, _)
       | CP.Neq (a1, CP.IConst(i, _), _) ->
             if (is_firstorder_mem a1 vs) then
 	          "(" ^ (mona_of_exp a1 f) ^ " ~= " ^ (string_of_int i) ^ ")"
             else
 	          "(" ^ (mona_of_exp a1 f) ^ " ~= pconst(" ^ (string_of_int i) ^ "))"
-      | CP.Neq (a, CP.Null _, _) 
-      | CP.Neq (CP.Null _, a, _) ->
-            if (is_firstorder_mem a vs) then
-              "(" ^ (mona_of_exp a f) ^ " > 0)"
-            else
-              " greater(" ^ (mona_of_exp a f) ^ ", pconst(0))"
+      (* | CP.Neq (a, CP.Null _, _)  *)
+      (* | CP.Neq (CP.Null _, a, _) -> *)
+      (*       if (is_firstorder_mem a vs) then *)
+      (*         "(" ^ (mona_of_exp a f) ^ " > 0)" *)
+      (*       else *)
+      (*         " greater(" ^ (mona_of_exp a f) ^ ", pconst(0))" *)
       | CP.Neq (a1, a2, _) ->
 	        if (is_firstorder_mem a1 vs)&& (is_firstorder_mem a2 vs) then
 	          "(" ^ (mona_of_exp a1 f) ^ " ~= " ^ (mona_of_exp a2 f) ^ ")"
@@ -962,6 +975,7 @@ and mona_of_b_formula_x b f vs =
               str ^ " nequal(" ^ a1name ^ ", " ^ a2name ^ ") "^ end_str
       | CP.Eq((CP.Add(a1, a2, _)), a3, _)
       | CP.Eq(a3, (CP.Add(a1, a2, _)), _) ->
+            let _ = Debug.ninfo_pprint "add and eq" no_pos in
             if (is_firstorder_mem a1 vs) && (is_firstorder_mem a2 vs) && (is_firstorder_mem a3 vs) then
               let a1str = (mona_of_exp a1 f) in
               let a2str = (mona_of_exp a2 f) in
@@ -979,12 +993,12 @@ and mona_of_b_formula_x b f vs =
 	          "(" ^ (mona_of_exp a1 f) ^ " = " ^ (string_of_int i) ^ ")"
             else
 	          "(" ^ (mona_of_exp a1 f) ^ " = pconst(" ^ (string_of_int i) ^ "))"
-      | CP.Eq (a1, CP.Null _, _) 
-      | CP.Eq (CP.Null _, a1, _) ->
-            if (is_firstorder_mem a1 vs) then
-	          "(" ^ (mona_of_exp a1 f) ^ " = 0)"
-            else
-	          "(" ^ (mona_of_exp a1 f) ^ " = pconst(0))"
+      (* | CP.Eq (a1, CP.Null _, _)  *)
+      (* | CP.Eq (CP.Null _, a1, _) -> *)
+      (*       if (is_firstorder_mem a1 vs) then *)
+      (*             "(" ^ (mona_of_exp a1 f) ^ " = 0)" *)
+      (*       else *)
+      (*             "(" ^ (mona_of_exp a1 f) ^ " = pconst(0))" *)
       | CP.Eq (a1, a2, _) -> 
             if (is_firstorder_mem a1 vs)&& (is_firstorder_mem a2 vs) then
               "(" ^ (mona_of_exp a1 f) ^ " = " ^ (mona_of_exp a2 f) ^ ")"
@@ -1037,8 +1051,8 @@ and mona_of_b_formula_x b f vs =
       | CP.ListAllN _
       | CP.ListPerm _ -> failwith ("Lists are not supported in Mona")
       | CP.LexVar _ -> failwith ("LexVar is not supported in Mona")
-	  | CP.VarPerm _ -> failwith ("VarPerm is not supported in Mona")
-	  | CP.RelForm _ -> failwith ("Relations are not supported in Mona") (* An Hoa *) 
+      | CP.VarPerm _ -> failwith ("VarPerm is not supported in Mona")
+      | CP.RelForm _ -> failwith ("Relations are not supported in Mona") (* An Hoa *) 
   in
   ret
 

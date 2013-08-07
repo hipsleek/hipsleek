@@ -1519,6 +1519,7 @@ sub sleek_process_file  {
             foreach my $line (@lines) { 
                 if($line =~ m/Entailing lemma/){
                     if($line =~ m/Valid/) { $lemmas_results = $lemmas_results ."Valid."; }
+                    elsif($line =~ m/EXC/) { $lemmas_results = $lemmas_results ."EXC."; }
                     elsif($line =~ m/Fail/)  { $lemmas_results = $lemmas_results ."Fail.";}
                 }elsif($line =~ m/Barrrier/){
 					 $barrier_results = $barrier_results .$line .".";
@@ -1536,6 +1537,7 @@ sub sleek_process_file  {
                     }
                     else {
                         if($line =~ m/Valid/) { $entail_results = $entail_results ."Valid."; }
+                        elsif($line =~ m/EXC/) {  $entail_results = $entail_results ."EXC."; }
                         elsif($line =~ m/Fail/)  { $entail_results = $entail_results ."Fail.";}
                     }
                 }
@@ -1544,9 +1546,15 @@ sub sleek_process_file  {
 				(($lem == 1)  && ($lemmas_results !~ /^$test->[2]$/)) || 
 				($barr==1 && ($barrier_results ne $test->[2])))
 			{
-				print "Unexpected result with : $test->[0]\n";
-				$error_count++;
-				$error_files = $error_files . " " . $test->[0];
+                            @results = split (/\./, $entail_results);
+                            # print "\n@results";
+                            @expected = split (/\./, $test->[3]);
+                            my @mark_failures = map {if ($results[$_] !~ $expected[$_]) {$_+1} else {0}} 0 .. $#results;
+                            my @failures = grep { $_ > 0 } @mark_failures;
+                            local $" = ',';
+                            print "Unexpected result with : $test->[0] (failed check(s): @failures) \n";
+                            $error_count++;
+                            $error_files = $error_files . " " . $test->[0]."(@failures)";
 			}	
 			if($timings) {
 				# log_one_line_of_timings ($test->[0],$output);

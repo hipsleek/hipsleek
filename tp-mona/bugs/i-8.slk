@@ -1,0 +1,24 @@
+data node {
+	int val; 
+	node next;	
+}.
+
+pred ll<n> == self = null & n = 0 
+	or self::node<_, q> * q::ll<n-1> 
+  inv n >= 0.
+
+
+// (27)
+infer [y] m=-1 |- y::node<a,b> * b::ll<m>.
+print residue.
+//Inferred Heap:[ y::node<inf_310,inf_311>[Orig], b::ll<inf_m_315>[Orig][LHSCase]]
+//Inferred Pure:[ b=inf_311, a=inf_310 & b=inf_311 & inf_m_315=0 - 1]
+// inferred pre is false
+
+
+
+
+
+
+
+

@@ -399,7 +399,6 @@ and mkAnd_x f1 f2 pos = match f1 with
       | BForm ((BConst (false, _), _), _) -> f2
       | BForm ((BConst (true, _), _), _) -> f1
       | _ ->
-            (* let rec helper f1 f2 =  *)
             match f1,f2 with 
 		| AndList b1, AndList b2 -> mkAndList (Label_Pure.merge b1 b2)
 		| AndList b, f -> mkAndList (Label_Pure.merge b [(LO.unlabelled,f)])

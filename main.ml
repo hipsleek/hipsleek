@@ -26,6 +26,8 @@ let print_version () =
   print_endline ("IT IS FREE FOR NON-COMMERCIAL USE");
   print_endline ("Copyright @ PLS2 @ NUS")
 
+
+
 (******************************************)
 (* main function                          *)
 (******************************************)
@@ -105,7 +107,7 @@ let process_includes (file_list: string list) (curdir: string) : Iast.prog_decl 
 let process_includes (file_list: string list) (curdir: string): Iast.prog_decl list =
   let pr1 = pr_list (fun x -> x) in
   let pr2 = pr_list (fun x -> (pr_list Iprinter.string_of_rel_decl) x.Iast.prog_rel_decls)  in
-  Debug.no_1 "process_includes" pr1 pr2 process_includes file_list curdir
+  Debug.no_1 "process_includes" pr1 pr2 (fun _ -> process_includes file_list curdir) file_list
 			
 (* Process all intermediate primitives which receive after parsing *)
 let rec process_intermediate_prims prims_list =
@@ -616,6 +618,7 @@ let main1 () =
   (* Cprinter.fmt_string "TEST7.................................."; *)
   (*  Cprinter.fmt_cut (); *)
   process_cmd_line ();
+  let _ = Debug.read_main () in
   Scriptarguments.check_option_consistency ();
   if !Globals.print_version_flag then begin
 	print_version ()

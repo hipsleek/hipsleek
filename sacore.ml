@@ -2103,7 +2103,7 @@ let reverify_cond prog (unk_hps: CP.spec_var list) link_hps hpdefs cond_equivs=
        (*=============OBLIGATION================*)
 (*=============**************************================*)
 (*hpdef for gettting root. becuase hp decl may be removed previously*)
-let trans_constr_hp_2_view_x iprog cprog proc_name hpdefs in_hp_names chprels_decl constrs=
+let trans_constr_hp_2_view iprog cprog proc_name hpdefs in_hp_names chprels_decl constrs=
   let process_cs cs=
     let nlhs = SAO.trans_formula_hp_2_view iprog cprog proc_name
        chprels_decl hpdefs cs.CF.hprel_lhs in
@@ -2117,13 +2117,13 @@ let trans_constr_hp_2_view_x iprog cprog proc_name hpdefs in_hp_names chprels_de
   (* let _ = print_endline ("n_constrs: " ^ (pr1 n_constrs))  in *)
   n_constrs
 
-let trans_constr_hp_2_view iprog cprog proc_name in_hp_names chprels_decl constrs=
-  let pr1= pr_list_ln Cprinter.string_of_hprel_short in
-  let pr2 = pr_list pr_id in
-  Debug.no_2 "trans_constr_hp_2_view" pr2 pr1 pr1
-      (fun _ _ -> trans_constr_hp_2_view_x iprog cprog proc_name
-          in_hp_names chprels_decl constrs)
-      in_hp_names constrs
+(* let trans_constr_hp_2_view iprog cprog proc_name in_hp_names chprels_decl constrs= *)
+(*   let pr1= pr_list_ln Cprinter.string_of_hprel_short in *)
+(*   let pr2 = pr_list pr_id in *)
+(*   Debug.no_2 "trans_constr_hp_2_view" pr2 pr1 pr1 *)
+(*       (fun _ _ -> trans_constr_hp_2_view iprog cprog proc_name *)
+(*           in_hp_names chprels_decl constrs) *)
+(*       in_hp_names constrs *)
 
 (*
 (* List of vars needed for abduction process *)
@@ -2229,7 +2229,7 @@ let partition_constrs_4_paths link_hpargs0 constrs0 =
 (*=============**************************================*)
        (*=============FIXPOINT================*)
 (*=============**************************================*)
-let gfp_gen_init_x prog is_pre r base_fs rec_fs=
+let gfp_gen_init prog is_pre r base_fs rec_fs=
   let find_greates_neg (r_fs, r_unk_hpargs)f=
     let svl = CF.get_ptrs_f f in
     let pos = (CF.pos_of_formula f) in
@@ -2246,12 +2246,12 @@ let gfp_gen_init_x prog is_pre r base_fs rec_fs=
   let n_fs, n_unk_hpargs = List.fold_left find_greates_neg ([],[]) rec_fs in
   (CF.formula_of_disjuncts (base_fs@rec_fs@n_fs), n_unk_hpargs)
 
-let gfp_gen_init prog is_pre r base_fs rec_fs=
-  let pr1 = Cprinter.prtt_string_of_formula in
-  let pr2 = pr_list_ln pr1 in
-  Debug.no_2 "gfp_gen_init" !CP.print_sv pr2 (pr_pair pr1 !CP.print_svl)
-      (fun _ _ -> gfp_gen_init_x prog is_pre r base_fs rec_fs)
-      r rec_fs
+(* let gfp_gen_init prog is_pre r base_fs rec_fs= *)
+(*   let pr1 = Cprinter.prtt_string_of_formula in *)
+(*   let pr2 = pr_list_ln pr1 in *)
+(*   Debug.no_2 "gfp_gen_init" !CP.print_sv pr2 (pr_pair pr1 !CP.print_svl) *)
+(*       (fun _ _ -> gfp_gen_init prog is_pre r base_fs rec_fs) *)
+(*       r rec_fs *)
 
 let gfp_iter_x prog base_fs rec_fs fixn=
   fixn
@@ -2349,7 +2349,7 @@ let lfp_iter_x prog step hp args dang_hps fix_0 nonrec_fs rec_fs=
   let pdef_rec_fs = List.map (fun f -> (hp,args, None, f, [])) rec_fs in
   let pdef_nonrec_fs = List.map (fun f -> (hp,args, None, f, [])) nonrec_fs in
   (*INTERNAL*)
-  let rec rec_helper_x i pdef_fix_i=
+  let rec rec_helper i pdef_fix_i=
     (**********PRINTING***********)
     let _ = DD.binfo_pprint ("   fix: " ^ (string_of_int i) ^ (
         let pr1  = Cprinter.prtt_string_of_formula in
@@ -2372,19 +2372,19 @@ let lfp_iter_x prog step hp args dang_hps fix_0 nonrec_fs rec_fs=
     let fix_i_plus1 = simplify_disj_set prog args dang_hps [] fix_i_plus no_pos in
     let diff = Gen.BList.difference_eq (fun (_,_, _, f1, _) (_,_, _, f2, _) ->
         SAU.check_relaxeq_formula args f1 f2) fix_i_plus1 pdef_fix_i in
-    let rec_helper pdef_fix_i=
-      let pr1 (_,_, _, f, _) = Cprinter.prtt_string_of_formula f in
-      let pr2 = pr_list_ln pr1 in
-      Debug.no_1 "rec_helper" pr2 pr2
-          (fun _ -> rec_helper_x pdef_fix_i) pdef_fix_i
-    in
+    (* let rec_helper pdef_fix_i= *)
+    (*   let pr1 (_,_, _, f, _) = Cprinter.prtt_string_of_formula f in *)
+    (*   let pr2 = pr_list_ln pr1 in *)
+    (*   Debug.no_1 "rec_helper" pr2 pr2 *)
+    (*       (fun _ -> rec_helper_x pdef_fix_i) pdef_fix_i *)
+    (* in *)
     (*recusive call*)
     if diff = [] then fix_i_plus1 else
     rec_helper (i+1) fix_i_plus1
   in
   (*END INTERNAL*)
   let pdef_fix_0 = List.map (fun f -> (hp,args, None, f, [])) fix_0 in
-  let r = rec_helper_x step pdef_fix_0 in
+  let r = rec_helper step pdef_fix_0 in
   List.map (fun (_,_, _, f, _) -> f) r
 
 let lfp_iter prog step hp args dang_hps fix_0 nonrec_fs rec_fs=

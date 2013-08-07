@@ -1,5 +1,5 @@
 
-simplify true & not(x>0).
+simplify true & !(x>0).
 /*
 ERROR: at t-2.slk_9:20_9:23 
 Message: expected cexp, found pure_constr

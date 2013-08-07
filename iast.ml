@@ -1404,7 +1404,7 @@ and set_check_fixpt_x  (data_decls : data_decl list) (view_decls : view_decl lis
 
 and data_name_of_view (view_decls : view_decl list) (f0 : F.struc_formula) : ident = 
   let pr = !print_struc_formula in
-  Debug.no_1_loop "data_name_of_view" pr (fun x->x)
+  Debug.no_1(* _loop *) "data_name_of_view" pr (fun x->x)
       (fun _ -> data_name_of_view_x (view_decls : view_decl list) (f0 : F.struc_formula)) f0
 
 and data_name_of_view_x (view_decls : view_decl list) (f0 : F.struc_formula) : ident = 
@@ -1717,7 +1717,7 @@ let exists_path (c1 : ident) (c2 : ident) :bool =
 	  with 
  		| _ -> false
 
-let exists_path c1 c2 =	Debug.no_2_loop "exists_path" pr_id pr_id  string_of_bool exists_path c1 c2 
+let exists_path c1 c2 =	Debug.no_2(* _loop *) "exists_path" pr_id pr_id  string_of_bool exists_path c1 c2 
 		
 (* (\* is t1 a subtype of t2 *\) *)
 let sub_type2 (t1 : typ) (t2 : typ) =  

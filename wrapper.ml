@@ -18,11 +18,11 @@ let wrap_classic et f a =
 let wrap_gen save_fn set_fn restore_fn flags f a =
   (* save old_value *)
   let old_values = save_fn flags in
-  let _ = set_fn flags in
+  let () = set_fn flags in
   try 
     let res = f a in
     (* restore old_value *)
-    restore_fn old_values;
+    let () = restore_fn old_values in
     res
   with _ as e ->
       (restore_fn old_values;
@@ -59,6 +59,12 @@ let wrap_two_bools flag1 flag2 new_value f a =
 
 let wrap_no_filtering f a =
   wrap_one_bool filtering_flag false f a
+
+let wrap_redlog_only f a =
+  wrap_one_bool Redlog.dis_omega true f a
+
+let wrap_oc_redlog f a =
+  wrap_one_bool Redlog.dis_omega false f a
 
 let wrap_lbl_dis_aggr f a =
   if !Globals.inv_wrap_flag

@@ -591,7 +591,7 @@ let rec meta_to_formula (mf0 : meta_formula) quant fv_idents (tlist:TI.spec_var_
 let meta_to_formula (mf0 : meta_formula) quant fv_idents (tlist:TI.spec_var_type_list) : (TI.spec_var_type_list*CF.formula) = 
   let pr_meta = string_of_meta_formula in
   let pr_f = Cprinter.string_of_formula in
-  Debug.no_1 "Sleekengine.meta_to_formual" pr_meta pr_f
+  Debug.no_1 "Sleekengine.meta_to_formual" pr_meta pr_none
              (fun mf -> meta_to_formula mf quant fv_idents tlist) mf0
 
 let rec meta_to_formula_not_rename (mf0 : meta_formula) quant fv_idents (tlist:TI.spec_var_type_list)
@@ -1317,6 +1317,10 @@ let print_entail_result sel_hps (valid: bool) (residue: CF.list_context) (num_id
   (* with e -> *)
   (*     let _ =  Error.process_exct(e)in *)
 
+let print_exception_result s (num_id: string) =
+          Log.last_cmd # dumping "sleek_dump(exception)";
+          silenced_print print_string (num_id^": EXC. "^s^"\n")
+
 let print_entail_result sel_hps (valid: bool) (residue: CF.list_context) (num_id: string):bool =
   let pr0 = string_of_bool in
   let pr = !CF.print_list_context in
@@ -1341,9 +1345,11 @@ let process_entail_check_x (iante : meta_formula) (iconseq : meta_formula) (etyp
         wrap_proving_kind (PK_Sleek_Entail nn) (run_entail_check iante iconseq) etype in
       print_entail_result [] (*sel_hps*) valid rs num_id
     with ex ->
-        print_string "caught\n"; Printexc.print_backtrace stdout;
-        let _ = print_string ("\nEntailment Failure "^num_id^(Printexc.to_string ex)^"\n") 
-        in false
+        let exs = (Printexc.to_string ex) in
+        let _ = print_exception_result exs (*sel_hps*) num_id in
+        (* (\* let _ = print_string "caught\n"; Printexc.print_backtrace stdout in *\) *)
+        (* let _ = print_string ("\nEntailment Problem "^num_id^(Printexc.to_string ex)^"\n")  in *)
+        false
   (* with e -> print_exc num_id *)
 
 (* the value of flag "exact" decides the type of entailment checking              *)
@@ -1412,7 +1418,7 @@ let process_hull (f : meta_formula) =
   with _ -> print_exc num_id
 
 let process_pairwise (f : meta_formula) =
-  let num_id = "Hull  ("^(string_of_int (sleek_proof_counter#inc_and_get))^")" in  
+  let num_id = "PairWise  ("^(string_of_int (sleek_proof_counter#inc_and_get))^")" in  
   try 
     let rs = run_pairwise f in
     print_result rs num_id
@@ -1428,7 +1434,7 @@ let process_infer (ivars: ident list) (iante0 : meta_formula) (iconseq0 : meta_f
     with ex -> 
         (* print_exc num_id *)
         print_string "caught\n"; Printexc.print_backtrace stdout;
-        let _ = print_string ("\nEntailment Failure "^nn^(Printexc.to_string ex)^"\n") 
+        let _ = print_string ("\nEntailment Problem "^nn^(Printexc.to_string ex)^"\n") 
         in false
 
 let process_capture_residue (lvar : ident) = 

@@ -433,6 +433,16 @@ let convert_inf_to_var (pf:CP.formula) : CP.formula =
   in
   map_formula pf (f_f,f_bf,f_e)
 
+let convert_var_to_inf (pf:CP.formula) : CP.formula =
+  let f_f f = None in
+  let f_bf bf = None in
+  let f_e e = 
+    match e with
+      | Var(sv,pos) -> if is_inf e then Some (mkInfConst pos) else None
+      | _ -> None
+  in
+  map_formula pf (f_f,f_bf,f_e)
+
 let rec contains_inf_eq_b_formula (bf: CP.b_formula) : bool = 
   let (p_f,bf_ann) = bf in
   match p_f with 
@@ -723,13 +733,17 @@ let rec normalize_inf_formula_sat (f: CP.formula): CP.formula =
         (*let f = (*MCP.mix_of_pure*) (convert_inf_to_var pf_norm) in 
           let x_sv = CP.SpecVar(Int,"x",Unprimed) in
           let x_var =  CP.Var(x_sv,no_pos) in
-          let inf_var =  CP.Var(CP.SpecVar(Int,"ZInfinity",Unprimed),no_pos) in (* Same Name as in parser.ml *)
+          let inf_var =  CP.Var(CP.SpecVar(Int,CP.zinf_str,Unprimed),no_pos) in (* Same Name as in parser.ml *)
           let x_f = CP.BForm((CP.Lte(x_var,inf_var,no_pos),None),None) in
           let inf_constr = CP.Forall(x_sv,x_f,None,no_pos) in
           let f = CP.And(f,inf_constr,no_pos) in f*)
   else (*MCP.mix_of_pure*) (convert_inf_to_var (normalize_inf_formula f)) in pf_norm
   (*let _ = DD.vv_trace("Normalized: "^ (string_of_pure_formula pf_norm)) in*)
   
+let normalize_inf_formula_sat (f: CP.formula) : CP.formula = 
+  let pr = Cprinter.string_of_pure_formula in
+  Debug.no_1 "normalize_inf_formula_sat " pr pr normalize_inf_formula_sat f
+
 let normalize_inf_formula_sat (f: CP.formula) : CP.formula = 
   Gen.Profiling.do_1 "INF-norm-sat" (normalize_inf_formula_sat) f
 
@@ -760,6 +774,11 @@ let normalize_inf_formula_imply (ante: CP.formula) (conseq: CP.formula) : CP.for
     let new_c = join_conjunctions (List.map normalize_inf_formula new_c_lst) in
   	new_a,new_c
   else new_a,new_c
+
+let normalize_inf_formula_imply (ante: CP.formula) (conseq: CP.formula) : CP.formula * CP.formula = 
+  let pr = Cprinter.string_of_pure_formula in
+  Debug.no_2 "INF-norm-imply" pr pr (pr_pair pr pr)
+    normalize_inf_formula_imply ante conseq
 
 let normalize_inf_formula_imply (ante: CP.formula) (conseq: CP.formula) : CP.formula * CP.formula = 
   Gen.Profiling.do_1 "INF-norm-imply" (normalize_inf_formula_imply ante) conseq

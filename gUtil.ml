@@ -313,6 +313,9 @@ module SleekHelper = struct
     | SC.EntailCheck (iante, iconseq, etype) -> 
         log "processing entail check";
         Some (SE.run_entail_check iante iconseq etype)
+    | SC.Simplify f ->
+        log "processing simplify";
+        Some (SE.run_simplify f)
     | SC.CaptureResidue lvar -> 
         log "processing capture residue";
         SE.process_capture_residue lvar; None

@@ -71,7 +71,11 @@ let is_tmp_int sv = match sv with
   | SpecVar (Int,str,_) ->  ((String.length str) > 5) && ((String.compare (String.sub str 0 5) "v_int") == 0)
   | _ -> false
 
+let zinf_str = constinfinity
+
 let is_inf_sv sv = match sv with
+  (*| SpecVar (Int,zinf_str,_) -> true*)
+  (* Above doesn't work as it matches against all integer spec vars *)
   | SpecVar (Int,"ZInfinity",_) -> true
   | _ -> false
 
@@ -1723,6 +1727,8 @@ and mkAdd a1 a2 pos = Add (a1, a2, pos)
 and mkSubtract a1 a2 pos = Subtract (a1, a2, pos)
 
 and mkIConst a pos = IConst (a, pos)
+
+and mkInfConst pos = InfConst (zinf_str, pos)
 
 and mkFConst a pos = FConst (a, pos)
 
@@ -5853,10 +5859,15 @@ let fold_formula (e: formula) (f_f, f_bf, f_e) (f_comb: 'b list -> 'b) : 'b =
     snd (trans_formula e () new_f f_arg f_comb)
 
 (* map functions to formula with argument
- * f_f: 'a -> formula -> formula option
- * f_bf: 'a -> b_formula -> b_formula option
- * f_e: 'a -> exp -> exp option
+type: formula ->
+  'a ->
+  f_f : ('a -> formula -> formula option) * 
+  f_bf: ('a -> b_formula -> b_formula option) *
+  f_e: ('a -> exp -> exp option) ->
+  ('a -> formula -> 'a) * ('a -> b_formula -> 'a) * ('a -> exp -> 'a) ->
+  formula
  *)
+
 let map_formula_arg (e: formula) (arg: 'a) (f_f, f_bf, f_e) f_arg : formula =
     let trans_func f = (fun a e -> push_opt_void_pair (f a e)) in
     let new_f = trans_func f_f, trans_func f_bf, trans_func f_e in
@@ -6481,10 +6492,12 @@ let is_gt eq e1 e2 =
           -> (int_of_heap_ann i1)>(int_of_heap_ann i2)
     | _,_ -> false
 
-let const_lend = AConst (Lend,no_pos)
-let const_imm = AConst (Imm,no_pos)
-let const_mut = AConst (Mutable,no_pos)
-let const_abs = AConst (Accs,no_pos)
+let const_ann_lend = AConst (Lend,no_pos)
+let const_ann_imm = AConst (Imm,no_pos)
+let const_ann_mut = AConst (Mutable,no_pos)
+let const_ann_abs = AConst (Accs,no_pos)
+let const_ann_top = const_ann_abs
+let const_ann_bot = const_ann_mut
 
 let is_diff e1 e2 =
   match e1,e2 with
@@ -6549,10 +6562,13 @@ let check_imply_neq eq lhs e1 e2 =
     | _ -> false
   in if ((eqExp_f eq) e1 e2) then -2
   else helper lhs 
+
+(* type: (spec_var -> spec_var -> bool) -> p_formula list -> exp -> exp -> int *)
+
 let check_imply_neq_debug eq lhs e1 e2 = 
 Debug.no_3 
     "check_imply_neq" 
-    (fun c-> String.concat "&" (List.map !print_b_formula c))
+    (fun c-> String.concat "&" (List.map !print_p_formula c))
     !print_exp 
     !print_exp 
     string_of_int (check_imply_neq eq ) lhs e1 e2
@@ -11049,3 +11065,16 @@ let extract_eq_clauses_lbl_lst lst =
 let extract_eq_clauses_lbl_lst lst =
   let pr = pr_list (pr_pair pr_none !print_formula) in
   Debug.no_1 "extract_eq_clauses_lbl_lst"  pr pr  extract_eq_clauses_lbl_lst lst
+
+let is_ieq f =
+  match f with
+    | BForm (b,_) ->
+          let pf,_ = b in
+          begin
+            match pf with
+              | Neq _ | Gt _ | Gte _
+              | Lt _ | Lte _ -> true
+              |_ -> false
+          end
+    | _ -> false
+

@@ -759,6 +759,27 @@ and isStrictConstHTrue f = match f with
 	        (* don't need to care about formula_base_type  *)
   | _ -> false
 
+and isEmpFormula f = 
+  match f with
+  | Base ({formula_base_heap = HEmp}) -> true
+  | Exists ({formula_exists_heap = HEmp}) -> true
+  | Or ({formula_or_f1 = f1; formula_or_f2 = f2}) ->
+      (isEmpFormula f1) && (isEmpFormula f2)
+  | _ -> false
+
+and is_trivial_h_formula h =
+  match h with
+    | HTrue | HFalse | HEmp -> true
+    | _ -> false
+
+and is_trivial_heap_formula f = 
+  match f with
+  | Base ({formula_base_heap = h}) 
+  | Exists ({formula_exists_heap = h}) 
+      -> is_trivial_h_formula h
+  | _ -> false
+
+
 and isTrivTerm_x f = match f with
   | Base ({formula_base_heap = HEmp;formula_base_pure = p; formula_base_flow = fl;})
   | Exists ({formula_exists_heap = HEmp;formula_exists_pure = p; formula_exists_flow = fl;}) ->  MCP.isTrivMTerm p && is_top_flow fl.formula_flow_interval
@@ -4281,10 +4302,10 @@ let elim_unused_pure_x (f0:formula) rhs =
   in
   helper f0
 
-let elim_unused_pure (f0:formula) =
+let elim_unused_pure (f0:formula) rhs =
   let pr= !print_formula in
   Debug.no_1 " elim_unused_pure" pr pr
-      (fun _ -> elim_unused_pure_x f0) f0
+      (fun _ -> elim_unused_pure_x f0 rhs) f0
 
 let prune_irr_neq_formula_x must_kept_svl lhs_b rhs_b =
   let r_svl = fv (Base rhs_b) in
@@ -8452,7 +8473,7 @@ let list_partial_context_or (l1:list_partial_context) (l2:list_partial_context) 
 
 let list_partial_context_or (l1:list_partial_context) (l2:list_partial_context) : list_partial_context = 
   let pr x = string_of_int (List.length x) in 
-  Debug.no_2_loop "list_partial_context_or" pr pr pr list_partial_context_or l1 l2 
+  Debug.no_2(*_loop*) "list_partial_context_or" pr pr pr list_partial_context_or l1 l2 
 
 let list_failesc_context_or f (l1:list_failesc_context) (l2:list_failesc_context) : list_failesc_context = 
   List.concat (List.map (fun pc1-> (List.map (fun pc2 -> remove_dupl_false_fe (merge_failesc_context_or f pc1 pc2)) l2)) l1)
@@ -9525,7 +9546,7 @@ let transform_formula_w_perm_x (f:formula -> formula option) (e:formula) (permva
 let transform_formula_w_perm (f:formula -> formula option) (e:formula) (permvar:cperm):formula =
   let pr = !print_formula in
   Debug.no_3 "transform_formula_w_perm" 
-      (fun _ -> "f") pr !print_spec_var pr 
+      (fun _ -> "f") pr (pr_none) pr 
       transform_formula_w_perm_x f e permvar
 
 let transform_formula_w_perm_x (f:formula -> formula option) (e:formula) (permvar:cperm_var):formula =
@@ -11743,7 +11764,7 @@ let prepost_of_finalize_x (var:CP.spec_var) sort (args:CP.spec_var list) (lbl:fo
 
 (*automatically generate pre/post conditions of finalize[lock_sort](lock_var,lock_args) *)
 let prepost_of_finalize (var:CP.spec_var) sort (args:CP.spec_var list) (lbl:formula_label) pos : struc_formula = 
-  Debug.no_3 "prepost_of_finalize" !print_sv (fun str -> str) print_svl
+  Debug.no_3 "prepost_of_finalize" !print_sv pr_none !print_svl
       !print_struc_formula       (fun _ _ _ -> prepost_of_finalize_x var sort args lbl pos) var sort args
 
 let prepost_of_acquire_x (var:CP.spec_var) sort (args:CP.spec_var list) (inv:formula) (lbl:formula_label) pos : struc_formula =

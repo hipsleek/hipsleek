@@ -854,6 +854,37 @@ ISSUES
       (ii) if fail, try deep_lhs cases?
 
 keyword in code :  infer_deep_ante_issues 
+
+For i13-5a example, the following are points to note:
+
+This example added:
+
+!!! WARNING : deep-ante-split activated
+!!! split-1:[ x=2, 5<x]
+!!! split-2:[ ((x=2 | 5<x)) & (((flted_18_41!=y & y!=null) | flted_18_41=y))]WARNING : Pushing 2 stk_estate (4)
+ 
+However, we later generated two identical LHS term, that was
+triggered by split of [x=2, 5<x]. Such split is probably
+not meaningful since x is not an inferrable var but is
+currently triggered by --iesa
+
+It later generated two identical residue, and probably two
+rel assumption, as well.
+
+!!! new_ante_fmls:[ 
+HP_42(flted_18_41)&flted_18_41=null&{FLOW,(19,20)=__norm}[], 
+HP_42(flted_18_41)&flted_18_41=null&{FLOW,(19,20)=__norm}[]
+]
+
+I think you should do 2 things (i) first; then (ii)
+(i) combine new_ante_fmls into a single pure-or always so
+    that the unsat exception do not occur
+(ii) allow infer_pure_m to be triggered on its own first;
+     if it succeeds do not do deep_ante_split
+(iii) there is also an issue with identical rel_assume 
+    being introduced; but as this is harmless I think u
+    may skip it first.
+
 ===================================================================
 ===================================================================
 ===================================================================

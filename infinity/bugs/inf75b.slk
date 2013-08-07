@@ -1,0 +1,32 @@
+
+slk_simplify  mi!=\inf. 
+//Simplify  (1): (mi!=(\inf) | (\inf)<mi)
+// expects mi<\inf
+
+slk_simplify  mi<=\inf. 
+//Simplify  (2): mi<=(\inf)
+// expects true 
+
+slk_simplify  \inf<m. 
+// Simplify  (3): (\inf)<m
+//   expects false
+
+slk_simplify  \inf<=m. 
+//Simplify  (4): (\inf)<=m
+/// expect: m=\inf
+
+
+slk_simplify  \inf<=\inf+1. 
+//Simplify  (5): true
+// expect: true
+
+slk_simplify  \inf<=\inf-1. 
+//Simplify  (6): false
+// expect: true
+
+slk_simplify  \inf<\inf. 
+
+slk_simplify  \inf=x. 
+
+
+

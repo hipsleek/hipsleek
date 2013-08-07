@@ -118,10 +118,10 @@ List.fold_left (fun acc (rel_cat, hf,_,f_body)->
 	      ((vname,tis), n_iview)::acc
 	| _ -> acc) [] hp_rels
 
-let transform_hp_rels_to_iviews iprog cprog hp_rels =
-  let pr1 = pr_list (pr_pair pr_id Cprinter.string_of_hp_rel_def) in
-  let pr2 = pr_list (pr_pair pr_id (pr_pair Iprinter.string_of_view_decl TI.string_of_tlist)) in
-  Debug.no_1 "transform_hp_rels_to_iviews" pr1 pr2 transform_hp_rels_to_iviews iprog cprog hp_rels
+(* let transform_hp_rels_to_iviews iprog cprog hp_rels = *)
+(*   let pr1 = pr_list (pr_pair pr_id Cprinter.string_of_hp_rel_def) in *)
+(*   let pr2 = pr_list (pr_pair pr_id (pr_pair Iprinter.string_of_view_decl TI.string_of_tlist)) in *)
+(*   Debug.no_1 "transform_hp_rels_to_iviews" pr1 pr2 transform_hp_rels_to_iviews iprog cprog hp_rels *)
 
 let syn_hprel_x crem_hprels irem_hprels=
   let rec process_one chps res=
