@@ -940,7 +940,9 @@ and process_one_match_x prog is_normalizing (c:match_res) :action_wt =
                   let a1 = 
                     if is_r_lock then [] else
                       if (new_orig || vr_self_pts==[]) then [(1,M_fold c)] else [] in
-                  let a2 = if (new_orig) then [(1,M_rd_lemma c)] else [] in
+                  (* WN : what is M_rd_lemma for?? *)
+                  let a2 = if (new_orig) then [(* (1,M_rd_lemma c) *)] else [] in
+                  (* let a2 = if (new_orig) then [(1,M_rd_lemma c)] else [] in *)
                   let a = a1@a2 in
                   if a!=[] then (-1,Search_action a)
                   else (1,M_Nothing_to_do (" matched data with derived self-rec RHS node "^(string_of_match_res c)))
@@ -1053,14 +1055,17 @@ and process_one_match_x prog is_normalizing (c:match_res) :action_wt =
   else r
 
 
-and process_matches prog estate lhs_h is_normalizing ((l:match_res list),(rhs_node,rhs_rest)) =
+and process_matches prog estate lhs_h is_normalizing (((l:match_res list),(rhs_node,rhs_rest)) as ks) =
   let pr = Cprinter.string_of_h_formula   in
   let pr1 = pr_list string_of_match_res in
   let pr2 x = (fun (l1, (c1,c2)) -> "(" ^ (pr1 l1) ^ ",(" ^ (pr c1) ^ "," ^ (pr c2) ^ "))" ) x in
   let pr3 = string_of_action_wt_res0 in
-  Debug.no_2 "process_matches" pr pr2 pr3 
-      (fun _ _-> process_matches_x prog estate lhs_h is_normalizing (l, (rhs_node,rhs_rest))) 
-      lhs_h (l, (rhs_node,rhs_rest))
+  Debug.no_4 "process_matches" (add_str "lhs_h" pr)
+      (add_str "matches" pr1)
+      (add_str "rhs_node" pr) 
+      (add_str "rhs_rest" pr) pr3 
+      (fun _ _ _ _ -> process_matches_x prog estate lhs_h is_normalizing ks) 
+      lhs_h l  rhs_node rhs_rest
 
 and process_matches_x prog estate lhs_h is_normalizing ((l:match_res list),(rhs_node,rhs_rest)) = 
   let _ = Debug.tinfo_pprint "**** sel_hp_rel **********************" no_pos in
