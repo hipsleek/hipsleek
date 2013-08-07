@@ -130,6 +130,7 @@ struct
  let fnone (c:'a):'a option = None
 
  let is_empty l = match l with [] -> true | _ -> false
+ let is_None l = l==None
 
  let rec last_ne l a  = match l with
    | [] -> a

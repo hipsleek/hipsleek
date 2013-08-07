@@ -7317,7 +7317,7 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
                             (* in *)
                             (* let _ = Debug.tinfo_hprint (add_str "no_split2" (string_of_bool)) no_split2 no_pos in *)
                             let ante1 = MCP.mix_of_pure (List.hd split1) in
-                            let r1,r2,r3 = Inf.infer_pure_m 1 unk_heaps estate ante1 ante1 m_lhs split_conseq pos in
+                            let r1,r2,r3 = Inf.infer_pure_m 11 unk_heaps estate ante1 ante1 m_lhs split_conseq pos in
                             let split_mix1 = List.map MCP.mix_of_pure split1 in
                             (* let split_mix2 = List.map MCP.mix_of_pure split2 in *)
                             (* let split_mix2a =  *)
@@ -9451,7 +9451,7 @@ and solver_detect_lhs_rhs_contra i prog estate conseq pos msg =
   let pr_f = Cprinter.string_of_formula in
   let pr_es (es,e) =  pr_pair pr_estate Cprinter.string_of_pure_formula (es,e) in
   let pr = CP.print_lhs_rhs in
-  let pr_3 (_,lr,b) =  pr_pair (pr_list pr) string_of_bool (lr,b) in
+  let pr_3 (_,lr,b) =  pr_pair (pr_list pr) (add_str "real_c" string_of_bool) (lr,b) in
   Debug.no_3_num i "solver_detect_lhs_rhs_contra" 
       pr_estate pr_f pr_id  (pr_pair (pr_pair (pr_option pr_es) string_of_bool) (pr_list pr_3)) (fun _ _ _ -> 
           solver_detect_lhs_rhs_contra_x i prog estate conseq pos msg) estate conseq msg

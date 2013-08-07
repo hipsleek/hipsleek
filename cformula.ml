@@ -7468,6 +7468,11 @@ let rec is_inferred_pre_ctx ctx =
   | Ctx estate -> is_inferred_pre estate 
   | OCtx (ctx1, ctx2) -> (is_inferred_pre_ctx ctx1) || (is_inferred_pre_ctx ctx2)
 
+let is_inferred_pre_ctx ctx =
+  let pr = !print_context in
+  let pr2 = string_of_bool in
+  Debug.no_1 "is_inferred_pre_ctx" pr pr2 is_inferred_pre_ctx ctx
+
 let remove_dupl_false (sl:branch_ctx list) = 
   let (fl,nl) = (List.partition (fun (_,oc) -> 
       (isAnyFalseCtx oc && not(is_inferred_pre_ctx oc)) ) sl) in
@@ -8017,6 +8022,26 @@ let repl_label_list_partial_context (lab:path_trace) (cl:list_partial_context) :
     = List.map (fun (fl,sl) -> (fl, List.map (fun (_,c) -> (lab,c)) sl)) cl
 
 
+
+let isAnyFalseCtx (ctx:context) : bool = match ctx with
+  | Ctx es -> isAnyConstFalse es.es_formula
+  | _ -> false  
+
+(* WN : need to choose the weaker pre of the two *)
+let merge_false es1 es2 = es1
+    (* { es1 with *)
+    (*     (\* all inferred must be concatenated from different false *\) *)
+    (*     es_infer_pure = es1.es_infer_pure@es2.es_infer_pure; *)
+    (*     es_infer_rel = es1.es_infer_rel@es2.es_infer_rel; *)
+    (*     es_infer_heap = es1.es_infer_heap@es2.es_infer_heap; *)
+    (*     es_infer_hp_rel = es1.es_infer_hp_rel@es2.es_infer_hp_rel *)
+    (*  } *)
+
+let merge_false_ctx c1 c2 =
+  match c1,c2 with
+    | Ctx e1, Ctx e2 -> Ctx (merge_false e1 e2)
+    | _,_ -> (Debug.info_pprint "warning on merge_false" no_pos; c1)
+
 (* let anyPreInCtx c = is_inferred_pre_ctx c *)
 
 (* let proc_left t1 t2 = *)
@@ -8025,33 +8050,14 @@ let repl_label_list_partial_context (lab:path_trace) (cl:list_partial_context) :
 (*       | [c1] -> *)
 (*             if isAnyFalseCtx c1 then *)
 (*               (\* let _ = print_endline ("FalseCtx") in *\) *)
-(*               if is_inferred_pre_ctx c1 then  *)
+(*               if is_inferred_pre_ctx c1 then *)
 (*                 (\* let _ = print_endline ("Inferred") in *\) *)
 (*                 Some t2 (\* drop FalseCtx with Pre *\) *)
-(*               else  *)
+(*               else *)
 (*                 (\* let _ = print_endline ("NOT Inferred") in *\) *)
 (*                 Some t1 (\* keep FalseCtx wo Pre *\) *)
 (*             else None *)
 (*       | _ -> None *)
-
-let isAnyFalseCtx (ctx:context) : bool = match ctx with
-  | Ctx es -> isAnyConstFalse es.es_formula
-  | _ -> false  
-
-let merge_false es1 es2 = 
-    { es1 with
-        (* all inferred must be concatenated from different false *)
-        es_infer_pure = es1.es_infer_pure@es2.es_infer_pure;
-        es_infer_rel = es1.es_infer_rel@es2.es_infer_rel;
-        es_infer_heap = es1.es_infer_heap@es2.es_infer_heap;
-        es_infer_hp_rel = es1.es_infer_hp_rel@es2.es_infer_hp_rel
-     }
-
-let merge_false_ctx c1 c2 =
-  match c1,c2 with
-    | Ctx e1, Ctx e2 -> Ctx (merge_false e1 e2)
-    | _,_ -> (Debug.info_pprint "warning on merge_false" no_pos; c1)
-
 
 let proc_left t1 t2 =
     match t1 with
@@ -8065,7 +8071,7 @@ let proc_left t1 t2 =
                           && is_inferred_pre_ctx c2
                         (* both t1 and t2 are FalseCtx with Pre *)
                         then Some [merge_false_ctx c1 c2]
-                        else Some t1 (* only t1 is FalseCtx with Pre *)
+                        else Some t2 (* drop FalseCtx t1 with Pre *)
                   | _ -> Some t1 (* only t1 is FalseCtx with Pre *)
               else Some t1 (* keep FalseCtx wo Pre *)
             else None
@@ -8084,7 +8090,7 @@ let simplify_ctx_elim_false_dupl t1 t2 =
 
 let simplify_ctx_elim_false_dupl t1 t2 =
   let pr = !print_context_list_short in
-  Debug.no_2 "simplify_ctx_elim_flse_dupl" pr pr pr simplify_ctx_elim_false_dupl t1 t2 
+  Debug.no_2 "simplify_ctx_elim_false_dupl" pr pr pr simplify_ctx_elim_false_dupl t1 t2 
 
   (*context set union*)
 
