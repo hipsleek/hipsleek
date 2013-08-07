@@ -102,7 +102,7 @@ let sleek_entail_check isvl (cprog: C.prog_decl) ante conseq=
   let pr1 = Cprinter.prtt_string_of_formula in
   let pr2 = Cprinter.string_of_struc_formula in
   let pr3 = pr_triple string_of_bool Cprinter.string_of_list_context !CP.print_svl in
-  Debug.ho_2 "sleek_entail_check" pr1 pr2 pr3
+  Debug.no_2 "sleek_entail_check" pr1 pr2 pr3
       (fun _ _ -> sleek_entail_check_x isvl cprog ante conseq)
       ante conseq
 

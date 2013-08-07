@@ -1816,7 +1816,22 @@ and infer_shapes_proper iprog prog proc_name callee_hps is need_preprocess detec
     let post_obl_act = IC.icompute_action_post_oblg () in
     iprocess_action iprog prog proc_name callee_hps is_post_oblg post_obl_act need_preprocess detect_dang
   in
-  is_post_oblg1
+  let htrue_hpargs, defs2b = SAU.convert_HTrue_2_None is_post_oblg1.CF.is_hp_defs in
+  let defs2 = SAC.generate_hp_def_from_unk_hps defs2b is_post_oblg1.CF.is_dang_hpargs
+    (List.fold_left (fun ls (hp_kind, _, _,_)-> ls@(CF.get_hpdef_name_w_tupled hp_kind)) [] is_post_oblg1.CF.is_hp_defs)
+    is_post_oblg1.CF.is_post_hps is_post_oblg1.CF.is_unk_map is_post_oblg1.CF.is_hp_equivs
+  in
+  let defs3,link_hpargs3 = if !Globals.pred_elim_dangling then
+    let defs3a = SAC.transform_xpure_to_pure prog defs2 is_post_oblg1.CF.is_unk_map
+      (is_post_oblg1.CF.is_link_hpargs@htrue_hpargs) in
+    (*we have already transformed link/unk preds into pure form.
+      Now return [] so that we do not need generate another unk preds*)
+    (defs3a, [])
+  else (defs2,is_post_oblg1.CF.is_link_hpargs@htrue_hpargs)
+  in
+  {is_post_oblg1 with CF.is_link_hpargs = link_hpargs3;
+      CF.is_hp_defs = defs3;
+  }
 
 (***************************************************************
                      END PROCESS INFER ACTION

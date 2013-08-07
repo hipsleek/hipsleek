@@ -3865,6 +3865,12 @@ let get_hpdef_name hpdef=
      (* | CP.HPRelNDefn hp -> hp *)
      | _ -> report_error no_pos "sau.get_hpdef_name"
 
+let get_hpdef_name_w_tupled hpdef=
+   match hpdef with
+     | CP.HPRelDefn (hp,_,_) -> [hp]
+     | CP.HPRelLDefn hps -> hps
+     | _ -> []
+
 let hpdef_cmp d1 d2 =
   try
     let hp1 = get_hpdef_name d1.hprel_def_kind in

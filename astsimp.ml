@@ -8030,7 +8030,8 @@ let process_pred_def_4_iast_x iprog check_exists pdef=
 
 let process_pred_def_4_iast iprog check_exists pdef=
   let pr = Iprinter.string_of_view_decl in
-  Debug.no_1 "process_pred_def_4_iast" pr pr_no process_pred_def_4_iast_x iprog check_exists pdef
+  Debug.no_1 "process_pred_def_4_iast" pr pr_none
+      (fun _ -> process_pred_def_4_iast_x iprog check_exists pdef) pdef
 
 (*L2: todo: merge with SLEEKEN.convert_data_and_pred_to_cast*)
 let convert_pred_to_cast_x ls_pr_new_view_tis iprog cprog =
