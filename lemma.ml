@@ -65,16 +65,16 @@ let final_inst_analysis_view_x cprog vdef=
 let final_inst_analysis_view cprog vdef=
   let pr1 = Cprinter.string_of_view_decl in
   let pr2 hd= Cprinter.prtt_string_of_h_formula (CF.DataNode hd) in
-  Debug.ho_1 "final_inst_analysis_view" pr1 (pr_pair (pr_list pr2) !CP.print_svl)
+  Debug.no_1 "final_inst_analysis_view" pr1 (pr_pair (pr_list pr2) !CP.print_svl)
       (fun _ -> final_inst_analysis_view_x cprog vdef) vdef
 
 let subst_cont vn cont_args f ihf chf self_hns self_null pos=
   let rec subst_helper ss f0=
     match f0 with
-      | CF.Base _ -> let _, vns, _ = CF.get_hp_rel_formula f0 in
-        if (* List.exists (fun hv -> String.compare hv.CF.h_formula_view_name vn = 0) vns *) vns<> [] then
-          f0
-        else CF.subst ss f0
+      | CF.Base _ -> (* let _, vns, _ = CF.get_hp_rel_formula f0 in *)
+        (* if (\* List.exists (fun hv -> String.compare hv.CF.h_formula_view_name vn = 0) vns *\) vns<> [] then *)
+        (*   f0 *)
+        (* else *) CF.subst ss f0
       | CF.Exists _ ->
             let qvars, base_f1 = CF.split_quantifiers f0 in
             let nf = subst_helper ss base_f1 in
@@ -128,18 +128,20 @@ let check_view_subsume iprog cprog view1 view2 need_cont_ana=
     0  false (IF.ConstAnn Mutable) false false false None
     (List.map (fun (CP.SpecVar (_,id,p)) -> IP.Var ((id,p), pos1)) view2.C.view_vars) [] None pos2 in
   let chf2 = CF.mkViewNode (CP.SpecVar (Named view2.C.view_name,self, Unprimed)) view2.C.view_name
-    view1.C.view_vars no_pos in
+    view2.C.view_vars no_pos in
   let v_f1, v_f2, iform_hf1, cform_hf1, iform_hf2, cform_hf2=
     if not need_cont_ana then
       (v_f11, v_f2, IF.formula_of_heap_1 ihf1 pos1, CF.formula_of_heap chf1 pos1,
       IF.formula_of_heap_1 ihf2 pos2, CF.formula_of_heap chf2 pos2)
     else
       if List.length view1.C.view_vars > List.length view2.C.view_vars && view1.C.view_cont_vars != [] then
+        (* let _ = print_endline ("xxx1") in *)
         let self_hds, self_null = final_inst_analysis_view cprog view2 in
         let v_f12, ihf_12, cform_chf12 = subst_cont view1.C.view_name view1.C.view_cont_vars
           v_f11 ihf1 chf1 self_hds self_null pos1 in
         (v_f12, v_f2, ihf_12, cform_chf12, IF.formula_of_heap_1 ihf2 pos2, CF.formula_of_heap chf2 pos2)
-      else if List.length view1.C.view_vars < List.length view2.C.view_vars && view2.C.view_cont_vars != [] then
+      else if List.length view2.C.view_vars > List.length view1.C.view_vars && view2.C.view_cont_vars != [] then
+        (* let _ = print_endline ("xxx2") in *)
         let self_hds, self_null = final_inst_analysis_view cprog view1 in
         let v_f22, ihf_22, cform_chf22 = subst_cont view2.C.view_name view2.C.view_cont_vars v_f2 ihf2 chf2 self_hds self_null pos2 in
         (v_f11, v_f22, IF.formula_of_heap_1 ihf1 pos1, CF.formula_of_heap chf1 pos1, ihf_22, cform_chf22)

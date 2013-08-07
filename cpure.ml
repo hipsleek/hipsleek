@@ -544,7 +544,16 @@ let eq_spec_var (sv1 : spec_var) (sv2 : spec_var) = match (sv1, sv2) with
 	    (* translation has ensured well-typedness.
 		   We need only to compare names and primedness *)
 	    v1 = v2 & p1 = p2
-      
+
+let rec eq_spec_var_order_list l1 l2=
+  match l1,l2 with
+    |[],[] -> true
+    | v1::ls1,v2::ls2 ->
+        if eq_spec_var v1 v2 then
+          eq_spec_var_order_list ls1 ls2
+        else false
+    | _ -> false
+
 let eq_spec_var_nop (sv1 : spec_var) (sv2 : spec_var) = match (sv1, sv2) with
   | (SpecVar (t1, v1, p1), SpecVar (t2, v2, p2)) ->
 	    (* translation has ensured well-typedness.

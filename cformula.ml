@@ -16,6 +16,7 @@ module Err = Error
 module CP = Cpure
 module MCP = Mcpure
 
+
 type cond_path_type = int list
 
 (* let string_of_cond_path c = "(" ^(String.concat ", " (List.map string_of_int c)) ^ ")" *)
@@ -3954,6 +3955,38 @@ let is_HRel_f (f0:formula) =
   in
   helper f0
 
+let map_heap_hf_1 fn hf0=
+  let rec helper hf=
+    match hf with
+      | Star { h_formula_star_h1 = hf1;
+        h_formula_star_h2 = hf2;}
+      |  Conj { h_formula_conj_h1 = hf1;
+         h_formula_conj_h2 = hf2;}
+      | Phase { h_formula_phase_rd = hf1;
+        h_formula_phase_rw = hf2;}
+      | StarMinus { h_formula_starminus_h1 = hf1;
+        h_formula_starminus_h2 = hf2;}
+      | ConjStar { h_formula_conjstar_h1 = hf1;
+        h_formula_conjstar_h2 = hf2;}
+      | ConjConj { h_formula_conjconj_h1 = hf1;
+        h_formula_conjconj_h2 = hf2;} ->
+            (helper hf1)@(helper hf2)
+      | _ -> fn hf
+  in
+  helper hf0
+
+let map_heap_1 fn f0=
+  let rec helper f=
+  match f with
+    | Base ({ formula_base_heap = h1;})
+    | Exists ({formula_exists_heap = h1;}) ->
+        map_heap_hf_1 fn h1
+    | Or orf  ->
+       (helper orf.formula_or_f1) @ (helper orf.formula_or_f2)
+  in
+  helper f0
+
+
 let trans_heap_hf fn hf0=
   let rec helper hf=
     match hf with
@@ -6536,8 +6569,6 @@ think it is used to instantiate when folding.
   (* from this context *)
   es_term_err: string option;
 
-  (*for cyclic proof*)
-  es_proof_trace: (formula*formula) list;
   (* for IMMUTABILITY *)
 (* INPUT : this is an alias set for the RHS conseq *)
 (* to be used by matching strategy for imm *)
@@ -6554,7 +6585,9 @@ think it is used to instantiate when folding.
   (* es_imm_pure_stk : MCP.mix_formula list; *)
   es_must_error : (string * fail_type) option;
   (* es_must_error : string option *)
-  es_trace : formula_trace; (*LDK: to keep track of past operations: match,fold...*) 
+  es_trace : formula_trace; (*LDK: to keep track of past operations: match,fold...*)
+  (*for cyclic proof*)
+  es_proof_traces: (formula*formula) list;
   (* WN : isn't above the same as prior steps? *)
   es_is_normalizing : bool; (*normalizing process*)
 
@@ -6796,6 +6829,7 @@ let empty_es flowt grp_lbl pos =
    (* es_imm_pure_stk = []; *)
   es_must_error = None;
   es_trace = [];
+  es_proof_traces = [];
   es_is_normalizing = false;
   es_infer_post = false;
   es_infer_vars = [];
@@ -13161,3 +13195,11 @@ let combine_guard ogs0=
         end
   in
   helper ogs0 []
+
+let add_proof_traces_ctx ctx0 proof_traces=
+  let rec helper ctx=
+    match ctx with
+      | Ctx es -> Ctx {es with es_proof_traces = es.es_proof_traces@proof_traces}
+      | OCtx (ctx1,ctx2) -> OCtx( helper ctx1, helper ctx2)
+  in
+  helper ctx0
