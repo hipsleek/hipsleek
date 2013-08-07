@@ -248,6 +248,8 @@ let common_arguments = [
    "Turn on unsatisfiable formulae elimination during type-checking");
   ("--en-disj-compute", Arg.Set Globals.disj_compute_flag,
    "Enable re-computation of user-supplied disj. invariant");
+  ("--dis-comp-xp0", Arg.Clear Globals.compute_xpure_0,
+   "Disable the computation of xpure 0");
   ("--dis-inv-wrap", Arg.Clear Globals.inv_wrap_flag,
    "Disable the wrapping of --lda for pred invariant proving");
   ("--dis-lhs-case", Arg.Clear Globals.lhs_case_flag,
