@@ -444,9 +444,9 @@ let rec get_words str =
     m::(get_words rest)
   with _ -> if len<4 then [] else [str] 
 
-let get_words str =
-  let pr_id x = x in
-  ho_1 "get_words" pr_id (pr_list pr_id) get_words str
+(* let get_words str = *)
+(*   let pr_id x = x in *)
+(*   ho_1 "get_words" pr_id (pr_list pr_id) get_words str *)
 
 let read_main () =
   let xs = read_from_debug_file (debug_file ()) in
@@ -557,9 +557,7 @@ let go_7 t_flag l_flag s = ho_7_opt_aux t_flag [] l_flag (fun _ -> true) None s
 (*   else f_none *)
 
 let splitter s f_none f_gen f_norm =
-  (* if !read_debug_flag then *)
   if !z_debug_flag then
-    (* String.compare !z_debug_file "" != 0 then *)
     match (in_debug s) with
       | DO_Normal -> f_gen (f_norm false false)
       | DO_Trace -> f_gen (f_norm true false) 
@@ -577,38 +575,31 @@ let no_2 s p1 p2 p0 f e1 =
   let code_gen fn = fn s p1 p2 p0 f e1 in
   let code_none = ho_aux_no (f e1) in
   splitter s code_none code_gen go_2
-  (* splitter s code_none code_gen ho_2 to_2 ho_2_loop *)
 
 let no_3 s p1 p2 p3 p0 f e1 e2 =
   let code_gen fn = fn s p1 p2 p3 p0 f e1 e2 in
   let code_none = ho_aux_no (f e1 e2) in
   splitter s code_none code_gen go_3
-  (* splitter s code_none code_gen ho_3 to_3 ho_3_loop *)
 
 let no_4 s p1 p2 p3 p4 p0 f e1 e2 e3 =
   let code_gen fn = fn s p1 p2 p3 p4 p0 f e1 e2 e3 in
   let code_none = ho_aux_no (f e1 e2 e3) in
   splitter s code_none code_gen go_4
-  (* splitter s code_none code_gen ho_4 to_4 ho_4_loop *)
 
 let no_5 s p1 p2 p3 p4 p5 p0 f e1 e2 e3 e4 =
   let code_gen fn = fn s p1 p2 p3 p4 p5 p0 f e1 e2 e3 e4 in
   let code_none = ho_aux_no (f e1 e2 e3 e4) in
   splitter s code_none code_gen go_5
-  (* splitter s code_none code_gen ho_5 to_5 ho_5_loop *)
 
 let no_6 s p1 p2 p3 p4 p5 p6 p0 f e1 e2 e3 e4 e5 =
   let code_gen fn = fn s p1 p2 p3 p4 p5 p6 p0 f e1 e2 e3 e4 e5 in
   let code_none = ho_aux_no (f e1 e2 e3 e4 e5) in
   splitter s code_none code_gen go_6
-  (* splitter s code_none code_gen ho_6 to_6 ho_6_loop *)
 
 let no_7 s p1 p2 p3 p4 p5 p6 p7 p0 f e1 e2 e3 e4 e5 e6 =
   let code_gen fn = fn s p1 p2 p3 p4 p5 p6 p7 p0 f e1 e2 e3 e4 e5 e6 in
   let code_none = ho_aux_no (f e1 e2 e3 e4 e5 e6) in
   splitter s code_none code_gen go_7
-  (* splitter s code_none code_gen ho_7 to_7 ho_7_loop *)
-
 
 let ho_1_opt tr_flag lp_flag f = ho_1_opt_aux tr_flag [] lp_flag f None
 let ho_2_opt tr_flag lp_flag f = ho_2_opt_aux tr_flag [] lp_flag f None
@@ -742,31 +733,26 @@ let no_2_num (i:int) s p1 p2 p0 f e1 =
   let code_gen fn = fn i s p1 p2 p0 f e1 in
   let code_none = ho_aux_no (f e1) in
   splitter s code_none code_gen go_2_num 
-  (* splitter s code_none code_gen ho_2_num to_2_num ho_2_loop_num *)
 
 let no_3_num (i:int) s p1 p2 p3 p0 f e1 e2 =
   let code_gen fn = fn i s p1 p2 p3 p0 f e1 e2 in
   let code_none = ho_aux_no (f e1 e2) in
   splitter s code_none code_gen go_3_num 
-  (* splitter s code_none code_gen ho_3_num to_3_num ho_3_loop_num *)
 
 let no_4_num (i:int) s p1 p2 p3 p4 p0 f e1 e2 e3 =
   let code_gen fn = fn i s p1 p2 p3 p4 p0 f e1 e2 e3 in
   let code_none = ho_aux_no (f e1 e2 e3) in
   splitter s code_none code_gen go_4_num 
-  (* splitter s code_none code_gen ho_4_num to_4_num ho_4_loop_num *)
 
 let no_5_num (i:int) s p1 p2 p3 p4 p5 p0 f e1 e2 e3 e4 =
   let code_gen fn = fn i s p1 p2 p3 p4 p5 p0 f e1 e2 e3 e4 in
   let code_none = ho_aux_no (f e1 e2 e3 e4) in
   splitter s code_none code_gen go_5_num 
-  (* splitter s code_none code_gen ho_5_num to_5_num ho_5_loop_num *)
 
 let no_6_num (i:int) s p1 p2 p3 p4 p5 p6 p0 f e1 e2 e3 e4 e5 =
   let code_gen fn = fn i s p1 p2 p3 p4 p5 p6 p0 f e1 e2 e3 e4 e5 in
   let code_none = ho_aux_no (f e1 e2 e3 e4 e5) in
   splitter s code_none code_gen go_6_num 
-  (* splitter s code_none code_gen ho_6_num to_6_num ho_6_loop_num *)
 
 let ho_1_cmp tr_flag lp_flag g = ho_1_opt_aux tr_flag [] lp_flag (fun _ -> true) (Some g) 
 let ho_2_cmp tr_flag lp_flag g = ho_2_opt_aux tr_flag [] lp_flag (fun _ -> true) (Some g) 
@@ -800,31 +786,26 @@ let no_1_cmp g s p1 p0 f =
   let code_gen fn = fn g s p1 p0 f in
   let code_none = ho_aux_no f in
   splitter s code_none code_gen ho_1_cmp 
-  (* splitter s code_none code_gen ho_1_cmp to_1_cmp ho_1_cmp_loop *)
 
 let no_2_cmp g s p1 p2 p0 f e1 =
   let code_gen fn = fn g s p1 p2 p0 f e1 in
   let code_none = ho_aux_no (f e1) in
   splitter s code_none code_gen ho_2_cmp 
-  (* splitter s code_none code_gen ho_2_cmp to_2_cmp ho_2_cmp_loop *)
 
 let no_3_cmp g s p1 p2 p3 p0 f e1 e2 =
   let code_gen fn = fn g s p1 p2 p3 p0 f e1 e2 in
   let code_none = ho_aux_no (f e1 e2) in
   splitter s code_none code_gen ho_3_cmp 
-  (* splitter s code_none code_gen ho_3_cmp to_3_cmp ho_3_cmp_loop *)
 
 let no_4_cmp g s p1 p2 p3 p4 p0 f e1 e2 e3 =
   let code_gen fn = fn g s p1 p2 p3 p4 p0 f e1 e2 e3 in
   let code_none = ho_aux_no (f e1 e2 e3) in
   splitter s code_none code_gen ho_4_cmp 
-  (* splitter s code_none code_gen ho_4_cmp to_4_cmp ho_4_cmp_loop *)
 
 let no_5_cmp g s p1 p2 p3 p4 p5 p0 f e1 e2 e3 e4 =
   let code_gen fn = fn g s p1 p2 p3 p4 p5 p0 f e1 e2 e3 e4 in
   let code_none = ho_aux_no (f e1 e2 e3 e4) in
   splitter s code_none code_gen ho_5_cmp 
-  (* splitter s code_none code_gen ho_5_cmp to_5_cmp ho_5_cmp_loop *)
 
 let no_6_cmp g s p1 p2 p3 p4 p5 p6 p0 f e1 e2 e3 e4 e5 =
   let code_gen fn = fn g s p1 p2 p3 p4 p5 p6 p0 f e1 e2 e3 e4 e5 in
@@ -884,37 +865,31 @@ let no_eff_1 s l p1 p0 f =
   let code_gen fn = fn s l p1 p0 f in
   let code_none = ho_aux_no f in
   splitter s code_none code_gen ho_eff_1 
-  (* splitter s code_none code_gen ho_eff_1 to_eff_1 ho_eff_1_loop *)
 
 let no_eff_2 s l p1 p2 p0 f e1 =
   let code_gen fn = fn s l p1 p2 p0 f e1 in
   let code_none = ho_aux_no (f e1) in
   splitter s code_none code_gen ho_eff_2 
-  (* splitter s code_none code_gen ho_eff_2 to_eff_2 ho_eff_2_loop *)
 
 let no_eff_3 s l p1 p2 p3 p0 f e1 e2 =
   let code_gen fn = fn s l p1 p2 p3 p0 f e1 e2 in
   let code_none = ho_aux_no (f e1 e2) in
   splitter s code_none code_gen ho_eff_3 
-  (* splitter s code_none code_gen ho_eff_3 to_eff_3 ho_eff_3_loop *)
 
 let no_eff_4 s l p1 p2 p3 p4 p0 f e1 e2 e3 =
   let code_gen fn = fn s l p1 p2 p3 p4 p0 f e1 e2 e3 in
   let code_none = ho_aux_no (f e1 e2 e3) in
   splitter s code_none code_gen ho_eff_4 
-  (* splitter s code_none code_gen ho_eff_4 to_eff_4 ho_eff_4_loop *)
 
 let no_eff_5 s l p1 p2 p3 p4 p5 p0 f e1 e2 e3 e4 =
   let code_gen fn = fn s l p1 p2 p3 p4 p5 p0 f e1 e2 e3 e4 in
   let code_none = ho_aux_no (f e1 e2 e3 e4) in
   splitter s code_none code_gen ho_eff_5 
-  (* splitter s code_none code_gen ho_eff_5 to_eff_5 ho_eff_5_loop *)
 
 let no_eff_6 s l p1 p2 p3 p4 p5 p6 p0 f e1 e2 e3 e4 e5 =
   let code_gen fn = fn s l p1 p2 p3 p4 p5 p6 p0 f e1 e2 e3 e4 e5 in
   let code_none = ho_aux_no (f e1 e2 e3 e4 e5) in
   splitter s code_none code_gen ho_eff_6 
-  (* splitter s code_none code_gen ho_eff_6 to_eff_6 ho_eff_6_loop *)
 
 (* let no_eff_2 _ _ _ _ _ f e1  *)
 (*       = ho_aux_no (f e1) *)
@@ -959,31 +934,26 @@ let no_eff_1_num i s l p1 p0 f =
   let code_gen fn = fn i s l p1 p0 f in
   let code_none = ho_aux_no f in
   splitter s code_none code_gen ho_eff_1_num 
-  (* splitter s code_none code_gen ho_eff_1_num to_eff_1_num ho_eff_1_num_loop *)
 
 let no_eff_2_num i s l p1 p2 p0 f e1 =
   let code_gen fn = fn i s l p1 p2 p0 f e1 in
   let code_none = ho_aux_no (f e1) in
   splitter s code_none code_gen ho_eff_2_num 
-  (* splitter s code_none code_gen ho_eff_2_num to_eff_2_num ho_eff_2_num_loop *)
 
 let no_eff_3_num i s l p1 p2 p3 p0 f e1 e2 =
   let code_gen fn = fn i s l p1 p2 p3 p0 f e1 e2 in
   let code_none = ho_aux_no (f e1 e2) in
   splitter s code_none code_gen ho_eff_3_num 
-  (* splitter s code_none code_gen ho_eff_3_num to_eff_3_num ho_eff_3_num_loop *)
 
 let no_eff_4_num i s l p1 p2 p3 p4 p0 f e1 e2 e3 =
   let code_gen fn = fn i s l p1 p2 p3 p4 p0 f e1 e2 e3 in
   let code_none = ho_aux_no (f e1 e2 e3) in
   splitter s code_none code_gen ho_eff_4_num 
-  (* splitter s code_none code_gen ho_eff_4_num to_eff_4_num ho_eff_4_num_loop *)
 
 let no_eff_5_num i s l p1 p2 p3 p4 p5 p0 f e1 e2 e3 e4 =
   let code_gen fn = fn i s l p1 p2 p3 p4 p5 p0 f e1 e2 e3 e4 in
   let code_none = ho_aux_no (f e1 e2 e3 e4) in
   splitter s code_none code_gen ho_eff_5_num 
-  (* splitter s code_none code_gen ho_eff_5_num to_eff_5_num ho_eff_5_num_loop *)
 
 let no_eff_6_num i s l p1 p2 p3 p4 p5 p6 p0 f e1 e2 e3 e4 e5 =
   let code_gen fn = fn i s l p1 p2 p3 p4 p5 p6 p0 f e1 e2 e3 e4 e5 in
