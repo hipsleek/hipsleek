@@ -1,0 +1,32 @@
+// examples from bi-abduction paper
+
+data node {
+	node next;	
+}.
+
+pred lseg<p> == 
+  case {
+   self = p -> [] self=p;
+   self!=p ->  [] self::node<q> * q::lseg<p>;
+  } 
+  inv true.
+
+HeapPred H1(node a).
+
+//infer [z,H1] x::node<z> * H1(y)  |- x::lseg<z> * y::lseg<null>.
+//infer [z,H1] H1(y) & x=r  |- x::lseg<z> * y::lseg<null>.
+//infer [z,H1] H1(y) & x=r  |- y::lseg<null> * x::lseg<z> .
+infer [z] x::node<z>  |- x::lseg<z> .
+print residue.
+
+/*
+problem:
+
+!!! >>>>>> mismatch ptr z::lseg<z_88>@M is not found (or inst) in the lhs <<<<<<
+!!! dumping for sleek_dump(fail)
+*/
+
+
+
+
+

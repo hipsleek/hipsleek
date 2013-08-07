@@ -46,8 +46,8 @@ let simplif_arith f =
               match b with
                 | (CP.Lte (e1, e2, s), l) ->  (CP.Lte (CP.norm_exp e1,CP.norm_exp e2, s), l)
                 | (CP.Lt (e1, e2, s), l) ->  (CP.Lt (CP.norm_exp e1,CP.norm_exp e2, s), l)
-                | (CP.Gte (e1, e2, s), l) ->  (CP.Gte (CP.norm_exp e1,CP.norm_exp e2, s), l)
-                | (CP.Gt (e1, e2, s), l) ->  (CP.Gt (CP.norm_exp e1,CP.norm_exp e2, s), l)
+                | (CP.Gte (e1, e2, s), l) ->  (CP.Lte (CP.norm_exp e2,CP.norm_exp e1, s), l)
+                | (CP.Gt (e1, e2, s), l) ->  (CP.Lt (CP.norm_exp e2,CP.norm_exp e1, s), l)
                 | (CP.Eq  (e1, e2, s), l) ->  (CP.Eq  (CP.norm_exp e1,CP.norm_exp e2, s), l)
                 | (CP.Neq (e1, e2, s), l) ->  (CP.Neq (CP.norm_exp e1,CP.norm_exp e2, s), l)
                 | _ -> b
@@ -102,6 +102,9 @@ let merge_ieq_ieq f1 f2  =  (* merge_other f1 f2 *)
                       if((i1-i2) < limit_conj) then merged (neq_conj_n (i1-i2) i1 var)
                       else merge_other f1 f2
                   else merge_other f1 f2
+            | (CP.Lt ( (CP.Var(v1,_) as var1), (CP.Var(v2,_) as var2), _), _), (CP.Lt (CP.Var(v3,_),CP.Var(v4,_), _), _) ->
+                  if (CP.eq_spec_var v1 v4) & (CP.eq_spec_var v2 v3) then merged [(CP.BForm((CP.mkNeq var1 var2 no_pos, None), None))]
+                  else merge_other f1 f2
             | _ -> merge_other f1 f2
           end
     | _ -> merge_other f1 f2
@@ -153,7 +156,7 @@ let merge_two_disj f1 f2 =
   let f1 = make_strict_ieq f1 in
   let f2 = make_strict_ieq f2 in
   match CP.is_ieq f1, CP.is_ieq f2 with
-    | true, true ->   merge_ieq_ieq  f1 f2 
+    | true, true ->  merge_ieq_ieq  f1 f2 
     | false, true ->  if CP.is_eq_exp f1 then merge_eq_ieq f1 f2  else  merge_other f1 f2
     | true, false ->  if CP.is_eq_exp f2 then merge_eq_ieq f2 f1  else  merge_other f1 f2
     | false, false -> if (CP.is_eq_exp f1) && (CP.is_eq_exp f2) then merge_eq_eq f1 f2 else  merge_other f1 f2
@@ -161,7 +164,7 @@ let merge_two_disj f1 f2 =
 let can_further_norm f1_conj f2_conj =
   let f1_sv = List.fold_left (fun a f ->  (CP.all_vars f)@a) [] f1_conj in
   let f2_sv = List.fold_left (fun a f ->  (CP.all_vars f)@a) [] f2_conj in
-  if Gen.BList.list_equiv_eq CP.eq_spec_var f1_sv f2_sv then true
+  if Gen.BList.list_setequal_eq CP.eq_spec_var f1_sv f2_sv then true
   else false
 
 let maybe_merge conj1 conj2 = (* (true, conj1) *)
