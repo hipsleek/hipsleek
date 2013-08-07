@@ -12,14 +12,14 @@ HeapPred H1(node a).
 
 //(5)
 
-//infer [z,H1] x::node<z> * H1(y)  |- x::lseg<z> * y::lseg<null>.
+infer [z,H1] x::node<z> * H1(y)  |- x::lseg<z> * y::lseg<null>.
 //print residue.
 
 //infer [z] x::node<z>   |- x::lseg<z>.
 //print residue.
 
 
-infer [y] x::node<z>  |- y::lseg<null>.
+//infer [y] x::node<z>  |- y::lseg<null>.
 
 print residue.
 

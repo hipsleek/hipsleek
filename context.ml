@@ -453,11 +453,11 @@ and spatial_ctx_extract p f a i pi rn rr =
   Debug.no_4 "spatial_ctx_extract" string_of_h_formula Cprinter.string_of_imm pr_svl string_of_h_formula pr 
       (fun _ _ _ _-> spatial_ctx_extract_x p f a i pi rn rr ) f i a rn 
 
-and update_ann (f : h_formula) (pimm1 : ann list) (pimm : ann list) : h_formula = 
+and update_field_imm (f : h_formula) (pimm1 : ann list) (pimm : ann list) : h_formula = 
   let pr lst = "[" ^ (List.fold_left (fun y x-> (Cprinter.string_of_imm x) ^ ", " ^ y) "" lst) ^ "]; " in
-  Debug.no_3 "update_ann" (Cprinter.string_of_h_formula) pr pr  (Cprinter.string_of_h_formula) (fun _ _ _-> update_ann_x f pimm1 pimm) f pimm1 pimm
+  Debug.no_3 "update_ann" (Cprinter.string_of_h_formula) pr pr  (Cprinter.string_of_h_formula) (fun _ _ _-> update_field_imm_x f pimm1 pimm) f pimm1 pimm
 
-and update_ann_x (f : h_formula) (pimm1 : ann list) (pimm : ann list) : h_formula = 
+and update_field_imm_x (f : h_formula) (pimm1 : ann list) (pimm : ann list) : h_formula = 
   let new_field_ann_lnode = Immutable.replace_list_ann pimm1 pimm in
   (* asankhs: If node has all field annotations as @A make it HEmp *)
   if (isAccsList new_field_ann_lnode) then HEmp else
@@ -467,14 +467,37 @@ and update_ann_x (f : h_formula) (pimm1 : ann list) (pimm : ann list) : h_formul
   in
   updated_f
 
+and update_imm (f : h_formula) (imm1 : ann) (imm2 : ann) : h_formula = 
+  let pr = Cprinter.string_of_imm in
+  Debug.no_3 "update_ann" (Cprinter.string_of_h_formula) pr pr  (Cprinter.string_of_h_formula) (fun _ _ _-> update_imm_x f imm1 imm2) f imm1 imm2
 
-and imm_split_lhs_node estate l_node r_node = match l_node, r_node with
-	| DataNode dl, DataNode dr ->
-		if (!Globals.allow_field_ann) then 
-		 let n_f = update_ann l_node dl.h_formula_data_param_imm dr.h_formula_data_param_imm in
-		 {estate with es_formula = mkStar (formula_of_heap n_f no_pos) estate.es_formula Flow_combine no_pos}
-        else estate
-	| _ -> estate 
+and update_imm_x (f : h_formula) (imm1 : ann) (imm2 : ann) : h_formula = 
+  let new_imm_lnode = Immutable.remaining_ann imm1 imm2 in
+  (* asankhs: If node has all field annotations as @A make it HEmp *)
+  if (isAccsList [new_imm_lnode]) then HEmp else
+  let updated_f = match f with 
+    | DataNode d -> DataNode ( {d with h_formula_data_imm = new_imm_lnode} )
+    | _          -> report_error no_pos ("[context.ml] : only data node should allow field annotations \n")
+  in
+  updated_f
+
+
+and imm_split_lhs_node_x estate l_node r_node = match l_node, r_node with
+  | DataNode dl, DataNode dr ->
+	if (!Globals.allow_field_ann) then 
+	  let n_f = update_field_imm l_node dl.h_formula_data_param_imm dr.h_formula_data_param_imm in
+	  {estate with es_formula = mkStar (formula_of_heap n_f no_pos) estate.es_formula Flow_combine no_pos}
+        else if(!Globals.allow_imm) then
+          let n_f = update_imm l_node dl.h_formula_data_imm dr.h_formula_data_imm in
+          {estate with es_formula = mkStar (formula_of_heap n_f no_pos) estate.es_formula Flow_combine no_pos}
+        else
+          estate
+  | _ -> estate 
+
+and imm_split_lhs_node estate l_node r_node =
+  let pr_node = Cprinter.string_of_h_formula in
+  let pr_es = Cprinter.string_of_entail_state in
+  Debug.no_3 "imm_split_lhs_node" pr_es pr_node pr_node pr_es imm_split_lhs_node_x estate l_node r_node
   
 and spatial_ctx_extract_x prog (f0 : h_formula) (aset : CP.spec_var list) (imm : ann) (pimm : ann list) rhs_node rhs_rest : match_res list  =
   let rec helper f = match f with

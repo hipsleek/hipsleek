@@ -1351,7 +1351,7 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
                 let pr = Cprinter.string_of_mix_formula in
                 let sf = remove_disj_clauses vdef.C.view_user_inv in
                 (* Debug.info_hprint (add_str "disj_form" string_of_bool) disj_form no_pos; *)
-                if disj_form then
+                if disj_form && !Globals.compute_xpure_0 then
                   (vdef.C.view_user_inv <- sf; vdef.C.view_xpure_flag <- false);
 	        Debug.info_pprint ("Using a simpler inv for xpure0 of "^vdef.C.view_name) pos;
                 Debug.info_hprint (add_str "inv(xpure0)" pr) vdef.C.view_user_inv pos;

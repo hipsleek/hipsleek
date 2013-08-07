@@ -8552,7 +8552,7 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
     else 
       let l_h,l_p,l_fl,l_t, l_a = split_components estate.es_formula in
       let restore_hole h estate = 
-        let restore_hole_b = (isPoly r_ann && (isMutable l_ann || isImm l_ann)) || (isPoly r_ann && isPoly l_ann) in
+        let restore_hole_b = ((* isPoly r_ann && *) (isMutable l_ann || isImm l_ann)) || (isPoly r_ann && isPoly l_ann) in
         Debug.tinfo_hprint (add_str "restore_hole_b" (string_of_bool)) restore_hole_b pos;
         if restore_hole_b then 
           match h with
@@ -8800,11 +8800,12 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
                 if not(!Globals.allow_imm) && not(!Globals.allow_field_ann) then mkStarH consumed_h estate.es_heap pos
                 else if (!Globals.allow_imm) && not(!Globals.allow_field_ann) then
                   begin
-                      if (isLend r_ann || isAccs r_ann || (isPoly r_ann && (isLend l_ann || isAccs l_ann)) || (isPoly r_ann && isPoly l_ann)) (*&& not(!allow_field_ann)*) 
-                      then estate.es_heap (*do not consume*)
-                      else mkStarH consumed_h estate.es_heap pos end 
+                    if (isLend r_ann || isAccs r_ann || (isPoly r_ann (* && (isLend l_ann || isAccs l_ann) *)) (* || (isPoly r_ann && isPoly l_ann) *)) (*&& not(!allow_field_ann)*) 
+                    then estate.es_heap (*do not consume*)
+                    else mkStarH consumed_h estate.es_heap pos end 
                 else  
-                  mkStarH consumed_h estate.es_heap pos 
+                  if (!Globals.allow_field_ann) then estate.es_heap
+                  else mkStarH consumed_h estate.es_heap pos 
               in
 	          let n_es_res,n_es_succ = match ((get_node_label l_node),(get_node_label r_node)) with
                 |Some s1, Some s2 -> ((Gen.BList.remove_elem_eq (=) s1 estate.es_residue_pts),((s1,s2)::estate.es_success_pts))

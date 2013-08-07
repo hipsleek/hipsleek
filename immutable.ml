@@ -1028,7 +1028,7 @@ and consumes (a: ann): bool =
    depending on the LHS ann, PolyAnn might consume after a match, but it is considered to
    initialy create a hole. *)
 and produces_hole (a: ann): bool = 
-  if isLend a || isAccs  a || isPoly a then true
+  if isLend a || isAccs  a (* || isPoly a *) then true
   else false
 
 and compute_ann_list all_fields (diff_fields : ident list) (default_ann : CF.ann) : CF.ann list =
