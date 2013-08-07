@@ -266,10 +266,10 @@ let rec normalize_b_formula (bf: CP.b_formula) :CP.b_formula =
             else if check_neg_inf2_inf e2_norm e1_norm then CP.BConst(true,pos)
             else if check_neg_inf2_const e2_norm e1_norm then CP.BConst(true,pos)
             else if CP.is_const_exp e1_norm && CP.is_inf e2_norm then CP.BConst(true,pos)
-            else if CP.is_const_or_var e1_norm && CP.is_inf e2_norm then CP.Neq(e1_norm,e2_norm,pos)
+            (*else if CP.is_const_or_var e1_norm && CP.is_inf e2_norm then CP.Neq(e1_norm,e2_norm,pos)*)
             else if CP.is_inf e1_norm && CP.is_const_or_var e2_norm then CP.BConst(false,pos)
             else if check_neg_inf2 e1_norm e2_norm then CP.BConst(false,pos)
-            else if check_neg_inf2 e2_norm e1_norm then CP.Neq(e1_norm,e2_norm,pos)
+            (*else if check_neg_inf2 e2_norm e1_norm then CP.Neq(e1_norm,e2_norm,pos)*)
             else if fst(check_const_add_inf e1_norm) && CP.is_inf e2_norm then 
               let ec = snd (check_const_add_inf e1_norm) in helper (CP.Lt(ec,e2_norm,pos))
             else if fst(check_const_add_inf e2_norm) && CP.is_inf e1_norm then 
@@ -307,8 +307,8 @@ let rec normalize_b_formula (bf: CP.b_formula) :CP.b_formula =
             else if check_neg_inf2_const e1_norm e2_norm then CP.BConst(true,pos)
             else if CP.is_inf e1_norm && CP.is_const_exp e2_norm then CP.BConst(true,pos)
             else if CP.is_const_or_var e1_norm && CP.is_inf e2_norm then CP.BConst(false,pos)
-            else if CP.is_inf e1_norm && CP.is_const_or_var e2_norm then CP.Neq(e1_norm,e2_norm,pos)
-            else if check_neg_inf2 e1_norm e2_norm then CP.Neq(e1_norm,e2_norm,pos)
+            (*else if CP.is_inf e1_norm && CP.is_const_or_var e2_norm then CP.Neq(e1_norm,e2_norm,pos)
+            else if check_neg_inf2 e1_norm e2_norm then CP.Neq(e1_norm,e2_norm,pos)*)
             else if check_neg_inf2 e2_norm e1_norm then CP.BConst(false,pos)
             else if fst(check_const_add_inf e1_norm) && CP.is_inf e2_norm then 
               let ec = snd (check_const_add_inf e1_norm) in helper (CP.Gt(ec,e2_norm,pos))
@@ -343,21 +343,28 @@ let rec normalize_b_formula (bf: CP.b_formula) :CP.b_formula =
       | CP.Eq (e1,e2,pos) -> 
             let e1_norm = normalize_exp e1 in
             let e2_norm = normalize_exp e2 in
-            if check_neg_inf2_inf e1_norm e2_norm || check_neg_inf2_inf e2_norm e1_norm then CP.BConst(false,pos)
+            if check_neg_inf2_inf e1_norm e2_norm || check_neg_inf2_inf e2_norm e1_norm 
+            then CP.BConst(false,pos)
             else if CP.is_inf e1_norm && CP.is_inf e2_norm then CP.BConst(true,pos)
             else if CP.is_const_exp e1_norm && CP.is_inf e2_norm then CP.BConst(false,pos)
             else if CP.is_inf e1_norm && CP.is_const_exp e2_norm then CP.BConst(false,pos)
-            else if check_neg_inf2_const e1_norm e2_norm || check_neg_inf2_const e2_norm e1_norm then CP.BConst(false,pos)
+            else if check_neg_inf2_const e1_norm e2_norm || check_neg_inf2_const e2_norm e1_norm 
+            then CP.BConst(false,pos)
             else CP.Eq(e1_norm,e2_norm,pos)
       | CP.Neq (e1,e2,pos) -> 
             let e1_norm = normalize_exp e1 in
             let e2_norm = normalize_exp e2 in
-            if check_neg_inf2_inf e1_norm e2_norm || check_neg_inf2_inf e2_norm e1_norm then CP.BConst(true,pos)
+            if check_neg_inf2_inf e1_norm e2_norm || check_neg_inf2_inf e2_norm e1_norm 
+            then CP.BConst(true,pos)
             else if CP.is_inf e1_norm && CP.is_inf e2_norm then CP.BConst(false,pos)
             else if CP.is_const_exp e1_norm && CP.is_inf e2_norm then CP.BConst(true,pos)
             else if CP.is_inf e1_norm && CP.is_const_exp e2_norm then CP.BConst(true,pos)
             else if check_neg_inf2_const e1_norm e2_norm || check_neg_inf2_const e2_norm e1_norm
             then CP.BConst(true,pos)
+            else if CP.is_inf e1_norm then CP.Lt(e2_norm,e1_norm,pos)
+            else if CP.is_inf e2_norm then CP.Lt(e1_norm,e2_norm,pos)
+            else if check_neg_inf2 e1_norm e2_norm then CP.Gt(e1_norm,e2_norm,pos) 
+            else if check_neg_inf2 e2_norm e1_norm then CP.Gt(e2_norm,e1_norm,pos) 
             else CP.Neq(e1_norm,e2_norm,pos)                            
       | CP.EqMax (e1,e2,e3,pos) -> 
             let flag,w1,w2 = check_neg_inf e1 e2 e3 in

@@ -144,7 +144,7 @@ checkentail  \inf!=\inf |- false.
 //(43) Valid
 checkentail true |- \inf != -\inf.
 
-//(44) Valid
+//(44) Fail
 checkentail true |- \inf+7 !=\inf.
 
 //(45) Fail
@@ -172,7 +172,7 @@ checkentail true |- \inf!=\inf.
 //(52) Valid
 checkentail true |- \inf != -\inf.
 
-//(53) Valid
+//(53) Fail
 checkentail true |- \inf+3 !=\inf.
 
 //(54) Fail
