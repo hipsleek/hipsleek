@@ -10,6 +10,7 @@ module IF = Iformula
 module IP = Ipure
 module CF = Cformula
 module CP = Cpure
+module MCP = Mcpure
 module H  = Hashtbl
 module I  = Iast
 module SC = Sleekcore
@@ -38,11 +39,71 @@ let generate_ilemma iprog cprog lemma_n coer_type lhs rhs head body=
   else
     [],[]
 
+
+let final_inst_analysis_view_x cprog vdef=
+  let process_branch (r1,r2)vname args f=
+    let hds, vns, hdrels = CF.get_hp_rel_formula f in
+    if vns <> [] then (r1,r2) else
+      let self_hds = List.filter (fun hd ->
+          CP.is_self_spec_var hd.CF.h_formula_data_node
+      ) hds in
+      if self_hds = [] then
+        let ( _,mix_f,_,_,_) = CF.split_components f in
+        let eqNulls = CP.remove_dups_svl ((MCP.get_null_ptrs mix_f) ) in
+        let self_eqNulls = List.filter (CP.is_self_spec_var) eqNulls in
+        ([], self_eqNulls)
+      else ( self_hds, [])
+  in
+  let vname = vdef.Cast.view_name in
+  let args = vdef.Cast.view_vars in
+  let s_hds, s_null = List.fold_left (fun (is_node, is_null) (f,_) ->
+      process_branch (is_node, is_null) vname args f
+  ) ([],[]) vdef.Cast.view_un_struc_formula
+  in
+  (s_hds, s_null)
+
+let final_inst_analysis_view cprog vdef=
+  let pr1 = Cprinter.string_of_view_decl in
+  let pr2 hd= Cprinter.prtt_string_of_h_formula (CF.DataNode hd) in
+  Debug.ho_1 "final_inst_analysis_view" pr1 (pr_pair (pr_list pr2) !CP.print_svl)
+      (fun _ -> final_inst_analysis_view_x cprog vdef) vdef
+
+let subst_cont vn cont_args f hf self_hns self_null=
+  let rec subst_helper ss f0=
+    match f0 with
+      | CF.Base _ -> let _, vns, _ = CF.get_hp_rel_formula f0 in
+        if (* List.exists (fun hv -> String.compare hv.CF.h_formula_view_name vn = 0) vns *) vns<> [] then
+          f0
+        else CF.subst ss f0
+      | CF.Exists _ ->
+            let qvars, base_f1 = CF.split_quantifiers f0 in
+            let nf = subst_helper ss base_f1 in
+            CF.add_quantifiers qvars nf
+      | CF.Or orf ->
+            CF.Or {orf with CF.formula_or_f1 = subst_helper ss orf.CF.formula_or_f1;
+                CF.formula_or_f2 = subst_helper ss orf.CF.formula_or_f2;
+            }
+  in
+  if self_null <> [] then
+    let cont = match cont_args with
+      | [a] -> a
+      | _ -> report_error no_pos "Lemma.subst_cont: to handle"
+    in
+    let null_sv = CP.SpecVar (CP.type_of_spec_var cont, null_name, Unprimed) in
+    let ss = [(cont, null_sv)] in
+    let ss1 = ((CP.name_of_spec_var cont, CP.primed_of_spec_var cont), (null_name, Unprimed) ) in
+    (subst_helper ss f, IF.h_apply_one ss1 hf)
+  else if self_hns <> [] then
+    let _ = report_warning no_pos ("Lemma.subst_cont: to handle") in
+    (f, hf)
+  else (f,hf)
+
 (*if two views are equiv, generate an equiv lemma*)
-let check_view_subsume iprog cprog view1 view2=
+let check_view_subsume iprog cprog view1 view2 need_cont_ana=
+  (*todo, subst parameters if any*)
   let hn_c_trans (sv1, sv2) hf = match hf with
     | CF.ViewNode vn ->
-          let nhf = 
+          let nhf =
             if String.compare sv1 vn.CF.h_formula_view_name = 0 then
               CF.ViewNode {vn with CF.h_formula_view_name = sv2 }
             else hf
@@ -52,7 +113,7 @@ let check_view_subsume iprog cprog view1 view2=
   in
   let v_f1 = CF.formula_of_disjuncts (List.map fst view1.C.view_un_struc_formula) in
   let v_f2 = CF.formula_of_disjuncts (List.map fst view2.C.view_un_struc_formula) in
-  let v_f11 = CF.formula_trans_heap_node (hn_c_trans (view1.C.view_name, view2.C.view_name)) v_f1 in
+  let v_f11 = (* CF.formula_trans_heap_node (hn_c_trans (view1.C.view_name, view2.C.view_name)) *) v_f1 in
   let pos1 = (CF.pos_of_formula v_f1) in
   let pos2 = (CF.pos_of_formula v_f2) in
   let hf1 = IF.mkHeapNode (self, Unprimed) (view1.C.view_name)
@@ -61,10 +122,24 @@ let check_view_subsume iprog cprog view1 view2=
   let hf2 = IF.mkHeapNode (self, Unprimed) (view2.C.view_name)
     0  false (IF.ConstAnn Mutable) false false false None
     (List.map (fun (CP.SpecVar (_,id,p)) -> IP.Var ((id,p), pos1)) view2.C.view_vars) [] None pos2 in
+  let v_f1, v_f2, hf1,hf2=
+    if not need_cont_ana then
+      (v_f11, v_f2, hf1,hf2)
+    else
+      if List.length view1.C.view_vars > List.length view2.C.view_vars && view1.C.view_cont_vars != [] then
+        let self_hds, self_null = final_inst_analysis_view cprog view2 in
+        let v_f12, hf_12 = subst_cont view1.C.view_name view1.C.view_cont_vars v_f11 hf1 self_hds self_null in
+        (v_f12, v_f2, hf_12, hf2)
+      else if List.length view1.C.view_vars < List.length view2.C.view_vars && view2.C.view_cont_vars != [] then
+        let self_hds, self_null = final_inst_analysis_view cprog view1 in
+        let v_f22, hf_22 = subst_cont view2.C.view_name view2.C.view_cont_vars v_f2 hf2 self_hds self_null in
+        (v_f11, v_f22, hf1, hf_22)
+      else (v_f11, v_f2, hf1,hf2)
+  in
   let lemma_n = view1.C.view_name ^"_"^ view2.C.view_name in
-  let l2r1, r2l1 = generate_ilemma iprog cprog lemma_n I.Left v_f11 v_f2
+  let l2r1, r2l1 = generate_ilemma iprog cprog lemma_n I.Left v_f1 v_f2
     (IF.formula_of_heap_1 hf1 pos1) (IF.formula_of_heap_1 hf2 pos2) in
-  let l2r2, r2l2 = generate_ilemma iprog cprog lemma_n I.Right v_f11 v_f2
+  let l2r2, r2l2 = generate_ilemma iprog cprog lemma_n I.Right v_f1 v_f2
     (IF.formula_of_heap_1 hf1 pos1) (IF.formula_of_heap_1 hf2 pos2) in
   (l2r1@l2r2, r2l1@r2l2)
 
@@ -75,8 +150,21 @@ let generate_lemma_4_views_x iprog cprog=
       | [v] -> (l_lem,r_lem)
       | v::rest ->
             let l,r = List.fold_left (fun (r1,r2) v1 ->
-                let l, r = check_view_subsume iprog cprog v v1 in
-                (r1@l,r2@r)
+                if List.length v.C.view_vars = List.length v1.C.view_vars then
+                  let l, r = check_view_subsume iprog cprog v v1 false in
+                  (r1@l,r2@r)
+                else if (List.length v.C.view_vars > List.length v1.C.view_vars &&
+                    List.length v.C.view_vars = List.length v1.C.view_vars + List.length v.C.view_cont_vars) ||
+                  (List.length v.C.view_vars < List.length v1.C.view_vars &&
+                      List.length v1.C.view_vars = List.length v.C.view_vars + List.length v1.C.view_cont_vars)
+                then
+                  (*cont paras + final inst analysis*)
+                  let _ = report_warning no_pos ("cont paras + final inst analysis " ^ (v.C.view_name) ^ " ..." ^
+                      v1.C.view_name) in
+                  let l, r = check_view_subsume iprog cprog v v1 true in
+                  (r1@l,r2@r)
+                else
+                  (r1,r2)
             ) ([],[]) rest
             in
             helper rest (l_lem@l) (r_lem@r)

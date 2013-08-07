@@ -1,6 +1,6 @@
 #eq-view-1.slk: DONE
 
-equivalent definition. generate two lemmas:
+equivalent definition. generate equiv lemmas (ll <-> ll1):
  - left
  - right
 
@@ -10,7 +10,7 @@ equivalent definition. generate two lemmas:
 two views is not the same length of paras
 
  - need check cont parameter
- - search to matching cont parameter with real termination value
+ - search to matching cont parameter with an inst termination value
 ===================================================================
 
 ===================================================================

@@ -31,8 +31,13 @@ lseg<p> == self=p
 //1b.
 //checkentail x::ll0<> |- x::ll<>.
 
-//2
+//2a
 checkentail x::ll<> |- x::ll1<>.
+
+print residue.
+
+//2b
+checkentail x::ll1<> |- x::ll<>.
 
 print residue.
 
