@@ -138,6 +138,21 @@ norm_pure_input@17 EXIT out : (ZInfinity+1)<=ZInfinity
   --> true
 
 =======================================================================
+# is-3b.slk
+
+checkentail x::bnd1<0,dmi,dmx>  
+   & n=0 & dmi=\inf 
+   //& 0=(\inf)+dmx // why this fails?
+   & dmx=-\inf
+   & mi=min(a,dmi) & mx=max(a,dmx)
+   |- a=mi & 
+       mx=a
+      .
+The above succeed with dmx=-inf but not 0=\inf+dmx
+I think your normalization need to ensure that we will
+have equality, where possible, than can be picked
+for substitution.
+
 =======================================================================
 =======================================================================
 =======================================================================
