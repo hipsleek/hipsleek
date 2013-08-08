@@ -2156,6 +2156,7 @@ and unfold_struc_x (prog:prog_or_branches) (f : struc_formula) (v : CP.spec_var)
       | None -> None 
       | Some s -> 
 	    let tmp_es = CF.empty_es (CF.mkTrueFlow ()) (None,[]) no_pos in
+            (* WN_all_lemma : are there two programs here? *)
 	    Some (normalize_struc_formula_w_coers (fst prog) tmp_es s (fst prog).prog_left_coercions) in
   
   let rec struc_helper f = match f with
@@ -10152,7 +10153,10 @@ and process_action i caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
     | CF.SuccCtx ctx0 -> List.length ctx0 in
   let pr2 x = "\nctx length:" ^ (string_of_int (length_ctx (fst x))) ^ " \n Context:"^ Cprinter.string_of_list_context_short (fst x) in
   let pr3 = Cprinter.string_of_formula in
-  Debug.no_5_num i "process_action" pr1 
+  let filter _ = match a with
+    | Context.M_Nothing_to_do _ -> false
+    | _ -> true in 
+  Debug.no_5_all i "process_action" (Some filter) None [] pr1 
       (add_str "estate" Cprinter.string_of_entail_state_short)
       (add_str "conseq" Cprinter.string_of_formula) 
       (add_str "lhs_b" pr3) 
@@ -10624,7 +10628,8 @@ and apply_universal_a prog estate coer resth1 anode lhs_b rhs_b c1 c2 conseq is_
 and find_coercions_x c1 c2 prog anode ln2 =
   let is_not_norm c = match c.coercion_case with | Normalize _ -> false | _ -> true in
   let origs = try get_view_origins anode with _ -> print_string "exception get_view_origins\n"; [] in 
-  let coers1 = look_up_coercion_def_raw prog.prog_left_coercions c1 in  
+  let left_co = Lem_store.all_lemma # get_left_coercion in
+  let coers1 = look_up_coercion_def_raw left_co (* prog.prog_left_coercions *) c1 in  
   let coers1 = List.filter (fun c -> not(is_cycle_coer c origs) && is_not_norm c) coers1  in (* keep only non-cyclic coercion rule *)
   let origs2 = try get_view_origins ln2 with _ -> print_string "exception get_view_origins\n"; [] in 
   let coers2 = look_up_coercion_def_raw prog.prog_right_coercions c2 in
@@ -11627,7 +11632,9 @@ let normalize_entail_state_w_lemma prog (es:CF.entail_state) =
   let es = CF.clear_entailment_vars es in
   (* create a tmp estate for normalizing *)
   let tmp_es = CF.empty_es (CF.mkTrueFlow ()) es.CF.es_group_lbl no_pos in
-  CF.Ctx {es with CF.es_formula = normalize_formula_w_coers 5 prog tmp_es es.CF.es_formula prog.prog_left_coercions}
+  let left_co = Lem_store.all_lemma # get_left_coercion in
+  CF.Ctx {es with CF.es_formula = normalize_formula_w_coers 5 prog tmp_es es.CF.es_formula 
+          left_co (* prog.prog_left_coercions *)}
 
 let normalize_list_failesc_context_w_lemma prog lctx =
   (* if not (Perm.allow_perm ()) then lctx *)

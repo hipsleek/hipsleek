@@ -31,6 +31,7 @@ let string_of_lem_formula lf = match lf with
   | CFormula f -> Cprinter.string_of_formula f
   | CSFormula csf -> Cprinter.string_of_struc_formula csf
 
+
 (* checks if iante(CF.formula) entails iconseq(CF.formula or CF.struc_formula) in cprog(C.prog_decl)
    - similar to Sleekengine.run_entail_check
 *)

@@ -1092,6 +1092,8 @@ let rec trans_prog (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_decl
 	  (* Start calling is_sat,imply,simplify from trans_proc *)
 	  let cprocs = !loop_procs @ cprocs1 in
 	  let (l2r_coers, r2l_coers) = trans_coercions prog in
+          let _ = Lem_store.all_lemma # add_left_coercion l2r_coers in
+          let _ = Lem_store.all_lemma # add_right_coercion r2l_coers in
 	  let log_vars = List.concat (List.map (trans_logical_vars) prog.I.prog_logical_var_decls) in 
 	  let bdecls = List.map (trans_bdecl prog) prog.I.prog_barrier_decls in
 	  let cprog = {
@@ -7149,8 +7151,11 @@ and pred_prune_inference_x (cp:C.prog_decl):C.prog_decl =
     let procs = C.proc_decls_map proc_spec prog_barriers_pruned.C.new_proc_decls in 
     let l_coerc = List.concat (List.map (coerc_spec prog_barriers_pruned true) prog_barriers_pruned.C.prog_left_coercions) in
     let r_coerc = List.concat (List.map (coerc_spec prog_barriers_pruned false) prog_barriers_pruned.C.prog_right_coercions) in
+    let _ = Lem_store.all_lemma # add_left_coercion l_coerc in
+    let _ = Lem_store.all_lemma # add_right_coercion r_coerc in
     let r = { prog_barriers_pruned with 
         C.new_proc_decls = procs;
+        (* WN_all_lemma - is this overriding of lemmas? *)
         C.prog_left_coercions  = l_coerc;
         C.prog_right_coercions = r_coerc;} in
     Gen.Profiling.pop_time "pred_inference" ;r
@@ -7537,6 +7542,7 @@ and check_barrier_wf prog bd =
             else (*check precision P * P = false , shold be redundant at this point*)
               
               let f = (*Solver.normalize_frac_formula prog*) (CF.mkStar p1 p1 CF.Flow_combine no_pos) in
+              (* WN_all_lemma *)
               let f = Solver.normalize_formula_w_coers 8 prog empty_es f prog.C.prog_left_coercions in
               Gen.Profiling.inc_counter "barrier_proofs";
               if Solver.unsat_base_nth 3 prog (ref 0) f then (p1,p2)  
@@ -7544,6 +7550,7 @@ and check_barrier_wf prog bd =
       | _ -> raise  (Err.Malformed_barrier " disjunctive specification?")) fl) in
     (*the pre sum totals full barrier fs get residue F1*)
     let tot_pre = List.fold_left (fun a c-> CF.mkStar a c CF.Flow_combine no_pos) (CF.mkTrue_nf no_pos) pres in
+    (* WN_all_lemma *)
     let tot_pre = Solver.normalize_formula_w_coers 9 prog empty_es tot_pre prog.C.prog_left_coercions in
     (*let tot_pre = Solver.normalize_frac_formula prog tot_pre in*)
     (*let _ = print_string (Cprinter.string_of_formula tot_pre) in *)
@@ -7557,6 +7564,7 @@ and check_barrier_wf prog bd =
       if CF.isFailCtx fpre then  raise  (Err.Malformed_barrier (" preconditions do not contain the entire barrier in transition "^t_str ))
       else (*the post sum totals full barrier ts get residue F2*)
         let tot_post = List.fold_left (fun a c-> CF.mkStar a c CF.Flow_combine no_pos) (CF.mkTrue_nf no_pos) posts in
+        (* WN_all_lemma - is this overriding of lemmas? *)
         let tot_post = Solver.normalize_formula_w_coers 10 prog empty_es tot_post prog.C.prog_left_coercions in
         (*let tot_post = Solver.normalize_frac_formula prog tot_post in*)
         Gen.Profiling.inc_counter "barrier_proofs";
@@ -7591,6 +7599,7 @@ and check_barrier_wf prog bd =
       Gen.Profiling.inc_counter "barrier_proofs";
       (*should be made to use "and" on xpures to detect the contradiction, probably by looking only at the pures after normalization*)
         let nf = CF.mkStar f1 f2 CF.Flow_combine no_pos in
+        (* WN_all_lemma - is this overriding of lemmas? *)
         let nf = Solver.normalize_formula_w_coers 11 prog empty_es nf prog.C.prog_left_coercions in   
       if  Solver.unsat_base_nth 6 prog (ref 0) nf then () 
       else raise (Err.Malformed_barrier (" no contradiction found in preconditions of transitions from "^(string_of_int st)^"  for preconditions: \n f1:   "^

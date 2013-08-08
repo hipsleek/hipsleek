@@ -3381,6 +3381,7 @@ let string_of_program p = "\n" ^ (string_of_data_decl_list p.prog_data_decls) ^ 
   (string_of_barrier_decl_list p.prog_barrier_decls) ^ "\n\n" ^ 
   (string_of_rel_decl_list p.prog_rel_decls) ^ "\n\n" ^ 
   (string_of_axiom_decl_list p.prog_axiom_decls) ^ "\n\n" ^ 
+  (* WN_all_lemma - override usage? *)
   (string_of_coerc_decl_list p.prog_left_coercions)^"\n\n"^
   (string_of_coerc_decl_list p.prog_right_coercions)^"\n\n"^
   (* TODO: PD *)
