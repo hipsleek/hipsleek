@@ -1,0 +1,21 @@
+data node {
+  int val;
+  node next;
+}.
+
+pred ll<> == self=null
+	or self::node<_, q> * q::ll<>
+	inv true.
+
+pred ll_size<n> == self=null & n = 0
+  or self::node<_, q> * q::ll_size<m> & n =m+1
+  inv true.
+
+
+//lemma "V1" self::ll_size<_> -> self::ll<>.
+
+//FAIL
+checkentail x::ll<> |- x::ll_size<_>.
+
+//OK
+checkentail x::ll_size<_> |- x::ll<> .
