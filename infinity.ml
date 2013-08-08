@@ -40,7 +40,7 @@ Normalizes Min and Max Exp as per the rules
 *)
 let rec normalize_exp (exp: CP.exp) : CP.exp =
   let _ = DD.vv_trace("in normalize_exp: "^ (string_of_formula_exp exp)) in
-  let exp = CP.norm_exp exp in
+  (*let exp = CP.norm_exp exp in*)
   match exp with
     | CP.Min(e1,e2,pos) -> 
           let e1_norm = normalize_exp e1 in
