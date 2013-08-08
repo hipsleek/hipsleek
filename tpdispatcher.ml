@@ -841,9 +841,9 @@ let cnv_ptr_to_int (ex_flag,st_flag) f =
               Some (Gt(a1,IConst(0,ll),ll),l)
             else 
               Some (Neq(a1,IConst(0,ll),ll),l)
-          else  let (is_inf_flag,a1,a2) = comm_inf a1 a2 in
+          (*else  let (is_inf_flag,a1,a2) = comm_inf a1 a2 in
           if is_inf_flag then
-              Some (Lt(a1,CP.Var(CP.SpecVar(Int,constinfinity,Unprimed),ll),ll),l)
+              Some (Lt(a1,CP.Var(CP.SpecVar(Int,constinfinity,Unprimed),ll),ll),l)*)
           else Some(bf)
      (* | Lte(a1,a2,ll) -> if is_inf a1 && not(is_inf a2) then Some(BConst(false,ll),l)  
         else if is_inf a2 && not(is_inf a1) then Some(BConst(true,ll),l) 
@@ -900,10 +900,10 @@ let comm_is_ann a1 a2 =
 
 let is_ptr_ctr a1 a2 =
   match a1,a2 with
-    | Var(v,_),IConst(_,_) ->
+    | Var(v,_),_ ->
           let t=type_of_spec_var v in
           (is_otype t,is_ann_type t)
-    | IConst(_,_),Var(v,_) ->
+    | _,Var(v,_) ->
           let t=type_of_spec_var v in
           (is_otype t,is_ann_type t)
     | _ -> (false,false)
@@ -930,35 +930,37 @@ let is_null a1 a2 =
 
 (* s>0 -> 0<s -> 1<=s *)
 let to_ptr ptr_flag pf =
-  let rec norm pf = 
+  let norm0 pf = match pf with
+    | Gt(a,b,ll) -> Lt(CP.norm_exp b, CP.norm_exp a,ll)
+    | Gte(a,b,ll) -> Lte(CP.norm_exp b, CP.norm_exp a,ll)
+    | Lte(a,b,ll) -> Lte(CP.norm_exp a, CP.norm_exp b,ll)
+    | Lt(a,b,ll) -> Lt(CP.norm_exp a, CP.norm_exp b,ll)
+    | _ -> pf in
+  let rec norm pf =
     match pf with
-      | Lt(a,IConst(i,l),ll) -> Lte(a,IConst(i-1,l),ll)
-      | Lt(IConst(i,l),a,ll) -> Lte(IConst(i+1,l),a,ll)
-      | Gt(a,b,ll) -> norm (Lt(b,a,ll))
-      | Gte(a,b,ll) -> Lte(b,a,ll)
+      | Lt(a,IConst(i,l),ll) -> norm(Lte(a,IConst(i-1,l),ll))
+      | Lt(IConst(i,l),a,ll) -> norm(Lte(IConst(i+1,l),a,ll))
+      | Lte((Var(v,_) as a1), IConst(i,_),ll) ->
+            if ptr_flag then
+              if i<=(-1) then BConst(false,ll)   (* v<=0 --> v=M; v<=1 --> @L<:v *)
+              else if i>0 then BConst(true,ll)
+              else Eq(a1,Null ll,ll)
+            else (* ann_flag *)
+              if i<=(-1)  then BConst(false,ll)
+              else if i>2 then BConst(true,ll)
+              else if i=0 then Eq(a1,int_to_ann i,ll)
+              else SubAnn(a1,int_to_ann i,ll)
+      | Lte(IConst(i,_),(Var(v,_) as a1),ll) ->
+            if ptr_flag then
+              if i>=1 then Neq(a1,Null ll,ll)
+              else BConst(true,ll)
+            else (* ann_flag *)
+              if i<=(0)  then BConst(true,ll)
+              else if i>3 then BConst(false,ll)
+              else if i=3 then Eq(a1,int_to_ann i,ll)
+              else SubAnn(int_to_ann i,a1,ll)
       | _ -> pf
-  in let pf = norm pf in
-  match pf with
-    | Lte((Var(v,_) as a1), IConst(i,_),ll) ->
-          if ptr_flag then
-            if i<=(-1) then BConst(false,ll)   (* v<=0 --> v=M; v<=1 --> @L<:v *)
-            else if i>0 then BConst(true,ll)
-            else Eq(a1,Null ll,ll)
-          else (* ann_flag *)
-            if i<=(-1)  then BConst(false,ll)
-            else if i>2 then BConst(true,ll)
-            else if i=0 then Eq(a1,int_to_ann i,ll)
-            else SubAnn(a1,int_to_ann i,ll)
-    | Lte(IConst(i,_),(Var(v,_) as a1),ll) ->
-          if ptr_flag then
-            if i>=1 then Neq(a1,Null ll,ll)
-            else BConst(true,ll)
-          else (* ann_flag *)
-            if i<=(0)  then BConst(true,ll)
-            else if i>3 then BConst(false,ll)
-            else if i=3 then Eq(a1,int_to_ann i,ll)
-            else SubAnn(int_to_ann i,a1,ll)
-    | _ -> pf
+  in norm (norm0 pf)
 
 let to_ptr ptr_flag pf =
   let pr f = Cprinter.string_of_b_formula (f,None) in
@@ -1712,8 +1714,9 @@ let tp_is_sat f sat_no =
 
 
 let norm_pure_input f =
-  let f = if !Globals.allow_inf then Infinity.normalize_inf_formula_sat(* _sat *) f else f in
   let f = cnv_ptr_to_int f in
+  let f = if !Globals.allow_inf 
+    then Infinity.convert_inf_to_var (Infinity.normalize_inf_formula f) else f in
   f
 
 let norm_pure_input f =

@@ -1289,7 +1289,7 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
     (* let compute_view_x_formula_x_op ()= *)
     (if (n > 0 (* && not(vdef.C.view_is_prim) *)) then
       (     
-	  let (xform', addr_vars', ms) = Solver.xpure_symbolic prog (C.formula_of_unstruc_view_f vdef) in	
+	  let (xform', addr_vars', ms) = Solver.xpure_symbolic 1 prog (C.formula_of_unstruc_view_f vdef) in	
 	  let addr_vars = CP.remove_dups_svl addr_vars' in
 	  let xform = MCP.simpl_memo_pure_formula Solver.simpl_b_formula Solver.simpl_pure_formula xform' (TP.simplify_a 10) in
           (* let _ = print_endline ("\n xform: " ^ (Cprinter.string_of_mix_formula xform)) in *)
@@ -1314,7 +1314,14 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
             vdef.C.view_xpure_flag <- TP.check_diff vdef.C.view_user_inv xform2)
           ;
           vdef.C.view_addr_vars <- addr_vars;
-	  vdef.C.view_baga <- (match ms.CF.mem_formula_mset with | [] -> [] | h::_ -> h) ;
+          let _ = Debug.tinfo_hprint (add_str "view_addr_vars" !Cast.print_svl) addr_vars no_pos in
+          let baga = (match ms.CF.mem_formula_mset with | [] -> [] | h::_ -> h) in
+          let _ = Debug.tinfo_hprint (add_str "view_baga" !Cast.print_svl) baga no_pos in
+          let new_baga = Gen.BList.intersect_eq (CP.eq_spec_var) baga addr_vars in
+          let _ = Debug.tinfo_hprint (add_str "new_baga" !Cast.print_svl) new_baga no_pos in
+          (* intersection ensures we remove existential vars *)
+	  vdef.C.view_baga <- new_baga
+               ;
 	  helper (n - 1) do_not_compute_flag
               (* else report_error pos "view formula does not entail supplied invariant\n" in () *)
       )
@@ -1332,7 +1339,7 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
   let check_and_compute () = 
     let vn = vdef.C.view_name in
     if not(vdef.C.view_is_prim) then
-      let (xform', _ (*addr_vars'*), ms) = Solver.xpure_symbolic prog (C.formula_of_unstruc_view_f vdef) in	
+      let (xform', _ (*addr_vars'*), ms) = Solver.xpure_symbolic 2 prog (C.formula_of_unstruc_view_f vdef) in	
       (*let addr_vars = CP.remove_dups_svl addr_vars' in*)
       let xform = MCP.simpl_memo_pure_formula Solver.simpl_b_formula Solver.simpl_pure_formula xform' (TP.simplify_a 10) in
       let formula1 = CF.formula_of_mix_formula xform pos in
@@ -1351,7 +1358,7 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
                 let pr = Cprinter.string_of_mix_formula in
                 let sf = remove_disj_clauses vdef.C.view_user_inv in
                 (* Debug.info_hprint (add_str "disj_form" string_of_bool) disj_form no_pos; *)
-                if disj_form then
+                if disj_form && !Globals.compute_xpure_0 then
                   (vdef.C.view_user_inv <- sf; vdef.C.view_xpure_flag <- false);
 	        Debug.info_pprint ("Using a simpler inv for xpure0 of "^vdef.C.view_name) pos;
                 Debug.info_hprint (add_str "inv(xpure0)" pr) vdef.C.view_user_inv pos;
@@ -1701,7 +1708,7 @@ and compute_base_case prog cf vars =
 and compute_base_case_x prog cf vars = (*flatten_base_case cf s self_c_var *)
   let compute_base_case_x_op ()=
     let xpuring f = 
-      let (xform', _ , _) = Solver.xpure_symbolic prog f in
+      let (xform', _ , _) = Solver.xpure_symbolic 3 prog f in
       let xform = simpl_memo_pure_formula Solver.simpl_b_formula Solver.simpl_pure_formula xform' (TP.simplify_a 10) in
       ([],[fold_mem_lst (CP.mkTrue no_pos) true true xform]) in
     let rec part f = match f with

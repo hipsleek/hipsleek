@@ -1,0 +1,27 @@
+/*
+id: 16; caller: []; line: 16; classic: false; kind: Sleek_Entail(1); hec_num: 4; evars: [z_32,flted_16_33]; infer_vars: [inf_ann_39,inf_p_40,z,H1,HP_57]; 
+c_heap: y::lseg<flted_16_56>@M * z::lseg<inf_p_40>@inf_ann_39 * x::node<z>@M
+
+id: 16; caller: []; line: 13; classic: false; kind: Sleek_Entail(1); hec_num: 4; evars: [z_32,flted_13_33]; infer_vars: [inf_ann_39,inf_p_40,z,H1,HP_56]; c_heap: y::lseg<flted_13_55>@M * z::lseg<inf_p_40>@inf_ann_39 * x::node<z>@M
+ checkentail HP_56(flted_13_55)&q_34=z & inf_ann_39=@M & inf_p_40=null 
+& inf_p_40!=x&
+{FLOW,(19,20)=__norm}[]
+ |-  (exists z_32: emp&flted_13_55=null & z=z_32 & x!=z_32 & inf_p_40=z_32&
+{FLOW,(19,20)=__norm})[]. 
+
+*/
+data node {
+   node next ;
+}.
+
+HeapPred HP(node a).
+
+infer [HP] HP(flted_16_56)&
+            q_34=z & inf_ann_39=@M & inf_p_40=null & inf_p_40!=x & z=null
+ |-  
+      flted_16_56=null &
+      //& 
+      x!=z &
+      inf_p_40=z
+.
+print residue.

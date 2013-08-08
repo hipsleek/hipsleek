@@ -2431,7 +2431,7 @@ let pr_estate (es : entail_state) =
   pr_wrap_test "es_orig_ante: " Gen.is_None (pr_opt pr_formula) es.es_orig_ante; 
   (*pr_vwrap "es_orig_conseq: " pr_struc_formula es.es_orig_conseq;  *)
   if (!Debug.devel_debug_print_orig_conseq == true) then pr_vwrap "es_orig_conseq: " pr_struc_formula es.es_orig_conseq  else ();
-  pr_vwrap "es_heap: " pr_h_formula es.es_heap;
+  pr_wrap_test "es_heap: " is_empty_heap pr_h_formula es.es_heap;
   pr_wrap_test "es_history: " Gen.is_empty (pr_seq "" pr_h_formula) es.es_history;
   (*pr_wrap_test "es_prior_steps: "  Gen.is_empty (fun x -> fmt_string (string_of_prior_steps x)) es.es_prior_steps;*)
   pr_wrap_test "es_ante_evars: " Gen.is_empty (pr_seq "" pr_spec_var) es.es_ante_evars;
@@ -2451,7 +2451,7 @@ let pr_estate (es : entail_state) =
   (* pr_wrap_test "es_residue_pts: " Gen.is_empty (pr_seq "" pr_formula_label) es.es_residue_pts; *)
   (* pr_wrap_test "es_path_label: " Gen.is_empty pr_path_trace es.es_path_label; *)
   pr_wrap_test "es_cond_path: " Gen.is_empty (pr_seq "" (fun s -> fmt_int s)) es.es_cond_path;
-  pr_vwrap "es_var_measures 1: " (pr_opt (fun (t_ann, l1, l2) ->
+  pr_wrap_test "es_var_measures 1: " Gen.is_None (pr_opt (fun (t_ann, l1, l2) ->
     fmt_string (string_of_term_ann t_ann);
     pr_seq "" pr_formula_exp l1; pr_set pr_formula_exp l2;
   )) es.es_var_measures;
@@ -2484,7 +2484,7 @@ let pr_estate (es : entail_state) =
    if (es.es_var_zero_perm!=[]) then
      pr_wrap_test "es_var_zero_perm: " (fun _ -> false) (pr_seq "" pr_spec_var) es.es_var_zero_perm; (*always print*)
   (* pr_vwrap "es_infer_invs:  " pr_list_pure_formula es.es_infer_invs; *)
-  pr_wrap_test "es_unsat_flag: " (fun _-> false) (fun c-> fmt_string (string_of_bool c)) es.es_unsat_flag;  
+  pr_wrap_test "es_unsat_flag: " (fun x-> x) (fun c-> fmt_string (string_of_bool c)) es.es_unsat_flag;  
   fmt_close ()
 
 let pr_estate_infer_hp (es : entail_state) =

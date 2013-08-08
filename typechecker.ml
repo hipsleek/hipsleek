@@ -2854,10 +2854,10 @@ and check_proc iprog (prog : prog_decl) (proc : proc_decl) cout_option (mutual_g
 		  let _ = match exc with | Some e -> raise e | None -> () in
                   if pr_flag then
                     begin
-		      if pp then print_string ("\nProcedure "^proc.proc_name^" SUCCESS\n")
+		      if pp then print_string ("\nProcedure "^proc.proc_name^" SUCCESS.\n")
 	              else 
                         let _ = Log.last_cmd # dumping (proc.proc_name^" FAIL-1") in
-                        print_string ("\nProcedure "^proc.proc_name^" result FAIL-1\n")
+                        print_string ("\nProcedure "^proc.proc_name^" result FAIL.(1)\n")
                     end;
 	      	  pp
 	        end
@@ -2910,7 +2910,7 @@ let check_proc_wrapper iprog prog proc cout_option mutual_grp =
   with _ as e ->
     if !Globals.check_all then begin
       (* dummy_exception(); *)
-      print_string ("\nProcedure "^proc.proc_name^" FAIL-2\n");
+      print_string ("\nProcedure "^proc.proc_name^" FAIL.(2)\n");
       print_string ("\nException "^(Printexc.to_string e)^" Occurred!\n");
       Printexc.print_backtrace(stdout);
       print_string ("\nError(s) detected when checking procedure " ^ proc.proc_name ^ "\n");
@@ -2986,7 +2986,7 @@ let check_proc_wrapper_map iprog prog (proc,num) cout_option =
     check_proc iprog prog proc cout_option []
   with _ as e ->
     if !Globals.check_all then begin
-      print_string ("\nProcedure "^proc.proc_name^" FAIL-3\n");
+      print_string ("\nProcedure "^proc.proc_name^" FAIL.(3)\n");
       print_string ("\nError(s) detected when checking procedure " ^ proc.proc_name ^ "\n");
       false
     end else
@@ -2997,7 +2997,7 @@ let check_proc_wrapper_map_net iprog prog  (proc,num) cout_option =
     check_proc iprog prog proc cout_option []
   with _ as e ->
     if !Globals.check_all then begin
-      print_string ("\nProcedure "^proc.proc_name^" FAIL-4\n");
+      print_string ("\nProcedure "^proc.proc_name^" FAIL.(4)\n");
       print_string ("\nError(s) detected when checking procedure " ^ proc.proc_name ^ "\n");
       false
     end else
