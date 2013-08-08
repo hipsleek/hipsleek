@@ -40,6 +40,7 @@ Normalizes Min and Max Exp as per the rules
 *)
 let rec normalize_exp (exp: CP.exp) : CP.exp =
   let _ = DD.vv_trace("in normalize_exp: "^ (string_of_formula_exp exp)) in
+  let exp = CP.norm_exp exp in
   match exp with
     | CP.Min(e1,e2,pos) -> 
           let e1_norm = normalize_exp e1 in
@@ -562,6 +563,16 @@ let find_inf_subs (f:CP.formula) : (CP.formula * EM.emap) list =
     						    | Var(sv1,_),Var(sv2,_) -> EM.add_equiv eset sv1 sv2
                                 | _,IConst(0,_) -> 
                                     (match e1 with 
+                                       | Add(a1,a2,_) -> 
+                                           (match a1, a2 with 
+                                           | Var(sa1,_),Var(sa2,_) -> if is_inf a1 
+                                                          then EM.add_equiv eset sa2 neg_inf
+                                             else if is_inf a2 then EM.add_equiv eset sa1 neg_inf
+                                             else eset
+                                           | _ -> eset)
+                                       | _ -> eset)
+                                | IConst(0,_),_ -> 
+                                    (match e2 with 
                                        | Add(a1,a2,_) -> 
                                            (match a1, a2 with 
                                            | Var(sa1,_),Var(sa2,_) -> if is_inf a1 
