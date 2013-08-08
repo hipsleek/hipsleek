@@ -15,3 +15,5 @@ pred lseg<p> == self=p
 //lemma "V1" self::lseg<null> <-> self::ll<>.
 
 checkentail x::ll<> |- x::lseg<null>.
+
+checkentail x::lseg<null> |- x::ll<> .

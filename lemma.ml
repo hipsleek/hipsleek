@@ -71,10 +71,13 @@ let final_inst_analysis_view cprog vdef=
 let subst_cont vn cont_args f ihf chf self_hns self_null pos=
   let rec subst_helper ss f0=
     match f0 with
-      | CF.Base _ -> (* let _, vns, _ = CF.get_hp_rel_formula f0 in *)
+      | CF.Base fb -> (* let _, vns, _ = CF.get_hp_rel_formula f0 in *)
         (* if (\* List.exists (fun hv -> String.compare hv.CF.h_formula_view_name vn = 0) vns *\) vns<> [] then *)
         (*   f0 *)
-        (* else *) CF.subst ss f0
+        (* else *)
+            (* let nfb = CF.subst_b ss fb in *)
+            let np = CP.subst_term ss (MCP.pure_of_mix fb.CF.formula_base_pure) in
+            CF.Base {fb with CF.formula_base_pure = MCP.mix_of_pure np}
       | CF.Exists _ ->
             let qvars, base_f1 = CF.split_quantifiers f0 in
             let nf = subst_helper ss base_f1 in
@@ -89,8 +92,8 @@ let subst_cont vn cont_args f ihf chf self_hns self_null pos=
       | [a] -> a
       | _ -> report_error no_pos "Lemma.subst_cont: to handle"
     in
-    let null_sv = CP.SpecVar (CP.type_of_spec_var cont, null_name, Unprimed) in
-    let ss = [(cont, null_sv)] in
+    let null_exp = CP.Null pos in
+    let ss = [(cont, null_exp)] in
     let n = IP.Null no_pos in
     let ip = IP.mkEqExp (IP.Var (((CP.name_of_spec_var cont, CP.primed_of_spec_var cont)), no_pos)) (IP.Null no_pos) no_pos in
     let cp = CP.mkNull cont pos in
@@ -103,17 +106,6 @@ let subst_cont vn cont_args f ihf chf self_hns self_null pos=
 
 (*if two views are equiv (subsume), generate an equiv (left/right) lemma*)
 let check_view_subsume iprog cprog view1 view2 need_cont_ana=
-  (*todo, subst parameters if any*)
-  (* let hn_c_trans (sv1, sv2) hf = match hf with *)
-  (*   | CF.ViewNode vn -> *)
-  (*         let nhf = *)
-  (*           if String.compare sv1 vn.CF.h_formula_view_name = 0 then *)
-  (*             CF.ViewNode {vn with CF.h_formula_view_name = sv2 } *)
-  (*           else hf *)
-  (*         in *)
-  (*         nhf *)
-  (*   | _ -> hf *)
-  (* in *)
   let v_f1 = CF.formula_of_disjuncts (List.map fst view1.C.view_un_struc_formula) in
   let v_f2 = CF.formula_of_disjuncts (List.map fst view2.C.view_un_struc_formula) in
   let v_f11 = (* CF.formula_trans_heap_node (hn_c_trans (view1.C.view_name, view2.C.view_name)) *) v_f1 in
@@ -171,8 +163,8 @@ let generate_lemma_4_views_x iprog cprog=
                       List.length v1.C.view_vars = List.length v.C.view_vars + List.length v1.C.view_cont_vars)
                 then
                   (*cont paras + final inst analysis*)
-                  let _ = report_warning no_pos ("cont paras + final inst analysis " ^ (v.C.view_name) ^ " ..." ^
-                      v1.C.view_name) in
+                  (* let _ = report_warning no_pos ("cont paras + final inst analysis " ^ (v.C.view_name) ^ " ..." ^ *)
+                  (*     v1.C.view_name) in *)
                   let l, r = check_view_subsume iprog cprog v v1 true in
                   (r1@l,r2@r)
                 else

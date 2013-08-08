@@ -11087,3 +11087,20 @@ let is_ieq f =
           end
     | _ -> false
 
+(* let swap_null_x (f : formula) : formula = *)
+(*   let f_e e = Some e in *)
+(*   let f_b ((pf,ann) as bf) = *)
+(*     match pf with *)
+(*       | Eq (e1, e2, l) -> begin *)
+(*           match e1 with *)
+(*             | Null _ -> Some ((Eq (e2, e1, l)), ann) *)
+(*             | _ -> Some bf *)
+(*         end *)
+(*       | _ -> Some bf *)
+(*   in *)
+(*   transform_formula ((fun _-> None),(fun _-> None), (fun _-> None),f_b,f_e) f *)
+
+(* let swap_null (f : formula) : formula = *)
+(*   let pr1 = !print_formula in *)
+(*   Debug.no_1 "CP.swap_null" pr1 pr1 *)
+(*       (fun _ -> swap_null_x f) f *)
