@@ -829,7 +829,7 @@ xform has self>0 instead of self!=null
   xform: ((p!=self & self>0) | p=self)
 
 ===================================================================
-# i13-5a.slk
+# i13-5a.slk  (in bugs)
 
 infer [H1] H1(y) & (x=2 | x>5)  |- y::lseg<null> .
 

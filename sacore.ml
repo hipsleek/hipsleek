@@ -14,6 +14,7 @@ module TP = Tpdispatcher
 module SAU = Sautility
 module SAO = Saout
 module Inf = Infer
+module SC = Sleekcore
 
 let cmp_hp_pos (hp1,pos1) (hp2,pos2)= (CP.eq_spec_var hp1 hp2) && pos1=pos2
 
@@ -2131,55 +2132,56 @@ let do_entail_check_x vars cprog cs=
   let _ = Infer.rel_ass_stk # reset in
   let ante = cs.CF.hprel_lhs in
   let conseq = CF.struc_formula_of_formula cs.CF.hprel_rhs (CF.pos_of_formula  cs.CF.hprel_rhs) in
-  let conseq = Solver.prune_pred_struc cprog true conseq in
-  let pr = Cprinter.string_of_struc_formula in
-  let _ = DD.tinfo_hprint (add_str "conseq(after prune)" pr) conseq no_pos in 
-  let conseq = AS.add_param_ann_constraints_struc conseq in
-  let _ = DD.tinfo_hprint (add_str "conseq(after add param)" pr) conseq no_pos in
-  (*********PRINTING*****************)
-  (* let _ = Debug.devel_zprint (lazy ("\nrun_entail_check 2:" *)
-  (*                       ^"\n ### ivars = "^(pr_list pr_id ivars) *)
-  (*                       ^ "\n ### ante = "^(Cprinter.string_of_formula ante) *)
-  (*                       ^ "\n ### conseq = "^(Cprinter.string_of_struc_formula conseq) *)
-  (*                       ^"\n\n")) no_pos in *)
-  (*********PRINTING*****************)
-  let es = CF.empty_es (CF.mkTrueFlow ()) Lab2_List.unlabelled no_pos in
-  let ante = Solver.normalize_formula_w_coers 11 cprog es ante cprog.CA.prog_left_coercions in
-  (*********PRINTING*****************)
-  (* let _ = if (!Globals.print_core || !Globals.print_core_all) then print_endline ("INPUT: \n ### ante = " ^ (Cprinter.string_of_formula ante) ^"\n ### conseq = " ^ (Cprinter.string_of_struc_formula conseq)) else () in *)
-  (* let _ = Debug.devel_zprint (lazy ("\nrun_entail_check 3: after normalization" *)
-  (*                       ^ "\n ### ante = "^(Cprinter.string_of_formula ante) *)
-  (*                       ^ "\n ### conseq = "^(Cprinter.string_of_struc_formula conseq) *)
-  (*                       ^"\n\n")) no_pos in *)
-  (*********PRINTING*****************)
-  let ectx = CF.empty_ctx (CF.mkTrueFlow ()) Lab2_List.unlabelled no_pos in
-  let ctx = CF.build_context ectx ante no_pos in
-  let ctx = Solver.elim_exists_ctx ctx in
-  (* List of vars appearing in original formula *)
-  let orig_vars = CF.fv ante @ CF.struc_fv conseq in
-  (* Init context with infer_vars and orig_vars *)
-  let (vrel,iv) = List.partition (fun v -> CP.is_rel_typ v) vars in
-  let (v_hp_rel,iv) = List.partition (fun v -> CP.is_hprel_typ v) iv in
-  let ctx = Inf.init_vars ctx iv vrel v_hp_rel orig_vars in
-  (*********PRINTING*****************)
-  (* let _ = if !Globals.print_core || !Globals.print_core_all *)
-  (*   then print_string ("\nrun_infer:\n"^(Cprinter.string_of_formula ante) *)
-  (*       (\* ^" "^(!CP.print_svl vars) *\) *)
-  (*     ^" |- "^(Cprinter.string_of_struc_formula conseq)^"\n") *)
-  (*   else () *)
+  (* let conseq = Solver.prune_pred_struc cprog true conseq in *)
+  (* let pr = Cprinter.string_of_struc_formula in *)
+  (* let _ = DD.tinfo_hprint (add_str "conseq(after prune)" pr) conseq no_pos in  *)
+  (* let conseq = AS.add_param_ann_constraints_struc conseq in *)
+  (* let _ = DD.tinfo_hprint (add_str "conseq(after add param)" pr) conseq no_pos in *)
+  (* (\*********PRINTING*****************\) *)
+  (* (\* let _ = Debug.devel_zprint (lazy ("\nrun_entail_check 2:" *\) *)
+  (* (\*                       ^"\n ### ivars = "^(pr_list pr_id ivars) *\) *)
+  (* (\*                       ^ "\n ### ante = "^(Cprinter.string_of_formula ante) *\) *)
+  (* (\*                       ^ "\n ### conseq = "^(Cprinter.string_of_struc_formula conseq) *\) *)
+  (* (\*                       ^"\n\n")) no_pos in *\) *)
+  (* (\*********PRINTING*****************\) *)
+  (* let es = CF.empty_es (CF.mkTrueFlow ()) Lab2_List.unlabelled no_pos in *)
+  (* let ante = Solver.normalize_formula_w_coers 11 cprog es ante cprog.CA.prog_left_coercions in *)
+  (* (\*********PRINTING*****************\) *)
+  (* (\* let _ = if (!Globals.print_core || !Globals.print_core_all) then print_endline ("INPUT: \n ### ante = " ^ (Cprinter.string_of_formula ante) ^"\n ### conseq = " ^ (Cprinter.string_of_struc_formula conseq)) else () in *\) *)
+  (* (\* let _ = Debug.devel_zprint (lazy ("\nrun_entail_check 3: after normalization" *\) *)
+  (* (\*                       ^ "\n ### ante = "^(Cprinter.string_of_formula ante) *\) *)
+  (* (\*                       ^ "\n ### conseq = "^(Cprinter.string_of_struc_formula conseq) *\) *)
+  (* (\*                       ^"\n\n")) no_pos in *\) *)
+  (* (\*********PRINTING*****************\) *)
+  (* let ectx = CF.empty_ctx (CF.mkTrueFlow ()) Lab2_List.unlabelled no_pos in *)
+  (* let ctx = CF.build_context ectx ante no_pos in *)
+  (* let ctx = Solver.elim_exists_ctx ctx in *)
+  (* (\* List of vars appearing in original formula *\) *)
+  (* let orig_vars = CF.fv ante @ CF.struc_fv conseq in *)
+  (* (\* Init context with infer_vars and orig_vars *\) *)
+  (* let (vrel,iv) = List.partition (fun v -> CP.is_rel_typ v) vars in *)
+  (* let (v_hp_rel,iv) = List.partition (fun v -> CP.is_hprel_typ v) iv in *)
+  (* let ctx = Inf.init_vars ctx iv vrel v_hp_rel orig_vars in *)
+  (* (\*********PRINTING*****************\) *)
+  (* (\* let _ = if !Globals.print_core || !Globals.print_core_all *\) *)
+  (* (\*   then print_string ("\nrun_infer:\n"^(Cprinter.string_of_formula ante) *\) *)
+  (* (\*       (\\* ^" "^(!CP.print_svl vars) *\\) *\) *)
+  (* (\*     ^" |- "^(Cprinter.string_of_struc_formula conseq)^"\n") *\) *)
+  (* (\*   else () *\) *)
+  (* (\* in *\) *)
+  (* (\*********PRINTING*****************\) *)
+  (* let ctx = *)
+  (*   if !Globals.delay_proving_sat then ctx *)
+  (*   else CF.transform_context (Solver.elim_unsat_es 9 cprog (ref 1)) ctx in *)
+  (* let _ = if (CF.isAnyFalseCtx ctx) then *)
+  (*       print_endline ("[Warning] False ctx") *)
   (* in *)
-  (*********PRINTING*****************)
-  let ctx =
-    if !Globals.delay_proving_sat then ctx
-    else CF.transform_context (Solver.elim_unsat_es 9 cprog (ref 1)) ctx in
-  let _ = if (CF.isAnyFalseCtx ctx) then
-        print_endline ("[Warning] False ctx")
-  in
-  let rs1, _ =  Solver.heap_entail_struc_init cprog false false
-        (CF.SuccCtx[ctx]) conseq no_pos None
-  in
+  (* let rs1, _ =  Solver.heap_entail_struc_init cprog false false *)
+  (*       (CF.SuccCtx[ctx]) conseq no_pos None *)
+  (* in *)
   (* let _ = print_endline ("WN# 1:"^(Cprinter.string_of_list_context rs1)) in *)
-  let rs = CF.transform_list_context (Solver.elim_ante_evars,(fun c->c)) rs1 in
+  (* let rs = CF.transform_list_context (Solver.elim_ante_evars,(fun c->c)) rs1 in *)
+  let (valid, rs,v_hp_rel) = SC.sleek_entail_check vars cprog [] ante conseq in
   let valid = ((not (CF.isFailCtx rs))) in
   if not valid then
     report_error no_pos ("Can not prove:\n" ^ (Cprinter.string_of_hprel_short cs))
