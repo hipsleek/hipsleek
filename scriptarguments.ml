@@ -540,6 +540,8 @@ let common_arguments = [
   ("--sa-subsume", Arg.Set Globals.sa_subsume, "use subsume when comparing definitions after infering");
   (* ("--norm-useless", Arg.Set Globals.norm_elim_useless, "elim useless parameters of user-defined predicates (view)"); *)
   ("--norm-extract", Arg.Set Globals.norm_extract, "extract common pattern among branches of user-defined predicates (view)");
+  ("--en-norm-disj", Arg.Set Globals.allow_norm_disj, "enable the normalization of disjunct during simplify");
+  ("--dis-norm-disj", Arg.Clear Globals.allow_norm_disj, "disable the normalization of disjunct during simplify");
   ("--sa-en-print-decl" , Arg.Set Globals.print_heap_pred_decl, "enable predicates declaration printing");
   ("--sa-dis-print-decl" , Arg.Clear Globals.print_heap_pred_decl, "disable predicates declaration printing");
   ("--en-print-ann" , Arg.Set Globals.print_ann, "enable annotation printing (default)");
