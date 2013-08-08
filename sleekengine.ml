@@ -80,9 +80,13 @@ let cprog = ref {
     C.prog_axiom_decls = []; (* [4/10/2011] An Hoa *)
     (*C.old_proc_decls = [];*)
     C.new_proc_decls = Hashtbl.create 1; (* no need for proc *)
-    C.prog_left_coercions = [];
-    C.prog_right_coercions = [];
+    (*C.prog_left_coercions = [];
+    C.prog_right_coercions = [];*)
     C. prog_barrier_decls = []}
+	
+let _ = 
+	Lem_store.all_lemma # clear_right_coercion;
+	Lem_store.all_lemma # clear_left_coercion
 
 let residues =  ref (None : (CF.list_context * bool) option)    (* parameter 'bool' is used for printing *)
 
@@ -104,8 +108,10 @@ let clear_cprog () =
   !cprog.C.prog_view_decls <- [];
   !cprog.C.prog_rel_decls <- [];
   !cprog.C.prog_hp_decls <- [];
-  !cprog.C.prog_left_coercions <- [];
-  !cprog.C.prog_right_coercions <- []
+  (*!cprog.C.prog_left_coercions <- [];*)
+  (*!cprog.C.prog_right_coercions <- []*)
+  Lem_store.all_lemma # clear_right_coercion;
+  Lem_store.all_lemma # clear_left_coercion
 
 let clear_all () =
   Debug.clear_debug_log ();
@@ -367,8 +373,8 @@ let process_lemma ldef =
   (* WN_all_lemma - should we remove the cprog updating *)
   let _ = Lem_store.all_lemma # add_left_coercion l2r in 
   let _ = Lem_store.all_lemma # add_right_coercion r2l in 
-  !cprog.C.prog_left_coercions <- l2r @ !cprog.C.prog_left_coercions;
-  !cprog.C.prog_right_coercions <- r2l @ !cprog.C.prog_right_coercions;
+  (*!cprog.C.prog_left_coercions <- l2r @ !cprog.C.prog_left_coercions;*)
+  (*!cprog.C.prog_right_coercions <- r2l @ !cprog.C.prog_right_coercions;*)
   let get_coercion c_lst = match c_lst with 
     | [c] -> Some c
     | _ -> None in
