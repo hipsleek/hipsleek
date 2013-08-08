@@ -1,4 +1,4 @@
-# infinity/bugs/inf-4b.slk --en-inf
+# infinity/bugs/inf-4b.slk --en-inf -FIXED
 
 capture         v!=\inf 
 internally as   v<\inf
@@ -33,7 +33,7 @@ cnv_int_to_ptr inp1 : (v<ZInfinity | ZInfinity<v)
 cnv_int_to_ptr@6 EXIT out : (v!=(\inf) | ZInfinity<v)
 Simplify  (6): (ZInfinity<v | v!=(\inf))
 =======================================================================
-# inf75a.slk
+# inf75a.slk - FIXED
 
 slk_simplify x=null & mi=\inf.
 
@@ -51,7 +51,7 @@ norm_pure_input inp1 : x=null & mi=\inf
 norm_pure_input@20 EXIT out : x=0 & true
 
 =======================================================================
-# inf75a.slk
+# inf75a.slk -FIXED
 
 slk_simplify x=null & mi=\inf.
 //Simplify  (1): x=null  // lose m=\inf
@@ -80,7 +80,7 @@ slk_simplify  \inf<=\inf+1.
 slk_simplify  \inf<=\inf-1. 
 //Simplify  (9): (\inf)<=(\inf) // sound?
 =======================================================================
-# inf75b.slk --en-inf -debug zdebug
+# inf75b.slk --en-inf -debug zdebug -FIXED
 
 slk_simplify  mi!=\inf. 
 //Simplify  (1): (mi!=(\inf) | (\inf)<mi)
@@ -138,6 +138,21 @@ norm_pure_input@17 EXIT out : (ZInfinity+1)<=ZInfinity
   --> true
 
 =======================================================================
+# is-3b.slk
+
+checkentail x::bnd1<0,dmi,dmx>  
+   & n=0 & dmi=\inf 
+   //& 0=(\inf)+dmx // why this fails?
+   & dmx=-\inf
+   & mi=min(a,dmi) & mx=max(a,dmx)
+   |- a=mi & 
+       mx=a
+      .
+The above succeed with dmx=-inf but not 0=\inf+dmx
+I think your normalization need to ensure that we will
+have equality, where possible, than can be picked
+for substitution.
+
 =======================================================================
 =======================================================================
 =======================================================================

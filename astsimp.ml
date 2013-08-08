@@ -1314,7 +1314,14 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
             vdef.C.view_xpure_flag <- TP.check_diff vdef.C.view_user_inv xform2)
           ;
           vdef.C.view_addr_vars <- addr_vars;
-	  vdef.C.view_baga <- (match ms.CF.mem_formula_mset with | [] -> [] | h::_ -> h) ;
+          let _ = Debug.tinfo_hprint (add_str "view_addr_vars" !Cast.print_svl) addr_vars no_pos in
+          let baga = (match ms.CF.mem_formula_mset with | [] -> [] | h::_ -> h) in
+          let _ = Debug.tinfo_hprint (add_str "view_baga" !Cast.print_svl) baga no_pos in
+          let new_baga = Gen.BList.intersect_eq (CP.eq_spec_var) baga addr_vars in
+          let _ = Debug.tinfo_hprint (add_str "new_baga" !Cast.print_svl) new_baga no_pos in
+          (* intersection ensures we remove existential vars *)
+	  vdef.C.view_baga <- new_baga
+               ;
 	  helper (n - 1) do_not_compute_flag
               (* else report_error pos "view formula does not entail supplied invariant\n" in () *)
       )
@@ -1351,7 +1358,7 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
                 let pr = Cprinter.string_of_mix_formula in
                 let sf = remove_disj_clauses vdef.C.view_user_inv in
                 (* Debug.info_hprint (add_str "disj_form" string_of_bool) disj_form no_pos; *)
-                if disj_form then
+                if disj_form && !Globals.compute_xpure_0 then
                   (vdef.C.view_user_inv <- sf; vdef.C.view_xpure_flag <- false);
 	        Debug.info_pprint ("Using a simpler inv for xpure0 of "^vdef.C.view_name) pos;
                 Debug.info_hprint (add_str "inv(xpure0)" pr) vdef.C.view_user_inv pos;

@@ -413,6 +413,7 @@ let read_from_debug_file chn : string list =
   (try
     while true do
       let xs = (input_line chn) in
+      let xs = String.trim xs in
       let n = String.length xs in
       (* let s = String.sub xs 0 1 in *)
       if n > 0 && xs.[0]!='#' (* String.compare s "#" !=0 *) then begin
@@ -675,6 +676,15 @@ let go_4_num tr_flag lp_flag i =  add_num (go_4 tr_flag lp_flag) i
 let go_5_num tr_flag lp_flag i =  add_num (go_5 tr_flag lp_flag) i
 let go_6_num tr_flag lp_flag i =  add_num (go_6 tr_flag lp_flag) i
 
+let add_num_opt f i p s = let str=(s^"#"^(string_of_int i)) in f p str
+
+let go_1_num_opt tr_flag lp_flag i =  add_num_opt (ho_1_opt tr_flag lp_flag) i
+let go_2_num_opt tr_flag lp_flag i =  add_num_opt (ho_2_opt tr_flag lp_flag) i
+let go_3_num_opt tr_flag lp_flag i =  add_num_opt (ho_3_opt tr_flag lp_flag) i
+let go_4_num_opt tr_flag lp_flag i =  add_num_opt (ho_4_opt tr_flag lp_flag) i
+let go_5_num_opt tr_flag lp_flag i =  add_num_opt (ho_5_opt tr_flag lp_flag) i
+let go_6_num_opt tr_flag lp_flag i =  add_num_opt (ho_6_opt tr_flag lp_flag) i
+
 (* let ho_1_num i =  add_num ho_1 i *)
 (* let ho_2_num i =  add_num ho_2 i *)
 (* let ho_3_num i =  add_num ho_3 i *)
@@ -723,11 +733,40 @@ let to_6_loop_num i =  add_num to_6_loop i
 (* let no_6_num (i:int) s _ _ _ _ _ _ _ f e1 e2 e3 e4 e5 *)
 (*       = ho_aux_no (f e1 e2 e3 e4 e5) *)
 
+let no_1_num_opt (i:int) p s p1 p0 f =
+  let code_gen fn = fn i p s p1 p0 f in
+  let code_none = ho_aux_no f in
+  splitter s code_none code_gen go_1_num_opt 
+
+let no_2_num_opt (i:int) p s p1 p2 p0 f e1 =
+  let code_gen fn = fn i p s p1 p2 p0 f e1 in
+  let code_none = ho_aux_no (f e1) in
+  splitter s code_none code_gen go_2_num_opt 
+
+let no_3_num_opt (i:int) p s p1 p2 p3 p0 f e1 e2 =
+  let code_gen fn = fn i p s p1 p2 p3 p0 f e1 e2 in
+  let code_none = ho_aux_no (f e1 e2) in
+  splitter s code_none code_gen go_3_num_opt 
+
+let no_4_num_opt (i:int) p s p1 p2 p3 p4 p0 f e1 e2 e3 =
+  let code_gen fn = fn i p s p1 p2 p3 p4 p0 f e1 e2 e3 in
+  let code_none = ho_aux_no (f e1 e2 e3) in
+  splitter s code_none code_gen go_4_num_opt 
+
+let no_5_num_opt (i:int) p s p1 p2 p3 p4 p5 p0 f e1 e2 e3 e4 =
+  let code_gen fn = fn i p s p1 p2 p3 p4 p5 p0 f e1 e2 e3 e4 in
+  let code_none = ho_aux_no (f e1 e2 e3 e4) in
+  splitter s code_none code_gen go_5_num_opt 
+
+let no_6_num_opt (i:int) p s p1 p2 p3 p4 p5 p6 p0 f e1 e2 e3 e4 e5 =
+  let code_gen fn = fn i p s p1 p2 p3 p4 p5 p6 p0 f e1 e2 e3 e4 e5 in
+  let code_none = ho_aux_no (f e1 e2 e3 e4 e5) in
+  splitter s code_none code_gen go_6_num_opt 
+
 let no_1_num (i:int) s p1 p0 f =
   let code_gen fn = fn i s p1 p0 f in
   let code_none = ho_aux_no f in
   splitter s code_none code_gen go_1_num 
-  (* splitter s code_none code_gen ho_1_num to_1_num ho_1_loop_num *)
 
 let no_2_num (i:int) s p1 p2 p0 f e1 =
   let code_gen fn = fn i s p1 p2 p0 f e1 in

@@ -6131,6 +6131,10 @@ let norm_bform_a (bf:b_formula) : b_formula =
               LexVar { t_info with lex_exp = nle; lex_tmp = nlt; }
    in (npf, il)
 
+let norm_exp b =
+  let pr = !print_exp in
+  Debug.no_1 "CP.norm_exp" pr pr norm_exp b
+
 let norm_bform_aux (bf:b_formula) : b_formula = norm_bform_a bf
 
 let norm_bform_opt bf =

@@ -265,7 +265,7 @@ object (self)
                 last_sleek_fail <- cmd
         | None -> last_sleek_fail <- cmd
   method dumping no =
-    Debug.info_pprint ("dumping for "^no) no_pos;
+    Debug.ninfo_pprint ("dumping for "^no) no_pos;
       if  !proof_logging_txt (*|| !sleek_logging_txt *) then
         begin
           match last_proof_fail with
