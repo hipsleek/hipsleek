@@ -651,7 +651,7 @@ let rec xpure (prog : prog_decl) (f0 : formula) : (mix_formula * CP.spec_var lis
       
 and xpure_x (prog : prog_decl) (f0 : formula) : (mix_formula * CP.spec_var list * CF.mem_formula) =
   (* print_string "calling xpure"; *)
-  if (!Globals.allow_imm) then xpure_symbolic prog f0
+  if (!Globals.allow_imm) then xpure_symbolic 4 prog f0
   else
     (*TODO: allow_perm and allow_imm at the same time*)
     if (Perm.allow_perm ()) then
@@ -1148,8 +1148,8 @@ and xpure_heap_perm_x (prog : prog_decl) (h0 : h_formula)  (p0: mix_formula) (wh
   (* let nmf = MCP.merge_mems mf frac_f true in *)
   (mf, memset)
 
-and xpure_symbolic (prog : prog_decl) (h0 : formula) : (MCP.mix_formula  * CP.spec_var list * CF.mem_formula) = 
-  Debug.no_1 "xpure_symbolic" Cprinter.string_of_formula 
+and xpure_symbolic i (prog : prog_decl) (h0 : formula) : (MCP.mix_formula  * CP.spec_var list * CF.mem_formula) = 
+  Debug.no_1_num i "xpure_symbolic" Cprinter.string_of_formula 
       (fun (p1,vl,p4) -> (Cprinter.string_of_mix_formula p1)^"#"^(Cprinter.string_of_spec_var_list vl)^"#
 "^(Cprinter.string_of_mem_formula p4)) 
       (fun h0 -> xpure_symbolic_orig prog h0) h0
