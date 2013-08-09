@@ -1225,7 +1225,8 @@ let generalize_hps prog is_pre callee_hps unk_hps link_hps sel_post_hps pre_defs
 (***************************************************************
                       LIB MATCHING
 ****************************************************************)
-let collect_sel_hp_def cond_path defs sel_hps unk_hps m=
+let collect_sel_hpdef_x defs sel_hps unk_hps m=
+  let lib_hps = List.map fst m in
   (*currently, use the first lib matched*)
   let m = List.map (fun (hp, l) -> (hp, List.hd l)) m in
   let mlib = List.map (fun (hp, _) -> hp) m in
@@ -1236,30 +1237,29 @@ let collect_sel_hp_def cond_path defs sel_hps unk_hps m=
             Some (CF.formula_of_heap hf1 no_pos)
           else look_up_lib hp ss
   in
-  let mk_hprel_def kind hprel og opf opflib=
-    {
-        CF.hprel_def_kind = kind;
-        CF.hprel_def_hrel = hprel;
-        CF.hprel_def_guard = og;
-        CF.hprel_def_body = [(cond_path,opf)];
-        CF.hprel_def_body_lib = opflib;
-    }
+  let extract_body hpdef=
+     let fs = List.fold_left (fun r (_, f_opt) ->  match f_opt with
+      | Some f -> r@[f]
+      | None -> r
+    ) [] hpdef.CF.hprel_def_body in
+     let f = CF.disj_of_list fs no_pos in
+     f
   in
-  let compute_def_w_lib (hp,(a,hprel,og, f))=
+  let compute_def_w_lib (hp,hpdef)=
     let olib = look_up_lib hp m in
-    (* if CP.mem_svl hp unk_hps then *)
-    (*   (mk_hprel_def a hprel None None) *)
-    (* else *)
     begin
-        let f1 =
+        let f1_opt =
           match olib with
             | None ->
-            (*subs lib form inside f if applicable*)
-                let f_subst = CF.subst_hrel_hview_f f m in
-                f_subst
-            | Some lib_f -> lib_f
+                  (*subs lib form inside f if applicable*)
+                  let f =  extract_body hpdef in
+                  let hps = CF.get_hp_rel_name_formula f in
+                  if CP.intersect_svl hps lib_hps = [] then None else
+                    let f_subst = CF.subst_hrel_hview_f f m in
+                    Some f_subst
+            | Some lib_f -> Some lib_f
         in
-        (mk_hprel_def a hprel og (Some f) (Some f1))
+        {hpdef with CF.hprel_def_body_lib = f1_opt}
     end
   in
   let look_up_depend cur_hp_sel f=
@@ -1274,13 +1274,14 @@ let collect_sel_hp_def cond_path defs sel_hps unk_hps m=
     let rec helper1 ls res=
       match ls with
         | [] -> res
-        | (hp,(a,hf,og,f))::lss ->
+        | (hp,(* (a,hf,og,f) *) hpdef)::lss ->
             let incr =
               if CP.mem_svl hp (cur_sel(* @unk_hps *)) then
                 []
               else
                 [hp]
             in
+            let f =  extract_body hpdef in
             let new_hp_dep = look_up_depend cur_sel f in
             helper1 lss (CP.remove_dups_svl (res@incr@new_hp_dep))
     in
@@ -1290,10 +1291,9 @@ let collect_sel_hp_def cond_path defs sel_hps unk_hps m=
       let incr_sel_hp_def,remain_hp_defs = look_up_hp_def incr_sel_hps non_sel_hp_def in
       find_closed_sel (cur_sel@incr_sel_hps) (cur_sel_hpdef@incr_sel_hp_def) remain_hp_defs incr_sel_hp_def
   in
-  let defsw = List.map (fun (a,hf,og,f) ->
-      (List.hd (CF.get_hp_rel_name_h_formula hf), (a,hf,og,f))) defs in
+  let defsw = List.map (fun hpdef ->
+      (List.hd (CF.get_hp_rel_name_h_formula hpdef.CF.hprel_def_hrel), hpdef)) defs in
   let sel_defw,remain_hp_defs = List.partition (fun (hp,_) -> CP.mem_svl hp sel_hps) defsw in
-  (* let sel_defw1 = Gen.BList.remove_dups_eq (fun (hp1,_) (hp2,_) -> CP.eq_spec_var hp1 hp2) sel_defw in *)
   let closed_sel_defw = find_closed_sel sel_hps sel_defw remain_hp_defs sel_defw in
   let all_sel_defw = List.map compute_def_w_lib closed_sel_defw in
   (*remove hp not in orig but == lib*)
@@ -1304,21 +1304,21 @@ let collect_sel_hp_def cond_path defs sel_hps unk_hps m=
       not (CP.mem_svl hp inter_lib))
       all_sel_defw
 
-(* let collect_sel_hp_def defs sel_hps unk_hps m= *)
-(*   let pr1 = pr_list_ln Cprinter.string_of_hp_rel_def in *)
-(*   let pr2 = !CP.print_svl in *)
-(*   let pr3b = pr_list_ln Cprinter.prtt_string_of_h_formula in *)
-(*   let pr3a = fun (hp,vns) -> (!CP.print_sv hp) ^ " === " ^ *)
-(*       (\* ( String.concat " OR " view_names) *\) (pr3b vns) in *)
-(*   let pr3 = pr_list_ln pr3a in *)
-(*   let pr4 = (pr_list_ln Cprinter.string_of_hprel_def) in *)
-(*   Debug.no_3 "collect_sel_hp_def" pr1 pr2 pr3 pr4 *)
-(*       (fun _ _ _ -> collect_sel_hp_def_x defs sel_hps unk_hps m) defs sel_hps m *)
+let collect_sel_hpdef hpdefs sel_hps unk_hps m=
+  let pr1 = pr_list_ln Cprinter.string_of_hprel_def in
+  let pr2 = !CP.print_svl in
+  let pr3b = pr_list_ln Cprinter.prtt_string_of_h_formula in
+  let pr3a = fun (hp,vns) -> (!CP.print_sv hp) ^ " === " ^
+      (* ( String.concat " OR " view_names) *) (pr3b vns) in
+  let pr3 = pr_list_ln pr3a in
+  (* let pr4 = (pr_list_ln Cprinter.string_of_hprel_def) in *)
+  Debug.no_3 "sa3.collect_sel_hpdef" pr1 pr2 pr3 pr1
+      (fun _ _ _ -> collect_sel_hpdef_x hpdefs sel_hps unk_hps m) hpdefs sel_hps m
 
 let match_hps_views_x (hp_defs: CF.hp_rel_def list) (vdcls: CA.view_decl list):
 (CP.spec_var* CF.h_formula list) list=
   let hp_defs1 = List.filter (fun (def,_,_,_) -> match def with
-    | CP.RelDefn _ -> true
+    | CP.HPRelDefn _ -> true
     | _ -> false
   ) hp_defs in
   let m = List.map (SAU.match_one_hp_views vdcls) hp_defs1 in
@@ -1931,7 +1931,7 @@ let infer_shapes_conquer iprog prog proc_name ls_is sel_hps=
             CF.hprel_def_hrel = hf;
             CF.hprel_def_guard = og;
             CF.hprel_def_body = [(is.CF.is_cond_path, Some f)];
-            CF.hprel_def_body_lib = Some f;
+            CF.hprel_def_body_lib = (* Some f *) None;
         }
         ) tupled_defs
         in
@@ -1940,7 +1940,7 @@ let infer_shapes_conquer iprog prog proc_name ls_is sel_hps=
         in
         (cl_sel_hps, hp_defs1,tupled_defs1)
     in
-    let hpdefs = List.map (fun (k, hf, og, f) -> CF.mk_hprel_def k hf og [(is.CF.is_cond_path, Some f)] (Some f)) defs in
+    let hpdefs = List.map (fun (k, hf, og, f) -> CF.mk_hprel_def k hf og [(is.CF.is_cond_path, Some f)] None(* (Some f) *)) defs in
     let link_hp_defs = SAC.generate_hp_def_from_link_hps prog is.CF.is_cond_path is.CF.is_hp_equivs is.CF.is_link_hpargs in
     (cl_sel_hps@(List.map fst is.CF.is_link_hpargs), hpdefs@link_hp_defs, tupled_defs2, is.CF.is_hp_defs)
   in
@@ -1960,8 +1960,18 @@ let infer_shapes_conquer iprog prog proc_name ls_is sel_hps=
     (CP.remove_dups_svl dang_hps) all_hpdefs cmb_defs
   else (all_hpdefs, cmb_defs)
   in
-  let _ = List.iter (fun hp_def -> rel_def_stk # push hp_def) (n_cmb_defs@tupled_defs) in
-  ([],(* cmb_defs, *) SAU.combine_hpdefs n_all_hpdefs)
+  let n_all_hp_defs1 = SAU.combine_hpdefs n_all_hpdefs in
+  let n_cmb_defs1 = if !Globals.pred_reuse then
+    let lib_matching = match_hps_views n_all_hp_defs1 prog.CA.prog_view_decls in
+    let _ = DD.info_pprint ("        sel_hp_rel:" ^ (!CP.print_svl sel_hps)) no_pos in
+    let _ =  DD.info_pprint (" matching: " ^
+        (let pr = pr_list_ln (fun (hp,view_names) -> (!CP.print_sv hp) ^ " :== " ^
+            ( String.concat " OR " (List.map Cprinter.prtt_string_of_h_formula view_names))) in pr lib_matching)) no_pos in
+    collect_sel_hpdef n_cmb_defs sel_hps dang_hps lib_matching
+  else n_cmb_defs
+  in
+  let _ = List.iter (fun hp_def -> rel_def_stk # push hp_def) (n_cmb_defs1@tupled_defs) in
+  ([],(* cmb_defs, *) n_all_hp_defs1)
 
 let infer_shapes_x iprog prog proc_name (constrs0: CF.hprel list) sel_hps post_hps hp_rel_unkmap unk_hpargs0a link_hpargs0 need_preprocess detect_dang: (CF.hprel list * CF.hp_rel_def list)
       (* (CF.hprel list * CF.hp_rel_def list* (CP.spec_var*CP.exp list * CP.exp list) list ) *) =

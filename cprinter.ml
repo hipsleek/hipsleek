@@ -2031,7 +2031,9 @@ let pr_hprel_def_short hpd=
   fmt_string " ::=";
   (* no cut here please *)
   (* fmt_cut(); *)
-  (pr_list_op_none " \/ " pr_path_of) hpd.hprel_def_body;
+  match hpd.hprel_def_body_lib with
+    | None -> (pr_list_op_none " \/ " pr_path_of) hpd.hprel_def_body;
+    | Some f -> prtt_pr_formula f;
    (* fmt_string (String.concat " OR " (List.map pr_path_of hpd.hprel_def_body)); *)
   (* fmt_string " LIB FORM:\n"; *)
   (* (pr_h_formula hpd.hprel_def_hrel); *)

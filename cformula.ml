@@ -6396,14 +6396,7 @@ let subst_hrel_f f0 hprel_subst=
   Debug.no_2 "subst_hrel_f" pr2 (pr_list (pr_pair pr1 pr1)) pr2
       (fun _ _ -> subst_hrel_f_x f0 hprel_subst) f0 hprel_subst
 
-let rec subst_hrel_hview_f f subst=
-  match f with
-    | Base fb -> Base {fb with formula_base_heap =  subst_hrel_hview_hf fb.formula_base_heap subst;}
-    | Or orf -> Or {orf with formula_or_f1 = subst_hrel_hview_f orf.formula_or_f1 subst;
-        formula_or_f2 = subst_hrel_hview_f orf.formula_or_f2 subst;}
-    | Exists fe -> Exists {fe with formula_exists_heap =  subst_hrel_hview_hf fe.formula_exists_heap subst;}
-
-and subst_hrel_hview_hf hf0 subst=
+let subst_hrel_hview_hf hf0 subst=
   let helper (* (HRel (id,el,p)) *) hrel (id1, hf)=
     let id,el,_ = extract_HRel_orig hrel in
     if CP.eq_spec_var id id1 then
@@ -6489,6 +6482,21 @@ and subst_hrel_hview_hf hf0 subst=
     | HEmp -> hf
   in
   helper2 hf0
+
+let rec subst_hrel_hview_f_x f0 subst=
+  let rec helper f=
+    match f with
+      | Base fb -> Base {fb with formula_base_heap =  subst_hrel_hview_hf fb.formula_base_heap subst;}
+      | Or orf -> Or {orf with formula_or_f1 = helper orf.formula_or_f1 ;
+            formula_or_f2 = helper orf.formula_or_f2;}
+      | Exists fe -> Exists {fe with formula_exists_heap =  subst_hrel_hview_hf fe.formula_exists_heap subst;}
+  in
+  helper f0
+
+let subst_hrel_hview_f f subst=
+  let pr1 = !print_formula in
+  Debug.no_1 "subst_hrel_hview_f" pr1 pr1
+      (fun _ -> subst_hrel_hview_f_x f subst) f
 
 let ins_x ss f0=
   let rec helper f=

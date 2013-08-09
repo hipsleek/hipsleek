@@ -1523,7 +1523,7 @@ let collect_sel_hp_def cond_path defs sel_hps unk_hps m=
 let match_hps_views_x (hp_defs: CF.hp_rel_def list) (vdcls: CA.view_decl list):
 (CP.spec_var* CF.h_formula list) list=
   let hp_defs1 = List.filter (fun (def,_,_,_) -> match def with
-    | CP.RelDefn _ -> true
+    | CP.HPRelDefn _ -> true
     | _ -> false
   ) hp_defs in
   let m = List.map (SAU.match_one_hp_views vdcls) hp_defs1 in

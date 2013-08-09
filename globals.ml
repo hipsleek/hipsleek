@@ -643,6 +643,8 @@ let pred_syn_modular = ref true
 
 let sa_dnc = ref false
 
+let pred_reuse = ref false
+
 (*temp: should be improve*)
 let pred_en_oblg = ref true
 
