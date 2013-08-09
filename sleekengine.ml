@@ -72,18 +72,23 @@ let cobj_def = { C.data_name = "Object";
 				 C.data_invs = [];
 				 C.data_methods = [] }
 
-let cprog = ref { C.prog_data_decls = [];
-			  C.prog_view_decls = [];
-			  C.prog_logical_vars = [];
-(*				C.prog_func_decls = [];*)
-				C.prog_rel_decls = []; (* An Hoa *)
-                C.prog_hp_decls = [];
-				C.prog_axiom_decls = []; (* [4/10/2011] An Hoa *)
-			  (*C.old_proc_decls = [];*)
-			  C.new_proc_decls = Hashtbl.create 1; (* no need for proc *)
-			  C.prog_left_coercions = [];
-			  C.prog_right_coercions = [];
-			  C. prog_barrier_decls = []}
+let cprog = ref { 
+    C.prog_data_decls = [];
+    C.prog_view_decls = [];
+    C.prog_logical_vars = [];
+    (*	C.prog_func_decls = [];*)
+    C.prog_rel_decls = []; (* An Hoa *)
+    C.prog_hp_decls = [];
+    C.prog_axiom_decls = []; (* [4/10/2011] An Hoa *)
+    (*C.old_proc_decls = [];*)
+    C.new_proc_decls = Hashtbl.create 1; (* no need for proc *)
+    (*C.prog_left_coercions = [];
+    C.prog_right_coercions = [];*)
+    C. prog_barrier_decls = []}
+	
+let _ = 
+	Lem_store.all_lemma # clear_right_coercion;
+	Lem_store.all_lemma # clear_left_coercion
 
 let residues =  ref (None : (CF.list_context * bool) option)    (* parameter 'bool' is used for printing *)
 
@@ -105,8 +110,10 @@ let clear_cprog () =
   !cprog.C.prog_view_decls <- [];
   !cprog.C.prog_rel_decls <- [];
   !cprog.C.prog_hp_decls <- [];
-  !cprog.C.prog_left_coercions <- [];
-  !cprog.C.prog_right_coercions <- []
+  (*!cprog.C.prog_left_coercions <- [];*)
+  (*!cprog.C.prog_right_coercions <- []*)
+  Lem_store.all_lemma # clear_right_coercion;
+  Lem_store.all_lemma # clear_left_coercion
 
 let clear_all () =
   Debug.clear_debug_log ();
@@ -369,8 +376,11 @@ let process_lemma ldef =
   let _ = if (!Globals.print_input || !Globals.print_input_all) then print_string (Iprinter.string_of_coerc_decl ldef) in
   let _ = if (!Globals.print_core || !Globals.print_core_all) then 
     print_string ("\nleft:\n " ^ (Cprinter.string_of_coerc_decl_list l2r) ^"\n right:\n"^ (Cprinter.string_of_coerc_decl_list r2l) ^"\n") else () in
-  !cprog.C.prog_left_coercions <- l2r @ !cprog.C.prog_left_coercions;
-  !cprog.C.prog_right_coercions <- r2l @ !cprog.C.prog_right_coercions;
+  (* WN_all_lemma - should we remove the cprog updating *)
+  let _ = Lem_store.all_lemma # add_left_coercion l2r in 
+  let _ = Lem_store.all_lemma # add_right_coercion r2l in 
+  (*!cprog.C.prog_left_coercions <- l2r @ !cprog.C.prog_left_coercions;*)
+  (*!cprog.C.prog_right_coercions <- r2l @ !cprog.C.prog_right_coercions;*)
   let get_coercion c_lst = match c_lst with 
     | [c] -> Some c
     | _ -> None in
@@ -378,20 +388,20 @@ let process_lemma ldef =
   let r2l = get_coercion r2l in
   let res = LP.verify_lemma l2r r2l !cprog (ldef.I.coercion_name) ldef.I.coercion_type in
   residues := (match res with
-               | None -> None;
-               | Some ls_ctx -> Some (ls_ctx, true))
+    | None -> None;
+    | Some ls_ctx -> Some (ls_ctx, true))
 
 let process_lemma ldef =
   Debug.no_1 "process_lemma" Iprinter.string_of_coerc_decl (fun _ -> "?") process_lemma ldef
 
-	
+      
 let process_data_def ddef =
   if AS.check_data_pred_name iprog ddef.I.data_name then
     let tmp = iprog.I.prog_data_decls in
     iprog.I.prog_data_decls <- ddef :: iprog.I.prog_data_decls;
   else begin
     dummy_exception() ;
-	(* print_string (ddef.I.data_name ^ " is already defined.\n") *)
+    (* print_string (ddef.I.data_name ^ " is already defined.\n") *)
 	report_error ddef.I.data_pos (ddef.I.data_name ^ " is already defined.")
   end
 
@@ -461,8 +471,10 @@ let convert_data_and_pred_to_cast_x () =
   let _ = if (!Globals.print_input || !Globals.print_input_all) then print_string (Iprinter.string_of_program iprog) else () in
   let _ = if (!Globals.print_core || !Globals.print_core_all) then print_string (Cprinter.string_of_program cprog5) else () in
   let l2r, r2l = LEM.generate_lemma_4_views iprog cprog5 in
-  let _ = cprog5.C.prog_left_coercions <- l2r @ cprog5.C.prog_left_coercions in
-  let _ = cprog5.C.prog_right_coercions <- r2l @ cprog5.C.prog_right_coercions in
+  let _ = Lem_store.all_lemma # add_left_coercion l2r in
+  let _ = Lem_store.all_lemma # add_right_coercion r2l in
+  (* let _ = cprog5.C.prog_left_coercions <- l2r @ cprog5.C.prog_left_coercions in *)
+  (* let _ = cprog5.C.prog_right_coercions <- r2l @ cprog5.C.prog_right_coercions in *)
   cprog := cprog5
 
 let convert_data_and_pred_to_cast () = 
@@ -731,6 +743,8 @@ let run_infer_one_pass (ivars: ident list) (iante0 : meta_formula) (iconseq0 : m
   (*                       ^ "\n ### conseq = "^(Cprinter.string_of_struc_formula conseq) *)
   (*                       ^"\n\n")) no_pos in *)
   (* let es = CF.empty_es (CF.mkTrueFlow ()) Lab2_List.unlabelled no_pos in *)
+  (* let left_co = Lem_store.all_lemma # get_left_coercion in *)
+  (* let ante = Solver.normalize_formula_w_coers 11 !cprog es ante left_co in *)
   (* let ante = Solver.normalize_formula_w_coers 11 !cprog es ante !cprog.C.prog_left_coercions in *)
   (* let _ = if (!Globals.print_core || !Globals.print_core_all) then print_endline ("INPUT: \n ### ante = " ^ (Cprinter.string_of_formula ante) ^"\n ### conseq = " ^ (Cprinter.string_of_struc_formula conseq)) else () in *)
   (* let _ = Debug.devel_zprint (lazy ("\nrun_entail_check 3: after normalization" *)

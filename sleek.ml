@@ -214,7 +214,7 @@ let parse_file (parse) (source_file : string) =
   Debug.tinfo_pprint "sleek : after proc one lemma" no_pos;
   (*identify universal variables*)
   let cviews = !cprog.C.prog_view_decls in
-  let cviews = List.map (Cast.add_uni_vars_to_view !cprog !cprog.C.prog_left_coercions) cviews in
+  let cviews = List.map (Cast.add_uni_vars_to_view !cprog (Lem_store.all_lemma # get_left_coercion) (*!cprog.C.prog_left_coercions*)) cviews in
   !cprog.C.prog_view_decls <- cviews;
   List.iter proc_one_cmd cmds 
 

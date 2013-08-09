@@ -1034,7 +1034,7 @@ let cnv_int_to_ptr f =
 let norm_pure_result f =
   let f = cnv_int_to_ptr f in    
   let f = if !Globals.allow_inf then Infinity.convert_var_to_inf f else f in 
-  let f = NM.norm_disj f in
+  let f = if !Globals.allow_norm_disj then NM.norm_disj f else f in
   f
 
 let norm_pure_result f =

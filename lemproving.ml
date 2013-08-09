@@ -31,6 +31,7 @@ let string_of_lem_formula lf = match lf with
   | CFormula f -> Cprinter.string_of_formula f
   | CSFormula csf -> Cprinter.string_of_struc_formula csf
 
+
 (* checks if iante(CF.formula) entails iconseq(CF.formula or CF.struc_formula) in cprog(C.prog_decl)
    - similar to Sleekengine.run_entail_check
 *)
@@ -118,7 +119,7 @@ let check_coercion_struc coer lhs rhs (cprog: C.prog_decl) =
   let pos = CF.pos_of_formula coer.C.coercion_head in
   let lhs = Solver.unfold_nth 9 (cprog,None) lhs (CP.SpecVar (Named "", self, Unprimed)) true 0 pos in
   (*let _ = print_string("lhs_unfoldfed_struc: "^(Cprinter.string_of_formula lhs)^"\n") in*)
-  let _ = Debug.info_hprint (add_str "rhs" Cprinter.string_of_struc_formula) rhs pos in
+  let _ = Debug.binfo_hprint (add_str "LP:rhs" Cprinter.string_of_struc_formula) rhs pos in
   let rhs = Solver.unfold_struc_nth 9 (cprog,None) rhs (CP.SpecVar (Named "", self, Unprimed)) true 0 pos in
   let lhs = if(coer.C.coercion_case == C.Ramify) then 
     Mem.ramify_unfolded_formula lhs cprog.C.prog_view_decls 
