@@ -9705,6 +9705,11 @@ let trans_formula (e: formula) (arg: 'a) f f_arg f_comb: (formula * 'b) =
   in
   trans_f e arg
 
+(* let map_formula_args (e: formula) (arg:'a) (f:'a -> formula -> formula option) (f_args: 'a -> formula -> 'a) : formula = *)
+(*   let f1 ac e = push_opt_void_pair (f ac e) in *)
+(*   fst (trans_formula e arg f1 f_args voidf) *)
+
+
 (* let map_formula (e: formula) f f_comb: (formula * 'b) = *)
 (*   let f_struc_f, f_f, f_heap_f, f_pure, f_memo = f in *)
 (*   let n_f_struc_f _ e = f_struc_f e in *)
