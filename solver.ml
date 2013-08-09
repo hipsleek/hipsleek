@@ -321,13 +321,13 @@ let rec formula_2_mem_x (f : CF.formula) prog : CF.mem_formula =
       | Base ({formula_base_heap = h;
 	    formula_base_pure = p;
 	    formula_base_pos = pos}) -> 
-	        h_formula_2_mem h [] [] prog
+	        h_formula_2_mem h [] prog
       | Exists ({formula_exists_qvars = qvars;
 	    formula_exists_heap = qh;
 	    formula_exists_pure = qp;
 	    formula_exists_pos = pos}) ->
             let subs = compute_subs_mem (pure_of_mix qp) qvars in
-            let mset = (h_formula_2_mem qh qvars subs prog).mem_formula_mset in
+            let mset = (h_formula_2_mem qh qvars prog).mem_formula_mset in
             let mset = CP.DisjSetSV.mk_exist_dset qvars subs mset in
              { mem_formula_mset = mset }
       | Or ({formula_or_f1 = f1;
@@ -373,11 +373,11 @@ and formula_2_mem_perm (f : formula) prog : CF.mem_formula =
 (*   Debug.no_1 "h_formula_2_mem" Cprinter.string_of_h_formula Cprinter.string_of_mem_formula *)
 (*       (fun f -> h_formula_2_mem f evars prog) f *)
 
-and h_formula_2_mem (f : h_formula) (evars : CP.spec_var list) subs prog : CF.mem_formula =
+and h_formula_2_mem (f : h_formula) (evars : CP.spec_var list) prog : CF.mem_formula =
   let pr0 = Cprinter.string_of_spec_var in
-  let pr_subs = pr_list (pr_pair pr0 pr0) in
-  Debug.no_3 "h_formula_2_mem"  Cprinter.string_of_h_formula Cprinter.string_of_spec_var_list pr_subs 
-   Cprinter.string_of_mem_formula (fun f evars _ -> h_formula_2_mem_x f evars subs prog) f evars subs
+  (* let pr_subs = pr_list (pr_pair pr0 pr0) in *)
+  Debug.no_2 "h_formula_2_mem"  Cprinter.string_of_h_formula Cprinter.string_of_spec_var_list 
+   Cprinter.string_of_mem_formula (fun f evars -> h_formula_2_mem_x f evars prog) f evars
 
 and compatible_ann (ann1: CF.ann list) (ann2: CF.ann list): bool =
   if not(!Globals.allow_field_ann) then false else 
@@ -463,7 +463,7 @@ and compatible_ann (ann1: CF.ann list) (ann2: CF.ann list): bool =
  
 
 (* WN : this calculation on mem_formula need to be revamped *) 
-and h_formula_2_mem_x (f : h_formula) (evars : CP.spec_var list) subs prog : CF.mem_formula = 
+and h_formula_2_mem_x (f : h_formula) (evars : CP.spec_var list) prog : CF.mem_formula = 
     let rec helper f =
     (* for h_formula *)
     match f with
@@ -927,8 +927,7 @@ and xpure_heap_mem_enum_x (prog : prog_decl) (h0 : h_formula) (which_xpure :int)
       | Hole _ -> MCP.mkMTrue no_pos (*report_error no_pos "[solver.ml]: An immutability marker was encountered in the formula\n"*)
   in
   (* to build a subs here *)
-  let subs = [] in
-  let memset = h_formula_2_mem h0 [] subs prog in
+  let memset = h_formula_2_mem h0 [] prog in
   if (is_sat_mem_formula memset) then (xpure_heap_helper prog h0 which_xpure , memset)
   else 
     (MCP.mkMFalse no_pos, memset)  
@@ -1293,7 +1292,7 @@ and xpure_heap_symbolic i (prog : prog_decl) (h0 : h_formula) (which_xpure :int)
       (fun which_xpure h0 -> xpure_heap_symbolic_x prog h0 which_xpure) which_xpure h0
 
 and xpure_heap_symbolic_x (prog : prog_decl) (h0 : h_formula) (which_xpure :int) : (MCP.mix_formula * CP.spec_var list * CF.mem_formula) = 
-  let memset = h_formula_2_mem h0 [] [] prog in
+  let memset = h_formula_2_mem h0 [] prog in
   let ph, pa = xpure_heap_symbolic_i prog h0 which_xpure in
   if (is_sat_mem_formula memset) then (ph, pa, memset)
   else (MCP.mkMFalse no_pos, pa, memset)  
