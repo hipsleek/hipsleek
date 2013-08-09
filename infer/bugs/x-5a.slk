@@ -1,0 +1,26 @@
+data node{
+ node next;
+}.
+
+relation R(node a).
+HeapPred H(node a).
+HeapPred H1(node a).
+
+infer [inf_ann_39,inf_p_40,z,flted_21_55] 
+  H(flted_21_55)&q_34=z & inf_ann_39=@M & inf_p_40=null & inf_p_40!=x
+ |-  (exists z_32: emp&flted_21_55=null & z=z_32 & x!=z_32 & inf_p_40=z_32).
+print residue.
+
+infer [inf_ann_39,inf_p_40,z,H] 
+  H(flted_21_55)&q_34=z & inf_ann_39=@M & inf_p_40=null & inf_p_40!=x
+ |-  (exists z_32: emp&flted_21_55=null & z=z_32 & x!=z_32 & inf_p_40=z_32).
+print residue.
+/*
+id: 15; caller: []; line: 21; classic: false; kind: Sleek_Entail(1); hec_num: 4; evars: [z_32,flted_21_33]; infer_vars: 
+[inf_ann_39,inf_p_40,z,H1,HP_56]; 
+c_heap: y::lseg<flted_21_55>@M * z::lseg<inf_p_40>@inf_ann_39 * x::node<z>@M
+ checkentail 
+HP_56(flted_21_55)&q_34=z & inf_ann_39=@M & inf_p_40=null & inf_p_40!=x&
+{FLOW,(19,20)=__norm}[]
+ |-  (exists z_32: emp&flted_21_55=null & z=z_32 & x!=z_32 & inf_p_40=z_32&
+*/
