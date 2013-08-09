@@ -2134,7 +2134,7 @@ and unfold_struc_x (prog:prog_or_branches) (f : struc_formula) (v : CP.spec_var)
       | None -> None
       | Some s ->
 	    let rem_f = mkEBase_w_vars ee ei ii (mkBase h_rest p TypeTrue fl a pos) None pos in
-	    Some (combine_struc rem_f s) in
+	    Some (push_struc_exists qvars (combine_struc rem_f s) ) in
   
   let f_helper ee ei ii f = 
     let nf = match f with
@@ -11560,14 +11560,27 @@ and simpl_pure_formula (f : CP.formula) : CP.formula = match f with
 	  let _ = print_string("\n[solver.ml]: Formula after simpl: " ^ Cprinter.string_of_pure_formula simpl_f ^ "\n") in*)
 	simpl_f
 
-and combine_struc (f1:struc_formula)(f2:struc_formula) :struc_formula = 
+and combine_struc_base b1 b2 = 
+	   {formula_struc_explicit_inst = b1.formula_struc_explicit_inst@b2.formula_struc_explicit_inst;
+		formula_struc_implicit_inst = b1.formula_struc_implicit_inst@b2.formula_struc_implicit_inst;
+        formula_struc_exists = b1.formula_struc_exists @ b2.formula_struc_exists;
+		formula_struc_base = normalize_combine b1.formula_struc_base b2.formula_struc_base no_pos;
+		formula_struc_pos = b1.formula_struc_pos;
+		formula_struc_continuation = match b2.formula_struc_continuation with 
+			| None-> b1.formula_struc_continuation
+			| _ -> report_error no_pos "combine_struc_base unexpected continuations";
+		}
+	
+and combine_struc_x (f1:struc_formula)(f2:struc_formula) :struc_formula = 
   match f2 with
-    | ECase b -> ECase {b with formula_case_branches = map_l_snd (combine_struc f1) b.formula_case_branches}
+    | ECase b -> ECase {b with formula_case_branches = map_l_snd (combine_struc_x f1) b.formula_case_branches}
     | EBase b -> 
-	  let cont = match b.formula_struc_continuation with
-	    | None -> Some f1
-	    | Some l -> Some (combine_struc f1 l) in
-	  EBase {b with formula_struc_continuation = cont }																											  
+		(match f1 with
+			| EBase b1 -> EBase (combine_struc_base b1 b)
+			| _ -> 
+			 (match b.formula_struc_continuation with
+				| None -> EBase {b with formula_struc_continuation = Some f1}
+				| Some l -> EBase {b with formula_struc_continuation = Some (combine_struc_x f1 l)}))			  
     | EAssume {
 		formula_assume_vars= x1;
 		formula_assume_simpl = b;
@@ -11582,16 +11595,18 @@ and combine_struc (f1:struc_formula)(f2:struc_formula) :struc_formula =
 			formula_assume_lbl = (y1,y2);
 			formula_assume_ensures_type = t2;} -> 
 				let f = normalize_combine b d (Cformula.pos_of_formula d) in
-				let f_str = combine_struc b_str d_str in
+				let f_str = combine_struc_x b_str d_str in
 				mkEAssume (x1@x2) f f_str (y1,(y2^y2')) t1
-	    | _-> combine_struc f2 f1)
+	    | _-> combine_struc_x f2 f1)
     | EInfer e -> (match f1 with 
 	| EInfer e2 -> EInfer {e with formula_inf_vars = e.formula_inf_vars @ e2.formula_inf_vars;
-	      formula_inf_continuation = combine_struc e.formula_inf_continuation e2.formula_inf_continuation}
-	| _ -> EInfer {e with formula_inf_continuation = combine_struc f1 e.formula_inf_continuation})
-    | EList b -> EList (map_l_snd (combine_struc f1) b)(*push labels*)
+	      formula_inf_continuation = combine_struc_x e.formula_inf_continuation e2.formula_inf_continuation}
+	| _ -> EInfer {e with formula_inf_continuation = combine_struc_x f1 e.formula_inf_continuation})
+    | EList b -> EList (map_l_snd (combine_struc_x f1) b)(*push labels*)
 
-
+and combine_struc f1 f2 =
+Debug.no_2 "combine_struc" !print_struc_formula !print_struc_formula !print_struc_formula combine_struc_x f1 f2
+	
 and compose_struc_formula (delta : struc_formula) (phi : struc_formula) (x : CP.spec_var list) (pos : loc) =
   let rs = CP.fresh_spec_vars x in
   let rho1 = List.combine (List.map CP.to_unprimed x) rs in

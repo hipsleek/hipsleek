@@ -3304,7 +3304,10 @@ and remove_quantifiers (qvars : CP.spec_var list) (f : formula) : formula = matc
         (* 19.05.2008 *)
 
 and push_struc_exists (qvars : CP.spec_var list) (f : struc_formula) = match f with
-	| EBase b -> EBase {b with formula_struc_exists = b.formula_struc_exists @ qvars}
+	| EBase b -> 
+		(match b.formula_struc_continuation with
+			| None -> EBase {b with formula_struc_base = push_exists qvars b.formula_struc_base}
+			| _ -> EBase {b with formula_struc_exists = b.formula_struc_exists @ qvars})			
 	| ECase b -> ECase {b with formula_case_exists = b.formula_case_exists @ qvars}
 	| EAssume b -> EAssume {b with
 		formula_assume_simpl = push_exists qvars b.formula_assume_simpl;
