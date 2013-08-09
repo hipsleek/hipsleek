@@ -1,0 +1,21 @@
+infer [inf_ann_31,inf_n_32,n,q]
+ n=0 & inf_ann_31=@M
+ //& inf_n_32>=0
+ //& ((inf_n_32=0 & q=null) | (1<=inf_n_32 & q!=null))
+ |-  emp&inf_n_32=n.
+print residue.
+
+infer [inf_ann_31,inf_n_32,n,q]
+ n=0 & inf_ann_31=@M
+ & ((inf_n_32=0 & q=null) | (1<=inf_n_32 & q!=null))
+ |-  emp&inf_n_32=n.
+
+print residue.
+
+/*
+# x-4.slk 
+
+Why did extra ante cause inference to fail?
+  version with problem 9239 
+
+ */

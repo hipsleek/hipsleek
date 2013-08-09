@@ -138,7 +138,7 @@ norm_pure_input@17 EXIT out : (ZInfinity+1)<=ZInfinity
   --> true
 
 =======================================================================
-# is-3b.slk
+# is-3b.slk - FIXED
 
 checkentail x::bnd1<0,dmi,dmx>  
    & n=0 & dmi=\inf 

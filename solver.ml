@@ -651,7 +651,7 @@ let rec xpure (prog : prog_decl) (f0 : formula) : (mix_formula * CP.spec_var lis
       
 and xpure_x (prog : prog_decl) (f0 : formula) : (mix_formula * CP.spec_var list * CF.mem_formula) =
   (* print_string "calling xpure"; *)
-  if (!Globals.allow_imm) then xpure_symbolic prog f0
+  if (!Globals.allow_imm) then xpure_symbolic 4 prog f0
   else
     (*TODO: allow_perm and allow_imm at the same time*)
     if (Perm.allow_perm ()) then
@@ -1148,8 +1148,8 @@ and xpure_heap_perm_x (prog : prog_decl) (h0 : h_formula)  (p0: mix_formula) (wh
   (* let nmf = MCP.merge_mems mf frac_f true in *)
   (mf, memset)
 
-and xpure_symbolic (prog : prog_decl) (h0 : formula) : (MCP.mix_formula  * CP.spec_var list * CF.mem_formula) = 
-  Debug.no_1 "xpure_symbolic" Cprinter.string_of_formula 
+and xpure_symbolic i (prog : prog_decl) (h0 : formula) : (MCP.mix_formula  * CP.spec_var list * CF.mem_formula) = 
+  Debug.no_1_num i "xpure_symbolic" Cprinter.string_of_formula 
       (fun (p1,vl,p4) -> (Cprinter.string_of_mix_formula p1)^"#"^(Cprinter.string_of_spec_var_list vl)^"#
 "^(Cprinter.string_of_mem_formula p4)) 
       (fun h0 -> xpure_symbolic_orig prog h0) h0
@@ -2134,7 +2134,7 @@ and unfold_struc_x (prog:prog_or_branches) (f : struc_formula) (v : CP.spec_var)
       | None -> None
       | Some s ->
 	    let rem_f = mkEBase_w_vars ee ei ii (mkBase h_rest p TypeTrue fl a pos) None pos in
-	    Some (combine_struc rem_f s) in
+	    Some (push_struc_exists qvars (combine_struc rem_f s) ) in
   
   let f_helper ee ei ii f = 
     let nf = match f with
@@ -2156,7 +2156,8 @@ and unfold_struc_x (prog:prog_or_branches) (f : struc_formula) (v : CP.spec_var)
       | None -> None 
       | Some s -> 
 	    let tmp_es = CF.empty_es (CF.mkTrueFlow ()) (None,[]) no_pos in
-	    Some (normalize_struc_formula_w_coers (fst prog) tmp_es s (fst prog).prog_left_coercions) in
+            (* WN_all_lemma : are there two programs here? *)
+	    Some (normalize_struc_formula_w_coers (fst prog) tmp_es s (Lem_store.all_lemma # get_left_coercion) (*(fst prog).prog_left_coercions*)) in
   
   let rec struc_helper f = match f with
     | ECase b -> ECase {b with formula_case_branches = map_l_snd struc_helper b.formula_case_branches}	 
@@ -2235,7 +2236,7 @@ and unfold_x (prog:prog_or_branches) (f : formula) (v : CP.spec_var) (already_un
 	formula_base_pos = pos}) ->  
 	    let new_f = unfold_baref prog h p a fl v pos [] already_unsat uf in
 	    let tmp_es = CF.empty_es (CF.mkTrueFlow ()) (None,[]) no_pos in
-	    normalize_formula_w_coers 1 (fst prog) tmp_es new_f (fst prog).prog_left_coercions 
+	    normalize_formula_w_coers 1 (fst prog) tmp_es new_f (Lem_store.all_lemma # get_left_coercion) (*(fst prog).prog_left_coercions*) 
 
       | Exists _ -> (*report_error pos ("malfunction: trying to unfold in an existentially quantified formula!!!")*)
             let rf,l = rename_bound_vars_with_subst f in
@@ -2245,7 +2246,7 @@ and unfold_x (prog:prog_or_branches) (f : formula) (v : CP.spec_var) (already_un
             (*let _ = print_string ("\n memo before unfold: "^(Cprinter.string_of_memoised_list mem)^"\n")in*)
             let uf = unfold_baref prog h p a fl v pos qvars already_unsat uf in
 	    let tmp_es = CF.empty_es (CF.mkTrueFlow ()) (None,[]) no_pos in
-	    normalize_formula_w_coers 2 (fst prog) tmp_es uf (fst prog).prog_left_coercions
+	    normalize_formula_w_coers 2 (fst prog) tmp_es uf (Lem_store.all_lemma # get_left_coercion) (*(fst prog).prog_left_coercions*)
       | Or ({formula_or_f1 = f1;
         formula_or_f2 = f2;
         formula_or_pos = pos}) ->
@@ -4890,7 +4891,7 @@ and early_pure_contra_detection_x hec_num prog estate conseq pos msg is_folding 
 	    let r1, prf = heap_entail_one_context 9 prog is_folding ctx1 conseq None None None pos in
             let _ = Debug.tinfo_hprint (add_str "r1"  Cprinter.string_of_list_context) r1 pos in
             let _ = Debug.binfo_pprint ("*********2********") no_pos in
-            let slk_no = next_sleek_int () in
+            let slk_no = Log.last_cmd # start_sleek 1 in
  	    let r1 = Infer.add_infer_hp_contr_to_list_context hinf_args_map [pf] r1 in
 	    begin 
 	      (*r1 might be None if the inferred contradiction might span several predicates or if it includes non heap pred arguments*)
@@ -5155,7 +5156,7 @@ and log_contra_detect hec_num conseq result pos =
     let avoid = CF.is_emp_term conseq in
     let avoid = avoid or (not (hec_stack # is_empty)) in
     let caller = hec_stack # string_of_no_ln in
-    let slk_no = (* if avoid then 0 else *) (next_sleek_int ()) in
+    let slk_no = (* if avoid then 0 else *) Log.(last_cmd # start_sleek 2) in
     (* let _ = hec_stack # push slk_no in *)
     (* let r = hec a b c in *)
     (* let _ = hec_stack # pop in *)
@@ -6352,7 +6353,7 @@ and heap_entail_conjunct hec_num (prog : prog_decl) (is_folding : bool)  (ctx0 :
     let avoid = avoid or ((hec_num=1 || hec_num=2) && CF.is_emp_term conseq) in
     let avoid = avoid or (not (hec_stack # is_empty)) in
     let caller = hec_stack # string_of_no_ln in
-    let slk_no = (* if avoid then 0 else *) (next_sleek_int ()) in
+    let slk_no = (* if avoid then 0 else *) (Log.last_cmd # start_sleek 3) in
     (* let _ = Log.last_sleek_command # set (Some (ante,conseq)) in *)
     let _ = hec_stack # push slk_no in
     let logger fr tt timeout = 
@@ -10201,7 +10202,10 @@ and process_action i caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
     | CF.SuccCtx ctx0 -> List.length ctx0 in
   let pr2 x = "\nctx length:" ^ (string_of_int (length_ctx (fst x))) ^ " \n Context:"^ Cprinter.string_of_list_context_short (fst x) in
   let pr3 = Cprinter.string_of_formula in
-  Debug.no_5_num i "process_action" pr1 
+  let filter _ = match a with
+    | Context.M_Nothing_to_do _ -> false
+    | _ -> true in 
+  Debug.no_5_all i "process_action" (Some filter) None [] pr1 
       (add_str "estate" Cprinter.string_of_entail_state_short)
       (add_str "conseq" Cprinter.string_of_formula) 
       (add_str "lhs_b" pr3) 
@@ -10673,10 +10677,11 @@ and apply_universal_a prog estate coer resth1 anode lhs_b rhs_b c1 c2 conseq is_
 and find_coercions_x c1 c2 prog anode ln2 =
   let is_not_norm c = match c.coercion_case with | Normalize _ -> false | _ -> true in
   let origs = try get_view_origins anode with _ -> print_string "exception get_view_origins\n"; [] in 
-  let coers1 = look_up_coercion_def_raw prog.prog_left_coercions c1 in  
+  let left_co = Lem_store.all_lemma # get_left_coercion in
+  let coers1 = look_up_coercion_def_raw left_co (* prog.prog_left_coercions *) c1 in  
   let coers1 = List.filter (fun c -> not(is_cycle_coer c origs) && is_not_norm c) coers1  in (* keep only non-cyclic coercion rule *)
   let origs2 = try get_view_origins ln2 with _ -> print_string "exception get_view_origins\n"; [] in 
-  let coers2 = look_up_coercion_def_raw prog.prog_right_coercions c2 in
+  let coers2 = look_up_coercion_def_raw (Lem_store.all_lemma # get_right_coercion)(*prog.prog_right_coercions*) c2 in
   let coers2 = List.filter (fun c -> not(is_cycle_coer c origs2) && is_not_norm c) coers2  in (* keep only non-cyclic coercion rule *)
   let coers1, univ_coers = List.partition (fun c -> Gen.is_empty c.coercion_univ_vars) coers1 in
   (* let coers2 = (* (List.map univ_to_right_coercion univ_coers)@ *)coers2 in*)
@@ -11604,14 +11609,27 @@ and simpl_pure_formula (f : CP.formula) : CP.formula = match f with
 	  let _ = print_string("\n[solver.ml]: Formula after simpl: " ^ Cprinter.string_of_pure_formula simpl_f ^ "\n") in*)
 	simpl_f
 
-and combine_struc (f1:struc_formula)(f2:struc_formula) :struc_formula = 
+and combine_struc_base b1 b2 = 
+	   {formula_struc_explicit_inst = b1.formula_struc_explicit_inst@b2.formula_struc_explicit_inst;
+		formula_struc_implicit_inst = b1.formula_struc_implicit_inst@b2.formula_struc_implicit_inst;
+        formula_struc_exists = b1.formula_struc_exists @ b2.formula_struc_exists;
+		formula_struc_base = normalize_combine b1.formula_struc_base b2.formula_struc_base no_pos;
+		formula_struc_pos = b1.formula_struc_pos;
+		formula_struc_continuation = match b2.formula_struc_continuation with 
+			| None-> b1.formula_struc_continuation
+			| _ -> report_error no_pos "combine_struc_base unexpected continuations";
+		}
+	
+and combine_struc_x (f1:struc_formula)(f2:struc_formula) :struc_formula = 
   match f2 with
-    | ECase b -> ECase {b with formula_case_branches = map_l_snd (combine_struc f1) b.formula_case_branches}
+    | ECase b -> ECase {b with formula_case_branches = map_l_snd (combine_struc_x f1) b.formula_case_branches}
     | EBase b -> 
-	  let cont = match b.formula_struc_continuation with
-	    | None -> Some f1
-	    | Some l -> Some (combine_struc f1 l) in
-	  EBase {b with formula_struc_continuation = cont }																											  
+		(match f1 with
+			| EBase b1 -> EBase (combine_struc_base b1 b)
+			| _ -> 
+			 (match b.formula_struc_continuation with
+				| None -> EBase {b with formula_struc_continuation = Some f1}
+				| Some l -> EBase {b with formula_struc_continuation = Some (combine_struc_x f1 l)}))			  
     | EAssume {
 		formula_assume_vars= x1;
 		formula_assume_simpl = b;
@@ -11626,16 +11644,18 @@ and combine_struc (f1:struc_formula)(f2:struc_formula) :struc_formula =
 			formula_assume_lbl = (y1,y2);
 			formula_assume_ensures_type = t2;} -> 
 				let f = normalize_combine b d (Cformula.pos_of_formula d) in
-				let f_str = combine_struc b_str d_str in
+				let f_str = combine_struc_x b_str d_str in
 				mkEAssume (x1@x2) f f_str (y1,(y2^y2')) t1
-	    | _-> combine_struc f2 f1)
+	    | _-> combine_struc_x f2 f1)
     | EInfer e -> (match f1 with 
 	| EInfer e2 -> EInfer {e with formula_inf_vars = e.formula_inf_vars @ e2.formula_inf_vars;
-	      formula_inf_continuation = combine_struc e.formula_inf_continuation e2.formula_inf_continuation}
-	| _ -> EInfer {e with formula_inf_continuation = combine_struc f1 e.formula_inf_continuation})
-    | EList b -> EList (map_l_snd (combine_struc f1) b)(*push labels*)
+	      formula_inf_continuation = combine_struc_x e.formula_inf_continuation e2.formula_inf_continuation}
+	| _ -> EInfer {e with formula_inf_continuation = combine_struc_x f1 e.formula_inf_continuation})
+    | EList b -> EList (map_l_snd (combine_struc_x f1) b)(*push labels*)
 
-
+and combine_struc f1 f2 =
+Debug.no_2 "combine_struc" !print_struc_formula !print_struc_formula !print_struc_formula combine_struc_x f1 f2
+	
 and compose_struc_formula (delta : struc_formula) (phi : struc_formula) (x : CP.spec_var list) (pos : loc) =
   let rs = CP.fresh_spec_vars x in
   let rho1 = List.combine (List.map CP.to_unprimed x) rs in
@@ -11676,13 +11696,15 @@ let normalize_entail_state_w_lemma prog (es:CF.entail_state) =
   let es = CF.clear_entailment_vars es in
   (* create a tmp estate for normalizing *)
   let tmp_es = CF.empty_es (CF.mkTrueFlow ()) es.CF.es_group_lbl no_pos in
-  CF.Ctx {es with CF.es_formula = normalize_formula_w_coers 5 prog tmp_es es.CF.es_formula prog.prog_left_coercions}
+  let left_co = Lem_store.all_lemma # get_left_coercion in
+  CF.Ctx {es with CF.es_formula = normalize_formula_w_coers 5 prog tmp_es es.CF.es_formula 
+          left_co (* prog.prog_left_coercions *)}
 
 let normalize_list_failesc_context_w_lemma prog lctx =
   (* if not (Perm.allow_perm ()) then lctx *)
   (* else *)
     (* TO CHECK merging nodes *)
-  if prog.prog_left_coercions == [] then lctx
+  if (Lem_store.all_lemma # get_left_coercion) (*prog.prog_left_coercions*) == [] then lctx
   else
     let fct = normalize_entail_state_w_lemma prog in
     let res = CF.transform_list_failesc_context (idf,idf,fct) lctx in
@@ -11694,7 +11716,7 @@ let normalize_list_failesc_context_w_lemma prog lctx =
       (normalize_list_failesc_context_w_lemma prog) lctx
       
 let normalize_list_partial_context_w_lemma prog lctx = 
-  if prog.prog_left_coercions == [] then lctx
+  if (Lem_store.all_lemma # get_left_coercion) (*prog.prog_left_coercions*) == [] then lctx
   else
     let fct = normalize_entail_state_w_lemma prog in
     let res = CF.transform_list_partial_context (fct, idf) lctx in

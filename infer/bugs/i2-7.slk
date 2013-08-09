@@ -15,11 +15,11 @@ print residue.
 //(8)
 infer [q,n] n=0 |- q::ll<n> .
 print residue.
-/*
+
 // equiv to q=null
 Inferred Heap:[ q::ll<inf_n_101>[Orig][LHSCase]]
 Inferred Pure:[ inf_n_101=0]
 <1>true & n=0 & inf_n_101=0 &
 {FLOW,(17,18)=__norm}
-*/
+
 */

@@ -691,6 +691,7 @@ let sa_subsume = ref false
 (* let norm_elim_useless = ref false *)
 
 let norm_extract = ref false
+let allow_norm_disj = ref true
 
 let norm_cont_analysis = ref true
 
@@ -794,6 +795,7 @@ let sleek_flag = ref false
 
 let sleek_log_filter = ref true
 (* flag to filter trivial sleek entailment logs *)
+(* particularly child calls *)
 
 let use_field = ref false
 
@@ -1328,37 +1330,17 @@ let last_sleek_fail_no = ref 0
 
 let get_sleek_no () = !sleek_proof_no
 
+let set_sleek_no n = sleek_proof_no:=n
+
 let get_last_sleek_fail () = !last_sleek_fail_no
 
 let set_last_sleek_fail () = 
   last_sleek_fail_no := !sleek_proof_no
 
-let next_sleek_int () : int =
-  sleek_proof_no := !sleek_proof_no + 1; 
-  (!sleek_proof_no)
+(* let next_sleek_int () : int = *)
+(*   sleek_proof_no := !sleek_proof_no + 1;  *)
+(*   (!sleek_proof_no) *)
 
-let z_debug_file = ref ""
-
-let z_debug_flag = ref false
-
-
-(*let debug_file = open_in_gen [Open_creat] 0o666 ("z-debug.log")*)
-let debug_file ()=
-  let get_path s = 
-    if String.contains s '/' then
-      let i = String.rindex s '/' in
-      String.sub s 0 (i+1)
-    else ""
-  in
-  let debug_conf = "./" ^ !z_debug_file in
-  (* let _ = print_endline (debug_conf) in *)
-  let global_debug_conf =
-    if (Sys.file_exists debug_conf) then
-    debug_conf
-    else (get_path Sys.executable_name) ^ (String.sub debug_conf 2 ((String.length debug_conf) -2))
-  in
-  (* let _ = print_endline global_debug_conf in *)
-  open_in (global_debug_conf)
 
 (* let read_from_debug_file chn : string list = *)
 (*   let line = ref [] in *)
