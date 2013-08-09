@@ -1231,6 +1231,22 @@ struct
   let is_sat_dset (xs:dpart) : bool = 
     not(is_dupl_dset xs)
 
+  let apply_subs subs x =
+    try
+      List.assoc x subs
+    with _ -> x
+
+  let mk_exist_dset (evars:ptr list) (subs: (ptr*ptr) list) (xss:dpart) : dpart = 
+    let rec aux ls =
+      match ls with
+        | [] -> []
+        | x::xs -> 
+              let x = apply_subs subs x in
+              if BList.mem_eq eq x evars then (aux xs)
+              else x::(aux xs) 
+    in
+    List.map aux xss
+
 end;;
 
 class mult_counters =

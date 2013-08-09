@@ -1327,14 +1327,15 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
           (* let xf = pure_of_mix xform' in *)
           (* let xf = strip_exists_pure xf in *)
           (* let (subs,_) = Mcpure.get_all_vv_eqs_mix xform' in *)
-          let _ = Debug.info_hprint (add_str "xform(mix)" Cprinter.string_of_mix_formula) xform' no_pos in
-          let _ = Debug.info_hprint (add_str "view_addr_vars" !Cast.print_svl) addr_vars no_pos in
-          let _ = Debug.info_hprint (add_str "view_vars" !Cast.print_svl) vdef.C.view_vars no_pos in
+          (* let _ = Debug.info_hprint (add_str "xform(mix)" Cprinter.string_of_mix_formula) xform' no_pos in *)
+          (* let _ = Debug.info_hprint (add_str "view_addr_vars" !Cast.print_svl) addr_vars no_pos in *)
+          (* let _ = Debug.info_hprint (add_str "view_vars" !Cast.print_svl) vdef.C.view_vars no_pos in *)
           let baga = (match ms.CF.mem_formula_mset with | [] -> [] | h::_ -> h) in
-          let _ = Debug.info_hprint (add_str "view_baga" !Cast.print_svl) baga no_pos in
-          let new_baga = Gen.BList.intersect_eq (CP.eq_spec_var) baga addr_vars in
-          let _ = Debug.info_hprint (add_str "new_baga" !Cast.print_svl) new_baga no_pos in
+          (* let _ = Debug.info_hprint (add_str "view_baga" !Cast.print_svl) baga no_pos in *)
+          (* let new_baga = Gen.BList.intersect_eq (CP.eq_spec_var) baga addr_vars in *)
+          (* let _ = Debug.info_hprint (add_str "new_baga" !Cast.print_svl) new_baga no_pos in *)
           (* intersection ensures we remove existential vars *)
+          let new_baga = baga in
 	  vdef.C.view_baga <- new_baga
                ;
 	  helper (n - 1) do_not_compute_flag

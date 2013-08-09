@@ -3639,6 +3639,12 @@ and get_subst_equation_b_formula (f : b_formula) (v : spec_var) lbl only_vars: (
    
 
 and get_all_vv_eqs (f0 : formula) : ((spec_var * spec_var) list * formula) =
+  let pr = !print_formula in
+  let pr_sv = !print_sv in
+  let prr = pr_pair (pr_list (pr_pair pr_sv pr_sv)) pr in
+  Debug.no_1 "get_all_vv_eqs" pr prr get_all_vv_eqs_x f0
+
+and get_all_vv_eqs_x (f0 : formula) : ((spec_var * spec_var) list * formula) =
   let rec helper f0 =  match f0 with
       | And (f1, f2, pos) ->
           let st1, rf1 = helper f1  in
