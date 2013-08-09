@@ -886,6 +886,29 @@ I think you should do 2 things (i) first; then (ii)
     may skip it first.
 
 ===================================================================
+# baga-2.slk
+
+pred l4<q> == 
+  self::node<q>*q::node<_>
+inv self!=null.
+// baga {self,q}
+
+pred l5<k> == 
+  self::node<q>*q::node<_> & k=q
+inv self!=null.
+
+l4 is Ok but l5 is missing on 
+a baga address.
+
+need to get visible parameters and
+extract equality from pure formula 
+for substitution in xpure_symbolic
+
+ missing on k for baga formula
+ addr vars: self
+  uni_vars: []
+  bag of addr: self
+  view_complex_inv: None
 ===================================================================
 ===================================================================
 ===================================================================

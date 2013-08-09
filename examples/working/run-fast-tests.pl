@@ -1425,7 +1425,7 @@ sub hip_process_file {
             } else {
                 print "Checking $test->[0] (runs with extra options: $extra_options)\n";
             }
-			print "$hip $script_arguments $extra_options $exempl_path_full/$test->[0] \n";
+			#print "$hip $script_arguments $extra_options $exempl_path_full/$test->[0] \n";
 			$output = `$hip $script_arguments $extra_options $exempl_path_full/$test->[0] 2>&1`;
 			print LOGFILE "\n======================================\n";
 			print LOGFILE "$output";

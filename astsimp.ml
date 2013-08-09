@@ -760,21 +760,21 @@ let remove_disj_clauses (mf: mix_formula): mix_formula =
   let pf = pure_of_mix mf in
   let rm_disj f = 
     let mf_conjs = CP.split_conjunctions f in
-    Debug.info_hprint (add_str "mf_conjs0" (pr_list !CP.print_formula)) mf_conjs no_pos;
+    Debug.tinfo_hprint (add_str "mf_conjs0" (pr_list !CP.print_formula)) mf_conjs no_pos;
     if List.length mf_conjs == 1 then hull_disj f
     else 
       let (disj,mf_conjs) = List.partition CP.is_disjunct mf_conjs in
-      Debug.info_hprint (add_str "mf_conjs3" (pr_list !CP.print_formula)) mf_conjs no_pos;
+      Debug.tinfo_hprint (add_str "mf_conjs3" (pr_list !CP.print_formula)) mf_conjs no_pos;
       mf_conjs 
   in
   let mf_conjs = rm_disj pf in
-  Debug.info_hprint (add_str "mf_conjs1" (pr_list !CP.print_formula)) mf_conjs no_pos;
+  Debug.tinfo_hprint (add_str "mf_conjs1" (pr_list !CP.print_formula)) mf_conjs no_pos;
   let mf_conjs = List.map (fun x -> match x with 
     | CP.AndList xs -> 
           let ys = List.map (fun (l,a) -> (l,CP.join_conjunctions (rm_disj a))) xs in
           CP.AndList ys
     | y -> y) mf_conjs in
-  Debug.info_hprint (add_str "mf_conjs2" (pr_list !CP.print_formula)) mf_conjs no_pos;
+  Debug.tinfo_hprint (add_str "mf_conjs2" (pr_list !CP.print_formula)) mf_conjs no_pos;
   let mf = CP.join_conjunctions (mf_conjs) in
   mix_of_pure mf
 
@@ -1298,8 +1298,6 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
           let xform1 = (TP.simplify_with_pairwise 1 (CP.drop_rel_formula (MCP.pure_of_mix xform))) in
           let ls_disj = CP.list_of_disjs xform1 in
           let xform2 = MCP.mix_of_pure (CP.disj_of_list (Gen.BList.remove_dups_eq CP.equalFormula ls_disj) pos) in
-          Debug.tinfo_hprint (add_str "xform1" !CP.print_formula) xform1 pos;
-          Debug.tinfo_hprint (add_str "xform2" !MCP.print_mix_formula) xform2 pos;
           
           (* let _ = print_endline ("\n xform1: " ^ (Cprinter.string_of_pure_formula xform1)) in *)
           (* let _ = print_endline ("\n xform2: " ^ (Cprinter.string_of_mix_formula xform2)) in *)
@@ -1309,6 +1307,8 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
 	  (* let (rs, _) = Solver.heap_entail_init prog false (CF.SuccCtx [ ctx ]) formula pos in *)
 	  (* let _ = if not(CF.isFailCtx rs) then *)
           (* if disj user-supplied inv; just use it *)
+          Debug.tinfo_hprint (add_str "xform1" !CP.print_formula) xform1 pos;
+          Debug.tinfo_hprint (add_str "xform2" !MCP.print_mix_formula) xform2 pos;
           if do_not_compute_flag then 
             vdef.C.view_xpure_flag <- true
           else
@@ -1316,11 +1316,13 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
             vdef.C.view_xpure_flag <- TP.check_diff vdef.C.view_user_inv xform2)
           ;
           vdef.C.view_addr_vars <- addr_vars;
-          let _ = Debug.tinfo_hprint (add_str "view_addr_vars" !Cast.print_svl) addr_vars no_pos in
+          let _ = Debug.info_hprint (add_str "xform(mix)" Cprinter.string_of_mix_formula) xform' no_pos in
+          let _ = Debug.info_hprint (add_str "view_addr_vars" !Cast.print_svl) addr_vars no_pos in
+          let _ = Debug.info_hprint (add_str "view_vars" !Cast.print_svl) vdef.C.view_vars no_pos in
           let baga = (match ms.CF.mem_formula_mset with | [] -> [] | h::_ -> h) in
-          let _ = Debug.tinfo_hprint (add_str "view_baga" !Cast.print_svl) baga no_pos in
+          let _ = Debug.info_hprint (add_str "view_baga" !Cast.print_svl) baga no_pos in
           let new_baga = Gen.BList.intersect_eq (CP.eq_spec_var) baga addr_vars in
-          let _ = Debug.tinfo_hprint (add_str "new_baga" !Cast.print_svl) new_baga no_pos in
+          let _ = Debug.info_hprint (add_str "new_baga" !Cast.print_svl) new_baga no_pos in
           (* intersection ensures we remove existential vars *)
 	  vdef.C.view_baga <- new_baga
                ;
