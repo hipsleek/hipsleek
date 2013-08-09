@@ -58,6 +58,7 @@ and action =
   | Seq_action of action_wt list 
   | Search_action of action_wt list (*the match_res indicates if pushing holes for each action is required or it will be done once, at the end*)
   | M_lhs_case of match_res
+  | M_cyclic of match_res
   (* | Un *)
   (* | M *)
   (* | Opt int *)
@@ -132,6 +133,7 @@ let rec pr_action_name a = match a with
   | Seq_action l -> fmt_string "SEQ"
   | Search_action l -> fmt_string "SEARCH"
   | M_lhs_case e -> fmt_string "LHSCaseAnalysis"
+  | M_cyclic _ -> fmt_string "Match cyclic"
 
 let rec pr_action_res pr_mr a = match a with
   | Undefined_action e -> fmt_string "Undefined_action =>"; pr_mr e
@@ -155,6 +157,7 @@ let rec pr_action_res pr_mr a = match a with
         pr_seq_vbox "SEARCH =>" (pr_action_wt_res pr_mr) l;
         fmt_close();
   | M_lhs_case e -> fmt_string "LHSCaseAnalysis =>"; pr_mr e
+  | M_cyclic e -> fmt_string "Match cyclic =>"; pr_mr e
 
 and pr_action_wt_res pr_mr (w,a) = 
   fmt_string ("Prio:"^(string_of_int w)); (pr_action_res pr_mr a)
@@ -189,6 +192,7 @@ let action_get_holes a = match a with
   | M_rd_lemma e
   | M_lemma (e,_)
   | M_base_case_unfold e
+  | M_cyclic e
   | M_base_case_fold e -> Some e.match_res_holes
   | Seq_action _
   | Cond_action _
@@ -713,15 +717,17 @@ and lookup_lemma_action_x prog (c:match_res) :action =
                     left_act@right_act
                   end
                   else  [] in
+                  (* let _ = Debug.info_hprint (add_str "xxxx" pr_id) "1"  no_pos in *)
                   if l=[] then (1,M_Nothing_to_do (string_of_match_res c))
+                    (* (1, M_cyclic c) *)
                   else (-1,Search_action l)
             | DataNode dl, ViewNode vr -> (1,M_Nothing_to_do (string_of_match_res c))
             | ViewNode vl, DataNode dr -> (1,M_Nothing_to_do (string_of_match_res c))
             | _ -> report_error no_pos "process_one_match unexpected formulas\n"	              )
-    | MaterializedArg (mv,ms) -> 
+    | MaterializedArg (mv,ms) ->
           (*unexpected*)
           (1,M_Nothing_to_do (string_of_match_res c))
-    | WArg -> 
+    | WArg ->
           (1,M_Nothing_to_do (string_of_match_res c))
   in
   act
@@ -878,7 +884,9 @@ and process_one_match_x prog is_normalizing (c:match_res) :action_wt =
                         | Some a -> [a]
                         | None ->
                               (* TO CHECK : MUST ensure not fold/unfold LOCKs*)
-                              let lst=[(1,M_base_case_unfold c);(1,M_Nothing_to_do ("mis-matched LHS:"^(vl_name)^" and RHS: "^(vr_name)))] in
+                              (* let _ = Debug.info_hprint (add_str "xxxx" pr_id) "4"  no_pos in *)
+                              (* let lst=[(1,M_base_case_unfold c);(1,M_Nothing_to_do ("mis-matched LHS:"^(vl_name)^" and RHS: "^(vr_name)))] in *)
+                              let lst=[(1,M_base_case_unfold c);(1,M_cyclic c)] in
                               (*let lst = [(1,M_base_case_unfold c);(1,M_unmatched_rhs_data_node (rhs_node,c.match_res_rhs_rest))] in*)
                               [(1,Cond_action lst)]
                   in
@@ -1166,6 +1174,7 @@ and sort_wt_x (ys: action_wt list) : action_wt list =
     | M_fold _
     | M_split_match _ 
     | M_match _ 
+    | M_cyclic _
     | M_lhs_case _ -> false
     | M_Nothing_to_do _ 
     | Undefined_action _ 

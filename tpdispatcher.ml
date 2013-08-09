@@ -1758,6 +1758,9 @@ let simplify (f : CP.formula) : CP.formula =
     else 
       let cmd = PT_SIMPLIFY f in
       let _ = Log.last_proof_command # set cmd in
+      if !Globals.allow_inf && Infinity.contains_inf f then f
+      else 
+      (*let f = if !Globals.allow_inf then Infinity.convert_inf_to_var f else f in*)
       let omega_simplify f = simplify_omega f
         (* Omega.simplify f  *)in
       (* this simplifcation will first remove complex formula as boolean
@@ -1956,6 +1959,9 @@ let hull (f : CP.formula) : CP.formula =
   let simpl_no = (string_of_int simpl_num) in
   let cmd = PT_HULL f in
   let _ = Log.last_proof_command # set cmd in
+  if !Globals.allow_inf && Infinity.contains_inf f then f
+  else 
+  (*let f = if !Globals.allow_inf then Infinity.convert_inf_to_var f else f in*)
   let fn f = match !pure_tp with
     | DP -> Dp.hull  f
     | Isabelle -> Isabelle.hull f
@@ -2014,6 +2020,8 @@ let tp_pairwisecheck (f : CP.formula) : CP.formula =
   let simpl_no = (string_of_int simpl_num) in
   let cmd = PT_PAIRWISE f in
   let _ = Log.last_proof_command # set cmd in
+  if !Globals.allow_inf && Infinity.contains_inf f then f
+  else 
   let fn f = match !pure_tp with
     | DP -> Dp.pairwisecheck f
     | Isabelle -> Isabelle.pairwisecheck f

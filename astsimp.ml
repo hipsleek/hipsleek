@@ -8008,35 +8008,48 @@ let check_data_pred_name iprog name : bool =
 (*   let pr2 = string_of_bool in *)
 (*   Debug.no_1 "check_data_pred_name" pr1 pr2 (fun _ -> check_data_pred_name iprog name) name *)
 
-let process_pred_def_4_iast iprog pdef = 
-  (* if check_data_pred_name iprog pdef.I.view_name then *)
+(* let process_pred_def_4_iast iprog pdef =  *)
+(*   (\* if check_data_pred_name iprog pdef.I.view_name then *\) *)
+(*     let curr_view_decls = iprog.I.prog_view_decls in *)
+(*     try *)
+(*       let h = (self,Unprimed)::(res_name,Unprimed)::(List.map (fun c-> (c,Unprimed)) pdef.Iast.view_vars ) in *)
+(*       let p = (self,Primed)::(res_name,Primed)::(List.map (fun c-> (c,Primed)) pdef.Iast.view_vars ) in *)
+(*       iprog.I.prog_view_decls <- pdef :: curr_view_decls; *)
+(*       let wf = case_normalize_struc_formula_view 11 iprog h p pdef.Iast.view_formula false  *)
+(*         false (\*allow_post_vars*\) false [] in *)
+(*       let inv_lock = pdef.I.view_inv_lock in *)
+(*       let inv_lock = *)
+(*         (match inv_lock with *)
+(*           | None -> None *)
+(*           | Some f -> *)
+(*                 let new_f = case_normalize_formula iprog h f None in (\*TO CHECK: h or p*\) *)
+(*                 Some new_f) *)
+(*         in *)
+(*       let new_pdef = {pdef with Iast.view_formula = wf;Iast.view_inv_lock = inv_lock} in *)
+(*       iprog.I.prog_view_decls <- ( new_pdef :: curr_view_decls); *)
+(*     with *)
+(*       | _ ->  dummy_exception() ; iprog.I.prog_view_decls <- curr_view_decls *)
+(*     (\* else *\) *)
+(*     (\*   print_string (pdef.I.view_name ^ " is already defined.\n") *\) *)
+
+(* let process_pred_def_4_iast iprog pdef = *)
+(*   let pr = Iprinter.string_of_view_decl in *)
+(*   Debug.no_1 "process_pred_def_4_iast" pr pr_no *)
+(*       (fun _ -> process_pred_def_4_iast iprog pdef) pdef *)
+
+let process_pred_def_4_iast_x iprog check_exists pdef=
+  if not check_exists || check_data_pred_name iprog pdef.I.view_name then
     let curr_view_decls = iprog.I.prog_view_decls in
-    try
-      let h = (self,Unprimed)::(res_name,Unprimed)::(List.map (fun c-> (c,Unprimed)) pdef.Iast.view_vars ) in
-      let p = (self,Primed)::(res_name,Primed)::(List.map (fun c-> (c,Primed)) pdef.Iast.view_vars ) in
-      iprog.I.prog_view_decls <- pdef :: curr_view_decls;
-      let wf = case_normalize_struc_formula_view 11 iprog h p pdef.Iast.view_formula false 
-        false (*allow_post_vars*) false [] in
-      let inv_lock = pdef.I.view_inv_lock in
-      let inv_lock =
-        (match inv_lock with
-          | None -> None
-          | Some f ->
-                let new_f = case_normalize_formula iprog h f None in (*TO CHECK: h or p*)
-                Some new_f)
-        in
-      let new_pdef = {pdef with Iast.view_formula = wf;Iast.view_inv_lock = inv_lock} in
-      iprog.I.prog_view_decls <- ( new_pdef :: curr_view_decls);
-    with
-      | _ ->  dummy_exception() ; iprog.I.prog_view_decls <- curr_view_decls
-    (* else *)
-    (*   print_string (pdef.I.view_name ^ " is already defined.\n") *)
+    iprog.I.prog_view_decls <- pdef :: curr_view_decls;
+  else
+    report_error pdef.I.view_pos (pdef.I.view_name ^ " is already defined.")
 
-let process_pred_def_4_iast iprog pdef =
+let process_pred_def_4_iast iprog check_exists pdef=
   let pr = Iprinter.string_of_view_decl in
-  Debug.no_1 "process_pred_def_4_iast" pr pr_no
-      (fun _ -> process_pred_def_4_iast iprog pdef) pdef
+  Debug.no_1 "process_pred_def_4_iast" pr pr_none
+      (fun _ -> process_pred_def_4_iast_x iprog check_exists pdef) pdef
 
+(*L2: todo: merge with SLEEKEN.convert_data_and_pred_to_cast*)
 let convert_pred_to_cast_x ls_pr_new_view_tis iprog cprog =
   let rec look_up_view ls_pair_view_name_tis vn0=
     match ls_pair_view_name_tis with

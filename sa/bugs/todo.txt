@@ -1543,7 +1543,7 @@ EXPECTED:
 
 */
 =======================================================================
-# i13a.slk
+# i13a.slk: FIXED (--sa-en-cont)
 
 infer [H1] H1(y)  |- y::lseg<p> * p::node<null> .
 
@@ -1559,6 +1559,17 @@ Would we be able to infer something like
 
 So that this example would succeed?
 =====================================================================
+# lseg-1.slk 
+
+infer [H1] H1(y)  |- y=null.
+
+Heap-pred H1(y) is still in residue.
+Should we remove it from ante, so we do not
+perform another inference step?
+ 
+ <1>H1(y)&y=null&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [// Sleek_Entail(1)
+H1(y) --> emp&y=null]
 ======================================================================
 ======================================================================
 ======================================================================

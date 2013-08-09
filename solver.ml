@@ -8312,7 +8312,10 @@ and do_match_inst_perm_vars_x (l_perm:P.spec_var option) (r_perm:P.spec_var opti
           (rho_0, label_list, CP.mkTrue no_pos,CP.mkTrue no_pos)
       )
     else
-      let rho_0 = List.combine r_args l_args in (* without branch label *)
+      let rho_0 = try
+        List.combine r_args l_args
+      with _ -> [] (*matching with cyclic proof is not the same predicate*)
+      in (* without branch label *)
       (rho_0, label_list,CP.mkTrue no_pos,CP.mkTrue no_pos)
 
   end
@@ -8331,7 +8334,7 @@ and do_match_inst_perm_vars l_perm r_perm l_args r_args label_list evars ivars i
       string_of_spec_var_list
       string_of_spec_var_list
       pr_out
-      (fun _ _ _ _ _ _ -> do_match_inst_perm_vars_x l_perm r_perm l_args r_args label_list evars ivars impl_vars expl_vars) l_perm r_perm evars ivars impl_vars expl_vars
+      (fun _ _ _ _ _ _ -> do_match_inst_perm_vars_x l_perm r_perm l_args r_args label_list evars ivars impl_vars expl_vars) l_perm r_perm evars ivars l_args r_args
 
 (*Modified a set of vars in estate to reflect instantiation
   when matching 2 perm vars*)
@@ -8614,7 +8617,10 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
                   | _ -> 				  (List.combine r_args l_args, label_list)
                   else   (List.combine r_args l_args, label_list)
                   in*)
-              let rho = List.combine rho_0 label_list in (* with branch label *)
+              let rho = try
+                List.combine rho_0 label_list
+              with _ -> [] (*matching with cyclic proof is not the same predicate*)
+              in (* with branch label *)
               let evars,ivars,impl_vars, expl_vars = do_match_perm_vars l_perm r_perm evars ivars impl_vars expl_vars in
               (*impl_tvars are impl_vars that are replaced by ivars in rho. 
                 A pair (impl_var,ivar) belong to rho => 
@@ -9596,6 +9602,27 @@ and solver_infer_lhs_contra_list prog estate lhs_xpure pos msg =
   Debug.no_2 "solver_infer_lhs_contra_list" pr_estate Cprinter.string_of_mix_formula  
       (pr_pair (pr_list pr_es) (pr_list pr_3)) (fun _ _ -> solver_infer_lhs_contra_list_x prog estate lhs_xpure pos msg ) estate lhs_xpure
 
+and process_before_do_match prog estate conseq lhs_b rhs_b rhs_h_matched_set is_folding pos
+      lhs_node lhs_rest rhs_node rhs_rest holes=
+  let subsumes, to_be_proven = prune_branches_subsume(*_debug*) prog lhs_node rhs_node in
+  if not subsumes then  (CF.mkFailCtx_in (Basic_Reason (mkFailContext "there is a mismatch in branches " estate conseq (get_node_label rhs_node) pos, CF.mk_failure_must "mismatch in branches" sl_error)), NoAlias)
+  else
+    let new_es_formula = Base{lhs_b with formula_base_heap = lhs_rest} in
+    (* let _ = print_string ("\n(andreeac) lhs_rest: " ^ (Cprinter.string_of_h_formula lhs_rest)) in *)
+    (* let _ = print_string ("\n(andreeac) initial estate " ^ ( Cprinter.string_of_entail_state_short estate)) in  *)
+    let new_estate = {estate with es_formula = new_es_formula; es_crt_holes = holes} in
+    (* let _ = print_string ("\n(andreeac) new estate " ^ ( Cprinter.string_of_entail_state_short new_estate)) in  *)
+    (*TODO: if prunning fails then try unsat on each of the unprunned branches with respect to the context,
+      if it succeeds and the flag from to_be_proven is true then make current context false*)
+    let rhs_p = match to_be_proven with
+      | None -> rhs_b.formula_base_pure
+      | Some (p,_) -> MCP.memoise_add_pure rhs_b.formula_base_pure p in
+    let n_rhs_b = Base {rhs_b with formula_base_heap = rhs_rest;formula_base_pure = rhs_p} in
+    Debug.tinfo_hprint (add_str "new_estate(M_match)" (Cprinter.string_of_entail_state)) new_estate pos;
+    let res_es0, prf0 = do_match prog new_estate lhs_node rhs_node n_rhs_b rhs_h_matched_set is_folding pos in
+    (* let _ = Debug.info_pprint ("M_match 2: " ^ (Cprinter.string_of_list_context res_es0)) no_pos in *)
+    (res_es0,prf0)
+
 and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:CP.spec_var list) is_folding pos =
   if not(Context.is_complex_action a) then
     begin
@@ -9700,25 +9727,47 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
               | Some r -> r
               | None  -> begin
             (*<<***END SPLIT/COMBINE permissions*******************)
-              let subsumes, to_be_proven = prune_branches_subsume(*_debug*) prog lhs_node rhs_node in
-	      if not subsumes then  (CF.mkFailCtx_in (Basic_Reason (mkFailContext "there is a mismatch in branches " estate conseq (get_node_label rhs_node) pos, CF.mk_failure_must "mismatch in branches" sl_error)), NoAlias)
-              else
-                let new_es_formula = Base{lhs_b with formula_base_heap = lhs_rest} in
-                (* let _ = print_string ("\n(andreeac) lhs_rest: " ^ (Cprinter.string_of_h_formula lhs_rest)) in *)
-                (* let _ = print_string ("\n(andreeac) initial estate " ^ ( Cprinter.string_of_entail_state_short estate)) in  *)
-                let new_estate = {estate with es_formula = new_es_formula; es_crt_holes = holes} in
-                (* let _ = print_string ("\n(andreeac) new estate " ^ ( Cprinter.string_of_entail_state_short new_estate)) in  *)
-		(*TODO: if prunning fails then try unsat on each of the unprunned branches with respect to the context,
-		  if it succeeds and the flag from to_be_proven is true then make current context false*)
-                let rhs_p = match to_be_proven with
-                  | None -> rhs_b.formula_base_pure
-                  | Some (p,_) -> MCP.memoise_add_pure rhs_b.formula_base_pure p in
-                let n_rhs_b = Base {rhs_b with formula_base_heap = rhs_rest;formula_base_pure = rhs_p} in
-                Debug.tinfo_hprint (add_str "new_estate(M_match)" (Cprinter.string_of_entail_state)) new_estate pos;
-                let res_es0, prf0 = do_match prog new_estate lhs_node rhs_node n_rhs_b rhs_h_matched_set is_folding pos in
-                (* let _ = Debug.info_pprint ("M_match 2: " ^ (Cprinter.string_of_list_context res_es0)) no_pos in *)
-                (res_es0,prf0)
+                  process_before_do_match prog estate conseq lhs_b rhs_b rhs_h_matched_set is_folding pos
+                      lhs_node lhs_rest rhs_node rhs_rest holes
+              (* let subsumes, to_be_proven = prune_branches_subsume(\*_debug*\) prog lhs_node rhs_node in *)
+	      (* if not subsumes then  (CF.mkFailCtx_in (Basic_Reason (mkFailContext "there is a mismatch in branches " estate conseq (get_node_label rhs_node) pos, CF.mk_failure_must "mismatch in branches" sl_error)), NoAlias) *)
+              (* else *)
+              (*   let new_es_formula = Base{lhs_b with formula_base_heap = lhs_rest} in *)
+              (*   (\* let _ = print_string ("\n(andreeac) lhs_rest: " ^ (Cprinter.string_of_h_formula lhs_rest)) in *\) *)
+              (*   (\* let _ = print_string ("\n(andreeac) initial estate " ^ ( Cprinter.string_of_entail_state_short estate)) in  *\) *)
+              (*   let new_estate = {estate with es_formula = new_es_formula; es_crt_holes = holes} in *)
+              (*   (\* let _ = print_string ("\n(andreeac) new estate " ^ ( Cprinter.string_of_entail_state_short new_estate)) in  *\) *)
+	      (*   (\*TODO: if prunning fails then try unsat on each of the unprunned branches with respect to the context, *)
+	      (*     if it succeeds and the flag from to_be_proven is true then make current context false*\) *)
+              (*   let rhs_p = match to_be_proven with *)
+              (*     | None -> rhs_b.formula_base_pure *)
+              (*     | Some (p,_) -> MCP.memoise_add_pure rhs_b.formula_base_pure p in *)
+              (*   let n_rhs_b = Base {rhs_b with formula_base_heap = rhs_rest;formula_base_pure = rhs_p} in *)
+              (*   Debug.tinfo_hprint (add_str "new_estate(M_match)" (Cprinter.string_of_entail_state)) new_estate pos; *)
+              (*   let res_es0, prf0 = do_match prog new_estate lhs_node rhs_node n_rhs_b rhs_h_matched_set is_folding pos in *)
+              (*   (\* let _ = Debug.info_pprint ("M_match 2: " ^ (Cprinter.string_of_list_context res_es0)) no_pos in *\) *)
+              (*   (res_es0,prf0) *)
               end)
+      | Context.M_cyclic ({
+            Context.match_res_lhs_node = lhs_node;
+            Context.match_res_lhs_rest = lhs_rest;
+            Context.match_res_rhs_node = rhs_node;
+            Context.match_res_rhs_rest = rhs_rest;
+            Context.match_res_holes = holes;} as m_res)->
+            Debug.tinfo_hprint (add_str "lhs_node" (Cprinter.string_of_h_formula)) lhs_node pos;
+            Debug.tinfo_hprint (add_str "lhs_rest" (Cprinter.string_of_h_formula)) lhs_rest pos;
+            Debug.tinfo_hprint (add_str "rhs_node" (Cprinter.string_of_h_formula)) rhs_node pos;
+            Debug.tinfo_hprint (add_str "rhs_rest" (Cprinter.string_of_h_formula)) rhs_rest pos;
+            let b = Syn_checkeq.check_exists_cyclic_proofs estate
+              (CF.formula_of_heap lhs_node no_pos, CF.formula_of_heap rhs_node no_pos) in
+            if b then
+              process_before_do_match prog estate conseq lhs_b rhs_b rhs_h_matched_set is_folding pos
+                  lhs_node lhs_rest rhs_node rhs_rest holes
+            else
+              let s = "search cyclic proof: FAIL" in
+              let res = (CF.mkFailCtx_in (Basic_Reason (mkFailContext s estate (Base rhs_b) None pos,
+              CF.mk_failure_may s Globals.sl_error)), NoAlias) in
+              res
       | Context.M_split_match {
             Context.match_res_lhs_node = lhs_node;
             Context.match_res_lhs_rest = lhs_rest;

@@ -13,6 +13,7 @@ open Gen.Basic
 module P = Ipure
 
 let top_flow = top_flow
+let n_flow = n_flow
 
 type ann = ConstAnn of heap_ann | PolyAnn of ((ident * primed) * loc)
 
