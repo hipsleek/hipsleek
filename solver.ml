@@ -7368,15 +7368,30 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
                                             (true,[],None)
                                   end
                             | Some pf ->
-                                  begin
+                              begin
+                              match relass with
+                                | [] -> 
                                     stk_inf_pure # push pf;
                                     let new_pf = MCP.mix_of_pure pf in
                                     let split_ante0 = MCP.merge_mems split_ante0 new_pf true in 
                                     let split_ante1 = MCP.merge_mems split_ante1 new_pf true in
-				    let _ = Debug.devel_pprint ("asta3?") no_pos in
                                     let _ = Debug.devel_pprint ("IMP #" ^ (string_of_int !imp_no)) no_pos in
                                     fst (imply_mix_formula 2 split_ante0 split_ante1 split_conseq imp_no memset)
-                                  end
+                                | _ ->
+                                    (* TODO: to check the implication of new ante *)
+                                    stk_inf_pure # push pf;
+                                    stk_rel_ass # push_list relass;
+                                    let _ = 
+                                      if entail_states = [] then 
+                                        report_error pos "Expecting a non-empty list of entail states"
+                                      else 
+                                        if not(false_es) then ()
+                                        else 
+                                          let n = List.length entail_states in
+                                          let _ = Debug.ninfo_pprint ("WARNING : Pushing "^(string_of_int n)^"stk_estate (6)") pos in
+                                          stk_estate # push_list entail_states in
+                                    (true,[],None)
+                              end
                         end
               end in
       let res1,res2,re3, (fn_fc_kind, (fn_contra_list, fn_must_list, fn_may_list)) =
