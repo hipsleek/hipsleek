@@ -1054,10 +1054,13 @@ let rec infer_pure_m_x unk_heaps estate lhs_rels lhs_xpure_orig lhs_xpure0
                           let rels,others = List.partition CP.is_RelForm (CP.list_of_conjs rhs_xpure) in
                           MCP.mix_of_pure (CP.conj_of_list others pos), rels
                       in
-                      let _,other_vars = List.partition CP.is_rel_var iv_orig in
+                      Debug.ninfo_hprint (add_str "iv_orig: " !CP.print_svl) iv_orig no_pos;
+                      let not_rel_vars = List.filter 
+                        (fun x -> not (CP.is_rel_var x || CP.is_hp_rel_var x)) iv_orig in
+                      Debug.ninfo_hprint (add_str "not_rel_vars: " !CP.print_svl) not_rel_vars no_pos;
                       let (ip1,ip2,rs) = infer_pure_m unk_heaps estate None 
                         (CP.drop_rel_formula lhs_xpure_orig) lhs_xpure0 
-                        lhs_wo_heap_orig rhs_xpure_orig (vs_lhs@other_vars) pos in
+                        lhs_wo_heap_orig rhs_xpure_orig (vs_lhs@not_rel_vars) pos in
                       let rels = List.filter (fun r -> CP.subset (CP.fv_wo_rel_r r) vs_lhs) rels in
                       let p_ass,ipures = (match ip2 with
                         | None -> ([],rels),[]
@@ -1111,7 +1114,7 @@ let rec infer_pure_m_x unk_heaps estate lhs_rels lhs_xpure_orig lhs_xpure0
                               ) (p_ass_conjs @ rs))
                           in
                           let inferred_pure = CP.conj_of_list ipures no_pos in
-                          if not (CP.subset (CP.fv inferred_pure) other_vars) then (None,None,[])
+                          if not (CP.subset (CP.fv inferred_pure) not_rel_vars) then (None,None,[])
                           else if rel_ass = [] then (None,Some inferred_pure,[])
                           else
                             let pf1 = (CP.mkAnd lhs_xpure (CP.conj_of_list (ps@rs) pos) pos) in
