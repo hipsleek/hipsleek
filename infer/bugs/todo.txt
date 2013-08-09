@@ -191,6 +191,26 @@ infer [inf_ann_31,inf_n_32,n,q]
 print residue.
 
 ========================================================================
+# x-4.slk
+
+--en-norm-disj (why simplify to true?)
+
+id: 23<2; prover: OMEGA CALCULATOR; loc: _0:0_0:0; kind: Sleek_Entail(2)
+ raw proof:SIMPLIFY:{[n, inf_n_32, q] : ( (not (((n = 0) & (((inf_n_32 = 0) & (q <= 0)) | ((1 <= inf_n_32) & (q != 0)))))) )};
+ raw result:{[n,inf_n_32,q]: inf_n_32 <= 0 && 1 <= q} union {[n,inf_n_32,q]: inf_n_32 <= -1 && q <= 0} union {[n,0,q]: q <= 0 && 1 <= n} union {[n,0,q]: n <= -1 && q <= 0} union {[n,inf_n_32,0]: 1 <= inf_n_32} union {[n,inf_n_32,q]: q <= -1 && 1 <= n && 1 <= inf_n_32} union {[n,inf_n_32,q]: n <= -1 && q <= -1 && 1 <= inf_n_32} union {[n,inf_n_32,q]: 1 <= inf_n_32 && 1 <= q && 1 <= n} union {[n,inf_n_32,q]: n <= -1 && 1 <= inf_n_32 && 1 <= q}
+ Simplify:  !((n=0 & (((inf_n_32=0 & q=null) | (1<=inf_n_32 & q!=null)))))
+ res:  true
+ 
+--dis-norm-disj
+
+ id: 23<2; prover: OMEGA CALCULATOR; loc: _0:0_0:0; kind: Sleek_Entail(2)
+ raw proof:SIMPLIFY:{[n, inf_n_32, q] : ( (not (((n = 0) & (((inf_n_32 = 0) & (q <= 0)) | ((1 <= inf_n_32) & (q != 0)))))) )};
+ raw result:{[n,inf_n_32,q]: inf_n_32 <= 0 && 1 <= q} union {[n,inf_n_32,q]: inf_n_32 <= -1 && q <= 0} union {[n,0,q]: q <= 0 && 1 <= n} union {[n,0,q]: n <= -1 && q <= 0} union {[n,inf_n_32,0]: 1 <= inf_n_32} union {[n,inf_n_32,q]: q <= -1 && 1 <= n && 1 <= inf_n_32} union {[n,inf_n_32,q]: n <= -1 && q <= -1 && 1 <= inf_n_32} union {[n,inf_n_32,q]: 1 <= inf_n_32 && 1 <= q && 1 <= n} union {[n,inf_n_32,q]: n <= -1 && 1 <= inf_n_32 && 1 <= q}
+ Simplify:  !((n=0 & (((inf_n_32=0 & q=null) | (1<=inf_n_32 & q!=null)))))
+ res:  ((inf_n_32=0 & q=null & n!=0) | (q=null & inf_n_32!=0) | ((q+1)<=0 & 
+1<=inf_n_32 & n!=0) | (1<=inf_n_32 & q!=null & n!=0) | (inf_n_32<=0 & 
+q!=null))
+
 ========================================================================
 ========================================================================
 ========================================================================

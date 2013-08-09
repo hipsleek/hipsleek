@@ -438,6 +438,50 @@ type debug_option =
 
 let debug_map = Hashtbl.create 50
 
+let regexp_line = ref []
+
+let z_debug_file = ref ""
+(* let z_debug_regexp = ref None *)
+let z_debug_flag = ref false
+
+(*let debug_file = open_in_gen [Open_creat] 0o666 ("z-debug.log")*)
+let debug_file ()=
+  let get_path s = 
+    if String.contains s '/' then
+      let i = String.rindex s '/' in
+      String.sub s 0 (i+1)
+    else ""
+  in
+  let fname = !z_debug_file in
+  (* print_endline ("Debug File : "^fname); *)
+  let n = String.length fname in
+  if n>1 && fname.[0]='$' then
+    begin
+      (* z_debug_regexp := Some fname; *)
+      let re = String.sub fname 1 (n-1) in
+      regexp_line := [Str.regexp_case_fold re];
+      None
+    end
+  else
+    begin
+      let debug_conf = "./" ^ fname in
+      (* let _ = print_endline (debug_conf) in *)
+      let global_debug_conf =
+        if (Sys.file_exists debug_conf) then
+          debug_conf
+        else (get_path Sys.executable_name) ^ (String.sub debug_conf 2 ((String.length debug_conf) -2))
+      in
+      (* let _ = print_endline global_debug_conf in *)
+      try
+        Some(open_in (global_debug_conf))
+      with _ ->
+          begin
+            print_endline ("WARNING : cannot find debug file "^fname); 
+            z_debug_flag:=false;
+            None
+          end
+    end
+
 let read_from_debug_file chn : string list =
   let line = ref [] in
   let quitloop = ref false in
@@ -449,6 +493,10 @@ let read_from_debug_file chn : string list =
       (* let s = String.sub xs 0 1 in *)
       if n > 0 && xs.[0]!='#' (* String.compare s "#" !=0 *) then begin
         line := xs::!line;
+      end;
+      if n > 1 && xs.[0]=='$' (* String.compare s "#" !=0 *) then begin
+        let xs = String.sub xs 1 (n-1) in
+        regexp_line := (Str.regexp_case_fold xs)::!regexp_line;
       end;
     done;
   with _ -> ());
@@ -481,7 +529,9 @@ let rec get_words str =
 (*   ho_1 "get_words" pr_id (pr_list pr_id) get_words str *)
 
 let read_main () =
-  let xs = read_from_debug_file (debug_file ()) in
+  let xs = match debug_file() with
+    | Some c -> read_from_debug_file c
+    | _ -> [] in
   (* let _ = print_endline ((pr_list (fun x -> x)) xs) in *)
   List.iter (fun x ->
       try
@@ -507,9 +557,13 @@ let read_main () =
   ) xs
 
 let in_debug x =
-  try
-    Hashtbl.find debug_map x
-  with _ -> DO_None
+  let x = String.trim x in
+  let b = List.exists (fun re -> Str.string_match re x 0) !regexp_line in
+  if b then DO_Normal
+  else
+    try
+      Hashtbl.find debug_map x
+    with _ -> DO_None
 
 let go_1 t_flag l_flag s = ho_1_opt_aux t_flag [] l_flag (fun _ -> true) None s
 let go_2 t_flag l_flag s = ho_2_opt_aux t_flag [] l_flag (fun _ -> true) None s

@@ -310,7 +310,10 @@ let common_arguments = [
   ("--use-large-bind", Arg.Set Globals.large_bind,
    "Use large bind construct, where the bound variable may be changed in the body of bind");
   ("-debug", Arg.String (fun s ->
-      Globals.z_debug_file:=s; Globals.z_debug_flag:=true),
+      Debug.z_debug_file:=s; Debug.z_debug_flag:=true),
+   "Read from a debug log file");
+  ("-debug-regexp", Arg.String (fun s ->
+      Debug.z_debug_file:=("$"^s); Debug.z_debug_flag:=true),
    "Read from a debug log file");
   ("-v", Arg.Set Debug.debug_on,
    "Verbose");
