@@ -1,0 +1,18 @@
+//Valid.Fail.Fail
+data node { int val ; node next }.
+
+pred ll<n> == self = null & n = 0
+	or self::node<next = r> * r::ll<n - 1>
+	inv n >= 0.
+
+pred sortl<n, mi> == self = null & n = 0
+	or self::node<mi, r> * r::sortl<n - 1, k> & mi <= k
+	inv n >= 0.
+
+
+lemma "V1" self::sortl<n, mi> -> self::ll<n>.
+
+//this can be proved as valid if rhs is not unfolded?
+lemma "F2" self::sortl<n, mi> <- self::ll<n>.
+
+lemma "F3" self::sortl<n, mi> <-> self::ll<n>.

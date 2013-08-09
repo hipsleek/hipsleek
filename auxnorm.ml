@@ -111,42 +111,42 @@ let merge_ieq_ieq f1 f2  =  (* merge_other f1 f2 *)
 
       
 
-let merge_eq_ieq eq ieq  = (* merge_other f1o f2o *)
-  let emap = CP.EMapSV.build_eset ( CP.pure_ptr_equations eq) in
-  match ieq with
-    | CP.BForm (b, lb) ->
-          begin
-            match b with
-              | (CP.Lt (ex1, ex2, s), l) -> 
-                    begin
-                      match conv_exp_to_var ex1, conv_exp_to_var ex2 with
-                        |  Some v1, Some v2 ->
-                               if CP.EMapSV.is_equiv emap v1 v2 then 
-                                   merged [CP.BForm ((CP.Lte (ex1,  ex2, s), l), lb)]
-                               else merge_other eq ieq
-                        | _, _ -> merge_other eq ieq
-                    end
-              | (CP.Gt (ex1, ex2, s), l) ->
-                    begin
-                      match conv_exp_to_var ex1, conv_exp_to_var ex2 with
-                        |  Some v1, Some v2 ->
-                               if CP.EMapSV.is_equiv emap v1 v2 then
-                                 merged [CP.BForm ((CP.Gte (ex1,  ex2, s), l), lb)]
-                               else merge_other eq ieq
-                        | _, _ -> merge_other eq ieq
-                    end
-              | (CP.Neq (ex1, ex2, _), _) ->
-                    begin
-                      match conv_exp_to_var ex1, conv_exp_to_var ex2 with
-                        |  Some v1, Some v2 ->
-                               if CP.EMapSV.is_equiv emap v1 v2 then 
-                                   merged [CP.mkTrue no_pos]
-                               else merge_other eq ieq
-                        | _, _ -> merge_other eq ieq
-                    end
-              | _ -> merge_other eq ieq
-          end
-    | _ -> merge_other eq ieq
+let merge_eq_ieq eq ieq  = merge_other eq ieq
+  (* let emap = CP.EMapSV.build_eset ( CP.pure_ptr_equations eq) in *)
+  (* match ieq with *)
+  (*   | CP.BForm (b, lb) -> *)
+  (*         begin *)
+  (*           match b with *)
+  (*             | (CP.Lt (ex1, ex2, s), l) ->  *)
+  (*                   begin *)
+  (*                     match conv_exp_to_var ex1, conv_exp_to_var ex2 with *)
+  (*                       |  Some v1, Some v2 -> *)
+  (*                              if CP.EMapSV.is_equiv emap v1 v2 then  *)
+  (*                                  merged [CP.BForm ((CP.Lte (ex1,  ex2, s), l), lb)] *)
+  (*                              else merge_other eq ieq *)
+  (*                       | _, _ -> merge_other eq ieq *)
+  (*                   end *)
+  (*             | (CP.Gt (ex1, ex2, s), l) -> *)
+  (*                   begin *)
+  (*                     match conv_exp_to_var ex1, conv_exp_to_var ex2 with *)
+  (*                       |  Some v1, Some v2 -> *)
+  (*                              if CP.EMapSV.is_equiv emap v1 v2 then *)
+  (*                                merged [CP.BForm ((CP.Gte (ex1,  ex2, s), l), lb)] *)
+  (*                              else merge_other eq ieq *)
+  (*                       | _, _ -> merge_other eq ieq *)
+  (*                   end *)
+  (*             | (CP.Neq (ex1, ex2, _), _) -> *)
+  (*                   begin *)
+  (*                     match conv_exp_to_var ex1, conv_exp_to_var ex2 with *)
+  (*                       |  Some v1, Some v2 -> *)
+  (*                              if CP.EMapSV.is_equiv emap v1 v2 then  *)
+  (*                                  merged [CP.mkTrue no_pos] *)
+  (*                              else merge_other eq ieq *)
+  (*                       | _, _ -> merge_other eq ieq *)
+  (*                   end *)
+  (*             | _ -> merge_other eq ieq *)
+  (*         end *)
+  (*   | _ -> merge_other eq ieq *)
 
 let merge_eq_eq f1 f2 = merge_other f1 f2
 
