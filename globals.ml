@@ -694,6 +694,8 @@ let norm_extract = ref false
 
 let norm_cont_analysis = ref true
 
+let lemma_infer = ref false
+
 let dis_sem = ref false
 
 (* let show_diff_constrs = ref true *)
