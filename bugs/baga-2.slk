@@ -11,6 +11,11 @@ pred l5<k> ==
   self::node<q>*q::node<_> & k=q
 inv self!=null.
 /*
+# baga-2.slk
+
+l4 is Ok but l5 is missing on 
+a baga address
+
  missing on k for baga formula
  addr vars: self
   uni_vars: []

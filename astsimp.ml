@@ -35,6 +35,14 @@ type trans_exp_type =
 
 let pr_v_decls l = pr_list (fun v -> v.I.view_name) l
 
+(* let strip_exists_pure f = *)
+(*   let rec aux f = *)
+(*     match f with *)
+(*       | CP.Exists (_,f,_,_) -> aux f *)
+(*       | _ -> f *)
+(*   in let ls=CP.split_conjunction f in *)
+(*   let ls = List.map aux ls in *)
+(*   CP.join_conjunction ls *)
 
 (* list of scc views that are in mutual-recursion *)
 let view_scc : (ident list) list ref = ref []
@@ -1316,6 +1324,9 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
             vdef.C.view_xpure_flag <- TP.check_diff vdef.C.view_user_inv xform2)
           ;
           vdef.C.view_addr_vars <- addr_vars;
+          (* let xf = pure_of_mix xform' in *)
+          (* let xf = strip_exists_pure xf in *)
+          (* let (subs,_) = Mcpure.get_all_vv_eqs_mix xform' in *)
           let _ = Debug.info_hprint (add_str "xform(mix)" Cprinter.string_of_mix_formula) xform' no_pos in
           let _ = Debug.info_hprint (add_str "view_addr_vars" !Cast.print_svl) addr_vars no_pos in
           let _ = Debug.info_hprint (add_str "view_vars" !Cast.print_svl) vdef.C.view_vars no_pos in

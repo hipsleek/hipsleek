@@ -2368,7 +2368,7 @@ let get_subst_equation_mix_formula p qvar only_vars = match p with
   | OnePF f -> 
     let l,f = get_subst_equation_formula f qvar only_vars in
     (l,OnePF f)
-    
+
 let get_all_vv_eqs_mix f = match f with 
 	| MemoF f -> 
 		let l,f = get_all_vv_eqs_memo f in
@@ -2376,7 +2376,13 @@ let get_all_vv_eqs_mix f = match f with
 	| OnePF f -> 
 		let l,f = get_all_vv_eqs f in
 		l, OnePF f
-	
+
+let get_all_vv_eqs_mix f = 
+  let pr1 = !print_mix_f in
+  let pr = pr_list (pr_pair !print_sv_f !print_sv_f) in
+  let pr2 = pr_pair pr !print_mix_f in
+  Debug.no_1 "get_all_vv_eqs_mix" pr1 pr2 get_all_vv_eqs_mix f 
+
 let mix_cons_filter f fct = match f with
   | MemoF f -> MemoF (cons_filter f fct)
   | OnePF _ -> f

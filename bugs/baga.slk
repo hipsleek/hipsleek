@@ -17,6 +17,7 @@ pred l5<k> ==
   self::node<q>*q::node<_> & k=q
 inv self!=null.
 /*
+
  missing on k for baga formula
  addr vars: self
   uni_vars: []
