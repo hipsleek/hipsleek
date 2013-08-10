@@ -887,7 +887,7 @@ struct
     let b = is_one2one f (get_elems s) in
     if b then  List.map (fun (e,k) -> (f e, List.map f k)) s
     else Error.report_error {Error.error_loc = Globals.no_pos; 
-							 Error.error_text = ("rename_eset : f is not 1-to-1 map")}
+    Error.error_text = ("rename_eset : f is not 1-to-1 map")}
 
   (* s - from var; t - to var *)
   let norm_subs_eq (subs:epair) : epair =
@@ -916,7 +916,26 @@ struct
 	  let ns = List.fold_left (fun s (a1,a2) -> add_equiv s a1 a2) s e2 in
       List.map (fun (e,k) -> (f e,k)) ns
 
-
+  (* given existential evars and an eset, return a set of substitution *)
+  (* from evars to free vars, where possible *)
+  (* if not possible, return subs to the first existential var found *)
+  (* [v] [v=w, v=y] ---> [(v,w)] *)
+  (* [v,y] [v=w, v=y] ---> [(v,w),(y,w)] *)
+  (* [v,y,w] [v=w, v=y] ---> [(v,v),(w,v),(y,v)] *)
+  let build_subs_4_evars evars eset =
+    let rec aux ev  =
+      match ev with 
+        | [] -> []
+        | e::evs -> 
+              let eqlist = find_equiv_all e eset in
+              let (bound,free) = List.partition (fun c -> BList.mem_eq eq c evars) eqlist in
+              let (used,rest) = List.partition (fun c -> BList.mem_eq eq c bound) evs in
+              let target = match free with 
+                | [] -> e
+                | h::_ -> h in
+              let nsubs = List.map (fun x -> (x,target)) (e::used) in
+              nsubs@(aux rest)
+    in aux evars
 end;;
 
 module INT =
