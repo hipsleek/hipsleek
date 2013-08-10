@@ -298,20 +298,48 @@ let no_diff = ref false (* if true, then xpure_symbolic will drop the disequalit
 let no_check_outer_vars = ref false 
 
 (*----------------*)
+(* below should be moved to Gen.eset *)
+let build_subs_4_evars evars eset =
+  (* let pr_svl = Cprinter.string_of_spec_var_list in *)
+  (* let pr_eset = CP.EMapSV.string_of in *)
+  let rec aux ev  =
+    match ev with 
+      | [] -> []
+      | e::evs -> 
+            let eqlist = CP.EMapSV.find_equiv_all e eset in
+            let (bound,free) = List.partition (fun c -> Gen.BList.mem_eq CP.eq_spec_var c evars) eqlist in
+            (* Debug.info_hprint (add_str "eset" pr_eset) eset no_pos; *)
+            (* Debug.info_hprint (add_str "eqlist" pr_svl) eqlist no_pos; *)
+            (* Debug.info_hprint (add_str "bound" pr_svl) bound no_pos; *)
+            (* Debug.info_hprint (add_str "free" pr_svl) free no_pos; *)
+            let (used,rest) = List.partition (fun c -> Gen.BList.mem_eq CP.eq_spec_var c bound) evs in
+            let nsubs = match free with 
+              | [] -> []
+              | h::_ -> List.map (fun x -> (x,h)) (e::used)
+            in nsubs@(aux rest)
+  in aux evars
+
 let compute_subs_mem puref evars = 
+  let pr_sv = Cprinter.string_of_spec_var in
+  let pr = pr_list (pr_pair pr_sv pr_sv) in
   let (subs,_) = CP.get_all_vv_eqs puref in
-  let subs = List.map (fun (v1,v2) ->
-      if Gen.BList.mem_eq CP.eq_spec_var v2 evars then (v2,v1)
-      else (v1,v2)
-  ) subs in
-  subs
+  let eqset = CP.EMapSV.build_eset subs in
+  let nsubs = build_subs_4_evars evars eqset in
+  (* let subs1 = List.map (fun (v1,v2) -> *)
+  (*     if Gen.BList.mem_eq CP.eq_spec_var v2 evars then (v2,v1) *)
+  (*     else (v1,v2) *)
+  (* ) subs in *)
+  (* Debug.info_hprint (add_str "orig subs" pr) subs no_pos; *)
+  (* Debug.info_hprint (add_str "old_subs" pr) subs1 no_pos; *)
+  (* Debug.info_hprint (add_str "new_subs" pr) nsubs no_pos; *)
+  nsubs
 
 let compute_subs_mem puref evars = 
   let pr = Cprinter.string_of_pure_formula in
   let pr2 = Cprinter.string_of_spec_var_list in
   let pr_sv = Cprinter.string_of_spec_var in
   let pr_subs = pr_list (pr_pair pr_sv pr_sv) in
-  Debug.no_2 "compute_subs_mem" pr pr2 pr_subs compute_subs_mem  puref evars  
+  Debug.no_2 "compute_subs_mem" pr (add_str "evars" pr2) pr_subs compute_subs_mem  puref evars  
 
 let rec formula_2_mem_x (f : CF.formula) prog : CF.mem_formula = 
   (* for formula *)	

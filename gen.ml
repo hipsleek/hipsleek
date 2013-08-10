@@ -758,7 +758,7 @@ struct
             List.map (fun (a,b) -> if (b==r1 or b==r2) then (a,r3) else (a,b)) s
 
   let build_eset (xs:(elem * elem) list) :  emap =
-    List.fold_right (fun (x,y) eqs -> add_equiv eqs x y) xs (mkEmpty)
+    List.fold_left (fun eqs (x,y) -> add_equiv eqs x y) mkEmpty xs 
 
   let mem x ls =
     List.exists (fun e -> eq x e) ls
@@ -915,6 +915,7 @@ struct
 	  let e2= norm_subs_eq s1 in
 	  let ns = List.fold_left (fun s (a1,a2) -> add_equiv s a1 a2) s e2 in
       List.map (fun (e,k) -> (f e,k)) ns
+
 
 end;;
 

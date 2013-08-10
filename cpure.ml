@@ -3648,11 +3648,12 @@ and get_all_vv_eqs_x (f0 : formula) : ((spec_var * spec_var) list * formula) =
   let rec helper f0 =  match f0 with
       | And (f1, f2, pos) ->
           let st1, rf1 = helper f1  in
-          if not (Gen.is_empty st1) then
-            (st1, mkAnd rf1 f2 pos)
-          else
-            let st2, rf2 = helper f2  in
-            (st2, mkAnd f1 rf2 pos)
+          let st2, rf2 = helper f2  in
+          (st1@st2, mkAnd rf1 rf2 pos)
+          (* if not (Gen.is_empty st1) then *)
+          (*   (st1, mkAnd rf1 f2 pos) *)
+          (* else *)
+          (*   (st2, mkAnd f1 rf2 pos) *)
       | AndList b -> 
 		  let r1,r2 = List.fold_left (fun (a1,b1) c-> 
 			  if Gen.is_empty a1 then 
