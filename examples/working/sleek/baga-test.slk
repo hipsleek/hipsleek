@@ -2,9 +2,11 @@ data node {
   node next;
 }.
 
+// --eps
+
 //Fail.Fail.Valid.Valid.Fail.Valid.
 //Valid.Fail.Fail.
-//Valid.Fail.Fail.Valid.Valid.
+//Valid.Fail.Fail.Valid.Valid.Valid.
 
 pred l3<> == 
   self::node<q>*q::node<_> 
@@ -75,5 +77,10 @@ checkentail x::l7<q> * x::l7<q> |- false.
 // (13) Valid
 checkentail x::l7<q> * x::l7<q> & x!=null |- q!=null.
 
+// --eps
 // (14) Valid
 checkentail x::l7<q> * x::l7<q> & x!=null |- false.
+
+// --eps
+// (15) Valid
+checkentail x::l7<q> * y::l7<q> & x!=null & y!=null |- false.
