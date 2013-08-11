@@ -146,8 +146,8 @@ let check_coercion_struc coer lhs rhs (cprog: C.prog_decl) =
 let check_left_coercion coer (cprog: C.prog_decl) =
   (*let _ = print_string ("\nCoercion name: " ^ coer.C.coercion_name) in *)
   let ent_lhs =coer.C.coercion_head in
-  (* let ent_rhs = CF.struc_formula_of_formula coer.C.coercion_body no_pos in *)
-  let ent_rhs =  coer.C.coercion_body_norm in
+  let ent_rhs = CF.struc_formula_of_formula coer.C.coercion_body no_pos in
+  (* let ent_rhs =  coer.C.coercion_body_norm in *)
   check_coercion_struc coer ent_lhs ent_rhs cprog
 
 let check_left_coercion coer cprog  =
@@ -157,7 +157,7 @@ let check_left_coercion coer cprog  =
 (* sets the lhs & rhs of the entailment when proving r2l lemma (coercion), where the rhs (coercion head) is normalized  *)
 let check_right_coercion coer (cprog: C.prog_decl) =
   (* let _ = print_string ("\nCoercion name: " ^ coer.C.coercion_name) in *)
-  let ent_rhs = CF.struc_formula_of_formula coer.C.coercion_head_norm no_pos in
+  let ent_rhs = CF.struc_formula_of_formula coer.C.coercion_head(* _norm *) no_pos in
   let ent_lhs = coer.C.coercion_body in
   check_coercion_struc coer ent_lhs ent_rhs cprog 
 
