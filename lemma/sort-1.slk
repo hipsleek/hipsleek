@@ -10,6 +10,7 @@ pred sortl<n, mi> == self = null & n = 0
 
 lemma self::sortl<n, mi> -> self::ll<n>.
 
+/*
 checkentail x = null & n = 0
 	or x::node<mi, r> * r::sortl<n - 1, k> & mi <= k
      |- x::ll<n>.
@@ -21,3 +22,4 @@ checkentail x = null & n = 0
 	or x::node<next = r> * r::ll<n - 1>
     .
 print residue.
+*/

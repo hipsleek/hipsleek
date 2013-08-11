@@ -829,7 +829,7 @@ xform has self>0 instead of self!=null
   xform: ((p!=self & self>0) | p=self)
 
 ===================================================================
-# i13-5a.slk
+# i13-5a.slk  (in bugs)
 
 infer [H1] H1(y) & (x=2 | x>5)  |- y::lseg<null> .
 
@@ -886,7 +886,66 @@ I think you should do 2 things (i) first; then (ii)
     may skip it first.
 
 ===================================================================
+# baga-2.slk
+
+pred l4<q> == 
+  self::node<q>*q::node<_>
+inv self!=null.
+// baga {self,q}
+
+pred l5<k> == 
+  self::node<q>*q::node<_> & k=q
+inv self!=null.
+
+l4 is Ok but l5 is missing on 
+a baga address.
+
+need to get visible parameters and
+extract equality from pure formula 
+for substitution in xpure_symbolic
+
+ missing on k for baga formula
+ addr vars: self
+  uni_vars: []
+  bag of addr: self
+  view_complex_inv: None
 ===================================================================
+# baga-2.slk
+
+(i) duplicated calls to formula_2_mem..
+(ii) are they critical?
+
+formula_2_mem@1
+formula_2_mem inp1 : {1}->(exists q,Anon_11: self::node<q>@M * q::node<Anon_11>@M&k=q & q!=self&
+{FLOW,(1,22)=__flow})[]
+formula_2_mem@1 EXIT out : [[self,q]]
+
+formula_2_mem@3
+formula_2_mem inp1 : {1}->(exists q,Anon_11: self::node<q>@M * q::node<Anon_11>@M&k=q & q!=self&
+{FLOW,(1,22)=__flow})[]
+formula_2_mem@3 EXIT out : [[self,q]]
+
+!!! xform(mix): exists(q:k=q & q!=self & q!=null) & self!=null
+!!! view_addr_vars:[self]
+!!! view_vars:[k]
+!!! view_baga:[self,q]
+!!! new_baga:[self]
+
+formula_2_mem@5
+formula_2_mem inp1 : {1}->(exists q,Anon_11: self::node<q>@M * q::node<Anon_11>@M&k=q & q!=self&
+{FLOW,(1,22)=__flow})[]
+formula_2_mem@5 EXIT out : [[self,q]]
+
+formula_2_mem@7
+formula_2_mem inp1 : {1}->(exists q,Anon_11: self::node<q>@M * q::node<Anon_11>@M&k=q & q!=self&
+{FLOW,(1,22)=__flow})[]
+formula_2_mem@7 EXIT out : [[self,q]]
+
+formula_2_mem@9
+formula_2_mem inp1 : {1}->self::node<q>@M * q::node<Anon_11>@M&k=q & q!=self&
+{FLOW,(1,22)=__flow}[]
+formula_2_mem@9 EXIT out : [[self,q]]
+
 ===================================================================
 ===================================================================
 ===================================================================

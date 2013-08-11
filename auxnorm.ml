@@ -111,42 +111,42 @@ let merge_ieq_ieq f1 f2  =  (* merge_other f1 f2 *)
 
       
 
-let merge_eq_ieq eq ieq  = (* merge_other f1o f2o *)
-  let emap = CP.EMapSV.build_eset ( CP.pure_ptr_equations eq) in
-  match ieq with
-    | CP.BForm (b, lb) ->
-          begin
-            match b with
-              | (CP.Lt (ex1, ex2, s), l) -> 
-                    begin
-                      match conv_exp_to_var ex1, conv_exp_to_var ex2 with
-                        |  Some v1, Some v2 ->
-                               if CP.EMapSV.is_equiv emap v1 v2 then 
-                                   merged [CP.BForm ((CP.Lte (ex1,  ex2, s), l), lb)]
-                               else merge_other eq ieq
-                        | _, _ -> merge_other eq ieq
-                    end
-              | (CP.Gt (ex1, ex2, s), l) ->
-                    begin
-                      match conv_exp_to_var ex1, conv_exp_to_var ex2 with
-                        |  Some v1, Some v2 ->
-                               if CP.EMapSV.is_equiv emap v1 v2 then
-                                 merged [CP.BForm ((CP.Gte (ex1,  ex2, s), l), lb)]
-                               else merge_other eq ieq
-                        | _, _ -> merge_other eq ieq
-                    end
-              | (CP.Neq (ex1, ex2, _), _) ->
-                    begin
-                      match conv_exp_to_var ex1, conv_exp_to_var ex2 with
-                        |  Some v1, Some v2 ->
-                               if CP.EMapSV.is_equiv emap v1 v2 then 
-                                   merged [CP.mkTrue no_pos]
-                               else merge_other eq ieq
-                        | _, _ -> merge_other eq ieq
-                    end
-              | _ -> merge_other eq ieq
-          end
-    | _ -> merge_other eq ieq
+let merge_eq_ieq eq ieq  = merge_other eq ieq
+  (* let emap = CP.EMapSV.build_eset ( CP.pure_ptr_equations eq) in *)
+  (* match ieq with *)
+  (*   | CP.BForm (b, lb) -> *)
+  (*         begin *)
+  (*           match b with *)
+  (*             | (CP.Lt (ex1, ex2, s), l) ->  *)
+  (*                   begin *)
+  (*                     match conv_exp_to_var ex1, conv_exp_to_var ex2 with *)
+  (*                       |  Some v1, Some v2 -> *)
+  (*                              if CP.EMapSV.is_equiv emap v1 v2 then  *)
+  (*                                  merged [CP.BForm ((CP.Lte (ex1,  ex2, s), l), lb)] *)
+  (*                              else merge_other eq ieq *)
+  (*                       | _, _ -> merge_other eq ieq *)
+  (*                   end *)
+  (*             | (CP.Gt (ex1, ex2, s), l) -> *)
+  (*                   begin *)
+  (*                     match conv_exp_to_var ex1, conv_exp_to_var ex2 with *)
+  (*                       |  Some v1, Some v2 -> *)
+  (*                              if CP.EMapSV.is_equiv emap v1 v2 then *)
+  (*                                merged [CP.BForm ((CP.Gte (ex1,  ex2, s), l), lb)] *)
+  (*                              else merge_other eq ieq *)
+  (*                       | _, _ -> merge_other eq ieq *)
+  (*                   end *)
+  (*             | (CP.Neq (ex1, ex2, _), _) -> *)
+  (*                   begin *)
+  (*                     match conv_exp_to_var ex1, conv_exp_to_var ex2 with *)
+  (*                       |  Some v1, Some v2 -> *)
+  (*                              if CP.EMapSV.is_equiv emap v1 v2 then  *)
+  (*                                  merged [CP.mkTrue no_pos] *)
+  (*                              else merge_other eq ieq *)
+  (*                       | _, _ -> merge_other eq ieq *)
+  (*                   end *)
+  (*             | _ -> merge_other eq ieq *)
+  (*         end *)
+  (*   | _ -> merge_other eq ieq *)
 
 let merge_eq_eq f1 f2 = merge_other f1 f2
 
@@ -167,11 +167,11 @@ let can_further_norm f1_conj f2_conj =
   if Gen.BList.list_setequal_eq CP.eq_spec_var f1_sv f2_sv then true
   else false
 
-let maybe_merge conj1 conj2 = (* (true, conj1) *)
-  let common_conj, conj1 = List.partition (fun f -> Gen.BList.mem_eq CP.equalFormula f conj2) conj1 in
-  let conj2 = Gen.BList.difference_eq CP.equalFormula conj2 common_conj in
+let maybe_merge conj1i conj2i = (* (true, conj1) *)
+  let common_conj, conj1 = List.partition (fun f -> Gen.BList.mem_eq CP.equalFormula f conj2i) conj1i in
+  let conj2 = Gen.BList.difference_eq CP.equalFormula conj2i common_conj in
   match conj1, conj2 with
-    | [], [] -> (true,conj1)                     (* identical lists*)
+    | [], [] -> (true,conj1i)                     (* identical lists*)
     | _, []
     | [], _  -> (true, common_conj)
     | f1::[], f2::[] -> 
@@ -187,6 +187,11 @@ let maybe_merge conj1 conj2 = (* (true, conj1) *)
             (false,[])
           else                          (* formulas can not be further normalized *)
             (false,[])
+
+let maybe_merge conj1 conj2 =
+  let pr = pr_list Cprinter.string_of_pure_formula in
+  let pr_out = pr_pair string_of_bool pr in
+  Debug.no_2 "maybe_merge" pr pr pr_out maybe_merge conj1 conj2
 
 let update_disj disj conj_lst = 
   let rec helper disj (conj_lst,d_init) =

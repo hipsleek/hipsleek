@@ -179,6 +179,17 @@ Mixed version currently fails, but I would expect:
  inferred rel   [R(fld5) --> fld5=null]
 
 ========================================================================
+
+# x-4.slk 
+Why did extra ante cause inference to fail?
+Without it, inference success with inf_n_32=n.
+
+infer [inf_ann_31,inf_n_32,n,q]
+ n=0 & inf_ann_31=@M
+ //& ((inf_n_32=0 & q=null) | (1<=inf_n_32 & q!=null))
+ |-  emp&inf_n_32=n.
+print residue.
+
 # x-3.slk
 
 Below works.
@@ -190,6 +201,7 @@ q_34=z & inf_ann_39=@M & inf_p_40=null & inf_p_40!=x & x!=null
 print residue.
 
 but an identical inference (LHS/RS) with an extra inferrable  
+
 var fails. I think this problem wasn't there before
 and need to be fixed.
 
@@ -202,6 +214,26 @@ print residue.
 
 Please test i13-5d.slk which should work if you fix this problem.
 ========================================================================
+# x-4.slk
+
+--en-norm-disj (why simplify to true?)
+
+id: 23<2; prover: OMEGA CALCULATOR; loc: _0:0_0:0; kind: Sleek_Entail(2)
+ raw proof:SIMPLIFY:{[n, inf_n_32, q] : ( (not (((n = 0) & (((inf_n_32 = 0) & (q <= 0)) | ((1 <= inf_n_32) & (q != 0)))))) )};
+ raw result:{[n,inf_n_32,q]: inf_n_32 <= 0 && 1 <= q} union {[n,inf_n_32,q]: inf_n_32 <= -1 && q <= 0} union {[n,0,q]: q <= 0 && 1 <= n} union {[n,0,q]: n <= -1 && q <= 0} union {[n,inf_n_32,0]: 1 <= inf_n_32} union {[n,inf_n_32,q]: q <= -1 && 1 <= n && 1 <= inf_n_32} union {[n,inf_n_32,q]: n <= -1 && q <= -1 && 1 <= inf_n_32} union {[n,inf_n_32,q]: 1 <= inf_n_32 && 1 <= q && 1 <= n} union {[n,inf_n_32,q]: n <= -1 && 1 <= inf_n_32 && 1 <= q}
+ Simplify:  !((n=0 & (((inf_n_32=0 & q=null) | (1<=inf_n_32 & q!=null)))))
+ res:  true
+ 
+--dis-norm-disj
+
+ id: 23<2; prover: OMEGA CALCULATOR; loc: _0:0_0:0; kind: Sleek_Entail(2)
+ raw proof:SIMPLIFY:{[n, inf_n_32, q] : ( (not (((n = 0) & (((inf_n_32 = 0) & (q <= 0)) | ((1 <= inf_n_32) & (q != 0)))))) )};
+ raw result:{[n,inf_n_32,q]: inf_n_32 <= 0 && 1 <= q} union {[n,inf_n_32,q]: inf_n_32 <= -1 && q <= 0} union {[n,0,q]: q <= 0 && 1 <= n} union {[n,0,q]: n <= -1 && q <= 0} union {[n,inf_n_32,0]: 1 <= inf_n_32} union {[n,inf_n_32,q]: q <= -1 && 1 <= n && 1 <= inf_n_32} union {[n,inf_n_32,q]: n <= -1 && q <= -1 && 1 <= inf_n_32} union {[n,inf_n_32,q]: 1 <= inf_n_32 && 1 <= q && 1 <= n} union {[n,inf_n_32,q]: n <= -1 && 1 <= inf_n_32 && 1 <= q}
+ Simplify:  !((n=0 & (((inf_n_32=0 & q=null) | (1<=inf_n_32 & q!=null)))))
+ res:  ((inf_n_32=0 & q=null & n!=0) | (q=null & inf_n_32!=0) | ((q+1)<=0 & 
+1<=inf_n_32 & n!=0) | (1<=inf_n_32 & q!=null & n!=0) | (inf_n_32<=0 & 
+q!=null))
+
 ========================================================================
 ========================================================================
 ========================================================================

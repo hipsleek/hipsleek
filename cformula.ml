@@ -16,6 +16,7 @@ module Err = Error
 module CP = Cpure
 module MCP = Mcpure
 
+
 type cond_path_type = int list
 
 (* let string_of_cond_path c = "(" ^(String.concat ", " (List.map string_of_int c)) ^ ")" *)
@@ -35,7 +36,7 @@ type typed_ident = (typ * ident)
 
 and mem_perm_formula = {mem_formula_exp : CP.exp;
 			mem_formula_exact : bool;
-            mem_formula_field_values : (ident * (CP.exp list)) list;
+                        mem_formula_field_values : (ident * (CP.exp list)) list;
 			mem_formula_field_layout : (ident * (ann list)) list;
 			mem_formula_guards : CP.formula list; 
 }
@@ -3304,7 +3305,10 @@ and remove_quantifiers (qvars : CP.spec_var list) (f : formula) : formula = matc
         (* 19.05.2008 *)
 
 and push_struc_exists (qvars : CP.spec_var list) (f : struc_formula) = match f with
-	| EBase b -> EBase {b with formula_struc_exists = b.formula_struc_exists @ qvars}
+	| EBase b -> 
+		(match b.formula_struc_continuation with
+			| None -> EBase {b with formula_struc_base = push_exists qvars b.formula_struc_base}
+			| _ -> EBase {b with formula_struc_exists = b.formula_struc_exists @ qvars})			
 	| ECase b -> ECase {b with formula_case_exists = b.formula_case_exists @ qvars}
 	| EAssume b -> EAssume {b with
 		formula_assume_simpl = push_exists qvars b.formula_assume_simpl;
@@ -3865,6 +3869,12 @@ let get_hpdef_name hpdef=
      (* | CP.HPRelNDefn hp -> hp *)
      | _ -> report_error no_pos "sau.get_hpdef_name"
 
+let get_hpdef_name_w_tupled hpdef=
+   match hpdef with
+     | CP.HPRelDefn (hp,_,_) -> [hp]
+     | CP.HPRelLDefn hps -> hps
+     | _ -> []
+
 let hpdef_cmp d1 d2 =
   try
     let hp1 = get_hpdef_name d1.hprel_def_kind in
@@ -3947,6 +3957,38 @@ let is_HRel_f (f0:formula) =
        (helper orf.formula_or_f1) && (helper orf.formula_or_f2)
   in
   helper f0
+
+let map_heap_hf_1 fn hf0=
+  let rec helper hf=
+    match hf with
+      | Star { h_formula_star_h1 = hf1;
+        h_formula_star_h2 = hf2;}
+      |  Conj { h_formula_conj_h1 = hf1;
+         h_formula_conj_h2 = hf2;}
+      | Phase { h_formula_phase_rd = hf1;
+        h_formula_phase_rw = hf2;}
+      | StarMinus { h_formula_starminus_h1 = hf1;
+        h_formula_starminus_h2 = hf2;}
+      | ConjStar { h_formula_conjstar_h1 = hf1;
+        h_formula_conjstar_h2 = hf2;}
+      | ConjConj { h_formula_conjconj_h1 = hf1;
+        h_formula_conjconj_h2 = hf2;} ->
+            (helper hf1)@(helper hf2)
+      | _ -> fn hf
+  in
+  helper hf0
+
+let map_heap_1 fn f0=
+  let rec helper f=
+  match f with
+    | Base ({ formula_base_heap = h1;})
+    | Exists ({formula_exists_heap = h1;}) ->
+        map_heap_hf_1 fn h1
+    | Or orf  ->
+       (helper orf.formula_or_f1) @ (helper orf.formula_or_f2)
+  in
+  helper f0
+
 
 let trans_heap_hf fn hf0=
   let rec helper hf=
@@ -4402,7 +4444,8 @@ let rec heap_trans_heap_node fct f0 =
   let rec helper f=
     match f with
       | HRel b -> fct f
-      | HTrue | HFalse | HEmp | Hole _ | DataNode _ | ViewNode _ -> f
+      | ViewNode _ -> fct f
+      | HTrue | HFalse | HEmp | Hole _ | DataNode _ -> f
       | Phase b -> Phase {b with h_formula_phase_rd = recf b.h_formula_phase_rd; h_formula_phase_rw = recf b.h_formula_phase_rw}
       | Conj b -> Conj {b with h_formula_conj_h2 = recf b.h_formula_conj_h2; h_formula_conj_h1 = recf b.h_formula_conj_h1}
       | Star b -> Star {b with h_formula_star_h2 = recf b.h_formula_star_h2; h_formula_star_h1 = recf b.h_formula_star_h1}
@@ -6529,7 +6572,6 @@ think it is used to instantiate when folding.
   (* from this context *)
   es_term_err: string option;
 
-
   (* for IMMUTABILITY *)
 (* INPUT : this is an alias set for the RHS conseq *)
 (* to be used by matching strategy for imm *)
@@ -6546,7 +6588,9 @@ think it is used to instantiate when folding.
   (* es_imm_pure_stk : MCP.mix_formula list; *)
   es_must_error : (string * fail_type) option;
   (* es_must_error : string option *)
-  es_trace : formula_trace; (*LDK: to keep track of past operations: match,fold...*) 
+  es_trace : formula_trace; (*LDK: to keep track of past operations: match,fold...*)
+  (*for cyclic proof*)
+  es_proof_traces: (formula*formula) list;
   (* WN : isn't above the same as prior steps? *)
   es_is_normalizing : bool; (*normalizing process*)
 
@@ -6788,6 +6832,7 @@ let empty_es flowt grp_lbl pos =
    (* es_imm_pure_stk = []; *)
   es_must_error = None;
   es_trace = [];
+  es_proof_traces = [];
   es_is_normalizing = false;
   es_infer_post = false;
   es_infer_vars = [];
@@ -9684,6 +9729,11 @@ let trans_formula (e: formula) (arg: 'a) f f_arg f_comb: (formula * 'b) =
             (new_exists, f_comb [v1; v2])
   in
   trans_f e arg
+
+(* let map_formula_args (e: formula) (arg:'a) (f:'a -> formula -> formula option) (f_args: 'a -> formula -> 'a) : formula = *)
+(*   let f1 ac e = push_opt_void_pair (f ac e) in *)
+(*   fst (trans_formula e arg f1 f_args voidf) *)
+
 
 (* let map_formula (e: formula) f f_comb: (formula * 'b) = *)
 (*   let f_struc_f, f_f, f_heap_f, f_pure, f_memo = f in *)
@@ -13178,3 +13228,11 @@ let combine_guard ogs0=
         end
   in
   helper ogs0 []
+
+let add_proof_traces_ctx ctx0 proof_traces=
+  let rec helper ctx=
+    match ctx with
+      | Ctx es -> Ctx {es with es_proof_traces = es.es_proof_traces@proof_traces}
+      | OCtx (ctx1,ctx2) -> OCtx( helper ctx1, helper ctx2)
+  in
+  helper ctx0

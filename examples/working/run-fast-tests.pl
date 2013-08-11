@@ -1184,11 +1184,13 @@ $output_file = "log";
         ["mk_zero.ss", 1, "", "mk_zero", "SUCCESS"],
         ["perm.ss", 1, "", "append", "SUCCESS"]
     ],
-    "lemmas"=>[["lemma_check01.ss", 3, " --elp ", "V1", "Valid", "V2", "Valid", "F3", "Fail"],
-               ["lemma_check02.ss", 2, " --elp ", "F5", "Fail", "V6", "Valid."],
-               ["lemma_check03.ss", 3, " --elp ", "L1", "Valid", "L2", "Valid", "L4", "Fail"],
-               ["lemma_check04.ss", 3, " --elp ", "L41", "Valid", "L42", "Fail", "L43","Fail"],
-               ["lemma_check06.ss", 6, " --elp ",  "L61", "Valid", "L67", "Valid", "L62", "Valid", "L64", "Fail", "L65", "Fail", "L66", "Fail"]
+    "lemmas"=>[
+        ["lemma_check01.ss", 3, " --elp ", "V1", "Valid", "V2", "Valid", "F3", "Fail"],
+        ["lemma_check01.ss", 3, " --elp ", "V1", "Valid", "V2", "Valid", "F3", "Fail"],
+        ["lemma_check02.ss", 2, " --elp ", "F5", "Fail", "V6", "Valid."],
+        ["lemma_check03.ss", 3, " --elp ", "L1", "Valid", "L2", "Valid", "L4", "Fail"],
+        ["lemma_check04.ss", 3, " --elp ", "L41", "Valid", "L42", "Fail", "L43","Fail"],
+        ["lemma_check06.ss", 6, " --elp ",  "L61", "Valid", "L67", "Valid", "L62", "Valid", "L64", "Fail", "L65", "Fail", "L66", "Fail"]
     ]
     );
 
@@ -1277,11 +1279,17 @@ $output_file = "log";
 					["fracperm/split-combine.slk","--en-para -perm fperm -tp redlog", "", "Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid."],
                   ["fracperm/combine2.slk","--en-para -perm fperm -tp redlog", "", "Valid.Valid.Valid.Valid."]
            ],
-    "lemmas"=>[["lemma_check01.slk", " --elp ", "Valid.Valid.Fail.", ""],
-              ["lemma_check02.slk", " --elp ", "Fail.Valid.", ""],
-              ["lemma_check03.slk", " --elp ", "Valid.Valid.Fail.", ""],
-              ["lemma_check04.slk", " --elp ", "Valid.Fail.Fail.", ""],
-              ["lemma_check06.slk", " --elp ", "Valid.Valid.Valid.Fail.Fail.Fail.", ""]],
+    "lemmas"=>[
+        ["ll.slk", " --elp ", "Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Fail.", ""],
+        ["sort.slk", " --elp ", "Valid.Fail.Fail.", ""],
+        ["lseg.slk", " --elp ", "Valid.Fail.", ""],
+        ["lseg_case.slk", " --elp ", "Valid.Fail.Fail.Valid.Fail.Fail.", ""]
+        # ["lemma_check01.slk", " --elp ", "Valid.Valid.Fail.", ""],
+        # ["lemma_check02.slk", " --elp ", "Fail.Valid.", ""],
+        # ["lemma_check03.slk", " --elp ", "Valid.Valid.Fail.", ""],
+        # ["lemma_check04.slk", " --elp ", "Valid.Fail.Fail.", ""],
+        # ["lemma_check06.slk", " --elp ", "Valid.Valid.Valid.Fail.Fail.Fail.", ""]
+    ],
     "musterr"=>[["err1.slk","","must.may.must.must.may.must.may.must.must.Valid.may.must."],
                ["err2.slk","","must.may.must.must.must.may.must.must.may.may.may.must.may.must.may.must.may.must.must.must.must.Valid.must.Valid.must.must.must.must.Valid.may.may."],
 			   ["err3.slk","","must.must.must.must.must.must.may.must.must."],
@@ -1426,7 +1434,7 @@ sub hip_process_file {
             } else {
                 print "Checking $test->[0] (runs with extra options: $extra_options)\n";
             }
-			#print "$hip $script_arguments $extra_options $exempl_path/hip/$test->[0] 2>&1 \n";
+			#print "$hip $script_arguments $extra_options $exempl_path_full/$test->[0] \n";
 			$output = `$hip $script_arguments $extra_options $exempl_path_full/$test->[0] 2>&1`;
 			print LOGFILE "\n======================================\n";
 			print LOGFILE "$output";
@@ -1454,6 +1462,7 @@ sub hip_process_file {
 
 			for($i = 3; $i<$limit;$i+=2)
 			{
+                            #print "\n$output";
 				if($output !~ /$procedure $test->[$i]\$.* $test->[$i+1]\./)
 				{
 			 		$error_count++;
@@ -1490,14 +1499,14 @@ sub sleek_process_file  {
           $err = 1;
       }
       if (("$param" =~ "lemmas") ||  ($script_arguments=~"--elp")) {  $lem = 1; }
-	  if ("$param" =~ "sleek_barr"){ $barr=1;}
+      if ("$param" =~ "sleek_barr"){ $barr=1;}
 #      elsif ($script_arguments=~"--dlp"){ $lem = 0; }
       
       if ("$param" =~ "sleek") {
           print "Starting sleek tests:\n";
           $exempl_path_full = "$exempl_path/sleek";
       }else {
-          $exempl_path_full = "$exempl_path_full/$param";
+          $exempl_path_full = "$exempl_path/sleek/$param";
           print "Starting sleek-$param tests:\n";
       }
       $t_list = $sleek_files{$param};

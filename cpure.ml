@@ -546,7 +546,16 @@ let eq_spec_var (sv1 : spec_var) (sv2 : spec_var) = match (sv1, sv2) with
 	    (* translation has ensured well-typedness.
 		   We need only to compare names and primedness *)
 	    v1 = v2 & p1 = p2
-      
+
+let rec eq_spec_var_order_list l1 l2=
+  match l1,l2 with
+    |[],[] -> true
+    | v1::ls1,v2::ls2 ->
+        if eq_spec_var v1 v2 then
+          eq_spec_var_order_list ls1 ls2
+        else false
+    | _ -> false
+
 let eq_spec_var_nop (sv1 : spec_var) (sv2 : spec_var) = match (sv1, sv2) with
   | (SpecVar (t1, v1, p1), SpecVar (t2, v2, p2)) ->
 	    (* translation has ensured well-typedness.
@@ -1108,7 +1117,6 @@ and isConstTrue_debug (p:formula) =
 
 
 
-        
 and isTrivTerm (p:formula) = match p with
   | BForm ((LexVar l, _),_) -> (l.lex_ann == Term || l.lex_ann==MayLoop) && l.lex_exp==[]
   | _ -> false
@@ -3632,14 +3640,21 @@ and get_subst_equation_b_formula (f : b_formula) (v : spec_var) lbl only_vars: (
    
 
 and get_all_vv_eqs (f0 : formula) : ((spec_var * spec_var) list * formula) =
+  let pr = !print_formula in
+  let pr_sv = !print_sv in
+  let prr = pr_pair (pr_list (pr_pair pr_sv pr_sv)) pr in
+  Debug.no_1 "get_all_vv_eqs" pr prr get_all_vv_eqs_x f0
+
+and get_all_vv_eqs_x (f0 : formula) : ((spec_var * spec_var) list * formula) =
   let rec helper f0 =  match f0 with
       | And (f1, f2, pos) ->
           let st1, rf1 = helper f1  in
-          if not (Gen.is_empty st1) then
-            (st1, mkAnd rf1 f2 pos)
-          else
-            let st2, rf2 = helper f2  in
-            (st2, mkAnd f1 rf2 pos)
+          let st2, rf2 = helper f2  in
+          (st1@st2, mkAnd rf1 rf2 pos)
+          (* if not (Gen.is_empty st1) then *)
+          (*   (st1, mkAnd rf1 f2 pos) *)
+          (* else *)
+          (*   (st2, mkAnd f1 rf2 pos) *)
       | AndList b -> 
 		  let r1,r2 = List.fold_left (fun (a1,b1) c-> 
 			  if Gen.is_empty a1 then 
@@ -11084,3 +11099,20 @@ let is_ieq f =
           end
     | _ -> false
 
+(* let swap_null_x (f : formula) : formula = *)
+(*   let f_e e = Some e in *)
+(*   let f_b ((pf,ann) as bf) = *)
+(*     match pf with *)
+(*       | Eq (e1, e2, l) -> begin *)
+(*           match e1 with *)
+(*             | Null _ -> Some ((Eq (e2, e1, l)), ann) *)
+(*             | _ -> Some bf *)
+(*         end *)
+(*       | _ -> Some bf *)
+(*   in *)
+(*   transform_formula ((fun _-> None),(fun _-> None), (fun _-> None),f_b,f_e) f *)
+
+(* let swap_null (f : formula) : formula = *)
+(*   let pr1 = !print_formula in *)
+(*   Debug.no_1 "CP.swap_null" pr1 pr1 *)
+(*       (fun _ -> swap_null_x f) f *)

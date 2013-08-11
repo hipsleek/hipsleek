@@ -58,6 +58,7 @@ and action =
   | Seq_action of action_wt list 
   | Search_action of action_wt list (*the match_res indicates if pushing holes for each action is required or it will be done once, at the end*)
   | M_lhs_case of match_res
+  | M_cyclic of match_res
   (* | Un *)
   (* | M *)
   (* | Opt int *)
@@ -132,6 +133,7 @@ let rec pr_action_name a = match a with
   | Seq_action l -> fmt_string "SEQ"
   | Search_action l -> fmt_string "SEARCH"
   | M_lhs_case e -> fmt_string "LHSCaseAnalysis"
+  | M_cyclic _ -> fmt_string "Match cyclic"
 
 let rec pr_action_res pr_mr a = match a with
   | Undefined_action e -> fmt_string "Undefined_action =>"; pr_mr e
@@ -155,6 +157,7 @@ let rec pr_action_res pr_mr a = match a with
         pr_seq_vbox "SEARCH =>" (pr_action_wt_res pr_mr) l;
         fmt_close();
   | M_lhs_case e -> fmt_string "LHSCaseAnalysis =>"; pr_mr e
+  | M_cyclic e -> fmt_string "Match cyclic =>"; pr_mr e
 
 and pr_action_wt_res pr_mr (w,a) = 
   fmt_string ("Prio:"^(string_of_int w)); (pr_action_res pr_mr a)
@@ -189,6 +192,7 @@ let action_get_holes a = match a with
   | M_rd_lemma e
   | M_lemma (e,_)
   | M_base_case_unfold e
+  | M_cyclic e
   | M_base_case_fold e -> Some e.match_res_holes
   | Seq_action _
   | Cond_action _
@@ -410,7 +414,8 @@ and choose_full_mater_coercion l_vname l_vargs r_aset (c:coercion_decl) =
 
 and coerc_mater_match_x prog l_vname (l_vargs:P.spec_var list) r_aset (imm : ann) (lhs_f:Cformula.h_formula) =
   (* TODO : how about right coercion, Cristina? *)
-  let coercs = prog.prog_left_coercions in
+  (* WN_all_lemma - is this overriding of lemmas? *)
+  let coercs = (Lem_store.all_lemma # get_left_coercion)(*prog.prog_left_coercions*) in
   let _ = DD.tinfo_hprint (add_str "coercs" (pr_list Cprinter.string_of_coercion)) coercs no_pos in
   let pos_coercs = List.fold_right (fun c a -> match (choose_full_mater_coercion l_vname l_vargs r_aset c) with 
     | None ->  a 
@@ -656,8 +661,9 @@ and lookup_lemma_action_x prog (c:match_res) :action =
                                   in*)
                   (*expecting ((String.compare dl.h_formula_data_name dr.h_formula_data_name)==0) == true*)
                   let l = 
-                    let left_ls = look_up_coercion_with_target (List.filter (fun c -> c.coercion_case = (Cast.Normalize false)) prog.prog_left_coercions) dl.h_formula_data_name dr.h_formula_data_name in
-                    let right_ls = look_up_coercion_with_target (List.filter (fun c -> c.coercion_case = (Cast.Normalize true)) prog.prog_right_coercions) dr.h_formula_data_name dl.h_formula_data_name in
+                    (* WN_all_lemma - is this overriding of lemmas? *)
+                    let left_ls = look_up_coercion_with_target (List.filter (fun c -> c.coercion_case = (Cast.Normalize false)) (*prog.prog_left_coercions*) (Lem_store.all_lemma # get_left_coercion)) dl.h_formula_data_name dr.h_formula_data_name in
+                    let right_ls = look_up_coercion_with_target (List.filter (fun c -> c.coercion_case = (Cast.Normalize true)) (*prog.prog_right_coercions*) (Lem_store.all_lemma # get_right_coercion)) dr.h_formula_data_name dl.h_formula_data_name in
                     let left_act = List.map (fun l -> (1,M_lemma (c,Some l))) left_ls in
                     let right_act = List.map (fun l -> (1,M_lemma (c,Some l))) right_ls in
                     left_act@right_act
@@ -704,22 +710,24 @@ and lookup_lemma_action_x prog (c:match_res) :action =
                   let l = if flag
                   then begin
                     (*expecting ((String.compare vl.h_formula_view_name vr.h_formula_view_name)==0)*)
-                    let left_ls = look_up_coercion_with_target (List.filter (fun c -> c.coercion_case = (Cast.Normalize false)) prog.prog_left_coercions) vl_name vr_name in
-                    let right_ls = look_up_coercion_with_target (List.filter (fun c -> c.coercion_case = (Cast.Normalize true)) prog.prog_right_coercions) vr_name vl_name in
+                    let left_ls = look_up_coercion_with_target (List.filter (fun c -> c.coercion_case = (Cast.Normalize false)) (Lem_store.all_lemma # get_left_coercion)(*prog.prog_left_coercions*)) vl_name vr_name in
+                    let right_ls = look_up_coercion_with_target (List.filter (fun c -> c.coercion_case = (Cast.Normalize true)) (Lem_store.all_lemma # get_right_coercion) (*prog.prog_right_coercions*)) vr_name vl_name in
                     let left_act = if (not(!ann_derv) || vl_new_orig) then List.map (fun l -> (1,M_lemma (c,Some l))) left_ls else [] in
                     let right_act = if (not(!ann_derv) || vr_new_orig) then List.map (fun l -> (1,M_lemma (c,Some l))) right_ls else [] in
                     left_act@right_act
                   end
                   else  [] in
+                  (* let _ = Debug.info_hprint (add_str "xxxx" pr_id) "1"  no_pos in *)
                   if l=[] then (1,M_Nothing_to_do (string_of_match_res c))
+                    (* (1, M_cyclic c) *)
                   else (-1,Search_action l)
             | DataNode dl, ViewNode vr -> (1,M_Nothing_to_do (string_of_match_res c))
             | ViewNode vl, DataNode dr -> (1,M_Nothing_to_do (string_of_match_res c))
             | _ -> report_error no_pos "process_one_match unexpected formulas\n"	              )
-    | MaterializedArg (mv,ms) -> 
+    | MaterializedArg (mv,ms) ->
           (*unexpected*)
           (1,M_Nothing_to_do (string_of_match_res c))
-    | WArg -> 
+    | WArg ->
           (1,M_Nothing_to_do (string_of_match_res c))
   in
   act
@@ -783,8 +791,9 @@ and process_one_match_x prog is_normalizing (c:match_res) :action_wt =
                   let l3 = if flag
                   then 
                     begin
-                      let left_ls = filter_norm_lemmas(look_up_coercion_with_target prog.prog_left_coercions dl.h_formula_data_name dr.h_formula_data_name) in
-                      let right_ls = filter_norm_lemmas(look_up_coercion_with_target prog.prog_right_coercions dr.h_formula_data_name dl.h_formula_data_name) in
+                      (* WN_all_lemma - is this overriding of lemmas? *)
+                      let left_ls = filter_norm_lemmas(look_up_coercion_with_target (Lem_store.all_lemma # get_left_coercion) (*prog.prog_left_coercions*) dl.h_formula_data_name dr.h_formula_data_name) in
+                      let right_ls = filter_norm_lemmas(look_up_coercion_with_target (Lem_store.all_lemma # get_right_coercion) (*prog.prog_right_coercions*) dr.h_formula_data_name dl.h_formula_data_name) in
                       let left_act = List.map (fun l -> (1,M_lemma (c,Some l))) left_ls in
                       let right_act = List.map (fun l -> (1,M_lemma (c,Some l))) right_ls in
                       if (left_act==[] && right_act==[]) then [] (* [(1,M_lemma (c,None))] *) (* only targetted lemma *)
@@ -875,7 +884,9 @@ and process_one_match_x prog is_normalizing (c:match_res) :action_wt =
                         | Some a -> [a]
                         | None ->
                               (* TO CHECK : MUST ensure not fold/unfold LOCKs*)
-                              let lst=[(1,M_base_case_unfold c);(1,M_Nothing_to_do ("mis-matched LHS:"^(vl_name)^" and RHS: "^(vr_name)))] in
+                              (* let _ = Debug.info_hprint (add_str "xxxx" pr_id) "4"  no_pos in *)
+                              (* let lst=[(1,M_base_case_unfold c);(1,M_Nothing_to_do ("mis-matched LHS:"^(vl_name)^" and RHS: "^(vr_name)))] in *)
+                              let lst=[(1,M_base_case_unfold c);(1,M_cyclic c)] in
                               (*let lst = [(1,M_base_case_unfold c);(1,M_unmatched_rhs_data_node (rhs_node,c.match_res_rhs_rest))] in*)
                               [(1,Cond_action lst)]
                   in
@@ -901,8 +912,8 @@ and process_one_match_x prog is_normalizing (c:match_res) :action_wt =
                   in
                   let l3 = if flag
                   then begin
-                    let left_ls = filter_norm_lemmas(look_up_coercion_with_target prog.prog_left_coercions vl_name vr_name) in
-                    let right_ls = filter_norm_lemmas(look_up_coercion_with_target prog.prog_right_coercions vr_name vl_name) in
+                    let left_ls = filter_norm_lemmas(look_up_coercion_with_target (Lem_store.all_lemma # get_left_coercion) (*prog.prog_left_coercions*) vl_name vr_name) in
+                    let right_ls = filter_norm_lemmas(look_up_coercion_with_target (Lem_store.all_lemma # get_right_coercion) (*prog.prog_right_coercions*) vr_name vl_name) in
                     let left_act = if (not(!ann_derv) || vl_new_orig) then List.map (fun l -> (1,M_lemma (c,Some l))) left_ls else [] in
                     let right_act = if (not(!ann_derv) || vr_new_orig) then List.map (fun l -> (1,M_lemma (c,Some l))) right_ls else [] in
                     (* let left_act = List.map (fun l -> (1,M_lemma (c,Some l))) left_ls in *)
@@ -941,7 +952,10 @@ and process_one_match_x prog is_normalizing (c:match_res) :action_wt =
                     if is_r_lock then [] else
                       if (new_orig || vr_self_pts==[]) then [(1,M_fold c)] else [] in
                   (* WN : what is M_rd_lemma for?? *)
-                  let a2 = if (new_orig) then [(* (1,M_rd_lemma c) *)] else [] in
+                  let r_lem = 
+                    if (Lem_store.all_lemma # any_lemma) then [(1,M_rd_lemma c)]
+                    else [] in
+                  let a2 = if (new_orig) then r_lem else [] in
                   (* let a2 = if (new_orig) then [(1,M_rd_lemma c)] else [] in *)
                   let a = a1@a2 in
                   if a!=[] then (-1,Search_action a)
@@ -960,7 +974,8 @@ and process_one_match_x prog is_normalizing (c:match_res) :action_wt =
                   in
                   let new_orig = if !ann_derv then not(vl_view_derv) else vl_view_orig in
                   let uf_i = if new_orig then 0 else 1 in
-                  let left_ls = filter_norm_lemmas(look_up_coercion_with_target prog.prog_left_coercions vl_name dr.h_formula_data_name) in
+                  (* WN_all_lemma - is this overriding of lemmas? *)
+                  let left_ls = filter_norm_lemmas(look_up_coercion_with_target (Lem_store.all_lemma # get_left_coercion)(*prog.prog_left_coercions*) vl_name dr.h_formula_data_name) in
                   (* let a1 = if (new_orig || vl_self_pts==[]) then [(1,M_unfold (c,uf_i))] else [] in *)
                   let _ = DD.tinfo_hprint (add_str "left_ls" (pr_list pr_none)) left_ls no_pos in
                   let a1 = 
@@ -1159,6 +1174,7 @@ and sort_wt_x (ys: action_wt list) : action_wt list =
     | M_fold _
     | M_split_match _ 
     | M_match _ 
+    | M_cyclic _
     | M_lhs_case _ -> false
     | M_Nothing_to_do _ 
     | Undefined_action _ 

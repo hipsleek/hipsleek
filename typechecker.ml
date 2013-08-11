@@ -2956,12 +2956,14 @@ let check_coercion (prog : prog_decl) =
      - left coercion c -> (Some c, None)
      - right coercion c -> (None, Some c)
   *)
-  let lemmas = List.map (fun l2r_coerc -> (Some l2r_coerc, find_coerc prog.prog_right_coercions l2r_coerc.coercion_name) ) prog.prog_left_coercions in
+  let left_coercs  =  Lem_store.all_lemma # get_left_coercion in
+  let right_coercs =  Lem_store.all_lemma # get_right_coercion in
+  let lemmas = List.map (fun l2r_coerc -> (Some l2r_coerc, find_coerc right_coercs (*prog.prog_right_coercions*) l2r_coerc.coercion_name) ) left_coercs (*prog.prog_left_coercions*) in
   (* add to lemmas the coercions from prog.prog_right_coercions that do not have a corresponding pair in prog.prog_left_coercions *)
   let lemmas = lemmas @ List.map (fun r2l_coerc -> (None, Some r2l_coerc))
     (List.filter 
-        (fun r2l_coerc -> List.for_all (fun l2r_coerc -> r2l_coerc.coercion_name <> l2r_coerc.coercion_name) prog.prog_left_coercions)
-        prog.prog_right_coercions) in
+        (fun r2l_coerc -> List.for_all (fun l2r_coerc -> r2l_coerc.coercion_name <> l2r_coerc.coercion_name) left_coercs (*prog.prog_left_coercions*))
+        right_coercs (*prog.prog_right_coercions*)) in
    List.iter (fun (l2r, r2l) -> 
        let (coerc_type, coerc_name) = 
        match (l2r, r2l) with

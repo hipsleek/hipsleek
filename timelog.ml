@@ -55,7 +55,7 @@ object (self)
             begin
               if trace_timer then print_endline "adding last_big";
               let to_flag = timer_timeout_flag in
-              (* let slk_no = stget_sleek_no ()) in  *)
+              (* let slk_no = get_sleek_no ()) in  *)
               last_big<-None;
               let s2 = if to_flag then ":TIMEOUT:" else ":" in
               (* let s2 = if last_timeout_flag then s2^":T2:" else s2 in *)
@@ -141,6 +141,7 @@ let log_wrapper s logger f x  =
       let r = logtime # stop_time in
       let to_flag = logtime # get_timeout () in
       let (pr,no) = logger (Some res) r to_flag in
+      (* if s="sleek-hec" then print_endline ("log_wrapper (normal):"^no); *)
       logtime # add_proof_info pr no;
       res
     with e ->
@@ -148,5 +149,6 @@ let log_wrapper s logger f x  =
         let to_flag = logtime # get_timeout () in
         let (pr,no) = logger None tt to_flag in
         logtime # add_proof_info (pr^"*EXC*") no;
+        (* if s="sleek-hec" then print_endline ("log_wrapper (exc):"^no); *)
         let _ = Debug.info_hprint (add_str "WARNING logtime exception" string_of_float) tt no_pos in
         raise e
