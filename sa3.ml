@@ -1963,10 +1963,10 @@ let infer_shapes_conquer iprog prog proc_name ls_is sel_hps=
   let n_all_hp_defs1 = SAU.combine_hpdefs n_all_hpdefs in
   let n_cmb_defs1 = if !Globals.pred_reuse then
     let lib_matching = match_hps_views n_all_hp_defs1 prog.CA.prog_view_decls in
-    let _ = DD.info_pprint ("        sel_hp_rel:" ^ (!CP.print_svl sel_hps)) no_pos in
-    let _ =  DD.info_pprint (" matching: " ^
-        (let pr = pr_list_ln (fun (hp,view_names) -> (!CP.print_sv hp) ^ " :== " ^
-            ( String.concat " OR " (List.map Cprinter.prtt_string_of_h_formula view_names))) in pr lib_matching)) no_pos in
+    (* let _ = DD.info_pprint ("        sel_hp_rel:" ^ (!CP.print_svl sel_hps)) no_pos in *)
+    (* let _ =  DD.info_pprint (" matching: " ^ *)
+    (*     (let pr = pr_list_ln (fun (hp,view_names) -> (!CP.print_sv hp) ^ " :== " ^ *)
+    (*         ( String.concat " OR " (List.map Cprinter.prtt_string_of_h_formula view_names))) in pr lib_matching)) no_pos in *)
     collect_sel_hpdef n_cmb_defs sel_hps dang_hps lib_matching
   else n_cmb_defs
   in

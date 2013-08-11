@@ -656,6 +656,8 @@ let sa_syn = ref true
 
 let sa_en_split = ref false
 
+let pred_split_para = ref false
+
 (* let sa_dangling = ref false *)
 
 let sa_refine_dang = ref false
