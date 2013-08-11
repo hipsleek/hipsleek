@@ -342,6 +342,8 @@ let is_float_var (sv : spec_var) : bool = is_float_type (type_of_spec_var sv)
 
 let is_rel_var (sv : spec_var) : bool = is_RelT (type_of_spec_var sv)
 
+let is_hp_rel_var (sv : spec_var) : bool = is_HpT (type_of_spec_var sv)
+
 let is_primed (sv : spec_var) : bool = match sv with
   | SpecVar (_, _, p) -> p = Primed
 

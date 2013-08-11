@@ -947,6 +947,44 @@ formula_2_mem inp1 : {1}->self::node<q>@M * q::node<Anon_11>@M&k=q & q!=self&
 formula_2_mem@9 EXIT out : [[self,q]]
 
 ===================================================================
+# baga-3.slk
+
+pred l3a<> == 
+  self::node<q>*q::node<_>  & self=q
+inv self!=null.
+
+  prune baga conditions: ([q])-1,([self])-2
+should be:
+  prune baga conditions: ([q])-1,([self,self])-2
+
+pred l6<q:node> == 
+  q::node<_> & self=null
+  or self::node<r>*r::node<_> & r=q
+inv q!=null.
+
+Got:
+  prune invs:3:
+   ,[{1,2} -> {[q]} [ q!=null]; {1} -> {[q]} [ self=null; q!=null]; 
+   {2} -> {[self]} [ q!=null; self!=null]]
+Should be:
+  prune invs:3:
+   ,[{1,2} -> {[q]} [ q!=null]; {1} -> {[q]} [ self=null; q!=null]; 
+   {2} -> {[self,q]} [ q!=null; self!=null]]
+
+pred l7<q:node> == 
+  self=null & q=null
+  or self::node<r>*r::node<_> & r=q
+inv true.
+
+GOT:
+  prune invs:3:
+   ,[{4,5} -> {[]} []; {4} -> {[]} [ self=null; q=null]; 
+   {5} -> {[self]} [ self!=null; q!=null]]
+should be:
+  prune invs:3:
+   ,[{4,5} -> {[]} []; {4} -> {[]} [ self=null; q=null]; 
+   {5} -> {[self,q]} [ self!=null; q!=null]]
+
 ===================================================================
 ===================================================================
 ===================================================================

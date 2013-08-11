@@ -9036,6 +9036,31 @@ let disj_of_list (xs : formula list) pos : formula =
   | [] -> mkTrue (mkTrueFlow ()) pos
   | x::xs -> helper xs x
 
+let mkOr_pure f1 f2 pos =
+  if isStrictConstTrue f1 || isStrictConstTrue f2 then
+  	mkTrue (mkTrueFlow ()) pos
+  else if isAnyConstFalse f1 then f2
+  else if isAnyConstFalse f2 then f1
+  else
+    match f1,f2 with
+    | Base b1,Base b2 ->
+      if b1.formula_base_heap = b2.formula_base_heap then
+      Base {b1 with formula_base_pure = 
+        MCP.mkOr_mems b1.formula_base_pure b2.formula_base_pure}
+      else
+        Or ({formula_or_f1 = f1; formula_or_f2 = f2; formula_or_pos = pos})
+    | _,_ -> 	
+    	Or ({formula_or_f1 = f1; formula_or_f2 = f2; formula_or_pos = pos})
+
+let disj_of_list_pure (xs : formula list) pos : formula = 
+  let rec helper xs r = match xs with
+    | [] -> r
+    | x::xs -> mkOr_pure x (helper xs r) pos
+  in
+  match xs with
+  | [] -> mkTrue (mkTrueFlow ()) pos
+  | x::xs -> helper xs x
+
 let rec split_conjuncts (f:formula):formula list = match f with 
   | Or b -> (split_conjuncts b.formula_or_f1)@(split_conjuncts b.formula_or_f2)
   | _ -> [f] 
