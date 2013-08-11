@@ -1559,7 +1559,7 @@ Would we be able to infer something like
 
 So that this example would succeed?
 =====================================================================
-# lseg-1.slk 
+# lseg-1.slk   FIXED
 
 infer [H1] H1(y)  |- y=null.
 
