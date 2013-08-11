@@ -1185,8 +1185,8 @@ $output_file = "log";
         ["perm.ss", 1, "", "append", "SUCCESS"]
     ],
     "lemmas"=>[
-        ["lemma_check01.ss", 3, " --elp ", "V1", "Valid", "V2", "Valid", "F3", "Fail"],
-        ["lemma_check01.ss", 3, " --elp ", "V1", "Valid", "V2", "Valid", "F3", "Fail"],
+        ["lemma_check01.ss", " --elp ", "Valid.Valid.Fail.",""],
+        # ["lemma_check01.ss", 3, " --elp ", "V1","Valid", "V2", "Valid", "F3", "Fail"],
         ["lemma_check02.ss", 2, " --elp ", "F5", "Fail", "V6", "Valid."],
         ["lemma_check03.ss", 3, " --elp ", "L1", "Valid", "L2", "Valid", "L4", "Fail"],
         ["lemma_check04.ss", 3, " --elp ", "L41", "Valid", "L42", "Fail", "L43","Fail"],
