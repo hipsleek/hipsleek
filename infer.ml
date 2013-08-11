@@ -980,10 +980,12 @@ let rec infer_pure_m_x unk_heaps estate lhs_rels lhs_xpure_orig lhs_xpure0
         (* abstract common terms from disj into conjunctive form *)
         if (CP.isConstTrue new_p || CP.isConstFalse new_p) then 
           begin
-            (* Do not add new_p_ass when new_p_ass is false or contains relation *)
+            (* Do not add new_p_ass when new_p_ass contradict LHS or RHS contains relation *)
             let new_p_ass_conjs = CP.list_of_conjs new_p_ass in
             let rhs_contain_rel = List.exists CP.is_RelForm new_p_ass_conjs in
-            if ((lhs_rels==None && unk_heaps==[]) || not(CP.isConstFalse new_p_ass || rhs_contain_rel)) then
+            let is_contra = not(TP.is_sat_raw (MCP.mix_of_pure 
+              (CP.mkAnd lhs_xpure new_p_ass no_pos))) && (CP.isConstFalse new_p) in
+            if ((lhs_rels==None && unk_heaps==[]) || not(is_contra || rhs_contain_rel)) then
               begin
                 DD.devel_pprint ">>>>>> infer_pure_m <<<<<<" pos;
                 DD.devel_pprint "Did not manage to infer a useful precondition" pos;
