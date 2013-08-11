@@ -2485,7 +2485,7 @@ let pr_estate (es : entail_state) =
      pr_wrap_test "es_var_zero_perm: " (fun _ -> false) (pr_seq "" pr_spec_var) es.es_var_zero_perm; (*always print*)
   (* pr_vwrap "es_infer_invs:  " pr_list_pure_formula es.es_infer_invs; *)
   pr_wrap_test "es_unsat_flag: " (fun x-> x) (fun c-> fmt_string (string_of_bool c)) es.es_unsat_flag;  
-   pr_wrap_test "es_proof_traces: " Gen.is_empty  (pr_seq "" (pr_pair_aux pr_formula pr_formula)) es.es_proof_traces;
+  (* pr_wrap_test "es_proof_traces: " Gen.is_empty  (pr_seq "" (pr_pair_aux pr_formula pr_formula)) es.es_proof_traces; *)
   fmt_close ()
 
 let pr_estate_infer_hp (es : entail_state) =

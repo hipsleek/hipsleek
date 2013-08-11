@@ -1376,10 +1376,10 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
                 (* Debug.info_hprint (add_str "disj_form" string_of_bool) disj_form no_pos; *)
                 if disj_form && !Globals.compute_xpure_0 then
                   (vdef.C.view_user_inv <- sf; vdef.C.view_xpure_flag <- false);
-	        Debug.info_pprint ("Using a simpler inv for xpure0 of "^vdef.C.view_name) pos;
-                Debug.info_hprint (add_str "inv(xpure0)" pr) vdef.C.view_user_inv pos;
+	        Debug.tinfo_pprint ("Using a simpler inv for xpure0 of "^vdef.C.view_name) pos;
+                Debug.tinfo_hprint (add_str "inv(xpure0)" pr) vdef.C.view_user_inv pos;
 
-	        Debug.info_hprint (add_str "inv(xpure1)" pr) vdef.C.view_x_formula pos
+	        Debug.tinfo_hprint (add_str "inv(xpure1)" pr) vdef.C.view_x_formula pos
               end
           end
         else report_error pos ("view defn for "^vn^" does not entail supplied invariant\n") 
@@ -2410,6 +2410,13 @@ and trans_coercions (prog : I.prog_decl) :
   let (tmp1, tmp2) = List.split tmp in
   let tmp3 = List.concat tmp1 in let tmp4 = List.concat tmp2 in (tmp3, tmp4)
 
+
+and unfold_self prog body = 
+  let pri_f = Iprinter.string_of_formula in
+  Debug.info_hprint (add_str "orig body" pri_f) body no_pos;
+  body
+
+
 and trans_one_coercion (prog : I.prog_decl) (coer : I.coercion_decl) :
       ((C.coercion_decl list) * (C.coercion_decl list)) =
   let pr x =  Iprinter.string_of_coerc_decl x in
@@ -2482,6 +2489,7 @@ and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
   (* c_body_norm is used only for proving l2r part of a lemma (left & equiv lemmas) *)
   let h = List.map (fun c-> (c,Unprimed)) lhs_fnames0 in
   let p = List.map (fun c-> (c,Primed)) lhs_fnames0 in
+  let unfold_body = unfold_self prog coer.I.coercion_body in
   let wf,_ = case_normalize_struc_formula 1 prog h p (IF.formula_to_struc_formula coer.I.coercion_body) false 
     false (*allow_post_vars*) true [] in
   let quant = true in

@@ -9,9 +9,6 @@ pred ll<> == self = null
 	or self::node<next = r> * r::ll<>
 	inv true.
 
-lemma "V1" self::ll_s<n> -> self::ll<>.
-// valid
-
 lemma "V2" self::ll_s<n> <- self::ll<>.
 // valid
 /*
@@ -20,7 +17,7 @@ lemma "V2" self::ll_s<n> <- self::ll<>.
 Entailing lemma V2: Fail. 
 */
 
-lemma "V3" self::ll_s<n> <-> self::ll<>.
+//lemma "V3" self::ll_s<n> <-> self::ll<>.
 // valid
 // valid
 /*
@@ -28,22 +25,4 @@ Entailing lemma V3: Fail. Details below:
 	 "->" implication: : Valid.
 	 "<-" implication: : Fail. 
 */
-
-lemma "V4" self::ll<> -> (exists n: self::ll_s<n>).
-// valid
-
-lemma "V5" self::ll<> <- (exists n: self::ll_s<n>).
-// valid
-
-lemma "V6" self::ll<> <-> (exists n: self::ll_s<n>).
-// valid (both sides!)
-
-lemma "F7" self::ll<> -> self::ll_s<n>.
-// valid
-
-lemma "V8" self::ll<> <- self::ll_s<n>.
-// valid
-
-lemma "F9" self::ll<> <-> self::ll_s<n>.
-// valid (both ways)
 

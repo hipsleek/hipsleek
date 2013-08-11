@@ -40,10 +40,11 @@ lemma self::sortl<n, mi> -> self::ll<m> & m>=n.
 lemma self::sortl<n, mi> -> (exists m : self::ll<m> & m>=n).
 
 //(8)
-// should succeed
+// should fail
 lemma self::sortl<n, mi> <- self::ll<n>.
 
 //(9)
+// should fail
 lemma self::sortl<n, mi> <- self::ll<m>.
 
 
