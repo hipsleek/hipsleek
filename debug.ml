@@ -320,7 +320,7 @@ struct
       let _ = print_string ("\n"^h^"\n") in
       (* if not df then *)
       (pr_args args; pr_lazy_res lz);
-      let _ = print_string (s^" EXIT out :"^(pr_o r)^"\n") in
+      let _ = print_string (s^" EXIT:"^(pr_o r)^"\n") in
       flush stdout;
       r)
 
