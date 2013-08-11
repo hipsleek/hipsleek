@@ -2411,10 +2411,10 @@ and trans_coercions (prog : I.prog_decl) :
   let tmp3 = List.concat tmp1 in let tmp4 = List.concat tmp2 in (tmp3, tmp4)
 
 
-and unfold_self prog body = 
-  let pri_f = Iprinter.string_of_formula in
-  Debug.info_hprint (add_str "orig body" pri_f) body no_pos;
-  body
+(* and unfold_self prog body =  *)
+(*   let pri_f = Iprinter.string_of_formula in *)
+(*   Debug.info_hprint (add_str "orig body" pri_f) body no_pos; *)
+(*   body *)
 
 
 and trans_one_coercion (prog : I.prog_decl) (coer : I.coercion_decl) :
@@ -2489,7 +2489,7 @@ and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
   (* c_body_norm is used only for proving l2r part of a lemma (left & equiv lemmas) *)
   let h = List.map (fun c-> (c,Unprimed)) lhs_fnames0 in
   let p = List.map (fun c-> (c,Primed)) lhs_fnames0 in
-  let unfold_body = unfold_self prog coer.I.coercion_body in
+  (* let unfold_body = unfold_self prog coer.I.coercion_body in *)
   let wf,_ = case_normalize_struc_formula 1 prog h p (IF.formula_to_struc_formula coer.I.coercion_body) false 
     false (*allow_post_vars*) true [] in
   let quant = true in

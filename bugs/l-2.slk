@@ -26,3 +26,4 @@ Entailing lemma V3: Fail. Details below:
 	 "<-" implication: : Fail. 
 */
 
+lemma "V2" self::ll<> -> self::ll_s<n>.

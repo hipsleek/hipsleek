@@ -87,6 +87,33 @@ let check_repatch_memo_pure l s =
   else 
     let _ = report_warning no_pos ("repatching memo_pure"^s) in
     repatch_memo_pure l
+(*
+
+type: Mcpure_D.memoised_group ->
+  'a ->
+  ('a -> Mcpure_D.memoised_group -> (Mcpure_D.memoised_group * 'b) option) *
+  (Mcpure_D.memoised_constraint -> 'a -> Mcpure_D.memoised_constraint * 'c) *
+  ('a -> Mcpure_D.var_aset -> Mcpure_D.var_aset * 'c list) *
+  (Cpure.formula -> 'a -> Cpure.formula * 'c) *
+  (Cpure.spec_var -> 'a -> Cpure.spec_var * 'c) ->
+  ('a -> Mcpure_D.memoised_group -> 'a) ->
+  ('c list -> 'b) -> Mcpure_D.memoised_group * 'b
+
+Expecting
+=========
+
+type: memo_pure ->
+  'a ->
+  ('a -> memo_pure -> (memo * 'a) option) 
+  ('a -> memo_pure -> 'a) ->
+  ('a list -> 'a) -> memo_pure * 'b
+
+*)
+
+let trans_memo_pure (e: memo_pure) (arg: 'a) f f_arg (comb:'b list->'b) : (memo_pure * 'b) =
+  match f arg e with
+    | Some (r,other) -> (r,other)
+    | None -> (e,comb [])
 
 let trans_memo_group (e: memoised_group) (arg: 'a) f (f_arg:'a->memoised_group->'a) f_comb : (memoised_group * 'b) =
   let f_grp, f_memo_cons, f_aset, f_slice, f_fv = f in
@@ -2445,6 +2472,17 @@ let trans_mix_formula (e: mix_formula) (arg: 'a) f f_arg f_comb : (mix_formula *
     let f,r = trans_formula e arg pf pa f_comb in
     (OnePF f,r)
     
+let trans_n_mix_formula (e: mix_formula) (arg: 'a) f f_arg f_comb : (mix_formula * 'b) = 
+  let mf,pf = f in
+  let ma,pa = f_arg in
+  match e with
+  | MemoF e-> 
+    let f,r = trans_memo_pure e arg mf ma f_comb in
+    (MemoF f, r)
+  | OnePF e -> 
+    let f,r = trans_formula e arg pf pa f_comb in
+    (OnePF f,r)
+
 (*find constraints in f that related to specvar in v_l*)    
 let find_rel_constraints (f:mix_formula) (v_l :spec_var list):  mix_formula = match f with
   | MemoF f -> 

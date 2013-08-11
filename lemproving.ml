@@ -114,13 +114,57 @@ let check_coercion coer lhs rhs  (cprog: C.prog_decl) =
   let pr2 = Cprinter.string_of_formula in
   Debug.no_3 "check_coercion" pr1 pr2 pr2 (fun (valid,rs) -> string_of_bool valid) (fun _ _ _ -> check_coercion coer lhs rhs cprog ) coer lhs rhs*)
 
+
+let add_exist_heap_of_struc (fv_lhs:CP.spec_var list) (e : CF.struc_formula) : CF.struc_formula * (CP.spec_var list) =
+  let f_none _ _ = None in
+  let c_h_formula fv_lhs x =  
+    let vs = CF.h_fv x in
+    let vs = Gen.BList.difference_eq CP.eq_spec_var vs fv_lhs in
+    (x, vs) in
+  let f_f fv_lhs e = 
+    match e with
+      | CF.Base ({CF.formula_base_heap = hf}) 
+          -> let (n_hf,vs) = c_h_formula fv_lhs hf in
+          Some (CF.push_exists vs e,vs)
+      | CF.Exists ({CF.formula_exists_heap = hf; CF.formula_exists_qvars = qvs}) 
+          -> let fv_lhs = Gen.BList.difference_eq CP.eq_spec_var fv_lhs qvs in
+            let (n_hf,vs) = c_h_formula fv_lhs hf in
+          Some (CF.push_exists vs e,vs)
+      | _ -> None 
+  in
+  let f1 a e = Some(e,[]) in
+  let f2 a e = None in
+  let f_pure = (f1,f2,f2) in
+  let f_memo a e = Some(e,[]) in
+  let f_arg =
+    let f1 e _ = e in
+    (f1,f1,f1,(f1,f1,f1),f1) in
+  let f_gen = (f_none, f_f, f_none, f_pure, f_memo) in
+  let (a,b) = CF.trans_n_struc_formula e fv_lhs f_gen f_arg (fun a -> List.concat a) in
+  (a,b)
+
+let add_exist_heap_of_struc (fv_lhs:CP.spec_var list) (e : CF.struc_formula) : CF.struc_formula * (CP.spec_var list) 
+      = 
+  let pr1 = Cprinter.string_of_spec_var_list in
+  let pr2 = Cprinter.string_of_struc_formula in
+  Debug.no_2 "add_exist_heap_of_struc" pr1 pr2 (pr_pair pr2 pr1) add_exist_heap_of_struc fv_lhs e
+
 (* same effect as check_coercion with the difference that the rhs is a struc_formula *)
 let check_coercion_struc coer lhs rhs (cprog: C.prog_decl) =
   let pos = CF.pos_of_formula coer.C.coercion_head in
+  let fv_lhs = CF.fv lhs in
+  let _ = Debug.binfo_hprint (add_str "LP.lhs" Cprinter.string_of_formula) lhs pos in
+  let _ = Debug.binfo_hprint (add_str "LP.fv_lhs" Cprinter.string_of_spec_var_list) fv_lhs pos in
   let lhs = Solver.unfold_nth 9 (cprog,None) lhs (CP.SpecVar (Named "", self, Unprimed)) true 0 pos in
   (*let _ = print_string("lhs_unfoldfed_struc: "^(Cprinter.string_of_formula lhs)^"\n") in*)
-  let _ = Debug.binfo_hprint (add_str "LP:rhs" Cprinter.string_of_struc_formula) rhs pos in
-  let rhs = Solver.unfold_struc_nth 9 (cprog,None) rhs (CP.SpecVar (Named "", self, Unprimed)) true 0 pos in
+  let (new_rhs,fv_rhs) = add_exist_heap_of_struc fv_lhs rhs in
+  let glob_vs_rhs = Gen.BList.difference_eq CP.eq_spec_var fv_rhs fv_lhs in
+  let _ = Debug.binfo_hprint (add_str "LP.rhs" Cprinter.string_of_struc_formula) rhs pos in
+  let _ = Debug.binfo_hprint (add_str "LP.rhs" Cprinter.string_of_struc_formula) new_rhs pos in
+  let _ = Debug.binfo_hprint (add_str "LP.glob_vs_rhs" Cprinter.string_of_spec_var_list) glob_vs_rhs pos in
+  let _ = Debug.binfo_hprint (add_str "LP.fv_rhs" Cprinter.string_of_spec_var_list) fv_rhs pos in
+  (* let vs_rhs = CF.fv_s rhs in *)
+  let rhs = Solver.unfold_struc_nth 9 (cprog,None) new_rhs (CP.SpecVar (Named "", self, Unprimed)) true 0 pos in
   let lhs = if(coer.C.coercion_case == C.Ramify) then 
     Mem.ramify_unfolded_formula lhs cprog.C.prog_view_decls 
   else lhs
