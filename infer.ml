@@ -1135,7 +1135,7 @@ let rec infer_pure_m_x unk_heaps estate lhs_rels lhs_xpure_orig lhs_xpure0 lhs_w
                                       (* let truef = CF.mkTrue (CF.mkNormalFlow()) pos in *)
                                       (*LOC: es_cond_path from estate*)
                                       let es_cond_path = CF.get_es_cond_path new_estate  in
-                                      let rel_ass1,heap_ass = List.fold_left ( fun (ls1, ls2) (a, p1, p2) ->
+                                      let rel_ass1,heap_ass,i_hps = List.fold_left ( fun (ls1, ls2, r_hps) (a, p1, p2) ->
                                           let ohf = Predicate.trans_rels p1 in
                                           match ohf with
                                             | Some (hp, hf) ->
@@ -1143,27 +1143,17 @@ let rec infer_pure_m_x unk_heaps estate lhs_rels lhs_xpure_orig lhs_xpure0 lhs_w
                                                   let lhs = CF.formula_of_heap hf pos in
                                                   let rhs = CF.formula_of_pure_P p2 pos in
                                                   let hp_rel = CF.mkHprel_1 knd lhs None rhs es_cond_path in
-                                                  (*   { *)
-                                                  (*     CF.hprel_kind = CP.RelAssume [hp]; *)
-                                                  (*     unk_svl = []; *)
-                                                  (*     unk_hps = []; *)
-                                                  (*     predef_svl = []; *)
-                                                  (*     (\* hprel_lhs = CF.mkBase hf (MCP.mix_of_pure p2) CF.TypeTrue (CF.mkTrueFlow ()) [] pos; *\) *)
-                                                  (*     (\* hprel_rhs = truef; *\) *)
-                                                  (*     hprel_lhs = CF.formula_of_heap hf pos; *)
-                                                  (*     hprel_guard = None; *)
-                                                  (*     hprel_rhs = CF.formula_of_pure_P p2 pos; *)
-                                                  (*     hprel_path = es_cond_path; *)
-                                                  (*     hprel_proving_kind = Others.proving_kind # top_no_exc; *)
-                                                  (* } *)
-                                                  (* in *)
-                                                  (ls1, ls2@[hp_rel])
-                                            | None -> (ls1@[(a, p1, p2)], ls2)
-                                      ) ([], []) rel_ass
+                                                  (ls1, ls2@[hp_rel],r_hps@[hp])
+                                            | None -> (ls1@[(a, p1, p2)], ls2,r_hps)
+                                      ) ([], [], []) rel_ass
                                       in
                                       let _ = Log.current_hprel_ass_stk # push_list heap_ass in
                                       let _ = rel_ass_stk # push_list heap_ass in
-                                      let new_es = {new_estate with CF.es_infer_hp_rel = estate.CF.es_infer_hp_rel @ heap_ass;} in
+                                      (*drop inferred hpred*)
+                                      let n_es_formula,_ = CF.drop_hrel_f new_estate.CF.es_formula i_hps in
+                                      let new_es = {new_estate with CF.es_infer_hp_rel = estate.CF.es_infer_hp_rel @ heap_ass;
+                                          CF.es_formula = n_es_formula;
+                                      } in
                                       (rel_ass1, heap_ass,new_es)
                                     else
                                       (rel_ass, [],new_estate)
