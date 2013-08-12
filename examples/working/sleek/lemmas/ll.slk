@@ -26,3 +26,8 @@ lemma "F7" self::ll<> -> self::ll_s<n>.
 lemma "V8" self::ll<> <- self::ll_s<n>.
 
 lemma "F9" self::ll<> <-> self::ll_s<n>.
+
+
+checkentail x::ll_s<n> |- x::ll<>.
+
+checkentail x::ll_s<n> |- x::ll<> * y::ll<>.
