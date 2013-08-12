@@ -31,6 +31,8 @@ lemma "lsegmb" self::lseg<n, p, sm, lg> & n = n1+n2 & n1,n2 >=0
       <- self::lseg<n1, q, sm, lg1>@D * q::lseg<n2, p, sm2, lg>@D & lg1<=sm2.
 */
 
+/*
+
 //(1) Valid - unfolded rhs
 infer [] x::node<sm, null> & t=x & n=1 & sm=lg
   or x::node<sm, r> * r::ll_tail<nn, t, sm1, lg> & r!=null & sm<=sm1 & nn=n-1
@@ -107,7 +109,7 @@ infer []
             lg1_265<=lg & sm<=sm1_268 &
             flted_22_264=nn_266+1 & sm=sm_277 &
             p_278=t & lg1_265=lg_279& flted_22_264!=0 ).
-
+*/
          /*
 Good Context: [
                es_formula: 
@@ -139,4 +141,27 @@ heap_entail_struc_init_bug_inv inp2 : :ECase case {
                                    flted_22_264=nn_266+1 & sm=sm_277 & 
                                    p_278=t & lg1_265=lg_279&
                                    {FLOW,(1,22)=__flow})[]
+
+
+!!! LP.new_rhs: EBase (exists flted_22_196,flted_22_197,
+       lg1_198: self::lseg<flted_22_197,t,sm,lg1_198>@M *
+       t::node<lg,flted_22_196>@M&n=flted_22_197+1 & flted_22_196=null &
+       lg1_198<=lg&{FLOW,(1,22)=__flow})[]
+
+!!! LP.rhs(after unfold): :ECase case {
+         flted_22_264=0 -> :EBase t::node<lg,flted_22_263>@M&n=flted_22_264+
+                                  1 & flted_22_263=null & lg1_265<=lg &
+                                  self=t & lg1_265=sm&{FLOW,(1,22)=__flow}[]
+         ;
+         flted_22_264!=0 -> :EBase exists (Expl)[nn_266](Impl)[r_267;
+                                   sm1_268](ex)(exists sm_277,p_278,
+                                   lg_279: t::node<lg,flted_22_263>@M *
+                                   self::node<sm_277,r_267>@M *
+                                   r_267::lseg<nn_266,p_278,sm1_268,lg_279>@M&
+                                   n=flted_22_264+1 & flted_22_263=null &
+                                   lg1_265<=lg & sm<=sm1_268 &
+                                   flted_22_264=nn_266+1 & sm=sm_277 &
+                                   p_278=t & lg1_265=lg_279&
+                                   {FLOW,(1,22)=__flow})[]
+
 */
