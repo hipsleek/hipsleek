@@ -1184,14 +1184,14 @@ $output_file = "log";
         ["mk_zero.ss", 1, "", "mk_zero", "SUCCESS"],
         ["perm.ss", 1, "", "append", "SUCCESS"]
     ],
-    "lemmas"=>[
-        # ["lemma_check01.ss", " --elp ", "Valid.Valid.Fail.",""],
-        ["lemma_check01.ss", 3, " --elp ", "V1","Valid", "V2", "Valid", "F3", "Fail"],
-        ["lemma_check02.ss", 2, " --elp ", "F5", "Fail", "V6", "Valid."],
-        ["lemma_check03.ss", 3, " --elp ", "L1", "Valid", "L2", "Valid", "L4", "Fail"],
-        ["lemma_check04.ss", 3, " --elp ", "L41", "Valid", "L42", "Fail", "L43","Fail"],
-        ["lemma_check06.ss", 6, " --elp ",  "L61", "Valid", "L67", "Valid", "L62", "Valid", "L64", "Fail", "L65", "Fail", "L66", "Fail"]
-    ]
+    # "lemmas"=>[
+    #     # ["lemma_check01.ss", " --elp ", "Valid.Valid.Fail.",""],
+    #     ["lemma_check01.ss", 3, " --elp ", "V1","Valid", "V2", "Valid", "F3", "Fail"],
+    #     ["lemma_check02.ss", 2, " --elp ", "F5", "Fail", "V6", "Valid."],
+    #     ["lemma_check03.ss", 3, " --elp ", "L1", "Valid", "L2", "Valid", "L4", "Fail"],
+    #     ["lemma_check04.ss", 3, " --elp ", "L41", "Valid", "L42", "Fail", "L43","Fail"],
+    #     ["lemma_check06.ss", 6, " --elp ",  "L61", "Valid", "L67", "Valid", "L62", "Valid", "L64", "Fail", "L65", "Fail", "L66", "Fail"]
+    # ]
     );
 
 # list of file, string with result of each entailment&lemma....
@@ -1282,7 +1282,7 @@ $output_file = "log";
                   ["fracperm/combine2.slk","--en-para -perm fperm -tp redlog", "", "Valid.Valid.Valid.Valid."]
            ],
     "lemmas"=>[
-        ["ll.slk", " --elp ", "Fail.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Fail.", ""],
+        ["ll.slk", " --elp ", "Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.", "Valid.Fail."],
         ["sort.slk", " --elp ", "Valid.Fail.Fail.", ""],
         ["lseg.slk", " --elp ", "Valid.Fail.", ""],
         ["lseg_case.slk", " --elp ", "Valid.Fail.Fail.Valid.Fail.Fail.", ""]
@@ -1488,6 +1488,18 @@ sub hip_process_file {
 }
 
 
+sub grep_failures {
+    my ($res,$exp,$prefix) = @_;
+    @results = split (/\./, $res);
+    @expected = split (/\./, $exp);
+    my %mark_failures = map {if ($results[$_] !~ $expected[$_]) {$_+1 =>"$expected[$_]"} else {(0 => "same")}} 0 .. $#results;
+    my @failures = grep {  $_ > 0 } keys  %mark_failures;
+    my @failures_e = map {  "\{"."$prefix".$_ ."#". $mark_failures{$_}."\}" } @failures;
+    @failures_e = sort  @failures_e;
+    #print "\n @failures_e";
+    return @failures_e;
+}
+
 
 sub sleek_process_file  {
   foreach $param (@param_list)
@@ -1513,68 +1525,67 @@ sub sleek_process_file  {
       }
       $t_list = $sleek_files{$param};
       foreach $test (@{$t_list})
-			{
-            my $extra_options = $test->[1];
-            if ("$extra_options" eq "") {
-                print "Checking $test->[0]\n";
-            } else {
-                print "Checking $test->[0] (runs with extra options: $extra_options)\n";
-            }
-            $script_args = $script_arguments." ".$extra_options;
-			$output = `$sleek $script_args $exempl_path_full/$test->[0] 2>&1`;
-			print LOGFILE "\n======================================\n";
-	        print LOGFILE "$output";
-            my $lemmas_results = "";
-            my $entail_results = "";
-			my $barrier_results = "";
-            my @lines = split /\n/, $output; 
-            foreach my $line (@lines) { 
-                if($line =~ m/Entailing lemma/){
-                    if($line =~ m/Valid\./) { $lemmas_results = $lemmas_results ."Valid."; }
-                    elsif($line =~ m/EXC\./) { $lemmas_results = $lemmas_results ."EXC."; }
-                    elsif($line =~ m/Fail\./)  { $lemmas_results = $lemmas_results ."Fail.";}
-                }elsif($line =~ m/Barrrier/){
-					 $barrier_results = $barrier_results .$line .".";
-				}elsif($line =~ m/Entail/){
-                    if( $err == 1) {
-                        $i = index($line, "Valid. (bot)",0);
-                        $h = index($line, "Valid.",0);
-                        $j = index($line, "Fail.(must)",0);
-                        $k = index($line, "Fail.(may)",0);
-                        #  print "i=".$i ." h=". $h . " j=" .$j . " k=".$k ."\n";
-                        if($i >= 0) { $r = $r ."bot."; }
-                        elsif($h >= 0) { $r = $r ."Valid."; }
-                        elsif($j >= 0)  { $r = $r ."must.";} #$line =~ m/Fail.(must)/
-                        elsif($k >= 0)  { $r = $r ."may.";}
-                    }
-                    else {
-                        if($line =~ m/Valid\./) { $entail_results = $entail_results ."Valid."; }
-                        elsif($line =~ m/EXC\./) {  $entail_results = $entail_results ."EXC."; }
-                        elsif($line =~ m/Fail\./)  { $entail_results = $entail_results ."Fail.";}
-                    }
-                }
-            }
-			if ((($lem==0) && ($barr==0) && ($entail_results !~ /^$test->[3]$/)) || 
-				(($lem == 1)  && ($lemmas_results !~ /^$test->[2]$/)) || 
-				($barr==1 && ($barrier_results ne $test->[2])))
-			{
-                            @results = split (/\./, $entail_results);
-                            # print "\n@results";
-                            @expected = split (/\./, $test->[3]);
-                            my %mark_failures = map {if ($results[$_] !~ $expected[$_]) {$_+1 =>"$expected[$_]"} else {(0 => "same")}} 0 .. $#results;
-                            my @failures = grep {  $_ > 0 } keys  %mark_failures;
-                            my @failures_e = map {  "\{".$_ ."#". $mark_failures{$_}."\}" } @failures;
-                            # my @failures =  grep { $mark_failures{$_} != "same"} keys %mark_failures;
-                            # print "@failures";
-                            local $" = ',';
-                            print "Unexpected result with : $test->[0] (failed check(s): @failures_e) \n";
-                            $error_count++;
-                            $error_files = $error_files . " " . $test->[0]."(@failures_e)";
-			}	
-			if($timings) {
-				# log_one_line_of_timings ($test->[0],$output);
-			}
-			sum_of_timings ($output);
-		}
-	}
+      {
+          my $extra_options = $test->[1];
+          if ("$extra_options" eq "") {
+              print "Checking $test->[0]\n";
+          } else {
+              print "Checking $test->[0] (runs with extra options: $extra_options)\n";
+          }
+          $script_args = $script_arguments." ".$extra_options;
+          $output = `$sleek $script_args $exempl_path_full/$test->[0] 2>&1`;
+          print LOGFILE "\n======================================\n";
+          print LOGFILE "$output";
+          #print "$output";
+          my $lemmas_results = "";
+          my $entail_results = "";
+          my $barrier_results = "";
+          my @lines = split /\n/, $output; 
+          foreach my $line (@lines) { 
+              if($line =~ m/Entailing lemma/){
+                  if($line =~ m/Valid\./) { $lemmas_results = $lemmas_results ."Valid."; }
+                  elsif($line =~ m/EXC\./) { $lemmas_results = $lemmas_results ."EXC."; }
+                  elsif($line =~ m/Fail\./)  { $lemmas_results = $lemmas_results ."Fail.";}
+              } elsif($line =~ m/Barrrier/){
+                  $barrier_results = $barrier_results .$line .".";
+              }elsif($line =~ m/Entail/){
+                  if( $err == 1) {
+                      $i = index($line, "Valid. (bot)",0);
+                      $h = index($line, "Valid.",0);
+                      $j = index($line, "Fail.(must)",0);
+                      $k = index($line, "Fail.(may)",0);
+                      #  print "i=".$i ." h=". $h . " j=" .$j . " k=".$k ."\n";
+                      if($i >= 0) { $r = $r ."bot."; }
+                      elsif($h >= 0) { $r = $r ."Valid."; }
+                      elsif($j >= 0)  { $r = $r ."must.";} #$line =~ m/Fail.(must)/
+                      elsif($k >= 0)  { $r = $r ."may.";}
+                  }
+                  else {
+                      if($line =~ m/Valid\./) { $entail_results = $entail_results ."Valid."; }
+                      elsif($line =~ m/EXC\./) {  $entail_results = $entail_results ."EXC."; }
+                      elsif($line =~ m/Fail\./)  { $entail_results = $entail_results ."Fail.";}
+                  }
+              }
+          }
+          my @failures = ();
+          if  (($lem == 1)  && ($lemmas_results !~ /^$test->[2]$/)){
+              @failures = grep_failures($lemmas_results, $test->[2],"L");
+          }
+          if ((($barr==0) && ($entail_results !~ /^$test->[3]$/)) || 
+              # (($lem == 1)  && ($lemma_results !~ /^$test->[2]$/)) || 
+              ($barr==1 && ($barrier_results ne $test->[2]))){
+              @failures = grep_failures($entail_results, $test->[3],"E"), @failures;
+          }
+          if ($#failures >= 0 ){
+              local $" = ',';
+              print "Unexpected result with : $test->[0] (failed check(s): @failures) \n";
+              $error_count++;
+              $error_files = $error_files . " " . $test->[0]."(@failures)";
+          }
+          if($timings) {
+              # log_one_line_of_timings ($test->[0],$output);
+          }
+          sum_of_timings ($output);
+      }
+  }
 }
