@@ -1,0 +1,79 @@
+data node {
+  node next;
+}.
+
+//Fail.Fail.Valid.Valid.Fail.Valid.
+//Valid.Fail.Fail.
+//Valid.Fail.Fail.Valid.Valid.
+
+pred l3<> == 
+  self::node<q>*q::node<_> 
+inv self!=null.
+
+pred l3a<> == 
+  self::node<q>*q::node<_>  & self=q
+inv self!=null.
+
+//(1) fail
+checkentail x::l3<> |- false.
+
+//(2) fail
+checkentail x::l3<> * c::node<_> |- false.
+
+//(3) valid
+checkentail x::l3a<> |- false.
+
+//(4) valid
+checkentail x::l3<> * x::l3<> |- false.
+
+
+pred l4<q:node> == 
+  (exists z: self::node<r>*r::node<_> & r=z & z=q)
+inv self!=null.
+// baga {self,q}
+
+// (5) fail
+checkentail x::l4<c> * d::node<_> |- false.
+
+// (6) valid
+checkentail x::l4<c> * c::node<_> |- false.
+
+
+pred l5<k> == 
+  self::node<q>*q::node<_> & k=q & self!=q
+inv self!=null.
+
+// (7) valid
+checkentail x::l5<c> * c::node<_> |- false.
+
+// (8) fail
+checkentail x::l5<c> * q::node<_> |- false.
+
+pred l6<q:node> == 
+  q::node<_> & self=null
+  or self::node<r>*r::node<_> & r=q
+inv q!=null.
+// baga {q}
+
+// (9) Fail
+checkentail x::l6<_> * x::l6<_> |- false.
+
+// (10) Valid
+checkentail x::l6<q> * y::l6<q> |- false.
+
+// (11) Fail
+checkentail x::l6<q> * y::l6<_> |- false.
+
+pred l7<q:node> == 
+  self=null & q=null
+  or self::node<r>*r::node<_> & r=q
+inv true.
+
+// (12) Fail
+checkentail x::l7<q> * x::l7<q> |- false.
+
+// (13) Valid
+checkentail x::l7<q> * x::l7<q> & x!=null |- q!=null.
+
+// (14) Valid
+checkentail x::l7<q> * x::l7<q> & x!=null |- false.

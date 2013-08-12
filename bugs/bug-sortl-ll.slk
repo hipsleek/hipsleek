@@ -8,9 +8,26 @@ pred sortl<n, mi> == self::node<mi,null> & n=1
 	or self::node<mi, r> * r::sortl<n - 1, k> & mi <= k
 	inv n >= 1 & self!=null.
 
-//lemma self::sortl<n, mi> -> self::ll<n>.
+lemma self::sortl<n, mi> -> self::ll<n>.
 
-lemma self::sortl<n, mi> <- self::ll<n>.
+lemma self::sortl<n, mi> -> (exists m : self::ll<m>).
+
+lemma self::sortl<n, mi> -> self::ll<m>.
+// should succeed
+
+lemma self::sortl<n, mi> -> self::ll<m> & m>n.
+// should fail
+
+lemma self::sortl<n, mi> -> (exists m : self::ll<m> & m>n).
+// should fail
+
+lemma self::sortl<n, mi> -> self::ll<m> & m>=n.
+// succeed
+
+lemma self::sortl<n, mi> -> (exists m : self::ll<m> & m>=n).
+// should succeed
+
+//lemma self::sortl<n, mi> <- self::ll<n>.
 
 
 //lemma self::ll<n> -> self::sortl<n, mi>.

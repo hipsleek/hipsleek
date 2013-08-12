@@ -1,0 +1,29 @@
+//Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Fail
+data node { int val ; node next }.
+
+pred ll_s<n> == self = null & n = 0
+	or self::node<next = r> * r::ll_s<n - 1>
+	inv n >= 0.
+
+pred ll<> == self = null 
+	or self::node<next = r> * r::ll<>
+	inv true.
+
+lemma "V2" self::ll_s<n> <- self::ll<>.
+// valid
+/*
+!!! orig body:(EX  . (self::ll<>@M[HeapNode1])*(true)( FLOW __flow))
+!!! LP:rhs: EBase self::ll_s<n>@M&{FLOW,(1,22)=__flow}[]
+Entailing lemma V2: Fail. 
+*/
+
+//lemma "V3" self::ll_s<n> <-> self::ll<>.
+// valid
+// valid
+/*
+Entailing lemma V3: Fail. Details below:
+	 "->" implication: : Valid.
+	 "<-" implication: : Fail. 
+*/
+
+lemma "V2" self::ll<> -> self::ll_s<n>.

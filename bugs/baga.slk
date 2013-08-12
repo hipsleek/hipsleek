@@ -1,0 +1,26 @@
+data node {
+  node next;
+}.
+
+
+pred l2<> == 
+  self::node<q>*q::node<_>
+inv self!=null.
+// baga {self}
+
+pred l4<q> == 
+  self::node<q>*q::node<_>
+inv self!=null.
+// baga {self,q}
+
+pred l5<k> == 
+  self::node<q>*q::node<_> & k=q
+inv self!=null.
+/*
+
+ missing on k for baga formula
+ addr vars: self
+  uni_vars: []
+  bag of addr: self
+  view_complex_inv: None
+ */

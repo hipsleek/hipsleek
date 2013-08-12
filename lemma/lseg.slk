@@ -1,0 +1,30 @@
+//Valid.Fail
+data node { int val ; node next }.
+
+
+pred lseg<n, p> == self = p & n = 0
+         or self::node<next = r> * r::lseg<n - 1, p>
+         inv n >= 0.
+
+
+
+lemma "V1" self::lseg<n, p> & n = a + b & a,b >=0 -> self::lseg<a, r> * r::lseg<b, p>.
+
+//lemma "F2" self::lseg<n, p> & n = a + b & a,b >=0 <- self::lseg<a, r> * r::lseg<b, p>.
+
+
+infer []  p=self & n=0 & n=b+a & 0<=a & 0<=b  or 
+      (exists p_58,flted_6_59,Anon_60,r_61: self::node<Anon_60,r_61>@M * 
+    r_61::lseg<flted_6_59,p_58>@M&n=flted_6_59+1 & p=p_58 & n=b+a & 0<=a & 
+    0<=b) |- 
+          (exists a_62,b_63,
+           p_64: r::lseg<b_63,p_64>@M&a=a_62 & b=b_63 & p=p_64 & r=self & a_62=0).
+
+infer []  p=self & n=0 & n=b+a & 0<=a & 0<=b  or 
+      (exists p_58,flted_6_59,Anon_60,r_61: self::node<Anon_60,r_61>@M * 
+    r_61::lseg<flted_6_59,p_58>@M&n=flted_6_59+1 & p=p_58 & n=b+a & 0<=a & 
+    0<=b) |- 
+           (exists p_72,flted_6_73,
+                     a_62,b_63,p_64: r::lseg<b_63,p_64>@M * 
+                     self::node<Anon_65,r_66>@M * r_66::lseg<flted_6_73,p_72>@M&
+                      a=a_62 & b=b_63 & p=p_64 & a_62=flted_6_73+1 & p_72=r).

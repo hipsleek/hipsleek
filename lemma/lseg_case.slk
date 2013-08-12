@@ -1,0 +1,140 @@
+//Valid.Fail.Fail.Valid.Fail.Fail.
+data node { int val ; node next }.
+
+pred lseg<n, p> == case {
+     n=0 -> [] self = p & n = 0;
+     n!=0 ->  [] self::node<next = r> * r::lseg<n - 1, p>; 
+     }
+     inv n >= 0.
+
+
+
+lemma "V1" self::lseg<n, p> & n = a + b & a,b >=0 ->  (exists r: self::lseg<a, r> * r::lseg<b, p>).
+
+
+//(1) fails ---------------> r_76,a_71,b_72,r_74 are free vars
+
+infer [] //emp&n=0 & p=x & n=0 & n=b+a & 0<=a & 0<=b
+  (exists p_64,flted_6_65,Anon_66,r_67: x::node<Anon_66,r_67>@M * 
+    r_67::lseg<flted_6_65,p_64>@M&n!=0 & n=flted_6_65+1 & p=p_64 & n=b+a & 
+    0<=a & 0<=b)
+ |-
+    (exists p_82,flted_6_83, Anon_75,r_76: 
+                           r_74::lseg<b_72,p_73>@M * 
+                           x::node<Anon_75,r_76>@M * 
+                           r_76::lseg<flted_6_83,p_82>@M&a=a_71 & b=b_72 & 
+                           p=p_73 & a_71=flted_6_83+1 & p_82=r_74).
+
+
+
+//(2) fails  ---------------> (i) add r_76,a_71,b_72,r_74 as quatif vars
+
+infer [] //emp&n=0 & p=x & n=0 & n=b+a & 0<=a & 0<=b
+  (exists p_64,flted_6_65,Anon_66,r_67: x::node<Anon_66,r_67>@M * 
+    r_67::lseg<flted_6_65,p_64>@M&n!=0 & n=flted_6_65+1 & p=p_64 & n=b+a & 
+    0<=a & 0<=b)
+ |-
+    (exists p_82,flted_6_83, Anon_75,r_76,a_71,b_72,r_74: 
+                           r_74::lseg<b_72,p_73>@M * 
+                           x::node<Anon_75,r_76>@M * 
+                           r_76::lseg<flted_6_83,p_82>@M&a=a_71 & b=b_72 & 
+                           p=p_73 & a_71=flted_6_83+1 & p_82=r_74).
+
+
+//(3) fails  ---------------> (i)  add r_76,a_71,b_72,r_74 as quatif vars
+//           ---------------> (ii) r_74 and p_82 are aliases, so remove p_82 var
+//                                 but still fails because (a<=0) on lhs
+infer [] 
+      (exists p_67,flted_6_68,Anon_69,r_70: x::node<Anon_69,r_70>@M * 
+    r_70::lseg<flted_6_68,p_67>@M&n!=0 & n=flted_6_68+1 & p=p_67 & n=b+a & 
+    0<=a & 0<=b)
+    |- (exists flted_6_83, Anon_75,r_76,a_71,b_72,r_74: 
+                           r_74::lseg<b_72,p_73>@M * 
+                           x::node<Anon_75,r_76>@M * 
+                           r_76::lseg<flted_6_83,r_74>@M&a=a_71 & b=b_72 & 
+                           p=p_73 & a_71=flted_6_83+1).
+
+
+
+//(4) valid  ---------------> (i)   add r_76,a_71,b_72,r_74 as quatif vars
+//           ---------------> (ii)  merge r_74 and p_82 are aliases, so remove p_82 var
+//                                  but still fails because (a<=0) on lhs
+//           ---------------> (iii) a<=0 made stronger to a<0 on lhs 
+
+infer [] 
+      (exists p_67,flted_6_68,Anon_69,r_70: x::node<Anon_69,r_70>@M * 
+    r_70::lseg<flted_6_68,p_67>@M&n!=0 & n=flted_6_68+1 & p=p_67 & n=b+a & 
+    0<a  & 0<=b)
+    |- (exists rr,Anon_75, r_76, flted_6_83, a_71,b_72: rr::lseg<b_72,p_73>@M * 
+                           x::node<Anon_75,r_76>@M * 
+                           r_76::lseg<flted_6_83,rr>@M&a=a_71 & b=b_72 & 
+                           p=p_73 & a_71=flted_6_83+1 ).
+
+
+// (5) valid
+infer [] //emp&n=0 & p=x & n=0 & n=b+a & 0<=a & 0<=b
+
+ (exists flted_6_68,Anon_69,r_70: x::node<Anon_69,r_70>@M * 
+    r_70::lseg<flted_6_68,p>@M&n!=0 & n=flted_6_68+1  & n=b+a & 
+    0<a & 0<=b & 0<n)
+|-
+    (exists flted_6_83,Anon_75,r_76,r: 
+                            r::lseg<b,p>@M * 
+                           x::node<Anon_75,r_76>@M * 
+                           r_76::lseg<flted_6_83,r>@M & a=flted_6_83+1 ).
+
+
+
+//(6) valid
+infer []
+      (exists flted_6_68: n!=0 & n=flted_6_68+1 & n=b+a &  0<=a &  0<=b)
+    |- (exists flted_6_83, a_71,b_72: a=a_71 & b=b_72 & 
+                           a_71=flted_6_83+1 ).
+
+//(7) fail - below cannot be proved 0<=a on lhs, but has to be proved to be greater than 0
+infer []
+      (exists flted_6_68: n!=0 & n=flted_6_68+1 & n=b+a &  0<=a &  0<=b)
+    |- (exists flted_6_83, a_71,b_72: a=a_71 & b=b_72 & 
+                           a_71=flted_6_83+1 & flted_6_83>=0).
+
+//(8) valid ---- 0<a
+infer []
+      (exists flted_6_68: n!=0 & n=flted_6_68+1 & n=b+a &  0<a &  0<=b)
+    |- (exists flted_6_83, a_71,b_72: a=a_71 & b=b_72 & 
+                           a_71=flted_6_83+1 & flted_6_83>=0).
+
+
+
+
+/*
+
+
+!!! LP:rhs: EBase (exists a_44,b_45,p_46,r_43: self::lseg<a_44,r_43>@M * 
+       r_43::lseg<b_45,p_46>@M&a=a_44 & b=b_45 & p=p_46&
+       {FLOW,(1,22)=__flow})[]
+
+
+unfold_struc_nth#9@3
+unfold_struc_nth#9 inp1 :true
+unfold_struc_nth#9 inp2 :self
+unfold_struc_nth#9 inp3 : EBase (exists a_44,b_45,p_46,r_43: self::lseg<a_44,r_43>@M * 
+       r_43::lseg<b_45,p_46>@M&a=a_44 & b=b_45 & p=p_46&
+       {FLOW,(1,22)=__flow})[]
+unfold_struc_nth#9 inp4 :None
+unfold_struc_nth#9@3 EXIT out : :ECase case {
+         a_71=0 -> :EBase r_74::lseg<b_72,p_73>@M&a=a_71 & b=b_72 & p=p_73 & 
+                          r_74=self & a_71=0&{FLOW,(1,22)=__flow}[]
+         ;
+         a_71!=0 -> :EBase exists (Expl)(Impl)[Anon_75; 
+                           r_76](ex)(exists p_82,
+                           flted_6_83: r_74::lseg<b_72,p_73>@M * 
+                           self::node<Anon_75,r_76>@M * 
+                           r_76::lseg<flted_6_83,p_82>@M&a=a_71 & b=b_72 & 
+                           p=p_73 & a_71=flted_6_83+1 & p_82=r_74&
+                           {FLOW,(1,22)=__flow})[]
+         
+         }
+
+we lose info abt quatif vars, namely: a_44,b_45,r_43 (a,b,r)
+
+*/

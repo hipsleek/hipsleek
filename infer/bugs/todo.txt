@@ -179,8 +179,8 @@ Mixed version currently fails, but I would expect:
  inferred rel   [R(fld5) --> fld5=null]
 
 ========================================================================
-# x-4.slk 
 
+# x-4.slk 
 Why did extra ante cause inference to fail?
 Without it, inference success with inf_n_32=n.
 
@@ -190,6 +190,29 @@ infer [inf_ann_31,inf_n_32,n,q]
  |-  emp&inf_n_32=n.
 print residue.
 
+# x-3.slk
+
+Below works.
+
+infer[fld5,z]
+R(fld5) &
+q_34=z & inf_ann_39=@M & inf_p_40=null & inf_p_40!=x & x!=null
+|-x!=z & inf_p_40=z &fld5=null.
+print residue.
+
+but an identical inference (LHS/RS) with an extra inferrable  
+
+var fails. I think this problem wasn't there before
+and need to be fixed.
+
+
+infer[fld5,z,inf_p_40]
+R(fld5) &
+q_34=z & inf_ann_39=@M & inf_p_40=null & inf_p_40!=x & x!=null
+|-x!=z & inf_p_40=z &fld5=null.
+print residue.
+
+Please test i13-5d.slk which should work if you fix this problem.
 ========================================================================
 # x-4.slk
 

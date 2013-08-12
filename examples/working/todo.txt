@@ -264,6 +264,18 @@ Total verification time: 6.18 second
 	Time spent in child processes: 1.42 second
 	Number of false contexts: 0
 ====================================================================
+# run-fase-test lemmas
+
+Did we pass these tests?
+
+Starting sleek-lemmas tests:
+Checking ll.slk (runs with extra options:  --elp )
+Unexpected result with : ll.slk (failed check(s): ) 
+Checking sort.slk (runs with extra options:  --elp )
+Checking lseg.slk (runs with extra options:  --elp )
+Unexpected result with : lseg.slk (failed check(s): ) 
+Checking lseg_case.slk (runs with extra options:  --elp )
+Unexpected result with : lseg_case.slk (failed check(s): ) 
 ====================================================================
 ====================================================================
 ====================================================================
