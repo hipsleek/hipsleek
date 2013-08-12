@@ -1287,9 +1287,9 @@ $output_file = "log";
     "lemmas"=>[
         ["ll.slk", " --elp ", "Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.", "Valid.Fail."],
         ["sort1.slk", " --elp ", "Valid.Fail.Fail.", ""],
-        ["sort2.slk", " --elp ", "Valid.Valid.Valid.Fail.Fail.Valid.Valid.Fail.Fail.", ""],
+        ["sort2.slk", " --elp ", "Fail.Valid.Valid.Valid.Valid.Fail.Valid.Valid.Fail.Valid.Fail.", ""],
         ["lseg.slk", " --elp ", "Valid.Fail.", ""],
-        ["lseg_case.slk", " --elp ", "Valid.Valid..Valid.Valid.Valid.Valid.", ""]
+        ["lseg_case.slk", " --elp ", "Valid.Valid.Valid.Valid.Valid.Valid.", ""]
     ],
     "musterr"=>[["err1.slk","","must.may.must.must.may.must.may.must.must.Valid.may.must."],
                ["err2.slk","","must.may.must.must.must.may.must.must.may.may.may.must.may.must.may.must.may.must.must.must.must.Valid.must.Valid.must.must.must.must.Valid.may.may."],

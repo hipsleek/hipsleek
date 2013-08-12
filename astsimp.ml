@@ -4588,7 +4588,7 @@ and trans_I2C_struc_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : id
               (n_tlist, (f1, f2)::n_cl)
         ) in  
         let (n_tl,n_cl) = aux tl b.IF.formula_case_branches in 
-        let cf = CF.ECase { CF.formula_case_exists = [];
+        let cf = CF.ECase { (* CF.formula_case_exists = []; *)
                             CF.formula_case_branches = n_cl;
                             CF.formula_case_pos = b.IF.formula_case_pos} in
         (n_tl,cf)

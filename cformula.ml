@@ -98,7 +98,7 @@ and struc_infer_formula =
 and struc_case_formula =
 	{
 		formula_case_branches : (Cpure.formula * struc_formula ) list;
-		formula_case_exists : Cpure.spec_var list; (*should be absolete, to be removed *)
+		(* formula_case_exists : Cpure.spec_var list; *) (*should be absolete, to be removed *)
 		formula_case_pos : loc 		
 	}
 
@@ -2114,7 +2114,7 @@ and struc_fv (f: struc_formula) : CP.spec_var list =
   let rdv = Gen.BList.remove_dups_eq CP.eq_spec_var in
   let dsvl l1 l2 = Gen.BList.difference_eq CP.eq_spec_var (rdv l1) l2 in
   match f with
-	| ECase b -> dsvl (List.concat (List.map (fun (c1,c2) -> (CP.fv c1)@(struc_fv c2) ) b.formula_case_branches)) b.formula_case_exists
+	| ECase b -> (* dsvl *) (List.concat (List.map (fun (c1,c2) -> (CP.fv c1)@(struc_fv c2) ) b.formula_case_branches)) (* b.formula_case_exists *)
 	| EBase b -> dsvl ((fold_opt struc_fv b.formula_struc_continuation)@(fv b.formula_struc_base))
                       (b.formula_struc_explicit_inst @ b.formula_struc_implicit_inst@ b.formula_struc_exists)
 	| EAssume b -> fv b.formula_assume_simpl
@@ -2125,7 +2125,7 @@ and struc_fv_infer (f: struc_formula) : CP.spec_var list =
   let rdv = Gen.BList.remove_dups_eq CP.eq_spec_var in
   let dsvl l1 l2 = Gen.BList.difference_eq CP.eq_spec_var (rdv l1) l2 in
   match f with
-    | ECase b -> dsvl (List.concat (List.map (fun (c1,c2) -> (CP.fv c1)@(struc_fv_infer c2) ) b.formula_case_branches)) b.formula_case_exists
+    | ECase b -> (* dsvl *) (List.concat (List.map (fun (c1,c2) -> (CP.fv c1)@(struc_fv_infer c2) ) b.formula_case_branches)) (* b.formula_case_exists *)
     | EBase b -> dsvl ((fold_opt struc_fv_infer b.formula_struc_continuation)@(fv b.formula_struc_base))
           (b.formula_struc_explicit_inst @ b.formula_struc_implicit_inst@ b.formula_struc_exists)
     | EAssume b -> fv b.formula_assume_simpl
@@ -3487,10 +3487,11 @@ and formula_of_disjuncts (f:formula list) : formula=
 
 and rename_struc_bound_vars (f:struc_formula):struc_formula = match f with
 	| ECase b-> 
-		  let sst3 = List.map (fun v -> (v,(CP.fresh_spec_var v))) b.formula_case_exists in
-		  let f = ECase {b with formula_case_exists = (snd (List.split sst3));
+		  (* let sst3 = List.map (fun v -> (v,(CP.fresh_spec_var v))) b.formula_case_exists in *)
+		  let f = ECase {b with (* formula_case_exists = (snd (List.split sst3)); *)
 			  formula_case_branches = List.map (fun (c1,c2)-> ((Cpure.rename_top_level_bound_vars c1),(rename_struc_bound_vars c2))) b.formula_case_branches;} in
-		  subst_struc sst3 f
+		  (* subst_struc  sst3  f *)
+                  f
 	| EBase b-> 
 		  let sst1 = List.map (fun v -> (v,(CP.fresh_spec_var v))) b.formula_struc_explicit_inst in
 		  let sst2 = List.map (fun v -> (v,(CP.fresh_spec_var v))) b.formula_struc_implicit_inst in
@@ -3630,10 +3631,10 @@ and rename_struc_clash_bound_vars (f1 : struc_formula) (f2 : formula) : struc_fo
 		formula_assume_struc = rename_struc_clash_bound_vars b.formula_assume_struc f2;}
 	| ECase b ->  
 		  let r1 = List.map (fun (c1,c2) -> (c1,(rename_struc_clash_bound_vars c2 f2))) b.formula_case_branches in
-		  let new_exs = List.map (fun v -> (if (check_name_clash v f2) then (v,(CP.fresh_spec_var v)) else (v,v))) b.formula_case_exists in
-		  let rho = (List.filter (fun (v1,v2) -> (not (CP.eq_spec_var v1 v2))) new_exs) in
-		  ECase {formula_case_exists = (snd (List.split new_exs));
-		  formula_case_branches = List.map (fun (c1,c2)-> ((Cpure.subst rho c1),(subst_struc rho c2))) r1;
+		  (* let new_exs = List.map (fun v -> (if (check_name_clash v f2) then (v,(CP.fresh_spec_var v)) else (v,v))) b.formula_case_exists in *)
+		  (* let rho = (List.filter (fun (v1,v2) -> (not (CP.eq_spec_var v1 v2))) new_exs) in *)
+		  ECase {(* formula_case_exists = (snd (List.split new_exs)); *)
+		  formula_case_branches = (* List.map (fun (c1,c2)-> ((Cpure.subst rho c1),(subst_struc rho c2))) *) r1;
 		  formula_case_pos = b.formula_case_pos}
 	| EBase b ->
          (* let _ = Debug.info_pprint ("  b.formula_struc_implicit_inst " ^ (!CP.print_svl b.formula_struc_implicit_inst)) no_pos in *)
@@ -9014,7 +9015,7 @@ let rec struc_to_formula_gen (f:struc_formula):(formula*formula_label option lis
 					let npf = mkBase HEmp np TypeTrue (mkTrueFlow ()) [] b.formula_case_pos in
 					let l = struc_to_formula_gen c2 in
 					List.map (fun (c1,c2) -> (normalize_combine npf c1 no_pos,c2)) l) b.formula_case_branches) in
-			  List.map (fun (c1,c2)-> ( push_exists b.formula_case_exists c1,c2)) r 
+			  (* List.map (fun (c1,c2)-> ( push_exists b.formula_case_exists c1,c2)); *) r 
 		| EBase b-> 
 				let nf,nl = b.formula_struc_base,(get_label_f b.formula_struc_base) in
 				let f c = push_exists b.formula_struc_exists (normalize_combine nf c b.formula_struc_pos) in
@@ -9161,7 +9162,7 @@ let rec struc_to_formula_x (f:struc_formula):formula = match f with
 					(mkOr a (normalize_combine (mkBase HEmp c1 TypeTrue (mkTrueFlow ()) [] b.formula_case_pos ) (struc_to_formula_x c2) b.formula_case_pos) 
 						b.formula_case_pos) ) (mkFalse (mkFalseFlow) b.formula_case_pos) b.formula_case_branches 
 			else mkTrue (mkTrueFlow ()) b.formula_case_pos in
-		   push_exists b.formula_case_exists r 
+		   (* push_exists b.formula_case_exists *) r 
 		| EBase b-> 
 				let e = match b.formula_struc_continuation with
 					| Some e -> normalize_combine b.formula_struc_base (struc_to_formula_x e) b.formula_struc_pos 
@@ -9221,7 +9222,7 @@ let rec struc_to_precond_formula (f : struc_formula) : formula = match f with
 		let r = if (List.length b.formula_case_branches) >0 then
 			List.fold_left fold_function (mkFalse (mkFalseFlow) b.formula_case_pos) b.formula_case_branches 
 		else mkTrue (mkTrueFlow ()) b.formula_case_pos in
-			push_exists b.formula_case_exists r
+			(* push_exists b.formula_case_exists *) r
 	| EBase b -> 
 		let e = match b.formula_struc_continuation with
 			| None -> b.formula_struc_base 
@@ -10524,7 +10525,8 @@ and split_struc_formula_a (f:struc_formula):(formula*formula) list = match f wit
 			let r =  List.concat (List.map (fun (c1,c2)->
 				let ll = split_struc_formula_a c2 in
 				List.map (fun (d1,d2)-> ((normalize 4 d1 (formula_of_pure_N c1 b.formula_case_pos) b.formula_case_pos),d2)) ll) b.formula_case_branches) in
-			List.map (fun (c1,c2)-> ((push_exists b.formula_case_exists c1),(push_exists b.formula_case_exists c2))) r 
+                        r
+			(* List.map (fun (c1,c2)-> ((push_exists b.formula_case_exists c1),(push_exists b.formula_case_exists c2))) r  *)
 		| EBase b-> 
 				let ll = fold_opt split_struc_formula_a b.formula_struc_continuation in
 				let e = List.map (fun (c1,c2)-> ((normalize 5 c1 b.formula_struc_base b.formula_struc_pos),c2)) ll in
