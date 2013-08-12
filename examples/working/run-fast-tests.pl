@@ -1185,8 +1185,8 @@ $output_file = "log";
         ["perm.ss", 1, "", "append", "SUCCESS"]
     ],
     "lemmas"=>[
-        ["lemma_check01.ss", " --elp ", "Valid.Valid.Fail.",""],
-        # ["lemma_check01.ss", 3, " --elp ", "V1","Valid", "V2", "Valid", "F3", "Fail"],
+        # ["lemma_check01.ss", " --elp ", "Valid.Valid.Fail.",""],
+        ["lemma_check01.ss", 3, " --elp ", "V1","Valid", "V2", "Valid", "F3", "Fail"],
         ["lemma_check02.ss", 2, " --elp ", "F5", "Fail", "V6", "Valid."],
         ["lemma_check03.ss", 3, " --elp ", "L1", "Valid", "L2", "Valid", "L4", "Fail"],
         ["lemma_check04.ss", 3, " --elp ", "L41", "Valid", "L42", "Fail", "L43","Fail"],
@@ -1282,7 +1282,7 @@ $output_file = "log";
                   ["fracperm/combine2.slk","--en-para -perm fperm -tp redlog", "", "Valid.Valid.Valid.Valid."]
            ],
     "lemmas"=>[
-        ["ll.slk", " --elp ", "Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Fail.", ""],
+        ["ll.slk", " --elp ", "Fail.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Fail.", ""],
         ["sort.slk", " --elp ", "Valid.Fail.Fail.", ""],
         ["lseg.slk", " --elp ", "Valid.Fail.", ""],
         ["lseg_case.slk", " --elp ", "Valid.Fail.Fail.Valid.Fail.Fail.", ""]
