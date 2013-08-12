@@ -158,6 +158,7 @@ let check_coercion_struc coer lhs rhs (cprog: C.prog_decl) =
   let _ = Debug.binfo_hprint (add_str "LP.lhs" Cprinter.string_of_formula) lhs pos in
   let _ = Debug.binfo_hprint (add_str "LP.fv_lhs" Cprinter.string_of_spec_var_list) fv_lhs pos in
   let lhs = Solver.unfold_nth 9 (cprog,None) lhs (CP.SpecVar (Named "", self, Unprimed)) true 0 pos in
+  let _ = Debug.binfo_hprint (add_str "LP.lhs(unfolded)" Cprinter.string_of_formula) lhs pos in
   (*let _ = print_string("lhs_unfoldfed_struc: "^(Cprinter.string_of_formula lhs)^"\n") in*)
   let (new_rhs,fv_rhs) = add_exist_heap_of_struc fv_lhs rhs in
   let glob_vs_rhs = Gen.BList.difference_eq CP.eq_spec_var fv_rhs fv_lhs in

@@ -18,9 +18,11 @@ pred ll_tail<n, t, sm, lg> ==
    }
 inv n>=1 & self!=null & sm<=lg.
 
+lemma "ll_tail2lsegL" self::ll_tail<n, t, sm, lg> & m=n-1-> self::lseg<m, t, sm, lg1> * t::node<lg, null> & lg1<=lg.
 
-lemma "ll_tail2lsegL" self::ll_tail<n, t, sm, lg> -> (exists lg1: self::lseg<n-1, t, sm, lg1> * t::node<lg, null> & lg1<=lg).
 /*
+lemma "ll_tail2lsegL" self::ll_tail<n, t, sm, lg> -> (exists lg1: self::lseg<n-1, t, sm, lg1> * t::node<lg, null> & lg1<=lg).
+
 lemma "ll_tail2lsegR" self::ll_tail<n, t, sm, lg> <- (exists lg1: self::lseg<n-1, t, sm, lg1> * t::node<lg, null> & lg1<=lg).
 
 lemma "ll_tail2lseg" self::ll_tail<n, t, sm, lg> <-> (exists lg1: self::lseg<n-1, t, sm, lg1> * t::node<lg, null> & lg1<=lg).
@@ -165,3 +167,26 @@ heap_entail_struc_init_bug_inv inp2 : :ECase case {
                                    {FLOW,(1,22)=__flow})[]
 
 */
+
+checkentail
+ (exists sm_248,flted_16_249: self::node<sm_248,flted_16_249>@M&n=1 & 
+ flted_16_249=null & self=t & n=1 & lg=sm & sm=sm_248 & n=m+1)
+ or (exists sm_250,t_251,lg_252,r_253,nn_254,
+    sm1_255: self::node<sm_250,r_253>@M * 
+    r_253::ll_tail<nn_254,t_251,sm1_255,lg_252>@M&n!=1 & r_253!=null & 
+    sm<=sm1_255 & n=nn_254+1 & sm=sm_250 & t=t_251 & lg=lg_252 & n=m+1)
+|- 
+case {
+         m=0 ->  [] (exists lg1_257,flted_21_256: 
+                        t::node<lg,flted_21_256>@M&flted_21_256=null & 
+                       lg1_257<=lg & self=t & lg1_257=sm);
+         m!=0 ->  [nn_258] (exists sm_269,p_270,
+                        lg_271,lg1_257,flted_21_256: 
+                        t::node<lg,flted_21_256>@M * 
+                        self::node<sm_269,r_259>@M * 
+                        r_259::lseg<nn_258,p_270,sm1_260,lg_271>@M&
+                        flted_21_256=null & lg1_257<=lg & sm<=sm1_260 & 
+                        m=nn_258+1 & sm=sm_269 & p_270=t & lg1_257=lg_271
+                        );
+}
+.
