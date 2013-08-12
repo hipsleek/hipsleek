@@ -1361,6 +1361,8 @@ let process_entail_check_x (iante : meta_formula) (iconseq : meta_formula) (etyp
     with ex ->
         let exs = (Printexc.to_string ex) in
         let _ = print_exception_result exs (*sel_hps*) num_id in
+		let _ = if !Globals.trace_failure then 
+		  (print_string "caught\n"; Printexc.print_backtrace stdout) else () in 
         (* (\* let _ = print_string "caught\n"; Printexc.print_backtrace stdout in *\) *)
         (* let _ = print_string ("\nEntailment Problem "^num_id^(Printexc.to_string ex)^"\n")  in *)
         false
