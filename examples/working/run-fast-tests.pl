@@ -1286,14 +1286,10 @@ $output_file = "log";
            ],
     "lemmas"=>[
         ["ll.slk", " --elp ", "Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.", "Valid.Fail."],
-        ["sort.slk", " --elp ", "Valid.Fail.Fail.", ""],
+        ["sort1.slk", " --elp ", "Valid.Fail.Fail.", ""],
+        ["sort2.slk", " --elp ", "Valid.Valid.Valid.Fail.Fail.Valid.Valid.Fail.Fail.", ""],
         ["lseg.slk", " --elp ", "Valid.Fail.", ""],
-        ["lseg_case.slk", " --elp ", "Valid.Fail.Fail.Valid.Fail.Fail.", ""]
-        # ["lemma_check01.slk", " --elp ", "Valid.Valid.Fail.", ""],
-        # ["lemma_check02.slk", " --elp ", "Fail.Valid.", ""],
-        # ["lemma_check03.slk", " --elp ", "Valid.Valid.Fail.", ""],
-        # ["lemma_check04.slk", " --elp ", "Valid.Fail.Fail.", ""],
-        # ["lemma_check06.slk", " --elp ", "Valid.Valid.Valid.Fail.Fail.Fail.", ""]
+        ["lseg_case.slk", " --elp ", "Valid.Valid..Valid.Valid.Valid.Valid.", ""]
     ],
     "musterr"=>[["err1.slk","","must.may.must.must.may.must.may.must.must.Valid.may.must."],
                ["err2.slk","","must.may.must.must.must.may.must.must.may.may.may.must.may.must.may.must.may.must.must.must.must.Valid.must.Valid.must.must.must.must.Valid.may.may."],
