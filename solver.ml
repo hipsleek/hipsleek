@@ -4155,14 +4155,14 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
 	                              (rez1, (mkCaseStep ctx f rez2))
                                     end
                                   else
-	                            if (List.length b.formula_case_exists)>0 then 
-	                              let ws = CP.fresh_spec_vars b.formula_case_exists in
-	                              let st = List.combine b.formula_case_exists ws in
-	                              let new_struc = subst_struc st (ECase {b with formula_case_exists = []})in
-	                              let new_ctx = push_exists_context ws ctx in
-	                              let nc,np = helper_inner 1 new_ctx new_struc in 
-	                              (nc, (mkEexStep ctx f np))
-	                            else if case_brs==[] (* (List.length b.formula_case_branches )=0 *) then ((SuccCtx [ctx]),TrueConseq)
+	                            (* if (List.length b.formula_case_exists)>0 then  *)
+	                            (*   let ws = CP.fresh_spec_vars b.formula_case_exists in *)
+	                            (*   let st = List.combine b.formula_case_exists ws in *)
+	                            (*   let new_struc = subst_struc st (ECase {b with formula_case_exists = []})in *)
+	                            (*   let new_ctx = push_exists_context ws ctx in *)
+	                            (*   let nc,np = helper_inner 1 new_ctx new_struc in  *)
+	                            (*   (nc, (mkEexStep ctx f np)) *)
+	                            (* else *) if case_brs==[] (* (List.length b.formula_case_branches )=0 *) then ((SuccCtx [ctx]),TrueConseq)
 	                            else 
 	                              let rec helper l = match l with
 	                                | [] -> None

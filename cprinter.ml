@@ -2266,7 +2266,7 @@ let string_of_spec_var_list l = "["^(string_of_spec_var_list_noparen l)^"]" ;;
 let string_of_typed_spec_var_list l = "["^(Gen.Basic.pr_list string_of_typed_spec_var l)^"]" ;;
 
 let rec pr_struc_formula  (e:struc_formula) = match e with
-    | ECase { formula_case_exists =ee; formula_case_branches  =  case_list ; formula_case_pos = _} ->
+    | ECase { formula_case_branches  =  case_list ; formula_case_pos = _} ->
 		  fmt_string "ECase ";
          (* fmt_string (string_of_pos p.start_pos);*)
           pr_args  (Some("V",1)) (Some "A") "case " "{" "}" ";"
@@ -3790,7 +3790,7 @@ let rec html_of_formula e = match e with
 		html_exist ^ (html_of_spec_var_list svs) ^ " : " ^ (html_of_h_formula h) ^ html_op_and ^ (html_of_pure_formula (MP.pure_of_mix p))
 
 let rec html_of_struc_formula f = match f with
-	| ECase { formula_case_exists = ee;
+	| ECase { 
 					formula_case_branches = case_list;} ->
 		"ECase " ^ (String.concat " &oplus; " (List.map (fun (case_guard,case_fml) -> (html_of_pure_formula case_guard) ^ " ==> " ^ (html_of_struc_formula case_fml)) case_list))
 	| EBase { formula_struc_implicit_inst = ii;

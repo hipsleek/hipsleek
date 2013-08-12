@@ -10,9 +10,7 @@ pred sortl<n, mi> == self::node<mi,null> & n=1
 	or self::node<mi, r> * r::sortl<n - 1, k> & mi <= k
 	inv n >= 1 & self!=null.
 
-// Fail.Valid.Valid.Valid
-// Valid.Fail.Valid
-// Valid.Fail.Valid.Fail.
+// Fail.Valid.Valid.Valid.Valid.Fail.Valid.Valid.Fail.Valid.Fail.
 
 
 //(1)
