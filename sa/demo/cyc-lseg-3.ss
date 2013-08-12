@@ -11,11 +11,13 @@ ll<> == self=null
 void trav(ref node y)
   requires y::ll<>
   ensures y::ll<> & y'=null;
+/*
 {  if (y!=null) {
      y=y.next;
      trav(y);
    }
 }
+*/
 
 node foo(node x)
 /*
@@ -33,6 +35,14 @@ node foo(node x)
 
 /*
 # cyc-lseg-3.ss 
+
+
+[ // PRE
+(0)H(x) --> emp&
+x=null,
+ // POST
+(0)emp&x=null & res=null & 
+res=x --> G(x,res@NI)]
 
 pre/post from auxiliary seems broken.
 
