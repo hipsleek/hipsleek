@@ -167,7 +167,7 @@ heap_entail_struc_init_bug_inv inp2 : :ECase case {
                                    {FLOW,(1,22)=__flow})[]
 
 */
-
+/*
 checkentail
  (exists sm_248,flted_16_249: self::node<sm_248,flted_16_249>@M&n=1 & 
  flted_16_249=null & self=t & n=1 & lg=sm & sm=sm_248 & n=m+1)
@@ -190,3 +190,4 @@ case {
                         );
 }
 .
+*/

@@ -3273,7 +3273,7 @@ and split_quantifiers (f : formula) : (CP.spec_var list * formula) = match f wit
   | Base _ -> ([], f)
   | _ -> failwith ("split_quantifiers: invalid argument (formula_or)")
 
-and add_quantifiers (qvars : CP.spec_var list) (f : formula) : formula = match f with
+and add_quantifiers_x (qvars : CP.spec_var list) (f : formula) : formula = match f with
   | Base ({formula_base_heap = h; 
 	formula_base_pure = p; 
 	formula_base_type = t;
@@ -3291,6 +3291,9 @@ and add_quantifiers (qvars : CP.spec_var list) (f : formula) : formula = match f
 		mkExists new_qvars h p t fl a pos
   | _ -> failwith ("add_quantifiers: invalid argument")
 
+and add_quantifiers (qvars : CP.spec_var list) (f : formula) : formula = 
+  Debug.no_2 "add_quantifiers" !print_svl !print_formula !print_formula add_quantifiers_x qvars f
+
 (* 19.05.2008 *)
 and remove_quantifiers (qvars : CP.spec_var list) (f : formula) : formula = match f with
   | Base _ -> f
@@ -3307,17 +3310,23 @@ and remove_quantifiers (qvars : CP.spec_var list) (f : formula) : formula = matc
   | _ -> failwith ("add_quantifiers: invalid argument")
         (* 19.05.2008 *)
 
-and push_struc_exists (qvars : CP.spec_var list) (f : struc_formula) = match f with
+and push_struc_exists (qvars : CP.spec_var list) (f : struc_formula) = 
+  let pr = !print_struc_formula in
+  Debug.no_2 "push_struc_exists" !print_svl pr pr push_struc_exists_x qvars f
+
+and push_struc_exists_x (qvars : CP.spec_var list) (f : struc_formula) = match f with
 	| EBase b -> 
 		(match b.formula_struc_continuation with
 			| None -> EBase {b with formula_struc_base = push_exists qvars b.formula_struc_base}
 			| _ -> EBase {b with formula_struc_exists = b.formula_struc_exists @ qvars})			
-	| ECase b -> ECase {b with formula_case_exists = b.formula_case_exists @ qvars}
+	(* | ECase b -> ECase {b with formula_case_exists = b.formula_case_exists @ qvars} *)
+	| ECase b -> ECase {b with formula_case_branches = List.map (fun (f,sf) -> (f,push_struc_exists_x qvars sf) ) b.formula_case_branches; }
+              (* b with formula_case_exists = b.formula_case_exists @ qvars} *)
 	| EAssume b -> EAssume {b with
 		formula_assume_simpl = push_exists qvars b.formula_assume_simpl;
-		formula_assume_struc = push_struc_exists qvars b.formula_assume_struc;}
+		formula_assume_struc = push_struc_exists_x qvars b.formula_assume_struc;}
 	| EInfer b -> EInfer b
-	| EList b -> EList (map_l_snd (push_struc_exists qvars) b)
+	| EList b -> EList (map_l_snd (push_struc_exists_x qvars) b)
 
 and push_exists_x (qvars : CP.spec_var list) (f : formula) = 
   match f with
