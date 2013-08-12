@@ -24,7 +24,10 @@ void trav(ref node y)
 
 
 /*
-# cyc-lseg.ss 
+# cyc-lseg.ss --pred-en-split
+
+Inferred result is fine.
+How come predicate synthesis option is not working?
 
 Obtained
 --------
@@ -38,27 +41,15 @@ Obtained
  or emp&y_883=0
  ]
 
-I wonder if we can derive:
+The --pred-en-split option is not working, as it has same
+result as above.
 
-  G(y,y') ::= G2(y) & y'=null
- G(y_884,y_885) ::= 
- y_884::node<next_20_873>@M * G(next_20_873,y_885)
- or emp&y_884=y_885 & y_885=null & y_884=null
+I wonder if we can derive, maybe using lemma synthesis?
 
-
-
---pred-en-equiv reuse of equivalent predicate
-definition not working properly since G/H identical to ll.
-Is this option working?
- 
-[ G(x_882) ::= 
- x_882::node<next_20_872>@M * G(next_20_872)
- or emp&x_882=null
- ,
- H(x_881) ::= 
- H(next_20_879) * x_881::node<next_20_879>@M
- or emp&x_881=null
- ]
-
+  G(y,y') ::= G2(y) * G3(y')
+  G2(y_884) ::= 
+   y_884::node<next_20_873>@M * G(next_20_873)
+   or emp&y_884=null
+  G3(y') ::= y'=null
 
 */

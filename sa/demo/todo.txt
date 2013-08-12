@@ -5907,7 +5907,69 @@ void trav(node x)
    }
 }
 =====================================================================
+# cyc-lseg.ss --pred-en-split
+
+Inferred result is fine.
+How come predicate synthesis option is not working?
+
+void trav(ref node y)
+  infer [H,G]
+  requires H(y)
+   ensures G(y,y');
+{  if (y!=null) {
+     y=y.next;
+     trav(y);
+   }
+}
+
+Obtained
+--------
+
+[ G(y_884,y_885) ::= 
+ y_884::node<next_20_873>@M * G(next_20_873,y_885)
+ or emp&y_884=y_885 & y_885=null & y_884=null
+ ,
+ H(y_883) ::= 
+ H(next_20_881) * y_883::node<next_20_881>@M
+ or emp&y_883=0
+ ]
+
+The --pred-en-split option is not working, as it has same
+result as above.
+
+I wonder if we can derive, maybe using lemma synthesis?
+
+  G(y,y') ::= G2(y) * G3(y')
+  G2(y_884) ::= 
+   y_884::node<next_20_873>@M * G(next_20_873)
+   or emp&y_884=null
+  G3(y') ::= y'=null
 =====================================================================
+# cyc-lseg-3.ss 
+
+pre/post from auxiliary seems broken.
+
+Obtained
+--------
+
+[ G(x_901,res_902) ::= emp&res_902=x_901 & x_901=null & res_902=null,
+ H(x_900) ::= emp&x_900=null]
+
+This answer seems to be wrong!
+
+Expecting:
+ H(x) ::= x::ll<>
+ G(x,res) ::= x::ll<> & res=null
+
+node foo(node x)
+  infer [H,G]
+  requires H(x)
+  ensures G(x,res);
+{ 
+  node y=x;
+  trav(y);
+  return y;
+}
 =====================================================================
 =====================================================================
 =====================================================================
