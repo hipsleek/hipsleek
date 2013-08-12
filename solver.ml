@@ -1660,8 +1660,8 @@ and prune_preds_x prog (simp_b:bool) (f:formula):formula =
   let helper_formulas f = 
     let p2 = Cprinter.string_of_formula in
     Debug.no_1 "helper_formulas" p2 p2 helper_formulas f in 
-  if !Globals.dis_ps then 
-    f
+  if (isAnyConstFalse f) then f 
+  else if !Globals.dis_ps then f
   else
     (
         Gen.Profiling.push_time "prune_preds_filter";
@@ -1787,9 +1787,11 @@ and heap_prune_preds_x prog (hp:h_formula) (old_mem: memo_pure) ba_crt : (h_form
               let aliases = MCP.memo_get_asets ba_crt new_mem2 in
               let ba_crt = ba_crt@(List.concat(List.map (fun c->CP.EMapSV.find_equiv_all c aliases ) ba_crt)) in
               let n_l = List.filter (fun c-> 
-                  let c_ba,_ = List.find (fun (_,d)-> c=d) v_def.view_prune_conditions_baga in
-                  let c_ba = List.map (CP.subs_one zip) c_ba in
-                  not (Gen.BList.disjoint_eq CP.eq_spec_var ba_crt c_ba)) rem_br in
+				  try
+				    let c_ba,_ = List.find (fun (_,d)-> c=d) v_def.view_prune_conditions_baga in
+					let c_ba = List.map (CP.subs_one zip) c_ba in
+					not (Gen.BList.disjoint_eq CP.eq_spec_var ba_crt c_ba)
+				  with Not_found-> true) rem_br in
               Gen.BList.remove_dups_eq (=) (l_prune@n_l) in
             let l_prune = if (List.length l_prune')=(List.length rem_br) then l_prune else l_prune' in
             
@@ -3227,21 +3229,29 @@ and elim_ante_evars (es:entail_state) : context =
   Ctx {es with es_formula = ef } (*!! maybe unsound unless new clean cache id*)
 
 (*used for finding the unsat in the original pred defs formulas*)
-and find_unsat (prog : prog_decl) (f : formula):formula list*formula list =  
+and find_unsat_x (prog : prog_decl) (f : formula):formula list*formula list =  
   let sat_subno = ref 1 in 
   match f with
-    | Base _ | Exists _ ->
+    | Base {formula_base_label = lbl} | Exists {formula_exists_label = lbl} ->
 	  let _ = reset_int2 () in
-	  let pf, _, _ = xpure prog f in
-	  let is_ok = TP.is_sat_mix_sub_no pf sat_subno true true in  
-	  if is_ok then ([f],[]) else ([],[f])
+	  let pf, _, m_set = xpure prog f in
+	  let m_set_f = List.fold_left (fun a (c1,c2)-> CP.mkAnd a (CP.mkPtrNeqEqn c1 c2 no_pos) no_pos) (CP.mkTrue no_pos)
+					(generate_disj_pairs_from_memf m_set) in
+	  let n_pf = MCP.memoise_add_pure_N pf m_set_f in
+	  let is_ok = TP.is_sat_mix_sub_no n_pf sat_subno true true in  
+	  if is_ok then ([f],[]) else ([(mkFalseLbl (CF.mkTrueFlow ()) lbl no_pos)],[f])
     | Or ({formula_or_f1 = f1;
       formula_or_f2 = f2;
       formula_or_pos = pos}) ->
-	  let nf1,nf1n = find_unsat prog f1 in
-	  let nf2,nf2n = find_unsat prog f2 in
+	  let nf1,nf1n = find_unsat_x prog f1 in
+	  let nf2,nf2n = find_unsat_x prog f2 in
 	  (nf1@nf2,nf1n@nf2n)
 
+and find_unsat prog f =
+	let pr_f =  Cprinter.string_of_formula in
+	let pr_l = pr_list pr_f in
+	Debug.no_1 "find_unsat" pr_f (pr_pair pr_l pr_l) (find_unsat_x prog) f
+	  
 and unsat_base_x prog (sat_subno:  int ref) f  : bool= 
   match f with
     | Or _ -> report_error no_pos ("unsat_xpure : encountered a disjunctive formula \n")

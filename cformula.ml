@@ -289,15 +289,16 @@ let print_infer_rel(l,r) = (!print_pure_f l)^" --> "^(!print_pure_f r)
 let print_mem_formula = ref (fun (c:mem_formula) -> "printer has not been initialized")
 (* let print_failesc = ref (fun (c:failesc) -> "printer has not been initialized") *)
 
-
-let mkFalse (flowt: flow_formula) pos = Base ({
+let mkFalseLbl (flowt: flow_formula) lbl pos = Base ({
 		formula_base_heap = HFalse; 
 		formula_base_pure = MCP.mkMFalse pos; 
 		formula_base_type = TypeFalse;
 		formula_base_and = [];
 		formula_base_flow = flowt (*mkFalseFlow*); (*Cpure.flow_eqs any_flow pos;*)
-		formula_base_label = None;
+		formula_base_label = lbl;
 		formula_base_pos = pos})
+
+let mkFalse (flowt: flow_formula) pos = mkFalseLbl flowt None pos 
   
 let mkEFalse flowt pos = EBase({
 	formula_struc_explicit_inst = [];
