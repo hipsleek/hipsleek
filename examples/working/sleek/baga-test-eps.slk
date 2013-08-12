@@ -77,12 +77,10 @@ checkentail x::l7<q> * x::l7<q> |- false.
 // (13) Valid
 checkentail x::l7<q> * x::l7<q> & x!=null |- q!=null.
 
-// should be valid with --eps
-// approx by non-eps cause failure
-// (14) Fail
+// --eps
+// (14) Valid
 checkentail x::l7<q> * x::l7<q> & x!=null |- false.
 
-// should be valid with --eps
-// approx by non-eps cause failure
-// (15) Fail
+// --eps
+// (15) Valid
 checkentail x::l7<q> * y::l7<q> & x!=null & y!=null |- false.
