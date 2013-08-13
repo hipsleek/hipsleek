@@ -1798,6 +1798,18 @@ and find_m_prop_heap_x params eq_f h =
               let ret =  List.map (fun v -> C.mk_mater_prop v true [ h.CF.h_formula_view_name]) l in
               let _ = Debug.tinfo_hprint (add_str "ret" (pr_list Cprinter.string_of_mater_property)) ret no_pos in 
               ret
+      | CF.HRel (hp,e,_) ->
+            let args = CP.diff_svl (CF.get_all_sv h) [hp] in
+            (* let l, _  = Sautility.find_root prog [hp] args  [] in *)
+            (* let l = eq_f l in *)
+            let l = args in
+            (* andreeac: to do smth because this is not correct for hrel with more than one arg (args should be [root]) *)
+            Debug.tinfo_hprint (add_str "hrel:l" (Cprinter.string_of_spec_var_list)) l no_pos;
+            if l==[] then []
+            else
+              let ret =  List.map (fun v -> C.mk_mater_prop v true [Cprinter.string_of_spec_var hp]) l in
+              let _ = Debug.tinfo_hprint (add_str "ret" (pr_list Cprinter.string_of_mater_property)) ret no_pos in 
+              ret
       | CF.Star h -> (helper h.CF.h_formula_star_h1)@(helper h.CF.h_formula_star_h2)
       | CF.StarMinus h -> (helper h.CF.h_formula_starminus_h1)@(helper h.CF.h_formula_starminus_h2)
       | CF.Conj h -> (helper h.CF.h_formula_conj_h1)@(helper h.CF.h_formula_conj_h2)
@@ -1807,7 +1819,7 @@ and find_m_prop_heap_x params eq_f h =
       | CF.Hole _ 
       | CF.HTrue 
       | CF.HFalse 
-      | CF.HRel _
+      (* | CF.HRel _ *)
       | CF.HEmp -> [] in
   helper h
 
@@ -1855,6 +1867,14 @@ and find_node_vars eq_f h =
         Debug.tinfo_hprint (add_str "view:l" (Cprinter.string_of_spec_var_list)) l no_pos;
         if l==[] then ([],[])
         else ([],[h.CF.h_formula_view_name])
+    | CF.HRel (hp, e, _) ->        
+          let l = List.fold_left (fun lst exp ->  
+              match exp with
+                | (CP.Var (v,_)) ->  (eq_f v)@lst
+                | _ -> lst) [] e in
+          Debug.tinfo_hprint (add_str "hrel:l" (Cprinter.string_of_spec_var_list)) l no_pos;
+          if l==[] then ([],[])
+          else ([], [CP.name_of_spec_var hp])
     | CF.Star h -> join (helper  h.CF.h_formula_star_h1) (helper  h.CF.h_formula_star_h2)
     | CF.StarMinus h -> join (helper  h.CF.h_formula_starminus_h1) (helper  h.CF.h_formula_starminus_h2)
     | CF.Conj h -> join (helper  h.CF.h_formula_conj_h1) (helper  h.CF.h_formula_conj_h2)
@@ -1864,7 +1884,6 @@ and find_node_vars eq_f h =
     | CF.Hole _ 
     | CF.HTrue 
     | CF.HFalse 
-    | CF.HRel _
     | CF.HEmp -> ([],[]) in
   (* let helper h =  *)
   (*   let pr1 = Cprinter.string_of_h_formula in *)
@@ -2519,8 +2538,9 @@ and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
     true (*check_pre*) in
   let c_head_norm = CF.struc_to_formula cs_head_norm in
   (* free vars in RHS but not LHS *)
+  let hrels = List.map (fun (a,_) -> a) (CF.get_HRels_f c_rhs ) in
   let ex_vars = Gen.BList.remove_dups_eq CP.eq_spec_var 
-    (List.filter (fun v -> not(List.mem (CP.name_of_spec_var v) lhs_fnames0) ) (CF.fv c_rhs)) in 
+    (List.filter (fun v -> not(List.mem (CP.name_of_spec_var v) lhs_fnames0) ) (Gen.BList.difference_eq CP.eq_spec_var (CF.fv c_rhs) hrels)) in 
   (* wrap exists for RHS - no implicit instantiation*)
   let c_rhs = CF.push_exists ex_vars c_rhs in
   let lhs_name = find_view_name c_lhs self (IF.pos_of_formula coer.I.coercion_head) in
