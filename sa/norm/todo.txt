@@ -62,6 +62,21 @@ EXPECT
 =====
   G1(a,b) --> P1(a) * HP_n(b,a@NI)
 ===================================================================
+# bug-classic-4a.slk
+
+infer_exact
+[P1] n::node<_,null> & self=null
+|- P1(self).
+print residue.
+
+ <1>(exists flted_23_51: emp&flted_23_51=null & self=null&{FLOW,(19,20)=__norm})[]
+ inferred hprel: [// Sleek_Entail(2)
+n::node<Anon_14,flted_23_51>@M&flted_23_51=null & 
+self=null --> P1(self)]
+
+PROBLEM : why did we include an unrelated n::node<_,null>
+ when folding with unknown predicate?
+
 ===================================================================
 ===================================================================
 ===================================================================
