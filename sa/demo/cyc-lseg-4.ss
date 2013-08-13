@@ -4,7 +4,7 @@ data node {
 }
 
 HeapPred H(node x).
-HeapPred G(node y,node@NI z).
+HeapPred G(node y, node@NI z).
 
 ll<> == self=null
   or self::node<_,q>*q::ll<>;

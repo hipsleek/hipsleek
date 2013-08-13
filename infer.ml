@@ -2054,6 +2054,7 @@ let find_undefined_selective_pointers_x prog lfb lmix_f unmatched rhs_rest rhs_h
   let hds = (lhds @ rhds) in
   let hvs = (lhvs @ rhvs) in
   let eqs = (leqs@reqs) in
+  let _ = DD.ninfo_pprint ("      eqs: " ^ (let pr = pr_list(pr_pair !CP.print_sv !CP.print_sv) in pr eqs)) no_pos in
    (*defined vars=  null + data + view + match nodes*)
   let r_def_vs = reqNulls @ (List.map (fun hd -> hd.CF.h_formula_data_node) rhds)
    @ (List.map (fun hv -> hv.CF.h_formula_view_node) rhvs) in
@@ -2190,7 +2191,8 @@ let find_undefined_selective_pointers_x prog lfb lmix_f unmatched rhs_rest rhs_h
       (* let h_args1 = if List.filter CP.is_node_typ h_args in *)
       let hrel_args1 = List.concat hrel_args in
       (*should include their closed ptrs*)
-      let hrel_args2 = CP.remove_dups_svl (List.fold_left SAU.close_def hrel_args1 (eqs)) in
+      (* let hrel_args2 = CP.remove_dups_svl (List.fold_left SAU.close_def hrel_args1 (eqs)) in *)
+      let hrel_args2 = CP.remove_dups_svl (CF.find_close hrel_args1 eqs) in
       let mis_match_found, ls_unfold_fwd_svl = get_rhs_unfold_fwd_svl h_node h_args (def_vs@hrel_args2) ls_lhp_args in
       (mis_match_found, ls_unfold_fwd_svl(* @lundefs_args *),[],selected_hpargs, None)
   in

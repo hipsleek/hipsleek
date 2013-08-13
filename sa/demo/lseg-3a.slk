@@ -13,6 +13,7 @@ infer [H] H(x)&x=x' & x'=y_30'
  |-  y_30'::ll<>@M.
 print residue.
 
+
 infer [H] H(x)&x=x' & x'=y_30'
  |-  x'::ll<>@M.
 print residue.

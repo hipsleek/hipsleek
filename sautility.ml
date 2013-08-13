@@ -1141,6 +1141,19 @@ let generate_closure_eq_null args eqNulls cur_eqs=
   let new_eq_ps = helper (CP.intersect_svl args eqNulls) [] in
   CP.join_conjunctions new_eq_ps
 
+let re_arrange eqs0=
+  let rec helper eqs res=
+  match eqs with
+    | [] -> res
+    | (sv1, sv2)::rest ->
+          try
+            let sv3 = List.assoc sv1 res in
+            helper rest (res@[(sv2,sv3)])
+          with _ ->
+              helper rest (res@[(sv1,sv2)])
+  in
+  helper eqs0 []
+
 let smart_subst_x nf1 nf2 hpargs eqs0 reqs unk_svl prog_vars=
   let largs= CF.h_fv nf1.CF.formula_base_heap in
   let rargs= CF.h_fv nf2.CF.formula_base_heap in
@@ -1161,7 +1174,9 @@ let smart_subst_x nf1 nf2 hpargs eqs0 reqs unk_svl prog_vars=
   let new_eqs = filter_eqs all_args prog_vars eqs in
   let new_eqs1 = List.filter (fun (sv1,sv2) -> not (CP.mem_svl sv1 eqNulls2 && CP.mem_svl sv2 eqNulls2)) new_eqs in
   let new_eqs1 = filter_eq_in_one_hp unk_svl new_eqs1 hpargs in
-  let nf1a = CF.subst_b new_eqs1 nf1 in
+  let new_eqs2 = re_arrange new_eqs1 in
+  let _ = DD.ninfo_pprint ("      new_eqs2: " ^ (let pr = pr_list(pr_pair !CP.print_sv !CP.print_sv) in pr new_eqs2)) no_pos in
+  let nf1a = CF.subst_b new_eqs2 nf1 in
   let _ = Debug.ninfo_pprint ("nf1a: " ^ (Cprinter.string_of_formula_base nf1a)) no_pos in
   let ps10 = CP.list_of_conjs (MCP.pure_of_mix nf1a.CF.formula_base_pure) in
   let eqNulls3 = List.filter (fun sv -> not (CP.mem_svl sv rargs)) eqNulls2 in
@@ -1174,7 +1189,7 @@ let smart_subst_x nf1 nf2 hpargs eqs0 reqs unk_svl prog_vars=
   let nf11 = {nf1a with CF.formula_base_pure = MCP.mix_of_pure new_p13} in
   let _ = Debug.ninfo_pprint ("nf11: " ^ (Cprinter.string_of_formula_base nf11)) no_pos in
   (*rhs - nf2: not handle yet*)
-  let new_nf2 = CF.subst_b (new_eqs1@reqs) nf2 in
+  let new_nf2 = CF.subst_b (new_eqs2@reqs) nf2 in
   (*subst again*)
   let nleqs0 = (MCP.ptr_equations_without_null nf11.CF.formula_base_pure) in
   let ptrs_group1 = (CF.get_ptrs_group_hf nf1.CF.formula_base_heap)@(CF.get_ptrs_group_hf nf11.CF.formula_base_heap) in
@@ -1229,9 +1244,10 @@ let keep_data_view_hrel_nodes_two_fbs prog f1 f2 hd_nodes hv_nodes hpargs
    (List.fold_left close_def rhs_svl eqs ) in
   let _ = Debug.ninfo_pprint ("f1: " ^ (Cprinter.string_of_formula_base f1)) no_pos in
   let _ = Debug.ninfo_pprint ("f2: " ^ (Cprinter.string_of_formula_base f2)) no_pos in
+  (*demo/cyc-lseg-3.ss*)
   let nf1 = CF.drop_data_view_hpargs_nodes_fb f1 check_nbelongsto_dnode check_nbelongsto_vnode check_neq_hpargs
     (* lkeep_nodes *) keep_vars (* lkeep_nodes *) keep_vars lkeep_hpargs (keep_vars@c_lhs_hpargs@
-        (List.filter (fun sv -> not (CP.is_node_typ sv)) (lhs_args_ni@rhs_args_ni))) in
+        (( List.filter (fun sv -> not (CP.is_node_typ sv)) lhs_args_ni)@rhs_args_ni)) in
   let nf2 = CF.drop_data_view_hrel_nodes_fb f2 check_nbelongsto_dnode check_nbelongsto_vnode check_neq_hrelnode
     keep_vars keep_vars rkeep_hps (keep_vars@rhs_args_ni) in
   let _ = Debug.ninfo_pprint ("nf1: " ^ (Cprinter.string_of_formula_base nf1)) no_pos in
@@ -1525,7 +1541,7 @@ let find_well_defined_hp_x prog hds hvs r_hps prog_vars post_hps (hp,args) def_p
     let hf1 = CF.drop_hnodes_hf f.CF.formula_base_heap args in
     let p = MCP.pure_of_mix f.CF.formula_base_pure in
     let diff_svl = CP.diff_svl (CP.fv p) args in
-    let p_w_quan = CP.mkExists_with_simpl Omega.simplify diff_svl p None no_pos in
+    let p_w_quan = CP.mkExists_with_simpl TP.simplify_raw diff_svl p None no_pos in
     let f1 = {f with CF.formula_base_pure = MCP.mix_of_pure p_w_quan;
         CF.formula_base_heap = hf1;} in
     let leqs = (MCP.ptr_equations_without_null f1.CF.formula_base_pure) in

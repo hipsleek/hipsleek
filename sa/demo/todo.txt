@@ -5945,7 +5945,7 @@ I wonder if we can derive, maybe using lemma synthesis?
    or emp&y_884=null
   G3(y') ::= y'=null
 =====================================================================
-# cyc-lseg-3.ss 
+# cyc-lseg-3.ss : FIXED
 
 pre/post from auxiliary seems broken.
 
@@ -5971,7 +5971,7 @@ node foo(node x)
   return y;
 }
 =====================================================================
-# cyc-lseg-4.ss 
+# cyc-lseg-4.ss :FIXED (simplification via TP instead OMega directly)
 
 minor issue with  x_942=0
 
@@ -5990,7 +5990,7 @@ Obtained
 This answer looks good but x_942=0 should have been converted
 to null by our ptr conversion.
 =====================================================================
-# lseg-3a.slk
+# lseg-3a.slk: FIXED
 
 It seems the problem is caused by not handling transitivity
 of = properly. You need to use CP.EMapSV which will allow
@@ -6037,9 +6037,11 @@ synchronize sa2.infer_shapes_proper with sa3.infer_shapes_proper
   let post_constrs1 = SAU.subst_equiv_hprel unify_equiv_map11 post_constrs in
 =====================================================================
  # sleekcore.ml
- - default is checkeq-sem
- - add --checkeq-syn
 
+ - default is checkeq-sem
+ - add --checkeq-en-syn
+
+ DONE: pred-en-equiv
 =====================================================================
 =====================================================================
 =====================================================================
