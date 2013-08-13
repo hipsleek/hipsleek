@@ -1,0 +1,94 @@
+
+data node {
+	int val; 
+	node next; 
+}.
+
+pred  sortll<mi> == self=null & mi=\inf
+   or self::node<mi, p> * p::sortll<m2> & -\inf<mi<\inf & mi<=m2
+//inv self!=null & -\inf<mi<\inf | (self=null & mi=\inf)
+.
+
+/*
+  xform: (self!=null | (self=null & mi=\inf))
+*/
+
+//(1)
+checkentail x=null |- x::sortll<mi>.
+print residue.
+
+//(2)
+checkentail x::sortll<mi> & x!=null |- -\inf<mi<\inf.
+print residue.
+
+//(3)
+checkentail x::sortll<mi> & mi<\inf |- x!=null.
+print residue.
+
+//(4)
+checkentail x::sortll<mi> & mi=\inf |- x=null.
+print residue.
+
+//(5)
+checkentail x::sortll<mi> & mi<\inf |- x!=null.
+print residue.
+
+//(6)
+checkentail x::sortll<mi> & -\inf<mi |- x!=null.
+print residue.
+
+//(7)
+checkentail x::sortll<mi> & mi-\inf<0 |- x!=null.
+print residue.
+
+//(8)
+checkentail x::sortll<mi> & mi+1=\inf |- x!=null.
+print residue.
+
+//(9)
+checkentail  mi+1=\inf |- mi=\inf.
+print residue.
+
+//(10)
+checkentail  mi-5=\inf |- mi=\inf.
+print residue.
+
+
+//(11)
+checkentail  mi-5>=\inf |- mi=\inf.
+print residue.
+
+//(12)
+checkentail  mi+5>=\inf |- mi=\inf.
+print residue.
+
+//(13)
+checkentail  mi>=\inf-6 |- mi=\inf.
+print residue.
+
+//(14)
+checkentail  mi>=\inf+6 |- mi=\inf.
+print residue.
+
+//(15)
+checkentail  mi>=\inf+6 |- mi>=\inf.
+print residue.
+
+//(16)
+checkentail  mi>=\inf-6 |- mi>=\inf.
+print residue.
+
+
+//(17) fail but should succeed
+checkentail  mi+3=\inf |- mi=\inf.
+print residue.
+
+
+//(18) fail but should succeed
+checkentail  mi=\inf-3 |- mi=\inf.
+print residue.
+
+
+//(19) valid but should fail (UNSOUND)
+checkentail  mi=\inf-3 |- mi<\inf.
+print residue.
