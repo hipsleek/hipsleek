@@ -1,0 +1,34 @@
+data node { int val ; node next }.
+
+// taken from bug-sort-ll.slk
+
+pred ll<n,m> == self = null & n = 0 & m=1
+	or self::node<next = r> * r::ll<n - 1,m-1>
+	inv n >= 0.
+
+pred sortl<n, mi> == self::node<mi,null> & n=1
+	or self::node<mi, r> * r::sortl<n - 1, k> & mi <= k
+	inv n >= 1 & self!=null.
+
+// Valid.Valid.Valid
+// Fail.Fail.Valid.Valid
+// Fail.Fail.
+
+
+//(3)
+//lemma self::sortl<n, mi> -> self::ll<n,n>.
+/* OK
+ !!! LP:rhs: EBase (exists n_147: self::ll<n,n_147>@M&n=n_147&{FLOW,(1,22)=__flow})[]
+*/
+
+lemma self::ll<nnn,1> <- self::sortl<nnn, mmmmi>.
+/*
+
+  why did we not have exists n_147.  
+  !!! LP:rhs: EBase self::ll<n,n_147>@M&{FLOW,(1,22)=__flow}[]
+
+*/
+
+// should succeed
+
+

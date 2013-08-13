@@ -342,6 +342,8 @@ let is_float_var (sv : spec_var) : bool = is_float_type (type_of_spec_var sv)
 
 let is_rel_var (sv : spec_var) : bool = is_RelT (type_of_spec_var sv)
 
+let is_hp_rel_var (sv : spec_var) : bool = is_HpT (type_of_spec_var sv)
+
 let is_primed (sv : spec_var) : bool = match sv with
   | SpecVar (_, _, p) -> p = Primed
 
@@ -1115,7 +1117,6 @@ and isConstTrue_debug (p:formula) =
 
 
 
-        
 and isTrivTerm (p:formula) = match p with
   | BForm ((LexVar l, _),_) -> (l.lex_ann == Term || l.lex_ann==MayLoop) && l.lex_exp==[]
   | _ -> false
@@ -2040,6 +2041,8 @@ and mkTrue_b pos = (BConst (true, pos),None)
 and mkTrue pos =  BForm ((BConst (true, pos), None),None)
 
 and mkFalse pos = BForm ((BConst (false, pos), None),None)
+
+and mkFalse_b pos = (BConst (false, pos), None) 
 
 and mkExists_with_simpl simpl (vs : spec_var list) (f : formula) lbl pos = 
   Debug.no_2 "mkExists_with_simpl" !print_svl !print_formula !print_formula 
@@ -3639,14 +3642,21 @@ and get_subst_equation_b_formula (f : b_formula) (v : spec_var) lbl only_vars: (
    
 
 and get_all_vv_eqs (f0 : formula) : ((spec_var * spec_var) list * formula) =
+  let pr = !print_formula in
+  let pr_sv = !print_sv in
+  let prr = pr_pair (pr_list (pr_pair pr_sv pr_sv)) pr in
+  Debug.no_1 "get_all_vv_eqs" pr prr get_all_vv_eqs_x f0
+
+and get_all_vv_eqs_x (f0 : formula) : ((spec_var * spec_var) list * formula) =
   let rec helper f0 =  match f0 with
       | And (f1, f2, pos) ->
           let st1, rf1 = helper f1  in
-          if not (Gen.is_empty st1) then
-            (st1, mkAnd rf1 f2 pos)
-          else
-            let st2, rf2 = helper f2  in
-            (st2, mkAnd f1 rf2 pos)
+          let st2, rf2 = helper f2  in
+          (st1@st2, mkAnd rf1 rf2 pos)
+          (* if not (Gen.is_empty st1) then *)
+          (*   (st1, mkAnd rf1 f2 pos) *)
+          (* else *)
+          (*   (st2, mkAnd f1 rf2 pos) *)
       | AndList b -> 
 		  let r1,r2 = List.fold_left (fun (a1,b1) c-> 
 			  if Gen.is_empty a1 then 

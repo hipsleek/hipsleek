@@ -1,11 +1,21 @@
 Starting Omega...oc
 
-Entail (1) : Fail.(may) cause: true |-  y!=null. LOCS:[11;0] (may-bug)
+!!! dumping for sleek_dump(fail)
+Entail (1) : Fail.
 
 
-ERROR: at _0_0 
-Message: t is not found in both sides
- 
-Entailment Failure (2) Failure("t is not found in both sides")
-: no residue 
-Stop Omega... 15 invocations 
+!!! dumping for sleek_dump(fail)
+Entail (2) : Fail.
+
+Stop Omega... 25 invocations 
+SAT Count   : 17
+SAT % Hit   : 41.17%
+IMPLY Count : 13
+IMPLY % Hit : 30.76%
+Time(cache overhead) : 0. (seconds)
+
+!!! log(small):(0.019335,41)
+Total verification time: 0.08 second(s)
+	Time spent in main process: 0.05 second(s)
+	Time spent in child processes: 0.03 second(s)
+

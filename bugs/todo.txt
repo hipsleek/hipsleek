@@ -886,8 +886,105 @@ I think you should do 2 things (i) first; then (ii)
     may skip it first.
 
 ===================================================================
+# baga-2.slk
+
+pred l4<q> == 
+  self::node<q>*q::node<_>
+inv self!=null.
+// baga {self,q}
+
+pred l5<k> == 
+  self::node<q>*q::node<_> & k=q
+inv self!=null.
+
+l4 is Ok but l5 is missing on 
+a baga address.
+
+need to get visible parameters and
+extract equality from pure formula 
+for substitution in xpure_symbolic
+
+ missing on k for baga formula
+ addr vars: self
+  uni_vars: []
+  bag of addr: self
+  view_complex_inv: None
 ===================================================================
+# baga-2.slk
+
+(i) duplicated calls to formula_2_mem..
+(ii) are they critical?
+
+formula_2_mem@1
+formula_2_mem inp1 : {1}->(exists q,Anon_11: self::node<q>@M * q::node<Anon_11>@M&k=q & q!=self&
+{FLOW,(1,22)=__flow})[]
+formula_2_mem@1 EXIT out : [[self,q]]
+
+formula_2_mem@3
+formula_2_mem inp1 : {1}->(exists q,Anon_11: self::node<q>@M * q::node<Anon_11>@M&k=q & q!=self&
+{FLOW,(1,22)=__flow})[]
+formula_2_mem@3 EXIT out : [[self,q]]
+
+!!! xform(mix): exists(q:k=q & q!=self & q!=null) & self!=null
+!!! view_addr_vars:[self]
+!!! view_vars:[k]
+!!! view_baga:[self,q]
+!!! new_baga:[self]
+
+formula_2_mem@5
+formula_2_mem inp1 : {1}->(exists q,Anon_11: self::node<q>@M * q::node<Anon_11>@M&k=q & q!=self&
+{FLOW,(1,22)=__flow})[]
+formula_2_mem@5 EXIT out : [[self,q]]
+
+formula_2_mem@7
+formula_2_mem inp1 : {1}->(exists q,Anon_11: self::node<q>@M * q::node<Anon_11>@M&k=q & q!=self&
+{FLOW,(1,22)=__flow})[]
+formula_2_mem@7 EXIT out : [[self,q]]
+
+formula_2_mem@9
+formula_2_mem inp1 : {1}->self::node<q>@M * q::node<Anon_11>@M&k=q & q!=self&
+{FLOW,(1,22)=__flow}[]
+formula_2_mem@9 EXIT out : [[self,q]]
+
 ===================================================================
+# baga-3.slk
+
+pred l3a<> == 
+  self::node<q>*q::node<_>  & self=q
+inv self!=null.
+
+  prune baga conditions: ([q])-1,([self])-2
+should be:
+  prune baga conditions: ([q])-1,([self,self])-2
+
+pred l6<q:node> == 
+  q::node<_> & self=null
+  or self::node<r>*r::node<_> & r=q
+inv q!=null.
+
+Got:
+  prune invs:3:
+   ,[{1,2} -> {[q]} [ q!=null]; {1} -> {[q]} [ self=null; q!=null]; 
+   {2} -> {[self]} [ q!=null; self!=null]]
+Should be:
+  prune invs:3:
+   ,[{1,2} -> {[q]} [ q!=null]; {1} -> {[q]} [ self=null; q!=null]; 
+   {2} -> {[self,q]} [ q!=null; self!=null]]
+
+pred l7<q:node> == 
+  self=null & q=null
+  or self::node<r>*r::node<_> & r=q
+inv true.
+
+GOT:
+  prune invs:3:
+   ,[{4,5} -> {[]} []; {4} -> {[]} [ self=null; q=null]; 
+   {5} -> {[self]} [ self!=null; q!=null]]
+should be:
+  prune invs:3:
+   ,[{4,5} -> {[]} []; {4} -> {[]} [ self=null; q=null]; 
+   {5} -> {[self,q]} [ self!=null; q!=null]]
+
 ===================================================================
 ===================================================================
 ===================================================================

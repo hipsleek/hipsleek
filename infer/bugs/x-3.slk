@@ -3,23 +3,100 @@ data node{
 }.
 
 relation R(node a).
+HeapPred H(node a).
 
+// (1) valid
 infer[fld5,z]
 R(fld5) &
 q_34=z & inf_ann_39=@M & inf_p_40=null & inf_p_40!=x & x!=null
-|-x!=z & inf_p_40=z 
-&fld5=null
-.
+|-x!=z & inf_p_40=z &fld5=null.
+print residue.
+
+// (2) valid
+infer[R,z]
+R(fld5) &
+q_34=z & inf_ann_39=@M & inf_p_40=null & inf_p_40!=x & x!=null
+|-x!=z & inf_p_40=z &fld5=null.
+print residue.
+
+// (3) valid
+infer[H,z]
+H(fld5) &
+q_34=z & inf_ann_39=@M & inf_p_40=null & inf_p_40!=x & x!=null
+|-x!=z & inf_p_40=z &fld5=null.
+print residue.
+
+// (4) valid
+infer[fld5,z,inf_p_40]
+q_34=z & inf_ann_39=@M & inf_p_40=null & inf_p_40!=x & x!=null
+|-x!=z & inf_p_40=z &fld5=null.
+print residue.
+
+// (5) valid
+infer[R,z,inf_p_40]
+R(fld5) &
+q_34=z & inf_ann_39=@M & inf_p_40=null & inf_p_40!=x & x!=null
+|-x!=z & inf_p_40=z &fld5=null.
+print residue.
+
+// (6) valid
+infer[H,z]
+H(fld5) &
+q_34=z & inf_ann_39=@M & inf_p_40=null & inf_p_40!=x & x!=null
+|-x!=z & inf_p_40=z &fld5=null.
+print residue.
+
+/*
+# x-3.slk
+
+Below works.
+
+infer[R,z]
+R(fld5) &
+q_34=z & inf_ann_39=@M & inf_p_40=null & inf_p_40!=x & x!=null
+|-x!=z & inf_p_40=z &fld5=null.
+print residue.
+
+but an identical inference (LHS/RS) with an extra inferrable
+var fails. I think this problem need to be fixed.
+
+infer[R,z,inf_p_40]
+R(fld5) &
+q_34=z & inf_ann_39=@M & inf_p_40=null & inf_p_40!=x & x!=null
+|-x!=z & inf_p_40=z &fld5=null.
+print residue.
+
+Please test i13-5d.slk which should work if you fix this problem.
+
+
+------------------------------------------
+
+infer[R2]
+R2(fld5,z) &
+q_34=z & inf_ann_39=@M & inf_p_40=null & inf_p_40!=x & x!=null
+|-x!=z & inf_p_40=z &fld5=null.
 print residue.
 
 infer[R,z]
 R(fld5) &
 q_34=z & inf_ann_39=@M & inf_p_40=null & inf_p_40!=x & x!=null
-|-x!=z & inf_p_40=z 
-&fld5=null
-.
-/*
-# x-3.slk
+|-x!=z & inf_p_40=z &fld5=null.
+print residue.
+
+infer[R,z,inf_p_40]
+R(fld5) &
+q_34=z & inf_ann_39=@M & inf_p_40=null & inf_p_40!=x & x!=null
+|-x!=z & inf_p_40=z &fld5=null.
+print residue.
+
+
+-------------------------------------------------
+
+infer[R,z]
+R(fld5) &
+q_34=z & x!=null
+|-x!=z & fld5=null.
+print residue.
 
 pure does not infer relation/heap_pred properties.
 We need a super_infer_pure that would handle also relation

@@ -1,0 +1,30 @@
+data node2 {
+	int val;
+	node2 left;
+	node2 right; 
+}.
+
+/* view for binary search trees */
+pred bst <sm, lg> == self = null & sm =\inf & lg=-\inf	
+	or self::node2<v,p,q> & p = null & q = null & sm = lg & -\inf < sm < \inf
+	or self::node2<v, p, q> * p::bst<sm1, lg1> * q::bst<sm2, lg2> 
+  & lg1<=v<=sm2 & sm=min(sm1,v) & lg=max(lg2,v) & -\inf < v < \inf
+  inv self=null & sm = \inf & lg = -\inf
+  | self!=null & sm = lg & -\inf < sm < \inf
+  | self!=null & sm <= lg & sm > -\inf & lg < \inf.
+
+checkentail v_node2_48_849::node2<a,flted_33_778,flted_33_777>@M * 
+x::node2<v_709,v_node2_48_849,q_711> & p_710=null & q_711=null & 
+lg=sm & 0<(sm+(\inf)) & sm<(\inf) & x!=null & tmp_28'=null & x!=null & 
+!(v_bool_41_599') & x!=null & !(v_bool_41_599') & a<=v_709 & 
+v_bool_45_597' & a<=v_709 & v_bool_45_597' & lg_745+(\inf)=0
+& sm_744=\inf & lg_745+(\inf)=0 & p_710=null & flted_33_778=null & 
+flted_33_777=null & p_710=null &
+(
+(p_710=null & sm_744=\inf & lg_745+(\inf)=0) 
+| (p_710!=null & lg_745=sm_744 & 0<(sm_744+(\inf)) & sm_744<(\inf)) 
+| (p_710!=null & sm_744<=lg_745 & 0<(sm_744+(\inf)) & lg_745<(\inf))
+) 
+& left_48_789=p_710 & v_node2_56_598'=x & 
+res=v_node2_56_598'
+ |-  res::bst<mi_850,ma_851>. 

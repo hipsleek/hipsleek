@@ -320,7 +320,7 @@ struct
       let _ = print_string ("\n"^h^"\n") in
       (* if not df then *)
       (pr_args args; pr_lazy_res lz);
-      let _ = print_string (s^" EXIT out :"^(pr_o r)^"\n") in
+      let _ = print_string (s^" EXIT:"^(pr_o r)^"\n") in
       flush stdout;
       r)
 
@@ -439,6 +439,7 @@ type debug_option =
 let debug_map = Hashtbl.create 50
 
 let regexp_line = ref []
+let regexp_line_str = ref []
 
 let z_debug_file = ref ""
 (* let z_debug_regexp = ref None *)
@@ -459,7 +460,7 @@ let debug_file ()=
     begin
       (* z_debug_regexp := Some fname; *)
       let re = String.sub fname 1 (n-1) in
-      regexp_line := [Str.regexp_case_fold re];
+      regexp_line_str := [re];
       None
     end
   else
@@ -496,7 +497,8 @@ let read_from_debug_file chn : string list =
       end;
       if n > 1 && xs.[0]=='$' (* String.compare s "#" !=0 *) then begin
         let xs = String.sub xs 1 (n-1) in
-        regexp_line := (Str.regexp_case_fold xs)::!regexp_line;
+        (* regexp_line := (Str.regexp_case_fold xs)::!regexp_line; *)
+        regexp_line_str := xs::!regexp_line_str;
       end;
     done;
   with _ -> ());
@@ -528,11 +530,7 @@ let rec get_words str =
 (*   let pr_id x = x in *)
 (*   ho_1 "get_words" pr_id (pr_list pr_id) get_words str *)
 
-let read_main () =
-  let xs = match debug_file() with
-    | Some c -> read_from_debug_file c
-    | _ -> [] in
-  (* let _ = print_endline ((pr_list (fun x -> x)) xs) in *)
+let add_entry_with_options entry_fn xs =
   List.iter (fun x ->
       try
         let l = String.index x ',' in
@@ -545,25 +543,64 @@ let read_main () =
           | false,true -> DO_Loop
           | true,false -> DO_Trace
           | true,true -> DO_Both
-        (* let _ = print_endline (m) in *)
-        (* let _ = print_endline (split) in *)
+        in
+        let _ = print_endline (m) in
+        let _ = print_endline (split) in
         (* let kind = if String.compare split "Trace" == 0 then DO_Trace else *)
         (*   if String.compare split "Loop" == 0 then DO_Loop else *)
         (*     DO_Normal *)
-        in
-        Hashtbl.add debug_map m kind
+        entry_fn m kind
       with _ ->
-      Hashtbl.add debug_map x DO_Normal
+      entry_fn x DO_Normal
   ) xs
+
+let read_main () =
+  let xs = match debug_file() with
+    | Some c -> read_from_debug_file c
+    | _ -> [] in
+  let _ = add_entry_with_options (fun x k -> Hashtbl.add debug_map x k) xs in
+  let _ = add_entry_with_options (fun x k -> 
+      let re = Str.regexp_case_fold x 
+      in regexp_line := (re,k)::!regexp_line) !regexp_line_str in
+  ()
+  (* (\* let _ = print_endline ((pr_list (fun x -> x)) xs) in *\) *)
+  (* List.iter (fun x -> *)
+  (*     try *)
+  (*       let l = String.index x ',' in *)
+  (*       let m = String.sub x 0 l in *)
+  (*       let split = String.sub x (l+1) ((String.length x) -l -1) in *)
+  (*       let opts = get_words split in *)
+  (*       (\* let (tr_flag,lp_flag) = proc_option opts in *\) *)
+  (*       let kind = match proc_option opts with *)
+  (*         | false,false -> DO_Normal *)
+  (*         | false,true -> DO_Loop *)
+  (*         | true,false -> DO_Trace *)
+  (*         | true,true -> DO_Both *)
+  (*       (\* let _ = print_endline (m) in *\) *)
+  (*       (\* let _ = print_endline (split) in *\) *)
+  (*       (\* let kind = if String.compare split "Trace" == 0 then DO_Trace else *\) *)
+  (*       (\*   if String.compare split "Loop" == 0 then DO_Loop else *\) *)
+  (*       (\*     DO_Normal *\) *)
+  (*       in *)
+  (*       Hashtbl.add debug_map m kind *)
+  (*     with _ -> *)
+  (*     Hashtbl.add debug_map x DO_Normal *)
+  (* ) xs *)
 
 let in_debug x =
   let x = String.trim x in
-  let b = List.exists (fun re -> Str.string_match re x 0) !regexp_line in
-  if b then DO_Normal
-  else
+  let opt_k = 
     try
-      Hashtbl.find debug_map x
-    with _ -> DO_None
+      Some(List.find (fun (re,k) -> Str.string_match re x 0) !regexp_line)
+    with _ -> None in
+  match opt_k with
+    | Some (_,k) -> k
+    | None ->
+          begin
+            try
+              Hashtbl.find debug_map x
+            with _ -> DO_None
+          end
 
 let go_1 t_flag l_flag s = ho_1_opt_aux t_flag [] l_flag (fun _ -> true) None s
 let go_2 t_flag l_flag s = ho_2_opt_aux t_flag [] l_flag (fun _ -> true) None s
