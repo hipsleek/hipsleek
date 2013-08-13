@@ -1315,16 +1315,16 @@ let collect_sel_hpdef hpdefs sel_hps unk_hps m=
   Debug.no_3 "sa3.collect_sel_hpdef" pr1 pr2 pr3 pr1
       (fun _ _ _ -> collect_sel_hpdef_x hpdefs sel_hps unk_hps m) hpdefs sel_hps m
 
-let match_hps_views_x (hp_defs: CF.hp_rel_def list) (vdcls: CA.view_decl list):
+let match_hps_views_x prog (hp_defs: CF.hp_rel_def list) (vdcls: CA.view_decl list):
 (CP.spec_var* CF.h_formula list) list=
   let hp_defs1 = List.filter (fun (def,_,_,_) -> match def with
     | CP.HPRelDefn _ -> true
     | _ -> false
   ) hp_defs in
-  let m = List.map (SAU.match_one_hp_views vdcls) hp_defs1 in
+  let m = List.map (SAU.match_one_hp_views prog vdcls) hp_defs1 in
     (List.filter (fun (_,l) -> l<>[]) m)
 
-let match_hps_views (hp_defs: CF.hp_rel_def list) (vdcls: CA.view_decl list):
+let match_hps_views prog (hp_defs: CF.hp_rel_def list) (vdcls: CA.view_decl list):
 (CP.spec_var* CF.h_formula list) list=
   let pr1 = pr_list_ln Cprinter.string_of_hp_rel_def in
   let pr2 = pr_list_ln  Cprinter.prtt_string_of_h_formula  in
@@ -1333,7 +1333,7 @@ let match_hps_views (hp_defs: CF.hp_rel_def list) (vdcls: CA.view_decl list):
   let pr3 = pr_list_ln pr3a in
   let pr4 = pr_list_ln (Cprinter.string_of_view_decl) in
   Debug.no_2 "match_hps_views" pr1 pr4 pr3
-      (fun _ _ -> match_hps_views_x hp_defs vdcls) hp_defs vdcls
+      (fun _ _ -> match_hps_views_x prog hp_defs vdcls) hp_defs vdcls
 
 
 (***************************************************************
@@ -1965,7 +1965,7 @@ let infer_shapes_conquer iprog prog proc_name ls_is sel_hps=
   let n_cmb_defs1, n_all_hp_defs2 = SAU.reuse_equiv_hpdefs prog n_cmb_defs n_all_hp_defs1 in
   (*reuse with lib*)
   let n_cmb_defs2 = if !Globals.pred_equiv then
-    let lib_matching = match_hps_views n_all_hp_defs1 prog.CA.prog_view_decls in
+    let lib_matching = match_hps_views prog n_all_hp_defs1 prog.CA.prog_view_decls in
     (* let _ = DD.info_pprint ("        sel_hp_rel:" ^ (!CP.print_svl sel_hps)) no_pos in *)
     (* let _ =  DD.info_pprint (" matching: " ^ *)
     (*     (let pr = pr_list_ln (fun (hp,view_names) -> (!CP.print_sv hp) ^ " :== " ^ *)

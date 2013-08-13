@@ -3052,7 +3052,7 @@ let get_shape_from_file view_node keep_vars proc_name =
 (*(*  print_endline ("SPEC" ^ ((pr_pair (fun x -> x) Cprinter.string_of_struc_formula) res));*)*)
 (*  res*)
 
-let get_spec_from_file prog = 
+let get_spec_from_file prog =
   let input_spec = (get_file_name Sys.argv.(1)) ^ ".spec" in
   let input_str = syscall ("cat " ^ input_spec) in
   let res = Parser.parse_specs_list input_str in
@@ -3060,11 +3060,11 @@ let get_spec_from_file prog =
 (*  let id,command = get_cmd_from_file in*)
   let id, command = !(IF.cmd) in
   let cmd = match command with
-    | (true,_,Some view_node) -> 
+    | (true,_,Some view_node) ->
       let proc = List.filter (fun x -> x.I.proc_name=id) prog.I.prog_proc_decls in
-      let keep_vars = 
+      let keep_vars =
         if List.length proc != 1 then report_error no_pos ("Error in get_spec_from_file " ^ input_spec)
-        else 
+        else
           List.map (fun x -> x.I.param_name) (List.hd proc).I.proc_args
       in
       let _ = get_shape_from_file view_node keep_vars id in
@@ -3072,7 +3072,7 @@ let get_spec_from_file prog =
     | (false,Some cmd,_) -> cmd
     | _ -> report_error no_pos "No command"
   in
-  let res = List.map (fun (id1,spec) -> 
+  let res = List.map (fun (id1,spec) ->
     if id1=id then (id1,IF.merge_cmd cmd spec) else (id1,spec)) res in
   res
 

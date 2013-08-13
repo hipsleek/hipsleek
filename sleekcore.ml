@@ -28,7 +28,7 @@ module NF = Nativefront
 module CEQ = Checkeq
 module TI = Typeinfer
 module MCP = Mcpure
-
+module SY_CEQ = Syn_checkeq
 
 let sleek_entail_check_x isvl (cprog: C.prog_decl) proof_traces ante conseq=
   let pr = Cprinter.string_of_struc_formula in
@@ -116,3 +116,46 @@ let sleek_entail_check isvl (cprog: C.prog_decl) proof_traces ante conseq=
 
 let sleek_sat_check isvl cprog f=
   true
+
+(*
+- guiding_svl is used to guide the syntatic checking.
+- guiding_svl is common variables between f1 and f2
+*)
+let check_equiv cprog guiding_svl f1 f2=
+  if not (!Globals.checkeq_syn) then
+    let b1, _, _ = (sleek_entail_check [] cprog [] f1 (CF.struc_formula_of_formula f2 no_pos)) in
+    if b1 then
+      let b2,_,_ = (sleek_entail_check [] cprog [] f2 (CF.struc_formula_of_formula f1 no_pos)) in
+      b2
+    else
+      b1
+  else
+    SY_CEQ.check_relaxeq_formula guiding_svl f1 f2
+
+let rec check_equiv_list_x prog fs1 fs2=
+  let rec look_up_f f fs fs1=
+    match fs with
+      | [] -> (false, fs1)
+      | f1::fss -> if (check_equiv prog [] f f1) then
+            (true,fs1@fss)
+          else look_up_f f fss (fs1@[f1])
+  in
+  if List.length fs1 = List.length fs2 then
+    match fs1 with
+      | [] -> true
+      | f1::fss1 ->
+          begin
+              let r,fss2 = look_up_f f1 fs2 [] in
+              if r then
+                check_equiv_list prog fss1 fss2
+              else false
+          end
+  else false
+
+and check_equiv_list prog fs1 fs2: bool=
+  let pr1 = pr_list_ln Cprinter.prtt_string_of_formula in
+  Debug.no_2 "check_equiv_list" pr1 pr1 string_of_bool
+      (fun _ _ -> check_equiv_list_x prog fs1 fs2) fs1 fs2
+
+
+let _ = Sautility.check_equiv_list := check_equiv_list

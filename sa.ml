@@ -3546,12 +3546,12 @@ let check_eq_hpdef unk_hpargs post_hps hp_defs =
     (****************(*MATCHING w view decls*)*****************)
 (************************************************************)
 (*========= matching=========*)
-let match_hps_views_x (hp_defs: CF.hp_rel_def list) (vdcls: CA.view_decl list):
+let match_hps_views_x prog (hp_defs: CF.hp_rel_def list) (vdcls: CA.view_decl list):
 (CP.spec_var* CF.h_formula list) list=
-  let m = List.map (SAU.match_one_hp_views vdcls) hp_defs in
+  let m = List.map (SAU.match_one_hp_views prog vdcls) hp_defs in
     (List.filter (fun (_,l) -> l<>[]) m)
 
-let match_hps_views (hp_defs: CF.hp_rel_def list) (vdcls: CA.view_decl list):
+let match_hps_views prog (hp_defs: CF.hp_rel_def list) (vdcls: CA.view_decl list):
 (CP.spec_var* CF.h_formula list) list=
   let pr1 = pr_list_ln Cprinter.string_of_hp_rel_def in
   let pr2 = pr_list_ln  Cprinter.prtt_string_of_h_formula  in
@@ -3560,7 +3560,7 @@ let match_hps_views (hp_defs: CF.hp_rel_def list) (vdcls: CA.view_decl list):
   let pr3 = pr_list_ln pr3a in
   let pr4 = pr_list_ln (Cprinter.string_of_view_decl) in
   Debug.no_2 "match_hps_views" pr1 pr4 pr3
-      (fun _ _ -> match_hps_views_x hp_defs vdcls) hp_defs vdcls
+      (fun _ _ -> match_hps_views_x prog hp_defs vdcls) hp_defs vdcls
 
 (*END matching*)
 (************************************************************)
@@ -3849,7 +3849,7 @@ let infer_hps_x prog proc_name (hp_constrs: CF.hprel list) sel_hp_rels sel_post_
       ()
     else ()
   in
-   let m = match_hps_views hp_defs5 prog.CA.prog_view_decls in
+   let m = match_hps_views prog hp_defs5 prog.CA.prog_view_decls in
   let _ = DD.ninfo_pprint ("        sel_hp_rel:" ^ (!CP.print_svl sel_hp_rels)) no_pos in
   (* let _ =  DD.info_pprint (" matching: " ^ *)
   (*   (let pr = pr_list_ln (fun (hp,view_names) -> (!CP.print_sv hp) ^ " === " ^ *)

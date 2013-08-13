@@ -641,6 +641,8 @@ let cond_path_trace = ref true
 
 let pred_syn_modular = ref true
 
+let checkeq_syn = ref false
+
 let sa_dnc = ref false
 
 let pred_reuse = ref false

@@ -6028,7 +6028,18 @@ Entail (2) : Valid.
  inferred hprel: [// Sleek_Entail(2)
 H(x') --> x'::ll@M]
 =====================================================================
+#
+
+synchronize sa2.infer_shapes_proper with sa3.infer_shapes_proper
+ -  !Globals.pred_conj_unify
+ - !Globals.pred_equiv
+ - let _ = DD.binfo_pprint ">>>>>> post-predicates<<<<<<" no_pos in
+  let post_constrs1 = SAU.subst_equiv_hprel unify_equiv_map11 post_constrs in
 =====================================================================
+ # sleekcore.ml
+ - default is checkeq-sem
+ - add --checkeq-syn
+
 =====================================================================
 =====================================================================
 =====================================================================
