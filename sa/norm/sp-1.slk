@@ -35,7 +35,15 @@ or x::node<_,p>*y::node<_,q>*p::zip<y>
 print residue.
 
 /*
-# split-1a.slk
+# sp-1a.slk
+
+Need to trigger zip lemma to yield
+uninterpreted predicate.
+
+Make sure lemma is proven and synthesized
+under classic setting.
+
+====================
 
 Lemma over uninterpreted predicate..
 
