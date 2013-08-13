@@ -1766,7 +1766,7 @@ let infer_collect_rel is_sat estate lhs_h_mix lhs_mix rhs_mix pos =
           let new_lhs,lhs_rel_list = 
             if is_bag_cnt then 
               (* TODO: The better is to avoid generating redundant primed vars *)
-              pairwise_proc (CP.arith_simplify_new (CP.remove_red_primed_vars new_lhs)),rel_lhs
+              pairwise_proc (CP.remove_red_primed_vars new_lhs),rel_lhs
             else
               let new_lhs_drop_rel = TP.simplify_raw (CP.drop_rel_formula new_lhs) in
               let new_lhs_drop_rel = pairwise_proc new_lhs_drop_rel in

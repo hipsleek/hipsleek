@@ -1336,7 +1336,7 @@ and get_alias (e : exp) : spec_var =
 (*and get_alias_bag (e : exp) : spec_var =*)
 (*  match e with*)
 (*    | Var (sv, _) -> sv*)
-(*    | Bag ([],_) -> SpecVar (Named "", "emptybag", Unprimed)*)
+(*    | Bag ([],_) -> SpecVar (Named "", "{}", Unprimed)*)
 (*    | BagUnion ([Var (sv1,_); Bag ([Var(sv2,_)],_)], _) -> *)
 (*      SpecVar (Named "", "unionbag" ^ (name_of_spec_var sv1) ^ (name_of_spec_var sv2), Unprimed)*)
 (*    | BagUnion ([Var (sv1,_); Bag ([Var(sv2,_)],_)], _) -> *)
@@ -1345,32 +1345,42 @@ and get_alias (e : exp) : spec_var =
 
 and can_be_aliased_aux_bag with_emp (e : exp) : bool =
   match e with
-    | Var _ -> true
-    | Subtract (_,Subtract (_,Var _,_),_) -> true
-    | Bag ([],_) -> with_emp
-    | Bag (es,_) -> List.for_all (can_be_aliased_aux_bag with_emp) es
-    | BagUnion (es, _) -> List.for_all (can_be_aliased_aux_bag with_emp) es
-    | _ -> false
-          
-and get_alias_bag (e : exp) : spec_var =
-  match e with
-    | Var (sv, _)
-    | Subtract (_,Subtract (_,Var (sv,_),_),_) -> sv
-    | Bag ([],_) -> SpecVar (Named "", "emptybag", Unprimed)
-    | Bag (es,_) -> 
-          SpecVar (Named "", "bag" ^ (List.fold_left (fun x y -> x ^ name_of_exp y) "" es), Unprimed)
-    | BagUnion (es, _) -> 
-          SpecVar (Named "", "unionbag" ^ (List.fold_left (fun x y -> x ^ name_of_exp y) "" es), Unprimed)
-    | _ -> report_error no_pos "Not a bag or a variable or a bag_union or null"
+  | Var _ -> true
+  | Subtract (_,Subtract (_,Var _,_),_) -> true
+  | Bag ([],_) -> with_emp
+  | Bag (es,_) -> List.for_all (can_be_aliased_aux_bag with_emp) es
+  | BagUnion (es, _) -> List.for_all (can_be_aliased_aux_bag with_emp) es
+  | _ -> false
 
-and name_of_exp (e: exp): string =
+and fold_bag_name (lst:exp list) = match lst with
+  | [] -> ""
+  | hd::tl -> List.fold_left (fun x y -> x ^ "+" ^ name_of_exp y) (name_of_exp hd) tl
+
+and get_alias_bag (e : exp) keep_vars : spec_var =
   match e with
-    | Var (sv, _)
-    | Subtract (_,Subtract (_,Var (sv,_),_),_) -> name_of_spec_var sv
-    | Bag ([],_) -> "emptybag"
-    | Bag (es,_)
-    | BagUnion (es, _) -> (List.fold_left (fun x y -> x ^ name_of_exp y) "" es)
-    | _ -> ""
+  | Var (sv, _)
+  | Subtract (_,Subtract (_,Var (sv,_),_),_) -> sv
+  | Bag ([],_) -> SpecVar (Named "eb", "{}", Unprimed)
+  | Bag (es,_) -> 
+    if subset (afv e) keep_vars 
+    then SpecVar (Named "bi", fold_bag_name es, Unprimed)
+    else SpecVar (Named "b", fold_bag_name es, Unprimed)
+  | BagUnion (es, _) -> 
+    if subset (afv e) keep_vars 
+    then SpecVar (Named "ubi", fold_bag_name es, Unprimed)
+    else SpecVar (Named "ub", fold_bag_name es, Unprimed)
+  | _ -> report_error no_pos "Not a bag or a variable or a bag_union or null"
+
+and name_of_exp (e: exp): string = match e with
+  | Var (sv, _)
+  | Subtract (_,Subtract (_,Var (sv,_),_),_) -> cnv_bag_name (name_of_spec_var sv)
+  | Bag ([],_) -> "{}"
+  | Bag (es,_)
+  | BagUnion (es, _) -> fold_bag_name es
+  | _ -> ""
+
+and cnv_bag_name name = 
+  if 'a' <= name.[0] && name.[0] <= 'z' then "{" ^ name ^ "}" else name
 
 and is_object_var (sv : spec_var) = match sv with
   | SpecVar (Named _, _, _) -> true
@@ -8361,10 +8371,10 @@ let rec remove_redundant_constraints (f : formula) : formula = match f with
 	| _ -> f
 
 and remove_redundant_constraints_b f = match f with  
-	| Eq (e1,e2,l) -> 
-		let r = eqExp_f eq_spec_var e1 e2 in 
-			if r then BConst (true,no_pos) else f
-	| _ -> f
+  | Eq (e1,e2,l) -> 
+    let r = eqExp_f eq_spec_var e1 e2 in 
+    if r then BConst (true,no_pos) else f
+  | _ -> f
 
 (* Reference to function to solve equations in module Redlog. To be initialized in redlog.ml *)
 let solve_equations = ref (fun (eqns : (exp * exp) list) (bv : spec_var list) -> (([],[]) : (((spec_var * spec_var) list) * ((spec_var * string) list))))
@@ -9309,77 +9319,7 @@ let rec remove_cnts remove_vars f = match f with
   | Not (f,o,p) -> mkNot (remove_cnts remove_vars f) o p
   | Forall (v,f,o,p) -> mkForall [v] (remove_cnts remove_vars f) o p
   | Exists (v,f,o,p) -> mkExists [v] (remove_cnts remove_vars f) o p
-  | AndList _ -> report_error no_pos "unexpected AndList"
-
-let rec remove_cnts2 keep_vars f = match f with
-  | BForm _ -> if intersect (fv f) keep_vars = [] then mkTrue no_pos else f
-  | And (f1,f2,p) -> 
-    let res1 = remove_cnts2 keep_vars f1 in
-    let res2 = remove_cnts2 keep_vars f2 in
-    if isConstFalse res1 then res2
-    else if isConstFalse res2 then res1
-    else mkAnd res1 res2 p
-  | Or (f1,f2,o,p) -> 
-    let res1 = remove_cnts2 keep_vars f1 in
-    let res2 = remove_cnts2 keep_vars f2 in
-    if isConstTrue res1 then res2
-    else if isConstTrue res2 then res1
-    else mkOr res1 res2 o p
-  | Not (f,o,p) -> mkNot (remove_cnts2 keep_vars f) o p
-  | Forall (v,f,o,p) -> mkForall [v] (remove_cnts2 keep_vars f) o p
-  | Exists (v,f,o,p) -> mkExists [v] (remove_cnts2 keep_vars f) o p
-  | AndList _ -> report_error no_pos "unexpected AndList"
-
-let rec is_num_dom_exp_0 e = match e with
-  | IConst _ -> true
-  | Add (e1,e2,_) -> is_num_dom_exp_0 e1 || is_num_dom_exp_0 e2
-(*  | Subtract (e1,e2,_) -> is_num_dom_exp e1 || is_num_dom_exp e2*)
-  | _ -> false
-
-let rec is_num_dom_exp e = match e with
-  | IConst (0,_) -> false
-  | IConst _ -> true
-  | Add (e1,e2,_) -> is_num_dom_exp e1 || is_num_dom_exp e2
-  | _ -> false
-
-let get_num_dom_pf pf = match pf with
-  | Lt (e1,e2,_)
-  | Lte (e1,e2,_)
-  | Gt (e1,e2,_)
-  | Gte (e1,e2,_)
-  | Neq (e1,e2,_) -> 
-    if is_num_dom_exp_0 e1 || is_num_dom_exp_0 e2 then 
-      let r = afv e1 @ afv e2 in
-      (r,[],r) 
-    else ([],[],[])
-  | Eq (e1,e2,_) -> 
-    begin
-    match e1,e2 with
-    | Var _, BagUnion _ -> ([], List.filter is_int_typ (afv e1 @ afv e2), [])
-    | _ -> 
-      if is_num_dom_exp e1 || is_num_dom_exp e2 then 
-        let r = afv e1 @ afv e2 in
-        (r,[],r) 
-      else 
-      if is_num_dom_exp_0 e1 || is_num_dom_exp_0 e2 then (afv e1 @ afv e2,[],[]) 
-      else ([],[],[])
-    end
-  | _ -> ([],[],[])
-
-let rec get_num_dom f = match f with
-  | BForm ((pf,_),_) -> get_num_dom_pf pf
-  | And (f1,f2,_) -> 
-    let (r11,r12,r13) = get_num_dom f1 in
-    let (r21,r22,r23) = get_num_dom f2 in
-    (r11@r21,r12@r22,r13@r23)
-  | Or (f1,f2,_,_) ->
-    let (r11,r12,r13) = get_num_dom f1 in
-    let (r21,r22,r23) = get_num_dom f2 in
-    (r11@r21,r12@r22,r13@r23)
-  | Not (f,_,_) -> get_num_dom f
-  | Forall (_,f,_,_) -> get_num_dom f
-  | Exists (_,f,_,_) -> get_num_dom f
-  | AndList _ -> report_error no_pos "unexpected AndList"
+  | AndList _ -> report_error no_pos "to handle AndList"
 
 let order_var v1 v2 vs =
   if List.exists (eq_spec_var_nop v1) vs then

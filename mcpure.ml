@@ -308,15 +308,15 @@ and m_apply_par (sst:(spec_var * spec_var) list) f =
 (*   | Eq (e1, e2, _) -> can_be_aliased_aux true e1 && can_be_aliased_aux true e2 *)
 (*   | _ -> false *)
 
-and b_f_bag_equations_aux with_emp f =
+and b_f_bag_equations_aux with_emp f keep_vars =
   let (pf,_) = f in
   match pf with
     | Eq (e1, e2, _) ->
           let b = can_be_aliased_aux_bag with_emp e1 && can_be_aliased_aux_bag with_emp e2 in
-          if not b then [] else [(get_alias_bag e1, get_alias_bag e2)]
+          if not b then [] else [(get_alias_bag e1 keep_vars, get_alias_bag e2 keep_vars)]
     | _ -> [] 
 
-and b_f_bag_equations f = b_f_bag_equations_aux true f
+and b_f_bag_equations f keep_vars = b_f_bag_equations_aux true f keep_vars
 
 and is_bf_ptr_equations bf =
   let (pf,_) = bf in
@@ -363,18 +363,18 @@ and is_bf_ptr_equations bf =
 (*   let pr3 = pr_list (pr_pair !print_sv !print_sv) in *)
 (*   Debug.no_2 "pure_ptr_equations_aux" pr1 pr2 pr3 pure_ptr_equations_aux_x with_null f  *)
 
-and pure_bag_equations_aux_x with_emp (f:formula) : (spec_var * spec_var) list = 
+and pure_bag_equations_aux_x with_emp (f:formula) keep_vars : (spec_var * spec_var) list = 
   let rec prep_f f = match f with
     | And (f1, f2, pos) -> (prep_f f1) @ (prep_f f2)
-    | BForm (bf,_) -> b_f_bag_equations_aux with_emp bf
+    | BForm (bf,_) -> b_f_bag_equations_aux with_emp bf keep_vars
     | _ -> [] 
   in prep_f f
 
-and pure_bag_equations_aux with_emp (f:formula) : (spec_var * spec_var) list = 
+and pure_bag_equations_aux with_emp (f:formula) keep_vars: (spec_var * spec_var) list = 
   let pr1 = string_of_bool in
   let pr2 = !print_pure_f in
   let pr3 = pr_list (pr_pair !print_sv !print_sv) in
-  Debug.no_2 "pure_bag_equations_aux" pr1 pr2 pr3 pure_bag_equations_aux_x with_emp f 
+  Debug.no_2 "pure_bag_equations_aux" pr1 pr2 pr3 pure_bag_equations_aux_x with_emp f keep_vars
 
 (* use_with_null_const for below *)
 (* assume that f is a satisfiable conjunct *) 
@@ -394,10 +394,10 @@ and ptr_equations_aux_mp with_null (f : memo_pure) : (spec_var * spec_var) list 
       string_of_bool !print_mp_f pr_out
       ptr_equations_aux_mp_x with_null f
 
-and bag_equations_aux_mp with_emp (f : memo_pure) : (spec_var * spec_var) list =  
+and bag_equations_aux_mp with_emp (f : memo_pure) keep_vars: (spec_var * spec_var) list =  
   let helper f = 
-    let r = List.fold_left (fun a c -> (a @ b_f_bag_equations c.memo_formula)) [] f.memo_group_cons in
-    let r = List.fold_left (fun a c -> a @ (pure_bag_equations_aux with_emp c)) r f.memo_group_slice in
+    let r = List.fold_left (fun a c -> (a @ b_f_bag_equations c.memo_formula keep_vars)) [] f.memo_group_cons in
+    let r = List.fold_left (fun a c -> a @ (pure_bag_equations_aux with_emp c keep_vars)) r f.memo_group_slice in
     let eqs = get_equiv_eq f.memo_group_aset in
     r @ eqs in
   List.concat (List.map helper f)
@@ -2265,7 +2265,8 @@ let ptr_equations_without_null f =
    let pr2 = pr_list (pr_pair pr_elem pr_elem) in
    Debug.no_1 "ptr_equations_without_null" pr1 pr2 ptr_equations_without_null f
 
-let ptr_bag_equations_without_null f = (ptr_equations_aux true f) @ (bag_equations_aux true f)
+let ptr_bag_equations_without_null f keep_vars = 
+  (ptr_equations_aux true f) @ (bag_equations_aux true f keep_vars)
 
 let filter_useless_memo_pure sim_f b fv f = match f with
   | MemoF f -> MemoF (filter_useless_memo_pure sim_f b fv f)
