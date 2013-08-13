@@ -5,12 +5,12 @@ data node {
 
 
 pred lseg<n, p, sm, lg> == case {
-  n=0 -> [] self=p & sm<=lg;
+  n=0 -> [] self=p ;
   n=1 -> [] self::node<sm, p> & sm=lg;
  (n<0 | n>1) -> [nn] self::node<sm, r> * r::lseg<nn, p, sm1, lg> 
                & sm<=sm1 & nn=n-1; 
-}	inv n >= 0 & sm<=lg.
-
+}	inv n >= 0 .
+//(n<=1 & sm=lg | n>1 & sm<=lg).
 
 pred ll_tail<n, t, sm, lg> == 
    case {
@@ -21,7 +21,7 @@ inv n>=1 & self!=null & sm<=lg.
 
   /* todo: m=n-1 for case struct */
  
-//lemma "ll_tail2lsegL" self::ll_tail<n, t, sm, lg> & m=n-1-> self::lseg<m, t, sm, lg1> * t::node<lg, null> & lg1<=lg.
+lemma "ll_tail2lsegL" self::ll_tail<n, t, sm, lg> & m=n-1-> self::lseg<m, t, sm, lg1> * t::node<lg, null> & lg1<=lg.
 
 
 //lemma "ll_tail2lsegL" self::ll_tail<n, t, sm, lg> ->  self::lseg<n-1, t, sm, lg1> * t::node<lg, null> & lg1<=lg.
@@ -30,7 +30,8 @@ inv n>=1 & self!=null & sm<=lg.
 
 lemma "ll_tail2lsegR" self::ll_tail<nnn, t, sm, lg>  
    <- self::lseg<nnn-1, t, sm, lg1> * t::node<lg, null> 
-          & (nnn=1 & sm=lg & lg1=lg | nnn!=1 & lg1<=lg).
+          & (nnn=1 & sm=lg | nnn!=1 & lg1<=lg)
+.
 
 /*
 
