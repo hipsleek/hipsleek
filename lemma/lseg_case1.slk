@@ -1,0 +1,98 @@
+//Valid.Fail.Fail.Valid.Fail.Fail.
+data node { int val ; node next }.
+
+pred lseg<n, p> == case {
+     n=0 -> [] self = p & n = 0;
+     n!=0 ->  [] self::node<next = r> * r::lseg<n - 1, p>; 
+     }
+     inv n >= 0.
+
+
+//lemma "V1" self::lseg<n, p> & n = a + b & a,b >=0 ->  (exists r: self::lseg<a, r> * r::lseg<b, p>).
+
+/*
+lemma "F2" self::lseg<n, p> &  n = a + b & a,b >=0 <- self::lseg<a, r> * r::lseg<b, p>.
+
+lemma "F3" self::lseg<n, p> &  n = a + b & a,b >=0 <-> self::lseg<a, r> * r::lseg<b, p>.
+
+lemma "V4" self::lseg<a, r> * r::lseg<b, p> & n = a + b & a,b >=0 -> self::lseg<n, p>.
+
+lemma "F5" self::lseg<a, r> * r::lseg<b, p> & n = a + b & a,b >=0 <- self::lseg<n, p>.
+
+lemma "F6" self::lseg<a, r> * r::lseg<b, p> & n = a + b & a,b >=0 <-> self::lseg<n, p>.
+*/
+
+infer [] emp&n=0 & p=self & n=0 & n=b+a & 0<=a & 0<=b
+ or (exists p_64,flted_6_65,Anon_66,r_67: self::node<Anon_66,r_67>@M * 
+    r_67::lseg<flted_6_65,p_64>@M&n!=0 & n=flted_6_65+1 & p=p_64 & n=b+a & 
+    0<=a & 0<=b)
+ |-      (exists r: r::lseg<b_69,p_70>@M&
+                          a=a_68 & b=b_69 & p=p_70 & r=self & a_68=0).
+
+
+
+infer [] emp&n=0 & p=x & n=0 & n=b+a & 0<=a & 0<=b
+ or (exists p_64,flted_6_65,Anon_66,r_67: x::node<Anon_66,r_67>@M * 
+    r_67::lseg<flted_6_65,p_64>@M&n!=0 & n=flted_6_65+1 & p=p_64 & n=b+a & 
+    0<=a & 0<=b)
+ |-
+         (exists r,Anon_71,r_72,p_78,flted_6_79, a_68, b_69: r::lseg<b_69,p_70>@M * 
+                           x::node<Anon_71,r_72>@M * 
+                           r_72::lseg<flted_6_79,p_78>@M&a=a_68 & b=b_69 & 
+                           p=p_70 & a_68=flted_6_79+1 & p_78=r & a_68!=0  ).
+
+
+
+
+//lemma "V1" self::lseg<n, p> & n = a + b & a,b >=0 ->  (exists r: self::lseg<a, r> * r::lseg<b, p>).
+
+lemma "V1" self::lseg<n, p> & n = a + b & a>0 & n>0 & b >=0 ->  (exists r: self::lseg<a, r> * r::lseg<b, p>).
+
+
+infer [] emp&n=0 & p=x & n=0 & n=b+a & 0<=a & 0<=b
+ or (exists p_64,flted_6_65,Anon_66,r_67: x::node<Anon_66,r_67>@M * 
+    r_67::lseg<flted_6_65,p_64>@M&n!=0 & n=flted_6_65+1 & p=p_64 & n=b+a & 
+    0<=a & 0<=b)
+ |-
+         (exists r,Anon_71,r_72,p_78,flted_6_79: r::lseg<b,p_70>@M * 
+                           x::node<Anon_71,r_72>@M * 
+                           r_72::lseg<flted_6_79,p_78>@M& 
+                           p=p_70 & a=flted_6_79+1 & p_78=r & a!=0 ).
+
+
+infer [] //emp&n=0 & p=x & n=0 & n=b+a & 0<=a & 0<=b
+
+ (exists flted_6_68,Anon_69,r_70: x::node<Anon_69,r_70>@M * 
+    r_70::lseg<flted_6_68,p>@M&n!=0 & n=flted_6_68+1  & n=b+a & 
+    0<a & 0<=b & 0<n)
+|-
+    (exists flted_6_83,Anon_75,r_76,r: 
+                            r::lseg<b,p>@M * 
+                           x::node<Anon_75,r_76>@M * 
+                           r_76::lseg<flted_6_83,r>@M & a=flted_6_83+1 ).
+
+
+
+
+infer [] 
+      (exists p_67,flted_6_68,Anon_69,r_70: x::node<Anon_69,r_70>@M * 
+    r_70::lseg<flted_6_68,p_67>@M&n!=0 & n=flted_6_68+1 & p=p_67 & n=b+a & 
+    0<a  & 0<=b)
+    |- (exists rr,Anon_75, r_76, flted_6_83, a_71,b_72: rr::lseg<b_72,p_73>@M * 
+                           x::node<Anon_75,r_76>@M * 
+                           r_76::lseg<flted_6_83,rr>@M&a=a_71 & b=b_72 & 
+                           p=p_73 & a_71=flted_6_83+1 ).
+
+
+
+//valid
+infer []
+      (exists flted_6_68: n!=0 & n=flted_6_68+1 & n=b+a &  0<=a &  0<=b)
+    |- (exists flted_6_83, a_71,b_72: a=a_71 & b=b_72 & 
+                           a_71=flted_6_83+1 ).
+
+//fail
+infer []
+      (exists flted_6_68: n!=0 & n=flted_6_68+1 & n=b+a &  0<=a &  0<=b)
+    |- (exists flted_6_83, a_71,b_72: a=a_71 & b=b_72 & 
+                           a_71=flted_6_83+1 & flted_6_83>=0).

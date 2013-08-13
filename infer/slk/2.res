@@ -20,39 +20,58 @@ Entail (3) : Valid.
 
 Entail (4) : Valid. 
 
- <1>EXISTS(flted_7_68: b::ll<flted_7_68>@M[Orig]&flted_7_68+1=n&{FLOW,(19,20)=__norm})[]
+ <1>(exists flted_7_67: b::ll<flted_7_67>@M&n=flted_7_67+1&{FLOW,(19,20)=__norm})[]
  inferred pure: [x!=null]
 
 
-Entail (5) : Fail.(may) cause: q_97=null & flted_7_95=0 | q_97!=null & 1<=flted_7_95 |-  q_97=null. LOCS:[7;6;1;33] (may-bug)
+Entail (5) : Valid. 
+
+ <1>(exists flted_7_86: b::ll<flted_7_86>@M&n=flted_7_86+1&{FLOW,(19,20)=__norm})[]
+ inferred pure: [n!=0]
 
 
-Entail (6) : Valid. 
-
- <1>EXISTS(q_129,flted_7_127: q_129::ll<flted_7_127>@M[Orig]&flted_7_127+1=n & n=1&{FLOW,(19,20)=__norm})[]
- inferred pure: [n=1; n!=0]
+!!! dumping for sleek_dump(fail)
+Entail (6) : Fail.
 
 
 Entail (7) : Valid. 
 
- <1>EXISTS(q_162,flted_7_160: q_162::ll<flted_7_160>@M[Orig]&flted_7_160+1=n & 0<n & n=1&{FLOW,(19,20)=__norm})[]
- inferred pure: [n=1]
+ <1>(exists flted_7_139,q_155,flted_7_153: q_155::ll<flted_7_153>@M&flted_7_139=flted_7_153+1 & n=flted_7_139+1 & n=2&{FLOW,(19,20)=__norm})[]
+ inferred pure: [n=2; n!=0; n!=1]
 
 
 Entail (8) : Valid. 
 
+ <1>(exists q_186,flted_7_184: q_186::ll<flted_7_184>@M&n=flted_7_184+1 & 0<n & n=1&{FLOW,(19,20)=__norm})[]
+ inferred pure: [n=1]
+
+
+Entail (9) : Valid. 
+
  <1>hfalse&false&{FLOW,(19,20)=__norm}[]
- inferred pure: [n<=0]
+ inferred pure: [1>n]
 
 
-Entail (9) : Fail.(must) cause: 0<n & (x=null & n=0 | x!=null & 1<=n) |-  x=null. LOCS:[6;1;50] (must-bug)
+!!! dumping for sleek_dump(fail)
+Entail (10) : Fail.
 
 
-Entail (10) : Valid. 
+Entail (11) : Valid. 
 
- <1>emp&a=inf_a_187 & q=inf_q_188 & b=inf_b_190 & c=inf_c_191 & inf_ann_189<=0 & inf_ann_186<=0&{FLOW,(19,20)=__norm}[]
- inferred heap: [inf_q_188::node<inf_b_190,inf_c_191>@inf_ann_189[Orig]; 
-                x::node<inf_a_187,inf_q_188>@inf_ann_186[Orig]]
- inferred pure: [inf_ann_186<=0; inf_ann_189<=0]
+ <1>emp&a=inf_a_209 & inf_q_210=q & b=inf_b_212 & c=inf_c_213 & inf_ann_211=@M & inf_ann_208=@M&{FLOW,(19,20)=__norm}[]
+ inferred heap: [inf_q_210::node<inf_b_212,inf_c_213>@inf_ann_211; 
+                 x::node<inf_a_209,inf_q_210>@inf_ann_208]
+ inferred pure: [inf_ann_208=@M; inf_ann_211=@M]
 
-Stop Omega... 84 invocations 
+Stop Omega... 120 invocations 
+SAT Count   : 100
+SAT % Hit   : 63.%
+IMPLY Count : 72
+IMPLY % Hit : 56.94%
+Time(cache overhead) : 0. (seconds)
+
+!!! log(small):(0.124377,263)
+Total verification time: 0.13 second(s)
+	Time spent in main process: 0.09 second(s)
+	Time spent in child processes: 0.04 second(s)
+

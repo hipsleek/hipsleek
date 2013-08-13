@@ -314,7 +314,10 @@ let common_arguments = [
    "Read from a debug log file");
   ("-debug-regexp", Arg.String (fun s ->
       Debug.z_debug_file:=("$"^s); Debug.z_debug_flag:=true),
-   "Read from a debug log file");
+   "Match logged methods from a regular expression");
+  ("-dre", Arg.String (fun s ->
+      Debug.z_debug_file:=("$"^s); Debug.z_debug_flag:=true),
+   "Shorthand for -debug-regexp");
   ("-v", Arg.Set Debug.debug_on,
    "Verbose");
   ("--pipe", Arg.Unit Tpdispatcher.Netprover.set_use_pipe,
