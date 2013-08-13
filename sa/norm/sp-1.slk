@@ -5,7 +5,7 @@ data node{
 
 pred zip<y> ==
   self=null & y=null
-or self::node<_,p>*y::node<_,q>*p::zip<y>
+or self::node<_,p>*y::node<_,q>*p::zip<q>
 inv true.
 
 HeapPred P1(node a).
@@ -30,7 +30,7 @@ print residue.
 
 infer [P1,P2] 
   x=null & y=null
-or x::node<_,p>*y::node<_,q>*p::zip<y>
+or x::node<_,p>*y::node<_,q>*p::zip<q>
      |- P1(x) * P2(y).
 print residue.
 
