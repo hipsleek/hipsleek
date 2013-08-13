@@ -119,7 +119,9 @@ let add_exist_heap_of_struc (fv_lhs:CP.spec_var list) (e : CF.struc_formula) : C
   let f_none _ _ = None in
   let c_h_formula qvs fv_lhs x =  
     let vs = CF.h_fv x in
-    let vs = Gen.BList.difference_eq CP.eq_spec_var vs (fv_lhs@qvs) in
+    let hrels = List.map (fun (a,_) -> a) (CF.get_HRels x ) in
+    (* let hrels = Gen.BList.difference_eq CP.eq_spec_var hrels qvs in *)
+    let vs = Gen.BList.difference_eq CP.eq_spec_var vs (fv_lhs@qvs@hrels) in
     (x, vs) in
   let f_f fv_lhs e = 
     match e with
