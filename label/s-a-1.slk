@@ -1,0 +1,55 @@
+
+data node{
+	int val;
+	node next;
+}.
+
+
+pred lx<g,s,"S":M> == true & ["":self=g & self!=s; "S": M={}]
+  or self::node<v,nxt> * nxt::lx<g,s,M1> & ["":self!=g & self!=s; "S": M=union(M1,{self})]
+inv self!=s.
+
+checkentail prev'::lx<c_1174,sent,flted_15_1175>@M
+ * nxt_974::lx<g_971,s_972,M1_975>@M&
+AndList( "":a=g_971 & b=s_972 & b=b_976 & a=a_977 & cur=cur_984 & 
+         prev=prev_983 & next_22_982=nxt_974 & cur_984=prev_996 & 
+         cur_995=nxt_974 & cur_995!=sent & !(v_bool_26_912') & 
+         cur_995!=sent & !(v_bool_26_912') & cur_995=null & v_bool_30_913' & 
+         cur_995=null & v_bool_30_913' & a_999=b_976 & a_977=b_998 & 
+         a_977!=prev & cur_984!=null & exists(a_37:a_37!=null) & 
+         b_998!=prev_996
+ ; "":a!=cur_984 & b!=cur_984 & a!=cur & (((a=null & b=sent) | (a=sent & 
+   b=null))) & b_976!=prev_996 & a_977!=prev_996 & a_999!=prev_996 & 
+   b_998!=prev_996 & exists(a_1008:exists(b_1007:b_1007=null & 
+   a_1008!=null)) & c_1174=null & cur'=sent
+ ; "S":M1=union(M1_975,{cur_984}) & M1_997=union(M2,{prev_996}) & 
+   M2_1000={} & flted_15_1175=union(M1_997,M2_1000)) 
+ |-  AndList( "": true
+   & sent=sent ; "":c_1174=null & cur'=sent
+ ; 
+"S":true
+// & flted_15_1175=union(M1,M2)
+) .
+
+print residue.
+/*
+  ], id: 66; caller: []; line: 15; classic: false; kind: [POST,
+Check_Specs]; hec_num: 4; evars: [sent_1176,flted_15_1177,c_1178]; infer_vars: []; c_heap: prev'::lx<c_1174,sent,flted_15_1175>@M
+ checkentail nxt_974::lx<g_971,s_972,M1_975>@M&
+AndList( "":a=g_971 & b=s_972 & b=b_976 & a=a_977 & cur=cur_984 & 
+         prev=prev_983 & next_22_982=nxt_974 & cur_984=prev_996 & 
+         cur_995=nxt_974 & cur_995!=sent & !(v_bool_26_912') & 
+         cur_995!=sent & !(v_bool_26_912') & cur_995=null & v_bool_30_913' & 
+         cur_995=null & v_bool_30_913' & a_999=b_976 & a_977=b_998 & 
+         a_977!=prev & cur_984!=null & exists(a_37:a_37!=null) & 
+         b_998!=prev_996
+ ; "":a!=cur_984 & b!=cur_984 & a!=cur & (((a=null & b=sent) | (a=sent & 
+   b=null))) & b_976!=prev_996 & a_977!=prev_996 & a_999!=prev_996 & 
+   b_998!=prev_996 & exists(a_1008:exists(b_1007:b_1007=null & 
+   a_1008!=null)) & c_1174=null & cur'=sent
+ ; "S":M1=union(M1_975,{cur_984}) & M1_997=union(M2,{prev_996}) & 
+   M2_1000={} & flted_15_1175=union(M1_997,M2_1000)) &
+{FLOW,(22,23)=__norm}[]
+ |-  emp&AndList( "":sent=sent ; "":c_1174=null & cur'=sent
+ ; "S":flted_15_1175=union(M1,M2)) &{FLOW,(22,23)=__norm}[].
+*/

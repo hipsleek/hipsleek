@@ -1,0 +1,18 @@
+//Valid.Valid.Fail
+data node { int val ; node next }.
+
+
+pred lseg<n, p> == case {
+     n=0 -> [] self = p & n = 0;
+     n!=0 ->  [] self::node<next = r> * r::lseg<b,p> & b=n-1; 
+     }
+     inv n >= 0.
+
+//checkentail x::node<1,y> * y::node<1,z> * z::node<2,null> |- x::lseg<3,null> .
+
+//checkentail (exists a,b,r: x::lseg<a, r> * r::lseg<b, p> & n=a+b) |- x::lseg<n, p>.
+
+lemma "V1" self::lseg<n, p> & n = a + b & a,b >=0 -> self::lseg<a, r> * r::lseg<b, p>.
+
+// Valid 
+

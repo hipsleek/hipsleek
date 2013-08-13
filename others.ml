@@ -122,3 +122,69 @@ let wrap_proving_kind (tk) exec_function args =
 (* let post_pos = ref no_pos *)
 (* let set_post_pos p = post_pos := p *)
 
+type tp_type =
+  | OmegaCalc
+  | CvcLite
+  | Cvc3
+  | CO (* CVC3 then Omega combination *)
+  | Isabelle
+  | Mona
+  | MonaH
+  | OM
+  | OI
+  | SetMONA
+  | CM (* CVC3 then MONA *)
+  | Coq
+  | Z3
+  | OCRed
+  | Redlog
+  | Mathematica
+  | RM (* Redlog and Mona *)
+  | PARAHIP (* Redlog, Z3 and Mona *) (*This option is used on ParaHIP website*)
+  | ZM (* Z3 and Mona *)
+  | OZ (* Omega and Z3 *)
+  | AUTO (* Omega, Z3, Mona, Coq *)
+  | DP (*ineq prover for proof slicing experim*)
+  | SPASS
+  | MINISAT
+  | LOG (* Using previous results instead of invoking the actual provers *)
+
+let string_of_prover prover = match prover with
+	| OmegaCalc -> "OMEGA CALCULATOR"
+	| CvcLite -> "CVC Lite"
+	| Cvc3 -> "CVC3"
+	| CO  -> "CO"
+	| Isabelle -> "ISABELLE"
+	| Mona -> "MONA"
+	| MonaH -> "MonaH"
+	| OM -> "OM"
+	| OI -> "OI"
+	| SetMONA -> "SetMONA"
+	| CM  -> "CM"
+	| Coq -> "COQ"
+	| Z3 -> "Z3"
+	| OCRed -> "OC and REDLOG"
+	| Redlog -> "REDLOG (REDUCE LOGIC)"
+	| RM -> "Redlog, Mona"
+        | Mathematica -> "Mathematica"
+	| PARAHIP -> "Redlog, Mona, z3" (*This option is used on ParaHIP website*)
+	| ZM -> "Z3, Mona"
+	| OZ -> "Omega, z3"
+	| AUTO -> "AUTO - omega, z3, mona, coq"
+	| DP -> "Disequality Solver"
+	| SPASS -> "SPASS"
+	| MINISAT -> "MINISAT"
+	| LOG -> "LOG"
+
+let last_tp_used = new Globals.store LOG string_of_prover
+
+let last_proof_string = new Globals.store "no proof" pr_id
+
+let last_proof_result = new Globals.store "no result" pr_id
+
+(* 
+   this is meant to record the last commands in the
+   different category encounterd by sleek/hip; but it
+   should perhaps be integrated with the logging command
+   option to avoid duplication?
+*)

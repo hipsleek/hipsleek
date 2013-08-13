@@ -43,6 +43,9 @@ type command =
   | LemmaDef of I.coercion_decl
   | LetDef of (ident * meta_formula)
   | EntailCheck of (meta_formula * meta_formula * entail_type)
+  | Simplify of (meta_formula)
+  | Slk_Hull of (meta_formula)
+  | Slk_PairWise of (meta_formula)
   | RelAssume of (CF.cond_path_type * meta_formula * meta_formula option * meta_formula)
   | RelDefn of (CF.cond_path_type * meta_formula * meta_formula)
   | ShapeInfer of (ident list * ident list)
@@ -101,6 +104,9 @@ let string_of_command c = match c with
   | LemmaDef  _ -> "LemmaDef"
   | LetDef  _ -> "LetDef"   
   | EntailCheck _ -> "EntailCheck"
+  | Simplify _ -> "Simplify"
+  | Slk_Hull _ -> "Slk_Hull"
+  | Slk_PairWise _ -> "Slk_PairWise"
   | RelAssume _ -> "RelAssume"
   | RelDefn _ -> "RelDefn"
   | ShapeInfer _ -> "ShapeInfer"

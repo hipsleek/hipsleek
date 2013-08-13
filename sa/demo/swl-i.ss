@@ -56,6 +56,89 @@ ensures prev'::ll<sent>  & cur'=sent ;
 /*
 # swl-i.ss
 
+We have two pre-obligations :
+
+!!! PRE-OBLIGATION:
+ HP_903(prev_940,cur_943,sent_938) * cur_943::node<val_36_939,prev_940>@M
+  & prev_941=null & cur_942=cur_943 
+  --> cur_942::node<val_36_900,next_36_901>@M * 
+  HP_902(next_36_901,prev_941,sent_938) * HP_903(prev_941,cur_942,sent_938)
+!!! PRE-OBLIGATION:
+ HP_902(next_36_947,prev_946,sent_948) * HP_903(prev_946,cur_944,sent_948) * 
+  cur_944::node<val_36_945,prev_946>@M&next_36_947!=null 
+  & next_36_947!=sent_948 
+  --> next_36_947::node<val_36_900,next_36_901>@M * 
+  HP_902(next_36_901,cur_944,sent_948) * HP_903(cur_944,next_36_947,sent_948)
+
+which resulted in below. However, for these pre-obligation
+you need to run it under classic always. Have you use wrapper
+method in wrapper.ml to ensure this?
+
+[ HP_903(prev_940,cur_943,sent_938) &  prev_941=null 
+    --> HP_902(prev_940,prev_941,sent_938),
+
+ emp&prev_941=null --> HP_903(prev_941,cur_942,sent_964),
+ 
+ HP_902(next_36_947,prev_946,sent_948)&next_36_947!=null & 
+  next_36_947!=sent_948 --> next_36_947::node<val_36_965,next_36_966>@M 
+  * HP_967(next_36_966,prev_946,sent_948),
+ 
+ HP_967(next_36_966,prev_946,sent_948) 
+  |#| cur_944::node<val_36_945,prev_946>@M 
+     --> HP_902(next_36_966,cur_944,sent_948),
+
+ HP_903(prev_946,cur_944,sent_948) 
+  * cur_944::node<val_36_945,prev_946>@M& next_36_947!=null 
+  &  next_36_947!=sent_948 --> HP_903(cur_944,next_36_947,sent_948)]
+
+We also obtained below but I am not sure what are they?
+What are they?
+
+*************************************************
+*******relational assumptions (pre-assumptions)********
+****************************************************
+[ HP_902(next_36_901,prev,sent)
+   & next_36_901=sent  --> emp,
+ HP_902(next_36_901,prev,sent)
+   &next_36_901!=sent & next_36_901=null --> emp]
+
+Assuming these assumptions are correct, we would still have to
+synthesize their predicate definitions. Do not also forget to
+dump the header for new predicate introduced such as:
+
+ HP_967(next_36_966,prev_946,sent_948) 
+
+One possible next candidate is HP_903:
+
+ HP_903(prev_940,cur_943,sent_938) &  prev_941=null 
+    --> HP_902(prev_940,prev_941,sent_938),
+
+ HP_903(prev_946,cur_944,sent_948) 
+  * cur_944::node<val_36_945,prev_946>@M& next_36_947!=null 
+  &  next_36_947!=sent_948 --> HP_903(cur_944,next_36_947,sent_948)]
+ emp&prev_941=null --> HP_903(prev_941,cur_942,sent_964),
+
+We have two choices
+(i)  HP_903(prev_940,cur_943,sent_938) 
+     ::= HP_902(prev_940,null,sent_938),
+
+(ii)  HP_903(prev_946,cur_944,sent_948) 
+  * cur_944::node<val_36_945,prev_946>@M& next_36_947!=null 
+  &  next_36_947!=sent_948 --> HP_903(cur_944,next_36_947,sent_948)]
+ emp&prev_941=null --> HP_903(prev_941,cur_942,sent_964),
+
+I would suggest that we try (1), which would lead to two pre-obligations:
+
+
+(i)  HP_903(prev_946,cur_944,sent_948) 
+     * cur_944::node<val_36_945,prev_946>@M& next_36_947!=null &  
+      next_36_947!=sent_948 --> HP_902(cur_944,null,sent_948)
+(ii)  emp&prev_941=null --> HP_902(prev_941,null,sent_964)
+
+HP_903(prev_941,cur_942,sent_964),
+
+===========================================================
+
 shape_infer is failing for some reason
 (i) provide an option --sa-dis-infer
     to disable shape_infer

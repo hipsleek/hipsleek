@@ -3,9 +3,11 @@ data node{
 	node next;
 }
 
+/*
 ll<M> == self = null & M = {}
 	or self::node<_,nxt> * nxt::ll<Mnxt> & M = union(Mnxt,{self})
 inv true;
+*/
 
 global node SENTINEL;
 

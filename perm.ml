@@ -481,4 +481,4 @@ let drop_tauto f =
   | Forall (s,f,l,p) -> Forall (s, helper f, l,p) 
   | Exists (v,f,l,p) -> Exists (v, helper f, l,p) in
  let pr =  !print_formula in
- Debug.no_1_loop "drop_tauto" pr pr helper f
+ Debug.no_1 "drop_tauto" pr pr helper f

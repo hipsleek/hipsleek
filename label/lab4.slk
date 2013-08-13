@@ -1,0 +1,11 @@
+
+checkentail n>=0 & ["n":n>0; "s":n=0] 
+   |- true & ["n":n>0] 
+      or true & ["s":n>=0].
+print residue.
+
+/*
+checkentail n>=0 & ["n":n>0; "s":n=0] 
+   |- true & ["n","s":(n>0 | n>=0)] 
+print residue.
+*/

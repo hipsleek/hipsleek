@@ -1,0 +1,77 @@
+data node {
+  node next;
+}.
+
+pred l7<q:node> == 
+  self=null & q=null
+  or self::node<r>*r::node<_> & r=q
+inv true.
+
+// (12) Fail
+checkentail x::l7<q> * x::l7<q> |- false.
+
+pred l3a<> == 
+  self::node<q>*q::node<_>  & self=q
+inv self!=null.
+
+pred l6<q:node> == 
+  q::node<_> & self=null
+  or self::node<r>*r::node<_> & r=q
+inv q!=null.
+
+//(3) valid
+checkentail x::l3a<> |- false.
+
+// (10) Valid
+checkentail x::l6<q> * y::l6<q> |- false.
+
+// (13) Valid
+checkentail x::l7<q> * x::l7<q> & x!=null |- q!=null.
+
+// (14) Valid
+checkentail x::l7<q> * x::l7<q> & x!=null |- false.
+
+// (15) Valid
+checkentail x::l7<q> * y::l7<q> & x!=null & y!=null |- false.
+
+/*
+# baga-3.slk
+
+pred l3a<> == 
+  self::node<q>*q::node<_>  & self=q
+inv self!=null.
+
+  prune baga conditions: ([q])-1,([self])-2
+should be:
+  prune baga conditions: ([q])-1,([self,self])-2
+
+pred l6<q:node> == 
+  q::node<_> & self=null
+  or self::node<r>*r::node<_> & r=q
+inv q!=null.
+
+Got:
+  prune invs:3:
+   ,[{1,2} -> {[q]} [ q!=null]; {1} -> {[q]} [ self=null; q!=null]; 
+   {2} -> {[self]} [ q!=null; self!=null]]
+Should be:
+  prune invs:3:
+   ,[{1,2} -> {[q]} [ q!=null]; {1} -> {[q]} [ self=null; q!=null]; 
+   {2} -> {[self,q]} [ q!=null; self!=null]]
+
+pred l7<q:node> == 
+  self=null & q=null
+  or self::node<r>*r::node<_> & r=q
+inv true.
+
+GOT:
+  prune invs:3:
+   ,[{4,5} -> {[]} []; {4} -> {[]} [ self=null; q=null]; 
+   {5} -> {[self]} [ self!=null; q!=null]]
+should be:
+  prune invs:3:
+   ,[{4,5} -> {[]} []; {4} -> {[]} [ self=null; q=null]; 
+   {5} -> {[self,q]} [ self!=null; q!=null]]
+
+
+*/

@@ -1,0 +1,40 @@
+data node{
+  int val;
+  node next;
+}.
+
+ checkentail 
+x'::node<d_1151,xnext_1194>@M &n=flted_9_1150+1 & mi=min(d_1151,tmi_1153) & mx=max(d_1151,tmx_1154) & 
+0<(d_1151+(\inf)) & d_1151<(\inf) & n!=1 & a=mi & 1<=n & x=x' & a!=d_1151 & 
+!(v_bool_34_1063') & a!=d_1151 & !(v_bool_34_1063') & flted_9_1150=n_1169 & 
+mi_1170=tmi_1153 & mx_1171=tmx_1154 & n_1169=1 & tmi_1153<=(\inf) & 
+0<=flted_9_1150 & xnext_1194=null & n_1169=1 & mi_1170<=(\inf) & 0<=n_1169 & 
+d_1151=d_1198 & p_1199=xnext_1194 & exists(flted_9_1207:flted_9_1207=0) & 
+tmi_1200=\inf & tmx_1201+(\inf)=0 & exists(flted_31_1196:flted_31_1196=0+
+1) & exists(mi1_1197:mi1_1197=min(d_1198,tmi_1200)) & 
+exists(mx_1195:mx_1195=max(d_1198,tmx_1201))
+ |-  (exists mx_1195,flted_31_1196,mi1_1197: 
+emp&n=flted_31_1196+1 
+&  mi<=mi1_1197 
+//& mx=mx_1195 
+& mx_1195=max(d_1198,tmx_1201) & 
+mi1_1197=min(d_1198,tmi_1200) 
+& flted_31_1196=0+1).
+
+
+/*
+id: 38; caller: []; line: 31; classic: false; kind: POST; hec_num: 4; evars: [mx_1195,flted_31_1196,mi1_1197]; infer_vars: []; c_heap: 
+x'::node<d_1151,xnext_1194>@M
+ checkentail emp&n=flted_9_1150+1 & mi=min(d_1151,tmi_1153) & mx=max(d_1151,tmx_1154) & 
+0<(d_1151+(\inf)) & d_1151<(\inf) & n!=1 & a=mi & 1<=n & x=x' & a!=d_1151 & 
+!(v_bool_34_1063') & a!=d_1151 & !(v_bool_34_1063') & flted_9_1150=n_1169 & 
+mi_1170=tmi_1153 & mx_1171=tmx_1154 & n_1169=1 & tmi_1153<=(\inf) & 
+0<=flted_9_1150 & xnext_1194=null & n_1169=1 & mi_1170<=(\inf) & 0<=n_1169 & 
+d_1151=d_1198 & p_1199=xnext_1194 & exists(flted_9_1207:flted_9_1207=0) & 
+tmi_1200=\inf & tmx_1201+(\inf)=0 & exists(flted_31_1196:flted_31_1196=0+
+1) & exists(mi1_1197:mi1_1197=min(d_1198,tmi_1200)) & 
+exists(mx_1195:mx_1195=max(d_1198,tmx_1201))&{FLOW,(24,25)=__norm}[]
+ |-  (exists mx_1195,flted_31_1196,mi1_1197: emp&n=flted_31_1196+1 & 
+mi<=mi1_1197 & mx=mx_1195 & mx_1195=max(d_1198,tmx_1201) & 
+mi1_1197=min(d_1198,tmi_1200) & flted_31_1196=0+1&{FLOW,(24,25)=__norm})[]. 
+*/

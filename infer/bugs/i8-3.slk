@@ -1,0 +1,67 @@
+data node {
+	int val; 
+	node next;	
+}.
+
+pred ll<n> == self = null & n = 0 
+	or self::node<_, q> * q::ll<n-1> 
+  inv n >= 0.
+
+HeapPred H1(node y).
+
+infer [y] m=-1 |- y::node<a,b> & m>=0.
+print residue.
+
+/*
+# i8-3.slk
+
+!!! early contra detect:false
+!!! early failure due to lhs-rhs contra detected
+!!! between ante and conseq
+!!! ante (in ctx): es_formula: emp&m+1=0&{FLOW,(19,20)=__norm}[]
+!!! conseq: y::node<a,b>@M&0<=m&{FLOW,(19,20)=__norm}[]
+!!! Loc : please add suitable must-error message
+
+infer [y] m=1 |- y::node<a,b> & m>=0.
+print residue.
+
+ <1>emp&m=1 & a=inf_a_32 & b=inf_b_33 & inf_ann_31<=0&{FLOW,(19,20)=__norm}[]
+ inferred heap: [y::node<inf_a_32,inf_b_33>@inf_ann_31]
+ inferred pure: [inf_ann_31<=0]
+
+# i8-3.slk 
+
+GOT
+===
+infer [y] m=-1 |- y::node<a,b> & m>=0.
+ <1>hfalse&false&{FLOW,(19,20)=__norm}[]
+ inferred heap: [y::node<inf_a_33,inf_b_34>@inf_ann_32]
+ inferred pure: [b!=inf_b_34; inf_ann_32<=0]
+
+TWO PROBLEMS
+(i) why is b inferred for pure?
+
+This seems to be triggered here due to an incorrect infer_lhs_contra
+
+!!!:0: 0: >>>>>> infer_lhs_contra <<<<<<
+!!!:0: 0: trigger cond   : :ante contradict with conseq
+!!!:0: 0: LHS pure       : : m+1=0 & a=inf_a_33 & b=inf_b_34 & inf_ann_32<=0 & y!=null
+!!!:0: 0: ovrlap inf vars: :[inf_a_33,inf_b_34,inf_ann_32,y]
+!!!:0: 0: pre infer   : : (b!=inf_b_34 | inf_ann_32>0 | y=null)
+!!!:0: 0: new pre infer   : : b!=inf_b_34
+!!!:0: 0: pre thus   : : y!=null & inf_ann_32<=0 & inf_ann_32<=0
+
+(ii) why did we not fail earlier as there was already a
+    contradiction that could not be resolved by lhs_contra.
+
+// (28)
+//infer [y] m=-1 |- y!=null & m>=0.
+//infer [y] m=-1 |- y::node<a,b> * b::ll<m> & m>=0.
+//infer [m] m=-1 |- y::node<_,_> & m>=0.
+print residue.
+
+*/
+
+
+
+

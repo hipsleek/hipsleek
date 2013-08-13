@@ -1,0 +1,22 @@
+/*
+Check_Specs]; hec_num: 4; evars: [sent_1691,flted_31_1692,M3_1693]; infer_vars: []; c_heap: 
+prev'::tx<flted_39_1690,sent,M3_1689>@M
+*/
+data node {
+ int mark;
+ node left;
+ node right;
+}.
+
+pred tx<g,s,"s":M> == true&["":self = g & s!=null & (g=null | g=s) ; "s": M={}]
+   or self::node<v,l,r> * l::tx<g,s,M1> * r::tx<null,s,M2> & ["": self != g & self != s ;"s": M=union({self},M1,M2)]
+   or self::node<v,l,r> * l::tx<null,s,M1> * r::tx<g,s,M2> & ["": self != g & self != s ;"s": M=union({self},M1,M2)]
+inv true&["": s!=null
+ & (g=null & self!=s | g=s & self!=null)
+  ; "s": (s notin M) &
+    // why below gives syntax error 
+    (null notin M) & 
+    (self=g & M={} | self!=g & M!={} & self in M)
+]
+.
+

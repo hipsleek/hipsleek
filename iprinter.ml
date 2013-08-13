@@ -5,10 +5,79 @@ open Iast
 open Globals
 open Lexing
 open Gen.Basic
-open Label_only
+(* open Label_only *)
 
 module F = Iformula
 module P = Ipure
+(* module LO=Label_only.Lab_List *)
+module LO=Label_only.LOne
+module LO2=Label_only.Lab2_List
+
+(* function to enclose a string s into parenthesis *)
+let parenthesis s = "(" ^ s ^ ")"
+;;
+
+(* function to concatenate the elements of a list of strings and puts c betwwen then (for field access)*)
+let rec concatenate_string_list l c = match l with 
+ | [] -> ""
+ | h::[] -> h 
+ | h::t -> h ^ c ^ (concatenate_string_list t c)
+;;
+
+(* pretty printing for unary operators *)
+let string_of_unary_op = function 
+  | OpUMinus       -> "-"
+  | OpPreInc       -> "++"
+  | OpPreDec       -> "--"
+  | OpPostInc      -> "++"
+  | OpPostDec      -> "--"
+  | OpNot          -> "!"
+  (*For pointers: *v and &v *)
+  | OpVal -> "*"
+  | OpAddr -> "&"
+;;    
+
+(* pretty priting for binary operators *)
+let string_of_binary_op = function 
+  | OpPlus         -> " + "
+  | OpMinus        -> " - "
+  | OpMult         -> " * "
+  | OpDiv          -> " / "
+  | OpMod          -> " % "
+  | OpEq           -> " == "
+  | OpNeq          -> " != "                                 
+  | OpLt           -> " < "
+  | OpLte          -> " <= "
+  | OpGt           -> " > "
+  | OpGte          -> " >= "
+  | OpLogicalAnd   -> " && "                                 
+  | OpLogicalOr    -> " || "
+  | OpIsNull       -> " == "
+  | OpIsNotNull    -> " != "
+;;
+
+(* pretty printing for assign operators *)
+let string_of_assign_op = function 
+  | OpAssign      -> " = "
+  | OpPlusAssign  -> " += "
+  | OpMinusAssign -> " -= "
+  | OpMultAssign  -> " *= "
+  | OpDivAssign   -> " /= "
+  | OpModAssign   -> " %= "
+;;
+
+let string_of_primed = function 
+	| Unprimed -> ""
+	| Primed -> "'";;
+
+(* function used to decide if parentrhesis are needed or not *)
+let need_parenthesis = function 
+    | P.Null _ | P.Var _ | P.IConst _ | P.Max _ | P.Min _  -> false
+    | _                                                    -> true
+;; 
+
+(* let string_of_label = function  *)
+
 
 (* function to enclose a string s into parenthesis *)
 let parenthesis s = "(" ^ s ^ ")"
@@ -79,8 +148,8 @@ let string_of_label = function
 ;;
 
 let string_of_formula_label (i,s) s2:string = ("("^(string_of_int i)^", "^s^"):"^s2)
-let string_of_spec_label = Lab_List.string_of
-let string_of_spec_label_def = Lab2_List.string_of
+let string_of_spec_label = LO.string_of
+let string_of_spec_label_def = LO2.string_of
 
 let string_of_formula_label_opt h s2:string = match h with | None-> s2 | Some s -> string_of_formula_label s s2
 let string_of_control_path_id (i,s) s2:string = string_of_formula_label (i,s) s2
@@ -319,18 +388,18 @@ let rec string_of_h_formula = function
              F.h_formula_starminus_h2 = f2;
              F.h_formula_starminus_pos = l} ) ->
       if is_bool_f f1 then 
-        if is_bool_f f2 then (string_of_h_formula f1) ^ " * " ^ (string_of_h_formula f2)
-        else (string_of_h_formula f1) ^ " *- (" ^ (string_of_h_formula f2) ^ ")"
+        if is_bool_f f2 then (string_of_h_formula f2) ^ " -* " ^ (string_of_h_formula f1)
+        else (string_of_h_formula f2) ^ " -* (" ^ (string_of_h_formula f1) ^ ")"
       else
-        "(" ^ (string_of_h_formula f1) ^ ") *- (" ^ (string_of_h_formula f2) ^ ")"        
+        "(" ^ (string_of_h_formula f2) ^ ") -* (" ^ (string_of_h_formula f1) ^ ")"        
   | F.Conj ({F.h_formula_conj_h1 = f1;
              F.h_formula_conj_h2 = f2;
              F.h_formula_conj_pos = l} ) ->
       if is_bool_f f1 then 
-        if is_bool_f f2 then (string_of_h_formula f1) ^ " & " ^ (string_of_h_formula f2)
-        else (string_of_h_formula f1) ^ " & (" ^ (string_of_h_formula f2) ^ ")"
+        if is_bool_f f2 then (string_of_h_formula f1) ^ " U* " ^ (string_of_h_formula f2)
+        else (string_of_h_formula f1) ^ " U* (" ^ (string_of_h_formula f2) ^ ")"
       else
-        "(" ^ (string_of_h_formula f1) ^ ") & (" ^ (string_of_h_formula f2) ^ ")"
+        "(" ^ (string_of_h_formula f1) ^ ") U* (" ^ (string_of_h_formula f2) ^ ")"
   | F.ConjStar ({F.h_formula_conjstar_h1 = f1;
              F.h_formula_conjstar_h2 = f2;
              F.h_formula_conjstar_pos = l} ) ->
@@ -343,10 +412,10 @@ let rec string_of_h_formula = function
              F.h_formula_conjconj_h2 = f2;
              F.h_formula_conjconj_pos = l} ) ->
       if is_bool_f f1 then 
-        if is_bool_f f2 then (string_of_h_formula f1) ^ " && " ^ (string_of_h_formula f2)
-        else (string_of_h_formula f1) ^ " && (" ^ (string_of_h_formula f2) ^ ")"
+        if is_bool_f f2 then (string_of_h_formula f1) ^ " & " ^ (string_of_h_formula f2)
+        else (string_of_h_formula f1) ^ " & (" ^ (string_of_h_formula f2) ^ ")"
       else
-        "(" ^ (string_of_h_formula f1) ^ ") && (" ^ (string_of_h_formula f2) ^ ")"                
+        "(" ^ (string_of_h_formula f1) ^ ") & (" ^ (string_of_h_formula f2) ^ ")"                
   | F.Phase ({F.h_formula_phase_rd = f1;
               F.h_formula_phase_rw = f2;
               F.h_formula_phase_pos = l} ) ->
@@ -932,5 +1001,6 @@ Iast.print_view_decl := string_of_view_decl;
 Iast.print_data_decl := string_of_data_decl;
 Iast.print_exp := string_of_exp;
 Ipure.print_formula :=string_of_pure_formula;
+Ipure.print_formula_exp := string_of_formula_exp;
 Ipure.print_id := string_of_id;
 

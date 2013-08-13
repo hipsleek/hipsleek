@@ -1,0 +1,12 @@
+checkentail true &
+ ["": x=5;
+  "n": y>x]
+ |- true & 
+     ["n":y>5].
+// "" or [] should be similar to common ante
+
+/*
+checkentail x=5 & y>x
+ |- true & 
+     ["n":y>5].
+*/

@@ -1,0 +1,46 @@
+========lab2.slk --dump-proof==========
+Starting Omega...oc
+
+Entail 1: Valid. 
+
+ <1>emp&0<=n & 0<n&{FLOW,(19,20)=__norm}[]
+
+
+Entail 2: Valid. 
+
+ <1>emp&S={x}&{FLOW,(19,20)=__norm}[]
+
+
+!!! src_files:[../lab2.slk]
+!!! Number of log entries 5
+!!! Logging logs/no_eps_proof_log____lab2_slk.txt
+ 
+ id: 1<0; prover: OMEGA CALCULATOR; loc: _0:0_0:0; kind: Sleek_Entail(1)
+ Sat:  0<=n & 0<n
+ res: SAT
+ -------------------- 
+ id: 2<1; prover: OMEGA CALCULATOR; loc: _0:0_0:0; kind: Sleek_Entail(1)
+ Imply: ante: 0<=n & 0<n
+	     conseq:  0<=(1+n)
+ res: true
+ -------------------- 
+ id: 3<1; prover: OMEGA CALCULATOR; loc: _0:0_0:0; kind: Sleek_Entail(1)
+ Imply: ante: 0<=n & 0<n
+	     conseq:  0<=n
+ res: true
+ -------------------- 
+ id: 4<1; prover: MONA; loc: _0:0_0:0; kind: Sleek_Entail(2)
+ Sat:  S={x}
+ res: SAT
+ -------------------- 
+ id: 5<2; prover: MONA; loc: _0:0_0:0; kind: Sleek_Entail(2)
+ Imply: ante: S={x}
+	     conseq:  S!=({})
+ res: true
+ --------------------
+!!! Number of MONA calls:2
+!!! Number of Omega calls:3
+
+!!! Number of sleek log entries 0
+!!! Logging logs/sleek_log____lab2_slk.txt
+====================

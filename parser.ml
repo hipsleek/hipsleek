@@ -7,7 +7,7 @@ open Iast
 open Token
 open Sleekcommons
 open Gen.Basic
-open Label_only
+(* open Label_only *)
 
 open Perm
 
@@ -16,6 +16,11 @@ module P = Ipure
 module E1 = Error
 module I = Iast
 module Ts = Tree_shares.Ts
+module LO = Label_only.LOne
+(* module LO = Label_only.Lab_List *)
+module Lbl = Label_only
+
+module LO2 = Label_only.Lab2_List
 
 module SHGram = Camlp4.Struct.Grammar.Static.Make(Lexer.Make(Token))
 
@@ -46,7 +51,7 @@ type decl =
   | Logical_var of exp_var_decl (* Globally logical vars *)
   | Proc of proc_decl
   | Coercion of coercion_decl
-		| Include of string
+  | Include of string
 		
 
 type member = 
@@ -200,16 +205,16 @@ let rec split_members mbrs = match mbrs with
 let rec remove_spec_qualifier (_, pre, post) = (pre, post)
   
 
-let label_struc_list (lgrp:(spec_label_def*F.struc_formula) list list) : (spec_label_def*F.struc_formula) list = 
+let label_struc_list (lgrp:(Lbl.spec_label_def*F.struc_formula) list list) : (Lbl.spec_label_def*F.struc_formula) list = 
   List.concat lgrp
 
-let label_struc_groups (lgrp:(spec_label_def*F.struc_formula) list list) : F.struc_formula =
+let label_struc_groups (lgrp:(Lbl.spec_label_def*F.struc_formula) list list) : F.struc_formula =
   F.EList (label_struc_list lgrp)
 
-let label_struc_list_auto (lgrp:(spec_label_def*F.struc_formula) list list)  = 
+let label_struc_list_auto (lgrp:(Lbl.spec_label_def*F.struc_formula) list list)  = 
   let n = List.length lgrp in
   let fl = List.concat lgrp in
-  let all_unlab = List.for_all (fun (l,_) -> Lab2_List.is_unlabelled l) fl in
+  let all_unlab = List.for_all (fun (l,_) -> LO2.is_unlabelled l) fl in
   if n<=1 || not(all_unlab) then fl 
   else 
     (* automatically insert numeric label if spec is completely unlabelled *)
@@ -219,7 +224,7 @@ let label_struc_list_auto (lgrp:(spec_label_def*F.struc_formula) list list)  =
     in lgr
 
 (* auto insertion of numeric if unlabelled *)
-let label_struc_groups_auto (lgrp:(spec_label_def*F.struc_formula) list list) : F.struc_formula =
+let label_struc_groups_auto (lgrp:(Lbl.spec_label_def*F.struc_formula) list list) : F.struc_formula =
   F.EList (label_struc_list_auto lgrp)
 
 
@@ -232,7 +237,7 @@ let error_on_dups f l p = if (Gen.BList.check_dups_eq f l) then report_error p (
 let label_formula f ofl = (match f with 
           | P.BForm (b,_) -> P.BForm (b,ofl)
           | P.And _ -> f
-		  | P.AndList b -> f
+	  | P.AndList b -> f
           | P.Or  (b1,b2,_,l)  -> P.Or(b1,b2,ofl,l)
           | P.Not (b1,_,l)     -> P.Not(b1,ofl,l)
           | P.Forall (q,b1,_,l)-> P.Forall(q,b1,ofl,l)
@@ -392,6 +397,7 @@ let peek_try =
          | [GT,_;INV,_] -> raise Stream.Failure
          | [GT,_;AND,_] -> raise Stream.Failure
          | [GT,_;ANDSTAR,_] -> raise Stream.Failure
+         | [GT,_;UNIONSTAR,_] -> raise Stream.Failure
          | [GT,_;ANDAND,_] -> raise Stream.Failure
          | [GT,_;OR,_] -> raise Stream.Failure
          | [GT,_;ORWORD,_] -> raise Stream.Failure
@@ -627,15 +633,15 @@ let peek_heap_andstar =
              |[ANDSTAR,_;RES t,_; COLONCOLON,_; _,_] -> ()
              | _ -> raise Stream.Failure)
              
-let peek_heap_andand = 
-   SHGram.Entry.of_parser "peek_heap_andand"
+let peek_heap_unionstar = 
+   SHGram.Entry.of_parser "peek_heap_unionstar"
        (fun strm ->
            match Stream.npeek 4 strm with
-             |[ANDAND,_;OPAREN ,_; IDENTIFIER id,_; COLONCOLON,_] -> ()
-             |[ANDAND,_;IDENTIFIER id,_; COLONCOLON,_; _,_] -> ()
-             |[ANDAND,_;SELFT t,_; COLONCOLON,_; _,_] -> ()
-             |[ANDAND,_;THIS t,_; COLONCOLON,_; _,_] -> ()
-             |[ANDAND,_;RES t,_; COLONCOLON,_; _,_] -> ()
+             |[UNIONSTAR,_;OPAREN ,_; IDENTIFIER id,_; COLONCOLON,_] -> ()
+             |[UNIONSTAR,_;IDENTIFIER id,_; COLONCOLON,_; _,_] -> ()
+             |[UNIONSTAR,_;SELFT t,_; COLONCOLON,_; _,_] -> ()
+             |[UNIONSTAR,_;THIS t,_; COLONCOLON,_; _,_] -> ()
+             |[UNIONSTAR,_;RES t,_; COLONCOLON,_; _,_] -> ()
              | _ -> raise Stream.Failure)   
              
 let peek_heap_starminus = 
@@ -798,6 +804,9 @@ non_empty_command:
       | t= decl_unknown_cmd        -> ShapeDeclUnknown t
       | t=shape_sconseq_cmd     -> ShapeSConseq t
       | t=shape_sante_cmd     -> ShapeSAnte t
+      | t=simplify_cmd        -> Simplify t
+      | t=hull_cmd        -> Slk_Hull t
+      | t=pairwise_cmd        -> Slk_PairWise t
       | t= infer_cmd           -> InferCmd t  
       | t=captureresidue_cmd  -> CaptureResidue t
       | t=print_cmd           -> PrintCmd t
@@ -936,24 +945,36 @@ opt_inv: [[t=OPT inv -> un_option t (P.mkTrue no_pos)]];
 opt_mem_perm_set: [[t=OPT mem_perm_set -> t ]];
 
 mem_perm_set: [[ `MEM; e = cexp; `LEFTARROW; `OPAREN;  mpl = LIST0 mem_perm_layout SEP `SEMICOLON; `CPAREN 
-				->  {	F.mem_formula_exp = e;
+				-> let fal,g = List.split mpl in
+				   let fv,al = List.split fal in   
+					{	F.mem_formula_exp = e;
 					F.mem_formula_exact = false;
-					F.mem_formula_field_layout = (fst (List.split mpl));
-					F.mem_formula_guards = (snd (List.split mpl))}				
+					F.mem_formula_field_values = fv;
+					F.mem_formula_field_layout = al;
+					F.mem_formula_guards = g}				
 		| `MEME; e = cexp; `LEFTARROW; `OPAREN; mpl = LIST0 mem_perm_layout SEP `SEMICOLON; `CPAREN 
-				->  {	F.mem_formula_exp = e;
+				-> let fal,g = List.split mpl in
+				   let fv,al = List.split fal in   
+					{	F.mem_formula_exp = e;
 					F.mem_formula_exact = true;
-					F.mem_formula_field_layout = (fst (List.split mpl));
-					F.mem_formula_guards = (snd (List.split mpl))} ]];
+					F.mem_formula_field_values = fv;
+					F.mem_formula_field_layout = al;
+					F.mem_formula_guards = g} ]];
 					
 mem_perm_layout:[[ 
 `IDENTIFIER dn; `LT; annl = ann_list; `GT; guard = OPT pure_guard -> 
-let perml = get_heap_ann_list annl in (dn,perml),(un_option guard (P.mkTrue no_pos)) ]];
+let fv,annl = List.split annl in 
+let perml = get_heap_ann_list annl in ((dn,fv),(dn,perml)),(un_option guard (P.mkTrue no_pos)) ]];
 
 pure_guard: [[ `AND; e = pure_constr -> e
 ]];
 
-ann_list:[[b = LIST0 ann_heap SEP `COMMA -> b]];
+ann_list:[[b = LIST0 cexp_ann SEP `COMMA -> b]];
+
+cexp_ann: [[ `INT_LITER (i,_) ; ah = ann_heap ->  (P.IConst(i,no_pos),ah)
+           | e = OPT cid ; ah = ann_heap -> 
+           let evar = (un_option e ("Anon_"^(fresh_trailer()),Unprimed) ) in (P.Var(evar,no_pos),ah)   
+          ]];
 
 opt_derv: [[t=OPT derv -> un_option t false ]];
 
@@ -992,6 +1013,12 @@ transpec:
   ]];
 
 
+ann_label: 
+  [[
+     `SAT  -> Lbl.LA_Sat
+   | `IMM  -> Lbl.LA_Imply
+   ]];
+
 ann_heap: 
   [[
     `MUT -> Some (F.ConstAnn(Mutable))
@@ -1006,18 +1033,32 @@ ann_heap_list: [[ b=LIST0 ann_heap -> b ]];
 
 opt_branches:[[t=OPT branches -> un_option t (P.mkTrue no_pos)]];
 
-branches : [[`AND; `OSQUARE; b= LIST1 one_branch SEP `SEMICOLON ; `CSQUARE -> P.mkAndList b ]];
+branches : [[`AND; `OSQUARE; b= LIST1 one_branch SEP `SEMICOLON ; `CSQUARE -> P.mkAndList_opt b ]];
 
-one_branch : [[ `STRING (_,id); `COLON; pc=pure_constr -> (Lab_List.singleton id,pc)]];
+one_branch_single : [[ `STRING (_,id); `COLON; pc=pure_constr -> (LO.singleton id,pc)]];
 
-opt_branch:[[t=OPT branch -> un_option t empty_spec_label]];
+one_string: [[`STRING (_,id)-> id]];
 
-branch: [[ `STRING (_,id);`COLON -> Lab_List.singleton id ]];
+one_string_w_ann: [[  id = one_string; ann_lbl = OPT ann_label -> (id, un_option ann_lbl (Lbl.LA_Both) )]];
+
+string_w_ann_list: [[`COMMA; lbl_lst = LIST0 one_string_w_ann SEP `COMMA -> lbl_lst]];
+
+opt_string_w_ann_list: [[lbl_lst = OPT string_w_ann_list -> un_option lbl_lst [] ]];
+
+(* one_branch : [[ lbl = LIST1 one_string SEP `COMMA ; `COLON; pc=pure_constr -> (LO.norm lbl,pc)]]; *)
+one_branch : [[ lbl = one_string; lblA = opt_string_w_ann_list ; `COLON; pc=pure_constr -> (LO.convert lbl lblA,pc)]];
+
+opt_branch:[[t=OPT branch -> un_option t LO.unlabelled]];
+
+branch: [[ `STRING (_,id);`COLON -> 
+    if !Globals.remove_label_flag then  LO.unlabelled
+    else LO.singleton id ]];
 
 view_header:
   [[ `IDENTIFIER vn; `LT; l= opt_ann_cid_list; `GT ->
       let cids, anns = List.split l in
       let cids_t, br_labels = List.split cids in
+	  let has_labels = List.exists (fun c-> not (LO.is_unlabelled c)) br_labels in
       (* DD.info_hprint (add_str "parser-view_header(cids_t)" (pr_list (pr_pair string_of_typ pr_id))) cids_t no_pos; *)
       let _, cids = List.split cids_t in
       (* if List.exists (fun x -> match snd x with | Primed -> true | Unprimed -> false) cids then *)
@@ -1030,7 +1071,7 @@ view_header:
           view_data_name = "";
           view_vars = (* List.map fst *) cids;
           (* view_frac_var = empty_iperm; *)
-          view_labels = br_labels;
+          view_labels = br_labels,has_labels;
           view_modes = modes;
           view_typed_vars = cids_t;
           view_pt_by_self  = [];
@@ -1049,6 +1090,7 @@ view_header_ext:
   [[ `IDENTIFIER vn;`OSQUARE;sl= id_list;`CSQUARE; `LT; l= opt_ann_cid_list; `GT ->
       let cids, anns = List.split l in
       let cids_t, br_labels = List.split cids in
+	  let has_labels = List.exists (fun c-> not (LO.is_unlabelled c)) br_labels in
       (* DD.info_hprint (add_str "parser-view_header(cids_t)" (pr_list (pr_pair string_of_typ pr_id))) cids_t no_pos; *)
       let _, cids = List.split cids_t in
       (* if List.exists (fun x -> match snd x with | Primed -> true | Unprimed -> false) cids then *)
@@ -1061,7 +1103,7 @@ view_header_ext:
           view_data_name = "";
           view_vars = (* List.map fst *) cids;
           (* view_frac_var = empty_iperm; *)
-          view_labels = br_labels;
+          view_labels = br_labels,has_labels;
           view_modes = modes;
           view_typed_vars = cids_t;
           view_pt_by_self  = [];
@@ -1143,7 +1185,7 @@ cid_typ:
         (ut,id)
    ]];
 
-ann_cid:[[ ob=opt_branch; c = cid_typ; al=opt_ann_list ->((c, ob), al)]];
+ann_cid:[[ ob= opt_branch; c = cid_typ; al=opt_ann_list ->((c, ob), al)]];
 
 
 opt_ann_list: [[t=LIST0 ann -> t]];
@@ -1174,8 +1216,8 @@ extended_l:
    | h=extended_constr_grp -> label_struc_groups [h]]];
    
 extended_constr_grp:
-   [[ c=extended_constr -> [(empty_spec_label_def,c)]
-    | `IDENTIFIER id; `COLON; `OSQUARE; t = LIST0 extended_constr SEP `ORWORD; `CSQUARE -> List.map (fun c-> (Lab2_List.singleton id,c)) t]];
+   [[ c=extended_constr -> [(Lbl.empty_spec_label_def,c)]
+    | `IDENTIFIER id; `COLON; `OSQUARE; t = LIST0 extended_constr SEP `ORWORD; `CSQUARE -> List.map (fun c-> (LO2.singleton id,c)) t]];
 
 extended_constr:
 	[[ `CASE; `OBRACE; il= impl_list; `CBRACE -> 
@@ -1187,7 +1229,7 @@ extended_constr:
 impl_list:[[t=LIST1 impl -> t]];
 
 impl: [[ pc=pure_constr; `LEFTARROW; ec=extended_l; `SEMICOLON ->
-			if(List.length (Ipure.look_for_anonymous_pure_formula pc))>0 then report_error (get_pos_camlp4 _loc 1) ("anonimous variables in case guard are disalowed")
+			if(List.length (Ipure.look_for_anonymous_pure_formula pc))>0 then report_error (get_pos_camlp4 _loc 1) ("anonymous variables in case guard are disalowed")
 		  else (pc,ec)]];
 
 (* seem _loc 2 is empty *)
@@ -1243,7 +1285,9 @@ opt_formula_label: [[t=OPT formula_label -> un_option t None]];
 
 opt_label: [[t= OPT label->un_option t ""]]; 
 
-label : [[  `STRING (_,id); `COLON -> id]];
+label : [[  `STRING (_,id);  `COLON -> id ]];
+
+label_w_ann : [[  `STRING (_,id); ann_lbl = OPT ann_label; `COLON -> (id, un_option ann_lbl (Lbl.LA_Both)) ]];
 
 (* opt_pure_label :[[t=Opure_label -> un_option t (fresh_branch_point_id "")]]; *)
 
@@ -1273,14 +1317,14 @@ heap_rd:
 
 heap_rw:
   [[ hrd=heap_wr; `STAR; `OPAREN; hc=heap_constr; `CPAREN -> F.mkStar hrd hc (get_pos_camlp4 _loc 2)
-   | hrd=heap_wr; peek_heap_starminus; `STARMINUS; `OPAREN; hc=heap_constr; `CPAREN -> F.mkStarMinus hrd hc (get_pos_camlp4 _loc 2)
-   | shc=heap_wr; peek_heap_andand; `ANDAND; `OPAREN; wr = heap_constr; `CPAREN -> F.mkConjConj shc wr (get_pos_camlp4 _loc 2)
+   | hrd=heap_wr; peek_heap_starminus; `STARMINUS; `OPAREN; hc=heap_constr; `CPAREN -> F.mkStarMinus hc hrd (get_pos_camlp4 _loc 2)
+   | shc=heap_wr; peek_heap_and; `AND; `OPAREN; wr = heap_constr; `CPAREN -> F.mkConjConj shc wr (get_pos_camlp4 _loc 2)
    | shc=heap_wr; peek_heap_andstar; `ANDSTAR; `OPAREN; wr = heap_constr; `CPAREN -> F.mkConjStar shc wr (get_pos_camlp4 _loc 2)
-   | shc=heap_wr; peek_heap_and; `AND; `OPAREN; wr = heap_constr; `CPAREN -> F.mkConj shc wr (get_pos_camlp4 _loc 2)
-   | shc=heap_wr; peek_heap_starminus; `STARMINUS; wr = simple_heap_constr -> F.mkStarMinus shc wr (get_pos_camlp4 _loc 2) 
-   | shc=heap_wr; peek_heap_andand; `ANDAND; wr = simple_heap_constr -> F.mkConjConj shc wr (get_pos_camlp4 _loc 2) 
+   | shc=heap_wr; peek_heap_unionstar; `UNIONSTAR; `OPAREN; wr = heap_constr; `CPAREN -> F.mkConj shc wr (get_pos_camlp4 _loc 2)
+   | shc=heap_wr; peek_heap_starminus; `STARMINUS; wr = simple_heap_constr -> F.mkStarMinus wr shc (get_pos_camlp4 _loc 2) 
+   | shc=heap_wr; peek_heap_and; `AND; wr = simple_heap_constr -> F.mkConjConj shc wr (get_pos_camlp4 _loc 2)
    | shc=heap_wr; peek_heap_andstar; `ANDSTAR; wr = simple_heap_constr -> F.mkConjStar shc wr (get_pos_camlp4 _loc 2)
-   | shc=heap_wr; peek_heap_and; `AND; wr = simple_heap_constr -> F.mkConj shc wr (get_pos_camlp4 _loc 2)
+   | shc=heap_wr; peek_heap_unionstar; `UNIONSTAR; wr = simple_heap_constr -> F.mkConj shc wr (get_pos_camlp4 _loc 2) 
    | hwr=heap_wr                                          -> F.mkPhase F.HEmp hwr (get_pos_camlp4 _loc 2)]];
 
 heap_wr:
@@ -1473,6 +1517,9 @@ cexp_w:
     [ ofl= pure_label ; spc=SELF -> apply_pure_form1 (fun c-> label_formula c ofl) spc]
   | "slicing_label"
     [ sl=slicing_label; f=SELF -> set_slicing_utils_pure_double f sl ]
+  | "AndList"
+	[`ANDLIST;`OPAREN;t= LIST1 one_branch SEP `SEMICOLON ;`CPAREN ->
+            Pure_f(P.mkAndList_opt t)(*to be used only for sleek testing*)]
   | "pure_or" RIGHTA
     [ pc1=SELF; `OR; pc2=SELF ->apply_pure_form2 (fun c1 c2-> P.mkOr c1 c2 None (get_pos_camlp4 _loc 2)) pc1 pc2]
   | "pure_and" RIGHTA
@@ -1506,12 +1553,14 @@ cexp_w:
     | lc=SELF; `IN_T;   cl=SELF ->
         let cid, pos = match lc with
           | Pure_c (P.Var (t, l)) -> (t, l)
+          | Pure_c (P.Null l) -> ((null_name, Unprimed), l)
           | _ -> report_error (get_pos_camlp4 _loc 1) "expected cid" in
         let f = cexp_to_pure1 (fun c2 -> P.BagIn (cid,c2,pos)) cl in
         set_slicing_utils_pure_double f false
     | lc=SELF(*cid*); `NOTIN;  cl=SELF ->
         let cid, pos = match lc with
           | Pure_c (P.Var (t, l)) -> (t, l)
+          | Pure_c (P.Null l) -> ((null_name,Unprimed), l)
           | _ -> report_error (get_pos_camlp4 _loc 1) "expected cid" in
         let f = cexp_to_pure1 (fun c2 -> P.BagNotIn(cid,c2,pos)) cl in
         set_slicing_utils_pure_double f false
@@ -1636,7 +1685,7 @@ cexp_w:
     | `INT_LITER (i,_) ; ann0 = LIST1 ann_heap ->
         Pure_t((P.IConst (i, get_pos_camlp4 _loc 1)) ,(get_heap_ann_opt ann0 ))
     | `INFINITY ->
-        Pure_c (P.InfConst("ZInfinity",get_pos_camlp4 _loc 1))
+        Pure_c (P.InfConst(constinfinity,get_pos_camlp4 _loc 1))
     | `FLOAT_LIT (f,_) ; ann0 = LIST1 ann_heap ->
         Pure_t((P.FConst (f, get_pos_camlp4 _loc 1)), (get_heap_ann_opt ann0 ))
     | `INT_LITER (i,_) -> Pure_c (P.IConst (i, get_pos_camlp4 _loc 1)) 
@@ -1657,8 +1706,8 @@ cexp_w:
     | `FORALL; `OPAREN; ocl=opt_cid_list; `COLON; pc=SELF; `CPAREN ->
         apply_pure_form1 (fun c-> List.fold_left (fun f v-> P.mkForall [v] f None (get_pos_camlp4 _loc 1)) c ocl) pc
     | t=cid -> Pure_f (P.BForm ((P.mkBVar t (get_pos_camlp4 _loc 1), None), None ))
-    | `NOT; t=cid -> Pure_f (P.mkNot (P.BForm ((P.mkBVar t (get_pos_camlp4 _loc 2), None), None )) None (get_pos_camlp4 _loc 1))
     | `NOT; `OPAREN; c=pure_constr; `CPAREN -> Pure_f (P.mkNot c None (get_pos_camlp4 _loc 1))  
+    | `NOT; t=cid -> Pure_f (P.mkNot (P.BForm ((P.mkBVar t (get_pos_camlp4 _loc 2), None), None )) None (get_pos_camlp4 _loc 1))
     ]
   ];
 
@@ -1774,6 +1823,15 @@ shape_sante_cmd:
    (il1,il2)
    ]];
 
+simplify_cmd:
+  [[ `SIMPLIFY; t=meta_constr -> t]];
+
+hull_cmd:
+  [[ `SLK_HULL; t=meta_constr -> t]];
+
+pairwise_cmd:
+  [[ `SLK_PAIRWISE; t=meta_constr -> t]];
+
 shapeinfer_proper_cmd:
    [[ `SHAPE_INFER_PROP; `OSQUARE;il1=OPT id_list;`CSQUARE; `OSQUARE; il2=OPT id_list;`CSQUARE ->
    let il1 = un_option il1 [] in
@@ -1879,11 +1937,10 @@ non_array_type:
    | `FLOAT              -> float_type 
    | `INFINT_TYPE        -> infint_type 
    | `BOOL               -> bool_type
-   | `BAG                -> bag_type
+   | `BAG               -> bag_type
+   | `BAG; `OPAREN; t = non_array_type ; `CPAREN -> BagT t
    | `IDENTIFIER id      -> Named id
-   | t=rel_header_view   ->
-       let tl,_ = List.split t.Iast.rel_typed_vars in
-       RelT tl ]];
+   | t=rel_header_view   -> let tl,_ = List.split t.Iast.rel_typed_vars in RelT tl ]];
 
 pointer_type:
   [[ t=non_array_type; r = star_list -> 
@@ -2252,7 +2309,7 @@ spec_list_outer : [[t= LIST1 spec_list_grp -> label_struc_groups_auto t ]];
 spec_list_grp:
   [[
       (* c=spec -> [(empty_spec_label_def,c)] *)
-     t= LIST1 spec -> List.map (fun c -> (empty_spec_label_def,c)) t
+     t= LIST1 spec -> List.map (fun c -> (Lbl.empty_spec_label_def,c)) t
     | `IDENTIFIER id; `COLON; `OSQUARE; 
           t = spec_list_only 
           (* LIST0 spec SEP `ORWORD *)
@@ -2977,13 +3034,13 @@ let parse_sleek n s =
   SHGram.parse sprog (PreCast.Loc.mk n) s
 
 let parse_sleek n s =
-  DD.no_1_loop "parse_sleek" (fun x -> x) (pr_list string_of_command) (fun n -> parse_sleek n s) n
+  DD.no_1(* _loop *) "parse_sleek" (fun x -> x) (pr_list string_of_command) (fun n -> parse_sleek n s) n
 
 let parse_hip n s =
   SHGram.parse hprog (PreCast.Loc.mk n) s
 
 let parse_hip n s =
-  DD.no_1_loop "parse_hip" (fun x -> x) (fun _ -> "?") (fun n -> parse_hip n s) n
+  DD.no_1(* _loop *) "parse_hip" (fun x -> x) (fun _ -> "?") (fun n -> parse_hip n s) n
 
 let parse_sleek_int n s =
   SHGram.parse_string sprog_int (PreCast.Loc.mk n) s

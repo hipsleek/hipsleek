@@ -14,6 +14,7 @@ module F = Iformula
 module P = Ipure
 module Err = Error
 module CP = Cpure
+module LO = Label_only.LOne
 
 type typed_ident = (typ * ident)
 
@@ -68,7 +69,7 @@ and view_decl =
     (* view_frac_var : iperm; (\*LDK: frac perm ??? think about it later*\) *)
     mutable view_vars : ident list;
     view_pos : loc;
-    view_labels : Label_only.spec_label list;
+    view_labels : LO.t list * bool;
     view_modes : mode list;
     mutable view_typed_vars : (typ * ident) list;
     view_kind : view_kind;
@@ -1277,16 +1278,17 @@ and collect_data_view_from_pure_bformula (data_names: ident list) (bf : P.b_form
   | P.ListIn _ | P.ListNotIn _ | P.ListAllN _ | P.ListPerm _ -> ([], [])
   | P.VarPerm _ | P.RelForm _ -> ([], [])
 
-and collect_data_view_from_pure_exp (data_names: ident list) (e0 : P.exp) : (ident list) * (ident list) =
+and collect_data_view_from_pure_exp_x (data_names: ident list) (e0 : P.exp) : (ident list) * (ident list) =
   match e0 with
   | P.Ann_Exp (e, t, pos) -> (
       match e with
-      | P.Var ((self, _), _) -> 
-          let t_id = string_of_typ t in
-          if (List.mem t_id data_names) then
-            ([t_id], [])       (* type annotation of self to view decl *)
-          else
-            report_error pos ("self has invalid type: " ^ t_id)
+      | P.Var ((id, _), _) ->
+            if String.compare id self != 0 then ([],[]) else
+              let t_id = string_of_typ t in
+              if (List.mem t_id data_names) then
+                ([t_id], [])       (* type annotation of self to view decl *)
+              else
+                report_error pos ("self has invalid type: " ^ t_id)
       | _ -> ([], [])
     )
   | P.Null _ | P.Level _  | P.Var _ -> ([], [])
@@ -1298,7 +1300,13 @@ and collect_data_view_from_pure_exp (data_names: ident list) (e0 : P.exp) : (ide
   | P.ListLength _ | P.ListAppend _ | P.ListReverse _ -> ([], [])
   | P.ArrayAt _ | P.Func _ -> ([], [])
 
-  
+and collect_data_view_from_pure_exp (data_names: ident list) (e0 : P.exp) : (ident list) * (ident list) =
+  let pr1 = !P.print_formula_exp in
+  let pr2 = pr_list pr_id in
+  let pr3 = pr_pair pr2 pr2 in
+  Debug.no_1 "collect_data_view_from_pure_exp" pr1 pr3
+      (fun _ -> collect_data_view_from_pure_exp_x data_names e0) e0
+
 and find_data_view_x (data_names: ident list) (f:Iformula.struc_formula) pos :  (ident list) * (ident list) =
   let (dl,el) = collect_data_view_from_struc data_names f in
   if (List.length dl>1) then report_error pos ("self points to different data node types")
@@ -1382,8 +1390,8 @@ and update_fixpt (vl:(view_decl * ident list *ident list) list)  =
   Debug.no_1 "update_fixpt" pr pr_none update_fixpt_x vl
 
 and set_check_fixpt (data_decls : data_decl list) (view_decls: view_decl list)  =
-  let pr = pr_list !print_data_decl in 
-  let pr2 = pr_list !print_view_decl in 
+  let pr = pr_list_ln !print_data_decl in 
+  let pr2 = pr_list_ln !print_view_decl in 
   Debug.no_2 "set_check_fixpt" pr pr2 pr_none (fun _ _ -> set_check_fixpt_x data_decls view_decls )  data_decls view_decls
 
 and set_check_fixpt_x  (data_decls : data_decl list) (view_decls : view_decl list)  =
@@ -1396,7 +1404,7 @@ and set_check_fixpt_x  (data_decls : data_decl list) (view_decls : view_decl lis
 
 and data_name_of_view (view_decls : view_decl list) (f0 : F.struc_formula) : ident = 
   let pr = !print_struc_formula in
-  Debug.no_1_loop "data_name_of_view" pr (fun x->x)
+  Debug.no_1(* _loop *) "data_name_of_view" pr (fun x->x)
       (fun _ -> data_name_of_view_x (view_decls : view_decl list) (f0 : F.struc_formula)) f0
 
 and data_name_of_view_x (view_decls : view_decl list) (f0 : F.struc_formula) : ident = 
@@ -1709,7 +1717,7 @@ let exists_path (c1 : ident) (c2 : ident) :bool =
 	  with 
  		| _ -> false
 
-let exists_path c1 c2 =	Debug.no_2_loop "exists_path" pr_id pr_id  string_of_bool exists_path c1 c2 
+let exists_path c1 c2 =	Debug.no_2(* _loop *) "exists_path" pr_id pr_id  string_of_bool exists_path c1 c2 
 		
 (* (\* is t1 a subtype of t2 *\) *)
 let sub_type2 (t1 : typ) (t2 : typ) =  
@@ -2475,3 +2483,15 @@ let trans_to_exp_form exp0=
       | _ -> report_error no_pos "iast.trans_exp_to_form: not handle yet"
   in
   helper exp0
+
+let lbl_getter prog vn id = 
+  try 
+	let vd = look_up_view_def_raw 15 prog.prog_view_decls vn in
+	let vl, v_has_l = vd.view_labels in
+	if v_has_l then
+	 try
+	  Some (List.nth vl id )
+	 with Failure _ -> report_error no_pos "lbl_getter, index out of range"
+	else None
+  with 
+   | Not_found -> None 

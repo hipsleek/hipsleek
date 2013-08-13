@@ -1,0 +1,9 @@
+
+checkentail  n>=0 & (AndList("n":n>0; "s":p=1) | AndList("n":n=5; "s":p=1)) 
+  |- AndList("s":p=0) | AndList("n":n>1).
+print residue.
+
+/*
+some repeated proofs here; esp after failure;
+I presume due to xpure0 then xpure1?
+*/

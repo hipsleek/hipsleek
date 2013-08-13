@@ -1,0 +1,37 @@
+// examples from bi-abduction paper
+data node {
+	node next;	
+}.
+
+pred lseg<p:node> == self = p 
+	or self::node<q> * q::lseg<p> & self!=p 
+  inv true.
+
+HeapPred H1(node x).
+
+//1
+infer [H1] H1(y)  |- y::lseg<p> .
+print residue.
+
+//2
+infer [H1] H1(y)  |- y::lseg<p> * p::node<null> .
+print residue.
+
+/* 
+# i13a.slk
+
+ H1(y) --> y::lseg<p> * p::node<null>.
+
+This example currently fails as it did not produce a
+a continuation heap pred. I remember we were analysing the
+parameters to see if they were continuation parameters?
+
+Would we be able to infer something like
+
+  H1(y) --> y::lseg<k> * H2(y) 
+
+see bug-app1.slk: DONE
+
+Expecting relational assumption : H(r) --> r::lseg<q> * q::ln<>
+
+*/

@@ -1,0 +1,33 @@
+data node{
+	int val;
+	node next;
+}.
+
+pred lg<"n":s,"s":M> == true & ["n":self = null & self != s; "s":M = {}] 
+	or self::node<_,nxt> * nxt::lg<s,Mnxt> & ["s": M = union(Mnxt,{self}); "n": self != s]
+//inv forall(x: x notin M | (x != null & x != s));
+inv true&["n":self!=s].
+
+pred ls<"n":p,"s":M> == true & ["n":self = p; "s":M = {}]
+	or self::node<_,nxt> * nxt::ls<p,M1> & ["n": self != p ; "s": M = union({self},M1)]
+inv true.
+
+checkentail 
+ //prev::lg<sentinel_1255,Mp>@M * 
+ cur_1262::node<Anon_1251,prev_1261>@M 
+ * nxt_1252::ls<p_1250,M1_1253>@M 
+  &
+  ["":
+       cur=cur_1262 & prev=prev_1261 & n_42'=nxt_1252 &
+        //nxt_1252=p_1250 &  M1_1253={} &
+         next_33_1260=nxt_1252 & cur_1262=prev' & cur'=n_42' & 
+         cur'=sentinel & v_bool_37_933' & cur'=sentinel & v_bool_37_933'
+ ; "n":cur_1262!=sentinel_1254 & p_1250=sentinel_1254 & cur!=sentinel & 
+   sentinel=sentinel_1254 & sentinel=sentinel_1255 & 
+   exists(sentinel_1404:sentinel_1255=sentinel_1404 & prev'!=sentinel_1404)
+]
+ |-  emp 
+    & ["n": nxt_1252=p_1250]
+    //& ["s": M1_1252={}]
+.
+

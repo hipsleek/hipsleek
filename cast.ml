@@ -15,6 +15,7 @@ module F = Cformula
 module P = Cpure
 module MP = Mcpure
 module Err = Error
+module LO = Label_only.LOne
 
 type typed_ident = (typ * ident)
 
@@ -27,8 +28,8 @@ and prog_decl = {
     mutable prog_axiom_decls : axiom_decl list; (* An Hoa : axiom definitions *)
     (*old_proc_decls : proc_decl list;*) (* To be removed completely *)
     new_proc_decls : (ident, proc_decl) Hashtbl.t; (* Mingled name with proc_delc *)
-    mutable prog_left_coercions : coercion_decl list;
-    mutable prog_right_coercions : coercion_decl list;
+    (*mutable prog_left_coercions : coercion_decl list;*)
+    (*mutable prog_right_coercions : coercion_decl list;*)
     prog_barrier_decls : barrier_decl list
 }
     
@@ -81,7 +82,7 @@ and view_decl = {
     view_cont_vars : P.spec_var list;
     view_case_vars : P.spec_var list; (* predicate parameters that are bound to guard of case, but excluding self; subset of view_vars*)
     view_uni_vars : P.spec_var list; (*predicate parameters that may become universal variables of universal lemmas*)
-    view_labels : Label_only.spec_label list;
+    view_labels : LO.t list;
     view_modes : mode list;
     view_is_prim : bool;
     view_kind : view_kind;
@@ -89,7 +90,7 @@ and view_decl = {
     mutable view_materialized_vars : mater_property list; (* view vars that can point to objects *)
     view_data_name : ident;
     view_formula : F.struc_formula; (* case-structured formula *)
-    view_user_inv : MP.mix_formula; (* XPURE 0 -> revert to P.formula*)
+    mutable view_user_inv : MP.mix_formula; (* XPURE 0 -> revert to P.formula*)
     view_mem : F.mem_perm_formula option; (* Memory Region Spec *)
     view_inv_lock : F.formula option;
     mutable view_x_formula : (MP.mix_formula); (*XPURE 1 -> revert to P.formula*)

@@ -1,0 +1,20 @@
+
+checkentail x=x' & MayLoop & t_31'=0 & v_int_22_859'=1 & 0<m & 0<=m
+|-  Term[].
+
+print residue.
+
+checkentail x=x' & Term[] & t_31'=0 & v_int_22_859'=1 & 0<m & 0<=m
+|-  MayLoop.
+
+print residue.
+
+checkentail Term[x] & x=5
+|-  Term[].
+
+
+checkentail MayLoop & m=5 
+|-  MayLoop & m>0.
+
+
+print residue.
