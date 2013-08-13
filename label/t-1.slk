@@ -1,0 +1,15 @@
+checkentail cur_1238!=null & cur_1238!=sentinel_1202 & s_1195=sentinel_1202 & 
+s_1196=sentinel_1202 & cur!=null & cur=cur_1238 & r_1200=right_37_1233 & 
+l_1198=left_39_1236 & l_1568=r_1200 & cur_1238!=s_1196 & 
+exists(sentinel_1875:l_1198!=sentinel_1875) & cur'=sentinel & 
+l_1198!=s_1195 & r_1200!=s_1196 & Mp_1261=union(Ml_1569,Mr_1571,{v_1567}) & 
+s_1196=sentinel_1203 & Ml_1569=Mr_1201 & prev_1237=r_1570 & 
+v_1567=v_int_34_1232 & Mc_1260=Ml_1199 & l_1198!=null & l_1198!=sentinel & 
+mark_34_1226=v_1197 & v_int_34_1232=1+v_1197 & prev=prev_1237 & 
+sentinel=sentinel_1202 & sentinel=sentinel_1203 & Mc=union(Ml_1199,Mr_1201,
+{v_1197}) & Mp=Mr_1571 & flted_25_1856=union(Mc_1260,Mp_1261) & 
+(((exists(Mr_1872:exists(Ml_1873:exists(v_1874:flted_25_1856=union(Ml_1873,
+Mr_1872,{v_1874})))) & prev'!=sentinel & prev'!=null) | (prev'=null & 
+flted_25_1856={} & prev'!=sentinel)))
+|- flted_25_1856=union(Mc,Mp).
+

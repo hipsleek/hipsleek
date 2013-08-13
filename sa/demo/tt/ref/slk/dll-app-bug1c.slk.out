@@ -1,0 +1,12 @@
+========dll-app-bug1c.slk ==========
+Starting Omega...oc
+HP_7 is defined.
+HP_8 is defined.
+HP_9 is defined.
+
+Entail (1) : Valid. 
+
+ <1>HP_27(Anon_25,x) * HP_28(Anon_26,x) * HP_29(x,l2)&x!=null & Anon_11=Anon_25 & Anon_12=Anon_26&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [HP_7(x,l2)&x!=null --> l2::node<Anon_25,Anon_26>@M * 
+                   HP_27(Anon_25,x@NI) * HP_28(Anon_26,x@NI) * HP_29(x,l2@NI)]
+====================

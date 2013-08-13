@@ -1,20 +1,23 @@
 Starting Omega...oc
 
-Entail (1) : Fail.(must) cause: true |-  n=2 & n=1. LOCS:[0;13] (RHS: contradiction)
+!!! dumping for sleek_dump(fail)
+Entail (1) : Fail.
 
 
-Entail (2) : Fail.(may) cause: true |-  y!=null. LOCS:[0] (may-bug)
+!!! dumping for sleek_dump(fail)
+Entail (2) : Fail.
 
 
 Entail (3) : Valid. 
 
- <1>emp&b!=null & a=inf_a_61 & m=inf_m_65 & inf_ann_64<=0 & inf_ann_60<=0 & b=inf_b_62&{FLOW,(19,20)=__norm}[]
- inferred heap: [b::ll<inf_m_65>@inf_ann_64[Orig][LHSCase]; 
-                y::node<inf_a_61,inf_b_62>@inf_ann_60[Orig]]
- inferred pure: [b=inf_b_62; inf_ann_60<=0; inf_ann_64<=0]
+ <1>emp&b!=null & a=inf_a_72 & inf_m_76=m & inf_ann_75=@M & inf_ann_71=@M & b=inf_b_73&{FLOW,(19,20)=__norm}[]
+ inferred heap: [b::ll<inf_m_76>@inf_ann_75; 
+                 y::node<inf_a_72,inf_b_73>@inf_ann_71]
+ inferred pure: [b=inf_b_73; inf_ann_71=@M; inf_ann_75=@M]
 
 
-Entail (4) : Fail.(may) cause: true |-  y!=null. LOCS:[0] (may-bug)
+!!! dumping for sleek_dump(fail)
+Entail (4) : Fail.
 
 
 Entail (5) : Valid. 
@@ -25,7 +28,18 @@ Entail (5) : Valid.
 
 Entail (6) : Valid. 
 
- <1>EXISTS(flted_7_105: b::ll<flted_7_105>@M[Orig]&flted_7_105+1=n&{FLOW,(19,20)=__norm})[]
- inferred pure: [n!=0 | x!=null]
+ <1>(exists flted_7_133: b::ll<flted_7_133>@M&n=flted_7_133+1&{FLOW,(19,20)=__norm})[]
+ inferred pure: [(n!=0 | x!=null)]
 
-Stop Omega... 80 invocations 
+Stop Omega... 101 invocations 
+SAT Count   : 86
+SAT % Hit   : 53.48%
+IMPLY Count : 82
+IMPLY % Hit : 60.97%
+Time(cache overhead) : 0. (seconds)
+
+!!! log(small):(0.091425,227)
+Total verification time: 0.12 second(s)
+	Time spent in main process: 0.08 second(s)
+	Time spent in child processes: 0.04 second(s)
+

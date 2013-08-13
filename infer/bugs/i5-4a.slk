@@ -1,0 +1,13 @@
+infer [y] true   |- y!=0.
+print residue.
+
+/*
+# i5-4a.slk
+
+ <1>emp&((y+1)<=0 | 1<=y)&{FLOW,(19,20)=__norm}[]
+ inferred pure: [((y+1)<=0 | 1<=y)]
+
+# can we have simpler result, namely y!=0
+
+
+*/

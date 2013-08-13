@@ -19,28 +19,40 @@ HeapPred H(node a).
 PostPred G(node a, node c).
 
 node set_right (node x)
-//infer [H,G] requires H(x) ensures G(x,res);
-requires x::tree<> ensures x::tree<> & res=x;
+infer [H,G] requires H(x) ensures G(x,res);
+//requires x::tree<> ensures x::tree<> & res=x;
 {
   //[1]
-  dprint;
+  //dprint;
   if (x.right==null) 
     { //[1.1]
-      dprint;
+      //dprint;
+      assert true;
    	}
   else 
     { //[1.2]
-      dprint;
+      //dprint;
   		x.right =set_right(x.right);
   		x.left = set_right(x.left);
   	}
-  dprint;
+  //dprint;
   return x;
 }
 
 /*
-# tll-if.ss
+# tll-if.ss  --sa-dnc 
 
+[ HP_802(left_27_800) ::=UNKNOWN,
+
+ H(x_834) ::= x_834::node<left_27_800,right_27_801>@M * HP_802(left_27_800)&right_27_801=null
+   \/  x_834::node<left_27_800,right_27_801>@M * H(left_27_800) * H(right_27_801)&right_27_801!=null,
+
+ G(x_836,res_837) ::= HP_802(left_27_800) * res_837::node<left_27_800,right_27_801>@M
+                           &right_27_801=null & res_837=x_836
+   \/  G(right_27_801,v_node_34_823) * G(left_27_800,v_node_35_833) * 
+       res_837::node<v_node_35_833,v_node_34_823>@M&right_27_801!=null & res_837=x_836]
+
+===========
 
  //[1]
  H(x) --> x::node<left_25_800,right_25_801>@M * H_2(left_25_800) 

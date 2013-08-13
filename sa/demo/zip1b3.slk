@@ -11,11 +11,11 @@ HeapPred HP_8(node a, node@NI b).
 HeapPred G1(node a, node b, node c).
 
 
-relAssume G1
+relAssume
  //res=x & 
  x=null & res=null --> G1(x,y,res).
 
-relAssume G1
+relAssume
  y::node<val_25_826,next_25_827> * x::node<val_24_819,nnn>
   * G1(nnn,next_25_827,rrr) 
 //  & nn=rr

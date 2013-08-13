@@ -1,0 +1,43 @@
+data node {
+	int val; 
+	node next; 
+}.
+
+pred  sortll<mi> == self=null & mi=\inf
+   or self::node<mi, p> * p::sortll<m2> & mi<=m2
+inv true.
+
+//(4) Fail
+checkentail true |- v=max(v,-w).
+
+//(45) Fail
+checkentail true |- \inf+8 != -\inf.
+
+
+//(46) Valid
+checkentail \inf+3=\inf |- false.
+print residue.
+
+//(54) Fail
+checkentail true |- \inf+c != -\inf.
+
+//(55) Valid
+checkentail true |- \inf>=\inf.
+
+/*
+# inf-1.slk --en-inf
+
+pred  sortll<mi> == self=null & mi=\inf
+   or self::node<mi, p> * p::sortll<m2> & mi<=m2
+inv true.
+
+Omega error caused by presence of \inf. Can we not use
+a special variable to denote "\inf" before sending to Omega?
+
+Omega Error format: ((self=0 & mi=\inf) | self>0)
+Omega Error format: exists(m2:((exists(p:p>0) | m2=\inf)) & mi<=m2)
+
+Also, some Mona exceptions that Andreea may help resolve later.
+
+*/
+

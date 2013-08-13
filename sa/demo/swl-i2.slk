@@ -1,0 +1,25 @@
+data node{
+	int val;
+	node next;
+}.
+HeapPred H(node a, node b, node@NI c).
+HeapPred HP_902(node next_36_901, node@NI prev, node@NI sent).
+HeapPred HP_903(node prev, node@NI cur, node@NI sent).
+PostPred G(node a, node ra, node b, node rb, node@NI c).
+
+relAssume
+  (0) H(cur,prev,sent) --> cur::node<val_36_900,next_36_901>@M * 
+HP_902(next_36_901,prev,sent) * HP_903(prev,cur,sent).
+
+// PRE_REC
+relAssume
+ (2;2;0)HP_902(next_36_901,prev,sent) * HP_903(prev,cur,sent) * 
+cur::node<val_36_900,prev>@M&cur=cur_909 & cur'=next_36_901 & cur'!=sent & 
+cur'!=null --> H(cur',cur_909,sent).
+
+// POST
+relAssume
+ (2;2;0)G(next_36_901,cur',cur,prev',sent)&next_36_901!=sent & 
+next_36_901!=null --> G(cur,cur',prev,prev',sent).
+
+shape_infer [H, HP_902, HP_903][G].

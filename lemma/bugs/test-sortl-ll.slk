@@ -1,0 +1,49 @@
+data node { int val ; node next }.
+
+// taken from bug-sort-ll.slk
+
+pred ll<n> == self = null & n = 0
+	or self::node<next = r> * r::ll<n - 1>
+	inv n >= 0.
+
+pred sortl<n, mi> == self::node<mi,null> & n=1
+	or self::node<mi, r> * r::sortl<n - 1, k> & mi <= k
+	inv n >= 1 & self!=null.
+
+// Valid.Valid.Valid
+// Fail.Fail.Valid.Valid
+// Fail.Fail.
+
+//(1)
+lemma self::sortl<n, mi> -> self::ll<n>.
+
+//(2)
+lemma self::sortl<n, mi> -> (exists m : self::ll<m>).
+
+//(3)
+lemma self::sortl<n, mi> -> self::ll<m>.
+// should succeed
+
+//(4)
+lemma self::sortl<n, mi> -> self::ll<m> & m>n.
+// should fail
+
+//(5)
+lemma self::sortl<n, mi> -> (exists m : self::ll<m> & m>n).
+// should fail
+
+//(6)
+lemma self::sortl<n, mi> -> self::ll<m> & m>=n.
+// succeed
+
+//(7)
+lemma self::sortl<n, mi> -> (exists m : self::ll<m> & m>=n).
+
+//(8)
+// should succeed
+lemma self::sortl<n, mi> <- self::ll<n>.
+
+//(9)
+lemma self::sortl<n, mi> <- self::ll<m>.
+
+

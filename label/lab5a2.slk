@@ -1,0 +1,4 @@
+
+checkentail  n>=0 & (AndList("n":n>0; "s":p=0) | AndList("n":n=5; "s":p=1)) 
+  |- AndList("s":p=0) | AndList("n":n>1).
+print residue.

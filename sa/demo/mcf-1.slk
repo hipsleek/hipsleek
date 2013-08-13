@@ -1,0 +1,224 @@
+data tree {
+    node children;
+    }.
+    
+data node {
+    tree child; 
+    node prev; 
+    node next; 
+    tree parent;
+    }.
+
+HeapPred H1(tree a).
+PostPred G1(tree a).
+HeapPred H2(node a,node@NI c,tree@NI b).
+HeapPred H_1(tree a,node@NI c,tree@NI b).
+HeapPred H_2(node a,node@NI c,tree@NI b).
+HeapPred H_3(node a,node@NI c,tree@NI b).
+HeapPred H_4(tree a,node@NI c,tree@NI b).
+HeapPred H_5(node a).
+PostPred G2(node a,node@NI c,tree@NI b).
+Declare_Unknown [H_2,H_4].
+
+
+relAssume
+ H2(l,prv,par)& l!=null --> l::node<child_07,prev_08,next_09,parent_10>@M * 
+  H_1(child_07,prv,par) * H_2(prev_08,prv,par) * H_3(next_09,prv,par) * H_4(parent_10,prv,par).
+
+relAssume
+ H2(l,prv,par)&l=null --> emp.
+
+relAssume
+ H_3(next_09,prv,par)&par=par' & 
+  prev_08=prv --> H2(next_09,l,par). // what should l be?
+
+relAssume
+ H_1(child_07,prv,par) //&par=par' & prev_08=prv 
+   --> H1(child_07).
+
+relAssume
+ H1(t) --> t::tree<children_84> * H_5(children_84).
+
+relAssume
+ H_5(children_84)&
+  children_84!=null --> H2(children_84,n_38',t).
+// what are n_39' and t?
+ H_5(v_node) & v_node!=null | t::tree<v_node> 
+   --> H2(v_node,n_38'@NI,t@NI) & n_38'=null
+
+relAssume
+ H_5(children_84) &
+  children_84=null --> emp.
+
+shape_infer [H1,H2,H_1,H_2,H_3,H_4,H_5][].
+
+/*
+# mcf-1.slk
+
+ALGO
+====
+Step 1: Confirm H1
+ H_1(child_07,prv,par) //&par=par' & prev_08=prv 
+   --> H1(child_07).
+ // make equality
+ H_1(child_07,prv,par) <-> H1(child_07).
+
+Step 2: Confirm H_3
+
+ H_3(next_09,prv,par)&par=par' & 
+  prev_08=prv --> H2(next_09,l,par). // what should l be?
+
+ H_3(v_node_43_958',prv@NI,par'@NI) <-> l'::node<_,_,v_node_43_958',_> --* H2(v_node_43_958',l'@NI,par'@NI)]
+
+Step 3: Confirm H2
+
+ H2(l,prv,par)& l!=null --> l::node<child_07,prev_08,next_09,parent_10>@M * 
+  H_1(child_07,prv,par) * H_2(prev_08,prv,par) * H_3(next_09,prv,par) * H_4(parent_10,prv,par).
+ H2(l,prv,par)&l=null --> emp.
+ // unfold H_1
+ H2(l,prv,par)& l!=null --> l::node<child_07,prev_08,next_09,parent_10>@M * 
+     H1(child_07) * H_2(prev_08,prv,par) * H_3(next_09,prv,par) * H_4(parent_10,prv,par).
+ // contextual unfold of H_3
+ H2(l,prv,par)& l!=null --> l::node<child_07,prev_08,next_09,parent_10>@M * 
+     H1(child_07) * H_2(prev_08,prv,par) * H2(next_09,l,par) * H_4(parent_10,prv,par).
+ // Make equal
+ H2(l,prv,par)<--> l::node<child_07,prev_08,next_09,parent_10>@M * 
+     H1(child_07) * H_2(prev_08,prv,par) * H2(next_09,l,par) * H_4(parent_10,prv,par)
+     or l=null
+
+Step 3: Confirm H1
+
+ H1(t) --> t::tree<children_84> * H_5(children_84).
+ // make equal
+ H1(t) <-> t::tree<children_84> * H_5(children_84).
+
+Step 4: Confirm H_5
+ H_5(v_node) & v_node!=null 
+   --> t::tree<v_node> --* H2(v_node,n_38'@NI,t@NI) & n_38'=null
+ H_5(children_84) &  children_84=null --> emp.
+
+ H_5(v_node) = t::tree<v_node> --* H2(v_node,n_38'@NI,t@NI) & n_38'=null & v_node!=null
+               \/ v_node=null
+
+
+==========
+Remove H_5
+==========
+ H1(t) <-> t::tree<children> & H_5(children).
+   // unfold children
+    <-> t::tree<children> & children=null
+      or t::tree<children> * (tt::tree<children> --* H2(children,n_38'@NI,tt@NI) & n_38'=null & children!=null) 
+   // match tt to t
+    <-> t::tree<children> & children=null
+      or t::tree<children> * H2(children,n_38'@NI,t@NI) & n_38'=null & children!=null 
+    <-> t::tree<children> & children=null
+      or t::tree<children> * H2(children,n_38'@NI,t@NI) & n_38'=null & children!=null 
+
+========
+
+ H2(l,prv,par)<--> l::node<child_07,prev_08,next_09,parent_10> * 
+     H1(child_07) * H_2(prev_08,prv,par) * H2(next_09,l,par) * H_4(parent_10,prv,par)
+     or l=null
+
+ H1(t) <-> t::tree<children> & children=null
+      or t::tree<children> * H2(children,n_38',t) & n_38'=null & children!=null 
+
+
+
+
+
+ H1(t) --> t::tree<children_84> * H_5(children_84).
+
+ H_5(children_84)&
+  children_84!=null --> H2(children_84,n_38',t).
+// what are n_39' and t?
+
+ H_5(children_84) &
+  children_84=null --> emp.
+
+*/
+
+/*
+relAssume
+ H_2(prev_08,prv,par) --> emp&
+  forall(parent_10:((par!=parent_10 | prv>=prev_08)) & 
+  ((par!=parent_10 | prev_08>=prv))).
+
+relAssume
+ H_2(prev_08,prv,par) --> emp&
+  forall(parent_10:((prev_08!=prv | par>=parent_10)) & 
+  ((prev_08!=prv | parent_10>=par))).
+
+relAssume
+ H_2(prev_08,prv,par) --> emp&
+  forall(parent_10:((par>=parent_10 | prv>=prev_08)) & 
+  ((parent_10>=par | prv>=prev_08)) & ((par>=parent_10 | 
+  prev_08>=prv)) & ((parent_10>=par | prev_08>=prv))).
+
+ H2(l,prv,par)&l=null --> G2(l,prv,par).
+
+ H_5(children_84) * t::tree<children_84>@M&
+  children_84=null --> G1(t).
+
+ H_2(prev_08,prv,par) * 
+  H_4(parent_10,prv,par) * 
+  l::node<child_07,prev_08,next_09,parent_10>@M * 
+  G2(next_09,l,par) * G1(child_07)&par=parent_10 & 
+  prev_08=prv --> G2(l,prv,par).
+
+ t::tree<children_84>@M * 
+  G2(children_84,n_1105,t)&children_84!=null & 
+  n_1105=null --> G1(t).
+
+*/
+
+/*
+# mcf-1.slk
+
+[ H2(l_153,prv_154,par_155) ::= 
+ child_114::tree<children_84>@M * H_5(children_84) * 
+ l_153::node<child_114,prev_115,next_116,parent_117>@M * 
+ H_2(prev_115,prv_154,par_155) * H_3(next_116,prv_154,par_155) * 
+ H_4(parent_117,prv_154,par_155)
+ or emp&l_153=null,
+
+ H_3(next_156,prv_157,par_158) ::= H2(next_156,l,par_158)&prev_08=prv_157 & par'=par_158,
+
+ H_1(child_159,prv_160,par_161) ::= H1(child_159),
+
+ H1(t_162) ::= t_162::tree<children_84>@M * H_5(children_84),
+
+ H_5(children_163) ::= 
+ child_107::tree<children_84>@M * H_5(children_84) * 
+ children_163::node<child_107,prev_108,next_109,parent_110>@M * 
+ H_2(prev_108,n_111,t_112) * H_3(next_109,n_111,t_112) * 
+ H_4(parent_110,n_111,t_112)
+ or emp&children_163=null
+ 
+================================================================
+
+ERROR: at mcf-1.slk_66:47_66:58 
+Message: gather_type_info_var : unexpected exceptionInvalid_argument("[ocamlgraph] iter_succ")
+ Fatal error: exception Failure("gather_type_info_var : unexpected exceptionInvalid_argument("[ocamlgraph] iter_succ")")
+
+Not sure if this is due to wrong type declaration of heap predicate.
+I wonder if we can do a dump of unknown heap predicate defined
+and generated at the start of shape inference (in hip) which we could 
+later cut for sleek. This would reduce tedium for preparing sleek file.
+
+HeapPred H1(tree a).
+PostPred G1(tree a).
+HeapPred H2(node a,node@NI c,tree@NI b).
+HeapPred H_1(tree a,node@NI c,tree@NI b).
+HeapPred H_2(node a,node@NI c,tree@NI b).
+HeapPred H_3(node a,node@NI c,tree@NI b).
+HeapPred H_4(tree a,node@NI c,tree@NI b).
+HeapPred H_5(tree a).
+PostPred G2(node a,node@NI c,tree@NI b).
+
+Also, after we have have analysed the unknowns, can we
+also output the statement (in hip)
+
+Declare_Unknown [H_2,H_4].
+
+*/

@@ -1,0 +1,23 @@
+data node{
+	node next;
+}.
+
+HeapPred H(node a).
+
+relAssume
+  H(x) --> H(x).
+
+relAssume
+  H(x) --> x=null.
+
+shape_infer [H][].
+
+
+/*
+# loop-3b2.slk
+
+GOT: (good)
+  H(x_17) ::= emp&x_17=null]
+
+
+*/

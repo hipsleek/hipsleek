@@ -1,0 +1,36 @@
+data node{
+	int val;
+	node next;
+}.
+
+
+HeapPred H(node a, node b, node@NI c).
+HeapPred H_3(node prev, node@NI cur, node@NI sent).
+HeapPred H_2(node next_1, node@NI prev, node@NI sent).
+HeapPred HP_44(node next_1, node@NI prev, node@NI sent).
+
+relAssume
+   H_2(next_1,prev,sent)&next_1!=sent & 
+                   next_1!=null --> next_1::node<val_0,n1_43>@M * 
+                   HP_44(n1_43,prev,sent).
+
+relAssume
+  HP_44(n1_43,prev,sent) |#| cur_909::node<val_0,prev>@M --> H_2(n1_43,cur_909,sent).
+
+relAssume
+  H_3(prev,cur_909,sent) * cur_909::node<val_0,prev>@M&
+         cur'!=sent & cur'!=null --> H_3(cur_909,cur',sent).
+
+relAssume
+   H_2(cur',prev,sent) & cur'=sent --> emp.
+
+
+shape_infer [H_2,H_3,HP_44][].
+
+/*
+# swl-i3a1.slk 
+
+*/
+
+
+

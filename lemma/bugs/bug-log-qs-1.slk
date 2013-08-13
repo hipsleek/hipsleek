@@ -1,0 +1,75 @@
+data node {
+	int val; 
+	node next; 
+}.
+
+
+pred lseg<n, p, sm, lg> == case {
+  n=0 -> [] self=p & sm=lg;
+ (n!=0) -> [nn] self::node<sm, r> * r::lseg<nn, p, sm1, lg> 
+               & sm<=sm1 & nn=n-1; 
+}	inv n >= 0 & sm<=lg.
+
+
+pred ll_tail<n, t, sm, lg> == 
+   case {
+     n=1 -> [] self::node<sm, null> & t=self & n=1 & sm=lg;
+     n!=1 -> [] self::node<sm, r> * r::ll_tail<nn, t, sm1, lg> & r!=null & sm<=sm1 & nn=n-1;
+   }
+inv n>=1 & self!=null & sm<=lg.
+
+  /* todo: m=n-1 for case struct */
+ 
+//lemma "ll_tail2lsegL" self::ll_tail<n, t, sm, lg> & m=n-1-> self::lseg<m, t, sm, lg1> * t::node<lg, null> & lg1<=lg.
+
+
+//lemma "ll_tail2lsegL" self::ll_tail<n, t, sm, lg> ->  self::lseg<n-1, t, sm, lg1> * t::node<lg, null> & lg1<=lg.
+
+ //fail:  sm<=lg |-  lg=sm. 
+
+lemma "ll_tail2lsegR" self::ll_tail<nnn, t, sm, lg>  <- self::lseg<nnn-1, t, sm, lg1> * t::node<lg, null> & lg1<=lg .
+
+/*
+
+n * t <- n * ls * n
+   t <- ls * n
+*/
+
+checkentail
+ (exists flted_30_242,flted_30_243,lg1_244: t::node<lg,flted_30_242>@M&
+ flted_30_243=0 & self=t & lg1_244=sm & nnn=flted_30_243+1 & 
+ flted_30_242=null & lg1_244<=lg)
+ or (exists sm_262,p_263,lg_264,nn_265,r_266,sm1_267,flted_30_242,
+    flted_30_243,lg1_244: self::node<sm_262,r_266>@M * 
+    r_266::lseg<nn_265,p_263,sm1_267,lg_264>@M * t::node<lg,flted_30_242>@M&
+    flted_30_243!=0 & sm<=sm1_267 & flted_30_243=nn_265+1 & sm=sm_262 & 
+    p_263=t & lg1_244=lg_264 & nnn=flted_30_243+1 & flted_30_242=null & 
+    lg1_244<=lg)
+|-
+case {
+         nnn=1 -> [] (exists sm_281,
+                         flted_16_282: self::node<sm_281,flted_16_282>@M&
+                         flted_16_282=null & self=t & nnn=1 & lg=sm & 
+                         sm=sm_281)
+         ;
+         nnn!=1 -> [] (exists sm_283,t_284,
+                          lg_285: self::node<sm_283,r_270>@M * 
+                          r_270::ll_tail<nn_271,t_284,sm1_272,lg_285>@M&
+                          r_270!=null & sm<=sm1_272 & nnn=nn_271+1 & 
+                          sm=sm_283 & t=t_284 & lg=lg_285);
+         }
+
+.
+
+/*
+# bug-log-qs-1.slk --esl
+
+logging bug!
+loris@loris-desktop:/home2/loris/hg/sl_clean/lemma/bugs$ ../../sleek qs-1.slk  --esl
+Starting Omega...oc
+ERROR : top of empty stackERROR : get_sleek_no on empty sleek_stk
+LOGGING ERROR : inconsistent slk_no problem 2 stk:-1
+ERROR : top of empty stackFatal error: exception Gen.Stack_Error
+loris@loris-desktop:/home2/loris/hg/sl_clean/lemma/bugs$ 
+
+*/

@@ -1,0 +1,27 @@
+checkentail
+flted_9_1600=null & M1=union({v_1601},M1_1603,M2_1605) & b=null & 
+l_1602=n_54' & r_1604=tmp_55' & r_1604=right_43_1619 & l_1602=left_44_1623 & 
+a_1643=flted_9_1600 & M1_1603=M1_1644 & (((flted_9_1600=l_1602 & 
+M1_1603={}) | (flted_9_1600!=l_1602 & M1_1603!=({})))) & 
+(((flted_9_1600=null & l_1602!=s_1597) | (flted_9_1600=s_1597 & 
+l_1602!=null))) & s_1597!=null & cur_1627!=null & (((b=prev & M2={}) | 
+(b!=prev & M2!=({})))) & (((b=null & prev!=sent_1607) | (b=sent_1607 & 
+prev!=null))) & sent_1607!=null & (((g_1598=r_1604 & M2_1605={}) | 
+(g_1598!=r_1604 & M2_1605!=({})))) & (((g_1598=null & r_1604!=s_1599) | 
+(g_1598=s_1599 & r_1604!=null))) & s_1599!=null & ((prev'=null | 
+prev'!=null)) & cur'!=null & cur'=n_54' & cur_1627=prev' & cur=cur_1627 & 
+prev=prev_1625 & a!=null & s_1599=sent_1606 & a=g_1598 & s_1597=sent_1606 & 
+cur_1627!=sent_1606 & a!=cur_1627 & a=sent & cur!=sent & sent=sent_1607 & 
+sent=sent_1606 & sent=sent' & cur'!=sent' & 
+exists(sent_1882:sent_1882!=null & ((b_1645=null | b_1645=sent_1882))) & 
+b_1645=prev'
+|-  (b_1645=null | b_1645=sent')
+.
+
+
+/*
+Mona is running ... Timeout when checking #432!
+
+ id: 432; prover: MONA; TIME: 5.; loc: swt-4e-set_ss_57:2_57:22; kind: PRE_REC
+ store dump :Imply: ante: 
+*/

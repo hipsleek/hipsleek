@@ -1,0 +1,4 @@
+
+checkentail  AndList("n":n>=0 & n=0) |- 
+   AndList("n":n>0 & n=0 | n<0 & n>=0 &n=1).
+print residue.

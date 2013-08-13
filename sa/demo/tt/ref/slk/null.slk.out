@@ -1,0 +1,11 @@
+========null.slk ==========
+Starting Omega...oc
+[Warning] False ctx
+
+Entail (1) : Valid. 
+
+ <1>hfalse&false&{FLOW,(19,20)=__norm}[]
+
+
+Entail (2) : Fail.
+====================

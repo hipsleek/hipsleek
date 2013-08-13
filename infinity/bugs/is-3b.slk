@@ -1,0 +1,29 @@
+
+data node {
+	int val; 
+	node next; 
+}.
+
+pred bnd1<n,mi,mx> == self = null & n = 0 & mi = \inf & mx=-\inf or 
+  self::node<d, p> * p::bnd1<n-1, tmi,tmx> & mi = min(d, tmi) & mx=max(d,tmx) & -\inf<d<\inf
+
+  inv n>=0.
+
+checkentail x::bnd1<0,dmi,dmx>  
+   & n=0 & dmi=\inf 
+   & 0=(\inf)+dmx // why this fails?
+   //& dmx=-\inf
+   & mi=min(a,dmi) & mx=max(a,dmx)
+   |- a=mi & 
+       mx=a
+      .
+
+/* 
+# is-3b.slk
+
+The above succeed with dmx=-inf but not 0=\inf+dmx
+I think your normalization need to ensure that we will
+have equality, where possible, than can be picked
+for substitution.
+
+*/

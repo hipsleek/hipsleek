@@ -65,6 +65,7 @@ let pure_of_heap_pred_gen_h hf0=
             in (nh, ps1@ps2)
       | CF.StarMinus { CF.h_formula_starminus_h1 = hf1;
         CF.h_formula_starminus_h2 = hf2;
+CF.h_formula_starminus_aliasing = al;
         CF.h_formula_starminus_pos = pos} ->
             let nh1,ps1 = helper hf1 in
             let nh2, ps2 = helper hf2 in
@@ -74,6 +75,7 @@ let pure_of_heap_pred_gen_h hf0=
               | (_, CF.HEmp) -> nh1
               | _ -> CF.StarMinus { CF.h_formula_starminus_h1 = nh1;
                 CF.h_formula_starminus_h2 = nh2;
+                CF.h_formula_starminus_aliasing = al;
                 CF.h_formula_starminus_pos = pos}
             in (nh, ps1@ps2)
       | CF.ConjStar { CF.h_formula_conjstar_h1 = hf1;

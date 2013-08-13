@@ -9,7 +9,7 @@ HeapPred HP_1(node a).
 HeapPred HP_0(node a).
 HeapPred G(node a).
 
-relAssume G
+relAssume 
  HP_0(left_25_798) * HP_1(right_25_799) * 
  x::node<key_25_797,left_25_798,right_25_799>
  &left_25_798=null 

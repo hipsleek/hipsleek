@@ -7,7 +7,7 @@ HeapPred H1(node a, node@NI b).
 HeapPred G1(node a, node b, node c).
 
 
-relAssume G1
+relAssume 
 H1(x,y) & x=null & res=null --> G1(x,y,res).
  
 shape_infer[H1][G1].

@@ -1,0 +1,23 @@
+slk_simplify \inf+2 != \inf.
+// ok to be false
+
+slk_simplify \inf+2 = \inf.
+// should be true
+
+slk_simplify \inf= \inf-2.
+// should be true
+
+slk_simplify \inf = -\inf.
+// ok to be false
+
+/*
+- FIXED
+\inf+c --> \inf
+
+\inf-c --> \inf
+
+\inf+\inf--> \inf
+
+\inf+x | x<\inf --> \inf
+
+*/

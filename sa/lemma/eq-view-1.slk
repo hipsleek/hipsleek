@@ -1,0 +1,52 @@
+data node{
+	int val;
+	node next;
+}.
+
+pred ll<> == self=null
+     or self::node<_, q> * q::ll<>
+inv true.
+
+//pred ll0<> == self::ll<>.
+
+pred ll1<> == self=null
+     or self::node<_, q> * q::ll1<>
+inv true.
+
+
+pred ll2<> == self::node<_, q> * q::ll2<>
+inv true.
+
+
+/*
+lseg<p> == self=p
+  or self::node<_, q> * q::lseg<p>
+  inv true;
+*/
+
+//lemma "V1" self::ll1<> <-> self::ll<>.
+
+//1a
+//checkentail x::ll<> |- x::ll0<>.
+
+//1b.
+//checkentail x::ll0<> |- x::ll<>.
+
+//2a
+checkentail x::ll<> |- x::ll1<>.
+
+print residue.
+
+
+//2b
+checkentail x::ll1<> |- x::ll<>.
+print residue.
+
+
+//3a should FAIL
+checkentail x::ll<> |- x::ll2<>.
+
+
+//3b subsume
+checkentail x::ll2<> |- x::ll<>.
+print residue.

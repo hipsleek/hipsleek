@@ -1,0 +1,17 @@
+checkentail
+s_1127!=null & a=null & a=g_1128 & a!=cur_1157 & cur_1157!=sent_1136 
+& M1=M2_1135+1+M1_1133 
+& s_1127=sent_1136 & s_1129=sent_1136 & cur!=null 
+& cur=cur_1157 & l_1132=left_44_1153 & sent!=null & 0<=M2_1178 
+& 0<=M1_1176 
+& b_1177=sent & cur'=sent & 0<=M1_1133 & cur_1157!=null & s_1129!=null 
+& 0<=M2_1135 & sent_1137!=null & 0<=M2 & b=b_1177 & M2_1178=M2+1+M2_1135 & 
+b_1177!=cur_1157 & s_1129=sent_1137 & cur_1157!=s_1129 & b!=cur_1157 & 
+M1_1133=M1_1176 & l_1132!=null & l_1132!=sent & sent=sent_1136 & 
+sent=sent_1137 & b=sent & prev=prev_1155 & f4=null & 
+f3=M2_1178+M1_1176 & prev'!=null & 0<=f3 & 
+(((f4=null & prev'!=sent) | (f4=sent & prev'!=null)))
+|- false
+// f3>0 & f4!=prev'
+//(f3=0 | f4=prev')
+.

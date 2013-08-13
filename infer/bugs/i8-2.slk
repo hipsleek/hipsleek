@@ -1,0 +1,27 @@
+data node {
+	int val; 
+	node next;	
+}.
+
+HeapPred H1(node y).
+
+// (28)
+infer [m] m=-1 |- y::node<_,_> & m>=0.
+
+
+/*
+# i8-2.slk
+
+There is a contradiction but why isn't it being picked?
+
+!!! early contra detect:false
+early_hp_contra_detection#1@4@3
+early_hp_contra_detection#1 inp1 : emp&m+1=0&{FLOW,(19,20)=__norm}[]
+  es_infer_vars: [m]
+early_hp_contra_detection#1 inp2 : y::node<Anon_12,Anon_13>@M&0<=m&{FLOW,(19,20)=__norm}[]
+early_hp_contra_detection#1@4 EXIT out :no contra
+ es = None
+
+*/
+
+

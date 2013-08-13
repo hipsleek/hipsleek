@@ -6,11 +6,11 @@ data cell{
 HeapPred P(cell a).
 HeapPred G(cell a).
 
-relAssume P
+relAssume 
  P(x) --> x::cell<_>.
-relAssume P
+relAssume 
  x::cell<_> --> P(x).
-relAssume G
+relAssume 
  G(x) --> G(x).
 
 shape_infer [P][G].

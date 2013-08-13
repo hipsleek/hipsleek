@@ -1,0 +1,28 @@
+data node {
+  int val;
+  node next;
+}.
+
+data cell {
+  int val;
+}.
+
+/*
+pred ll<> == (self:node)=null
+  inv true.
+*/
+
+pred ll<> == self::node<_,_>
+  or self::cell<_>
+  inv true.
+
+/*
+# view-1.stk
+
+ERROR is detected prior to type-checking
+
+ERROR: at _0:0_0:0 
+Message: self points to different data node types
+ Fatal error: exception Failure("self points to different data node types")
+
+*/

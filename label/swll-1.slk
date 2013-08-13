@@ -1,0 +1,16 @@
+data node{
+	int val;
+	node next;
+}.
+
+
+pred ls<"n":p,"s":M> == true & ["n":self = p; "s":M = {}]
+	or self::node<_,nxt> * nxt::ls<p,M1> & ["n": self != p ; "s": M = union({self},M1)]
+inv true.
+
+checkentail x::ls<p,M> & ["n":x=p] |- true & ["s":M={}].
+
+/*
+checkentail true & ["n":x=p; "s":M={}] 
+    or x!=null & ["n":x=p & x!=p; "s":M!={}] |- true & ["s":M={}].
+*/

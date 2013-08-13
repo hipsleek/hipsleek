@@ -1,0 +1,79 @@
+data node{
+	int val;
+	node next;
+}.
+
+pred ll<> = self=null
+  or self::node<_,q>*q::ll<> 
+inv true.
+
+HeapPred H_3(node prev, node@NI cur, node@NI sent).
+HeapPred H_2(node next_1, node@NI prev, node@NI sent).
+HeapPred G(node a, node ra, node b, node rb, node@NI c).
+
+/*
+infer_exact[H_2,H_3] 
+ H_2(next_1,prev,sent) * H_3(prev,cur,sent) * 
+  cur::node<_,prev>@M & next_1!=sent & 
+   next_1!=null |- 
+     next_1::node<_,n1> * H_2(n1,cur,sent) * H_3(cur,next_1,sent)
+  .
+print residue.
+*/
+
+checkentail x::node<_,null> |- x::ll<> 8 y::ll<>.
+
+
+/*
+
+infer_exact [H_2,H_3] 
+ H_2(next_1,prev,sent) * H_3(prev,cur,sent) * 
+  cur::node<_,prev>@M & next_1!=sent & 
+   next_1!=null |- 
+     next_1::node<_,n1> * H_2(n1,cur,sent) * H_3(cur,next_1,sent)
+  .
+print residue.
+*/
+
+/*
+# bug-swl-1.slk
+
+GOT
+===
+   H_2(next_1,prev@NI,sent@NI)&next_1!=sent & 
+      next_1!=null --> next_1::node<Anon_47,n1_48>@M * 
+                   HP_49(n1_48,prev@NI,sent@NI); 
+   HP_49(n1_48,prev@NI,sent@NI)&
+       next_1!=null |#| cur::node<Anon_12,prev>@M 
+                   --> H_2(n1_48,cur@NI,sent@NI); 
+EXPECT
+======
+   cur::node<Anon_12,prev>@M * H_3(prev,cur@NI,sent@NI)
+                   H_3(cur,next_1,sent)
+
+WHY was it split into 2 parts?
+==============================
+ <1>emp&next_1!=sent & next_1!=null & Anon_13=Anon_47 & n1=n1_48 & n1=n1_48&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [
+   H_3(prev,cur@NI,sent@NI)&next_1!=null & 
+                   next_1!=sent --> emp; 
+   cur::node<Anon_12,prev>@M --> H_3(cur,next_1@NI,sent@NI)
+
+===========
+ inferred hprel: [
+   H_2(next_1,prev@NI,sent@NI)&next_1!=sent & 
+                   next_1!=null --> next_1::node<Anon_36,n1_37>@M * 
+                   HP_38(n1_37,prev@NI,sent@NI); 
+  HP_38(n1_37,prev@NI,sent@NI)&
+     next_1!=null |#| cur::node<Anon_11,prev>@M --> H_2(n1_37,cur@NI,sent@NI); 
+  cur::node<Anon_11,prev>@M&next_1!=sent & 
+                   next_1!=null --> H_3(cur,next_1@NI,sent@NI)]
+  H_3(prev,cur@NI,sent@NI)&next_1!=null & 
+                   next_1!=sent --> emp; 
+
+
+
+*/
+
+
+

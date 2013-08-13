@@ -6,8 +6,10 @@
 
 open Globals
 open Gen.Basic
-open Label_only
+(* open Label_only *)
 open Label
+module LO = Label_only.LOne
+
 
 type xpure_view = {
     xpure_view_node : ident option;
@@ -37,11 +39,11 @@ type xpure_view = {
 type formula = 
   | BForm of (b_formula*(formula_label option))
   | And of (formula * formula * loc)
-  | AndList of (spec_label * formula) list
+  | AndList of (LO.t * formula) list
   | Or of (formula * formula *(formula_label option) * loc)
   | Not of (formula *(formula_label option)* loc)
   | Forall of ((ident * primed) * formula *(formula_label option)* loc)
-  | Exists of ((ident * primed) * formula *(formula_label option)* loc)
+  | Exists of (( ident * primed) * formula *(formula_label option)* loc)
 
 (* Boolean constraints *)
 and b_formula = p_formula * ((bool * int * (exp list)) option)
@@ -80,11 +82,11 @@ and p_formula =
 
 (* Expression *)
 and exp = 
-  | Ann_Exp of (exp * typ)
+  | Ann_Exp of (exp * typ * loc)
   | Null of loc
   | Level of ((ident * primed) * loc)
   | Var of ((ident * primed) * loc)
-	  (* variables could be of type pointer, int, bags, lists etc *)
+  (* variables could be of type pointer, int, bags, lists etc *)
   | IConst of (int * loc)
   | FConst of (float * loc)
   | AConst of (heap_ann * loc)
@@ -97,12 +99,13 @@ and exp =
   | Div of (exp * exp * loc)
   | Max of (exp * exp * loc)
   | Min of (exp * exp * loc)
-	  (* bag expressions *)
+  | TypeCast of (typ * exp * loc)
+  (* bag expressions *)
   | Bag of (exp list * loc)
   | BagUnion of (exp list * loc)
   | BagIntersect of (exp list * loc)
   | BagDiff of (exp * exp * loc)
- 	  (* list expressions *)
+  (* list expressions *)
   | List of (exp list * loc)
   | ListCons of (exp * exp * loc)
   | ListHead of (exp * loc)
@@ -115,7 +118,7 @@ and exp =
 
 and relation = (* for obtaining back results from Omega Calculator. Will see if it should be here*)
   | ConstRel of bool
-  |	BaseRel of (exp list * formula)
+  | BaseRel of (exp list * formula)
   | UnionRel of (relation * relation)
 
 (* let print_formula = ref (fun (c:formula) -> "cpure printer has not been initialized") *)

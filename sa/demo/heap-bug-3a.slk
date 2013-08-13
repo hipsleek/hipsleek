@@ -12,7 +12,7 @@ HeapPred HP_1(node a).
 HeapPred HP_4(node a).
 HeapPred HP_5(node a).
 
-relAssume G
+relAssume 
 HP_4(left_39_832) * HP_5(right_39_833) * 
 x::node<key_39_831,left_39_832,right_39_833>@M
 & left_39_832=null & v_bool_39_812' 

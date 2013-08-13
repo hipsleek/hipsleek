@@ -1,0 +1,26 @@
+data node {
+  node prev;
+  node next;
+}.
+
+HeapPred H(node a).
+PostPred G(node a).
+PostPred G2(node a).
+
+//1.
+infer_exact [G,H] H(a) & b!=null|- G(b).
+print residue.
+
+/*
+# xisa-bug-2.slk
+
+Entail (1) : Valid. 
+<1>emp&b!=null&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [emp&b!=null --> G(b); H(a) --> emp]
+
+Better to have:
+   H(a) & b!=null --> G(b)
+
+If G(..) is the last consequent, we include all heap
+terms and their corresponding (reachable) pure constrains.
+*/

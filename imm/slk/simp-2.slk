@@ -1,0 +1,40 @@
+
+slk_simplify x!=0 & y>0.
+
+slk_hull x=1 | x=3.
+
+slk_pairwise x=1 | x=3.
+
+slk_pairwise x=1 | x=2.
+
+
+
+/*
+# imm/slk/simp-2.slk --dump-proof
+
+Simplify  (1): ((1<=y & 1<=x) | ((x+1)<=0 & 1<=y))
+
+Hull  (2): 1<=x & x<=3
+
+PairWise  (3): (x=1 | x=3)
+
+PairWise  (4): 1<=x & x<=2
+
+
+Hull and pairwise are beng performed but they
+are NOT proof logged yet!
+Its format should be similar to simplify which would contain
+a formula result. We should add them to proof log to make
+it easier for debugging.
+
+
+*/
+
+
+
+
+
+
+
+
+

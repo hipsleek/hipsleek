@@ -1,0 +1,82 @@
+
+data node {
+ int mark;
+ node left;
+ node right;
+}.
+
+pred tx<n,g,s,"s":M> == true&["": self = g & self != s & n != s; "s": M = {}]
+	or self::node<v,l,r> * l::tx<n,g,s,Ml> * r::tx<n,n,s,Mr> & ["": self != g & self != s & n != s ; "s": M = union({self},Ml,Mr)]
+	or self::node<v,l,r> * l::tx<n,n,s,Ml> * r::tx<n,g,s,Mr> & ["": self != g & self != s & n != s ; "s": M = union({self},Ml,Mr)]
+inv true&["": self != s & n != s].
+
+checkentail l_1148::tx<n_1141,n_1142,s_1143,Ml_1149>@M 
+* r_1150::tx<n_1144,g_1145,s_1146,Mr_1151>@M 
+* prev::tx<flted_13_1154,b_1152,a_1153,Mp>@M 
+* cur_1175::node<v_1147,r_1150,prev_1173>@M
+& ((AndList("":flted_13_1155=n_1141 & flted_13_1155=n_1142 & b=s_1143 & 
+           flted_13_1155=n_1144 & a=g_1145 & b=s_1146 & flted_13_1155=null & 
+           flted_13_1154=null & b=b_1152 & a=a_1153 & cur=cur_1175 & 
+           prev=prev_1173 & r_1150=right_21_1167 & l_1148=left_22_1171 & 
+           cur_1175=prev_1193 & cur_1191=l_1148 & cur_1191!=sentinel & 
+           !(v_bool_26_980') & cur_1191!=sentinel & !(v_bool_26_980') & 
+           cur_1191=null & v_bool_27_981' & cur_1191=null & v_bool_27_981' & 
+           flted_14_3353=null & flted_14_3354=null
+ ; "":flted_14_3354=prev' & prev'!=sentinel & flted_14_3353!=sentinel & 
+   a!=cur_1175 & b!=cur_1175 & b!=flted_13_1155 & a!=cur & (((a=null & 
+   b=sentinel) | (a=sentinel & b=null))) & 
+   exists(flted_13_1442:a_1197=prev_1193 & b_1196!=prev_1193 & 
+   b_1196!=flted_13_1442) & 
+   exists(a_1440:exists(flted_13_1441:exists(b_1439:b_1439=null & 
+   a_1440!=null & a_1440!=flted_13_1441))) & cur'=sentinel & 
+   exists(flted_13_53:b_1196!=flted_13_53) & 
+   exists(flted_13_52:exists(a_55:a_55!=null & a_55!=flted_13_52)) & 
+   b_1196!=prev_1193 & flted_14_3354=prev' & prev'!=sentinel & 
+   flted_14_3353!=sentinel & 
+   exists(sentinel_3355:exists(flted_14_3357:exists(flted_14_3356:flted_14_3356=prev' & 
+   prev'!=sentinel_3355 & flted_14_3357!=sentinel_3355)))
+ ; "s":M_3352={} & Mc=union({cur_1175},Ml_1149,Mr_1151) & Mc_1195={} & 
+   Mp_1198={} & M_3352=union(Mc_1195,Mp_1198) & exists(M_3358:M_3358={})) ) 
+| 
+(AndList( "":flted_13_1155=n_1141 & flted_13_1155=n_1142 & b=s_1143 & 
+          flted_13_1155=n_1144 & a=g_1145 & b=s_1146 & flted_13_1155=null & 
+          flted_13_1154=null & b=b_1152 & a=a_1153 & cur=cur_1175 & 
+          prev=prev_1173 & r_1150=right_21_1167 & l_1148=left_22_1171 & 
+          cur_1175=prev_1193 & cur_1191=l_1148 & cur_1191!=sentinel & 
+          !(v_bool_26_980') & cur_1191!=sentinel & !(v_bool_26_980') & 
+          cur_1191=null & v_bool_27_981' & cur_1191=null & v_bool_27_981' & 
+          flted_14_3353=null & flted_14_3354=null
+ ; "":flted_14_3354=prev' & prev'!=sentinel & flted_14_3353!=sentinel & 
+   a!=cur_1175 & b!=cur_1175 & b!=flted_13_1155 & a!=cur & (((a=null & 
+   b=sentinel) | (a=sentinel & b=null))) & 
+   exists(flted_13_1442:a_1197=prev_1193 & b_1196!=prev_1193 & 
+   b_1196!=flted_13_1442) & 
+   exists(a_1440:exists(flted_13_1441:exists(b_1439:b_1439=null & 
+   a_1440!=null & a_1440!=flted_13_1441))) & cur'=sentinel & 
+   exists(flted_13_53:b_1196!=flted_13_53) & 
+   exists(flted_13_52:exists(a_55:a_55!=null & a_55!=flted_13_52)) & 
+   b_1196!=prev_1193 & 
+   exists(sentinel_3355:exists(flted_14_3357:exists(flted_14_3356:flted_14_3356=prev' & 
+   prev'!=sentinel_3355 & flted_14_3357!=sentinel_3355)))
+ ; "s":M_3352={} & Mc=union({cur_1175},Ml_1149,Mr_1151) & Mc_1195={} & 
+   Mp_1198={} & M_3352=union(Mc_1195,Mp_1198) & M_3352={} & 
+   exists(M_3358:M_3358={})) ))
+ |-  (exists sentinel_3355,flted_14_3356,flted_14_3357,M_3358: emp&
+AndList( "":flted_14_3357=null & flted_14_3356=null & sentinel=sentinel_3355
+ ; "":cur'=sentinel & flted_14_3356=prev' & prev'!=sentinel_3355 & 
+   flted_14_3357!=sentinel_3355
+ ; "s":M_3358=union(Mc,Mp) & M_3358={})) 
+. 
+
+
+/*
+above fail due to a contradition. Hence LHS must be false.
+
+
+id: 4121; prover: MONA; loc: swt-4g-addr-lbl.ss_26:23_26:29; kind: POST
+ Imply: ante: exists(Mr_3325:exists(Ml_3326:Mp=union({prev},Ml_3326,Mr_3325))) & 
+Mp_1198={} & Mc_1195=union({cur_3292},{},{}) & M_3291=union(Mc_1195,
+Mp_1198) & exists(Mr_3323:exists(Ml_3324:M_3291=union({prev'},Ml_3324,
+Mr_3323)))
+	     conseq:  M_3291={}
+*/

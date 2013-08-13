@@ -1,0 +1,171 @@
+========set-tail-2.ss --pred-en-dangling==========
+<rstart>2
+[ \seppred{H}{x,y@NI} --> \sepnode{x}{node}{prev_15_785,next_15_786} * 
+  \seppred{HP_787}{prev_15_785,y@NI} * \seppred{HP_788}{next_15_786,y@NI},
+ \seppred{HP_787}{prev_15_785,y@NI} * \seppred{HP_788}{next_15_786,y@NI} * 
+  \sepnode{x}{node}{prev_15_785,y}&next_15_786=null --> \seppred{G}{x,y}]
+<rstop>*************************************
+*************************************<dstart>
+[ \seppred{H}{x_793,y_794} ::= \sepnode{x_793}{node}{__DP_HP_787,next_15_786}&next_15_786=null,
+ \seppred{G}{x_797,y_798} ::= \sepnode{x_797}{node}{__DP_HP_787,y_798}]
+<dstop>*************************************
+====================
+========sll-dll.ss --pred-en-dangling==========
+<rstart>4
+[ \seppred{H1}{x,p@NI}&
+  x!=null --> \sepnode{x}{node}{prev_21_801,next_21_802} * 
+  \seppred{HP_803}{prev_21_801,p@NI} * \seppred{HP_804}{next_21_802,p@NI},
+ \seppred{HP_804}{next_21_802,p@NI} --> \seppred{H1}{next_21_802,x'@NI},
+ \sepnode{x}{node}{p,next_21_802} * 
+  \seppred{G1}{next_21_802,x} --> \seppred{G1}{x,p},
+ \seppred{H1}{x,p@NI}&x=null --> \seppred{G1}{x,p}]
+<rstop>*************************************
+*************************************<dstart>
+[ \seppred{H1}{x_818,p_819} ::= 
+ \emp&x_818=null
+ or \seppred{H1}{next_21_815,x'} * 
+    \sepnode{x_818}{node}{__DP_HP_803,next_21_815}
+ ,
+ \seppred{G1}{x_823,p_824} ::= 
+ \emp&x_823=null
+ or \sepnode{x_823}{node}{p_824,next_21_802} * 
+    \seppred{G1}{next_21_802,x_823}
+ ]
+<dstop>*************************************
+====================
+========last-2.ss --pred-en-dangling==========
+<rstart>5
+[ \seppred{HP_818}{next_18_817} * \sepnode{x}{node}{val_18_816,next_18_817}&
+  res=x & next_18_817=null --> \seppred{G}{res,x},
+ \seppred{H}{x} --> \sepnode{x}{node}{val_18_816,next_18_817} * 
+  \seppred{HP_818}{next_18_817},
+ \seppred{HP_818}{next_18_817}&next_18_817!=null --> \seppred{H}{next_18_817},
+ \seppred{G}{t_37',next_18_817}&
+  next_18_817!=null --> \sepnode{t_37'}{node}{val_23_833,next_23_834} * 
+  \seppred{GP_835}{next_23_834,next_18_817@NI} * 
+  \seppred{GP_836}{next_18_817,t_37'@NI},
+ \sepnode{x}{node}{val_18_816,next_18_817} * 
+  \seppred{GP_835}{next_23_834,next_18_817@NI} * 
+  \seppred{GP_836}{next_18_817,res@NI} * 
+  \sepnode{res}{node}{val_23_833,next_23_834}&
+  next_18_817!=null --> \seppred{G}{res,x}]
+<rstop>*************************************
+*************************************<dstart>
+[ \seppred{H}{x_854} ::= \sepnode{x_854}{node}{val_18_816,next_18_817} * 
+\seppred{HP_818}{next_18_817},
+ \seppred{G}{res_856,x_857} ::= 
+ \sepnode{res_856}{node}{val_18_816,next_18_817}&res_856=x_857 & 
+ next_18_817=null
+ or \sepnode{x_857}{node}{val_18_858,next_18_859} * 
+    \seppred{GP_836}{next_18_859,res_856} * 
+    \sepnode{res_856}{node}{val_18_816,__DP_GP_835}&next_18_859!=null
+ ,
+ \seppred{HP_818}{next_18_855} ::= 
+ \emp&next_18_855=null
+ or \sepnode{next_18_855}{node}{val_18_816,next_18_817} * 
+    \seppred{HP_818}{next_18_817}
+ ,
+ \seppred{GP_836}{next_18_922,t_923} ::= 
+ \sepnode{next_18_922}{node}{val_18_914,next_18_915} * 
+ \seppred{GP_836}{next_18_915,t_923}&next_18_915!=null
+ or \emp&next_18_922!=null & next_18_922=t_923
+ ]
+<dstop>*************************************
+====================
+========dll-append_paper.ss --pred-en-dangling --classic==========
+<rstart>7
+[ \seppred{HP_800}{next_15_798,y@NI} * \seppred{HP_801}{y,x@NI}&
+  next_15_798!=null --> \seppred{H}{next_15_798,y},
+ \seppred{HP_799}{prev_15_797,y@NI} * 
+  \sepnode{x}{node}{prev_15_797,next_15_798} * \seppred{G}{next_15_798,y}&
+  next_15_798!=null --> \seppred{G}{x,y},
+ \seppred{H}{x,y} --> \sepnode{x}{node}{prev_15_797,next_15_798} * 
+  \seppred{HP_799}{prev_15_797,y@NI} * \seppred{HP_800}{next_15_798,y@NI} * 
+  \seppred{HP_801}{y,x@NI},
+ \seppred{HP_801}{y,x@NI} --> \sepnode{y}{node}{prev_21_820,next_21_821} * 
+  \seppred{HP_822}{prev_21_820,x@NI} * \seppred{HP_823}{next_21_821,x@NI},
+ \seppred{HP_799}{prev_15_797,y@NI} * \sepnode{x}{node}{prev_15_797,y} * 
+  \seppred{HP_823}{next_21_821,x@NI} * 
+  \sepnode{y}{node}{x,next_21_821} --> \seppred{G}{x,y},
+ \seppred{HP_800}{next_15_798,y@NI}&next_15_798=null --> \emp,
+ \seppred{HP_822}{prev_21_820,x@NI} --> \emp]
+<rstop>*************************************
+*************************************<dstart>
+[ \seppred{H}{x_832,y_833} ::= \sepnode{x_832}{node}{__DP_HP_799,next_15_798} * 
+\seppred{HP_800}{next_15_798,y_833} * 
+\sepnode{y_833}{node}{__DP_HP_822,__DP_HP_823},
+ \seppred{G}{x_836,y_837} ::= 
+ \sepnode{x_836}{node}{__DP_HP_799,y_837} * 
+ \sepnode{y_837}{node}{x_836,__DP_HP_823}
+ or \sepnode{x_836}{node}{__DP_HP_799,next_15_798} * 
+    \seppred{G}{next_15_798,y_837}&next_15_798!=null
+ ,
+ \seppred{HP_800}{next_15_830,y_831} ::= 
+ \emp&next_15_830=null
+ or \sepnode{next_15_830}{node}{__DP_HP_799,next_15_798} * 
+    \seppred{HP_800}{next_15_798,y_831}
+ ]
+<dstop>*************************************
+====================
+========zip_paper_leq.ss --sa-en-sp-split --pred-en-dangling==========
+<rstart>6
+[ \seppred{HP_864}{y}&res=x & x=null & res=null --> \seppred{G}{x,y,res},
+ \seppred{H}{x,y}&x=null --> \seppred{HP_864}{y},
+ \seppred{H}{x,y}&x!=null --> \sepnode{x}{node}{val_22_834,next_22_835} * 
+  \seppred{HP_836}{next_22_835,y@NI} * \seppred{HP_837}{y,x@NI},
+ \seppred{HP_837}{y,x@NI} --> \sepnode{y}{node}{val_22_841,next_22_842} * 
+  \seppred{HP_843}{next_22_842,x@NI},
+ \seppred{HP_836}{next_22_835,y@NI} * 
+  \seppred{HP_843}{next_22_842,x@NI} --> \seppred{H}{next_22_835,next_22_842},
+ \sepnode{x}{node}{val_22_834,next_22_835} * 
+  \sepnode{y}{node}{val_22_841,next_22_842} * 
+  \seppred{G}{next_22_835,next_22_842,n_867} * 
+  \sepnode{res}{node}{v_868,n_867}&v_868=val_22_841+
+  val_22_834 --> \seppred{G}{x,y,res}]
+<rstop>*************************************
+*************************************<dstart>
+[ \seppred{H}{x_914,y_915} ::= 
+ \seppred{H}{next_22_899,next_22_897} * 
+ \sepnode{y_915}{node}{val_22_896,next_22_897} * 
+ \sepnode{x_914}{node}{val_22_898,next_22_899}
+ or \seppred{HP_864}{y_915}&x_914=null
+ ,
+ \seppred{G}{x_918,y_919,res_920} ::= 
+ \sepnode{x_918}{node}{val_22_834,next_22_835} * 
+ \sepnode{y_919}{node}{val_22_841,next_22_842} * 
+ \seppred{G}{next_22_835,next_22_842,n_867} * 
+ \sepnode{res_920}{node}{v_868,n_867}&v_868=val_22_841+val_22_834
+ or \seppred{HP_864}{y_919}&res_920=x_918 & x_918=null & res_920=null
+ ]
+<dstop>*************************************
+====================
+========tll.ss --sa-dnc --pred-en-dangling==========
+<rstart>5
+[ \seppred{HP_848}{left_31_845,t@NI} * \seppred{HP_849}{right_31_846,t@NI} * 
+  \sepnode{x}{node}{left_31_845,right_31_846,t}&res=x & 
+  right_31_846=null --> \seppred{G}{x,res@NI,t},
+ \seppred{H}{x,t@NI} --> \sepnode{x}{node}{left_31_845,right_31_846,next_31_847} * 
+  \seppred{HP_848}{left_31_845,t@NI} * \seppred{HP_849}{right_31_846,t@NI} * 
+  \seppred{HP_850}{next_31_847,t@NI},
+ \seppred{HP_849}{right_31_846,t@NI}&
+  right_31_846!=null --> \seppred{H}{right_31_846,t@NI},
+ \seppred{HP_848}{left_31_845,t@NI} --> \seppred{H}{left_31_845,l_47'@NI},
+ \seppred{HP_850}{next_31_847,t@NI} * 
+  \sepnode{x}{node}{left_31_845,right_31_846,next_31_847} * 
+  \seppred{G}{right_31_846,l_878@NI,t} * 
+  \seppred{G}{left_31_845,res@NI,l_878}&
+  right_31_846!=null --> \seppred{G}{x,res@NI,t}]
+<rstop>*************************************
+*************************************<dstart>
+[ \seppred{H}{x_879,t_880} ::= \sepnode{x_879}{node}{__DP_HP_848,right_31_846,__DP_HP_850}&
+right_31_846=null
+   \/  \sepnode{x_879}{node}{left_31_845,right_31_846,__DP_HP_850} * 
+\seppred{H}{left_31_845,l_886} * \seppred{H}{right_31_846,t_880}&
+right_31_846!=null,
+ \seppred{G}{x_883,res_884,t_885} ::= \sepnode{res_884}{node}{__DP_HP_848,right_31_846,t_885}&right_31_846=null & 
+res_884=x_883
+   \/  \sepnode{x_883}{node}{left_31_845,right_31_846,__DP_HP_850} * 
+\seppred{G}{right_31_846,l_878,t_885} * 
+\seppred{G}{left_31_845,res_884,l_878}&right_31_846!=null]
+<dstop>*************************************
+====================

@@ -114,6 +114,7 @@ module Make (Token : SleekTokenS)
 	 ("axiom", AXIOM); (* [4/10/2011] An Hoa : new keyword *)
    ("alln", ALLN);
    ("app", APPEND);
+   ("AndList", ANDLIST);
    ("bagmax", BAGMAX);
 	 ("bagmin", BAGMIN);
    ("bag", BAG);
@@ -125,10 +126,16 @@ module Make (Token : SleekTokenS)
    ("catch", CATCH);
    ("checkeq", CHECKEQ);
    ("checkentail", CHECKENTAIL);
+   ("slk_hull", SLK_HULL);
+   ("slk_pairwise", SLK_PAIRWISE);
+   ("slk_simplify", SIMPLIFY);
    ("relAssume", RELASSUME);
+   ("relDefn", RELDEFN);
    ("shape_infer", SHAPE_INFER );
    ("shape_infer_proper", SHAPE_INFER_PROP );
    ( "shape_post_obligation", SHAPE_POST_OBL);
+   ("shape_divide" , SHAPE_DIVIDE);
+   ("shape_conquer" , SHAPE_CONQUER);
    ( "shape_split_base", SHAPE_SPLIT_BASE);
    ("shape_elim_useless", SHAPE_ELIM_USELESS );
    ("shape_extract", SHAPE_EXTRACT );
@@ -241,6 +248,7 @@ module Make (Token : SleekTokenS)
    (*("variance", VARIANCE);*)
 	 ("while", WHILE);
    ("with", WITH);
+   ("XPURE",XPURE);
 	 (flow, FLOW flow);]
 }
   
@@ -305,7 +313,8 @@ rule tokenizer file_name = parse
   | '&' { AND }
   | "&*" { ANDSTAR }
   | "&&" { ANDAND }
-  | "*-" { STARMINUS }
+  | "U*" { UNIONSTAR }
+  | "-*" { STARMINUS }
   | "@" { AT }
   | "@@" { ATAT }
   | "@@[" { ATATSQ }
@@ -315,6 +324,7 @@ rule tokenizer file_name = parse
   | "@D" { DERV }
   | "@M" { MUT }
   | "@R" { MAT }
+  | "@S" { SAT }
   | "@VAL" {VAL}
   | "@REC" {REC}
   | "@NI" {NI}
@@ -327,6 +337,7 @@ rule tokenizer file_name = parse
   | "@full" {PFULL}
   | "@value" {PVALUE}
   (* | "@p_ref" {PREF} *)
+  | '^' { CARET }
   | '}' { CBRACE }
   | "|]" {CLIST}
   | ':' { COLON }
@@ -347,6 +358,7 @@ rule tokenizer file_name = parse
   | '>' { GT }
   | ">=" { GTE }
   | '#' { HASH }
+  | "|#|" {REL_GUARD}
   | "->" { LEFTARROW }
   | '<' { LT }
   | "<=" { LTE }

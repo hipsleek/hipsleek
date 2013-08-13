@@ -1,0 +1,186 @@
+# infinity/bugs/inf-4b.slk --en-inf -FIXED
+
+capture         v!=\inf 
+internally as   v<\inf
+
+PROBLEM HERE!
+-------------
+// weird
+cnv_int_to_ptr@2
+cnv_int_to_ptr inp1 : ZInfinity=v
+cnv_int_to_ptr@2 EXIT out : ZInfinity=v
+Simplify  (2): ZInfinity=v
+
+// -ve inf
+cnv_int_to_ptr@3
+cnv_int_to_ptr inp1 : v=0-ZInfinity
+cnv_int_to_ptr@3 EXIT out : v=0-ZInfinity
+Simplify  (3): v+ZInfinity=0
+
+// use v<\inf
+cnv_int_to_ptr@4
+cnv_int_to_ptr inp1 : (ZInfinity<v | v<ZInfinity)
+cnv_int_to_ptr@4 EXIT out : (ZInfinity<v | v!=(\inf))
+Simplify  (4): (v!=(\inf) | ZInfinity<v)
+
+cnv_int_to_ptr@5
+cnv_int_to_ptr inp1 : (ZInfinity<v | v<ZInfinity)
+cnv_int_to_ptr@5 EXIT out : (ZInfinity<v | v!=(\inf))
+Simplify  (5): (v!=(\inf) | ZInfinity<v)
+
+cnv_int_to_ptr@6
+cnv_int_to_ptr inp1 : (v<ZInfinity | ZInfinity<v)
+cnv_int_to_ptr@6 EXIT out : (v!=(\inf) | ZInfinity<v)
+Simplify  (6): (ZInfinity<v | v!=(\inf))
+=======================================================================
+# inf75a.slk - FIXED
+
+slk_simplify x=null & mi=\inf.
+
+Gives:
+ Simplify  (1): x=null
+
+
+Reason is that normalization converts mi=\inf to true!
+Can we do this:
+   mi=\inf --> mi=ZInfinity
+   mi!=Int --> mi<ZInfinity
+
+norm_pure_input@20@19
+norm_pure_input inp1 : x=null & mi=\inf
+norm_pure_input@20 EXIT out : x=0 & true
+
+=======================================================================
+# inf75a.slk -FIXED
+
+slk_simplify x=null & mi=\inf.
+//Simplify  (1): x=null  // lose m=\inf
+
+slk_simplify  mi=\inf.
+//Simplify  (2): true // lose info
+
+slk_simplify  mi!=\inf. 
+//Simplify  (3): false // unsound
+
+slk_simplify  mi<\inf. 
+//Simplify  (4): true // lose info
+
+slk_simplify  mi<=\inf. 
+//Simplify  (5): true // OK
+
+slk_simplify  \inf<m. 
+//Simplify  (6): false OK
+
+slk_simplify  \inf<=m. 
+//Simplify  (7): m=\inf  OK
+
+slk_simplify  \inf<=\inf+1. 
+//Simplify  (8): (\inf)<=(\inf)
+
+slk_simplify  \inf<=\inf-1. 
+//Simplify  (9): (\inf)<=(\inf) // sound?
+=======================================================================
+# inf75b.slk --en-inf -debug zdebug -FIXED
+
+slk_simplify  mi!=\inf. 
+//Simplify  (1): (mi!=(\inf) | (\inf)<mi)
+// expects mi<\inf
+
+slk_simplify  mi<=\inf. 
+//Simplify  (2): mi<=(\inf)
+// expects true 
+
+slk_simplify  \inf<m. 
+// Simplify  (3): (\inf)<m
+//   expects false
+
+slk_simplify  \inf<=m. 
+//Simplify  (4): (\inf)<=m
+/// expect: m=\inf
+
+
+slk_simplify  \inf<=\inf+1. 
+//Simplify  (5): true
+// expect: true
+
+slk_simplify  \inf<=\inf-1. 
+//Simplify  (6): false
+// expect: true
+
+norm_pure_input@5
+norm_pure_input inp1 : mi!=(\inf)
+norm_pure_input@5 EXIT out : ZInfinity!=mi
+  --> mi<ZInfinity
+
+norm_pure_input@9
+norm_pure_input inp1 : mi<=(\inf)
+norm_pure_input@9 EXIT out : mi<=ZInfinity
+  --> true
+
+norm_pure_input@11
+norm_pure_input inp1 : (\inf)<m
+norm_pure_input@11 EXIT out : ZInfinity<m
+  --> false
+
+norm_pure_input@13
+norm_pure_input inp1 : (\inf)<=m
+norm_pure_input@13 EXIT out : ZInfinity<=m
+  --> ZInfinity=m
+
+norm_pure_input@15
+norm_pure_input inp1 : (\inf)<=(1+(\inf))
+norm_pure_input@15 EXIT out : ZInfinity<=(1+ZInfinity)
+  --> true
+
+norm_pure_input@17
+norm_pure_input inp1 : ((\inf)+1)<=(\inf)
+norm_pure_input@17 EXIT out : (ZInfinity+1)<=ZInfinity
+  --> true
+
+=======================================================================
+# is-3b.slk - FIXED
+
+checkentail x::bnd1<0,dmi,dmx>  
+   & n=0 & dmi=\inf 
+   //& 0=(\inf)+dmx // why this fails?
+   & dmx=-\inf
+   & mi=min(a,dmi) & mx=max(a,dmx)
+   |- a=mi & 
+       mx=a
+      .
+The above succeed with dmx=-inf but not 0=\inf+dmx
+I think your normalization need to ensure that we will
+have equality, where possible, than can be picked
+for substitution.
+
+=======================================================================
+=======================================================================
+=======================================================================
+=======================================================================
+=======================================================================
+=======================================================================
+=======================================================================
+=======================================================================
+=======================================================================
+=======================================================================
+=======================================================================
+=======================================================================
+=======================================================================
+=======================================================================
+=======================================================================
+=======================================================================
+=======================================================================
+=======================================================================
+=======================================================================
+=======================================================================
+=======================================================================
+=======================================================================
+=======================================================================
+=======================================================================
+=======================================================================
+=======================================================================
+=======================================================================
+=======================================================================
+=======================================================================
+=======================================================================
+=======================================================================
