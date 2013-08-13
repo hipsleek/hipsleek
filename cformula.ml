@@ -3875,6 +3875,24 @@ let get_hpdef_name_w_tupled hpdef=
      | CP.HPRelLDefn hps -> hps
      | _ -> []
 
+let subst_opt ss f_opt=
+  match f_opt with
+    | None -> None
+    | Some f -> Some (subst ss f)
+
+let h_subst_opt ss hf_opt=
+  match hf_opt with
+    | None -> None
+    | Some hf -> Some (h_subst ss hf)
+
+let subst_hpdef ss hpdef=
+  let n_guard = h_subst_opt ss hpdef.hprel_def_guard in
+  let n_body = List.map (fun (p, f_opt) -> (p, subst_opt ss f_opt)) hpdef.hprel_def_body in
+  { hpdef with
+      hprel_def_guard = n_guard;
+      hprel_def_body = n_body;
+  }
+
 let hpdef_cmp d1 d2 =
   try
     let hp1 = get_hpdef_name d1.hprel_def_kind in
@@ -4114,7 +4132,7 @@ let extract_hrel_head_x (f0:formula) =
             else
               None
         )
-    | Or _ -> report_error no_pos "CF.extract_hrel_head"
+    | Or _ -> None
   in
   helper f0
 
