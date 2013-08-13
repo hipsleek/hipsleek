@@ -6172,3 +6172,38 @@ let combine_path_defs sel_hps1 path_defs=
         [(CF.mk_hprel_def k (mkHRel hp args0 no_pos) g path_fs lib)]
   in
   List.fold_left (fun ls hp -> ls@(combine_one_def hp)) [] sel_hps1
+
+(*find def as the form H1 = H2, subst into views, hpdef, hp_defs*)
+let reuse_equiv_hpdefs_x prog hpdefs hp_defs=
+  let get_equiv_def (r_hp_defs, r_drop_hps, r_equivs) ((k, hrel, _,  f) as hp_def)=
+    let eq_hp_opt = CF.extract_hrel_head f in
+    match eq_hp_opt with
+      | None -> (r_hp_defs@[hp_def], r_drop_hps, r_equivs)
+      | Some hp1 ->
+            let hp,_ = CF.extract_HRel hrel in
+            (r_hp_defs, r_drop_hps@[hp], r_equivs@[(hp,hp1)])
+  in
+  let update_hpdef drop_hps equivs r hpdef=
+    let hp,_ = CF.extract_HRel hpdef.CF.hprel_def_hrel in
+    if CP.mem_svl hp drop_hps then
+      r
+    else
+      let n_hpdef = CF.subst_hpdef equivs hpdef in
+      (r@[n_hpdef])
+  in
+  let r_hp_defs, drop_hps, equivs = List.fold_left get_equiv_def ([],[],[]) hp_defs in
+  if drop_hps = [] then (hpdefs, hp_defs) else
+    (*update hpdefs: remove + subst*)
+    let r_hpdefs = List.fold_left (update_hpdef drop_hps equivs) [] hpdefs in
+    (*subst hp_defs*)
+    let r_hp_defs1 = List.map (fun (k, hrel, g, f) -> (k, hrel, CF.h_subst_opt equivs g, CF.subst equivs f)) r_hp_defs in
+    (*subst cviews*)
+    (* let n_cviews = List.map (fun v -> {v with }) prog.Cast.prog_view_decls in *)
+    (r_hpdefs, r_hp_defs1)
+
+let reuse_equiv_hpdefs prog hpdefs hp_defs=
+  let pr1 = pr_list_ln Cprinter.string_of_hp_rel_def in
+  let pr2 = pr_list_ln Cprinter.string_of_hprel_def in
+  Debug.no_2 "SAU.reuse_equiv_hpdefs" pr2 pr1 (pr_pair pr2 pr1)
+      (fun _ _ -> reuse_equiv_hpdefs_x prog hpdefs hp_defs)
+      hpdefs hp_defs

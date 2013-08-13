@@ -1961,17 +1961,20 @@ let infer_shapes_conquer iprog prog proc_name ls_is sel_hps=
   else (all_hpdefs, cmb_defs)
   in
   let n_all_hp_defs1 = SAU.combine_hpdefs n_all_hpdefs in
-  let n_cmb_defs1 = if !Globals.pred_reuse then
+  (*reuse: check equivalent form - substitute*)
+  let n_cmb_defs1, n_all_hp_defs2 = SAU.reuse_equiv_hpdefs prog n_cmb_defs n_all_hp_defs1 in
+  (*reuse with lib*)
+  let n_cmb_defs2 = if !Globals.pred_equiv then
     let lib_matching = match_hps_views n_all_hp_defs1 prog.CA.prog_view_decls in
     (* let _ = DD.info_pprint ("        sel_hp_rel:" ^ (!CP.print_svl sel_hps)) no_pos in *)
     (* let _ =  DD.info_pprint (" matching: " ^ *)
     (*     (let pr = pr_list_ln (fun (hp,view_names) -> (!CP.print_sv hp) ^ " :== " ^ *)
     (*         ( String.concat " OR " (List.map Cprinter.prtt_string_of_h_formula view_names))) in pr lib_matching)) no_pos in *)
-    collect_sel_hpdef n_cmb_defs sel_hps dang_hps lib_matching
-  else n_cmb_defs
+    collect_sel_hpdef n_cmb_defs1 sel_hps dang_hps lib_matching
+  else n_cmb_defs1
   in
-  let _ = List.iter (fun hp_def -> rel_def_stk # push hp_def) (n_cmb_defs1@tupled_defs) in
-  ([],(* cmb_defs, *) n_all_hp_defs1)
+  let _ = List.iter (fun hp_def -> rel_def_stk # push hp_def) (n_cmb_defs2@tupled_defs) in
+  ([],(* cmb_defs, *) n_all_hp_defs2)
 
 let infer_shapes_x iprog prog proc_name (constrs0: CF.hprel list) sel_hps post_hps hp_rel_unkmap unk_hpargs0a link_hpargs0 need_preprocess detect_dang: (CF.hprel list * CF.hp_rel_def list)
       (* (CF.hprel list * CF.hp_rel_def list* (CP.spec_var*CP.exp list * CP.exp list) list ) *) =
