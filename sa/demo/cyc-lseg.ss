@@ -6,6 +6,7 @@ HeapPred H(node x).
 HeapPred G(node y).
 
 ll<> == self=null
+//  or self::node<q>*q::ll<>
   or self::node<q>*q::ll<>;
 
 void trav(node x)
