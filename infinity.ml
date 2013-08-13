@@ -63,6 +63,8 @@ let rec normalize_exp (exp: CP.exp) : CP.exp =
     		  else CP.Add(e1_norm,e2_norm,pos)
    | _ -> exp
 
+let normalize_exp (exp: CP.exp) : CP.exp =
+Debug.no_1 "infinity.normalize_exp" string_of_formula_exp string_of_formula_exp normalize_exp exp 
 
 (* normalize \inf <= const + var ~~> \inf <= var and so on *)
 let check_const_add_inf (exp: CP.exp) : bool * CP.exp = 
@@ -351,6 +353,14 @@ let rec normalize_b_formula (bf: CP.b_formula) :CP.b_formula =
             else if CP.is_inf e1_norm && CP.is_const_exp e2_norm then CP.BConst(false,pos)
             else if check_neg_inf2_const e1_norm e2_norm || check_neg_inf2_const e2_norm e1_norm 
             then CP.BConst(false,pos)
+            else if fst(check_const_add_inf e1_norm) && CP.is_inf e2_norm then 
+              let ec = snd (check_const_add_inf e1_norm) in helper (CP.Eq(ec,e2_norm,pos))
+            else if fst(check_const_add_inf e2_norm) && CP.is_inf e1_norm then 
+              let ec = snd (check_const_add_inf e2_norm) in helper (CP.Eq(e1_norm,ec,pos))
+            else if fst(check_const_add_neg_inf e1_norm e2_norm) then
+              let ec = snd(check_const_add_neg_inf e1_norm e2_norm) in helper (CP.Eq(ec,e2_norm,pos)) 
+            else if fst(check_const_add_neg_inf e2_norm e1_norm) then
+              let ec = snd(check_const_add_neg_inf e2_norm e1_norm) in helper (CP.Eq(e1_norm,ec,pos)) 
             else CP.Eq(e1_norm,e2_norm,pos)
       | CP.Neq (e1,e2,pos) -> 
             let e1_norm = normalize_exp e1 in
