@@ -1001,7 +1001,7 @@ self=null --> P1(self)]
 PROBLEM : why did we include an unrelated n::node<_,null>
  when folding with unknown predicate?
 ===================================================================
-# sp-5a.slk
+# sp-5a.slk, sp-5b.slk: FIXED
 
 These are very basic examples. I am surprised that they could
 be wrong..

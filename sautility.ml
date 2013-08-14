@@ -2714,7 +2714,14 @@ let rec elim_irr_eq_exps prog args f=
           let _,new_p1 =  CP.prune_irr_neq new_p keep_ptrs1 in
           let new_h1 = CF.h_subst ss fb.CF.formula_base_heap in
           let new_h2 = filter_unconnected_hf args new_h1 in
-          CF.Base {fb with CF.formula_base_pure = MCP.mix_of_pure new_p1;
+          let eqNulls = MCP.get_null_ptrs (MCP.mix_of_pure new_p1) in
+          let ps2 = List.filter (fun p ->
+              if CP.is_eq_between_vars p then
+                CP.diff_svl (CP.fv p) eqNulls != []
+              else true
+          ) (CP.list_of_conjs new_p1) in
+          let new_p2 = CP.conj_of_list ps2 (CP.pos_of_formula new_p1) in
+          CF.Base {fb with CF.formula_base_pure = MCP.mix_of_pure new_p2;
               CF.formula_base_heap = new_h2}
     | CF.Exists fe ->
         let qvars, base1 = CF.split_quantifiers f in
@@ -3968,7 +3975,7 @@ let mk_hprel_def prog is_pre (cdefs:(CP.spec_var *CF.hp_rel_def) list) unk_hps u
         in
         let base_case_exist,defs2 = simplify_set_of_formulas prog is_pre cdefs hp new_args unk_hps unk_svl defs1 in
         if defs2 = [] (* || not base_case_exist *) then [] else
-          let defs1 = List.map CF.remove_neqNull_redundant_hnodes_f defs in
+          let defs1 = List.map CF.remove_neqNull_redundant_hnodes_f defs2 in
           (*make disjunction*)
           let def = List.fold_left (fun f1 f2 -> CF.mkOr f1 f2 (CF.pos_of_formula f1))
             (List.hd defs1) (List.tl defs1) in
