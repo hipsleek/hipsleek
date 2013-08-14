@@ -1196,7 +1196,7 @@ let smart_subst_x nf1 nf2 hpargs eqs0 reqs unk_svl prog_vars=
   let nf11 = {nf1a with CF.formula_base_pure = MCP.mix_of_pure new_p13} in
   let _ = Debug.ninfo_pprint ("nf11: " ^ (Cprinter.string_of_formula_base nf11)) no_pos in
   (*rhs - nf2: not handle yet*)
-  let new_nf2 = CF.subst_b (new_eqs2@reqs) nf2 in
+  let new_nf2 = CF.subst_b (* (new_eqs2@reqs) *) new_eqs2 nf2 in
   (*subst again*)
   let nleqs0 = (MCP.ptr_equations_without_null nf11.CF.formula_base_pure) in
   let ptrs_group1 = (CF.get_ptrs_group_hf nf1.CF.formula_base_heap)@(CF.get_ptrs_group_hf nf11.CF.formula_base_heap) in
