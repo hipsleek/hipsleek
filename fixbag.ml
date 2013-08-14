@@ -351,7 +351,12 @@ let rec elim_disj p flag = match p with
 
 let rec elim_ex p = match p with
   | Exists (_,f,_,_) -> elim_ex f
-  | _ -> p
+  | BForm _ -> p
+  | And (f1,f2,pos) -> CP.mkAnd (elim_ex f1) (elim_ex f2) pos
+  | Or (f1,f2,o,pos) -> CP.mkOr (elim_ex f1) (elim_ex f2) o pos
+  | Not (f,o,pos) -> Not (elim_ex f,o,pos)
+  | Forall (_,f,_,_) -> p
+  | AndList _ -> report_error no_pos "to handle AndList"
 
 let rec elim_red p =
   let p = elim_ex p in
@@ -483,12 +488,15 @@ let helper (rel,pfs) ante_vars =
     | CP.SpecVar (Named t, _, _) -> t="eb"||t="ub"||t="b"||t="bi"||t="ubi"
     | _ -> false 
   in
+  let mk_exists_no_simp vs pure o p = List.fold_left (fun f v -> Exists (v,f,o,p)) pure vs in
+(*  let _ = DD.info_hprint (add_str "input_pairs3: " *)
+(*    (pr_pair !CP.print_formula (pr_list !CP.print_formula))) (rel,pfs) no_pos in*)
   let pfs = List.map (fun p -> 
     let exists_vars = 
       CP.diff_svl 
         (List.filter (fun x -> not(CP.is_bag_typ x 
         || CP.is_rel_typ x || is_special_typ x)) (CP.fv p)) fv_rel 
-    in CP.mkExists exists_vars p None no_pos) pfs in
+    in mk_exists_no_simp exists_vars p None no_pos) pfs in
   match pfs with
   | [] -> []
   | _ -> [(rel, List.fold_left (fun p1 p2 -> 

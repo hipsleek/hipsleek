@@ -374,7 +374,8 @@ and pure_bag_equations_aux with_emp (f:formula) keep_vars: (spec_var * spec_var)
   let pr1 = string_of_bool in
   let pr2 = !print_pure_f in
   let pr3 = pr_list (pr_pair !print_sv !print_sv) in
-  Debug.no_2 "pure_bag_equations_aux" pr1 pr2 pr3 pure_bag_equations_aux_x with_emp f keep_vars
+  let pr4 = !print_svl in
+  Debug.no_3 "pure_bag_equations_aux" pr1 pr2 pr4 pr3 pure_bag_equations_aux_x with_emp f keep_vars
 
 (* use_with_null_const for below *)
 (* assume that f is a satisfiable conjunct *) 

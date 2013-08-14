@@ -1703,7 +1703,8 @@ let infer_collect_rel is_sat estate lhs_h_mix lhs_mix rhs_mix pos =
       let rhs_mix_new = MCP.mix_of_pure rhs_p_new in
       if not(check_sat) then
         begin
-          let p, rel_ass = infer_lhs_contra_estate 3 estate lhs_mix pos "infer_collect_rel: ante contradict with conseq" in
+          let p, rel_ass = infer_lhs_contra_estate 3 estate lhs_mix pos 
+            "infer_collect_rel: ante contradict with conseq" in
           DD.dinfo_pprint ">>>>>> infer_collect_rel <<<<<<" pos;
           DD.dinfo_pprint "LHS and RHS Contradiction detected for:" pos; 
           DD.dinfo_hprint (add_str "lhs" Cprinter.string_of_pure_formula) lhs_c no_pos;
@@ -1828,10 +1829,10 @@ let infer_collect_rel is_sat estate lhs_h_mix lhs_mix rhs_mix pos =
         (* End - Auxiliary function *)
         let inf_rel_ls = List.map (filter_ass lhs_p_new) rel_rhs in
         DD.trace_hprint (add_str "Rel Inferred (b4 pairwise):" (pr_list print_only_lhs_rhs)) inf_rel_ls pos;
-        let inf_rel_ls = 
-          if is_bag_cnt then 
-            List.map (fun (lhs,rhs) -> (pairwise_proc lhs,rhs)) inf_rel_ls 
-          else inf_rel_ls in
+(*        let inf_rel_ls = *)
+(*          if is_bag_cnt then *)
+(*            List.map (fun (lhs,rhs) -> (pairwise_proc lhs,rhs)) inf_rel_ls *)
+(*          else inf_rel_ls in*)
         DD.trace_hprint (add_str "Rel Inferred (b4 wrap_exists):" (pr_list print_only_lhs_rhs)) inf_rel_ls pos;
         let inf_rel_ls = List.concat (List.map wrap_exists inf_rel_ls) in
       	(* below causes non-linear LHS for relation *)
