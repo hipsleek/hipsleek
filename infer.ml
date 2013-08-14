@@ -2760,7 +2760,7 @@ let infer_collect_hp_rel_x prog (es:entail_state) rhs0 rhs_rest (rhs_h_matched_s
               let es_cond_path = CF.get_es_cond_path es in
               let truef = (CF.mkTrue (CF.mkNormalFlow()) pos) in
               let lhs, new_es =
-                if !Globals.do_classic_frame_rule then
+                if false (* !Globals.do_classic_frame_rule *) then
                   let rest_args = CF.h_fv rhs_rest in
                   let lhds, lhvs, lhrs = CF.get_hp_rel_bformula lhs_b1 in
                   let helper (hp,eargs,_)=(hp,List.concat (List.map CP.afv eargs)) in
