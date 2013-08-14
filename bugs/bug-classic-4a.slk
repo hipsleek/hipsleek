@@ -36,6 +36,7 @@ infer_exact
 [P1] n::node<_,null> & self=null
 |- P1(self).
 print residue.
+
 // should just fail
 
 /*
@@ -48,11 +49,12 @@ self=null --> P1(self)]
 
 PROBLEM : why did we include an unrelated n::node<_,null>?
 */
-
+/*
 infer_exact
 [P1] n::node<_,null> 
 |- P1(self).
 print residue.
+*/
 // should just fail!
 
 

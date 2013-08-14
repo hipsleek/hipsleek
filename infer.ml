@@ -2755,6 +2755,7 @@ let infer_collect_hp_rel_x prog (es:entail_state) rhs0 rhs_rest (rhs_h_matched_s
         if (CP.intersect mis_nodes (List.fold_left SAU.close_def v_lhs leqs)) = [] then
           begin
             let _ = Debug.tinfo_pprint ">>>>>> mismatch ptr is not a selective variable <<<<<<" pos in
+            (*bugs/bug-classic-4a.slk: comment the following stuff*)
             let rhs_hps = (List.map fst r_hpargs) in
             if rhs_hps <> [] then
               let es_cond_path = CF.get_es_cond_path es in
@@ -2778,31 +2779,14 @@ let infer_collect_hp_rel_x prog (es:entail_state) rhs0 rhs_rest (rhs_h_matched_s
                     [] leqs [] post_hps [] [] pos in
                   (CF.Base ass_lhs1, new_es)
                 else
-                  (* let n_es = {es with CF.es_formula = CF.mkStar es.CF.es_formula *)
-                  (*         (CF.formula_of_heap rhs0 no_pos) Flow_combine no_pos;} *)
-                  (* in *)
                   (truef, es)
               in
               let knd = CP.RelAssume rhs_hps in
               let lhs = lhs in
               let rhs = CF.Base rhs_b1 in
               let hprel_ass = [CF.mkHprel_1 knd lhs None rhs es_cond_path] in
-              (* let hprel_ass = [{ *)
-              (*     CF.hprel_kind = CP.RelAssume rhs_hps; *)
-              (*     unk_svl = [] ; *)
-              (*     unk_hps = []; *)
-              (*     predef_svl = [] ; *)
-              (*     hprel_lhs = lhs; *)
-              (*     hprel_guard = None; *)
-              (*     hprel_rhs = CF.Base rhs_b1; *)
-              (*     hprel_path = es_cond_path; *)
-              (*     hprel_proving_kind = Others.proving_kind # top_no_exc; *)
-              (* }] in *)
               let _ = rel_ass_stk # push_list hprel_ass in
               let _ = Log.current_hprel_ass_stk # push_list hprel_ass in
-              (* let n_lhs = CF.mkStarH lhs_b1.CF.formula_base_heap rhs0 pos in *)
-              (* let n_rhs,_ = CF.drop_hrel_f (CF.Base rhs_b) rhs_hps in *)
-              (* (true, es, lhs_b0.CF.formula_base_heap,NOne) *)
               let new_es1 = {new_es with CF.es_infer_hp_rel = es.CF.es_infer_hp_rel @  hprel_ass;
                   CF.es_infer_vars_sel_post_hp_rel = (es.CF.es_infer_vars_sel_post_hp_rel @ post_hps);} in
               (true, new_es1, rhs0 ,None)
@@ -2951,7 +2935,7 @@ let infer_collect_hp_rel_classsic i prog (es:entail_state) rhs pos =
   let pr2 = Cprinter.string_of_h_formula in
   let pr3 = Cprinter.string_of_estate_infer_hp in
   let pr4 =  pr_pair string_of_bool pr3 in
-  Debug.no_2_num i "infer_collect_hp_rel" pr1 pr2 pr4
+  Debug.no_2_num i "infer_collect_hp_rel_classsic" pr1 pr2 pr4
 ( fun _ _ -> infer_collect_hp_rel_classsic_x prog es rhs pos) es.CF.es_formula rhs
 (*=*****************************************************************=*)
          (*=**************INFER REL HP ASS*****************=*)
