@@ -31,7 +31,7 @@ module MCP = Mcpure
 module SY_CEQ = Syn_checkeq
 
 
-let generate_lemma = ref(fun iprog n t iante iconseq -> [],[])
+let generate_lemma = ref(fun (iprog: I.prog_decl) n t iante iconseq -> [],[])
 
 let sleek_entail_check_x isvl (cprog: C.prog_decl) proof_traces ante conseq=
   let pr = Cprinter.string_of_struc_formula in
@@ -186,6 +186,6 @@ and check_equiv_list iprog prog guiding_svl proof_traces need_lemma fs1 fs2: boo
       (fun _ _ -> check_equiv_list_x iprog prog guiding_svl proof_traces need_lemma fs1 fs2) fs1 fs2
 
 
-let _ = Sautility.check_equiv := check_equiv
-let _ = Sautility.check_equiv_list := check_equiv_list
+(* let _ = Sautility.check_equiv := check_equiv *)
+(* let _ = Sautility.check_equiv_list := check_equiv_list *)
 
