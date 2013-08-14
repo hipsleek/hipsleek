@@ -6,14 +6,14 @@ data node{
 HeapPred P1(node a).
 
 //(1)
-
+/*
 infer [P1] 
    x=null
 |- (exists x: P1(x) & x=p).
 print residue.
 // emp --> P1(p)
-
-
+*/
+/*
 //(2)
 // emp&x=null&{FLOW,(19,20)=__norm}[] [P1] |-  EBase exists (Expl)(Impl)[p](ex)P1(p)&{FLOW,(19,20)=__norm}[]
 // p is not implicit
@@ -22,7 +22,7 @@ infer [P1]
 |- P1(p).
 print residue.
 // emp --> P1(p)
-
+*/
 
 //(3)
 infer [P1] 
@@ -34,6 +34,7 @@ print residue.
 // cannot prove x=p
 // should fail
 
+/*
 //(4)
 // emp&x=null&{FLOW,(19,20)=__norm}[] [P1] |-  EBase exists (Expl)(Impl)[p](ex)P1(p)&p=x&{FLOW,(19,20)=__norm}[]
 // p is not implicit
@@ -44,7 +45,7 @@ print residue.
 // x=null --> P(x)
 // cannot prove x=p
 // should fail
-
+*/
 /*
 
   lhs |- P(v*) & v=w

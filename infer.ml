@@ -1153,13 +1153,15 @@ let rec infer_pure_m_x unk_heaps estate lhs_rels lhs_xpure_orig lhs_xpure0
                                 (*LOC: es_cond_path from estate*)
                                 let es_cond_path = CF.get_es_cond_path new_estate  in
                                       let rel_ass1,heap_ass,i_hps = List.fold_left ( fun (ls1, ls2, r_hps) (a, p1, p2) ->
-                                    let ohf = Predicate.trans_rels p1 in
-                                    match ohf with
-                                      | Some (hp, hf) ->
-                                            let knd = CP.RelAssume [hp] in
-                                            let lhs = CF.formula_of_heap hf pos in
-                                            let rhs = CF.formula_of_pure_P p2 pos in
-                                            let hp_rel = CF.mkHprel_1 knd lhs None rhs es_cond_path in
+                                          (* let _ = DD.info_hprint (add_str "p1 : " !CP.print_formula) p1 pos in *)
+                                          (* let _ = DD.info_hprint (add_str "p2 : " !CP.print_formula) p2 pos in *)
+                                          let ohf = Predicate.trans_rels p1 in
+                                          match ohf with
+                                            | Some (hp, hf) ->
+                                                  let knd = CP.RelAssume [hp] in
+                                                  let lhs = CF.formula_of_heap hf pos in
+                                                  let rhs = CF.formula_of_pure_P p2 pos in
+                                                  let hp_rel = CF.mkHprel_1 knd lhs None rhs es_cond_path in
                                                   (ls1, ls2@[hp_rel],r_hps@[hp])
                                             | None -> (ls1@[(a, p1, p2)], ls2,r_hps)
                                       ) ([], [], []) rel_ass
@@ -2665,7 +2667,8 @@ let update_es prog es hds hvs ass_lhs_b rhs rhs_rest r_new_hfs defined_hps lsele
      in
      let new_es_formula, new_lhs, new_holes = check_consumed_node rhs new_es_formula in
      let new_es_formula1 = CF.subst m new_es_formula in
-     let new_es = {es with CF. es_infer_vars_hp_rel = es.CF.es_infer_vars_hp_rel@rvhp_rels;
+     let new_es = {es with CF.es_infer_vars_hp_rel = CP.diff_svl (es.CF.es_infer_vars_hp_rel@rvhp_rels) (CF.get_hp_rel_name_h_formula rhs);
+         CF.es_infer_vars_rel = CP.diff_svl es.CF.es_infer_vars_rel (CF.h_fv rhs);
          CF.es_infer_hp_rel = es.CF.es_infer_hp_rel @ hp_rel_list;
          CF.es_infer_hp_unk_map = (es.CF.es_infer_hp_unk_map@unk_map);
          CF.es_infer_vars_sel_post_hp_rel = (es.CF.es_infer_vars_sel_post_hp_rel @ post_hps);
@@ -2738,13 +2741,6 @@ let infer_collect_hp_rel_x prog (es:entail_state) rhs0 rhs_rest (rhs_h_matched_s
           DD.tinfo_pprint ("  unmatch: " ^ (Cprinter.string_of_h_formula rhs)) pos;
           DD.tinfo_pprint ("  classic: " ^ (string_of_bool !Globals.do_classic_frame_rule)) pos
         in
-        let mis_nodes =  match rhs with
-          | DataNode n -> [n.h_formula_data_node]
-          | ViewNode n -> [n.h_formula_view_node]
-          | HRel (_,eargs,_) -> CP.remove_dups_svl (List.concat (List.map CP.afv eargs))
-          | _ -> report_error pos "Expect a node or a hrel"
-                (* CF.get_ptr_from_data_w_hrel *)
-        in
         let post_hps,prog_vars = get_prog_vars es.CF.es_infer_vars_sel_hp_rel rhs proving_kind#top in
         (********** BASIC INFO LHS, RHS **********)
         let l_hpargs = CF.get_HRels lhs_b0.CF.formula_base_heap in
@@ -2755,7 +2751,14 @@ let infer_collect_hp_rel_x prog (es:entail_state) rhs0 rhs_rest (rhs_h_matched_s
           (leqs@reqs) reqs [] (prog_vars@es.es_infer_vars)
         in
         let rhs = rhs_b1.CF.formula_base_heap in
-        if (CP.intersect mis_nodes (List.fold_left SAU.close_def v_lhs leqs)) = [] then
+        let mis_nodes =  match rhs with
+          | DataNode n -> [n.h_formula_data_node]
+          | ViewNode n -> [n.h_formula_view_node]
+          | HRel (_,eargs,_) -> CP.remove_dups_svl (List.concat (List.map CP.afv eargs))
+          | _ -> report_error pos "Expect a node or a hrel"
+                (* CF.get_ptr_from_data_w_hrel *)
+        in
+        if (CP.intersect mis_nodes (List.fold_left SAU.close_def v_lhs (leqs@reqs))) = [] then
           begin
             let _ = Debug.tinfo_pprint ">>>>>> mismatch ptr is not a selective variable <<<<<<" pos in
             (*bugs/bug-classic-4a.slk: comment the following stuff*)

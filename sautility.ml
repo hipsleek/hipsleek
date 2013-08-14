@@ -1218,8 +1218,9 @@ let smart_subst_x nf1 nf2 hpargs eqs0 reqs unk_svl prog_vars=
 let smart_subst nf1 nf2 hpargs eqs reqs unk_svl prog_vars=
   let pr1 = Cprinter.string_of_formula_base in
   let pr2 = !CP.print_svl in
-  Debug.no_3 "smart_subst" pr1 pr1 pr2 (pr_triple pr1 pr1 pr2)
-      (fun _ _ _ -> smart_subst_x nf1 nf2 hpargs eqs reqs unk_svl prog_vars) nf1 nf2 prog_vars
+  let pr3 = pr_list (pr_pair !CP.print_sv !CP.print_sv)  in
+  Debug.no_4 "smart_subst" pr1 pr1 pr2 pr3 (pr_triple pr1 pr1 pr2)
+      (fun _ _ _ _ -> smart_subst_x nf1 nf2 hpargs eqs reqs unk_svl prog_vars) nf1 nf2 prog_vars eqs
 
 let smart_subst_lhs f lhpargs leqs infer_vars=
   match f with
