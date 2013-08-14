@@ -2234,8 +2234,8 @@ let find_undefined_selective_pointers_x prog lfb lmix_f unmatched rhs_rest rhs_h
       not (Gen.BList.mem_eq SAU.check_hp_arg_eq (hp,args) ls_defined_hpargs)
   ) lhs_selected_hpargs0@classic_lhs_sel_hpargs
   in
-  (*********CLASSIC**sa/demo/xisa-remove2**********)
-  let classic_ptrs = if !Globals.do_classic_frame_rule && (CF.is_empty_heap rhs_rest) then
+  (*********CLASSIC**sa/demo/xisa-remove2; bugs/bug-classic-4a**********)
+  let classic_ptrs = if false (* !Globals.do_classic_frame_rule *) && (CF.is_empty_heap rhs_rest) then
     let acc_ptrs = List.fold_left (fun ls (_, args) -> ls@args) [] (lhs_selected_hpargs1@rhs_sel_hpargs@(List.map (fun (a,b,_,_) -> (a,b)) total_defined_hps)) in
     let cl_acc_ptrs= SAU.look_up_closed_ptr_args prog hds hvs acc_ptrs in
     List.fold_left (fun ls hd -> let sv = hd.CF.h_formula_data_node in
@@ -2409,6 +2409,9 @@ let simplify_lhs_rhs prog lhs_b rhs_b leqs reqs hds hvs lhrs rhrs lhs_selected_h
   let filter_his = elim_redun_his (List.concat (List.map get_h_formula_data_fr_hnode history)) [] in
   let _ = Debug.ninfo_pprint ("    lhs_args_ni:" ^(!CP.print_svl lhs_args_ni)) no_pos in
   let _ = Debug.ninfo_pprint ("    rhs_args_ni:" ^(!CP.print_svl rhs_args_ni)) no_pos in
+  let _ = Debug.ninfo_pprint ("    svl:" ^(!CP.print_svl svl)) no_pos in
+  let _ = Debug.ninfo_pprint ("    keep_root_hrels:" ^(!CP.print_svl keep_root_hrels)) no_pos in
+  let _ = Debug.ninfo_pprint ("    classic_nodes:" ^(!CP.print_svl classic_nodes)) no_pos in
   let lhs_b1,rhs_b1 = SAU.keep_data_view_hrel_nodes_two_fbs prog lhs_b rhs_b
     (hds@filter_his) hvs (lhp_args@rhp_args) leqs reqs [] (svl@keep_root_hrels@classic_nodes)
     (lhs_keep_rootvars@keep_root_hrels) lhp_args lhs_args_ni
@@ -2761,7 +2764,7 @@ let infer_collect_hp_rel_x prog (es:entail_state) rhs0 rhs_rest (rhs_h_matched_s
               let es_cond_path = CF.get_es_cond_path es in
               let truef = (CF.mkTrue (CF.mkNormalFlow()) pos) in
               let lhs, new_es =
-                if !Globals.do_classic_frame_rule then
+                if false (* !Globals.do_classic_frame_rule *) then
                   let rest_args = CF.h_fv rhs_rest in
                   let lhds, lhvs, lhrs = CF.get_hp_rel_bformula lhs_b1 in
                   let helper (hp,eargs,_)=(hp,List.concat (List.map CP.afv eargs)) in

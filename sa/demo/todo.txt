@@ -5922,7 +5922,29 @@ void trav(ref node y)
    }
 }
 
+How come pred-en-split not working properly?
+
 Obtained
+[ G(x_884,x_885) ::= 
+ x_884::node<next_21_873>@M * G(next_21_873,x_885)
+ or emp&x_884=x_885 & x_885=null & x_884=null
+ ,
+ H(x_883) ::= 
+ H(next_21_881) * x_883::node<next_21_881>@M
+ or emp&x_883=null
+ ]
+
+Expecting:
+  G(y,y') ::= G2(y) * G3(y')
+  G2(y_884) ::= 
+   y_884::node<next_20_873>@M * G(next_20_873)
+   or emp&y_884=null
+  G3(y') ::= y'=null
+
+Maybe lemma synthesis is required.
+
+
+
 --------
 
 [ G(y_884,y_885) ::= 

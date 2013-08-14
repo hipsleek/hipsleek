@@ -3,16 +3,16 @@ data node {
 }
 
 HeapPred H(node x).
-HeapPred G(node y).
+  HeapPred G(node y,node z).
 
 ll<> == self=null
 //  or self::node<q>*q::ll<>
   or self::node<q>*q::ll<>;
 
-void trav(node x)
+void trav(ref node x)
   infer [H,G]
   requires H(x)
-  ensures G(x); 
+  ensures G(x,x');//' 
 /*
   requires x::ll<>
   ensures x::ll<>;
@@ -24,7 +24,7 @@ void trav(node x)
 }
 
 /*
-# cyc-lseg.ss --pred-en-equiv
+# cyc-lseg.ss --predcyc-sl-en-equiv
 
 --pred-en-equiv reuse of equivalent predicate
 definition not working properly since G/H identical to ll.
