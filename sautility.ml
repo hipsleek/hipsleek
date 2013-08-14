@@ -6208,8 +6208,10 @@ let reuse_equiv_hpdefs_x prog hpdefs hp_defs=
     match eq_hp_opt with
       | None -> (r_hp_defs@[hp_def], r_drop_hps, r_equivs)
       | Some hp1 ->
-            let hp,_ = CF.extract_HRel hrel in
-            (r_hp_defs, r_drop_hps@[hp], r_equivs@[(hp,hp1)])
+            try
+              let hp,_ = CF.extract_HRel hrel in
+              (r_hp_defs, r_drop_hps@[hp], r_equivs@[(hp,hp1)])
+            with _ -> (r_hp_defs@[hp_def], r_drop_hps, r_equivs)
   in
   let update_hpdef drop_hps equivs r hpdef=
     let hp,_ = CF.extract_HRel hpdef.CF.hprel_def_hrel in
