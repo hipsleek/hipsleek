@@ -36,8 +36,6 @@ P1(p) --> emp&
 p=null]
 */
 
-Entail (3) : Valid. 
-
 
 
 //(3)
@@ -52,3 +50,9 @@ print residue.
  inferred hprel: [// Sleek_Entail(3)
 emp --> P1(p)]
 */
+
+infer [P1] 
+   x=null
+|- P1(x) & x=p .
+print residue.
+
