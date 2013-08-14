@@ -536,7 +536,7 @@ class ['a] stack_noexc (x_init:'a) (epr:'a->string) (eq:'a->'a->bool)  =
      method last : 'a = match stk with 
        | [] -> emp_val
        | _ -> List.hd (List.rev stk)
-     method pop_top = match stk with 
+     method pop_top_no_exc = match stk with 
        | [] -> emp_val
        | x::xs -> stk <- xs; x
    end;;

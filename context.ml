@@ -1047,7 +1047,7 @@ and process_one_match_x prog estate lhs_h is_normalizing (c:match_res) (rhs_node
                       if (new_orig || vr_self_pts==[]) then [(1,M_fold c)] else [] in
                   (* WN : what is M_rd_lemma for?? *)
                   let r_lem = 
-                    if (Lem_store.all_lemma # any_lemma) then [(1,M_rd_lemma c)]
+                    if (Lem_store.all_lemma # any_coercion) then [(1,M_rd_lemma c)]
                     else [] in
                   let a2 = if (new_orig) then r_lem else [] in
                   (* let a2 = if (new_orig) then [(1,M_rd_lemma c)] else [] in *)
