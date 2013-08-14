@@ -1093,7 +1093,9 @@ and process_matches_x prog estate lhs_h is_normalizing ((l:match_res list),(rhs_
           let ptr_vs = estate.es_infer_vars in
           let ptr_vs = List.filter (fun v -> CP.is_otype(CP.type_of_spec_var v)) ptr_vs in
           let rs = 
-            if estate.es_infer_vars_hp_rel==[] && ptr_vs==[] then []
+            if estate.es_infer_vars_hp_rel==[] && ptr_vs==[] then
+              (*to support lemma with unknown preds*)
+              []
             else [(2,M_infer_heap (rhs_node,rhs_rest))] in
           if (is_view rhs_node) && (get_view_original rhs_node) then
             let r = (2, M_base_case_fold { match_res_lhs_node = HEmp;

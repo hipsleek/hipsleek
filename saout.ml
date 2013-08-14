@@ -215,7 +215,7 @@ let trans_hprel_2_cview_x iprog cprog proc_name hpdefs:
                 (ls1,ls2, ls3@[view])
               with _ -> (ls1@[hp], ls2@[def], ls3)
           end
-        | _ -> (ls1,ls2, ls3)
+         | _ -> (ls1,ls2, ls3)
   ) ([],[], []) (hpdefs1) in
   let _ =  Debug.ninfo_pprint (" def_hps: " ^ (!CP.print_svl def_hps)) no_pos in
   if def_hps = [] then (views, [])

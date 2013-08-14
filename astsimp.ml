@@ -8120,7 +8120,7 @@ let convert_pred_to_cast_x ls_pr_new_view_tis iprog cprog =
   in
   let cviews1 =
     if !Globals.norm_extract then
-      Norm.norm_extract_common cprog cviews (List.map (fun vdef -> vdef.C.view_name) cviews)
+      Norm.norm_extract_common iprog cprog cviews (List.map (fun vdef -> vdef.C.view_name) cviews)
     else cviews
   in
   let _ = Debug.ninfo_pprint ( "cviews1: " ^ (pr2 cviews1)) no_pos in

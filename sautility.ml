@@ -10,6 +10,7 @@ module CF = Cformula
 module CP = Cpure
 module MCP = Mcpure
 module C = Cast
+module I = Iast
 module CEQ = Checkeq
 module TP = Tpdispatcher
 module SY_CEQ = Syn_checkeq
@@ -25,7 +26,13 @@ let check_relaxeq_formula = SY_CEQ.check_relaxeq_formula
 let checkeq_pair_formula = SY_CEQ.checkeq_pair_formula
 let checkeq_formula_list = SY_CEQ.checkeq_formula_list
 
-let check_equiv_list = ref (fun (prog: C.prog_decl) (fs1: CF.formula list) (fs2: CF.formula list) ->
+let check_equiv = ref (fun (iprog: I.prog_decl) (prog: C.prog_decl) (svl: CP.spec_var list) (proof_traces: (CF.formula * CF.formula) list) (need_lemma:bool)
+  (fs1: CF.formula) (fs2: CF.formula) ->
+    let _ = print_endline "sau printer has not been initialize 1" in
+false )
+
+let check_equiv_list = ref (fun (iprog: I.prog_decl) (prog: C.prog_decl) (svl: CP.spec_var list) (pr_proof_traces: (CF.formula * CF.formula) list)
+  (need_lemma:bool) (fs1: CF.formula list) (fs2: CF.formula list) ->
     let _ = print_endline "sau printer has not been initialize" in
 false )
 
@@ -5859,47 +5866,57 @@ let simp_tree unk_hps hpdefs=
 (************************************************************)
     (****************(*MATCHING w view decls*)*****************)
 (************************************************************)
-let match_one_hp_one_view_x prog hp hp_name args def_fs (vdcl: C.view_decl): bool=
+let match_one_hp_one_view_x iprog prog hp hp_name args def_fs (vdcl: C.view_decl): bool=
   let v_fl,_ = List.split vdcl.C.view_un_struc_formula in
-  if (List.length def_fs) = (List.length v_fl) then
   (*get root*)
-    let (CP.SpecVar (t,_,_)) = List.hd args in
-    (*assume self is always unprimed*)
-    let ss = List.combine (args) ([CP.SpecVar (t,self,Unprimed)]@vdcl.C.view_vars) in
-    let def_fs1 = List.map (CF.subst ss) def_fs in
-    let top_flw = CF.mkTrueFlow () in
-    let def_fs2 = List.map (CF.set_flow_in_formula_override top_flw) def_fs1 in
-    let v_fl1 =
-      if vdcl.C.view_is_rec then
-        List.map (subst_view_hp_formula vdcl.C.view_name hp) v_fl
-      else v_fl
-    in
-    let v_fl2 = List.map CF.elim_exists v_fl1 in
-     (*for debugging*)
-    (* let pr = pr_list_ln Cprinter.prtt_string_of_formula in *)
-    (* let _ = Debug.info_pprint ("     def_fs: " ^ (pr def_fs)) no_pos in *)
-    (* let _ = Debug.info_pprint ("     def_fs1: " ^ (pr def_fs1)) no_pos in *)
-    (* let _ = Debug.info_pprint ("     v_fl1: " ^ (pr v_fl1)) no_pos in *)
-    (*END for debugging*)
-    (* checkeq_formula_list def_fs1 v_fl2 *)
-    (!check_equiv_list) prog def_fs2 v_fl2
+  let (CP.SpecVar (t,_,_)) = List.hd args in
+  (*assume self is always unprimed*)
+  let v_args = [CP.SpecVar (t,self,Unprimed)]@vdcl.C.view_vars in
+  let ss = List.combine (args) (v_args) in
+  let def_fs1 = List.map (CF.subst ss) def_fs in
+  let v_fl1 = List.map CF.elim_exists v_fl in
+  if (!Globals.checkeq_syn) then
+    if (List.length def_fs) = (List.length v_fl) then
+      let v_fl2 =
+        if vdcl.C.view_is_rec then
+          List.map (subst_view_hp_formula vdcl.C.view_name hp) v_fl1
+        else v_fl1
+      in
+      (*for debugging*)
+      (* let pr = pr_list_ln Cprinter.prtt_string_of_formula in *)
+      (* let _ = Debug.info_pprint ("     def_fs: " ^ (pr def_fs)) no_pos in *)
+      (* let _ = Debug.info_pprint ("     def_fs1: " ^ (pr def_fs1)) no_pos in *)
+      (* let _ = Debug.info_pprint ("     v_fl1: " ^ (pr v_fl1)) no_pos in *)
+      (*END for debugging*)
+      checkeq_formula_list def_fs1 v_fl2
+    else
+      false
   else
-    false
+    let def = CF.disj_of_list def_fs1 no_pos in
+    let v_fl2 = CF.disj_of_list v_fl1 no_pos in
+    let top_flw = CF.mkTrueFlow () in
+    let def2 = CF.set_flow_in_formula_override top_flw def in
+    let v_form = CF.formula_of_heap (CF.mkViewNode (CP.SpecVar (Named vdcl.C.view_name, self, Unprimed)) vdcl.C.view_name
+    vdcl.C.view_vars no_pos) no_pos in
+    let hp_form = CF.formula_of_heap (CF.HRel hp) no_pos in
+    let hp_form1 = CF.subst ss hp_form in
+    let pt1 = [(hp_form1, v_form)] in
+    (!check_equiv) iprog prog v_args pt1 true def2 v_fl2
 
-let match_one_hp_one_view prog hp hp_name args def_fs (vdcl: C.view_decl):bool=
+let match_one_hp_one_view iprog prog hp hp_name args def_fs (vdcl: C.view_decl):bool=
   let pr1 = pr_list_ln Cprinter.prtt_string_of_formula in
   let pr2 = Cprinter.string_of_view_decl in
   Debug.no_2 "match_one_hp_one_view" pr1 pr2 string_of_bool
-      (fun _ _ -> match_one_hp_one_view_x prog hp hp_name args def_fs vdcl) def_fs vdcl
+      (fun _ _ -> match_one_hp_one_view_x iprog prog hp hp_name args def_fs vdcl) def_fs vdcl
 
-let match_one_hp_views prog (vdcls: C.view_decl list) (_, hf, _,orf):(CP.spec_var* CF.h_formula list)=
+let match_one_hp_views iprog prog (vdcls: C.view_decl list) (_, hf, _,orf):(CP.spec_var* CF.h_formula list)=
   match hf with
     | CF.HRel (hp, eargs, p) ->
         let def_fl = CF.list_of_disjs orf in
         let args = List.concat (List.map CP.afv eargs) in
         let helper vdcl=
           if (List.length args) = ((List.length vdcl.C.view_vars) + 1) then
-            if (match_one_hp_one_view prog (hp, eargs, p) hp args def_fl vdcl) then
+            if (match_one_hp_one_view iprog prog (hp, eargs, p) hp args def_fl vdcl) then
               let vnode = CF.mkViewNode (List.hd args) vdcl.C.view_name
                 (List.tl args) no_pos in
               [vnode]
