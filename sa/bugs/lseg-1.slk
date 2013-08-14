@@ -11,6 +11,12 @@ HeapPred H1(node a).
 infer [H1] H1(y)  |- y=null.
 print residue.
 
+infer [H1] H1(y) & y=null  |- y=null.
+print residue.
+
+infer [H1,y] H1(y)  |- y=null.
+print residue.
+
 /*
 # lseg-1.slk 
 

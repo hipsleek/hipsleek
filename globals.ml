@@ -641,7 +641,11 @@ let cond_path_trace = ref true
 
 let pred_syn_modular = ref true
 
+let checkeq_syn = ref false
+
 let sa_dnc = ref false
+
+let pred_reuse = ref false
 
 (*temp: should be improve*)
 let pred_en_oblg = ref true
@@ -653,6 +657,8 @@ let pred_syn_flag = ref true
 let sa_syn = ref true
 
 let sa_en_split = ref false
+
+let pred_split = ref false
 
 (* let sa_dangling = ref false *)
 
@@ -694,6 +700,8 @@ let norm_extract = ref false
 let allow_norm_disj = ref true
 
 let norm_cont_analysis = ref true
+
+let lemma_infer = ref false
 
 let dis_sem = ref false
 

@@ -448,7 +448,7 @@ let convert_data_and_pred_to_cast_x () =
   let _ = !cprog.C.prog_view_decls <- cviews in
   let cviews1 =
     if !Globals.norm_extract then
-      Norm.norm_extract_common !cprog cviews (List.map (fun vdef -> vdef.C.view_name) cviews)
+      Norm.norm_extract_common iprog !cprog cviews (List.map (fun vdef -> vdef.C.view_name) cviews)
     else cviews
   in
   let cviews2 =
@@ -1206,7 +1206,7 @@ let process_shape_elim_useless sel_vnames=
   ()
 
 let process_shape_extract sel_vnames=
-  let view_defs = Norm.norm_extract_common !cprog !cprog.Cast.prog_view_decls sel_vnames in
+  let view_defs = Norm.norm_extract_common iprog !cprog !cprog.Cast.prog_view_decls sel_vnames in
   let _ = !cprog.Cast.prog_view_decls <- view_defs in
   let pr = pr_list_ln Cprinter.string_of_view_decl in
   let _ = Debug.tinfo_pprint ("views after EXTRACTION: \n" ^ (pr view_defs)) no_pos in

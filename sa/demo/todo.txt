@@ -5754,15 +5754,316 @@ HP_890(left_31_918) ::= H(left_31_918)&left_31_918!=null
 # bt-left2.ss: binding. FIXED
 
 =====================================================================
+# hip/ex.ss: DONE
+
+- to support pred-en-reuse
+
 =====================================================================
+# demo/last.ss
+
+ - to support pred-en-splitting
+
+  G(res_918,x_919) ::=
+ res_918::node<val_18_899,next_18_900>@M&res_918=x_919 & next_18_900=null
+ or x_919::node<val_18_899,next_18_900>@M * G(res_918,next_18_900)&
+    next_18_900!=null
+
+=====
+EXPECTED:
+ G(res,x) <-> res::node<_,null>*P(x,res@NI)
+ and then derive:
+  P(x,res) = x=res
+   x::node<_,q>*q::P<res>
+
 =====================================================================
+# cyc-tree-1.ss
+
+void trav(node x)
+  infer [H,G]
+  requires H(x)
+  ensures G(x); 
+{  if (x!=null) {
+     if (rand()) x = x.left;
+     else x = x.right;
+     trav(x);
+   }
+}
+
+Relational Assumptions:
+
+[ // BIND
+(1;1;0)  
+   H(x) & x!=null --> x::node<left_25_881,right_25_882>@M 
+     * HP_883(left_25_881) * HP_884(right_25_882),
+ // BIND
+(2;1;0)
+   H(x) & x!=null --> x::node<left_26_889,right_26_890>@M 
+     * HP_891(left_26_889) * HP_892(right_26_890),
+ // PRE_REC
+(1;1;0) HP_883(left_25_881) --> H(left_25_881),
+ // PRE_REC
+(2;1;0) HP_892(right_26_890) --> H(right_26_890),
+ // POST
+(1;1;0)
+    HP_884(right_25_882) * x::node<left_25_881,right_25_882>@M 
+     * G(left_25_881) --> G(x),
+ // POST
+(2;1;0)
+    HP_891(left_26_889) * x::node<left_26_889,right_26_890>@M 
+     * G(right_26_890) --> G(x),
+ // POST
+(2;0) H(x) & x=null --> G(x)]
+
+It seems like we have lose some precision to obtain below.
+I think we should currently only do so under some commands
+option, such as --pred-unify-pre (to strengthen pre by 
+unification of some branches).
+
+Predicates
+==========
+[ G(x_921) ::= 
+     H(left_25_881) * x_921::node<left_25_881,right_25_882>@M 
+            * G(right_25_882)
+     or emp&x_921=null
+ ,
+ H(x_920) ::= 
+     x_920::node<left_25_898,right_25_899>@M * H(left_25_898) 
+           * H(right_25_899)
+     or emp&x_920=null
+ ]
+
+I would expect firstly:
+   H(x) ::= emp & x=null 
+    or x::node<left_25_881,right_25_882>@M 
+           * H(left_25_881) * HP_884(right_25_882),
+    or x::node<left_26_889,right_26_890>@M 
+           * HP_891(left_26_889) * H(right_26_890),
+
+   G(x) ::= emp & x=null 
+    or HP_884(right_25_882) * x::node<left_25_881,right_25_882>@M 
+       * G(left_25_881) 
+     or HP_891(left_26_889) * x::node<left_26_889,right_26_890>@M 
+     * G(right_26_890) --> G(x),
+
+ --pred-unify-pre would then give:
+   H(x) ::= emp & x=null 
+    or x::node<left_25_881,right_25_882>@M 
+           * H(left_25_881) * H(right_25_882),
+   G(x) ::= emp & x=null 
+    or H(right_25_882) * x::node<left_25_881,right_25_882>@M 
+       * G(left_25_881) 
+     or H(left_26_889) * x::node<left_26_889,right_26_890>@M 
+     * G(right_26_890) --> G(x),
+
+  --pred-unify-post would then give:
+     G(x) ::= H(x)
+
+--sa-dnc seems to produce what we expected above
+
+Predicates
+==========
+[ G(x_902) ::=
+    (1;1;0) HP_884(right_25_882) * x_902::node<left_25_881,right_25_882>@M 
+      * G(left_25_881)
+   \/ (2;1;0) HP_891(left_26_889) * x_902::node<left_26_889,right_26_890>@M 
+      * G(right_26_890)
+   \/ (2;0) emp&x_902=null,
+
+H(x_901) ::=(1;1;0) H(left_25_898) * x_901::node<left_25_898,right_25_899>@M 
+     * HP_884(right_25_899)
+   \/ (2;1;0) H(right_26_905) * x_901::node<left_26_904,right_26_905>@M 
+     * HP_891(left_26_904)
+   \/ (2;0) emp&x_901=null,
+ 
+HP_884(right_25_882) ::=(1;1;0) NONE,
+HP_891(left_26_889) ::=(2;1;0) NONE]
+
 =====================================================================
+# cyc-lseg.ss --pred-en-equiv
+
+--pred-en-equiv reuse of equivalent predicate
+definition not working properly since G/H identical to ll.
+Is this option working?
+ 
+[ G(x_882) ::= 
+ x_882::node<next_20_872>@M * G(next_20_872)
+ or emp&x_882=null
+ ,
+ H(x_881) ::= 
+ H(next_20_879) * x_881::node<next_20_879>@M
+ or emp&x_881=null
+ ]
+
+ll<> == self=null
+  or self::node<q>*q::ll<>;
+
+void trav(node x)
+  infer [H,G]
+  requires H(x)
+  ensures G(x); 
+{  if (x!=null) {
+     x=x.next;
+     trav(x);
+   }
+}
 =====================================================================
+# cyc-lseg.ss --pred-en-split
+
+Inferred result is fine.
+How come predicate synthesis option is not working?
+
+void trav(ref node y)
+  infer [H,G]
+  requires H(y)
+   ensures G(y,y');
+{  if (y!=null) {
+     y=y.next;
+     trav(y);
+   }
+}
+
+How come pred-en-split not working properly?
+
+Obtained
+[ G(x_884,x_885) ::= 
+ x_884::node<next_21_873>@M * G(next_21_873,x_885)
+ or emp&x_884=x_885 & x_885=null & x_884=null
+ ,
+ H(x_883) ::= 
+ H(next_21_881) * x_883::node<next_21_881>@M
+ or emp&x_883=null
+ ]
+
+Expecting:
+  G(y,y') ::= G2(y) * G3(y')
+  G2(y_884) ::= 
+   y_884::node<next_20_873>@M * G(next_20_873)
+   or emp&y_884=null
+  G3(y') ::= y'=null
+
+Maybe lemma synthesis is required.
+
+
+
+--------
+
+[ G(y_884,y_885) ::= 
+ y_884::node<next_20_873>@M * G(next_20_873,y_885)
+ or emp&y_884=y_885 & y_885=null & y_884=null
+ ,
+ H(y_883) ::= 
+ H(next_20_881) * y_883::node<next_20_881>@M
+ or emp&y_883=0
+ ]
+
+The --pred-en-split option is not working, as it has same
+result as above.
+
+I wonder if we can derive, maybe using lemma synthesis?
+
+  G(y,y') ::= G2(y) * G3(y')
+  G2(y_884) ::= 
+   y_884::node<next_20_873>@M * G(next_20_873)
+   or emp&y_884=null
+  G3(y') ::= y'=null
 =====================================================================
+# cyc-lseg-3.ss : FIXED
+
+pre/post from auxiliary seems broken.
+
+Obtained
+--------
+
+[ G(x_901,res_902) ::= emp&res_902=x_901 & x_901=null & res_902=null,
+ H(x_900) ::= emp&x_900=null]
+
+This answer seems to be wrong!
+
+Expecting:
+ H(x) ::= x::ll<>
+ G(x,res) ::= x::ll<> & res=null
+
+node foo(node x)
+  infer [H,G]
+  requires H(x)
+  ensures G(x,res);
+{ 
+  node y=x;
+  trav(y);
+  return y;
+}
 =====================================================================
+# cyc-lseg-4.ss :FIXED (simplification via TP instead OMega directly)
+
+minor issue with  x_942=0
+
+Obtained
+--------
+[ G(x_943,x_944) ::= 
+ x_943::node<next_33_916,down_33_917>@M * down_33_917::ll@M * 
+ G(next_33_916,x_944)
+ or emp&x_943=x_944 & x_944=null & x_943=null
+ ,
+ H(x_942) ::= 
+ H(next_33_939) * down_33_938::ll@M * x_942::node<next_33_939,down_33_938>@M
+ or emp&x_942=0
+ ]
+
+This answer looks good but x_942=0 should have been converted
+to null by our ptr conversion.
 =====================================================================
+# lseg-3a.slk: FIXED
+
+It seems the problem is caused by not handling transitivity
+of = properly. You need to use CP.EMapSV which will allow
+equality to be handled accurately and efficiently.
+
+A recent use is:
+
+let compute_subs_mem puref evars = 
+  let (subs,_) = CP.get_all_vv_eqs puref in
+  let eqset = CP.EMapSV.build_eset subs in
+  let nsubs = build_subs_4_evars evars eqset in
+  nsubs
+
+infer [H] H(x)&x=x' & x'=y_30'
+ |-  y_30'::ll<>@M.
+print residue.
+
+infer [H] H(x)&x=x' & x'=y_30'
+ |-  x'::ll<>@M.
+print residue.
+
+!!! >>>>>> mismatch ptr y_30'::ll@M is not found (or inst) in the lhs <<<<<<WARNING : Pushing 1 stk_estate (4)
+
+Entail (1) : Valid. 
+
+ <1>(exists y_30': emp&x'=null & y_30'=null & x=null & y_30'=null&{FLOW,(19,20)=__norm})[]
+ inferred hprel: [// Sleek_Entail(1)
+H(x) --> emp&
+x=null]
+
+
+Entail (2) : Valid. 
+
+ <1>emp&x=y_30'&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [// Sleek_Entail(2)
+H(x') --> x'::ll@M]
 =====================================================================
+#
+
+synchronize sa2.infer_shapes_proper with sa3.infer_shapes_proper
+ -  !Globals.pred_conj_unify
+ - !Globals.pred_equiv
+ - let _ = DD.binfo_pprint ">>>>>> post-predicates<<<<<<" no_pos in
+  let post_constrs1 = SAU.subst_equiv_hprel unify_equiv_map11 post_constrs in
 =====================================================================
+ # sleekcore.ml
+
+ - default is checkeq-sem
+ - add --checkeq-en-syn
+
+ DONE: pred-en-equiv
 =====================================================================
 =====================================================================
 =====================================================================

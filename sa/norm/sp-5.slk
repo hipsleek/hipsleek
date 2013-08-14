@@ -33,9 +33,25 @@ or self::node<_,p>*p::ll<>
 print residue.
 */
 
+//(1)
 infer_exact [P1] 
    self=null
-or self::node<_,p>*p::ll<>
+or self::node<_,p1>*p1::ll<>
 |- P1(p) & self=p
    or self::node<_,q>*q::ls<p> * P1(p).
+print residue.
+
+//(2)
+infer_exact [P1] 
+   self=null
+or self::node<_,p1>*p1::ls<pp> * P1(pp)
+|- P1(p) & self=p
+   or self::node<_,q>*q::ls<p> * P1(p).
+print residue.
+
+
+//(3)
+infer_exact [P1] 
+   self=null
+|- P1(p) & self=p.
 print residue.

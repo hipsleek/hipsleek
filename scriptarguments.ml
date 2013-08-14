@@ -508,6 +508,7 @@ let common_arguments = [
   ("--sa-dis-cont", Arg.Clear Globals.norm_cont_analysis, "disable cont analysis for views");
   ("--pred-dis-mod", Arg.Clear Globals.pred_syn_modular, "disable modular predicate synthesis (use old algo)");
   ("--pred-en-mod", Arg.Set Globals.pred_syn_modular, "using modular predicate synthesis");
+  ("--checkeq-en-syn", Arg.Set Globals.checkeq_syn, "check two formulas are equivalent syntatically. default is semantic checking via sleek");
   ("--pred-en-oblg", Arg.Set Globals.pred_en_oblg, "enable sa_en_pre_oblg");
   ("--pred-dis-oblg", Arg.Clear Globals.pred_en_oblg, "enable sa_en_pre_oblg");
    ("--sa-dnc", Arg.Set Globals.sa_dnc, "algorithm of normalization with divide and conquer");
@@ -536,7 +537,7 @@ let common_arguments = [
   ("--sa-dis-sp-split", Arg.Clear Globals.sa_sp_split_base, "disable special base case split at entailment");
   ("--sa-en-split", Arg.Set Globals.sa_infer_split_base, "enable base case splitting of relational assumption at shape infer");
   ("--sa-dis-split", Arg.Clear Globals.sa_infer_split_base, "disable base case splitting of relational assumption at shape infer");
-  ("--sa-split", Arg.Set Globals.sa_en_split, "splitting hp args into multiple hp if possible");
+  ("--pred-en-split", Arg.Set Globals.pred_split, "splitting hp args into multiple hp if possible");
   ("--sa-unify-dangling", Arg.Set Globals.sa_unify_dangling, "unify branches of definition to instantiate dangling predicate");
   ("--pred-disj-unify", Arg.Set Globals.pred_disj_unify, "attempt to unify two similar predicates among inferred pred defs");
    ("--pred-conj-unify", Arg.Set Globals.pred_conj_unify, "attempt to conj-unify among inferred assumption");

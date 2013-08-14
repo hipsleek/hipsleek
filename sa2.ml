@@ -1520,16 +1520,16 @@ let collect_sel_hp_def cond_path defs sel_hps unk_hps m=
 (*   Debug.no_3 "collect_sel_hp_def" pr1 pr2 pr3 pr4 *)
 (*       (fun _ _ _ -> collect_sel_hp_def defs sel_hps unk_hps m) defs sel_hps m *)
 
-let match_hps_views_x (hp_defs: CF.hp_rel_def list) (vdcls: CA.view_decl list):
+let match_hps_views_x iprog prog (hp_defs: CF.hp_rel_def list) (vdcls: CA.view_decl list):
 (CP.spec_var* CF.h_formula list) list=
   let hp_defs1 = List.filter (fun (def,_,_,_) -> match def with
-    | CP.RelDefn _ -> true
+    | CP.HPRelDefn _ -> true
     | _ -> false
   ) hp_defs in
-  let m = List.map (SAU.match_one_hp_views vdcls) hp_defs1 in
+  let m = List.map (SAU.match_one_hp_views iprog prog vdcls) hp_defs1 in
     (List.filter (fun (_,l) -> l<>[]) m)
 
-let match_hps_views (hp_defs: CF.hp_rel_def list) (vdcls: CA.view_decl list):
+let match_hps_views iprog prog (hp_defs: CF.hp_rel_def list) (vdcls: CA.view_decl list):
 (CP.spec_var* CF.h_formula list) list=
   let pr1 = pr_list_ln Cprinter.string_of_hp_rel_def in
   let pr2 = pr_list_ln  Cprinter.prtt_string_of_h_formula  in
@@ -1538,7 +1538,7 @@ let match_hps_views (hp_defs: CF.hp_rel_def list) (vdcls: CA.view_decl list):
   let pr3 = pr_list_ln pr3a in
   let pr4 = pr_list_ln (Cprinter.string_of_view_decl) in
   Debug.no_2 "match_hps_views" pr1 pr4 pr3
-      (fun _ _ -> match_hps_views_x hp_defs vdcls) hp_defs vdcls
+      (fun _ _ -> match_hps_views_x iprog prog hp_defs vdcls) hp_defs vdcls
 
 
 (***************************************************************
@@ -2096,8 +2096,8 @@ and infer_shapes_x iprog prog proc_name (constrs0: CF.hprel list) sel_hps post_h
     all_post_hps hp_rel_unkmap unk_hpargs link_hpargs need_preprocess detect_dang in
   let link_hp_defs = SAC.generate_hp_def_from_link_hps prog cond_path equivs link_hpargs2 in
   let hp_defs1,tupled_defs = SAU.partition_tupled hp_defs in
-  (*decide what to show: DO NOT SHOW hps relating to tupled defs*)
-  let m = match_hps_views hp_defs1 prog.CA.prog_view_decls in
+  (* decide what to show: DO NOT SHOW hps relating to tupled defs *)
+  let m = match_hps_views iprog prog hp_defs1 prog.CA.prog_view_decls in
   let sel_hps1 = if !Globals.pred_elim_unused_preds then sel_hps else
     CP.remove_dups_svl ((List.map (fun (a,_,_,_) -> CF.get_hpdef_name a) hp_defs1)@sel_hps)
   in

@@ -10,6 +10,7 @@ module C = Cast
 module TP = Tpdispatcher
 module SAU = Sautility
 
+
 (***********************************************)
 (*****ELIM unused parameters of view **********)
 let norm_elim_useless_para_x view_name sf args=
@@ -364,7 +365,8 @@ let recover_view_decl old_vdecl vname vvars ir f=
   Debug.no_4 "recover_view_decl" pr1 pr_id !CP.print_svl pr2 pr1
       (fun _ _ _ _ -> recover_view_decl_x old_vdecl vname vvars ir f) old_vdecl vname vvars f
 
-let norm_extract_common_one_view_x cprog cviews vdecl=
+
+let norm_extract_common_one_view_x iprog cprog cviews vdecl=
   let extract_view_name hf=
     match hf with
       | CF.ViewNode hv -> hv.CF.h_formula_view_name
@@ -394,7 +396,7 @@ let norm_extract_common_one_view_x cprog cviews vdecl=
         (* let _ = Debug.info_pprint ("  hp2: "^ (!CP.print_sv hp2)) no_pos in *)
         (*IMPORTANT: process hp2 first + check equiv then hp1*)
         (*matching with current views*)
-        let (_, eq_hfs) = SAU.match_one_hp_views cviews (a,hrel2,None,f2) in
+        let (_, eq_hfs) = SAU.match_one_hp_views iprog cprog cviews (a,hrel2,None,f2) in
         let n_vdecl2, view_ss=
           if eq_hfs = [] then
              let _ = Debug.info_pprint ("  DO SYNTHESIZE view: "^ (!CP.print_sv hp2) ^ "\n") no_pos in 
@@ -426,19 +428,19 @@ let norm_extract_common_one_view_x cprog cviews vdecl=
         n_vdecl2@[n_vdecl1]
     | _ -> report_error no_pos "norm:norm_extract_common_one_view: sth wrong"
 
-let norm_extract_common_one_view cprog cviews vdecl=
+let norm_extract_common_one_view iprog cprog cviews vdecl=
   let pr1 = Cprinter.string_of_view_decl in
   Debug.no_1 "norm_extract_common_one_view" pr1 (pr_list_ln pr1)
-      (fun _ -> norm_extract_common_one_view_x cprog cviews vdecl) vdecl
+      (fun _ -> norm_extract_common_one_view_x iprog cprog cviews vdecl) vdecl
 
-let norm_extract_common cprog cviews sel_vns=
+let norm_extract_common iprog cprog cviews sel_vns=
   let rec process_helper rem_vs done_vs=
     match rem_vs with
       | [] -> done_vs
       | vdecl::rest ->
           let n_vdecls =
             if List.exists (fun vn -> String.compare vn vdecl.Cast.view_name = 0) sel_vns then
-              norm_extract_common_one_view cprog (done_vs@rest) vdecl
+              norm_extract_common_one_view iprog cprog (done_vs@rest) vdecl
             else [vdecl]
           in
           process_helper rest (done_vs@n_vdecls)

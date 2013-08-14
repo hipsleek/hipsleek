@@ -15,17 +15,11 @@ module H  = Hashtbl
 module I  = Iast
 module SC = Sleekcore
 
-let generate_ilemma iprog cprog lemma_n coer_type lhs rhs ihead chead ibody cbody=
-  (*check entailment*)
-  let (res,_,_) =  if coer_type = I.Left then
-    SC.sleek_entail_check [] cprog [(chead,cbody)] lhs (CF.struc_formula_of_formula rhs no_pos)
-  else SC.sleek_entail_check [] cprog [(cbody,chead)] rhs (CF.struc_formula_of_formula lhs no_pos)
-  in
-  if res then
-    (*generate ilemma*)
+let generate_lemma_helper iprog lemma_name coer_type ihead ibody=
+  (*generate ilemma*)
     let ilemma = { I.coercion_type = coer_type;
     I.coercion_exact = false;
-    I.coercion_name = (fresh_any_name lemma_n);
+    I.coercion_name = (fresh_any_name lemma_name);
     I.coercion_head = (IF.subst_stub_flow IF.top_flow ihead);
     I.coercion_body = (IF.subst_stub_flow IF.top_flow ibody);
     I.coercion_proof = I.Return ({ I.exp_return_val = None;
@@ -35,6 +29,16 @@ let generate_ilemma iprog cprog lemma_n coer_type lhs rhs ihead chead ibody cbod
     (*transfrom ilemma to clemma*)
     let ldef = AS.case_normalize_coerc iprog ilemma in
     let l2r, r2l = AS.trans_one_coercion iprog ldef in
+    l2r, r2l
+
+let generate_ilemma iprog cprog lemma_n coer_type lhs rhs ihead chead ibody cbody=
+  (*check entailment*)
+  let (res,_,_) =  if coer_type = I.Left then
+    SC.sleek_entail_check [] cprog [(chead,cbody)] lhs (CF.struc_formula_of_formula rhs no_pos)
+  else SC.sleek_entail_check [] cprog [(cbody,chead)] rhs (CF.struc_formula_of_formula lhs no_pos)
+  in
+  if res then
+    let l2r, r2l = generate_lemma_helper iprog lemma_n coer_type ihead ibody in
     l2r, r2l
   else
     [],[]
@@ -184,3 +188,5 @@ let generate_lemma_4_views iprog cprog=
   Debug.no_1 "generate_lemma_4_views" pr1 (pr_pair pr2 pr2)
       (fun _ -> generate_lemma_4_views_x iprog cprog)
       cprog
+
+let _ = Sleekcore.generate_lemma := generate_lemma_helper
