@@ -1,1 +1,10 @@
-checkentail true |- \inf+4=-\inf.
+checkentail lg1_331<=lg
+& sm<=sm1_330
+& 0<(sm+(\inf)) 
+& sm<(\inf) 
+|-  lg1_367<=lg 
+& sm<=sm1_330 
+& 0<(sm+(\inf)) 
+& sm<(\inf) 
+& lg1_367=max(lg1_331,sm) 
+& lg1_367<(\inf).
