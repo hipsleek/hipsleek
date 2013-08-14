@@ -377,8 +377,8 @@ let process_lemma ldef =
   let _ = if (!Globals.print_core || !Globals.print_core_all) then 
     print_string ("\nleft:\n " ^ (Cprinter.string_of_coerc_decl_list l2r) ^"\n right:\n"^ (Cprinter.string_of_coerc_decl_list r2l) ^"\n") else () in
   (* WN_all_lemma - should we remove the cprog updating *)
-  let _ = Lem_store.all_lemma # add_left_coercion l2r in 
-  let _ = Lem_store.all_lemma # add_right_coercion r2l in 
+  let _ = Lem_store.all_lemma # add_coercion l2r r2l in 
+  (* let _ = Lem_store.all_lemma # add_right_coercion r2l in  *)
   (*!cprog.C.prog_left_coercions <- l2r @ !cprog.C.prog_left_coercions;*)
   (*!cprog.C.prog_right_coercions <- r2l @ !cprog.C.prog_right_coercions;*)
   let get_coercion c_lst = match c_lst with 

@@ -1100,8 +1100,7 @@ let rec trans_prog (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_decl
 	  (* Start calling is_sat,imply,simplify from trans_proc *)
 	  let cprocs = !loop_procs @ cprocs1 in
 	  let (l2r_coers, r2l_coers) = trans_coercions prog in
-          let _ = Lem_store.all_lemma # set_left_coercion l2r_coers in
-          let _ = Lem_store.all_lemma # set_right_coercion r2l_coers in
+          let _ = Lem_store.all_lemma # set_coercion l2r_coers r2l_coers in
 	  let log_vars = List.concat (List.map (trans_logical_vars) prog.I.prog_logical_var_decls) in 
 	  let bdecls = List.map (trans_bdecl prog) prog.I.prog_barrier_decls in
 	  let cprog = {
@@ -7212,13 +7211,12 @@ and pred_prune_inference_x (cp:C.prog_decl):C.prog_decl =
     let procs = C.proc_decls_map proc_spec prog_barriers_pruned.C.new_proc_decls in 
     let l_coerc = List.concat (List.map (coerc_spec prog_barriers_pruned true) (Lem_store.all_lemma # get_left_coercion) (*prog_barriers_pruned.C.prog_left_coercions*)) in
     let r_coerc = List.concat (List.map (coerc_spec prog_barriers_pruned false) (Lem_store.all_lemma # get_right_coercion)(*prog_barriers_pruned.C.prog_right_coercions*)) in
-    let _ = Lem_store.all_lemma # set_left_coercion l_coerc in
-    let _ = Lem_store.all_lemma # set_right_coercion r_coerc in
-	let r = { prog_barriers_pruned with 
+    let _ = Lem_store.all_lemma # set_coercion l_coerc r_coerc in
+    let r = { prog_barriers_pruned with 
         C.new_proc_decls = procs;
         (* WN_all_lemma - is this overriding of lemmas? *)
         (*C.prog_left_coercions  = l_coerc;
-        C.prog_right_coercions = r_coerc;*)} in
+          C.prog_right_coercions = r_coerc;*)} in
     Gen.Profiling.pop_time "pred_inference" ;r
         
 and pr_proc_call_order p = 

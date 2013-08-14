@@ -48,6 +48,10 @@ object (self)
     self # clear_right_coercion;
     self # add_right_coercion lem
 
+  method set_coercion left right =
+    self # set_left_coercion left;
+    self # set_right_coercion right
+
   method get_left_coercion =
     left_lem # get_stk
 
