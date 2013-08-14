@@ -986,7 +986,7 @@ should be:
    {5} -> {[self,q]} [ self!=null; q!=null]]
 
 ===================================================================
-# bug-classic-4a.slk
+# bug-classic-4a.slk: FIXED
 
 infer_exact
 [P1] n::node<_,null> & self=null
