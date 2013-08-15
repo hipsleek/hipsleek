@@ -37,6 +37,7 @@ infer [P1]
 |- P1(self) & self=p.
 print residue.
 // expect self=null --> P1(self)
+//fail: can not prove self-p in rhs?
 
 //(5)
 infer [P1] 
@@ -47,8 +48,8 @@ print residue.
 
 //(6)
 infer [P1] 
-   self=null
-|- P1(p).
+   self=null & self=p
+|- P1(p) .
 print residue.
 // expect self=null --> P1(self)
 
@@ -86,6 +87,7 @@ infer_exact [P1]
 |- P1(p).
 print residue.
 // expect self::node<_,_> --> P1(self)
+// should fail?
 
 //12
 infer [P1] 
@@ -93,6 +95,7 @@ infer [P1]
 |- P1(p).
 print residue.
 // expect self::node<_,_> --> P1(self)
+//p=null --> P1(p) ??
 
 //13
 infer [P1] 
@@ -104,9 +107,9 @@ print residue.
 //14
 infer [P1] 
    self::node<_,p> & p=null
-|- P1(p) & p=null.
+|- P1(self) & p=null.
 print residue.
-// expect self::node<_,_> --> P1(self)
+// expect self::node<_,p> & p=null --> P1(self)
 
 //15
 infer [P1] 

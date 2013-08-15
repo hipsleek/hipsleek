@@ -1195,8 +1195,8 @@ let smart_subst_x nf1 nf2 hpargs eqs0 reqs unk_svl prog_vars=
   let new_p13 = CP.conj_of_list new_ps13 no_pos in
   let nf11 = {nf1a with CF.formula_base_pure = MCP.mix_of_pure new_p13} in
   let _ = Debug.ninfo_pprint ("nf11: " ^ (Cprinter.string_of_formula_base nf11)) no_pos in
-  (*rhs - nf2: not handle yet*)
-  let new_nf2 = CF.subst_b (new_eqs2@reqs) (* new_eqs2 *) nf2 in
+  (*rhs*)
+  let new_nf2 = CF.subst_b (new_eqs2@reqs) nf2 in
   (*subst again*)
   let nleqs0 = (MCP.ptr_equations_without_null nf11.CF.formula_base_pure) in
   let ptrs_group1 = (CF.get_ptrs_group_hf nf1.CF.formula_base_heap)@(CF.get_ptrs_group_hf nf11.CF.formula_base_heap) in
@@ -1215,12 +1215,23 @@ let smart_subst_x nf1 nf2 hpargs eqs0 reqs unk_svl prog_vars=
   let n_prog_vars = CP.subst_var_list (nleqs4@nreqs2) prog_vars in
   (lhs_b2,rhs_b2,n_prog_vars)
 
+(*
+(i) build emap for LHS/RHS 
+  - eqnull -> make closure. do not subst
+  - cycle nodes: DO NOT subst
+  - inside one preds, do not subst
+(ii) common free vars for both LHS/RHS
+(iii) subs both sides to use smallest common vars
+        lhs     |- P(v* )
+*)
+(* let smart_subst_new nf1 nf2 hpargs leqs reqs unk_svl prog_vars= *)
+
 let smart_subst nf1 nf2 hpargs eqs reqs unk_svl prog_vars=
   let pr1 = Cprinter.string_of_formula_base in
   let pr2 = !CP.print_svl in
   let pr3 = pr_list (pr_pair !CP.print_sv !CP.print_sv)  in
-  Debug.no_4 "smart_subst" pr1 pr1 pr2 pr3 (pr_triple pr1 pr1 pr2)
-      (fun _ _ _ _ -> smart_subst_x nf1 nf2 hpargs eqs reqs unk_svl prog_vars) nf1 nf2 prog_vars eqs
+  Debug.no_5 "smart_subst" pr1 pr1 pr2 pr3 pr3 (pr_triple pr1 pr1 pr2)
+      (fun _ _ _ _ _ -> smart_subst_x nf1 nf2 hpargs eqs reqs unk_svl prog_vars) nf1 nf2 prog_vars eqs reqs
 
 let smart_subst_lhs f lhpargs leqs infer_vars=
   match f with

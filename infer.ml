@@ -2743,8 +2743,10 @@ let infer_collect_hp_rel_x prog (es:entail_state) rhs0 rhs_rest (rhs_h_matched_s
         let l_non_infer_hps = CP.diff_svl lhrs ivs in
         let r_hpargs = CF.get_HRels rhs in
         (**smart subst**)
+        let n_es_evars = CP.subst_var_list sst0 es.CF.es_evars in
         let lhs_b1, rhs_b1, subst_prog_vars = SAU.smart_subst lhs_b0 (formula_base_of_heap rhs pos) (l_hpargs@r_hpargs)
-          (leqs@reqs) reqs [] (prog_vars@es.es_infer_vars)
+          (leqs@reqs) (List.filter (fun (sv1,sv2) -> CP.intersect_svl [sv1;sv2] n_es_evars <> []) reqs)
+          [] (prog_vars@es.es_infer_vars)
         in
         let rhs = rhs_b1.CF.formula_base_heap in
         let mis_nodes =  match rhs with
