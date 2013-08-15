@@ -2658,12 +2658,15 @@ let update_es prog es hds hvs ass_lhs_b rhs rhs_rest r_new_hfs defined_hps lsele
                (*generate new hole*)
                let nf, nholes = if Immutable.produces_hole (hd.CF.h_formula_data_imm) then
                  let hole_no = Globals.fresh_int() in
-               let h_hole = CF.Hole hole_no  in
+                 let h_hole = CF.Hole hole_no  in
                  (CF.mkAnd_f_hf f h_hole pos,[(new_h, hole_no)])
                else (f,[])
                in
                (nf , new_h, nholes)
-         | _ -> (f,h,[])
+         | _ ->
+               let consumed_hns = List.filter (fun hd -> CP.mem_svl hd.CF.h_formula_data_node root_vars_ls2) hds in
+               let nlhs = if consumed_hns = [] then h else CF.DataNode (List.hd consumed_hns) in
+               (f, nlhs, [])
      in
      let new_es_formula, new_lhs, new_holes = check_consumed_node rhs new_es_formula in
      let new_es_formula1 = CF.subst m new_es_formula in
