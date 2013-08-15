@@ -11,29 +11,16 @@ inv true.
 HeapPred P1(node a).
 HeapPred P2(node a).
 
-lemma self::zip<y> -> P1(self) * P2(y).
 
-// lemma self::zip<y> -> P1(self) * P2(y).
 
-//lemma self::zip<y> -> P2(y).
+lemma_infer [P1,P2] self::zip<y> -> P1(self) * P2(y).
+
 
 /*
-checkentail x::zip<y>
-     |- P1(x) * P2(y).
-print residue.
-
-
-infer [P1,P2] x::zip<y>
-     |- P1(x) * P2(y).
-print residue.
-*/
-
-/*
-infer [P1,P2] 
-  self=null & y=null
-or self::node<_,p>*y::node<_,q>*p2::zip<q> & p=p2
-     |- P1(self) * P2(y).
-print residue.
+(i) to infer P1,P2 via lemma synthesis
+(ii) push lemma into store
+(iii) unfold known pred, and infer P1,P2
+(iv) pop lemma from store
 */
 /*
 # sp-1a.slk

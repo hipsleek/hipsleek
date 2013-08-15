@@ -63,7 +63,7 @@ let run_entail_check_helper (iante: lem_formula) (iconseq: lem_formula) (cprog: 
 (*   Some true  -->  always check entailment exactly (no residue in RHS)          *)
 (*   Some false -->  always check entailment inexactly (allow residue in RHS)     *)
 let run_entail_check (iante : lem_formula) (iconseq : lem_formula) (cprog: C.prog_decl) (exact : bool option) =
-  wrap_classic exact (run_entail_check_helper iante iconseq) cprog
+  wrap_classic (Some true) (* exact *) (run_entail_check_helper iante iconseq) cprog
 
 let print_exc (check_id: string) =
   Printexc.print_backtrace stdout;
@@ -237,7 +237,7 @@ let print_entail_result (valid: bool) (residue: CF.list_context) (num_id: string
    coerc_type: lemma type (Right, Left or Equiv)
 *)
 let verify_lemma (l2r: C.coercion_decl option) (r2l: C.coercion_decl option) (cprog: C.prog_decl)  lemma_name lemma_type =
-  if !Globals.check_coercions then
+  if true (* !Globals.check_coercions *) then
     let helper coercs check_coerc = match coercs with
       | None -> (true, None)
       | Some coerc -> let (valid, rs) = check_coerc coerc cprog in (valid, Some rs)
@@ -270,7 +270,8 @@ let verify_lemma (l2r: C.coercion_decl option) (r2l: C.coercion_decl option) (cp
 
 let verify_lemma (l2r: C.coercion_decl option) (r2l: C.coercion_decl option) (cprog: C.prog_decl)  
       coerc_name coerc_type =
-  wrap_proving_kind PK_Verify_Lemma (verify_lemma (l2r: C.coercion_decl option) (r2l: C.coercion_decl option) (cprog: C.prog_decl) coerc_name ) coerc_type
+  wrap_proving_kind PK_Verify_Lemma 
+      ((* wrap_classic (Some true) *) (verify_lemma (l2r: C.coercion_decl option) (r2l: C.coercion_decl option) (cprog: C.prog_decl) coerc_name)) coerc_type
 
 let verify_lemma caller (l2r: C.coercion_decl option) (r2l: C.coercion_decl option) (cprog: C.prog_decl)  coerc_name coerc_type =
   let pr c = match c with 

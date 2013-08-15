@@ -210,15 +210,18 @@ let lst_to_opt l =
     | [c] -> Some c
     | _   -> None
 
-let manage_lemma ldef_lst iprog cprog = 
+let manage_safe_lemmas ldef_lst iprog cprog = 
   let lems = List.map (fun ldef -> 
       let l2r,r2l,typ = process_one_lemma iprog cprog ldef in
-      let _ = Lem_store.all_lemma # add_coercion l2r r2l in
-      ((lst_to_opt l2r),(lst_to_opt r2l),typ,(ldef.I.coercion_name))
+      (* let _ = Lem_store.all_lemma # add_coercion l2r r2l in *)
+      (l2r,r2l,typ,(ldef.I.coercion_name))
   ) ldef_lst in
+  let left  = List.concat (List.map (fun (a,_,_,_)-> a) lems) in
+  let right = List.concat (List.map (fun (_,a,_,_)-> a) lems) in
+  let _ = Lem_store.all_lemma # add_coercion left right in
   let nm = ref "" in
   let invalid = List.exists (fun (l2r,r2l,typ,name) -> 
-      let res = LP.verify_lemma 3 l2r r2l cprog name typ in 
+      let res = LP.verify_lemma 3 (lst_to_opt l2r) (lst_to_opt r2l) cprog name typ in 
       (match res with
         | None -> nm := name; true
         | Some (CF.FailCtx _) -> nm := name; true
@@ -226,11 +229,27 @@ let manage_lemma ldef_lst iprog cprog =
   ) lems in
   if invalid then 
     let _ = print_endline ("Failed to prove "^(!nm) ^ ". Reverting lemma store to previous state.") in
-    List.iter (fun _ -> Lem_store.all_lemma # pop_coercion ) lems;
+    (* List.iter (fun _ -> Lem_store.all_lemma # pop_coercion ) lems; *)
+    Lem_store.all_lemma # pop_coercion;
     ()
   else
     print_endline ("Valid repo: lemma store increased.");
   None
+
+let manage_unsafe_lemmas ldef_lst iprog cprog = 
+  let (left,right) = List.fold_left (fun (left,right) ldef -> 
+      let l2r,r2l,typ = process_one_lemma iprog cprog ldef in
+      (l2r@left,r2l@right)
+          (* Lem_store.all_lemma # add_coercion l2r r2l *)
+  ) ([],[]) ldef_lst in
+  let _ = Lem_store.all_lemma # add_coercion left right in
+  print_endline ("Updated store with unsafe repo.");
+  None
+
+
+let manage_lemmas ldef_lst iprog cprog =
+  if !Globals.check_coercions then manage_safe_lemmas ldef_lst iprog cprog
+  else manage_unsafe_lemmas ldef_lst iprog cprog
 
 let manage_test_lemmas ldef_lst iprog cprog = 
   let lems = List.map (fun ldef -> 
@@ -278,10 +297,3 @@ let manage_test_new_lemmas ldef_lst iprog cprog =
     print_endline ("Valid repo: store restored.");
   None
 
-let manage_unsafe_lemmas ldef_lst iprog cprog = 
-  let _ = List.iter (fun ldef -> 
-      let l2r,r2l,typ = process_one_lemma iprog cprog ldef in
-      Lem_store.all_lemma # add_coercion l2r r2l
-  ) ldef_lst in
-  print_endline ("Updated store with unsafe repo.");
-  None

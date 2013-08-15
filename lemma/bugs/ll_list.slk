@@ -41,6 +41,6 @@ lemma
        "V15" self::ll_s<n> <-> self::ll<>].
 
 
-//lemma "V4" self::ll_s<n> * x::ll<> -> self::ll<>. //should this fail?
+lemma "V4" self::ll_s<n> * x::ll<> -> self::ll<>. //should this fail?
 
 checkentail x::ll_s<n> |- x::ll<>.

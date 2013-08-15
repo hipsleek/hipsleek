@@ -3034,7 +3034,7 @@ let check_prog iprog (prog : prog_decl) =
   in
   let _ = if (Printexc.backtrace_status ()) then print_endline "backtrace active" in 
    (* let _ = Debug.info_pprint ("  check_prog: " ^ (Cprinter.string_of_program prog) ) no_pos in *)
-  if !Globals.check_coercions then 
+  if true (* !Globals.check_coercions *) then 
     begin
       print_string "Checking lemmas... ";
       (* ignore (check_coercion prog); *)

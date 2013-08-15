@@ -397,7 +397,7 @@ let process_list_lemma ldef_lst =
   let lst = ldef_lst.Iast.coercion_list_elems in
   let res = 
     match ldef_lst.Iast.coercion_list_kind with
-      | LEM            -> Lemma.manage_lemma lst iprog !cprog
+      | LEM            -> Lemma.manage_lemmas lst iprog !cprog
       | LEM_TEST       -> Lemma.manage_test_lemmas lst iprog !cprog
       | LEM_TEST_NEW   -> Lemma.manage_test_new_lemmas lst iprog !cprog
       | LEM_UNSAFE     -> Lemma.manage_unsafe_lemmas lst iprog !cprog

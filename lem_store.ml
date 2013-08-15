@@ -1,3 +1,6 @@
+open Gen.Basic
+open Gen.BList
+
 let lem_pr = ref (fun (c:Cast.coercion_decl) -> "lem_store printer has not been initialized") 
 let ilem_pr = ref (fun (c:Iast.coercion_decl) -> "COERC printer has not been initialized") 
 let ilem_lst_pr = ref (fun (c:Iast.coercion_decl_list) -> "COERC_LIST printer has not been initialized") 
@@ -24,9 +27,15 @@ object (self)
       right_lem # push_list lem;
       num_right_lem_stk # push len
 
-  method add_coercion left right =
+  method add_coercion_x left right =
     self # add_left_coercion left;
     self # add_right_coercion right
+
+  method add_coercion left right =
+    let pr x = string_of_int (List.length x) in
+    Debug.no_1 "lem_store:add_coercion" (add_str "(left,right)" (pr_pair pr pr)) 
+        pr_none 
+        (fun _ -> self # add_coercion_x left right) (left,right)
 
   method clear_left_coercion =
     left_lem # reset ;
@@ -88,9 +97,19 @@ object (self)
         done
       end
 
-  method pop_coercion =
+  method pop_coercion_x =
     self # pop_left_coercion;
     self # pop_right_coercion
+
+
+  method pop_coercion =
+    let left_num = num_left_lem_stk # top_no_exc in
+    let right_num = num_right_lem_stk # top_no_exc in
+    Debug.no_1 "lem_store:pop_coercion" 
+        (add_str "(left,right)" (pr_pair string_of_int string_of_int)) 
+        pr_none 
+        (fun _ -> self # pop_coercion_x) (left_num,right_num)
+
 
 end;;
 
