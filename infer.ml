@@ -2574,25 +2574,17 @@ let generate_constraints prog es rhs lhs_b ass_guard rhs_b1 defined_hps
   (*   lookup_eq_hprel_ass rvhp_rels ass new_lhs new_rhs *)
   (* in *)
   let m = [] in
-  let hp_rels=
+  let hp_rels, n_es_heap_opt=
     (* if b && m <> [] then [] else *)
       let knd = CP.RelAssume (CP.remove_dups_svl (lhrs@rhrs@rvhp_rels)) in
       let lhs = CF.remove_neqNull_svl matched_svl (CF.Base new_lhs_b) in
       let grd = check_guard ass_guard new_lhs_b new_rhs_b in
       let rhs = CF.Base new_rhs_b in
       let hp_rel = CF.mkHprel knd [] [] matched_svl lhs grd rhs es_cond_path in
-      [hp_rel]
-      (* [{ *)
-      (*     CF.hprel_kind = CP.RelAssume (CP.remove_dups_svl (lhrs@rhrs@rvhp_rels)); *)
-      (*     unk_svl = [] ; *)
-      (*     unk_hps = []; *)
-      (*     predef_svl = matched_svl ; (\*(closed_hprel_args_def@total_unk_svl@matched_svl);*\) *)
-      (*     hprel_lhs = CF.remove_neqNull_svl matched_svl (CF.Base new_lhs_b); *)
-      (*     hprel_guard = check_guard ass_guard new_lhs_b new_rhs_b; *)
-      (*     hprel_rhs = CF.Base new_rhs_b; *)
-      (*     hprel_proving_kind = Others.proving_kind # top_no_exc; *)
-      (*     hprel_path = es_cond_path; *)
-      (* }] *)
+      [hp_rel], Some (match lhs with
+        | CF.Base fb -> fb.CF.formula_base_heap
+        | _ -> report_error no_pos "INFER.generate_constrains: impossible"
+      )
   in
   let hp_rel_list = hp_rels@defined_hprels in
   let _ = rel_ass_stk # push_list (hp_rel_list) in
@@ -2601,7 +2593,7 @@ let generate_constraints prog es rhs lhs_b ass_guard rhs_b1 defined_hps
   (* let _ = DD.info_pprint ("  new_post_hps: " ^ (!CP.print_svl new_post_hps)) pos in *)
   let _ = DD.tinfo_pprint ("  hp_rels: " ^ (let pr = pr_list_ln Cprinter.string_of_hprel in pr hp_rels)) pos in
   let _ = DD.tinfo_pprint ("  hp_rel_list: " ^ (let pr = pr_list_ln Cprinter.string_of_hprel in pr hp_rel_list)) pos in
-  r_new_hfs, new_lhs_b,m,rvhp_rels,new_post_hps, hp_rel_list
+  r_new_hfs, new_lhs_b,m,rvhp_rels,new_post_hps, hp_rel_list, n_es_heap_opt
 
 
 let update_es prog es hds hvs ass_lhs_b rhs rhs_rest r_new_hfs defined_hps lselected_hpargs0
@@ -2664,9 +2656,10 @@ let update_es prog es hds hvs ass_lhs_b rhs rhs_rest r_new_hfs defined_hps lsele
                in
                (nf , new_h, nholes)
          | _ ->
-               let consumed_hns = List.filter (fun hd -> CP.mem_svl hd.CF.h_formula_data_node root_vars_ls2) hds in
-               let nlhs = if consumed_hns = [] then h else CF.DataNode (List.hd consumed_hns) in
-               (f, nlhs, [])
+               (* let consumed_hns = List.filter (fun hd -> CP.mem_svl hd.CF.h_formula_data_node root_vars_ls2) hds in *)
+               (* let nlhs = if consumed_hns = [] then h else CF.DataNode (List.hd consumed_hns) in *)
+               (* (f, nlhs, []) *)
+               (f, h, [])
      in
      let new_es_formula, new_lhs, new_holes = check_consumed_node rhs new_es_formula in
      let new_es_formula1 = CF.subst m new_es_formula in
@@ -2832,7 +2825,7 @@ let infer_collect_hp_rel_x prog (es:entail_state) rhs0 rhs_rest (rhs_h_matched_s
               | [] -> lhs_b1
               | hf::rest -> CF.mkAnd_fb_hf lhs_b1 (List.fold_left(fun a c-> mkStarH a c pos ) hf rest) pos
             in
-            let r_new_hfs,ass_lhs_b, m,rvhp_rels, r_post_hps,hp_rel_list =
+            let r_new_hfs,ass_lhs_b, m,rvhp_rels, r_post_hps,hp_rel_list,n_es_heap_opt =
               generate_constraints prog es rhs n_lhs_b1 ass_guard rhs_b1
                   defined_hps1 ls_unknown_ptrs unk_pure unk_svl
                   no_es_history lselected_hpargs2 rselected_hpargs
@@ -2843,13 +2836,17 @@ let infer_collect_hp_rel_x prog (es:entail_state) rhs0 rhs_rest (rhs_h_matched_s
             (*use leqs not leqs: since res is not substed*)
             let new_es, new_lhs = update_es prog es hds hvs ass_lhs_b rhs rhs_rest r_new_hfs defined_hps1 lselected_hpargs2
               rvhp_rels leqs m new_post_hps unk_map hp_rel_list pos in
-            (true, new_es,new_lhs, None)
+            let n_es_heap = match rhs with
+              | CF.HRel _ -> n_es_heap_opt
+              | _ -> None
+            in
+            (true, new_es,new_lhs, n_es_heap)
       end
 
 let infer_collect_hp_rel i prog (es:entail_state) rhs rhs_rest (rhs_h_matched_set:CP.spec_var list) lhs_b rhs_b pos =
   let pr1 = Cprinter.string_of_formula_base in
   let pr4 = Cprinter.string_of_estate_infer_hp in
-  let pr5 =  pr_quad string_of_bool pr4 Cprinter.string_of_h_formula (pr_option Cprinter.string_of_formula) in
+  let pr5 =  pr_quad string_of_bool pr4 Cprinter.string_of_h_formula (pr_option Cprinter.string_of_h_formula) in
   Debug.no_2_num i "infer_collect_hp_rel" pr1 pr1 pr5
 ( fun _ _ -> infer_collect_hp_rel_x prog es rhs rhs_rest rhs_h_matched_set lhs_b rhs_b pos) lhs_b rhs_b
 
