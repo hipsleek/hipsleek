@@ -2,5 +2,7 @@
 #process_action,Loop
 #norm_pure_result,Trace
 #norm_pure_input,Trace
-#find_equiv_all
+find_inf_subs
+find_equiv_all
 normalize_inf_formula
+INF-norm-imply

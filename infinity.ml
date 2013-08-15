@@ -799,10 +799,10 @@ let normalize_inf_formula_sat (f: CP.formula) : CP.formula =
   
 let normalize_inf_formula_imply (ante: CP.formula) (conseq: CP.formula) : CP.formula * CP.formula = 
   if not (contains_inf ante) && not (contains_inf conseq) then ante,conseq else
-  let ante_norm = if contains_inf_eq ante 
+  (*let ante_norm = if contains_inf_eq ante 
   		then (*(normalize_inf_formula*) (substitute_inf ante)
-  		else  (*normalize_inf_formula*) ante in
-  let ante_norm_lst = split_conjunctions ante_norm in
+  		else  (*normalize_inf_formula*) ante in*)
+  let ante_norm_lst = split_conjunctions ante in
   let ante_norm = join_conjunctions (List.map normalize_inf_formula ante_norm_lst) in
   let conseq_norm = (*if contains_inf_eq conseq
   		then (normalize_inf_formula (substitute_inf conseq))
@@ -810,7 +810,7 @@ let normalize_inf_formula_imply (ante: CP.formula) (conseq: CP.formula) : CP.for
   let new_a = convert_inf_to_var ante_norm in
   let new_c = convert_inf_to_var conseq_norm in
   let atoc_sublist = find_inf_subs new_a in
-  if List.length atoc_sublist == 1 
+  let ante,conseq = if List.length atoc_sublist == 1 
   then let _,subs_c = List.hd atoc_sublist in 
   	let vlist = find_equiv_all_x (SpecVar(Int,constinfinity,Unprimed)) subs_c in
   	let new_c = sub_inf_list new_c vlist false in (* substitute +ve inf *)
@@ -821,6 +821,9 @@ let normalize_inf_formula_imply (ante: CP.formula) (conseq: CP.formula) : CP.for
     let new_c = join_conjunctions (List.map normalize_inf_formula new_c_lst) in
   	new_a,new_c
   else new_a,new_c
+  in let ante_norm = (*check if need to normalize again*)if contains_inf_eq ante 
+  		then normalize_inf_formula (substitute_inf ante)
+  		else ante in ante_norm,conseq
 
 let normalize_inf_formula_imply (ante: CP.formula) (conseq: CP.formula) : CP.formula * CP.formula = 
   let pr = Cprinter.string_of_pure_formula in
