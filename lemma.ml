@@ -227,7 +227,8 @@ let manage_safe_lemmas ldef_lst iprog cprog =
         | Some (CF.FailCtx _) -> nm := name; true
         | _ -> false)
   ) lems in
-  if invalid then 
+  if invalid then
+    let _ = Log.last_cmd # dumping (!nm) in
     let _ = print_endline ("Failed to prove "^(!nm) ^ ". Reverting lemma store to previous state.") in
     (* List.iter (fun _ -> Lem_store.all_lemma # pop_coercion ) lems; *)
     Lem_store.all_lemma # pop_coercion;

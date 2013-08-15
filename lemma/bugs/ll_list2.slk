@@ -23,4 +23,4 @@ lemma
        "V15" self::ll_s<n> <-> self::ll<>].
 
 
-checkentail x::ll_s<n> |- x::ll<>.
+//checkentail x::ll_s<n> |- x::ll<>.
