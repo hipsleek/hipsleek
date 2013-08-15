@@ -11,18 +11,18 @@ pred lseg<n, p, sm, lg> == case {
                      & lg<\inf; 
 }	
 //inv n >= 0  -\inf<sm & lg<\inf
-inv n = 0 & sm=\inf & lg=-\inf |
-    n>0 & -\inf<sm & sm<=lg & lg<\inf
-.
-// n>=0 
+//inv n = 0 & sm=\inf & lg=-\inf |
+  //  n>0 & -\inf<sm & sm<=lg & lg<\inf
+//.
+ inv n>=0 .
 
 pred ll_tail<n, t, sm, lg> == 
    case {
      n=1 -> [] self::node<sm, null> & t=self & n=1 & sm=lg & -\inf<sm<\inf;
      n!=1 -> [] self::node<sm, r> * r::ll_tail<nn, t, sm1, lg> & r!=null & sm<=sm1 & nn=n-1 & -\inf<sm<\inf;
    }
-inv n>=1 & self!=null & -\inf<sm & sm<=lg & lg<\inf.
-
+//inv n>=1 & self!=null & -\inf<sm & sm<=lg & lg<\inf.
+inv n>=1.
   /* todo: m=n-1 for case struct */
  
 lemma "ll_tail2lsegL" self::ll_tail<n, t, sm, lg> & m=n-1
