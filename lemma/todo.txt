@@ -36,6 +36,14 @@ EBase {3}->emp&self_lem_11=null & n_62=0&{FLOW,(1,22)=__flow}[]
             EBase emp&n=n_62&{FLOW,(1,22)=__flow}[]
 
 ====================================================================
+# ../../sleek qs-3-inf.slk --en-inf --elp --esl 
+
+Can trace with exception backtrace?
+
+Starting Omega...oc
+ERROR : top of empty stackERROR : get_sleek_no on empty sleek_stk
+LOGGING ERROR : inconsistent slk_no problem 2 stk:-1
+ERROR : top of empty stackFatal error: exception Gen.Stack_Error
 ====================================================================
 ====================================================================
 ====================================================================

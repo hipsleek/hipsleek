@@ -1,5 +1,5 @@
-==========================================================
-# s-s1a.slk  These are wrong.
+sa==========================================================
+# s-s1a.slk  These are wrong. - FIXED
 
 //(17) fail but should succeed
 checkentail  mi+3=\inf |- mi=\inf.

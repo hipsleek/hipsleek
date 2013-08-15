@@ -27,7 +27,7 @@ object (self)
     begin
       (* timer_timeout <- false; *)
       if trace_timer then print_endline ("inside timer_stop "^pno); 
-      let r = stk_t # pop_top in
+      let r = stk_t # pop_top_no_exc in
       if stk_t # is_empty then 
         (if timer_val==None then timer_val <- Some s)
       else print_endline "Nested Timer(stop)"
@@ -36,7 +36,7 @@ object (self)
     begin
       if trace_timer then print_endline ("inside timer_timeout "^pno);
       timer_timeout_flag <- true;
-      let r = stk_t # pop_top in
+      let r = stk_t # pop_top_no_exc in
       if stk_t # is_empty then 
         (if timer_val==None then timer_val <- Some s)
       else print_endline "Nested Timer(timeout)"
@@ -70,13 +70,13 @@ object (self)
           | Some t2 ->
                 begin
                   (* let t = Gen.Profiling.get_time() in *)
-                  let (s,_) = time_stk # pop_top in
+                  let (s,_) = time_stk # pop_top_no_exc in
                   timer_val <- None;
                   (s,t2)
                 end
           | None ->
                 let t = Gen.Profiling.get_main_time() in
-                let (s,st) = time_stk # pop_top in
+                let (s,st) = time_stk # pop_top_no_exc in
                 (s,t -. st)
       in
       if tt>3.0 then
