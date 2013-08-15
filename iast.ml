@@ -36,7 +36,7 @@ type prog_decl = {
     (* An Hoa: relational declaration *)
     prog_proc_decls : proc_decl list;
     prog_barrier_decls : barrier_decl list;
-    mutable prog_coercion_decls : coercion_decl list
+    mutable prog_coercion_decls : coercion_decl_list list
 }
 
 and data_field_ann =
@@ -201,14 +201,23 @@ proc_test_comps: test_comps option}
 
 and coercion_decl = { coercion_type : coercion_type;
 coercion_exact : bool;
+coercion_kind:   lemma_kind;
 coercion_name : ident;
 coercion_head : F.formula;
 coercion_body : F.formula;
 coercion_proof : exp }
+
+and coercion_decl_list = {
+    coercion_list_elems : coercion_decl list;
+    coercion_list_kind:   lemma_kind;
+}
+
 and coercion_type = 
   | Left
   | Equiv
   | Right
+
+
 
 (********vp:for parse compare file************)
 and cp_file_comps = 
@@ -2075,7 +2084,7 @@ let rec append_iprims_list (iprims : prog_decl) (iprims_list : prog_decl list) :
                 prog_axiom_decls = hd.prog_axiom_decls @ iprims.prog_axiom_decls; (* [4/10/2011] An Hoa *)
                 prog_hopred_decls = hd.prog_hopred_decls @ iprims.prog_hopred_decls;
                 prog_proc_decls = hd.prog_proc_decls @  iprims.prog_proc_decls;
-                prog_coercion_decls = hd.prog_coercion_decls @ iprims.prog_coercion_decls;
+                prog_coercion_decls = hd.prog_coercion_decls @  iprims.prog_coercion_decls;
 				prog_barrier_decls = hd.prog_barrier_decls @ iprims.prog_barrier_decls;
 				} in
              append_iprims_list new_iprims tl
@@ -2308,6 +2317,7 @@ let gen_normalize_lemma_comb ddef =
  {coercion_type = Left;
   coercion_name = lem_name;
   coercion_exact = false;
+  coercion_kind = LEM_UNSAFE;
   coercion_head = F.formula_of_heap_1 (F.mkStar (gennode perm1 args1) (gennode perm2 args2) no_pos) no_pos;
   coercion_body = F. mkBase (gennode perm3 args1) pure  top_flow [] no_pos;
   coercion_proof =  Return { exp_return_val = None; exp_return_path_id = None ; exp_return_pos = no_pos }
@@ -2324,6 +2334,7 @@ let gen_normalize_lemma_comb ddef =
  {coercion_type = Left;
   coercion_name = lem_name;
   coercion_exact = false;
+  coercion_kind = LEM_UNSAFE;
   coercion_head = F.mkBase (gennode perm3 args) pure  top_flow [] no_pos;
   coercion_body = F.formula_of_heap_1 (F.mkStar (gennode perm1 args) (gennode perm2 args) no_pos) no_pos;
   
@@ -2332,9 +2343,14 @@ let gen_normalize_lemma_comb ddef =
 	
 let add_normalize_lemmas prog4 = 
 	if !perm = NoPerm || not !enable_split_lemma_gen then prog4
-	else {prog4 with prog_coercion_decls = List.fold_left(fun a c-> (gen_normalize_lemma_split c)::(gen_normalize_lemma_comb c)::a) prog4.prog_coercion_decls prog4.prog_data_decls}
-	
-	
+	else {prog4 with prog_coercion_decls =
+                let new_lems =  List.fold_left(fun a c-> (gen_normalize_lemma_split c)::(gen_normalize_lemma_comb c)::a) [] prog4.prog_data_decls in
+                let new_lst  = 
+                  { coercion_list_elems = new_lems;
+                    coercion_list_kind  = LEM;} in
+                new_lst::prog4.prog_coercion_decls
+        }
+
 let rec get_breaks e = 
 	let f e = match e with
 		| Raise {exp_raise_type = rt}-> (match rt with
@@ -2495,3 +2511,7 @@ let lbl_getter prog vn id =
 	else None
   with 
    | Not_found -> None 
+
+let eq_coercion c1 c2 = (String.compare c1.coercion_name c2.coercion_name) == 0
+
+let eq_coercion_list = (==)             (* to be modified *)

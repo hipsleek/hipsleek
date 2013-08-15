@@ -40,7 +40,7 @@ type command =
   | RelDef of I.rel_decl (* An Hoa *)
   | HpDef of I.hp_decl
   | AxiomDef of I.axiom_decl (* [4/10/2011] An Hoa *)
-  | LemmaDef of I.coercion_decl
+  | LemmaDef of I.coercion_decl_list
   | LetDef of (ident * meta_formula)
   | EntailCheck of (meta_formula * meta_formula * entail_type)
   | Simplify of (meta_formula)

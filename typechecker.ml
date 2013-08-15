@@ -2972,7 +2972,7 @@ let check_coercion (prog : prog_decl) =
          | (Some coerc1, Some coerc2) -> (I.Equiv, coerc1.coercion_name)
          | (None, None) ->  Error.report_error {Err.error_loc = no_pos; Err.error_text = "[typechecker.ml]: Lemma can't be empty"}
        in
-       let _ = LP.verify_lemma l2r r2l prog coerc_name coerc_type in ()
+       let _ = LP.verify_lemma 1 l2r r2l prog coerc_name coerc_type in ()
    ) lemmas
 
 let init_files () =

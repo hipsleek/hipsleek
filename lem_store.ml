@@ -1,4 +1,6 @@
 let lem_pr = ref (fun (c:Cast.coercion_decl) -> "lem_store printer has not been initialized") 
+let ilem_pr = ref (fun (c:Iast.coercion_decl) -> "COERC printer has not been initialized") 
+let ilem_lst_pr = ref (fun (c:Iast.coercion_decl_list) -> "COERC_LIST printer has not been initialized") 
 let lem_eq = (==) 
 
 class lemma_store =
@@ -92,7 +94,47 @@ object (self)
 
 end;;
 
-let all_lemma = new lemma_store
+let all_lemma = new lemma_store;;
 
+(* module COERC = *)
+(* struct *)
+(*   type t = Iast.coercion_decl *)
+(*   let eq = Iast.eq_coercion *)
+(*   let string_of = !ilem_pr *)
+(* end;; *)
+
+(* module BL_coercs = Gen.BListEQ(COERC);; *)
+
+(* module COERC_LIST = *)
+(* struct *)
+(*   type t = Iast.coercion_decl_list *)
+(*   let eq = Iast.eq_coercion_list *)
+(*   let string_of = !ilem_lst_pr *)
+(* end;; *)
+
+
+(* module BL_coercs_list = Gen.BListEQ(COERC_LIST);; *)
+
+class lemma_list_store = 
+object (self)
+  val lst = new Gen.stack_pr !ilem_lst_pr Iast.eq_coercion_list
+
+  method add_ilemma lemma_list =
+    lst # push lemma_list
+
+  method set_ilemma il_lst  =
+    let _ = lst # reset in
+    let len = List.iter (self # add_ilemma ) il_lst in
+    ()
+
+  method get_all_ilemma =
+    lst # reverse_of
+
+  method string_of =
+    lst # string_of
+
+end;;
+
+let ilemma_st = new lemma_list_store;;
 
 

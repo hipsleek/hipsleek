@@ -365,13 +365,12 @@ let process_axiom_def adef = begin
 	(* Forward the axiom to the smt solver. *)
 	Smtsolver.add_axiom cadef.C.axiom_hypothesis Smtsolver.IMPLIES cadef.C.axiom_conclusion;
 end
-	
 
 let process_lemma ldef =
   let ldef = AS.case_normalize_coerc iprog ldef in
   let l2r, r2l = AS.trans_one_coercion iprog ldef in
-  let l2r = List.concat (List.map (fun c-> AS.coerc_spec !cprog true c) l2r) in
-  let r2l = List.concat (List.map (fun c-> AS.coerc_spec !cprog false c) r2l) in
+  let l2r = List.concat (List.map (fun c-> AS.coerc_spec !cprog c) l2r) in
+  let r2l = List.concat (List.map (fun c-> AS.coerc_spec !cprog c) r2l) in
   (* TODO : WN print input_ast *)
   let _ = if (!Globals.print_input || !Globals.print_input_all) then print_string (Iprinter.string_of_coerc_decl ldef) in
   let _ = if (!Globals.print_core || !Globals.print_core_all) then 
@@ -386,7 +385,7 @@ let process_lemma ldef =
     | _ -> None in
   let l2r = get_coercion l2r in
   let r2l = get_coercion r2l in
-  let res = LP.verify_lemma l2r r2l !cprog (ldef.I.coercion_name) ldef.I.coercion_type in
+  let res = LP.verify_lemma 2 l2r r2l !cprog (ldef.I.coercion_name) ldef.I.coercion_type in
   residues := (match res with
     | None -> None;
     | Some ls_ctx -> Some (ls_ctx, true))
@@ -394,6 +393,18 @@ let process_lemma ldef =
 let process_lemma ldef =
   Debug.no_1 "process_lemma" Iprinter.string_of_coerc_decl (fun _ -> "?") process_lemma ldef
 
+let process_list_lemma ldef_lst =
+  let lst = ldef_lst.Iast.coercion_list_elems in
+  let res = 
+    match ldef_lst.Iast.coercion_list_kind with
+      | LEM            -> Lemma.manage_lemma lst iprog !cprog
+      | LEM_TEST       -> Lemma.manage_test_lemmas lst iprog !cprog
+      | LEM_TEST_NEW   -> Lemma.manage_test_new_lemmas lst iprog !cprog
+      | LEM_UNSAFE     -> Lemma.manage_unsafe_lemmas lst iprog !cprog
+            (* let _ = List.map process_lemma ldef_lst.Iast.coercion_list_elems in *) in
+  residues := (match res with
+    | None -> None;
+    | Some ls_ctx -> Some (ls_ctx, true))
       
 let process_data_def ddef =
   if AS.check_data_pred_name iprog ddef.I.data_name then

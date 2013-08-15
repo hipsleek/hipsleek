@@ -186,6 +186,7 @@ and coercion_case =
 and coercion_decl = { 
     coercion_type : coercion_type;
     coercion_exact : bool;
+    coercion_kind : lemma_kind;
     coercion_name : ident;
     coercion_head : F.formula; (* used as antecedent during --elp *)
     coercion_head_norm : F.formula; (* used as consequent during --elp *)

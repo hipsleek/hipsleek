@@ -1,0 +1,21 @@
+//Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Fail
+
+data node { int val ; node next }.
+
+pred ll_s<n> == self = null & n = 0
+	or self::node<next = r> * r::ll_s<n - 1>
+	inv n >= 0.
+
+pred ll<> == self = null 
+	or self::node<next = r> * r::ll<>
+	inv true.
+
+lemma_test_new 
+     [ "V7" self::ll_s<n> -> self::ll<>; 
+       "V8" self::ll_s<n> <- self::ll<>;
+       "V9"  self::ll_s<n> <-> self::ll<>].
+
+
+//lemma "V4" self::ll_s<n> * x::ll<> -> self::ll<>. //should this fail?
+
+checkentail x::ll_s<n> |- x::ll<>.
