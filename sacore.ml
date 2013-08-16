@@ -2690,16 +2690,18 @@ let pred_split_hp_x iprog prog unk_hps (hp_defs: CF.hp_rel_def list)  =
   ) ([],[],[]) hp_defs
   in
   let closure_tupled_hps = find_closure_tuplep_hps tupled_hps sing_hp_defs in
-  let sing_hp_defs1, tupled_hp_defs1  = if List.length closure_tupled_hps > List.length tupled_hps then
+  let sing_hp_defs1a, tupled_hp_defs1  = if List.length closure_tupled_hps > List.length tupled_hps then
     let sing_hp_defs2, tupled_hp_defs2 = List.partition (fun (def,_,_,_) ->
-         match def with
-        | CP.HPRelDefn (hp,_,_) -> not (CP.mem_svl hp closure_tupled_hps)
-        | _ -> false
+        match def with
+            | CP.HPRelDefn (hp,_,_) -> not (CP.mem_svl hp closure_tupled_hps)
+            | _ -> false
     ) sing_hp_defs in
     (sing_hp_defs2, tupled_hp_defs2@tupled_hp_defs)
   else
     sing_hp_defs,tupled_hp_defs
   in
+  let sing_hp_defs1, sing_hp_def1b = List.partition (fun (_,_,_,f) -> let fs = CF.list_of_disjs f in
+        if List.length fs < 2 then false else true) sing_hp_defs1a in
   (*compute candidates*)
   let split_cands = pred_split_cands prog unk_hps sing_hp_defs1 in
   (*split and obtain map*)
@@ -2711,7 +2713,7 @@ let pred_split_hp_x iprog prog unk_hps (hp_defs: CF.hp_rel_def list)  =
       prove_split_cand iprog prog proving_fnc unk_hps ss_preds hp_defs0 split
   ) sing_hp_defs1 split_map_hprel_subst
   in
-  let tupled_hp_defs2 = List.map (fun (a,b,c, f) -> (a,b,c, CF.subst_hrel_f f ss_preds)) tupled_hp_defs1 in
+  let tupled_hp_defs2 = List.map (fun (a,b,c, f) -> (a,b,c, CF.subst_hrel_f f ss_preds)) (tupled_hp_defs1@sing_hp_def1b) in
   (sing_hp_defs2@tupled_hp_defs2,List.map (fun (a1,a2,a3,a4,_) -> (a1,a2,a3,a4)) split_map_hprel_subst)
 
 let pred_split_hp iprog prog unk_hps (hp_defs: CF.hp_rel_def list): (CF.hp_rel_def list *
