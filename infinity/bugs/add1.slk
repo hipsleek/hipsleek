@@ -3,8 +3,6 @@ sm<(\inf) & sm=sm_320 & lg=lg_322 & lg1_293=lg1_835
 	   |- (exists lg1_329:lg1_329<=lg & lg1_329=max(lg1_293,sm) & lg1_329<(\inf))
 .
 
-
-/*
 slk_simplify (nnn=0 & lg+(\inf)=0 | nnn>0 & lg<\inf).
 
 slk_simplify (nnn=0 & lg=-ninfinity | nnn>0 & lg <infinity).
@@ -13,4 +11,6 @@ slk_simplify (nnn=0 & lg=-ninfinity | nnn>0 & lg <infinity).
 slk_simplify (nnn=0 & lg=neginfinity | nnn=0 & lg<infinity).
 
 slk_simplify -\inf<\inf & (nnn=0 & lg = -\inf | nnn = 0 & lg< \inf).
-*/
+
+slk_simplify (nnn=0 & lg = -\inf) | (nnn = 0 & lg< \inf).
+

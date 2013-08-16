@@ -14,8 +14,8 @@ HeapPred P2(node a).
 lemma_infer [P1,P2] self::zip<y> -> P1(self) * P2(y).
 print residue.
 
-infer [P1,P2] self::zip<y> |- P1(self) * P2(y).
-print residue.
+//infer [P1,P2] self::zip<y> |- P1(self) * P2(y).
+//print residue.
 /*
  (a) add lemma to repo
  (b) unfold LHS and for infer_cmd
