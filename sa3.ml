@@ -1983,6 +1983,8 @@ let infer_shapes_conquer iprog prog proc_name ls_is sel_hps=
   else (all_hpdefs, cmb_defs)
   in
   let n_all_hp_defs1 = SAU.combine_hpdefs n_all_hpdefs in
+  (*split pred*)
+  let _ = SAC.pred_split_hp iprog prog dang_hps n_all_hp_defs1 in
   (*reuse: check equivalent form - substitute*)
   let n_cmb_defs1, n_all_hp_defs2 = SAU.reuse_equiv_hpdefs prog n_cmb_defs n_all_hp_defs1 in
   (*reuse with lib*)
