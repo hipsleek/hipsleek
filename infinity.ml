@@ -441,30 +441,41 @@ let rec normalize_inf_formula (pf: CP.formula) : CP.formula =
     | CP.Exists (qid, qf,fl,pos) -> 
           let qf_norm = normalize_inf_formula qf in CP.Exists(qid,qf_norm,fl,pos))
 
+(* convert \inf to Zinfinity and -\inf to ZinfinityPRMD
+and add ZinfintyPRMD < Zinfinity *)
+
 let convert_inf_to_var (pf:CP.formula) : CP.formula =
   let f_f f = None in
   let f_bf_neg bf = let (f,l) = bf in 
     match f with
-    | Eq(e1,e2,pos) -> if check_neg_inf2 e1 e2 
-      then let e1 = (match e1 with 
-        | Add(a1,a2,pos) -> if is_inf a1 then CP.Add(CP.Var(CP.SpecVar(Int,constinfinity,Primed),pos),a2,pos)
-            else CP.Add(a1,CP.Var(CP.SpecVar(Int,constinfinity,Primed),pos),pos)
-        | _ -> e1) in Some(Eq(e1,e2,pos),l)
+    | Eq(e1,e2,pos) (*| Neq(e1,e2,pos) | 
+      Lt(e1,e2,pos) | Gt(e1,e2,pos) |
+      Lte(e1,e2,pos) | Gte(e1,e2,pos)*)
+      -> let e1,e2 = normalize_exp e1,normalize_exp e2 in 
+         if check_neg_inf2 e1 e2 
+      then (match e1 with 
+        | Add(a1,a2,pos) -> if is_inf a1 && is_inf a2 then Some(mkFalse_b pos)
+          else if is_inf a1 
+          then Some(Eq(CP.Var(CP.SpecVar(Int,constinfinity,Primed),pos),a2,pos),l)
+          else Some(Eq(a1,CP.Var(CP.SpecVar(Int,constinfinity,Primed),pos),pos),l)
+        | _ -> Some(Eq(e1,e2,pos),l))
       else if check_neg_inf2 e2 e1
-      then let e2 = (match e2 with 
-        | Add(a1,a2,pos) -> if is_inf a1 then CP.Add(CP.Var(CP.SpecVar(Int,constinfinity,Primed),pos),a2,pos)
-            else CP.Add(a1,CP.Var(CP.SpecVar(Int,constinfinity,Primed),pos),pos)
-        | _ -> e2) in Some(Eq(e1,e2,pos),l)
+      then (match e2 with 
+        | Add(a1,a2,pos) -> if is_inf a1 && is_inf a2 then Some(mkFalse_b pos)
+          else if is_inf a1 
+          then Some(Eq(CP.Var(CP.SpecVar(Int,constinfinity,Primed),pos),a2,pos),l)
+          else Some(Eq(a1,CP.Var(CP.SpecVar(Int,constinfinity,Primed),pos),pos),l)
+        | _ -> Some(Eq(e1,e2,pos),l))
       else None
     | _ -> None in
   let f_bf bf = None in 
-  let f_e e = 
+  let f_e e =
     match e with
       | InfConst (i,pos) -> Some (CP.Var(CP.SpecVar(Int,i,Unprimed),pos))
       | _ -> None
   in
   let pf = map_formula pf (f_f,f_bf_neg,f_e) in
-  map_formula pf (f_f,f_bf,f_e) 
+   map_formula pf (f_f,f_bf,f_e)
 
 let convert_inf_to_var (pf:CP.formula) : CP.formula =
 Debug.no_1 "convert_inf_to_var" string_of_pure_formula string_of_pure_formula 
@@ -475,7 +486,9 @@ let convert_var_to_inf (pf:CP.formula) : CP.formula =
   let f_bf bf = None in
   let f_e e = 
     match e with
-      | Var(sv,pos) -> if is_inf e then Some (mkInfConst pos) else None
+      | Var(sv,pos) -> if is_inf e 
+        then if not(is_primed sv) then Some (mkInfConst pos) else Some(mkNegInfConst pos) 
+        else None
       | _ -> None
   in
   map_formula pf (f_f,f_bf,f_e)
@@ -823,7 +836,10 @@ let normalize_inf_formula_imply (ante: CP.formula) (conseq: CP.formula) : CP.for
   else new_a,new_c
   in let ante_norm = (*check if need to normalize again*)if contains_inf_eq ante 
   		then normalize_inf_formula (substitute_inf ante)
-  		else ante in ante_norm,conseq
+  		else ante in 
+  let conseq_norm = if contains_inf_eq conseq then normalize_inf_formula (substitute_inf conseq) 
+    else conseq in 
+  ante_norm,conseq_norm
 
 let normalize_inf_formula_imply (ante: CP.formula) (conseq: CP.formula) : CP.formula * CP.formula = 
   let pr = Cprinter.string_of_pure_formula in

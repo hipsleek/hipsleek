@@ -10,11 +10,9 @@ pred lseg<n, p, sm, lg> == case {
                & nn=n-1 & sm<=sm1 & -\inf<sm<\inf & lg=max(lg1,sm)
                      & lg<\inf; 
 }	
-//inv n >= 0  -\inf<sm & lg<\inf
-//inv n = 0 & sm=\inf & lg=-\inf |
-  //  n>0 & -\inf<sm & sm<=lg & lg<\inf
-//.
- inv n>=0 .
+//inv n >= 0  -\inf<sm & lg<\inf.
+//inv n = 0 & sm=\inf & lg=-\inf |n>0 & -\inf<sm & sm<=lg & lg<\inf.
+inv n>=0 .
 
 pred ll_tail<n, t, sm, lg> == 
    case {
