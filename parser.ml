@@ -83,6 +83,7 @@ let convert_lem_kind (l: lemma_kind_t) =
       | TLEM_TEST      -> LEM_TEST
       | TLEM_TEST_NEW  -> LEM_TEST_NEW
       | TLEM_UNSAFE    -> LEM_UNSAFE
+      | TLEM_SAFE      -> LEM_SAFE
       | TLEM_INFER     -> LEM_INFER
 
 let default_rel_id = "rel_id__"

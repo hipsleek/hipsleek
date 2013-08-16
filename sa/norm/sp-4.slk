@@ -17,7 +17,7 @@ pred ll<n:node> == self=null
 inv true.
 
 
-lemma self::ll<n> -> P1(self) .
+lemma_infer [P1] self::ll<n> -> P1(self) .
 
 
 /*

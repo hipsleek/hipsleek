@@ -902,6 +902,7 @@ let string_of_lem_kind l =
     | LEM_TEST     -> "testing lemmas"
     | LEM_TEST_NEW -> "testing lemmas(empty context)"
     | LEM_UNSAFE   -> "unsafe lemmas(not proved)"
+    | LEM_SAFE     -> "safe lemmas(added to store only if valid)"
     | LEM_INFER    -> "infer lemmas"
 ;;
 
