@@ -1507,7 +1507,9 @@ let process_print_command pcmd0 = match pcmd0 with
 	  let (n_tl,pf) = meta_to_struc_formula mf false [] None [] in
 		print_string ((Cprinter.string_of_struc_formula pf) ^ "\n")
   | PCmd pcmd -> 
-	if pcmd = "residue" then
+	if pcmd = "lemmas" then
+          Lem_store.all_lemma # dump
+	else if pcmd = "residue" then
           print_residue !CF.residues 
           (* match !CF.residues with *)
           (*   | None -> print_string ": no residue \n" *)
