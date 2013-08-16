@@ -11,7 +11,8 @@ inv true.
 HeapPred P1(node a).
 HeapPred P2(node a).
 
-lemma self::zip<y> -> P1(self) * P2(y).
+lemma_infer [P1,P2] self::zip<y> -> P1(self) * P2(y).
+print residue.
 
 lemma_unsafe self::zip<y> -> P1(self) * P2(y).
 
@@ -23,18 +24,26 @@ checkentail x::zip<y>
 print residue.
 
 */
+/*
 infer [P1,P2] x::zip<y>
      |- P1(x) * P2(y).
-print residue.
+print residue.*/
 
 
-/*
+
 infer [P1,P2] 
   self=null & y=null
-or self::node<_,p>*y::node<_,q>*p2::zip<q> & p=p2
+or self::node<_,p>*y::node<_,q>*p::zip<q> 
      |- P1(self) * P2(y).
 print residue.
-*/
+
+infer [P1,P2] 
+  self=null & y=null
+or self::node<_,p>*y::node<_,q>*p2::zip<q> & p2=p
+     |- P1(self) * P2(y).
+print residue.
+
+
 /*
 # sp-1a.slk
 
