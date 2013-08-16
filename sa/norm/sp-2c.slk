@@ -13,11 +13,12 @@ HeapPred P2(node a).
 HeapPred H1(node a).
 HeapPred H2(node a).
 
-lemma_unsafe self::zip<y> <- P1(self) * P2(y).
-print lemmas.
+lemma_infer [P1,P2] self::zip<y> -> P1(self) * P2(y).
+print residue.
 
-lemma_unsafe self::zip<y> -> P1(self) * P2(y).
-print lemmas.
+
+//lemma_infer [H2] self::zip<y> -> H2(self) * H2(y).
+//print residue.
 
 infer [] P1(x)*P2(y) |- x::zip<y>.
 print residue.
