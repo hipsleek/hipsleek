@@ -2,31 +2,12 @@
 
 slk_simplify (nnn=0 & lg = -\inf).
 /*
-simplify_omega@3
-simplify_omega inp1 : nnn=0 & lg+(\inf)=0
-simplify_omega@3 EXIT: nnn=0 & lg=\inf & lg<(\inf)
-Simplify  (2): nnn=0 & lg=\inf & lg<(\inf)
+norm_pure_input@1
+norm_pure_input inp1 : nnn=0 & lg+(\inf)=0
+norm_pure_input@1 EXIT: nnn=0 & lg+ZInfinity'=0
 
-# Above result is incorrect as we suddently obtained lg=\inf
-
-I also trace the cnv function and noticed two problems
-below:
-
-cnv_ptr_to_int@5
-cnv_ptr_to_int inp1 :(true,true)
-cnv_ptr_to_int inp2 : nnn=0 & lg+(\inf)=0
-cnv_ptr_to_int@5 EXIT: nnn=0 & lg+(\inf)=0
-
-# it would be good if _to_int would haveremoved \inf
-  to get it suitable for pure prover
-
-cnv_int_to_ptr@6
-cnv_int_to_ptr inp1 : nnn=0 & ZInfinity'=lg & lg<ZInfinity
-cnv_int_to_ptr@6 EXIT: nnn=0 & lg=\inf & lg<ZInfinity
-
-# the to_ptr aove is suppose to replace ZInfinity with \inf
-  and ZInfinity' with -\inf
-
+# expecting
+  norm_pure_input@1 EXIT: nnn=0 & lg=Neg_ZInfinity
 
 */
 
@@ -46,10 +27,10 @@ Simplify  (1): ((nnn=0 & lg=\inf & lg<(\inf)) | (nnn=0 & lg<(\inf)))
 # I wasn't expecting two separate omega calls to be made.
 I was expecting the following Omega call to be made instead;
 
- 
-  NZInfinity<Infinity (nnn=0 & lg = NZInfinity) | (nnn = 0 & lg< ZInfinity)
+   NZInfinity<Infinity (nnn=0 & lg = NZInfinity) | (nnn = 0 & lg< ZInfinity)
 
-which should simpl
+which should simply to
+    (4): nnn=0 & lg<\inf
 
 */
 
@@ -73,3 +54,24 @@ the normalization?
 slk_pairwise  ninf<inf & (nnn=0 & lg=ninf) | (nnn=0 & lg<inf).
 //PairWise  (4): nnn=0 & lg<inf
 
+
+slk_simplify  (nnn=0 & lg=-\inf) | (nnn=0 & lg<\inf).
+/*
+norm_pure_input@13
+norm_pure_input inp1 : nnn=0 & lg<(\inf)
+norm_pure_input@13 EXIT: ZInfinity'<ZInfinity & nnn=0 & lg<ZInfinity
+
+norm_pure_result@14
+norm_pure_result inp1 : nnn=0 & ZInfinity'<ZInfinity & lg<ZInfinity
+norm_pure_result@14 EXIT: nnn=0 & lg<(\inf)
+
+norm_pure_input@15
+norm_pure_input inp1 : nnn=0 & lg+(\inf)=0
+norm_pure_input@15 EXIT: ZInfinity'<ZInfinity & nnn=0 & ZInfinity'=lg
+
+norm_pure_result@16
+norm_pure_result inp1 : nnn=0 & ZInfinity'=lg & lg<ZInfinity
+norm_pure_result@16 EXIT: nnn=0 & lg=\inf & lg<(\inf)
+                                ^^  lg=-\inf
+Simplify  (5): ((nnn=0 & lg=\inf & lg<(\inf)) | (nnn=0 & lg<(\inf)))
+*/
