@@ -201,8 +201,8 @@ proc_test_comps: test_comps option}
 
 and coercion_decl = { coercion_type : coercion_type;
 coercion_exact : bool;
-coercion_kind:   lemma_kind;
 coercion_name : ident;
+coercion_infer_vars : ident list;
 coercion_head : F.formula;
 coercion_body : F.formula;
 coercion_proof : exp }
@@ -2317,7 +2317,7 @@ let gen_normalize_lemma_comb ddef =
  {coercion_type = Left;
   coercion_name = lem_name;
   coercion_exact = false;
-  coercion_kind = LEM_UNSAFE;
+  coercion_infer_vars = [];
   coercion_head = F.formula_of_heap_1 (F.mkStar (gennode perm1 args1) (gennode perm2 args2) no_pos) no_pos;
   coercion_body = F. mkBase (gennode perm3 args1) pure  top_flow [] no_pos;
   coercion_proof =  Return { exp_return_val = None; exp_return_path_id = None ; exp_return_pos = no_pos }
@@ -2334,7 +2334,7 @@ let gen_normalize_lemma_comb ddef =
  {coercion_type = Left;
   coercion_name = lem_name;
   coercion_exact = false;
-  coercion_kind = LEM_UNSAFE;
+  coercion_infer_vars = [];
   coercion_head = F.mkBase (gennode perm3 args) pure  top_flow [] no_pos;
   coercion_body = F.formula_of_heap_1 (F.mkStar (gennode perm1 args) (gennode perm2 args) no_pos) no_pos;
   

@@ -2425,7 +2425,30 @@ and collect_important_vars_in_spec (spec : CF.struc_formula) : (CP.spec_var list
   helper spec
       
 (** An Hoa : end collect_important_vars_in_spec **)
-      
+
+and ident_to_spec_var id n_tl p prog =
+  let v= get_spec_var_ident n_tl id p (* Unprimed  *)in
+  match v with
+    | CP.SpecVar(t,id,pr) ->
+          if t==UNK then
+            try
+              let _ = I.look_up_rel_def_raw prog.I.prog_rel_decls id in
+              CP.SpecVar(RelT[],id,pr)
+            with _ ->
+                try
+                  let _ = I.look_up_func_def_raw prog.I.prog_func_decls id in
+                  CP.SpecVar(RelT[],id,pr)
+                with _ ->
+                    try
+                      let _ = I.look_up_hp_def_raw prog.I.prog_hp_decls id in
+                      CP.SpecVar(HpT,id,pr)
+                    with _ -> v
+          else v
+
+and ident_list_to_spec_var_list ivs n_tl prog =
+  let new_ivs = List.map (fun (i,p) -> ident_to_spec_var i n_tl p prog ) ivs in
+  new_ivs
+
 (* transform coercion lemma from iast to cast *)
 and trans_coercions (prog : I.prog_decl) :
       ((C.coercion_decl list) * (C.coercion_decl list)) =
@@ -2435,12 +2458,10 @@ and trans_coercions (prog : I.prog_decl) :
   let (tmp1, tmp2) = List.split tmp in
   let tmp3 = List.concat tmp1 in let tmp4 = List.concat tmp2 in (tmp3, tmp4)
 
-
 (* and unfold_self prog body =  *)
 (*   let pri_f = Iprinter.string_of_formula in *)
 (*   Debug.info_hprint (add_str "orig body" pri_f) body no_pos; *)
 (*   body *)
-
 
 and trans_one_coercion (prog : I.prog_decl) (coer : I.coercion_decl) :
       ((C.coercion_decl list) * (C.coercion_decl list)) =
@@ -2561,7 +2582,6 @@ and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
         let m_vars = find_materialized_prop args [] c_rhs in
         let c_coer ={ C.coercion_type = coer.I.coercion_type;
 		C.coercion_exact= coer.I.coercion_exact;
-		C.coercion_kind= coer.I.coercion_kind;
         C.coercion_name = coer.I.coercion_name;
         C.coercion_head = c_lhs;
         C.coercion_head_norm = c_head_norm;
@@ -2569,6 +2589,7 @@ and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
         C.coercion_body_norm = cs_body_norm;
         C.coercion_impl_vars = []; (* ex_vars; *)
         C.coercion_univ_vars = univ_vars;
+        C.coercion_infer_vars = ident_list_to_spec_var_list (List.map (fun id -> (id, Unprimed)) coer.I.coercion_infer_vars ) n_tl prog; 
         C.coercion_head_view = lhs_name;
         C.coercion_body_view = rhs_name;
         C.coercion_mater_vars = m_vars;
@@ -4644,25 +4665,7 @@ and trans_I2C_struc_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : id
         let pos = b.IF.formula_inf_pos in
         let ivs = b.IF.formula_inf_vars in
         let (n_tl,ct) = trans_struc_formula fvars tl b.IF.formula_inf_continuation in
-        let new_ivs = List.map (fun (i,p) ->
-          let v=get_spec_var_ident n_tl i p in
-          match v with
-          | CP.SpecVar(t,id,pr) ->
-              if t==UNK then
-                try
-                  let _ = I.look_up_rel_def_raw prog.I.prog_rel_decls id in
-                  CP.SpecVar(RelT[],id,pr)
-                with _ -> 
-                  try
-                    let _ = I.look_up_func_def_raw prog.I.prog_func_decls id in
-                    CP.SpecVar(RelT[],id,pr)
-                  with _ ->
-                    try
-                      let _ = I.look_up_hp_def_raw prog.I.prog_hp_decls id in
-                      CP.SpecVar(HpT,id,pr)
-                    with _ -> v
-              else v
-        ) ivs in
+        let new_ivs = ident_list_to_spec_var_list ivs n_tl prog in
         (* TODO : any warning below should be fixed *)
         let ivs_unk = List.filter (fun v -> (CP.type_of_spec_var v)==UNK) new_ivs in
         if ivs_unk!=[] then 
@@ -6178,7 +6181,7 @@ and case_normalize_coerc prog (cd: Iast.coercion_decl):Iast.coercion_decl =
   let ncb = case_normalize_formula prog [] cd.Iast.coercion_body None in
   { Iast.coercion_type = cd.Iast.coercion_type;
   Iast.coercion_exact = cd.Iast.coercion_exact;
-  Iast.coercion_kind = cd.Iast.coercion_kind;
+  Iast.coercion_infer_vars = cd.Iast.coercion_infer_vars;
   Iast.coercion_name = cd.Iast.coercion_name;
   Iast.coercion_head = nch;
   Iast.coercion_body = ncb;

@@ -902,6 +902,7 @@ let string_of_lem_kind l =
     | LEM_TEST     -> "testing lemmas"
     | LEM_TEST_NEW -> "testing lemmas(empty context)"
     | LEM_UNSAFE   -> "unsafe lemmas(not proved)"
+    | LEM_INFER    -> "infer lemmas"
 ;;
 
 (* pretty printing for a list of coerc_decl_list *)

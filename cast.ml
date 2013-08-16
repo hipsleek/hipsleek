@@ -186,7 +186,6 @@ and coercion_case =
 and coercion_decl = { 
     coercion_type : coercion_type;
     coercion_exact : bool;
-    coercion_kind : lemma_kind;
     coercion_name : ident;
     coercion_head : F.formula; (* used as antecedent during --elp *)
     coercion_head_norm : F.formula; (* used as consequent during --elp *)
@@ -194,6 +193,8 @@ and coercion_decl = {
     coercion_body_norm : F.struc_formula; (* used as consequent during --elp *)
     coercion_impl_vars : P.spec_var list; (* list of implicit vars *)
     coercion_univ_vars : P.spec_var list; (* list of universally quantified variables. *)
+
+    coercion_infer_vars :  P.spec_var list;
     (* coercion_proof : exp; *)
     (* coercion_head_exist : F.formula;   *)
     (* same as head except for annotation to self node? *)

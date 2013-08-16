@@ -83,6 +83,7 @@ let convert_lem_kind (l: lemma_kind_t) =
       | TLEM_TEST      -> LEM_TEST
       | TLEM_TEST_NEW  -> LEM_TEST_NEW
       | TLEM_UNSAFE    -> LEM_UNSAFE
+      | TLEM_INFER     -> LEM_INFER
 
 let default_rel_id = "rel_id__"
 (* let tmp_rel_decl = ref (None : rel_decl option) *)
@@ -797,10 +798,7 @@ non_empty_command:
       | t = func_decl         -> FuncDef t
       | t = rel_decl          -> RelDef t
       | t = hp_decl          -> HpDef t
-      | `LEMMA kind;t = coercion_decl ->LemmaDef {t with  
-            coercion_list_elems = [t];
-            coercion_list_kind  = convert_lem_kind kind }
-      | `LEMMA kind; `OSQUARE; t = coercion_decl_list; `CSQUARE -> LemmaDef {t with  coercion_list_kind = convert_lem_kind kind }
+      | l = coerc_decl_aux -> LemmaDef l
       | t= axiom_decl -> AxiomDef t (* [4/10/2011] An Hoa : axiom declarations *)
       | t=let_decl            -> t
       | t=checkeq_cmd         -> EqCheck t
@@ -1919,7 +1917,7 @@ coercion_decl:
   [[ on=opt_name; dc1=disjunctive_constr; cd=coercion_direction; dc2=disjunctive_constr ->
       { coercion_type = cd;
 	coercion_exact = false;
-        coercion_kind = LEM_UNSAFE;
+        coercion_infer_vars = [];
         coercion_name = (* on; *)
         (let v=on in (if (String.compare v "")==0 then (fresh_any_name "lem") else v));
         (* coercion_head = dc1; *)
@@ -1939,6 +1937,33 @@ coercion_decl_list:
             coercion_list_elems = coerc;
             coercion_list_kind  = LEM;
         }
+    ]];
+
+infer_coercion_decl:
+    [[
+        `OSQUARE; il=OPT id_list; `CSQUARE;  t = coercion_decl -> {t with coercion_infer_vars = un_option il [] }
+    ]];
+
+infer_coercion_decl_list:
+    [[
+        coerc = LIST1 infer_coercion_decl SEP `SEMICOLON -> {
+            coercion_list_elems = coerc;
+            coercion_list_kind  = LEM;
+        }
+    ]];
+
+coerc_decl_aux:
+    [[
+      `LEMMA TLEM_INFER; t = infer_coercion_decl -> 
+          { coercion_list_elems = [t];
+            coercion_list_kind  = LEM_INFER }
+      (* | `LEMMA TLEM_INFER; `OSQUARE; t = infer_coercion_decl_list; `CSQUARE ->  *)
+      (*     { t with coercion_list_kind = LEM_INFER } *)
+      | `LEMMA kind;t = coercion_decl -> 
+          { coercion_list_elems = [t];
+            coercion_list_kind  = convert_lem_kind kind }
+      | `LEMMA kind; `OSQUARE; t = coercion_decl_list; `CSQUARE -> 
+          { t with coercion_list_kind = convert_lem_kind kind }
     ]];
 
 coercion_direction:

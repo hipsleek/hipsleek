@@ -15,9 +15,6 @@ lemma_test
         "V2" self::ll_s<n> <- self::ll<>;
         "V3" self::ll_s<n> <-> self::ll<>].
 
-//1
-checkentail x::ll_s<n> |- x::ll<>.
-
 lemma_test 
      [ "V4" self::ll_s<n> -> self::ll<> & n<0; 
        "V5" self::ll_s<n> <- self::ll<>;
@@ -41,6 +38,6 @@ lemma
        "V15" self::ll_s<n> <-> self::ll<>].
 
 
-lemma "V4" self::ll_s<n> * x::ll<> -> self::ll<>. //should this fail?
+lemma "V16" self::ll_s<n> * x::ll<> -> self::ll<>. //should this fail?
 
 checkentail x::ll_s<n> |- x::ll<>.

@@ -31,17 +31,33 @@ let string_of_lem_formula lf = match lf with
   | CFormula f -> Cprinter.string_of_formula f
   | CSFormula csf -> Cprinter.string_of_struc_formula csf
 
+let split_infer_vars vrs =
+  let p,rl,hp = List.fold_left (fun (p,rl,hp) var -> 
+      match var with
+        | CP.SpecVar(RelT _,_,_) -> (p,var::rl,hp)
+        | CP.SpecVar(HpT, _, _ ) -> (p,rl,var::hp)
+        | _      -> (var::p,rl,hp)
+  ) ([],[],[]) vrs in
+  (p,rl,hp)
+
+let add_infer_vars_to_ctx ivs ctx =
+  let (p,rl,hp) = split_infer_vars ivs in
+  let ctx = Infer.init_vars ctx p rl hp [] in 
+  ctx
+   
 
 (* checks if iante(CF.formula) entails iconseq(CF.formula or CF.struc_formula) in cprog(C.prog_decl)
    - similar to Sleekengine.run_entail_check
 *)
-let run_entail_check_helper (iante: lem_formula) (iconseq: lem_formula) (cprog: C.prog_decl)  =
+let run_entail_check_helper (iante: lem_formula) (iconseq: lem_formula) (inf_vars: CP.spec_var list) (cprog: C.prog_decl)  =
   let ante = lem_to_cformula iante in
   (* let ante = Solver.prune_preds cprog true ante in (\* (andreeac) redundant? *\) *)
   let conseq = lem_to_struc_cformula iconseq in
   (* let conseq = Solver.prune_pred_struc cprog true conseq in (\* (andreeac) redundant ? *\) *)
   let ectx = CF.empty_ctx (CF.mkTrueFlow ()) Lab2_List.unlabelled no_pos in
   let ctx = CF.build_context ectx ante no_pos in
+  (* andreeac: add infer_vars to ctx *)
+  let ctx = add_infer_vars_to_ctx inf_vars ctx in
   let _ = if !Globals.print_core || !Globals.print_core_all then print_string ("\nrun_entail_check_helper:\n"^(Cprinter.string_of_formula ante)^" |- "^(Cprinter.string_of_struc_formula conseq)^"\n") else () in
   let ctx = CF.transform_context (Solver.elim_unsat_es 10 cprog (ref 1)) ctx in
   let rs1, _ = 
@@ -62,8 +78,8 @@ let run_entail_check_helper (iante: lem_formula) (iconseq: lem_formula) (cprog: 
 (*   None       -->  forbid residue in RHS when the option --classic is turned on *)
 (*   Some true  -->  always check entailment exactly (no residue in RHS)          *)
 (*   Some false -->  always check entailment inexactly (allow residue in RHS)     *)
-let run_entail_check (iante : lem_formula) (iconseq : lem_formula) (cprog: C.prog_decl) (exact : bool option) =
-  wrap_classic (Some true) (* exact *) (run_entail_check_helper iante iconseq) cprog
+let run_entail_check (iante : lem_formula) (iconseq : lem_formula) (inf_vars: CP.spec_var list) (cprog: C.prog_decl)    (exact : bool option) =
+  wrap_classic (Some true) (* exact *) (run_entail_check_helper iante iconseq inf_vars) cprog
 
 let print_exc (check_id: string) =
   Printexc.print_backtrace stdout;
@@ -71,16 +87,17 @@ let print_exc (check_id: string) =
   print_string ("exception in " ^ check_id ^ " check\n")
 
 (* calls the entailment method and catches possible exceptions *)
-let process_coercion_check iante iconseq iexact (lemma_name: string)  (cprog: C.prog_decl)  =
+let process_coercion_check iante iconseq (inf_vars: CP.spec_var list) iexact (lemma_name: string) (cprog: C.prog_decl)  =
   try 
-    run_entail_check iante iconseq cprog (if iexact then Some true else None)
+    run_entail_check iante iconseq inf_vars cprog (if iexact then Some true else None)
   with _ -> print_exc ("lemma \""^ lemma_name ^"\""); 
       let rs = (CF.FailCtx (CF.Trivial_Reason (CF.mk_failure_must "exception in lemma proving" lemma_error))) in
       (false, rs)
 
-let process_coercion_check iante0 iconseq0 iexact(lemma_name: string)  (cprog: C.prog_decl) =
+let process_coercion_check iante0 iconseq0 (inf_vars: CP.spec_var list) iexact (lemma_name: string) (cprog: C.prog_decl) =
   let pr = string_of_lem_formula in
-  Debug.no_2 "process_coercion_check" pr pr (fun _ -> "?") (fun _ _ -> process_coercion_check iante0 iconseq0 iexact lemma_name cprog) iante0 iconseq0
+  let pr3 = Cprinter.string_of_spec_var_list in
+  Debug.no_3 "process_coercion_check" pr pr pr3 (fun _ -> "?") (fun _ _ _ -> process_coercion_check iante0 iconseq0 inf_vars iexact lemma_name cprog) iante0 iconseq0 inf_vars
 
 (* prepares the lhs&rhs of the coercion to be checked 
    - unfold lhs once
@@ -184,7 +201,7 @@ let check_coercion_struc coer lhs rhs (cprog: C.prog_decl) =
   let self_sv_renamed_lst = (CP.SpecVar (Named "", (self ^ "_" ^ coer.C.coercion_name), Unprimed)) :: [] in
   let lhs = CF.subst_avoid_capture self_sv_lst self_sv_renamed_lst lhs in
   let rhs = CF.subst_struc_avoid_capture self_sv_lst self_sv_renamed_lst rhs in
-  process_coercion_check (CFormula lhs) (CSFormula rhs) coer.C.coercion_exact coer.C.coercion_name  cprog
+  process_coercion_check (CFormula lhs) (CSFormula rhs) coer.C.coercion_infer_vars coer.C.coercion_exact coer.C.coercion_name  cprog
 
 let check_coercion_struc coer lhs rhs (cprog: C.prog_decl) =
   let pr1 = Cprinter.string_of_coercion in

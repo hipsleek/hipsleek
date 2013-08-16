@@ -28,7 +28,7 @@ let ineq_opt_flag = ref false
 
 let illegal_format s = raise (Illegal_Prover_Format s)
 
-type lemma_kind = LEM_TEST | LEM_TEST_NEW | LEM | LEM_UNSAFE
+type lemma_kind = LEM_TEST | LEM_TEST_NEW | LEM | LEM_UNSAFE | LEM_INFER
 
 (* type nflow = (int*int)(\*numeric representation of flow*\) *)
 type flags = 

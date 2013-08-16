@@ -401,6 +401,7 @@ let process_list_lemma ldef_lst =
       | LEM_TEST       -> Lemma.manage_test_lemmas lst iprog !cprog
       | LEM_TEST_NEW   -> Lemma.manage_test_new_lemmas lst iprog !cprog
       | LEM_UNSAFE     -> Lemma.manage_unsafe_lemmas lst iprog !cprog
+      | LEM_INFER      -> Lemma.manage_lemmas lst iprog !cprog
             (* let _ = List.map process_lemma ldef_lst.Iast.coercion_list_elems in *) in
   residues := (match res with
     | None -> None;
