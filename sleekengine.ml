@@ -90,7 +90,8 @@ let _ =
 	Lem_store.all_lemma # clear_right_coercion;
 	Lem_store.all_lemma # clear_left_coercion
 
-let residues =  ref (None : (CF.list_context * bool) option)    (* parameter 'bool' is used for printing *)
+(* Moved to CFormula *)
+(* let residues =  ref (None : (CF.list_context * bool) option)    (\* parameter 'bool' is used for printing *\) *)
 
 let sleek_hprel_assumes = ref ([]: CF.hprel list)
 let sleek_hprel_defns = ref ([]: (CF.cond_path_type * CF.hp_rel_def) list)
@@ -122,7 +123,7 @@ let clear_all () =
   clear_var_table ();
   clear_iprog ();
   clear_cprog ();
-  residues := None
+  CF.residues := None
 
 (*L2: move to astsimp*)
 (* let check_data_pred_name name : bool = *)
@@ -365,36 +366,73 @@ let process_axiom_def adef = begin
 	(* Forward the axiom to the smt solver. *)
 	Smtsolver.add_axiom cadef.C.axiom_hypothesis Smtsolver.IMPLIES cadef.C.axiom_conclusion;
 end
-	
 
 let process_lemma ldef =
   let ldef = AS.case_normalize_coerc iprog ldef in
   let l2r, r2l = AS.trans_one_coercion iprog ldef in
-  let l2r = List.concat (List.map (fun c-> AS.coerc_spec !cprog true c) l2r) in
-  let r2l = List.concat (List.map (fun c-> AS.coerc_spec !cprog false c) r2l) in
+  let l2r = List.concat (List.map (fun c-> AS.coerc_spec !cprog c) l2r) in
+  let r2l = List.concat (List.map (fun c-> AS.coerc_spec !cprog c) r2l) in
   (* TODO : WN print input_ast *)
   let _ = if (!Globals.print_input || !Globals.print_input_all) then print_string (Iprinter.string_of_coerc_decl ldef) in
-  let _ = if (!Globals.print_core || !Globals.print_core_all) then 
+  let _ = if (!Globals.print_core || !Globals.print_core_all) then
     print_string ("\nleft:\n " ^ (Cprinter.string_of_coerc_decl_list l2r) ^"\n right:\n"^ (Cprinter.string_of_coerc_decl_list r2l) ^"\n") else () in
   (* WN_all_lemma - should we remove the cprog updating *)
-  let _ = Lem_store.all_lemma # add_left_coercion l2r in 
-  let _ = Lem_store.all_lemma # add_right_coercion r2l in 
+  let _ = Lem_store.all_lemma # add_coercion l2r r2l in
+  (* let _ = Lem_store.all_lemma # add_right_coercion r2l in  *)
   (*!cprog.C.prog_left_coercions <- l2r @ !cprog.C.prog_left_coercions;*)
   (*!cprog.C.prog_right_coercions <- r2l @ !cprog.C.prog_right_coercions;*)
-  let get_coercion c_lst = match c_lst with 
+  let get_coercion c_lst = match c_lst with
     | [c] -> Some c
     | _ -> None in
   let l2r = get_coercion l2r in
   let r2l = get_coercion r2l in
-  let res = LP.verify_lemma l2r r2l !cprog (ldef.I.coercion_name) ldef.I.coercion_type in
-  residues := (match res with
-    | None -> None;
-    | Some ls_ctx -> Some (ls_ctx, true))
+  let res = LP.verify_lemma 2 l2r r2l !cprog (ldef.I.coercion_name) ldef.I.coercion_type in
+                     ()
+  (* CF.residues := (match res with *)
+  (*   | None -> None; *)
+  (*   | Some ls_ctx -> Some (ls_ctx, true)) *)
 
 let process_lemma ldef =
   Debug.no_1 "process_lemma" Iprinter.string_of_coerc_decl (fun _ -> "?") process_lemma ldef
 
-      
+let print_residue residue =
+          match residue with
+            | None -> print_string ": no residue \n"
+                  (* | Some s -> print_string ((Cprinter.string_of_list_formula  *)
+                  (*       (CF.list_formula_of_list_context s))^"\n") *)
+                  (*print all posible outcomes and their traces with numbering*)
+            | Some (ls_ctx, print) ->
+                  if (print) then
+                    (* let _ = print_endline (Cprinter.string_of_list_context ls_ctx) in *)
+                    print_string ((Cprinter.string_of_numbered_list_formula_trace_inst !cprog
+                        (CF.list_formula_trace_of_list_context ls_ctx))^"\n" )
+
+
+let process_list_lemma ldef_lst =
+  let lst = ldef_lst.Iast.coercion_list_elems in
+  let res = 
+    match ldef_lst.Iast.coercion_list_kind with
+      | LEM            -> Lemma.manage_lemmas lst iprog !cprog
+      | LEM_TEST       -> Lemma.manage_test_lemmas lst iprog !cprog
+      | LEM_TEST_NEW   -> Lemma.manage_test_new_lemmas lst iprog !cprog
+      | LEM_UNSAFE     -> Lemma.manage_unsafe_lemmas lst iprog !cprog
+      | LEM_SAFE       -> Lemma.manage_safe_lemmas lst iprog !cprog
+      | LEM_INFER      -> 
+                     begin
+                     let r = Lemma.manage_test_lemmas lst iprog !cprog in
+                     (* let nr = match r with Some lc -> Some(lc,true) | None -> None in *)
+                     (* let _ = print_residue  nr in *)
+                     r
+                     end
+            (* let _ = List.map process_lemma ldef_lst.Iast.coercion_list_elems in *) 
+  in ()
+  (* CF.residues := (match res with *)
+  (*   | None -> None; *)
+  (*   | Some ls_ctx -> Some (ls_ctx, true)) *)
+
+let process_list_lemma ldef_lst =
+  Debug.no_1 "process_list_lemma" pr_none pr_none process_list_lemma  ldef_lst
+
 let process_data_def ddef =
   if AS.check_data_pred_name iprog ddef.I.data_name then
     let tmp = iprog.I.prog_data_decls in
@@ -406,7 +444,7 @@ let process_data_def ddef =
   end
 
 let process_data_def ddef =
-  Debug.no_1 "process_data_def" pr_no pr_no process_data_def ddef 
+  Debug.no_1 "process_data_def" pr_none pr_none process_data_def ddef 
 
 let convert_data_and_pred_to_cast_x () =
   (* convert data *)
@@ -690,7 +728,7 @@ let run_pairwise (iante0 : meta_formula) =
   r
 
 let run_infer_one_pass (ivars: ident list) (iante0 : meta_formula) (iconseq0 : meta_formula) =
-  let _ = residues := None in
+  let _ = CF.residues := None in
   let _ = Infer.rel_ass_stk # reset in
   let _ = Sa2.rel_def_stk # reset in
   let _ = if (!Globals.print_input || !Globals.print_input_all) then print_endline ("INPUT: \n ### 1 ante = " ^ (string_of_meta_formula iante0) ^"\n ### conseq = " ^ (string_of_meta_formula iconseq0)) else () in
@@ -795,13 +833,13 @@ let run_infer_one_pass (ivars: ident list) (iante0 : meta_formula) (iconseq0 : m
   (* let res = *)
   (*   if not !Globals.disable_failure_explaining then ((not (CF.isFailCtx_gen rs))) *)
   (*   else ((not (CF.isFailCtx rs))) in *)
-  (* residues := Some (rs, res); *)
+  (* CF.residues := Some (rs, res); *)
   (* (res, rs,v_hp_rel) *)
   let orig_vars = CF.fv ante @ CF.struc_fv conseq in
   (* List of vars needed for abduction process *)
   let vars = List.map (fun v -> TI.get_spec_var_type_list_infer (v, Unprimed) orig_vars no_pos) ivars in
   let (res, rs,v_hp_rel) = SC.sleek_entail_check vars !cprog [] ante conseq in
-  residues := Some (rs, res);
+  CF.residues := Some (rs, res);
   (res, rs,v_hp_rel)
 
 let run_infer_one_pass ivars (iante0 : meta_formula) (iconseq0 : meta_formula) =
@@ -1454,10 +1492,11 @@ let process_infer (ivars: ident list) (iante0 : meta_formula) (iconseq0 : meta_f
         in false
 
 let process_capture_residue (lvar : ident) = 
-	let flist = match !residues with 
+	let flist = match !CF.residues with 
       | None -> [(CF.mkTrue (CF.mkTrueFlow()) no_pos)]
       | Some (ls_ctx, print) -> CF.list_formula_of_list_context ls_ctx in
 		put_var lvar (Sleekcommons.MetaFormLCF flist)
+
 
 let process_print_command pcmd0 = match pcmd0 with
   | PVar pvar ->	  
@@ -1469,23 +1508,24 @@ let process_print_command pcmd0 = match pcmd0 with
 		print_string ((Cprinter.string_of_struc_formula pf) ^ "\n")
   | PCmd pcmd -> 
 	if pcmd = "residue" then
-          match !residues with
-            | None -> print_string ": no residue \n"
-                  (* | Some s -> print_string ((Cprinter.string_of_list_formula  *)
-                  (*       (CF.list_formula_of_list_context s))^"\n") *)
-                  (*print all posible outcomes and their traces with numbering*)
-            | Some (ls_ctx, print) ->
-                  if (print) then
-                    (* let _ = print_endline (Cprinter.string_of_list_context ls_ctx) in *)
-                    print_string ((Cprinter.string_of_numbered_list_formula_trace_inst !cprog
-                        (CF.list_formula_trace_of_list_context ls_ctx))^"\n" );
+          print_residue !CF.residues 
+          (* match !CF.residues with *)
+          (*   | None -> print_string ": no residue \n" *)
+          (*         (\* | Some s -> print_string ((Cprinter.string_of_list_formula  *\) *)
+          (*         (\*       (CF.list_formula_of_list_context s))^"\n") *\) *)
+          (*         (\*print all posible outcomes and their traces with numbering*\) *)
+          (*   | Some (ls_ctx, print) -> *)
+          (*         if (print) then *)
+          (*           (\* let _ = print_endline (Cprinter.string_of_list_context ls_ctx) in *\) *)
+          (*           print_string ((Cprinter.string_of_numbered_list_formula_trace_inst !cprog *)
+          (*               (CF.list_formula_trace_of_list_context ls_ctx))^"\n" ); *)
 	else
 	  print_string ("unsupported print command: " ^ pcmd)
 
 let process_cmp_command (input: ident list * ident * meta_formula list) =
   let iv,var,fl = input in
   if var = "residue" then
-    match !residues with
+    match !CF.residues with
       | None -> print_string ": no residue \n"
       | Some (ls_ctx, print) ->(
         if (print) then (
@@ -1502,7 +1542,7 @@ let process_cmp_command (input: ident list * ident * meta_formula list) =
 	)
       )
   else if (var = "assumption") then(
-    match !residues with
+    match !CF.residues with
       | None -> print_string ": no residue \n"
       | Some (ls_ctx, print) ->(
         if (print) then (
@@ -1527,11 +1567,11 @@ let process_cmp_command (input: ident list * ident * meta_formula list) =
   else
     print_string ("unsupported compare command: " ^ var)
 
-let get_residue () = !residues
+let get_residue () = !CF.residues
 
 let get_residue () =
   Debug.no_1 "get_residue" pr_no (pr_opt pr_no) get_residue ()
-  (*match !residues with*)
+  (*match !CF.residues with*)
     (*| None -> ""*)
     (*| Some s -> Cprinter.string_of_list_formula (CF.list_formula_of_list_context s)*)
 

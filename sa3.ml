@@ -1962,7 +1962,7 @@ let infer_shapes_conquer iprog prog proc_name ls_is sel_hps=
         in
         (cl_sel_hps, hp_defs1,tupled_defs1)
     in
-    let hpdefs = List.map (fun (k, hf, og, f) -> CF.mk_hprel_def k hf og [(is.CF.is_cond_path, Some f)] None(* (Some f) *)) defs in
+    let hpdefs = List.map (fun (k, hf, og, f) -> CF.mk_hprel_def k hf og [(is.CF.is_cond_path, Some f)] None) defs in
     let link_hp_defs = SAC.generate_hp_def_from_link_hps prog is.CF.is_cond_path is.CF.is_hp_equivs is.CF.is_link_hpargs in
     (cl_sel_hps@(List.map fst is.CF.is_link_hpargs), hpdefs@link_hp_defs, tupled_defs2, is.CF.is_hp_defs)
   in
@@ -1977,14 +1977,35 @@ let infer_shapes_conquer iprog prog proc_name ls_is sel_hps=
       (ls1@ is.CF.is_post_hps , ls2 @ (List.map fst (is.CF.is_dang_hpargs@is.CF.is_link_hpargs))))
     ([],[])ls_is
   in
-  let n_all_hpdefs, n_cmb_defs = if !Globals.sa_dnc then
+  let n_all_hpdefs0a, n_cmb_defs0 = if !Globals.sa_dnc then
     SAC.compute_lfp_def prog (CP.remove_dups_svl post_hps)
     (CP.remove_dups_svl dang_hps) all_hpdefs cmb_defs
   else (all_hpdefs, cmb_defs)
   in
-  let n_all_hp_defs1 = SAU.combine_hpdefs n_all_hpdefs in
+  let n_all_hp_defs0b = SAU.combine_hpdefs n_all_hpdefs0a in
   (*split pred*)
-  let _ = SAC.pred_split_hp iprog prog dang_hps n_all_hp_defs1 in
+  let n_all_hp_defs1, n_cmb_defs  = if !Globals.pred_split then
+    let n_all_hp_defs0c, split_map = SAC.pred_split_hp iprog prog dang_hps n_all_hp_defs0b in
+    (*update n_cmb_defs0*)
+    let n_cmb_defs0a = if split_map = [] then n_cmb_defs0 else
+      let split_hps, split_comp_hps = List.fold_left (fun (r1, r2) (hp,_,comps,_) ->
+          let comps_hps = List.map fst comps in
+          (r1@[hp], r2@comps_hps)
+      ) ([],[]) split_map in
+      let n_cmb_defs0b = SAU.pred_split_update_hpdefs split_hps n_cmb_defs0 n_all_hp_defs0c in
+      let comps_hp_defs = List.fold_left (fun r hp ->
+          try
+            let hp_def = CF.look_up_hp_def n_all_hp_defs0c hp in
+            r@[hp_def]
+          with _ -> r
+      ) [] split_comp_hps in
+      let comps_hpdefs = List.map (fun (k, hf, og, f) -> CF.mk_hprel_def k hf og [([], Some f)] None) comps_hp_defs in
+      n_cmb_defs0b@comps_hpdefs
+    in
+    (n_all_hp_defs0c, n_cmb_defs0a)
+  else
+    (n_all_hp_defs0b, n_cmb_defs0)
+  in
   (*reuse: check equivalent form - substitute*)
   let n_cmb_defs1, n_all_hp_defs2 = SAU.reuse_equiv_hpdefs prog n_cmb_defs n_all_hp_defs1 in
   (*reuse with lib*)

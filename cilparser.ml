@@ -1192,7 +1192,7 @@ and translate_file (file: Cil.file) : Iast.prog_decl =
   let hopred_decls : Iast.hopred_decl list ref = ref [] in
   let proc_decls : Iast.proc_decl list ref = ref [] in
   let barrier_decls : Iast.barrier_decl list ref = ref [] in
-  let coercion_decls : Iast.coercion_decl list ref = ref [] in
+  let coercion_decls : Iast.coercion_decl_list list ref = ref [] in
   let aux_progs : Iast.prog_decl list ref = ref [] in
   
   (* reset & init global vars *)

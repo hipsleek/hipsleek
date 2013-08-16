@@ -1,5 +1,6 @@
 open Globals
 open Gen
+open Others
 open Label_only
 
 module DD = Debug
@@ -2571,7 +2572,8 @@ let check_split_global_x prog cands =
   let generate_split (hp,args0,parts0,p0) =
     let hps = List.map (helper1 p0) parts0 in
     let new_hp_args,new_hrel_fs = List.split hps in
-    let new_hrels_comb = List.fold_left (fun hf1 hf2 -> CF.mkStarH hf1 hf2 p0) (List.hd new_hrel_fs) (List.tl new_hrel_fs) in
+    let new_hrels_comb = List.fold_left (fun hf1 hf2 -> CF.mkStarH hf1 hf2 p0)
+      (List.hd new_hrel_fs) (List.tl new_hrel_fs) in
     let hrel0 = SAU.mkHRel hp args0 p0 in
     (hp, args0, new_hp_args, hrel0,new_hrels_comb)
   in
@@ -2589,7 +2591,7 @@ let check_split_global prog cands =
   Debug.no_1 "check_split_global" pr1 pr3
        (fun _ -> check_split_global_x prog cands) cands
 
-let prove_split_cand_x iprog cprog ss_preds hp_defs (hp, args, comps, lhs_hf, rhs_hf)=
+let prove_split_cand_x iprog cprog proving_fnc unk_hps ss_preds hp_defs (hp, args, comps, lhs_hf, rhs_hf)=
   let rec look_up rest_defs rem=
     match rest_defs with
       | [] -> report_error no_pos "SAC.prove_split_cand"
@@ -2600,38 +2602,66 @@ let prove_split_cand_x iprog cprog ss_preds hp_defs (hp, args, comps, lhs_hf, rh
             else
               look_up rest (rem@[def])
   in
-  (* let rec comps_split comps  *)
-  (* let rec insert_para comps fs res= *)
-  (*   match comps,fs with *)
-  (*     | [],[] -> res *)
-  (*     | fs::rest_comps, f::rest -> insert_para rest_comps rest (res@[(fs@[f])]) *)
-  (*     | _ -> report_error no_pos "sac.prove_split_cand: should be the same length" *)
-  (* in *)
+  let rec comps_split comps f res=
+    match comps with
+      | [] -> res
+      | (hp,args)::rest ->
+            let f_comp = CF.drop_data_view_hrel_nodes f SAU.check_nbelongsto_dnode
+              SAU.check_nbelongsto_vnode SAU.check_neq_hrelnode
+              args args [hp] in
+            comps_split rest f (res@[f_comp])
+  in
+  let rec insert_para comps fs res=
+    match comps,fs with
+      | [],[] -> res
+      | fs::rest_comps, f::rest -> insert_para rest_comps rest (res@[(fs@[f])])
+      | _ -> report_error no_pos "sac.prove_split_cand: should be the same length 1"
+  in
+  let rec combine_comp comps1 ls_defs1 pos res=
+    match comps1,ls_defs1 with
+      | [],[] -> res
+      | (hp, args)::rest1, fs::rest2 ->
+            let fs1 = List.filter (fun f -> not (SAU.is_trivial f (hp,args))) fs in
+            let r,paras = SAU.find_root cprog unk_hps args fs1 in
+            let n_hp_defs = SAU.mk_hprel_def cprog false [] unk_hps [] hp (args, r, paras) fs1 [] pos in
+            combine_comp rest1 rest2 pos (res@(List.map snd n_hp_defs))
+      | _ -> report_error no_pos "sac.prove_split_cand: should be the same length 2"
+  in
   (*res: list of disj of resulting split*)
-  (* let subst_and_split res f= *)
-  (*   (\*subst*\) *)
-  (*   let f1 = CF.subst_hrel_f f ss_preds in *)
-  (*   let fs = comps_split comps f1 [] in *)
-  (*   let n_res = insert_para res fs [] in *)
-  (* in *)
+  let subst_and_split res f=
+    (*subst*)
+    let f1 = CF.subst_hrel_f f ss_preds in
+    let fs = comps_split comps f1 [] in
+    let n_res = if res = [] then List.map (fun f -> [f]) fs else insert_para res fs [] in
+    n_res
+  in
+  let prove_sem cur_hpdefs f=
+    let proc_name = "split_pred" in
+    (*transform to view*)
+    let n_cviews,chprels_decl = SAO.trans_hprel_2_cview iprog cprog proc_name cur_hpdefs in
+    (*trans_hp_view_formula*)
+    let f12 = SAO.trans_formula_hp_2_view iprog cprog proc_name chprels_decl cur_hpdefs f in
+    let f22 = SAO.trans_formula_hp_2_view iprog cprog proc_name chprels_decl cur_hpdefs (CF.formula_of_heap rhs_hf no_pos) in
+  (*prove*)
+    let r1,rl,_ = proving_fnc (List.map fst comps) f12 (CF.struc_formula_of_formula f22 no_pos) in
+    []
+  in
   let (k, rel, og, f), rem_hp_defs = look_up hp_defs [] in
   (*try: do the split to obtain new defs sematically*)
-  (* let fs = CF.list_of_disjs f in *)
-  (*transform to view*)
-  let cur_hpdefs = [(k, rel, og, f)] in
-  let proc_name = "split_pred" in
-  let n_cviews,chprels_decl = SAO.trans_hprel_2_cview iprog cprog proc_name cur_hpdefs in
-  (*trans_hp_view_formula*)
-  let f12 = SAO.trans_formula_hp_2_view iprog cprog proc_name chprels_decl cur_hpdefs (CF.formula_of_heap lhs_hf no_pos) in
-  let f22 = SAO.trans_formula_hp_2_view iprog cprog proc_name chprels_decl cur_hpdefs (CF.formula_of_heap rhs_hf no_pos) in
-  (*prove*)
-  let r1,rl,_ = Sleekcore.sleek_entail_check (List.map fst comps) cprog [] f12 (CF.struc_formula_of_formula f22 no_pos) in
-  []
+  (* let _ = prove_sem [(k, rel, og, f)] f in *)
+  (*syntactically*)
+  let fs = CF.list_of_disjs f in
+  let split = List.fold_left subst_and_split [] fs in
+  let split_hp_defs = combine_comp comps split no_pos [] in
+  let n_hp_def = (k, rel, og, CF.formula_of_heap rhs_hf no_pos) in
+  let _ = DD.info_pprint (" pred_split (syn):" ^ (!CP.print_sv hp) ^ "(" ^ (!CP.print_svl args) ^ ") :== " ^
+      (Cprinter.prtt_string_of_h_formula rhs_hf)) no_pos in
+  n_hp_def::split_hp_defs@rem_hp_defs
 
-let prove_split_cand iprog cprog ss_preds hp_defs (hp, args, comps, lhs_hf, rhs_hf)=
+let prove_split_cand iprog cprog proving_fnc unk_hps ss_preds hp_defs (hp, args, comps, lhs_hf, rhs_hf)=
   let pr1 = pr_list_num Cprinter.string_of_hp_rel_def in
   Debug.no_1 "prove_split_cand" pr1 pr1
-      (fun _ -> prove_split_cand_x iprog cprog ss_preds hp_defs (hp, args, comps, lhs_hf, rhs_hf))
+      (fun _ -> prove_split_cand_x iprog cprog proving_fnc unk_hps ss_preds hp_defs (hp, args, comps, lhs_hf, rhs_hf))
       hp_defs
 
 let find_closure_tuplep_hps tupled_hps hp_defs=
@@ -2676,13 +2706,13 @@ let pred_split_hp_x iprog prog unk_hps (hp_defs: CF.hp_rel_def list)  =
   let split_map_hprel_subst = check_split_global prog split_cands in
   let ss_preds = List.map (fun (_,_,_,a,b) -> (a,b)) split_map_hprel_subst in
   (*prove and do split*)
-  let sing_hp_defs1 = List.fold_left (fun hp_defs0 split ->
-      prove_split_cand iprog prog ss_preds hp_defs0 split
+  let proving_fnc svl f1 = wrap_proving_kind PK_Pred_Split (Sleekcore.sleek_entail_check svl prog [] f1) in
+  let sing_hp_defs2 = List.fold_left (fun hp_defs0 split ->
+      prove_split_cand iprog prog proving_fnc unk_hps ss_preds hp_defs0 split
   ) sing_hp_defs1 split_map_hprel_subst
   in
-  (* let new_constrs = subst_constr_with_new_hps hp_constrs split_map_hprel_subst in *)
-  (* ([],List.map (fun (a1,a2,a3,a4,_) -> (a1,a2,a3,a4)) split_map_hprel_subst) *)
-  ([],[])
+  let tupled_hp_defs2 = List.map (fun (a,b,c, f) -> (a,b,c, CF.subst_hrel_f f ss_preds)) tupled_hp_defs1 in
+  (sing_hp_defs2@tupled_hp_defs2,List.map (fun (a1,a2,a3,a4,_) -> (a1,a2,a3,a4)) split_map_hprel_subst)
 
 let pred_split_hp iprog prog unk_hps (hp_defs: CF.hp_rel_def list): (CF.hp_rel_def list *
  (CP.spec_var*CP.spec_var list * (CP.spec_var*CP.spec_var list) list *CF.h_formula) list) =

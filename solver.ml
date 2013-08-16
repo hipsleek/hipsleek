@@ -173,6 +173,7 @@ let filter_formula_memo f (simp_b:bool) =
 (*find what conditions are required in order for the antecedent node to be pruned sufficiently
   to match the conseq, if the conditions relate only to universal variables then move them to the right*)
 let prune_branches_subsume_x prog lhs_node rhs_node :(bool*(CP.formula*bool) option)= match lhs_node,rhs_node with
+  | HRel h1, HRel h2->  (true, None)    (* what decision should be taken abt unk pred? *)
   | DataNode dn1, DataNode dn2-> 
     (match (dn1.h_formula_data_remaining_branches,dn2.h_formula_data_remaining_branches) with
       | None,None -> (true, None)
@@ -9090,7 +9091,12 @@ and do_fold_w_ctx_x fold_ctx prog estate conseq ln2 vd resth2 rhs_b is_folding p
   let (ivars,ivars_rel,vd) = match vd with 
     | None -> ([],[],None)
     | Some (iv,ivr,f) -> (iv,ivr, Some f) in
-  let var_to_fold = get_node_var ln2 in
+  let var_to_fold = 
+    match ln2 with 
+      | HRel (hp, e, _) ->  let args = CP.diff_svl (get_all_sv  ln2) [hp] in
+        let root, _  = Sautility.find_root prog [hp] args  [] in
+        root
+      | _ ->  get_node_var ln2 in
   let ctx0 = Ctx estate in
   let rhs_h,rhs_p,rhs_t,rhs_fl,rhs_a = CF.extr_formula_base rhs_b in
   let (p2,c2,perm,v2,pid,r_rem_brs,r_p_cond,pos2) = 

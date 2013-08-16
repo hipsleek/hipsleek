@@ -103,7 +103,7 @@ module Make (Token : SleekTokenS)
   let err error loc = raise(Loc.Exc_located(loc, Error.E error))
 
   let warn error loc = Format.eprintf "Warning: %a: %a@." Loc.print loc Error.print error
-
+    
  let sleek_keywords = Hashtbl.create 100
  let comment_level = ref 0
  let _ = List.map (fun ((k,t):(string*sleek_token)) -> Hashtbl.add sleek_keywords k t)
@@ -191,8 +191,13 @@ module Make (Token : SleekTokenS)
 	 ("inv", INV);
 	 ("inv_lock", INVLOCK);
    ("joinpred", JOIN); (*Changed by 28/12/2011*)
-	 ("lemma", LEMMA false);
-	 ("lemma_exact", LEMMA true);
+	 ("lemma", LEMMA TLEM);
+	 ("lemma_test", LEMMA TLEM_TEST);
+	 ("lemma_test_new", LEMMA TLEM_TEST_NEW);
+	 ("lemma_unsafe", LEMMA TLEM_UNSAFE);
+         ("lemma_safe", LEMMA TLEM_SAFE);
+	 ("lemma_infer", LEMMA TLEM_INFER);
+	 (* ("lemma_exact", LEMMA (\* true *\)); *)
    ("len", LENGTH);
 	 ("let", LET);
 	 ("max", MAX);

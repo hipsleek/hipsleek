@@ -83,7 +83,7 @@ let string_of_sleek_proving_kind ()
       = proving_kind#string_of
 
 let string_of_top_proving_kind () 
-      = string_of_proving_kind (proving_kind#top)
+      = string_of_proving_kind (proving_kind#top_no_exc)
 
 let string_of_log_type lt =
   match lt with
@@ -291,7 +291,7 @@ object (self)
               last_sleek_fail <- cmd
       | None -> last_sleek_fail <- cmd
   method dumping no =
-    let _ = Debug.ninfo_pprint ("dumping for "^no) no_pos in
+    let _ = Debug.info_pprint ("dumping for "^no) no_pos in
     if  !proof_logging_txt (*|| !sleek_logging_txt *) then
       begin
         match last_proof_fail with

@@ -6255,3 +6255,14 @@ let reuse_equiv_hpdefs prog hpdefs hp_defs=
   Debug.no_2 "SAU.reuse_equiv_hpdefs" pr2 pr1 (pr_pair pr2 pr1)
       (fun _ _ -> reuse_equiv_hpdefs_x prog hpdefs hp_defs)
       hpdefs hp_defs
+
+
+let pred_split_update_hpdefs split_hps hpdefs hp_defs=
+  let update_one hpdefs hp=
+    try
+      let hpdef,rem_hpdefs = CF.look_up_hpdef_with_remain hpdefs hp [] in
+      let (_,_,_,f) = CF.look_up_hp_def hp_defs hp in
+      (rem_hpdefs@[{hpdef with CF.hprel_def_body = [([], Some f)]}])
+    with _ -> hpdefs
+  in
+  List.fold_left update_one hpdefs split_hps

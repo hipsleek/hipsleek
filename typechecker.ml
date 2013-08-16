@@ -2972,7 +2972,7 @@ let check_coercion (prog : prog_decl) =
          | (Some coerc1, Some coerc2) -> (I.Equiv, coerc1.coercion_name)
          | (None, None) ->  Error.report_error {Err.error_loc = no_pos; Err.error_text = "[typechecker.ml]: Lemma can't be empty"}
        in
-       let _ = LP.verify_lemma l2r r2l prog coerc_name coerc_type in ()
+       let _ = LP.verify_lemma 1 l2r r2l prog coerc_name coerc_type in ()
    ) lemmas
 
 let init_files () =
@@ -3034,7 +3034,7 @@ let check_prog iprog (prog : prog_decl) =
   in
   let _ = if (Printexc.backtrace_status ()) then print_endline "backtrace active" in 
    (* let _ = Debug.info_pprint ("  check_prog: " ^ (Cprinter.string_of_program prog) ) no_pos in *)
-  if !Globals.check_coercions then 
+  if true (* !Globals.check_coercions *) then 
     begin
       print_string "Checking lemmas... ";
       (* ignore (check_coercion prog); *)

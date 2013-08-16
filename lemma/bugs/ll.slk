@@ -11,7 +11,7 @@ pred ll<> == self = null
 
 lemma "V1" self::ll_s<n> -> self::ll<>.
 
-lemma "V2" self::ll_s<n> <- self::ll<>.
+lemma  "V2" self::ll_s<n> <- self::ll<>.
 
 lemma "V3" self::ll_s<n> <-> self::ll<>.
 

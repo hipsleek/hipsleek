@@ -71,6 +71,12 @@ let wrap_lbl_dis_aggr f a =
   then wrap_two_bools label_aggressive_sat label_aggressive_imply false f a
   else f a
 
+let wrap_lemma_safe f a =
+  wrap_one_bool Globals.check_coercions true f a
+
+let wrap_lemma_unsafe f a =
+  wrap_one_bool Globals.check_coercions false f a
+
 (* let proof_no = ref 0 *)
 
 (* let next_proof_no_str () = *)
