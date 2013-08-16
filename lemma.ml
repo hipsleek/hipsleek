@@ -198,6 +198,7 @@ let _ = Sleekcore.generate_lemma := generate_lemma_helper
 
 (* Below are methods used for lemma transformation (ilemma->lemma), lemma proving and lemma store update *)
 
+
 (* ilemma  ----> (left coerc list, right coerc list) *)
 let process_one_lemma iprog cprog ldef = 
   let ldef = AS.case_normalize_coerc iprog ldef in
@@ -209,6 +210,7 @@ let process_one_lemma iprog cprog ldef =
     let _ = print_string ("\nleft:\n " ^ (Cprinter.string_of_coerc_decl_list l2r) ^"\n right:\n"^ (Cprinter.string_of_coerc_decl_list r2l) ^"\n") in
     () else () in
   (l2r,r2l,ldef.I.coercion_type)
+
 
 let lst_to_opt l = 
   match l with
@@ -245,6 +247,22 @@ let verify_one_repo lems cprog =
               res
   ) (None,[]) lems in
   res
+
+let sa_verify_one_repo cprog l2r r2l = 
+  let res = List.fold_left (fun ((valid_ans,res_so_far) as res) coer ->
+      match valid_ans with
+        | true ->
+              let (flag,lc) = LP.sa_verify_lemma cprog coer in 
+              (flag, lc::res_so_far)
+        | false -> res
+  ) (true,[]) (l2r@r2l) in
+  res
+
+(* update the lemma store with the lemmas in repo and check for their validity *)
+let sa_update_store_with_repo cprog l2r r2l =
+   let _ = Lem_store.all_lemma # add_coercion l2r r2l in
+   let (invalid_lem, lctx) =  sa_verify_one_repo cprog l2r r2l in
+   (invalid_lem, lctx)
 
 (* update the lemma store with the lemmas in repo and check for their validity *)
 let update_store_with_repo repo iprog cprog =
@@ -299,6 +317,23 @@ let manage_lemmas repo iprog cprog =
 (*   let _ = print_endline ("Removing temp repo ---> lemma store restored.") in *)
 (*   Some nctx *)
 
+(* l2r are left to right_lemmas *)
+(* r2l are right to right_lemmas *)
+(* return None if some failure; return list of contexts if all succeeded *)
+let sa_infer_lemmas cprog lemmas  = 
+  let (l2r,others) = List.partition (fun c -> c.C.coercion_type==I.Left) lemmas in 
+  let (r2l,equiv) = List.partition (fun c -> c.C.coercion_type==I.Right) others in 
+  let l2r = l2r@(List.map (fun c -> {c with C.coercion_type = I.Left} ) equiv) in
+  let r2l = r2l@(List.map (fun c -> {c with C.coercion_type = I.Right} ) equiv) in
+  let (valid_lem, nctx) = sa_update_store_with_repo cprog l2r r2l in
+  Lem_store.all_lemma # pop_coercion;
+  match valid_lem with
+    | false -> 
+          (* let _ = Log.last_cmd # dumping (name) in *)
+          let _ = Debug.tinfo_pprint ("\nFailed to prove a lemma ==> during sa_infer_lemmas.") no_pos in
+          None
+    | true -> Some nctx
+
 (* update store with given repo, but pop it out in the end regardless of the result of lemma verification *)
 (* return None if all succeed, return first failed ctx otherwise *)
 let manage_infer_lemmas repo iprog cprog = 
@@ -313,7 +348,7 @@ let manage_infer_lemmas repo iprog cprog =
           let _ = print_endline ("\nTemp lemmas proved valid in current context.") in
           Some nctx
 
-(* for testing, we do not return outcome of lemma proving *)
+(* for lemma_test, we do not return outcome of lemma proving *)
 let manage_test_lemmas repo iprog cprog = 
   manage_infer_lemmas repo iprog cprog; None
 

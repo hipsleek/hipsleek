@@ -318,3 +318,17 @@ let verify_lemma caller (l2r: C.coercion_decl option) (r2l: C.coercion_decl opti
     | None -> ""
   in
   Debug.no_3_num caller "verify_lemma" pr pr (fun x -> x) (Cprinter.string_of_list_context) (fun _ _ _ -> verify_lemma l2r r2l cprog coerc_name coerc_type) l2r r2l coerc_name
+
+
+(* check the validity of the lemma where:
+   l2r: "->" implication
+   r2l: "<-" implication 
+   cprog: cast program (needed for unfolding)
+*)
+let sa_verify_lemma cprog (lem:C.coercion_decl) =
+  match lem.C.coercion_type with
+    | I.Left -> check_left_coercion lem cprog
+    | I.Right -> check_right_coercion lem cprog
+    | I.Equiv -> failwith "Equiv not handled in sa_verify_lemma"
+
+
