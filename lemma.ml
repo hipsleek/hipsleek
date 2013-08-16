@@ -223,78 +223,84 @@ let process_one_repo repo iprog cprog =
   ) repo
 
 (* verify all the lemmas in one repo *)
-let verify_one_repo lems cprog = 
+let verify_one_repo lems cprog ctx = 
   let nm = ref "" in
-  let invalid = List.exists (fun (l2r,r2l,typ,name) -> 
-      let res = LP.verify_lemma 3 (lst_to_opt l2r) (lst_to_opt r2l) cprog name typ in 
+  let nlctx = ref ctx in
+  let _ = List.exists (fun (l2r,r2l,typ,name) -> 
+      let res = LP.verify_lemma 3 (lst_to_opt l2r) (lst_to_opt r2l) !nlctx cprog name typ in 
+      nlctx := res;
       match res with
-        | None -> nm := name; true
-        | Some (CF.FailCtx _) -> nm := name; true
-        | _ -> false
+        | CF.FailCtx _  -> nm := name; true
+        | CF.SuccCtx _  ->  false
   ) lems in
-  (invalid, !nm)
+  (!nm, !nlctx)
 
 (* update the lemma store with the lemmas in repo and check for their validity *)
-let update_store_with_repo repo iprog cprog  =
+let update_store_with_repo repo iprog cprog ctx =
   let lems = process_one_repo repo iprog cprog in
   let left  = List.concat (List.map (fun (a,_,_,_)-> a) lems) in
   let right = List.concat (List.map (fun (_,a,_,_)-> a) lems) in
   let _ = Lem_store.all_lemma # add_coercion left right in
-  let (invalid, invalid_lem) =  verify_one_repo lems cprog in
-  (invalid, invalid_lem)
+  let (invalid_lem, lctx) =  verify_one_repo lems cprog ctx in
+  (invalid_lem, lctx)
 
 (* pop only if repo is invalid *)
-let manage_safe_lemmas repo iprog cprog = 
-  let (invalid, invalid_lem) = update_store_with_repo repo iprog cprog in
-  if invalid then
-    let _ = Log.last_cmd # dumping (invalid_lem) in
-    let _ = print_endline ("\nFailed to prove "^ (invalid_lem) ^ " ==> invalid repo in current context.") in
-    Lem_store.all_lemma # pop_coercion;
-    let _ = print_endline ("Removing invalid repo ---> lemma store restored.") in
-    ()
-  else
-    print_endline ("\nValid repo: lemma store increased.");
-  None
+let manage_safe_lemmas repo iprog cprog ctx = 
+  let (invalid_lem, nctx) = update_store_with_repo repo iprog cprog ctx in
+  match nctx with
+    | CF.FailCtx _ -> 
+          let _ = Log.last_cmd # dumping (invalid_lem) in
+          let _ = print_endline ("\nFailed to prove "^ (invalid_lem) ^ " ==> invalid repo in current context.") in
+          Lem_store.all_lemma # pop_coercion;
+          let _ = print_endline ("Removing invalid repo ---> lemma store restored.") in
+          Some ctx
+    | CF.SuccCtx _ ->
+          let _ = print_endline ("\nValid repo: lemma store increased.") in
+          Some nctx
 
 (* update store with given repo without verifying the lemmas *)
-let manage_unsafe_lemmas repo iprog cprog = 
+let manage_unsafe_lemmas repo iprog cprog ctx = 
   let (left,right) = List.fold_left (fun (left,right) ldef -> 
       let l2r,r2l,typ = process_one_lemma iprog cprog ldef in
       (l2r@left,r2l@right)
   ) ([],[]) repo in
   let _ = Lem_store.all_lemma # add_coercion left right in
   print_endline ("\nUpdated store with unsafe repo.");
-  None
+  Some ctx
 
-let manage_lemmas repo iprog cprog =
-  if !Globals.check_coercions then manage_safe_lemmas repo iprog cprog
-  else manage_unsafe_lemmas repo iprog cprog
+let manage_lemmas repo iprog cprog ctx=
+  if !Globals.check_coercions then manage_safe_lemmas repo iprog cprog ctx
+  else manage_unsafe_lemmas repo iprog cprog ctx
 
 (* update store with given repo, but pop it out in the end regardless of the result of lemma verification *)
-let manage_test_lemmas repo iprog cprog = 
-  let (invalid, invalid_lem) = update_store_with_repo repo iprog cprog in
+let manage_test_lemmas repo iprog cprog ctx = 
+  let new_ctx = CF.SuccCtx [CF.empty_ctx (CF.mkTrueFlow ()) Lab2_List.unlabelled no_pos] in 
+  let (invalid_lem, nctx) = update_store_with_repo repo iprog cprog new_ctx in
   Lem_store.all_lemma # pop_coercion;
-  if invalid then 
-    let _ = Log.last_cmd # dumping (invalid_lem) in
-    print_endline ("\nFailed to prove "^(invalid_lem) ^ " ==> invalid repo in current context.")
-  else
-    print_endline ("\nTemp repo proved valid in current context.");
+  let _  = match nctx with
+    | CF.FailCtx _ -> 
+          let _ = Log.last_cmd # dumping (invalid_lem) in
+          print_endline ("\nFailed to prove "^(invalid_lem) ^ " ==> invalid repo in current context.")
+    | CF.SuccCtx _ ->
+          print_endline ("\nTemp repo proved valid in current context.") in
   print_endline ("Removing temp repo ---> lemma store restored.");
-  None
+  Some ctx
 
 (* verify given repo in a fresh store. Revert the store back to it's state prior to this method call *)
-let manage_test_new_lemmas repo iprog cprog = 
+let manage_test_new_lemmas repo iprog cprog ctx = 
   let left_lems = Lem_store.all_lemma # get_left_coercion in
   let right_lems = Lem_store.all_lemma # get_right_coercion in
   let _ = Lem_store.all_lemma # set_coercion [] [] in
-  let (invalid, invalid_lem) = update_store_with_repo repo iprog cprog in
+  let (invalid_lem, nctx) = update_store_with_repo repo iprog cprog ctx in
   let _ = Lem_store.all_lemma # set_left_coercion left_lems in
   let _ = Lem_store.all_lemma # set_right_coercion right_lems in
-  if invalid then 
-    let _ = Log.last_cmd # dumping (invalid_lem) in
-    print_endline ("\nFailed to prove "^ (invalid_lem) ^ " ==> invalid repo in fresh context.")
-  else
-    print_endline ("\nTemp repo proved valid in fresh context.");
+  let _ = match nctx with 
+    | CF.FailCtx _ -> 
+          let _ = Log.last_cmd # dumping (invalid_lem) in
+          print_endline ("\nFailed to prove "^ (invalid_lem) ^ " ==> invalid repo in fresh context.")
+    | CF.SuccCtx _ ->
+          print_endline ("\nTemp repo proved valid in fresh context.") in
   print_endline ("Removing temp repo ---> lemma store restored.");
-  None
+  Some ctx
+
 

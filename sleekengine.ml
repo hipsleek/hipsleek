@@ -32,6 +32,7 @@ module SAC = Sacore
 module MCP = Mcpure
 module SC = Sleekcore
 module LEM = Lemma
+module LO2 = Label_only.Lab2_List
 
 let sleek_proof_counter = new Gen.counter 0
 
@@ -386,7 +387,8 @@ let process_lemma ldef =
     | _ -> None in
   let l2r = get_coercion l2r in
   let r2l = get_coercion r2l in
-  let res = LP.verify_lemma 2 l2r r2l !cprog (ldef.I.coercion_name) ldef.I.coercion_type in
+  let ctx = CF.SuccCtx [CF.empty_ctx (CF.mkTrueFlow ()) LO2.unlabelled no_pos] in
+  let res = LP.verify_lemma 2 l2r r2l ctx !cprog (ldef.I.coercion_name) ldef.I.coercion_type in
                      ()
   (* CF.residues := (match res with *)
   (*   | None -> None; *)
@@ -410,29 +412,30 @@ let print_residue residue =
 
 let process_list_lemma ldef_lst =
   let lst = ldef_lst.Iast.coercion_list_elems in
+  let ctx = match !CF.residues with
+    | None            ->  CF.SuccCtx [CF.empty_ctx (CF.mkTrueFlow ()) Lab2_List.unlabelled no_pos]
+    | Some (CF.SuccCtx ctx, _) -> CF.SuccCtx ctx 
+    | Some (CF.FailCtx ctx, _) -> CF.SuccCtx [CF.empty_ctx (CF.mkTrueFlow ()) Lab2_List.unlabelled no_pos] in (* andreeac: to check if it should skip lemma proving *)
   let res = 
     match ldef_lst.Iast.coercion_list_kind with
-      | LEM            -> Lemma.manage_lemmas lst iprog !cprog
-      | LEM_TEST       -> Lemma.manage_test_lemmas lst iprog !cprog
-      | LEM_TEST_NEW   -> Lemma.manage_test_new_lemmas lst iprog !cprog
-      | LEM_UNSAFE     -> Lemma.manage_unsafe_lemmas lst iprog !cprog
-      | LEM_SAFE       -> Lemma.manage_safe_lemmas lst iprog !cprog
+      | LEM            -> Lemma.manage_lemmas lst iprog !cprog ctx
+      | LEM_TEST       -> Lemma.manage_test_lemmas lst iprog !cprog ctx
+      | LEM_TEST_NEW   -> Lemma.manage_test_new_lemmas lst iprog !cprog ctx
+      | LEM_UNSAFE     -> Lemma.manage_unsafe_lemmas lst iprog !cprog ctx
+      | LEM_SAFE       -> Lemma.manage_safe_lemmas lst iprog !cprog ctx
       | LEM_INFER      -> 
                      begin
-                     let r = Lemma.manage_test_lemmas lst iprog !cprog in
+                     let r = Lemma.manage_test_lemmas lst iprog !cprog ctx in
                      (* let nr = match r with Some lc -> Some(lc,true) | None -> None in *)
                      (* let _ = print_residue  nr in *)
                      r
                      end
             (* let _ = List.map process_lemma ldef_lst.Iast.coercion_list_elems in *) 
   in ()
-  (* CF.residues := (match res with *)
-  (*   | None -> None; *)
-  (*   | Some ls_ctx -> Some (ls_ctx, true)) *)
 
 let process_list_lemma ldef_lst =
   Debug.no_1 "process_list_lemma" pr_none pr_none process_list_lemma  ldef_lst
-
+      
 let process_data_def ddef =
   if AS.check_data_pred_name iprog ddef.I.data_name then
     let tmp = iprog.I.prog_data_decls in
