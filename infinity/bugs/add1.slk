@@ -1,5 +1,10 @@
 slk_simplify (nnn=0 & lg+(\inf)=0 | nnn>0 & lg<\inf).
+
 slk_simplify (nnn=0 & lg=-ninfinity | nnn>0 & lg <infinity).
+
 slk_simplify neginfinity<infinity &
      (nnn=0 & lg=neginfinity | nnn=0 & lg<infinity).
+
+slk_simplify (nnn=0 & lg=neginfinity | nnn=0 & lg<infinity).
+
 slk_simplify -\inf<\inf & (nnn=0 & lg = -\inf | nnn = 0 & lg< \inf).

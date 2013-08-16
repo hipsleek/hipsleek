@@ -89,7 +89,12 @@ let print_exc (check_id: string) =
 (* calls the entailment method and catches possible exceptions *)
 let process_coercion_check iante iconseq (inf_vars: CP.spec_var list) iexact (lemma_name: string) (cprog: C.prog_decl)  =
   try 
-    run_entail_check iante iconseq inf_vars cprog (if iexact then Some true else None)
+    let (b,lc) as res = run_entail_check iante iconseq inf_vars cprog (if iexact then Some true else None) in
+    let _ = Debug.info_hprint (add_str "inf_vars" !CP.print_svl) inf_vars no_pos in
+    (if inf_vars!=[] then
+      let _ = Debug.info_pprint "writing to residue " no_pos in
+      CF.residues := Some (lc,b));
+    res
   with _ -> print_exc ("lemma \""^ lemma_name ^"\""); 
       let rs = (CF.FailCtx (CF.Trivial_Reason (CF.mk_failure_must "exception in lemma proving" lemma_error))) in
       (false, rs)
@@ -97,7 +102,9 @@ let process_coercion_check iante iconseq (inf_vars: CP.spec_var list) iexact (le
 let process_coercion_check iante0 iconseq0 (inf_vars: CP.spec_var list) iexact (lemma_name: string) (cprog: C.prog_decl) =
   let pr = string_of_lem_formula in
   let pr3 = Cprinter.string_of_spec_var_list in
-  Debug.no_3 "process_coercion_check" pr pr pr3 (fun _ -> "?") (fun _ _ _ -> process_coercion_check iante0 iconseq0 inf_vars iexact lemma_name cprog) iante0 iconseq0 inf_vars
+  let pr_out = pr_pair string_of_bool (Cprinter.string_of_list_context) in
+  Debug.no_3 "process_coercion_check" pr pr pr3 pr_out 
+      (fun _ _ _ -> process_coercion_check iante0 iconseq0 inf_vars iexact lemma_name cprog) iante0 iconseq0 inf_vars
 
 (* prepares the lhs&rhs of the coercion to be checked 
    - unfold lhs once
