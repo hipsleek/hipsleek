@@ -273,8 +273,9 @@ let manage_lemmas repo iprog cprog ctx=
   else manage_unsafe_lemmas repo iprog cprog ctx
 
 (* update store with given repo, but pop it out in the end regardless of the result of lemma verification *)
-let manage_test_lemmas repo iprog cprog ctx = 
+let manage_test_lemmas repo iprog cprog orig_ctx = 
   let new_ctx = CF.SuccCtx [CF.empty_ctx (CF.mkTrueFlow ()) Lab2_List.unlabelled no_pos] in 
+  (* what is the purpose of new_ctx? *)
   let (invalid_lem, nctx) = update_store_with_repo repo iprog cprog new_ctx in
   Lem_store.all_lemma # pop_coercion;
   let _  = match nctx with
@@ -283,8 +284,11 @@ let manage_test_lemmas repo iprog cprog ctx =
           print_endline ("\nFailed to prove "^(invalid_lem) ^ " ==> invalid repo in current context.")
     | CF.SuccCtx _ ->
           print_endline ("\nTemp repo proved valid in current context.") in
-  print_endline ("Removing temp repo ---> lemma store restored.");
-  Some ctx
+  let _ = print_endline ("Removing temp repo ---> lemma store restored.") in
+  Some nctx
+
+let manage_infer_lemmas repo iprog cprog ctx = 
+  manage_test_lemmas repo iprog cprog ctx
 
 (* verify given repo in a fresh store. Revert the store back to it's state prior to this method call *)
 let manage_test_new_lemmas repo iprog cprog ctx = 

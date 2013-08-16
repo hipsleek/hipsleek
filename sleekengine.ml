@@ -409,13 +409,14 @@ let print_residue residue =
                     print_string ((Cprinter.string_of_numbered_list_formula_trace_inst !cprog
                         (CF.list_formula_trace_of_list_context ls_ctx))^"\n" )
 
-
 let process_list_lemma ldef_lst =
   let lst = ldef_lst.Iast.coercion_list_elems in
+  (* why do we check residue for ctx? do we really need a previous context? *)
   let ctx = match !CF.residues with
     | None            ->  CF.SuccCtx [CF.empty_ctx (CF.mkTrueFlow ()) Lab2_List.unlabelled no_pos]
     | Some (CF.SuccCtx ctx, _) -> CF.SuccCtx ctx 
-    | Some (CF.FailCtx ctx, _) -> CF.SuccCtx [CF.empty_ctx (CF.mkTrueFlow ()) Lab2_List.unlabelled no_pos] in (* andreeac: to check if it should skip lemma proving *)
+    | Some (CF.FailCtx ctx, _) -> CF.SuccCtx [CF.empty_ctx (CF.mkTrueFlow ()) Lab2_List.unlabelled no_pos] in 
+  (* andreeac: to check if it should skip lemma proving *)
   let res = 
     match ldef_lst.Iast.coercion_list_kind with
       | LEM            -> Lemma.manage_lemmas lst iprog !cprog ctx
@@ -425,7 +426,7 @@ let process_list_lemma ldef_lst =
       | LEM_SAFE       -> Lemma.manage_safe_lemmas lst iprog !cprog ctx
       | LEM_INFER      -> 
                      begin
-                     let r = Lemma.manage_test_lemmas lst iprog !cprog ctx in
+                     let r = Lemma.manage_infer_lemmas lst iprog !cprog ctx in
                      (* let nr = match r with Some lc -> Some(lc,true) | None -> None in *)
                      (* let _ = print_residue  nr in *)
                      r
