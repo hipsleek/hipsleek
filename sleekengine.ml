@@ -387,8 +387,8 @@ let process_lemma ldef =
     | _ -> None in
   let l2r = get_coercion l2r in
   let r2l = get_coercion r2l in
-  let ctx = CF.SuccCtx [CF.empty_ctx (CF.mkTrueFlow ()) LO2.unlabelled no_pos] in
-  let res = LP.verify_lemma 2 l2r r2l ctx !cprog (ldef.I.coercion_name) ldef.I.coercion_type in
+  (* let ctx = CF.SuccCtx [CF.empty_ctx (CF.mkTrueFlow ()) LO2.unlabelled no_pos] in *)
+  let res = LP.verify_lemma 2 l2r r2l !cprog (ldef.I.coercion_name) ldef.I.coercion_type in
                      ()
   (* CF.residues := (match res with *)
   (*   | None -> None; *)
@@ -419,20 +419,16 @@ let process_list_lemma ldef_lst =
   (* andreeac: to check if it should skip lemma proving *)
   let res = 
     match ldef_lst.Iast.coercion_list_kind with
-      | LEM            -> Lemma.manage_lemmas lst iprog !cprog ctx
-      | LEM_TEST       -> Lemma.manage_test_lemmas lst iprog !cprog ctx
-      | LEM_TEST_NEW   -> Lemma.manage_test_new_lemmas lst iprog !cprog ctx
-      | LEM_UNSAFE     -> Lemma.manage_unsafe_lemmas lst iprog !cprog ctx
-      | LEM_SAFE       -> Lemma.manage_safe_lemmas lst iprog !cprog ctx
-      | LEM_INFER      -> 
-                     begin
-                     let r = Lemma.manage_infer_lemmas lst iprog !cprog ctx in
-                     (* let nr = match r with Some lc -> Some(lc,true) | None -> None in *)
-                     (* let _ = print_residue  nr in *)
-                     r
-                     end
-            (* let _ = List.map process_lemma ldef_lst.Iast.coercion_list_elems in *) 
-  in ()
+      | LEM            -> Lemma.manage_lemmas lst iprog !cprog 
+      | LEM_TEST       -> Lemma.manage_test_lemmas lst iprog !cprog 
+      | LEM_TEST_NEW   -> Lemma.manage_test_new_lemmas lst iprog !cprog 
+      | LEM_UNSAFE     -> Lemma.manage_unsafe_lemmas lst iprog !cprog 
+      | LEM_SAFE       -> Lemma.manage_safe_lemmas lst iprog !cprog 
+      | LEM_INFER      -> Lemma.manage_infer_lemmas lst iprog !cprog 
+  in
+  match res with
+    | None | Some [] -> CF.clear_residue ()
+    | Some(c::_) -> CF.set_residue true c
 
 let process_list_lemma ldef_lst =
   Debug.no_1 "process_list_lemma" pr_none pr_none process_list_lemma  ldef_lst
