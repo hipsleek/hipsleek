@@ -5,6 +5,7 @@ open Label_only
 
 module DD = Debug
 module Err = Error
+module IA = Iast
 module CA = Cast
 module AS = Astsimp
 module CP = Cpure
@@ -16,6 +17,16 @@ module SAU = Sautility
 module SAO = Saout
 module Inf = Infer
 module SC = Sleekcore
+
+let infer_shapes = ref (fun (iprog: IA.prog_decl) (cprog: CA.prog_decl) (proc_name: ident)
+  (hp_constrs: CF.hprel list) (sel_hp_rels: CP.spec_var list) (sel_post_hp_rels: CP.spec_var list)
+  (hp_rel_unkmap: ((CP.spec_var * int list) * CP.xpure_view) list)
+  (unk_hpargs: (CP.spec_var * CP.spec_var list) list)
+  (link_hpargs: (int list * (Cformula.CP.spec_var * Cformula.CP.spec_var list)) list)
+  (need_preprocess: bool) (detect_dang: bool) -> let a = ([] : CF.hprel list) in
+  let b = ([] : CF.hp_rel_def list) in
+  (a, b)
+)
 
 let cmp_hp_pos (hp1,pos1) (hp2,pos2)= (CP.eq_spec_var hp1 hp2) && pos1=pos2
 
@@ -2593,8 +2604,27 @@ let prove_split_cand_x iprog cprog proving_fnc unk_hps ss_preds hp_defs (hp, arg
     let f12 = SAO.trans_formula_hp_2_view iprog cprog proc_name chprels_decl cur_hpdefs f in
     let f22 = SAO.trans_formula_hp_2_view iprog cprog proc_name chprels_decl cur_hpdefs (CF.formula_of_heap rhs_hf no_pos) in
   (*prove*)
-    let r1,rl,_ = proving_fnc (List.map fst comps) f12 (CF.struc_formula_of_formula f22 no_pos) in
-    []
+    let valid,lc,_ = proving_fnc (List.map fst comps) f12 (CF.struc_formula_of_formula f22 no_pos) in
+    if valid then
+      let ass =
+        let hprels = Inf.collect_hp_rel_list_context lc in
+        let (_,hp_rest) = List.partition (fun hp ->
+            match hp.CF.hprel_kind with
+              | CP.RelDefn _ -> true
+              | _ -> false
+        ) hprels
+        in
+        let (hp_lst_assume,(* hp_rest *)_) = List.partition (fun hp ->
+            match hp.CF.hprel_kind with
+              | CP.RelAssume _ -> true
+              | _ -> false
+        ) hp_rest
+        in
+        hp_lst_assume
+      in
+      cur_hpdefs
+    else
+      cur_hpdefs
   in
   let prove_syn (k, rel, og, f) =
     let fs = CF.list_of_disjs f in
@@ -2607,9 +2637,11 @@ let prove_split_cand_x iprog cprog proving_fnc unk_hps ss_preds hp_defs (hp, arg
   in
   let (k, rel, og, f), rem_hp_defs = look_up hp_defs [] in
   (*try: do the split to obtain new defs sematically*)
-  (* let _ = prove_sem [(k, rel, og, f)] f in *)
-  (*syntactically*)
-  let split_hp_defs = prove_syn (k, rel, og, f) in
+  let split_hp_defs = if !Globals.syntatic_mode then
+    (*syntactically*)
+    prove_syn (k, rel, og, f)
+  else prove_sem [(k, rel, og, f)] f
+  in
   split_hp_defs@rem_hp_defs
 
 let prove_split_cand iprog cprog proving_fnc unk_hps ss_preds hp_defs (hp, args, comps, lhs_hf, rhs_hf)=

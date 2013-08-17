@@ -31,7 +31,7 @@ module MCP = Mcpure
 module SY_CEQ = Syn_checkeq
 
 
-let generate_lemma = ref(fun (iprog: I.prog_decl) n t (ihps: ident list) iante iconseq -> [],[])
+let generate_lemma = ref (fun (iprog: I.prog_decl) n t (ihps: ident list) iante iconseq -> [],[])
 
 let sleek_entail_check_x isvl (cprog: C.prog_decl) proof_traces ante conseq=
   let pr = Cprinter.string_of_struc_formula in

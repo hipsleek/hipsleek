@@ -2056,8 +2056,12 @@ let infer_shapes_x iprog prog proc_name (constrs0: CF.hprel list) sel_hps post_h
   in
   r
 
-let infer_shapes iprog prog proc_name (hp_constrs: CF.hprel list) sel_hp_rels sel_post_hp_rels
-      hp_rel_unkmap unk_hpargs link_hpargs need_preprocess detect_dang:
+let infer_shapes (iprog: Iast.prog_decl) (prog: Cast.prog_decl) (proc_name:ident)
+      (hp_constrs: CF.hprel list) (sel_hp_rels: CP.spec_var list) (sel_post_hp_rels: CP.spec_var list)
+      (hp_rel_unkmap: ((CP.spec_var * int list) * CP.xpure_view) list)
+      (unk_hpargs: (CP.spec_var * CP.spec_var list) list)
+      (link_hpargs: (int list * (Cformula.CP.spec_var * Cformula.CP.spec_var list)) list)
+      (need_preprocess: bool) (detect_dang:bool):
  (* (CF.cond_path_type * CF.hp_rel_def list*(CP.spec_var*CP.exp list * CP.exp list) list) = *)
   (* (CF.hprel list * CF.hp_rel_def list*(CP.spec_var*CP.exp list * CP.exp list) list) = *)
       (CF.hprel list * CF.hp_rel_def list) =
@@ -2091,3 +2095,5 @@ let infer_shapes iprog prog proc_name (hp_constrs: CF.hprel list) sel_hp_rels se
           sel_post_hp_rels hp_rel_unkmap unk_hpargs link_hpargs
           need_preprocess detect_dang)
       proc_name hp_constrs sel_post_hp_rels hp_rel_unkmap unk_hpargs link_hpargs
+
+let _ = Sacore.infer_shapes := infer_shapes

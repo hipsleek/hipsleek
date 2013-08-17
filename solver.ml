@@ -8874,7 +8874,7 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
               (*  let _ = DD.info_pprint ("  new_ante: " ^ (Cprinter.string_of_formula new_ante)) pos in *)
               Debug.tinfo_hprint (add_str "consumed_h" (Cprinter.string_of_h_formula)) consumed_h pos;
               Debug.tinfo_hprint (add_str "new_consumed" (Cprinter.string_of_h_formula)) new_consumed pos;
-              Debug.info_hprint (add_str "new_ante" (Cprinter.string_of_formula)) new_ante pos;
+              Debug.tinfo_hprint (add_str "new_ante" (Cprinter.string_of_formula)) new_ante pos;
               Debug.tinfo_hprint (add_str "new_conseq" (Cprinter.string_of_formula)) new_conseq pos;
 
               let new_es = {estate with es_formula = new_ante;

@@ -706,6 +706,7 @@ let allow_norm_disj = ref true
 
 let norm_cont_analysis = ref true
 
+(*context: (1, M_cyclic c) *)
 let lemma_infer = ref false
 
 let dis_sem = ref false
