@@ -1,0 +1,61 @@
+data node{
+	int val;
+	node next;
+}.
+
+HeapPred P1(node a).
+
+//(1)
+
+infer [P1] 
+   x=null
+|- (exists x: P1(x) & x=p).
+print residue.
+// emp --> P1(p)
+
+
+//(2)
+// emp&x=null&{FLOW,(19,20)=__norm}[] [P1] |-  EBase exists (Expl)(Impl)[p](ex)P1(p)&{FLOW,(19,20)=__norm}[]
+// p is not implicit
+infer [P1] 
+   x=null
+|- P1(p).
+print residue.
+// emp --> P1(p)
+
+
+//(3)
+infer [P1] 
+   x=null
+|- P1(x) & x=p.
+print residue.
+// should fail
+// x=null --> P(x)
+// cannot prove x=p
+// should fail
+
+
+//(4)
+// emp&x=null&{FLOW,(19,20)=__norm}[] [P1] |-  EBase exists (Expl)(Impl)[p](ex)P1(p)&p=x&{FLOW,(19,20)=__norm}[]
+// p is not implicit
+infer [P1] 
+   x=null
+|- P1(p) & x=p.
+print residue.
+// x=null --> P(x)
+// cannot prove x=p
+// should fail
+
+/*
+
+  lhs |- P(v*) & v=w
+
+  x=p |-  x=p
+
+(i) build emap for LHS/RHS
+(ii) common free vars for both LHS/RHS
+(iii) subs both sides to use smallest common vars
+        lhs     |- P(v*)
+
+*/
+

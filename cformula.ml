@@ -2090,17 +2090,17 @@ and get_lines (ll: loc list): (int list)=
 
 and subst_pos_struc_formula (p:loc) (f:struc_formula): struc_formula=
   match f with
-	| ECase b ->
-        let helper (pre, post)= (CP.subst_pos_formula p pre, subst_pos_struc_formula p post) in
-        ECase {b with formula_case_branches = List.map helper b.formula_case_branches; formula_case_pos = p}
-	| EBase b-> EBase { b with formula_struc_base = subst_pos_formula p b.formula_struc_base;
-						formula_struc_continuation = map_opt (subst_pos_struc_formula p) b.formula_struc_continuation;
-						formula_struc_pos = p}
-	| EAssume b-> EAssume {b with
-			formula_assume_simpl = subst_pos_formula p b.formula_assume_simpl;
-			formula_assume_struc = subst_pos_struc_formula p b.formula_assume_struc;}
+    | ECase b ->
+          let helper (pre, post)= (CP.subst_pos_formula p pre, subst_pos_struc_formula p post) in
+          ECase {b with formula_case_branches = List.map helper b.formula_case_branches; formula_case_pos = p}
+    | EBase b-> EBase { b with formula_struc_base = subst_pos_formula p b.formula_struc_base;
+	  formula_struc_continuation = map_opt (subst_pos_struc_formula p) b.formula_struc_continuation;
+	  formula_struc_pos = p}
+    | EAssume b-> EAssume {b with
+	  formula_assume_simpl = subst_pos_formula p b.formula_assume_simpl;
+	  formula_assume_struc = subst_pos_struc_formula p b.formula_assume_struc;}
     | EInfer ei -> EInfer {ei with formula_inf_continuation = subst_pos_struc_formula p ei.formula_inf_continuation; formula_inf_pos=p}
-	| EList b -> EList (map_l_snd (subst_pos_struc_formula p) b)
+    | EList b -> EList (map_l_snd (subst_pos_struc_formula p) b)
 	
   
 
@@ -3877,6 +3877,36 @@ and infer_state = {
     is_hp_equivs: (CP.spec_var*CP.spec_var) list;
     is_hp_defs: hp_rel_def list;
 }
+
+let rec look_up_hpdef hpdefs hp0=
+  match hpdefs with
+    | [] -> raise Not_found
+    | hpdef::rest -> begin
+        match hpdef.hprel_def_kind with
+          | CP.HPRelDefn (hp,_,_) -> if CP.eq_spec_var hp hp0 then (hpdef)
+            else look_up_hpdef rest hp0
+          | _ -> look_up_hpdef rest hp0
+      end
+
+let rec look_up_hpdef_with_remain hpdefs hp0 done_hpdefs=
+  match hpdefs with
+    | [] -> raise Not_found
+    | hpdef::rest -> begin
+        match hpdef.hprel_def_kind with
+          | CP.HPRelDefn (hp,_,_) -> if CP.eq_spec_var hp hp0 then (hpdef,done_hpdefs@rest)
+            else look_up_hpdef_with_remain rest hp0 (done_hpdefs@[hpdef])
+          | _ -> look_up_hpdef_with_remain rest hp0 (done_hpdefs@[hpdef])
+      end
+
+let rec look_up_hp_def hp_defs hp0=
+  match hp_defs with
+    | [] -> raise Not_found
+    | ((k, _,_,_) as hp_def)::rest -> begin
+        match k with
+          | CP.HPRelDefn (hp,_,_) -> if CP.eq_spec_var hp hp0 then hp_def
+            else look_up_hp_def rest hp0
+          | _ -> look_up_hp_def rest hp0
+      end
 
 let get_hpdef_name hpdef=
    match hpdef with

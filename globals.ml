@@ -659,6 +659,8 @@ let pred_syn_flag = ref true
 
 let sa_syn = ref true
 
+let lemma_syn = ref false
+
 let sa_en_split = ref false
 
 let pred_split = ref false
@@ -866,7 +868,7 @@ let self_fold_search_flag = ref false
 
 let show_gist = ref false
 let imply_top_flag = ref false
-let early_contra_flag = ref false
+let early_contra_flag = ref true
 
 let trace_failure = ref false
 

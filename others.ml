@@ -26,6 +26,7 @@ type proving_kind =
 	| PK_If_Stmt
 	| PK_Pre_Oblg
 	| PK_Post_Oblg
+        | PK_Pred_Split
 	| PK_Assign_Stmt
 	| PK_Assert
 	| PK_BIND
@@ -59,6 +60,7 @@ let string_of_proving_kind pk =
     | PK_POST -> "POST"
     | PK_Pre_Oblg -> "PRE-OBLIGATION"
     | PK_Post_Oblg -> "POST-OBLIGATION"
+    | PK_Pred_Split -> "PK_Pred_Split"
     | PK_Unknown -> "UNKNOWN"
 
 let sleek_kind = new Gen.stack_pr string_of_proving_kind (==)

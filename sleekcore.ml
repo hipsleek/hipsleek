@@ -31,7 +31,7 @@ module MCP = Mcpure
 module SY_CEQ = Syn_checkeq
 
 
-let generate_lemma = ref(fun iprog n t iante iconseq -> [],[])
+let generate_lemma = ref(fun (iprog: I.prog_decl) n t (ihps: ident list) iante iconseq -> [],[])
 
 let sleek_entail_check_x isvl (cprog: C.prog_decl) proof_traces ante conseq=
   let pr = Cprinter.string_of_struc_formula in
@@ -113,9 +113,9 @@ let sleek_entail_check isvl (cprog: C.prog_decl) proof_traces ante conseq=
   let pr2 = Cprinter.string_of_struc_formula in
   let pr3 = pr_triple string_of_bool Cprinter.string_of_list_context !CP.print_svl in
   let pr4 = pr_list_ln (pr_pair pr1 pr1) in
-  Debug.no_3 "sleek_entail_check" pr1 pr2 pr4 pr3
-      (fun _ _ _ -> sleek_entail_check_x isvl cprog proof_traces ante conseq)
-      ante conseq proof_traces
+  Debug.no_4 "sleek_entail_check" !CP.print_svl pr1 pr2 pr4 pr3
+      (fun _ _ _ _ -> sleek_entail_check_x isvl cprog proof_traces ante conseq)
+      isvl ante conseq proof_traces
 
 let sleek_sat_check isvl cprog f=
   true
@@ -128,7 +128,7 @@ let check_equiv iprog cprog guiding_svl proof_traces need_lemma f1 f2=
   let gen_lemma (r_left, r_right) (ante,conseq)=
     let iante = Astsimp.rev_trans_formula ante in
     let iconseq = Astsimp.rev_trans_formula conseq in
-    let l2r,r2l = !generate_lemma iprog "temp" I.Equiv iante iconseq in
+    let l2r,r2l = !generate_lemma iprog "temp" I.Equiv [] iante iconseq in
     (r_left@l2r, r_right@r2l)
   in
   if not (!Globals.checkeq_syn) then
@@ -186,6 +186,6 @@ and check_equiv_list iprog prog guiding_svl proof_traces need_lemma fs1 fs2: boo
       (fun _ _ -> check_equiv_list_x iprog prog guiding_svl proof_traces need_lemma fs1 fs2) fs1 fs2
 
 
-let _ = Sautility.check_equiv := check_equiv
-let _ = Sautility.check_equiv_list := check_equiv_list
+(* let _ = Sautility.check_equiv := check_equiv *)
+(* let _ = Sautility.check_equiv_list := check_equiv_list *)
 

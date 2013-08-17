@@ -2305,7 +2305,17 @@ let add_bar_inits prog =
 	prog_data_decls = prog.prog_data_decls@b_data_def; 
 	prog_proc_decls = prog.prog_proc_decls@b_proc_def; }
 
-	
+let mk_lemma lemma_name coer_type ihps ihead ibody=
+  { coercion_type = coer_type;
+  coercion_exact = false;
+  coercion_infer_vars = ihps;
+  coercion_name = (lemma_name);
+  coercion_head = (F.subst_stub_flow F.top_flow ihead);
+  coercion_body = (F.subst_stub_flow F.top_flow ibody);
+  coercion_proof = Return ({ exp_return_val = None;
+  exp_return_path_id = None ;
+  exp_return_pos = no_pos })}
+
 let gen_normalize_lemma_comb ddef = 
  let self = (self,Unprimed) in
  let lem_name = "c"^ddef.data_name in
