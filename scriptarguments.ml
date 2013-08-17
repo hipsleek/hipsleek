@@ -508,7 +508,7 @@ let common_arguments = [
   ("--sa-dis-cont", Arg.Clear Globals.norm_cont_analysis, "disable cont analysis for views");
   ("--pred-dis-mod", Arg.Clear Globals.pred_syn_modular, "disable modular predicate synthesis (use old algo)");
   ("--pred-en-mod", Arg.Set Globals.pred_syn_modular, "using modular predicate synthesis");
-  ("--en-syn-mode", Arg.Set Globals.syn_mode, "check two formulas are equivalent syntatically. default is semantic checking via sleek");
+  ("--en-syn-mode", Arg.Set Globals.syntatic_mode, "check two formulas are equivalent syntatically. default is semantic checking via sleek");
   ("--pred-en-oblg", Arg.Set Globals.pred_en_oblg, "enable sa_en_pre_oblg");
   ("--pred-dis-oblg", Arg.Clear Globals.pred_en_oblg, "enable sa_en_pre_oblg");
    ("--sa-dnc", Arg.Set Globals.sa_dnc, "algorithm of normalization with divide and conquer");

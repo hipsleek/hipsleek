@@ -1337,7 +1337,7 @@ let match_one_hp_views iprog prog (vdcls: CA.view_decl list) (k, hf, g,orf):(CP.
 
 let match_hps_views_x iprog prog sel_hps (hp_defs: CF.hp_rel_def list) (vdcls: CA.view_decl list):
 (CP.spec_var* CF.h_formula list) list=
-  let match_one_fnc = if (!Globals.checkeq_syn) then SAU.match_one_hp_views else
+  let match_one_fnc = if (!Globals.syntatic_mode) then SAU.match_one_hp_views else
     (match_one_hp_views) in
   let hp_defs1 = List.filter (fun (def,_,_,_) -> match def with
     | CP.HPRelDefn (hp,_,_) -> CP.mem_svl hp sel_hps
