@@ -1891,7 +1891,9 @@ compose_cmd:
 
 print_cmd:
   [[ `PRINT; `IDENTIFIER id           -> PCmd id
-   | `PRINT; `DOLLAR; `IDENTIFIER id  -> PVar id]];
+   | `PRINT; `DOLLAR; `IDENTIFIER id  -> PVar id
+   | `PRINT_LEMMAS  -> PCmd "lemmas"
+  ]];
 
 cmp_cmd:
   [[ `CMP; `IDENTIFIER id ; `OSQUARE; il=OPT id_list; `CSQUARE ; `COLON; fl = LIST1 meta_constr SEP `COMMA  -> 

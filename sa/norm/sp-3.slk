@@ -11,7 +11,8 @@ inv true.
 HeapPred P1(node a).
 HeapPred P2(node a).
 
-lemma_infer [P1,P2] self::G<y> -> P1(self) * P2(y).
+lemma_infer [P1,P2] self::G<y> -> P1(self) * P2(y) & y!=null.
+print residue.
 /*
 // this is for independent paramters, just like zip.
  (a) add lemma

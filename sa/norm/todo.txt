@@ -77,8 +77,38 @@ self=null --> P1(self)]
 PROBLEM : why did we include an unrelated n::node<_,null>
  when folding with unknown predicate?
 ===================================================================
+# sp-2a.slk & sp_2b.slk
+
+Right-to-left lemmas not being scheduled!
 ===================================================================
+# sp-2b.slk
+
+# How come the print lemmas operation are scheduled
+entirely after the two lemma_unsafe??
+
+Updated store with unsafe repo.
+
+Updated store with unsafe repo.
+Left Lemmas:[Lemma "lem_14":  self::zip<y>@M&{FLOW,(1,22)=__flow}[]==>]
+Right Lemmas:[Lemma "lem_13":  self::zip<y>@M&{FLOW,(1,22)=__flow}[]<==]
+
+Left Lemmas:[Lemma "lem_14":  self::zip<y>@M&{FLOW,(1,22)=__flow}[]==>]
+Right Lemmas:[Lemma "lem_13":  self::zip<y>@M&{FLOW,(1,22)=__flow}[]<==]
 ===================================================================
+# sp-2d1.slk
+
+infer [H2] self::node<_,p>*y::node<_,q>*H2(p)*H2(q)
+ |- H2(self) * H2(y). 
+print residue.
+
+ <1>emp&{FLOW,(19,20)=__norm}[]
+ inferred hprel:
+
+[ self::node<Anon_11,p>@M * H2(p) --> H2(self) * HP_22(q); 
+  y::node<Anon_12,q>@M * H2(q) * HP_22(q) --> H2(y)]
+
+Why is there spurious HP_22?
+
 ===================================================================
 ===================================================================
 ===================================================================

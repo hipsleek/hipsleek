@@ -1740,6 +1740,8 @@ and mkIConst a pos = IConst (a, pos)
 
 and mkInfConst pos = InfConst (zinf_str, pos)
 
+and mkNegInfConst pos = mkSubtract (mkIConst 0 pos) (mkInfConst pos) pos
+
 and mkFConst a pos = FConst (a, pos)
 
 and mkMult a1 a2 pos = Mult (a1, a2, pos)

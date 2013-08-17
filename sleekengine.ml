@@ -32,6 +32,7 @@ module SAC = Sacore
 module MCP = Mcpure
 module SC = Sleekcore
 module LEM = Lemma
+module LO2 = Label_only.Lab2_List
 
 let sleek_proof_counter = new Gen.counter 0
 
@@ -386,6 +387,7 @@ let process_lemma ldef =
     | _ -> None in
   let l2r = get_coercion l2r in
   let r2l = get_coercion r2l in
+  (* let ctx = CF.SuccCtx [CF.empty_ctx (CF.mkTrueFlow ()) LO2.unlabelled no_pos] in *)
   let res = LP.verify_lemma 2 l2r r2l !cprog (ldef.I.coercion_name) ldef.I.coercion_type in
                      ()
   (* CF.residues := (match res with *)
@@ -407,32 +409,30 @@ let print_residue residue =
                     print_string ((Cprinter.string_of_numbered_list_formula_trace_inst !cprog
                         (CF.list_formula_trace_of_list_context ls_ctx))^"\n" )
 
-
 let process_list_lemma ldef_lst =
   let lst = ldef_lst.Iast.coercion_list_elems in
+  (* why do we check residue for ctx? do we really need a previous context? *)
+  let ctx = match !CF.residues with
+    | None            ->  CF.SuccCtx [CF.empty_ctx (CF.mkTrueFlow ()) Lab2_List.unlabelled no_pos]
+    | Some (CF.SuccCtx ctx, _) -> CF.SuccCtx ctx 
+    | Some (CF.FailCtx ctx, _) -> CF.SuccCtx [CF.empty_ctx (CF.mkTrueFlow ()) Lab2_List.unlabelled no_pos] in 
+  (* andreeac: to check if it should skip lemma proving *)
   let res = 
     match ldef_lst.Iast.coercion_list_kind with
-      | LEM            -> Lemma.manage_lemmas lst iprog !cprog
-      | LEM_TEST       -> Lemma.manage_test_lemmas lst iprog !cprog
-      | LEM_TEST_NEW   -> Lemma.manage_test_new_lemmas lst iprog !cprog
-      | LEM_UNSAFE     -> Lemma.manage_unsafe_lemmas lst iprog !cprog
-      | LEM_SAFE       -> Lemma.manage_safe_lemmas lst iprog !cprog
-      | LEM_INFER      -> 
-                     begin
-                     let r = Lemma.manage_test_lemmas lst iprog !cprog in
-                     (* let nr = match r with Some lc -> Some(lc,true) | None -> None in *)
-                     (* let _ = print_residue  nr in *)
-                     r
-                     end
-            (* let _ = List.map process_lemma ldef_lst.Iast.coercion_list_elems in *) 
-  in ()
-  (* CF.residues := (match res with *)
-  (*   | None -> None; *)
-  (*   | Some ls_ctx -> Some (ls_ctx, true)) *)
+      | LEM            -> Lemma.manage_lemmas lst iprog !cprog 
+      | LEM_TEST       -> Lemma.manage_test_lemmas lst iprog !cprog 
+      | LEM_TEST_NEW   -> Lemma.manage_test_new_lemmas lst iprog !cprog 
+      | LEM_UNSAFE     -> Lemma.manage_unsafe_lemmas lst iprog !cprog 
+      | LEM_SAFE       -> Lemma.manage_safe_lemmas lst iprog !cprog 
+      | LEM_INFER      -> Lemma.manage_infer_lemmas lst iprog !cprog 
+  in
+  match res with
+    | None | Some [] -> CF.clear_residue ()
+    | Some(c::_) -> CF.set_residue true c
 
 let process_list_lemma ldef_lst =
   Debug.no_1 "process_list_lemma" pr_none pr_none process_list_lemma  ldef_lst
-
+      
 let process_data_def ddef =
   if AS.check_data_pred_name iprog ddef.I.data_name then
     let tmp = iprog.I.prog_data_decls in
@@ -1507,7 +1507,9 @@ let process_print_command pcmd0 = match pcmd0 with
 	  let (n_tl,pf) = meta_to_struc_formula mf false [] None [] in
 		print_string ((Cprinter.string_of_struc_formula pf) ^ "\n")
   | PCmd pcmd -> 
-	if pcmd = "residue" then
+	if pcmd = "lemmas" then
+          Lem_store.all_lemma # dump
+	else if pcmd = "residue" then
           print_residue !CF.residues 
           (* match !CF.residues with *)
           (*   | None -> print_string ": no residue \n" *)

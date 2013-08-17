@@ -328,7 +328,7 @@ let rec choose_context_x prog rhs_es lhs_h lhs_p rhs_p posib_r_aliases rhs_node 
           else if (* not(CP.mem p lhs_fv) ||  *)(!Globals.enable_syn_base_case && (CP.mem CP.null_var paset)) then
             (Debug.devel_zprint (lazy ("choose_context: " ^ (string_of_spec_var p) ^ " is not mentioned in lhs\n\n")) pos; [] )
           else 
-            let res = spatial_ctx_extract prog lhs_h paset imm pimm rhs_node rhs_rest in
+            let res = spatial_ctx_extract prog lhs_h paset imm pimm rhs_node rhs_rest lhs_p in
             filter_match_res_list res rhs_node
     | HTrue -> (
           if (rhs_rest = HEmp) then (
@@ -478,13 +478,13 @@ and coerc_mater_match prog l_vname (l_vargs:P.spec_var list) r_aset imm (lhs_f:C
   rn - right node
   rr - right rest
 *)
-and spatial_ctx_extract p f a i pi rn rr = 
+and spatial_ctx_extract p f a i pi rn rr lhs_p = 
   let pr = pr_list string_of_match_res in
   let pr_svl = Cprinter.string_of_spec_var_list in
   (*let pr_aset = pr_list (pr_list Cprinter.string_of_spec_var) in*)
   (* let pr = pr_no in *)
   Debug.no_4 "spatial_ctx_extract" string_of_h_formula Cprinter.string_of_imm pr_svl string_of_h_formula pr 
-      (fun _ _ _ _-> spatial_ctx_extract_x p f a i pi rn rr ) f i a rn 
+      (fun _ _ _ _-> spatial_ctx_extract_x p f a i pi rn rr lhs_p) f i a rn 
 
 and update_ann (f : h_formula) (pimm1 : ann list) (pimm : ann list) : h_formula = 
   let pr lst = "[" ^ (List.fold_left (fun y x-> (Cprinter.string_of_imm x) ^ ", " ^ y) "" lst) ^ "]; " in
@@ -509,13 +509,14 @@ and imm_split_lhs_node estate l_node r_node = match l_node, r_node with
         else estate
 	| _ -> estate 
   
+(*  *)
 and get_data_nodes_ptrs_to_view prog hd_nodes hv_nodes view_sv =
   let unlinked_nodes = ref ([]: CP.spec_var list) in
   List.filter (fun node ->
       if Gen.BList.mem_eq CP.eq_spec_var (node.h_formula_data_node) !unlinked_nodes then false
       else
         let ptrs = Sautility.look_up_closed_ptr_args prog hd_nodes hv_nodes [node.h_formula_data_node] in
-        if not (List.exists (CP.eq_spec_var view_sv) ptrs) then begin
+        if (empty_inters view_sv ptrs) then begin
           unlinked_nodes := !unlinked_nodes @ ptrs;
           false
         end
@@ -528,7 +529,7 @@ and get_view_nodes_ptrs_to_view prog hd_nodes hv_nodes view_sv =
       if Gen.BList.mem_eq CP.eq_spec_var (node.h_formula_view_node) !unlinked_nodes then false
       else
         let ptrs = Sautility.look_up_closed_ptr_args prog hd_nodes hv_nodes [node.h_formula_view_node] in
-        if not((List.exists (CP.eq_spec_var view_sv) ptrs))then begin
+        if (empty_inters view_sv ptrs)then begin
           unlinked_nodes := !unlinked_nodes @ ptrs;
           false
         end
@@ -541,7 +542,7 @@ and get_hrels_ptrs_to_view prog hd_nodes hv_nodes hrels view_sv =
       let root0, _  = Sautility.find_root prog [hp0] args0  [] in
       let ptrs = Sautility.look_up_closed_ptr_args prog hd_nodes hv_nodes [root0] in
       (* replace root with aset *)
-      (List.exists (CP.eq_spec_var view_sv) ptrs)
+      not(empty_inters view_sv ptrs)
   ) hrels)
 
 and empty_inters lst1 lst2 = 
@@ -551,7 +552,7 @@ and empty_inters lst1 lst2 =
 
 (* try to find a lemma to be applied only if the view on the lhs is reachable from a node matching
 the node on the rhs *)
-and coerc_mater_match_with_unk_hp prog (l_vname: ident) (l_vargs: P.spec_var list) (r_aset: P.spec_var list) (lhs_node: Cformula.h_formula) (l_f: Cformula.h_formula) view_sv =
+and coerc_mater_match_with_unk_hp_x prog (l_vname: ident) (l_vargs: P.spec_var list) (r_aset: P.spec_var list) (lhs_node: Cformula.h_formula) (l_f: Cformula.h_formula) view_sv =
   let cmm () = 
     let cmm = coerc_mater_match prog l_vname l_vargs r_aset (ConstAnn(Mutable)) lhs_node in 
     cmm in
@@ -565,7 +566,12 @@ and coerc_mater_match_with_unk_hp prog (l_vname: ident) (l_vargs: P.spec_var lis
       else cmm ()
     else cmm ()
   else cmm ()
-and spatial_ctx_extract_x prog (f0 : h_formula) (aset : CP.spec_var list) (imm : ann) (pimm : ann list) rhs_node rhs_rest : match_res list  =
+
+and coerc_mater_match_with_unk_hp prog (l_vname: ident) (l_vargs: P.spec_var list) (r_aset: P.spec_var list) (lhs_node: Cformula.h_formula) (l_f: Cformula.h_formula) view_sv =
+  let pr_svl = Cprinter.string_of_spec_var_list in
+  Debug.no_4 "coerc_mater_match_with_unk_hp" pr_id pr_svl pr_svl pr_svl pr_none (fun _ _ _ _-> coerc_mater_match_with_unk_hp_x prog (l_vname: ident) (l_vargs: P.spec_var list) (r_aset: P.spec_var list) (lhs_node: Cformula.h_formula) (l_f: Cformula.h_formula) view_sv) l_vname l_vargs r_aset view_sv
+
+and spatial_ctx_extract_x prog (f0 : h_formula) (aset : CP.spec_var list) (imm : ann) (pimm : ann list) rhs_node rhs_rest lhs_p: match_res list  =
   let rec helper f = match f with
     | HTrue -> []
     | HFalse -> []
@@ -605,8 +611,12 @@ and spatial_ctx_extract_x prog (f0 : h_formula) (aset : CP.spec_var list) (imm :
       h_formula_view_name = c}) ->
           begin
             match rhs_node with
-              | HRel (hp,e,_) ->  let cmm = coerc_mater_match_with_unk_hp prog c vs1 aset f f0 p1 in 
-                cmm
+              | HRel (hp,e,_) ->  
+                    let eqset = CP.EMapSV.build_eset (MCP.ptr_equations_aux false lhs_p) in
+                    let p1_eq = CP.EMapSV.find_equiv_all p1 eqset in
+                    let p1_eq = p1::p1_eq in
+                    let cmm = coerc_mater_match_with_unk_hp prog c vs1 aset f f0 p1_eq in 
+                    cmm
               | _ -> 
           (* if (subtype_ann imm1 imm) then *)
                     if (CP.mem p1 aset) then

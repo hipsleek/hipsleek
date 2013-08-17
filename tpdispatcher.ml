@@ -1032,8 +1032,23 @@ let cnv_int_to_ptr f =
 
 (* this is to normalize result from simplify/hull/gist *)
 let norm_pure_result f =
-  let f = cnv_int_to_ptr f in    
-  let f = if !Globals.allow_inf then Infinity.convert_var_to_inf f else f in 
+  let f = cnv_int_to_ptr f in
+  let f = if !Globals.allow_inf
+    then let f =  CP.arith_simplify 13 (Infinity.convert_var_to_inf f) in
+         let drop_inf_constr f =   
+           let f_f e = None in
+           let f_bf bf = 
+             let (pf, l) = bf in
+             match pf with
+               | Lt(a1,a2,pos) -> if Infinity.check_neg_inf2_inf a1 a2 || Infinity.check_neg_inf2_inf a2 a1
+                 then Some(mkTrue_b pos) else Some bf
+               | _ -> Some bf
+           in
+           let f_e e = (Some e) in
+           map_formula f (f_f, f_bf, f_e) in 
+         let f = drop_inf_constr f in
+         Infinity.normalize_inf_formula f
+    else f in 
   let f = if !Globals.allow_norm_disj then NM.norm_disj f else f in
   f
 
@@ -1716,8 +1731,10 @@ let tp_is_sat f sat_no =
 let norm_pure_input f =
   let f = cnv_ptr_to_int f in
   let f = if !Globals.allow_inf 
-    then Infinity.convert_inf_to_var (Infinity.normalize_inf_formula f) else f in
-  f
+    then let f = Infinity.convert_inf_to_var f 
+           in let add_inf_constr = BForm((mkLt (CP.Var(CP.SpecVar(Int,constinfinity,Primed),no_pos)) (CP.Var(CP.SpecVar(Int,constinfinity,Unprimed),no_pos)) no_pos,None),None) in
+      let f = mkAnd add_inf_constr f no_pos in f
+    else f in f
 
 let norm_pure_input f =
   let pr = Cprinter.string_of_pure_formula in
@@ -1758,8 +1775,8 @@ let simplify (f : CP.formula) : CP.formula =
     else 
       let cmd = PT_SIMPLIFY f in
       let _ = Log.last_proof_command # set cmd in
-      (*if !Globals.allow_inf && Infinity.contains_inf f then f
-      else 
+      (* if !Globals.allow_inf && Infinity.contains_inf f then f
+      else
       let f = if !Globals.allow_inf then Infinity.convert_inf_to_var f else f in*)
       let omega_simplify f = simplify_omega f
         (* Omega.simplify f  *)in

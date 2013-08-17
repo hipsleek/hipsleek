@@ -101,7 +101,6 @@ object (self)
     self # pop_left_coercion;
     self # pop_right_coercion
 
-
   method pop_coercion =
     let left_num = num_left_lem_stk # top_no_exc in
     let right_num = num_right_lem_stk # top_no_exc in
@@ -109,6 +108,20 @@ object (self)
         (add_str "(left,right)" (pr_pair string_of_int string_of_int)) 
         pr_none 
         (fun _ -> self # pop_coercion_x) (left_num,right_num)
+
+  method dump_left =
+    let lems = left_lem # reverse_of in
+    print_endline ("Left Lemmas:"^(pr_list !lem_pr lems))
+
+  method dump_right =
+    let lems = right_lem # reverse_of in
+    print_endline ("Right Lemmas:"^(pr_list !lem_pr lems))
+
+  method dump =
+    self # dump_left;
+    self # dump_right;
+    print_endline ""
+
 
 
 end;;
@@ -137,6 +150,7 @@ let all_lemma = new lemma_store;;
 class lemma_list_store = 
 object (self)
   val lst = new Gen.stack_pr !ilem_lst_pr Iast.eq_coercion_list
+    (* prt empty at this time *)
 
   method add_ilemma lemma_list =
     lst # push lemma_list
@@ -150,7 +164,8 @@ object (self)
     lst # reverse_of
 
   method string_of =
-    lst # string_of
+    let lems = lst # reverse_of in
+    print_endline ("ILemmas:"^(pr_list !ilem_lst_pr lems))
 
 end;;
 
