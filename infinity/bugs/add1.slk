@@ -1,7 +1,3 @@
-checkentail true |- \inf+8 != -\inf.
-checkentail true |- \inf+7 !=\inf.
-checkentail true |- \inf+7 =\inf.
-
 slk_simplify (nnn=0 & lg+(\inf)=0 | nnn>0 & lg<\inf).
 
 //slk_simplify (nnn=0 & lg=-ninfinity | nnn>0 & lg <infinity).
@@ -13,6 +9,7 @@ slk_pairwise (nnn=0 & lg = -\inf) | (nnn = 0 & lg< \inf).
 
 slk_simplify -\inf<\inf & (nnn=0 & lg = -\inf | nnn = 0 & lg< \inf).
 /*
+FIXED
 norm_pure_input@13
 norm_pure_input inp1 : 0<((\inf)+(\inf)) & (((nnn=0 & lg+(\inf)=0) | (nnn=0 & lg<(\inf))))
 norm_pure_input@13 EXIT: ZInfinity'<ZInfinity & 0<(ZInfinity+ZInfinity) & (((nnn=0 & 

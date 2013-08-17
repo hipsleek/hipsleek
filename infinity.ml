@@ -56,6 +56,7 @@ let rec normalize_exp (exp: CP.exp) : CP.exp =
           else CP.Max(e1_norm,e2_norm,pos)
   | CP.Add(e1,e2,pos) -> let e1_norm = normalize_exp e1 in
     		  let e2_norm = normalize_exp e2 in
+              if CP.is_inf e1_norm && CP.is_inf e2_norm then e1_norm else 
     		  if CP.is_const_exp e1_norm && CP.is_inf e2_norm
     		  then e2_norm
     		  else if CP.is_inf e1_norm && CP.is_const_exp e2_norm
