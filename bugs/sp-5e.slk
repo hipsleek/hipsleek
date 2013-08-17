@@ -38,6 +38,15 @@ infer [P3]
 |- P3(x,y) & y!= null & x!=null.
 print residue.
 
+// expecting it to succeed
+infer [P3]
+   y::node<_,_> 
+|- P3(x,y).
+print residue.
 
 
 // expecting it to succeed
+infer [P3]
+   y::node<_,_> *  x::node<_,_>
+|- P3(x,y).
+print residue.
