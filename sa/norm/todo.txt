@@ -95,7 +95,8 @@ Right Lemmas:[Lemma "lem_13":  self::zip<y>@M&{FLOW,(1,22)=__flow}[]<==]
 Left Lemmas:[Lemma "lem_14":  self::zip<y>@M&{FLOW,(1,22)=__flow}[]==>]
 Right Lemmas:[Lemma "lem_13":  self::zip<y>@M&{FLOW,(1,22)=__flow}[]<==]
 ===================================================================
-# sp-2d1.slk
+# sp-2d1.slk: FIXED
+(pick unknown preds in lhs by comparing both pred name and pred args)
 
 infer [H2] self::node<_,p>*y::node<_,q>*H2(p)*H2(q)
  |- H2(self) * H2(y). 

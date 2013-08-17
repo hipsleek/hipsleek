@@ -237,7 +237,7 @@ let rec retrieve_args_from_locs_helper args locs index res=
 let retrieve_args_from_locs args locs=
   retrieve_args_from_locs_helper args locs 0 []
 
-let rec eq_spec_var_order_list = CP.eq_spec_var_order_list
+let eq_spec_var_order_list = CP.eq_spec_var_order_list
   (* match l1,l2 with *)
   (*   |[],[] -> true *)
   (*   | v1::ls1,v2::ls2 -> *)

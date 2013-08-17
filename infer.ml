@@ -1999,7 +1999,7 @@ let find_undefined_selective_pointers_x prog lfb lmix_f unmatched rhs_rest rhs_h
       (true,ls_fwd_svl@extra_clls)
     else (false, [])
   in
-  let get_lhs_fold_fwd_svl selected_hps def_vs rhs_args lhs_hds
+  let get_lhs_fold_fwd_svl selected_hpargs def_vs rhs_args lhs_hds
         lhs_hvs ls_lhs_hpargs=
     let rec find_pt_new cur_hds svl res hd_rest=
       match cur_hds with
@@ -2017,7 +2017,9 @@ let find_undefined_selective_pointers_x prog lfb lmix_f unmatched rhs_rest rhs_h
     in
     let process_one (hp,args)=
       (* let _ = Debug.info_pprint ("  hp: " ^ (!CP.print_sv hp)) no_pos in *)
-      if CP.mem_svl hp selected_hps then
+      if Gen.BList.mem_eq (fun (hp1,args1) (hp2,args2) ->
+          CP.eq_spec_var hp1 hp2 && (CP.eq_spec_var_order_list args1 args2)
+      ) (hp,args) selected_hpargs then
         let args_ins,_ = SAU.partition_hp_args prog hp args in
         let args_ins1 = fst (List.split args_ins) in
         let opto = loop_helper (*find_pt_new*) lhs_hds args_ins1 [] in
@@ -2175,7 +2177,8 @@ let find_undefined_selective_pointers_x prog lfb lmix_f unmatched rhs_rest rhs_h
                 ([], [(hp,rhs_args)], None)
           | None ->
                 let closed_rhs_hpargs = CF.find_close rhs_args leqs in
-                let r1,r2 = (get_lhs_fold_fwd_svl (List.map fst selected_hpargs) def_vs closed_rhs_hpargs lhds lhvs ls_lhp_args,
+                let _ = DD.ninfo_pprint ("selected_hpargs: " ^ (pr_list (pr_pair !CP.print_sv !CP.print_svl)) selected_hpargs) pos in
+                let r1,r2 = (get_lhs_fold_fwd_svl selected_hpargs def_vs closed_rhs_hpargs lhds lhvs ls_lhp_args,
                 selected_hpargs) in
                 let ass_guard1 = if CP.mem_svl rhs_hp post_hps then
                   None
@@ -2663,8 +2666,14 @@ let update_es prog es hds hvs ass_lhs_b rhs rhs_rest r_new_hfs defined_hps lsele
      in
      let new_es_formula, new_lhs, new_holes = check_consumed_node rhs new_es_formula in
      let new_es_formula1 = CF.subst m new_es_formula in
-     let new_es = {es with CF.es_infer_vars_hp_rel = CP.diff_svl (es.CF.es_infer_vars_hp_rel@rvhp_rels) (CF.get_hp_rel_name_h_formula rhs);
-         CF.es_infer_vars_rel = CP.diff_svl es.CF.es_infer_vars_rel (CF.h_fv rhs);
+     (*if rhs_rest = Emp. remove infer svl such that infer_pure_m is not invoked*)
+     let n_ihvr = if CF.is_empty_heap rhs_rest then
+       CP.diff_svl (es.CF.es_infer_vars_hp_rel@rvhp_rels) (CF.get_hp_rel_name_h_formula rhs)
+     else (es.CF.es_infer_vars_hp_rel@rvhp_rels)
+     in
+     let n_ivr = if CF.is_empty_heap rhs_rest then CP.diff_svl es.CF.es_infer_vars_rel (CF.h_fv rhs) else es.CF.es_infer_vars_rel in
+     let new_es = {es with CF.es_infer_vars_hp_rel = n_ihvr;
+         CF.es_infer_vars_rel =  n_ivr;
          CF.es_infer_hp_rel = es.CF.es_infer_hp_rel @ hp_rel_list;
          CF.es_infer_hp_unk_map = (es.CF.es_infer_hp_unk_map@unk_map);
          CF.es_infer_vars_sel_post_hp_rel = (es.CF.es_infer_vars_sel_post_hp_rel @ post_hps);
