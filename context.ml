@@ -990,7 +990,7 @@ and process_one_match_x prog estate lhs_h is_normalizing (c:match_res) (rhs_node
                               (* TO CHECK : MUST ensure not fold/unfold LOCKs*)
                               (* let _ = Debug.info_hprint (add_str "xxxx" pr_id) "4"  no_pos in *)
                               (* let lst=[(1,M_base_case_unfold c);(1,M_Nothing_to_do ("mis-matched LHS:"^(vl_name)^" and RHS: "^(vr_name)))] in *)
-                              let lst=[(1,M_base_case_unfold c);(1,M_cyclic c)] in
+                              let lst=[(1,M_base_case_unfold c)(* ;(1,M_cyclic c) *)] in
                               (*let lst = [(1,M_base_case_unfold c);(1,M_unmatched_rhs_data_node (rhs_node,c.match_res_rhs_rest))] in*)
                               [(1,Cond_action lst)]
                   in
