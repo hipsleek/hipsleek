@@ -44,14 +44,15 @@ infer_exact [P1]
 |- self::node<_,p2>*p2::ls<y> * P1(y).
 print residue.
 */
-
+/*
 infer_exact [P1]
 self=null
    or self::node<_,pp>*pp::ls<yy> * P1(yy)
 |- [y] P1(y) & self=y
 or self::node<_,p>*p::ls<y> * P1(y)
 .
-print residue.
+*/
+
 
 /*
 infer_exact [P1]
@@ -87,4 +88,45 @@ infer_exact [P1]
    P1(ppp) 
 |- P1(y).
 print residue.
+
+infer_exact [P1]
+  P1(yy)
+|- [y] P1(y) & y=yy
+.
+print residue.
+
+infer_exact [P1]
+self::node<_,pp>*pp::ls<yy> * P1(yy)
+|- [y] self::node<_,p>*p::ls<y> * P1(y)
+.
+
+*/
+
+
+infer_exact [P1]
+p::ls<yy> * P1(yy) //& pp=p
+|- [y] p::ls<y> * P1(y)
+.
+print residue.
+
+infer_exact [P1]
+P1(yy) //& pp=p
+|- [y] P1(y) & y=yy
+.
+print residue.
+
+/*
+# sp-7c.slk
+
+Expecting same outcome from above two examples
+but it seems the first one is less accurate!
+However, I could not track the cause of this problem.
+
+ <1>emp&y=yy&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [emp --> P1(y_32); P1(yy) --> emp]
+
+
+<1>emp&y=yy&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [P1(yy) --> P1(yy)]
+
 */

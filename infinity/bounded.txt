@@ -1,8 +1,19 @@
-x>-inf & y=x-c --> y>-inf
 
-x>-inf & y=x-c --> y>-inf
+Strengthening
+=============
+x>-\inf & y=x-c --> y>-\inf
+x<\inf & y=x+c --> y<\inf
+x>-\inf+c <--> x>-\inf
+x<\inf-c <--> x<\inf
+x!=-\inf <--> x>-\inf
+x!=\inf <--> x<\inf
 
-x>-inf+c --> x>-inf
+Weakening
+=========
+x<\inf+c <--> x<\inf
+x>-\inf-c <--> x>-\inf
 
+
+checkentail x>-\inf & y=x-10 |- y>-\inf.
 
 
