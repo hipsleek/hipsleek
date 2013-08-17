@@ -5881,6 +5881,9 @@ HP_891(left_26_889) ::=(2;1;0) NONE]
 =====================================================================
 # cyc-lseg.ss --pred-en-equiv
 
+ (1)- semantic mode:
+ (2)- syntactic mode: DONE
+
 --pred-en-equiv reuse of equivalent predicate
 definition not working properly since G/H identical to ll.
 Is this option working?

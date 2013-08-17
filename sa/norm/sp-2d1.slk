@@ -9,6 +9,7 @@ HeapPred H2(node a).
 infer [H2,H1] self::node<_,p>*y::node<_,q>*H2(p)*H1(q)
  |- H1(self) * H2(y). 
 print residue.
+
 /*
 OK
  <1>emp&{FLOW,(19,20)=__norm}[]

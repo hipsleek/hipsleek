@@ -1315,78 +1315,38 @@ let collect_sel_hpdef hpdefs sel_hps unk_hps m=
   Debug.no_3 "sa3.collect_sel_hpdef" pr1 pr2 pr3 pr1
       (fun _ _ _ -> collect_sel_hpdef_x hpdefs sel_hps unk_hps m) hpdefs sel_hps m
 
-(* let match_one_hp_one_view_x iprog prog hp hp_name args def_fs (vdcl: C.view_decl): bool= *)
-(*   let v_fl,_ = List.split vdcl.C.view_un_struc_formula in *)
-(*   (\*get root*\) *)
-(*   let (CP.SpecVar (t,_,_)) = List.hd args in *)
-(*   (\*assume self is always unprimed*\) *)
-(*   let v_args = [CP.SpecVar (t,self,Unprimed)]@vdcl.C.view_vars in *)
-(*   let ss = List.combine (args) (v_args) in *)
-(*   let def_fs1 = List.map (CF.subst ss) def_fs in *)
-(*   let v_fl1 = List.map CF.elim_exists v_fl in *)
-(*   if (!Globals.checkeq_syn) then *)
-(*     if (List.length def_fs) = (List.length v_fl) then *)
-(*       let v_fl2 = *)
-(*         if vdcl.C.view_is_rec then *)
-(*           List.map (subst_view_hp_formula vdcl.C.view_name hp) v_fl1 *)
-(*         else v_fl1 *)
-(*       in *)
-(*       (\*for debugging*\) *)
-(*       (\* let pr = pr_list_ln Cprinter.prtt_string_of_formula in *\) *)
-(*       (\* let _ = Debug.info_pprint ("     def_fs: " ^ (pr def_fs)) no_pos in *\) *)
-(*       (\* let _ = Debug.info_pprint ("     def_fs1: " ^ (pr def_fs1)) no_pos in *\) *)
-(*       (\* let _ = Debug.info_pprint ("     v_fl1: " ^ (pr v_fl1)) no_pos in *\) *)
-(*       (\*END for debugging*\) *)
-(*       checkeq_formula_list def_fs1 v_fl2 *)
-(*     else *)
-(*       false *)
-(*   else *)
-(*     let def = CF.disj_of_list def_fs1 no_pos in *)
-(*     let v_fl2 = CF.disj_of_list v_fl1 no_pos in *)
-(*     let top_flw = CF.mkTrueFlow () in *)
-(*     let def2 = CF.set_flow_in_formula_override top_flw def in *)
-(*     let v_form = CF.formula_of_heap (CF.mkViewNode (CP.SpecVar (Named vdcl.C.view_name, self, Unprimed)) vdcl.C.view_name *)
-(*     vdcl.C.view_vars no_pos) no_pos in *)
-(*     let hp_form = CF.formula_of_heap (CF.HRel hp) no_pos in *)
-(*     let hp_form1 = CF.subst ss hp_form in *)
-(*     let pt1 = [(hp_form1, v_form)] in *)
-(*     (!check_equiv) iprog prog v_args pt1 true def2 v_fl2 *)
+let match_one_hp_views iprog prog (vdcls: CA.view_decl list) (k, hf, g,orf):(CP.spec_var* CF.h_formula list)=
+  let helper args r paras vdcl=
+    if (List.length args) = ((List.length vdcl.CA.view_vars) + 1) then
+      let f1 = CF.formula_of_heap hf no_pos in
+      let vnode = CF.mkViewNode (List.hd args) vdcl.CA.view_name
+        (List.tl args) no_pos in
+      let f2 = CF.formula_of_heap vnode no_pos in
+      if Lemma.checkeq_sem iprog prog f1 f2 [(k, hf, g,orf)] then
+        [vnode]
+      else []
+    else []
+  in
+  match k with
+    | CP.HPRelDefn (hp, r, paras) -> begin
+        let args = r::paras in
+        let eq_views = List.concat (List.map (helper args r paras) vdcls) in
+        (hp,eq_views)
+      end
+    | _ -> report_error no_pos "SA3.match_one_hp_views: support HPRELDEF only"
 
-(* let match_one_hp_one_view iprog prog hp hp_name args def_fs (vdcl: C.view_decl):bool= *)
-(*   let pr1 = pr_list_ln Cprinter.prtt_string_of_formula in *)
-(*   let pr2 = Cprinter.string_of_view_decl in *)
-(*   Debug.no_2 "match_one_hp_one_view" pr1 pr2 string_of_bool *)
-(*       (fun _ _ -> match_one_hp_one_view_x iprog prog hp hp_name args def_fs vdcl) def_fs vdcl *)
-
-(* let match_one_hp_views iprog prog (vdcls: C.view_decl list) (k, hf, g,orf):(CP.spec_var* CF.h_formula list)= *)
-(*   match hf with *)
-(*     | CF.HRel (hp, eargs, p) -> *)
-(*         let def_fl = CF.list_of_disjs orf in *)
-(*         let args = List.concat (List.map CP.afv eargs) in *)
-(*         let helper vdcl= *)
-(*           if (List.length args) = ((List.length vdcl.C.view_vars) + 1) then *)
-(*             if (match_one_hp_one_view iprog prog (hp, eargs, p) hp args def_fl vdcl) then *)
-(*               let vnode = CF.mkViewNode (List.hd args) vdcl.C.view_name *)
-(*                 (List.tl args) no_pos in *)
-(*               [vnode] *)
-(*             else [] *)
-(*           else [] *)
-(*         in *)
-(*         let eq_views = List.concat (List.map helper vdcls) in *)
-(*         (hp,eq_views) *)
-(*     | _ -> report_error no_pos "sau.match_one_hp_views: should be a hp" *)
-
-
-let match_hps_views_x iprog prog (hp_defs: CF.hp_rel_def list) (vdcls: CA.view_decl list):
+let match_hps_views_x iprog prog sel_hps (hp_defs: CF.hp_rel_def list) (vdcls: CA.view_decl list):
 (CP.spec_var* CF.h_formula list) list=
+  let match_one_fnc = if (!Globals.checkeq_syn) then SAU.match_one_hp_views else
+    (match_one_hp_views) in
   let hp_defs1 = List.filter (fun (def,_,_,_) -> match def with
-    | CP.HPRelDefn _ -> true
+    | CP.HPRelDefn (hp,_,_) -> CP.mem_svl hp sel_hps
     | _ -> false
   ) hp_defs in
-  let m = List.map (SAU.match_one_hp_views iprog prog vdcls) hp_defs1 in
+  let m = List.map (match_one_fnc iprog prog vdcls) hp_defs1 in
     (List.filter (fun (_,l) -> l<>[]) m)
 
-let match_hps_views iprog prog (hp_defs: CF.hp_rel_def list) (vdcls: CA.view_decl list):
+let match_hps_views iprog prog sel_hps (hp_defs: CF.hp_rel_def list) (vdcls: CA.view_decl list):
 (CP.spec_var* CF.h_formula list) list=
   let pr1 = pr_list_ln Cprinter.string_of_hp_rel_def in
   let pr2 = pr_list_ln  Cprinter.prtt_string_of_h_formula  in
@@ -1395,7 +1355,7 @@ let match_hps_views iprog prog (hp_defs: CF.hp_rel_def list) (vdcls: CA.view_dec
   let pr3 = pr_list_ln pr3a in
   let pr4 = pr_list_ln (Cprinter.string_of_view_decl) in
   Debug.no_2 "match_hps_views" pr1 pr4 pr3
-      (fun _ _ -> match_hps_views_x iprog prog hp_defs vdcls) hp_defs vdcls
+      (fun _ _ -> match_hps_views_x iprog prog sel_hps hp_defs vdcls) hp_defs vdcls
 
 
 (***************************************************************
@@ -2002,7 +1962,7 @@ let infer_shapes_conquer iprog prog proc_name ls_is sel_hps=
         in
         (cl_sel_hps, hp_defs1,tupled_defs1)
     in
-    let hpdefs = List.map (fun (k, hf, og, f) -> CF.mk_hprel_def k hf og [(is.CF.is_cond_path, Some f)] None(* (Some f) *)) defs in
+    let hpdefs = List.map (fun (k, hf, og, f) -> CF.mk_hprel_def k hf og [(is.CF.is_cond_path, Some f)] None) defs in
     let link_hp_defs = SAC.generate_hp_def_from_link_hps prog is.CF.is_cond_path is.CF.is_hp_equivs is.CF.is_link_hpargs in
     (cl_sel_hps@(List.map fst is.CF.is_link_hpargs), hpdefs@link_hp_defs, tupled_defs2, is.CF.is_hp_defs)
   in
@@ -2017,17 +1977,40 @@ let infer_shapes_conquer iprog prog proc_name ls_is sel_hps=
       (ls1@ is.CF.is_post_hps , ls2 @ (List.map fst (is.CF.is_dang_hpargs@is.CF.is_link_hpargs))))
     ([],[])ls_is
   in
-  let n_all_hpdefs, n_cmb_defs = if !Globals.sa_dnc then
+  let n_all_hpdefs0a, n_cmb_defs0 = if !Globals.sa_dnc then
     SAC.compute_lfp_def prog (CP.remove_dups_svl post_hps)
     (CP.remove_dups_svl dang_hps) all_hpdefs cmb_defs
   else (all_hpdefs, cmb_defs)
   in
-  let n_all_hp_defs1 = SAU.combine_hpdefs n_all_hpdefs in
+  let n_all_hp_defs0b = SAU.combine_hpdefs n_all_hpdefs0a in
+  (*split pred*)
+  let n_all_hp_defs1, n_cmb_defs  = if !Globals.pred_split then
+    let n_all_hp_defs0c, split_map = SAC.pred_split_hp iprog prog dang_hps n_all_hp_defs0b in
+    (*update n_cmb_defs0*)
+    let n_cmb_defs0a = if split_map = [] then n_cmb_defs0 else
+      let split_hps, split_comp_hps = List.fold_left (fun (r1, r2) (hp,_,comps,_) ->
+          let comps_hps = List.map fst comps in
+          (r1@[hp], r2@comps_hps)
+      ) ([],[]) split_map in
+      let n_cmb_defs0b = SAU.pred_split_update_hpdefs split_hps n_cmb_defs0 n_all_hp_defs0c in
+      let comps_hp_defs = List.fold_left (fun r hp ->
+          try
+            let hp_def = CF.look_up_hp_def n_all_hp_defs0c hp in
+            r@[hp_def]
+          with _ -> r
+      ) [] split_comp_hps in
+      let comps_hpdefs = List.map (fun (k, hf, og, f) -> CF.mk_hprel_def k hf og [([], Some f)] None) comps_hp_defs in
+      n_cmb_defs0b@comps_hpdefs
+    in
+    (n_all_hp_defs0c, n_cmb_defs0a)
+  else
+    (n_all_hp_defs0b, n_cmb_defs0)
+  in
   (*reuse: check equivalent form - substitute*)
   let n_cmb_defs1, n_all_hp_defs2 = SAU.reuse_equiv_hpdefs prog n_cmb_defs n_all_hp_defs1 in
   (*reuse with lib*)
   let n_cmb_defs2 = if !Globals.pred_equiv then
-    let lib_matching = match_hps_views iprog prog n_all_hp_defs1 prog.CA.prog_view_decls in
+    let lib_matching = match_hps_views iprog prog sel_hps n_all_hp_defs1 prog.CA.prog_view_decls in
     (* let _ = DD.info_pprint ("        sel_hp_rel:" ^ (!CP.print_svl sel_hps)) no_pos in *)
     (* let _ =  DD.info_pprint (" matching: " ^ *)
     (*     (let pr = pr_list_ln (fun (hp,view_names) -> (!CP.print_sv hp) ^ " :== " ^ *)

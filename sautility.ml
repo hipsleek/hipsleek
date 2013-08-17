@@ -26,15 +26,15 @@ let check_relaxeq_formula = SY_CEQ.check_relaxeq_formula
 let checkeq_pair_formula = SY_CEQ.checkeq_pair_formula
 let checkeq_formula_list = SY_CEQ.checkeq_formula_list
 
-let check_equiv = ref (fun (iprog: I.prog_decl) (prog: C.prog_decl) (svl: CP.spec_var list) (proof_traces: (CF.formula * CF.formula) list) (need_lemma:bool)
-  (fs1: CF.formula) (fs2: CF.formula) ->
-    let _ = print_endline "sau printer has not been initialize 1" in
-false )
+(* let check_equiv = ref (fun (iprog: I.prog_decl) (prog: C.prog_decl) (svl: CP.spec_var list) (proof_traces: (CF.formula * CF.formula) list) (need_lemma:bool) *)
+(*   (fs1: CF.formula) (fs2: CF.formula) -> *)
+(*     let _ = print_endline "sau printer has not been initialize 1" in *)
+(* false ) *)
 
-let check_equiv_list = ref (fun (iprog: I.prog_decl) (prog: C.prog_decl) (svl: CP.spec_var list) (pr_proof_traces: (CF.formula * CF.formula) list)
-  (need_lemma:bool) (fs1: CF.formula list) (fs2: CF.formula list) ->
-    let _ = print_endline "sau printer has not been initialize" in
-false )
+(* let check_equiv_list = ref (fun (iprog: I.prog_decl) (prog: C.prog_decl) (svl: CP.spec_var list) (pr_proof_traces: (CF.formula * CF.formula) list) *)
+(*   (need_lemma:bool) (fs1: CF.formula list) (fs2: CF.formula list) -> *)
+(*     let _ = print_endline "sau printer has not been initialize" in *)
+(* false ) *)
 
 let is_rec_pardef (hp,_,f,_)=
   let hps = CF.get_hp_rel_name_formula f in
@@ -237,7 +237,7 @@ let rec retrieve_args_from_locs_helper args locs index res=
 let retrieve_args_from_locs args locs=
   retrieve_args_from_locs_helper args locs 0 []
 
-let rec eq_spec_var_order_list = CP.eq_spec_var_order_list
+let eq_spec_var_order_list = CP.eq_spec_var_order_list
   (* match l1,l2 with *)
   (*   |[],[] -> true *)
   (*   | v1::ls1,v2::ls2 -> *)
@@ -1195,7 +1195,7 @@ let smart_subst_x nf1 nf2 hpargs eqs0 reqs unk_svl prog_vars=
   let new_p13 = CP.conj_of_list new_ps13 no_pos in
   let nf11 = {nf1a with CF.formula_base_pure = MCP.mix_of_pure new_p13} in
   let _ = Debug.ninfo_pprint ("nf11: " ^ (Cprinter.string_of_formula_base nf11)) no_pos in
-  (*rhs - nf2: not handle yet*)
+  (*rhs*)
   let new_nf2 = CF.subst_b (new_eqs2@reqs) nf2 in
   (*subst again*)
   let nleqs0 = (MCP.ptr_equations_without_null nf11.CF.formula_base_pure) in
@@ -1215,11 +1215,23 @@ let smart_subst_x nf1 nf2 hpargs eqs0 reqs unk_svl prog_vars=
   let n_prog_vars = CP.subst_var_list (nleqs4@nreqs2) prog_vars in
   (lhs_b2,rhs_b2,n_prog_vars)
 
+(*
+(i) build emap for LHS/RHS 
+  - eqnull -> make closure. do not subst
+  - cycle nodes: DO NOT subst
+  - inside one preds, do not subst
+(ii) common free vars for both LHS/RHS
+(iii) subs both sides to use smallest common vars
+        lhs     |- P(v* )
+*)
+(* let smart_subst_new nf1 nf2 hpargs leqs reqs unk_svl prog_vars= *)
+
 let smart_subst nf1 nf2 hpargs eqs reqs unk_svl prog_vars=
   let pr1 = Cprinter.string_of_formula_base in
   let pr2 = !CP.print_svl in
-  Debug.no_3 "smart_subst" pr1 pr1 pr2 (pr_triple pr1 pr1 pr2)
-      (fun _ _ _ -> smart_subst_x nf1 nf2 hpargs eqs reqs unk_svl prog_vars) nf1 nf2 prog_vars
+  let pr3 = pr_list (pr_pair !CP.print_sv !CP.print_sv)  in
+  Debug.no_5 "smart_subst" pr1 pr1 pr2 pr3 pr3 (pr_triple pr1 pr1 pr2)
+      (fun _ _ _ _ _ -> smart_subst_x nf1 nf2 hpargs eqs reqs unk_svl prog_vars) nf1 nf2 prog_vars eqs reqs
 
 let smart_subst_lhs f lhpargs leqs infer_vars=
   match f with
@@ -2713,7 +2725,14 @@ let rec elim_irr_eq_exps prog args f=
           let _,new_p1 =  CP.prune_irr_neq new_p keep_ptrs1 in
           let new_h1 = CF.h_subst ss fb.CF.formula_base_heap in
           let new_h2 = filter_unconnected_hf args new_h1 in
-          CF.Base {fb with CF.formula_base_pure = MCP.mix_of_pure new_p1;
+          let eqNulls = MCP.get_null_ptrs (MCP.mix_of_pure new_p1) in
+          let ps2 = List.filter (fun p ->
+              if CP.is_eq_between_vars p then
+                CP.diff_svl (CP.fv p) eqNulls != []
+              else true
+          ) (CP.list_of_conjs new_p1) in
+          let new_p2 = CP.conj_of_list ps2 (CP.pos_of_formula new_p1) in
+          CF.Base {fb with CF.formula_base_pure = MCP.mix_of_pure new_p2;
               CF.formula_base_heap = new_h2}
     | CF.Exists fe ->
         let qvars, base1 = CF.split_quantifiers f in
@@ -3967,7 +3986,7 @@ let mk_hprel_def prog is_pre (cdefs:(CP.spec_var *CF.hp_rel_def) list) unk_hps u
         in
         let base_case_exist,defs2 = simplify_set_of_formulas prog is_pre cdefs hp new_args unk_hps unk_svl defs1 in
         if defs2 = [] (* || not base_case_exist *) then [] else
-          let defs1 = List.map CF.remove_neqNull_redundant_hnodes_f defs in
+          let defs1 = List.map CF.remove_neqNull_redundant_hnodes_f defs2 in
           (*make disjunction*)
           let def = List.fold_left (fun f1 f2 -> CF.mkOr f1 f2 (CF.pos_of_formula f1))
             (List.hd defs1) (List.tl defs1) in
@@ -5866,6 +5885,7 @@ let simp_tree unk_hps hpdefs=
 (************************************************************)
     (****************(*MATCHING w view decls*)*****************)
 (************************************************************)
+(*syntactically equivalence checking*)
 let match_one_hp_one_view_x iprog prog hp hp_name args def_fs (vdcl: C.view_decl): bool=
   let v_fl,_ = List.split vdcl.C.view_un_struc_formula in
   (*get root*)
@@ -5875,33 +5895,21 @@ let match_one_hp_one_view_x iprog prog hp hp_name args def_fs (vdcl: C.view_decl
   let ss = List.combine (args) (v_args) in
   let def_fs1 = List.map (CF.subst ss) def_fs in
   let v_fl1 = List.map CF.elim_exists v_fl in
-  if (!Globals.checkeq_syn) then
-    if (List.length def_fs) = (List.length v_fl) then
-      let v_fl2 =
-        if vdcl.C.view_is_rec then
-          List.map (subst_view_hp_formula vdcl.C.view_name hp) v_fl1
-        else v_fl1
-      in
-      (*for debugging*)
-      (* let pr = pr_list_ln Cprinter.prtt_string_of_formula in *)
-      (* let _ = Debug.info_pprint ("     def_fs: " ^ (pr def_fs)) no_pos in *)
-      (* let _ = Debug.info_pprint ("     def_fs1: " ^ (pr def_fs1)) no_pos in *)
-      (* let _ = Debug.info_pprint ("     v_fl1: " ^ (pr v_fl1)) no_pos in *)
-      (*END for debugging*)
-      checkeq_formula_list def_fs1 v_fl2
-    else
-      false
+  if (List.length def_fs) = (List.length v_fl) then
+    let v_fl2 =
+      if vdcl.C.view_is_rec then
+        List.map (subst_view_hp_formula vdcl.C.view_name hp) v_fl1
+      else v_fl1
+    in
+    (*for debugging*)
+    (* let pr = pr_list_ln Cprinter.prtt_string_of_formula in *)
+    (* let _ = Debug.info_pprint ("     def_fs: " ^ (pr def_fs)) no_pos in *)
+    (* let _ = Debug.info_pprint ("     def_fs1: " ^ (pr def_fs1)) no_pos in *)
+    (* let _ = Debug.info_pprint ("     v_fl1: " ^ (pr v_fl1)) no_pos in *)
+    (*END for debugging*)
+    checkeq_formula_list def_fs1 v_fl2
   else
-    let def = CF.disj_of_list def_fs1 no_pos in
-    let v_fl2 = CF.disj_of_list v_fl1 no_pos in
-    let top_flw = CF.mkTrueFlow () in
-    let def2 = CF.set_flow_in_formula_override top_flw def in
-    let v_form = CF.formula_of_heap (CF.mkViewNode (CP.SpecVar (Named vdcl.C.view_name, self, Unprimed)) vdcl.C.view_name
-    vdcl.C.view_vars no_pos) no_pos in
-    let hp_form = CF.formula_of_heap (CF.HRel hp) no_pos in
-    let hp_form1 = CF.subst ss hp_form in
-    let pt1 = [(hp_form1, v_form)] in
-    (!check_equiv) iprog prog v_args pt1 true def2 v_fl2
+    false
 
 let match_one_hp_one_view iprog prog hp hp_name args def_fs (vdcl: C.view_decl):bool=
   let pr1 = pr_list_ln Cprinter.prtt_string_of_formula in
@@ -6218,8 +6226,10 @@ let reuse_equiv_hpdefs_x prog hpdefs hp_defs=
     match eq_hp_opt with
       | None -> (r_hp_defs@[hp_def], r_drop_hps, r_equivs)
       | Some hp1 ->
-            let hp,_ = CF.extract_HRel hrel in
-            (r_hp_defs, r_drop_hps@[hp], r_equivs@[(hp,hp1)])
+            try
+              let hp,_ = CF.extract_HRel hrel in
+              (r_hp_defs, r_drop_hps@[hp], r_equivs@[(hp,hp1)])
+            with _ -> (r_hp_defs@[hp_def], r_drop_hps, r_equivs)
   in
   let update_hpdef drop_hps equivs r hpdef=
     let hp,_ = CF.extract_HRel hpdef.CF.hprel_def_hrel in
@@ -6245,3 +6255,14 @@ let reuse_equiv_hpdefs prog hpdefs hp_defs=
   Debug.no_2 "SAU.reuse_equiv_hpdefs" pr2 pr1 (pr_pair pr2 pr1)
       (fun _ _ -> reuse_equiv_hpdefs_x prog hpdefs hp_defs)
       hpdefs hp_defs
+
+
+let pred_split_update_hpdefs split_hps hpdefs hp_defs=
+  let update_one hpdefs hp=
+    try
+      let hpdef,rem_hpdefs = CF.look_up_hpdef_with_remain hpdefs hp [] in
+      let (_,_,_,f) = CF.look_up_hp_def hp_defs hp in
+      (rem_hpdefs@[{hpdef with CF.hprel_def_body = [([], Some f)]}])
+    with _ -> hpdefs
+  in
+  List.fold_left update_one hpdefs split_hps
