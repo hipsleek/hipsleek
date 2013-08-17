@@ -20,22 +20,13 @@ module SAO = Saout
 
 let generate_lemma_helper iprog lemma_name coer_type ihps ihead ibody=
   (*generate ilemma*)
-    let ilemma = { I.coercion_type = coer_type;
-    I.coercion_exact = false;
-    I.coercion_infer_vars = ihps;
-    I.coercion_name = (fresh_any_name lemma_name);
-    I.coercion_head = (IF.subst_stub_flow IF.top_flow ihead);
-    I.coercion_body = (IF.subst_stub_flow IF.top_flow ibody);
-    I.coercion_proof = I.Return ({ I.exp_return_val = None;
-    I.exp_return_path_id = None ;
-    I.exp_return_pos = no_pos })}
-    in
+    let ilemma = I.mk_lemma (fresh_any_name lemma_name) coer_type ihps ihead ibody
     (*transfrom ilemma to clemma*)
     let ldef = AS.case_normalize_coerc iprog ilemma in
     let l2r, r2l = AS.trans_one_coercion iprog ldef in
     l2r, r2l
 
-let generate_ilemma iprog cprog lemma_n coer_type lhs rhs ihead chead ibody cbody=
+let generate_lemma iprog cprog lemma_n coer_type lhs rhs ihead chead ibody cbody=
   (*check entailment*)
   let (res,_,_) =  if coer_type = I.Left then
     SC.sleek_entail_check [] cprog [(chead,cbody)] lhs (CF.struc_formula_of_formula rhs no_pos)
@@ -148,9 +139,9 @@ let check_view_subsume iprog cprog view1 view2 need_cont_ana=
       IF.formula_of_heap_1 ihf2 pos2, CF.formula_of_heap chf2 pos2)
   in
   let lemma_n = view1.C.view_name ^"_"^ view2.C.view_name in
-  let l2r1, r2l1 = generate_ilemma iprog cprog lemma_n I.Left v_f1 v_f2
+  let l2r1, r2l1 = generate_lemma iprog cprog lemma_n I.Left v_f1 v_f2
     iform_hf1 cform_hf1 iform_hf2 cform_hf2 in
-  let l2r2, r2l2 = generate_ilemma iprog cprog lemma_n I.Right v_f1 v_f2
+  let l2r2, r2l2 = generate_lemma iprog cprog lemma_n I.Right v_f1 v_f2
     iform_hf1 cform_hf1 iform_hf2 cform_hf2 in
   (l2r1@l2r2, r2l1@r2l2)
 
