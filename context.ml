@@ -880,7 +880,7 @@ and process_one_match_x prog estate lhs_h is_normalizing (c:match_res) (rhs_node
                         ((dl_flag==false && (dl.h_formula_data_origins!=[])) 
                         || ((dr_flag==false && dr.h_formula_data_origins!=[])))) then [(0,M_match c)] (*force a MATCH after each lemma*)
                     else 
-                      if (String.compare dl.h_formula_data_name dr.h_formula_data_name)==0 then [(1,M_match c)]
+                      if (String.compare dl.h_formula_data_name dr.h_formula_data_name)==0 then [(0,M_match c)]
                       else [(1,M_Nothing_to_do ("no proper match (type error) found for: "^(string_of_match_res c)))]
                   in
 		  let l2 = if !perm=Dperm && !use_split_match && not !consume_all then (1,M_split_match c)::l2 else l2 in

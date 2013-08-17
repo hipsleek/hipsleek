@@ -1960,8 +1960,11 @@ let pr_hprel_short_inst cprog hpa=
   fmt_open_box 1;
   (* fmt_string "hprel(2)"; *)
   (* fmt_string (CP.print_rel_cat hpa.hprel_kind); *)
-  fmt_string ("// "^(Others.string_of_proving_kind hpa.hprel_proving_kind));
-  fmt_print_newline();
+  if not(!Globals.is_sleek_running) then
+    begin
+      fmt_string ("// "^(Others.string_of_proving_kind hpa.hprel_proving_kind));
+      fmt_print_newline()
+    end;
   pr_wrap_test_nocut "" Gen.is_empty (* skip_cond_path_trace *) 
       (fun p -> fmt_string ((pr_list_round_sep ";" (fun s -> string_of_int s)) p)) hpa.hprel_path;
   prtt_pr_formula_inst cprog hpa.hprel_lhs;

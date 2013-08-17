@@ -607,6 +607,8 @@ let lib_files = ref ([] : string list)
 
 let ptr_to_int_exact = ref false
 
+let is_sleek_running = ref false
+
 let remove_label_flag = ref false
 let label_split_conseq = ref true
 let label_split_ante = ref true
@@ -656,6 +658,8 @@ let pred_en_oblg = ref true
 let pred_syn_flag = ref true
 
 let sa_syn = ref true
+
+let lemma_syn = ref false
 
 let sa_en_split = ref false
 
@@ -864,7 +868,7 @@ let self_fold_search_flag = ref false
 
 let show_gist = ref false
 let imply_top_flag = ref false
-let early_contra_flag = ref false
+let early_contra_flag = ref true
 
 let trace_failure = ref false
 
