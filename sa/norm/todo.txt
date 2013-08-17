@@ -163,6 +163,17 @@ print residue.
  inferred hprel: [P1(ppp) --> P1(y)]
 
 ===================================================================
+# sp-7b2.slk
+
+infer_exact [P1]
+   P1(ppp) & y=yy
+|- P1(y).
+
+Why did we get below? when ppp is not traceable
+from y. This occurs only under classic.
+
+ <1>emp&y=yy&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [P1(ppp) --> P1(y)]
 ===================================================================
 ===================================================================
 ===================================================================
