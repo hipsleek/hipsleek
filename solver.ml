@@ -8745,6 +8745,9 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
                 ivar belongs to ivars
                 (ivar,impl_var) belongs to ivar_subs_to_conseq
               *)
+              let _ =  Debug.ninfo_pprint (" impl_vars: " ^ (!CP.print_svl  impl_vars)) no_pos in
+              (* let impl_vars = match r_node with *)
+              (*   | HRel (_, eargs, ) *)
               let ((impl_tvars, tmp_ivars, ivar_subs_to_conseq),other_subs) = subs_to_inst_vars rho ivars impl_vars pos in
               let rec check_rel_consistency cur_other_subs rels = (
                 match cur_other_subs with
@@ -8774,6 +8777,7 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
                 (* let _ =  Debug.info_pprint ("ivar_subs_to_conseq: " ^ (pr ivar_subs_to_conseq)) no_pos in *)
                 (* let _ =  Debug.info_pprint ("tmp_ivars: " ^ (!CP.print_svl tmp_ivars)) no_pos in *)
                 (* let _ =  Debug.info_pprint ("impl_tvars: " ^ (!CP.print_svl impl_tvars)) no_pos in *)
+                (* let _ =  Debug.info_pprint ("estate.es_gen_expl_vars: " ^ (!CP.print_svl estate.es_gen_expl_vars)) no_pos in *)
                 let new_impl_vars = subtract impl_vars impl_tvars in
                 let new_exist_vars = evars(* @tmp_ivars *) in
                 let new_expl_vars = expl_vars@impl_tvars in
@@ -8787,12 +8791,15 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
                 Note: other_subs will never contain any impl_tvars because 
                 of the pre-processed subs_to_inst_vars*)
 	          (* An Hoa : strip all the pair of equality involving # *)
-	          let other_subs = List.filter (fun ((x,y),_) -> not (CP.is_hole_spec_var x || CP.is_hole_spec_var y)
+	        let other_subs = List.filter (fun ((x,y),_) -> not (CP.is_hole_spec_var x || CP.is_hole_spec_var y)
                                                  && not (CP.is_rel_typ x)) other_subs in
               let pr1 (a,b) = let pr = (pr_pair !CP.print_sv !CP.print_sv) in pr a in
-              (* let _ =  Debug.info_pprint ("other_subs: " ^ (pr_list pr1 other_subs)) no_pos in *)
+              let _ =  Debug.ninfo_pprint ("other_subs: " ^ (pr_list pr1 other_subs)) no_pos in
+              (* let _ =  Debug.info_pprint ("new_exist_vars: " ^ (!CP.print_svl new_exist_vars)) no_pos in *)
+              (* let _ =  Debug.info_pprint ("impl_tvars: " ^ (!CP.print_svl impl_tvars)) no_pos in *)
+              (* let _ =  Debug.info_pprint ("estate.es_gen_expl_vars: " ^ (!CP.print_svl estate.es_gen_expl_vars)) no_pos in *)
               let to_lhs,to_rhs,ext_subst = get_eqns_free other_subs new_exist_vars impl_tvars estate.es_gen_expl_vars pos in
-
+              let _ =  Debug.ninfo_pprint ("to_lhs: " ^ (!CP.print_formula to_lhs)) no_pos in
               (* let _ =  Debug.info_pprint ("ext_subst: " ^ (pr ext_subst)) no_pos in *)
               (*adding pure formula for relational args of view*)
               let to_lhs = CP.mkAnd to_lhs lp_rels no_pos in
@@ -8874,7 +8881,7 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
               (*  let _ = DD.info_pprint ("  new_ante: " ^ (Cprinter.string_of_formula new_ante)) pos in *)
               Debug.tinfo_hprint (add_str "consumed_h" (Cprinter.string_of_h_formula)) consumed_h pos;
               Debug.tinfo_hprint (add_str "new_consumed" (Cprinter.string_of_h_formula)) new_consumed pos;
-              Debug.tinfo_hprint (add_str "new_ante" (Cprinter.string_of_formula)) new_ante pos;
+              Debug.info_hprint (add_str "new_ante" (Cprinter.string_of_formula)) new_ante pos;
               Debug.tinfo_hprint (add_str "new_conseq" (Cprinter.string_of_formula)) new_conseq pos;
 
               let new_es = {estate with es_formula = new_ante;
@@ -10184,7 +10191,13 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
 		  else
 		    let n_rhs_b =  Base {rhs_b with formula_base_heap = rhs_rest} in
 		    (* Debug.info_hprint (add_str "DD: new_estate 1" (Cprinter.string_of_entail_state)) new_estate pos; *)
-		    let res_es0, prf0 = do_match prog new_estate n_lhs rhs n_rhs_b rhs_h_matched_set is_folding n_es_heap_opt pos in
+		    let res_es0, prf0 = match n_es_heap_opt with
+                      | None -> do_match prog new_estate n_lhs rhs n_rhs_b rhs_h_matched_set is_folding n_es_heap_opt pos
+                      | Some hf -> let new_es = {new_estate with CF.es_heap = hf} in
+                        let new_ctx = Ctx (CF.add_to_estate new_es "infer: rhs: unkown pred") in
+                        heap_entail_conjunct 28 prog is_folding new_ctx n_rhs_b (rhs_h_matched_set) pos
+                    in
+
 		    (* Debug.info_hprint (add_str "DD: new_estate 2" (Cprinter.string_of_list_context)) res_es0 pos; *)
 		  (res_es0,prf0) in
               if (contra) then 
