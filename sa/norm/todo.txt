@@ -81,7 +81,7 @@ PROBLEM : why did we include an unrelated n::node<_,null>
 
 Right-to-left lemmas not being scheduled!
 ===================================================================
-# sp-2b.slk
+# sp-2b.slk   FIXED
 
 # How come the print lemmas operation are scheduled
 entirely after the two lemma_unsafe??
