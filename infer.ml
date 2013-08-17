@@ -2215,10 +2215,14 @@ let find_undefined_selective_pointers_x prog lfb lmix_f unmatched rhs_rest rhs_h
     (defined_hps, lhs_selected_hpargs)
   in
   (*********CLASSIC************)
-  let classic_defined, classic_lhs_sel_hpargs= if !Globals.do_classic_frame_rule &&  (CF.is_empty_heap rhs_rest)  then
-    let lhs_sel_hps = List.map fst lhs_selected_hpargs in
+  let classic_defined, classic_lhs_sel_hpargs= if !Globals.do_classic_frame_rule && (CF.is_empty_heap rhs_rest)  then
+    (*/norm/sp-7b1: need compare pred name + pred args*)
+    (* let lhs_sel_hps = List.map fst lhs_selected_hpargs in *)
     let truef = CF.mkTrue (CF.mkNormalFlow()) pos in
-    let rem_lhpargs1 = List.filter (fun (hp,_) -> not (CP.mem_svl hp lhs_sel_hps)) rem_lhpargs in
+    let rem_lhpargs1 = List.filter (fun (hp,args) -> not (
+        Gen.BList.mem_eq (fun (hp1,args1) (hp2,args2) ->
+            CP.eq_spec_var hp1 hp2 && (CP.eq_spec_var_order_list args1 args2))
+            (hp,args) lhs_selected_hpargs)) rem_lhpargs in
     List.fold_left (fun (ls,ls2) (hp,args) ->
         (* if CP.mem_svl hp sel_hps then *)
           let hf = (CF.HRel (hp, List.map (fun x -> CP.mkVar x pos) args, pos)) in
@@ -2237,7 +2241,9 @@ let find_undefined_selective_pointers_x prog lfb lmix_f unmatched rhs_rest rhs_h
   let ls_defined_hpargs =  List.map (fun (hp,args,_,_) -> (hp,args)) total_defined_hps in
   let lhs_selected_hpargs1 = List.filter (fun (hp,args) ->
       not (Gen.BList.mem_eq SAU.check_hp_arg_eq (hp,args) ls_defined_hpargs)
-  ) lhs_selected_hpargs0@classic_lhs_sel_hpargs
+  ) lhs_selected_hpargs0
+    (* lhs_selected_hpargs0@classic_lhs_sel_hpargs *)
+    (*/norm/sp-7b1*)
   in
   (*********CLASSIC**sa/demo/xisa-remove2; bugs/bug-classic-4a**********)
   let classic_ptrs = if false (* !Globals.do_classic_frame_rule *) && (CF.is_empty_heap rhs_rest) then
