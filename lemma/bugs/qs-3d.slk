@@ -1,19 +1,11 @@
-//slk_simplify (nnn=0 & lg+(\inf)=0 | nnn>0 & lg<\inf).
-
-//slk_simplify (nnn=0 & lg=0 | nnn>0 & lg=0).
-
-//slk_pairwise (nnn=0 & lg=0 | nnn>0 & lg=0).
-
-slk_simplify neginfinity<infinity & (nnn=0 & lg=neginfinity | nnn>0 & lg<infinity).
-
-slk_simplify neginfinity<infinity & (nnn=0 & lg=neginfinity | nnn=0 & lg<infinity).
-
-slk_hull neginfinity<infinity & 
-         (nnn=0 & lg=neginfinity | nnn=0 & lg<infinity).
-
+checkentail sm+\inf>=1 |- sm>-\inf.
+checkentail sm+\inf>=2 |- sm>-\inf.
+checkentail sm>-\inf |- sm+\inf>=2.
+checkentail sm>-\inf |- sm+\inf>=1.
+checkentail sm>-\inf |- sm>-\inf-1.
 /*
-it seems that simplify is never invoked with \inf
+ sm>-\inf
 
 
 */
-
+checkentail sm>-\inf |- sm>-\inf+1.

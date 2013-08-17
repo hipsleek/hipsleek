@@ -4737,43 +4737,43 @@ and heap_entail_split_lhs (prog : prog_decl) (is_folding : bool) (ctx0 : context
 	    (*	let _ = print_string("compute final answer\n") in*)
 	    ((fold_context_left 3 [with_h1_ctx; final_ctx]),( mkOrRight ctx0 conseq [with_h1_prf; final_prf]))		
 		(*  end of helper method *)
-                (*in
-                (* Do Matching (data nodes are already compacted) before Spliting *)
-                  let matching_helper prog is_folding ctx0 conseq pos = 
-    	          let lhs = CF.formula_of_context ctx0 in
-	          let estate = CF.estate_of_context ctx0 pos in
-	          let rhs = conseq in
-    	          let h1, p1, fl1, t1, a1 = split_components lhs in
-    	          let h2, p2, fl2, t2, a2 = split_components rhs in
-   	          let rhs_lst = split_linear_node_guided (CP.remove_dups_svl (h_fv h1 @ MCP.mfv p1)) h2 in
-    	          let posib_r_alias = (estate.es_evars @ estate.es_gen_impl_vars @ estate.es_gen_expl_vars) in
-    	          let rhs_eqset = estate.es_rhs_eqset in
-    	          let actions = Context.compute_actions prog estate rhs_eqset h1 p1 p2 posib_r_alias rhs_lst estate.es_is_normalizing pos in
-                (*let r = List.map (fun (c1,c2) -> (Context.choose_context prog rhs_eqset h1 p1 p2 posib_r_alias c1 c2 pos,(c1,c2))) rhs_lst in*)
-    	        (* Filter only matching actions *)
-    	        (*let match_actions  =  List.filter (fun c -> match c with 
-    	          | Context.M_match ma  -> true
-    	          | _ -> false
-    	          ) actions *)
-                  let b1 = { formula_base_heap = h1;
-                  formula_base_pure = p1;
-                  formula_base_type = t1;
-                  formula_base_and = a1; (*TO CHECK: Done: pass a1 throught*)
-                  formula_base_flow = fl1;
-                  formula_base_label = None;
-                  formula_base_pos = pos } in
-                  let b2 = { formula_base_heap = h2;
-                  formula_base_pure = p2;
-                  formula_base_type = t2;
-                  formula_base_and = a2; (*TO CHECK: Done: pass a2 throught*)
-                  formula_base_flow = fl2;
-                  formula_base_label = None;
-                  formula_base_pos = pos } in  
-                  match actions with
-                  | Context.M_match _ -> process_action 2 prog estate conseq b1 b2 actions [] is_folding pos
-                  | _ -> let msg = "Dummy FailContext for no Matching in heap_entail_split_lhs" in 
-	    	  let fail_ex = {fe_kind = Failure_Must msg; fe_name = Globals.logical_error;fe_locs=[]}
-	    	  in mkFailCtx_in (Trivial_Reason (fail_ex)), Failure*)
+                (* in *)
+                (* (\* Do Matching (data nodes are already compacted) before Spliting *\) *)
+                (*   let matching_helper prog is_folding ctx0 conseq pos =  *)
+    	        (*   let lhs = CF.formula_of_context ctx0 in *)
+	        (*   let estate = CF.estate_of_context ctx0 pos in *)
+	        (*   let rhs = conseq in *)
+    	        (*   let h1, p1, fl1, t1, a1 = split_components lhs in *)
+    	        (*   let h2, p2, fl2, t2, a2 = split_components rhs in *)
+   	        (*   let rhs_lst = split_linear_node_guided (CP.remove_dups_svl (h_fv h1 @ MCP.mfv p1)) h2 in *)
+    	        (*   let posib_r_alias = (estate.es_evars @ estate.es_gen_impl_vars @ estate.es_gen_expl_vars) in *)
+    	        (*   let rhs_eqset = estate.es_rhs_eqset in *)
+    	        (*   let actions = Context.compute_actions prog estate rhs_eqset h1 p1 p2 posib_r_alias rhs_lst estate.es_is_normalizing pos in *)
+                (* (\*let r = List.map (fun (c1,c2) -> (Context.choose_context prog rhs_eqset h1 p1 p2 posib_r_alias c1 c2 pos,(c1,c2))) rhs_lst in*\) *)
+    	        (* (\* Filter only matching actions *\) *)
+    	        (* (\*let match_actions  =  List.filter (fun c -> match c with  *)
+    	        (*   | Context.M_match ma  -> true *)
+    	        (*   | _ -> false *)
+    	        (*   ) actions *\) *)
+                (*   let b1 = { formula_base_heap = h1; *)
+                (*   formula_base_pure = p1; *)
+                (*   formula_base_type = t1; *)
+                (*   formula_base_and = a1; (\*TO CHECK: Done: pass a1 throught*\) *)
+                (*   formula_base_flow = fl1; *)
+                (*   formula_base_label = None; *)
+                (*   formula_base_pos = pos } in *)
+                (*   let b2 = { formula_base_heap = h2; *)
+                (*   formula_base_pure = p2; *)
+                (*   formula_base_type = t2; *)
+                (*   formula_base_and = a2; (\*TO CHECK: Done: pass a2 throught*\) *)
+                (*   formula_base_flow = fl2; *)
+                (*   formula_base_label = None; *)
+                (*   formula_base_pos = pos } in   *)
+                (*   match actions with *)
+                (*   | Context.M_match _ -> process_action 2 prog estate conseq b1 b2 actions [] is_folding pos *)
+                (*   | _ -> let msg = "Dummy FailContext for no Matching in heap_entail_split_lhs" in  *)
+	    	(*   let fail_ex = {fe_kind = Failure_Must msg; fe_name = Globals.logical_error;fe_locs=[]} *)
+	    	(*   in mkFailCtx_in (Trivial_Reason (fail_ex)), Failure *)
     in
     (* main method *)
     let lhs = CF.formula_of_context ctx0 in
@@ -5267,7 +5267,7 @@ and heap_entail_conjunct_lhs_x hec_num prog is_folding  (ctx:context) (conseq:CF
               if real_c then (* real_c = false denotes contradiction *)
                 heap_entail()
               else (* early failure due to real lhs-rhs contra detected *)
-                let _ = Debug.info_pprint "Early lhs-rhs contra detected" no_pos in
+                let _ = Debug.tinfo_pprint "Early lhs-rhs contra detected" no_pos in
                 let pr = Cprinter.string_of_formula in
                 let pr2 = Cprinter.string_of_context in
                 let ante, prf, estate = match ctx with 

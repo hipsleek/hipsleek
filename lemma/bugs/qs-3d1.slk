@@ -1,0 +1,75 @@
+//checkentail sm>-\inf |- sm+\inf>=2.
+//checkentail sm>-\inf |- sm>-\inf+1.
+
+slk_simplify sm+\inf>=2.
+/*
+Simplify  (3): 2<=((\inf)+sm)
+
+We obtain simplify to just:
+  sm>-\inf
+
+
+*/
+
+slk_simplify sm+\inf>=1.
+/*
+implify  (2): 1<=((\inf)+sm)
+
+We obtain simplify to just:
+  sm>-\inf
+
+*/
+
+slk_simplify sm+\inf>=0.
+/*
+Simplify  (3): true
+
+*/
+
+
+slk_simplify sm+(\inf+1)>=1.
+/*
+implify  (2): 1<=((\inf)+sm)
+
+How come not the same as above?
+
+*/
+
+slk_simplify sm>-\inf & m=sm.
+
+
+slk_simplify sm>-\inf & m=sm+1.
+
+
+slk_simplify sm>-\inf & m=sm-1.
+/*
+Simplify  (5): m=sm & 1<=((\inf)+m)
+
+Simplify  (6): m=1+sm & 2<=((\inf)+m)
+
+Simplify  (7): sm=m+1
+
+Some of these simplification seem to lose
+info on bounded integer. An integer is
+bounded if we have n>(-inf) or n<inf.
+Such integers remains bounded, even after
+constant addition or subtraction.
+
+I guess the > operator are not good.
+We need to convert them to n!=-inf or
+n!=inf, so that informatin is not lost.
+
+
+*/
+
+slk_simplify sm!=-\inf & m=sm.
+
+slk_simplify sm!=-\inf & m=sm+1.
+
+slk_simplify sm!=-\inf & m=sm-1.
+
+/*
+Simplify  (8): m=sm & ((1+m+(\inf)=0 | 1<=((\inf)+m)))
+Simplify  (9): m=1+sm & ((m+(\inf)=0 | 2<=((\inf)+m)))
+Simplify  (10): sm=m+1
+*/
