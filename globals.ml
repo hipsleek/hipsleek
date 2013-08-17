@@ -866,7 +866,7 @@ let self_fold_search_flag = ref false
 
 let show_gist = ref false
 let imply_top_flag = ref false
-let early_contra_flag = ref false
+let early_contra_flag = ref true
 
 let trace_failure = ref false
 

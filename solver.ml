@@ -5264,9 +5264,10 @@ and heap_entail_conjunct_lhs_x hec_num prog is_folding  (ctx:context) (conseq:CF
             in
             let _ = Debug.tinfo_hprint (add_str "early contra detect" string_of_bool) contra no_pos in
             if not(contra) then 
-              if real_c then 
+              if real_c then (* real_c = false denotes contradiction *)
                 heap_entail()
               else (* early failure due to real lhs-rhs contra detected *)
+                let _ = Debug.info_pprint "Early lhs-rhs contra detected" no_pos in
                 let pr = Cprinter.string_of_formula in
                 let pr2 = Cprinter.string_of_context in
                 let ante, prf, estate = match ctx with 
