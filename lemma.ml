@@ -18,11 +18,11 @@ module LP = Lemproving
 module SAO = Saout
 
 
-let generate_lemma_helper iprog lemma_name coer_type ihead ibody=
+let generate_lemma_helper iprog lemma_name coer_type ihps ihead ibody=
   (*generate ilemma*)
     let ilemma = { I.coercion_type = coer_type;
     I.coercion_exact = false;
-    I.coercion_infer_vars = [];
+    I.coercion_infer_vars = ihps;
     I.coercion_name = (fresh_any_name lemma_name);
     I.coercion_head = (IF.subst_stub_flow IF.top_flow ihead);
     I.coercion_body = (IF.subst_stub_flow IF.top_flow ibody);
@@ -42,7 +42,7 @@ let generate_ilemma iprog cprog lemma_n coer_type lhs rhs ihead chead ibody cbod
   else SC.sleek_entail_check [] cprog [(cbody,chead)] rhs (CF.struc_formula_of_formula lhs no_pos)
   in
   if res then
-    let l2r, r2l = generate_lemma_helper iprog lemma_n coer_type ihead ibody in
+    let l2r, r2l = generate_lemma_helper iprog lemma_n coer_type [] ihead ibody in
     l2r, r2l
   else
     [],[]
@@ -373,9 +373,6 @@ let checkeq_sem iprog cprog f1 f2 hpdefs=
       (fun _ _ _ ->  checkeq_sem_x iprog cprog f1 f2 hpdefs)
       f1 f2 hpdefs
 
-let _ = Sleekcore.generate_lemma := generate_lemma_helper
-      
-
 (* verify  a list of lemmas *)
 (* if one of them fails, return failure *)
 (* otherwise, return a list of their successful contexts 
@@ -568,3 +565,4 @@ let manage_test_new_lemmas repo iprog cprog =
    let _ = Lem_store.all_lemma # set_right_coercion right_lems in
    res
 
+let _ = Sleekcore.generate_lemma := generate_lemma_helper

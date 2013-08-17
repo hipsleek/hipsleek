@@ -31,7 +31,7 @@ module MCP = Mcpure
 module SY_CEQ = Syn_checkeq
 
 
-let generate_lemma = ref(fun (iprog: I.prog_decl) n t iante iconseq -> [],[])
+let generate_lemma = ref(fun (iprog: I.prog_decl) n t (ihps: ident list) iante iconseq -> [],[])
 
 let sleek_entail_check_x isvl (cprog: C.prog_decl) proof_traces ante conseq=
   let pr = Cprinter.string_of_struc_formula in
@@ -128,7 +128,7 @@ let check_equiv iprog cprog guiding_svl proof_traces need_lemma f1 f2=
   let gen_lemma (r_left, r_right) (ante,conseq)=
     let iante = Astsimp.rev_trans_formula ante in
     let iconseq = Astsimp.rev_trans_formula conseq in
-    let l2r,r2l = !generate_lemma iprog "temp" I.Equiv iante iconseq in
+    let l2r,r2l = !generate_lemma iprog "temp" I.Equiv [] iante iconseq in
     (r_left@l2r, r_right@r2l)
   in
   if not (!Globals.checkeq_syn) then
