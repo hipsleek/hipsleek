@@ -142,7 +142,7 @@ Below the LHS was strengthened with x=yyyy!
 !!!:0: 0: do_match (after): LHS:  es_formula: emp&x=yyyy&{FLOW,(19,20)=__norm}[]
 
 ===================================================================
-# sp-7b2.slk
+# sp-7b2.slk  FIXED
 
 infer_exact [P1]
    P1(ppp) 
@@ -175,6 +175,28 @@ from y. This occurs only under classic.
  <1>emp&y=yy&{FLOW,(19,20)=__norm}[]
  inferred hprel: [P1(ppp) --> P1(y)]
 ===================================================================
+# sp-7e.slk
+
+infer_exact [P1]
+P1(yy)
+|- (exists y,q36: P1(q36) & y=q36 & y=yy).
+
+infer_exact [P1]
+P1(yy)
+|- (exists y,q36: P1(q36) & y=q36 & q36=yy).
+
+These two examples gave different results.
+Presumably it is due to not using eq_map for
+equality on the RHS?
+
+Entail (1) : Valid. 
+ <1>emp&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [emp --> P1(q36_41); P1(yy) --> emp]
+
+
+Entail (2) : Valid. 
+ <1>emp&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [P1(yy) --> P1(yy)]
 ===================================================================
 ===================================================================
 ===================================================================

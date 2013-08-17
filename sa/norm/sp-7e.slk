@@ -1,0 +1,24 @@
+data node{
+	int val;
+	node next;
+}.
+
+HeapPred P1(node a).
+
+
+infer_exact [P1]
+P1(yy)
+|- (exists y,q36: P1(q36) & y=q36 & y=yy)
+.
+print residue.
+
+
+infer_exact [P1]
+P1(yy)
+|- (exists y,q36: P1(q36) & y=q36 & q36=yy)
+.
+print residue.
+
+
+
+
