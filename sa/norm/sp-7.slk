@@ -16,6 +16,7 @@ pred ll<> == self=null
 inv true.
 
 //lemma_safe self::ll<> -> self::ls<q>*q::ll<>.
+//lemma_unsafe  self::ll<> -> self::ls<q>*P1(q).
 lemma_unsafe  self::ll<> -> self::ls<q>*P1(self).
 
 //lemma_infer [P1] self::ll<> -> self::ls<q>*P1(self).
@@ -37,10 +38,32 @@ infer_exact [P1]
    self::node<_,p>*p::ls<y> * P1(y)
 |- self::node<_,p2>*p2::ls<y> * P1(y).
 print residue.
-*/
+
+infer [P1]
+   P1(x)
+|- P1(y).
+print residue.
+
 
 infer_exact [P1]
    self::node<_,ppp>*ppp::ll<>
 |- self::node<_,p2>*p2::ls<y> * P1(y).
 print residue.
+*/
 
+
+infer_exact [P1]
+   ppp::ls<yy> *P1(ppp)
+|- ppp::ls<y> * P1(y).
+print residue.
+
+infer_exact [P1]
+   P1(ppp) & y=yy
+|- P1(y).
+print residue.
+
+
+infer_exact [P1]
+   P1(ppp) 
+|- P1(y).
+print residue.

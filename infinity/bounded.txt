@@ -1,0 +1,8 @@
+x>-inf & y=x-c --> y>-inf
+
+x>-inf & y=x-c --> y>-inf
+
+x>-inf+c --> x>-inf
+
+
+
