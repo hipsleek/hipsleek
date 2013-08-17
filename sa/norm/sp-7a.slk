@@ -13,3 +13,5 @@ print residue.
 infer [P1] P1(x) & y=x |- P1(y).
 print residue.
 
+infer [P1] P1(x)  |- P1(y) & y=x.
+print residue.
