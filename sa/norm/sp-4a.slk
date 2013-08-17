@@ -18,7 +18,7 @@ pred ll<n:node> ==
 inv true.
 
 
-lemma self::ll<n> -> P1(self) .
+lemma_unsafe self::ll<n> -> P1(self) .
 
 
 /*
@@ -28,13 +28,21 @@ lemma self::ll<n> -> P1(self) .
  (c) collect result from
 */
 
-infer_exact
-[P1] 
-  n::node<_,null> & self=null
-or self::node<_,p>*p::ll<n>
-|-
-P1(self)
-.
+infer_exact [P1] 
+  self=null
+or self::node<_,p>*p::ll<n> |- P1(self) .
 print residue.
+/*
+# sp-4a.slk
+
+This triggered the lemma but how come sp-4a1.slk did not
+
+ inferred hprel: [// Sleek_Entail(1)
+emp&self=null --> P1(self); 
+// Sleek_Entail(1)
+P1(p) * 
+self::node<Anon_15,p>@M --> P1(self)]
+*/
+
 
 

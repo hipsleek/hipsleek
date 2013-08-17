@@ -157,7 +157,8 @@ let parse_file (parse) (source_file : string) =
       | LemmaDef ldef -> process_list_lemma ldef
       | DataDef _ | PredDef _ | BarrierCheck _ | FuncDef _ | RelDef _ | HpDef _ | AxiomDef _ (* An Hoa *)
       | CaptureResidue _ | LetDef _ | EntailCheck _ | EqCheck _ | InferCmd _ | PrintCmd _ 
-      | RelAssume _ | RelDefn _ | ShapeInfer _ | ShapeDivide _ | ShapeConquer _ | ShapePostObl _ | ShapeInferProp _ | ShapeSplitBase _ | ShapeElim _ | ShapeExtract _ | ShapeDeclDang _ | ShapeDeclUnknown _
+      | RelAssume _ | RelDefn _ | ShapeInfer _ | ShapeDivide _ | ShapeConquer _ | ShapePostObl _ 
+      | ShapeInferProp _ | ShapeSplitBase _ | ShapeElim _ | ShapeExtract _ | ShapeDeclDang _ | ShapeDeclUnknown _
       | ShapeSConseq _ | ShapeSAnte _
       | CmpCmd _| Time _ | _ -> () in
   let proc_one_cmd c = 
@@ -194,7 +195,9 @@ let parse_file (parse) (source_file : string) =
       | Time (b,s,_) -> 
             if b then Gen.Profiling.push_time s 
             else Gen.Profiling.pop_time s
-      | DataDef _ | PredDef _ | FuncDef _ | RelDef _ | HpDef _ | AxiomDef _ (* An Hoa *) | LemmaDef _ | EmptyCmd -> () in
+      | LemmaDef ldef -> process_list_lemma ldef
+      | DataDef _ | PredDef _ | FuncDef _ | RelDef _ | HpDef _ | AxiomDef _ (* An Hoa *) (* | LemmaDef _ *) 
+      | EmptyCmd -> () in
   let cmds = parse_first [] in
   List.iter proc_one_def cmds;
   (* An Hoa : Parsing is completed. If there is undefined type, report error.
@@ -210,8 +213,8 @@ let parse_file (parse) (source_file : string) =
   Debug.tinfo_pprint "sleek : after 2nd parsing" no_pos;
   convert_data_and_pred_to_cast ();
   Debug.tinfo_pprint "sleek : after convert_data_and_pred_to_cast" no_pos;
-  List.iter proc_one_lemma cmds;
-  Debug.tinfo_pprint "sleek : after proc one lemma" no_pos;
+  (* List.iter proc_one_lemma cmds; *)
+  (* Debug.tinfo_pprint "sleek : after proc one lemma" no_pos; *)
   (*identify universal variables*)
   let cviews = !cprog.C.prog_view_decls in
   let cviews = List.map (Cast.add_uni_vars_to_view !cprog (Lem_store.all_lemma # get_left_coercion) (*!cprog.C.prog_left_coercions*)) cviews in

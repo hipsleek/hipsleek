@@ -18,6 +18,7 @@ inv true.
 
 
 lemma_infer [P1] self::ll<n> -> P1(self) .
+print residue.
 
 
 /*
@@ -25,7 +26,6 @@ lemma_infer [P1] self::ll<n> -> P1(self) .
  (a) add lemma
  (b) unfold LHS and for infer_cmd
  (c) collect result from
-*/
 
 infer
 [P1] 
@@ -35,5 +35,7 @@ or self::node<_,p>*p::ll<n>
 P1(self)
 .
 print residue.
+*/
+
 
 
