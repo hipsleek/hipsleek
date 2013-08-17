@@ -2672,14 +2672,14 @@ let update_es prog es hds hvs ass_lhs_b rhs rhs_rest r_new_hfs defined_hps lsele
      in
      let new_es_formula, new_lhs, new_holes = check_consumed_node rhs new_es_formula in
      let new_es_formula1 = CF.subst m new_es_formula in
-     (*if rhs_rest = Emp. remove infer svl such that infer_pure_m is not invoked*)
-     let n_ihvr = if CF.is_empty_heap rhs_rest then
-       CP.diff_svl (es.CF.es_infer_vars_hp_rel@rvhp_rels) (CF.get_hp_rel_name_h_formula rhs)
-     else (es.CF.es_infer_vars_hp_rel@rvhp_rels)
+     (*if rhs_rest = Emp && . remove infer svl such that infer_pure_m is not invoked*)
+     let n_ihvr = (* if (\* CF.is_empty_heap rhs_rest *\) false then *)
+     (*   CP.diff_svl (es.CF.es_infer_vars_hp_rel@rvhp_rels) (CF.get_hp_rel_name_h_formula rhs) *)
+     (* else *) (es.CF.es_infer_vars_hp_rel@rvhp_rels)
      in
-     let n_ivr = if CF.is_empty_heap rhs_rest then CP.diff_svl es.CF.es_infer_vars_rel (CF.h_fv rhs) else es.CF.es_infer_vars_rel in
+     (* let n_ivr = if CF.is_empty_heap rhs_rest then CP.diff_svl es.CF.es_infer_vars_rel (CF.h_fv rhs) else es.CF.es_infer_vars_rel in *)
      let new_es = {es with CF.es_infer_vars_hp_rel = n_ihvr;
-         CF.es_infer_vars_rel =  n_ivr;
+         (* CF.es_infer_vars_rel =  n_ivr; *)
          CF.es_infer_hp_rel = es.CF.es_infer_hp_rel @ hp_rel_list;
          CF.es_infer_hp_unk_map = (es.CF.es_infer_hp_unk_map@unk_map);
          CF.es_infer_vars_sel_post_hp_rel = (es.CF.es_infer_vars_sel_post_hp_rel @ post_hps);
@@ -2920,6 +2920,7 @@ let infer_collect_hp_rel_classsic_x prog (es:entail_state) rhs pos =
   let _ = Debug.ninfo_pprint ("es_infer_vars: " ^ (!CP.print_svl  es.es_infer_vars)) no_pos in
   let _ = Debug.ninfo_pprint ("es_infer_vars_sel_hp_rel: " ^ (!CP.print_svl  es.es_infer_vars_sel_hp_rel)) no_pos in
   if rhs<>HEmp || no_infer_hp_rel es then
+    let _ = Debug.ninfo_pprint ("no_infer_hp: " ) no_pos in
     (false, es)
   else
     let lhs = es.CF.es_formula in

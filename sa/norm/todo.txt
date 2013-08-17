@@ -62,7 +62,7 @@ EXPECT
 =====
   G1(a,b) --> P1(a) * HP_n(b,a@NI)
 ===================================================================
-# bug-classic-4a.slk
+# bug-classic-4a.slk: FIXED
 
 infer_exact
 [P1] n::node<_,null> & self=null
