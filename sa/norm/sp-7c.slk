@@ -109,6 +109,7 @@ p::ls<yy> * P1(yy) //& pp=p
 .
 print residue.
 
+
 infer_exact [P1]
 P1(yy) //& pp=p
 |- [y] P1(y) & y=yy
