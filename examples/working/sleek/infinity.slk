@@ -147,7 +147,7 @@ checkentail true |- \inf != -\inf.
 //(44) Fail
 checkentail true |- \inf+7 !=\inf.
 
-//(45) Fail
+//(45) Valid
 checkentail true |- \inf+8 != -\inf.
 
 //(46) Fail

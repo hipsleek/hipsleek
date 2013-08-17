@@ -56,6 +56,7 @@ let rec normalize_exp (exp: CP.exp) : CP.exp =
           else CP.Max(e1_norm,e2_norm,pos)
   | CP.Add(e1,e2,pos) -> let e1_norm = normalize_exp e1 in
     		  let e2_norm = normalize_exp e2 in
+              if CP.is_inf e1_norm && CP.is_inf e2_norm then e1_norm else 
     		  if CP.is_const_exp e1_norm && CP.is_inf e2_norm
     		  then e2_norm
     		  else if CP.is_inf e1_norm && CP.is_const_exp e2_norm
@@ -118,6 +119,12 @@ used to handle rules with infinity in both sides
 *)
 
 let check_neg_inf2_inf (exp1: CP.exp) (exp2: CP.exp) : bool = 
+  match exp1,exp2 with
+    | CP.Var(sv1,_),CP.Var(sv2,_) -> if is_inf_sv sv1 && is_inf_sv sv2 then
+        if (is_primed sv1 && not(is_primed sv2)) || (is_primed sv2 && not(is_primed sv1))
+        then true else false
+      else false 
+    | _ -> (
   match exp1 with
     | CP.Add(e1,e2,pos) ->
           (* WN : why dos e1,e2 need to be both \inf? *)
@@ -130,7 +137,7 @@ let check_neg_inf2_inf (exp1: CP.exp) (exp2: CP.exp) : bool =
     		    | _ -> false)
     	    else false
     	  else false
-    | _ -> false
+    | _ -> false)
 
 (*
 Return true if exp1 is \inf and exp2 is const
@@ -451,7 +458,7 @@ let convert_inf_to_var (pf:CP.formula) : CP.formula =
     | Eq(e1,e2,pos) (*| Neq(e1,e2,pos) | 
       Lt(e1,e2,pos) | Gt(e1,e2,pos) |
       Lte(e1,e2,pos) | Gte(e1,e2,pos)*)
-      -> let e1,e2 = normalize_exp e1,normalize_exp e2 in 
+      -> (*let e1,e2 = normalize_exp e1,normalize_exp e2 in *)
          if check_neg_inf2 e1 e2 
       then (match e1 with 
         | Add(a1,a2,pos) -> if is_inf a1 && is_inf a2 then Some(mkFalse_b pos)
@@ -469,12 +476,13 @@ let convert_inf_to_var (pf:CP.formula) : CP.formula =
       else None
     | _ -> None in
   let f_bf bf = None in 
+  let f_e_neg e = Some(normalize_exp e) in
   let f_e e =
     match e with
       | InfConst (i,pos) -> Some (CP.Var(CP.SpecVar(Int,i,Unprimed),pos))
       | _ -> None
   in
-  let pf = map_formula pf (f_f,f_bf_neg,f_e) in
+  let pf = map_formula pf (f_f,f_bf_neg,f_e_neg) in
    map_formula pf (f_f,f_bf,f_e)
 
 let convert_inf_to_var (pf:CP.formula) : CP.formula =
