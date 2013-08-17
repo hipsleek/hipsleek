@@ -163,7 +163,7 @@ print residue.
  inferred hprel: [P1(ppp) --> P1(y)]
 
 ===================================================================
-# sp-7b2.slk
+# sp-7b2.slk  FIXED
 
 infer_exact [P1]
    P1(ppp) & y=yy
@@ -198,6 +198,20 @@ Entail (2) : Valid.
  <1>emp&{FLOW,(19,20)=__norm}[]
  inferred hprel: [P1(yy) --> P1(yy)]
 ===================================================================
+# sp-7e.slk
+
+Obtained below:
+ <1>emp&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [P1(q36_22) --> P1(q36_22); P1(yy) --> emp]
+
+where P1(yy) is accounted twice!
+
+@1!   residue before matching: : P1(yy)&{FLOW,(19,20)=__norm}[]
+@1!   new_lhs: : P1(q36_22)
+@1!   new_es_formula: : P1(yy)&{FLOW,(19,20)=__norm}[]
+
+P1(q36_22) is from smart subs, while P1(yy) is the original LHS.
+After the folding, why is P1(yy) still be kept?
 ===================================================================
 ===================================================================
 ===================================================================

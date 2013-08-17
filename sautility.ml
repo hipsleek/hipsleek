@@ -87,6 +87,13 @@ let close_def defs (v1,v2)=
   else if CP.mem_svl v1 defs then (CP.remove_dups_svl defs@[v2])
   else if CP.mem_svl v2 defs then (CP.remove_dups_svl defs@[v1])
   else (defs)
+
+let close_def defs (v1,v2) =
+  let pr = !CP.print_sv in
+  let pr_pair = pr_pair pr pr in
+  let p_svl = !CP.print_svl in
+  Debug.no_2 "SAU:close_def" p_svl pr_pair p_svl close_def defs (v1,v2) 
+
   (* else *)
   (*   let b1 = CP.mem_svl v1 defs in *)
   (*   let b2 = CP.mem_svl v2 defs in *)
