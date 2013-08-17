@@ -111,7 +111,7 @@ print residue.
 Why is there spurious HP_22?
 
 ===================================================================
-# sp-7b1.slk
+# sp-7b1.slk: FIXED
 
 infer [P1] P1(x) |- P1(yyyy) & yyyy=x.
 print residue.

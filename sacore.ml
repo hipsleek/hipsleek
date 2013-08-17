@@ -2596,13 +2596,15 @@ let prove_split_cand_x iprog cprog proving_fnc unk_hps ss_preds hp_defs (hp, arg
     let n_res = if res = [] then List.map (fun f -> [f]) fs else insert_para res fs [] in
     n_res
   in
-  let prove_sem cur_hpdefs f=
+  (*shared*)
+  (*END share*)
+  let prove_sem ((k, rel, og, f) as cur_hpdef) =
     let proc_name = "split_pred" in
     (*transform to view*)
-    let n_cviews,chprels_decl = SAO.trans_hprel_2_cview iprog cprog proc_name cur_hpdefs in
+    let n_cviews,chprels_decl = SAO.trans_hprel_2_cview iprog cprog proc_name [cur_hpdef] in
     (*trans_hp_view_formula*)
-    let f12 = SAO.trans_formula_hp_2_view iprog cprog proc_name chprels_decl cur_hpdefs f in
-    let f22 = SAO.trans_formula_hp_2_view iprog cprog proc_name chprels_decl cur_hpdefs (CF.formula_of_heap rhs_hf no_pos) in
+    let f12 = SAO.trans_formula_hp_2_view iprog cprog proc_name chprels_decl [cur_hpdef] f in
+    let f22 = SAO.trans_formula_hp_2_view iprog cprog proc_name chprels_decl [cur_hpdef] (CF.formula_of_heap rhs_hf no_pos) in
   (*prove*)
     let valid,lc,_ = proving_fnc (List.map fst comps) f12 (CF.struc_formula_of_formula f22 no_pos) in
     if valid then
@@ -2620,11 +2622,17 @@ let prove_split_cand_x iprog cprog proving_fnc unk_hps ss_preds hp_defs (hp, arg
               | _ -> false
         ) hp_rest
         in
-        hp_lst_assume
+        let _, hp_defs = !infer_shapes iprog cprog "temp" hp_lst_assume (List.map fst comps) (List.map fst comps)
+          [] [] [] true true in
+        let n_hp_def = (k, rel, og, CF.formula_of_heap rhs_hf no_pos) in
+        let _ = DD.info_pprint (" pred_split (sem):" ^ (!CP.print_sv hp) ^ "(" ^ (!CP.print_svl args) ^ ") :== " ^
+        (Cprinter.prtt_string_of_h_formula rhs_hf)) no_pos in
+        n_hp_def::hp_defs
       in
-      cur_hpdefs
+      (*todo: remove map also*)
+      [cur_hpdef]
     else
-      cur_hpdefs
+      [cur_hpdef]
   in
   let prove_syn (k, rel, og, f) =
     let fs = CF.list_of_disjs f in
@@ -2640,7 +2648,7 @@ let prove_split_cand_x iprog cprog proving_fnc unk_hps ss_preds hp_defs (hp, arg
   let split_hp_defs = if !Globals.syntatic_mode then
     (*syntactically*)
     prove_syn (k, rel, og, f)
-  else prove_sem [(k, rel, og, f)] f
+  else prove_sem (k, rel, og, f)
   in
   split_hp_defs@rem_hp_defs
 
