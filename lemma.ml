@@ -20,7 +20,7 @@ module SAO = Saout
 
 let generate_lemma_helper iprog lemma_name coer_type ihps ihead ibody=
   (*generate ilemma*)
-    let ilemma = I.mk_lemma (fresh_any_name lemma_name) coer_type ihps ihead ibody
+    let ilemma = I.mk_lemma (fresh_any_name lemma_name) coer_type ihps ihead ibody in
     (*transfrom ilemma to clemma*)
     let ldef = AS.case_normalize_coerc iprog ilemma in
     let l2r, r2l = AS.trans_one_coercion iprog ldef in
