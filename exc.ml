@@ -771,7 +771,7 @@ struct
             else if c1="" then true
             else 
               begin
-                Debug.ninfo_pprint (exlist#string_of) no_pos ;
+                Debug.ninfo_zprint (lazy (exlist#string_of)) no_pos ;
                 exlist # sub_type_obj c1 c2
               end
       | Array (et1,d1), Array (et2,d2) ->
