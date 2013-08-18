@@ -893,7 +893,7 @@ let process_rel_assume cond_path (ilhs : meta_formula) (igurad_opt : meta_formul
   (*     hprel_proving_kind = Others.proving_kind # top_no_exc; *)
   (* } in *)
   (*hp_assumes*)
-  let _ = Debug.ninfo_pprint (Cprinter.string_of_hprel_short new_rel_ass) no_pos in
+  let _ = Debug.ninfo_zprint  (lazy  (Cprinter.string_of_hprel_short new_rel_ass)) no_pos in
   let _ = sleek_hprel_assumes := !sleek_hprel_assumes@[new_rel_ass] in
   ()
 
@@ -918,7 +918,7 @@ let process_rel_defn cond_path (ilhs : meta_formula) (irhs: meta_formula)=
   in
   (*hp_defn*)
   (* let pr= pr_pair CF.string_of_cond_path Cprinter.string_of_hp_rel_def_short in *)
-  (* let _ = Debug.ninfo_pprint ((pr pr_new_rel_defn) ^ "\n") no_pos in *)
+  (* let _ = Debug.ninfo_zprint  (lazy  ((pr pr_new_rel_defn) ^ "\n")) no_pos in *)
   let _ =  sleek_hprel_defns := ! sleek_hprel_defns@[pr_new_rel_defn] in
   ()
 
@@ -930,8 +930,8 @@ let process_decl_hpdang hp_names =
     (hp,args)
   in
   let hpargs = List.map process hp_names in
-  let _ = Debug.ninfo_pprint ("dangling: " ^
-      (let pr = pr_list (pr_pair !Cpure.print_sv !Cpure.print_svl) in pr hpargs)) no_pos in
+  let _ = Debug.ninfo_zprint  (lazy  ("dangling: " ^
+      (let pr = pr_list (pr_pair !Cpure.print_sv !Cpure.print_svl) in pr hpargs))) no_pos in
   let _ = sleek_hprel_dang := !sleek_hprel_dang@hpargs in
   ()
 
@@ -943,8 +943,8 @@ let process_decl_hpunknown (cond_path, hp_names) =
     (cond_path, (hp,args))
   in
   let hpargs = List.map process hp_names in
-  let _ = Debug.ninfo_pprint (("unknown: " ^
-      (let pr = pr_list (pr_pair CF.string_of_cond_path (pr_pair !Cpure.print_sv !Cpure.print_svl)) in pr hpargs)) ^ "\n") no_pos in
+  let _ = Debug.ninfo_zprint  (lazy  (("unknown: " ^
+      (let pr = pr_list (pr_pair CF.string_of_cond_path (pr_pair !Cpure.print_sv !Cpure.print_svl)) in pr hpargs)) ^ "\n")) no_pos in
   let _ = sleek_hprel_unknown := !sleek_hprel_unknown@hpargs in
   ()
 
@@ -1240,14 +1240,14 @@ let process_shape_elim_useless sel_vnames=
   let view_defs = Norm.norm_elim_useless !cprog.Cast.prog_view_decls sel_vnames in
   let _ = !cprog.Cast.prog_view_decls <- view_defs in
   let pr = pr_list_ln Cprinter.string_of_view_decl in
-  let _ = Debug.info_pprint ("views after ELIM: \n" ^ (pr view_defs)) no_pos in
+  let _ = Debug.info_zprint  (lazy  ("views after ELIM: \n" ^ (pr view_defs))) no_pos in
   ()
 
 let process_shape_extract sel_vnames=
   let view_defs = Norm.norm_extract_common iprog !cprog !cprog.Cast.prog_view_decls sel_vnames in
   let _ = !cprog.Cast.prog_view_decls <- view_defs in
   let pr = pr_list_ln Cprinter.string_of_view_decl in
-  let _ = Debug.tinfo_pprint ("views after EXTRACTION: \n" ^ (pr view_defs)) no_pos in
+  let _ = Debug.tinfo_zprint  (lazy  ("views after EXTRACTION: \n" ^ (pr view_defs))) no_pos in
   ()
 
 (* the value of flag "exact" decides the type of entailment checking              *)
@@ -1337,7 +1337,7 @@ let print_entail_result sel_hps (valid: bool) (residue: CF.list_context) (num_id
       (*     print_endline "*************************************"; *)
       (*     Infer.rel_ass_stk # reset *)
       (*   end; *)
-      (* (\* let _ = Debug.info_pprint (" sel_hps:" ^ (!CP.print_svl sel_hps)) no_pos in *\) *)
+      (* (\* let _ = Debug.info_zprint  (lazy  (" sel_hps:" ^ (!CP.print_svl sel_hps))) no_pos in *\) *)
       (* let ls_hprel, _(\* ls_inferred_hps *\), _ (\* dropped_hps *\) = *)
       (*   if !Globals.pred_syn_flag && (hp_lst_assume <> []) then *)
       (*     Sa.infer_hps !cprog num_id hp_lst_assume *)
@@ -1450,7 +1450,7 @@ let process_eq_check (ivars: ident list)(if1 : meta_formula) (if2 : meta_formula
         print_string (num_id^": Fail.\n")
   (* print_endline ("\n VALID") else print_endline ("\n FAIL") *)
     in
-    let _ = if(res) then Debug.info_pprint (CEQ.string_of_map_table (List.hd mt_list) ^ "\n") no_pos in
+    let _ = if(res) then Debug.info_zprint  (lazy  (CEQ.string_of_map_table (List.hd mt_list) ^ "\n")) no_pos in
     ()
    )
 
@@ -1536,7 +1536,7 @@ let process_cmp_command (input: ident list * ident * meta_formula list) =
 	    let cfs = CF.list_formula_of_list_context ls_ctx in
 	    let cf1 = (List.hd cfs) in (*if ls-ctx has exacly 1 ele*)	    
 	    let (n_tl,cf2) = meta_to_formula_not_rename f false [] []  in
-	    let _ = Debug.info_pprint ("Compared residue: " ^ (Cprinter.string_of_formula cf2) ^ "\n") no_pos in
+	    let _ = Debug.info_zprint  (lazy  ("Compared residue: " ^ (Cprinter.string_of_formula cf2) ^ "\n")) no_pos in
 	    let res,mt = CEQ.checkeq_formulas iv cf1 cf2 in
 	    if(res) then  print_string ("EQUAL\n") else  print_string ("NOT EQUAL\n")
 	  )
@@ -1552,7 +1552,7 @@ let process_cmp_command (input: ident list * ident * meta_formula list) =
 	    let f1,f2 = (List.hd fl, List.hd (List.tl fl)) in	    
 	    let (n_tl,cf11) = meta_to_formula_not_rename f1 false [] []  in
 	    let (n_tl,cf12) = meta_to_formula_not_rename f2 false [] n_tl  in
-	    let _ = Debug.info_pprint ("Compared assumption: " ^ (Cprinter.string_of_formula cf11) ^ ", " ^ (Cprinter.string_of_formula cf12) ^ "\n") no_pos in
+	    let _ = Debug.info_zprint  (lazy  ("Compared assumption: " ^ (Cprinter.string_of_formula cf11) ^ ", " ^ (Cprinter.string_of_formula cf12) ^ "\n")) no_pos in
 	    let hprels = match ls_ctx with
 	      | CF.SuccCtx (c::_) ->  CF.collect_hp_rel c
 	      | _ -> [] (*TODO: report error ?*)
