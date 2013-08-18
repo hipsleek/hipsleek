@@ -291,17 +291,20 @@ object (self)
               last_sleek_fail <- cmd
       | None -> last_sleek_fail <- cmd
   method dumping no =
-    let _ = Debug.info_zprint  (lazy  ("dumping for "^no)) no_pos in
     if  !proof_logging_txt (*|| !sleek_logging_txt *) then
       begin
         match last_proof_fail with
-          | Some e -> Debug.info_hprint string_of_proof_log_entry e no_pos 
-          | _ -> Debug.info_pprint "Cannot find imply proof failure" no_pos
+          | Some e -> 
+                let _ = Debug.info_zprint  (lazy  ("dumping for "^no)) no_pos in
+                Debug.info_hprint string_of_proof_log_entry e no_pos 
+          | _ -> Debug.info_pprint ("Cannot find imply proof failure for "^no) no_pos
       end;
     if !sleek_logging_txt then
       match last_sleek_fail with
-        | Some e -> Debug.info_hprint string_of_sleek_log_entry e no_pos 
-        | _ -> Debug.info_pprint "Cannot find sleek failure" no_pos
+        | Some e -> 
+              let _ = Debug.info_zprint  (lazy  ("dumping for "^no)) no_pos in
+              Debug.info_hprint string_of_sleek_log_entry e no_pos 
+        | _ -> Debug.info_pprint ("Cannot find sleek failure for "^no) no_pos
               (* print_endline ("!!!! WARNING : last sleek log " ^ (pr_id no)); *)
   method dump_prover_cnt =
     begin
