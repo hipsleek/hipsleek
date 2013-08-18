@@ -2378,7 +2378,7 @@ let rec get_breaks e =
 
 let exists_return_x e0=
   let rec helper e=
-    (* let _ = Debug.info_pprint (" helper: " ^ (!print_exp e)  ) no_pos in *)
+    (* let _ = Debug.info_zprint (lazy  (" helper: " ^ (!print_exp e)  )) no_pos in *)
     match e with
       | Block { exp_block_body = bb} ->
           (* let _ = Debug.info_pprint (" BLOCK" ) no_pos in *)
@@ -2390,7 +2390,7 @@ let exists_return_x e0=
           (* let _ = Debug.info_pprint (" RAISE" ) no_pos in *)
           match et with
             | Const_flow f ->
-                (* let _ = Debug.info_pprint (" et" ^ ( f)) no_pos in *)
+                (* let _ = Debug.info_zprint (lazy  (" et" ^ ( f))) no_pos in *)
                 if (is_eq_flow  (exlist # get_hash loop_ret_flow) (exlist # get_hash f)) then true else false
             | _ -> false
       end
@@ -2419,7 +2419,7 @@ let exists_return e0=
 
 let exists_return_val_x e0=
   let rec helper e=
-    (* let _ = Debug.info_pprint (" helper: " ^ (!print_exp e)  ) no_pos in *)
+    (* let _ = Debug.info_zprint (lazy  (" helper: " ^ (!print_exp e)  )) no_pos in *)
     match e with
       | Block { exp_block_body = bb} ->
           (* let _ = Debug.info_pprint (" BLOCK" ) no_pos in *)
@@ -2431,7 +2431,7 @@ let exists_return_val_x e0=
           (* let _ = Debug.info_pprint (" RAISE" ) no_pos in *)
           match et with
             | Const_flow _ ->
-                (* let _ = Debug.info_pprint (" et" ^ ( f)) no_pos in *)
+                (* let _ = Debug.info_zprint (lazy  (" et" ^ ( f))) no_pos in *)
                 false
             | _ -> true
       end
@@ -2463,7 +2463,7 @@ let exists_return_val e0=
 
 let get_return_exp_x e0=
   let rec helper e=
-    (* let _ = Debug.info_pprint (" helper: " ^ (!print_exp e)  ) no_pos in *)
+    (* let _ = Debug.info_zprint (lazy  (" helper: " ^ (!print_exp e)  )) no_pos in *)
     match e with
       | Block { exp_block_body = bb} ->
           (* let _ = Debug.info_pprint (" BLOCK" ) no_pos in *)

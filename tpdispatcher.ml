@@ -981,7 +981,7 @@ let cnv_int_to_ptr f =
               if is_ann_flag then
                 if is_valid_ann i then Some(Eq(a1,int_to_ann i,ll),l)
                 else  Some(BConst (false,ll),l) (* contradiction *)
-            else if is_inf a1 then Some(Eq(a2,mkInfConst ll,ll),l)
+            (*else if is_inf a1 then Some(Eq(a2,mkInfConst ll,ll),l)*)
             else Some bf
       | Neq (a1, a2, ll) -> 
             let (is_null_flag,a1,a2) = comm_is_null a1 a2 in
@@ -1731,7 +1731,7 @@ let tp_is_sat f sat_no =
 let norm_pure_input f =
   let f = cnv_ptr_to_int f in
   let f = if !Globals.allow_inf 
-    then let f = Infinity.convert_inf_to_var f 
+    then let f = Infinity.convert_inf_to_var f
            in let add_inf_constr = BForm((mkLt (CP.Var(CP.SpecVar(Int,constinfinity,Primed),no_pos)) (CP.Var(CP.SpecVar(Int,constinfinity,Unprimed),no_pos)) no_pos,None),None) in
       let f = mkAnd add_inf_constr f no_pos in f
     else f in f
@@ -1976,8 +1976,8 @@ let hull (f : CP.formula) : CP.formula =
   let simpl_no = (string_of_int simpl_num) in
   let cmd = PT_HULL f in
   let _ = Log.last_proof_command # set cmd in
-  if !Globals.allow_inf && Infinity.contains_inf f then f
-  else 
+  (*if !Globals.allow_inf && Infinity.contains_inf f then f
+  else*) 
   (*let f = if !Globals.allow_inf then Infinity.convert_inf_to_var f else f in*)
   let fn f = match !pure_tp with
     | DP -> Dp.hull  f
@@ -2037,8 +2037,8 @@ let tp_pairwisecheck (f : CP.formula) : CP.formula =
   let simpl_no = (string_of_int simpl_num) in
   let cmd = PT_PAIRWISE f in
   let _ = Log.last_proof_command # set cmd in
-  if !Globals.allow_inf && Infinity.contains_inf f then f
-  else 
+  (*if !Globals.allow_inf && Infinity.contains_inf f then f
+  else *)
   let fn f = match !pure_tp with
     | DP -> Dp.pairwisecheck f
     | Isabelle -> Isabelle.pairwisecheck f
