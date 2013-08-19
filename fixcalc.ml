@@ -255,7 +255,7 @@ let compute_pure_inv (fmls:CP.formula list) (name:ident) (para_names:CP.spec_var
       "\n};\nbottomupgen([" ^ name ^ "], [1], SimHeur);"
     with _ -> report_error no_pos "Error in translating the input for fixcalc"
   in 
-  DD.ninfo_pprint ("Input of fixcalc: " ^ input_fixcalc) no_pos;
+  DD.ninfo_zprint (lazy (("Input of fixcalc: " ^ input_fixcalc))) no_pos;
 
   (* Call the fixpoint calculation *)
   let output_of_sleek = "fixcalc.inp" in
@@ -267,7 +267,7 @@ let compute_pure_inv (fmls:CP.formula list) (name:ident) (para_names:CP.spec_var
 
   (* Remove parentheses *)
   let res = remove_paren res (String.length res) in
-  DD.ninfo_pprint ("res = " ^ res ^ "\n") no_pos;
+  DD.ninfo_zprint (lazy (("res = " ^ res ^ "\n"))) no_pos;
 
   (* Parse result *)
   let inv = List.hd (Parse_fix.parse_fix res) in
@@ -286,7 +286,7 @@ let compute_heap_pure_inv fml (name:ident) (para_names:CP.spec_var list): CP.for
       "\n};\nbottomupgen([" ^ name ^ "], [1], SimHeur);"
     with _ -> report_error no_pos "Error in translating the input for fixcalc"
   in 
-  DD.ninfo_pprint ("Input of fixcalc: " ^ input_fixcalc) no_pos;
+  DD.ninfo_zprint (lazy (("Input of fixcalc: " ^ input_fixcalc))) no_pos;
 
   (* Call the fixpoint calculation *)
   let output_of_sleek = "fixcalc.inp" in
@@ -298,7 +298,7 @@ let compute_heap_pure_inv fml (name:ident) (para_names:CP.spec_var list): CP.for
 
   (* Remove parentheses *)
   let res = remove_paren res (String.length res) in
-  DD.ninfo_pprint ("res = " ^ res ^ "\n") no_pos;
+  DD.ninfo_zprint (lazy (("res = " ^ res ^ "\n"))) no_pos;
 
   (* Parse result *)
   let inv = List.hd (Parse_fix.parse_fix res) in
@@ -336,7 +336,7 @@ let compute_pure_inv (fmls:CP.formula list) (name:ident) (para_names:CP.spec_var
       "\n};\nbottomupgen([" ^ name ^ "], [1], SimHeur);"
     with _ -> report_error no_pos "Error in translating the input for fixcalc"
   in 
-  DD.ninfo_pprint ("Input of fixcalc: " ^ input_fixcalc) no_pos;
+  DD.ninfo_zprint (lazy (("Input of fixcalc: " ^ input_fixcalc))) no_pos;
 
   (* Call the fixpoint calculation *)
   let output_of_sleek = "fixcalc.inp" in
@@ -348,7 +348,7 @@ let compute_pure_inv (fmls:CP.formula list) (name:ident) (para_names:CP.spec_var
 
   (* Remove parentheses *)
   let res = remove_paren res (String.length res) in
-  DD.ninfo_pprint ("res = " ^ res ^ "\n") no_pos;
+  DD.ninfo_zprint (lazy (("res = " ^ res ^ "\n"))) no_pos;
 
   (* Parse result *)
   let inv = List.hd (Parse_fix.parse_fix res) in
@@ -494,7 +494,7 @@ let compute_fixpoint_aux rel_defs ante_vars bottom_up =
   DD.devel_pprint ("Input of fixcalc: " ^ input_fixcalc) no_pos;
   (* DD.info_hprint (add_str "def" pr_id) def no_pos; *)
   (* DD.info_hprint (add_str "cmd" pr_id) cmd no_pos; *)
-  (* DD.info_pprint ("fixpoint input = " ^ input_fixcalc) no_pos; *)
+  (* DD.info_zprint (lazy (("fixpoint input = " ^ input_fixcalc))) no_pos; *)
   (* Call the fixpoint calculation *)
   let output_of_sleek = if bottom_up then "fixcalc.inf" else "fixcalc.td" in
   let oc = open_out output_of_sleek in
@@ -505,7 +505,7 @@ let compute_fixpoint_aux rel_defs ante_vars bottom_up =
 
   (* Remove parentheses *)
   let res = remove_paren res (String.length res) in
-  DD.ninfo_pprint ("res = " ^ res ^ "\n") no_pos;
+  DD.ninfo_zprint (lazy (("res = " ^ res ^ "\n"))) no_pos;
 
   (* Parse result *)
   DD.devel_pprint ("Result of fixcalc: " ^ res) no_pos;

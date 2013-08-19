@@ -169,7 +169,7 @@ let compute_inv name vars fml pf no_of_disjs =
      in
       (*print_endline ("\nINPUT: " ^ input_fixbag);*)
       DD.info_pprint ">>>>>> compute_fixpoint <<<<<<" no_pos;
-      DD.info_pprint ("Input of fixbag: " ^ input_fixbag) no_pos;
+      DD.info_zprint (lazy (("Input of fixbag: " ^ input_fixbag))) no_pos;
 (*      let output_of_sleek = "fixbag.inf" in*)
 (*      let oc = open_out output_of_sleek in*)
 (*      Printf.fprintf oc "%s" input_fixbag;*)
@@ -178,7 +178,7 @@ let compute_inv name vars fml pf no_of_disjs =
       let res = syscall (fixbag ^ " \'" ^ input_fixbag ^ "\' \'" ^ no ^ "\'") in
       let res = remove_paren res (String.length res) in
       (*print_endline ("RES: " ^ res);*)
-      DD.info_pprint ("Result of fixbag: " ^ res) no_pos;
+      DD.info_zprint (lazy (("Result of fixbag: " ^ res))) no_pos;
       let new_pf = List.hd (Parse_fixbag.parse_fix res) in
       let _ = DD.devel_hprint (add_str "Result of fixbag (parsed): "  !CP.print_formula) new_pf no_pos in
     let check_imply = Omega.imply new_pf pf "1" 100.0 in

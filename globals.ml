@@ -644,7 +644,7 @@ let cond_path_trace = ref true
 
 let pred_syn_modular = ref true
 
-let checkeq_syn = ref false
+let syntatic_mode = ref false (* syntatic mode - default is semantic*)
 
 let sa_dnc = ref false
 
