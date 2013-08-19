@@ -15,8 +15,10 @@ inv nnn >= 0 & -\inf<sm & lg<\inf
 //inv nnn>=0 
 .
 /*
-  xform: ((nnn=0 & p=self & sm=\inf & 0=lg+(\inf) & lg<sm) | ((1+0)<=(sm+
-           (\inf)) & sm<=lg & lg<(\inf) & 1<=nnn & self!=null))
+  xform: (
+  (nnn=0 & p=self & sm=\inf & 0=lg+(\inf) & lg<sm) 
+| (1<=(sm+(\inf)) & sm<=lg & lg<(\inf) & 1<=nnn & self!=null))
+  ^^^^^^^^^^^^^^
 */
 
 pred ll_tail<n, t, sm, lg> == 
@@ -28,8 +30,10 @@ pred ll_tail<n, t, sm, lg> ==
 inv n>=1 & self!=null & -\inf<sm & sm<=lg & lg<\inf
 //inv n>=1
 /*
-  xform: ((n=1 & lg=sm & self=t & (1+0)<=(lg+(\inf)) & lg<(\inf) & 
-           t!=null) | ((1+0)<=(sm+(\inf)) & sm<=lg & lg<(\inf) & 
+  xform: (
+  (n=1 & lg=sm & self=t & 1<=(lg+(\inf)) & lg<(\inf) & 
+           t!=null) 
+    | 1<=(sm+(\inf)) & sm<=lg & lg<(\inf) & 
            self!=null & 2<=n))
 */
 .
