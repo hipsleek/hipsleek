@@ -20,8 +20,8 @@ HeapPred P2(node a).
 //lemma self::zip<y> -> P2(y).
 
 
- lemma "V2" self::zip<y> <- P1(self) * P2(y).
-
+ lemma_infer [P1,P2] "V2" self::zip<y> <- P1(self) * P2(y).
+print residue.
 
 infer [P1,P2]  P1(xx) * P2(yy)
      |- xx::zip<yy>.

@@ -445,8 +445,6 @@ and coerc_mater_match_x prog l_vname (l_vargs:P.spec_var list) r_aset (imm : ann
   (* TODO : how about right coercion, Cristina? *)
   (* WN_all_lemma - is this overriding of lemmas? *)
   let coercs = (Lem_store.all_lemma # get_left_coercion)(*prog.prog_left_coercions*) in
-  (* let coercs = (Lem_store.all_lemma # get_left_coercion)(\*prog.prog_left_coercions*\) in *)
-  let coercs = (Lem_store.all_lemma # get_right_coercion)@coercs in
   let _ = DD.tinfo_hprint (add_str "coercs" (pr_list Cprinter.string_of_coercion)) coercs no_pos in
   let pos_coercs = List.fold_right (fun c a ->
       match (choose_full_mater_coercion l_vname l_vargs r_aset c) with 
@@ -568,13 +566,16 @@ and empty_inters lst1 lst2 =
       | [] -> true
       | _  -> false
 
+and exists_candidate_lemma_x coercs vname = 
+  let valid_cand c = if ((c.coercion_case=Cast.Simple || c.coercion_case= (Normalize false)) && c.coercion_head_view = vname) then true else false in
+  List.exists valid_cand coercs  
+
+and exists_candidate_lemma coercs vname = 
+  Debug.no_1 "exists_candidate_lemma" pr_id string_of_bool (fun _ -> exists_candidate_lemma_x coercs vname) vname
+
 (* try to find a lemma to be applied only if the view on the lhs is reachable from a node matching
 the node on the rhs *)
-and coerc_mater_match_with_unk_hp_x prog (l_vname: ident) (r_vname: ident) (l_vargs: P.spec_var list) (r_vargs: P.spec_var list) (r_aset: P.spec_var list) (lhs_node: Cformula.h_formula) (l_f: Cformula.h_formula) view_sv =
-  let cmm () = 
-    let cmm = coerc_mater_match_left prog l_vname l_vargs r_aset (ConstAnn(Mutable)) lhs_node in 
-    let cmm2 = coerc_mater_match_right prog r_vname r_vargs view_sv (ConstAnn(Mutable)) lhs_node in 
-    cmm@cmm2 in
+and coerc_mater_match_with_unk_hp_helper prog (r_aset: P.spec_var list) (l_f: Cformula.h_formula) view_sv cmm =
   let hd_nodes, hv_nodes, hrels = get_hp_rel_h_formula l_f in
   let ptrs0 = (List.map (fun v -> v.h_formula_data_node) (get_data_nodes_ptrs_to_view prog hd_nodes hv_nodes view_sv) ) in
   if (empty_inters ptrs0 r_aset) then
@@ -588,6 +589,29 @@ and coerc_mater_match_with_unk_hp_x prog (l_vname: ident) (r_vname: ident) (l_va
       else cmm ()
     else cmm ()
   else cmm ()
+
+and coerc_mater_match_with_unk_hp_left prog (l_vname: ident) (r_vname: ident) (l_vargs: P.spec_var list) (r_vargs: P.spec_var list) (r_aset: P.spec_var list) (lhs_node: Cformula.h_formula) (l_f: Cformula.h_formula) view_sv =
+  let coerc_left = Lem_store.all_lemma # get_left_coercion in
+  let exists_left = exists_candidate_lemma coerc_left l_vname in
+  let cmm = if exists_left then 
+    let fcmm () =  coerc_mater_match_left prog l_vname l_vargs r_aset (ConstAnn(Mutable)) lhs_node in 
+    coerc_mater_match_with_unk_hp_helper prog r_aset l_f view_sv fcmm 
+  else [] in
+  cmm
+
+and coerc_mater_match_with_unk_hp_right prog (l_vname: ident) (r_vname: ident) (l_vargs: P.spec_var list) (r_vargs: P.spec_var list) (r_aset: P.spec_var list) (lhs_node: Cformula.h_formula) (l_f: Cformula.h_formula) view_sv =
+  let coerc_right = Lem_store.all_lemma # get_right_coercion in
+  let exists_right = exists_candidate_lemma coerc_right r_vname in
+  let cmm = if exists_right then 
+    let fcmm () = coerc_mater_match_right prog r_vname r_vargs view_sv (ConstAnn(Mutable)) lhs_node in 
+    coerc_mater_match_with_unk_hp_helper prog r_aset l_f view_sv fcmm
+  else [] in
+  cmm
+
+and coerc_mater_match_with_unk_hp_x prog (l_vname: ident) (r_vname: ident) (l_vargs: P.spec_var list) (r_vargs: P.spec_var list) (r_aset: P.spec_var list) (lhs_node: Cformula.h_formula) (l_f: Cformula.h_formula) view_sv =
+  let cmml = coerc_mater_match_with_unk_hp_left prog l_vname r_vname l_vargs r_vargs r_aset lhs_node l_f view_sv in
+  let cmmr = coerc_mater_match_with_unk_hp_right prog l_vname r_vname l_vargs r_vargs r_aset lhs_node l_f view_sv in 
+  cmml@cmmr
 
 and coerc_mater_match_with_unk_hp prog (l_vname: ident) (r_vname: ident) (l_vargs: P.spec_var list) (r_vargs: P.spec_var list)  (r_aset: P.spec_var list) (lhs_node: Cformula.h_formula) (l_f: Cformula.h_formula) view_sv =
   let pr_svl = Cprinter.string_of_spec_var_list in
