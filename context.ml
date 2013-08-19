@@ -876,8 +876,8 @@ and filter_norm_lemmas l =
     | _ -> true) l 
 
 and process_one_match_mater_unk_w_view lhs_name rhs_name c ms f = 
-  let right_ls = filter_norm_lemmas(look_up_coercion_with_target (Lem_store.all_lemma # get_right_coercion) lhs_name rhs_name) in
-  let left_ls = filter_norm_lemmas(look_up_coercion_with_target (Lem_store.all_lemma # get_left_coercion) rhs_name lhs_name) in
+  let right_ls = filter_norm_lemmas(look_up_coercion_with_target (Lem_store.all_lemma # get_right_coercion) rhs_name lhs_name) in
+  let left_ls = filter_norm_lemmas(look_up_coercion_with_target (Lem_store.all_lemma # get_left_coercion) lhs_name rhs_name) in
   let coerc_lst = left_ls@right_ls in
   let prio, coerc = match ms with
     | Coerc_mater s -> (1,s)
