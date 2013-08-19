@@ -1,0 +1,88 @@
+// examples from bi-abduction paper
+
+data node {
+	node next;	
+}.
+
+pred lseg<p> == self = p 
+	or self::node<q> * q::lseg<p> & self!=p 
+  inv true.
+
+/*
+pred lseg<p> == 
+  case {
+   self = p -> [] self=p;
+   self!=p ->  [] self::node<q> * q::lseg<p>;
+  } 
+  inv true.
+*/
+HeapPred H1(node a).
+
+infer [z,H1] x::node<z> * H1(y)  |- x::lseg<z> * y::lseg<null>.
+//infer [z,H1] H1(y) & x=r  |- x::lseg<z> * y::lseg<null>.
+//infer [z,H1] H1(y) & x=r  |- y::lseg<null> * x::lseg<z> .
+//infer [H1] H1(y)  |- y::lseg<null>.
+//infer [z] x::node<z>  |- x::lseg<z> .
+print residue.
+
+/*
+infer [z,H1] x::node<z> * H1(y)  |- x::lseg<z> * y::lseg<null>.
+
+ Context: [
+  x::node<z>@M&{FLOW,(19,20)=__norm}[]
+  es_infer_vars/rel: [z];
+  emp&q_27=z & inf_ann_32=@M & inf_p_33=null & inf_p_33!=x&{FLOW,(19,20)=__norm}[]
+  es_infer_vars/rel: [inf_ann_32; inf_p_33; z]
+  es_infer_heap: [z::lseg<inf_p_33>@inf_ann_32]
+  es_infer_pure: [inf_p_33=null; inf_ann_32=@M]  
+  ]
+
+Why is it missing on z=null??
+
+infer_pure_m_2#1 inp2 :lhs xpure : q_34=z & inf_ann_39=@M & inf_p_40=null & inf_p_40!=x & ((flted_21_55=y | 
+(y!=null & ((y<flted_21_55 | flted_21_55<y))))) & ((inf_p_40=z | (z!=null & 
+((z<inf_p_40 | inf_p_40<z))))) & x!=null
+infer_pure_m_2#1 inp3 :lhs xpure0 : q_34=z & inf_ann_39=@M & inf_p_40=null & inf_p_40!=x & x!=null
+infer_pure_m_2#1 inp4 :rhs xpure : flted_21_55=null & x!=z & inf_p_40=z
+infer_pure_m_2#1@37 EXIT out :(new es,inf pure,rel_ass) :(None,None,[])
+
+-------
+
+infer_pure_m_2#1 inp2 :lhs xpure : q_27=z & inf_ann_32=@M & inf_p_33=null & inf_p_33!=x & ((inf_p_33=z | 
+(z!=null & ((z<inf_p_33 | inf_p_33<z))))) & x!=null
+infer_pure_m_2#1 inp3 :lhs xpure0 : q_27=z & inf_ann_32=@M & inf_p_33=null & inf_p_33!=x & x!=null
+infer_pure_m_2#1 inp4 :rhs xpure : x!=z & inf_p_33=z
+
+infer [z] x::node<z>  |- x::lseg<z> .
+
+ <1>emp&q_27=z & inf_ann_32=@M & inf_p_33=null & inf_p_33!=x & z=null&{FLOW,(19,20)=__norm}[]
+ inferred heap: [z::lseg<inf_p_33>@inf_ann_32]
+ inferred pure: [z=null; inf_p_33=null; inf_ann_32=@M]
+
+-----------
+
+Why is HP_29 still there?
+
+infer [H1] H1(y)  |- y::lseg<null>.
+
+ <1>HP_29(flted_24_28)&flted_24_28=null&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [// Sleek_Entail(1)
+    H1(y) --> y::lseg<flted_24_28>@M * HP_29(flted_24_28); 
+// Sleek_Entail(1)
+  HP_29(flted_24_28) --> emp& flted_24_28=null]
+
+--------------
+
+
+
+
+problem:
+
+!!! >>>>>> mismatch ptr z::lseg<z_88>@M is not found (or inst) in the lhs <<<<<<
+!!! dumping for sleek_dump(fail)
+*/
+
+
+
+
+

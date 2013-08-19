@@ -15,6 +15,7 @@ module F = Cformula
 module P = Cpure
 module MP = Mcpure
 module Err = Error
+module LO = Label_only.LOne
 
 type typed_ident = (typ * ident)
 
@@ -27,8 +28,8 @@ and prog_decl = {
     mutable prog_axiom_decls : axiom_decl list; (* An Hoa : axiom definitions *)
     (*old_proc_decls : proc_decl list;*) (* To be removed completely *)
     new_proc_decls : (ident, proc_decl) Hashtbl.t; (* Mingled name with proc_delc *)
-    mutable prog_left_coercions : coercion_decl list;
-    mutable prog_right_coercions : coercion_decl list;
+    (*mutable prog_left_coercions : coercion_decl list;*)
+    (*mutable prog_right_coercions : coercion_decl list;*)
     prog_barrier_decls : barrier_decl list
 }
     
@@ -81,7 +82,7 @@ and view_decl = {
     view_cont_vars : P.spec_var list;
     view_case_vars : P.spec_var list; (* predicate parameters that are bound to guard of case, but excluding self; subset of view_vars*)
     view_uni_vars : P.spec_var list; (*predicate parameters that may become universal variables of universal lemmas*)
-    view_labels : Label_only.spec_label list;
+    view_labels : LO.t list;
     view_modes : mode list;
     view_is_prim : bool;
     view_kind : view_kind;
@@ -192,6 +193,8 @@ and coercion_decl = {
     coercion_body_norm : F.struc_formula; (* used as consequent during --elp *)
     coercion_impl_vars : P.spec_var list; (* list of implicit vars *)
     coercion_univ_vars : P.spec_var list; (* list of universally quantified variables. *)
+
+    coercion_infer_vars :  P.spec_var list;
     (* coercion_proof : exp; *)
     (* coercion_head_exist : F.formula;   *)
     (* same as head except for annotation to self node? *)
@@ -902,10 +905,10 @@ let rec look_up_view_def_raw (defs : view_decl list) (name : ident) = match defs
   | d :: rest -> if d.view_name = name then d else look_up_view_def_raw rest name
   | [] -> raise Not_found
 
-let look_up_view_def_raw (defs : view_decl list) (name : ident) = 
+let look_up_view_def_raw i (defs : view_decl list) (name : ident) = 
   let pr = fun x -> x in
   let pr_out = !print_view_decl in
-  Debug.no_1 "look_up_view_def_raw" pr pr_out (fun _ -> look_up_view_def_raw defs name) name
+  Debug.no_1_num i "look_up_view_def_raw" pr pr_out (fun _ -> look_up_view_def_raw defs name) name
 
 
 (* An Hoa *)
@@ -1006,13 +1009,13 @@ let is_rec_view_def prog (name : ident) : bool =
 
 (*check whether a view is a lock invariant*)
 let get_lock_inv prog (name : ident) : (bool * F.formula) =
-  let vdef = look_up_view_def_raw prog.prog_view_decls name in
+  let vdef = look_up_view_def_raw 1 prog.prog_view_decls name in
   match vdef.view_inv_lock with
     | None -> (false, (F.mkTrue (F.mkTrueFlow ()) no_pos))
     | Some f -> (true, f)
 
 let is_lock_inv prog (name : ident) : bool =
-  let vdef = look_up_view_def_raw prog.prog_view_decls name in
+  let vdef = look_up_view_def_raw 2 prog.prog_view_decls name in
   match vdef.view_inv_lock with
     | None -> false
     | Some f -> true
@@ -1719,7 +1722,7 @@ let formula_of_unstruc_view_f vd = F.formula_of_disjuncts (fst (List.split vd.vi
 let vdef_fold_use_bc prog ln2  = match ln2 with
   | F.ViewNode vn -> 
     (try 
-      let vd = look_up_view_def_raw prog.prog_view_decls vn.F.h_formula_view_name in
+      let vd = look_up_view_def_raw 3 prog.prog_view_decls vn.F.h_formula_view_name in
       match vd.view_raw_base_case with
         | None -> None
         | Some f-> Some {vd with view_formula = F.formula_to_struc_formula f}
@@ -1846,7 +1849,7 @@ let rec add_uni_vars_to_view_x cprog (l2r_coers:coercion_decl list) (view:view_d
 		| F.ViewNode vn ->
             if ((String.compare vn.F.h_formula_view_name view.view_name)=0) then []
 			else
-				let vdef = look_up_view_def_raw cprog.prog_view_decls vn.F.h_formula_view_name in
+				let vdef = look_up_view_def_raw 4 cprog.prog_view_decls vn.F.h_formula_view_name in
 				let vdef = add_uni_vars_to_view_x cprog l2r_coers vdef in
 				let vdef_uni_vars = vdef.view_uni_vars in
 				let fr = vdef.view_vars in
@@ -2034,7 +2037,7 @@ let collect_hp_rels prog= Hashtbl.fold (fun i p acc->
 	(List.map (fun c-> name,c) p.proc_hpdefs)@acc) prog.new_proc_decls []
 
 let look_up_cont_args_x a_args vname cviews=
-  let vdef = look_up_view_def_raw cviews vname in
+  let vdef = look_up_view_def_raw 5 cviews vname in
   let pr_args = List.combine vdef.view_vars a_args in
   List.fold_left (fun ls cont_sv -> ls@[List.assoc cont_sv pr_args]) [] vdef.view_cont_vars
 

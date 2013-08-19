@@ -1,0 +1,41 @@
+data node {
+	int val; 
+	node next;	
+}.
+
+pred ll<na> == self = null & na = 0 
+	or self::node<_, q> * q::ll<na-1> 
+  inv na >= 0.
+
+
+// (9) lhs & rhs -> false
+// inferred pure: [n<=0]
+infer [] n>0 & n>m  |- false.
+print residue.
+
+// (10) lhs & rhs -> false
+infer [] n>0 & n>m  |- false.
+print residue.
+/*
+Inferred Heap:[]
+inferred pure: [n<=m | n<=0]
+<1>false & false &
+*/
+
+// (12) lhs & rhs -> false
+infer [] n>0 & m=2  |- false.
+print residue.
+
+
+/*
+# i-10.slk
+
+infer [] n>0 & n>m  |- false.
+
+What is the cause of the following error? Has expression been
+properly normalized?
+
+Entailment Failure (1) Failure("compute_order_b_formula: not computed yet")
+: no residue 
+
+*/

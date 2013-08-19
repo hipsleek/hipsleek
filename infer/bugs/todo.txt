@@ -1,0 +1,250 @@
+
+# t-2.slk
+
+simplify true & not(x>0).
+
+Why is there a parser error?
+
+ERROR: at t-2.slk_9:20_9:23 
+Message: expected cexp, found pure_constr
+ File "t-2.slk", line 9, characters 22-23
+ error: Failure("expected cexp, found pure_constr")
+ at:(Program not linked with -g, cannot print stack backtrace)
+Fatal error: exception Failure("expected cexp, found pure_constr")
+========================================================================
+# i5-4a.slk
+
+infer [y] true   |- y!=0.
+print residue.
+
+ <1>emp&((y+1)<=0 | 1<=y)&{FLOW,(19,20)=__norm}[]
+ inferred pure: [((y+1)<=0 | 1<=y)]
+
+# can we have simpler result, namely y!=0
+
+========================================================================
+# i7-6a.slk
+
+Below needs to split the disjunct more deeply,
+and return Some(..)
+
+infer [n] q::ll<m>@M&n=m+1 |-  emp&q=null.
+
+imply_mix_formula#1@2
+imply_mix_formula#1 inp1 : n=1+m & 0<=m
+imply_mix_formula#1 inp2 :Some( n=1+m & (((1<=m & q!=null) | (m=0 & q=null))))
+imply_mix_formula#1 inp3 : q=null
+imply_mix_formula#1 inp4 : []
+imply_mix_formula#1@2 EXIT out :(false,None)
+
+# i7-6b.slk split outer disj on LHS
+
+infer [n] (q=null & m=0 & m=n-1 & n>=0 | q!=null & m>0 & m=n-1 & n>=0) |- q=null.
+
+imply_mix_formula#1@1
+imply_mix_formula#1 inp1 : ((q=null & m=0 & n=m+1 & 0<=n) | (q!=null & 0<m & n=m+1 & 0<=n))
+imply_mix_formula#1 inp2 :None
+imply_mix_formula#1 inp3 : q=null
+imply_mix_formula#1 inp4 : []
+imply_mix_formula#1@1 EXIT out :(false,Some(([ q=null & m=0 & n=m+1 & 0<=n, q!=null & 0<m & n=m+1 & 0<=n],[])))
+
+
+========================================================================
+# i8-2.slk
+
+infer [m] m=-1 |- y::node<_,_> & m>=0.
+
+There is a contradiction but why isn't it being picked?
+
+!!! early contra detect:false
+early_hp_contra_detection#1@4@3
+early_hp_contra_detection#1 inp1 : emp&m+1=0&{FLOW,(19,20)=__norm}[]
+  es_infer_vars: [m]
+early_hp_contra_detection#1 inp2 : y::node<Anon_12,Anon_13>@M&0<=m&{FLOW,(19,20)=__norm}[]
+early_hp_contra_detection#1@4 EXIT out :no contra
+ es = None
+========================================================================
+# i8-3.slk  (i) FIXED by Thai
+
+GOT
+===
+infer [y] m=-1 |- y::node<a,b> & m>=0.
+ <1>hfalse&false&{FLOW,(19,20)=__norm}[]
+ inferred heap: [y::node<inf_a_33,inf_b_34>@inf_ann_32]
+ inferred pure: [b!=inf_b_34; inf_ann_32<=0]
+
+TWO PROBLEMS
+(i) why is b inferred for pure?
+
+This seems to be triggered here due to an incorrect infer_lhs_contra
+
+!!!:0: 0: >>>>>> infer_lhs_contra <<<<<<
+!!!:0: 0: trigger cond   : :ante contradict with conseq
+!!!:0: 0: LHS pure       : : m+1=0 & a=inf_a_33 & b=inf_b_34 & inf_ann_32<=0 & y!=null
+!!!:0: 0: ovrlap inf vars: :[inf_a_33,inf_b_34,inf_ann_32,y]
+!!!:0: 0: pre infer   : : (b!=inf_b_34 | inf_ann_32>0 | y=null)
+!!!:0: 0: new pre infer   : : b!=inf_b_34
+!!!:0: 0: pre thus   : : y!=null & inf_ann_32<=0 & inf_ann_32<=0
+
+(ii) why did we not fail earlier as there was already a
+    contradiction that could not be resolved by lhs_contra.
+========================================================================
+# i8-3.slk: FIXED 
+
+!!! early contra detect:false
+!!! early failure due to lhs-rhs contra detected
+!!! between ante and conseq
+!!! ante (in ctx): es_formula: emp&m+1=0&{FLOW,(19,20)=__norm}[]
+!!! conseq: y::node<a,b>@M&0<=m&{FLOW,(19,20)=__norm}[]
+!!! Loc : please add suitable must-error message
+
+infer [y] m=1 |- y::node<a,b> & m>=0.
+print residue.
+========================================================================
+# i13-5.slk --sa-en-cont see i13-5a.slk
+
+
+infer [z,H1] x::node<z> * H1(y)  |- x::lseg<z> * y::lseg<null>.
+
+Succeeds individually but fails when put together
+
+!!! >>>>>> mismatch ptr z::lseg<z_32>@M is not found (or inst) in the lhs <<<<<<
+!!! dumping for sleek_dump(fail)
+Entail (1) : Fail.
+
+infer [z,H1] x::node<z>   |- x::lseg<z>.
+print residue.
+--> OK
+
+infer [z,H1] H1(y)  |- y::lseg<null> .
+print residue.
+--> OK
+
+infer [z,H1] x::node<z> * H1(y)  |- x::lseg<z>.
+print residue.
+--> OK
+
+infer [z,H1] H1(y)*x::node<z>  |- x::lseg<z> * y::lseg<null> .
+print residue.
+--> fails
+========================================================================
+# i13-5a.slk --sa-en-cont. FIXED: remove do_infer_heap
+
+infer [z,H1] x::node<z> * H1(y)  |- x::lseg<z> * y::lseg<null>.
+========================================================================
+# i2.slk FIXED
+
+fails but should succeed..
+
+//(3)
+infer [q] true |- q::ll<n> .
+print residue.
+========================================================================
+# i2a.slk
+
+checkentail already succeeds; so why do we still
+infer q=null? It is really redundant!
+
+Entail 1: Valid. 
+
+
+Entail (2) : Valid. 
+
+ <1>emp&q=null & n=0&{FLOW,(19,20)=__norm}[]
+ inferred pure: [n=0]
+========================================================================
+# x-2.slk
+
+slk_simplify x!=null & x!=y.
+
+this gives:
+Simplify  (2): x!=null & ((x<y | y<x))
+
+Can we normalise further to:
+Simplify  (2): x!=null & (x!=y)
+========================================================================
+# x-3.slk
+
+pure does not infer relation/heap_pred properties.
+We need a super_infer_pure that would handle also relation
+and predicates.
+
+Pure version obtained:
+----------------------
+ <1>emp&R(fld5) & q_34=z & inf_ann_39=@M & inf_p_40=null & inf_p_40!=x & x!=null & z=null & fld5=null&{FLOW,(19,20)=__norm}[]
+ inferred pure: [fld5=null; z=null]
+
+Mixed version currently fails, but I would expect:
+ inferred pure: [z=null]
+ inferred rel   [R(fld5) --> fld5=null]
+
+========================================================================
+
+# x-4.slk 
+Why did extra ante cause inference to fail?
+Without it, inference success with inf_n_32=n.
+
+infer [inf_ann_31,inf_n_32,n,q]
+ n=0 & inf_ann_31=@M
+ //& ((inf_n_32=0 & q=null) | (1<=inf_n_32 & q!=null))
+ |-  emp&inf_n_32=n.
+print residue.
+
+# x-3.slk
+
+Below works.
+
+infer[fld5,z]
+R(fld5) &
+q_34=z & inf_ann_39=@M & inf_p_40=null & inf_p_40!=x & x!=null
+|-x!=z & inf_p_40=z &fld5=null.
+print residue.
+
+but an identical inference (LHS/RS) with an extra inferrable  
+
+var fails. I think this problem wasn't there before
+and need to be fixed.
+
+
+infer[fld5,z,inf_p_40]
+R(fld5) &
+q_34=z & inf_ann_39=@M & inf_p_40=null & inf_p_40!=x & x!=null
+|-x!=z & inf_p_40=z &fld5=null.
+print residue.
+
+Please test i13-5d.slk which should work if you fix this problem.
+========================================================================
+# x-4.slk
+
+--en-norm-disj (why simplify to true?)
+
+id: 23<2; prover: OMEGA CALCULATOR; loc: _0:0_0:0; kind: Sleek_Entail(2)
+ raw proof:SIMPLIFY:{[n, inf_n_32, q] : ( (not (((n = 0) & (((inf_n_32 = 0) & (q <= 0)) | ((1 <= inf_n_32) & (q != 0)))))) )};
+ raw result:{[n,inf_n_32,q]: inf_n_32 <= 0 && 1 <= q} union {[n,inf_n_32,q]: inf_n_32 <= -1 && q <= 0} union {[n,0,q]: q <= 0 && 1 <= n} union {[n,0,q]: n <= -1 && q <= 0} union {[n,inf_n_32,0]: 1 <= inf_n_32} union {[n,inf_n_32,q]: q <= -1 && 1 <= n && 1 <= inf_n_32} union {[n,inf_n_32,q]: n <= -1 && q <= -1 && 1 <= inf_n_32} union {[n,inf_n_32,q]: 1 <= inf_n_32 && 1 <= q && 1 <= n} union {[n,inf_n_32,q]: n <= -1 && 1 <= inf_n_32 && 1 <= q}
+ Simplify:  !((n=0 & (((inf_n_32=0 & q=null) | (1<=inf_n_32 & q!=null)))))
+ res:  true
+ 
+--dis-norm-disj
+
+ id: 23<2; prover: OMEGA CALCULATOR; loc: _0:0_0:0; kind: Sleek_Entail(2)
+ raw proof:SIMPLIFY:{[n, inf_n_32, q] : ( (not (((n = 0) & (((inf_n_32 = 0) & (q <= 0)) | ((1 <= inf_n_32) & (q != 0)))))) )};
+ raw result:{[n,inf_n_32,q]: inf_n_32 <= 0 && 1 <= q} union {[n,inf_n_32,q]: inf_n_32 <= -1 && q <= 0} union {[n,0,q]: q <= 0 && 1 <= n} union {[n,0,q]: n <= -1 && q <= 0} union {[n,inf_n_32,0]: 1 <= inf_n_32} union {[n,inf_n_32,q]: q <= -1 && 1 <= n && 1 <= inf_n_32} union {[n,inf_n_32,q]: n <= -1 && q <= -1 && 1 <= inf_n_32} union {[n,inf_n_32,q]: 1 <= inf_n_32 && 1 <= q && 1 <= n} union {[n,inf_n_32,q]: n <= -1 && 1 <= inf_n_32 && 1 <= q}
+ Simplify:  !((n=0 & (((inf_n_32=0 & q=null) | (1<=inf_n_32 & q!=null)))))
+ res:  ((inf_n_32=0 & q=null & n!=0) | (q=null & inf_n_32!=0) | ((q+1)<=0 & 
+1<=inf_n_32 & n!=0) | (1<=inf_n_32 & q!=null & n!=0) | (inf_n_32<=0 & 
+q!=null))
+
+========================================================================
+========================================================================
+========================================================================
+========================================================================
+========================================================================
+========================================================================
+========================================================================
+========================================================================
+========================================================================
+========================================================================
+========================================================================
+========================================================================
+========================================================================
+========================================================================

@@ -1,0 +1,43 @@
+
+data node {
+	int val; 
+	node next; 
+}.
+
+
+pred bnd1<n,mi,mx> == self = null & n = 0 & mi = \inf & mx=-\inf or 
+  self::node<d, p> * p::bnd1<n-1, tmi,tmx> & mi = min(d, tmi) & mx=max(d,tmx) & -\inf<d<\inf
+  inv n>=0
+/*
+  inv self=null & n=0 & mi=\inf & mx=-\inf |
+      self!=null & n=1 & mi=mx & -\inf<mi<\inf |
+      self!=null & n>1 & mi<=mx & -\inf<mi & mx<\inf
+*/
+.
+
+checkentail x::bnd1<n,mi,mx> & n=1 |- x::node<a,null> 
+ //& a=mx 
+ & mi=a 
+.
+
+checkentail x::bnd1<n,mi,mx> & n=0 |- mx=-\inf.
+
+checkentail x::bnd1<n,mi,mx> & n=0 |- mi=\inf.
+
+checkentail mi=min(a,dmi) & mx=max(a,dmx)
+  & dmi=\inf & dmx=-\inf |- a=mi & mx=a
+.
+
+checkentail x::bnd1<0,dmi,dmx>  
+   & n=0 & dmi=\inf 
+   //& 0=(\inf)+dmx
+   & dmx=-\inf
+   & mi=min(a,dmi) & mx=max(a,dmx)
+   |- a=mi & 
+       mx=a
+      .
+
+
+/*
+id: 38; caller: []; line: 31; classic: false; kind: POST; hec_num: 4; evars: [mx_1195,flted_31_1196,mi1_1197]; infer_vars: []; c_heap: x'::node<d_1151,xnext_1194>@M
+*/

@@ -1,0 +1,25 @@
+// examples from bi-abduction paper
+
+data node {
+	node next;	
+}.
+
+
+pred lseg<p> == self = p 
+	or self::node<q> * q::lseg<p> //& self!=p 
+  inv true.
+  
+checkentail x::node<r> |- x::lseg<p>.
+print residue.
+/*
+ <1>x::node<r>@M&p=x&{FLOW,(19,20)=__norm}[]
+<2>emp&q_22=r & p=q_22&{FLOW,(19,20)=__norm}[]
+*/
+  
+checkentail x::node<r> |- x::lseg<r>.
+print residue.
+
+/*
+ <1>emp&q_36=r&{FLOW,(19,20)=__norm}[]
+*/
+

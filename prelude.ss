@@ -1,7 +1,5 @@
-
-
-class __DivByZeroErr  extends __Error {}
-class __ArrBoundErr  extends __Error {}
+class __DivByZeroErr extends __Error {}
+class __ArrBoundErr extends __Error {}
 
 int add___(int a, int b) 
   requires true 

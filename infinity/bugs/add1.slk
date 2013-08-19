@@ -1,0 +1,24 @@
+slk_simplify (nnn=0 & lg+(\inf)=0 | nnn>0 & lg<\inf).
+
+//slk_simplify (nnn=0 & lg=-ninfinity | nnn>0 & lg <infinity).
+//slk_simplify (nnn=0 & lg=neginfinity | nnn=0 & lg<infinity).
+
+slk_simplify (nnn=0 & lg = -\inf) | (nnn = 0 & lg< \inf).
+
+slk_pairwise (nnn=0 & lg = -\inf) | (nnn = 0 & lg< \inf).
+
+slk_simplify -\inf<\inf & (nnn=0 & lg = -\inf | nnn = 0 & lg< \inf).
+/*
+FIXED
+norm_pure_input@13
+norm_pure_input inp1 : 0<((\inf)+(\inf)) & (((nnn=0 & lg+(\inf)=0) | (nnn=0 & lg<(\inf))))
+norm_pure_input@13 EXIT: ZInfinity'<ZInfinity & 0<(ZInfinity+ZInfinity) & (((nnn=0 & 
+ZInfinity'=lg) | (nnn=0 & lg<ZInfinity)))
+
+Above introduced 0<(ZInfinity+ZInfinity).
+I think we should have simplified \inf+\inf --> \inf,
+so that 0<\inf is simply true.
+
+*/
+
+

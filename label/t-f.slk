@@ -1,0 +1,33 @@
+data node {
+ int mark;
+ node left;
+ node right;
+}.
+
+pred tx<"n":g,"n":s,"s":M> == true&["n":self = g & s!=null & (g=null | g=s) ; "s": M={}]
+   or self::node<v,l,r> * l::tx<g,s,M1> * r::tx<null,s,M2> & ["n": self != g & self != s ;"s": M=union({v},M1,M2)]
+   or self::node<v,l,r> * l::tx<null,s,M1> * r::tx<g,s,M2> & ["n": self != g & self != s ;"s": M=union({v},M1,M2)]
+inv true&["n": s!=null & (g=null & self!=s | g=s & self!=null); "n","s":(self=g & M={} | self!=g & M!={})].
+
+checkentail 
+   prev::tx<b,sent_1313,M2>@M&
+  AndList( 
+  "":cur=cur' & prev=prev' & sent=sent' & a!=null & b=null & 
+         cur!=sent & a=sent
+ ; "n": a=cur' & sent_1312!=null 
+& ((a=null | a=sent_1312)) 
+&  sent=sent_1312 & sent=sent_1313
+ ; "s":M1={}) 
+ |-  cur'::node<mark_48_986',left_48_987',right_48_988'>@L.
+
+print residue. 
+
+/*
+# t-f.slk  -tp om --lbl-en-aggr-sat
+
+Currently fails:
+  Entail 1: Fail.
+
+It should not have failed if equalities were properly propagated.
+
+*/

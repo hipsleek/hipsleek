@@ -1,0 +1,39 @@
+
+data node {
+	int val; 
+	node next; 
+}.
+
+pred  sortll<mi> == self=null & mi=\inf
+   or self::node<mi, p> * p::sortll<m2> & -\inf<mi<\inf & mi<=m2
+//inv self!=null & -\inf<mi<\inf | (self=null & mi=\inf)
+.
+
+
+//(17) fail but should succeed
+checkentail  mi+3=\inf |- mi=\inf.
+print residue.
+
+
+//(18) fail but should succeed
+checkentail  mi=\inf-3 |- mi=\inf.
+print residue.
+
+
+//(19) valid but should fail (UNSOUND)
+checkentail  mi=\inf-3 |- mi<\inf.
+print residue.
+
+/*
+s-s1a.slk  These are wrong.
+
+Entail 1: Fail.
+
+
+Entail 2: Fail.
+
+
+Entail 3: Valid. 
+
+ <1>emp&mi+3=\inf&{FLOW,(19,20)=__norm}[]
+*/

@@ -87,6 +87,33 @@ let check_repatch_memo_pure l s =
   else 
     let _ = report_warning no_pos ("repatching memo_pure"^s) in
     repatch_memo_pure l
+(*
+
+type: Mcpure_D.memoised_group ->
+  'a ->
+  ('a -> Mcpure_D.memoised_group -> (Mcpure_D.memoised_group * 'b) option) *
+  (Mcpure_D.memoised_constraint -> 'a -> Mcpure_D.memoised_constraint * 'c) *
+  ('a -> Mcpure_D.var_aset -> Mcpure_D.var_aset * 'c list) *
+  (Cpure.formula -> 'a -> Cpure.formula * 'c) *
+  (Cpure.spec_var -> 'a -> Cpure.spec_var * 'c) ->
+  ('a -> Mcpure_D.memoised_group -> 'a) ->
+  ('c list -> 'b) -> Mcpure_D.memoised_group * 'b
+
+Expecting
+=========
+
+type: memo_pure ->
+  'a ->
+  ('a -> memo_pure -> (memo * 'a) option) 
+  ('a -> memo_pure -> 'a) ->
+  ('a list -> 'a) -> memo_pure * 'b
+
+*)
+
+let trans_memo_pure (e: memo_pure) (arg: 'a) f f_arg (comb:'b list->'b) : (memo_pure * 'b) =
+  match f arg e with
+    | Some (r,other) -> (r,other)
+    | None -> (e,comb [])
 
 let trans_memo_group (e: memoised_group) (arg: 'a) f (f_arg:'a->memoised_group->'a) f_comb : (memoised_group * 'b) =
   let f_grp, f_memo_cons, f_aset, f_slice, f_fv = f in
@@ -1140,7 +1167,7 @@ and memo_pure_push_exists_slice_x (f_simp, do_split) (qv: spec_var list) (f0: me
    ands them and sends them to simplify
 *)
 and memo_pure_push_exists_all fs qv f0 pos =
-  Debug.no_3_loop "memo_pure_push_exists_all" !print_sv_l_f !print_mp_f (fun _ -> "")
+  Debug.no_3 "memo_pure_push_exists_all" !print_sv_l_f !print_mp_f (fun _ -> "")
       !print_mp_f (memo_pure_push_exists_all_x fs) qv f0 pos
       
 and memo_pure_push_exists_all_x (f_simp,do_split) (qv:spec_var list) (f0:memo_pure) pos : memo_pure=
@@ -2368,7 +2395,7 @@ let get_subst_equation_mix_formula p qvar only_vars = match p with
   | OnePF f -> 
     let l,f = get_subst_equation_formula f qvar only_vars in
     (l,OnePF f)
-    
+
 let get_all_vv_eqs_mix f = match f with 
 	| MemoF f -> 
 		let l,f = get_all_vv_eqs_memo f in
@@ -2376,7 +2403,13 @@ let get_all_vv_eqs_mix f = match f with
 	| OnePF f -> 
 		let l,f = get_all_vv_eqs f in
 		l, OnePF f
-	
+
+let get_all_vv_eqs_mix f = 
+  let pr1 = !print_mix_f in
+  let pr = pr_list (pr_pair !print_sv_f !print_sv_f) in
+  let pr2 = pr_pair pr !print_mix_f in
+  Debug.no_1 "get_all_vv_eqs_mix" pr1 pr2 get_all_vv_eqs_mix f 
+
 let mix_cons_filter f fct = match f with
   | MemoF f -> MemoF (cons_filter f fct)
   | OnePF _ -> f
@@ -2439,6 +2472,17 @@ let trans_mix_formula (e: mix_formula) (arg: 'a) f f_arg f_comb : (mix_formula *
     let f,r = trans_formula e arg pf pa f_comb in
     (OnePF f,r)
     
+let trans_n_mix_formula (e: mix_formula) (arg: 'a) f f_arg f_comb : (mix_formula * 'b) = 
+  let mf,pf = f in
+  let ma,pa = f_arg in
+  match e with
+  | MemoF e-> 
+    let f,r = trans_memo_pure e arg mf ma f_comb in
+    (MemoF f, r)
+  | OnePF e -> 
+    let f,r = trans_formula e arg pf pa f_comb in
+    (OnePF f,r)
+
 (*find constraints in f that related to specvar in v_l*)    
 let find_rel_constraints (f:mix_formula) (v_l :spec_var list):  mix_formula = match f with
   | MemoF f -> 
@@ -2770,8 +2814,22 @@ let translate_waitlevel_mix_formula (mf : mix_formula) : mix_formula =
   Debug.no_1 "translate_waitlevel_mix_formula" !print_mix_formula !print_mix_formula 
       translate_waitlevel_mix_formula_x mf
 
-let remove_disj_clauses (mf: mix_formula): mix_formula * bool = 
-  let mf_conjs = split_conjunctions (pure_of_mix mf) in 
-  let (disj,mf_conjs) = List.partition is_disjunct mf_conjs in
-  let mf = join_conjunctions mf_conjs in
-  (mix_of_pure mf,not(disj==[]))
+let remove_disj_clauses (mf: mix_formula): mix_formula = 
+  let pf = pure_of_mix mf in
+  let rm_disj f = 
+    let mf_conjs = split_conjunctions f in
+    let (disj,mf_conjs) = List.partition is_disjunct mf_conjs in
+      mf_conjs 
+  in
+  let mf_conjs = rm_disj pf in
+  let mf_conjs = List.map (fun x -> match x with 
+    | AndList xs -> 
+          let ys = List.map (fun (l,a) -> (l,join_conjunctions (rm_disj a))) xs in
+          AndList ys
+    | y -> y) mf_conjs in
+  let mf = join_conjunctions (mf_conjs) in
+  mix_of_pure mf
+
+let remove_disj_clauses (mf: mix_formula): mix_formula = 
+  let pr = !print_mix_formula in
+  Debug.no_1 "remove_disj_clauses" pr pr remove_disj_clauses mf

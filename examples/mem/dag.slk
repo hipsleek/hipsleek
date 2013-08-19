@@ -12,19 +12,19 @@ pred dag0<M> == self = null & M = {}
 pred dag1<v,M> == self = null & M = {}
 	or self::node<v@M,l@L,r@L> * l::dag1<v,Ml> & r::dag1<v,Mr> & M = union(Ml,Mr,{self})
 	inv true
-	memE M->(node<@M,@L,@L> & true).
+	memE M->(node<v@M,@L,@L> & true).
 
 pred dag2<v,M> == self = null & M = {} & v = 0
 	or self::node<0,l@L,r@L> * l::dag2<_,Ml> & r::dag2<_,Mr> & M = union(Ml,Mr,{self}) & v = 1
 	or self::node<1@I,l@L,r@L> * l::dag2<1,Ml> & r::dag2<1,Mr> & M = union(Ml,Mr,{self}) & v = 2
 	inv 0 <= v <= 2
-	memE M->(node<@M,@L,@L> & v = 1 ; node<@I,@L,@L> & v = 2).
+	memE M->(node<0@M,@L,@L> & v = 1 ; node<1@I,@L,@L> & v = 2).
 
 pred dag3<v,M> == self = null & M = {} & v = 0
 	or self::node<0,l@L,r@L> * l::dag3<1,Ml> & r::dag3<1,Mr> & M = union(Ml,Mr,{self}) & v = 1
 	or self::node<0,l@L,r@L> * l::dag3<_,Ml> & r::dag3<_,Mr> & M = union(Ml,Mr,{self}) & v = 2
 	or self::node<1,l@L,r@L> * l::dag3<3,Ml> & r::dag3<3,Mr> & M = union(Ml,Mr,{self}) & v = 3
 	inv 0 <= v <= 3
-	mem M->(node<@M,@L,@L> & 1 <= v <= 2 ; node<@I,@L,@L> & 2 <= v <= 3).
+	mem M->(node<0@M,@L,@L> & 1 <= v <= 2 ; node<@I,@L,@L> & 2 <= v <= 3).
 		
 checkentail true |- x::dag0<M>.

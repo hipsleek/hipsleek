@@ -54,7 +54,8 @@ let report_error e =
   flush stdout;
   failwith e.error_text
 
-let report_no_pattern () = report_error {error_loc=no_pos; error_text="HIP/SLEEK error, unhandled pattern - very poor coding, lazy programmers !!!"}
+let report_no_pattern () = report_error {error_loc=no_pos; error_text="HIP/SLEEK error, unhandled pattern"}
+(*asankhs: Lets not use such wording in external errors and exceptions - very poor coding, lazy programmers !!!*)
   
 let report_error1 e s=
   (Printf.printf "%s\n" e.error_text);

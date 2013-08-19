@@ -1,0 +1,35 @@
+#eq-view-1.slk: DONE
+
+equivalent definition. generate equiv lemmas (ll <-> ll1):
+ - left
+ - right
+
+===================================================================
+#sem-mat.slk: DONE
+
+two views is not the same length of paras
+
+ - need check cont parameter
+ - search to matching cont parameter with an inst termination value
+
+ll<> and lseg<p>
+
+generate lemma: self::ll<> <--> self::lseg<null>
+===================================================================
+#subsume-lem.slk:
+
+two views is not the same length of paras and
+ - not in cont case
+ - set of paras is a subset of another set of paras
+
+ll_size<n> and ll<>
+
+generate lemma: self::ll_size<n> --> self::ll
+===================================================================
+
+
+===================================================================
+
+===================================================================
+
+===================================================================

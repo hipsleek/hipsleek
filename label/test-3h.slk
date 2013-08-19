@@ -1,0 +1,21 @@
+
+//checkentail true & ["y","x":y>2; "x":y>1; "z":y>3] |- true & ["x":y>2].
+//checkentail true & ["y","x":y>2; "x":y>1; "z":y>0] |- true & ["z":y>2].
+//checkentail true & ["y","x":y>2; "x":y>1; "z":y>0] |- true & ["y":y>2].
+//checkentail true & ["y","x":y>2; "x":y>1; "z":y>0] |- true & ["y","z":y>2].
+//checkentail true & ["y","x":y>2; "x":y>1; "z":y>0] |- true & ["x","z":y>2].
+//checkentail true & ["y","x":y>2; "x":y>1; "z":y>0] |- true & ["x":y>2; "z":y>6].
+//checkentail y=8 & ["y","x":y>2; "x":y>1; "z":y>0] |- true & ["x":y>2; "z":y>6].
+checkentail y=8 & ["y","x":y>2; "x","":y>1; "z","x":y>0] 
+    |- false.
+//checkentail y=8 & ["y","x":y>2; "x":y>1; "z":y>0] |- true & ["x":y>0; "z":y>6].
+//checkentail y=8 & ["y":y>2; "x":y>1; "z":y>0] |- true & ["x":y>2; "z":y>6].
+//checkentail y=8 & ["y","":y>2; "x","":y>3; "z":y>0] |- true & ["z","":y>6].
+
+/*
+
+
+"x",.. |-   
+
+*/
+

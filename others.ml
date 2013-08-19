@@ -26,6 +26,7 @@ type proving_kind =
 	| PK_If_Stmt
 	| PK_Pre_Oblg
 	| PK_Post_Oblg
+        | PK_Pred_Split
 	| PK_Assign_Stmt
 	| PK_Assert
 	| PK_BIND
@@ -59,6 +60,7 @@ let string_of_proving_kind pk =
     | PK_POST -> "POST"
     | PK_Pre_Oblg -> "PRE-OBLIGATION"
     | PK_Post_Oblg -> "POST-OBLIGATION"
+    | PK_Pred_Split -> "PK_Pred_Split"
     | PK_Unknown -> "UNKNOWN"
 
 let sleek_kind = new Gen.stack_pr string_of_proving_kind (==)
@@ -136,6 +138,7 @@ type tp_type =
   | CM (* CVC3 then MONA *)
   | Coq
   | Z3
+  | OCRed
   | Redlog
   | Mathematica
   | RM (* Redlog and Mona *)
@@ -162,6 +165,7 @@ let string_of_prover prover = match prover with
 	| CM  -> "CM"
 	| Coq -> "COQ"
 	| Z3 -> "Z3"
+	| OCRed -> "OC and REDLOG"
 	| Redlog -> "REDLOG (REDUCE LOGIC)"
 	| RM -> "Redlog, Mona"
         | Mathematica -> "Mathematica"
@@ -176,3 +180,13 @@ let string_of_prover prover = match prover with
 
 let last_tp_used = new Globals.store LOG string_of_prover
 
+let last_proof_string = new Globals.store "no proof" pr_id
+
+let last_proof_result = new Globals.store "no result" pr_id
+
+(* 
+   this is meant to record the last commands in the
+   different category encounterd by sleek/hip; but it
+   should perhaps be integrated with the logging command
+   option to avoid duplication?
+*)

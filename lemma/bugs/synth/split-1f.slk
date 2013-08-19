@@ -1,0 +1,53 @@
+data node{
+	int val;
+	node next;
+}.
+
+pred zip<y> ==
+  self=null & y=null
+or self::node<_,p>*y::node<_,q>*p::zip<q>
+inv true.
+
+pred ll<> == self=null
+ or self::node<_,q>*q::ll<>
+inv true.
+
+HeapPred P1(node a).
+HeapPred P2(node a).
+HeapPred P3(node a).
+
+
+lemma self::zip<y> -> P1(self) * P2(y).
+
+
+//5
+infer [P1,P2]   
+  x::node<_,p>*y::node<_,q>*r::zip<qq> |- P1(x) * P2(y) * r::zip<mm>.
+print residue.
+
+
+//5
+infer [P1,P2]   
+  x::node<_,p>*y::node<_,q>*r::zip<qq> |- P1(x) * P2(y).
+print residue.
+
+/*
+
+ - predicate-splitting
+ - equivalence checking
+ - useless parameter elimination
+ - subsumption checking
+   P(..) --> Q(..)
+   Q(..) --> P(..)
+ - refactoring
+ - split lemma synthesis
+
+   x::ll<>  --> x::U<p> * p::ll<>
+   x::ll<>  <-- x::U<p> * p::ll<>
+
+   x::ll<B>  --> x::U<p> * p::ll<>
+   x::ll<B>  <-- x::U<p> * p::ll<>
+
+
+
+*/

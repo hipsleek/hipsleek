@@ -14,6 +14,7 @@ module F = Iformula
 module P = Ipure
 module Err = Error
 module CP = Cpure
+module LO = Label_only.LOne
 
 type typed_ident = (typ * ident)
 
@@ -35,7 +36,7 @@ type prog_decl = {
     (* An Hoa: relational declaration *)
     prog_proc_decls : proc_decl list;
     prog_barrier_decls : barrier_decl list;
-    mutable prog_coercion_decls : coercion_decl list
+    mutable prog_coercion_decls : coercion_decl_list list
 }
 
 and data_field_ann =
@@ -68,7 +69,7 @@ and view_decl =
     (* view_frac_var : iperm; (\*LDK: frac perm ??? think about it later*\) *)
     mutable view_vars : ident list;
     view_pos : loc;
-    view_labels : Label_only.spec_label list;
+    view_labels : LO.t list * bool;
     view_modes : mode list;
     mutable view_typed_vars : (typ * ident) list;
     view_kind : view_kind;
@@ -201,13 +202,22 @@ proc_test_comps: test_comps option}
 and coercion_decl = { coercion_type : coercion_type;
 coercion_exact : bool;
 coercion_name : ident;
+coercion_infer_vars : ident list;
 coercion_head : F.formula;
 coercion_body : F.formula;
 coercion_proof : exp }
+
+and coercion_decl_list = {
+    coercion_list_elems : coercion_decl list;
+    coercion_list_kind:   lemma_kind;
+}
+
 and coercion_type = 
   | Left
   | Equiv
   | Right
+
+
 
 (********vp:for parse compare file************)
 and cp_file_comps = 
@@ -1277,16 +1287,17 @@ and collect_data_view_from_pure_bformula (data_names: ident list) (bf : P.b_form
   | P.ListIn _ | P.ListNotIn _ | P.ListAllN _ | P.ListPerm _ -> ([], [])
   | P.VarPerm _ | P.RelForm _ -> ([], [])
 
-and collect_data_view_from_pure_exp (data_names: ident list) (e0 : P.exp) : (ident list) * (ident list) =
+and collect_data_view_from_pure_exp_x (data_names: ident list) (e0 : P.exp) : (ident list) * (ident list) =
   match e0 with
   | P.Ann_Exp (e, t, pos) -> (
       match e with
-      | P.Var ((self, _), _) -> 
-          let t_id = string_of_typ t in
-          if (List.mem t_id data_names) then
-            ([t_id], [])       (* type annotation of self to view decl *)
-          else
-            report_error pos ("self has invalid type: " ^ t_id)
+      | P.Var ((id, _), _) ->
+            if String.compare id self != 0 then ([],[]) else
+              let t_id = string_of_typ t in
+              if (List.mem t_id data_names) then
+                ([t_id], [])       (* type annotation of self to view decl *)
+              else
+                report_error pos ("self has invalid type: " ^ t_id)
       | _ -> ([], [])
     )
   | P.Null _ | P.Level _  | P.Var _ -> ([], [])
@@ -1298,7 +1309,13 @@ and collect_data_view_from_pure_exp (data_names: ident list) (e0 : P.exp) : (ide
   | P.ListLength _ | P.ListAppend _ | P.ListReverse _ -> ([], [])
   | P.ArrayAt _ | P.Func _ -> ([], [])
 
-  
+and collect_data_view_from_pure_exp (data_names: ident list) (e0 : P.exp) : (ident list) * (ident list) =
+  let pr1 = !P.print_formula_exp in
+  let pr2 = pr_list pr_id in
+  let pr3 = pr_pair pr2 pr2 in
+  Debug.no_1 "collect_data_view_from_pure_exp" pr1 pr3
+      (fun _ -> collect_data_view_from_pure_exp_x data_names e0) e0
+
 and find_data_view_x (data_names: ident list) (f:Iformula.struc_formula) pos :  (ident list) * (ident list) =
   let (dl,el) = collect_data_view_from_struc data_names f in
   if (List.length dl>1) then report_error pos ("self points to different data node types")
@@ -1382,8 +1399,8 @@ and update_fixpt (vl:(view_decl * ident list *ident list) list)  =
   Debug.no_1 "update_fixpt" pr pr_none update_fixpt_x vl
 
 and set_check_fixpt (data_decls : data_decl list) (view_decls: view_decl list)  =
-  let pr = pr_list !print_data_decl in 
-  let pr2 = pr_list !print_view_decl in 
+  let pr = pr_list_ln !print_data_decl in 
+  let pr2 = pr_list_ln !print_view_decl in 
   Debug.no_2 "set_check_fixpt" pr pr2 pr_none (fun _ _ -> set_check_fixpt_x data_decls view_decls )  data_decls view_decls
 
 and set_check_fixpt_x  (data_decls : data_decl list) (view_decls : view_decl list)  =
@@ -1396,7 +1413,7 @@ and set_check_fixpt_x  (data_decls : data_decl list) (view_decls : view_decl lis
 
 and data_name_of_view (view_decls : view_decl list) (f0 : F.struc_formula) : ident = 
   let pr = !print_struc_formula in
-  Debug.no_1_loop "data_name_of_view" pr (fun x->x)
+  Debug.no_1(* _loop *) "data_name_of_view" pr (fun x->x)
       (fun _ -> data_name_of_view_x (view_decls : view_decl list) (f0 : F.struc_formula)) f0
 
 and data_name_of_view_x (view_decls : view_decl list) (f0 : F.struc_formula) : ident = 
@@ -1709,7 +1726,7 @@ let exists_path (c1 : ident) (c2 : ident) :bool =
 	  with 
  		| _ -> false
 
-let exists_path c1 c2 =	Debug.no_2_loop "exists_path" pr_id pr_id  string_of_bool exists_path c1 c2 
+let exists_path c1 c2 =	Debug.no_2(* _loop *) "exists_path" pr_id pr_id  string_of_bool exists_path c1 c2 
 		
 (* (\* is t1 a subtype of t2 *\) *)
 let sub_type2 (t1 : typ) (t2 : typ) =  
@@ -2067,7 +2084,7 @@ let rec append_iprims_list (iprims : prog_decl) (iprims_list : prog_decl list) :
                 prog_axiom_decls = hd.prog_axiom_decls @ iprims.prog_axiom_decls; (* [4/10/2011] An Hoa *)
                 prog_hopred_decls = hd.prog_hopred_decls @ iprims.prog_hopred_decls;
                 prog_proc_decls = hd.prog_proc_decls @  iprims.prog_proc_decls;
-                prog_coercion_decls = hd.prog_coercion_decls @ iprims.prog_coercion_decls;
+                prog_coercion_decls = hd.prog_coercion_decls @  iprims.prog_coercion_decls;
 				prog_barrier_decls = hd.prog_barrier_decls @ iprims.prog_barrier_decls;
 				} in
              append_iprims_list new_iprims tl
@@ -2288,7 +2305,17 @@ let add_bar_inits prog =
 	prog_data_decls = prog.prog_data_decls@b_data_def; 
 	prog_proc_decls = prog.prog_proc_decls@b_proc_def; }
 
-	
+let mk_lemma lemma_name coer_type ihps ihead ibody=
+  { coercion_type = coer_type;
+  coercion_exact = false;
+  coercion_infer_vars = ihps;
+  coercion_name = (lemma_name);
+  coercion_head = (F.subst_stub_flow F.top_flow ihead);
+  coercion_body = (F.subst_stub_flow F.top_flow ibody);
+  coercion_proof = Return ({ exp_return_val = None;
+  exp_return_path_id = None ;
+  exp_return_pos = no_pos })}
+
 let gen_normalize_lemma_comb ddef = 
  let self = (self,Unprimed) in
  let lem_name = "c"^ddef.data_name in
@@ -2300,6 +2327,7 @@ let gen_normalize_lemma_comb ddef =
  {coercion_type = Left;
   coercion_name = lem_name;
   coercion_exact = false;
+  coercion_infer_vars = [];
   coercion_head = F.formula_of_heap_1 (F.mkStar (gennode perm1 args1) (gennode perm2 args2) no_pos) no_pos;
   coercion_body = F. mkBase (gennode perm3 args1) pure  top_flow [] no_pos;
   coercion_proof =  Return { exp_return_val = None; exp_return_path_id = None ; exp_return_pos = no_pos }
@@ -2316,6 +2344,7 @@ let gen_normalize_lemma_comb ddef =
  {coercion_type = Left;
   coercion_name = lem_name;
   coercion_exact = false;
+  coercion_infer_vars = [];
   coercion_head = F.mkBase (gennode perm3 args) pure  top_flow [] no_pos;
   coercion_body = F.formula_of_heap_1 (F.mkStar (gennode perm1 args) (gennode perm2 args) no_pos) no_pos;
   
@@ -2324,9 +2353,14 @@ let gen_normalize_lemma_comb ddef =
 	
 let add_normalize_lemmas prog4 = 
 	if !perm = NoPerm || not !enable_split_lemma_gen then prog4
-	else {prog4 with prog_coercion_decls = List.fold_left(fun a c-> (gen_normalize_lemma_split c)::(gen_normalize_lemma_comb c)::a) prog4.prog_coercion_decls prog4.prog_data_decls}
-	
-	
+	else {prog4 with prog_coercion_decls =
+                let new_lems =  List.fold_left(fun a c-> (gen_normalize_lemma_split c)::(gen_normalize_lemma_comb c)::a) [] prog4.prog_data_decls in
+                let new_lst  = 
+                  { coercion_list_elems = new_lems;
+                    coercion_list_kind  = LEM;} in
+                new_lst::prog4.prog_coercion_decls
+        }
+
 let rec get_breaks e = 
 	let f e = match e with
 		| Raise {exp_raise_type = rt}-> (match rt with
@@ -2344,7 +2378,7 @@ let rec get_breaks e =
 
 let exists_return_x e0=
   let rec helper e=
-    (* let _ = Debug.info_pprint (" helper: " ^ (!print_exp e)  ) no_pos in *)
+    (* let _ = Debug.info_zprint (lazy  (" helper: " ^ (!print_exp e)  )) no_pos in *)
     match e with
       | Block { exp_block_body = bb} ->
           (* let _ = Debug.info_pprint (" BLOCK" ) no_pos in *)
@@ -2356,7 +2390,7 @@ let exists_return_x e0=
           (* let _ = Debug.info_pprint (" RAISE" ) no_pos in *)
           match et with
             | Const_flow f ->
-                (* let _ = Debug.info_pprint (" et" ^ ( f)) no_pos in *)
+                (* let _ = Debug.info_zprint (lazy  (" et" ^ ( f))) no_pos in *)
                 if (is_eq_flow  (exlist # get_hash loop_ret_flow) (exlist # get_hash f)) then true else false
             | _ -> false
       end
@@ -2385,7 +2419,7 @@ let exists_return e0=
 
 let exists_return_val_x e0=
   let rec helper e=
-    (* let _ = Debug.info_pprint (" helper: " ^ (!print_exp e)  ) no_pos in *)
+    (* let _ = Debug.info_zprint (lazy  (" helper: " ^ (!print_exp e)  )) no_pos in *)
     match e with
       | Block { exp_block_body = bb} ->
           (* let _ = Debug.info_pprint (" BLOCK" ) no_pos in *)
@@ -2397,7 +2431,7 @@ let exists_return_val_x e0=
           (* let _ = Debug.info_pprint (" RAISE" ) no_pos in *)
           match et with
             | Const_flow _ ->
-                (* let _ = Debug.info_pprint (" et" ^ ( f)) no_pos in *)
+                (* let _ = Debug.info_zprint (lazy  (" et" ^ ( f))) no_pos in *)
                 false
             | _ -> true
       end
@@ -2429,7 +2463,7 @@ let exists_return_val e0=
 
 let get_return_exp_x e0=
   let rec helper e=
-    (* let _ = Debug.info_pprint (" helper: " ^ (!print_exp e)  ) no_pos in *)
+    (* let _ = Debug.info_zprint (lazy  (" helper: " ^ (!print_exp e)  )) no_pos in *)
     match e with
       | Block { exp_block_body = bb} ->
           (* let _ = Debug.info_pprint (" BLOCK" ) no_pos in *)
@@ -2475,3 +2509,19 @@ let trans_to_exp_form exp0=
       | _ -> report_error no_pos "iast.trans_exp_to_form: not handle yet"
   in
   helper exp0
+
+let lbl_getter prog vn id = 
+  try 
+	let vd = look_up_view_def_raw 15 prog.prog_view_decls vn in
+	let vl, v_has_l = vd.view_labels in
+	if v_has_l then
+	 try
+	  Some (List.nth vl id )
+	 with Failure _ -> report_error no_pos "lbl_getter, index out of range"
+	else None
+  with 
+   | Not_found -> None 
+
+let eq_coercion c1 c2 = (String.compare c1.coercion_name c2.coercion_name) == 0
+
+let eq_coercion_list = (==)             (* to be modified *)

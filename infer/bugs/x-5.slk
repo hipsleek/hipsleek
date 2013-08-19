@@ -1,0 +1,29 @@
+data node{
+ node next;
+}.
+
+HeapPred H(node a).
+
+infer[H,z]
+H(fld5) &
+q_34=z & inf_ann_39=@M & inf_p_40=null & inf_p_40!=x & x!=null
+|-
+x!=z & inf_p_40=z &fld5=null
+.
+
+infer[H,z,inf_p_40]
+H(fld5) &
+q_34=z & inf_ann_39=@M & inf_p_40=null & inf_p_40!=x & x!=null
+|-
+(exists zz: 
+  x!=zz & inf_p_40=zz &fld5=null & zz=z
+)
+.
+print residue.
+
+/*
+infer [inf_ann_39,inf_p_40,z,H] 
+  H(flted_21_55)&q_34=z & inf_ann_39=@M & inf_p_40=null & inf_p_40!=x
+ |-  (exists z_32: emp&flted_21_55=null & z=z_32 & x!=z_32 & inf_p_40=z_32).
+print residue.
+*/

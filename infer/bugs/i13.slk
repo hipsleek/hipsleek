@@ -1,0 +1,54 @@
+// examples from bi-abduction paper
+
+data node {
+	node next;	
+}.
+
+pred ll<n> == self = null & n = 0 
+	or self::node<q> * q::ll<n-1> 
+  inv n >= 0.
+
+pred lseg<p> == self = p 
+	or self::node<q> * q::lseg<p> & self!=p 
+  inv true.
+  
+// (1) 
+//checkentail x::node<null>  |- x::ll<n>.
+//print residue.
+
+HeapPred H1(node y).
+
+/*
+//(3)
+infer [H1] H1(y)* x::node<y>  |- x::node<a> * a::lseg<null> .
+print residue.
+
+//(5)
+infer [z,H1] H1(y)*x::node<z>  |- x::lseg<z> * y::lseg<null> .
+print residue.
+
+infer [H1] H1(y)  |- y::lseg<z> .
+
+ <1>emp&z=z_35&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [// Sleek_Entail(1)
+H1(y) --> y::lseg<z_35>@M]
+
+infer [H1] H1(y)  |- y=null. 
+
+ <1>H1(y)&y=null&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [// Sleek_Entail(1)
+H1(y) --> emp&
+y=null]
+
+infer [H1] H1(y)  |- y::node<null>.
+<1>HP_40(flted_46_39)&flted_46_39=null&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [// Sleek_Entail(1)
+H1(y) --> y::node<flted_46_39>@M * HP_40(flted_46_39); 
+// Sleek_Entail(1)
+HP_40(flted_46_39) --> emp&
+flted_46_39=null]
+
+*/
+
+infer [H1] H1(y)  |- y::lseg<null> .
+print residue.

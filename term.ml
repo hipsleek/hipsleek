@@ -359,11 +359,12 @@ let strip_lexvar_pure_only f =
   (lexvar, CP.join_conjunctions other_p)
 
 let def_lbl l =
-  if l==[] then true
-  else List.exists (fun s -> s="") l
+  LO.is_common l
+  (*     if l==[] then true *)
+  (* else List.exists (fun s -> s="") l *)
 
 let def_lbl l =
-  Debug.no_1 "def_lbl" (pr_list pr_string) string_of_bool def_lbl l
+  Debug.no_1 "def_lbl" (LO.string_of) string_of_bool def_lbl l
 
 let strip_lexvar_list ls =
   let rec aux xs =
@@ -624,7 +625,7 @@ let check_term_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
   let pr = !print_mix_formula in
   let pr2 = !print_entail_state in
   let f = wrap_proving_kind PK_Term_Dec (check_term_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p) in
-   Debug.no_3_loop "trans_lexvar_rhs" pr2 pr pr
+   Debug.no_3(* _loop *) "trans_lexvar_rhs" pr2 pr pr
     (fun (es, lhs, rhs, _) -> pr_triple pr2 pr pr (es, lhs, rhs))  
     (fun _ _ _ -> f pos) estate lhs_p rhs_p
 

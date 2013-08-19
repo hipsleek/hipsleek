@@ -1,0 +1,13 @@
+//Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Fail
+data node { int val ; node next }.
+
+pred ll_s<n,a> == self::node<a,null> & n = 1 & a>0
+	or self::node<a,r> * r::ll_s<n - 1,a> & a>0
+	inv n >= 1 & a > 0.
+
+pred ll<a> == self::node<a,null> & a>0
+	or self::node<a,r> * r::ll<a> & a>0
+	inv a>0.
+
+
+lemma "V4" self::ll<a> -> (exists n: self::ll_s<n,a>).

@@ -34,7 +34,7 @@ int find_min(node x)
 
 void delete_min(ref node x, int a)
 	requires x::bnd1<n, s, l, mi> & n >= 1 & a = mi 
-z	ensures x' = null & n = 1 & s <= mi < l or 
+	ensures x' = null & n = 1 & s <= mi < l or 
                 x'::bnd1<n-1, s, l, mi1> & mi1 >= mi & x' != null & n > 1;
 
 {

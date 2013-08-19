@@ -1,0 +1,107 @@
+data node {
+	int val; 
+	node next;	
+}.
+
+pred ll<n> == self = null & n = 0 
+	or self::node<_, q> * q::ll<n-1> 
+  inv n >= 0.
+
+HeapPred H1(node y).
+HeapPred H2(node y).
+
+
+/*
+infer [x] true |- x::node<_,b>.
+print residue.
+
+ <1>emp&Anon_13=inf_Anon_59 & b=inf_b_60 & inf_ann_58<=0&{FLOW,(19,20)=__norm}[]
+ inferred heap: [x::node<inf_Anon_59@M,inf_b_60@M>@inf_ann_58]
+ inferred pure: [inf_ann_58<=0]
+
+infer [x] b::node<1,y> |- x::node<_,_>.
+print residue.
+
+<1>(exists flted_31_59: b::node<flted_31_59@M,y@M>@M&flted_31_59=1 & Anon_14=inf_Anon_61 & inf_q_62=q & Anon_15=inf_Anon_64 & Anon_16=inf_Anon_65 & inf_ann_63<=0 & inf_ann_60<=0&{FLOW,(19,20)=__norm})[]
+ inferred heap: [inf_q_62::node<inf_Anon_64@M,inf_Anon_65@M>@inf_ann_63; 
+                 x::node<inf_Anon_61@M,inf_q_62@M>@inf_ann_60]
+ inferred pure: [inf_ann_60<=0; inf_ann_63<=0]
+
+
+infer [x] b::node<1,y> |- x::node<_,null>.
+print residue.
+
+Entail (1) : Valid. 
+ <1>(exists flted_33_44: b::node<flted_33_44@M,y@M>@M&flted_33_44=1 & Anon_12=inf_Anon_47 & inf_ann_46<=0 & inf_flted_33_48=null&{FLOW,(19,20)=__norm})[]
+ inferred heap: [x::node<inf_Anon_47@M,inf_flted_33_48@M>@inf_ann_46]
+ inferred pure: [inf_flted_33_48=null; inf_ann_46<=0]
+
+infer [x] b::node<1,y> |- x::node<_,q> * q::node<_,_>.
+print residue.
+
+
+ <1>(exists flted_45_59: b::node<flted_45_59@M,y@M>@M&flted_45_59=1 & Anon_13=inf_Anon_61 & inf_q_62=q & Anon_14=inf_Anon_64 & Anon_15=inf_Anon_65 & inf_ann_63<=0 & inf_ann_60<=0&{FLOW,(19,20)=__norm})[]
+ inferred heap: [inf_q_62::node<inf_Anon_64@M,inf_Anon_65@M>@inf_ann_63; 
+                 x::node<inf_Anon_61@M,inf_q_62@M>@inf_ann_60]
+ inferred pure: [inf_ann_60<=0; inf_ann_63<=0]
+
+---
+
+infer [x] b=null |- x::node<_,b>.
+print residue.
+
+ <1>emp&b=null & Anon_12=inf_Anon_36 & inf_ann_35<=0 & inf_b_37=null&{FLOW,(19,20)=__norm}[]
+ inferred heap: [x::node<inf_Anon_36@M,inf_b_37@M>@inf_ann_35]
+ inferred pure: [inf_b_37=null; inf_ann_35<=0]
+
+
+infer [k] b=null |- k=b.
+ <1>emp&b=null & k=null&{FLOW,(19,20)=__norm}[]
+ inferred pure: [k=null]
+
+infer [k] b!=null |- k=b.
+print residue.
+// should fail since we cannot express without b
+
+
+infer [x] b::node<_,_> |- x::node<_,b>.
+print residue.
+// fails
+
+
+
+infer [x,b] b::node<_,_> |- x::node<_,b>.
+print residue.
+
+ <1>b::node<Anon_15@M,Anon_16@M>@M&Anon_17=inf_Anon_61 & inf_ann_60<=0 & b=inf_b_62&{FLOW,(19,20)=__norm}[]
+ inferred heap: [x::node<inf_Anon_61@M,inf_b_62@M>@inf_ann_60]
+ inferred pure: [b=inf_b_62; inf_ann_60<=0]
+
+*/
+
+
+infer [x,y] b::node<1,y>   |- x::node<_,b>*b::node<_,y>*y::node<_,null>.
+print residue.
+
+
+/*
+infer [x] b!=null |- x::node<_,b>.
+print residue.
+// x::node<f1,f2> & f2=b
+
+infer [x] b::node<_,_> |- x::node<_,b>.
+print residue.
+
+*/
+
+
+//(3)
+//infer [x,y] b::node<1,y>   |- x::node<_,b>*b::node<_,y>*y::node<_,null>.
+//print residue.
+// TODO : "b" part of the inferred?
+// I suppose this is OK?
+/*
+Inferred Heap:[ x::node<inf_Anon_74,inf_b_75>[Orig], y::node<inf_Anon_78,inf_flted_20_79>[Orig]]
+Inferred Pure:[ inf_b_75=b & inf_flted_20_79=null]
+*/
+

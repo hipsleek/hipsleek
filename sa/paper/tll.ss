@@ -23,7 +23,7 @@ HeapPred H(node a, node@NI b).
 HeapPred G(node a, node@NI b, node c).
 
 node set_right (node x, node t)
-  infer [H,G] requires H(x,t) ensures G(x,res,t);
+infer [H,G] requires H(x,t) ensures G(x,res,t);
 //requires x::tree<> ensures x::tll<res,t>;
 {
   //node xr = x.right;
@@ -43,7 +43,7 @@ node set_right (node x, node t)
 }
 
 /*
-# tll.ss --sa-dnc --pred-en-dangling
+# tll.ss --sa-dnc --pred-en-dangling --pred-en-eup
 
 
 RELASSUME

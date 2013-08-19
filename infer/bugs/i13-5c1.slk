@@ -1,0 +1,26 @@
+
+infer [z] x!=null & z=null  |- x=z or z=null.
+print residue.
+
+/*
+
+infer [] x!=null & z=null  |- x=z.
+
+infer [] x!=null & z=null  |- z=null.
+
+infer [z] x!=null & z=null  |- x=z.
+print residue.
+
+infer [z] x!=null & z=null  |- z=null.
+print residue.
+
+During search, we should place false state from
+lhs_contra with lower priority!
+
+ <1>hfalse&false&{FLOW,(19,20)=__norm}[]
+ inferred pure: [z!=null]
+
+
+
+*/
+

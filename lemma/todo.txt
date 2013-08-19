@@ -1,0 +1,114 @@
+# sort-1.slk --esl
+
+Looking at sleek_log & now heap_entail, it seems
+we have a problem here with forming the RHS. In particular
+n_62 is redundant and should have been existential if present.
+This is due to a bug in unfolding the RHS.
+
+It would have been better if the RHS were unfolded to:
+
+EBase {3}->emp&self_lem_11=null & n=0&{FLOW,(1,22)=__flow}[]
+|| :EBase exists (Expl)(Impl)[Anon_63; 
+          r_64](ex)(exists flted_4_65: self_lem_11::node<Anon_63,r_64>@M * 
+          r_64::ll<flted_4_65>@M&n=flted_4_65+1&{FLOW,(1,22)=__flow})[]
+
+BTW, why should there be a staged computation, where we prove
+n=n_62 separately. We should fix lemma proving, if we
+form the correct unfolded RHS.
+----------------
+heap_entail_one_context_struc@1
+heap_entail_one_context_struc inp1 : 
+ es_formula: emp&self_lem_11=null & n=0&{FLOW,(1,22)=__flow}[]
+ es_pure: true
+ es_aux_conseq: true
+ CtxORes_formula: 
+       (exists mi_58,flted_8_59,r_60,k_61: self_lem_11::node<mi_58,r_60>@M * 
+       r_60::sortl<flted_8_59,k_61>@M&n=flted_8_59+1 & mi<=k_61 & mi=mi_58&
+       {FLOW,(1,22)=__flow})[]
+      es_pure: true
+      es_aux_conseq: true
+heap_entail_one_context_struc inp2 : :
+EBase {3}->emp&self_lem_11=null & n_62=0&{FLOW,(1,22)=__flow}[]
+          EBase emp&n=n_62&{FLOW,(1,22)=__flow}[]
+|| :EBase exists (Expl)(Impl)[Anon_63; 
+          r_64](ex)(exists flted_4_65: self_lem_11::node<Anon_63,r_64>@M * 
+          r_64::ll<flted_4_65>@M&n_62=flted_4_65+1&{FLOW,(1,22)=__flow})[]
+            EBase emp&n=n_62&{FLOW,(1,22)=__flow}[]
+
+====================================================================
+# ../../sleek qs-3-inf.slk --en-inf --elp --esl 
+
+Can trace with exception backtrace?
+
+Starting Omega...oc
+ERROR : top of empty stackERROR : get_sleek_no on empty sleek_stk
+LOGGING ERROR : inconsistent slk_no problem 2 stk:-1
+ERROR : top of empty stackFatal error: exception Gen.Stack_Error
+====================================================================
+====================================================================
+# qs-3c.slk
+
+checkentail
+(m_858=0 & sm1_363=\inf & lg1_879+(\inf)=0) 
+& sm1_330=sm1_363 
+& lg1_879<=lg_360 & sm<=sm1_363 
+& 0<(sm+(\inf)) & sm<(\inf) & sm=sm_358 
+& lg=lg_360 & lg1_331=lg1_879
+|-	     
+(exists lg1_900:
+lg1_900=max(lg1_331,sm) 
+//lg1_900=sm 
+& lg1_900<(\inf))
+.
+
+Above fails but should have suceeded
+ after you subs lg1_331=-\inf
+
+An example of incompleteness of \inf
+
+*/
+====================================================================
+# equiv.slk
+
+Got:
+
+Valid Lemmas : [V1:<==>] added to lemma store.
+
+Entailing lemma V2: Fail. Details below:
+
+Failed to prove V2:<==> in current context.
+Removing invalid lemma ---> lemma store restored.
+
+How come no failure message printing like below in lemproving.ml?
+
+            let _ = print_string (num_id ^ ": Fail. Details below:\n") in
+            let _ = print_entail_result valid_l2r rs1 "\t \"->\" implication: " in
+            print_entail_result valid_r2l rs2 "\t \"<-\" implication: "
+====================================================================
+====================================================================
+====================================================================
+====================================================================
+====================================================================
+====================================================================
+====================================================================
+====================================================================
+====================================================================
+====================================================================
+====================================================================
+====================================================================
+====================================================================
+====================================================================
+====================================================================
+====================================================================
+====================================================================
+====================================================================
+====================================================================
+====================================================================
+====================================================================
+====================================================================
+====================================================================
+====================================================================
+====================================================================
+====================================================================
+====================================================================
+====================================================================

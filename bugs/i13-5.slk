@@ -1,0 +1,121 @@
+// examples from bi-abduction paper
+
+data node {
+	node next;	
+}.
+
+pred ll<n> == self = null & n = 0 
+	or self::node<q> * q::ll<n-1> 
+  inv n >= 0.
+
+pred lseg<p> == self = p 
+	or self::node<q> * q::lseg<p> & self!=p 
+  inv true.
+
+HeapPred H1(node a ).
+
+
+infer [H1] H1(y) & (n=1 | n=3)  |- y::lseg<null> .
+print residue.
+
+
+/*
+
+# i13-5.slk
+
+infer [H1] H1(y)  |- y::lseg<null> .
+
+Why did we have an xpure for lseg on LHS?
+Is it due to an unfolding of H1(y), which then
+lead presence of lseg<..> on LHS.
+
+!!! stk_estate: :[ 
+HP_40(flted_18_39)&flted_18_39=null & y!=null&{FLOW,(19,20)=__norm}[], 
+HP_40(flted_18_39)&y=null & flted_18_39=null&{FLOW,(19,20)=__norm}[]]
+
+
+====================
+
+xform has self>0 instead of self!=null
+
+  {1}->emp&p=self&{FLOW,(1,22)=__flow}[]
+   || {2}->(exists p_12,q: self::node<q>@M * q::lseg<p_12>@M&p!=self & 
+      p=p_12&{FLOW,(1,22)=__flow})[]
+  xform: ((p!=self & self>0) | p=self)
+
+==========
+ 
+!!! stk_estate: :[ 
+HP_40(flted_18_39)&flted_18_39=null & y!=null&{FLOW,(19,20)=__norm}[], 
+HP_40(flted_18_39)&y=null & flted_18_39=null&{FLOW,(19,20)=__norm}[]]
+
+
+infer [H1] H1(y)  |- y::node<null>.
+print residue.
+
+!!! stk_estate: :[ HP_40(flted_18_39)&flted_18_39=null&{FLOW,(19,20)=__norm}[]]
+Entail (1) : Valid. 
+
+ <1>HP_40(flted_18_39)&flted_18_39=null&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [// Sleek_Entail(1)
+H1(y) --> y::node<flted_18_39>@M * HP_40(flted_18_39); 
+// Sleek_Entail(1)
+HP_40(flted_18_39) --> emp&
+flted_18_39=null]
+
+
+ARNING : Pushing 1 stk_estate (4)
+
+Entail (1) : Valid. 
+
+ <1>HP_40(flted_18_39)&flted_18_39=null&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [// Sleek_Entail(1)
+H1(y) --> y::node<flted_18_39>@M * HP_40(flted_18_39); 
+// Sleek_Entail(1)
+HP_40(flted_18_39) --> emp&
+flted_18_39=null]
+
+infer [H1] H1(y)  |- y=null .
+print residue.
+
+--OK
+
+infer [H1] H1(y)  |- y::lseg<z> .
+print residue.
+
+--OK
+
+# 13-5.slk --sa-en-cont
+
+infer [H1] H1(y)  |- y::lseg<null> .
+print residue.
+
+WARNING : Pushing 2 stk_estate (4)
+Message: unsat_xpure : encountered a disjunctive formula 
+!!! WARNING logtime exception:0.004caught
+(Program not linked with -g, cannot print stack backtrace)
+Entailment Failure (1) Failure("unsat_xpure : encountered a disjunctive formula \n")
+
+infer [] x::node<z>  |- x::lseg<r> .
+print residue.
+
+-------
+
+Why only one solution?
+
+ <1>x::node<z>@M&r=x&{FLOW,(19,20)=__norm}[]
+
+
+
+
+//(5)
+infer [z,H1] H1(y)*x::node<z>  |- x::lseg<z> * y::lseg<null> .
+print residue.
+
+infer [z] x::node<z>  |- x::lseg<z> .
+print residue.
+
+infer [] x::node<z>  |- 
+   (exists r: x::node<q> & q::lseg<r> & x!=r).
+print residue.
+*/

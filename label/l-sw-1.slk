@@ -1,0 +1,101 @@
+checkentail
+ ((AndList( "":cur=cur_1004 & prev=prev_1003 & sentinel=sentinel' & 
+            n_42'=nxt_994 & next_33_1002=nxt_994 & cur_1004=prev_1015 & 
+            cur_1014=n_42' & cur_1014!=sentinel' & !(v_bool_37_933') & 
+            cur_1014!=sentinel' & !(v_bool_37_933') & cur_1014=null & 
+            v_bool_38_934' & cur_1014=null & v_bool_38_934' & 
+            cur'=prev_1015 & prev'=null & cur_1004!=null
+ ; "n":s_992=sentinel_996 & cur_1004!=sentinel_996 & cur!=null & 
+   sentinel=sentinel_996 & sentinel=sentinel_997 & nxt_994=null & 
+   nxt_994!=s_992 & prev=sentinel_997
+ ; "s":Mc=union(Mnxt_995,{cur_1004}) & Mnxt_995={} & Mp={}) ) | 
+(AndList( "":cur=cur_1004 & prev=prev_1003 & sentinel=sentinel' & 
+          n_42'=nxt_994 & next_33_1002=nxt_994 & cur_1004=prev_1015 & 
+          cur_1014=n_42' & cur_1014!=sentinel' & !(v_bool_37_933') & 
+          cur_1014!=sentinel' & !(v_bool_37_933') & cur_1014=null & 
+          v_bool_38_934' & cur_1014=null & v_bool_38_934' & cur'=prev_1015 & 
+          prev'=null & nxt_994!=null & prev!=null & cur_1004!=null
+ ; "n":s_992=sentinel_996 & cur_1004!=sentinel_996 & cur!=null & 
+   sentinel=sentinel_996 & sentinel=sentinel_997 & nxt_994!=s_992 & 
+   prev!=sentinel_997
+ ; "s":Mc=union(Mnxt_995,{cur_1004}) & exists(Mnxt:Mnxt_995=union(Mnxt,
+   {nxt_994})) & exists(M1:Mp=union({prev},M1))) ) | 
+(AndList( "":cur=cur_1004 & prev=prev_1003 & sentinel=sentinel' & 
+          n_42'=nxt_994 & next_33_1002=nxt_994 & cur_1004=prev_1015 & 
+          cur_1014=n_42' & cur_1014!=sentinel' & !(v_bool_37_933') & 
+          cur_1014!=sentinel' & !(v_bool_37_933') & cur_1014=null & 
+          v_bool_38_934' & cur_1014=null & v_bool_38_934' & cur'=prev_1015 & 
+          prev'=null & prev!=null & cur_1004!=null
+ ; "n":s_992=sentinel_996 & cur_1004!=sentinel_996 & cur!=null & 
+   sentinel=sentinel_996 & sentinel=sentinel_997 & nxt_994=null & 
+   nxt_994!=s_992 & prev!=sentinel_997
+ ; "s":Mc=union(Mnxt_995,{cur_1004}) & Mnxt_995={} & 
+   exists(M1:Mp=union({prev},M1))) ) | 
+(AndList( "":cur=cur_1004 & prev=prev_1003 & sentinel=sentinel' & 
+          n_42'=nxt_994 & next_33_1002=nxt_994 & cur_1004=prev_1015 & 
+          cur_1014=n_42' & cur_1014!=sentinel' & !(v_bool_37_933') & 
+          cur_1014!=sentinel' & !(v_bool_37_933') & cur_1014=null & 
+          v_bool_38_934' & cur_1014=null & v_bool_38_934' & cur'=prev_1015 & 
+          prev'=null & nxt_994!=null & cur_1004!=null
+ ; "n":s_992=sentinel_996 & cur_1004!=sentinel_996 & cur!=null & 
+   sentinel=sentinel_996 & sentinel=sentinel_997 & nxt_994!=s_992 & 
+   prev=sentinel_997
+ ; "s":Mc=union(Mnxt_995,{cur_1004}) & exists(Mnxt:Mnxt_995=union(Mnxt,
+   {nxt_994})) & Mp={}) ))
+	 |-  ((AndList( "s":Mp={}) ) | (AndList( "n":prev=sentinel_997) ))
+.
+
+
+print residue.
+
+/*
+
+from swll-1.ss --en-imp-top --en-logging-txt
+
+ id: 252; prover: MONA; TIME: 5.; loc: swll-1_ss_43:2_43:26; kind: PRE_REC
+ ImplyTOP: ante: ((AndList( "":cur=cur_1004 & prev=prev_1003 & sentinel=sentinel' & 
+            n_42'=nxt_994 & next_33_1002=nxt_994 & cur_1004=prev_1015 & 
+            cur_1014=n_42' & cur_1014!=sentinel' & !(v_bool_37_933') & 
+            cur_1014!=sentinel' & !(v_bool_37_933') & cur_1014=null & 
+            v_bool_38_934' & cur_1014=null & v_bool_38_934' & 
+            cur'=prev_1015 & prev'=null & cur_1004!=null
+ ; "n":s_992=sentinel_996 & cur_1004!=sentinel_996 & cur!=null & 
+   sentinel=sentinel_996 & sentinel=sentinel_997 & nxt_994=null & 
+   nxt_994!=s_992 & prev=sentinel_997
+ ; "s":Mc=union(Mnxt_995,{cur_1004}) & Mnxt_995={} & Mp={}) ) | 
+(AndList( "":cur=cur_1004 & prev=prev_1003 & sentinel=sentinel' & 
+          n_42'=nxt_994 & next_33_1002=nxt_994 & cur_1004=prev_1015 & 
+          cur_1014=n_42' & cur_1014!=sentinel' & !(v_bool_37_933') & 
+          cur_1014!=sentinel' & !(v_bool_37_933') & cur_1014=null & 
+          v_bool_38_934' & cur_1014=null & v_bool_38_934' & cur'=prev_1015 & 
+          prev'=null & nxt_994!=null & prev!=null & cur_1004!=null
+ ; "n":s_992=sentinel_996 & cur_1004!=sentinel_996 & cur!=null & 
+   sentinel=sentinel_996 & sentinel=sentinel_997 & nxt_994!=s_992 & 
+   prev!=sentinel_997
+ ; "s":Mc=union(Mnxt_995,{cur_1004}) & exists(Mnxt:Mnxt_995=union(Mnxt,
+   {nxt_994})) & exists(M1:Mp=union({prev},M1))) ) | 
+(AndList( "":cur=cur_1004 & prev=prev_1003 & sentinel=sentinel' & 
+          n_42'=nxt_994 & next_33_1002=nxt_994 & cur_1004=prev_1015 & 
+          cur_1014=n_42' & cur_1014!=sentinel' & !(v_bool_37_933') & 
+          cur_1014!=sentinel' & !(v_bool_37_933') & cur_1014=null & 
+          v_bool_38_934' & cur_1014=null & v_bool_38_934' & cur'=prev_1015 & 
+          prev'=null & prev!=null & cur_1004!=null
+ ; "n":s_992=sentinel_996 & cur_1004!=sentinel_996 & cur!=null & 
+   sentinel=sentinel_996 & sentinel=sentinel_997 & nxt_994=null & 
+   nxt_994!=s_992 & prev!=sentinel_997
+ ; "s":Mc=union(Mnxt_995,{cur_1004}) & Mnxt_995={} & 
+   exists(M1:Mp=union({prev},M1))) ) | 
+(AndList( "":cur=cur_1004 & prev=prev_1003 & sentinel=sentinel' & 
+          n_42'=nxt_994 & next_33_1002=nxt_994 & cur_1004=prev_1015 & 
+          cur_1014=n_42' & cur_1014!=sentinel' & !(v_bool_37_933') & 
+          cur_1014!=sentinel' & !(v_bool_37_933') & cur_1014=null & 
+          v_bool_38_934' & cur_1014=null & v_bool_38_934' & cur'=prev_1015 & 
+          prev'=null & nxt_994!=null & cur_1004!=null
+ ; "n":s_992=sentinel_996 & cur_1004!=sentinel_996 & cur!=null & 
+   sentinel=sentinel_996 & sentinel=sentinel_997 & nxt_994!=s_992 & 
+   prev=sentinel_997
+ ; "s":Mc=union(Mnxt_995,{cur_1004}) & exists(Mnxt:Mnxt_995=union(Mnxt,
+   {nxt_994})) & Mp={}) ))
+	     conseqTOP:  ((AndList( "s":Mp={}) ) | (AndList( "n":prev=sentinel_997) ))
+ res: false
+*/

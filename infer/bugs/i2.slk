@@ -1,0 +1,38 @@
+data node {
+	int val; 
+	node next;	
+}.
+
+pred ll<n> == self = null & n = 0 
+	or self::node<_, q> * q::ll<n-1> 
+  inv n >= 0.
+
+HeapPred H1(node q).
+HeapPred H2(node q, int n).
+
+//(3)
+infer [q] true |- q::ll<n> .
+print residue.
+
+infer [q] q!=null |- q::ll<n> .
+print residue.
+
+//(7)
+infer [n,q] n=0 |- q::ll<n> .
+print residue.
+
+//(8)
+infer [q,n] n=0 |- q::ll<n> .
+print residue.
+
+infer [n] q=null |- q::ll<n> .
+print residue.
+
+/*
+// equiv to q=null
+Inferred Heap:[ q::ll<inf_n_101>[Orig][LHSCase]]
+Inferred Pure:[ inf_n_101=0]
+<1>true & n=0 & inf_n_101=0 &
+{FLOW,(17,18)=__norm}
+*/
+

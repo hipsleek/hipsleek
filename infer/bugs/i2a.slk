@@ -1,0 +1,32 @@
+data node {
+	int val; 
+	node next;	
+}.
+
+pred ll<n> == self = null & n = 0 
+	or self::node<_, q> * q::ll<n-1> 
+  inv n >= 0.
+
+checkentail q=null |- q::ll<n> .
+// succeeds
+
+// should not infer n=0 when entailment
+// already succeeds
+infer [n] q=null |- q::ll<n> .
+print residue.
+
+/*
+# i2a.slk
+
+checkentail already succeeds; so why do we still
+infer q=null? It is really redundant!
+
+Entail 1: Valid. 
+
+
+Entail (2) : Valid. 
+
+ <1>emp&q=null & n=0&{FLOW,(19,20)=__norm}[]
+ inferred pure: [n=0]
+
+*/

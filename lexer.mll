@@ -103,7 +103,7 @@ module Make (Token : SleekTokenS)
   let err error loc = raise(Loc.Exc_located(loc, Error.E error))
 
   let warn error loc = Format.eprintf "Warning: %a: %a@." Loc.print loc Error.print error
-
+    
  let sleek_keywords = Hashtbl.create 100
  let comment_level = ref 0
  let _ = List.map (fun ((k,t):(string*sleek_token)) -> Hashtbl.add sleek_keywords k t)
@@ -114,6 +114,7 @@ module Make (Token : SleekTokenS)
 	 ("axiom", AXIOM); (* [4/10/2011] An Hoa : new keyword *)
    ("alln", ALLN);
    ("app", APPEND);
+   ("AndList", ANDLIST);
    ("bagmax", BAGMAX);
 	 ("bagmin", BAGMIN);
    ("bag", BAG);
@@ -125,6 +126,9 @@ module Make (Token : SleekTokenS)
    ("catch", CATCH);
    ("checkeq", CHECKEQ);
    ("checkentail", CHECKENTAIL);
+   ("slk_hull", SLK_HULL);
+   ("slk_pairwise", SLK_PAIRWISE);
+   ("slk_simplify", SIMPLIFY);
    ("relAssume", RELASSUME);
    ("relDefn", RELDEFN);
    ("shape_infer", SHAPE_INFER );
@@ -187,8 +191,13 @@ module Make (Token : SleekTokenS)
 	 ("inv", INV);
 	 ("inv_lock", INVLOCK);
    ("joinpred", JOIN); (*Changed by 28/12/2011*)
-	 ("lemma", LEMMA false);
-	 ("lemma_exact", LEMMA true);
+	 ("lemma", LEMMA TLEM);
+	 ("lemma_test", LEMMA TLEM_TEST);
+	 ("lemma_test_new", LEMMA TLEM_TEST_NEW);
+	 ("lemma_unsafe", LEMMA TLEM_UNSAFE);
+         ("lemma_safe", LEMMA TLEM_SAFE);
+	 ("lemma_infer", LEMMA TLEM_INFER);
+	 (* ("lemma_exact", LEMMA (\* true *\)); *)
    ("len", LENGTH);
 	 ("let", LET);
 	 ("max", MAX);
@@ -208,6 +217,7 @@ module Make (Token : SleekTokenS)
      ("pred_extn", PRED_EXT);
 	 ("hip_include", HIP_INCLUDE);
      ("print", PRINT);
+     ("print_lemmas", PRINT_LEMMAS);
      ("mem", MEM);
      ("memE", MEME);
 	 ("dprint", DPRINT);
@@ -244,6 +254,7 @@ module Make (Token : SleekTokenS)
    (*("variance", VARIANCE);*)
 	 ("while", WHILE);
    ("with", WITH);
+   ("XPURE",XPURE);
 	 (flow, FLOW flow);]
 }
   
@@ -308,7 +319,8 @@ rule tokenizer file_name = parse
   | '&' { AND }
   | "&*" { ANDSTAR }
   | "&&" { ANDAND }
-  | "*-" { STARMINUS }
+  | "U*" { UNIONSTAR }
+  | "-*" { STARMINUS }
   | "@" { AT }
   | "@@" { ATAT }
   | "@@[" { ATATSQ }
@@ -318,6 +330,7 @@ rule tokenizer file_name = parse
   | "@D" { DERV }
   | "@M" { MUT }
   | "@R" { MAT }
+  | "@S" { SAT }
   | "@VAL" {VAL}
   | "@REC" {REC}
   | "@NI" {NI}

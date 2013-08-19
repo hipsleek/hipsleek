@@ -792,15 +792,289 @@ checkentail true &
  |- true & 
      ["n":y>5].
 ===================================================================
+# ll-back-3a.ss
+
+This example works in default but not sa_logging branch!
+
+Parsing file "ll-back-3a.ss" by default parser...
+
+!!!  processing primitives "["prelude.ss"]
+Starting Omega...oc
+
+!!! dumping for finalize on hipStop Omega... 1 invocations caught
+(Program not linked with -g, cannot print stack backtrace)
+
+Exception occurred: Not_found
+Error3(s) detected at main 
+
 ====================================================================
+# 13-5.slk --sa-en-cont
+
+infer [H1] H1(y)  |- y::lseg<null> .
+print residue.
+
+WARNING : Pushing 2 stk_estate (4)
+Message: unsat_xpure : encountered a disjunctive formula 
+!!! WARNING logtime exception:0.004caught
+(Program not linked with -g, cannot print stack backtrace)
+Entailment Failure (1) Failure("unsat_xpure : encountered a disjunctive formula \n")
 ===================================================================
+# i13-5.slk
+
+xform has self>0 instead of self!=null
+
+  {1}->emp&p=self&{FLOW,(1,22)=__flow}[]
+   || {2}->(exists p_12,q: self::node<q>@M * q::lseg<p_12>@M&p!=self & 
+      p=p_12&{FLOW,(1,22)=__flow})[]
+  xform: ((p!=self & self>0) | p=self)
+
 ===================================================================
+# i13-5a.slk  (in bugs)
+
+infer [H1] H1(y) & (x=2 | x>5)  |- y::lseg<null> .
+
+./sleek i13-5a.slk --sa-en-cont --iesa --dsd
+
+Using above triggers an unsat_xpure exception
+
+!!! infer_deep_ante_issues triggered by --iesa
+!!! if stk_estate > 1, can cause unsat_xpure exception
+!!! Thai : can we convert below to single ctx by using pure or rather than CtxOr
+!!! new_ante_fmls:[ HP_40(flted_18_39)&flted_18_39=null&{FLOW,(19,20)=__norm}[]]
+
+ISSUES 
+ 1. added a flag --infer-en-split-ante that
+    would trigger deep_lhs split of antecedent for pure inference
+ 2. Added simplify_with_pairwise to reduce disjunction
+ 3. To address
+    - minimise on stk-estate
+    - use pure disjunct rather than heap disjunct
+    - balanced use of deep_lhs
+      (i) try normal infer_pure first
+      (ii) if fail, try deep_lhs cases?
+
+keyword in code :  infer_deep_ante_issues 
+
+For i13-5a example, the following are points to note:
+
+This example added:
+
+!!! WARNING : deep-ante-split activated
+!!! split-1:[ x=2, 5<x]
+!!! split-2:[ ((x=2 | 5<x)) & (((flted_18_41!=y & y!=null) | flted_18_41=y))]WARNING : Pushing 2 stk_estate (4)
+ 
+However, we later generated two identical LHS term, that was
+triggered by split of [x=2, 5<x]. Such split is probably
+not meaningful since x is not an inferrable var but is
+currently triggered by --iesa
+
+It later generated two identical residue, and probably two
+rel assumption, as well.
+
+!!! new_ante_fmls:[ 
+HP_42(flted_18_41)&flted_18_41=null&{FLOW,(19,20)=__norm}[], 
+HP_42(flted_18_41)&flted_18_41=null&{FLOW,(19,20)=__norm}[]
+]
+
+I think you should do 2 things (i) first; then (ii)
+(i) combine new_ante_fmls into a single pure-or always so
+    that the unsat exception do not occur
+(ii) allow infer_pure_m to be triggered on its own first;
+     if it succeeds do not do deep_ante_split
+(iii) there is also an issue with identical rel_assume 
+    being introduced; but as this is harmless I think u
+    may skip it first.
+
 ===================================================================
+# baga-2.slk
+
+pred l4<q> == 
+  self::node<q>*q::node<_>
+inv self!=null.
+// baga {self,q}
+
+pred l5<k> == 
+  self::node<q>*q::node<_> & k=q
+inv self!=null.
+
+l4 is Ok but l5 is missing on 
+a baga address.
+
+need to get visible parameters and
+extract equality from pure formula 
+for substitution in xpure_symbolic
+
+ missing on k for baga formula
+ addr vars: self
+  uni_vars: []
+  bag of addr: self
+  view_complex_inv: None
 ===================================================================
+# baga-2.slk
+
+(i) duplicated calls to formula_2_mem..
+(ii) are they critical?
+
+formula_2_mem@1
+formula_2_mem inp1 : {1}->(exists q,Anon_11: self::node<q>@M * q::node<Anon_11>@M&k=q & q!=self&
+{FLOW,(1,22)=__flow})[]
+formula_2_mem@1 EXIT out : [[self,q]]
+
+formula_2_mem@3
+formula_2_mem inp1 : {1}->(exists q,Anon_11: self::node<q>@M * q::node<Anon_11>@M&k=q & q!=self&
+{FLOW,(1,22)=__flow})[]
+formula_2_mem@3 EXIT out : [[self,q]]
+
+!!! xform(mix): exists(q:k=q & q!=self & q!=null) & self!=null
+!!! view_addr_vars:[self]
+!!! view_vars:[k]
+!!! view_baga:[self,q]
+!!! new_baga:[self]
+
+formula_2_mem@5
+formula_2_mem inp1 : {1}->(exists q,Anon_11: self::node<q>@M * q::node<Anon_11>@M&k=q & q!=self&
+{FLOW,(1,22)=__flow})[]
+formula_2_mem@5 EXIT out : [[self,q]]
+
+formula_2_mem@7
+formula_2_mem inp1 : {1}->(exists q,Anon_11: self::node<q>@M * q::node<Anon_11>@M&k=q & q!=self&
+{FLOW,(1,22)=__flow})[]
+formula_2_mem@7 EXIT out : [[self,q]]
+
+formula_2_mem@9
+formula_2_mem inp1 : {1}->self::node<q>@M * q::node<Anon_11>@M&k=q & q!=self&
+{FLOW,(1,22)=__flow}[]
+formula_2_mem@9 EXIT out : [[self,q]]
+
 ===================================================================
+# baga-3.slk
+
+pred l3a<> == 
+  self::node<q>*q::node<_>  & self=q
+inv self!=null.
+
+  prune baga conditions: ([q])-1,([self])-2
+should be:
+  prune baga conditions: ([q])-1,([self,self])-2
+
+pred l6<q:node> == 
+  q::node<_> & self=null
+  or self::node<r>*r::node<_> & r=q
+inv q!=null.
+
+Got:
+  prune invs:3:
+   ,[{1,2} -> {[q]} [ q!=null]; {1} -> {[q]} [ self=null; q!=null]; 
+   {2} -> {[self]} [ q!=null; self!=null]]
+Should be:
+  prune invs:3:
+   ,[{1,2} -> {[q]} [ q!=null]; {1} -> {[q]} [ self=null; q!=null]; 
+   {2} -> {[self,q]} [ q!=null; self!=null]]
+
+pred l7<q:node> == 
+  self=null & q=null
+  or self::node<r>*r::node<_> & r=q
+inv true.
+
+GOT:
+  prune invs:3:
+   ,[{4,5} -> {[]} []; {4} -> {[]} [ self=null; q=null]; 
+   {5} -> {[self]} [ self!=null; q!=null]]
+should be:
+  prune invs:3:
+   ,[{4,5} -> {[]} []; {4} -> {[]} [ self=null; q=null]; 
+   {5} -> {[self,q]} [ self!=null; q!=null]]
+
 ===================================================================
+# bug-classic-4a.slk: FIXED
+
+infer_exact
+[P1] n::node<_,null> & self=null
+|- P1(self).
+print residue.
+
+ <1>(exists flted_23_51: emp&flted_23_51=null & self=null&{FLOW,(19,20)=__norm})[]
+ inferred hprel: [// Sleek_Entail(2)
+n::node<Anon_14,flted_23_51>@M&flted_23_51=null & 
+self=null --> P1(self)]
+
+PROBLEM : why did we include an unrelated n::node<_,null>
+ when folding with unknown predicate?
 ===================================================================
+# sp-5a.slk, sp-5b.slk: FIXED
+
+These are very basic examples. I am surprised that they could
+be wrong..
+
+//(3)
+infer_exact [P1] 
+   self=null
+|- P1(p) & self=p.
+print residue.
+// expect self=null --> P1(self)
+/*
+ <1>emp&self=null & p=null&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [// Sleek_Entail(1)
+emp --> P1(p_18); 
+// Sleek_Entail(1)
+P1(p) --> emp&
+p=null]
+*/
+
+
+//(3)
+infer [P1] 
+   self=null
+|- P1(p) & self=p.
+print residue.
+// expect self=null --> P1(self)
+/*
+// Sleek_Entail(2)
+P1(p) --> emp&
+p=null]
+*/
+
+Entail (3) : Valid. 
+
+
+
+//(3)
+infer [P1] 
+   self=null
+|- P1(self) & self=p.
+print residue.
+// expect self=null --> P1(self)
+
+/*
+ <1>emp&self=null & p=self&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [// Sleek_Entail(3)
+emp --> P1(p)]
+*/
+
+
 ===================================================================
+# sp-5c.slk: # sp-5e.slk: FIXED
+
+//4
+infer [P1] 
+   self::node<_,_> 
+|- P1(self) & self!=null.
+print residue.
+
+/*
+// expecting it to succeed
+// self::node<_,_> --> P1(self)
+
+c_heap should come from LHS..
+
+ --------------------
+!!!  
+id: 11; caller: []; line: 0; classic: false; kind: Sleek_Entail(4); hec_num: 4; evars: []; infer_vars: []; c_heap: P1(self)
+ checkentail emp&{FLOW,(19,20)=__norm}[]
+ |-  emp&self!=null&{FLOW,(19,20)=__norm}[]. 
+
+*/
+
 ===================================================================
 ===================================================================
 ===================================================================
