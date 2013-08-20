@@ -2251,7 +2251,7 @@ and unfold_struc_x (prog:prog_or_branches) (f : struc_formula) (v : CP.spec_var)
     let asets = Context.alias_nth 6 (MCP.ptr_equations_with_null p) in
     let aset' = Context.get_aset asets v in
     let aset = if CP.mem v aset' then aset' else v :: aset' in
-    let h_rest, unfolded_f = struc_unfold_heap prog h aset v uf pos in
+    let h_rest, unfolded_f = struc_unfold_heap prog h aset v uf (qvars@ee@ei) pos in
     match unfolded_f with
       | None -> None
       | Some s ->
@@ -2314,7 +2314,7 @@ and unfold_struc_x (prog:prog_or_branches) (f : struc_formula) (v : CP.spec_var)
   struc_helper f		
       
       
-and struc_unfold_heap_x (prog:Cast.prog_or_branches) (f : h_formula) (aset : CP.spec_var list) (v : CP.spec_var) (uf:int) pos:
+and struc_unfold_heap_x (prog:Cast.prog_or_branches) (f : h_formula) (aset : CP.spec_var list) (v : CP.spec_var) (uf:int) eqvars pos:
       h_formula *(struc_formula option)= 
   let (f,r) = pick_view_node f aset in
   let n_struc = match r with
@@ -2330,14 +2330,24 @@ and struc_unfold_heap_x (prog:Cast.prog_or_branches) (f : h_formula) (aset : CP.
       h_formula_view_arguments = vs} -> 
 	  let uf = old_uf+uf in
 	  let vdef = Cast.look_up_view_def pos (fst prog).prog_view_decls lhs_name in
-	  let forms = match brs with 
-            | None -> vdef.view_formula
-            | Some s -> 
-		  let joiner f = formula_of_disjuncts (fst (List.split f)) in
-		  let f = joiner (List.filter (fun (_,l)-> List.mem l s) vdef.view_un_struc_formula) in
-		  struc_formula_of_formula f  pos in         
+          (* check to see if vdef case vars are quantif. Is so use unstruc view formula *)
+          let vs_vdef = List.combine vdef.view_vars vs in
+          let is_in v lst = Gen.BList.mem_eq CP.eq_spec_var v lst in
+          let quantif_case_vars = List.exists (fun (vdef_arg,varg) -> is_in varg eqvars && is_in vdef_arg vdef.view_case_vars) vs_vdef in
+          let joiner f = formula_of_disjuncts (fst (List.split f)) in
+          let forms = match brs, quantif_case_vars with
+            | None, false   -> vdef.view_formula
+            | None, true    -> 
+                  let f = joiner  vdef.view_un_struc_formula in
+	          struc_formula_of_formula f  pos
+            | Some s,_      -> 
+                  let f = joiner (List.filter (fun (_,l)-> List.mem l s) vdef.view_un_struc_formula) in
+                  struc_formula_of_formula f  pos in
+          (* let joiner f = formula_of_disjuncts (fst (List.split f)) in *)
+          (* let f = joiner (List.filter (fun (_,l)-> List.mem l brs) vdef.view_un_struc_formula) in *)
+          (* struc_formula_of_formula f  pos in *)
           let renamed_view_formula = add_struc_unfold_num (rename_struc_bound_vars forms) uf in
-	  let renamed_view_formula = propagate_imm_struc_formula renamed_view_formula imm in
+          let renamed_view_formula = propagate_imm_struc_formula renamed_view_formula imm in
           let renamed_view_formula = 
             if (Perm.allow_perm ()) then
               (match perm with 
@@ -2358,15 +2368,15 @@ and struc_unfold_heap_x (prog:Cast.prog_or_branches) (f : h_formula) (aset : CP.
 	  Some new_struc_f in
   (f,n_struc)
 
-and struc_unfold_heap (prog:Cast.prog_or_branches) (f : h_formula) (aset : CP.spec_var list) (v : CP.spec_var) (uf:int) pos:
+and struc_unfold_heap (prog:Cast.prog_or_branches) (f : h_formula) (aset : CP.spec_var list) (v : CP.spec_var) (uf:int) qvars pos:
       h_formula *(struc_formula option)= 
   let pr = Cprinter.string_of_struc_formula in
   let prh = Cprinter.string_of_h_formula in
   let pr2 = Cprinter.string_of_prog_or_branches in
   let prs = Cprinter.string_of_spec_var in
   let pr_out = pr_pair prh (pr_opt pr) in
-  Debug.no_4 "struc_unfold_heap"  prh (pr_list prs) prs pr2 pr_out
-      (fun _ _ _ _ -> struc_unfold_heap_x prog f aset v  uf pos)  f aset v prog
+  Debug.no_5 "struc_unfold_heap"  prh (pr_list prs) prs pr2 (pr_list prs) pr_out
+      (fun _ _ _ _ _ -> struc_unfold_heap_x prog f aset v  uf qvars pos)  f aset v prog qvars
       
 and unfold_nth (n:int) (prog:prog_or_branches) (f : formula) (v : CP.spec_var) (already_unsat:bool) (uf:int) (pos : loc) : formula =
   (* unfold_x prog f v already_unsat pos *)

@@ -253,7 +253,7 @@ let check_right_coercion coer (cprog: C.prog_decl) =
   Debug.no_1 "check_right_coercion" pr (fun (valid,_) -> string_of_bool valid) (fun _ -> check_right_coercion coer cprog ) coer
 
 (* interprets the entailment results for proving lemma validity and prints failure cause is case lemma is invalid *)
-let print_entail_result (valid: bool) (ctx: CF.list_context) (num_id: string) cprog =
+let print_lemma_entail_result (valid: bool) (ctx: CF.list_context) (num_id: string) =
   if valid then 
     let _ = print_string (num_id ^ ": Valid.\n") in ()
     (* print_string ((Cprinter.string_of_numbered_list_formula_trace_inst cprog *)
@@ -295,23 +295,24 @@ let verify_lemma (l2r: C.coercion_decl option) (r2l: C.coercion_decl option) (cp
     | I.Equiv -> 
           let residue = CF.and_list_context rs1 rs2 in
           let valid = valid_l2r && valid_r2l in
-          let _ = if valid then print_entail_result valid residue num_id 
+          let _ = if valid then print_lemma_entail_result valid residue num_id 
           else 
             let _ = print_string (num_id ^ ": Fail. Details below:\n") in
-            let _ = print_entail_result valid_l2r rs1 "\t \"->\" implication: " in
-            print_entail_result valid_r2l rs2 "\t \"<-\" implication: "
+            let _ = print_lemma_entail_result valid_l2r rs1 "\t \"->\" implication: " in
+            let _ = print_lemma_entail_result valid_r2l rs2 "\t \"<-\" implication: " in
+            ()
           in
           residue
-    | I.Left -> let _ = print_entail_result valid_l2r rs1 num_id  in rs1
-    | I.Right  -> let _ = print_entail_result valid_r2l rs2 num_id  in rs2
+    | I.Left -> let _ = print_lemma_entail_result valid_l2r rs1 num_id  in rs1
+    | I.Right  -> let _ = print_lemma_entail_result valid_r2l rs2 num_id  in rs2
   in
   residues
   (* else None *)
 
-let verify_lemma (l2r: C.coercion_decl option) (r2l: C.coercion_decl option) (cprog: C.prog_decl)  
+let verify_lemma (l2r: C.coercion_decl option) (r2l: C.coercion_decl option) (cprog: C.prog_decl)
       coerc_name coerc_type  =
-  wrap_proving_kind PK_Verify_Lemma 
-      ((* wrap_classic (Some true) *) (verify_lemma (l2r: C.coercion_decl option) (r2l: C.coercion_decl option) (cprog: C.prog_decl) coerc_name)) coerc_type 
+  wrap_proving_kind PK_Verify_Lemma
+      ((* wrap_classic (Some true) *) (verify_lemma (l2r: C.coercion_decl option) (r2l: C.coercion_decl option) (cprog: C.prog_decl) coerc_name)) coerc_type
 
 let verify_lemma caller (l2r: C.coercion_decl option) (r2l: C.coercion_decl option) (cprog: C.prog_decl)  coerc_name coerc_type =
   let pr c = match c with 
