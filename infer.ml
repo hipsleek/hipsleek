@@ -358,16 +358,16 @@ let get_alias_formula (f:CF.formula) =
 
 let build_var_aset lst = CP.EMapSV.build_eset lst
 
-let is_elem_of conj conjs =
- (* let filtered = List.filter (fun c -> TP.imply_raw conj c && TP.imply_raw c conj) conjs in *)
-  let filtered = List.filter (fun c -> CP.equalFormula conj c) conjs in
-  match filtered with
-    | [] -> false
-    | _ -> true
+(*let is_elem_of conj conjs =*)
+(* (* let filtered = List.filter (fun c -> TP.imply_raw conj c && TP.imply_raw c conj) conjs in *)*)
+(*  let filtered = List.filter (fun c -> CP.equalFormula conj c) conjs in*)
+(*  match filtered with*)
+(*    | [] -> false*)
+(*    | _ -> true*)
 
-let is_elem_of conj conjs = 
-  let pr = !CP.print_formula in
-  Debug.no_1 "is_elem_of" pr pr_no (fun _ -> is_elem_of conj conjs) conj
+(*let is_elem_of conj conjs = *)
+(*  let pr = !CP.print_formula in*)
+(*  Debug.no_1 "is_elem_of" pr pr_no (fun _ -> is_elem_of conj conjs) conj*)
 
             (* (b,args,inf_arg,h,new_iv,over_iv,[orig_r]) in *)
             (* (List.exists (CP.eq_spec_var_aset lhs_aset r) *)
@@ -484,7 +484,10 @@ let rec filter_var f vars =
   match f with
   | CP.Or (f1,f2,l,p) -> 
         CP.Or (filter_var f1 vars, filter_var f2 vars, l, p)
-  | _ -> if TP.is_sat_raw (MCP.mix_of_pure f) && CP.get_Neg_RelForm f = [] then CP.filter_var_new (CP.drop_rel_formula f) vars else CP.mkFalse no_pos
+  | _ -> 
+    if TP.is_sat_raw (MCP.mix_of_pure f) && CP.get_Neg_RelForm f = [] 
+    then CP.filter_var_new (CP.drop_rel_formula f) vars 
+    else CP.mkFalse no_pos
 (*        let flag = TP.is_sat_raw f                                 *)
 (*          try                                                      *)
 (*            Omega.is_sat_weaken f "0"                              *)
