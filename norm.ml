@@ -17,7 +17,7 @@ let norm_elim_useless_para_x view_name sf args=
   let extract_svl f=
     let f1 = CF.elim_exists f in
     let new_f = CF.drop_view_formula f1 [view_name] in
-    (* let _ = Debug.info_pprint (" new_f:" ^ (Cprinter.prtt_string_of_formula new_f) ) no_pos in *)
+    (* let _ = Debug.info_zprint  (lazy  (" new_f:" ^ (Cprinter.prtt_string_of_formula new_f) )) no_pos in *)
      (CF.fv new_f)
   in
   let rec build_keep_pos_list rem_args res index all=
@@ -29,10 +29,10 @@ let norm_elim_useless_para_x view_name sf args=
    in
   if args = [] then (view_name, args, []) else
     let svl = extract_svl (CF.struc_to_formula sf) in
-    (* let _ = Debug.info_pprint (" svl:" ^ (!CP.print_svl svl) ) no_pos in *)
-    (* let _ = Debug.info_pprint (" args:" ^ (!CP.print_svl args) ) no_pos in *)
+    (* let _ = Debug.info_zprint  (lazy  (" svl:" ^ (!CP.print_svl svl) )) no_pos in *)
+    (* let _ = Debug.info_zprint  (lazy  (" args:" ^ (!CP.print_svl args) )) no_pos in *)
     let new_args = CP.intersect_svl args svl in
-    (* let _ = Debug.info_pprint (" new_args:" ^ (!CP.print_svl new_args) ) no_pos in *)
+    (* let _ = Debug.info_zprint  (lazy  (" new_args:" ^ (!CP.print_svl new_args) )) no_pos in *)
     if List.length args > List.length new_args then
       let keep_pos = build_keep_pos_list args [] 0 new_args in
       let new_vname = CP.fresh_old_name view_name in
@@ -40,7 +40,7 @@ let norm_elim_useless_para_x view_name sf args=
       (* let n_sf = CF.drop_view_paras_struc_formula sf ss in *)
       (* let n_ufs = List.map ( fun (uf, ufl) -> (CF.drop_view_paras_formula uf ss, ufl)) ufs in *)
       let dropped_args = CP.diff_svl args svl in
-      let _ = Debug.info_pprint ("  ELIMINATE parameters:" ^ (!CP.print_svl dropped_args) ^ " of view " ^ view_name ^ "\n" ) no_pos in
+      let _ = Debug.info_zprint  (lazy  ("  ELIMINATE parameters:" ^ (!CP.print_svl dropped_args) ^ " of view " ^ view_name ^ "\n" )) no_pos in
       (new_vname, new_args, ss)
     else
       (view_name, args, [])
@@ -386,20 +386,20 @@ let norm_extract_common_one_view_x iprog cprog cviews vdecl=
   match defs with
     | [a] -> [vdecl]
     | [(hp1,(_,hrel1,_,f1));(hp2,(a,hrel2,_,f2))] ->
-        let _ = Debug.info_pprint ("  DO EXTRACT on view: "^ (!CP.print_sv hp1) ^ "\n") no_pos in 
+        let _ = Debug.info_zprint  (lazy  ("  DO EXTRACT on view: "^ (!CP.print_sv hp1) ^ "\n")) no_pos in 
         let n_f1 =
           if !Globals.pred_elim_useless then
             CF.subst_hrel_f f1 elim_ss
           else
             f1
         in
-        (* let _ = Debug.info_pprint ("  hp2: "^ (!CP.print_sv hp2)) no_pos in *)
+        (* let _ = Debug.info_zprint  (lazy  ("  hp2: "^ (!CP.print_sv hp2))) no_pos in *)
         (*IMPORTANT: process hp2 first + check equiv then hp1*)
         (*matching with current views*)
         let (_, eq_hfs) = SAU.match_one_hp_views iprog cprog cviews (a,hrel2,None,f2) in
         let n_vdecl2, view_ss=
           if eq_hfs = [] then
-             let _ = Debug.info_pprint ("  DO SYNTHESIZE view: "^ (!CP.print_sv hp2) ^ "\n") no_pos in 
+             let _ = Debug.info_zprint  (lazy  ("  DO SYNTHESIZE view: "^ (!CP.print_sv hp2) ^ "\n")) no_pos in 
             let _,args2 = CF.extract_HRel hrel2 in
             let vname2 = (CP.name_of_spec_var hp2) in
             let self_var2 = Cpure.SpecVar ((Named vname2), self, Unprimed) in
@@ -411,12 +411,12 @@ let norm_extract_common_one_view_x iprog cprog cviews vdecl=
           else
             let eq_hf = List.hd eq_hfs in
             let eq_vn = extract_view_name eq_hf in
-            let _ = Debug.info_pprint ("  DO NOT SYNTHESIZE. MATCHED view: "^ (eq_vn) ^ "\n") no_pos in 
+            let _ = Debug.info_zprint  (lazy  ("  DO NOT SYNTHESIZE. MATCHED view: "^ (eq_vn) ^ "\n")) no_pos in 
             let to_hp = CP.SpecVar (HpT, eq_vn, Unprimed) in
             ([], Some ([hp2], to_hp))
         in
         (*hp1 must equal hp*)
-        (* let _ = Debug.info_pprint ("  hp1: "^ (!CP.print_sv hp1)) no_pos in *)
+        (* let _ = Debug.info_zprint  (lazy  ("  hp1: "^ (!CP.print_sv hp1))) no_pos in *)
         (***hprels to views*******)
         let n_f10 =
           match view_ss with

@@ -81,7 +81,7 @@ let parse_file_full file_name (primitive: bool) =
 
 (* Parse all prelude files declared by user.*)
 let process_primitives (file_list: string list) : Iast.prog_decl list =
-  Debug.info_pprint (" processing primitives \"" ^(pr_list pr_id file_list) ^ "\n") no_pos;
+  Debug.info_zprint (lazy ((" processing primitives \"" ^(pr_list pr_id file_list) ^ "\n"))) no_pos;
   flush stdout;
   let new_names = List.map (fun c-> (Gen.get_path Sys.executable_name) ^ (String.sub c 1 ((String.length c) - 2))) file_list in
   if (Sys.file_exists "./prelude.ss") then
@@ -95,7 +95,7 @@ let process_primitives (file_list: string list) : Iast.prog_decl list =
 
 (* Parse all include files declared by user.*)
 let process_includes (file_list: string list) (curdir: string) : Iast.prog_decl list =
-  Debug.info_pprint (" processing includes \"" ^(pr_list pr_id file_list)) no_pos;
+  Debug.info_zprint (lazy ((" processing includes \"" ^(pr_list pr_id file_list)))) no_pos;
   flush stdout;
   List.map  (fun x-> 
                  if(Sys.file_exists (curdir^"/"^x)) then parse_file_full (curdir^"/"^x) true
@@ -217,11 +217,11 @@ let reverify_with_hp_rel old_cprog iprog =
 (***************end process compare file*****************)
 (*Working*)
 let process_source_full source =
-  Debug.info_pprint ("Full processing file \"" ^ source ^ "\"\n") no_pos;
+  Debug.info_zprint (lazy (("Full processing file \"" ^ source ^ "\"\n"))) no_pos;
   flush stdout;
   let _ = Gen.Profiling.push_time "Preprocessing" in
   let prog = parse_file_full source false in
-  let _ = Debug.ninfo_pprint ("       iprog:" ^ (Iprinter.string_of_program prog)) no_pos in
+  let _ = Debug.ninfo_zprint (lazy (("       iprog:" ^ (Iprinter.string_of_program prog)))) no_pos in
   let _ = Gen.Profiling.push_time "Process compare file" in
   let prog = if(!Globals.cp_test || !Globals.cp_prefile) then (
     process_cp_file prog 
@@ -391,8 +391,8 @@ let process_source_full source =
       (*   let _= if (!Globals.proof_logging_txt)  *)
       (*   then  *)
       (*     begin *)
-      (*       Debug.info_pprint ("Logging "^fname^"\n") no_pos; *)
-      (*       Debug.info_pprint ("Logging "^fz3name^"\n") no_pos; *)
+      (*       Debug.info_zprint (lazy (("Logging "^fname^"\n"))) no_pos; *)
+      (*       Debug.info_zprint (lazy (("Logging "^fz3name^"\n"))) no_pos; *)
       (*       Log.proof_log_to_text_file !Globals.source_files; *)
       (*       Log.z3_proofs_list_to_file !Globals.source_files *)
       (*     end *)
@@ -433,7 +433,7 @@ let process_source_full source =
 	)
 
 let process_source_full_parse_only source =
-  Debug.info_pprint ("Full processing file (parse only) \"" ^ source ^ "\"\n") no_pos;
+  Debug.info_zprint (lazy (("Full processing file (parse only) \"" ^ source ^ "\"\n"))) no_pos;
   flush stdout;
   let prog = parse_file_full source false in
   (* Remove all duplicated declared prelude *)
@@ -457,7 +457,7 @@ let process_source_full_parse_only source =
   (prog, prims_list)
 
 let process_source_full_after_parser source (prog, prims_list) =
-  Debug.info_pprint ("Full processing file (after parser) \"" ^ source ^ "\"\n") no_pos;
+  Debug.info_zprint (lazy (("Full processing file (after parser) \"" ^ source ^ "\"\n"))) no_pos;
   flush stdout;
   if (!Tpdispatcher.tp_batch_mode) then Tpdispatcher.start_prover ();
   (* Global variables translating *)

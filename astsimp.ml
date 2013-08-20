@@ -1349,7 +1349,7 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
       )
     else 
       begin
-        (* let _ = Debug.info_pprint "code when -nxpure 0 !" no_pos in *)
+        (* let _ = Debug.info_zprint (lazy ("code when -nxpure 0 !")) no_pos in *)
         validate_mem_spec prog vdef (* verify the memory specs using predicate definition *)
       end;
     if !Globals.print_x_inv && (n = 0)
@@ -1382,7 +1382,7 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
                 (* Debug.info_hprint (add_str "disj_form" string_of_bool) disj_form no_pos; *)
                 if disj_form && !Globals.compute_xpure_0 then
                   (vdef.C.view_user_inv <- sf; vdef.C.view_xpure_flag <- false);
-	        Debug.tinfo_pprint ("Using a simpler inv for xpure0 of "^vdef.C.view_name) pos;
+	        Debug.tinfo_zprint (lazy (("Using a simpler inv for xpure0 of "^vdef.C.view_name))) pos;
                 Debug.tinfo_hprint (add_str "inv(xpure0)" pr) vdef.C.view_user_inv pos;
 
 	        Debug.tinfo_hprint (add_str "inv(xpure1)" pr) vdef.C.view_x_formula pos
@@ -1644,7 +1644,7 @@ and fill_one_base_case prog vd = Debug.no_1 "fill_one_base_case" Cprinter.string
   
 and fill_one_base_case_x prog vd =
   if vd.C.view_is_prim then 
-    (Debug.ninfo_pprint "fill_one_base - prim" no_pos;
+    (Debug.ninfo_zprint (lazy ("fill_one_base - prim")) no_pos;
     {vd with C.view_base_case = None; C.view_raw_base_case = None})
   else
     begin
@@ -2229,11 +2229,11 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
       let _ = check_valid_flows proc.I.proc_static_specs in
       let _ = check_valid_flows proc.I.proc_dynamic_specs in
       (* let _ = print_endline ("trans_proc: "^ proc.I.proc_name ^": before set_pre_flow: specs = " ^ (Iprinter.string_of_struc_formula (proc.I.proc_static_specs@proc.I.proc_dynamic_specs))) in *)
-      (* let _ = Debug.info_pprint ("  transform I2C: " ^  proc.I.proc_name ) no_pos in *)
-      (* let _ = Debug.info_pprint ("   static spec" ^(Iprinter.string_of_struc_formula proc.I.proc_static_specs)) no_pos in *)
+      (* let _ = Debug.info_zprint (lazy (("  transform I2C: " ^  proc.I.proc_name ))) no_pos in *)
+      (* let _ = Debug.info_zprint (lazy (("   static spec" ^(Iprinter.string_of_struc_formula proc.I.proc_static_specs)))) no_pos in *)
       let (n_tl,cf) = trans_I2C_struc_formula 2 prog true free_vars proc.I.proc_static_specs n_tl true true (*check_pre*) in
       let static_specs_list = set_pre_flow cf in
-      (* let _ = Debug.info_pprint ("   static spec" ^(Cprinter.string_of_struc_formula static_specs_list)) no_pos in *)
+      (* let _ = Debug.info_zprint (lazy (("   static spec" ^(Cprinter.string_of_struc_formula static_specs_list)))) no_pos in *)
       (* let _ = print_string "trans_proc :: set_pre_flow PASSED 1\n" in *)
       let (n_tl,cf) = trans_I2C_struc_formula 3 prog true free_vars proc.I.proc_dynamic_specs n_tl true true (*check_pre*) in
       let dynamic_specs_list = set_pre_flow cf in
@@ -2374,7 +2374,7 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
         let ffv = Gen.BList.difference_eq cmp (*(CF.struc_fv_infer final_static_specs_list)*) struc_fv (lock_vars@((cret_type,res_name)::(Named raisable_class,eres_name)::args2)) in
         let str = Cprinter.string_of_spec_var_list ffv in
         if (ffv!=[]) then 
-          Debug.info_pprint ("WARNING : uninterpreted free variables "^str^" in specification.") no_pos
+          Debug.info_zprint (lazy (("WARNING : uninterpreted free variables "^str^" in specification."))) no_pos
           (* Error.report_error {  *)
           (*     Err.error_loc = no_pos; *)
           (*     Err.error_text = "error 3: free variables "^(Cprinter.string_of_spec_var_list ffv)^" in proc "^proc.I.proc_name^" "}  *)
@@ -3914,7 +3914,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
             (*if exists return inside body:w2a.ss*)
             (*check exists return inside loop body*)
             let exist_return_inside = if proc.I.proc_return <> Void && I.exists_return body then true else false in
-            let _ = Debug.info_pprint ("       exist_return_inside: " ^ (string_of_bool exist_return_inside)) no_pos in
+            let _ = Debug.info_zprint (lazy (("       exist_return_inside: " ^ (string_of_bool exist_return_inside)))) no_pos in
             let prepost = match wrap with 
               | None -> prepost
               | Some _ -> IF.add_post_for_flow (I.get_breaks body) prepost in
@@ -8151,7 +8151,7 @@ let convert_pred_to_cast_x ls_pr_new_view_tis iprog cprog =
       Norm.norm_extract_common iprog cprog cviews (List.map (fun vdef -> vdef.C.view_name) cviews)
     else cviews
   in
-  let _ = Debug.ninfo_pprint ( "cviews1: " ^ (pr2 cviews1)) no_pos in
+  let _ = Debug.ninfo_zprint (lazy (( "cviews1: " ^ (pr2 cviews1)))) no_pos in
   let cviews2 = Norm.cont_para_analysis cprog cviews1 in
   let _ = cprog.C.prog_view_decls <- cprog.C.prog_view_decls@cviews2 in
   let _ =  (List.map (fun vdef -> compute_view_x_formula cprog vdef !Globals.n_xpure) cviews2) in

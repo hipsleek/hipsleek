@@ -447,7 +447,7 @@ let verify_one_repo lems cprog =
       match fail_ans with
         | None ->
               let res = LP.verify_lemma 3 (lst_to_opt l2r) (lst_to_opt r2l) cprog name typ in 
-              ((if CF.isFailCtx res then Some name else None), res::res_so_far)
+              ((if CF.isFailCtx res then Some (name^":"^(Cprinter.string_of_coercion_type typ)) else None), res::res_so_far)
         | Some n ->
               res
   ) (None,[]) lems in
@@ -470,12 +470,14 @@ let manage_safe_lemmas repo iprog cprog =
   match invalid_lem with
     | Some name -> 
           let _ = Log.last_cmd # dumping (name) in
-          let _ = print_endline ("\nFailed to prove "^ (name) ^ " ==> invalid repo in current context.") in
+          let _ = print_endline ("\nFailed to prove "^ (name) ^ " in current context.") in
           Lem_store.all_lemma # pop_coercion;
-          let _ = print_endline ("Removing invalid repo ---> lemma store restored.") in
+          let _ = print_endline ("Removing invalid lemma ---> lemma store restored.") in
           Some([List.hd(nctx)])
     | None ->
-          let _ = print_endline ("\nValid repo: lemma store increased.") in
+          let lem_str = pr_list pr_id (List.map (fun i -> 
+              i.I.coercion_name^":"^(Cprinter.string_of_coercion_type i.I.coercion_type)) repo) in
+          let _ = print_endline ("\nValid Lemmas : "^lem_str^" added to lemma store.") in
           None
 
 (* update store with given repo without verifying the lemmas *)

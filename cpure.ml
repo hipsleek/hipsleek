@@ -6293,6 +6293,17 @@ let add_equiv_eq_debug a v1 v2 =
   let _ = print_string ("add_equiv_eq out :"^(string_of_var_eset ax)^"\n") in
   ax
 
+let add_equiv_list_eqs a evars =
+  List.fold_left (fun tpl (sv1,sv2) -> add_equiv_eq tpl sv1 sv2) a evars
+
+let find_eq_closure a svl =
+  let eqc_svl = List.fold_left (fun r sv ->
+      let eq_svl = EMapSV.find_equiv_all sv a in
+      r@eq_svl
+  ) [] svl
+  in
+  remove_dups_svl eqc_svl
+
 (* constant may be added to map*)
 let add_equiv_eq_with_const a v1 v2 = EMapSV.add_equiv a v1 v2
 

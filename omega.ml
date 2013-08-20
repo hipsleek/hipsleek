@@ -691,7 +691,7 @@ let rec match_vars (vars_list0 : spec_var list) rel =
           in
           if List.length aelist0 != List.length vars_list0 then
             begin
-              Debug.info_pprint ("vlist:"^(!print_svl vars_list0)^" aelist:"^(pr_list !print_exp aelist0)) no_pos;
+              Debug.info_zprint  (lazy  ("vlist:"^(!print_svl vars_list0)^" aelist:"^(pr_list !print_exp aelist0))) no_pos;
               illegal_format ("match_var: numbers of arguments do not match")
             end
           else

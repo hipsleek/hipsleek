@@ -291,17 +291,20 @@ object (self)
               last_sleek_fail <- cmd
       | None -> last_sleek_fail <- cmd
   method dumping no =
-    let _ = Debug.info_pprint ("dumping for "^no) no_pos in
     if  !proof_logging_txt (*|| !sleek_logging_txt *) then
       begin
         match last_proof_fail with
-          | Some e -> Debug.info_hprint string_of_proof_log_entry e no_pos 
-          | _ -> Debug.info_pprint "Cannot find imply proof failure" no_pos
+          | Some e -> 
+                let _ = Debug.info_zprint  (lazy  ("dumping for "^no)) no_pos in
+                Debug.info_hprint string_of_proof_log_entry e no_pos 
+          | _ -> Debug.info_pprint ("Cannot find imply proof failure for "^no) no_pos
       end;
     if !sleek_logging_txt then
       match last_sleek_fail with
-        | Some e -> Debug.info_hprint string_of_sleek_log_entry e no_pos 
-        | _ -> Debug.info_pprint "Cannot find sleek failure" no_pos
+        | Some e -> 
+              let _ = Debug.info_zprint  (lazy  ("dumping for "^no)) no_pos in
+              Debug.info_hprint string_of_sleek_log_entry e no_pos 
+        | _ -> Debug.info_pprint ("Cannot find sleek failure for "^no) no_pos
               (* print_endline ("!!!! WARNING : last sleek log " ^ (pr_id no)); *)
   method dump_prover_cnt =
     begin
@@ -361,7 +364,7 @@ let proof_log_stk : proof_log  Gen.stack_filter
 (* wrong order number indicates recursive invocations *)
 let add_sleek_logging timeout_flag stime infer_vars classic_flag caller avoid hec slk_no ante conseq 
       consumed_heap evars (result) pos=
-  (* let _ = Debug.info_pprint ("avoid: "^(string_of_bool avoid)) no_pos in *)
+  (* let _ = Debug.info_zprint  (lazy  ("avoid: "^(string_of_bool avoid))) no_pos in *)
   if !Globals.sleek_logging_txt then
     (* let _ = Debug.info_pprint "logging .." no_pos in *)
     let (stk_slk_no,src,slk_parent_no) = last_cmd # get_sleek_no in
@@ -496,8 +499,8 @@ let proof_log_to_text_file fname (src_files) =
   then
     begin
       let lgs = (List.rev (proof_log_stk # get_stk)) in
-      let _ = Debug.info_pprint ("Number of log entries "^(string_of_int (List.length lgs))) no_pos in
-      Debug.info_pprint ("Logging "^fname^"\n") no_pos;
+      let _ = Debug.info_zprint  (lazy  ("Number of log entries "^(string_of_int (List.length lgs)))) no_pos in
+      Debug.info_zprint  (lazy  ("Logging "^fname^"\n")) no_pos;
       let tstartlog = Gen.Profiling.get_time () in
       let oc = 
         (try Unix.mkdir "logs" 0o750 with _ -> ());
@@ -549,7 +552,7 @@ let proof_log_to_text_file fname (src_files) =
 
 (* let z3_proofs_list_to_file fz3name (src_files) = *)
 (*   if !Globals.proof_logging_txt || !Globals.sleek_logging_txt then *)
-(*     let _ = Debug.info_pprint ("Logging "^fz3name^"\n") no_pos in *)
+(*     let _ = Debug.info_zprint  (lazy  ("Logging "^fz3name^"\n")) no_pos in *)
 (*     let tstartlog = Gen.Profiling.get_time () in *)
 (*     let oc =  *)
 (*       (try Unix.mkdir "logs" 0o750 with _ -> ()); *)
@@ -611,8 +614,8 @@ let wrap_calculate_time exec_func src_file args =
 let sleek_log_to_text_file slfn (src_files) =
     (* let tstartlog = Gen.Profiling.get_time () in *)
   let lgs = sleek_log_stk # len in
-  let _ = Debug.info_pprint ("Number of sleek log entries "^(string_of_int (lgs))) no_pos in
-  Debug.info_pprint ("Logging "^slfn^"\n") no_pos;
+  let _ = Debug.info_zprint  (lazy  ("Number of sleek log entries "^(string_of_int (lgs)))) no_pos in
+  Debug.info_zprint  (lazy  ("Logging "^slfn^"\n")) no_pos;
   (* let fn = "logs/sleek_log_" ^ (Globals.norm_file_name (List.hd src_files)) ^".txt" in *)
   let fn = slfn in
     let oc =
@@ -640,7 +643,7 @@ let sleek_log_to_text_file2 (src_files) =
   Debug.no_1 "sleek_log_to_text_file" pr pr_none (sleek_log_to_text_file fn) (src_files)
 
 let process_proof_logging src_files  =
-  (* Debug.info_pprint ("process_proof_logging\n") no_pos; *)
+  (* Debug.info_zprint  (lazy  ("process_proof_logging\n")) no_pos; *)
   if !Globals.proof_logging_txt (* || !Globals.proof_logging_txt || !Globals.sleek_logging_txt *) then 
     begin
       let tstartlog = Gen.Profiling.get_time () in
