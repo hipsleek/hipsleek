@@ -618,6 +618,75 @@ let find_inf_subs (f:CP.formula) : (CP.formula * EM.emap) list =
   in 
   List.map (fun e -> (e,find_inf_eq e)) ds
 
+(*
+Find the integers bounded with \inf 
+ 
+   x<\inf & c<x \/ x>-\inf & c>x
+   ==> [(x<\inf & c<x,[x->\inf,x->c]),
+        (x>-\inf & c>x,[x->-\inf,x->c])
+       ]
+*)
+
+let find_inf_bounded (f:CP.formula) : (CP.formula * EM.emap) list =
+  let ds = CP.split_disjunctions f in
+  let find_inf_comp e =
+    let f_f f = 
+    	(match f with
+    	| And _ | AndList _  | BForm _ -> None 
+    	| _ -> Some [])
+    in
+    let f_bf bf = 
+      (match bf with
+        | (Eq _),_ -> Some ([bf]) 
+        | _,_ -> Some ([])
+      )
+    in
+    let f_e e = Some ([]) in
+    (* let f_arg = (fun _ _ -> ()),(fun _ _ -> ()),(fun _ _ -> ()) in *)
+    (* let subs e = trans_formula e () (f_f,f_bf,f_e) f_arg List.concat in *)
+    let find_comp e = fold_formula e (f_f,f_bf,f_e) List.concat in
+    let pr = string_of_pure_formula in
+    let prl l = pr_list string_of_b_formula l in
+    let find_comp e = DD.no_1 "find_inf_bounded" pr prl find_comp e in
+    let eq_list = find_comp e in
+    (*let eq_list_vars = List.filter (fun bf ->  let (p_f,bf_ann) = bf in
+    					match p_f with
+  					| Eq(e1,e2,pos) -> if is_var e1 && is_var e2 then true else false
+    					| _ -> false
+    			) eq_list in*)
+    let eqset = EM.mkEmpty in
+    let neg_inf = CP.SpecVar(Int,constinfinity,Primed) in
+    let eqset = List.fold_left (fun eset exp -> 
+			        let (p_f,bf_ann) = exp in
+    				(match p_f with
+    				| Lt (e1,e2,pos) -> (match e1,e2 with
+    						    | Var(sv1,_),Var(sv2,_) -> EM.add_equiv eset sv1 sv2
+                                (*| _,IConst(0,_) -> 
+                                    (match e1 with 
+                                       | Add(a1,a2,_) -> 
+                                           (match a1, a2 with 
+                                           | Var(sa1,_),Var(sa2,_) -> if is_inf a1 
+                                                          then EM.add_equiv eset sa2 neg_inf
+                                             else if is_inf a2 then EM.add_equiv eset sa1 neg_inf
+                                             else eset
+                                           | _ -> eset)
+                                       | _ -> eset)*)
+                                | IConst(0,_),_ -> 
+                                    (match e2 with 
+                                       | Add(a1,a2,_) -> 
+                                           (match a1, a2 with 
+                                           | Var(sa1,_),Var(sa2,_) -> if is_inf a1 
+                                                          then EM.add_equiv eset sa2 neg_inf
+                                             else if is_inf a2 then EM.add_equiv eset sa1 neg_inf
+                                             else eset
+                                           | _ -> eset)
+                                       | _ -> eset)
+             			        | _ -> eset)
+    				| _ -> eset)
+    				) eqset eq_list in eqset 
+  in 
+  List.map (fun e -> (e,find_inf_comp e)) ds
+
 let rec sub_inf_list_exp (exp: CP.exp) (vars: CP.spec_var list) (is_neg: bool) : CP.exp =
   match exp with
     | CP.Null _
