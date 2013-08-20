@@ -2363,6 +2363,7 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
       in
       let cproc ={
           C.proc_name = proc.I.proc_mingled_name;
+          C.proc_short_name = proc.I.proc_short_name;
           C.proc_source = proc.I.proc_source;
           C.proc_flags = proc.I.proc_flags;
           C.proc_args = args;
@@ -3852,7 +3853,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
             I.exp_while_wrappings = wrap;
             I.exp_while_path_id = pi;
             I.exp_while_pos = pos } ->
-          let _ = Debug.info_pprint ("       ASTSIMP.trans_exp WHILE:") no_pos in
+            let _ = Debug.ninfo_pprint ("Converting while loop ...") no_pos in
             let tvars = E.visible_names () in
             let tvars = Gen.BList.remove_dups_eq (=) tvars in
             (*ONLY NEED THOSE that are modified in the body and condition*)
@@ -3869,11 +3870,11 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
             let fn3 = fresh_name () in
             (* let w_name = fn3 ^ ("_" ^ (Gen.replace_path_sep_with_uscore *)
             (*     (Gen.replace_dot_with_uscore (string_of_loc pos)))) in  *)
-            let w_name = fn3 ^ "_while_" ^ (string_of_pos_plain pos.start_pos) in
+            let w_name = (*fn3 ^ *)"while_" ^ (string_of_pos_plain pos.start_pos) in
             (*if exists return inside body:w2a.ss*)
             (*check exists return inside loop body*)
             let exist_return_inside = if proc.I.proc_return <> Void && I.exists_return body then true else false in
-            let _ = Debug.info_pprint ("       exist_return_inside: " ^ (string_of_bool exist_return_inside)) no_pos in
+            let _ = Debug.ninfo_pprint ("       exist_return_inside: " ^ (string_of_bool exist_return_inside)) no_pos in
             let prepost = match wrap with 
               | None -> prepost
               | Some _ -> IF.add_post_for_flow (I.get_breaks body) prepost in
@@ -3908,8 +3909,9 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
                 I.param_loc = pos; }) tvars in
             let w_proc ={
                 I.proc_name = w_name;
+                I.proc_short_name = w_name;
                 I.proc_source = "source_file";
-				I.proc_flags = [];
+                I.proc_flags = [];
                 I.proc_mingled_name = mingle_name_enum prog w_name (List.map fst tvars);
                 I.proc_data_decl = proc.I.proc_data_decl;
                 I.proc_constructor = false;
@@ -3948,11 +3950,31 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
       | Iast.Cast {I.exp_cast_target_type = ty;
                    I.exp_cast_body = exp;
                    I.exp_cast_pos = pos} ->
-          let body, _ = trans_exp prog proc exp in
-          let cexp = C.Cast {C.exp_cast_target_type = ty;
-                             C.exp_cast_body = body;
-                             C.exp_cast_pos = pos} in
-          (cexp, ty)
+          let org_exp, _ = trans_exp prog proc exp in
+          let org_ty = Gen.unsome (C.type_of_exp org_exp) in
+          if (ty = org_ty) then
+            (org_exp, ty)
+          else if (org_ty = Bool && ty = Int) then (
+            (* cast bool exp to int exp *)
+            let tmp_name = (fresh_var_name "int" pos.start_pos.Lexing.pos_lnum) in
+            let tmp_var_decl = Iast.mkVarDecl Int [(tmp_name, None, pos)] pos in
+            let tmp_var = I.mkVar tmp_name pos in
+            let then_exp = I.mkAssign I.OpAssign tmp_var (I.mkIntLit 1 pos) None pos in
+            let else_exp = I.mkAssign I.OpAssign tmp_var (I.mkIntLit 0 pos) None pos in
+            let if_exp = I.Cond {I.exp_cond_condition = exp;
+                                 I.exp_cond_then_arm = then_exp;
+                                 I.exp_cond_else_arm = else_exp;
+                                 I.exp_cond_path_id = None;
+                                 I.exp_cond_pos = pos } in
+            let cast_exp = I.mkSeq tmp_var_decl (I.mkSeq if_exp tmp_var pos) pos in
+            trans_exp prog proc cast_exp
+          )
+          else (
+            let cast_exp = C.Cast {C.exp_cast_target_type = ty;
+                                   C.exp_cast_body = org_exp;
+                                   C.exp_cast_pos = pos} in
+            (cast_exp, ty)
+          )
       | Iast.Finally b ->  Err.report_error { Err.error_loc = b.I.exp_finally_pos; Err.error_text = "Translation of finally failed";}
       | Iast.ConstDecl _ -> failwith (Iprinter.string_of_exp ie)
       | Iast.Break _ -> failwith (Iprinter.string_of_exp ie)
@@ -5135,12 +5157,14 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
                 let vdef = I.look_up_view_def_raw 9 prog.I.prog_view_decls c in
                 let labels = fst vdef.I.view_labels in
                 let hvars = match_exp (List.combine exps labels) pos in
-                let c0 =
-                  if vdef.I.view_data_name = "" then 
+                let typ = (
+                  if (vdef.I.view_is_prim) then UNK
+                  else if vdef.I.view_data_name = "" then 
                     (fill_view_param_types vdef;
-                    vdef.I.view_data_name)
-                  else vdef.I.view_data_name in
-                let new_v = CP.SpecVar (Named c0, v, p) in
+                    Named vdef.I.view_data_name)
+                  else Named vdef.I.view_data_name 
+                ) in
+                let new_v = CP.SpecVar (typ, v, p) in
                 (*LDK: linearize perm permission as a spec var*)
                 let permvar = (match perm with
                   | None -> None

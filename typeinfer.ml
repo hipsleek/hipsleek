@@ -165,7 +165,8 @@ let rec dim_unify d1 d2 = if (d1 = d2) then Some d1 else None
 
 and must_unify (k1 : typ) (k2 : typ) tlist pos : (spec_var_type_list * typ) =
   let pr = (* string_of_typ *) pr_none in
-  Debug.no_2 "must_unify" pr pr pr (fun _ _ -> must_unify_x k1 k2 tlist pos) k1 k2
+  let pr_out (_, t) = string_of_typ t in
+  Debug.no_2 "must_unify" pr pr pr_out (fun _ _ -> must_unify_x k1 k2 tlist pos) k1 k2
 
 and must_unify_x (k1 : typ) (k2 : typ) tlist pos : (spec_var_type_list * typ) =
   let (n_tlist,k) = unify_type k1 k2 tlist in

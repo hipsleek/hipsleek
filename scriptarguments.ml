@@ -494,7 +494,8 @@ let common_arguments = [
   ("--inc", Arg.Set Globals.do_infer_inc, "Enable incremental spec inference");
   (* invariant *)
   ("--inv", Arg.Set Globals.do_infer_inv, "Enable invariant inference");
-
+  (* pretty printing *)
+  ("--dispretty", Arg.Clear Globals.pretty_printing, "Disable pretty printing for pcp");
   (* use classical reasoning in separation logic *)
   ("--classic", Arg.Set Globals.opt_classic, "Use classical reasoning in separation logic");
   ("--dis-split", Arg.Set Globals.use_split_match, "Disable permission splitting lemma (use split match instead)");

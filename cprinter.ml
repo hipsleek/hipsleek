@@ -3147,7 +3147,10 @@ let rec string_of_exp = function
 	exp_icall_path_id = pid;
 	exp_icall_pos = l;
 	exp_icall_is_rec = is_rec}) -> 
-        string_of_control_path_id_opt pid (r ^ "." ^ id ^ "(" ^ (string_of_ident_list idl ",") ^ ")" ^ (if (is_rec) then " rec" else ""))
+	  let string_of_rec = if !Globals.pretty_printing then "" 
+	    else if (is_rec) then " rec" else "" in
+    string_of_control_path_id_opt pid (r ^ "." ^ id ^ 
+    "(" ^ (string_of_ident_list idl ",") ^ ")" ^ string_of_rec)
   | Cast ({exp_cast_target_type = t;
 	exp_cast_body = body}) -> begin
       "(" ^ (string_of_typ t) ^ " )" ^ string_of_exp body
@@ -3208,8 +3211,11 @@ let rec string_of_exp = function
 	exp_scall_path_id = pid;
 	exp_scall_pos = l;
 	exp_scall_is_rec = is_rec}) ->
-      let lock_info = match lock with |None -> "" | Some id -> ("[" ^ id ^ "]") in
-        string_of_control_path_id_opt pid (id ^ lock_info ^ "(" ^ (string_of_ident_list idl ",") ^ ")" ^ (if (is_rec) then " rec" else ""))
+	  let string_of_rec = if !Globals.pretty_printing then "" 
+      else if (is_rec) then " rec" else "" in
+    let lock_info = match lock with |None -> "" | Some id -> ("[" ^ id ^ "]") in
+    string_of_control_path_id_opt pid (id ^ lock_info ^ 
+    "(" ^ (string_of_ident_list idl ",") ^ ")" ^ string_of_rec)
   | Seq ({exp_seq_type = _;
 	exp_seq_exp1 = e1;
 	exp_seq_exp2 = e2;
@@ -3257,6 +3263,16 @@ let rec string_of_decl_list l c = match l with
   | [] -> ""
   | h::[] -> "  " ^ string_of_decl h 
   | h::t -> "  " ^ (string_of_decl h) ^ c ^ (string_of_decl_list t c)
+;;
+
+let string_of_arg (t,id) call_by_ref =
+  let string_ref = if List.mem id call_by_ref then "ref " else "" in
+  string_ref ^ (string_of_typ t) ^ " " ^ id
+
+let rec string_of_args_list args call_by_ref c = match args with 
+  | [] -> ""
+  | [h] -> string_of_arg h call_by_ref
+  | h::t -> (string_of_arg h call_by_ref) ^ c ^ (string_of_args_list t call_by_ref c)
 ;;
 
 (* function to print a list of typed_ident *) 
@@ -3333,13 +3349,14 @@ let rec string_of_coerc_list l = match l with
 
 (* pretty printing for a procedure *)
 let string_of_proc_decl p = 
-  let locstr = (string_of_full_loc p.proc_loc)  
-  in  (string_of_typ p.proc_return) ^ " " ^ p.proc_name ^ "(" ^ (string_of_decl_list p.proc_args ",") ^ ")"
-      ^ (if p.proc_is_recursive then " rec" else "") ^ "\n"
-      ^ "static " ^ (string_of_struc_formula p.proc_static_specs) ^ "\n"
-      ^ "dynamic " ^ (string_of_struc_formula p.proc_dynamic_specs) ^ "\n"
-      ^ (if Gen.is_empty p.proc_by_name_params then "" 
-	  else ("\nref " ^ (String.concat ", " (List.map string_of_spec_var p.proc_by_name_params)) ^ "\n"))
+  let locstr = (string_of_full_loc p.proc_loc) in
+    (string_of_typ p.proc_return) ^ " " ^ p.proc_short_name 
+    ^ "(" ^ (string_of_args_list p.proc_args (List.map string_of_spec_var p.proc_by_name_params) ", ") ^ ")"
+    ^ (if p.proc_is_recursive && not(!Globals.pretty_printing) then " rec" else "") ^ "\n"
+(*      ^ "static " ^ (string_of_struc_formula p.proc_static_specs) ^ "\n"*)
+(*      ^ "dynamic " ^ (string_of_struc_formula p.proc_dynamic_specs) ^ "\n"*)
+(*    ^ (if Gen.is_empty p.proc_by_name_params then "" *)
+(*	  else ("ref " ^ (String.concat ", " (List.map string_of_spec_var p.proc_by_name_params)) ^ "\n"))*)
       ^ (match p.proc_body with 
         | Some e -> (string_of_exp e) ^ "\n\n"
 	    | None -> "") ^ locstr^"\n"
@@ -3916,6 +3933,7 @@ Cast.print_mater_prop_list := string_of_mater_prop_list;;
 Cast.print_coercion := string_of_coerc_long;;
 print_coerc_decl_list := string_of_coerc_decl_list;;
 Omega.print_pure := string_of_pure_formula;;
+Omega.print_exp := string_of_formula_exp;
 Smtsolver.print_pure := string_of_pure_formula;;
 Smtsolver.print_ty_sv := string_of_typed_spec_var;;
 Coq.print_p_f_f := string_of_pure_formula ;;

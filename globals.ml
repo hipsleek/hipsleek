@@ -320,6 +320,9 @@ let log_proof_details = ref true
 let proof_logging_time = ref 0.000
 (* let sleek_src_files = ref ([]: string list) *)
 
+(* Option for pretty printing *)
+let pretty_printing = ref true
+
 (*sleek logging*)
 let sleek_logging_txt = ref false
 let dump_proof = ref false

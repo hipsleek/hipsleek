@@ -131,6 +131,7 @@ and axiom_decl = {
 
 and proc_decl = {
     proc_name : ident;
+    proc_short_name: ident;
     proc_args : typed_ident list;
     proc_source : ident; (* source file *)
     proc_return : typ;

@@ -2410,6 +2410,7 @@ and unfold_x (prog:prog_or_branches) (f : formula) (v : CP.spec_var) (already_un
 
 
 and unfold_baref prog (h : h_formula) (p : MCP.mix_formula) a (fl:flow_formula) (v : CP.spec_var) pos qvars already_unsat (uf:int) =
+  print_endline "inside unfold_baref";
   let asets = Context.alias_nth 6 (MCP.ptr_equations_with_null p) in
   let aset' = Context.get_aset asets v in
   let aset = if CP.mem v aset' then aset' else v :: aset' in
@@ -2455,12 +2456,15 @@ and unfold_heap_x (prog:Cast.prog_or_branches) (f : h_formula) (aset : CP.spec_v
                h_formula_view_remaining_branches = brs;
                h_formula_view_perm = perm;
                h_formula_view_arguments = vs}) ->(*!!Attention: there might be several nodes pointed to by the same pointer as long as they are empty*)
-      let uf = old_uf+uf in
-      if CP.mem p aset then (
+      let prog1 = fst prog in
+      let vdef = Cast.look_up_view_def pos prog1.prog_view_decls lhs_name in
+      if (vdef.view_is_prim) then
+        (* don't unfold primitive predicates *)
+        formula_of_heap_fl f fl pos
+      else if CP.mem p aset then (
         match (snd prog) with
         | None ->
-            let prog = fst prog in
-            let vdef = Cast.look_up_view_def pos prog.prog_view_decls lhs_name in
+            let uf = old_uf+uf in
             (*let _ = print_string "\n y\n" in*)
             let joiner f = formula_of_disjuncts (fst (List.split f)) in
             let forms = match brs with 

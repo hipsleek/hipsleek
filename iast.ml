@@ -181,23 +181,27 @@ param_loc : loc }
   }
 *)
 
-and proc_decl = { proc_name : ident;
-mutable proc_mingled_name : ident;
-mutable proc_data_decl : data_decl option; (* the class containing the method *)
-proc_flags: (ident*ident*(flags option)) list;
-proc_source : ident;
-proc_constructor : bool;
-proc_args : param list;
-proc_return : typ;
-(*   mutable proc_important_vars : CP.spec_var list;*)
-proc_static_specs : Iformula.struc_formula;
-proc_dynamic_specs : Iformula.struc_formula;
-proc_exceptions : ident list;
-proc_body : exp option;
-proc_is_main : bool;
-proc_file : string;
-proc_loc : loc;
-proc_test_comps: test_comps option}
+and proc_decl = 
+{ 
+  proc_name : ident;
+  proc_short_name: ident;
+  mutable proc_mingled_name : ident;
+  mutable proc_data_decl : data_decl option; (* the class containing the method *)
+  proc_flags: (ident*ident*(flags option)) list;
+  proc_source : ident;
+  proc_constructor : bool;
+  proc_args : param list;
+  proc_return : typ;
+  (*   mutable proc_important_vars : CP.spec_var list;*)
+  proc_static_specs : Iformula.struc_formula;
+  proc_dynamic_specs : Iformula.struc_formula;
+  proc_exceptions : ident list;
+  proc_body : exp option;
+  proc_is_main : bool;
+  proc_file : string;
+  proc_loc : loc;
+  proc_test_comps: test_comps option
+}
 
 and coercion_decl = { coercion_type : coercion_type;
 coercion_exact : bool;
@@ -735,6 +739,7 @@ let mkProc sfile id flgs n dd c ot ags r ss ds pos bd =
     | _ -> ss 
           in
   { proc_name = id;
+  proc_short_name = id;
   proc_source =sfile;
   proc_flags = flgs;
       proc_mingled_name = n; 
@@ -1652,6 +1657,11 @@ and mkContinue jump_label path_id pos =
              exp_continue_path_id = path_id;
              exp_continue_pos = pos }
 
+and mkCast target_typ body pos =
+  Cast { exp_cast_target_type = target_typ;
+         exp_cast_body = body;
+         exp_cast_pos = pos }
+
 (*************************************************************)
 (* Building the graph representing the class hierarchy       *)
 (*************************************************************)
@@ -2275,7 +2285,8 @@ let add_bar_inits prog =
 				F.mkEAssume simp str (fresh_formula_label "") None in
 			(*let _ =print_string ("post: "^(!print_struc_formula post)^"\n") in*)
 			{ proc_name = "init_"^b.barrier_name;
-                          proc_source = "source_file";
+			  proc_source = "source_file";
+			  proc_short_name = "init_"^b.barrier_name;
 			  proc_flags = [];
 			  proc_mingled_name = "";
 			  proc_data_decl = None ;
