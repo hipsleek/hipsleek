@@ -417,7 +417,7 @@ and view_mater_match_x prog c vs1 aset imm f =
 and choose_full_mater_coercion_x l_vname l_vargs r_aset (c:coercion_decl) =
   (* if not(c.coercion_simple_lhs && c.coercion_head_view = l_vname) then None *)
   if not((c.coercion_case=Cast.Simple || c.coercion_case= (Normalize false)) && c.coercion_head_view = l_vname) then None
-  else 
+  else
     let args = List.tl (fv_simple_formula_coerc c.coercion_head) in (* dropping the self parameter and fracvar *)
     let _ = DD.tinfo_hprint (add_str "args" (pr_list Cprinter.string_of_spec_var)) args no_pos in
     match l_vargs with
@@ -441,13 +441,13 @@ and choose_full_mater_coercion l_vname l_vargs r_aset (c:coercion_decl) =
   let pr (c,_) = string_of_coercion c in
   Debug.no_1 "choose_full_mater_coercion" pr_svl (* (pr_option pr) *) pr_none (fun _ -> choose_full_mater_coercion_x l_vname l_vargs r_aset c) r_aset
 
-and coerc_mater_match_x prog l_vname (l_vargs:P.spec_var list) r_aset (imm : ann) (lhs_f:Cformula.h_formula) =
+and coerc_mater_match_x coercs vname (vargs:P.spec_var list) r_aset (lhs_f:Cformula.h_formula) =
   (* TODO : how about right coercion, Cristina? *)
   (* WN_all_lemma - is this overriding of lemmas? *)
-  let coercs = (Lem_store.all_lemma # get_left_coercion)(*prog.prog_left_coercions*) in
-  let _ = DD.tinfo_hprint (add_str "coercs" (pr_list Cprinter.string_of_coercion)) coercs no_pos in
+  (* let coercs = (Lem_store.all_lemma # get_left_coercion)(\*prog.prog_left_coercions*\) in *)
+  (* let _ = DD.tinfo_hprint (add_str "coercs" (pr_list Cprinter.string_of_coercion)) coercs no_pos in *)
   let pos_coercs = List.fold_right (fun c a ->
-      match (choose_full_mater_coercion l_vname l_vargs r_aset c) with 
+      match (choose_full_mater_coercion vname vargs r_aset c) with 
         | None ->  a 
         | Some t -> t::a
   ) coercs [] in
@@ -462,27 +462,14 @@ and coerc_mater_match_x prog l_vname (l_vargs:P.spec_var list) r_aset (imm : ann
   (*       with  _ ->  a) [] pos_coercs in *)
   (* if produces_hole imm then [] else *) res
 
-and coerc_mater_match prog l_vname (l_vargs:P.spec_var list) r_aset imm (lhs_f:Cformula.h_formula) =
+and coerc_mater_match coercs l_vname (l_vargs:P.spec_var list) r_aset (lhs_f:Cformula.h_formula) =
   let pr = Cprinter.string_of_h_formula in
   let pr4 (h1,h2,l,mt) = pr_pair pr pr (h1,h2) in
   let pr2 ls = pr_list pr4 ls in
   let pr_svl = Cprinter.string_of_spec_var_list in
   Debug.no_3 "coerc_mater_match" pr_id pr_svl pr_svl pr2
-      (fun _ _ _ -> coerc_mater_match_x prog l_vname (l_vargs:P.spec_var list) r_aset imm (lhs_f:Cformula.h_formula)) l_vname l_vargs r_aset
+      (fun _ _ _ -> coerc_mater_match_x coercs l_vname (l_vargs:P.spec_var list) r_aset (lhs_f:Cformula.h_formula)) l_vname l_vargs r_aset
   
-and coerc_mater_match_left prog l_vname (l_vargs:P.spec_var list) r_aset imm (lhs_f:Cformula.h_formula) =
-   coerc_mater_match prog l_vname l_vargs r_aset imm lhs_f
-
-and coerc_mater_match_right prog r_vname (r_vargs:P.spec_var list) l_aset imm (lhs_f:Cformula.h_formula) =
-  let coercs = (Lem_store.all_lemma # get_right_coercion) in
-  let _ = DD.tinfo_hprint (add_str "coercs" (pr_list Cprinter.string_of_coercion)) coercs no_pos in
-  let pos_coercs = List.fold_right (fun c a ->
-      match (choose_full_mater_coercion r_vname r_vargs l_aset c) with 
-        | None ->  a 
-        | Some t -> t::a
-  ) coercs [] in
-  let res = List.map (fun (c,mv) -> (HEmp, lhs_f, [], MaterializedArg (mv,c))) pos_coercs in
-  res
 (*
   spatial context
   type: Cast.prog_decl ->
@@ -575,27 +562,29 @@ and exists_candidate_lemma coercs vname =
 
 (* try to find a lemma to be applied only if the view on the lhs is reachable from a node matching
 the node on the rhs *)
-and coerc_mater_match_with_unk_hp_helper prog (r_aset: P.spec_var list) (l_f: Cformula.h_formula) view_sv cmm =
-  let hd_nodes, hv_nodes, hrels = get_hp_rel_h_formula l_f in
-  let ptrs0 = (List.map (fun v -> v.h_formula_data_node) (get_data_nodes_ptrs_to_view prog hd_nodes hv_nodes view_sv) ) in
-  if (empty_inters ptrs0 r_aset) then
-    let ptrs0 = (List.map (fun v -> v.h_formula_view_node) (get_view_nodes_ptrs_to_view prog hd_nodes hv_nodes view_sv) ) in
-    if (empty_inters ptrs0 r_aset) then
+and check_pred_reachability prog (must_contain: P.spec_var list) (target_f: Cformula.h_formula) target_aset =
+  let hd_nodes, hv_nodes, hrels = get_hp_rel_h_formula target_f in
+  let ptrs0 = (List.map (fun v -> v.h_formula_data_node) (get_data_nodes_ptrs_to_view prog hd_nodes hv_nodes target_aset) ) in
+  if (empty_inters ptrs0 must_contain) then
+    let ptrs0 = (List.map (fun v -> v.h_formula_view_node) (get_view_nodes_ptrs_to_view prog hd_nodes hv_nodes target_aset) ) in
+    if (empty_inters ptrs0 must_contain) then
       let ptrs0 = (List.map (fun (hp0,e0,_) -> 
           let args0 = CP.diff_svl (get_all_sv (HRel(hp0, e0,no_pos))) [hp0] in
           let root0, _  = Sautility.find_root prog [hp0] args0  [] in
-          root0) (get_hrels_ptrs_to_view prog hd_nodes hv_nodes hrels view_sv)) in
-      if (empty_inters ptrs0 r_aset) then []
-      else cmm ()
-    else cmm ()
-  else cmm ()
+          root0) (get_hrels_ptrs_to_view prog hd_nodes hv_nodes hrels target_aset)) in
+      if (empty_inters ptrs0 must_contain) then false
+      else true
+    else true
+  else true
 
 and coerc_mater_match_with_unk_hp_left prog (l_vname: ident) (r_vname: ident) (l_vargs: P.spec_var list) (r_vargs: P.spec_var list) (r_aset: P.spec_var list) (lhs_node: Cformula.h_formula) (l_f: Cformula.h_formula) view_sv =
   let coerc_left = Lem_store.all_lemma # get_left_coercion in
   let exists_left = exists_candidate_lemma coerc_left l_vname in
   let cmm = if exists_left then 
-    let fcmm () =  coerc_mater_match_left prog l_vname l_vargs r_aset (ConstAnn(Mutable)) lhs_node in 
-    coerc_mater_match_with_unk_hp_helper prog r_aset l_f view_sv fcmm 
+    let reachable_pred = check_pred_reachability prog r_aset l_f view_sv in 
+    if (reachable_pred) then 
+      coerc_mater_match coerc_left l_vname l_vargs r_aset lhs_node
+    else []
   else [] in
   cmm
 
@@ -603,8 +592,10 @@ and coerc_mater_match_with_unk_hp_right prog (l_vname: ident) (r_vname: ident) (
   let coerc_right = Lem_store.all_lemma # get_right_coercion in
   let exists_right = exists_candidate_lemma coerc_right r_vname in
   let cmm = if exists_right then 
-    let fcmm () = coerc_mater_match_right prog r_vname r_vargs view_sv (ConstAnn(Mutable)) lhs_node in 
-    coerc_mater_match_with_unk_hp_helper prog r_aset l_f view_sv fcmm
+    let reachable_pred = check_pred_reachability prog r_aset l_f view_sv in 
+    if (reachable_pred) then 
+      coerc_mater_match coerc_right r_vname r_vargs view_sv lhs_node
+    else [] 
   else [] in
   cmm
 
@@ -629,9 +620,16 @@ and spatial_ctx_extract_hrel_on_lhs prog hp e rhs_node aset (lhs_node: Cformula.
           let root_aset = CP.EMapSV.find_equiv_all root emap in
           let root_aset = root::root_aset in
           (* let e = List.fold_left (fun a v-> CP.is_var v then  a@[CP.exp_to_spec_var v] else a) []  e in *)
-          let cmm = coerc_mater_match_with_unk_hp prog (CP.name_of_spec_var hp) c args vs1 aset lhs_node l_f root_aset in (* aset and root_aset are the same set ?*)
+          let cmm = coerc_mater_match_with_unk_hp prog (CP.name_of_spec_var hp) c args vs1 aset lhs_node l_f root_aset in 
           cmm
     | _ -> []
+
+and coerc_mater_match_gen l_vname (l_vargs:P.spec_var list) r_aset (lhs_f:Cformula.h_formula) = 
+  let coerc_left = Lem_store.all_lemma # get_left_coercion in
+  let cmml = coerc_mater_match coerc_left l_vname (l_vargs:P.spec_var list) r_aset (lhs_f:Cformula.h_formula) in 
+  let coerc_right = Lem_store.all_lemma # get_right_coercion in
+  let cmmr = coerc_mater_match coerc_right l_vname (l_vargs:P.spec_var list) r_aset (lhs_f:Cformula.h_formula) in
+  cmml@cmmr
 
 
 and spatial_ctx_extract_x prog (f0 : h_formula) (aset : CP.spec_var list) (imm : ann) (pimm : ann list) rhs_node rhs_rest emap: match_res list  =
@@ -689,7 +687,7 @@ and spatial_ctx_extract_x prog (f0 : h_formula) (aset : CP.spec_var list) (imm :
                         [(HEmp, f, [], Root)]
                     else
                       let vmm = view_mater_match prog c (p1::vs1) aset imm f in
-                      let cmm = coerc_mater_match prog c vs1 aset imm f in 
+                      let cmm = coerc_mater_match_gen c vs1 aset f in 
                       (*LDK: currently, assume that frac perm does not effect 
                         the choice of lemmas (coercions)*)
                       vmm@cmm

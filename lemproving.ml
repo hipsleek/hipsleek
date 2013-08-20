@@ -220,6 +220,7 @@ let check_coercion_struc coer lhs rhs (cprog: C.prog_decl) =
   let self_sv_renamed_lst = (CP.SpecVar (Named "", (self ^ "_" ^ coer.C.coercion_name), Unprimed)) :: [] in
   let lhs = CF.subst_avoid_capture self_sv_lst self_sv_renamed_lst lhs in
   let rhs = CF.subst_struc_avoid_capture self_sv_lst self_sv_renamed_lst rhs in
+  (* let rhs = CF.case_to_disjunct rhs in *)
   process_coercion_check (CFormula lhs) (CSFormula rhs) coer.C.coercion_infer_vars coer.C.coercion_exact coer.C.coercion_name  cprog
 
 let check_coercion_struc coer lhs rhs (cprog: C.prog_decl) =

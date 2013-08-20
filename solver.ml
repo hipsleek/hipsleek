@@ -2354,7 +2354,8 @@ and struc_unfold_heap_x (prog:Cast.prog_or_branches) (f : h_formula) (aset : CP.
           (* let _ = Debug.info_hprint (add_str "res_form"  Cprinter.string_of_struc_formula) res_form pos in *)
 	  let res_form = struc_formula_set_lhs_case false (add_struc_origins origs res_form ) in (* no LHS case analysis after unfold *)
           (* let _ = Debug.binfo_hprint (add_str "res_form"  Cprinter.string_of_struc_formula) res_form pos in *)
-	  Some (CF.replace_struc_formula_label v_lbl res_form) in
+          let new_struc_f = CF.replace_struc_formula_label v_lbl res_form in
+	  Some new_struc_f in
   (f,n_struc)
 
 and struc_unfold_heap (prog:Cast.prog_or_branches) (f : h_formula) (aset : CP.spec_var list) (v : CP.spec_var) (uf:int) pos:
