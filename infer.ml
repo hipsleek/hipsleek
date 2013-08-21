@@ -2752,15 +2752,15 @@ let infer_collect_hp_rel_x prog (es:entail_state) rhs0 rhs_rest (rhs_h_matched_s
         let leqs = (MCP.ptr_equations_without_null mix_lf) in
         let p_reqs = (MCP.ptr_equations_without_null mix_rf) in
         let pr = pr_list (pr_pair !CP.print_sv !CP.print_sv) in
-        let _ = DD.info_hprint (add_str "   sst0: " pr) (sst0) pos in
-        let _ = DD.info_hprint (add_str "   es.CF.es_rhs_eqset: " pr) (es.CF.es_rhs_eqset) pos in
-        let _ = DD.info_hprint (add_str "   p_reqs: " pr)  p_reqs pos in
+        let _ = DD.ninfo_hprint (add_str "   sst0: " pr) (sst0) pos in
+        let _ = DD.ninfo_hprint (add_str "   es.CF.es_rhs_eqset: " pr) (es.CF.es_rhs_eqset) pos in
+        let _ = DD.ninfo_hprint (add_str "   p_reqs: " pr)  p_reqs pos in
         let rls1,rls2  = List.split es.CF.es_rhs_eqset in
         let n_rhs_eqset = List.combine (CP.subst_var_list sst0 rls1) (CP.subst_var_list sst0 rls2)
           (* (MCP.ptr_equations_without_null mix_rf) *)  in
         let reqs = Gen.BList.remove_dups_eq (fun (sv1,sv2) (sv3, sv4) -> CP.eq_spec_var sv1 sv3 && CP.eq_spec_var sv2 sv4) n_rhs_eqset@p_reqs in
-        let _ = DD.info_hprint (add_str "   reqs: " pr) (reqs) pos in
-        let _ = DD.info_hprint (add_str "   n_rhs_eqset: " pr) (n_rhs_eqset) pos in
+        let _ = DD.ninfo_hprint (add_str "   reqs: " pr) (reqs) pos in
+        let _ = DD.ninfo_hprint (add_str "   n_rhs_eqset: " pr) (n_rhs_eqset) pos in
         let _ =
           DD.tinfo_pprint ">>>>>> infer_hp_rel <<<<<<" pos;
           DD.tinfo_hprint (add_str  "  es_heap " Cprinter.string_of_h_formula) es.CF.es_heap pos;
@@ -2793,15 +2793,15 @@ let infer_collect_hp_rel_x prog (es:entail_state) rhs0 rhs_rest (rhs_h_matched_s
           | _ -> report_error pos "Expect a node or a hrel"
                 (* CF.get_ptr_from_data_w_hrel *)
         in
-        let _ = Debug.info_pprint "parameters for detecting mis_match" pos in
-        let _ = Debug.info_hprint (add_str "mis_nodes" !print_svl) mis_nodes pos in
-        let _ = Debug.info_hprint (add_str "leqs" pr) leqs pos in
-        let _ = Debug.info_hprint (add_str "reqs" pr) reqs pos in
-        let _ = Debug.info_hprint (add_str "subs_prog_vars" !print_svl) subst_prog_vars pos in
+        let _ = Debug.tinfo_pprint "parameters for detecting mis_match" pos in
+        let _ = Debug.tinfo_hprint (add_str "mis_nodes" !print_svl) mis_nodes pos in
+        let _ = Debug.tinfo_hprint (add_str "leqs" pr) leqs pos in
+        let _ = Debug.tinfo_hprint (add_str "reqs" pr) reqs pos in
+        let _ = Debug.tinfo_hprint (add_str "subs_prog_vars" !print_svl) subst_prog_vars pos in
         let fv_lhs = CF.h_fv lhs_h in
         let fv_rhs = CF.h_fv rhs in
-        let _ = Debug.info_hprint (add_str "fv_lhs" !print_svl) fv_lhs pos in
-        let _ = Debug.info_hprint (add_str "fv_rhs" !print_svl) fv_rhs pos in
+        let _ = Debug.tinfo_hprint (add_str "fv_lhs" !print_svl) fv_lhs pos in
+        let _ = Debug.tinfo_hprint (add_str "fv_rhs" !print_svl) fv_rhs pos in
         (* WN_infer_heap : why did we not use the outcome of smart_subs? *)
         (* smart_subst@2@1 *)
         (* smart_subst inp1 : P1(yy)&{FLOW,(19,20)=__norm}[] *)
@@ -2813,7 +2813,7 @@ let infer_collect_hp_rel_x prog (es:entail_state) rhs0 rhs_rest (rhs_h_matched_s
         (* if (CP.intersect mis_nodes (List.fold_left SAU.close_def v_lhs (leqs@reqs))) = [] then *)
         if (CP.intersect fv_lhs fv_rhs) == [] then
           begin
-            let _ = Debug.info_pprint ">>>>>> mismatch ptr is not a selective variable <<<<<<" pos in
+            let _ = Debug.tinfo_pprint ">>>>>> mismatch ptr is not a selective variable <<<<<<" pos in
             (*bugs/bug-classic-4a.slk: comment the following stuff*)
             let rhs_hps = (List.map fst r_hpargs) in
             if rhs_hps <> [] then
@@ -2869,7 +2869,7 @@ let infer_collect_hp_rel_x prog (es:entail_state) rhs0 rhs_rest (rhs_h_matched_s
             find_undefined_selective_pointers prog lhs_b1 mix_lf1 rhs rhs_rest
                 (rhs_h_matched_set) leqs1 reqs1 pos es.CF.es_infer_hp_unk_map post_hps subst_prog_vars in
           if not is_found_mis then
-            let _ = Debug.info_zprint (lazy (">>>>>> mismatch ptr" ^ (Cprinter.prtt_string_of_h_formula rhs) ^" is not found (or inst) in the lhs <<<<<<")) pos in
+            let _ = Debug.tinfo_zprint (lazy (">>>>>> mismatch ptr" ^ (Cprinter.prtt_string_of_h_formula rhs) ^" is not found (or inst) in the lhs <<<<<<")) pos in
             (false, es, rhs, None)
           else
             let rhs_b1 = CF.formula_base_of_heap rhs pos in

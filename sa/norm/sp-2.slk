@@ -12,7 +12,7 @@ HeapPred P1(node a).
 HeapPred P2(node a).
 
 
-lemma_infer [P1,P2] self::zip<y> -> P1(self) * P2(y).
+lemma_infer [P1,P2] self::zip<y> <- P1(self) * P2(y).
 print residue.
 
 
