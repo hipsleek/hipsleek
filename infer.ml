@@ -2752,15 +2752,15 @@ let infer_collect_hp_rel_x prog (es:entail_state) rhs0 rhs_rest (rhs_h_matched_s
         let leqs = (MCP.ptr_equations_without_null mix_lf) in
         let p_reqs = (MCP.ptr_equations_without_null mix_rf) in
         let pr = pr_list (pr_pair !CP.print_sv !CP.print_sv) in
-        let _ = DD.ninfo_hprint (add_str "   sst0: " pr) (sst0) pos in
-        let _ = DD.ninfo_hprint (add_str "   es.CF.es_rhs_eqset: " pr) (es.CF.es_rhs_eqset) pos in
-        let _ = DD.ninfo_hprint (add_str "   p_reqs: " pr)  p_reqs pos in
+        let _ = DD.tinfo_hprint (add_str "   sst0: " pr) (sst0) pos in
+        let _ = DD.tinfo_hprint (add_str "   es.CF.es_rhs_eqset: " pr) (es.CF.es_rhs_eqset) pos in
+        let _ = DD.tinfo_hprint (add_str "   p_reqs: " pr)  p_reqs pos in
         let rls1,rls2  = List.split es.CF.es_rhs_eqset in
         let n_rhs_eqset = List.combine (CP.subst_var_list sst0 rls1) (CP.subst_var_list sst0 rls2)
           (* (MCP.ptr_equations_without_null mix_rf) *)  in
         let reqs = Gen.BList.remove_dups_eq (fun (sv1,sv2) (sv3, sv4) -> CP.eq_spec_var sv1 sv3 && CP.eq_spec_var sv2 sv4) n_rhs_eqset@p_reqs in
-        let _ = DD.ninfo_hprint (add_str "   reqs: " pr) (reqs) pos in
-        let _ = DD.ninfo_hprint (add_str "   n_rhs_eqset: " pr) (n_rhs_eqset) pos in
+        let _ = DD.tinfo_hprint (add_str "   reqs " pr) (reqs) pos in
+        let _ = DD.tinfo_hprint (add_str "   n_rhs_eqset " pr) (n_rhs_eqset) pos in
         let _ =
           DD.tinfo_pprint ">>>>>> infer_hp_rel <<<<<<" pos;
           DD.tinfo_hprint (add_str  "  es_heap " Cprinter.string_of_h_formula) es.CF.es_heap pos;
