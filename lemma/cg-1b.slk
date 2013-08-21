@@ -1,0 +1,28 @@
+data node {
+ node pPrev;
+ node pNext;
+}.
+
+pred lseg<prev,p,last> == case {
+  self=p -> [] self=p & prev=last;
+ self!=p -> [] self::node<prev, r> * r::lseg<self,p,last>;
+}	inv true.
+
+/*
+pred lseg<prev,p,last> == self=p & prev=last
+ or  self::node<prev, r> * r::lseg<self,p,last>
+	inv true.
+*/
+
+// doubly linked list with extra pointer for the last element
+
+pred dll<prev,o,l> == 
+  case {
+   self=l -> [] self::node<prev,o> ; 
+   self!=l -> [] self::node<prev,t> * t::dll<self,o,l>;
+  }
+inv self!=null & l!=null.
+
+lemma_safe "taildls" self::dll<prev,o,l> <-> 
+   self::lseg<prev,l,ib3> * l::node<ib3,o>.
+
