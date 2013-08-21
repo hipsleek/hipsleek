@@ -1,0 +1,61 @@
+data node { int val ; node next }.
+
+pred lseg<n, p> == case {
+     n=0  -> []  self::node<next = null> & self = p & n = 1;
+     n!=0 ->  [] self::node<next = r> * r::lseg<n - 1, p>; 
+     }
+     inv n >= 0 & self!=null.
+
+
+pred ll_tail<n, t> == 
+   case {
+     n=1  -> [] self::node<next = null> & t = self & n = 1;
+     n!=1 -> [] self::node<next = r> * r::ll_tail<n - 1, t> & r!=null;
+   }
+   inv n>=1 & self!=null.  
+
+
+
+lemma_safe "lseg" self::lseg<n, p> & n = a + b & a,b >=0 <->  self::lseg<a, r> * r::lseg<b, p>.
+
+lemma_safe "tail2lseg" self::ll_tail<n, t> <-> self::lseg<n-1, t> * t::node<_, null>.
+
+
+lemma_safe "tail2lsegL" self::ll_tail<n, t> -> self::lseg<n-1, t> * t::node<_, null>.
+
+/**
+
+Entailing lemma tail2lseg: Fail. Details below:
+         "->" implication: : Fail.
+         "<-" implication: : Valid.
+
+*/
+
+
+
+
+
+/*
+
+checkentail 
+ (exists Anon_1268,Anon_1269: self_tail2lsegL::node<Anon_1268,Anon_1269>@M&
+ n=1 & self_tail2lsegL=t & n=1)
+ or (exists t_1270,flted_13_1271,Anon_1272,
+    r_1273: self_tail2lsegL::node<Anon_1272,r_1273>@M *
+    r_1273::ll_tail<flted_13_1271,t_1270>@M&n!=1 & n=flted_13_1271+1 &
+    r_1273!=null & t=t_1270)
+|- 
+       (exists flted_23_1274,flted_23_1275,
+       Anon_1276: t::node<Anon_1276,flted_23_1274>@M&n=flted_23_1275+1 &
+       flted_23_1274=null & flted_23_1275=0 & self_tail2lsegL=t &
+       flted_23_1275=0).
+
+     or 
+
+  (exists p_1284,flted_5_1285,Anon_1286,r_1287,flted_23_1274,
+          flted_23_1275,Anon_1276: t::node<Anon_1276,flted_23_1274>@M *
+          self_tail2lsegL::node<Anon_1286,r_1287>@M *
+          r_1287::lseg<flted_5_1285,p_1284>@M&n=flted_23_1275+1 &
+          flted_23_1274=null & flted_23_1275!=0 & flted_23_1275=flted_5_1285+
+          1 & p_1284=t).
+*/

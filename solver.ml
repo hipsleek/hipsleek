@@ -2251,7 +2251,7 @@ and unfold_struc_x (prog:prog_or_branches) (f : struc_formula) (v : CP.spec_var)
     let asets = Context.alias_nth 6 (MCP.ptr_equations_with_null p) in
     let aset' = Context.get_aset asets v in
     let aset = if CP.mem v aset' then aset' else v :: aset' in
-    let h_rest, unfolded_f = struc_unfold_heap prog h aset v uf pos in
+    let h_rest, unfolded_f = struc_unfold_heap prog h aset v uf (qvars@ee@ei) pos in
     match unfolded_f with
       | None -> None
       | Some s ->
@@ -2314,7 +2314,7 @@ and unfold_struc_x (prog:prog_or_branches) (f : struc_formula) (v : CP.spec_var)
   struc_helper f		
       
       
-and struc_unfold_heap_x (prog:Cast.prog_or_branches) (f : h_formula) (aset : CP.spec_var list) (v : CP.spec_var) (uf:int) pos:
+and struc_unfold_heap_x (prog:Cast.prog_or_branches) (f : h_formula) (aset : CP.spec_var list) (v : CP.spec_var) (uf:int) eqvars pos:
       h_formula *(struc_formula option)= 
   let (f,r) = pick_view_node f aset in
   let n_struc = match r with
@@ -2330,14 +2330,24 @@ and struc_unfold_heap_x (prog:Cast.prog_or_branches) (f : h_formula) (aset : CP.
       h_formula_view_arguments = vs} -> 
 	  let uf = old_uf+uf in
 	  let vdef = Cast.look_up_view_def pos (fst prog).prog_view_decls lhs_name in
-	  let forms = match brs with 
-            | None -> vdef.view_formula
-            | Some s -> 
-		  let joiner f = formula_of_disjuncts (fst (List.split f)) in
-		  let f = joiner (List.filter (fun (_,l)-> List.mem l s) vdef.view_un_struc_formula) in
-		  struc_formula_of_formula f  pos in         
+          (* check to see if vdef case vars are quantif. Is so use unstruc view formula *)
+          let vs_vdef = List.combine vdef.view_vars vs in
+          let is_in v lst = Gen.BList.mem_eq CP.eq_spec_var v lst in
+          let quantif_case_vars = List.exists (fun (vdef_arg,varg) -> is_in varg eqvars && is_in vdef_arg vdef.view_case_vars) vs_vdef in
+          let joiner f = formula_of_disjuncts (fst (List.split f)) in
+          let forms = match brs, quantif_case_vars with
+            | None, false   -> vdef.view_formula
+            | None, true    -> 
+                  let f = joiner  vdef.view_un_struc_formula in
+	          struc_formula_of_formula f  pos
+            | Some s,_      -> 
+                  let f = joiner (List.filter (fun (_,l)-> List.mem l s) vdef.view_un_struc_formula) in
+                  struc_formula_of_formula f  pos in
+          (* let joiner f = formula_of_disjuncts (fst (List.split f)) in *)
+          (* let f = joiner (List.filter (fun (_,l)-> List.mem l brs) vdef.view_un_struc_formula) in *)
+          (* struc_formula_of_formula f  pos in *)
           let renamed_view_formula = add_struc_unfold_num (rename_struc_bound_vars forms) uf in
-	  let renamed_view_formula = propagate_imm_struc_formula renamed_view_formula imm in
+          let renamed_view_formula = propagate_imm_struc_formula renamed_view_formula imm in
           let renamed_view_formula = 
             if (Perm.allow_perm ()) then
               (match perm with 
@@ -2354,18 +2364,19 @@ and struc_unfold_heap_x (prog:Cast.prog_or_branches) (f : h_formula) (aset : CP.
           (* let _ = Debug.info_hprint (add_str "res_form"  Cprinter.string_of_struc_formula) res_form pos in *)
 	  let res_form = struc_formula_set_lhs_case false (add_struc_origins origs res_form ) in (* no LHS case analysis after unfold *)
           (* let _ = Debug.binfo_hprint (add_str "res_form"  Cprinter.string_of_struc_formula) res_form pos in *)
-	  Some (CF.replace_struc_formula_label v_lbl res_form) in
+          let new_struc_f = CF.replace_struc_formula_label v_lbl res_form in
+	  Some new_struc_f in
   (f,n_struc)
 
-and struc_unfold_heap (prog:Cast.prog_or_branches) (f : h_formula) (aset : CP.spec_var list) (v : CP.spec_var) (uf:int) pos:
+and struc_unfold_heap (prog:Cast.prog_or_branches) (f : h_formula) (aset : CP.spec_var list) (v : CP.spec_var) (uf:int) qvars pos:
       h_formula *(struc_formula option)= 
   let pr = Cprinter.string_of_struc_formula in
   let prh = Cprinter.string_of_h_formula in
   let pr2 = Cprinter.string_of_prog_or_branches in
   let prs = Cprinter.string_of_spec_var in
   let pr_out = pr_pair prh (pr_opt pr) in
-  Debug.no_4 "struc_unfold_heap"  prh (pr_list prs) prs pr2 pr_out
-      (fun _ _ _ _ -> struc_unfold_heap_x prog f aset v  uf pos)  f aset v prog
+  Debug.no_5 "struc_unfold_heap"  prh (pr_list prs) prs pr2 (pr_list prs) pr_out
+      (fun _ _ _ _ _ -> struc_unfold_heap_x prog f aset v  uf qvars pos)  f aset v prog qvars
       
 and unfold_nth (n:int) (prog:prog_or_branches) (f : formula) (v : CP.spec_var) (already_unsat:bool) (uf:int) (pos : loc) : formula =
   (* unfold_x prog f v already_unsat pos *)
@@ -4737,43 +4748,43 @@ and heap_entail_split_lhs (prog : prog_decl) (is_folding : bool) (ctx0 : context
 	    (*	let _ = print_string("compute final answer\n") in*)
 	    ((fold_context_left 3 [with_h1_ctx; final_ctx]),( mkOrRight ctx0 conseq [with_h1_prf; final_prf]))		
 		(*  end of helper method *)
-                (*in
-                (* Do Matching (data nodes are already compacted) before Spliting *)
-                  let matching_helper prog is_folding ctx0 conseq pos = 
-    	          let lhs = CF.formula_of_context ctx0 in
-	          let estate = CF.estate_of_context ctx0 pos in
-	          let rhs = conseq in
-    	          let h1, p1, fl1, t1, a1 = split_components lhs in
-    	          let h2, p2, fl2, t2, a2 = split_components rhs in
-   	          let rhs_lst = split_linear_node_guided (CP.remove_dups_svl (h_fv h1 @ MCP.mfv p1)) h2 in
-    	          let posib_r_alias = (estate.es_evars @ estate.es_gen_impl_vars @ estate.es_gen_expl_vars) in
-    	          let rhs_eqset = estate.es_rhs_eqset in
-    	          let actions = Context.compute_actions prog estate rhs_eqset h1 p1 p2 posib_r_alias rhs_lst estate.es_is_normalizing pos in
-                (*let r = List.map (fun (c1,c2) -> (Context.choose_context prog rhs_eqset h1 p1 p2 posib_r_alias c1 c2 pos,(c1,c2))) rhs_lst in*)
-    	        (* Filter only matching actions *)
-    	        (*let match_actions  =  List.filter (fun c -> match c with 
-    	          | Context.M_match ma  -> true
-    	          | _ -> false
-    	          ) actions *)
-                  let b1 = { formula_base_heap = h1;
-                  formula_base_pure = p1;
-                  formula_base_type = t1;
-                  formula_base_and = a1; (*TO CHECK: Done: pass a1 throught*)
-                  formula_base_flow = fl1;
-                  formula_base_label = None;
-                  formula_base_pos = pos } in
-                  let b2 = { formula_base_heap = h2;
-                  formula_base_pure = p2;
-                  formula_base_type = t2;
-                  formula_base_and = a2; (*TO CHECK: Done: pass a2 throught*)
-                  formula_base_flow = fl2;
-                  formula_base_label = None;
-                  formula_base_pos = pos } in  
-                  match actions with
-                  | Context.M_match _ -> process_action 2 prog estate conseq b1 b2 actions [] is_folding pos
-                  | _ -> let msg = "Dummy FailContext for no Matching in heap_entail_split_lhs" in 
-	    	  let fail_ex = {fe_kind = Failure_Must msg; fe_name = Globals.logical_error;fe_locs=[]}
-	    	  in mkFailCtx_in (Trivial_Reason (fail_ex)), Failure*)
+                (* in *)
+                (* (\* Do Matching (data nodes are already compacted) before Spliting *\) *)
+                (*   let matching_helper prog is_folding ctx0 conseq pos =  *)
+    	        (*   let lhs = CF.formula_of_context ctx0 in *)
+	        (*   let estate = CF.estate_of_context ctx0 pos in *)
+	        (*   let rhs = conseq in *)
+    	        (*   let h1, p1, fl1, t1, a1 = split_components lhs in *)
+    	        (*   let h2, p2, fl2, t2, a2 = split_components rhs in *)
+   	        (*   let rhs_lst = split_linear_node_guided (CP.remove_dups_svl (h_fv h1 @ MCP.mfv p1)) h2 in *)
+    	        (*   let posib_r_alias = (estate.es_evars @ estate.es_gen_impl_vars @ estate.es_gen_expl_vars) in *)
+    	        (*   let rhs_eqset = estate.es_rhs_eqset in *)
+    	        (*   let actions = Context.compute_actions prog estate rhs_eqset h1 p1 p2 posib_r_alias rhs_lst estate.es_is_normalizing pos in *)
+                (* (\*let r = List.map (fun (c1,c2) -> (Context.choose_context prog rhs_eqset h1 p1 p2 posib_r_alias c1 c2 pos,(c1,c2))) rhs_lst in*\) *)
+    	        (* (\* Filter only matching actions *\) *)
+    	        (* (\*let match_actions  =  List.filter (fun c -> match c with  *)
+    	        (*   | Context.M_match ma  -> true *)
+    	        (*   | _ -> false *)
+    	        (*   ) actions *\) *)
+                (*   let b1 = { formula_base_heap = h1; *)
+                (*   formula_base_pure = p1; *)
+                (*   formula_base_type = t1; *)
+                (*   formula_base_and = a1; (\*TO CHECK: Done: pass a1 throught*\) *)
+                (*   formula_base_flow = fl1; *)
+                (*   formula_base_label = None; *)
+                (*   formula_base_pos = pos } in *)
+                (*   let b2 = { formula_base_heap = h2; *)
+                (*   formula_base_pure = p2; *)
+                (*   formula_base_type = t2; *)
+                (*   formula_base_and = a2; (\*TO CHECK: Done: pass a2 throught*\) *)
+                (*   formula_base_flow = fl2; *)
+                (*   formula_base_label = None; *)
+                (*   formula_base_pos = pos } in   *)
+                (*   match actions with *)
+                (*   | Context.M_match _ -> process_action 2 prog estate conseq b1 b2 actions [] is_folding pos *)
+                (*   | _ -> let msg = "Dummy FailContext for no Matching in heap_entail_split_lhs" in  *)
+	    	(*   let fail_ex = {fe_kind = Failure_Must msg; fe_name = Globals.logical_error;fe_locs=[]} *)
+	    	(*   in mkFailCtx_in (Trivial_Reason (fail_ex)), Failure *)
     in
     (* main method *)
     let lhs = CF.formula_of_context ctx0 in
@@ -5267,7 +5278,7 @@ and heap_entail_conjunct_lhs_x hec_num prog is_folding  (ctx:context) (conseq:CF
               if real_c then (* real_c = false denotes contradiction *)
                 heap_entail()
               else (* early failure due to real lhs-rhs contra detected *)
-                let _ = Debug.ninfo_pprint "Early lhs-rhs contra detected" no_pos in
+                let _ = Debug.tinfo_pprint "Early lhs-rhs contra detected" no_pos in
                 let pr = Cprinter.string_of_formula in
                 let pr2 = Cprinter.string_of_context in
                 let ante, prf, estate = match ctx with 
