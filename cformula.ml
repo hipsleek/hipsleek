@@ -2854,7 +2854,7 @@ and apply_one ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : formula) = match
 			let qvars, base_f = split_quantifiers f in
 			let new_qvar = CP.fresh_spec_var t in
 			let new_qvars = List.filter (fun c -> not (CP.eq_spec_var t c)) qsv in
-			add_quantifiers (new_qvar::new_qvars) (subst [(t,new_qvar)] base_f)
+			add_quantifiers (new_qvar::new_qvars) (apply_one s (apply_one (t,new_qvar) base_f))
 		else Exists ({formula_exists_qvars = qsv; 
 		formula_exists_heap =  h_apply_one s qh; 
 		formula_exists_pure = MCP.regroup_memo_group (MCP.m_apply_one s qp); 
