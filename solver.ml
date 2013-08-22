@@ -11919,7 +11919,7 @@ let heap_entail_struc_list_failesc_context_init (prog : prog_decl) (is_folding :
 	(fun (cl, _) -> Cprinter.string_of_list_failesc_context cl)
 	(fun _ _ -> heap_entail_struc_list_failesc_context_init prog is_folding has_post cl conseq tid delayed_f join_id pos pid) cl conseq
 
-let heap_entail_list_partial_context_init (prog : prog_decl) (is_folding : bool)  (cl : list_partial_context)
+let heap_entail_list_partial_context_init_x (prog : prog_decl) (is_folding : bool)  (cl : list_partial_context)
         (conseq:formula) (tid: CP.spec_var option) (delayed_f: MCP.mix_formula option) (join_id: CP.spec_var option) pos (pid:control_path_id) : (list_partial_context * proof) = 
   let _ = set_entail_pos pos in
   Debug.devel_zprint (lazy ("heap_entail_init list_partial_context_init:"
@@ -11950,6 +11950,14 @@ let heap_entail_list_partial_context_init (prog : prog_decl) (is_folding : bool)
   heap_entail_agressive_prunning entail_fct (prune_ctx_list prog) (fun (c,_)-> isSuccessListPartialCtx_new c) norm_cl 
   end
 
+let heap_entail_list_partial_context_init (prog : prog_decl) (is_folding : bool)  (cl : list_partial_context)
+        (conseq:formula) (tid: CP.spec_var option) (delayed_f: MCP.mix_formula option) (join_id: CP.spec_var option) pos (pid:control_path_id) : (list_partial_context * proof) = 
+	let pr1 = Cprinter.string_of_list_partial_context in
+	let pr2 = Cprinter.string_of_formula in
+	let pr3 (a,_)= pr1 a in
+	Debug.no_2 "heap_entail_list_partial_context_init" pr1 pr2 pr3 
+	 (fun _ _ -> heap_entail_list_partial_context_init_x prog  is_folding cl conseq tid delayed_f join_id pos pid) cl conseq 
+  
 (* let heap_entail_list_partial_context_init (prog : prog_decl) (is_folding : bool)  (cl : list_partial_context) *)
 (*         (conseq:formula) (tid: CP.spec_var option) (delayed_f: MCP.mix_formula option) (join_id: CP.spec_var option) pos (pid:control_path_id) : (list_partial_context * proof) =  *)
 (*   (\*let pr x = (string_of_int(List.length x))^"length" in*\) *)
