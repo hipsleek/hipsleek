@@ -4487,7 +4487,7 @@ and case_coverage_x (instant:Cpure.spec_var list)(f:CF.struc_formula): bool =
         | Some l -> struc_case_coverage (instant@ b.CF.formula_struc_explicit_inst@ b.CF.formula_struc_implicit_inst@ b.CF.formula_struc_exists) (CP.mkAnd (CF.extract_pure b.CF.formula_struc_base) ctx no_pos)l)
     | CF.ECase b -> 
           let r1,r2 = List.split b.CF.formula_case_branches in
-          let all = List.fold_left (fun a c->(Cpure.mkOr a c None no_pos) ) (Cpure.mkFalse b.CF.formula_case_pos) r1  in
+          let all = List.fold_left (fun a c->(Cpure.mkStupid_Or a c None no_pos) ) (Cpure.mkFalse b.CF.formula_case_pos) r1  in
           (** An Hoa Temporary Printing **)
           (* let _ = print_endline ("An Hoa : all = " ^ (Cprinter.string_of_pure_formula all)) in*)
           let _ = if not(Gen.BList.subset_eq (=) (Cpure.fv all) instant) then 
@@ -4498,7 +4498,7 @@ and case_coverage_x (instant:Cpure.spec_var list)(f:CF.struc_formula): bool =
             Err.error_text = "all guard free vars must be instantiated";} in
           let _ = 
             let coverage_error = 
-                let f_sat = Cpure.mkAnd ctx (Cpure.Not (all,None,no_pos)) no_pos in
+                let f_sat = Cpure.mkAnd ctx (Cpure.mkNot all None no_pos) no_pos in
                 Tpdispatcher.is_sat_sub_no 11 f_sat sat_subno
                 (*not (Tpdispatcher.simpl_imply_raw ctx all)*) in
             if coverage_error then 

@@ -1,0 +1,15 @@
+
+data node {
+    node pxNext;
+}.
+
+pred ls<ob,ib, B> ==  self::node<ob> &  ib=self & B={self}
+                      or  self::node<t> * t::ls<ob,ib,B1> & self!=ib & B=union({self},B1).
+
+
+lemma "t" self::ls<ob,ib,B> & self!=ib -> self::ls<ib,ib3,B1> * ib::node<ob> &B=union(B1,{ib}).
+
+  
+checkentail e::ls<_,ib1,B1> &  e!=ib1 |- ib1::node<_>.
+
+  print residue.

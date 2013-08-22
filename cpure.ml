@@ -1930,8 +1930,33 @@ and mkOr_x f1 f2 lbl pos=
 	 | AndList l, f
 	 | f, AndList l -> AndList (or_branches l [(LO.unlabelled,f)] lbl pos)
 	 | _ -> *)Or (f1, f2, lbl ,pos)
-
+	 
 and mkOr f1 f2 lbl pos = Debug.no_2 "pure_mkOr" !print_formula !print_formula !print_formula (fun _ _ -> mkOr_x f1 f2 lbl pos) f1 f2
+	 
+and mkStupid_Or_x f1 f2 lbl pos= 
+	let or_branches l1 l2 lbl pos=
+	  let branches = Gen.BList.remove_dups_eq (=) (fst (List.split l1) @ (fst (List.split l2))) in
+	  let map_fun branch =
+	  try 
+	  let l1 = List.assoc branch l1 in
+	  try
+	  let l2 = List.assoc branch l2 in
+	  (branch, mkOr l1 l2 lbl pos)
+	  with Not_found -> (branch, mkTrue pos)
+	  with Not_found -> (branch, mkTrue pos )
+	  in
+	  Label_Pure.norm  (List.map map_fun branches) in
+  if (isConstFalse f1) then f2
+  else if (isConstTrue f1) then f1
+  else if (isConstFalse f2) then f1
+  else if (isConstTrue f2) then f2
+  else match f1, f2 with 
+	 | AndList l1, AndList l2 -> AndList (or_branches l1 l2 lbl pos)
+	 | AndList l, f
+	 | f, AndList l -> AndList (or_branches l [(LO.unlabelled,f)] lbl pos)
+	 | _ -> Or (f1, f2, lbl ,pos)
+
+and mkStupid_Or f1 f2 lbl pos = Debug.no_2 "pure_mkStupidOr" !print_formula !print_formula !print_formula (fun _ _ -> mkOr_x f1 f2 lbl pos) f1 f2
   
 and mkGtExp (ae1 : exp) (ae2 : exp) pos :formula =
   match (ae1, ae2) with
