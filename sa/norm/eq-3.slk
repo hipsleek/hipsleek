@@ -1,0 +1,20 @@
+//check smart_subst: eq null
+
+data node{
+	int val;
+	node next;
+}.
+
+HeapPred H2(node a, node b).
+HeapPred G2(node a,node b).
+
+pred lseg<p> ==
+    self::node<_,p> 
+  or self::node<_,q> * q::lseg<p> 
+ inv true.
+
+
+//1
+infer [H2,G2] H2(x,y) & x=null & x=y    |- G2(x,y) .
+print residue.
+

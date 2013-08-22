@@ -2633,11 +2633,11 @@ let update_es prog es hds hvs ass_lhs_b rhs rhs_rest r_new_hfs defined_hps lsele
      (*should consider closure of aliasing. since constraints are in normal form,
        but residue is not. and we want to drop exact matching of args*)
      (* let lselected_hpargs2 = List.map (fun (hp,args) -> (hp, CF.find_close args leqs)) lselected_hpargs1 in *)
-     let _ = DD.info_hprint (add_str  "  lselected_hpargs: " (pr_list (pr_pair !CP.print_sv  !CP.print_svl))) lselected_hpargs1 pos
+     let _ = DD.ninfo_hprint (add_str  "  lselected_hpargs: " (pr_list (pr_pair !CP.print_sv  !CP.print_svl))) lselected_hpargs1 pos
      in
-     let _ = DD.info_hprint (add_str  "  all_aset: " (CP.EMapSV.string_of )) all_aset pos  in
+     let _ = DD.ninfo_hprint (add_str  "  all_aset: " (CP.EMapSV.string_of )) all_aset pos  in
      let lselected_hpargs2 = List.map (fun (hp,args) -> (hp, CP.find_eq_closure all_aset args)) lselected_hpargs1 in
-     let _ = DD.info_hprint (add_str  "  lselected_hpargs2: " (pr_list (pr_pair !CP.print_sv  !CP.print_svl))) lselected_hpargs2 pos
+     let _ = DD.ninfo_hprint (add_str  "  lselected_hpargs2: " (pr_list (pr_pair !CP.print_sv  !CP.print_svl))) lselected_hpargs2 pos
      in
      let _ = DD.ninfo_hprint (add_str  "  root_vars_ls2 " !CP.print_svl) root_vars_ls2 pos in
      let _ = DD.ninfo_hprint (add_str  "  before " Cprinter.string_of_formula) new_es_formula pos in
@@ -2668,9 +2668,6 @@ let update_es prog es hds hvs ass_lhs_b rhs rhs_rest r_new_hfs defined_hps lsele
                in
                (nf , new_h, nholes)
          | _ ->
-               (* let consumed_hns = List.filter (fun hd -> CP.mem_svl hd.CF.h_formula_data_node root_vars_ls2) hds in *)
-               (* let nlhs = if consumed_hns = [] then h else CF.DataNode (List.hd consumed_hns) in *)
-               (* (f, nlhs, []) *)
                (f, h, [])
      in
      let new_es_formula, new_lhs, new_holes = check_consumed_node rhs new_es_formula in
@@ -2693,14 +2690,6 @@ let update_es prog es hds hvs ass_lhs_b rhs rhs_rest r_new_hfs defined_hps lsele
      DD.tinfo_hprint (add_str "  new_lhs: "  Cprinter.string_of_h_formula) new_lhs pos;
      (new_es, new_lhs)
    end
-(*
-@1!   residue before matching: : P1(yy)&{FLOW,(19,20)=__norm}[]
-@1!   new_lhs: : P1(q36_22)
-@1!   new_es_formula: : P1(yy)&{FLOW,(19,20)=__norm}[]
-
-P1(q36_22) is from smart subs, while P1(yy) is the original LHS.
-After the folding, why is P1(yy) still be kept?
-*)
 
 (*
 type: Cast.prog_decl ->
@@ -2753,13 +2742,13 @@ let infer_collect_hp_rel_x prog (es:entail_state) rhs0 rhs_rest (rhs_h_matched_s
         let v_2_rename = List.filter (fun sv -> not (CP.is_hprel_typ sv)) (CP.diff_svl v_rhs (v_lhs@v_hp_rel)) in
         let fr_svl = CP.fresh_spec_vars v_2_rename in
         (* WN_infer_heap : why did use fresh var here? *)
-        let sst0 = List.combine v_2_rename fr_svl in
+        let sst0 = (* List.combine v_2_rename fr_svl *) [] in
         let rhs = CF.h_subst sst0 rhs0 in
         let rhs_b = CF.subst_b sst0 rhs_b0 in
         (* DD.info_pprint "  hp_rel found" pos; *)
         (*which pointers are defined and which arguments of data nodes are pointer*)
         let ( _,mix_lf,_,_,_) = CF.split_components (CF.Base lhs_b0) in
-        let (_,mix_rf,_,_,_) = CF.split_components (CF.Base rhs_b) in
+        let (_,mix_rf,_,_,_) = CF.split_components (CF.Base rhs_b0) in
         let leqs = (MCP.ptr_equations_without_null mix_lf) in
 
         let l_emap0 = get_eqset (MCP.pure_of_mix mix_lf) in
@@ -2772,7 +2761,7 @@ let infer_collect_hp_rel_x prog (es:entail_state) rhs0 rhs_rest (rhs_h_matched_s
         let pr = pr_list (pr_pair !CP.print_sv !CP.print_sv) in
         let _ = DD.ninfo_hprint (add_str "   sst0: " pr) (sst0) pos in
         let _ = DD.ninfo_hprint (add_str "   es.CF.es_rhs_eqset: " pr) (es.CF.es_rhs_eqset) pos in
-        let _ = DD.ninfo_hprint (add_str "   reqs__orig: " pr)  reqs_orig pos in
+        let _ = DD.ninfo_hprint (add_str "   reqs_orig: " pr)  reqs_orig pos in
         let rls1,rls2  = List.split es.CF.es_rhs_eqset in
         let n_rhs_eqset = List.combine (CP.subst_var_list sst0 rls1) (CP.subst_var_list sst0 rls2)
           (* (MCP.ptr_equations_without_null mix_rf) *)  in
@@ -2799,14 +2788,14 @@ let infer_collect_hp_rel_x prog (es:entail_state) rhs0 rhs_rest (rhs_h_matched_s
         let r_hpargs = CF.get_HRels rhs in
         (**smart subst**)
         let n_es_evars = CP.subst_var_list sst0 es.CF.es_evars in
-        let lhs_b2, rhs_b2, subst_prog_vars2 = SAU.smart_subst lhs_b0 (formula_base_of_heap rhs pos) (l_hpargs@r_hpargs)
+        let lhs_b1, rhs_b1, subst_prog_vars = SAU.smart_subst_new lhs_b0 (formula_base_of_heap rhs pos) (l_hpargs@r_hpargs)
            l_emap0 r_emap0 r_eqsetmap1
-          [] n_es_evars (prog_vars@es.es_infer_vars)
-        in
-        let lhs_b1, rhs_b1, subst_prog_vars = SAU.smart_subst lhs_b0 (formula_base_of_heap rhs pos) (l_hpargs@r_hpargs)
-          (leqs@reqs) (List.filter (fun (sv1,sv2) -> CP.intersect_svl [sv1;sv2] n_es_evars <> []) reqs)
           [] (prog_vars@es.es_infer_vars)
         in
+        (* let lhs_b1, rhs_b1, subst_prog_vars = SAU.smart_subst lhs_b0 (formula_base_of_heap rhs pos) (l_hpargs@r_hpargs) *)
+        (*   (leqs@reqs) (List.filter (fun (sv1,sv2) -> CP.intersect_svl [sv1;sv2] n_es_evars <> []) reqs) *)
+        (*   [] (prog_vars@es.es_infer_vars) *)
+        (* in *)
         let lhs_h = lhs_b1.CF.formula_base_heap in
         let rhs = rhs_b1.CF.formula_base_heap in
         let mis_nodes =  match rhs with
@@ -2825,14 +2814,6 @@ let infer_collect_hp_rel_x prog (es:entail_state) rhs0 rhs_rest (rhs_h_matched_s
         let fv_rhs = CF.h_fv rhs in
         let _ = Debug.tinfo_hprint (add_str "fv_lhs" !print_svl) fv_lhs pos in
         let _ = Debug.tinfo_hprint (add_str "fv_rhs" !print_svl) fv_rhs pos in
-        (* WN_infer_heap : why did we not use the outcome of smart_subs? *)
-        (* smart_subst@2@1 *)
-        (* smart_subst inp1 : P1(yy)&{FLOW,(19,20)=__norm}[] *)
-        (* smart_subst inp2 : P1(q36_22)&{FLOW,(1,22)=__flow}[] *)
-        (* smart_subst inp3 :[] *)
-        (* smart_subst inp4 :[(y_20,q36_22),(y_20,yy)] *)
-        (* smart_subst inp5 :[(y_20,q36_22),(y_20,yy)] *)
-        (* smart_subst@2 EXIT:( P1(q36_22)&{FLOW,(19,20)=__norm}[], P1(q36_22)&{FLOW,(1,22)=__flow}[],[]) *)
         (* if (CP.intersect mis_nodes (List.fold_left SAU.close_def v_lhs (leqs@reqs))) = [] then *)
         if (CP.intersect fv_lhs fv_rhs) == [] then
           begin
@@ -2914,9 +2895,9 @@ let infer_collect_hp_rel_x prog (es:entail_state) rhs0 rhs_rest (rhs_h_matched_s
             (*the new hprel generate may be from post-preds, update them*)
             let new_post_hps = post_hps@r_post_hps in
             (*use leqs not leqs1: since res is not substed*)
-            let _ = DD.info_zprint (lazy ((" leqs: " ^ (let pr = pr_list(pr_pair !CP.print_sv !CP.print_sv) in pr leqs)))) no_pos in
-            let _ = DD.info_zprint (lazy ((" reqs_orig: " ^ (let pr = pr_list(pr_pair !CP.print_sv !CP.print_sv) in pr reqs_orig)))) no_pos in
-            let _ = DD.info_zprint (lazy ((" n_rhs_eqset: " ^ (let pr = pr_list(pr_pair !CP.print_sv !CP.print_sv) in pr n_rhs_eqset)))) no_pos in
+            let _ = DD.ninfo_zprint (lazy ((" leqs: " ^ (let pr = pr_list(pr_pair !CP.print_sv !CP.print_sv) in pr leqs)))) no_pos in
+            let _ = DD.ninfo_zprint (lazy ((" reqs_orig: " ^ (let pr = pr_list(pr_pair !CP.print_sv !CP.print_sv) in pr reqs_orig)))) no_pos in
+            let _ = DD.ninfo_zprint (lazy ((" n_rhs_eqset: " ^ (let pr = pr_list(pr_pair !CP.print_sv !CP.print_sv) in pr n_rhs_eqset)))) no_pos in
             let l_aset = CP.EMapSV.mkEmpty in
             let all_aset = CP.add_equiv_list_eqs l_aset (leqs@reqs_orig@n_rhs_eqset) in
             let new_es, new_lhs = update_es prog es hds hvs ass_lhs_b rhs rhs_rest r_new_hfs defined_hps1 lselected_hpargs2
@@ -2925,7 +2906,31 @@ let infer_collect_hp_rel_x prog (es:entail_state) rhs0 rhs_rest (rhs_h_matched_s
               | CF.HRel _ -> n_es_heap_opt
               | _ -> None
             in
-            (true, new_es,new_lhs, n_es_heap)
+            (*if rhs is a view/data, we are going to do_match, prepare env here*)
+            let n_lhs1,new_es1 = match rhs with
+              | CF.DataNode _
+              | CF.ViewNode _ ->
+                    let v_lhs = (CF.fv (CF.Base lhs_b0)) in
+                    let v_rhs = (CF.h_fv (rhs0)) in
+                    let v_hp_rel = es.CF.es_infer_vars_hp_rel in
+                    let r_evars = List.map fst es.CF.es_rhs_eqset in
+                    let evars_match_lhs,evars_nmatch_lhs  = List.partition (fun sv -> CP.mem_svl sv r_evars
+                    ) new_es.CF.es_evars in
+                    let _ = DD.ninfo_zprint (lazy ((" evars_match_lhs: " ^ (!CP.print_svl evars_match_lhs)))) no_pos in
+                    let _ = DD.ninfo_zprint (lazy ((" evars_nmatch_lhs: " ^ (!CP.print_svl evars_nmatch_lhs)))) no_pos in
+                    let v_2_rename = List.filter (fun sv -> not (CP.is_hprel_typ sv)) (CP.diff_svl v_rhs (v_lhs@v_hp_rel@evars_match_lhs)) in
+                    let fr_svl = CP.fresh_spec_vars v_2_rename in
+                    let sst0 = (List.combine v_2_rename fr_svl) in
+                    let fr_evars = CP.fresh_spec_vars evars_nmatch_lhs in
+                    let sst1 = List.combine evars_nmatch_lhs fr_evars in
+                    let sst = sst0@ es.CF.es_rhs_eqset@sst1 in
+                    let n_es_formula = CF.subst sst new_es.CF.es_formula in
+                    (CF.h_subst sst new_lhs, {new_es with CF.es_formula = n_es_formula;
+                        CF.es_ante_evars = new_es.CF.es_ante_evars@fr_evars;
+                    })
+              | _ -> new_lhs,new_es
+            in
+            (true, new_es1, n_lhs1, n_es_heap)
       end
 
 let infer_collect_hp_rel i prog (es:entail_state) rhs rhs_rest (rhs_h_matched_set:CP.spec_var list) lhs_b rhs_b pos =

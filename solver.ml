@@ -8856,9 +8856,11 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
               (*do not subst heap relation*)
               let r_subs = List.filter (fun sv -> not (CP.is_rel_typ sv)) r_subs in
               let l_subs = List.filter (fun sv -> not (CP.is_rel_typ sv)) l_subs in
+              let _ = DD.info_zprint (lazy ((" tmp_conseq: " ^ (Cprinter.prtt_string_of_formula tmp_conseq)))) no_pos in
               let tmp_conseq' = subst_avoid_capture r_subs l_subs tmp_conseq in
               let tmp_h2, tmp_p2, tmp_fl2, _, tmp_a2 = split_components tmp_conseq' in
               let new_conseq = mkBase tmp_h2 tmp_p2 r_t r_fl tmp_a2 pos in
+              let _ = DD.info_zprint (lazy ((" new_conseq: " ^ (Cprinter.prtt_string_of_formula new_conseq)))) no_pos in
 	          (* An Hoa : TODO fix the consumption here - THIS CAUSES THE CONTRADICTION ON LEFT HAND SIDE! *)
               (* only add the consumed node if the node matched on the rhs is mutable *)
               let consumed_h =  (match rem_l_node with

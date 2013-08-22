@@ -1267,13 +1267,13 @@ let build_subst_comm args prog_vars emap comm_svl=
   if ls_com_eq_svl = [] then [] else
     List.fold_left build_subst [] ls_com_eq_svl
 
-let smart_subst_new_x lhs_b rhs_b hpargs l_emap r_emap r_qemap unk_svl evars prog_vars=
+let smart_subst_new_x lhs_b rhs_b hpargs l_emap r_emap r_qemap unk_svl prog_vars=
   let largs= CF.h_fv lhs_b.CF.formula_base_heap in
   let rargs= CF.h_fv rhs_b.CF.formula_base_heap in
   let all_args = CP.remove_dups_svl (largs@rargs) in
   (*---------------------------------------*)
   let lsvl = CF.fv (CF.Base lhs_b) in
-  let rsvl = CF.fv (CF.Base rhs_b) in
+  let rsvl = (CF.fv (CF.Base rhs_b))@(CP.EMapSV.get_elems r_emap)@(CP.EMapSV.get_elems r_qemap) in
   let comm_svl = CP.intersect_svl lsvl rsvl in
   let lhs_b1, rhs_b1, prog_vars =
     if comm_svl = [] then
@@ -1282,17 +1282,23 @@ let smart_subst_new_x lhs_b rhs_b hpargs l_emap r_emap r_qemap unk_svl evars pro
       let emap = CP.EMapSV.merge_eset l_emap r_emap in
       let emap1 = CP.EMapSV.merge_eset emap r_qemap in
       let ss = build_subst_comm all_args prog_vars emap1 comm_svl in
-      (CF.subst_b ss lhs_b, CF.subst_b ss rhs_b, CP.subst_var_list ss prog_vars)
+      let lhs_b1 = CF.subst_b ss lhs_b in
+      let rhs_b1 = CF.subst_b ss rhs_b in
+      let lhs_b2 = {lhs_b1 with CF.formula_base_pure = MCP.mix_of_pure
+              (CP.remove_redundant (MCP.pure_of_mix lhs_b1.CF.formula_base_pure)); } in
+      let rhs_b2 = {rhs_b1 with CF.formula_base_pure = MCP.mix_of_pure
+              (CP.remove_redundant (MCP.pure_of_mix rhs_b1.CF.formula_base_pure)); } in
+      (lhs_b2, rhs_b2, CP.subst_var_list ss prog_vars)
   in
   (lhs_b1, rhs_b1, prog_vars)
 
-let smart_subst_new lhs_b rhs_b hpargs l_emap r_emap r_qemap unk_svl evars prog_vars=
+let smart_subst_new lhs_b rhs_b hpargs l_emap r_emap r_qemap unk_svl prog_vars=
   let pr1 = Cprinter.string_of_formula_base in
   let pr2 = !CP.print_svl in
   let pr3 = CP.EMapSV.string_of  in
-  Debug.no_7 "smart_subst_new" pr1 pr1 pr2 pr3 pr3 pr3 pr2 (pr_triple pr1 pr1 pr2)
-      (fun _ _ _ _ _ _ _ -> smart_subst_new_x lhs_b rhs_b hpargs l_emap r_emap r_qemap unk_svl evars prog_vars)
-      lhs_b rhs_b prog_vars l_emap r_emap r_qemap evars
+  Debug.no_6 "smart_subst_new" pr1 pr1 pr2 pr3 pr3 pr3 (pr_triple pr1 pr1 pr2)
+      (fun _ _ _ _ _ _-> smart_subst_new_x lhs_b rhs_b hpargs l_emap r_emap r_qemap unk_svl prog_vars)
+      lhs_b rhs_b prog_vars l_emap r_emap r_qemap
 
 
 let smart_subst_lhs f lhpargs leqs infer_vars=
