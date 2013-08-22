@@ -9,7 +9,7 @@ pred lseg<n, p> == case {
 
 
 
-lemma "V1" self::lseg<n, p> & n = a + b & a,b >=0 ->  (exists r: self::lseg<a, r> * r::lseg<b, p>).
+lemma_safe "V1" self::lseg<n, p> & n = a + b & a,b >=0 <->  (exists r: self::lseg<a, r> * r::lseg<b, p>).
 
 
 //(1) fails ---------------> a_71,b_72,r_74 are free vars
