@@ -214,8 +214,16 @@ P1(q36_22) is from smart subs, while P1(yy) is the original LHS.
 After the folding, why is P1(yy) still be kept?
 ===================================================================
 # eq-1.slk
+  - emap
+  - common vars: lhs-rsh
 # eq-2.slk
+  - do_match and unfold after inference when miss node is a view/data
 # eq-3.slk
+  - eq args of an unknown pred: don't subst eq of args
+#eq-4.slk
+ -eq null
+# eq-rft:
+  view + pure properties
 ===================================================================
 # null.slk
 

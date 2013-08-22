@@ -15,6 +15,19 @@ pred lseg<p> ==
 
 
 //1
-infer [H2,G2] H2(x,y) & x=null & x=y    |- G2(x,y) .
+infer [H2,G2] H2(p,y) * x::node<_,p>  & p=y    |- G2(x,y) .
 print residue.
 
+/*
+<1>emp&p=y&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [H2(p,y) * x::node<Anon_13,p>@M & p=y --> G2(x,p)]
+
+*/
+
+//2
+infer [H2,G2] H2(p,y) * x::node<_,p>  & p=z & z=y    |- G2(x,z) .
+print residue.
+
+//2
+infer [H2,G2] H2(p,y) & x=y  & p=z & z=y    |- G2(x,z) .
+print residue.
