@@ -637,7 +637,7 @@ let find_inf_bounded (f:CP.formula) : (CP.formula * EM.emap) list =
     in
     let f_bf bf = 
       (match bf with
-        | (Eq _),_ -> Some ([bf]) 
+        | (Lt _),_ -> Some ([bf]) 
         | _,_ -> Some ([])
       )
     in
@@ -655,7 +655,6 @@ let find_inf_bounded (f:CP.formula) : (CP.formula * EM.emap) list =
     					| _ -> false
     			) eq_list in*)
     let eqset = EM.mkEmpty in
-    let neg_inf = CP.SpecVar(Int,constinfinity,Primed) in
     let eqset = List.fold_left (fun eset exp -> 
 			        let (p_f,bf_ann) = exp in
     				(match p_f with
@@ -671,8 +670,71 @@ let find_inf_bounded (f:CP.formula) : (CP.formula * EM.emap) list =
                                              else eset
                                            | _ -> eset)
                                        | _ -> eset)*)
+                                (*| IConst(0,_),_ -> 
+                                    (match e2 with 
+                                       | Add(a1,a2,_) -> 
+                                           (match a1, a2 with 
+                                           | Var(sa1,_),Var(sa2,_) -> if is_inf a1 
+                                                          then EM.add_equiv eset sa2 neg_inf
+                                             else if is_inf a2 then EM.add_equiv eset sa1 neg_inf
+                                             else eset
+                                           | _ -> eset)
+                                       | _ -> eset)*)
+             			        | _ -> eset)
+    				| _ -> eset)
+    				) eqset eq_list in eqset 
+  in 
+  List.map (fun e -> (e,find_inf_comp e)) ds
+
+let find_neginf_bounded (f:CP.formula) : (CP.formula * EM.emap) list =
+  let ds = CP.split_disjunctions f in
+  let find_inf_comp e =
+    let f_f f = 
+    	(match f with
+    	| And _ | AndList _  | BForm _ -> None 
+    	| _ -> Some [])
+    in
+    let f_bf bf = 
+      (match bf with
+        | (Lt _),_ -> Some ([bf]) 
+        | (Gt _),_ -> Some ([bf]) 
+        | _,_ -> Some ([])
+      )
+    in
+    let f_e e = Some ([]) in
+    (* let f_arg = (fun _ _ -> ()),(fun _ _ -> ()),(fun _ _ -> ()) in *)
+    (* let subs e = trans_formula e () (f_f,f_bf,f_e) f_arg List.concat in *)
+    let find_comp e = fold_formula e (f_f,f_bf,f_e) List.concat in
+    let pr = string_of_pure_formula in
+    let prl l = pr_list string_of_b_formula l in
+    let find_comp e = DD.no_1 "find_neginf_bounded" pr prl find_comp e in
+    let eq_list = find_comp e in
+    (*let eq_list_vars = List.filter (fun bf ->  let (p_f,bf_ann) = bf in
+    					match p_f with
+  					| Eq(e1,e2,pos) -> if is_var e1 && is_var e2 then true else false
+    					| _ -> false
+    			) eq_list in*)
+    let eqset = EM.mkEmpty in
+    let neg_inf = CP.SpecVar(Int,constinfinity,Primed) in
+    let eqset = List.fold_left (fun eset exp -> 
+			        let (p_f,bf_ann) = exp in
+    				(match p_f with
+    				| Lt (e1,e2,pos) -> (match e1,e2 with
                                 | IConst(0,_),_ -> 
                                     (match e2 with 
+                                       | Add(a1,a2,_) -> 
+                                           (match a1, a2 with 
+                                           | Var(sa1,_),Var(sa2,_) -> if is_inf a1 
+                                                          then EM.add_equiv eset sa2 neg_inf
+                                             else if is_inf a2 then EM.add_equiv eset sa1 neg_inf
+                                             else eset
+                                           | _ -> eset)
+                                       | _ -> eset)
+             			        | _ -> eset)
+    				| Gt (e1,e2,pos) -> (match e1,e2 with
+    						    | Var(sv1,_),Var(sv2,_) -> EM.add_equiv eset sv1 sv2
+                                | _,IConst(0,_) -> 
+                                    (match e1 with 
                                        | Add(a1,a2,_) -> 
                                            (match a1, a2 with 
                                            | Var(sa1,_),Var(sa2,_) -> if is_inf a1 
@@ -742,9 +804,24 @@ let rec sub_inf_list_exp (exp: CP.exp) (vars: CP.spec_var list) (is_neg: bool) :
     | CP.ArrayAt _ -> exp
     | Level _ -> Error.report_no_pattern()
     
-let rec sub_inf_list_b_formula (bf:CP.b_formula) (vl: CP.spec_var list) (is_neg: bool) : CP.b_formula = 
+let rec sub_inf_list_b_formula (bf:CP.b_formula) (vl: CP.spec_var list) (is_neg: bool) (is_bound: bool)
+ : CP.b_formula = 
   let (p_f,bf_ann) = bf in
-  let p_f_conv = 
+  let p_f_conv = if is_bound && is_neg
+    then (match p_f with
+      | Eq(e1,e2,pos) -> let e1_conv = sub_inf_list_exp e1 vl is_neg in
+                         let e2_conv = sub_inf_list_exp e2 vl is_neg in
+                         Gt(e1_conv,e2_conv,pos)
+      | _ -> p_f
+    )
+    else if is_bound
+    then (match p_f with
+      | Eq(e1,e2,pos) -> let e1_conv = sub_inf_list_exp e1 vl is_neg in
+                         let e2_conv = sub_inf_list_exp e2 vl is_neg in
+                         Lt(e1_conv,e2_conv,pos)
+      | _ -> p_f
+    )
+    else
     (match p_f with 
       | CP.XPure _
       | CP.LexVar _
@@ -804,11 +881,12 @@ let rec sub_inf_list_b_formula (bf:CP.b_formula) (vl: CP.spec_var list) (is_neg:
 (*
 substitute all variables in vl with \inf in f
 *)
-let rec sub_inf_list (f:CP.formula) (vl: CP.spec_var list) (is_neg: bool) : CP.formula = 
+let rec sub_inf_list (f:CP.formula) (vl: CP.spec_var list) (is_neg: bool) (is_bound: bool) : CP.formula = 
+if List.length vl == 0 then f else 
   let rec helper pf vl =
     match pf with
       | CP.BForm (b,fl) -> 
-            let b_norm = sub_inf_list_b_formula b vl is_neg
+            let b_norm = sub_inf_list_b_formula b vl is_neg is_bound
             in CP.BForm(b_norm,fl) 
       | CP.And (pf1,pf2,pos) -> 
             let pf1_norm = helper pf1 vl in
@@ -832,7 +910,7 @@ let rec sub_inf_list (f:CP.formula) (vl: CP.spec_var list) (is_neg: bool) : CP.f
             in CP.Exists(qid,qf_norm,fl,pos)
   in
   helper f vl
-  
+
 (*
 do the substitutions with \inf 
 *)
@@ -844,15 +922,28 @@ let find_equiv_all_x  (e:EM.elem) (s:EM.emap) : EM.elist  =
 let substitute_inf (f: CP.formula) : CP.formula =
   let f = convert_inf_to_var f in
   let sublist = find_inf_subs f in
+  let boundlist = snd (List.split(find_inf_bounded f)) in 
+  let negboundlist = snd (List.split(find_neginf_bounded f)) in 
   let after_sub = List.map (fun (pf,kv) -> 
   			(*let filter_infs = List.filter (fun (e,k) -> is_inf_sv k) kv in
   			let vlistlist = List.map (fun (e,k) -> EM.find_equiv_all e kv) filter_infs in
                         let vlist = List.flatten vlistlist in*)
                         let svlist = (find_equiv_all_x (SpecVar(Int,constinfinity,Unprimed)) kv) in  	
-  			            let new_pf = sub_inf_list pf svlist false in
+  			            let new_pf = sub_inf_list pf svlist false false in
                         let svneglist = (find_equiv_all_x (SpecVar(Int,constinfinity,Primed)) kv) in  
-	                    let new_pf = sub_inf_list new_pf svneglist true in
-                        arith_simplify 10 new_pf) sublist in
+	                    let new_pf = sub_inf_list new_pf svneglist true false in
+                        (*arith_simplify 10*) new_pf) sublist in
+ (* let _ = print_string("bound = "^(string_of_pure_formula (join_disjunctions after_sub))^"\n") in*)
+  let after_sub = List.map (fun (pf,kv) -> 
+                        let svlist = (find_equiv_all_x (SpecVar(Int,constinfinity,Unprimed)) kv) in  	
+  			            let new_pf = sub_inf_list pf svlist false true in
+                        new_pf) (List.combine after_sub boundlist) in 
+ (* let _ = print_string("bound < "^(string_of_pure_formula (join_disjunctions after_sub))^"\n") in*)
+  let after_sub = List.map (fun (pf,kv) -> 
+                        let svneglist = (find_equiv_all_x (SpecVar(Int,constinfinity,Primed)) kv) in  
+	                    let new_pf = sub_inf_list pf svneglist true true in
+                        arith_simplify 10 new_pf) (List.combine after_sub negboundlist) in 
+ (* let _ = print_string("bound > "^(string_of_pure_formula (join_disjunctions after_sub))^"\n") in*)
   join_disjunctions after_sub
 
 let substitute_inf (f: CP.formula) : CP.formula =
@@ -903,17 +994,17 @@ let normalize_inf_formula_imply (ante: CP.formula) (conseq: CP.formula) : CP.for
   let ante,conseq = if List.length atoc_sublist == 1 
   then let _,subs_c = List.hd atoc_sublist in 
   	let vlist = find_equiv_all_x (SpecVar(Int,constinfinity,Unprimed)) subs_c in
-  	let new_c = sub_inf_list new_c vlist false in (* substitute +ve inf *)
+  	let new_c = sub_inf_list new_c vlist false false in (* substitute +ve inf *)
     let negvlist =  find_equiv_all_x (SpecVar(Int,constinfinity,Primed)) subs_c in
-    let new_c =  sub_inf_list new_c negvlist true in (* substitute -ve inf *)
+    let new_c =  sub_inf_list new_c negvlist true false in (* substitute -ve inf *)
     let new_c = arith_simplify 11 new_c in
     let new_c_lst  = split_conjunctions new_c in
     let new_c = join_conjunctions (List.map normalize_inf_formula new_c_lst) in
   	new_a,new_c
   else new_a,new_c
-  in let ante_norm = (*check if need to normalize again*)if contains_inf_eq ante 
-  		then normalize_inf_formula (substitute_inf ante)
-  		else ante in 
+  in let ante_norm = (*check if need to normalize again*)(*if contains_inf_eq ante 
+  		then *)normalize_inf_formula (substitute_inf ante)
+  		(*else ante*) in 
   let conseq_norm = if contains_inf_eq conseq then normalize_inf_formula (substitute_inf conseq) 
     else conseq in 
   ante_norm,conseq_norm
