@@ -1,6 +1,6 @@
 checkentail x>-\inf & y=x-2 |- y>-\inf.
 
-checkentail x<\inf & y=x+8 |- y<\inf.
+checkentail x<\inf & y=8+x |- y<\inf.
 
 checkentail sm>-\inf & m=sm |- m > -\inf.
 

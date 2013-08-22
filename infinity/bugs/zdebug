@@ -5,13 +5,13 @@
 #norm_pure_result
 #norm_pure_input
 #find_inf_subs
-find_equiv_all
+#find_equiv_all
 #normalize_inf_formula
 INF-norm-imply
 #simplify_omega
 #TP.simplify
 #cnv_int_to_ptr
 #infinity.normalize_exp
-find_inf_bounded
-find_neginf_bounded
-
+#find_inf_bounded
+#find_neginf_bounded
+sub_inf_list

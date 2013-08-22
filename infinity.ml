@@ -805,78 +805,125 @@ let rec sub_inf_list_exp (exp: CP.exp) (vars: CP.spec_var list) (is_neg: bool) :
     | Level _ -> Error.report_no_pattern()
     
 let rec sub_inf_list_b_formula (bf:CP.b_formula) (vl: CP.spec_var list) (is_neg: bool) (is_bound: bool)
- : CP.b_formula = 
+ : CP.b_formula * CP.b_formula = 
+  let tbf = mkTrue_p no_pos in
   let (p_f,bf_ann) = bf in
-  let p_f_conv = if is_bound && is_neg
+  let p_f_conv,tbf = if is_bound && is_neg
     then (match p_f with
-      | Eq(e1,e2,pos) -> let e1_conv = sub_inf_list_exp e1 vl is_neg in
-                         let e2_conv = sub_inf_list_exp e2 vl is_neg in
-                         Gt(e1_conv,e2_conv,pos)
-      | _ -> p_f
+      | Eq(e1,e2,pos) -> 
+      	  if (is_var e1 && is_inf e2) || (is_var e2 && is_inf e1) 
+            || (check_neg_inf2 e1 e2) || (check_neg_inf2 e2 e1)
+          then p_f,tbf else
+          (match e1,e2 with
+            | Var(sv,pos),Add(a1,a2,_) -> (match a1,a2 with
+                | Var(sv1,_),IConst(_,_)
+                | IConst(_,_),Var(sv1,_) ->  
+                    if BList.mem_eq eq_spec_var sv vl || BList.mem_eq eq_spec_var sv1 vl
+                    then            
+                      let e1_conv = sub_inf_list_exp e1 vl is_neg in
+                      let e2_conv = sub_inf_list_exp e2 vl is_neg in
+                      Gt(e2_conv,e1_conv,pos),p_f
+                    else p_f,tbf
+                | _, _ -> p_f,tbf)         
+            | Add(a1,a2,_),Var(sv,pos) -> (match a1,a2 with
+                | Var(sv1,_),IConst(_,_)
+                | IConst(_,_),Var(sv1,_) ->  
+                    if BList.mem_eq eq_spec_var sv vl || BList.mem_eq eq_spec_var sv1 vl
+                    then            
+                      let e1_conv = sub_inf_list_exp e1 vl is_neg in
+                      let e2_conv = sub_inf_list_exp e2 vl is_neg in
+                      Gt(e1_conv,e2_conv,pos),p_f
+                    else p_f,tbf
+                | _, _ -> p_f,tbf)
+            | _,_ -> p_f,tbf)
+      | _ -> p_f,tbf
     )
     else if is_bound
     then (match p_f with
-      | Eq(e1,e2,pos) -> let e1_conv = sub_inf_list_exp e1 vl is_neg in
-                         let e2_conv = sub_inf_list_exp e2 vl is_neg in
-                         Lt(e1_conv,e2_conv,pos)
-      | _ -> p_f
+      | Eq(e1,e2,pos) -> 
+          if (is_var e1 && is_inf e2) || (is_var e2 && is_inf e1) 
+            || (check_neg_inf2 e1 e2) || (check_neg_inf2 e2 e1)
+          then p_f,tbf else
+          (match e1,e2 with
+            | Var(sv,pos),Add(a1,a2,_) -> (match a1,a2 with
+                | Var(sv1,_),IConst(_,_)
+                | IConst(_,_),Var(sv1,_) ->  
+                    if BList.mem_eq eq_spec_var sv vl || BList.mem_eq eq_spec_var sv1 vl
+                    then            
+                      let e1_conv = sub_inf_list_exp e1 vl is_neg in
+                      let e2_conv = sub_inf_list_exp e2 vl is_neg in
+                      Lt(e2_conv,e1_conv,pos),p_f
+                    else p_f,tbf
+                | _, _ -> p_f,tbf) 
+            | Add(a1,a2,_),Var(sv,pos) -> (match a1,a2 with
+                | Var(sv1,_),IConst(_,_)
+                | IConst(_,_),Var(sv1,_) ->  
+                    if BList.mem_eq eq_spec_var sv vl || BList.mem_eq eq_spec_var sv1 vl
+                    then            
+                      let e1_conv = sub_inf_list_exp e1 vl is_neg in
+                      let e2_conv = sub_inf_list_exp e2 vl is_neg in
+                      Lt(e1_conv,e2_conv,pos),p_f
+                    else p_f,tbf
+                | _, _ -> p_f,tbf) 
+            | _,_ -> p_f,tbf)
+      | _ -> p_f,tbf
     )
     else
     (match p_f with 
       | CP.XPure _
       | CP.LexVar _
       | CP.BConst _
-      | CP.BVar _ -> p_f
+      | CP.BVar _ -> p_f,tbf
       | CP.Lt (e1,e2,pos) -> 
             let e1_conv = sub_inf_list_exp e1 vl is_neg in
             let e2_conv = sub_inf_list_exp e2 vl is_neg in
-            CP.Lt(e1_conv,e2_conv,pos)
+            CP.Lt(e1_conv,e2_conv,pos),tbf
       | CP.Lte (e1,e2,pos) -> 
             let e1_conv = sub_inf_list_exp e1 vl is_neg in
             let e2_conv = sub_inf_list_exp e2 vl is_neg in
-            CP.Lte(e1_conv,e2_conv,pos)
+            CP.Lte(e1_conv,e2_conv,pos),tbf
       | CP.Gt (e1,e2,pos) -> 
             let e1_conv = sub_inf_list_exp e1 vl is_neg in
             let e2_conv = sub_inf_list_exp e2 vl is_neg in
-            CP.Gt(e1_conv,e2_conv,pos)
+            CP.Gt(e1_conv,e2_conv,pos),tbf
       | CP.Gte (e1,e2,pos) -> 
             let e1_conv = sub_inf_list_exp e1 vl is_neg in
             let e2_conv = sub_inf_list_exp e2 vl is_neg in
-            CP.Gte(e1_conv,e2_conv,pos)
-      | CP.SubAnn (e1,e2,pos) -> p_f
+            CP.Gte(e1_conv,e2_conv,pos),tbf
+      | CP.SubAnn (e1,e2,pos) -> p_f,tbf
       | CP.Eq (e1,e2,pos) -> 
       	    if (is_var e1 && is_inf e2) || (is_var e2 && is_inf e1) 
               || (check_neg_inf2 e1 e2) || (check_neg_inf2 e2 e1)
-            then p_f else
+            then p_f,tbf else
             let e1_conv = sub_inf_list_exp e1 vl is_neg in
             let e2_conv = sub_inf_list_exp e2 vl is_neg in
-            CP.Eq(e1_conv,e2_conv,pos)
+            CP.Eq(e1_conv,e2_conv,pos),tbf
       | CP.Neq (e1,e2,pos) -> 
             let e1_conv = sub_inf_list_exp e1 vl is_neg in
             let e2_conv = sub_inf_list_exp e2 vl is_neg in
-            CP.Neq(e1_conv,e2_conv,pos)
+            CP.Neq(e1_conv,e2_conv,pos),tbf
       | CP.ListIn (e1,e2,pos)
       | CP.ListNotIn (e1,e2,pos)
       | CP.ListAllN (e1,e2,pos)
-      | CP.ListPerm (e1,e2,pos) -> p_f
+      | CP.ListPerm (e1,e2,pos) -> p_f,tbf
       | CP.EqMax (e1,e2,e3,pos) -> 
             let e1_conv = sub_inf_list_exp e1 vl is_neg in
             let e2_conv = sub_inf_list_exp e2 vl is_neg in
             let e3_conv = sub_inf_list_exp e3 vl is_neg in
-            CP.EqMax(e1_conv,e2_conv,e3_conv,pos)
+            CP.EqMax(e1_conv,e2_conv,e3_conv,pos),tbf
       | CP.EqMin (e1,e2,e3,pos) -> 
             let e1_conv = sub_inf_list_exp e1 vl is_neg in
             let e2_conv = sub_inf_list_exp e2 vl is_neg in
             let e3_conv = sub_inf_list_exp e3 vl is_neg in
-            CP.EqMin(e1_conv,e2_conv,e3_conv,pos)
+            CP.EqMin(e1_conv,e2_conv,e3_conv,pos),tbf
       | CP.BagIn _
       | CP.BagNotIn _
       | CP.BagSub _
       | CP.BagMin _
       | CP.BagMax _
       | CP.VarPerm _
-      | CP.RelForm _ -> p_f
-    ) in (p_f_conv,bf_ann)
+      | CP.RelForm _ -> p_f,tbf
+    ) in (p_f_conv,bf_ann),(tbf,bf_ann)
     
 (*
 substitute all variables in vl with \inf in f
@@ -886,8 +933,8 @@ if List.length vl == 0 then f else
   let rec helper pf vl =
     match pf with
       | CP.BForm (b,fl) -> 
-            let b_norm = sub_inf_list_b_formula b vl is_neg is_bound
-            in CP.BForm(b_norm,fl) 
+            let b_norm,tbf = sub_inf_list_b_formula b vl is_neg is_bound
+            in (mkAnd (CP.BForm(b_norm,fl)) (CP.BForm(tbf,fl)) no_pos)
       | CP.And (pf1,pf2,pos) -> 
             let pf1_norm = helper pf1 vl in
             let pf2_norm = helper pf2 vl in
@@ -910,6 +957,9 @@ if List.length vl == 0 then f else
             in CP.Exists(qid,qf_norm,fl,pos)
   in
   helper f vl
+
+let sub_inf_list (f:CP.formula) (vl: CP.spec_var list) (is_neg: bool) (is_bound: bool) : CP.formula = 
+Debug.no_1 "sub_inf_list" string_of_pure_formula string_of_pure_formula (fun _ -> sub_inf_list f vl is_neg is_bound) f
 
 (*
 do the substitutions with \inf 
