@@ -1,12 +1,14 @@
-//check smart_subst: eq null
+//check smart_subst: grp vars of preds + data/nodes
 
 data node{
 	int val;
 	node next;
 }.
 
+HeapPred H1(node a).
 HeapPred H2(node a, node b).
 HeapPred G2(node a,node b).
+HeapPred G3(node a,node b, node c).
 
 pred lseg<p> ==
     self::node<_,p> 
@@ -24,10 +26,26 @@ print residue.
 
 */
 
+//1b
+infer_exact [H2]
+H2(p,y) & p!=null & p=y
+|- (exists yy,q36: H1(q36) & yy=q36 & q36=y)
+.
+print residue.
+
+/*
 //2
 infer [H2,G2] H2(p,y) * x::node<_,p>  & p=z & z=y    |- G2(x,z) .
 print residue.
-
-//2
-infer [H2,G2] H2(p,y) & x=y  & p=z & z=y    |- G2(x,z) .
+*/
+/*
+//3
+infer [H1,H2,G2] H2(p,y) & z=y  & p=z    |- G2(z,t) * H1(z) .
 print residue.
+*/
+
+/*
+//4
+infer [H2,G3] H2(p,y) & x=y  & p=z & z=y & z=t    |- G2(x,z,t) .
+print residue.
+*/

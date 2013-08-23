@@ -2139,23 +2139,22 @@ let find_undefined_selective_pointers_x prog lfb lmix_f unmatched rhs_rest rhs_h
         svl@(List.map fst args_i)
       else svl
   ) [] ls_lhp_args in
-  let vioated_ni_hps, vioated_ni_svl = List.fold_left (fun (ls1,ls2) (hp,args) ->
-      let _,args_ni = SAU.partition_hp_args prog hp args in
-      (*violate NI?*)
-      let vs_ni = List.fold_left (fun ls (sv_ni, _) ->
-          if (List.exists (fun hd ->
-              CP.eq_spec_var sv_ni hd.CF.h_formula_data_node
-          ) lhds) then ls@[sv_ni] else ls
-      ) [] args_ni
-      in
-      let vs_ni1 = CP.diff_svl vs_ni post_svl_ni in
-      if vs_ni1 <> [] then
-        (ls1@[hp], ls2@vs_ni1)
-      else
-        (ls1,ls2)
-  ) ([],[]) ls_lhp_args
-  in
-  (*TODO: find correct INIT for node (NI should not be INIT)*)
+  (* let vioated_ni_hps, vioated_ni_svl = List.fold_left (fun (ls1,ls2) (hp,args) -> *)
+  (*     let _,args_ni = SAU.partition_hp_args prog hp args in *)
+  (*     (\*violate NI?*\) *)
+  (*     let vs_ni = List.fold_left (fun ls (sv_ni, _) -> *)
+  (*         if (List.exists (fun hd -> *)
+  (*             CP.eq_spec_var sv_ni hd.CF.h_formula_data_node *)
+  (*         ) lhds) then ls@[sv_ni] else ls *)
+  (*     ) [] args_ni *)
+  (*     in *)
+  (*     let vs_ni1 = CP.diff_svl vs_ni post_svl_ni in *)
+  (*     if vs_ni1 <> [] then *)
+  (*       (ls1@[hp], ls2@vs_ni1) *)
+  (*     else *)
+  (*       (ls1,ls2) *)
+  (* ) ([],[]) ls_lhp_args *)
+  (* in *)
   let vioated_ni_hps, vioated_ni_svl = [],[] in
   (******************************************)
   let selected_hpargs =
