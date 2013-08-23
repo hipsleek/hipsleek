@@ -111,7 +111,7 @@ print residue.
 Why is there spurious HP_22?
 
 ===================================================================
-# sp-7b1.slk: FIXED
+# sp-7b1.slk: FIXED (recheck with the new)
 
 infer [P1] P1(x) |- P1(yyyy) & yyyy=x.
 print residue.
@@ -142,7 +142,7 @@ Below the LHS was strengthened with x=yyyy!
 !!!:0: 0: do_match (after): LHS:  es_formula: emp&x=yyyy&{FLOW,(19,20)=__norm}[]
 
 ===================================================================
-# sp-7b2.slk  FIXED
+# sp-7b2.slk  FIXED (recheck with the new)
 
 infer_exact [P1]
    P1(ppp) 
@@ -198,7 +198,7 @@ Entail (2) : Valid.
  <1>emp&{FLOW,(19,20)=__norm}[]
  inferred hprel: [P1(yy) --> P1(yy)]
 ===================================================================
-# sp-7e.slk
+# sp-7e.slk: FIXED
 
 Obtained below:
  <1>emp&{FLOW,(19,20)=__norm}[]
@@ -213,16 +213,16 @@ where P1(yy) is accounted twice!
 P1(q36_22) is from smart subs, while P1(yy) is the original LHS.
 After the folding, why is P1(yy) still be kept?
 ===================================================================
-# eq-1.slk
+# eq-1.slk: DONE
   - emap
   - common vars: lhs-rsh
-# eq-2.slk
+# eq-2.slk: DONE
   - do_match and unfold after inference when miss node is a view/data
-# eq-3.slk
+# eq-3.slk: DONE
   - eq args of an unknown pred: don't subst eq of args
-#eq-4.slk
+#eq-4.slk: DONE
  -eq null
-# eq-rft:
+# eq-rft: DONE
   view + pure properties
 ===================================================================
 # null.slk
