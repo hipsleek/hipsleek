@@ -8,6 +8,7 @@ pred ll<n> == self = null & n = 0
   inv n >= 0.
 
 HeapPred H1(node x).
+HeapPred HP_32(node x).
 HeapPred H2(node x, int n).
 
 // (1)
@@ -15,7 +16,7 @@ infer [H1] H1(y) |- y::node<a,b>.
 print residue.
 
 validate Valid:[
-( [HP_32],
+( [],
   HP_32(b_34)&a=a_33 & b=b_34,
   [H1(y) --> y::node<a,b>@M * HP_32(b)]
 )

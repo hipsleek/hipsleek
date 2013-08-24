@@ -1020,18 +1020,24 @@ let process_shape_infer pre_hps post_hps=
 
 let process_validate r ils_es=
   (**********INTERNAL**********)
-  let preprocess_constr (ilhs, irhs)=
-    let (n_tl,lhs) = meta_to_formula ilhs false [] [] in
+  let preprocess_constr act_idents act_ti (ilhs, irhs)=
+    let (n_tl,lhs) = meta_to_formula ilhs false act_idents act_ti in
     let fvs = CF.fv lhs in
     let fv_idents = (List.map CP.name_of_spec_var fvs) in
-    let (_, rhs) = meta_to_formula irhs false fv_idents n_tl in
+    let (_, rhs) = meta_to_formula irhs false (fv_idents@act_idents) n_tl in
     (lhs,rhs)
   in
-  let preprocess_iestate (iguide_vars, ief, iconstrs)=
-    let (n_tl,es_formula) = meta_to_formula ief false iguide_vars [] in
+  let preprocess_iestate act_vars (iguide_vars, ief, iconstrs)=
+    let act_idents = (List.map CP.name_of_spec_var act_vars) in
+    let act_ti = List.fold_left (fun ls (CP.SpecVar(t,sv,_)) ->
+              let vk = TI.fresh_proc_var_kind ls t in
+              ls@[(sv,vk)]
+    ) [] act_vars in
+    let (n_tl,es_formula) = meta_to_formula ief false (act_idents) act_ti in
     let orig_vars = CF.fv es_formula in
-    let guide_vars = List.map (fun v -> TI.get_spec_var_type_list_infer (v, Unprimed) orig_vars no_pos) iguide_vars in
-    let constrs = List.map preprocess_constr iconstrs in
+    let guide_vars = List.map (fun v -> TI.get_spec_var_type_list_infer (v, Unprimed) (orig_vars@act_vars) no_pos)
+      iguide_vars in
+    let constrs = List.map (preprocess_constr act_idents act_ti) iconstrs in
     (guide_vars, es_formula, constrs)
   in
   (*******END INTERNAL ********)
@@ -1039,13 +1045,15 @@ let process_validate r ils_es=
   let nn = (sleek_proof_counter#get) in
   let validate_id = "Validate " ^ (string_of_int nn) ^": " in
   (*get current residue -> FAIL? VALID*)
-  let a_r, ls_a_es = match !CF.residues with
-    | None -> false, []
+  let a_r, ls_a_es, act_vars = match !CF.residues with
+    | None -> false, [], []
     | Some (lc,_) -> begin
         match lc with
-          | CF.FailCtx _ -> (false, [])
-          | CF.SuccCtx cl -> let ls_a_es = List.fold_left (fun ls_es ctx -> ls_es@(CF.flatten_context ctx)) [] cl in
-            (true, ls_a_es)
+          | CF.FailCtx _ -> (false, [], [])
+          | CF.SuccCtx cl ->
+                let ls_a_es = List.fold_left (fun ls_es ctx -> ls_es@(CF.flatten_context ctx)) [] cl in
+                let act_vars = List.fold_left (fun ls es -> ls@(CF.es_fv es)) [] ls_a_es in
+                (true, ls_a_es, CP.remove_dups_svl act_vars)
       end
   in
   (*expect: r = FAIL? Valid*)
@@ -1058,8 +1066,11 @@ let process_validate r ils_es=
     | true,false -> let _ = print_endline (validate_id ^ "FAIL.") in ()
     | false,false -> let _ = print_endline (validate_id ^ "SUCC.") in ()
     | true, true ->
+          (*syn new unknown preds generated between cprog and iprog*)
+          let inew_hprels = Saout.syn_hprel !cprog.C.prog_hp_decls iprog.I.prog_hp_decls in
+          let _ = iprog.I.prog_hp_decls <- (iprog.I.prog_hp_decls@inew_hprels) in
           (*for each succ context: validate residue + inferred results*)
-          let ls_expect_es = List.map preprocess_iestate ils_es in
+          let ls_expect_es = List.map (preprocess_iestate act_vars) ils_es in
           let b, es_opt, ls_fail_ass = SC.validate ls_expect_es ls_a_es in
           let _ = if b then
             print_endline (validate_id ^ "SUCC.")

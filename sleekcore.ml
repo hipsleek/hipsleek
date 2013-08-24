@@ -193,7 +193,8 @@ let validate_x ls_ex_es0 ls_act_es0=
   (*********INTERNAL********)
   let validate_one (guide_vars, es_f, ls_ass) es=
     (*compare es_formula*)
-    let b1 = SY_CEQ.check_relaxeq_formula guide_vars es_f es.CF.es_formula in
+    (* let b1 = SY_CEQ.check_relaxeq_formula guide_vars es_f es.CF.es_formula in *)
+    let b1,_ = CEQ.checkeq_formulas (List.map CP.name_of_spec_var guide_vars) es_f es.CF.es_formula in
     (*compare constrs*)
     if b1 then
       let b2= if ls_ass = [] then true else

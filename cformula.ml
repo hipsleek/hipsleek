@@ -6939,6 +6939,11 @@ let flatten_context ctx0=
   in
   helper ctx0
 
+let es_fv es=
+  CP.remove_dups_svl ((fv es.es_formula)@(es.es_infer_vars_rel)@es.es_infer_vars_hp_rel@
+      (List.fold_left (fun ls (_,p1,p2) -> ls@(CP.fv p1)@(CP.fv p2)) [] es.es_infer_rel)@
+      (List.fold_left (fun ls hprel -> ls@(fv hprel.hprel_lhs)@(fv hprel.hprel_rhs)) [] es.es_infer_hp_rel))
+
 let is_one_context (c:context) =
   match c with
     | Ctx _ -> true
