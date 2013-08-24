@@ -1041,7 +1041,7 @@ let process_validate r ils_es=
     (guide_vars, es_formula, constrs)
   in
   (*******END INTERNAL ********)
-  let _ = DD.info_hprint (add_str  "  sleekengine " pr_id) "process_shape_divide\n" no_pos in
+  let _ = DD.info_hprint (add_str  "  sleekengine " pr_id) "process_validate\n" no_pos in
   let nn = (sleek_proof_counter#get) in
   let validate_id = "Validate " ^ (string_of_int nn) ^": " in
   (*get current residue -> FAIL? VALID*)

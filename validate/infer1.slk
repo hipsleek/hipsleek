@@ -20,7 +20,7 @@ validate Valid:[
    HP_32(b_34)&a=a_33 & b=b_34,
   [H1(y) --> y::node<a,b>@M * HP_32(b)]
 )
-]
+].
 
 /*
 # infer1.slk
