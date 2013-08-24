@@ -60,6 +60,7 @@ type sleek_token =
   | INVLOCK 
   | LOGICAL
   | INFINITY
+  | VALIDATE
   | XPURE
 
 
@@ -127,6 +128,7 @@ module Token = struct
     | TERM -> "Term"
     | LOOP -> "Loop"
     | MAYLOOP -> "MayLoop"
+    | VALIDATE -> "validate"
     | XPURE -> "XPURE"
 
 

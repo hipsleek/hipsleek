@@ -804,6 +804,7 @@ non_empty_command:
       | t=let_decl            -> t
       | t=checkeq_cmd         -> EqCheck t
       | t= checkentail_cmd     -> EntailCheck t
+      | t= validate_cmd     -> Validate t
       | t=relassume_cmd     -> RelAssume t
       | t=reldefn_cmd     -> RelDefn t
       | t=shapeinfer_cmd     -> ShapeInfer t
@@ -1773,6 +1774,27 @@ checkentail_cmd:
   [[ `CHECKENTAIL; t=meta_constr; `DERIVE; b=extended_meta_constr -> (t, b, None)
    | `CHECKENTAIL_EXACT; t=meta_constr; `DERIVE; b=extended_meta_constr -> (t, b, Some true)
    | `CHECKENTAIL_INEXACT; t=meta_constr; `DERIVE; b=extended_meta_constr -> (t, b, Some false)]];
+
+ls_rel_ass: [[`OSQUARE; t = LIST0 rel_ass SEP `SEMICOLON ;`CSQUARE-> t]];
+
+rel_ass : [[ t=meta_constr; `CONSTR; b=meta_constr -> (t, b)]];
+
+validate_entail_state:
+  [[
+     `OPAREN ; `OSQUARE; il1=OPT id_list;`CSQUARE; `COMMA; ef = meta_constr; `COMMA; ls_ass = ls_rel_ass ; `CPAREN->
+         let il1 = un_option il1 [] in
+         (il1, ef, ls_ass)
+  ]];
+
+validate_list_context:
+  [[
+     `OSQUARE; t = LIST0 validate_entail_state SEP `SEMICOLON ;`CSQUARE-> t
+  ]];
+
+validate_cmd:
+  [[ `VALIDATE; r=id; `COLON; lc = OPT validate_list_context  ->
+      (r, un_option lc [])
+   ]];
 
 cond_path:
     [[ `OPAREN; il2 = OPT int_list; `CPAREN -> un_option il2 []

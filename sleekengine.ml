@@ -1016,6 +1016,14 @@ let process_shape_infer pre_hps post_hps=
   (*    CEQ.cp_test !cprog hp_lst_assume ls_inferred_hps sel_hps *)
   (* in *)
   ()
+
+let process_validate r lc=
+  let _ = DD.info_hprint (add_str  "  sleekengine " pr_id) "process_shape_divide\n" no_pos in
+  (*get current residue -> FAIL? VALID*)
+  (*expect: r = FAIL? Valid*)
+  (*for each succ context: validate residue + inferred results*)
+  ()
+
 let process_shape_divide pre_hps post_hps=
    (* let _ = DD.info_pprint "process_shape_divide" no_pos in *)
   let hp_lst_assume = !sleek_hprel_assumes in
