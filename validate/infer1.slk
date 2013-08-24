@@ -16,12 +16,24 @@ infer [H1] H1(y) |- y::node<a,b>.
 print residue.
 
 validate Valid:[
-( [],
-  HP_32(b_34)&a=a_33 & b=b_34,
+( [H1,b],
+   HP_32(b_34)&a=a_33 & b=b_34,
   [H1(y) --> y::node<a,b>@M * HP_32(b)]
 )
 ]
-.
+
+/*
+# infer1.slk
+
+ <1>HP_33(b_35)&a=a_34 & b=b_35&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [H1(y) --> y::node<a,b>@M * HP_33(b)]
+
+Why did we get above?
+
+Should it not be:
+ inferred hprel: [H1(y) --> y::node<a_34,b_35>@M * HP_33(b_35)]
+
+*/
 
 /*
 // (2)
