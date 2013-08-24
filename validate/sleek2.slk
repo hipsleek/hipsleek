@@ -21,8 +21,8 @@ print residue.
 checkentail x::node<_, null> * z::node<_,_> * y::ll<_> & m = 1 |- x::ll<m>.
 print residue.
 validate Valid:[
-( [z,y,m,r],
-  z::node<_,_>@M * y::ll<_> & r=null & m=1,
+( [z,y,m],
+  z::node<_,_>@M * y::ll<_> & r=null & m=1 & a=b,
   []
 )
 ]

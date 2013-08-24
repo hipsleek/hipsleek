@@ -1,3 +1,16 @@
+checkentail x>-\inf & y=x-2 |- y>-\inf.
+
+checkentail x<\inf & y=8+x |- y<\inf.
+
+checkentail sm>-\inf & m=sm |- m > -\inf.
+
+
+checkentail sm>-\inf & m=sm+1 |- m > -\inf.
+
+
+checkentail sm>-\inf & m=sm-1 |- m > -\inf.
+
+/*
 slk_simplify (nnn=0 & lg+(\inf)=0 | nnn>0 & lg<\inf).
 
 //slk_simplify (nnn=0 & lg=-ninfinity | nnn>0 & lg <infinity).
@@ -8,7 +21,7 @@ slk_simplify (nnn=0 & lg = -\inf) | (nnn = 0 & lg< \inf).
 slk_pairwise (nnn=0 & lg = -\inf) | (nnn = 0 & lg< \inf).
 
 slk_simplify -\inf<\inf & (nnn=0 & lg = -\inf | nnn = 0 & lg< \inf).
-/*
+
 FIXED
 norm_pure_input@13
 norm_pure_input inp1 : 0<((\inf)+(\inf)) & (((nnn=0 & lg+(\inf)=0) | (nnn=0 & lg<(\inf))))

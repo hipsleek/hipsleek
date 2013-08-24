@@ -1252,7 +1252,9 @@ $output_file = "log";
         ["sort1.slk", " --elp ", "Valid.Fail.Fail.", ""],
         ["sort2.slk", " --elp ", "Fail.Valid.Valid.Valid.Valid.Fail.Valid.Valid.Fail.Valid.Fail.", ""],
         ["lseg.slk", " --elp ", "Valid.Fail.", ""],
-        ["lseg_case.slk", " --elp ", "Valid.Valid.Valid.Valid.Valid.Valid.", ""]
+        ["lseg_case.slk", " --elp ", "Valid.Valid.Valid.Valid.Valid.Valid.", ""],
+        ["ll_tail.slk", "", "Valid.Valid", "Valid.Valid"],
+        ["sll_tailL.slk", "", "Valid.Valid", ""]
                       ],
 		"sleek_barr"=>[["../tree_shares/barrier.slk", "--eps --dis-field-ann --dis-precise-xpure -perm dperm", "Barrrier b1n Success.Barrrier b3n Fail:  frames do not match (1->2).Barrrier b2n Fail:  contradiction in post for transition (1->2).Barrrier b4n Fail:  no contradiction found in preconditions of transitions from 1  for preconditions: .", ""],
 				  ["../tree_shares/barrier3.slk", "--eps --dis-field-ann --dis-precise-xpure -perm dperm", "Barrrier b1n Success.Barrrier b3n Fail:  frames do not match (1->2).Barrrier b2n Fail:  contradiction in post for transition (1->2).", ""]

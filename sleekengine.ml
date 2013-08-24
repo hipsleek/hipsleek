@@ -731,6 +731,7 @@ let run_infer_one_pass (ivars: ident list) (iante0 : meta_formula) (iconseq0 : m
   let _ = CF.residues := None in
   let _ = Infer.rel_ass_stk # reset in
   let _ = Sa2.rel_def_stk # reset in
+  let _ = Sa3.rel_def_stk # reset in
   let _ = if (!Globals.print_input || !Globals.print_input_all) then print_endline ("INPUT: \n ### 1 ante = " ^ (string_of_meta_formula iante0) ^"\n ### conseq = " ^ (string_of_meta_formula iconseq0)) else () in
   let _ = Debug.devel_pprint ("\nrun_entail_check 1:"
                               ^ "\n ### iante0 = "^(string_of_meta_formula iante0)
@@ -1017,11 +1018,56 @@ let process_shape_infer pre_hps post_hps=
   (* in *)
   ()
 
-let process_validate r lc=
+let process_validate r ils_es=
+  (**********INTERNAL**********)
+  let preprocess_constr (ilhs, irhs)=
+    let (n_tl,lhs) = meta_to_formula ilhs false [] [] in
+    let fvs = CF.fv lhs in
+    let fv_idents = (List.map CP.name_of_spec_var fvs) in
+    let (_, rhs) = meta_to_formula irhs false fv_idents n_tl in
+    (lhs,rhs)
+  in
+  let preprocess_iestate (iguide_vars, ief, iconstrs)=
+    let (n_tl,es_formula) = meta_to_formula ief false iguide_vars [] in
+    let orig_vars = CF.fv es_formula in
+    let guide_vars = List.map (fun v -> TI.get_spec_var_type_list_infer (v, Unprimed) orig_vars no_pos) iguide_vars in
+    let constrs = List.map preprocess_constr iconstrs in
+    (guide_vars, es_formula, constrs)
+  in
+  (*******END INTERNAL ********)
   let _ = DD.info_hprint (add_str  "  sleekengine " pr_id) "process_shape_divide\n" no_pos in
+  let nn = (sleek_proof_counter#get) in
+  let validate_id = "Validate " ^ (string_of_int nn) ^": " in
   (*get current residue -> FAIL? VALID*)
+  let a_r, ls_a_es = match !CF.residues with
+    | None -> false, []
+    | Some (lc,_) -> begin
+        match lc with
+          | CF.FailCtx _ -> (false, [])
+          | CF.SuccCtx cl -> let ls_a_es = List.fold_left (fun ls_es ctx -> ls_es@(CF.flatten_context ctx)) [] cl in
+            (true, ls_a_es)
+      end
+  in
   (*expect: r = FAIL? Valid*)
-  (*for each succ context: validate residue + inferred results*)
+  let ex_r = if String.compare r "Valid" == 0 then true else
+    if String.compare r "FAIL" == 0 then false else
+      report_error no_pos "SLEEKENGINE.process_validate: expected result should be Valid or FAIL"
+  in
+  let _ = match a_r,ex_r with
+    | false,true
+    | true,false -> let _ = print_endline (validate_id ^ "FAIL.") in ()
+    | false,false -> let _ = print_endline (validate_id ^ "SUCC.") in ()
+    | true, true ->
+          (*for each succ context: validate residue + inferred results*)
+          let ls_expect_es = List.map preprocess_iestate ils_es in
+          let b, es_opt, ls_fail_ass = SC.validate ls_expect_es ls_a_es in
+          let _ = if b then
+            print_endline (validate_id ^ "SUCC.")
+          else
+            print_endline (validate_id ^ "FAIL.")
+          in ()
+  in
+  let _ = print_endline ("\n") in
   ()
 
 let process_shape_divide pre_hps post_hps=

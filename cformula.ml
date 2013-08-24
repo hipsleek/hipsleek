@@ -2847,8 +2847,15 @@ and apply_one ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : formula) = match
 	formula_exists_flow = fl;
     formula_exists_label = lbl;
 	formula_exists_pos = pos}) -> 
-	    if List.mem (CP.name_of_spec_var fr) (List.map CP.name_of_spec_var qsv) then f 
-	    else Exists ({formula_exists_qvars = qsv; 
+	    if List.mem (CP.name_of_spec_var fr) (List.map CP.name_of_spec_var qsv) then f
+	    else if List.mem (CP.name_of_spec_var t) (List.map CP.name_of_spec_var qsv) then 
+			(*!! needed as it might be the case that a free variable is renamed such that the new name clashes
+			  with an existential*)
+			let qvars, base_f = split_quantifiers f in
+			let new_qvar = CP.fresh_spec_var t in
+			let new_qvars = List.filter (fun c -> not (CP.eq_spec_var t c)) qsv in
+			add_quantifiers (new_qvar::new_qvars) (apply_one s (apply_one (t,new_qvar) base_f))
+		else Exists ({formula_exists_qvars = qsv; 
 		formula_exists_heap =  h_apply_one s qh; 
 		formula_exists_pure = MCP.regroup_memo_group (MCP.m_apply_one s qp); 
 		formula_exists_type = tconstr;
@@ -6923,6 +6930,14 @@ let empty_es flowt grp_lbl pos =
   es_term_err = None;
   (*es_infer_invs = [];*)
 }
+
+let flatten_context ctx0=
+  let rec helper ctx =
+    match ctx with
+      | Ctx es -> [es]
+      | OCtx (ctx1, ctx2) -> (helper ctx1)@(helper ctx2)
+  in
+  helper ctx0
 
 let is_one_context (c:context) =
   match c with
