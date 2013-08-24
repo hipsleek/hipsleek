@@ -8,6 +8,9 @@ Why did we get above?
 
 Should it not be:
  inferred hprel: [H1(y) --> y::node<a_34,b_35>@M * HP_33(b_35)]
+                                    ^^^^ ^^^^            ^^^^
+rather than immediately bound to a,b which came about only after 
+the matching.
 
 Should use the free vars:
 validate Valid:[
@@ -17,6 +20,20 @@ validate Valid:[
 )
 ]
 ==================================================================
+Below should have succeeded too.
+
+validate Valid:[
+( [H1,b],
+//   HP_32(b_34)&a=a_33 & b=b_34,
+   HP_32(b),
+  [H1(y) --> y::node<_,bb>@M * HP_32(bb)]
+  //[H1(y) --> y::node<a,b>@M * HP_32(b)]
+)
+].
+// I think it should be OK to change b->bb
+// the problem is that your inferred hp_rel should have been
+// inferred hprel: [H1(y) --> y::node<a_1,b_2>@M * HP_35(b_2)]
+// or you could have renamed the existentially quantified vars.
 ==================================================================
 ==================================================================
 ==================================================================
