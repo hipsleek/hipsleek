@@ -20,6 +20,7 @@ inv n>=1 & self!=null & sm<=lg.
 
 lemma_safe "lsegL" self::lseg<n, p, sm, lg> & n = a + b & a,b>=0 ->  self::lseg<a, r, sm, lg1> * r::lseg<b,p,sm1,lg> & lg1<=sm1.
 
+lemma_safe "ll_tail2lsegL1" self::ll_tail<n, t, sm, lg> & m=n-1-> self::lseg<m, t, sm, lg1> * t::node<lg, null> & lg1<=lg.
 lemma_safe "lsegR" self::lseg<n, p, sm, lg> & n = a + b & a,b>=0 <-  self::lseg<a, r, sm, lg1> * r::lseg<b,p,sm1,lg> & lg1<=sm1.
 
 lemma_safe "ll_tail2lsegL" self::ll_tail<n, t, sm, lg> ->  self::lseg<n-1, t, sm, lg1> * t::node<lg, null> & lg1<=lg.
