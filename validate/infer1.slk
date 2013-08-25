@@ -26,11 +26,15 @@ validate [
 
 
 validate [
-( [H1],
+( [H1,b], 
+// It is important to place b above
+// so that we ensure that HP_32(b) is satisfied.
 //   HP_32(b_34)&a=a_33 & b=b_34,
    HP_32(b),
   [H1(y) --> y::node<_,bb>@M * HP_32(bb)]
   //[H1(y) --> y::node<a,b>@M * HP_32(b)]
+  // however, it is not important to change b to bb
+  // since b/bb is local to each relational assumption
 )
 ].
 // I think it should be OK to change b->bb
