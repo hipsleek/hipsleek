@@ -3277,7 +3277,7 @@ and unsat_base_x prog (sat_subno:  int ref) f  : bool=
 	  if !Globals.simpl_unfold2 then 
 		let sat,npf = MCP.check_pointer_dis_sat npf in
 		if  sat then	not (TP.is_sat_mix_sub_no npf sat_subno true true)
-		else false
+		else true
 	  else
 	   not (TP.is_sat_mix_sub_no npf sat_subno true true)
     | Exists ({ formula_exists_qvars = qvars;
@@ -3291,7 +3291,7 @@ and unsat_base_x prog (sat_subno:  int ref) f  : bool=
 	  if !Globals.simpl_unfold2 then 
 		let sat,npf = MCP.check_pointer_dis_sat npf in
 		if  sat then	not (TP.is_sat_mix_sub_no npf sat_subno true true)
-		else false
+		else true
 	  else
 	   not (TP.is_sat_mix_sub_no npf sat_subno true true)
 	 
