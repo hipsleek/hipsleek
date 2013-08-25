@@ -1018,7 +1018,7 @@ let process_shape_infer pre_hps post_hps=
   (* in *)
   ()
 
-let process_validate r ils_es=
+let process_validate ils_es=
   (**********INTERNAL**********)
   let preprocess_constr act_idents act_ti (ilhs, irhs)=
     let (n_tl,lhs) = meta_to_formula ilhs false act_idents act_ti in
@@ -1057,10 +1057,11 @@ let process_validate r ils_es=
       end
   in
   (*expect: r = FAIL? Valid*)
-  let ex_r = if String.compare r "Valid" == 0 then true else
-    if String.compare r "FAIL" == 0 then false else
-      report_error no_pos "SLEEKENGINE.process_validate: expected result should be Valid or FAIL"
-  in
+  (* let ex_r = if String.compare r "Valid" == 0 then true else *)
+  (*   if String.compare r "FAIL" == 0 then false else *)
+  (*     report_error no_pos "SLEEKENGINE.process_validate: expected result should be Valid or FAIL" *)
+  (* in *)
+  let ex_r = true in
   let _ = match a_r,ex_r with
     | false,true
     | true,false -> let _ = print_endline (validate_id ^ "FAIL.") in ()

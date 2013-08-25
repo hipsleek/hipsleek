@@ -1792,8 +1792,8 @@ validate_list_context:
   ]];
 
 validate_cmd:
-  [[ `VALIDATE; r=id; `COLON; lc = OPT validate_list_context  ->
-      (r, un_option lc [])
+  [[ `VALIDATE; lc = OPT validate_list_context  ->
+      (un_option lc [])
    ]];
 
 cond_path:

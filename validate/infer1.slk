@@ -15,7 +15,7 @@ HeapPred H2(node x, int n).
 infer [H1] H1(y) |- y::node<a,b>.
 print residue.
 
-validate Valid:[
+validate [
 ( [H1,b],
 //   HP_32(b_34)&a=a_33 & b=b_34,
    HP_32(b),
@@ -25,8 +25,8 @@ validate Valid:[
 ].
 
 
-validate Valid:[
-( [H1,b],
+validate [
+( [H1],
 //   HP_32(b_34)&a=a_33 & b=b_34,
    HP_32(b),
   [H1(y) --> y::node<_,bb>@M * HP_32(bb)]
