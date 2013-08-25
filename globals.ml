@@ -638,6 +638,10 @@ let dis_show_diff = ref false
 
 let sa_print_inter = ref false
 
+let tc_drop_unused = ref false
+let simpl_unfold2 = ref false
+let simpl_unfold1 = ref false
+
 let print_heap_pred_decl = ref true
 
 let cond_path_trace = ref true

@@ -559,7 +559,9 @@ let common_arguments = [
   ("--dis-print-derv" , Arg.Clear Globals.print_derv, "disable [derv,orig] annotation printing (default)");
   ("--en-texify", Arg.Set Globals.texify, "output latex formulas");
   ("--en-testing", Arg.Set Globals.testing_flag, "generate for testing comparison with start/stop markers");
-
+  ("--etcnf",Arg.Set Globals.tc_drop_unused, "quantify names that will not be used from the context after each Hoare rule");
+  ("--etcsu1",Arg.Set Globals.simpl_unfold1,"keep only default branch when unsat-ing");
+  ("--etcsu2",Arg.Set Globals.simpl_unfold2,"syntactically deal with equalities and disequalities between vars")
   ]
 
 (* arguments/flags used only by hip *)	

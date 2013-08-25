@@ -13482,3 +13482,37 @@ let set_residue b lc =
 
 let clear_residue () =
   residues := None
+
+  (*eliminates a fv that is otherwise to be existentially quantified, it does so only if the substitution is not
+  a heap var as that would break the linearization...*)
+let elim_e_var to_keep (f0 : formula) : formula = 
+	let helper2 f = match f with 
+	  | Base b ->
+		let h = b.formula_base_heap in
+		let p = b.formula_base_pure in
+		let a_alias,_ = Mcpure.get_all_vv_eqs_mix p in
+		let a_alias = (*filter any directly heap related aliasing *)
+			let no_touch = h_fv h in
+			List.filter (fun (v1,v2)-> 
+				let f v = not (Gen.BList.mem_eq CP.eq_spec_var v no_touch)  in
+				(f v1)&&(f v2)) a_alias in
+		let a_alias = (*ensure no substitution of used vars occurs*)
+			List.fold_left (fun a (v1,v2)-> 
+				let f v = Gen.BList.mem_eq (=) (CP.name_of_spec_var v) to_keep in
+				match (f v1),(f v2) with
+					| true,true  -> a 
+					| true,false -> (v2,v1)::a
+					| false,true 
+					| false,false -> (v1,v2)::a) [] a_alias in
+		let _ = print_string ("bai-dropped:   "^(pr_list (pr_pair !print_sv !print_sv) a_alias)^"\n") in
+		let np = MCP.memo_subst a_alias p in
+		let np = MCP.drop_triv_eq np in
+		Base{b with formula_base_pure = np;}
+	  | _ -> f in
+	let rec helper f0 = match f0 with
+	  | Or b -> mkOr (helper b.formula_or_f1) (helper b.formula_or_f2) b.formula_or_pos
+	  | Base _ 
+	  | Exists _ -> 
+		let qvars,b = split_quantifiers f0 in
+		push_exists qvars (helper2 b) in
+	helper f0

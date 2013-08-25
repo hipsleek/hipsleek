@@ -11145,3 +11145,44 @@ let is_ieq f =
 (*   let pr1 = !print_formula in *)
 (*   Debug.no_1 "CP.swap_null" pr1 pr1 *)
 (*       (fun _ -> swap_null_x f) f *)
+
+
+let drop_triv_eq f =
+	let fc f = match f with
+		| BForm ((Eq(Var(vl,_),Var(vr,_),l),_),_) -> 
+			if eq_spec_var vl vr then Some (mkTrue l)
+			else Some f
+		| BForm _ -> Some f
+		| _ -> None in
+	transform_formula (nonef, nonef,fc,somef,somef) f
+	
+let rec default_branch f=
+	let fc f = match f with
+		| AndList l -> 
+			let l = List.filter (fun (l,_)-> LO.is_unlabelled l) l in
+			let l = List.map (fun (_,f)-> default_branch f) l in
+			Some (List.fold_left (fun a c-> mkAnd a c no_pos) (mkTrue no_pos) l)
+		| BForm _ -> Some f
+		| _ -> None in
+	transform_formula (nonef, nonef,fc,somef,somef) f
+	
+let check_pointer_dis_sat_x c = 
+	let a_alias,_ = get_all_vv_eqs c in
+	let nf = subst a_alias c in
+	let f a c = match c with 
+			| BForm ((Neq(Var(vl,_),Var(vr,_),l),_),_) -> 
+				if eq_spec_var vl vr then Some (c, false)
+				else Some (mkTrue no_pos,a)
+			| BForm ((Eq(Var(vl,_),Var(vr,_),l),_),_) -> 
+				if eq_spec_var vl vr then Some (mkTrue no_pos, a)
+				else Some (c,a)
+			| BForm _ -> Some (c,a)
+			| _ -> None  in
+	let f_comb = 
+	    (fun f l -> (match f with Or _ -> List.fold_left (||) false l | _ -> List.fold_left (&&) true l)),
+		(fun _ l -> List.fold_left (&&) true l),
+		(fun _ l -> List.fold_left (&&) true l) in
+	foldr_formula nf true (f, (fun a c-> Some (c,a)), (fun a c-> Some (c,a))) (idf2,idf2,idf2) f_comb
+	
+let check_pointer_dis_sat c= 
+	Debug.no_1 "check_pointer_dis_sat" !print_formula (pr_pair !print_formula string_of_bool) check_pointer_dis_sat_x c

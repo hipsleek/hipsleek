@@ -3273,7 +3273,13 @@ and unsat_base_x prog (sat_subno:  int ref) f  : bool=
           let p = MCP.translate_level_mix_formula p in
 	  let ph,_,_ = xpure_heap 1 prog h p 1 in
 	  let npf = MCP.merge_mems p ph true in
-	  not (TP.is_sat_mix_sub_no npf sat_subno true true)
+	  let npf = if !Globals.simpl_unfold1 then MCP.default_branch npf else npf in
+	  if !Globals.simpl_unfold2 then 
+		let sat,npf = MCP.check_pointer_dis_sat npf in
+		if  sat then	not (TP.is_sat_mix_sub_no npf sat_subno true true)
+		else false
+	  else
+	   not (TP.is_sat_mix_sub_no npf sat_subno true true)
     | Exists ({ formula_exists_qvars = qvars;
       formula_exists_heap = qh;
       formula_exists_pure = qp;
@@ -3281,8 +3287,14 @@ and unsat_base_x prog (sat_subno:  int ref) f  : bool=
           let qp = MCP.translate_level_mix_formula qp in
 	  let ph,_,_ = xpure_heap 1 prog qh qp 1 in
 	  let npf = MCP.merge_mems qp ph true in
-	  not (TP.is_sat_mix_sub_no npf sat_subno true true)
-
+	  let npf = if !Globals.simpl_unfold1 then MCP.default_branch npf else npf in
+	  if !Globals.simpl_unfold2 then 
+		let sat,npf = MCP.check_pointer_dis_sat npf in
+		if  sat then	not (TP.is_sat_mix_sub_no npf sat_subno true true)
+		else false
+	  else
+	   not (TP.is_sat_mix_sub_no npf sat_subno true true)
+	 
 
 (* and unsat_base_nth(\*_debug*\) n prog (sat_subno:  int ref) f  : bool =  *)
 (*   Gen.Profiling.do_1 "unsat_base_nth" (unsat_base_x prog sat_subno) f *)
