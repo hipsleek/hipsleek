@@ -13484,7 +13484,7 @@ let clear_residue () =
   residues := None
 
   (*eliminates a fv that is otherwise to be existentially quantified, it does so only if the substitution is not
-  a heap var as that would break the linearization...*)
+  a heap var as that would break the linearization..., used in the cast simplifications *)
 let elim_e_var to_keep (f0 : formula) : formula = 
 	let helper2 f = match f with 
 	  | Base b ->

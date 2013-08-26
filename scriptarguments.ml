@@ -171,7 +171,7 @@ let common_arguments = [
    "Show gist when implication fails");
   ("--hull-pre-inv", Arg.Set Globals.hull_pre_inv,
    "Hull precondition invariant at call sites");
-  ("--sat-timeout", Arg.Set_float Globals.sat_timeout_limit,
+  ("--sat-timeout", Arg.Float (fun v -> Globals.sat_timeout_limit:=v; Globals.user_sat_timeout:=true),
    "Timeout for sat checking");
   ("--imply-timeout", Arg.Set_float Globals.imply_timeout_limit,
    "Timeout for imply checking");
@@ -560,8 +560,9 @@ let common_arguments = [
   ("--en-texify", Arg.Set Globals.texify, "output latex formulas");
   ("--en-testing", Arg.Set Globals.testing_flag, "generate for testing comparison with start/stop markers");
   ("--etcnf",Arg.Set Globals.tc_drop_unused, "quantify names that will not be used from the context after each Hoare rule");
-  ("--etcsu1",Arg.Set Globals.simpl_unfold1,"keep only default branch when unsat-ing");
-  ("--etcsu2",Arg.Set Globals.simpl_unfold2,"syntactically deal with equalities and disequalities between vars")
+  (*("--etcsu1",Arg.Set Globals.simpl_unfold1,"keep only default branch when unsat-ing");*)
+  ("--etcsu2",Arg.Set Globals.simpl_unfold2,"syntactically deal with equalities and disequalities between vars for sat");
+  ("--etcsu3",Arg.Set Globals.simpl_unfold3,"syntactically deal with equalities and disequalities between vars for imply")
   ]
 
 (* arguments/flags used only by hip *)	

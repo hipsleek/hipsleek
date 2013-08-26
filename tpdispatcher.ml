@@ -2338,6 +2338,7 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
 
 
 let tp_imply_no_cache ante conseq imp_no timeout process =
+  let ante,conseq = if !Globals.simpl_unfold3 then simpl_equalities ante conseq else (ante,conseq) in
   let ante = 
     if !Globals.allow_imm_inv then add_imm_inv ante conseq
     else ante in

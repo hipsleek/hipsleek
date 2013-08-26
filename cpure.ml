@@ -3674,7 +3674,7 @@ and get_all_vv_eqs (f0 : formula) : ((spec_var * spec_var) list * formula) =
   let prr = pr_pair (pr_list (pr_pair pr_sv pr_sv)) pr in
   Debug.no_1 "get_all_vv_eqs" pr prr get_all_vv_eqs_x f0
 
-and get_all_vv_eqs_x (f0 : formula) : ((spec_var * spec_var) list * formula) =
+and get_all_vv_eqs_x (f0 : formula) : ((spec_var * spec_var) list * formula) =  
   let rec helper f0 =  match f0 with
       | And (f1, f2, pos) ->
           let st1, rf1 = helper f1  in
@@ -3695,7 +3695,7 @@ and get_all_vv_eqs_x (f0 : formula) : ((spec_var * spec_var) list * formula) =
       | BForm (((Eq (Var (sv1, _), Var (sv2, _), pos)),_),_) -> ([(sv1, sv2)], mkTrue no_pos )	  
       | _ -> ([], f0)
   in helper f0
-
+  
 and get_all_vv_eqs_bform b = match b with
 	| ((Eq (Var (sv1, _), Var (sv2, _), pos)),_) -> [(sv1, sv2)]
 	| _ -> []
@@ -11147,6 +11147,8 @@ let is_ieq f =
 (*       (fun _ -> swap_null_x f) f *)
 
 
+
+(*used in the optimization that in between hoare rules unused (now or in the future) variables should be quantified*)
 let drop_triv_eq f =
 	let fc f = match f with
 		| BForm ((Eq(Var(vl,_),Var(vr,_),l),_),_) -> 
@@ -11155,34 +11157,121 @@ let drop_triv_eq f =
 		| BForm _ -> Some f
 		| _ -> None in
 	transform_formula (nonef, nonef,fc,somef,somef) f
-	
-let rec default_branch f=
-	let fc f = match f with
-		| AndList l -> 
-			let l = List.filter (fun (l,_)-> LO.is_unlabelled l) l in
-			let l = List.map (fun (_,f)-> default_branch f) l in
-			Some (List.fold_left (fun a c-> mkAnd a c no_pos) (mkTrue no_pos) l)
-		| BForm _ -> Some f
+		
+
+ (*returns a list of substitutions that can be safely applied over the entire formula*)
+let get_vv_eqs (f0 : formula) : (spec_var * spec_var) list =
+	let fct p f = match f with 
+		| BForm ((Eq (Var(vl,_),Var(vr,_),_),_),_) ->  if p then Some (f,[(vl,vr)]) else Some (f,[])
+		| BForm ((Neq(Var(vl,_),Var(vr,_),_),_),_) ->  if p then Some (f,[]) else Some (f,[(vl,vr)])
+		| BForm _ -> Some (f,[])
 		| _ -> None in
-	transform_formula (nonef, nonef,fc,somef,somef) f
+	let f_arg arg e = match e with | Not _ -> not arg | _ -> arg in
+	let f_cmb e l = match e with 
+            | BForm _  | And _ | AndList _  | Not _ -> List.concat l
+            | Or _ -> 
+				let intf (a1,a2) (b1,b2) =  
+					((eq_spec_var a1 b1) &&  (eq_spec_var a2 b2)) || 
+					((eq_spec_var a1 b2) &&  (eq_spec_var a2 b1)) in
+				Gen.BList.intersect_eq intf  (List.hd l) (List.hd (List.tl l)) 
+            | Forall (sv,_,_,_) 
+            | Exists (sv,_,_,_) -> List.filter (fun (v1,v2)-> not ((eq_spec_var sv v1)||(eq_spec_var sv v2)))(List.concat l) in 
+	let f_stop1 a b = Some (b,[]) in
+	let f_stop2 a b = Some (b,[]) in
+	snd (foldr_formula f0 true (fct,f_stop1, f_stop2) (f_arg,idf2,idf2) (f_cmb, (fun _ _ -> []), (fun _ _ -> [])))
+    	
+	(*lump all pointer vars apearing in anything but disequalities*)
+let force_all_vv_eqs_x f0 = 
+	let rec helper b f = match f with
+		| BForm ((Eq (Var(vl,_),Var(vr,_),_),_),_) ->  if b&&(not (eq_spec_var vl vr)) then [vl;vr] else []
+		| BForm ((Eq(Var(vl,_),(Null _),_),_),_)
+		| BForm ((Eq((Null _),Var(vl,_),_),_),_)->   if b then [vl] else []
+		| BForm ((Neq(Var(vl,_),Var(vr,_),_),_),_) ->  if b&&(not (eq_spec_var vl vr)) then [] else [vl;vr]
+		| BForm ((Neq(Var(vl,_),(Null _),_),_),_)
+		| BForm ((Neq((Null _),Var(vl,_),_),_),_)->   if b then [] else [vl]
+		| BForm (b,_) -> bfv b 
+		| Or (f1,f2,_,_)
+		| And (f1,f2,_)-> (helper b f1) @ (helper b f2)
+	    | AndList l -> Gen.fold_l_snd (helper b) l	
+		| Not (f,_,_)-> helper (not b) f
+		| Forall (_,f,_,_) 
+		| Exists (_,f,_,_)-> helper b f  in
+    Gen.BList.remove_dups_eq eq_spec_var (List.filter is_node_typ (helper true f0))
+		
+let force_all_vv_eqs f0 =
+	Debug.no_1 "force_all_vv_eqs" !print_formula !print_svl force_all_vv_eqs_x f0
+	
+	(*the next set of functions deal with elimination of equalities and disequalities, and early detection of contradictions*)
+	(*mainly due to the performance penalty of disequalities *)
+	
+let decide_keep vars_to_keep v = 
+	(not (is_node_typ v)) || (List.exists (eq_spec_var v) vars_to_keep)
+	
+	(*get ante substitutions and try and apply as many as possible*)
+let expand_eqs_x ante conseq = 
+	let a_alias = get_vv_eqs ante in
+	let rec sub (ante,conseq) nf = match nf with 
+		| [] -> (ante,conseq)
+		| h::t -> 
+			let t = List.map (fun (c1,c2)-> subst_var h c1, subst_var h c2) t in
+			sub (subst [h] ante ,subst [h] conseq) t in
+	sub (ante,conseq) a_alias
+	
+let expand_eqs ante conseq = 
+	let pr = !print_formula in
+	Debug.no_2 "expand_eqs" pr pr (pr_pair pr pr) expand_eqs_x ante conseq
 	
 let check_pointer_dis_sat_x c = 
-	let a_alias,_ = get_all_vv_eqs c in
-	let nf = subst a_alias c in
-	let f a c = match c with 
-			| BForm ((Neq(Var(vl,_),Var(vr,_),l),_),_) -> 
-				if eq_spec_var vl vr then Some (c, false)
-				else Some (mkTrue no_pos,a)
-			| BForm ((Eq(Var(vl,_),Var(vr,_),l),_),_) -> 
-				if eq_spec_var vl vr then Some (mkTrue no_pos, a)
-				else Some (c,a)
-			| BForm _ -> Some (c,a)
-			| _ -> None  in
-	let f_comb = 
-	    (fun f l -> (match f with Or _ -> List.fold_left (||) false l | _ -> List.fold_left (&&) true l)),
-		(fun _ l -> List.fold_left (&&) true l),
-		(fun _ l -> List.fold_left (&&) true l) in
-	foldr_formula nf true (f, (fun a c-> Some (c,a)), (fun a c-> Some (c,a))) (idf2,idf2,idf2) f_comb
+	let helper nf = 
+		let nf ,_= expand_eqs nf (mkTrue no_pos) in
+		let vars_to_keep = force_all_vv_eqs nf in
+		let f a c = match c with 
+				| BForm ((Neq(Var(vl,_),Var(vr,_),l),_),_) -> 
+					if eq_spec_var vl vr then Some (c, false)
+					else if (decide_keep vars_to_keep vl)&& (decide_keep vars_to_keep vr) then Some (c,a)
+					else Some (mkTrue no_pos, a)
+				| BForm ((Eq(Var(vl,_),Var(vr,_),l),_),_) -> 
+					if eq_spec_var vl vr then Some (mkTrue no_pos, a)
+					else Some (c,a)
+				| BForm ((Neq((Null _),Var(v,_),_),_),_)
+				| BForm ((Neq(Var(v,_),(Null _),_),_),_) -> 
+					if (decide_keep vars_to_keep v) then Some (c,a) else Some (mkTrue no_pos, a)
+				| BForm _ -> Some (c,a)
+				| _ -> None  in
+		let f_comb = 
+			(fun f l -> (match f with Or _ -> or_list l | _ -> and_list l)),
+			(fun _ l -> and_list l),
+			(fun _ l -> and_list l) in
+		foldr_formula nf true (f, (fun a c-> Some (c,a)), (fun a c-> Some (c,a))) (idf2,idf2,idf2) f_comb in
+	List.fold_left (fun (a1,a2) c-> 
+		let r1,r2 = helper c in
+		mkOr a1 r1 None no_pos , (a2||r2) ) (mkFalse no_pos, false) (split_disjunctions c)  
 	
+	
+	(*not equivalence preserving, use carefully, designed as a simplification pre unsat check*)
 let check_pointer_dis_sat c= 
 	Debug.no_1 "check_pointer_dis_sat" !print_formula (pr_pair !print_formula string_of_bool) check_pointer_dis_sat_x c
+	
+let simpl_equalities_x ante conseq = 
+  let ante, conseq = expand_eqs ante conseq in
+  let vars_to_keep = (force_all_vv_eqs ante)@(fv conseq) in
+  let f e = match e with
+		| BForm ((Neq(Var(vl,_),Var(vr,_),l),_),_) -> 
+				if eq_spec_var vl vr then Some (mkFalse no_pos)
+				else if (decide_keep vars_to_keep vl)&& (decide_keep vars_to_keep vr) then Some e
+				else Some (mkTrue no_pos)
+		| BForm ((Eq(Var(vl,_),Var(vr,_),l),_),_) -> 
+				if eq_spec_var vl vr then Some (mkTrue no_pos)
+				else Some e
+		| BForm ((Neq((Null _),Var(v,_),_),_),_)
+		| BForm ((Neq(Var(v,_),(Null _),_),_),_) -> 
+				if (decide_keep vars_to_keep v) then Some e else Some (mkTrue no_pos)
+		| BForm _ -> Some e 
+		| _ -> None in
+  let tr = transform_formula (somef,somef,f,somef,somef) in
+  tr ante, tr conseq
+  
+  (*a simplification pre imply check*)
+let simpl_equalities ante conseq  = 
+	let pr = !print_formula in
+	Debug.no_2 "simpl_equalities" pr pr (pr_pair pr pr) simpl_equalities_x ante conseq

@@ -3265,6 +3265,18 @@ and find_unsat prog f =
 	Debug.no_1 "find_unsat" pr_f (pr_pair pr_l pr_l) (find_unsat_x prog) f
 	  
 and unsat_base_x prog (sat_subno:  int ref) f  : bool= 
+  let tp_call_wrapper npf = 
+	if !Globals.simpl_unfold2 then 
+		let r = 
+			let sat,npf = MCP.check_pointer_dis_sat npf in
+			if  sat then	not (TP.is_sat_mix_sub_no npf sat_subno true true)
+			else true in
+		(*let _ = if r<>(not (TP.is_sat_mix_sub_no npf sat_subno true true)) 
+			then print_string ("diff: "^(Cprinter.string_of_mix_formula  npf)^"\n") 
+			else () in*)
+		r
+	  else not (TP.is_sat_mix_sub_no npf sat_subno true true) in
+	  
   match f with
     | Or _ -> report_error no_pos ("unsat_xpure : encountered a disjunctive formula \n")
     | Base ({ formula_base_heap = h;
@@ -3273,13 +3285,7 @@ and unsat_base_x prog (sat_subno:  int ref) f  : bool=
           let p = MCP.translate_level_mix_formula p in
 	  let ph,_,_ = xpure_heap 1 prog h p 1 in
 	  let npf = MCP.merge_mems p ph true in
-	  let npf = if !Globals.simpl_unfold1 then MCP.default_branch npf else npf in
-	  if !Globals.simpl_unfold2 then 
-		let sat,npf = MCP.check_pointer_dis_sat npf in
-		if  sat then	not (TP.is_sat_mix_sub_no npf sat_subno true true)
-		else true
-	  else
-	   not (TP.is_sat_mix_sub_no npf sat_subno true true)
+	  tp_call_wrapper npf
     | Exists ({ formula_exists_qvars = qvars;
       formula_exists_heap = qh;
       formula_exists_pure = qp;
@@ -3287,14 +3293,8 @@ and unsat_base_x prog (sat_subno:  int ref) f  : bool=
           let qp = MCP.translate_level_mix_formula qp in
 	  let ph,_,_ = xpure_heap 1 prog qh qp 1 in
 	  let npf = MCP.merge_mems qp ph true in
-	  let npf = if !Globals.simpl_unfold1 then MCP.default_branch npf else npf in
-	  if !Globals.simpl_unfold2 then 
-		let sat,npf = MCP.check_pointer_dis_sat npf in
-		if  sat then	not (TP.is_sat_mix_sub_no npf sat_subno true true)
-		else true
-	  else
-	   not (TP.is_sat_mix_sub_no npf sat_subno true true)
-	 
+	  tp_call_wrapper npf
+	  	 
 
 (* and unsat_base_nth(\*_debug*\) n prog (sat_subno:  int ref) f  : bool =  *)
 (*   Gen.Profiling.do_1 "unsat_base_nth" (unsat_base_x prog sat_subno) f *)
