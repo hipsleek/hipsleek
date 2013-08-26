@@ -11148,7 +11148,25 @@ let is_ieq f =
 
 
 
-(*used in the optimization that in between hoare rules unused (now or in the future) variables should be quantified*)
+(*used in the optimization that in between hoare rules dead variables should be quantified*)
+
+let drop_dupl_x f = 
+	let rec helper f = 
+		let rec splitter (a,o) f = match f with
+		  | BForm _ -> f::a,o
+		  | And (f1,f2,_) -> splitter (splitter (a,o) f1) f2 
+		  | AndList l -> a, (AndList (map_l_snd helper l))::o
+		  | Or _ 
+		  | Not _ 
+		  | Forall _ 
+		  | Exists _ -> a, f::o in
+		let a,o = splitter ([],[]) f in		
+		join_conjunctions ((remove_dupl_conj_list a)@o)	in
+	join_disjunctions (List.map helper (split_disjunctions f)) 
+
+let drop_dupl f = 
+	Debug.no_1 "drop_dupl" !print_formula !print_formula drop_dupl_x f
+	
 let drop_triv_eq f =
 	let fc f = match f with
 		| BForm ((Eq(Var(vl,_),Var(vr,_),l),_),_) -> 
@@ -11156,7 +11174,7 @@ let drop_triv_eq f =
 			else Some f
 		| BForm _ -> Some f
 		| _ -> None in
-	transform_formula (nonef, nonef,fc,somef,somef) f
+	drop_dupl(transform_formula (nonef, nonef,fc,somef,somef) f)
 		
 
  (*returns a list of substitutions that can be safely applied over the entire formula*)
@@ -11245,7 +11263,7 @@ let check_pointer_dis_sat_x c =
 		foldr_formula nf true (f, (fun a c-> Some (c,a)), (fun a c-> Some (c,a))) (idf2,idf2,idf2) f_comb in
 	List.fold_left (fun (a1,a2) c-> 
 		let r1,r2 = helper c in
-		mkOr a1 r1 None no_pos , (a2||r2) ) (mkFalse no_pos, false) (split_disjunctions c)  
+		mkOr a1 (drop_dupl r1) None no_pos , (a2||r2) ) (mkFalse no_pos, false) (split_disjunctions c)  
 	
 	
 	(*not equivalence preserving, use carefully, designed as a simplification pre unsat check*)
@@ -11269,7 +11287,7 @@ let simpl_equalities_x ante conseq =
 		| BForm _ -> Some e 
 		| _ -> None in
   let tr = transform_formula (somef,somef,f,somef,somef) in
-  tr ante, tr conseq
+  drop_dupl (tr ante), tr conseq
   
   (*a simplification pre imply check*)
 let simpl_equalities ante conseq  = 
