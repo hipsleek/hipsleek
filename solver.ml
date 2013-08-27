@@ -9191,6 +9191,7 @@ and do_fold_w_ctx_x fold_ctx prog estate conseq ln2 vd resth2 rhs_b is_folding p
         get_cperm perm
       else []
     in
+    (* let _ = Debug.info_hprint (add_str "xxx 2" (Cprinter.string_of_list_context_short)) fold_rs pos in *)
     (*add permission vars if applicable*)
     let tmp, tmp_prf = process_fold_result (ivars,ivars_rel) prog is_folding estate fold_rs p2 (perms@v2) b pos in
     let prf = mkFold ctx0 conseq p2 fold_prf tmp_prf in
@@ -9948,7 +9949,8 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
 		(res_es0,prf0)			  
       | Context.M_fold {
             Context.match_res_rhs_node = rhs_node;
-            Context.match_res_rhs_rest = rhs_rest;} -> 
+            Context.match_res_rhs_rest = rhs_rest;} ->
+            (* let _ = Debug.info_hprint (add_str "xxx M_fold" (Cprinter.string_of_entail_state)) estate pos in *)
           let estate =
               if Inf.no_infer_rel estate then estate
               else
@@ -10184,21 +10186,21 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
 
               let (contra, _, lc, prf ) = early_pure_contra_detection 13 prog estate conseq pos msg is_folding in
 
-              let do_match () = 
+              let do_match () =
                 let (cl,_) as first_heap_r = do_infer_heap rhs rhs_rest caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:CP.spec_var list) is_folding pos in
                 let res = (CF.isFailCtx) cl in
                 if not(res) then first_heap_r
                 else
                   let (res,new_estate, n_lhs, n_rhs, n_es_heap_opt) = Inf.infer_collect_hp_rel 1 prog estate rhs rhs_rest rhs_h_matched_set lhs_b rhs_b pos in
 		  (* Debug.info_hprint (add_str "DD: n_lhs" (Cprinter.string_of_h_formula)) n_lhs pos; *)
-		  if (not res) then (* r *) 
+		  if (not res) then (* r *)
                     (CF.mkFailCtx_in (Basic_Reason (mkFailContext "infer_heap_node" estate (Base rhs_b) None pos,
                     CF.mk_failure_must ("Cannot infer heap and pure 2") sl_error)), NoAlias)
 		  else
-		    let n_rhs_b =  Base {rhs_b with formula_base_heap = rhs_rest} in
+		    let n_rhs_b =  (Base {rhs_b with formula_base_heap = rhs_rest}) in
 		    (* Debug.info_hprint (add_str "DD: new_estate 1" (Cprinter.string_of_entail_state)) new_estate pos; *)
 		    let res_es0, prf0 = match n_es_heap_opt with
-                      | None -> do_match prog new_estate n_lhs n_rhs n_rhs_b rhs_h_matched_set is_folding pos
+                      | None -> do_match prog new_estate n_lhs rhs n_rhs_b rhs_h_matched_set is_folding pos
                       | Some hf -> let new_es = {new_estate with CF.es_heap = hf} in
                         let new_ctx = Ctx (CF.add_to_estate new_es "infer: rhs: unkown pred") in
                         heap_entail_conjunct 28 prog is_folding new_ctx n_rhs_b (rhs_h_matched_set) pos
@@ -10292,10 +10294,12 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
                           (*   (rhs_h_matched_set:CP.spec_var list) is_folding pos in *)
                           (* (CF.mkFailCtx_in (Or_Reason (res_lc, unmatched_lhs)), prf) *)
                         else
-                          let n_rhs_b = Base {rhs_b with formula_base_heap = rhs_rest} in
+                          (*subt the fresh evars for rhs*)
+                          let n_rhs_b = (Base {rhs_b with formula_base_heap = rhs_rest}) in
                           let _ = Debug.tinfo_hprint (add_str "new_estate(M_unmatched_rhs_data_node)" (Cprinter.string_of_entail_state)) new_estate pos in
                           let res_es0, prf0 = match n_es_heap_opt with
-                            | None -> do_match prog new_estate n_lhs n_rhs n_rhs_b rhs_h_matched_set is_folding pos
+                            | None ->
+                                  do_match prog new_estate n_lhs rhs n_rhs_b rhs_h_matched_set is_folding pos
                             | Some hf -> let new_es = {new_estate with CF.es_heap = hf} in
                               let new_ctx = Ctx (CF.add_to_estate new_es "infer: rhs: unkown pred") in
                               heap_entail_conjunct 28 prog is_folding new_ctx n_rhs_b (rhs_h_matched_set) pos
