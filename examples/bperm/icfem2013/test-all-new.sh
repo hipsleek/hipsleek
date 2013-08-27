@@ -11,7 +11,7 @@ for prog in $( ls *.ss ); do
 	echo "============================="
 	echo "===$prog"
 	echo "============================="
-	echo "===$prog===" >> test.n
+	echo "===$prog===" >> test-all.n
     $HIP $prog | grep -E 'Proc|assert' >> test-all.n
 done
 

@@ -13,7 +13,7 @@ lemma "S-SPLIT" self::barrier(c,t,0)<p> & 0<c<=t & c=c1+c2 & 0<c1<t & 0<c2<t -> 
 //combine successfully
 lemma "S-COMBINE" self::barrier(c1,t,0)<p> * self::barrier(c2,t,0)<p> -> self::barrier(c1+c2,t,0)<p>;
 
-//S-SEP is done automatically of the verifier
+//S-SEP is done automatically by the verifier
 //********************************************
 
 // WRAPPER FUNCTION
