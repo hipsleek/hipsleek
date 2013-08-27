@@ -1319,8 +1319,11 @@ let match_one_hp_views iprog prog (vdcls: CA.view_decl list) (k, hf, g,orf):(CP.
   let helper args r paras vdcl=
     if (List.length args) = ((List.length vdcl.CA.view_vars) + 1) then
       let f1 = CF.formula_of_heap hf no_pos in
-      let vnode = CF.mkViewNode (List.hd args) vdcl.CA.view_name
-        (List.tl args) no_pos in
+      let self_sv = CP.SpecVar (CP.type_of_spec_var r ,self, Unprimed) in
+      let sst = List.combine (r::paras) (self_sv::vdcl.CA.view_vars) in
+      let f1 = CF.subst sst f1 in
+      let vnode = CF.mkViewNode (self_sv ) vdcl.CA.view_name
+        (vdcl.CA.view_vars) no_pos in
       let f2 = CF.formula_of_heap vnode no_pos in
       if Lemma.checkeq_sem iprog prog f1 f2 [(k, hf, g,orf)] then
         [vnode]

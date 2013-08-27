@@ -40,12 +40,6 @@ validate [
 )
 ].
 
-// I think it should be OK to change b->bb
-// the problem is that your inferred hp_rel should have been
-// inferred hprel: [H1(y) --> y::node<a_1,b_2>@M * HP_35(b_2)]
-// or you could have renamed the existentially quantified vars.
-
-
 
 /*
 # infer1.slk

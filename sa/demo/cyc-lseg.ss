@@ -7,7 +7,7 @@ HeapPred H(node x).
 
 ll<> == self=null
   or self::node<q>*q::ll<>
-  or self::node<q>*q::ll<>;
+ or self::node<q>*q::ll<>;
 
 void trav(ref node x)
   infer [H,G]
