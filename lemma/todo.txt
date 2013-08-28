@@ -36,10 +36,61 @@ EBase {3}->emp&self_lem_11=null & n_62=0&{FLOW,(1,22)=__flow}[]
             EBase emp&n=n_62&{FLOW,(1,22)=__flow}[]
 
 ====================================================================
+# ../../sleek qs-3-inf.slk --en-inf --elp --esl 
+
+Can trace with exception backtrace?
+
+Starting Omega...oc
+ERROR : top of empty stackERROR : get_sleek_no on empty sleek_stk
+LOGGING ERROR : inconsistent slk_no problem 2 stk:-1
+ERROR : top of empty stackFatal error: exception Gen.Stack_Error
 ====================================================================
 ====================================================================
+# qs-3c.slk
+
+checkentail
+(m_858=0 & sm1_363=\inf & lg1_879+(\inf)=0) 
+& sm1_330=sm1_363 
+& lg1_879<=lg_360 & sm<=sm1_363 
+& 0<(sm+(\inf)) & sm<(\inf) & sm=sm_358 
+& lg=lg_360 & lg1_331=lg1_879
+|-	     
+(exists lg1_900:
+lg1_900=max(lg1_331,sm) 
+//lg1_900=sm 
+& lg1_900<(\inf))
+.
+
+Above fails but should have suceeded
+ after you subs lg1_331=-\inf
+
+An example of incompleteness of \inf
+
+*/
 ====================================================================
+# equiv.slk -FIXED
+
+Got:
+
+Valid Lemmas : [V1:<==>] added to lemma store.
+
+Entailing lemma V2: Fail. Details below:
+
+Failed to prove V2:<==> in current context.
+Removing invalid lemma ---> lemma store restored.
+
+How come no failure message printing like below in lemproving.ml?
+
+            let _ = print_string (num_id ^ ": Fail. Details below:\n") in
+            let _ = print_entail_result valid_l2r rs1 "\t \"->\" implication: " in
+            print_entail_result valid_r2l rs2 "\t \"<-\" implication: "
 ====================================================================
+#bugs/qs-2.slk
+
+ //fail:  sm<=lg |-  lg=sm. 
+lemma_safe "ll_tail2lsegR" self::ll_tail<n, t, sm, lg>  & m=n-1 <- self::lseg<m, t, sm, lg1> * t::node<lg, null> & lg1<=lg 
+lemma_safe "lsegR" self::lseg<n, p, sm, lg> & n = a + b & a,b>=0 <-  self::lseg<a, r, sm, lg1> * r::lseg<b,p,sm1,lg> & lg1<=sm1.
+
 ====================================================================
 ====================================================================
 ====================================================================

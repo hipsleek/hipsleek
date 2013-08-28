@@ -166,7 +166,7 @@ let op_conj = " U* "
 let op_conjstar = " &* " 
 let op_conjconj = " & " 
 let op_f_or = "or" 
-let op_lappend = "append"
+let op_lappend = "app"
 let op_cons = ":::"
 
 
@@ -276,7 +276,7 @@ let pr_args_gen f_empty box_opt sep_opt op open_str close_str sep_str f xs =
 
  (** invoke pr_args_gen  *)   
 let pr_args box_opt sep_opt op open_str close_str sep_str f xs =
-  pr_args_gen (fun () -> fmt_string (op(* ^open_str^close_str *)) ) box_opt sep_opt op open_str close_str sep_str f xs
+  pr_args_gen (fun () -> fmt_string (op^open_str^close_str) ) box_opt sep_opt op open_str close_str sep_str f xs
 
  (** invoke pr_args_gen and print nothing when xs  is empty  *)      
 let pr_args_option box_opt sep_opt op open_str close_str sep_str f xs =
@@ -1960,8 +1960,11 @@ let pr_hprel_short_inst cprog hpa=
   fmt_open_box 1;
   (* fmt_string "hprel(2)"; *)
   (* fmt_string (CP.print_rel_cat hpa.hprel_kind); *)
-  fmt_string ("// "^(Others.string_of_proving_kind hpa.hprel_proving_kind));
-  fmt_print_newline();
+  if not(!Globals.is_sleek_running) then
+    begin
+      fmt_string ("// "^(Others.string_of_proving_kind hpa.hprel_proving_kind));
+      fmt_print_newline()
+    end;
   pr_wrap_test_nocut "" Gen.is_empty (* skip_cond_path_trace *) 
       (fun p -> fmt_string ((pr_list_round_sep ";" (fun s -> string_of_int s)) p)) hpa.hprel_path;
   prtt_pr_formula_inst cprog hpa.hprel_lhs;
@@ -2031,7 +2034,9 @@ let pr_hprel_def_short hpd=
   fmt_string " ::=";
   (* no cut here please *)
   (* fmt_cut(); *)
-  (pr_list_op_none " \/ " pr_path_of) hpd.hprel_def_body;
+  match hpd.hprel_def_body_lib with
+    | None -> (pr_list_op_none " \/ " pr_path_of) hpd.hprel_def_body;
+    | Some f -> prtt_pr_formula f;
    (* fmt_string (String.concat " OR " (List.map pr_path_of hpd.hprel_def_body)); *)
   (* fmt_string " LIB FORM:\n"; *)
   (* (pr_h_formula hpd.hprel_def_hrel); *)
@@ -2626,9 +2631,9 @@ let pr_list_context (ctx:list_context) =
 let pr_context_short (ctx : context) = 
   let rec f xs = match xs with
     | Ctx e -> [(e.es_formula,e.es_infer_vars@e.es_infer_vars_rel,e.es_infer_heap,e.es_infer_pure,e.es_infer_rel,
-      e.es_var_measures,e. es_var_zero_perm,e.es_trace,e.es_cond_path, e.es_proof_traces)]
+      e.es_var_measures,e. es_var_zero_perm,e.es_trace,e.es_cond_path, e.es_proof_traces, e.es_ante_evars)]
     | OCtx (x1,x2) -> (f x1) @ (f x2) in
-  let pr (f,(* ac, *)iv,ih,ip,ir,vm,vperms,trace,ecp, ptraces) =
+  let pr (f,(* ac, *)iv,ih,ip,ir,vm,vperms,trace,ecp, ptraces,evars) =
     fmt_open_vbox 0;
     pr_formula_wrap f;
     pr_wrap_test "es_var_zero_perm: " Gen.is_empty  (pr_seq "" pr_spec_var) vperms;
@@ -2641,6 +2646,7 @@ let pr_context_short (ctx : context) =
     pr_vwrap "es_trace: " pr_es_trace trace;
     pr_wrap_test "es_cond_path: " Gen.is_empty (pr_seq "" (fun s -> fmt_int s)) ecp;
     pr_wrap_test "es_proof_traces: " Gen.is_empty (pr_seq "" (pr_pair_aux pr_formula pr_formula)) ptraces;
+	pr_wrap_test "es_ante_evars: " Gen.is_empty (pr_seq "" pr_spec_var) evars;
     fmt_string "\n";
     fmt_close_box();
   in 
@@ -3931,3 +3937,4 @@ Mathematica.print_svl := string_of_spec_var_list;;
 Mathematica.print_sv := string_of_spec_var;;
 Perm.print_sv := string_of_spec_var;;
 Lem_store.lem_pr:=string_of_coerc_short;;
+

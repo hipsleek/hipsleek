@@ -896,11 +896,34 @@ let rec string_of_barrier_decl_list l = match l with
  | h::t      -> (string_of_barrier_decl h) ^ "\n" ^ (string_of_barrier_decl_list t)
 ;;
 
-(* pretty printing for a list of coerc_decl *)
-let rec string_of_coerc_decl_list l = match l with 
- | []        -> ""
- | h::[]     -> (string_of_coerc_decl h) 
- | h::t      -> (string_of_coerc_decl h) ^ "\n" ^ (string_of_coerc_decl_list t)
+let string_of_lem_kind l =
+  match l with
+    | LEM          -> "lemmas(to be proved and saved)"
+    | LEM_TEST     -> "testing lemmas"
+    | LEM_TEST_NEW -> "testing lemmas(empty context)"
+    | LEM_UNSAFE   -> "unsafe lemmas(not proved)"
+    | LEM_SAFE     -> "safe lemmas(added to store only if valid)"
+    | LEM_INFER    -> "infer lemmas"
+;;
+
+(* pretty printing for a list of coerc_decl_list *)
+let string_of_coerc_decl_list l = 
+  let rec helper l = 
+    match l with 
+      | []        -> ""
+      | h::[]     -> (string_of_coerc_decl h) 
+      | h::t      -> (string_of_coerc_decl h) ^ "\n" ^ (helper t)
+  in "\n"^(string_of_lem_kind (l.coercion_list_kind)) ^ "[\n" ^ (helper l.coercion_list_elems) ^"]"
+;;
+
+(* pretty printing for a list of coerc_decl_list list *)
+let string_of_coerc_decl_list_list l = 
+  let rec helper l = 
+    match l with 
+      | []        -> ""
+      | h::[]     -> (string_of_coerc_decl_list h) 
+      | h::t      -> (string_of_coerc_decl_list h) ^ "\n" ^ (helper t)
+  in (helper l)
 ;;
 
 (* pretty printing for an element of type (ident * int option) *)
@@ -966,7 +989,7 @@ let string_of_program p = (* "\n" ^ (string_of_data_decl_list p.prog_data_decls)
   (string_of_barrier_decl_list p.prog_barrier_decls) ^ "\n" ^
   (string_of_rel_decl_list p.prog_rel_decls) ^"\n" ^
   (string_of_axiom_decl_list p.prog_axiom_decls) ^"\n" ^
-  (string_of_coerc_decl_list p.prog_coercion_decls) ^ "\n\n" ^ 
+  (string_of_coerc_decl_list_list p.prog_coercion_decls) ^ "\n\n" ^ 
   (string_of_proc_decl_list p.prog_proc_decls) ^ "\n"
 ;;
 
@@ -987,7 +1010,7 @@ let string_of_program_separate_prelude p iprims= (* "\n" ^ (string_of_data_decl_
   (string_of_barrier_decl_list (helper_chop p.prog_barrier_decls (List.length iprims.prog_barrier_decls))) ^ "\n" ^
   (string_of_rel_decl_list (helper_chop p.prog_rel_decls (List.length iprims.prog_rel_decls))) ^"\n" ^
   (string_of_axiom_decl_list (helper_chop p.prog_axiom_decls (List.length iprims.prog_axiom_decls))) ^"\n" ^
-  (string_of_coerc_decl_list (helper_chop p.prog_coercion_decls (List.length iprims.prog_coercion_decls))) ^ "\n\n" ^
+  (string_of_coerc_decl_list_list (helper_chop p.prog_coercion_decls (List.length iprims.prog_coercion_decls))) ^ "\n\n" ^
   (string_of_proc_decl_list (helper_chop p.prog_proc_decls (List.length iprims.prog_proc_decls))) ^ "\n"
 ;;                                                                                                                         
 

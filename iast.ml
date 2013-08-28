@@ -36,7 +36,7 @@ type prog_decl = {
     (* An Hoa: relational declaration *)
     prog_proc_decls : proc_decl list;
     prog_barrier_decls : barrier_decl list;
-    mutable prog_coercion_decls : coercion_decl list
+    mutable prog_coercion_decls : coercion_decl_list list
 }
 
 and data_field_ann =
@@ -202,13 +202,22 @@ proc_test_comps: test_comps option}
 and coercion_decl = { coercion_type : coercion_type;
 coercion_exact : bool;
 coercion_name : ident;
+coercion_infer_vars : ident list;
 coercion_head : F.formula;
 coercion_body : F.formula;
 coercion_proof : exp }
+
+and coercion_decl_list = {
+    coercion_list_elems : coercion_decl list;
+    coercion_list_kind:   lemma_kind;
+}
+
 and coercion_type = 
   | Left
   | Equiv
   | Right
+
+
 
 (********vp:for parse compare file************)
 and cp_file_comps = 
@@ -2075,7 +2084,7 @@ let rec append_iprims_list (iprims : prog_decl) (iprims_list : prog_decl list) :
                 prog_axiom_decls = hd.prog_axiom_decls @ iprims.prog_axiom_decls; (* [4/10/2011] An Hoa *)
                 prog_hopred_decls = hd.prog_hopred_decls @ iprims.prog_hopred_decls;
                 prog_proc_decls = hd.prog_proc_decls @  iprims.prog_proc_decls;
-                prog_coercion_decls = hd.prog_coercion_decls @ iprims.prog_coercion_decls;
+                prog_coercion_decls = hd.prog_coercion_decls @  iprims.prog_coercion_decls;
 				prog_barrier_decls = hd.prog_barrier_decls @ iprims.prog_barrier_decls;
 				} in
              append_iprims_list new_iprims tl
@@ -2296,7 +2305,17 @@ let add_bar_inits prog =
 	prog_data_decls = prog.prog_data_decls@b_data_def; 
 	prog_proc_decls = prog.prog_proc_decls@b_proc_def; }
 
-	
+let mk_lemma lemma_name coer_type ihps ihead ibody=
+  { coercion_type = coer_type;
+  coercion_exact = false;
+  coercion_infer_vars = ihps;
+  coercion_name = (lemma_name);
+  coercion_head = (F.subst_stub_flow F.top_flow ihead);
+  coercion_body = (F.subst_stub_flow F.top_flow ibody);
+  coercion_proof = Return ({ exp_return_val = None;
+  exp_return_path_id = None ;
+  exp_return_pos = no_pos })}
+
 let gen_normalize_lemma_comb ddef = 
  let self = (self,Unprimed) in
  let lem_name = "c"^ddef.data_name in
@@ -2308,6 +2327,7 @@ let gen_normalize_lemma_comb ddef =
  {coercion_type = Left;
   coercion_name = lem_name;
   coercion_exact = false;
+  coercion_infer_vars = [];
   coercion_head = F.formula_of_heap_1 (F.mkStar (gennode perm1 args1) (gennode perm2 args2) no_pos) no_pos;
   coercion_body = F. mkBase (gennode perm3 args1) pure  top_flow [] no_pos;
   coercion_proof =  Return { exp_return_val = None; exp_return_path_id = None ; exp_return_pos = no_pos }
@@ -2324,6 +2344,7 @@ let gen_normalize_lemma_comb ddef =
  {coercion_type = Left;
   coercion_name = lem_name;
   coercion_exact = false;
+  coercion_infer_vars = [];
   coercion_head = F.mkBase (gennode perm3 args) pure  top_flow [] no_pos;
   coercion_body = F.formula_of_heap_1 (F.mkStar (gennode perm1 args) (gennode perm2 args) no_pos) no_pos;
   
@@ -2332,9 +2353,14 @@ let gen_normalize_lemma_comb ddef =
 	
 let add_normalize_lemmas prog4 = 
 	if !perm = NoPerm || not !enable_split_lemma_gen then prog4
-	else {prog4 with prog_coercion_decls = List.fold_left(fun a c-> (gen_normalize_lemma_split c)::(gen_normalize_lemma_comb c)::a) prog4.prog_coercion_decls prog4.prog_data_decls}
-	
-	
+	else {prog4 with prog_coercion_decls =
+                let new_lems =  List.fold_left(fun a c-> (gen_normalize_lemma_split c)::(gen_normalize_lemma_comb c)::a) [] prog4.prog_data_decls in
+                let new_lst  = 
+                  { coercion_list_elems = new_lems;
+                    coercion_list_kind  = LEM;} in
+                new_lst::prog4.prog_coercion_decls
+        }
+
 let rec get_breaks e = 
 	let f e = match e with
 		| Raise {exp_raise_type = rt}-> (match rt with
@@ -2352,7 +2378,7 @@ let rec get_breaks e =
 
 let exists_return_x e0=
   let rec helper e=
-    (* let _ = Debug.info_pprint (" helper: " ^ (!print_exp e)  ) no_pos in *)
+    (* let _ = Debug.info_zprint (lazy  (" helper: " ^ (!print_exp e)  )) no_pos in *)
     match e with
       | Block { exp_block_body = bb} ->
           (* let _ = Debug.info_pprint (" BLOCK" ) no_pos in *)
@@ -2364,7 +2390,7 @@ let exists_return_x e0=
           (* let _ = Debug.info_pprint (" RAISE" ) no_pos in *)
           match et with
             | Const_flow f ->
-                (* let _ = Debug.info_pprint (" et" ^ ( f)) no_pos in *)
+                (* let _ = Debug.info_zprint (lazy  (" et" ^ ( f))) no_pos in *)
                 if (is_eq_flow  (exlist # get_hash loop_ret_flow) (exlist # get_hash f)) then true else false
             | _ -> false
       end
@@ -2393,7 +2419,7 @@ let exists_return e0=
 
 let exists_return_val_x e0=
   let rec helper e=
-    (* let _ = Debug.info_pprint (" helper: " ^ (!print_exp e)  ) no_pos in *)
+    (* let _ = Debug.info_zprint (lazy  (" helper: " ^ (!print_exp e)  )) no_pos in *)
     match e with
       | Block { exp_block_body = bb} ->
           (* let _ = Debug.info_pprint (" BLOCK" ) no_pos in *)
@@ -2405,7 +2431,7 @@ let exists_return_val_x e0=
           (* let _ = Debug.info_pprint (" RAISE" ) no_pos in *)
           match et with
             | Const_flow _ ->
-                (* let _ = Debug.info_pprint (" et" ^ ( f)) no_pos in *)
+                (* let _ = Debug.info_zprint (lazy  (" et" ^ ( f))) no_pos in *)
                 false
             | _ -> true
       end
@@ -2437,7 +2463,7 @@ let exists_return_val e0=
 
 let get_return_exp_x e0=
   let rec helper e=
-    (* let _ = Debug.info_pprint (" helper: " ^ (!print_exp e)  ) no_pos in *)
+    (* let _ = Debug.info_zprint (lazy  (" helper: " ^ (!print_exp e)  )) no_pos in *)
     match e with
       | Block { exp_block_body = bb} ->
           (* let _ = Debug.info_pprint (" BLOCK" ) no_pos in *)
@@ -2495,3 +2521,7 @@ let lbl_getter prog vn id =
 	else None
   with 
    | Not_found -> None 
+
+let eq_coercion c1 c2 = (String.compare c1.coercion_name c2.coercion_name) == 0
+
+let eq_coercion_list = (==)             (* to be modified *)

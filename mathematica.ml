@@ -177,13 +177,13 @@ let check_formula (f: string) : bool option =
       Some false
     else
       let _ = Debug.dinfo_pprint ("Mathematica unexpected anser 1: ") no_pos in
-      let _ = Debug.dinfo_pprint ("   Input : " ^ f) no_pos in
-      let _ = Debug.dinfo_pprint ("   Output: " ^ output) no_pos in
+      let _ = Debug.dinfo_zprint (lazy (("   Input : " ^ f))) no_pos in
+      let _ = Debug.dinfo_zprint (lazy (("   Output: " ^ output))) no_pos in
       failwith "Mathematica: Unexpected answer!"
   with _ ->
       let _ = Debug.dinfo_pprint ("Mathematica unexpected anser 2: ") no_pos in
-      let _ = Debug.dinfo_pprint ("   Input : " ^ f) no_pos in
-      let _ = Debug.dinfo_pprint ("   Output: " ^ output) no_pos in
+      let _ = Debug.dinfo_zprint (lazy (("   Input : " ^ f))) no_pos in
+      let _ = Debug.dinfo_zprint (lazy (("   Output: " ^ output))) no_pos in
       failwith "Mathematica: Unexpected answer!"
 
 let check_formula f =

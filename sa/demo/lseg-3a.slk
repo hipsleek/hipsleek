@@ -1,0 +1,60 @@
+
+data node {
+  node next;
+}.
+
+HeapPred H(node x).
+HeapPred G(node y,node@NI z).
+
+pred ll<> == self=null
+  or self::node<q>*q::ll<>.
+
+infer [H] H(x)&x=x' & x'=y_30'
+ |-  y_30'::ll<>@M.
+print residue.
+
+
+infer [H] H(x)&x=x' & x'=y_30'
+ |-  x'::ll<>@M.
+print residue.
+
+/*
+# lseg-3a.slk
+
+It seems the problem is caused by not handling transitivity
+of = properly. You need to use CP.EMapSV which will allow
+equality to be handled accurately and efficiently.
+
+A recent use is:
+
+let compute_subs_mem puref evars = 
+  let (subs,_) = CP.get_all_vv_eqs puref in
+  let eqset = CP.EMapSV.build_eset subs in
+  let nsubs = build_subs_4_evars evars eqset in
+  nsubs
+
+infer [H] H(x)&x=x' & x'=y_30'
+ |-  y_30'::ll<>@M.
+print residue.
+
+infer [H] H(x)&x=x' & x'=y_30'
+ |-  x'::ll<>@M.
+print residue.
+
+!!! >>>>>> mismatch ptr y_30'::ll@M is not found (or inst) in the lhs <<<<<<WARNING : Pushing 1 stk_estate (4)
+
+Entail (1) : Valid. 
+
+ <1>(exists y_30': emp&x'=null & y_30'=null & x=null & y_30'=null&{FLOW,(19,20)=__norm})[]
+ inferred hprel: [// Sleek_Entail(1)
+H(x) --> emp&
+x=null]
+
+
+Entail (2) : Valid. 
+
+ <1>emp&x=y_30'&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [// Sleek_Entail(2)
+H(x') --> x'::ll@M]
+
+*/

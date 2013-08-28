@@ -948,7 +948,7 @@ and substitute_seq (fct: C.proc_decl): C.proc_decl = match fct.C.proc_body with
 
 let trans_logical_vars lvars =
   List.map (fun (id,_,_)-> CP.SpecVar(lvars.I.exp_var_decl_type, id, Unprimed)) lvars.I.exp_var_decl_decls
-  
+
 (*HIP*)
 let rec trans_prog (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_decl =
   (* let _ = print_string ("--> input prog4 = \n"^(Iprinter.string_of_program prog4)^"\n") in *)
@@ -1100,8 +1100,7 @@ let rec trans_prog (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_decl
 	  (* Start calling is_sat,imply,simplify from trans_proc *)
 	  let cprocs = !loop_procs @ cprocs1 in
 	  let (l2r_coers, r2l_coers) = trans_coercions prog in
-          let _ = Lem_store.all_lemma # set_left_coercion l2r_coers in
-          let _ = Lem_store.all_lemma # set_right_coercion r2l_coers in
+          let _ = Lem_store.all_lemma # set_coercion l2r_coers r2l_coers in
 	  let log_vars = List.concat (List.map (trans_logical_vars) prog.I.prog_logical_var_decls) in 
 	  let bdecls = List.map (trans_bdecl prog) prog.I.prog_barrier_decls in
 	  let cprog = {
@@ -1350,7 +1349,7 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
       )
     else 
       begin
-        (* let _ = Debug.info_pprint "code when -nxpure 0 !" no_pos in *)
+        (* let _ = Debug.info_zprint (lazy ("code when -nxpure 0 !")) no_pos in *)
         validate_mem_spec prog vdef (* verify the memory specs using predicate definition *)
       end;
     if !Globals.print_x_inv && (n = 0)
@@ -1383,7 +1382,7 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
                 (* Debug.info_hprint (add_str "disj_form" string_of_bool) disj_form no_pos; *)
                 if disj_form && !Globals.compute_xpure_0 then
                   (vdef.C.view_user_inv <- sf; vdef.C.view_xpure_flag <- false);
-	        Debug.tinfo_pprint ("Using a simpler inv for xpure0 of "^vdef.C.view_name) pos;
+	        Debug.tinfo_zprint (lazy (("Using a simpler inv for xpure0 of "^vdef.C.view_name))) pos;
                 Debug.tinfo_hprint (add_str "inv(xpure0)" pr) vdef.C.view_user_inv pos;
 
 	        Debug.tinfo_hprint (add_str "inv(xpure1)" pr) vdef.C.view_x_formula pos
@@ -1645,7 +1644,7 @@ and fill_one_base_case prog vd = Debug.no_1 "fill_one_base_case" Cprinter.string
   
 and fill_one_base_case_x prog vd =
   if vd.C.view_is_prim then 
-    (Debug.ninfo_pprint "fill_one_base - prim" no_pos;
+    (Debug.ninfo_zprint (lazy ("fill_one_base - prim")) no_pos;
     {vd with C.view_base_case = None; C.view_raw_base_case = None})
   else
     begin
@@ -1798,6 +1797,18 @@ and find_m_prop_heap_x params eq_f h =
               let ret =  List.map (fun v -> C.mk_mater_prop v true [ h.CF.h_formula_view_name]) l in
               let _ = Debug.tinfo_hprint (add_str "ret" (pr_list Cprinter.string_of_mater_property)) ret no_pos in 
               ret
+      | CF.HRel (hp,e,_) ->
+            let args = CP.diff_svl (CF.get_all_sv h) [hp] in
+            (* let l, _  = Sautility.find_root prog [hp] args  [] in *)
+            (* let l = eq_f l in *)
+            let l = args in
+            (* andreeac: to do smth because this is not correct for hrel with more than one arg (args should be [root]) *)
+            Debug.tinfo_hprint (add_str "hrel:l" (Cprinter.string_of_spec_var_list)) l no_pos;
+            if l==[] then []
+            else
+              let ret =  List.map (fun v -> C.mk_mater_prop v true [Cprinter.string_of_spec_var hp]) l in
+              let _ = Debug.tinfo_hprint (add_str "ret" (pr_list Cprinter.string_of_mater_property)) ret no_pos in 
+              ret
       | CF.Star h -> (helper h.CF.h_formula_star_h1)@(helper h.CF.h_formula_star_h2)
       | CF.StarMinus h -> (helper h.CF.h_formula_starminus_h1)@(helper h.CF.h_formula_starminus_h2)
       | CF.Conj h -> (helper h.CF.h_formula_conj_h1)@(helper h.CF.h_formula_conj_h2)
@@ -1807,7 +1818,7 @@ and find_m_prop_heap_x params eq_f h =
       | CF.Hole _ 
       | CF.HTrue 
       | CF.HFalse 
-      | CF.HRel _
+      (* | CF.HRel _ *)
       | CF.HEmp -> [] in
   helper h
 
@@ -1855,6 +1866,14 @@ and find_node_vars eq_f h =
         Debug.tinfo_hprint (add_str "view:l" (Cprinter.string_of_spec_var_list)) l no_pos;
         if l==[] then ([],[])
         else ([],[h.CF.h_formula_view_name])
+    | CF.HRel (hp, e, _) ->        
+          let l = List.fold_left (fun lst exp ->  
+              match exp with
+                | (CP.Var (v,_)) ->  (eq_f v)@lst
+                | _ -> lst) [] e in
+          Debug.tinfo_hprint (add_str "hrel:l" (Cprinter.string_of_spec_var_list)) l no_pos;
+          if l==[] then ([],[])
+          else ([], [CP.name_of_spec_var hp])
     | CF.Star h -> join (helper  h.CF.h_formula_star_h1) (helper  h.CF.h_formula_star_h2)
     | CF.StarMinus h -> join (helper  h.CF.h_formula_starminus_h1) (helper  h.CF.h_formula_starminus_h2)
     | CF.Conj h -> join (helper  h.CF.h_formula_conj_h1) (helper  h.CF.h_formula_conj_h2)
@@ -1864,7 +1883,6 @@ and find_node_vars eq_f h =
     | CF.Hole _ 
     | CF.HTrue 
     | CF.HFalse 
-    | CF.HRel _
     | CF.HEmp -> ([],[]) in
   (* let helper h =  *)
   (*   let pr1 = Cprinter.string_of_h_formula in *)
@@ -2211,11 +2229,11 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
       let _ = check_valid_flows proc.I.proc_static_specs in
       let _ = check_valid_flows proc.I.proc_dynamic_specs in
       (* let _ = print_endline ("trans_proc: "^ proc.I.proc_name ^": before set_pre_flow: specs = " ^ (Iprinter.string_of_struc_formula (proc.I.proc_static_specs@proc.I.proc_dynamic_specs))) in *)
-      (* let _ = Debug.info_pprint ("  transform I2C: " ^  proc.I.proc_name ) no_pos in *)
-      (* let _ = Debug.info_pprint ("   static spec" ^(Iprinter.string_of_struc_formula proc.I.proc_static_specs)) no_pos in *)
+      (* let _ = Debug.info_zprint (lazy (("  transform I2C: " ^  proc.I.proc_name ))) no_pos in *)
+      (* let _ = Debug.info_zprint (lazy (("   static spec" ^(Iprinter.string_of_struc_formula proc.I.proc_static_specs)))) no_pos in *)
       let (n_tl,cf) = trans_I2C_struc_formula 2 prog true free_vars proc.I.proc_static_specs n_tl true true (*check_pre*) in
       let static_specs_list = set_pre_flow cf in
-      (* let _ = Debug.info_pprint ("   static spec" ^(Cprinter.string_of_struc_formula static_specs_list)) no_pos in *)
+      (* let _ = Debug.info_zprint (lazy (("   static spec" ^(Cprinter.string_of_struc_formula static_specs_list)))) no_pos in *)
       (* let _ = print_string "trans_proc :: set_pre_flow PASSED 1\n" in *)
       let (n_tl,cf) = trans_I2C_struc_formula 3 prog true free_vars proc.I.proc_dynamic_specs n_tl true true (*check_pre*) in
       let dynamic_specs_list = set_pre_flow cf in
@@ -2356,7 +2374,7 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
         let ffv = Gen.BList.difference_eq cmp (*(CF.struc_fv_infer final_static_specs_list)*) struc_fv (lock_vars@((cret_type,res_name)::(Named raisable_class,eres_name)::args2)) in
         let str = Cprinter.string_of_spec_var_list ffv in
         if (ffv!=[]) then 
-          Debug.info_pprint ("WARNING : uninterpreted free variables "^str^" in specification.") no_pos
+          Debug.info_zprint (lazy (("WARNING : uninterpreted free variables "^str^" in specification."))) no_pos
           (* Error.report_error {  *)
           (*     Err.error_loc = no_pos; *)
           (*     Err.error_text = "error 3: free variables "^(Cprinter.string_of_spec_var_list ffv)^" in proc "^proc.I.proc_name^" "}  *)
@@ -2407,22 +2425,43 @@ and collect_important_vars_in_spec (spec : CF.struc_formula) : (CP.spec_var list
   helper spec
       
 (** An Hoa : end collect_important_vars_in_spec **)
-      
+
+and ident_to_spec_var id n_tl p prog =
+  let v= get_spec_var_ident n_tl id p (* Unprimed  *)in
+  match v with
+    | CP.SpecVar(t,id,pr) ->
+          if t==UNK then
+            try
+              let _ = I.look_up_rel_def_raw prog.I.prog_rel_decls id in
+              CP.SpecVar(RelT[],id,pr)
+            with _ ->
+                try
+                  let _ = I.look_up_func_def_raw prog.I.prog_func_decls id in
+                  CP.SpecVar(RelT[],id,pr)
+                with _ ->
+                    try
+                      let _ = I.look_up_hp_def_raw prog.I.prog_hp_decls id in
+                      CP.SpecVar(HpT,id,pr)
+                    with _ -> v
+          else v
+
+and ident_list_to_spec_var_list ivs n_tl prog =
+  let new_ivs = List.map (fun (i,p) -> ident_to_spec_var i n_tl p prog ) ivs in
+  new_ivs
+
 (* transform coercion lemma from iast to cast *)
 and trans_coercions (prog : I.prog_decl) :
       ((C.coercion_decl list) * (C.coercion_decl list)) =
   let tmp =
     List.map (fun coer -> trans_one_coercion prog coer)
-        prog.I.prog_coercion_decls in
+       (List.fold_left (fun a coerc_lst -> a@(coerc_lst.I.coercion_list_elems)) [] (prog.I.prog_coercion_decls)) in
   let (tmp1, tmp2) = List.split tmp in
   let tmp3 = List.concat tmp1 in let tmp4 = List.concat tmp2 in (tmp3, tmp4)
-
 
 (* and unfold_self prog body =  *)
 (*   let pri_f = Iprinter.string_of_formula in *)
 (*   Debug.info_hprint (add_str "orig body" pri_f) body no_pos; *)
 (*   body *)
-
 
 and trans_one_coercion (prog : I.prog_decl) (coer : I.coercion_decl) :
       ((C.coercion_decl list) * (C.coercion_decl list)) =
@@ -2519,8 +2558,9 @@ and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
     true (*check_pre*) in
   let c_head_norm = CF.struc_to_formula cs_head_norm in
   (* free vars in RHS but not LHS *)
+  let hrels = List.map (fun (a,_) -> a) (CF.get_HRels_f c_rhs ) in
   let ex_vars = Gen.BList.remove_dups_eq CP.eq_spec_var 
-    (List.filter (fun v -> not(List.mem (CP.name_of_spec_var v) lhs_fnames0) ) (CF.fv c_rhs)) in 
+    (List.filter (fun v -> not(List.mem (CP.name_of_spec_var v) lhs_fnames0) ) (Gen.BList.difference_eq CP.eq_spec_var (CF.fv c_rhs) hrels)) in 
   (* wrap exists for RHS - no implicit instantiation*)
   let c_rhs = CF.push_exists ex_vars c_rhs in
   let lhs_name = find_view_name c_lhs self (IF.pos_of_formula coer.I.coercion_head) in
@@ -2549,6 +2589,7 @@ and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
         C.coercion_body_norm = cs_body_norm;
         C.coercion_impl_vars = []; (* ex_vars; *)
         C.coercion_univ_vars = univ_vars;
+        C.coercion_infer_vars = ident_list_to_spec_var_list (List.map (fun id -> (id, Unprimed)) coer.I.coercion_infer_vars ) n_tl prog; 
         C.coercion_head_view = lhs_name;
         C.coercion_body_view = rhs_name;
         C.coercion_mater_vars = m_vars;
@@ -3873,7 +3914,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
             (*if exists return inside body:w2a.ss*)
             (*check exists return inside loop body*)
             let exist_return_inside = if proc.I.proc_return <> Void && I.exists_return body then true else false in
-            let _ = Debug.info_pprint ("       exist_return_inside: " ^ (string_of_bool exist_return_inside)) no_pos in
+            let _ = Debug.info_zprint (lazy (("       exist_return_inside: " ^ (string_of_bool exist_return_inside)))) no_pos in
             let prepost = match wrap with 
               | None -> prepost
               | Some _ -> IF.add_post_for_flow (I.get_breaks body) prepost in
@@ -4446,7 +4487,7 @@ and case_coverage_x (instant:Cpure.spec_var list)(f:CF.struc_formula): bool =
         | Some l -> struc_case_coverage (instant@ b.CF.formula_struc_explicit_inst@ b.CF.formula_struc_implicit_inst@ b.CF.formula_struc_exists) (CP.mkAnd (CF.extract_pure b.CF.formula_struc_base) ctx no_pos)l)
     | CF.ECase b -> 
           let r1,r2 = List.split b.CF.formula_case_branches in
-          let all = List.fold_left (fun a c->(Cpure.mkOr a c None no_pos) ) (Cpure.mkFalse b.CF.formula_case_pos) r1  in
+          let all = List.fold_left (fun a c->(Cpure.mkStupid_Or a c None no_pos) ) (Cpure.mkFalse b.CF.formula_case_pos) r1  in
           (** An Hoa Temporary Printing **)
           (* let _ = print_endline ("An Hoa : all = " ^ (Cprinter.string_of_pure_formula all)) in*)
           let _ = if not(Gen.BList.subset_eq (=) (Cpure.fv all) instant) then 
@@ -4457,7 +4498,7 @@ and case_coverage_x (instant:Cpure.spec_var list)(f:CF.struc_formula): bool =
             Err.error_text = "all guard free vars must be instantiated";} in
           let _ = 
             let coverage_error = 
-                let f_sat = Cpure.mkAnd ctx (Cpure.Not (all,None,no_pos)) no_pos in
+                let f_sat = Cpure.mkAnd ctx (Cpure.mkNot all None no_pos) no_pos in
                 Tpdispatcher.is_sat_sub_no 11 f_sat sat_subno
                 (*not (Tpdispatcher.simpl_imply_raw ctx all)*) in
             if coverage_error then 
@@ -4624,25 +4665,7 @@ and trans_I2C_struc_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : id
         let pos = b.IF.formula_inf_pos in
         let ivs = b.IF.formula_inf_vars in
         let (n_tl,ct) = trans_struc_formula fvars tl b.IF.formula_inf_continuation in
-        let new_ivs = List.map (fun (i,p) ->
-          let v=get_spec_var_ident n_tl i p in
-          match v with
-          | CP.SpecVar(t,id,pr) ->
-              if t==UNK then
-                try
-                  let _ = I.look_up_rel_def_raw prog.I.prog_rel_decls id in
-                  CP.SpecVar(RelT[],id,pr)
-                with _ -> 
-                  try
-                    let _ = I.look_up_func_def_raw prog.I.prog_func_decls id in
-                    CP.SpecVar(RelT[],id,pr)
-                  with _ ->
-                    try
-                      let _ = I.look_up_hp_def_raw prog.I.prog_hp_decls id in
-                      CP.SpecVar(HpT,id,pr)
-                    with _ -> v
-              else v
-        ) ivs in
+        let new_ivs = ident_list_to_spec_var_list ivs n_tl prog in
         (* TODO : any warning below should be fixed *)
         let ivs_unk = List.filter (fun v -> (CP.type_of_spec_var v)==UNK) new_ivs in
         if ivs_unk!=[] then 
@@ -6158,10 +6181,16 @@ and case_normalize_coerc prog (cd: Iast.coercion_decl):Iast.coercion_decl =
   let ncb = case_normalize_formula prog [] cd.Iast.coercion_body None in
   { Iast.coercion_type = cd.Iast.coercion_type;
   Iast.coercion_exact = cd.Iast.coercion_exact;
+  Iast.coercion_infer_vars = cd.Iast.coercion_infer_vars;
   Iast.coercion_name = cd.Iast.coercion_name;
   Iast.coercion_head = nch;
   Iast.coercion_body = ncb;
   Iast.coercion_proof = cd.Iast.coercion_proof}
+
+and case_normalize_coerc_list prog (cdl: Iast.coercion_decl_list): Iast.coercion_decl_list =
+  let new_elems = List.map (case_normalize_coerc prog) cdl.Iast.coercion_list_elems in
+  {Iast.coercion_list_elems = new_elems;
+   Iast.coercion_list_kind  = cdl.Iast.coercion_list_kind;}
       
 and ren_list_concat (l1:((ident*ident) list)) (l2:((ident*ident) list)):((ident*ident) list) = 
   let fl2 = fst (List.split l2) in
@@ -6720,7 +6749,7 @@ and case_normalize_program_x (prog: Iast.prog_decl):Iast.prog_decl=
   let prog = {prog with Iast.prog_data_decls = cdata} in
   let procs1 = List.map (case_normalize_proc prog) prog.I.prog_proc_decls in
   let prog = {prog with Iast.prog_proc_decls = procs1} in
-  let coer1 = List.map (case_normalize_coerc prog) prog.Iast.prog_coercion_decls in  
+  let coer1 = List.map (case_normalize_coerc_list prog) prog.Iast.prog_coercion_decls in  
   { prog with 
       Iast.prog_data_decls = cdata;
       Iast.prog_view_decls = tmp_views;
@@ -7153,7 +7182,7 @@ and barrier_prune_inv_inference cp bd =
   let pr = Cprinter.string_of_barrier_decl in
   Debug.no_1 "barrier_prune_inv_inference" pr pr (barrier_prune_inv_inference_x cp) bd
 
-and coerc_spec prog is_l c = 
+and coerc_spec prog c = 
   (* if not !Globals.allow_pred_spec then [c] *)
   if !Globals.dis_ps then [c]
   else 
@@ -7190,15 +7219,14 @@ and pred_prune_inference_x (cp:C.prog_decl):C.prog_decl =
           C.proc_dynamic_specs=  Solver.prune_pred_struc prog_barriers_pruned simp_b f.C.proc_dynamic_specs;
       } in
     let procs = C.proc_decls_map proc_spec prog_barriers_pruned.C.new_proc_decls in 
-    let l_coerc = List.concat (List.map (coerc_spec prog_barriers_pruned true) (Lem_store.all_lemma # get_left_coercion) (*prog_barriers_pruned.C.prog_left_coercions*)) in
-    let r_coerc = List.concat (List.map (coerc_spec prog_barriers_pruned false) (Lem_store.all_lemma # get_right_coercion)(*prog_barriers_pruned.C.prog_right_coercions*)) in
-    let _ = Lem_store.all_lemma # set_left_coercion l_coerc in
-    let _ = Lem_store.all_lemma # set_right_coercion r_coerc in
-	let r = { prog_barriers_pruned with 
+    let l_coerc = List.concat (List.map (coerc_spec prog_barriers_pruned ) (Lem_store.all_lemma # get_left_coercion) (*prog_barriers_pruned.C.prog_left_coercions*)) in
+    let r_coerc = List.concat (List.map (coerc_spec prog_barriers_pruned ) (Lem_store.all_lemma # get_right_coercion)(*prog_barriers_pruned.C.prog_right_coercions*)) in
+    let _ = Lem_store.all_lemma # set_coercion l_coerc r_coerc in
+    let r = { prog_barriers_pruned with 
         C.new_proc_decls = procs;
         (* WN_all_lemma - is this overriding of lemmas? *)
         (*C.prog_left_coercions  = l_coerc;
-        C.prog_right_coercions = r_coerc;*)} in
+          C.prog_right_coercions = r_coerc;*)} in
     Gen.Profiling.pop_time "pred_inference" ;r
         
 and pr_proc_call_order p = 
@@ -8120,10 +8148,10 @@ let convert_pred_to_cast_x ls_pr_new_view_tis iprog cprog =
   in
   let cviews1 =
     if !Globals.norm_extract then
-      Norm.norm_extract_common cprog cviews (List.map (fun vdef -> vdef.C.view_name) cviews)
+      Norm.norm_extract_common iprog cprog cviews (List.map (fun vdef -> vdef.C.view_name) cviews)
     else cviews
   in
-  let _ = Debug.ninfo_pprint ( "cviews1: " ^ (pr2 cviews1)) no_pos in
+  let _ = Debug.ninfo_zprint (lazy (( "cviews1: " ^ (pr2 cviews1)))) no_pos in
   let cviews2 = Norm.cont_para_analysis cprog cviews1 in
   let _ = cprog.C.prog_view_decls <- cprog.C.prog_view_decls@cviews2 in
   let _ =  (List.map (fun vdef -> compute_view_x_formula cprog vdef !Globals.n_xpure) cviews2) in

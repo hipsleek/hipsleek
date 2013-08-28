@@ -28,7 +28,10 @@ module NF = Nativefront
 module CEQ = Checkeq
 module TI = Typeinfer
 module MCP = Mcpure
+module SY_CEQ = Syn_checkeq
 
+
+let generate_lemma = ref(fun (iprog: I.prog_decl) n t (ihps: ident list) iante iconseq -> [],[])
 
 let sleek_entail_check_x isvl (cprog: C.prog_decl) proof_traces ante conseq=
   let pr = Cprinter.string_of_struc_formula in
@@ -110,9 +113,79 @@ let sleek_entail_check isvl (cprog: C.prog_decl) proof_traces ante conseq=
   let pr2 = Cprinter.string_of_struc_formula in
   let pr3 = pr_triple string_of_bool Cprinter.string_of_list_context !CP.print_svl in
   let pr4 = pr_list_ln (pr_pair pr1 pr1) in
-  Debug.no_3 "sleek_entail_check" pr1 pr2 pr4 pr3
-      (fun _ _ _ -> sleek_entail_check_x isvl cprog proof_traces ante conseq)
-      ante conseq proof_traces
+  Debug.no_4 "sleek_entail_check" !CP.print_svl pr1 pr2 pr4 pr3
+      (fun _ _ _ _ -> sleek_entail_check_x isvl cprog proof_traces ante conseq)
+      isvl ante conseq proof_traces
 
 let sleek_sat_check isvl cprog f=
   true
+
+(*
+- guiding_svl is used to guide the syntatic checking.
+- guiding_svl is common variables between f1 and f2
+*)
+let check_equiv iprog cprog guiding_svl proof_traces need_lemma f1 f2=
+  let gen_lemma (r_left, r_right) (ante,conseq)=
+    let iante = Astsimp.rev_trans_formula ante in
+    let iconseq = Astsimp.rev_trans_formula conseq in
+    let l2r,r2l = !generate_lemma iprog "temp" I.Equiv [] iante iconseq in
+    (r_left@l2r, r_right@r2l)
+  in
+  if not (!Globals.syntatic_mode) then
+    let old_l, old_r = if need_lemma then
+      let n_l, n_r = List.fold_left gen_lemma ([],[]) proof_traces in
+      let old_l = Lem_store.all_lemma # get_left_coercion  in
+      let old_r = Lem_store.all_lemma # get_right_coercion  in
+      let _ = Lem_store.all_lemma # add_left_coercion n_l in
+      let _ = Lem_store.all_lemma # add_right_coercion n_r in
+      (old_l, old_r)
+    else ([],[])
+    in
+    let r =
+      let b1, _, _ = (sleek_entail_check [] cprog proof_traces f1 (CF.struc_formula_of_formula f2 no_pos)) in
+      if b1 then
+        let b2,_,_ = (sleek_entail_check [] cprog (List.map (fun (f1,f2) -> (f2,f1)) proof_traces)
+            f2 (CF.struc_formula_of_formula f1 no_pos)) in
+        b2
+      else
+        b1
+    in
+    let _ = if need_lemma then
+      let _ = Lem_store.all_lemma # set_left_coercion old_l in
+      let _ = Lem_store.all_lemma # set_right_coercion old_r in
+      ()
+    else ()
+    in
+    r
+  else
+    SY_CEQ.check_relaxeq_formula guiding_svl f1 f2
+
+let rec check_equiv_list_x iprog prog guiding_svl proof_traces need_lemma fs1 fs2=
+  let rec look_up_f f fs fs1=
+    match fs with
+      | [] -> (false, fs1)
+      | f1::fss -> if (check_equiv iprog prog guiding_svl proof_traces need_lemma f f1) then
+            (true,fs1@fss)
+          else look_up_f f fss (fs1@[f1])
+  in
+  if List.length fs1 = List.length fs2 then
+    match fs1 with
+      | [] -> true
+      | f1::fss1 ->
+          begin
+              let r,fss2 = look_up_f f1 fs2 [] in
+              if r then
+                check_equiv_list iprog prog guiding_svl proof_traces need_lemma fss1 fss2
+              else false
+          end
+  else false
+
+and check_equiv_list iprog prog guiding_svl proof_traces need_lemma fs1 fs2: bool=
+  let pr1 = pr_list_ln Cprinter.prtt_string_of_formula in
+  Debug.no_2 "check_equiv_list" pr1 pr1 string_of_bool
+      (fun _ _ -> check_equiv_list_x iprog prog guiding_svl proof_traces need_lemma fs1 fs2) fs1 fs2
+
+
+(* let _ = Sautility.check_equiv := check_equiv *)
+(* let _ = Sautility.check_equiv_list := check_equiv_list *)
+

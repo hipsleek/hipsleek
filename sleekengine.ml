@@ -32,6 +32,7 @@ module SAC = Sacore
 module MCP = Mcpure
 module SC = Sleekcore
 module LEM = Lemma
+module LO2 = Label_only.Lab2_List
 
 let sleek_proof_counter = new Gen.counter 0
 
@@ -90,7 +91,8 @@ let _ =
 	Lem_store.all_lemma # clear_right_coercion;
 	Lem_store.all_lemma # clear_left_coercion
 
-let residues =  ref (None : (CF.list_context * bool) option)    (* parameter 'bool' is used for printing *)
+(* Moved to CFormula *)
+(* let residues =  ref (None : (CF.list_context * bool) option)    (\* parameter 'bool' is used for printing *\) *)
 
 let sleek_hprel_assumes = ref ([]: CF.hprel list)
 let sleek_hprel_defns = ref ([]: (CF.cond_path_type * CF.hp_rel_def) list)
@@ -122,7 +124,7 @@ let clear_all () =
   clear_var_table ();
   clear_iprog ();
   clear_cprog ();
-  residues := None
+  CF.residues := None
 
 (*L2: move to astsimp*)
 (* let check_data_pred_name name : bool = *)
@@ -365,35 +367,71 @@ let process_axiom_def adef = begin
 	(* Forward the axiom to the smt solver. *)
 	Smtsolver.add_axiom cadef.C.axiom_hypothesis Smtsolver.IMPLIES cadef.C.axiom_conclusion;
 end
-	
 
 let process_lemma ldef =
   let ldef = AS.case_normalize_coerc iprog ldef in
   let l2r, r2l = AS.trans_one_coercion iprog ldef in
-  let l2r = List.concat (List.map (fun c-> AS.coerc_spec !cprog true c) l2r) in
-  let r2l = List.concat (List.map (fun c-> AS.coerc_spec !cprog false c) r2l) in
+  let l2r = List.concat (List.map (fun c-> AS.coerc_spec !cprog c) l2r) in
+  let r2l = List.concat (List.map (fun c-> AS.coerc_spec !cprog c) r2l) in
   (* TODO : WN print input_ast *)
   let _ = if (!Globals.print_input || !Globals.print_input_all) then print_string (Iprinter.string_of_coerc_decl ldef) in
-  let _ = if (!Globals.print_core || !Globals.print_core_all) then 
+  let _ = if (!Globals.print_core || !Globals.print_core_all) then
     print_string ("\nleft:\n " ^ (Cprinter.string_of_coerc_decl_list l2r) ^"\n right:\n"^ (Cprinter.string_of_coerc_decl_list r2l) ^"\n") else () in
   (* WN_all_lemma - should we remove the cprog updating *)
-  let _ = Lem_store.all_lemma # add_left_coercion l2r in 
-  let _ = Lem_store.all_lemma # add_right_coercion r2l in 
+  let _ = Lem_store.all_lemma # add_coercion l2r r2l in
+  (* let _ = Lem_store.all_lemma # add_right_coercion r2l in  *)
   (*!cprog.C.prog_left_coercions <- l2r @ !cprog.C.prog_left_coercions;*)
   (*!cprog.C.prog_right_coercions <- r2l @ !cprog.C.prog_right_coercions;*)
-  let get_coercion c_lst = match c_lst with 
+  let get_coercion c_lst = match c_lst with
     | [c] -> Some c
     | _ -> None in
   let l2r = get_coercion l2r in
   let r2l = get_coercion r2l in
-  let res = LP.verify_lemma l2r r2l !cprog (ldef.I.coercion_name) ldef.I.coercion_type in
-  residues := (match res with
-    | None -> None;
-    | Some ls_ctx -> Some (ls_ctx, true))
+  (* let ctx = CF.SuccCtx [CF.empty_ctx (CF.mkTrueFlow ()) LO2.unlabelled no_pos] in *)
+  let res = LP.verify_lemma 2 l2r r2l !cprog (ldef.I.coercion_name) ldef.I.coercion_type in
+                     ()
+  (* CF.residues := (match res with *)
+  (*   | None -> None; *)
+  (*   | Some ls_ctx -> Some (ls_ctx, true)) *)
 
 let process_lemma ldef =
   Debug.no_1 "process_lemma" Iprinter.string_of_coerc_decl (fun _ -> "?") process_lemma ldef
 
+let print_residue residue =
+          match residue with
+            | None -> print_string ": no residue \n"
+                  (* | Some s -> print_string ((Cprinter.string_of_list_formula  *)
+                  (*       (CF.list_formula_of_list_context s))^"\n") *)
+                  (*print all posible outcomes and their traces with numbering*)
+            | Some (ls_ctx, print) ->
+                  if (print) then
+                    (* let _ = print_endline (Cprinter.string_of_list_context ls_ctx) in *)
+                    print_string ((Cprinter.string_of_numbered_list_formula_trace_inst !cprog
+                        (CF.list_formula_trace_of_list_context ls_ctx))^"\n" )
+
+let process_list_lemma ldef_lst =
+  let lst = ldef_lst.Iast.coercion_list_elems in
+  (* why do we check residue for ctx? do we really need a previous context? *)
+  let ctx = match !CF.residues with
+    | None            ->  CF.SuccCtx [CF.empty_ctx (CF.mkTrueFlow ()) Lab2_List.unlabelled no_pos]
+    | Some (CF.SuccCtx ctx, _) -> CF.SuccCtx ctx 
+    | Some (CF.FailCtx ctx, _) -> CF.SuccCtx [CF.empty_ctx (CF.mkTrueFlow ()) Lab2_List.unlabelled no_pos] in 
+  (* andreeac: to check if it should skip lemma proving *)
+  let res = 
+    match ldef_lst.Iast.coercion_list_kind with
+      | LEM            -> Lemma.manage_lemmas lst iprog !cprog 
+      | LEM_TEST       -> Lemma.manage_test_lemmas lst iprog !cprog 
+      | LEM_TEST_NEW   -> Lemma.manage_test_new_lemmas lst iprog !cprog 
+      | LEM_UNSAFE     -> Lemma.manage_unsafe_lemmas lst iprog !cprog 
+      | LEM_SAFE       -> Lemma.manage_safe_lemmas lst iprog !cprog 
+      | LEM_INFER      -> Lemma.manage_infer_lemmas lst iprog !cprog 
+  in
+  match res with
+    | None | Some [] -> CF.clear_residue ()
+    | Some(c::_) -> CF.set_residue true c
+
+let process_list_lemma ldef_lst =
+  Debug.no_1 "process_list_lemma" pr_none pr_none process_list_lemma  ldef_lst
       
 let process_data_def ddef =
   if AS.check_data_pred_name iprog ddef.I.data_name then
@@ -406,7 +444,7 @@ let process_data_def ddef =
   end
 
 let process_data_def ddef =
-  Debug.no_1 "process_data_def" pr_no pr_no process_data_def ddef 
+  Debug.no_1 "process_data_def" pr_none pr_none process_data_def ddef 
 
 let convert_data_and_pred_to_cast_x () =
   (* convert data *)
@@ -448,7 +486,7 @@ let convert_data_and_pred_to_cast_x () =
   let _ = !cprog.C.prog_view_decls <- cviews in
   let cviews1 =
     if !Globals.norm_extract then
-      Norm.norm_extract_common !cprog cviews (List.map (fun vdef -> vdef.C.view_name) cviews)
+      Norm.norm_extract_common iprog !cprog cviews (List.map (fun vdef -> vdef.C.view_name) cviews)
     else cviews
   in
   let cviews2 =
@@ -470,7 +508,7 @@ let convert_data_and_pred_to_cast_x () =
   let cprog5 = (*if !Globals.enable_case_inference then AS.case_inference iprog cprog4 else*) cprog4 in
   let _ = if (!Globals.print_input || !Globals.print_input_all) then print_string (Iprinter.string_of_program iprog) else () in
   let _ = if (!Globals.print_core || !Globals.print_core_all) then print_string (Cprinter.string_of_program cprog5) else () in
-  let l2r, r2l = LEM.generate_lemma_4_views iprog cprog5 in
+  let l2r, r2l = if !Globals.lemma_syn then LEM.generate_lemma_4_views iprog cprog5 else [],[] in
   let _ = Lem_store.all_lemma # add_left_coercion l2r in
   let _ = Lem_store.all_lemma # add_right_coercion r2l in
   (* let _ = cprog5.C.prog_left_coercions <- l2r @ cprog5.C.prog_left_coercions in *)
@@ -690,7 +728,7 @@ let run_pairwise (iante0 : meta_formula) =
   r
 
 let run_infer_one_pass (ivars: ident list) (iante0 : meta_formula) (iconseq0 : meta_formula) =
-  let _ = residues := None in
+  let _ = CF.residues := None in
   let _ = Infer.rel_ass_stk # reset in
   let _ = Sa2.rel_def_stk # reset in
   let _ = if (!Globals.print_input || !Globals.print_input_all) then print_endline ("INPUT: \n ### 1 ante = " ^ (string_of_meta_formula iante0) ^"\n ### conseq = " ^ (string_of_meta_formula iconseq0)) else () in
@@ -795,13 +833,13 @@ let run_infer_one_pass (ivars: ident list) (iante0 : meta_formula) (iconseq0 : m
   (* let res = *)
   (*   if not !Globals.disable_failure_explaining then ((not (CF.isFailCtx_gen rs))) *)
   (*   else ((not (CF.isFailCtx rs))) in *)
-  (* residues := Some (rs, res); *)
+  (* CF.residues := Some (rs, res); *)
   (* (res, rs,v_hp_rel) *)
   let orig_vars = CF.fv ante @ CF.struc_fv conseq in
   (* List of vars needed for abduction process *)
   let vars = List.map (fun v -> TI.get_spec_var_type_list_infer (v, Unprimed) orig_vars no_pos) ivars in
   let (res, rs,v_hp_rel) = SC.sleek_entail_check vars !cprog [] ante conseq in
-  residues := Some (rs, res);
+  CF.residues := Some (rs, res);
   (res, rs,v_hp_rel)
 
 let run_infer_one_pass ivars (iante0 : meta_formula) (iconseq0 : meta_formula) =
@@ -855,7 +893,7 @@ let process_rel_assume cond_path (ilhs : meta_formula) (igurad_opt : meta_formul
   (*     hprel_proving_kind = Others.proving_kind # top_no_exc; *)
   (* } in *)
   (*hp_assumes*)
-  let _ = Debug.ninfo_pprint (Cprinter.string_of_hprel_short new_rel_ass) no_pos in
+  let _ = Debug.ninfo_zprint  (lazy  (Cprinter.string_of_hprel_short new_rel_ass)) no_pos in
   let _ = sleek_hprel_assumes := !sleek_hprel_assumes@[new_rel_ass] in
   ()
 
@@ -880,7 +918,7 @@ let process_rel_defn cond_path (ilhs : meta_formula) (irhs: meta_formula)=
   in
   (*hp_defn*)
   (* let pr= pr_pair CF.string_of_cond_path Cprinter.string_of_hp_rel_def_short in *)
-  (* let _ = Debug.ninfo_pprint ((pr pr_new_rel_defn) ^ "\n") no_pos in *)
+  (* let _ = Debug.ninfo_zprint  (lazy  ((pr pr_new_rel_defn) ^ "\n")) no_pos in *)
   let _ =  sleek_hprel_defns := ! sleek_hprel_defns@[pr_new_rel_defn] in
   ()
 
@@ -892,8 +930,8 @@ let process_decl_hpdang hp_names =
     (hp,args)
   in
   let hpargs = List.map process hp_names in
-  let _ = Debug.ninfo_pprint ("dangling: " ^
-      (let pr = pr_list (pr_pair !Cpure.print_sv !Cpure.print_svl) in pr hpargs)) no_pos in
+  let _ = Debug.ninfo_zprint  (lazy  ("dangling: " ^
+      (let pr = pr_list (pr_pair !Cpure.print_sv !Cpure.print_svl) in pr hpargs))) no_pos in
   let _ = sleek_hprel_dang := !sleek_hprel_dang@hpargs in
   ()
 
@@ -905,8 +943,8 @@ let process_decl_hpunknown (cond_path, hp_names) =
     (cond_path, (hp,args))
   in
   let hpargs = List.map process hp_names in
-  let _ = Debug.ninfo_pprint (("unknown: " ^
-      (let pr = pr_list (pr_pair CF.string_of_cond_path (pr_pair !Cpure.print_sv !Cpure.print_svl)) in pr hpargs)) ^ "\n") no_pos in
+  let _ = Debug.ninfo_zprint  (lazy  (("unknown: " ^
+      (let pr = pr_list (pr_pair CF.string_of_cond_path (pr_pair !Cpure.print_sv !Cpure.print_svl)) in pr hpargs)) ^ "\n")) no_pos in
   let _ = sleek_hprel_unknown := !sleek_hprel_unknown@hpargs in
   ()
 
@@ -1202,14 +1240,14 @@ let process_shape_elim_useless sel_vnames=
   let view_defs = Norm.norm_elim_useless !cprog.Cast.prog_view_decls sel_vnames in
   let _ = !cprog.Cast.prog_view_decls <- view_defs in
   let pr = pr_list_ln Cprinter.string_of_view_decl in
-  let _ = Debug.info_pprint ("views after ELIM: \n" ^ (pr view_defs)) no_pos in
+  let _ = Debug.info_zprint  (lazy  ("views after ELIM: \n" ^ (pr view_defs))) no_pos in
   ()
 
 let process_shape_extract sel_vnames=
-  let view_defs = Norm.norm_extract_common !cprog !cprog.Cast.prog_view_decls sel_vnames in
+  let view_defs = Norm.norm_extract_common iprog !cprog !cprog.Cast.prog_view_decls sel_vnames in
   let _ = !cprog.Cast.prog_view_decls <- view_defs in
   let pr = pr_list_ln Cprinter.string_of_view_decl in
-  let _ = Debug.tinfo_pprint ("views after EXTRACTION: \n" ^ (pr view_defs)) no_pos in
+  let _ = Debug.tinfo_zprint  (lazy  ("views after EXTRACTION: \n" ^ (pr view_defs))) no_pos in
   ()
 
 (* the value of flag "exact" decides the type of entailment checking              *)
@@ -1299,7 +1337,7 @@ let print_entail_result sel_hps (valid: bool) (residue: CF.list_context) (num_id
       (*     print_endline "*************************************"; *)
       (*     Infer.rel_ass_stk # reset *)
       (*   end; *)
-      (* (\* let _ = Debug.info_pprint (" sel_hps:" ^ (!CP.print_svl sel_hps)) no_pos in *\) *)
+      (* (\* let _ = Debug.info_zprint  (lazy  (" sel_hps:" ^ (!CP.print_svl sel_hps))) no_pos in *\) *)
       (* let ls_hprel, _(\* ls_inferred_hps *\), _ (\* dropped_hps *\) = *)
       (*   if !Globals.pred_syn_flag && (hp_lst_assume <> []) then *)
       (*     Sa.infer_hps !cprog num_id hp_lst_assume *)
@@ -1412,7 +1450,7 @@ let process_eq_check (ivars: ident list)(if1 : meta_formula) (if2 : meta_formula
         print_string (num_id^": Fail.\n")
   (* print_endline ("\n VALID") else print_endline ("\n FAIL") *)
     in
-    let _ = if(res) then Debug.info_pprint (CEQ.string_of_map_table (List.hd mt_list) ^ "\n") no_pos in
+    let _ = if(res) then Debug.info_zprint  (lazy  (CEQ.string_of_map_table (List.hd mt_list) ^ "\n")) no_pos in
     ()
    )
 
@@ -1454,10 +1492,11 @@ let process_infer (ivars: ident list) (iante0 : meta_formula) (iconseq0 : meta_f
         in false
 
 let process_capture_residue (lvar : ident) = 
-	let flist = match !residues with 
+	let flist = match !CF.residues with 
       | None -> [(CF.mkTrue (CF.mkTrueFlow()) no_pos)]
       | Some (ls_ctx, print) -> CF.list_formula_of_list_context ls_ctx in
 		put_var lvar (Sleekcommons.MetaFormLCF flist)
+
 
 let process_print_command pcmd0 = match pcmd0 with
   | PVar pvar ->	  
@@ -1468,24 +1507,27 @@ let process_print_command pcmd0 = match pcmd0 with
 	  let (n_tl,pf) = meta_to_struc_formula mf false [] None [] in
 		print_string ((Cprinter.string_of_struc_formula pf) ^ "\n")
   | PCmd pcmd -> 
-	if pcmd = "residue" then
-          match !residues with
-            | None -> print_string ": no residue \n"
-                  (* | Some s -> print_string ((Cprinter.string_of_list_formula  *)
-                  (*       (CF.list_formula_of_list_context s))^"\n") *)
-                  (*print all posible outcomes and their traces with numbering*)
-            | Some (ls_ctx, print) ->
-                  if (print) then
-                    (* let _ = print_endline (Cprinter.string_of_list_context ls_ctx) in *)
-                    print_string ((Cprinter.string_of_numbered_list_formula_trace_inst !cprog
-                        (CF.list_formula_trace_of_list_context ls_ctx))^"\n" );
+	if pcmd = "lemmas" then
+          Lem_store.all_lemma # dump
+	else if pcmd = "residue" then
+          print_residue !CF.residues 
+          (* match !CF.residues with *)
+          (*   | None -> print_string ": no residue \n" *)
+          (*         (\* | Some s -> print_string ((Cprinter.string_of_list_formula  *\) *)
+          (*         (\*       (CF.list_formula_of_list_context s))^"\n") *\) *)
+          (*         (\*print all posible outcomes and their traces with numbering*\) *)
+          (*   | Some (ls_ctx, print) -> *)
+          (*         if (print) then *)
+          (*           (\* let _ = print_endline (Cprinter.string_of_list_context ls_ctx) in *\) *)
+          (*           print_string ((Cprinter.string_of_numbered_list_formula_trace_inst !cprog *)
+          (*               (CF.list_formula_trace_of_list_context ls_ctx))^"\n" ); *)
 	else
 	  print_string ("unsupported print command: " ^ pcmd)
 
 let process_cmp_command (input: ident list * ident * meta_formula list) =
   let iv,var,fl = input in
   if var = "residue" then
-    match !residues with
+    match !CF.residues with
       | None -> print_string ": no residue \n"
       | Some (ls_ctx, print) ->(
         if (print) then (
@@ -1494,7 +1536,7 @@ let process_cmp_command (input: ident list * ident * meta_formula list) =
 	    let cfs = CF.list_formula_of_list_context ls_ctx in
 	    let cf1 = (List.hd cfs) in (*if ls-ctx has exacly 1 ele*)	    
 	    let (n_tl,cf2) = meta_to_formula_not_rename f false [] []  in
-	    let _ = Debug.info_pprint ("Compared residue: " ^ (Cprinter.string_of_formula cf2) ^ "\n") no_pos in
+	    let _ = Debug.info_zprint  (lazy  ("Compared residue: " ^ (Cprinter.string_of_formula cf2) ^ "\n")) no_pos in
 	    let res,mt = CEQ.checkeq_formulas iv cf1 cf2 in
 	    if(res) then  print_string ("EQUAL\n") else  print_string ("NOT EQUAL\n")
 	  )
@@ -1502,7 +1544,7 @@ let process_cmp_command (input: ident list * ident * meta_formula list) =
 	)
       )
   else if (var = "assumption") then(
-    match !residues with
+    match !CF.residues with
       | None -> print_string ": no residue \n"
       | Some (ls_ctx, print) ->(
         if (print) then (
@@ -1510,7 +1552,7 @@ let process_cmp_command (input: ident list * ident * meta_formula list) =
 	    let f1,f2 = (List.hd fl, List.hd (List.tl fl)) in	    
 	    let (n_tl,cf11) = meta_to_formula_not_rename f1 false [] []  in
 	    let (n_tl,cf12) = meta_to_formula_not_rename f2 false [] n_tl  in
-	    let _ = Debug.info_pprint ("Compared assumption: " ^ (Cprinter.string_of_formula cf11) ^ ", " ^ (Cprinter.string_of_formula cf12) ^ "\n") no_pos in
+	    let _ = Debug.info_zprint  (lazy  ("Compared assumption: " ^ (Cprinter.string_of_formula cf11) ^ ", " ^ (Cprinter.string_of_formula cf12) ^ "\n")) no_pos in
 	    let hprels = match ls_ctx with
 	      | CF.SuccCtx (c::_) ->  CF.collect_hp_rel c
 	      | _ -> [] (*TODO: report error ?*)
@@ -1527,11 +1569,11 @@ let process_cmp_command (input: ident list * ident * meta_formula list) =
   else
     print_string ("unsupported compare command: " ^ var)
 
-let get_residue () = !residues
+let get_residue () = !CF.residues
 
 let get_residue () =
   Debug.no_1 "get_residue" pr_no (pr_opt pr_no) get_residue ()
-  (*match !residues with*)
+  (*match !CF.residues with*)
     (*| None -> ""*)
     (*| Some s -> Cprinter.string_of_list_formula (CF.list_formula_of_list_context s)*)
 

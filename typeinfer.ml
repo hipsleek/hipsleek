@@ -101,6 +101,9 @@ let node2_to_node_x prog (h0 : IF.h_formula_heap2) : IF.h_formula_heap =
             let tmp3 =
               (match tmp2 with
                 | [ ((_, IP.Var ((e1, e2), e3)), ann) ] -> (IP.Var ((e1, e2), e3),ann)
+                | [ ((_, IP.Null p), ann) ] -> (IP.Null p,ann)
+                | [ ((_, IP.IConst (i, p)), ann) ] -> (IP.IConst (i, p), ann)
+                | [ ((_, IP.FConst (i, p)), ann) ] -> (IP.FConst (i, p), ann)
                 | _ ->
                       let fn = ("Anon"^(fresh_trailer()))
                       in

@@ -62,14 +62,156 @@ EXPECT
 =====
   G1(a,b) --> P1(a) * HP_n(b,a@NI)
 ===================================================================
+# bug-classic-4a.slk: FIXED
+
+infer_exact
+[P1] n::node<_,null> & self=null
+|- P1(self).
+print residue.
+
+ <1>(exists flted_23_51: emp&flted_23_51=null & self=null&{FLOW,(19,20)=__norm})[]
+ inferred hprel: [// Sleek_Entail(2)
+n::node<Anon_14,flted_23_51>@M&flted_23_51=null & 
+self=null --> P1(self)]
+
+PROBLEM : why did we include an unrelated n::node<_,null>
+ when folding with unknown predicate?
 ===================================================================
+# sp-2a.slk & sp_2b.slk
+
+Right-to-left lemmas not being scheduled!
 ===================================================================
+# sp-2b.slk   FIXED
+
+# How come the print lemmas operation are scheduled
+entirely after the two lemma_unsafe??
+
+Updated store with unsafe repo.
+
+Updated store with unsafe repo.
+Left Lemmas:[Lemma "lem_14":  self::zip<y>@M&{FLOW,(1,22)=__flow}[]==>]
+Right Lemmas:[Lemma "lem_13":  self::zip<y>@M&{FLOW,(1,22)=__flow}[]<==]
+
+Left Lemmas:[Lemma "lem_14":  self::zip<y>@M&{FLOW,(1,22)=__flow}[]==>]
+Right Lemmas:[Lemma "lem_13":  self::zip<y>@M&{FLOW,(1,22)=__flow}[]<==]
 ===================================================================
+# sp-2d1.slk: FIXED
+(pick unknown preds in lhs by comparing both pred name and pred args)
+
+infer [H2] self::node<_,p>*y::node<_,q>*H2(p)*H2(q)
+ |- H2(self) * H2(y). 
+print residue.
+
+ <1>emp&{FLOW,(19,20)=__norm}[]
+ inferred hprel:
+
+[ self::node<Anon_11,p>@M * H2(p) --> H2(self) * HP_22(q); 
+  y::node<Anon_12,q>@M * H2(q) * HP_22(q) --> H2(y)]
+
+Why is there spurious HP_22?
+
 ===================================================================
+# sp-7b1.slk
+
+infer [P1] P1(x) |- P1(yyyy) & yyyy=x.
+print residue.
+
+<1>emp&x=y&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [P1(y) --> P1(y)]
+
+Seems to be UNSOUND! 
+
+How did x=yyyy got added to LHS?
+
+It seems that a do_match was used, but this isn't
+quite right, as we are doing a folding process.
+Below the LHS was strengthened with x=yyyy!
+
+
+ ### action =  InferHeap => ( P1(yyyy), emp)
+ ### estate =  P1(x)&{FLOW,(19,20)=__norm}[]
+ ### conseq =  P1(yyyy)&{FLOW,(19,20)=__norm}[]
+
+
+!!!:0: 0: do_match: using  P1(x) to prove  P1(yyyy)
+!!!:0: 0: do_match: source LHS:  es_formula: emp&{FLOW,(19,20)=__norm}[]
+ es_rhs_eqset: [yyyy:x]
+ es_infer_hp_rel: [P1(x) --> P1(x)]
+ es_unsat_flag: false
+!!!:0: 0: do_match: source RHS:  emp&{FLOW,(19,20)=__norm}[]
+!!!:0: 0: do_match (after): LHS:  es_formula: emp&x=yyyy&{FLOW,(19,20)=__norm}[]
+
 ===================================================================
+# sp-7b2.slk  FIXED
+
+infer_exact [P1]
+   P1(ppp) 
+|- P1(y).
+print residue.
+
+ <1>emp&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [emp --> P1(y_16); P1(ppp) --> emp]
+
+infer_exact [P1]
+   P1(ppp) & y=yy
+|- P1(y).
+print residue.
+
+ Why did we get below which is less accurate.
+
+ <1>emp&y=yy&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [P1(ppp) --> P1(y)]
+
 ===================================================================
+# sp-7b2.slk  FIXED
+
+infer_exact [P1]
+   P1(ppp) & y=yy
+|- P1(y).
+
+Why did we get below? when ppp is not traceable
+from y. This occurs only under classic.
+
+ <1>emp&y=yy&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [P1(ppp) --> P1(y)]
 ===================================================================
+# sp-7e.slk
+
+infer_exact [P1]
+P1(yy)
+|- (exists y,q36: P1(q36) & y=q36 & y=yy).
+
+infer_exact [P1]
+P1(yy)
+|- (exists y,q36: P1(q36) & y=q36 & q36=yy).
+
+These two examples gave different results.
+Presumably it is due to not using eq_map for
+equality on the RHS?
+
+Entail (1) : Valid. 
+ <1>emp&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [emp --> P1(q36_41); P1(yy) --> emp]
+
+
+Entail (2) : Valid. 
+ <1>emp&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [P1(yy) --> P1(yy)]
 ===================================================================
+# sp-7e.slk
+
+Obtained below:
+ <1>emp&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [P1(q36_22) --> P1(q36_22); P1(yy) --> emp]
+
+where P1(yy) is accounted twice!
+
+@1!   residue before matching: : P1(yy)&{FLOW,(19,20)=__norm}[]
+@1!   new_lhs: : P1(q36_22)
+@1!   new_es_formula: : P1(yy)&{FLOW,(19,20)=__norm}[]
+
+P1(q36_22) is from smart subs, while P1(yy) is the original LHS.
+After the folding, why is P1(yy) still be kept?
 ===================================================================
 ===================================================================
 ===================================================================

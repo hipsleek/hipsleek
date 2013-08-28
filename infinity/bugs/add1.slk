@@ -1,10 +1,37 @@
-checkentail lg1_331<=lg
-& sm<=sm1_330
-& 0<(sm+(\inf)) 
-& sm<(\inf) 
-|-  lg1_367<=lg 
-& sm<=sm1_330 
-& 0<(sm+(\inf)) 
-& sm<(\inf) 
-& lg1_367=max(lg1_331,sm) 
-& lg1_367<(\inf).
+checkentail x>-\inf & y=x-2 |- y>-\inf.
+
+checkentail x<\inf & y=8+x |- y<\inf.
+
+checkentail sm>-\inf & m=sm |- m > -\inf.
+
+
+checkentail sm>-\inf & m=sm+1 |- m > -\inf.
+
+
+checkentail sm>-\inf & m=sm-1 |- m > -\inf.
+
+/*
+slk_simplify (nnn=0 & lg+(\inf)=0 | nnn>0 & lg<\inf).
+
+//slk_simplify (nnn=0 & lg=-ninfinity | nnn>0 & lg <infinity).
+//slk_simplify (nnn=0 & lg=neginfinity | nnn=0 & lg<infinity).
+
+slk_simplify (nnn=0 & lg = -\inf) | (nnn = 0 & lg< \inf).
+
+slk_pairwise (nnn=0 & lg = -\inf) | (nnn = 0 & lg< \inf).
+
+slk_simplify -\inf<\inf & (nnn=0 & lg = -\inf | nnn = 0 & lg< \inf).
+
+FIXED
+norm_pure_input@13
+norm_pure_input inp1 : 0<((\inf)+(\inf)) & (((nnn=0 & lg+(\inf)=0) | (nnn=0 & lg<(\inf))))
+norm_pure_input@13 EXIT: ZInfinity'<ZInfinity & 0<(ZInfinity+ZInfinity) & (((nnn=0 & 
+ZInfinity'=lg) | (nnn=0 & lg<ZInfinity)))
+
+Above introduced 0<(ZInfinity+ZInfinity).
+I think we should have simplified \inf+\inf --> \inf,
+so that 0<\inf is simply true.
+
+*/
+
+

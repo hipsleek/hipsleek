@@ -1,0 +1,49 @@
+data node{
+	int val;
+	node next;
+}.
+
+pred zip<y> ==
+  self=null & y=null
+or self::node<_,p>*y::node<_,q>*p::zip<q>
+inv true.
+
+pred ll<> == self=null
+ or self::node<_,q>*q::ll<>
+inv true.
+
+HeapPred P1(node a).
+HeapPred P2(node a).
+
+// (1)
+infer [P1,P2] x::zip<y> |- P1(x).
+print residue.
+/*
+ loses data here..
+ <1>emp&true&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [x::zip<y>@M[LHSCase]&true --> P1(x)&true]
+*/
+
+//(2)
+infer [P1,P2] P1(x)  |- x::zip<y>.
+print residue.
+/*
+
+Below gains data, and is isn't sound.
+
+ <1>HP_43(y_42)&y=y_42&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [P1(x)&true --> x::zip<y_42>@M[LHSCase] * HP_43(y_42)&true]
+*/
+
+/*
+# split-1b.slk
+
+First entailment loses data.
+Second entailment should not succeed,
+as it seems to have gained data!
+This is esp when y is instantiated
+rather than a continuation.
+
+Need to refine 2nd-order matching.
+
+*/

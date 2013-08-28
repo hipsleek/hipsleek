@@ -85,25 +85,29 @@ let merge_ieq_ieq f1 f2  =  (* merge_other f1 f2 *)
     | CP.BForm (b1, _), CP.BForm (b2, _) ->
           begin
           match b1,b2 with
+              (* i1<v1 | i2<v2 *)
             | (CP.Lt (CP.IConst (i1, _), CP.Var(v1,_), _), _), (CP.Lt (CP.IConst (i2, loci), CP.Var(v2,_), _), _) ->
                   if (CP.eq_spec_var v1 v2) then
                     if i1<=i2 then merged [f1] else merged [f2]
                   else merge_other f1 f2
+              (* v1<i1 | v2<i2 *)
             | (CP.Lt (CP.Var(v1,_) , CP.IConst (i1, _), _), _), (CP.Lt (CP.Var(v2,_), CP.IConst (i2, loci), _), _) ->
                   if (CP.eq_spec_var v1 v2) then
                     if i1<=i2 then merged [f2] else merged [f1]
                   else merge_other f1 f2
+              (* i1<v1 | v2<i2 *)
             | (CP.Lt (CP.IConst (i1, _), CP.Var(v1,_), _), _), (CP.Lt ((CP.Var(v2,_) as var), CP.IConst (i2, loci), _), _)
+              (* v2<i2 | i1<v1 *)
             | (CP.Lt ((CP.Var(v2,_) as var), CP.IConst (i2, loci), _), _), (CP.Lt (CP.IConst (i1, _), CP.Var(v1,_), _), _) ->
                   if (CP.eq_spec_var v1 v2) then
                     if i1<i2 then  merged [CP.mkTrue no_pos]
-                    (* else if (i1==i2) then neq_conj_n 1 i1 var *)
                     else 
                       if((i1-i2) < limit_conj) then merged (neq_conj_n (i1-i2) i1 var)
                       else merge_other f1 f2
                   else merge_other f1 f2
+              (* v1<v2 | v3<i4 *)
             | (CP.Lt ( (CP.Var(v1,_) as var1), (CP.Var(v2,_) as var2), _), _), (CP.Lt (CP.Var(v3,_),CP.Var(v4,_), _), _) ->
-                  if (CP.eq_spec_var v1 v4) & (CP.eq_spec_var v2 v3) then merged [(CP.BForm((CP.mkNeq var1 var2 no_pos, None), None))]
+                  if (CP.eq_spec_var v1 v4) & (CP.eq_spec_var v2 v3) then merged [(CP.BForm((CP.mkNeq var1 var2 no_pos, None), None))] (* a<b | b<a *)
                   else merge_other f1 f2
             | _ -> merge_other f1 f2
           end
@@ -203,10 +207,10 @@ let update_disj disj conj_lst =
               | Node (conj, d) -> 
                     let (merged, new_conj) = maybe_merge conj conj_lst in 
                     if merged then
-                      (Some (Node (new_conj,d@d_init)), xs)
+                      (Some (Node (new_conj,d_init@d)), xs)
                     else 
-                      let merged, disj = helper xs (conj_lst,d_init) in
-                      (merged, x::disj)
+                      let merged_node, disj = helper xs (conj_lst,d_init) in
+                      (merged_node, disj@[x])
   in
   let rec aux disj (conj_lst, d) =
     let merged_node, disj = helper disj (conj_lst,d)  in
@@ -216,20 +220,23 @@ let update_disj disj conj_lst =
   in
   aux disj (conj_lst,[])
 
+(* adds a new disjunct(conj_lst) to the existing tree  *)
 let add_disj_to_tree conj_lst tree =
   match tree with
     | Empty -> Node(conj_lst, [Empty])
-    | Node (common, disj) -> 
+    | Node (common, disjT) -> 
+          (* new_common <-- conj_lst \intersect common; push_back = common\conj_lst *)
           let new_common, push_back = List.partition (fun c-> Gen.BList.mem_eq CP.equalFormula c conj_lst) common in
-          let new_disj = List.map (fun d -> 
+          let new_disjT = List.map (fun d -> 
               match d with
                 | Empty -> Node(push_back, [])
-                | Node (c,d) -> Node (c@push_back, d) ) disj in
+                | Node (c,d) -> Node (c@push_back, d) ) disjT in
           let conj_lst = Gen.BList.difference_eq  CP.equalFormula conj_lst new_common in (* grep only what's not common with the root *)
           (* let new_disj = Empty::new_disj in (\* Empty is the placeholder for conj_lst in case the latter can not merge with other  *\) *)
-          let new_disj = update_disj new_disj conj_lst in
-          Node(new_common, new_disj)
+          let new_disjT = update_disj new_disjT conj_lst in
+          Node(new_common, new_disjT)
 
+(* creates the tree of disjunctions *)
 let norm_disj_tree disj = 
   let rec helper disj tree =
     match disj with

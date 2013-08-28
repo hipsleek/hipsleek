@@ -1,0 +1,35 @@
+//Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Fail
+data node { int val ; node next }.
+
+pred ll<> == self = null 
+	or self::node<next = r> * r::ll<>
+	inv true.
+
+pred G<> == self = null 
+	or self::node<next = r> * r::ll<>
+	inv true.
+
+pred H<> == self::node<next = r> * r::ll<>
+	inv self!=null.
+
+lemma_safe "V1" self::ll<> <-> self::G<>.
+
+lemma_safe "V2" self::ll<> <-> self::H<>.
+/*
+# equiv.slk
+
+Got:
+
+Valid Lemmas : [V1:<==>] added to lemma store.
+
+Entailing lemma V2: Fail. Details below:
+
+Failed to prove V2:<==> in current context.
+Removing invalid lemma ---> lemma store restored.
+
+How come no failure message printing like below in lemproving.ml?
+
+            let _ = print_string (num_id ^ ": Fail. Details below:\n") in
+            let _ = print_entail_result valid_l2r rs1 "\t \"->\" implication: " in
+            print_entail_result valid_r2l rs2 "\t \"<-\" implication: "
+*/

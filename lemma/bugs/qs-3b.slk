@@ -1,0 +1,52 @@
+checkentail
+ (((m_858=0 & sm1_363=\inf & lg1_879+(\inf)=0) | (0<m_858 & 0<(sm1_363+
+(\inf)) & sm1_363<=lg1_879 & lg1_879<(\inf)))) 
+& sm1_330=sm1_363 
+& lg1_879<=lg_360 & sm<=sm1_363 
+& 0<(sm+(\inf)) & sm<(\inf) & sm=sm_358 
+& lg=lg_360 & lg1_331=lg1_879
+|-	     
+(exists lg1_900:lg1_900<=lg & lg1_900=max(lg1_331,sm) & lg1_900<(\inf))
+.
+
+checkentail
+(m_858=0 & sm1_363=\inf & lg1_879+(\inf)=0) 
+//| (0<m_858 & 0<(sm1_363+(\inf)) & sm1_363<=lg1_879 & lg1_879<(\inf)) 
+& sm1_330=sm1_363 
+& lg1_879<=lg 
+& sm<=sm1_363 
+& 0<(sm+(\inf)) & sm<(\inf) 
+//& sm=sm_358 
+//& lg=lg_360 
+& lg1_331=lg1_879
+|- sm<=lg	     
+//(exists lg1_900:
+//lg1_900<=lg 
+//& 
+//lg1_900=max(lg1_331,sm) 
+//lg1_900=sm 
+//& lg1_900<(\inf))
+.
+/*
+  xform: ((exists(sm1_107:sm1_107<=lg & sm<=sm1_107 & 0<(sm1_107+(\inf))) 
+       & 
+           lg<(\inf) & 2<=n & 0<(sm+(\inf)) & sm<(\inf) & 
+           self!=null) | 
+        (n=1 & self=t & n=1 & lg=sm & 0<(sm+(\inf)) & 
+           sm<(\inf) & self!=null))
+
+
+id: 58; caller: []; line: 0; classic: true; kind: Verify_Lemma; hec_num: 4; evars: [sm_353,p_354,flted_30_355,lg1_356]; infer_vars: []; c_heap: 
+r_350::lseg<m_847,t_348,sm1_352,lg1_868>@M * 
+self_ll_tail2lsegL::node<sm_347,r_350>@M 
+* t_348::node<lg_349,flted_30_867>@M
+ checkentail emp&flted_30_867=null & lg1_868<=lg_349 & n!=1 & r_350!=null & 
+sm<=sm1_352 & n=nn_351+1 & 0<(sm+(\inf)) & sm<(\inf) & sm=sm_347 & t=t_348 & 
+lg=lg_349 & n=m+1 & m!=0 & lg=lg_349 & r_318=r_350 & sm1_319=sm1_352 & 
+lg1_320=lg1_868&{FLOW,(1,22)=__flow}[]
+ |-  (exists lg1_356: emp&flted_30_867=null & lg1_356<=lg & m=nn_317+1 & 
+sm<=sm1_319 & 0<(sm+(\inf)) & sm<(\inf) & lg1_356=max(lg1_320,sm) & 
+lg1_356<(\inf) & sm=sm_347 & t=t_348 & nn_351=nn_317+1&
+
+*/
+
