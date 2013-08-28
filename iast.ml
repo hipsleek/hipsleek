@@ -1300,6 +1300,7 @@ and collect_data_view_from_pure_exp_x (data_names: ident list) (e0 : P.exp) : (i
                 report_error pos ("self has invalid type: " ^ t_id)
       | _ -> ([], [])
     )
+  | P.Bptriple _ -> ([], []) (*MERGE CHECK*)
   | P.Null _ | P.Level _  | P.Var _ -> ([], [])
   | P.IConst _ | P.FConst _ | P.AConst _  | P.InfConst _ | P.Tsconst _ -> ([], [])
   | P.Add _ | P.Subtract _ | P.Mult _ | P.Div _ -> ([], [])

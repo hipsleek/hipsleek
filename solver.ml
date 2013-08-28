@@ -1058,7 +1058,7 @@ and xpure_perm_x (prog : prog_decl) (h : h_formula) (p: mix_formula) : MCP.mix_f
               let p1_vars = List.map CF.get_node_var part1 in (*[x1,x2]*)
               let p1_perms = List.map CF.get_node_perm part1 in
               let is_p1_full =
-                List.exists (fun v -> v=None) p1_perm
+                List.exists (fun v -> v=None) p1_perms
               in
               (* [f1,f2]*)
           let p1_perm_exps = List.concat (List.map Perm.get_cperm p1_perms) in
@@ -1123,9 +1123,9 @@ and xpure_perm_x (prog : prog_decl) (h : h_formula) (p: mix_formula) : MCP.mix_f
                       let gt_bf = CP.Gt (all_sum_c,t1_all_sum_a,no_pos) in
                       let gt_f = CP.BForm ((gt_bf,None),None) in
                       let or_f = CP.mkOr neq_t1_t3 gt_f None no_pos in
-					  Debug.devel_zprint (lazy ("xpure_perm: check: [Begin] check bounded permission constrainst: "^ (Cprinter.string_of_pure_formula or_f) ^ "\n")) no_pos;
-					  let b,_,_ = CP.imply_disj_orig [f] or_f TP.imply imp_no in
-					  Debug.devel_zprint (lazy ("xpure_perm: check: [End] check bounded permission constrainst "^(string_of_bool b)^" \n")) no_pos;
+		      Debug.devel_zprint (lazy ("xpure_perm: check: [Begin] check bounded permission constrainst: "^ (Cprinter.string_of_pure_formula or_f) ^ "\n")) no_pos;
+		      let b,_,_ = CP.imply_disj_orig [f] or_f (TP.imply_one 100) imp_no in
+		      Debug.devel_zprint (lazy ("xpure_perm: check: [End] check bounded permission constrainst "^(string_of_bool b)^" \n")) no_pos;
                       b
                       (**********<<BPERM********************)
                     else if (!Globals.perm = Dperm) then
@@ -1159,7 +1159,7 @@ and xpure_perm_x (prog : prog_decl) (h : h_formula) (p: mix_formula) : MCP.mix_f
 					  (*f1+f2+f2+f4>1.0*)
 					  let gt_exp = CP.mkGtExp sum_exp full_exp no_pos in
 					  Debug.devel_zprint (lazy ("xpure_perm: check: [Begin] check fractional permission constrainst: "^ (Cprinter.string_of_pure_formula gt_exp) ^ "\n")) no_pos;
-					  let b,_,_ = CP.imply_disj_orig [f] gt_exp TP.imply imp_no in
+					  let b,_,_ = CP.imply_disj_orig [f] gt_exp (TP.imply_one 101) imp_no in
 					  Debug.devel_zprint (lazy ("xpure_perm: check: [End] check fractional permission constrainst \n")) no_pos;
 					  b
                     (**********<<FPERM,CPERM,NONE********************)
@@ -2435,7 +2435,7 @@ and struc_unfold_heap_x (prog:Cast.prog_or_branches) (f : h_formula) (aset : CP.
             if (Perm.allow_perm ()) then
               (match perm with 
                 | None -> renamed_view_formula
-                | Some f -> Cformula.propagate_perm_struc_formula renamed_view_formula f) 
+                | Some f -> Cformula.propagate_perm_struc_formula renamed_view_formula (Cpure.get_var f)) 
             else renamed_view_formula in
           let fr_vars = (CP.SpecVar (Named vdef.view_data_name, self, Unprimed))::  vdef.view_vars in
           let to_rels,to_rem = (List.partition CP.is_rel_typ vs) in
@@ -3385,9 +3385,9 @@ and unsat_base_x prog (sat_subno:  int ref) f  : bool=
 
 and unsat_base_nth (n:int) prog (sat_subno:  int ref) f  : bool = 
   (*unsat_base_x prog sat_subno f*)
-  Debug.no_1_num n "unsat_base_nth" 
+  Debug.no_2_num n "unsat_base_nth" 
       Cprinter.string_of_formula string_of_int string_of_bool
-      (fun _ -> unsat_base_x prog sat_subno f) f
+      (fun _ _ -> unsat_base_x prog sat_subno f) f n
 
 and elim_unsat_es i (prog : prog_decl) (sat_subno:  int ref) (es : entail_state) : context =
   let pr1 = Cprinter.string_of_entail_state in
@@ -8771,8 +8771,8 @@ and do_match_inst_perm_vars_x (l_perm:P.exp option) (r_perm:P.exp option) (l_arg
             let rho_0 = List.combine (ls2@r_args) (ls1@l_args) in
             let label_list1 =
               match !Globals.perm with
-                | Bperm -> [Label_only.Lab_List.unlabelled;Label_only.Lab_List.unlabelled;Label_only.Lab_List.unlabelled]
-                | _ -> [Label_only.Lab_List.unlabelled]
+                | Bperm -> [LO.unlabelled; LO.unlabelled; LO.unlabelled]
+                | _ -> [LO.unlabelled]
             in
             let label_list = (label_list1@label_list) in
             (rho_0, label_list,CP.mkTrue no_pos,CP.mkTrue no_pos)
@@ -8780,10 +8780,10 @@ and do_match_inst_perm_vars_x (l_perm:P.exp option) (r_perm:P.exp option) (l_arg
             (match !Globals.perm with
               | Bperm -> report_error no_pos "[solver.ml] do_match_inst_perm_vars : unexpected for bperm"
               | _ ->
-                  let f2 = Cpure.get_var f2 in
-	              let rho_0 = List.combine (f2::r_args) (full_perm_var ()::l_args) in
-              let label_list = (LO.unlabelled::label_list) in
-                  (rho_0, label_list,CP.mkTrue no_pos,CP.mkTrue no_pos))
+                    let f2 = Cpure.get_var f2 in
+	            let rho_0 = List.combine (f2::r_args) (full_perm_var ()::l_args) in
+                    let label_list = (LO.unlabelled::label_list) in
+                    (rho_0, label_list,CP.mkTrue no_pos,CP.mkTrue no_pos))
 
         (*(if (List.mem f2 evars) then
         (*rename only*)

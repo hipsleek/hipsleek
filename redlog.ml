@@ -365,7 +365,7 @@ let rec rl_of_formula_x pr_w pr_s f0 =
 
 let rl_of_formula pr_w pr_s f0 =
   let _ = set_prover_type() in
-  rl_of_formula pr_w pr_s f0
+  rl_of_formula_x pr_w pr_s f0
 
 (***********************************
  pretty printer for pure formula

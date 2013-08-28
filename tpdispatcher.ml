@@ -2478,7 +2478,7 @@ let tp_imply ante conseq old_imp_no timeout process =
 ;;
 
 let tp_imply ante conseq imp_no timeout process =	
-  (* let pr1 = Cprinter.string_of_pure_formula in *)
+  let pr1 = Cprinter.string_of_pure_formula in
   let prout x = (last_prover())^": "^(string_of_bool x) in
   Debug.no_2 "tp_imply" 
       (add_str "ante" pr1) 
@@ -2663,8 +2663,8 @@ let is_sat (f : CP.formula) (sat_no : string): bool =
 
   
 let imply_timeout_helper ante conseq process ante_inner conseq_inner imp_no timeout =  
-        let ante0 = CP.infer_level_pure ante0 in (*add l.mu>0*)
-        let conseq0 = CP.infer_level_pure conseq0 in (*add l.mu>0*)
+        let ante0 = CP.infer_level_pure ante in (*add l.mu>0*) (*MERGE CHECK*)
+        let conseq0 = CP.infer_level_pure conseq in (*add l.mu>0*) (*MERGE CHECK*)
 	  let acpairs = imply_label_filter ante conseq in
 	  let pairs = List.map (fun (ante,conseq) -> 
               let _ = Debug.devel_hprint (add_str "ante 1: " Cprinter.string_of_pure_formula) ante no_pos in

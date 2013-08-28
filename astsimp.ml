@@ -993,9 +993,9 @@ let rec trans_prog (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_decl
   (* let _ = print_endline (exlist # string_of ) in *)
   let prog3 = prog4 in
   let prog2 = { prog3 with I.prog_data_decls =
-            ({I.data_name = raisable_class;I.data_fields = [];I.data_parent_name = "Object";I.data_invs = [];I.data_is_template = false;I.data_methods = []})
-          ::({I.data_name = bfail_flow;I.data_fields = [];I.data_parent_name = "Object";I.data_invs = [];I.data_is_template = false;I.data_methods = []})
-          ::({I.data_name = error_flow;I.data_pos = no_pos;I.data_fields = [];I.data_parent_name = "Object";I.data_invs = [];I.data_is_template = false;I.data_methods = []})
+          ({I.data_name = raisable_class;I.data_fields = [];I.data_parent_name = "Object";I.data_invs = [];I.data_is_template = false;I.data_methods = []; I.data_pos = no_pos; })
+          ::({I.data_name = error_flow;I.data_fields = [];I.data_parent_name = "Object";I.data_invs = [];I.data_is_template = false;I.data_methods = []; I.data_pos = no_pos; })
+          ::({I.data_name = bfail_flow;I.data_fields = [];I.data_parent_name = "Object";I.data_invs = [];I.data_is_template = false;I.data_methods = []; I.data_pos = no_pos; })
           :: prog3.I.prog_data_decls;} in
   (* let _ = print_endline (exlist # string_of ) in *)
   (* let _ = I.find_empty_static_specs prog2 in *)
@@ -4988,18 +4988,18 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
     match hargs with
     | (e, _) :: rest ->
         let e_hvars = match e with
-          | IP.Var ((ve, pe), pos_e) -> trans_var_safe (ve, pe) UNK tlist pos_e
-          | IP.Ann_Exp (IP.Var ((ve, pe), pos_e ), t, _) -> trans_var_safe (ve, pe) t tlist pos_e (*annotated self*)
-              | IP.Bptriple ((ec,et,ea), pos_e) ->
-                  let apply_one e =
-                    (match e with
-                      | IP.Var ((ve, pe), pos_e) -> trans_var_safe (ve, pe) UNK stab pos_e
-                      | _ -> report_error (IF.pos_of_formula f0) ("linearize_formula : match_exp : Expecting Var in Bptriple"^(Iprinter.string_of_formula f0)))
-                  in
-                  List.map apply_one [ec;et;ea]
+          | IP.Var ((ve, pe), pos_e) -> [trans_var_safe (ve, pe) UNK tlist pos_e]
+          | IP.Ann_Exp (IP.Var ((ve, pe), pos_e ), t, _) -> [trans_var_safe (ve, pe) t tlist pos_e] (*annotated self*)
+          | IP.Bptriple ((ec,et,ea), pos_e) ->
+                let apply_one e =
+                  (match e with
+                    | IP.Var ((ve, pe), pos_e) -> trans_var_safe (ve, pe) UNK tlist pos_e
+                    | _ -> report_error (IF.pos_of_formula f0) ("linearize_formula : match_exp : Expecting Var in Bptriple"^(Iprinter.string_of_formula f0)))
+                in
+                List.map apply_one [ec;et;ea]
           | _ -> report_error (IF.pos_of_formula f0)("malfunction with float out exp: "^(Iprinter.string_of_formula f0))in
         let rest_hvars = match_exp rest pos in
-        let hvars = e_hvars :: rest_hvars in
+        let hvars = e_hvars @ rest_hvars in
         hvars
     | [] -> [] in
   let expand_dereference_node (f: IF.h_formula) pos : (IF.h_formula * (Globals.ident * Globals.primed) list) = (
@@ -5191,22 +5191,26 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
                         | _ ->
                             let v = List.nth permvars 0 in
                             Some (Cpure.Var (v,no_pos)) ))
-                             CF.h_formula_data_name = rootptr_type_name;
-                             CF.h_formula_data_derv = dr;
-                             CF.h_formula_data_imm = Immutable.iformula_ann_to_cformula_ann imm;
-                             CF.h_formula_data_param_imm = Immutable.iformula_ann_opt_to_cformula_ann_lst ann_param;
-                             CF.h_formula_data_perm = permvar; (*??? TO CHECK: temporarily*)
-                             CF.h_formula_data_origins = []; (*??? temporarily*)
-                             CF.h_formula_data_original = true; (*??? temporarily*)
-                             CF.h_formula_data_arguments = hvars;
-                             CF.h_formula_data_holes = holes;
-                             CF.h_formula_data_label = pi;
-                             CF.h_formula_data_remaining_branches = None;
-                             CF.h_formula_data_pruning_conditions = [];
-                             CF.h_formula_data_pos = pos;} in
-              let result_heap = Immutable.normalize_field_ann_heap_node result_heap in
-              (result_heap, CF.TypeTrue, [], tl)
-            )
+              in
+              let result_heap =  CF.DataNode {
+		  CF.h_formula_data_node = CP.SpecVar (rootptr_type,rootptr,p);
+                  CF.h_formula_data_name = rootptr_type_name;
+                  CF.h_formula_data_derv = dr;
+                  CF.h_formula_data_imm = Immutable.iformula_ann_to_cformula_ann imm;
+                  CF.h_formula_data_param_imm = Immutable.iformula_ann_opt_to_cformula_ann_lst ann_param;
+                  CF.h_formula_data_perm = permvar; (*??? TO CHECK: temporarily*)
+                  CF.h_formula_data_origins = []; (*??? temporarily*)
+                  CF.h_formula_data_original = true; (*??? temporarily*)
+                  CF.h_formula_data_arguments = hvars;
+                  CF.h_formula_data_holes = holes;
+                  CF.h_formula_data_label = pi;
+                  CF.h_formula_data_remaining_branches = None;
+                  CF.h_formula_data_pruning_conditions = [];
+                  CF.h_formula_data_pos = pos;}
+              in
+          let result_heap = Immutable.normalize_field_ann_heap_node result_heap in
+          (result_heap, CF.TypeTrue, [], tl)
+    )
             else (
               (* Not a field access, proceed with the original code *)
               try (
@@ -5236,22 +5240,25 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
                           | _ ->
                               let v = List.nth permvars 0 in
                               Some (Cpure.Var (v,no_pos)) ))
-                               CF.h_formula_view_name = c;
-                               CF.h_formula_view_derv = dr;
-                               CF.h_formula_view_imm = Immutable.iformula_ann_to_cformula_ann imm;
-                               CF.h_formula_view_perm = permvar; (*LDK: TO CHECK*)
-                               CF.h_formula_view_arguments = hvars;
-                               CF.h_formula_view_modes = vdef.I.view_modes;
-                               CF.h_formula_view_coercible = true;
-                               CF.h_formula_view_origins = [];
-                               CF.h_formula_view_original = true;
-                               (* CF.h_formula_view_orig_fold_num = !num_self_fold_search; *)
-                               CF.h_formula_view_lhs_case = true;
-                               CF.h_formula_view_unfold_num = 0;
-                               CF.h_formula_view_label = pi;
-                               CF.h_formula_view_pruning_conditions = [];
-                               CF.h_formula_view_remaining_branches = None;
-                               CF.h_formula_view_pos = pos;} in
+                in
+                let new_h = CF.ViewNode {
+                    CF.h_formula_view_node = new_v;
+                    CF.h_formula_view_name = c;
+                    CF.h_formula_view_derv = dr;
+                    CF.h_formula_view_imm = Immutable.iformula_ann_to_cformula_ann imm;
+                    CF.h_formula_view_perm = permvar; (*LDK: TO CHECK*)
+                    CF.h_formula_view_arguments = hvars;
+                    CF.h_formula_view_modes = vdef.I.view_modes;
+                    CF.h_formula_view_coercible = true;
+                    CF.h_formula_view_origins = [];
+                    CF.h_formula_view_original = true;
+                    (* CF.h_formula_view_orig_fold_num = !num_self_fold_search; *)
+                    CF.h_formula_view_lhs_case = true;
+                    CF.h_formula_view_unfold_num = 0;
+                    CF.h_formula_view_label = pi;
+                    CF.h_formula_view_pruning_conditions = [];
+                    CF.h_formula_view_remaining_branches = None;
+                    CF.h_formula_view_pos = pos;} in
                 (new_h, CF.TypeTrue, [], tl)
               )
               with Not_found ->
@@ -5376,7 +5383,7 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
     let new_p = Cpure.arith_simplify 5 new_p in
     let mix_p = (MCP.memoise_add_pure_N (MCP.mkMTrue pos) new_p) in
     (*formula_delayed*)
-    let new_dl = trans_pure_formula dl stab in
+    let new_dl = trans_pure_formula dl tlist in
     let new_dl = Cpure.arith_simplify 5 new_dl in
     let mix_dl = (MCP.memoise_add_pure_N (MCP.mkMTrue pos) new_dl) in
     let id_var = (match id with
@@ -5615,9 +5622,9 @@ and trans_pure_exp_x (e0 : IP.exp) (tlist:spec_var_type_list) : CP.exp =
     | IP.Bptriple ((pc,pt,pa),pos) ->
         (match pc,pt,pa with
           | Ipure.Var (vc,posc), Ipure.Var (vt,post),Ipure.Var (va,posa) ->
-              let pc = trans_var vc stab posc in
-              let pt = trans_var vt stab post in
-              let pa = trans_var va stab posa in
+              let pc = trans_var vc tlist posc in
+              let pt = trans_var vt tlist post in
+              let pa = trans_var va tlist posa in
               CP.Bptriple ((pc,pt,pa),pos)
           | _ -> report_error pos ("trans_pure_exp: Bptriple error at location "^(string_of_full_loc pos)))
     | IP.AConst(a,pos) -> CP.AConst(a,pos)
@@ -5661,17 +5668,18 @@ and trans_pure_exp_list (elist : IP.exp list) (tlist:spec_var_type_list) : CP.ex
     | e :: rest -> (trans_pure_exp e tlist) :: (trans_pure_exp_list rest tlist)
 
 
-    | IP.Bptriple ((pc,pt,pa), pos) ->
-          let _ = must_unify_expect_test et Bptyp pos in 
-          let new_et = fresh_tvar stab in
-	      let t1 = gather_type_info_exp_x pc stab new_et in (* Int *)
-	      let t2 = gather_type_info_exp_x pt stab new_et in (* Int *)
-	      let t3 = gather_type_info_exp_x pa stab new_et in (* Int *)
-          let _ = must_unify_expect t1 Int stab pos in
-          let _ = must_unify_expect t2 Int stab pos in
-          let _ = must_unify_expect t3 Int stab pos in
-          Bptyp
-    | IP.Add (a1, a2, pos) ->
+(*MERGE CHECK*)
+    (* | IP.Bptriple ((pc,pt,pa), pos) -> *)
+    (*       let _ = must_unify_expect_test et Bptyp pos in  *)
+    (*       let new_et = fresh_tvar stab in *)
+    (*           let t1 = gather_type_info_exp_x pc stab new_et in (\* Int *\) *)
+    (*           let t2 = gather_type_info_exp_x pt stab new_et in (\* Int *\) *)
+    (*           let t3 = gather_type_info_exp_x pa stab new_et in (\* Int *\) *)
+    (*       let _ = must_unify_expect t1 Int stab pos in *)
+    (*       let _ = must_unify_expect t2 Int stab pos in *)
+    (*       let _ = must_unify_expect t3 Int stab pos in *)
+    (*       Bptyp *)
+    (* | IP.Add (a1, a2, pos) -> *)
 
 and case_normalize_pure_formula hp b f = f
 
@@ -5863,10 +5871,10 @@ and case_normalize_renamed_formula_x prog (avail_vars:(ident*primed) list) posib
                       | Bperm ->
                           (match f with
                             | IP.Bptriple ((ec,et,ea),pos) ->
-                                let lbls = [Label_only.empty_spec_label;Label_only.empty_spec_label;Label_only.empty_spec_label] in
+                                let lbls = [Lab2_List.unlabelled;Lab2_List.unlabelled;Lab2_List.unlabelled] in
                                 lbls,[ec;et;ea]
                             | _ ->  report_error pos ("linearize_heap : Expecting Bptriple for bperm"))
-                      | _ ->  [Label_only.empty_spec_label], [f])
+                      | _ ->  [Lab2_List.unlabelled], [f])
             in
             let args = b.IF.h_formula_heap_arguments in
             Debug.tinfo_hprint (add_str "ty_vars" (pr_list (pr_pair string_of_typ pr_id))) tp_vars pos;

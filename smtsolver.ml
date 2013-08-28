@@ -281,7 +281,7 @@ and collect_bformula_info b = match b with
       else 
         { default_formula_info with relations = [r]; }
   | _ -> default_formula_info
-  | CP.Bptriple _ (*TOCHECK*)
+
 
 
 and combine_formula_info if1 if2 =

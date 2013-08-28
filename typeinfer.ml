@@ -494,6 +494,19 @@ and gather_type_info_exp_x a0 tlist et =
       let t = I.float_type in
       let (n_tl,n_typ) = must_unify_expect t et tlist pos in
       (n_tl,n_typ)      
+  | IP.Bptriple ((pc,pt,pa), pos) ->
+        let _ = must_unify_expect_test_2 et Bptyp Tree_sh tlist pos in 
+        let (new_et, n_tl) = fresh_tvar tlist in
+        let nt = List.find (fun (v,en) -> en.sv_info_kind = new_et) n_tl in 
+        let (tmp1,tmp2)=nt in
+	let (n_tl1,t1) = gather_type_info_exp pc n_tl new_et in (* Int *)
+	let (n_tl2,t2) = gather_type_info_exp_x pt n_tl1 new_et in (* Int *)
+	let (n_tl3,t3) = gather_type_info_exp_x pa n_tl2 new_et in (* Int *)
+        let (n_tlist1,_) = must_unify_expect t1 Int tlist pos in
+        let (n_tlist2,_) = must_unify_expect t2 Int n_tlist1 pos in
+        let (n_tlist3,_) = must_unify_expect t3 Int n_tlist2 pos in
+        let n_tl = List.filter (fun (v,en) -> v<>tmp1) n_tlist3 in
+        (n_tl, Bptyp)
   | IP.Add (a1, a2, pos) -> 
       let _ = must_unify_expect_test_2 et NUM Tree_sh tlist pos in (* UNK, Int, Float, NUm, Tvar *)
       let (new_et, n_tl) = fresh_tvar tlist in          
