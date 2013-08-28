@@ -1,0 +1,63 @@
+slk_simplify v<:@M & @M<:v.
+//Simplify  (1): v=@M
+
+slk_simplify v<:@L.
+//Simplify  (2): v<:@L
+
+slk_simplify v<:@M.
+//Simplify  (3): v=@M
+
+slk_simplify @M<:v.
+//Simplify  (4): true
+
+slk_simplify @A<:v.
+//Simplify  (5): v=@A
+
+slk_simplify @L<:v.
+//Simplify  (6): @L<:v
+
+slk_simplify v<:@I & @L<:v.
+//Simplify  (7): false
+
+
+slk_simplify x=null & y=null.
+
+slk_pairwise x=null & y!=null.
+
+
+slk_pairwise x=null & (y=null | y!=null).
+
+checkentail x=null & y=null |- x=y.
+
+slk_simplify x!=0 & y>0.
+
+slk_simplify (x+1)<=0.
+
+slk_hull ((1<=y & 1<=x) | ((x+1)<=0 & 1<=y)).
+/*
+# imm/slk/simp.slk --dump-proof
+
+Simplify  (8): ((1<=y & 1<=x) | ((x+1)<=0 & 1<=y))
+
+ id: 8<0; prover: OMEGA CALCULATOR; loc: _0:0_0:0; kind: UNKNOWN
+ raw proof:SIMPLIFY:{[x, y] : (((x != 0) & (0 < y)))};
+ raw result:{[x,y]: 1 <= y && 1 <= x} union {[x,y]: x <= -1 && 1 <= y}
+ Simplify:  x!=0 & 0<y
+ res:  ((1<=y & 1<=x) | ((x+1)<=0 & 1<=y))
+
+Issue: inequality of x!=0 results in disjunction. I wonder
+if we can have a further normalization to recover the
+conjunctive form, namely:
+  1<=y & (x!=0)
+or at least:
+  1<=y & (1<=x | x+1<=0)
+
+*/
+
+
+
+
+
+
+
+

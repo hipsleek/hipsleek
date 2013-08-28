@@ -1,0 +1,94 @@
+data node{
+	int val;
+	node prev;
+	node next;
+}.
+
+HeapPred H(node a).
+HeapPred HP_0(node a).
+HeapPred HP_1(node a).
+HeapPred G(node a).
+
+//Declare_Dangling [HP_2].
+//Declare_Unknown [HP_2].
+
+relAssume 
+ HP_0(x)&x!=null --> x::node<key_25_797,left_25_798,right_25_799>@M * 
+  HP_0(left_25_798) * HP_1(right_25_799).
+
+relAssume 
+ HP_1(x)&x!=null --> x::node<key_25_797,left_25_798,right_25_799>@M * 
+  HP_1(left_25_798) * HP_0(right_25_799).
+
+relAssume 
+ HP_1(x)&x!=null --> x::node<key_25_797,left_25_798,right_25_799>@M * 
+  HP_1(left_25_798) * HP_1(right_25_799).
+
+relAssume 
+ HP_1(right_25_799)&right_25_799=null --> emp.
+
+relAssume 
+ HP_0(left_25_798)&left_25_798=null --> emp.
+
+
+shape_infer [HP_0,HP_1][].
+
+/* 
+
+GOT:
+
+ HP_0(x_41) ::=  
+ emp&x_41=null
+ or x_41::node<key_25_797,left_25_798,right_25_799>@M * HP_0(left_25_798) * 
+    HP_1(right_25_799)&true
+ ,
+ HP_1(x_42) ::=  
+ emp&x_42=null
+ or x_42::node<key_25_797,left_25_798,right_25_799>@M * HP_1(left_25_798) * 
+    HP_0(right_25_799)&true
+ or x_42::node<key_25_797,left_25_798,right_25_799>@M * HP_1(left_25_798) * 
+    (HP_1(right_25_799)/&\HP_0(right_25_799))&true
+ ]
+
+The above is not strictly correct, and may be
+weaker than necessary. We should be using
+conj-unify rather than disj-unify for pre-pred.
+
+# tree-4a.slk
+
+Added an equation:
+==================
+relAssume HP_1
+ HP_1(x)&x!=null --> x::node<key_25_797,left_25_798,right_25_799>@M * 
+  HP_1(left_25_798) * HP_1(right_25_799).
+
+SEEMS BRITTLE (wrong HP_1 defn)
+===============================
+
+[ HP_0(x_41) ::=  
+ emp&x_41=null
+ or x_41::node<key_25_797,left_25_798,right_25_799>@M * HP_0(left_25_798)&
+    right_25_799=null
+ ,
+ HP_1(right_25_42) ::=  emp&right_25_42=null]
+*************************************
+
+SOLN
+====
+relAssume HP_1
+ HP_1(x) --> x!=null -> x::node<key_25_797,left_25_798,right_25_799>@M * 
+  HP_1(left_25_798) * HP_0(right_25_799).
+
+relAssume HP_1
+ HP_1(x) --> &x!=null -> x::node<key_25_797,left_25_798,right_25_799>@M * 
+  HP_1(left_25_798) * HP_1(right_25_799).
+
+====>
+ HP_1(x) --> &x!=null -> 
+     x::node<key_25_797,left_25_798,right_25_799>@M * 
+        HP_1(left_25_798) * HP_1(right_25_799).
+  /\ x::node<key_25_797,left_25_798,right_25_799>@M * 
+        HP_1(left_25_798) * HP_0(right_25_799).
+
+
+*/

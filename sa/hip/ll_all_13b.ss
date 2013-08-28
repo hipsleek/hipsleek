@@ -39,6 +39,8 @@ void trav(node x)
      infer [H1,G1]
      requires H1(x)
      ensures G1(x);
+     /* requires x::ls2<> */
+     /* ensures x::ls2<>; */
 
 /*
   requires x::ls<>

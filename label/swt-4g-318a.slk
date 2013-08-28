@@ -1,0 +1,10 @@
+checkentail
+   M1=union({cur},M2_1849) & 
+   exists(flted_33_2637:
+   flted_33_2637=union({prev'},M2_1849,M2)
+   )
+   & cur=prev'
+|- (exists flted_33_2637: flted_33_2637=union(M1,M2) 
+  & flted_33_2637=union({prev'},M2_1849,M2)
+ )
+.

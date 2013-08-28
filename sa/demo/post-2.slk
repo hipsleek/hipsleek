@@ -1,0 +1,29 @@
+data node{
+	int val;
+	node next;
+}.
+
+
+HeapPred G(node a).
+
+
+
+
+relAssume
+ x=e & k=e & k=null  --> G(x).
+
+relAssume
+ x=null  --> G(x).
+
+shape_infer [][G].
+
+/*
+# post-2.slk
+
+should have just one disjunct
+[ G(x_17) ::=  
+ emp&x_17=null
+ or emp&x_17=null
+ ]
+
+*/

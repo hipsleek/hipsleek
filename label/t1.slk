@@ -1,0 +1,8 @@
+checkentail
+ AndList( "":0<=p ; "n":0<n ; "s":p=1) 
+|-  AndList( "s":p=0)  | AndList( "n":1<n) .
+
+
+//checkentail AndList( "":0<=n ; "n":0<n ; "s":p=1) |-  ((AndList( "s":p=0) ) | (AndList( "n":1<n) )).
+ 
+print residue.

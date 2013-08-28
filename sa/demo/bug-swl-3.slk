@@ -1,0 +1,30 @@
+data node{
+	int val;
+	node next;
+}.
+
+HeapPred H_3(node prev, node@NI cur, node@NI sent).
+HeapPred H_2(node next_1, node@NI prev, node@NI sent).
+HeapPred G(node a, node ra, node b, node rb, node@NI c).
+
+infer_exact [H_2,H_3] 
+  H_3(prev,cur,sent) *
+  cur::node<Anon_11,prev>@M&next_1!=sent & 
+              next_1!=null |- H_3(cur,next_1,sent).
+print residue.
+
+/*
+# bug-swl-3.slk
+
+This gives correct result but inconsistent with bug-swl-1.slk
+
+GOT
+===
+<1>emp&next_1!=sent & next_1!=null&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [H_3(prev,cur@NI,sent@NI) * cur::node<Anon_11,prev>@M&
+                   next_1!=sent & next_1!=null --> H_3(cur,next_1@NI,sent@NI)]
+
+*/
+
+
+

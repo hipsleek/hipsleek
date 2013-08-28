@@ -1,0 +1,75 @@
+data node {
+	int val; 
+	node next;	
+}.
+
+HeapPred H(node a, node b).
+HeapPred HP_6(node a, node@NI b).
+HeapPred HP_7(node a, node@NI b).
+
+Declare_Unknown [HP_7].
+
+relAssume  //(1)
+ H(rest,h)&h!=rest --> rest::node<val_36_824,next_36_825> * 
+  HP_6(next_36_825,h) * HP_7(h,rest).
+
+relAssume  //(2)
+ HP_6(next_36_825,h) * HP_7(h,rest)&h!=rest 
+   --> H(next_36_825,h).
+
+relAssume  //(3)
+ H(rest,h)&h=rest --> emp.
+
+shape_infer [H,HP_6,HP_7][].
+/*
+# cll-1b.slk
+
+GOT
+===
+[ H(rest_43,h_44) ::=  
+ emp&h_44=rest_43
+ or H(next_36_40,h_44) * rest_43::node<val_36_39,next_36_40>@M&h_44!=rest_43
+ ,
+ HP_6(next_36_825,h) ::=  H(next_36_825,h)&h!=rest,
+ HP_7(a,b) ::= NONE]
+*
+
+2nd equation is wrong. 
+
+EXPECT
+======
+ HP_6(next_36_825,h) * HP_7(h,rest)&h!=rest 
+   <--> H(next_36_825,h).
+
+ HP_6(next_36_825,h) * HP_7(h,rest) ::=  H(next_36_825,h)&h!=rest,
+
+
+WRONG
+=====
+[ H(rest_45,h_46) ::=  emp&h_46=rest_45,
+ HP_6(next_36_825,h) ::=  H(next_36_825,h)&h!=rest,
+ HP_7(a,b) ::= NONE]
+
+EXPECT
+======
+
+Make Equal (2)
+ HP_6(next_36_825,h) * HP_7(h,rest)&h!=rest 
+   <--> H(next_36_825,h). //(2a)
+
+Use (2a) to strengthen (1)
+ H(rest,h)&h!=rest --> rest::node<val_36_824,nn> * 
+  H(nn,h). //(1a)
+
+Combine (1a) & (3)
+ H(rest,h) --> 
+  rest::node<val_36_824,nn> * H(nn,h) & h!=null
+  or h=res
+
+Make Equal
+ H(rest,h) <--> 
+  rest::node<val_36_824,nn> * H(nn,h) & h!=null
+  or h=res
+
+*/
+

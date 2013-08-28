@@ -1,0 +1,13 @@
+========two-bug-1.slk ==========
+Starting Omega...oc
+H2 is defined.
+G2 is defined.
+HP_5 is defined.
+HP_6 is defined.
+
+Entail (1) : Valid. 
+
+ <1>HP_5(next_24_784,y) * x::node<val_24_783,next_24_784>@M[Orig] * HP_31(next_27_30,x) * y::node<val_27_29,next_27_30>@M[Orig]&next_24_784!=null & val_27_29=val_27_762' & next_27_30=next_27_763'&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [HP_6(y,x@NI) --> y::node<val_27_29,next_27_30>@M * 
+                   HP_31(next_27_30,x@NI)]
+====================

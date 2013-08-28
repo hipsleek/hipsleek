@@ -1092,7 +1092,7 @@ and gen_bindings_heap prog (h0 : h_formula) (unbound_vars : CP.spec_var list) (v
 	 corresponding positionally to v.
       *)
       let pname = CP.name_of_spec_var p in
-      let vdef = C.look_up_view_def_raw prog.C.prog_view_decls c in
+      let vdef = C.look_up_view_def_raw 30 prog.C.prog_view_decls c in
       let helper v vp m pb =
 	if m = ModeOut then
 	  let vname = CP.name_of_spec_var v in
@@ -1546,7 +1546,7 @@ and gen_heap prog (h0 : h_formula) (vmap : var_map) (unbound_vars : CP.spec_var 
 	ckr.root = p;
 	if (!ckr.traverse(curColor, newColor)) return false;
       *)
-      let vdef = C.look_up_view_def_raw prog.C.prog_view_decls c in
+      let vdef = C.look_up_view_def_raw 31 prog.C.prog_view_decls c in
       let cls = class_name_of_view c in
       let new_checker = New ({exp_new_class_name = cls;
       exp_new_arguments = [];
@@ -1715,6 +1715,7 @@ and gen_disjunct prog (disj0 : formula) (vmap0 : var_map) (output_vars : CP.spec
   let disj_proc = 
     { proc_name = dproc_name;
     proc_source = "source_file";
+	proc_flags = [];
     proc_mingled_name = dproc_name;
     proc_data_decl = None; (* the class containing the method *)
     proc_constructor = false;
@@ -1835,6 +1836,7 @@ and gen_view (prog : C.prog_decl) (vdef : C.view_decl) : (data_decl * CP.spec_va
   let check_proc = 
     { proc_name = "traverse";
     proc_source = "source_file";
+	proc_flags = [];
     proc_mingled_name = "traverse";
     proc_data_decl = None;
     proc_constructor = false;
@@ -1850,6 +1852,7 @@ and gen_view (prog : C.prog_decl) (vdef : C.view_decl) : (data_decl * CP.spec_va
     proc_test_comps = None} in
   let ddef = { data_name = class_name_of_view vdef.C.view_name;
   data_fields = fields;
+  data_pos = vdef.C.view_pos;
   data_parent_name = "Object";
   data_invs = [];
   data_is_template = false;
@@ -1878,7 +1881,7 @@ and get_partially_bound_vars_heap prog (h0 : h_formula) : CP.spec_var list = mat
 	vars1 @ vars2
   | ViewNode ({h_formula_view_arguments = args0;
     h_formula_view_name = c}) ->
-	let vdef = C.look_up_view_def_raw prog.C.prog_view_decls c in
+	let vdef = C.look_up_view_def_raw 32 prog.C.prog_view_decls c in
 	let rec helper flags args = match flags, args with
 	  | (flag :: rest1, arg :: rest2) ->
 		let tmp = helper rest1 rest2 in
@@ -1958,6 +1961,7 @@ and gen_partially_bound_type ((CP.SpecVar (t, v, p)) : CP.spec_var) pos : data_d
 	let fields = [((Bool, "bound"), pos, false,F_NO_ANN); ((Named (string_of_typ t), "val"), pos, false,F_NO_ANN)] in
 	let ddef = { data_name = cls_aug;
 	data_fields = fields;
+	data_pos = no_pos;
 	data_parent_name = "Object";
 	data_invs = [];
         data_is_template = false;

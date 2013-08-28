@@ -1,0 +1,43 @@
+
+data node2{
+    node2 n;
+    node2 s;
+}.
+
+HeapPred SLSEG(node2 a,node2 b).
+HeapPred HP_5(node2 a,node2 b).
+HeapPred HP_6(node2 a,node2 b).
+
+// lsgB.slk
+
+relAssume SLSEG
+  SLSEG(l,e) --> emp&((e+1)>l | l!=null) & (l!=null | l>(e-1)).
+relAssume SLSEG
+  SLSEG(l,e)&e!=l & l!=null --> l::node2<n_16_793,s_16_794>@M * 
+  HP_5(n_16_793,e) * HP_6(s_16_794,e) .
+relAssume SLSEG
+  HP_5(n_16_793,e) --> SLSEG(n_16_793,e).
+relAssume G
+ SLSEG(l,e)&e=l --> G(l,e)&true.
+relAssume G
+ HP_6(s_19_796,e) * l::node2<n_19_795,s_19_796>@M * G(n_19_795,e) &
+  e!=l --> G(l,e).
+relAssume G
+ HP_6(s_19_796,e) * l::node2<n_19_795,s_19_796>@M * G(n_19_795,e)&
+  e!=l --> G(l,e).
+
+shape_infer [SLSEG,HP_5][G].
+
+/*
+Why is G not synthesized
+
+[ HP_5(n_16_69,e_70) ::= SLSEG(n_16_69,e_70)&true,
+ SLSEG(l_71,e_72) ::= 
+ emp&e_72!=l_71 & l_71=null
+ or emp&e_72=l_71
+ or (SLSEG(n_16_65,e_72)) * l_71::node2<n_16_65,s_16_66>@M&
+     XPURE(HP_6(s_16_66,e_72)) & e_72!=l_71
+ ]
+
+
+*/

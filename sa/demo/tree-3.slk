@@ -1,0 +1,31 @@
+data node{
+	int val;
+	node prev;
+	node next;
+}.
+
+HeapPred H(node a).
+HeapPred HP_1(node a).
+HeapPred HP_2(node a).
+HeapPred G(node a).
+
+relAssume 
+    H(x)&true --> x::node<_,left,right>@M * HP_1(left) * HP_2(right)&true.
+
+relAssume 
+   HP_2(right)&right!=null --> H(right)&true.
+
+relAssume 
+   HP_2(right)&right=null --> emp&true.
+
+relAssume
+   HP_1(left) * x::node<_,left,right>@M&
+     right=null --> G(x)&true.
+
+relAssume
+  HP_1(left) * x::node<_,left,right>@M * 
+  G(right)&right!=null --> G(x)&true.
+
+Declare_Unknown [HP_1].
+
+shape_infer [H,HP_1,HP_2][G].

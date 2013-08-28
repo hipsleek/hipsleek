@@ -40,7 +40,7 @@ node trav(node x)
      ensures G1(res);
 
   /* requires x::ls2<> */
-  /* ensures x::ls2<>; */
+  /* ensures res::ls2<>; */
 /*
 
 You obtained below which is good.

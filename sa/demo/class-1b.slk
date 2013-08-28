@@ -1,0 +1,61 @@
+data node{
+	node next;
+	node prev;
+}.
+
+
+HeapPred H(node a,node b).
+HeapPred G(node b).
+
+/*
+infer_exact [H,G] G(a) & a=null & b!=null |- emp.
+print residue.
+
+infer_exact [H,G] G(b) & a=null |- emp.
+print residue.
+*/
+
+infer_exact [H,G] G(b) & a=null & b!=null |- emp.
+print residue.
+
+/*
+# class-1b.slk
+
+GOT
+===
+Entail (3) : Valid. 
+ <1>emp&a=null&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [G(b) --> emp]
+
+EXPECT
+======
+ inferred hprel: [G(b) & b!=null--> emp]
+
+===========
+Exact classical reasoning does not allow residue.
+
+Entail (1) : Valid. 
+ <1>H(a,b)&a=null&{FLOW,(19,20)=__norm}[]
+
+
+Entail (2) : Fail.
+ id: 1; caller: []; line: 0; classic: true; kind: Why None?; hec_num: 2; evars: []; infer_vars: [H]; c_heap: emp
+ checkentail H(a,b)&a=null&{FLOW,(19,20)=__norm}[]
+ |-  emp&true&{FLOW,(19,20)=__norm}[]. 
+res:  failctx
+         fe_kind: MUST
+         fe_name: 
+         fe_locs: {
+                   fc_message: classical separation logic
+                   fc_current_lhs_flow: {FLOW,(19,20)=__norm}}
+
+EXPECTED:
+=========
+For above to go through, we must check
+the LHS to ensure that every unknown predicate is enforced
+to be empty, as follows:
+
+    H(a,b) & a=null --> emp
+
+
+*/

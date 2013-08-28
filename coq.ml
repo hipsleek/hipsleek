@@ -7,6 +7,8 @@ open GlobProver
 module CP = Cpure
 module Err = Error
 
+let set_prover_type () = Others.last_tp_used # set Others.Coq
+
 let coq_file_number = ref 0
 let result_file_name = "res"
 let log_all_flag = ref false
@@ -80,17 +82,14 @@ and coq_of_exp e0 =
   | CP.Tsconst _ -> failwith ("tsconst not supported in coq, should have already been handled")
   | CP.Bptriple _ ->  illegal_format "coq_of_exp : bptriple cannot be handled"
   | CP.AConst (i, _) -> string_of_heap_ann i
-  | CP.FConst (f, _) -> 
-			illegal_format "coq_of_exp : float cannot be handled"
-        (* failwith ("coq.coq_of_exp: float can never appear here") *)
+  | CP.FConst (f, _) -> illegal_format "coq_of_exp : float cannot be handled"
   | CP.Add (a1, a2, _) ->  " ( " ^ (coq_of_exp a1) ^ " + " ^ (coq_of_exp a2) ^ ")"
   | CP.Subtract (a1, a2, _) ->  " ( " ^ (coq_of_exp a1) ^ " - " ^ (coq_of_exp a2) ^ ")"
   | CP.Mult (a1, a2, _) -> "(" ^ (coq_of_exp a1) ^ " * " ^ (coq_of_exp a2) ^ ")"
   | CP.Div (a1, a2, _) -> "(" ^ (coq_of_exp a1) ^ " / " ^ (coq_of_exp a2) ^ ")"
   | CP.Max _
-  | CP.Min _ -> 
-			illegal_format "coq_of_exp : min/max cannot be handled"
-(* failwith ("coq.coq_of_exp: min/max can never appear here") *)
+  | CP.Min _ -> illegal_format "coq_of_exp : min/max cannot be handled"
+  | CP.TypeCast _ -> illegal_format "coq_of_exp : TypeCast cannot be handled"
   (* lists *)
   | CP.List (alist, pos) -> 
     begin match alist with
@@ -214,6 +213,11 @@ and coq_of_formula pr_w pr_s f =
     | CP.Or (p1, p2, _, _) ->
 	    "(" ^ (helper p1) ^ " \\/ " ^ (helper p2) ^ ")"
   in helper f
+
+let coq_of_formula pr_w pr_s f =
+  let _ = set_prover_type () in
+  coq_of_formula pr_w pr_s f
+  
 
 (* checking the result given by Coq *)
 let rec check fd coq_file_name : bool=

@@ -1,0 +1,246 @@
+# sll-del.ss: DONE
+
+void delete(node2 x)
+  /* infer[n] */
+/*
+  requires x::node2<_,p,q>*q::sll<x> & q!=null
+  ensures x::node2<_,p,r>*r::sll<x> ;
+*/
+  infer[H1,G1]
+  requires H1(x)
+  ensures G1(x);
+
+[ G1(x_589) ::= x_589::node2<val_27_548,next_29_528'>@M 
+              * HP_590(next_29_528')&true,
+
+ H1(x_594) ::= x_594::node2<val_27_520',next_27_521'>@M * 
+    next_27_521'::node2<val_27_523',next_27_587>@M&next_27_587=null,
+
+ HP_590(next_29_528') ::= 
+ emp&next_29_528'=null
+ or next_29_528'::node2<val_27_548,next_29_591>@M * HP_590(next_29_591)&true
+ ]
+
+PROBLEM : inferred H1(..) is too strong..
+==================================================
+# dll-del.ss: DONE
+
+==================================================
+# bubble.ss
+
+todo:
+  - to fix bug of infer.simplify: DONE
+  - to revise unk analysis: DONE
+  - to remove redundancy in rec branches when do join: DONE
+  - to remove redundancy in constraint infer
+==================================================
+# dll-del.ss: DONE
+HP_590 and HP_598 are the same but our normalization system did not
+merge them.
+
+[ H1(x_589) ::= x_589::node2<val_26_520',next_26_521'>@M * 
+next_26_521'::node2<val_26_523',next_26_587>@M * HP_590(next_26_587)&true,
+ G1(x_597) ::= x_597::node2<val_26_548,next_28_528'>@M * HP_598(next_28_528')&true,
+ HP_590(next_26_587) ::= 
+ emp&next_26_587=null
+ or next_26_587::node2<val_26_523',next_26_588>@M * HP_590(next_26_588)&true
+ ,
+ HP_598(next_28_528') ::= 
+ emp&next_28_528'=null
+ or next_28_528'::node2<val_26_548,next_28_599>@M * HP_598(next_28_599)&true
+ ]
+==================================================
+# dll-del.ss: DONE (*)
+
+The new dll-del uses two pointers and obtained the following.
+Below H1 * H2 are the same. However, H1 should have two nodes,
+due to x.next.next test;
+so I am surprised that it has suddenly lost a node.
+This did not happen for sll-del.ss.
+
+[ H1(x_642) ::= x_642::node2<val_26_533',prev_26_534',next_26_535'>@M * 
+  HP_643(prev_26_534',next_26_535') * HP_559(prev_26_534')&true,
+ G1(x_649) ::= x_649::node2<val_26_568,prev_26_569,next_28_544'>@M * 
+   HP_643(prev_26_569,next_28_544') * HP_559(prev_26_569)&true,
+
+ HP_643(prev_26_534',next_26_535') ::= 
+ emp&next_26_535'=null
+ or next_26_535'::node2<val_26_533',prev_26_644,next_26_645>@M * 
+    HP_643(prev_26_644,next_26_645) * HP_559(prev_26_644)&true
+ ]
+
+*************************************
+# sll-del2.ss: DONE
+
+We obtained :
+
+ G2(res) ::= res::node2<val_30_567,v_node2_30_579>@M&true]
+
+but why did we not get:
+
+ G2(res) ::= res::node2<val_30_567,null>@M&true]
+
+This problem seems to be triggered at relational assumption:
+
+ res::node2<val_30_567,v_node2_30_579>@M&true --> G2(res)&true,
+*************************************
+# dll-del3.ss: DONE (--sa-refine-dang)
+
+  too many lines, why did it not fold to dll?
+*************************************
+# dll-del3a.ss: DONE (--sa-refine-dang)
+
+  too many lines, why did it not fold to dll?
+  G2(..) definition looks good.
+*************************************
+# dll-del3.ss: DONE
+
+  Should return a failure.
+
+*************************************
+# ll-append15.ss: DONE --sa-dangling
+
+ H2(x_600,y_601) ::=
+ emp&x_600=null
+ or x_600::node<val_35_553',next_35_554'>@M * H2(next_35_554',y_601)&true
+
+==> 
+H2(x_600,y_601) ::=
+ emp&x_600=null & DL(y_601)
+ or x_600::node<val_35_553',next_35_554'>@M * H2(next_35_554',y_601)&true
+
+*************************************
+# ins-1.ss
+H2(res) should be stronger:
+res::node<_,p>*p::ll0<> & p !=null
+
+*************************************
+# qsort-1.ss:
+H2(xs',res) = HP1(xs')*HP2(res)
+
+should be: HP1(x)=HP2(x)=ll0
+
+todo:
+ - support binding
+ - support two roots in synthesis
+
+*************************************
+# qsort-2.ss: DONE
+H6(y,res) = H6(xn_684,y_688) * res_687::node<val_78_674,xn_684>@M&true
+ or H5(res_687)&res_687=y_688
+
+note: H6(res,y): OK
+
+*************************************
+# qsort.ss:
+
+qsort: after ins-1.ss is fixed
+
+*************************************
+# app.ss (ll-append8): DONE
+
+Used:
+  infer [H,K,G]
+  requires H(x)*K(y)
+  ensures G(x,y);//'
+
+*************************************
+*******relational definition ********
+*************************************
+[ G(x_572,y_573) ::= x_572::node<val_34_550,y_574>@M * HP_575(y_574,y_573)&true,
+ H(x_578) ::= x_578::node<val_34_526',next_34_527'>@M * HP_545(next_34_527')&true,
+ HP_575(y_574,y_573) ::= 
+ y_574::node<val_34_550,y_576>@M * HP_575(y_576,y_573)&true
+ or K(y_573)&y_573=y_574
+ ,
+ HP_545(v_node_34_579) ::= 
+ emp&v_node_34_579=null
+ or v_node_34_579::node<val_34_526',next_34_527'>@M * HP_545(next_34_527')&
+    true
+ ]
+
+Possible to extract K(Y) ? yielding:
+
+ G(x_572,y) ::= x_572::node<val_34_550,y_574>@M * HP_575(y_574,y) * K(y),
+ HP_575(y_574,y_573) ::= 
+  y_574::node<val_34_550,y_576>@M * HP_575(y_576,y_573)&true
+  or y_573=y_574
+
+*************************************
+# aux.slk
+
+infer [G2] x::node<_,p> * p::node<_,p2>*G2(p2,y)*K(y) & p!=null 
+    |- x::node<_,p>*G2(p,y)*K(y).
+print residue.
+/*
+FAIL but later appear as in next entailment!
+ p::node<Anon_12,p2>@M * G2(p2,y)& XPURE(K(y)) --> G2(p,y)&true,
+ p::node<Anon_12,p2>@M * G2(p2,y)& XPURE(K(y)) --> G2(p,y)&true,
+*/
+*************************************
+# aux5a.slk
+
+ H<> -> tree<> fails as expected, 
+but
+ tree<> <- H<> succeeds instead
+*************************************
+# aux5f.slk
+
+pred H2<> == self::node<_,l>
+inv self!=null.
+
+pred tree2<> == self::node<_,l>*l::node<_,_>
+inv self!=null.
+
+lemma self::tree2<> <- self::H2<>. 
+// should fail but succeeded
+
+This prepared unfolded the LHS term:
+
+Mun_entail_check_helper:
+ EXISTS(Anon_30,l_31: self_lem_15::node<Anon_30,l_31>@M[Orig]&true&
+{FLOW,(1,22)=__flow})[] |-  EBase self_lem_15::tree2@M[0][Orig][LHSCase]&true&{FLOW,(1,22)=__flow}[]
+
+which does not seem sufficient. I think we need to
+unfold RHS term once too, otherwise there is no progress when
+the coercion is applied on RHS
+*************************************
+# norm.slk
+
+Can we test the sa normalization feature in sleek?
+*************************************
+# imm.slk: DONE
+
+infer [HP] HP(x) |-  x::node<_@A,q>@L .
+print residue
+/*
+(i) residue is wrong
+(ii) print also rel-assumption when residue is printed. DONE
+ <1>EXISTS(q,Anon_12: (HP_24(q)) * x::node<Anon_12@A,q@L>@M[Orig]&true&{FLOW,(19,20)=__norm})[]
+*/
+*************************************
+Could we suppress the printing below: DONE
+
+/*
+for sleek; it is only relevant for hip.
+*************************************
+*******relational assumption ********
+*************************************
+[ HP(x)&true --> x::node<Anon_12,q>@M * (HP_24(q))&true]
+*************************************
+
+*************************************
+*******relational definition ********
+*************************************
+[ HP(x_25) ::= x_25::node<Anon_12,q>@M * (HP_24(q))&true,
+ HP_24(q) ::= htrue&true]
+*************************************
+*/
+*************************************
+# function call handle
+
+*************************************
+# twolevel.ss: nested lists
+
+*************************************
+sa_heaps.ss (infer)

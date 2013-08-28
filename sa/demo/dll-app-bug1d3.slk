@@ -1,0 +1,30 @@
+data node{
+	node prev;
+	node next;
+}.
+
+HeapPred HP_7(node a,node b).
+
+infer [HP_7] //(2)
+HP_7(x,l2) & x=null |-  x::node<_,_>@M.
+print residue.
+
+// should succeed
+
+/*
+# dll-app-bug1d3.slk
+
+GOT
+==
+ <1>(HP_24(Anon_22,l2)) * (HP_25(Anon_23,l2)) * (HP_26(l2,x))&x=null & Anon_11=Anon_22 & Anon_12=Anon_23&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [HP_7(x,l2)&x=null --> x::node<Anon_22,Anon_23>@M * 
+                   (HP_24(Anon_22,l2@NI)) * (HP_25(Anon_23,l2@NI)) * 
+                   (HP_26(l2,x@NI))&true]
+
+Should have been a contradiction lemma of the form instead.
+It was working before.
+
+  HP_7(x,l) --> x!=null
+
+
+*/

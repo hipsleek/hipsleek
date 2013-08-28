@@ -1,0 +1,55 @@
+data node{
+	int val;
+	node prev;
+	node next;
+}.
+
+HeapPred H(node a).
+HeapPred HP_0(node a).
+HeapPred HP_1(node a).
+HeapPred G(node a).
+
+//Declare_Dangling [HP_2].
+//Declare_Unknown [HP_2].
+
+relAssume 
+ HP_0(x)&x!=null --> x::node<_,ll,right_25_799>@M * 
+  HP_0(ll) * HP_0(right_25_799).
+
+relAssume 
+ HP_1(x)&x!=null --> x::node<key_25_797,left_25_798,right_25_799>@M * 
+  HP_0(left_25_798) * HP_1(right_25_799).
+
+relAssume 
+ HP_1(right_25_799)&right_25_799=null --> emp.
+
+relAssume 
+ HP_0(left_25_798)&left_25_798=null --> emp.
+
+
+shape_infer [HP_0,HP_1][].
+
+/* 
+
+# tree-4d.slk 
+
+PROBLEM : Why did we have a duplicated branch in HP_1?
+
+
+[ HP_1(x_41) ::=  
+ emp&x_41=null
+ or x_41::node<key_25_797,left_25_798,right_25_799>@M * HP_1(right_25_799)&
+    left_25_798=null
+ or x_41::node<key_25_797,left_25_798,right_25_799>@M * HP_1(right_25_799) * 
+    left_25_798::node<Anon_11,ll_35,right_25_36>@M * HP_1(ll_35) * 
+    HP_1(right_25_36)&true
+ ,
+ HP_0(x_42) ::=  
+ emp&x_42=null
+ or x_42::node<Anon_11,ll,right_25_799>@M * HP_0(ll) * HP_0(right_25_799)&
+    true
+ ]
+
+
+
+*/

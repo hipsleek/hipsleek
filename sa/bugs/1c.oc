@@ -1,0 +1,9 @@
+K:={[l,e]:e!=l & l=0};
+complement K;
+
+K:={[l,e]:e!=l & l<=0};
+J := complement K;
+
+M := {[l,e]:(e>=l | l>0) && (l>(e-1) | l>0) };
+M subset J;
+J subset M;

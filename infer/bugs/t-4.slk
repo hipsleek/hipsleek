@@ -1,0 +1,5 @@
+//checkentail x=null & y=null |- x=y.
+
+checkentail x=null & y=null |- x=null.
+
+print residue.

@@ -1,0 +1,32 @@
+========tail-bug-1.slk ==========
+Starting Omega...oc
+H1 is defined.
+HP_9 is defined.
+G1 is defined.
+
+!!! >>>>>> step 1: find dangling ptrs, link pre and post-preds dangling preds<<<<<<
+!!! >>>>>> step 2: split constraints based on pre and post-preds<<<<<<
+!!! *** NO SPLITTING DONE ***
+!!! >>>>>> step 3: apply transitive implication<<<<<<
+!!! >>>>>> step 3a: simplification <<<<<<
+!!! >>>>>> step 3b: do apply_transitive_imp <<<<<<
+!!! >>>>>> pre-predicates<<<<<<
+!!! >>>>>> step pre-4: remove unused predicates<<<<<<
+!!! >>>>>> pre-predicates: step pre-5: group & simpl impl<<<<<<
+!!! >>>>>> pre-predicates: step pre-6: combine<<<<<<
+!!! >>>>>> pre-predicates: step pre-7: remove redundant x!=null<<<<<<
+!!! >>>>>> pre-predicates: step pre-8: strengthen<<<<<<
+!!! >>>>>> step 6: generalization <<<<<<
+!!! >>>>>> post-predicates<<<<<<
+!!! >>>>>> step post-4: step remove unused predicates<<<<<<
+!!! >>>>>> post-predicates: step post-5: remove redundant x!=null : not implemented yet<<<<<<
+!!! >>>>>> post-predicates: step post-61: weaken<<<<<<
+
+*************************************
+*******relational definition ********
+*************************************
+[ HP_9(next_14_778) ::= emp& XPURE(HP_9(next_14_778)),
+ H1(c_26) ::= c_26::node<val_14_777,next_14_778>@M& XPURE(HP_9(next_14_778)),
+ G1(res_27,c_28) ::= c_28::node<val_14_777,res_27>@M& XPURE(HP_9(res_27))]
+*************************************
+====================

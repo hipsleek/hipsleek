@@ -1,0 +1,50 @@
+data node{
+	int val;
+	node prev;
+	node next;
+}
+
+HeapPred H1(node a).
+HeapPred G1(node a, node b).
+
+void tail (node c)
+  infer[H1,G1] requires H1(c) ensures G1(res,c);
+{
+    return c.next;
+}
+
+
+relAssume H1
+ H1(c) --> c::node<v,prev_19_765',next_19_766'>@M * 
+  K(v) * HP_5(prev_19_765') * HP_6(next_19_766')&true.
+
+ // need to use K(Int) too to capture linking variable
+
+relAssume G1
+ c::node<v,prev_14_771,res>@M * HP_5(prev_14_771) * K(v) * 
+  HP_6(res)&true --> G1(res,c)&true.
+
+
+Step 1
+======
+Convert Linking predicate into linking variables
+for pre/post conditions.
+
+A predicate p(..) is said to be linking if it is a pre-predicate
+that also appears in the LHS of a post-predicate defn.
+
+We replace each linking pre-predicate by a special 
+linking variable name, that will not be renamed.
+
+ H1(c) --> c::node<link_k,link_HP_5,link_HP_6>@M 
+
+ c::node<link_k,link_HP_5,link_HP_6>@M & link_HP_6=res 
+       --> G1(res,c)&true.
+
+Step 2
+======
+Strengthen pre-pred and weaken post-pred.
+
+ H1(c)     <--> c::node<link_k,link_HP_5,link_HP_6>@M 
+ G1(res,c) <--> c::node<link_k,link_HP_5,link_HP_6>@M & link_HP_6=res
+

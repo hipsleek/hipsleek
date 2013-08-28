@@ -2,8 +2,15 @@
 (* module Lb = Label_only *)
     (* circular with Lb *)
     
-(*let ramification_entailments = ref 0
-let total_entailments = ref 0 *)
+let ramification_entailments = ref 0
+let noninter_entailments = ref 0
+let total_entailments = ref 0
+
+type aliasing_scenario = 
+  | Not_Aliased
+  | May_Aliased
+  | Must_Aliased
+  | Partial_Aliased
 
 type ('a,'b) twoAns = 
   | FstAns of 'a
@@ -13,15 +20,22 @@ type ident = string
 type constant_flow = string
 
 exception Illegal_Prover_Format of string
+exception SA_HP_TUPLED
 
 let reverify_flag = ref false
+let reverify_all_flag = ref false
 let ineq_opt_flag = ref false
 
 let illegal_format s = raise (Illegal_Prover_Format s)
 
+type lemma_kind = LEM_TEST | LEM_TEST_NEW | LEM | LEM_UNSAFE | LEM_SAFE | LEM_INFER
 
 (* type nflow = (int*int)(\*numeric representation of flow*\) *)
-
+type flags = 
+	  Flag_str of string
+	| Flag_int of int
+	| Flag_float of float
+	
 type bformula_label = int
 and ho_branch_label = string
 (*and branch_label = spec_label	(*formula branches*)*)
@@ -73,6 +87,14 @@ and term_fail =
   | TermErr_Must
 
 and rel = REq | RNeq | RGt | RGte | RLt | RLte | RSubAnn
+
+type hp_arg_kind=
+  | I
+  | NI
+
+let print_arg_kind i= match i with
+  | I -> ""
+  | NI -> "#"
 
 (* and prim_type =  *)
 (*   | TVar of int *)
@@ -178,7 +200,8 @@ let convert_prim_to_obj (t:typ) : typ =
 
 (*for heap predicate*)
 let hp_default_prefix_name = "HP_"
-let dang_hp_default_prefix_name = "DLING_"
+let hppost_default_prefix_name = "GP_"
+let dang_hp_default_prefix_name = "__DP"
 (*
   Data types for code gen
 *)
@@ -235,12 +258,12 @@ let string_of_vp_ann a =
 
 let string_of_term_ann a =
   match a with
-  | Term -> "Term"
-  | Loop -> "Loop"
-  | MayLoop -> "MayLoop"
-  | Fail f -> match f with
-    | TermErr_May -> "TermErr_May"
-    | TermErr_Must -> "TermErr_Must"
+    | Term -> "Term"
+    | Loop -> "Loop"
+    | MayLoop -> "MayLoop"
+    | Fail f -> match f with
+        | TermErr_May -> "TermErr_May"
+        | TermErr_Must -> "TermErr_Must"
 
 let string_of_loc (p : loc) = 
     Printf.sprintf "1 File \"%s\",Line:%d,Col:%d"
@@ -296,15 +319,18 @@ let string_of_loc_by_char_num (l : loc) =
 (* Option for proof logging *)
 let proof_logging = ref false
 let proof_logging_txt = ref false
+let log_proof_details = ref true
 let proof_logging_time = ref 0.000
-let sleek_src_files = ref ([]: string list)
+(* let sleek_src_files = ref ([]: string list) *)
 
 (*sleek logging*)
 let sleek_logging_txt = ref false
+let dump_proof = ref false
+let dump_sleek_proof = ref false
 
 (*Proof logging facilities*)
 class ['a] store (x_init:'a) (epr:'a->string) =
-   object 
+   object (self)
      val emp_val = x_init
      val mutable lc = None
      method is_avail : bool = match lc with
@@ -315,9 +341,13 @@ class ['a] store (x_init:'a) (epr:'a->string) =
        | None -> emp_val
        | Some p -> p
      method reset = lc <- None
+     method get_rm :'a = match lc with
+       | None -> emp_val
+       | Some p -> (self#reset; p)
      method string_of : string = match lc with
        | None -> "Why None?"
        | Some l -> (epr l)
+     method dump = print_endline ("\n store dump :"^(self#string_of))
    end;;
 
 (* this will be set to true when we are in error explanation module *)
@@ -335,21 +365,10 @@ object
        | Some l -> (string_of_pos l.start_pos)
 end;;
 
-class proving_type =
-object
-  inherit [string] store "None" (fun x -> x)
-     (* method string_of_string : string = match lc with *)
-     (*   | None -> "None" *)
-     (*   | Some l -> l *)
-end;;
-
-
 
 (*Some global vars for logging*)
 let proving_loc  = new prog_loc
 let post_pos = new prog_loc
-let proving_kind = new proving_type
-let sleek_kind = new proving_type
 let explain_mode = new failure_mode
 let return_exp_pid = ref ([]: control_path_id list)	
 let z3_proof_log_list = ref ([]: string list)
@@ -357,51 +376,7 @@ let z3_time = ref 0.0
 
 let add_to_z3_proof_log_list (f: string) =
 	z3_proof_log_list := !z3_proof_log_list @ [f]
-	 
-let proving_info () = 
-  if(proving_kind # is_avail) then
-    (
-	let temp= if(explain_mode # is_avail) then "FAILURE EXPLAINATION" else proving_kind # string_of in
-      	if (post_pos # is_avail) 
-        then ("Proving Infor spec:"^(post_pos#string_of_pos) ^" loc:"^(proving_loc#string_of_pos)^" kind::"^temp)
-        else 
-          let loc_info = 
-            if (proving_loc # is_avail) then " loc:"^(proving_loc#string_of_pos)
-            else " loc: NONE" 
-          in ("Proving Infor spec:"^(post_pos#string_of_pos) ^loc_info^" kind::"^temp)
-    )
-  else "..no proving kind.."(*"who called is_sat,imply,simplify to be displayed later..."*)
-	
 
-let wrap_proving_kind (str : string) exec_function args =
-  (* if (!sleek_logging_txt || !proof_logging_txt) then *)
-    begin
-      let b = proving_kind # is_avail in
-      let m = proving_kind # get in
-      let _ = proving_kind # set str in
- 	  try 
-        let res = exec_function args in
-        let _ =  
-          if b then proving_kind # set m 
-          else proving_kind # reset
-        in res
-      with _ as e ->
-          begin
-            (if b then proving_kind # set m 
-            else proving_kind # reset);
-            raise e
-          end
-    end
-  (* else 	 *)
-  (*   let res = exec_function args  *)
-  (*   in res *)
- 
-(* let wrap_proving_kind (str : string) exec_function args = *)
-(*   Debug.no_1 "wrap_proving_kind" pr_id pr_none  *)
-(*       (fun _ -> wrap_proving_kind str exec_function args) str *)
-
-(* let post_pos = ref no_pos *)
-(* let set_post_pos p = post_pos := p *)
 
 let entail_pos = ref no_pos
 let set_entail_pos p = entail_pos := p
@@ -412,9 +387,9 @@ let set_entail_pos p = entail_pos := p
 (* let clear_proving_loc () = proving_loc#reset *)
 (*   (\* proving_loc := None *\) *)
 
-  let pr_lst s f xs = String.concat s (List.map f xs)
+ let pr_lst s f xs = String.concat s (List.map f xs)
 
- let pr_list_brk open_b close_b f xs  = open_b ^(pr_lst "," f xs)^close_b
+ let pr_list_brk open_b close_b f xs  = open_b ^(pr_lst ";" f xs)^close_b
  let pr_list f xs = pr_list_brk "[" "]" f xs
  let pr_list_angle f xs = pr_list_brk "<" ">" f xs
  let pr_list_round f xs = pr_list_brk "(" ")" f xs
@@ -447,6 +422,11 @@ let rec string_of_typ (x:typ) : string = match x with
 let is_RelT x =
   match x with
     | RelT _ -> true
+    | _ -> false
+;;
+let is_HpT x =
+  match x with
+    | HpT -> true
     | _ -> false
 ;;
 
@@ -488,6 +468,10 @@ let subs_tvar_in_typ t (i:int) nt =
 let null_type = Named ""
 ;;
 
+let is_null_type t=
+  match t with
+    | Named "" -> true
+    | _ -> false
 
 
 let rec s_i_list l c = match l with 
@@ -561,6 +545,7 @@ let no_pos1 = { Lexing.pos_fname = "";
 				   Lexing.pos_cnum = 0 } 
 
 let res_name = "res"
+let null_name = "null"
 
 let sl_error = "separation entailment"
 let logical_error = "logical bug"
@@ -575,8 +560,8 @@ let eres_name = "eres"
 let self = "self"
 
 let constinfinity = "ZInfinity"
-
 let deep_split_disjuncts = ref false
+let check_integer_overflow = ref false
 
 let this = "this"
 
@@ -608,6 +593,8 @@ let level_data_typ = Int
 let ls_typ = BagT (Named ls_data_typ)
 let lsmu_typ = BagT (Int)
 
+let silence_output = ref false
+
 (*precluded files*)
 let header_file_list  = ref (["\"prelude.ss\""] : string list)
 let pragma_list = ref ([] : string list)
@@ -621,6 +608,19 @@ let lib_files = ref ([] : string list)
  * moved here from iparser.mly *)
 
 (* command line options *)
+
+let ptr_to_int_exact = ref false
+
+let is_sleek_running = ref false
+
+let remove_label_flag = ref false
+let label_split_conseq = ref true
+let label_split_ante = ref true
+let label_aggressive_sat = ref true
+let label_aggressive_imply = ref true
+
+let texify = ref false
+let testing_flag = ref false
 
 let instantiation_variants = ref 0
 
@@ -638,25 +638,88 @@ let consume_all = ref false
 
 let enable_split_lemma_gen = ref false
 
-let show_diff = ref false
+let dis_show_diff = ref false
 
 let sa_print_inter = ref false
 
-let sa_en_norm = ref true
+let tc_drop_unused = ref false
+let simpl_unfold3 = ref false
+let simpl_unfold2 = ref false
+let simpl_unfold1 = ref false
+
+let print_heap_pred_decl = ref true
+
+let cond_path_trace = ref true
+
+let pred_syn_modular = ref true
+
+let syntatic_mode = ref false (* syntatic mode - default is semantic*)
+
+let sa_dnc = ref false
+
+let pred_reuse = ref false
+
+(*temp: should be improve*)
+let pred_en_oblg = ref true
+
+(* let sa_en_norm = ref false *)
+
+let pred_syn_flag = ref true
+
+let sa_syn = ref true
+
+let lemma_syn = ref false
 
 let sa_en_split = ref false
 
-let sa_elim_dangling = ref false
+let pred_split = ref false
 
-let sa_elim_useless = ref false
+(* let sa_dangling = ref false *)
 
-let sa_inlining = ref false
+let sa_refine_dang = ref false
+
+let pred_elim_useless = ref false
+let infer_deep_ante_flag = ref false
+
+let pred_infer_flag = ref true
+
+let pred_elim_dangling = ref false
+
+(* let sa_inlining = ref false *)
+
+let sa_sp_split_base = ref false
+let sa_pure_field = ref false
+
+let sa_infer_split_base = ref true
+
+let pred_elim_unused_preds = ref true
+
+(* let sa_keep_unused_preds = ref false *)
 
 let sa_unify_dangling = ref false
 
+let pred_conj_unify = ref false
+
+let pred_disj_unify = ref false
+
+let pred_equiv = ref false
+
+let sa_tree_simp = ref false
+
+let sa_subsume = ref false
+
+(* let norm_elim_useless = ref false *)
+
+let norm_extract = ref false
+let allow_norm_disj = ref true
+
+let norm_cont_analysis = ref true
+
+let lemma_infer = ref false
+
 let dis_sem = ref false
 
-let show_diff_constrs = ref false
+(* let show_diff_constrs = ref true *)
 
 let procs_verified = ref ([] : string list)
 
@@ -668,6 +731,10 @@ let verify_callees = ref false
 
 let elim_unsat = ref false
 let disj_compute_flag = ref false
+let compute_xpure_0 = ref true
+let inv_wrap_flag = ref true
+let lhs_case_flag = ref false
+let lhs_case_search_flag = ref false
 let smart_xpure = ref true
 let super_smart_xpure = ref false
 let precise_perm_xpure = ref true
@@ -675,19 +742,38 @@ let precise_perm_xpure = ref true
      smart_xpure and xpure0!=xpure1 *)
 let smart_memo = ref false
 
+let enable_constraint_based_filtering = ref false
+
 (* let lemma_heuristic = ref false *)
 
 let elim_exists_ff = ref true
 
 let allow_imm = ref true (*imm will delay checking guard conditions*)
 
+let allow_imm_inv = ref true (*imm inv to add of form @M<:v<:@A*)
 let allow_field_ann = ref false
 
-let allow_mem = ref true
+(*Since this flag is disabled by default if you use this ensure that 
+run-fast-test mem test cases pass *)
+let allow_field_ann = ref false 
+  (* disabled by default as it is unstable and
+     other features, such as shape analysis are affected by it *)
 
-let allow_inf = ref true (*enable support to use infinity (\inf and -\inf) in formulas *)
+let allow_mem = ref false
+(*enabling allow_mem will turn on field ann as well *)
+
+let infer_mem = ref false
+
+let pa = ref false
+
+let allow_inf = ref false (*enable support to use infinity (\inf and -\inf) in formulas *)
 
 let ann_derv = ref false
+
+let print_ann = ref true
+let print_derv = ref false
+
+let print_clean_flag = ref false
 
 (*is used during deployment, e.g. on a website*)
 (*Will shorten the error/warning/... message delivered
@@ -732,20 +818,26 @@ let check_all = ref true
   
 let auto_number = ref true
 
+let sleek_flag = ref false
+
 let sleek_log_filter = ref true
 (* flag to filter trivial sleek entailment logs *)
+(* particularly child calls *)
 
 let use_field = ref false
 
 let large_bind = ref false
 
 let print_x_inv = ref false
+let print_cnv_null = ref false
 
 let hull_pre_inv = ref false
 
 let use_coercion = ref true
 
 let case_split = ref false
+
+let simplified_case_normalize = ref true
 
 let use_set = ref true
 
@@ -789,6 +881,8 @@ let num_self_fold_search = ref 0
 let self_fold_search_flag = ref false
 
 let show_gist = ref false
+let imply_top_flag = ref false
+let early_contra_flag = ref true
 
 let trace_failure = ref false
 
@@ -817,6 +911,10 @@ let enable_prune_cache = ref true
 
 let enable_counters = ref false
 
+let enable_time_stats = ref true
+
+let enable_count_stats = ref true
+
 let enable_fast_imply = ref false
 
 let failure_analysis = ref false
@@ -826,6 +924,7 @@ let seq_to_try = ref false
 let print_input = ref false
 let print_input_all = ref false
 
+let print_cil_input = ref false
 (* let pass_global_by_value = ref true *)
 
 (* let allow_pred_spec = ref false *)
@@ -842,6 +941,8 @@ let disable_elim_redundant_ctr = ref false
 let enable_strong_invariant = ref false
 let enable_aggressive_prune = ref false
 let enable_redundant_elim = ref false
+
+let enable_constraint_based_filtering = ref false
 
 (* let disable_aggressive_prune = ref false *)
 (* let prune_with_slice = ref false *)
@@ -957,6 +1058,7 @@ let omega_err = ref false
 let seq_number = ref 10
 
 let sat_timeout_limit = ref 2.
+let user_sat_timeout = ref false
 let imply_timeout_limit = ref 3.
 
 let dis_provers_timeout = ref false
@@ -1178,16 +1280,137 @@ let norm_file_name str =
 	done;
 	str
 
-let wrap_classic et f a =
-  let flag = !do_classic_frame_rule in
-  do_classic_frame_rule := (match et with
-    | None -> !opt_classic
-    | Some b -> b);
-  try 
-    let res = f a in
-    (* restore flag do_classic_frame_rule  *)
-    do_classic_frame_rule := flag;
-    res
-  with _ as e ->
-      (do_classic_frame_rule := flag;
-      raise e)
+(* let wrap_classic et f a = *)
+(*   let flag = !do_classic_frame_rule in *)
+(*   do_classic_frame_rule := (match et with *)
+(*     | None -> !opt_classic *)
+(*     | Some b -> b); *)
+(*   try  *)
+(*     let res = f a in *)
+(*     (\* restore flag do_classic_frame_rule  *\) *)
+(*     do_classic_frame_rule := flag; *)
+(*     res *)
+(*   with _ as e -> *)
+(*       (do_classic_frame_rule := flag; *)
+(*       raise e) *)
+
+(* let wrap_gen save_fn set_fn restore_fn flags f a = *)
+(*   (\* save old_value *\) *)
+(*   let old_values = save_fn flags in *)
+(*   let _ = set_fn flags in *)
+(*   try  *)
+(*     let res = f a in *)
+(*     (\* restore old_value *\) *)
+(*     restore_fn old_values; *)
+(*     res *)
+(*   with _ as e -> *)
+(*       (restore_fn old_values; *)
+(*       raise e) *)
+
+(* let wrap_one_bool flag new_value f a = *)
+(*   let save_fn flag = (flag,!flag) in *)
+(*   let set_fn flag = flag := new_value in *)
+(*   let restore_fn (flag,old_value) = flag := old_value in *)
+(*   wrap_gen save_fn set_fn restore_fn flag f a *)
+
+(* let wrap_two_bools flag1 flag2 new_value f a = *)
+(*   let save_fn (flag1,flag2) = (flag1,flag2,!flag1,!flag2) in *)
+(*   let set_fn (flag1,flag2) = flag1 := new_value; flag2:=new_value in *)
+(*   let restore_fn (flag1,flag2,old1,old2) = flag1 := old1; flag2:=old2 in *)
+(*   wrap_gen save_fn set_fn restore_fn (flag1,flag2) f a *)
+
+(* (\* let wrap_general flag new_value f a = *\) *)
+(* (\*   (\\* save old_value *\\) *\) *)
+(* (\*   let old_value = !flag in *\) *)
+(* (\*   flag := new_value; *\) *)
+(* (\*   try  *\) *)
+(* (\*     let res = f a in *\) *)
+(* (\*     (\\* restore old_value *\\) *\) *)
+(* (\*     flag := old_value; *\) *)
+(* (\*     res *\) *)
+(* (\*   with _ as e -> *\) *)
+(* (\*       (flag := old_value; *\) *)
+(* (\*       raise e) *\) *)
+
+(* let wrap_no_filtering f a = *)
+(*   wrap_one_bool filtering_flag false f a *)
+
+(* let wrap_lbl_dis_aggr f a = *)
+(*   wrap_two_bools label_aggressive_sat label_aggressive_imply false f a *)
+
+let proof_no = ref 0
+
+let next_proof_no () =
+  proof_no := !proof_no + 1;
+  !proof_no
+
+(* let next_proof_no_str () = *)
+(*   proof_no := !proof_no + 1; *)
+(*   string_of_int !proof_no *)
+
+let get_proof_no () = !proof_no
+
+let get_proof_no_str () = string_of_int !proof_no
+
+let sleek_proof_no = ref 0
+
+let last_sleek_fail_no = ref 0
+
+let get_sleek_no () = !sleek_proof_no
+
+let set_sleek_no n = sleek_proof_no:=n
+
+let get_last_sleek_fail () = !last_sleek_fail_no
+
+let set_last_sleek_fail () = 
+  last_sleek_fail_no := !sleek_proof_no
+
+(* let next_sleek_int () : int = *)
+(*   sleek_proof_no := !sleek_proof_no + 1;  *)
+(*   (!sleek_proof_no) *)
+
+
+(* let read_from_debug_file chn : string list = *)
+(*   let line = ref [] in *)
+(*   let quitloop = ref false in *)
+(*   (try *)
+(*     while true do *)
+(*       let xs = (input_line chn) in *)
+(*       let n = String.length xs in *)
+(*       (\* let s = String.sub xs 0 1 in *\) *)
+(*       if n > 0 && xs.[0]=='#' (\* String.compare s "#" !=0 *\) then begin *)
+(*         line := xs::!line; *)
+(*       end; *)
+(*     done; *)
+(*   with _ -> ()); *)
+(*   !line *)
+
+(* let debug_map = Hashtbl.create 50 *)
+
+(* let read_main () = *)
+(*   let xs = read_from_debug_file (debug_file ()) in *)
+(*   (\* let _ = print_endline ((pr_list (fun x -> x)) xs) in *\) *)
+(*   List.iter (fun x -> *)
+(*       try *)
+(*         let l = String.index x ',' in *)
+(*         let m = String.sub x 0 l in *)
+(*         let split = String.sub x (l+1) ((String.length x) -l -1) in *)
+(*         let _ = print_endline (m) in *)
+(*         let _ = print_endline (split) in *)
+(*         let kind = if String.compare split "Trace" == 0 then DO_Trace else *)
+(*           if String.compare split "Loop" == 0 then DO_Loop else *)
+(*             DO_Normal *)
+(*         in *)
+(*         Hashtbl.add debug_map m kind *)
+(*       with _ -> *)
+(*       Hashtbl.add debug_map x DO_Normal *)
+(*   ) xs *)
+
+(* let in_debug x = *)
+(*   try *)
+(*     Hashtbl.find debug_map x *)
+(*   with _ -> DO_None *)
+
+
+
+

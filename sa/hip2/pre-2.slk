@@ -1,0 +1,79 @@
+data node{
+ int val;
+ node next;
+}.
+
+
+HeapPred H(node a).
+HeapPred HP_2(node a).
+
+relAssume  H // (1)
+ H(x) & x=null --> emp.
+relAssume  HP // (2)
+ H(x) --> x::node<_,next> * HP_2(next) .
+
+shape_infer [H][].
+
+/*
+
+GOT:
+[ H(x) ::= x::node<Anon_11,next>@M& XPURE(HP_2(next))
+        or emp&x=null
+ ]
+
+EXPECTING:
+[ H(x) ::= x::node<Anon_11,next>@M& XPURE(HP_2(next))
+]
+
+
+ H(x) --> x=null -> emp
+ H(x) --> true -> x::node<_,next> & XPURE(HP_2(next))
+---------------------------------------------------------
+ H(x) --> false & not(true) -> emp
+   /\ true & x!=null -> x::node<_,next> & XPURE(HP_2(next))
+   /\ true & x=null -> x::node<_,next> & XPURE(HP_2(next)) &  x=null
+---------------------------------------------------------
+ H(x) --> false \/ x::node<..> \/ false
+      --> x::node<_,next> & XPURE(HP_2(next))
+
+ B & A1 --> C1
+ B & A2 --> C2
+------------------
+ B --> A1 -> C1
+ B --> A2 -> C2
+------------------
+ B --> A1->C1 /\ A2-> C2
+------------------
+ B --> A1 & not(A2) -> C1 
+    /\ A2 & not(A1) -> C2
+    /\ A1 & A2 -> C1 /\ C2
+------------------
+ B -->  C1 & A1 & not(C2)
+    \/  C2 & A2 & not(A1)
+   \/  C1 /\ C2 & A1 & A2
+
+
+ B --> x=null -> C1
+ B --> true -> C2
+
+ B --> P1 -> C1
+ ---------------
+ B --> C1 & P1
+
+
+ B --> P1 -> C1
+ B --> P2 -> C2  P1/\P2=false
+--------------------------------------
+ B --> P1 \/ P2 -> C1 & P1 \/ C2 & P2
+
+
+ B --> P1 -> C1
+ B --> P2 -> C2  P1/\P2!=false
+------------------------------
+ B --> P1\/P2 ->
+          C1 & P1 & not(P2) 
+       \/ C2 & P2 & not(P1)
+       \/ (C1 /\ C2) & P1 & P2 // most tricky
+
+
+*/

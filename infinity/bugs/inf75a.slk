@@ -1,0 +1,78 @@
+
+slk_simplify x=null & mi=\inf.
+//Simplify  (1): x=null  // lose m=\inf
+
+slk_simplify  mi=\inf.
+//Simplify  (2): true // lose info
+
+slk_simplify  mi!=\inf. 
+//Simplify  (3): false // unsound
+
+slk_simplify  mi<\inf. 
+//Simplify  (4): true // lose info
+
+slk_simplify  mi<=\inf. 
+//Simplify  (5): true // OK
+
+slk_simplify  \inf<m. 
+//Simplify  (6): false OK
+
+slk_simplify  \inf<=m. 
+//Simplify  (7): m=\inf  OK
+
+slk_simplify  \inf<=\inf+1. 
+//Simplify  (8): (\inf)<=(\inf)
+
+slk_simplify  \inf<=\inf-1. 
+//Simplify  (9): (\inf)<=(\inf) // sound?
+
+
+/*
+# inf75a.slk --en-inf
+
+slk_simplify x=null & mi=\inf.
+//Simplify  (1): x=null  // lose m=\inf
+
+slk_simplify  mi=\inf.
+//Simplify  (2): true // lose info
+
+slk_simplify  mi!=\inf. 
+//Simplify  (3): false // unsound
+
+slk_simplify  mi<\inf. 
+//Simplify  (4): true // lose info
+
+slk_simplify  mi<=\inf. 
+//Simplify  (5): true // OK
+
+slk_simplify  \inf<m. 
+//Simplify  (6): false OK
+
+slk_simplify  \inf<=m. 
+//Simplify  (7): m=\inf  OK
+
+slk_simplify  \inf<=\inf+1. 
+//Simplify  (8): (\inf)<=(\inf)
+
+slk_simplify  \inf<=\inf-1. 
+//Simplify  (9): (\inf)<=(\inf) // sound?
+
+-------------------------
+
+slk_simplify x=null & mi=\inf.
+
+Gives:
+ Simplify  (1): x=null
+
+
+Reason is that normalization converts mi=\inf to true!
+Can we do this:
+   mi=\inf --> mi=ZInfinity
+   mi!=Int --> mi<ZInfinity
+
+norm_pure_input@20@19
+norm_pure_input inp1 : x=null & mi=\inf
+norm_pure_input@20 EXIT out : x=0 & true
+
+
+*/

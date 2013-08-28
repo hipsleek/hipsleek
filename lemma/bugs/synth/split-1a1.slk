@@ -1,0 +1,21 @@
+data node{
+	int val;
+	node next;
+}.
+
+pred zip<y> ==
+  self=null & y=null
+or self::node<_,p>*y::node<_,q>*p::zip<q>
+inv true.
+
+HeapPred P1(node a).
+HeapPred P2(node a).
+
+//lemma self::zip<y> -> P1(self) * P2(y).
+
+infer [P1,P2]
+  xx::node<_,p>*yy::node<_,q>*P1(p) * P2(q)
+     |- P1(xx) * P2(yy).
+print residue.
+
+/*

@@ -1,0 +1,22 @@
+data node{
+	int val;
+	node next;
+}.
+
+pred G<y> ==
+  self=null & y=null
+or self::node<_,p>*p::G<y>
+inv true.
+
+HeapPred P1(node a).
+HeapPred P2(node a).
+
+lemma_infer [P1,P2] self::G<y> -> P1(self) * P2(y) & y!=null.
+print residue.
+/*
+// this is for independent paramters, just like zip.
+ (a) add lemma
+ (b) unfold LHS and for infer_cmd
+ (c) collect result from
+*/
+

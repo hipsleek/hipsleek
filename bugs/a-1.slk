@@ -1,0 +1,21 @@
+data node {
+  int val;
+  node next;
+}.
+
+
+// (5)
+infer [] @A<:v |- v=@A.
+
+infer [] @L<:v |- v=@L.
+
+// (6)
+infer [] v<:@M |- v=@M.
+
+/*
+// (11) Fail (due to incompleteness)
+infer [] y::node<_,_>@M |- y::node<a,b>@v & v<:@M.
+
+// (17)
+infer [] y::node<_,_>@v |- y::node<a,b>@L.
+*/

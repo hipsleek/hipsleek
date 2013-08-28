@@ -1,0 +1,33 @@
+data node {
+ int val;
+ node right;
+}.
+
+HeapPred H(node a).
+relation R1(int a).
+relation G(node a).
+
+/*
+infer [R1] x::node<a1,b1> * R1(a1) & G(b1) |- x::node<a,b> & a>0.
+print residue.
+*/
+
+infer [H,R1] x::node<a1,b1> * H(b1) & R1(a1) |- x::node<a,b> & a>0.
+print residue.
+
+
+/*
+# mt-2.slk
+
+Why is there an extra _pure_of_H name? Can it
+be removed for pure infer
+
+Entail (3) : Valid. 
+
+ <1>H(b1)&R1(a1) & a=a1 & b=b1 & 1<=a1&{FLOW,(19,20)=__norm}[]
+ inferred rel: [RELASS [R1,_pure_of_H]: ( R1(a1)) -->  1<=a1]
+
+
+*/
+
+

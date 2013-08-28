@@ -1,0 +1,25 @@
+data node { int val ; node next }.
+
+pred ll<n> == self = null & n = 0
+	or self::node<next = r> * r::ll<n - 1>
+	inv n >= 0.
+
+pred sortl<n, mi> == self = null & n = 0
+	or self::node<mi, r> * r::sortl<n - 1, k> & mi <= k
+	inv n >= 0.
+
+lemma self::sortl<n, mi> -> self::ll<n>.
+
+checkentail x = null & n = 0
+	or x::node<mi, r> * r::sortl<n - 1, k> & mi <= k
+     |- x::ll<n>.
+print residue.
+
+checkentail x = null & n = 0
+	or x::node<mi, r> * r::sortl<n - 1, k> & mi <= k
+     |- case {
+         x=null -> [] n = 0;
+	 x!=null -> [] x::node<next = r> * r::ll<n - 1>;
+        }
+    .
+print residue.

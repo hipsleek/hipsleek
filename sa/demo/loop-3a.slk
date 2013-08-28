@@ -1,0 +1,42 @@
+data node{
+	node next;
+}.
+
+HeapPred H_2(node a).
+
+pred P<> == self::node<n> * H_2(n).
+
+infer [H_2]
+ x::node<next_1> * H_2(next_1) |- x::P<>.
+print residue.
+
+/*
+# loop-3a.slk
+
+GOT
+===
+Entail (1) : Valid. 
+ <1>emp&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [H_2(next_1) --> H_2(next_1)]
+
+It seems that our derivation may obtain for us
+a special identity relational assumption:
+
+  U(v) --> U(v)
+
+In the case of pre-pred, we are to obtain
+as weak as possible; so this could be simplified to
+
+ U(v) --> true
+
+In the case of post-pred, we are to obtain
+a version than is as strong as possible, so we could
+reduce it instead to:
+
+  false --> U(v)
+
+I think this has to be in our design and implementation
+so that we will end up with weakest pre and strongest
+post for each of our predicates..
+
+*/

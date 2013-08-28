@@ -1,0 +1,21 @@
+checkentail
+(m_858=0 & sm1_363=\inf & lg1_879+(\inf)=0) 
+& sm1_330=sm1_363 
+& lg1_879<=lg_360 & sm<=sm1_363 
+& 0<(sm+(\inf)) & sm<(\inf) & sm=sm_358 
+& lg=lg_360 & lg1_331=lg1_879
+|-	     
+(exists lg1_900:
+lg1_900=max(lg1_331,sm) 
+//lg1_900=sm 
+& lg1_900<(\inf))
+.
+
+/*
+Above fails but should have suceeded
+ after you subs lg1_331=-\inf
+
+An example of incompleteness of \inf
+
+*/
+

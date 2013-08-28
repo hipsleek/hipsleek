@@ -17,11 +17,13 @@ int foo(int N)
   ensures res=N;
 {
 int i = 0;
+int k = 0;
 while (i < N) 
   requires true
-  ensures i'=N;
+  ensures i'=N & k=2*N;
   {
     i = i+1;
+	k = k+2;
   }
  return i;
 }

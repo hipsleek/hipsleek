@@ -1,0 +1,37 @@
+data node{
+ int val;
+ node next;
+}.
+
+
+HeapPred H(node a,node b).
+HeapPred HP_1(node a,node b).
+HeapPred HP_2(node a,node b).
+
+relAssume  H // (1)
+ H(x,y) --> x::node<_,next> * HP_2(next,y).
+relAssume  HP_2 // (2)
+  HP_2(next,y) & next!=null --> H(next,y).
+relAssume  HP_2 // (3)
+  HP_2(next,y) & next=null --> emp.
+
+shape_infer [H,HP_2][].
+
+/*
+ Obtained:
+
+[ H(x_57,y_58) ::= x_57::node<Anon_11,next>@M * (HP_2(next,y_58))
+    & XPURE(H(y_58)),
+      ^^^^^^^^^^^^^^
+ HP_2(next_59,y_60) ::= HP_61(next_59,y_60)& XPURE(H(y_60)),
+                                             ^^^^^^^^^^^^^^
+ HP_61(next_59,y_60) ::= 
+ emp&next_59=null
+ or next_59::node<Anon_11,next>@M * (HP_61(next,y_60))&true
+ ]
+
+
+Why did we have spurious XPURE(...)?
+
+
+*/

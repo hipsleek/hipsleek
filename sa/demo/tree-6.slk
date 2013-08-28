@@ -1,0 +1,106 @@
+data node{
+	int val;
+	node prev;
+	node next;
+}.
+
+
+HeapPred G(node a).
+HeapPred H(node a).
+HeapPred HP_0(node a).
+HeapPred HP_1(node a).
+
+relAssume 
+ H(x)&true --> x::node<key_31_797,left_31_798,right_31_799> * 
+  HP_0(left_31_798) * HP_1(right_31_799).
+
+relAssume 
+ HP_0(left_31_798)&left_31_798!=null --> H(left_31_798).
+
+relAssume 
+ HP_1(right_31_799)&right_31_799!=null --> H(right_31_799).
+
+
+relAssume 
+ HP_1(right_31_799)&right_31_799=null --> emp.
+
+relAssume 
+ HP_0(left_31_798) * x::node<key_31_797,left_31_798,right_31_799>@M&
+  left_31_798!=null & right_31_799=null --> G(x).
+
+relAssume 
+ HP_0(left_31_798)&left_31_798=null --> emp.
+
+relAssume 
+ HP_1(right_31_799) * x::node<key_31_797,left_31_798,right_31_799>@M&
+  left_31_798=null --> G(x).
+
+relAssume 
+ HP_0(left_31_798)&left_31_798=null --> emp.
+
+
+relAssume 
+ HP_1(right_31_799) * x::node<key_31_797,left_31_798,right_31_799>@M&
+  left_31_798=null --> G(x).
+
+
+relAssume 
+ x::node<key_31_797,left_31_798,right_31_799>@M * G(left_31_798) * 
+ G(right_31_799)&left_31_798!=null & right_31_799!=null --> G(x).
+
+
+shape_infer [H,HP_1,HP_2][G].
+
+/*
+
+WHY HP_0 did not have base-case?
+
+
+HP_0(left_31_86) ::=  
+  left_31_86::node<key_31_797,left_31_798,right_31_799>@M * 
+  HP_0(left_31_798) * HP_1(right_31_799)&true]
+
+=======
+
+ H(x_87) ::=  x_87::node<key_31_797,left_31_798,right_31_799>@M * HP_0(left_31_798) * HP_1(right_31_799)&true,
+
+ HP_1(right_31_69) ::=  
+ right_31_69::node<key_31_797,left_31_798,right_31_799>@M * 
+ HP_0(left_31_798) * HP_1(right_31_799)&true
+ or emp&right_31_69=null
+ ,
+
+ G(x_88) ::=  
+ HP_0(left_31_798) * x_88::node<key_31_797,left_31_798,right_31_799>@M&
+ left_31_798!=null & right_31_799=null
+ or HP_1(right_31_799) * x_88::node<key_31_797,left_31_798,right_31_799>@M&
+    left_31_798=null
+ or x_88::node<key_31_797,left_31_798,right_31_799>@M * G(left_31_798) * 
+    G(right_31_799)&left_31_798!=null & right_31_799!=null
+ ,
+ HP_0(left_31_86) ::=  left_31_86::node<key_31_797,left_31_798,right_31_799>@M * 
+HP_0(left_31_798) * HP_1(right_31_799)&true]
+
+
+--pred-unify
+
+
+[ H(x_87) ::=  x_87::node<key_31_797,left_31_798,right_31_799>@M * H(left_31_798) * 
+HP_1(right_31_799)&true,
+ HP_1(right_31_69) ::=  
+ emp&right_31_69=null
+ or right_31_69::node<key_31_797,left_31_798,right_31_799>@M * 
+    H(left_31_798) * HP_1(right_31_799)&true
+ ,
+ G(x_88) ::=  
+ x_88::node<key_31_797,left_31_798,right_31_799>@M * G(left_31_798) * 
+ G(right_31_799)&left_31_798!=null & right_31_799!=null
+ or HP_1(right_31_799) * x_88::node<key_31_797,left_31_798,right_31_799>@M&
+    left_31_798=null
+ or H(left_31_798) * x_88::node<key_31_797,left_31_798,right_31_799>@M&
+    left_31_798!=null & right_31_799=null
+ ]
+
+
+
+*/

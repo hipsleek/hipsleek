@@ -1,0 +1,15 @@
+data node {
+	int val; 
+	node next;	
+}.
+
+HeapPred H1(node x).
+HeapPred H2(node x, int n).
+
+
+// (9)
+infer [H1]  H1(y) |- (exists a: y::node<a,null> & a>0).
+print residue.
+
+
+

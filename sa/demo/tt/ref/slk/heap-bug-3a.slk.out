@@ -1,0 +1,50 @@
+========heap-bug-3a.slk ==========
+Starting Omega...oc
+H is defined.
+G is defined.
+HP_0 is defined.
+HP_1 is defined.
+HP_4 is defined.
+HP_5 is defined.
+
+!!! >>>>>> step 1: find dangling ptrs, link pre and post-preds dangling preds<<<<<<
+!!! >>>>>> step 2: split constraints based on pre and post-preds<<<<<<
+!!! **********************************
+!!! **** split_base ****
+!!! **********************************
+!!! post_hps:[G]
+!!! prog_vars:[]
+!!! BEFORE:[(1): HP_4(left_39_832) * HP_5(right_39_833) * 
+  x::node<key_39_831,left_39_832,right_39_833>@M&left_39_832=null & 
+  v_bool_39_812' --> G(x)]
+!!! =============>>>>
+!!! AFTER:[(1): HP_5(right_39_833) * x::node<key_39_831,left_39_832,right_39_833>@M&
+  left_39_832=null --> G(x),
+(2): HP_4(left_39_832)&left_39_832=null --> emp]
+!!! UNKNOWN added:[]
+!!! **********************************
+!!! **** end of split_base ****
+!!! **********************************
+!!! >>>>>> step 3: apply transitive implication<<<<<<
+!!! >>>>>> step 3a: simplification <<<<<<
+!!! >>>>>> step 3b: do apply_transitive_imp <<<<<<
+!!! >>>>>> pre-predicates<<<<<<
+!!! >>>>>> step pre-4: remove unused predicates<<<<<<
+!!! >>>>>> pre-predicates: step pre-5: group & simpl impl<<<<<<
+!!! >>>>>> pre-predicates: step pre-6: combine<<<<<<
+!!! >>>>>> pre-predicates: step pre-7: remove redundant x!=null<<<<<<
+!!! >>>>>> pre-predicates: step pre-8: strengthen<<<<<<
+!!! >>>>>> step 6: generalization <<<<<<
+!!! >>>>>> post-predicates<<<<<<
+!!! >>>>>> step post-4: step remove unused predicates<<<<<<
+!!! >>>>>> post-predicates: step post-5: remove redundant x!=null : not implemented yet<<<<<<
+!!! >>>>>> post-predicates: step post-61: weaken<<<<<<
+
+*************************************
+*******relational definition ********
+*************************************
+[ HP_4(left_39_26) ::= emp&left_39_26=null,
+ G(x_27) ::= HP_5(right_39_833) * x_27::node<key_39_831,left_39_832,right_39_833>@M&
+left_39_832=null]
+*************************************
+====================

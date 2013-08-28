@@ -1,0 +1,82 @@
+data node{
+	int val;
+	node next;
+}.
+
+HeapPred HL(node a).
+HeapPred H1(node a, node b).
+HeapPred HP_1(node a, node@NI b).
+HeapPred HP_2(node a, node@NI b).
+HeapPred HP_8(node a, node@NI b).
+HeapPred G1(node a, node b, node c).
+
+relAssume 
+ H1(x,y)&x!=null --> x::node<val_24_819,next_24_820>@M * 
+  HP_1(next_24_820,y) * HP_2(y,x).
+
+relAssume 
+ HP_2(y,x)
+   --> y::node<val_25_826,next_25_827> * HP_8(next_25_827,x).
+
+relAssume 
+ HP_8(next_25_827,x) * HP_1(next_24_820,y) & true 
+ --> H1(next_24_820,next_25_827).
+
+relAssume 
+ H1(x,y) & x=null & res=null --> G1(x,y,res).
+
+relAssume 
+ y::node<val_25_826,next_25_827> * x::node<val_24_819,nn>
+  * G1(nn,next_25_827,rr) 
+  & nn=rr
+  & res=x --> G1(x,y,res).
+ 
+//shape_infer[H1,HP_2,HP_1,HP_8][G1].
+shape_infer[H1,HP_2,HP_1,HP_8][G1].
+
+/*
+
+# zip1b2.slk
+
+Just need to identify redundant predicates for removal:
+[ HP_2(y_175,x_176) ::= y_175::node<val_25_826,next_25_827>@M * (HP_8(next_25_827,x_176))&true,
+ (HP_8(next_25_827,x)) * 
+  (HP_1(next_24_820,y)) ::= H1(next_24_820,next_25_827)&true]
+
+=====
+
+[ HP_2(y_175,x_176) ::= y_175::node<val_25_826,next_25_827>@M * (HP_8(next_25_827,x_176))&true,
+ H1(x_177,y_178) ::= 
+ emp&x_177=null
+ or (H1(next_24_102,next_25_100)) * y_178::node<val_25_99,next_25_100>@M * 
+    x_177::node<val_24_101,next_24_102>@M&true
+ ,
+ G1(x_179,y_180,res_181) ::= HP_182(x_179,y_180,res_181)&res_181=x_179,
+ HP_182(x_179,y_180,res_183) ::= 
+ emp&x_179=null
+ or y_180::node<val_25_826,next_25_827>@M * x_179::node<val_24_819,nn>@M * 
+    (HP_182(nn,next_25_827,nn))&true
+ ,
+ (HP_8(next_25_827,x)) * 
+  (HP_1(next_24_820,y)) ::= H1(next_24_820,next_25_827)&true]
+
+=== --sa-s-split
+
+[ H1(x_176,y_177) ::= 
+ HP_60(y_177)&x_176=null
+ or (H1(next_24_103,next_25_101)) * y_177::node<val_25_100,next_25_101>@M * 
+    x_176::node<val_24_102,next_24_103>@M&true
+ ,
+ HP_2(y_178,x_179) ::= y_178::node<val_25_826,next_25_827>@M * (HP_8(next_25_827,x_179))&true,
+ G1(x_180,y_181,res_182) ::= HP_183(x_180,y_181,res_182)&res_182=x_180,
+ HP_183(x_180,y_181,res_182) ::= 
+ HP_60(y_181)&x_180=null & res_182=null
+ or y_181::node<val_25_826,next_25_827>@M * x_180::node<val_24_819,nn>@M * 
+    (HP_183(nn,next_25_827,nn))&true
+ ,
+ (HP_8(next_25_827,x)) * 
+  (HP_1(next_24_820,y)) ::= H1(next_24_820,next_25_827)&true,
+ HP_60(y) ::=NONE]
+
+
+*/

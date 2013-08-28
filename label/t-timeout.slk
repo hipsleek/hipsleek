@@ -1,0 +1,22 @@
+checkentail
+flted_8_1577=null & M1=union({v_1578},M1_1580,M2_1582) & l_1579=n_54' & 
+r_1581=tmp_55' & r_1581=right_43_1620 & l_1579=left_44_1624 & 
+M1_1580=M1_1644 & (((g_1574=l_1579 & M1_1580={}) | (g_1574!=l_1579 & 
+M1_1580!=({})))) & (((g_1574=null & l_1579!=s_1575) | (g_1574=s_1575 & 
+l_1579!=null))) & s_1575!=null & cur_1628!=null & (((flted_8_1577=r_1581 & 
+M2_1582={}) | (flted_8_1577!=r_1581 & M2_1582!=({})))) & 
+(((flted_8_1577=null & r_1581!=s_1576) | (flted_8_1577=s_1576 & 
+r_1581!=null))) & s_1576!=null & sent_1584!=null & a_1643=g_1574 & 
+cur'!=null & cur'!=sent' & cur'=n_54' & cur=cur_1628 & sent=sent' & 
+sent=sent_1583 & sent=sent_1584 & a!=null & cur!=sent & a=sent & 
+s_1576=sent_1583 & s_1575=sent_1583 & a=g_1574 & cur_1628!=sent_1583 & 
+a!=cur_1628 & b=null & prev=prev_1626 & cur_1628=prev' & (((b=null & 
+prev!=sent_1584) | (b=sent_1584 & prev!=null))) & (((b=prev & M2={}) | 
+(b!=prev & M2!=({}))))
+|-  (M2={} | b=prev)
+.
+
+/*
+ id: 355; prover: MONA; TIME: 5.; loc: swt-4e-set_ss_57:2_57:22; kind: PRE_REC
+ Imply: ante: 
+*/

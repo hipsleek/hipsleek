@@ -1,0 +1,35 @@
+data node{
+	int val;
+	node next;
+}.
+
+HeapPred H2(node a).
+HeapPred H3(node a).
+
+pred ln<> ==
+    self::node<_,q> & q=null
+  or self::node<_,q> * q::ln<> & q!=null
+ inv self!=null.
+
+pred lseg<p> ==
+    self::node<_,p> 
+  or self::node<_,q> * q::lseg<p> 
+ inv true.
+
+/*
+infer [H2] H2(x) |- x=null.
+print residue.
+
+
+*/
+//infer [H2] H2(r)   |- r::lseg<p> & p=null.
+//print residue.
+infer [H2] H2(r)   |- r::lseg<q>*q::ln<>.
+print residue.
+//infer [H2] H2(r)   |- r::node<_,q>*q::ln<>.
+//print residue.
+//infer [H2] H2(r)   |- r::node<_,p> & p=null.
+
+
+infer [H2,H3] H2(r)*H3(q)   |- r::lseg<null>*q::ln<>.
+print residue.

@@ -1,0 +1,263 @@
+data node {
+ int mark;
+ node left;
+ node right;
+}.
+
+pred tx<g,s,"s":M> == true&["":self = g & s!=null & (g=null | g=s) ; "s": M={}]
+   or self::node<v,l,r> * l::tx<g,s,M1> * r::tx<null,s,M2> & ["": self != g & self != s ;"s": M=union({v},M1,M2)]
+   or self::node<v,l,r> * l::tx<null,s,M1> * r::tx<g,s,M2> & ["": self != g & self != s ;"s": M=union({v},M1,M2)]
+inv true&["": s!=null & (g=null & self!=s | g=s & self!=null); "","s":(self=g & M={} | self!=g & M!={})].
+
+ checkentail 
+prev::tx<b,sent_1214,M2>@M * r_1211::tx<g_1205,s_1206,M2_1212>@M * 
+cur_1262::node<v_1208,tmp_55',prev_1260>@M * 
+l_1209::tx<flted_9_1207,s_1204,M1_1210>@M
+& AndList( "":cur=cur_1262 & prev=prev_1260 & sent=sent' & a=null & b=sent & 
+         cur!=null & l_1209=n_54' & r_1211=tmp_55' & r_1211=right_51_1246 & 
+         l_1209=left_52_1258 & cur_1262=prev' & cur'=n_54' & cur'!=sent' & 
+         !(v_bool_56_998') & cur'!=sent' & !(v_bool_56_998') & cur'!=null & 
+         !(v_bool_59_999') & cur'!=null & !(v_bool_59_999') & a_1353!=null & 
+         ((b_1355!=null | cur'=sent' | a_1353!=sent'))
+ ; "":flted_9_1207=null & a!=cur_1262 & cur_1262!=sent_1213 & 
+   s_1204=sent_1213 & a=g_1205 & s_1206=sent_1213 & sent=sent_1213 & 
+   sent=sent_1214 & a_1353=flted_9_1207 & g_1205=null & b!=prev' & 
+   prev'!=s_1206 & s_1206=sent_1214 & exists(sent_2294:b_1355!=prev' & 
+   prev'!=sent_2294 & s_1206=sent_2294 & b=b_1355 & sent_1214=sent_2294)
+ ; "s":M1=union({v_1208},M1_1210,M2_1212) & M1_1210=M1_1354 & 
+   M2_1356=union({v_1208},M2_1212,M2)) 
+ |-  false.
+
+/*
+# t-f-2.slk -tp om --lbl-en-aggr-sat
+
+WHY is there a MONA limit reach for this simple example?
+How many invocations to MONA did we have? Can we print
+it just like omega
+
+Starting Omega...oc
+Mona is running ... restart (limit reached)
+
+Entail 1: Fail.
+Stop Omega... 50 invocations 
+SAT Count   : 200
+SAT % Hit   : 34.%
+IMPLY Count : 16
+IMPLY % Hit : 12.5%
+Time(cache overhead) : 0.064005 (seconds)
+
+
+-------
+# t-f-2.slk -tp om 
+
+l_1209!=s_1204 & s_1204!=null & s_1204!=null & M1=union({v_1208},M1_1210,
+M2_1212) & M1_1210=M1_1354 & M2_1356=union({v_1208},M2_1212,M2)
+
+Mona is running ... mona aborted execution
+inside timer_start 136
+inside timer_stop 136
+[mona] Warning: sat --> true(from mona failure 1b)
+
+inside add_proof_info
+adding last_big
+inside timer_start 137
+inside timer_stop 137
+
+ store dump :Sat:  cur_1262!=null & cur=cur_1262 & prev=prev_1260 & sent=sent' & a=null & 
+b=sent & cur!=null & l_1209=n_54' & r_1211=tmp_55' & r_1211=right_51_1246 & 
+l_1209=left_52_1258 & cur_1262=prev' & cur'=n_54' & cur'!=sent' & 
+!(v_bool_56_998') & cur'!=sent' & !(v_bool_56_998') & cur'!=null & 
+!(v_bool_59_999') & cur'!=null & !(v_bool_59_999') & a_1353!=null & 
+((b_1355!=null | cur'=sent' | a_1353!=sent')) & 
+exists(M2_210:exists(r:(((b=r & M2_210={}) | (b!=r & M2_210!=({})))) & 
+(((b=null & r!=sent_1214) | (b=sent_1214 & r!=null)))) & 
+exists(M1:exists(l:(((null=null & l!=sent_1214) | (sent_1214=null & 
+l!=null))) & (((l=null & M1={}) | (l!=null & M1!=({}))))) & 
+exists(v:M2=union({v},M1,M2_210)))) & prev!=null & b!=prev & 
+prev!=sent_1214 & sent_1214!=null & sent_1214!=null & 
+exists(M2:exists(r:(((r=null & M2={}) | (r!=null & M2!=({})))) & 
+(((null=null & r!=s_1206) | (s_1206=null & r!=null)))) & 
+exists(M1:exists(l:(((g_1205=l & M1={}) | (g_1205!=l & M1!=({})))) & 
+(((g_1205=null & l!=s_1206) | (g_1205=s_1206 & l!=null)))) & 
+exists(v:M2_1212=union({v},M1,M2)))) & r_1211!=null & g_1205!=r_1211 & 
+r_1211!=s_1206 & s_1206!=null & s_1206!=null & 
+exists(M2:exists(r:(((flted_9_1207=r & M2={}) | (flted_9_1207!=r & 
+M2!=({})))) & (((flted_9_1207=null & r!=s_1204) | (flted_9_1207=s_1204 & 
+r!=null)))) & exists(M1:exists(l:(((null=null & l!=s_1204) | (s_1204=null & 
+l!=null))) & (((l=null & M1={}) | (l!=null & M1!=({}))))) & 
+exists(v:M1_1210=union({v},M1,M2)))) & l_1209!=null & flted_9_1207!=l_1209 & 
+l_1209!=s_1204 & s_1204!=null & s_1204!=null & flted_9_1207=null & 
+a!=cur_1262 & cur_1262!=sent_1213 & s_1204=sent_1213 & a=g_1205 & 
+s_1206=sent_1213 & sent=sent_1213 & sent=sent_1214 & a_1353=flted_9_1207 & 
+g_1205=null & b!=prev' & prev'!=s_1206 & s_1206=sent_1214 & prev'!=s_1206 & 
+s_1206=sent_1214 & b_1355!=prev' & b=b_1355
+
+Mona is running ... mona aborted execution
+inside timer_start 137
+inside timer_stop 137
+[mona] Warning: sat --> true(from mona failure 1b)
+
+inside add_proof_info
+adding last_big
+inside timer_start 138
+inside timer_stop 138
+
+ store dump :Sat:  cur_1262!=null & cur=cur_1262 & prev=prev_1260 & sent=sent' & a=null & 
+b=sent & cur!=null & l_1209=n_54' & r_1211=tmp_55' & r_1211=right_51_1246 & 
+l_1209=left_52_1258 & cur_1262=prev' & cur'=n_54' & cur'!=sent' & 
+!(v_bool_56_998') & cur'!=sent' & !(v_bool_56_998') & cur'!=null & 
+!(v_bool_59_999') & cur'!=null & !(v_bool_59_999') & a_1353!=null & 
+((b_1355!=null | cur'=sent' | a_1353!=sent')) & 
+exists(M2_210:exists(r:(((b=r & M2_210={}) | (b!=r & M2_210!=({})))) & 
+(((b=null & r!=sent_1214) | (b=sent_1214 & r!=null)))) & 
+exists(M1:exists(l:(((null=null & l!=sent_1214) | (sent_1214=null & 
+l!=null))) & (((l=null & M1={}) | (l!=null & M1!=({}))))) & 
+exists(v:M2=union({v},M1,M2_210)))) & prev!=null & b!=prev & 
+prev!=sent_1214 & sent_1214!=null & sent_1214!=null & 
+exists(M2:exists(r:(((r=null & M2={}) | (r!=null & M2!=({})))) & 
+(((null=null & r!=s_1206) | (s_1206=null & r!=null)))) & 
+exists(M1:exists(l:(((g_1205=l & M1={}) | (g_1205!=l & M1!=({})))) & 
+(((g_1205=null & l!=s_1206) | (g_1205=s_1206 & l!=null)))) & 
+exists(v:M2_1212=union({v},M1,M2)))) & r_1211!=null & g_1205!=r_1211 & 
+r_1211!=s_1206 & s_1206!=null & s_1206!=null & 
+exists(M2:exists(r:(((flted_9_1207=r & M2={}) | (flted_9_1207!=r & 
+M2!=({})))) & (((flted_9_1207=null & r!=s_1204) | (flted_9_1207=s_1204 & 
+r!=null)))) & exists(M1:exists(l:(((null=null & l!=s_1204) | (s_1204=null & 
+l!=null))) & (((l=null & M1={}) | (l!=null & M1!=({}))))) & 
+exists(v:M1_1210=union({v},M1,M2)))) & l_1209!=null & flted_9_1207!=l_1209 & 
+l_1209!=s_1204 & s_1204!=null & s_1204!=null & M1=union({v_1208},M1_1210,
+M2_1212) & M1_1210=M1_1354 & M2_1356=union({v_1208},M2_1212,M2)
+
+Mona is running ... mona aborted execution
+inside timer_start 138
+inside timer_stop 138
+[mona] Warning: sat --> true(from mona failure 1b)
+
+inside add_proof_info
+adding last_big
+inside timer_start 139
+inside timer_stop 139
+inside add_proof_info
+inside timer_start 140
+inside timer_stop 140
+inside add_proof_info
+inside timer_start 141
+inside timer_stop 141
+inside add_proof_info
+inside timer_start 142
+inside timer_stop 142
+inside add_proof_info
+inside timer_start 143
+inside timer_stop 143
+inside add_proof_info
+inside timer_start 144
+inside timer_stop 144
+inside add_proof_info
+inside timer_start 145
+inside timer_stop 145
+inside add_proof_info
+inside timer_start 146
+inside timer_stop 146
+inside add_proof_info
+inside timer_start 147
+inside timer_stop 147
+inside add_proof_info
+inside timer_start 148
+inside timer_stop 148
+inside add_proof_info
+inside timer_start 149
+inside timer_stop 149
+
+ store dump :Sat:  cur_1262!=null & cur=cur_1262 & prev=prev_1260 & sent=sent' & a=null & 
+b=sent & cur!=null & l_1209=n_54' & r_1211=tmp_55' & r_1211=right_51_1246 & 
+l_1209=left_52_1258 & cur_1262=prev' & cur'=n_54' & cur'!=sent' & 
+!(v_bool_56_998') & cur'!=sent' & !(v_bool_56_998') & cur'!=null & 
+!(v_bool_59_999') & cur'!=null & !(v_bool_59_999') & a_1353!=null & 
+((b_1355!=null | cur'=sent' | a_1353!=sent')) & 
+exists(M2_211:exists(r:(((r=null & M2_211={}) | (r!=null & M2_211!=({})))) & 
+(((null=null & r!=sent_1214) | (sent_1214=null & r!=null)))) & 
+exists(M1:exists(l:(((b=l & M1={}) | (b!=l & M1!=({})))) & (((b=null & 
+l!=sent_1214) | (b=sent_1214 & l!=null)))) & exists(v:M2=union({v},M1,
+M2_211)))) & prev!=null & b!=prev & prev!=sent_1214 & sent_1214!=null & 
+sent_1214!=null & exists(M2:exists(r:(((g_1205=r & M2={}) | (g_1205!=r & 
+M2!=({})))) & (((g_1205=null & r!=s_1206) | (g_1205=s_1206 & r!=null)))) & 
+exists(M1:exists(l:(((null=null & l!=s_1206) | (s_1206=null & l!=null))) & 
+(((l=null & M1={}) | (l!=null & M1!=({}))))) & exists(v:M2_1212=union({v},M1,
+M2)))) & r_1211!=null & g_1205!=r_1211 & r_1211!=s_1206 & s_1206!=null & 
+s_1206!=null & exists(M2:exists(r:(((r=null & M2={}) | (r!=null & 
+M2!=({})))) & (((null=null & r!=s_1204) | (s_1204=null & r!=null)))) & 
+exists(M1:exists(l:(((flted_9_1207=l & M1={}) | (flted_9_1207!=l & 
+M1!=({})))) & (((flted_9_1207=null & l!=s_1204) | (flted_9_1207=s_1204 & 
+l!=null)))) & exists(v:M1_1210=union({v},M1,M2)))) & l_1209!=null & 
+flted_9_1207!=l_1209 & l_1209!=s_1204 & s_1204!=null & s_1204!=null & 
+flted_9_1207=null & a!=cur_1262 & cur_1262!=sent_1213 & s_1204=sent_1213 & 
+a=g_1205 & s_1206=sent_1213 & sent=sent_1213 & sent=sent_1214 & 
+a_1353=flted_9_1207 & g_1205=null & b!=prev' & prev'!=s_1206 & 
+s_1206=sent_1214 & prev'!=s_1206 & s_1206=sent_1214 & b_1355!=prev' & 
+b=b_1355
+
+Mona is running ... mona aborted execution
+inside timer_start 149
+inside timer_stop 149
+[mona] Warning: sat --> true(from mona failure 1b)
+
+inside add_proof_info
+adding last_big
+inside timer_start 150
+inside timer_stop 150
+
+ store dump :Sat:  cur_1262!=null & cur=cur_1262 & prev=prev_1260 & sent=sent' & a=null & 
+b=sent & cur!=null & l_1209=n_54' & r_1211=tmp_55' & r_1211=right_51_1246 & 
+l_1209=left_52_1258 & cur_1262=prev' & cur'=n_54' & cur'!=sent' & 
+!(v_bool_56_998') & cur'!=sent' & !(v_bool_56_998') & cur'!=null & 
+!(v_bool_59_999') & cur'!=null & !(v_bool_59_999') & a_1353!=null & 
+((b_1355!=null | cur'=sent' | a_1353!=sent')) & 
+exists(M2_211:exists(r:(((r=null & M2_211={}) | (r!=null & M2_211!=({})))) & 
+(((null=null & r!=sent_1214) | (sent_1214=null & r!=null)))) & 
+exists(M1:exists(l:(((b=l & M1={}) | (b!=l & M1!=({})))) & (((b=null & 
+l!=sent_1214) | (b=sent_1214 & l!=null)))) & exists(v:M2=union({v},M1,
+M2_211)))) & prev!=null & b!=prev & prev!=sent_1214 & sent_1214!=null & 
+sent_1214!=null & exists(M2:exists(r:(((g_1205=r & M2={}) | (g_1205!=r & 
+M2!=({})))) & (((g_1205=null & r!=s_1206) | (g_1205=s_1206 & r!=null)))) & 
+exists(M1:exists(l:(((null=null & l!=s_1206) | (s_1206=null & l!=null))) & 
+(((l=null & M1={}) | (l!=null & M1!=({}))))) & exists(v:M2_1212=union({v},M1,
+M2)))) & r_1211!=null & g_1205!=r_1211 & r_1211!=s_1206 & s_1206!=null & 
+s_1206!=null & exists(M2:exists(r:(((r=null & M2={}) | (r!=null & 
+M2!=({})))) & (((null=null & r!=s_1204) | (s_1204=null & r!=null)))) & 
+exists(M1:exists(l:(((flted_9_1207=l & M1={}) | (flted_9_1207!=l & 
+M1!=({})))) & (((flted_9_1207=null & l!=s_1204) | (flted_9_1207=s_1204 & 
+l!=null)))) & exists(v:M1_1210=union({v},M1,M2)))) & l_1209!=null & 
+flted_9_1207!=l_1209 & l_1209!=s_1204 & s_1204!=null & s_1204!=null & 
+M1=union({v_1208},M1_1210,M2_1212) & M1_1210=M1_1354 & 
+M2_1356=union({v_1208},M2_1212,M2)
+
+Mona is running ... mona aborted execution
+inside timer_start 150
+inside timer_stop 150
+[mona] Warning: sat --> true(from mona failure 1b)
+
+inside add_proof_info
+adding last_big
+inside add_proof_info
+inside add_proof_info
+
+Entail 1: Fail.
+
+Stop Omega... 33 invocations 
+SAT Count   : 87
+SAT % Hit   : 12.64%
+IMPLY Count : 16
+IMPLY % Hit : 6.25%
+Time(cache overhead) : 0.080006 (seconds)
+
+!!! log(small):(1.064625,125)
+!!! log(big)(>0.5s)(12):(9.061231,[(SAT,0.62776),(SAT,0.856385),(SAT,0.998355),(SAT,0.649482),(SAT,0.641394),(SAT,1.161868),(SAT,0.889944),(SAT,0.706628),(SAT,0.589969),(SAT,0.626052),(SAT,0.669755),(SAT,0.643639)])
+!!! log(bigger)(>4s)(16):(9.061231,[(SAT:113:NO:MONA,4.584998),(SAT:114:NO:MONA,4.207816),(SAT:122:NO:MONA,4.929803),(SAT:123:NO:MONA,4.464687),(SAT:124:NO:MONA,4.999642),(SAT:125:NO:MONA,4.359972),(SAT:127:NO:MONA,4.948172),(SAT:128:NO:MONA,4.842884),(SAT:129:NO:MONA,4.739176),(SAT:130:NO:MONA,4.361382),(SAT:135:NO:MONA,5.),(SAT:136:NO:MONA,4.352531),(SAT:137:NO:MONA,4.552078),(SAT:138:NO:MONA,4.560957),(SAT:149:NO:MONA,4.88393),(SAT:150:NO:MONA,4.312945)])
+Total verification time: 72.720543 second(s)
+	Time spent in main process: 0.732045 second(s)
+	Time spent in child processes: 71.988498 second(s)
+
+
+
+  
+*/

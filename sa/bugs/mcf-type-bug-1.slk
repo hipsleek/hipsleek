@@ -1,0 +1,49 @@
+data tree {
+    node children;
+    }.
+    
+data node {
+    tree child; 
+    node prev; 
+    node next; 
+    tree parent;
+    }.
+
+HeapPred H1(tree a).
+PostPred G1(tree a).
+HeapPred H2(node a,node@NI c,tree@NI b).
+HeapPred H_1(tree a,node@NI c,tree@NI b).
+HeapPred H_2(node a,node@NI c,tree@NI b).
+HeapPred H_3(node a,node@NI c,tree@NI b).
+HeapPred H_4(tree a,node@NI c,tree@NI b).
+HeapPred H_5(tree a). // ERROR here 
+PostPred G2(node a,node@NI c,tree@NI b).
+Declare_Unknown [H_2,H_4].
+
+
+relAssume
+ H_5(children_84)&
+  children_84!=null --> H2(children_84,n_38',t).
+// what are n_39' and t?
+
+relAssume
+ H_5(children_84) &
+  children_84=null --> emp.
+
+
+//shape_infer [H1,H2,H_1,H_2,H_3,H_4,H_5][].
+shape_infer [H2,H_5][].
+
+
+/*
+# mcf-type-bug-1.slk
+
+Can we have a more meaningful type error message than below.
+At least, print the variable.
+
+ERROR: at mcf-1.slk_66:47_66:58 
+Message: gather_type_info_var : unexpected exceptionInvalid_argument("[ocamlgraph] iter_succ")
+ Fatal error: exception Failure("gather_type_info_var : unexpected exceptionInvalid_argument("[ocamlgraph] iter_succ")")
+
+
+*/

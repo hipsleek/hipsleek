@@ -1,0 +1,39 @@
+data node{
+	int val;
+	node next;
+}.
+
+HeapPred H1(node a, node b).
+HeapPred HP_4(node a, node b).
+HeapPred G1(node a, node b).
+HeapPred K(int a).
+
+relAssume H1
+ H1(c,y)&true --> c::node<val_16_751',next_16_752'>@M * 
+    HP_4(next_16_752',y)&true.
+
+relAssume H1
+ HP_4(t_31',y)&t_31'!=null --> H1(t_31',y)&true.
+
+relAssume G1
+ c::node<val_16_781,t_792>@M * G1(t_792,y) &t_792!=null --> G1(c,y)&true.
+
+relAssume G1
+ HP_4(next_21_790,y) * c::node<val_16_779,y>@M & next_21_790=null --> G1(c,y)&true.
+
+shape_infer [H1,HP_4][G1].
+
+/*
+[ H1(c_37,y_38) ::= c_37::node<val_16_751',next_16_752'>@M * (HP_4(next_16_752',y_38))&true,
+ G1(c_41,y_42) ::= c_41::node<val_16_781,t_792>@M * (HP_43(t_792,y_42))&true,
+ HP_43(t_792,y_42) ::= 
+ emp&t_792=y_42
+ or t_792::node<val_16_781,t_44>@M * (HP_43(t_44,y_42))&true
+ ,
+ HP_4(next_21_39,y_40) ::= 
+ emp&next_21_39=null
+ or next_21_39::node<val_16_751',next_16_752'>@M * (HP_4(next_16_752',y_40))&
+    true
+ ]
+*/
+

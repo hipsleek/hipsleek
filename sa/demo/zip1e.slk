@@ -1,0 +1,136 @@
+data node{
+	int val;
+	node next;
+}.
+
+HeapPred HL(node a).
+HeapPred H1(node a, node b).
+HeapPred HP_1(node a, node@NI b).
+HeapPred HP_2(node a, node@NI b).
+HeapPred HP_8(node a, node@NI b).
+HeapPred G1(node a, node b, node c).
+
+relAssume 
+ H1(x,y)&x!=null --> x::node<val_24_819,next_24_820>@M * 
+  HP_1(next_24_820,y) * HP_2(y,x).
+
+relAssume 
+ HP_2(y,x)
+   --> y::node<val_25_826,next_25_827> * HP_8(next_25_827,x).
+
+relAssume
+ HP_8(next_25_827,x) * HP_1(next_24_820,y) & true 
+ --> H1(next_24_820,next_25_827).
+
+relAssume 
+ H1(x,y) & x=null & res=null --> G1(x,y,res).
+
+/*
+relAssume 
+ H1(x,y)&x=null  --> emp.
+ H1(x,y)&x=null  --> HL(y).
+*/
+
+relAssume 
+ y::node<val_25_826,next_25_827> * x::node<val_24_819,nn>
+  * G1(nn,next_25_827,rr) 
+  & nn=rr
+  & res=x --> G1(x,y,res).
+ 
+shape_infer[H1,HP_2,HP_1,HP_8][G1].
+
+/*
+
+# zip1.slk 
+
+GOT
+====
+
+[ HP_2(y_176,x_177) ::= y_176::node<val_25_826,next_25_827>@M * (HP_8(next_25_827,x_177))&true,
+
+ HP_1(next_24_820,y) ::= (H1(x,y)) * (HP_2(y,x))&true,
+ HP_8(next_25_827,x) ::= HP_2(y,x)&true,
+
+ H1(x_178,y_179) ::= 
+ emp&x_178=null
+ or (H1(next_24_103,next_25_101)) * y_179::node<val_25_100,next_25_101>@M * 
+    x_178::node<val_24_102,next_24_103>@M&true
+ ,
+
+ G1(x_180,y_181,res_183) ::= 
+ emp&x_180=null
+ or y_181::node<val_25_826,next_25_827>@M * x_180::node<val_24_819,nn>@M * 
+    (G1(nn,next_25_827,nn))&true
+ ]
+
+PROBLEMS
+========
+(1) Why did we get:
+ HP_1(next_24_820,y) ::= (H1(x,y)) * (HP_2(y,x))&true,
+ HP_8(next_25_827,x) ::= HP_2(y,x)&true,
+Expecting: (tupled definition for two pre-pred)
+ (HP_1(next_24_820,y@NI)) * (HP_8(next_25_827,x@NI))&
+  true <--> H1(next_24_820,next_25_827)&true,
+
+# zip1.slk
+
+(2) Also, for G, we seem to lose the relation x=r. Why is it missing??
+ EXPECTING:
+ G1(x_180,y_181,res_183) ::= 
+ emp&x_180=null  //& x=r
+ or y_181::node<val_25_826,next_25_827>@M * x_180::node<val_24_819,nn>@M * 
+    (G1(nn,next_25_827,nn))  //& x=r
+ ]
+
+(3) We had a split:
+relAssume G1
+ H1(x,y) & x=null & res=null --> G1(x,y,res).
+
+Since y is instantiating. Perhaps, we should have a special SPLIT
+that preserves its data using a special predicate HL(y).
+ H1(x,y)&x=null  --> HL(y)
+ HL(y) & x=null & res=null --> G1(x,y,res)
+
+
+==========================
+
+ H1(x,y)&x!=null --> x::node<val_24_819,next_24_820>@M * 
+  (HP_821(next_24_820,y@NI)) * (HP_822(y,x@NI))&true,
+ 
+ HP_822(y,x@NI)&true --> y::node<val_25_826,next_25_827>@M * 
+  (HP_828(next_25_827,x@NI))&true,
+
+ (HP_821(next_24_820,y@NI)) * (HP_828(next_25_827,x@NI))&
+  true --> H1(next_24_820,next_25_827)&true,
+
+ H1(x,y)&x=null --> emp&true,
+
+ emp&x=null & res=null --> G1(x,y,res)&true,
+ y::node<val_25_826,next_25_827>@M * 
+  (G1(next_24_820,next_25_827,v_node_27_858)) * 
+  x::node<v_int_26_842,v_node_27_858>@M&res=x --> G1(x,y,res)&true]
+
+STEPS
+=====
+ HP_822(y,x@NI)&true <--> y::node<val_25_826,next_25_827>@M * 
+  (HP_828(next_25_827,x@NI))&true,
+
+ H1(x,y)&x!=null --> x::node<val_24_819,next_24_820>@M * 
+  (HP_821(next_24_820,y@NI)) * y::node<val_25_826,next_25_827>@M * 
+  (HP_828(next_25_827,x@NI))
+
+ (HP_821(next_24_820,y@NI)) * (HP_828(next_25_827,x@NI))&
+  true <--> H1(next_24_820,next_25_827)&true,
+
+ H1(x,y)&x!=null --> x::node<val_24_819,nx>@M * 
+                          y::node<val_25_826,ny>@M * H1(nx,ny)
+
+ H1(x,y) <--> x::node<val_24_819,nx>@M * y::node<val_25_826,ny>@M * H1(nx,ny)
+             or x=null,
+ 
+ 
+*************************************
+
+
+
+*/

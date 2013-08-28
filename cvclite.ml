@@ -101,6 +101,7 @@ and cvcl_of_exp a = match a with
   | CP.Div (a1, a2, _) -> failwith ("[cvclite.ml]: divide is not supported.")
   | CP.Max _ 
   | CP.Min _ -> failwith ("Cvclite.cvcl_of_exp: min/max should not appear here")
+  | CP.TypeCast _ -> failwith ("Cvclite.cvcl_of_exp: TypeCast should not appear here")
   | CP.Bag ([], _) -> ""
   | CP.Bag _ | CP.BagUnion _ | CP.BagIntersect _ | CP.BagDiff _ ->
   	  failwith ("[cvcLite.ml]: ERROR in constraints (set should not appear here)");

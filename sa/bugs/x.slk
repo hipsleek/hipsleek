@@ -1,0 +1,25 @@
+data node{
+  int val;
+  node prev;
+  node next;
+}.
+
+
+pred ll<> == self = null
+        or self::node<_, _ , q> * q::ll<>.
+
+pred dll<l, p,q> == self = null & l = 0
+//                or self::node<v, p, q> * q::dll<l-1, self,_>
+          or self::node<v, p, q> * q::dll<l-1, r,_> & r=self 
+//          or (exists r: self::node<v, p, q> * q::dll<l-1, r,_> & r=self) 
+  inv l >= 0.
+
+checkentail c::node<Anon_841,p,q_843> * 
+  q_843::dll<Anon_861,c,A2>  
+  |-  (exists A4,A5: 
+         c::dll<A4,_,A5>). 
+
+
+checkentail c::node<_,p,q> * q::dll<_,c,A2>  
+  |-  (exists A5: 
+         c::dll<_,_,A5>). 

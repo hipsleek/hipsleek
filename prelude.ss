@@ -1,7 +1,5 @@
-
-
-class __DivByZeroErr  extends __Error {}
-class __ArrBoundErr  extends __Error {}
+class __DivByZeroErr extends __Error {}
+class __ArrBoundErr extends __Error {}
 
 int add___(int a, int b) 
   requires true 
@@ -70,28 +68,65 @@ int mod___(int a, int b) case {
   }
 }
 
-/*
+float add___(int a, float b) 
+  requires true 
+  ensures res = a + b;
+
+float add___(float a, int b) 
+  requires true 
+  ensures res = a + b;
+
 float add___(float a, float b) 
   requires true 
   ensures res = a + b;
+
+
+float minus___(int a, float b) 
+  requires true 
+  ensures res = a - b;
+
+float minus___(float a, int b) 
+  requires true 
+  ensures res = a - b;
 
 float minus___(float a, float b) 
   requires true 
   ensures res = a - b;
 
 
+float mult___(int a, float b) 
+  requires true 
+  ensures res = a * b;
+
+float mult___(float a, int b) 
+  requires true 
+  ensures res = a * b;
+
 float mult___(float a, float b) 
   requires true 
   ensures res = a * b;
+
+
+/*
+float div___(int a, float b)
+ case {
+  b = 0.0 -> ensures true & flow __DivByZeroErr;
+  b != 0.0 -> ensures res = a / b;
+ }
+
+float div___(float a, int b)
+ case {
+  b = 0.0 -> ensures true & flow __DivByZeroErr;
+  b != 0.0 -> ensures res = a / b;
+ }
 
 float div___(float a, float b)
  case {
   b = 0.0 -> ensures true & flow __DivByZeroErr;
   b != 0.0 -> ensures res = a / b;
  }
-// requires b!=0.0
-// ensures ensures res = a / b;
 */
+
 bool eq___(int a, int b) 
   case {
     a = b -> ensures res;
@@ -348,7 +383,53 @@ int[] aalloc___(int dim)
 	requires true 
 	ensures dom(res,0,dim-1);
 
+                                  ///////////////
+                                  /*
+pred_prim RS_mem<i:int>
+ inv i>0 & self!=null;
 
+RS_mem malloc(int n)
+ requires n>0
+ ensures  res=null or res::RS_mem<n>;
 
+RS_mem malloc(int n)
+ requires n>0
+ ensures  res=null or res::RS_mem<n>;
+
+item cast_to_ptr(RS_mem p)
+ case {
+  p=null -> ensures res=null;
+  p!=null -> 
+    requires p::RS_mem<a> & a>=size(item)
+    ensures res::item<_>
+ }
+
+item cast_to_ptr(RS_mem p)
+ case {
+  p=null -> ensures res=null;
+  p!=null -> 
+    requires p::RS_mem<a> //& a>=size(item)
+    ensures res::item<_>;
+ }
+                                  */
 //////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////
+
+/*
+data memory {
+  int size;
+}
+
+memory malloc(int size)
+  requires size>0
+  ensures  res=null or res::memory<size>;
+*/
+
+/*
+pred_prim RS_mem<i:int>
+ inv i>0 & self!=null;
+
+RS_mem malloc1(int n)
+ requires n>0
+ ensures  res=null or res::RS_mem<n>;
+*/

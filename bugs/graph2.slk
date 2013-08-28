@@ -1,0 +1,198 @@
+data node {
+  node next;
+}.
+
+pred ls<y> == 
+ case {
+  self=y -> [] true;
+  self!=y -> [] self::node<q>*q::ls<y>; 
+ }
+inv true.
+
+checkentail
+x4::ls<x5>
+* x3::node<x4>
+* x4::ls<x7>
+* x4::node<q>
+* q::ls<x6> & x4!=x6
+& x5!=x7
+& x1=x2 & x2=x3
+|- false.
+
+
+checkentail
+x3::node<x4>
+* x4::ls<x5>
+* x4::ls<x7>
+* x4::node<q>
+* q::ls<x6> & x4!=x6
+& x5!=x7
+& x1=x2 & x2=x3
+|- false.
+
+
+/*
+
+
+checkentail
+x3::node<x4>
+* x4::ls<x5>
+* x4::ls<x7> 
+* x4::ls<x6>
+& x5!=x7
+& x1=x2 & x2=x3
+|-
+x1::node<x4> * x4::ls<x5> * x4::ls<x7> & x5!=x7
+& x1=x2 & x2=x3 & x4=x6 & x1!=x4
+.
+
+checkentail
+x4::ls<x5>
+* x4::ls<x7>
+* x4::node<q>
+& x5!=x7
+|- false.
+
+
+x3::node<x4>
+* x4::ls<x5>
+* x4::ls<x7>
+* x4::node<q>
+* q::ls<x6> & x4!=x6
+& x5!=x7
+& x1=x2 & x2=x3
+
+x4=x5 or x4::node<q1>*q1::ls<x5> & x4!=x5
+x4=x7 or x4::node<q1>*q1::ls<x7> & x4!=x5
+
+
+
+x3::node<x4>
+* x4::ls<x5>
+* x4::ls<x7> 
+& x5!=x7
+& x1=x2 & x2=x3
+x4=x6 or 
+
+x3::node<x4>
+* x4::ls<x5>
+* x4::ls<x7> 
+x4::node<q>*q::ls<x6> & x4!=x6
+& x5!=x7
+& x1=x2 & x2=x3
+
+
+checkentail
+x3::node<x4>
+* x4::ls<x5>
+* x4::ls<x7> 
+* x4::ls<x6>
+& x5!=x7
+& x1=x2 & x2=x3
+|-
+x1::node<x4> * x4::ls<x5> * x4::ls<x7> & x5!=x7
+& x1=x2 & x2=x3 & x4=x6 & x1!=x4
+.
+
+
+(x1=x3 or x1::node<_,q>*q::ls<x3> & x1!=x3) *
+(x1=x2 or x1::node<_,q2>*q2::ls<x2> & x1!=x2)
+
+x1=x2 & x1=x2
+x1=x3 & x1::node<_,q>*q::ls<x2> & x1!=x2
+x1=x2 & x1::node<_,q2>*q2::ls<x3> & x1!=x3
+
+x2=x3 or x2::node<_,q3>*q3::ls<x3> & x2!=x3
+
+
+x1=x2 & x1=x2 & x2=x3
+x1=x3 & x1::node<_,q>*q::ls<x2> & x1!=x2 & x2=x3 // f
+x1=x2 & x1::node<_,q2>*q2::ls<x3> & x1!=x3 & x2=x3 // f
+
+x1=x2 & x2=x3 
+    & x2::node<_,q3>*q3::ls<x3> & x2!=x3 // f
+x1=x3 & x1::node<_,q>*q::ls<x2> & x1!=x2 // false when x3::node<_> added 
+    & x2::node<_,q3>*q3::ls<x3> & x2!=x3
+x1=x2 & x1::node<_,q2>*q2::ls<x3> & x1!=x3 &
+    & x2::node<_,q3>*q3::ls<x3> & x2!=x3 // false
+
+checkentail 
+    x1::node<q>*q::ls<x2> 
+    * x2::node<q3>*q3::ls<x3> 
+    * x3::node<_>
+    & x2!=x3
+    & x1!=x2 
+    & x1=x3 |- false
+. 
+
+checkentail
+x3::node<x4>
+* x4::ls<x5>
+* x4::ls<x6>
+* x4::ls<x7> & x5!=x7
+& x1=x2 & x2=x3
+x1::node<x4> * x4::ls<x5> * x4::ls<x7> & x5!=x7
+& x1=x2 & x2=x3 & x4=x6 & x1!=x4
+.
+
+
+
+
+
+
+checkentail
+x1::ls<x3> * x1::ls<x2> 
+* x3::node<x4>
+* x4::ls<x5>
+* x4::ls<x6>
+* x4::ls<x7> & x5!=x7
+& x2=x3 
+or x1::ls<x3> * x1::ls<x2> 
+* x3::node<x4>
+* x4::ls<x5>
+* x4::ls<x6>
+* x4::ls<x7> 
+* x2::node<q>*q::ls<x3> & x2!=x3
+& x5!=x7
+|-
+x1::node<x4> * x4::ls<x5> * x4::ls<x7> & x5!=x7
+& x1=x2 & x2=x3 & x4=x6 & x1!=x4
+.
+
+
+checkentail
+x1::ls<x3> * x1::ls<x2> * x2::ls<x3>
+* x3::node<x4>
+* x4::ls<x5>
+* x4::ls<x6>
+* x4::ls<x7> & x5!=x7
+|-
+x1::node<x4> * x4::ls<x5> * x4::ls<x7> & x5!=x7
+& x1=x2 & x2=x3 & x4=x6 & x1!=x4
+.
+
+checkentail
+x1::node<x4> * x4::ls<x5> * x4::ls<x7> & x5!=x7
+& x1=x2 & x2=x3 & x4=x6 & x1!=x4
+|-
+x1::ls<x3> * x1::ls<x2> * x2::ls<x3>
+* x3::node<x4>
+* x4::ls<x5>
+* x4::ls<x6>
+* x4::ls<x7> & x5!=x7
+.
+
+checkentail
+x1::node<x4> * x4::ls<x5> * x4::ls<x7> & x5!=x7
+& x1=x2 & x2=x3 & x4=x6 & x1!=x4
+|-
+x1::node<x4> *x4::ls<x6> * x6::ls<x7> & x1!=x4 & x1!=x6
+.
+
+checkentail
+x1::node<x4> *x4::ls<x6> * x6::ls<x7> & x1!=x4 & x1!=x6
+|-
+x1::node<x4> * x4::ls<x5> * x4::ls<x7> & x5!=x7
+& x1=x2 & x2=x3 & x4=x6 & x1!=x4
+.
+*/

@@ -8,6 +8,10 @@ open GlobProver
 open Gen.Basic
 module CP = Cpure
 
+let set_prover_type () = Others.last_tp_used # set Others.Redlog
+
+let set_proof_string str = Others.last_proof_string # set str
+let set_proof_result str = Others.last_proof_result # set str
 
 (* options *)
 let is_presburger = ref false
@@ -97,7 +101,8 @@ let send_cmd cmd =
     let cmd = cmd ^ ";\n" in
     let _ = output_string !process.outchannel cmd in
     let _ = flush !process.outchannel in
-    let _ = read_till_prompt !process.inchannel in
+    let k = read_till_prompt !process.inchannel in
+    let _ = set_proof_result ("3:"^k) in
     ()
 
 let set_rl_mode mode =
@@ -118,8 +123,8 @@ let start () =
         send_cmd "load_package redlog";
         send_cmd "rlset ofsf";
         send_cmd "on rlnzden";
-		send_cmd "off varopt"; (* An Hoa : turn off variable rearrangement *)
-		send_cmd "off arbvars"; (* An Hoa : do not introduce arbcomplex(_) *)
+        send_cmd "off varopt"; (* An Hoa : turn off variable rearrangement *)
+        send_cmd "off arbvars"; (* An Hoa : do not introduce arbcomplex(_) *)
       in
       rl_current_mode := OFSF;
       let set_process proc = process := proc in
@@ -167,6 +172,7 @@ let send_and_receive f =
   if !is_reduce_running then
     try
         let fnc () =
+          let _ = set_proof_string ("2:"^f^"\n") in
           let _ = send_cmd f in
           input_line !process.inchannel
         in
@@ -178,6 +184,7 @@ let send_and_receive f =
             Procutils.PrvComms.maybe_raise_and_catch_timeout fnc () !timeout fail_with_timeout
           else fnc ()
         in
+        let _ = set_proof_result answ in
         answ
     with
         (* Timeout exception is not expected here except for dis_provers_timeout *)
@@ -201,7 +208,6 @@ let send_and_receive f =
 
 let check_formula f =
   let res = send_and_receive ("rlqe " ^ f) in
-  (* let _ = print_endline ("redlog out:"^res) in *)
   if res = "true$" then
     Some true
   else if res = "false$" then
@@ -289,6 +295,13 @@ let rec rl_of_exp e0 =
   | CP.Div (e1, e2, _) -> "(" ^ (rl_of_exp e1) ^ " / " ^ (rl_of_exp e2) ^ ")"
   | CP.Max _
   | CP.Min _ -> failwith ("redlog.rl_of_exp: min/max can't appear here")
+  | CP.TypeCast (t, e1, _) -> (
+      match t with
+      | Globals.Int -> "fix(" ^ (rl_of_exp e1) ^ ")"
+      | Globals.Float -> rl_of_exp e1
+      | _ -> failwith ("redlog.rl_of_exp: redlog don't support type casting to '"
+                       ^ (Globals.string_of_typ t) ^ "'") 
+    )
   | _ -> failwith ("redlog: bags/list is not supported")
 
 let rl_of_b_formula b =
@@ -351,9 +364,8 @@ let rec rl_of_formula_x pr_w pr_s f0 =
   in helper f0
 
 let rl_of_formula pr_w pr_s f0 =
-  Debug.no_1 "rl_of_formula"
-      !print_formula pr_id
-      (fun _ -> rl_of_formula_x pr_w pr_s f0) f0
+  let _ = set_prover_type() in
+  rl_of_formula pr_w pr_s f0
 
 (***********************************
  pretty printer for pure formula
@@ -1113,6 +1125,7 @@ let is_valid_ops pr_w pr_s f imp_no =
   let f = normalize_formula f in
   let frl = rl_of_formula pr_s pr_w f in
   let rl_input = "rlall(" ^ frl ^")" in
+  let _ = print_endline ("rl_input 2 = " ^ rl_input) in
   let runner () = check_formula rl_input in
   let err_msg = "Timeout when checking #imply " ^ imp_no ^ "!" in
   let proc = lazy (run_with_timeout runner err_msg) in

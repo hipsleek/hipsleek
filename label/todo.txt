@@ -1,0 +1,884 @@
+# lab1.slk 
+
+checkentail n>=0 & ["n":n>0; "s":n=0] |- (n>=-1) & ["n":n>=0].
+print residue.
+
+ Issues: 
+ (i) why is CACHED called twice?
+ (ii)  logging/caching of SAT seems at a higher level?
+       Is splitting down for UNSAT? seems so.
+ (iii)  IMPLY seems to use "" for ante always?
+
+ id: 1; prover: MONA; loc: _0:0_0:0; kind: Sleek_Entail(1)
+ Sat:  (AndList ([],0<=n) & ([n],0<n) & ([s],n=0)) 
+ res: SAT
+ -------------------- 
+ id: 2; prover : CACHED ; loc: _0:0_0:0; kind: Sleek_Entail(1)
+ Sat:  (AndList ([],0<=n) & ([n],0<n) & ([s],n=0)) 
+ res: SAT
+ -------------------- 
+ id: 3; prover : CACHED ; loc: _0:0_0:0; kind: Sleek_Entail(1)
+ Sat:  (AndList ([],0<=n) & ([n],0<n) & ([s],n=0)) 
+ res: SAT
+ -------------------- 
+ id: 4; prover: MONA; loc: _0:0_0:0; kind: Sleek_Entail(1)
+ Imply: ante: 0<=n
+	     conseq:  (AndList ([],0<=(1+n))) 
+ res: true
+ -------------------- 
+ id: 5; prover: MONA; loc: _0:0_0:0; kind: Sleek_Entail(1)
+ Imply: ante: 0<=n & 0<n
+	     conseq:  (AndList ([n],0<=n)) 
+ res: true
+ --------------------
+============================================================
+# lab1.slk
+
+checkentail n>=0 & ["n":n>0; "s":n=0] |- (n>=-1) & ["n":n>=0].
+print residue.
+
+Issues : 
+ (1) why is there "true" on LHS?
+ (2) it seems the first UNSAT is redundant
+ (3) there are now 9 calls to UNSAT, we need to
+     know why is_sat is called 3 times and
+     hence tp_is_sat is called 9 times
+
+ id: 1; prover: OMEGA CALCULATOR; loc: _0:0_0:0; kind: Sleek_Entail(1)
+ Sat:  true & 0<=n
+ res: SAT
+ -------------------- 
+ id: 2; prover: OMEGA CALCULATOR; loc: _0:0_0:0; kind: Sleek_Entail(1)
+ Sat:  true & 0<=n & 0<n
+ res: SAT
+ -------------------- 
+ id: 3; prover: OMEGA CALCULATOR; loc: _0:0_0:0; kind: Sleek_Entail(1)
+ Sat:  true & 0<=n & n=0
+ res: SAT
+ 
+============================================================
+# lab2.slk -tp mona --en-proof-logging FIXED
+
+checkentail n>=0 & n>0 |- (n>=-1) & n>=0.
+print residue.
+
+Why did it not call MONA?
+
+I could not find any call to omega apart from the one in Mona.new_order_formula_x
+It looks like there is a bug in the logging  and the maintainance of the Others.last_tp_used stack.
+
+id: 1; prover: OMEGA CALCULATOR; loc: _0:0_0:0; kind: Sleek_Entail(1)
+ Sat:  0<=n & 0<n
+ res: SAT
+ -------------------- 
+ id: 2; prover: OMEGA CALCULATOR; loc: _0:0_0:0; kind: Sleek_Entail(1)
+ Imply: ante: 0<=n & 0<n
+	     conseq:  0<=(1+n)
+ res: true
+ -------------------- 
+ id: 3; prover: OMEGA CALCULATOR; loc: _0:0_0:0; kind: Sleek_Entail(1)
+ Imply: ante: 0<=n & 0<n
+	     conseq:  0<=n
+ res: true
+ --------------------
+
+is_sat_sub_no #6@1
+is_sat_sub_no #6 inp1 : (AndList ([],0<=n) & ([n],0<n) & ([s],n=0)) 
+is_sat_sub_no #6 inp2 :1
+is_sat_sub_no #6@1 EXIT out :true
+
+is_sat_sub_no #6@5
+is_sat_sub_no #6 inp1 : (AndList ([],0<=n) & ([n],0<n) & ([s],n=0)) 
+is_sat_sub_no #6 inp2 :-8999
+is_sat_sub_no #6@5 EXIT out :true
+
+is_sat_sub_no #6@9
+is_sat_sub_no #6 inp1 : (AndList ([],0<=n) & ([n],0<n) & ([s],n=0)) 
+is_sat_sub_no #6 inp2 :-8998
+is_sat_sub_no #6@9 EXIT out :true
+============================================================
+# lab1.slk
+
+checkentail n>=0 & ["n":n>0; "s":n=0] |- (n>=-1) & ["n":n>=0].
+print residue.
+
+ISSUE :
+
+The first unsat from "" label is redundant since
+it was added to labels for "n","s" already.
+
+ id: 1; prover: MONA; loc: _0:0_0:0; kind: Sleek_Entail(1)
+ Sat:  true & 0<=n
+ res: SAT
+ -------------------- 
+ id: 2; prover: MONA; loc: _0:0_0:0; kind: Sleek_Entail(1)
+ Sat:  true & 0<=n & 0<n
+ res: SAT
+ -------------------- 
+ id: 3; prover: MONA; loc: _0:0_0:0; kind: Sleek_Entail(1)
+ Sat:  true & 0<=n & n=0
+ res: SAT
+============================================================
+# dll-app.ss  FIXED with wrap_no_filter
+
+failed for --no-filter but succeed for --filter
+============================================================
+# swll-1.slk   FIXED (using UNSAT on disj ante)
+
+1st version did not work; but 2nd did due to the absence of
+UNSAT on the disj ante on "empty_RHS". Need to refine
+wrap_no_filter to support more UNSATs.
+
+checkentail x::ls<p,M> & ["n":x=p] |- true & ["s":M={}].
+
+checkentail true & ["n":x=p; "s":M={}] 
+    or x!=null & ["n":x=p & x!=p; "s":M!={}] |- true & ["s":M={}].
+
+============================================================
+# swll-1.ss   (does not work well esp for implication)
+
+ UNSAT should not mix common "" with other labels
+ to speed-up further
+
+============================================================
+# lab3.slk
+
+checkentail n>=0 & ["n":n>0; "s":n=0] |- true & ["n":n>0; "s":n=1].
+print residue.
+
+Expecting 2 implications rather than 3. The last one below
+redundant.
+
+ id: 3; prover: OMEGA CALCULATOR; loc: _0:0_0:0; kind: Sleek_Entail(1)
+ Imply: ante: 0<=n & 0<n
+	     conseq:  AndList[ ["n"]:0<n] 
+ res: true
+ -------------------- 
+ id: 4; prover: OMEGA CALCULATOR; loc: _0:0_0:0; kind: Sleek_Entail(1)
+ Imply: ante: 0<=n & n=0
+	     conseq:  AndList[ ["s"]:n=1] 
+ res: false
+ -------------------- 
+ id: 5; prover: OMEGA CALCULATOR; loc: _0:0_0:0; kind: Sleek_Entail(1)
+ Imply: ante: true
+	     conseq:  AndList[ ["n"]:0<n] 
+ res: false
+
+============================================================
+# schorr-waite-list-lbl.ss -tp om --en-logging-txt
+
+ISSUES
+------
+* Why disj conseq?
+   conseq:  ((AndList[ ["s"]:MpX={}] ) | (AndList[ ["n"]:prev=sentinel_1000] ))
+-> The disj is due to base case guard. It is checked during unfolding for base case.
+in  do_base_case_unfold_only_x (solver.ml)               
+	let (nctx,b) = sem_imply_add prog is_folding  fold_ctx bc1 !enable_syn_base_case in
+
+* why no labels on LHS?
+->  it was a problem with printing, i fixed it in tpdispatcher.ml 
+
+ id: 242; prover: MONA; TIME: 5.032313; loc: schorr-waite-list-lbl_ss_43:2_43:26; kind: PRE_REC
+ Imply: ante: ((cur=cur_1007 & prev=prev_1006 & sentinel=sentinel' & n_42'=nxt_997 & 
+next_33_1005=nxt_997 & cur_1007=prev_1018 & cur_1017=n_42' & 
+cur_1017!=sentinel' & !(v_bool_37_934') & cur_1017!=sentinel' & 
+!(v_bool_37_934') & cur_1017=null & v_bool_38_935' & cur_1017=null & 
+v_bool_38_935' & cur'=prev_1018 & prev'=null & cur_1007!=null & 
+s_995=sentinel_999 & cur_1007!=sentinel_999 & cur!=null & 
+sentinel=sentinel_999 & sentinel=sentinel_1000 & ((((s_995+1)<=nxt_997 & 
+nxt_997=null) | (nxt_997=null & nxt_997<=(s_995-1)))) & prev=sentinel_1000 & 
+Mc=union(Mnxt_998,{cur_1007}) & Mnxt_998={} & MpX={}) | (cur=cur_1007 & 
+prev=prev_1006 & sentinel=sentinel' & n_42'=nxt_997 & next_33_1005=nxt_997 & 
+cur_1007=prev_1018 & cur_1017=n_42' & cur_1017!=sentinel' & 
+!(v_bool_37_934') & cur_1017!=sentinel' & !(v_bool_37_934') & 
+cur_1017=null & v_bool_38_935' & cur_1017=null & v_bool_38_935' & 
+cur'=prev_1018 & prev'=null & nxt_997!=null & prev!=null & cur_1007!=null & 
+s_995=sentinel_999 & cur_1007!=sentinel_999 & cur!=null & 
+sentinel=sentinel_999 & sentinel=sentinel_1000 & ((s_995<nxt_997 | 
+nxt_997<s_995)) & ((sentinel_1000<prev | prev<sentinel_1000)) & 
+Mc=union(Mnxt_998,{cur_1007}) & exists(Mnxt_1046:Mnxt_998=union(Mnxt_1046,
+{nxt_997})) & exists(M1_1045:MpX=union({prev},M1_1045))) | (cur=cur_1007 & 
+prev=prev_1006 & sentinel=sentinel' & n_42'=nxt_997 & next_33_1005=nxt_997 & 
+cur_1007=prev_1018 & cur_1017=n_42' & cur_1017!=sentinel' & 
+!(v_bool_37_934') & cur_1017!=sentinel' & !(v_bool_37_934') & 
+cur_1017=null & v_bool_38_935' & cur_1017=null & v_bool_38_935' & 
+cur'=prev_1018 & prev'=null & prev!=null & cur_1007!=null & 
+s_995=sentinel_999 & cur_1007!=sentinel_999 & cur!=null & 
+sentinel=sentinel_999 & sentinel=sentinel_1000 & ((((s_995+1)<=nxt_997 & 
+nxt_997=null) | (nxt_997=null & nxt_997<=(s_995-1)))) & 
+((sentinel_1000<prev | prev<sentinel_1000)) & Mc=union(Mnxt_998,
+{cur_1007}) & Mnxt_998={} & exists(M1_1044:MpX=union({prev},M1_1044))) | 
+(cur=cur_1007 & prev=prev_1006 & sentinel=sentinel' & n_42'=nxt_997 & 
+next_33_1005=nxt_997 & cur_1007=prev_1018 & cur_1017=n_42' & 
+cur_1017!=sentinel' & !(v_bool_37_934') & cur_1017!=sentinel' & 
+!(v_bool_37_934') & cur_1017=null & v_bool_38_935' & cur_1017=null & 
+v_bool_38_935' & cur'=prev_1018 & prev'=null & nxt_997!=null & 
+cur_1007!=null & s_995=sentinel_999 & cur_1007!=sentinel_999 & cur!=null & 
+sentinel=sentinel_999 & sentinel=sentinel_1000 & ((s_995<nxt_997 | 
+nxt_997<s_995)) & prev=sentinel_1000 & Mc=union(Mnxt_998,{cur_1007}) & 
+exists(Mnxt_1043:Mnxt_998=union(Mnxt_1043,{nxt_997})) & MpX={}))
+	     conseq:  ((AndList[ ["s"]:MpX={}] ) | (AndList[ ["n"]:prev=sentinel_1000] ))
+ res: false
+
+============================================================
+# lab5a.slk
+
+checkentail  AndList("n":n>0; "s":n=0) |- 
+  (AndList("n":n>0; "s":n=0) | AndList("": n<0; "n":n>=0; "s":n=1)).
+print residue.
+
+Currently, the disjunct on RHS is not split. If we detect conseq
+is of form:
+
+  AndList(...) | AndList(..) | ..
+
+We should perform a labelling search on proving RHS, and terminate
+with the first successful proof.
+
+-------------------- 
+ id: 3; prover: OMEGA CALCULATOR; loc: _0:0_0:0; kind: Sleek_Entail(1)
+ Imply: ante: 0<n & n=0
+	     conseq:  ((0<n & n=0) | (n<0 & 0<=n & n=1))
+ res: true
+============================================================
+# swll-1.ss  FIXED due to hip calling wrong imply method
+
+l-sw-1.slk was proof 252 extracted from 
+   swll-1.ss --en-imp-top --en-logging-txt
+
+When run as sleek, it will decompose ante (LHS) prior to
+decomposing conseq.
+
+However, in hip; it was decomposing conseq and then
+dropping the labels from the LHS. Why is there such
+inconsistency? 
+
+to trace:
+let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (imp_no : string) timeout process
+
+============================================================
+# swt-4f-set.ss (INFO)
+
+multi pre/post is sufficient for swt algo
+
+Procedure lscan$node~node~node SUCCESS
+Stop Omega... 355 invocations 
+6 false contexts at: ( (66,13)  (66,6)  (65,12)  (65,6)  (60,8)  (59,19) )
+
+!!! time_log (small):(18.453534,1234)
+!!! log (>.5s):(458.429221,[0.692192,0.69396,0.723799,0.715398,0.720225,0.716505,0.761808,0.769539,5.,4.404,5.,9.512595,9.524595,9.524595,2.829472,9.636603,23.069442,3.421265,6.532407,5.,4.948308,5.,4.964312,3.665216,4.999283,5.,10.172635,10.184636,10.184636,3.397345,10.296643,13.924869,3.382726,7.056441,5.,4.952308,5.,4.964311,0.674529,0.678187,0.712585,0.706763,0.720611,0.720981,0.76844,0.762388,3.20314,5.,5.,4.748295,22.201386,22.201386,22.325395,22.337396,3.119473,3.436215,3.656512,3.628227,3.615437,3.596224,5.,4.940309,5.,2.821175,5.,7.976498,7.988498,7.988498,4.188249,8.100505,13.032814,1.846151,6.264392,5.,4.920308,5.,4.980311,0.753405,2.910105,3.399065,0.583049,0.58025])
+Total verification time: 153.689603 second(s)
+	Time spent in main process: 3.248202 second(s)
+
+============================================================
+# swl-4-addr-lbl.ss --lbl-en-aggr -tp om
+
+ E1=eq(S1) 
+ E2=eq(S2) 
+ E=E1&E2 
+ W=fv(E)
+ V1=fv(S1)
+ V2=fv(S2)
+ R1=ex(W-V1.E)
+ R2=ex(W-V2.E)
+ SAT(R1 & S1) | SAT(R2 & S2)
+-----------------------------
+ SAT(S1 & S2)
+============================================================
+# t-f.slk  -tp om --lbl-en-aggr-sat  FIXED
+
+checkentail 
+   prev::tx<b,sent_1313,M2>@M&
+  AndList( 
+  "":cur=cur' & prev=prev' & sent=sent' & a!=null & b=null & 
+         cur!=sent & a=sent
+ ; "n": a=cur' & sent_1312!=null 
+//& ((a=null | a=sent_1312)) 
+//&  sent=sent_1312 & sent=sent_1313
+ ; "s":M1={}) 
+ |-  cur'::node<mark_48_986',left_48_987',right_48_988'>@L.
+
+Currently fails:
+  Entail 1: Fail.
+
+It should not have failed if equalities were properly propagated.
+
+============================================================
+# t-f-2a.slk -tp om --lbl-en-aggr-sat
+
+PRIORITY
+ 
+WHY is there a MONA limit reach for this simple example?
+How many invocations to MONA did we have? Can we print
+it just like omega
+
+Starting Omega...oc
+Mona is running ... restart (limit reached)
+
+Entail 1: Fail.
+Stop Omega... 50 invocations 
+SAT Count   : 200
+
+MONA seems to be restarted quite often.
+One possibility is to restart mona only
+and re-execute a proof only if
+  (i) there were 100 previous working computation
+ (ii) we have an unknown failure (e.g. time-out, exception etc)
+If it fails again, we do not re-execute.
+ 
+============================================================
+# t-f-3.slk
+
+PRIORITY
+
+What is a 1b failure? Can we have a better error message?
+Can such proof be split again?
+
+Mona is running ... mona aborted execution
+[mona] Warning: sat --> true(from mona failure 1b)
+
+Entail 1: Fail.
+============================================================
+# swt-4g-set-lbl.ss -tp om --lbl-en-aggr --esl 
+
+What is the cause of below? Is it Omega or MONA problem?
+
+IMPLY : End_of_file when checking 
+ Restarting Omega after ... 173 invocations Stop Omega... 173 invocations Starting Omega...oc
+============================================================
+# swt-4g-set-lbl.ss -tp om 
+
+Procedure lscan$node~node~node SUCCESS
+Stop Omega... 246 invocations 
+!!! Number of log entries 818
+!!! Logging logs/no_eps_proof_log_swt-4g-set-lbl_ss.txt
+
+!!! Number of sleek log entries 319
+!!! Logging logs/sleek_log_swt-4g-set-lbl_ss.txt
+
+2 false contexts at: ( (58,8)  (57,19) )
+
+!!! log(small):(24.968163,1103)
+!!! log(big)(>0.5s)(27):(39.390115,[(imply,2.925499),(imply,2.372803),(imply,1.939754),(imply,1.554712),(imply,0.777756),(imply,0.763984),(imply,1.424533),(imply,2.01822),(imply,1.603307),(imply,2.453657),(imply,0.990725),(imply,0.817517),(imply,1.297117),(imply,0.892379),(imply,0.884132),(imply,1.134175),(imply,2.360318),(imply,0.594739),(imply,1.407681),(imply,1.51012),(imply,1.039994),(imply,2.17741),(imply,0.759051),(imply,0.551018),(imply,0.757007),(imply,2.371109),(imply,2.011398)])
+!!! 
+ log(bigger)(>4s)(7):(27.500453,[(imply:224<:42:NO:MONA,3.008791),(imply:400<:89:NO:MONA,5.),(imply:460<:107:NO:MONA,5.),(imply:662<:191:NO:MONA,5.),(imply:664<:191:NO:MONA,3.34148),(imply:743<:216:NO:MONA,3.029326),(imply:747<:217:NO:MONA,3.120856)])
+Total verification time: 89.265577 second(s)
+	Time spent in main process: 4.512281 second(s)
+	Time spent in child processes: 84.753296 second(s)
+	Time for logging: 1.300077 second(s)
+
+-------
+# swt-4g-set-lbl.ss -tp om --lea
+
+does not work as need to propagate x=c too
+(FIXED propagation of x=null problem; and adding eq to LHS of IMPLY)
+
+schor-waitte tree (g-version) now works with the aggressive
+option but there are some timeouts below to investigate
+for performance improvements:
+
+Checking procedure lscan$node~node~node... 
+Procedure lscan$node~node~node SUCCESS
+Stop Omega... 368 invocations 
+2 false contexts at: ( (58,8)  (57,19) )
+Total verification time: 6.020375 second(s)
+	Time spent in main process: 4.072254 second(s)
+	Time spent in child processes: 1.948121 second(s)
+	Time for logging: 1.312084 second(s)
+
+!!! log(small):(7.649072,1315)
+
+Procedure lscan$node~node~node SUCCESS
+Stop Omega... 275 invocations 
+!!! Number of log entries 1185
+!!! Logging logs/no_eps_proof_log_swt-4g-set-lbl_ss.txt
+
+!!! Number of sleek log entries 319
+!!! Logging logs/sleek_log_swt-4g-set-lbl_ss.txt
+
+2 false contexts at: ( (58,8)  (57,19) )
+
+!!! log(small):(24.939634,1487)
+!!! log(big)(>0.5s)(17):(15.600239,[(imply,0.791806),(imply,1.4352),(imply,1.18232),(imply,1.032658),(imply,0.585485),(imply,0.816166),(imply,1.608251),(imply,1.10327),(imply,1.136742),(imply,0.536958),(imply,0.809376),(imply,0.96437),(imply,0.842262),(imply,0.783089),(imply,0.552327),(imply,0.814423),(imply,0.605536)])
+Total verification time: 37.762359 second(s)
+	Time spent in main process: 5.108319 second(s)
+	Time spent in child processes: 32.65404 second(s)
+	Time for logging: 2.004122 second(s)
+
+
+--------
+# swt-4g-set-lbl.ss -tp om --dis-lbl 
+
+Procedure lscan$node~node~node SUCCESS
+Stop Omega... 306 invocations 
+2 false contexts at: ( (58,8)  (57,19) )
+
+!!! log(small):(23.454227,1254)
+!!! log(big)(>0.5s)(36):(45.975793,[(SAT,0.683766),(SAT,0.672923),(SAT,0.734657),(SAT,0.716517),(SAT,0.714193),(SAT,0.716932),(SAT,0.77277),(SAT,0.789857),(imply,1.719451),(imply,1.821174),(SAT,0.528527),(imply,2.188367),(imply,1.568875),(imply,1.621138),(SAT,0.537591),(imply,2.198906),(imply,2.326614),(imply,2.707787),(imply,2.985323),(imply,0.599133),(imply,0.597069),(SAT,0.774352),(SAT,0.678462),(SAT,0.744959),(SAT,0.727461),(SAT,0.754659),(SAT,0.739041),(SAT,0.778397),(SAT,0.786239),(imply,2.511089),(SAT,0.52471),(imply,1.702914),(imply,2.69588),(imply,1.824985),(imply,2.65411),(imply,0.876965)])
+!!! 
+ log(bigger)(>4s)(14):(55.036859,[(imply:499<:84:NO:MONA,4.123157),(imply:510<:89:NO:MONA,3.188763),(imply:561<:99:NO:MONA,3.679863),(imply:581<:102:NO:MONA,3.990717),(imply:590<:106:NO:MONA,3.554903),(imply:592<:107:NO:MONA,3.419138),(imply:643<:117:NO:MONA,3.686981),(imply:852<:188:NO:MONA,3.767111),(imply:878<:191:NO:MONA,4.038386),(imply:889<:196:NO:MONA,5.),(imply:954<:207:NO:MONA,3.37706),(imply:1001<:216:NO:MONA,3.21078),(imply:1003<:217:NO:MONA,5.),(imply:1021<:224:NO:MONA,5.)])
+Total verification time: 119.159446 second(s)
+	Time spent in main process: 3.732233 second(s)
+	Time spent in child processes: 115.427213 second(s)
+
+============================================================
+# swt-4g-set-lbl.ss -tp om --lbl-en-aggr --esl 
+
+We need a more general time-out wrapper that can also
+be applied to omega and sleek timeouts.
+
+Mona is running ... Timeout when checking #2656!
+============================================================
+# t-to-432.slk -tp om --esl
+
+timeout exception info not logged by add_proof_info
+even though inside_timeout method was executed due
+to a prior timer_start?
+why? see current code below:
+------
+  method add_proof_info new_s no =
+    print_endline "inside add_proof_info";
+    match last_big with
+      | None -> ()
+      | Some(s,t) -> 
+            begin
+              print_endline "adding last_big";
+              let to_flag = timer_timeout_flag in
+              last_big<-None;
+              let s2 = if to_flag then ":TIMEOUT:" else ":NO:" in
+              let s2 = if last_timeout_flag then s2^":T2:" else s2 in
+               hist_big # push(s^":"^no^s2^new_s,t)
+            end
+------
+
+inside timer_start 0
+inside timer_stop 0
+inside timer_start 1
+inside timer_stop 1
+inside add_proof_info
+inside timer_start 2
+inside timer_stop 2
+inside add_proof_info
+inside timer_start 3
+inside timer_timeout 3
+
+[mona.ml]:Timeout exception
+
+Mona is running ... Timeout when checking #3!
+inside timer_start 3
+inside timer_stop 3
+inside add_proof_info
+adding last_big
+inside add_proof_info
+
+Entail 1: Fail.
+
+
+SAT Count   : 1
+SAT % Hit   : 0.%
+IMPLY Count : 2
+IMPLY % Hit : 0.%
+Time(cache overhead) : 0.004001 (seconds)
+
+!!! log(small):(0.395107,3)
+!!! log(bigger)(>4s)(1):(0.,[(imply:3:NO:MONA,5.)])
+Total verification time: 8.696542 second(s)
+	Time spent in main process: 0.080004 second(s)
+	Time spent in child processes: 8.616538 second(s)
+
+!!! src_files:[t-to-432.slk]
+!!! Logging logs/no_eps_proof_log_t-to-432_slk.txt
+
+!!! Number of log entries 3
+
+===========================================================
+# t-f-2.slk -tp om --esl
+--dis-lbl
+
+Stop Omega... 8 invocations 
+SAT Count   : 21
+SAT % Hit   : 52.38%
+IMPLY Count : 14
+IMPLY % Hit : 7.14%
+Time(cache overhead) : 0.012001 (seconds)
+
+!!! log(small):(0.231865,44)
+Total verification time: 0.336019 second(s)
+	Time spent in main process: 0.160009 second(s)
+	Time spent in child processes: 0.17601 second(s)
+
+!!! src_files:[t-f-2.slk]
+!!! Logging logs/no_eps_proof_log_t-f-2_slk.txt
+
+!!! Number of log entries 43
+
+--------------------------------------------
+
+!!! log(small):(1.009156,125)
+!!! log(big)(>0.5s)(12):(9.756082,[(SAT,0.865794),(SAT,1.006212),(SAT,1.036937),(SAT,0.64791),(SAT,0.74909),(SAT,1.162425),(SAT,1.054024),(SAT,0.572506),(SAT,0.572178),(SAT,0.635461),(SAT,0.562629),(SAT,0.890916)])
+
+!!! log(bigger)(>4s)(16):(9.756082,[(SAT:113:NO:MONA,5.),(SAT:114:NO:MONA,4.682976),(SAT:122:NO:MONA,4.745412),(SAT:123:NO:MONA,4.539973),(SAT:124:NO:MONA,4.912821),(SAT:125:NO:MONA,5.),(SAT:127:NO:MONA,5.),(SAT:128:NO:MONA,5.),(SAT:129:NO:MONA,4.899909),(SAT:130:NO:MONA,4.659544),(SAT:135:NO:MONA,4.804025),(SAT:136:NO:MONA,4.723027),(SAT:137:NO:MONA,4.89216),(SAT:138:NO:MONA,4.873554),(SAT:149:NO:MONA,4.960797),(SAT:150:NO:MONA,4.726344)])
+Total verification time: 73.524594 second(s)
+	Time spent in main process: 0.848052 second(s)
+	Time spent in child processes: 72.676542 second(s)
+
+PRIORITY
+-----------------------
+
+# t-f-2.slk --lea
+
+slighly slower that --dis-lbl
+
+Entail 1: Valid. 
+
+Stop Omega... 37 invocations 
+SAT Count   : 91
+SAT % Hit   : 14.28%
+IMPLY Count : 14
+IMPLY % Hit : 0.%
+Time(cache overhead) : 0.072008 (seconds)
+
+!!! log(small):(1.324866,154)
+Total verification time: 1.656101 second(s)
+	Time spent in main process: 0.752046 second(s)
+	Time spent in child processes: 0.904055 second(s)
+
+!!! log(small):(1.324866,154)
+Total verification time: 1.656101 second(s)
+	Time spent in main process: 0.752046 second(s)
+	Time spent in child processes: 0.904055 second(s)
+
+----
+
+--dis-lbl
+
+This option seems to work very well for this example!!
+
+Entail 1: Valid. 
+
+Stop Omega... 8 invocations 
+SAT Count   : 21
+SAT % Hit   : 52.38%
+IMPLY Count : 14
+IMPLY % Hit : 7.14%
+Time(cache overhead) : 0.008002 (seconds)
+
+!!! log(small):(0.190088,44)
+Total verification time: 0.332019 second(s)
+	Time spent in main process: 0.156009 second(s)
+	Time spent in child processes: 0.17601 second(s)
+
+-----
+
+-tp om
+
+loris@loris-desktop:/home2/loris/hg/sl_infer/examples/label$ ../../sleek t-f-2.slk  -tp om --esl 
+Starting Omega...oc
+[Warning] False ctx
+
+Entail 1: Valid. 
+
+Stop Omega... 31 invocations 
+SAT Count   : 77
+SAT % Hit   : 11.68%
+IMPLY Count : 14
+IMPLY % Hit : 0.%
+Time(cache overhead) : 0.060002 (seconds)
+
+!!! log(small):(1.01297,140)
+Total verification time: 1.500092 second(s)
+	Time spent in main process: 0.732045 second(s)
+	Time spent in child processes: 0.768047 second(s)
+
+============================================================
+# swt-4g-addr-lbl.ss --lea -tp om --esl
+
+ id: 4121; prover: MONA; loc: swt-4g-addr-lbl.ss_26:23_26:29; kind: POST
+ Imply: ante: exists(Mr_3325:exists(Ml_3326:Mp=union({prev},Ml_3326,Mr_3325))) & 
+Mp_1198={} & Mc_1195=union({cur_3292},{},{}) & M_3291=union(Mc_1195,
+Mp_1198) & exists(Mr_3323:exists(Ml_3324:M_3291=union({prev'},Ml_3324,
+Mr_3323)))
+	     conseq:  M_3291={}
+ res: false
+ --------------------
+!!!  
+id: 365; caller: []; line: 14; classic: false; kind: [POST,
+Check_Specs]; hec_num: 4; evars: [sentinel_3355,flted_14_3356,flted_14_3357,M_3358]; infer_vars: []; c_heap: emp
+
+checkentail l_1148::tx<n_1141,n_1142,s_1143,Ml_1149>@M * 
+r_1150::tx<n_1144,g_1145,s_1146,Mr_1151>@M * 
+prev::tx<flted_13_1154,b_1152,a_1153,Mp>@M * 
+cur_1175::node<v_1147,r_1150,prev_1173>@M&
+((AndList( "":flted_13_1155=n_1141 & flted_13_1155=n_1142 & b=s_1143 & 
+           flted_13_1155=n_1144 & a=g_1145 & b=s_1146 & flted_13_1155=null & 
+           flted_13_1154=null & b=b_1152 & a=a_1153 & cur=cur_1175 & 
+           prev=prev_1173 & r_1150=right_21_1167 & l_1148=left_22_1171 & 
+           cur_1175=prev_1193 & cur_1191=l_1148 & cur_1191!=sentinel & 
+           !(v_bool_26_980') & cur_1191!=sentinel & !(v_bool_26_980') & 
+           cur_1191=null & v_bool_27_981' & cur_1191=null & v_bool_27_981' & 
+           flted_14_3353=null & flted_14_3354=null
+ ; "":flted_14_3354=prev' & prev'!=sentinel & flted_14_3353!=sentinel & 
+   a!=cur_1175 & b!=cur_1175 & b!=flted_13_1155 & a!=cur & (((a=null & 
+   b=sentinel) | (a=sentinel & b=null))) & 
+   exists(flted_13_1442:a_1197=prev_1193 & b_1196!=prev_1193 & 
+   b_1196!=flted_13_1442) & 
+   exists(a_1440:exists(flted_13_1441:exists(b_1439:b_1439=null & 
+   a_1440!=null & a_1440!=flted_13_1441))) & cur'=sentinel & 
+   exists(flted_13_53:b_1196!=flted_13_53) & 
+   exists(flted_13_52:exists(a_55:a_55!=null & a_55!=flted_13_52)) & 
+   b_1196!=prev_1193 & flted_14_3354=prev' & prev'!=sentinel & 
+   flted_14_3353!=sentinel & 
+   exists(sentinel_3355:exists(flted_14_3357:exists(flted_14_3356:flted_14_3356=prev' & 
+   prev'!=sentinel_3355 & flted_14_3357!=sentinel_3355)))
+ ; "s":M_3352={} & Mc=union({cur_1175},Ml_1149,Mr_1151) & Mc_1195={} & 
+   Mp_1198={} & M_3352=union(Mc_1195,Mp_1198) & exists(M_3358:M_3358={})) ) | 
+(AndList( "":flted_13_1155=n_1141 & flted_13_1155=n_1142 & b=s_1143 & 
+          flted_13_1155=n_1144 & a=g_1145 & b=s_1146 & flted_13_1155=null & 
+          flted_13_1154=null & b=b_1152 & a=a_1153 & cur=cur_1175 & 
+          prev=prev_1173 & r_1150=right_21_1167 & l_1148=left_22_1171 & 
+          cur_1175=prev_1193 & cur_1191=l_1148 & cur_1191!=sentinel & 
+          !(v_bool_26_980') & cur_1191!=sentinel & !(v_bool_26_980') & 
+          cur_1191=null & v_bool_27_981' & cur_1191=null & v_bool_27_981' & 
+          flted_14_3353=null & flted_14_3354=null
+ ; "":flted_14_3354=prev' & prev'!=sentinel & flted_14_3353!=sentinel & 
+   a!=cur_1175 & b!=cur_1175 & b!=flted_13_1155 & a!=cur & (((a=null & 
+   b=sentinel) | (a=sentinel & b=null))) & 
+   exists(flted_13_1442:a_1197=prev_1193 & b_1196!=prev_1193 & 
+   b_1196!=flted_13_1442) & 
+   exists(a_1440:exists(flted_13_1441:exists(b_1439:b_1439=null & 
+   a_1440!=null & a_1440!=flted_13_1441))) & cur'=sentinel & 
+   exists(flted_13_53:b_1196!=flted_13_53) & 
+   exists(flted_13_52:exists(a_55:a_55!=null & a_55!=flted_13_52)) & 
+   b_1196!=prev_1193 & 
+   exists(sentinel_3355:exists(flted_14_3357:exists(flted_14_3356:flted_14_3356=prev' & 
+   prev'!=sentinel_3355 & flted_14_3357!=sentinel_3355)))
+ ; "s":M_3352={} & Mc=union({cur_1175},Ml_1149,Mr_1151) & Mc_1195={} & 
+   Mp_1198={} & M_3352=union(Mc_1195,Mp_1198) & M_3352={} & 
+   exists(M_3358:M_3358={})) ))&
+{FLOW,(22,23)=__norm}[]
+ |-  (exists sentinel_3355,flted_14_3356,flted_14_3357,M_3358: emp&
+AndList( "":flted_14_3357=null & flted_14_3356=null & sentinel=sentinel_3355
+ ; "":cur'=sentinel & flted_14_3356=prev' & prev'!=sentinel_3355 & 
+   flted_14_3357!=sentinel_3355
+ ; "s":M_3358=union(Mc,Mp) & M_3358={}) &{FLOW,(22,23)=__norm})[]. 
+============================================================
+./../sleek t-swt-2656.slk -tp om --esl
+
+
+IMPLY : End_of_file when checking 
+ Restarting Omega after ... 4 invocations Stop Omega... 4 invocations Starting Omega...oc
+
+[mona.ml]:Timeout exception
+
+Mona is running ... Timeout when checking #10!
+
+!!! dumping for sleek_dump(fail)
+Entail 1: Fail.
+
+Stop Omega... 4 invocations 
+SAT Count   : 1
+SAT % Hit   : 0.%
+IMPLY Count : 5
+IMPLY % Hit : 0.%
+Time(cache overhead) : 0.012001 (seconds)
+
+!!! log(small):(0.065911,5)
+!!! 
+ log(bigger)(>4s)(2):(15.,[(imply:9<:1:TIMEOUT:OMEGA CALCULATOR,10.),(imply:10<:1:NO:MONA,5.)])
+Total verification time: 8.928556 second(s)
+	Time spent in main process: 0.128007 second(s)
+	Time spent in child processes: 8.800549 second(s)
+
+ maybe_raise_and_catch_timeout : Unexpected exception : End_of_file[3]   Done                    emacs g-s  (wd: /home2/loris/hg/sl_infer)
+(wd now: /home2/loris/hg/sl_infer/examples/label)
+[4]   Done                    emacs logs/no_eps_proof_log_examples_label_swt-4g-set-lbl_ss.txt  (wd: /home2/loris/hg/sl_infer)
+(wd now: /home2/loris/hg/sl_infer/examples/label)
+[7]+  Done                    emacs todo.txt
+
+============================================================
+# swt-4g-set-lbl.ss -tp om --lea -mona-cycle 1000
+
+buffer overflow disappears with default cycle of 90
+
+Checking procedure lscan$node~node~node... *** buffer overflow detected ***: mona_inter terminated
+======= Backtrace: =========
+/lib/tls/i686/cmov/libc.so.6(__fortify_fail+0x50)[0x1f2390]
+/lib/tls/i686/cmov/libc.so.6(+0xe12ca)[0x1f12ca]
+/lib/tls/i686/cmov/libc.so.6(+0xe0a08)[0x1f0a08]
+/lib/tls/i686/cmov/libc.so.6(_IO_default_xsputn+0x9e)[0x179afe]
+/lib/tls/i686/cmov/libc.so.6(_IO_vfprintf+0xe24)[0x14da34]
+/lib/tls/i686/cmov/libc.so.6(__vsprintf_chk+0xad)[0x1f0abd]
+/lib/tls/i686/cmov/libc.so.6(__sprintf_chk+0x2d)[0x1f09fd]
+mona_inter[0x808024e]
+mona_inter[0x8074671]
+mona_inter[0x8076944]
+/lib/tls/i686/cmov/libc.so.6(__libc_start_main+0xe6)[0x126bd6]
+mona_inter[0x804b6f1]
+======= Memory map: ========
+
+============================================================
+# swt-4g-addr-lbl.ss --lea -tp om --esl
+
+post-fail
+
+id: 189; caller: []; line: 19; classic: false; kind: [POST,
+Check_Specs]; hec_num: 4; evars: [sent_1932,flted_19_1933,M3_1934]; infer_vars: []; c_heap: prev::tx<b,sent_1143,M2>@M * r_1141::tx<g_1135,s_1136,M2_1142>@M * 
+cur_1163::node<v_1138,tmp_54',prev_1161>@M
+ checkentail l_1139::tx<flted_9_1137,s_1134,M1_1140>@M&
+AndList( "":cur=cur_1163 & prev=prev_1161 & a=null & b=sent & cur!=null & 
+         l_1139=n_53' & r_1141=tmp_54' & r_1141=right_39_1155 & 
+         l_1139=left_40_1159 & cur_1163=prev' & cur'=n_53' & cur'=sentinel & 
+         v_bool_44_996' & cur'=sentinel & v_bool_44_996'
+ ; "":flted_9_1137=null & a!=cur_1163 & cur_1163!=sent & s_1134=sent & 
+   a=g_1135 & s_1136=sent & sent=sent_1143 & 
+   exists(sent_1932:exists(flted_19_1933:flted_19_1933!=prev' & 
+   prev'!=sent_1932 & s_1136=sent_1932 & b=flted_19_1933 & 
+   sent_1143=sent_1932))
+ ; "s":M1=union({cur_1163},M1_1140,M2_1142) & 
+   exists(M3_1934:M3_1934=union({prev'},M2_1142,M2))) &
+{FLOW,(22,23)=__norm}[]
+ |-  (exists sent_1932,flted_19_1933,M3_1934: emp&
+AndList( "":flted_19_1933=null & cur'=sent & prev'!=null & sent=sent_1932 & 
+         flted_19_1933!=prev' & prev'!=sent_1932 & s_1136=sent_1932 & 
+         b=flted_19_1933 & sent_1143=sent_1932
+ ; "s":M3_1934=union(M1,M2) & M3_1934=union({prev'},M2_1142,M2)) &
+{FLOW,(22,23)=__norm})[]. 
+res:  failctx
+         fe_kind: MAY
+         fe_name: logical bug
+         fe_locs: {
+                   fc_message: failed in entailing pure formula(s) in conseq
+                   fc_current_lhs_flow: {FLOW,(22,23)=__norm}}Stop Omega... 190 invocations 
+!!! Number of log entries 841
+!!! Logging logs/no_eps_proof_log_swt-4g-addr-lbl_ss.txt
+
+!!! Number of sleek log entries 201
+!!! Logging logs/sleek_log_swt-4g-addr-lbl_ss.txt
+
+0 false contexts at: ()
+
+!!! log(small):(14.943442,964)
+!!! log(big)(>0.5s)(33):(43.435122,[(SAT,1.215302),(SAT,1.171657),(imply,0.67441),(imply,2.842573),(imply,2.504252),(imply,1.691108),(imply,0.859074),(imply,1.061111),(imply,0.928615),(imply,1.85688),(imply,0.723818),(imply,2.869664),(imply,2.576563),(imply,1.805169),(imply,0.861132),(imply,1.035464),(imply,0.891713),(imply,1.965587),(imply,0.641083),(imply,0.69931),(SAT,2.766952),(imply,0.680297),(imply,1.453692),(imply,0.66641),(imply,0.672719),(imply,0.666727),(imply,0.668876),(SAT,2.736567),(imply,0.682897),(imply,1.467558),(imply,0.674917),(imply,0.654208),(SAT,0.768817)])
+!!! 
+ log(bigger)(>4s)(45):(219.189973,[(SAT:213<:25:NO:MONA,5.),(SAT:217<:27:NO:MONA,5.),(SAT:221<:29:NO:MONA,5.),(SAT:225<:31:NO:MONA,5.),(SAT:230<:33:NO:MONA,5.),(SAT:235<:33:NO:MONA,5.),(SAT:239<:33:NO:MONA,5.),(SAT:244<:33:NO:MONA,5.),(SAT:249<:33:NO:MONA,5.),(SAT:253<:35:NO:MONA,5.),(SAT:257<:37:NO:MONA,5.),(SAT:261<:39:NO:MONA,5.),(SAT:266<:41:NO:MONA,5.),(SAT:271<:41:NO:MONA,5.),(SAT:275<:41:NO:MONA,5.),(SAT:280<:41:NO:MONA,5.),(SAT:285<:42:NO:MONA,5.),(SAT:325<:53:NO:MONA,5.),(SAT:338<:55:NO:MONA,5.),(SAT:354<:57:NO:MONA,4.554711),(SAT:367<:59:NO:MONA,5.),(SAT:392<:63:NO:MONA,5.),(SAT:397<:63:NO:MONA,5.),(SAT:406<:64:NO:MONA,5.),(SAT:410<:64:NO:MONA,5.),(SAT:415<:66:NO:MONA,5.),(SAT:455<:77:NO:MONA,5.),(SAT:468<:79:NO:MONA,5.),(SAT:484<:81:NO:MONA,4.590213),(SAT:497<:83:NO:MONA,5.),(SAT:522<:87:NO:MONA,5.),(SAT:527<:87:NO:MONA,5.),(SAT:536<:88:NO:MONA,5.),(SAT:540<:88:NO:MONA,5.),(SAT:549<:91:NO:MONA,3.14326),(SAT:589<:102:NO:MONA,5.),(SAT:627<:109:NO:MONA,3.147496),(SAT:667<:120:NO:MONA,5.),(SAT:701<:126:NO:MONA,5.),(SAT:740<:137:NO:MONA,5.),(SAT:764<:142:NO:MONA,5.),(SAT:803<:153:NO:MONA,5.),(SAT:953<:189:NO:MONA,5.),(SAT:967<:192:NO:MONA,5.),(SAT:981<:195:NO:MONA,3.754293)])
+Total verification time: 269.020811 second(s)
+	Time spent in main process: 3.248202 second(s)
+	Time spent in child processes: 265.772609 second(s)
+	Time for logging: 1.292085 second(s)
+
+============================================================
+../../sleek t-g-addr-189.slk -tp om --esl --efa
+
+Though this fails, there are a couple of timeouts to 
+investigate.
+
+!!! log(small):(1.190161,42)
+!!! 
+ log(bigger)(>4s)(3):(12.076643,[(SAT:43<:1:MONA,4.017158),(SAT:53<:2:MONA,4.021098),(SAT:54<:2:MONA,4.038387)])
+Total verification time: 13.240826 second(s)
+	Time spent in main process: 0.180011 second(s)
+	Time spent in child processes: 13.060815 second(s)
+
+============================================================
+# swt-4g-310-a.slk - FIXED
+Parser was not accepting null for in/notin constraints.
+
+Why do we have parser error for below:
+
+    // why below gives syntax error 
+    (null notin M) & 
+    (self=g & M={} | self!=g & M!={} & self in M)
+
+ERROR: at swt-4g-310-a.slk_18:5_18:17 
+Message: expected cid
+ File "swt-4g-310-a.slk", line 18, characters 16-17
+ error: Failure("expected cid")
+ at:(Program not linked with -g, cannot print stack backtrace)
+Fatal error: exception Failure("expected cid")
+
+============================================================
+# swt-4g-318b.slk
+
+why is there a type error here? 
+Can Trung fix this?
+
+ERROR: at _0:-1_0:-1 
+Message: with 2 convert expected the same cexp types, found different types
+ File "swt-4g-318b.slk", line 14, characters 51-52
+ error: Failure("with 2 convert expected the same cexp types, found different types")
+ at:(Program not linked with -g, cannot print stack backtrace)
+Fatal error: exception Failure("with 2 convert expected the same cexp types, found different types")
+============================================================
+# swt-4h-addr-lbl.ss (INFO)
+
+Both multi pre/post (4h) and case-spec (4g) are now
+working with addr-lbl.ss with --lea (aggressive labelling);
+running in seconds
+
+!!!  processing primitives "["prelude.ss"]
+Starting Omega...oc
+
+Checking procedure lscan$node~node~node... 
+Procedure lscan$node~node~node SUCCESS
+Stop Omega... 434 invocations 
+1 false contexts at: ( (31,19) )
+
+!!! log(small):(9.406437,1761)
+Total verification time: 6.076379 second(s)
+	Time spent in main process: 3.920245 second(s)
+	Time spent in child processes: 2.156134 second(s)
+============================================================
+hip swt-4g-set-lbl.ss --lda
+
+!!! log(small):(24.746556,1085)
+!!! log(big)(>0.5s)(35):(59.159321,[(imply,0.967926),(imply,0.518967),(imply,1.170377),(imply,1.400985),(imply,1.149412),(imply,2.436337),(imply,1.504063),(imply,2.269941),(imply,2.8108),(imply,2.03219),(imply,2.131817),(imply,2.605044),(imply,0.694315),(imply,0.791236),(imply,2.549423),(imply,1.676183),(imply,0.941581),(imply,2.632619),(imply,2.651773),(imply,1.094885),(imply,2.797416),(imply,2.373707),(imply,2.301834),(imply,0.810135),(imply,1.577758),(imply,2.867507),(imply,1.787331),(imply,2.461037),(imply,2.371836),(imply,0.772189),(imply,1.184892),(imply,0.928179),(imply,0.548221),(imply,1.63412),(imply,0.713285)])
+!!! 
+ log(bigger)(>4s)(17):(73.0942,[(imply:224<:42:MONA,3.114488),(imply:310<:65:MONA,3.013627),(imply:387<:84:MONA,3.745446),(imply:398<:88:MONA,4.79288),(imply:400<:89:MONA,5.),(imply:435<:99:MONA,3.940665),(imply:447<:102:MONA,5.),(imply:458<:106:MONA,5.),(imply:460<:107:MONA,5.),(imply:467<:109:MONA,3.057275),(imply:495<:117:MONA,3.644123),(imply:662<:191:MONA,5.),(imply:714<:207:MONA,4.586654),(imply:734<:212:MONA,5.),(imply:747<:217:MONA,3.199042),(imply:782<:227:MONA,5.),(imply:833<:245:MONA,5.)])
+Total verification time: 145.441088 second(s)
+	Time spent in main process: 3.360209 second(s)
+	Time spent in child processes: 142.080879 second(s)
+============================================================
+# swl-4-p1.ss
+
+poor performance with:
+
+//inv self!=s & (g!=self & s!=self | g=self);
+
+Procedure lscan$node~node~node SUCCESS
+Stop Omega... 147 invocations 
+0 false contexts at: ()
+
+!!! log(small):(5.886522,361)
+!!! log(big)(>0.5s)(3):(6.277689,[(SAT,2.468985),(SAT,2.526955),(imply,1.281749)])
+!!! 
+ log(bigger)(>4s)(2):(7.184828,[(SAT:188<23:OMEGA CALCULATOR,3.912472),(SAT:287<64:OMEGA CALCULATOR,3.272356)])
+Total verification time: 15.636975 second(s)
+	Time spent in main process: 0.604037 second(s)
+	Time spent in child processes: 15.032938 second(s)
+
+--------
+using:
+  inv self!=s;
+which computes:
+ xform: ((g!=self & s!=self & self!=null) | (g=self & s!=self))
+
+Procedure lscan$node~node~node SUCCESS
+Stop Omega... 147 invocations 
+0 false contexts at: ()
+
+!!! log(small):(3.238215,363)
+!!! log(big)(>0.5s)(1):(0.787067,[(SAT,0.787067)])
+Total verification time: 3.536219 second(s)
+	Time spent in main process: 0.628038 second(s)
+	Time spent in child processes: 2.908181 second(s)
+
+
+============================================================
+============================================================
+============================================================
+============================================================
+============================================================
+============================================================
+============================================================
+============================================================
+============================================================

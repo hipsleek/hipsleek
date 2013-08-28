@@ -6,14 +6,14 @@ struct point {
 
 int foo()
 {
-  struct point px, py;
+  struct point px;
   px.x = 0;
-  
-  int z;
-  z = 1;
-  return 1;
+  px.y = 1;
+  return px.x;
 }
 
-void main()
-{
-}
+
+/*
+  Expected 
+
+*/

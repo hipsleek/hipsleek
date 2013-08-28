@@ -1,0 +1,13 @@
+data node{
+ int val;
+ node next;
+}.
+
+
+HeapPred HP_6(node a).
+HeapPred G(node a, node a).
+
+infer [HP_6,G] 
+ x::node<_,nn> * HP_6(nn) & x'=null & nn=null  |-  G(x,x').
+print residue.
+

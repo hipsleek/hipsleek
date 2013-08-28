@@ -1,0 +1,43 @@
+
+data node{
+	node next;
+	node prev;
+}.
+
+HeapPred H1(node a).
+HeapPred H2(node a).
+HeapPred HP_1(node a).
+HeapPred HP_2(node a).
+HeapPred HP_825(node a).
+HeapPred HP_826(node a).
+HeapPred G(node a).
+
+relAssume 
+	H1(l1) * H2(l2) &l2!=null & l1=null --> l2::node<n,p> * HP_2(n) * HP_1(p).
+  
+relAssume 
+ H1(l1)&l1!=null --> l1::node<n,p> * HP_825(n) * HP_826(p).
+  
+relAssume 
+ HP_825(n) --> H1(n).
+ 
+relAssume 
+ H2(l2) --> H2(l2).
+ 
+ relAssume 
+ emp&l1=null --> G(l1).
+ 
+ relAssume 
+ H1(l1) * H2(l2) &l2=null & l1=null --> G(l1).
+ 
+ relAssume 
+ HP_826(p) * l1::node<n,p> * G(n) --> G(l1).
+ 
+ shape_infer [H1,H2][G].
+ 
+ 
+ /* error durign shape inference
+ 
+ !!! >>>>>> pre-predicates: step pre-6: combine<<<<<<Fatal error: exception Failure("tl")
+
+*/

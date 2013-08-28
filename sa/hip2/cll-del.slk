@@ -1,0 +1,23 @@
+data node{
+ int val;
+ node next;
+}.
+
+HeapPred H(node a).
+HeapPred HP_6(node a).
+HeapPred HP_6e(node a, node a).
+HeapPred HP_7(node a, node a).
+HeapPred G(node a, node a).
+
+relAssume  H
+ H(x) --> x::node<_,n> * HP_6e(n,x).
+relAssume  HP_6e
+ HP_6e(n,x) & n!=x --> n::node<_,q> * HP_7(q,x).
+relAssume  HP_6e
+ HP_6e(n,x) & n=x --> emp.
+relAssume  G
+ x::node<_,n> & n=x & x'=null --> G(x,x').
+relAssume  G
+ x::node<_,r> * q::node<_,r> * HP_7(r,x) & x'=x --> G(x,x').
+
+shape_infer [H,HP_6e,HP_7][G].

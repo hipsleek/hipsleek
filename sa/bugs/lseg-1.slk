@@ -1,0 +1,34 @@
+data node {
+	node next;	
+}.
+
+pred lseg<p> == self = p 
+	or self::node<q> * q::lseg<p> & self!=p 
+  inv true.
+
+HeapPred H1(node a).
+
+infer [H1] H1(y)  |- y=null.
+print residue.
+
+infer [H1] H1(y) & y=null  |- y=null.
+print residue.
+
+infer [H1,y] H1(y)  |- y=null.
+print residue.
+
+/*
+# lseg-1.slk 
+
+infer [H1] H1(y)  |- y=null.
+
+Heap-pred H1(y) is still in residue.
+Should we remove it from ante, so we do not
+perform another inference step?
+ 
+ <1>H1(y)&y=null&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [// Sleek_Entail(1)
+H1(y) --> emp&
+y=null]
+
+*/

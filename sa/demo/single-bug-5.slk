@@ -1,0 +1,55 @@
+data node{
+	int val;
+	node next;
+}.
+
+
+pred G0<x> ==
+     self::node<val_29_788,null>@M&self=x 
+or x::node<val_29_788,next_29_789> * next_29_789::G5<self> * 
+     self::node<val_34_802,null>
+inv self!=null.
+
+/*
+pred G0<x> == self::node<_,null> * x::G1<self>
+inv self!=null.
+
+pred G1<r> ==self=r or self::node<_,n>*n::G5<r>
+ inv true.
+*/
+
+pred G5<t> ==
+   self=t & self!=null
+   or self::node<_,nn>*nn::G5<t>
+inv self!=null . //& t!=null.
+
+
+checkentail x::node<Anon_827,q_828> * res::G0<q_828>
+& x!=null & q_828!=null & !(v_bool_46_801') 
+& q_828!=null & !(v_bool_46_801')
+ |-  
+  res::G0<x>.
+/*
+    res::node<val_29_788,null>@M&res=x 
+or x::node<val_29_788,next_29_789> * next_29_789::G5<self> * 
+     res::node<val_34_802,null>.
+*/
+
+print residue.
+
+/*
+
+# single-bug-5.slk
+
+An unfold on G0 seems to be required!!
+
+Why does't res::G<x> on RHS succeed?
+
+ checkentail x::node<Anon_827,q_828>[Orig] * res::G0<q_828>@M[0][Orig][LHSCase]&
+x!=null & q_828!=null & !(v_bool_46_801') & q_828!=null & !(v_bool_46_801')&
+{FLOW,(22,23)=__norm}[]
+ |-  EXISTS(x_39: res::G0<x_39>@M[0][Orig][LHSCase]&x=x_39&
+{FLOW,(22,23)=__norm})[]. 
+
+*/
+

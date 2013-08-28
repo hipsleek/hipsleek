@@ -1,42 +1,49 @@
-/* singly linked lists */
+//Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Fail
+data node { int val ; node next }.
 
-/* representation of a node */
+pred ll_s<n> == self = null & n = 0
+	or self::node<next = r> * r::ll_s<n - 1>
+	inv n >= 0.
 
-data node {
-	int val; 
-	node next;	
-}.
+pred ll<> == self = null 
+	or self::node<next = r> * r::ll<>
+	inv true.
 
+lemma "V1" self::ll_s<n> -> self::ll<>.
+// valid
 
-/* view for a singly linked list */
-
-pred ll<n> == self = null & n = 0 
-	or self::node<_, q> * q::ll<n-1> 
-  inv n >= 0.
-
-checkentail x::node<1,x2>*x2::node<3,null> |- x::ll<n>.
-
-print residue.
-
+lemma "V2" self::ll_s<n> <- self::ll<>.
+// valid
 /*
-checkentail x::node<1,x2>*x2::node<3,null> 
-  |- x::node<_,y1>*y1::node<_,null>.
-
-print residue.
-
-checkentail x::ll<m> & m=4  |- x::ll<n>.
-
-print residue.
-
-
-checkentail x::node<_,q>*q::ll<m> & m=4  |- x::node<_,r>.
-
-print residue.
-
-
-checkentail x::node<_,q> * q::ll<m> & m=4  |- x::ll<n> & n>6.
-
-checkentail x::ll<m> & m=4  |- [n] x::node<_,q> * q::ll<n-1>.
-
-print residue.
+!!! orig body:(EX  . (self::ll<>@M[HeapNode1])*(true)( FLOW __flow))
+!!! LP:rhs: EBase self::ll_s<n>@M&{FLOW,(1,22)=__flow}[]
+Entailing lemma V2: Fail. 
 */
+
+lemma "V3" self::ll_s<n> <-> self::ll<>.
+// valid
+// valid
+/*
+Entailing lemma V3: Fail. Details below:
+	 "->" implication: : Valid.
+	 "<-" implication: : Fail. 
+*/
+
+lemma "V4" self::ll<> -> (exists n: self::ll_s<n>).
+// valid
+
+lemma "V5" self::ll<> <- (exists n: self::ll_s<n>).
+// valid
+
+lemma "V6" self::ll<> <-> (exists n: self::ll_s<n>).
+// valid (both sides!)
+
+lemma "F7" self::ll<> -> self::ll_s<n>.
+// valid
+
+lemma "V8" self::ll<> <- self::ll_s<n>.
+// valid
+
+lemma "F9" self::ll<> <-> self::ll_s<n>.
+// valid (both ways)
+

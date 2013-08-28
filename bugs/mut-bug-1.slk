@@ -1,0 +1,41 @@
+data tree {
+    node next;
+    }.
+
+data node {
+    tree child; 
+    }.
+
+
+pred A<> == self=null  or  self::tree<c>* c::B<>
+ inv true.
+pred B<> == self=null or  self::node<c>* c::A<>
+ inv true.
+
+//checkentail x::A<> & x!=null |- x::node<_>.
+
+checkentail x::A<> & x!=null |- x::tree<_>.
+print residue.
+
+checkentail x::A<> & x!=null |- x::tree<>.
+print residue.
+
+/*
+# mut-bug-1.slk
+
+Why is B<> pick as a type declaration rather
+than view declaration? In mut-1.slk, we can
+have mutual predicates with more than 1 parameter.
+
+SOLN : If type declaration is not found, please
+ assume that it is a view declaration.
+
+========
+
+ERROR: at mut-bug-1.slk_15:42_15:48 
+Message: no type declaration named B is found
+ 
+ERROR: at mut-bug-1.slk_17:41_17:47 
+Message: no type declaration named A is found
+*/
+

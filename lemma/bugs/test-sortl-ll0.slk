@@ -1,0 +1,28 @@
+data node { int val ; node next }.
+
+// taken from bug-sort-ll.slk
+
+pred ll<n> == self = null & n = 0
+	or self::node<next = r> * r::ll<n - 1>
+	inv n >= 0.
+
+pred sortl<n, mi> == self::node<mi,null> & n=1
+	or self::node<mi, r> * r::sortl<n - 1, k> & mi <= k
+	inv n >= 1 & self!=null.
+
+
+
+//(8)
+// should succeed
+lemma self::sortl<n, mi> <- self::ll<n>.
+
+
+infer [] x = null & n = 0
+	or x::node<next = r> * r::ll<n - 1> & n=1
+        |- x::node<mi,null> .
+
+
+infer [] x = null & n = 0
+	or x::node<next = r> * r::ll<n - 1> & mi <= k
+	|- x::node<mi, r> * r::sortl<n - 1, k>.
+

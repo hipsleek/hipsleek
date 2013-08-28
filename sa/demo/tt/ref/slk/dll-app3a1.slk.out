@@ -1,0 +1,16 @@
+========dll-app3a1.slk ==========
+Starting Omega...oc
+G is defined.
+H is defined.
+HP_9 is defined.
+HP_0 is defined.
+HP_1 is defined.
+HP_2 is defined.
+HP_3 is defined.
+
+Entail (1) : Valid. 
+
+ <1>HP_9(next_16_7,l2) * HP_0(prev_16_8,l2) * l1::node<l2,prev_16_8>@M[Orig] * HP_39(next_21_37,l1) * HP_40(prev_21_38,l1)&next_16_7=null & next_16_7=next_20_807 & next_21_37=next_21_766' & prev_21_38=prev_21_767'&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [HP_1(l2,l1@NI) --> l2::node<next_21_37,prev_21_38>@M * 
+                   HP_39(next_21_37,l1@NI) * HP_40(prev_21_38,l1@NI)]
+====================

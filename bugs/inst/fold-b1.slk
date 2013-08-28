@@ -1,0 +1,51 @@
+data cell{
+  int v
+}.
+
+
+pred foo<p> == 
+     (exists v: self::cell<v> & v>0 & p=1)
+ or  (exists v: self::cell<v> & v<=0 & p=2)
+  inv 1<=p<=2.
+
+
+pred fooK<p> == 
+     self::cell<v> & v>0 & p=1
+ or  self::cell<v> & v<=0 & p=2
+  inv 1<=p<=2.
+
+/*
+
+ Example below shows why case analysis is more complete!
+
+*/
+
+pred fooC<p> == 
+   [] self::cell<v> 
+     case { v>0 -> [] p=1;
+            v<=0 -> [] p=2;
+     }
+  inv 1<=p<=2.
+
+
+checkentail c::cell<3> |- c::foo<n>. 
+print residue.
+//<1>EXISTS(flted_11_30: emp&flted_11_30=3 & n=1&{FLOW,(19,20)=__norm})[]
+
+checkentail c::cell<3> * d::cell<r> & r<0 |- c::fooK<n> * d::fooK<m>. 
+print residue.
+
+
+checkentail c::cell<r>  |- c::foo<n> . 
+print residue.
+/*
+    fail
+*/
+
+checkentail c::cell<r>  |- c::fooC<n> . 
+print residue.
+/*
+<1>
+    emp&r=v_100 & v_100<=0 & n=2&{FLOW,(19,20)=__norm}[]
+    or emp&r=v_100 & 0<v_100 & n=1&{FLOW,(19,20)=__norm}[]
+*/

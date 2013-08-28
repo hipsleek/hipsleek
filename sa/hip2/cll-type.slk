@@ -1,0 +1,20 @@
+data node{
+ int val;
+ node next;
+}.
+
+HeapPred H(node a).
+HeapPred HP_6(node a).
+
+
+infer [x] x::node<val_35_804,next_35_805>
+ |-  y!=null.
+
+infer [x] x::node<val_35_804,next_35_805> & x=y
+ |-  x!=null.
+
+infer [] x::node<val_35_804,next_35_805> & x=x'
+ |-  x!=null.
+
+infer [x] x::node<val_35_804,next_35_805> & x=x'
+ |-  x!=null.

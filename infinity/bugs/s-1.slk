@@ -1,0 +1,5 @@
+slk_simplify x=\inf & y=-\inf.
+slk_simplify x=\inf & y+\inf=0.
+slk_simplify x=\inf+\inf & y+\inf=0. // \inf+\inf=>\inf
+slk_simplify x=\inf-\inf & y+\inf=0. // \inf-\inf => \inf-\inf'
+

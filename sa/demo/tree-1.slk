@@ -1,0 +1,37 @@
+data node{
+	node prev;
+	node next;
+}.
+
+HeapPred H(node a).
+HeapPred HP_1(node a).
+HeapPred HP_2(node a).
+HeapPred G(node a).
+
+relAssume 
+ H(x)&x!=null --> x::node<l,r> * HP_1(l) * HP_2(r).
+  
+relAssume 
+ HP_1(l) --> H(l).
+ 
+relAssume 
+ HP_2(r) --> H(r).
+ 
+relAssume  
+ H(x)&x=null --> H(x).
+ 
+/*
+  below would be treated as a pre-obligation.
+  what if it cannot be handled
+     if defn has not been formed; leave it as
+     a complex lhs rule to be used.
+*/
+relAssume  x::node<l,r> * H(l) * H(r) --> H(x).
+
+
+shape_infer [H,HP_1,HP_2][].
+
+/* 
+
+
+*/

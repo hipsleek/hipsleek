@@ -1,0 +1,40 @@
+data node{
+ int val;
+ node next;
+}.
+
+
+HeapPred H(node a).
+HeapPred HP_6(node a).
+HeapPred G(node a, node a).
+
+relAssume H
+  H(x)&true --> x::node<val_26_784,next_26_785>@M * HP_6(next_26_785).
+ 
+relAssume G
+  HP_6(res) * x::node<val_26_784,v_null_27_793> 
+   & v_null_27_793=null --> G(x,res).
+
+shape_infer [H][G].
+
+/*
+
+H(x_42) ::= x_42::node<val_26_784,next_26_785>@M& XPURE(HP_27(next_26_785)),
+ G(x,res) ::= x::node<val_26_784,v_null_27_793>@M&v_null_27_793=null &  XPURE(HP_27(res))]
+
+Tried --sa-dangling, --sa-refine-dang, --sa-unify-dangling
+What are these different options anyway?
+
+How come we did not get:
+
+ H(x_42) ::= x_42::node<val_26_784,next_26_785>@M& 
+     UU_HP_27_UU=next_26_785),
+ G(x,res) ::= x::node<val_26_784,v_null_27_793>@M&v_null_27_793=null 
+     &  UU_HP_27_UU=res
+
+Solution: This could be done by replacing
+
+   XPure(P(v)) ==> UU_P_UU=v
+
+
+*/

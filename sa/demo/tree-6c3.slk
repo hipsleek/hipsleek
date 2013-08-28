@@ -1,0 +1,49 @@
+data node{
+	int val;
+	node prev;
+	node next;
+}.
+
+
+HeapPred G(node a).
+HeapPred H(node a).
+HeapPred HP_0(node a).
+HeapPred HP_1(node a).
+
+Declare_Unknown [HP_1, HP_0].
+
+relAssume
+ H(x) --> x::node<key_31_797,left_31_798,right_31_799> * 
+  HP_0(left_31_798) * HP_1(right_31_799).
+
+relAssume
+ H(x) --> x::node<key_31_797,left_31_798,right_31_799> * 
+  HP_1(left_31_798) * HP_0(right_31_799).
+
+
+shape_infer [H,HP_0,HP_1][].
+
+/*
+
+# tree-6c3.slk
+
+Two problems for HP_0:
+ (i) why l_43!=null not eliminated?
+ (ii) wht happen to base-case equation?
+
+GOT:
+[ 
+  HP_0(l_43) ::=  l_43::node<key_31_797,left_31_798,right_31_799>@M * HP_0(left_31_798) * HP_1(right_31_799)&l_43!=null,
+
+
+ H(x_44) ::=  x_44::node<key_31_797,left_31_798,right_31_799>@M * HP_0(left_31_798) * HP_1(right_31_799)&true,
+
+ HP_1(a) ::= NONE]
+
+===========
+
+
+
+
+
+*/
