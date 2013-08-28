@@ -183,42 +183,6 @@ let generate_lemma_4_views iprog cprog=
       (fun _ -> generate_lemma_4_views_x iprog cprog)
       cprog
 
-(* verify  a list of lemmas *)
-(* if one of them fails, return failure *)
-(* otherwise, return a list of their successful contexts 
-   which may contain inferred result *)
-let sa_verify_one_repo cprog l2r r2l = 
-  let res = List.fold_left (fun ((valid_ans,res_so_far) as res) coer ->
-      match valid_ans with
-        | true ->
-              let (flag,lc) = LP.sa_verify_lemma cprog coer in 
-              (flag, lc::res_so_far)
-        | false -> res
-  ) (true,[]) (l2r@r2l) in
-  res
-
-(* update the lemma store with the lemmas in repo and check for their validity *)
-let sa_update_store_with_repo cprog l2r r2l =
-   let _ = Lem_store.all_lemma # add_coercion l2r r2l in
-   let (invalid_lem, lctx) =  sa_verify_one_repo cprog l2r r2l in
-   (invalid_lem, lctx)
-
-(* l2r are left to right_lemmas *)
-(* r2l are right to right_lemmas *)
-(* return None if some failure; return list of contexts if all succeeded *)
-let sa_infer_lemmas cprog lemmas  = 
-  let (l2r,others) = List.partition (fun c -> c.C.coercion_type==I.Left) lemmas in 
-  let (r2l,equiv) = List.partition (fun c -> c.C.coercion_type==I.Right) others in 
-  let l2r = l2r@(List.map (fun c -> {c with C.coercion_type = I.Left} ) equiv) in
-  let r2l = r2l@(List.map (fun c -> {c with C.coercion_type = I.Right} ) equiv) in
-  let (valid_lem, nctx) = sa_update_store_with_repo cprog l2r r2l in
-  Lem_store.all_lemma # pop_coercion;
-  match valid_lem with
-    | false -> 
-          (* let _ = Log.last_cmd # dumping (name) in *)
-          let _ = Debug.tinfo_pprint ("\nFailed to prove a lemma ==> during sa_infer_lemmas.") no_pos in
-          None
-    | true -> Some nctx
 
 (* Below are methods used for lemma transformation (ilemma->lemma), lemma proving and lemma store update *)
 
@@ -342,6 +306,52 @@ let manage_infer_lemmas str repo iprog cprog =
     | None ->
           let _ = print_endline ("\n Temp Lemma(s) "^str^" as valid in current context.") in
           Some nctx
+
+(* verify  a list of lemmas *)
+(* if one of them fails, return failure *)
+(* otherwise, return a list of their successful contexts 
+   which may contain inferred result *)
+let sa_verify_one_repo cprog l2r r2l = 
+  let res = List.fold_left (fun ((valid_ans,res_so_far) as res) coer ->
+      match valid_ans with
+        | true ->
+              let (flag,lc) = LP.sa_verify_lemma cprog coer in 
+              (flag, lc::res_so_far)
+        | false -> res
+  ) (true,[]) (l2r@r2l) in
+  res
+
+(* update the lemma store with the lemmas in repo and check for their validity *)
+let sa_update_store_with_repo cprog l2r r2l =
+   let _ = Lem_store.all_lemma # add_coercion l2r r2l in
+   let (invalid_lem, lctx) =  sa_verify_one_repo cprog l2r r2l in
+   (invalid_lem, lctx)
+
+(* l2r are left to right_lemmas *)
+(* r2l are right to right_lemmas *)
+(* return None if some failure; return list of contexts if all succeeded *)
+let sa_infer_lemmas iprog cprog lemmas  = 
+  (* let (l2r,others) = List.partition (fun c -> c.C.coercion_type==I.Left) lemmas in  *)
+  (* let (r2l,equiv) = List.partition (fun c -> c.C.coercion_type==I.Right) others in  *)
+  (* let l2r = l2r@(List.map (fun c -> {c with C.coercion_type = I.Left} ) equiv) in *)
+  (* let r2l = r2l@(List.map (fun c -> {c with C.coercion_type = I.Right} ) equiv) in *)
+  (* let (valid_lem, nctx) = sa_update_store_with_repo cprog l2r r2l in *)
+  (* Lem_store.all_lemma # pop_coercion; *)
+  (* match valid_lem with *)
+  (*   | false ->  *)
+  (*         (\* let _ = Log.last_cmd # dumping (name) in *\) *)
+  (*         let _ = Debug.tinfo_pprint ("\nFailed to prove a lemma ==> during sa_infer_lemmas.") no_pos in *)
+  (*         None *)
+  (*   | true -> Some nctx *)
+  let (invalid_lem, nctx) = update_store_with_repo lemmas iprog cprog in
+  Lem_store.all_lemma # pop_coercion;
+   match invalid_lem with
+    | Some name -> 
+          let _ = Debug.tinfo_pprint ("\nFailed to prove a lemma ==> during sa_infer_lemmas.") no_pos in
+          None
+    | None ->
+          Some nctx
+
 
 (* for lemma_test, we do not return outcome of lemma proving *)
 let manage_test_lemmas repo iprog cprog = 

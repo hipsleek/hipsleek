@@ -5881,7 +5881,7 @@ HP_891(left_26_889) ::=(2;1;0) NONE]
 =====================================================================
 # cyc-lseg.ss --pred-en-equiv
 
- (1)- semantic mode:
+ (1)- semantic mode: DONE
  (2)- syntactic mode: DONE
 
 --pred-en-equiv reuse of equivalent predicate
@@ -5910,7 +5910,7 @@ void trav(node x)
    }
 }
 =====================================================================
-# cyc-lseg.ss --pred-en-split
+# cyc-lseg.ss --pred-en-split: FIXED
 
 Inferred result is fine.
 How come predicate synthesis option is not working?

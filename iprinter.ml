@@ -824,9 +824,9 @@ let string_of_view_decl v = v.view_name ^"[" ^ (String.concat "," v.view_prop_ex
 let string_of_view_vars v_vars = (concatenate_string_list v_vars ",")
 
 let string_of_coerc_type c = match c with 
-  | Left -> "<="
+  | Left -> "=>"
   | Equiv -> "<=>"
-  | Right -> "=>"
+  | Right -> "<="
 
 let string_of_coerc_decl c = (string_of_coerc_type c.coercion_type)^"coerc "^c.coercion_name^"\n\t head: "^(string_of_formula c.coercion_head)^"\n\t body:"^
 							 (string_of_formula c.coercion_body)^"\n" 

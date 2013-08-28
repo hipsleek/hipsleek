@@ -1394,6 +1394,7 @@ let h_subst ss ls_eq_args0 hf0=
             hf1
     | CF.HRel (hp, eargs, pos) ->
           let svl = List.fold_left List.append [] (List.map CP.afv eargs) in
+          let _ = Debug.ninfo_hprint (add_str  "svl " !CP.print_svl) svl no_pos in
           if is_expl_eqs ls_eq_args0 svl then hf0 else
             let hf1 = CF.h_subst ss hf0 in
             hf1
@@ -1412,11 +1413,12 @@ let smart_subst_new_x lhs_b rhs_b hpargs l_emap r_emap r_qemap unk_svl prog_vars
       (lhs_b, rhs_b, prog_vars)
     else
       let l_emap1, null_ps, null_sst = expose_expl_closure_eq_null lhs_b all_args l_emap in
-      let emap0 = CP.EMapSV.merge_eset l_emap1 r_emap in
+      let emap0 = CP.EMapSV.merge_eset l_emap r_emap in
       let vars_grps = (CF.get_ptrs_group_hf lhs_b.CF.formula_base_heap)@(CF.get_ptrs_group_hf rhs_b.CF.formula_base_heap)@
         (List.map snd hpargs)
       in
       let emap0a, ls_eq_args, expl_eqs_ps, eq_sst = expose_expl_eqs emap0 prog_vars vars_grps in
+      let _ = Debug.ninfo_hprint (add_str  "ls_eq_args " (pr_list !CP.print_svl)) ls_eq_args no_pos in
       let emap1 = CP.EMapSV.merge_eset emap0a r_qemap in
       let ss = build_subst_comm all_args prog_vars emap1 comm_svl in
       (*LHS*)
@@ -1431,6 +1433,7 @@ let smart_subst_new_x lhs_b rhs_b hpargs l_emap r_emap r_qemap unk_svl prog_vars
       } in
       (*RHS*)
       let rhs_b1 = CF.subst_b ss rhs_b in
+      let _ = Debug.ninfo_hprint (add_str  "rhs_b1 " Cprinter.prtt_string_of_formula) (CF.Base rhs_b1) no_pos in
       let rhs_b2 = {rhs_b1 with CF.formula_base_pure = MCP.mix_of_pure
               (CP.remove_redundant (MCP.pure_of_mix rhs_b1.CF.formula_base_pure));
           CF.formula_base_heap = CF.trans_heap_hf (h_subst (null_sst@eq_sst) ls_eq_args) rhs_b1.CF.formula_base_heap;
@@ -1443,9 +1446,10 @@ let smart_subst_new lhs_b rhs_b hpargs l_emap r_emap r_qemap unk_svl prog_vars=
   let pr1 = Cprinter.string_of_formula_base in
   let pr2 = !CP.print_svl in
   let pr3 = CP.EMapSV.string_of in
-  Debug.no_6 "smart_subst_new" pr1 pr1 pr2 pr3 pr3 pr3 (pr_triple pr1 pr1 pr2)
-      (fun _ _ _ _ _ _-> smart_subst_new_x lhs_b rhs_b hpargs l_emap r_emap r_qemap unk_svl prog_vars)
-      lhs_b rhs_b prog_vars l_emap r_emap r_qemap
+  let pr4 = pr_list (pr_pair !CP.print_sv !CP.print_svl) in
+  Debug.no_7 "smart_subst_new" pr1 pr1 pr4 pr2 pr3 pr3 pr3 (pr_triple pr1 pr1 pr2)
+      (fun _ _ _ _ _ _ _-> smart_subst_new_x lhs_b rhs_b hpargs l_emap r_emap r_qemap unk_svl prog_vars)
+      lhs_b rhs_b hpargs prog_vars l_emap r_emap r_qemap
 
 
 let smart_subst_lhs f lhpargs leqs infer_vars=

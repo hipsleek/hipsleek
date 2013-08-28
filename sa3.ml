@@ -1988,7 +1988,7 @@ let infer_shapes_conquer iprog prog proc_name ls_is sel_hps=
   let n_all_hp_defs0b = SAU.combine_hpdefs n_all_hpdefs0a in
   (*split pred*)
   let n_all_hp_defs1, n_cmb_defs  = if !Globals.pred_split then
-    let n_all_hp_defs0c, split_map = SAC.pred_split_hp iprog prog dang_hps n_all_hp_defs0b in
+    let n_all_hp_defs0c, split_map = SAC.pred_split_hp iprog prog Infer.rel_ass_stk rel_def_stk dang_hps n_all_hp_defs0b in
     (*update n_cmb_defs0*)
     let n_cmb_defs0a = if split_map = [] then n_cmb_defs0 else
       let split_hps, split_comp_hps = List.fold_left (fun (r1, r2) (hp,_,comps,_) ->

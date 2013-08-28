@@ -368,6 +368,9 @@ let process_axiom_def adef = begin
 	Smtsolver.add_axiom cadef.C.axiom_hypothesis Smtsolver.IMPLIES cadef.C.axiom_conclusion;
 end
 
+(*this function is never called. it is replaced by process_list_lemma
+TO REMOVE
+*)
 let process_lemma ldef =
   let ldef = AS.case_normalize_coerc iprog ldef in
   let l2r, r2l = AS.trans_one_coercion iprog ldef in
