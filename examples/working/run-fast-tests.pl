@@ -206,10 +206,13 @@ $output_file = "log";
 	],
 	# END OF ARRAY TESTING EXAMPLES
 	"hip_tr"=>[["trees.ss",1,"insert"]],
-	"infinity" =>[["bst-inf.ss",2,"--dsd","delete","SUCCESS","remove_min","SUCCESS"],
-	["inf-selsort.ss",3,"--dsd","find_min","SUCCESS","delete_min","SUCCESS","selection_sort","SUCCESS"],
-	["inf-ins.ss",1,"--dsd","insert","SUCCESS"],
-	["inf-sel.ss",3,"--dsd","find_min","SUCCESS","delete_min","SUCCESS","selection_sort","SUCCESS"],
+	"infinity" =>[["bst-inf.ss",2,"--dsd --en-inf","delete","SUCCESS","remove_min","SUCCESS"],
+	["inf-selsort.ss",3,"--dsd --en-disj-compute --en-inf","find_min","SUCCESS","delete_min","SUCCESS","selection_sort","SUCCESS"],
+	["inf-ins.ss",1,"--dsd --en-inf","insert","SUCCESS"],
+	["inf-sel.ss",3,"--dsd --en-inf","find_min","SUCCESS","delete_min","SUCCESS","selection_sort","SUCCESS"],
+	["bubble-inf.ss",4,"--dsd --en-inf","id2","SUCCESS","id3","SUCCESS","bubble","SUCCESS","bsort","SUCCESS"],
+	["heaps-inf.ss",4,"--en-inf","insert","SUCCESS","deleteoneel","SUCCESS","deleteone","SUCCESS","deletemax","SUCCESS"],
+	["merge-inf.ss",1,"--dsd --en-inf","merge","SUCCESS"],
 	],
     "imm" =>[ 
         ["bigint.ss",17,  " --imm -tp redlog",
@@ -344,23 +347,49 @@ $output_file = "log";
          "get_next", "SUCCESS"
         ]],
         "mem" => [
-        ["dag.ss",2,"-tp om --ramify","mark","SUCCESS","mark2","SUCCESS"], 
-        ["graph.ss",2,"-tp om --ramify","mark","SUCCESS","mark2","SUCCESS"],
-        ["dag_1.ss",1,"-tp om","mark","SUCCESS"],
-        ["graph_1.ss",1,"-tp om","mark","SUCCESS"],
-        ["dag_copy.ss",1,"-tp om --ramify","copy_dag","SUCCESS"],
-        ["garbage_collector.ss",3,"-tp om --ramify","mark","SUCCESS","sweep","SUCCESS","collect","SUCCESS"],
-        ["llsortll.ss",6,"-tp om --eps","overlaid_insert","SUCCESS","delete2","SUCCESS","insert2","SUCCESS",
+        ["dag.ss",2,"-tp om --mem --ramify","mark","SUCCESS","mark2","SUCCESS"],
+        ["dag_values.ss",2,"-tp om --mem --ramify","mark","SUCCESS","mark2","SUCCESS"],
+        ["dag_values_infer.ss",2,"-tp om --mem --ramify --infer-mem","mark","SUCCESS","mark2","SUCCESS"],   
+        ["graph.ss",2,"-tp om --mem --ramify","mark","SUCCESS","mark2","SUCCESS"],
+        ["graph_values.ss",2,"-tp om --mem --ramify","mark","SUCCESS","mark2","SUCCESS"],
+        ["graph_values_infer.ss",2,"-tp om --mem --ramify --infer-mem","mark","SUCCESS","mark2","SUCCESS"],
+        ["dag_1.ss",1,"-tp om --mem --ramify","mark","SUCCESS"],
+        ["dag_1_ramify.ss",1,"-tp om --mem --ramify","mark","SUCCESS"],
+        ["graph_1.ss",1,"-tp om --mem --ramify","mark","SUCCESS"],
+        ["graph_1_ramify.ss",1,"-tp om --mem --ramify","mark","SUCCESS"],
+        ["dag_copy.ss",1,"-tp om --mem --ramify","copy_dag","SUCCESS"],
+        ["garbage_collector.ss",3,"-tp om --mem --ramify","mark","SUCCESS","sweep","SUCCESS","collect","SUCCESS"],
+        ["garbage_collector_values.ss",3,"-tp om --mem --ramify","mark","SUCCESS","sweep","SUCCESS","collect","SUCCESS"],
+        ["garbage_collector_values_infer.ss",3,"-tp om --mem --ramify --infer-mem","mark","SUCCESS","sweep","SUCCESS","collect","SUCCESS"],
+        ["llsortll.ss",6,"-tp om --mem --eps","overlaid_insert","SUCCESS","delete2","SUCCESS","insert2","SUCCESS",
         "get_tail","SUCCESS","insertion_sort","SUCCESS","id","SUCCESS"],
-        ["lltree.ss",1,"-tp om","move_request","SUCCESS"],
-        ["lltree2.ss",1,"-tp om --eps","move_request","SUCCESS"],
-        ["nodell.ss",6,"-tp om --ramify","delete_cache","SUCCESS","delete","SUCCESS","add_L","SUCCESS",
+        ["infer_llsortll.ss",6,"-tp om --mem --eps --infer-mem","overlaid_insert","SUCCESS","delete2","SUCCESS","insert2","SUCCESS",
+        "get_tail","SUCCESS","insertion_sort","SUCCESS","id","SUCCESS"],
+        ["lltree.ss",1,"-tp om --mem","move_request","SUCCESS"],
+        ["infer_lltree.ss",1,"-tp om --mem --infer-mem","move_request","SUCCESS"],
+        ["lltree2.ss",1,"-tp om --mem --eps","move_request","SUCCESS"],
+        ["infer_lltree2.ss",1,"-tp om --mem --eps --infer-mem","move_request","SUCCESS"],
+        ["nodell.ss",6,"-tp om --mem --ramify","delete_cache","SUCCESS","delete","SUCCESS","add_L","SUCCESS",
         "caching","SUCCESS","add_in","SUCCESS","find","SUCCESS"],
-        ["pll.ss",2,"-tp om","length","SUCCESS","sum","SUCCESS"],
-        ["process_schedular.ss",4,"-tp om","insert_process","SUCCESS","insert_rll","SUCCESS",
+        ["nodell_infer.ss",6,"-tp om --mem --ramify --infer-mem","delete_cache","SUCCESS","delete","SUCCESS","add_L","SUCCESS",
+        "caching","SUCCESS","add_in","SUCCESS","find","SUCCESS"],
+        ["pll.ss",2,"-tp om --mem","length","SUCCESS","sum","SUCCESS"],
+        ["pll_ramify.ss",2,"-tp om --mem --ramify","length","SUCCESS","sum","SUCCESS"],
+        ["pll_infer.ss",2,"-tp om --mem --infer-mem","length","SUCCESS","sum","SUCCESS"],
+        ["pll_ramify_infer.ss",2,"-tp om --mem --ramify --infer-mem","length","SUCCESS","sum","SUCCESS"],
+        ["doubly_circular_list.ss",4,"-tp om --mem","insert_node_dcll","SUCCESS","insert_lln","SUCCESS",
+        "insert_llt","SUCCESS","insert_dcll","SUCCESS"],
+        ["infer_doubly_circular_list.ss",4,"-tp om --mem --infer-mem","insert_node_dcll","SUCCESS","insert_lln","SUCCESS",
+        "insert_llt","SUCCESS","insert_dcll","SUCCESS"],
+        ["process_schedular.ss",4,"-tp om --mem","insert_process","SUCCESS","insert_rll","SUCCESS",
         "insert_pll","SUCCESS","insert_sll","SUCCESS"],
-        ["ramified-cells.ss",3,"--ramify","ex0","SUCCESS","ex1","SUCCESS","mark","SUCCESS"],
-        ["ramified-pairs.ss",1,"--ramify","mark","SUCCESS"],
+        ["process_schedular_ramify.ss",4,"-tp om --mem --ramify","insert_process","SUCCESS","insert_rll","SUCCESS",
+        "insert_pll","SUCCESS","insert_sll","SUCCESS"],
+        ["ramified-cells.ss",3,"--mem --ramify","ex0","SUCCESS","ex1","SUCCESS","mark","SUCCESS"],
+        ["ramified-pairs.ss",1,"--mem --ramify","mark","SUCCESS"],
+        ["jsvarstore.ss",1,"--mem --ramify","ex1","SUCCESS"],
+        ["graph_spanning.ss",1,"-tp om --mem --ramify --eps","spanning","SUCCESS"],
+        ["graph_spanning_infer.ss",1,"-tp om --mem --ramify --eps --infer-mem","spanning","SUCCESS"],
         ],
 	"hip" =>[
 #	["2-3trees.ss",4,"make_node","SUCCESS","insert_left","SUCCESS","insert_middle","SUCCESS","insert_right","SUCCESS","insert","SUCCESS"],
@@ -462,7 +491,7 @@ $output_file = "log";
 								"append_bll","SUCCESS",
 								"qsort","SUCCESS"],
         # goes into a loop with combined-lemma-heuristics still
-				["qsort-tail.ss",2, "", "qsort","SUCCESS","partition1","SUCCESS"],
+				#["qsort-tail.ss",2, "", "qsort","SUCCESS","partition1","SUCCESS"],
 				["selection.ss",3, "", "find_min","SUCCESS",
 								"delete_min","SUCCESS",
 								"selection_sort","SUCCESS"],
@@ -535,14 +564,14 @@ $output_file = "log";
 					"delete", "SUCCESS", "delete1", "SUCCESS", "f1", "SUCCESS",
 					"f2", "SUCCESS", "insert", "SUCCESS", "test_del", "SUCCESS",
 					"test_del2", "SUCCESS", "test_fold", "SUCCESS"],
-				["../../modular_examples/dll-modular.ss",11, "--overeps", 
-					"append", "SUCCESS", "append1", "SUCCESS", "append2", "SUCCESS",
-					"delete", "SUCCESS", "delete1", "SUCCESS", "f1", "SUCCESS",
-					"f2", "SUCCESS", "insert", "SUCCESS", "test_del", "SUCCESS",
-					"test_del2", "SUCCESS", "test_fold", "SUCCESS"],
-				["../../modular_examples/selection-modular.ss",3, "--overeps", 
+				# ["../../modular_examples/dll-modular.ss",11, "--overeps", 
+				# 	"append", "SUCCESS", "append1", "SUCCESS", "append2", "SUCCESS",
+				# 	"delete", "SUCCESS", "delete1", "SUCCESS", "f1", "SUCCESS",
+				# 	"f2", "SUCCESS", "insert", "SUCCESS", "test_del", "SUCCESS",
+				# 	"test_del2", "SUCCESS", "test_fold", "SUCCESS"],
+				["../../modular_examples/selection-modular.ss",3, "--overeps --lda", 
 					"delete_min", "SUCCESS", "find_min", "SUCCESS", "selection_sort", "SUCCESS"],
-				["../../modular_examples/qsort-modular.ss",3, "--overeps", 
+				["../../modular_examples/qsort-modular.ss",3, "--overeps --lda", 
 					"append_bll", "SUCCESS", "partition", "SUCCESS", "qsort", "SUCCESS"],				
 				#["../../modular_examples/2-3trees-modular.ss",5, "--overeps", 
 				#	"insert_left", "SUCCESS", "height", "SUCCESS", "minim", "SUCCESS",
@@ -726,7 +755,7 @@ $output_file = "log";
         ### DEADLOCKED and DEADLOCK-FREE scenarios
 				["parahip/double-acquire.ss",2,  "--en-para -tp parahip", 
                                 "func","SUCCESS",
-                                "main","FAIL-1"
+                                "main","FAIL-2"
 								],
 				["parahip/no-deadlock1.ss",2,  "--en-para -tp parahip", 
                                 "func","SUCCESS",
@@ -1158,12 +1187,14 @@ $output_file = "log";
         ["mk_zero.ss", 1, "", "mk_zero", "SUCCESS"],
         ["perm.ss", 1, "", "append", "SUCCESS"]
     ],
-    "lemmas"=>[["lemma_check01.ss", 3, " --elp ", "V1", "Valid", "V2", "Valid", "F3", "Fail"],
-               ["lemma_check02.ss", 2, " --elp ", "F5", "Fail", "V6", "Valid."],
-               ["lemma_check03.ss", 3, " --elp ", "L1", "Valid", "L2", "Valid", "L4", "Fail"],
-               ["lemma_check04.ss", 3, " --elp ", "L41", "Valid", "L42", "Fail", "L43","Fail"],
-               ["lemma_check06.ss", 6, " --elp ",  "L61", "Valid", "L67", "Valid", "L62", "Valid", "L64", "Fail", "L65", "Fail", "L66", "Fail"]
-    ]
+    # "lemmas"=>[
+    #     # ["lemma_check01.ss", " --elp ", "Valid.Valid.Fail.",""],
+    #     ["lemma_check01.ss", 3, " --elp ", "V1","Valid", "V2", "Valid", "F3", "Fail"],
+    #     ["lemma_check02.ss", 2, " --elp ", "F5", "Fail", "V6", "Valid."],
+    #     ["lemma_check03.ss", 3, " --elp ", "L1", "Valid", "L2", "Valid", "L4", "Fail"],
+    #     ["lemma_check04.ss", 3, " --elp ", "L41", "Valid", "L42", "Fail", "L43","Fail"],
+    #     ["lemma_check06.ss", 6, " --elp ",  "L61", "Valid", "L67", "Valid", "L62", "Valid", "L64", "Fail", "L65", "Fail", "L66", "Fail"]
+    # ]
     );
 
 # list of file, string with result of each entailment&lemma....
@@ -1180,39 +1211,50 @@ $output_file = "log";
                       # slow in sleek8.slk due to search
                       ["sleek8.slk", "", "Valid.", "Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Fail.Valid.Fail."],
                       ["sleek9.slk", "", "Valid.Valid.","Valid.Fail.Valid.Valid."],
-											["symb-diff.slk", "", "", "Valid.Valid.Valid."],
-                      ["infer/infer1.slk", "", "", "Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid."],
-                      ["infer/infer2.slk", "", "", "Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Valid."],
+                      ["baga-test-eps.slk", "--eps", "","Fail.Fail.Valid.Valid.Fail.Valid.Valid.Fail.Fail.Valid.Fail.Fail.Valid.Valid.Valid."],
+                      ["baga-test.slk", "", "","Fail.Fail.Valid.Valid.Fail.Valid.Valid.Fail.Fail.Valid.Fail.Fail.Valid.Fail.Fail."],
+              ["symb-diff.slk", "", "", "Valid.Valid.Valid."],
+                      ["infer/infer1.slk", "", "", "Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid."],
+                      ["infer/infer2.slk", "", "", "Valid.Valid.Valid.Fail.Valid.Fail.Valid.Valid.Fail."],
                       ["infer/infer4.slk", "", "", "Fail."],
                       ["infer/infer5.slk", "", "", "Valid.Valid.Fail.Valid."],
                       ["infer/infer6.slk", "", "", "Valid."],
                       ["infer/infer7.slk", "", "", "Valid.Valid.Valid.Valid.Fail.Valid.Valid.Valid.Fail.Valid."],
-                      ["infer/infer8.slk", "", "", "Valid.Valid.Valid.Fail.Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Fail.Fail.Valid.Valid.Valid."],
+                      ["infer/infer8.slk", "", "", "Valid.Valid.Valid.Fail.Fail.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Fail.Fail.Valid.Valid.Valid."],
                       ["infer/infer9.slk", "", "", "Valid.Valid.Valid.Valid.Valid.Fail.Valid.Fail.Valid.Valid."],
 #                      ["infer/infer10.slk", "", "", "Valid.Valid.Valid.Valid.Valid.Valid.Fail.Fail.Valid.Valid.Fail.Valid.Fail.Fail.Fail.Fail."],
                       ["infer/infer10.slk", "", "", "Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Fail.Fail.Fail.Valid."],
                       ["infer/infer11.slk", "", "", "Fail."],
 #                      ["infer/infer12.slk", "", "", "Valid.Fail.Fail.Fail.Fail.Valid.Fail.Fail.Fail.Fail.Fail.Valid.Fail.Fail.Fail.Valid.Valid.Valid."],
                       ["infer/infer12.slk", "", "", "Valid.Fail.Valid.Fail.Fail.Valid.Valid.Valid.Valid.Fail.Fail.Valid.Fail.Fail.Fail.Valid.Valid.Valid."],
-                      ["infer/infer13.slk", "", "", "Valid.Valid.Valid.Valid.Valid."],
-                      ["infer/infer14.slk", "", "", "Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid."],
+                      ["infer/infer13.slk", "--sa-en-cont", "", "Valid.Valid.Valid.Valid.Valid."],
+                      ["infer/infer14.slk", "--sa-en-pure-field", "", "Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid."],
                       ["infer/infer15.slk", "", "", "Valid.Valid.Valid.Valid.Valid.Valid.Valid."],
+                      ["infer/infer16.slk", "", "", "Valid.Valid.Valid.Valid.Valid.Valid."],
 # TODO : why are spaces so important in " --imm "?
-                      ["ann1.slk", " --imm ", "", "Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Fail.Valid.Fail.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Fail.Valid.Fail.Fail.Valid.Valid.Valid.Fail.Valid.Valid.Fail."],
+                      ["ann1.slk", " --imm --en-imm-inv", "", "Valid.Valid.Valid.Valid.Fail.Valid.Valid.Fail.Fail.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Fail.Valid.Fail.Valid.Fail.Fail.Valid.Valid.Valid.Fail.Valid.Valid.Fail."],
                       ["imm/imm1.slk", " --imm ", "", "Fail.Valid.Valid.Valid.Valid.Valid."],
                       #["imm/imm2.slk", "--imm", "Valid.Fail.Valid.Valid.Valid.Fail.Valid.Fail."],
                       ["imm/imm2.slk", " --imm ", "", "Fail.Valid.Fail.Valid.Fail."],
                       ["imm/imm3.slk", " --imm ", "", "Fail.Fail.Valid.Valid.Valid.Valid."],
                       ["imm/imm4.slk", " --imm ", "", "Valid.Fail."],
                       ["imm/imm-hard.slk", " --imm --eps", "", "Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid."],
-                      ["imm-field/sleek01.slk", " --field-ann ", "", "Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail."],
-                      ["imm-field/sleek02.slk", " --field-ann ", "", "Fail.Valid.Valid.Valid.Valid.Fail.Valid.Fail.Valid.Valid.Valid.Valid.Fail."],
+                      ["imm-field/sleek01.slk", " --field-ann ", "", "Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail."],
+                      ["imm-field/sleek02.slk", " --field-ann ", "", "Fail.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Fail."],
                       ["imm-field/sleek03.slk", " --field-ann ", "", "Valid.Fail.Valid.Valid.Fail.Valid.Valid.Fail.Valid.Valid.Fail."],
                       ["classic/classic1.slk", "", "", "Valid.Valid.Valid.Valid.Valid.Valid.Fail.Fail."],
                       ["classic/classic1.slk", " --classic", "", "Fail.Valid.Valid.Valid.Fail.Valid.Fail.Fail."],
                       ["classic/classic2.slk", "", "", "Fail.Valid.Valid.Valid.Fail.Valid.Fail.Fail."],
                       ["classic/classic3.slk", "", "", "Valid.Valid.Valid.Valid.Valid.Valid.Fail.Fail."],
-                      ["infinity.slk","--dsd","",                      "Fail.Valid.Valid.Fail.Valid.Valid.Fail.Valid.Valid.Valid.Fail.Valid.Valid.Fail.Fail.Valid.Fail.Valid.Fail.Fail.Valid.Valid.Fail.Valid.Fail.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Fail.Valid.Valid.Valid.Fail.Valid.Valid.Valid.Fail.Fail.Fail.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Valid.Fail.Fail.Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Fail.Valid.Valid.Valid.Valid.Valid."]
+                      ["classic/classic4.slk", "", "", "Valid.Fail.Valid.Fail.Valid.Fail.Valid.Fail."],
+                      ["infinity.slk","--dsd --en-inf","",                      "Fail.Valid.Valid.Fail.Valid.Valid.Fail.Valid.Valid.Valid.Fail.Valid.Valid.Fail.Fail.Valid.Fail.Valid.Fail.Fail.Valid.Valid.Fail.Valid.Fail.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Valid.Fail.Valid.Fail.Valid.Valid.Valid.Fail.Fail.Valid.Fail.Fail.Valid.Valid.Valid.Valid.Valid.Fail.Fail.Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Fail.Valid.Valid.Valid.Valid.Valid."],
+        ["ll.slk", " --elp ", "Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.", "Valid.Fail."],
+        ["sort1.slk", " --elp ", "Valid.Fail.Fail.", ""],
+        ["sort2.slk", " --elp ", "Fail.Valid.Valid.Valid.Valid.Fail.Valid.Valid.Fail.Valid.Fail.", ""],
+        ["lseg.slk", " --elp ", "Valid.Fail.", ""],
+        ["lseg_case.slk", " --elp ", "Valid.Valid.Valid.Valid.Valid.Valid.", ""],
+        ["ll_tail.slk", "", "Valid.Valid", "Valid.Valid"],
+        ["sll_tailL.slk", "", "Valid.Valid", ""]
                       ],
 		"sleek_barr"=>[["../tree_shares/barrier.slk", "--eps --dis-field-ann --dis-precise-xpure -perm dperm", "Barrrier b1n Success.Barrrier b3n Fail:  frames do not match (1->2).Barrrier b2n Fail:  contradiction in post for transition (1->2).Barrrier b4n Fail:  no contradiction found in preconditions of transitions from 1  for preconditions: .", ""],
 				  ["../tree_shares/barrier3.slk", "--eps --dis-field-ann --dis-precise-xpure -perm dperm", "Barrrier b1n Success.Barrrier b3n Fail:  frames do not match (1->2).Barrrier b2n Fail:  contradiction in post for transition (1->2).", ""]
@@ -1249,11 +1291,13 @@ $output_file = "log";
 					["fracperm/split-combine.slk","--en-para -perm fperm -tp redlog", "", "Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid."],
                   ["fracperm/combine2.slk","--en-para -perm fperm -tp redlog", "", "Valid.Valid.Valid.Valid."]
            ],
-    "lemmas"=>[["lemma_check01.slk", " --elp ", "Valid.Valid.Fail.", ""],
-              ["lemma_check02.slk", " --elp ", "Fail.Valid.", ""],
-              ["lemma_check03.slk", " --elp ", "Valid.Valid.Fail.", ""],
-              ["lemma_check04.slk", " --elp ", "Valid.Fail.Fail.", ""],
-              ["lemma_check06.slk", " --elp ", "Valid.Valid.Valid.Fail.Fail.Fail.", ""]],
+    # "lemmas"=>[
+    #     ["ll.slk", " --elp ", "Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.", "Valid.Fail."],
+    #     ["sort1.slk", " --elp ", "Valid.Fail.Fail.", ""],
+    #     ["sort2.slk", " --elp ", "Fail.Valid.Valid.Valid.Valid.Fail.Valid.Valid.Fail.Valid.Fail.", ""],
+    #     ["lseg.slk", " --elp ", "Valid.Fail.", ""],
+    #     ["lseg_case.slk", " --elp ", "Valid.Valid.Valid.Valid.Valid.Valid.", ""]
+    # ],
     "musterr"=>[["err1.slk","","must.may.must.must.may.must.may.must.must.Valid.may.must."],
                ["err2.slk","","must.may.must.must.must.may.must.must.may.may.may.must.may.must.may.must.may.must.must.must.must.Valid.must.Valid.must.must.must.must.Valid.may.may."],
 			   ["err3.slk","","must.must.must.must.must.must.may.must.must."],
@@ -1398,7 +1442,7 @@ sub hip_process_file {
             } else {
                 print "Checking $test->[0] (runs with extra options: $extra_options)\n";
             }
-			#print "$hip $script_arguments $extra_options $exempl_path/hip/$test->[0] 2>&1 \n";
+			#print "$hip $script_arguments $extra_options $exempl_path_full/$test->[0] \n";
 			$output = `$hip $script_arguments $extra_options $exempl_path_full/$test->[0] 2>&1`;
 			print LOGFILE "\n======================================\n";
 			print LOGFILE "$output";
@@ -1426,7 +1470,8 @@ sub hip_process_file {
 
 			for($i = 3; $i<$limit;$i+=2)
 			{
-				if($output !~ /$procedure $test->[$i]\$.* $test->[$i+1]/)
+                            #print "\n$output";
+				if($output !~ /$procedure $test->[$i]\$.* $test->[$i+1]\./)
 				{
 			 		$error_count++;
 					$error_files=$error_files."error at: $test->[0] $test->[$i]\n";
@@ -1449,6 +1494,18 @@ sub hip_process_file {
 }
 
 
+sub grep_failures {
+    my ($res,$exp,$prefix) = @_;
+    @results = split (/\./, $res);
+    @expected = split (/\./, $exp);
+    my %mark_failures = map {if ($results[$_] !~ $expected[$_]) {$_+1 =>"$expected[$_]"} else {(0 => "same")}} 0 .. $#results;
+    my @failures = grep {  $_ > 0 } keys  %mark_failures;
+    my @failures_e = map {  "\{"."$prefix".$_ ."#". $mark_failures{$_}."\}" } @failures;
+    @failures_e = sort  @failures_e;
+    #print "\n @failures_e";
+    return @failures_e;
+}
+
 
 sub sleek_process_file  {
   foreach $param (@param_list)
@@ -1462,69 +1519,79 @@ sub sleek_process_file  {
           $err = 1;
       }
       if (("$param" =~ "lemmas") ||  ($script_arguments=~"--elp")) {  $lem = 1; }
-	  if ("$param" =~ "sleek_barr"){ $barr=1;}
+      if ("$param" =~ "sleek_barr"){ $barr=1;}
 #      elsif ($script_arguments=~"--dlp"){ $lem = 0; }
       
       if ("$param" =~ "sleek") {
           print "Starting sleek tests:\n";
           $exempl_path_full = "$exempl_path/sleek";
       }else {
-          $exempl_path_full = "$exempl_path_full/$param";
+          $exempl_path_full = "$exempl_path/sleek/$param";
           print "Starting sleek-$param tests:\n";
       }
       $t_list = $sleek_files{$param};
       foreach $test (@{$t_list})
-			{
-            my $extra_options = $test->[1];
-            if ("$extra_options" eq "") {
-                print "Checking $test->[0]\n";
-            } else {
-                print "Checking $test->[0] (runs with extra options: $extra_options)\n";
-            }
-            $script_args = $script_arguments." ".$extra_options;
-			$output = `$sleek $script_args $exempl_path_full/$test->[0] 2>&1`;
-			print LOGFILE "\n======================================\n";
-	        print LOGFILE "$output";
-            my $lemmas_results = "";
-            my $entail_results = "";
-			my $barrier_results = "";
-            my @lines = split /\n/, $output; 
-            foreach my $line (@lines) { 
-                if($line =~ m/Entailing lemma/){
-                    if($line =~ m/Valid/) { $lemmas_results = $lemmas_results ."Valid."; }
-                    elsif($line =~ m/Fail/)  { $lemmas_results = $lemmas_results ."Fail.";}
-                }elsif($line =~ m/Barrrier/){
-					 $barrier_results = $barrier_results .$line .".";
-				}elsif($line =~ m/Entail/){
-                    if( $err == 1) {
-                        $i = index($line, "Valid. (bot)",0);
-                        $h = index($line, "Valid.",0);
-                        $j = index($line, "Fail.(must)",0);
-                        $k = index($line, "Fail.(may)",0);
-                        #  print "i=".$i ." h=". $h . " j=" .$j . " k=".$k ."\n";
-                        if($i >= 0) { $r = $r ."bot."; }
-                        elsif($h >= 0) { $r = $r ."Valid."; }
-                        elsif($j >= 0)  { $r = $r ."must.";} #$line =~ m/Fail.(must)/
-                        elsif($k >= 0)  { $r = $r ."may.";}
-                    }
-                    else {
-                        if($line =~ m/Valid/) { $entail_results = $entail_results ."Valid."; }
-                        elsif($line =~ m/Fail/)  { $entail_results = $entail_results ."Fail.";}
-                    }
-                }
-            }
-			if ((($lem==0) && ($barr==0) && ($entail_results !~ /^$test->[3]$/)) || 
-				(($lem == 1)  && ($lemmas_results !~ /^$test->[2]$/)) || 
-				($barr==1 && ($barrier_results ne $test->[2])))
-			{
-				print "Unexpected result with : $test->[0]\n";
-				$error_count++;
-				$error_files = $error_files . " " . $test->[0];
-			}	
-			if($timings) {
-				# log_one_line_of_timings ($test->[0],$output);
-			}
-			sum_of_timings ($output);
-		}
-	}
+      {
+          my $extra_options = $test->[1];
+          if ("$extra_options" eq "") {
+              print "Checking $test->[0]\n";
+          } else {
+              print "Checking $test->[0] (runs with extra options: $extra_options)\n";
+          }
+          $script_args = $script_arguments." ".$extra_options;
+          $output = `$sleek $script_args $exempl_path_full/$test->[0] 2>&1`;
+          print LOGFILE "\n======================================\n";
+          print LOGFILE "$output";
+          #print "$output";
+          my $lemmas_results = "";
+          my $entail_results = "";
+          my $barrier_results = "";
+          my @lines = split /\n/, $output; 
+          foreach my $line (@lines) { 
+              if($line =~ m/Entailing lemma/){
+                  if($line =~ m/Valid\./) { $lemmas_results = $lemmas_results ."Valid."; }
+                  elsif($line =~ m/EXC\./) { $lemmas_results = $lemmas_results ."EXC."; }
+                  elsif($line =~ m/Fail\./)  { $lemmas_results = $lemmas_results ."Fail.";}
+              } elsif($line =~ m/Barrrier/){
+                  $barrier_results = $barrier_results .$line .".";
+              }elsif($line =~ m/Entail/){
+                  if( $err == 1) {
+                      $i = index($line, "Valid. (bot)",0);
+                      $h = index($line, "Valid.",0);
+                      $j = index($line, "Fail.(must)",0);
+                      $k = index($line, "Fail.(may)",0);
+                      #  print "i=".$i ." h=". $h . " j=" .$j . " k=".$k ."\n";
+                      if($i >= 0) { $r = $r ."bot."; }
+                      elsif($h >= 0) { $r = $r ."Valid."; }
+                      elsif($j >= 0)  { $r = $r ."must.";} #$line =~ m/Fail.(must)/
+                      elsif($k >= 0)  { $r = $r ."may.";}
+                  }
+                  else {
+                      if($line =~ m/Valid\./) { $entail_results = $entail_results ."Valid."; }
+                      elsif($line =~ m/EXC\./) {  $entail_results = $entail_results ."EXC."; }
+                      elsif($line =~ m/Fail\./)  { $entail_results = $entail_results ."Fail.";}
+                  }
+              }
+          }
+          my @failures = ();
+          if  (($lem == 1)  && ($lemmas_results !~ /^$test->[2]$/)){
+              @failures = grep_failures($lemmas_results, $test->[2],"L");
+          }
+          if ((($barr==0) && ($entail_results !~ /^$test->[3]$/)) || 
+              # (($lem == 1)  && ($lemma_results !~ /^$test->[2]$/)) || 
+              ($barr==1 && ($barrier_results ne $test->[2]))){
+              @failures = grep_failures($entail_results, $test->[3],"E"), @failures;
+          }
+          if ($#failures >= 0 ){
+              local $" = ',';
+              print "Unexpected result with : $test->[0] (failed check(s): @failures) \n";
+              $error_count++;
+              $error_files = $error_files . " " . $test->[0]."(@failures)";
+          }
+          if($timings) {
+              # log_one_line_of_timings ($test->[0],$output);
+          }
+          sum_of_timings ($output);
+      }
+  }
 }

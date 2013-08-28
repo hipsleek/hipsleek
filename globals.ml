@@ -196,7 +196,7 @@ type perm_type =
   | Dperm (*distinct fractional shares*)
   | Bperm (*bounded permissions*)
   
-let perm = ref Bperm
+let perm = ref NoPerm
 
 let no_pos = 
 	let no_pos1 = { Lexing.pos_fname = "";
@@ -696,7 +696,7 @@ to end-users*)
 (* let is_deployed = ref true *)
 
 let print_assume_struc = ref false
-let web_compile_flag = ref true (*enable compilation flag for website*)
+let web_compile_flag = ref false (*enable compilation flag for website*)
 
 
 (* Decide whether normalization/simplification
