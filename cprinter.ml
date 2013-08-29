@@ -2464,8 +2464,8 @@ let pr_estate (es : entail_state) =
                                                     | None -> "None"
                                                     | Some i -> string_of_int i)) es.es_var_label;
   *)
-  (* if es.es_trace!=[] then *)
-  (*   pr_vwrap "es_trace: " pr_es_trace es.es_trace; *)
+  if es.es_trace!=[] then
+    pr_vwrap "es_trace: " pr_es_trace es.es_trace;
   if es.es_is_normalizing then
     pr_vwrap "es_is_normalizing: " fmt_bool es.es_is_normalizing;
   (*

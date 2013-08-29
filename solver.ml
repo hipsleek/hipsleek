@@ -1239,7 +1239,9 @@ and xpure_heap_perm_x (prog : prog_decl) (h0 : h_formula)  (p0: mix_formula) (wh
 	h_formula_data_pos = pos}) ->
             let non_null = CP.mkNeqNull p pos in
             let i = fresh_int2 () in
-            let eq_i = CP.mkEqVarInt p i pos in
+            (* let eq_i = CP.mkEqVarInt p i pos in *)
+            (*TO CHECK: temporarily change from eq_i to non_null *)
+            let eq_i = non_null in
             (*LDK: add fractional invariant 0<f<=1, if applicable*)
             (match frac with
               | None -> MCP.memoise_add_pure_N (MCP.mkMTrue pos) eq_i (* full permission -> p=i*)
