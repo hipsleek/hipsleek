@@ -1125,7 +1125,7 @@ let is_valid_ops pr_w pr_s f imp_no =
   let f = normalize_formula f in
   let frl = rl_of_formula pr_s pr_w f in
   let rl_input = "rlall(" ^ frl ^")" in
-  let _ = print_endline ("rl_input 2 = " ^ rl_input) in
+  (* let _ = print_endline ("rl_input 2 = " ^ rl_input) in *)
   let runner () = check_formula rl_input in
   let err_msg = "Timeout when checking #imply " ^ imp_no ^ "!" in
   let proc = lazy (run_with_timeout runner err_msg) in
