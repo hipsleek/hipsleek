@@ -5879,7 +5879,7 @@ HP_884(right_25_882) ::=(1;1;0) NONE,
 HP_891(left_26_889) ::=(2;1;0) NONE]
 
 =====================================================================
-# cyc-lseg.ss --pred-en-equiv
+# cyc-lseg.ss --pred-en-equiv : DONE
 
  (1)- semantic mode: DONE
  (2)- syntactic mode: DONE

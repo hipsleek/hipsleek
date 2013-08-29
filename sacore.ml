@@ -2635,19 +2635,19 @@ let prove_split_cand_x iprog cprog proving_fnc ass_stk hpdef_stk unk_hps ss_pred
     let sst = [(r, self_sv)] in
     (* let f12 = CF.subst sst f12_0 in *)
     let f22 = CF.subst sst f22_0 in
-    let _ = Debug.info_hprint (add_str  "f12 " Cprinter.prtt_string_of_formula) f12 no_pos in
-    let _ = Debug.info_hprint (add_str  "f22 " Cprinter.prtt_string_of_formula) f22 no_pos in
+    let _ = Debug.ninfo_hprint (add_str  "f12 " Cprinter.prtt_string_of_formula) f12 no_pos in
+    let _ = Debug.ninfo_hprint (add_str  "f22 " Cprinter.prtt_string_of_formula) f22 no_pos in
     (*iformula to construct lemma*)
     let if12 = AS.rev_trans_formula f12 in
     let if22 = AS.rev_trans_formula f22 in
-    let _ = Debug.info_hprint (add_str  "if12 " Iprinter.string_of_formula) if12 no_pos in
-    let _ = Debug.info_hprint (add_str  "if22 " Iprinter.string_of_formula) if22 no_pos in
+    let _ = Debug.ninfo_hprint (add_str  "if12 " Iprinter.string_of_formula) if12 no_pos in
+    let _ = Debug.ninfo_hprint (add_str  "if22 " Iprinter.string_of_formula) if22 no_pos in
     (*prove*)
     (* let valid,lc,_ = proving_fnc (List.map fst comps) f12 (CF.struc_formula_of_formula f22 no_pos) in *)
     (*construct lemma_infer*)
     let ilemma_inf = IA.mk_lemma (fresh_any_name "tmp_infer") IA.Left
       (List.map (fun (hp, _) -> CP.name_of_spec_var hp) comps) (IF.add_quantifiers [] if12) (IF.add_quantifiers [] if22) in
-    let _ = print_string ("\nilemma_infs:\n " ^ (Iprinter.string_of_coerc_decl ilemma_inf) ^"\n") in
+    let _ = Debug.ninfo_hprint (add_str "\nilemma_infs:\n " (Iprinter.string_of_coerc_decl)) ilemma_inf no_pos in
     let lc_opt = LEM.sa_infer_lemmas iprog cprog [ilemma_inf] in
     match lc_opt with
       | Some lcs ->

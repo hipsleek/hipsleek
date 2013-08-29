@@ -1321,7 +1321,10 @@ for each ls_eqs, if it contains at least two vars of the same group,
 let expose_expl_eqs_x emap0 prog_vars vars_grps0=
   let all_vars = List.concat vars_grps0 in
   let process_one_ls_eq ls_eqs =
-    let ls_eq_args = List.filter (fun svl -> List.length (CP.intersect_svl svl ls_eqs) > 1) vars_grps0 in
+    let ls_eq_args = List.fold_left (fun r args ->
+        let inter = CP.intersect_svl args ls_eqs in
+        if List.length inter > 1 then r@[inter] else r
+        ) [] vars_grps0 in
     let ls_eq_args1 = List.sort (fun ls1 ls2 -> List.length ls2 - List.length ls1) ls_eq_args in
     let ls_eq_args2 = Gen.BList.remove_dups_eq (Gen.BList.subset_eq CP.eq_spec_var) ls_eq_args1 in
     if ls_eq_args2=[] then (false,[],[])
