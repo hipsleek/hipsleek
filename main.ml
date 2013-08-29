@@ -157,8 +157,8 @@ let parse_file_cp file_name =
       (print_string ((Camlp4.PreCast.Loc.to_string l)^"\n --error: "^(Printexc.to_string t)^"\n at:"^(Printexc.get_backtrace ()));
        raise t)
 
-let process_cp_file prog =
-  let file_to_cp = if(String.compare !Globals.file_cp "" != 0) then !Globals.file_cp else (
+let process_validate prog =
+  let file_to_cp = if(String.compare !Globals.validate_target "" != 0) then !Globals.validate_target else (
     "sa/hip/test/ll-append3.cp"
   )
   in
@@ -223,10 +223,10 @@ let process_source_full source =
   let prog = parse_file_full source false in
   let _ = Debug.ninfo_zprint (lazy (("       iprog:" ^ (Iprinter.string_of_program prog)))) no_pos in
   let _ = Gen.Profiling.push_time "Process compare file" in
-  let prog = if(!Globals.cp_test || !Globals.cp_prefile) then (
-    process_cp_file prog 
+  let prog = if(!Globals.validate || !Globals.cp_prefile) then (
+      process_validate prog
   )
-    else prog
+  else prog
   in
   let prog = process_lib_file prog in
   let _ = Gen.Profiling.pop_time "Process compare file" in
