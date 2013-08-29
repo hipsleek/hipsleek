@@ -2315,14 +2315,14 @@ let validate proc hp_lst_assume inferred_hp_defs sel_hp_rels =
   let _ =
     if(is_have_tc) then (
         let _ = if(res1) then
-	          print_string ("Compare ass " ^ proc.Cast.proc_name ^ " SUCCESS\n" )
+	          print_string ("Validate assumption: " ^ proc.Cast.proc_name ^ " SUCCESS\n" )
 	        else
-	          print_string ("Compare ass " ^ proc.Cast.proc_name ^ " FAIL\n" )
+	          print_string ("Validate assumption: " ^ proc.Cast.proc_name ^ " FAIL\n" )
         in
         let _ = if(res2) then
-	          print_string ("Compare defs " ^ proc.Cast.proc_name ^ " SUCCESS\n" )
+	          print_string ("Validate shape: " ^ proc.Cast.proc_name ^ " SUCCESS\n" )
 	        else
-	          print_string ("Compare defs " ^ proc.Cast.proc_name ^ " FAIL\n" )
+	          print_string ("Validate shape: " ^ proc.Cast.proc_name ^ " FAIL\n" )
         in
         ()
     )
