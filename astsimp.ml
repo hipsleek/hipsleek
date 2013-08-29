@@ -5871,10 +5871,10 @@ and case_normalize_renamed_formula_x prog (avail_vars:(ident*primed) list) posib
                       | Bperm ->
                           (match f with
                             | IP.Bptriple ((ec,et,ea),pos) ->
-                                let lbls = [Lab2_List.unlabelled;Lab2_List.unlabelled;Lab2_List.unlabelled] in
+                                let lbls = [LO.unlabelled;LO.unlabelled;LO.unlabelled] in
                                 lbls,[ec;et;ea]
                             | _ ->  report_error pos ("linearize_heap : Expecting Bptriple for bperm"))
-                      | _ ->  [Lab2_List.unlabelled], [f])
+                      | _ ->  [LO.unlabelled], [f])
             in
             let args = b.IF.h_formula_heap_arguments in
             Debug.tinfo_hprint (add_str "ty_vars" (pr_list (pr_pair string_of_typ pr_id))) tp_vars pos;
@@ -7976,6 +7976,11 @@ let rec rev_trans_exp e = match e with
   | CP.Var (v,p) -> let t =  CP.type_of_spec_var v in
     (* let _ = print_endline ((!CP.print_sv v)^ ": " ^ (string_of_typ t)) in *)
     IP.Ann_Exp (IP.Var (rev_trans_spec_var v, p), t, p) (*L2: added annotated sv instead sv here*)
+  | CP.Bptriple ((c,t,a),p) ->
+      let nc = IP.Var (rev_trans_spec_var c, p) in
+      let nt = IP.Var (rev_trans_spec_var t, p) in
+      let na = IP.Var (rev_trans_spec_var a, p) in
+      IP.Bptriple ((nc,nt,na),p)
   | CP.IConst b -> IP.IConst b
   | CP.FConst b -> IP.FConst b
   | CP.AConst b -> IP.AConst b
