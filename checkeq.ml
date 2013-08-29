@@ -1909,6 +1909,8 @@ let checkeq_defs_with_diff_x hvars svars (defs: (CP.rel_cat * CF.h_formula * CF.
   else (
     let rec check_hps pair_vars checking parent= ( 
       let check_one_def v1 v2 =
+        let _ = Debug.ninfo_hprint (add_str "v1 " (!CP.print_sv)) v1 no_pos in
+        let _ = Debug.ninfo_hprint (add_str "v2 " (!CP.print_sv)) v2 no_pos in
 	let ds = find_hpdef v1 v2 parent in
 	match ds with
 	  | Some (d1,d2) -> (
@@ -1927,7 +1929,7 @@ let checkeq_defs_with_diff_x hvars svars (defs: (CP.rel_cat * CF.h_formula * CF.
 	    else [(d1,d2,mtl)]
 	  )
 	  | None -> (
-	    report_error no_pos "checkeq_defs_with_diff: have not handle if the def of diff predicates can not be found "
+	    report_error no_pos "checkeq_defs_with_diff: have not handled if the def of diff predicates can not be found "
 	  )
       in 
       let res_pairs = List.map (fun (v1,v2) -> let res = check_one_def v1 v2 in

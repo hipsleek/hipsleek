@@ -1966,8 +1966,20 @@ let infer_shapes_conquer iprog prog proc_name ls_is sel_hps=
         (cl_sel_hps, hp_defs1,tupled_defs1)
     in
     let hpdefs = List.map (fun (k, hf, og, f) -> CF.mk_hprel_def k hf og [(is.CF.is_cond_path, Some f)] None) defs in
-    let link_hp_defs = SAC.generate_hp_def_from_link_hps prog is.CF.is_cond_path is.CF.is_hp_equivs is.CF.is_link_hpargs in
-    (cl_sel_hps@(List.map fst is.CF.is_link_hpargs), hpdefs@link_hp_defs, tupled_defs2, is.CF.is_hp_defs)
+    let link_hpdefs = SAC.generate_hp_def_from_link_hps prog is.CF.is_cond_path is.CF.is_hp_equivs is.CF.is_link_hpargs in
+    let link_hp_defs = List.map (fun hpdef ->
+        let fs = List.fold_left (fun ls (_, f_opt) ->
+            match f_opt with
+              | None -> ls
+              | Some f -> ls@[f]
+        ) [] hpdef.CF.hprel_def_body in
+        let f = if fs = [] then CF.formula_of_heap CF.HTrue no_pos else
+          CF.disj_of_list fs no_pos
+        in
+        (hpdef.CF.hprel_def_kind, hpdef.CF.hprel_def_hrel, hpdef.CF.hprel_def_guard, f)) link_hpdefs
+    in
+    (cl_sel_hps@(List.map fst is.CF.is_link_hpargs), hpdefs@link_hpdefs,
+    tupled_defs2, is.CF.is_hp_defs@link_hp_defs)
   in
   let cl_sel_hps, path_defs, tupled_defs, all_hpdefs = List.fold_left (fun (ls1, ls2,ls3, ls4) path_setting ->
       let r1,r2,r3, r4 = process_path_defs_setting path_setting in
