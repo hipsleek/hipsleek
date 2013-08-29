@@ -1549,6 +1549,8 @@ and is_varperm_of_typ (f : formula) typ : bool=
 and get_varperm_pure (f : formula) typ : spec_var list=
   (match f with
     | BForm (b,_) -> get_varperm_b b typ
+    | AndList ls ->
+        List.concat (List.map (fun (_,fi) -> get_varperm_pure fi typ) ls)
     | And (f1,f2,_) ->
           let res1 = get_varperm_pure f1 typ in
           let res2 = get_varperm_pure f2 typ in
