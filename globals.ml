@@ -5,6 +5,7 @@
 let ramification_entailments = ref 0
 let noninter_entailments = ref 0
 let total_entailments = ref 0
+let omega_sat_imply_time = ref 0.0
 
 type aliasing_scenario = 
   | Not_Aliased

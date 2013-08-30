@@ -1066,3 +1066,5 @@ let normalize_inf_formula_imply (ante: CP.formula) (conseq: CP.formula) : CP.for
 
 let normalize_inf_formula_imply (ante: CP.formula) (conseq: CP.formula) : CP.formula * CP.formula = 
   Gen.Profiling.do_1 "INF-norm-imply" (normalize_inf_formula_imply ante) conseq
+
+
