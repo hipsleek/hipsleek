@@ -1240,22 +1240,25 @@ let smart_subst nf1 nf2 hpargs eqs reqs unk_svl prog_vars=
 (iii) subs both sides to use smallest common vars
         lhs     |- P(v* )
 *)
-let cmp_fn sv1 sv2 = String.compare (CP.name_of_spec_var sv1) (CP.name_of_spec_var sv2)
-let build_subst_comm args prog_vars emap comm_svl=
-  let find_comm_eq ls_eq sv=
-    if List.exists (fun svl -> CP.mem_svl sv svl) ls_eq then ls_eq else
-      let com_eq_svl = CP.EMapSV.find_equiv_all sv emap in
-      if com_eq_svl = [] then ls_eq else
-        ls_eq@[com_eq_svl]
-  in
+let cmp_fn sv1 sv2 = let n= String.compare (CP.name_of_spec_var sv1) (CP.name_of_spec_var sv2) in
+  if n=0 then
+    if CP.primed_of_spec_var sv1 = Unprimed then -1 else 1
+  else n
+let build_subst_comm_x args prog_vars emap comm_svl=
+  (* let find_comm_eq ls_eq sv= *)
+  (*   if List.exists (fun svl -> CP.mem_svl sv svl) ls_eq then ls_eq else *)
+  (*     let com_eq_svl = CP.EMapSV.find_equiv_all sv emap in *)
+  (*     if com_eq_svl = [] then ls_eq else *)
+  (*       ls_eq@[com_eq_svl] *)
+  (* in *)
   let build_subst subst evars=
     let inter1 = CP.intersect_svl evars prog_vars in
     let keep_sv = if inter1 <> [] then
-      List.hd inter1
+      List.hd (List.sort cmp_fn inter1)
     else
       let inter2 = CP.intersect_svl evars args in
       if inter2 <> [] then
-        List.hd inter2
+        List.hd (List.sort cmp_fn inter2)
       else
         let evars1 = List.sort cmp_fn evars in
         List.hd evars1
@@ -1263,9 +1266,26 @@ let build_subst_comm args prog_vars emap comm_svl=
     let new_ss = List.fold_left (fun r sv -> if CP.eq_spec_var keep_sv sv then r else r@[(sv, keep_sv)]) [] evars in
     subst@new_ss
   in
-  let ls_com_eq_svl = List.fold_left find_comm_eq [] comm_svl in
-  if ls_com_eq_svl = [] then [] else
+  let epart0 = CP.EMapSV.partition emap in
+  (* let ls_com_eq_svl = List.fold_left find_comm_eq [] comm_svl in *)
+  let ls_com_eq_svl, ls_non_com_eq_svl = List.partition (fun svl ->
+      CP.intersect_svl svl comm_svl <> []
+  ) epart0 in
+  let ss1 =  if ls_com_eq_svl = [] then [] else
     List.fold_left build_subst [] ls_com_eq_svl
+  in
+  let ss2 = if ls_non_com_eq_svl = [] then [] else
+    List.fold_left build_subst [] ls_non_com_eq_svl
+  in
+  (ss1@ss2)
+
+let build_subst_comm args prog_vars emap comm_svl=
+  let pr1 = CP.EMapSV.string_of in
+  let pr2 =  !CP.print_svl in
+  let pr3 = pr_list (pr_pair !CP.print_sv !CP.print_sv ) in
+  Debug.no_4 "SAU.build_subst_comm" pr2 pr2 pr1 pr2 pr3
+      (fun _ _ _ _ ->  build_subst_comm_x args prog_vars emap comm_svl)
+      args prog_vars emap comm_svl
 
 let expose_expl_closure_eq_null_x lhs_b lhs_args emap0=
   let rec find_equiv_all eparts sv all_parts=
@@ -1421,7 +1441,7 @@ let smart_subst_new_x lhs_b rhs_b hpargs l_emap r_emap r_qemap unk_svl prog_vars
         (List.map snd hpargs)
       in
       let emap0a, ls_eq_args, expl_eqs_ps, eq_sst = expose_expl_eqs emap0 prog_vars vars_grps in
-      let _ = Debug.ninfo_hprint (add_str  "ls_eq_args " (pr_list !CP.print_svl)) ls_eq_args no_pos in
+      let _ = Debug.info_hprint (add_str  "ls_eq_args " (pr_list !CP.print_svl)) ls_eq_args no_pos in
       let emap1 = CP.EMapSV.merge_eset emap0a r_qemap in
       let ss = build_subst_comm all_args prog_vars emap1 comm_svl in
       (*LHS*)
