@@ -366,8 +366,7 @@ let check_formula f timeout =
 Gen.Profiling.do_2 "Omega:check_formula" check_formula f timeout 
 
 let check_formula i f timeout =
-  let ptime4 = Unix.times () in
-  let t4 = ptime4.Unix.tms_utime +. ptime4.Unix.tms_cutime +. ptime4.Unix.tms_stime +. ptime4.Unix.tms_cstime   in let r = Debug.no_2 "Omega:check_formula" (fun x->x) string_of_float string_of_bool check_formula f timeout in let _ =  omega_sat_imply_time := !omega_sat_imply_time +. t4 in r
+Debug.no_2 "Omega:check_formula" (fun x->x) string_of_float string_of_bool check_formula f timeout 
 
 (* linear optimization with omega *)
 let rec send_and_receive f timeout=
@@ -448,7 +447,7 @@ let is_sat_ops pr_weak pr_strong (pe : formula)  (sat_no : string): bool =
             let str = Pai.pai_of_formula pr_weak pr_strong pe in
             let pre_str = "print_formula (integer_qelim <<" in
             let post_str = ">>);;\n" in
-            let str = if vstr == "" then pre_str^str^post_str 
+            let str = if List.length pvars  == 0 then pre_str^str^post_str 
               else pre_str^"exists "^ vstr ^" . "^str^post_str in
             output_string Pai.pai_file (str);
             flush Pai.pai_file;
@@ -553,7 +552,7 @@ let is_valid_ops_x pr_weak pr_strong (pe : formula) timeout: bool =
             let str = Pai.pai_of_formula pr_strong pr_weak pe in
             let pre_str = "print_formula (integer_qelim << ~(" in
             let post_str = ")>>);;\n" in
-            let str = if vstr == "" then pre_str^str^post_str 
+            let str = if List.length pvars  == 0 then pre_str^str^post_str 
               else pre_str^"exists "^ vstr ^" . "^str^post_str in
             output_string Pai.pai_file (str);
             flush Pai.pai_file;

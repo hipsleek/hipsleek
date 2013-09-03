@@ -419,6 +419,8 @@ let process_source_full source =
 	^ (string_of_float (ptime4.Unix.tms_utime+.ptime4.Unix.tms_stime)) ^ " second(s)\n"
 	^ "\tTime spent in child processes: " 
 	^ (string_of_float (ptime4.Unix.tms_cutime +. ptime4.Unix.tms_cstime)) ^ " second(s)\n"
+	^ "\tTime spent in omega sat and imply processes: " 
+	^ (string_of_float !Globals.omega_sat_imply_time) ^ " second(s)\n"
 	^ if !Globals.allow_mem then "\nTotal Entailments : " 
 	^ (string_of_int !Globals.total_entailments) ^ "\n" 
 	^ "Ramification Entailments : "^ (string_of_int !Globals.ramification_entailments) ^"\n"
