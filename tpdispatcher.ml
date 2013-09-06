@@ -509,7 +509,7 @@ let start_prover () =
 let stop_prover () =
   match !pure_tp with
   | OmegaCalc -> (
-      Omega.stop ();
+      if !Omega.is_omega_running then Omega.stop ();
       if !Redlog.is_reduce_running then Redlog.stop ();
     )
   | Coq -> Coq.stop ();
@@ -530,8 +530,8 @@ let stop_prover () =
   | Mona -> Mona.stop();
   | Mathematica -> Mathematica.stop();
   | OM -> (
-      Mona.stop();
-      Omega.stop();
+      if !Mona.is_mona_running then Mona.stop();
+      if !Omega.is_omega_running then Omega.stop();
     )
   | ZM -> (
       Mona.stop();
@@ -1481,6 +1481,7 @@ let simplify (f:CP.formula):CP.formula =
   helper f
 
 let simplify (f:CP.formula):CP.formula =
+  if !Globals.allow_mem then f else 
   let pr = !CP.print_formula in
   Debug.no_1 "TP.simplify" pr pr simplify f
 	  

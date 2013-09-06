@@ -7065,6 +7065,11 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
   *)
   let _ = reset_int2 () in
   let curr_lhs_h = (mkStarH lhs_h estate_orig.es_heap pos) in
+  (* Do compaction for field annotations *)
+  let curr_lhs_h, lhs_p = if(!Globals.allow_field_ann) 
+	then let h,p = Mem.compact_nodes_with_same_name_in_h_formula_top curr_lhs_h (Context.comp_aliases lhs_p)
+	in h, (MCP.merge_mems lhs_p (MCP.mix_of_pure p) true)
+	else curr_lhs_h, lhs_p in
   let curr_lhs_h, lhs_p = normalize_frac_heap prog curr_lhs_h lhs_p in
   let unk_heaps = CF.keep_hrel curr_lhs_h in
   (* Debug.info_hprint (add_str "curr_lhs_h" Cprinter.string_of_h_formula) curr_lhs_h no_pos; *)
