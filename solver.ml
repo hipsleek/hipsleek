@@ -10226,7 +10226,6 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
                               in
                               (false, f,ls1@ls2)
                           | _ ->
-                              let _ = print_endline ("I am here 3") in
                               let f1 = Cpure.get_var f1 in
                               let f2 = Cpure.get_var f2 in
                               if (CP.eq_spec_var f1 f2) then

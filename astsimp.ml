@@ -1855,14 +1855,15 @@ and find_trans_view_name ff self pos =
   Debug.no_2 "find_trans_view_name" pr1 pr2 (pr_list pr_id) (fun _ _ -> find_trans_view_name_x ff self pos) ff self
 
 
-and find_node_vars eq_f h =
+(*TO CHECK: why there are diferences between DataNode and ViewNode ??? *)
+and find_node_vars_x eq_f h =
   let join (a,b) (c,d) = (a@c,b@d) in
   let rec helper h =  match h with
     | CF.DataNode h ->
           let l = eq_f h.CF.h_formula_data_node in
           let _ = Debug.tinfo_hprint (add_str "data:l" (Cprinter.string_of_spec_var_list)) l no_pos in
           if l==[] then ([],[])
-          else (h.CF.h_formula_data_arguments,[])
+          else (h.CF.h_formula_data_arguments,[h.CF.h_formula_data_name]) (*TO CHECK*)
     | CF.ViewNode h ->
         let l = eq_f h.CF.h_formula_view_node in
         Debug.tinfo_hprint (add_str "view:l" (Cprinter.string_of_spec_var_list)) l no_pos;
@@ -1892,6 +1893,10 @@ and find_node_vars eq_f h =
   (*   Debug.no_1 "find_node_vars" pr1 (pr_pair pr2 pr_id) helper h  in *)
   helper h
 
+and find_node_vars eq_f h =
+  let pr_list_id = (pr_list pr_id) in
+  let pr = pr_pair (pr_list Cprinter.string_of_spec_var) pr_list_id in
+  Debug.no_1 "find_node_vars" Cprinter.string_of_h_formula pr (fun _ -> find_node_vars_x eq_f h) h
 
 and param_alias_sets p params = 
   let eqns = ptr_equations_with_null p in
