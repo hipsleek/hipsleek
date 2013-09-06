@@ -122,8 +122,8 @@ let ranking_frozen_mutrec_preds pr_hp_cs=
 (*
   find all pre-preds that has only one assumption ===> equal
 *)
-let icompute_action_pre_x constrs post_hps frozen_hps=
-  let ignored_hps = post_hps@frozen_hps in
+let icompute_action_pre_x constrs post_hps frozen_hps pre_fix_hps=
+  let ignored_hps = post_hps@frozen_hps@pre_fix_hps in
   let partition_pre_preds (pre_preds, rem_constrs, tupled_hps) cs=
     let l_hpargs = CF.get_HRels_f cs.CF.hprel_lhs in
     let r_hpargs = CF.get_HRels_f cs.CF.hprel_rhs in
@@ -244,12 +244,12 @@ let icompute_action_pre_x constrs post_hps frozen_hps=
   (pre_preds_4_equal3,
   List.filter (fun hp -> not (CP.mem_svl hp tupled_hps)) complex_hps,rem_constrs)
 
-let icompute_action_pre constrs post_hps frozen_hps=
+let icompute_action_pre constrs post_hps frozen_hps pre_fix_hps=
   let pr1 = pr_list_ln Cprinter.string_of_hprel_short in
   let pr2 = pr_list_ln (pr_pair !CP.print_sv  pr1) in
   Debug.no_3 "icompute_action_pre" pr1 !CP.print_svl !CP.print_svl
       (pr_triple pr2 !CP.print_svl pr1)
-      (fun _ _ _ -> icompute_action_pre_x constrs post_hps frozen_hps)
+      (fun _ _ _ -> icompute_action_pre_x constrs post_hps frozen_hps pre_fix_hps)
       constrs post_hps frozen_hps
 
 

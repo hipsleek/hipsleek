@@ -198,15 +198,6 @@ let is_empty_wop opf=
     | None -> false
     | Some f ->  is_empty_f f
 
-let rec is_unk_f f=
-   match f with
-    | CF.Base fb ->
-        (CF.is_unknown_heap fb.CF.formula_base_heap) &&
-            (CP.isConstTrue (MCP.pure_of_mix fb.CF.formula_base_pure))
-    | CF.Exists _ -> let _, base1 = CF.split_quantifiers f in
-                     is_unk_f base1
-    | _ -> report_error no_pos "SAU.is_unk_f: not handle yet"
-
 let rec is_only_xpure_f f=
    match f with
     | CF.Base fb ->
@@ -215,8 +206,8 @@ let rec is_only_xpure_f f=
           (CF.is_emp_heap fb.CF.formula_base_heap) &&
             (CP.isConstTrue p || (List.for_all CP.is_xpure ps))
     | CF.Exists _ -> let _, base1 = CF.split_quantifiers f in
-                     is_unk_f base1
-    | _ -> report_error no_pos "SAU.is_unk_f: not handle yet"
+                     CF.is_unknown_f base1
+    | _ -> report_error no_pos "SAU.is_only_xpure_f: not handle yet"
 
 let rec get_pos ls n sv=
   match ls with
@@ -1441,7 +1432,7 @@ let smart_subst_new_x lhs_b rhs_b hpargs l_emap r_emap r_qemap unk_svl prog_vars
         (List.map snd hpargs)
       in
       let emap0a, ls_eq_args, expl_eqs_ps, eq_sst = expose_expl_eqs emap0 prog_vars vars_grps in
-      let _ = Debug.info_hprint (add_str  "ls_eq_args " (pr_list !CP.print_svl)) ls_eq_args no_pos in
+      let _ = Debug.ninfo_hprint (add_str  "ls_eq_args " (pr_list !CP.print_svl)) ls_eq_args no_pos in
       let emap1 = CP.EMapSV.merge_eset emap0a r_qemap in
       let ss = build_subst_comm all_args prog_vars emap1 comm_svl in
       (*LHS*)
@@ -1752,7 +1743,7 @@ let rec simplify_one_constr prog unk_hps constr=
                 let l,r,matched = simplify_one_constr_b prog unk_hps lhs_b rhs_b in
                  (* if l.CF.formula_base_heap = CF.HEmp && *)
                  (*   (MCP.isConstMTrue l.CF.formula_base_pure) then *)
-                if is_unk_f (CF.Base l) || is_unk_f (CF.Base r) ||
+                if CF.is_unknown_f (CF.Base l) || CF.is_unknown_f (CF.Base r) ||
                 (is_empty_f (CF.Base l) && is_empty_f (CF.Base r)) then
                   let _ = DD.ninfo_pprint (" input: " ^(Cprinter.prtt_string_of_formula_base lhs_b) ^ " ==> " ^
                                                   (Cprinter.prtt_string_of_formula_base rhs_b)) no_pos in

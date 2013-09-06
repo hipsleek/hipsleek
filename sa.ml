@@ -1663,7 +1663,7 @@ let rec simplify_one_constr prog unk_hps constr=
                 let l,r,matched = SAU.simplify_one_constr_b prog unk_hps lhs_b rhs_b in
                  (* if l.CF.formula_base_heap = CF.HEmp && *)
                  (*   (MCP.isConstMTrue l.CF.formula_base_pure) then *)
-                if SAU.is_unk_f (CF.Base l) || SAU.is_unk_f (CF.Base r) ||
+                if CF.is_unknown_f (CF.Base l) || CF.is_unknown_f (CF.Base r) ||
                 (SAU.is_empty_f (CF.Base l) && SAU.is_empty_f (CF.Base r)) then
                   let _ = DD.ninfo_pprint (" input: " ^(Cprinter.prtt_string_of_formula_base lhs_b) ^ " ==> " ^
                                                   (Cprinter.prtt_string_of_formula_base rhs_b)) no_pos in

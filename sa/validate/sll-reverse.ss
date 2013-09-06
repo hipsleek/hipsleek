@@ -28,10 +28,16 @@ HP_RELDEFN G1:  G1(x,y)::  HP_571(x) * HP_572(y)&true]
 
  */
 void reverse(ref node x, ref node y)
+
   infer[HX,HY,G1]
   requires HX(x)*HY(y)
   ensures G1(x',y');
 
+/*
+   infer[H1,G1]
+  requires H1(x,y)
+  ensures G1(x',y');
+*/
 /*
   infer[H1,H2]
   requires x::ll<>*H1(y)
