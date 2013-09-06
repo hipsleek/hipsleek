@@ -1842,9 +1842,6 @@ let rec add_uni_vars_to_view_x cprog (l2r_coers:coercion_decl list) (view:view_d
   (*                       ^"\n ### res1 = " ^ (Cprinter.string_of_spec_var_list res1) *)
   (*                       ^ "\n\n") in *)
   let uni_vars = P.remove_dups_svl res1 in
-  (* let _ = print_string ("\n add_uni_vars_to_view:" *)
-  (*                       ^"\n ### uni_vars = " ^ (Cprinter.string_of_spec_var_list uni_vars) *)
-  (*                       ^ "\n\n") in *)
   if (view.view_is_rec) then {view with view_uni_vars = uni_vars}
   else
 	let rec process_h_formula (h_f:F.h_formula):P.spec_var list = match h_f with
