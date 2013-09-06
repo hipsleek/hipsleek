@@ -2324,6 +2324,7 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
         else by_names
       else by_names
       in
+      (* let _ = print_string "trans_proc :: lockset translated PASSED \n" in *)
       (******<<LOCKSET variable*********)
       let static_specs_list  = CF.plug_ref_vars by_names static_specs_list in
       let dynamic_specs_list = CF.plug_ref_vars by_names dynamic_specs_list in
@@ -2350,6 +2351,7 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
         else
           dynamic_specs_list
       in
+      (* let _ = print_string "trans_proc :: vperm translated PASSED \n" in *)
       (*=============================*)
       let final_static_specs_list = 
 	if CF.isConstDTrue static_specs_list then 
@@ -3232,14 +3234,19 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
             let tmp = List.map (helper) args in
             let (cargs, cts) = List.split tmp in
             let proc_decl = I.look_up_proc_def_raw prog.I.prog_proc_decls mn in
-            let cts = (
-              List.map2 (fun p1 t2 ->
-                let t1 = p1.I.param_type in
-                match t1, t2 with
-                | Globals.Named _, Globals.Named "" -> t1  (* null case *)
-                | _ -> t2
-              ) proc_decl.I.proc_args cts
-            ) in
+            (*TO CHECK: not sure what is it for? but it may not be
+              applicable to concurrency as these invocations (except join())
+              are generic to the number of arguments *)
+            let cts = if (mn=Globals.fork_name || mn=Globals.acquire_name || mn=Globals.release_name || mn=Globals.finalize_name || mn=Globals.init_name) then cts
+                else
+                  (
+                      List.map2 (fun p1 t2 ->
+                          let t1 = p1.I.param_type in
+                          match t1, t2 with
+                            | Globals.Named _, Globals.Named "" -> t1  (* null case *)
+                            | _ -> t2
+                      ) proc_decl.I.proc_args cts
+                  ) in
             let mingled_mn = C.mingle_name mn cts in (* signature of the function *)
             let this_recv = 
               if Gen.is_some proc.I.proc_data_decl then
