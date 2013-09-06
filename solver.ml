@@ -697,7 +697,7 @@ and h_formula_2_mem_perm_x (f : h_formula) (p0 : mix_formula) (evars : CP.spec_v
                           let full_f = Perm.mkFullPerm_pure () (Cpure.get_var var) in
                           let f0 = MCP.pure_of_mix p0 in
                           Debug.devel_zprint (lazy ("h_formula_2_mem_perm: [Begin] check fractional variable "^ (Cprinter.string_of_formula_exp var) ^ " is full_perm" ^"\n")) pos;
-                    let res,_,_ = CP.imply_disj_orig [f0] full_f (TP.imply_one 24) imp_no in
+                          let res,_,_ = CP.imply_disj_orig [f0] full_f (TP.imply_one 24) imp_no in
                           Debug.devel_zprint (lazy ("h_formula_2_mem_perm: [End] check fractional variable "^ (Cprinter.string_of_formula_exp var) ^ " is full_perm. ### res = " ^ (string_of_bool res) ^"\n")) pos;
                           if (res) then
                             CP.DisjSetSV.singleton_dset (p(*, CP.mkTrue pos*))
@@ -770,7 +770,8 @@ let rec xpure (prog : prog_decl) (f0 : formula) : (mix_formula * CP.spec_var lis
       
 and xpure_x (prog : prog_decl) (f0 : formula) : (mix_formula * CP.spec_var list * CF.mem_formula) =
   (* print_string "calling xpure"; *)
-  if (!Globals.allow_imm) then xpure_symbolic 4 prog f0
+  if (!Globals.allow_imm) then
+    xpure_symbolic 4 prog f0
   else
     (*TODO: allow_perm and allow_imm at the same time*)
     if (Perm.allow_perm ()) then
@@ -1292,8 +1293,11 @@ and xpure_heap_perm_x (prog : prog_decl) (h0 : h_formula)  (p0: mix_formula) (wh
               | Some f ->
                     if CF.is_mem_mem_formula p memset then 
                       (*full LOCK node*)
+                      let non_null = CP.mkNeqNull p pos in
                       let i = fresh_int2 () in
-                      let eq_i = CP.mkEqVarInt p i pos in
+                      (* let eq_i = CP.mkEqVarInt p i pos in *)
+                      (* TO CHECK: temporarily use non-null*)
+                      let eq_i = non_null in
                       MCP.memoise_add_pure_N (MCP.mkMTrue pos) eq_i (* full permission -> p=i*)
                     else
                       (*partial LOCK node*)
@@ -4592,15 +4596,15 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
 			            (match n_ctx_list with
 	                              | FailCtx _ ->(* let _ = print_endline ("###: 1") in *) (n_ctx_list, prf)
 	                              | SuccCtx _ ->
-				            let res_ctx, res_prf = match formula_cont with
-					      | Some l -> heap_entail_struc prog is_folding has_post n_ctx_list l tid new_delayed_f join_id pos pid (*also propagate tid*)
-				              | None -> (n_ctx_list, prf) in
-                                            (* DD.info_zprint  (lazy  ("  after pre 0: " ^ (Cprinter.string_of_list_context res_ctx))) pos; *)
-				            let res_ctx = if !wrap_exists_implicit_explicit then push_exists_list_context (expl_inst@impl_inst) res_ctx else res_ctx in
-                                            (* DD.info_zprint  (lazy  ("  after pre 1: " ^ (Cprinter.string_of_list_context res_ctx))) pos; *)
-				            (res_ctx,res_prf)
-                                                (*  let _ = print_endline ("###: 3") in*)
-                                    )
+				                      let res_ctx, res_prf = match formula_cont with
+					                    | Some l -> heap_entail_struc prog is_folding has_post n_ctx_list l tid new_delayed_f join_id pos pid (*also propagate tid*)
+				                        | None -> (n_ctx_list, prf) in
+                            (* DD.info_zprint  (lazy  ("  after pre 0: " ^ (Cprinter.string_of_list_context res_ctx))) pos; *)
+				                      let res_ctx = if !wrap_exists_implicit_explicit then push_exists_list_context (expl_inst@impl_inst) res_ctx else res_ctx in
+                            (* DD.info_zprint  (lazy  ("  after pre 1: " ^ (Cprinter.string_of_list_context res_ctx))) pos; *)
+				                      (res_ctx,res_prf)
+                                    (*  let _ = print_endline ("###: 3") in*)
+                                )
                             | EAssume {
 				  formula_assume_simpl = post;
 				  formula_assume_vars = ref_vars;
