@@ -832,6 +832,145 @@ $output_file = "log";
 								]
         ### END parahip
              ],
+	"hip_veribsync" =>[
+				# ["veribsync/while-loop.ss",4,  "--en-para -perm bperm -tp redlog",
+                #                 "fun","SUCCESS",
+                #                 "fun3","SUCCESS",
+                #                 "loop_fun","SUCCESS",
+                #                 "loop_fun3","SUCCESS"
+				# 				],
+				# ["veribsync/while-loop2.ss",8,  "--en-para -perm bperm -tp redlog",
+                #                 "fun","SUCCESS",
+                #                 "fun3","SUCCESS",
+                #                 "fun4","SUCCESS",
+                #                 "fun5","SUCCESS",
+                #                 "fun6","SUCCESS",
+                #                 "fun7","SUCCESS",
+                #                 "fun8","SUCCESS",
+                #                 "fun9","SUCCESS"
+				# 				],
+				# ["veribsync/hip-bperm1.ss",6,  "--en-para -perm bperm -tp redlog",
+                #                 "destroyCellFail","FAIL",
+                #                 "readCell","SUCCESS",
+                #                 "testNewCell","SUCCESS",
+                #                 "testNewCell2","SUCCESS",
+                #                 "updateCell","SUCCESS",
+                #                 "updateCellFail","FAIL"
+				# 				],
+				# ["veribsync/bperm-exp.ss",4,  "--en-para -perm bperm -tp redlog",
+                #                 "main","SUCCESS",
+                #                 "thread1","SUCCESS",
+                #                 "thread2","SUCCESS",
+                #                 "thread3","SUCCESS"
+				# 				],
+				# ["veribsync/barrier-static-primitives.ss",1,  "--en-para -perm bperm -tp redlog",
+                #                 "main","SUCCESS"
+				# 				],
+				# ["veribsync/barrier-static-exp1.ss",3,  "--en-para -perm bperm -tp redlog",
+                #                 "main","SUCCESS",
+                #                 "thread1","SUCCESS",
+                #                 "thread2","SUCCESS"
+				# 				],
+				# ["veribsync/barrier-static-exp2.ss",3,  "--en-para -perm bperm -tp redlog",
+                #                 "main","FAIL",
+                #                 "thread1","SUCCESS",
+                #                 "thread2","SUCCESS"
+				# 				],
+				# ["veribsync/barrier-static-exp3.ss",3,  "--en-para -perm bperm -tp redlog",
+                #                 "main","FAIL",
+                #                 "thread1","SUCCESS",
+                #                 "thread2","SUCCESS"
+				# 				],
+				# ["veribsync/barrier-static-complex.ss",3,  "--en-para -perm bperm -tp redlog",
+                #                 "main","SUCCESS",
+                #                 "thread1","SUCCESS",
+                #                 "thread2","SUCCESS"
+				# 				],
+				# ["veribsync/barrier-static-complex2.ss",3,  "--en-para -perm bperm -tp redlog",
+                #                 "main","SUCCESS",
+                #                 "thread1","SUCCESS",
+                #                 "thread2","SUCCESS"
+				# 				],
+				# ["veribsync/barrier-static-complex3.ss",2,  "--en-para -perm bperm -tp redlog",
+                #                 "main","SUCCESS",
+                #                 "thread","SUCCESS"
+				# 				],
+				# ["veribsync/barrier-static-multiple.ss",4,  "--en-para -perm bperm -tp redlog",
+                #                 "main","SUCCESS",
+                #                 "main_fail","SUCCESS",
+                #                 "participant","SUCCESS",
+                #                 "participant_fail","FAIL"
+				# 				],
+				# ["veribsync/barrier-static-consistency.ss",5,  "--en-para -perm bperm -tp redlog",
+                #                 "main","SUCCESS",
+                #                 "main_fail","FAIL",
+                #                 "participant","SUCCESS",
+                #                 "participant1","SUCCESS",
+                #                 "participant_fail","FAIL"
+				# 				],
+				# ["veribsync/barrier-dynamic-exp1.ss",4,  "--en-para -perm bperm -tp redlog",
+                #                 "main","SUCCESS",
+                #                 "thread1","SUCCESS",
+                #                 "thread2","SUCCESS",
+                #                 "thread3","SUCCESS"
+				# 				],
+				# ["veribsync/barrier-dynamic-exp2.ss",4,  "--en-para -perm bperm -tp redlog",
+                #                 "main","FAIL",
+                #                 "thread1","SUCCESS",
+                #                 "thread2","SUCCESS",
+                #                 "thread3","SUCCESS"
+				# 				],
+				# ["veribsync/barrier-dynamic-exp3.ss",4,  "--en-para -perm bperm -tp redlog",
+                #                 "main","FAIL",
+                #                 "thread1","SUCCESS",
+                #                 "thread2","SUCCESS",
+                #                 "thread3","SUCCESS"
+				# 				],
+				# ["veribsync/barrier-dynamic-exp4.ss",5,  "--en-para -perm bperm -tp redlog",
+                #                 "childthread1","SUCCESS",
+                #                 "childthread2","SUCCESS",
+                #                 "main","SUCCESS",
+                #                 "thread1","SUCCESS",
+                #                 "thread2","SUCCESS"
+				# 				],
+				# ["veribsync/barrier-dynamic-exp5.ss",2,  "--en-para -perm bperm -tp redlog",
+                #                 "main","SUCCESS",
+                #                 "thread","SUCCESS"
+				# 				],
+				# ["veribsync/barrier-dynamic-exp6.ss",3,  "--en-para -perm bperm -tp redlog",
+                #                 "main","SUCCESS",
+                #                 "thread1","SUCCESS",
+                #                 "thread2","SUCCESS"
+				# 				],
+				# ["veribsync/barrier-dynamic-exp7.ss",2,  "--en-para -perm bperm -tp redlog",
+                #                 "CalculationInTask","SUCCESS",
+                #                 "main","SUCCESS"
+				# 				],
+				["veribsync/benchmark/barnes.ss",16,  "--en-para -perm bperm -tp redlog",
+                                "ANLinit","SUCCESS", "ComputeForces","SUCCESS",
+                                "Housekeep","SUCCESS","find_my_bodies","SUCCESS",
+                                "hackcofm","SUCCESS","maketree","SUCCESS",
+                                "stepsystem","SUCCESS","find_my_initial_bodies","SUCCESS",
+                                "SlaveStart","SUCCESS","diagnostics","SUCCESS",
+                                "initoutput","SUCCESS","initparam","SUCCESS",
+                                "startrun","SUCCESS","tab_init","SUCCESS",
+                                "main","SUCCESS","output","SUCCESS"
+								],
+				# ["veribsync/benchmark/barnes.ss",16,  "--en-para -perm bperm -tp redlog",
+                #                 "","SUCCESS","","SUCCESS",
+                #                 "","SUCCESS","","SUCCESS",
+                #                 "","SUCCESS","","SUCCESS",
+                #                 "","SUCCESS","","SUCCESS",
+                #                 "","SUCCESS","","SUCCESS"
+				# 				],
+
+
+
+				["vperm/fibonacci.ss",2,  "--ann-vp -tp z3 -perm none --dis-ls dis--locklevel", 
+                                "seq_fib","SUCCESS",
+                                "para_fib2","SUCCESS"
+								]
+             ], # END hip_veribsync
 	"bags" =>[
         ["avl-all-1.ss", 8, "", "remove_min", "SUCCESS", "rotate_double_right", "SUCCESS", "rotate_double_left", "SUCCESS", 
          "get_max", "SUCCESS", "rotate_right", "SUCCESS", "rotate_left", "SUCCESS", "height", "SUCCESS"],
@@ -1292,17 +1431,17 @@ $output_file = "log";
                   ["fracperm/combine2.slk","--en-para -perm fperm -tp redlog", "", "Valid.Valid.Valid.Valid."]
            ],
     "sleek_veribsync" => [
-                      ["veribsync/bperm1.slk","--en-para -perm bperm -tp parahip", "", "Valid.Fail.Valid.Valid.Valid.Valid.Valid.Fail."],
-                      ["veribsync/bperm-split.slk","--en-para -perm bperm -tp parahip", "", "Valid.Valid.Fail.Valid.Valid.Fail.Valid.Valid."],
-                      ["veribsync/bperm-combine.slk","--en-para -perm bperm -tp parahip", "", "Valid.Valid.Valid.Valid."],
-                      ["veribsync/bperm-split-combine.slk","--en-para -perm bperm -tp parahip", "", "Valid.Valid.Valid.Valid.Valid.Valid."],
-                      ["veribsync/barrier1.slk","--en-para -perm bperm -tp parahip", "", "Valid.Fail.Valid.Valid.Valid.Valid.Valid.Fail."],
-                      ["veribsync/barrier-split.slk","--en-para -perm bperm -tp parahip", "", "Valid.Valid.Fail.Valid.Valid.Fail.Valid."],
-                      ["veribsync/barrier-combine.slk","--en-para -perm bperm -tp parahip", "", "Valid.Valid.Valid.Valid."],
-                      ["veribsync/barrier-sep.slk","--en-para -perm bperm -tp parahip", "", "Valid.Valid.Valid."],
-                      ["veribsync/barrier-static.slk","--en-para -perm bperm -tp parahip", "", "Valid.Valid.Valid.Valid.Valid."],
-                      ["veribsync/barrier-dynamic.slk","--en-para -perm bperm -tp parahip", "", "Valid.Fail.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Valid.Fail.Valid.Valid.Valid.Fail.Fail.Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Valid.Valid."],
-                      ["veribsync/barrier-dynamic2.slk","--en-para -perm bperm -tp parahip", "", "Valid.Fail.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Valid.Fail.Valid.Valid.Valid.Fail.Fail.Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Valid.Valid."]],
+                      ["veribsync/bperm1.slk","--en-para -perm bperm -tp redlog", "", "Valid.Fail.Valid.Valid.Valid.Valid.Valid.Fail."],
+                      ["veribsync/bperm-split.slk","--en-para -perm bperm -tp redlog", "", "Valid.Valid.Fail.Valid.Valid.Fail.Valid.Valid."],
+                      ["veribsync/bperm-combine.slk","--en-para -perm bperm -tp redlog", "", "Valid.Valid.Valid.Valid."],
+                      ["veribsync/bperm-split-combine.slk","--en-para -perm bperm -tp redlog", "", "Valid.Valid.Valid.Valid.Valid.Valid."],
+                      ["veribsync/barrier1.slk","--en-para -perm bperm -tp redlog", "", "Valid.Fail.Valid.Valid.Valid.Valid.Valid.Fail."],
+                      ["veribsync/barrier-split.slk","--en-para -perm bperm -tp redlog", "", "Valid.Valid.Fail.Valid.Valid.Fail.Valid."],
+                      ["veribsync/barrier-combine.slk","--en-para -perm bperm -tp redlog", "", "Valid.Valid.Valid.Valid."],
+                      ["veribsync/barrier-sep.slk","--en-para -perm bperm -tp redlog", "", "Valid.Valid.Valid."],
+                      ["veribsync/barrier-static.slk","--en-para -perm bperm -tp redlog", "", "Valid.Valid.Valid.Valid.Valid."],
+                      ["veribsync/barrier-dynamic.slk","--en-para -perm bperm -tp redlog", "", "Valid.Fail.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Valid.Fail.Valid.Valid.Valid.Fail.Fail.Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Valid.Valid."],
+                      ["veribsync/barrier-dynamic2.slk","--en-para -perm bperm -tp redlog", "", "Valid.Fail.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Valid.Fail.Valid.Valid.Valid.Fail.Fail.Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Valid.Valid."]],
 
     # "lemmas"=>[
     #     ["ll.slk", " --elp ", "Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.", "Valid.Fail."],
