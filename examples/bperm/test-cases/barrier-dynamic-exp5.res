@@ -1,2 +1,2 @@
-Procedure main$ SUCCESS
-Procedure thread$barrier SUCCESS
+Procedure main$ SUCCESS.
+Procedure thread$barrier SUCCESS.

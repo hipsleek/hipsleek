@@ -1,2 +1,2 @@
-Procedure CalculationInTask$barrier SUCCESS
-Procedure main$ SUCCESS
+Procedure CalculationInTask$barrier SUCCESS.
+Procedure main$ SUCCESS.
