@@ -54,8 +54,10 @@ void lscan(ref node cur, ref node prev, node sent)
   //dprint;
   if (cur == null) {
       // change direction;
+    node tmp = cur;
       cur = prev;
-      prev = null;
+      //prev = null;
+      prev = tmp;
   }
   //dprint;
   lscan(cur,prev,sent);
