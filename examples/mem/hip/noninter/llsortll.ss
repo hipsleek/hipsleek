@@ -41,8 +41,8 @@ lemma self::sll<n,sm,lg,R> -> self::ll<n,R>;
 lemma self::ll<n,R> -> self::lseg<n,R,p>;
 
 void overlaid_insert(ref node x, ref node s,int v)
-requires x::ll<n,R> &* s::sll<n,sm,lg,R>
-ensures x'::ll<n+1,R1> &* s'::sll<n+1,mi,ma,R1> & mi = min(v, sm) & ma = max(v, lg) &  R1 = union(R,{x}); 
+requires x::ll<n,R> * s::sll<n,sm,lg,R>
+ensures x'::ll<n+1,R1> * s'::sll<n+1,mi,ma,R1> & mi = min(v, sm) & ma = max(v, lg) &  R1 = union(R,{x}); 
 {
 node c = new node(v,null,null);
 c.next = x;
@@ -51,8 +51,8 @@ s = insert2(s,c);
 }
 
 void overlaid_delete(node x, node s, int v)
-requires x::ll<n,R> &* s::sll<n,sm,lg,R>
-ensures x::ll<nres,R1> &* s::sll<nres,mi,ma,R1> & mi = min(v, sm) & ma = max(v, lg) & (R1 subset R | R1 = R) & n-1 <= nres <= n;
+requires x::ll<n,R> * s::sll<n,sm,lg,R>
+ensures x::ll<nres,R1> * s::sll<nres,mi,ma,R1> & mi = min(v, sm) & ma = max(v, lg) & (R1 subset R | R1 = R) & n-1 <= nres <= n;
 /*
 {
 node c;
@@ -154,8 +154,8 @@ node get_tail(node x)
 /* transform a normal singly linked list in a sorted list */
 void insertion_sort(node x, ref node y)
 
-	requires x::ll<n,Rll> &* y::sll<m1, ys1, yl1,Rsll>
-	ensures y'::sll<n + m1, _, _,R1> &* x::ll<n,Rll> & R1 = union(Rsll,Rll) ;
+	requires x::ll<n,Rll> * y::sll<m1, ys1, yl1,Rsll>
+	ensures y'::sll<n + m1, _, _,R1> * x::ll<n,Rll> & R1 = union(Rsll,Rll) ;
 
 {
 	if (x != null)

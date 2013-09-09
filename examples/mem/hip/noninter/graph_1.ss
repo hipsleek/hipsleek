@@ -6,14 +6,17 @@ data node {
 	node right;	
 }
 
-graph<v,ann,M> == self = null & M = {}
-	or self::node<v@ann,l@L,r@L> U* (l::graph<v,ann,Ml> U* r::graph<v,ann,Mr>) & M = union(Ml,Mr,{self})
+graph<v,M> == self = null & M = {}
+	or self::node<0,l@I,r@I> U* (l::graph<0,Ml> U* r::graph<0,Mr>) & M = union(Ml,Mr,{self}) & v = 0
+	or self::node<1,l@I,r@I> U* (l::graph<_,Ml> U* r::graph<_,Mr>) & M = union(Ml,Mr,{self}) & v = 2
+	or self::node<1,l@I,r@I> U* (l::graph<1,Ml> U* r::graph<1,Mr>) & M = union(Ml,Mr,{self}) & v = 1
 	inv true
-	mem M->(node<@M,@L,@L> ; node<@A,@L,@L>);
+	mem M->(node<@M,@I,@I> ; node<@I,@I,@I>);
 
 void mark(ref node x)
-requires x::graph<0,@M,M>
-ensures x::graph<1,@A,M>;
+requires x::graph<0,M>
+//ensures x::graph<_,M>; //fails
+ensures x::graph<1,M>;
 {
 node l,r;
 if(x == null) return;

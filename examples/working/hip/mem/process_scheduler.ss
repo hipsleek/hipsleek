@@ -24,12 +24,14 @@ sll<R> == self = null & R = {}
     
 void insert_process(int pid, int stat, ref node plist, ref node rlist, ref node slist)
 case {
-stat = 1 -> requires rlist::rll<R1> * slist::sll<R2> &* plist::ll<R>  & R = union(R1,R2)
-	    ensures  rlist'::rll<R1p> * slist::sll<R2> &* plist'::ll<Rp>
-	    & plist' = rlist' & Rp = union(R1p,R2) & R1p = union(R1,{rlist'}) & Rp = union(R,{plist'});
-stat != 1 -> requires rlist::rll<R1> * slist::sll<R2> &* plist::ll<R> & R = union(R1,R2)
-	    ensures rlist::rll<R1> * slist'::sll<R2p> &* plist'::ll<Rp> 
-	    & plist' = slist' & Rp = union(R1,R2p) & R2p = union(R2,{slist'}) & Rp = union(R,{plist'});}
+stat = 1 -> requires rlist::rll<R1> * slist::sll<R2> * plist::ll<R>  & R = union(R1,R2) & intersect(R1,R2) = {}
+	    ensures  rlist'::rll<R1p> * slist::sll<R2> * plist'::ll<Rp>
+	    & plist' = rlist' & Rp = union(R1p,R2) & R1p = union(R1,{rlist'}) & Rp = union(R,{plist'})
+		& intersect(R1p,R2) = {};
+stat != 1 -> requires rlist::rll<R1> * slist::sll<R2> * plist::ll<R> & R = union(R1,R2) & intersect(R1,R2) = {}
+	    ensures rlist::rll<R1> * slist'::sll<R2p> * plist'::ll<Rp> 
+	    & plist' = slist' & Rp = union(R1,R2p) & R2p = union(R2,{slist'}) & Rp = union(R,{plist'})
+		& intersect(R1p,R2) = {};}
 {
 	node tmp = new node(pid,stat,null,null,null);
 	tmp.next = plist;
@@ -44,9 +46,9 @@ stat != 1 -> requires rlist::rll<R1> * slist::sll<R2> &* plist::ll<R> & R = unio
 
 node insert_pll(node x, ref node n)
 requires x::ll<R> * n::node<_@L,1@L,_@M,_@A,_@M>
-ensures res::ll<R1> & R1 = union(R,{n});
+ensures res::ll<R1> & Rn = {n} & R1 = union(R,Rn) & intersect(R,Rn) = {};
 requires x::ll<R> * n::node<_@L,v@L,_@M,_@M,_@A> & v != 1
-ensures res::ll<R1> & R1 = union(R,{n});
+ensures res::ll<R1> & Rn = {n} & R1 = union(R,Rn) & intersect(R,Rn) = {};
 {
 	n.next = x;
 	return n;
@@ -54,7 +56,7 @@ ensures res::ll<R1> & R1 = union(R,{n});
 
 node insert_rll(node x, ref node n)
 requires x::rll<R> * n::node<_@L,1@L,_@A,_@M,_@A>
-ensures res::rll<R1> & R1 = union(R,{n});
+ensures res::rll<R1> & Rn = {n} & R1 = union(R,Rn) & intersect(R,Rn) = {};
 {
 	n.rnext = x;
 	return n;
@@ -62,7 +64,7 @@ ensures res::rll<R1> & R1 = union(R,{n});
 
 node insert_sll(node x, ref node n)
 requires x::sll<R> * n::node<_@L,v@L,_@A,_@A,_@M> & v != 1
-ensures res::sll<R1> & R1 = union(R,{n});
+ensures res::sll<R1> & Rn = {n} & R1 = union(R,Rn) & intersect(R,Rn) = {};
 {
 	n.snext = x;
 	return n;

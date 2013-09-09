@@ -6,7 +6,8 @@ data node {
 
 dag<v,M> == self = null & M = {}
 	or self::node<0@M,l@I,r@I> * l::dag<0,Ml> U* r::dag<0,Mr> & M = union(Ml,Mr,{self}) & v = 0
-	or self::node<1@I,l@I,r@I> * l::dag<_,Ml> U* r::dag<_,Mr> & M = union(Ml,Mr,{self}) & v = 1
+	or self::node<1@I,l@I,r@I> * l::dag<_,Ml> U* r::dag<_,Mr> & M = union(Ml,Mr,{self}) & v = 2
+	or self::node<1@I,l@I,r@I> * l::dag<1,Ml> U* r::dag<1,Mr> & M = union(Ml,Mr,{self}) & v = 1
 	inv true
 	mem M->(node<@I,@I,@I> ; node<@M,@I,@I>);
 

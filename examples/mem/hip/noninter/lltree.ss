@@ -46,10 +46,6 @@ void tree_remove(node x, ref node q1t)
 requires q1t::treeseg<p,x,Ss> * x::node<_@L,_@A,_@M,_@M,_@M>
 ensures q1t::tseg<x,Ss>;
 
-void list_add_first(ref node q2, node y)
-requires q2::ll<S> * y::node<v@L,_@M,_@A,_@A,_@A>
-ensures  y::node<v@L,q2@A,_@A,_@A,_@A> * q2::ll<S> & q2' = y;
-
 void tree_add(ref node q1t, node y)
 requires q1t::tree<p,S> * y::node<v@L,_@A,_,_,_>
 ensures q1t::tree<p,S1> & S1 = union(S,{y});
@@ -58,13 +54,12 @@ void totree(ref node q1s, ref node q1t)
 requires q1s::ll<S>
 ensures q1t::tree<p,S>;
 
-void move_request(ref node q1s, ref node q2, ref node q1t)
-requires q2::ll<Sq> * q1s::ll<S> &* q1t::tseg<q1s,S>
-ensures q2'::ll<Sq1> * q1s'::ll<S1> &* q1t::tseg<q1s',S1> & S = union(S1,{q1s}) & Sq1 = union(Sq,{q1s});
+void delete_request(ref node q1s, ref node q1t)
+requires q1s::ll<S> * q1t::tseg<q1s,S>
+ensures q1s'::ll<S1> * q1t::tseg<q1s',S1> & S = union(S1,{q1s});
 {
 node c;
 c = list_remove_first(q1s);
 if (c == null) return;
 tree_remove(c,q1t);
-list_add_first(q2,c);
 }
