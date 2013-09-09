@@ -26,7 +26,7 @@ GetOptions( "stop"  => \$stop,
 @param_list = @ARGV;
 if(($help) || (@param_list == ""))
 {
-	print "./run-fast-tests.pl [-help] [-root path_to_sleek] [-tp name_of_prover] [-log-timings] [-log-string string_to_be_added_to_the_log] [-copy-to-home21] hip_tr|hip|imm|imm-filed|sleek|parahip|hip_vperm|sleek_vperm|sleek_fracperm|infinity|mem [-flags \"arguments to be transmited to hip/sleek \"]\n";
+	print "./run-fast-tests.pl [-help] [-root path_to_sleek] [-tp name_of_prover] [-log-timings] [-log-string string_to_be_added_to_the_log] [-copy-to-home21] hip_tr|hip|imm|imm-filed|sleek|parahip|hip_vperm|sleek_vperm|sleek_fracperm||sleek_veribsync|hip_veribsync|infinity|mem [-flags \"arguments to be transmited to hip/sleek \"]\n";
 	exit(0);
 }
 
@@ -45,7 +45,7 @@ if($prover){
 		'co' => 'co', 'isabelle' => 'isabelle', 'coq' => 'coq', 'mona' => 'mona', 'om' => 'om', 
 		'oi' => 'oi', 'set' => 'set', 'cm' => 'cm', 'redlog' => 'redlog', 'rm' => 'rm', 'prm' => 'prm', 'z3' => 'z3', 'z3-2.19' => 'z3-2.19', 'zm' => 'zm', 'log' => 'log');
 	if (!exists($provers{$prover})){
-        print "./run-fast-tests.pl [-help] [-root path_to_sleek] [-tp name_of_prover] [-log-timings]  [-log-string string_to_be_added_to_the_log] [-copy-to-home21] hip_tr|hip|sleek|parahip|hip_vperm|sleek_vperm|sleek_fracperm [-flags \"arguments to be transmited to hip/sleek \"]\n";
+        print "./run-fast-tests.pl [-help] [-root path_to_sleek] [-tp name_of_prover] [-log-timings]  [-log-string string_to_be_added_to_the_log] [-copy-to-home21] hip_tr|hip|sleek|parahip|hip_vperm|sleek_vperm|sleek_fracperm|sleek_veribsync|hip_veribsync [-flags \"arguments to be transmited to hip/sleek \"]\n";
 		print "\twhere name_of_prover should be one of the followings: 'cvcl', 'cvc3', 'omega', 'co', 'isabelle', 'coq', 'mona', 'om', 'oi', 'set', 'cm', 'redlog', 'rm', 'prm', 'z3' or 'zm'\n";
 		exit(0);
 	}
@@ -1291,6 +1291,19 @@ $output_file = "log";
 					["fracperm/split-combine.slk","--en-para -perm fperm -tp redlog", "", "Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid."],
                   ["fracperm/combine2.slk","--en-para -perm fperm -tp redlog", "", "Valid.Valid.Valid.Valid."]
            ],
+    "sleek_veribsync" => [
+                      ["veribsync/bperm1.slk","--en-para -perm bperm -tp parahip", "", "Valid.Fail.Valid.Valid.Valid.Valid.Valid.Fail."],
+                      ["veribsync/bperm-split.slk","--en-para -perm bperm -tp parahip", "", "Valid.Valid.Fail.Valid.Valid.Fail.Valid.Valid."],
+                      ["veribsync/bperm-combine.slk","--en-para -perm bperm -tp parahip", "", "Valid.Valid.Valid.Valid."],
+                      ["veribsync/bperm-split-combine.slk","--en-para -perm bperm -tp parahip", "", "Valid.Valid.Valid.Valid.Valid.Valid."],
+                      ["veribsync/barrier1.slk","--en-para -perm bperm -tp parahip", "", "Valid.Fail.Valid.Valid.Valid.Valid.Valid.Fail."],
+                      ["veribsync/barrier-split.slk","--en-para -perm bperm -tp parahip", "", "Valid.Valid.Fail.Valid.Valid.Fail.Valid."],
+                      ["veribsync/barrier-combine.slk","--en-para -perm bperm -tp parahip", "", "Valid.Valid.Valid.Valid."],
+                      ["veribsync/barrier-sep.slk","--en-para -perm bperm -tp parahip", "", "Valid.Valid.Valid."],
+                      ["veribsync/barrier-static.slk","--en-para -perm bperm -tp parahip", "", "Valid.Valid.Valid.Valid.Valid."],
+                      ["veribsync/barrier-dynamic.slk","--en-para -perm bperm -tp parahip", "", "Valid.Fail.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Valid.Fail.Valid.Valid.Valid.Fail.Fail.Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Valid.Valid."],
+                      ["veribsync/barrier-dynamic2.slk","--en-para -perm bperm -tp parahip", "", "Valid.Fail.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Valid.Fail.Valid.Valid.Valid.Fail.Fail.Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Valid.Valid."]],
+
     # "lemmas"=>[
     #     ["ll.slk", " --elp ", "Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.", "Valid.Fail."],
     #     ["sort1.slk", " --elp ", "Valid.Fail.Fail.", ""],
