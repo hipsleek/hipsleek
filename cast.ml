@@ -1210,31 +1210,32 @@ let case_of_coercion_x (lhs:F.formula) (rhs:F.formula) : coercion_case =
   let h,_,_,_,_ = F.split_components lhs in
   let hs = F.split_star_conjunctions h in
   let flag = if (List.length hs) == 1 then 
-	  let sm = List.hd hs in (match sm with
-	  | F.StarMinus _ -> true
-	  | _ -> false)
+	    let sm = List.hd hs in (match sm with
+	      | F.StarMinus _ -> true
+	      | _ -> false)
 	  else false in
   if(flag) then Ramify
   else
-  let fct f = match f with
-    | Cformula.Base {F.formula_base_heap=h}
-    | Cformula.Exists {F.formula_exists_heap=h} ->      
+    let fct f = match f with
+      | Cformula.Base {F.formula_base_heap=h}
+      | Cformula.Exists {F.formula_exists_heap=h} ->      
           let _ = Debug.tinfo_hprint (add_str "formula_exists_heap" !print_h_formula ) h no_pos in 
           let hs = F.split_star_conjunctions h in
-	  let self_n = List.for_all (fun c-> 
+          let hs = List.filter (fun c -> not (c=F.HTrue || c=F.HEmp)) hs in
+	      let self_n = List.for_all (fun c-> 
               let _ = Debug.tinfo_hprint (add_str "c" !print_h_formula ) c no_pos in
               let only_self = match c with
                 | F.DataNode _
                 | F.ViewNode _-> (P.name_of_spec_var (F.get_node_var c)) = self 
                 | F.HRel (sv,exp_lst,_) -> (
-                      let _ = Debug.tinfo_hprint (add_str "sv" !print_sv ) sv no_pos in
-                      match exp_lst with
-                        | [sv] -> (
-                              match sv with
-                                | (P.Var (v,_)) -> (P.name_of_spec_var v) = self
-                                | _ -> false)
-                        | _ -> false
-                  )
+                    let _ = Debug.tinfo_hprint (add_str "sv" !print_sv ) sv no_pos in
+                    match exp_lst with
+                      | [sv] -> (
+                          match sv with
+                            | (P.Var (v,_)) -> (P.name_of_spec_var v) = self
+                            | _ -> false)
+                      | _ -> false
+                )
                 | _ -> failwith ("Only nodes and HRel allowed after split_star_conjunctions ") 
               in
               only_self) hs  in
@@ -1244,13 +1245,13 @@ let case_of_coercion_x (lhs:F.formula) (rhs:F.formula) : coercion_case =
             | F.HRel (sv,exp_lst,_) -> P.name_of_spec_var sv
             | _ -> failwith ("Only nodes and HRel allowed after split_star_conjunctions ") in
           (List.length hs),self_n, List.map get_name hs
-    | _ -> 1,false,[]
-  in
-  (*length = #nodes, sn = is there a self node, typ= List of names of nodes*)
-  let lhs_length,l_sn,lhs_typ = fct lhs in
-  let rhs_length,r_sn,rhs_typ = fct rhs in
-  match lhs_typ@rhs_typ with
-	| [] -> Simple
+      | _ -> 1,false,[]
+    in
+    (*length = #nodes, sn = is there a self node, typ= List of names of nodes*)
+    let lhs_length,l_sn,lhs_typ = fct lhs in
+    let rhs_length,r_sn,rhs_typ = fct rhs in
+    match lhs_typ@rhs_typ with
+	  | [] -> Simple
 	| h::t ->
         (*
           Why using concret numbers (e.g. 1,2) here ?

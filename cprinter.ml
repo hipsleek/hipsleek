@@ -2199,7 +2199,13 @@ let pr_numbered_list_formula_trace (e:(context * (formula*formula_trace)) list) 
   pr_numbered_list_formula_trace_ho (e) (count:int) f
 
 let pr_numbered_list_formula_trace_inst cprog (e:(context * (formula*formula_trace)) list) (count:int) =
-  let f b = () in
+  let f b = begin
+            fmt_string "\n";
+            fmt_string "[[";
+            pr_es_trace b;
+            fmt_string "]]"
+  end in
+  (* let f b = () in *)
   (pr_numbered_list_formula_trace_ho_inst cprog) (e) (count:int) f
 
 let pr_numbered_list_formula_no_trace (e:(context * (formula*formula_trace)) list) (count:int) =

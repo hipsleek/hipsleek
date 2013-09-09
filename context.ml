@@ -824,9 +824,11 @@ and lookup_lemma_action_x prog (c:match_res) :action =
                     (* WN_all_lemma - is this overriding of lemmas? *)
                     let left_ls = look_up_coercion_with_target (List.filter (fun c -> c.coercion_case = (Cast.Normalize false)) (*prog.prog_left_coercions*) (Lem_store.all_lemma # get_left_coercion)) dl.h_formula_data_name dr.h_formula_data_name in
                     let right_ls = look_up_coercion_with_target (List.filter (fun c -> c.coercion_case = (Cast.Normalize true)) (*prog.prog_right_coercions*) (Lem_store.all_lemma # get_right_coercion)) dr.h_formula_data_name dl.h_formula_data_name in
+                    let simple_ls = look_up_coercion_with_target (List.filter (fun c -> c.coercion_case = Cast.Simple) (*prog.prog_right_coercions*) ((Lem_store.all_lemma # get_left_coercion) @ (Lem_store.all_lemma # get_right_coercion))) dr.h_formula_data_name dl.h_formula_data_name in
                     let left_act = List.map (fun l -> (1,M_lemma (c,Some l))) left_ls in
                     let right_act = List.map (fun l -> (1,M_lemma (c,Some l))) right_ls in
-                    left_act@right_act
+                    let simple_act = List.map (fun l -> (1,M_lemma (c,Some l))) simple_ls in
+                    left_act@right_act@simple_act
                   in
                   if l=[] then (1,M_Nothing_to_do (string_of_match_res c))
                   else (-1,Search_action l)

@@ -222,6 +222,11 @@ let parse_file (parse) (source_file : string) =
   (* Debug.tinfo_pprint "sleek : after proc one lemma" no_pos; *)
   (*identify universal variables*)
   List.iter proc_one_lemma cmds;
+  let l2r = Lem_store.all_lemma # get_left_coercion in
+  let r2l = Lem_store.all_lemma # get_right_coercion in
+  let _ = if (!Globals.print_core || !Globals.print_core_all) then
+        print_string ("\nleft:\n " ^ (Cprinter.string_of_coerc_decl_list l2r) ^"\n right:\n"^ (Cprinter.string_of_coerc_decl_list r2l) ^"\n") else () in
+  (*-------------END lemma --------------------*)
   let cviews = !cprog.C.prog_view_decls in
   let cviews = List.map (Cast.add_uni_vars_to_view !cprog (Lem_store.all_lemma # get_left_coercion) (*!cprog.C.prog_left_coercions*)) cviews in
   !cprog.C.prog_view_decls <- cviews;

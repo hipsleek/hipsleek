@@ -9739,6 +9739,10 @@ and process_unfold_x prog estate conseq a is_folding pos has_post pid =
 	      (res_rs, prf)
     | _ -> report_error no_pos ("process_unfold - expecting just unfold operation")
 
+(*
+  TO CHECK: what is this supposed to do?
+  What if there is permission?
+*)
 and do_infer_heap rhs rhs_rest caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:CP.spec_var list) is_folding pos =
   let pr1 = Cprinter.string_of_h_formula in
   let pr2 = Cprinter.string_of_formula in
@@ -11297,7 +11301,8 @@ and do_coercion_x prog c_opt estate conseq resth1 resth2 anode lhs_b rhs_b ln2 i
 		    else if ( (!perm=Dperm) && (not (test_frac_subsume prog estate rhs_b.formula_base_pure (get_node_perm anode) (get_node_perm ln2)))) || !use_split_match
             then (([],[]),[])
 		    else (
-                if (not !Globals.web_compile_flag) then print_string"\n splitting \n";
+                (* if (not !Globals.web_compile_flag) then *)
+                (*   print_string"\n splitting \n"; *)
                 r)
 	    | Iast.Right -> (([],[c]),[])
 	    | _ -> report_error no_pos ("Iast.Equiv detected - astsimpl should have eliminated it ")
