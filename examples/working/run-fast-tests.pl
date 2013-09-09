@@ -727,7 +727,7 @@ $output_file = "log";
 								],
 				["parahip/cell.ss",2,  "--en-para -tp parahip", 
                                 "test","SUCCESS",
-                                "test1","FAIL-1"
+                                "test1","FAIL"
 								],
 				["parahip/cell4.ss",2,  "--en-para -tp parahip", 
                                 "inc","SUCCESS",
@@ -735,13 +735,13 @@ $output_file = "log";
 								],
 				["parahip/cell-lock-vperm.ss",2,  "--en-para -tp parahip", 
                                 "testCell","SUCCESS",
-                                "testVar","FAIL-1"
+                                "testVar","FAIL"
 								],
 				["parahip/cell-extreme-cases.ss",4,  "--en-para -tp parahip", 
-                                "test","FAIL-2",
-                                "test2","FAIL-2",
-                                "test3","FAIL-1",
-                                "test4","FAIL-1"
+                                "test","FAIL",
+                                "test2","FAIL",
+                                "test3","FAIL",
+                                "test4","FAIL"
 								],
 				["parahip/ls-bind.ss",2,  "--en-para -tp parahip", 
                                 "func","SUCCESS",
@@ -755,7 +755,7 @@ $output_file = "log";
         ### DEADLOCKED and DEADLOCK-FREE scenarios
 				["parahip/double-acquire.ss",2,  "--en-para -tp parahip", 
                                 "func","SUCCESS",
-                                "main","FAIL-2"
+                                "main","FAIL"
 								],
 				["parahip/no-deadlock1.ss",2,  "--en-para -tp parahip", 
                                 "func","SUCCESS",
@@ -771,15 +771,15 @@ $output_file = "log";
 								],
 				["parahip/deadlock1.ss",2,  "--en-para -tp parahip", 
                                 "func","SUCCESS",
-                                "main","FAIL-1"
+                                "main","FAIL"
 								],
 				["parahip/deadlock2.ss",2,  "--en-para -tp parahip", 
                                 "func","SUCCESS",
-                                "main","FAIL-1"
+                                "main","FAIL"
 								],
 				["parahip/deadlock3.ss",2,  "--en-para -tp parahip", 
                                 "func","SUCCESS",
-                                "main","FAIL-1"
+                                "main","FAIL"
 								],
 				["parahip/disj-no-deadlock1.ss",2,  "--en-para -tp parahip", 
                                 "func","SUCCESS",
@@ -795,14 +795,14 @@ $output_file = "log";
 								],
 				["parahip/disj-deadlock.ss",2,  "--en-para -tp parahip", 
                                 "func","SUCCESS",
-                                "main","FAIL-1"
+                                "main","FAIL"
 								],
 				["parahip/ordered-locking.ss",2,  "--en-para -tp parahip", 
                                 "func","SUCCESS",
                                 "main","SUCCESS"
 								],
 				["parahip/unordered-locking.ss",2,  "--en-para -tp parahip", 
-                                "func","FAIL-1",
+                                "func","FAIL",
                                 "main","SUCCESS"
 								],
         ### FUNTIONAL CORRECTNESS
