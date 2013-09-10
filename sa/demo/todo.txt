@@ -6073,8 +6073,10 @@ synchronize sa2.infer_shapes_proper with sa3.infer_shapes_proper
 --pred-en-split
 =====================================================================
 # ll-back.ss
- - reverify-all : fail
- - inference is incorrect. should do interprocedural sa properly (ll-back1.slk)
+ - reverify-all : fail FIXED
+ - main function: inference is incorrect.
+  should do interprocedural sa properly (ll-back1.slk)
+
 =====================================================================
 =====================================================================
 =====================================================================

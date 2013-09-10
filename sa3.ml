@@ -2085,7 +2085,7 @@ let infer_shapes_conquer iprog prog proc_name ls_is sel_hps=
     (n_all_hp_defs0b, n_cmb_defs0)
   in
   (*reuse: check equivalent form - substitute*)
-  let n_cmb_defs1, n_all_hp_defs2 = SAU.reuse_equiv_hpdefs prog n_cmb_defs n_all_hp_defs1 in
+  let n_cmb_defs1, n_all_hp_defs2 = (* SAU.reuse_equiv_hpdefs prog *) (n_cmb_defs, n_all_hp_defs1) in
   (*reuse with lib*)
   let n_cmb_defs2 = if !Globals.pred_equiv then
     let lib_matching = match_hps_views iprog prog sel_hps n_all_hp_defs1 prog.CA.prog_view_decls in
