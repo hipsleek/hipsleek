@@ -892,7 +892,7 @@ let rec sub_inf_list_b_formula (bf:CP.b_formula) (vl: CP.spec_var list) (is_neg:
             CP.Gte(e1_conv,e2_conv,pos),tbf
       | CP.SubAnn (e1,e2,pos) -> p_f,tbf
       | CP.Eq (e1,e2,pos) -> 
-      	    if (is_var e1 && is_inf e2) || (is_var e2 && is_inf e1) 
+      	   if (is_var e1 && is_inf e2) || (is_var e2 && is_inf e1) 
               || (check_neg_inf2 e1 e2) || (check_neg_inf2 e2 e1)
             then p_f,tbf else
             let e1_conv = sub_inf_list_exp e1 vl is_neg in
