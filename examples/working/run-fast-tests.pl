@@ -212,7 +212,7 @@ $output_file = "log";
 	["inf-sel.ss",3,"--dsd --en-inf","find_min","SUCCESS","delete_min","SUCCESS","selection_sort","SUCCESS"],
 	["bubble-inf.ss",4,"--dsd --en-inf","id2","SUCCESS","id3","SUCCESS","bubble","SUCCESS","bsort","SUCCESS"],
 	["heaps-inf.ss",4,"--en-inf","insert","SUCCESS","deleteoneel","SUCCESS","deleteone","SUCCESS","deletemax","SUCCESS"],
-	["merge-inf.ss",1,"--dsd --en-inf","merge","SUCCESS"],
+	["merge-inf.ss",1,"--dsd --en-inf --en-disj-compute","merge","SUCCESS"],
 	],
     "imm" =>[ 
         ["bigint.ss",17,  " --imm -tp redlog",
