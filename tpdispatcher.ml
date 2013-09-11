@@ -540,7 +540,9 @@ let stop_prover () =
   | Mona -> Mona.stop();
   | Mathematica -> Mathematica.stop();
   | OM -> (
+    if !Mona.is_mona_running then
       Mona.stop();
+   if !Omega.is_omega_running then
       Omega.stop();
     )
   | ZM -> (
