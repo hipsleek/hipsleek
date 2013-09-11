@@ -6077,6 +6077,12 @@ synchronize sa2.infer_shapes_proper with sa3.infer_shapes_proper
  - main function: inference is incorrect.
   should do interprocedural sa properly (ll-back1.slk)
 
+interprocedural sa:
+  for each callee:
+    transform into view
+    subst specs
+    remove unknown preds for further analysis
+
 =====================================================================
 =====================================================================
 =====================================================================

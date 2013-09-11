@@ -43,7 +43,7 @@ int for_aux(ref node ptr)
 
 HeapPred H2(node a).
 HeapPred G2(node b).
-             /*
+
 int main(ref node ptr)
 
              //  requires true
@@ -60,7 +60,7 @@ int main(ref node ptr)
 
   return 0;
 }
-             */
+
 
              /*
 [ // PRE_REC

@@ -2484,6 +2484,7 @@ let proc_mutual_scc_shape_infer iprog prog scc_procs =
         let _ = Sa3.rel_def_stk # reset in
         ()
       end;
+    (*transform the result: hpdef --> views and transform specs*)
     (**************regression check _ gen_regression file******************)
     (*to revise the check for scc*)
     let proc = List.hd scc_procs in
