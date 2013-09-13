@@ -9,12 +9,24 @@ inv n >= 0;
 
 node take(node x, int k)
 requires x::inflist<\inf,null> & 0 <= k <= \inf
-ensures x::inflist<k,res> * res::inflist<\inf,null>;
+ensures res::inflist<k,x> * x::inflist<\inf,null>;
 {
 	if (x == null) return x;
 	else {
 		if (k == 0) return x;
 		else return take(x.next,k-1);
+	}
+}
+
+
+node remove(node x, int k)
+requires x::inflist<\inf,null> & 0 <= k <= \inf
+ensures x::inflist<k,res> * res::inflist<\inf,null>;
+{
+	if (x == null) return x;
+	else {
+		if (k == 0) return x;
+		else return remove(x.next,k-1);
 	}
 }
 
