@@ -8,8 +8,8 @@ inflist<n> == self = null & n = 0
 inv n >= 0;
 
 node take(node x, int k)
-  requires x::inflist<\inf> & 0 <= k <= \inf
-  ensures  res::inflist<k> * x::inflist<\inf> & x!=null ;
+  requires x::inflist<\inf>
+  ensures  res::inflist<k> * x::inflist<\inf> ;
 {
   node y;
   if (k == 0) return null;
@@ -19,5 +19,3 @@ node take(node x, int k)
     return y;
   }
 }
-
-

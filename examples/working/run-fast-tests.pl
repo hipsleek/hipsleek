@@ -207,9 +207,10 @@ $output_file = "log";
 	# END OF ARRAY TESTING EXAMPLES
 	"hip_tr"=>[["trees.ss",1,"insert"]],
 	"infinity" =>[
-	["inflist.ss",2,"--dsd --en-inf","take","SUCCESS","append","SUCCESS"],
-	["inftree.ss",1,"--dsd --en-inf","count","SUCCESS",],
-	["stream.ss",1,"--dsd --en-inf","zip","SUCCESS",],
+	["inflist.ss",2,"--dsd --en-inf","remove","SUCCESS","append","SUCCESS"],
+	["infll_take.ss",1,"--dsd --en-inf","take","SUCCESS"],
+	["inftree.ss",1,"--dsd --en-inf","count","SUCCESS"],
+	["stream.ss",1,"--dsd --en-inf","zip","SUCCESS"],
 	["bst-inf.ss",2,"--dsd --en-inf","delete","SUCCESS","remove_min","SUCCESS"],
 	["inf-selsort.ss",3,"--dsd --en-disj-compute --en-inf","find_min","SUCCESS","delete_min","SUCCESS","selection_sort","SUCCESS"],
 	["inf-ins.ss",1,"--dsd --en-inf","insert","SUCCESS"],
