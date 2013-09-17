@@ -5029,7 +5029,7 @@ and early_hp_contra_detection_x hec_num prog estate conseq pos =
       let orig_ante = estate.es_formula in
       match r_inf_contr with
         | Some (new_estate, pf) ->
-              let _ = Debug.info_hprint (add_str "early_hp_contra_detection : " pr_id) "..in Some" pos in
+              let _ = Debug.ninfo_hprint (add_str "early_hp_contra_detection : " pr_id) "..in Some" pos in
               let new_estate = {new_estate with es_infer_vars = orig_inf_vars; es_orig_ante = Some orig_ante} in
               let temp_ctx = SuccCtx[false_ctx_with_orig_ante new_estate orig_ante pos] in
               (* let _ = Debug.info_pprint ("*********1********") no_pos in *)
@@ -5057,7 +5057,7 @@ and early_hp_contra_detection_x hec_num prog estate conseq pos =
               in
               (real_c,true, Some es)
         | None ->  
-              let _ = Debug.info_hprint (add_str "early_hp_contra_detection : " pr_id) "..in None" pos in
+              let _ = Debug.ninfo_hprint (add_str "early_hp_contra_detection : " pr_id) "..in None" pos in
               match relass with
 		| [(es,h,_)] -> 
                       let new_estate = { es with es_infer_vars = orig_inf_vars; es_orig_ante = Some orig_ante } in
@@ -9796,9 +9796,10 @@ and solver_infer_lhs_contra_list_x prog estate lhs_xpure pos msg =
               let diff = CP.diff_svl fv  h_inf_args0 in
               let p = CP.mkForall diff f None pos in 
               if TP.is_sat_raw (MCP.mix_of_pure p) then
-                let np = (Omega.simplify (CP.arith_simplify_new p)) in
+                (* let np = (Omega.simplify (CP.arith_simplify_new p)) in *)
+                let np = (TP.simplify_raw (CP.arith_simplify_new p)) in
                 let _ = DD.tinfo_hprint (add_str "p" !CP.print_formula) p no_pos in
-                let _ = DD.tinfo_hprint (add_str "p(omega simpl)" !CP.print_formula) (Omega.simplify p) no_pos in
+                let _ = DD.tinfo_hprint (add_str "p(omega simpl)" !CP.print_formula) (TP.simplify_raw p) no_pos in
                 x@[(es,np)]
               else x
           ) [] infer_vars_hp_rel in

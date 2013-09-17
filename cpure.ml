@@ -8599,6 +8599,15 @@ let rec is_neq_exp (f:formula) = match f with
   | Exists (_,p1,_,_) -> is_neq_exp p1
   | _ -> false
 
+let rec is_eq_neq_exp (f:formula) = match f with
+  | BForm (bf,_) ->
+    (match bf with
+    | (Neq _,_) -> true
+    | (Eq _,_) -> true
+    | _ -> false)
+  | Exists (_,p1,_,_) -> is_neq_exp p1
+  | _ -> false
+
 let is_neq_null_exp_x (f:formula) = match f with
   | BForm (bf,_) ->
     (match bf with
@@ -8625,6 +8634,26 @@ let rec contains_neq (f:formula) : bool =  match f with
     | Forall (_ ,f1,_,_) 
     | Exists (_ ,f1,_,_) -> (contains_neq f1)  
     | AndList l -> exists_l_snd contains_exists l
+
+
+let neg_eq_neq f0=
+  let rec helper f= match f with
+    | BForm (bf,a) ->
+          (match bf with
+            | (Neq (sv1,sv2,b),c) ->
+                  let sv1,sv2 = if is_null sv1 then (sv2, sv1) else (sv1,sv2) in
+                  BForm ((Eq (sv1, sv2, b), c), a)
+            | (Eq (sv1,sv2,b),c) ->
+                  let sv1,sv2 = if is_null sv1 then (sv2, sv1) else (sv1,sv2) in
+                  BForm ((Neq (sv1, sv2, b), c), a)
+            | _ -> f)
+    | Exists (a, p, c,l) ->
+          Forall (a, helper p, c,l)
+    | Forall (a, p, c,l) ->
+          Exists (a, helper p, c,l)
+    | _ -> f
+  in
+  helper f0
 
 (*neg(x!=y) == x=y; neg(x!=null) === x=null*)
 let rec neg_neq_x f=
