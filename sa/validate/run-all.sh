@@ -14,9 +14,16 @@ echo "check-sll-head"
 ../../hip check-sll-head.ss  -validate o/check-sll-head.cp | grep Validate
 echo "skip0"
 ../../hip skip0.ss  -validate o/skip0.cp | grep Validate
-echo "skip-list"
-../../hip skip-list.ss  -validate o/skip-list.cp | grep Validate
-
+#echo "skip-list"
+#../../hip skip-list.ss  -validate o/skip-list.cp | grep Validate
+echo "check-sorted"
+../../hip check-sorted.ss  --sa-en-pure-field  -validate o/check-sorted.cp | grep Validate
+#echo "sll-insertsort.ss"
+#../../hip sll-insertsort.ss -validate o/sll-insertsort.cp | grep Validate
+echo "CSll"
+../../hip cll.ss  -validate o/cll.cp | grep Validate
+echo "CSll"
+../../hip check-cll.ss  -validate o/check-cll.cp | grep Validate
 #sa-dangling
 
 #pred-disj-unify
