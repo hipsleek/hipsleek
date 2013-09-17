@@ -3103,10 +3103,18 @@ test_ele:
 constrs: [[t = LIST0 constr SEP `COMMA -> t]];
 
 
-constr : [[ t=disjunctive_constr; `CONSTR; b=disjunctive_constr -> {ass_lhs = F.subst_stub_flow n_flow t;
-ass_rhs = F.subst_stub_flow n_flow b}
-  |  t=disjunctive_constr; `EQUIV; b=disjunctive_constr -> {ass_lhs = F.subst_stub_flow n_flow t;
-ass_rhs = F.subst_stub_flow n_flow b}
+constr : [[ t=disjunctive_constr; `CONSTR; b=disjunctive_constr ->
+    {ass_lhs = F.subst_stub_flow n_flow t;
+    ass_guard = None;
+    ass_rhs = F.subst_stub_flow n_flow b}
+  | t=disjunctive_constr; `REL_GUARD; guard = disjunctive_constr; `CONSTR; b=disjunctive_constr ->
+        {ass_lhs = F.subst_stub_flow n_flow t;
+        ass_guard = Some guard;
+        ass_rhs = F.subst_stub_flow n_flow b}
+  |  t=disjunctive_constr; `EQUIV; b=disjunctive_constr ->
+         {ass_lhs = F.subst_stub_flow n_flow t;
+         ass_guard = None;
+         ass_rhs = F.subst_stub_flow n_flow b}
 ]];
 
 (*end of cp_list*)

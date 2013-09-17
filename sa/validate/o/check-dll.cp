@@ -1,7 +1,7 @@
 HeapPred HP_895(node a, node b).
 HeapPred HP_894(node a, node b).
 
-reverse:SUCCESS[
+check_dll:SUCCESS[
 ass [H1,G1][]:{
  // BIND (2;0)
   H1(l,prv)&l!=null --> l::node<prev_19_892,next_19_893>@M * HP_894(prev_19_892,prv) *HP_895(next_19_893,prv),
