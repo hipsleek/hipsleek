@@ -39,6 +39,7 @@ let flow_store = ref ([] : CF.flow_store list)
 let num_para = ref (1)
 let sort_input = ref false
 let webserver = ref false
+let proc_used_names = ref ([]:ident list)
 
 (* global option to switch on/off the simplification of context after symbolic execution *)
 let simplify_context = ref false 
@@ -667,6 +668,11 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
                      * before going into the function body *)
                     let (_, rankbnds) = check_bounded_term prog ctx1 (CF.pos_of_formula post_cond) in
 		    let _ = Gen.Profiling.push_time "typechecker : check_exp" in
+					let _ = if !Globals.tc_drop_unused then
+							let spec_names = List.map CP.name_of_spec_var ((CF.context_fv ctx1)@(CF.struc_fv post_struc)) in
+							proc_used_names := Gen.BList.remove_dups_eq (=) ((exp_fv e0)@spec_names@(List.map snd proc.proc_args))
+							;print_string ("bai-used:   "^(String.concat "," !proc_used_names)^"\n")
+							else () in
                     let res_ctx = check_exp prog proc lfe e0 post_label in
                     (*Clear es_pure before check_post*)
 	                let res_ctx =  CF.transform_list_failesc_context (idf,idf, (fun es -> CF.Ctx (CF.clear_entailment_es_pure es))) res_ctx in
@@ -1204,6 +1210,10 @@ and check_exp prog proc ctx (e0:exp) label =
 and get_xpure_of_formula f = 1
 
 and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_context) (e0:exp) (post_start_label:formula_label) : CF.list_failesc_context = 
+  let ctx = if !Globals.tc_drop_unused then
+				let f es = CF.Ctx{es with CF.es_formula = CF.elim_e_var !proc_used_names es.CF.es_formula} in
+				List.map (CF.transform_failesc_context (idf,idf,f)) ctx 
+			else ctx in
   if (exp_to_check e0) then  CF.find_false_list_failesc_ctx ctx (Cast.pos_of_exp e0)
   else ();
     let check_exp1 (ctx : CF.list_failesc_context) : CF.list_failesc_context = 

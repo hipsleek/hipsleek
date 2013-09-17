@@ -638,6 +638,12 @@ let dis_show_diff = ref false
 
 let sa_print_inter = ref false
 
+let tc_drop_unused = ref false
+let simpl_unfold3 = ref false
+let simpl_unfold2 = ref false
+let simpl_unfold1 = ref false
+let simpl_memset = ref false
+
 let print_heap_pred_decl = ref true
 
 let cond_path_trace = ref true
@@ -1045,6 +1051,7 @@ let omega_err = ref false
 let seq_number = ref 10
 
 let sat_timeout_limit = ref 2.
+let user_sat_timeout = ref false
 let imply_timeout_limit = ref 3.
 
 let dis_provers_timeout = ref false

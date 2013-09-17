@@ -2631,9 +2631,9 @@ let pr_list_context (ctx:list_context) =
 let pr_context_short (ctx : context) = 
   let rec f xs = match xs with
     | Ctx e -> [(e.es_formula,e.es_infer_vars@e.es_infer_vars_rel,e.es_infer_heap,e.es_infer_pure,e.es_infer_rel,
-      e.es_var_measures,e. es_var_zero_perm,e.es_trace,e.es_cond_path, e.es_proof_traces)]
+      e.es_var_measures,e. es_var_zero_perm,e.es_trace,e.es_cond_path, e.es_proof_traces, e.es_ante_evars)]
     | OCtx (x1,x2) -> (f x1) @ (f x2) in
-  let pr (f,(* ac, *)iv,ih,ip,ir,vm,vperms,trace,ecp, ptraces) =
+  let pr (f,(* ac, *)iv,ih,ip,ir,vm,vperms,trace,ecp, ptraces,evars) =
     fmt_open_vbox 0;
     pr_formula_wrap f;
     pr_wrap_test "es_var_zero_perm: " Gen.is_empty  (pr_seq "" pr_spec_var) vperms;
@@ -2646,6 +2646,7 @@ let pr_context_short (ctx : context) =
     pr_vwrap "es_trace: " pr_es_trace trace;
     pr_wrap_test "es_cond_path: " Gen.is_empty (pr_seq "" (fun s -> fmt_int s)) ecp;
     pr_wrap_test "es_proof_traces: " Gen.is_empty (pr_seq "" (pr_pair_aux pr_formula pr_formula)) ptraces;
+	pr_wrap_test "es_ante_evars: " Gen.is_empty (pr_seq "" pr_spec_var) evars;
     fmt_string "\n";
     fmt_close_box();
   in 

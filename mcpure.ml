@@ -2833,3 +2833,15 @@ let remove_disj_clauses (mf: mix_formula): mix_formula =
 let remove_disj_clauses (mf: mix_formula): mix_formula = 
   let pr = !print_mix_formula in
   Debug.no_1 "remove_disj_clauses" pr pr remove_disj_clauses mf
+
+  
+let drop_triv_eq (mf: mix_formula): mix_formula = match mf with
+	| MemoF _ -> mf
+	| OnePF f -> OnePF (drop_triv_eq f)
+
+	
+let check_pointer_dis_sat mf = match mf with
+	| MemoF _ -> true, mf
+	| OnePF f -> 
+		let r,b = check_pointer_dis_sat f in
+		b, OnePF r

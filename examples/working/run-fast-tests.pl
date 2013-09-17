@@ -206,13 +206,18 @@ $output_file = "log";
 	],
 	# END OF ARRAY TESTING EXAMPLES
 	"hip_tr"=>[["trees.ss",1,"insert"]],
-	"infinity" =>[["bst-inf.ss",2,"--dsd --en-inf","delete","SUCCESS","remove_min","SUCCESS"],
+	"infinity" =>[
+	["inflist.ss",2,"--dsd --en-inf","remove","SUCCESS","append","SUCCESS"],
+	["infll_take.ss",1,"--dsd --en-inf","take","SUCCESS"],
+	["inftree.ss",1,"--dsd --en-inf","count","SUCCESS"],
+	["stream.ss",1,"--dsd --en-inf","zip","SUCCESS"],
+	["bst-inf.ss",2,"--dsd --en-inf","delete","SUCCESS","remove_min","SUCCESS"],
 	["inf-selsort.ss",3,"--dsd --en-disj-compute --en-inf","find_min","SUCCESS","delete_min","SUCCESS","selection_sort","SUCCESS"],
 	["inf-ins.ss",1,"--dsd --en-inf","insert","SUCCESS"],
 	["inf-sel.ss",3,"--dsd --en-inf","find_min","SUCCESS","delete_min","SUCCESS","selection_sort","SUCCESS"],
 	["bubble-inf.ss",4,"--dsd --en-inf","id2","SUCCESS","id3","SUCCESS","bubble","SUCCESS","bsort","SUCCESS"],
 	["heaps-inf.ss",4,"--en-inf","insert","SUCCESS","deleteoneel","SUCCESS","deleteone","SUCCESS","deletemax","SUCCESS"],
-	["merge-inf.ss",1,"--dsd --en-inf","merge","SUCCESS"],
+	["merge-inf.ss",1,"--dsd --en-inf --en-disj-compute","merge","SUCCESS"],
 	],
     "imm" =>[ 
         ["bigint.ss",17,  " --imm -tp redlog",
@@ -1248,6 +1253,7 @@ $output_file = "log";
                       ["classic/classic3.slk", "", "", "Valid.Valid.Valid.Valid.Valid.Valid.Fail.Fail."],
                       ["classic/classic4.slk", "", "", "Valid.Fail.Valid.Fail.Valid.Fail.Valid.Fail."],
                       ["infinity.slk","--dsd --en-inf","",                      "Fail.Valid.Valid.Fail.Valid.Valid.Fail.Valid.Valid.Valid.Fail.Valid.Valid.Fail.Fail.Valid.Fail.Valid.Fail.Fail.Valid.Valid.Fail.Valid.Fail.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Valid.Fail.Valid.Fail.Valid.Valid.Valid.Fail.Fail.Valid.Fail.Fail.Valid.Valid.Valid.Valid.Valid.Fail.Fail.Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Fail.Valid.Valid.Valid.Valid.Valid."],
+        ["inflem.slk", " --elp ", "Valid.Valid.", "Valid.Valid."],
         ["ll.slk", " --elp ", "Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.", "Valid.Fail."],
         ["sort1.slk", " --elp ", "Valid.Fail.Fail.", ""],
         ["sort2.slk", " --elp ", "Fail.Valid.Valid.Valid.Valid.Fail.Valid.Valid.Fail.Valid.Fail.", ""],

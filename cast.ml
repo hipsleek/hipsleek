@@ -2045,3 +2045,47 @@ let look_up_cont_args a_args vname cviews=
   let pr1 = !Cpure.print_svl in
   Debug.no_2 "look_up_cont_args" pr1 pr_id pr1
       (fun _ _ -> look_up_cont_args_x a_args vname cviews) a_args vname
+	  
+	  
+	  
+let exp_fv (e:exp) = 
+  let comb_f = List.concat in
+  let f (ac:ident list) e : ident list option= match e with
+			  | Assert b -> 
+				let l = (Gen.fold_opt F.struc_fv b.exp_assert_asserted_formula)@ (Gen.fold_opt F.fv b.exp_assert_assumed_formula)in
+				Some (ac@ List.map P.name_of_spec_var l)
+	          | Java _ -> Some ac
+	          | CheckRef b-> Some (b.exp_check_ref_var::ac)
+	          | BConst _ -> Some ac
+	          | Debug _ -> Some ac
+	          | Dprint b -> Some (b.exp_dprint_visible_names@ac)
+	          | FConst _ -> Some ac
+	          | ICall b -> Some (b.exp_icall_receiver::b.exp_icall_arguments@ac)
+	          | IConst _ -> Some ac
+			  | New b -> Some ((List.map snd b.exp_new_arguments)@ac)
+	          | Null _ -> Some ac
+			  | EmptyArray _ -> Some ac
+	          | Print _ -> Some ac
+			  | Barrier b-> Some ((snd b.exp_barrier_recv)::ac)
+	          | SCall b -> Some (ac@b.exp_scall_arguments)
+	          | This _ -> Some ac
+	          | Time _ -> Some ac
+	          | Var b -> Some (b.exp_var_name::ac)
+	          | VarDecl b -> Some (b.exp_var_decl_name::ac)
+	          | Unfold b -> Some ((P.name_of_spec_var b.exp_unfold_var)::ac)
+	          | Unit _ -> Some ac
+	          | Sharp _ -> Some ac
+			  |  _ -> None in
+    let f_args (ac:ident list) e : ident list= match e with
+		| Label b -> ac
+		| Assign b -> b.exp_assign_lhs::ac
+		| Bind b ->ac@ ((snd b.exp_bind_bound_var)::(List.map snd b.exp_bind_fields))
+		| Block b -> ac@(List.map snd b.exp_block_local_vars)
+		| Cond b ->b.exp_cond_condition::ac
+		| Cast b -> ac
+		| Catch b -> (Gen.fold_opt (fun (_,c)-> [c]) b.exp_catch_var)@ac
+		| Seq b -> ac
+		| While b -> ac@[b.exp_while_condition]@(List.map P.name_of_spec_var (F.struc_fv b.exp_while_spec))
+		| Try b -> ac
+		| _ -> ac in
+  fold_exp_args e [] f f_args comb_f []

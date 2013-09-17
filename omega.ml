@@ -453,7 +453,7 @@ let is_sat_ops pr_weak pr_strong (pe : formula)  (sat_no : string): bool =
 
 	      let sat =
             try
-                check_formula 1 fomega !in_timeout
+                check_formula 1 fomega (if !user_sat_timeout then !sat_timeout_limit else !in_timeout)
             with
               | Procutils.PrvComms.Timeout as exc ->
                     let _ = set_proof_result ("TIMEOUT") in

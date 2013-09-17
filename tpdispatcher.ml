@@ -540,7 +540,9 @@ let stop_prover () =
   | Mona -> Mona.stop();
   | Mathematica -> Mathematica.stop();
   | OM -> (
+    if !Mona.is_mona_running then
       Mona.stop();
+   if !Omega.is_omega_running then
       Omega.stop();
     )
   | ZM -> (
@@ -1034,7 +1036,7 @@ let cnv_int_to_ptr f =
 let norm_pure_result f =
   let f = cnv_int_to_ptr f in
   let f = if !Globals.allow_inf
-    then let f =  CP.arith_simplify 13 (Infinity.convert_var_to_inf f) in
+    then let f =  (*CP.arith_simplify 13*) (Infinity.convert_var_to_inf f) in
          let drop_inf_constr f =   
            let f_f e = None in
            let f_bf bf = 
@@ -2338,6 +2340,7 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
 
 
 let tp_imply_no_cache ante conseq imp_no timeout process =
+  let ante,conseq = if !Globals.simpl_unfold3 then simpl_equalities ante conseq else (ante,conseq) in
   let ante = 
     if !Globals.allow_imm_inv then add_imm_inv ante conseq
     else ante in
