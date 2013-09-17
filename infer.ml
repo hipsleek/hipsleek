@@ -586,8 +586,10 @@ let infer_lhs_contra pre_thus lhs_xpure ivars pos msg =
       let e_ptr_vars = CP.diff_svl (List.concat (List.map CP.fv ptrs_ps)) ivars in
       let _ = DD.tinfo_hprint (add_str "e_ptr_vars: " !print_svl) e_ptr_vars pos in
       let exists_vars = qvars1@ptr_qvars0@e_ptr_vars in
-      let a_fml = CP.conj_of_list (non_ptr_bare_f::ptrs_ps) pos in
-      let f = CP.mkExists exists_vars a_fml None pos in
+      let ps = List.map (fun p -> CP.mkExists exists_vars p None pos) (List.filter (fun p -> not(CP.isConstTrue p)) (non_ptr_bare_f::ptrs_ps)) in
+      let f = CP.conj_of_list ps pos in
+      (* let a_fml = CP.conj_of_list (List.filter (fun p -> not(CP.isConstTrue p)) (non_ptr_bare_f::ptrs_ps)) pos in *)
+      (* let f = CP.mkExists exists_vars a_fml None pos in *)
       let _ = DD.tinfo_hprint (add_str "exists_vars: " !print_svl) exists_vars pos in
       let _ = DD.tinfo_hprint (add_str "f: " !print_formula) f pos in 
       (* let f = simplify_helper (CP.mkExists exists_var f None pos) in *)
@@ -603,7 +605,7 @@ let infer_lhs_contra pre_thus lhs_xpure ivars pos msg =
             let f = TP.pairwisecheck_raw f in
             Redlog.negate_formula f
         in
-        let _ = DD.tinfo_hprint (add_str "neg_f: " !print_formula) neg_f pos in 
+        let _ = DD.ninfo_hprint (add_str "neg_f: " !print_formula) neg_f pos in 
         (* Thai: Remove disjs contradicting with pre_thus *)
         let new_neg_f = 
           if CP.isConstTrue pre_thus then neg_f

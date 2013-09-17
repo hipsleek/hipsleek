@@ -285,6 +285,8 @@ let full_perm_var_name = "Anon_full_perm"
 let rec isConstTrue (p:formula) = match p with
   | BForm ((BConst (true, pos), _),_) -> true
   | AndList b -> all_l_snd isConstTrue b
+  | Exists (_,p1,_,_) -> isConstTrue p1
+  | Forall (_,p1,_,_) -> isConstTrue p1
   | _ -> false
 		
 and isConstFalse (p:formula) =
@@ -8589,11 +8591,12 @@ let is_eq_between_no_bag_vars (f:formula) = match f with
     | _ -> false)
   | _ -> false
 
-let is_neq_exp (f:formula) = match f with
+let rec is_neq_exp (f:formula) = match f with
   | BForm (bf,_) ->
     (match bf with
     | (Neq _,_) -> true
     | _ -> false)
+  | Exists (_,p1,_,_) -> is_neq_exp p1
   | _ -> false
 
 let is_neq_null_exp_x (f:formula) = match f with
@@ -8624,7 +8627,7 @@ let rec contains_neq (f:formula) : bool =  match f with
     | AndList l -> exists_l_snd contains_exists l
 
 (*neg(x!=y) == x=y; neg(x!=null) === x=null*)
-let neg_neq_x f=
+let rec neg_neq_x f=
   match f with
     | BForm (bf,a) ->
           (match bf with
@@ -8632,6 +8635,8 @@ let neg_neq_x f=
                   let sv1,sv2 = if is_null sv1 then (sv2, sv1) else (sv1,sv2) in
                   BForm ((Eq (sv1, sv2, b), c), a)
             | _ -> f)
+    | Exists (a, p, c,l) ->
+          Forall (a, neg_neq_x p, c,l)
     | _ -> f
 
 let neg_neq p=

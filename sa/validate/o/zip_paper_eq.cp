@@ -7,8 +7,7 @@ ass [H,G][]:{
   // BIND (2;0)
   H(x,y) & x!=null --> x::node<val_30_933,next_30_934>@M 
      * HP6(y,x)
-     * HP_935(next_30_934,y) 
-  ,
+     * HP_935(next_30_934,y) ,
  // BIND (2;0)
   HP6(y,x) &x=xx 
   --> y::node<val_30_941,next_30_942>@M 

@@ -4950,7 +4950,9 @@ and early_hp_contra_detection_x hec_num prog estate conseq pos =
   (* if there is no hp inf, post pone contra detection *)
   (* if (List.length estate.es_infer_vars_hp_rel == 0 ) then  (false, None) *)
   if (Infer.no_infer_all_all estate) && not (!Globals.early_contra_flag) 
-  then (true,false, None)
+  then
+    let _ = Debug.ninfo_hprint (add_str "early_hp_contra_detection : " pr_id) "1" pos in
+    (true,false, None)
   else
     if (* (isEmpFormula estate.es_formula) && *) (is_trivial_heap_formula conseq) 
     then (true, false, None)
@@ -4962,7 +4964,7 @@ and early_hp_contra_detection_x hec_num prog estate conseq pos =
       let orig_ante = estate.es_formula in
       match r_inf_contr with
         | Some (new_estate, pf) ->
-              let _ = Debug.tinfo_pprint "..in Some" pos in
+              let _ = Debug.ninfo_hprint (add_str "early_hp_contra_detection : " pr_id) "..in Some" pos in
               let new_estate = {new_estate with es_infer_vars = orig_inf_vars; es_orig_ante = Some orig_ante} in
               let temp_ctx = SuccCtx[false_ctx_with_orig_ante new_estate orig_ante pos] in
               (* let _ = Debug.info_pprint ("*********1********") no_pos in *)
@@ -4990,7 +4992,7 @@ and early_hp_contra_detection_x hec_num prog estate conseq pos =
               in
               (real_c,true, Some es)
         | None ->  
-              let _ = Debug.tinfo_pprint "..in None" pos in
+              let _ = Debug.ninfo_hprint (add_str "early_hp_contra_detection : " pr_id) "..in None" pos in
               match relass with
 		| [(es,h,_)] -> 
                       let new_estate = { es with es_infer_vars = orig_inf_vars; es_orig_ante = Some orig_ante } in
@@ -5262,7 +5264,8 @@ and heap_entail_conjunct_lhs_x hec_num prog is_folding  (ctx:context) (conseq:CF
                	  heap_entail_split_rhs_phases prog is_folding  ctx conseq false pos     
                 end
 	      else
-                heap_entail_conjunct 1 prog is_folding  ctx conseq [] pos in
+                heap_entail_conjunct 1 prog is_folding  ctx conseq [] pos
+            in
 
             let (real_c,contra, r1, prf) = 
               let es = get_estate_from_context ctx in
@@ -9554,7 +9557,8 @@ and solver_detect_lhs_rhs_contra_all_x prog estate conseq pos msg =
     let contr, _ = Infer.detect_lhs_rhs_contra  p_lhs_xpure p_rhs_xpure pos in
     contr in
   let r_inf_contr,relass = 
-    if lhs_rhs_contra_flag then ([],[])
+    if lhs_rhs_contra_flag then
+      ([],[])
     else
       begin
         (* lhs_rhs contradiction detected *)

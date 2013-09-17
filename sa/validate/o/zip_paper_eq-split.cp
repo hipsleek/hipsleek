@@ -10,12 +10,12 @@ HeapPred HP_998(node y).
 zip:SUCCESS[
 ass [H,G][]:{
   // BIND (2;0)
-  H(x,y)&y=y' & x!=null --> x::node<val_30_933,next_30_934>@M * HP_935(next_30_934,y) *
+  H(x,y) & x!=null --> x::node<val_30_933,next_30_934>@M * HP_935(next_30_934,y) *
      HP_936(y,x),
  // BIND (2;0)
-  HP_936(y,x)&x=x' --> y::node<val_30_941,next_30_942>@M * HP_943(next_30_942,x),
+  HP_936(y,x) --> y::node<val_30_941,next_30_942>@M * HP_943(next_30_942,x),
  // PRE_REC (2;0)
- HP_935(next_30_934,y) * HP_943(next_30_942,x)&y=y' & x=x' --> H(next_30_934,next_30_942),
+ HP_935(next_30_934,y) * HP_943(next_30_942,x) --> H(next_30_934,next_30_942),
  // POST (1;1;0)
  H(res,y)&y=null & x=null & res=null & res=x --> G(x,y,res),
  // POST (2;0)
