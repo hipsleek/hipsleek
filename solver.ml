@@ -4964,7 +4964,7 @@ and early_hp_contra_detection_x hec_num prog estate conseq pos =
       let orig_ante = estate.es_formula in
       match r_inf_contr with
         | Some (new_estate, pf) ->
-              let _ = Debug.ninfo_hprint (add_str "early_hp_contra_detection : " pr_id) "..in Some" pos in
+              let _ = Debug.info_hprint (add_str "early_hp_contra_detection : " pr_id) "..in Some" pos in
               let new_estate = {new_estate with es_infer_vars = orig_inf_vars; es_orig_ante = Some orig_ante} in
               let temp_ctx = SuccCtx[false_ctx_with_orig_ante new_estate orig_ante pos] in
               (* let _ = Debug.info_pprint ("*********1********") no_pos in *)
@@ -4992,7 +4992,7 @@ and early_hp_contra_detection_x hec_num prog estate conseq pos =
               in
               (real_c,true, Some es)
         | None ->  
-              let _ = Debug.ninfo_hprint (add_str "early_hp_contra_detection : " pr_id) "..in None" pos in
+              let _ = Debug.info_hprint (add_str "early_hp_contra_detection : " pr_id) "..in None" pos in
               match relass with
 		| [(es,h,_)] -> 
                       let new_estate = { es with es_infer_vars = orig_inf_vars; es_orig_ante = Some orig_ante } in
