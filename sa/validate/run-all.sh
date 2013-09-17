@@ -6,7 +6,8 @@ echo "sll-reverse"
 ../../hip sll-reverse.ss  -validate o/sll-reverse.cp | grep Validate
 echo "zip_paper_eq"
 ../../hip zip_paper_eq.ss  -validate o/zip_paper_eq.cp | grep Validate
-
+echo "check-dll"
+../../hip check-dll.ss  -validate o/check-dll.cp | grep Validate
 #sa-dangling
 
 #pred-disj-unify

@@ -5759,7 +5759,8 @@ let rec drop_hrel_f_x f0 hp_names=
       let nf,argsl = helper base1 in
       (add_quantifiers qvars nf,argsl)
   in
-  helper f0
+  if hp_names = [] then (f0, []) else
+    helper f0
 
 and drop_hrel_f f0 hp_names=
   let pr1 = !print_formula in

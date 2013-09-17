@@ -8,9 +8,9 @@ ass [HX,HY,G1][]:{
  // PRE_REC
    HP_890(next_50_889) --> HX(next_50_889),
  // PRE_REC
- HY(y) * x_897::node<val_50_888,y_896>@ M& y=y_896 --> HY(x_897),
+ HY(y) * x_897::node<val_50_888,y> --> HY(x_897),
  // POST
- G1(x',y') --> G1(x',y');
+ G1(x',y') --> G1(x',y'),
  // POST
   HX(x) * HY(y')& x=null --> G1(x,y')
  }

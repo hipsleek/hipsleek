@@ -98,36 +98,8 @@ let rec find_imply_subst prog unk_hps link_hps frozen_hps frozen_constrs complex
                           }
                           in
                           let _ = Debug.ninfo_zprint (lazy (("    new rhs: " ^ (Cprinter.string_of_hprel_short new_cs)))) no_pos in
-                          (*moved after pre-preds synthesized*)
-                          (* let l_hds, l_hvs,lhrels =CF.get_hp_rel_formula new_cs.CF.hprel_lhs in *)
-                          (* let r_hds, r_hvs,rhrels =CF.get_hp_rel_formula new_cs.CF.hprel_rhs in *)
-                          (* if (List.length l_hds > 0 || List.length l_hvs > 0) && List.length lhrels > 0 && *)
-                          (*    (\* (List.length r_hds > 0 || List.length r_hvs > 0) && *\) List.length rhrels > 0 *)
-                          (* then *)
-                          (*   let ho_constrs, _ = collect_ho_ass prog true [] ([], []) new_cs in *)
-                          (*   let ho_constrs1 = SAU.remove_dups_constr ho_constrs in *)
-                          (*   if ho_constrs1==[] || *)
-                          (*     check_constr_duplicate (new_cs.CF.hprel_lhs,new_cs.CF.hprel_rhs) ho_constrs1 then *)
-                          (*       let new_cs1 = SAU.simp_match_hp_w_unknown prog unk_hps link_hps new_cs in *)
-                          (*       ([new_cs1],[]) *)
-                          (*   else *)
-                          (*     (\***************  PRINTING*********************\) *)
-                          (*     let _ = *)
-                          (*       begin *)
-                          (*         let pr = pr_list_ln Cprinter.string_of_hprel_short in *)
-                          (*         print_endline ""; *)
-                          (*         print_endline "\n*************************************************"; *)
-                          (*         print_endline "*******relational assumptions (obligation)********"; *)
-                          (*         print_endline "****************************************************"; *)
-                          (*         print_endline (pr ho_constrs1); *)
-                          (*         print_endline "*************************************" *)
-                          (*       end *)
-                          (*     in *)
-                          (*     (ho_constrs1, List.map fst3 lhrels) *)
-                          (*   (\***************  END PRINTING*********************\) *)
-                          (* else *)
-                            let new_cs1 = SAU.simp_match_hp_w_unknown prog unk_hps link_hps new_cs in
-                            ([new_cs1],[])
+                          let new_cs1 = SAU.simp_match_hp_w_unknown prog unk_hps link_hps new_cs in
+                          ([new_cs1],[])
                         end
                 | None -> ([],[])
             end
@@ -1827,8 +1799,8 @@ and infer_process_pre_preds iprog prog proc_name callee_hps b_is_pre is (pre_fix
   in
   let _ = DD.ninfo_hprint (add_str "   is:"  Cprinter.string_of_infer_state_short) is no_pos in
   let r_is,a,n_pre_oblg_constrs = helper_x is [] [] pre_oblg_constrs0 in
-  let _ = DD.ninfo_hprint (add_str "   r_is:" Cprinter.string_of_infer_state_short) r_is no_pos in
-  let _ = DD.info_hprint (add_str "  n_pre_oblg_constrs:" (pr_list_ln Cprinter.string_of_hprel_short)) n_pre_oblg_constrs no_pos in
+  let _ = DD.info_hprint (add_str "   r_is:" Cprinter.string_of_infer_state_short) r_is no_pos in
+  let _ = DD.ninfo_hprint (add_str "  n_pre_oblg_constrs:" (pr_list_ln Cprinter.string_of_hprel_short)) n_pre_oblg_constrs no_pos in
   (r_is,a,n_pre_oblg_constrs)
 
 (* and infer_pre_trans_closure prog is= *)
