@@ -12,7 +12,7 @@ ass [H1,G1][]:{
  // POST (2;0)
   HP_894(prev_19_892,prv) * l::node<prv,next_19_893>@M *G1(next_19_893,l)& prev_19_892=prv --> G1(l,prv);
  // POST
-   HP_894(prev_19_892,prv) --> emp& prev_19_892=prv
+   HP_894(prev_19_892,prv) & prev_19_892=prv --> emp
   }
 
 hpdefs [H1,G1][]:{
