@@ -275,6 +275,7 @@ let main () =
                                    let cmd = parse cts in
                                    proc_gen_cmd cmd;
                                    Buffer.clear buffer;
+
                                    if !inter then
                                      prompt := "SLEEK> "
                               with
