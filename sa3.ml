@@ -60,7 +60,7 @@ let rec find_imply_subst prog unk_hps link_hps frozen_hps frozen_constrs complex
           else check_constr_duplicate (lhs,rhs) ss
   in
   let find_imply_one cs1 cs2=
-    let _ = Debug.ninfo_zprint (lazy (("    rhs: " ^ (Cprinter.string_of_hprel_short cs2)))) no_pos in
+    let _ = Debug.info_zprint (lazy (("    rhs: " ^ (Cprinter.string_of_hprel_short cs2)))) no_pos in
     (*if this assumption is going to be equal generalized. do not subst*)
     let lhps = CF.get_hp_rel_name_formula cs2.CF.hprel_lhs in
     if List.length lhps<2 && CP.diff_svl lhps frozen_hps = [] then ([],[]) else
@@ -148,12 +148,12 @@ let rec find_imply_subst prog unk_hps link_hps frozen_hps frozen_constrs complex
             in
             subst_w_frozen rest n_non_frozen is_changed1 n_unfrozen_hps1
   in
-  let is_changed0,new_cs0,unfrozen_hps0 = subst_w_frozen frozen_constrs constrs false [] in
-  let is_changed,new_cs1,unfrozen_hps =
-    if List.length new_cs0 < 1 then (is_changed0, new_cs0, unfrozen_hps0) else
-    helper_new_only [] new_cs0 is_changed0 unfrozen_hps0
+  let is_changed0,constrs0,unfrozen_hps0 =
+    if List.length constrs < 2 then (false, constrs, []) else
+    helper_new_only [] constrs false []
   in
-  (is_changed,new_cs1,unfrozen_hps)
+  let is_changed1,constrs1,unfrozen_hps1 = subst_w_frozen frozen_constrs constrs0 is_changed0 unfrozen_hps0 in
+  (is_changed1,constrs1,unfrozen_hps1)
 
 (* and find_imply_subst prog unk_hps link_hps frozen_hps complex_hps constrs= *)
 (*   let pr1 = pr_list_ln Cprinter.string_of_hprel_short in *)
@@ -1756,7 +1756,9 @@ and infer_process_pre_preds iprog prog proc_name callee_hps b_is_pre is (pre_fix
              let lhps = CF.get_hp_rel_name_formula cs.CF.hprel_lhs in
              if List.length lhps<2 && CP.intersect_svl lhps complex_hps = [] then true else false
            in
-           let pre_oblg_constrs, complex_constrs = List.partition (is_not_in_complex complex_hps) constrs in
+           let _, constrs1,_  = subst_cs prog post_hps dang_hps link_hps (frozen_hps@equal_hps)
+          (frozen_constrs1) complex_hps constrs in
+           let pre_oblg_constrs, complex_constrs = List.partition (is_not_in_complex complex_hps) constrs1 in
            let pre_act = IC.igen_action_pre complex_hps complex_constrs in
            let n_is11 = {n_is1 with CF.is_constrs = pre_oblg_constrs} in
            let n_is12 = iprocess_action iprog prog proc_name callee_hps n_is11 pre_act need_preprocess detect_dang in

@@ -233,16 +233,16 @@ let icompute_action_pre_x constrs post_hps frozen_hps pre_fix_hps=
   else pre_preds_4_equal2
   in
   (*find rem_constrs for weaken*)
-  let is_not_in_frozen frozen_hps cs=
+  let is_not_in_frozen complex_hps frozen_hps cs=
     let lhps = CF.get_hp_rel_name_formula cs.CF.hprel_lhs in
-    if CP.intersect_svl lhps frozen_hps = [] then true else false
+    if (CP.intersect_svl lhps frozen_hps) = [] || (CP.intersect_svl lhps complex_hps <> []) then true else false
   in
+  let complex_hps1 = List.filter (fun hp -> not (CP.mem_svl hp tupled_hps)) complex_hps in
   let rem_constrs = if pre_preds_4_equal3 =[] then constrs else
     let hps = List.map fst pre_preds_4_equal3 in
-    List.filter (is_not_in_frozen hps) constrs
+    List.filter (is_not_in_frozen complex_hps hps) constrs
   in
-  (pre_preds_4_equal3,
-  List.filter (fun hp -> not (CP.mem_svl hp tupled_hps)) complex_hps,rem_constrs)
+  (pre_preds_4_equal3, complex_hps1,rem_constrs)
 
 let icompute_action_pre constrs post_hps frozen_hps pre_fix_hps=
   let pr1 = pr_list_ln Cprinter.string_of_hprel_short in

@@ -3100,7 +3100,7 @@ test_ele:
   else if(String.compare t "hpdefs" == 0) then ExpectedHpDef (il,sl,cs)
   else report_error no_pos "no_case"]];
 
-constrs: [[t = LIST0 constr SEP `COMMA -> t]];
+constrs: [[t = LIST0 constr SEP `SEMICOLON -> t]];
 
 
 constr : [[ t=disjunctive_constr; `CONSTR; b=disjunctive_constr ->
