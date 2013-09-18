@@ -22,8 +22,10 @@ echo "check-sorted"
 #../../hip sll-insertsort.ss -validate o/sll-insertsort.cp | grep Validate
 echo "CSll"
 ../../hip cll.ss  -validate o/cll.cp | grep Validate
-echo "CSll"
+echo "check-CSll"
 ../../hip check-cll.ss  -validate o/check-cll.cp | grep Validate
+echo " 0/1 SLLs"
+../../hip sll-01-slls.ss  -validate o/sll-01-slls.cp | grep Validate
 #sa-dangling
 
 #pred-disj-unify
