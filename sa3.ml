@@ -50,6 +50,7 @@ ss: subst from ldns -> ldns
 (*
 equal_hps: are preds that are going to be generalized. DO NOT subst them
 *)
+
 let rec find_imply_subst prog unk_hps link_hps frozen_hps frozen_constrs complex_hps constrs=
   let rec check_constr_duplicate (lhs,rhs) constrs=
     match constrs with
@@ -60,7 +61,7 @@ let rec find_imply_subst prog unk_hps link_hps frozen_hps frozen_constrs complex
           else check_constr_duplicate (lhs,rhs) ss
   in
   let find_imply_one cs1 cs2=
-    let _ = Debug.info_zprint (lazy (("    rhs: " ^ (Cprinter.string_of_hprel_short cs2)))) no_pos in
+    let _ = Debug.ninfo_zprint (lazy (("    rhs: " ^ (Cprinter.string_of_hprel_short cs2)))) no_pos in
     (*if this assumption is going to be equal generalized. do not subst*)
     let lhps = CF.get_hp_rel_name_formula cs2.CF.hprel_lhs in
     if List.length lhps<2 && CP.diff_svl lhps frozen_hps = [] then ([],[]) else
@@ -106,47 +107,47 @@ let rec find_imply_subst prog unk_hps link_hps frozen_hps frozen_constrs complex
       | _ -> report_error no_pos "sa2.find_imply_one"
   in
   let rec helper_new_only don rest is_changed unfrozen_hps=
-    match rest with
-      | [] -> is_changed,don,unfrozen_hps
-      | cs1::rest ->
-          let _ = Debug.ninfo_zprint (lazy (("    lhs: " ^ (Cprinter.string_of_hprel_short cs1)))) no_pos in
-          if SAC.cs_rhs_is_only_neqNull cs1 then
-            (helper_new_only (don@[cs1]) rest is_changed unfrozen_hps)
-          else
-            let is_changed1, new_rest, n_unfrozen_hps1 = List.fold_left ( fun (b,res, r_unfroz_hps) cs2->
-                let new_constrs, unfroz_hps = find_imply_one cs1 cs2 in
-                if List.length new_constrs > 0 then
-                  (true,res@new_constrs, r_unfroz_hps@unfroz_hps)
-                  else (b,res@[cs2], r_unfroz_hps)
-            ) (is_changed, [], []) (rest)
-            in
-            let is_changed2,new_don, n_unfrozen_hps2 = List.fold_left ( fun (b,res, r_unfroz_hps) cs2->
-                let new_constrs, unfroz_hps = find_imply_one cs1 cs2 in
-                if List.length new_constrs > 0 then
-                 (true,res@new_constrs,  r_unfroz_hps@unfroz_hps)
-                else
-                  (b,res@[cs2], r_unfroz_hps)
-            ) (is_changed1,[], []) (don)
-            in
-            (helper_new_only (new_don@[cs1]) new_rest is_changed2 (unfrozen_hps@n_unfrozen_hps1@n_unfrozen_hps2))
+   match rest with
+     | [] -> is_changed,don,unfrozen_hps
+     | cs1::rest ->
+           let _ = Debug.info_zprint (lazy (("    lhs: " ^ (Cprinter.string_of_hprel_short cs1)))) no_pos in
+           if SAC.cs_rhs_is_only_neqNull cs1 then
+             (helper_new_only (don@[cs1]) rest is_changed unfrozen_hps)
+           else
+             let is_changed1, new_rest, n_unfrozen_hps1 = List.fold_left ( fun (b,res, r_unfroz_hps) cs2->
+                 let new_constrs, unfroz_hps = find_imply_one cs1 cs2 in
+                 if List.length new_constrs > 0 then
+                   (true,res@new_constrs, r_unfroz_hps@unfroz_hps)
+                 else (b,res@[cs2], r_unfroz_hps)
+             ) (is_changed, [], []) (rest)
+             in
+             let is_changed2,new_don, n_unfrozen_hps2 = List.fold_left ( fun (b,res, r_unfroz_hps) cs2->
+                 let new_constrs, unfroz_hps = find_imply_one cs1 cs2 in
+                 if List.length new_constrs > 0 then
+                   (true,res@new_constrs,  r_unfroz_hps@unfroz_hps)
+                 else
+                   (b,res@[cs2], r_unfroz_hps)
+             ) (is_changed1,[], []) (don)
+             in
+             (helper_new_only (new_don@[cs1]) new_rest is_changed2 (unfrozen_hps@n_unfrozen_hps1@n_unfrozen_hps2))
   in
   let rec subst_w_frozen frozen_constrs non_frozen is_changed unfrozen_hps=
     match frozen_constrs with
       | [] -> is_changed,non_frozen,unfrozen_hps
       | cs1::rest ->
-          let _ = Debug.ninfo_zprint (lazy (("    lhs: " ^ (Cprinter.string_of_hprel_short cs1)))) no_pos in
-          if SAC.cs_rhs_is_only_neqNull cs1 then
-            (helper_new_only rest non_frozen is_changed unfrozen_hps)
-          else
-            let is_changed1, n_non_frozen, n_unfrozen_hps1 =
-              List.fold_left ( fun (b,res, r_unfroz_hps) cs2->
-                let new_constrs, unfroz_hps = find_imply_one cs1 cs2 in
-                if List.length new_constrs > 0 then
-                  (true,res@new_constrs, r_unfroz_hps@unfroz_hps)
-                  else (b,res@[cs2], r_unfroz_hps)
-            ) (is_changed, [], []) non_frozen
-            in
-            subst_w_frozen rest n_non_frozen is_changed1 n_unfrozen_hps1
+            let _ = Debug.info_zprint (lazy (("    lhs: " ^ (Cprinter.string_of_hprel_short cs1)))) no_pos in
+            if SAC.cs_rhs_is_only_neqNull cs1 then
+              (helper_new_only rest non_frozen is_changed unfrozen_hps)
+            else
+              let is_changed1, n_non_frozen, n_unfrozen_hps1 =
+                List.fold_left ( fun (b,res, r_unfroz_hps) cs2->
+                    let new_constrs, unfroz_hps = find_imply_one cs1 cs2 in
+                    if List.length new_constrs > 0 then
+                      (true,res@new_constrs, r_unfroz_hps@unfroz_hps)
+                    else (b,res@[cs2], r_unfroz_hps)
+                ) (is_changed, [], []) non_frozen
+              in
+              subst_w_frozen rest n_non_frozen is_changed1 n_unfrozen_hps1
   in
   let is_changed0,constrs0,unfrozen_hps0 =
     if List.length constrs < 2 then (false, constrs, []) else
@@ -172,7 +173,8 @@ and subst_cs_w_other_cs_x prog post_hps dang_hps link_hps frozen_hps frozen_cons
   (*remove recursive cs and post-preds based to preserve soundness*)
   (* let constrs1 = List.filter (fun cs -> (is_non_recursive_non_post_cs post_hps dang_hps cs) && not (is_trivial cs)) constrs in *)
   let constrs1,rem = List.partition (fun cs -> (is_non_recursive_non_post_cs post_hps dang_hps cs) && not (is_trivial cs)) constrs in
-  let b,new_cs2, unfrozen_hps = find_imply_subst prog dang_hps link_hps frozen_hps frozen_constrs complex_hps constrs1 in
+  let b,new_cs2, unfrozen_hps=
+    find_imply_subst prog dang_hps link_hps frozen_hps frozen_constrs complex_hps constrs1 in
   (b, new_cs2@rem,unfrozen_hps)
 (*=========END============*)
 
@@ -1017,6 +1019,115 @@ let pardef_subst_fix prog unk_hps groups=
   Debug.no_1 "pardef_subst_fix" pr1 pr1
       (fun _ -> pardef_subst_fix_x prog unk_hps groups) groups
 
+(*
+  divide hp into three groups:
+  - independent - ready for genalizing
+  - dependent:
+      - depend on non-recursive groups: susbst
+      - depend on recusive groups: wait
+*)
+let def_subst_fix prog unk_hps hpdefs=
+  (*remove dups*)
+  (* let unk_hps = CP.remove_dups_svl unk_hps in *)
+  let is_rec_hpdef (a1,_,_,f)=
+    let hp = CF.get_hpdef_name a1 in
+    let hps = CF.get_hp_rel_name_formula f in
+    (CP.mem_svl hp hps)
+  in
+  let is_independ_hpdef (a1,_,_,f)=
+    let hp = CF.get_hpdef_name a1 in
+    let hps = CF.get_hp_rel_name_formula f in
+    let hps = CP.remove_dups_svl hps in
+    (* DD.ninfo_zprint (lazy (("       rec hp: " ^ (!CP.print_sv hp)))) no_pos; *)
+    let _,rems = List.partition (fun hp1 -> CP.eq_spec_var hp hp1) hps in
+    (* DD.ninfo_zprint (lazy (("       rec rems: " ^ (!CP.print_svl rems)))) no_pos; *)
+    (rems = [])
+  in
+  let process_dep_hpdef hpdef rec_hps nrec_hpdefs=
+    let (a1,hprel,g,f) = hpdef in
+    let hp = CF.get_hpdef_name a1 in
+    let fs = CF.list_of_disjs f in
+    (* DD.ninfo_zprint (lazy (("       process_dep_group hp: " ^ (!CP.print_sv hp)))) no_pos; *)
+    let succ_hp_args =  List.concat (List.map CF.get_HRels_f fs) in
+    (*remove dups*)
+    let succ_hp_args = Gen.BList.remove_dups_eq SAU.check_simp_hp_eq succ_hp_args in
+    (*get succ hp names only*)
+    let succ_hps = fst (List.split succ_hp_args) in
+    (* DD.ninfo_zprint (lazy (("       process_dep_group succ_hps: " ^ (!CP.print_svl succ_hps)))) no_pos; *)
+    (*remove itself hp and unk_hps*)
+    let succ_hps1 = List.filter (fun hp1 -> not (CP.eq_spec_var hp1 hp) &&
+        not (CP.mem_svl hp1 unk_hps) && not (CP.mem_svl hp1 rec_hps) ) succ_hps in
+    (* DD.info_zprint (lazy (("       process_dep_group succ_hps1: " ^ (!CP.print_svl succ_hps1)))) no_pos; *)
+    if (CP.diff_svl succ_hps1 rec_hps) <> [] then
+      (*not depends on any recursive hps, susbt it*)
+      let args = SAU.get_ptrs hprel in
+      let ters,new_fs = List.split (List.map (fun f1 -> SAU.succ_subst_hpdef prog nrec_hpdefs succ_hps1 (hp,args,g,f1)) fs) in
+      (*check all is false*)
+      (* let pr = pr_list string_of_bool in *)
+      (* DD.ninfo_zprint (lazy (("       bool: " ^ (pr ters)))) no_pos; *)
+      let ter = List.for_all (fun b -> not b) ters in
+      let fs1  = SAU.remove_longer_common_prefix_w_unk unk_hps (List.concat new_fs) in
+      (* let pr1 = pr_list_ln Cprinter.prtt_string_of_formula in *)
+      (* let _ = DD.info_zprint (lazy (("       fs1: " ^ (pr1 fs1)))) no_pos in *)
+      let b =
+        if not ter then
+        not (SAU.checkeq_formula_list fs fs1)
+        else false
+      in
+      (* let fs2 = SAU.remove_subset new_fs1 in *)
+      (*may be wrong: should reevauate root*)
+      (b , (CP.HPRelDefn (hp, List.hd args, List.tl args ),hprel, g,CF.disj_of_list fs1 no_pos ))
+    else
+      (*return*)
+      (false,hpdef)
+  in
+  let subst_first_dep_hpdef deps rec_hps nrec_hpdefs=
+    let rec local_helper deps res r=
+      match deps with
+        | [] -> (r,res)
+        | hpdef::gs -> let r1,hpdef1 = process_dep_hpdef hpdef rec_hps nrec_hpdefs in
+                     (* if r then (true,(res@[hpdef1]@gs)) *)
+                     (* else local_helper gs (res@[hpdef]) *)
+                       local_helper gs (res@[hpdef1]) (r1||r)
+    in
+    (* if nrec_grps = [] then (false, deps) else *)
+      local_helper deps [] false
+  in
+  let helper_x hpdefs rec_inds nrec_inds=
+    let indeps,deps = List.partition is_independ_hpdef hpdefs in
+    (*classify indeps into rec and non_rec*)
+    let lrec_inds,lnrec_inds = List.partition is_rec_hpdef indeps in
+    (*for return*)
+    let res_rec_inds = rec_inds@lrec_inds in
+    let res_nrec_inds = nrec_inds@lnrec_inds in
+    let lrec_deps,l_nrec_deps = List.partition is_rec_hpdef deps in
+    (*find deps on non_recs*)
+    let rec_hps = List.map
+      (fun (a1,_,_,_) -> CF.get_hpdef_name a1)
+      (res_rec_inds@lrec_deps) in
+    (*find the first depend grp in deps to subst,
+    if can not find, return false for terminating*)
+    let r, deps1 = subst_first_dep_hpdef deps rec_hps (res_nrec_inds@l_nrec_deps) in
+    (( (*List.length indeps>0 || *) r), deps1, res_rec_inds,res_nrec_inds)
+  in
+  (*for debugging*)
+   let helper hpdefs rec_inds nrec_inds=
+     let pr1 = (pr_list_ln SAU.string_of_hp_rel_def) in
+     let pr2= pr_quad string_of_bool pr1 pr1 pr1 in
+     Debug.no_3 "def_subst_fix:helper" pr1 pr1 pr1 pr2
+         (fun _ _ _ -> helper_x hpdefs rec_inds nrec_inds) hpdefs rec_inds nrec_inds
+   in
+  (*END for debugging*)
+  let rec helper_fix cur rec_indps nrec_indps=
+    let r,new_cur,new_rec_indps,new_nrec_indps = helper cur rec_indps nrec_indps in
+    if r then
+      (*rearrange cur for terminating*)
+      (* let new_cur1 = (List.tl new_cur)@[List.hd new_cur] in *)
+      helper_fix new_cur new_rec_indps new_nrec_indps
+    else (new_cur@new_rec_indps@new_nrec_indps)
+  in
+  helper_fix hpdefs [] []
+
 let is_valid_pardef (_,args,_,_,f,_)=
   let ls_succ_args = snd (List.split (CF.get_HRels_f f)) in
   let succ_args = List.concat ls_succ_args in
@@ -1803,7 +1914,9 @@ and infer_process_pre_preds iprog prog proc_name callee_hps b_is_pre is (pre_fix
   let r_is,a,n_pre_oblg_constrs = helper_x is [] [] pre_oblg_constrs0 in
   let _ = DD.ninfo_hprint (add_str "   r_is:" Cprinter.string_of_infer_state_short) r_is no_pos in
   let _ = DD.ninfo_hprint (add_str "  n_pre_oblg_constrs:" (pr_list_ln Cprinter.string_of_hprel_short)) n_pre_oblg_constrs no_pos in
-  (r_is,a,n_pre_oblg_constrs)
+  let hp_defs1,tupled_defs = SAU.partition_tupled r_is.CF.is_hp_defs in
+  let r_is1 = {r_is with CF.is_hp_defs = (def_subst_fix prog [] hp_defs1)@tupled_defs } in
+  (r_is1,a,n_pre_oblg_constrs)
 
 (* and infer_pre_trans_closure prog is= *)
 (*   let n_constrs,_ = infer_pre_preds prog is.CF.is_post_hps [] *)

@@ -41,7 +41,7 @@ let is_rec_pardef (hp,_,f,_)=
   (CP.mem_svl hp hps)
 
 let string_of_hp_rel_def hp_rel =
- let str_of_hp_rel (r,f1, f2) =
+ let str_of_hp_rel (r,f1, _,f2) =
    (* match r with *)
    (*   | CP.HPRelNDefn _ -> ( (CP.print_rel_cat r)^ ": " ^(Cprinter.string_of_h_formula f1) ^ ":: " *)
    (*     ^("NONE")) *)
@@ -5494,7 +5494,7 @@ let succ_subst_with_rec_indp prog rec_indp_grps unk_hps depend_grps=
 let rec look_up_subst_hpdef hp args nrec_hpdefs=
   match nrec_hpdefs with
     | [] -> [](* report_error no_pos "sau.look_up_groups" *)
-    | (a1,hprel1,f1)::gs -> begin
+    | (a1,hprel1,_,f1)::gs -> begin
         let hp1 = CF.get_hpdef_name a1 in
         (* DD.info_zprint (lazy (("       hp: " ^ (!CP.print_sv hp)))) no_pos; *)
         (* DD.info_zprint (lazy (("       succ_susbt_def hp1: " ^ (!CP.print_sv hp1)))) no_pos; *)
@@ -5516,8 +5516,8 @@ let compose_subs f1 f2 pos=
   let new_f21,_ = CF.drop_hrel_f new_f2 ptrs1 in
   CF.mkStar f1 new_f21 CF.Flow_combine pos
 
-let succ_susbt_hpdef_x prog nrec_hpdefs all_succ_hp (hp,args,f)=
-  DD.ninfo_zprint (lazy (("       succ_susbt_def hp: " ^ (!CP.print_sv hp)))) no_pos;
+let succ_subst_hpdef_x prog nrec_hpdefs all_succ_hp (hp,args,g,f)=
+  DD.ninfo_zprint (lazy (("       succ_subst_def hp: " ^ (!CP.print_sv hp)))) no_pos;
   DD.ninfo_zprint (lazy (("       all_succ_hp: " ^ (!CP.print_svl all_succ_hp)))) no_pos;
   let pos = no_pos in
   (*l1 x l2*)
@@ -5569,14 +5569,14 @@ let succ_susbt_hpdef_x prog nrec_hpdefs all_succ_hp (hp,args,f)=
           ((lsf_cmb3 <> []),lsf_cmb3)
     end
 
-let succ_susbt_hpdef prog nrec_hpdefs all_succ_hp (hp,args,f)=
+let succ_subst_hpdef prog nrec_hpdefs all_succ_hp (hp,args,g,f)=
   let pr1 = pr_list_ln (string_of_hp_rel_def) in
   let pr2 = !CP.print_svl in
-  let pr3 = pr_triple !CP.print_sv !CP.print_svl Cprinter.prtt_string_of_formula in
+  let pr3 = pr_quad !CP.print_sv !CP.print_svl pr_none Cprinter.prtt_string_of_formula in
   let pr4 = pr_pair string_of_bool (pr_list_ln Cprinter.prtt_string_of_formula) in
   Debug.no_3 " succ_susbt_hpdef" pr1 pr2 pr3 pr4
-      (fun _ _ _ -> succ_susbt_hpdef_x prog nrec_hpdefs all_succ_hp (hp,args,f))
-      nrec_hpdefs all_succ_hp (hp,args,f)
+      (fun _ _ _ -> succ_subst_hpdef_x prog nrec_hpdefs all_succ_hp (hp,args,g,f))
+      nrec_hpdefs all_succ_hp (hp,args,g,f)
 
 let combine_hpdefs_x hpdefs=
   (*partition the set by hp_name*)
