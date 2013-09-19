@@ -12,7 +12,7 @@ echo "check-sll-head"
 ../../hip check-sll-head.ss -validate o/check-sll-head.cp | grep Validate
 echo "skip0"
 ../../hip skip0.ss -validate o/skip0.cp | grep Validate
-#echo "skip-list"
+echo "skip-list: TODO (interprocedural)"
 #../../hip skip-list.ss -validate o/skip-list.cp | grep Validate
 echo "check-sorted"
 ../../hip check-sorted.ss --sa-en-pure-field -validate o/check-sorted.cp | grep Validate
@@ -28,7 +28,16 @@ echo "sll2dll"
 ../../hip sll-dll.ss -validate o/sll-dll.cp | grep Validate
 echo "check-dll"
 ../../hip check-dll.ss -validate o/check-dll.cp | grep Validate
-
+echo "bt-search-2.ss: TODO"
+#../../hip bt-search-2.ss -validate o/bt-search-2.cp | grep Validate
+echo "tll: to check"
+../../hip tll.ss -validate o/tll.cp | grep Validate
+echo "rose-tree: to check"
+../../hip rose-tree-1.ss -validate o/rose-tree-1.cp | grep Validate
+echo "check mcf: to check"
+../../hip check-mcf.ss -validate o/check-mcf.cp | grep Validate
+echo "check-tll: to check"
+../../hip check-tll.ss -validate o/check-tll.cp | grep Validate
 #sa-dangling
 echo "dll-app"
 ../../hip dll-append_paper.ss --classic --pred-en-dangling -validate o/dll-append_paper.cp | grep Validate
@@ -42,3 +51,5 @@ echo "cyc-lseg"
 ../../hip cyc-lseg.ss  -validate o/cyc-lseg.cp --pred-en-split | grep Validate
 echo "zip_paper_eq"
 ../../hip zip_paper_eq.ss  -validate o/zip_paper_eq-split.cp --pred-en-split | grep Validate
+
+#sa-dnc
