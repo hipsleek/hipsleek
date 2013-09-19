@@ -16,7 +16,7 @@ graph<v,M> == self = null & M = {}
 void mark(ref node x)
 requires x::graph<0,M>
 //ensures x::graph<_,M>; //fails
-ensures x::graph<1,M>;
+ensures_inexact x::graph<1,M>;
 {
 node l,r;
 if(x == null) return;

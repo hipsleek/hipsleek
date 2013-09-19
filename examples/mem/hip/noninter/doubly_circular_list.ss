@@ -17,7 +17,7 @@ llt<hd,R> == self = hd & R = {}
    
 void insert_dcll(int v, node x)
 requires x::node<0,y,z> * (y::lln<x,R> &* z::llt<x,R>)
-ensures  x::node<0,i,j> * (i::lln<x,Ru> &* j::llt<x,Ru>) & R subset Ru;
+ensures_inexact  x::node<0,i,j> * (i::lln<x,Ru> &* j::llt<x,Ru>) & R subset Ru;
 {
 	node tmp = new node(v,null,null);
 	x.next = insert_lln(x.next,tmp);
@@ -26,7 +26,7 @@ ensures  x::node<0,i,j> * (i::lln<x,Ru> &* j::llt<x,Ru>) & R subset Ru;
 
 void insert_node_dcll(node v, node x)
 requires x::node<0,y,z> * v::node<m,_,_> * (y::lln<x,R> &* z::llt<x,R>)
-ensures  x::node<0,i,j> * (i::lln<x,Ru> &* j::llt<x,Ru>) & Ru = union(R,{v});
+ensures_inexact  x::node<0,i,j> * (i::lln<x,Ru> &* j::llt<x,Ru>) & Ru = union(R,{v});
 {
 	//node tmp = new node(v,null,null);
 	x.next = insert_lln(x.next,v);
@@ -35,7 +35,7 @@ ensures  x::node<0,i,j> * (i::lln<x,Ru> &* j::llt<x,Ru>) & Ru = union(R,{v});
 
 node insert_lln(node x, node n)
 requires x::lln<hd,R> * n::node<v@L,_@M,_@A>
-ensures res::lln<hd,R1> & R1 = union(R,{n});
+ensures_inexact res::lln<hd,R1> & R1 = union(R,{n});
 {
 	n.next = x;
 	return n;
@@ -43,7 +43,7 @@ ensures res::lln<hd,R1> & R1 = union(R,{n});
 
 node insert_llt(node x, node n)
 requires x::llt<hd,R> * n::node<v@L,_@A,_@M>
-ensures res::llt<hd,R1> & R1 = union(R,{n});
+ensures_inexact res::llt<hd,R1> & R1 = union(R,{n});
 {
 	n.tnext = x;
 	return n;

@@ -42,7 +42,7 @@ lemma self::ll<n,R> -> self::lseg<n,R,p>;
 
 void overlaid_insert(ref node x, ref node s,int v)
 requires x::ll<n,R> &* s::sll<n,sm,lg,R>
-ensures x'::ll<n+1,R1> &* s'::sll<n+1,mi,ma,R1> & mi = min(v, sm) & ma = max(v, lg) &  R1 = union(R,{x}); 
+ensures_inexact x'::ll<n+1,R1> &* s'::sll<n+1,mi,ma,R1> & mi = min(v, sm) & ma = max(v, lg) &  R1 = union(R,{x}); 
 {
 node c = new node(v,null,null);
 c.next = x;
@@ -64,7 +64,7 @@ s = c;
 
 void delete2(node x, node vn)
 requires x::ll<n,R> * vn::node<_@L,_,_@A>
-ensures x::ll<nres,R1> & n - 1 <= nres <= n; 
+ensures_inexact x::ll<nres,R1> & n - 1 <= nres <= n; 
 {
 	if(x != null){
 	if(x.next == vn)
@@ -101,7 +101,7 @@ ensures res::sll<n + 1, mi, ma, R1> & mi = min(v, sm) & ma = max(v, lg) & R subs
 
 node insert2(node x, node vn)
 	requires x::sll<n, sm, lg,R> *  vn::node<v@L,_@A,_>
-	ensures res::sll<n+1, mi, ma, R1> & mi=min(v, sm) & ma=max(v, lg) & R1 = union(R,{vn});
+	ensures_inexact res::sll<n+1, mi, ma, R1> & mi=min(v, sm) & ma=max(v, lg) & R1 = union(R,{vn});
 {
 	if (x==null) {
 		vn.snext = null;
@@ -145,7 +145,7 @@ ensures res::sll<nres, sres, lres,R1> & sres >= xs & lres <= xl & n-1 <= nres <=
 node get_tail(node x)
 
 	requires x::sll<n, xs, xl,R> & x != null
-	ensures res::sll<n-1, sres, lres,R1> & sres >= xs & lres <= xl & R = union({x},R1); 
+	ensures_inexact res::sll<n-1, sres, lres,R1> & sres >= xs & lres <= xl & R = union({x},R1); 
 
 {
 	return x.snext;
@@ -155,7 +155,7 @@ node get_tail(node x)
 void insertion_sort(node x, ref node y)
 
 	requires x::ll<n,Rll> &* y::sll<m1, ys1, yl1,Rsll>
-	ensures y'::sll<n + m1, _, _,R1> &* x::ll<n,Rll> & R1 = union(Rsll,Rll) ;
+	ensures_inexact y'::sll<n + m1, _, _,R1> &* x::ll<n,Rll> & R1 = union(Rsll,Rll) ;
 
 {
 	if (x != null)

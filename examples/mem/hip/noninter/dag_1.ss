@@ -14,7 +14,7 @@ dag<v,M> == self = null & M = {}
 void mark(ref node x)
 requires x::dag<0,M>
 //ensures x::dag<0,M>;  // fails
-ensures x::dag<1,M>;
+ensures_inexact x::dag<1,M>;
 {
 node l,r;
 if(x == null) return;

@@ -10,7 +10,7 @@ ll<v,M,n,S> == self = null & M = {} & n = 0 & S = 0
 
 int length(node x)
 requires x::ll<@A,M,n,S>
-ensures x::ll<@A,M,n,S> & res = n; 
+ensures_inexact x::ll<@A,M,n,S> & res = n; 
 {
 if(x==null) return 0;
 else 
@@ -20,7 +20,7 @@ return m;}
 
 int sum(node x)
 requires x::ll<@L,M,n,S>
-ensures x::ll<@L,M,n,S> & res = S; 
+ensures_inexact x::ll<@L,M,n,S> & res = S; 
 {
 if(x==null) return 0;
 else 

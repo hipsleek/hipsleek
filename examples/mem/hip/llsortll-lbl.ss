@@ -10,31 +10,31 @@ data node {
 
 /* view for a linked list */
 
-ll<n,R> == self = null & n = 0
-		or self::node<_@L,p,_@A> * p::ll<n-1,Rp> //& R = union(Rp,{self})
+ll<n,"m":R> == self = null & n = 0 & ["m": R = {}]
+		or self::node<_@L,p,_@A> * p::ll<n-1,Rp> & ["m": R = union(Rp,{self})]
 		inv n >= 0
-		memE R ->();
+		mem R->(node<@L,@M,@A>);
 
 /* view for a sorted list */
 
-sll<n, sm, lg, R> == self = null & n = 0 & sm <= lg
+sll<n, sm, lg, "m":R> == self = null & n = 0 & sm <= lg & ["m": R = {}]
 	or (exists qs,ql: self::node<qmin@L,_@A,q> * q::sll<n-1, qs, ql, Rq> 
-	& qmin <= qs & ql <= lg & sm <= qmin) //& R = union(Rq,{self}))
+	& qmin <= qs & ql <= lg & sm <= qmin & ["m": R = union(Rq,{self})])
 	inv n >= 0 & sm <= lg
-	memE R->();
+	mem R->(node<@L,@A,@M>);
 
 /* view for list segment */	
-lseg<n,R,p> == self = p & n = 0
-	or self::node<_@L,q,_@A> * q::lseg<n-1,Rq,p>// & R = union(Rq,{self})
+lseg<n,"m":R,p> == self = p & n = 0 & ["m": R = {}] 
+	or self::node<_@L,q,_@A> * q::lseg<n-1,Rq,p> & ["m": R = union(Rq,{self})]
 	inv n>=0
-	memE R->();
+	mem R->(node<@L,@M,@A>);
 	
 /* view for sorted list segment */
-slseg<n,sm,lg,R,p> == self = p & n = 0 & sm <= lg 
+slseg<n,sm,lg,"m":R,p> == self = p & n = 0 & sm <= lg & ["m": R = {}]
 	or (exists qs,ql: self::node<qmin@L,_@A,q> * q::slseg<n-1,qs,ql,Rq,p> 
-	& qmin <= qs & ql <= lg & sm <= qmin) //& R = union(Rq,{self}))
+	& qmin <= qs & ql <= lg & sm <= qmin & ["m": R = union(Rq,{self})])
 	inv n >= 0 & sm <= lg
-	memE R->();
+	mem R->(node<@L,@A,@M>);
 	
 lemma self::sll<n,sm,lg,R> -> self::ll<n,R>;
 
@@ -42,7 +42,7 @@ lemma self::ll<n,R> -> self::lseg<n,R,p>;
 
 void overlaid_insert(ref node x, ref node s,int v)
 requires x::ll<n,R> &* s::sll<n,sm,lg,R>
-ensures_inexact x'::ll<n+1,R1> &* s'::sll<n+1,mi,ma,R1> & mi = min(v, sm) & ma = max(v, lg) &  R1 = union(R,{x}); 
+ensures x'::ll<n+1,R1> &* s'::sll<n+1,mi,ma,R1> & mi = min(v, sm) & ma = max(v, lg) &  ["m": R1 = union(R,{x})]; 
 {
 node c = new node(v,null,null);
 c.next = x;
@@ -52,7 +52,7 @@ s = insert2(s,c);
 
 void overlaid_delete(node x, node s, int v)
 requires x::ll<n,R> &* s::sll<n,sm,lg,R>
-ensures x::ll<nres,R1> &* s::sll<nres,mi,ma,R1> & mi = min(v, sm) & ma = max(v, lg) & (R1 subset R | R1 = R) & n-1 <= nres <= n;
+ensures x::ll<nres,R1> &* s::sll<nres,mi,ma,R1> & mi = min(v, sm) & ma = max(v, lg) & n-1 <= nres <= n & ["m": (R1 subset R | R1 = R)];
 /*
 {
 node c;
@@ -64,7 +64,7 @@ s = c;
 
 void delete2(node x, node vn)
 requires x::ll<n,R> * vn::node<_@L,_,_@A>
-ensures_inexact x::ll<nres,R1> & n - 1 <= nres <= n; 
+ensures x::ll<nres,R1> & n - 1 <= nres <= n; 
 {
 	if(x != null){
 	if(x.next == vn)
@@ -78,7 +78,7 @@ ensures_inexact x::ll<nres,R1> & n - 1 <= nres <= n;
 /* insert an element in a sorted list */
 node insert(node x, int v)
 requires x::sll<n, sm, lg, R>
-ensures res::sll<n + 1, mi, ma, R1> & mi = min(v, sm) & ma = max(v, lg) & R subset R1;  
+ensures res::sll<n + 1, mi, ma, R1> & mi = min(v, sm) & ma = max(v, lg) & ["m": R subset R1];  
 /*
 {
 	node tmp;
@@ -101,7 +101,7 @@ ensures res::sll<n + 1, mi, ma, R1> & mi = min(v, sm) & ma = max(v, lg) & R subs
 
 node insert2(node x, node vn)
 	requires x::sll<n, sm, lg,R> *  vn::node<v@L,_@A,_>
-	ensures_inexact res::sll<n+1, mi, ma, R1> & mi=min(v, sm) & ma=max(v, lg) & R1 = union(R,{vn});
+	ensures res::sll<n+1, mi, ma, R1> & mi=min(v, sm) & ma=max(v, lg) & ["m": R1 = union(R,{vn})];
 {
 	if (x==null) {
 		vn.snext = null;
@@ -120,7 +120,7 @@ node insert2(node x, node vn)
 /* delete a node from a sorted list */
 node delete(node x, int v)
 requires x::sll<n, xs, xl, R>
-ensures res::sll<nres, sres, lres,R1> & sres >= xs & lres <= xl & n-1 <= nres <= n & (R1 subset R | R1 = R);
+ensures res::sll<nres, sres, lres,R1> & sres >= xs & lres <= xl & n-1 <= nres <= n & ["m": (R1 subset R | R1 = R)];
 /*
 {
 	node tmp; 
@@ -145,7 +145,7 @@ ensures res::sll<nres, sres, lres,R1> & sres >= xs & lres <= xl & n-1 <= nres <=
 node get_tail(node x)
 
 	requires x::sll<n, xs, xl,R> & x != null
-	ensures_inexact res::sll<n-1, sres, lres,R1> & sres >= xs & lres <= xl & R = union({x},R1); 
+	ensures res::sll<n-1, sres, lres,R1> & sres >= xs & lres <= xl & ["m": R = union({x},R1)]; 
 
 {
 	return x.snext;
@@ -155,7 +155,7 @@ node get_tail(node x)
 void insertion_sort(node x, ref node y)
 
 	requires x::ll<n,Rll> &* y::sll<m1, ys1, yl1,Rsll>
-	ensures_inexact y'::sll<n + m1, _, _,R1> &* x::ll<n,Rll> & R1 = union(Rsll,Rll) ;
+	ensures y'::sll<n + m1, _, _,R1> &* x::ll<n,Rll> & ["m": R1 = union(Rsll,Rll)] ;
 
 {
 	if (x != null)

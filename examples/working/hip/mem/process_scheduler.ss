@@ -46,9 +46,9 @@ stat != 1 -> requires rlist::rll<R1> * slist::sll<R2> * plist::ll<R> & R = union
 
 node insert_pll(node x, ref node n)
 requires x::ll<R> * n::node<_@L,1@L,_@M,_@A,_@M>
-ensures res::ll<R1> & Rn = {n} & R1 = union(R,Rn) & intersect(R,Rn) = {};
+ensures_inexact res::ll<R1> & Rn = {n} & R1 = union(R,Rn) & intersect(R,Rn) = {};
 requires x::ll<R> * n::node<_@L,v@L,_@M,_@M,_@A> & v != 1
-ensures res::ll<R1> & Rn = {n} & R1 = union(R,Rn) & intersect(R,Rn) = {};
+ensures_inexact res::ll<R1> & Rn = {n} & R1 = union(R,Rn) & intersect(R,Rn) = {};
 {
 	n.next = x;
 	return n;
@@ -56,7 +56,7 @@ ensures res::ll<R1> & Rn = {n} & R1 = union(R,Rn) & intersect(R,Rn) = {};
 
 node insert_rll(node x, ref node n)
 requires x::rll<R> * n::node<_@L,1@L,_@A,_@M,_@A>
-ensures res::rll<R1> & Rn = {n} & R1 = union(R,Rn) & intersect(R,Rn) = {};
+ensures_inexact res::rll<R1> & Rn = {n} & R1 = union(R,Rn) & intersect(R,Rn) = {};
 {
 	n.rnext = x;
 	return n;
@@ -64,7 +64,7 @@ ensures res::rll<R1> & Rn = {n} & R1 = union(R,Rn) & intersect(R,Rn) = {};
 
 node insert_sll(node x, ref node n)
 requires x::sll<R> * n::node<_@L,v@L,_@A,_@A,_@M> & v != 1
-ensures res::sll<R1> & Rn = {n} & R1 = union(R,Rn) & intersect(R,Rn) = {};
+ensures_inexact res::sll<R1> & Rn = {n} & R1 = union(R,Rn) & intersect(R,Rn) = {};
 {
 	n.snext = x;
 	return n;

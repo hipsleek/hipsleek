@@ -976,7 +976,7 @@ let rec join_ann_conjconj (ann1: CF.ann list) (ann2: CF.ann list) (param1: CP.sp
 				  (ha1==ha2 && compatible, CF.ConstAnn(ha1)::new_ann, p1::new_param(*, (CP.mkAnd p new_p no_pos)*))
     | _ -> (false,[],[](*,tf*))        
 
-let compact_data_nodes (h1: CF.h_formula) (h2: CF.h_formula) (aset:CP.spec_var list list) func
+let compact_data_nodes (h1: CF.h_formula) (h2: CF.h_formula) (aset:CP.spec_var list list) (func) (combine_data: bool)
 : CF.h_formula * CF.h_formula * CP.formula =
 (match h1 with
 | CF.DataNode 
@@ -990,9 +990,11 @@ let compact_data_nodes (h1: CF.h_formula) (h2: CF.h_formula) (aset:CP.spec_var l
  	 | CF.DataNode { CF.h_formula_data_name = name2;
  	                 CF.h_formula_data_node = v2;
  	                 CF.h_formula_data_param_imm = param_ann2; 
- 	                 CF.h_formula_data_arguments = h2args;} ->
+ 	                 CF.h_formula_data_arguments = h2args;} -> 
          (* h1, h2 nodes; check if they can be join into a single node. If so, h1 will contain the updated annotations, while 
             h2 will be replaced by "emp". Otherwise both data nodes will remain unchanged *)
+         let p_comp = CP.mkEqVar v1 v2 no_pos in
+         let h1,h2,p = 
  		     if (String.compare name1 name2 == 0) && ((CP.mem v2 aset_sv) || (CP.eq_spec_var v1 v2)) then
  		         let compatible, new_param_imm, new_args = func param_ann1 param_ann2 h1args h2args  in
 	                (* compact to keep the updated node*)
@@ -1005,6 +1007,7 @@ let compact_data_nodes (h1: CF.h_formula) (h2: CF.h_formula) (aset:CP.spec_var l
 	                   let p = CP.conj_of_list 
 		          (List.map (fun c -> (CP.mkEqVar (fst c) (snd c) h.CF.h_formula_data_pos)) comb_list) 				   h.CF.h_formula_data_pos
 			   in 
+                 (*let p = CP.mkAnd (CP.mkEqVar h.CF.h_formula_data_node v2 h.CF.h_formula_data_pos) p h.CF.h_formula_data_pos in *)
 			   	(CF.DataNode {h with CF.h_formula_data_arguments = new_args; 			
 			     	 CF.h_formula_data_param_imm = new_param_imm}, CF.HEmp, p)
 			  	else (CF.HFalse, h2, (CP.mkTrue no_pos))
@@ -1017,12 +1020,15 @@ let compact_data_nodes (h1: CF.h_formula) (h2: CF.h_formula) (aset:CP.spec_var l
 			         (List.combine h.CF.h_formula_data_arguments h1args) in
 			          let p = CP.conj_of_list 
 			        (List.map (fun c -> (CP.mkEqVar (fst c) (snd c) h.CF.h_formula_data_pos)) comb_list) 				          h.CF.h_formula_data_pos
-			         in
+			          in
+                      (*let p = CP.mkAnd (CP.mkEqVar h.CF.h_formula_data_node v2 h.CF.h_formula_data_pos) p h.CF.h_formula_data_pos in *)
 			         (CF.DataNode {h with CF.h_formula_data_arguments = new_args;
 			          CF.h_formula_data_param_imm = new_param_imm},CF.HEmp,p)
 			          else (CF.HFalse,h1,(CP.mkTrue no_pos))
  			   | _ -> (h1, h2,(CP.mkTrue no_pos)) (* will never reach this branch *))
-		     else (h1, h2,(CP.mkTrue no_pos)) (* h2 is not an alias of h1 *) 
+		     else (h1, h2,(CP.mkTrue no_pos)) (* h2 is not an alias of h1 *)  
+         in 
+         (if combine_data then h1,h2,(CP.mkAnd p p_comp no_pos) else h1,h2,p)
 	| _ -> (h1,h2,(CP.mkTrue no_pos))  (*shouldn't get here*))
 | _ -> (h1,h2,(CP.mkTrue no_pos)) (*shouldn't get here*))
 
@@ -1033,13 +1039,13 @@ let rec compact_nodes_with_same_name_in_h_formula (f: CF.h_formula) (aset: CP.sp
       | CF.Star {CF.h_formula_star_h1 = h1;
                  CF.h_formula_star_h2 = h2;
                  CF.h_formula_star_pos = pos } ->             
-	let h1,h2,_ = compact_nodes_op h1 h2 aset join_ann in
+	let h1,h2,_ = (compact_nodes_op h1 h2 aset join_ann false) in
 	let res = CF.mkStarH h1 h2 pos in
 	res,(CP.mkTrue no_pos)
       | CF.Conj{CF.h_formula_conj_h1 = h1;
 		CF.h_formula_conj_h2 = h2;
 	        CF.h_formula_conj_pos = pos} ->
-	        let h1,h2,_ = compact_nodes_op h1 h2 aset join_ann_conj in
+	        let h1,h2,_ = compact_nodes_op h1 h2 aset join_ann_conj false in
 		let res = CF.mkConjH h1 h2 pos in
 		res,(CP.mkTrue no_pos)
 	        (*let h1_h,h1_p = compact_nodes_with_same_name_in_h_formula h.CF.h_formula_conj_h1 aset in
@@ -1050,20 +1056,20 @@ let rec compact_nodes_with_same_name_in_h_formula (f: CF.h_formula) (aset: CP.sp
       | CF.ConjStar{CF.h_formula_conjstar_h1 = h1;
 		CF.h_formula_conjstar_h2 = h2;
 	        CF.h_formula_conjstar_pos = pos} ->
-	        let h1,h2,_ = compact_nodes_op h1 h2 aset join_ann_conjstar in
+	        let h1,h2,_ = compact_nodes_op h1 h2 aset join_ann_conjstar true in
 		let res = CF.mkConjStarH h1 h2 pos in
 		res,(CP.mkTrue no_pos)
       | CF.ConjConj{CF.h_formula_conjconj_h1 = h1;
 		CF.h_formula_conjconj_h2 = h2;
 	        CF.h_formula_conjconj_pos = pos} ->
-	        let h1,h2,p = compact_nodes_op h1 h2 aset join_ann_conjconj in
+	        let h1,h2,p = compact_nodes_op h1 h2 aset join_ann_conjconj true in
 		let res = CF.mkConjConjH h1 h2 pos in
 		res,p		 	        
       | CF.StarMinus{CF.h_formula_starminus_h1 = h1;
 		CF.h_formula_starminus_h2 = h2;
         CF.h_formula_starminus_aliasing = al;
 	        CF.h_formula_starminus_pos = pos} ->
-	        let h1,h2,p = compact_nodes_op h1 h2 aset join_ann in
+	        let h1,h2,p = compact_nodes_op h1 h2 aset join_ann false in
 		let res = CF.mkStarMinusH h1 h2 al pos 21 in
 		res,p
       | CF.Phase h ->  let h1_h,h1_p = compact_nodes_with_same_name_in_h_formula h.CF.h_formula_phase_rd aset in
@@ -1073,7 +1079,7 @@ let rec compact_nodes_with_same_name_in_h_formula (f: CF.h_formula) (aset: CP.sp
  	      CF.h_formula_phase_rw = h2_h;},(CP.mkTrue no_pos)
       | _ -> f,(CP.mkTrue no_pos)
    
-and compact_nodes_op (h1: CF.h_formula) (h2: CF.h_formula) (aset:CP.spec_var list list) func 
+and compact_nodes_op (h1: CF.h_formula) (h2: CF.h_formula) (aset:CP.spec_var list list) func combine_data
 : CF.h_formula * CF.h_formula * CP.formula =  
 (match h1 with
  	          | CF.DataNode { CF.h_formula_data_name = name1;
@@ -1087,15 +1093,15 @@ and compact_nodes_op (h1: CF.h_formula) (h2: CF.h_formula) (aset:CP.spec_var lis
  		                              CF.h_formula_data_node = v2;
  		                              CF.h_formula_data_param_imm = param_ann2; 
  		                              CF.h_formula_data_arguments = h2args;} ->
- 		                              compact_data_nodes h1 h2 aset func
+ 		                              compact_data_nodes h1 h2 aset func combine_data
 		          | CF.Star {CF.h_formula_star_h1 = h21;
 			                     CF.h_formula_star_h2 = h22;
 			                     CF.h_formula_star_pos = pos2 } ->
 (* h1 node, h2 star formula. Try to unify h1 with nodes on the left hand side of h2 star-formula, resulting in a new h1
 which will be checked against the right side of h2 star-formula. This will result in updated part of h2 right and left hand side of '*'.
 Rejoin h2 star fomula, and apply compact_nodes_with_same_name_in_h_formula_x on the updated h2 to check for other groups of aliases. *)
-		          	  let h31, h32,p3 = compact_nodes_op h1 h21 aset func in
-		                  let h41, h42,p4 = compact_nodes_op h31 h22 aset func in
+		          	  let h31, h32,p3 = compact_nodes_op h1 h21 aset func combine_data in
+		                  let h41, h42,p4 = compact_nodes_op h31 h22 aset func combine_data in
 		                  let new_h2 = CF.mkStarH h32 h42 pos2 in
 		                  let new_p2 = CP.mkAnd p3 p4 pos2 in
                                   let new_h2, new_p = compact_nodes_with_same_name_in_h_formula new_h2 aset in 
@@ -1103,8 +1109,8 @@ Rejoin h2 star fomula, and apply compact_nodes_with_same_name_in_h_formula_x on 
 		          | CF.Conj {CF.h_formula_conj_h1 = h21;
 					 CF.h_formula_conj_h2 = h22;
 			                 CF.h_formula_conj_pos = pos2} -> 
-			          let h31, h32,p3 = compact_nodes_op h1 h21 aset func in
-		                  let h41, h42,p4 = compact_nodes_op h31 h22 aset func in
+			          let h31, h32,p3 = compact_nodes_op h1 h21 aset func combine_data in
+		                  let h41, h42,p4 = compact_nodes_op h31 h22 aset func combine_data in
 		                  let new_h2 = CF.mkConjH h32 h42 pos2 in
 		                  let new_p2 = CP.mkAnd p3 p4 pos2 in
                                   let new_h2, new_p = compact_nodes_with_same_name_in_h_formula new_h2 aset in 
@@ -1112,8 +1118,8 @@ Rejoin h2 star fomula, and apply compact_nodes_with_same_name_in_h_formula_x on 
 		          | CF.ConjStar {CF.h_formula_conjstar_h1 = h21;
 					 CF.h_formula_conjstar_h2 = h22;
 			                 CF.h_formula_conjstar_pos = pos2} -> 
-			          let h31, h32,p3 = compact_nodes_op h1 h21 aset func in
-		                  let h41, h42,p4 = compact_nodes_op h31 h22 aset func in
+			          let h31, h32,p3 = compact_nodes_op h1 h21 aset func combine_data in
+		                  let h41, h42,p4 = compact_nodes_op h31 h22 aset func combine_data in
 		                  let new_h2 = CF.mkConjStarH h32 h42 pos2 in
 		                  let new_p2 = CP.mkAnd p3 p4 pos2 in
                                   let new_h2, new_p = compact_nodes_with_same_name_in_h_formula new_h2 aset in 
@@ -1121,8 +1127,8 @@ Rejoin h2 star fomula, and apply compact_nodes_with_same_name_in_h_formula_x on 
 		          | CF.ConjConj {CF.h_formula_conjconj_h1 = h21;
 					 CF.h_formula_conjconj_h2 = h22;
 			                 CF.h_formula_conjconj_pos = pos2} -> 
-			          let h31, h32,p3 = compact_nodes_op h1 h21 aset func in
-		                  let h41, h42,p4 = compact_nodes_op h31 h22 aset func in
+			          let h31, h32,p3 = compact_nodes_op h1 h21 aset func combine_data in
+		                  let h41, h42,p4 = compact_nodes_op h31 h22 aset func combine_data in
 		                  let new_h2 = CF.mkConjConjH h32 h42 pos2 in
 		                  let new_p2 = CP.mkAnd p3 p4 pos2 in
                                   let new_h2, new_p = compact_nodes_with_same_name_in_h_formula new_h2 aset in 
@@ -1131,8 +1137,8 @@ Rejoin h2 star fomula, and apply compact_nodes_with_same_name_in_h_formula_x on 
 					 CF.h_formula_starminus_h2 = h22;
                      CF.h_formula_starminus_aliasing =al;
 			                 CF.h_formula_starminus_pos = pos2} -> 
-			          let h31, h32,p3 = compact_nodes_op h1 h21 aset func in
-		                  let h41, h42,p4 = compact_nodes_op h31 h22 aset func in
+			          let h31, h32,p3 = compact_nodes_op h1 h21 aset func combine_data in
+		                  let h41, h42,p4 = compact_nodes_op h31 h22 aset func combine_data in
 		                  let new_h2 = CF.mkStarMinusH h32 h42 al pos2 22 in
 		                  let new_p2 = CP.mkAnd p3 p4 pos2 in
                                   let new_h2, new_p = compact_nodes_with_same_name_in_h_formula new_h2 aset in 
@@ -1142,8 +1148,8 @@ Rejoin h2 star fomula, and apply compact_nodes_with_same_name_in_h_formula_x on 
 	          | CF.Star {CF.h_formula_star_h1 = h11;
 		                 CF.h_formula_star_h2 = h12;
 		                 CF.h_formula_star_pos = pos1 } ->
-		      let h31,h32,p3 = compact_nodes_op h11 h2 aset func in
-		      let h41,h42,p4 = compact_nodes_op h12 h32 aset func in
+		      let h31,h32,p3 = compact_nodes_op h11 h2 aset func combine_data in
+		      let h41,h42,p4 = compact_nodes_op h12 h32 aset func combine_data in
 		      let new_h2 = CF.mkStarH h31 h41 pos1 in
 		      let new_p2 = CP.mkAnd p3 p4 pos1 in
                       let new_h2, new_p = compact_nodes_with_same_name_in_h_formula new_h2 aset in 
@@ -1151,8 +1157,8 @@ Rejoin h2 star fomula, and apply compact_nodes_with_same_name_in_h_formula_x on 
 	          | CF.Conj {CF.h_formula_conj_h1 = h11;
 				CF.h_formula_conj_h2 = h12;
 			        CF.h_formula_conj_pos = pos1} ->
-		      let h31,h32,p3 = compact_nodes_op h11 h2 aset func in
-		      let h41,h42,p4 = compact_nodes_op h12 h32 aset func in
+		      let h31,h32,p3 = compact_nodes_op h11 h2 aset func combine_data in
+		      let h41,h42,p4 = compact_nodes_op h12 h32 aset func combine_data in
 		      let new_h2 = CF.mkConjH h31 h41 pos1 in
 		      let new_p2 = CP.mkAnd p3 p4 pos1 in
                       let new_h2, new_p = compact_nodes_with_same_name_in_h_formula new_h2 aset in 
@@ -1160,8 +1166,8 @@ Rejoin h2 star fomula, and apply compact_nodes_with_same_name_in_h_formula_x on 
 	          | CF.ConjStar {CF.h_formula_conjstar_h1 = h11;
 				CF.h_formula_conjstar_h2 = h12;
 			        CF.h_formula_conjstar_pos = pos1} ->
-		      let h31,h32,p3 = compact_nodes_op h11 h2 aset func in
-		      let h41,h42,p4 = compact_nodes_op h12 h32 aset func in
+		      let h31,h32,p3 = compact_nodes_op h11 h2 aset func combine_data in
+		      let h41,h42,p4 = compact_nodes_op h12 h32 aset func combine_data in
 		      let new_h2 = CF.mkConjStarH h31 h41 pos1 in
 		      let new_p2 = CP.mkAnd p3 p4 pos1 in
                       let new_h2, new_p = compact_nodes_with_same_name_in_h_formula new_h2 aset in 
@@ -1169,8 +1175,8 @@ Rejoin h2 star fomula, and apply compact_nodes_with_same_name_in_h_formula_x on 
 	          | CF.ConjConj {CF.h_formula_conjconj_h1 = h11;
 				CF.h_formula_conjconj_h2 = h12;
 			        CF.h_formula_conjconj_pos = pos1} ->
-		      let h31,h32,p3 = compact_nodes_op h11 h2 aset func in
-		      let h41,h42,p4 = compact_nodes_op h12 h32 aset func in
+		      let h31,h32,p3 = compact_nodes_op h11 h2 aset func combine_data in
+		      let h41,h42,p4 = compact_nodes_op h12 h32 aset func combine_data in
 		      let new_h2 = CF.mkConjConjH h31 h41 pos1 in
 		      let new_p2 = CP.mkAnd p3 p4 pos1 in
                       let new_h2, new_p = compact_nodes_with_same_name_in_h_formula new_h2 aset in 
@@ -1179,8 +1185,8 @@ Rejoin h2 star fomula, and apply compact_nodes_with_same_name_in_h_formula_x on 
 				CF.h_formula_starminus_h2 = h12;
                 CF.h_formula_starminus_aliasing = al;
 			        CF.h_formula_starminus_pos = pos1} ->
-		      let h31,h32,p3 = compact_nodes_op h11 h2 aset func in
-		      let h41,h42,p4 = compact_nodes_op h12 h32 aset func in
+		      let h31,h32,p3 = compact_nodes_op h11 h2 aset func combine_data in
+		      let h41,h42,p4 = compact_nodes_op h12 h32 aset func combine_data in
 		      let new_h2 = CF.mkStarMinusH h31 h41 al pos1 23 in
 		      let new_p2 = CP.mkAnd p3 p4 pos1 in
                       let new_h2, new_p = compact_nodes_with_same_name_in_h_formula new_h2 aset in 
