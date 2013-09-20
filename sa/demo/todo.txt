@@ -5776,7 +5776,7 @@ EXPECTED:
    x::node<_,q>*q::P<res>
 
 =====================================================================
-# cyc-tree-1.ss
+# cyc-tree-1.ss: DONE
 
 void trav(node x)
   infer [H,G]

@@ -110,7 +110,7 @@ let rec find_imply_subst prog unk_hps link_hps frozen_hps frozen_constrs complex
    match rest with
      | [] -> is_changed,don,unfrozen_hps
      | cs1::rest ->
-           let _ = Debug.info_zprint (lazy (("    lhs: " ^ (Cprinter.string_of_hprel_short cs1)))) no_pos in
+           let _ = Debug.ninfo_zprint (lazy (("    lhs: " ^ (Cprinter.string_of_hprel_short cs1)))) no_pos in
            if SAC.cs_rhs_is_only_neqNull cs1 then
              (helper_new_only (don@[cs1]) rest is_changed unfrozen_hps)
            else
@@ -135,7 +135,7 @@ let rec find_imply_subst prog unk_hps link_hps frozen_hps frozen_constrs complex
     match frozen_constrs with
       | [] -> is_changed,non_frozen,unfrozen_hps
       | cs1::rest ->
-            let _ = Debug.info_zprint (lazy (("    lhs: " ^ (Cprinter.string_of_hprel_short cs1)))) no_pos in
+            let _ = Debug.ninfo_zprint (lazy (("    lhs: " ^ (Cprinter.string_of_hprel_short cs1)))) no_pos in
             if SAC.cs_rhs_is_only_neqNull cs1 then
               (helper_new_only rest non_frozen is_changed unfrozen_hps)
             else
@@ -738,7 +738,7 @@ let generalize_one_hp_x prog is_pre (hpdefs: (CP.spec_var *CF.hp_rel_def) list) 
             else SAU.elim_useless_rec_preds prog hp args0 defs1
             in
             (*remove duplicate*)
-            let defs3 = SAU.equiv_unify args0 defs2 in
+            let defs3 = if is_pre then SAU.equiv_unify args0 defs2 else defs2 in
             let defs4 = SAU.remove_equiv_wo_unkhps hp skip_hps defs3 in
             let defs5a = SAU.find_closure_eq hp args0 defs4 in
             (*Perform Conjunctive Unification (without loss) for post-preds. pre-preds are performed separately*)
@@ -746,7 +746,8 @@ let generalize_one_hp_x prog is_pre (hpdefs: (CP.spec_var *CF.hp_rel_def) list) 
               SAU.perform_conj_unify_post prog args0 (unk_hps@link_hps) unk_svl defs5a no_pos
             in
             let pr1 = pr_list_ln Cprinter.prtt_string_of_formula in
-            let _ = DD.ninfo_pprint ("defs1: " ^ (pr1 defs1)) no_pos in
+            let _ = DD.ninfo_hprint (add_str "defs5a: " pr1) defs5a no_pos in
+            let _ = DD.ninfo_hprint (add_str "defs5: " pr1) defs5 no_pos in
             (*remove duplicate with self-recursive*)
             (* let base_case_exist,defs4 = SAU.remove_dups_recursive hp args0 unk_hps defs3 in *)
             (*find longest hnodes common for more than 2 formulas*)
@@ -1671,12 +1672,13 @@ let infer_post_synthesize_x prog proc_name callee_hps is need_preprocess detect_
   let _ = DD.binfo_pprint ">>>>>> post-predicates: step post-4: weaken<<<<<<" no_pos in
   let constrs0 = List.map (SAU.weaken_strengthen_special_constr_pre false) is.CF.is_constrs in
   let dang_hps = List.map fst (is.CF.is_dang_hpargs@is.CF.is_link_hpargs) in
-  let ss = List.filter (fun (hp1, hp2) -> CP.intersect_svl [hp1;hp2] dang_hps == []) is.CF.is_hp_equivs in
-  let constrs1 = if ss = [] then constrs0 else
-    List.map (fun cs -> {cs with CF.hprel_lhs = CF.subst ss cs.CF.hprel_lhs;
-        CF.hprel_rhs = CF.subst ss cs.CF.hprel_rhs;
-    }) constrs0
-  in
+  (* let ss = List.filter (fun (hp1, hp2) -> CP.intersect_svl [hp1;hp2] dang_hps == []) is.CF.is_hp_equivs in *)
+  (* let constrs1 = if ss = [] then constrs0 else *)
+  (*   List.map (fun cs -> {cs with CF.hprel_lhs = CF.subst ss cs.CF.hprel_lhs; *)
+  (*       CF.hprel_rhs = CF.subst ss cs.CF.hprel_rhs; *)
+  (*   }) constrs0 *)
+  (* in *)
+  let constrs1 = SAU.subst_equiv_hprel is.CF.is_hp_equivs constrs0 in
   let par_defs = get_par_defs_post constrs1 in
   (*subst pre-preds into if they are not recursive -do with care*)
   let pre_hps_need_fwd= SAU.get_pre_fwd is.CF.is_post_hps par_defs in
@@ -1685,6 +1687,12 @@ let infer_post_synthesize_x prog proc_name callee_hps is need_preprocess detect_
     pre_defs pre_hps par_defs in
   let hp_names,hp_defs = List.split pair_names_defs in
   let n_hp_defs = is.CF.is_hp_defs@hp_defs in
+  let post_defs1,unify_equiv_map2 = if !Globals.pred_unify_post then
+    SAC.do_unify prog false (List.map fst is.CF.is_dang_hpargs) (List.map fst is.CF.is_link_hpargs)
+        is.CF.is_post_hps n_hp_defs
+  else
+    (n_hp_defs, [])
+  in
   (*consj_post_unify??*)
   (* let dang_hps = List.map fst (is.CF.is_dang_hpargs@is.CF.is_link_hpargs) in *)
   (* let ss = List.filter (fun (hp1, hp2) -> CP.intersect_svl [hp1;hp2] dang_hps == []) is.CF.is_hp_equivs in *)
@@ -1696,7 +1704,8 @@ let infer_post_synthesize_x prog proc_name callee_hps is need_preprocess detect_
   (*   (a,hf,g, CF.disj_of_list fs1 (CF.pos_of_formula def))) n_hp_defs *)
   (* in *)
   {is with CF.is_constrs = [];
-      CF.is_hp_defs = n_hp_defs}
+      CF.is_hp_equivs = is.CF.is_hp_equivs@unify_equiv_map2;
+      CF.is_hp_defs = post_defs1}
 
 let infer_post_synthesize prog proc_name callee_hps is need_preprocess detect_dang=
   let pr1 = Cprinter.string_of_infer_state_short in
@@ -2093,6 +2102,7 @@ let infer_shapes_divide iprog prog proc_name (constrs0: CF.hprel list) callee_hp
       constrs0
 
 let infer_shapes_conquer iprog prog proc_name ls_is sel_hps=
+  (***********INTERNAL***************)
   let process_path_defs_setting is=
     let hp_defs1,tupled_defs = SAU.partition_tupled is.CF.is_hp_defs in
     let cl_sel_hps, defs, tupled_defs2=
@@ -2131,6 +2141,7 @@ let infer_shapes_conquer iprog prog proc_name ls_is sel_hps=
     (cl_sel_hps@(List.map fst is.CF.is_link_hpargs), hpdefs@link_hpdefs,
     tupled_defs2, is.CF.is_hp_defs@link_hp_defs)
   in
+  (***********END INTERNAL***************)
   let cl_sel_hps, path_defs, tupled_defs, all_hpdefs = List.fold_left (fun (ls1, ls2,ls3, ls4) path_setting ->
       let r1,r2,r3, r4 = process_path_defs_setting path_setting in
       (ls1@r1, ls2@[r2], ls3@r3, ls4@r4)
@@ -2148,6 +2159,8 @@ let infer_shapes_conquer iprog prog proc_name ls_is sel_hps=
   else (all_hpdefs, cmb_defs)
   in
   let n_all_hp_defs0b = SAU.combine_hpdefs n_all_hpdefs0a in
+  (*unify-post*)
+  
   (*split pred*)
   let n_all_hp_defs1, n_cmb_defs  = if !Globals.pred_split then
     let n_all_hp_defs0c, split_map = SAC.pred_split_hp iprog prog Infer.rel_ass_stk rel_def_stk dang_hps n_all_hp_defs0b in

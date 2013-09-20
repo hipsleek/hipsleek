@@ -701,6 +701,8 @@ let pred_disj_unify = ref false
 
 let pred_equiv = ref false
 
+let pred_unify_post = ref false
+
 let sa_tree_simp = ref false
 
 let sa_subsume = ref false

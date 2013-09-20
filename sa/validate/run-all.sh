@@ -31,13 +31,13 @@ echo "check-dll"
 echo "bt-search-2.ss: TODO"
 #../../hip bt-search-2.ss -validate o/bt-search-2.cp | grep Validate
 echo "tll: to check"
-../../hip tll.ss -validate o/tll.cp | grep Validate
+#../../hip tll.ss -validate o/tll.cp | grep Validate
 echo "rose-tree: to check"
-../../hip rose-tree-1.ss -validate o/rose-tree-1.cp | grep Validate
+#../../hip rose-tree-1.ss -validate o/rose-tree-1.cp | grep Validate
 echo "check mcf: to check"
-../../hip check-mcf.ss -validate o/check-mcf.cp | grep Validate
+#../../hip check-mcf.ss -validate o/check-mcf.cp | grep Validate
 echo "check-tll: to check"
-../../hip check-tll.ss -validate o/check-tll.cp | grep Validate
+#../../hip check-tll.ss -validate o/check-tll.cp | grep Validate
 #sa-dangling
 echo "dll-app"
 ../../hip dll-append_paper.ss --classic --pred-en-dangling -validate o/dll-append_paper.cp | grep Validate
@@ -52,4 +52,10 @@ echo "cyc-lseg"
 echo "zip_paper_eq"
 ../../hip zip_paper_eq.ss  -validate o/zip_paper_eq-split.cp --pred-en-split | grep Validate
 
+#pred-unify-post
+../../hip cyc-tree-1.ss --pred-unify-post -validate o/cyc-tree-1.cp | grep Validate
 #sa-dnc
+
+#--pred-en-equiv
+echo "cyc-lseg"
+#../../hip ll-trav.ss --pred-en-equiv -validate o/ll-trav-equiv.cp --pred-en-split | grep Validate

@@ -101,8 +101,21 @@ let check_stricteq_hrels hrels1 hrels2=
             helper2 rest1 rest2 (ss0@ss)
           else (false,ss0)
   in
+  (* let rec check_inconsistency (sv1,sv2) rest= *)
+  (*   match rest with *)
+  (*     | [] -> false *)
+  (*     | a:: rest1 -> *)
+  (*           if List.exists (fun (sv3,sv4) -> CP.eq_spec_var sv1 sv4 && CP.eq_spec_var sv2 sv3) rest then *)
+  (*             true *)
+  (*           else check_inconsistency a rest1 *)
+  (* in *)
   if (List.length hrels1) = (List.length hrels2) then
-    helper2 hrels1 hrels2 []
+    let b, ss = helper2 hrels1 hrels2 [] in
+    (*inconsistence: (x1,x2) and (x2,x1)*)
+    (* if b && ss != [] then *)
+    (*   if check_inconsistency (List.hd ss) (List.tl ss) then (false,[]) else *)
+    (*     (b,ss) *)
+    (* else *) (b,ss)
   else (false,[])
 
 let check_stricteq_h_fomula_x stricted_eq hf1 hf2=
