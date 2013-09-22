@@ -28,8 +28,8 @@ echo "sll2dll"
 ../../hip sll-dll.ss -validate o/sll-dll.cp | grep Validate
 echo "check-dll"
 ../../hip check-dll.ss -validate o/check-dll.cp | grep Validate
-echo "bt-search-2.ss: TODO"
-#../../hip bt-search-2.ss -validate o/bt-search-2.cp | grep Validate
+echo "bt-search-2.ss"
+../../hip bt-search-2.ss -validate --pred-unify-post  o/bt-search-2.cp | grep Validate
 echo "tll: to check"
 #../../hip tll.ss -validate o/tll.cp | grep Validate
 echo "rose-tree: to check"

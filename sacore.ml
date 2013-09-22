@@ -1704,7 +1704,7 @@ This is mandatory
 --------------
   A<x> --->  x::node<l,r> * H1<l> * H2<r> /\ x::node<l,r> * H2<l> * H1<r>
 *)
-let unify_branches_hpdef_x prog unk_hps link_hps hp_defs =
+let unify_branches_hpdef_x prog unk_hps link_hps post_hps hp_defs =
   let unk_hps = unk_hps@link_hps in
   let rec check_eq_one hp args fs f done_fs=
     match fs with
@@ -1744,10 +1744,17 @@ let unify_branches_hpdef_x prog unk_hps link_hps hp_defs =
       else
         let fs = CF.list_of_disjs f in
         let fs1,ss = check_eq hp (args) fs [] [] in
+        let ss1 = List.map (fun (sv1, sv2) -> if CP.mem_svl sv2 post_hps then (sv2,sv1) else (sv1,sv2)) ss in
+        let fs2 =
+          let parts = SAU.partition_subst_hprel ss1 [] in
+          List.map (fun f ->
+          List.fold_left (fun f0 (from_hps, to_hp) -> CF.subst_hprel f0 from_hps to_hp) f parts
+          ) fs1
+        in
         let p = CF.pos_of_formula f in
         let new_f = List.fold_left (fun f1 f2 -> CF.mkOr f1 f2 p)
-          (List.hd fs1) (List.tl fs1) in
-        (a,hrel,og,new_f),ss
+          (List.hd fs2) (List.tl fs2) in
+        (a,hrel,og,new_f),ss1
     with _ -> (a,hrel,og,f),[]
   in
   DD.ninfo_pprint ">>>>>> unify: <<<<<<" no_pos;
@@ -1758,11 +1765,11 @@ let unify_branches_hpdef_x prog unk_hps link_hps hp_defs =
   in
   (r,ss)
 
-let unify_branches_hpdef prog unk_hps link_hps hp_defs =
+let unify_branches_hpdef prog unk_hps link_hps post_hps hp_defs =
   let pr1 = pr_list_ln Cprinter.string_of_hp_rel_def in
   let pr2 = pr_pair pr1 (pr_list (pr_pair !CP.print_sv !CP.print_sv)) in
   Debug.no_3 "unify_branches_hpdef" !CP.print_svl !CP.print_svl pr1 pr2
-      (fun _ _ _ -> unify_branches_hpdef_x prog unk_hps link_hps hp_defs)
+      (fun _ _ _ -> unify_branches_hpdef_x prog unk_hps link_hps post_hps hp_defs)
       unk_hps link_hps hp_defs
 
 let equiv_cmp (hp11,hp12) (hp21,hp22)=
@@ -1882,7 +1889,7 @@ let unify_pred = unify_shape_equiv
 
 
 (*do_conj_unify: pre only*)
-let do_unify_x prog do_conj_unify unk_hps link_hps pos_hps defs0=
+let do_unify_x prog do_conj_unify unk_hps link_hps post_hps defs0=
   let subst_equiv equivs (a,b,og, f)=
     let nf = if equivs = [] then f else
       List.fold_left (fun f0 (from_hps, to_hp) ->
@@ -1903,22 +1910,22 @@ let do_unify_x prog do_conj_unify unk_hps link_hps pos_hps defs0=
   else (defs0, [])
   in
   (*unify fields*)
-  let defs2,equivs2= unify_branches_hpdef prog unk_hps link_hps defs1 in
-  let equivs2a = List.map (fun (sv1,sv2) -> if CP.mem_svl sv2 pos_hps then (sv2,sv1) else (sv1,sv2)) (equivs1@equivs2) in
+  let defs2,equivs2= unify_branches_hpdef prog unk_hps link_hps post_hps defs1 in
+  let equivs2a = List.map (fun (sv1,sv2) -> if CP.mem_svl sv2 post_hps then (sv2,sv1) else (sv1,sv2)) (equivs1@equivs2) in
   let equivs = Gen.BList.remove_dups_eq equiv_cmp equivs2a in
   (*unify syntax*)
   let defs, equivs =  unify_syntax_equiv_hpdef prog unk_hps link_hps defs2 (equivs) in
-  let equivs3a = List.map (fun (sv1,sv2) -> if CP.mem_svl sv2 pos_hps then (sv2,sv1) else (sv1,sv2)) equivs in
+  let equivs3a = List.map (fun (sv1,sv2) -> if CP.mem_svl sv2 post_hps then (sv2,sv1) else (sv1,sv2)) equivs in
   let parts = SAU.partition_subst_hprel equivs3a [] in
   let defs1 = List.map (subst_equiv parts) defs in
   (defs1, equivs)
 
-let do_unify prog do_conj_unify unk_hps link_hps pos_hps hp_defs=
+let do_unify prog do_conj_unify unk_hps link_hps post_hps hp_defs=
   let pr1 = pr_list_ln Cprinter.string_of_hp_rel_def in
   let pr2 = !CP.print_svl in
   let pr3 = pr_pair pr1 (pr_list (pr_pair !CP.print_sv !CP.print_sv)) in
   Debug.no_3 "do_unify" pr2 pr2 pr1 pr3
-      (fun _ _ _ -> do_unify_x prog do_conj_unify unk_hps link_hps pos_hps hp_defs)
+      (fun _ _ _ -> do_unify_x prog do_conj_unify unk_hps link_hps post_hps hp_defs)
       unk_hps link_hps hp_defs
 
 let reverify_cond_x prog (unk_hps: CP.spec_var list) link_hps hpdefs cond_equivs=
