@@ -59,7 +59,8 @@ let parse_file_full file_name (primitive: bool) =
       )
     ) in
     (* start parsing *)
-    if not primitive then 
+    if not primitive then
+      if (not !Globals.web_compile_flag) then
       print_endline ("Parsing file \"" ^ file_name ^ "\" by " 
                      ^ parser_to_use ^ " parser...");
     let _ = Gen.Profiling.push_time "Parsing" in
@@ -81,6 +82,7 @@ let parse_file_full file_name (primitive: bool) =
 
 (* Parse all prelude files declared by user.*)
 let process_primitives (file_list: string list) : Iast.prog_decl list =
+  if (not !Globals.web_compile_flag) then
   Debug.info_zprint (lazy ((" processing primitives \"" ^(pr_list pr_id file_list) ^ "\n"))) no_pos;
   flush stdout;
   let new_names = List.map (fun c-> (Gen.get_path Sys.executable_name) ^ (String.sub c 1 ((String.length c) - 2))) file_list in
@@ -132,7 +134,7 @@ let process_include_files incl_files ref_file=
       let new_h_files = process_header_with_pragma header_files !Globals.pragma_list in
 		try
 		  let (curdir,_)=BatString.rsplit ref_file "/" in
-		  let _= print_endline ("BachLe curdir: "^curdir) in   
+		  (* let _= print_endline ("BachLe curdir: "^curdir) in    *)
       let prims_list = process_includes new_h_files curdir in (*list of includes in header files*)
 	    prims_list
 		with Not_found ->
@@ -217,6 +219,7 @@ let reverify_with_hp_rel old_cprog iprog =
 (***************end process compare file*****************)
 (*Working*)
 let process_source_full source =
+  if (not !Globals.web_compile_flag) then
   Debug.info_zprint (lazy (("Full processing file \"" ^ source ^ "\"\n"))) no_pos;
   flush stdout;
   let _ = Gen.Profiling.push_time "Preprocessing" in
@@ -295,6 +298,27 @@ let process_source_full source =
     let _ = Gen.Profiling.push_time "Translating to Core" in
 (*    let _ = print_string ("Translating to core language...\n"); flush stdout in *)
     (* let _ = print_endline (Iprinter.string_of_program intermediate_prog) in *)
+    (**************************************)
+    (*Simple heuristic for ParaHIP website*)
+    (*Heuristic: check if waitlevel and locklevels have been used for verification
+      If not detect waitlevel or locklevel -> set allow_locklevel==faslse
+      Note: this is used in ParaHIP website for demonstration only.
+      We could use the run-time flag "--dis-locklevel" to disable the use of locklevels
+      and waitlevel.
+    *)
+    let search_for_locklevel proc =
+      if (not !Globals.allow_locklevel) then
+        let struc_fv = Iformula.struc_free_vars false proc.Iast.proc_static_specs in
+        let b = List.exists (fun (id,_) -> (id = Globals.waitlevel_name)) struc_fv in
+        if b then
+          Globals.allow_locklevel := true
+    in
+    let _ = if !Globals.web_compile_flag then
+          let _ = List.map search_for_locklevel prog.Iast.prog_proc_decls in
+          ()
+    in
+    (**************************************)
+
     let cprog = Astsimp.trans_prog intermediate_prog (*iprims*) in
 		(* let cprog = Astsimp.trans_prog intermediate_prog (*iprims*) in *)
     (* let _ = print_string ("Translating to core language...\n"); flush stdout in *)
@@ -432,6 +456,7 @@ let process_source_full source =
     else "\n"
 	)
 
+(*None Working: see process_source_full instead *)
 let process_source_full_parse_only source =
   Debug.info_zprint (lazy (("Full processing file (parse only) \"" ^ source ^ "\"\n"))) no_pos;
   flush stdout;
@@ -489,20 +514,20 @@ let process_source_full_after_parser source (prog, prims_list) =
   let _ = Gen.Profiling.push_time "Translating to Core" in
   (* let _ = print_string ("Translating to core language...\n"); flush stdout in *)
 
-        (**************************************)
-    (*Simple heuristic for ParaHIP website*)
-    (*Heuristic: check if waitlevel and locklevels have been used for verification
-      If not detect waitlevel or locklevel -> set allow_locklevel==faslse
-      Note: this is used in ParaHIP website for demonstration only.
-      We could use the run-time flag "--dis-locklevel" to disable the use of locklevels
-      and waitlevel.
-    *)
-    let search_for_locklevel proc =
-      if (not !Globals.allow_locklevel) then
-        let struc_fv = Iformula.struc_free_vars false proc.Iast.proc_static_specs in
-        let b = List.exists (fun (id,_) -> (id = Globals.waitlevel_name)) struc_fv in
-        if b then
-         Globals.allow_locklevel := true
+  (**************************************)
+  (*Simple heuristic for ParaHIP website*)
+  (*Heuristic: check if waitlevel and locklevels have been used for verification
+    If not detect waitlevel or locklevel -> set allow_locklevel==faslse
+    Note: this is used in ParaHIP website for demonstration only.
+    We could use the run-time flag "--dis-locklevel" to disable the use of locklevels
+    and waitlevel.
+  *)
+  let search_for_locklevel proc =
+    if (not !Globals.allow_locklevel) then
+      let struc_fv = Iformula.struc_free_vars false proc.Iast.proc_static_specs in
+      let b = List.exists (fun (id,_) -> (id = Globals.waitlevel_name)) struc_fv in
+      if b then
+        Globals.allow_locklevel := true
   in
   let _ = if !Globals.web_compile_flag then
         let _ = List.map search_for_locklevel prog.Iast.prog_proc_decls in

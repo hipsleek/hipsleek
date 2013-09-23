@@ -534,16 +534,6 @@ let rec string_of_imm imm =
   | TempAnn(t) -> "@[" ^ (string_of_imm t) ^ "]"
   | PolyAnn(v) -> "@" ^ (string_of_spec_var v)
 
-
-
-
-let string_of_cperm perm =
-  let perm_str = match perm with
-    | None -> ""
-    | Some f -> string_of_spec_var f
-  in if (Perm.allow_perm ()) then "(" ^ perm_str ^ ")" else ""
-
-
 let string_of_derv dr = 
   if not !print_ann then ""
   else if dr then "@D" else ""
@@ -682,6 +672,7 @@ let rec pr_formula_exp (e:P.exp) =
     | P.AConst (i, l) -> fmt_string (string_of_heap_ann i)
     | P.InfConst (i,l) -> let r = "\\inf" in fmt_string r
     | P.Tsconst (i,l) -> fmt_string (Tree_shares.Ts.string_of i)
+	| P.Bptriple (t,l) -> fmt_string (pr_triple string_of_spec_var string_of_spec_var string_of_spec_var t)
     | P.FConst (f, l) -> fmt_string "FLOAT ";fmt_float f
     | P.Add (e1, e2, l) -> 
           let args = bin_op_to_list op_add_short exp_assoc_op e in
@@ -1022,6 +1013,18 @@ let pr_aliasing_scenario (al :aliasing_scenario) =
 (* 	pr_mem_formula {mem_formula_mset = r} *)
 (*     | [] -> fmt_string ";" *)
 (* ;; *)
+
+(** convert formula exp to a string via pr_formula_exp *)
+let string_of_formula_exp (e:P.exp) : string =  poly_string_of_pr  pr_formula_exp e
+
+let printer_of_formula_exp (crt_fmt: Format.formatter) (e:P.exp) : unit =
+  poly_printer_of_pr crt_fmt pr_formula_exp e
+
+let string_of_cperm perm =
+  let perm_str = match perm with
+    | None -> ""
+    | Some f -> string_of_formula_exp f
+  in if (Perm.allow_perm ()) then "(" ^ perm_str ^ ")" else ""
 
 let rec pr_h_formula h = 
   let f_b e =  pr_bracket h_formula_wo_paren pr_h_formula e 
@@ -1539,12 +1542,6 @@ let rec pr_h_formula_for_spec h =
   | HEmp -> fmt_string "emp"
   | Hole m -> fmt_string ("Hole[" ^ (string_of_int m) ^ "]")
   | StarMinus _ | ConjStar _ | ConjConj _  -> Error.report_no_pattern ()
-
-(** convert formula exp to a string via pr_formula_exp *)
-let string_of_formula_exp (e:P.exp) : string =  poly_string_of_pr  pr_formula_exp e
-
-let printer_of_formula_exp (crt_fmt: Format.formatter) (e:P.exp) : unit =
-  poly_printer_of_pr crt_fmt pr_formula_exp e
 
 let string_of_memoised_list l : string  = poly_string_of_pr pr_memoise_group l
 
@@ -2192,17 +2189,23 @@ let rec pr_numbered_list_formula_trace_ho_inst cprog (e:(context * (formula*form
         end
 
 let pr_numbered_list_formula_trace (e:(context * (formula*formula_trace)) list) (count:int) =
-(*  let f b = begin
+  let f b = begin
             fmt_string "\n";
             fmt_string "[[";
             pr_es_trace b;
             fmt_string "]]"
-  end in*)
-  let f b = () in
+  end in
+  (* let f b = () in *)
   pr_numbered_list_formula_trace_ho (e) (count:int) f
 
 let pr_numbered_list_formula_trace_inst cprog (e:(context * (formula*formula_trace)) list) (count:int) =
-  let f b = () in
+  let f b = begin
+            fmt_string "\n";
+            fmt_string "[[";
+            pr_es_trace b;
+            fmt_string "]]"
+  end in
+  (* let f b = () in *)
   (pr_numbered_list_formula_trace_ho_inst cprog) (e) (count:int) f
 
 let pr_numbered_list_formula_no_trace (e:(context * (formula*formula_trace)) list) (count:int) =
@@ -2467,8 +2470,8 @@ let pr_estate (es : entail_state) =
                                                     | None -> "None"
                                                     | Some i -> string_of_int i)) es.es_var_label;
   *)
-  (* if es.es_trace!=[] then *)
-  (*   pr_vwrap "es_trace: " pr_es_trace es.es_trace; *)
+  if es.es_trace!=[] then
+    pr_vwrap "es_trace: " pr_es_trace es.es_trace;
   if es.es_is_normalizing then
     pr_vwrap "es_is_normalizing: " fmt_bool es.es_is_normalizing;
   (*
@@ -3599,6 +3602,7 @@ let rec html_of_formula_exp e =
     | P.FConst (f, l) -> string_of_float f
     | P.AConst (f, l) -> string_of_heap_ann f
     | P.Tsconst(f, l) -> Tree_shares.Ts.string_of f
+	| P.Bptriple((vc,vt,va), l) -> "<bperm>" ^ html_of_spec_var vc ^ " " ^ html_of_spec_var vt ^ " " ^ html_of_spec_var va ^ " " ^ "</bperm>"
     | P.Add (e1, e2, l) -> 
           let args = bin_op_to_list op_add_short exp_assoc_op e in
           String.concat html_op_add (List.map html_of_formula_exp args)
@@ -3936,5 +3940,6 @@ Mathematica.print_formula := string_of_pure_formula;;
 Mathematica.print_svl := string_of_spec_var_list;;
 Mathematica.print_sv := string_of_spec_var;;
 Perm.print_sv := string_of_spec_var;;
+Perm.print_exp := string_of_formula_exp;;
 Lem_store.lem_pr:=string_of_coerc_short;;
 

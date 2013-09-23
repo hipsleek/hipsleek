@@ -89,6 +89,7 @@ and formula_exists = { formula_exists_qvars : (ident * primed) list;
 and one_formula = {
     formula_heap : h_formula;
     formula_pure : P.formula;
+    formula_delayed : P.formula;
     formula_thread : (ident*primed) option;
     formula_pos : loc
 }
@@ -242,12 +243,14 @@ and one_formula_of_formula_base b =
   {formula_heap = b.formula_base_heap;
    formula_pure = b.formula_base_pure;
    formula_thread = None;
+   formula_delayed = (P.mkTrue b.formula_base_pos);
    formula_pos = b.formula_base_pos}
 
 and one_formula_of_formula_exists b =
   {formula_heap = b.formula_exists_heap;
    formula_pure = b.formula_exists_pure;
    formula_thread = None;
+   formula_delayed = (P.mkTrue b.formula_exists_pos);
    formula_pos = b.formula_exists_pos}
 
 and add_formula_and (a: one_formula list) (f:formula) : formula =
@@ -399,10 +402,11 @@ and mkExists (qvars : (ident * primed) list) (h : h_formula) (p : P.formula) flo
                  formula_exists_pos = pos }
       )
 
-and mkOneFormula (h : h_formula) (p : P.formula) id pos = 
+and mkOneFormula (h : h_formula) (p : P.formula) (dl : P.formula) id pos = 
   {formula_heap =h;
    formula_pure = p;
    formula_thread = id;
+   formula_delayed = dl;
    formula_pos =pos}
 
 and mkStar f1 f2 pos = match f1 with
@@ -824,12 +828,13 @@ and subst_var_list ft (o : (ident*primed)) =
     | [] -> o
     | _ -> snd (List.hd r)
 
-and split_one_formula (f : one_formula) = f.formula_heap, f.formula_pure, f.formula_thread, f.formula_pos
+and split_one_formula (f : one_formula) = f.formula_heap, f.formula_pure, f.formula_delayed,f.formula_thread, f.formula_pos
 
 and one_formula_apply_one ((fr, t) as s : ((ident*primed) * (ident*primed))) (f : one_formula) =
-  let h,p,id,pos = split_one_formula f in
+  let h,p,dl,id,pos = split_one_formula f in
   {formula_heap = h_apply_one s h;
    formula_pure = Ipure.apply_one s p;
+   formula_delayed = Ipure.apply_one s dl;
    formula_thread = (match id with 
      | None -> None
      | Some v -> Some (subst_var s v));
@@ -838,7 +843,7 @@ and one_formula_apply_one ((fr, t) as s : ((ident*primed) * (ident*primed))) (f 
 
 
 and one_formula_apply_one_pointer ((fr, t) as s : ((ident*primed) * (ident*primed))) (f : one_formula) vars =
-  let h,p,id,pos = split_one_formula f in
+  let h,p,dl,id,pos = split_one_formula f in
   let closure = List.map (fun v -> Ipure.find_closure_pure v p) vars in
   let closure = List.concat closure in
   let new_h,ps = h_apply_one_pointer s h closure in
@@ -863,6 +868,7 @@ and one_formula_apply_one_pointer ((fr, t) as s : ((ident*primed) * (ident*prime
   (***************)
   {formula_heap = new_h;
    formula_pure = new_p2;
+   formula_delayed = dl; (*TO CHECK*)
    formula_thread = (match id with 
      | None -> None
      | Some v -> Some (subst_var s v));
@@ -1251,9 +1257,10 @@ and subst_pointer_struc (sst:((ident * primed)*(ident * primed)) list) (f:struc_
 
 (*======for generate tmp view=========*)
 let rec one_formula_apply_one_w_data_name ((fr, t) as s : ((ident*primed) * (ident*primed))) (f : one_formula) =
-  let h,p,id,pos = split_one_formula f in
+  let h,p,dl,id,pos = split_one_formula f in
   {formula_heap = h_apply_one_w_data_name s h;
    formula_pure = Ipure.apply_one s p;
+   formula_delayed = Ipure.apply_one s dl;
    formula_thread = (match id with
      | None -> None
      | Some v -> Some (subst_var s v));
@@ -1603,7 +1610,7 @@ and float_out_exps_from_heap_x lbl_getter (f:formula ) (rel0: rel option) :formu
 	  let r1,r2 = List.hd rl in
 	  let r1,r2 = List.fold_left (fun (a1,a2)(c1,c2)-> ((c1::a1),(Ipure.mkAnd a2 c2 f.formula_pos)) ) ([r1],r2) (List.tl rl) in
       let new_p = Ipure.mkAnd r2 f.formula_pure f.formula_pos in
-      (r1,mkOneFormula rh new_p f.formula_thread f.formula_pos)
+      (r1,mkOneFormula rh new_p f.formula_delayed f.formula_thread f.formula_pos)
   in
   let rec helper (f:formula):formula =	match f with
     | Base b-> let rh,rl = float_out_exps b.formula_base_heap in
@@ -1671,7 +1678,7 @@ and float_out_one_formula_min_max (f :  one_formula) :  one_formula =
   let new_p =  (match nhpf with
     | None -> np
     | Some e1 -> Ipure.And (np, e1, f.formula_pos)) in
-  mkOneFormula nh new_p f.formula_thread f.formula_pos
+  mkOneFormula nh new_p f.formula_delayed f.formula_thread f.formula_pos
 
 and float_out_min_max (f :  formula) :  formula =
   match f with
@@ -2045,8 +2052,9 @@ let rec prune_exists_struc infer_vars fml = match fml with
 (*find thread id for each one_formula*)
 (*remove thread = id and add id into  formula_thread*)
 let float_out_thread_one_formula_x (f : one_formula) : one_formula =
-  let p = f.formula_pure in
-  let ps = P.list_of_conjs p in
+  (*find thread id in formula_delayed*)
+  let dl = f.formula_delayed in
+  let ps = P.list_of_conjs dl in
   (*look for a formula with thread=id*)
   let helper (f:P.formula) =
     match f with
@@ -2083,7 +2091,7 @@ let float_out_thread_one_formula_x (f : one_formula) : one_formula =
   let new_p = P.conj_of_list ps2 in
   let thread_f = List.hd ps1 in
   let thread_id,_ = helper thread_f in
-  {f with formula_pure = new_p; formula_thread = thread_id}
+  {f with formula_delayed = new_p; formula_thread = thread_id}
 
 let float_out_thread_one_formula (f : one_formula) : one_formula =
   Debug.no_1  "float_out_thread_one_formula"

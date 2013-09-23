@@ -1,0 +1,48 @@
+/*
+  For static barriers, a=0 always.
+  Do dynamic barriers, a!=0 possibly (both negative and positive)
+
+  This D-SPLIT rule could lead to FULL permission (unsound)
+*/
+
+//********************************************
+//********************************************
+lemma "D-SPLIT" self::barrier(c,t,a)<p> & 0<c<=t+a & c=c1+c2 & a=a1+a2 & 0<c1<t+a1 & 0<c2<t+a2 -> self::barrier(c1,t,a1)<p> * self::barrier(c2,t,a2)<p>.
+
+lemma "D-FULL" self::barrier(c,t,a)<p> & c=t+a & a!=0 -> self::barrier(c,t+a,0)<p>.
+
+//combine successfully
+lemma "D-COMBINE-1" self::barrier(c1,t,a1)<p> * self::barrier(c2,t,a2)<p> & c1!=0 & c2!=0 -> self::barrier(c1+c2,t,a1+a2)<p>.
+
+//combine successfully, ordering is not important
+lemma "D-COMBINE-2" self::barrier(c1,t,a1)<p1> * self::barrier(c2,t,a2)<p2> & c1!=0 & c2=0 & p2<=p1 -> self::barrier(c1,t,a1+a2)<p1>.
+
+//combine successfully
+lemma "D-COMBINE-3" self::barrier(0,t,a1)<p1> * self::barrier(0,t,a2)<p2> -> self::barrier(0,t,a1+a2)<p> & p=max(p1,p2).
+
+
+//detect inconsistency
+lemma "D-FAIL-1" self::barrier(c1,t,a1)<p1> * self::barrier(c2,t,a2)<p2> & c1!=0 & c2!=0 & p1!=p2 -> true & flow __Fail.
+
+//detect inconsistency
+lemma "D-FAIL-2" self::barrier(c1,t,a1)<p1> * self::barrier(c2,t,a2)<p2> & c1!=0 & c2=0 & p1<p2 -> true & flow __Fail.
+
+//D-SEP is not implemented as a lemma
+//D-SEP is done automatically in xpure_perm
+//"D-SEP" b1::barrier(c1,t,a1)<p> * b2::barrier(c2,t,a2)<p> & (t1!=t2 || c1+c2>t1+a1+a2  -> b1!=b2.
+
+//********************************************
+//********************************************
+
+//(1)
+//checkentail b::barrier(3,2,2)<p> |- b::barrier(2,2,2)<p> * b::barrier(1,2,0)<p>.
+//print residue. //VALID, 1 residue
+
+//(2)
+//checkentail b::barrier(2,2,2)<p> |- b::barrier(1,2,2)<p>* b::barrier(1,2,0)<p>.
+//print residue. //VALID, 1 residue
+
+//(3)
+checkentail b::barrier(3,2,2)<p> |- b::barrier(1,2,0)<p> * b::barrier(1,2,0)<p> * b::barrier(1,2,2)<p>.
+print residue. //VALID, but ERRROR because (1,2,0) * (1,2,0) = (2,2,0) = FULL
+//unsound

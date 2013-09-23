@@ -1,0 +1,29 @@
+/*
+  [Fixed]
+  Fix a bug where successive application of S-COMBINE leads to
+  existential vars with the same name.
+  Solution: rename exist vars for each application
+*/
+
+//********************************************
+//lemma "S-SPLIT" self::barrier(c,t,0)<p> & 0<c<=t & c=c1+c2 & 0<c1<t & 0<c2<t -> self::barrier(c1,t,0)<p> * self::barrier(c2,t,0)<p>.
+
+//combine successfully
+lemma "S-COMBINE" self::barrier(c1,t,0)<p> * self::barrier(c2,t,0)<p> -> self::barrier(c1+c2,t,0)<p>.
+
+//detect inconsistency
+//lemma "S-FAIL" self::barrier(c1,t,0)<p1> * self::barrier(c2,t,0)<p2> & p1!=p2 & flow __norm -> true & flow __Fail.
+//********************************************
+
+checkentail
+TimeBarrier'::barrier(1,2,0)<p1_2702> * 
+TimeBarrier'::barrier(1,2,0)<p1_3291> *
+SlaveBarrier'::barrier(1,2,0)<pt1_2703> * 
+SlaveBarrier'::barrier(1,2,0)<pt1_3292> &
+0<ROTATE_STEPS' &
+SlaveBarrier'!=TimeBarrier' &
+p1_3291 = p1_2702 &
+p1_2702=2 &
+pt1_2703=pt1_3292 &
+pt1_3292=1 |- SlaveBarrier'::barrier(2,2,0)<p1> * TimeBarrier'::barrier(2,2,0)<p2>.
+print residue.
