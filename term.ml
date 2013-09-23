@@ -1262,10 +1262,21 @@ let phase_num_infer_whole_scc (prog: Cast.prog_decl) (proc_lst: Cast.proc_decl l
 (* Main function of the termination checker *)
 let term_check_output () =
   if (not !Globals.dis_term_msg) && not(term_res_stk # is_empty) then
-    (fmt_string "\nTermination checking result:\n";
-    (if (!Globals.term_verbosity == 0) then pr_term_res_stk (term_res_stk # get_stk)
-    else pr_term_err_stk (term_err_stk # get_stk));
-    fmt_print_newline ())
+  begin
+    fmt_string "\nTermination checking result: ";
+    if (!Globals.term_verbosity == 0) then 
+    begin
+      fmt_string "\n";
+      pr_term_res_stk (term_res_stk # get_stk)
+    end
+    else
+    begin
+      let err_msg = term_err_stk # get_stk in
+      if err_msg = [] then fmt_string "SUCCESS\n"
+      else pr_term_err_stk (term_err_stk # get_stk)
+    end;
+    fmt_print_newline ()
+  end
 
 let rec get_loop_ctx c =
   match c with
