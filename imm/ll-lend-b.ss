@@ -12,8 +12,15 @@ ll<n> == self=null & n=0 or
   inv n>=0;
 
 int length(node p)
-  requires p::ll_ann<n,@M,@A>
-  ensures p::ll_ann<n,@M,@A> & res=n;
+/*
+  requires p::ll_ann<n,@A,@L>
+  ensures p::ll_ann<n,@A,@A> & res=n;
+  requires p::ll_ann<n,@A,@L>
+  ensures res=n;
+*/
+  requires p::ll_ann<n,@A,@L>
+  ensures p::ll_ann<n,@A,@L> & res=n;
+// should fail due to @L in post-condition
 {
   if (p==null) return 0;
     else return 1+length(p.next);
@@ -35,8 +42,8 @@ node tl(node p)
   ensures p::node<_@A,res> * res::ll_ann<n-1,@A,@M>;
 
 */
-  requires p::ll_ann<n,@A,@A> & n>0
-  ensures p::node<_@A,res> * res::ll_ann<n-1,@A,@A>;
+  requires p::ll_ann<n,@A,@M> & n>0
+  ensures p::node<_@A,res> * res::ll_ann<n-1,@A,@M>;
 
 {
   return p.next;

@@ -25,3 +25,9 @@ checkentail p::ll_ann<n,@A,@M> & n>0 |- p::node<_@L,_@M>.
 
 checkentail p::node<_,_@v> & v=@A |- p::node<_,_@L>.
   // fail as expected
+
+checkentail p::node<_,_@v> & v=@L |- p::node<_,_@L>.
+
+checkentail p::ll_ann<n,@M,@L> & n>0 |- p::node<_,_@L>.
+
+checkentail p::ll_ann<n,@M,@M> & n>0 |- p::node<_,_@L>.

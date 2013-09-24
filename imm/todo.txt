@@ -71,7 +71,7 @@ Above should flag an error since @L is present
 in the post-condition.
 
 =============================================================
-# imm/ll-lend-b.ss --field-ann
+# imm/ll-lend-b.ss --field-ann (solved in ann_1)
 
 ll<n,a1,a2> == self=null & n=0 or
   self::node<_@a1,q@a2>*q::ll<n-1,a1,a2>
@@ -94,6 +94,18 @@ checkentail p::ll_ann<n,@M,@A> & n>0 |- p::node<_,_@L>.
 checkentail p::ll_ann<n,@A,@M> & n>0 |- p::node<_@L,_@M>.
   // why this succeed?
 =============================================================
+# imm/ll-lend-b.ss --field-ann
+
+int length(node p)
+/*
+  requires p::ll_ann<n,@A,@L>
+  ensures p::ll_ann<n,@A,@A> & res=n;
+  requires p::ll_ann<n,@A,@L>
+  ensures res=n;
+*/
+  requires p::ll_ann<n,@A,@L>
+  ensures p::ll_ann<n,@A,@L> & res=n;
+// should fail due to @L in post-condition
 =============================================================
 =============================================================
 =============================================================
