@@ -107,7 +107,16 @@ int length(node p)
   ensures p::ll_ann<n,@A,@L> & res=n;
 // should fail due to @L in post-condition
 =============================================================
+checkentail x::node<_@A>|- x::node<_@L>.
+
+change "Fail.(must) cause: mismatched annotation" with it's actual reason
 =============================================================
+normalize the residue for:
+
+checkentail x::node<_@v> & v=@A|- true.
+<1>x::node<Anon_11@v>@M&0<=v & v=@A&{FLOW,(21,22)=__norm}
+
+====> <1>x::node<Anon_11@A>@M & 0<=v & v=@A & {FLOW,(21,22)=__norm}
 =============================================================
 =============================================================
 =============================================================
