@@ -1,0 +1,85 @@
+data node{
+	int val;
+	node next;
+}.
+
+pred zip<y> ==
+  self=null & y=null
+or self::node<_,p>*y::node<_,q>*p::zip<q>
+inv true.
+
+HeapPred P1(node a).
+HeapPred P2(node a).
+
+ lemma self::zip<y> -> P1(self) * P2(y).
+
+// lemma self::zip<y> * y::node<_,_> -> P1(self) * P2(y).
+
+// lemma self::zip<y> -> P1(self) * P2(y).
+
+//lemma self::zip<y> -> P2(y).
+
+
+
+infer [P1,P2] 
+    xx=null & yy=null
+ or xx::node<_,p>*yy::node<_,q>*p::zip<q>
+     |- P1(xx) * P2(yy).
+print residue.
+
+/*
+checkentail 
+    xx=null & yy=null
+     |- P1(xx) * P2(yy).
+print residue.
+
+infer [P1,P2] 
+    xx=null & yy=null
+     |- P1(xx) * P2(yy).
+print residue.
+*/
+/* exception
+checkentail 
+  xx::node<_,p>*yy::node<_,q>*p::zip<q>
+     |- P1(xx) * P2(yy).
+print residue.
+*/
+
+/* exception
+infer [P1,P2]
+  xx::node<_,p>*yy::node<_,q>*p::zip<q>
+     |- P1(xx) * P2(yy).
+print residue.
+*/
+/*
+infer [P1,P2]
+  xx::node<_,p>*yy::node<_,q>*P1(p) * P2(q)
+     |- P1(xx) * P2(yy).
+print residue.
+*/
+/*
+checkentail yy::node<_,_> * xx::zip<yy>
+     |- P1(xx) * P2(yy).
+print residue.
+*/
+/*
+infer [P1,P2] x::zip<y>
+     |- P1(x) * P2(y).
+print residue.
+*/
+
+/*
+# split-1a.slk
+
+Lemma over uninterpreted predicate..
+
+Why is there an exception/error?
+
+Starting Omega...oc
+P1 is defined.
+P2 is defined.
+Fatal error: exception Failure("get_node_var: invalid argument")
+
+This must be in the lemma checking section?
+
+*/

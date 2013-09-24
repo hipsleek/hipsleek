@@ -215,7 +215,7 @@ let trans_hprel_2_cview_x iprog cprog proc_name hpdefs:
                 (ls1,ls2, ls3@[view])
               with _ -> (ls1@[hp], ls2@[def], ls3)
           end
-        | _ -> (ls1,ls2, ls3)
+         | _ -> (ls1,ls2, ls3)
   ) ([],[], []) (hpdefs1) in
   let _ =  Debug.ninfo_pprint (" def_hps: " ^ (!CP.print_svl def_hps)) no_pos in
   if def_hps = [] then (views, [])
@@ -242,7 +242,7 @@ let trans_hprel_2_cview_x iprog cprog proc_name hpdefs:
   let iviews0, new_views = List.fold_left (fun (ls1,ls2) (id,iv) -> ((ls1@[iv]), (ls2@[id]))) ([],[]) pair_iviews in
   let n_iproc,iviews = plugin_inferred_iviews pair_iviews iprog cprog in
   (* let _ = iprog.I.prog_view_decls <- n_iproc.I.prog_view_decls in *)
-  let _ = List.iter (AS.process_pred_def_4_iast iprog) iviews in
+  let _ = List.iter (AS.process_pred_def_4_iast iprog false) iviews in
   (* let _ = iprog.Iast.prog_view_decls <- iprog.Iast.prog_view_decls@iviews in *)
   (*convert to cview. new_views: view with annotated types*)
   let cviews = (AS.convert_pred_to_cast new_views iprog cprog) in

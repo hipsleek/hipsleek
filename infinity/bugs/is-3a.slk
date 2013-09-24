@@ -15,10 +15,27 @@ pred bnd1<n,mi,mx> == self = null & n = 0 & mi = \inf & mx=-\inf or
 */
 .
 
-
 checkentail x::bnd1<n,mi,mx> & n=1 |- x::node<a,null> 
-& a=mx & mi=a
+ //& a=mx 
+ & mi=a 
 .
+
+checkentail x::bnd1<n,mi,mx> & n=0 |- mx=-\inf.
+
+checkentail x::bnd1<n,mi,mx> & n=0 |- mi=\inf.
+
+checkentail mi=min(a,dmi) & mx=max(a,dmx)
+  & dmi=\inf & dmx=-\inf |- a=mi & mx=a
+.
+
+checkentail x::bnd1<0,dmi,dmx>  
+   & n=0 & dmi=\inf 
+   //& 0=(\inf)+dmx
+   & dmx=-\inf
+   & mi=min(a,dmi) & mx=max(a,dmx)
+   |- a=mi & 
+       mx=a
+      .
 
 
 /*

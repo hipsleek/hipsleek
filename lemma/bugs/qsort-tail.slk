@@ -1,0 +1,170 @@
+data node {
+	int val; 
+	node next; 
+}.
+
+
+pred lseg<n, p, sm, lg> == case {
+  n=0 -> [] self=p & sm=lg;
+ (n!=0) -> [nn] self::node<sm, r> * r::lseg<nn, p, sm1, lg> 
+               & sm<=sm1 & nn=n-1; 
+}	inv n >= 0 & sm<=lg.
+
+
+pred ll_tail<n, t, sm, lg> == 
+   case {
+     n=1 -> [] self::node<sm, null> & t=self & n=1 & sm=lg;
+     n!=1 -> [] self::node<sm, r> * r::ll_tail<nn, t, sm1, lg> & r!=null & sm<=sm1 & nn=n-1;
+   }
+inv n>=1 & self!=null & sm<=lg.
+
+  /* todo: m=n-1 for case struct */
+
+lemma "ll_tail2lsegL" self::ll_tail<n, t, sm, lg> & m=n-1-> self::lseg<m, t, sm, lg1> * t::node<lg, null> & lg1<=lg.
+print residue.
+
+lemma "ll_tail2lsegL" self::ll_tail<n, t, sm, lg> ->  self::lseg<n-1, t, sm, lg1> * t::node<lg, null> & lg1<=lg.
+print residue.
+
+
+ //fail:  sm<=lg |-  lg=sm. 
+lemma "ll_tail2lsegR" self::ll_tail<n, t, sm, lg>  <- self::lseg<n-1, t, sm, lg1> * t::node<lg, null> & lg1<=lg.
+
+  /*
+lemma "ll_tail2lseg" self::ll_tail<n, t, sm, lg> <-> (exists lg1: self::lseg<n-1, t, sm, lg1> * t::node<lg, null> & lg1<=lg).
+
+lemma "lsegmb" self::lseg<n, p, sm, lg> & n = n1+n2 & n1,n2 >=0  <-> (exists lg1,sm2: self::lseg<n1, q, sm, lg1>@D * q::lseg<n2, p, sm2, lg> & lg1<=sm2).
+
+lemma "lsegmb" self::lseg<n, p, sm, lg> & n = n1+n2 & n1,n2 >=0  
+      <- self::lseg<n1, q, sm, lg1>@D * q::lseg<n2, p, sm2, lg>@D & lg1<=sm2.
+  */
+
+/*
+
+//(1) Valid - unfolded rhs
+infer [] x::node<sm, null> & t=x & n=1 & sm=lg
+  or x::node<sm, r> * r::ll_tail<nn, t, sm1, lg> & r!=null & sm<=sm1 & nn=n-1
+  |- (exists lg1: x::lseg<n-1, t, sm, lg1> * t::node<lg, null> & lg1<=lg).
+
+//(2) valid --- ( induct |- induct )
+  infer [] //x::node<sm, null> & t=x & n=1 & sm=lg
+  x::node<sm, r> * r::ll_tail<nn, t, sm1, lg> & r!=null & sm<=sm1 & nn=n-1
+  |- (exists lg1: x::node<sm, r> * r::lseg<nn0, p, sm1, lg1>  
+      * t::node<lg, null> & lg1<=lg & sm<=sm1 & nn0=n-2).
+
+//(3) valid --- (base |- base)
+  infer [] x::node<sm, null> & t=x & n=1 & sm=lg
+//or x::node<sm, r> * r::ll_tail<nn, t, sm1, lg> & r!=null & sm<=sm1 & nn=n-1
+  |- (exists lg1: 
+       t::node<lg, null> & lg1<=lg & x=t & sm=lg1).
+
+//(4) fail --- (base |- base)
+infer [] (exists sm_255,
+                flted_16_256: self_ll_tail2lsegL::node<sm_255,flted_16_256>@M&
+                n=1 & flted_16_256=null & self_ll_tail2lsegL=t & n=1 & 
+                lg=sm & sm=sm_255)
+|-  t::node<lg,flted_22_263>@M&n=flted_22_264+1 & flted_22_263=null & lg1_265<=lg & 
+  self_ll_tail2lsegL=t & lg1_265=sm& flted_22_264=0.
+
+
+//5 
+infer [] 
+  (exists sm_257,t_258,lg_259,r_260,nn_261,
+   sm1_262: self_ll_tail2lsegL::node<sm_257,r_260>@M * 
+   r_260::ll_tail<nn_261,t_258,sm1_262,lg_259>@M&n!=1 & 
+   r_260!=null & sm<=sm1_262 & n=nn_261+1 & sm=sm_257 & 
+   t=t_258 & lg=lg_259)
+|- 
+  [nn_266] (exists sm_277,p_278,lg_279: t::node<lg,flted_22_263>@M * 
+            self_ll_tail2lsegL::node<sm_277,r_267>@M * 
+            r_267::lseg<nn_266,p_278,sm1_268,lg_279>@M&
+            n=flted_22_264+1 & flted_22_263=null & 
+            lg1_265<=lg & sm<=sm1_268 & 
+            flted_22_264=nn_266+1 & sm=sm_277 & 
+            p_278=t & lg1_265=lg_279& flted_22_264!=0 ).
+
+
+
+//6 remove t_258,sm_257,lg_259, r_260,sm1_262 from exists 
+// add lg1_265,flted_22_264 as exists
+infer [] 
+  (exists nn_261: self_ll_tail2lsegL::node<sm,r>@M * 
+   r::ll_tail<nn_261,t,sm1,lg>@M&n!=1 & 
+   r!=null & sm<=sm1 & n=nn_261+1 
+   )
+|- 
+  [nn_266] (exists lg1,flted_22_264,flted_22_263: t::node<lg,flted_22_263>@M * 
+            self_ll_tail2lsegL::node<sm,r>@M * 
+            r::lseg<nn_266,t,sm1,lg1>@M&
+            n=flted_22_264+1 & flted_22_263=null & 
+            lg1<=lg & sm<=sm1 & 
+            flted_22_264=nn_266+1
+            & flted_22_264!=0).
+
+
+//5 --- add lg1_265,flted_22_264,flted_22_263 to exists ===> Valid
+infer []
+  (exists sm_257,t_258,lg_259,r_260,nn_261,
+   sm1_262: self_ll_tail2lsegL::node<sm_257,r_260>@M *
+   r_260::ll_tail<nn_261,t_258,sm1_262,lg_259>@M&n!=1 &
+   r_260!=null & sm<=sm1_262 & n=nn_261+1 & sm=sm_257 &
+   t=t_258 & lg=lg_259)
+|-
+  [nn_266] (exists sm_277,p_278,lg_279,lg1_265,flted_22_264,flted_22_263: t::node<lg,flted_22_263>@M *
+            self_ll_tail2lsegL::node<sm_277,r_267>@M *
+            r_267::lseg<nn_266,p_278,sm1_268,lg_279>@M&
+            n=flted_22_264+1 & flted_22_263=null &
+            lg1_265<=lg & sm<=sm1_268 &
+            flted_22_264=nn_266+1 & sm=sm_277 &
+            p_278=t & lg1_265=lg_279& flted_22_264!=0 ).
+*/
+
+
+checkentail 
+ (exists flted_28_242,flted_28_243,lg1_244: t::node<lg,flted_28_242>@M&
+ flted_28_243=0 & x=t & lg1_244=sm & n=flted_28_243+1 &
+ flted_28_242=null & lg1_244<=lg)
+ or (exists sm_262,p_263,lg_264,nn_265,r_266,sm1_267,flted_28_242,
+    flted_28_243,lg1_244: x::node<sm_262,r_266>@M *
+    r_266::lseg<nn_265,p_263,sm1_267,lg_264>@M * t::node<lg,flted_28_242>@M&
+    flted_28_243!=0 & sm<=sm1_267 & flted_28_243=nn_265+1 & sm=sm_262 &
+    p_263=t & lg1_244=lg_264 & n=flted_28_243+1 & flted_28_242=null &
+    lg1_244<=lg)
+|-
+ case {
+         n=1 -> [] (exists sm_281,
+                       flted_16_282: x::node<sm_281,flted_16_282>@M&
+                       flted_16_282=null & x=t & n=1 & lg=sm & sm=sm_281);
+         n!=1 -> [] (exists sm_283,t_284,
+                        lg_285: x::node<sm_283,r_270>@M *
+                        r_270::ll_tail<nn_271,t_284,sm1_272,lg_285>@M&
+                        r_270!=null & sm<=sm1_272 & n=nn_271+1 & sm=sm_283 &
+                                     t=t_284 & lg=lg_285);
+
+         }
+.
+
+
+
+//base fail: sm<=lg 
+checkentail 
+ (exists flted_28_242,flted_28_243,lg1_244: t::node<lg,flted_28_242>@M&
+ flted_28_243=0 & x=t & lg1_244=sm & n=flted_28_243+1 &
+ flted_28_242=null & lg1_244<=lg)
+|-(exists sm_281, flted_16_282: x::node<sm_281,flted_16_282>@M&
+   flted_16_282=null & x=t & n=1 & lg=sm & sm=sm_281).
+      
+
+//ind Valid
+checkentail (exists sm_262,p_263,lg_264,nn_265,r_266,sm1_267,flted_28_242,
+    flted_28_243,lg1_244: x::node<sm_262,r_266>@M *
+    r_266::lseg<nn_265,p_263,sm1_267,lg_264>@M * t::node<lg,flted_28_242>@M&
+    flted_28_243!=0 & sm<=sm1_267 & flted_28_243=nn_265+1 & sm=sm_262 &
+    p_263=t & lg1_244=lg_264 & n=flted_28_243+1 & flted_28_242=null &
+    lg1_244<=lg)
+|-(exists sm_283,t_284, lg_285: x::node<sm_283,r_270>@M *
+                        r_270::ll_tail<nn_271,t_284,sm1_272,lg_285>@M&
+                        r_270!=null & sm<=sm1_272 & n=nn_271+1 & sm=sm_283 &
+                                     t=t_284 & lg=lg_285 &n!=1)
+.
+print residue.

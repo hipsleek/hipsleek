@@ -1,0 +1,4 @@
+checkentail L1=[||] |- len(L1)=0.
+
+checkentail L1=[||] |- len(L1)>0.
+

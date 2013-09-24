@@ -1451,7 +1451,8 @@ let write_to_file  (is_sat_b: bool) (fv: CP.spec_var list) (f: CP.formula) (imp_
     print_string ("\n[MONA.ml]:Timeout exception "^t^"\n"); flush stdout;
     restart ("Timeout!");
     is_sat_b in
-  let res = Procutils.PrvComms.maybe_raise_and_catch_timeout_bool fnc () !mona_timeout hproc in 
+  let timeout  = if is_sat_b&& !user_sat_timeout then !sat_timeout_limit else !mona_timeout in
+  let res = Procutils.PrvComms.maybe_raise_and_catch_timeout_bool fnc () timeout hproc in 
   Sys.remove mona_filename;
   stop();
   res

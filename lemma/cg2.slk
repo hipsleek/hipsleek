@@ -1,0 +1,17 @@
+data node {
+ node pxPrevious;
+ node pxNext;
+}.
+
+// doubly linked list with extra pointer for the last element
+
+pred dll<prev,o,l> == self::node<prev,o> & l=self 
+ or self::node<prev,t> * t::dll<self,o,l> .
+
+lemma "taildls" self::dll<prev,o,l>& l!=self -> 
+   self::dll<prev,l,ib3> * l::node<ib3,o>.
+
+/*
+lemma "taildls2" self::dll<prev,o,l> -> 
+     self::dll<prev,l,ib3> * l::node<ib3,o> or self::node<prev,o> & l=self.
+*/

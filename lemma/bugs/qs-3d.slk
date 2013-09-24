@@ -1,0 +1,11 @@
+checkentail sm+\inf>=1 |- sm>-\inf.
+checkentail sm+\inf>=2 |- sm>-\inf.
+checkentail sm>-\inf |- sm+\inf>=2.
+checkentail sm>-\inf |- sm+\inf>=1.
+checkentail sm>-\inf |- sm>-\inf-1.
+/*
+ sm>-\inf
+
+
+*/
+checkentail sm>-\inf |- sm>-\inf+1.

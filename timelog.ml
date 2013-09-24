@@ -27,7 +27,7 @@ object (self)
     begin
       (* timer_timeout <- false; *)
       if trace_timer then print_endline ("inside timer_stop "^pno); 
-      let r = stk_t # pop_top in
+      let r = stk_t # pop_top_no_exc in
       if stk_t # is_empty then 
         (if timer_val==None then timer_val <- Some s)
       else print_endline "Nested Timer(stop)"
@@ -36,7 +36,7 @@ object (self)
     begin
       if trace_timer then print_endline ("inside timer_timeout "^pno);
       timer_timeout_flag <- true;
-      let r = stk_t # pop_top in
+      let r = stk_t # pop_top_no_exc in
       if stk_t # is_empty then 
         (if timer_val==None then timer_val <- Some s)
       else print_endline "Nested Timer(timeout)"
@@ -55,7 +55,7 @@ object (self)
             begin
               if trace_timer then print_endline "adding last_big";
               let to_flag = timer_timeout_flag in
-              (* let slk_no = stget_sleek_no ()) in  *)
+              (* let slk_no = get_sleek_no ()) in  *)
               last_big<-None;
               let s2 = if to_flag then ":TIMEOUT:" else ":" in
               (* let s2 = if last_timeout_flag then s2^":T2:" else s2 in *)
@@ -70,13 +70,13 @@ object (self)
           | Some t2 ->
                 begin
                   (* let t = Gen.Profiling.get_time() in *)
-                  let (s,_) = time_stk # pop_top in
+                  let (s,_) = time_stk # pop_top_no_exc in
                   timer_val <- None;
                   (s,t2)
                 end
           | None ->
                 let t = Gen.Profiling.get_main_time() in
-                let (s,st) = time_stk # pop_top in
+                let (s,st) = time_stk # pop_top_no_exc in
                 (s,t -. st)
       in
       if tt>3.0 then
@@ -141,6 +141,7 @@ let log_wrapper s logger f x  =
       let r = logtime # stop_time in
       let to_flag = logtime # get_timeout () in
       let (pr,no) = logger (Some res) r to_flag in
+      (* if s="sleek-hec" then print_endline ("log_wrapper (normal):"^no); *)
       logtime # add_proof_info pr no;
       res
     with e ->
@@ -148,5 +149,6 @@ let log_wrapper s logger f x  =
         let to_flag = logtime # get_timeout () in
         let (pr,no) = logger None tt to_flag in
         logtime # add_proof_info (pr^"*EXC*") no;
+        (* if s="sleek-hec" then print_endline ("log_wrapper (exc):"^no); *)
         let _ = Debug.info_hprint (add_str "WARNING logtime exception" string_of_float) tt no_pos in
         raise e

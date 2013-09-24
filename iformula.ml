@@ -13,6 +13,7 @@ open Gen.Basic
 module P = Ipure
 
 let top_flow = top_flow
+let n_flow = n_flow
 
 type ann = ConstAnn of heap_ann | PolyAnn of ((ident * primed) * loc)
 
@@ -591,6 +592,37 @@ let rec h_fv (f:h_formula):(ident*primed) list = match f with
   | HEmp -> [] 
 ;;
 
+let get_hprel_svl_hf (f0:h_formula):(ident*primed) list =
+  let rec helper f =match f with
+    | Conj ({h_formula_conj_h1 = h1; 
+      h_formula_conj_h2 = h2; 
+      h_formula_conj_pos = pos})
+    | ConjStar ({h_formula_conjstar_h1 = h1; 
+      h_formula_conjstar_h2 = h2; 
+      h_formula_conjstar_pos = pos})
+    | ConjConj ({h_formula_conjconj_h1 = h1; 
+      h_formula_conjconj_h2 = h2;
+      h_formula_conjconj_pos = pos})
+    | Phase ({h_formula_phase_rd = h1;
+      h_formula_phase_rw = h2;
+      h_formula_phase_pos = pos}) 
+    | StarMinus ({h_formula_starminus_h1 = h1; 
+      h_formula_starminus_h2 = h2; 
+      h_formula_starminus_pos = pos})
+    | Star ({h_formula_star_h1 = h1; 
+      h_formula_star_h2 = h2; 
+      h_formula_star_pos = pos}) ->  Gen.BList.remove_dups_eq (=) ((helper h1)@(helper h2))
+    | HRel (_, args, _)->
+          let args_fv = List.concat (List.map Ipure.afv args) in
+          Gen.BList.remove_dups_eq (=) args_fv
+    | HeapNode _
+    | HeapNode2 _
+    | HTrue
+    | HFalse
+    | HEmp -> []
+  in
+  helper f0
+;;
 
 let heap_fv_one_formula (f:one_formula):(ident*primed) list =  (h_fv f.formula_heap);;
 
@@ -598,11 +630,11 @@ let heap_fv_one_formula (f:one_formula):(ident*primed) list =  (h_fv f.formula_h
 let rec heap_fv (f:formula):(ident*primed) list = match f with
 	| Base b-> 
         let avars = List.concat (List.map heap_fv_one_formula b.formula_base_and) in
-        let hvars = h_fv b.formula_base_heap in
+        let hvars = (h_fv b.formula_base_heap) in
         Gen.BList.remove_dups_eq (=) hvars@avars
 	| Exists b-> 
         let avars = List.concat (List.map heap_fv_one_formula b.formula_exists_and) in
-        let hvars = h_fv b.formula_exists_heap in
+        let hvars =  (h_fv b.formula_exists_heap) in
         Gen.BList.difference_eq (=) (Gen.BList.remove_dups_eq (=) hvars@avars)
              b.formula_exists_qvars 
 	| Or b-> Gen.BList.remove_dups_eq (=) ((heap_fv b.formula_or_f1)@(heap_fv b.formula_or_f2))
@@ -630,11 +662,11 @@ let rec struc_case_fv (f:struc_formula): (ident*primed) list =  match f with
 and unbound_heap_fv (f:formula):(ident*primed) list = match f with
 	| Base b-> 
         let avars = List.concat (List.map heap_fv_one_formula b.formula_base_and) in
-        let hvars = h_fv b.formula_base_heap in
+        let hvars = Gen.BList.difference_eq (=) (h_fv b.formula_base_heap) (get_hprel_svl_hf b.formula_base_heap) in
         Gen.BList.remove_dups_eq (=) hvars@avars
 	| Exists b-> 
         let avars = List.concat (List.map heap_fv_one_formula b.formula_exists_and) in
-        let hvars = h_fv b.formula_exists_heap in
+        let hvars = Gen.BList.difference_eq (=) (h_fv b.formula_exists_heap) (get_hprel_svl_hf b.formula_exists_heap) in
 		Gen.BList.difference_eq (=) (hvars@avars) b.formula_exists_qvars
 	| Or b-> Gen.BList.remove_dups_eq (=) ((unbound_heap_fv b.formula_or_f1)@(unbound_heap_fv b.formula_or_f2))
 
@@ -2394,3 +2426,4 @@ let rec struc_formula_drop_heap_node f0 hns =
 let struc_formula_drop_heap_node f hns =
 	let pr = !print_struc_formula in
 	Debug.no_1 "struc_formula_drop_heap_node" pr pr (fun _ -> struc_formula_drop_heap_node f hns) f
+

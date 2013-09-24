@@ -1,0 +1,29 @@
+data node{
+	int val;
+	node next;
+}.
+
+
+HeapPred P1(node a).
+HeapPred P2(node a).
+
+//# sp-5d.slk
+//1
+infer [P1] 
+   self::node<_,_> 
+|- self::node<a,b> & self!=null.
+print residue.
+
+//1
+infer [P1] 
+   self::node<_,_> 
+|- P1(self) & self!=null.
+print residue.
+
+//1
+infer [P1] 
+   P1(self)
+|- self::node<_,_> & self!=null
+.
+print residue.
+

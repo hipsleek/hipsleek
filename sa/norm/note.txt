@@ -1,0 +1,37 @@
+lemma_test self::ll<> <-> self::ll2<>.
+
+This will check if a lemma holds.
+The proven lemma is not added into repository.
+
+lemma_test_new self::ll<> <-> self::ll2<>.
+
+This will check if a lemma holds under a fresh
+context without any prior asserted lemmas.
+The proven lemma is not added into repository.
+
+Procedure
+ (i) save lemma context
+ (ii) add current lemma under test
+ (iii) unfold lhs/rhs
+ (iv) check if lemma is valid or otherwise
+ (iv) remove lemma
+ (v) restore lemma context
+
+lemma (add a lemma with proving)
+ - prove the given lemma, under the current
+   context;
+ - temporarily add the lemma prior to the
+   proof
+ - if prove fails, give an error message;
+   and remove the unproven lemma repository
+
+lemma_unsafe
+ - add a lemma into store without any proving
+
+For each of these commands, we may have a list
+of lemmas that are simultaneously proven or
+added, as follows:
+
+lemma  .. 
+ [ lhs <-> rhs;
+   lhs2 --> rhs] 

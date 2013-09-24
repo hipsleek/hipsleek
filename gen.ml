@@ -536,7 +536,7 @@ class ['a] stack_noexc (x_init:'a) (epr:'a->string) (eq:'a->'a->bool)  =
      method last : 'a = match stk with 
        | [] -> emp_val
        | _ -> List.hd (List.rev stk)
-     method pop_top = match stk with 
+     method pop_top_no_exc = match stk with 
        | [] -> emp_val
        | x::xs -> stk <- xs; x
    end;;
@@ -758,7 +758,7 @@ struct
             List.map (fun (a,b) -> if (b==r1 or b==r2) then (a,r3) else (a,b)) s
 
   let build_eset (xs:(elem * elem) list) :  emap =
-    List.fold_right (fun (x,y) eqs -> add_equiv eqs x y) xs (mkEmpty)
+    List.fold_left (fun eqs (x,y) -> add_equiv eqs x y) mkEmpty xs 
 
   let mem x ls =
     List.exists (fun e -> eq x e) ls
@@ -887,7 +887,7 @@ struct
     let b = is_one2one f (get_elems s) in
     if b then  List.map (fun (e,k) -> (f e, List.map f k)) s
     else Error.report_error {Error.error_loc = Globals.no_pos; 
-							 Error.error_text = ("rename_eset : f is not 1-to-1 map")}
+    Error.error_text = ("rename_eset : f is not 1-to-1 map")}
 
   (* s - from var; t - to var *)
   let norm_subs_eq (subs:epair) : epair =
@@ -916,6 +916,26 @@ struct
 	  let ns = List.fold_left (fun s (a1,a2) -> add_equiv s a1 a2) s e2 in
       List.map (fun (e,k) -> (f e,k)) ns
 
+  (* given existential evars and an eset, return a set of substitution *)
+  (* from evars to free vars, where possible *)
+  (* if not possible, return subs to the first existential var found *)
+  (* [v] [v=w, v=y] ---> [(v,w)] *)
+  (* [v,y] [v=w, v=y] ---> [(v,w),(y,w)] *)
+  (* [v,y,w] [v=w, v=y] ---> [(v,v),(w,v),(y,v)] *)
+  let build_subs_4_evars evars eset =
+    let rec aux ev  =
+      match ev with 
+        | [] -> []
+        | e::evs -> 
+              let eqlist = find_equiv_all e eset in
+              let (bound,free) = List.partition (fun c -> BList.mem_eq eq c evars) eqlist in
+              let (used,rest) = List.partition (fun c -> BList.mem_eq eq c bound) evs in
+              let target = match free with 
+                | [] -> e
+                | h::_ -> h in
+              let nsubs = List.map (fun x -> (x,target)) (e::used) in
+              nsubs@(aux rest)
+    in aux evars
 end;;
 
 module INT =
@@ -1230,6 +1250,22 @@ struct
   (* false result denotes contradiction *)
   let is_sat_dset (xs:dpart) : bool = 
     not(is_dupl_dset xs)
+
+  let apply_subs subs x =
+    try
+      List.assoc x subs
+    with _ -> x
+
+  let mk_exist_dset (evars:ptr list) (subs: (ptr*ptr) list) (xss:dpart) : dpart = 
+    let rec aux ls =
+      match ls with
+        | [] -> []
+        | x::xs -> 
+              let x = apply_subs subs x in
+              if BList.mem_eq eq x evars then (aux xs)
+              else x::(aux xs) 
+    in
+    List.map aux xss
 
 end;;
 

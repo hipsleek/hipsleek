@@ -1,0 +1,32 @@
+//E: Valid.Valid
+//L: Valid.Valid
+
+data node { int val ; node next }.
+
+pred lseg<n, p> == case {
+     n=0  -> []  self = p;
+     n!=0 -> [] self::node<next = r> * r::lseg<n - 1, p> ; 
+     }
+     inv n >= 0.
+
+
+pred ll_tail<n, t> == 
+   case {
+     n=1  -> [] self::node<next = null> & t = self & n = 1;
+     n!=1 -> [] self::node<next = r> * r::ll_tail<n - 1, t> & r!=null;
+   }
+   inv n>=1 & self!=null.  
+
+
+
+lemma_safe "lseg" self::lseg<n, p> & n = a + b & a,b >=0 <->  self::lseg<a, r> * r::lseg<b, p>.
+
+lemma_safe "tail2lseg" self::ll_tail<n, t> <-> self::lseg<n-1, t> * t::node<_, null>.
+
+
+// "lseg <-" + "tail2lseg ->"
+checkentail x::lseg<n,tx> * tx::node<_,y> *y::ll_tail<m,ty> |- x::lseg<m+n, ty> * ty::node<_,null>.
+
+//"tail2lseg <-" + "lseg <-" + "tail2lseg ->"
+checkentail x::lseg<n,tx> * tx::node<_,y> *y::ll_tail<m,ty> |- x::ll_tail<m+n+1, ty>.
+

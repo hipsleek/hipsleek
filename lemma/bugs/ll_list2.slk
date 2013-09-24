@@ -1,0 +1,26 @@
+//Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Fail
+
+data node { int val ; node next }.
+
+pred ll_s<n> == self = null & n = 0
+	or self::node<next = r> * r::ll_s<n - 1>
+	inv n >= 0.
+
+pred ll<> == self = null 
+	or self::node<next = r> * r::ll<>
+	inv true.
+
+
+lemma_unsafe 
+     [ "V10" self::ll_s<n> -> self::ll<>; 
+       "V11"  self::ll_s<n> <- self::ll<>;
+       "V12"  self::ll_s<n> <-> self::ll<>].
+
+lemma  
+     [
+       "V13" self::ll_s<n> -> self::ll<> & n<0; 
+       "V14" self::ll_s<n> <- self::ll<> ;
+       "V15" self::ll_s<n> <-> self::ll<>].
+
+
+//checkentail x::ll_s<n> |- x::ll<>.

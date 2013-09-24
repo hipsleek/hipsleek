@@ -342,6 +342,8 @@ let is_float_var (sv : spec_var) : bool = is_float_type (type_of_spec_var sv)
 
 let is_rel_var (sv : spec_var) : bool = is_RelT (type_of_spec_var sv)
 
+let is_hp_rel_var (sv : spec_var) : bool = is_HpT (type_of_spec_var sv)
+
 let is_primed (sv : spec_var) : bool = match sv with
   | SpecVar (_, _, p) -> p = Primed
 
@@ -544,7 +546,16 @@ let eq_spec_var (sv1 : spec_var) (sv2 : spec_var) = match (sv1, sv2) with
 	    (* translation has ensured well-typedness.
 		   We need only to compare names and primedness *)
 	    v1 = v2 & p1 = p2
-      
+
+let rec eq_spec_var_order_list l1 l2=
+  match l1,l2 with
+    |[],[] -> true
+    | v1::ls1,v2::ls2 ->
+        if eq_spec_var v1 v2 then
+          eq_spec_var_order_list ls1 ls2
+        else false
+    | _ -> false
+
 let eq_spec_var_nop (sv1 : spec_var) (sv2 : spec_var) = match (sv1, sv2) with
   | (SpecVar (t1, v1, p1), SpecVar (t2, v2, p2)) ->
 	    (* translation has ensured well-typedness.
@@ -1105,7 +1116,6 @@ and isConstTrue_debug (p:formula) =
 
 
 
-        
 and isTrivTerm (p:formula) = match p with
   | BForm ((LexVar l, _),_) -> (l.lex_ann == Term || l.lex_ann==MayLoop) && l.lex_exp==[]
   | _ -> false
@@ -1729,6 +1739,8 @@ and mkIConst a pos = IConst (a, pos)
 
 and mkInfConst pos = InfConst (zinf_str, pos)
 
+and mkNegInfConst pos = mkSubtract (mkIConst 0 pos) (mkInfConst pos) pos
+
 and mkFConst a pos = FConst (a, pos)
 
 and mkMult a1 a2 pos = Mult (a1, a2, pos)
@@ -1917,8 +1929,33 @@ and mkOr_x f1 f2 lbl pos=
 	 | AndList l, f
 	 | f, AndList l -> AndList (or_branches l [(LO.unlabelled,f)] lbl pos)
 	 | _ -> *)Or (f1, f2, lbl ,pos)
-
+	 
 and mkOr f1 f2 lbl pos = Debug.no_2 "pure_mkOr" !print_formula !print_formula !print_formula (fun _ _ -> mkOr_x f1 f2 lbl pos) f1 f2
+	 
+and mkStupid_Or_x f1 f2 lbl pos= 
+	let or_branches l1 l2 lbl pos=
+	  let branches = Gen.BList.remove_dups_eq (=) (fst (List.split l1) @ (fst (List.split l2))) in
+	  let map_fun branch =
+	  try 
+	  let l1 = List.assoc branch l1 in
+	  try
+	  let l2 = List.assoc branch l2 in
+	  (branch, mkOr l1 l2 lbl pos)
+	  with Not_found -> (branch, mkTrue pos)
+	  with Not_found -> (branch, mkTrue pos )
+	  in
+	  Label_Pure.norm  (List.map map_fun branches) in
+  if (isConstFalse f1) then f2
+  else if (isConstTrue f1) then f1
+  else if (isConstFalse f2) then f1
+  else if (isConstTrue f2) then f2
+  else match f1, f2 with 
+	 | AndList l1, AndList l2 -> AndList (or_branches l1 l2 lbl pos)
+	 | AndList l, f
+	 | f, AndList l -> AndList (or_branches l [(LO.unlabelled,f)] lbl pos)
+	 | _ -> Or (f1, f2, lbl ,pos)
+
+and mkStupid_Or f1 f2 lbl pos = Debug.no_2 "pure_mkStupidOr" !print_formula !print_formula !print_formula (fun _ _ -> mkOr_x f1 f2 lbl pos) f1 f2
   
 and mkGtExp (ae1 : exp) (ae2 : exp) pos :formula =
   match (ae1, ae2) with
@@ -2030,6 +2067,8 @@ and mkTrue_b pos = (BConst (true, pos),None)
 and mkTrue pos =  BForm ((BConst (true, pos), None),None)
 
 and mkFalse pos = BForm ((BConst (false, pos), None),None)
+
+and mkFalse_b pos = (BConst (false, pos), None) 
 
 and mkExists_with_simpl simpl (vs : spec_var list) (f : formula) lbl pos = 
   Debug.no_2 "mkExists_with_simpl" !print_svl !print_formula !print_formula 
@@ -3630,14 +3669,21 @@ and get_subst_equation_b_formula (f : b_formula) (v : spec_var) lbl only_vars: (
    
 
 and get_all_vv_eqs (f0 : formula) : ((spec_var * spec_var) list * formula) =
+  let pr = !print_formula in
+  let pr_sv = !print_sv in
+  let prr = pr_pair (pr_list (pr_pair pr_sv pr_sv)) pr in
+  Debug.no_1 "get_all_vv_eqs" pr prr get_all_vv_eqs_x f0
+
+and get_all_vv_eqs_x (f0 : formula) : ((spec_var * spec_var) list * formula) =  
   let rec helper f0 =  match f0 with
       | And (f1, f2, pos) ->
           let st1, rf1 = helper f1  in
-          if not (Gen.is_empty st1) then
-            (st1, mkAnd rf1 f2 pos)
-          else
-            let st2, rf2 = helper f2  in
-            (st2, mkAnd f1 rf2 pos)
+          let st2, rf2 = helper f2  in
+          (st1@st2, mkAnd rf1 rf2 pos)
+          (* if not (Gen.is_empty st1) then *)
+          (*   (st1, mkAnd rf1 f2 pos) *)
+          (* else *)
+          (*   (st2, mkAnd f1 rf2 pos) *)
       | AndList b -> 
 		  let r1,r2 = List.fold_left (fun (a1,b1) c-> 
 			  if Gen.is_empty a1 then 
@@ -3649,7 +3695,7 @@ and get_all_vv_eqs (f0 : formula) : ((spec_var * spec_var) list * formula) =
       | BForm (((Eq (Var (sv1, _), Var (sv2, _), pos)),_),_) -> ([(sv1, sv2)], mkTrue no_pos )	  
       | _ -> ([], f0)
   in helper f0
-
+  
 and get_all_vv_eqs_bform b = match b with
 	| ((Eq (Var (sv1, _), Var (sv2, _), pos)),_) -> [(sv1, sv2)]
 	| _ -> []
@@ -6121,6 +6167,10 @@ let norm_bform_a (bf:b_formula) : b_formula =
               let nlt = List.map norm_exp t_info.lex_tmp in
               LexVar { t_info with lex_exp = nle; lex_tmp = nlt; }
    in (npf, il)
+
+let norm_exp b =
+  let pr = !print_exp in
+  Debug.no_1 "CP.norm_exp" pr pr norm_exp b
 
 let norm_bform_aux (bf:b_formula) : b_formula = norm_bform_a bf
 
@@ -11097,3 +11147,168 @@ let is_ieq f =
           end
     | _ -> false
 
+(* let swap_null_x (f : formula) : formula = *)
+(*   let f_e e = Some e in *)
+(*   let f_b ((pf,ann) as bf) = *)
+(*     match pf with *)
+(*       | Eq (e1, e2, l) -> begin *)
+(*           match e1 with *)
+(*             | Null _ -> Some ((Eq (e2, e1, l)), ann) *)
+(*             | _ -> Some bf *)
+(*         end *)
+(*       | _ -> Some bf *)
+(*   in *)
+(*   transform_formula ((fun _-> None),(fun _-> None), (fun _-> None),f_b,f_e) f *)
+
+(* let swap_null (f : formula) : formula = *)
+(*   let pr1 = !print_formula in *)
+(*   Debug.no_1 "CP.swap_null" pr1 pr1 *)
+(*       (fun _ -> swap_null_x f) f *)
+
+
+
+(*used in the optimization that in between hoare rules dead variables should be quantified*)
+
+let drop_dupl_x f = 
+	let rec helper f = 
+		let rec splitter (a,o) f = match f with
+		  | BForm _ -> f::a,o
+		  | And (f1,f2,_) -> splitter (splitter (a,o) f1) f2 
+		  | AndList l -> a, (AndList (map_l_snd helper l))::o
+		  | Or _ 
+		  | Not _ 
+		  | Forall _ 
+		  | Exists _ -> a, f::o in
+		let a,o = splitter ([],[]) f in		
+		join_conjunctions ((remove_dupl_conj_list a)@o)	in
+	join_disjunctions (List.map helper (split_disjunctions f)) 
+
+let drop_dupl f = 
+	Debug.no_1 "drop_dupl" !print_formula !print_formula drop_dupl_x f
+	
+let drop_triv_eq f =
+	let fc f = match f with
+		| BForm ((Eq(Var(vl,_),Var(vr,_),l),_),_) -> 
+			if eq_spec_var vl vr then Some (mkTrue l)
+			else Some f
+		| BForm _ -> Some f
+		| _ -> None in
+	drop_dupl(transform_formula (nonef, nonef,fc,somef,somef) f)
+		
+
+ (*returns a list of substitutions that can be safely applied over the entire formula*)
+let get_vv_eqs (f0 : formula) : (spec_var * spec_var) list =
+	let fct p f = match f with 
+		| BForm ((Eq (Var(vl,_),Var(vr,_),_),_),_) ->  if p then Some (f,[(vl,vr)]) else Some (f,[])
+		| BForm ((Neq(Var(vl,_),Var(vr,_),_),_),_) ->  if p then Some (f,[]) else Some (f,[(vl,vr)])
+		| BForm _ -> Some (f,[])
+		| _ -> None in
+	let f_arg arg e = match e with | Not _ -> not arg | _ -> arg in
+	let f_cmb e l = match e with 
+            | BForm _  | And _ | AndList _  | Not _ -> List.concat l
+            | Or _ -> 
+				let intf (a1,a2) (b1,b2) =  
+					((eq_spec_var a1 b1) &&  (eq_spec_var a2 b2)) || 
+					((eq_spec_var a1 b2) &&  (eq_spec_var a2 b1)) in
+				Gen.BList.intersect_eq intf  (List.hd l) (List.hd (List.tl l)) 
+            | Forall (sv,_,_,_) 
+            | Exists (sv,_,_,_) -> List.filter (fun (v1,v2)-> not ((eq_spec_var sv v1)||(eq_spec_var sv v2)))(List.concat l) in 
+	let f_stop1 a b = Some (b,[]) in
+	let f_stop2 a b = Some (b,[]) in
+	snd (foldr_formula f0 true (fct,f_stop1, f_stop2) (f_arg,idf2,idf2) (f_cmb, (fun _ _ -> []), (fun _ _ -> [])))
+    	
+	(*lump all pointer vars apearing in anything but disequalities*)
+let force_all_vv_eqs_x f0 = 
+	let rec helper b f = match f with
+		| BForm ((Eq (Var(vl,_),Var(vr,_),_),_),_) ->  if b&&(not (eq_spec_var vl vr)) then [vl;vr] else []
+		| BForm ((Eq(Var(vl,_),(Null _),_),_),_)
+		| BForm ((Eq((Null _),Var(vl,_),_),_),_)->   if b then [vl] else []
+		| BForm ((Neq(Var(vl,_),Var(vr,_),_),_),_) ->  if b&&(not (eq_spec_var vl vr)) then [] else [vl;vr]
+		| BForm ((Neq(Var(vl,_),(Null _),_),_),_)
+		| BForm ((Neq((Null _),Var(vl,_),_),_),_)->   if b then [] else [vl]
+		| BForm (b,_) -> bfv b 
+		| Or (f1,f2,_,_)
+		| And (f1,f2,_)-> (helper b f1) @ (helper b f2)
+	    | AndList l -> Gen.fold_l_snd (helper b) l	
+		| Not (f,_,_)-> helper (not b) f
+		| Forall (_,f,_,_) 
+		| Exists (_,f,_,_)-> helper b f  in
+    Gen.BList.remove_dups_eq eq_spec_var (List.filter is_node_typ (helper true f0))
+		
+let force_all_vv_eqs f0 =
+	Debug.no_1 "force_all_vv_eqs" !print_formula !print_svl force_all_vv_eqs_x f0
+	
+	(*the next set of functions deal with elimination of equalities and disequalities, and early detection of contradictions*)
+	(*mainly due to the performance penalty of disequalities *)
+	
+let decide_keep vars_to_keep v = 
+	(not (is_node_typ v)) || (List.exists (eq_spec_var v) vars_to_keep)
+	
+	(*get ante substitutions and try and apply as many as possible*)
+let expand_eqs_x ante conseq = 
+	let a_alias = get_vv_eqs ante in
+	let rec sub (ante,conseq) nf = match nf with 
+		| [] -> (ante,conseq)
+		| h::t -> 
+			let t = List.map (fun (c1,c2)-> subst_var h c1, subst_var h c2) t in
+			sub (subst [h] ante ,subst [h] conseq) t in
+	sub (ante,conseq) a_alias
+	
+let expand_eqs ante conseq = 
+	let pr = !print_formula in
+	Debug.no_2 "expand_eqs" pr pr (pr_pair pr pr) expand_eqs_x ante conseq
+	
+let check_pointer_dis_sat_x c = 
+	let helper nf = 
+		let nf ,_= expand_eqs nf (mkTrue no_pos) in
+		let vars_to_keep = force_all_vv_eqs nf in
+		let f a c = match c with 
+				| BForm ((Neq(Var(vl,_),Var(vr,_),l),_),_) -> 
+					if eq_spec_var vl vr then Some (c, false)
+					else if (decide_keep vars_to_keep vl)&& (decide_keep vars_to_keep vr) then Some (c,a)
+					else Some (mkTrue no_pos, a)
+				| BForm ((Eq(Var(vl,_),Var(vr,_),l),_),_) -> 
+					if eq_spec_var vl vr then Some (mkTrue no_pos, a)
+					else Some (c,a)
+				| BForm ((Neq((Null _),Var(v,_),_),_),_)
+				| BForm ((Neq(Var(v,_),(Null _),_),_),_) -> 
+					if (decide_keep vars_to_keep v) then Some (c,a) else Some (mkTrue no_pos, a)
+				| BForm _ -> Some (c,a)
+				| _ -> None  in
+		let f_comb = 
+			(fun f l -> (match f with Or _ -> or_list l | _ -> and_list l)),
+			(fun _ l -> and_list l),
+			(fun _ l -> and_list l) in
+		foldr_formula nf true (f, (fun a c-> Some (c,a)), (fun a c-> Some (c,a))) (idf2,idf2,idf2) f_comb in
+	List.fold_left (fun (a1,a2) c-> 
+		let r1,r2 = helper c in
+		mkOr a1 (drop_dupl r1) None no_pos , (a2||r2) ) (mkFalse no_pos, false) (split_disjunctions c)  
+	
+	
+	(*not equivalence preserving, use carefully, designed as a simplification pre unsat check*)
+let check_pointer_dis_sat c= 
+	Debug.no_1 "check_pointer_dis_sat" !print_formula (pr_pair !print_formula string_of_bool) check_pointer_dis_sat_x c
+	
+let simpl_equalities_x ante conseq = 
+  let ante, conseq = expand_eqs ante conseq in
+  let vars_to_keep = (force_all_vv_eqs ante)@(fv conseq) in
+  let f e = match e with
+		| BForm ((Neq(Var(vl,_),Var(vr,_),l),_),_) -> 
+				if eq_spec_var vl vr then Some (mkFalse no_pos)
+				else if (decide_keep vars_to_keep vl)&& (decide_keep vars_to_keep vr) then Some e
+				else Some (mkTrue no_pos)
+		| BForm ((Eq(Var(vl,_),Var(vr,_),l),_),_) -> 
+				if eq_spec_var vl vr then Some (mkTrue no_pos)
+				else Some e
+		| BForm ((Neq((Null _),Var(v,_),_),_),_)
+		| BForm ((Neq(Var(v,_),(Null _),_),_),_) -> 
+				if (decide_keep vars_to_keep v) then Some e else Some (mkTrue no_pos)
+		| BForm _ -> Some e 
+		| _ -> None in
+  let tr = transform_formula (somef,somef,f,somef,somef) in
+  drop_dupl (tr ante), tr conseq
+  
+  (*a simplification pre imply check*)
+let simpl_equalities ante conseq  = 
+	let pr = !print_formula in
+	Debug.no_2 "simpl_equalities" pr pr (pr_pair pr pr) simpl_equalities_x ante conseq

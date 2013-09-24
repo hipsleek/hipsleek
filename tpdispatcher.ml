@@ -900,10 +900,10 @@ let comm_is_ann a1 a2 =
 
 let is_ptr_ctr a1 a2 =
   match a1,a2 with
-    | Var(v,_),IConst(_,_) ->
+    | Var(v,_),_ ->
           let t=type_of_spec_var v in
           (is_otype t,is_ann_type t)
-    | IConst(_,_),Var(v,_) ->
+    | _,Var(v,_) ->
           let t=type_of_spec_var v in
           (is_otype t,is_ann_type t)
     | _ -> (false,false)
@@ -930,35 +930,37 @@ let is_null a1 a2 =
 
 (* s>0 -> 0<s -> 1<=s *)
 let to_ptr ptr_flag pf =
-  let rec norm pf = 
+  let norm0 pf = match pf with
+    | Gt(a,b,ll) -> Lt(CP.norm_exp b, CP.norm_exp a,ll)
+    | Gte(a,b,ll) -> Lte(CP.norm_exp b, CP.norm_exp a,ll)
+    | Lte(a,b,ll) -> Lte(CP.norm_exp a, CP.norm_exp b,ll)
+    | Lt(a,b,ll) -> Lt(CP.norm_exp a, CP.norm_exp b,ll)
+    | _ -> pf in
+  let rec norm pf =
     match pf with
-      | Lt(a,IConst(i,l),ll) -> Lte(a,IConst(i-1,l),ll)
-      | Lt(IConst(i,l),a,ll) -> Lte(IConst(i+1,l),a,ll)
-      | Gt(a,b,ll) -> norm (Lt(b,a,ll))
-      | Gte(a,b,ll) -> Lte(b,a,ll)
+      | Lt(a,IConst(i,l),ll) -> norm(Lte(a,IConst(i-1,l),ll))
+      | Lt(IConst(i,l),a,ll) -> norm(Lte(IConst(i+1,l),a,ll))
+      | Lte((Var(v,_) as a1), IConst(i,_),ll) ->
+            if ptr_flag then
+              if i<=(-1) then BConst(false,ll)   (* v<=0 --> v=M; v<=1 --> @L<:v *)
+              else if i>0 then BConst(true,ll)
+              else Eq(a1,Null ll,ll)
+            else (* ann_flag *)
+              if i<=(-1)  then BConst(false,ll)
+              else if i>2 then BConst(true,ll)
+              else if i=0 then Eq(a1,int_to_ann i,ll)
+              else SubAnn(a1,int_to_ann i,ll)
+      | Lte(IConst(i,_),(Var(v,_) as a1),ll) ->
+            if ptr_flag then
+              if i>=1 then Neq(a1,Null ll,ll)
+              else BConst(true,ll)
+            else (* ann_flag *)
+              if i<=(0)  then BConst(true,ll)
+              else if i>3 then BConst(false,ll)
+              else if i=3 then Eq(a1,int_to_ann i,ll)
+              else SubAnn(int_to_ann i,a1,ll)
       | _ -> pf
-  in let pf = norm pf in
-  match pf with
-    | Lte((Var(v,_) as a1), IConst(i,_),ll) ->
-          if ptr_flag then
-            if i<=(-1) then BConst(false,ll)   (* v<=0 --> v=M; v<=1 --> @L<:v *)
-            else if i>0 then BConst(true,ll)
-            else Eq(a1,Null ll,ll)
-          else (* ann_flag *)
-            if i<=(-1)  then BConst(false,ll)
-            else if i>2 then BConst(true,ll)
-            else if i=0 then Eq(a1,int_to_ann i,ll)
-            else SubAnn(a1,int_to_ann i,ll)
-    | Lte(IConst(i,_),(Var(v,_) as a1),ll) ->
-          if ptr_flag then
-            if i>=1 then Neq(a1,Null ll,ll)
-            else BConst(true,ll)
-          else (* ann_flag *)
-            if i<=(0)  then BConst(true,ll)
-            else if i>3 then BConst(false,ll)
-            else if i=3 then Eq(a1,int_to_ann i,ll)
-            else SubAnn(int_to_ann i,a1,ll)
-    | _ -> pf
+  in norm (norm0 pf)
 
 let to_ptr ptr_flag pf =
   let pr f = Cprinter.string_of_b_formula (f,None) in
@@ -979,7 +981,7 @@ let cnv_int_to_ptr f =
               if is_ann_flag then
                 if is_valid_ann i then Some(Eq(a1,int_to_ann i,ll),l)
                 else  Some(BConst (false,ll),l) (* contradiction *)
-            else if is_inf a1 then Some(Eq(a2,mkInfConst ll,ll),l)
+            (*else if is_inf a1 then Some(Eq(a2,mkInfConst ll,ll),l)*)
             else Some bf
       | Neq (a1, a2, ll) -> 
             let (is_null_flag,a1,a2) = comm_is_null a1 a2 in
@@ -1030,9 +1032,24 @@ let cnv_int_to_ptr f =
 
 (* this is to normalize result from simplify/hull/gist *)
 let norm_pure_result f =
-  let f = cnv_int_to_ptr f in    
-  let f = if !Globals.allow_inf then Infinity.convert_var_to_inf f else f in 
-  let f = NM.norm_disj f in
+  let f = cnv_int_to_ptr f in
+  let f = if !Globals.allow_inf
+    then let f =  CP.arith_simplify 13 (Infinity.convert_var_to_inf f) in
+         let drop_inf_constr f =   
+           let f_f e = None in
+           let f_bf bf = 
+             let (pf, l) = bf in
+             match pf with
+               | Lt(a1,a2,pos) -> if Infinity.check_neg_inf2_inf a1 a2 || Infinity.check_neg_inf2_inf a2 a1
+                 then Some(mkTrue_b pos) else Some bf
+               | _ -> Some bf
+           in
+           let f_e e = (Some e) in
+           map_formula f (f_f, f_bf, f_e) in 
+         let f = drop_inf_constr f in
+         Infinity.normalize_inf_formula f
+    else f in 
+  let f = if !Globals.allow_norm_disj then NM.norm_disj f else f in
   f
 
 let norm_pure_result f =
@@ -1714,8 +1731,10 @@ let tp_is_sat f sat_no =
 let norm_pure_input f =
   let f = cnv_ptr_to_int f in
   let f = if !Globals.allow_inf 
-    then Infinity.convert_inf_to_var (Infinity.normalize_inf_formula f) else f in
-  f
+    then let f = Infinity.convert_inf_to_var f
+           in let add_inf_constr = BForm((mkLt (CP.Var(CP.SpecVar(Int,constinfinity,Primed),no_pos)) (CP.Var(CP.SpecVar(Int,constinfinity,Unprimed),no_pos)) no_pos,None),None) in
+      let f = mkAnd add_inf_constr f no_pos in f
+    else f in f
 
 let norm_pure_input f =
   let pr = Cprinter.string_of_pure_formula in
@@ -1756,6 +1775,9 @@ let simplify (f : CP.formula) : CP.formula =
     else 
       let cmd = PT_SIMPLIFY f in
       let _ = Log.last_proof_command # set cmd in
+      (* if !Globals.allow_inf && Infinity.contains_inf f then f
+      else
+      let f = if !Globals.allow_inf then Infinity.convert_inf_to_var f else f in*)
       let omega_simplify f = simplify_omega f
         (* Omega.simplify f  *)in
       (* this simplifcation will first remove complex formula as boolean
@@ -1954,6 +1976,9 @@ let hull (f : CP.formula) : CP.formula =
   let simpl_no = (string_of_int simpl_num) in
   let cmd = PT_HULL f in
   let _ = Log.last_proof_command # set cmd in
+  (*if !Globals.allow_inf && Infinity.contains_inf f then f
+  else*) 
+  (*let f = if !Globals.allow_inf then Infinity.convert_inf_to_var f else f in*)
   let fn f = match !pure_tp with
     | DP -> Dp.hull  f
     | Isabelle -> Isabelle.hull f
@@ -2012,6 +2037,8 @@ let tp_pairwisecheck (f : CP.formula) : CP.formula =
   let simpl_no = (string_of_int simpl_num) in
   let cmd = PT_PAIRWISE f in
   let _ = Log.last_proof_command # set cmd in
+  (*if !Globals.allow_inf && Infinity.contains_inf f then f
+  else *)
   let fn f = match !pure_tp with
     | DP -> Dp.pairwisecheck f
     | Isabelle -> Isabelle.pairwisecheck f
@@ -2311,6 +2338,7 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
 
 
 let tp_imply_no_cache ante conseq imp_no timeout process =
+  let ante,conseq = if !Globals.simpl_unfold3 then simpl_equalities ante conseq else (ante,conseq) in
   let ante = 
     if !Globals.allow_imm_inv then add_imm_inv ante conseq
     else ante in

@@ -1,0 +1,11 @@
+compute_actions,Loop
+#cnv_ptr_to_int,Trace
+#heap_entail_empty_rhs_heap
+process_action,#Loop
+#assumption_filter
+infer_heap_nodes
+infer_lhs_contra,
+infer_pure_m_2,Loop
+process_matches
+infer_collect_hp_rel,trace
+do_infer_heap

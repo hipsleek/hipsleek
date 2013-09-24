@@ -50,7 +50,8 @@ type decl =
   | Global_var of exp_var_decl
   | Logical_var of exp_var_decl (* Globally logical vars *)
   | Proc of proc_decl
-  | Coercion of coercion_decl
+  (* | Coercion of coercion_decl *)
+  | Coercion_list of coercion_decl_list
   | Include of string
 		
 
@@ -74,6 +75,16 @@ type file_offset =
     line_start: int;
     byte_num: int;
   }
+
+
+let convert_lem_kind (l: lemma_kind_t) =
+    match l with
+      | TLEM           -> LEM
+      | TLEM_TEST      -> LEM_TEST
+      | TLEM_TEST_NEW  -> LEM_TEST_NEW
+      | TLEM_UNSAFE    -> LEM_UNSAFE
+      | TLEM_SAFE      -> LEM_SAFE
+      | TLEM_INFER     -> LEM_INFER
 
 let default_rel_id = "rel_id__"
 (* let tmp_rel_decl = ref (None : rel_decl option) *)
@@ -528,10 +539,13 @@ SHGram.Entry.of_parser "peek_print"
              | [EXISTS,_;OPAREN,_;_] -> ()
              | [UNION,_;OPAREN,_;_] -> ()
 	     (* | [XPURE,_;OPAREN,_;_] -> () *)
-             | [IDENTIFIER id,_;OPAREN,_;_] -> if hp_names # mem id then raise Stream.Failure else ()
+             | [IDENTIFIER id,_;OPAREN,_;_] ->  if hp_names # mem id then raise Stream.Failure else ()
              | [_;COLONCOLON,_;_] -> raise Stream.Failure
              | [_;PRIME,_;COLONCOLON,_] -> raise Stream.Failure
              | [OPAREN,_;_;COLONCOLON,_] -> raise Stream.Failure
+             | [OSQUARE,_;_;COLONCOLON,_] -> raise Stream.Failure
+             | [OSQUARE,_;DOUBLEQUOTE,_;_]-> raise Stream.Failure
+             (* | [i,_;j,_;k,_]-> print_string("start here: i:" ^ (Token.to_string i)^" j:"^(Token.to_string j)^" k:"^(Token.to_string k)^" end here \n");() *)
              | _ -> ())
 
  let peek_typecast = 
@@ -785,7 +799,7 @@ non_empty_command:
       | t = func_decl         -> FuncDef t
       | t = rel_decl          -> RelDef t
       | t = hp_decl          -> HpDef t
-      | `LEMMA lex;t= coercion_decl -> LemmaDef {t with coercion_exact = lex}
+      | l = coerc_decl_aux -> LemmaDef l
       | t= axiom_decl -> AxiomDef t (* [4/10/2011] An Hoa : axiom declarations *)
       | t=let_decl            -> t
       | t=checkeq_cmd         -> EqCheck t
@@ -1877,7 +1891,9 @@ compose_cmd:
 
 print_cmd:
   [[ `PRINT; `IDENTIFIER id           -> PCmd id
-   | `PRINT; `DOLLAR; `IDENTIFIER id  -> PVar id]];
+   | `PRINT; `DOLLAR; `IDENTIFIER id  -> PVar id
+   | `PRINT_LEMMAS  -> PCmd "lemmas"
+  ]];
 
 cmp_cmd:
   [[ `CMP; `IDENTIFIER id ; `OSQUARE; il=OPT id_list; `CSQUARE ; `COLON; fl = LIST1 meta_constr SEP `COMMA  -> 
@@ -1903,7 +1919,8 @@ meta_constr:
 coercion_decl:
   [[ on=opt_name; dc1=disjunctive_constr; cd=coercion_direction; dc2=disjunctive_constr ->
       { coercion_type = cd;
-		coercion_exact = false;
+	coercion_exact = false;
+        coercion_infer_vars = [];
         coercion_name = (* on; *)
         (let v=on in (if (String.compare v "")==0 then (fresh_any_name "lem") else v));
         (* coercion_head = dc1; *)
@@ -1916,6 +1933,41 @@ coercion_decl:
         coercion_proof = Return ({ exp_return_val = None;
                      exp_return_path_id = None ;
                      exp_return_pos = get_pos_camlp4 _loc 1 })}]];
+
+coercion_decl_list:
+    [[
+        coerc = LIST1 coercion_decl SEP `SEMICOLON -> {
+            coercion_list_elems = coerc;
+            coercion_list_kind  = LEM;
+        }
+    ]];
+
+infer_coercion_decl:
+    [[
+        `OSQUARE; il=OPT id_list; `CSQUARE;  t = coercion_decl -> {t with coercion_infer_vars = un_option il [] }
+    ]];
+
+infer_coercion_decl_list:
+    [[
+        coerc = LIST1 infer_coercion_decl SEP `SEMICOLON -> {
+            coercion_list_elems = coerc;
+            coercion_list_kind  = LEM;
+        }
+    ]];
+
+coerc_decl_aux:
+    [[
+      `LEMMA TLEM_INFER; t = infer_coercion_decl -> 
+          { coercion_list_elems = [t];
+            coercion_list_kind  = LEM_INFER }
+      (* | `LEMMA TLEM_INFER; `OSQUARE; t = infer_coercion_decl_list; `CSQUARE ->  *)
+      (*     { t with coercion_list_kind = LEM_INFER } *)
+      | `LEMMA kind;t = coercion_decl -> 
+          { coercion_list_elems = [t];
+            coercion_list_kind  = convert_lem_kind kind }
+      | `LEMMA kind; `OSQUARE; t = coercion_decl_list; `CSQUARE -> 
+          { t with coercion_list_kind = convert_lem_kind kind }
+    ]];
 
 coercion_direction:
   [[ `LEFTARROW  -> Left
@@ -2141,7 +2193,7 @@ hprogn:
       let hp_defs = new Gen.stack in(* list of heap predicate relations *)
       let axiom_defs = ref ([] : axiom_decl list) in (* [4/10/2011] An Hoa *)
       let proc_defs = ref ([] : proc_decl list) in
-      let coercion_defs = ref ([] : coercion_decl list) in
+      let coercion_defs = ref ([] : coercion_decl_list list) in
       let hopred_defs = ref ([] : hopred_decl list) in
       let choose d = match d with
         | Type tdef -> begin
@@ -2160,7 +2212,7 @@ hprogn:
         | Global_var glvdef -> global_var_defs := glvdef :: !global_var_defs
         | Logical_var lvdef -> logical_var_defs := lvdef :: !logical_var_defs
         | Proc pdef -> proc_defs := pdef :: !proc_defs 
-        | Coercion cdef -> coercion_defs := cdef :: !coercion_defs in
+        | Coercion_list cdef -> coercion_defs := cdef :: !coercion_defs in
     let _ = List.map choose t in
     let obj_def = { data_name = "Object";
                     data_pos = no_pos;
@@ -2218,7 +2270,11 @@ decl:
   |  g=global_var_decl            -> Global_var g
   |  l=logical_var_decl -> Logical_var l
   |  p=proc_decl                  -> Proc p
-  | `LEMMA lex; c= coercion_decl; `SEMICOLON    -> Coercion {c with coercion_exact = lex}]];
+  (* | `LEMMA lex; c= coercion_decl; `SEMICOLON    -> Coercion {c with coercion_exact = lex}]]; *)
+  | `LEMMA kind; c= coercion_decl; `SEMICOLON    -> Coercion_list
+        { coercion_list_elems = [c];
+          coercion_list_kind  = (convert_lem_kind kind)}
+  | `LEMMA kind(* lex *); c = coercion_decl_list; `SEMICOLON    -> Coercion_list {c with (* coercion_exact = false *) coercion_list_kind = convert_lem_kind kind}]];
 
 type_decl: 
   [[ t= data_decl  -> Data t

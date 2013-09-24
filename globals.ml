@@ -28,6 +28,7 @@ let ineq_opt_flag = ref false
 
 let illegal_format s = raise (Illegal_Prover_Format s)
 
+type lemma_kind = LEM_TEST | LEM_TEST_NEW | LEM | LEM_UNSAFE | LEM_SAFE | LEM_INFER
 
 (* type nflow = (int*int)(\*numeric representation of flow*\) *)
 type flags = 
@@ -606,6 +607,8 @@ let lib_files = ref ([] : string list)
 
 let ptr_to_int_exact = ref false
 
+let is_sleek_running = ref false
+
 let remove_label_flag = ref false
 let label_split_conseq = ref true
 let label_split_ante = ref true
@@ -635,13 +638,22 @@ let dis_show_diff = ref false
 
 let sa_print_inter = ref false
 
+let tc_drop_unused = ref false
+let simpl_unfold3 = ref false
+let simpl_unfold2 = ref false
+let simpl_unfold1 = ref false
+
 let print_heap_pred_decl = ref true
 
 let cond_path_trace = ref true
 
 let pred_syn_modular = ref true
 
+let syntatic_mode = ref false (* syntatic mode - default is semantic*)
+
 let sa_dnc = ref false
+
+let pred_reuse = ref false
 
 (*temp: should be improve*)
 let pred_en_oblg = ref true
@@ -652,7 +664,11 @@ let pred_syn_flag = ref true
 
 let sa_syn = ref true
 
+let lemma_syn = ref false
+
 let sa_en_split = ref false
+
+let pred_split = ref false
 
 (* let sa_dangling = ref false *)
 
@@ -691,8 +707,11 @@ let sa_subsume = ref false
 (* let norm_elim_useless = ref false *)
 
 let norm_extract = ref false
+let allow_norm_disj = ref true
 
 let norm_cont_analysis = ref true
+
+let lemma_infer = ref false
 
 let dis_sem = ref false
 
@@ -794,6 +813,7 @@ let sleek_flag = ref false
 
 let sleek_log_filter = ref true
 (* flag to filter trivial sleek entailment logs *)
+(* particularly child calls *)
 
 let use_field = ref false
 
@@ -853,7 +873,7 @@ let self_fold_search_flag = ref false
 
 let show_gist = ref false
 let imply_top_flag = ref false
-let early_contra_flag = ref false
+let early_contra_flag = ref true
 
 let trace_failure = ref false
 
@@ -1029,6 +1049,7 @@ let omega_err = ref false
 let seq_number = ref 10
 
 let sat_timeout_limit = ref 2.
+let user_sat_timeout = ref false
 let imply_timeout_limit = ref 3.
 
 let dis_provers_timeout = ref false
@@ -1331,37 +1352,17 @@ let last_sleek_fail_no = ref 0
 
 let get_sleek_no () = !sleek_proof_no
 
+let set_sleek_no n = sleek_proof_no:=n
+
 let get_last_sleek_fail () = !last_sleek_fail_no
 
 let set_last_sleek_fail () = 
   last_sleek_fail_no := !sleek_proof_no
 
-let next_sleek_int () : int =
-  sleek_proof_no := !sleek_proof_no + 1; 
-  (!sleek_proof_no)
+(* let next_sleek_int () : int = *)
+(*   sleek_proof_no := !sleek_proof_no + 1;  *)
+(*   (!sleek_proof_no) *)
 
-let z_debug_file = ref ""
-
-let z_debug_flag = ref false
-
-
-(*let debug_file = open_in_gen [Open_creat] 0o666 ("z-debug.log")*)
-let debug_file ()=
-  let get_path s = 
-    if String.contains s '/' then
-      let i = String.rindex s '/' in
-      String.sub s 0 (i+1)
-    else ""
-  in
-  let debug_conf = "./" ^ !z_debug_file in
-  (* let _ = print_endline (debug_conf) in *)
-  let global_debug_conf =
-    if (Sys.file_exists debug_conf) then
-    debug_conf
-    else (get_path Sys.executable_name) ^ (String.sub debug_conf 2 ((String.length debug_conf) -2))
-  in
-  (* let _ = print_endline global_debug_conf in *)
-  open_in (global_debug_conf)
 
 (* let read_from_debug_file chn : string list = *)
 (*   let line = ref [] in *)

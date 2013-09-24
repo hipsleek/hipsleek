@@ -1,0 +1,62 @@
+data node {
+ node pPrev;
+ node pNext;
+}.
+
+
+pred lseg<prev,pp,last> == case {
+  self=pp -> [] prev=last;
+ self!=pp -> [] self::node<prev, r> * r::lseg<self,pp,last>;
+}	inv true.
+
+/*
+// this is weaker than case-spec above
+pred lseg<prev,p,last> == self=p & prev=last
+ or  self::node<prev, r> * r::lseg<self,p,last> //& self!=p
+	inv true.
+*/
+
+// doubly linked list with extra pointer for the last element
+
+pred dll<prev,pp,last> == 
+  case {
+   self=last -> [] self::node<prev,pp> ; 
+   self!=last -> [] self::node<prev,t> * t::dll<self,pp,last>;
+  }
+inv self!=null & last!=null.
+
+/*
+lemma_safe "taildls" self::dll<prev,pp,last> <-> 
+                self::lseg<prev,last,ib3> * last::node<ib3,pp>.
+*/
+
+
+//lemma_safe "tail3" self::dll<prev,pp,last> -> self::lseg<prev,pp,last>.
+
+checkentail_exact
+ self::node<prev,pp> & self=last & self=pp |- prev=last.
+
+checkentail_exact
+ self::node<prev,pp> & self=last & self!=pp |- 
+    self::node<prev, r> * r::lseg<self,pp,last>
+ .
+
+checkentail_exact
+ self::node<prev,pp> & self=last  |- 
+    self=pp & prev=last
+ .
+
+checkentail_exact
+ self::node<prev,pp> & self=last  |- 
+    self::node<prev, r> * r::lseg<self,pp,last> & self!=pp
+ .
+
+checkentail_exact
+ self::node<prev,pp> & self=last  |- 
+    self::lseg<prev,pp,last>
+ .
+
+
+
+lemma_safe "tail2" self::dll<prev,pp,last> ->
+                self::node<prev,q>*q::lseg<self,pp,last> .

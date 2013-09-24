@@ -1,0 +1,105 @@
+data node{
+	int val;
+	node next;
+}.
+
+pred zip<y> ==
+  self=null & y=null
+or self::node<_,p>*y::node<_,q>*p::zip<q>
+inv true.
+
+pred ll<> == self=null
+ or self::node<_,q>*q::ll<>
+inv true.
+
+HeapPred P1(node a).
+HeapPred P2(node a).
+HeapPred P3(node a).
+
+
+//lemma self::zip<y> -> P1(self) * P3(y). try-error?
+//lemma self::zip<y> -> P1(self) * P2(y).
+lemma self::zip<y> -> P2(y) * P1(self).
+
+
+
+//1
+infer [P1,P2] x::zip<y> * P1(x) * P2(y)|-  x::zip<y> * P1(x) * P2(y).
+print residue.
+
+
+//2
+infer [P1,P2] xx::zip<yy> |- P1(xx) * P2(yy).
+print residue.
+
+
+//3
+infer [P1,P2] x::zip<z> |- P1(x) * P2(y).
+print residue.
+
+
+//4
+infer [P1,P2]  P1(x) * P2(z) |- P1(x) * P2(y).
+print residue.
+
+
+//5
+infer [P1,P2]   x=null & y=null
+or x::node<_,p>*y::node<_,q>*p::zip<q> |- P1(x) * P2(y).
+print residue.
+
+
+//6
+infer [P1,P2]   x=null & y=null
+or x::node<_,p>*y::node<_,q>  * P1(p) * P2(q) |- P1(x) * P2(y).
+print residue.
+
+//7
+infer [P1,P2]   
+  x::node<_,p>*y::node<_,q> * p::zip<q> |- P1(x) * P2(y).
+print residue.
+
+
+//8
+infer [P1,P2]   
+  x::node<_,p>*y::node<_,q> * P1(p) * P2(q) |- P1(x) * P2(y).
+print residue.
+
+
+//9
+infer [P1,P2] xx::zip<yy> |- P1(yy) * P2(xx).
+print residue.
+
+
+//10
+infer [P1,P2]   
+  x::node<_,p>*y::node<_,q>*q::zip<p> |- P1(x) * P2(y).
+print residue.
+
+
+//5
+infer [P1,P2]   x=null & y=null
+or x::node<_,p>*y::node<_,q>*r::zip<qq> |- P1(x) * P2(y) * r::zip<qq>.
+print residue.
+
+/*
+
+ - predicate-splitting
+ - equivalence checking
+ - useless parameter elimination
+ - subsumption checking
+   P(..) --> Q(..)
+   Q(..) --> P(..)
+ - refactoring
+ - split lemma synthesis
+
+   x::ll<>  --> x::U<p> * p::ll<>
+   x::ll<>  <-- x::U<p> * p::ll<>
+
+   x::ll<B>  --> x::U<p> * p::ll<>
+   x::ll<B>  <-- x::U<p> * p::ll<>
+
+
+
+*/
+

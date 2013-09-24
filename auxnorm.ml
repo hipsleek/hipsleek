@@ -46,8 +46,8 @@ let simplif_arith f =
               match b with
                 | (CP.Lte (e1, e2, s), l) ->  (CP.Lte (CP.norm_exp e1,CP.norm_exp e2, s), l)
                 | (CP.Lt (e1, e2, s), l) ->  (CP.Lt (CP.norm_exp e1,CP.norm_exp e2, s), l)
-                | (CP.Gte (e1, e2, s), l) ->  (CP.Gte (CP.norm_exp e1,CP.norm_exp e2, s), l)
-                | (CP.Gt (e1, e2, s), l) ->  (CP.Gt (CP.norm_exp e1,CP.norm_exp e2, s), l)
+                | (CP.Gte (e1, e2, s), l) ->  (CP.Lte (CP.norm_exp e2,CP.norm_exp e1, s), l)
+                | (CP.Gt (e1, e2, s), l) ->  (CP.Lt (CP.norm_exp e2,CP.norm_exp e1, s), l)
                 | (CP.Eq  (e1, e2, s), l) ->  (CP.Eq  (CP.norm_exp e1,CP.norm_exp e2, s), l)
                 | (CP.Neq (e1, e2, s), l) ->  (CP.Neq (CP.norm_exp e1,CP.norm_exp e2, s), l)
                 | _ -> b
@@ -85,22 +85,29 @@ let merge_ieq_ieq f1 f2  =  (* merge_other f1 f2 *)
     | CP.BForm (b1, _), CP.BForm (b2, _) ->
           begin
           match b1,b2 with
+              (* i1<v1 | i2<v2 *)
             | (CP.Lt (CP.IConst (i1, _), CP.Var(v1,_), _), _), (CP.Lt (CP.IConst (i2, loci), CP.Var(v2,_), _), _) ->
                   if (CP.eq_spec_var v1 v2) then
                     if i1<=i2 then merged [f1] else merged [f2]
                   else merge_other f1 f2
+              (* v1<i1 | v2<i2 *)
             | (CP.Lt (CP.Var(v1,_) , CP.IConst (i1, _), _), _), (CP.Lt (CP.Var(v2,_), CP.IConst (i2, loci), _), _) ->
                   if (CP.eq_spec_var v1 v2) then
                     if i1<=i2 then merged [f2] else merged [f1]
                   else merge_other f1 f2
+              (* i1<v1 | v2<i2 *)
             | (CP.Lt (CP.IConst (i1, _), CP.Var(v1,_), _), _), (CP.Lt ((CP.Var(v2,_) as var), CP.IConst (i2, loci), _), _)
+              (* v2<i2 | i1<v1 *)
             | (CP.Lt ((CP.Var(v2,_) as var), CP.IConst (i2, loci), _), _), (CP.Lt (CP.IConst (i1, _), CP.Var(v1,_), _), _) ->
                   if (CP.eq_spec_var v1 v2) then
                     if i1<i2 then  merged [CP.mkTrue no_pos]
-                    (* else if (i1==i2) then neq_conj_n 1 i1 var *)
                     else 
                       if((i1-i2) < limit_conj) then merged (neq_conj_n (i1-i2) i1 var)
                       else merge_other f1 f2
+                  else merge_other f1 f2
+              (* v1<v2 | v3<i4 *)
+            | (CP.Lt ( (CP.Var(v1,_) as var1), (CP.Var(v2,_) as var2), _), _), (CP.Lt (CP.Var(v3,_),CP.Var(v4,_), _), _) ->
+                  if (CP.eq_spec_var v1 v4) & (CP.eq_spec_var v2 v3) then merged [(CP.BForm((CP.mkNeq var1 var2 no_pos, None), None))] (* a<b | b<a *)
                   else merge_other f1 f2
             | _ -> merge_other f1 f2
           end
@@ -108,42 +115,42 @@ let merge_ieq_ieq f1 f2  =  (* merge_other f1 f2 *)
 
       
 
-let merge_eq_ieq eq ieq  = (* merge_other f1o f2o *)
-  let emap = CP.EMapSV.build_eset ( CP.pure_ptr_equations eq) in
-  match ieq with
-    | CP.BForm (b, lb) ->
-          begin
-            match b with
-              | (CP.Lt (ex1, ex2, s), l) -> 
-                    begin
-                      match conv_exp_to_var ex1, conv_exp_to_var ex2 with
-                        |  Some v1, Some v2 ->
-                               if CP.EMapSV.is_equiv emap v1 v2 then 
-                                   merged [CP.BForm ((CP.Lte (ex1,  ex2, s), l), lb)]
-                               else merge_other eq ieq
-                        | _, _ -> merge_other eq ieq
-                    end
-              | (CP.Gt (ex1, ex2, s), l) ->
-                    begin
-                      match conv_exp_to_var ex1, conv_exp_to_var ex2 with
-                        |  Some v1, Some v2 ->
-                               if CP.EMapSV.is_equiv emap v1 v2 then
-                                 merged [CP.BForm ((CP.Gte (ex1,  ex2, s), l), lb)]
-                               else merge_other eq ieq
-                        | _, _ -> merge_other eq ieq
-                    end
-              | (CP.Neq (ex1, ex2, _), _) ->
-                    begin
-                      match conv_exp_to_var ex1, conv_exp_to_var ex2 with
-                        |  Some v1, Some v2 ->
-                               if CP.EMapSV.is_equiv emap v1 v2 then 
-                                   merged [CP.mkTrue no_pos]
-                               else merge_other eq ieq
-                        | _, _ -> merge_other eq ieq
-                    end
-              | _ -> merge_other eq ieq
-          end
-    | _ -> merge_other eq ieq
+let merge_eq_ieq eq ieq  = merge_other eq ieq
+  (* let emap = CP.EMapSV.build_eset ( CP.pure_ptr_equations eq) in *)
+  (* match ieq with *)
+  (*   | CP.BForm (b, lb) -> *)
+  (*         begin *)
+  (*           match b with *)
+  (*             | (CP.Lt (ex1, ex2, s), l) ->  *)
+  (*                   begin *)
+  (*                     match conv_exp_to_var ex1, conv_exp_to_var ex2 with *)
+  (*                       |  Some v1, Some v2 -> *)
+  (*                              if CP.EMapSV.is_equiv emap v1 v2 then  *)
+  (*                                  merged [CP.BForm ((CP.Lte (ex1,  ex2, s), l), lb)] *)
+  (*                              else merge_other eq ieq *)
+  (*                       | _, _ -> merge_other eq ieq *)
+  (*                   end *)
+  (*             | (CP.Gt (ex1, ex2, s), l) -> *)
+  (*                   begin *)
+  (*                     match conv_exp_to_var ex1, conv_exp_to_var ex2 with *)
+  (*                       |  Some v1, Some v2 -> *)
+  (*                              if CP.EMapSV.is_equiv emap v1 v2 then *)
+  (*                                merged [CP.BForm ((CP.Gte (ex1,  ex2, s), l), lb)] *)
+  (*                              else merge_other eq ieq *)
+  (*                       | _, _ -> merge_other eq ieq *)
+  (*                   end *)
+  (*             | (CP.Neq (ex1, ex2, _), _) -> *)
+  (*                   begin *)
+  (*                     match conv_exp_to_var ex1, conv_exp_to_var ex2 with *)
+  (*                       |  Some v1, Some v2 -> *)
+  (*                              if CP.EMapSV.is_equiv emap v1 v2 then  *)
+  (*                                  merged [CP.mkTrue no_pos] *)
+  (*                              else merge_other eq ieq *)
+  (*                       | _, _ -> merge_other eq ieq *)
+  (*                   end *)
+  (*             | _ -> merge_other eq ieq *)
+  (*         end *)
+  (*   | _ -> merge_other eq ieq *)
 
 let merge_eq_eq f1 f2 = merge_other f1 f2
 
@@ -153,7 +160,7 @@ let merge_two_disj f1 f2 =
   let f1 = make_strict_ieq f1 in
   let f2 = make_strict_ieq f2 in
   match CP.is_ieq f1, CP.is_ieq f2 with
-    | true, true ->   merge_ieq_ieq  f1 f2 
+    | true, true ->  merge_ieq_ieq  f1 f2 
     | false, true ->  if CP.is_eq_exp f1 then merge_eq_ieq f1 f2  else  merge_other f1 f2
     | true, false ->  if CP.is_eq_exp f2 then merge_eq_ieq f2 f1  else  merge_other f1 f2
     | false, false -> if (CP.is_eq_exp f1) && (CP.is_eq_exp f2) then merge_eq_eq f1 f2 else  merge_other f1 f2
@@ -161,14 +168,14 @@ let merge_two_disj f1 f2 =
 let can_further_norm f1_conj f2_conj =
   let f1_sv = List.fold_left (fun a f ->  (CP.all_vars f)@a) [] f1_conj in
   let f2_sv = List.fold_left (fun a f ->  (CP.all_vars f)@a) [] f2_conj in
-  if Gen.BList.list_equiv_eq CP.eq_spec_var f1_sv f2_sv then true
+  if Gen.BList.list_setequal_eq CP.eq_spec_var f1_sv f2_sv then true
   else false
 
-let maybe_merge conj1 conj2 = (* (true, conj1) *)
-  let common_conj, conj1 = List.partition (fun f -> Gen.BList.mem_eq CP.equalFormula f conj2) conj1 in
-  let conj2 = Gen.BList.difference_eq CP.equalFormula conj2 common_conj in
+let maybe_merge conj1i conj2i = (* (true, conj1) *)
+  let common_conj, conj1 = List.partition (fun f -> Gen.BList.mem_eq CP.equalFormula f conj2i) conj1i in
+  let conj2 = Gen.BList.difference_eq CP.equalFormula conj2i common_conj in
   match conj1, conj2 with
-    | [], [] -> (true,conj1)                     (* identical lists*)
+    | [], [] -> (true,conj1i)                     (* identical lists*)
     | _, []
     | [], _  -> (true, common_conj)
     | f1::[], f2::[] -> 
@@ -185,6 +192,11 @@ let maybe_merge conj1 conj2 = (* (true, conj1) *)
           else                          (* formulas can not be further normalized *)
             (false,[])
 
+let maybe_merge conj1 conj2 =
+  let pr = pr_list Cprinter.string_of_pure_formula in
+  let pr_out = pr_pair string_of_bool pr in
+  Debug.no_2 "maybe_merge" pr pr pr_out maybe_merge conj1 conj2
+
 let update_disj disj conj_lst = 
   let rec helper disj (conj_lst,d_init) =
     match disj with
@@ -195,10 +207,10 @@ let update_disj disj conj_lst =
               | Node (conj, d) -> 
                     let (merged, new_conj) = maybe_merge conj conj_lst in 
                     if merged then
-                      (Some (Node (new_conj,d@d_init)), xs)
+                      (Some (Node (new_conj,d_init@d)), xs)
                     else 
-                      let merged, disj = helper xs (conj_lst,d_init) in
-                      (merged, x::disj)
+                      let merged_node, disj = helper xs (conj_lst,d_init) in
+                      (merged_node, disj@[x])
   in
   let rec aux disj (conj_lst, d) =
     let merged_node, disj = helper disj (conj_lst,d)  in
@@ -208,20 +220,23 @@ let update_disj disj conj_lst =
   in
   aux disj (conj_lst,[])
 
+(* adds a new disjunct(conj_lst) to the existing tree  *)
 let add_disj_to_tree conj_lst tree =
   match tree with
     | Empty -> Node(conj_lst, [Empty])
-    | Node (common, disj) -> 
+    | Node (common, disjT) -> 
+          (* new_common <-- conj_lst \intersect common; push_back = common\conj_lst *)
           let new_common, push_back = List.partition (fun c-> Gen.BList.mem_eq CP.equalFormula c conj_lst) common in
-          let new_disj = List.map (fun d -> 
+          let new_disjT = List.map (fun d -> 
               match d with
                 | Empty -> Node(push_back, [])
-                | Node (c,d) -> Node (c@push_back, d) ) disj in
+                | Node (c,d) -> Node (c@push_back, d) ) disjT in
           let conj_lst = Gen.BList.difference_eq  CP.equalFormula conj_lst new_common in (* grep only what's not common with the root *)
           (* let new_disj = Empty::new_disj in (\* Empty is the placeholder for conj_lst in case the latter can not merge with other  *\) *)
-          let new_disj = update_disj new_disj conj_lst in
-          Node(new_common, new_disj)
+          let new_disjT = update_disj new_disjT conj_lst in
+          Node(new_common, new_disjT)
 
+(* creates the tree of disjunctions *)
 let norm_disj_tree disj = 
   let rec helper disj tree =
     match disj with
