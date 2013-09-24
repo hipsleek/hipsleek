@@ -57,9 +57,42 @@ res:  [
 
 */
 =============================================================
+# imm/ll-lend-1.ss --field-ann
+
+ll<n,a> == self=null & n=0 or
+  self::node<_@a,q>*q::ll<n-1,a>
+  inv n>=0;
+
+int length(node p)
+  requires p::ll<n,@L>
+  ensures p::ll<n,@L> & res=n;
+
+Above should flag an error since @L is present
+in the post-condition.
 
 =============================================================
+# imm/ll-lend-b.ss --field-ann
+
+ll<n,a1,a2> == self=null & n=0 or
+  self::node<_@a1,q@a2>*q::ll<n-1,a1,a2>
+  inv n>=0;
+
+int length(node p)
+  requires p::ll<n,@M,@A>
+  ensures p::ll<n,@M,@A> & res=n;
+
+This currently succeeds but is actually
+unsound since we need read permission on p.next
 =============================================================
+# ll-lend-b.slk --field-ann
+
+Below should fail.
+
+checkentail p::ll_ann<n,@M,@A> & n>0 |- p::node<_,_@L>.
+  // why this succeed?
+
+checkentail p::ll_ann<n,@A,@M> & n>0 |- p::node<_@L,_@M>.
+  // why this succeed?
 =============================================================
 =============================================================
 =============================================================

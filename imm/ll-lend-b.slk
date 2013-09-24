@@ -1,0 +1,23 @@
+data node{
+ int val;
+ node next;
+}.
+
+pred ll_ann<n,a1,a2> == self=null & n=0 or
+  self::node<_@a1,q@a2>*q::ll_ann<n-1,a1,a2>
+  inv n>=0.
+
+checkentail p::ll_ann<n,@M,@M> & n=0 |- p=null.
+
+
+checkentail p::node<_,_@A> |- p::node<_,_@L>.
+  // fail as expected
+
+checkentail p::ll_ann<n,@M,@A> & n>0 |- p::node<_,_@M>.
+  // fail as expected
+
+checkentail p::ll_ann<n,@M,@A> & n>0 |- p::node<_,_@L>.
+  // why this succeed?
+
+checkentail p::ll_ann<n,@A,@M> & n>0 |- p::node<_@L,_@M>.
+  // why this succeed?
