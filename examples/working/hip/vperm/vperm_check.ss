@@ -26,7 +26,7 @@ void incCell(ref cell x)
 int test1(ref int x,ref int y)
   requires true //@full[x,y]
   ensures @full[y] & res = z
-          and @full[x] & thread=z; //'
+          and thread=z & true--> @full[x]; //'
 {
   int id;
   id=fork(inc,x);
@@ -39,7 +39,7 @@ int test1(ref int x,ref int y)
 int test2(ref cell x,ref cell y)
   requires x::cell<i> * y::cell<j> // & @full[x,y] 
   ensures y::cell<j+1> & @full[y] & res = z
-          and x::cell<i+1> & @full[x] & thread=z; //'
+          and thread=z & true --> x::cell<i+1> & @full[x]; //'
 {
   int id;
   id=fork(incCell,x);
@@ -52,7 +52,7 @@ int test2(ref cell x,ref cell y)
 int test3(ref int x,ref int y)
   requires true //@full[x,y]
   ensures @full[y] & res = z
-          and @full[x] & thread=z; //'
+          and thread=z & true --> @full[x]; //'
 {
   int id;
   id=fork(inc,x);
@@ -65,7 +65,7 @@ int test3(ref int x,ref int y)
 int test4(ref int x,ref int y)
   requires true //@full[x,y]
   ensures @full[y] & res = z
-          and @full[x] & thread=z; //'
+          and thread=z & true --> @full[x]; //'
 {
   int id;
   id=fork(inc,x);

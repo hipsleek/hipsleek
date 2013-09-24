@@ -197,6 +197,7 @@ let rec string_of_formula_exp = function
   | P.InfConst(s,l) -> s
   | P.AConst (i, l)           -> string_of_heap_ann i
   | P.Tsconst (i,l)			  -> Tree_shares.Ts.string_of i
+  | P.Bptriple (t,l) -> pr_triple string_of_formula_exp string_of_formula_exp string_of_formula_exp t
   | P.FConst (f, _) -> string_of_float f
   | P.Add (e1, e2, l)	      -> (match e1 with 
 	  | P.Null _ 
@@ -466,14 +467,16 @@ let rec string_of_h_formula = function
 (* let string_of_identifier (d1,d2) = d1^(match d2 with | Primed -> "&&'" | Unprimed -> "");;  *)
 
 let string_of_one_formula (f:F.one_formula) =
-  let h,p,th,pos = F.split_one_formula f in
+  let h,p,dl,th,pos = F.split_one_formula f in
   let sh = string_of_h_formula h in
   let sp = string_of_pure_formula p in
+  let sdl = string_of_pure_formula dl in
   let sth = match th with
     | None -> ("thread = None")
     | Some (v,_) ->("thread = " ^ v)  in
   ( "<" ^ sth^ ">" 
-    ^ "*" ^ "(" ^ sh ^ ")" 
+    ^ "&" ^ "(" ^ sdl ^ ")" 
+    ^ " --> " ^ "(" ^ sh ^ ")" 
     ^ "*" ^ "(" ^ sp ^ ")" )
 
 let rec string_of_one_formula_list (f:F.one_formula list) =

@@ -354,6 +354,7 @@ rule tokenizer file_name = parse
   | ']' { CSQUARE }
   | '$' { DOLLAR }
   | "." { DOT }
+  | ".." { DOTDOT }
   | "\"" { DOUBLEQUOTE }
   | "\\inf" {INFINITY}
   | "=" { EQ }

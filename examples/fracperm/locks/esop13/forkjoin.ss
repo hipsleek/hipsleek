@@ -28,7 +28,7 @@ void main()
   init[LOCK](l1);
   release(l1);
   //
-  int id = fork(func,l1); //create a chile thread
+  int id = fork(func,l1); //create a child thread
   //DELAY
   //
   acquire(l1);

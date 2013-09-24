@@ -152,15 +152,21 @@ let parse_file (parse) (source_file : string) =
   let proc_one_def c =
     Debug.no_1 "proc_one_def" string_of_command pr_none proc_one_def c 
   in
-  (* let proc_one_lemma c =  *)
-  (*   match c with *)
-  (*     | LemmaDef ldef -> process_list_lemma ldef *)
-  (*     | DataDef _ | PredDef _ | BarrierCheck _ | FuncDef _ | RelDef _ | HpDef _ | AxiomDef _ (\* An Hoa *\) *)
-  (*     | CaptureResidue _ | LetDef _ | EntailCheck _ | EqCheck _ | InferCmd _ | PrintCmd _  *)
-  (*     | RelAssume _ | RelDefn _ | ShapeInfer _ | ShapeDivide _ | ShapeConquer _ | ShapePostObl _  *)
-  (*     | ShapeInferProp _ | ShapeSplitBase _ | ShapeElim _ | ShapeExtract _ | ShapeDeclDang _ | ShapeDeclUnknown _ *)
-  (*     | ShapeSConseq _ | ShapeSAnte _ *)
-  (*     | CmpCmd _| Time _ | _ -> () in *)
+  (* 
+     Processing lemmas so that we could add_uni_vars_to_view.
+     See examples/working/sleek/fracperm/uni_vars 
+     for an example of uni_vars - This is a general solution,
+     not limited to fracperm only
+  *)
+  let proc_one_lemma c =
+    match c with
+      | LemmaDef ldef -> process_list_lemma ldef
+      | DataDef _ | PredDef _ | BarrierCheck _ | FuncDef _ | RelDef _ | HpDef _ | AxiomDef _ (* An Hoa *)
+      | CaptureResidue _ | LetDef _ | EntailCheck _ | EqCheck _ | InferCmd _ | PrintCmd _
+      | RelAssume _ | RelDefn _ | ShapeInfer _ | ShapeDivide _ | ShapeConquer _ | ShapePostObl _
+      | ShapeInferProp _ | ShapeSplitBase _ | ShapeElim _ | ShapeExtract _ | ShapeDeclDang _ | ShapeDeclUnknown _
+      | ShapeSConseq _ | ShapeSAnte _
+      | CmpCmd _| Time _ | _ -> () in
   let proc_one_cmd c = 
     match c with
       | EntailCheck (iante, iconseq, etype) -> (process_entail_check iante iconseq etype; ())
@@ -195,8 +201,8 @@ let parse_file (parse) (source_file : string) =
       | Time (b,s,_) -> 
             if b then Gen.Profiling.push_time s 
             else Gen.Profiling.pop_time s
-      | LemmaDef ldef -> process_list_lemma ldef
-      | DataDef _ | PredDef _ | FuncDef _ | RelDef _ | HpDef _ | AxiomDef _ (* An Hoa *) (* | LemmaDef _ *) 
+      (* | LemmaDef ldef -> process_list_lemma ldef *)
+      | DataDef _ | PredDef _ | FuncDef _ | RelDef _ | HpDef _ | AxiomDef _ (* An Hoa *) | LemmaDef _ 
       | EmptyCmd -> () in
   let cmds = parse_first [] in
   List.iter proc_one_def cmds;
@@ -213,13 +219,22 @@ let parse_file (parse) (source_file : string) =
   Debug.tinfo_pprint "sleek : after 2nd parsing" no_pos;
   convert_data_and_pred_to_cast ();
   Debug.tinfo_pprint "sleek : after convert_data_and_pred_to_cast" no_pos;
-  (* List.iter proc_one_lemma cmds; *)
   (* Debug.tinfo_pprint "sleek : after proc one lemma" no_pos; *)
   (*identify universal variables*)
+  List.iter proc_one_lemma cmds;
+  let l2r = Lem_store.all_lemma # get_left_coercion in
+  let r2l = Lem_store.all_lemma # get_right_coercion in
+  let _ = if (!Globals.print_core || !Globals.print_core_all) then
+        print_string ("\nleft:\n " ^ (Cprinter.string_of_coerc_decl_list l2r) ^"\n right:\n"^ (Cprinter.string_of_coerc_decl_list r2l) ^"\n") else () in
+  (*-------------END lemma --------------------*)
   let cviews = !cprog.C.prog_view_decls in
   let cviews = List.map (Cast.add_uni_vars_to_view !cprog (Lem_store.all_lemma # get_left_coercion) (*!cprog.C.prog_left_coercions*)) cviews in
   !cprog.C.prog_view_decls <- cviews;
-  List.iter proc_one_cmd cmds 
+  List.iter proc_one_cmd cmds
+
+
+
+
 
 
 let main () =
@@ -242,7 +257,12 @@ let main () =
                 I.prog_hopred_decls = [];
 				I.prog_barrier_decls = [];
               } in
-  let _ = process_data_def (I.b_data_constr b_datan []) in
+  (*Generate barrier data type*)
+  let _ = if (!Globals.perm = Globals.Dperm) then
+        process_data_def (I.b_data_constr b_datan [])
+      else if (!Globals.perm = Globals.Bperm) then
+        process_data_def (I.b_data_constr b_datan [((Int,"phase"))])
+  in
   let _ = I.inbuilt_build_exc_hierarchy () in (* for inbuilt control flows *)
   let _ = Iast.build_exc_hierarchy true iprog in
   let _ = exlist # compute_hierarchy  in  

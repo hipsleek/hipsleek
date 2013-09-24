@@ -235,7 +235,7 @@ let prelude () =
   (* start omega system in a separated process and load redlog package *)
 let start() =
   if not !is_omega_running then begin
-      print_endline ("Starting Omega..." ^ !omegacalc); flush stdout;
+      if (not !Globals.web_compile_flag) then print_endline ("Starting Omega..." ^ !omegacalc); flush stdout;
       last_test_number := !test_number;
       let _ = Procutils.PrvComms.start !log_all_flag log_all ("omega", !omegacalc, [||]) set_process prelude in
       is_omega_running := true;
@@ -245,6 +245,7 @@ let start() =
 let stop () =
   if !is_omega_running then begin
     let num_tasks = !test_number - !last_test_number in
+    if (not !Globals.web_compile_flag) then
     print_string_if !Globals.enable_count_stats ("Stop Omega... "^(string_of_int !omega_call_count)^" invocations "); flush stdout;
     let _ = Procutils.PrvComms.stop !log_all_flag log_all !process num_tasks Sys.sigkill (fun () -> ()) in
     is_omega_running := false;

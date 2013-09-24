@@ -1,0 +1,9 @@
+Procedure init_ray_tasks$ SUCCESS.
+Procedure process_tasks$barrier SUCCESS.
+Procedure f_r_1117_while_69_2$barrier FAIL.(2)
+Procedure init_global$barrier~int SUCCESS.
+Procedure init_visibility_module$ SUCCESS.
+Procedure input$ SUCCESS.
+Procedure parse_args$int~int SUCCESS.
+Procedure main$ SUCCESS.
+Procedure radiosity$barrier FAIL.(2)
