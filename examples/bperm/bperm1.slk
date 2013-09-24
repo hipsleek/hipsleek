@@ -1,0 +1,42 @@
+data node {int val ; node next;}.
+
+//(1)
+checkentail x::node(3,2,1)<_, null> |- x::node(3,2,1)<_,b>.
+print residue.
+// VALID, exact match
+
+//(2)
+checkentail x::node(1,2,1)<_, null> |- x::node(1,3,1)<_,b>.
+print residue.
+// FAIL, exact match
+
+//(3)
+checkentail x::node(1,2,1)<_, null> |- (exists c,t,a: x::node(c,t,a)<_,b>).
+print residue.
+//VALID
+
+//(4)
+checkentail x::node(1,2,1)<_, null> |- x::node(c,t,a)<_,b>.
+print residue.
+//VALID with implicit instantiation
+
+
+//(5)
+checkentail x::node(c,t,a)<_, null> |- 0<=c<=t+a & t>=0.
+print residue.
+// VALID, invariant
+
+//(6)
+checkentail x::node(1,2,1)<_, null> |- [c,t,a] x::node(c,t,a)<_,b>.
+print residue.
+//VALID with explicit instantiation, residue: c=1, t=2, a=1
+
+//(7)
+checkentail x::node(1,2,1)<_, null> |- (exists c: x::node(c,t,a)<_,b>).
+print residue.
+//VALID with implicit instantiation, residue: t=2, a=1
+
+//(8)
+checkentail x::node(1,2,1)<_, null> |- (exists a1: x::node(c,t,a)<_,b> & a=a1 & a1=2).
+print residue.
+//FAIL

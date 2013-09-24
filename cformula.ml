@@ -1711,8 +1711,8 @@ and h_add_perm_a (h : h_formula) (permvar:cperm_var) : h_formula=
 	      Star ({h_formula_star_h1 = helper h1;
 		  h_formula_star_h2 = helper h2;
 		  h_formula_star_pos = pos})
-    | ViewNode vn -> ViewNode {vn with h_formula_view_perm = Some permvar}
-    | DataNode vn -> DataNode {vn with h_formula_data_perm = Some permvar}
+    | ViewNode vn -> ViewNode {vn with h_formula_view_perm = Some (Cpure.Var (permvar,no_pos))}
+    | DataNode vn -> DataNode {vn with h_formula_data_perm = Some (Cpure.Var (permvar,no_pos))}
     | _ -> h
   in helper h
 
@@ -2666,7 +2666,7 @@ and subst_b sst (f : formula_base) =
 and dn_subst sst dn=
   ({ dn with
       h_formula_data_node = CP.subst_var_par sst dn.h_formula_data_node;
-      h_formula_data_perm = map_opt (CP.subst_var_par sst) dn.h_formula_data_perm;
+      h_formula_data_perm = map_opt (CP.e_apply_subs sst) dn.h_formula_data_perm;
 	  h_formula_data_arguments = List.map (CP.subst_var_par sst) dn.h_formula_data_arguments;
 	  h_formula_data_pruning_conditions = List.map (fun (c,c2)-> (CP.b_apply_subs sst c,c2)) dn.h_formula_data_pruning_conditions;
    })
@@ -2728,7 +2728,7 @@ and h_subst sst (f : h_formula) =
 		ViewNode { g with 
 							h_formula_view_imm = subs_imm_par sst imm;  
 							h_formula_view_node = CP.subst_var_par sst x; 
-							h_formula_view_perm = map_opt (CP.subst_var_par sst) perm;
+							h_formula_view_perm = map_opt (CP.e_apply_subs sst) perm;
 							h_formula_view_arguments = List.map (CP.subst_var_par sst) svs;
 							h_formula_view_pruning_conditions = List.map (fun (c,c2)-> (CP.b_apply_subs sst c,c2)) pcond
 		}
@@ -2751,7 +2751,7 @@ and h_subst sst (f : h_formula) =
 							h_formula_data_derv = dr; 
 							h_formula_data_imm = subs_imm_par sst imm;  
 	                        h_formula_data_param_imm = List.map (subs_imm_par sst) ann_param;
-							h_formula_data_perm = map_opt (CP.subst_var_par sst) perm;   (*LDK*)
+							h_formula_data_perm = map_opt (CP.e_apply_subs sst) perm;   (*LDK*)
 							h_formula_data_arguments = List.map (CP.subst_var_par sst) svs;
 							h_formula_data_holes = hs; (* An Hoa 16/8/2011 Holes added *)
 							h_formula_data_origins = orgs;
@@ -3593,11 +3593,11 @@ and propagate_perm_h_formula (f : h_formula) (permvar:cperm_var) : h_formula * (
   match f with
     | ViewNode f1 -> 
         let fresh_var = fresh_cperm_var () permvar in
-        let vn = ViewNode({f1 with h_formula_view_perm = Some fresh_var}) in
+        let vn = ViewNode({f1 with h_formula_view_perm = Some (Cpure.Var (fresh_var,no_pos))}) in
         (vn,[fresh_var])
     | DataNode f1 -> 
         let fresh_var = fresh_cperm_var () permvar in
-        let dn = DataNode({f1 with h_formula_data_perm = Some fresh_var}) in
+        let dn = DataNode({f1 with h_formula_data_perm = Some (Cpure.Var (fresh_var,no_pos))}) in
         (dn,[fresh_var])
     | Star f1 ->
 	      let h1,xs1 = propagate_perm_h_formula f1.h_formula_star_h1 permvar in
@@ -10356,6 +10356,40 @@ let clear_entailment_history_es_es (es :entail_state) : entail_state =
       es_heap = HEmp;
   }
 
+
+let clear_entailment_history_es2 xp (es :entail_state) :entail_state =
+  (* TODO : this is clearing more than es_heap since qsort-tail.ss fails otherwise *)
+  let hf = es.es_heap in
+  (* let old_history =  if is_data hf then es.es_history@[hf] else es.es_history in *)
+  let old_history =  [] in
+  (* adding xpure0 of es_heap into es_formula *)
+  let es_f = match xp hf with
+    | None -> es.es_formula
+    | Some (mf,svl,mm)  -> mkAnd_pure es.es_formula mf no_pos
+  in 
+      {(empty_es (mkTrueFlow ()) es.es_group_lbl no_pos) with
+          es_formula = es_f;
+          es_history = old_history;
+          es_path_label = es.es_path_label;
+          es_prior_steps = es.es_prior_steps;
+          es_var_measures = es.es_var_measures;
+      (* WN : what is the purpose of es_var_stack?*)
+          es_var_stack = es.es_var_stack;
+      es_pure = es.es_pure;
+          es_infer_vars = es.es_infer_vars;
+          es_infer_vars_rel = es.es_infer_vars_rel;
+          es_infer_vars_hp_rel = es.es_infer_vars_hp_rel;
+          es_infer_vars_sel_hp_rel = es.es_infer_vars_sel_hp_rel;
+          es_infer_vars_sel_post_hp_rel = es.es_infer_vars_sel_post_hp_rel;
+          es_infer_hp_unk_map = es.es_infer_hp_unk_map;
+          es_infer_heap = es.es_infer_heap;
+          es_infer_pure = es.es_infer_pure;
+          es_infer_rel = es.es_infer_rel;
+          es_infer_hp_rel = es.es_infer_hp_rel;
+          es_group_lbl = es.es_group_lbl;
+          es_term_err = es.es_term_err;
+          es_var_zero_perm = es.es_var_zero_perm;}
+
 (*
   to be used in the type-checker. After every entailment, the history of consumed nodes
   must be cleared.
@@ -12004,7 +12038,7 @@ let prepost_of_acquire_x (var:CP.spec_var) sort (args:CP.spec_var list) (inv:for
       h_formula_view_name = sort; (*lock_sort*)
       h_formula_view_derv = false;
       h_formula_view_imm = ConstAnn(Mutable); 
-      h_formula_view_perm = Some fresh_perm;
+      h_formula_view_perm = Some (Cpure.Var (fresh_perm,no_pos));
       h_formula_view_arguments = uargs;
       h_formula_view_modes = []; (*???*)
       h_formula_view_coercible = true; (*??*)
@@ -12050,7 +12084,7 @@ let prepost_of_acquire_x (var:CP.spec_var) sort (args:CP.spec_var list) (inv:for
         ls_post_f
   in
   (**************)
-  let read_f = mkPermInv () fresh_perm in
+  let read_f = mkPermInv_var () fresh_perm in
   (*POST-CONDITION*)
   let tmp = mkBase_simp lock_node (MCP.memoise_add_pure_N (MCP.mkMTrue pos) lock_post_f) in
   (* let tmp = formula_of_heap_w_normal_flow lock_node pos in *)
@@ -12828,7 +12862,7 @@ let collect_heap_args_list_failesc_context (ctx:list_failesc_context) (sv:CP.spe
          (*pickup a set of args and its non-empty node name*)
          let head_args,head_id = List.find (fun (args,id) -> (id<>"")) args_list in
          let _ = List.iter (fun (args,id) ->
-             if(id<>"") & (((List.length head_args) != (List.length args)) || (id!=head_id)) then
+             if(id<>"") & (((List.length head_args) != (List.length args)) || (id<>head_id)) then
                (*if a node name is non-empty, it should be consistent with the head*)
                report_error no_pos ("collect_heap_args_list_failesc_context: heap_args of node " ^ (!print_sv sv) ^ (" are inconsistent"))
              else ()
@@ -13112,7 +13146,7 @@ let get_bar_conds b_name self (l_f:(formula * formula_label) list): ((int option
 					let f = MCP.fold_mem_lst (CP. mkTrue no_pos) false false p in
 					let perm = match bd.h_formula_data_perm with
 						| None -> Some Tree_shares.Ts.top
-						| Some v -> CP.get_inst_tree v f in
+						| Some v -> CP.get_inst_tree (List.hd (Cpure.afv v)) f in
 					(CP.get_inst_int (List.hd bd.h_formula_data_arguments) f, perm, lbl) in	
 	List.map helper l_f
 	
@@ -13225,6 +13259,7 @@ let elim_prm e =
     | CP.Func _
     | CP.ArrayAt _ -> Some e 
     | CP.Var (v,p)-> Some (CP.Var (nv v, p))
+    | CP.Bptriple ((c,t,a),p) -> Some (CP.Bptriple ((nv c,nv t,nv a),p))
     | CP.Add _ 
     | CP.Subtract _ 
     | CP.Mult _

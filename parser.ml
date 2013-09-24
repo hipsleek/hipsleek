@@ -1267,19 +1267,26 @@ disjunctive_constr:
    ]
   ];
 
-core_constr_and : [[ ls=core_constr_conjunctions ->
- 
- let main = List.hd ls in
-    let formula_and = List.tl ls in
-    let formula_and = List.map (F.one_formula_of_formula) formula_and in
-    let main = F.add_formula_and formula_and main in
-    main
- ]];
+core_constr_and : [[ 
+    f1 = core_constr; `ANDWORD; ls=core_constr_conjunctions ->
+      let main = F.add_formula_and ls f1 in
+      main
+  | f1 = core_constr -> f1
+]];
 
 core_constr_conjunctions: [ "core_constr_and" LEFTA
                    [ f1 = SELF; `ANDWORD; f2 = SELF -> f1@f2]
-                   | [f1 = core_constr -> [f1]]
+                   | [f1 = and_core_constr -> [f1]]
                   ];
+
+and_core_constr:
+  [
+    [ dl = pure_constr; `CONSTR; f = core_constr  ->
+       let h,p,fl,_ = F.split_components f in
+       let pos = (get_pos_camlp4 _loc 2) in 
+       F.mkOneFormula h p dl None pos
+    ]
+  ];
 
 core_constr:
   [
@@ -1461,7 +1468,20 @@ simple_heap_constr:
 opt_perm: [[t = OPT perm -> t ]];
 
 (*LDK: for fractionl permission, we expect cexp*)
-perm: [[`OPAREN; t = cexp; `CPAREN  -> t ]];  
+perm: [[ `OPAREN; t = LIST1 cexp SEP `COMMA; `CPAREN  ->
+          match !Globals.perm with
+            | Bperm -> (*Bounded permissions have 3 parameters*)
+                if ((List.length t) ==3) then
+                  let pc = List.hd t in
+                  let pt = List.hd (List.tl t) in
+                  let pa = List.hd (List.tl (List.tl t)) in
+                  Ipure.Bptriple ((pc,pt,pa),get_pos_camlp4 _loc 1)
+                else
+                  let _ = print_endline ("Warning: bounded permission has incorrect number of arguments") in
+                  let e = Ipure.IConst (1,get_pos_camlp4 _loc 1) in
+                  Ipure.Bptriple ((e,e,e),get_pos_camlp4 _loc 1)
+            | _ -> List.hd t (*other permission systems have one parameter*)
+       ]];
 
 opt_general_h_args: [[t = OPT general_h_args -> un_option t ([],[])]];   
         
@@ -2283,7 +2303,7 @@ mdecl:
 	  |t=decl -> [t]]];
   
 decl:
-  [[ `HIP_INCLUDE; `PRIME; `IDENTIFIER ic; `PRIME -> Include ic
+  [[ `HIP_INCLUDE; `PRIME; ic = dir_path ; `PRIME -> Include ic
 	|  t=type_decl                  -> Type t
   |  r=func_decl; `DOT -> Func r
   |  r=rel_decl; `DOT -> Rel r (* An Hoa *)
@@ -2297,6 +2317,16 @@ decl:
         { coercion_list_elems = [c];
           coercion_list_kind  = (convert_lem_kind kind)}
   | `LEMMA kind(* lex *); c = coercion_decl_list; `SEMICOLON    -> Coercion_list {c with (* coercion_exact = false *) coercion_list_kind = convert_lem_kind kind}]];
+
+dir_path: [[t = LIST1 file_name SEP `DIV ->
+    let str  = List.fold_left (fun res str -> res^str^"/") "" t in
+    let len = String.length str in
+    Str.string_before str (len-1)
+           ]];
+
+file_name: [[ `DOTDOT -> ".."
+              | `IDENTIFIER id -> id
+            ]];
 
 type_decl: 
   [[ t= data_decl  -> Data t

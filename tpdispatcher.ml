@@ -26,11 +26,13 @@ let wrap_ocredlog = Wrapper.wrap_oc_redlog
 let test_db = false
 
 (* let pure_tp = ref OmegaCalc *)
+(* let tp = ref OmegaCalc *)
 let pure_tp = ref OM
 (* let tp = ref OZ *)
-(* let tp = ref Redlog *)
+let tp = ref Redlog
 (* let tp = ref AUTO *)
 (* let tp = ref PARAHIP *)
+(* let tp = ref Z3 *)
 
 let provers_process = ref None
 
@@ -636,6 +638,7 @@ let rec is_array_exp e = match e with
   | CP.Func _ -> Some false
   | CP.TypeCast (_, e1, _) -> is_array_exp e1
   | CP.AConst _ | CP.FConst _ | CP.IConst _ | CP.Tsconst _ | CP.InfConst _ 
+    | CP.Bptriple _
   | CP.Level _
   | CP.Var _ | CP.Null _ -> Some false
 
@@ -669,6 +672,7 @@ let rec is_list_exp e = match e with
   | CP.TypeCast (_, e1, _) -> is_list_exp e1
   | CP.ArrayAt (_,_,_) | CP.Func _ -> Some false
   | CP.Null _ | CP.AConst _ | CP.Tsconst _ | CP.InfConst _
+    | CP.Bptriple _
   | CP.Level _
   | CP.FConst _ | CP.IConst _ -> Some false
   | CP.Var(sv,_) -> if CP.is_list_var sv then Some true else Some false
@@ -1367,6 +1371,7 @@ let assumption_filter_slicing (ante : CP.formula) (cons : CP.formula) : (CP.form
   (CP.join_conjunctions (pick_rel_constraints cons l_ante), cons)
 
 let assumption_filter (ante : CP.formula) (cons : CP.formula) : (CP.formula * CP.formula) =
+  if (CP.isConstFalse cons) then (ante,cons) else
   let conseq_vars = CP.fv cons in
   if (List.exists (fun v -> CP.name_of_spec_var v = waitlevel_name) conseq_vars) then
     (ante,cons)
@@ -1378,7 +1383,7 @@ let assumption_filter (ante : CP.formula) (cons : CP.formula) : (CP.formula * CP
   Debug.no_2 "assumption_filter" pr pr (fun (l, _) -> pr l)
 	assumption_filter ante cons
 
-	  
+
 (* rename and shorten variables for better caching of formulas *)
 (* TODO WN: check if it avoids name clashes? *)
 let norm_var_name (e: CP.formula) : CP.formula =
@@ -1479,6 +1484,7 @@ let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
   if not !tp_batch_mode then start_prover ();
   let f = if (!Globals.allow_locklevel) then
         (*should translate waitlevel before level*)
+        let f = CP.infer_level_pure f in (*add l.mu>0*)
         let f = CP.translate_waitlevel_pure f in
         let f = CP.translate_level_pure f in
         let _ = Debug.devel_hprint (add_str "After translate_: " Cprinter.string_of_pure_formula) f no_pos in
@@ -2142,8 +2148,10 @@ let restore_suppress_imply_output_state () = match !suppress_imply_output_stack 
 let tp_imply_no_cache ante conseq imp_no timeout process =
   let ante,conseq = if (!Globals.allow_locklevel) then
         (*should translate waitlevel before level*)
+        let ante = CP.infer_level_pure ante in (*add l.mu>0*)
         let ante = CP.translate_waitlevel_pure ante in
         let ante = CP.translate_level_pure ante in
+        let conseq = CP.infer_level_pure conseq in (*add l.mu>0*)
         let conseq = CP.translate_waitlevel_pure conseq in
         let conseq = CP.translate_level_pure conseq in
         let _ = Debug.devel_hprint (add_str "After translate_: ante = " Cprinter.string_of_pure_formula) ante no_pos in
@@ -2657,6 +2665,8 @@ let is_sat (f : CP.formula) (sat_no : string): bool =
 
   
 let imply_timeout_helper ante conseq process ante_inner conseq_inner imp_no timeout =  
+        let ante0 = CP.infer_level_pure ante in (*add l.mu>0*) (*MERGE CHECK*)
+        let conseq0 = CP.infer_level_pure conseq in (*add l.mu>0*) (*MERGE CHECK*)
 	  let acpairs = imply_label_filter ante conseq in
 	  let pairs = List.map (fun (ante,conseq) -> 
               let _ = Debug.devel_hprint (add_str "ante 1: " Cprinter.string_of_pure_formula) ante no_pos in

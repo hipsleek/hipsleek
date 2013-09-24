@@ -184,6 +184,7 @@ and exp =
   | AConst of (heap_ann * loc)
   | InfConst of (ident * loc)
   | Tsconst of (Tree_shares.Ts.t_sh * loc)
+  | Bptriple of ((spec_var * spec_var * spec_var) * loc) (*triple for bounded permissions*)
   | Add of (exp * exp * loc)
   | Subtract of (exp * exp * loc)
   | Mult of (exp * exp * loc)
@@ -376,10 +377,10 @@ let is_int_str_aux (n:int) (s:string) : bool =
 
 
 let string_of_spec_var (sv: spec_var) = match sv with
-    | SpecVar (t, v, _) -> v ^ (if is_primed sv then "PRMD" else "")
+    | SpecVar (t, v, _) -> v ^ (if is_primed sv then "'" else "")
  
 let string_of_spec_var_type (sv: spec_var) = match sv with
-    | SpecVar (t, v, _) -> v ^ (if is_primed sv then "PRMD" else "")^":"^(string_of_typ t)
+    | SpecVar (t, v, _) -> v ^ (if is_primed sv then "'" else "")^":"^(string_of_typ t)
 
 
 (* pretty printing for a spec_var list *)
@@ -513,6 +514,11 @@ let get_var_opt (e:exp) =
   match e with 
     | Var (v,_) -> Some v
     | _ -> None
+
+let get_var (e:exp) =
+  match e with 
+    | Var (v,_) -> v
+    | _ -> report_error no_pos "[cpure.ml] get_var: expecting Var"
 
 let filter_vars lv = 
 	List.fold_left (fun a c -> match c with 
@@ -838,6 +844,7 @@ let rec get_exp_type (e : exp) : typ =
   | FConst _ -> Float
   | AConst _ -> AnnT
   | Tsconst _ -> Tree_sh
+  | Bptriple  _ -> Bptyp
   | Add (e1, e2, _) | Subtract (e1, e2, _) | Mult (e1, e2, _)
   | Max (e1, e2, _) | Min (e1, e2, _) ->
       begin
@@ -1064,6 +1071,7 @@ and afv (af : exp) : spec_var list =
     | InfConst _
     | Tsconst _
     | FConst _ -> []
+    | Bptriple ((ec,et,ea),_) -> [ec;et;ea]
     | Var (sv, _) -> if (is_hole_spec_var sv) then [] else [sv]
     | Level (sv, _) -> if (is_hole_spec_var sv) then [] else [sv]
     | Add (a1, a2, _) -> combine_avars a1 a2
@@ -1543,6 +1551,8 @@ and is_varperm_of_typ (f : formula) typ : bool=
 and get_varperm_pure (f : formula) typ : spec_var list=
   (match f with
     | BForm (b,_) -> get_varperm_b b typ
+    | AndList ls ->
+        List.concat (List.map (fun (_,fi) -> get_varperm_pure fi typ) ls)
     | And (f1,f2,_) ->
           let res1 = get_varperm_pure f1 typ in
           let res2 = get_varperm_pure f2 typ in
@@ -1673,6 +1683,7 @@ and is_exp_arith (e:exp) : bool=
   | List _ | ListCons _ | ListHead _ | ListTail _
   | ListLength _ | ListAppend _ | ListReverse _ -> false
   | Tsconst _ -> false
+    | Bptriple _ -> false
   | Func _ -> true
   | ArrayAt _ -> true (* An Hoa : a[i] is just a value *)
           
@@ -1981,6 +1992,9 @@ and mkLtExp (ae1 : exp) (ae2 : exp) pos :formula =
 and mkLteExp (ae1 : exp) (ae2 : exp) pos :formula =
   BForm ((Lte (ae1, ae2, pos), None),None)
 
+and mkGteExp (ae1 : exp) (ae2 : exp) pos :formula =
+  BForm ((Gte (ae1, ae2, pos), None),None)
+
 and mkEqExp (ae1 : exp) (ae2 : exp) pos :formula =
   (* let ae1,ae2 =  *)
   (*   match ae1,ae2 with *)
@@ -2051,6 +2065,12 @@ and mkGteVar (sv1 : spec_var) (sv2 : spec_var) pos=
   else
     BForm (((Gte (Var (sv1, pos), Var (sv2, pos), pos)),None), None)
 
+and mkLteVar (sv1 : spec_var) (sv2 : spec_var) pos=
+  if eq_spec_var sv1 sv2 then
+    mkTrue pos
+  else
+    BForm (((Lte (Var (sv1, pos), Var (sv2, pos), pos)),None), None)
+
 and mkNeqVar (sv1 : spec_var) (sv2 : spec_var) pos=
   if eq_spec_var sv1 sv2 then
     mkFalse pos
@@ -2059,6 +2079,9 @@ and mkNeqVar (sv1 : spec_var) (sv2 : spec_var) pos=
 
 and mkEqVarInt (sv : spec_var) (i : int) pos =
   BForm ((Eq (Var (sv, pos), IConst (i, pos), pos), None),None)
+
+and mkNeqVarInt (sv : spec_var) (i : int) pos =
+  BForm ((Neq (Var (sv, pos), IConst (i, pos), pos), None),None)
 
 
 (*and mkTrue pos l= BForm ((BConst (true, pos)),l)*)
@@ -2587,6 +2610,7 @@ and pos_of_exp (e : exp) = match e with
   | AConst (_, p) 
   | FConst (_, p) 
   | Tsconst (_, p)
+  | Bptriple (_,p)
   | Add (_, _, p) 
   | Subtract (_, _, p) 
   | Mult (_, _, p) 
@@ -3055,6 +3079,10 @@ and subs_one sst v =
 
 and e_apply_subs sst e = match e with
   | Null _ | IConst _ | FConst _ | AConst _ |InfConst _ |Tsconst _ -> e
+  | Bptriple ((ec,et,ea),pos) ->
+      Bptriple ((subs_one sst ec,
+                 subs_one sst et,
+                 subs_one sst ea),pos)
   | Var (sv, pos) -> Var (subs_one sst sv, pos)
   | Level (sv, pos) -> Level (subs_one sst sv, pos)
   | Add (a1, a2, pos) -> normalize_add (Add (e_apply_subs sst a1, e_apply_subs sst a2, pos))
@@ -3098,9 +3126,15 @@ and b_subst (zip: (spec_var * spec_var) list) (bf:b_formula) :b_formula =
   let pr = pr_list (pr_pair !print_sv !print_sv) in
   let pr2 = !print_b_formula in
   Debug.no_2 "b_subst" pr pr2 pr2 b_subst_x zip bf
-      
+
+and e_apply_one_spec_var (fr, t) sv = if eq_spec_var sv fr then t else sv
+
 and e_apply_one (fr, t) e = match e with
   | Null _ | IConst _ | InfConst _ | FConst _ | AConst _ | Tsconst _ -> e
+  | Bptriple ((ec,et,ea),pos) ->
+      Bptriple ((e_apply_one_spec_var (fr, t) ec,
+                 e_apply_one_spec_var (fr, t) et,
+                 e_apply_one_spec_var (fr, t) ea),pos)
   | Var (sv, pos) -> Var ((if eq_spec_var sv fr then t else sv), pos)
   | Level (sv, pos) -> Level ((if eq_spec_var sv fr then t else sv), pos)
   | Add (a1, a2, pos) -> normalize_add (Add (e_apply_one (fr, t) a1, e_apply_one (fr, t) a2, pos))
@@ -3215,6 +3249,7 @@ and a_apply_par_term (sst : (spec_var * exp) list) e =
   | InfConst _
   | FConst _ 
   | AConst _ 
+  | Bptriple _ (*TOCHECK*)
   | Tsconst _ -> e
   | Add (a1, a2, pos) -> normalize_add (Add (a_apply_par_term sst a1, a_apply_par_term sst a2, pos))
   | Subtract (a1, a2, pos) -> Subtract (a_apply_par_term sst a1, a_apply_par_term sst a2, pos)
@@ -3322,6 +3357,7 @@ and a_apply_one_term ((fr, t) : (spec_var * exp)) e = match e with
   | AConst _ 
   | InfConst _ 
   | FConst _ 
+  | Bptriple _ -> e
   | Tsconst _ -> e
   | Add (a1, a2, pos) -> normalize_add (Add (a_apply_one_term (fr, t) a1, a_apply_one_term (fr, t) a2, pos))
   | Subtract (a1, a2, pos) -> Subtract (a_apply_one_term (fr, t) a1, a_apply_one_term (fr, t) a2, pos)
@@ -3373,6 +3409,7 @@ and a_apply_one_term_selective variance ((fr, t) : (spec_var * exp)) e : (bool*e
     | FConst _ 
     | AConst _ 
     | Tsconst _ -> (false,e)
+    | Bptriple _ -> (false,e) (* TOCHECK *)
     | Add (a1, a2, pos) -> 
         let b1, r1 = helper crt_var a1 in
         let b2, r2 = helper crt_var a2 in
@@ -4569,6 +4606,7 @@ and b_apply_one_exp (fr, t) bf =
 
 and e_apply_one_exp (fr, t) e = match e with
   | Null _ | IConst _ | InfConst _ | FConst _| AConst _ | Tsconst _ -> e
+  | Bptriple _ -> e
   | Var (sv, pos) -> if eq_spec_var sv fr then t else e
   | Level (sv, pos) -> if eq_spec_var sv fr then t else e
   | Add (a1, a2, pos) -> Add (e_apply_one_exp (fr, t) a1, e_apply_one_exp (fr, t) a2, pos)
@@ -4793,9 +4831,10 @@ and of_interest (e1:exp) (e2:exp) (interest_vars:spec_var list):bool =
     | Level _ 
     | IConst _ 
     | InfConst _ 
-    | AConst _ 
-    | Tsconst _ 
+	| AConst _
+	| Tsconst _
     | FConst _ -> true
+	| Bptriple _ -> false (*TOCHECK*)
     | Add (e1,e2,_)
     | Subtract (e1,e2,_) -> false
     | Mult _
@@ -4923,6 +4962,7 @@ and simp_mult_x (e : exp) :  exp =
     match e0 with
       | Null _ 
       | Tsconst _ 
+      | Bptriple _ 
       | AConst _ -> e0	  
       | Var (v, l) ->
             (match m with 
@@ -4997,6 +5037,7 @@ and split_sums_x (e :  exp) : (( exp option) * ( exp option)) =
     |  Var _ 
     |  Level _ 
     |  Tsconst _
+    |  Bptriple _
     |  InfConst _
     |  AConst _ -> ((Some e), None)
     |  IConst (v, l) ->
@@ -5148,6 +5189,7 @@ and purge_mult_x (e :  exp):  exp = match e with
   |  AConst _ 
   | InfConst _
   | Tsconst _
+  | Bptriple _
   | FConst _ -> e
   |  Add (e1, e2, l) ->  Add((purge_mult e1), (purge_mult e2), l)
   |  Subtract (e1, e2, l) ->  Subtract((purge_mult e1), (purge_mult e2), l)
@@ -5180,7 +5222,7 @@ and purge_mult_x (e :  exp):  exp = match e with
                       | IConst (v2, _) -> 
                             if (v2 = 0) then t2 
                             else if (v2 = 1) then t1 
-                            else if (v2 = 2) then Add(t2,t2,l)
+                            else if (v2 = 2) then Add(t1,t1,l)
                         else Mult (t1, t2, l) 
                       | FConst (v2, _) ->
                             if (v2 = 0.0) then t2 
@@ -5465,6 +5507,7 @@ let foldr_exp (e:exp) (arg:'a) (f:'a->exp->(exp * 'b) option)
         | InfConst _ 
         | AConst _
         | Tsconst _ 
+          | Bptriple _ 
         | FConst _ -> (e,f_comb [])
         | Add (e1,e2,l) ->
             let (ne1,r1) = helper new_arg e1 in
@@ -5562,6 +5605,7 @@ let rec transform_exp f e  =
       | IConst _
       | AConst _
       | Tsconst _
+		| Bptriple _
       | FConst _ -> e
       | Add (e1,e2,l) ->
           let ne1 = transform_exp f e1 in
@@ -6003,6 +6047,7 @@ let rec get_head e = match e with
     | FConst (f,_) -> string_of_float f
     | AConst (f,_) -> string_of_heap_ann f
     | Tsconst (f,_) -> Tree_shares.Ts.string_of f
+	| Bptriple _ -> "Bptriple"
     | Add (e,_,_) | Subtract (e,_,_) | Mult (e,_,_) | Div (e,_,_) | TypeCast (_, e, _)
     | Max (e,_,_) | Min (e,_,_) | BagDiff (e,_,_) | ListCons (e,_,_)| ListHead (e,_) 
     | ListTail (e,_)| ListLength (e,_) | ListReverse (e,_)  -> get_head e
@@ -6057,6 +6102,7 @@ and norm_exp (e:exp) =
   let rec helper e = match e with
     | Var _ 
     | Null _ | IConst _ | InfConst _ | FConst _ | AConst _ | Tsconst _ 
+    | Bptriple _
     | Level _ -> e
     | Add (e1,e2,l) -> simp_addsub e (IConst(0,no_pos)) l 
     | Subtract (e1,e2,l) -> simp_addsub e1 e2 l 
@@ -8451,6 +8497,7 @@ let compute_instantiations_x pure_f v_of_int avail_v =
       | Tsconst _ 
       | Null _ -> failwith ("expecting var"^ (!print_sv v) )
       | Var (v1,_) -> if (eq_spec_var v1 v) then rhs_e else failwith ("expecting var"^ (!print_sv v))
+      | Bptriple _ -> failwith ("not expecting Bptriple, expecting var"^ (!print_sv v) )
       | Add (e1,e2,p) -> check_in_one e1 e2 (Subtract (rhs_e,e2,p)) (Subtract (rhs_e,e1,p))
       | Subtract (e1,e2,p) -> check_in_one e1 e2 (Add (rhs_e,e2,p)) (Add (rhs_e,e1,p))
       | Mult (e1,e2,p) -> check_in_one e1 e2 (Div (rhs_e,e2,p)) (Div (rhs_e,e1,p))
@@ -10355,6 +10402,7 @@ let infer_level_pure (f : formula) : formula =
 (*Attempt to infer constraints on LSMU based on constraints on LS
 For example:
 LS'=LS --infer--> LSMU'=LSMU
+l in LS --infer--> l.mu=v & v in LSMU
 *)
 let infer_lsmu_pure_x (f:formula) : formula * (spec_var list)=
   if (not !allow_locklevel) then (f,[]) else
@@ -10466,6 +10514,11 @@ let infer_lsmu_pure_x (f:formula) : formula * (spec_var list)=
   let nf2,evars = split_ex_quantifiers_rec nf in
   (nf2,evars)
 
+(*Attempt to infer constraints on LSMU based on constraints on LS
+For example:
+LS'=LS --infer--> LSMU'=LSMU
+l in LS --infer--> l.mu=v & v in LSMU
+*)
 let infer_lsmu_pure (f:formula) : formula * (spec_var list) =
   let pr_out = pr_pair !print_formula !print_svl in
   Debug.no_1 "infer_lsmu_pure"
