@@ -19,8 +19,6 @@ module IP = Iprinter
 module C  = Cast
 
 
-
-
 (* let rec split_phase_debug_lhs h = Debug.no_1 "split_phase(lhs)" *)
 (*   Cprinter.string_of_h_formula  *)
 (*   (fun (a,b,c) -> "RD = " ^ (Cprinter.string_of_h_formula a) ^ "; WR = " ^ (Cprinter.string_of_h_formula b) ^ "; NEXT = " ^ (Cprinter.string_of_h_formula c) ^ "\n")  *)
