@@ -1,6 +1,8 @@
-HeapPred HP_925(node a, node b).
-HeapPred HP_939(node a, node b).
-HeapPred HP_940(node a, node b).
+HeapPred HP_925(node a).
+HeapPred HP_952(tree a, tree b).
+HeapPred HP_953(node a, tree b).
+HeapPred HP_954(tree a, tree b).
+HeapPred HP_955(tree a, node b).
 
 check_tree:SUCCESS[
 ass [H1,G1][]:{
@@ -13,24 +15,25 @@ ass [H1,G1][]:{
  // POST (2;0)
   G2(children_33_924,t)&children_33_924!=null & t!=null --> G1(t)
  }
+
 ]
 
 check_child:SUCCESS[
 ass [H2,G2][]:{
  // BIND (2;0)
-  H2(l,par)& l!=null --> l::node<child_47_949,next_47_950,parent_47_951>@M *HP_952(child_47_949,par@NI) *
-    HP_953(next_47_950,par@NI) *HP_954(parent_47_951,par@NI) * HP_955(par,l@NI);
+  H2(l,par)& l!=null --> l::node<child_47_949,next_47_950,parent_47_951>@M *HP_952(child_47_949,par) *
+    HP_953(next_47_950,par) *HP_954(parent_47_951,par) * HP_955(par,l);
  // PRE_REC (1;2;0)
-  HP_953(next_47_950,parent_47_951@NI) * HP_954(parent_47_951,par@NI) * HP_955(parent_47_951,l@NI)&
+  HP_953(next_47_950,parent_47_951) * HP_954(parent_47_951,par) * HP_955(parent_47_951,l)&
    par=parent_47_951 --> H2(next_47_950,parent_47_951);
  // PRE_REC (1;2;0)
-  HP_952(child_47_949,par@NI) --> H1(child_47_949);
+  HP_952(child_47_949,par) --> H1(child_47_949);
  // POST (1;0)
   H2(l,par)& l=null --> G2(l,par);
  // POST (1;2;0)
   l::node<child_47_949,next_47_950,par>@M * G2(next_47_950,par) --> G2(l,par);
  // POST
-   HP_954(parent_47_951,par@NI)& par=parent_47_951 --> emp
+   HP_954(parent_47_951,par)& par=parent_47_951 --> emp
  }
 hpdefs [H1,G1,G2][]:{
  G1(t_1248) <-> G2(children_33_924,t_1248)&t_1248!=null

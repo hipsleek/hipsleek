@@ -33,7 +33,7 @@ echo "bt-search-2.ss"
 echo "tll: to check"
 #../../hip tll.ss -validate o/tll.cp | grep Validate
 echo "rose-tree: to check"
-#../../hip rose-tree-1.ss -validate o/rose-tree-1.cp | grep Validate
+../../hip rose-tree-1.ss -validate o/rose-tree-1.cp | grep Validate
 echo "check mcf: to check"
 #../../hip check-mcf.ss -validate o/check-mcf.cp | grep Validate
 echo "check-tll: to check"
