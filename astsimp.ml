@@ -1616,6 +1616,8 @@ SpecVar (_, n, _) -> vdef.I.view_vars <- vdef.I.view_vars @ [n];
           C.view_uni_vars = [];
           C.view_labels = fst vdef.I.view_labels;
           C.view_modes = vdef.I.view_modes;
+          C.view_contains_L_ann = false;
+          C.view_contains_var_ann = [];
           C.view_partially_bound_vars = [];
           C.view_materialized_vars = mvars;
           C.view_data_name = data_name;

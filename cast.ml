@@ -86,6 +86,9 @@ and view_decl = {
     view_modes : mode list;
     view_is_prim : bool;
     view_kind : view_kind;
+    (* below to detect @L in post-condition *)
+    mutable view_contains_L_ann : bool;
+    mutable view_contains_var_ann : P.spec_var list;
     mutable view_partially_bound_vars : bool list;
     mutable view_materialized_vars : mater_property list; (* view vars that can point to objects *)
     view_data_name : ident;

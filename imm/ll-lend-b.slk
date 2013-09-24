@@ -7,27 +7,36 @@ pred ll_ann<n,a1,a2> == self=null & n=0 or
   self::node<_@a1,q@a2>*q::ll_ann<n-1,a1,a2>
   inv n>=0.
 
+//(1)
 checkentail p::ll_ann<n,@M,@M> & n=0 |- p=null.
 
 
+//(2)
 checkentail p::node<_,_@A> |- p::node<_,_@L>.
   // fail as expected
 
+//(3)
 checkentail p::ll_ann<n,@M,@A> & n>0 |- p::node<_,_@M>.
   // fail as expected
 
+//(4)
 checkentail p::ll_ann<n,@M,@A> & n>0 |- p::node<_,_@L>.
 print residue.
-  // why this succeed?
+  // fail as expected
 
+//(5)
 checkentail p::ll_ann<n,@A,@M> & n>0 |- p::node<_@L,_@M>.
-  // why this succeed?
+  // fail as expected
 
+//(6)
 checkentail p::node<_,_@v> & v=@A |- p::node<_,_@L>.
   // fail as expected
 
+//(7)
 checkentail p::node<_,_@v> & v=@L |- p::node<_,_@L>.
 
+//(8)
 checkentail p::ll_ann<n,@M,@L> & n>0 |- p::node<_,_@L>.
 
+//(9)
 checkentail p::ll_ann<n,@M,@M> & n>0 |- p::node<_,_@L>.

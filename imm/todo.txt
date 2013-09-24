@@ -118,6 +118,16 @@ checkentail x::node<_@v> & v=@A|- true.
 
 ====> <1>x::node<Anon_11@A>@M & 0<=v & v=@A & {FLOW,(21,22)=__norm}
 =============================================================
+# ll-lend-c1.ss
+
+ll<n> == self=null & n=0 or
+  self::node<_@A,q@L>*q::ll<n-1>
+  inv n>=0;
+
+int length(node p)
+  requires p::ll<n>
+  ensures p::ll<n> & res=n;
+// should fail due to @L in ll<n> post-condition
 =============================================================
 =============================================================
 =============================================================
