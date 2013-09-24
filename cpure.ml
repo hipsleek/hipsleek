@@ -11203,6 +11203,8 @@ let is_ieq f =
 
 (*used in the optimization that in between hoare rules dead variables should be quantified*)
 
+let eq_pair_eq (a1,a2) (b1,b2) = ((eq_spec_var a1 b1) &&  (eq_spec_var a2 b2)) || ((eq_spec_var a1 b2) &&  (eq_spec_var a2 b1))
+
 let drop_dupl_x f = 
 	let rec helper f = 
 		let rec splitter (a,o) f = match f with
@@ -11240,17 +11242,52 @@ let get_vv_eqs (f0 : formula) : (spec_var * spec_var) list =
 	let f_arg arg e = match e with | Not _ -> not arg | _ -> arg in
 	let f_cmb e l = match e with 
             | BForm _  | And _ | AndList _  | Not _ -> List.concat l
-            | Or _ -> 
-				let intf (a1,a2) (b1,b2) =  
-					((eq_spec_var a1 b1) &&  (eq_spec_var a2 b2)) || 
-					((eq_spec_var a1 b2) &&  (eq_spec_var a2 b1)) in
-				Gen.BList.intersect_eq intf  (List.hd l) (List.hd (List.tl l)) 
+            | Or _ -> Gen.BList.intersect_eq eq_pair_eq  (List.hd l) (List.hd (List.tl l)) 
             | Forall (sv,_,_,_) 
             | Exists (sv,_,_,_) -> List.filter (fun (v1,v2)-> not ((eq_spec_var sv v1)||(eq_spec_var sv v2)))(List.concat l) in 
 	let f_stop1 a b = Some (b,[]) in
 	let f_stop2 a b = Some (b,[]) in
 	snd (foldr_formula f0 true (fct,f_stop1, f_stop2) (f_arg,idf2,idf2) (f_cmb, (fun _ _ -> []), (fun _ _ -> [])))
-    	
+    
+let get_neqs (f0 : formula) : ((spec_var * spec_var) list) * (spec_var list) =
+	let fct p f = match f with 
+		| BForm ((Eq (Var(vl,_),Var(vr,_),_),_),_) ->  if p then Some (f,([],[])) else Some (f,([(vl,vr)],[]))
+		| BForm ((Neq(Var(vl,_),Var(vr,_),_),_),_) ->  if p then Some (f,([(vl,vr)],[])) else Some (f,([],[])) 
+		| BForm ((Eq (Null _ ,Var(v ,_),_),_),_)
+		| BForm ((Eq (Var(v ,_),Null _ ,_),_),_) ->  if p then Some (f,([],[])) else Some (f,([],[v]))
+		| BForm ((Neq(Var(v ,_),Null _ ,_),_),_)
+		| BForm ((Neq(Null _ ,Var(v ,_),_),_),_) -> if p then Some (f,([],[v])) else Some (f,([],[])) 
+		| BForm _ -> Some (f,([],[]))
+		| _ -> None in
+	let f_arg arg e = match e with | Not _ -> not arg | _ -> arg in
+	let f_cmb e l :((spec_var * spec_var) list) * (spec_var list)  = match e with 
+            | BForm _  | And _ | AndList _  | Not _ -> Gen.fold_pair2f List.concat List.concat (List.split l)
+            | Or _ -> 
+				let r1neq, r1null = List.hd l in
+				let r2neq, r2null = List.hd (List.tl l) in
+				 Gen.BList.intersect_eq eq_pair_eq r1neq r2neq , r1null@r2null
+            | Forall (sv,_,_,_) 
+            | Exists (sv,_,_,_) -> 
+				let l1,l2 = Gen.fold_pair2f List.concat List.concat (List.split l) in
+				List.filter (fun (v1,v2)-> not ((eq_spec_var sv v1)||(eq_spec_var sv v2))) l1,
+				List.filter (fun v-> not (eq_spec_var sv v)) l2 in 
+	let f_stop1 a b = Some (b,([],[])) in
+	let f_stop2 a b = Some (b,([],[])) in
+	snd (foldr_formula f0 true (fct,f_stop1, f_stop2) (f_arg,idf2,idf2) (f_cmb, (fun _ _ -> ([],[])), (fun _ _ -> ([],[]))))
+	
+let drop_neq (aneq,anull) f = 
+  let f_tr e = match e with
+		| BForm ((Neq(Var(vl,_),Var(vr,_),l),_),_) -> 
+				if List.exists (eq_pair_eq (vl,vr)) aneq then Some (mkTrue no_pos) else Some e
+		| BForm ((Neq((Null _),Var(v,_),_),_),_)
+		| BForm ((Neq(Var(v,_),(Null _),_),_),_) -> 
+				if (List.exists (eq_spec_var v) anull) then Some (mkTrue no_pos) else Some e
+		| Not _ -> Some e
+		| BForm _ -> Some e 
+		| _ -> None in
+  transform_formula (somef,somef,f_tr,somef,somef) f
+	
+	
 	(*lump all pointer vars apearing in anything but disequalities*)
 let force_all_vv_eqs_x f0 = 
 	let rec helper b f = match f with
@@ -11325,6 +11362,8 @@ let check_pointer_dis_sat c=
 	
 let simpl_equalities_x ante conseq = 
   let ante, conseq = expand_eqs ante conseq in
+  let a_neq = get_neqs ante in
+  let conseq = drop_neq a_neq conseq in
   let vars_to_keep = (force_all_vv_eqs ante)@(fv conseq) in
   let f e = match e with
 		| BForm ((Neq(Var(vl,_),Var(vr,_),l),_),_) -> 
