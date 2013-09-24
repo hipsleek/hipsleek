@@ -125,6 +125,7 @@ type typ =
   | RelT of (typ list) (* relation type *)
   | HpT (* heap predicate relation type *)
   | Tree_sh
+  | Bptyp
   (* | FuncT (\* function type *\) *)
   | Pointer of typ (* base type and dimension *)
 
@@ -216,6 +217,7 @@ type perm_type =
   | Frac (*fractional permissions*)
   | Count (*counting permissions*)
   | Dperm (*distinct fractional shares*)
+  | Bperm (*bounded permissions*)
   
 let perm = ref NoPerm
 
@@ -407,6 +409,7 @@ let rec string_of_typ (x:typ) : string = match x with
   | TVar t        -> "TVar["^(string_of_int t)^"]"
   | List t        -> "list("^(string_of_typ t)^")"
   | Tree_sh		  -> "Tsh"
+  | Bptyp		  -> "Bptyp"
   | RelT a      -> "RelT("^(pr_list string_of_typ a)^")"
   | Pointer t        -> "Pointer{"^(string_of_typ t)^"}"
   | HpT        -> "HpT"
@@ -439,6 +442,7 @@ let rec string_of_typ_alpha = function
   | NUM          -> "NUM"
   | AnnT          -> "AnnT"
   | Tree_sh		  -> "Tsh"
+  | Bptyp		  -> "Bptyp"
   | BagT t        -> "bag_"^(string_of_typ t)
   | TVar t        -> "TVar_"^(string_of_int t)
   | List t        -> "list_"^(string_of_typ t)
@@ -642,6 +646,7 @@ let tc_drop_unused = ref false
 let simpl_unfold3 = ref false
 let simpl_unfold2 = ref false
 let simpl_unfold1 = ref false
+let simpl_memset = ref false
 
 let print_heap_pred_decl = ref true
 
@@ -747,6 +752,7 @@ let elim_exists_ff = ref true
 let allow_imm = ref true (*imm will delay checking guard conditions*)
 
 let allow_imm_inv = ref true (*imm inv to add of form @M<:v<:@A*)
+let allow_field_ann = ref false
 
 (*Since this flag is disabled by default if you use this ensure that 
 run-fast-test mem test cases pass *)
@@ -773,11 +779,12 @@ let print_clean_flag = ref false
 (*is used during deployment, e.g. on a website*)
 (*Will shorten the error/warning/... message delivered
 to end-users*)
-let is_deployed = ref false 
+(*Unify is_deployed an web_compile_flag*)
+(* let is_deployed = ref true *)
 
 let print_assume_struc = ref false
-
 let web_compile_flag = ref false (*enable compilation flag for website*)
+
 
 (* Decide whether normalization/simplification
 such as x<1 --> x+1<=1 is allowed
@@ -791,15 +798,18 @@ such as x<1 --> x+1<=1 is allowed
    for more details.
    Currently, conservativly do not allow such simplification
 *)
+
+let allow_lsmu_infer = ref true
+
 let allow_norm = ref false
 
-let allow_ls = ref false (*enable lockset during verification*)
+let allow_ls = ref true (*enable lockset during verification*)
 
 let allow_locklevel = ref false (*enable locklevel during verification*)
 
 (* let has_locklevel = ref false *)
 
-let ann_vp = ref false (* Disable variable permissions in default, turn on in para5*)
+let ann_vp = ref true (* Disable variable permissions in default, turn on in para5*)
 
 let allow_ptr = ref false (*true -> enable pointer translation*)
 
@@ -902,7 +912,7 @@ let enable_prune_cache = ref true
 
 let enable_counters = ref false
 
-let enable_time_stats = ref true
+let enable_time_stats = ref false
 
 let enable_count_stats = ref true
 
@@ -920,7 +930,7 @@ let print_cil_input = ref false
 
 (* let allow_pred_spec = ref false *)
 
-let disable_failure_explaining = ref true
+let disable_failure_explaining = ref false
 
 let simplify_error = ref false
 
@@ -940,7 +950,7 @@ let enable_constraint_based_filtering = ref false
 
 let enulalias = ref false
 
-let pass_global_by_value = ref true
+let pass_global_by_value = ref false
 
 let exhaust_match = ref false
 

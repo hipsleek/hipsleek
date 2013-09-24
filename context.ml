@@ -838,9 +838,11 @@ and lookup_lemma_action_x prog (c:match_res) :action =
                     (* WN_all_lemma - is this overriding of lemmas? *)
                     let left_ls = look_up_coercion_with_target (List.filter (fun c -> c.coercion_case = (Cast.Normalize false)) (*prog.prog_left_coercions*) (Lem_store.all_lemma # get_left_coercion)) dl.h_formula_data_name dr.h_formula_data_name in
                     let right_ls = look_up_coercion_with_target (List.filter (fun c -> c.coercion_case = (Cast.Normalize true)) (*prog.prog_right_coercions*) (Lem_store.all_lemma # get_right_coercion)) dr.h_formula_data_name dl.h_formula_data_name in
+                    let simple_ls = look_up_coercion_with_target (List.filter (fun c -> c.coercion_case = Cast.Simple) (*prog.prog_right_coercions*) ((Lem_store.all_lemma # get_left_coercion) @ (Lem_store.all_lemma # get_right_coercion))) dr.h_formula_data_name dl.h_formula_data_name in
                     let left_act = List.map (fun l -> (1,M_lemma (c,Some l))) left_ls in
                     let right_act = List.map (fun l -> (1,M_lemma (c,Some l))) right_ls in
-                    left_act@right_act
+                    let simple_act = List.map (fun l -> (1,M_lemma (c,Some l))) simple_ls in
+                    left_act@right_act@simple_act
                   in
                   if l=[] then (1,M_Nothing_to_do (string_of_match_res c))
                   else (-1,Search_action l)
@@ -943,6 +945,19 @@ and norm_search_action ls = match ls with
 and process_one_match_x prog estate lhs_h is_normalizing (c:match_res) (rhs_node,rhs_rest): action_wt =
   let rhs_node = c.match_res_rhs_node in
   let lhs_node = c.match_res_lhs_node in
+  (*Normalize false --> split
+    Normalize true --> combine/normalize
+  *)
+  let filter_norm_lemmas l = List.filter (fun c-> 
+      match c.coercion_case with 
+        | Normalize b-> 
+            (* For fractional permission (e.g. in ParaHIP),
+               also filter out SPLIT formula.
+               Current heuristic is to decide SPLIT or MATCH when MATCH.*)
+            let b = if (!Globals.perm = Frac) || (!Globals.perm = Bperm) then not b else b in
+            if b || !use_split_match then false else true 
+        | _ -> true) l
+  in
   let r = match c.match_res_type with 
     | Root ->
           let view_decls = prog.prog_view_decls in

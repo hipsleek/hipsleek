@@ -2,10 +2,10 @@
 #process_action,Loop
 #convert_inf_to_var
 #convert_var_to_inf
-#norm_pure_result
-#norm_pure_input
-#find_inf_subs
-#find_equiv_all
+norm_pure_result
+norm_pure_input
+find_inf_subs
+find_equiv_all
 #normalize_inf_formula
 INF-norm-imply
 #simplify_omega
@@ -15,3 +15,4 @@ INF-norm-imply
 #find_inf_bounded
 #find_neginf_bounded
 sub_inf_list
+normalize_inf_formula_sat 

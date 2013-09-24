@@ -64,6 +64,9 @@ let rec mona_of_typ = function
   | Pointer _ ->
         Error.report_error {Error.error_loc = no_pos; 
         Error.error_text = "pointer type not supported for mona"}
+  | Bptyp ->
+        Error.report_error {Error.error_loc = no_pos; 
+        Error.error_text = "Bptyp type not supported for mona"}
 
 (*------------------------------------------*)
 let rec mkEq l = match l with

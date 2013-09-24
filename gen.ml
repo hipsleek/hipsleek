@@ -106,6 +106,10 @@ struct
    | None -> []
    | Some v -> (f v)
   
+ let fold_pair1f f (x1,x2) = f x1, f x2
+ 
+ let fold_pair2f f1 f2 (x1,x2) = f1 x1, f2 x2
+ 
  let map_opt_def def f x = match x with
 	| None -> def
 	| Some v -> f v

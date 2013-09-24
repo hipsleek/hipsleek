@@ -213,9 +213,11 @@ let common_arguments = [
   ("--dis-ls", Arg.Clear Globals.allow_ls,"disable locksets during verification");
   ("--locklevel", Arg.Set Globals.allow_locklevel,"enable locklevels during verification");
   ("--dis-locklevel", Arg.Clear Globals.allow_locklevel,"disable locklevels during verification");
+	("--dis-lsmu-infer", Arg.Clear Globals.allow_lsmu_infer,"disable simple inference of lsmu");
+	("--en-lsmu-infer", Arg.Set Globals.allow_lsmu_infer,"enable simple inference of lsmu");
   ("--dis-para", Arg.Unit Perm.disable_para,"disable concurrency verification");
   ("--en-para", Arg.Unit Perm.enable_para,"enable concurrency verification");
-  ("--imm", Arg.Set Globals.allow_imm,"enable the use of immutability annotations");
+	("--imm", Arg.Set Globals.allow_imm,"enable the use of immutability annotations");
   ("--field-ann", Arg.Set Globals.allow_field_ann,"enable the use of immutability annotations for data fields");
   ("--memset-opt", Arg.Set Globals.ineq_opt_flag,"to optimize the inequality set enable");
   ("--dis-field-ann", Arg.Clear Globals.allow_field_ann,"disable the use of immutability annotations for data fields");
@@ -300,7 +302,7 @@ let common_arguments = [
    "oi"; "set"; "cm"; "OCRed"; "redlog"; "rm"; "prm"; "spass";"parahip"; "math"; "minisat" ;"auto";"log"; "dp"], Tpdispatcher.set_tp),
    "Choose theorem prover:\n\tcvcl: CVC Lite\n\tcvc3: CVC3\n\tomega: Omega Calculator (default)\n\tco: CVC3 then Omega\n\tisabelle: Isabelle\n\tcoq: Coq\n\tmona: Mona\n\tz3: Z3\n\tom: Omega and Mona\n\toi: Omega and Isabelle\n\tset: Use MONA in set mode.\n\tcm: CVC3 then MONA.");
   ("--dis-tp-batch-mode", Arg.Clear Tpdispatcher.tp_batch_mode,"disable batch-mode processing of external theorem provers");
-  ("-perm", Arg.Symbol (["fperm"; "cperm"; "dperm";"none"], Perm.set_perm),
+  ("-perm", Arg.Symbol (["fperm"; "cperm"; "dperm"; "bperm"; "none"], Perm.set_perm),
    "Choose type of permissions for concurrency :\n\t fperm: fractional permissions\n\t cperm: counting permissions");
   ("--permprof", Arg.Set Globals.perm_prof, "Enable perm prover profiling (for distinct shares)");
   ("--omega-interval", Arg.Set_int Omega.omega_restart_interval,
@@ -563,7 +565,8 @@ let common_arguments = [
   ("--etcnf",Arg.Set Globals.tc_drop_unused, "quantify names that will not be used from the context after each Hoare rule");
   (*("--etcsu1",Arg.Set Globals.simpl_unfold1,"keep only default branch when unsat-ing");*)
   ("--etcsu2",Arg.Set Globals.simpl_unfold2,"syntactically deal with equalities and disequalities between vars for sat");
-  ("--etcsu3",Arg.Set Globals.simpl_unfold3,"syntactically deal with equalities and disequalities between vars for imply")
+  ("--etcsu3",Arg.Set Globals.simpl_unfold3,"syntactically deal with equalities and disequalities between vars for imply");
+  ("--etcsu1",Arg.Set Globals.simpl_memset,"use the old,complicated memset calculator")
   ]
 
 (* arguments/flags used only by hip *)	

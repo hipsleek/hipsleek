@@ -479,6 +479,7 @@ module type ETABLE =
     val abnormal_flow : ident
     val stub_flow : ident
     val error_flow : ident
+    val bfail_flow : ident (*barrier failure*)
     val norm_flow_int : nflow ref
     val ret_flow_int : nflow ref
     val c_flow_int : nflow ref
@@ -488,6 +489,7 @@ module type ETABLE =
     val abnormal_flow_int : nflow ref
     val raisable_flow_int : nflow ref
     val error_flow_int : nflow ref
+    val bfail_flow_int : nflow ref
     val false_flow_int : nflow
     val empty_flow : nflow 
     val is_false_flow : nflow -> bool
@@ -543,6 +545,7 @@ struct
   let abnormal_flow = "__abnormal"
   let stub_flow = "__stub" (* temp stub flow used by parser *)
   let error_flow = "__Error"
+  let bfail_flow = "__Fail"
 end;;
  
 module ETABLE_NFLOW : ETABLE =
@@ -560,6 +563,7 @@ struct
   let abnormal_flow_int = ref empty_flow
   let raisable_flow_int = ref empty_flow
   let error_flow_int  = ref empty_flow 
+  let bfail_flow_int  = ref empty_flow 
   let false_flow_int = (0,0) 
   let is_empty_flow ((a,b):nflow) = a<0 || (a>b)
   let get_closest_new elist (((min,max):nflow) as nf):(string * int) =
@@ -667,6 +671,7 @@ struct
         abnormal_flow_int := empty_flow;
         raisable_flow_int := empty_flow;
         error_flow_int := empty_flow;
+        bfail_flow_int := empty_flow;
         elist <- []
       end
     method private sort = 
@@ -722,6 +727,7 @@ struct
         top_flow_int := self # get_hash top_flow;
         raisable_flow_int := self # get_hash raisable_class;
         abnormal_flow_int := self # get_hash abnormal_flow;
+        bfail_flow_int := self # get_hash bfail_flow;
         error_flow_int := self # get_hash error_flow
       end
     method compute_hierarchy =
@@ -808,6 +814,7 @@ struct
   let abnormal_flow_int = ref empty_flow
   let raisable_flow_int = ref empty_flow
   let error_flow_int  = ref empty_flow
+  let bfail_flow_int  = ref empty_flow
   let false_flow_int = ((0,0),[(0,0)])
 
   let is_empty_flow ((a,b),lst) = lst==[] || a<0 || (a>b)
@@ -983,6 +990,7 @@ struct
         abnormal_flow_int := empty_flow;
         raisable_flow_int := empty_flow;
         error_flow_int := empty_flow;
+        bfail_flow_int := empty_flow;
         elist <- []
       end
     method private sort = 
@@ -1042,7 +1050,8 @@ struct
         top_flow_int := self # get_hash top_flow;
         raisable_flow_int := self # get_hash raisable_class;
         abnormal_flow_int := self # get_hash abnormal_flow;
-        error_flow_int := self # get_hash error_flow
+        bfail_flow_int := self # get_hash bfail_flow;
+        error_flow_int := self # get_hash error_flow;
       end
     method compute_hierarchy =
       begin
