@@ -1513,11 +1513,11 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 	            let _ = Debug.devel_zprint (lazy ("bind: unfolded context:\n" ^ (Cprinter.string_of_list_failesc_context unfolded)
                     ^ "\n")) pos in
 	            (*let _ = print_string ("\n(andreeac)bind: unfolded context:\n" ^ (Cprinter.string_of_list_failesc_context unfolded)     ^ "\n") in *)
-	            let unfolded = if(!Globals.allow_field_ann) then
+	            let unfolded = (* if(!Globals.allow_field_ann) then
                       let idf = (fun c -> c) in
 		      CF.transform_list_failesc_context (idf,idf,
 		      (fun es -> CF.Ctx{es with CF.es_formula = Mem.compact_nodes_with_same_name_in_formula es.CF.es_formula;})) unfolded
-		    else unfolded in
+		    else*) unfolded in
 	            let c = string_of_typ v_t in
                     let fresh_frac_name = Cpure.fresh_old_name "f" in
                     let perm_t = cperm_typ () in
@@ -1618,7 +1618,8 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                           (* let f_esc = proc_esc_stack pid in *)
                           (* TODO WN : Does this work for field level access? *)
                           let tmp_res2 = 
-		            if not(CF.isLend imm_node) && not(CF.isAccs imm_node) (* asankhs: Do not change this please&& not(!Globals.allow_field_ann)*) then 
+		            if not(CF.isLend imm_node) && not(CF.isAccs imm_node)
+                      (* asankhs: && not(!Globals.allow_field_ann)*) then 
 		              CF.normalize_max_renaming_list_failesc_context_4_bind pid vheap pos true tmp_res1 
     			          (* for Lend, Accs it should not be added back and 
 								field level annotations should be added back and compacted *)
@@ -1630,12 +1631,12 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                           Debug.tinfo_hprint (add_str "bind:tmp_res2" (pr_list Cprinter.string_of_failesc_context)) tmp_res2 no_pos;
                           let _ = CF.must_consistent_list_failesc_context "bind 6" tmp_res2  in
                           let tmp_res2 = 
-                            if(!Globals.allow_field_ann) then
+                         (*if(!Globals.allow_field_ann) then
                               let idf = (fun c -> c) in
 		              CF.transform_list_failesc_context (idf,idf,
 		              (fun es -> CF.Ctx{es with CF.es_formula = Mem.compact_nodes_with_same_name_in_formula es.CF.es_formula;})) 
 		                  tmp_res2 
-		            else tmp_res2
+		            else*) tmp_res2
 		          in
 		          let tmp_res2 = prune_ctx_failesc_list prog tmp_res2 in
                           let tmp_res3 = CF.push_exists_list_failesc_context vs_prim tmp_res2 in
@@ -2064,12 +2065,12 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                      (* let _ = Debug.info_pprint ("   callee:" ^ mn) no_pos in *)
                      (* let _ = Debug.info_pprint ("   caller:" ^ proc0.proc_name) no_pos in *)
                      let _ = update_callee_hpdefs_proc prog.Cast.new_proc_decls proc0.proc_name mn in
-                      if(!Globals.allow_field_ann) then
+                      (* if(!Globals.allow_field_ann) then
                         let idf = (fun c -> c) in
 		        CF.transform_list_failesc_context (idf,idf,
 		        (fun es -> CF.Ctx{es with CF.es_formula = Mem.compact_nodes_with_same_name_in_formula es.CF.es_formula;})) 
 		            res 
-		      else res
+		      else*) res
 		    in res
                   else begin
                     (*   let _ = print_endline ("\nlocle2:" ^ proc.proc_name) in *)

@@ -453,26 +453,33 @@ and spatial_ctx_extract p f a i pi rn rr =
   Debug.no_4 "spatial_ctx_extract" string_of_h_formula Cprinter.string_of_imm pr_svl string_of_h_formula pr 
       (fun _ _ _ _-> spatial_ctx_extract_x p f a i pi rn rr ) f i a rn 
 
-and update_ann (f : h_formula) (pimm1 : ann list) (pimm : ann list) : h_formula = 
+and update_ann (f : h_formula) (pimm1 : ann list) (pimm : ann list) : h_formula * h_formula = 
   let pr lst = "[" ^ (List.fold_left (fun y x-> (Cprinter.string_of_imm x) ^ ", " ^ y) "" lst) ^ "]; " in
-  Debug.no_3 "update_ann" (Cprinter.string_of_h_formula) pr pr  (Cprinter.string_of_h_formula) (fun _ _ _-> update_ann_x f pimm1 pimm) f pimm1 pimm
+  Debug.no_3 "update_ann" (Cprinter.string_of_h_formula) pr pr 
+    (pr_pair string_of_h_formula string_of_h_formula) (fun _ _ _-> update_ann_x f pimm1 pimm) f pimm1 pimm
 
-and update_ann_x (f : h_formula) (pimm1 : ann list) (pimm : ann list) : h_formula = 
+and update_ann_x (f : h_formula) (pimm1 : ann list) (pimm : ann list) : h_formula * h_formula = 
   let new_field_ann_lnode = Immutable.replace_list_ann pimm1 pimm in
+  let rhs_f = match f with 
+    | DataNode d -> DataNode ( {d with h_formula_data_param_imm = pimm})
+    | _          -> report_error no_pos ("[context.ml] : only data node should allow field annotations \n")
+  in
   (* asankhs: If node has all field annotations as @A make it HEmp *)
-  if (isAccsList new_field_ann_lnode) then HEmp else
+  if (isAccsList new_field_ann_lnode) then HEmp,rhs_f else
   let updated_f = match f with 
-    | DataNode d -> DataNode ( {d with h_formula_data_param_imm = new_field_ann_lnode} )
+    | DataNode d -> DataNode ( {d with h_formula_data_param_imm = new_field_ann_lnode} ),rhs_f
     | _          -> report_error no_pos ("[context.ml] : only data node should allow field annotations \n")
   in
   updated_f
 
-
 and imm_split_lhs_node estate l_node r_node = match l_node, r_node with
 	| DataNode dl, DataNode dr ->
 		if (!Globals.allow_field_ann) then 
-		 let n_f = update_ann l_node dl.h_formula_data_param_imm dr.h_formula_data_param_imm in
-		 {estate with es_formula = mkStar (formula_of_heap n_f no_pos) estate.es_formula Flow_combine no_pos}
+		 let n_f,es_f = update_ann l_node dl.h_formula_data_param_imm dr.h_formula_data_param_imm in
+		 {estate with es_formula = mkStar (formula_of_heap n_f no_pos) estate.es_formula Flow_combine no_pos;
+           es_heap = mkStarH es_f estate.es_heap no_pos;
+             
+         }
         else estate
 	| _ -> estate 
   

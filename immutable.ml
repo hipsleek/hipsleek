@@ -628,7 +628,7 @@ and replace_list_ann_x (ann_lst_l: ann list) (ann_lst_r: ann list): ann list =
 	    match ann_r with 
 	      | ConstAnn(Mutable)	   
 	      | ConstAnn(Imm)     -> (ConstAnn(Accs)) :: (replace_list_ann_x tl tr)
-	      | ConstAnn(Lend)    -> TempAnn(ann_l) :: (replace_list_ann_x tl tr)
+	      | ConstAnn(Lend)    ->  TempAnn(ann_l) :: (replace_list_ann_x tl tr)
 	      | TempAnn _
 	      | ConstAnn(Accs)    -> ann_l :: (replace_list_ann_x tl tr)
 	      | PolyAnn(v)        -> ann_l :: (replace_list_ann_x tl tr) (* TODO(ann): check if var ann is replaced or not *)

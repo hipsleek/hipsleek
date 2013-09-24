@@ -666,6 +666,10 @@ and xpure_heap i (prog : prog_decl) (h0 : h_formula) (p0 : mix_formula) (which_x
       (fun _ _ _ -> xpure_heap_new prog h0 p0 which_xpure) h0 p0 which_xpure
 
 and xpure_heap_new (prog : prog_decl) (h0 : h_formula) (p0 : mix_formula) (which_xpure :int) : (mix_formula * CP.spec_var list * CF.mem_formula) =
+  let h0,p0 = if(!Globals.allow_field_ann) 
+	then let h,p = Mem.compact_nodes_with_same_name_in_h_formula_top h0 (Context.comp_aliases p0)
+	     in h, (MCP.merge_mems p0 (MCP.mix_of_pure p) true)
+	else h0,p0 in 
   let (mf,svl,diff) as x = xpure_heap_x prog h0 p0 which_xpure in
   if (!Globals.ineq_opt_flag) then x
   else
@@ -3658,13 +3662,13 @@ and heap_entail_struc_x (prog : prog_decl) (is_folding : bool)  (has_post: bool)
     | FailCtx _ -> (cl,Failure)
     | SuccCtx cl ->
     	  (* Do compaction for field annotations *)
-    	  let conseq = if(!Globals.allow_field_ann) 
-          then Mem.compact_nodes_with_same_name_in_struc conseq else conseq in
-    	  let cl = if(!Globals.allow_field_ann) 
+    	  let conseq = (*if(!Globals.allow_field_ann) 
+          then Mem.compact_nodes_with_same_name_in_struc conseq else*) conseq in
+    	  let cl = (*if(!Globals.allow_field_ann) 
           then List.map (fun c -> CF.transform_context (fun es -> 
     	      (*let _ = print_string("\nFormula :"^(Cprinter.string_of_formula es.CF.es_formula)^"\n") in*)
 	      CF.Ctx{es with CF.es_formula = Mem.compact_nodes_with_same_name_in_formula es.CF.es_formula;}) c) cl
-	  else cl
+	  else *)cl
 	  in
 	  if !Globals.use_set || Gen.is_empty cl then
 	    let tmp1 = List.map (fun c -> heap_entail_one_context_struc_nth "4" prog is_folding  has_post c conseq tid delayed_f join_id pos pid) cl in
@@ -4562,10 +4566,10 @@ and heap_entail_split_lhs (prog : prog_decl) (is_folding : bool) (ctx0 : context
 			            (* first add the frame h2*[] *)
 			            let cl = List.map (fun x -> insert_ho_frame x (fun f -> CF.mkConjH h1 f pos)) cl in 
 		                    (* next add the frame h1/\[]*)
-		                    let cl = if (!Globals.allow_field_ann) then List.map
+		                    let cl = (*if (!Globals.allow_field_ann) then List.map
 				      (fun c -> CF.transform_context (fun es -> 
 				          CF.Ctx{es with CF.es_formula = Mem.compact_nodes_with_same_name_in_formula es.CF.es_formula;}) c)
-				      cl else cl
+				      cl else*) cl
 			                (*let cl = List.map (fun x -> insert_ho_frame x (fun f -> CF.mkConjH h1 f pos)) cl
 			               	  in*) in (SuccCtx(cl), with_h2_prf)
 		          in (with_h2_ctx, with_h2_prf)
@@ -4709,9 +4713,9 @@ and heap_entail_one_context i prog is_folding  ctx conseq (tid: CP.spec_var opti
 (*only struc_formula can have some thread id*)
 and heap_entail_one_context_a i (prog : prog_decl) (is_folding : bool)  (ctx : context) (conseq : formula) pos : (list_context * proof) =
   Debug.vv_trace "heap_entail_one_context" ;
-    let ctx = if (!Globals.allow_field_ann) then CF.transform_context (fun es -> 
+    let ctx = (*if (!Globals.allow_field_ann) then CF.transform_context (fun es -> 
 	CF.Ctx{es with CF.es_formula = Mem.compact_nodes_with_same_name_in_formula es.CF.es_formula;}) ctx 
-    else ctx
+    else *) ctx
     in
     if isAnyFalseCtx ctx then (* check this first so that false => false is true (with false residual) *)
       (SuccCtx [ctx], UnsatAnte)
@@ -5441,10 +5445,10 @@ and heap_entail_split_rhs_phases_x (prog : prog_decl) (is_folding : bool) (ctx_0
                         (* let _ = print_endline ("**********************************") in *)
 		                heap_entail_conjunct 3 prog is_folding  c new_conseq []  pos) cl 
 	                in
-	            let cl = if (!Globals.allow_field_ann) then List.map
+	            let cl = (*if (!Globals.allow_field_ann) then List.map
 		      (fun c -> CF.transform_context (fun es -> 
 			  CF.Ctx{es with CF.es_formula = Mem.compact_nodes_with_same_name_in_formula es.CF.es_formula;}) c)
-		      cl else cl
+		      cl else*) cl
 		    in
 	                let res_ctx, res_prf = List.split res in
 	                let res_prf = mkContextList cl (Cformula.struc_formula_of_formula conseq pos) res_prf in
@@ -6362,7 +6366,7 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
       let ante0 = estate.es_formula in
       (*print_string ("\nAN HOA CHECKPOINT :: Antecedent: " ^ (Cprinter.string_of_formula ante))*)
       let ante = if(!Globals.allow_mem) then Mem.ramify_starminus_in_formula ante0 prog.prog_view_decls else ante0 in
-            (*let ante = if(!Globals.allow_field_ann) then Mem.compact_nodes_with_same_name_in_formula ante else ante in *)
+      let ante = if(!Globals.allow_mem) then Mem.compact_nodes_with_same_name_in_formula ante else ante in 
       let conseq = if(!Globals.allow_mem) then Mem.remove_accs_from_formula conseq else conseq in (* Make x::node<_,_>@A to x!= null on RHS *)
             (*let conseq  = if(!Globals.allow_field_ann) then Mem.compact_nodes_with_same_name_in_formula conseq else conseq in *)
       let ctx0 = Ctx{estate with es_formula = ante;} in
@@ -7066,10 +7070,10 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
   let _ = reset_int2 () in
   let curr_lhs_h = (mkStarH lhs_h estate_orig.es_heap pos) in
   (* Do compaction for field annotations *)
-  let curr_lhs_h, lhs_p = if(!Globals.allow_field_ann) 
+  let curr_lhs_h, lhs_p = (*if(!Globals.allow_field_ann) 
 	then let h,p = Mem.compact_nodes_with_same_name_in_h_formula_top curr_lhs_h (Context.comp_aliases lhs_p)
 	in h, (MCP.merge_mems lhs_p (MCP.mix_of_pure p) true)
-	else curr_lhs_h, lhs_p in
+	else *) curr_lhs_h, lhs_p in
   let curr_lhs_h, lhs_p = normalize_frac_heap prog curr_lhs_h lhs_p in
   let unk_heaps = CF.keep_hrel curr_lhs_h in
   (* Debug.info_hprint (add_str "curr_lhs_h" Cprinter.string_of_h_formula) curr_lhs_h no_pos; *)
@@ -8472,7 +8476,7 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
             in
             Debug.tinfo_hprint (add_str "rem_l_node" (Cprinter.string_of_h_formula)) rem_l_node pos;
             Debug.tinfo_hprint (add_str "rem_r_node" (Cprinter.string_of_h_formula)) rem_r_node pos;
-	      (* let _ = print_string ("\n(andreeac) solver.ml rem_l_node: " ^ (Cprinter.string_of_h_formula rem_l_node)) in *)
+	      (*let _ = print_string ("\n(andreeac) solver.ml rem_l_node: " ^ (Cprinter.string_of_h_formula rem_l_node)) in *)
 	      (* let _ = print_string ("\n(andreeac) solver.ml rem_r_node: " ^ (Cprinter.string_of_h_formula rem_r_node)) in *)
 	          (* Filter out variables with @A on either lhs or rhs so that they do not form unnecessary equalities*)
             if (!Globals.allow_field_ann) then
@@ -8640,7 +8644,7 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
           (* let poly_consumes = isPoly r_ann && (isMutable l_ann || isImm l_ann) in *)
               Debug.tinfo_hprint (add_str "r_ann" (Cprinter.string_of_imm)) r_ann pos;
               let new_consumed = 
-                if (isLend r_ann || isAccs r_ann || (isPoly r_ann && (isLend l_ann || isAccs l_ann))) (*&& not(!allow_field_ann)*) then estate.es_heap else mkStarH consumed_h estate.es_heap pos in
+                if (isLend r_ann || isAccs r_ann || (isPoly r_ann && (isLend l_ann || isAccs l_ann))) || (!allow_field_ann) then estate.es_heap else mkStarH consumed_h estate.es_heap pos in
 	      (*let _ = print_string("\ncris: new_consumed = " ^ (Cprinter.string_of_h_formula new_consumed) ) in *)
 	      (*let _ = print_string("\ncris: new_ante = " ^ (Cprinter.string_of_formula new_ante) ) in *)
 	          let n_es_res,n_es_succ = match ((get_node_label l_node),(get_node_label r_node)) with
@@ -8678,15 +8682,14 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
 	      (* let _ = print_string("cris: new_conseq = " ^ (Cprinter.string_of_formula new_conseq) ^ "\n") in *)
               let res_es1, prf1 = 
                 if (!Globals.allow_mem) then heap_entail_split_rhs prog is_folding new_ctx new_conseq (rhs_matched_set @ [r_var]) pos
-                else heap_entail_conjunct 11 prog is_folding  new_ctx new_conseq (rhs_matched_set @ [r_var]) pos in
-              (Cformula.add_to_subst res_es1 r_subs l_subs, prf1) 
-      		  (*match final_ctx with
+                else heap_entail_conjunct 11 prog is_folding  new_ctx new_conseq (rhs_matched_set @ [r_var]) pos in (Cformula.add_to_subst res_es1 r_subs l_subs, prf1) (*in
+      		  match final_ctx with
 	            | SuccCtx(cl) ->
 	          (* substitute the holes due to the temporary removal of matched immutable nodes *) 
-            	    let _ = print_string("asankhs: new_context = " ^ (Cprinter.string_of_list_context final_ctx) ^ "\n") in
-	            let cl1 = List.map subs_crt_holes_ctx cl in
+     (*let _ = print_string("asankhs: new_context = " ^ (Cprinter.string_of_list_context final_ctx) ^ "\n") in*)
+	        let cl1 = List.map subs_crt_holes_ctx cl in
 		    let cl1 = List.map restore_tmp_ann_ctx cl1 in
-		    let _ = print_string("asankhs: after_context = " ^ (Cprinter.string_of_list_context (SuccCtx(cl1))) ^ "\n") in
+		    (*let _ = print_string("asankhs: after_context = " ^ (Cprinter.string_of_list_context (SuccCtx(cl1))) ^ "\n") in*)
 		    (SuccCtx(cl1), final_prf)
 	            | FailCtx _ -> (final_ctx, final_prf)*)
               else

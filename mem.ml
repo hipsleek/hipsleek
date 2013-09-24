@@ -962,6 +962,16 @@ let rec join_ann_conjstar (ann1: CF.ann list) (ann2: CF.ann list) (param1: CP.sp
     				let compatible, new_ann, new_param(*, new_p*) = join_ann_conjstar t1 t2 pt1 pt2  in
     				  (*let p = CP.mkEqVar *)
 				  (true && compatible, (CF.ConstAnn(Lend))::new_ann, p1::new_param(*, (CP.mkAnd p new_p no_pos)*))
+    | (CF.ConstAnn(Lend))::t1, a::t2, p::pt1, pa::pt2 
+    | a::t1, (CF.ConstAnn(Lend))::t2, pa::pt1, p::pt2 -> 
+    				let compatible, new_ann, new_param(*, new_p*) = join_ann_conjstar t1 t2 pt1 pt2  in
+    				  (*let p = CP.mkEqVar *)
+				  (true && compatible, a::new_ann, pa::new_param(*, (CP.mkAnd p new_p no_pos)*))
+    |  ((CF.PolyAnn v1) as a)::t1, (CF.PolyAnn v2)::t2, pa::pt1, p::pt2 -> 
+                    (* asankhs: loss of poly ann information *)
+    				let compatible, new_ann, new_param(*, new_p*) = join_ann_conjstar t1 t2 pt1 pt2  in
+    				  (*let p = CP.mkEqVar *)
+				  (true && compatible, a::new_ann, pa::new_param(*, (CP.mkAnd p new_p no_pos)*))
     | _ -> (false,[],[](*,tf*))
     
 
@@ -995,7 +1005,8 @@ let compact_data_nodes (h1: CF.h_formula) (h2: CF.h_formula) (aset:CP.spec_var l
             h2 will be replaced by "emp". Otherwise both data nodes will remain unchanged *)
          let p_comp = CP.mkEqVar v1 v2 no_pos in
          let h1,h2,p = 
- 		     if (String.compare name1 name2 == 0) && ((CP.mem v2 aset_sv) || (CP.eq_spec_var v1 v2)) then
+ 		     if (String.compare name1 name2 == 0) && (((CP.mem v2 aset_sv) || (CP.eq_spec_var v1 v2))
+                                                         || combine_data)  then
  		         let compatible, new_param_imm, new_args = func param_ann1 param_ann2 h1args h2args  in
 	                (* compact to keep the updated node*)
                          if(not(CP.is_primed v2) || (CP.is_primed v1)) then
@@ -1010,12 +1021,13 @@ let compact_data_nodes (h1: CF.h_formula) (h2: CF.h_formula) (aset:CP.spec_var l
                  (*let p = CP.mkAnd (CP.mkEqVar h.CF.h_formula_data_node v2 h.CF.h_formula_data_pos) p h.CF.h_formula_data_pos in *)
 			   	(CF.DataNode {h with CF.h_formula_data_arguments = new_args; 			
 			     	 CF.h_formula_data_param_imm = new_param_imm}, CF.HEmp, p)
-			  	else (CF.HFalse, h2, (CP.mkTrue no_pos))
+			  	else let () = print_endline ("Warning : Compacting Data Nodes "^(string_of_h_formula h1)^" and "^(string_of_h_formula h2)^" leads to HFalse")
+                     in (CF.HFalse, h2, (CP.mkTrue no_pos))
  			  | _ -> (h1, h2,(CP.mkTrue no_pos)) (* will never reach this branch *))
 	                  else (*keep v2*)
  			  (match h2 with (* this match is to avoid the rewriting of all h2 parameters*)
  			   | CF.DataNode h -> 
-			         if (compatible == true) then 
+			         (if (compatible == true) then 
 			         let comb_list = 
 			         (List.combine h.CF.h_formula_data_arguments h1args) in
 			          let p = CP.conj_of_list 
@@ -1024,13 +1036,21 @@ let compact_data_nodes (h1: CF.h_formula) (h2: CF.h_formula) (aset:CP.spec_var l
                       (*let p = CP.mkAnd (CP.mkEqVar h.CF.h_formula_data_node v2 h.CF.h_formula_data_pos) p h.CF.h_formula_data_pos in *)
 			         (CF.DataNode {h with CF.h_formula_data_arguments = new_args;
 			          CF.h_formula_data_param_imm = new_param_imm},CF.HEmp,p)
-			          else (CF.HFalse,h1,(CP.mkTrue no_pos))
+			          else  
+                     let () = print_endline ("Warning2 : Compacting Data Nodes "^(string_of_h_formula h1)^" and "^(string_of_h_formula h2)^" leads to HFalse")
+                       in (CF.HFalse,h1,(CP.mkTrue no_pos)))
  			   | _ -> (h1, h2,(CP.mkTrue no_pos)) (* will never reach this branch *))
 		     else (h1, h2,(CP.mkTrue no_pos)) (* h2 is not an alias of h1 *)  
          in 
          (if combine_data then h1,h2,(CP.mkAnd p p_comp no_pos) else h1,h2,p)
 	| _ -> (h1,h2,(CP.mkTrue no_pos))  (*shouldn't get here*))
 | _ -> (h1,h2,(CP.mkTrue no_pos)) (*shouldn't get here*))
+
+let compact_data_nodes (h1: CF.h_formula) (h2: CF.h_formula) (aset:CP.spec_var list list) (func) (combine_data: bool)
+: CF.h_formula * CF.h_formula * CP.formula =
+  let pr = string_of_h_formula in
+  let pr_3 = (fun (a, b, c) ->  " h1 : "^(pr a)^" h2 : "^ (pr b)^" p : "^(string_of_pure_formula c)) in
+Debug.no_3 "Mem.compact_data_nodes" pr pr (string_of_bool) pr_3 (fun h1 h2 cd -> compact_data_nodes h1 h2 aset func cd) h1 h2 combine_data
 
 let rec compact_nodes_with_same_name_in_h_formula (f: CF.h_formula) (aset: CP.spec_var list list) : CF.h_formula * CP.formula = 
   (*let _ = print_string("Compacting :"^ (string_of_h_formula f)^ "\n") in*)
@@ -1039,7 +1059,9 @@ let rec compact_nodes_with_same_name_in_h_formula (f: CF.h_formula) (aset: CP.sp
       | CF.Star {CF.h_formula_star_h1 = h1;
                  CF.h_formula_star_h2 = h2;
                  CF.h_formula_star_pos = pos } ->             
-	let h1,h2,_ = (compact_nodes_op h1 h2 aset join_ann false) in
+	(* Compaction happens only with aliased objects hence compact using join_ann_conjstar 
+       let h1,h2,_ = (compact_nodes_op h1 h2 aset join_ann false) in *)
+    let h1,h2,_ = (compact_nodes_op h1 h2 aset join_ann_conjstar false) in
 	let res = CF.mkStarH h1 h2 pos in
 	res,(CP.mkTrue no_pos)
       | CF.Conj{CF.h_formula_conj_h1 = h1;
@@ -1109,7 +1131,7 @@ Rejoin h2 star fomula, and apply compact_nodes_with_same_name_in_h_formula_x on 
 		          | CF.Conj {CF.h_formula_conj_h1 = h21;
 					 CF.h_formula_conj_h2 = h22;
 			                 CF.h_formula_conj_pos = pos2} -> 
-			          let h31, h32,p3 = compact_nodes_op h1 h21 aset func combine_data in
+		          let h31, h32,p3 = compact_nodes_op h1 h21 aset func combine_data in
 		                  let h41, h42,p4 = compact_nodes_op h31 h22 aset func combine_data in
 		                  let new_h2 = CF.mkConjH h32 h42 pos2 in
 		                  let new_p2 = CP.mkAnd p3 p4 pos2 in
@@ -1199,6 +1221,7 @@ Rejoin h2 star fomula, and apply compact_nodes_with_same_name_in_h_formula_x on 
 
 let compact_nodes_with_same_name_in_h_formula_top (f: CF.h_formula) (aset: CP.spec_var list list) : CF.h_formula * CP.formula = 
   let pr = pr_pair string_of_h_formula string_of_pure_formula in 
+  let f = Immutable.restore_tmp_ann_h_formula f in
   Debug.no_1 "compact_nodes_with_same_name_in_h_formula" string_of_h_formula pr (fun c -> compact_nodes_with_same_name_in_h_formula c aset) f
 
 let rec compact_nodes_with_same_name_in_formula (cf: CF.formula): CF.formula =
