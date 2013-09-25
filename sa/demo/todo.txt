@@ -5776,7 +5776,7 @@ EXPECTED:
    x::node<_,q>*q::P<res>
 
 =====================================================================
-# cyc-tree-1.ss
+# cyc-tree-1.ss: DONE
 
 void trav(node x)
   infer [H,G]
@@ -5879,9 +5879,9 @@ HP_884(right_25_882) ::=(1;1;0) NONE,
 HP_891(left_26_889) ::=(2;1;0) NONE]
 
 =====================================================================
-# cyc-lseg.ss --pred-en-equiv
+# cyc-lseg.ss --pred-en-equiv : DONE
 
- (1)- semantic mode:
+ (1)- semantic mode: DONE
  (2)- syntactic mode: DONE
 
 --pred-en-equiv reuse of equivalent predicate
@@ -5910,7 +5910,7 @@ void trav(node x)
    }
 }
 =====================================================================
-# cyc-lseg.ss --pred-en-split
+# cyc-lseg.ss --pred-en-split: FIXED
 
 Inferred result is fine.
 How come predicate synthesis option is not working?
@@ -6068,9 +6068,25 @@ synchronize sa2.infer_shapes_proper with sa3.infer_shapes_proper
 
  DONE: pred-en-equiv
 =====================================================================
+#ll-delete.ss
+
+--pred-en-split
 =====================================================================
+# ll-back.ss
+ - reverify-all : fail FIXED
+ - main function: inference is incorrect.
+  should do interprocedural sa properly (ll-back1.slk)
+
+interprocedural sa:
+  for each callee:
+    transform into view
+    subst specs
+    remove unknown preds for further analysis
+
 =====================================================================
+#skip-list.ss: to support
 =====================================================================
+
 =====================================================================
 =====================================================================
 =====================================================================

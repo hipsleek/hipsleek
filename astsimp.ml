@@ -8079,7 +8079,7 @@ let rec rev_trans_heap f = match f with
                     0
                     b.CF.h_formula_view_derv 
                     (IF.ConstAnn(Mutable))
-                    true false false None (List.map (fun c-> IP.Var ((rev_trans_spec_var c),no_pos)) b.CF.h_formula_view_arguments) []
+                    true false false None (List.map (fun c-> IP.Var ((rev_trans_spec_var c),no_pos)) b.CF.h_formula_view_arguments) (List.map (fun _ -> None) b.CF.h_formula_view_arguments)
                     None b.CF.h_formula_view_pos
   | CF.Hole _ -> failwith "holes should not have been here"
   | CF.HRel  (sv,el,p)  -> IF.HRel (sv_n sv, List.map rev_trans_exp el, p)

@@ -1,0 +1,37 @@
+//check smart_subst: rhs_eqset
+
+data node{
+	int val;
+	node next;
+}.
+
+HeapPred H2(node a).
+HeapPred P1(node a).
+
+pred lseg<p> ==
+    self::node<_,p> 
+  or self::node<_,q> * q::lseg<p> 
+ inv true.
+
+
+//1
+infer [H2] H2(r)   |- r::node<_,null> .
+print residue.
+
+/*
+<1>H2(r)&flted_17_37=null&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [H2(r) --> r::node<Anon_36,flted_17_37>@M * 
+                   HP_38(flted_17_37); 
+                  HP_38(flted_17_37) --> emp&flted_17_37=0]
+*/
+
+//2
+infer [H2] H2(r)   |- r::lseg<null> .
+print residue.
+
+/*
+
+ <1>emp&flted_29_34=null&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [H2(r) --> r::lseg<flted_29_34>@M * HP_35(flted_29_34); 
+                  HP_35(flted_29_34) --> emp&flted_29_34=null]
+*/

@@ -33,9 +33,9 @@ let set_proc_verified arg =
   let procs = Gen.split_by "," arg in
 	Globals.procs_verified := procs @ !Globals.procs_verified
 
-let set_file_cp arg =
-  Globals.file_cp := arg;
-   Globals.cp_test := true
+let set_validate_config arg =
+  Globals.validate_target := arg;
+   Globals.validate := true
 
 let set_gen_cpfile arg =
  Globals.cpfile := arg;
@@ -546,6 +546,7 @@ let common_arguments = [
    ("--pred-conj-unify", Arg.Set Globals.pred_conj_unify, "attempt to conj-unify among inferred assumption");
   ("--pred-en-equiv", Arg.Set Globals.pred_equiv, "attempt to reuse predicates with identical definition");
   ("--pred-dis-equiv", Arg.Clear Globals.pred_equiv, "disable reuse of predicates with identical definition");
+  ("--pred-unify-post", Arg.Set Globals.pred_unify_post, "unify (branches, syntax) definition of post-predicates");
   ("--sa-tree-simp", Arg.Set Globals.sa_tree_simp, "simplify a tree branches of definition");
   ("--sa-subsume", Arg.Set Globals.sa_subsume, "use subsume when comparing definitions after infering");
   (* ("--norm-useless", Arg.Set Globals.norm_elim_useless, "elim useless parameters of user-defined predicates (view)"); *)
@@ -589,7 +590,7 @@ let hip_specific_arguments = [ ("-cp", Arg.String set_pred,
    "disable pass read global variables by value");
   ("--sqt", Arg.Set Globals.seq_to_try,
    "translate seq to try");
-  ("-cp-test", Arg.String set_file_cp,
+  ("-validate", Arg.String set_validate_config,
    "compare set of constraints");
   ("-cp-pre-test", Arg.Set Globals.cp_prefile,
    "compare set of constraints");
