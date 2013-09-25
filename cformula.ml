@@ -19,7 +19,7 @@ module MCP = Mcpure
 type ann = ConstAnn of heap_ann | PolyAnn of CP.spec_var |
         TempAnn of ann | TempRes of (ann * ann) (* lhs_ann * rhs_ann *)
             (* TempAnn  -> to what is lent  *)
-            (* matching PolyAnn results in: TempCons -> consumed, TempRes  -> residue *)
+
 type cond_path_type = int list
 
 (* let string_of_cond_path c = "(" ^(String.concat ", " (List.map string_of_int c)) ^ ")" *)
@@ -290,6 +290,8 @@ let print_spec_var = print_sv
 let print_spec_var_list = print_svl
 let print_infer_rel(l,r) = (!print_pure_f l)^" --> "^(!print_pure_f r)
 let print_mem_formula = ref (fun (c:mem_formula) -> "printer has not been initialized")
+let print_imm = ref (fun (c:ann) -> "printer has not been initialized")
+
 (* let print_failesc = ref (fun (c:failesc) -> "printer has not been initialized") *)
 
 let mkFalseLbl (flowt: flow_formula) lbl pos = Base ({
@@ -463,11 +465,14 @@ and isPoly(a : ann) : bool =
     | _ -> false
 
 
-let rec fv_ann (a:ann) = match a with
+let rec fv_ann_x (a:ann) = match a with
   | ConstAnn _
   | TempAnn _ -> []
-  | TempRes(v,w) -> (fv_ann w)@(fv_ann v)
+  | TempRes(v,w) -> (fv_ann_x w)@(fv_ann_x v)
   | PolyAnn v -> [v]
+
+let rec fv_ann (a:ann) = 
+  Debug.no_1 "fv_ann" !print_imm (pr_list !print_sv) fv_ann_x a
 
 let rec fv_ann_lst (a:ann list) = match a with
   | [] -> []

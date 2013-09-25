@@ -933,6 +933,12 @@ let rec join_ann (ann1: CF.ann list) (ann2: CF.ann list) (param1: CP.spec_var li
     | a::t1, (CF.ConstAnn(Accs))::t2, pa::pt1, p::pt2 -> let compatible, new_ann, new_param(*, new_p*) = join_ann t1 t2 pt1 pt2  in
     				  (*let p = CP.mkEqVar *)
 				  (true && compatible, a::new_ann, pa::new_param(*, (CP.mkAnd p new_p no_pos)*))
+    (* | (CF.TempRes(a1,a2))::t1, a::t2, p::pt1, pa::pt2  *)
+    (* | a::t1, (CF.TempRes(a1,a2))::t2, pa::pt1, p::pt2 -> *)
+    (*       let compatible, new_ann, new_param(\*, new_p*\) = join_ann t1 t2 pt1 pt2  in *)
+    (* 	  (\*let p = CP.mkEqVar *\) *)
+    (*       let compatible = compatible  *)
+    (*       (compatible, a::new_ann, pa::new_param(\*, (CP.mkAnd p new_p no_pos)*\)) *)
     | _ -> (false,[],[](*,tf*))
     
 let rec join_ann_conj (ann1: CF.ann list) (ann2: CF.ann list) (param1: CP.spec_var list) (param2: CP.spec_var list):

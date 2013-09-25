@@ -84,7 +84,8 @@ int length(node p)
 This currently succeeds but is actually
 unsound since we need read permission on p.next
 =============================================================
-# ll-lend-b.slk --field-ann
+!!FIXED!!
+# ll-lend-b.slk --field-ann 
 
 Below should fail.
 
@@ -129,6 +130,13 @@ int length(node p)
   ensures p::ll<n> & res=n;
 // should fail due to @L in ll<n> post-condition
 =============================================================
+#sleek0222.slk
+
+residue should eliminate unnecessary exists:
+Entail 1: Valid. 
+
+ <1>(exists flted_30_63,flted_30_62,flted_30_61: x::node<p@[@M, @flted_30_63],q@A>@M&flted_30_62=@M & flted_30_61=@M & 2<n & a_66=p & q=q_67 & exists(flted_30_64:flted_30_62=flted_30_64 & @M<:flted_30_64 & @M<:flted_30_64) & exists(flted_30_63:0<=flted_30_63 & flted_30_61=flted_30_63 & @M<:flted_30_63 & @M<:flted_30_63) & exists(flted_30_65:flted_30_65=n+1)&{FLOW,(21,22)=__norm})[]
+[[ SEARCH ==>  Fold ==>  Match ==>  COND ==>  Match ==> ]]
 =============================================================
 =============================================================
 =============================================================

@@ -724,7 +724,7 @@ and consumed_ann (ann_l: ann) (ann_r: ann): ann =
             (*   | PolyAnn() -> TempCons(ann_l) *)
             (*   | _         -> ConstAnn(Accs) *)
     | ConstAnn(Mutable) 
-    | ConstAnn(Imm)     -> ann_l
+    | ConstAnn(Imm)     -> ann_r
 
 
 (* during matching *)
@@ -1109,51 +1109,55 @@ and compute_ann_list_x all_fields (diff_fields : ident list) (default_ann : CF.a
     | [] -> []
 ;; 
 
-
-let rec normalize_h_formula_dn auxf (h : CF.h_formula) : CF.h_formula = 
+let rec normalize_h_formula_dn auxf (h : CF.h_formula) : CF.h_formula * (CP.formula list) * ((Globals.ident * Globals.primed) list) = 
   match h with
     | CF.Star({CF.h_formula_star_h1 = h1;
       CF.h_formula_star_h2 = h2;
       CF.h_formula_star_pos = pos}) ->
-	  let nh1 = normalize_h_formula_dn auxf h1 in
-	  let nh2 = normalize_h_formula_dn auxf h2 in
-	  CF.Star({CF.h_formula_star_h1 = nh1;
+	  let nh1, lc1, nv1 = normalize_h_formula_dn auxf h1 in
+	  let nh2, lc2, nv2 = normalize_h_formula_dn auxf h2 in
+	  let h = CF.Star({CF.h_formula_star_h1 = nh1;
 	  CF.h_formula_star_h2 = nh2;
-	  CF.h_formula_star_pos = pos})
+	  CF.h_formula_star_pos = pos}) in
+          (h, lc1@lc2, nv1@nv2)
     | CF.Conj({CF.h_formula_conj_h1 = h1;
       CF.h_formula_conj_h2 = h2;
       CF.h_formula_conj_pos = pos}) ->
-	  let nh1 = normalize_h_formula_dn auxf h1 in
-	  let nh2 = normalize_h_formula_dn auxf h2 in
-	  CF.Conj({CF.h_formula_conj_h1 = nh1;
+	  let nh1, lc1, nv1 = normalize_h_formula_dn auxf h1 in
+	  let nh2, lc2, nv2 = normalize_h_formula_dn auxf h2 in
+	  let h = CF.Conj({CF.h_formula_conj_h1 = nh1;
 	  CF.h_formula_conj_h2 = nh2;
-	  CF.h_formula_conj_pos = pos})
+	  CF.h_formula_conj_pos = pos}) in
+          (h, lc1@lc2, nv1@nv2)
     | CF.ConjStar({CF.h_formula_conjstar_h1 = h1;
       CF.h_formula_conjstar_h2 = h2;
       CF.h_formula_conjstar_pos = pos}) ->
-	  let nh1 = normalize_h_formula_dn auxf h1 in
-	  let nh2 = normalize_h_formula_dn auxf h2 in
-	  CF.ConjStar({CF.h_formula_conjstar_h1 = nh1;
+	  let nh1, lc1, nv1 = normalize_h_formula_dn auxf h1 in
+	  let nh2, lc2, nv2 = normalize_h_formula_dn auxf h2 in
+	  let h = CF.ConjStar({CF.h_formula_conjstar_h1 = nh1;
 	  CF.h_formula_conjstar_h2 = nh2;
-	  CF.h_formula_conjstar_pos = pos})
+	  CF.h_formula_conjstar_pos = pos}) in
+          (h, lc1@lc2, nv1@nv2)
     | CF.ConjConj({CF.h_formula_conjconj_h1 = h1;
       CF.h_formula_conjconj_h2 = h2;
       CF.h_formula_conjconj_pos = pos}) ->
-	  let nh1 = normalize_h_formula_dn auxf h1 in
-	  let nh2 = normalize_h_formula_dn auxf h2 in
-	  CF.ConjConj({CF.h_formula_conjconj_h1 = nh1;
+	  let nh1, lc1, nv1 = normalize_h_formula_dn auxf h1 in
+	  let nh2, lc2, nv2 = normalize_h_formula_dn auxf h2 in
+	  let h = CF.ConjConj({CF.h_formula_conjconj_h1 = nh1;
 	  CF.h_formula_conjconj_h2 = nh2;
-	  CF.h_formula_conjconj_pos = pos})
+	  CF.h_formula_conjconj_pos = pos}) in
+          (h, lc1@lc2, nv1@nv2)
     | CF.Phase({CF.h_formula_phase_rd = h1;
       CF.h_formula_phase_rw = h2;
       CF.h_formula_phase_pos = pos}) ->
-	  let nh1 = normalize_h_formula_dn auxf h1 in
-	  let nh2 = normalize_h_formula_dn auxf h2 in
-	  CF.Phase({CF.h_formula_phase_rd = nh1;
+	  let nh1,lc1,nv1 = normalize_h_formula_dn auxf h1 in
+	  let nh2,lc2,nv2 = normalize_h_formula_dn auxf h2 in
+	  let h = CF.Phase({CF.h_formula_phase_rd = nh1;
 	  CF.h_formula_phase_rw = nh2;
-	  CF.h_formula_phase_pos = pos})
+	  CF.h_formula_phase_pos = pos}) in 
+          (h, lc1@lc2, nv1@nv2)
     | CF.DataNode hn -> auxf h 
-    | _ -> h
+    | _ -> (h,[],[])
 
 let rec normalize_formula_dn aux_f (f : formula): formula = match f with
   | Or ({formula_or_f1 = f1; formula_or_f2 = f2; formula_or_pos = pos}) ->
@@ -1162,39 +1166,60 @@ let rec normalize_formula_dn aux_f (f : formula): formula = match f with
 	let resform = mkOr rf1 rf2 pos in
 	resform
   | Base f1 ->
-        let f1_heap = normalize_h_formula_dn aux_f f1.formula_base_heap in
+        let f1_heap, f1_constr, nv = normalize_h_formula_dn aux_f f1.formula_base_heap in
         Base({f1 with formula_base_heap = f1_heap})
   | Exists f1 ->
-        let f1_heap = normalize_h_formula_dn aux_f f1.formula_exists_heap in
+        let f1_heap, f1_constr, nv = normalize_h_formula_dn aux_f f1.formula_exists_heap in
         Exists({f1 with formula_exists_heap = f1_heap})
 
-let push_node_imm_to_field_imm_x (h: CF.h_formula):  CF.h_formula =
+let merge_imm_ann ann1 ann2 = 
+  match ann1, ann2 with
+    | CF.ConstAnn(Mutable), ann
+    | ann, CF.ConstAnn(Mutable) -> (ann, [], [])
+    | CF.ConstAnn(Accs), _
+    | _, CF.ConstAnn(Accs)    -> (CF.ConstAnn(Accs), [], [])
+    | CF.PolyAnn sv, ann
+    | ann, CF.PolyAnn sv   -> 
+          let fresh_v = "ann_" ^ (fresh_name ()) in
+          let fresh_sv = (CP.SpecVar(AnnT, fresh_v, Unprimed)) in
+          let fresh_var = CP.Var(fresh_sv, no_pos) in
+          let poly_ann = mkPolyAnn fresh_sv in
+          let constr1 = CP.mkSubAnn (mkExpAnnSymb ann no_pos) fresh_var in
+          let constr2 = CP.mkSubAnn (CP.Var(sv, no_pos)) fresh_var in
+          (poly_ann, constr1::[constr2], [(fresh_v, Unprimed)])
+    | ann_n, _ -> let ann = if (subtype_ann 2  ann_n  ann2 ) then ann2 else  ann1 in
+      (ann, [], [])
+
+let push_node_imm_to_field_imm_x (h: CF.h_formula):  CF.h_formula  * (CP.formula list) * ((Globals.ident * Globals.primed) list) =
   match h with
     | CF.DataNode dn -> 
           let ann_node = dn.CF.h_formula_data_imm in
-          let new_ann_param = List.map (fun p_ann ->
-              match ann_node with
-	        | CF.ConstAnn(Mutable) -> p_ann
-                | CF.ConstAnn(Accs)    -> CF.ConstAnn(Accs)
-                | ann_n -> if (subtype_ann 2  ann_n  p_ann ) then p_ann else  ann_node ) dn.CF.h_formula_data_param_imm in  
+          let new_ann_param, constr, new_vars = List.fold_left (fun (params, constr, vars) p_ann ->
+              let new_p_ann,nc,nv = merge_imm_ann ann_node p_ann in
+              (params@[new_p_ann], nc@constr, nv@vars)
+          ) ([],[],[]) dn.CF.h_formula_data_param_imm in  
           let new_ann_node =  if (List.length  dn.CF.h_formula_data_param_imm > 0) then CF.ConstAnn(Mutable) else ann_node in
-          CF.DataNode{dn with  CF.h_formula_data_imm = new_ann_node;
- 	      CF.h_formula_data_param_imm = new_ann_param;}
-    | _ -> h
+          let n_dn = CF.DataNode{dn with  CF.h_formula_data_imm = new_ann_node;
+ 	      CF.h_formula_data_param_imm = new_ann_param;} in
+          (n_dn, constr, new_vars)
+    | _ -> (h, [], [])
 
-let push_node_imm_to_field_imm caller (h:CF.h_formula) : CF.h_formula =
+let push_node_imm_to_field_imm caller (h:CF.h_formula) : CF.h_formula * (CP.formula list) * ((Globals.ident * Globals.primed) list) =
   let pr = Cprinter.string_of_h_formula in
-  Debug.no_1_num caller "push_node_imm_to_field_imm" pr pr push_node_imm_to_field_imm_x h 
+  let pr_out = pr_triple Cprinter.string_of_h_formula pr_none pr_none in
+  Debug.no_1_num caller "push_node_imm_to_field_imm" pr pr_out push_node_imm_to_field_imm_x h 
 
-let normalize_field_ann_heap_node_x (h:CF.h_formula): CF.h_formula =
+let normalize_field_ann_heap_node_x (h:CF.h_formula): CF.h_formula  * (CP.formula list) * ((Globals.ident * Globals.primed) list) =
   if (!Globals.allow_field_ann) then
   (* if false then *)
-    normalize_h_formula_dn (push_node_imm_to_field_imm 1) h
-  else h
+    let h, constr, new_vars = normalize_h_formula_dn (push_node_imm_to_field_imm 1) h in
+    (h,constr,new_vars)
+  else (h,[],[])
 
-let normalize_field_ann_heap_node (h:CF.h_formula): CF.h_formula =
+let normalize_field_ann_heap_node (h:CF.h_formula): CF.h_formula * (CP.formula list) * ((Globals.ident * Globals.primed) list) =
   let pr = Cprinter.string_of_h_formula in
-  Debug.no_1 "normalize_field_ann_heap_node" pr pr normalize_field_ann_heap_node_x h
+  let pr_out = pr_triple Cprinter.string_of_h_formula pr_none pr_none in
+  Debug.no_1 "normalize_field_ann_heap_node" pr pr_out normalize_field_ann_heap_node_x h
 
 let normalize_field_ann_formula_x (h:CF.formula): CF.formula =
   if (!Globals.allow_field_ann) then

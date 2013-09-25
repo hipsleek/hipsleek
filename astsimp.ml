@@ -5117,7 +5117,8 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
     | _ -> report_error pos "expand_dereference_node: expect a HeapNode"
   ) in
   let rec linearize_heap (f : IF.h_formula) pos (tl:spec_var_type_list)
-                         : ( CF.h_formula * CF.t_formula * (Globals.ident * Globals.primed) list * (spec_var_type_list)) = ( 
+        : (( CF.h_formula (* *  (MCP.mix_formula list)  *)) * CF.t_formula * (Globals.ident * Globals.primed) list * (spec_var_type_list)) = ( 
+            (* andreeac: TODO add the constraints in a pair with  CF.h_formula *)
     let res = ( (*let _ = print_string("H_formula: "^(Iprinter.string_of_h_formula f)^"\n") in*)
       match f with
       | IF.HeapNode2 h2 -> report_error (IF.pos_of_formula f0) "malfunction with convert to heap node"
@@ -5222,7 +5223,7 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
                   CF.h_formula_data_pruning_conditions = [];
                   CF.h_formula_data_pos = pos;}
               in
-          let result_heap = Immutable.normalize_field_ann_heap_node result_heap in
+          (* let result_heap = Immutable.normalize_field_ann_heap_node result_heap in *)
           (result_heap, CF.TypeTrue, [], tl)
     )
             else (
@@ -5322,7 +5323,7 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
                                CF.h_formula_data_remaining_branches = None;
                                CF.h_formula_data_pruning_conditions = [];
                                CF.h_formula_data_pos = pos;} in
-                let new_h = Immutable.normalize_field_ann_heap_node new_h in
+                (* let new_h = Immutable.normalize_field_ann_heap_node new_h in *)
                 (new_h, CF.TypeTrue, [], tl)
           )
         )
@@ -5393,7 +5394,10 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
     let pos = f.IF.formula_pos in
     let (new_h, type_f, newvars, n_tl) = linearize_heap h pos tl in
     (*let _ = print_string("Heap: "^(Cprinter.string_of_h_formula new_h)^"\n") in*)
+    let new_h, new_constr, new_vars = Immutable.normalize_field_ann_heap_node new_h in
+    let newvars = newvars@new_vars in
     let new_p = trans_pure_formula p n_tl in
+    let new_p = CP.join_disjunctions (new_p::new_constr) in
     let new_p = Cpure.arith_simplify 5 new_p in
     let mix_p = (MCP.memoise_add_pure_N (MCP.mkMTrue pos) new_p) in
     (*formula_delayed*)
@@ -5422,6 +5426,7 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
     CF.formula_ref_vars = [];
     CF.formula_label = None;
     CF.formula_pos = pos} in
+    (* let new_f = Immutable.normalize_field_ann_formula new_f in *)
     (new_f,type_f, newvars, n_tl)
   ) in
   (* let linearize_one_formula f pos = ( *)
@@ -5437,8 +5442,12 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
     let a = base.IF.formula_base_and in
     let pos = base.IF.formula_base_pos in
     let (new_h, type_f, newvars1, n_tl) = linearize_heap h pos tl in
+    let new_h, new_constr, new_vars = Immutable.normalize_field_ann_heap_node new_h in
+    let newvars = newvars1@new_vars in
     let new_p = trans_pure_formula p n_tl in
-    (*let _ = print_string("\nForm: "^(Cprinter.string_of_pure_formula new_p)) in*)
+    let _ = print_string("\nForm: "^(Cprinter.string_of_pure_formula new_p)) in
+    let new_p = CP.join_disjunctions (new_p::new_constr) in
+    let _ = print_string("\nForm: "^(Cprinter.string_of_pure_formula new_p)) in
     let new_p = Cpure.arith_simplify 5 new_p in
     (*let _ = print_string("\nSimpleForm: "^(Cprinter.string_of_pure_formula new_p)) in*)
     let new_fl = trans_flow_formula fl pos in

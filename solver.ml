@@ -404,7 +404,8 @@ and h_formula_2_mem (f : h_formula) (p : mix_formula) (evars : CP.spec_var list)
   Debug.no_3 "h_formula_2_mem"  Cprinter.string_of_h_formula Cprinter.string_of_mix_formula Cprinter.string_of_spec_var_list Cprinter.string_of_mem_formula 
       (fun f p evars -> h_formula_2_mem_x f p evars prog) f p evars
 
-and compatible_ann (ann1: CF.ann list) (ann2: CF.ann list): bool =
+(* andreeac: to add equality info *)
+and compatible_ann (ann1: CF.ann list) (ann2: CF.ann list) : bool =
   if not(!Globals.allow_field_ann) then false else 
   let rec helper ann1 ann2 = 
   match ann1, ann2 with
@@ -412,6 +413,9 @@ and compatible_ann (ann1: CF.ann list) (ann2: CF.ann list): bool =
     | (CF.ConstAnn(Accs))::t1, a::t2 
     | a::t1, (CF.ConstAnn(Accs))::t2 -> let compatible = helper t1 t2 in
 				                        true && compatible
+    | (CF.TempRes(a1,a2))::t1, a::t2 
+    | a::t1, (CF.TempRes(a1,a2))::t2 -> let compatible = helper t1 t2 in
+				                        (CF.eq_ann a a2) && compatible
     | _ -> false
   in helper ann1 ann2
 
@@ -9975,8 +9979,8 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
                     then estate.es_heap (*do not consume*)
                     else mkStarH consumed_h estate.es_heap pos end 
                 else  
-                  if (!Globals.allow_field_ann) then estate.es_heap
-                  else mkStarH consumed_h estate.es_heap pos 
+                  (* if (!Globals.allow_field_ann) then estate.es_heap *)
+                  (* else *) mkStarH consumed_h estate.es_heap pos 
               in
 	          let n_es_res,n_es_succ = match ((get_node_label l_node),(get_node_label r_node)) with
                 |Some s1, Some s2 -> ((Gen.BList.remove_elem_eq (=) s1 estate.es_residue_pts),((s1,s2)::estate.es_success_pts))

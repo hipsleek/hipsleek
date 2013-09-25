@@ -7,13 +7,23 @@ data node {
 infer [] y::node<_,_>@I |- [v] y::node<a,b>@v & v=@M.
 //infer [] y::node<_,_>@I |- [v] y::node<a@v,b@v> & v=@M.
 print residue.
-/*
 
-//2
-infer [] y::node<_,_>@I |- (exists v: y::node<a,b>@v & v=@M).
+// (1) FAIL
+infer [] y::node<_,_>@I |- y::node<a,b>@v & v=@M.
+//infer [] y::node<_,_>@I |- [v] y::node<a@v,b@v> & v=@M.
 print residue.
 
 
+//2
+infer [] y::node<_,_>@A |- (exists v: y::node<a,b>@v & v=@M).
+print residue.
+
+
+//2
+infer [] y::node<_,_>@M |- (exists v: y::node<a,b>@v & v=@M).
+print residue.
+
+/*
 // 3
 infer [] y::node<_,_>@M |- [v] y::node<a,b>@v & v=@I.
 print residue.

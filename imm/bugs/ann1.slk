@@ -1,0 +1,18 @@
+data node {
+  int val;
+  node next;
+}.
+
+// 1 fail
+infer [] y::node<_,_>@I |- y::node<a,b>@v & v=@M.
+print residue.
+
+// 2
+infer [] y::node<_,_>@I |- (exists v: y::node<a,b>@v & v=@M).
+print residue.
+
+
+// 3 
+infer [] y::node<_,_>@I |- [v] y::node<a,b>@v & v=@M.
+print residue.
+
