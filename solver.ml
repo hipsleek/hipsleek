@@ -703,7 +703,121 @@ and h_formula_2_mem_x (f : h_formula) (p0 : mix_formula) (evars : CP.spec_var li
       | HFalse -> {mem_formula_mset = CP.DisjSetSV.mkEmpty;}
       | HEmp   -> {mem_formula_mset = CP.DisjSetSV.mkEmpty;}
             
-    in let mf = (helper f) in {mem_formula_mset = (CP.DisjSetSV.remove_dups_disj_set mf.mem_formula_mset)}
+    in
+(* 	(\*a much simpler version of the above helper*\) *)
+    let rec helper_simpl f =
+      let node_lst = split_star_h f in
+      let mapper f = match f with (*base cases, no * (StarH)  *)
+	| StarMinus _ -> {mem_formula_mset = CP.DisjSetSV.mkEmpty;}
+	| Hole _ -> {mem_formula_mset = CP.DisjSetSV.mkEmpty;}
+	| HRel _  -> {mem_formula_mset = CP.DisjSetSV.mkEmpty;}
+	| HTrue  -> {mem_formula_mset = CP.DisjSetSV.mkEmpty;}
+	| HFalse -> {mem_formula_mset = CP.DisjSetSV.mkEmpty;}
+	| HEmp   -> {mem_formula_mset = CP.DisjSetSV.mkEmpty;}
+	| Phase {h_formula_phase_rd = h1;h_formula_phase_rw = h2;h_formula_phase_pos = pos}
+	| Conj {h_formula_conj_h1 = h1;h_formula_conj_h2 = h2;h_formula_conj_pos = pos}
+	| ConjStar {h_formula_conjstar_h1 = h1;h_formula_conjstar_h2 = h2;h_formula_conjstar_pos = pos}
+	| ConjConj {h_formula_conjconj_h1 = h1;h_formula_conjconj_h2 = h2;h_formula_conjconj_pos = pos} ->
+	      Debug.tinfo_hprint (add_str "f" (fun f -> "#Conj/ConjStar/ConjConj/Phase#" ^ Cprinter.string_of_h_formula f)) f pos;
+	      let m1 = helper_simpl h1  in
+	      let m2 = helper_simpl h2 in
+	      {mem_formula_mset = CP.DisjSetSV.merge_disj_set m1.mem_formula_mset m2.mem_formula_mset;}
+	| DataNode ({h_formula_data_node = p;h_formula_data_perm = perm;h_formula_data_pos = pos}) ->
+	      Debug.tinfo_hprint (add_str "f" (fun f -> "#DN#" ^ Cprinter.string_of_h_formula f)) f pos;
+	      (* if List.mem p evars || perm<> None then *)
+	      (*   {mem_formula_mset = CP.DisjSetSV.mkEmpty;} *)
+	      (* else *)
+	      (*   {mem_formula_mset = CP.DisjSetSV.singleton_dset p;} *)
+              (*In the presence of fractional permission,
+                p in memset only if frac=1.0 
+                Therefore, we need pure information to prove*)
+	      let new_mset = 
+                match perm with
+                  | Some var ->
+                        (match !Globals.perm with
+                          | Bperm -> CP.DisjSetSV.mkEmpty (*TODO: ???*)
+                          | _ ->
+                                (*prove that p0 |- var=full_perm*)
+                                let full_f = Perm.mkFullPerm_pure () (Cpure.get_var var) in
+                                let f0 = MCP.pure_of_mix p0 in
+                                Debug.devel_zprint (lazy ("h_formula_2_mem: [Begin] check fractional variable "^ (Cprinter.string_of_formula_exp var) ^ " is full_perm" ^"\n")) pos;
+                                let res,_,_ = CP.imply_disj_orig [f0] full_f (TP.imply_one 24) imp_no in
+                                Debug.devel_zprint (lazy ("h_formula_2_mem: [End] check fractional variable "^ (Cprinter.string_of_formula_exp var) ^ " is full_perm. ### res = " ^ (string_of_bool res) ^"\n")) pos;
+                                if (res) then
+                                  CP.DisjSetSV.singleton_dset (p(*, CP.mkTrue pos*))
+                                else [])
+                  | None ->
+	                if List.mem p evars || perm<> None then CP.DisjSetSV.mkEmpty
+	                else CP.DisjSetSV.singleton_dset (p(*, CP.mkTrue pos*)) 
+              in
+	      {mem_formula_mset = new_mset;}
+	| ViewNode ({ h_formula_view_node = p;h_formula_view_name = c;h_formula_view_arguments = vs;
+	  h_formula_view_remaining_branches = lbl_lst;h_formula_view_perm = perm;	h_formula_view_pos = pos}) ->
+	      Debug.tinfo_hprint (add_str "f" (fun f -> "#VN#" ^ Cprinter.string_of_h_formula f)) f pos;
+	      (* let vdef = look_up_view_def pos prog.prog_view_decls c in *)
+	      (* (\*TO DO: Temporarily ignore LOCK*\) *)
+	      (* if  perm<> None then {mem_formula_mset =[]} *)
+	      (* else *)
+	      (*   (match vdef.view_inv_lock with *)
+	      (*     | Some f -> *)
+	      (*   	{mem_formula_mset =[]} *)
+	      (*     | None -> *)
+	      (*   	let new_mset = *)
+	      (*   	  (match lbl_lst with *)
+	      (*   	    |None -> *)
+	      (*   		 if List.mem p evars then CP.BagaSV.mkEmpty *)
+	      (*   		 else look_up_view_baga prog c p vs *)
+	      (*   	    | Some ls -> *)
+	      (*   		  let from_svs = CP.SpecVar (Named vdef.view_data_name, self, Unprimed) :: vdef.view_vars in *)
+	      (*   		  let to_svs = p :: vs in *)
+	      (*   		  lookup_view_baga_with_subs ls vdef from_svs to_svs) in *)
+	      (*   	{mem_formula_mset = CP.DisjSetSV.one_list_dset new_mset;} *)
+	      (*   ) *)
+              let ba = look_up_view_baga prog c p vs in
+              let vdef = look_up_view_def pos prog.prog_view_decls c in
+              let from_svs = CP.SpecVar (Named vdef.view_data_name, self, Unprimed) :: vdef.view_vars in
+              let to_svs = p :: vs in
+              (*TO DO: Temporarily ignore LOCK*)
+	      let new_mset = 
+                (match perm with
+                  | Some var ->
+                        (*******************PERM>>*****************)
+                        (*In the presence of fractional permission,
+                          p in memset only if frac=1.0 
+                          Therefore, we need pure information to prove*)
+                        let full_f = Perm.mkFullPerm_pure () (Cpure.get_var var) in
+                        (*prove that p0 |- var=full_perm*)
+                        let f0 = MCP.pure_of_mix p0 in
+                        Debug.devel_zprint (lazy ("h_formula_2_mem: [Begin] check fractional variable "^ (Cprinter.string_of_formula_exp var) ^ " is full_perm" ^"\n")) pos;
+                        let res,_,_ = CP.imply_disj_orig [f0] full_f (TP.imply_one 25) imp_no in
+                        Debug.devel_zprint (lazy ("h_formula_2_mem: [End] check fractional variable "^ (Cprinter.string_of_formula_exp var) ^ " is full_perm. ### res = " ^ (string_of_bool res) ^"\n")) pos;
+                        if (res) then
+                          (match lbl_lst with
+                            |None ->
+                                 if List.mem p evars then CP.BagaSV.mkEmpty
+	                         else ba 
+                            | Some ls -> 
+                                  lookup_view_baga_with_subs ls vdef from_svs to_svs)
+                        else []
+                          (*******************<<PERM*****************)
+                  | None ->
+                        (* (match vdef.view_inv_lock with *)
+                        (*   | Some f -> CP.BagaSV.mkEmpty *)
+                        (*   | None -> *)
+                        (match lbl_lst with
+                          |None ->
+                               if List.mem p evars then CP.BagaSV.mkEmpty
+	                       else ba 
+                          | Some ls -> 
+                                lookup_view_baga_with_subs ls vdef from_svs to_svs))
+              in
+	      {mem_formula_mset = CP.DisjSetSV.one_list_dset new_mset;}  
+	| Star _  -> report_error no_pos "solver: h_mem should not get star at this point" in
+      let r = List.fold_left (fun a c-> CP.DisjSetSV.star_disj_set a (mapper c).mem_formula_mset) CP.DisjSetSV.mkEmpty node_lst in
+      {mem_formula_mset = r} in
+    (* let mf = (helper f) in *)
+    let mf = if !simpl_memset then helper(*_simpl2*) f else helper_simpl f in
+    {mem_formula_mset = (CP.DisjSetSV.remove_dups_disj_set mf.mem_formula_mset)}
 
 (* code below from clean_print not yet incorporated *)
 (* (\* WN : this calculation on mem_formula need to be revamped *\)  *)
