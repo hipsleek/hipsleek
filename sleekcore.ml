@@ -32,6 +32,7 @@ module SY_CEQ = Syn_checkeq
 
 
 let generate_lemma = ref(fun (iprog: I.prog_decl) n t (ihps: ident list) iante iconseq -> [],[])
+let cproof = ref (None: Prooftracer.proof option)
 
 let sleek_entail_check_x isvl (cprog: C.prog_decl) proof_traces ante conseq=
   let pr = Cprinter.string_of_struc_formula in
@@ -87,7 +88,7 @@ let sleek_entail_check_x isvl (cprog: C.prog_decl) proof_traces ante conseq=
         print_endline ("[Warning] False ctx")
   in
   (* let _ = print_endline ("ctx: "^(Cprinter.string_of_context ctx)) in *)
-  let rs1, _ = 
+  let rs1, pr = 
     if not !Globals.disable_failure_explaining then
       Solver.heap_entail_struc_init_bug_inv cprog false false 
         (CF.SuccCtx[ctx]) conseq no_pos None
@@ -103,6 +104,7 @@ let sleek_entail_check_x isvl (cprog: C.prog_decl) proof_traces ante conseq=
     if not !Globals.disable_failure_explaining then ((not (CF.isFailCtx_gen rs)))
     else ((not (CF.isFailCtx rs))) in
   (* residues := Some (rs, res); *)
+	let _= cproof:=Some pr in
   (res, rs,v_hp_rel)
 
 (*
@@ -119,7 +121,6 @@ let sleek_entail_check isvl (cprog: C.prog_decl) proof_traces ante conseq=
 
 let sleek_sat_check isvl cprog f=
   true
-
 (*
 - guiding_svl is used to guide the syntatic checking.
 - guiding_svl is common variables between f1 and f2
