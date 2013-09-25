@@ -29,10 +29,11 @@ int for_aux(ref node ptr)
 
 {
   node old_ptr = ptr;
-  // ptr = new node(old_ptr);
+  //ptr = new node(old_ptr);
   ptr = malloc(1);
   if (ptr==null) {
     ptr = old_ptr;
+    //dprint;
     return -1;
   }
 
@@ -40,7 +41,7 @@ int for_aux(ref node ptr)
   for_aux(ptr);
   return 0;
 }
-
+             /*
 HeapPred H2(node a).
 HeapPred G2(node b).
 
@@ -60,7 +61,7 @@ int main(ref node ptr)
 
   return 0;
 }
-
+             */
 
              /*
 [ // PRE_REC

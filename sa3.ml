@@ -40,7 +40,7 @@ let collect_ho_ass cprog is_pre def_hps (acc_constrs, post_no_def) cs=
     (acc_constrs@new_constrs, post_no_def@linfer_hps)
 
 (*input in fb
- output: true,susbs: can subst
+ output: true,subst: can subst
 *)
 
 (*

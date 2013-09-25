@@ -31,7 +31,7 @@ echo "check-dll"
 echo "bt-search-2.ss"
 ../../hip bt-search-2.ss -validate --pred-unify-post  o/bt-search-2.cp | grep Validate
 echo "tll: to check"
-#../../hip tll.ss -validate o/tll.cp | grep Validate
+#../../hip tll.ss --sa-dnc --pred-en-dangling --pred-en-eup -validate o/tll.cp | grep Validate
 echo "rose-tree: to check"
 ../../hip rose-tree-1.ss -validate o/rose-tree-1.cp | grep Validate
 echo "check mcf: to check"
