@@ -812,7 +812,7 @@ let allow_locklevel = ref false (*enable locklevel during verification*)
 
 (* let has_locklevel = ref false *)
 
-let ann_vp = ref true (* Disable variable permissions in default, turn on in para5*)
+let ann_vp = ref false (* Disable variable permissions in default, turn on in para5*)
 
 let allow_ptr = ref false (*true -> enable pointer translation*)
 

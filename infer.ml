@@ -565,6 +565,12 @@ let infer_lhs_contra pre_thus lhs_xpure ivars pos msg =
   if not(check_sat) then None
   else
     let f = simplify_contra 1 (MCP.pure_of_mix lhs_xpure) ivars in
+    let eqs0 = (MCP.ptr_equations_without_null lhs_xpure) in
+    let eqs1 = List.map (fun (sv1, sv2) ->
+        if CP.mem_svl sv1 ivars then (sv2,sv1)
+        else (sv1,sv2)
+    ) eqs0 in
+    let f = CP.subst eqs1 f in
     let vf = CP.fv f in
     let over_v = CP.intersect vf ivars in
     if (over_v ==[]) then None
