@@ -1,8 +1,7 @@
--to add: print proof
-
+-to add: print proof: DONE
+=========================================================================
 isleek.ml
  - add commands for isleek (list checkentail.)
-
 =========================================================================
 # to add: list checkentail.
  - isleek.ml <- add a list of checkentail commands (id, orig lhs, orig rhs, es option, proof option)
