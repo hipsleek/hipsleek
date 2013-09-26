@@ -104,7 +104,7 @@ let sleek_entail_check_x isvl (cprog: C.prog_decl) proof_traces ante conseq=
     if not !Globals.disable_failure_explaining then ((not (CF.isFailCtx_gen rs)))
     else ((not (CF.isFailCtx rs))) in
   (* residues := Some (rs, res); *)
-	let _= cproof:=Some pr in
+  let _= cproof:=Some pr in
   (res, rs,v_hp_rel)
 
 (*

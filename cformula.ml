@@ -13535,7 +13535,7 @@ let is_no_heap_struc_formula (e : struc_formula) : bool =
   Debug.no_1 "is_no_heap_struc_formula" pr string_of_bool is_no_heap_struc_formula e
 
 let residues =  ref (None : (list_context * bool) option)    (* parameter 'bool' is used for printing *)
-	
+
 let set_residue b lc =
   residues := Some (lc,b)
 

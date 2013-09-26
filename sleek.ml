@@ -279,7 +279,7 @@ let main () =
   try
       if (!inter) then
         begin
-            Debug.info_pprint "sleek : interactive" no_pos;
+            Debug.info_pprint "sleek : interactive\n" no_pos;
             while not (!quit) do
               if !inter then (* check for interactivity *)
                 print_string !prompt;
@@ -288,11 +288,12 @@ let main () =
                   | "" -> ()
                   | _ -> 
                       try
+                        if input = "quit" then quit := true else
                           let term_indx = String.index input terminator in
                           let s = String.sub input 0 (term_indx+1) in
                           Buffer.add_string buffer s;
                           let cts = Buffer.contents buffer in
-                          if cts = "quit" || cts = "quit\n" then quit := true
+                          if cts = "quit." || cts = "quit\n" then quit := true
                           else try
                                    let cmd = parse cts in
                                    proc_gen_cmd cmd;

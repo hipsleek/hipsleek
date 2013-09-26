@@ -10,6 +10,6 @@ checkentail x::node<_,q> * q::ll<n> & n > 1 |- (exists m: x::ll<m> & m > 3).
 
 
 print residue.
-print proof.
+
 
 

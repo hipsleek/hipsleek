@@ -124,7 +124,8 @@ let clear_all () =
   clear_var_table ();
   clear_iprog ();
   clear_cprog ();
-  CF.residues := None
+  CF.residues := None;
+  SC.cproof := None
 
 (*L2: move to astsimp*)
 (* let check_data_pred_name name : bool = *)
@@ -401,21 +402,22 @@ let process_lemma ldef =
   Debug.no_1 "process_lemma" Iprinter.string_of_coerc_decl (fun _ -> "?") process_lemma ldef
 
 let print_residue residue =
-          match residue with
-            | None -> print_string ": no residue \n"
-                  (* | Some s -> print_string ((Cprinter.string_of_list_formula  *)
-                  (*       (CF.list_formula_of_list_context s))^"\n") *)
-                  (*print all posible outcomes and their traces with numbering*)
-            | Some (ls_ctx, print) ->
-                  if (print) then
-                    (* let _ = print_endline (Cprinter.string_of_list_context ls_ctx) in *)
-                    print_string ((Cprinter.string_of_numbered_list_formula_trace_inst !cprog
-                        (CF.list_formula_trace_of_list_context ls_ctx))^"\n" )
+  match residue with
+    | None -> print_string ": no residue \n"
+          (* | Some s -> print_string ((Cprinter.string_of_list_formula  *)
+          (*       (CF.list_formula_of_list_context s))^"\n") *)
+          (*print all posible outcomes and their traces with numbering*)
+    | Some (ls_ctx, print) ->
+          if (print) then
+            (* let _ = print_endline (Cprinter.string_of_list_context ls_ctx) in *)
+            print_string ((Cprinter.string_of_numbered_list_formula_trace_inst !cprog
+                (CF.list_formula_trace_of_list_context ls_ctx))^"\n" )
+
 let print_proof proof =
-          match proof with
-						| None -> print_string ": no proof \n"
-						| Some pr -> print_string ("printing proof:...\n" ^ (Prooftracer.string_of_proof pr))
-						
+  match proof with
+    | None -> print_string ": no proof \n"
+    | Some pr -> print_string ("printing proof:...\n" ^ (Prooftracer.string_of_proof pr))
+
 let process_list_lemma ldef_lst =
   let lst = ldef_lst.Iast.coercion_list_elems in
   (* why do we check residue for ctx? do we really need a previous context? *)
@@ -736,7 +738,7 @@ let run_pairwise (iante0 : meta_formula) =
 
 let run_infer_one_pass (ivars: ident list) (iante0 : meta_formula) (iconseq0 : meta_formula) =
   let _ = CF.residues := None in
-	let _= SC.cproof := None in
+  let _= SC.cproof := None in
   let _ = Infer.rel_ass_stk # reset in
   let _ = Sa2.rel_def_stk # reset in
   let _ = Sa3.rel_def_stk # reset in
@@ -1596,7 +1598,7 @@ let process_print_command pcmd0 = match pcmd0 with
           (*           print_string ((Cprinter.string_of_numbered_list_formula_trace_inst !cprog *)
           (*               (CF.list_formula_trace_of_list_context ls_ctx))^"\n" ); *)
 	else if pcmd ="proof" then
-		      print_proof !SC.cproof				
+		      print_proof !SC.cproof
 	else
 	  print_string ("unsupported print command: " ^ pcmd)
 
