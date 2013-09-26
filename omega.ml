@@ -47,9 +47,9 @@ let omega_of_spec_var (sv : spec_var):string = match sv with
 		let r = match (List.filter (fun (a,b,_)-> ((String.compare v b)==0) )!omega_subst_lst) with
 				  | []->
             let ln = (String.length v) in  
-            let r_c = if (ln<15) then v
+            let r_c = if (ln<20) then v
               else 
-                let v_s = String.sub v (ln-15)  15 in
+                let v_s = "v"^(String.sub v (ln-20)  20) in
                 if((String.get v_s 0)=='_') then String.sub v_s 1 ((String.length v_s)-1) else v_s in
             begin
               omega_subst_lst := (r_c,v,t)::!omega_subst_lst; 
@@ -235,7 +235,7 @@ let prelude () =
   (* start omega system in a separated process and load redlog package *)
 let start() =
   if not !is_omega_running then begin
-      print_endline ("Starting Omega..." ^ !omegacalc); flush stdout;
+      if (not !Globals.web_compile_flag) then print_endline ("Starting Omega..." ^ !omegacalc); flush stdout;
       last_test_number := !test_number;
       let _ = Procutils.PrvComms.start !log_all_flag log_all ("omega", !omegacalc, [||]) set_process prelude in
       is_omega_running := true;
@@ -245,6 +245,7 @@ let start() =
 let stop () =
   if !is_omega_running then begin
     let num_tasks = !test_number - !last_test_number in
+    if (not !Globals.web_compile_flag) then
     print_string_if !Globals.enable_count_stats ("Stop Omega... "^(string_of_int !omega_call_count)^" invocations "); flush stdout;
     let _ = Procutils.PrvComms.stop !log_all_flag log_all !process num_tasks Sys.sigkill (fun () -> ()) in
     is_omega_running := false;

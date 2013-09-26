@@ -129,6 +129,7 @@ let start () =
       rl_current_mode := OFSF;
       let set_process proc = process := proc in
       let rl_bin = if !Globals.web_compile_flag then "/usr/local/etc/reduce/bin/redcsl" else "redcsl" in
+      (* let rl_bin = "redcsl" in *)
       let _ = Procutils.PrvComms.start !is_log_all log_file ("redlog", rl_bin,  [|"-w"; "-b";"-l reduce.log"|] ) set_process prelude in
       (* print_endline "Starting Reduce... "; *)
       flush stdout
@@ -345,7 +346,7 @@ let rl_of_b_formula b =
   | CP.VarPerm _ -> "" (*TO CHECK: ignore VarPerm*)
   | _ -> failwith "redlog: bags is not supported"
 
-let rec rl_of_formula pr_w pr_s f0 =
+let rec rl_of_formula_x pr_w pr_s f0 =
   let rec helper f0 =
     match f0 with
       | CP.BForm ((b,_) as bf,_) -> 
@@ -355,7 +356,7 @@ let rec rl_of_formula pr_w pr_s f0 =
                 | Some f -> helper f
             end
 	  | CP.AndList _ -> Gen.report_error no_pos "redlog.ml: encountered AndList, should have been already handled"
-      | CP.Not (f, _, _) -> "(not " ^ (rl_of_formula pr_s pr_w f) ^ ")"
+      | CP.Not (f, _, _) -> "(not " ^ (helper f) ^ ")"
       | CP.Forall (sv, f, _, _) -> "(all (" ^ (rl_of_spec_var sv) ^ ", " ^ (helper f) ^ "))"
       | CP.Exists (sv, f, _, _) -> "(ex (" ^ (rl_of_spec_var sv) ^ ", " ^ (helper f) ^ "))"
       | CP.And (f1, f2, _) -> "(" ^ (helper f1) ^ " and " ^ (helper f2) ^ ")"
@@ -364,7 +365,7 @@ let rec rl_of_formula pr_w pr_s f0 =
 
 let rl_of_formula pr_w pr_s f0 =
   let _ = set_prover_type() in
-  rl_of_formula pr_w pr_s f0
+  rl_of_formula_x pr_w pr_s f0
 
 (***********************************
  pretty printer for pure formula
@@ -374,7 +375,6 @@ let string_of_exp e0 = !print_exp e0
 let string_of_b_formula bf = !print_b_formula bf
   
 let string_of_formula f0 = !print_formula f0
-
   
 let simplify_var_name (e: CP.formula) : CP.formula =
   let shorten_sv (CP.SpecVar (typ, name, prm)) vnames =
@@ -1125,7 +1125,7 @@ let is_valid_ops pr_w pr_s f imp_no =
   let f = normalize_formula f in
   let frl = rl_of_formula pr_s pr_w f in
   let rl_input = "rlall(" ^ frl ^")" in
-  let _ = print_endline ("rl_input 2 = " ^ rl_input) in
+  (* let _ = print_endline ("rl_input 2 = " ^ rl_input) in *)
   let runner () = check_formula rl_input in
   let err_msg = "Timeout when checking #imply " ^ imp_no ^ "!" in
   let proc = lazy (run_with_timeout runner err_msg) in
@@ -1164,7 +1164,9 @@ let imply_no_cache_ops pr_w pr_s (f : CP.formula) (imp_no: string) : bool * floa
         if (has_eq_int eef) then
           begin
               (* If there is exist quantified over integers, issue the warning*)
-              (print_string ("\n[Redlog] WARNING: Found formula with existential quantified var(s), result may be unsound! (Imply #" ^ imp_no ^ ") for redlog\n"));
+              let _ = if not !Globals.web_compile_flag then
+              (print_string ("\n[Redlog] WARNING: Found formula with existential quantified var(s), result may be unsound! (Imply #" ^ imp_no ^ ") for redlog\n"))
+              in
               valid eef
           end
         else
@@ -1233,7 +1235,14 @@ let imply ante conseq imp_no =
 (*       (add_str "imp_no" (fun c -> c))  *)
 (*       string_of_bool imply ante conseq imp_no *)
 
-
+(*
+LDK:
+The translation is buggy
+For example: f'=1
+Then, rlf= "fPRMD=1"
+lexbuf = "fPRMD=1"
+Finally, simpler="fPRMD=1" which is not the orignal formula.
+*)
 let simplify_with_redlog (f: CP.formula) : CP.formula  =
   let pr_n x = None in
   if (CP.is_float_formula f) then
@@ -1246,7 +1255,9 @@ let simplify_with_redlog (f: CP.formula) : CP.formula  =
     let _ = send_cmd "rlset ofsf" in
     let lexbuf = Lexing.from_string redlog_result in
     let simpler_f = Rlparser.input Rllexer.tokenizer lexbuf in
-    simpler_f
+    (* simpler_f *)
+    (*LDK: currently temporarily do not use simpler_f*)
+    f
 
 let simplify_with_redlog (f: CP.formula) : CP.formula  =
   (* let pr = pr_pair !print_formula string_of_bool in *)

@@ -1,0 +1,39 @@
+/*
+  Weird error with redlog (run with "-tp redlog")
+
+  why (2) FAIL but (1) is VALID
+
+Solver.heap_entail_empty_rhs_heap
+(inside fold_fun_impt)
+->
+Solver.heap_entail_build_mix_formula_check
+->
+Solver.elim_exists_mix_formula
+->
+Solver.elim_exists_pure_branch
+->
+TP.simplify_a
+whhich is Redlog.simplify
+->
+simplify_with_redlog
+
+However, The translation is buggy
+For example: f'=1
+Then, rlf= "fPRMD=1"
+lexbuf = "fPRMD=1"
+Finally, simpler="fPRMD=1" which is not the orignal formula.
+
+Suspect that the translation is not for Solver's purposes.
+
+SOLUTION: temporarily do not use the outcome of
+ simplify_with_redlog
+
+*/
+
+//(1)
+//checkentail bs=bs' & i'=r*bs |- (exists r:bs*r=i').
+//VALID
+
+//(2)
+checkentail bs=bs' & i'=r*bs |- (exists r:bs'*r=i').
+// FAIL, unexpected, should be VALID

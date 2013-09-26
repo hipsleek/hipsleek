@@ -242,7 +242,7 @@ let apply_transitive_impl_fix prog post_hps callee_hps (* hp_rel_unkmap *) dang_
     let new_cs1 = (* SAU.simplify_constrs prog unk_hps *) new_cs in
     (*  Debug.ninfo_hprint (add_str "apply_transitive_imp LOOP: " (pr_list_ln Cprinter.string_of_hprel)) constrs no_pos; *)
     begin
-      let equal_cands, complex_hps,_ = Icontext.icompute_action_pre new_cs1 post_hps frozen_hps in
+      let equal_cands, complex_hps,_ = Icontext.icompute_action_pre new_cs1 post_hps frozen_hps [] in
       let equal_hps = List.map fst equal_cands in
       let _ = if equal_hps <> [] then
         DD.binfo_pprint (" freeze: " ^ (!CP.print_svl equal_hps) )no_pos
@@ -1846,7 +1846,7 @@ and infer_shapes_proper iprog prog proc_name cond_path (constrs2: CF.hprel list)
   let pre_hps, pre_defs, unk_hpargs1,unk_map3, pre_equivs, unk_equivs, _ (*pre_oblg_constrs*) = infer_shapes_init_pre prog pre_constrs1 callee_hps []
     (sel_post_hps1) unk_hpargs link_hps unk_map2 detect_dang in
   let pre_defs1, unify_equiv_map1 = if !Globals.pred_conj_unify then
-    SAC.do_unify prog unk_hps link_hps pre_defs
+    SAC.do_unify prog true unk_hps link_hps sel_post_hps1 pre_defs
   else
     (pre_defs, [])
   in
@@ -1866,8 +1866,8 @@ and infer_shapes_proper iprog prog proc_name cond_path (constrs2: CF.hprel list)
   let post_constrs1 = SAU.subst_equiv_hprel unify_equiv_map11 post_constrs in
   let post_hps, post_defs,unk_hpargs3,unk_map5  = infer_shapes_init_post prog post_constrs1 []
     (sel_post_hps1) unk_hpargs2 link_hps unk_map4 detect_dang pre_defs2 in
-  let post_defs1,unify_equiv_map2 = if false then (*this just for pre-preds*)
-    SAC.do_unify prog unk_hps link_hps post_defs
+  let post_defs1,unify_equiv_map2 = if !Globals.pred_unify_post then
+    SAC.do_unify prog false unk_hps link_hps post_hps post_defs
   else
     (post_defs,unify_equiv_map11)
   in

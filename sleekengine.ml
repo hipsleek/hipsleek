@@ -368,6 +368,9 @@ let process_axiom_def adef = begin
 	Smtsolver.add_axiom cadef.C.axiom_hypothesis Smtsolver.IMPLIES cadef.C.axiom_conclusion;
 end
 
+(*this function is never called. it is replaced by process_list_lemma
+TO REMOVE
+*)
 let process_lemma ldef =
   let ldef = AS.case_normalize_coerc iprog ldef in
   let l2r, r2l = AS.trans_one_coercion iprog ldef in
@@ -736,6 +739,7 @@ let run_infer_one_pass (ivars: ident list) (iante0 : meta_formula) (iconseq0 : m
 	let _= SC.cproof := None in
   let _ = Infer.rel_ass_stk # reset in
   let _ = Sa2.rel_def_stk # reset in
+  let _ = Sa3.rel_def_stk # reset in
   let _ = if (!Globals.print_input || !Globals.print_input_all) then print_endline ("INPUT: \n ### 1 ante = " ^ (string_of_meta_formula iante0) ^"\n ### conseq = " ^ (string_of_meta_formula iconseq0)) else () in
   let _ = Debug.devel_pprint ("\nrun_entail_check 1:"
                               ^ "\n ### iante0 = "^(string_of_meta_formula iante0)
@@ -1021,6 +1025,71 @@ let process_shape_infer pre_hps post_hps=
   (*    CEQ.cp_test !cprog hp_lst_assume ls_inferred_hps sel_hps *)
   (* in *)
   ()
+
+let process_validate ils_es=
+  (**********INTERNAL**********)
+  let preprocess_constr act_idents act_ti (ilhs, irhs)=
+    let (n_tl,lhs) = meta_to_formula ilhs false act_idents act_ti in
+    let fvs = CF.fv lhs in
+    let fv_idents = (List.map CP.name_of_spec_var fvs) in
+    let (_, rhs) = meta_to_formula irhs false (fv_idents@act_idents) n_tl in
+    (lhs,rhs)
+  in
+  let preprocess_iestate act_vars (iguide_vars, ief, iconstrs)=
+    let act_idents = (List.map CP.name_of_spec_var act_vars) in
+    let act_ti = List.fold_left (fun ls (CP.SpecVar(t,sv,_)) ->
+              let vk = TI.fresh_proc_var_kind ls t in
+              ls@[(sv,vk)]
+    ) [] act_vars in
+    let (n_tl,es_formula) = meta_to_formula ief false (act_idents) act_ti in
+    let orig_vars = CF.fv es_formula in
+    let guide_vars = List.map (fun v -> TI.get_spec_var_type_list_infer (v, Unprimed) (orig_vars@act_vars) no_pos)
+      iguide_vars in
+    let constrs = List.map (preprocess_constr act_idents act_ti) iconstrs in
+    (guide_vars, es_formula, constrs)
+  in
+  (*******END INTERNAL ********)
+  let _ = DD.info_hprint (add_str  "  sleekengine " pr_id) "process_validate\n" no_pos in
+  let nn = (sleek_proof_counter#get) in
+  let validate_id = "Validate " ^ (string_of_int nn) ^": " in
+  (*get current residue -> FAIL? VALID*)
+  let a_r, ls_a_es, act_vars = match !CF.residues with
+    | None -> false, [], []
+    | Some (lc,_) -> begin
+        match lc with
+          | CF.FailCtx _ -> (false, [], [])
+          | CF.SuccCtx cl ->
+                let ls_a_es = List.fold_left (fun ls_es ctx -> ls_es@(CF.flatten_context ctx)) [] cl in
+                let act_vars = List.fold_left (fun ls es -> ls@(CF.es_fv es)) [] ls_a_es in
+                (true, ls_a_es, CP.remove_dups_svl act_vars)
+      end
+  in
+  (*expect: r = FAIL? Valid*)
+  (* let ex_r = if String.compare r "Valid" == 0 then true else *)
+  (*   if String.compare r "FAIL" == 0 then false else *)
+  (*     report_error no_pos "SLEEKENGINE.process_validate: expected result should be Valid or FAIL" *)
+  (* in *)
+  let ex_r = true in
+  let _ = match a_r,ex_r with
+    | false,true
+    | true,false -> let _ = print_endline (validate_id ^ "FAIL.") in ()
+    | false,false -> let _ = print_endline (validate_id ^ "SUCC.") in ()
+    | true, true ->
+          (*syn new unknown preds generated between cprog and iprog*)
+          let inew_hprels = Saout.syn_hprel !cprog.C.prog_hp_decls iprog.I.prog_hp_decls in
+          let _ = iprog.I.prog_hp_decls <- (iprog.I.prog_hp_decls@inew_hprels) in
+          (*for each succ context: validate residue + inferred results*)
+          let ls_expect_es = List.map (preprocess_iestate act_vars) ils_es in
+          let b, es_opt, ls_fail_ass = SC.validate ls_expect_es ls_a_es in
+          let _ = if b then
+            print_endline (validate_id ^ "SUCC.")
+          else
+            print_endline (validate_id ^ "FAIL.")
+          in ()
+  in
+  let _ = print_endline ("\n") in
+  ()
+
 let process_shape_divide pre_hps post_hps=
    (* let _ = DD.info_pprint "process_shape_divide" no_pos in *)
   let hp_lst_assume = !sleek_hprel_assumes in

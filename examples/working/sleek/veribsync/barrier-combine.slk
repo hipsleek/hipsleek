@@ -1,0 +1,21 @@
+/*
+  For static barriers, a=0 always
+*/
+
+lemma "combineBarrier" self::barrier(c1,t,0)<p> * self::barrier(c2,t,0)<p> -> self::barrier(c1+c2,t,0)<p>.
+
+//(1)
+checkentail b::barrier(1,2,0)<p1> * b::barrier(1,2,0)<p1>  |- b::barrier(2,2,0)<p2>.
+print residue. //valid, COMBINE, 1 residue
+
+//(2)
+checkentail b::barrier(1,3,0)<p1> * b::barrier(1,3,0)<p1>  |- b::barrier(2,3,0)<p2>.
+print residue. //valid, COMBINE, 1 residue
+
+//(3)
+checkentail b::barrier(1,3,0)<p1> * b::barrier(1,3,0)<p1> * b::barrier(1,3,0)<p1>  |- b::barrier(3,3,0)<p2>.
+print residue. //valid, COMBINE, 1 residue
+
+//(4)
+checkentail b::barrier(1,3,0)<p1> * b::barrier(1,3,0)<p1> * b::barrier(1,3,0)<p1>  * b::barrier(1,3,0)<p1> |- b::barrier(4,3,0)<p2>.
+print residue. //valid, COMBINE,false context

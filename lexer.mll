@@ -250,6 +250,7 @@ module Make (Token : SleekTokenS)
    ("try", TRY);
 	 ("unfold", UNFOLD);
 	 ("union", UNION);
+         ("validate", VALIDATE);
 	 ("void", VOID);
    (*("variance", VARIANCE);*)
 	 ("while", WHILE);
@@ -354,6 +355,7 @@ rule tokenizer file_name = parse
   | ']' { CSQUARE }
   | '$' { DOLLAR }
   | "." { DOT }
+  | ".." { DOTDOT }
   | "\"" { DOUBLEQUOTE }
   | "\\inf" {INFINITY}
   | "=" { EQ }

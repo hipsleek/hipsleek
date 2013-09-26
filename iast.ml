@@ -234,6 +234,7 @@ and expected_comp =
 
 and ass = {
     ass_lhs: F.formula;
+    ass_guard: F.formula option;
     ass_rhs: F.formula }
 
 (********end parse compare file************)
@@ -1300,6 +1301,7 @@ and collect_data_view_from_pure_exp_x (data_names: ident list) (e0 : P.exp) : (i
                 report_error pos ("self has invalid type: " ^ t_id)
       | _ -> ([], [])
     )
+  | P.Bptriple _ -> ([], []) (*MERGE CHECK*)
   | P.Null _ | P.Level _  | P.Var _ -> ([], [])
   | P.IConst _ | P.FConst _ | P.AConst _  | P.InfConst _ | P.Tsconst _ -> ([], [])
   | P.Add _ | P.Subtract _ | P.Mult _ | P.Div _ -> ([], [])
@@ -1752,6 +1754,7 @@ let inbuilt_build_exc_hierarchy () =
   let _ = (exlist # add_edge brk_top "__others") in
   let _ = (exlist # add_edge spec_flow "__others") in
   let _ = (exlist # add_edge error_flow top_flow) in
+  let _ = (exlist # add_edge bfail_flow top_flow) in
   ()
 
 let build_exc_hierarchy (clean:bool)(prog : prog_decl) =
