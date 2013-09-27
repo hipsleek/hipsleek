@@ -224,6 +224,37 @@ let is_lend_debug f =
       (string_of_bool)
       is_lend f
 
+let decide_where_to_add_constr constrl constrr  impl_vars expl_vars evars sv =
+  if CP.mem sv impl_vars then ([constrl], [], [])
+  else if CP.mem sv expl_vars then
+    ([], [constrr], (* [r_constr] *)[])
+  else if CP.mem sv evars then
+    ([(* constr2 *)], [constrr], [constrr])
+  else ([constrl], [], [])
+
+let mkTempRes_x ann_l ann_r  impl_vars expl_vars evars =
+  match ann_r with
+    | PolyAnn sv ->
+          let fresh_v = "ann_" ^ (fresh_name ()) in
+          let fresh_sv = (CP.SpecVar(AnnT, fresh_v, Unprimed)) in
+          let fresh_var = CP.Var(fresh_sv, no_pos) in
+          let poly_ann = mkPolyAnn fresh_sv in
+          let constrl = CP.BForm ((CP.Eq(fresh_var,(mkExpAnnSymb ann_r no_pos),no_pos),None), None) in
+          let constr2 = CP.BForm ((CP.SubAnn((mkExpAnnSymb ann_l no_pos),fresh_var,no_pos),None), None) in
+          let to_lhs, to_rhs, to_rhs_ex = decide_where_to_add_constr constrl constrl  impl_vars expl_vars evars sv in
+          ((TempRes(ann_l,poly_ann),poly_ann), [fresh_sv], (to_lhs, to_rhs, to_rhs_ex))
+    | _ -> ((TempRes(ann_l, ann_r), ann_r), [], ([], [], []))       (* should not reach this branch *)
+
+let mkTempRes ann_l ann_r  impl_vars expl_vars evars =
+  let pr = Cprinter.string_of_imm in
+  let pr1 = pr_pair pr pr in
+  let pr3a = pr_list !CP.print_formula in
+  let pr3 = pr_triple pr3a pr3a pr3a in 
+  let pr_out = pr_triple (add_str "(residue,cosumed) = " pr1) 
+    (add_str "new var:" (pr_list Cprinter.string_of_spec_var))
+    (add_str "constraints: " pr3) in
+  Debug.no_2 "mkTempRes"  pr pr pr_out (fun _ _ -> mkTempRes_x ann_l ann_r  impl_vars expl_vars evars ) ann_l ann_r
+
 (* and contains_phase_debug (f : h_formula) : bool =   *)
 (*   Debug.no_1 "contains_phase" *)
 (*       (!print_h_formula)  *)
@@ -235,7 +266,6 @@ let is_lend_debug f =
 (* emp & emp * K == K *)
 (* KR: check there is only @L *)
 (* KR & KR ==> KR ; (KR ; true) *)
-
 
 let rec normalize_h_formula (h : IF.h_formula) (wr_phase : bool) : IF.h_formula =
   Debug.no_1 "normalize_h_formula"
@@ -624,10 +654,10 @@ and subtype_ann_pair (imm1 : ann) (imm2 : ann) : bool * ((CP.exp * CP.exp) optio
   let pr_out = pr_pair string_of_bool (pr_option (pr_pair (add_str "l" pr_exp) (add_str "r" pr_exp)) ) in
   Debug.no_1 "subtype_ann_pair" pr1 pr_out (fun _ -> subtype_ann_pair_x imm1 imm2) (imm1,imm2)
 
-and subtype_ann_gen_x impl_vars evars (imm1 : ann) (imm2 : ann) : bool * (CP.formula option) * (CP.formula option) * (CP.formula option) =
+and subtype_ann_gen_x impl_vars evars (imm1 : ann) (imm2 : ann) : bool * (CP.formula list) * (CP.formula list) * (CP.formula list) =
   let (f,op) = subtype_ann_pair imm1 imm2 in
   match op with
-    | None -> (f,None,None,None)
+    | None -> (f,[],[],[])
     | Some (l,r) -> 
           let to_rhs = CP.BForm ((CP.SubAnn(l,r,no_pos),None), None) in
           (* implicit instantiation of @v made stronger into an equality *)
@@ -640,17 +670,17 @@ and subtype_ann_gen_x impl_vars evars (imm1 : ann) (imm2 : ann) : bool * (CP.for
             match r with
               | CP.Var(v,_) -> 
                     (* implicit var annotation on rhs *)
-                    if CP.mem v impl_vars then (f,Some to_lhs,None, None)
+                    if CP.mem v impl_vars then (f,[to_lhs],[],[])
                     else if CP.mem v evars then
-                            (f,None, Some to_rhs, Some to_rhs)
-                    else (f,None,Some to_rhs, None)
-              | _ -> (f,None,Some to_rhs, None)
+                            (f,[], [to_rhs], [to_rhs])
+                    else (f,[],[to_rhs], [])
+              | _ -> (f,[],[to_rhs], [])
           end
 
-and subtype_ann_gen impl_vars evars (imm1 : ann) (imm2 : ann) : bool * (CP.formula option) * (CP.formula option) * (CP.formula option) =
+and subtype_ann_gen impl_vars evars (imm1 : ann) (imm2 : ann) : bool * (CP.formula list) * (CP.formula list) * (CP.formula list) =
   let pr1 = !CP.print_svl in
   let pr2 = (Cprinter.string_of_imm)  in
-  let pr2a = pr_option !CP.print_formula in
+  let pr2a = pr_list !CP.print_formula in
   let prlst =  (pr_pair (pr_list Cprinter.string_of_spec_var) (pr_list Cprinter.string_of_spec_var)) in
   let pr3 = pr_quad string_of_bool pr2a pr2a pr2a  in
   Debug.no_4 "subtype_ann_gen" pr1 pr1 pr2 pr2 pr3 subtype_ann_gen_x impl_vars evars (imm1 : ann) (imm2 : ann) 
@@ -662,53 +692,109 @@ and mkAndOpt (old_f: CP.formula option) (to_add: CP.formula option): CP.formula 
     | (None, Some f)     -> Some f 
     | (Some f1, Some f2) -> Some (CP.mkAnd f1 f2 no_pos)
 
-and subtype_ann_list impl_vars evars (ann1 : ann list) (ann2 : ann list) : bool * (CP.formula option list) * (CP.formula option list) * (CP.formula option list) =
+(* and mkAnd (old_f: CP.formula list) (to_add: CP.formula list): CP.formula option = *)
+(*   match (old_f, to_add) with *)
+(*     | ([], [])       -> None *)
+(*     | (f::[], []) *)
+(*     | ([], f::[])     -> Some f  *)
+(*     | (f1::[], f2::[]) -> Some (CP.mkAnd f1 f2 no_pos) *)
+
+and subtype_ann_list impl_vars evars (ann1 : ann list) (ann2 : ann list) : bool * (CP.formula  list) * (CP.formula  list) * (CP.formula  list) =
   match (ann1, ann2) with
     | ([], [])         -> (true, [], [], [])
     | (a1::[], a2::[]) -> 
           let (r, f1, f2, f3) = subtype_ann_gen impl_vars evars a1 a2 in
-          (r, [f1], [f2], [f3])
+          (r, f1, f2, f3)
     | (a1::t1, a2::t2) -> 
           let (r, ann_lhs_new, ann_rhs_new, ann_rhs_new_ex) = subtype_ann_gen impl_vars evars a1 a2 in
           let (res, ann_lhs, ann_rhs,  ann_rhs_ex) = subtype_ann_list impl_vars evars t1 t2 in
-          (r&&res, ann_lhs_new::ann_lhs, ann_rhs_new::ann_rhs, ann_rhs_new_ex::ann_rhs_ex)
+          (r&&res, ann_lhs_new@ann_lhs, ann_rhs_new@ann_rhs, ann_rhs_new_ex@ann_rhs_ex)
               (* (r&&res, mkAndOpt ann_lhs ann_lhs_new, mkAndOpt ann_rhs ann_rhs_new) *)
     | _ ->      (false, [], [], [])                        (* different lengths *)
 
 and param_ann_equals_node_ann (ann_lst : ann list) (node_ann: ann): bool =
   List.fold_left (fun res x -> res && (CF.eq_ann x node_ann)) true ann_lst
 
-and remaining_ann_x (ann_l: ann) (ann_r: ann) : ann =
+(* and remaining_ann_x (ann_l: ann) (ann_r: ann) impl_vars evars(\* : ann *\) = *)
+(*   match ann_r with *)
+(*     | ConstAnn(Mutable) *)
+(*     | ConstAnn(Imm)     -> ((ConstAnn(Accs)), [],([],[],[])) *)
+(*     | ConstAnn(Lend)    -> (TempAnn(ann_l), [],([],[],[])) *)
+(*     | TempAnn _ *)
+(*     | TempRes _   *)
+(*     | ConstAnn(Accs)    -> (ann_l, [],([],[],[])) *)
+(*     | PolyAnn(_)        -> *)
+(*           (\* must check ann_l (probl cases: @M,@I,@v), decide between retruning a Accs or TempRes*\) *)
+(*           match ann_l with *)
+(*               (\*must check ann_l (probl cases: @M,@I,@v), decide between returning Accs or TempCons*\) *)
+(*             | ConstAnn(Mutable) *)
+(*             | ConstAnn(Imm) *)
+(*             | PolyAnn(_) ->  *)
+(*                   let (new_ann,_), fv, (to_lhs, to_rhs, to_rhs_ex) = mkTempRes ann_l ann_r impl_vars evars in *)
+(*                   (new_ann,fv, (to_lhs, to_rhs, to_rhs_ex)) *)
+(*                   (\* TempRes(ann_l, ann_r) *\) *)
+(*             | _          -> (ann_l, [],([],[],[])) *)
+
+(* and remaining_ann (ann_l: ann) (ann_r: ann) impl_vars evars(\* : ann  *\)= *)
+(*   let pr = Cprinter.string_of_imm in *)
+(*   let pr_out  = pr_triple  pr pr_none pr_none in *)
+(*   Debug.no_2 "remaining_ann" pr pr pr_out (fun _ _-> remaining_ann_x ann_l ann_r impl_vars evars) ann_l ann_r *)
+
+and remaining_ann_x (ann_l: ann) (ann_r: ann) impl_vars evars(* : ann *) =
+  match ann_l with
+    | TempAnn ann -> ann
+    | _ -> ann_l
+
+and remaining_ann (ann_l: ann) (ann_r: ann) impl_vars evars(* : ann  *)=
+  let pr = Cprinter.string_of_imm in
+  let pr_out  = pr_triple  pr pr_none pr_none in
+  Debug.no_2 "remaining_ann" pr pr pr (fun _ _-> remaining_ann_x ann_l ann_r impl_vars evars) ann_l ann_r
+
+(* residue * consumed *)
+and subtract_ann (ann_l: ann) (ann_r: ann)  impl_vars expl_vars evars norm (* : ann *) =
   match ann_r with
     | ConstAnn(Mutable)
-    | ConstAnn(Imm)     -> (ConstAnn(Accs))
-    | ConstAnn(Lend)    -> TempAnn(ann_l)
+    | ConstAnn(Imm)     -> ((ConstAnn(Accs), ann_r), [],([],[],[]))
+    | ConstAnn(Lend)    -> ((TempAnn(ann_l), ConstAnn(Accs)), [],([],[],[]))
     | TempAnn _
     | TempRes _  
-    | ConstAnn(Accs)    -> ann_l
+    | ConstAnn(Accs)    -> ((ann_l, ConstAnn(Accs)), [],([],[],[]))
     | PolyAnn(_)        ->
-          (* must check ann_l (probl cases: @M,@I,@v), decide between retruning a Accs or TempRes*)
           match ann_l with
-              (*must check ann_l (probl cases: @M,@I,@v), decide between returning Accs or TempCons*)
             | ConstAnn(Mutable)
             | ConstAnn(Imm)
-            | PolyAnn(_) -> TempRes(ann_l, ann_r)
-            | _          -> ann_l
+            | PolyAnn(_) -> 
+                  if norm then 
+                    let (res_ann,cons_ann), fv, (to_lhs, to_rhs, to_rhs_ex) = mkTempRes ann_l ann_r  impl_vars expl_vars evars in
+                    ((res_ann, cons_ann),fv, (to_lhs, to_rhs, to_rhs_ex))
+                  else  ((TempRes(ann_l, ann_r), ann_r), [], ([],[],[]))
+                  (* TempRes(ann_l, ann_r) *)
+            | _          -> ((ann_l, ConstAnn(Accs)), [],([],[],[]))
 
-and remaining_ann (ann_l: ann) (ann_r: ann) : ann =
-  let pr = Cprinter.string_of_imm in
-  Debug.no_2 "remaining_ann" pr pr pr (fun _ _-> remaining_ann_x ann_l ann_r) ann_l ann_r
 
 (* during matching - for residue*)
-and replace_list_ann_x (ann_lst_l: ann list) (ann_lst_r: ann list): ann list =
-  match (ann_lst_l, ann_lst_r) with
-    | ([], []) -> []
-    | (ann_l :: tl, ann_r :: tr ) -> (remaining_ann ann_l ann_r) :: (replace_list_ann_x tl tr)
-    | (_, _) -> (* ann_lst_l *) report_error no_pos ("[immutable.ml] : nodes should have same no. of fields \n")
+and replace_list_ann_x (ann_lst_l: ann list) (ann_lst_r: ann list) es =
+  let impl_vars = es.es_gen_impl_vars in
+  let expl_vars = es.es_gen_expl_vars in
+  let evars     = es.es_evars in
+  let n_ann_lst, niv, constr = List.fold_left (fun ((res_ann_acc,cons_ann_acc), n_iv, (to_lhsl, to_rhsl, to_rhs_exl)) (ann_l,ann_r) -> 
+      let (resid_ann, cons_ann), niv, (to_lhs, to_rhs, to_rhs_ex) = subtract_ann ann_l ann_r impl_vars expl_vars evars true in 
+      ((res_ann_acc@[resid_ann], cons_ann_acc@[cons_ann]), niv@n_iv, (to_lhs@to_lhsl, to_rhs@to_rhsl, to_rhs_ex@to_rhs_exl))
+  ) (([],[]), [], ([],[],[])) (List.combine ann_lst_l ann_lst_r ) in
+  n_ann_lst, niv, constr 
 
-and replace_list_ann (ann_lst_l: ann list) (ann_lst_r: ann list): ann list =
+and replace_list_ann (ann_lst_l: ann list) (ann_lst_r: ann list) es =
   let pr lst = "[" ^ (List.fold_left (fun y x-> (Cprinter.string_of_imm x) ^ ", " ^ y) "" lst) ^ "]; " in
-  Debug.no_2 "replace_list_ann" pr pr pr (fun _ _-> replace_list_ann_x ann_lst_l ann_lst_r) ann_lst_l ann_lst_r
+  let pr_p =  pr_pair pr pr in 
+  let pr_out = pr_triple pr_p pr_none pr_none in
+  Debug.no_2 "replace_list_ann" pr pr pr_out (fun _ _-> replace_list_ann_x ann_lst_l ann_lst_r es) ann_lst_l ann_lst_r
+
+and replace_list_ann_mem (ann_lst_l: ann list) (ann_lst_r: ann list) impl_vars expl_vars evars =
+  let n_ann_lst, niv, constr = List.fold_left (fun ((res_ann_acc,cons_ann_acc), n_iv, (to_lhsl, to_rhsl, to_rhs_exl)) (ann_l,ann_r) -> 
+      let (resid_ann, cons_ann), niv, (to_lhs, to_rhs, to_rhs_ex) = subtract_ann ann_l ann_r impl_vars expl_vars evars true in 
+      ((res_ann_acc@[resid_ann], cons_ann_acc@[cons_ann]), niv@n_iv, (to_lhs@to_lhsl, to_rhs@to_rhsl, to_rhs_ex@to_rhs_exl))
+  ) (([],[]), [], ([],[],[])) (List.combine ann_lst_l ann_lst_r ) in
+  n_ann_lst, niv, constr 
 
 and consumed_ann (ann_l: ann) (ann_r: ann): ann = 
   match ann_r with
@@ -793,7 +879,7 @@ and collect_ann_info_from_formula (a: CF.ann) (conjs: CP.formula list) (pure: CP
       collect_ann_info_from_formula_x a conjs pure 
 
 (* restore ann for residue * consumed *)
-and restore_tmp_res_ann_x (annl: ann) (annr: ann) (pure0: MCP.mix_formula): ann =
+and restore_tmp_res_ann_x (annl: ann) (annr: ann) (pure0: MCP.mix_formula) impl_vars evars: ann =
     let pure = MCP.pure_of_mix pure0 in
     (* let pairs = CP.pure_ptr_equations pure in *)
     Debug.tinfo_hprint (add_str "pure:" (Cprinter.string_of_pure_formula)) pure no_pos;
@@ -809,63 +895,146 @@ and restore_tmp_res_ann_x (annl: ann) (annr: ann) (pure0: MCP.mix_formula): ann 
       | None   -> def_ann in
     let annl = ann_subst ann_l0 annl in
     let annr = ann_subst ann_r0 annr in
-    let res = remaining_ann annl annr in
+    let res = remaining_ann annl annr impl_vars evars in
     res
 
-and restore_tmp_res_ann (annl: ann) (annr: ann) (pure0: MCP.mix_formula): ann =
+and restore_tmp_res_ann (annl: ann) (annr: ann) (pure0: MCP.mix_formula) impl_vars evars: ann =
   let pr = Cprinter.string_of_imm in
-  Debug.no_3 "restore_tmp_res_ann" pr pr Cprinter.string_of_mix_formula pr restore_tmp_res_ann_x annl annr pure0
+  Debug.no_3 "restore_tmp_res_ann" pr pr Cprinter.string_of_mix_formula pr (fun _ _ _ -> restore_tmp_res_ann_x annl annr pure0 impl_vars evars) annl annr pure0 
 
+and ann_to_var ann = 
+  match ann with 
+    | PolyAnn ann  -> Some ann
+    | ConstAnn ann -> Some (CP.mk_sp_aconst ann)
+    | _ -> None 
+
+and remaining_ann_new_x (annl: ann) emap: ann=
+  let elem_const = (CP.mk_sp_aconst Mutable)::(CP.mk_sp_aconst Imm)::(CP.mk_sp_aconst Lend)::[(CP.mk_sp_aconst Accs)] in
+  let anns =  (ConstAnn(Mutable))::(ConstAnn(Imm))::(ConstAnn(Lend))::[(ConstAnn(Accs))] in
+  let anns = List.combine elem_const anns in
+  let getAnn aconst = snd (List.find (fun (a,_) -> CP.eq_spec_var a aconst)  anns) in    
+  let normalize_imm ann = 
+    match (ann_to_var ann) with
+      | Some v -> 
+            begin
+              let elst  =  CP.EMapSV.find_equiv_all v emap in
+              let const =  Gen.BList.intersect_eq CP.eq_spec_var elst elem_const in
+              match const with
+                | []    -> ann
+                | h::[] -> getAnn h 
+                | _     -> failwith "an imm ann cannot be assigned to 2 different values (imm)"
+            end
+      | _ -> ann                        (* should never reach this branch *)
+  in
+  let res = match annl with
+    | TempAnn ann -> normalize_imm ann
+    | TempRes (ann_l,ann_r) -> (* ann_l *)
+          let ann_l = normalize_imm ann_l in
+          let ann_r = normalize_imm ann_r in
+          let (res,_),_,_ = subtract_ann ann_l ann_r [] [] [] false in
+          res
+    | PolyAnn ann -> normalize_imm annl 
+    | _ -> annl in
+  res
+
+and remaining_ann_new (ann_l: ann) emap(* : ann  *)=
+  let pr = Cprinter.string_of_imm in
+  let pr_out  = pr_triple  pr pr_none pr_none in
+  Debug.no_1 "remaining_ann" pr pr (fun _-> remaining_ann_new_x ann_l emap) ann_l
+
+and build_eset_of_conj_formula f =
+  let lst = CP.split_conjunctions f in
+  let emap = List.fold_left (fun acc f -> match f with
+    | CP.BForm (bf,_) ->
+          (match bf with
+            | (CP.Eq (CP.Var (v1,_), CP.Var (v2,_), _),_) -> 
+                  if (CP.is_bag_typ v1) then acc
+                  else CP.EMapSV.add_equiv acc v1 v2
+            | (CP.Eq (ex, CP.Var (v1,_), _),_) 
+            | (CP.Eq (CP.Var (v1,_), ex, _),_) -> 
+                  (match CP.conv_ann_exp_to_var ex with
+                    | Some (v2,_) -> CP.EMapSV.add_equiv acc v1 v2
+                    | None -> acc)
+            | (CP.SubAnn (CP.Var (v1,_), (CP.AConst(Mutable,_) as exp), _),_) -> (* bot *)
+                  let v2 = CP.mk_sp_aconst Mutable in CP.EMapSV.add_equiv acc v1 v2
+            | (CP.SubAnn(CP.AConst(Accs,_) as exp, CP.Var (v1,_), _),_) -> (* top *)
+                  let v2 = CP.mk_sp_aconst Accs in CP.EMapSV.add_equiv acc v1 v2
+            | _ -> acc)
+    | _ -> acc
+  ) CP.EMapSV.mkEmpty lst in emap
+
+(* restore ann for residue * consumed *)
+and restore_tmp_res_ann_new_x (annl: ann) (pure0: MCP.mix_formula): ann =
+  let pure = MCP.pure_of_mix pure0 in
+  let emap = build_eset_of_conj_formula pure in 
+  let res = remaining_ann_new annl emap  in
+  res 
+
+
+and restore_tmp_res_ann_new (annl: ann)(pure0: MCP.mix_formula): ann =
+  let pr = Cprinter.string_of_imm in
+  Debug.no_2 "restore_tmp_res_ann" pr  Cprinter.string_of_mix_formula pr (fun _ _ -> restore_tmp_res_ann_new_x annl pure0 ) annl  pure0 
 
 and restore_tmp_ann_x (ann_lst: ann list) (pure0: MCP.mix_formula): ann list =
+  match ann_lst with
+    | [] -> []
+    | ann_l::tl ->
+          let ann_l = restore_tmp_res_ann_new ann_l pure0 in
+          ann_l :: (restore_tmp_ann_x tl pure0)
+
+and restore_tmp_ann (ann_lst: ann list) (pure0: MCP.mix_formula): ann list =
+  let pr = pr_list Cprinter.string_of_imm in 
+  Debug.no_2 "restore_tmp_ann" pr  (Cprinter.string_of_mix_formula) pr restore_tmp_ann_x ann_lst pure0
+
+and restore_tmp_ann_x_old (ann_lst: ann list) (pure0: MCP.mix_formula): ann list =
   match ann_lst with
     | [] -> []
     | ann_l::tl ->
           begin
 	    match ann_l with 
 	      | TempAnn(t)     -> 
-                    let ann_l = restore_tmp_res_ann t (ConstAnn(Accs))(* t *) pure0 in
+                    let ann_l = restore_tmp_res_ann t (ConstAnn(Accs))(* t *) pure0 [] [] in
                     ann_l :: (restore_tmp_ann_x tl pure0)
-              | TempRes(al,ar) -> 
-                    Debug.tinfo_hprint (add_str "TempRes:" (Cprinter.string_of_imm)) ann_l no_pos;
-                    Debug.tinfo_hprint (add_str "pure0:" (Cprinter.string_of_mix_formula)) pure0 no_pos;
-                    let ann_l = restore_tmp_res_ann al ar pure0 in
+              | TempRes(al,ar) ->  
+                    (* Debug.tinfo_hprint (add_str "TempRes:" (Cprinter.string_of_imm)) ann_l no_pos; *)
+                    (* Debug.tinfo_hprint (add_str "pure0:" (Cprinter.string_of_mix_formula)) pure0 no_pos; *)
+                    (* let ann_l = restore_tmp_res_ann al ar pure0 [] [] in *)
                     ann_l :: (restore_tmp_ann_x tl pure0)
 	      | _        -> ann_l :: (restore_tmp_ann_x tl pure0)
           end
 
-and restore_tmp_ann (ann_lst: ann list) (pure0: MCP.mix_formula): ann list =
+and restore_tmp_ann_old (ann_lst: ann list) (pure0: MCP.mix_formula): ann list =
   let pr = pr_list Cprinter.string_of_imm in 
   Debug.no_2 "restore_tmp_ann" pr  (Cprinter.string_of_mix_formula) pr restore_tmp_ann_x ann_lst pure0
 
-and update_field_ann (f : h_formula) (pimm1 : ann list) (pimm : ann list) : h_formula = 
-  let pr lst = "[" ^ (List.fold_left (fun y x-> (Cprinter.string_of_imm x) ^ ", " ^ y) "" lst) ^ "]; " in
-  Debug.no_3 "update_field_ann" (Cprinter.string_of_h_formula) pr pr  (Cprinter.string_of_h_formula) (fun _ _ _-> update_field_ann_x f pimm1 pimm) f pimm1 pimm
+(* and update_field_ann (f : h_formula) (pimm1 : ann list) (pimm : ann list)  impl_vars evars: h_formula =  *)
+(*   let pr lst = "[" ^ (List.fold_left (fun y x-> (Cprinter.string_of_imm x) ^ ", " ^ y) "" lst) ^ "]; " in *)
+(*   Debug.no_3 "update_field_ann" (Cprinter.string_of_h_formula) pr pr  (Cprinter.string_of_h_formula) (fun _ _ _-> update_field_ann_x f pimm1 pimm impl_vars evars) f pimm1 pimm *)
 
-and update_field_ann_x (f : h_formula) (pimm1 : ann list) (pimm : ann list) : h_formula = 
-  let new_field_ann_lnode = replace_list_ann pimm1 pimm in
-  (* asankhs: If node has all field annotations as @A make it HEmp *)
-  if (isAccsList new_field_ann_lnode) then HEmp else (*andreea temporarily allow nodes only with @A fields*)
-  let updated_f = match f with 
-    | DataNode d -> DataNode ( {d with h_formula_data_param_imm = new_field_ann_lnode} )
-    | _          -> report_error no_pos ("[context.ml] : only data node should allow field annotations \n")
-  in
-  updated_f
+(* and update_field_ann_x (f : h_formula) (pimm1 : ann list) (pimm : ann list) impl_vars evars: h_formula =  *)
+(*   let new_field_ann_lnode = replace_list_ann pimm1 pimm impl_vars evars in *)
+(*   (\* asankhs: If node has all field annotations as @A make it HEmp *\) *)
+(*   if (isAccsList new_field_ann_lnode) then HEmp else (\*andreea temporarily allow nodes only with @A fields*\) *)
+(*   let updated_f = match f with  *)
+(*     | DataNode d -> DataNode ( {d with h_formula_data_param_imm = new_field_ann_lnode} ) *)
+(*     | _          -> report_error no_pos ("[context.ml] : only data node should allow field annotations \n") *)
+(*   in *)
+(*   updated_f *)
 
-and update_ann (f : h_formula) (ann_l: ann) (ann_r: ann) : h_formula = 
-  let pr = Cprinter.string_of_imm in
-  Debug.no_3 "update_ann" (Cprinter.string_of_h_formula) pr pr  (Cprinter.string_of_h_formula) (fun _ _ _-> update_ann_x f ann_l ann_r) f ann_l ann_r
+(* and update_ann (f : h_formula) (ann_l: ann) (ann_r: ann) impl_vars evars: h_formula =  *)
+(*   let pr = Cprinter.string_of_imm in *)
+(*   Debug.no_3 "update_ann" (Cprinter.string_of_h_formula) pr pr  (Cprinter.string_of_h_formula) (fun _ _ _-> update_ann_x f ann_l ann_r impl_vars evars) f ann_l ann_r *)
 
-and update_ann_x (f : h_formula) (ann_l: ann) (ann_r: ann) : h_formula = 
-  let new_ann_lnode = remaining_ann ann_l ann_r in
-  (* asankhs: If node has all field annotations as @A make it HEmp *)
-  if (isAccs new_ann_lnode) then HEmp else 
-  let updated_f = match f with 
-    | DataNode d -> DataNode ( {d with h_formula_data_imm = new_ann_lnode} )
-    | ViewNode v -> ViewNode ( {v with h_formula_view_imm = new_ann_lnode} )
-    | _          -> report_error no_pos ("[context.ml] : only data node or view node should allow annotations \n")
-  in
-  updated_f
+(* and update_ann_x (f : h_formula) (ann_l: ann) (ann_r: ann) impl_vars evars : h_formula =  *)
+(*   let new_ann_lnode = remaining_ann ann_l ann_r impl_vars evars in *)
+(*   (\* asankhs: If node has all field annotations as @A make it HEmp *\) *)
+(*   if (isAccs new_ann_lnode) then HEmp else  *)
+(*   let updated_f = match f with  *)
+(*     | DataNode d -> DataNode ( {d with h_formula_data_imm = new_ann_lnode} ) *)
+(*     | ViewNode v -> ViewNode ( {v with h_formula_view_imm = new_ann_lnode} ) *)
+(*     | _          -> report_error no_pos ("[context.ml] : only data node or view node should allow annotations \n") *)
+(*   in *)
+(*   updated_f *)
 
 (* utilities for handling lhs heap state continuation *)
 and push_cont_ctx (cont : h_formula) (ctx : Cformula.context) : Cformula.context =

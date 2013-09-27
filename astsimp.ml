@@ -5445,9 +5445,9 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
     let new_h, new_constr, new_vars = Immutable.normalize_field_ann_heap_node new_h in
     let newvars = newvars1@new_vars in
     let new_p = trans_pure_formula p n_tl in
-    let _ = print_string("\nForm: "^(Cprinter.string_of_pure_formula new_p)) in
+    (* let _ = print_string("\nForm: "^(Cprinter.string_of_pure_formula new_p)) in *)
     let new_p = CP.join_disjunctions (new_p::new_constr) in
-    let _ = print_string("\nForm: "^(Cprinter.string_of_pure_formula new_p)) in
+    (* let _ = print_string("\nForm: "^(Cprinter.string_of_pure_formula new_p)) in *)
     let new_p = Cpure.arith_simplify 5 new_p in
     (*let _ = print_string("\nSimpleForm: "^(Cprinter.string_of_pure_formula new_p)) in*)
     let new_fl = trans_flow_formula fl pos in

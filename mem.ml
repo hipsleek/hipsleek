@@ -244,7 +244,9 @@ let rec fl_diff (fl1 : (ident * (CF.ann list)) list) (fl2: (ident * (CF.ann list
 	match fl2 with
 	| [] -> fl1
 	| x::xs -> let _ = List.map (fun c -> if (String.compare (fst c) (fst x)) == 0 
-				then (fst c),Imm.replace_list_ann (snd c) (snd x) 
+				then 
+                                  let (an,_), _, _ = Imm.replace_list_ann_mem (snd c) (snd x) [] [][] in
+                                  (fst c),an
 				else c) fl1 in fl_diff fl1 xs
 
 let get_field_name (fl : (ident * (CF.ann list)) list) : ident = 

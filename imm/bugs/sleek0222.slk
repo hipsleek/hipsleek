@@ -13,10 +13,9 @@ data node {
 }.
 
 pred ll<n, v1, v2> == self = null & n = 0 
-	or self::node<a@v2, q> * 
-    q::ll<n-1, v1, v2>@v1
+	or self::node<a@v1, q> * 
+    q::ll<n-1, v1, v2>@V2
   inv n >= 0.
-
 
 
 // (3) Valid
@@ -29,3 +28,5 @@ print residue.
 // (3) Valid
 checkentail x::node<p,q> * q::ll<n,@M,@M> & n > 2 |- x::ll<n+1,@M,@M> & n > 2.
 print residue.
+
+

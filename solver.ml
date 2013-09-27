@@ -3353,8 +3353,9 @@ and split_universal_a (f0 : CP.formula) (evars : CP.spec_var list) (expl_inst_va
   (* try to obtain as much as a CNF form as possible so that the splitting of bindings between antecedent and consequent is more accurate *)
   let f = (normalize_to_CNF f0 pos) in
   let to_ante, to_conseq = split f in
+  Debug.devel_zprint (lazy ("split_universal: to_ante(after split): "^ (Cprinter.string_of_pure_formula to_ante))) pos;
   let to_ante = CP.find_rel_constraints to_ante vvars in
-  
+  Debug.devel_zprint (lazy ("split_universal: to_ante(find_rel_constraint): "^ (Cprinter.string_of_pure_formula to_ante))) pos;
   let conseq_fv = CP.fv to_conseq in
   (*TO CHECK: should include impl_inst_vars or not*)
   let instantiate = List.filter (fun v -> List.mem v (evars@expl_inst_vars(*@impl_inst_vars*))) conseq_fv in
@@ -3362,6 +3363,7 @@ and split_universal_a (f0 : CP.formula) (evars : CP.spec_var list) (expl_inst_va
   let to_ante =
     if CP.fv wrapped_to_conseq <> [] then CP.mkAnd to_ante wrapped_to_conseq no_pos else to_ante
   in
+  Debug.devel_zprint (lazy ("split_universal: to_ante(aft wrapp): "^ (Cprinter.string_of_pure_formula to_ante))) pos;
   (*t evars = explicitly_quantified @ evars in*)
 
   (*TODO: wrap implicit vars for to_ante
@@ -3725,12 +3727,13 @@ and fold_op_x1 prog (ctx : context) (view : h_formula) vd (rhs_p : MCP.mix_formu
 	          (*([], Failure)*)
 
 and process_fold_result ivars_p prog is_folding estate (fold_rs0:list_context) p2 vs2 base2 pos : (list_context * proof list) =
+  let pr_es = Cprinter.string_of_entail_state in
   let pr1 = Cprinter.string_of_list_context_short in
   let pro x = pr1 (fst x) in
   let pr2 = pr_list Cprinter.string_of_spec_var in
   let pr3 x = Cprinter.string_of_formula (CF.Base x) in
-  Debug.no_3 "process_fold_result" pr1 pr2 pr3 pro (fun _ _ _-> process_fold_result_x ivars_p prog is_folding estate (fold_rs0:list_context) p2 vs2 base2 pos )  
-      fold_rs0 (p2::vs2) base2
+  Debug.no_4 "process_fold_result" pr_es pr1 pr2 pr3 pro (fun _ _ _ _-> process_fold_result_x ivars_p prog is_folding estate (fold_rs0:list_context) p2 vs2 base2 pos )  
+      estate fold_rs0 (p2::vs2) base2
 and process_fold_result_x (ivars,ivars_rel) prog is_folding estate (fold_rs0:list_context) p2 vs2 base2 pos : (list_context * proof list) =
   let pure2 = base2.formula_base_pure in
   let resth2 = base2.formula_base_heap in
@@ -3797,7 +3800,7 @@ and process_fold_result_x (ivars,ivars_rel) prog is_folding estate (fold_rs0:lis
           let r = add_to_aux_conseq rest_rs to_conseq pos in
 	  (r, prf) in
   let process_one (ss:CF.steps) fold_rs1 = 
-    let pr1 = Cprinter.string_of_context_short  in
+    let pr1 = Cprinter.string_of_context(* _short *)  in
     let pr2 (c,_) = Cprinter.string_of_list_context_short c in
     Debug.no_1 "process_one" pr1 pr2 (fun _ -> process_one_x (ss:CF.steps) fold_rs1) fold_rs1 in
   (*Debug.no_1 "process_fold_result: process_one" pr1 pr2 (fun _ -> process_one_x (ss:CF.steps) fold_rs1) fold_rs1 in*)
@@ -9627,7 +9630,7 @@ and do_match prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) is
 	  
 and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) is_folding pos : 
       list_context *proof =
-	let estate = Context.imm_split_lhs_node estate l_node r_node in
+  let estate, (iadd_to_lhs, iadd_to_rhs, iadd_to_rhs_ex) = Context.imm_split_lhs_node estate l_node r_node in
 	
   (* print_endline ("\n\n(andreeac)[do_match] input LHS = "^ (Cprinter.string_of_entail_state estate)); *)
   (* print_endline ("[do_match] RHS = "^ (Cprinter.string_of_formula rhs)); *)
@@ -9684,18 +9687,21 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
     (* let _ = print_string("--C: l_ann = " ^ (Cprinter.string_of_imm l_ann) ^ "\n") in *)
     (* check subtyping between lhs and rhs node ann, and collect info between ann vars and const vars *)
     
-    let (r, add_to_lhs, add_to_rhs, add_to_rhs_ex) = if ((*not(!allow_field_ann) &&*) (!allow_imm)) then subtype_ann_gen es_impl_vars es_evars l_ann r_ann else (true, None, None, None)  (*ignore node ann is field ann enable*) in
-    Debug.tinfo_hprint (add_str "add_to_lhs" (pr_opt Cprinter.string_of_pure_formula)) add_to_lhs pos;
-    Debug.tinfo_hprint (add_str "add_to_rhs" (pr_opt Cprinter.string_of_pure_formula)) add_to_rhs pos;
+    let (r, add_to_lhs, add_to_rhs, add_to_rhs_ex) = if ((*not(!allow_field_ann) &&*) (!allow_imm)) then subtype_ann_gen es_impl_vars es_evars l_ann r_ann else (true, [], [],[])  (*ignore node ann is field ann enable*) in
+    Debug.tinfo_hprint (add_str "add_to_lhs" (pr_list Cprinter.string_of_pure_formula)) add_to_lhs pos;
+    Debug.tinfo_hprint (add_str "add_to_rhs" (pr_list Cprinter.string_of_pure_formula)) add_to_rhs pos;
     (* check imm subtyping between lhs and rhs node fields, and collect info between vars and consts - makes sens only for data nodes *)
     let (rl, param_ann_lhs, param_ann_rhs,  param_ann_rhs_ex) =  if (!allow_field_ann) then subtype_ann_list es_impl_vars es_evars l_param_ann r_param_ann else (true, [], [], []) in
-    Debug.tinfo_hprint (add_str "param_ann_lhs" (pr_list (pr_opt Cprinter.string_of_pure_formula))) param_ann_lhs pos;
-    Debug.tinfo_hprint (add_str "param_ann_rhs" (pr_list (pr_opt Cprinter.string_of_pure_formula))) param_ann_rhs pos;
+    Debug.tinfo_hprint (add_str "param_ann_lhs" (pr_list ( Cprinter.string_of_pure_formula))) param_ann_lhs pos;
+    Debug.tinfo_hprint (add_str "param_ann_rhs" (pr_list ( Cprinter.string_of_pure_formula))) param_ann_rhs pos;
     let join_ann_constr ann ann_lst =
       let f_lst = CP.remove_dupl_conj_opt_list (ann :: ann_lst) in
       List.fold_left Immutable.mkAndOpt None f_lst in
+    let join_ann_constr ann ann_lst = 
+      if List.length (ann@ann_lst) == 0 then None
+      else Some (CP.join_conjunctions (ann@ann_lst)) in
     (* construct two formulae for lhs and, respectively rhs, combining the constraints collected from both node ann and field ann *)
-    let (r, ann_lhs, ann_rhs, ann_rhs_ex) = (r && rl, join_ann_constr add_to_lhs param_ann_lhs, join_ann_constr add_to_rhs param_ann_rhs, join_ann_constr add_to_rhs_ex param_ann_rhs_ex) in
+    let (r, ann_lhs, ann_rhs, ann_rhs_ex) = (r && rl, join_ann_constr add_to_lhs (param_ann_lhs@iadd_to_lhs), join_ann_constr add_to_rhs (param_ann_rhs@iadd_to_rhs), join_ann_constr add_to_rhs_ex (param_ann_rhs_ex@iadd_to_rhs_ex)) in
     (* andreeac IMP  add ann_to_rhs_ex to add_to_rhs *)
     (* If the matched view args are param-ann check those as well*)
     let l_args_ann = List.filter (fun c -> CP.is_ann_type (CP.type_of_spec_var c)) l_args in 
@@ -9955,11 +9961,8 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
 		  HRel _ | HTrue | HFalse | HEmp -> 
                       (match l_node with
                         | DataNode dnl ->
-                              if (!Globals.allow_field_ann) then 
-                                let _ = Debug.tinfo_hprint (add_str "l_node inside consumed_h" (Cprinter.string_of_h_formula)) l_node pos in
-                                let param_ann = Immutable.consumed_list_ann l_param_ann r_param_ann in
-                                let consumed_data =  DataNode {dnl with h_formula_data_param_imm = param_ann; } in
-                                consumed_data
+                              if (!Globals.allow_field_ann) then HEmp 
+                                (* es_heap is already updated with consumed heap from beginning of do_match: Context.imm_split_lhs_node *)
                               else
                                 l_node
                         | _->

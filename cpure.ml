@@ -363,6 +363,8 @@ let to_int_var (sv : spec_var) : spec_var = match sv with
 (* name prefix for int const *)
 let const_prefix = "__CONST_Int_"
 
+let aconst_prefix = "__CONST_Ann_"
+
 let const_prefix_len = String.length(const_prefix)
 
 (* is string a int const, n is prefix length *)
@@ -1250,6 +1252,12 @@ and is_var_num (e : exp) : bool =
     | Var _ -> true
     | IConst _ -> true
     | FConst _ -> true
+    | _ -> false
+
+and is_var_ann (e : exp) : bool =
+  match e with
+    | Var _ -> true
+    | AConst _ -> true
     | _ -> false
 
 and to_var (e : exp) : spec_var =
@@ -3967,6 +3975,7 @@ and find_bound_b_formula v f0 =
     | Lte (e1, e2, pos) -> helper e1 e2 true true
     | Gt (e1, e2, pos) -> helper e1 e2 false false
     | Gte (e1, e2, pos) -> helper e1 e2 false true
+    | SubAnn (e1, e2, pos) -> helper e1 e2 true true
     | _ -> (None, None)
 
 (* eliminate exists with the help of c1<=v<=c2 *)
@@ -6294,10 +6303,20 @@ let mk_sp_const (i:int) =
   let n= const_prefix^(string_of_int i)
   in SpecVar ((Int), n , Unprimed) 
 
+let mk_sp_aconst (a:heap_ann) =
+  let ann = aconst_prefix^(string_of_heap_ann a)
+  in SpecVar ((AnnT), ann , Unprimed)
+
 let conv_exp_to_var (e:exp) : (spec_var * loc) option = 
   match e with
     | IConst(i,loc) -> Some (mk_sp_const i,loc)
     | Null loc -> Some (null_var,loc)
+    | _ -> None
+
+let conv_ann_exp_to_var (e:exp) : (spec_var * loc) option = 
+  match e with
+    | AConst(a,loc) -> Some (mk_sp_aconst a,loc)
+    | Var(v,no_pos) -> Some (v, no_pos)
     | _ -> None
 
 (* convert exp to var representation where possible *)
