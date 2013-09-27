@@ -2002,7 +2002,7 @@ let do_entail_check_x vars cprog cs=
   let _ = Infer.rel_ass_stk # reset in
   let ante = cs.CF.hprel_lhs in
   let conseq = CF.struc_formula_of_formula cs.CF.hprel_rhs (CF.pos_of_formula  cs.CF.hprel_rhs) in
-  let (valid, rs,v_hp_rel) = SC.sleek_entail_check vars cprog [] ante conseq in
+  let (valid, rs,v_hp_rel,_) = SC.sleek_entail_check vars cprog [] ante conseq in
   let valid = ((not (CF.isFailCtx rs))) in
   if not valid then
     report_error no_pos ("Can not prove:\n" ^ (Cprinter.string_of_hprel_short cs))

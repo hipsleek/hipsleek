@@ -28,7 +28,7 @@ let generate_lemma_helper iprog lemma_name coer_type ihps ihead ibody=
 
 let generate_lemma iprog cprog lemma_n coer_type lhs rhs ihead chead ibody cbody=
   (*check entailment*)
-  let (res,_,_) =  if coer_type = I.Left then
+  let (res,_,_,_) =  if coer_type = I.Left then
     SC.sleek_entail_check [] cprog [(chead,cbody)] lhs (CF.struc_formula_of_formula rhs no_pos)
   else SC.sleek_entail_check [] cprog [(cbody,chead)] rhs (CF.struc_formula_of_formula lhs no_pos)
   in
@@ -562,11 +562,11 @@ let checkeq_sem_x iprog0 cprog0 f1 f2 hpdefs=
     let lemma_name = "tmp" in
     let l_coer = I.mk_lemma (fresh_any_name lemma_name) I.Left [] if12 if22 in
     let _ = manage_unsafe_lemmas [l_coer] iprog0 cprog0 in
-    let r1,_,_ = SC.sleek_entail_check [] cprog0 [(* (f12,f22) *)] f13 (CF.struc_formula_of_formula f23 no_pos) in
+    let r1,_,_,_ = SC.sleek_entail_check [] cprog0 [(* (f12,f22) *)] f13 (CF.struc_formula_of_formula f23 no_pos) in
     if not r1 then false else
       let r_coer = I.mk_lemma (fresh_any_name lemma_name) I.Right [] if12 if22 in
       let _ = manage_unsafe_lemmas [r_coer] iprog0 cprog0 in
-      let r2,_,_ = SC.sleek_entail_check [] cprog0 [(* (f22,f12) *)] f23 (CF.struc_formula_of_formula f13 no_pos) in
+      let r2,_,_,_ = SC.sleek_entail_check [] cprog0 [(* (f22,f12) *)] f23 (CF.struc_formula_of_formula f13 no_pos) in
       r2
   in
   let _ = reset_progs bc in

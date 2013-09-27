@@ -125,7 +125,7 @@ let clear_all () =
   clear_iprog ();
   clear_cprog ();
   CF.residues := None;
-  SC.cproof := None
+  SC.eproof := None
 
 (*L2: move to astsimp*)
 (* let check_data_pred_name name : bool = *)
@@ -738,7 +738,7 @@ let run_pairwise (iante0 : meta_formula) =
 
 let run_infer_one_pass (ivars: ident list) (iante0 : meta_formula) (iconseq0 : meta_formula) =
   let _ = CF.residues := None in
-  let _= SC.cproof := None in
+  let _= SC.eproof := None in
   let _ = Infer.rel_ass_stk # reset in
   let _ = Sa2.rel_def_stk # reset in
   let _ = Sa3.rel_def_stk # reset in
@@ -849,8 +849,9 @@ let run_infer_one_pass (ivars: ident list) (iante0 : meta_formula) (iconseq0 : m
   let orig_vars = CF.fv ante @ CF.struc_fv conseq in
   (* List of vars needed for abduction process *)
   let vars = List.map (fun v -> TI.get_spec_var_type_list_infer (v, Unprimed) orig_vars no_pos) ivars in
-  let (res, rs,v_hp_rel) = SC.sleek_entail_check vars !cprog [] ante conseq in
-  CF.residues := Some (rs, res);
+  let (res, rs,v_hp_rel, prf) = SC.sleek_entail_check vars !cprog [] ante conseq in
+  let _ = CF.residues := Some (rs, res) in
+  let _= SC.eproof := Some prf in
   (res, rs,v_hp_rel)
 
 let run_infer_one_pass ivars (iante0 : meta_formula) (iconseq0 : meta_formula) =
@@ -1598,7 +1599,7 @@ let process_print_command pcmd0 = match pcmd0 with
           (*           print_string ((Cprinter.string_of_numbered_list_formula_trace_inst !cprog *)
           (*               (CF.list_formula_trace_of_list_context ls_ctx))^"\n" ); *)
 	else if pcmd ="proof" then
-		      print_proof !SC.cproof
+	  print_proof !SC.eproof
 	else
 	  print_string ("unsupported print command: " ^ pcmd)
 
