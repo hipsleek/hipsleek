@@ -426,7 +426,12 @@ let rec normalize_inf_formula (pf: CP.formula) : CP.formula =
   (*if not (contains_inf_or_inf_var pf) then pf else*)
   (match pf with 
     | CP.BForm (b,fl) -> 
-          let b_norm = normalize_b_formula b in CP.BForm(b_norm,fl) 
+          let b_norm = normalize_b_formula b in
+          let bf =  CP.BForm(b_norm,fl) in bf
+          (*let mkInfVar  = SpecVar (Int, zinf_str, Unprimed) in
+          let mkNegInfVar =  SpecVar (Int, zinf_str, Primed) in
+          let axiom = mkNeqVar mkInfVar mkNegInfVar no_pos in
+          let b_norm  = mkAnd bf axiom no_pos in b_norm*)
     | CP.And (pf1,pf2,pos) -> 
         (*let _ = Gen.Profiling.push_time "INF-Normalize_And" in*)
         (*let _ = print_string("pf1: "^(string_of_pure_formula pf1)^"\n") in*)
@@ -760,7 +765,8 @@ let rec sub_inf_list_exp (exp: CP.exp) (vars: CP.spec_var list) (is_neg: bool) :
     | CP.FConst _ -> exp
     | CP.Var (sv,pos) -> 
         if BList.mem_eq eq_spec_var sv vars 
-        then if is_neg then (mkSubtract (IConst(0,pos)) (Var(SpecVar(Int,constinfinity,Unprimed),pos)) pos)
+        then if is_neg then (*CP.Var(CP.SpecVar(Int,constinfinity,Primed),pos) *)
+          (mkSubtract (IConst(0,pos)) (Var(SpecVar(Int,constinfinity,Primed),pos)) pos)
           else CP.Var(CP.SpecVar(Int,constinfinity,Unprimed),pos) 
         else exp
     | CP.Add (a1, a2, pos) -> 
@@ -894,7 +900,7 @@ let rec sub_inf_list_b_formula (bf:CP.b_formula) (vl: CP.spec_var list) (is_neg:
       | CP.SubAnn (e1,e2,pos) -> p_f,tbf
       | CP.Eq (e1,e2,pos) -> 
       	   if (is_var e1 && is_inf e2) || (is_var e2 && is_inf e1) 
-              || (check_neg_inf2 e1 e2) || (check_neg_inf2 e2 e1)
+             (*|| (check_neg_inf2 e1 e2) || (check_neg_inf2 e2 e1)*)
              ||(is_var e1 && is_var e2)
             then p_f,tbf else
             let e1_conv = sub_inf_list_exp e1 vl is_neg in
