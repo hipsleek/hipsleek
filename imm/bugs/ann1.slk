@@ -4,7 +4,7 @@ data node {
 }.
 
 // (1) residue must not contain v
-infer [] y::node<_,_@w> |- (exists v: y::node<a,b@v>).
+infer [] y::node<_,_>@w |- (exists v: y::node<a,b>@v).
 print residue.
 
 /*

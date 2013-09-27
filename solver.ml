@@ -9630,7 +9630,7 @@ and do_match prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) is
 	  
 and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) is_folding pos : 
       list_context *proof =
-  let estate, (iadd_to_lhs, iadd_to_rhs, iadd_to_rhs_ex) = Context.imm_split_lhs_node estate l_node r_node in
+  let estate, ((iadd_to_lhs, iadd_to_rhs, iadd_to_rhs_ex),subst) = Context.imm_split_lhs_node estate l_node r_node in
 	
   (* print_endline ("\n\n(andreeac)[do_match] input LHS = "^ (Cprinter.string_of_entail_state estate)); *)
   (* print_endline ("[do_match] RHS = "^ (Cprinter.string_of_formula rhs)); *)
@@ -9898,6 +9898,7 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
               (* let _ =  Debug.info_zprint  (lazy  ("impl_tvars: " ^ (!CP.print_svl impl_tvars))) no_pos in *)
               (* let _ =  Debug.info_zprint  (lazy  ("estate.es_gen_expl_vars: " ^ (!CP.print_svl estate.es_gen_expl_vars))) no_pos in *)
               let to_lhs,to_rhs,ext_subst =  get_eqns_free other_subs new_exist_vars impl_tvars estate.es_gen_expl_vars pos  in
+              let ext_subst = ext_subst@subst in
               let is_ann a = CP.is_ann_type (CP.type_of_spec_var a) in
               let _ =  Debug.ninfo_zprint  (lazy  ("to_lhs: " ^ (!CP.print_formula to_lhs))) no_pos in
               (* let _ =  Debug.info_zprint  (lazy  ("ext_subst: " ^ (pr ext_subst))) no_pos in *)

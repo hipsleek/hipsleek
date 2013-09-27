@@ -224,13 +224,13 @@ let is_lend_debug f =
       (string_of_bool)
       is_lend f
 
-let decide_where_to_add_constr constrl constrr  impl_vars expl_vars evars sv =
-  if CP.mem sv impl_vars then ([constrl], [], [])
+let decide_where_to_add_constr constr1 constr2  impl_vars expl_vars evars sv fsv =
+  if CP.mem sv impl_vars then (constr1::[constr2], [], [], [])
   else if CP.mem sv expl_vars then
-    ([], [constrr], (* [r_constr] *)[])
+    ([constr2], [constr1], (* [r_constr] *)[], [])
   else if CP.mem sv evars then
-    ([(* constr2 *)], [constrr], [constrr])
-  else ([constrl], [], [])
+    ([constr2], [(* constr1 *)], [(* constr1 *)], [(sv,fsv)])
+  else (constr1::[constr2], [], [], [])
 
 let mkTempRes_x ann_l ann_r  impl_vars expl_vars evars =
   match ann_r with
@@ -239,20 +239,20 @@ let mkTempRes_x ann_l ann_r  impl_vars expl_vars evars =
           let fresh_sv = (CP.SpecVar(AnnT, fresh_v, Unprimed)) in
           let fresh_var = CP.Var(fresh_sv, no_pos) in
           let poly_ann = mkPolyAnn fresh_sv in
-          let constrl = CP.BForm ((CP.Eq(fresh_var,(mkExpAnnSymb ann_r no_pos),no_pos),None), None) in
+          let constr1 = CP.BForm ((CP.Eq(fresh_var,(mkExpAnnSymb ann_r no_pos),no_pos),None), None) in
           let constr2 = CP.BForm ((CP.SubAnn((mkExpAnnSymb ann_l no_pos),fresh_var,no_pos),None), None) in
-          let to_lhs, to_rhs, to_rhs_ex = decide_where_to_add_constr constrl constrl  impl_vars expl_vars evars sv in
-          ((TempRes(ann_l,poly_ann),poly_ann), [fresh_sv], (to_lhs, to_rhs, to_rhs_ex))
-    | _ -> ((TempRes(ann_l, ann_r), ann_r), [], ([], [], []))       (* should not reach this branch *)
+          let to_lhs, to_rhs, to_rhs_ex, subst = decide_where_to_add_constr constr1 constr2  impl_vars expl_vars evars sv fresh_sv in
+          ((TempRes(ann_l,poly_ann),poly_ann), [fresh_sv], ((to_lhs, to_rhs, to_rhs_ex),subst))
+    | _ -> ((TempRes(ann_l, ann_r), ann_r), [], (([], [], []),[]))       (* should not reach this branch *)
 
 let mkTempRes ann_l ann_r  impl_vars expl_vars evars =
   let pr = Cprinter.string_of_imm in
   let pr1 = pr_pair pr pr in
   let pr3a = pr_list !CP.print_formula in
-  let pr3 = pr_triple pr3a pr3a pr3a in 
+  let pr3 = pr_pair (pr_triple pr3a pr3a pr3a) (add_str "\n\t subst" (pr_list (pr_pair Cprinter.string_of_spec_var Cprinter.string_of_spec_var) )) in 
   let pr_out = pr_triple (add_str "(residue,cosumed) = " pr1) 
-    (add_str "new var:" (pr_list Cprinter.string_of_spec_var))
-    (add_str "constraints: " pr3) in
+    (add_str "\n\tnew var:" (pr_list Cprinter.string_of_spec_var))
+    (add_str "\n\tconstraints: " pr3) in 
   Debug.no_2 "mkTempRes"  pr pr pr_out (fun _ _ -> mkTempRes_x ann_l ann_r  impl_vars expl_vars evars ) ann_l ann_r
 
 (* and contains_phase_debug (f : h_formula) : bool =   *)
@@ -754,22 +754,22 @@ and remaining_ann (ann_l: ann) (ann_r: ann) impl_vars evars(* : ann  *)=
 and subtract_ann (ann_l: ann) (ann_r: ann)  impl_vars expl_vars evars norm (* : ann *) =
   match ann_r with
     | ConstAnn(Mutable)
-    | ConstAnn(Imm)     -> ((ConstAnn(Accs), ann_r), [],([],[],[]))
-    | ConstAnn(Lend)    -> ((TempAnn(ann_l), ConstAnn(Accs)), [],([],[],[]))
+    | ConstAnn(Imm)     -> ((ConstAnn(Accs), ann_r), [],(([],[],[]),[]))
+    | ConstAnn(Lend)    -> ((TempAnn(ann_l), ConstAnn(Accs)), [],(([],[],[]),[]))
     | TempAnn _
     | TempRes _  
-    | ConstAnn(Accs)    -> ((ann_l, ConstAnn(Accs)), [],([],[],[]))
+    | ConstAnn(Accs)    -> ((ann_l, ConstAnn(Accs)), [],(([],[],[]),[]))
     | PolyAnn(_)        ->
           match ann_l with
             | ConstAnn(Mutable)
             | ConstAnn(Imm)
             | PolyAnn(_) -> 
                   if norm then 
-                    let (res_ann,cons_ann), fv, (to_lhs, to_rhs, to_rhs_ex) = mkTempRes ann_l ann_r  impl_vars expl_vars evars in
-                    ((res_ann, cons_ann),fv, (to_lhs, to_rhs, to_rhs_ex))
-                  else  ((TempRes(ann_l, ann_r), ann_r), [], ([],[],[]))
+                    let (res_ann,cons_ann), fv, ((to_lhs, to_rhs, to_rhs_ex),subst) = mkTempRes ann_l ann_r  impl_vars expl_vars evars in
+                    ((res_ann, cons_ann),fv, ((to_lhs, to_rhs, to_rhs_ex),subst))
+                  else  ((TempRes(ann_l, ann_r), ann_r), [], (([],[],[]),[]))
                   (* TempRes(ann_l, ann_r) *)
-            | _          -> ((ann_l, ConstAnn(Accs)), [],([],[],[]))
+            | _          -> ((ann_l, ConstAnn(Accs)), [],(([],[],[]),[]))
 
 
 (* during matching - for residue*)
@@ -777,10 +777,10 @@ and replace_list_ann_x (ann_lst_l: ann list) (ann_lst_r: ann list) es =
   let impl_vars = es.es_gen_impl_vars in
   let expl_vars = es.es_gen_expl_vars in
   let evars     = es.es_evars in
-  let n_ann_lst, niv, constr = List.fold_left (fun ((res_ann_acc,cons_ann_acc), n_iv, (to_lhsl, to_rhsl, to_rhs_exl)) (ann_l,ann_r) -> 
-      let (resid_ann, cons_ann), niv, (to_lhs, to_rhs, to_rhs_ex) = subtract_ann ann_l ann_r impl_vars expl_vars evars true in 
-      ((res_ann_acc@[resid_ann], cons_ann_acc@[cons_ann]), niv@n_iv, (to_lhs@to_lhsl, to_rhs@to_rhsl, to_rhs_ex@to_rhs_exl))
-  ) (([],[]), [], ([],[],[])) (List.combine ann_lst_l ann_lst_r ) in
+  let n_ann_lst, niv, constr = List.fold_left (fun ((res_ann_acc,cons_ann_acc), n_iv, ((to_lhsl, to_rhsl, to_rhs_exl),substl)) (ann_l,ann_r) -> 
+      let (resid_ann, cons_ann), niv, ((to_lhs, to_rhs, to_rhs_ex),subst) = subtract_ann ann_l ann_r impl_vars expl_vars evars true in 
+      ((res_ann_acc@[resid_ann], cons_ann_acc@[cons_ann]), niv@n_iv, ((to_lhs@to_lhsl, to_rhs@to_rhsl, to_rhs_ex@to_rhs_exl),subst@substl))
+  ) (([],[]), [], (([],[],[]),[])) (List.combine ann_lst_l ann_lst_r ) in
   n_ann_lst, niv, constr 
 
 and replace_list_ann (ann_lst_l: ann list) (ann_lst_r: ann list) es =
@@ -791,7 +791,7 @@ and replace_list_ann (ann_lst_l: ann list) (ann_lst_r: ann list) es =
 
 and replace_list_ann_mem (ann_lst_l: ann list) (ann_lst_r: ann list) impl_vars expl_vars evars =
   let n_ann_lst, niv, constr = List.fold_left (fun ((res_ann_acc,cons_ann_acc), n_iv, (to_lhsl, to_rhsl, to_rhs_exl)) (ann_l,ann_r) -> 
-      let (resid_ann, cons_ann), niv, (to_lhs, to_rhs, to_rhs_ex) = subtract_ann ann_l ann_r impl_vars expl_vars evars true in 
+      let (resid_ann, cons_ann), niv, ((to_lhs, to_rhs, to_rhs_ex),_) = subtract_ann ann_l ann_r impl_vars expl_vars evars true in 
       ((res_ann_acc@[resid_ann], cons_ann_acc@[cons_ann]), niv@n_iv, (to_lhs@to_lhsl, to_rhs@to_rhsl, to_rhs_ex@to_rhs_exl))
   ) (([],[]), [], ([],[],[])) (List.combine ann_lst_l ann_lst_r ) in
   n_ann_lst, niv, constr 

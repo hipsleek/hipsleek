@@ -513,7 +513,7 @@ and update_imm_x (f : h_formula) (imm1 : ann) (imm2 : ann)  es =
   (* let new_imm_lnode, niv, constr = Immutable.remaining_ann imm1 imm2 impl_vars evars in *)
   let (res_ann, cons_ann), niv, constr = Immutable.replace_list_ann [imm1] [imm2]  es in
   (* asankhs: If node has all field annotations as @A make it HEmp *)
-  if (isAccsList res_ann) then (HEmp, [], ([],[],[]) )else
+  if (isAccsList res_ann) then (HEmp, [], (([],[],[]),[]) )else
     let updated_f = match f with 
       | DataNode d -> DataNode ( {d with h_formula_data_imm = List.hd res_ann} )
       | _          -> report_error no_pos ("[context.ml] : only data node should allow field annotations \n")
@@ -538,10 +538,10 @@ and imm_split_lhs_node_x estate l_node r_node = match l_node, r_node with
                 (* es_gen_impl_vars = estate.es_gen_impl_vars@niv  *)} in
             (n_es, constr)
           else 
-            (estate,([],[],[]))
+            (estate,(([],[],[]),[]))
         else
-          (estate,([],[],[]))
-  | _ -> (estate,([],[],[]))
+          (estate,(([],[],[]),[]))
+  | _ -> (estate,(([],[],[]),[]))
   
 and imm_split_lhs_node estate l_node r_node =
   let pr_node = Cprinter.string_of_h_formula in
