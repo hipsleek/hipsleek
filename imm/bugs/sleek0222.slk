@@ -14,7 +14,7 @@ data node {
 
 pred ll<n, v1, v2> == self = null & n = 0 
 	or self::node<a@v1, q> * 
-    q::ll<n-1, v1, v2>@V2
+    q::ll<n-1, v1, v2>@v2
   inv n >= 0.
 
 

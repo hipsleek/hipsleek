@@ -66,6 +66,10 @@ let is_bool_typ sv = match sv with
 let is_int_typ sv = match sv with
   | SpecVar (Int,_,_) -> true
   | _ -> false
+
+let is_ann_typ sv = match sv with
+  | SpecVar (AnnT,_,_) -> true
+  | _ -> false
   
 let is_tmp_int sv = match sv with
   | SpecVar (Int,str,_) ->  ((String.length str) > 5) && ((String.compare (String.sub str 0 5) "v_int") == 0)

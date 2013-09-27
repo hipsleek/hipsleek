@@ -1308,8 +1308,8 @@ let subtype_sv_ann_gen (impl_vars: CP.spec_var list) (l: CP.spec_var) (r: CP.spe
           match r with
             | CP.Var(v,_) -> 
                 if CP.mem v impl_vars then (true,Some lhs,None, None)
-                else (true,None,Some c, None)
-            | _ -> (true,None,Some c, None)
+                else (true,None,(* Some c *)None, None)
+            | _ -> (true,None,(* Some c *)None, None)
         end
 
 let rec subtype_sv_ann_gen_list (impl_vars: CP.spec_var list) (ls: CP.spec_var list) (rs: CP.spec_var list)
@@ -1319,7 +1319,8 @@ match ls, rs with
 | l::ls, r::rs -> let f, lhs, rhs, rhs_ex = (subtype_sv_ann_gen impl_vars l r) in
 		  let fs, lhsls, rhsrs, rhsrs_ex = (subtype_sv_ann_gen_list impl_vars ls rs) in
 		  (f && fs, (Imm.mkAndOpt lhs lhsls) , (Imm.mkAndOpt rhs rhsrs), (Imm.mkAndOpt rhs_ex rhsrs_ex))
-| _,_ -> (false,None,None, None)(* shouldn't get here *)
+| _,_ -> 
+      (false,None,None, None)(* shouldn't get here *)
 
 
 let rec get_may_aliases (sv:CP.spec_var) (h: CF.h_formula) : (CP.spec_var) list =
