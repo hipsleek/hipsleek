@@ -20,7 +20,7 @@ module Imm = Immutable
 module TP = Tpdispatcher
 
 let mk_mem_perm_formula 
-(mem_exp: CP.exp) (isexact: bool) (fv: (ident * (CP.exp list)) list) (fl: (ident * (CF.ann list)) list) (g: CP.formula list)
+(mem_exp: CP.exp) (isexact: bool) (fv: (ident * (CP.exp list)) list) (fl: (ident * (CP.ann list)) list) (g: CP.formula list)
 : CF.mem_perm_formula = 
 	{ CF.mem_formula_exp = mem_exp;
 	  CF.mem_formula_exact = isexact;
@@ -58,20 +58,20 @@ let rec intersect_list_val (ann_lst_l: CP.exp list) (ann_lst_r: CP.exp list): CP
 			Err.error_loc = no_pos;
 			Err.error_text = "[mem.ml] : Memory Spec should have same number of fields values";}
 
-let rec intersect_list_ann_no_inter (ann_lst_l: CF.ann list) (ann_lst_r: CF.ann list): CF.ann list =
+let rec intersect_list_ann_no_inter (ann_lst_l: CP.ann list) (ann_lst_r: CP.ann list): CP.ann list =
   match (ann_lst_l, ann_lst_r) with
     | ([], []) -> []
     | (ann_l :: tl, ann_r :: tr ) ->
       begin
 	match ann_l, ann_r with 
-	  | CF.ConstAnn(Mutable), CF.ConstAnn(Accs)
-  	  | CF.ConstAnn(Imm), CF.ConstAnn(Accs) 
-  	  | CF.ConstAnn(Lend), CF.ConstAnn(Accs)
-	  | CF.ConstAnn(Lend), CF.ConstAnn(Lend) -> ann_l :: (intersect_list_ann_no_inter tl tr)	
-  	  | CF.ConstAnn(Accs), CF.ConstAnn(Mutable)
-  	  | CF.ConstAnn(Accs), CF.ConstAnn(Imm)
-	  | CF.ConstAnn(Accs), CF.ConstAnn(Lend) 
-  	  | CF.ConstAnn(Accs), CF.ConstAnn(Accs)-> ann_r :: (intersect_list_ann_no_inter tl tr)
+	  | CP.ConstAnn(Mutable), CP.ConstAnn(Accs)
+  	  | CP.ConstAnn(Imm), CP.ConstAnn(Accs) 
+  	  | CP.ConstAnn(Lend), CP.ConstAnn(Accs)
+	  | CP.ConstAnn(Lend), CP.ConstAnn(Lend) -> ann_l :: (intersect_list_ann_no_inter tl tr)	
+  	  | CP.ConstAnn(Accs), CP.ConstAnn(Mutable)
+  	  | CP.ConstAnn(Accs), CP.ConstAnn(Imm)
+	  | CP.ConstAnn(Accs), CP.ConstAnn(Lend) 
+  	  | CP.ConstAnn(Accs), CP.ConstAnn(Accs)-> ann_r :: (intersect_list_ann_no_inter tl tr)
   	  | _ , _ -> Err.report_error {
 			Err.error_loc = no_pos;
 			Err.error_text = "[mem.ml] : Memory Spec field layouts may interfere";}
@@ -81,21 +81,21 @@ let rec intersect_list_ann_no_inter (ann_lst_l: CF.ann list) (ann_lst_r: CF.ann 
 			Err.error_loc = no_pos;
 			Err.error_text = "[mem.ml] : Memory Spec should have same number of fields in layout";}
 
-let rec intersect_list_ann (ann_lst_l: CF.ann list) (ann_lst_r: CF.ann list): CF.ann list =
+let rec intersect_list_ann (ann_lst_l: CP.ann list) (ann_lst_r: CP.ann list): CP.ann list =
   match (ann_lst_l, ann_lst_r) with
     | ([], []) -> []
     | (ann_l :: tl, ann_r :: tr ) ->
       begin
 	match ann_r with 
-	  | CF.ConstAnn(Mutable) -> ann_r :: (intersect_list_ann tl tr)		   
-	  | CF.ConstAnn(Imm)     -> if (CF.isMutable ann_l) then ann_l :: (intersect_list_ann tl tr)
+	  | CP.ConstAnn(Mutable) -> ann_r :: (intersect_list_ann tl tr)		   
+	  | CP.ConstAnn(Imm)     -> if (CP.isMutable ann_l) then ann_l :: (intersect_list_ann tl tr)
 	  			 else ann_r :: (intersect_list_ann tl tr)
-	  | CF.ConstAnn(Lend)    -> if (CF.isAccs ann_l) then ann_r :: (intersect_list_ann tl tr)
+	  | CP.ConstAnn(Lend)    -> if (CP.isAccs ann_l) then ann_r :: (intersect_list_ann tl tr)
 	  			 else ann_l :: (intersect_list_ann tl tr)
-	  | CF.TempAnn _
-	  | CF.TempRes _
-	  | CF.ConstAnn(Accs)    -> ann_l :: (intersect_list_ann tl tr)
-	  | CF.PolyAnn(v)        -> ann_l :: (intersect_list_ann tl tr) (* TODO(ann): check if var ann is replaced or not *)
+	  | CP.TempAnn _
+	  | CP.TempRes _
+	  | CP.ConstAnn(Accs)    -> ann_l :: (intersect_list_ann tl tr)
+	  | CP.PolyAnn(v)        -> ann_l :: (intersect_list_ann tl tr) (* TODO(ann): check if var ann is replaced or not *)
       end
     | (_, _) -> Err.report_error {
 			Err.error_loc = no_pos;
@@ -123,7 +123,7 @@ let mem_guards_checking_reverse (fl1: CP.formula list) (fl2 : CP.formula) pos =
 	Err.report_error { Err.error_loc = pos;
 	Err.error_text = "[mem.ml] : Memory Spec Guards fail during reverse sat checking";}	
 		    
-let rec fl_subtyping (fl1 : (ident * (CF.ann list)) list) (fl2: (ident * (CF.ann list)) list) pos =
+let rec fl_subtyping (fl1 : (ident * (CP.ann list)) list) (fl2: (ident * (CP.ann list)) list) pos =
   (*let _ = print_string("\n\nfl1: ") in 
   let _ = List.map (fun c -> 
     let _ = print_string ((fst c)^" : "^(String.concat "," (List.map string_of_imm (snd c)))^" ") in c) fl1 in
@@ -149,7 +149,7 @@ let rec fl_subtyping (fl1 : (ident * (CF.ann list)) list) (fl2: (ident * (CF.ann
 			Err.error_text = "[mem.ml] : Memory Spec field layout doesn't respect annotation subtyping";}
 		    in fl_subtyping xs fl2 pos
 
-let rec fl_subtyping_rev (fl1 : (ident * (CF.ann list)) list) (fl2: (ident * (CF.ann list)) list)  pos =
+let rec fl_subtyping_rev (fl1 : (ident * (CP.ann list)) list) (fl2: (ident * (CP.ann list)) list)  pos =
   let helper fl1 fl2 pos = 
   (* fl2 will be a list of 1 value for this case *)
   if List.length fl2 > 1 then Err.report_error { Err.error_loc = pos;
@@ -226,21 +226,21 @@ let rec fv_diff (fl1 : (ident * (CP.exp list)) list) (fl2: (ident * (CP.exp list
 				then (fst c),intersect_list_val (snd c) (snd x) 
 				else c) fl1 in fv_diff fl1 xs
 
-let rec fl_intersect_no_inter (fl1 : (ident * (CF.ann list)) list) (fl2: (ident * (CF.ann list)) list) : (ident * (CF.ann list)) list =
+let rec fl_intersect_no_inter (fl1 : (ident * (CP.ann list)) list) (fl2: (ident * (CP.ann list)) list) : (ident * (CP.ann list)) list =
 	match fl2 with
 	| [] -> fl1
 	| x::xs -> let _ = List.map (fun c -> if (String.compare (fst c) (fst x)) == 0 
 				then (fst c), intersect_list_ann_no_inter (snd c) (snd x) 
 				else c) fl1 in fl_intersect_no_inter fl1 xs
 				
-let rec fl_intersect (fl1 : (ident * (CF.ann list)) list) (fl2: (ident * (CF.ann list)) list) : (ident * (CF.ann list)) list =
+let rec fl_intersect (fl1 : (ident * (CP.ann list)) list) (fl2: (ident * (CP.ann list)) list) : (ident * (CP.ann list)) list =
 	match fl2 with
 	| [] -> fl1
 	| x::xs -> let _ = List.map (fun c -> if (String.compare (fst c) (fst x)) == 0 
 				then (fst c), intersect_list_ann (snd c) (snd x) 
 				else c) fl1 in fl_intersect fl1 xs				
 				
-let rec fl_diff (fl1 : (ident * (CF.ann list)) list) (fl2: (ident * (CF.ann list)) list) : (ident * (CF.ann list)) list =
+let rec fl_diff (fl1 : (ident * (CP.ann list)) list) (fl2: (ident * (CP.ann list)) list) : (ident * (CP.ann list)) list =
 	match fl2 with
 	| [] -> fl1
 	| x::xs -> let _ = List.map (fun c -> if (String.compare (fst c) (fst x)) == 0 
@@ -249,7 +249,7 @@ let rec fl_diff (fl1 : (ident * (CF.ann list)) list) (fl2: (ident * (CF.ann list
                                   (fst c),an
 				else c) fl1 in fl_diff fl1 xs
 
-let get_field_name (fl : (ident * (CF.ann list)) list) : ident = 
+let get_field_name (fl : (ident * (CP.ann list)) list) : ident = 
 	try fst (List.hd fl)
 	with | _ -> Err.report_error {
 			Err.error_loc = no_pos;
@@ -742,35 +742,35 @@ let normalize_h_formula (h : IF.h_formula): IF.h_formula =
 		   IF.h_formula_star_pos = pos}) ->
 	| _ -> h*)
 	
-let rec is_compatible_field_layout (ann_lst_l: CF.ann list) (ann_lst_r: CF.ann list): bool =	
+let rec is_compatible_field_layout (ann_lst_l: CP.ann list) (ann_lst_r: CP.ann list): bool =	
 match (ann_lst_l, ann_lst_r) with
     | ([], []) -> true
     | (ann_l :: tl, ann_r :: tr ) ->
       begin
 	match ann_l, ann_r with 
-	  | CF.ConstAnn(Mutable), CF.ConstAnn(Accs)
-  	  | CF.ConstAnn(Imm), CF.ConstAnn(Accs) 
-  	  | CF.ConstAnn(Lend), CF.ConstAnn(Accs)
-	  | CF.ConstAnn(Lend), CF.ConstAnn(Lend) -> true && (is_compatible_field_layout tl tr)	
-  	  | CF.ConstAnn(Accs), CF.ConstAnn(Mutable)
-  	  | CF.ConstAnn(Accs), CF.ConstAnn(Imm)
-	  | CF.ConstAnn(Accs), CF.ConstAnn(Lend) 
-  	  | CF.ConstAnn(Accs), CF.ConstAnn(Accs)-> true && (is_compatible_field_layout tl tr)
+	  | CP.ConstAnn(Mutable), CP.ConstAnn(Accs)
+  	  | CP.ConstAnn(Imm), CP.ConstAnn(Accs) 
+  	  | CP.ConstAnn(Lend), CP.ConstAnn(Accs)
+	  | CP.ConstAnn(Lend), CP.ConstAnn(Lend) -> true && (is_compatible_field_layout tl tr)	
+  	  | CP.ConstAnn(Accs), CP.ConstAnn(Mutable)
+  	  | CP.ConstAnn(Accs), CP.ConstAnn(Imm)
+	  | CP.ConstAnn(Accs), CP.ConstAnn(Lend) 
+  	  | CP.ConstAnn(Accs), CP.ConstAnn(Accs)-> true && (is_compatible_field_layout tl tr)
   	  | _ , _ -> false
 
       end
     | (_, _) ->	false
     
-let rec is_same_field_layout (ann_lst_l: CF.ann list) (ann_lst_r: CF.ann list): bool =	
+let rec is_same_field_layout (ann_lst_l: CP.ann list) (ann_lst_r: CP.ann list): bool =	
 match (ann_lst_l, ann_lst_r) with
     | ([], []) -> true
     | (ann_l :: tl, ann_r :: tr ) ->
       begin
 	match ann_l, ann_r with 
-	  | CF.ConstAnn(Mutable), CF.ConstAnn(Mutable)
-  	  | CF.ConstAnn(Imm), CF.ConstAnn(Imm) 
-  	  | CF.ConstAnn(Lend), CF.ConstAnn(Lend)
-  	  | CF.ConstAnn(Accs), CF.ConstAnn(Accs)-> true && (is_same_field_layout tl tr)
+	  | CP.ConstAnn(Mutable), CP.ConstAnn(Mutable)
+  	  | CP.ConstAnn(Imm), CP.ConstAnn(Imm) 
+  	  | CP.ConstAnn(Lend), CP.ConstAnn(Lend)
+  	  | CP.ConstAnn(Accs), CP.ConstAnn(Accs)-> true && (is_same_field_layout tl tr)
   	  | _ , _ -> false
 
       end
@@ -916,40 +916,40 @@ match h with
 	let matched_data_nodes = match_mem_formula_data fl1 list_of_data_nodes in
  *) 
  
-let rec transform_to_tmp_ann (ann_lst: CF.ann list) : CF.ann list =
+let rec transform_to_tmp_ann (ann_lst: CP.ann list) : CP.ann list =
   match ann_lst with
     | [] -> []
     | ann_l::tl ->
       begin
 	match ann_l with 
-	  | CF.ConstAnn(ann)  -> CF.TempAnn(CF.ConstAnn(ann)) :: (transform_to_tmp_ann tl)
+	  | CP.ConstAnn(ann)  -> CP.TempAnn(CP.ConstAnn(ann)) :: (transform_to_tmp_ann tl)
 	  | _ -> ann_l :: (transform_to_tmp_ann tl)
       end
 
-let rec join_ann (ann1: CF.ann list) (ann2: CF.ann list) (param1: CP.spec_var list) (param2: CP.spec_var list):
- bool * (CF.ann list) * (CP.spec_var list) (* * CP.formula*) =
+let rec join_ann (ann1: CP.ann list) (ann2: CP.ann list) (param1: CP.spec_var list) (param2: CP.spec_var list):
+ bool * (CP.ann list) * (CP.spec_var list) (* * CP.formula*) =
  (*let tf = CP.mkTrue no_pos in*)
   match ann1, ann2,param1,param2 with
     | [], [],[],[] -> (true,[],[](*,tf*))
-    | (CF.ConstAnn(Accs))::t1, a::t2, p::pt1, pa::pt2 
-    | a::t1, (CF.ConstAnn(Accs))::t2, pa::pt1, p::pt2 -> let compatible, new_ann, new_param(*, new_p*) = join_ann t1 t2 pt1 pt2  in
+    | (CP.ConstAnn(Accs))::t1, a::t2, p::pt1, pa::pt2 
+    | a::t1, (CP.ConstAnn(Accs))::t2, pa::pt1, p::pt2 -> let compatible, new_ann, new_param(*, new_p*) = join_ann t1 t2 pt1 pt2  in
     				  (*let p = CP.mkEqVar *)
 				  (true && compatible, a::new_ann, pa::new_param(*, (CP.mkAnd p new_p no_pos)*))
-    (* | (CF.TempRes(a1,a2))::t1, a::t2, p::pt1, pa::pt2  *)
-    (* | a::t1, (CF.TempRes(a1,a2))::t2, pa::pt1, p::pt2 -> *)
+    (* | (CP.TempRes(a1,a2))::t1, a::t2, p::pt1, pa::pt2  *)
+    (* | a::t1, (CP.TempRes(a1,a2))::t2, pa::pt1, p::pt2 -> *)
     (*       let compatible, new_ann, new_param(\*, new_p*\) = join_ann t1 t2 pt1 pt2  in *)
     (* 	  (\*let p = CP.mkEqVar *\) *)
     (*       let compatible = compatible  *)
     (*       (compatible, a::new_ann, pa::new_param(\*, (CP.mkAnd p new_p no_pos)*\)) *)
     | _ -> (false,[],[](*,tf*))
     
-let rec join_ann_conj (ann1: CF.ann list) (ann2: CF.ann list) (param1: CP.spec_var list) (param2: CP.spec_var list):
- bool * (CF.ann list) * (CP.spec_var list) (* * CP.formula*) =
+let rec join_ann_conj (ann1: CP.ann list) (ann2: CP.ann list) (param1: CP.spec_var list) (param2: CP.spec_var list):
+ bool * (CP.ann list) * (CP.spec_var list) (* * CP.formula*) =
  (*let tf = CP.mkTrue no_pos in*)
   match ann1, ann2,param1,param2 with
     | [], [],[],[] -> (true,[],[](*,tf*))
-    | (CF.ConstAnn(Accs))::t1, a::t2, p::pt1, pa::pt2 
-    | a::t1, (CF.ConstAnn(Accs))::t2, pa::pt1, p::pt2 -> let compatible, new_ann, new_param(*, new_p*) = join_ann_conj t1 t2 pt1 pt2  in
+    | (CP.ConstAnn(Accs))::t1, a::t2, p::pt1, pa::pt2 
+    | a::t1, (CP.ConstAnn(Accs))::t2, pa::pt1, p::pt2 -> let compatible, new_ann, new_param(*, new_p*) = join_ann_conj t1 t2 pt1 pt2  in
     				  (*let p = CP.mkEqVar *)
 				  (true && compatible, a::new_ann, pa::new_param(*, (CP.mkAnd p new_p no_pos)*))
     | a1::t1, a2::t2, p::pt1, pa::pt2 -> let compatible, new_ann, new_param(*, new_p*) = join_ann_conj t1 t2 pt1 pt2  in
@@ -957,32 +957,32 @@ let rec join_ann_conj (ann1: CF.ann list) (ann2: CF.ann list) (param1: CP.spec_v
 				  (true && compatible, a1::new_ann, p::new_param(*, (CP.mkAnd p new_p no_pos)*))
     | _ -> (false,[],[](*,tf*))
     
-let rec join_ann_conjstar (ann1: CF.ann list) (ann2: CF.ann list) (param1: CP.spec_var list) (param2: CP.spec_var list):
- bool * (CF.ann list) * (CP.spec_var list) (* * CP.formula*) =
+let rec join_ann_conjstar (ann1: CP.ann list) (ann2: CP.ann list) (param1: CP.spec_var list) (param2: CP.spec_var list):
+ bool * (CP.ann list) * (CP.spec_var list) (* * CP.formula*) =
  (*let tf = CP.mkTrue no_pos in*)
   match ann1, ann2,param1,param2 with
     | [], [],[],[] -> (true,[],[](*,tf*))
-    | (CF.ConstAnn(Accs))::t1, a::t2, p::pt1, pa::pt2 
-    | a::t1, (CF.ConstAnn(Accs))::t2, pa::pt1, p::pt2 -> 
+    | (CP.ConstAnn(Accs))::t1, a::t2, p::pt1, pa::pt2 
+    | a::t1, (CP.ConstAnn(Accs))::t2, pa::pt1, p::pt2 -> 
     				let compatible, new_ann, new_param(*, new_p*) = join_ann_conjstar t1 t2 pt1 pt2  in
     				  (*let p = CP.mkEqVar *)
 				  (true && compatible, a::new_ann, pa::new_param(*, (CP.mkAnd p new_p no_pos)*))
-    | (CF.ConstAnn(Lend))::t1, (CF.ConstAnn(Lend))::t2, p1::pt1, p2::pt2  -> 
+    | (CP.ConstAnn(Lend))::t1, (CP.ConstAnn(Lend))::t2, p1::pt1, p2::pt2  -> 
     				let compatible, new_ann, new_param(*, new_p*) = join_ann_conjstar t1 t2 pt1 pt2  in
     				  (*let p = CP.mkEqVar *)
-				  (true && compatible, (CF.ConstAnn(Lend))::new_ann, p1::new_param(*, (CP.mkAnd p new_p no_pos)*))
+				  (true && compatible, (CP.ConstAnn(Lend))::new_ann, p1::new_param(*, (CP.mkAnd p new_p no_pos)*))
     | _ -> (false,[],[](*,tf*))
     
 
-let rec join_ann_conjconj (ann1: CF.ann list) (ann2: CF.ann list) (param1: CP.spec_var list) (param2: CP.spec_var list):
- bool * (CF.ann list) * (CP.spec_var list) (* * CP.formula*) =
+let rec join_ann_conjconj (ann1: CP.ann list) (ann2: CP.ann list) (param1: CP.spec_var list) (param2: CP.spec_var list):
+ bool * (CP.ann list) * (CP.spec_var list) (* * CP.formula*) =
  (*let tf = CP.mkTrue no_pos in*)
   match ann1, ann2,param1,param2 with
     | [], [],[],[] -> (true,[],[](*,tf*))
-    | CF.ConstAnn(ha1)::t1, CF.ConstAnn(ha2)::t2, p1::pt1, p2::pt2 -> 
+    | CP.ConstAnn(ha1)::t1, CP.ConstAnn(ha2)::t2, p1::pt1, p2::pt2 -> 
     			let compatible, new_ann, new_param(*, new_p*) = join_ann_conjconj t1 t2 pt1 pt2  in
     				  (*let p = CP.mkEqVar *)
-				  (ha1==ha2 && compatible, CF.ConstAnn(ha1)::new_ann, p1::new_param(*, (CP.mkAnd p new_p no_pos)*))
+				  (ha1==ha2 && compatible, CP.ConstAnn(ha1)::new_ann, p1::new_param(*, (CP.mkAnd p new_p no_pos)*))
     | _ -> (false,[],[](*,tf*))        
 
 let compact_data_nodes (h1: CF.h_formula) (h2: CF.h_formula) (aset:CP.spec_var list list) func
@@ -1255,14 +1255,14 @@ let rec compact_nodes_with_same_name_in_struc (f: CF.struc_formula): CF.struc_fo
         
 let rec is_lend_h_formula (f : CF.h_formula) : bool =  match f with
   | CF.DataNode (h1) -> 
-        if (CF.isLend h1.CF.h_formula_data_imm) then
+        if (CP.isLend h1.CF.h_formula_data_imm) then
           (* let _ = print_string("true for h = " ^ (!print_h_formula f) ^ "\n\n")  in *) true
         else
         if !Globals.allow_field_ann && (Imm.isExistsLendList h1.CF.h_formula_data_param_imm) then true
         else
           false
   | CF.ViewNode (h1) ->
-        if (CF.isLend h1.CF.h_formula_view_imm) then
+        if (CP.isLend h1.CF.h_formula_view_imm) then
           (* let _ = print_string("true for h = " ^ (!print_h_formula f) ^ "\n\n") in *) true
         else
           false
@@ -1634,7 +1634,7 @@ let ramify_star_one (h1: CF.h_formula) (h1mpf: CF.mem_perm_formula option) (h2: 
 					   let fresh_args = CP.fresh_spec_vars old_args in
 					   let comb = List.combine old_args fresh_args in
 					   let comb_with_paimm = List.combine comb paimm in
-					   let comb_filtered = List.filter (fun (_,c) -> CF.isMutable c) comb_with_paimm in
+					   let comb_filtered = List.filter (fun (_,c) -> CP.isMutable c) comb_with_paimm in
 					   let comb,_ = List.split comb_filtered in
 					   let new_h1 = CF.h_subst comb h1 in
 					   (*let _ = print_string("New H: "^(string_of_h_formula new_h1)^"\n") in*)
@@ -1656,7 +1656,7 @@ let ramify_star_one (h1: CF.h_formula) (h1mpf: CF.mem_perm_formula option) (h2: 
 		let comb2 = List.combine fresh_args old_args in
 		let comb = List.combine comb1 comb2 in
 		let comb_with_paimm = List.combine comb paimm in
-		let comb_filtered = List.filter (fun (_,c) -> CF.isMutable c) comb_with_paimm in
+		let comb_filtered = List.filter (fun (_,c) -> CP.isMutable c) comb_with_paimm in
 		let comb,_ = List.split comb_filtered in
 		let _,lst = List.split comb in
 		let fr,ol = List.split lst in
@@ -1687,7 +1687,7 @@ match p with
                        CF.h_formula_data_imm = imm;
                        CF.h_formula_data_arguments = dargs;
                        CF.h_formula_data_pos = pos} -> 
-                       if(CF.isMutable imm) then
+                       if(CP.isMutable imm) then
                        List.fold_left (fun (h,f) q  -> 
 		       let q_mpf, q_vars  = 
 		       if (CF.is_view q) then
@@ -1707,7 +1707,7 @@ match p with
 		       let p_vdef = C.look_up_view_def_raw 22 vl name in
 		       let p_mpf = p_vdef.C.view_mem in
 		       let p_vars = p_vdef.C.view_vars in
-		       if(CF.isMutable imm) then
+		       if(CP.isMutable imm) then
 		       List.fold_left (fun (h,f) q -> 
 		       let q_mpf,q_vars = 
 		       if (CF.is_view q) then
@@ -2140,7 +2140,7 @@ match h with
 	CF.mkConjConjH h1 h2 pos,p
   | CF.DataNode _
   | CF.ViewNode _ -> let imm = CF.get_node_imm h in
-  			if CF.isAccs imm 
+  			if CP.isAccs imm 
   			then let p = (CP.mkNeqNull (CF.get_node_var h) no_pos) in
   				CF.HEmp,p
   			else h,(CP.mkTrue no_pos)

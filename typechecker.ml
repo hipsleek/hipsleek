@@ -1654,7 +1654,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                           (* let f_esc = proc_esc_stack pid in *)
                           (* TODO WN : Does this work for field level access? *)
                           let tmp_res2 = 
-		            if not(CF.isLend imm_node) && not(CF.isAccs imm_node) (* asankhs: Do not change this please&& not(!Globals.allow_field_ann)*) then 
+		            if not(CP.isLend imm_node) && not(CP.isAccs imm_node) (* asankhs: Do not change this please&& not(!Globals.allow_field_ann)*) then 
 		              CF.normalize_max_renaming_list_failesc_context_4_bind pid vheap pos true tmp_res1 
     			          (* for Lend, Accs it should not be added back and 
 								field level annotations should be added back and compacted *)
@@ -1906,8 +1906,8 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                 CF.h_formula_data_node = CP.SpecVar (Named c, res_name, Unprimed);
                 CF.h_formula_data_name = c;
 		CF.h_formula_data_derv = false;
-		CF.h_formula_data_imm = CF.ConstAnn(Mutable);
-                CF.h_formula_data_param_imm = List.map (fun _ -> CF.ConstAnn(Mutable)) heap_args; 
+		CF.h_formula_data_imm = CP.ConstAnn(Mutable);
+                CF.h_formula_data_param_imm = List.map (fun _ -> CP.ConstAnn(Mutable)) heap_args; 
                 (* (andreeac) to check: too weak *)	     
 		        CF.h_formula_data_perm = perm;
 			    CF.h_formula_data_origins = [];

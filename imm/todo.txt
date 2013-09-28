@@ -138,6 +138,12 @@ Entail 1: Valid.
  <1>(exists flted_30_63,flted_30_62,flted_30_61: x::node<p@[@M, @flted_30_63],q@A>@M&flted_30_62=@M & flted_30_61=@M & 2<n & a_66=p & q=q_67 & exists(flted_30_64:flted_30_62=flted_30_64 & @M<:flted_30_64 & @M<:flted_30_64) & exists(flted_30_63:0<=flted_30_63 & flted_30_61=flted_30_63 & @M<:flted_30_63 & @M<:flted_30_63) & exists(flted_30_65:flted_30_65=n+1)&{FLOW,(21,22)=__norm})[]
 [[ SEARCH ==>  Fold ==>  Match ==>  COND ==>  Match ==> ]]
 =============================================================
+unsoud imm without setting  simpl_memset,
+due to the fact that h_formula_2_mem detects false on ante 
+when encounters * between nodes with disjoint fileds.
+eg:
+x::node<x@M,x@[@v]> * x::node<x@A,x@A>
+
 =============================================================
 =============================================================
 =============================================================

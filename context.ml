@@ -305,7 +305,7 @@ let rec choose_context_x prog rhs_es lhs_h lhs_p rhs_p posib_r_aliases rhs_node 
                   let args = CP.diff_svl (get_all_sv  rhs_node) [hp] in
                   let root, _  = Sautility.find_root prog [hp] args  [] in
                   let _ = Debug.tinfo_hprint (add_str "root" Cprinter.string_of_spec_var) root pos in
-                  (ConstAnn(Mutable), [], root)
+                  (CP.ConstAnn(Mutable), [], root)
             | _ -> report_error no_pos "choose_context unexpected rhs formula\n"
           in
           let lhs_fv = (h_fv lhs_h) @ (MCP.mfv lhs_p) in
@@ -489,12 +489,12 @@ and spatial_ctx_extract p f a i pi rn rr lhs_p =
   Debug.no_4 "spatial_ctx_extract" string_of_h_formula Cprinter.string_of_imm pr_svl string_of_h_formula pr 
       (fun _ _ _ _-> spatial_ctx_extract_x p f a i pi rn rr lhs_p) f i a rn 
 
-and update_field_imm (f : h_formula) (pimm1 : ann list): h_formula = 
+and update_field_imm (f : h_formula) (pimm1 : CP.ann list): h_formula = 
   let pr lst = "[" ^ (List.fold_left (fun y x-> (Cprinter.string_of_imm x) ^ ", " ^ y) "" lst) ^ "]; " in
   let pr_out = Cprinter.string_of_h_formula in
   Debug.no_2 "update_field_ann" (Cprinter.string_of_h_formula) pr  pr_out (fun _ _-> update_field_imm_x f pimm1 ) f pimm1
 
-and update_field_imm_x (f : h_formula) (new_field_ann_lnode: ann list) : h_formula  = 
+and update_field_imm_x (f : h_formula) (new_field_ann_lnode: CP.ann list) : h_formula  = 
   (* let (res_ann, cons_ann), niv, constr = Immutable.replace_list_ann pimm1 pimm impl_vars evars in *)
   (* asankhs: If node has all field annotations as @A make it HEmp *)
   if (isAccsList new_field_ann_lnode) then HEmp else
@@ -504,12 +504,12 @@ and update_field_imm_x (f : h_formula) (new_field_ann_lnode: ann list) : h_formu
     in
     updated_f
 
-and update_imm (f : h_formula) (imm1 : ann) (imm2 : ann) es(* : h_formula *) = 
+and update_imm (f : h_formula) (imm1 : CP.ann) (imm2 : CP.ann) es(* : h_formula *) = 
   let pr = Cprinter.string_of_imm in
   let pr_out = pr_triple (Cprinter.string_of_h_formula) pr_none pr_none in
     Debug.no_3 "update_ann" (Cprinter.string_of_h_formula) pr pr  pr_out  (fun _ _ _-> update_imm_x f imm1 imm2  es) f imm1 imm2
 
-and update_imm_x (f : h_formula) (imm1 : ann) (imm2 : ann)  es = 
+and update_imm_x (f : h_formula) (imm1 : CP.ann) (imm2 : CP.ann)  es = 
   (* let new_imm_lnode, niv, constr = Immutable.remaining_ann imm1 imm2 impl_vars evars in *)
   let (res_ann, cons_ann), niv, constr = Immutable.replace_list_ann [imm1] [imm2]  es in
   (* asankhs: If node has all field annotations as @A make it HEmp *)
@@ -669,7 +669,7 @@ and coerc_mater_match_gen l_vname (l_vargs:P.spec_var list) r_aset (lhs_f:Cformu
   cmml@cmmr
 
 
-and spatial_ctx_extract_x prog (f0 : h_formula) (aset : CP.spec_var list) (imm : ann) (pimm : ann list) rhs_node rhs_rest emap: match_res list  =
+and spatial_ctx_extract_x prog (f0 : h_formula) (aset : CP.spec_var list) (imm : CP.ann) (pimm : CP.ann list) rhs_node rhs_rest emap: match_res list  =
   let rec helper f = match f with
     | HTrue -> []
     | HFalse -> []

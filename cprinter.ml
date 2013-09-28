@@ -527,13 +527,13 @@ let string_of_subst stt = pr_list (pr_pair string_of_spec_var string_of_spec_var
 let rec string_of_imm imm = 
   if not !print_ann then ""
   else match imm with
-  | ConstAnn(Accs) -> "@A"
-  | ConstAnn(Imm) -> "@I"
-  | ConstAnn(Lend) -> "@L"
-  | ConstAnn(Mutable) -> "@M"
-  | TempAnn(t) -> "@[" ^ (string_of_imm t) ^ "]"
-  | TempRes(l,r) -> "@[" ^ (string_of_imm l) ^ ", " ^ (string_of_imm r) ^ "]"
-  | PolyAnn(v) -> "@" ^ (string_of_spec_var v)
+  | CP.ConstAnn(Accs) -> "@A"
+  | CP.ConstAnn(Imm) -> "@I"
+  | CP.ConstAnn(Lend) -> "@L"
+  | CP.ConstAnn(Mutable) -> "@M"
+  | CP.TempAnn(t) -> "@[" ^ (string_of_imm t) ^ "]"
+  | CP.TempRes(l,r) -> "@[" ^ (string_of_imm l) ^ ", " ^ (string_of_imm r) ^ "]"
+  | CP.PolyAnn(v) -> "@" ^ (string_of_spec_var v)
 
 let string_of_derv dr = 
   if not !print_ann then ""

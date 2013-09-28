@@ -16,9 +16,13 @@ module Err = Error
 module CP = Cpure
 module MCP = Mcpure
 
-type ann = ConstAnn of heap_ann | PolyAnn of CP.spec_var |
-        TempAnn of ann | TempRes of (ann * ann) (* lhs_ann * rhs_ann *)
-            (* TempAnn  -> to what is lent  *)
+(* type ann = ConstAnn of heap_ann | PolyAnn of CP.spec_var | *)
+(*         TempAnn of ann | TempRes of (ann * ann) (\* lhs_ann * rhs_ann *\) *)
+            (* CP.TempAnn  -> to what is lent  *)
+
+(* type view_arg = SVArg of CP.spec_var | AnnArg of ann *)
+
+type ann = CP.ann
 
 type cond_path_type = int list
 
@@ -237,6 +241,7 @@ and h_formula_view = {  h_formula_view_node : CP.spec_var;
                         h_formula_view_imm : ann;
                         (* h_formula_view_primitive : bool; (\* indicates if it is primitive view? *\) *)
                         h_formula_view_perm : cperm; (*LDK: permission*)
+                        (* h_formula_view_arguments : view_arg list;  *)
                         h_formula_view_arguments : CP.spec_var list;
                         h_formula_view_modes : mode list;
                         h_formula_view_coercible : bool;
@@ -435,71 +440,6 @@ end;;
 
 module Label_Heap = LabelExpr(Lab_List)(Exp_Heap);;
 module Label_Spec = LabelExpr(Lab2_List)(Exp_Spec);;
-
-
-(* utility functions *)
-
-let isAccs(a : ann) : bool = 
-  match a with
-    | ConstAnn(Accs) -> true
-    | _ -> false
-
-let isLend(a : ann) : bool = 
-  match a with
-    | ConstAnn(Lend) -> true
-    | _ -> false
-
-and isMutable(a : ann) : bool = 
-  match a with
-    | ConstAnn(Mutable) -> true
-    | _ -> false
-
-and isImm(a : ann) : bool = 
-  match a with
-    | ConstAnn(Imm) -> true
-    | _ -> false
-
-and isPoly(a : ann) : bool = 
-  match a with
-    | PolyAnn v -> true
-    | _ -> false
-
-
-let rec fv_ann_x (a:ann) = match a with
-  | ConstAnn _
-  | TempAnn _ -> []
-  | TempRes(v,w) -> (fv_ann_x w)@(fv_ann_x v)
-  | PolyAnn v -> [v]
-
-let rec fv_ann (a:ann) = 
-  Debug.no_1 "fv_ann" !print_imm (pr_list !print_sv) fv_ann_x a
-
-let rec fv_ann_lst (a:ann list) = match a with
-  | [] -> []
-  | h :: t -> (fv_ann h) @ (fv_ann_lst t)
-
-let mkConstAnn i = match i with 
-  | 0 -> ConstAnn Mutable
-  | 1 -> ConstAnn Imm
-  | 2 -> ConstAnn Lend
-  | 3 -> ConstAnn Accs
-  | _ -> report_error no_pos "Const Ann must be less than 3"  
-
-let mkPolyAnn v = PolyAnn v
-
-let mkExpAnn ann pos = 
-  match ann with
-    | TempAnn _ -> CP.IConst(int_of_heap_ann Accs, pos)
-    | TempRes (v,w) -> CP.IConst(int_of_heap_ann Accs, pos)
-    | ConstAnn a -> CP.IConst(int_of_heap_ann a, pos)
-    | PolyAnn v  -> CP.Var(v, pos)
-
-let mkExpAnnSymb ann pos = 
-  match ann with
-    | TempAnn _ -> CP.AConst(Accs, pos)
-    | TempRes _ -> CP.AConst(Accs, pos)
-    | ConstAnn a -> CP.AConst(a, pos)
-    | PolyAnn v  -> CP.Var(v, pos)  
 
 (* generalized to data and view *)
 let get_ptr_from_data h =
@@ -1355,13 +1295,13 @@ and fv_simple_formula (f:formula) =
     | DataNode h -> 
         let perm = h.h_formula_data_perm in
         let perm_vars = fv_cperm perm in
-        let ann_vars = if (!Globals.allow_imm) || (!Globals.allow_field_ann) then (fv_ann (h.h_formula_data_imm)) else [] in
-        let ann_vars = if (!Globals. allow_field_ann) then ann_vars @ (fv_ann_lst h.h_formula_data_param_imm) else ann_vars  in
+        let ann_vars = if (!Globals.allow_imm) || (!Globals.allow_field_ann) then (CP.fv_ann (h.h_formula_data_imm)) else [] in
+        let ann_vars = if (!Globals. allow_field_ann) then ann_vars @ (CP.fv_ann_lst h.h_formula_data_param_imm) else ann_vars  in
         perm_vars@ann_vars@(h.h_formula_data_node::h.h_formula_data_arguments)
     | ViewNode h -> 
         let perm = h.h_formula_view_perm in
         let perm_vars = fv_cperm perm in
-        let ann_vars =  if ((!Globals.allow_imm) || (!Globals.allow_field_ann)) then fv_ann (h.h_formula_view_imm)  else [] in
+        let ann_vars =  if ((!Globals.allow_imm) || (!Globals.allow_field_ann)) then CP.fv_ann (h.h_formula_view_imm)  else [] in
         perm_vars@ann_vars@(h.h_formula_view_node::h.h_formula_view_arguments)
     | _ -> []
 
@@ -2221,7 +2161,7 @@ and remove_h_lend (f:h_formula) : h_formula =
         mk_Conj new_f1 new_f2 pos
     | DataNode {h_formula_data_imm = i} 
     | ViewNode {h_formula_view_imm = i} ->
-          if isLend i then HEmp else f
+          if CP.isLend i then HEmp else f
     | _ -> f
 
 and remove_lend (f:formula) : formula = match f with
@@ -2260,14 +2200,8 @@ and remove_h_ann (f:h_formula) (annot : ann) : h_formula =
         mk_ConjConj new_f1 new_f2 pos                
     | DataNode {h_formula_data_imm = i} 
     | ViewNode {h_formula_view_imm = i} ->
-          if (eq_ann i annot) then HTrue else f
+          if (CP.eq_ann i annot) then HTrue else f
     | _ -> f
-
-and eq_ann (a1 : ann) (a2 : ann) : bool =
-  match a1, a2 with
-    | ConstAnn ha1, ConstAnn ha2 -> ha1 == ha2
-    | PolyAnn sv1, PolyAnn sv2 -> CP.eq_spec_var sv1 sv2
-    | _ -> false
 
 and remove_one_ann (f:formula) (annot : ann) : formula = 
     match f with
@@ -2323,8 +2257,8 @@ and fv (f : formula) : CP.spec_var list = match f with
 		res
 and h_fv_node v perm ann param_ann vs =
   let pvars = fv_cperm perm in
-  let avars = (fv_ann ann) in
-  let avars = if (!Globals.allow_field_ann) then avars @ (fv_ann_lst param_ann)  else avars in
+  let avars = (CP.fv_ann ann) in
+  let avars = if (!Globals.allow_field_ann) then avars @ (CP.fv_ann_lst param_ann)  else avars in
   let pvars = 
     if pvars==[] then 
       pvars 
@@ -2819,16 +2753,16 @@ and subst_one_by_one_h_x sst (f : h_formula) = match sst with
   | [] -> f
 
 and apply_one_imm (fr,t) a = match a with
-  | ConstAnn _ -> a
-  | TempAnn t1 -> TempAnn(apply_one_imm (fr,t) t1)
-  | TempRes (tl,tr) ->  TempRes(apply_one_imm (fr,t) tl, apply_one_imm (fr,t) tr)
-  | PolyAnn sv ->  PolyAnn (if CP.eq_spec_var sv fr then t else sv)
+  | CP.ConstAnn _ -> a
+  | CP.TempAnn t1 -> CP.TempAnn(apply_one_imm (fr,t) t1)
+  | CP.TempRes (tl,tr) ->  CP.TempRes(apply_one_imm (fr,t) tl, apply_one_imm (fr,t) tr)
+  | CP.PolyAnn sv ->  CP.PolyAnn (if CP.eq_spec_var sv fr then t else sv)
 
 and subs_imm_par sst a = match a with
-  | ConstAnn _ -> a
-  | TempAnn t1 -> TempAnn(subs_imm_par sst t1)
-  | TempRes (tl,tr) -> TempRes(subs_imm_par sst tl,subs_imm_par sst tr)
-  | PolyAnn sv ->  PolyAnn (CP.subst_var_par sst sv)
+  | CP.ConstAnn _ -> a
+  | CP.TempAnn t1 -> CP.TempAnn(subs_imm_par sst t1)
+  | CP.TempRes (tl,tr) -> CP.TempRes(subs_imm_par sst tl,subs_imm_par sst tr)
+  | CP.PolyAnn sv ->  CP.PolyAnn (CP.subst_var_par sst sv)
 
 and subst_var (fr, t) (o : CP.spec_var) = 
   if CP.eq_spec_var fr o then t else o
@@ -4412,14 +4346,14 @@ and get_all_sv (f: h_formula): CP.spec_var list = match f with
              h_formula_data_imm = imm;
              h_formula_data_param_imm = param_imm;
     } ->  
-        let fv_ann_list = if (!Globals.allow_imm) then fv_ann imm else [] in
-        let fv_ann_list = if (!Globals.allow_field_ann) then fv_ann_list@(fv_ann_lst param_imm) else fv_ann_list in
+        let fv_ann_list = if (!Globals.allow_imm) then CP.fv_ann imm else [] in
+        let fv_ann_list = if (!Globals.allow_field_ann) then fv_ann_list@(CP.fv_ann_lst param_imm) else fv_ann_list in
         [c]@(List.filter CP.is_node_typ args)@fv_ann_list
   | ViewNode {h_formula_view_node = c;
              h_formula_view_arguments = args;
             h_formula_view_imm = imm;
     } -> 
-         let fv_ann_list = if (!Globals.allow_imm) then fv_ann imm else [] in
+         let fv_ann_list = if (!Globals.allow_imm) then CP.fv_ann imm else [] in
          [c]@(List.filter CP.is_node_typ args)@fv_ann_list
   | Conj {h_formula_conj_h1 = h1; h_formula_conj_h2 = h2}
   | Star {h_formula_star_h1 = h1; h_formula_star_h2 = h2}
@@ -4513,7 +4447,7 @@ let get_hdnodes_hrel_hf (hf0: h_formula) =
 let check_imm_mis rhs_mis rhs0=
   match rhs_mis with
     | DataNode hd1 ->
-        if not(isLend (hd1.h_formula_data_imm)) then rhs0
+        if not(CP.isLend (hd1.h_formula_data_imm)) then rhs0
         else
           let mis_sv = hd1.h_formula_data_node in
           let rec helper rhs=
@@ -4537,8 +4471,8 @@ let check_imm_mis rhs_mis rhs0=
                           h_formula_phase_rw = helper hf2;
                           h_formula_phase_pos = pos}
               | DataNode hd -> if CP.eq_spec_var mis_sv hd.h_formula_data_node then
-                    if not(isLend (hd.h_formula_data_imm)) then rhs else
-                      DataNode {hd with h_formula_data_imm = (ConstAnn(Mutable));}
+                    if not(CP.isLend (hd.h_formula_data_imm)) then rhs else
+                      DataNode {hd with h_formula_data_imm = (CP.ConstAnn(Mutable));}
                   else rhs
               | _ -> rhs
           in
@@ -11408,34 +11342,34 @@ let rec simp_ann_x heap pures = match heap with
     (mkPhaseH h1 h2 pos,ps2)
   | DataNode data ->
     let imm = data.h_formula_data_imm in
-    let ann_var = fv_ann imm in
+    let ann_var = CP.fv_ann imm in
     if ann_var = [] then (heap,pures)
     else
       let p,res = List.partition (fun p -> CP.fv p = ann_var) pures in
       begin
         match p with
-        | [] -> (DataNode {data with h_formula_data_imm = mkConstAnn 2},res)
+        | [] -> (DataNode {data with h_formula_data_imm = CP.mkConstAnn 2},res)
         | [hd] -> 
           let is = CP.getAnn hd in
           if is = [] then (heap,pures)
-          else (DataNode {data with h_formula_data_imm = mkConstAnn (List.hd is)},res)
+          else (DataNode {data with h_formula_data_imm = CP.mkConstAnn (List.hd is)},res)
         | _ -> (heap,pures)
       end
   | ViewNode view ->
     let imm = view.h_formula_view_imm in
-    let ann_var = fv_ann imm in
+    let ann_var = CP.fv_ann imm in
     if ann_var = [] then (heap,pures)
     else
       let p,res = List.partition (fun p -> CP.fv p = ann_var) pures in
       begin
         match p with
-        | [] -> (ViewNode {view with h_formula_view_imm = mkConstAnn 2},res)
+        | [] -> (ViewNode {view with h_formula_view_imm = CP.mkConstAnn 2},res)
         | [hd] ->
           let is = CP.getAnn hd in
           if is = [] then (heap,pures)
           else
             (* andreeac is it obsolete?  *)
-            (ViewNode {view with h_formula_view_imm = mkConstAnn (List.hd is)},res)
+            (ViewNode {view with h_formula_view_imm = CP.mkConstAnn (List.hd is)},res)
         | _ -> (heap,pures)
       end
   | _ -> (heap,pures)
@@ -11934,7 +11868,7 @@ let prepost_of_init_x (var:CP.spec_var) sort (args:CP.spec_var list) (lbl:formul
       h_formula_data_node = var;
       h_formula_data_name = lock_name;
 	  h_formula_data_derv = false;
-	  h_formula_data_imm = ConstAnn(Mutable);
+	  h_formula_data_imm = CP.ConstAnn(Mutable);
       h_formula_data_param_imm = []; (* list should have the same size as h_formula_data_arguments *)
 	  h_formula_data_perm = None;
 	  h_formula_data_origins = [];
@@ -11951,7 +11885,7 @@ let prepost_of_init_x (var:CP.spec_var) sort (args:CP.spec_var list) (lbl:formul
       h_formula_view_node = var; (*Have to reserve type of view_node to finalize*)
       h_formula_view_name = sort; (*lock_sort*)
       h_formula_view_derv = false;
-      h_formula_view_imm = ConstAnn(Mutable); 
+      h_formula_view_imm = CP.ConstAnn(Mutable); 
       h_formula_view_perm = None;
       h_formula_view_arguments = uargs;
       h_formula_view_modes = []; (*???*)
@@ -12019,7 +11953,7 @@ let prepost_of_finalize_x (var:CP.spec_var) sort (args:CP.spec_var list) (lbl:fo
       h_formula_data_node = var;
       h_formula_data_name = lock_name;
 	  h_formula_data_derv = false;
-	  h_formula_data_imm = ConstAnn(Mutable);
+	  h_formula_data_imm = CP.ConstAnn(Mutable);
       h_formula_data_param_imm = [];    (* list should have the same size as h_formula_data_arguments *)
 	  h_formula_data_perm = None;
 	  h_formula_data_origins = [];
@@ -12036,7 +11970,7 @@ let prepost_of_finalize_x (var:CP.spec_var) sort (args:CP.spec_var list) (lbl:fo
       h_formula_view_node = var; (*Have to reserve type of view_node to finalize*)
       h_formula_view_name = sort; (*lock_sort*)
       h_formula_view_derv = false;
-      h_formula_view_imm = ConstAnn(Mutable); 
+      h_formula_view_imm = CP.ConstAnn(Mutable); 
       h_formula_view_perm = None;
       h_formula_view_arguments = uargs;
       h_formula_view_modes = []; (*???*)
@@ -12104,7 +12038,7 @@ let prepost_of_acquire_x (var:CP.spec_var) sort (args:CP.spec_var list) (inv:for
       h_formula_view_node = var; (*Have to reserve type of view_node to finalize*)
       h_formula_view_name = sort; (*lock_sort*)
       h_formula_view_derv = false;
-      h_formula_view_imm = ConstAnn(Mutable); 
+      h_formula_view_imm = CP.ConstAnn(Mutable); 
       h_formula_view_perm = Some (Cpure.Var (fresh_perm,no_pos));
       h_formula_view_arguments = uargs;
       h_formula_view_modes = []; (*???*)
@@ -12188,7 +12122,7 @@ let prepost_of_release_x (var:CP.spec_var) sort (args:CP.spec_var list) (inv:for
   (*     h_formula_view_node = var; (\*Have to reserve type of view_node to finalize*\) *)
   (*     h_formula_view_name = sort; (\*lock_sort*\) *)
   (*     h_formula_view_derv = false; *)
-  (*     h_formula_view_imm = ConstAnn(Mutable);  *)
+  (*     h_formula_view_imm = CP.ConstAnn(Mutable);  *)
   (*     h_formula_view_perm = Some fresh_perm; *)
   (*     h_formula_view_arguments = uargs; *)
   (*     h_formula_view_modes = []; (\*???*\) *)
@@ -12944,7 +12878,7 @@ let mkViewNode view_node view_name view_args pos = ViewNode
   h_formula_view_name = view_name;
   h_formula_view_derv = false;
   h_formula_view_arguments = view_args;
-  h_formula_view_imm = ConstAnn Mutable;
+  h_formula_view_imm = CP.ConstAnn Mutable;
   h_formula_view_perm = None;
   h_formula_view_modes = [];
   h_formula_view_coercible = true;
@@ -13368,7 +13302,7 @@ let convert_hf_to_mut f =
               DataNode 
                   {d with 
                       h_formula_data_param_imm = 
-                          List.map (fun _ -> ConstAnn Mutable) d.h_formula_data_param_imm;
+                          List.map (fun _ -> CP.ConstAnn Mutable) d.h_formula_data_param_imm;
                       (* h_formula_data_arguments = CP.fresh_spec_vars d.h_formula_data_arguments; *)
                   })
     | _ -> None in
@@ -13385,7 +13319,7 @@ let convert_to_mut f =
               DataNode
                   {d with
                       h_formula_data_param_imm =
-                          List.map (fun _ -> ConstAnn Mutable) d.h_formula_data_param_imm;
+                          List.map (fun _ -> CP.ConstAnn Mutable) d.h_formula_data_param_imm;
                       h_formula_data_arguments = CP.fresh_spec_vars d.h_formula_data_arguments;
                   })
     | _ -> None in

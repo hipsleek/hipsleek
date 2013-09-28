@@ -1422,8 +1422,8 @@ and add_param_ann_constraints_to_pure (h_f: CF.h_formula) (p_f: MCP.mix_formula 
       | CF.ConjConj h  -> create_mix_formula_with_ann_constr h.CF.h_formula_conjconj_h1 h.CF.h_formula_conjconj_h2 p_f             
       | CF.Phase h -> create_mix_formula_with_ann_constr h.CF.h_formula_phase_rd h.CF.h_formula_phase_rw p_f 
       | CF.DataNode h -> let data_ann = h.CF.h_formula_data_imm in
-        let helper1 (param_imm: CF.ann) = 
-	  match (CF.mkExpAnn data_ann no_pos), (CF.mkExpAnn param_imm no_pos) with
+        let helper1 (param_imm: CP.ann) = 
+	  match (CP.mkExpAnn data_ann no_pos), (CP.mkExpAnn param_imm no_pos) with
 	    | CP.IConst i1, CP.IConst i2 -> None (* if i1<=i2 then mkMTrue  no_pos else mkMFalse no_pos  *)
 	    | (_ as n), (_ as f) -> Some (MCP.mix_of_pure(CP.BForm((CP.Lte(n, f, no_pos), None), None))) in
         let p = match p_f with
@@ -3003,8 +3003,8 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
                                       C.exp_var_pos = pos;
                                     } in
                                     let (tmp_e, tmp_t) =
-                          (* flatten_to_bind prog proc base_e (List.rev fs) (Some fn_var) pid (CF.TempAnn(CF.ConstAnn(Mutable))) false pos (*(andreeac)to check, insertion.ss -p insert fails with CF.TempAnn(....)*)*) 
-                          flatten_to_bind prog proc base_e (List.rev fs) (Some fn_var) pid (CF.ConstAnn(Mutable)) false pos
+                          (* flatten_to_bind prog proc base_e (List.rev fs) (Some fn_var) pid (CF.TempAnn(CP.ConstAnn(Mutable))) false pos (*(andreeac)to check, insertion.ss -p insert fails with CF.TempAnn(....)*)*) 
+                          flatten_to_bind prog proc base_e (List.rev fs) (Some fn_var) pid (CP.ConstAnn(Mutable)) false pos
 
                         in
                         
@@ -3132,7 +3132,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
                                 let vt = trans_type prog vi.E.var_type pos in
                                 let (ce, te) = helper e in
                                 let _ = E.pop_scope ()in
-                                let initial_ann_lst =  (List.map (fun f -> (f, (CF.ConstAnn(Accs)))) vs) in
+                                let initial_ann_lst =  (List.map (fun f -> (f, (CP.ConstAnn(Accs)))) vs) in
                                 let ann_lst = Immutable.read_write_exp_analysis ce initial_ann_lst in 
                                 let _,ann_lst = List.split ann_lst in
                                 let bind_e =  create_bind_exp te (vt, v) (List.combine vs_types vs) ce false pos pid in
@@ -3141,8 +3141,8 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
                                 (*     C.exp_bind_bound_var = (vt, v); *)
                                 (*     C.exp_bind_fields = List.combine vs_types vs; *)
                                 (*     C.exp_bind_body = ce; *)
-                                (*     C.exp_bind_imm = CF.ConstAnn(Mutable); (\* can it be true? *\) (\*WN : conservatively @M *\) *)
-                                (*     C.exp_bind_param_imm = List.map (fun _ -> CF.ConstAnn(Mutable)) vs ; *)
+                                (*     C.exp_bind_imm = CP.ConstAnn(Mutable); (\* can it be true? *\) (\*WN : conservatively @M *\) *)
+                                (*     C.exp_bind_param_imm = List.map (fun _ -> CP.ConstAnn(Mutable)) vs ; *)
                                 (*     C.exp_bind_read_only = false; (\*conservative. May use read/write analysis to figure out*\) *)
 				(*     C.exp_bind_pos = pos; *)
                                 (*     C.exp_bind_path_id = pid; }) in *)
@@ -3542,9 +3542,9 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
               (* ... = o.f => read_only = true *)
               let r = 
 	            if (!Globals.allow_imm) || (!Globals.allow_field_ann) then
-                  flatten_to_bind prog proc e (List.rev fs) None pid (CF.ConstAnn(Lend)) true pos (* ok to have it lend instead of Imm? *)
+                  flatten_to_bind prog proc e (List.rev fs) None pid (CP.ConstAnn(Lend)) true pos (* ok to have it lend instead of Imm? *)
                 else
-                  flatten_to_bind prog proc e (List.rev fs) None pid (CF.ConstAnn(Mutable)) true pos
+                  flatten_to_bind prog proc e (List.rev fs) None pid (CP.ConstAnn(Mutable)) true pos
               in
               (* let _ = print_string ("after: "^(Cprinter.string_of_exp (fst r))) in *)
               r
@@ -4323,7 +4323,7 @@ and compact_field_access_sequence prog root_type field_seq =
 
 and create_bind_exp typ bound_v fields body read_only pos pid =
   let _, vs = List.split fields in
-  let initial_ann_lst =  (List.map (fun f -> (f, (CF.ConstAnn(Accs)))) vs) in
+  let initial_ann_lst =  (List.map (fun f -> (f, (CP.ConstAnn(Accs)))) vs) in
   let ann_lst = Immutable.read_write_exp_analysis body initial_ann_lst in 
   let _,ann_lst = List.split ann_lst in
   let ann = Immutable.get_strongest_imm ann_lst in
@@ -4332,7 +4332,7 @@ and create_bind_exp typ bound_v fields body read_only pos pid =
       C.exp_bind_bound_var = bound_v;
       C.exp_bind_fields = fields;
       C.exp_bind_body = body;
-      C.exp_bind_imm = CF.ConstAnn(Mutable); 
+      C.exp_bind_imm = CP.ConstAnn(Mutable); 
       C.exp_bind_param_imm = ann_lst;
       C.exp_bind_read_only = read_only;
       C.exp_bind_pos = pos;
@@ -4774,11 +4774,11 @@ and trans_I2C_struc_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : id
   (n_tl, r)
 
 (* checks if two lists of annotation can be joint together. If so, it returns the list resulting after the combination of the input lists *)
-and join_ann (ann1: CF.ann list) (ann2: CF.ann list): bool * (CF.ann list) =
+and join_ann (ann1: CP.ann list) (ann2: CP.ann list): bool * (CP.ann list) =
   match ann1, ann2 with
     | [], [] -> (true, [])
-    | (CF.ConstAnn(Accs))::t1, a::t2 
-    | a::t1, (CF.ConstAnn(Accs))::t2 -> let compatible, new_ann = join_ann t1 t2 in
+    | (CP.ConstAnn(Accs))::t1, a::t2 
+    | a::t1, (CP.ConstAnn(Accs))::t2 -> let compatible, new_ann = join_ann t1 t2 in
                   (true && compatible, a::new_ann)
     | _ -> (false, [])
 
@@ -4961,7 +4961,7 @@ and trans_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : ident list) 
                 IF.formula_base_and = a;
                 IF.formula_base_pos = pos; } in
             let (n_tl,ch, newvars) = linearize_formula prog f1 n_tl in
-            let _ = print_string ("Cform: "^(Cprinter.string_of_formula ch) ^"\n" ) in
+            (* let _ = print_string ("Cform: "^(Cprinter.string_of_formula ch) ^"\n" ) in *)
             let qsvars = List.map (fun qv -> trans_var qv n_tl pos) qvars in
             let newvars = List.map (fun qv -> trans_var qv n_tl pos) newvars in
             let ch = CF.push_exists (qsvars @ newvars) ch in
@@ -6090,9 +6090,9 @@ and case_normalize_formula_x prog (h:(ident*primed) list)(f:IF.formula): IF.form
   let f = convert_heap2 prog f in
   (* let _ = print_string ("case_normalize_formula :: CHECK POINT 1 ==> f = " ^ Iprinter.string_of_formula f ^ "\n") in *)
   let f = IF.float_out_thread f in
-  let _ = print_string ("case_normalize_formula :: CHECK POINT 1 ==> f = " ^ Iprinter.string_of_formula f ^ "\n") in
+  (* let _ = print_string ("case_normalize_formula :: CHECK POINT 1 ==> f = " ^ Iprinter.string_of_formula f ^ "\n") in *)
   let f = IF.float_out_exps_from_heap (I.lbl_getter prog) f in (*andreeac - check rel*)
-  let _ = print_string ("case_normalize_formula :: CHECK POINT 1 ==> f = " ^ Iprinter.string_of_formula f ^ "\n") in
+  (* let _ = print_string ("case_normalize_formula :: CHECK POINT 1 ==> f = " ^ Iprinter.string_of_formula f ^ "\n") in *)
 
   let f = IF.float_out_min_max f in
   (* let _ = print_string ("case_normalize_formula :: CHECK POINT 2 ==> f = " ^ Iprinter.string_of_formula f ^ "\n") in *)
@@ -7703,7 +7703,7 @@ and check_barrier_wf prog bd =
     let h = CF.DataNode {
         CF.h_formula_data_node = CP.SpecVar (Named bd.C.barrier_name, self,Unprimed);
         CF.h_formula_data_name = bd.C.barrier_name;
-        CF.h_formula_data_imm = CF.ConstAnn Mutable;
+        CF.h_formula_data_imm = CP.ConstAnn Mutable;
                         CF.h_formula_data_param_imm = [];
         CF.h_formula_data_perm = Some (Cpure.Var (v,no_pos));
         CF.h_formula_data_arguments = st_v::List.tl bd.C.barrier_shared_vars;
@@ -7891,7 +7891,7 @@ and trans_bdecl prog bd =
   let pr_out c = Cprinter.string_of_barrier_decl c in
   Debug.no_1 "trans_bdecl " pr_in pr_out (trans_bdecl_x prog) bd
       
-and trans_field_layout (iann : IF.ann list) : CF.ann list = List.map Immutable.iformula_ann_to_cformula_ann iann
+and trans_field_layout (iann : IF.ann list) : CP.ann list = List.map Immutable.iformula_ann_to_cformula_ann iann
 
 and trans_mem_formula (imem : IF.mem_formula) (tlist:spec_var_type_list) : CF.mem_perm_formula = 
     let mem_exp = trans_pure_exp imem.IF.mem_formula_exp tlist in 

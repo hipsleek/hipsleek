@@ -405,17 +405,17 @@ and h_formula_2_mem (f : h_formula) (p : mix_formula) (evars : CP.spec_var list)
       (fun f p evars -> h_formula_2_mem_x f p evars prog) f p evars
 
 (* andreeac: to add equality info *)
-and compatible_ann (ann1: CF.ann list) (ann2: CF.ann list) : bool =
+and compatible_ann (ann1: CP.ann list) (ann2: CP.ann list) : bool =
   if not(!Globals.allow_field_ann) then false else 
   let rec helper ann1 ann2 = 
   match ann1, ann2 with
     | [], [] -> true
-    | (CF.ConstAnn(Accs))::t1, a::t2 
-    | a::t1, (CF.ConstAnn(Accs))::t2 -> let compatible = helper t1 t2 in
+    | (CP.ConstAnn(Accs))::t1, a::t2 
+    | a::t1, (CP.ConstAnn(Accs))::t2 -> let compatible = helper t1 t2 in
 				                        true && compatible
-    | (CF.TempRes(a1,a2))::t1, a::t2 
-    | a::t1, (CF.TempRes(a1,a2))::t2 -> let compatible = helper t1 t2 in
-				                        (CF.eq_ann a a2) && compatible
+    | (CP.TempRes(a1,a2))::t1, a::t2 
+    | a::t1, (CP.TempRes(a1,a2))::t2 -> let compatible = helper t1 t2 in
+				                        (CP.eq_ann a a2) && compatible
     | _ -> false
   in helper ann1 ann2
 
@@ -3705,7 +3705,7 @@ and fold_op_x1 prog (ctx : context) (view : h_formula) vd (rhs_p : MCP.mix_formu
               let renamed_view_formula = rename_struc_bound_vars form in
 	      (****)  
               let renamed_view_formula = 
-	        if ((isImm imm) || (isLend imm) || (isAccs imm)) (*&& not(!Globals.allow_field_ann)*) then 
+	        if ((CP.isImm imm) || (CP.isLend imm) || (CP.isAccs imm)) (*&& not(!Globals.allow_field_ann)*) then 
 	          propagate_imm_struc_formula renamed_view_formula imm
 	        else
 	          renamed_view_formula
@@ -9769,7 +9769,7 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
         h_formula_view_perm = perm;
         h_formula_view_imm = ann;
         h_formula_view_arguments = l_args} -> (l_args, l_node_name, perm, ann, [])
-      | HRel (_, eargs, _) -> ((List.fold_left List.append [] (List.map CP.afv eargs)), "",  None, ConstAnn Mutable,[])
+      | HRel (_, eargs, _) -> ((List.fold_left List.append [] (List.map CP.afv eargs)), "",  None, CP.ConstAnn Mutable,[])
       | _ -> report_error no_pos "[solver.ml]: do_match non view input lhs\n" in
     let r_args, r_node_name, r_var, r_perm, r_ann, r_param_ann = match r_node with
       | DataNode {h_formula_data_name = r_node_name;
@@ -9783,7 +9783,7 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
         h_formula_view_imm = ann;
         h_formula_view_arguments = r_args;
         h_formula_view_node = r_var} -> (r_args, r_node_name, r_var, perm, ann, [])
-      | HRel (rhp, eargs, _) -> ((List.fold_left List.append [] (List.map CP.afv eargs)), "",rhp, None, ConstAnn Mutable,[])
+      | HRel (rhp, eargs, _) -> ((List.fold_left List.append [] (List.map CP.afv eargs)), "",rhp, None, CP.ConstAnn Mutable,[])
       | _ -> report_error no_pos "[solver.ml]: do_match non view input rhs\n" in     
 
     (* An Hoa : found out that the current design of do_match 
@@ -9844,7 +9844,7 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
     else 
       let l_h,l_p,l_fl,l_t, l_a = split_components estate.es_formula in
       let restore_hole h estate = 
-        let restore_hole_b = ((* isPoly r_ann && *) (isMutable l_ann || isImm l_ann)) || (isPoly r_ann && isPoly l_ann) in
+        let restore_hole_b = ((* isPoly r_ann && *) (isMutable l_ann || isImm l_ann)) || (CP.isPoly r_ann && CP.isPoly l_ann) in
         Debug.tinfo_hprint (add_str "restore_hole_b" (string_of_bool)) restore_hole_b pos;
         if restore_hole_b then 
           match h with
@@ -9859,7 +9859,7 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
       in
       let replace_hole_w_emp h estate =
         (* if rhs ann is variable do no consume yet, restore the hole, works ok for impl quantif on rhs (w/o fields ann) *)
-        let restore_hole_b = isPoly r_ann && (isMutable l_ann || isImm l_ann) in
+        let restore_hole_b = CP.isPoly r_ann && (CP.isMutable l_ann || CP.isImm l_ann) in
         if restore_hole_b then 
           match h with
             |Hole _ -> let new_l_h = HEmp in
@@ -10105,7 +10105,7 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
                 if not(!Globals.allow_imm) && not(!Globals.allow_field_ann) then mkStarH consumed_h estate.es_heap pos
                 else if (!Globals.allow_imm) && not(!Globals.allow_field_ann) then
                   begin
-                    if (isLend r_ann || isAccs r_ann || (isPoly r_ann (* && (isLend l_ann || isAccs l_ann) *)) (* || (isPoly r_ann && isPoly l_ann) *)) (*&& not(!allow_field_ann)*) 
+                    if (CP.isLend r_ann || CP.isAccs r_ann || (CP.isPoly r_ann (* && (isLend l_ann || isAccs l_ann) *)) (* || (isPoly r_ann && isPoly l_ann) *)) (*&& not(!allow_field_ann)*) 
                     then estate.es_heap (*do not consume*)
                     else mkStarH consumed_h estate.es_heap pos end 
                 else  

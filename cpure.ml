@@ -17,6 +17,11 @@ open Label
 type spec_var =
   | SpecVar of (typ * ident * primed)
 
+type ann = ConstAnn of heap_ann | PolyAnn of spec_var |
+        TempAnn of ann | TempRes of (ann * ann)
+
+type view_arg = SVArg of spec_var | AnnArg of ann
+
 let compare_sv (SpecVar (t1, id1, pr1)) (SpecVar (t2, id2, pr2))=
   if (t1=t2)&&(pr1=pr2) then compare id1 id2
   else -1
@@ -560,6 +565,12 @@ let eq_spec_var (sv1 : spec_var) (sv2 : spec_var) = match (sv1, sv2) with
 	    (* translation has ensured well-typedness.
 		   We need only to compare names and primedness *)
 	    v1 = v2 & p1 = p2
+
+let eq_ann (a1 :  ann) (a2 : ann) : bool =
+  match a1, a2 with
+    | ConstAnn ha1, ConstAnn ha2 -> ha1 == ha2
+    | PolyAnn sv1, PolyAnn sv2 -> eq_spec_var sv1 sv2
+    | _ -> false
 
 let rec eq_spec_var_order_list l1 l2=
   match l1,l2 with
@@ -11473,3 +11484,66 @@ let simpl_equalities_x ante conseq =
 let simpl_equalities ante conseq  = 
 	let pr = !print_formula in
 	Debug.no_2 "simpl_equalities" pr pr (pr_pair pr pr) simpl_equalities_x ante conseq
+
+(* imm utilities *)
+
+let isAccs(a : ann) : bool = 
+  match a with
+    | ConstAnn(Accs) -> true
+    | _ -> false
+
+let isLend(a : ann) : bool = 
+  match a with
+    | ConstAnn(Lend) -> true
+    | _ -> false
+
+and isMutable(a : ann) : bool = 
+  match a with
+    | ConstAnn(Mutable) -> true
+    | _ -> false
+
+and isImm(a : ann) : bool = 
+  match a with
+    | ConstAnn(Imm) -> true
+    | _ -> false
+
+and isPoly(a : ann) : bool = 
+  match a with
+    | PolyAnn v -> true
+    | _ -> false
+
+
+let rec fv_ann (a: ann) = match a with
+  | ConstAnn _ -> []
+  | TempAnn v  -> fv_ann v
+  | TempRes(v,w) -> (fv_ann w)@(fv_ann v)
+  | PolyAnn v  -> [v]
+
+let rec fv_ann_lst (a:ann list) = match a with
+  | [] -> []
+  | h :: t -> (fv_ann h) @ (fv_ann_lst t)
+
+let mkConstAnn i = match i with 
+  | 0 -> ConstAnn Mutable
+  | 1 -> ConstAnn Imm
+  | 2 -> ConstAnn Lend
+  | 3 -> ConstAnn Accs
+  | _ -> report_error no_pos "Const Ann must be less than 3"  
+
+let mkPolyAnn v = PolyAnn v
+
+let mkExpAnn ann pos = 
+  match ann with
+    | TempAnn _ -> IConst(int_of_heap_ann Accs, pos)
+    | TempRes (v,w) -> IConst(int_of_heap_ann Accs, pos)
+    | ConstAnn a -> IConst(int_of_heap_ann a, pos)
+    | PolyAnn v  -> Var(v, pos)
+
+let mkExpAnnSymb ann pos = 
+  match ann with
+    | TempAnn _ -> AConst(Accs, pos)
+    | TempRes _ -> AConst(Accs, pos)
+    | ConstAnn a -> AConst(a, pos)
+    | PolyAnn v  -> Var(v, pos)  
+
+(* end imm utilities *)
