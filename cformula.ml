@@ -225,7 +225,7 @@ and h_formula_data = {  h_formula_data_node : CP.spec_var;
                         h_formula_data_origins : ident list;
                         h_formula_data_original : bool;
                         h_formula_data_arguments : CP.spec_var list;
-						h_formula_data_holes : int list; (* An Hoa : list of fields not to be considered for partial structures *) (*store positions*)
+			h_formula_data_holes : int list; (* An Hoa : list of fields not to be considered for partial structures *) (*store positions*)
                         h_formula_data_label : formula_label option;
                         h_formula_data_remaining_branches :  (formula_label list) option;
                         h_formula_data_pruning_conditions :  (CP.b_formula * formula_label list ) list;
@@ -3936,6 +3936,16 @@ let rec look_up_hp_def hp_defs hp0=
           | _ -> look_up_hp_def rest hp0
       end
 
+let rec is_unknown_f f=
+   match f with
+    | Base fb ->
+        (is_unknown_heap fb.formula_base_heap) &&
+            (CP.isConstTrue (MCP.pure_of_mix fb.formula_base_pure))
+    | Exists _ -> let _, base1 = split_quantifiers f in
+                     is_unknown_f base1
+    | Or {formula_or_f1 = o11; formula_or_f2 = o12;} -> (is_unknown_f o11) && (is_unknown_f o12)
+
+
 let get_hpdef_name hpdef=
    match hpdef with
      | CP.HPRelDefn (hp,_,_) -> hp
@@ -5780,7 +5790,8 @@ let rec drop_hrel_f_x f0 hp_names=
       let nf,argsl = helper base1 in
       (add_quantifiers qvars nf,argsl)
   in
-  helper f0
+  if hp_names = [] then (f0, []) else
+    helper f0
 
 and drop_hrel_f f0 hp_names=
   let pr1 = !print_formula in
@@ -6965,6 +6976,19 @@ let empty_es flowt grp_lbl pos =
   es_term_err = None;
   (*es_infer_invs = [];*)
 }
+
+let flatten_context ctx0=
+  let rec helper ctx =
+    match ctx with
+      | Ctx es -> [es]
+      | OCtx (ctx1, ctx2) -> (helper ctx1)@(helper ctx2)
+  in
+  helper ctx0
+
+let es_fv es=
+  CP.remove_dups_svl ((fv es.es_formula)@(es.es_infer_vars_rel)@es.es_infer_vars_hp_rel@
+      (List.fold_left (fun ls (_,p1,p2) -> ls@(CP.fv p1)@(CP.fv p2)) [] es.es_infer_rel)@
+      (List.fold_left (fun ls hprel -> ls@(fv hprel.hprel_lhs)@(fv hprel.hprel_rhs)) [] es.es_infer_hp_rel))
 
 let is_one_context (c:context) =
   match c with

@@ -1663,7 +1663,7 @@ let rec simplify_one_constr prog unk_hps constr=
                 let l,r,matched = SAU.simplify_one_constr_b prog unk_hps lhs_b rhs_b in
                  (* if l.CF.formula_base_heap = CF.HEmp && *)
                  (*   (MCP.isConstMTrue l.CF.formula_base_pure) then *)
-                if SAU.is_unk_f (CF.Base l) || SAU.is_unk_f (CF.Base r) ||
+                if CF.is_unknown_f (CF.Base l) || CF.is_unknown_f (CF.Base r) ||
                 (SAU.is_empty_f (CF.Base l) && SAU.is_empty_f (CF.Base r)) then
                   let _ = DD.ninfo_pprint (" input: " ^(Cprinter.prtt_string_of_formula_base lhs_b) ^ " ==> " ^
                                                   (Cprinter.prtt_string_of_formula_base rhs_b)) no_pos in
@@ -2750,12 +2750,12 @@ let pardef_subst_fix prog unk_hps groups=
 let def_subst_fix prog unk_hps hpdefs=
   (*remove dups*)
   (* let unk_hps = CP.remove_dups_svl unk_hps in *)
-  let is_rec_hpdef (a1,_,f)=
+  let is_rec_hpdef (a1,_,_,f)=
     let hp = CF.get_hpdef_name a1 in
     let hps = CF.get_hp_rel_name_formula f in
     (CP.mem_svl hp hps)
   in
-  let is_independ_hpdef (a1,_,f)=
+  let is_independ_hpdef (a1,_,_,f)=
     let hp = CF.get_hpdef_name a1 in
     let hps = CF.get_hp_rel_name_formula f in
     let hps = CP.remove_dups_svl hps in
@@ -2765,7 +2765,7 @@ let def_subst_fix prog unk_hps hpdefs=
     (rems = [])
   in
   let process_dep_hpdef hpdef rec_hps nrec_hpdefs=
-    let (a1,hprel,f) = hpdef in
+    let (a1,hprel,g,f) = hpdef in
     let hp = CF.get_hpdef_name a1 in
     let fs = CF.list_of_disjs f in
     (* DD.ninfo_zprint (lazy (("       process_dep_group hp: " ^ (!CP.print_sv hp)))) no_pos; *)
@@ -2782,7 +2782,7 @@ let def_subst_fix prog unk_hps hpdefs=
     if (CP.diff_svl succ_hps1 rec_hps) <> [] then
       (*not depends on any recursive hps, susbt it*)
       let args = SAU.get_ptrs hprel in
-      let ters,new_fs = List.split (List.map (fun f1 -> SAU.succ_susbt_hpdef prog nrec_hpdefs succ_hps1 (hp,args,f1)) fs) in
+      let ters,new_fs = List.split (List.map (fun f1 -> SAU.succ_subst_hpdef prog nrec_hpdefs succ_hps1 (hp,args,g,f1)) fs) in
       (*check all is false*)
       (* let pr = pr_list string_of_bool in *)
       (* DD.ninfo_zprint (lazy (("       bool: " ^ (pr ters)))) no_pos; *)
@@ -2797,7 +2797,7 @@ let def_subst_fix prog unk_hps hpdefs=
       in
       (* let fs2 = SAU.remove_subset new_fs1 in *)
       (*may be wrong: should reevauate root*)
-      (b , (CP.HPRelDefn (hp, List.hd args, List.tl args ),hprel,CF.disj_of_list fs1 no_pos ))
+      (b , (CP.HPRelDefn (hp, List.hd args, List.tl args ),hprel,g,CF.disj_of_list fs1 no_pos ))
     else
       (*return*)
       (false,hpdef)
@@ -2824,7 +2824,7 @@ let def_subst_fix prog unk_hps hpdefs=
     let lrec_deps,l_nrec_deps = List.partition is_rec_hpdef deps in
     (*find deps on non_recs*)
     let rec_hps = List.map
-      (fun (a1,_,_) -> CF.get_hpdef_name a1)
+      (fun (a1,_,_,_) -> CF.get_hpdef_name a1)
       (res_rec_inds@lrec_deps) in
     (*find the first depend grp in deps to subst,
     if can not find, return false for terminating*)
@@ -2847,7 +2847,9 @@ let def_subst_fix prog unk_hps hpdefs=
       helper_fix new_cur new_rec_indps new_nrec_indps
     else (new_cur@new_rec_indps@new_nrec_indps)
   in
-  helper_fix hpdefs [] []
+  let hpdefs = List.map (fun (a,b,c) -> (a,b,None, c)) hpdefs in
+  let res = helper_fix hpdefs [] [] in
+  List.map (fun (a,b,_,c) -> (a,b,c)) res
 
 (*this subst is to elim intermediate hps in final inferred hprel def
  *)

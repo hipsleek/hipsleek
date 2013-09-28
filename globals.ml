@@ -705,6 +705,8 @@ let pred_disj_unify = ref false
 
 let pred_equiv = ref false
 
+let pred_unify_post = ref false
+
 let sa_tree_simp = ref false
 
 let sa_subsume = ref false
@@ -716,6 +718,7 @@ let allow_norm_disj = ref true
 
 let norm_cont_analysis = ref true
 
+(*context: (1, M_cyclic c) *)
 let lemma_infer = ref false
 
 let dis_sem = ref false
@@ -967,13 +970,13 @@ let disable_multiple_specs =ref false
 
 let perm_prof = ref false
 
-let cp_test = ref false 
+let validate = ref false 
 
 let cp_prefile = ref false 
 
 let gen_cpfile = ref false 
 
-let file_cp = ref ""
+let validate_target = ref ""
 
 let cpfile = ref ""
 

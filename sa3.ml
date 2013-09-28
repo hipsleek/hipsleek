@@ -50,6 +50,7 @@ ss: subst from ldns -> ldns
 (*
 equal_hps: are preds that are going to be generalized. DO NOT subst them
 *)
+
 let rec find_imply_subst prog unk_hps link_hps frozen_hps frozen_constrs complex_hps constrs=
   let rec check_constr_duplicate (lhs,rhs) constrs=
     match constrs with
@@ -98,90 +99,62 @@ let rec find_imply_subst prog unk_hps link_hps frozen_hps frozen_constrs complex
                           }
                           in
                           let _ = Debug.ninfo_zprint (lazy (("    new rhs: " ^ (Cprinter.string_of_hprel_short new_cs)))) no_pos in
-                          (*moved after pre-preds synthesized*)
-                          (* let l_hds, l_hvs,lhrels =CF.get_hp_rel_formula new_cs.CF.hprel_lhs in *)
-                          (* let r_hds, r_hvs,rhrels =CF.get_hp_rel_formula new_cs.CF.hprel_rhs in *)
-                          (* if (List.length l_hds > 0 || List.length l_hvs > 0) && List.length lhrels > 0 && *)
-                          (*    (\* (List.length r_hds > 0 || List.length r_hvs > 0) && *\) List.length rhrels > 0 *)
-                          (* then *)
-                          (*   let ho_constrs, _ = collect_ho_ass prog true [] ([], []) new_cs in *)
-                          (*   let ho_constrs1 = SAU.remove_dups_constr ho_constrs in *)
-                          (*   if ho_constrs1==[] || *)
-                          (*     check_constr_duplicate (new_cs.CF.hprel_lhs,new_cs.CF.hprel_rhs) ho_constrs1 then *)
-                          (*       let new_cs1 = SAU.simp_match_hp_w_unknown prog unk_hps link_hps new_cs in *)
-                          (*       ([new_cs1],[]) *)
-                          (*   else *)
-                          (*     (\***************  PRINTING*********************\) *)
-                          (*     let _ = *)
-                          (*       begin *)
-                          (*         let pr = pr_list_ln Cprinter.string_of_hprel_short in *)
-                          (*         print_endline ""; *)
-                          (*         print_endline "\n*************************************************"; *)
-                          (*         print_endline "*******relational assumptions (obligation)********"; *)
-                          (*         print_endline "****************************************************"; *)
-                          (*         print_endline (pr ho_constrs1); *)
-                          (*         print_endline "*************************************" *)
-                          (*       end *)
-                          (*     in *)
-                          (*     (ho_constrs1, List.map fst3 lhrels) *)
-                          (*   (\***************  END PRINTING*********************\) *)
-                          (* else *)
-                            let new_cs1 = SAU.simp_match_hp_w_unknown prog unk_hps link_hps new_cs in
-                            ([new_cs1],[])
+                          let new_cs1 = SAU.simp_match_hp_w_unknown prog unk_hps link_hps new_cs in
+                          ([new_cs1],[])
                         end
                 | None -> ([],[])
             end
       | _ -> report_error no_pos "sa2.find_imply_one"
   in
   let rec helper_new_only don rest is_changed unfrozen_hps=
-    match rest with
-      | [] -> is_changed,don,unfrozen_hps
-      | cs1::rest ->
-          let _ = Debug.ninfo_zprint (lazy (("    lhs: " ^ (Cprinter.string_of_hprel_short cs1)))) no_pos in
-          if SAC.cs_rhs_is_only_neqNull cs1 then
-            (helper_new_only (don@[cs1]) rest is_changed unfrozen_hps)
-          else
-            let is_changed1, new_rest, n_unfrozen_hps1 = List.fold_left ( fun (b,res, r_unfroz_hps) cs2->
-                let new_constrs, unfroz_hps = find_imply_one cs1 cs2 in
-                if List.length new_constrs > 0 then
-                  (true,res@new_constrs, r_unfroz_hps@unfroz_hps)
-                  else (b,res@[cs2], r_unfroz_hps)
-            ) (is_changed, [], []) (rest)
-            in
-            let is_changed2,new_don, n_unfrozen_hps2 = List.fold_left ( fun (b,res, r_unfroz_hps) cs2->
-                let new_constrs, unfroz_hps = find_imply_one cs1 cs2 in
-                if List.length new_constrs > 0 then
-                 (true,res@new_constrs,  r_unfroz_hps@unfroz_hps)
-                else
-                  (b,res@[cs2], r_unfroz_hps)
-            ) (is_changed1,[], []) (don)
-            in
-            (helper_new_only (new_don@[cs1]) new_rest is_changed2 (unfrozen_hps@n_unfrozen_hps1@n_unfrozen_hps2))
+   match rest with
+     | [] -> is_changed,don,unfrozen_hps
+     | cs1::rest ->
+           let _ = Debug.ninfo_zprint (lazy (("    lhs: " ^ (Cprinter.string_of_hprel_short cs1)))) no_pos in
+           if SAC.cs_rhs_is_only_neqNull cs1 then
+             (helper_new_only (don@[cs1]) rest is_changed unfrozen_hps)
+           else
+             let is_changed1, new_rest, n_unfrozen_hps1 = List.fold_left ( fun (b,res, r_unfroz_hps) cs2->
+                 let new_constrs, unfroz_hps = find_imply_one cs1 cs2 in
+                 if List.length new_constrs > 0 then
+                   (true,res@new_constrs, r_unfroz_hps@unfroz_hps)
+                 else (b,res@[cs2], r_unfroz_hps)
+             ) (is_changed, [], []) (rest)
+             in
+             let is_changed2,new_don, n_unfrozen_hps2 = List.fold_left ( fun (b,res, r_unfroz_hps) cs2->
+                 let new_constrs, unfroz_hps = find_imply_one cs1 cs2 in
+                 if List.length new_constrs > 0 then
+                   (true,res@new_constrs,  r_unfroz_hps@unfroz_hps)
+                 else
+                   (b,res@[cs2], r_unfroz_hps)
+             ) (is_changed1,[], []) (don)
+             in
+             (helper_new_only (new_don@[cs1]) new_rest is_changed2 (unfrozen_hps@n_unfrozen_hps1@n_unfrozen_hps2))
   in
   let rec subst_w_frozen frozen_constrs non_frozen is_changed unfrozen_hps=
     match frozen_constrs with
       | [] -> is_changed,non_frozen,unfrozen_hps
       | cs1::rest ->
-          let _ = Debug.ninfo_zprint (lazy (("    lhs: " ^ (Cprinter.string_of_hprel_short cs1)))) no_pos in
-          if SAC.cs_rhs_is_only_neqNull cs1 then
-            (helper_new_only rest non_frozen is_changed unfrozen_hps)
-          else
-            let is_changed1, n_non_frozen, n_unfrozen_hps1 =
-              List.fold_left ( fun (b,res, r_unfroz_hps) cs2->
-                let new_constrs, unfroz_hps = find_imply_one cs1 cs2 in
-                if List.length new_constrs > 0 then
-                  (true,res@new_constrs, r_unfroz_hps@unfroz_hps)
-                  else (b,res@[cs2], r_unfroz_hps)
-            ) (is_changed, [], []) non_frozen
-            in
-            subst_w_frozen rest n_non_frozen is_changed1 n_unfrozen_hps1
+            let _ = Debug.ninfo_zprint (lazy (("    lhs: " ^ (Cprinter.string_of_hprel_short cs1)))) no_pos in
+            if SAC.cs_rhs_is_only_neqNull cs1 then
+              (helper_new_only rest non_frozen is_changed unfrozen_hps)
+            else
+              let is_changed1, n_non_frozen, n_unfrozen_hps1 =
+                List.fold_left ( fun (b,res, r_unfroz_hps) cs2->
+                    let new_constrs, unfroz_hps = find_imply_one cs1 cs2 in
+                    if List.length new_constrs > 0 then
+                      (true,res@new_constrs, r_unfroz_hps@unfroz_hps)
+                    else (b,res@[cs2], r_unfroz_hps)
+                ) (is_changed, [], []) non_frozen
+              in
+              subst_w_frozen rest n_non_frozen is_changed1 n_unfrozen_hps1
   in
-  let is_changed0,new_cs0,unfrozen_hps0 = subst_w_frozen frozen_constrs constrs false [] in
-  let is_changed,new_cs1,unfrozen_hps =
-    if List.length new_cs0 < 1 then (is_changed0, new_cs0, unfrozen_hps0) else
-    helper_new_only [] new_cs0 is_changed0 unfrozen_hps0
+  let is_changed0,constrs0,unfrozen_hps0 =
+    if List.length constrs < 2 then (false, constrs, []) else
+    helper_new_only [] constrs false []
   in
-  (is_changed,new_cs1,unfrozen_hps)
+  let is_changed1,constrs1,unfrozen_hps1 = subst_w_frozen frozen_constrs constrs0 is_changed0 unfrozen_hps0 in
+  (is_changed1,constrs1,unfrozen_hps1)
 
 (* and find_imply_subst prog unk_hps link_hps frozen_hps complex_hps constrs= *)
 (*   let pr1 = pr_list_ln Cprinter.string_of_hprel_short in *)
@@ -200,7 +173,8 @@ and subst_cs_w_other_cs_x prog post_hps dang_hps link_hps frozen_hps frozen_cons
   (*remove recursive cs and post-preds based to preserve soundness*)
   (* let constrs1 = List.filter (fun cs -> (is_non_recursive_non_post_cs post_hps dang_hps cs) && not (is_trivial cs)) constrs in *)
   let constrs1,rem = List.partition (fun cs -> (is_non_recursive_non_post_cs post_hps dang_hps cs) && not (is_trivial cs)) constrs in
-  let b,new_cs2, unfrozen_hps = find_imply_subst prog dang_hps link_hps frozen_hps frozen_constrs complex_hps constrs1 in
+  let b,new_cs2, unfrozen_hps=
+    find_imply_subst prog dang_hps link_hps frozen_hps frozen_constrs complex_hps constrs1 in
   (b, new_cs2@rem,unfrozen_hps)
 (*=========END============*)
 
@@ -219,7 +193,8 @@ let subst_cs_x prog post_hps dang_hps link_hps frozen_hps frozen_constrs complex
 let subst_cs prog post_hps dang_hps link_hps frozen_hps frozen_constrs complex_hps constrs =
   let pr1 = pr_list_ln Cprinter.string_of_hprel_short in
   Debug.no_2 "subst_cs" pr1 pr1 (pr_triple string_of_bool  pr1 !CP.print_svl)
-      (fun _ _ -> subst_cs_x prog post_hps dang_hps link_hps frozen_hps frozen_constrs complex_hps constrs) constrs frozen_constrs
+      (fun _ _ -> subst_cs_x prog post_hps dang_hps link_hps frozen_hps frozen_constrs complex_hps constrs)
+      constrs frozen_constrs
 
 
 (*split constrs like H(x) & x = null --> G(x): separate into 2 constraints*)
@@ -763,7 +738,7 @@ let generalize_one_hp_x prog is_pre (hpdefs: (CP.spec_var *CF.hp_rel_def) list) 
             else SAU.elim_useless_rec_preds prog hp args0 defs1
             in
             (*remove duplicate*)
-            let defs3 = SAU.equiv_unify args0 defs2 in
+            let defs3 = if is_pre then SAU.equiv_unify args0 defs2 else defs2 in
             let defs4 = SAU.remove_equiv_wo_unkhps hp skip_hps defs3 in
             let defs5a = SAU.find_closure_eq hp args0 defs4 in
             (*Perform Conjunctive Unification (without loss) for post-preds. pre-preds are performed separately*)
@@ -771,7 +746,8 @@ let generalize_one_hp_x prog is_pre (hpdefs: (CP.spec_var *CF.hp_rel_def) list) 
               SAU.perform_conj_unify_post prog args0 (unk_hps@link_hps) unk_svl defs5a no_pos
             in
             let pr1 = pr_list_ln Cprinter.prtt_string_of_formula in
-            let _ = DD.ninfo_pprint ("defs1: " ^ (pr1 defs1)) no_pos in
+            let _ = DD.ninfo_hprint (add_str "defs5a: " pr1) defs5a no_pos in
+            let _ = DD.ninfo_hprint (add_str "defs5: " pr1) defs5 no_pos in
             (*remove duplicate with self-recursive*)
             (* let base_case_exist,defs4 = SAU.remove_dups_recursive hp args0 unk_hps defs3 in *)
             (*find longest hnodes common for more than 2 formulas*)
@@ -1043,6 +1019,115 @@ let pardef_subst_fix prog unk_hps groups=
   let pr1 = pr_list_ln (pr_list_ln SAU.string_of_par_def_w_name_short) in
   Debug.no_1 "pardef_subst_fix" pr1 pr1
       (fun _ -> pardef_subst_fix_x prog unk_hps groups) groups
+
+(*
+  divide hp into three groups:
+  - independent - ready for genalizing
+  - dependent:
+      - depend on non-recursive groups: susbst
+      - depend on recusive groups: wait
+*)
+let def_subst_fix prog unk_hps hpdefs=
+  (*remove dups*)
+  (* let unk_hps = CP.remove_dups_svl unk_hps in *)
+  let is_rec_hpdef (a1,_,_,f)=
+    let hp = CF.get_hpdef_name a1 in
+    let hps = CF.get_hp_rel_name_formula f in
+    (CP.mem_svl hp hps)
+  in
+  let is_independ_hpdef (a1,_,_,f)=
+    let hp = CF.get_hpdef_name a1 in
+    let hps = CF.get_hp_rel_name_formula f in
+    let hps = CP.remove_dups_svl hps in
+    (* DD.ninfo_zprint (lazy (("       rec hp: " ^ (!CP.print_sv hp)))) no_pos; *)
+    let _,rems = List.partition (fun hp1 -> CP.eq_spec_var hp hp1) hps in
+    (* DD.ninfo_zprint (lazy (("       rec rems: " ^ (!CP.print_svl rems)))) no_pos; *)
+    (rems = [])
+  in
+  let process_dep_hpdef hpdef rec_hps nrec_hpdefs=
+    let (a1,hprel,g,f) = hpdef in
+    let hp = CF.get_hpdef_name a1 in
+    let fs = CF.list_of_disjs f in
+    (* DD.ninfo_zprint (lazy (("       process_dep_group hp: " ^ (!CP.print_sv hp)))) no_pos; *)
+    let succ_hp_args =  List.concat (List.map CF.get_HRels_f fs) in
+    (*remove dups*)
+    let succ_hp_args = Gen.BList.remove_dups_eq SAU.check_simp_hp_eq succ_hp_args in
+    (*get succ hp names only*)
+    let succ_hps = fst (List.split succ_hp_args) in
+    (* DD.ninfo_zprint (lazy (("       process_dep_group succ_hps: " ^ (!CP.print_svl succ_hps)))) no_pos; *)
+    (*remove itself hp and unk_hps*)
+    let succ_hps1 = List.filter (fun hp1 -> not (CP.eq_spec_var hp1 hp) &&
+        not (CP.mem_svl hp1 unk_hps) && not (CP.mem_svl hp1 rec_hps) ) succ_hps in
+    (* DD.info_zprint (lazy (("       process_dep_group succ_hps1: " ^ (!CP.print_svl succ_hps1)))) no_pos; *)
+    if (CP.diff_svl succ_hps1 rec_hps) <> [] then
+      (*not depends on any recursive hps, susbt it*)
+      let args = SAU.get_ptrs hprel in
+      let ters,new_fs = List.split (List.map (fun f1 -> SAU.succ_subst_hpdef prog nrec_hpdefs succ_hps1 (hp,args,g,f1)) fs) in
+      (*check all is false*)
+      (* let pr = pr_list string_of_bool in *)
+      (* DD.ninfo_zprint (lazy (("       bool: " ^ (pr ters)))) no_pos; *)
+      let ter = List.for_all (fun b -> not b) ters in
+      let fs1  = SAU.remove_longer_common_prefix_w_unk unk_hps (List.concat new_fs) in
+      (* let pr1 = pr_list_ln Cprinter.prtt_string_of_formula in *)
+      (* let _ = DD.info_zprint (lazy (("       fs1: " ^ (pr1 fs1)))) no_pos in *)
+      let b =
+        if not ter then
+        not (SAU.checkeq_formula_list fs fs1)
+        else false
+      in
+      (* let fs2 = SAU.remove_subset new_fs1 in *)
+      (*may be wrong: should reevauate root*)
+      (b , (CP.HPRelDefn (hp, List.hd args, List.tl args ),hprel, g,CF.disj_of_list fs1 no_pos ))
+    else
+      (*return*)
+      (false,hpdef)
+  in
+  let subst_first_dep_hpdef deps rec_hps nrec_hpdefs=
+    let rec local_helper deps res r=
+      match deps with
+        | [] -> (r,res)
+        | hpdef::gs -> let r1,hpdef1 = process_dep_hpdef hpdef rec_hps nrec_hpdefs in
+                     (* if r then (true,(res@[hpdef1]@gs)) *)
+                     (* else local_helper gs (res@[hpdef]) *)
+                       local_helper gs (res@[hpdef1]) (r1||r)
+    in
+    (* if nrec_grps = [] then (false, deps) else *)
+      local_helper deps [] false
+  in
+  let helper_x hpdefs rec_inds nrec_inds=
+    let indeps,deps = List.partition is_independ_hpdef hpdefs in
+    (*classify indeps into rec and non_rec*)
+    let lrec_inds,lnrec_inds = List.partition is_rec_hpdef indeps in
+    (*for return*)
+    let res_rec_inds = rec_inds@lrec_inds in
+    let res_nrec_inds = nrec_inds@lnrec_inds in
+    let lrec_deps,l_nrec_deps = List.partition is_rec_hpdef deps in
+    (*find deps on non_recs*)
+    let rec_hps = List.map
+      (fun (a1,_,_,_) -> CF.get_hpdef_name a1)
+      (res_rec_inds@lrec_deps) in
+    (*find the first depend grp in deps to subst,
+    if can not find, return false for terminating*)
+    let r, deps1 = subst_first_dep_hpdef deps rec_hps (res_nrec_inds@l_nrec_deps) in
+    (( (*List.length indeps>0 || *) r), deps1, res_rec_inds,res_nrec_inds)
+  in
+  (*for debugging*)
+   let helper hpdefs rec_inds nrec_inds=
+     let pr1 = (pr_list_ln SAU.string_of_hp_rel_def) in
+     let pr2= pr_quad string_of_bool pr1 pr1 pr1 in
+     Debug.no_3 "def_subst_fix:helper" pr1 pr1 pr1 pr2
+         (fun _ _ _ -> helper_x hpdefs rec_inds nrec_inds) hpdefs rec_inds nrec_inds
+   in
+  (*END for debugging*)
+  let rec helper_fix cur rec_indps nrec_indps=
+    let r,new_cur,new_rec_indps,new_nrec_indps = helper cur rec_indps nrec_indps in
+    if r then
+      (*rearrange cur for terminating*)
+      (* let new_cur1 = (List.tl new_cur)@[List.hd new_cur] in *)
+      helper_fix new_cur new_rec_indps new_nrec_indps
+    else (new_cur@new_rec_indps@new_nrec_indps)
+  in
+  helper_fix hpdefs [] []
 
 let is_valid_pardef (_,args,_,_,f,_)=
   let ls_succ_args = snd (List.split (CF.get_HRels_f f)) in
@@ -1319,8 +1404,11 @@ let match_one_hp_views iprog prog (vdcls: CA.view_decl list) (k, hf, g,orf):(CP.
   let helper args r paras vdcl=
     if (List.length args) = ((List.length vdcl.CA.view_vars) + 1) then
       let f1 = CF.formula_of_heap hf no_pos in
-      let vnode = CF.mkViewNode (List.hd args) vdcl.CA.view_name
-        (List.tl args) no_pos in
+      let self_sv = CP.SpecVar (CP.type_of_spec_var r ,self, Unprimed) in
+      let sst = List.combine (r::paras) (self_sv::vdcl.CA.view_vars) in
+      let f1 = CF.subst sst f1 in
+      let vnode = CF.mkViewNode (self_sv ) vdcl.CA.view_name
+        (vdcl.CA.view_vars) no_pos in
       let f2 = CF.formula_of_heap vnode no_pos in
       if Lemma.checkeq_sem iprog prog f1 f2 [(k, hf, g,orf)] then
         [vnode]
@@ -1377,7 +1465,7 @@ let partition_constrs_x constrs post_hps0=
       try
         let ohp = CF.extract_hrel_head cs.CF.hprel_rhs in
         match ohp with
-          | Some hp -> (CP.mem_svl hp hps)
+          | Some hp -> CP.mem_svl hp hps
           | None -> false
       with _ -> false
     in
@@ -1387,21 +1475,29 @@ let partition_constrs_x constrs post_hps0=
         (pre_cs,post_cs,pre_fix_cs@[cs], pre_oblg,tupled_hps,post_oblg)
       else
       let lhs_hps = CF.get_hp_rel_name_formula cs.CF.hprel_lhs in
-      if CP.intersect_svl (new_post_hps) lhs_hps = [] then
-        (*identify pre-oblg*)
-        let l_hds, l_hvs,lhrels =CF.get_hp_rel_formula cs.CF.hprel_lhs in
-        let r_hds, r_hvs,rhrels =CF.get_hp_rel_formula cs.CF.hprel_rhs in
-        if (List.length l_hds > 0 || List.length l_hvs > 0) && List.length lhrels > 0 &&
-          (* (List.length r_hds > 0 || List.length r_hvs > 0) && *) List.length rhrels > 0
-        then
-          (pre_cs,post_cs,pre_fix_cs,pre_oblg@[cs],tupled_hps@(CP.diff_svl (List.map (fun (a,_,_) -> a) rhrels) lhs_hps),post_oblg)
+      if (CP.intersect_svl pre_fix_hps lhs_hps) != [] then
+        (pre_cs,post_cs,pre_fix_cs, pre_oblg@[cs],tupled_hps,post_oblg)
         else
-        (pre_cs@[cs],post_cs,pre_fix_cs,pre_oblg,tupled_hps,post_oblg)
+          if CP.intersect_svl (new_post_hps) lhs_hps = [] then
+            (*identify pre-oblg*)
+            let l_hds, l_hvs,lhrels =CF.get_hp_rel_formula cs.CF.hprel_lhs in
+            let r_hds, r_hvs,rhrels =CF.get_hp_rel_formula cs.CF.hprel_rhs in
+            if (List.length l_hds > 0 || List.length l_hvs > 0) && List.length lhrels > 0 &&
+              (* (List.length r_hds > 0 || List.length r_hvs > 0) && *) List.length rhrels > 0
+            then
+              (pre_cs,post_cs,pre_fix_cs,pre_oblg@[cs],
+              (* tupled_hps@(CP.diff_svl (List.map (fun (a,_,_) -> a) rhrels) lhs_hps) *)
+              tupled_hps@(CP.diff_svl lhs_hps pre_fix_hps)
+                  ,post_oblg)
+            else
+              (pre_cs@[cs],post_cs,pre_fix_cs,pre_oblg,tupled_hps,post_oblg)
       else (pre_cs,post_cs,pre_fix_cs, pre_oblg,tupled_hps,post_oblg@[cs])
   in
   let pre_fix_hps0 = List.fold_left get_pre_fix_hp [] constrs in
+  let _ = Debug.ninfo_hprint (add_str "    pre_fix_hps0" !CP.print_svl) pre_fix_hps0 no_pos in
   let pre_fix_hps = CP.diff_svl pre_fix_hps0 post_hps0 in
   let pre_constrs,post_constrs, pre_fix_constrs, pre_oblg, tupled_dep_on_hps, post_oblg_constrs = List.fold_left (classify post_hps0 pre_fix_hps) ([],[],[],[],[],[]) constrs in
+  let _ = Debug.ninfo_hprint (add_str "    tupled_dep_on_hps" !CP.print_svl) tupled_dep_on_hps no_pos in
   (*partition pre-constrs, filter ones in pre-obligation*)
   let pre_constrs1, pre_oblg_ext = List.partition (fun cs ->
       let lhs_hps = CF.get_hp_rel_name_formula cs.CF.hprel_lhs in
@@ -1480,6 +1576,32 @@ let infer_pre_synthesize prog proc_name callee_hps is pre_constrs need_preproces
 
 (*compute greatest fixpoint for each set of constraints*)
 let infer_pre_fix_x iprog prog proc_name callee_hps is_pre is need_preprocess detect_dang pre_fix_hps=
+  let get_pre_fwd post_hps pre_fix_pdefs=
+    let pre_fix_pdefs_ext = List.map (fun (hp,args,f) ->
+        (hp,args, [], CP.mkTrue no_pos, Some f, None, None)
+    ) pre_fix_pdefs in
+    SAU.get_pre_fwd post_hps pre_fix_pdefs_ext
+  in
+  let unk_hps = List.map fst (is.CF.is_dang_hpargs@is.CF.is_link_hpargs) in
+  let do_subst_pre pre_fix_pdefs_grps predef_hps pre_def_grps=
+    if predef_hps <> [] then
+      let groups0 = List.map (fun grp -> List.map (fun (hp, args, f) -> (hp,args, None, f, [])) grp) pre_fix_pdefs_grps in
+      let groups1 = pardef_subst_fix prog unk_hps (groups0@pre_def_grps) in
+      (*filter out groups of pre-preds which defined already*)
+      let groups2 =  List.fold_left (fun r_grps grp ->
+          match grp with
+            | [] -> r_grps
+            | ((hp,_,_,_,_)::_) ->
+                  if not (CP.mem_svl hp predef_hps) then
+                    let grp1 = List.map (fun (hp,args,_,f,_) -> (hp,args,f)) grp in
+                    r_grps@[grp1]
+                  else
+                    r_grps
+      ) [] groups1 in
+      groups2
+    else
+      pre_fix_pdefs_grps
+  in
   let _ = DD.binfo_pprint ">>>>>> gfp computation for pre-preds <<<<<" no_pos in
   let rec partition_grp rem_pdefs grps=
     match rem_pdefs with
@@ -1491,13 +1613,17 @@ let infer_pre_fix_x iprog prog proc_name callee_hps is_pre is need_preprocess de
             partition_grp rest (grps@[((hp0,args0, f0)::grp)])
   in
   (*partition constraints*)
-  let pdefs = get_par_defs_pre_fix is.CF.is_constrs in
-  let pdefs_grps = partition_grp pdefs [] in
+  let pdefs0 = get_par_defs_pre_fix is.CF.is_constrs in
+  (*subst defined preds if applicable - swl.ss*)
+  (* let pre_hps_need_fwd= get_pre_fwd is.CF.is_post_hps pdefs0 in *)
+  (* let pre_defs, pre_hps = SAU.extract_fwd_pre_defs pre_hps_need_fwd is.CF.is_hp_defs in *)
+  let pdefs_grps0 = partition_grp pdefs0 [] in
+  (* let pdefs_grps1 = do_subst_pre pdefs_grps0 pre_hps pre_defs in *)
   (*for each set of constraints, compure greatest fixpoint*)
   let fix_defs, n_unk_hpargs = List.fold_left (fun (r_defs, r_unk_hpargs) pdefs ->
       let def, n_unk_hpargs = SAC.compute_gfp prog true is pdefs in
       (r_defs@[def], r_unk_hpargs@n_unk_hpargs)
-  ) ([],[]) pdefs_grps in
+  ) ([],[]) pdefs_grps0 in
   let n_dang_hpargs, n_link_hpargs = if !Globals.pred_elim_dangling then
     (is.CF.is_dang_hpargs@n_unk_hpargs, is.CF.is_link_hpargs)
   else (is.CF.is_dang_hpargs, is.CF.is_link_hpargs@n_unk_hpargs)
@@ -1546,12 +1672,13 @@ let infer_post_synthesize_x prog proc_name callee_hps is need_preprocess detect_
   let _ = DD.binfo_pprint ">>>>>> post-predicates: step post-4: weaken<<<<<<" no_pos in
   let constrs0 = List.map (SAU.weaken_strengthen_special_constr_pre false) is.CF.is_constrs in
   let dang_hps = List.map fst (is.CF.is_dang_hpargs@is.CF.is_link_hpargs) in
-  let ss = List.filter (fun (hp1, hp2) -> CP.intersect_svl [hp1;hp2] dang_hps == []) is.CF.is_hp_equivs in
-  let constrs1 = if ss = [] then constrs0 else
-    List.map (fun cs -> {cs with CF.hprel_lhs = CF.subst ss cs.CF.hprel_lhs;
-        CF.hprel_rhs = CF.subst ss cs.CF.hprel_rhs;
-    }) constrs0
-  in
+  (* let ss = List.filter (fun (hp1, hp2) -> CP.intersect_svl [hp1;hp2] dang_hps == []) is.CF.is_hp_equivs in *)
+  (* let constrs1 = if ss = [] then constrs0 else *)
+  (*   List.map (fun cs -> {cs with CF.hprel_lhs = CF.subst ss cs.CF.hprel_lhs; *)
+  (*       CF.hprel_rhs = CF.subst ss cs.CF.hprel_rhs; *)
+  (*   }) constrs0 *)
+  (* in *)
+  let constrs1 = SAU.subst_equiv_hprel is.CF.is_hp_equivs constrs0 in
   let par_defs = get_par_defs_post constrs1 in
   (*subst pre-preds into if they are not recursive -do with care*)
   let pre_hps_need_fwd= SAU.get_pre_fwd is.CF.is_post_hps par_defs in
@@ -1560,6 +1687,12 @@ let infer_post_synthesize_x prog proc_name callee_hps is need_preprocess detect_
     pre_defs pre_hps par_defs in
   let hp_names,hp_defs = List.split pair_names_defs in
   let n_hp_defs = is.CF.is_hp_defs@hp_defs in
+  let post_defs1,unify_equiv_map2 = if !Globals.pred_unify_post then
+    SAC.do_unify prog false (List.map fst is.CF.is_dang_hpargs) (List.map fst is.CF.is_link_hpargs)
+        is.CF.is_post_hps n_hp_defs
+  else
+    (n_hp_defs, [])
+  in
   (*consj_post_unify??*)
   (* let dang_hps = List.map fst (is.CF.is_dang_hpargs@is.CF.is_link_hpargs) in *)
   (* let ss = List.filter (fun (hp1, hp2) -> CP.intersect_svl [hp1;hp2] dang_hps == []) is.CF.is_hp_equivs in *)
@@ -1571,7 +1704,8 @@ let infer_post_synthesize_x prog proc_name callee_hps is need_preprocess detect_
   (*   (a,hf,g, CF.disj_of_list fs1 (CF.pos_of_formula def))) n_hp_defs *)
   (* in *)
   {is with CF.is_constrs = [];
-      CF.is_hp_defs = n_hp_defs}
+      CF.is_hp_equivs = is.CF.is_hp_equivs@unify_equiv_map2;
+      CF.is_hp_defs = post_defs1}
 
 let infer_post_synthesize prog proc_name callee_hps is need_preprocess detect_dang=
   let pr1 = Cprinter.string_of_infer_state_short in
@@ -1653,22 +1787,23 @@ and infer_shapes_from_obligation_x iprog prog proc_name callee_hps is_pre is nee
     if oblg_constrs = [] then
       let pr1 = pr_list_ln  Cprinter.string_of_hprel_short in
       DD.binfo_pprint ("proving:\n" ^ (pr1 rem_constr)) no_pos;
-      (* let _ = if rem_constr = [] then () else *)
-      (* (\*prove rem_constr*\) *)
-      (* (\*transform defs to cviews*\) *)
-      (* let need_trans_hprels = List.filter (fun (hp_kind, _,_,_) -> *)
-      (*     match hp_kind with *)
-      (*       |  CP.HPRelDefn (hp,_,_) -> CP.mem_svl hp dep_def_hps *)
-      (*       | _ -> false *)
-      (* ) (pre_defs@post_defs) in *)
-      (* let n_cviews,chprels_decl = Saout.trans_hprel_2_cview iprog prog proc_name need_trans_hprels in *)
-      (* let in_hp_names = List.map CP.name_of_spec_var dep_def_hps in *)
-      (* (\*for each oblg, subst + simplify*\) *)
-      (* let rem_constr2 = SAC.trans_constr_hp_2_view_x iprog prog proc_name (pre_defs@post_defs) *)
-      (*   in_hp_names chprels_decl rem_constr in *)
-      (* let _ = List.fold_left (collect_ho_ass prog is_pre def_hps) ([],[]) rem_constr2 in *)
-      (* () *)
-      (* in *)
+      let _ = if rem_constr = [] then () else
+      (*prove rem_constr*)
+        (*transform defs to cviews*)
+        let need_trans_hprels = List.filter (fun (hp_kind, _,_,_) ->
+            match hp_kind with
+              |  CP.HPRelDefn (hp,_,_) -> (* CP.mem_svl hp dep_def_hps *) true
+              | _ -> false
+        ) is.CF.is_hp_defs in
+        let _ = DD.info_hprint (add_str "dep_def_hps" !CP.print_svl) dep_def_hps no_pos in
+        let n_cviews,chprels_decl = Saout.trans_hprel_2_cview iprog prog proc_name need_trans_hprels in
+        let in_hp_names = List.map CP.name_of_spec_var dep_def_hps in
+        (*for each oblg, subst + simplify*)
+        let rem_constr2 = SAC.trans_constr_hp_2_view iprog prog proc_name is.CF.is_hp_defs
+          in_hp_names chprels_decl rem_constr in
+        let _ = List.fold_left (collect_ho_ass prog is_pre def_hps) ([],[]) rem_constr2 in
+        ()
+      in
       is
     else
       (* let _ = DD.info_pprint ("dep_def_hps: " ^ (!CP.print_svl dep_def_hps)) no_pos in *)
@@ -1706,7 +1841,8 @@ and infer_shapes_from_obligation iprog prog proc_name callee_hps is_pre is need_
       (fun _ -> infer_shapes_from_obligation_x iprog prog proc_name callee_hps is_pre is need_preprocess detect_dang) is
 
 (*===========fix point==============*)
-and infer_process_pre_preds iprog prog proc_name callee_hps is_pre is need_preprocess detect_dang =
+and infer_process_pre_preds iprog prog proc_name callee_hps b_is_pre is (pre_fix_hps, pre_oblg_constrs0)
+      need_preprocess detect_dang =
   let post_hps = is.CF.is_post_hps in
   let dang_hps = List.map fst is.CF.is_dang_hpargs in
   let link_hps = List.map fst is.CF.is_link_hpargs in
@@ -1714,10 +1850,10 @@ and infer_process_pre_preds iprog prog proc_name callee_hps is_pre is need_prepr
     in the new algo, those will be generalized as equiv. do not need to substed
   *)
   (*frozen_hps: it is synthesized already*)
-  let rec helper_x is frozen_hps frozen_constrs=
+  let rec helper_x is frozen_hps frozen_constrs pre_oblg_constrs =
     let constrs = is.CF.is_constrs in
     begin
-      let equal_cands, complex_hps,rem_constrs = IC.icompute_action_pre constrs post_hps frozen_hps in
+      let equal_cands, complex_hps,rem_constrs = IC.icompute_action_pre constrs post_hps frozen_hps pre_fix_hps in
       let equal_hps, new_frozen_constrs = List.fold_left (fun (ls1,ls2) (hp, constrs) -> ls1@[hp], ls2@constrs)
         ([],[]) equal_cands
       in
@@ -1740,7 +1876,9 @@ and infer_process_pre_preds iprog prog proc_name callee_hps is_pre is need_prepr
              let lhps = CF.get_hp_rel_name_formula cs.CF.hprel_lhs in
              if List.length lhps<2 && CP.intersect_svl lhps complex_hps = [] then true else false
            in
-           let pre_oblg_constrs, complex_constrs = List.partition (is_not_in_complex complex_hps) constrs in
+           let _, constrs1,_  = subst_cs prog post_hps dang_hps link_hps (frozen_hps@equal_hps)
+          (frozen_constrs1) complex_hps constrs in
+           let pre_oblg_constrs, complex_constrs = List.partition (is_not_in_complex complex_hps) constrs1 in
            let pre_act = IC.igen_action_pre complex_hps complex_constrs in
            let n_is11 = {n_is1 with CF.is_constrs = pre_oblg_constrs} in
            let n_is12 = iprocess_action iprog prog proc_name callee_hps n_is11 pre_act need_preprocess detect_dang in
@@ -1748,10 +1886,15 @@ and infer_process_pre_preds iprog prog proc_name callee_hps is_pre is need_prepr
         else n_is1
         in
         (* (constrs,[]) *)
-        (n_is2,[])
+        (n_is2,[],pre_oblg_constrs)
       else
-        let is_changed, constrs2,unfrozen_hps  = subst_cs prog post_hps dang_hps link_hps (frozen_hps@equal_hps) frozen_constrs1
+        let is_changed, constrs2,unfrozen_hps  = subst_cs prog post_hps dang_hps link_hps (frozen_hps@equal_hps)
+          (frozen_constrs1)
           complex_hps n_is1.CF.is_constrs in
+        let is_changed2, pre_oblg_constrs2,unfrozen_hps2  = subst_cs prog post_hps dang_hps link_hps (frozen_hps@equal_hps)
+          (frozen_constrs1)
+          complex_hps pre_oblg_constrs in
+        let _ = DD.ninfo_hprint (add_str "  pre_oblg_constrs2:" (pr_list_ln Cprinter.string_of_hprel_short)) pre_oblg_constrs2 no_pos in
         let unfrozen_hps1 = CP.remove_dups_svl (CP.intersect_svl unfrozen_hps frozen_hps0) in
         let frozen_hps1 = CP.diff_svl frozen_hps0 unfrozen_hps1 in
         let _ = if unfrozen_hps1 <> [] then
@@ -1759,25 +1902,30 @@ and infer_process_pre_preds iprog prog proc_name callee_hps is_pre is need_prepr
         else ()
         in
         (*for debugging*)
-        let _ = DD.ninfo_pprint ("   new constrs:" ^ (let pr = pr_list_ln Cprinter.string_of_hprel_short in pr constrs2)) no_pos in
-        let helper is frozen_hps frozen_constrs=
+        let _ = DD.ninfo_hprint (add_str "   new constrs:" (pr_list_ln Cprinter.string_of_hprel_short)) constrs2 no_pos in
+        let helper is frozen_hps frozen_constrs pre_oblg_constrs=
           let pr = Cprinter.string_of_infer_state_short in
-          Debug.no_1 "infer_process_pre_preds" pr (fun (is,_) -> pr is)
-              (fun _ -> helper_x is frozen_hps frozen_constrs) is
+          Debug.no_1 "infer_process_pre_preds" pr (fun (is,_,_) -> pr is)
+              (fun _ -> helper_x is frozen_hps frozen_constrs pre_oblg_constrs) is
         in
         (*END for debugging*)
-        let n_is3, non_unk_hps1 =
+        let n_is3, non_unk_hps1,pre_oblg_constrs3 =
           let constrs3 = if is_changed then constrs2 else n_is1.CF.is_constrs in
           (* helper new_cs2 constrs2 (frozen_hps@equal_hps) in *)
           let n_is = {n_is1 with CF.is_constrs = constrs3} in
-          helper n_is frozen_hps1 frozen_constrs1
+          helper n_is frozen_hps1 frozen_constrs1 pre_oblg_constrs2
       in
         (* (norm_constrs,[]) *)
-        (n_is3, [])
+        (n_is3, [],pre_oblg_constrs3)
     end
   in
-  let _ = DD.ninfo_pprint ("   is:" ^ (let pr = Cprinter.string_of_infer_state_short in pr is)) no_pos in
-  helper_x is [] []
+  let _ = DD.ninfo_hprint (add_str "   is:"  Cprinter.string_of_infer_state_short) is no_pos in
+  let r_is,a,n_pre_oblg_constrs = helper_x is [] [] pre_oblg_constrs0 in
+  let _ = DD.ninfo_hprint (add_str "   r_is:" Cprinter.string_of_infer_state_short) r_is no_pos in
+  let _ = DD.ninfo_hprint (add_str "  n_pre_oblg_constrs:" (pr_list_ln Cprinter.string_of_hprel_short)) n_pre_oblg_constrs no_pos in
+  let hp_defs1,tupled_defs = SAU.partition_tupled r_is.CF.is_hp_defs in
+  let r_is1 = {r_is with CF.is_hp_defs = (def_subst_fix prog [] hp_defs1)@tupled_defs } in
+  (r_is1,a,n_pre_oblg_constrs)
 
 (* and infer_pre_trans_closure prog is= *)
 (*   let n_constrs,_ = infer_pre_preds prog is.CF.is_post_hps [] *)
@@ -1799,28 +1947,42 @@ and infer_shapes_proper iprog prog proc_name callee_hps is need_preprocess detec
   in
   let post_hps1 = is.CF.is_post_hps in
   (*pre-synthesize*)
-  let is_pre = {is with CF.is_constrs = pre_constrs@pre_oblg_constrs0;
+  (*need to pass pre_oblg_constrs0 for closure computation*)
+  let is_pre = {is with CF.is_constrs = pre_constrs(* @pre_oblg_constrs0 *);
       CF.is_post_hps = post_hps1;
   } in
-  let is_pre0, _=  infer_process_pre_preds iprog prog proc_name callee_hps is_pre is_pre need_preprocess detect_dang in
+  (*need to pass pre_oblg_constrs0 for closure computation*)
+  let is_pre0, _, pre_oblg_constrs1=  infer_process_pre_preds iprog prog proc_name callee_hps true is_pre (pre_fix_hps, pre_oblg_constrs0)
+    need_preprocess detect_dang in
   let is_pre1 = {is_pre0 with CF.is_constrs = List.map (SAU.simp_match_unknown unk_hps link_hps) is_pre0.CF.is_constrs} in
-  (*pre-oblg*)
-  let is_pre_oblg1 = if is_pre1.CF.is_constrs = [] then is_pre1
-  else
-    let is_pre_oblg =  is_pre1 in
-    let pre_obl_act = IC.icompute_action_pre_oblg () in
-    iprocess_action iprog prog proc_name callee_hps is_pre_oblg pre_obl_act need_preprocess detect_dang
-  in
   (*pre-fix-synthesize*)
-  let is_pre2 = if pre_fix_constrs = [] then is_pre_oblg1 else
-    let is_pre_fix =  {is_pre_oblg1 with CF.is_constrs = pre_fix_constrs} in
+  let is_pre2 = if pre_fix_constrs = [] then is_pre1 else
+    let is_pre_fix =  {is_pre1 with CF.is_constrs = pre_fix_constrs} in
     let pre_fix_act = IC.icompute_action_pre_fix pre_fix_hps in
     iprocess_action iprog prog proc_name callee_hps is_pre_fix pre_fix_act need_preprocess detect_dang
   in
+  (*pre-oblg*)
+  let is_pre_oblg1 = if (* is_pre1.CF.is_constrs *)pre_oblg_constrs1 = [] then is_pre2
+  else
+    (*unknown preds generated during gfp have a chance to inferred here*)
+    let pre_fix_unk_hpargs = if !Globals.pred_elim_dangling then
+      (Gen.BList.difference_eq (fun (hp1,_) (hp2,_) -> CP.eq_spec_var hp1 hp2) is_pre2.CF.is_dang_hpargs is_pre1.CF.is_dang_hpargs)
+    else
+      (Gen.BList.difference_eq (fun (hp1,_) (hp2,_) -> CP.eq_spec_var hp1 hp2) is_pre2.CF.is_link_hpargs is_pre1.CF.is_link_hpargs)
+    in
+    let _ = DD.info_hprint (add_str " pre_fix_unk_hpargs" (pr_list (pr_pair !CP.print_sv !CP.print_svl))) pre_fix_unk_hpargs no_pos in
+    let is_pre_oblg =  {is_pre2 with CF.is_constrs = pre_oblg_constrs1;
+        CF.is_dang_hpargs = is_pre1.CF.is_dang_hpargs;
+        CF.is_link_hpargs = is_pre1.CF.is_link_hpargs;
+    } in
+    let pre_obl_act = IC.icompute_action_pre_oblg () in
+    iprocess_action iprog prog proc_name callee_hps is_pre_oblg pre_obl_act need_preprocess detect_dang
+  in
+  let is_pre3 = is_pre_oblg1 in
   (*post-synthesize*)
   let post_constrs, post_fix_hps, post_fix_constrs = SAU.classify_post_fix post_constrs0 in
-  let is_post1 = if post_constrs =[] then is_pre2 else
-    let is_post = {is_pre2 with CF.is_constrs = post_constrs } in
+  let is_post1 = if post_constrs =[] then is_pre3 else
+    let is_post = {is_pre3 with CF.is_constrs = post_constrs } in
     let post_act = IC.icompute_action_post () in
     let is_post = iprocess_action iprog prog proc_name callee_hps is_post post_act need_preprocess detect_dang in
     is_post
@@ -1940,6 +2102,7 @@ let infer_shapes_divide iprog prog proc_name (constrs0: CF.hprel list) callee_hp
       constrs0
 
 let infer_shapes_conquer iprog prog proc_name ls_is sel_hps=
+  (***********INTERNAL***************)
   let process_path_defs_setting is=
     let hp_defs1,tupled_defs = SAU.partition_tupled is.CF.is_hp_defs in
     let cl_sel_hps, defs, tupled_defs2=
@@ -1963,9 +2126,22 @@ let infer_shapes_conquer iprog prog proc_name ls_is sel_hps=
         (cl_sel_hps, hp_defs1,tupled_defs1)
     in
     let hpdefs = List.map (fun (k, hf, og, f) -> CF.mk_hprel_def k hf og [(is.CF.is_cond_path, Some f)] None) defs in
-    let link_hp_defs = SAC.generate_hp_def_from_link_hps prog is.CF.is_cond_path is.CF.is_hp_equivs is.CF.is_link_hpargs in
-    (cl_sel_hps@(List.map fst is.CF.is_link_hpargs), hpdefs@link_hp_defs, tupled_defs2, is.CF.is_hp_defs)
+    let link_hpdefs = SAC.generate_hp_def_from_link_hps prog is.CF.is_cond_path is.CF.is_hp_equivs is.CF.is_link_hpargs in
+    let link_hp_defs = List.map (fun hpdef ->
+        let fs = List.fold_left (fun ls (_, f_opt) ->
+            match f_opt with
+              | None -> ls
+              | Some f -> ls@[f]
+        ) [] hpdef.CF.hprel_def_body in
+        let f = if fs = [] then CF.formula_of_heap CF.HTrue no_pos else
+          CF.disj_of_list fs no_pos
+        in
+        (hpdef.CF.hprel_def_kind, hpdef.CF.hprel_def_hrel, hpdef.CF.hprel_def_guard, f)) link_hpdefs
+    in
+    (cl_sel_hps@(List.map fst is.CF.is_link_hpargs), hpdefs@link_hpdefs,
+    tupled_defs2, is.CF.is_hp_defs@link_hp_defs)
   in
+  (***********END INTERNAL***************)
   let cl_sel_hps, path_defs, tupled_defs, all_hpdefs = List.fold_left (fun (ls1, ls2,ls3, ls4) path_setting ->
       let r1,r2,r3, r4 = process_path_defs_setting path_setting in
       (ls1@r1, ls2@[r2], ls3@r3, ls4@r4)
@@ -1983,9 +2159,11 @@ let infer_shapes_conquer iprog prog proc_name ls_is sel_hps=
   else (all_hpdefs, cmb_defs)
   in
   let n_all_hp_defs0b = SAU.combine_hpdefs n_all_hpdefs0a in
+  (*unify-post*)
+  
   (*split pred*)
   let n_all_hp_defs1, n_cmb_defs  = if !Globals.pred_split then
-    let n_all_hp_defs0c, split_map = SAC.pred_split_hp iprog prog dang_hps n_all_hp_defs0b in
+    let n_all_hp_defs0c, split_map = SAC.pred_split_hp iprog prog Infer.rel_ass_stk rel_def_stk dang_hps n_all_hp_defs0b in
     (*update n_cmb_defs0*)
     let n_cmb_defs0a = if split_map = [] then n_cmb_defs0 else
       let split_hps, split_comp_hps = List.fold_left (fun (r1, r2) (hp,_,comps,_) ->
@@ -2007,7 +2185,7 @@ let infer_shapes_conquer iprog prog proc_name ls_is sel_hps=
     (n_all_hp_defs0b, n_cmb_defs0)
   in
   (*reuse: check equivalent form - substitute*)
-  let n_cmb_defs1, n_all_hp_defs2 = SAU.reuse_equiv_hpdefs prog n_cmb_defs n_all_hp_defs1 in
+  let n_cmb_defs1, n_all_hp_defs2 = (* SAU.reuse_equiv_hpdefs prog *) (n_cmb_defs, n_all_hp_defs1) in
   (*reuse with lib*)
   let n_cmb_defs2 = if !Globals.pred_equiv then
     let lib_matching = match_hps_views iprog prog sel_hps n_all_hp_defs1 prog.CA.prog_view_decls in
@@ -2056,8 +2234,12 @@ let infer_shapes_x iprog prog proc_name (constrs0: CF.hprel list) sel_hps post_h
   in
   r
 
-let infer_shapes iprog prog proc_name (hp_constrs: CF.hprel list) sel_hp_rels sel_post_hp_rels
-      hp_rel_unkmap unk_hpargs link_hpargs need_preprocess detect_dang:
+let infer_shapes (iprog: Iast.prog_decl) (prog: Cast.prog_decl) (proc_name:ident)
+      (hp_constrs: CF.hprel list) (sel_hp_rels: CP.spec_var list) (sel_post_hp_rels: CP.spec_var list)
+      (hp_rel_unkmap: ((CP.spec_var * int list) * CP.xpure_view) list)
+      (unk_hpargs: (CP.spec_var * CP.spec_var list) list)
+      (link_hpargs: (int list * (Cformula.CP.spec_var * Cformula.CP.spec_var list)) list)
+      (need_preprocess: bool) (detect_dang:bool):
  (* (CF.cond_path_type * CF.hp_rel_def list*(CP.spec_var*CP.exp list * CP.exp list) list) = *)
   (* (CF.hprel list * CF.hp_rel_def list*(CP.spec_var*CP.exp list * CP.exp list) list) = *)
       (CF.hprel list * CF.hp_rel_def list) =
@@ -2091,3 +2273,5 @@ let infer_shapes iprog prog proc_name (hp_constrs: CF.hprel list) sel_hp_rels se
           sel_post_hp_rels hp_rel_unkmap unk_hpargs link_hpargs
           need_preprocess detect_dang)
       proc_name hp_constrs sel_post_hp_rels hp_rel_unkmap unk_hpargs link_hpargs
+
+let _ = Sacore.infer_shapes := infer_shapes

@@ -234,6 +234,7 @@ and expected_comp =
 
 and ass = {
     ass_lhs: F.formula;
+    ass_guard: F.formula option;
     ass_rhs: F.formula }
 
 (********end parse compare file************)

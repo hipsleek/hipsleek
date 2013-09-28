@@ -183,223 +183,6 @@ let generate_lemma_4_views iprog cprog=
       (fun _ -> generate_lemma_4_views_x iprog cprog)
       cprog
 
-let do_unfold_view_hf cprog hf0 =
-  let fold_fnc ls1 ls2 aux_fnc = List.fold_left (fun r (hf2, p2) ->
-      let in_r = List.map (fun (hf1, p1) ->
-          let nh = aux_fnc hf1 hf2 in
-          let np = MCP.merge_mems p1 p2 true in
-          (nh, np)
-      ) ls1 in
-      r@in_r
-  ) [] ls2 in
-  let rec helper hf=
-    match hf with
-      | CF.Star { CF.h_formula_star_h1 = hf1;
-        CF.h_formula_star_h2 = hf2;
-        CF.h_formula_star_pos = pos} ->
-            let ls_hf_p1 = helper hf1 in
-            let ls_hf_p2 = helper hf2 in
-            let star_fnc h1 h2 =
-              CF.Star {CF.h_formula_star_h1 = h1;
-              CF.h_formula_star_h2 = h2;
-              CF.h_formula_star_pos = pos}
-            in
-            fold_fnc ls_hf_p1 ls_hf_p2 star_fnc
-      | CF.StarMinus { h_formula_starminus_h1 = hf1;
-        CF.h_formula_starminus_h2 = hf2;
-        CF.h_formula_starminus_aliasing = al;
-        CF.h_formula_starminus_pos = pos} ->
-            let ls_hf_p1 = helper hf1 in
-            let ls_hf_p2 = helper hf2 in
-            let starminus_fnc h1 h2 =
-              CF.StarMinus {CF.h_formula_starminus_h1 = h1;
-              CF.h_formula_starminus_h2 = h2;
-               CF.h_formula_starminus_aliasing = al;
-               CF.h_formula_starminus_pos = pos}
-            in
-            fold_fnc ls_hf_p1 ls_hf_p2 starminus_fnc
-      | CF.ConjStar  { CF.h_formula_conjstar_h1 = hf1;
-        CF.h_formula_conjstar_h2 = hf2;
-        CF.h_formula_conjstar_pos = pos} ->
-          let ls_hf_p1 = helper hf1 in
-          let ls_hf_p2 = helper hf2 in
-          let conjstar_fnc h1 h2 = CF.ConjStar { CF.h_formula_conjstar_h1 = h1;
-          CF.h_formula_conjstar_h2 = h2;
-          CF.h_formula_conjstar_pos = pos}
-          in
-          fold_fnc ls_hf_p1 ls_hf_p2 conjstar_fnc
-      | CF.ConjConj { CF.h_formula_conjconj_h1 = hf1;
-        CF.h_formula_conjconj_h2 = hf2;
-        CF.h_formula_conjconj_pos = pos} ->
-            let ls_hf_p1 = helper hf1 in
-            let ls_hf_p2 = helper hf2 in
-            let conjconj_fnc h1 h2 = CF.ConjConj { CF.h_formula_conjconj_h1 = h1;
-            CF.h_formula_conjconj_h2 = h2;
-            CF.h_formula_conjconj_pos = pos}
-            in
-            fold_fnc ls_hf_p1 ls_hf_p2 conjconj_fnc
-      | CF.Phase { h_formula_phase_rd = hf1;
-        CF.h_formula_phase_rw = hf2;
-        CF.h_formula_phase_pos = pos} ->
-            let ls_hf_p1 = helper hf1 in
-            let ls_hf_p2 = helper hf2 in
-            let phase_fnc h1 h2 = CF.Phase { CF.h_formula_phase_rd = h1;
-              CF.h_formula_phase_rw = h2;
-              CF.h_formula_phase_pos = pos}
-            in
-            fold_fnc ls_hf_p1 ls_hf_p2 phase_fnc
-      | CF.Conj { CF.h_formula_conj_h1 = hf1;
-        CF.h_formula_conj_h2 = hf2;
-        CF.h_formula_conj_pos = pos} ->
-          let ls_hf_p1 = helper hf1 in
-          let ls_hf_p2 = helper hf2 in
-          let conj_fnc h1 h2 = CF.Conj { CF.h_formula_conj_h1 = h1;
-          CF.h_formula_conj_h2 = h2;
-          CF.h_formula_conj_pos = pos}
-          in
-          fold_fnc ls_hf_p1 ls_hf_p2 conj_fnc
-      | CF.ViewNode hv -> begin
-            try
-              let vdcl = C.look_up_view_def_raw 40 cprog.C.prog_view_decls hv.CF.h_formula_view_name in
-              let fs = List.map fst vdcl.C.view_un_struc_formula in
-              let f_args = (CP.SpecVar (Named vdcl.C.view_name,self, Unprimed))::vdcl.C.view_vars in
-              let a_args = hv.CF.h_formula_view_node::hv.CF.h_formula_view_arguments in
-              let ss = List.combine f_args  a_args in
-              let fs1 = List.map (CF.subst ss) fs in
-              List.map (fun f -> (List.hd (CF.heap_of f), MCP.mix_of_pure (CF.get_pure f))) fs1
-            with _ -> report_error no_pos ("LEM.do_unfold_view_hf: can not find view " ^ hv.CF.h_formula_view_name)
-        end
-      | CF.DataNode _  | CF.HRel _ | CF.Hole _
-      | CF.HTrue  | CF.HFalse | CF.HEmp -> [(hf, MCP.mix_of_pure (CP.mkTrue no_pos))]
-  in
-  helper hf0
-
-let do_unfold_view_x cprog (f0: CF.formula) =
-  let rec helper f=
-  match f with
-    | CF.Base fb ->
-          let ls_hf_pure = do_unfold_view_hf cprog fb.CF.formula_base_heap in
-          let fs = List.map (fun (hf, p) -> CF.Base {fb with CF.formula_base_heap = hf;
-              CF.formula_base_pure = MCP.merge_mems p fb.CF.formula_base_pure true;
-          }) ls_hf_pure in
-          CF.disj_of_list fs fb.CF.formula_base_pos
-    | CF.Exists _ ->
-          let qvars, base1 = CF.split_quantifiers f in
-          let nf = helper base1 in
-          CF.add_quantifiers qvars nf
-    | CF.Or orf  ->
-          CF.Or { orf with CF.formula_or_f1 = helper orf.CF.formula_or_f1;
-              CF.formula_or_f2 = helper orf.CF.formula_or_f2 }
-  in
-  helper f0
-
-let do_unfold_view cprog (f0: CF.formula) =
-  let pr1 = Cprinter.prtt_string_of_formula in
-  Debug.no_1 "LEM.do_unfold_view" pr1 pr1
-      (fun _ -> do_unfold_view_x cprog f0) f0
-
-let checkeq_sem_x iprog0 cprog0 f1 f2 hpdefs=
-  (*************INTERNAL******************)
-  let back_up_progs iprog cprog=
-    (iprog.I.prog_view_decls, iprog.I.prog_hp_decls, cprog.C.prog_view_decls, cprog.C.prog_hp_decls)
-  in
-  let reset_progs (ivdecls, ihpdecls, cvdecls, chpdecls)=
-    let _ = iprog0.I.prog_view_decls <- ivdecls in
-    let _ = iprog0.I.prog_hp_decls <- ihpdecls in
-    let _ = cprog0.C.prog_view_decls <- cvdecls in
-    let _ = cprog0.C.prog_hp_decls <- chpdecls in
-    ()
-  in
-  let rec look_up_hpdef rem_hpdefs (r_unk_hps, r_hpdefs) hp=
-    match rem_hpdefs with
-      | [] -> (r_unk_hps@[hp], r_hpdefs)
-      | ((k, _,_,_) as hpdef)::rest -> begin
-          match k with
-            | CP.HPRelDefn (hp1,_,_) -> if CP.eq_spec_var hp hp1 then
-                (r_unk_hps, r_hpdefs@[hpdef])
-              else look_up_hpdef rest (r_unk_hps, r_hpdefs) hp
-            | _ -> look_up_hpdef rest (r_unk_hps, r_hpdefs) hp
-        end
-  in
-  let heap_remove_unk_hps unk_hps hn = match hn with
-    | CF.HRel (hp,eargs, pos)-> begin
-        if CP.mem_svl hp unk_hps then CF.HTrue else hn
-      end
-    | _ -> hn
-  in
-  (*************END INTERNAL******************)
-  (*for each proving: generate lemma; cyclic proof*)
-  let bc = back_up_progs iprog0 cprog0 in
-  let hps = CP.remove_dups_svl ((CF.get_hp_rel_name_formula f1)@(CF.get_hp_rel_name_formula f2)) in
-  let unk_hps, known_hpdefs = List.fold_left (look_up_hpdef hpdefs) ([],[]) hps in
-  (*remove unk_hps*)
-  let f11,f21 = if unk_hps = [] then (f1, f2) else
-    (CF.formula_trans_heap_node (heap_remove_unk_hps unk_hps) f1,
-    CF.formula_trans_heap_node (heap_remove_unk_hps unk_hps) f2)
-  in
-  (*transform hpdef to view;
-    if preds are unknown -> HTRUE
-  *)
-  let proc_name = "eqproving" in
-  let n_cview,chprels_decl = SAO.trans_hprel_2_cview iprog0 cprog0 proc_name known_hpdefs in
-  (*trans_hp_view_formula*)
-  let f12 = SAO.trans_formula_hp_2_view iprog0 cprog0 proc_name chprels_decl known_hpdefs f11 in
-  let f22 = SAO.trans_formula_hp_2_view iprog0 cprog0 proc_name chprels_decl known_hpdefs f21 in
-  (*unfold lhs - rhs*)
-  let f13 = do_unfold_view cprog0 f12 in
-  let f23 = do_unfold_view cprog0 f22 in
-  let r=
-    let r1,_,_ = SC.sleek_entail_check [] cprog0 [(f12,f22)] f13 (CF.struc_formula_of_formula f23 no_pos) in
-    if not r1 then false else
-      let r2,_,_ = SC.sleek_entail_check [] cprog0 [(f22,f12)] f23 (CF.struc_formula_of_formula f13 no_pos) in
-      r2
-  in
-  let _ = reset_progs bc in
-  r
-
-let checkeq_sem iprog cprog f1 f2 hpdefs=
-  let pr1 = Cprinter.prtt_string_of_formula in
-  let pr2 = pr_list_ln Cprinter.string_of_hp_rel_def in
-  Debug.no_3 "LEM.checkeq_sem" pr1 pr1 pr2 string_of_bool
-      (fun _ _ _ ->  checkeq_sem_x iprog cprog f1 f2 hpdefs)
-      f1 f2 hpdefs
-
-(* verify  a list of lemmas *)
-(* if one of them fails, return failure *)
-(* otherwise, return a list of their successful contexts 
-   which may contain inferred result *)
-let sa_verify_one_repo cprog l2r r2l = 
-  let res = List.fold_left (fun ((valid_ans,res_so_far) as res) coer ->
-      match valid_ans with
-        | true ->
-              let (flag,lc) = LP.sa_verify_lemma cprog coer in 
-              (flag, lc::res_so_far)
-        | false -> res
-  ) (true,[]) (l2r@r2l) in
-  res
-
-(* update the lemma store with the lemmas in repo and check for their validity *)
-let sa_update_store_with_repo cprog l2r r2l =
-   let _ = Lem_store.all_lemma # add_coercion l2r r2l in
-   let (invalid_lem, lctx) =  sa_verify_one_repo cprog l2r r2l in
-   (invalid_lem, lctx)
-
-(* l2r are left to right_lemmas *)
-(* r2l are right to right_lemmas *)
-(* return None if some failure; return list of contexts if all succeeded *)
-let sa_infer_lemmas cprog lemmas  = 
-  let (l2r,others) = List.partition (fun c -> c.C.coercion_type==I.Left) lemmas in 
-  let (r2l,equiv) = List.partition (fun c -> c.C.coercion_type==I.Right) others in 
-  let l2r = l2r@(List.map (fun c -> {c with C.coercion_type = I.Left} ) equiv) in
-  let r2l = r2l@(List.map (fun c -> {c with C.coercion_type = I.Right} ) equiv) in
-  let (valid_lem, nctx) = sa_update_store_with_repo cprog l2r r2l in
-  Lem_store.all_lemma # pop_coercion;
-  match valid_lem with
-    | false -> 
-          (* let _ = Log.last_cmd # dumping (name) in *)
-          let _ = Debug.tinfo_pprint ("\nFailed to prove a lemma ==> during sa_infer_lemmas.") no_pos in
-          None
-    | true -> Some nctx
 
 (* Below are methods used for lemma transformation (ilemma->lemma), lemma proving and lemma store update *)
 
@@ -524,6 +307,52 @@ let manage_infer_lemmas str repo iprog cprog =
           let _ = print_endline ("\n Temp Lemma(s) "^str^" as valid in current context.") in
           Some nctx
 
+(* verify  a list of lemmas *)
+(* if one of them fails, return failure *)
+(* otherwise, return a list of their successful contexts 
+   which may contain inferred result *)
+let sa_verify_one_repo cprog l2r r2l = 
+  let res = List.fold_left (fun ((valid_ans,res_so_far) as res) coer ->
+      match valid_ans with
+        | true ->
+              let (flag,lc) = LP.sa_verify_lemma cprog coer in 
+              (flag, lc::res_so_far)
+        | false -> res
+  ) (true,[]) (l2r@r2l) in
+  res
+
+(* update the lemma store with the lemmas in repo and check for their validity *)
+let sa_update_store_with_repo cprog l2r r2l =
+   let _ = Lem_store.all_lemma # add_coercion l2r r2l in
+   let (invalid_lem, lctx) =  sa_verify_one_repo cprog l2r r2l in
+   (invalid_lem, lctx)
+
+(* l2r are left to right_lemmas *)
+(* r2l are right to right_lemmas *)
+(* return None if some failure; return list of contexts if all succeeded *)
+let sa_infer_lemmas iprog cprog lemmas  = 
+  (* let (l2r,others) = List.partition (fun c -> c.C.coercion_type==I.Left) lemmas in  *)
+  (* let (r2l,equiv) = List.partition (fun c -> c.C.coercion_type==I.Right) others in  *)
+  (* let l2r = l2r@(List.map (fun c -> {c with C.coercion_type = I.Left} ) equiv) in *)
+  (* let r2l = r2l@(List.map (fun c -> {c with C.coercion_type = I.Right} ) equiv) in *)
+  (* let (valid_lem, nctx) = sa_update_store_with_repo cprog l2r r2l in *)
+  (* Lem_store.all_lemma # pop_coercion; *)
+  (* match valid_lem with *)
+  (*   | false ->  *)
+  (*         (\* let _ = Log.last_cmd # dumping (name) in *\) *)
+  (*         let _ = Debug.tinfo_pprint ("\nFailed to prove a lemma ==> during sa_infer_lemmas.") no_pos in *)
+  (*         None *)
+  (*   | true -> Some nctx *)
+  let (invalid_lem, nctx) = update_store_with_repo lemmas iprog cprog in
+  Lem_store.all_lemma # pop_coercion;
+   match invalid_lem with
+    | Some name -> 
+          let _ = Debug.tinfo_pprint ("\nFailed to prove a lemma ==> during sa_infer_lemmas.") no_pos in
+          None
+    | None ->
+          Some nctx
+
+
 (* for lemma_test, we do not return outcome of lemma proving *)
 let manage_test_lemmas repo iprog cprog = 
   manage_infer_lemmas "proved" repo iprog cprog; None
@@ -557,5 +386,199 @@ let manage_test_new_lemmas repo iprog cprog =
    let _ = Lem_store.all_lemma # set_left_coercion left_lems in
    let _ = Lem_store.all_lemma # set_right_coercion right_lems in
    res
+
+
+let do_unfold_view_hf cprog hf0 =
+  let fold_fnc ls1 ls2 aux_fnc = List.fold_left (fun r (hf2, p2) ->
+      let in_r = List.map (fun (hf1, p1) ->
+          let nh = aux_fnc hf1 hf2 in
+          let np = MCP.merge_mems p1 p2 true in
+          (nh, np)
+      ) ls1 in
+      r@in_r
+  ) [] ls2 in
+  let rec helper hf=
+    match hf with
+      | CF.Star { CF.h_formula_star_h1 = hf1;
+        CF.h_formula_star_h2 = hf2;
+        CF.h_formula_star_pos = pos} ->
+            let ls_hf_p1 = helper hf1 in
+            let ls_hf_p2 = helper hf2 in
+            let star_fnc h1 h2 =
+              CF.Star {CF.h_formula_star_h1 = h1;
+              CF.h_formula_star_h2 = h2;
+              CF.h_formula_star_pos = pos}
+            in
+            fold_fnc ls_hf_p1 ls_hf_p2 star_fnc
+      | CF.StarMinus { h_formula_starminus_h1 = hf1;
+        CF.h_formula_starminus_h2 = hf2;
+        CF.h_formula_starminus_aliasing = al;
+        CF.h_formula_starminus_pos = pos} ->
+            let ls_hf_p1 = helper hf1 in
+            let ls_hf_p2 = helper hf2 in
+            let starminus_fnc h1 h2 =
+              CF.StarMinus {CF.h_formula_starminus_h1 = h1;
+              CF.h_formula_starminus_h2 = h2;
+               CF.h_formula_starminus_aliasing = al;
+               CF.h_formula_starminus_pos = pos}
+            in
+            fold_fnc ls_hf_p1 ls_hf_p2 starminus_fnc
+      | CF.ConjStar  { CF.h_formula_conjstar_h1 = hf1;
+        CF.h_formula_conjstar_h2 = hf2;
+        CF.h_formula_conjstar_pos = pos} ->
+          let ls_hf_p1 = helper hf1 in
+          let ls_hf_p2 = helper hf2 in
+          let conjstar_fnc h1 h2 = CF.ConjStar { CF.h_formula_conjstar_h1 = h1;
+          CF.h_formula_conjstar_h2 = h2;
+          CF.h_formula_conjstar_pos = pos}
+          in
+          fold_fnc ls_hf_p1 ls_hf_p2 conjstar_fnc
+      | CF.ConjConj { CF.h_formula_conjconj_h1 = hf1;
+        CF.h_formula_conjconj_h2 = hf2;
+        CF.h_formula_conjconj_pos = pos} ->
+            let ls_hf_p1 = helper hf1 in
+            let ls_hf_p2 = helper hf2 in
+            let conjconj_fnc h1 h2 = CF.ConjConj { CF.h_formula_conjconj_h1 = h1;
+            CF.h_formula_conjconj_h2 = h2;
+            CF.h_formula_conjconj_pos = pos}
+            in
+            fold_fnc ls_hf_p1 ls_hf_p2 conjconj_fnc
+      | CF.Phase { h_formula_phase_rd = hf1;
+        CF.h_formula_phase_rw = hf2;
+        CF.h_formula_phase_pos = pos} ->
+            let ls_hf_p1 = helper hf1 in
+            let ls_hf_p2 = helper hf2 in
+            let phase_fnc h1 h2 = CF.Phase { CF.h_formula_phase_rd = h1;
+              CF.h_formula_phase_rw = h2;
+              CF.h_formula_phase_pos = pos}
+            in
+            fold_fnc ls_hf_p1 ls_hf_p2 phase_fnc
+      | CF.Conj { CF.h_formula_conj_h1 = hf1;
+        CF.h_formula_conj_h2 = hf2;
+        CF.h_formula_conj_pos = pos} ->
+          let ls_hf_p1 = helper hf1 in
+          let ls_hf_p2 = helper hf2 in
+          let conj_fnc h1 h2 = CF.Conj { CF.h_formula_conj_h1 = h1;
+          CF.h_formula_conj_h2 = h2;
+          CF.h_formula_conj_pos = pos}
+          in
+          fold_fnc ls_hf_p1 ls_hf_p2 conj_fnc
+      | CF.ViewNode hv -> begin
+            try
+              let vdcl = C.look_up_view_def_raw 40 cprog.C.prog_view_decls hv.CF.h_formula_view_name in
+              let fs = List.map fst vdcl.C.view_un_struc_formula in
+              let f_args = (CP.SpecVar (Named vdcl.C.view_name,self, Unprimed))::vdcl.C.view_vars in
+              let a_args = hv.CF.h_formula_view_node::hv.CF.h_formula_view_arguments in
+              let ss = List.combine f_args  a_args in
+              let fs1 = List.map (CF.subst ss) fs in
+              List.map (fun f -> (List.hd (CF.heap_of f), MCP.mix_of_pure (CF.get_pure f))) fs1
+            with _ -> report_error no_pos ("LEM.do_unfold_view_hf: can not find view " ^ hv.CF.h_formula_view_name)
+        end
+      | CF.DataNode _  | CF.HRel _ | CF.Hole _
+      | CF.HTrue  | CF.HFalse | CF.HEmp -> [(hf, MCP.mix_of_pure (CP.mkTrue no_pos))]
+  in
+  helper hf0
+
+let do_unfold_view_x cprog (f0: CF.formula) =
+  let rec helper f=
+  match f with
+    | CF.Base fb ->
+          let ls_hf_pure = do_unfold_view_hf cprog fb.CF.formula_base_heap in
+          let fs = List.map (fun (hf, p) -> CF.Base {fb with CF.formula_base_heap = hf;
+              CF.formula_base_pure = MCP.merge_mems p fb.CF.formula_base_pure true;
+          }) ls_hf_pure in
+          CF.disj_of_list fs fb.CF.formula_base_pos
+    | CF.Exists _ ->
+          let qvars, base1 = CF.split_quantifiers f in
+          let nf = helper base1 in
+          CF.add_quantifiers qvars nf
+    | CF.Or orf  ->
+          CF.Or { orf with CF.formula_or_f1 = helper orf.CF.formula_or_f1;
+              CF.formula_or_f2 = helper orf.CF.formula_or_f2 }
+  in
+  helper f0
+
+let do_unfold_view cprog (f0: CF.formula) =
+  let pr1 = Cprinter.prtt_string_of_formula in
+  Debug.no_1 "LEM.do_unfold_view" pr1 pr1
+      (fun _ -> do_unfold_view_x cprog f0) f0
+
+let checkeq_sem_x iprog0 cprog0 f1 f2 hpdefs=
+  (*************INTERNAL******************)
+  let back_up_progs iprog cprog=
+    (iprog.I.prog_view_decls, iprog.I.prog_hp_decls, cprog.C.prog_view_decls, cprog.C.prog_hp_decls,
+    Lem_store.all_lemma # get_left_coercion, Lem_store.all_lemma # get_right_coercion)
+  in
+  let reset_progs (ivdecls, ihpdecls, cvdecls, chpdecls, left_coers, righ_coers)=
+    let _ = iprog0.I.prog_view_decls <- ivdecls in
+    let _ = iprog0.I.prog_hp_decls <- ihpdecls in
+    let _ = cprog0.C.prog_view_decls <- cvdecls in
+    let _ = cprog0.C.prog_hp_decls <- chpdecls in
+    let _ = Lem_store.all_lemma # set_coercion left_coers righ_coers in
+    ()
+  in
+  let rec look_up_hpdef rem_hpdefs (r_unk_hps, r_hpdefs) hp=
+    match rem_hpdefs with
+      | [] -> (r_unk_hps@[hp], r_hpdefs)
+      | ((k, _,_,_) as hpdef)::rest -> begin
+          match k with
+            | CP.HPRelDefn (hp1,_,_) -> if CP.eq_spec_var hp hp1 then
+                (r_unk_hps, r_hpdefs@[hpdef])
+              else look_up_hpdef rest (r_unk_hps, r_hpdefs) hp
+            | _ -> look_up_hpdef rest (r_unk_hps, r_hpdefs) hp
+        end
+  in
+  let heap_remove_unk_hps unk_hps hn = match hn with
+    | CF.HRel (hp,eargs, pos)-> begin
+        if CP.mem_svl hp unk_hps then CF.HTrue else hn
+      end
+    | _ -> hn
+  in
+  (*************END INTERNAL******************)
+  (*for each proving: generate lemma; cyclic proof*)
+  let bc = back_up_progs iprog0 cprog0 in
+  let hps = CP.remove_dups_svl ((CF.get_hp_rel_name_formula f1)@(CF.get_hp_rel_name_formula f2)) in
+  let unk_hps, known_hpdefs = List.fold_left (look_up_hpdef hpdefs) ([],[]) hps in
+  (*remove unk_hps*)
+  let f11,f21 = if unk_hps = [] then (f1, f2) else
+    (CF.formula_trans_heap_node (heap_remove_unk_hps unk_hps) f1,
+    CF.formula_trans_heap_node (heap_remove_unk_hps unk_hps) f2)
+  in
+  (*transform hpdef to view;
+    if preds are unknown -> HTRUE
+  *)
+  let proc_name = "eqproving" in
+  let n_cview,chprels_decl = SAO.trans_hprel_2_cview iprog0 cprog0 proc_name known_hpdefs in
+  (*trans_hp_view_formula*)
+  let f12 = SAO.trans_formula_hp_2_view iprog0 cprog0 proc_name chprels_decl known_hpdefs f11 in
+  let f22 = SAO.trans_formula_hp_2_view iprog0 cprog0 proc_name chprels_decl known_hpdefs f21 in
+  (*iform*)
+  let if12 = AS.rev_trans_formula f12 in
+  let if22 = AS.rev_trans_formula f22 in
+  (*unfold lhs - rhs*)
+  let f13 = do_unfold_view cprog0 f12 in
+  let f23 = do_unfold_view cprog0 f22 in
+  let r=
+    let lemma_name = "tmp" in
+    let l_coer = I.mk_lemma (fresh_any_name lemma_name) I.Left [] if12 if22 in
+    let _ = manage_unsafe_lemmas [l_coer] iprog0 cprog0 in
+    let r1,_,_ = SC.sleek_entail_check [] cprog0 [(* (f12,f22) *)] f13 (CF.struc_formula_of_formula f23 no_pos) in
+    if not r1 then false else
+      let r_coer = I.mk_lemma (fresh_any_name lemma_name) I.Right [] if12 if22 in
+      let _ = manage_unsafe_lemmas [r_coer] iprog0 cprog0 in
+      let r2,_,_ = SC.sleek_entail_check [] cprog0 [(* (f22,f12) *)] f23 (CF.struc_formula_of_formula f13 no_pos) in
+      r2
+  in
+  let _ = reset_progs bc in
+  r
+
+let checkeq_sem iprog cprog f1 f2 hpdefs=
+  let pr1 = Cprinter.prtt_string_of_formula in
+  let pr2 = pr_list_ln Cprinter.string_of_hp_rel_def in
+  Debug.no_3 "LEM.checkeq_sem" pr1 pr1 pr2 string_of_bool
+      (fun _ _ _ ->  checkeq_sem_x iprog cprog f1 f2 hpdefs)
+      f1 f2 hpdefs
+
+
 
 let _ = Sleekcore.generate_lemma := generate_lemma_helper

@@ -290,6 +290,8 @@ let full_perm_var_name = "Anon_full_perm"
 let rec isConstTrue (p:formula) = match p with
   | BForm ((BConst (true, pos), _),_) -> true
   | AndList b -> all_l_snd isConstTrue b
+  | Exists (_,p1,_,_) -> isConstTrue p1
+  | Forall (_,p1,_,_) -> isConstTrue p1
   | _ -> false
 		
 and isConstFalse (p:formula) =
@@ -6387,6 +6389,18 @@ let add_equiv_eq_debug a v1 v2 =
   let _ = print_string ("add_equiv_eq out :"^(string_of_var_eset ax)^"\n") in
   ax
 
+let add_equiv_list_eqs a evars =
+  List.fold_left (fun tpl (sv1,sv2) -> add_equiv_eq tpl sv1 sv2) a evars
+
+let find_eq_closure a svl =
+  if EMapSV.is_empty a then svl else
+    let eqc_svl = List.fold_left (fun r sv ->
+        let eq_svl = EMapSV.find_equiv_all sv a in
+        r@eq_svl
+    ) svl svl
+    in
+    remove_dups_svl eqc_svl
+
 (* constant may be added to map*)
 let add_equiv_eq_with_const a v1 v2 = EMapSV.add_equiv a v1 v2
 
@@ -8665,11 +8679,21 @@ let is_eq_between_no_bag_vars (f:formula) = match f with
     | _ -> false)
   | _ -> false
 
-let is_neq_exp (f:formula) = match f with
+let rec is_neq_exp (f:formula) = match f with
   | BForm (bf,_) ->
     (match bf with
     | (Neq _,_) -> true
     | _ -> false)
+  | Exists (_,p1,_,_) -> is_neq_exp p1
+  | _ -> false
+
+let rec is_eq_neq_exp (f:formula) = match f with
+  | BForm (bf,_) ->
+    (match bf with
+    | (Neq _,_) -> true
+    | (Eq _,_) -> true
+    | _ -> false)
+  | Exists (_,p1,_,_) -> is_neq_exp p1
   | _ -> false
 
 let is_neq_null_exp_x (f:formula) = match f with
@@ -8699,8 +8723,28 @@ let rec contains_neq (f:formula) : bool =  match f with
     | Exists (_ ,f1,_,_) -> (contains_neq f1)  
     | AndList l -> exists_l_snd contains_exists l
 
+
+let neg_eq_neq f0=
+  let rec helper f= match f with
+    | BForm (bf,a) ->
+          (match bf with
+            | (Neq (sv1,sv2,b),c) ->
+                  let sv1,sv2 = if is_null sv1 then (sv2, sv1) else (sv1,sv2) in
+                  BForm ((Eq (sv1, sv2, b), c), a)
+            | (Eq (sv1,sv2,b),c) ->
+                  let sv1,sv2 = if is_null sv1 then (sv2, sv1) else (sv1,sv2) in
+                  BForm ((Neq (sv1, sv2, b), c), a)
+            | _ -> f)
+    | Exists (a, p, c,l) ->
+          Forall (a, helper p, c,l)
+    | Forall (a, p, c,l) ->
+          Exists (a, helper p, c,l)
+    | _ -> f
+  in
+  helper f0
+
 (*neg(x!=y) == x=y; neg(x!=null) === x=null*)
-let neg_neq_x f=
+let rec neg_neq_x f=
   match f with
     | BForm (bf,a) ->
           (match bf with
@@ -8708,6 +8752,8 @@ let neg_neq_x f=
                   let sv1,sv2 = if is_null sv1 then (sv2, sv1) else (sv1,sv2) in
                   BForm ((Eq (sv1, sv2, b), c), a)
             | _ -> f)
+    | Exists (a, p, c,l) ->
+          Forall (a, neg_neq_x p, c,l)
     | _ -> f
 
 let neg_neq p=

@@ -17,6 +17,10 @@ lseg<p> == self=p
   or self::node<_,nxt> * nxt::lseg<p> & self!=p 
 inv true;
 
+lx<g,s> == self=g & self!=s 
+  or self::node<_,nxt> * nxt::lx<g,s> & self!=g & self!=s 
+ inv self!=s ;
+
 HeapPred H(node a, node b, node@NI c).
 PostPred G(node a, node ra, node b, node rb, node@NI c).
 
@@ -26,10 +30,18 @@ requires cur::ll<sent> * prev::lseg<sent> & cur!=null
 ensures prev'::ll<sent>  & cur'=sent ;
 requires cur::lseg<sent> * prev::ll<sent> & cur!=sent 
 ensures prev'::ll<sent>  & cur'=sent ;
-*/ 
-  infer [H,G]
+
+ requires cur::lx<a,b> * prev::lx<b,a> & cur!=a 
+   & (a=null & b=sent | a=sent & b=null)
+
+ infer [H,G]
   requires H(cur,prev,sent)
   ensures G(cur,cur',prev,prev',sent);
+ 
+*/ 
+ requires cur::lx<a,b> * prev::lx<b,a> & cur!=a 
+  & (a=null & b=sent | a=sent & b=null)
+ ensures prev'::lx<null,sent>  & cur'=sent ;
 {
 
   node n;
@@ -43,12 +55,13 @@ ensures prev'::ll<sent>  & cur'=sent ;
       //assume false;
       return;
   }
+  dprint;
   if (cur == null) {
       // change direction;
       cur = prev;
       prev = null;
   }
-  //dprint;
+  dprint;
   lscan(cur,prev,sent);
 
 }

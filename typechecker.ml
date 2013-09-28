@@ -2545,12 +2545,15 @@ let proc_mutual_scc_shape_infer iprog prog scc_procs =
         print_endline (pr1 defs);
         if !Globals.testing_flag then print_endline "<dstop>"; 
         print_endline "*************************************";
-        let _ = Sa2.rel_def_stk # reset in
+        let _ = Sa3.rel_def_stk # reset in
         ()
       end;
-    (**************cp_test _ gen_cpfile******************)
-    (* let _ = if(!Globals.cp_test || !Globals.cp_prefile) then *)
-    (*   CEQ.cp_test proc scc_hprel_ass scc_inferred_hps scc_sel_hps in *)
+    (*transform the result: hpdef --> views and transform specs*)
+    (**************regression check _ gen_regression file******************)
+    (*to revise the check for scc*)
+    let proc = List.hd scc_procs in
+    let _ = if(!Globals.validate || !Globals.cp_prefile) then
+      CEQ.validate proc scc_hprel_ass scc_inferred_hps scc_sel_hps in
     (* let _ = if(!Globals.gen_cpfile) then *)
     (*   CEQ.gen_cpfile prog proc scc_hprel_ass scc_inferred_hps scc_dropped_hps old_hpdecls sel_hp_rels cout_option in *)
     (**************end cp_test _ gen_cpfile******************)
