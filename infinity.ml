@@ -67,6 +67,23 @@ let rec normalize_exp (exp: CP.exp) : CP.exp =
 let normalize_exp (exp: CP.exp) : CP.exp =
 Debug.no_1 "infinity.normalize_exp" string_of_formula_exp string_of_formula_exp normalize_exp exp 
 
+(* normalize 
+\inf+v = 0 ==> v=-\inf
+\inf+v op \inf ==>  \inf op \inf, for op be =,>,<,>= etc
+\inf+v op w+\inf ==>  \inf op \inf, for op be =,>,<,>= etc *)
+let check_var_add_inf (exp1: CP.exp) (exp2: CP.exp) : bool * CP.exp = 
+  let aux exp1 exp2 = match exp1 with
+  | CP.Add(e1,e2,pos) -> let flag = (CP.is_var e1 && CP.is_inf e2) || (CP.is_var e2 && CP.is_inf e1) in
+   if flag  && CP.is_inf exp2 then true,exp2 else 
+     (match exp2 with
+       | CP.Add(e1,e2,pos) -> if flag && (CP.is_var e1 && CP.is_inf e2) then true,e2
+         else if (CP.is_var e2 && CP.is_inf e1) then true,e1
+         else false,exp2
+       | _ -> false,exp1)
+  | _ -> false,exp1
+  in let f1,e1 = (aux exp1 exp2) in
+     if f1 then f1,e1 else (aux exp2 exp1)
+ 
 (* normalize \inf <= const + var ~~> \inf <= var and so on *)
 let check_const_add_inf (exp: CP.exp) : bool * CP.exp = 
 match exp with
@@ -288,6 +305,7 @@ let rec normalize_b_formula (bf: CP.b_formula) :CP.b_formula =
               let ec = snd(check_const_add_neg_inf e1_norm e2_norm) in helper (CP.Lt(ec,e2_norm,pos)) 
             else if fst(check_const_add_neg_inf e2_norm e1_norm) then
               let ec = snd(check_const_add_neg_inf e2_norm e1_norm) in helper (CP.Lt(e1_norm,ec,pos)) 
+            else let f,e = (check_var_add_inf e1_norm e2_norm) in if f then helper (CP.Lt(e,e,pos)) 
             else CP.Lt(e1_norm,e2_norm,pos)
       | CP.Lte(e1,e2,pos) -> 
             let e1_norm = normalize_exp e1 in
@@ -307,7 +325,8 @@ let rec normalize_b_formula (bf: CP.b_formula) :CP.b_formula =
             else if fst(check_const_add_neg_inf e1_norm e2_norm) then
               let ec = snd(check_const_add_neg_inf e1_norm e2_norm) in helper (CP.Lte(ec,e2_norm,pos)) 
             else if fst(check_const_add_neg_inf e2_norm e1_norm) then
-              let ec = snd(check_const_add_neg_inf e2_norm e1_norm) in helper (CP.Lte(e1_norm,ec,pos)) 
+              let ec = snd(check_const_add_neg_inf e2_norm e1_norm) in helper (CP.Lte(e1_norm,ec,pos))
+            else let f,e = (check_var_add_inf e1_norm e2_norm) in if f then helper (CP.Lte(e,e,pos)) 
             else check_leq e1_norm e2_norm pos (*CP.Lte(e1_norm,e2_norm,pos)*)
       | CP.Gt(e1,e2,pos) -> 
             let e1_norm = normalize_exp e1 in
@@ -327,7 +346,8 @@ let rec normalize_b_formula (bf: CP.b_formula) :CP.b_formula =
             else if fst(check_const_add_neg_inf e1_norm e2_norm) then
               let ec = snd(check_const_add_neg_inf e1_norm e2_norm) in helper (CP.Gt(ec,e2_norm,pos)) 
             else if fst(check_const_add_neg_inf e2_norm e1_norm) then
-              let ec = snd(check_const_add_neg_inf e2_norm e1_norm) in helper (CP.Gt(e1_norm,ec,pos)) 
+              let ec = snd(check_const_add_neg_inf e2_norm e1_norm) in helper (CP.Gt(e1_norm,ec,pos))
+            else let f,e = (check_var_add_inf e1_norm e2_norm) in if f then helper (CP.Gt(e,e,pos)) 
             else CP.Gt(e1_norm,e2_norm,pos)
       | CP.Gte(e1,e2,pos) -> 
             let e1_norm = normalize_exp e1 in
@@ -348,7 +368,8 @@ let rec normalize_b_formula (bf: CP.b_formula) :CP.b_formula =
             else if fst(check_const_add_neg_inf e1_norm e2_norm) then
               let ec = snd(check_const_add_neg_inf e1_norm e2_norm) in helper (CP.Gte(ec,e2_norm,pos)) 
             else if fst(check_const_add_neg_inf e2_norm e1_norm) then
-              let ec = snd(check_const_add_neg_inf e2_norm e1_norm) in helper (CP.Gte(e1_norm,ec,pos)) 
+              let ec = snd(check_const_add_neg_inf e2_norm e1_norm) in helper (CP.Gte(e1_norm,ec,pos))
+            else let f,e = (check_var_add_inf e1_norm e2_norm) in if f then helper (CP.Gte(e,e,pos)) 
             else CP.Gte(e1_norm,e2_norm,pos)
       | CP.Eq (e1,e2,pos) -> 
             let e1_norm = normalize_exp e1 in
@@ -367,7 +388,8 @@ let rec normalize_b_formula (bf: CP.b_formula) :CP.b_formula =
             else if fst(check_const_add_neg_inf e1_norm e2_norm) then
               let ec = snd(check_const_add_neg_inf e1_norm e2_norm) in helper (CP.Eq(ec,e2_norm,pos)) 
             else if fst(check_const_add_neg_inf e2_norm e1_norm) then
-              let ec = snd(check_const_add_neg_inf e2_norm e1_norm) in helper (CP.Eq(e1_norm,ec,pos)) 
+              let ec = snd(check_const_add_neg_inf e2_norm e1_norm) in helper (CP.Eq(e1_norm,ec,pos))
+            else let f,e = (check_var_add_inf e1_norm e2_norm) in if f then helper (CP.Eq(e,e,pos)) 
             else CP.Eq(e1_norm,e2_norm,pos)
       | CP.Neq (e1,e2,pos) -> 
             let e1_norm = normalize_exp e1 in
@@ -383,6 +405,7 @@ let rec normalize_b_formula (bf: CP.b_formula) :CP.b_formula =
             else if CP.is_inf e2_norm then CP.Lt(e1_norm,e2_norm,pos)
             else if check_neg_inf2 e1_norm e2_norm then CP.Gt(e1_norm,e2_norm,pos) 
             else if check_neg_inf2 e2_norm e1_norm then CP.Gt(e2_norm,e1_norm,pos) 
+            else let f,e = (check_var_add_inf e1_norm e2_norm) in if f then helper (CP.Neq(e,e,pos))
             else CP.Neq(e1_norm,e2_norm,pos)                            
       | CP.EqMax (e1,e2,e3,pos) -> 
             let flag,w1,w2 = check_neg_inf e1 e2 e3 in
