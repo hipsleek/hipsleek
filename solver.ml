@@ -10364,7 +10364,7 @@ and do_fold_w_ctx_x fold_ctx prog estate conseq ln2 vd resth2 rhs_b is_folding p
         h_formula_data_label = pid;
         h_formula_data_remaining_branches =r_rem_brs;
         h_formula_data_pruning_conditions = r_p_cond;
-        h_formula_data_pos = pos2})
+        h_formula_data_pos = pos2}) 
       | ViewNode ({ h_formula_view_node = p2;
         h_formula_view_name = c2;
         h_formula_view_imm = imm2;
@@ -10391,6 +10391,8 @@ and do_fold_w_ctx_x fold_ctx prog estate conseq ln2 vd resth2 rhs_b is_folding p
       h_formula_view_unfold_num = unfold_num;
       h_formula_view_perm = perm; (*LDK*)
       h_formula_view_arguments = List.tl new_v2;
+      h_formula_view_annot_arg = get_node_annot_args ln2;
+      h_formula_view_args_orig = CP.sv_to_view_arg_list (List.tl new_v2);
       h_formula_view_modes = get_view_modes ln2;
       h_formula_view_coercible = true;
       h_formula_view_lhs_case = false;

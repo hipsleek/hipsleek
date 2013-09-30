@@ -17,10 +17,17 @@ open Label
 type spec_var =
   | SpecVar of (typ * ident * primed)
 
+(* immutability annotations *)
 type ann = ConstAnn of heap_ann | PolyAnn of spec_var |
         TempAnn of ann | TempRes of (ann * ann)
 
-type view_arg = SVArg of spec_var | AnnArg of ann
+(* type view_arg = SVArg of spec_var | AnnArg of ann *)
+
+(* annotation argument type *)
+type annot_arg = ImmAnn of ann
+
+(* initial arg map: view arg or annot arg *)
+type view_arg = SVArg of spec_var | AnnotArg of annot_arg
 
 let compare_sv (SpecVar (t1, id1, pr1)) (SpecVar (t2, id2, pr2))=
   if (t1=t2)&&(pr1=pr2) then compare id1 id2
@@ -11546,4 +11553,101 @@ let mkExpAnnSymb ann pos =
     | ConstAnn a -> AConst(a, pos)
     | PolyAnn v  -> Var(v, pos)  
 
+(* dedicated name for imm sv ecoding the constant ann a *)
+let name_for_imm_sv a = (string_of_heap_ann a) ^ ann_var_sufix
+
+(* special spec var denoting ann constant *)
+let mkAnnSVar a =  SpecVar(AnnT, name_for_imm_sv a, Unprimed)
+ 
+let ann_sv_lst  = (name_for_imm_sv Mutable):: (name_for_imm_sv Imm):: (name_for_imm_sv Lend)::[(name_for_imm_sv Accs)]
+
+let is_ann_const_sv sv = 
+  match sv with
+    | SpecVar(AnnT,a,_) -> List.exists (fun an -> an = a ) ann_sv_lst
+    | _                 -> false
+
+let is_mut_sv sv = 
+  if not (is_ann_typ sv) then false
+  else eq_spec_var sv (mkAnnSVar Mutable)
+
+let is_imm_sv sv = 
+  if not (is_ann_typ sv) then false
+  else eq_spec_var sv (mkAnnSVar Imm)
+
+let is_lend_sv sv = 
+  if not (is_ann_typ sv) then false
+  else eq_spec_var sv (mkAnnSVar Lend)
+
+let is_accs_sv sv = 
+  if not (is_ann_typ sv) then false
+  else eq_spec_var sv (mkAnnSVar Accs)
+
 (* end imm utilities *)
+
+
+(* utilities for allowing annotations as view arguments *)
+let annot_arg_to_imm_ann (arg: annot_arg ): ann list =
+  match arg with
+    | ImmAnn a -> [a]
+          (* continue from here with other type of ann *)
+
+let mkSVArg sv = SVArg sv
+
+let mkImmAnn a = ImmAnn a
+
+let mkAnnotArg a = AnnotArg a
+
+let is_view_var_arg (arg:view_arg): bool =
+  match arg with
+    | SVArg _ -> true
+    | _       -> false
+
+let is_view_annot_arg (arg:view_arg): bool =
+  match arg with
+    | AnnotArg _ -> true
+    | _          -> false
+
+let view_arg_to_sv (arg:view_arg): spec_var list =
+  match arg with
+    | SVArg sv -> [sv]
+    | _        -> []
+
+let view_arg_to_sv_list (args:view_arg list): spec_var list =
+  List.fold_left (fun acc a -> acc@(view_arg_to_sv a)) [] args
+
+let view_arg_to_annot_arg (arg:view_arg): annot_arg list =
+  match arg with
+    | AnnotArg arg -> [arg]
+    | _            -> []
+
+let split_view_args (params: view_arg list): spec_var list * annot_arg list =
+  let view_args,annot_args = List.partition is_view_var_arg params in
+  let view_args  = List.fold_left (fun acc arg -> acc@(view_arg_to_sv arg)) [] view_args in
+  let annot_args = List.fold_left (fun acc arg -> acc@(view_arg_to_annot_arg arg)) [] annot_args in
+  view_args,annot_args
+
+let sv_to_annot_arg (sv:spec_var): annot_arg = ImmAnn (mkPolyAnn sv)
+  (* match sv with *)
+  (*   | SpecVar(AnnT_,_) -> ImmAnn (mkPolyAnn sv) *)
+  (*   | _                -> (*continue here if there are more kind of annotations *)*)
+
+let sv_to_view_arg (sv: spec_var): view_arg =
+  match sv with
+    | SpecVar(AnnT, _, _) -> mkAnnotArg (sv_to_annot_arg sv)
+    | _                   -> mkSVArg sv 
+
+let sv_to_view_arg_list (svl: spec_var list): view_arg list =
+  List.map sv_to_view_arg svl
+
+let imm_to_view_arg (ann: heap_ann): view_arg = 
+  mkAnnotArg (mkImmAnn (ConstAnn(ann)))
+
+(* let split_view_args_w_map (params: view_arg list) (map: view_arg list): spec_var list * annot_arg list = *)
+(*   let comb = List.combine params map in *)
+(*   let view_args, annot_args = List.fold_left (fun (acc_sv, acc_ann) (param, pattern) ->  *)
+(*       match pattern with *)
+(*          | SVArg sv -> (acc_sv, acc_ann) *)
+(*       is_view_var_arg) ([],[]) comb in *)
+  
+
+(* end utilities for allowing annotations as view arguments *)

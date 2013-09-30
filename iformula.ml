@@ -546,7 +546,76 @@ let rec ann_opt_to_ann_lst (ann_opt_lst: ann option list) (default_ann: ann): an
 let fv_imm ann = match ann with
   | ConstAnn _ -> []
   | PolyAnn (id,_) -> [id]
+
+let fv_imm_opt ann = 
+  match ann with
+    | Some ann -> fv_imm ann
+    | None     -> [] 
+
+let fv_imm_list ann_lst = 
+  List.fold_left (fun acc a -> acc @ (fv_imm a)) [] ann_lst
+
+let fv_imm_opt_list ann_lst = 
+  List.fold_left (fun acc a -> acc @ (fv_imm_opt a)) [] ann_lst
+
+let h_fv_ann (f:h_formula):(ident*primed) list = 
+  let rec helper f = 
+    match f with   
+      | Conj ({h_formula_conj_h1 = h1; 
+	h_formula_conj_h2 = h2; 
+	h_formula_conj_pos = pos})
+      | ConjStar ({h_formula_conjstar_h1 = h1; 
+	h_formula_conjstar_h2 = h2; 
+	h_formula_conjstar_pos = pos})
+      | ConjConj ({h_formula_conjconj_h1 = h1; 
+	h_formula_conjconj_h2 = h2; 
+	h_formula_conjconj_pos = pos})	   	   
+      | Phase ({h_formula_phase_rd = h1; 
+	h_formula_phase_rw = h2; 
+	h_formula_phase_pos = pos}) 
+      | StarMinus ({h_formula_starminus_h1 = h1; 
+	h_formula_starminus_h2 = h2; 
+	h_formula_starminus_pos = pos})
+      | Star ({h_formula_star_h1 = h1; 
+	h_formula_star_h2 = h2; 
+	h_formula_star_pos = pos}) ->  Gen.BList.remove_dups_eq (=) ((helper h1)@(helper h2))
+      | HeapNode {h_formula_heap_imm = imm; 
+        h_formula_heap_imm_param = imm_param; } 
+      | HeapNode2 {h_formula_heap2_imm = imm;
+        h_formula_heap2_imm_param = imm_param; } ->
+            let imm_vars = fv_imm imm in
+            let imm_param_vars = fv_imm_opt_list imm_param in
+            Gen.BList.remove_dups_eq (=) imm_vars@imm_param_vars
+      | HRel _
+      | HTrue 
+      | HFalse 
+      | HEmp -> [] 
+  in helper f
+
+let heap_fv_ann_one_formula (f:one_formula):(ident*primed) list =  (h_fv_ann f.formula_heap)
+
+let fv_ann_formula_x (f:formula):(ident*primed) list = 
+  let rec helper f = 
+    match f with
+      | Base b-> 
+            let avars = List.concat (List.map heap_fv_ann_one_formula  b.formula_base_and) in
+            let hvars = (h_fv_ann b.formula_base_heap) in
+            Gen.BList.remove_dups_eq (=) hvars@avars
+      | Exists b-> 
+            let avars = List.concat (List.map heap_fv_ann_one_formula  b.formula_exists_and) in
+            let hvars = (h_fv_ann b.formula_exists_heap) in
+	    Gen.BList.difference_eq (=) (hvars@avars) b.formula_exists_qvars
+      | Or b-> Gen.BList.remove_dups_eq (=) ((helper b.formula_or_f1)@(helper b.formula_or_f2))
+  in helper f 
+
+let fv_ann_formula (f:formula):(ident*primed) list = 
+  let pr = !print_formula in
+  let pr_out = pr_list (pr_id fst) in
+  Debug.no_1 "fv_ann_formula" pr pr_out fv_ann_formula_x f
+
+let collect_annot_vars f  = fv_ann_formula f
 ;;
+
 
 let rec h_fv (f:h_formula):(ident*primed) list = match f with   
   | Conj ({h_formula_conj_h1 = h1; 
@@ -1161,7 +1230,7 @@ and h_apply_one ((fr, t) as s : ((ident*primed) * (ident*primed))) (f : h_formul
   | HEmp -> f
   | HRel (r, args, l) -> HRel (r, List.map (Ipure.e_apply_one s) args,l)
 
-and rename_bound_vars (f : formula) = 
+and rename_bound_vars_x (f : formula) = 
   let add_quantifiers (qvars : (ident*primed) list) (f : formula) : formula = match f with
     | Base b -> mkExists qvars b.formula_base_heap b.formula_base_pure b.formula_base_flow b.formula_base_and b.formula_base_pos
     | Exists b -> 
@@ -1171,7 +1240,7 @@ and rename_bound_vars (f : formula) =
 
     | _ -> failwith ("add_quantifiers: invalid argument") in		
   match f with
-    | Or b -> mkOr (rename_bound_vars b.formula_or_f1) (rename_bound_vars b.formula_or_f2) b.formula_or_pos
+    | Or b -> mkOr (rename_bound_vars_x b.formula_or_f1) (rename_bound_vars_x b.formula_or_f2) b.formula_or_pos
     | Base _ -> f
     | Exists _ ->
 	      let qvars, base_f = split_quantifiers f in
@@ -1181,7 +1250,9 @@ and rename_bound_vars (f : formula) =
 	      let resform = add_quantifiers new_qvars new_base_f in
 		  resform 
 
-
+and rename_bound_vars (f : formula): formula = 
+  let pr = !print_formula in
+  Debug.no_1 "rename_bound_vars" pr pr rename_bound_vars_x f
 	          
 and subst_struc (sst:((ident * primed)*(ident * primed)) list) (f:struc_formula):struc_formula = match f with
 	| EAssume b -> 
@@ -1456,6 +1527,7 @@ Debug.no_1 "float_out_exps_from_heap" pr pr (fun _ -> float_out_exps_from_heap_x
 and float_out_exps_from_heap_x lbl_getter (f:formula )  :formula = 
   let rec float_ann_var l c=
     match c with
+      | Ipure.AConst _
       | Ipure.Var _ -> (c,[])
       | Ipure.Ann_Exp (e ,_,_) -> float_ann_var l e
       | _ ->
@@ -1512,6 +1584,7 @@ and float_out_exps_from_heap_x lbl_getter (f:formula )  :formula =
         let perm = b.h_formula_heap_perm in
         let na_perm, ls_perm = float_out_iperm () perm b.h_formula_heap_pos in
 		let rec prep_one_arg (id,c) = match c with
+                          | Ipure.AConst _
 			  | Ipure.Var _ -> (c,[])
                           | Ipure.Ann_Exp (e ,_,_) -> prep_one_arg (id, e)
 			  | _ ->
@@ -1544,6 +1617,7 @@ and float_out_exps_from_heap_x lbl_getter (f:formula )  :formula =
         let na_perm, ls_perm = float_out_iperm () perm b.h_formula_heap2_pos in
         let rec helper (id, c)=
           match c with
+              | Ipure.AConst _
 	      | Ipure.Var _ -> ((id,c),[])
               | Ipure.Ann_Exp (e ,_,_) -> helper (id, e)
 	      | _ ->
@@ -1720,6 +1794,7 @@ and float_out_heap_min_max (h :  h_formula) :
     match d with
       | Ipure.Null _ 
       | Ipure.IConst _
+      | Ipure.AConst _
       | Ipure.Var _ -> (d::a, c)
       | Ipure.Ann_Exp (e ,_,_) -> helper1 l (a, c) e
       | _ -> 
@@ -1734,6 +1809,7 @@ and float_out_heap_min_max (h :  h_formula) :
      match d2 with
        | Ipure.Null _ 
        | Ipure.IConst _
+       | Ipure.AConst _
        | Ipure.Var _ -> ((d1,d2):: a, c)
        | Ipure.Ann_Exp (e ,_,_) -> helper2 l (a, c) (d1,e)
        | _ -> 

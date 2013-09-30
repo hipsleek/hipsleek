@@ -129,6 +129,8 @@ type typ =
   (* | FuncT (\* function type *\) *)
   | Pointer of typ (* base type and dimension *)
 
+let ann_var_sufix = "_ann"
+
 let is_program_pointer (name:ident) = 
   let slen = (String.length name) in
   try  
