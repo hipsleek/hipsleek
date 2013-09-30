@@ -657,6 +657,7 @@ and h_formula_2_mem_x (f : h_formula) (p0 : mix_formula) (evars : CP.spec_var li
       | ViewNode ({ h_formula_view_node = p;
         h_formula_view_name = c;
         h_formula_view_arguments = vs;
+        h_formula_view_annot_arg = anns;
         h_formula_view_remaining_branches = lbl_lst;
 	h_formula_view_perm = perm;
         h_formula_view_pos = pos}) ->
@@ -665,6 +666,8 @@ and h_formula_2_mem_x (f : h_formula) (p0 : mix_formula) (evars : CP.spec_var li
             let vdef = look_up_view_def pos prog.prog_view_decls c in
             let from_svs = CP.SpecVar (Named vdef.view_data_name, self, Unprimed) :: vdef.view_vars in
             let to_svs = p :: vs in
+            (* let from_svs_ann = vdef.view_ann_params in *)
+            (* let to_svs_ann = anns in *)
             (*TO DO: Temporarily ignore LOCK*)
 	        let new_mset = 
               (match perm with
@@ -697,12 +700,13 @@ and h_formula_2_mem_x (f : h_formula) (p0 : mix_formula) (evars : CP.spec_var li
                                 if List.mem p evars then CP.BagaSV.mkEmpty
 	                            else ba 
                             | Some ls -> 
+
                                 lookup_view_baga_with_subs ls vdef from_svs to_svs))
             in
 	        {mem_formula_mset = CP.DisjSetSV.one_list_dset new_mset;} 
       | StarMinus _
       | Hole _ -> {mem_formula_mset = CP.DisjSetSV.mkEmpty;}
-      | HRel _  -> {mem_formula_mset = CP.DisjSetSV.mkEmpty;}
+      | HRel _  ->{mem_formula_mset = CP.DisjSetSV.mkEmpty;}
       | HTrue  -> {mem_formula_mset = CP.DisjSetSV.mkEmpty;}
       | HFalse -> {mem_formula_mset = CP.DisjSetSV.mkEmpty;}
       | HEmp   -> {mem_formula_mset = CP.DisjSetSV.mkEmpty;}
@@ -3167,7 +3171,9 @@ and struc_unfold_heap_x (prog:Cast.prog_or_branches) (f : h_formula) (aset : CP.
       h_formula_view_label = v_lbl;
       h_formula_view_remaining_branches = brs;
       h_formula_view_perm = perm;
-      h_formula_view_arguments = vs} -> 
+      h_formula_view_arguments = vs;
+      h_formula_view_annot_arg = anns
+      } -> 
 	  let uf = old_uf+uf in
 	  let vdef = Cast.look_up_view_def pos (fst prog).prog_view_decls lhs_name in
           (* check to see if vdef case vars are quantif. Is so use unstruc view formula *)
@@ -3187,7 +3193,11 @@ and struc_unfold_heap_x (prog:Cast.prog_or_branches) (f : h_formula) (aset : CP.
           (* let f = joiner (List.filter (fun (_,l)-> List.mem l brs) vdef.view_un_struc_formula) in *)
           (* struc_formula_of_formula f  pos in *)
           let renamed_view_formula = add_struc_unfold_num (rename_struc_bound_vars forms) uf in
-          let renamed_view_formula = propagate_imm_struc_formula renamed_view_formula imm in
+          (* let imm_anns = CP.annot_arg_to_imm_ann_list anns in *)
+          let fr_ann = vdef.view_ann_params in
+          let to_ann = anns in
+          let mpa = List.combine fr_ann to_ann in
+          let renamed_view_formula = propagate_imm_struc_formula renamed_view_formula imm mpa in
           let renamed_view_formula = 
             if (Perm.allow_perm ()) then
               (match perm with 
@@ -3306,7 +3316,9 @@ and unfold_heap_x (prog:Cast.prog_or_branches) (f : h_formula) (aset : CP.spec_v
                h_formula_view_label = v_lbl;
                h_formula_view_remaining_branches = brs;
                h_formula_view_perm = perm;
-               h_formula_view_arguments = vs}) ->(*!!Attention: there might be several nodes pointed to by the same pointer as long as they are empty*)
+               h_formula_view_arguments = vs;
+               h_formula_view_annot_arg = anns;
+    }) ->(*!!Attention: there might be several nodes pointed to by the same pointer as long as they are empty*)
       let uf = old_uf+uf in
       if CP.mem p aset then (
         match (snd prog) with
@@ -3323,7 +3335,10 @@ and unfold_heap_x (prog:Cast.prog_or_branches) (f : h_formula) (aset : CP.spec_v
             let renamed_view_formula = add_unfold_num renamed_view_formula uf in
             (* propagate the immutability annotation inside the definition *)
             (*let _ = print_string ("unfold pre subst: "^(Cprinter.string_of_formula renamed_view_formula)^"\n") in*)
-            let renamed_view_formula = propagate_imm_formula renamed_view_formula imm in
+            let from_ann = vdef.view_ann_params in
+            let to_ann = anns in 
+            let mpa = List.combine from_ann to_ann in
+            let renamed_view_formula = propagate_imm_formula renamed_view_formula imm mpa in
             (*let _ = print_string ("unfold post subst: "^(Cprinter.string_of_formula renamed_view_formula)^"\n") in*)
             (*if any, propagate the fractional permission inside the definition *)
             let renamed_view_formula = 
@@ -3669,6 +3684,7 @@ and fold_op_x prog (ctx : context) (view : h_formula) vd (rhs_p: MCP.mix_formula
   let ans = ((* ("use-case : "^string_of_bool use_case) *)
       (* ^ *)"\n context:"^(Cprinter.string_of_context ctx)
       ^"\n rhs view :"^(Cprinter.string_of_h_formula view) 
+      ^"\n rhs view annot :"^(Cprinter.string_of_annot_arg_list (CF.get_node_annot_args view)) 
       ^"\n rhs_p (pure) :"^(Cprinter.string_of_mix_formula rhs_p)) in
   let pr2 x = match x with
     | None -> "None"
@@ -3686,7 +3702,9 @@ and fold_op_x1 prog (ctx : context) (view : h_formula) vd (rhs_p : MCP.mix_formu
           h_formula_view_label = pid;
           h_formula_view_remaining_branches = r_brs;
           h_formula_view_perm = perm; 
-          h_formula_view_arguments = vs}) -> begin
+          h_formula_view_arguments = vs;
+          h_formula_view_annot_arg = anns
+          }) -> begin
             (* let _ = print_string ((pr_list_ln Cprinter.string_of_view_decl) prog.Cast.prog_view_decls)  in *)
             try
               let vdef = match vd with 
@@ -3704,12 +3722,12 @@ and fold_op_x1 prog (ctx : context) (view : h_formula) vd (rhs_p : MCP.mix_formu
               (*let form = Cformula.case_to_disjunct brs in *)
               let renamed_view_formula = rename_struc_bound_vars form in
 	      (****)  
-              let renamed_view_formula = 
-	        if ((CP.isImm imm) || (CP.isLend imm) || (CP.isAccs imm)) (*&& not(!Globals.allow_field_ann)*) then 
-	          propagate_imm_struc_formula renamed_view_formula imm
-	        else
-	          renamed_view_formula
-              in 
+              (* let renamed_view_formula =  propagate_imm_struc_formula renamed_view_formula imm anns in *)
+	      (*   if ((CP.isImm imm) || (CP.isLend imm) || (CP.isAccs imm)) (\*&& not(!Globals.allow_field_ann)*\) then  *)
+	      (*     propagate_imm_struc_formula renamed_view_formula imm anns *)
+	      (*   else *)
+	      (*     renamed_view_formula *)
+              (* in  *)
 	      (***)
 
 	      (*LDK: IMPORTANT
@@ -3724,7 +3742,8 @@ and fold_op_x1 prog (ctx : context) (view : h_formula) vd (rhs_p : MCP.mix_formu
               let fr_vars = (CP.SpecVar (Named vdef.Cast.view_data_name, self, Unprimed)) :: vdef.view_vars in
               let to_vars = p :: vs in
               let view_form = subst_struc_avoid_capture fr_vars to_vars renamed_view_formula in
-
+              let fr_ann = vdef.view_ann_params in
+              let to_ann = anns in
               (*ENHANCE universal lemmas:
                 propagate constraint on univ_vars into view_form*)
               let uni_vars = vdef.view_uni_vars in
@@ -3744,9 +3763,13 @@ and fold_op_x1 prog (ctx : context) (view : h_formula) vd (rhs_p : MCP.mix_formu
               in
               let view_form = add_struc_origins (get_view_origins view) view_form  in
               let view_form = CF.replace_struc_formula_label pid view_form in
+              (* let view_form =  propagate_imm_struc_formula view_form imm anns in *)
               let view_form = match use_case with 
                 | None -> view_form 
                 | Some f -> push_case_f f view_form in
+              let mpa = List.combine fr_ann to_ann in
+              let view_form =  propagate_imm_struc_formula view_form imm mpa in
+              Debug.devel_zprint (lazy ("do_fold: anns:" ^ (Cprinter.string_of_annot_arg_list anns))) pos;
               Debug.devel_zprint (lazy ("do_fold: LHS ctx:" ^ (Cprinter.string_of_context_short ctx))) pos;
               Debug.devel_zprint (lazy ("do_fold: RHS view: " ^ (Cprinter.string_of_h_formula view))) pos;
               Debug.devel_zprint (lazy ("do_fold: view_form: " ^ (Cprinter.string_of_struc_formula view_form))) pos;
@@ -10392,7 +10415,7 @@ and do_fold_w_ctx_x fold_ctx prog estate conseq ln2 vd resth2 rhs_b is_folding p
       h_formula_view_perm = perm; (*LDK*)
       h_formula_view_arguments = List.tl new_v2;
       h_formula_view_annot_arg = get_node_annot_args ln2;
-      h_formula_view_args_orig = CP.sv_to_view_arg_list (List.tl new_v2);
+      h_formula_view_args_orig = get_node_args_orig ln2;
       h_formula_view_modes = get_view_modes ln2;
       h_formula_view_coercible = true;
       h_formula_view_lhs_case = false;
@@ -12015,7 +12038,10 @@ and rewrite_coercion_x prog estate node f coer lhs_b rhs_b target_b weaken pos :
 	          let coer_rhs_new = add_origins coer_rhs_new1 ((* coer.coercion_name ::  *)origs) in
 
                   (* propagate the immutability annotation inside the definition *)
-                  let coer_rhs_new = propagate_imm_formula coer_rhs_new imm1 in
+                  let from_ann = (CF.get_node_annot_args lhs_heap) in
+                  let to_ann = (CF.get_node_annot_args node) in
+                  let mpa = List.combine from_ann to_ann in
+                  let coer_rhs_new = propagate_imm_formula coer_rhs_new imm1 mpa in
 
                   (* Currently, I am trying to change in advance at the trans_one_coer *)
                   (* Add origins to the body of the coercion which consists of *)

@@ -11591,6 +11591,9 @@ let annot_arg_to_imm_ann (arg: annot_arg ): ann list =
     | ImmAnn a -> [a]
           (* continue from here with other type of ann *)
 
+let annot_arg_to_imm_ann_list (arg: annot_arg list): ann list =
+  List.fold_left  (fun acc a -> acc@(annot_arg_to_imm_ann a) ) [] arg
+
 let mkSVArg sv = SVArg sv
 
 let mkImmAnn a = ImmAnn a
@@ -11620,6 +11623,13 @@ let view_arg_to_annot_arg (arg:view_arg): annot_arg list =
     | AnnotArg arg -> [arg]
     | _            -> []
 
+let annot_arg_to_view_arg (arg: annot_arg): view_arg =
+  mkAnnotArg arg
+  
+
+let annot_arg_to_view_arg_list (args: annot_arg list): view_arg list =
+  List.fold_left (fun acc a -> acc@[annot_arg_to_view_arg a]) [] args
+
 let split_view_args (params: view_arg list): spec_var list * annot_arg list =
   let view_args,annot_args = List.partition is_view_var_arg params in
   let view_args  = List.fold_left (fun acc arg -> acc@(view_arg_to_sv arg)) [] view_args in
@@ -11641,6 +11651,31 @@ let sv_to_view_arg_list (svl: spec_var list): view_arg list =
 
 let imm_to_view_arg (ann: heap_ann): view_arg = 
   mkAnnotArg (mkImmAnn (ConstAnn(ann)))
+
+let eq_annot_arg a1 a2 =
+  match a1,a2 with
+    | ImmAnn a1, ImmAnn a2 -> eq_ann a1 a2
+
+let range a b =
+  let rec aux a b =
+    if a > b then [] else a :: aux (a+1) b  in
+  if a > b then List.rev (aux b a) else aux a b;;
+
+let create_view_arg_list_from_map (map: view_arg list) (hargs: spec_var list) (annot: annot_arg list) = 
+  let hargs = sv_to_view_arg_list hargs in
+  let annot = annot_arg_to_view_arg_list annot in 
+  let lst = range 1 (List.length map) in
+  let lst = List.combine lst map in
+  let lst_sv,lst_ann = List.partition ( fun (_,a) -> is_view_var_arg a) lst in
+  let lst_sv = List.combine lst_sv hargs in
+  let lst_sv = List.map (fun ((no,_),harg) -> (no,harg)) lst_sv in
+  let lst_ann = List.combine lst_ann annot in
+  let lst_ann = List.map (fun ((no,_),ann) -> (no,ann)) lst_ann in
+  let lst = lst_sv@lst_ann in
+  let lst = List.sort (fun (no1,_) (no2,_) -> no1 - no2) lst in
+  let lst = List.map (fun (_,a) -> a) lst in
+  lst
+
 
 (* let split_view_args_w_map (params: view_arg list) (map: view_arg list): spec_var list * annot_arg list = *)
 (*   let comb = List.combine params map in *)

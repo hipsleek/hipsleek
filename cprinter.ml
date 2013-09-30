@@ -552,6 +552,9 @@ let string_of_annot_arg ann =
   match ann with
     | CP.ImmAnn imm -> string_of_imm_ann imm
 
+let string_of_annot_arg_list ann_list = 
+  pr_list string_of_annot_arg ann_list
+
 let string_of_typed_annot_arg ann = 
   match ann with
     | CP.ImmAnn imm -> string_of_typed_imm_ann imm
@@ -560,6 +563,9 @@ let string_of_view_arg arg =
   match arg with
     | CP.SVArg sv     -> string_of_spec_var sv
     | CP.AnnotArg ann -> string_of_annot_arg ann
+
+let string_of_view_arg_list arg_list = 
+  pr_list string_of_view_arg arg_list
 
 let string_of_typed_annot_arg ann = 
   match ann with
@@ -1171,6 +1177,7 @@ let rec pr_h_formula h =
       h_formula_view_perm = perm; (*LDK*)
       h_formula_view_arguments = svs;
       h_formula_view_args_orig = svs_orig;  
+      h_formula_view_annot_arg = anns;  
       h_formula_view_origins = origs;
       h_formula_view_original = original;
       h_formula_view_lhs_case = lhs_case;
@@ -1180,11 +1187,12 @@ let rec pr_h_formula h =
 	  h_formula_view_unfold_num = ufn;
       h_formula_view_pos =pos}) ->
           let perm_str = string_of_cperm perm in
+          let params = CP.create_view_arg_list_from_map svs_orig svs anns in
           fmt_open_hbox ();
 	  if (!Globals.texify) then
 	    begin
 	      (* fmt_string "\seppred{";pr_spec_var sv;fmt_string ("}{"^c^"}{"); pr_list_of_spec_var svs; fmt_string "}"; *)
-	      fmt_string "\seppred{";pr_spec_var sv;fmt_string ("}{"^c^"}{"); pr_list_of_view_arg svs_orig; fmt_string "}";
+	      fmt_string "\seppred{";pr_spec_var sv;fmt_string ("}{"^c^"}{"); pr_list_of_view_arg params; fmt_string "}";
 	    end
 	  else
 	    begin
@@ -1192,7 +1200,7 @@ let rec pr_h_formula h =
               (* pr_formula_label_opt pid;  *)
               pr_spec_var sv; 
               fmt_string "::"; (* to distinguish pred from data *)
-              pr_angle (c^perm_str) pr_view_arg svs_orig;
+              pr_angle (c^perm_str) pr_view_arg params;
 	      pr_imm imm;
 	      pr_derv dr;
               (* For example, #O[lem_29][Derv] means origins=[lem_29], and the heap node is derived*)
@@ -1326,6 +1334,7 @@ let rec prtt_pr_h_formula h =
       h_formula_view_perm = perm; (*LDK*)
       h_formula_view_arguments = svs; 
       h_formula_view_args_orig = svs_orig;  
+      h_formula_view_annot_arg = anns;  
       h_formula_view_origins = origs;
       h_formula_view_original = original;
       h_formula_view_lhs_case = lhs_case;
@@ -1334,6 +1343,7 @@ let rec prtt_pr_h_formula h =
       h_formula_view_pruning_conditions = pcond;
       h_formula_view_pos =pos}) ->
         let perm_str = string_of_cperm perm in
+        let params = CP.create_view_arg_list_from_map svs_orig svs anns in
           fmt_open_hbox ();
          (* (if pid==None then fmt_string "N
 N " else fmt_string "SS "); *)
@@ -1341,13 +1351,13 @@ N " else fmt_string "SS "); *)
 		  if (!Globals.texify) then 
 			  begin
 			  (* fmt_string "\seppred{";pr_spec_var sv;fmt_string ("}{"^c^"}{"); pr_list_of_spec_var svs; fmt_string "}"; *)
-			  fmt_string "\seppred{";pr_spec_var sv;fmt_string ("}{"^c^"}{"); pr_list_of_view_arg svs_orig; fmt_string "}";
+			  fmt_string "\seppred{";pr_spec_var sv;fmt_string ("}{"^c^"}{"); pr_list_of_view_arg params; fmt_string "}";
 			  end
 		  else
           begin
 			  pr_spec_var sv; 
 			  fmt_string "::"; 
-			  pr_angle (c^perm_str) pr_view_arg svs_orig;
+			  pr_angle (c^perm_str) pr_view_arg params;
 			  pr_imm imm;
 			  pr_derv dr;
 			  (* For example, #O[lem_29][Derv] means origins=[lem_29], and the heap node is derived*)
@@ -1451,6 +1461,7 @@ let rec prtt_pr_h_formula_inst prog h =
       h_formula_view_perm = perm; (*LDK*)
       h_formula_view_arguments = svs; 
       h_formula_view_args_orig = svs_orig;  
+      h_formula_view_annot_arg = anns;  
       h_formula_view_origins = origs;
       h_formula_view_original = original;
       h_formula_view_lhs_case = lhs_case;
@@ -1459,11 +1470,12 @@ let rec prtt_pr_h_formula_inst prog h =
       h_formula_view_pruning_conditions = pcond;
       h_formula_view_pos =pos}) ->
         let perm_str = string_of_cperm perm in
+        let params = CP.create_view_arg_list_from_map svs_orig svs anns in
           fmt_open_hbox ();
 		    if (!Globals.texify) then 
 			  begin
 			  (* fmt_string "\seppred{";pr_spec_var sv;fmt_string ("}{"^c^"}{");pr_list_of_spec_var svs;fmt_string "}"; *)
-			  fmt_string "\seppred{";pr_spec_var sv;fmt_string ("}{"^c^"}{");pr_list_of_view_arg svs_orig;fmt_string "}";
+			  fmt_string "\seppred{";pr_spec_var sv;fmt_string ("}{"^c^"}{");pr_list_of_view_arg params;fmt_string "}";
 			  end
 		  else
           begin
@@ -1472,7 +1484,7 @@ let rec prtt_pr_h_formula_inst prog h =
 				  (* pr_formula_label_opt pid;  *)
 				  pr_spec_var sv; 
 				  fmt_string "::"; 
-				  pr_angle (c^perm_str) pr_view_arg svs_orig;
+				  pr_angle (c^perm_str) pr_view_arg params;
 				  pr_imm imm;
 				  pr_derv dr;
 				  (* For example, #O[lem_29][Derv] means origins=[lem_29], and the heap node is derived*)
@@ -1573,6 +1585,7 @@ let rec pr_h_formula_for_spec h =
     h_formula_view_perm = perm; (*LDK*)
     h_formula_view_arguments = svs; 
     h_formula_view_args_orig = svs_orig;  
+    h_formula_view_annot_arg = anns;  
     h_formula_view_origins = origs;
     h_formula_view_original = original;
     h_formula_view_lhs_case = lhs_case;
@@ -1581,13 +1594,14 @@ let rec pr_h_formula_for_spec h =
     h_formula_view_pruning_conditions = pcond;
     h_formula_view_pos =pos}) ->
     let perm_str = string_of_cperm perm in
+    let params = CP.create_view_arg_list_from_map svs_orig svs anns in
     fmt_open_hbox ();
     (* (if pid==None then fmt_string "NN " else fmt_string "SS "); *)
     (* pr_formula_label_opt pid;  *)
     pr_spec_var sv; 
     fmt_string "::"; 
     (* if svs = [] then fmt_string (c^"<>") else pr_angle (c^perm_str) pr_spec_var svs; *)
-    if svs_orig = [] then fmt_string (c^"<>") else pr_angle (c^perm_str) pr_view_arg svs_orig;
+    if svs_orig = [] then fmt_string (c^"<>") else pr_angle (c^perm_str) pr_view_arg params;
 (*    pr_imm imm;*)
     pr_derv dr;
     (* For example, #O[lem_29][Derv] means origins=[lem_29], and the heap node is derived*)
@@ -3833,6 +3847,7 @@ let rec html_of_h_formula h = match h with
 				h_formula_view_arguments = svs; 
                                 h_formula_view_args_orig = svs_orig;  
 				h_formula_view_origins = origs;
+                                h_formula_view_annot_arg = anns;  
 				h_formula_view_original = original;
 				h_formula_view_lhs_case = lhs_case;
 				h_formula_view_label = pid;
@@ -3840,7 +3855,8 @@ let rec html_of_h_formula h = match h with
 				h_formula_view_pruning_conditions = pcond;
 				h_formula_view_pos =pos}) ->
 	      (* (html_of_spec_var sv) ^ html_mapsto ^ c ^ html_left_angle_bracket ^ (html_of_spec_var_list svs) ^ html_right_angle_bracket *)
-	      (html_of_spec_var sv) ^ html_mapsto ^ c ^ html_left_angle_bracket ^ (html_of_view_arg_list svs_orig) ^ html_right_angle_bracket
+              let params = CP.create_view_arg_list_from_map svs_orig svs anns in
+	      (html_of_spec_var sv) ^ html_mapsto ^ c ^ html_left_angle_bracket ^ (html_of_view_arg_list params) ^ html_right_angle_bracket
   | HTrue -> "<b>htrue</b>"
   | HFalse -> "<b>hfalse</b>"
   | HEmp -> "<b>emp</b>"

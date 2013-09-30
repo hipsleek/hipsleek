@@ -542,10 +542,11 @@ and insert_rd_phase (f : IF.h_formula) (wr_phase : IF.h_formula) : IF.h_formula 
   let pr_h = Iprinter.string_of_h_formula in
   Debug.no_2 "Immutable.insert_rd_phase" pr_h pr_h pr_h insert_rd_phase_x f wr_phase
 
-and propagate_imm_struc_formula e (imm : CP.ann)  =
+and propagate_imm_struc_formula e (imm : CP.ann)  (imm_p: (CP.annot_arg * CP.annot_arg) list)=
+  (* andreeac: to check why do we have all these constructs? *)
   let f_e_f e = None  in
   let f_f e = None in
-  let f_h_f f = Some (propagate_imm_h_formula f imm) in
+  let f_h_f f = Some (propagate_imm_h_formula f imm imm_p) in
   let f_p_t1 e = Some e in
   let f_p_t2 e = Some e in
   let f_p_t3 e = Some e in
@@ -555,68 +556,91 @@ and propagate_imm_struc_formula e (imm : CP.ann)  =
   transform_struc_formula f e
 
 
-and propagate_imm_formula (f : formula) (imm : CP.ann) : formula = match f with
+and propagate_imm_formula (f : formula) (imm : CP.ann) (imm_p: (CP.annot_arg * CP.annot_arg) list): formula = match f with
   | Or ({formula_or_f1 = f1; formula_or_f2 = f2; formula_or_pos = pos}) ->
-	let rf1 = propagate_imm_formula f1 imm in
-	let rf2 = propagate_imm_formula f2 imm in
+	let rf1 = propagate_imm_formula f1 imm imm_p in
+	let rf2 = propagate_imm_formula f2 imm imm_p in
 	let resform = mkOr rf1 rf2 pos in
 	resform
   | Base f1 ->
-        let f1_heap = propagate_imm_h_formula f1.formula_base_heap imm in
+        let f1_heap = propagate_imm_h_formula f1.formula_base_heap imm imm_p in
         Base({f1 with formula_base_heap = f1_heap})
   | Exists f1 ->
-        let f1_heap = propagate_imm_h_formula f1.formula_exists_heap imm in
+        let f1_heap = propagate_imm_h_formula f1.formula_exists_heap imm imm_p in
         Exists({f1 with formula_exists_heap = f1_heap})
 
-and propagate_imm_h_formula_x (f : h_formula) (imm : CP.ann) : h_formula = 
+and replace_imm imm map =
+  match imm with
+    | CP.ConstAnn _ -> imm
+    | _             -> let new_imm = List.fold_left (fun acc (fr,t) ->
+         if ( Gen.BList.mem_eq CP.eq_ann imm (CP.annot_arg_to_imm_ann fr)) then (CP.annot_arg_to_imm_ann t) else acc) [] map in
+      match new_imm with
+        | []   -> imm
+        | h::_ -> h
+
+and propagate_imm_h_formula_x (f : h_formula) (imm : CP.ann)  (imm_p: (CP.annot_arg * CP.annot_arg) list) : h_formula = 
   match f with
-    | ViewNode f1 -> ViewNode({f1 with h_formula_view_imm = 
-	      match f1.Cformula.h_formula_view_imm with
-	        | CP.ConstAnn _ -> imm
-	        | _ -> 
-	              begin
-	                match imm with 
-		          | CP.ConstAnn _ -> imm
-		          | _ -> f1.Cformula.h_formula_view_imm 
-	              end })
-    | DataNode f1 -> DataNode({f1 with h_formula_data_imm =
-	      (match f1.Cformula.h_formula_data_imm with
-	        | CP.ConstAnn _ -> imm
-	        | _ -> begin
-	            match imm with 
-	              | CP.ConstAnn _ -> imm
-	              | _ -> f1.Cformula.h_formula_data_imm 
-	          end);
-	  h_formula_data_param_imm = 
-	      List.map (fun c -> if (subtype_ann 1 imm c) then c else imm) f1.Cformula.h_formula_data_param_imm})
+    | ViewNode f1 -> 
+          let new_node_imm = imm in
+          let new_args_imm = List.fold_left (fun acc (fr,t) -> 
+              if (Gen.BList.mem_eq CP.eq_annot_arg fr (f1.CF.h_formula_view_annot_arg)) then acc@[t] else acc) []  imm_p in
+          (* andreeac: why was below needed? *)
+          (* match f1.Cformula.h_formula_view_imm with *)
+	  (*   | CP.ConstAnn _ -> imm *)
+	  (*   | _ ->  *)
+	  (*         begin *)
+	  (*           match imm with  *)
+	  (*             | CP.ConstAnn _ -> imm *)
+	  (*             | _ -> f1.Cformula.h_formula_view_imm  *)
+	  (*         end *)
+          ViewNode({f1 with h_formula_view_imm = new_node_imm;
+              h_formula_view_annot_arg = new_args_imm;
+          })
+    | DataNode f1 -> 
+          let new_param_imm = List.map (fun a -> replace_imm a imm_p) f1.CF.h_formula_data_param_imm in
+          DataNode({f1 with h_formula_data_imm = imm;
+              h_formula_data_param_imm = new_param_imm;})
+
+          (* andreeac: why was below needed? *)
+          (* DataNode({f1 with h_formula_data_imm = *)
+	      (* (match f1.Cformula.h_formula_data_imm with *)
+	      (*   | CP.ConstAnn _ -> imm *)
+	      (*   | _ -> begin *)
+	      (*       match imm with  *)
+	      (*         | CP.ConstAnn _ -> imm *)
+	      (* (\*         | _ -> f1.Cformula.h_formula_data_imm  *\) *)
+	      (* (\*     end); *\) *)
+	      (*     h_formula_data_param_imm =  *)
+	      (*     List.map (fun c -> if (subtype_ann 1 imm c) then c else imm) f1.Cformula.h_formula_data_param_imm}) *)
     | Star f1 ->
-	  let h1 = propagate_imm_h_formula f1.h_formula_star_h1 imm in
-	  let h2 = propagate_imm_h_formula f1.h_formula_star_h2 imm in
+	  let h1 = propagate_imm_h_formula f1.h_formula_star_h1 imm imm_p in
+	  let h2 = propagate_imm_h_formula f1.h_formula_star_h2 imm imm_p in
 	  mkStarH h1 h2 f1.h_formula_star_pos 
     | Conj f1 ->
-	  let h1 = propagate_imm_h_formula f1.h_formula_conj_h1 imm in
-	  let h2 = propagate_imm_h_formula f1.h_formula_conj_h2 imm in
+	  let h1 = propagate_imm_h_formula f1.h_formula_conj_h1 imm imm_p in
+	  let h2 = propagate_imm_h_formula f1.h_formula_conj_h2 imm imm_p in
 	  mkConjH h1 h2 f1.h_formula_conj_pos
     | ConjStar f1 ->
-	  let h1 = propagate_imm_h_formula f1.h_formula_conjstar_h1 imm in
-	  let h2 = propagate_imm_h_formula f1.h_formula_conjstar_h2 imm in
+	  let h1 = propagate_imm_h_formula f1.h_formula_conjstar_h1 imm imm_p in
+	  let h2 = propagate_imm_h_formula f1.h_formula_conjstar_h2 imm imm_p in
 	  mkConjStarH h1 h2 f1.h_formula_conjstar_pos
     | ConjConj f1 ->
-	  let h1 = propagate_imm_h_formula f1.h_formula_conjconj_h1 imm in
-	  let h2 = propagate_imm_h_formula f1.h_formula_conjconj_h2 imm in
+	  let h1 = propagate_imm_h_formula f1.h_formula_conjconj_h1 imm imm_p in
+	  let h2 = propagate_imm_h_formula f1.h_formula_conjconj_h2 imm imm_p in
 	  mkConjConjH h1 h2 f1.h_formula_conjconj_pos	      	      
     | Phase f1 ->
-	  let h1 = propagate_imm_h_formula f1.h_formula_phase_rd imm in
-	  let h2 = propagate_imm_h_formula f1.h_formula_phase_rw imm in
+	  let h1 = propagate_imm_h_formula f1.h_formula_phase_rd imm imm_p in
+	  let h2 = propagate_imm_h_formula f1.h_formula_phase_rw imm imm_p in
 	  mkPhaseH h1 h2 f1.h_formula_phase_pos
     | _ -> f
 
-and propagate_imm_h_formula (f : h_formula) (imm : CP.ann) : h_formula = 
-  Debug.no_2 "propagate_imm_h_formula" 
+and propagate_imm_h_formula (f : h_formula) (imm : CP.ann)  (map: (CP.annot_arg * CP.annot_arg) list): h_formula = 
+  Debug.no_3 "propagate_imm_h_formula" 
       (Cprinter.string_of_h_formula) 
       (Cprinter.string_of_imm) 
+      (pr_list (pr_pair Cprinter.string_of_annot_arg Cprinter.string_of_annot_arg )) 
       (Cprinter.string_of_h_formula) 
-      (fun _ _ -> propagate_imm_h_formula_x f imm) f imm 
+      (fun _ _ _ -> propagate_imm_h_formula_x f imm map) f imm map
 
 (* return true if imm1 <: imm2 *)	
 (* M <: I <: L <: A*)
