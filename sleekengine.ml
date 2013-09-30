@@ -868,10 +868,10 @@ let run_infer_one_pass (ivars: ident list) (iante0 : meta_formula) (iconseq0 : m
   let vars = List.map (fun v -> TI.get_spec_var_type_list_infer (v, Unprimed) orig_vars no_pos) ivars in
   let (res, rs,v_hp_rel, prf) = SC.sleek_entail_check vars !cprog [] ante conseq in
   let _= if(!Globals.debug_inter) then 
-        add_checkentail_list (sleek_proof_counter#get) iante0 iconseq0 (Some rs) !SC.cproof
+        add_checkentail_list (sleek_proof_counter#get) iante0 iconseq0 (Some rs) (Some prf)
+  in
   let _ = CF.residues := Some (rs, res) in
   let _= SC.eproof := Some prf in
-  in
   (res, rs,v_hp_rel)
 
 let run_infer_one_pass ivars (iante0 : meta_formula) (iconseq0 : meta_formula) =
