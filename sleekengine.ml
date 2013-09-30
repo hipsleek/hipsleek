@@ -6,6 +6,7 @@ open Globals
 open Wrapper
 open Others
 open Sleekcommons
+open Isleek
 open Gen.Basic
 (* open Exc.ETABLE_NFLOW *)
 open Exc.GTable
@@ -125,7 +126,8 @@ let clear_all () =
   clear_iprog ();
   clear_cprog ();
   CF.residues := None;
-  SC.eproof := None
+  SC.eproof := None;
+  SC.current_entail := None
 
 (*L2: move to astsimp*)
 (* let check_data_pred_name name : bool = *)
@@ -419,22 +421,19 @@ let print_proof proof =
     | Some pr -> print_string ("printing proof:...\n" ^ (Prooftracer.string_of_proof pr))
 
 let add_checkentail_list idn ante conseq lc pr =
-   SC.checkenlist := !SC.checkenlist @ [(idn,ante,conseq,lc,pr)] 
+  SC.checkenlist := !SC.checkenlist @ [(idn,ante,conseq,lc,pr)]
 
-let process_list_checkentail lce=
-  match lce with
-    | "list" -> let _=print_string "List checkentail...\n" in
-                let print_checkentail ce=
-                    match ce with 
-                      | (idn, ante, conseq, Some lc, Some pr) -> print_string (("Entail "^(string_of_int idn)^"")^"\n"^(string_of_meta_formula ante)^"\n"^(string_of_meta_formula conseq)^"\n"^(!CF.print_list_context lc)^"\n"^(Prooftracer.string_of_proof pr))
-                      | _ -> ()
-                in 
-                let rec print_list_checkentail lc= match lc with
-                  | [] -> ()
-                  | head::tail -> let _= print_checkentail head in print_list_checkentail tail
-                in print_list_checkentail !SC.checkenlist 
-    | _ -> print_string "not supported command for process_list_checkentail!\n"
- 
+let process_list_checkentail ()=
+  let print_checkentail ce=
+    match ce with
+      | (idn, ante, conseq, Some lc, Some pr) -> print_string (("Entail "^(string_of_int idn)^"")^"\n"^(string_of_meta_formula ante)^"\n"^(string_of_meta_formula conseq)^"\n"^(!CF.print_list_context lc)^"\n"^(Prooftracer.string_of_proof pr))
+      | _ -> ()
+  in 
+  let rec print_list_checkentail lc= match lc with
+                 | [] -> ()
+                 | head::tail -> let _= print_checkentail head in print_list_checkentail tail
+  in print_list_checkentail !SC.checkenlist 
+
 let process_list_lemma ldef_lst =
   let lst = ldef_lst.Iast.coercion_list_elems in
   (* why do we check residue for ctx? do we really need a previous context? *)
@@ -1487,6 +1486,10 @@ let print_exc (check_id: string) =
 (*   Some true  -->  always check entailment exactly (no residue in RHS)          *)
 (*   Some false -->  always check entailment inexactly (allow residue in RHS)     *)
 let process_entail_check_x (iante : meta_formula) (iconseq : meta_formula) (etype : entail_type) =
+  if(!Globals.debug_inter && !Globals.wait_auto) then 
+    let _= SC.current_entail:= Some (iante,iconseq,etype) in
+    true
+  else
   let nn = (sleek_proof_counter#inc_and_get) in
   let num_id = "\nEntail "^(string_of_int nn) in
     try 
@@ -1510,6 +1513,19 @@ let process_entail_check_x (iante : meta_formula) (iconseq : meta_formula) (etyp
 let process_entail_check (iante : meta_formula) (iconseq : meta_formula) (etype: entail_type) =
   let pr = string_of_meta_formula in
   Debug.no_2 "process_entail_check_helper" pr pr (fun _ -> "?") process_entail_check_x iante iconseq etype
+
+let process_tactics tacs =
+  match tacs with
+    | Match _ -> ()
+    | ListCheckEntail ->  process_list_checkentail ()
+    | Auto -> 
+        begin
+            Globals.wait_auto :=false;
+            let _= match !SC.current_entail with
+                      Some (iante,iconseq,etype) -> ignore (process_entail_check iante iconseq etype )
+                     | None ->()
+            in  Globals.wait_auto :=true   
+        end
 
 let process_eq_check (ivars: ident list)(if1 : meta_formula) (if2 : meta_formula) =
   (*let _ = print_endline ("\n Compare Check") in*)

@@ -1360,7 +1360,8 @@ let sleek_proof_no = ref 0
 
 let last_sleek_fail_no = ref 0
 
-let debug_inter = ref true (*To set debug interactive mode*)
+let debug_inter = ref false (*To set debug interactive mode*)
+let wait_auto =ref false (*To wait for auto tactic to perform checkentail*)
 
 let get_sleek_no () = !sleek_proof_no
 

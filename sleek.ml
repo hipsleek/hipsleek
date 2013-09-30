@@ -16,6 +16,7 @@
 
 open Globals
 open Sleekcommons
+open Isleek
 open Sleekengine
 open Gen.Basic
 (* open Exc.ETABLE_NFLOW *)
@@ -94,7 +95,7 @@ let proc_gen_cmd cmd =
     | RelDef rdef -> process_rel_def rdef
     | HpDef hpdef -> process_hp_def hpdef
     | AxiomDef adef -> process_axiom_def adef
-    | EntailCheck (iante, iconseq, etype) -> (process_entail_check iante iconseq etype;())
+    | EntailCheck (iante, iconseq, etype) ->  (process_entail_check iante iconseq etype;())
     | RelAssume (id, ilhs, iguard, irhs) -> process_rel_assume id ilhs iguard irhs
     | RelDefn (id, ilhs, irhs) -> process_rel_defn id ilhs irhs
     | ShapeInfer (pre_hps, post_hps) -> process_shape_infer pre_hps post_hps
@@ -114,7 +115,7 @@ let proc_gen_cmd cmd =
     | InferCmd (ivars, iante, iconseq,etype) -> (process_infer ivars iante iconseq etype;())
     | CaptureResidue lvar -> process_capture_residue lvar
     | LemmaDef ldef ->   process_list_lemma ldef
-    | ListCheckEntail lce -> process_list_checkentail lce
+    | Tactics t->  process_tactics t
     | PrintCmd pcmd -> process_print_command pcmd
     | Simplify f -> process_simplify f
     | Slk_Hull f -> process_hull f
@@ -200,7 +201,7 @@ let parse_file (parse) (source_file : string) =
       | PrintCmd pcmd -> process_print_command pcmd
       | CmpCmd ccmd -> process_cmp_command ccmd
       | LetDef (lvar, lbody) -> put_var lvar lbody
-      | ListCheckEntail lce -> process_list_checkentail lce
+      | Tactics t -> process_tactics t  
       | BarrierCheck bdef -> process_barrier_def bdef
       | Time (b,s,_) -> 
             if b then Gen.Profiling.push_time s 

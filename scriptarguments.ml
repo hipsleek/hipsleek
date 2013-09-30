@@ -320,6 +320,7 @@ let common_arguments = [
   ("-dre", Arg.String (fun s ->
       Debug.z_debug_file:=("$"^s); Debug.z_debug_flag:=true),
    "Shorthand for -debug-regexp");
+  ("--debug-inter", Arg.Unit( fun _-> Globals.debug_inter :=true; Globals.wait_auto:=true), "Use interactive mode for debugging");
   ("-v", Arg.Set Debug.debug_on,
    "Verbose");
   ("--pipe", Arg.Unit Tpdispatcher.Netprover.set_use_pipe,

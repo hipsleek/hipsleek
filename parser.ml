@@ -6,6 +6,7 @@ open Exc.GTable
 open Iast
 open Token
 open Sleekcommons
+open Isleek
 open Gen.Basic
 (* open Label_only *)
 
@@ -804,7 +805,7 @@ non_empty_command:
       | t=let_decl            -> t
       | t=checkeq_cmd         -> EqCheck t
       | t= checkentail_cmd     -> EntailCheck t
-      | t= list_checkentail_cmd -> ListCheckEntail t
+      | t= tactics_cmd -> Tactics t
       | t= validate_cmd     -> Validate t
       | t=relassume_cmd     -> RelAssume t
       | t=reldefn_cmd     -> RelDefn t
@@ -1791,8 +1792,20 @@ checkeq_cmd:
     let il = un_option il [] in (il,t,b)
   ]];
 
-list_checkentail_cmd:
-  [[ `IDENTIFIER t; `CHECKENTAIL -> t]];
+tactics_cmd:
+    [[ `IDENTIFIER t; `CHECKENTAIL -> 
+    let res =
+        match t with
+          | "list" -> ListCheckEntail 
+          |  _ -> report_error (get_pos_camlp4 _loc 1) (t^": not supported tactics command!")		
+    in res
+      | `IDENTIFIER t ->
+    let res =
+              match t with
+                | "auto" -> Auto 
+                | _ -> report_error (get_pos_camlp4 _loc 1) (t^": not supported tactics command!")		
+    in res
+  ]];
 
 checkentail_cmd:
   [[ `CHECKENTAIL; t=meta_constr; `DERIVE; b=extended_meta_constr -> (t, b, None)
