@@ -114,6 +114,7 @@ let proc_gen_cmd cmd =
     | InferCmd (ivars, iante, iconseq,etype) -> (process_infer ivars iante iconseq etype;())
     | CaptureResidue lvar -> process_capture_residue lvar
     | LemmaDef ldef ->   process_list_lemma ldef
+    | ListCheckEntail lce -> process_list_checkentail lce
     | PrintCmd pcmd -> process_print_command pcmd
     | Simplify f -> process_simplify f
     | Slk_Hull f -> process_hull f
@@ -199,6 +200,7 @@ let parse_file (parse) (source_file : string) =
       | PrintCmd pcmd -> process_print_command pcmd
       | CmpCmd ccmd -> process_cmp_command ccmd
       | LetDef (lvar, lbody) -> put_var lvar lbody
+      | ListCheckEntail lce -> process_list_checkentail lce
       | BarrierCheck bdef -> process_barrier_def bdef
       | Time (b,s,_) -> 
             if b then Gen.Profiling.push_time s 

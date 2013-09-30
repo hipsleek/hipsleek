@@ -11,7 +11,7 @@ open Gen.Basic
 open Exc.GTable
 open Perm
 open Label_only
-
+open Cpure
 module H = Hashtbl
 module I = Iast
 module Inf = Infer
@@ -33,6 +33,7 @@ module SY_CEQ = Syn_checkeq
 
 let generate_lemma = ref (fun (iprog: I.prog_decl) n t (ihps: ident list) iante iconseq -> [],[])
 let eproof = ref (None: Prooftracer.proof option)
+let checkenlist :((int * meta_formula *meta_formula * CF.list_context option* Prooftracer.proof option) (*To save list of all checkentail*) list) ref= ref []
 
 let sleek_entail_check_x isvl (cprog: C.prog_decl) proof_traces ante conseq=
   let pr = Cprinter.string_of_struc_formula in

@@ -1360,6 +1360,8 @@ let sleek_proof_no = ref 0
 
 let last_sleek_fail_no = ref 0
 
+let debug_inter = ref true (*To set debug interactive mode*)
+
 let get_sleek_no () = !sleek_proof_no
 
 let set_sleek_no n = sleek_proof_no:=n

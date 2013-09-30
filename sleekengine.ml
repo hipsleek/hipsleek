@@ -418,6 +418,23 @@ let print_proof proof =
     | None -> print_string ": no proof \n"
     | Some pr -> print_string ("printing proof:...\n" ^ (Prooftracer.string_of_proof pr))
 
+let add_checkentail_list idn ante conseq lc pr =
+   SC.checkenlist := !SC.checkenlist @ [(idn,ante,conseq,lc,pr)] 
+
+let process_list_checkentail lce=
+  match lce with
+    | "list" -> let _=print_string "List checkentail...\n" in
+                let print_checkentail ce=
+                    match ce with 
+                      | (idn, ante, conseq, Some lc, Some pr) -> print_string (("Entail "^(string_of_int idn)^"")^"\n"^(string_of_meta_formula ante)^"\n"^(string_of_meta_formula conseq)^"\n"^(!CF.print_list_context lc)^"\n"^(Prooftracer.string_of_proof pr))
+                      | _ -> ()
+                in 
+                let rec print_list_checkentail lc= match lc with
+                  | [] -> ()
+                  | head::tail -> let _= print_checkentail head in print_list_checkentail tail
+                in print_list_checkentail !SC.checkenlist 
+    | _ -> print_string "not supported command for process_list_checkentail!\n"
+ 
 let process_list_lemma ldef_lst =
   let lst = ldef_lst.Iast.coercion_list_elems in
   (* why do we check residue for ctx? do we really need a previous context? *)
@@ -850,8 +867,11 @@ let run_infer_one_pass (ivars: ident list) (iante0 : meta_formula) (iconseq0 : m
   (* List of vars needed for abduction process *)
   let vars = List.map (fun v -> TI.get_spec_var_type_list_infer (v, Unprimed) orig_vars no_pos) ivars in
   let (res, rs,v_hp_rel, prf) = SC.sleek_entail_check vars !cprog [] ante conseq in
+  let _= if(!Globals.debug_inter) then 
+        add_checkentail_list (sleek_proof_counter#get) iante0 iconseq0 (Some rs) !SC.cproof
   let _ = CF.residues := Some (rs, res) in
   let _= SC.eproof := Some prf in
+  in
   (res, rs,v_hp_rel)
 
 let run_infer_one_pass ivars (iante0 : meta_formula) (iconseq0 : meta_formula) =

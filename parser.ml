@@ -804,6 +804,7 @@ non_empty_command:
       | t=let_decl            -> t
       | t=checkeq_cmd         -> EqCheck t
       | t= checkentail_cmd     -> EntailCheck t
+      | t= list_checkentail_cmd -> ListCheckEntail t
       | t= validate_cmd     -> Validate t
       | t=relassume_cmd     -> RelAssume t
       | t=reldefn_cmd     -> RelDefn t
@@ -1789,6 +1790,9 @@ checkeq_cmd:
   [[ `CHECKEQ; `OSQUARE; il=OPT id_list; `CSQUARE; t=meta_constr; `EQV; b=meta_constr -> 
     let il = un_option il [] in (il,t,b)
   ]];
+
+list_checkentail_cmd:
+  [[ `IDENTIFIER t; `CHECKENTAIL -> t]];
 
 checkentail_cmd:
   [[ `CHECKENTAIL; t=meta_constr; `DERIVE; b=extended_meta_constr -> (t, b, None)
