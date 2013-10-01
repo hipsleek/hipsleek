@@ -12,7 +12,6 @@ lemma_safe "ls1" self::lseg2<q, S>
   -> self::lseg2<y, Sx> * y::lseg2<q, Sy> & S=union(Sx,Sy).
 */
 
-lemma_unsafe "ls2" self::lseg2<y, Sx> * y::lseg2<q, Sy>  & intersect (Sx,Sy) = {}  -> self::lseg2<q, union(Sx,Sy)> .
 
 /*
 lemma_safe "ls3" self::lseg2<y, Sx> * y::lseg2<q, Sy> & intersect (Sx,Sy)
@@ -29,6 +28,9 @@ checkentail
  |- self::lseg2<q, union(Sx,Sy)> .
 */
 
+lemma_safe "ls2" self::lseg2<y, Sx> * y::lseg2<q, Sy>  & intersect (Sx,Sy) = {}  -> self::lseg2<q, union(Sx,Sy)> .
+
+/*
 checkentail
  y::lseg2<q, Sy>  & intersect (Sx,Sy) = {} & Sy={} 
  & Sx={} & self=y
@@ -37,7 +39,7 @@ checkentail
 checkentail
  self::node<_,w> * w::lseg2<y,S1>  * y::lseg2<q, Sy>  & intersect (Sx,Sy) = {} & Sy={} & Sx=union({self},S1) & self notin S1
  |- self::lseg2<q, union(Sx,Sy)> .
-
+*/
 
 /*
 checkentail
