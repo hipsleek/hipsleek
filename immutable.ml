@@ -260,6 +260,12 @@ let mkTempRes ann_l ann_r  impl_vars expl_vars evars =
     (add_str "\n\tconstraints: " pr3) in 
   Debug.no_2 "mkTempRes"  pr pr pr_out (fun _ _ -> mkTempRes_x ann_l ann_r  impl_vars expl_vars evars ) ann_l ann_r
 
+let apply_f_to_annot_arg f_imm (args: CP.annot_arg list) : CP.annot_arg list=
+  let args = CP.annot_arg_to_imm_ann_list args in
+  let args =  f_imm args in
+  let args = CP.imm_ann_to_annot_arg_list args in
+  args
+
 let build_eset_of_conj_formula f =
   let lst = CP.split_conjunctions f in
   let emap = List.fold_left (fun acc f -> match f with
@@ -1182,7 +1188,11 @@ and restore_tmp_ann_h_formula (f: h_formula) pure0: h_formula =
             } in
           let new_f = maybe_replace_w_empty new_f in
           new_f
-    | CF.ViewNode h -> CF.ViewNode {h with h_formula_view_imm = List.hd (restore_tmp_ann [h.CF.h_formula_view_imm] pure0)}
+    | CF.ViewNode h -> 
+          let f args = restore_tmp_ann args pure0 in
+          let new_pimm = apply_f_to_annot_arg f h.CF.h_formula_view_annot_arg in 
+          CF.ViewNode {h with h_formula_view_imm = List.hd (restore_tmp_ann [h.CF.h_formula_view_imm] pure0);
+              h_formula_view_annot_arg = new_pimm }
     | _          -> f
 
 and restore_tmp_ann_formula (f: formula): formula =

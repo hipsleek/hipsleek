@@ -11592,14 +11592,6 @@ let is_accs_sv sv =
 
 
 (* utilities for allowing annotations as view arguments *)
-let annot_arg_to_imm_ann (arg: annot_arg ): ann list =
-  match arg with
-    | ImmAnn a -> [a]
-          (* continue from here with other type of ann *)
-
-let annot_arg_to_imm_ann_list (arg: annot_arg list): ann list =
-  List.fold_left  (fun acc a -> acc@(annot_arg_to_imm_ann a) ) [] arg
-
 let mkSVArg sv = SVArg sv
 
 let mkImmAnn a = ImmAnn a
@@ -11616,6 +11608,36 @@ let is_view_annot_arg (arg:view_arg): bool =
     | AnnotArg _ -> true
     | _          -> false
 
+let annot_arg_to_imm_ann (arg: annot_arg ): ann list =
+  match arg with
+    | ImmAnn a -> [a]
+          (* continue from here with other type of ann *)
+
+let annot_arg_to_imm_ann_list (arg: annot_arg list): ann list =
+  List.fold_left  (fun acc a -> acc@(annot_arg_to_imm_ann a) ) [] arg
+
+let imm_ann_to_annot_arg (a: ann): annot_arg =  mkImmAnn a
+
+let imm_ann_to_annot_arg_list (anns: ann list): annot_arg list =
+  List.fold_left  (fun acc a -> acc@[imm_ann_to_annot_arg a] ) [] anns
+
+let imm_to_view_arg (ann: heap_ann): view_arg = 
+  mkAnnotArg (imm_ann_to_annot_arg (ConstAnn(ann)))
+
+let imm_ann_to_view_arg (ann: ann): view_arg = 
+  mkAnnotArg (mkImmAnn ann)
+
+let imm_ann_to_view_arg_list (ann: ann list): view_arg list = 
+  List.map (fun a -> mkAnnotArg (mkImmAnn a)) ann
+
+let view_arg_to_imm_ann (arg: view_arg): ann list=
+  match arg with
+    | SVArg _     -> []
+    | AnnotArg a  -> annot_arg_to_imm_ann a
+
+let view_arg_to_imm_ann_list (args: view_arg list): ann list=
+  List.fold_left (fun acc arg -> acc@(view_arg_to_imm_ann arg)) []  args
+
 let view_arg_to_sv (arg:view_arg): spec_var list =
   match arg with
     | SVArg sv -> [sv]
@@ -11629,10 +11651,12 @@ let view_arg_to_annot_arg (arg:view_arg): annot_arg list =
     | AnnotArg arg -> [arg]
     | _            -> []
 
+let view_arg_to_annot_arg_lis (args:view_arg list): annot_arg list =
+  List.fold_left (fun acc arg -> acc@(view_arg_to_annot_arg arg)) []  args
+
 let annot_arg_to_view_arg (arg: annot_arg): view_arg =
   mkAnnotArg arg
   
-
 let annot_arg_to_view_arg_list (args: annot_arg list): view_arg list =
   List.fold_left (fun acc a -> acc@[annot_arg_to_view_arg a]) [] args
 
@@ -11654,9 +11678,6 @@ let sv_to_view_arg (sv: spec_var): view_arg =
 
 let sv_to_view_arg_list (svl: spec_var list): view_arg list =
   List.map sv_to_view_arg svl
-
-let imm_to_view_arg (ann: heap_ann): view_arg = 
-  mkAnnotArg (mkImmAnn (ConstAnn(ann)))
 
 let eq_annot_arg a1 a2 =
   match a1,a2 with

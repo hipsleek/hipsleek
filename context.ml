@@ -494,12 +494,13 @@ and update_field_imm (f : h_formula) (pimm1 : CP.ann list): h_formula =
   let pr_out = Cprinter.string_of_h_formula in
   Debug.no_2 "update_field_ann" (Cprinter.string_of_h_formula) pr  pr_out (fun _ _-> update_field_imm_x f pimm1 ) f pimm1
 
-and update_field_imm_x (f : h_formula) (new_field_ann_lnode: CP.ann list) : h_formula  = 
+and update_field_imm_x (f : h_formula) (new_fann: CP.ann list) : h_formula  = 
   (* let (res_ann, cons_ann), niv, constr = Immutable.replace_list_ann pimm1 pimm impl_vars evars in *)
   (* asankhs: If node has all field annotations as @A make it HEmp *)
-  if (isAccsList new_field_ann_lnode) then HEmp else
+  if (isAccsList new_fann) then HEmp else
     let updated_f = match f with 
-      | DataNode d -> DataNode ( {d with h_formula_data_param_imm = new_field_ann_lnode} )
+      | DataNode d -> DataNode ( {d with h_formula_data_param_imm = new_fann} )
+      | ViewNode v -> ViewNode ( {v with h_formula_view_annot_arg = CP.imm_ann_to_annot_arg_list new_fann} )
       | _          -> report_error no_pos ("[context.ml] : only data node should allow field annotations \n")
     in
     updated_f
@@ -541,8 +542,21 @@ and imm_split_lhs_node_x estate l_node r_node = match l_node, r_node with
             (estate,(([],[],[]),[]))
         else
           (estate,(([],[],[]),[]))
+  | ViewNode vl, ViewNode vr ->
+        if (!Globals.allow_field_ann) then
+          let l_ann = CP.annot_arg_to_imm_ann_list vl.h_formula_view_annot_arg in
+          let r_ann = CP.annot_arg_to_imm_ann_list vr.h_formula_view_annot_arg in
+          let (res_ann, cons_ann), niv, constr = Immutable.replace_list_ann l_ann r_ann estate in
+          let n_f = update_field_imm l_node res_ann in
+          let n_ch = update_field_imm l_node cons_ann in
+          let n_es = {estate with es_formula = mkStar (formula_of_heap n_f no_pos) estate.es_formula Flow_combine no_pos;
+              es_heap = mkStarH  n_ch  estate.es_heap no_pos;
+              (* es_gen_impl_vars =estate.es_gen_impl_vars@niv *) } in
+          (n_es, constr)
+        else
+          (estate,(([],[],[]),[]))
   | _ -> (estate,(([],[],[]),[]))
-  
+
 and imm_split_lhs_node estate l_node r_node =
   let pr_node = Cprinter.string_of_h_formula in
   let pr_es = Cprinter.string_of_entail_state in
