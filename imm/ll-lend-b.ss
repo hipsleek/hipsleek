@@ -20,9 +20,12 @@ int length(node p)
 */
 /*  requires p::ll_ann<n,@A,@L>
     ensures p::ll_ann<n,@A,@L> & res=n;*/
+/*
+   requires p::ll_ann<n,@M,@L> 
+   ensures p::ll_ann<n,@M,@A> & res=n; */
 
-   requires p::ll_ann<n,@M,@M> 
-   ensures p::ll_ann<n,@M,@M> & res=n; 
+   requires p::ll_ann<n,@M,@L> 
+   ensures p::ll_ann<n,@M,@A> & res=n; 
 
 /*  requires p::ll<n>
     ensures  p::ll<n> & res=n;*/

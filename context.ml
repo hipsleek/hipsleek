@@ -374,7 +374,7 @@ and choose_context prog es lhs_h lhs_p rhs_p posib_r_aliases rhs_node rhs_rest p
    bool ->
    Cformula.h_formula *)
 
-and view_mater_match prog c vs1 aset imm f =
+and view_mater_match prog c vs1 aset imm f anns =
   let pr1 = (fun x -> x) in
   let pr2 = !print_svl in
   let pro1 = (add_str "lhs_rest" Cprinter.string_of_h_formula) in
@@ -382,9 +382,9 @@ and view_mater_match prog c vs1 aset imm f =
   let pro3 = (add_str "holes" (pr_list (pr_pair Cprinter.string_of_h_formula string_of_int))) in
   let pro4 = (add_str "match_type" string_of_match_type) in
   let pr = pr_list (pr_quad pro1 pro2 pro3 pro4) in
-  Debug.no_3 "view_mater_match" pr1 pr2 pr2 pr (fun _ _ _ -> view_mater_match_x prog c vs1 aset imm f) c vs1 aset
+  Debug.no_3 "view_mater_match" pr1 pr2 pr2 pr (fun _ _ _ -> view_mater_match_x prog c vs1 aset imm f anns) c vs1 aset
 
-and view_mater_match_x prog c vs1 aset imm f =
+and view_mater_match_x prog c vs1 aset imm f anns =
   let vdef = look_up_view_def_raw 11 prog.prog_view_decls c in
   let vdef_param = (self_param vdef)::(vdef.view_vars) in
   let mvs = subst_mater_list_nth 1 vdef_param vs1 vdef.view_materialized_vars in
@@ -717,6 +717,7 @@ and spatial_ctx_extract_x prog (f0 : h_formula) (aset : CP.spec_var list) (imm :
       h_formula_view_imm = imm1;
       h_formula_view_perm = perm1;
       h_formula_view_arguments = vs1;
+      h_formula_view_annot_arg = anns;
       h_formula_view_name = c}) ->
           begin
             match rhs_node with
@@ -737,7 +738,7 @@ and spatial_ctx_extract_x prog (f0 : h_formula) (aset : CP.spec_var list) (imm :
                       else
                         [(HEmp, f, [], Root)]
                     else
-                      let vmm = view_mater_match prog c (p1::vs1) aset imm f in
+                      let vmm = view_mater_match prog c (p1::vs1) aset imm f anns in
                       let cmm = coerc_mater_match_gen c vs1 aset f in 
                       (*LDK: currently, assume that frac perm does not effect 
                         the choice of lemmas (coercions)*)
@@ -1174,11 +1175,16 @@ and process_one_match_x prog estate lhs_h is_normalizing (c:match_res) (rhs_node
                     | None -> false
                   in
                   let new_orig = if !ann_derv then not(vr_view_derv) else vr_view_orig in
+                  let sub_ann  = if (!Globals.allow_field_ann) then 
+                    let r,_,_,_ = Immutable.subtype_ann_list [] [] dl.h_formula_data_param_imm (CP.annot_arg_to_imm_ann_list vr.h_formula_view_annot_arg) in
+                    let isAccs  = Immutable.isAccsList dl.h_formula_data_param_imm in
+                    r && (isAccs)
+                  else true in
                   (* let right_ls = look_up_coercion_with_target prog.prog_right_coercions vr_name dl.h_formula_data_name in *)
                   (* let a1 = if (new_orig || vr_self_pts==[]) then [(1,M_fold c)] else [] in *)
                   let a1 = 
                     if is_r_lock then [] else
-                      if (new_orig || vr_self_pts==[]) then [(1,M_fold c)] else [] in
+                      if ((new_orig || vr_self_pts==[]) && sub_ann) then [(1,M_fold c)] else [] in
                   (* WN : what is M_rd_lemma for?? *)
                   let r_lem = 
                     if (Lem_store.all_lemma # any_coercion) then [(1,M_rd_lemma c)]
@@ -1206,9 +1212,13 @@ and process_one_match_x prog estate lhs_h is_normalizing (c:match_res) (rhs_node
                   let left_ls = filter_norm_lemmas(look_up_coercion_with_target (Lem_store.all_lemma # get_left_coercion)(*prog.prog_left_coercions*) vl_name dr.h_formula_data_name) in
                   (* let a1 = if (new_orig || vl_self_pts==[]) then [(1,M_unfold (c,uf_i))] else [] in *)
                   let _ = DD.tinfo_hprint (add_str "left_ls" (pr_list pr_none)) left_ls no_pos in
+                  let sub_ann  = if (!Globals.allow_field_ann) then 
+                    let r,_,_,_ = Immutable.subtype_ann_list [] []  (CP.annot_arg_to_imm_ann_list vl.h_formula_view_annot_arg) dr.h_formula_data_param_imm in
+                    r
+                  else true in
                   let a1 = 
                     if is_l_lock then [] else
-                      if (new_orig || vl_self_pts==[]) then [(1,M_unfold (c,uf_i))] else [] in
+                      if ((new_orig || vl_self_pts==[]) && sub_ann) then [(1,M_unfold (c,uf_i))] else [] in
                   let a2 = if (new_orig & left_ls!=[]) then [(1,M_lemma (c,Some (List.hd left_ls)))] else [] in
                   (* if (left_ls == [] && (vl_view_orig ) then ua *)
                   (* else (1,M_lemma (c,Some (List.hd left_ls))) *)

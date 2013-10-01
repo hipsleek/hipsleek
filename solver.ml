@@ -10118,8 +10118,8 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
                                 (* es_heap is already updated with consumed heap from beginning of do_match: Context.imm_split_lhs_node *)
                               else
                                 l_node
-                        | _->
-                              l_node)
+                        | ViewNode _ ->if (!Globals.allow_field_ann) then HEmp else l_node
+                        | _ -> l_node)
                 | _ -> 
                       (*TO DO: this may not be correct because we may also
                         have to update the holes*)
