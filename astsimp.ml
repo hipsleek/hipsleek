@@ -1608,7 +1608,7 @@ SpecVar (_, n, _) -> vdef.I.view_vars <- vdef.I.view_vars @ [n];
       let _ = if view_kind = Cast.View_PRIM then CF.view_prim_lst # push vn  in
       let view_vars_gen = CP.sv_to_view_arg_list view_sv_vars in
       let view_sv_vars, ann_params = CP.split_view_args view_vars_gen in
-      let _ = Debug.info_pprint ("!!! Trans_view HERE") no_pos in
+      (* let _ = Debug.info_pprint ("!!! Trans_view HERE") no_pos in *)
       let cvdef ={
           C.view_name = vn;
           C.view_pos = vdef.I.view_pos;

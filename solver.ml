@@ -3184,26 +3184,26 @@ and struc_unfold_heap_x (prog:Cast.prog_or_branches) (f : h_formula) (aset : CP.
           let forms = match brs, quantif_case_vars with
             | None, false   -> vdef.view_formula
             | None, true    -> 
-                  let f = joiner  vdef.view_un_struc_formula in
-	          struc_formula_of_formula f  pos
+                  let f = joiner  vdef.view_un_struc_formula in 
+                  struc_formula_of_formula f  pos 
             | Some s,_      -> 
                   let f = joiner (List.filter (fun (_,l)-> List.mem l s) vdef.view_un_struc_formula) in
-                  struc_formula_of_formula f  pos in
+                  struc_formula_of_formula f  pos  in
           (* let joiner f = formula_of_disjuncts (fst (List.split f)) in *)
           (* let f = joiner (List.filter (fun (_,l)-> List.mem l brs) vdef.view_un_struc_formula) in *)
           (* struc_formula_of_formula f  pos in *)
           let renamed_view_formula = add_struc_unfold_num (rename_struc_bound_vars forms) uf in
           (* let imm_anns = CP.annot_arg_to_imm_ann_list anns in *)
-          let fr_ann = vdef.view_ann_params in
-          let to_ann = anns in
-          let mpa = List.combine fr_ann to_ann in
-          let renamed_view_formula = propagate_imm_struc_formula renamed_view_formula imm mpa in
           let renamed_view_formula = 
             if (Perm.allow_perm ()) then
               (match perm with 
                 | None -> renamed_view_formula
                 | Some f -> Cformula.propagate_perm_struc_formula renamed_view_formula (Cpure.get_var f)) 
             else renamed_view_formula in
+          let fr_ann = vdef.view_ann_params in
+          let to_ann = anns in
+          let mpa = List.combine fr_ann to_ann in
+          let forms = Immutable.propagate_imm_struc_formula renamed_view_formula imm mpa in
           let fr_vars = (CP.SpecVar (Named vdef.view_data_name, self, Unprimed))::  vdef.view_vars in
           let to_rels,to_rem = (List.partition CP.is_rel_typ vs) in
 	  let res_form = subst_struc_avoid_capture fr_vars (v::vs) renamed_view_formula in
@@ -3330,15 +3330,15 @@ and unfold_heap_x (prog:Cast.prog_or_branches) (f : h_formula) (aset : CP.spec_v
             let forms = match brs with 
               | None -> formula_of_unstruc_view_f vdef
               | Some s -> joiner (List.filter (fun (_,l)-> List.mem l s) vdef.view_un_struc_formula) in
+            let from_ann = vdef.view_ann_params in
+            let to_ann = anns in 
+            let mpa = List.combine from_ann to_ann in
+            let forms = propagate_imm_formula forms imm mpa in
             let renamed_view_formula = rename_bound_vars forms in
             (* let _ = print_string ("renamed_view_formula: "^(Cprinter.string_of_formula renamed_view_formula)^"\n") in *)
             let renamed_view_formula = add_unfold_num renamed_view_formula uf in
             (* propagate the immutability annotation inside the definition *)
             (*let _ = print_string ("unfold pre subst: "^(Cprinter.string_of_formula renamed_view_formula)^"\n") in*)
-            let from_ann = vdef.view_ann_params in
-            let to_ann = anns in 
-            let mpa = List.combine from_ann to_ann in
-            let renamed_view_formula = propagate_imm_formula renamed_view_formula imm mpa in
             (*let _ = print_string ("unfold post subst: "^(Cprinter.string_of_formula renamed_view_formula)^"\n") in*)
             (*if any, propagate the fractional permission inside the definition *)
             let renamed_view_formula = 
@@ -3763,12 +3763,12 @@ and fold_op_x1 prog (ctx : context) (view : h_formula) vd (rhs_p : MCP.mix_formu
               in
               let view_form = add_struc_origins (get_view_origins view) view_form  in
               let view_form = CF.replace_struc_formula_label pid view_form in
-              (* let view_form =  propagate_imm_struc_formula view_form imm anns in *)
+              (* let view_form =  Immutable.propagate_imm_struc_formula view_form imm anns in *)
               let view_form = match use_case with 
                 | None -> view_form 
                 | Some f -> push_case_f f view_form in
               let mpa = List.combine fr_ann to_ann in
-              let view_form =  propagate_imm_struc_formula view_form imm mpa in
+              let view_form =  Immutable.propagate_imm_struc_formula view_form imm mpa in
               Debug.devel_zprint (lazy ("do_fold: anns:" ^ (Cprinter.string_of_annot_arg_list anns))) pos;
               Debug.devel_zprint (lazy ("do_fold: LHS ctx:" ^ (Cprinter.string_of_context_short ctx))) pos;
               Debug.devel_zprint (lazy ("do_fold: RHS view: " ^ (Cprinter.string_of_h_formula view))) pos;

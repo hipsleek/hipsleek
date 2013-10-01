@@ -6327,7 +6327,7 @@ let mk_sp_const (i:int) =
   let n= const_prefix^(string_of_int i)
   in SpecVar ((Int), n , Unprimed) 
 
-let mk_sp_aconst (a:heap_ann) =
+let mk_sv_aconst (a:heap_ann) =
   let ann = aconst_prefix^(string_of_heap_ann a)
   in SpecVar ((AnnT), ann , Unprimed)
 
@@ -6339,8 +6339,8 @@ let conv_exp_to_var (e:exp) : (spec_var * loc) option =
 
 let conv_ann_exp_to_var (e:exp) : (spec_var * loc) option = 
   match e with
-    | AConst(a,loc) -> Some (mk_sp_aconst a,loc)
-    | Var(v,no_pos) -> Some (v, no_pos)
+    | AConst(a,loc) -> Some (mk_sv_aconst a,loc)
+    | Var(v,loc)    -> Some (v, loc)
     | _ -> None
 
 (* convert exp to var representation where possible *)
@@ -11558,6 +11558,12 @@ let name_for_imm_sv a = (string_of_heap_ann a) ^ ann_var_sufix
 
 (* special spec var denoting ann constant *)
 let mkAnnSVar a =  SpecVar(AnnT, name_for_imm_sv a, Unprimed)
+
+let imm_to_sv ann = 
+  match ann with 
+    | PolyAnn ann  -> Some ann
+    | ConstAnn ann -> Some (mk_sv_aconst ann)
+    | _ -> None 
  
 let ann_sv_lst  = (name_for_imm_sv Mutable):: (name_for_imm_sv Imm):: (name_for_imm_sv Lend)::[(name_for_imm_sv Accs)]
 
