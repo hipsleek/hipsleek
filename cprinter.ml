@@ -3008,7 +3008,7 @@ let pr_view_decl v =
   (* wrap_box ("B",0) (fun ()-> pr_angle  ("view"^s^v.view_name) pr_typed_spec_var_lbl  *)
   (*     (List.combine v.view_labels v.view_vars); fmt_string "= ") (); *)
   wrap_box ("B",0) (fun ()-> pr_angle  ("view"^s^v.view_name) pr_typed_view_arg_lbl 
-      (List.combine v.view_labels v.view_params_orig); fmt_string "= ") ();
+      (CP.combine_labels_w_view_arg v.view_labels  v.view_params_orig); fmt_string "= ") ();
   fmt_cut (); wrap_box ("B",0) pr_struc_formula v.view_formula; 
   pr_vwrap  "view vars: "  pr_list_of_spec_var v.view_vars;
   pr_vwrap  "ann vars: "  pr_list_of_annot_arg v.view_ann_params;

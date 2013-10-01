@@ -57,7 +57,9 @@ res:  [
 
 */
 =============================================================
-# imm/ll-lend-1.ss --field-ann
+# imm/ll-lend-1.ss --field-ann 
+# partially fixed: it detects if there is a @L in the view params, but if
+# @L is build in vdef it does not. To be done
 
 ll<n,a> == self=null & n=0 or
   self::node<_@a,q>*q::ll<n-1,a>

@@ -1607,7 +1607,7 @@ SpecVar (_, n, _) -> vdef.I.view_vars <- vdef.I.view_vars @ [n];
       let vn = vdef.I.view_name in
       let _ = if view_kind = Cast.View_PRIM then CF.view_prim_lst # push vn  in
       let view_vars_gen = CP.sv_to_view_arg_list view_sv_vars in
-      let view_sv_vars, ann_params = CP.split_view_args view_vars_gen in
+      let view_sv_vars, labels, ann_params = CP.split_view_args (List.combine view_vars_gen (fst vdef.I.view_labels))in
       (* let _ = Debug.info_pprint ("!!! Trans_view HERE") no_pos in *)
       let cvdef ={
           C.view_name = vn;
@@ -1617,7 +1617,7 @@ SpecVar (_, n, _) -> vdef.I.view_vars <- vdef.I.view_vars @ [n];
           C.view_vars = view_sv_vars;
           C.view_cont_vars = [];
           C.view_uni_vars = [];
-          C.view_labels = fst vdef.I.view_labels;
+          C.view_labels = labels;
           C.view_modes = vdef.I.view_modes;
           C.view_contains_L_ann = false;
           C.view_ann_params  = ann_params;
@@ -5239,7 +5239,7 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
                 let labels = fst vdef.I.view_labels in
                 let params_orig = match_exp (List.combine exps labels) pos in
                 (* andreeac: TODO insert test check map compatib *)
-                let hvars, annot_params = CP.split_view_args params_orig in
+                let hvars, labels, annot_params = CP.split_view_args (List.combine params_orig labels) in
                 let c0 =
                   if vdef.I.view_data_name = "" then 
                     (fill_view_param_types vdef;

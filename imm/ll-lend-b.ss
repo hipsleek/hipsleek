@@ -18,8 +18,14 @@ int length(node p)
   requires p::ll_ann<n,@A,@L>
   ensures res=n;
 */
-  requires p::ll_ann<n,@A,@L>
-  ensures p::ll_ann<n,@A,@L> & res=n;
+/*  requires p::ll_ann<n,@A,@L>
+    ensures p::ll_ann<n,@A,@L> & res=n;*/
+
+   requires p::ll_ann<n,@M,@M> 
+   ensures p::ll_ann<n,@M,@M> & res=n; 
+
+/*  requires p::ll<n>
+    ensures  p::ll<n> & res=n;*/
 // should fail due to @L in post-condition
 {
   if (p==null) return 0;

@@ -11660,11 +11660,13 @@ let annot_arg_to_view_arg (arg: annot_arg): view_arg =
 let annot_arg_to_view_arg_list (args: annot_arg list): view_arg list =
   List.fold_left (fun acc a -> acc@[annot_arg_to_view_arg a]) [] args
 
-let split_view_args (params: view_arg list): spec_var list * annot_arg list =
-  let view_args,annot_args = List.partition is_view_var_arg params in
+let split_view_args (params: (view_arg *'a) list): spec_var list * 'a list * annot_arg list =
+  let view_args,annot_args = List.partition (fun (a,_) -> is_view_var_arg a) params in
+  let view_args, labels = List.split view_args in
   let view_args  = List.fold_left (fun acc arg -> acc@(view_arg_to_sv arg)) [] view_args in
+  let annot_args, _ = List.split annot_args in
   let annot_args = List.fold_left (fun acc arg -> acc@(view_arg_to_annot_arg arg)) [] annot_args in
-  view_args,annot_args
+  view_args,labels,annot_args
 
 let sv_to_annot_arg (sv:spec_var): annot_arg = ImmAnn (mkPolyAnn sv)
   (* match sv with *)
@@ -11703,13 +11705,16 @@ let create_view_arg_list_from_map (map: view_arg list) (hargs: spec_var list) (a
   let lst = List.map (fun (_,a) -> a) lst in
   lst
 
+let combine_labels_w_view_arg  lbl view_arg =
+  let no_lst = range 1 (List.length view_arg) in
+  let lst = List.combine no_lst view_arg in
+  let lst_sv,lst_ann = List.partition ( fun (_,a) -> is_view_var_arg a) lst in
+  let lst_sv = List.combine lbl lst_sv in
+  let lst_ann = List.map (fun a -> (LO.unlabelled,a)) lst_ann in
+  let no_view_args = lst_sv@lst_ann in
+  let no_view_args = List.sort (fun (_,(no1,_)) (_,(no2,_)) -> no1 - no2) no_view_args in
+  let view_args_w_lbl = List.map (fun (l,(_,a)) -> (l,a)) no_view_args in
+  view_args_w_lbl
 
-(* let split_view_args_w_map (params: view_arg list) (map: view_arg list): spec_var list * annot_arg list = *)
-(*   let comb = List.combine params map in *)
-(*   let view_args, annot_args = List.fold_left (fun (acc_sv, acc_ann) (param, pattern) ->  *)
-(*       match pattern with *)
-(*          | SVArg sv -> (acc_sv, acc_ann) *)
-(*       is_view_var_arg) ([],[]) comb in *)
-  
 
 (* end utilities for allowing annotations as view arguments *)

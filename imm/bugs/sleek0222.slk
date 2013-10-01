@@ -25,8 +25,11 @@ print residue.
 
 
 
-// (3) Valid
+// (1) Valid
 checkentail x::node<p,q> * q::ll<n,@M,@M> & n > 2 |- x::ll<n+1,@L,@M> & n > 2.
 print residue.
 
 
+// (2) Valid
+checkentail x::ll<n,@M,@A> & n > 2 |- x::ll<n,@M,@M> & n > 2.
+print residue.

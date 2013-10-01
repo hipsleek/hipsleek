@@ -1262,7 +1262,9 @@ let rec is_lend_h_formula (f : CF.h_formula) : bool =  match f with
         else
           false
   | CF.ViewNode (h1) ->
-        if (CP.isLend h1.CF.h_formula_view_imm) then
+        let anns = CP.annot_arg_to_imm_ann_list  h1.CF.h_formula_view_annot_arg in 
+        let islend = List.exists CP.isLend anns in
+        if (CP.isLend h1.CF.h_formula_view_imm) || (islend) then
           (* let _ = print_string("true for h = " ^ (!print_h_formula f) ^ "\n\n") in *) true
         else
           false
