@@ -1178,7 +1178,7 @@ and process_one_match_x prog estate lhs_h is_normalizing (c:match_res) (rhs_node
                   let sub_ann  = if (!Globals.allow_field_ann) then 
                     let r,_,_,_ = Immutable.subtype_ann_list [] [] dl.h_formula_data_param_imm (CP.annot_arg_to_imm_ann_list vr.h_formula_view_annot_arg) in
                     let isAccs  = Immutable.isAccsList dl.h_formula_data_param_imm in
-                    r && (isAccs)
+                    r && not(isAccs)
                   else true in
                   (* let right_ls = look_up_coercion_with_target prog.prog_right_coercions vr_name dl.h_formula_data_name in *)
                   (* let a1 = if (new_orig || vr_self_pts==[]) then [(1,M_fold c)] else [] in *)
