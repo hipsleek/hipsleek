@@ -154,6 +154,15 @@ let maybe_replace_w_empty h =
               | false, true -> if (isAccs node_imm) then HEmp else h
               | _,_         -> HEmp
           in new_h
+    | CF.ViewNode vn -> h
+          (* let node_imm = vn.CF.h_formula_view_imm in *)
+          (* let param_imm = CP.annot_arg_to_imm_ann_list vn.CF.h_formula_view_annot_arg in *)
+          (* let new_h =  *)
+          (*   match !Globals.allow_field_ann, !Globals.allow_imm with *)
+          (*     | true, _     -> if (isAccsList param_imm) then HEmp else h *)
+          (*     | false, true -> if (isAccs node_imm) then HEmp else h *)
+          (*     | _,_         -> HEmp *)
+          (* in new_h *)
     | _ -> h
 
 let ann_opt_to_ann (ann_opt: IF.ann option) (default_ann: IF.ann): IF.ann = 

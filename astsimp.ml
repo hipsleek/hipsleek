@@ -1608,6 +1608,7 @@ SpecVar (_, n, _) -> vdef.I.view_vars <- vdef.I.view_vars @ [n];
       let _ = if view_kind = Cast.View_PRIM then CF.view_prim_lst # push vn  in
       let view_vars_gen = CP.sv_to_view_arg_list view_sv_vars in
       let view_sv_vars, labels, ann_params = CP.split_view_args (List.combine view_vars_gen (fst vdef.I.view_labels))in
+      let ann_params = CP.imm_ann_to_annot_arg_list (CF.collect_imm_info ann_params n_un_str data_name prog.I.prog_data_decls) in 
       (* let _ = Debug.info_pprint ("!!! Trans_view HERE") no_pos in *)
       let cvdef ={
           C.view_name = vn;
@@ -4778,13 +4779,13 @@ and trans_I2C_struc_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : id
   (n_tl, r)
 
 (* checks if two lists of annotation can be joint together. If so, it returns the list resulting after the combination of the input lists *)
-and join_ann (ann1: CP.ann list) (ann2: CP.ann list): bool * (CP.ann list) =
-  match ann1, ann2 with
-    | [], [] -> (true, [])
-    | (CP.ConstAnn(Accs))::t1, a::t2 
-    | a::t1, (CP.ConstAnn(Accs))::t2 -> let compatible, new_ann = join_ann t1 t2 in
-                  (true && compatible, a::new_ann)
-    | _ -> (false, [])
+(* and join_ann (ann1: CP.ann list) (ann2: CP.ann list): bool * (CP.ann list) = *)
+(*   match ann1, ann2 with *)
+(*     | [], [] -> (true, []) *)
+(*     | (CP.ConstAnn(Accs))::t1, a::t2  *)
+(*     | a::t1, (CP.ConstAnn(Accs))::t2 -> let compatible, new_ann = join_ann t1 t2 in *)
+(*                   (true && compatible, a::new_ann) *)
+(*     | _ -> (false, []) *)
 
 (* Moved to mem.ml and called during entailment now *)
 (* and check_node_compatibility (n1: CF.h_formula) (n2: CF.h_formula): CP.spec_var list * CP.spec_var list =  *)
@@ -5938,7 +5939,7 @@ and case_normalize_renamed_formula_x prog (avail_vars:(ident*primed) list) posib
                           Some (IP.Bptriple ((c,t,a),no_pos)),hvars
                       | _ ->
                           (Some (List.hd hvars), List.tl hvars))
-              | None -> (None,hvars)
+g              | None -> (None,hvars)
             in
             let new_h = IF.HeapNode{ b with 
                 IF.h_formula_heap_arguments = hvars;

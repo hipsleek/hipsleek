@@ -9919,34 +9919,34 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
                 Debug.tinfo_hprint (add_str "new_l_holes" (pr_list string_of_int)) new_l_holes pos;
                 Debug.tinfo_hprint (add_str "new_r_holes" (pr_list string_of_int)) new_r_holes pos;
 	        let rem_l_node = if (CF.all_hole_vars new_l_args) then HEmp
-	          else DataNode { dnl with
-		          h_formula_data_arguments = new_l_args;
-		          h_formula_data_holes = new_l_holes; } in
+	        else DataNode { dnl with
+		    h_formula_data_arguments = new_l_args;
+		    h_formula_data_holes = new_l_holes; } in
 	        let rem_r_node = if (CF.all_hole_vars new_r_args) then HEmp 
-	          else DataNode { dnr with
-		          h_formula_data_arguments = new_r_args;
-		            h_formula_data_holes = new_r_holes;	} 
-            in
-            Debug.tinfo_hprint (add_str "rem_l_node" (Cprinter.string_of_h_formula)) rem_l_node pos;
-            Debug.tinfo_hprint (add_str "rem_r_node" (Cprinter.string_of_h_formula)) rem_r_node pos;
-	      (* let _ = print_string ("\n(andreeac) solver.ml rem_l_node: " ^ (Cprinter.string_of_h_formula rem_l_node)) in *)
-	      (* let _ = print_string ("\n(andreeac) solver.ml rem_r_node: " ^ (Cprinter.string_of_h_formula rem_r_node)) in *)
-	          (* Filter out variables with @A on either lhs or rhs so that they do not form unnecessary equalities*)
-            if (!Globals.allow_field_ann) then
-              let lst1 = List.combine l_args l_param_ann in
+	        else DataNode { dnr with
+		    h_formula_data_arguments = new_r_args;
+		    h_formula_data_holes = new_r_holes;	} 
+                in
+                Debug.tinfo_hprint (add_str "rem_l_node" (Cprinter.string_of_h_formula)) rem_l_node pos;
+                Debug.tinfo_hprint (add_str "rem_r_node" (Cprinter.string_of_h_formula)) rem_r_node pos;
+	        (* let _ = print_string ("\n(andreeac) solver.ml rem_l_node: " ^ (Cprinter.string_of_h_formula rem_l_node)) in *)
+	        (* let _ = print_string ("\n(andreeac) solver.ml rem_r_node: " ^ (Cprinter.string_of_h_formula rem_r_node)) in *)
+	        (* Filter out variables with @A on either lhs or rhs so that they do not form unnecessary equalities*)
+                if (!Globals.allow_field_ann) then
+                  let lst1 = List.combine l_args l_param_ann in
 	          let lst2 = List.combine r_args r_param_ann in
 	          let lst = List.combine lst1 lst2 in
 	          let new_lst = List.filter (fun (l,r) -> true) (* (fun (l,r) -> if isAccs(snd l) || isAccs(snd r) then false else true) *) lst in (*andreeac tmp disalow filter*)
 	          let lst1,lst2 = List.split new_lst in
 	          let new_l_args, new_l_param_ann = List.split lst1 in
 	          let new_r_args, new_r_param_ann = List.split lst2 in 
-              Debug.tinfo_hprint (add_str "new_l_args" (pr_list string_of_spec_var)) new_l_args pos;
-              Debug.tinfo_hprint (add_str "new_r_args" (pr_list string_of_spec_var)) new_r_args pos;
-              Debug.tinfo_hprint (add_str "l_param_ann" (pr_list Cprinter.string_of_imm)) l_param_ann pos;
-              Debug.tinfo_hprint (add_str "r_param_ann" (pr_list Cprinter.string_of_imm)) r_param_ann pos;
+                  Debug.tinfo_hprint (add_str "new_l_args" (pr_list string_of_spec_var)) new_l_args pos;
+                  Debug.tinfo_hprint (add_str "new_r_args" (pr_list string_of_spec_var)) new_r_args pos;
+                  Debug.tinfo_hprint (add_str "l_param_ann" (pr_list Cprinter.string_of_imm)) l_param_ann pos;
+                  Debug.tinfo_hprint (add_str "r_param_ann" (pr_list Cprinter.string_of_imm)) r_param_ann pos;
 	          (rem_l_node,rem_r_node,new_l_args, new_r_args,new_l_param_ann,new_r_param_ann)
-            else (rem_l_node,rem_r_node,l_args,r_args,l_param_ann,r_param_ann)
-	    (*(rem_l_node,rem_r_node,l_args, r_args, l_param_ann, r_param_ann)*)
+                else (rem_l_node,rem_r_node,l_args,r_args,l_param_ann,r_param_ann)
+	          (*(rem_l_node,rem_r_node,l_args, r_args, l_param_ann, r_param_ann)*)
 	    | _ -> (HEmp,HEmp,l_args, r_args, l_param_ann, r_param_ann)
       in
       match rem_r_node with (* Fail whenever the l_node cannot entail r_node *)

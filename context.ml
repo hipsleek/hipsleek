@@ -730,7 +730,7 @@ and spatial_ctx_extract_x prog (f0 : h_formula) (aset : CP.spec_var list) (imm :
                     (* if (subtype_ann imm1 imm) then *)
                     if (CP.mem p1 aset) then
                       (* let _ = print_string("found match for LHS = " ^ (Cprinter.string_of_h_formula f) ^ "\n") in *)
-                      if produces_hole imm (*&& not(!Globals.allow_field_ann)*) then
+                      if produces_hole imm && not(!Globals.allow_field_ann) then
 	                (* let _ = print_string("imm = Lend " ^ "\n") in *)
                         let hole_no = Globals.fresh_int() in
                         (*[(Hole hole_no, matched_node, hole_no, f, Root, HTrue, [])]*)
