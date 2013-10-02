@@ -17,6 +17,7 @@ module TP = Tpdispatcher
 module IF = Iformula
 module IP = Iprinter
 module C  = Cast
+module I  = Iast
 
 
 (* let rec split_phase_debug_lhs h = Debug.no_1 "split_phase(lhs)" *)
@@ -1542,3 +1543,101 @@ let read_write_exp_analysis (ex: C.exp)  (field_ann_lst: (ident * CP.ann) list) 
       | _  -> field_ann_lst
     
   in helper ex field_ann_lst
+
+let merge_imm_for_view a1l a2l =
+  match a1l,a2l with
+    | [], []      -> []
+    | [], t::_    -> a2l
+    | t::_, []    -> a1l
+    | t1::_,t2::_ -> if CP.eq_ann_list a1l a2l then a1l 
+      else failwith "Imm: view should preserve the same imm map"
+
+let update_arg_imm_for_view fimm dimm param_ann emap =
+  let param_ann = List.fold_left (fun acc a -> acc@(CP.fv_ann a)) [] param_ann in
+  match fimm with
+    | CP.ConstAnn _ -> 
+          let imm = 
+            match dimm with
+              | CP.PolyAnn _ -> dimm
+              | _            -> fimm in 
+          imm
+    | CP.PolyAnn sv ->
+            if (Gen.BList.mem_eq CP.eq_spec_var sv param_ann) then fimm
+            else 
+              let elist = sv::(CP.EMapSV.find_equiv_all sv emap) in 
+              let plst  = Gen.BList.intersect_eq CP.eq_spec_var param_ann elist in
+              if not (Gen.is_empty plst) then CP.mkPolyAnn (List.hd plst)
+              else fimm
+    | _ -> fimm
+
+let collect_view_imm_from_h_formula f param_ann data_name emap = (* param_ann *)
+  let rec helper  f param_ann data_name emap =
+    match f with
+      | CF.DataNode {h_formula_data_param_imm = pimm; h_formula_data_imm = imm; h_formula_data_name = name}-> 
+            if name = data_name then
+              List.map (fun p -> update_arg_imm_for_view p imm param_ann emap) pimm
+            else []
+      | CF.ViewNode h -> []
+      | CF.Star {h_formula_star_h1 = h1; h_formula_star_h2 = h2}
+      | CF.Conj {h_formula_conj_h1 = h1; h_formula_conj_h2 = h2}
+      | CF.ConjStar {h_formula_conjstar_h1 = h1; h_formula_conjstar_h2 = h2}
+      | CF.ConjConj {h_formula_conjconj_h1 = h1; h_formula_conjconj_h2 = h2}
+      | CF.Phase    {h_formula_phase_rd = h1; h_formula_phase_rw = h2}
+          -> 
+            let a1 = helper h1 param_ann data_name emap in
+            let a2 = helper h2 param_ann data_name emap in
+            merge_imm_for_view a1 a2
+      | _ -> []
+  in  helper f param_ann data_name emap
+
+
+let collect_view_imm_from_formula f param_ann data_name = (* param_ann *)
+  let rec helper  f param_ann data_name = 
+    match f with 
+      | Or ({formula_or_f1 = f1; formula_or_f2 = f2; formula_or_pos = pos}) ->
+	    let a1 = helper f1 param_ann data_name in
+	    let a2 = helper f2 param_ann data_name in
+	    let anns = merge_imm_for_view a1 a2 in
+            anns
+      | Base   ({formula_base_heap   = h; formula_base_pure   = p})
+      | Exists ({formula_exists_heap = h; formula_exists_pure = p}) ->
+            let emap = build_eset_of_conj_formula (MCP.pure_of_mix p) in
+            let anns = collect_view_imm_from_h_formula h param_ann data_name emap in
+            anns
+  in helper f param_ann data_name
+
+let collect_view_imm_from_struc_formula sf param_ann data_name = 
+  let rec helper sf param_ann data_name = 
+    match sf with
+      | EBase f   -> collect_view_imm_from_formula (f.formula_struc_base) param_ann data_name
+      | EList l   -> List.fold_left (fun acc l ->  merge_imm_for_view acc l) [] (map_snd_only (fun c->  helper c param_ann data_name) l)
+      | ECase f   -> List.fold_left (fun acc l ->  merge_imm_for_view acc l) [] (map_snd_only (fun c->  helper c param_ann data_name)  f.formula_case_branches)
+      | EAssume f ->
+            let v_imm_lst = collect_view_imm_from_formula f.formula_assume_simpl param_ann data_name in
+            merge_imm_for_view [] (helper  f.formula_assume_struc param_ann data_name);
+      | EInfer f  -> helper f.formula_inf_continuation param_ann data_name
+  in helper sf param_ann data_name 
+
+let collect_view_imm_from_case_struc_formula sf param_ann data_name def_ann = (* def_ann *)
+  let f_lst = snd (List.split (sf.CF.formula_case_branches)) in
+  let final_data_ann = List.fold_left (fun acc f->
+      let data_ann = collect_view_imm_from_struc_formula f param_ann data_name in
+      merge_imm_for_view acc data_ann
+  ) [] f_lst in
+  final_data_ann
+
+(* andreeac TODOIMM use wrapper below *)
+let collect_annot_imm_info_in_formula annot_args f data_name ddefs =
+  let ddef = I.look_up_data_def_raw ddefs data_name in
+  let def_ann  = List.map (fun f -> CP.imm_ann_bot ) ddef.I.data_fields in
+  let ann_final = 
+    if not (!Globals.allow_field_ann) then def_ann
+    else
+      let ann_params = CP.annot_arg_to_imm_ann_list annot_args in
+      let ann_params = collect_view_imm_from_case_struc_formula f ann_params data_name def_ann in
+      ann_params
+  in
+  let annot_args = CP.imm_ann_to_annot_arg_list  ann_final in
+  annot_args
+
+

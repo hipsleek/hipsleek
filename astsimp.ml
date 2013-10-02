@@ -1608,7 +1608,7 @@ SpecVar (_, n, _) -> vdef.I.view_vars <- vdef.I.view_vars @ [n];
       let _ = if view_kind = Cast.View_PRIM then CF.view_prim_lst # push vn  in
       let view_vars_gen = CP.sv_to_view_arg_list view_sv_vars in
       let view_sv_vars, labels, ann_params = CP.split_view_args (List.combine view_vars_gen (fst vdef.I.view_labels))in
-      let ann_params = CP.imm_ann_to_annot_arg_list (CF.collect_imm_info ann_params n_un_str data_name prog.I.prog_data_decls) in 
+      (* let ann_params = CP.imm_ann_to_annot_arg_list (Immutable.collect_annot_imm_info_in_formula ann_params cf data_name prog.I.prog_data_decls) in  *)
       (* let _ = Debug.info_pprint ("!!! Trans_view HERE") no_pos in *)
       let cvdef ={
           C.view_name = vn;
@@ -5939,7 +5939,7 @@ and case_normalize_renamed_formula_x prog (avail_vars:(ident*primed) list) posib
                           Some (IP.Bptriple ((c,t,a),no_pos)),hvars
                       | _ ->
                           (Some (List.hd hvars), List.tl hvars))
-g              | None -> (None,hvars)
+              | None -> (None,hvars)
             in
             let new_h = IF.HeapNode{ b with 
                 IF.h_formula_heap_arguments = hvars;

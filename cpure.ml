@@ -19,7 +19,7 @@ type spec_var =
 
 (* immutability annotations *)
 type ann = ConstAnn of heap_ann | PolyAnn of spec_var |
-        TempAnn of ann | TempRes of (ann * ann)
+        TempAnn of ann | TempRes of (ann * ann) (* | Norm of (ann * ann) *)
 
 (* type view_arg = SVArg of spec_var | AnnArg of ann *)
 
@@ -578,6 +578,10 @@ let eq_ann (a1 :  ann) (a2 : ann) : bool =
     | ConstAnn ha1, ConstAnn ha2 -> ha1 == ha2
     | PolyAnn sv1, PolyAnn sv2 -> eq_spec_var sv1 sv2
     | _ -> false
+
+(* andreeac TODOIMM use wrapper below, use emap for spec eq *)
+let eq_ann_list (a1 :  ann list) (a2 : ann list) : bool =
+  List.fold_left (fun acc (a1,a2) -> acc &&(eq_ann a1 a2)) true (List.combine a1 a2)
 
 let rec eq_spec_var_order_list l1 l2=
   match l1,l2 with
@@ -6643,12 +6647,20 @@ let is_gt eq e1 e2 =
           -> (int_of_heap_ann i1)>(int_of_heap_ann i2)
     | _,_ -> false
 
+
+let imm_top = Accs
+let imm_bot = Mutable
+
+(*ann  expressions *)
 let const_ann_lend = AConst (Lend,no_pos)
 let const_ann_imm = AConst (Imm,no_pos)
 let const_ann_mut = AConst (Mutable,no_pos)
 let const_ann_abs = AConst (Accs,no_pos)
-let const_ann_top = const_ann_abs
-let const_ann_bot = const_ann_mut
+let const_ann_top = AConst (imm_top, no_pos)
+let const_ann_bot = AConst (imm_bot, no_pos)
+(*annotations *)
+let imm_ann_top = ConstAnn imm_top
+let imm_ann_bot = ConstAnn imm_bot
 
 let is_diff e1 e2 =
   match e1,e2 with
@@ -11564,6 +11576,11 @@ let imm_to_sv ann =
     | PolyAnn ann  -> Some ann
     | ConstAnn ann -> Some (mk_sv_aconst ann)
     | _ -> None 
+
+let imm_to_sv_list ann = 
+  List.fold_left (fun acc a -> match a with
+    | Some ann -> acc@ann 
+    | None     -> acc) [] ann
  
 let ann_sv_lst  = (name_for_imm_sv Mutable):: (name_for_imm_sv Imm):: (name_for_imm_sv Lend)::[(name_for_imm_sv Accs)]
 
