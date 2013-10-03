@@ -52,6 +52,7 @@ void insertion_sort(node x, ref node y)
 	if (x != null)
 	{
 		y = insert(y, x.val);
+                dprint; 
 		insertion_sort(x.next, y);
 	}
 }
