@@ -838,7 +838,7 @@ let analize_unk_x prog post_hps constrs total_unk_map unk_hpargs link_hpargs=
    let full_hps = List.map (fun (hp, _, _) -> hp) full_unk_hp_args2_locs in
    (*find full unk_hps: I parameters + unk_svl*)
    let full_unk_hp_locs0, link_hpargs2 = find_full_unk_hps prog closure_post_hps full_hps unk_hp_args1 in
-   let _ = Debug.ninfo_pprint ("  full_unk_hp_locs: " ^ (let pr = pr_list (pr_pair !CP.print_sv (pr_list string_of_int))
+   let _ = Debug.info_pprint ("  full_unk_hp_locs: " ^ (let pr = pr_list (pr_pair !CP.print_sv (pr_list string_of_int))
                                               in pr full_unk_hp_locs0)) no_pos
    in
    let full_unk_hp_locs, link_hpargs2a =
@@ -854,7 +854,7 @@ let analize_unk_x prog post_hps constrs total_unk_map unk_hpargs link_hpargs=
        ([], List.map (fun (hp,locs) -> (hp,assoc3 unk_hp_args1 hp)) full_unk_hp_locs0)
    in
    let link_hpargs3 = Gen.BList.remove_dups_eq (fun (hp1,_) (hp2,_) -> CP.eq_spec_var hp1 hp2) ((List.filter (fun (hp,_) -> not (CP.mem_svl hp post_hps)) link_hpargs2)@link_hpargs@link_hpargs2a) in
-   let _ = Debug.ninfo_zprint (lazy (("  link_hpargs3: " ^ (let pr = pr_list (pr_pair !CP.print_sv !CP.print_svl) in pr link_hpargs3)))) no_pos
+   let _ = Debug.info_zprint (lazy (("  link_hpargs3: " ^ (let pr = pr_list (pr_pair !CP.print_sv !CP.print_svl) in pr link_hpargs3)))) no_pos
    in
    let link_hps = List.map fst link_hpargs3 in
    let rec update_helper cs unk_map res_cs res_unk_hps res_drop_links=
@@ -2000,8 +2000,34 @@ let trans_constr_hp_2_view iprog cprog proc_name hpdefs in_hp_names chprels_decl
 *)
 let do_entail_check_x vars cprog cs=
   let _ = Infer.rel_ass_stk # reset in
+  let get_view_def vname=
+    let _ = DD.ninfo_hprint (add_str "vname" pr_id) vname no_pos in
+    let vdef = (Cast.look_up_view_def_raw 40 cprog.Cast.prog_view_decls vname) in
+    (vname, vdef.Cast.view_un_struc_formula,vdef.Cast.view_vars)
+  in
+  let has_unknown vdef =
+    let hrels = List.fold_left (fun r (f,_) ->
+    r@((CF.get_hp_rel_name_formula f))) [] vdef in
+     hrels <> []
+  in
   let ante = cs.CF.hprel_lhs in
-  let conseq = CF.struc_formula_of_formula cs.CF.hprel_rhs (CF.pos_of_formula  cs.CF.hprel_rhs) in
+  let unfolded_rhs =
+    let vnodes = CF.get_vnodes cs.CF.hprel_rhs in
+    if vnodes = [] then cs.CF.hprel_rhs else
+      let pr_views = List.map (fun vn ->
+          match vn with
+            | CF.ViewNode vn -> get_view_def vn.CF.h_formula_view_name
+            | _ -> report_error no_pos "SAC.do_entail_check: impposible"
+      ) vnodes in
+      let need_unfold = List.fold_left (fun r (vname,vdef,_) ->
+          if has_unknown vdef then
+            r@[vname]
+          else r
+      ) [] pr_views in
+      if need_unfold = [] then cs.CF.hprel_rhs else
+        CF.do_unfold_view cprog pr_views cs.CF.hprel_rhs
+  in
+  let conseq = CF.struc_formula_of_formula unfolded_rhs (CF.pos_of_formula cs.CF.hprel_rhs) in
   let (valid, rs,v_hp_rel) = SC.sleek_entail_check vars cprog [] ante conseq in
   let valid = ((not (CF.isFailCtx rs))) in
   if not valid then

@@ -4800,7 +4800,10 @@ let get_sharing_x prog unk_hps r other_args args sh_ldns eqNulls eqPures hprels 
       let n_args = (next_roots@other_args) in
       (*first rel def for the orig*)
       let rest =  (hdss@(List.map (fun hprel -> CF.HRel hprel) hprels)) in
-      let orig_defs_h = List.fold_left (fun hf1 hf2 -> CF.mkStarH hf1 hf2 no_pos) (List.hd rest) (List.tl rest) in
+      let orig_defs_h = match rest with
+        | [] -> CF.HEmp
+        | _ -> List.fold_left (fun hf1 hf2 -> CF.mkStarH hf1 hf2 no_pos) (List.hd rest) (List.tl rest)
+      in
       let orig_def = CF.formula_of_heap orig_defs_h no_pos in
       (*common null process*)
       let orig_def1 =

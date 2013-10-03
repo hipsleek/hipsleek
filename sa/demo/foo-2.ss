@@ -17,8 +17,7 @@ node foo(node x)
 */ 
   infer [H,G]
   requires H(x)
-     ensures G(x,res);
-
+ensures G(x,res);
 {
   if (x== null) return null;
   else return foo(x.next);

@@ -1449,7 +1449,7 @@ let match_hps_views iprog prog sel_hps (hp_defs: CF.hp_rel_def list) (vdcls: CA.
 (***************************************************************
                      END LIB MATCHING
 ****************************************************************)
-let partition_constrs_x constrs post_hps0=
+let partition_constrs_x constrs post_hps0 dang_hps=
   let get_pre_fix_hp pre_fix_hps cs=
     let ohp = CF.extract_hrel_head cs.CF.hprel_rhs in
         match ohp with
@@ -1505,11 +1505,11 @@ let partition_constrs_x constrs post_hps0=
   ) pre_constrs in
   (pre_constrs1,post_constrs, pre_fix_constrs, pre_oblg@pre_oblg_ext, post_oblg_constrs, pre_fix_hps)
 
-let partition_constrs constrs post_hps=
+let partition_constrs constrs post_hps dang_hps=
   let pr1 = pr_list_ln Cprinter.string_of_hprel_short in
   let pr2 = !CP.print_svl in
-  Debug.no_2 "partition_constrs" pr1 pr2 (pr_hexa pr1 pr1 pr1 pr1 pr1 pr2)
-      (fun _ _ -> partition_constrs_x constrs post_hps) constrs post_hps
+  Debug.no_3 "partition_constrs" pr1 pr2 pr2 (pr_hexa pr1 pr1 pr1 pr1 pr1 pr2)
+      (fun _ _ _ -> partition_constrs_x constrs post_hps dang_hps) constrs post_hps dang_hps
 
 (***************************************************************
                      PROCESS INFER ACTION
@@ -1822,8 +1822,10 @@ and infer_shapes_from_obligation_x iprog prog proc_name callee_hps is_pre is nee
     (*call to infer_shape? proper? or post?*)
     let is1 = {is with CF.is_constrs = constrs2;} in
     let n_is=
-      infer_shapes_from_fresh_obligation iprog prog proc_name callee_hps
+      let r = infer_shapes_from_fresh_obligation iprog prog proc_name callee_hps
           is_pre is1 sel_lhs_hps sel_rhs_hps need_preprocess detect_dang def_hps in
+      r
+    in
     let pr1 = pr_list_ln  Cprinter.string_of_hprel_short in
     DD.binfo_pprint ("rem_constr:\n" ^ (pr1 rem_constr)) no_pos;
     if rem_constr = [] then
@@ -1943,7 +1945,7 @@ and infer_shapes_proper iprog prog proc_name callee_hps is need_preprocess detec
   let _ = DD.ninfo_hprint (add_str "link_hps" !CP.print_svl) link_hps no_pos in
   (*partition constraints into 4 groups: pre-predicates, pre-oblg,post-predicates, post-oblg*)
   let pre_constrs,post_constrs0, pre_fix_constrs, pre_oblg_constrs0, post_oblg_constrs, pre_fix_hps =
-    partition_constrs is.CF.is_constrs is.CF.is_post_hps
+    partition_constrs is.CF.is_constrs is.CF.is_post_hps (unk_hps@link_hps)
   in
   let post_hps1 = is.CF.is_post_hps in
   (*pre-synthesize*)
