@@ -6647,10 +6647,6 @@ let is_gt eq e1 e2 =
           -> (int_of_heap_ann i1)>(int_of_heap_ann i2)
     | _,_ -> false
 
-
-let imm_top = Accs
-let imm_bot = Mutable
-
 (*ann  expressions *)
 let const_ann_lend = AConst (Lend,no_pos)
 let const_ann_imm = AConst (Imm,no_pos)
@@ -11609,6 +11605,16 @@ let is_accs_sv sv =
 
 
 (* utilities for allowing annotations as view arguments *)
+let eq_annot_arg a1 a2 =
+  match a1,a2 with
+    | ImmAnn a1, ImmAnn a2 -> eq_ann a1 a2
+
+let eq_view_arg a1 a2 = 
+  match a1, a2 with
+    | SVArg sv1, SVArg sv2     -> eq_spec_var sv1 sv2
+    | AnnotArg a1, AnnotArg a2 -> eq_annot_arg a1 a2
+    | _ -> false
+
 let mkSVArg sv = SVArg sv
 
 let mkImmAnn a = ImmAnn a
@@ -11624,6 +11630,10 @@ let is_view_annot_arg (arg:view_arg): bool =
   match arg with
     | AnnotArg _ -> true
     | _          -> false
+
+let eq_annot_arg a1 a2 =
+  match a1,a2 with
+    | ImmAnn a1, ImmAnn a2 -> eq_ann a1 a2
 
 let annot_arg_to_imm_ann (arg: annot_arg ): ann list =
   match arg with
@@ -11668,7 +11678,7 @@ let view_arg_to_annot_arg (arg:view_arg): annot_arg list =
     | AnnotArg arg -> [arg]
     | _            -> []
 
-let view_arg_to_annot_arg_lis (args:view_arg list): annot_arg list =
+let view_arg_to_annot_arg_list (args:view_arg list): annot_arg list =
   List.fold_left (fun acc arg -> acc@(view_arg_to_annot_arg arg)) []  args
 
 let annot_arg_to_view_arg (arg: annot_arg): view_arg =
@@ -11697,10 +11707,6 @@ let sv_to_view_arg (sv: spec_var): view_arg =
 
 let sv_to_view_arg_list (svl: spec_var list): view_arg list =
   List.map sv_to_view_arg svl
-
-let eq_annot_arg a1 a2 =
-  match a1,a2 with
-    | ImmAnn a1, ImmAnn a2 -> eq_ann a1 a2
 
 let range a b =
   let rec aux a b =
@@ -11733,5 +11739,28 @@ let combine_labels_w_view_arg  lbl view_arg =
   let view_args_w_lbl = List.map (fun (l,(_,a)) -> (l,a)) no_view_args in
   view_args_w_lbl
 
+let initialize_positions_for_view_params (va: 'a list) = 
+  let positions = range 1 (List.length va) in
+  let va_pos = List.combine va positions in
+  va_pos
+
+let update_positions_for_view_params (va: 'a list) = 
+  let positions = range 1 (List.length va) in
+  let va_pos = List.combine va positions in
+  va_pos
+
+let update_positions_for_view_params_x (aa: annot_arg list) (pattern_lst: (view_arg * int) list) = 
+  (* let aa_pos = List.map (fun a -> (a,0)) aa in *)
+  let aa_pos = List.map (fun a -> 
+      let a = annot_arg_to_view_arg a in
+      let ff p = if (eq_view_arg (fst p) a) then Some (a,snd p) else None in
+      let found = Gen.BList.list_find ff pattern_lst in
+      match found with
+        | Some p -> p
+        | None   -> (a,0) ) aa in
+  let aa, pos = List.split aa_pos in
+  let aa = view_arg_to_annot_arg_list aa in
+  let aa_pos = List.combine aa pos in
+  aa_pos
 
 (* end utilities for allowing annotations as view arguments *)

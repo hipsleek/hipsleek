@@ -144,9 +144,27 @@ unsoud imm without setting  simpl_memset,
 due to the fact that h_formula_2_mem detects false on ante 
 when encounters * between nodes with disjoint fileds.
 eg:
-x::node<x@M,x@[@v]> * x::node<x@A,x@A>
+x::node<x@M,x@[@v]> * x::node<x@A,x@A> ==> false
 
 =============================================================
+Current restriction (which is not enforced by the parser yet):
+when enable_field_ann is set, all imm ann for data inside 
+view decl, must be parameters of view_decl in the order 
+they are used for view data. ex:
+
+ll<n,a1,a2> = self = null & n=0 or
+               self::node<_@a1,q@a2> * q::ll<n,a1,a2>
+
+
+fix the parameter positions: 
+(i)   add one extra field for I.view_decl: annot * pos
+(ii)  collecting imm info is done in Imm, for CF; must update 
+      the functions so that they use IF.
+(iii) during i2c, use the above field to update  CF.h_formula_view
+     with the appropriate annot_arg * pos
+
+
+
 =============================================================
 =============================================================
 =============================================================

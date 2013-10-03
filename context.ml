@@ -500,7 +500,7 @@ and update_field_imm_x (f : h_formula) (new_fann: CP.ann list) : h_formula  =
   if (isAccsList new_fann) then HEmp else
     let updated_f = match f with 
       | DataNode d -> DataNode ( {d with h_formula_data_param_imm = new_fann} )
-      | ViewNode v -> ViewNode ( {v with h_formula_view_annot_arg = CP.imm_ann_to_annot_arg_list new_fann} )
+      | ViewNode v -> ViewNode ( {v with h_formula_view_annot_arg =  CP.update_positions_for_view_params (CP.imm_ann_to_annot_arg_list new_fann)} )
       | _          -> report_error no_pos ("[context.ml] : only data node should allow field annotations \n")
     in
     updated_f
@@ -544,8 +544,8 @@ and imm_split_lhs_node_x estate l_node r_node = match l_node, r_node with
           (estate,(([],[],[]),[]))
   | ViewNode vl, ViewNode vr ->
         if (!Globals.allow_field_ann) then
-          let l_ann = CP.annot_arg_to_imm_ann_list vl.h_formula_view_annot_arg in
-          let r_ann = CP.annot_arg_to_imm_ann_list vr.h_formula_view_annot_arg in
+          let l_ann = CP.annot_arg_to_imm_ann_list (get_node_annot_args l_node) in
+          let r_ann = CP.annot_arg_to_imm_ann_list (get_node_annot_args r_node) in
           let (res_ann, cons_ann), niv, constr = Immutable.replace_list_ann l_ann r_ann estate in
           let n_f = update_field_imm l_node res_ann in
           let n_ch = update_field_imm l_node cons_ann in
@@ -717,8 +717,8 @@ and spatial_ctx_extract_x prog (f0 : h_formula) (aset : CP.spec_var list) (imm :
       h_formula_view_imm = imm1;
       h_formula_view_perm = perm1;
       h_formula_view_arguments = vs1;
-      h_formula_view_annot_arg = anns;
-      h_formula_view_name = c}) ->
+      h_formula_view_name = c}) as v ->
+          let anns = get_node_annot_args f in
           begin
             match rhs_node with
               | HRel (hp,_,_) ->  
@@ -1176,7 +1176,7 @@ and process_one_match_x prog estate lhs_h is_normalizing (c:match_res) (rhs_node
                   in
                   let new_orig = if !ann_derv then not(vr_view_derv) else vr_view_orig in
                   let sub_ann  = if (!Globals.allow_field_ann) then 
-                    let r,_,_,_ = Immutable.subtype_ann_list [] [] dl.h_formula_data_param_imm (CP.annot_arg_to_imm_ann_list vr.h_formula_view_annot_arg) in
+                    let r,_,_,_ = Immutable.subtype_ann_list [] [] dl.h_formula_data_param_imm (CP.annot_arg_to_imm_ann_list (get_node_annot_args rhs_node)) in
                     let isAccs  = Immutable.isAccsList dl.h_formula_data_param_imm in
                     r && not(isAccs)
                   else true in
@@ -1213,7 +1213,7 @@ and process_one_match_x prog estate lhs_h is_normalizing (c:match_res) (rhs_node
                   (* let a1 = if (new_orig || vl_self_pts==[]) then [(1,M_unfold (c,uf_i))] else [] in *)
                   let _ = DD.tinfo_hprint (add_str "left_ls" (pr_list pr_none)) left_ls no_pos in
                   let sub_ann  = if (!Globals.allow_field_ann) then 
-                    let r,_,_,_ = Immutable.subtype_ann_list [] []  (CP.annot_arg_to_imm_ann_list vl.h_formula_view_annot_arg) dr.h_formula_data_param_imm in
+                    let r,_,_,_ = Immutable.subtype_ann_list [] []  (CP.annot_arg_to_imm_ann_list (get_node_annot_args lhs_node)) dr.h_formula_data_param_imm in
                     r
                   else true in
                   let a1 = 

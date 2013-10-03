@@ -1186,6 +1186,8 @@ let rec pr_h_formula h =
       h_formula_view_pruning_conditions = pcond;
 	  h_formula_view_unfold_num = ufn;
       h_formula_view_pos =pos}) ->
+          let anns = List.map fst anns in
+          let svs_orig = List.map fst svs_orig in
           let perm_str = string_of_cperm perm in
           let params = CP.create_view_arg_list_from_map svs_orig svs anns in
           fmt_open_hbox ();
@@ -1342,6 +1344,8 @@ let rec prtt_pr_h_formula h =
       h_formula_view_remaining_branches = ann;
       h_formula_view_pruning_conditions = pcond;
       h_formula_view_pos =pos}) ->
+        let anns = List.map fst anns in
+        let svs_orig = List.map fst svs_orig in
         let perm_str = string_of_cperm perm in
         let params = CP.create_view_arg_list_from_map svs_orig svs anns in
           fmt_open_hbox ();
@@ -1469,6 +1473,8 @@ let rec prtt_pr_h_formula_inst prog h =
       h_formula_view_remaining_branches = ann;
       h_formula_view_pruning_conditions = pcond;
       h_formula_view_pos =pos}) ->
+        let anns = List.map fst anns in
+        let svs_orig = List.map fst svs_orig in
         let perm_str = string_of_cperm perm in
         let params = CP.create_view_arg_list_from_map svs_orig svs anns in
           fmt_open_hbox ();
@@ -1593,6 +1599,8 @@ let rec pr_h_formula_for_spec h =
     h_formula_view_remaining_branches = ann;
     h_formula_view_pruning_conditions = pcond;
     h_formula_view_pos =pos}) ->
+    let anns = List.map fst anns in
+    let svs_orig = List.map fst svs_orig in
     let perm_str = string_of_cperm perm in
     let params = CP.create_view_arg_list_from_map svs_orig svs anns in
     fmt_open_hbox ();
@@ -3008,10 +3016,10 @@ let pr_view_decl v =
   (* wrap_box ("B",0) (fun ()-> pr_angle  ("view"^s^v.view_name) pr_typed_spec_var_lbl  *)
   (*     (List.combine v.view_labels v.view_vars); fmt_string "= ") (); *)
   wrap_box ("B",0) (fun ()-> pr_angle  ("view"^s^v.view_name) pr_typed_view_arg_lbl 
-      (CP.combine_labels_w_view_arg v.view_labels  v.view_params_orig); fmt_string "= ") ();
+      (CP.combine_labels_w_view_arg v.view_labels  (List.map fst v.view_params_orig)); fmt_string "= ") ();
   fmt_cut (); wrap_box ("B",0) pr_struc_formula v.view_formula; 
   pr_vwrap  "view vars: "  pr_list_of_spec_var v.view_vars;
-  pr_vwrap  "ann vars: "  pr_list_of_annot_arg v.view_ann_params;
+  pr_vwrap  "ann vars: "  pr_list_of_annot_arg (List.map fst v.view_ann_params);
   pr_vwrap  "cont vars: "  pr_list_of_spec_var v.view_cont_vars;
   pr_vwrap  "inv: "  pr_mix_formula v.view_user_inv;
   pr_vwrap  "inv_lock: "  (pr_opt pr_formula) v.view_inv_lock;
@@ -3058,7 +3066,7 @@ let pr_view_decl_short v =
   (* wrap_box ("B",0) (fun ()-> pr_angle  ("view"^v.view_name) pr_typed_spec_var_lbl  *)
   (*     (List.combine v.view_labels v.view_vars); fmt_string "= ") (); *)
   wrap_box ("B",0) (fun ()-> pr_angle  ("view"^v.view_name) pr_typed_view_arg_lbl 
-      (List.combine v.view_labels v.view_params_orig); fmt_string "= ") ();
+      (List.combine v.view_labels (List.map fst v.view_params_orig)); fmt_string "= ") ();
   fmt_cut (); wrap_box ("B",0) pr_struc_formula v.view_formula; 
   pr_vwrap  "cont vars: "  pr_list_of_spec_var v.view_cont_vars;
   pr_vwrap  "inv: "  pr_mix_formula v.view_user_inv;
@@ -3855,6 +3863,8 @@ let rec html_of_h_formula h = match h with
 				h_formula_view_pruning_conditions = pcond;
 				h_formula_view_pos =pos}) ->
 	      (* (html_of_spec_var sv) ^ html_mapsto ^ c ^ html_left_angle_bracket ^ (html_of_spec_var_list svs) ^ html_right_angle_bracket *)
+              let anns = List. map fst anns in
+              let svs_orig = List. map fst svs_orig in
               let params = CP.create_view_arg_list_from_map svs_orig svs anns in
 	      (html_of_spec_var sv) ^ html_mapsto ^ c ^ html_left_angle_bracket ^ (html_of_view_arg_list params) ^ html_right_angle_bracket
   | HTrue -> "<b>htrue</b>"

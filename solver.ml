@@ -3200,7 +3200,8 @@ and struc_unfold_heap_x (prog:Cast.prog_or_branches) (f : h_formula) (aset : CP.
                 | None -> renamed_view_formula
                 | Some f -> Cformula.propagate_perm_struc_formula renamed_view_formula (Cpure.get_var f)) 
             else renamed_view_formula in
-          let fr_ann = vdef.view_ann_params in
+          let fr_ann = List.map fst vdef.view_ann_params in
+          let anns = List.map fst anns in
           let to_ann = anns in
           let mpa = List.combine fr_ann to_ann in
           let forms = Immutable.propagate_imm_struc_formula renamed_view_formula imm mpa in
@@ -3330,7 +3331,8 @@ and unfold_heap_x (prog:Cast.prog_or_branches) (f : h_formula) (aset : CP.spec_v
                       let forms = match brs with 
                         | None -> formula_of_unstruc_view_f vdef
                         | Some s -> joiner (List.filter (fun (_,l)-> List.mem l s) vdef.view_un_struc_formula) in
-                      let from_ann = vdef.view_ann_params in
+                      let from_ann = List.map fst vdef.view_ann_params in
+                      let anns = List.map fst anns in
                       let to_ann = anns in 
                       let mpa = List.combine from_ann to_ann in
                       let forms = propagate_imm_formula forms imm mpa in
@@ -3742,7 +3744,8 @@ and fold_op_x1 prog (ctx : context) (view : h_formula) vd (rhs_p : MCP.mix_formu
               let fr_vars = (CP.SpecVar (Named vdef.Cast.view_data_name, self, Unprimed)) :: vdef.view_vars in
               let to_vars = p :: vs in
               let view_form = subst_struc_avoid_capture fr_vars to_vars renamed_view_formula in
-              let fr_ann = vdef.view_ann_params in
+              let anns = List.map fst anns in
+              let fr_ann = List.map fst vdef.view_ann_params in
               let to_ann = anns in
               (*ENHANCE universal lemmas:
                 propagate constraint on univ_vars into view_form*)
@@ -9793,7 +9796,7 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
         h_formula_view_imm = ann;
         h_formula_view_arguments = l_args;
         h_formula_view_annot_arg = l_annot
-        } -> (l_args, l_node_name, "view", perm, ann, (CP.annot_arg_to_imm_ann_list l_annot))
+        } -> (l_args, l_node_name, "view", perm, ann, (CP.annot_arg_to_imm_ann_list (List.map fst l_annot)))
       | HRel (_, eargs, _) -> ((List.fold_left List.append [] (List.map CP.afv eargs)), "", "hrel",  None, CP.ConstAnn Mutable,[])
       | _ -> report_error no_pos "[solver.ml]: do_match non view input lhs\n" in
     let r_args, r_node_name,  r_var, r_perm, r_ann, r_param_ann = match r_node with
@@ -9808,7 +9811,7 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
         h_formula_view_imm = ann;
         h_formula_view_arguments = r_args;
         h_formula_view_annot_arg = r_annot;
-        h_formula_view_node = r_var} -> (r_args, r_node_name, r_var, perm, ann, (CP.annot_arg_to_imm_ann_list r_annot))
+        h_formula_view_node = r_var} -> (r_args, r_node_name, r_var, perm, ann, (CP.annot_arg_to_imm_ann_list (List.map fst r_annot)))
       | HRel (rhp, eargs, _) -> ((List.fold_left List.append [] (List.map CP.afv eargs)), "", rhp, None, CP.ConstAnn Mutable,[])
       | _ -> report_error no_pos "[solver.ml]: do_match non view input rhs\n" in     
 
@@ -10417,8 +10420,8 @@ and do_fold_w_ctx_x fold_ctx prog estate conseq ln2 vd resth2 rhs_b is_folding p
       h_formula_view_unfold_num = unfold_num;
       h_formula_view_perm = perm; (*LDK*)
       h_formula_view_arguments = List.tl new_v2;
-      h_formula_view_annot_arg = get_node_annot_args ln2;
-      h_formula_view_args_orig = get_node_args_orig ln2;
+      h_formula_view_annot_arg = CP.update_positions_for_view_params (get_node_annot_args ln2);
+      h_formula_view_args_orig = CP.update_positions_for_view_params (get_node_args_orig ln2);
       h_formula_view_modes = get_view_modes ln2;
       h_formula_view_coercible = true;
       h_formula_view_lhs_case = false;

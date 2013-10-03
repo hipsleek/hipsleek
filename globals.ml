@@ -87,6 +87,8 @@ and term_fail =
   | TermErr_Must
 
 (* and rel = REq | RNeq | RGt | RGte | RLt | RLte | RSubAnn *)
+let imm_top = Accs
+let imm_bot = Mutable
 
 type hp_arg_kind=
   | I

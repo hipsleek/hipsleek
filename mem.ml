@@ -1047,13 +1047,13 @@ let compact_view_nodes (h1: CF.h_formula) (h2: CF.h_formula) (aset:CP.spec_var l
          CF.h_formula_view_node = v1;
          CF.h_formula_view_annot_arg = annot_arg1;
          } ->
-    let param_ann1 = CP.annot_arg_to_imm_ann_list annot_arg1 in
+    let param_ann1 = CP.annot_arg_to_imm_ann_list (List.map fst annot_arg1) in
     let aset_sv = Context.get_aset aset v1 in
          (match h2 with
  	 | CF.ViewNode { CF.h_formula_view_name = name2;
  	                 CF.h_formula_view_node = v2;
  	                 CF.h_formula_view_annot_arg = annot_arg2;} ->
-         let param_ann2 = CP.annot_arg_to_imm_ann_list annot_arg2 in
+         let param_ann2 = CP.annot_arg_to_imm_ann_list (List.map fst annot_arg2 ) in
          (* h1, h2 nodes; check if they can be join into a single node. If so, h1 will contain the updated annotations, while 
             h2 will be replaced by "emp". Otherwise both data nodes will remain unchanged *)
  		 if (String.compare name1 name2 == 0) && ((CP.mem v2 aset_sv) || (CP.eq_spec_var v1 v2)) then
@@ -1063,7 +1063,7 @@ let compact_view_nodes (h1: CF.h_formula) (h2: CF.h_formula) (aset:CP.spec_var l
                    (match h1 with 
                      | CF.ViewNode h ->
 			   	         (CF.ViewNode {h with 
-                           CF.h_formula_view_annot_arg = (CP.imm_ann_to_annot_arg_list new_param_imm);},
+                           CF.h_formula_view_annot_arg = CP.update_positions_for_view_params (CP.imm_ann_to_annot_arg_list new_param_imm);},
                           CF.HEmp, (CP.mkTrue no_pos))
                      | _ -> (h1, h2,(CP.mkTrue no_pos))
                    )
@@ -1187,12 +1187,10 @@ Rejoin h2 star fomula, and apply compact_nodes_with_same_name_in_h_formula_x on 
 		      	res_h1, res_h2,res_p
               | CF.ViewNode {CF.h_formula_view_node = vn1;
                              CF.h_formula_view_name = name1;
-                             CF.h_formula_view_annot_arg = ann_arg1;
                              CF.h_formula_view_pos = pos1} ->
                   (match h2 with
  	      	          | CF.ViewNode { CF.h_formula_view_node = vn2;
  		                              CF.h_formula_view_name = name2;
- 		                              CF.h_formula_view_annot_arg = ann_arg2; 
  		                              CF.h_formula_view_pos = pos1} ->
  		                              compact_view_nodes h1 h2 aset func
                       | _ ->  h1,h2,(CP.mkTrue no_pos)
@@ -1311,7 +1309,7 @@ let rec is_lend_h_formula (f : CF.h_formula) : bool =  match f with
         else
           false
   | CF.ViewNode (h1) ->
-        let anns = CP.annot_arg_to_imm_ann_list  h1.CF.h_formula_view_annot_arg in 
+        let anns = CP.annot_arg_to_imm_ann_list (CF.get_node_annot_args  f) in 
         let islend = List.exists CP.isLend anns in
         if (CP.isLend h1.CF.h_formula_view_imm) || (islend) then
           (* let _ = print_string("true for h = " ^ (!print_h_formula f) ^ "\n\n") in *) true

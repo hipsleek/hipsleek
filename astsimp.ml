@@ -1564,8 +1564,7 @@ and trans_view_x (prog : I.prog_decl) ann_typs (vdef : I.view_decl): C.view_decl
           let is_deref_var = CP.is_inter_deference_spec_var v in
           if (is_deref_var) then (
             match v with
-            | CP.
-SpecVar (_, n, _) -> vdef.I.view_vars <- vdef.I.view_vars @ [n];
+            | CP.SpecVar (_, n, _) -> vdef.I.view_vars <- vdef.I.view_vars @ [n];
           );
           not (is_deref_var)
         ) ffv in
@@ -1607,8 +1606,8 @@ SpecVar (_, n, _) -> vdef.I.view_vars <- vdef.I.view_vars @ [n];
       let vn = vdef.I.view_name in
       let _ = if view_kind = Cast.View_PRIM then CF.view_prim_lst # push vn  in
       let view_vars_gen = CP.sv_to_view_arg_list view_sv_vars in
-      let view_sv_vars, labels, ann_params = CP.split_view_args (List.combine view_vars_gen (fst vdef.I.view_labels))in
-      (* let ann_params = CP.imm_ann_to_annot_arg_list (Immutable.collect_annot_imm_info_in_formula ann_params cf data_name prog.I.prog_data_decls) in  *)
+      let view_sv_vars, labels, ann_params = CP.split_view_args (List.combine view_vars_gen (fst vdef.I.view_labels)) in
+      let ann_params, view_vars_gen = Immutable.initialize_positions_for_args ann_params view_vars_gen cf data_name  prog.I.prog_data_decls in
       (* let _ = Debug.info_pprint ("!!! Trans_view HERE") no_pos in *)
       let cvdef ={
           C.view_name = vn;
@@ -5265,6 +5264,9 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
                               let v = List.nth permvars 0 in
                               Some (Cpure.Var (v,no_pos)) ))
                 in
+                (* let annot_params, params_orig = Immutable.initialize_positions_for_args  annot_params params_orig in  *)
+                let params_orig = CP.initialize_positions_for_view_params params_orig in
+                let annot_params = CP.update_positions_for_view_params annot_params in
                 let new_h = CF.ViewNode {
                     CF.h_formula_view_node = new_v;
                     CF.h_formula_view_name = c;

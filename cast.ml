@@ -88,8 +88,8 @@ and view_decl = {
     view_kind : view_kind;
     (* below to detect @L in post-condition *)
     mutable view_contains_L_ann : bool;
-    view_ann_params : P.annot_arg list;
-    view_params_orig: P.view_arg list;
+    view_ann_params : (P.annot_arg * int) list;
+    view_params_orig: (P.view_arg * int) list;
     mutable view_partially_bound_vars : bool list;
     mutable view_materialized_vars : mater_property list; (* view vars that can point to objects *)
     view_data_name : ident;
