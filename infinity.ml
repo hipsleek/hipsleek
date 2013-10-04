@@ -852,7 +852,7 @@ let rec sub_inf_list_b_formula (bf:CP.b_formula) (vl: CP.spec_var list) (is_neg:
                     then            
                       let e1_conv = sub_inf_list_exp e1 vl is_neg in
                       let e2_conv = sub_inf_list_exp e2 vl is_neg in
-                      Gt(e2_conv,e1_conv,pos),p_f
+                      Gt(e1_conv,e1_conv,pos),p_f
                     else p_f,tbf
                 | _, _ -> p_f,tbf)         
             | Add(a1,a2,_),Var(sv,pos) -> (match a1,a2 with
@@ -882,7 +882,7 @@ let rec sub_inf_list_b_formula (bf:CP.b_formula) (vl: CP.spec_var list) (is_neg:
                     then            
                       let e1_conv = sub_inf_list_exp e1 vl is_neg in
                       let e2_conv = sub_inf_list_exp e2 vl is_neg in
-                      Lt(e2_conv,e1_conv,pos),p_f
+                      Lt(e1_conv,e2_conv,pos),p_f
                     else p_f,tbf
                 | _, _ -> p_f,tbf) 
             | Add(a1,a2,_),Var(sv,pos) -> (match a1,a2 with
