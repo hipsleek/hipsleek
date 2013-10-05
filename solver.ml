@@ -4015,7 +4015,7 @@ and entail_state_elim_exists_x es =
   let pr_h = Cprinter.string_of_h_formula in
   let ff = es.es_formula in
   Debug.tinfo_hprint (add_str "f(b4 elim_exists_es_his)" pr_f) ff no_pos;
-  let f_prim,new_his = elim_exists_es_his ff es.es_history in
+  let f_prim,new_his,n_ss_ref = elim_exists_es_his ff es.es_history es.es_subst_ref in
   (* 05.06.08 *)
   (* we also try to eliminate exist vars for which a find a substitution of the form v = exp from the pure part *)
   (* let _ = print_string("[solver.ml, elim_exists_ctx]: Formula before exp exist elim: " ^ Cprinter.string_of_formula f_prim ^ "\n") in *)
@@ -4038,7 +4038,9 @@ and entail_state_elim_exists_x es =
   let simpl_fl = fl (*flows have nothing to simplify to*)in
   let simpl_f = CF.mkExists qvar h simpl_p t simpl_fl (CF.formula_and_of_formula base) (CF.pos_of_formula base) in (*TO CHECK*)
   Ctx{es with es_formula = simpl_f;
-      es_history = new_his}   (*assuming no change in cache formula*)
+      es_history = new_his;
+      es_subst_ref = n_ss_ref;
+  }   (*assuming no change in cache formula*)
 
 and entail_state_elim_exists es =
   let pr1 = Cprinter.string_of_formula in
@@ -5387,7 +5389,10 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
                                             in
                                             let new_post = CF.removeLS post in
                                             (*donot rename lockset variable when fork*)
-                                            let new_ref_vars = List.filter (fun v -> CP.name_of_spec_var v <> Globals.ls_name && CP.name_of_spec_var v <> Globals.lsmu_name) ref_vars in
+                                            let new_ref_vars = List.filter (fun v ->
+                                                let vname = CP.name_of_spec_var v in
+                                                vname <> Globals.ls_name && vname <> Globals.lsmu_name
+                                            ) ref_vars in
                                             let rs2 = compose_context_formula_and rs1 new_post df id new_ref_vars pos in
 				            let rs3 = add_path_id rs2 (pid,i) (-1) in
                                             let rs4 = prune_ctx prog rs3 in

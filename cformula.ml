@@ -3466,16 +3466,16 @@ and elim_exists_preserve (f0 : formula) rvars : formula = match f0 with
         r
   | Exists _ -> report_error no_pos ("Solver.elim_exists: Exists with an empty list of quantified variables")
 
-and elim_exists_es_his_x (f0 : formula) (his:h_formula list) : formula*h_formula list =
-  let rec helper f0 hfs=
+and elim_exists_es_his_x (f0 : formula) (his:h_formula list) subst_ref : formula*h_formula list *(CP.spec_var*CP.spec_var) list =
+  let rec helper f0 hfs ss_ref=
     match f0 with
       | Or ({ formula_or_f1 = f1;
               formula_or_f2 = f2;
               formula_or_pos = pos}) ->
-          let ef1,hfs1 = helper f1 hfs in
-          let ef2,hfs2 = helper f2 hfs1 in
-	      (mkOr ef1 ef2 pos, hfs2)
-      | Base _ -> (f0,hfs)
+          let ef1,hfs1,ss_ref1 = helper f1 hfs ss_ref in
+          let ef2,hfs2,ss_ref2 = helper f2 hfs1 ss_ref1 in
+	      (mkOr ef1 ef2 pos, hfs2,ss_ref2)
+      | Base _ -> (f0,hfs,ss_ref)
       | Exists ({ formula_exists_qvars = qvar :: rest_qvars;
                   formula_exists_heap = h;
                   formula_exists_pure = p;
@@ -3484,30 +3484,32 @@ and elim_exists_es_his_x (f0 : formula) (his:h_formula list) : formula*h_formula
                   formula_exists_and = a;
                   formula_exists_pos = pos}) ->
           let st, pp1 = MCP.get_subst_equation_memo_formula_vv p qvar in
-          let r,n_hfs = if List.length st = 1 then
+          let r,n_hfs,n_ss_ref = if List.length st = 1 then
              let tmp = mkBase h pp1 t fl a pos in (*TO CHECK*)
              let new_baref = subst st tmp in
              let new_hfs = List.map (h_subst st) hfs in
+             let n_ss_ref = List.map (fun (sv1,sv2) -> (sv1, CP.subs_one st sv2)) ss_ref in
              let tmp2 = add_quantifiers rest_qvars new_baref in
-             let tmp3,new_hfs1 = helper tmp2 new_hfs in
-                (tmp3,new_hfs1)
+             let tmp3,new_hfs1,n_ss_ref1 = helper tmp2 new_hfs n_ss_ref in
+                (tmp3,new_hfs1,n_ss_ref1)
               else (* if qvar is not equated to any variables, try the next one *)
                 let tmp1 = mkExists rest_qvars h p t fl a pos in (*TO CHECK*)
-                let tmp2,hfs1 = helper tmp1 hfs in
+                let tmp2,hfs1,ss_ref1 = helper tmp1 hfs ss_ref in
                 let tmp3 = add_quantifiers [qvar] tmp2 in
-                (tmp3,hfs1)
+                (tmp3,hfs1,ss_ref1)
           in
-          (r,n_hfs)
+          (r,n_hfs,n_ss_ref)
       | Exists _ -> report_error no_pos ("Solver.elim_exists: Exists with an empty list of quantified variables")
   in
-  helper f0 his
+  helper f0 his subst_ref
 
-and elim_exists_es_his (f0 : formula) (his:h_formula list) : formula*h_formula list =
+and elim_exists_es_his (f0 : formula) (his:h_formula list) ss_ref : formula*h_formula list*(CP.spec_var*CP.spec_var) list =
   let pr1 = pr_list !print_h_formula in
-  let pr_out = (pr_pair !print_formula pr1) in
-  Debug.no_2 "elim_exists_es_his"
-      !print_formula pr1 pr_out
-      elim_exists_es_his_x f0 his
+  let pr2 = pr_list (pr_pair !CP.print_sv !CP.print_sv) in
+  let pr_out = (pr_triple !print_formula pr1 pr2) in
+  Debug.no_3 "elim_exists_es_his"
+      !print_formula pr1 pr2 pr_out
+      elim_exists_es_his_x f0 his ss_ref
   
 and formula_of_disjuncts (f:formula list) : formula=
   match f with
@@ -3732,7 +3734,7 @@ and compose_formula_new (delta : formula) (phi : formula) (x : CP.spec_var list)
   let _ = must_consistent_formula "compose_formula 1" new_f in
   let resform = push_exists rs new_f in
   let _ = must_consistent_formula "compose_formula 2" resform in
-  resform,new_history
+  resform,new_history,rho2
 
 and compose_formula_x (delta : formula) (phi : formula) (x : CP.spec_var list) flow_tr (pos : loc) =
   let rs = CP.fresh_spec_vars x in
@@ -4977,11 +4979,7 @@ let do_unfold_view_hf cprog pr_views hf0 =
   in
   let fresh_var args f=
     let qvars, base1 = split_quantifiers f in
-    (* let nf = helper base1 in *)
-    (* let svl = CP.diff_svl *)
-    (*   (List.filter (fun sv -> not( CP.is_hprel_typ sv)) (CP.remove_dups_svl (fv f))) *)
-    (*   args in *)
-    let _ = DD.info_hprint (add_str "qvars" !CP.print_svl) qvars no_pos in
+    let _ = DD.ninfo_hprint (add_str "qvars" !CP.print_svl) qvars no_pos in
     let fr_qvars = CP.fresh_spec_vars qvars in
     let ss = List.combine qvars fr_qvars in
     let nf = subst ss base1 in
@@ -6912,6 +6910,7 @@ think it is used to instantiate when folding.
   (* input flag to indicate if post-condition is to be inferred *)
   es_infer_post : bool; 
   (*input vars where inference expected*)
+  es_subst_ref: (CP.spec_var * CP.spec_var) list;
   es_infer_vars : CP.spec_var list; 
   es_infer_vars_rel : CP.spec_var list;
   es_infer_vars_sel_hp_rel: CP.spec_var list;
@@ -7150,6 +7149,7 @@ let empty_es flowt grp_lbl pos =
   es_infer_vars_rel = [];
   es_infer_vars_sel_hp_rel = [];
   es_infer_vars_sel_post_hp_rel = [];
+  es_subst_ref = [];
   es_infer_hp_unk_map = [];
   es_infer_vars_hp_rel = [];
   es_infer_heap = []; (* HTrue; *)
@@ -9011,9 +9011,10 @@ and compose_context_formula_x (ctx : context) (phi : formula) (x : CP.spec_var l
 			let new_c2 = compose_context_formula_x ctx phi2 x force_sat flow_tr pos in
 			let res = (mkOCtx new_c1 new_c2 pos ) in
 			  res
-		| _ -> let new_es_f,new_history = compose_formula_new es.es_formula phi x flow_tr es.es_history pos in
+		| _ -> let new_es_f,new_history,rho2 = compose_formula_new es.es_formula phi x flow_tr es.es_history pos in
             Ctx {es with es_formula = new_es_f;
                 es_history = new_history;
+                es_subst_ref = rho2;
                 es_unsat_flag = (not force_sat) && es.es_unsat_flag;}
 	end
   | OCtx (c1, c2) -> 

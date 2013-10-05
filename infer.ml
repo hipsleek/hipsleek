@@ -2718,6 +2718,14 @@ let infer_collect_hp_rel_x prog (es0:entail_state) rhs0 rhs_rest (rhs_h_matched_
     eqset
   in
   (**********END INTERNAL***********)
+  let pk = try proving_kind#top with _ -> PK_Unknown in
+  (* let es0,lhs_b0,rhs0,rhs_b0 = if pk = PK_POST && es0.CF.es_subst_ref <> [] then *)
+  (*   let es1 = {es0 with CF.es_formula = CF.subst es0.CF.es_subst_ref es0.CF.es_formula} in *)
+  (*   let lhs_b1 = CF.subst_b es0.CF.es_subst_ref lhs_b0 in *)
+  (*   let rhs1 = CF.h_subst es0.CF.es_subst_ref rhs0 in *)
+  (*   let rhs_b1 = CF.subst_b es0.CF.es_subst_ref rhs_b0 in *)
+  (*   (es1,lhs_b1,rhs1,rhs_b1) *)
+  (* else (es0,lhs_b0,rhs0,rhs_b0) in *)
   (*for debugging*)
   (* DD.info_hprint (add_str  ("  es: " ^ (Cprinter.string_of_formula es.CF.es_formula)) pos; *)
   let _ = Debug.ninfo_hprint (add_str  "es_infer_vars_hp_rel " !CP.print_svl) es0.es_infer_vars_hp_rel no_pos in
@@ -2816,7 +2824,6 @@ let infer_collect_hp_rel_x prog (es0:entail_state) rhs0 rhs_rest (rhs_h_matched_
           DD.tinfo_hprint (add_str  "  classic " string_of_bool) !Globals.do_classic_frame_rule pos
         in
         let post_hps,prog_vars =
-          let pk = try proving_kind#top with _ -> PK_Unknown in
           get_prog_vars es.CF.es_infer_vars_sel_hp_rel rhs0b pk in
         (********** BASIC INFO LHS, RHS **********)
         let l_hpargs = CF.get_HRels lhs_b0.CF.formula_base_heap in

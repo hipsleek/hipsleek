@@ -4,30 +4,45 @@ data node {
   node next;
 }
 
-ll<n> == self = null & n=0
-	or self::node<_, q>* q::ll<n-1> 
-  inv true;
+/* ll<n> == self = null & n=0 */
+/* 	or self::node<_, q>* q::ll<n-1>  */
+/*   inv true; */
 
 
-llx<> == self = null  
-  or self::node<_, q>* q::llx<>;
+ll<> == self = null  
+  or self::node<_, q>* q::ll<>;
+
+ HeapPred U(node a).
+
+llu<> == U(self)  
+  or self::node<_, q>* q::llu<>;
 
   lly<> == self::node<_, q>* q::lly<>;
 
-HeapPred H1(node a,node b).
-  HeapPred G1(node a, node b).
+ HeapPred H1(node a,node@NI b).
+// HeapPred G1(node a, node b, node c).
+  HeapPred G1(node a).
 
 
-void reverse(ref node x,ref node y)
+  void reverse(ref node x, node y)
+  requires x::ll<> * y::llu<>
+  ensures x'::llu<>;//'
 /*
+  requires x::ll<> * y::ll<>
+  ensures x'::ll<>;//'
+
+   infer [H1,G1]
+    requires H1(x,y)
+     ensures G1(x');
+
   infer[HX,HY,G1]
   requires HX(x)*HY(y)
   ensures G1(x',y');
-*/
-
    infer[H1,G1]
-  requires H1(x,y)
+   requires H1(x,y)
      ensures G1(x',y');
+
+*/
 
   /* requires x::llx<> * y::lly<> */
   /* ensures y'::lly<> & x'=null; */
@@ -40,7 +55,7 @@ void reverse(ref node x,ref node y)
     //dprint;
     reverse(x,y);
     // dprint;
-  }
+  } else x=y;
 }
 /*
 
