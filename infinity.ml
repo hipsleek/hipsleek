@@ -54,14 +54,19 @@ let rec normalize_exp (exp: CP.exp) : CP.exp =
           if CP.is_const_or_var e1_norm && CP.is_inf e2_norm then e2_norm
           else if CP.is_inf e1_norm && CP.is_const_or_var e2_norm then e1_norm
           else CP.Max(e1_norm,e2_norm,pos)
-  | CP.Add(e1,e2,pos) -> let e1_norm = normalize_exp e1 in
+  | CP.Add(e1,e2,pos) -> 
+      let rec helper e1 e2 = 
+              let e1_norm = normalize_exp e1 in
     		  let e2_norm = normalize_exp e2 in
               if CP.is_inf e1_norm && CP.is_inf e2_norm then e1_norm else 
     		  if CP.is_const_exp e1_norm && CP.is_inf e2_norm
     		  then e2_norm
     		  else if CP.is_inf e1_norm && CP.is_const_exp e2_norm
     		  then e1_norm
-    		  else CP.Add(e1_norm,e2_norm,pos)
+              else match e1_norm with
+                | CP.Add(e3,e4,pos) -> let e5  = CP.Add(e4,e2_norm,pos) in helper e3 e5
+                | _ -> CP.Add(e1_norm,e2_norm,pos)
+      in helper e1 e2
    | _ -> exp
 
 let normalize_exp (exp: CP.exp) : CP.exp =
@@ -789,7 +794,7 @@ let rec sub_inf_list_exp (exp: CP.exp) (vars: CP.spec_var list) (is_neg: bool) :
     | CP.Var (sv,pos) -> 
         if BList.mem_eq eq_spec_var sv vars 
         then if is_neg then (*CP.Var(CP.SpecVar(Int,constinfinity,Primed),pos) *)
-          (mkSubtract (IConst(0,pos)) (Var(SpecVar(Int,constinfinity,Primed),pos)) pos)
+          (mkSubtract (IConst(0,pos)) (Var(SpecVar(Int,constinfinity,Unprimed),pos)) pos)
           else CP.Var(CP.SpecVar(Int,constinfinity,Unprimed),pos) 
         else exp
     | CP.Add (a1, a2, pos) -> 
@@ -1037,6 +1042,7 @@ let normalize_inf_formula (f: CP.formula): CP.formula =
 let rec normalize_inf_formula_sat (f: CP.formula): CP.formula = 
   (*let pf = MCP.pure_of_mix f in*)
   if not (contains_inf f) then f else 
+  (*let f =  arith_simplify 101 f in*) 
   let pf_norm =  if contains_inf_eq f then 
     normalize_inf_formula (substitute_inf f) 
         (*let f = (*MCP.mix_of_pure*) (convert_inf_to_var pf_norm) in 

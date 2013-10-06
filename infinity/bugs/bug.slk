@@ -1,0 +1,4 @@
+checkentail n=1 & 0<(mi+(\inf)) & mi<(\inf) & mi=mx & self!=null
+	     |-  ((self=null & n=0 & mi=\inf & (\inf)+mx=0) | (self!=null & 0<n & mi<=mx & 
+0<((\inf)+mi) & mx<(\inf))).
+
