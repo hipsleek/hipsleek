@@ -1,65 +1,51 @@
+
 data node {
   int val;
   node next;
 }
-/*
+
+/* ll<n> == self = null & n=0 */
+/* 	or self::node<_, q>* q::ll<n-1>  */
+/*   inv true; */
+
+
 ll<> == self = null  
-	or self::node<_, q>* q::ll<> 
-  inv true;
-*/
-HeapPred H1(node a,node b).
+  or self::node<_, q>* q::ll<>;
+
+ HeapPred U(node a).
+
+llu<> == U(self)  
+  or self::node<_, q>* q::llu<>;
+
+  lly<> == self::node<_, q>* q::lly<>;
+
+HeapPred H1(node a).
 HeapPred H2(node a).
-HeapPred HX(node a).
-HeapPred HY(node a).
-HeapPred HX1(node a, node b).
 HeapPred G1(node a, node b).
-HeapPred G2(node a, node b).
-HeapPred G(node a, node b, node c, node d).
+
+
+  void reverse(ref node x, ref node y)
+      infer [H1,H2,G1]
+      requires H1(x) * H2(y)
+     ensures G1(x',y');//'
 
 /*
-HP_RELDEFN HP_551:  HP_551(tmp_21',y)::  H1(tmp_21')&true,
-HP_RELDEFN H1:  H1(x)::
-                emp&x=null
- or x::node<val_39_532',next_39_533'> * H1(next_39_533')&true
- ,
-HP_RELDEFN H2:  H2(y)::  HP_572(y)&true,
-HP_RELDEFN HP_571:  HP_571(x)::  emp&x=null,
-HP_RELDEFN G1:  G1(x,y)::  HP_571(x) * HP_572(y)&true]
-
- */
-void reverse(ref node x, ref node y)
-
-  infer[HX,HY,G1]
-  requires HX(x)*HY(y)
-  ensures G1(x',y');
-
-/*
-   infer[H1,G1]
-  requires H1(x,y)
-  ensures G1(x',y');
+  requires x::ll<> * y::llu<>
+  ensures y'::llu<>;//'
 */
-/*
-  infer[H1,H2]
-  requires x::ll<>*H1(y)
-  ensures  H2(y') & x'=null; //'
-*/
-//requires x::ll<>
-//  ensures  x'=null; //'
- /* requires x::ll<> * y::ll<> */
- /* ensures y'::ll<> & x'=null; */
- /*  FAIL
-    requires x::ll<> & x=y
-    ensures y'::ll<> & x'=null;
- */
 {
-	if(x!= null){
-		node tmp = x.next;
-		x.next = y;
-		y = x;
-		x = tmp;
-		reverse(x,y);
-	}
+  if(x!= null){
+    node tmp = x.next;
+    x.next = y;
+    y = x;
+    x = tmp;
+    //dprint;
+    reverse(x,y);
+    // dprint;
+  }
+  // else x=y;
 }
+
 
 /*
 

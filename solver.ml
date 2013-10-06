@@ -4015,7 +4015,7 @@ and entail_state_elim_exists_x es =
   let pr_h = Cprinter.string_of_h_formula in
   let ff = es.es_formula in
   Debug.tinfo_hprint (add_str "f(b4 elim_exists_es_his)" pr_f) ff no_pos;
-  let f_prim,new_his,n_ss_ref = elim_exists_es_his ff es.es_history es.es_subst_ref in
+  let f_prim,new_his  = elim_exists_es_his ff es.es_history in
   (* 05.06.08 *)
   (* we also try to eliminate exist vars for which a find a substitution of the form v = exp from the pure part *)
   (* let _ = print_string("[solver.ml, elim_exists_ctx]: Formula before exp exist elim: " ^ Cprinter.string_of_formula f_prim ^ "\n") in *)
@@ -4039,7 +4039,7 @@ and entail_state_elim_exists_x es =
   let simpl_f = CF.mkExists qvar h simpl_p t simpl_fl (CF.formula_and_of_formula base) (CF.pos_of_formula base) in (*TO CHECK*)
   Ctx{es with es_formula = simpl_f;
       es_history = new_his;
-      es_subst_ref = n_ss_ref;
+      (* es_subst_ref = n_ss_ref; *)
   }   (*assuming no change in cache formula*)
 
 and entail_state_elim_exists es =

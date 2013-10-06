@@ -19,28 +19,27 @@ llu<> == U(self)
 
   lly<> == self::node<_, q>* q::lly<>;
 
- HeapPred H1(node a,node@NI b).
+ HeapPred H1(node a).
+HeapPred H2(node a).
 // HeapPred G1(node a, node b, node c).
-  HeapPred G1(node a).
+      HeapPred G1(node a, node b).
 
 
-  void reverse(ref node x, node y)
-  requires x::ll<> * y::llu<>
-  ensures x'::llu<>;//'
+  void reverse(ref node x, ref node y)
+      infer [H1,H2,G1]
+      requires H1(x) * H2(y)
+     ensures G1(x',y');//'
+
 /*
+  requires x::ll<> * y::llu<>
+  ensures y'::llu<>;//'
+
   requires x::ll<> * y::ll<>
-  ensures x'::ll<>;//'
+  ensures y'::ll<>;//'
 
    infer [H1,G1]
     requires H1(x,y)
      ensures G1(x');
-
-  infer[HX,HY,G1]
-  requires HX(x)*HY(y)
-  ensures G1(x',y');
-   infer[H1,G1]
-   requires H1(x,y)
-     ensures G1(x',y');
 
 */
 
@@ -55,7 +54,8 @@ llu<> == U(self)
     //dprint;
     reverse(x,y);
     // dprint;
-  } else x=y;
+  }
+  // else x=y;
 }
 /*
 

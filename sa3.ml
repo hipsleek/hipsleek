@@ -357,8 +357,8 @@ let split_base_constr prog cond_path constrs post_hps prog_vars unk_map unk_hps 
       else 
         begin
           let _ = DD.binfo_start "split_base" in
-          let _ = DD.binfo_hprint (add_str "post_hps" Cprinter.string_of_spec_var_list) post_hps no_pos in
-          let _ = DD.binfo_hprint (add_str "prog_vars" Cprinter.string_of_spec_var_list) prog_vars no_pos in
+          let _ = DD.ninfo_hprint (add_str "post_hps" Cprinter.string_of_spec_var_list) post_hps no_pos in
+          let _ = DD.ninfo_hprint (add_str "prog_vars" Cprinter.string_of_spec_var_list) prog_vars no_pos in
           let _ = DD.binfo_hprint (add_str "BEFORE" pr_id) s1 no_pos in
           let _ = DD.binfo_pprint "=============>>>>" no_pos in
           let _ = DD.binfo_hprint (add_str "AFTER" pr_id) s2 no_pos in
