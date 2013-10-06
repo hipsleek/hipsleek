@@ -14,7 +14,8 @@ let usage_msg = Sys.argv.(0) ^ " [options] <source files>"
 let set_source_file arg = 
   Globals.source_files := arg :: !Globals.source_files
 
-let process_cmd_line () = 
+let process_cmd_line () =
+        Perm.disable_para();
 	Arg.parse Scriptarguments.hip_arguments set_source_file usage_msg;
 	if !Globals.override_slc_ps then Globals.en_slc_ps:=false
 	else ()

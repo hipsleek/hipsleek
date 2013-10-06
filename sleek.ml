@@ -49,7 +49,9 @@ let print_version () =
   print_endline ("IT IS CURRENTLY FREE FOR NON-COMMERCIAL USE");
   print_endline ("Copyright @ PLS2 @ NUS")
 
-let process_cmd_line () = Arg.parse Scriptarguments.sleek_arguments set_source_file usage_msg
+let process_cmd_line () = 
+  Perm.disable_para();
+  Arg.parse Scriptarguments.sleek_arguments set_source_file usage_msg
 
 let inter = Scriptarguments.inter_hoa
 
