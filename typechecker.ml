@@ -2554,6 +2554,11 @@ let proc_mutual_scc_shape_infer iprog prog scc_procs =
         ()
       end;
     (*transform the result: hpdef --> views and transform specs*)
+    (*
+      scc_inferred_hps
+    *)
+    let _ = Saout.plug_shape_into_specs prog iprog
+      (List.map (fun proc -> proc.proc_name) scc_procs) scc_inferred_hps in
     (**************regression check _ gen_regression file******************)
     (*to revise the check for scc*)
     let proc = List.hd scc_procs in
