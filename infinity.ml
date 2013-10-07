@@ -122,6 +122,41 @@ match exp2 with
   | _ -> false,exp2
 
 (*
+ a+b<\inf   <--> a<\inf & b<\inf
+ a+b<=\inf  <--> true
+-\inf<a+b  <--> -\inf<a & -\inf<b
+ -\inf<=a+b <--> true
+ a+b=\inf   <--> (a=\inf | b=\inf)
+ a+b=-\inf  <--> (a=-\inf | b=-\inf)
+ \inf<=a+b  <--> a+b=\inf  <--> (a=\inf | b=\inf)
+ -\inf>=a+b <--> a+b=-\inf <--> (a=-\inf | b=-\inf)
+*)
+let split_inf_add (exp1: CP.exp) (exp2: CP.exp) pos : bool *CP.exp * CP.exp = 
+match exp1,exp2 with
+  | CP.Add(e1,e2,_),e -> if is_inf e then (true,e1,e2) else (false,exp1,exp2)
+  | _ , _ -> false,exp1,exp2
+
+let split_inf_add (exp1: CP.exp) (exp2: CP.exp) pos : bool *CP.exp * CP.exp = 
+  let pr  = string_of_formula_exp in 
+  DD.no_2 "split_inf_add"  pr pr (fun (a,b,c) -> string_of_bool a) 
+    (fun e1 e2 -> split_inf_add e1 e2 pos) exp1 exp2
+
+let split_neg_inf_add (exp1: CP.exp) (exp2: CP.exp) pos : bool *CP.exp * CP.exp = 
+match exp1,exp2 with
+  | CP.IConst(0,_),CP.Add(e1,e2,_) -> (match e1,e2 with
+                                        | CP.Add(e3,e4,pos), e
+                                        | e,CP.Add(e3,e4,pos) -> 
+                                     let (f,er1,er2) as rt = split_inf_add (CP.Add(e3,e4,pos)) e pos in
+                                     if f then rt 
+                                     else let (f,er1,er2) as rt = split_inf_add e3 (CP.Add(e,e4,pos)) pos in
+                                     if f then rt else 
+                                     let (f,er1,er2) as rt = split_inf_add (CP.Add(e,e4,pos)) e3 pos in
+                                     if f then rt else false,exp1,exp2
+                                        | _ -> false,exp1,exp2)
+  | _ , _ -> false,exp1,exp2
+
+
+(*
 --eps converts v>w to 1+w <= v detect it and revert back to substitute \inf during normalization
 *)
 let check_leq (exp1: CP.exp) (exp2: CP.exp) pos : CP.p_formula = 
@@ -281,6 +316,46 @@ let contains_inf (f:CP.formula) : bool =
   let pr = string_of_pure_formula in
     DD.no_1 "contains_inf" pr string_of_bool contains_inf f
 
+
+let simplify_b_formula (bf: CP.b_formula) : CP.b_formula * (CP.b_formula list) = 
+  let rec helper p_f split_p_f_lst = 
+    match p_f with
+      | CP.Lt(e1,e2,pos) -> let f,e1_split,e2_split = split_inf_add e1 e2 pos in
+                            let e1_p_f = CP.Lt(e1_split,(mkInfConst pos),pos) in
+                            let e2_p_f = CP.Lt(e2_split,(mkInfConst pos),pos) in
+                            if f then CP.BConst(true,pos),(e1_p_f::e2_p_f::split_p_f_lst)
+                            else let f,e1_nsplit,e2_nsplit = split_neg_inf_add e1 e2 pos in 
+                let e1_p_f = CP.Gt(CP.Add(e1_nsplit,(mkInfConst pos),pos),CP.IConst(0,pos),pos) in
+                let e2_p_f = CP.Gt(CP.Add(e2_nsplit,(mkInfConst pos),pos),CP.IConst(0,pos),pos) in
+                            if f then CP.BConst(true,pos),(e1_p_f::e2_p_f::split_p_f_lst)
+                            else p_f,split_p_f_lst
+      | CP.Lte(e1,e2,pos) -> let f,e1_split,e2_split = split_inf_add e1 e2 pos in
+                            if f then CP.BConst(true,pos),split_p_f_lst
+                            else let f,e1_nsplit,e2_nsplit = split_neg_inf_add e1 e2 pos in 
+                            if f then CP.BConst(true,pos),split_p_f_lst
+                            else p_f,split_p_f_lst
+      | CP.Gt(e1,e2,pos) -> let f,e1_split,e2_split = split_inf_add e2 e1 pos in
+                            let e1_p_f = CP.Lt(e1_split,(mkInfConst pos),pos) in
+                            let e2_p_f = CP.Lt(e2_split,(mkInfConst pos),pos) in
+                            if f then CP.BConst(true,pos),(e1_p_f::e2_p_f::split_p_f_lst)
+                            else let f,e1_nsplit,e2_nsplit = split_neg_inf_add e2 e1 pos in 
+                let e1_p_f = CP.Gt(CP.Add(e1_nsplit,(mkInfConst pos),pos),CP.IConst(0,pos),pos) in
+                let e2_p_f = CP.Gt(CP.Add(e2_nsplit,(mkInfConst pos),pos),CP.IConst(0,pos),pos) in
+                            if f then CP.BConst(true,pos),(e1_p_f::e2_p_f::split_p_f_lst)
+                            else p_f,split_p_f_lst
+      | CP.Gte(e1,e2,pos) -> let f,e1_split,e2_split = split_inf_add e2 e1 pos in
+                            if f then CP.BConst(true,pos),split_p_f_lst 
+                            else let f,e1_nsplit,e2_nsplit = split_neg_inf_add e2 e1 pos in 
+                            if f then CP.BConst(true,pos),split_p_f_lst
+                            else p_f,split_p_f_lst
+      | _ -> p_f,split_p_f_lst
+  in let p_f,bf_ann = bf in 
+     let p_f,xs = helper p_f [] in
+     let xs_bf = List.map (fun c -> (c,bf_ann)) xs in
+     (p_f,bf_ann),xs_bf 
+let simplify_b_formula (bf: CP.b_formula) : CP.b_formula * (CP.b_formula list) = 
+  let pr = string_of_b_formula in 
+DD.no_1 "infinity.simplify_b_formula" pr (fun c -> pr (fst c)) simplify_b_formula bf
 (*
 Normalize b_formula containing \inf 
 *)
@@ -455,7 +530,12 @@ let rec normalize_inf_formula (pf: CP.formula) : CP.formula =
   (match pf with 
     | CP.BForm (b,fl) -> 
           let b_norm = normalize_b_formula b in
-          let bf =  CP.BForm(b_norm,fl) in bf
+          (*let bf =  CP.BForm(b_norm,fl) in *)
+          let b,b_xs = simplify_b_formula b_norm in
+          if List.length b_xs > 0 
+          then let pf_lst = List.map (fun c -> CP.BForm(c,fl)) b_xs 
+               in let pf = conj_of_list (CP.BForm(b,fl)::pf_lst) no_pos in normalize_inf_formula pf
+          else CP.BForm(b,fl)
           (*let mkInfVar  = SpecVar (Int, zinf_str, Unprimed) in
           let mkNegInfVar =  SpecVar (Int, zinf_str, Primed) in
           let axiom = mkNeqVar mkInfVar mkNegInfVar no_pos in
@@ -512,8 +592,8 @@ let convert_inf_to_var (pf:CP.formula) : CP.formula =
   let f_e_neg e = Some(normalize_exp e) in
   let f_e e =
     match e with
-      | InfConst (i,pos) -> Some (CP.Var(CP.SpecVar(Int,i,Unprimed),pos))
-      | _ -> None
+    | CP.InfConst (i,pos) -> Some (CP.Var(CP.SpecVar(Int,i,Unprimed),pos))
+    | _ -> None
   in
   let pf = map_formula pf (f_f,f_bf_neg,f_e_neg) in
    map_formula pf (f_f,f_bf,f_e)
@@ -1076,7 +1156,7 @@ let normalize_inf_formula_imply (ante: CP.formula) (conseq: CP.formula) : CP.for
   		then (normalize_inf_formula (substitute_inf conseq))
   		else normalize_inf_formula*) conseq in
   let new_a = convert_inf_to_var ante_norm in
-  let new_c = convert_inf_to_var conseq_norm in
+  let new_c = (*convert_inf_to_var*) conseq_norm in
   let atoc_sublist = find_inf_subs new_a in
   let ante,conseq = if List.length atoc_sublist == 1 
   then let _,subs_c = List.hd atoc_sublist in 
@@ -1087,6 +1167,7 @@ let normalize_inf_formula_imply (ante: CP.formula) (conseq: CP.formula) : CP.for
     let new_c = arith_simplify 11 new_c in
     let new_c_lst  = split_conjunctions new_c in
     let new_c = join_conjunctions (List.map normalize_inf_formula new_c_lst) in
+    let new_c = convert_inf_to_var new_c in
   	new_a,new_c
   else new_a,new_c
   in let ante_norm = (*check if need to normalize again*)(*if contains_inf_eq ante 
@@ -1094,7 +1175,7 @@ let normalize_inf_formula_imply (ante: CP.formula) (conseq: CP.formula) : CP.for
   		(*else ante*) in 
   let conseq_norm = if contains_inf_eq conseq then normalize_inf_formula (substitute_inf conseq) 
     else conseq in 
-  ante_norm,conseq_norm
+  convert_inf_to_var ante_norm,convert_inf_to_var conseq_norm
 
 let normalize_inf_formula_imply (ante: CP.formula) (conseq: CP.formula) : CP.formula * CP.formula = 
   let pr = Cprinter.string_of_pure_formula in
