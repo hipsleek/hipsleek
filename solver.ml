@@ -5033,6 +5033,17 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
     Debug.no_2_num i (*loop*) "helper_inner" Cprinter.string_of_context Cprinter.string_of_struc_formula (fun (lc, _) -> Cprinter.string_of_list_context lc)
 	(helper_inner_x) ctx11 f
 
+  and need_unfold_rhs prog vn=
+    let vdef = C.look_up_view_def_raw 42 prog.C.prog_view_decls vn.CF.h_formula_view_name in
+    (*looking for unknown case*)
+    let unk_hps = List.fold_left (fun r (f,_) ->
+        match CF.extract_hrel_head f with
+          | Some hp -> r@[hp]
+          | None -> r
+    ) [] vdef.view_un_struc_formula in
+    if unk_hps <> [] then ([(vn.CF.h_formula_view_name,vdef.C.view_un_struc_formula, vdef.C.view_vars)],unk_hps) else ([],[])
+
+
   and helper_inner_x (ctx11 : context) (f:struc_formula) : list_context * proof = 
     begin
       match ctx11 with (*redundant check*)
@@ -5202,6 +5213,7 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
                     | None ->
                           (****************************************************)
                           (**************** <<< Perform check when join *******)
+                          (* let _ = DD.info_zprint  (lazy  ("  conseq: " ^ (Cprinter.string_of_struc_formula f))) pos in *)
                           match f with
                             | ECase b   -> 
                                   let ctx = add_to_context_num 1 ctx11 "case rule" in
@@ -5288,7 +5300,32 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
 		                  formula_struc_implicit_inst = impl_inst;
 		                  formula_struc_exists = base_exists;
 		                  formula_struc_base = formula_base;
-		                  formula_struc_continuation = formula_cont;} as b) -> 
+		                  formula_struc_continuation = formula_cont;} as b) ->begin
+                                  let vn_opt= CF.is_only_viewnode formula_base in
+                                  let need_unfold, pr_views ,args= match vn_opt with
+                                    | Some vn ->
+                                          let pr_views,unk_hps = need_unfold_rhs prog vn in
+                                          if unk_hps = [] || pr_views = [] then
+                                            (false, [], [])
+                                          else
+                                            (true, pr_views,vn.CF.h_formula_view_node::vn.CF. h_formula_view_arguments)
+                                    | None -> (false, [], [])
+                                  in
+                                  if need_unfold then
+                                    let nf = CF.do_unfold_view prog pr_views formula_base in
+                                    let fs = CF.list_of_disjs nf in
+                                    let struc_disj = List.map (fun f ->
+                                        let svl = CP.remove_dups_svl (CF.fv f) in
+                                        let ex_svl = List.filter (fun sv -> not (CP.is_hprel_typ sv)) (CP.diff_svl svl args) in
+                                        (Label_only.empty_spec_label_def,
+                                        CF.EBase {b with CF.formula_struc_base = f;
+                                            CF.formula_struc_implicit_inst = CP.remove_dups_svl (b.CF.formula_struc_implicit_inst@ex_svl);
+                                        })) fs in
+                                    let n_struc_f = CF.EList struc_disj in
+                                    (* let _ = DD.info_zprint  (lazy  (" es_infer_vars_rel: " ^ (!CP.print_svl es.CF.es_infer_vars_rel))) pos in *)
+                                    (* let _ = DD.info_zprint  (lazy  (" es_infer_vars_hp_rel: " ^ (!CP.print_svl es.CF.es_infer_vars_hp_rel))) pos in *)
+                                    helper_inner 14 ctx11 n_struc_f
+                                  else
                                   (*formula_ext_complete = pre_c;*)
                                   let rel_args = CF.get_rel_args formula_base in
                                   (* let rel_args1 = Sautility.find_close_f rel_args formula_base in *)
@@ -5354,6 +5391,7 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
 				                      (res_ctx,res_prf)
                                     (*  let _ = print_endline ("###: 3") in*)
                                 )
+                              end
                             | EAssume {
 				  formula_assume_simpl = post;
 				  formula_assume_vars = ref_vars;

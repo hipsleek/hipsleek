@@ -8439,5 +8439,3 @@ and normalize_fracs cprog  =
         C.prog_barrier_decls = List.map (normalize_barr_decl cprog) cprog.C.prog_barrier_decls;
     }
 *)  
-
-

@@ -1294,6 +1294,7 @@ and process_infer_heap_match prog estate lhs_h is_normalizing(rhs_node,rhs_rest)
           let r0 = (2,M_unmatched_rhs_data_node (rhs_node,rhs_rest)) in
           let ptr_vs = estate.es_infer_vars in
           let ptr_vs = List.filter (fun v -> CP.is_otype(CP.type_of_spec_var v)) ptr_vs in
+          (* let _ = DD.info_zprint  (lazy  ("  estate.es_infer_vars_hp_rel: " ^ (!CP.print_svl estate.es_infer_vars_hp_rel))) no_pos in *)
           let rs = 
             if estate.es_infer_vars_hp_rel==[] && ptr_vs==[] then
               (*to support lemma with unknown preds*)

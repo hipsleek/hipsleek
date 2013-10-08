@@ -1746,7 +1746,7 @@ let get_xpure_one vdef rm_br  =
     | Some l -> let n=(List.length l) in  
       if n<(List.length vdef.view_prune_branches) then None
       else (match vdef.view_complex_inv with 
-        | None -> None 
+        | None -> None
         | Some f -> Some f)  (* unspecialised with a complex_inv *)
     | None -> Some vdef.view_x_formula 
 
