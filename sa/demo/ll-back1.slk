@@ -23,3 +23,4 @@ print residue.
 //3.
 //infer [HP4] x=null |- HP4(x) or n::H1<> * x::node<n>.
 //print residue.
+
