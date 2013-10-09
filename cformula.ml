@@ -609,6 +609,14 @@ and formula_base_of_heap h pos = {formula_base_heap = h;
                                   formula_base_label = None;
 	                              formula_base_pos = pos}
 
+and formula_base_of_pure mf pos = {formula_base_heap = HEmp; 
+	                              formula_base_pure = mf; 
+	                              formula_base_type = TypeTrue;
+	                              formula_base_flow = (mkTrueFlow ());
+                                  formula_base_and = [];
+                                  formula_base_label = None;
+	                              formula_base_pos = pos}
+
 and formula_of_heap_w_normal_flow h pos = mkBase h (MCP.mkMTrue pos) TypeTrue (mkNormalFlow ()) [] pos
 
 and formula_of_heap_fl h fl pos = mkBase h (MCP.mkMTrue pos) TypeTrue fl [] pos
@@ -781,6 +789,16 @@ and is_trivial_heap_formula f =
       -> is_trivial_h_formula h
   | _ -> false
 
+and is_trivial_formula f = 
+  match f with
+  | Base {formula_base_heap = h;
+    formula_base_pure = p;
+    } ->
+        ( is_trivial_h_formula h) && ((MCP.isConstMTrue p) ||  MCP.isTrivMTerm p)
+  | Exists ({formula_exists_heap = h}) 
+      -> let _,base = split_quantifiers f in
+      is_trivial_formula base
+  | _ -> false
 
 and isTrivTerm_x f = match f with
   | Base ({formula_base_heap = HEmp;formula_base_pure = p; formula_base_flow = fl;})
@@ -9869,12 +9887,17 @@ let fold_h_formula_args (e:h_formula) (init_a:'a) (f:'a -> h_formula-> 'b option
 let fold_h_formula (e:h_formula) (f:h_formula-> 'b option) (comb_f: 'b list->'b) : 'b =
   fold_h_formula_args e () (fun _ e-> f e) voidf2 comb_f 
 
-let keep_hrel e =
+let keep_hrel_x e =
   let f hf = match hf with
     | HRel _ -> Some [hf]
     | _ -> None
   in 
   fold_h_formula e f List.concat
+
+let keep_hrel e=
+  let pr1 = !print_h_formula in
+  Debug.no_1 "keep_hrel" pr1 (pr_list pr1)
+      (fun _ -> keep_hrel_x e) e
 
 (* transform heap formula *)
 let rec transform_h_formula (f:h_formula -> h_formula option) (e:h_formula):h_formula = 

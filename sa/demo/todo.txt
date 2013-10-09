@@ -6075,7 +6075,9 @@ synchronize sa2.infer_shapes_proper with sa3.infer_shapes_proper
 # ll-back.ss
  - reverify-all : fail FIXED
  - main function: inference is incorrect.
-  should do interprocedural sa properly (ll-back1.slk)
+  should do interprocedural sa properly
+     - ll-back1.slk: unfold rhs for embeded unk inside views of context when proving pre DONE
+     -ll-back2.slk: unfold lhs for embeded unk inside views of context when proving post
 
 interprocedural sa:
   for each callee:
@@ -6094,6 +6096,17 @@ interprocedural sa:
   ensures G1(x',y');
 
 =====================================================================
+# sll-rev-3.slk
+
+I think a problem is that @NI cannot handle accumulating
+paramter. @NI is so far used as a segmented ptr.
+
+In the following entailment, I wonder if we can improve so that there
+is no residue. One way is to have another annotation, say @ACC
+for accumlating paramter that is non-instantiated but non-segmented also.
+
+On the other hand, we could also allow accumulating parameter to be
+split in a similar fashion as your pre.
 =====================================================================
 =====================================================================
 =====================================================================

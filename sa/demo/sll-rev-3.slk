@@ -1,0 +1,14 @@
+data node {
+  int val;
+  node next;
+}.
+
+HeapPred HP_9(node a,node@NI b).
+HeapPred H(node a,node b).
+
+
+
+infer [HP_9,H] HP_9(next_46_916,y) * x_924::node<val_46_915,y_923>@M&y=y_923 & x=x_924 &
+x_924!=null & next_46_916=tmp_33' & next_46_916=next_47_922 & x_924=y' & tmp_33'=x'
+ |-  H(x',y').
+print residue.

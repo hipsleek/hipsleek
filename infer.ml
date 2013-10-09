@@ -2607,7 +2607,9 @@ let generate_constraints prog es rhs lhs_b ass_guard rhs_b1 defined_hps
         | _ -> report_error no_pos "INFER.generate_constrains: impossible"
       )
   in
-  let hp_rel_list = hp_rels@defined_hprels in
+  let hp_rel_list0 = hp_rels@defined_hprels in
+  let ex_ass = (rel_ass_stk # get_stk) in
+  let hp_rel_list = Gen.BList.difference_eq SAU.constr_cmp hp_rel_list0 ex_ass in
   let _ = rel_ass_stk # push_list (hp_rel_list) in
   let _ = Log.current_hprel_ass_stk # push_list (hp_rel_list) in
   (* let _ = DD.info_hprint (add_str  "  rvhp_rels" !CP.print_svl rvhp_rels) pos in *)
@@ -2959,6 +2961,119 @@ let infer_collect_hp_rel i prog (es:entail_state) rhs rhs_rest (rhs_h_matched_se
      (pr_option Cprinter.string_of_h_formula) in
   Debug.no_2_num i "infer_collect_hp_rel" pr1 pr1 pr5
 ( fun _ _ -> infer_collect_hp_rel_x prog es rhs rhs_rest rhs_h_matched_set lhs_b rhs_b pos) lhs_b rhs_b
+
+(*******************************************************)
+(*******************************************************)
+(*******************************************************)
+
+let infer_collect_hp_rel_empty_rhs_x prog (es0:entail_state) mix_rf pos =
+  (*********INTERNAL**********)
+  let get_eqset puref =
+    let (subs,_) = CP.get_all_vv_eqs puref in
+    let eqset = CP.EMapSV.build_eset subs in
+    eqset
+  in
+  let es_cond_path = CF.get_es_cond_path es0 in
+  let generate_constrs lhs_b rhs_b leqs reqs hds hvs lhras (hp,args)=
+    let (new_lhs_b,new_rhs_b) = simplify_lhs_rhs prog lhs_b rhs_b leqs reqs hds hvs lhras []
+    [(hp,args)] [] [] [] [] [] [] [] in
+     let lhs = CF.remove_neqNull_svl args (CF.Base new_lhs_b) in
+    if CF.extract_hrel_head lhs = None then
+      let knd = CP.RelAssume [hp] in
+     let hprel_ass = CF.mkHprel knd [] [] args lhs None (CF.Base rhs_b) es_cond_path in
+      (Some hprel_ass)
+    else None
+  in
+  let lhs0 = es0.CF.es_formula in
+  (**********END INTERNAL***********)
+  (*for debugging*)
+  (* DD.info_hprint (add_str  ("  es: " ^ (Cprinter.string_of_formula es.CF.es_formula)) pos; *)
+  let _ = Debug.ninfo_hprint (add_str  "es_infer_vars_hp_rel " !CP.print_svl) es0.es_infer_vars_hp_rel no_pos in
+  let _ = Debug.ninfo_hprint (add_str  "es_infer_vars " !CP.print_svl) es0.es_infer_vars no_pos in
+  let _ = Debug.ninfo_hprint (add_str  "es_infer_vars_sel_hp_rel " !CP.print_svl) es0.es_infer_vars_sel_hp_rel no_pos in
+  (*end for debugging*)
+  let pk = try proving_kind#top with _ -> PK_Unknown in
+  if no_infer_hp_rel es0 || MCP.isTrivMTerm mix_rf ||  pk != PK_POST then
+    (false, es0,[])
+  else
+    let ivs = es0.es_infer_vars_hp_rel in
+    (*check whether LHS/RHS contains hp_rel*)
+    (*ll-del-1*)
+    let lhrs = CF.get_hp_rel_name_formula lhs0 in
+    if CP.intersect ivs (lhrs) = [] then
+      begin
+        (* DD.info_pprint ">>>>>> infer_hp_rel <<<<<<" pos; *)
+        let _ = DD.tinfo_pprint " no hp_rel found" pos in
+        (false,es0,[])
+      end
+    else
+      begin
+        let pr = pr_list (pr_pair !CP.print_sv !CP.print_sv) in
+        let _ = DD.ninfo_zprint (lazy (("  es0.CF.es_evars: " ^ (!CP.print_svl  es0.CF.es_evars)))) no_pos in
+        (*which pointers are defined and which arguments of data nodes are pointer*)let lhs_b0 = match lhs0 with
+          | Base fb -> fb
+          | _ -> report_error pos "Infer.infer_collect_hp_rel_empty_rhs: imposs"
+        in
+        let ( _,mix_lf,_,_,_) = CF.split_components lhs0 in
+        let l_emap0 = get_eqset (MCP.pure_of_mix mix_lf) in
+        let r_emap0 = get_eqset (MCP.pure_of_mix mix_rf) in
+        (* let _ = DD.ninfo_hprint (add_str "   sst0: " pr) (sst0) pos in *)
+        let _ =
+          DD.tinfo_pprint ">>>>>> infer_hp_rel <<<<<<" pos;
+          DD.tinfo_hprint (add_str  "  lhs " Cprinter.string_of_formula) lhs0 pos;
+          DD.tinfo_hprint (add_str  "  classic " string_of_bool) !Globals.do_classic_frame_rule pos
+        in
+        let rhs_b0 = formula_base_of_heap (CF.HEmp) pos in
+        (********** BASIC INFO LHS, RHS **********)
+        let l_hpargs = CF.get_HRels lhs_b0.CF.formula_base_heap in
+        let l_non_infer_hps = CP.diff_svl lhrs ivs in
+        (**smart subst**)
+        let leqs0 = (MCP.ptr_equations_without_null mix_lf) in
+        let lhs_b1 = SAU.smart_subst_lhs lhs0 l_hpargs leqs0 es0.es_infer_vars in
+        let rhs_b1 = rhs_b0 in
+        let lhs_h = lhs_b1.CF.formula_base_heap in
+        let ( _,mix_lf1,_,_,_) = CF.split_components (CF.Base lhs_b1) in
+        let ( _,mix_rf1,_,_,_) = CF.split_components (CF.Base rhs_b1) in
+        let leqs1 = (MCP.ptr_equations_without_null mix_lf1) in
+        let reqs1 = (MCP.ptr_equations_without_null mix_rf1) in
+          (********** END BASIC INFO LHS, RHS **********)
+          let sel_hprels = List.filter (fun (hp,_) -> CP.mem_svl hp ivs) (CF.get_HRels lhs_b1.CF.formula_base_heap) in
+          if sel_hprels = [] then
+            (false, es0,[])
+          else
+            let lhds, lhvs, lhrs = CF.get_hp_rel_bformula lhs_b1 in
+            let sel_hpargs, hprel_ass0 = List.fold_left (fun (ls1,ls2) (hp,args) ->
+                let r_opt = generate_constrs lhs_b1 rhs_b1 leqs1 reqs1 lhds lhvs lhrs (hp,args) in
+                match r_opt with
+                  | Some ass ->
+                        (ls1@[(hp,args)],ls2@[ass])
+                  | None -> (ls1,ls2)
+            ) ([],[]) sel_hprels in
+            let ex_ass = (rel_ass_stk # get_stk) in
+            let hprel_ass = Gen.BList.difference_eq SAU.constr_cmp hprel_ass0 ex_ass in
+            if sel_hpargs = [] || hprel_ass = [] then (false,es0,[]) else
+              (*update residue*)
+              let reqs0 = (MCP.ptr_equations_without_null mix_rf) in
+              let empty_eqset = CP.EMapSV.mkEmpty in
+              let all_aset = CP.add_equiv_list_eqs empty_eqset (leqs0@reqs0@es0.CF.es_rhs_eqset) in
+              let sel_hpargs2 = List.map (fun (hp,args) -> (hp, CP.find_eq_closure all_aset args)) sel_hpargs in
+              let nhf = CF.drop_data_view_hpargs_nodes_hf lhs_b0.CF.formula_base_heap SAU.select_dnode SAU.select_vnode SAU.select_subsumehpargs [] [] sel_hpargs2 in
+              let new_es_formula = CF.Base {lhs_b0 with CF.formula_base_heap = nhf} in
+              let es1 = {es0 with CF.es_formula = new_es_formula} in
+              (true, es1, hprel_ass)
+      end
+
+
+let infer_collect_hp_rel_empty_rhs i prog (es:entail_state) rhs_p pos =
+  let pr1 = Cprinter.string_of_formula in
+  let pr2 = Cprinter.string_of_mix_formula in
+  let pr3 (b, es,_) =  (pr_pair string_of_bool pr1) (b, es.CF.es_formula) in
+  Debug.no_2_num i "infer_collect_hp_rel_empty_rhs" pr1 pr2 pr3
+( fun _ _ -> infer_collect_hp_rel_empty_rhs_x prog es rhs_p pos) es.CF.es_formula rhs_p
+
+(*******************************************************)
+(*******************************************************)
+(*******************************************************)
 
 let collect_classic_assumption prog es lfb sel_hps infer_vars pos=
   let lhds, lhvs, lhrs = CF.get_hp_rel_bformula lfb in
@@ -3377,9 +3492,10 @@ let add_infer_hp_contr_to_list_context h_arg_map cps (l:list_context) : list_con
                 let new_rel = mkTupleRel succ_w_cands in
                 (res_rels@[new_rel])
     ) [] new_cps in
-    let _ = rel_ass_stk # push_list (new_rels) in
-    let _ = Log.current_hprel_ass_stk # push_list (new_rels) in
-    let scc_f es = Ctx {es with es_infer_hp_rel = es.es_infer_hp_rel@new_rels;} in
+    let new_rels1 = Gen.BList.difference_eq SAU.constr_cmp new_rels (rel_ass_stk # get_stk) in
+    let _ = rel_ass_stk # push_list (new_rels1) in
+    let _ = Log.current_hprel_ass_stk # push_list (new_rels1) in
+    let scc_f es = Ctx {es with es_infer_hp_rel = es.es_infer_hp_rel@new_rels1;} in
     Some (transform_list_context (scc_f, (fun a -> a)) l)
   with Not_found -> None
 

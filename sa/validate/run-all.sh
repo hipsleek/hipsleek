@@ -12,8 +12,8 @@ echo "check-sll-head"
 ../../hip check-sll-head.ss -validate o/check-sll-head.cp | grep Validate
 echo "skip0"
 ../../hip skip0.ss -validate o/skip0.cp | grep Validate
-echo "skip-list: TODO (interprocedural)"
-#../../hip skip-list.ss -validate o/skip-list.cp | grep Validate
+echo "skip2-list"
+../../hip skip2-list.ss -validate o/skip2-list.cp | grep Validate
 echo "check-sorted"
 ../../hip check-sorted.ss --sa-en-pure-field -validate o/check-sorted.cp | grep Validate
 #echo "sll-insertsort.ss"

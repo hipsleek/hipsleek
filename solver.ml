@@ -6113,8 +6113,11 @@ and early_hp_contra_detection_x hec_num prog estate conseq pos =
     let _ = Debug.ninfo_hprint (add_str "early_hp_contra_detection : " pr_id) "1" pos in
     (true,false, None)
   else
-    if (* (isEmpFormula estate.es_formula) && *) (is_trivial_heap_formula conseq) 
-    then (true, false, None)
+    if (* (isEmpFormula estate.es_formula) && *) (* is_trivial_heap_formula conseq *)
+      (is_trivial_formula conseq)
+    then
+       let _ = Debug.ninfo_hprint (add_str "early_hp_contra_detection : " pr_id) "3" pos in
+       (true, false, None)
     else
     begin
       let (r_inf_contr,real_c), relass = solver_detect_lhs_rhs_contra 1 prog estate conseq pos "EARLY CONTRA DETECTION" in
@@ -7939,6 +7942,13 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
                               (*                         (\*   (ctx, proof) *\) *)
                               (* ) *)
                               else (
+                                  (*infer hprel*)
+                                  let estate, hprel_ass=
+                                    if (h2 = HEmp) then
+                                      let (res,new_estate, rels) = Inf.infer_collect_hp_rel_empty_rhs 1 prog estate p2 pos in
+                                      if res then new_estate,rels else estate,[]
+                                    else estate,[]
+                                  in
                                 let b1 = {formula_base_heap = h1;
                                 formula_base_pure = p1;
                                 formula_base_type = t1;
@@ -7954,10 +7964,14 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
                                   match ctx with
                                   | FailCtx _ -> ctx
                                   | SuccCtx cl ->
+                                        let _ = Inf.rel_ass_stk # push_list hprel_ass in
+                                        let _ = Log.current_hprel_ass_stk # push_list hprel_ass in
                                       let new_cl =
                                         List.map (fun c ->
                                             (transform_context
                                                 (fun es ->
+                                                    let es = {es with CF.es_infer_hp_rel = es.CF.es_infer_hp_rel @ hprel_ass;}
+              in
                                                     (* explicit inst *)
                                                     let l_inst = get_expl_inst es p2 in
                                                     let es = move_impl_inst_estate es p2 in

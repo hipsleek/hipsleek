@@ -1414,6 +1414,7 @@ let h_subst ss ls_eq_args0 hf0=
             hf1
     | _ -> hf0
 
+
 let smart_subst_new_x lhs_b rhs_b hpargs l_emap r_emap r_qemap unk_svl prog_vars=
   let largs= CF.h_fv lhs_b.CF.formula_base_heap in
   let rargs= CF.h_fv rhs_b.CF.formula_base_heap in
@@ -1464,7 +1465,6 @@ let smart_subst_new lhs_b rhs_b hpargs l_emap r_emap r_qemap unk_svl prog_vars=
   Debug.no_7 "smart_subst_new" pr1 pr1 pr4 pr2 pr3 pr3 pr3 (pr_triple pr1 pr1 pr2)
       (fun _ _ _ _ _ _ _-> smart_subst_new_x lhs_b rhs_b hpargs l_emap r_emap r_qemap unk_svl prog_vars)
       lhs_b rhs_b hpargs prog_vars l_emap r_emap r_qemap
-
 
 let smart_subst_lhs f lhpargs leqs infer_vars=
   match f with
@@ -3304,11 +3304,11 @@ let convert_HTrue_2_None hpdefs=
   in
   List.fold_left do_convert ([],[]) hpdefs
 
-let remove_dups_constr constrs=
-  let constr_cmp cs1 cs2=
+let constr_cmp cs1 cs2=
     checkeq_pair_formula (cs1.CF.hprel_lhs,cs1.CF.hprel_rhs)
         (cs2.CF.hprel_lhs,cs2.CF.hprel_rhs)
-  in
+
+let remove_dups_constr constrs=
   Gen.BList.remove_dups_eq constr_cmp constrs
 
 let subst_equiv_hprel equivs constrs=
