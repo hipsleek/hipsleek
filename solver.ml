@@ -4940,13 +4940,28 @@ and heap_entail_one_context_struc_x (prog : prog_decl) (is_folding : bool)  has_
         let result, prf = heap_entail_after_sat_struc prog is_folding  has_post ctx conseq tid delayed_f join_id pos pid []  in
         (result, prf)
 
+and need_unfold_rhs prog vn=
+  let vdef = C.look_up_view_def_raw 42 prog.C.prog_view_decls vn.CF.h_formula_view_name in
+  (*looking for unknown case*)
+  let unk_hps = List.fold_left (fun r (f,_) ->
+      match CF.extract_hrel_head f with
+        | Some hp -> r@[hp]
+        | None -> r
+  ) [] vdef.view_un_struc_formula in
+  if unk_hps <> [] then
+    (* let _ = Debug.info_zprint (lazy (("    xxxa " ))) no_pos in *)
+    ([(vn.CF.h_formula_view_name,vdef.C.view_un_struc_formula, vdef.C.view_vars)],unk_hps)
+  else
+    ([],[])
+
+
 and heap_entail_after_sat_struc prog is_folding  has_post
       ctx conseq (tid: CP.spec_var option) (delayed_f: MCP.mix_formula option) (join_id: CP.spec_var option) pos pid (ss:steps) : (list_context * proof) =
   Debug.no_2 "heap_entail_after_sat_struc" Cprinter.string_of_context
       Cprinter.string_of_struc_formula
       (fun (lctx, _) -> Cprinter.string_of_list_context lctx)
       (fun _ _ -> heap_entail_after_sat_struc_x prog is_folding has_post ctx conseq tid delayed_f join_id pos pid ss) ctx conseq
-      
+
 and heap_entail_after_sat_struc_x prog is_folding has_post
       ctx conseq tid delayed_f join_id pos pid (ss:steps) : (list_context * proof) =     
   match ctx with
@@ -4969,10 +4984,35 @@ and heap_entail_after_sat_struc_x prog is_folding has_post
               ^ "\ntid:" ^ (pr_opt Cprinter.string_of_spec_var tid)
               ^ "\ndelayed_f:" ^ (pr_opt Cprinter.string_of_mix_formula delayed_f)
               ^ "\ncontext:\n" ^ (Cprinter.string_of_context ctx)^ "\nconseq:\n" ^ (Cprinter.string_of_struc_formula conseq))) pos;
-              (*let es = {es with es_formula = prune_preds prog es.es_formula } in*)
-              let es = (CF.add_to_estate_with_steps es ss) in
-              let tmp, prf = heap_entail_conjunct_lhs_struc prog is_folding has_post (Ctx es) conseq tid delayed_f join_id pos pid in
-	      (filter_set tmp, prf)
+              let vn_opt= CF.is_only_viewnode es.CF.es_formula in
+              let need_unfold, pr_views ,args, unk_hps= match vn_opt with
+                | Some vn ->
+                      let pr_views,unk_hps = need_unfold_rhs prog vn in
+                      if unk_hps = [] || pr_views = [] then
+                        (false, [], [],[])
+                      else
+                        (true, pr_views,vn.CF.h_formula_view_node::vn.CF. h_formula_view_arguments,unk_hps)
+                | None -> (false, [], [], [])
+              in
+              let fs = if need_unfold then
+                let nf = CF.do_unfold_view prog pr_views es.CF.es_formula in
+                let fs = CF.list_of_disjs nf in
+                fs
+              else []
+              in
+              if need_unfold && List.length fs > 1 then
+                let orctx = List.map (fun f ->
+                    Ctx {es with CF.es_formula = f;}
+                    ) fs
+                in
+                let n_ctx = List.fold_left (fun c1 c2 -> CF.OCtx (c1, c2)) (List.hd orctx) (List.tl orctx) in
+                 heap_entail_after_sat_struc_x prog is_folding has_post
+                     n_ctx conseq tid delayed_f join_id pos pid ss
+              else
+                (*let es = {es with es_formula = prune_preds prog es.es_formula } in*)
+                let es = (CF.add_to_estate_with_steps es ss) in
+                let tmp, prf = heap_entail_conjunct_lhs_struc prog is_folding has_post (Ctx es) conseq tid delayed_f join_id pos pid in
+	        (filter_set tmp, prf)
             end
 	  in wrap_trace es.es_path_label exec ()
 
@@ -5028,23 +5068,13 @@ and heap_entail_conjunct_lhs_struc p is_folding  has_post ctx conseq (tid:CP.spe
 
 and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (has_post:bool) (ctx_00 : context) 
       (conseq : struc_formula) (tid: CP.spec_var option) (delayed_f: MCP.mix_formula option) (join_id: CP.spec_var option) pos pid : (list_context * proof) =
+
   let rec helper_inner i (ctx11: context) (f: struc_formula) : list_context * proof =
     (* let _= print_endline ("calling heap entail conjunct lhs") in			 *)
     Debug.no_2_num i (*loop*) "helper_inner" Cprinter.string_of_context Cprinter.string_of_struc_formula (fun (lc, _) -> Cprinter.string_of_list_context lc)
 	(helper_inner_x) ctx11 f
 
-  and need_unfold_rhs prog vn=
-    let vdef = C.look_up_view_def_raw 42 prog.C.prog_view_decls vn.CF.h_formula_view_name in
-    (*looking for unknown case*)
-    let unk_hps = List.fold_left (fun r (f,_) ->
-        match CF.extract_hrel_head f with
-          | Some hp -> r@[hp]
-          | None -> r
-    ) [] vdef.view_un_struc_formula in
-    if unk_hps <> [] then ([(vn.CF.h_formula_view_name,vdef.C.view_un_struc_formula, vdef.C.view_vars)],unk_hps) else ([],[])
-
-
-  and helper_inner_x (ctx11 : context) (f:struc_formula) : list_context * proof = 
+   and helper_inner_x (ctx11 : context) (f:struc_formula) : list_context * proof = 
     begin
       match ctx11 with (*redundant check*)
 	| OCtx _ -> report_error post_pos#get ("[inner entailer" ^"] unexpected dealing with OCtx \n" ^ (Cprinter.string_of_context_short ctx11))
@@ -5302,14 +5332,14 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
 		                  formula_struc_base = formula_base;
 		                  formula_struc_continuation = formula_cont;} as b) ->begin
                                   let vn_opt= CF.is_only_viewnode formula_base in
-                                  let need_unfold, pr_views ,args= match vn_opt with
+                                  let need_unfold, pr_views ,args, unk_hps= match vn_opt with
                                     | Some vn ->
                                           let pr_views,unk_hps = need_unfold_rhs prog vn in
                                           if unk_hps = [] || pr_views = [] then
-                                            (false, [], [])
+                                            (false, [], [],[])
                                           else
-                                            (true, pr_views,vn.CF.h_formula_view_node::vn.CF. h_formula_view_arguments)
-                                    | None -> (false, [], [])
+                                            (true, pr_views,vn.CF.h_formula_view_node::vn.CF. h_formula_view_arguments,unk_hps)
+                                    | None -> (false, [], [], [])
                                   in
                                   if need_unfold then
                                     let nf = CF.do_unfold_view prog pr_views formula_base in
@@ -5324,7 +5354,12 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
                                     let n_struc_f = CF.EList struc_disj in
                                     (* let _ = DD.info_zprint  (lazy  (" es_infer_vars_rel: " ^ (!CP.print_svl es.CF.es_infer_vars_rel))) pos in *)
                                     (* let _ = DD.info_zprint  (lazy  (" es_infer_vars_hp_rel: " ^ (!CP.print_svl es.CF.es_infer_vars_hp_rel))) pos in *)
-                                    helper_inner 14 ctx11 n_struc_f
+                                    let n_ctx = match ctx11 with
+                                      | OCtx _ -> report_error post_pos#get ("[inner entailer" ^"] unexpected dealing with OCtx \n" ^ (Cprinter.string_of_context_short ctx11))
+	                              | Ctx es -> Ctx {es with
+                                            CF.es_infer_vars_hp_rel = CP.remove_dups_svl (es.CF.es_infer_vars_hp_rel@unk_hps);}
+                                    in
+                                    helper_inner 14 n_ctx n_struc_f
                                   else
                                   (*formula_ext_complete = pre_c;*)
                                   let rel_args = CF.get_rel_args formula_base in

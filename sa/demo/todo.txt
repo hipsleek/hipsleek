@@ -6079,14 +6079,16 @@ synchronize sa2.infer_shapes_proper with sa3.infer_shapes_proper
      - ll-back1.slk: unfold rhs for embeded unk inside views of context when proving pre DONE
      -ll-back2.slk: unfold lhs for embeded unk inside views of context when proving post
 
-interprocedural sa:
+interprocedural sa: DONE
   for each callee:
     transform into view
     subst specs
     remove unknown preds for further analysis
 
 =====================================================================
-#skip-list.ss: to support
+#skip-list.ss:
+  - skip2-list: DONE
+  - validate
 
 =====================================================================
 #  sll-reverse-1.ss: DONE

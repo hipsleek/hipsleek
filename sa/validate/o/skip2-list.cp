@@ -24,6 +24,7 @@ hpdefs [H2][]:{
 
  }
 ]
+/*
 skip1:SUCCESS[
 ass [H1][]:{
  // BIND (2;0)
@@ -46,3 +47,4 @@ hpdefs [H1][]:{
 
  }
 ]
+*/

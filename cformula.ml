@@ -4255,12 +4255,12 @@ let is_only_viewnode (f0:formula) =
         formula_exists_heap = h1;}) ->
         (
             let p2 = (MCP.pure_of_mix p1) in
-            if (CP.isConstTrue p2 ) then
+            (* if (CP.isConstTrue p2 ) then *)
               match h1 with
                 | ViewNode hv -> Some hv
                 | _ -> None
-            else
-              None
+            (* else *)
+            (*   None *)
         )
     | Or _ -> None
   in

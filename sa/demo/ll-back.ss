@@ -47,11 +47,11 @@ HeapPred G2(node b).
 
 int main(ref node ptr)
 
-             //  requires true
-             // ensures ptr'::ll<>;//'
+              /* requires true */
+              /* ensures ptr'::ll<>;//' */
 
 
-  infer [H1,G1,G2]
+  infer [G2]
   requires true
   ensures G2(ptr');//'
 
