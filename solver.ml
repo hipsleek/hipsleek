@@ -4941,7 +4941,15 @@ and heap_entail_one_context_struc_x (prog : prog_decl) (is_folding : bool)  has_
         (result, prf)
 
 and need_unfold_rhs prog vn=
-  let vdef = C.look_up_view_def_raw 42 prog.C.prog_view_decls vn.CF.h_formula_view_name in
+  let rec look_up_view vn0=
+    let vdef = C.look_up_view_def_raw 42 prog.C.prog_view_decls vn0.CF.h_formula_view_name in
+    let fs = List.map fst vdef.view_un_struc_formula in
+    let hv_opt = CF.is_only_viewnode false (CF.formula_of_disjuncts fs) in
+    match hv_opt with
+      | Some vn1 -> look_up_view vn1
+      | None -> vdef
+  in
+  let vdef = look_up_view vn in
   (*looking for unknown case*)
   let unk_hps = List.fold_left (fun r (f,_) ->
       match CF.extract_hrel_head f with
@@ -4984,7 +4992,7 @@ and heap_entail_after_sat_struc_x prog is_folding has_post
               ^ "\ntid:" ^ (pr_opt Cprinter.string_of_spec_var tid)
               ^ "\ndelayed_f:" ^ (pr_opt Cprinter.string_of_mix_formula delayed_f)
               ^ "\ncontext:\n" ^ (Cprinter.string_of_context ctx)^ "\nconseq:\n" ^ (Cprinter.string_of_struc_formula conseq))) pos;
-              let vn_opt= CF.is_only_viewnode es.CF.es_formula in
+              let vn_opt= CF.is_only_viewnode true es.CF.es_formula in
               let need_unfold, pr_views ,args, unk_hps= match vn_opt with
                 | Some vn ->
                       let pr_views,unk_hps = need_unfold_rhs prog vn in
@@ -5331,7 +5339,7 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
 		                  formula_struc_exists = base_exists;
 		                  formula_struc_base = formula_base;
 		                  formula_struc_continuation = formula_cont;} as b) ->begin
-                                  let vn_opt= CF.is_only_viewnode formula_base in
+                                  let vn_opt= CF.is_only_viewnode true formula_base in
                                   let need_unfold, pr_views ,args, unk_hps= match vn_opt with
                                     | Some vn ->
                                           let pr_views,unk_hps = need_unfold_rhs prog vn in
@@ -5357,7 +5365,9 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
                                     let n_ctx = match ctx11 with
                                       | OCtx _ -> report_error post_pos#get ("[inner entailer" ^"] unexpected dealing with OCtx \n" ^ (Cprinter.string_of_context_short ctx11))
 	                              | Ctx es -> Ctx {es with
-                                            CF.es_infer_vars_hp_rel = CP.remove_dups_svl (es.CF.es_infer_vars_hp_rel@unk_hps);}
+                                            CF.es_infer_vars_hp_rel = CP.remove_dups_svl (es.CF.es_infer_vars_hp_rel@unk_hps);
+                                            CF.es_infer_vars_sel_post_hp_rel = CP.remove_dups_svl (es.CF.es_infer_vars_sel_post_hp_rel@unk_hps);
+}
                                     in
                                     helper_inner 14 n_ctx n_struc_f
                                   else

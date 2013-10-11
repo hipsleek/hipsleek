@@ -4246,7 +4246,7 @@ let extract_hrel_head (f0:formula) =
   Debug.no_1 "extract_hrel_head" pr1 pr2
       (fun _ ->  extract_hrel_head_x f0) f0
 
-let is_only_viewnode (f0:formula) =
+let is_only_viewnode_x acc_pure (f0:formula) =
   let rec helper f=
   match f with
     | Base ({ formula_base_pure = p1;
@@ -4255,17 +4255,26 @@ let is_only_viewnode (f0:formula) =
         formula_exists_heap = h1;}) ->
         (
             let p2 = (MCP.pure_of_mix p1) in
-            (* if (CP.isConstTrue p2 ) then *)
+            if acc_pure || (CP.isConstTrue p2 ) then
               match h1 with
                 | ViewNode hv -> Some hv
                 | _ -> None
-            (* else *)
-            (*   None *)
+            else
+              None
         )
     | Or _ -> None
   in
   helper f0
 
+let is_only_viewnode acc_pure (f0:formula) =
+  let pr1 = !print_formula in
+  let pr2 ovn = match ovn with
+    | Some vn -> !print_h_formula (ViewNode vn)
+    | None -> "None"
+  in
+  Debug.no_2 "is_only_viewnode" string_of_bool pr1 pr2
+      (fun _ _ -> is_only_viewnode_x acc_pure f0)
+      acc_pure f0
 
 let extract_hprel_pure (f0:formula) =
   let rec helper f=

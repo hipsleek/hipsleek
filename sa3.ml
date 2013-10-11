@@ -1921,10 +1921,10 @@ and infer_process_pre_preds iprog prog proc_name callee_hps b_is_pre is (pre_fix
         (n_is3, [],pre_oblg_constrs3)
     end
   in
-  let _ = DD.info_hprint (add_str "   is:"  Cprinter.string_of_infer_state_short) is no_pos in
+  let _ = DD.ninfo_hprint (add_str "   is:"  Cprinter.string_of_infer_state_short) is no_pos in
   let r_is,a,n_pre_oblg_constrs = helper_x is [] [] pre_oblg_constrs0 in
-  let _ = DD.info_hprint (add_str "   r_is:" Cprinter.string_of_infer_state_short) r_is no_pos in
-  let _ = DD.info_hprint (add_str "  n_pre_oblg_constrs:" (pr_list_ln Cprinter.string_of_hprel_short)) n_pre_oblg_constrs no_pos in
+  let _ = DD.ninfo_hprint (add_str "   r_is:" Cprinter.string_of_infer_state_short) r_is no_pos in
+  let _ = DD.ninfo_hprint (add_str "  n_pre_oblg_constrs:" (pr_list_ln Cprinter.string_of_hprel_short)) n_pre_oblg_constrs no_pos in
   let hp_defs1,tupled_defs = SAU.partition_tupled r_is.CF.is_hp_defs in
   let r_is1 = {r_is with CF.is_hp_defs = (def_subst_fix prog [] hp_defs1)@tupled_defs } in
   (r_is1,a,n_pre_oblg_constrs)

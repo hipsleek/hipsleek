@@ -393,7 +393,7 @@ let trans_specs_hprel_2_cview iprog cprog proc_name hpdefs chprels_decl =
 (********END REVERIFY**********)
 (*******************************)
 
-let plug_shape_into_specs cprog iprog proc_names hp_defs=
+let plug_shape_into_specs_x cprog iprog proc_names hp_defs=
   let need_trans_hprels0, unk_hps =
     List.fold_left (fun (r_hp_defs, r_unk_hps) ((hp_kind, _,_,f) as hp_def) ->
         match hp_kind with
@@ -417,10 +417,16 @@ let plug_shape_into_specs cprog iprog proc_names hp_defs=
     let cprog = trans_specs_hprel_2_cview iprog cprog proc_name need_trans_hprels1 chprels_decl in
   cprog
   in
-  let need_trans_hprels1 = List.map (fun (a,b,c,f) ->
-      let new_f,_ = Cformula.drop_hrel_f f unk_hps in
-      (a,b,c,new_f)
-  ) need_trans_hprels0 in
+  let need_trans_hprels1 = (* List.map (fun (a,b,c,f) -> *)
+  (*     let new_f,_ = Cformula.drop_hrel_f f unk_hps in *)
+  (*     (a,b,c,new_f) *)
+  (* ) *) need_trans_hprels0 in
   let n_cviews,chprels_decl = trans_hprel_2_cview iprog cprog "" need_trans_hprels1 in
   let cprog = List.fold_left (plug_proc need_trans_hprels1 chprels_decl) cprog proc_names in
   cprog
+
+let plug_shape_into_specs cprog iprog proc_names hp_defs=
+  let pr1 = pr_list_ln Cprinter.string_of_hp_rel_def in
+  Debug.no_1 "plug_shape_into_specs" pr1 pr_none
+      (fun _ -> plug_shape_into_specs_x cprog iprog proc_names hp_defs)
+      hp_defs
