@@ -9,6 +9,7 @@ module MCP = Mcpure
 module DD = Debug
 open CP
 
+type  pai_num = Bottom | Neg_inf | Pos_inf | Finite
 
 (* Equisatisfiable Normalization *)
 (* 
@@ -29,7 +30,6 @@ open CP
    \inf<=c      ==> false
    \inf>c       ==> true
 *)
-
 
 (*
 Normalizes Min and Max Exp as per the rules
@@ -1184,3 +1184,160 @@ let normalize_inf_formula_imply (ante: CP.formula) (conseq: CP.formula) : CP.for
 
 let normalize_inf_formula_imply (ante: CP.formula) (conseq: CP.formula) : CP.formula * CP.formula = 
   Gen.Profiling.do_1 "INF-norm-imply" (normalize_inf_formula_imply ante) conseq
+
+let join_pai_num (x: pai_num) (y: pai_num) : pai_num =
+match x,y with
+  | Bottom,a 
+  | a,Bottom -> a
+  | Pos_inf,Pos_inf -> Pos_inf
+  | Neg_inf,Neg_inf -> Neg_inf
+  | Pos_inf,Neg_inf
+  | Neg_inf,Pos_inf
+  | Finite,_ 
+  | _,Finite -> Finite
+
+let propagate_pai (bf: CP.b_formula) (ls:(spec_var * pai_num) list) : (spec_var * pai_num) list  =
+ let rec helper p_f =
+    (match p_f with
+      | CP.Lt(e1,e2,pos) 
+      | CP.Gt(e2,e1,pos) 
+      | CP.Lte(e1,e2,pos) 
+      | CP.Gte(e2,e1,pos) ->
+          let v1 = get_var_opt e1 in
+          let v2 = get_var_opt e2 in
+         (match v1,v2 with
+            | Some(s1),Some(s2) -> 
+                if List.exists (fun (s,p) -> eq_spec_var s1 s) ls && 
+                  List.exists (fun (s,p) -> eq_spec_var s2 s) ls
+                then let sl1,pn1 = List.find (fun (l,_) -> eq_spec_var l s1) ls in
+                     let sl2,pn2 = List.find (fun (l,_) -> eq_spec_var l s2) ls in
+                     let s,p = 
+                       if pn1 = Pos_inf then let pn2_new = join_pai_num pn2 Pos_inf in sl2,pn2_new
+                       else if pn2 = Neg_inf then let pn1_new = join_pai_num pn1 Neg_inf in sl1,pn1_new
+                       else sl1,pn1
+                     in let ls_remove_s = List.filter (fun (l,_) -> not(eq_spec_var l s)) ls in
+                        (s,p)::ls_remove_s
+                else ls 
+            | _ ,_ -> ls)
+      | CP.Eq (e1,e2,pos) -> 
+          let v1 = get_var_opt e1 in
+          let v2 = get_var_opt e2 in
+         (match v1,v2 with
+            | Some(s1),Some(s2) -> 
+                if List.exists (fun (s,p) -> eq_spec_var s1 s) ls && 
+                  List.exists (fun (s,p) -> eq_spec_var s2 s) ls
+                then let sl1,pn1 = List.find (fun (l,_) -> eq_spec_var l s1) ls in
+                     let sl2,pn2 = List.find (fun (l,_) -> eq_spec_var l s2) ls in
+                     let pn  = join_pai_num pn1 pn2 in
+                     let ls = List.filter (fun (l,_) -> not(eq_spec_var l sl1)) ls in
+                     let ls = List.filter (fun (l,_) -> not(eq_spec_var l sl2)) ls in
+                        (sl1,pn)::(sl2,pn)::ls
+                else ls 
+            | _ ,_ -> ls)
+
+      | CP.Neq (e1,e2,pos) -> 
+          let v1 = get_var_opt e1 in
+          let v2 = get_var_opt e2 in
+         (match v1,v2 with
+            | Some(s1),Some(s2) -> 
+                if List.exists (fun (s,p) -> eq_spec_var s1 s) ls && 
+                  List.exists (fun (s,p) -> eq_spec_var s2 s) ls
+                then let sl1,pn1 = List.find (fun (l,_) -> eq_spec_var l s1) ls in
+                     let sl2,pn2 = List.find (fun (l,_) -> eq_spec_var l s2) ls in
+                     let s,p = match pn1,pn2 with
+                       | Pos_inf,_ -> sl2,join_pai_num pn2 Neg_inf
+                       | _,Pos_inf -> sl1,join_pai_num pn1 Neg_inf
+                       | _,Neg_inf -> sl1,join_pai_num pn1 Pos_inf
+                       | Neg_inf,_ -> sl2,join_pai_num pn2 Pos_inf
+                       | _,_ -> sl1,pn1
+                     in let ls_remove_s = List.filter (fun (l,_) -> not(eq_spec_var l s)) ls in
+                        (s,p)::ls_remove_s
+                else ls 
+            | _ ,_ -> ls)
+      | _ -> ls
+    ) in  
+  let (p_f,bf_ann) = bf in (helper p_f)
+
+let initialize_pai (bf: CP.b_formula) (ls:(spec_var * pai_num) list) 
+    : CP.b_formula * (spec_var * pai_num) list  =
+  let aux (s1:spec_var) (s2:spec_var) pai_new ls =
+    if is_inf_sv s2 then 
+      if List.exists (fun (s,p) -> eq_spec_var s1 s) ls then
+        let s,p = List.find (fun (l,_) -> eq_spec_var l s1) ls in
+        let p = join_pai_num p pai_new in
+        let ls_remove_s = List.filter (fun (l,_) -> not(eq_spec_var l s)) ls in
+        true,((s,p)::ls_remove_s)
+      else false,ls
+    else false,ls
+  in 
+ let rec helper p_f =
+    (match p_f with
+      | CP.Gt(e2,e1,pos) 
+      | CP.Lt(e1,e2,pos) ->
+          let v1 = get_var_opt e1 in
+          let v2 = get_var_opt e2 in
+         (match v1,v2 with
+            | Some(s1),Some(s2) -> let f,ls_new = aux s1 s2 Neg_inf ls in
+                                   if f then  (mkTrue_p no_pos),ls_new
+                                   else p_f,ls
+            | None,None -> (match e1,e2 with
+                | IConst(0,_),Add(e1,e2,_) -> 
+                    let v1 = get_var_opt e1 in
+                    let v2 = get_var_opt e2 in
+                    (match v1,v2 with
+                      | Some(s1),Some(s2) -> 
+                          let f,ls_new = aux s1 s2 Pos_inf ls in
+                          if f then  (mkTrue_p no_pos),ls_new
+                          else let f,ls_new = aux s2 s1 Pos_inf ls in
+                               if f then  (mkTrue_p no_pos),ls_new
+                               else p_f,ls
+                      | _,_ -> p_f,ls)
+                | _,_ -> p_f,ls)
+            | _ ,_ -> p_f,ls) 
+      | _ -> p_f,ls
+    ) in  
+  let (p_f,bf_ann) = bf in 
+  let p_f,ls = (helper p_f) in (p_f,bf_ann),ls
+
+let rec initialize_pai_formula (f:CP.formula) (ls:(spec_var * pai_num) list) 
+  : CP.formula * (spec_var * pai_num) list = 
+  let rec helper pf ls =
+    match pf with
+      | CP.BForm (b,fl) -> 
+            let b,ls = initialize_pai b ls
+            in CP.BForm(b,fl),ls
+      | CP.And (pf1,pf2,pos) -> 
+            let pf1,ls1 = helper pf1 ls in
+            let pf2,ls2 = helper pf2 ls1 in
+            CP.And(pf1,pf2,pos),ls2 
+      | CP.AndList pflst ->  CP.AndList(pflst),ls
+      | CP.Or (pf1,pf2,fl,pos) -> 
+            let pf1,ls1 = helper pf1 ls in
+            let pf2,ls2 = helper pf2 ls1 in
+            CP.Or(pf1,pf2,fl,pos),ls2 
+      | CP.Not (nf,fl,pos) -> 
+            let nf,ls = helper nf ls
+            in CP.Not(nf,fl,pos),ls
+      | CP.Forall (qid, qf,fl,pos) -> 
+            let qf,ls = helper qf ls
+            in CP.Forall(qid,qf,fl,pos),ls
+      | CP.Exists (qid, qf,fl,pos) -> 
+            let qf,ls = helper qf ls
+            in CP.Exists(qid,qf,fl,pos),ls
+  in
+  helper f ls
+
+(* assumes only conjunctions are in formula and all quantifiers are eliminated *)
+let fixed_point_pai_num (f: CP.formula) : CP.formula =
+  let var_list = CP.fv f in 
+  let ls = List.map (fun c -> (c,Bottom)) var_list in
+  let f,var_pai_lst = initialize_pai_formula f ls in
+  let clause_lst = list_of_bformula f in 
+  let lst = List.map (fun c -> match c with
+    | BForm (b,fl) -> propagate_pai b var_pai_lst
+    | _ -> var_pai_lst
+  ) clause_lst in
+  f
+
+let fixed_point_pai_num  (f: CP.formula) : CP.formula =
+Debug.no_1 "fixed_point_pai_num" string_of_pure_formula string_of_pure_formula fixed_point_pai_num f
