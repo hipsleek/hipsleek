@@ -23,7 +23,7 @@ node insert(node x, int v)
 {
         node tmp_null = null;
         node xn;
-
+       
    if (v <= x.val) {
 		return new node(v, x);
         }
