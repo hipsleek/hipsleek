@@ -5,18 +5,18 @@ data node {
 	node next; 
 }
 
-bnd<n, sm, bg> == self = null & n = 0 or 
-      self::node<d, p> * p::bnd<n-1, sm, bg> & sm <= d < bg 
+bnd<n, sm, bg,a1,a2> == self = null & n = 0 or 
+  self::node<d@a1, p@a2> * p::bnd<n-1, sm, bg,a1,a2> & sm <= d < bg 
       inv n >= 0;
 
-sll<n, sm, lg> == 
-     self::node<qmin, null> & qmin = sm & qmin = lg & n = 1 
-  or self::node<sm, q> * q::sll<n-1, qs, lg> &  sm <= qs 
+sll<n, sm, lg, a1, a2> == 
+     self::node<qmin@a1, nx@a2> & qmin = sm & qmin = lg & n = 1 & nx=null
+  or self::node<sm@a1, q@a2> * q::sll<n-1, qs, lg,a1,a2> &  sm <= qs 
       inv n >= 1 & sm <= lg & self!=null ;
 
 node partition(ref node xs, int c)
-  requires xs::bnd<n, sm, bg> & sm <= c <= bg
-    ensures xs'::bnd<a, sm, c> * res::bnd<b, c, bg> & n = a+b;
+  requires xs::bnd<n, sm, bg,@L,@M> & sm <= c <= bg
+    ensures xs'::bnd<a, sm, c,@A,@M> * res::bnd<b, c, bg,@A,@M> & n = a+b;
 {
 	node tmp1;
 	int v; 
@@ -45,10 +45,10 @@ node partition(ref node xs, int c)
 
 /* function to append 2 bounded lists */
 node append_bll(node x, node y)
-    requires y::sll<m,s2,b2> & x=null 
-    ensures res::sll<m,s2,b2>;
-	requires x::sll<nn, s0, b0> * y::sll<m, s2, b2> & b0 <= s2
-	ensures res::sll<nn+m, s0, b2>;
+    requires y::sll<m,s2,b2,@L,@M> & x=null 
+    ensures res::sll<m,s2,b2,@A,@M>;
+	requires x::sll<nn, s0, b0,@L,@M> * y::sll<m, s2, b2,@L,@M> & b0 <= s2
+	ensures res::sll<nn+m, s0, b2,@A,@M>;
 
 {
         node xn; 
@@ -64,8 +64,8 @@ node append_bll(node x, node y)
 void qsort(ref node xs)
     requires xs=null
 	ensures  xs'=null;
-	requires xs::bnd<n, sm, bg> & n>0 
-	ensures xs'::sll<n, smres, bgres> & smres >= sm & bgres < bg;
+	requires xs::bnd<n, sm, bg,@L,@M> & n>0 
+	ensures xs'::sll<n, smres, bgres,@A,@M> & smres >= sm & bgres < bg;
 {
 	node tmp;
         int v;
