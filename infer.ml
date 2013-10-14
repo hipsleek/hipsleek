@@ -603,11 +603,13 @@ let infer_lhs_contra pre_thus lhs_xpure ivars pos msg =
       else 
         let ps2 = CP.list_of_conjs f in
         let neg_f = 
-          if List.for_all (fun p -> CP.is_eq_neq_exp p) ps2 
+          if List.for_all (fun p -> CP.is_eq_neq_exp p &&
+              CP.intersect_svl ivars (CP.fv p) <> []
+          ) ps2 
           then
             let ps3 = List.map CP.neg_eq_neq ps2 in
             let ps4 = if List.length (CP.remove_dups_svl ivars) > 1 then
-              List.filter (fun p -> not (CP.is_neq_null_exp p)) ps3
+              List.filter (fun p -> not (CP.is_neq_null_exp p) ) ps3
             else ps3
             in
             disj_of_list ps4 pos
@@ -625,18 +627,20 @@ let infer_lhs_contra pre_thus lhs_xpure ivars pos msg =
           else let f = CP.mkAnd pre_thus neg_f no_pos in
                not(TP.is_sat_raw f) *)
         in
-        DD.devel_pprint ">>>>>> infer_lhs_contra <<<<<<" pos; 
-        DD.devel_hprint (add_str "trigger cond   : " pr_id) msg pos; 
-        DD.devel_hprint (add_str "LHS pure       : " !print_mix_formula) lhs_xpure_orig pos; 
-        DD.devel_hprint (add_str "ovrlap inf vars: " !print_svl) over_v pos; 
-        DD.devel_hprint (add_str "pre infer   : " !print_formula) neg_f pos; 
-        DD.devel_hprint (add_str "new pre infer   : " !print_formula) new_neg_f pos; 
-        DD.devel_hprint (add_str "pre thus   : " !print_formula) pre_thus pos; 
+        (* if CP.is_neq_exp new_neg_f then None else *) begin
+          DD.devel_pprint ">>>>>> infer_lhs_contra <<<<<<" pos; 
+          DD.devel_hprint (add_str "trigger cond   : " pr_id) msg pos; 
+          DD.devel_hprint (add_str "LHS pure       : " !print_mix_formula) lhs_xpure_orig pos; 
+          DD.devel_hprint (add_str "ovrlap inf vars: " !print_svl) over_v pos; 
+          DD.devel_hprint (add_str "pre infer   : " !print_formula) neg_f pos; 
+          DD.devel_hprint (add_str "new pre infer   : " !print_formula) new_neg_f pos; 
+          DD.devel_hprint (add_str "pre thus   : " !print_formula) pre_thus pos; 
 
-        if CP.isConstFalse new_neg_f then
-          (DD.devel_pprint "contradiction in inferred pre!" pos; 
-          None)
-        else Some (new_neg_f)
+          if CP.isConstFalse new_neg_f then
+            (DD.devel_pprint "contradiction in inferred pre!" pos; 
+            None)
+          else Some (new_neg_f)
+        end
 
 (*        DD.devel_hprint (add_str "contradict?: " string_of_bool) b pos; 
         if b then

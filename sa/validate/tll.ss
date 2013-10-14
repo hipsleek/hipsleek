@@ -61,6 +61,26 @@ RELASSUME
   G(right_29_846,l_878@NI,r) * G(left_29_845,res@NI,l_878)&
   right_29_846!=null --> G(x,res@NI,r)]
 
+[ // BIND
+(0)H(x',t@NI)&t=t' --> x'::node<left_31_900',right_31_901',next_31_902'>@M *
+HP_935(left_31_900',t@NI) * HP_936(right_31_901',t@NI) *
+HP_937(next_31_902',t@NI),
+ // PRE_REC
+(2;0)HP_936(v_node_40_910',t'@NI)&
+v_node_40_910'!=null --> H(v_node_40_910',t'@NI),
+ // PRE_REC
+(2;0)HP_935(v_node_41_914',t@NI)&
+t=t' --> H(v_node_41_914',l_47'@NI),
+ // POST
+(1;0)HP_935(left_31_939,t@NI) * HP_936(right_31_940,t@NI) *
+x::node<left_31_939,right_31_940,t>@M&right_31_940=null & res=t &
+res=x --> G(x,res@NI,t),
+ // POST
+(2;0)HP_937(next_31_941,t@NI) *
+x::node<left_31_939,right_31_940,next_31_941>@M *
+G(right_31_940,l_969@NI,t) * G(left_31_939,res@NI,l_969)&
+right_31_940!=null --> G(x,res@NI,t)]
+
 
 RELDEFN
 =======
@@ -74,6 +94,27 @@ RELDEFN
    res_884::node<__DP_8,right_29_846,r_885>@M&right_29_846=null & res_884=x_883
    \/  x_883::node<left_29_845,right_29_846,__DP_0>@M * G(right_29_846,l_878,r_885) 
        * G(left_29_845,res_884,l_878)&right_29_846!=null]
+
+
+ G(x_993,res_994,t_995) ::=
+ HP_937(next_31_941,t_995) *
+ x_993::node<left_31_939,right_31_940,next_31_941>@M *
+ G(right_31_940,l_969,t_995) * G(left_31_939,res_994,l_969)&
+ right_31_940!=null
+ or x_993::node<left_31_939,right_31_940,t_995>@M * H(left_31_939,l_992)&
+    res_994=t_995 & res_994=x_993 & right_31_940=null
+ ,
+ H(x_987,t_988) ::= H(left_31_972,l_47') *
+x_987::node<left_31_972,right_31_973,next_31_974>@M *
+HP_936(right_31_973,t_988) * HP_937(next_31_974,t_988),
+ HP_936(v_node_40_990,t_991) ::=
+ emp&v_node_40_990=null
+ or H(left_31_972,l_47') *
+    v_node_40_990::node<left_31_972,right_31_973,next_31_974>@M *
+    HP_936(right_31_973,t_991) * HP_937(next_31_974,t_991)
+ ,
+ HP_937(next_31_902',t) ::= NONE]
+
 
 # tll.ss --sa-dnc
 
@@ -94,6 +135,20 @@ RELDEFN
        * G(right_29_846,l_878,r_885) * G(left_29_845,res_884,l_878)&right_29_846!=null,
 
  H_0(next_29_847,r) ::= UNKNOWN \/ UNKNOWN]
+
+
+
+ G(x_993,res_994,t_995) ::=(2;0) x_993::node<left_31_939,right_31_940,__DP_HP_937>@M *
+G(right_31_940,l_969,t_995) * G(left_31_939,res_994,l_969)&right_31_940!=null
+   \/ (1;0) res_994::node<__DP_HP_935,right_31_940,res_994>@M&res_994=t_995 &
+res_994=x_993 & right_31_940=null,
+ H(x_990,t_991) ::=(2;0) H(left_31_980,l_47') *
+x_990::node<left_31_980,right_31_981,__DP_HP_937>@M *
+HP_936(right_31_981,t_991)
+   \/ (1;0) x_990::node<__DP_HP_935,right_31_901',__DP_HP_937'>@M *
+HP_936(right_31_901',t_991),
+ HP_936(v_node_40_970,t_971) ::=(2;0) H(v_node_40_970,t_971)&v_node_40_970!=null
+   \/ (1;0) emp&v_node_40_970=null]
 
 
 =========================

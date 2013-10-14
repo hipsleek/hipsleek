@@ -1167,7 +1167,7 @@ and collect_data_view_from_struc (data_names: ident list) (f:F.struc_formula): (
       let vl = Gen.Basic.remove_dups (List.concat vll) in
       (dl, vl)
   
-and collect_data_view_from_formula (data_names: ident list) (f0 : F.formula) : (ident list) * (ident list) = 
+and collect_data_view_from_formula_x (data_names: ident list) (f0 : F.formula) : (ident list) * (ident list) = 
   let rec helper (h0 : F.h_formula) = (
     match h0 with
     | F.HeapNode h -> 
@@ -1246,7 +1246,14 @@ and collect_data_view_from_formula (data_names: ident list) (f0 : F.formula) : (
         let vl = Gen.Basic.remove_dups (vl1 @ vl2) in
         (dl, vl)
 
-and collect_data_view_from_pure_formula (data_names: ident list) (f0 : P.formula) : (ident list) * (ident list) =
+and collect_data_view_from_formula (data_names: ident list) (f0 : F.formula) : (ident list) * (ident list) = 
+  let pr1 = !F.print_formula in
+  let pr2 = pr_list pr_id in
+  let pr3 = pr_pair pr2 pr2 in
+  Debug.no_1 "collect_data_view_from_formula" pr1 pr3
+      (fun _ -> collect_data_view_from_formula_x data_names f0) f0
+
+and collect_data_view_from_pure_formula_x (data_names: ident list) (f0 : P.formula) : (ident list) * (ident list) =
   match f0 with
   | P.BForm (bf, _) -> collect_data_view_from_pure_bformula data_names bf
   | P.And (f1, f2, _) ->
@@ -1270,6 +1277,14 @@ and collect_data_view_from_pure_formula (data_names: ident list) (f0 : P.formula
   | P.Not (f1, _, _) -> collect_data_view_from_pure_formula data_names f1
   | P.Forall (_, f1, _, _) -> collect_data_view_from_pure_formula data_names f1
   | P.Exists (_, f1, _, _) -> collect_data_view_from_pure_formula data_names f1
+
+
+and collect_data_view_from_pure_formula (data_names: ident list) (f0 : P.formula) : (ident list) * (ident list) =
+  let pr1 = !P.print_formula in
+  let pr2 = pr_list pr_id in
+  let pr3 = pr_pair pr2 pr2 in
+  Debug.no_1 "collect_data_view_from_pure_formula" pr1 pr3
+      (fun _ -> collect_data_view_from_pure_formula_x data_names f0) f0
 
 and collect_data_view_from_pure_bformula (data_names: ident list) (bf : P.b_formula) : (ident list) * (ident list) =
   let pf, _ = bf in

@@ -3190,7 +3190,7 @@ let check_subset_h_fomula hf1 hf2=
   Debug.no_2 " check_subset_h_fomula"  pr1 pr1 string_of_bool
       (fun _ _ ->  check_subset_h_fomula_x hf1 hf2) hf1 hf2
 
-let remove_subset fs0=
+let remove_subset_x fs0=
   let size_compare f1 f2=
     let s1 = get_data_view_hrel_vars_formula f1 in
     let s2 = get_data_view_hrel_vars_formula f2 in
@@ -3219,6 +3219,11 @@ let remove_subset fs0=
   in
   let fs1 = List.sort size_compare fs0 in
   helper fs1 []
+
+let remove_subset fs0=
+  let pr1 = pr_list_ln Cprinter.prtt_string_of_formula in
+  Debug.no_1 "remove_subset" pr1 pr1
+      (fun _ -> remove_subset_x fs0) fs0
 (************************************)
 
 let is_trivial f (hp,args)=
@@ -4252,7 +4257,9 @@ let mk_hprel_def prog is_pre (cdefs:(CP.spec_var *CF.hp_rel_def) list) unk_hps u
           let _ = DD.ninfo_zprint (lazy (((!CP.print_sv hp)^"(" ^(!CP.print_svl new_args) ^ ")"))) pos in
           DD.ninfo_zprint (lazy ((" =: " ^ (Cprinter.prtt_string_of_formula def) ))) pos;
           let _ = C.set_proot_hp_def_raw (get_pos new_args 0 r) prog.C.prog_hp_decls (CP.name_of_spec_var hp) in
-          let def = (hp, (CP.HPRelDefn (hp, r, paras), (CF.HRel (hp, List.map (fun x -> CP.mkVar x no_pos) new_args, pos)), CF.combine_guard ogs, def)) in
+          let n_id = C.get_root_typ_hprel prog.C.prog_hp_decls (CP.name_of_spec_var hp) in
+          let def = (hp, (CP.HPRelDefn (hp, r, paras), (CF.HRel (hp, List.map (fun x -> CP.mkVar x no_pos) new_args, pos)), CF.combine_guard ogs,
+          CF.subst [(r,CP.SpecVar (Named n_id, CP.name_of_spec_var r, CP.primed_of_spec_var r))] def)) in
           [def]
       end
 
@@ -5610,7 +5617,7 @@ let combine_hpdefs_x hpdefs=
           let fs1 = (remove_longer_common_prefix fs) in
           let fs2 = remove_subset fs1 in
           let p = (CF.pos_of_formula f0) in
-          let def = List.fold_left (fun f1 f2 -> CF.mkOr f1 f2 p)
+          let def = List.fold_left (fun f1 f2 -> CF.mkOr_n f1 f2 p)
                       (List.hd fs2) (List.tl fs2)
           in
           (hp0,hprel0, og0, def)
@@ -6437,7 +6444,7 @@ let find_closed_sel_hp_def defs sel_hps dang_hps equivs=
   Debug.no_2 "find_closed_sel_hp_def" pr1 pr2 pr4
       (fun _ _ -> find_closed_sel_hp_def_x defs sel_hps dang_hps equivs) defs sel_hps
 
-let combine_path_defs sel_hps1 path_defs=
+let combine_path_defs_x sel_hps1 path_defs=
   let rec look_up rem hp=
     match rem with
       | [] -> []
@@ -6480,6 +6487,14 @@ let combine_path_defs sel_hps1 path_defs=
         [(CF.mk_hprel_def k (mkHRel hp args0 no_pos) g path_fs lib)]
   in
   List.fold_left (fun ls hp -> ls@(combine_one_def hp)) [] sel_hps1
+
+let combine_path_defs sel_hps1 path_defs=
+  let pr1 = !CP.print_svl in
+  let pr2a = (pr_list_ln Cprinter.string_of_hprel_def) in
+  let pr2 = pr_list_ln pr2a in
+  Debug.no_2 "combine_path_defs" pr1 pr2 pr2a
+      (fun _ _ ->  combine_path_defs_x sel_hps1 path_defs)
+      sel_hps1 path_defs
 
 (*find def as the form H1 = H2, subst into views, hpdef, hp_defs*)
 let reuse_equiv_hpdefs_x prog hpdefs hp_defs=
@@ -6528,3 +6543,47 @@ let pred_split_update_hpdefs split_hps hpdefs hp_defs=
     with _ -> hpdefs
   in
   List.fold_left update_one hpdefs split_hps
+
+
+let filter_non_sel_x sel_hps0 hp_defs0 hpdefs0=
+  let add_deps (cl_sel,rest_hpdefs) hpdef=
+    match hpdef.CF.hprel_def_kind with
+      | CP.HPRelDefn (hp,_,_) ->
+            if CP.mem_svl hp cl_sel then
+            let dep_hps = List.fold_left (fun ls (_,f_opt) ->
+                match f_opt with
+                  | Some f -> ls@(CF.get_hp_rel_name_formula f)
+                  | None -> ls
+            ) []  hpdef.CF.hprel_def_body
+            in
+             CP.remove_dups_svl (cl_sel@(List.filter (fun sv -> not (CP.eq_spec_var sv hp)) dep_hps)),rest_hpdefs
+            else (cl_sel,rest_hpdefs@[hpdef])
+      | _ -> (cl_sel,rest_hpdefs@[hpdef])
+  in
+  let rec find_close_sel sel_hps rest_defs=
+    if rest_defs = [] then sel_hps else
+      let sel_hps1, rest_defs1 =
+        List.fold_left add_deps (sel_hps, []) rest_defs in
+      if List.length sel_hps1 > List.length sel_hps then
+         find_close_sel sel_hps1 rest_defs1
+      else sel_hps
+  in
+  let cl_sel_hps = find_close_sel sel_hps0  hpdefs0 in
+  let hp_defs1 = List.filter (fun (a,_,_,_) ->
+      match a with
+      | CP.HPRelDefn (hp,_,_) -> CP.mem_svl hp cl_sel_hps
+      | _ -> false
+  ) hp_defs0 in
+  let hpdefs1 = List.filter (fun hpdef ->
+      match hpdef.CF.hprel_def_kind with
+      | CP.HPRelDefn (hp,_,_) -> CP.mem_svl hp cl_sel_hps
+      | _ -> false
+  ) hpdefs0 in
+  hp_defs1,hpdefs1
+
+let filter_non_sel sel_hps hp_defs hpdefs=
+  let pr1 = pr_list_ln Cprinter.string_of_hp_rel_def in
+  let pr2 = pr_list_ln Cprinter.string_of_hprel_def in
+  Debug.no_3 "filter_non_sel" !CP.print_svl pr1 pr2 (pr_pair pr1 pr2)
+      (fun _ _ _ -> filter_non_sel_x sel_hps hp_defs hpdefs)
+      sel_hps hp_defs hpdefs

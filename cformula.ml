@@ -1248,6 +1248,14 @@ and mkOr f1 f2 pos =
   else 	
 	Or ({formula_or_f1 = f1; formula_or_f2 = f2; formula_or_pos = pos})
 
+and mkOr_n f1 f2 pos =
+  if isStrictConstHTrue f1 then f2 else
+    if isStrictConstHTrue f2 then f1
+  else if isAnyConstFalse f1 then f2
+  else if isAnyConstFalse f2 then f1
+  else
+    Or ({formula_or_f1 = f1; formula_or_f2 = f2; formula_or_pos = pos})
+
 and list_of_disjs (f0 : formula) : formula list =
   let rec helper f disjs = match f with
     | Or {formula_or_f1 = f1; formula_or_f2 = f2; formula_or_pos = pos} ->
