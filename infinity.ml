@@ -1333,11 +1333,21 @@ let fixed_point_pai_num (f: CP.formula) : CP.formula =
   let ls = List.map (fun c -> (c,Bottom)) var_list in
   let f,var_pai_lst = initialize_pai_formula f ls in
   let clause_lst = list_of_bformula f in 
-  let lst = List.map (fun c -> match c with
+  let rec calc_fix var_pai_lst = 
+    let rec aux cl vpl = match cl with
+      | c::cs -> (match c with
+          | BForm (b,fl) -> aux cs (propagate_pai b vpl)
+          | _ -> aux cs vpl)
+      | [] -> vpl in  
+  (*let lst = List.map (fun c -> match c with
     | BForm (b,fl) -> propagate_pai b var_pai_lst
     | _ -> var_pai_lst
-  ) clause_lst in
-  f
+  ) clause_lst in *)
+    let lst = aux clause_lst var_pai_lst in
+    if (List.for_all (fun (sv,pi) -> (List.mem (sv,pi) lst)) var_pai_lst) &&
+      (List.for_all (fun v -> (List.mem v var_pai_lst)) lst) then lst else calc_fix lst in
+  let fix_lst = calc_fix var_pai_lst
+  in f
 
 let fixed_point_pai_num  (f: CP.formula) : CP.formula =
 Debug.no_1 "fixed_point_pai_num" string_of_pure_formula string_of_pure_formula fixed_point_pai_num f
