@@ -31,7 +31,7 @@ echo "check-dll"
 echo "bt-search-2.ss"
 ../../hip bt-search-2.ss -validate --pred-unify-post  o/bt-search-2.cp | grep Validate
 echo "tll"
-../../hip tll.ss --sa-dnc --pred-en-dangling --pred-en-eup -validate o/tll.cp | grep Validate
+../../hip tll.ss --sa-dnc --pred-en-eup -validate o/tll.cp | grep Validate
 echo "rose-tree: to check"
 ../../hip rose-tree-1.ss -validate o/rose-tree-1.cp | grep Validate
 echo "check mcf: to check"
@@ -43,7 +43,8 @@ echo "ll-back.ss"
 #sa-dangling
 echo "dll-app"
 ../../hip dll-append_paper.ss --classic --pred-en-dangling -validate o/dll-append_paper.cp | grep Validate
-
+echo "tll"
+../../hip tll.ss --sa-dnc --pred-en-dangling --pred-en-eup -validate o/tll_dang.cp | grep Validate
 #pred-disj-unify
 echo "ll-trav-1.ss --pred-disj-unify"
 ../../hip ll-trav-1.ss --pred-disj-unify -validate o/ll-trav-1-unify.cp | grep Validate
