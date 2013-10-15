@@ -39,7 +39,7 @@ echo "check mcf: to check"
 echo "check-tll: to check"
 #../../hip check-tll.ss --sa-dnc --pred-en-dangling -validate o/check-tll.cp | grep Validate
 echo "ll-back.ss"
-../../hip ll-back.ss
+#../../hip ll-back.ss
 #sa-dangling
 echo "dll-app"
 ../../hip dll-append_paper.ss --classic --pred-en-dangling -validate o/dll-append_paper.cp | grep Validate

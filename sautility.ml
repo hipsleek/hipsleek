@@ -5503,8 +5503,8 @@ let succ_subst_with_rec_indp prog rec_indp_grps unk_hps depend_grps=
 
 let rec look_up_subst_hpdef hp args nrec_hpdefs=
   match nrec_hpdefs with
-    | [] -> [](* report_error no_pos "sau.look_up_groups" *)
-    | (a1,hprel1,_,f1)::gs -> begin
+    | [] -> ([],None,args)(* report_error no_pos "sau.look_up_groups" *)
+    | (a1,hprel1,g1,f1)::gs -> begin
         let hp1 = CF.get_hpdef_name a1 in
         (* DD.info_zprint (lazy (("       hp: " ^ (!CP.print_sv hp)))) no_pos; *)
         (* DD.info_zprint (lazy (("       succ_susbt_def hp1: " ^ (!CP.print_sv hp1)))) no_pos; *)
@@ -5512,7 +5512,7 @@ let rec look_up_subst_hpdef hp args nrec_hpdefs=
            let args1 = get_ptrs hprel1 in
            let ss = List.combine args1 args in
            let nf1 = CF.subst ss f1 in
-           (CF.list_of_disjs nf1)
+           ((CF.list_of_disjs nf1), g1,args)
         else
           look_up_subst_hpdef hp args gs
     end
@@ -5531,11 +5531,16 @@ let succ_subst_hpdef_x prog nrec_hpdefs all_succ_hp (hp,args,g,f)=
   DD.ninfo_zprint (lazy (("       all_succ_hp: " ^ (!CP.print_svl all_succ_hp)))) no_pos;
   let pos = no_pos in
   (*l1 x l2*)
-  let helper ls1 ls2=
-    List.concat (List.map (fun f1 ->
+  let helper ls1 (ls2, g_opt,args)=
+    let n_ls1 = List.concat (List.map (fun f1 ->
         List.map (fun f2 ->
             compose_subs f1 f2 pos
     ) ls2) ls1)
+    in
+    List.map (fun f2 ->
+        let b, nf2 = pattern_matching_with_guard f2 f g_opt args in
+        if b then nf2 else f2
+    ) n_ls1
   in
   let simplify_and_empty_test args f=
     let f1 = simplify_one_formula prog args f in
@@ -5558,8 +5563,8 @@ let succ_subst_hpdef_x prog nrec_hpdefs all_succ_hp (hp,args,g,f)=
         (false, simplify_and_empty_test args f)
     | _ -> begin
         let fs_list =  (List.map (fun (hp0,arg0) -> look_up_subst_hpdef hp0 arg0 nrec_hpdefs) succ_hp_args) in
-        let r = (List.concat fs_list) in
-        if List.length r = 0 then
+        (* let r = (List.concat fs_list) in *)
+        if fs_list = [] then
           (false, simplify_and_empty_test args f)
         else
         (*create template from f*)
@@ -5582,9 +5587,13 @@ let succ_subst_hpdef_x prog nrec_hpdefs all_succ_hp (hp,args,g,f)=
 let succ_subst_hpdef prog nrec_hpdefs all_succ_hp (hp,args,g,f)=
   let pr1 = pr_list_ln (string_of_hp_rel_def) in
   let pr2 = !CP.print_svl in
-  let pr3 = pr_quad !CP.print_sv !CP.print_svl pr_none Cprinter.prtt_string_of_formula in
+  let pr3a hf_opt = match hf_opt with
+    | None -> "None"
+    | Some hf -> Cprinter.prtt_string_of_h_formula hf
+  in
+  let pr3 = pr_quad !CP.print_sv !CP.print_svl pr3a Cprinter.prtt_string_of_formula in
   let pr4 = pr_pair string_of_bool (pr_list_ln Cprinter.prtt_string_of_formula) in
-  Debug.no_3 " succ_susbt_hpdef" pr1 pr2 pr3 pr4
+  Debug.no_3 " succ_subst_hpdef" pr1 pr2 pr3 pr4
       (fun _ _ _ -> succ_subst_hpdef_x prog nrec_hpdefs all_succ_hp (hp,args,g,f))
       nrec_hpdefs all_succ_hp (hp,args,g,f)
 
