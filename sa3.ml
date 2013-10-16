@@ -1972,7 +1972,7 @@ and infer_shapes_proper_x iprog prog proc_name callee_hps is need_preprocess det
     else
       (Gen.BList.difference_eq (fun (hp1,_) (hp2,_) -> CP.eq_spec_var hp1 hp2) is_pre2.CF.is_link_hpargs is_pre1.CF.is_link_hpargs)
     in
-    let _ = DD.info_hprint (add_str " pre_fix_unk_hpargs" (pr_list (pr_pair !CP.print_sv !CP.print_svl))) pre_fix_unk_hpargs no_pos in
+    let _ = DD.ninfo_hprint (add_str " pre_fix_unk_hpargs" (pr_list (pr_pair !CP.print_sv !CP.print_svl))) pre_fix_unk_hpargs no_pos in
     let is_pre_oblg =  {is_pre2 with CF.is_constrs = pre_oblg_constrs1;
         CF.is_dang_hpargs = is_pre1.CF.is_dang_hpargs;
         CF.is_link_hpargs = is_pre1.CF.is_link_hpargs;

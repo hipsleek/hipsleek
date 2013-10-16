@@ -2670,6 +2670,7 @@ let pattern_matching_with_guard_x rhs1 rhs2 guard match_svl=
     in
     match sel_pats with
       | [args] -> args
+      | [] -> []
       | _ -> report_error no_pos "sau.pattern_matching_with_guard 1"
   in
   let rec combine_remove_eq ls1 ls2 res=
@@ -2692,8 +2693,9 @@ let pattern_matching_with_guard_x rhs1 rhs2 guard match_svl=
           | CF.DataNode hd ->
                 let inter_rhs1, hd_locs, hd_name = find_pattern hd rhs1 in
                 let inter_rhs2 =  apply_partter hd_locs hd_name rhs2 in
-                let ss = combine_remove_eq inter_rhs1 inter_rhs2 [] in
-                (true,CF.subst ss rhs1)
+                if inter_rhs2 = [] then (false,rhs1) else
+                  let ss = combine_remove_eq inter_rhs1 inter_rhs2 [] in
+                  (true,CF.subst ss rhs1)
           | _ -> (false,rhs1)
       end
 

@@ -32,10 +32,10 @@ echo "bt-search-2.ss"
 ../../hip bt-search-2.ss -validate --pred-unify-post  o/bt-search-2.cp | grep Validate
 echo "tll"
 ../../hip tll.ss --sa-dnc --pred-en-eup -validate o/tll.cp | grep Validate
-echo "rose-tree: to check"
+echo "rose-tree"
 ../../hip rose-tree-1.ss -validate o/rose-tree-1.cp | grep Validate
-echo "check mcf: to check"
-#../../hip check-mcf.ss -validate o/check-mcf.cp | grep Validate
+echo "check mcf: (to fix bugs of validation)"
+../../hip check-mcf.ss -validate o/check-mcf.cp | grep Validate
 echo "check-tll: to check"
 #../../hip check-tll.ss --sa-dnc --pred-en-dangling -validate o/check-tll.cp | grep Validate
 echo "ll-back.ss"
