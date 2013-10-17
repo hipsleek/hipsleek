@@ -56,6 +56,7 @@ echo "zip_paper_eq"
 ../../hip zip_paper_eq.ss  -validate o/zip_paper_eq-split.cp --pred-en-split | grep Validate
 
 #pred-unify-post
+echo "cyc-tree"
 ../../hip cyc-tree-1.ss --pred-unify-post -validate o/cyc-tree-1.cp | grep Validate
 #sa-dnc
 

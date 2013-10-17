@@ -198,7 +198,7 @@ let subst_cs prog post_hps dang_hps link_hps frozen_hps frozen_constrs complex_h
 
 
 (*split constrs like H(x) & x = null --> G(x): separate into 2 constraints*)
-let split_base_constr prog cond_path constrs post_hps prog_vars unk_map unk_hps link_hps=
+let split_base_constr prog cond_path constrs post_hps sel_hps prog_vars unk_map unk_hps link_hps=
   (*internal method*)
   let split_one cs total_unk_map=
     let _ = Debug.ninfo_zprint (lazy (("  cs: " ^ (Cprinter.string_of_hprel_short cs)))) no_pos in
@@ -207,7 +207,7 @@ let split_base_constr prog cond_path constrs post_hps prog_vars unk_map unk_hps 
     let r_qvars, rhs = CF.split_quantifiers cs.CF.hprel_rhs in
     let l_hpargs = CF.get_HRels_f lhs in
     let r_hpargs = CF.get_HRels_f rhs in
-    if (List.exists (fun (hp,_) -> CP.mem_svl hp post_hps) r_hpargs) &&
+    if (* (List.exists (fun (hp,_) -> CP.mem_svl hp post_hps) r_hpargs) && *)
       (List.length l_hpargs > 0) then
         let leqs = (MCP.ptr_equations_without_null mix_lf) in
         let lhs_b = match lhs with
@@ -347,10 +347,10 @@ let split_base_constr prog cond_path constrs post_hps prog_vars unk_map unk_hps 
   in
   (new_constrs, new_map, link_hpargs)
 
-let split_base_constr prog cond_path constrs post_hps prog_vars unk_map unk_hps link_hps=
+let split_base_constr prog cond_path constrs post_hps sel_hps prog_vars unk_map unk_hps link_hps=
       let _ = step_change # reset in
       let s1 = (pr_list_num Cprinter.string_of_hprel_short) constrs in
-      let (constrs2, unk_map2, link_hpargs2) as res = split_base_constr prog cond_path constrs post_hps prog_vars unk_map unk_hps link_hps in
+      let (constrs2, unk_map2, link_hpargs2) as res = split_base_constr prog cond_path constrs post_hps sel_hps  prog_vars unk_map unk_hps link_hps in
       let s2 = (pr_list_num Cprinter.string_of_hprel_short) constrs2 in
       if step_change # no_change then 
         DD.binfo_pprint "*** NO SPLITTING DONE ***" no_pos
@@ -369,13 +369,13 @@ let split_base_constr prog cond_path constrs post_hps prog_vars unk_map unk_hps 
       res
 
 
-let split_base_constr prog cond_path constrs post_hps prog_vars unk_map unk_hps link_hps=
+let split_base_constr prog cond_path constrs post_hps sel_hps prog_vars unk_map unk_hps link_hps=
   let pr1 = pr_list_ln Cprinter.string_of_hprel_short in
   (* let pr2 = (pr_list (pr_pair (pr_list (pr_pair !CP.print_sv string_of_int)) CP.string_of_xpure_view)) in *)
   let pr2 = (pr_list (pr_pair (pr_pair !CP.print_sv (pr_list string_of_int)) CP.string_of_xpure_view)) in
   let pr3 = pr_list (pr_pair !CP.print_sv !CP.print_svl) in
   Debug.no_4 "split_base_constr" pr1 pr2 !CP.print_svl !CP.print_svl (pr_triple pr1 pr2 pr3)
-      (fun _ _ _ _ -> split_base_constr prog cond_path constrs post_hps prog_vars unk_map
+      (fun _ _ _ _ -> split_base_constr prog cond_path constrs post_hps sel_hps prog_vars unk_map
           unk_hps link_hps) constrs unk_map unk_hps post_hps
 
 (***************************************************************
@@ -1532,7 +1532,7 @@ let infer_split_base prog is=
     (* let link_hps1 = List.map fst is.IC.is_link_hpargs in *)
     let _ = DD.binfo_pprint ">>>>>> step 2: split constraints based on pre and post-preds<<<<<<" no_pos in
     let n_constrs, n_unk_map, n_link_hpargs =
-      split_base_constr prog is.CF.is_cond_path is.CF.is_constrs is.CF.is_post_hps [] is.CF.is_unk_map
+      split_base_constr prog is.CF.is_cond_path is.CF.is_constrs is.CF.is_post_hps is.CF.is_sel_hps [] is.CF.is_unk_map
           (List.map fst is.CF.is_dang_hpargs) (List.map fst is.CF.is_link_hpargs)
     in
     { is with
@@ -1795,7 +1795,7 @@ and infer_shapes_from_obligation_x iprog prog proc_name callee_hps is_pre is nee
               |  CP.HPRelDefn (hp,_,_) -> (* CP.mem_svl hp dep_def_hps *) true
               | _ -> false
         ) is.CF.is_hp_defs in
-        let _ = DD.info_hprint (add_str "dep_def_hps" !CP.print_svl) dep_def_hps no_pos in
+        let _ = DD.ninfo_hprint (add_str "dep_def_hps" !CP.print_svl) dep_def_hps no_pos in
         let n_cviews,chprels_decl = Saout.trans_hprel_2_cview iprog prog proc_name need_trans_hprels in
         let in_hp_names = List.map CP.name_of_spec_var dep_def_hps in
         (*for each oblg, subst + simplify*)

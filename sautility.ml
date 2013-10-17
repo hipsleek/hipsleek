@@ -1868,8 +1868,14 @@ let find_well_defined_hp_x prog hds hvs r_hps prog_vars post_hps (hp,args) def_p
               | [(hp1,args1,n_lhsb1, rhs)] -> begin
                   let n_lhs1 = (CF.Base n_lhsb1) in
                     match CF.extract_hrel_head n_lhs1 with
-                      | Some _ -> (lhsb, [],[(hp,args)], [])
-                      | None -> if CF.is_only_neqNull_pure (CF.get_pure n_lhs1) args1 then
+                      | Some _ ->
+                            (lhsb, [],[(hp,args)], [])
+                      | None ->
+                            (* let _ = Debug.info_hprint (add_str "    n_lhs1" Cprinter.string_of_formula) n_lhs1 no_pos in *)
+                            let p = (CF.get_pure n_lhs1) in
+                            if CF.is_only_neqNull_pure p args1 ||
+                              List.for_all (CP.is_neq_exp) (CP.list_of_conjs p)
+                            then
                           (lhsb, [],[(hp,args)], [])
                         else (n_lhsb, new_ass, wdf_hpargs, ls_rhs)
                 end
