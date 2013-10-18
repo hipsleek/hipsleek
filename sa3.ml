@@ -1628,6 +1628,7 @@ let infer_pre_fix_x iprog prog proc_name callee_hps is_pre is need_preprocess de
     (is.CF.is_dang_hpargs@n_unk_hpargs, is.CF.is_link_hpargs)
   else (is.CF.is_dang_hpargs, is.CF.is_link_hpargs@n_unk_hpargs)
   in
+  let _ = DD.info_hprint (add_str "  n_link_hpargs:" (pr_list (pr_pair !CP.print_sv !CP.print_svl))) n_link_hpargs no_pos in
   {is with CF.is_constrs = [];
       CF.is_dang_hpargs = n_dang_hpargs;
       CF.is_link_hpargs = n_link_hpargs;
@@ -1780,6 +1781,7 @@ and infer_shapes_from_obligation_x iprog prog proc_name callee_hps is_pre is nee
       (r_lhs@rem_lhs, r_rhs@rem_rhs, dep_def_hps@dep_define_hps1@dep_define_hps2,r_oblg_constrs@[cs], r_rem_constrs)
   in
   let constrs0 = is.CF.is_constrs in
+  (* let _ = DD.info_hprint (add_str "  obligation is.CF.is_link_hpargs:" (pr_list (pr_pair !CP.print_sv !CP.print_svl))) is.CF.is_link_hpargs no_pos in *)
   if constrs0 = [] then is else
     let constrs1 = SAU.remove_dups_constr constrs0 in
     (*the remain contraints will be treated as tupled ones.*)
@@ -1974,13 +1976,14 @@ and infer_shapes_proper_x iprog prog proc_name callee_hps is need_preprocess det
     in
     let _ = DD.ninfo_hprint (add_str " pre_fix_unk_hpargs" (pr_list (pr_pair !CP.print_sv !CP.print_svl))) pre_fix_unk_hpargs no_pos in
     let is_pre_oblg =  {is_pre2 with CF.is_constrs = pre_oblg_constrs1;
-        CF.is_dang_hpargs = is_pre1.CF.is_dang_hpargs;
-        CF.is_link_hpargs = is_pre1.CF.is_link_hpargs;
+        (* CF.is_dang_hpargs = is_pre1.CF.is_dang_hpargs; *)
+        (* CF.is_link_hpargs = is_pre1.CF.is_link_hpargs; *)
     } in
     let pre_obl_act = IC.icompute_action_pre_oblg () in
     iprocess_action iprog prog proc_name callee_hps is_pre_oblg pre_obl_act need_preprocess detect_dang
   in
   let is_pre3 = is_pre_oblg1 in
+   let _ = DD.ninfo_hprint (add_str "   is_pre3.CF.is_link_hpargs 2:" (pr_list (pr_pair !CP.print_sv !CP.print_svl))) is_pre3.CF.is_link_hpargs no_pos in
   (*post-synthesize*)
   let post_constrs, post_fix_hps, post_fix_constrs = SAU.classify_post_fix post_constrs0 in
   let is_post1 = if post_constrs =[] then is_pre3 else
@@ -2136,6 +2139,7 @@ let infer_shapes_conquer_x iprog prog proc_name ls_is sel_hps=
         (cl_sel_hps, hp_defs1,tupled_defs1)
     in
     let hpdefs = List.map (fun (k, hf, og, f) -> CF.mk_hprel_def k hf og [(is.CF.is_cond_path, Some f)] None) defs in
+    let _ = DD.ninfo_hprint (add_str "   is.CF.is_link_hpargs 2:" (pr_list (pr_pair !CP.print_sv !CP.print_svl))) is.CF.is_link_hpargs no_pos in
     let link_hpdefs = SAC.generate_hp_def_from_link_hps prog is.CF.is_cond_path is.CF.is_hp_equivs is.CF.is_link_hpargs in
     let link_hp_defs = List.map (fun hpdef ->
         let fs = List.fold_left (fun ls (_, f_opt) ->

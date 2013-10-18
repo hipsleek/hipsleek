@@ -4957,7 +4957,7 @@ and need_unfold_rhs prog vn=
         | None -> r
   ) [] vdef.view_un_struc_formula in
   if unk_hps <> [] then
-    (* let _ = Debug.info_zprint (lazy (("    xxxa " ))) no_pos in *)
+    let _ = Debug.info_zprint (lazy (("    xxxa " ))) no_pos in
     ([(vn.CF.h_formula_view_name,vdef.C.view_un_struc_formula, vdef.C.view_vars)],unk_hps)
   else
     ([],[])
@@ -4993,7 +4993,7 @@ and heap_entail_after_sat_struc_x prog is_folding has_post
               ^ "\ndelayed_f:" ^ (pr_opt Cprinter.string_of_mix_formula delayed_f)
               ^ "\ncontext:\n" ^ (Cprinter.string_of_context ctx)^ "\nconseq:\n" ^ (Cprinter.string_of_struc_formula conseq))) pos;
               let vn_opt= CF.is_only_viewnode true es.CF.es_formula in
-              let need_unfold, pr_views ,args, unk_hps= match vn_opt with
+              let need_unfold, pr_views ,_, unk_hps= match vn_opt with
                 | Some vn ->
                       let pr_views,unk_hps = need_unfold_rhs prog vn in
                       if unk_hps = [] || pr_views = [] then
