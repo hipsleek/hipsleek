@@ -1257,7 +1257,7 @@ and trans_data (prog : I.prog_decl) (ddef : I.data_decl) : C.data_decl =
 (*          self!=null & 3<=n *)
 and compute_view_x_formula (prog : C.prog_decl) (vdef : C.view_decl) (n : int) =
   let foo () =
-    Debug.no_eff_2 "compute_view_x_formula" [true]
+    Debug.ho_eff_2 "compute_view_x_formula" [true]
         (* Cprinter.string_of_program *)
         Cprinter.string_of_view_decl  
         string_of_int 

@@ -1,0 +1,11 @@
+data node { int val; node next; }.
+  
+pred lseg<n, p> ==
+  self = p & n = 0 or
+  self::node<v, q> * q::lseg<n-1, p> 
+  inv n >= 0.
+  
+lemma self::lseg<n+1, p> <- self::lseg<n, q> * q::node<v, p>.
+
+checkentail x::lseg<n, q> * q::node<v, p> |- x::lseg<n+10, p>.
+print residue.

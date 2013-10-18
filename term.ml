@@ -1318,7 +1318,7 @@ let check_loop_safety (prog : Cast.prog_decl) (proc : Cast.proc_decl) (ctx : lis
       Debug.devel_hprint (add_str "loop es" (pr_list Cprinter.string_of_entail_state_short)) loop_es pos;
       (* TODO: must check that each entail_state from loop_es implies false *)
       (* let unsound_ctx = List.find_all (fun es -> not (isAnyConstFalse es.es_formula)) loop_es in *)
-      let unsound_ctx = List.find_all (fun es -> is_Loop_es es) loop_es in
+      let unsound_ctx = List.find_all (fun es -> (is_Loop_es es) && not (isAnyConstFalse es.es_formula)) loop_es in
       if unsound_ctx == [] then true
       else
         begin
