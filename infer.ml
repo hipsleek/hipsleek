@@ -1988,7 +1988,8 @@ let find_undefined_selective_pointers_x prog lfb lmix_f unmatched rhs_rest rhs_h
     in
     let res,is_pre, niu_svl_i, niu_svl_ni = parition_helper h_node lhs_hpargs in
     if res then
-      let args1 = CP.remove_dups_svl (CP.diff_svl h_args def_svl) in
+      (*find arg pointers are going to be init in next stmts*)
+      let args1 = CP.remove_dups_svl (CP.diff_svl h_args (def_svl)) in
       (* let _ = Debug.info_zprint (lazy  ("     h_args:" ^(!CP.print_svl args1))) no_pos in *)
       (* let _ = Debug.info_zprint (lazy  ("     niu_svl_i:" ^((pr_list (pr_pair !CP.print_sv print_arg_kind) ) niu_svl_i))) no_pos in *)
       (* let _ = Debug.info_zprint (lazy  ("     niu_svl_ni:" ^((pr_list (pr_pair !CP.print_sv print_arg_kind) ) niu_svl_ni))) no_pos in *)

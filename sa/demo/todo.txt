@@ -6110,5 +6110,18 @@ for accumlating paramter that is non-instantiated but non-segmented also.
 On the other hand, we could also allow accumulating parameter to be
 split in a similar fashion as your pre.
 =====================================================================
+# dryad:
+- glib/glist.ss
+- https://git.gnome.org/browse/glib/tree/glib/gslist.c
+- https://git.gnome.org/browse/glib/tree/glib/gslist.c
+- https://git.gnome.org/browse/glib/tree/glib/gqsort.c
+- https://git.gnome.org/browse/glib/tree/glib/gqueue.c
+- https://git.gnome.org/browse/glib/tree/glib/gqsort.c
 =====================================================================
+ xisa:
+    dll-create.ss
+    dll-copy.ss
+    dll-findnback.ss
+    dll-rev.ss
 =====================================================================
+
