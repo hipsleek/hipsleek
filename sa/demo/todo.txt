@@ -6119,8 +6119,8 @@ split in a similar fashion as your pre.
 - https://git.gnome.org/browse/glib/tree/glib/gqsort.c
 =====================================================================
  xisa:
-    dll-create.ss
-    dll-copy.ss
+    dll-create.ss (x)
+    dll-copy.ss   (x)
     dll-findnback.ss
     dll-rev.ss
 =====================================================================

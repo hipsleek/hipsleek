@@ -1,5 +1,5 @@
 /*fail:
- g_list_append
+ g_list_append (last should lseg + case)
  g_list_insert
 
 */
@@ -7,6 +7,9 @@ data GList { int key;
   GList prev;
   GList next;
 }
+
+lseg<p> == self=p
+  or self::GList<_,_,q> * p::lseg<q> & self!=null;
 
 GList g_list_alloc ()
  requires true
@@ -32,6 +35,7 @@ GList g_list_append (GList    list,
     {
       last = g_list_last (list);
       // g_assert (last != NULL);
+      // dprint;
       last.next = new_list;
       new_list.prev = last;
 
@@ -131,6 +135,14 @@ HeapPred G_last(GList a).
 
 GList
  g_list_last (GList list)
+ case { list=null -> ensures res=null;
+   list!=null ->
+     requires list::lseg<l> * l::GList<a,b,null>
+  ensures list::lseg<res> * res::GList<a,b,null>;
+}
+
+GList
+ g_list_last1 (GList list)
 
   infer [H_last, G_last]
   requires H_last(list)
@@ -139,7 +151,7 @@ GList
   if (list != null)
     {
       if (list.next!=null)
-	return g_list_last (list.next);
+	return g_list_last1 (list.next);
     }
   
   return list;
