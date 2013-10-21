@@ -223,7 +223,7 @@ let create_void_pointer_casting_proc (typ_name: string) : Iast.proc_decl =
           typ_name ^ " " ^ proc_name ^ " (void__star p)\n" ^
           "  case { \n" ^
           "    p =  null -> ensures res = null; \n" ^
-          "    p != null -> p::memLoc<h,s> & h\n" ^ 
+          "    p != null -> requires p::memLoc<h,s> & h\n" ^ 
           "                 ensures res::" ^ data_name ^ param ^ " * res::memLoc<h,s> & h; \n" ^
           "  }\n"
         ) in
