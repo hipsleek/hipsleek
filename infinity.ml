@@ -1365,3 +1365,25 @@ let fixed_point_pai_num (f: CP.formula) : CP.formula =
 
 let fixed_point_pai_num  (f: CP.formula) : CP.formula =
 Debug.no_1 "fixed_point_pai_num" string_of_pure_formula string_of_pure_formula fixed_point_pai_num f
+
+let rec gen_instantiations (svl: CP.spec_var list) (fl: CP.formula list) : CP.formula list = 
+  let mk_inf_eq x =  BForm(((CP.mkEq (mkVar x no_pos) (mkInfConst no_pos) no_pos),None),None) in
+  let mk_neg_inf_eq x =  BForm(((CP.mkEq (mkVar x no_pos) (mkNegInfConst no_pos) no_pos),None),None) in
+  match svl with
+  | [] -> fl
+  | x::xs -> let fl_sub_x = (*List.filter (fun c -> not(List.mem x (CP.fv c)))*) fl  in
+             let x_eq_inf = mk_inf_eq x in
+             let x_eq_neg_inf = mk_neg_inf_eq x in
+             let fl_up = x_eq_inf::[x_eq_neg_inf] in 
+             let fl_up_inf = List.map (fun f -> mkAnd f x_eq_inf no_pos) fl_sub_x in
+             let fl_up_neg_inf = List.map (fun f -> mkAnd f x_eq_neg_inf no_pos) fl_sub_x in
+             gen_instantiations xs (fl@fl_up@fl_up_inf@fl_up_neg_inf)
+
+let gen_instantiations (svl: CP.spec_var list) (fl: CP.formula list) : CP.formula list = 
+Debug.no_1 "gen_instants" (pr_list string_of_pure_formula) (pr_list string_of_pure_formula)
+(fun _ -> gen_instantiations svl fl) fl
+
+let quantifier_elim (f: CP.formula): CP.formula list = 
+  let vars = List.filter (fun c -> not(is_inf_sv c)) (CP.fv f) in
+  let ins_lst = gen_instantiations vars [] in
+  List.map (fun pf -> arith_simplify 200  (mkAnd pf f no_pos)) ins_lst 

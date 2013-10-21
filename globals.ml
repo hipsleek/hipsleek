@@ -768,6 +768,7 @@ let infer_mem = ref false
 let pa = ref false
 
 let allow_inf = ref false (*enable support to use infinity (\inf and -\inf) in formulas *)
+let allow_inf_quantifier = ref false (*enable support to use quantifier elimination with infinity (\inf and -\inf) in formulas *)
 
 let ann_derv = ref false
 

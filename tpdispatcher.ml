@@ -2176,8 +2176,9 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
   (* (\* add invariant constraint @M<:v<:@A for each annotation var *\) *)
   (* let ante = CP.add_ann_constraints imm_vrs ante in *)
   (* Handle Infinity Constraints *)
-  let ante,conseq  = if !Globals.allow_inf then let a,c = Infinity.normalize_inf_formula_imply ante conseq
-                                                in let a = Infinity.fixed_point_pai_num a in a,c
+  let ante,conseq  = if !Globals.allow_inf 
+    then let a,c = Infinity.normalize_inf_formula_imply ante conseq
+         in let a = Infinity.fixed_point_pai_num a in a,c
   else ante,conseq in
   if should_output () then (
     reset_generated_prover_input ();
@@ -2357,7 +2358,16 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
     else ante in
   let ante = cnv_ptr_to_int ante in
   let conseq = cnv_ptr_to_int_weak conseq in
-  tp_imply_no_cache ante conseq imp_no timeout process
+  let flag = tp_imply_no_cache ante conseq imp_no timeout process in
+  if !Globals.allow_inf && not(flag) && !Globals.allow_inf_quantifier
+  then let alist  = Infinity.quantifier_elim ante in
+       let rec aux al = match al with
+         | [] -> false
+         | x::xs -> let f = tp_imply_no_cache x conseq imp_no timeout process in
+                    let _ = print_endline ("Ante :"^(Cprinter.string_of_pure_formula x)) in
+                    if f then true else aux xs
+       in aux alist
+  else flag 
 
 (* let tp_imply_no_cache ante conseq imp_no timeout process = *)
 (* 	(\*wrapper for capturing equalities due to transitive equality with null*\) *)
