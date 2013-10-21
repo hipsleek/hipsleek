@@ -1504,7 +1504,9 @@ let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
   let (pr_weak,pr_strong) = CP.drop_complex_ops in
   let (pr_weak_z3,pr_strong_z3) = CP.drop_complex_ops_z3 in
     (* Handle Infinity Constraints *)
-  let f = if !Globals.allow_inf then Infinity.normalize_inf_formula_sat f else f in
+  let f = if !Globals.allow_inf then let f = Infinity.normalize_inf_formula_sat f in
+                                     let f = (*Infinity.fixed_point_pai_num*) f in f
+    else f in
   let wf = f in
   let omega_is_sat f = Omega.is_sat_ops pr_weak pr_strong f sat_no in
   let redlog_is_sat f = wrap_redlog (Redlog.is_sat_ops pr_weak pr_strong f) sat_no in
@@ -2174,7 +2176,8 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
   (* (\* add invariant constraint @M<:v<:@A for each annotation var *\) *)
   (* let ante = CP.add_ann_constraints imm_vrs ante in *)
   (* Handle Infinity Constraints *)
-  let ante,conseq  = if !Globals.allow_inf then Infinity.normalize_inf_formula_imply ante conseq 
+  let ante,conseq  = if !Globals.allow_inf then let a,c = Infinity.normalize_inf_formula_imply ante conseq
+                                                in let a = Infinity.fixed_point_pai_num a in a,c
   else ante,conseq in
   if should_output () then (
     reset_generated_prover_input ();

@@ -1132,7 +1132,7 @@ let rec normalize_inf_formula_sat (f: CP.formula): CP.formula =
           let x_f = CP.BForm((CP.Lte(x_var,inf_var,no_pos),None),None) in
           let inf_constr = CP.Forall(x_sv,x_f,None,no_pos) in
           let f = CP.And(f,inf_constr,no_pos) in f*)
-  else (*MCP.mix_of_pure*) (convert_inf_to_var (normalize_inf_formula f)) in pf_norm
+  else (*MCP.mix_of_pure*) (normalize_inf_formula f) in (convert_inf_to_var pf_norm)
   (*let _ = DD.vv_trace("Normalized: "^ (string_of_pure_formula pf_norm)) in*)
   
 let normalize_inf_formula_sat (f: CP.formula) : CP.formula = 
@@ -1261,7 +1261,7 @@ let propagate_pai (bf: CP.b_formula) (ls:(spec_var * pai_num) list) : (spec_var 
 let initialize_pai (bf: CP.b_formula) (ls:(spec_var * pai_num) list) 
     : CP.b_formula * (spec_var * pai_num) list  =
   let aux (s1:spec_var) (s2:spec_var) pai_new ls =
-    if is_inf_sv s2 then 
+    if is_inf_sv s2 && not(is_inf_sv s1) then 
       if List.exists (fun (s,p) -> eq_spec_var s1 s) ls then
         let s,p = List.find (fun (l,_) -> eq_spec_var l s1) ls in
         let p = join_pai_num p pai_new in
@@ -1327,6 +1327,19 @@ let rec initialize_pai_formula (f:CP.formula) (ls:(spec_var * pai_num) list)
   in
   helper f ls
 
+let gen_pai_constr (v:spec_var * pai_num) : CP.formula =
+  let sv,pn = v in match pn with
+    | Bottom -> CP.mkTrue no_pos
+    | Neg_inf -> BForm(((CP.mkLt (mkVar sv no_pos) (mkInfConst no_pos) no_pos),None),None)
+    | Pos_inf -> BForm(((CP.mkGt (mkVar sv no_pos) (mkNegInfConst no_pos) no_pos),None),None)
+    | Finite -> (mkAnd (BForm(((CP.mkLt (mkVar sv no_pos) (mkInfConst no_pos) no_pos),None),None))
+        (BForm(((CP.mkGt (mkVar sv no_pos) (mkNegInfConst no_pos) no_pos),None),None)) no_pos)
+
+let rec gen_pai_num_constraints (ls:(spec_var*pai_num) list) :CP.formula =
+match ls with
+  | [] -> CP.mkTrue no_pos
+  | x::xs -> CP.mkAnd (gen_pai_constr x) (gen_pai_num_constraints xs) no_pos
+
 (* assumes only conjunctions are in formula and all quantifiers are eliminated *)
 let fixed_point_pai_num (f: CP.formula) : CP.formula =
   let var_list = CP.fv f in 
@@ -1346,8 +1359,9 @@ let fixed_point_pai_num (f: CP.formula) : CP.formula =
     let lst = aux clause_lst var_pai_lst in
     if (List.for_all (fun (sv,pi) -> (List.mem (sv,pi) lst)) var_pai_lst) &&
       (List.for_all (fun v -> (List.mem v var_pai_lst)) lst) then lst else calc_fix lst in
-  let fix_lst = calc_fix var_pai_lst
-  in f
+  let fix_lst = calc_fix var_pai_lst in
+  let pai_constrs = convert_inf_to_var (gen_pai_num_constraints fix_lst) in 
+  let f = mkAnd f pai_constrs no_pos in f 
 
 let fixed_point_pai_num  (f: CP.formula) : CP.formula =
 Debug.no_1 "fixed_point_pai_num" string_of_pure_formula string_of_pure_formula fixed_point_pai_num f
