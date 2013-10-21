@@ -2359,12 +2359,12 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
   let ante = cnv_ptr_to_int ante in
   let conseq = cnv_ptr_to_int_weak conseq in
   let flag = tp_imply_no_cache ante conseq imp_no timeout process in
-  if !Globals.allow_inf && not(flag) && !Globals.allow_inf_quantifier
+  if !Globals.allow_inf && not(flag) && !Globals.allow_inf_qe
   then let alist  = Infinity.quantifier_elim ante in
        let rec aux al = match al with
          | [] -> false
          | x::xs -> let f = tp_imply_no_cache x conseq imp_no timeout process in
-                    let _ = print_endline ("Ante :"^(Cprinter.string_of_pure_formula x)) in
+                    (*let _ = print_endline ("Ante :"^(Cprinter.string_of_pure_formula x)) in*)
                     if f then true else aux xs
        in aux alist
   else flag 
