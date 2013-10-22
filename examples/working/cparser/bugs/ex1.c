@@ -20,8 +20,10 @@ H1<> == self::node<_,p> & p=null
 	or self::node<_, q> * q::H1<>
 	inv true;
 */
+/*@
 HeapPred H(node a).
 HeapPred G(node a).
+*/
 
 void foo(struct node* x)
 /*@
