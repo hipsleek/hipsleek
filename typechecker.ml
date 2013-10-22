@@ -638,6 +638,7 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
             (* let ov = CP.diff_svl ovars curr_vars in *)
             in_vars # set curr_vars ;
             Debug.tinfo_hprint (add_str "curr vars" !CP.print_svl) curr_vars no_pos;
+            let _ = DD.ninfo_hprint (add_str "var_ref" !CP.print_svl) var_ref no_pos in
             (* Debug.info_hprint (add_str "fv post" !CP.print_svl) ovars no_pos; *)
             (* Debug.info_hprint (add_str "out vars" !CP.print_svl) ov no_pos; *)
 	    if ((Immutable.is_lend post_cond) && not(!Globals.allow_field_ann))
@@ -646,7 +647,7 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
 	    else
               let _ = post_pos#set (CF.pos_of_formula post_cond) in
               Debug.devel_zprint (lazy ("check_specs: EAssume: " ^ (Cprinter.string_of_context ctx) ^ "\n")) no_pos;
-              (*let _ = print_endline  ("todo:check_specs: EAssume: " ^ (Cprinter.string_of_context ctx) ^ "\n") in*)
+              (* let _ = print_endline  ("todo:check_specs: EAssume: " ^ (Cprinter.string_of_context ctx) ^ "\n") in *)
 	      let ctx1 = if !Globals.disable_pre_sat then ctx else CF.transform_context (elim_unsat_es 2 prog (ref 1)) ctx in
 	      if (CF.isAnyFalseCtx ctx1) then
 	        let _ = Debug.devel_zprint (lazy ("\nFalse precondition detected in procedure "^proc.proc_name^"\n with context: "^
@@ -674,10 +675,11 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
 							;print_string ("bai-used:   "^(String.concat "," !proc_used_names)^"\n")
 							else () in
                     let res_ctx = check_exp prog proc lfe e0 post_label in
+                    (* let _ = Debug.info_zprint (lazy (("res_ctx 0: " ^ (Cprinter.string_of_list_failesc_context_short res_ctx) ^ "\n"))) no_pos in *)
                     (*Clear es_pure before check_post*)
-	                let res_ctx =  CF.transform_list_failesc_context (idf,idf, (fun es -> CF.Ctx (CF.clear_entailment_es_pure es))) res_ctx in
-	    	    let res_ctx = CF.list_failesc_to_partial res_ctx in
-		    let _ = Gen.Profiling.pop_time "typechecker : check_exp" in
+	            let res_ctx =  CF.transform_list_failesc_context (idf,idf, (fun es -> CF.Ctx (CF.clear_entailment_es_pure es))) res_ctx in
+                    let res_ctx = CF.list_failesc_to_partial res_ctx in
+                    let _ = Gen.Profiling.pop_time "typechecker : check_exp" in
 	            (* let _ = print_string ("\n WN 1 :"^(Cprinter.string_of_list_partial_context res_ctx)) in *)
 	    	    let res_ctx = CF.change_ret_flow_partial_ctx res_ctx in
 	            (* let _ = print_string ("\n WN 2 : "^(Cprinter.string_of_list_partial_context res_ctx)) in*)
@@ -747,10 +749,12 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
                           DD.ninfo_hprint (add_str "Inferred constraints" (pr_list !CP.print_formula)) lp pos in
                         let _ = Term.add_phase_constr_by_scc proc (List.map TP.simplify_raw cl) in ()
                       in
+                      (* let _ = Debug.info_zprint (lazy (("res_ctx: " ^ (Cprinter.string_of_list_partial_context_short res_ctx) ^ "\n"))) no_pos in *)
                       (* TODO : collecting rel twice as a temporary fix to losing ranking rel inferred during check_post *)
                       (*                      let rel1 =  Inf.collect_rel_list_partial_context res_ctx in*)
                       (*                      DD.dinfo_zprint (lazy (">>>>> Performing check_post STARTS")) no_pos;*)
                       (* let hp_rels1 = Gen.BList.remove_dups_eq (=) (Inf.collect_hp_rel_list_partial_context res_ctx) in *)
+                      (* let _ = print_string ("\n WN 2 : "^(Cprinter.prtt_string_of_formula post_cond)) in *)
                       let tmp_ctx = check_post prog proc res_ctx (post_cond,post_struc) pos_post post_label etype in
                       (*                      DD.dinfo_pprint ">>>>> Performing check_post ENDS" no_pos;*)
                       (* Termination: collect error messages from successful states *)
@@ -845,10 +849,10 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
                                   DD.devel_pprint ("Final Post :"^(Cprinter.string_of_formula post_fml)) pos;
                                   (* print_endline ("Initial Residual Post : "^(pr_list Cprinter.string_of_formula flist)); *)
                                   (* print_endline ("Final Residual Post : "^(Cprinter.string_of_formula post_fml)); *)
-                                  let inferred_post = 
-									let vars = CP.remove_dups_svl (var_ref(* @post_vars *)) in
-									let post_struc = CF.mkEBase post_fml None pos in
-									CF.mkEAssume vars post_fml post_struc post_label etype in
+                                  let inferred_post =
+	                            let vars = CP.remove_dups_svl (var_ref(* @post_vars *)) in
+				    let post_struc = CF.mkEBase post_fml None pos in
+				    CF.mkEAssume vars post_fml post_struc post_label etype in
                                   inferred_post
                                 end in
                           (i_post, i_pre)
@@ -2066,13 +2070,15 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 		    let _ = if !print_proof && should_output_html then Prooftracer.push_list_failesc_context_struct_entailment sctx pre2 in
                     (* let _ = print_endline ("\nlocle: check_pre_post@SCall@sctx: " ^ *)
                     (*                              (Cprinter.string_of_list_failesc_context sctx)) in *)
+                    (* let _ = print_endline ("\nlocle: new_spec@SCall@sctx: " ^ *)
+                    (*     (Cprinter.string_of_struc_formula pre2)) in *)
                     (*we use new rules to judge the spec*)
                     let rs, prf = heap_entail_struc_list_failesc_context_init prog false true sctx pre2 None None None pos pid in
-		            let _ = if !print_proof && should_output_html then Prooftracer.pop_div () in
+		    let _ = if !print_proof && should_output_html then Prooftracer.pop_div () in
                     (* The context returned by heap_entail_struc_list_failesc_context_init, rs, is the context with unbound existential variables initialized & matched. *)
                     let _ = PTracer.log_proof prf in
 
-                    (*let _ = print_string (("\nEND SCALL ctx: ") ^ (Cprinter.string_of_list_failesc_context rs) ^ "\n") in*)
+                    (* let _ = print_string (("\nEND SCALL ctx: ") ^ (Cprinter.string_of_list_failesc_context rs) ^ "\n") in *)
                     (* if (CF.isSuccessListFailescCtx sctx) && (CF.isFailListFailescCtx rs) then
                        Debug.print_info "procedure call" (to_print^" has failed \n") pos else () ; *)
                     rs
@@ -2548,6 +2554,11 @@ let proc_mutual_scc_shape_infer iprog prog scc_procs =
         ()
       end;
     (*transform the result: hpdef --> views and transform specs*)
+    (*
+      scc_inferred_hps
+    *)
+    let _ = Saout.plug_shape_into_specs prog iprog
+      (List.map (fun proc -> proc.proc_name) scc_procs) scc_inferred_hps in
     (**************regression check _ gen_regression file******************)
     (*to revise the check for scc*)
     let proc = List.hd scc_procs in
@@ -3039,7 +3050,11 @@ let check_coercion (prog : prog_decl) =
          | (None, None) ->  Error.report_error {Err.error_loc = no_pos; Err.error_text = "[typechecker.ml]: Lemma can't be empty"}
        in
        (* let ctx = CF.SuccCtx [CF.empty_ctx (CF.mkTrueFlow ()) LO2.unlabelled no_pos] in *)
-       let _ = LP.verify_lemma 1 l2r r2l prog coerc_name coerc_type in ()
+       (* let _ =  if !Globals.check_coercions then *)
+         let _ = LP.verify_lemma 1 l2r r2l prog coerc_name coerc_type in ()
+       (* else () *)
+       (* in *)
+       (* () *)
    ) lemmas
 
 let init_files () =

@@ -803,7 +803,7 @@ such as x<1 --> x+1<=1 is allowed
    Currently, conservativly do not allow such simplification
 *)
 
-let allow_lsmu_infer = ref true
+let allow_lsmu_infer = ref false
 
 let allow_norm = ref true
 

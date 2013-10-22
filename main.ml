@@ -14,7 +14,8 @@ let usage_msg = Sys.argv.(0) ^ " [options] <source files>"
 let set_source_file arg = 
   Globals.source_files := arg :: !Globals.source_files
 
-let process_cmd_line () = 
+let process_cmd_line () =
+        Perm.disable_para();
 	Arg.parse Scriptarguments.hip_arguments set_source_file usage_msg;
 	if !Globals.override_slc_ps then Globals.en_slc_ps:=false
 	else ()
@@ -215,10 +216,10 @@ let reverify_with_hp_rel old_cprog iprog =
              end
           | _ -> (r_hp_defs, r_unk_hps)
   ) ([],[]) hp_defs in
-  let need_trans_hprels1 = List.map (fun (a,b,c,f) ->
-      let new_f,_ = Cformula.drop_hrel_f f unk_hps in
-      (a,b,c,new_f)
-  ) need_trans_hprels0 in
+  let need_trans_hprels1 = (* List.map (fun (a,b,c,f) -> *)
+  (*     let new_f,_ = Cformula.drop_hrel_f f unk_hps in *)
+  (*     (a,b,c,new_f) *)
+  (* ) *) need_trans_hprels0 in
   let proc_name = "" in
   let n_cviews,chprels_decl = Saout.trans_hprel_2_cview iprog old_cprog proc_name need_trans_hprels1 in
   let cprog = Saout.trans_specs_hprel_2_cview iprog old_cprog proc_name need_trans_hprels1 chprels_decl in

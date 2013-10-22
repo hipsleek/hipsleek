@@ -33,8 +33,8 @@ void lscan(ref node cur, ref node prev, node sent)
      ensures cur::node<val_36_992,prev>@M * prev::HP_994<sent> & cur'=sent & prev' = cur;
 */
 
-     requires cur::node<_,n>@M * n::HP_994<sent> *  prev::HP_994<sent> & cur!=sent
-     ensures prev'::node<_,p>@M * p::HP_994<sent> & cur'=sent & prev'!=sent;
+     /* requires cur::node<_,n>@M * n::HP_994<sent> *  prev::HP_994<sent> & cur!=sent */
+     /* ensures prev'::node<_,p>@M * p::HP_994<sent> & cur'=sent & prev'!=sent;//' */
 
 /*
 lx<g,s> == self=g & self!=s 
@@ -45,11 +45,11 @@ requires cur::lx<a,sent> * prev::lx<b,sent> & cur!=a
  ensures prev'::lx<null,sent>  & cur'=sent ;
 
  */
-/*
+
   infer [H,G]
   requires H(cur,prev,sent)
   ensures G(cur,cur',prev,prev',sent);
-*/
+
 {
 
   node n;

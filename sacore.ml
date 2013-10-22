@@ -2000,8 +2000,34 @@ let trans_constr_hp_2_view iprog cprog proc_name hpdefs in_hp_names chprels_decl
 *)
 let do_entail_check_x vars cprog cs=
   let _ = Infer.rel_ass_stk # reset in
+  let get_view_def vname=
+    let _ = DD.ninfo_hprint (add_str "vname" pr_id) vname no_pos in
+    let vdef = (Cast.look_up_view_def_raw 40 cprog.Cast.prog_view_decls vname) in
+    (vname, vdef.Cast.view_un_struc_formula,vdef.Cast.view_vars)
+  in
+  let has_unknown vdef =
+    let hrels = List.fold_left (fun r (f,_) ->
+    r@((CF.get_hp_rel_name_formula f))) [] vdef in
+     hrels <> []
+  in
   let ante = cs.CF.hprel_lhs in
-  let conseq = CF.struc_formula_of_formula cs.CF.hprel_rhs (CF.pos_of_formula  cs.CF.hprel_rhs) in
+  let unfolded_rhs =
+    let vnodes = CF.get_vnodes cs.CF.hprel_rhs in
+    if vnodes = [] then cs.CF.hprel_rhs else
+      let pr_views = List.map (fun vn ->
+          match vn with
+            | CF.ViewNode vn -> get_view_def vn.CF.h_formula_view_name
+            | _ -> report_error no_pos "SAC.do_entail_check: impposible"
+      ) vnodes in
+      let need_unfold = List.fold_left (fun r (vname,vdef,_) ->
+          if has_unknown vdef then
+            r@[vname]
+          else r
+      ) [] pr_views in
+      if need_unfold = [] then cs.CF.hprel_rhs else
+        CF.do_unfold_view cprog pr_views cs.CF.hprel_rhs
+  in
+  let conseq = CF.struc_formula_of_formula unfolded_rhs (CF.pos_of_formula cs.CF.hprel_rhs) in
   let (valid, rs,v_hp_rel) = SC.sleek_entail_check vars cprog [] ante conseq in
   let valid = ((not (CF.isFailCtx rs))) in
   if not valid then

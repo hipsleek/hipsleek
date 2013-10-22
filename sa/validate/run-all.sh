@@ -12,8 +12,8 @@ echo "check-sll-head"
 ../../hip check-sll-head.ss -validate o/check-sll-head.cp | grep Validate
 echo "skip0"
 ../../hip skip0.ss -validate o/skip0.cp | grep Validate
-echo "skip-list: TODO (interprocedural)"
-#../../hip skip-list.ss -validate o/skip-list.cp | grep Validate
+echo "skip2-list"
+../../hip skip2-list.ss -validate o/skip2-list.cp | grep Validate
 echo "check-sorted"
 ../../hip check-sorted.ss --sa-en-pure-field -validate o/check-sorted.cp | grep Validate
 #echo "sll-insertsort.ss"
@@ -30,18 +30,21 @@ echo "check-dll"
 ../../hip check-dll.ss -validate o/check-dll.cp | grep Validate
 echo "bt-search-2.ss"
 ../../hip bt-search-2.ss -validate --pred-unify-post  o/bt-search-2.cp | grep Validate
-echo "tll: to check"
-#../../hip tll.ss -validate o/tll.cp | grep Validate
-echo "rose-tree: to check"
+echo "tll"
+../../hip tll.ss --sa-dnc --pred-en-eup -validate o/tll.cp | grep Validate
+echo "rose-tree"
 ../../hip rose-tree-1.ss -validate o/rose-tree-1.cp | grep Validate
-echo "check mcf: to check"
-#../../hip check-mcf.ss -validate o/check-mcf.cp | grep Validate
+echo "check mcf: (to fix bugs of validation)"
+../../hip check-mcf.ss -validate o/check-mcf.cp | grep Validate
 echo "check-tll: to check"
-#../../hip check-tll.ss -validate o/check-tll.cp | grep Validate
+#../../hip check-tll.ss --sa-dnc --pred-en-dangling -validate o/check-tll.cp | grep Validate
+echo "ll-back.ss"
+#../../hip ll-back.ss
 #sa-dangling
 echo "dll-app"
 ../../hip dll-append_paper.ss --classic --pred-en-dangling -validate o/dll-append_paper.cp | grep Validate
-
+echo "tll"
+../../hip tll.ss --sa-dnc --pred-en-dangling --pred-en-eup -validate o/tll_dang.cp | grep Validate
 #pred-disj-unify
 echo "ll-trav-1.ss --pred-disj-unify"
 ../../hip ll-trav-1.ss --pred-disj-unify -validate o/ll-trav-1-unify.cp | grep Validate
@@ -53,6 +56,7 @@ echo "zip_paper_eq"
 ../../hip zip_paper_eq.ss  -validate o/zip_paper_eq-split.cp --pred-en-split | grep Validate
 
 #pred-unify-post
+echo "cyc-tree"
 ../../hip cyc-tree-1.ss --pred-unify-post -validate o/cyc-tree-1.cp | grep Validate
 #sa-dnc
 

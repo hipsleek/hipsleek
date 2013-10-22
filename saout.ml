@@ -80,19 +80,21 @@ List.fold_left (fun acc (rel_cat, hf,_,f_body)->
 	 	| _ -> failwith "unexpected heap formula instead of hrel node \n"
               in
               (*mkExist*)
-              let f_body1,tis = norm_free_svl f_body (r::paras) in
-              let _ = Debug.ninfo_hprint (add_str "f_body1: " Cprinter.prtt_string_of_formula) f_body1 no_pos in
-              let data_name  = match CP.type_of_spec_var r with
-                | Named id -> (* if String.compare id "" = 0 then *) id
-                    (* let n_id = C.get_root_typ_hprel cprog.C.prog_hp_decls (CP.name_of_spec_var v) in *)
-                    (* let _ = Debug.binfo_hprint (add_str "n_id: " pr_id) n_id  no_pos in *)
-                    (* (n_id) *)
-                  (* else *)
-                  (*   id *)
+              let data_name,r  = match CP.type_of_spec_var r with
+                | Named id -> if String.compare id "" = 0  then
+                    let n_id = C.get_root_typ_hprel cprog.C.prog_hp_decls (CP.name_of_spec_var v) in
+                    let _ = Debug.ninfo_hprint (add_str "n_id: " pr_id) n_id  no_pos in
+                    (n_id, (CP.SpecVar (Named n_id, CP.name_of_spec_var r, CP.primed_of_spec_var r)))
+                  else
+                    id,r
                 | _ -> report_error no_pos "should be a data name"
               in
+              let f_body1,tis = norm_free_svl f_body (r::paras) in
+              let _ = Debug.ninfo_hprint (add_str "f_body1: " Cprinter.prtt_string_of_formula) f_body1 no_pos in
               let no_prm_body = CF.elim_prm f_body1 in
-	      let new_body = CF.set_flow_in_formula_override {CF.formula_flow_interval = !top_flow_int; CF.formula_flow_link =None} no_prm_body in
+	      let new_body0 = CF.set_flow_in_formula_override {CF.formula_flow_interval = !top_flow_int; CF.formula_flow_link =None} no_prm_body in
+              
+              let new_body = CF.subst [] new_body0 in
 	      let i_body = AS.rev_trans_formula new_body in
 	      let i_body = IF.subst [((slf,Unprimed),(self,Unprimed))] i_body in
               let _ = Debug.ninfo_hprint (add_str "i_body1: " Iprinter.string_of_formula) i_body no_pos in
@@ -392,3 +394,41 @@ let trans_specs_hprel_2_cview iprog cprog proc_name hpdefs chprels_decl =
 (*******************************)
 (********END REVERIFY**********)
 (*******************************)
+
+let plug_shape_into_specs_x cprog iprog proc_names hp_defs=
+  let need_trans_hprels0, unk_hps =
+    List.fold_left (fun (r_hp_defs, r_unk_hps) ((hp_kind, _,_,f) as hp_def) ->
+        match hp_kind with
+          |  Cpure.HPRelDefn (hp,r,args) -> begin
+               try
+                 let _ = Cast.look_up_view_def_raw 33 cprog.Cast.prog_view_decls
+                   (Cpure.name_of_spec_var hp)
+                 in
+                 (r_hp_defs, r_unk_hps)
+               with Not_found ->
+                   (*at least one is node typ*)
+                   if List.exists (fun sv -> Cpure.is_node_typ sv) (r::args) then
+                     if (Cformula.is_unknown_f f) then
+                       r_hp_defs, r_unk_hps@[hp]
+                     else r_hp_defs@[hp_def], r_unk_hps
+                   else r_hp_defs, r_unk_hps
+             end
+          | _ -> (r_hp_defs, r_unk_hps)
+    ) ([],[]) hp_defs in
+  let plug_proc need_trans_hprels1 chprels_decl cprog proc_name=
+    let cprog = trans_specs_hprel_2_cview iprog cprog proc_name need_trans_hprels1 chprels_decl in
+  cprog
+  in
+  let need_trans_hprels1 = (* List.map (fun (a,b,c,f) -> *)
+  (*     let new_f,_ = Cformula.drop_hrel_f f unk_hps in *)
+  (*     (a,b,c,new_f) *)
+  (* ) *) need_trans_hprels0 in
+  let n_cviews,chprels_decl = trans_hprel_2_cview iprog cprog "" need_trans_hprels1 in
+  let cprog = List.fold_left (plug_proc need_trans_hprels1 chprels_decl) cprog proc_names in
+  cprog
+
+let plug_shape_into_specs cprog iprog proc_names hp_defs=
+  let pr1 = pr_list_ln Cprinter.string_of_hp_rel_def in
+  Debug.no_1 "plug_shape_into_specs" pr1 pr_none
+      (fun _ -> plug_shape_into_specs_x cprog iprog proc_names hp_defs)
+      hp_defs

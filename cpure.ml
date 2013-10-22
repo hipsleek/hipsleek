@@ -8652,7 +8652,7 @@ let rec is_eq_neq_exp (f:formula) = match f with
     | (Neq _,_) -> true
     | (Eq _,_) -> true
     | _ -> false)
-  | Exists (_,p1,_,_) -> is_neq_exp p1
+  | Exists (_,p1,_,_) -> is_eq_neq_exp p1
   | _ -> false
 
 let is_neq_null_exp_x (f:formula) = match f with

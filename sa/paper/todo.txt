@@ -367,7 +367,7 @@ HP_891(right_31_889),
  or emp&right_31_930=null
  ]
 ==================================================================
-# check-cll.ss
+# check-cll.ss: FIXED
 
 [ H1(l_904,p_905) ::=  H1(next_20_901,p_905) 
    * l_904::node<val_20_900,next_20_901>@M&l_904!=p_905
@@ -388,6 +388,36 @@ Why is sa-dnc missing on a base-case equation?
    \/  H1(l_906,l_906)&l_906=p_907]
 
 ==================================================================
+to support:
+ - # glib/glist.ss
+https://git.gnome.org/browse/glib/tree/glib/gslist.c
+https://git.gnome.org/browse/glib/tree/glib/gslist.c
+https://git.gnome.org/browse/glib/tree/glib/gqsort.c
+https://git.gnome.org/browse/glib/tree/glib/gqueue.c
+https://git.gnome.org/browse/glib/tree/glib/gqsort.c
+ - xisa:
+    dll-create.ss
+    dll-copy.ss
+    dll-findnback.ss
+    dll-rev.ss
+ - linux
+   - pci_driver (2532)
+   - t1394Diag.c (CancelIrp.c, CancelIrpFix.c, PnpRemoveDevice.c,
+     BusResetRoutine.c, GetAddressData,  GetAddressDataFix,
+     IsochDetachCompletionRoutine, SetAddressData,  SetAddressDataFix)
+   - scull.c (1010)
+   - class.c (1983)
+   - ll_rw_blk (5469)
+   - cdrom (6218)
+   - md (6653)
+ -slayer
+   - fw (attach_buffer_insert_head_list.c, callback_remove_entry_list.c,
+     cleanup_isochresourcedata.c, cleanup_isochresourcedata_unsafe.c,
+     cromdata_add_remove, is_on_list_flat, is_on_list_via_devext)
+   - sll (append.c, copy, copy_unsafe, create.c, create_kernel.c, destroy.c,
+    filter.c, find.c, reverse.c, traverse.c)
+ - slayer + refine
+
 ==================================================================
 ==================================================================
 ==================================================================
