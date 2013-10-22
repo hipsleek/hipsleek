@@ -587,6 +587,40 @@ infer [H_copy, G_copy]
   return new_list;
 }
 
+/**
+ * g_list_reverse:
+ * @list: a #GList
+ *
+ * Reverses a #GList.
+ * It simply switches the next and prev pointers of each element.
+ *
+ * Returns: the start of the reversed #GList
+ */
+
+HeapPred H1_rev(GList a).
+HeapPred H2_rev(GList a).
+HeapPred G_rev(GList a).
+
+GList
+g_list_reverse (GList list, GList last)
+  infer [H1_rev, H2_rev, G_rev]
+  requires H1_rev(list)* H2_rev(last)
+  ensures G_rev(res);
+{
+  // GList last;
+  
+  // last = null;
+  if (list !=null)
+    {
+      last = list;
+      list = last.next;
+      last.next = last.prev;
+      last.prev = list;
+      last = g_list_reverse(list, last);
+    }
+  
+  return last;
+}
 
 /**
  * g_list_nth:

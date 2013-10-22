@@ -6109,6 +6109,39 @@ for accumlating paramter that is non-instantiated but non-segmented also.
 
 On the other hand, we could also allow accumulating parameter to be
 split in a similar fashion as your pre.
+
+=====================================================================
+#glist-1.ss
+
+should contain list2'=list2 in the second residue. (case spec)
+==========================
+dprint: glist-1.ss:27: ctx:  List of Failesc Context: [FEC(0, 0, 1  [])]
+
+Successful States:
+[
+ Label: []
+ State:H1_concat(list1) * H2_concat(list2)&list2=list2' & list1=list1'&{FLOW,(24,25)=__norm}[]
+       es_var_measures 2: MayLoop[]
+       es_trace: empty
+       es_cond_path: [0]
+
+ ]
+
+dprint: glist-1.ss:29: ctx:  List of Failesc Context: [FEC(0, 0, 1  [])]
+
+Successful States:
+[
+ Label: []
+ State:(exists flted_12_957: H2_concat(list2) * HP_949(b_947) * list1'::lseg<tmp_33'>@M * tmp_33'::GList<a,b,flted_12_957>@M&flted_11_948=null & l!=null & flted_12_957=null&{FLOW,(24,25)=__norm})[]
+       es_var_measures 2: MayLoop[]
+       es_trace: empty
+       es_cond_path: [0]
+
+ ]
+
+=====================================================================
+=====================================================================
+
 =====================================================================
 # dryad:
 - glib/glist.ss

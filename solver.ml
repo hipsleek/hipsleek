@@ -7834,6 +7834,7 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
                 with _ -> v in
               let new_zero_vars = List.map (fct st) estate.es_var_zero_perm in
               (* let _ = print_endline ("heap_entail_conjunct_helper: rename es.es_var_zero_perm: \n ### old = " ^ (Cprinter.string_of_spec_var_list estate.es_var_zero_perm) ^ "\n ### new = " ^ (Cprinter.string_of_spec_var_list new_zero_vars)) in *)
+              (* let _ =  print_endline ("new_baref:" ^ (Cprinter.string_of_formula new_baref) )  in *)
               (* new ctx is the new context after substituting the fresh vars for the exist quantified vars *)
               let new_ctx = Ctx {estate with es_var_zero_perm = new_zero_vars;
                   es_formula = new_baref (* estate.es_formula *);
@@ -7882,8 +7883,8 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
                       (r, prf)
                 )
               | _ -> (
-                  let h1, p1, fl1, t1, a1 = split_components ante in
-                  let h2, p2, fl2, t2, a2 = split_components conseq in
+                    let h1, p1, fl1, t1, a1 = split_components ante in
+                    let h2, p2, fl2, t2, a2 = split_components conseq in
                   (*ADD inequality constraints on heap nodes due to fractional permissions to ante
                     For example: x::node(0.6)<> * y::node(0.6)<>
                     then we have a constraint x!=y
@@ -8030,7 +8031,7 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
                                                            add_to_aux_conseq_estate es (MCP.pure_of_mix l_inst) pos)
                                                 )  c)) cl in
                                       SuccCtx(new_cl) in
-                                    (*let _ = print_string("\nNEW Ctx: "^(Cprinter.string_of_list_context new_ctx)^"\n") in*)
+                                    (* let _ = print_string("\nNEW Ctx: "^(Cprinter.string_of_list_context new_ctx)^"\n") in *)
                                 (new_ctx, proof)
                               )
                             )
