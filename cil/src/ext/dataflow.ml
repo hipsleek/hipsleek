@@ -223,7 +223,7 @@ module ForwardsDataFlow =
             | Goto _ | Break _ | Continue _ | If _ 
             | TryExcept _ | TryFinally _ 
             | Switch _ | Loop _ | Return _ | Block _
-            | HipStmtSpec _ -> curr
+            | HipStmt _ -> curr
           in
           currentLoc := get_stmtLoc s.skind;
                 

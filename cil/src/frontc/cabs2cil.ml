@@ -61,7 +61,7 @@ let mydebugfunction () =
 
 let debugGlobal = false
 
-let continueOnError = true
+let continueOnError = false
 
 (** Turn on tranformation that forces correct parameter evaluation order *)
 let forceRLArgEval = ref false
@@ -3296,7 +3296,7 @@ and doExp (asconst: bool)   (* This expression is used as a constant *)
         with Not_found -> begin
           if (n = "NULL") then (
             (* TRUNG: consider NULL as a built-in variable and pass through *)
-            let vi = {vname = "NULL";
+            let vi = {vname = "null";
                       vtype = TPtr (TVoid [], []);
                       vattr = [];
                       vstorage = NoStorage;
@@ -6098,7 +6098,7 @@ and doDecl (isglobal: bool) : A.definition -> chunk = function
               | Block b -> blockFallsThrough b
               | TryFinally (b, h, _) -> blockFallsThrough h
               | TryExcept (b, _, h, _) -> true (* Conservative *)
-              | HipStmtSpec _ -> false
+              | HipStmt _ -> false
             and blockFallsThrough b = 
               let rec fall = function
                   [] -> true
@@ -6146,7 +6146,7 @@ and doDecl (isglobal: bool) : A.definition -> chunk = function
               | Block b -> blockCanBreak b
               | TryFinally (b, h, _) -> blockCanBreak b || blockCanBreak h
               | TryExcept (b, _, h, _) -> blockCanBreak b || blockCanBreak h
-              | HipStmtSpec _ -> false
+              | HipStmt _ -> false
             and blockCanBreak b = 
               List.exists stmtCanBreak b.bstmts
             in
@@ -6203,7 +6203,11 @@ and doDecl (isglobal: bool) : A.definition -> chunk = function
       let progspec = (
         try
           Parser.parse_c_program_spec fname hspec base_loc
-        with _ -> raise (HipSpecsError "Program specs error!")
+        with e -> 
+          let error_loc = ("line " ^ string_of_int (loc.Cabs.start_pos.lineno)) in
+          let _ = print_endline ("Program specs error: " ^ error_loc) in
+          (* raise (HipSpecsError ("Program specs error: " ^ error_loc)) *)
+          raise e
       ) in
       cabsPushGlobal (GHipProgSpec (progspec, !currentLoc));
       empty
@@ -6424,7 +6428,7 @@ and doStatement (s : A.statement) : chunk =
         currentLoc := loc';
         let hspec = (
           match hs with
-          | None -> Iformula.EList [];
+          | None -> Iformula.mkETrueTrueF ();
           | Some (s, hsloc) ->
               let base_loc = {Parser.line_num = hsloc.A.start_pos.A.lineno;
                               Parser.line_start = hsloc.A.start_pos.A.linestart;
@@ -6432,7 +6436,9 @@ and doStatement (s : A.statement) : chunk =
               let fname = hsloc.A.start_pos.A.filename in
               try
                 Parser.parse_c_function_spec fname s base_loc
-              with _ ->  raise (HipSpecsError "Loop specs error!")
+              with _ -> 
+                let error_loc = ("line " ^ string_of_int (loc.Cabs.start_pos.lineno)) in
+                raise (HipSpecsError ("Loop specs error: " ^ error_loc))
         ) in
         loopChunk ((doCondition false e skipChunk break_cond)
                    @@ s') hspec
@@ -6448,7 +6454,7 @@ and doStatement (s : A.statement) : chunk =
         exitLoop ();
         let hspec = (
           match hs with
-          | None -> Iformula.EList [];
+          | None -> Iformula.mkETrueTrueF ();
           | Some (s, hsloc) ->
               let base_loc = {Parser.line_num = hsloc.A.start_pos.A.lineno;
                               Parser.line_start = hsloc.A.start_pos.A.linestart;
@@ -6456,7 +6462,9 @@ and doStatement (s : A.statement) : chunk =
               let fname = hsloc.A.start_pos.A.filename in
               try
                 Parser.parse_c_function_spec fname s base_loc
-              with _ ->  raise (HipSpecsError "Loop specs error!")
+              with _ -> 
+                let error_loc = ("line " ^ string_of_int (loc.Cabs.start_pos.lineno)) in
+                raise (HipSpecsError ("Loop specs error: " ^ error_loc))
         ) in
         loopChunk (s' @@ s'') hspec
           
@@ -6478,7 +6486,7 @@ and doStatement (s : A.statement) : chunk =
         exitLoop ();
         let hspec = (
           match hs with
-          | None -> Iformula.EList [];
+          | None -> Iformula.mkETrueTrueF ();
           | Some (s, hsloc) ->
               let base_loc = {Parser.line_num = hsloc.A.start_pos.A.lineno;
                               Parser.line_start = hsloc.A.start_pos.A.linestart;
@@ -6486,7 +6494,9 @@ and doStatement (s : A.statement) : chunk =
               let fname = hsloc.A.start_pos.A.filename in
               try
                 Parser.parse_c_function_spec fname s base_loc
-              with _ ->  raise (HipSpecsError "Loop specs error!")
+              with _ -> 
+                let error_loc = ("line " ^ string_of_int (loc.Cabs.start_pos.lineno)) in
+                raise (HipSpecsError ("Loop specs error: " ^ error_loc))
         ) in
         let res = 
           match e2 with
@@ -6637,8 +6647,6 @@ and doStatement (s : A.statement) : chunk =
 *)
         s
 
-
-
     | A.ASM (asmattr, tmpls, details, loc) -> 
         (* Make sure all the outs are variables *)
         let loc' = convLoc loc in
@@ -6727,9 +6735,58 @@ and doStatement (s : A.statement) : chunk =
         let hspec = (
           try
             Parser.parse_c_statement_spec fname hs base_loc
-          with _ ->  raise (HipSpecsError "Statement specs error!")
+          with _ -> 
+            let error_loc = ("line " ^ string_of_int (loc.Cabs.start_pos.lineno)) in
+            raise (HipSpecsError ("Statement specs error: " ^ error_loc))
         ) in
-        s2c (mkStmt (HipStmtSpec (hspec, loc'))) loc'
+        let new_hspec = (
+          match hspec with
+          | Iast.Assert exp ->
+              let new_assert_sf = (
+                match exp.Iast.exp_assert_asserted_formula with
+                | None -> None
+                | Some (sf, b) ->
+                    let vars = IF.struc_free_vars true sf in
+                    let substitutes = ref [] in
+                    List.iter (fun (v,p) ->
+                      try
+                        let x = Hashtbl.find env v in
+                        match x with
+                        | EnvVar y, _ -> if (y.vname != v) then substitutes := !substitutes @ [((v, p), (y.vname, p))];
+                        | _ -> ()
+                      with _ -> ()
+                    ) vars;
+                    let new_sf = IF.subst_struc !substitutes sf in
+                    Some (new_sf, b)
+              ) in
+              let new_assume_f = (
+                match exp.Iast.exp_assert_assumed_formula with
+                | None -> None
+                | Some f -> 
+                    let vars = IF.all_fv f in
+                    let substitutes = ref [] in
+                    List.iter (fun (v,p) ->
+                      try
+                        let x = Hashtbl.find env v in
+                        match x with
+                        | EnvVar y, _ -> if (y.vname != v) then substitutes := !substitutes @ [((v, p), (y.vname, p))];
+                        | _ -> ()
+                      with _ -> ()
+                    ) vars;
+                    let new_f = IF.subst_all !substitutes f in
+                    Some new_f
+              ) in
+              let new_exp = { exp with Iast.exp_assert_asserted_formula = new_assert_sf;
+                                       Iast.exp_assert_assumed_formula = new_assume_f; } in
+              Iast.Assert new_exp
+          | Iast.Dprint _ -> hspec
+          | _ -> 
+            let error_loc = ("line " ^ string_of_int (loc.Cabs.start_pos.lineno)) in
+            raise (HipSpecsError ("Unsupported Hip statement, " ^ error_loc ^ ": " 
+                                  ^ (Iprinter.string_of_exp hspec)))
+        ) in
+        (* return *)
+        s2c (mkStmt (HipStmt (new_hspec, loc'))) loc'
 
   with e when continueOnError -> begin
     (ignore (E.log "Error in doStatement (%s)\n" (Printexc.to_string e)));
@@ -6740,7 +6797,7 @@ and doStatement (s : A.statement) : chunk =
 and doHipSpecs (hs: (string * Cabs.cabsloc) option) : IF.struc_formula =
   let hspec = (
     match hs with
-    | None -> Iformula.EList [];
+    | None -> Iformula.mkETrueTrueF ();
     | Some (s, hsloc) ->
         let base_loc = {Parser.line_num = hsloc.A.start_pos.A.lineno;
                         Parser.line_start = hsloc.A.start_pos.A.linestart;
@@ -6748,7 +6805,9 @@ and doHipSpecs (hs: (string * Cabs.cabsloc) option) : IF.struc_formula =
         let fname = hsloc.A.start_pos.A.filename in
         try
           Parser.parse_c_function_spec fname s base_loc
-        with _ -> raise (HipSpecsError "Function specs error!")
+        with _ ->
+          let error_loc = ("line " ^ string_of_int (hsloc.Cabs.start_pos.lineno)) in
+          raise (HipSpecsError ("Function specs error!" ^ error_loc))
   ) in
   let vars = IF.struc_free_vars true hspec in
   let substitutes = ref [] in
@@ -6756,8 +6815,7 @@ and doHipSpecs (hs: (string * Cabs.cabsloc) option) : IF.struc_formula =
     try
       let x = Hashtbl.find env v in
       match x with
-      | EnvVar y, _ ->
-          if (y.vname != v) then substitutes := !substitutes @ [((v, p), (y.vname, p))];
+      | EnvVar y, _ -> if (y.vname != v) then substitutes := !substitutes @ [((v, p), (y.vname, p))];
       | _ -> ()
     with _ -> ()
   ) vars;

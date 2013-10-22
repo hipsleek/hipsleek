@@ -3,6 +3,11 @@ struct pair {
   int y;
 };
 
+/*@
+pred_prim memLoc<heap:bool,size:int>
+  inv size>0;
+*/
+
 int first(struct pair p)
 /*@
   requires p::pair<a,b>
@@ -69,13 +74,11 @@ int foo2()
 */
 {
   struct pair* p;
-  {
-    struct pair v;
-    v.x = 1;
-    v.y = 2;
-    p = &v;
-    int r = v.x;
-  }
+  struct pair v;
+  v.x = 1;
+  v.y = 2;
+  p = &v;
+  int r = v.x;
   //p->y
   return r;
 }

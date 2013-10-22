@@ -168,7 +168,8 @@ let rec dim_unify d1 d2 = if (d1 = d2) then Some d1 else None
 
 and must_unify (k1 : typ) (k2 : typ) tlist pos : (spec_var_type_list * typ) =
   let pr = (* string_of_typ *) pr_none in
-  Debug.no_2 "must_unify" pr pr pr (fun _ _ -> must_unify_x k1 k2 tlist pos) k1 k2
+  let pr_out (_, t) = string_of_typ t in
+  Debug.no_2 "must_unify" pr pr pr_out (fun _ _ -> must_unify_x k1 k2 tlist pos) k1 k2
 
 and must_unify_x (k1 : typ) (k2 : typ) tlist pos : (spec_var_type_list * typ) =
   let (n_tlist,k) = unify_type k1 k2 tlist in
@@ -211,7 +212,23 @@ and unify_type_modify (modify_flag:bool) (k1 : spec_var_kind) (k2 : spec_var_kin
       | Int, Float -> (tl,Some Float) (*LDK: support floating point*)
       | Float, Int -> (tl,Some Float) (*LDK*)
       | Tree_sh, Tree_sh -> (tl,Some Tree_sh)
-      | t1, t2  -> 
+      | Named n1, Named n2 when (String.compare n1 "memLoc" = 0) -> (
+          let re = Str.regexp "__star$" in
+          try
+            let _ = Str.search_forward re n2 0 in
+            (tl, Some (Named n2))
+          with Not_found -> report_error no_pos ("UNIFICATION ERROR : at location "
+            ^" types " ^ n1 ^" and "^ n2 ^" are inconsistent")
+        )
+      | Named n1, Named n2 when (String.compare n2 "memLoc" = 0) -> (
+          let re = Str.regexp "__star$" in
+          try
+            let _ = Str.search_forward re n1 0 in
+            (tl, Some (Named n1))
+          with Not_found -> report_error no_pos ("UNIFICATION ERROR : at location "
+            ^" types " ^ n1 ^" and "^ n2 ^" are inconsistent")
+        )
+      | t1, t2  -> (
           if sub_type t1 t2 then (tlist, Some k2)  (* found t1, but expecting t2 *)
           else if sub_type t2 t1 then (tlist,Some k1)
           else 
@@ -233,6 +250,7 @@ and unify_type_modify (modify_flag:bool) (k1 : spec_var_kind) (k2 : spec_var_kin
                   | _,(n_tl,_) -> (n_tl,None))
               | _,_ -> (tl,None)
             end
+        )
   in unify k1 k2 tlist
 
 (* k2 is expected type *)
@@ -957,12 +975,15 @@ and try_unify_view_type_args prog c vdef v deref ies tlist pos =
       n_tl
     else 
       let expect_dname = (
-        let s = ref "" in
-        for i = 1 to deref do
-          s := !s ^ "__star";
-        done;
-        dname ^ !s
+          let s = ref "" in
+          for i = 1 to deref do
+            s := !s ^ "__star";
+          done;
+          dname ^ !s
       ) in
+     (*      Named expect_dname *)
+  (* ) in *)
+      (* let (n_tl,_) = gather_type_info_var v tlist expect_type pos in *)
       let (n_tl,_) = gather_type_info_var v tlist ( (Named expect_dname)) pos in
       n_tl
   ) in

@@ -1678,6 +1678,11 @@ and mkContinue jump_label path_id pos =
              exp_continue_path_id = path_id;
              exp_continue_pos = pos }
 
+and mkCast target_typ body pos =
+  Cast { exp_cast_target_type = target_typ;
+         exp_cast_body = body;
+         exp_cast_pos = pos }
+
 (*************************************************************)
 (* Building the graph representing the class hierarchy       *)
 (*************************************************************)

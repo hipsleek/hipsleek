@@ -29,7 +29,7 @@ void append(struct node* x, struct node* y)
 */
 {
   struct node* tmp = x->next;
-  if (tmp != NULL) {
+  if (tmp) {
     append(x->next, y);
     return;
   }

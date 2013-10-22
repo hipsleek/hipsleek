@@ -637,6 +637,7 @@ let use_split_match = ref false
 let consume_all = ref false
 
 let enable_split_lemma_gen = ref false
+let enable_lemma_rhs_unfold = ref false
 
 let dis_show_diff = ref false
 
@@ -804,7 +805,7 @@ such as x<1 --> x+1<=1 is allowed
 
 let allow_lsmu_infer = ref false
 
-let allow_norm = ref false
+let allow_norm = ref true
 
 let allow_ls = ref false (*enable lockset during verification*)
 

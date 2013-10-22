@@ -1,0 +1,34 @@
+==================================================================
+list all examples/features supported
+
+
+==================================================================
+#ex1-a.c:
+
+ to handle if(x) === if (x!=NULL)
+
+Checking procedure foo$node__star... inside unfold_baref
+
+( [(,0 ); (,1 )]) :ex1-a.c:27: 9: bind: node  x'::node__star<pdata_27_897'>@L cannot be derived from context
+
+
+(Cause of Bind Failure):ex1-a.c:27: 9:  List of Failesc Context: [FEC(1, 0, 0 )]
+Failed States:
+[
+ Label: [(,0 ); (,1 )]
+ State:
+        fe_kind: MUST
+        fe_name: logical bug
+        fe_locs: {
+                  fc_message:  x'=null |-  x'!=null. LOCS:[26;19;27] (must-bug)
+                  fc_current_lhs_flow: {FLOW,(3,7)=__Error}}
+ ]
+
+Procedure foo$node__star result FAIL.(1)
+
+
+
+
+==================================================================
+
+

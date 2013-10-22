@@ -704,7 +704,7 @@ struct
                                 stmt_fun
                                 (visit_block stmt_fun y block1)
                                 block2
-                          | HipStmtSpec _ -> y)
+                          | HipStmt _ -> y)
                     acc
                     blk.bstmts
                 and gather_gotos acc stmt =

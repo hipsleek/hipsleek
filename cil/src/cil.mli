@@ -992,7 +992,7 @@ and stmtkind =
          exception !!!
      *)      
   | TryExcept of block * (instr list * exp) * block * location
-  | HipStmtSpec of Iast.exp * location
+  | HipStmt of Iast.exp * location
 
   
 
