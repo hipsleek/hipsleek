@@ -1542,8 +1542,34 @@ EXPECTED:
  inferred pure : l=null
 
 */
-======================================================================
-======================================================================
+=======================================================================
+# i13a.slk: FIXED (--sa-en-cont)
+
+infer [H1] H1(y)  |- y::lseg<p> * p::node<null> .
+
+ H1(y) --> y::lseg<p> * p::node<null>.
+
+This example currently fails as it did not produce a
+a continuation heap pred. I remember we were analysing the
+parameters of pred defn to see if they were continuation parameters?
+
+Would we be able to infer something like
+
+  H1(y) --> y::lseg<k> * H2(k) 
+
+So that this example would succeed?
+=====================================================================
+# lseg-1.slk   FIXED
+
+infer [H1] H1(y)  |- y=null.
+
+Heap-pred H1(y) is still in residue.
+Should we remove it from ante, so we do not
+perform another inference step?
+ 
+ <1>H1(y)&y=null&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [// Sleek_Entail(1)
+H1(y) --> emp&y=null]
 ======================================================================
 ======================================================================
 ======================================================================

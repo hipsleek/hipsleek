@@ -1,7 +1,5 @@
-
-
-class __DivByZeroErr  extends __Error {}
-class __ArrBoundErr  extends __Error {}
+class __DivByZeroErr extends __Error {}
+class __ArrBoundErr extends __Error {}
 
 int add___(int a, int b) 
   requires true 
@@ -292,6 +290,10 @@ int array_get_elm_at___2d(int[,] a, int i, int j)
 /* ************ */
 /* data tid{ */
 /* } */
+
+data barrier{
+  int phase;
+}
 
 data lock{
 }

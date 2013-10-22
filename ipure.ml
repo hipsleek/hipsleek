@@ -6,9 +6,12 @@
 
 open Globals
 open Gen.Basic
-open Label_only
+(* open Label_only *)
 open Label
 include Ipure_D
+
+(* module LO = Label_only.Lab_List *)
+(* module LO = Label_only.Lab_LAnn *)
 
 (* type xpure_view = { *)
 (*     xpure_view_node : ident option; *)
@@ -121,6 +124,7 @@ include Ipure_D
 
 
 let print_formula = ref (fun (c:formula) -> "cpure printer has not been initialized")
+let print_formula_exp = ref (fun (c:exp) -> "cpure printer has not been initialized")
 let print_id = ref (fun (c:(ident*primed)) -> "cpure printer has not been initialized")
 
 module Exp_Pure =
@@ -131,7 +135,7 @@ struct
   let ref_string_of = print_formula
 end;;
 
-module Label_Pure = LabelExpr(Lab_List)(Exp_Pure);; 
+module Label_Pure = LabelExpr(LO)(Exp_Pure);; 
 
 let linking_exp_list = ref (Hashtbl.create 100)
 let _ = let zero = IConst (0, no_pos)
@@ -233,6 +237,7 @@ and afv (af : exp) : (ident * primed) list = match af with
   | Tsconst _ 
   | InfConst _
   | FConst _ -> []
+  | Bptriple ((ec,et,ea),_) -> Gen.BList.remove_dups_eq (=) ((afv ec) @ (afv et) @ (afv ea))
   | Ann_Exp (e,_,_) -> afv e
   | Add (a1, a2, _) -> combine_avars a1 a2
   | Subtract (a1, a2, _) -> combine_avars a1 a2
@@ -388,20 +393,32 @@ and mkEq a1 a2 pos =
   else 
 	Eq (a1, a2, pos)
 
-and mkAnd f1 f2 pos = match f1 with
+and mkAnd_x f1 f2 pos = match f1 with
   | BForm ((BConst (false, _), _), _) -> f1
   | BForm ((BConst (true, _), _), _) -> f2
   | _ -> match f2 with
       | BForm ((BConst (false, _), _), _) -> f2
       | BForm ((BConst (true, _), _), _) -> f1
-      | _ -> match f1,f2 with 
+      | _ ->
+            match f1,f2 with 
 		| AndList b1, AndList b2 -> mkAndList (Label_Pure.merge b1 b2)
-		| AndList b, f -> mkAndList (Label_Pure.merge b [(Lab_List.unlabelled,f)])
-		| f, AndList b -> mkAndList (Label_Pure.merge b [(Lab_List.unlabelled,f)])
-		| _ -> And (f1, f2, pos)
+		| AndList b, f -> mkAndList (Label_Pure.merge b [(LO.unlabelled,f)])
+		| f, AndList b -> mkAndList (Label_Pure.merge b [(LO.unlabelled,f)])
+		| _ -> And (f1, f2, pos) (* it's ok not to check for disjs containing AndList, this will be solved later, during the translation to cpure *)
+                      (* if no_andl f1 && no_andl f2 then And (f1, f2, pos)  *)
+		      (*      else report_error no_pos "Ipure: unhandled/unexpected mkAnd with andList case" *)
+
+and mkAnd f1 f2 pos = 
+  let pr = !print_formula in
+  Debug.no_2 "mkAnd" pr pr pr (fun _ _ -> mkAnd_x f1 f2 pos) f1 f2
 
 and mkAndList b = (*print_string "ipure_list_gen\n";*) AndList b
-		
+	
+and no_andl  = function
+  | BForm _ | And _ | Not _ | Forall _ | Exists _  -> true
+  | Or (f1,f2,_,_) -> no_andl f1 && no_andl f2
+  | AndList _ -> false 
+	
 and mkOr f1 f2 lbl pos = match f1 with
   | BForm ((BConst (false, _), _), _) -> f2
   | BForm ((BConst (true, _), _), _) -> f1
@@ -542,6 +559,7 @@ and pos_of_exp (e : exp) = match e with
   | IConst (_, p) 
   | FConst (_, p) 
   | Tsconst (_, p)
+  | Bptriple (_, p)
   | InfConst (_, p)
   | AConst (_, p) -> p
   | Ann_Exp (e,_,p) -> p
@@ -678,6 +696,10 @@ and e_apply_one ((fr, t) as p) e = match e with
   | Tsconst _
   | InfConst _
   | AConst _ -> e
+  | Bptriple ((ec,et,ea),pos) ->
+      Bptriple ((e_apply_one p ec,
+                 e_apply_one p et,
+                 e_apply_one p ea),pos)
   | Ann_Exp (e,ty,pos) -> Ann_Exp ((e_apply_one p e), ty, pos)
   | Var (sv, pos) -> Var (v_apply_one p sv, pos)
   | Level (sv, pos) -> Level (v_apply_one p sv, pos)
@@ -702,7 +724,7 @@ and e_apply_one ((fr, t) as p) e = match e with
   | Func (a, ind, pos) -> Func (a, (e_apply_one_list p ind), pos)
   | ArrayAt (a, ind, pos) -> ArrayAt (v_apply_one p a, (e_apply_one_list p ind), pos) (* An Hoa *)
 
-and v_apply_one ((fr, t) as p) v = (if eq_var v fr then t else v)
+and v_apply_one ((fr, t)) v = (if eq_var v fr then t else v)
 
 and e_apply_one_list ((fr, t) as p) alist = match alist with
   |[] -> []
@@ -712,8 +734,8 @@ and e_apply_one_list ((fr, t) as p) alist = match alist with
 and e_apply_one_list_of_pair ((fr, t) as p) list_of_pair = match list_of_pair with
   | [] -> []
   | (expr, bound)::rest -> match bound with
-							| None -> ((e_apply_one p expr), None)::(e_apply_one_list_of_pair p rest)
-							| Some b_expr ->  ((e_apply_one p expr), Some (e_apply_one p b_expr))::(e_apply_one_list_of_pair p rest)
+      | None -> ((e_apply_one p expr), None)::(e_apply_one_list_of_pair p rest)
+      | Some b_expr ->  ((e_apply_one p expr), Some (e_apply_one p b_expr))::(e_apply_one_list_of_pair p rest)
 
 and subst_list_of_pair sst ls = match sst with
   | [] -> ls
@@ -853,6 +875,7 @@ and find_lexp_exp (e: exp) ls =
   | InfConst _
   | FConst _ -> []
   | Ann_Exp(e,_,_) -> find_lexp_exp e ls
+	| Bptriple ((ec, et, ea), _) -> find_lexp_exp ec ls @ find_lexp_exp et ls @ find_lexp_exp ea ls
   | Add (e1, e2, _) -> find_lexp_exp e1 ls @ find_lexp_exp e2 ls
   | Subtract (e1, e2, _) -> find_lexp_exp e1 ls @ find_lexp_exp e2 ls
   | Mult (e1, e2, _) -> find_lexp_exp e1 ls @ find_lexp_exp e2 ls
@@ -873,6 +896,26 @@ and find_lexp_exp (e: exp) ls =
   | ListReverse (e, _) -> find_lexp_exp e ls
   | Func (_, el, _) -> List.fold_left (fun acc e -> acc @ find_lexp_exp e ls) [] el
   | ArrayAt (_, el, _) -> List.fold_left (fun acc e -> acc @ find_lexp_exp e ls) [] el
+
+and list_of_conjs (f: formula) : formula list =
+  match f with
+	| And (f1, f2, _) -> (list_of_conjs f1) @ (list_of_conjs f2)
+    | _ -> [f]
+
+and list_of_disjunctions (f: formula) : formula list =
+  match f with
+    | Or (f1, f2, _, _) -> (list_of_disjunctions f1) @ (list_of_disjunctions f2)
+    | _ -> [f]
+
+and conj_of_list (fs:formula list) : formula =
+  match fs with
+    | [] -> mkTrue no_pos
+    | x::xs -> List.fold_left (fun a c-> mkAnd a c no_pos) x xs
+
+(* and disj_of_list (fs:formula list) : formula = *)
+(*   match fs with *)
+(*     | [] -> mkTrue no_pos *)
+(*     | x::xs -> List.fold_left (fun a c-> mkOr a c no_pos) x xs *)
 ;;
 
 let rec break_pure_formula (f: formula) : b_formula list =
@@ -885,15 +928,7 @@ let rec break_pure_formula (f: formula) : b_formula list =
 	| Forall (_, f, _, _) -> break_pure_formula f
 	| Exists (_, f, _, _) -> break_pure_formula f
 
-let rec list_of_conjs (f: formula) : formula list =
-  match f with
-	| And (f1, f2, _) -> (list_of_conjs f1) @ (list_of_conjs f2)
-    | _ -> [f]
 
-let rec conj_of_list (fs:formula list) : formula =
-  match fs with
-    | [] -> mkTrue no_pos
-    | x::xs -> List.fold_left (fun a c-> mkAnd a c no_pos) x xs
 
 let rec contain_vars_exp (expr : exp) : bool =
   match expr with
@@ -903,6 +938,7 @@ let rec contain_vars_exp (expr : exp) : bool =
   | IConst _ 
   | AConst _ 
   | Tsconst _
+  | Bptriple _ (* TOCHECK *)
   | FConst _ -> false
   | Ann_Exp (exp,_,_) -> (contain_vars_exp exp)
   | Add (exp1, exp2, _) -> (contain_vars_exp exp1) || (contain_vars_exp exp2)
@@ -939,6 +975,19 @@ and float_out_exp_min_max (e: exp): (exp * (formula * (string list) ) option) = 
   | Ann_Exp (e, t, l) -> 
       let ne, np = float_out_exp_min_max e in
       (Ann_Exp (ne, t, l), np) 
+  | Bptriple ((ec,et,ea),l) -> 
+      let ec1,ec_r = float_out_exp_min_max ec in
+      let et1,et_r = float_out_exp_min_max et in
+      let ea1,ea_r = float_out_exp_min_max ea in
+      let r = List.fold_left ( fun np1 np2 ->
+          let res = match (np1, np2) with
+		    | None, None -> None
+		    | Some p, None -> Some p
+		    | None, Some p -> Some p
+		    | Some (p1, l1), Some (p2, l2) -> Some ((And (p1, p2, l)), (List.rev_append l1 l2))
+          in res) ec_r [et_r;ea_r]
+      in
+      (Bptriple ((ec1,et1,ea1),l),r)
   | Add (e1, e2, l) ->
       let ne1, np1 = float_out_exp_min_max e1 in
       let ne2, np2 = float_out_exp_min_max e2 in
@@ -947,6 +996,7 @@ and float_out_exp_min_max (e: exp): (exp * (formula * (string list) ) option) = 
         | Some p, None -> Some p
         | None, Some p -> Some p
         | Some (p1, l1), Some (p2, l2) -> Some ((And (p1, p2, l)), (List.rev_append l1 l2))in
+
       (Add (ne1, ne2, l), r) 
   | Subtract (e1, e2, l) ->
       let ne1, np1 = float_out_exp_min_max e1 in
@@ -1356,6 +1406,7 @@ let rec typ_of_exp (e: exp) : typ =
   | InfConst _                  -> Globals.Int (* Type of Infinity should be Num keep Int for now *)
   | AConst _                  -> Globals.AnnT
   | Tsconst _ 				  -> Globals.Tree_sh
+  | Bptriple _ 				  -> Globals.Bptyp
   (* Arithmetic expressions *)
   | Add (ex1, ex2, _)
   | Subtract (ex1, ex2, _)
@@ -1492,3 +1543,28 @@ let trans_special_formula s (p:formula) vars =
         )
     | _ -> p
   )
+
+
+
+(* 
+   Make a formula from a list of conjuncts, namely
+   [F1,F2,..,FN]  ==> F1 & F2 & .. & Fn 
+*)
+(* let conj_of_list (fs : formula list) pos : formula = *)
+(*   match fs with *)
+(*     | [] -> mkTrue pos *)
+(*     | x::xs -> List.fold_left (fun a c-> mkAnd a c no_pos) x xs *)
+
+let join_conjunctions fl = conj_of_list fl
+
+(* let join_disjunctions fl = disj_of_list fl *)
+
+let mkAndList_opt f =
+  if !Globals.remove_label_flag then 
+    join_conjunctions (List.map snd f)
+  else mkAndList f
+
+let mkAndList_opt f =
+  let pr = pr_list (pr_pair pr_none !print_formula) in
+  let pr2 = !print_formula in
+  Debug.no_1 "mkAndList_opt" pr pr2 mkAndList_opt f 

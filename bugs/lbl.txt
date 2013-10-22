@@ -1,0 +1,10 @@
+
+AndL["":f1;"a":f2;"b":f3] && AndL["a":g2]
+ ==> AndL["":f1;"a":f2&g2; "b":f3]
+
+(ex v1: 
+
+  AndL["":f1;"a":f2;"b":f3] && AndL["a":g2]
+ ==> AndL["":f1;"a":f2&g2; "b":f3]
+
+f(x,y) ==> AndList

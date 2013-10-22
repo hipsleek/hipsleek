@@ -15,6 +15,7 @@ module F = Cformula
 module P = Cpure
 module MP = Mcpure
 module Err = Error
+module LO = Label_only.LOne
 
 type typed_ident = (typ * ident)
 
@@ -27,8 +28,8 @@ and prog_decl = {
     mutable prog_axiom_decls : axiom_decl list; (* An Hoa : axiom definitions *)
     (*old_proc_decls : proc_decl list;*) (* To be removed completely *)
     new_proc_decls : (ident, proc_decl) Hashtbl.t; (* Mingled name with proc_delc *)
-    mutable prog_left_coercions : coercion_decl list;
-    mutable prog_right_coercions : coercion_decl list;
+    (*mutable prog_left_coercions : coercion_decl list;*)
+    (*mutable prog_right_coercions : coercion_decl list;*)
     prog_barrier_decls : barrier_decl list
 }
     
@@ -81,7 +82,7 @@ and view_decl = {
     view_cont_vars : P.spec_var list;
     view_case_vars : P.spec_var list; (* predicate parameters that are bound to guard of case, but excluding self; subset of view_vars*)
     view_uni_vars : P.spec_var list; (*predicate parameters that may become universal variables of universal lemmas*)
-    view_labels : Label_only.spec_label list;
+    view_labels : LO.t list;
     view_modes : mode list;
     view_is_prim : bool;
     view_kind : view_kind;
@@ -89,7 +90,7 @@ and view_decl = {
     mutable view_materialized_vars : mater_property list; (* view vars that can point to objects *)
     view_data_name : ident;
     view_formula : F.struc_formula; (* case-structured formula *)
-    view_user_inv : MP.mix_formula; (* XPURE 0 -> revert to P.formula*)
+    mutable view_user_inv : MP.mix_formula; (* XPURE 0 -> revert to P.formula*)
     view_mem : F.mem_perm_formula option; (* Memory Region Spec *)
     view_inv_lock : F.formula option;
     mutable view_x_formula : (MP.mix_formula); (*XPURE 1 -> revert to P.formula*)
@@ -192,6 +193,8 @@ and coercion_decl = {
     coercion_body_norm : F.struc_formula; (* used as consequent during --elp *)
     coercion_impl_vars : P.spec_var list; (* list of implicit vars *)
     coercion_univ_vars : P.spec_var list; (* list of universally quantified variables. *)
+
+    coercion_infer_vars :  P.spec_var list;
     (* coercion_proof : exp; *)
     (* coercion_head_exist : F.formula;   *)
     (* same as head except for annotation to self node? *)
@@ -902,10 +905,10 @@ let rec look_up_view_def_raw (defs : view_decl list) (name : ident) = match defs
   | d :: rest -> if d.view_name = name then d else look_up_view_def_raw rest name
   | [] -> raise Not_found
 
-let look_up_view_def_raw (defs : view_decl list) (name : ident) = 
+let look_up_view_def_raw i (defs : view_decl list) (name : ident) = 
   let pr = fun x -> x in
   let pr_out = !print_view_decl in
-  Debug.no_1 "look_up_view_def_raw" pr pr_out (fun _ -> look_up_view_def_raw defs name) name
+  Debug.no_1_num i "look_up_view_def_raw" pr pr_out (fun _ -> look_up_view_def_raw defs name) name
 
 
 (* An Hoa *)
@@ -1006,13 +1009,13 @@ let is_rec_view_def prog (name : ident) : bool =
 
 (*check whether a view is a lock invariant*)
 let get_lock_inv prog (name : ident) : (bool * F.formula) =
-  let vdef = look_up_view_def_raw prog.prog_view_decls name in
+  let vdef = look_up_view_def_raw 1 prog.prog_view_decls name in
   match vdef.view_inv_lock with
     | None -> (false, (F.mkTrue (F.mkTrueFlow ()) no_pos))
     | Some f -> (true, f)
 
 let is_lock_inv prog (name : ident) : bool =
-  let vdef = look_up_view_def_raw prog.prog_view_decls name in
+  let vdef = look_up_view_def_raw 2 prog.prog_view_decls name in
   match vdef.view_inv_lock with
     | None -> false
     | Some f -> true
@@ -1207,31 +1210,32 @@ let case_of_coercion_x (lhs:F.formula) (rhs:F.formula) : coercion_case =
   let h,_,_,_,_ = F.split_components lhs in
   let hs = F.split_star_conjunctions h in
   let flag = if (List.length hs) == 1 then 
-	  let sm = List.hd hs in (match sm with
-	  | F.StarMinus _ -> true
-	  | _ -> false)
+	    let sm = List.hd hs in (match sm with
+	      | F.StarMinus _ -> true
+	      | _ -> false)
 	  else false in
   if(flag) then Ramify
   else
-  let fct f = match f with
-    | Cformula.Base {F.formula_base_heap=h}
-    | Cformula.Exists {F.formula_exists_heap=h} ->      
+    let fct f = match f with
+      | Cformula.Base {F.formula_base_heap=h}
+      | Cformula.Exists {F.formula_exists_heap=h} ->      
           let _ = Debug.tinfo_hprint (add_str "formula_exists_heap" !print_h_formula ) h no_pos in 
           let hs = F.split_star_conjunctions h in
-	  let self_n = List.for_all (fun c-> 
+          let hs = List.filter (fun c -> not (c=F.HTrue || c=F.HEmp)) hs in
+	      let self_n = List.for_all (fun c-> 
               let _ = Debug.tinfo_hprint (add_str "c" !print_h_formula ) c no_pos in
               let only_self = match c with
                 | F.DataNode _
                 | F.ViewNode _-> (P.name_of_spec_var (F.get_node_var c)) = self 
                 | F.HRel (sv,exp_lst,_) -> (
-                      let _ = Debug.tinfo_hprint (add_str "sv" !print_sv ) sv no_pos in
-                      match exp_lst with
-                        | [sv] -> (
-                              match sv with
-                                | (P.Var (v,_)) -> (P.name_of_spec_var v) = self
-                                | _ -> false)
-                        | _ -> false
-                  )
+                    let _ = Debug.tinfo_hprint (add_str "sv" !print_sv ) sv no_pos in
+                    match exp_lst with
+                      | [sv] -> (
+                          match sv with
+                            | (P.Var (v,_)) -> (P.name_of_spec_var v) = self
+                            | _ -> false)
+                      | _ -> false
+                )
                 | _ -> failwith ("Only nodes and HRel allowed after split_star_conjunctions ") 
               in
               only_self) hs  in
@@ -1241,19 +1245,21 @@ let case_of_coercion_x (lhs:F.formula) (rhs:F.formula) : coercion_case =
             | F.HRel (sv,exp_lst,_) -> P.name_of_spec_var sv
             | _ -> failwith ("Only nodes and HRel allowed after split_star_conjunctions ") in
           (List.length hs),self_n, List.map get_name hs
-    | _ -> 1,false,[]
-  in
-  (*length = #nodes, sn = is there a self node, typ= List of names of nodes*)
-  let lhs_length,l_sn,lhs_typ = fct lhs in
-  let rhs_length,r_sn,rhs_typ = fct rhs in
-  match lhs_typ@rhs_typ with
-	| [] -> Simple
+      | _ -> 1,false,[]
+    in
+    (*length = #nodes, sn = is there a self node, typ= List of names of nodes*)
+    let lhs_length,l_sn,lhs_typ = fct lhs in
+    let rhs_length,r_sn,rhs_typ = fct rhs in
+    match lhs_typ@rhs_typ with
+	  | [] -> Simple
 	| h::t ->
         (*
           Why using concret numbers (e.g. 1,2) here ?
           If there is a lemma that split 1 node into 3 nodes,
           it is also considered a split lemma?
         *)
+        (*special case, detecting inconsistency using lemmas*)
+        if rhs_length=0  then Normalize true else 
 		if l_sn && r_sn && (List.for_all (fun c-> h=c) t) then
             (*all nodes having the same names*)
             (* ??? why using the node names *)
@@ -1719,7 +1725,7 @@ let formula_of_unstruc_view_f vd = F.formula_of_disjuncts (fst (List.split vd.vi
 let vdef_fold_use_bc prog ln2  = match ln2 with
   | F.ViewNode vn -> 
     (try 
-      let vd = look_up_view_def_raw prog.prog_view_decls vn.F.h_formula_view_name in
+      let vd = look_up_view_def_raw 3 prog.prog_view_decls vn.F.h_formula_view_name in
       match vd.view_raw_base_case with
         | None -> None
         | Some f-> Some {vd with view_formula = F.formula_to_struc_formula f}
@@ -1837,16 +1843,13 @@ let rec add_uni_vars_to_view_x cprog (l2r_coers:coercion_decl list) (view:view_d
   (*                       ^"\n ### res1 = " ^ (Cprinter.string_of_spec_var_list res1) *)
   (*                       ^ "\n\n") in *)
   let uni_vars = P.remove_dups_svl res1 in
-  (* let _ = print_string ("\n add_uni_vars_to_view:" *)
-  (*                       ^"\n ### uni_vars = " ^ (Cprinter.string_of_spec_var_list uni_vars) *)
-  (*                       ^ "\n\n") in *)
   if (view.view_is_rec) then {view with view_uni_vars = uni_vars}
   else
 	let rec process_h_formula (h_f:F.h_formula):P.spec_var list = match h_f with
 		| F.ViewNode vn ->
             if ((String.compare vn.F.h_formula_view_name view.view_name)=0) then []
 			else
-				let vdef = look_up_view_def_raw cprog.prog_view_decls vn.F.h_formula_view_name in
+				let vdef = look_up_view_def_raw 4 cprog.prog_view_decls vn.F.h_formula_view_name in
 				let vdef = add_uni_vars_to_view_x cprog l2r_coers vdef in
 				let vdef_uni_vars = vdef.view_uni_vars in
 				let fr = vdef.view_vars in
@@ -2034,7 +2037,7 @@ let collect_hp_rels prog= Hashtbl.fold (fun i p acc->
 	(List.map (fun c-> name,c) p.proc_hpdefs)@acc) prog.new_proc_decls []
 
 let look_up_cont_args_x a_args vname cviews=
-  let vdef = look_up_view_def_raw cviews vname in
+  let vdef = look_up_view_def_raw 5 cviews vname in
   let pr_args = List.combine vdef.view_vars a_args in
   List.fold_left (fun ls cont_sv -> ls@[List.assoc cont_sv pr_args]) [] vdef.view_cont_vars
 
@@ -2042,3 +2045,47 @@ let look_up_cont_args a_args vname cviews=
   let pr1 = !Cpure.print_svl in
   Debug.no_2 "look_up_cont_args" pr1 pr_id pr1
       (fun _ _ -> look_up_cont_args_x a_args vname cviews) a_args vname
+	  
+	  
+	  
+let exp_fv (e:exp) = 
+  let comb_f = List.concat in
+  let f (ac:ident list) e : ident list option= match e with
+			  | Assert b -> 
+				let l = (Gen.fold_opt F.struc_fv b.exp_assert_asserted_formula)@ (Gen.fold_opt F.fv b.exp_assert_assumed_formula)in
+				Some (ac@ List.map P.name_of_spec_var l)
+	          | Java _ -> Some ac
+	          | CheckRef b-> Some (b.exp_check_ref_var::ac)
+	          | BConst _ -> Some ac
+	          | Debug _ -> Some ac
+	          | Dprint b -> Some (b.exp_dprint_visible_names@ac)
+	          | FConst _ -> Some ac
+	          | ICall b -> Some (b.exp_icall_receiver::b.exp_icall_arguments@ac)
+	          | IConst _ -> Some ac
+			  | New b -> Some ((List.map snd b.exp_new_arguments)@ac)
+	          | Null _ -> Some ac
+			  | EmptyArray _ -> Some ac
+	          | Print _ -> Some ac
+			  | Barrier b-> Some ((snd b.exp_barrier_recv)::ac)
+	          | SCall b -> Some (ac@b.exp_scall_arguments)
+	          | This _ -> Some ac
+	          | Time _ -> Some ac
+	          | Var b -> Some (b.exp_var_name::ac)
+	          | VarDecl b -> Some (b.exp_var_decl_name::ac)
+	          | Unfold b -> Some ((P.name_of_spec_var b.exp_unfold_var)::ac)
+	          | Unit _ -> Some ac
+	          | Sharp _ -> Some ac
+			  |  _ -> None in
+    let f_args (ac:ident list) e : ident list= match e with
+		| Label b -> ac
+		| Assign b -> b.exp_assign_lhs::ac
+		| Bind b ->ac@ ((snd b.exp_bind_bound_var)::(List.map snd b.exp_bind_fields))
+		| Block b -> ac@(List.map snd b.exp_block_local_vars)
+		| Cond b ->b.exp_cond_condition::ac
+		| Cast b -> ac
+		| Catch b -> (Gen.fold_opt (fun (_,c)-> [c]) b.exp_catch_var)@ac
+		| Seq b -> ac
+		| While b -> ac@[b.exp_while_condition]@(List.map P.name_of_spec_var (F.struc_fv b.exp_while_spec))
+		| Try b -> ac
+		| _ -> ac in
+  fold_exp_args e [] f f_args comb_f []

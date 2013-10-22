@@ -5,10 +5,79 @@ open Iast
 open Globals
 open Lexing
 open Gen.Basic
-open Label_only
+(* open Label_only *)
 
 module F = Iformula
 module P = Ipure
+(* module LO=Label_only.Lab_List *)
+module LO=Label_only.LOne
+module LO2=Label_only.Lab2_List
+
+(* function to enclose a string s into parenthesis *)
+let parenthesis s = "(" ^ s ^ ")"
+;;
+
+(* function to concatenate the elements of a list of strings and puts c betwwen then (for field access)*)
+let rec concatenate_string_list l c = match l with 
+ | [] -> ""
+ | h::[] -> h 
+ | h::t -> h ^ c ^ (concatenate_string_list t c)
+;;
+
+(* pretty printing for unary operators *)
+let string_of_unary_op = function 
+  | OpUMinus       -> "-"
+  | OpPreInc       -> "++"
+  | OpPreDec       -> "--"
+  | OpPostInc      -> "++"
+  | OpPostDec      -> "--"
+  | OpNot          -> "!"
+  (*For pointers: *v and &v *)
+  | OpVal -> "*"
+  | OpAddr -> "&"
+;;    
+
+(* pretty priting for binary operators *)
+let string_of_binary_op = function 
+  | OpPlus         -> " + "
+  | OpMinus        -> " - "
+  | OpMult         -> " * "
+  | OpDiv          -> " / "
+  | OpMod          -> " % "
+  | OpEq           -> " == "
+  | OpNeq          -> " != "                                 
+  | OpLt           -> " < "
+  | OpLte          -> " <= "
+  | OpGt           -> " > "
+  | OpGte          -> " >= "
+  | OpLogicalAnd   -> " && "                                 
+  | OpLogicalOr    -> " || "
+  | OpIsNull       -> " == "
+  | OpIsNotNull    -> " != "
+;;
+
+(* pretty printing for assign operators *)
+let string_of_assign_op = function 
+  | OpAssign      -> " = "
+  | OpPlusAssign  -> " += "
+  | OpMinusAssign -> " -= "
+  | OpMultAssign  -> " *= "
+  | OpDivAssign   -> " /= "
+  | OpModAssign   -> " %= "
+;;
+
+let string_of_primed = function 
+	| Unprimed -> ""
+	| Primed -> "'";;
+
+(* function used to decide if parentrhesis are needed or not *)
+let need_parenthesis = function 
+    | P.Null _ | P.Var _ | P.IConst _ | P.Max _ | P.Min _  -> false
+    | _                                                    -> true
+;; 
+
+(* let string_of_label = function  *)
+
 
 (* function to enclose a string s into parenthesis *)
 let parenthesis s = "(" ^ s ^ ")"
@@ -79,8 +148,8 @@ let string_of_label = function
 ;;
 
 let string_of_formula_label (i,s) s2:string = ("("^(string_of_int i)^", "^s^"):"^s2)
-let string_of_spec_label = Lab_List.string_of
-let string_of_spec_label_def = Lab2_List.string_of
+let string_of_spec_label = LO.string_of
+let string_of_spec_label_def = LO2.string_of
 
 let string_of_formula_label_opt h s2:string = match h with | None-> s2 | Some s -> string_of_formula_label s s2
 let string_of_control_path_id (i,s) s2:string = string_of_formula_label (i,s) s2
@@ -128,6 +197,7 @@ let rec string_of_formula_exp = function
   | P.InfConst(s,l) -> s
   | P.AConst (i, l)           -> string_of_heap_ann i
   | P.Tsconst (i,l)			  -> Tree_shares.Ts.string_of i
+  | P.Bptriple (t,l) -> pr_triple string_of_formula_exp string_of_formula_exp string_of_formula_exp t
   | P.FConst (f, _) -> string_of_float f
   | P.Add (e1, e2, l)	      -> (match e1 with 
 	  | P.Null _ 
@@ -319,18 +389,18 @@ let rec string_of_h_formula = function
              F.h_formula_starminus_h2 = f2;
              F.h_formula_starminus_pos = l} ) ->
       if is_bool_f f1 then 
-        if is_bool_f f2 then (string_of_h_formula f1) ^ " * " ^ (string_of_h_formula f2)
-        else (string_of_h_formula f1) ^ " *- (" ^ (string_of_h_formula f2) ^ ")"
+        if is_bool_f f2 then (string_of_h_formula f2) ^ " -* " ^ (string_of_h_formula f1)
+        else (string_of_h_formula f2) ^ " -* (" ^ (string_of_h_formula f1) ^ ")"
       else
-        "(" ^ (string_of_h_formula f1) ^ ") *- (" ^ (string_of_h_formula f2) ^ ")"        
+        "(" ^ (string_of_h_formula f2) ^ ") -* (" ^ (string_of_h_formula f1) ^ ")"        
   | F.Conj ({F.h_formula_conj_h1 = f1;
              F.h_formula_conj_h2 = f2;
              F.h_formula_conj_pos = l} ) ->
       if is_bool_f f1 then 
-        if is_bool_f f2 then (string_of_h_formula f1) ^ " & " ^ (string_of_h_formula f2)
-        else (string_of_h_formula f1) ^ " & (" ^ (string_of_h_formula f2) ^ ")"
+        if is_bool_f f2 then (string_of_h_formula f1) ^ " U* " ^ (string_of_h_formula f2)
+        else (string_of_h_formula f1) ^ " U* (" ^ (string_of_h_formula f2) ^ ")"
       else
-        "(" ^ (string_of_h_formula f1) ^ ") & (" ^ (string_of_h_formula f2) ^ ")"
+        "(" ^ (string_of_h_formula f1) ^ ") U* (" ^ (string_of_h_formula f2) ^ ")"
   | F.ConjStar ({F.h_formula_conjstar_h1 = f1;
              F.h_formula_conjstar_h2 = f2;
              F.h_formula_conjstar_pos = l} ) ->
@@ -343,10 +413,10 @@ let rec string_of_h_formula = function
              F.h_formula_conjconj_h2 = f2;
              F.h_formula_conjconj_pos = l} ) ->
       if is_bool_f f1 then 
-        if is_bool_f f2 then (string_of_h_formula f1) ^ " && " ^ (string_of_h_formula f2)
-        else (string_of_h_formula f1) ^ " && (" ^ (string_of_h_formula f2) ^ ")"
+        if is_bool_f f2 then (string_of_h_formula f1) ^ " & " ^ (string_of_h_formula f2)
+        else (string_of_h_formula f1) ^ " & (" ^ (string_of_h_formula f2) ^ ")"
       else
-        "(" ^ (string_of_h_formula f1) ^ ") && (" ^ (string_of_h_formula f2) ^ ")"                
+        "(" ^ (string_of_h_formula f1) ^ ") & (" ^ (string_of_h_formula f2) ^ ")"                
   | F.Phase ({F.h_formula_phase_rd = f1;
               F.h_formula_phase_rw = f2;
               F.h_formula_phase_pos = l} ) ->
@@ -397,14 +467,16 @@ let rec string_of_h_formula = function
 (* let string_of_identifier (d1,d2) = d1^(match d2 with | Primed -> "&&'" | Unprimed -> "");;  *)
 
 let string_of_one_formula (f:F.one_formula) =
-  let h,p,th,pos = F.split_one_formula f in
+  let h,p,dl,th,pos = F.split_one_formula f in
   let sh = string_of_h_formula h in
   let sp = string_of_pure_formula p in
+  let sdl = string_of_pure_formula dl in
   let sth = match th with
     | None -> ("thread = None")
     | Some (v,_) ->("thread = " ^ v)  in
   ( "<" ^ sth^ ">" 
-    ^ "*" ^ "(" ^ sh ^ ")" 
+    ^ "&" ^ "(" ^ sdl ^ ")" 
+    ^ " --> " ^ "(" ^ sh ^ ")" 
     ^ "*" ^ "(" ^ sp ^ ")" )
 
 let rec string_of_one_formula_list (f:F.one_formula list) =
@@ -755,9 +827,9 @@ let string_of_view_decl v = v.view_name ^"[" ^ (String.concat "," v.view_prop_ex
 let string_of_view_vars v_vars = (concatenate_string_list v_vars ",")
 
 let string_of_coerc_type c = match c with 
-  | Left -> "<="
+  | Left -> "=>"
   | Equiv -> "<=>"
-  | Right -> "=>"
+  | Right -> "<="
 
 let string_of_coerc_decl c = (string_of_coerc_type c.coercion_type)^"coerc "^c.coercion_name^"\n\t head: "^(string_of_formula c.coercion_head)^"\n\t body:"^
 							 (string_of_formula c.coercion_body)^"\n" 
@@ -827,11 +899,34 @@ let rec string_of_barrier_decl_list l = match l with
  | h::t      -> (string_of_barrier_decl h) ^ "\n" ^ (string_of_barrier_decl_list t)
 ;;
 
-(* pretty printing for a list of coerc_decl *)
-let rec string_of_coerc_decl_list l = match l with 
- | []        -> ""
- | h::[]     -> (string_of_coerc_decl h) 
- | h::t      -> (string_of_coerc_decl h) ^ "\n" ^ (string_of_coerc_decl_list t)
+let string_of_lem_kind l =
+  match l with
+    | LEM          -> "lemmas(to be proved and saved)"
+    | LEM_TEST     -> "testing lemmas"
+    | LEM_TEST_NEW -> "testing lemmas(empty context)"
+    | LEM_UNSAFE   -> "unsafe lemmas(not proved)"
+    | LEM_SAFE     -> "safe lemmas(added to store only if valid)"
+    | LEM_INFER    -> "infer lemmas"
+;;
+
+(* pretty printing for a list of coerc_decl_list *)
+let string_of_coerc_decl_list l = 
+  let rec helper l = 
+    match l with 
+      | []        -> ""
+      | h::[]     -> (string_of_coerc_decl h) 
+      | h::t      -> (string_of_coerc_decl h) ^ "\n" ^ (helper t)
+  in "\n"^(string_of_lem_kind (l.coercion_list_kind)) ^ "[\n" ^ (helper l.coercion_list_elems) ^"]"
+;;
+
+(* pretty printing for a list of coerc_decl_list list *)
+let string_of_coerc_decl_list_list l = 
+  let rec helper l = 
+    match l with 
+      | []        -> ""
+      | h::[]     -> (string_of_coerc_decl_list h) 
+      | h::t      -> (string_of_coerc_decl_list h) ^ "\n" ^ (helper t)
+  in (helper l)
 ;;
 
 (* pretty printing for an element of type (ident * int option) *)
@@ -897,7 +992,7 @@ let string_of_program p = (* "\n" ^ (string_of_data_decl_list p.prog_data_decls)
   (string_of_barrier_decl_list p.prog_barrier_decls) ^ "\n" ^
   (string_of_rel_decl_list p.prog_rel_decls) ^"\n" ^
   (string_of_axiom_decl_list p.prog_axiom_decls) ^"\n" ^
-  (string_of_coerc_decl_list p.prog_coercion_decls) ^ "\n\n" ^ 
+  (string_of_coerc_decl_list_list p.prog_coercion_decls) ^ "\n\n" ^ 
   (string_of_proc_decl_list p.prog_proc_decls) ^ "\n"
 ;;
 
@@ -918,7 +1013,7 @@ let string_of_program_separate_prelude p iprims= (* "\n" ^ (string_of_data_decl_
   (string_of_barrier_decl_list (helper_chop p.prog_barrier_decls (List.length iprims.prog_barrier_decls))) ^ "\n" ^
   (string_of_rel_decl_list (helper_chop p.prog_rel_decls (List.length iprims.prog_rel_decls))) ^"\n" ^
   (string_of_axiom_decl_list (helper_chop p.prog_axiom_decls (List.length iprims.prog_axiom_decls))) ^"\n" ^
-  (string_of_coerc_decl_list (helper_chop p.prog_coercion_decls (List.length iprims.prog_coercion_decls))) ^ "\n\n" ^
+  (string_of_coerc_decl_list_list (helper_chop p.prog_coercion_decls (List.length iprims.prog_coercion_decls))) ^ "\n\n" ^
   (string_of_proc_decl_list (helper_chop p.prog_proc_decls (List.length iprims.prog_proc_decls))) ^ "\n"
 ;;                                                                                                                         
 
@@ -932,5 +1027,6 @@ Iast.print_view_decl := string_of_view_decl;
 Iast.print_data_decl := string_of_data_decl;
 Iast.print_exp := string_of_exp;
 Ipure.print_formula :=string_of_pure_formula;
+Ipure.print_formula_exp := string_of_formula_exp;
 Ipure.print_id := string_of_id;
 

@@ -1,0 +1,31 @@
+//Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Fail
+data node { int val ; node next }.
+
+pred ll_s<n> == self = null & n = 0
+	or self::node<next = r> * r::ll_s<n - 1>
+	inv n >= 0.
+
+pred ll<> == self = null 
+	or self::node<next = r> * r::ll<>
+	inv true.
+
+lemma "V1" self::ll_s<n> -> self::ll<>.
+
+lemma  "V2" self::ll_s<n> <- self::ll<>.
+
+lemma "V3" self::ll_s<n> <-> self::ll<>.
+
+lemma "V4" self::ll<> -> (exists n: self::ll_s<n>).
+
+lemma "V5" self::ll<> <- (exists n: self::ll_s<n>).
+
+lemma "V6" self::ll<> <-> (exists n: self::ll_s<n>).
+
+lemma "F7" self::ll<> -> self::ll_s<n>.
+
+lemma "V8" self::ll<> <- self::ll_s<n>.
+
+lemma "F9" self::ll<> <-> self::ll_s<n>.
+
+
+checkentail x::ll_s<n> |- x::ll<>.

@@ -1,0 +1,17 @@
+data node{
+	int val;
+	node next;
+}.
+
+pred G<y> ==
+  self=null & y=null
+or self::node<_,p> * p::G<y>
+inv true.
+
+HeapPred P1(node a).
+HeapPred P2(node a).
+
+
+lemma_infer [P1,P2] self::G<y:node> -> P1(self:node) * P2(y:node).
+print residue.
+

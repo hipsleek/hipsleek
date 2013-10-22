@@ -1,0 +1,77 @@
+
+
+slk_simplify (nnn=0 & lg = -\inf).
+/*
+norm_pure_input@1
+norm_pure_input inp1 : nnn=0 & lg+(\inf)=0
+norm_pure_input@1 EXIT: nnn=0 & lg+ZInfinity'=0
+
+# expecting
+  norm_pure_input@1 EXIT: nnn=0 & lg=Neg_ZInfinity
+
+*/
+
+
+slk_simplify (nnn=0 & lg = -\inf) | (nnn = 0 & lg< \inf).
+
+/*
+simplify_omega@1
+simplify_omega inp1 : nnn=0 & lg<(\inf)
+simplify_omega@1 EXIT: nnn=0 & lg<(\inf)
+
+simplify_omega@2
+simplify_omega inp1 : nnn=0 & lg+(\inf)=0
+simplify_omega@2 EXIT: nnn=0 & lg=\inf & lg<(\inf)
+Simplify  (1): ((nnn=0 & lg=\inf & lg<(\inf)) | (nnn=0 & lg<(\inf)))
+
+# I wasn't expecting two separate omega calls to be made.
+I was expecting the following Omega call to be made instead;
+
+   NZInfinity<Infinity (nnn=0 & lg = NZInfinity) | (nnn = 0 & lg< ZInfinity)
+
+which should simply to
+    (4): nnn=0 & lg<\inf
+
+*/
+
+slk_simplify  ninf<inf & (nnn=0 & lg=ninf) | (nnn=0 & lg<inf).
+/*
+simplify_omega@4
+simplify_omega inp1 : nnn=0 & lg<inf
+simplify_omega@4 EXIT: nnn=0 & lg<inf
+
+simplify_omega@5
+simplify_omega inp1 : ninf<inf & nnn=0 & lg=ninf
+simplify_omega@5 EXIT: nnn=0 & lg=ninf & lg<inf
+Simplify  (3): ((nnn=0 & lg=ninf & lg<inf) | (nnn=0 & lg<inf))
+
+Our simplify seems to be now broken. Previously, I was
+getting below similar to pairwisecheck. Did you change
+the normalization?
+
+*/
+
+slk_pairwise  ninf<inf & (nnn=0 & lg=ninf) | (nnn=0 & lg<inf).
+//PairWise  (4): nnn=0 & lg<inf
+
+
+slk_simplify  (nnn=0 & lg=-\inf) | (nnn=0 & lg<\inf).
+/*
+norm_pure_input@13
+norm_pure_input inp1 : nnn=0 & lg<(\inf)
+norm_pure_input@13 EXIT: ZInfinity'<ZInfinity & nnn=0 & lg<ZInfinity
+
+norm_pure_result@14
+norm_pure_result inp1 : nnn=0 & ZInfinity'<ZInfinity & lg<ZInfinity
+norm_pure_result@14 EXIT: nnn=0 & lg<(\inf)
+
+norm_pure_input@15
+norm_pure_input inp1 : nnn=0 & lg+(\inf)=0
+norm_pure_input@15 EXIT: ZInfinity'<ZInfinity & nnn=0 & ZInfinity'=lg
+
+norm_pure_result@16
+norm_pure_result inp1 : nnn=0 & ZInfinity'=lg & lg<ZInfinity
+norm_pure_result@16 EXIT: nnn=0 & lg=\inf & lg<(\inf)
+                                ^^  lg=-\inf
+Simplify  (5): ((nnn=0 & lg=\inf & lg<(\inf)) | (nnn=0 & lg<(\inf)))
+*/

@@ -1,0 +1,13 @@
+
+checkentail  
+  AndList("n":n>0; "s":n=0) |- true.
+print residue.
+
+checkentail  true &
+   (AndList("n":n>0; "s":n=0) | AndList("": n<0; "n":n>=0; "s":n=1))  
+   |- AndList("n":n>0; "s":n=0).
+print residue.
+
+checkentail  AndList("n":n>0; "s":n=0) |- 
+  (AndList("n":n>0; "s":n=0) | andList("": n<0; "n":n>=0; "s":n=1)).
+print residue.

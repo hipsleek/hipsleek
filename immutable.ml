@@ -21,17 +21,17 @@ module C  = Cast
 
 
 
-let rec split_phase_debug_lhs h = Debug.no_1 "split_phase(lhs)"
-  Cprinter.string_of_h_formula 
-  (fun (a,b,c) -> "RD = " ^ (Cprinter.string_of_h_formula a) ^ "; WR = " ^ (Cprinter.string_of_h_formula b) ^ "; NEXT = " ^ (Cprinter.string_of_h_formula c) ^ "\n") 
-  split_phase h
+(* let rec split_phase_debug_lhs h = Debug.no_1 "split_phase(lhs)" *)
+(*   Cprinter.string_of_h_formula  *)
+(*   (fun (a,b,c) -> "RD = " ^ (Cprinter.string_of_h_formula a) ^ "; WR = " ^ (Cprinter.string_of_h_formula b) ^ "; NEXT = " ^ (Cprinter.string_of_h_formula c) ^ "\n")  *)
+(*   split_phase h *)
 
-and split_phase_debug_rhs h = Debug.no_1 "split_phase(rhs)"
-  Cprinter.string_of_h_formula 
-  (fun (a,b,c) -> "RD = " ^ (Cprinter.string_of_h_formula a) ^ "; WR = " ^ (Cprinter.string_of_h_formula b) ^ "; NEXT = " ^ (Cprinter.string_of_h_formula c) ^ "\n") 
-  split_phase 0 h
+(* and split_phase_debug_rhs h = Debug.no_1 "split_phase(rhs)" *)
+(*   Cprinter.string_of_h_formula  *)
+(*   (fun (a,b,c) -> "RD = " ^ (Cprinter.string_of_h_formula a) ^ "; WR = " ^ (Cprinter.string_of_h_formula b) ^ "; NEXT = " ^ (Cprinter.string_of_h_formula c) ^ "\n")  *)
+(*   split_phase 0 h *)
 
-and split_phase i (h : h_formula) : (h_formula * h_formula * h_formula )= 
+let rec split_phase i (h : h_formula) : (h_formula * h_formula * h_formula )= 
   let pr = Cprinter.string_of_h_formula in
   let pr2 = pr_triple pr pr pr in
   Debug.no_1_num i "split_phase" pr pr2 split_phase_x h
@@ -549,7 +549,8 @@ and subtype_ann (imm1 : ann) (imm2 : ann) : bool =
 (* M <: I <: L <: A*)
 and subtype_ann_x (imm1 : ann) (imm2 : ann) : bool =
   let (r,op) = subtype_ann_pair imm1 imm2 in r
-                                                 
+               
+(* result: res:bool * (ann constraint = relation between lhs_ann and rhs_ann) *)
 and subtype_ann_pair (imm1 : ann) (imm2 : ann) : bool * ((CP.exp * CP.exp) option) =
   match imm1 with
     | PolyAnn v1 ->

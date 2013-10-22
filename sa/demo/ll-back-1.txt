@@ -1,0 +1,8 @@
+
+// PRE
+H1(ptr) * ptr'::node<ptr>@M --> H1(ptr'),
+ // POST
+H1(ptr)& ptr=ptr' --> G1(ptr',ptr),
+ // POST
+G1(ptr',ptr_916)& ptr_916!=null --> G1(ptr',ptr)]
+

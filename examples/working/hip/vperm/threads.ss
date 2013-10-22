@@ -75,7 +75,7 @@ void summator(node t, ref int sum)
 int start_sum_thread(node t, ref int sum)
   requires t::tree<n> //& @value[t] & @full[sum]
   ensures res=id
-  and t::tree<n> & @full[sum] & thread = id;//because there is no update to sum, users provide @full[sum] to see where sum goes from
+  and thread = id & true --> t::tree<n> & @full[sum];//because there is no update to sum, users provide @full[sum] to see where sum goes from
 {
   int id;
   id = fork(summator,t,sum);
@@ -85,7 +85,7 @@ int start_sum_thread(node t, ref int sum)
 //do not care about the value of sum
 void join_sum_thread(node t, ref int sum, int id)
   requires @value[t,id]
-           and t::tree<n> & @full[sum] & thread = id
+           and thread = id & true --> t::tree<n> & @full[sum]
   ensures t::tree<n>; // & @full[sum];
 {
   join(id);

@@ -6,8 +6,10 @@
 
 open Globals
 open Gen.Basic
-open Label_only
+(* open Label_only *)
 open Label
+module LO = Label_only.LOne
+
 
 type xpure_view = {
     xpure_view_node : ident option;
@@ -37,11 +39,11 @@ type xpure_view = {
 type formula = 
   | BForm of (b_formula*(formula_label option))
   | And of (formula * formula * loc)
-  | AndList of (spec_label * formula) list
+  | AndList of (LO.t * formula) list
   | Or of (formula * formula *(formula_label option) * loc)
   | Not of (formula *(formula_label option)* loc)
   | Forall of ((ident * primed) * formula *(formula_label option)* loc)
-  | Exists of ((ident * primed) * formula *(formula_label option)* loc)
+  | Exists of (( ident * primed) * formula *(formula_label option)* loc)
 
 (* Boolean constraints *)
 and b_formula = p_formula * ((bool * int * (exp list)) option)
@@ -90,6 +92,7 @@ and exp =
   | AConst of (heap_ann * loc)
   | InfConst of (ident * loc) (* Constant for Infinity  *)
   | Tsconst of (Tree_shares.Ts.t_sh * loc)
+  | Bptriple of ((exp * exp * exp) * loc) (*triple for bounded permissions*)
   (*| Tuple of (exp list * loc)*)
   | Add of (exp * exp * loc)
   | Subtract of (exp * exp * loc)

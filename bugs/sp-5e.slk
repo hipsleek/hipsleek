@@ -1,0 +1,52 @@
+data node{
+	int val;
+	node next;
+}.
+
+
+HeapPred P1(node a).
+HeapPred P2(node a).
+HeapPred P3(node a, node b).
+
+//1
+infer [P1] 
+   x=null
+|- P1(x).
+print residue.
+
+//2
+infer [P3]
+   x::node<_,_>
+|- P3(x,y) & x!= null.
+print residue.
+
+//3
+infer [P3]
+   y::node<_,_>
+|- P3(x,y) & y!= null.
+print residue.
+
+//4
+infer [P3]
+   y::node<_,_>
+|- P3(x,y) & y!= null.
+print residue.
+
+//5
+infer [P3]
+   y::node<_,_> *  x::node<_,_>
+|- P3(x,y) & y!= null & x!=null.
+print residue.
+
+// expecting it to succeed
+infer [P3]
+   y::node<_,_> 
+|- P3(x,y).
+print residue.
+
+
+// expecting it to succeed
+infer [P3]
+   y::node<_,_> *  x::node<_,_>
+|- P3(x,y).
+print residue.

@@ -177,13 +177,13 @@ let check_formula (f: string) : bool option =
       Some false
     else
       let _ = Debug.dinfo_pprint ("Mathematica unexpected anser 1: ") no_pos in
-      let _ = Debug.dinfo_pprint ("   Input : " ^ f) no_pos in
-      let _ = Debug.dinfo_pprint ("   Output: " ^ output) no_pos in
+      let _ = Debug.dinfo_zprint (lazy (("   Input : " ^ f))) no_pos in
+      let _ = Debug.dinfo_zprint (lazy (("   Output: " ^ output))) no_pos in
       failwith "Mathematica: Unexpected answer!"
   with _ ->
       let _ = Debug.dinfo_pprint ("Mathematica unexpected anser 2: ") no_pos in
-      let _ = Debug.dinfo_pprint ("   Input : " ^ f) no_pos in
-      let _ = Debug.dinfo_pprint ("   Output: " ^ output) no_pos in
+      let _ = Debug.dinfo_zprint (lazy (("   Input : " ^ f))) no_pos in
+      let _ = Debug.dinfo_zprint (lazy (("   Output: " ^ output))) no_pos in
       failwith "Mathematica: Unexpected answer!"
 
 let check_formula f =
@@ -282,6 +282,7 @@ let rec math_of_exp e0 : string=
   match e0 with
   | CP.Null _ -> "0"
   | CP.Var (v, _) -> math_of_spec_var v
+  | CP.Bptriple _ -> failwith ("mathematica.math_of_exp: Bptriple can't appear here")
   | CP.IConst (i, _) -> string_of_int i
   | CP.AConst (i, _) -> string_of_int (int_of_heap_ann i)
   | CP.FConst (f, _) -> math_of_float f

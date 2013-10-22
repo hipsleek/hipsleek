@@ -1,0 +1,81 @@
+//check smart_subst: grp vars of preds + data/nodes
+
+data node{
+	int val;
+	node next;
+}.
+
+HeapPred H1(node a).
+HeapPred H2(node a, node b).
+HeapPred G2(node a,node b).
+HeapPred G3(node a,node b, node c).
+
+pred lseg<p> ==
+    self::node<_,p> 
+  or self::node<_,q> * q::lseg<p> 
+ inv true.
+
+
+//1
+infer [H2,G2] H2(p,y) * x::node<_,p>  & p=y    |- G2(x,p) .
+print residue.
+
+/*
+<1>emp&p=y&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [H2(p,y) * x::node<Anon_13,p>@M & p=y --> G2(x,p)]
+*/
+
+
+//1a
+infer [H2,G3] H2(p,y) & p=y & x=y & y=t    |- G3(x,y,t) .
+print residue.
+
+/*
+<1>emp&p=y & x=y & t=y&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [H2(p,y)&p=y & x=y & t=y --> G3(x,y,t)]
+*/
+
+
+
+//1b
+infer_exact [H2]
+H2(p,y) & p!=null & p=y
+|- (exists yy,q36: H1(q36) & yy=q36 & q36=y)
+.
+print residue.
+
+/*
+<1>emp&p!=null & p=y&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [H2(p,y)&p!=null & p=y --> H1(y)]
+*/
+
+
+//2
+infer [H2,G2] H2(p,y) * x::node<_,p>  & p=z & z=y    |- G2(x,z) .
+print residue.
+
+/*
+ <1>emp&p=z & y=z&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [H2(z,y) * x::node<Anon_13,y>@M&y=z --> G2(x,y)]
+*/
+
+
+//3
+infer [H1,H2,G2] H2(p,y) & z=y  & p=z  |- G2(z,t) * H1(z) .
+print residue.
+
+
+/*
+<1>emp&y=z & p=z&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [emp&y=z --> G2(y,t); H2(z,y)&y=z --> H1(y)]
+*/
+
+
+//4
+infer [H2,G3] H2(p,y) & x=y  & p=z & z=y & z=t    |- G3(x,z,t) .
+print residue.
+
+/*
+ <1>emp&x=y & p=z & y=z & t=z&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [H2(p,y)&t=x & t=z & p=y & p=t --> G3(x,z,t)]
+*/

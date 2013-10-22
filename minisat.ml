@@ -358,8 +358,8 @@ let to_cnf_no_slicing f=
   
 (*The no need CNF conversion adapt to slicing, we just need the distributive law*)		
 	
-let minisat_cnf_of_formula f =
-  Debug.no_1 "minisat_of_formula" Cprinter.string_of_pure_formula pr_id minisat_cnf_of_formula f
+(* let minisat_cnf_of_formula f = *)
+(*   Debug.no_1 "minisat_of_formula" Cprinter.string_of_pure_formula pr_id minisat_cnf_of_formula f *)
 	   
 (*bach-minisat*)
 
@@ -397,6 +397,7 @@ let rec can_minisat_handle_expression (exp: Cpure.exp) : bool =
   | Cpure.ArrayAt _      -> false
   | Cpure.Func _ ->  false 
   | Cpure.Level _ | Cpure.InfConst _ | Cpure.Tsconst _ -> Error.report_no_pattern()
+  | Cpure.Bptriple _ -> Error.report_no_pattern()
 
 
 and can_minisat_handle_p_formula (pf : Cpure.p_formula) : bool =
@@ -747,7 +748,7 @@ let imply (ante : Cpure.formula) (conseq : Cpure.formula) (timeout: float) : boo
 
 let imply (ante : Cpure.formula) (conseq : Cpure.formula) (timeout: float) : bool =
   (* let _ = pint_endline "** In function minisat.imply:" in *)
-  Debug.no_1_loop "smt.imply" string_of_float string_of_bool
+  Debug.no_1(* _loop *) "smt.imply" string_of_float string_of_bool
     (fun _ -> imply ante conseq timeout) timeout
 
 let imply_with_check (ante : Cpure.formula) (conseq : Cpure.formula) (imp_no : string) (timeout: float) : bool option =

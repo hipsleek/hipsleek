@@ -1,0 +1,25 @@
+
+simplify true & !(x>0).
+/*
+ERROR: at t-2.slk_9:20_9:23 
+Message: expected cexp, found pure_constr
+ File "t-2.slk", line 9, characters 22-23
+ error: Failure("expected cexp, found pure_constr")
+ at:(Program not linked with -g, cannot print stack backtrace)
+Fatal error: exception Failure("expected cexp, found pure_constr")
+*/
+
+/*
+
+simplify true & x=null.
+
+simplify (x=null).
+
+simplify true & exists(x:x=null).
+
+simplify true & exists(x:x!=null).
+
+simplify exists(x:x=null).
+
+simplify not(x!=null).
+*/

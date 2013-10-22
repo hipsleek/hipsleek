@@ -1,0 +1,27 @@
+
+Strengthening
+=============
+x>-\inf & y=x-c --> y>-\inf
+x<\inf & y=x+c --> y<\inf
+
+x<\inf-c <--> x<\inf
+x!=-\inf <--> x>-\inf
+x!=\inf <--> x<\inf
+
+I was originally thinking of:
+ x>-\inf & y=x-c --> y>-\inf
+
+However, maybe below is more general:
+ x>-\inf & y=x+e & -\inf<e<\inf
+   --> y>-\inf
+
+
+Weakening
+=========
+x<\inf+c <--> x<\inf
+x>-\inf-c <--> x>-\inf
+
+
+checkentail x>-\inf & y=x-10 |- y>-\inf.
+
+

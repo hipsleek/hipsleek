@@ -45,6 +45,7 @@ let rec spass_dfg_of_exp (e0 : Cpure.exp) : (string * string list * string list)
   | Cpure.FConst _    -> illegal_format "SPASS don't support FConst expresion"
   | Cpure.AConst _    -> illegal_format "SPASS don't support AConst expresion"
   | Cpure.Tsconst _   -> illegal_format "SPASS don't support Tsconst expresion"
+  | Cpure.Bptriple _   -> illegal_format "SPASS don't support Bptriple expresion"
   | Cpure.Add _       -> illegal_format "SPASS don't support Add expresion"
   | Cpure.Level _ -> illegal_format ("z3.smt_of_exp: level should not appear here")
   | Cpure.Subtract _  -> illegal_format "SPASS don't support Substract expresion"
@@ -167,8 +168,8 @@ and spass_dfg_of_formula f : (string * string list * string list) =
       (new_s, new_func_list, new_pred_list)
     ) 
 
-let spass_dfg_of_formula f =
-  Debug.no_1 "spass_of_formula" Cprinter.string_of_pure_formula pr_id spass_dfg_of_formula f
+(* let spass_dfg_of_formula f = *)
+(*   Debug.no_1 "spass_of_formula" Cprinter.string_of_pure_formula pr_id spass_dfg_of_formula f *)
 
 (***************************************************************
 TRANSLATE CPURE FORMULA TO PROBLEM IN TPTP FORMAT
@@ -185,6 +186,7 @@ let rec spass_tptp_of_exp (e0 : Cpure.exp) : string =
   | Cpure.FConst _    -> illegal_format "SPASS don't support FConst expresion"
   | Cpure.AConst _    -> illegal_format "SPASS don't support AConst expresion"
   | Cpure.Tsconst _   -> illegal_format "SPASS don't support Tsconst expresion"
+  | Cpure.Bptriple _   -> illegal_format "SPASS don't support Tsconst expresion"
   | Cpure.Add _       -> illegal_format "SPASS don't support Add expresion"
   | Cpure.Subtract _  -> illegal_format "SPASS don't support Substract expresion"
   | Cpure.Mult _      -> illegal_format "SPASS don't support Mult expresion"
@@ -292,6 +294,7 @@ let rec can_spass_handle_expression (exp: Cpure.exp) : bool =
   | Cpure.ArrayAt _      -> false
   | Cpure.Func (sv, exp_list, _) -> List.for_all (fun e -> can_spass_handle_expression e) exp_list
   | Cpure.Level _ | Cpure.InfConst _ -> Error.report_no_pattern(); 
+  | Cpure.Bptriple _      -> Error.report_no_pattern();
 
 
 and can_spass_handle_p_formula (pf : Cpure.p_formula) : bool =
@@ -672,7 +675,7 @@ let rec spass_imply (ante : Cpure.formula) (conseq : Cpure.formula) timeout : bo
   (* let _ = "** In function Spass.spass_imply" in *)
   let pr = Cprinter.string_of_pure_formula in
   let result = 
-    Debug.no_2_loop "spass_imply" (pr_pair pr pr) string_of_float string_of_bool
+    Debug.no_2(* _loop *) "spass_imply" (pr_pair pr pr) string_of_float string_of_bool
     (fun _ _ -> spass_imply_x ante conseq timeout) (ante, conseq) timeout in
   (* let omega_result = Omega.imply ante conseq "" timeout in
   let _ = print_endline ("-- spass_imply result: " ^ (if result then "TRUE" else "FALSE")) in
@@ -750,7 +753,7 @@ let imply (ante : Cpure.formula) (conseq : Cpure.formula) (timeout: float) : boo
 
 let imply (ante : Cpure.formula) (conseq : Cpure.formula) (timeout: float) : bool =
   (* let _ = print_endline "** In function Spass.imply:" in *)
-  Debug.no_1_loop "smt.imply" string_of_float string_of_bool
+  Debug.no_1(* _loop *) "smt.imply" string_of_float string_of_bool
     (fun _ -> imply ante conseq timeout) timeout
 
 (**

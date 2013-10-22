@@ -1,4 +1,4 @@
-
+ 
 module type INC_TYPE =
 sig
   type t
@@ -32,6 +32,7 @@ struct
       | q::qs -> if (List.mem q qs) then remove_dups qs else q::(remove_dups qs)
 
   let pr_id x = x
+  let pr_string x = "\""^x^"\""
   
   let print_endline_if b s = if b then print_endline s else ()
   let print_string_if b s = if b then print_string s else ()
@@ -83,6 +84,8 @@ struct
  let pr_list_brk_sep open_b close_b sep f xs  = open_b ^(pr_lst sep f xs)^close_b
  let pr_list_brk open_b close_b f xs  = pr_list_brk_sep open_b close_b "," f xs
  let pr_list f xs = pr_list_brk "[" "]" f xs
+ let pr_list_semi f xs = pr_list_brk_sep "[" "]" ";" f xs
+ let pr_list_no_brk f xs = pr_list_brk "" "" f xs
  let pr_list_angle f xs = pr_list_brk "<" ">" f xs
  let pr_list_round f xs = pr_list_brk "(" ")" f xs
  let pr_list_round_sep sep f xs = pr_list_brk_sep "(" ")" sep f xs
@@ -103,6 +106,10 @@ struct
    | None -> []
    | Some v -> (f v)
   
+ let fold_pair1f f (x1,x2) = f x1, f x2
+ 
+ let fold_pair2f f1 f2 (x1,x2) = f1 x1, f2 x2
+ 
  let map_opt_def def f x = match x with
 	| None -> def
 	| Some v -> f v
@@ -127,6 +134,7 @@ struct
  let fnone (c:'a):'a option = None
 
  let is_empty l = match l with [] -> true | _ -> false
+ let is_None l = l==None
 
  let rec last_ne l a  = match l with
    | [] -> a
@@ -368,7 +376,11 @@ struct
     | x::xs -> match f x with
         | None -> list_find f xs
         | Some s -> Some s
-
+  let add_index l =
+	let rec helper id l = match l with 
+		| [] -> []
+		| h::t -> (id,h)::(helper (id+1) t) in
+	helper 0 l
 end;;
 
 module BListEQ =
@@ -514,7 +526,8 @@ class ['a] stack_filter (epr:'a->string) (eq:'a->'a->bool) (fil:'a->bool)  =
      method filter = stk <- List.filter fil stk
      method string_of_reverse_log_filter = 
        stk <- List.filter fil stk;
-       super#string_of_reverse_log
+       super#string_of_no_ln_rev
+           (* string_of_reverse_log *)
    end;;
 
 class ['a] stack_noexc (x_init:'a) (epr:'a->string) (eq:'a->'a->bool)  =
@@ -527,6 +540,9 @@ class ['a] stack_noexc (x_init:'a) (epr:'a->string) (eq:'a->'a->bool)  =
      method last : 'a = match stk with 
        | [] -> emp_val
        | _ -> List.hd (List.rev stk)
+     method pop_top_no_exc = match stk with 
+       | [] -> emp_val
+       | x::xs -> stk <- xs; x
    end;;
 
 (* class ['a] stack_noexc (x_init:'a) (epr:'a->string) (eq:'a->'a->bool)  = *)
@@ -690,7 +706,7 @@ struct
   let string_of (e: emap) : string =
     let f = string_of_elem in
     let ll=partition e in 
-    "emap["^ (String.concat " \n " (List.map (fun cl -> "{"^(String.concat ", "(List.map f cl))^"}") ll))^"]"
+    "emap["^ (String.concat ";" (List.map (fun cl -> "{"^(String.concat ","(List.map f cl))^"}") ll))^"]"
 
   let un_partition (ll:epart) : emap =
     let flat xs y = 
@@ -746,7 +762,7 @@ struct
             List.map (fun (a,b) -> if (b==r1 or b==r2) then (a,r3) else (a,b)) s
 
   let build_eset (xs:(elem * elem) list) :  emap =
-    List.fold_right (fun (x,y) eqs -> add_equiv eqs x y) xs (mkEmpty)
+    List.fold_left (fun eqs (x,y) -> add_equiv eqs x y) mkEmpty xs 
 
   let mem x ls =
     List.exists (fun e -> eq x e) ls
@@ -795,6 +811,9 @@ struct
   (* remove key e from e_set  *)
   let elim_elems_one  (s:emap) (e:elem) : emap = 
     List.filter (fun (a,k2) -> not(eq a e)) s
+
+  let elim_elems  (s:emap) (e:elem list) : emap = 
+    List.filter (fun (a,k2) -> not(mem a e)) s
 
   (* return all elements equivalent to e, including itself *)
   let find_equiv_all  (e:elem) (s:emap) : elist  =
@@ -872,7 +891,7 @@ struct
     let b = is_one2one f (get_elems s) in
     if b then  List.map (fun (e,k) -> (f e, List.map f k)) s
     else Error.report_error {Error.error_loc = Globals.no_pos; 
-							 Error.error_text = ("rename_eset : f is not 1-to-1 map")}
+    Error.error_text = ("rename_eset : f is not 1-to-1 map")}
 
   (* s - from var; t - to var *)
   let norm_subs_eq (subs:epair) : epair =
@@ -901,6 +920,26 @@ struct
 	  let ns = List.fold_left (fun s (a1,a2) -> add_equiv s a1 a2) s e2 in
       List.map (fun (e,k) -> (f e,k)) ns
 
+  (* given existential evars and an eset, return a set of substitution *)
+  (* from evars to free vars, where possible *)
+  (* if not possible, return subs to the first existential var found *)
+  (* [v] [v=w, v=y] ---> [(v,w)] *)
+  (* [v,y] [v=w, v=y] ---> [(v,w),(y,w)] *)
+  (* [v,y,w] [v=w, v=y] ---> [(v,v),(w,v),(y,v)] *)
+  let build_subs_4_evars evars eset =
+    let rec aux ev  =
+      match ev with 
+        | [] -> []
+        | e::evs -> 
+              let eqlist = find_equiv_all e eset in
+              let (bound,free) = List.partition (fun c -> BList.mem_eq eq c evars) eqlist in
+              let (used,rest) = List.partition (fun c -> BList.mem_eq eq c bound) evs in
+              let target = match free with 
+                | [] -> e
+                | h::_ -> h in
+              let nsubs = List.map (fun x -> (x,target)) (e::used) in
+              nsubs@(aux rest)
+    in aux evars
 end;;
 
 module INT =
@@ -953,6 +992,10 @@ struct
     else 
       let v1 = dd_stk # top in
       let v2 = debug_stk # top in
+      (* let l1 = dd_stk # get_stk in *)
+      (* let l2 = debug_stk # get_stk in *)
+      (* let pr = Basic.pr_list string_of_int in *)
+      (* let _ = print_endline ("ddstk:"^(pr l1)^" hostk:"^(pr l2)) in  *)
        if (v1==v2) then Some v1 else None
 
   let is_same_dd () =
@@ -974,10 +1017,12 @@ struct
 
   (* call f and pop its trace in call stack of ho debug *)
   let pop_aft_apply_with_exc_no (f:'a->'b) (e:'a) : 'b =
-    let r = (try 
-      (f e)
-    with exc -> (debug_stk # pop; raise exc))
-    in debug_stk # pop; r
+    try 
+      let r = (f e) in
+      (* debug_stk # pop;  *)
+      r
+    with exc -> ((* debug_stk # pop;  *)raise exc)
+
 
   (* string representation of call stack of ho_debug *)
   let string_of () : string =
@@ -986,7 +1031,8 @@ struct
     String.concat "@" (List.map string_of_int (List.filter (fun n -> n>0) h) )
 
   let push_no_call () =
-    debug_stk # push (-1)
+    ()
+    (* debug_stk # push (-3) *)
 
   (* returns @n and @n1;n2;.. for a new call being debugged *)
   let push_call_gen (os:string) (flag:bool) : (string * string) = 
@@ -1209,6 +1255,22 @@ struct
   let is_sat_dset (xs:dpart) : bool = 
     not(is_dupl_dset xs)
 
+  let apply_subs subs x =
+    try
+      List.assoc x subs
+    with _ -> x
+
+  let mk_exist_dset (evars:ptr list) (subs: (ptr*ptr) list) (xss:dpart) : dpart = 
+    let rec aux ls =
+      match ls with
+        | [] -> []
+        | x::xs -> 
+              let x = apply_subs subs x in
+              if BList.mem_eq eq x evars then (aux xs)
+              else x::(aux xs) 
+    in
+    List.map aux xss
+
 end;;
 
 class mult_counters =
@@ -1281,9 +1343,15 @@ struct
 
   let string_of_counters () =  counters#string_of
 
-  let get_time () = 
+  let get_all_time () = 
 	let r = Unix.times () in
 	r.Unix.tms_utime +. r.Unix.tms_stime +. r.Unix.tms_cutime +. r.Unix.tms_cstime
+
+  let get_main_time () = 
+	let r = Unix.times () in
+	r.Unix.tms_utime +. r.Unix.tms_stime (* +. r.Unix.tms_cutime +. r.Unix.tms_cstime *)
+
+  let get_time () = get_all_time()
 
   let push_time_no_cnt msg = 
     if (!Globals.profiling) then

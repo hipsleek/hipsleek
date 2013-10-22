@@ -307,12 +307,15 @@ module SleekHelper = struct
     | SC.DataDef ddef -> 
         log "processing data def";
         SE.process_data_def ddef; None
-    | SC.PredDef pdef -> 
-        log "processing pred def";
-        SE.process_pred_def pdef; None
+    | SC.PredDef pdef -> ((); None)
+        (* log "processing pred def"; *)
+        (* SE.process_pred_def pdef; None *)
     | SC.EntailCheck (iante, iconseq, etype) -> 
         log "processing entail check";
         Some (SE.run_entail_check iante iconseq etype)
+    | SC.Simplify f ->
+        log "processing simplify";
+        Some (SE.run_simplify f)
     | SC.CaptureResidue lvar -> 
         log "processing capture residue";
         SE.process_capture_residue lvar; None

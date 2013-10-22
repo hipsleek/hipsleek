@@ -1,0 +1,6 @@
+
+checkentail S={a} //& a>6
+  |- (exists y: S={y} & y>5).
+
+print residue.
+

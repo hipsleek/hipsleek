@@ -1,0 +1,50 @@
+/*
+id: 2656; prover: MONA; TIME: 5.; loc: examples_label_swt-4g-set-lbl_ss_65:2_65:22; kind: PRE_REC
+ Imply: ante: 
+*/
+
+checkentail 
+a=null & r_1211=tmp_55' & r_1211=right_51_1246 & r_1211!=null & 
+flted_9_1207!=l_1209 & sent_1214!=null 
+
+& exists(M2_2514:exists(r_2518:(((b=r_2518 & M2_2514={}) | (b!=r_2518 & 
+M2_2514!=({})))) & (((b=null & r_2518!=sent_1214) | (b=sent_1214 & 
+r_2518!=null)))) & exists(M1_2515:exists(l_2517:(((null=null & 
+l_2517!=sent_1214) | (sent_1214=null & l_2517!=null))) & (((l_2517=null & 
+M1_2515={}) | (l_2517!=null & M1_2515!=({}))))) & 
+exists(v_2516:M2=union({v_2516},M1_2515,M2_2514)))) 
+
+& s_1206!=null & 
+r_1211!=s_1206 & g_1205!=r_1211
+
+& exists(M2_2519:exists(r_2523:(((g_1205=r_2523 & M2_2519={}) | 
+(g_1205!=r_2523 & M2_2519!=({})))) & (((g_1205=null & r_2523!=s_1206) | 
+(g_1205=s_1206 & r_2523!=null)))) & 
+exists(M1_2520:exists(l_2522:(((null=null & l_2522!=s_1206) | (s_1206=null & 
+l_2522!=null))) & (((l_2522=null & M1_2520={}) | (l_2522!=null & 
+M1_2520!=({}))))) & exists(v_2521:M2_1212=union({v_2521},M1_2520,
+M2_2519)))) 
+
+& a_1344=flted_9_1207 & s_1206=sent_1213 & a=g_1205 & 
+cur_1262!=sent_1213 & a!=cur_1262 & flted_9_1207=null & l_1209!=null & 
+cur_1262!=null & cur'!=null & cur'=n_54' & l_1209=left_52_1258 & 
+l_1209=n_54' & cur!=null & cur=cur_1262 & prev=prev_1260 & sent=sent' & 
+b=sent & cur_1262=prev' & cur'!=sent' & prev!=null & s_1204=sent_1213 & 
+sent=sent_1213 & sent=sent_1214 & ((prev'=null | prev'!=null)) 
+& exists(sent_2524:sent_2524!=null & ((b_1346=null | b_1346=sent_2524))) & 
+b_1346=prev' & b!=prev & prev!=sent_1214 
+
+
+& exists(M2_2509:exists(r_2513:(((r_2513=null & M2_2509={}) | (r_2513!=null & M2_2509!=({})))) & (((null=null & r_2513!=s_1204) | (s_1204=null & 
+r_2513!=null)))) & exists(M1_2510:exists(l_2512:(((flted_9_1207=l_2512 & 
+M1_2510={}) | (flted_9_1207!=l_2512 & M1_2510!=({})))) & 
+(((flted_9_1207=null & l_2512!=s_1204) | (flted_9_1207=s_1204 & 
+l_2512!=null)))) & exists(v_2511:M1_1210=union({v_2511},M1_2510,
+M2_2509)))) 
+
+& l_1209!=s_1204 & s_1204!=null
+
+|-  s_1204=sent' & b_1346=prev' & sent'!=null 
+   & ((b_1346=null | b_1346=sent'))
+.
+

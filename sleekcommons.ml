@@ -40,12 +40,16 @@ type command =
   | RelDef of I.rel_decl (* An Hoa *)
   | HpDef of I.hp_decl
   | AxiomDef of I.axiom_decl (* [4/10/2011] An Hoa *)
-  | LemmaDef of I.coercion_decl
+  | LemmaDef of I.coercion_decl_list
   | LetDef of (ident * meta_formula)
   | EntailCheck of (meta_formula * meta_formula * entail_type)
+  | Simplify of (meta_formula)
+  | Slk_Hull of (meta_formula)
+  | Slk_PairWise of (meta_formula)
   | RelAssume of (CF.cond_path_type * meta_formula * meta_formula option * meta_formula)
   | RelDefn of (CF.cond_path_type * meta_formula * meta_formula)
   | ShapeInfer of (ident list * ident list)
+  | Validate of ( (ident list * meta_formula * (meta_formula * meta_formula) list) list)
   | ShapeDivide of (ident list * ident list)
   | ShapeConquer of (ident list * CF.cond_path_type list)
   | ShapePostObl of (ident list * ident list)
@@ -101,9 +105,13 @@ let string_of_command c = match c with
   | LemmaDef  _ -> "LemmaDef"
   | LetDef  _ -> "LetDef"   
   | EntailCheck _ -> "EntailCheck"
+  | Simplify _ -> "Simplify"
+  | Slk_Hull _ -> "Slk_Hull"
+  | Slk_PairWise _ -> "Slk_PairWise"
   | RelAssume _ -> "RelAssume"
   | RelDefn _ -> "RelDefn"
   | ShapeInfer _ -> "ShapeInfer"
+  | Validate _ -> "Validate"
   | ShapeDivide _ -> "ShapeDivide"
   | ShapeConquer _ -> "ShapeConquer"
   | ShapePostObl _ -> "| ShapePostObl"

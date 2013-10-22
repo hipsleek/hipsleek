@@ -1,0 +1,49 @@
+checkentail 1<=n & n!=1 & n=flted_9_1163+1 & mi=min(d_1164,tmi_1166) & a=mi & 
+d_1164=d_1248 & 0<=n_1182 & n_1182!=1 & (tmx_1167+4)<=((\inf)+p_1165+p_1165+
+tmi_1166) & tmi_1166<=((\inf)+tmx_1167) & (tmx_1167+3)<=((\inf)+tmi_1166) & 
+(tmx_1167+4)<=((\inf)+flted_9_1163+tmi_1166) & 0<=flted_9_1163 & 
+mi_1183=tmi_1166 & flted_9_1163=n_1182 & a!=d_1164 & d_1164<(\inf) & 
+0<(d_1164+(\inf)) & mx=max(d_1164,tmx_1167) & mx_1184=tmx_1167 & 
+n_1182=flted_46_1242+1 & mi_1183<=mi1_1243 & (mx_1184+4)<=((\inf)+n_1182+
+mi_1183) & (mx_1184+3)<=((\inf)+mi_1183) & mi_1183<=((\inf)+mx_1184) & 
+(mx_1184+4)<=((\inf)+p_1165+p_1165+mi_1183) & p_1249=xnext_1244 & 
+xnext_1244!=null & mi1_1243=mx_1184 & flted_46_1242=1 & (1+0)<=(mi1_1243+
+(\inf)) & mi1_1243<(\inf)
+	     conseq:  (flted_46_1242=0 | mi1_1243=\inf | mx_1184+(\inf)=0 | xnext_1244=null)
+checkentail x>-\inf & y=x-2 |- y>-\inf.
+
+checkentail x<\inf & y=8+x |- y<\inf.
+
+checkentail sm>-\inf & m=sm |- m > -\inf.
+
+
+checkentail sm>-\inf & m=sm+1 |- m > -\inf.
+
+
+checkentail sm>-\inf & m=sm-1 |- m > -\inf.
+
+/*
+slk_simplify (nnn=0 & lg+(\inf)=0 | nnn>0 & lg<\inf).
+
+//slk_simplify (nnn=0 & lg=-ninfinity | nnn>0 & lg <infinity).
+//slk_simplify (nnn=0 & lg=neginfinity | nnn=0 & lg<infinity).
+
+slk_simplify (nnn=0 & lg = -\inf) | (nnn = 0 & lg< \inf).
+
+slk_pairwise (nnn=0 & lg = -\inf) | (nnn = 0 & lg< \inf).
+
+slk_simplify -\inf<\inf & (nnn=0 & lg = -\inf | nnn = 0 & lg< \inf).
+
+FIXED
+norm_pure_input@13
+norm_pure_input inp1 : 0<((\inf)+(\inf)) & (((nnn=0 & lg+(\inf)=0) | (nnn=0 & lg<(\inf))))
+norm_pure_input@13 EXIT: ZInfinity'<ZInfinity & 0<(ZInfinity+ZInfinity) & (((nnn=0 & 
+ZInfinity'=lg) | (nnn=0 & lg<ZInfinity)))
+
+Above introduced 0<(ZInfinity+ZInfinity).
+I think we should have simplified \inf+\inf --> \inf,
+so that 0<\inf is simply true.
+
+*/
+
+

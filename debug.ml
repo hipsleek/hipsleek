@@ -140,7 +140,6 @@ let gen_vv_flags d =
     else (m>=d,"") in
   (flag,str)
 
-
 let verbose_hprint (d:int) (p:'a -> string) (arg:'a)  =
   let (flag,str)=gen_vv_flags d in
   ho_print flag (add_str str p) arg
@@ -242,57 +241,88 @@ open Gen.StackTrace
   (*     let _ = print_string (s^" out :"^(pr_o r)^"\n") in *)
   (*     r *)
 
-let ho_aux df lz (loop_d:bool) (test:'z -> bool) (g:('a->'z) option) (s:string) (args:string list) (pr_o:'z->string) (f:'a->'z) (e:'a) :'z =
-  let pr_args xs =
-    let rec helper (i:int) args = match args with
-      | [] -> ()
-      | a::args -> (print_string (s^" inp"^(string_of_int i)^" :"^a^"\n");(helper (i+1) args)) in
-    helper 1 xs in
-  let pr_lazy_res xs =
-    let rec helper xs = match xs with
-      | [] -> ()
-      | (i,a)::xs -> let a1=Lazy.force a in
-        if (a1=(List.nth args (i-1))) then helper xs
-        else (print_string (s^" res"^(string_of_int i)^" :"^(a1)^"\n");(helper xs)) in
-    helper xs in
-  let (test,pr_o) = match g with
-    | None -> (test,pr_o)
-    | Some g -> 
-          let res = ref (None:(string option)) in
-          let new_test z =
-            (try
-              let r = g e in
-              let rs = pr_o r in              
-              if String.compare (pr_o z) rs==0 then false
-              else (res := Some rs; true)
-            with ex ->  
-                (res := Some (" OLD COPY : EXIT Exception"^(Printexc.to_string ex)^"!\n");
-                true)) in
-          let new_pr_o x = (match !res with
-            | None -> pr_o x
-            | Some s -> ("DIFFERENT RESULT from PREVIOUS METHOD"^
-                  ("\n PREV :"^s)^
-                  ("\n NOW :"^(pr_o x)))) in
-          (new_test, new_pr_o) in
-  let s,h = push_call_gen s df in
-  (if loop_d then print_string ("\n"^h^" ENTRY :"^(String.concat "  " args)^"\n"));
-  flush stdout;
-  let r = (try
-    pop_aft_apply_with_exc f e
-  with ex -> 
-      (let _ = print_string ("\n"^h^"\n") in
-      (* if not df then *) 
-        (pr_args args; pr_lazy_res lz);
-      let _ = print_string (s^" EXIT Exception"^(Printexc.to_string ex)^"Occurred!\n") in
-      flush stdout;
-      raise ex)) in
-  (if not(test r) then r else
-    let _ = print_string ("\n"^h^"\n") in
-    (* if not df then *)
-      (pr_args args; pr_lazy_res lz);
-    let _ = print_string (s^" EXIT out :"^(pr_o r)^"\n") in
+(* ss with at least one argument *)
+let pick_front n ss =
+  let rec aux n ss  =
+    match ss with
+      | [] -> ss
+      | s::ss -> let m=String.length s in
+        if n>=m then s::aux (n-m) ss 
+        else []
+  in match ss with 
+    | [] -> ss
+    | s::ss -> s::(aux (n-(String.length s)) ss)
+
+(* module type LABEL_TYPE = *)
+(*     sig *)
+(*       type a *)
+(*       type t  *)
+(*       val unlabelled : t  *)
+(*       val is_unlabelled : t -> bool (\* is this unlabelled *\) *)
+(*       val norm : t -> t (\* sort a label *\) *)
+(*       val is_compatible : t -> t -> bool *)
+(*       val is_compatible_rec : t -> t -> bool *)
+(*       (\* val comb_identical : t -> t -> t (\\* combine two identical labels *\\) *\) *)
+(*       val comb_norm : int -> t -> t -> t (\* combine two normalised labels *\) *)
+(*       val string_of : t -> string *)
+(*       val compare : t -> t -> int *)
+(*       val singleton : a -> t *)
+(*       val convert : string -> lst_pair -> t *)
+(*     end;; *)
+
+module DebugCore  =
+struct
+  let ho_aux df lz (loop_d:bool) (test:'z -> bool) (g:('a->'z) option) (s:string) (args:string list) (pr_o:'z->string) (f:'a->'z) (e:'a) :'z =
+    let pr_args xs =
+      let rec helper (i:int) args = match args with
+        | [] -> ()
+        | a::args -> (print_string (s^" inp"^(string_of_int i)^" :"^a^"\n");(helper (i+1) args)) in
+      helper 1 xs in
+    let pr_lazy_res xs =
+      let rec helper xs = match xs with
+        | [] -> ()
+        | (i,a)::xs -> let a1=Lazy.force a in
+          if (a1=(List.nth args (i-1))) then helper xs
+          else (print_string (s^" res"^(string_of_int i)^" :"^(a1)^"\n");(helper xs)) in
+      helper xs in
+    let (test,pr_o) = match g with
+      | None -> (test,pr_o)
+      | Some g -> 
+            let res = ref (None:(string option)) in
+            let new_test z =
+              (try
+                let r = g e in
+                let rs = pr_o r in              
+                if String.compare (pr_o z) rs==0 then false
+                else (res := Some rs; true)
+              with ex ->  
+                  (res := Some (" OLD COPY : EXIT Exception"^(Printexc.to_string ex)^"!\n");
+                  true)) in
+            let new_pr_o x = (match !res with
+              | None -> pr_o x
+              | Some s -> ("DIFFERENT RESULT from PREVIOUS METHOD"^
+                    ("\n PREV :"^s)^
+                    ("\n NOW :"^(pr_o x)))) in
+            (new_test, new_pr_o) in
+    let s,h = push_call_gen s df in
+    (if loop_d then print_string ("\n"^h^" ENTRY :"^(String.concat "  " (pick_front 80 args))^"\n"));
     flush stdout;
-    r)
+    let r = (try
+      pop_aft_apply_with_exc f e
+    with ex -> 
+        (let _ = print_string ("\n"^h^"\n") in
+        (* if not df then *) 
+        (pr_args args; pr_lazy_res lz);
+        let _ = print_string (s^" EXIT Exception"^(Printexc.to_string ex)^"Occurred!\n") in
+        flush stdout;
+        raise ex)) in
+    (if not(test r) then r else
+      let _ = print_string ("\n"^h^"\n") in
+      (* if not df then *)
+      (pr_args args; pr_lazy_res lz);
+      let _ = print_string (s^" EXIT:"^(pr_o r)^"\n") in
+      flush stdout;
+      r)
 
 let choose bs xs = 
   let rec hp bs xs = match bs,xs with
@@ -388,6 +418,7 @@ let ho_7_opt_aux df (flags:bool list) (loop_d:bool) (test:'z->bool) g (s:string)
   ho_aux df lz loop_d test g s [a1;a2;a3;a4;a5;a6;a7] pr_o f e7
 
 (* better re-organization *)
+(* f:output->bool, b_loop:bool *)
 let ho_1_preopt f b_loop = ho_1_opt_aux false [] b_loop f None
 let to_1_preopt f b_loop = ho_1_opt_aux true [] b_loop f None
 let ho_1_pre b_loop = ho_1_preopt (fun _ -> true) b_loop
@@ -397,166 +428,384 @@ let to_1 s = to_1_pre false s
 let ho_1_opt f = ho_1_preopt f false
 let ho_1_loop s = ho_1_pre true s 
 
-let ho_1 s = ho_1_opt_aux false [] false (fun _ -> true) None s
-let ho_2 s = ho_2_opt_aux false [] false (fun _ -> true) None s
-let ho_3 s = ho_3_opt_aux false [] false (fun _ -> true) None s
-let ho_4 s = ho_4_opt_aux false [] false (fun _ -> true) None s
-let ho_5 s = ho_5_opt_aux false [] false (fun _ -> true) None s
-let ho_6 s = ho_6_opt_aux false [] false (fun _ -> true) None s
-let ho_7 s = ho_7_opt_aux false [] false (fun _ -> true) None s
 
-let to_1 s = ho_1_opt_aux true [] false (fun _ -> true) None s
-let to_2 s = ho_2_opt_aux true [] false (fun _ -> true) None s
-let to_3 s = ho_3_opt_aux true [] false (fun _ -> true) None s
-let to_4 s = ho_4_opt_aux true [] false (fun _ -> true) None s
-let to_5 s = ho_5_opt_aux true [] false (fun _ -> true) None s
-let to_6 s = ho_6_opt_aux true [] false (fun _ -> true) None s
+type debug_option =
+  | DO_None
+  | DO_Trace
+  | DO_Loop
+  | DO_Both
+  | DO_Normal
 
-let no_1 _ _ _ f 
-      = ho_aux_no f
-let no_2 _ _ _ _ f e1 
-      = ho_aux_no (f e1)
-let no_3 _ _ _ _ _ f e1 e2 
-      = ho_aux_no (f e1 e2)
-let no_4 _ _ _ _ _ _ f e1 e2 e3 
-      = ho_aux_no (f e1 e2 e3)
-let no_5 _ _ _ _ _ _ _ f e1 e2 e3 e4 
-      = ho_aux_no (f e1 e2 e3 e4)
-let no_6 _ _ _ _ _ _ _ _ f e1 e2 e3 e4 e5 
-      = ho_aux_no (f e1 e2 e3 e4 e5)
+let debug_map = Hashtbl.create 50
 
-let no_7 _ _ _ _ _ _ _ _ _ f e1 e2 e3 e4 e5 e6
-      = ho_aux_no (f e1 e2 e3 e4 e5 e6)
+let regexp_line = ref []
+let regexp_line_str = ref []
 
-let ho_1_opt f = ho_1_opt_aux false [] false f None
-let ho_2_opt f = ho_2_opt_aux false [] false f None
-let ho_3_opt f = ho_3_opt_aux false [] false f None
-let ho_4_opt f = ho_4_opt_aux false [] false f None
-let ho_5_opt f = ho_5_opt_aux false [] false f None
-let ho_6_opt f = ho_6_opt_aux false [] false f None
+let z_debug_file = ref ""
+(* let z_debug_regexp = ref None *)
+let z_debug_flag = ref false
 
-let to_1_opt f = ho_1_opt_aux true [] false f None
-let to_2_opt f = ho_2_opt_aux true [] false f None
-let to_3_opt f = ho_3_opt_aux true [] false f None
-let to_4_opt f = ho_4_opt_aux true [] false f None
-let to_5_opt f = ho_5_opt_aux true [] false f None
-let to_6_opt f = ho_6_opt_aux true [] false f None
+(*let debug_file = open_in_gen [Open_creat] 0o666 ("z-debug.log")*)
+let debug_file ()=
+  let get_path s = 
+    if String.contains s '/' then
+      let i = String.rindex s '/' in
+      String.sub s 0 (i+1)
+    else ""
+  in
+  let fname = !z_debug_file in
+  (* print_endline ("Debug File : "^fname); *)
+  let n = String.length fname in
+  if n>1 && fname.[0]='$' then
+    begin
+      (* z_debug_regexp := Some fname; *)
+      let re = String.sub fname 1 (n-1) in
+      regexp_line_str := [re];
+      None
+    end
+  else
+    begin
+      let debug_conf = "./" ^ fname in
+      (* let _ = print_endline (debug_conf) in *)
+      let global_debug_conf =
+        if (Sys.file_exists debug_conf) then
+          debug_conf
+        else (get_path Sys.executable_name) ^ (String.sub debug_conf 2 ((String.length debug_conf) -2))
+      in
+      (* let _ = print_endline global_debug_conf in *)
+      try
+        Some(open_in (global_debug_conf))
+      with _ ->
+          begin
+            print_endline ("WARNING : cannot find debug file "^fname); 
+            z_debug_flag:=false;
+            None
+          end
+    end
 
-let no_1_opt _ _ _ _ f 
-      = ho_aux_no f
-let no_2_opt _ _ _ _ _ f e1 
-      = ho_aux_no (f e1)
-let no_3_opt _ _ _ _ _ _ f e1 e2 
-      = ho_aux_no (f e1 e2)
-let no_4_opt _ _ _ _ _ _ _ f e1 e2 e3 
-      = ho_aux_no (f e1 e2 e3)
-let no_5_opt _ _ _ _ _ _ _ _ f e1 e2 e3 e4 
-      = ho_aux_no (f e1 e2 e3 e4)
-let no_6_opt _ _ _ _ _ _ _ _ _ f e1 e2 e3 e4 e5 
-      = ho_aux_no (f e1 e2 e3 e4 e5)
+let read_from_debug_file chn : string list =
+  let line = ref [] in
+  let quitloop = ref false in
+  (try
+    while true do
+      let xs = (input_line chn) in
+      let xs = String.trim xs in
+      let n = String.length xs in
+      (* let s = String.sub xs 0 1 in *)
+      if n > 0 && xs.[0]!='#' (* String.compare s "#" !=0 *) then begin
+        line := xs::!line;
+      end;
+      if n > 1 && xs.[0]=='$' (* String.compare s "#" !=0 *) then begin
+        let xs = String.sub xs 1 (n-1) in
+        (* regexp_line := (Str.regexp_case_fold xs)::!regexp_line; *)
+        regexp_line_str := xs::!regexp_line_str;
+      end;
+    done;
+  with _ -> ());
+  !line
+
+(* let read_from_debug_file chn : string list = *)
+(*  ho_1 "read_from_debug_file" (fun _ -> "?") (pr_list (fun x -> x))read_from_debug_file chn *)
+
+let proc_option str =
+  let rec aux str tr_flag lp_flag =
+    match str with
+      | [] -> (tr_flag,lp_flag)
+      | s::str ->
+            if String.compare s "Trace" == 0 then aux str true lp_flag 
+            else if String.compare s "Loop" == 0 then aux str tr_flag true 
+            else aux str tr_flag lp_flag
+  in aux str false false
+
+let rec get_words str =
+  let len = String.length str in
+  try
+    let l = String.index str ',' in
+    let m = String.sub str 0 l in
+    let rest = String.sub str (l+1) ((len) -l -1) in
+    m::(get_words rest)
+  with _ -> if len<4 then [] else [str] 
+
+(* let get_words str = *)
+(*   let pr_id x = x in *)
+(*   ho_1 "get_words" pr_id (pr_list pr_id) get_words str *)
+
+let add_entry_with_options entry_fn xs =
+  List.iter (fun x ->
+      try
+        let l = String.index x ',' in
+        let m = String.sub x 0 l in
+        let split = String.sub x (l+1) ((String.length x) -l -1) in
+        let opts = get_words split in
+        (* let (tr_flag,lp_flag) = proc_option opts in *)
+        let kind = match proc_option opts with
+          | false,false -> DO_Normal
+          | false,true -> DO_Loop
+          | true,false -> DO_Trace
+          | true,true -> DO_Both
+        in
+        let _ = print_endline (m) in
+        let _ = print_endline (split) in
+        (* let kind = if String.compare split "Trace" == 0 then DO_Trace else *)
+        (*   if String.compare split "Loop" == 0 then DO_Loop else *)
+        (*     DO_Normal *)
+        entry_fn m kind
+      with _ ->
+      entry_fn x DO_Normal
+  ) xs
+
+let read_main () =
+  let xs = match debug_file() with
+    | Some c -> read_from_debug_file c
+    | _ -> [] in
+  let _ = add_entry_with_options (fun x k -> Hashtbl.add debug_map x k) xs in
+  let _ = add_entry_with_options (fun x k -> 
+      let re = Str.regexp_case_fold x 
+      in regexp_line := (re,k)::!regexp_line) !regexp_line_str in
+  ()
+  (* (\* let _ = print_endline ((pr_list (fun x -> x)) xs) in *\) *)
+  (* List.iter (fun x -> *)
+  (*     try *)
+  (*       let l = String.index x ',' in *)
+  (*       let m = String.sub x 0 l in *)
+  (*       let split = String.sub x (l+1) ((String.length x) -l -1) in *)
+  (*       let opts = get_words split in *)
+  (*       (\* let (tr_flag,lp_flag) = proc_option opts in *\) *)
+  (*       let kind = match proc_option opts with *)
+  (*         | false,false -> DO_Normal *)
+  (*         | false,true -> DO_Loop *)
+  (*         | true,false -> DO_Trace *)
+  (*         | true,true -> DO_Both *)
+  (*       (\* let _ = print_endline (m) in *\) *)
+  (*       (\* let _ = print_endline (split) in *\) *)
+  (*       (\* let kind = if String.compare split "Trace" == 0 then DO_Trace else *\) *)
+  (*       (\*   if String.compare split "Loop" == 0 then DO_Loop else *\) *)
+  (*       (\*     DO_Normal *\) *)
+  (*       in *)
+  (*       Hashtbl.add debug_map m kind *)
+  (*     with _ -> *)
+  (*     Hashtbl.add debug_map x DO_Normal *)
+  (* ) xs *)
+
+let in_debug x =
+  let x = String.trim x in
+  let opt_k = 
+    try
+      Some(List.find (fun (re,k) -> Str.string_match re x 0) !regexp_line)
+    with _ -> None in
+  match opt_k with
+    | Some (_,k) -> k
+    | None ->
+          begin
+            try
+              Hashtbl.find debug_map x
+            with _ -> DO_None
+          end
+
+let go_1 t_flag l_flag s = ho_1_opt_aux t_flag [] l_flag (fun _ -> true) None s
+let go_2 t_flag l_flag s = ho_2_opt_aux t_flag [] l_flag (fun _ -> true) None s
+let go_3 t_flag l_flag s = ho_3_opt_aux t_flag [] l_flag (fun _ -> true) None s
+let go_4 t_flag l_flag s = ho_4_opt_aux t_flag [] l_flag (fun _ -> true) None s
+let go_5 t_flag l_flag s = ho_5_opt_aux t_flag [] l_flag (fun _ -> true) None s
+let go_6 t_flag l_flag s = ho_6_opt_aux t_flag [] l_flag (fun _ -> true) None s
+let go_7 t_flag l_flag s = ho_7_opt_aux t_flag [] l_flag (fun _ -> true) None s
+
+(* let ho_1 s = go_1 false false s *)
+(* let ho_2 s = go_2 false false s *)
+(* let ho_3 s = go_3 false false s *)
+(* let ho_4 s = go_4 false false s *)
+(* let ho_5 s = go_5 false false s *)
+(* let ho_6 s = go_6 false false s *)
+(* let ho_7 s = go_7 false false s *)
+
+(* let to_1 s = go_1 true false s *)
+(* let to_2 s = go_2 true false s *)
+(* let to_3 s = go_3 true false s *)
+(* let to_4 s = go_4 true false s *)
+(* let to_5 s = go_5 true false s *)
+(* let to_6 s = go_6 true false s *)
+(* let to_7 s = go_7 true false s *)
+
+(* let ho_1_loop s = go_1 false true s *)
+(* let ho_2_loop s = go_2 false true s *)
+(* let ho_3_loop s = go_3 false true s *)
+(* let ho_4_loop s = go_4 false true s *)
+(* let ho_5_loop s = go_5 false true s *)
+(* let ho_6_loop s = go_6 false true s *)
+(* let ho_7_loop s = go_7 false true s *)
+
+(* let ho_1 s = ho_1_opt_aux false [] false (fun _ -> true) None s *)
+(* let ho_2 s = ho_2_opt_aux false [] false (fun _ -> true) None s *)
+(* let ho_3 s = ho_3_opt_aux false [] false (fun _ -> true) None s *)
+(* let ho_4 s = ho_4_opt_aux false [] false (fun _ -> true) None s *)
+(* let ho_5 s = ho_5_opt_aux false [] false (fun _ -> true) None s *)
+(* let ho_6 s = ho_6_opt_aux false [] false (fun _ -> true) None s *)
+(* let ho_7 s = ho_7_opt_aux false [] false (fun _ -> true) None s *)
+
+(* let to_1 s = ho_1_opt_aux true [] false (fun _ -> true) None s *)
+(* let to_2 s = ho_2_opt_aux true [] false (fun _ -> true) None s *)
+(* let to_3 s = ho_3_opt_aux true [] false (fun _ -> true) None s *)
+(* let to_4 s = ho_4_opt_aux true [] false (fun _ -> true) None s *)
+(* let to_5 s = ho_5_opt_aux true [] false (fun _ -> true) None s *)
+(* let to_6 s = ho_6_opt_aux true [] false (fun _ -> true) None s *)
+(* let to_7 s = ho_7_opt_aux true [] false (fun _ -> true) None s *)
+
+(* let ho_1_loop s = ho_1_opt_aux false [] true (fun _ -> true) None s *)
+(* let ho_2_loop s = ho_2_opt_aux false [] true (fun _ -> true) None s *)
+(* let ho_3_loop s = ho_3_opt_aux false [] true (fun _ -> true) None s *)
+(* let ho_4_loop s = ho_4_opt_aux false [] true (fun _ -> true) None s *)
+(* let ho_5_loop s = ho_5_opt_aux false [] true (fun _ -> true) None s *)
+(* let ho_6_loop s = ho_6_opt_aux false [] true (fun _ -> true) None s *)
+(* let ho_7_loop s = ho_7_opt_aux false [] true (fun _ -> true) None s *)
+
+let splitter s f_none f_gen f_norm =
+  if !z_debug_flag then
+    match (in_debug s) with
+      | DO_Normal -> f_gen (f_norm false false)
+      | DO_Trace -> f_gen (f_norm true false) 
+      | DO_Loop -> f_gen (f_norm false true)
+      | DO_Both -> f_gen (f_norm true true)
+      | DO_None -> f_none
+  else f_none
+
+let no_1 s p1 p0 f =
+  let code_gen fn = fn s p1 p0 f in
+  let code_none = ho_aux_no f in
+  splitter s code_none code_gen go_1 
+
+let no_2 s p1 p2 p0 f e1 =
+  let code_gen fn = fn s p1 p2 p0 f e1 in
+  let code_none = ho_aux_no (f e1) in
+  splitter s code_none code_gen go_2
+
+let no_3 s p1 p2 p3 p0 f e1 e2 =
+  let code_gen fn = fn s p1 p2 p3 p0 f e1 e2 in
+  let code_none = ho_aux_no (f e1 e2) in
+  splitter s code_none code_gen go_3
+
+let no_4 s p1 p2 p3 p4 p0 f e1 e2 e3 =
+  let code_gen fn = fn s p1 p2 p3 p4 p0 f e1 e2 e3 in
+  let code_none = ho_aux_no (f e1 e2 e3) in
+  splitter s code_none code_gen go_4
+
+let no_5 s p1 p2 p3 p4 p5 p0 f e1 e2 e3 e4 =
+  let code_gen fn = fn s p1 p2 p3 p4 p5 p0 f e1 e2 e3 e4 in
+  let code_none = ho_aux_no (f e1 e2 e3 e4) in
+  splitter s code_none code_gen go_5
+
+let no_6 s p1 p2 p3 p4 p5 p6 p0 f e1 e2 e3 e4 e5 =
+  let code_gen fn = fn s p1 p2 p3 p4 p5 p6 p0 f e1 e2 e3 e4 e5 in
+  let code_none = ho_aux_no (f e1 e2 e3 e4 e5) in
+  splitter s code_none code_gen go_6
+
+let no_7 s p1 p2 p3 p4 p5 p6 p7 p0 f e1 e2 e3 e4 e5 e6 =
+  let code_gen fn = fn s p1 p2 p3 p4 p5 p6 p7 p0 f e1 e2 e3 e4 e5 e6 in
+  let code_none = ho_aux_no (f e1 e2 e3 e4 e5 e6) in
+  splitter s code_none code_gen go_7
+
+let ho_1_opt tr_flag lp_flag f = ho_1_opt_aux tr_flag [] lp_flag f None
+let ho_2_opt tr_flag lp_flag f = ho_2_opt_aux tr_flag [] lp_flag f None
+let ho_3_opt tr_flag lp_flag f = ho_3_opt_aux tr_flag [] lp_flag f None
+let ho_4_opt tr_flag lp_flag f = ho_4_opt_aux tr_flag [] lp_flag f None
+let ho_5_opt tr_flag lp_flag f = ho_5_opt_aux tr_flag [] lp_flag f None
+let ho_6_opt tr_flag lp_flag f = ho_6_opt_aux tr_flag [] lp_flag f None
+
+(* let ho_1_opt f = ho_1_opt_aux false [] false f None *)
+(* let ho_2_opt f = ho_2_opt_aux false [] false f None *)
+(* let ho_3_opt f = ho_3_opt_aux false [] false f None *)
+(* let ho_4_opt f = ho_4_opt_aux false [] false f None *)
+(* let ho_5_opt f = ho_5_opt_aux false [] false f None *)
+(* let ho_6_opt f = ho_6_opt_aux false [] false f None *)
+
+(* let to_1_opt f = ho_1_opt_aux true [] false f None *)
+(* let to_2_opt f = ho_2_opt_aux true [] false f None *)
+(* let to_3_opt f = ho_3_opt_aux true [] false f None *)
+(* let to_4_opt f = ho_4_opt_aux true [] false f None *)
+(* let to_5_opt f = ho_5_opt_aux true [] false f None *)
+(* let to_6_opt f = ho_6_opt_aux true [] false f None *)
+(* let to_7_opt f = ho_7_opt_aux true [] false f None *)
+
+(* let no_1_opt _ _ _ _ f  *)
+(*       = ho_aux_no f *)
+(* let no_2_opt _ _ _ _ _ f e1  *)
+(*       = ho_aux_no (f e1) *)
+(* let no_3_opt _ _ _ _ _ _ f e1 e2  *)
+(*       = ho_aux_no (f e1 e2) *)
+(* let no_4_opt _ _ _ _ _ _ _ f e1 e2 e3  *)
+(*       = ho_aux_no (f e1 e2 e3) *)
+(* let no_5_opt _ _ _ _ _ _ _ _ f e1 e2 e3 e4  *)
+(*       = ho_aux_no (f e1 e2 e3 e4) *)
+(* let no_6_opt _ _ _ _ _ _ _ _ _ f e1 e2 e3 e4 e5  *)
+(*       = ho_aux_no (f e1 e2 e3 e4 e5) *)
+
+let no_1_opt op s p1 p0 f =
+  let code_gen fn = fn op s p1 p0 f in
+  let code_none = ho_aux_no (f) in
+  splitter s code_none code_gen ho_1_opt
+
+let no_2_opt op s p1 p2 p0 f e1 =
+  let code_gen fn = fn op s p1 p2 p0 f e1 in
+  let code_none = ho_aux_no (f e1) in
+  splitter s code_none code_gen ho_2_opt
+
+let no_3_opt op s p1 p2 p3 p0 f e1 e2 =
+  let code_gen fn = fn op s p1 p2 p3 p0 f e1 e2 in
+  let code_none = ho_aux_no (f e1 e2) in
+  splitter s code_none code_gen ho_3_opt
+
+let no_4_opt op s p1 p2 p3 p4 p0 f e1 e2 e3 =
+  let code_gen fn = fn op s p1 p2 p3 p4 p0 f e1 e2 e3 in
+  let code_none = ho_aux_no (f e1 e2 e3) in
+  splitter s code_none code_gen ho_4_opt
+
+let no_5_opt op s p1 p2 p3 p4 p5 p0 f e1 e2 e3 e4 =
+  let code_gen fn = fn op s p1 p2 p3 p4 p5 p0 f e1 e2 e3 e4 in
+  let code_none = ho_aux_no (f e1 e2 e3 e4) in
+  splitter s code_none code_gen ho_5_opt
+
+let no_6_opt op s p1 p2 p3 p4 p5 p6 p0 f e1 e2 e3 e4 e5 =
+  let code_gen fn = fn op s p1 p2 p3 p4 p5 p6 p0 f e1 e2 e3 e4 e5 in
+  let code_none = ho_aux_no (f e1 e2 e3 e4 e5) in
+  splitter s code_none code_gen ho_6_opt
 
 let add_num f i s = let str=(s^"#"^(string_of_int i)) in f str
 
-let ho_1_num i =  add_num ho_1 i
-let ho_2_num i =  add_num ho_2 i
-let ho_3_num i =  add_num ho_3 i
-let ho_4_num i =  add_num ho_4 i
-let ho_5_num i =  add_num ho_5 i
-let ho_6_num i =  add_num ho_6 i
+let go_1_num tr_flag lp_flag i =  add_num (go_1 tr_flag lp_flag) i
+let go_2_num tr_flag lp_flag i =  add_num (go_2 tr_flag lp_flag) i
+let go_3_num tr_flag lp_flag i =  add_num (go_3 tr_flag lp_flag) i
+let go_4_num tr_flag lp_flag i =  add_num (go_4 tr_flag lp_flag) i
+let go_5_num tr_flag lp_flag i =  add_num (go_5 tr_flag lp_flag) i
+let go_6_num tr_flag lp_flag i =  add_num (go_6 tr_flag lp_flag) i
 
-let to_1_num i =  add_num to_1 i
-let to_2_num i =  add_num to_2 i
-let to_3_num i =  add_num to_3 i
-let to_4_num i =  add_num to_4 i
-let to_5_num i =  add_num to_5 i
-let to_6_num i =  add_num to_6 i
+let add_num_opt f i p s = let str=(s^"#"^(string_of_int i)) in f p str
 
-let no_1_num (i:int) s _ _ f
-      = ho_aux_no f
-let no_2_num (i:int) s _ _ _ f e1
-      = ho_aux_no (f e1)
-let no_3_num (i:int) s _ _ _ _ f e1 e2
-      = ho_aux_no (f e1 e2)
-let no_4_num (i:int) s _ _ _ _ _ f e1 e2 e3
-      = ho_aux_no (f e1 e2 e3)
-let no_5_num (i:int) s _ _ _ _ _ _ f e1 e2 e3 e4
-      = ho_aux_no (f e1 e2 e3 e4)
-let no_6_num (i:int) s _ _ _ _ _ _ _ f e1 e2 e3 e4 e5
-      = ho_aux_no (f e1 e2 e3 e4 e5)
+let go_1_num_opt tr_flag lp_flag i =  add_num_opt (ho_1_opt tr_flag lp_flag) i
+let go_2_num_opt tr_flag lp_flag i =  add_num_opt (ho_2_opt tr_flag lp_flag) i
+let go_3_num_opt tr_flag lp_flag i =  add_num_opt (ho_3_opt tr_flag lp_flag) i
+let go_4_num_opt tr_flag lp_flag i =  add_num_opt (ho_4_opt tr_flag lp_flag) i
+let go_5_num_opt tr_flag lp_flag i =  add_num_opt (ho_5_opt tr_flag lp_flag) i
+let go_6_num_opt tr_flag lp_flag i =  add_num_opt (ho_6_opt tr_flag lp_flag) i
 
-let ho_1_cmp g = ho_1_opt_aux false [] false (fun _ -> true) (Some g) 
-let ho_2_cmp g = ho_2_opt_aux false [] false (fun _ -> true) (Some g) 
-let ho_3_cmp g = ho_3_opt_aux false [] false (fun _ -> true) (Some g) 
-let ho_4_cmp g = ho_4_opt_aux false [] false (fun _ -> true) (Some g) 
-let ho_5_cmp g = ho_5_opt_aux false [] false (fun _ -> true) (Some g) 
-let ho_6_cmp g = ho_6_opt_aux false [] false (fun _ -> true) (Some g) 
+(* let ho_1_num i =  add_num ho_1 i *)
+(* let ho_2_num i =  add_num ho_2 i *)
+(* let ho_3_num i =  add_num ho_3 i *)
+(* let ho_4_num i =  add_num ho_4 i *)
+(* let ho_5_num i =  add_num ho_5 i *)
+(* let ho_6_num i =  add_num ho_6 i *)
 
-let no_1_cmp _ _ _ _ f 
-      = ho_aux_no f
-let no_2_cmp _ _ _ _ _ f e1 
-      = ho_aux_no (f e1)
-let no_3_cmp _ _ _ _ _ _ f e1 e2 
-      = ho_aux_no (f e1 e2)
-let no_4_cmp _ _ _ _ _ _ _ f e1 e2 e3 
-      = ho_aux_no (f e1 e2 e3)
-let no_5_cmp _ _ _ _ _ _ _ _ f e1 e2 e3 e4 
-      = ho_aux_no (f e1 e2 e3 e4)
-let no_6_cmp _ _ _ _ _ _ _ _ _ f e1 e2 e3 e4 e5 
-      = ho_aux_no (f e1 e2 e3 e4 e5)
+(* let to_1_num i =  add_num to_1 i *)
+(* let to_2_num i =  add_num to_2 i *)
+(* let to_3_num i =  add_num to_3 i *)
+(* let to_4_num i =  add_num to_4 i *)
+(* let to_5_num i =  add_num to_5 i *)
+(* let to_6_num i =  add_num to_6 i *)
 
-let ho_eff_1 s l = ho_1_opt_aux false l false (fun _ -> true) None s
-let ho_eff_2 s l = ho_2_opt_aux false l false (fun _ -> true) None s
-let ho_eff_3 s l = ho_3_opt_aux false l false (fun _ -> true) None s
-let ho_eff_4 s l = ho_4_opt_aux false l false (fun _ -> true) None s
-let ho_eff_5 s l = ho_5_opt_aux false l false (fun _ -> true) None s
-let ho_eff_6 s l = ho_6_opt_aux false l false (fun _ -> true) None s
-
-let to_eff_1 s l = ho_1_opt_aux true l false (fun _ -> true) None s
-let to_eff_2 s l = ho_2_opt_aux true l false (fun _ -> true) None s
-let to_eff_3 s l = ho_3_opt_aux true l false (fun _ -> true) None s
-let to_eff_4 s l = ho_4_opt_aux true l false (fun _ -> true) None s
-let to_eff_5 s l = ho_5_opt_aux true l false (fun _ -> true) None s
-let to_eff_6 s l = ho_6_opt_aux true l false (fun _ -> true) None s
-
-let no_eff_1 _ _ _ _ f 
-      = ho_aux_no f
-let no_eff_2 _ _ _ _ _ f e1 
-      = ho_aux_no (f e1)
-let no_eff_3 _ _ _ _ _ _ f e1 e2 
-      = ho_aux_no (f e1 e2)
-let no_eff_4 _ _ _ _ _ _ _ f e1 e2 e3 
-      = ho_aux_no (f e1 e2 e3)
-let no_eff_5 _ _ _ _ _ _ _ _ f e1 e2 e3 e4 
-      = ho_aux_no (f e1 e2 e3 e4)
-let no_eff_6 _ _ _ _ _ _ _ _ _ f e1 e2 e3 e4 e5 
-      = ho_aux_no (f e1 e2 e3 e4 e5)
-
-let ho_eff_1_num i =  add_num ho_eff_1 i
-let ho_eff_2_num i =  add_num ho_eff_2 i
-let ho_eff_3_num i =  add_num ho_eff_3 i
-let ho_eff_4_num i =  add_num ho_eff_4 i
-let ho_eff_5_num i =  add_num ho_eff_5 i
-let ho_eff_6_num i =  add_num ho_eff_6 i
-
-let to_eff_1_num i =  add_num to_eff_1 i
-let to_eff_2_num i =  add_num to_eff_2 i
-let to_eff_3_num i =  add_num to_eff_3 i
-let to_eff_4_num i =  add_num to_eff_4 i
-let to_eff_5_num i =  add_num to_eff_5 i
-let to_eff_6_num i =  add_num to_eff_6 i
-
-let no_eff_1_num _ _ _ _ _ f 
-      =  ho_aux_no (f)
-let no_eff_2_num _ _ _ _ _ _ f e1 
-      =  ho_aux_no (f e1)
-let no_eff_3_num _ _ _ _ _ _ _ f e1 e2 
-      =  ho_aux_no (f e1 e2)
-let no_eff_4_num _ _ _ _ _ _ _ _ f e1 e2 e3 
-      =  ho_aux_no (f e1 e2 e3)
-let no_eff_5_num _ _ _ _ _ _ _ _ _ f e1 e2 e3 e4 
-      =  ho_aux_no (f e1 e2 e3 e4)
-let no_eff_6_num _ _ _ _ _ _ _ _ _ _ f e1 e2 e3 e4 e5 
-      =  ho_aux_no (f e1 e2 e3 e4 e5)
+(* let ho_1_loop_num i =  add_num ho_1_loop i *)
+(* let ho_2_loop_num i =  add_num ho_2_loop i *)
+(* let ho_3_loop_num i =  add_num ho_3_loop i *)
+(* let ho_4_loop_num i =  add_num ho_4_loop i *)
+(* let ho_5_loop_num i =  add_num ho_5_loop i *)
+(* let ho_6_loop_num i =  add_num ho_6_loop i *)
 
 let to_1_loop s = ho_1_opt_aux true [] true (fun _ -> true) None s
 let to_2_loop s = ho_2_opt_aux true [] true (fun _ -> true) None s
@@ -565,34 +814,6 @@ let to_4_loop s = ho_4_opt_aux true [] true (fun _ -> true) None s
 let to_5_loop s = ho_5_opt_aux true [] true (fun _ -> true) None s
 let to_6_loop s = ho_6_opt_aux true [] true (fun _ -> true) None s
 
-let ho_1_loop s = ho_1_opt_aux false [] true (fun _ -> true) None s
-let ho_2_loop s = ho_2_opt_aux false [] true (fun _ -> true) None s
-let ho_3_loop s = ho_3_opt_aux false [] true (fun _ -> true) None s
-let ho_4_loop s = ho_4_opt_aux false [] true (fun _ -> true) None s
-let ho_5_loop s = ho_5_opt_aux false [] true (fun _ -> true) None s
-let ho_6_loop s = ho_6_opt_aux false [] true (fun _ -> true) None s
-
-
-let no_1_loop _ _ _ f 
-      = ho_aux_no f
-let no_2_loop _ _ _ _ f e1 
-      = ho_aux_no (f e1)
-let no_3_loop _ _ _ _ _ f e1 e2
-      = ho_aux_no (f e1 e2)
-let no_4_loop _ _ _ _ _ _ f e1 e2 e3
-      = ho_aux_no (f e1 e2 e3)
-let no_5_loop _ _ _ _ _ _ _ f e1 e2 e3 e4
-      = ho_aux_no (f e1 e2 e3 e4)
-let no_6_loop _ _ _ _ _ _ _ _ f e1 e2 e3 e4 e5
-      = ho_aux_no (f e1 e2 e3 e4 e5)
-
-let ho_1_loop_num i =  add_num ho_1_loop i
-let ho_2_loop_num i =  add_num ho_2_loop i
-let ho_3_loop_num i =  add_num ho_3_loop i
-let ho_4_loop_num i =  add_num ho_4_loop i
-let ho_5_loop_num i =  add_num ho_5_loop i
-let ho_6_loop_num i =  add_num ho_6_loop i
-
 let to_1_loop_num i =  add_num to_1_loop i
 let to_2_loop_num i =  add_num to_2_loop i
 let to_3_loop_num i =  add_num to_3_loop i
@@ -600,18 +821,386 @@ let to_4_loop_num i =  add_num to_4_loop i
 let to_5_loop_num i =  add_num to_5_loop i
 let to_6_loop_num i =  add_num to_6_loop i
 
-let no_1_loop_num _ _ _ _ f 
-      = ho_aux_no f
-let no_2_loop_num _ _ _ _ _ f e1 
-      = ho_aux_no (f e1)
-let no_3_loop_num _ _ _ _ _ _ f e1 e2
-      = ho_aux_no (f e1 e2)
-let no_4_loop_num _ _ _ _ _ _ _ f e1 e2 e3
-      = ho_aux_no (f e1 e2 e3)
-let no_5_loop_num _ _ _ _ _ _ _ _ f e1 e2 e3 e4
-      = ho_aux_no (f e1 e2 e3 e4)
-let no_6_loop_num _ _ _ _ _ _ _ _ _ f e1 e2 e3 e4 e5
-      = ho_aux_no (f e1 e2 e3 e4 e5)
+(* let no_1_num (i:int) s _ _ f *)
+(*       = ho_aux_no f *)
+(* let no_2_num (i:int) s _ _ _ f e1 *)
+(*       = ho_aux_no (f e1) *)
+(* let no_3_num (i:int) s _ _ _ _ f e1 e2 *)
+(*       = ho_aux_no (f e1 e2) *)
+(* let no_4_num (i:int) s _ _ _ _ _ f e1 e2 e3 *)
+(*       = ho_aux_no (f e1 e2 e3) *)
+(* let no_5_num (i:int) s _ _ _ _ _ _ f e1 e2 e3 e4 *)
+(*       = ho_aux_no (f e1 e2 e3 e4) *)
+(* let no_6_num (i:int) s _ _ _ _ _ _ _ f e1 e2 e3 e4 e5 *)
+(*       = ho_aux_no (f e1 e2 e3 e4 e5) *)
+
+let no_1_num_opt (i:int) p s p1 p0 f =
+  let code_gen fn = fn i p s p1 p0 f in
+  let code_none = ho_aux_no f in
+  splitter s code_none code_gen go_1_num_opt 
+
+let no_2_num_opt (i:int) p s p1 p2 p0 f e1 =
+  let code_gen fn = fn i p s p1 p2 p0 f e1 in
+  let code_none = ho_aux_no (f e1) in
+  splitter s code_none code_gen go_2_num_opt 
+
+let no_3_num_opt (i:int) p s p1 p2 p3 p0 f e1 e2 =
+  let code_gen fn = fn i p s p1 p2 p3 p0 f e1 e2 in
+  let code_none = ho_aux_no (f e1 e2) in
+  splitter s code_none code_gen go_3_num_opt 
+
+let no_4_num_opt (i:int) p s p1 p2 p3 p4 p0 f e1 e2 e3 =
+  let code_gen fn = fn i p s p1 p2 p3 p4 p0 f e1 e2 e3 in
+  let code_none = ho_aux_no (f e1 e2 e3) in
+  splitter s code_none code_gen go_4_num_opt 
+
+let no_5_num_opt (i:int) p s p1 p2 p3 p4 p5 p0 f e1 e2 e3 e4 =
+  let code_gen fn = fn i p s p1 p2 p3 p4 p5 p0 f e1 e2 e3 e4 in
+  let code_none = ho_aux_no (f e1 e2 e3 e4) in
+  splitter s code_none code_gen go_5_num_opt 
+
+let no_6_num_opt (i:int) p s p1 p2 p3 p4 p5 p6 p0 f e1 e2 e3 e4 e5 =
+  let code_gen fn = fn i p s p1 p2 p3 p4 p5 p6 p0 f e1 e2 e3 e4 e5 in
+  let code_none = ho_aux_no (f e1 e2 e3 e4 e5) in
+  splitter s code_none code_gen go_6_num_opt 
+
+let no_1_num (i:int) s p1 p0 f =
+  let code_gen fn = fn i s p1 p0 f in
+  let code_none = ho_aux_no f in
+  splitter s code_none code_gen go_1_num 
+
+let no_2_num (i:int) s p1 p2 p0 f e1 =
+  let code_gen fn = fn i s p1 p2 p0 f e1 in
+  let code_none = ho_aux_no (f e1) in
+  splitter s code_none code_gen go_2_num 
+
+let no_3_num (i:int) s p1 p2 p3 p0 f e1 e2 =
+  let code_gen fn = fn i s p1 p2 p3 p0 f e1 e2 in
+  let code_none = ho_aux_no (f e1 e2) in
+  splitter s code_none code_gen go_3_num 
+
+let no_4_num (i:int) s p1 p2 p3 p4 p0 f e1 e2 e3 =
+  let code_gen fn = fn i s p1 p2 p3 p4 p0 f e1 e2 e3 in
+  let code_none = ho_aux_no (f e1 e2 e3) in
+  splitter s code_none code_gen go_4_num 
+
+let no_5_num (i:int) s p1 p2 p3 p4 p5 p0 f e1 e2 e3 e4 =
+  let code_gen fn = fn i s p1 p2 p3 p4 p5 p0 f e1 e2 e3 e4 in
+  let code_none = ho_aux_no (f e1 e2 e3 e4) in
+  splitter s code_none code_gen go_5_num 
+
+let no_6_num (i:int) s p1 p2 p3 p4 p5 p6 p0 f e1 e2 e3 e4 e5 =
+  let code_gen fn = fn i s p1 p2 p3 p4 p5 p6 p0 f e1 e2 e3 e4 e5 in
+  let code_none = ho_aux_no (f e1 e2 e3 e4 e5) in
+  splitter s code_none code_gen go_6_num 
+
+let ho_1_cmp tr_flag lp_flag g = ho_1_opt_aux tr_flag [] lp_flag (fun _ -> true) (Some g) 
+let ho_2_cmp tr_flag lp_flag g = ho_2_opt_aux tr_flag [] lp_flag (fun _ -> true) (Some g) 
+let ho_3_cmp tr_flag lp_flag g = ho_3_opt_aux tr_flag [] lp_flag (fun _ -> true) (Some g) 
+let ho_4_cmp tr_flag lp_flag g = ho_4_opt_aux tr_flag [] lp_flag (fun _ -> true) (Some g) 
+let ho_5_cmp tr_flag lp_flag g = ho_5_opt_aux tr_flag [] lp_flag (fun _ -> true) (Some g) 
+let ho_6_cmp tr_flag lp_flag g = ho_6_opt_aux tr_flag [] lp_flag (fun _ -> true) (Some g) 
+
+(* let ho_1_cmp g = ho_1_opt_aux false [] false (fun _ -> true) (Some g)  *)
+(* let ho_2_cmp g = ho_2_opt_aux false [] false (fun _ -> true) (Some g)  *)
+(* let ho_3_cmp g = ho_3_opt_aux false [] false (fun _ -> true) (Some g)  *)
+(* let ho_4_cmp g = ho_4_opt_aux false [] false (fun _ -> true) (Some g)  *)
+(* let ho_5_cmp g = ho_5_opt_aux false [] false (fun _ -> true) (Some g)  *)
+(* let ho_6_cmp g = ho_6_opt_aux false [] false (fun _ -> true) (Some g)  *)
+
+(* let to_1_cmp g = ho_1_opt_aux true [] false (fun _ -> true) (Some g)  *)
+(* let to_2_cmp g = ho_2_opt_aux true [] false (fun _ -> true) (Some g)  *)
+(* let to_3_cmp g = ho_3_opt_aux true [] false (fun _ -> true) (Some g)  *)
+(* let to_4_cmp g = ho_4_opt_aux true [] false (fun _ -> true) (Some g)  *)
+(* let to_5_cmp g = ho_5_opt_aux true [] false (fun _ -> true) (Some g)  *)
+(* let to_6_cmp g = ho_6_opt_aux true [] false (fun _ -> true) (Some g)  *)
+
+(* let ho_1_cmp_loop g = ho_1_opt_aux false [] true (fun _ -> true) (Some g)  *)
+(* let ho_2_cmp_loop g = ho_2_opt_aux false [] true (fun _ -> true) (Some g)  *)
+(* let ho_3_cmp_loop g = ho_3_opt_aux false [] true (fun _ -> true) (Some g)  *)
+(* let ho_4_cmp_loop g = ho_4_opt_aux false [] true (fun _ -> true) (Some g)  *)
+(* let ho_5_cmp_loop g = ho_5_opt_aux false [] true (fun _ -> true) (Some g)  *)
+(* let ho_6_cmp_loop g = ho_6_opt_aux false [] true (fun _ -> true) (Some g)  *)
+
+let no_1_cmp g s p1 p0 f =
+  let code_gen fn = fn g s p1 p0 f in
+  let code_none = ho_aux_no f in
+  splitter s code_none code_gen ho_1_cmp 
+
+let no_2_cmp g s p1 p2 p0 f e1 =
+  let code_gen fn = fn g s p1 p2 p0 f e1 in
+  let code_none = ho_aux_no (f e1) in
+  splitter s code_none code_gen ho_2_cmp 
+
+let no_3_cmp g s p1 p2 p3 p0 f e1 e2 =
+  let code_gen fn = fn g s p1 p2 p3 p0 f e1 e2 in
+  let code_none = ho_aux_no (f e1 e2) in
+  splitter s code_none code_gen ho_3_cmp 
+
+let no_4_cmp g s p1 p2 p3 p4 p0 f e1 e2 e3 =
+  let code_gen fn = fn g s p1 p2 p3 p4 p0 f e1 e2 e3 in
+  let code_none = ho_aux_no (f e1 e2 e3) in
+  splitter s code_none code_gen ho_4_cmp 
+
+let no_5_cmp g s p1 p2 p3 p4 p5 p0 f e1 e2 e3 e4 =
+  let code_gen fn = fn g s p1 p2 p3 p4 p5 p0 f e1 e2 e3 e4 in
+  let code_none = ho_aux_no (f e1 e2 e3 e4) in
+  splitter s code_none code_gen ho_5_cmp 
+
+let no_6_cmp g s p1 p2 p3 p4 p5 p6 p0 f e1 e2 e3 e4 e5 =
+  let code_gen fn = fn g s p1 p2 p3 p4 p5 p6 p0 f e1 e2 e3 e4 e5 in
+  let code_none = ho_aux_no (f e1 e2 e3 e4 e5) in
+  splitter s code_none code_gen ho_6_cmp 
+
+(* let no_6_cmp g s p1 p2 p3 p4 p5 p6 p0 f e1 e2 e3 e4 e5 = *)
+(*   let code_gen fn = fn g s p1 p2 p3 p4 p5 p6 p0 f e1 e2 e3 e4 e5 in *)
+(*   let code_none = ho_aux_no (f e1 e2 e3 e4 p5) in *)
+(*   splitter s code_none code_gen ho_6_cmp to_6_cmp ho_6_cmp_loop *)
+
+(* let no_1_cmp _ _ _ _ f  *)
+(*       = ho_aux_no f *)
+(* let no_2_cmp _ _ _ _ _ f e1  *)
+(*       = ho_aux_no (f e1) *)
+(* let no_3_cmp _ _ _ _ _ _ f e1 e2  *)
+(*       = ho_aux_no (f e1 e2) *)
+(* let no_4_cmp _ _ _ _ _ _ _ f e1 e2 e3  *)
+(*       = ho_aux_no (f e1 e2 e3) *)
+(* let no_5_cmp _ _ _ _ _ _ _ _ f e1 e2 e3 e4  *)
+(*       = ho_aux_no (f e1 e2 e3 e4) *)
+(* let no_6_cmp _ _ _ _ _ _ _ _ _ f e1 e2 e3 e4 e5  *)
+(*       = ho_aux_no (f e1 e2 e3 e4 e5) *)
+
+let ho_eff_1 tr_flag lp_flag s l = ho_1_opt_aux tr_flag l lp_flag (fun _ -> true) None s
+let ho_eff_2 tr_flag lp_flag s l = ho_2_opt_aux tr_flag l lp_flag (fun _ -> true) None s
+let ho_eff_3 tr_flag lp_flag s l = ho_3_opt_aux tr_flag l lp_flag (fun _ -> true) None s
+let ho_eff_4 tr_flag lp_flag s l = ho_4_opt_aux tr_flag l lp_flag (fun _ -> true) None s
+let ho_eff_5 tr_flag lp_flag s l = ho_5_opt_aux tr_flag l lp_flag (fun _ -> true) None s
+let ho_eff_6 tr_flag lp_flag s l = ho_6_opt_aux tr_flag l lp_flag (fun _ -> true) None s
+
+(* let ho_eff_1 s l = ho_1_opt_aux false l false (fun _ -> true) None s *)
+(* let ho_eff_2 s l = ho_2_opt_aux false l false (fun _ -> true) None s *)
+(* let ho_eff_3 s l = ho_3_opt_aux false l false (fun _ -> true) None s *)
+(* let ho_eff_4 s l = ho_4_opt_aux false l false (fun _ -> true) None s *)
+(* let ho_eff_5 s l = ho_5_opt_aux false l false (fun _ -> true) None s *)
+(* let ho_eff_6 s l = ho_6_opt_aux false l false (fun _ -> true) None s *)
+
+(* let ho_eff_1_loop s l = ho_1_opt_aux false l true (fun _ -> true) None s *)
+(* let ho_eff_2_loop s l = ho_2_opt_aux false l true (fun _ -> true) None s *)
+(* let ho_eff_3_loop s l = ho_3_opt_aux false l true (fun _ -> true) None s *)
+(* let ho_eff_4_loop s l = ho_4_opt_aux false l true (fun _ -> true) None s *)
+(* let ho_eff_5_loop s l = ho_5_opt_aux false l true (fun _ -> true) None s *)
+(* let ho_eff_6_loop s l = ho_6_opt_aux false l true (fun _ -> true) None s *)
+
+(* let to_eff_1 s l = ho_1_opt_aux true l false (fun _ -> true) None s *)
+(* let to_eff_2 s l = ho_2_opt_aux true l false (fun _ -> true) None s *)
+(* let to_eff_3 s l = ho_3_opt_aux true l false (fun _ -> true) None s *)
+(* let to_eff_4 s l = ho_4_opt_aux true l false (fun _ -> true) None s *)
+(* let to_eff_5 s l = ho_5_opt_aux true l false (fun _ -> true) None s *)
+(* let to_eff_6 s l = ho_6_opt_aux true l false (fun _ -> true) None s *)
+
+(* let no_eff_1 _ _ _ _ f  *)
+(*       = ho_aux_no f *)
+
+let no_eff_1 s l p1 p0 f =
+  let code_gen fn = fn s l p1 p0 f in
+  let code_none = ho_aux_no f in
+  splitter s code_none code_gen ho_eff_1 
+
+let no_eff_2 s l p1 p2 p0 f e1 =
+  let code_gen fn = fn s l p1 p2 p0 f e1 in
+  let code_none = ho_aux_no (f e1) in
+  splitter s code_none code_gen ho_eff_2 
+
+let no_eff_3 s l p1 p2 p3 p0 f e1 e2 =
+  let code_gen fn = fn s l p1 p2 p3 p0 f e1 e2 in
+  let code_none = ho_aux_no (f e1 e2) in
+  splitter s code_none code_gen ho_eff_3 
+
+let no_eff_4 s l p1 p2 p3 p4 p0 f e1 e2 e3 =
+  let code_gen fn = fn s l p1 p2 p3 p4 p0 f e1 e2 e3 in
+  let code_none = ho_aux_no (f e1 e2 e3) in
+  splitter s code_none code_gen ho_eff_4 
+
+let no_eff_5 s l p1 p2 p3 p4 p5 p0 f e1 e2 e3 e4 =
+  let code_gen fn = fn s l p1 p2 p3 p4 p5 p0 f e1 e2 e3 e4 in
+  let code_none = ho_aux_no (f e1 e2 e3 e4) in
+  splitter s code_none code_gen ho_eff_5 
+
+let no_eff_6 s l p1 p2 p3 p4 p5 p6 p0 f e1 e2 e3 e4 e5 =
+  let code_gen fn = fn s l p1 p2 p3 p4 p5 p6 p0 f e1 e2 e3 e4 e5 in
+  let code_none = ho_aux_no (f e1 e2 e3 e4 e5) in
+  splitter s code_none code_gen ho_eff_6 
+
+(* let no_eff_2 _ _ _ _ _ f e1  *)
+(*       = ho_aux_no (f e1) *)
+(* let no_eff_3 _ _ _ _ _ _ f e1 e2  *)
+(*       = ho_aux_no (f e1 e2) *)
+(* let no_eff_4 _ _ _ _ _ _ _ f e1 e2 e3  *)
+(*       = ho_aux_no (f e1 e2 e3) *)
+(* let no_eff_5 _ _ _ _ _ _ _ _ f e1 e2 e3 e4  *)
+(*       = ho_aux_no (f e1 e2 e3 e4) *)
+(* let no_eff_6 _ _ _ _ _ _ _ _ _ f e1 e2 e3 e4 e5  *)
+(*       = ho_aux_no (f e1 e2 e3 e4 e5) *)
+
+let ho_eff_1_num tr_flag lp_flag i =  add_num (ho_eff_1 tr_flag lp_flag) i
+let ho_eff_2_num tr_flag lp_flag i =  add_num (ho_eff_2 tr_flag lp_flag) i
+let ho_eff_3_num tr_flag lp_flag i =  add_num (ho_eff_3 tr_flag lp_flag) i
+let ho_eff_4_num tr_flag lp_flag i =  add_num (ho_eff_4 tr_flag lp_flag) i
+let ho_eff_5_num tr_flag lp_flag i =  add_num (ho_eff_5 tr_flag lp_flag) i
+let ho_eff_6_num tr_flag lp_flag i =  add_num (ho_eff_6 tr_flag lp_flag) i
+
+(* let ho_eff_1_num_loop i =  add_num ho_eff_1_loop i *)
+(* let ho_eff_2_num_loop i =  add_num ho_eff_2_loop i *)
+(* let ho_eff_3_num_loop i =  add_num ho_eff_3_loop i *)
+(* let ho_eff_4_num_loop i =  add_num ho_eff_4_loop i *)
+(* let ho_eff_5_num_loop i =  add_num ho_eff_5_loop i *)
+(* let ho_eff_6_num_loop i =  add_num ho_eff_6_loop i *)
+
+(* let ho_eff_1_num i =  add_num ho_eff_1 i *)
+(* let ho_eff_2_num i =  add_num ho_eff_2 i *)
+(* let ho_eff_3_num i =  add_num ho_eff_3 i *)
+(* let ho_eff_4_num i =  add_num ho_eff_4 i *)
+(* let ho_eff_5_num i =  add_num ho_eff_5 i *)
+(* let ho_eff_6_num i =  add_num ho_eff_6 i *)
+
+(* let to_eff_1_num i =  add_num to_eff_1 i *)
+(* let to_eff_2_num i =  add_num to_eff_2 i *)
+(* let to_eff_3_num i =  add_num to_eff_3 i *)
+(* let to_eff_4_num i =  add_num to_eff_4 i *)
+(* let to_eff_5_num i =  add_num to_eff_5 i *)
+(* let to_eff_6_num i =  add_num to_eff_6 i *)
+
+let no_eff_1_num i s l p1 p0 f =
+  let code_gen fn = fn i s l p1 p0 f in
+  let code_none = ho_aux_no f in
+  splitter s code_none code_gen ho_eff_1_num 
+
+let no_eff_2_num i s l p1 p2 p0 f e1 =
+  let code_gen fn = fn i s l p1 p2 p0 f e1 in
+  let code_none = ho_aux_no (f e1) in
+  splitter s code_none code_gen ho_eff_2_num 
+
+let no_eff_3_num i s l p1 p2 p3 p0 f e1 e2 =
+  let code_gen fn = fn i s l p1 p2 p3 p0 f e1 e2 in
+  let code_none = ho_aux_no (f e1 e2) in
+  splitter s code_none code_gen ho_eff_3_num 
+
+let no_eff_4_num i s l p1 p2 p3 p4 p0 f e1 e2 e3 =
+  let code_gen fn = fn i s l p1 p2 p3 p4 p0 f e1 e2 e3 in
+  let code_none = ho_aux_no (f e1 e2 e3) in
+  splitter s code_none code_gen ho_eff_4_num 
+
+let no_eff_5_num i s l p1 p2 p3 p4 p5 p0 f e1 e2 e3 e4 =
+  let code_gen fn = fn i s l p1 p2 p3 p4 p5 p0 f e1 e2 e3 e4 in
+  let code_none = ho_aux_no (f e1 e2 e3 e4) in
+  splitter s code_none code_gen ho_eff_5_num 
+
+let no_eff_6_num i s l p1 p2 p3 p4 p5 p6 p0 f e1 e2 e3 e4 e5 =
+  let code_gen fn = fn i s l p1 p2 p3 p4 p5 p6 p0 f e1 e2 e3 e4 e5 in
+  let code_none = ho_aux_no (f e1 e2 e3 e4 e5) in
+  splitter s code_none code_gen ho_eff_6_num 
+
+let ho_1_all tr_flag lp_flag s pf gf l = ho_1_opt_aux tr_flag l lp_flag pf gf s
+let ho_2_all tr_flag lp_flag s pf gf l = ho_2_opt_aux tr_flag l lp_flag pf gf s
+let ho_3_all tr_flag lp_flag s pf gf l = ho_3_opt_aux tr_flag l lp_flag pf gf s
+let ho_4_all tr_flag lp_flag s pf gf l = ho_4_opt_aux tr_flag l lp_flag pf gf s
+let ho_5_all tr_flag lp_flag s pf gf l = ho_5_opt_aux tr_flag l lp_flag pf gf s
+let ho_6_all tr_flag lp_flag s pf gf l = ho_6_opt_aux tr_flag l lp_flag pf gf s
+
+let ho_1_all_num tr_flag lp_flag i =  add_num (ho_1_all tr_flag lp_flag) i
+let ho_2_all_num tr_flag lp_flag i =  add_num (ho_2_all tr_flag lp_flag) i
+let ho_3_all_num tr_flag lp_flag i =  add_num (ho_3_all tr_flag lp_flag) i
+let ho_4_all_num tr_flag lp_flag i =  add_num (ho_4_all tr_flag lp_flag) i
+let ho_5_all_num tr_flag lp_flag i =  add_num (ho_5_all tr_flag lp_flag) i
+let ho_6_all_num tr_flag lp_flag i =  add_num (ho_6_all tr_flag lp_flag) i
+
+let no_1_all i s pf gf l p1 p0 f =
+  let pf = match pf with 
+      Some p -> p 
+    | _ -> fun _ -> true in
+  let code_gen fn = fn i s pf gf l p1 p0 f in
+  let code_none = ho_aux_no (f) in
+  splitter s code_none code_gen ho_1_all_num 
+
+let no_2_all i s pf gf l p1 p2 p0 f e1 =
+  let pf = match pf with 
+      Some p -> p 
+    | _ -> fun _ -> true in
+  let code_gen fn = fn i s pf gf l p1 p2 p0 f e1 in
+  let code_none = ho_aux_no (f e1) in
+  splitter s code_none code_gen ho_2_all_num 
+
+let no_3_all i s pf gf l p1 p2 p3 p0 f e1 e2 =
+  let pf = match pf with 
+      Some p -> p 
+    | _ -> fun _ -> true in
+  let code_gen fn = fn i s pf gf l p1 p2 p3 p0 f e1 e2 in
+  let code_none = ho_aux_no (f e1 e2) in
+  splitter s code_none code_gen ho_3_all_num 
+
+let no_4_all i s pf gf l p1 p2 p3 p4 p0 f e1 e2 e3 =
+  let pf = match pf with 
+      Some p -> p 
+    | _ -> fun _ -> true in
+  let code_gen fn = fn i s pf gf l p1 p2 p3 p4 p0 f e1 e2 e3 in
+  let code_none = ho_aux_no (f e1 e2 e3) in
+  splitter s code_none code_gen ho_4_all_num 
+
+let no_5_all i s pf gf l p1 p2 p3 p4 p5 p0 f e1 e2 e3 e4 =
+  let pf = match pf with 
+      Some p -> p 
+    | _ -> fun _ -> true in
+  let code_gen fn = fn i s pf gf l p1 p2 p3 p4 p5 p0 f e1 e2 e3 e4 in
+  let code_none = ho_aux_no (f e1 e2 e3 e4) in
+  splitter s code_none code_gen ho_5_all_num 
+
+let no_6_all i s pf gf l p1 p2 p3 p4 p5 p6 p0 f e1 e2 e3 e4 e5 =
+  let pf = match pf with 
+      Some p -> p 
+    | _ -> fun _ -> true in
+  let code_gen fn = fn i s pf gf l p1 p2 p3 p4 p5 p6 p0 f e1 e2 e3 e4 e5 in
+  let code_none = ho_aux_no (f e1 e2 e3 e4 e5) in
+  splitter s code_none code_gen ho_6_all_num 
+
+(* let no_eff_1_num _ _ _ _ _ f  *)
+(*       =  ho_aux_no (f) *)
+(* let no_eff_2_num _ _ _ _ _ _ f e1  *)
+(*       =  ho_aux_no (f e1) *)
+(* let no_eff_3_num _ _ _ _ _ _ _ f e1 e2  *)
+(*       =  ho_aux_no (f e1 e2) *)
+(* let no_eff_4_num _ _ _ _ _ _ _ _ f e1 e2 e3  *)
+(*       =  ho_aux_no (f e1 e2 e3) *)
+(* let no_eff_5_num _ _ _ _ _ _ _ _ _ f e1 e2 e3 e4  *)
+(*       =  ho_aux_no (f e1 e2 e3 e4) *)
+(* let no_eff_6_num _ _ _ _ _ _ _ _ _ _ f e1 e2 e3 e4 e5  *)
+(*       =  ho_aux_no (f e1 e2 e3 e4 e5) *)
+
+(* let no_1_loop _ _ _ f  *)
+(*       = ho_aux_no f *)
+(* let no_2_loop _ _ _ _ f e1  *)
+(*       = ho_aux_no (f e1) *)
+(* let no_3_loop _ _ _ _ _ f e1 e2 *)
+(*       = ho_aux_no (f e1 e2) *)
+(* let no_4_loop _ _ _ _ _ _ f e1 e2 e3 *)
+(*       = ho_aux_no (f e1 e2 e3) *)
+(* let no_5_loop _ _ _ _ _ _ _ f e1 e2 e3 e4 *)
+(*       = ho_aux_no (f e1 e2 e3 e4) *)
+(* let no_6_loop _ _ _ _ _ _ _ _ f e1 e2 e3 e4 e5 *)
+(*       = ho_aux_no (f e1 e2 e3 e4 e5) *)
+
+
+(* let no_1_loop_num _ _ _ _ f  *)
+(*       = ho_aux_no f *)
+(* let no_2_loop_num _ _ _ _ _ f e1  *)
+(*       = ho_aux_no (f e1) *)
+(* let no_3_loop_num _ _ _ _ _ _ f e1 e2 *)
+(*       = ho_aux_no (f e1 e2) *)
+(* let no_4_loop_num _ _ _ _ _ _ _ f e1 e2 e3 *)
+(*       = ho_aux_no (f e1 e2 e3) *)
+(* let no_5_loop_num _ _ _ _ _ _ _ _ f e1 e2 e3 e4 *)
+(*       = ho_aux_no (f e1 e2 e3 e4) *)
+(* let no_6_loop_num _ _ _ _ _ _ _ _ _ f e1 e2 e3 e4 e5 *)
+(*       = ho_aux_no (f e1 e2 e3 e4 e5) *)
 
   (* let no_eff_1_opt  _ _ _ _ _ f = f *)
   (* let no_eff_2_opt  _ _ _ _ _ _ f = f *)
@@ -619,3 +1208,66 @@ let no_6_loop_num _ _ _ _ _ _ _ _ _ f e1 e2 e3 e4 e5
   (* let no_eff_4_opt  _ _ _ _ _ _ _ _ f = f *)
   (* let no_eff_5_opt  _ _ _ _ _ _ _ _ _ f = f *)
   (* let no_eff_6_opt  _ _ _ _ _ _ _ _ _ _ f = f *)
+
+end
+
+module DebugEmpty  =
+struct
+  let read_main() = ()
+  let no_1 s p1 p0 f = f
+  let no_2 s p1 p2 p0 f = f
+  let no_3 s p1 p2 p3 p0 f = f
+  let no_4 s p1 p2 p3 p4 p0 f = f
+  let no_5 s p1 p2 p3 p4 p5 p0 f = f
+  let no_6 s p1 p2 p3 p4 p5 p6 p0 f = f
+  let no_7 s p1 p2 p3 p4 p5 p6 p7 p0 f = f
+
+  let no_1_cmp g s p1 p0 f = f
+  let no_2_cmp g s p1 p2 p0 f = f
+  let no_3_cmp g s p1 p2 p3 p0 f = f
+  let no_4_cmp g s p1 p2 p3 p4 p0 f = f
+  let no_5_cmp g s p1 p2 p3 p4 p5 p0 f = f
+  let no_6_cmp g s p1 p2 p3 p4 p5 p6 p0 f = f
+
+  let no_1_opt op s p1 p0 f = f
+  let no_2_opt op s p1 p2 p0 f = f
+  let no_3_opt op s p1 p2 p3 p0 f = f
+  let no_4_opt op s p1 p2 p3 p4 p0 f = f
+  let no_5_opt op s p1 p2 p3 p4 p5 p0 f = f
+  let no_6_opt op s p1 p2 p3 p4 p5 p6 p0 f = f
+
+  let no_eff_1 s l p1 p0 f = f
+  let no_eff_2 s l p1 p2 p0 f = f
+  let no_eff_3 s l p1 p2 p3 p0 f = f
+  let no_eff_4 s l p1 p2 p3 p4 p0 f = f
+  let no_eff_5 s l p1 p2 p3 p4 p5 p0 f = f
+  let no_eff_6 s l p1 p2 p3 p4 p5 p6 p0 f = f
+
+  let no_eff_1_num i s l p1 p0 f = f
+  let no_eff_2_num i s l p1 p2 p0 f = f
+  let no_eff_3_num i s l p1 p2 p3 p0 f = f
+  let no_eff_4_num i s l p1 p2 p3 p4 p0 f = f
+  let no_eff_5_num i s l p1 p2 p3 p4 p5 p0 f = f
+  let no_eff_6_num i s l p1 p2 p3 p4 p5 p6 p0 f = f
+
+  let no_1_num (i:int) s p1 p0 f  = f
+  let no_2_num (i:int) s p1 p2 p0 f  = f
+  let no_3_num (i:int) s p1 p2 p3 p0 f  = f
+  let no_4_num (i:int) s p1 p2 p3 p4 p0 f  = f
+  let no_5_num (i:int) s p1 p2 p3 p4 p5 p0 f  = f
+  let no_6_num (i:int) s p1 p2 p3 p4 p5 p6 p0 f  = f 
+
+  let no_1_num_opt (i:int) p s p1 p0 f =  f
+  let no_2_num_opt (i:int) p s p1 p2 p0 f  = f
+  let no_3_num_opt (i:int) p s p1 p2 p3 p0 f = f
+  let no_4_num_opt (i:int) p s p1 p2 p3 p4 p0 f = f
+  let no_5_num_opt (i:int) p s p1 p2 p3 p4 p5 p0 f = f
+  let no_6_num_opt (i:int) p s p1 p2 p3 p4 p5 p6 p0 f = f
+
+  let no_1_all (i:int) s l (p,g) p1 p0 f =  f
+
+end
+
+(* include DebugEmpty *)
+include DebugCore
+

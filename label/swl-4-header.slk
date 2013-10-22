@@ -1,0 +1,11 @@
+data node{
+	int val;
+	node next;
+}.
+
+
+pred lx<"n":g,"n":s,"S":M> == true & ["n":self=g & self!=s; "S": M={}]
+  or self::node<v,nxt> * nxt::lx<g,s,M1> & ["n":self!=g & self!=s; "S": M=union(M1,{self})]
+  inv true & ["n":self!=s]  .
+
+

@@ -1,0 +1,45 @@
+========test-3d.slk --dump-proof==========
+Starting Omega...oc
+
+!!! dumping for sleek_dump(fail)
+!!!  
+ id: 5<1; prover: OMEGA CALCULATOR; loc: _0:0_0:0; kind: Sleek_Entail(1)
+ Imply: ante: 0<y
+	     conseq:  6<y
+ res: false
+ --------------------
+Entail 1: Fail.
+
+
+!!! src_files:[../test-3d.slk]
+!!! Number of log entries 5
+!!! Logging logs/no_eps_proof_log____test-3d_slk.txt
+ 
+ id: 1<0; prover: OMEGA CALCULATOR; loc: _0:0_0:0; kind: Sleek_Entail(1)
+ Sat:  1<y & 2<y
+ res: SAT
+ -------------------- 
+ id: 2<0; prover: OMEGA CALCULATOR; loc: _0:0_0:0; kind: Sleek_Entail(1)
+ Sat:  y=8
+ res: SAT
+ -------------------- 
+ id: 3<0; prover: OMEGA CALCULATOR; loc: _0:0_0:0; kind: Sleek_Entail(1)
+ Sat:  0<y
+ res: SAT
+ -------------------- 
+ id: 4<1; prover: OMEGA CALCULATOR; loc: _0:0_0:0; kind: Sleek_Entail(1)
+ Imply: ante: 1<y
+	     conseq:  0<y
+ res: true
+ -------------------- 
+ id: 5<1; prover: OMEGA CALCULATOR; loc: _0:0_0:0; kind: Sleek_Entail(1)
+ Imply: ante: 0<y
+	     conseq:  6<y
+ res: false
+ --------------------
+!!! Number of MONA calls:0
+!!! Number of Omega calls:5
+
+!!! Number of sleek log entries 0
+!!! Logging logs/sleek_log____test-3d_slk.txt
+====================

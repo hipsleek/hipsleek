@@ -1,0 +1,60 @@
+data node {
+	int val; 
+	node next; 
+}.
+
+
+pred lseg<nnn, p, sm, lg> == case {
+  nnn=0 -> [] self=p & sm=\inf & lg=-\inf;
+ (nnn!=0) -> [nn] self::node<sm, r> * r::lseg<nn, p, sm1, lg1> 
+               & nn=nnn-1 & sm<=sm1 & -\inf<sm<\inf & lg=max(lg1,sm)
+                     & lg<\inf; 
+}	
+inv nnn >= 0 & -\inf<sm & lg<\inf
+//inv n = 0 & sm=\inf & lg=-\inf | n>0 & -\inf<sm & sm<=lg & lg<\inf
+//inv nnn>=0 
+.
+/*
+  xform: (
+  (nnn=0 & p=self & sm=\inf & 0=lg+(\inf) & lg<sm) 
+| (1<=(sm+(\inf)) & sm<=lg & lg<(\inf) & 1<=nnn & self!=null))
+  ^^^^^^^^^^^^^^
+*/
+
+pred ll_tail<n, t, sm, lg> == 
+   case {
+     n=1 -> [] self::node<sm, null> & t=self & n=1 & sm=lg & -\inf<sm<\inf;
+     n!=1 -> [] self::node<sm, r> * r::ll_tail<nn, t, sm1, lg> & r!=null & sm<=sm1 & nn=n-1 & -\inf<sm<\inf;
+   }
+//inv n>=2 & self!=null & -\inf<sm & sm<=lg & lg<\inf | n=1 & self!=null & -\inf<sm & sm=lg & lg<\inf
+inv n>=1 & self!=null & -\inf<sm & sm<=lg & lg<\inf
+//inv n>=1
+/*
+  xform: (
+  (n=1 & lg=sm & self=t & 1<=(lg+(\inf)) & lg<(\inf) & 
+           t!=null) 
+    | 1<=(sm+(\inf)) & sm<=lg & lg<(\inf) & 
+           self!=null & 2<=n))
+*/
+.
+  /* todo: m=n-1 for case struct */
+ 
+lemma_safe "ll_tail2lsegL" self::ll_tail<n, t, sm, lg> & m=n-1
+       -> self::lseg<m, t, sm, lg1> * t::node<lg, null> & lg1<=lg.
+
+/*
+--pcp
+Can we eliminated exists?
+
+  xform: (exists(lg1_56:lg=max(lg1_56,sm) & lg1_56<(\inf)) & 
+           exists(sm1_55:sm<=sm1_55 & 0<(sm1_55+(\inf))) & 
+           exists(nn_53:n=nn_53+1 & 0<=(nn_53+(\inf))) 
+           & n!=0 & -\inf<sm & sm<(\inf) 
+           & lg<(\inf) & self!=null 
+           //& sm<=lg //missing
+         ) 
+         | (n=0 & p=self & sm=\inf & lg+(\inf)=0)
+
+
+*/
+

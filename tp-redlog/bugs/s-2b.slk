@@ -1,0 +1,20 @@
+data node { int val; node next }.
+
+// (1)
+checkentail true & (x+x=y & x>0) |- z::node<_,_> & y>1.
+print residue.
+
+// (2)
+checkentail z!=null & (x+x=y & x>0) |- y>1.
+print residue.
+
+// (3)
+checkentail z::node<_,_> & (x+x=y & x>0) |- z=null & y>1.
+print residue.
+
+// (4)
+checkentail z!=null & (x+x=y & x>0) |- z::node<_,_> & y>1.
+print residue.
+
+
+

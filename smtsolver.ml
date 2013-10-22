@@ -5,6 +5,8 @@ module CP = Cpure
 
 module StringSet = Set.Make(String)
 
+let set_prover_type () = Others.last_tp_used # set Others.Z3
+
 let set_generated_prover_input = ref (fun _ -> ())
 let set_prover_original_output = ref (fun _ -> ())
 
@@ -86,6 +88,7 @@ let rec smt_of_typ t =
   | HpT -> "Int"
   | INFInt 
   | Pointer _ -> Error.report_no_pattern ()
+    | Bptyp -> "int-triple"
 
 let smt_of_typ t =
   Debug.no_1 "smt_of_typ" string_of_typ (fun s -> s)
@@ -130,6 +133,7 @@ let rec smt_of_exp a =
   | CP.ListReverse _ -> illegal_format ("z3.smt_of_exp: ERROR in constraints (lists should not appear here)")
   | CP.Func _ -> illegal_format ("z3.smt_of_exp: ERROR in constraints (func should not appear here)")
   | CP.Tsconst _ -> illegal_format ("z3.smt_of_exp: ERROR in constraints (tsconst should not appear here)")
+	| CP.Bptriple _ -> ""
   | CP.ArrayAt (a, idx, l) -> 
       List.fold_left (fun x y -> "(select " ^ x ^ " " ^ (smt_of_exp y) ^ ")") (smt_of_spec_var a) idx
   | CP.InfConst _ -> Error.report_no_pattern ()
@@ -220,6 +224,7 @@ let rec smt_of_formula pr_w pr_s f =
   helper f
 
 let smt_of_formula pr_w pr_s f =
+  let _ = set_prover_type () in
   Debug.no_1 "smt_of_formula"  !CP.print_formula (fun s -> s)
     (fun _ -> smt_of_formula pr_w pr_s f) f
 
@@ -276,6 +281,8 @@ and collect_bformula_info b = match b with
       else 
         { default_formula_info with relations = [r]; }
   | _ -> default_formula_info
+
+
 
 and combine_formula_info if1 if2 =
   { relations = List.append if1.relations if2.relations;
@@ -716,7 +723,8 @@ let to_smt pr_weak pr_strong (ante : CP.formula) (conseq : CP.formula option) (p
   let conseq_fv = CP.fv conseq in
   let all_fv = Gen.BList.remove_dups_eq (=) (ante_fv @ conseq_fv) in
   let res = to_smt_v2 pr_weak pr_strong ante conseq all_fv info in
-  res
+    (* let _ = print_endline (" ### res = \n " ^ res) in *)
+    res
   
 let to_smt pr_weak pr_strong (ante : CP.formula) (conseq : CP.formula option) (prover: smtprover) = 
   Debug.no_1 "to_smt" (fun _ -> "") (fun c -> c) (fun c-> to_smt pr_weak pr_strong ante conseq prover) prover
@@ -898,7 +906,7 @@ and smt_imply_with_induction (ante : CP.formula) (conseq : CP.formula) (prover: 
 
 and smt_imply  pr_weak pr_strong (ante : Cpure.formula) (conseq : Cpure.formula) (prover: smtprover) timeout : bool =
   let pr = !print_pure in
-  Debug.no_2_loop "smt_imply" (pr_pair pr pr) string_of_float string_of_bool
+  Debug.no_2(* _loop *) "smt_imply" (pr_pair pr pr) string_of_float string_of_bool
       (fun _ _-> smt_imply_x  pr_weak pr_strong ante conseq prover timeout) (ante, conseq) timeout
 
 and smt_imply_x pr_weak pr_strong (ante : Cpure.formula) (conseq : Cpure.formula) (prover: smtprover) timeout : bool =
@@ -987,7 +995,7 @@ let imply (ante : CP.formula) (conseq : CP.formula) timeout: bool =
   )
 
 let imply (ante : CP.formula) (conseq : CP.formula) timeout: bool =
-  Debug.no_1_loop "smt.imply" string_of_float string_of_bool
+  Debug.no_1(* _loop *) "smt.imply" string_of_float string_of_bool
       (fun _ -> imply ante conseq timeout) timeout
 
 (**
@@ -1051,7 +1059,7 @@ let is_sat (pe : CP.formula) sat_no : bool =
     flush stdout;
     failwith s
 
-let is_sat f sat_no = Debug.no_2_loop "is_sat" (!print_pure) (fun x->x) string_of_bool is_sat f sat_no
+let is_sat f sat_no = Debug.no_2(* _loop *) "is_sat" (!print_pure) (fun x->x) string_of_bool is_sat f sat_no
 
 
 (**

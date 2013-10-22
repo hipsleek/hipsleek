@@ -23,7 +23,7 @@ lemma "splitLock" self::LOCK(f)<x,y> & f=f1+f2 & f1>0.0 & f2>0.0  -> self::LOCK(
 //fractional permission combining
 lemma "combineLock" self::LOCK(f1)<x,y> * self::LOCK(f2)<x,y> -> self::LOCK(f1+f2)<x,y>;
 
-void delete(ref PACKET p) requires p::PACKET<> ensures p'=null;
+void delete(ref PACKET p) requires p::PACKET<_,_,_> ensures p'=null;
 
 void delLock(ref lock l) requires l::lock<> ensures l'=null;
 
