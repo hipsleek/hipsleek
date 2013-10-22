@@ -10,7 +10,7 @@ HeapPred G(node a).
 */
 
 
-  void main()
-  {
-    return;
-  }
+  /* void main() */
+  /* { */
+  /*   return; */
+  /* } */
