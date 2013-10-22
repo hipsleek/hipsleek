@@ -805,15 +805,15 @@ such as x<1 --> x+1<=1 is allowed
 
 let allow_lsmu_infer = ref true
 
-let allow_norm = ref false
+let allow_norm = ref true
 
-let allow_ls = ref true (*enable lockset during verification*)
+let allow_ls = ref false (*enable lockset during verification*)
 
 let allow_locklevel = ref false (*enable locklevel during verification*)
 
 (* let has_locklevel = ref false *)
 
-let ann_vp = ref true (* Disable variable permissions in default, turn on in para5*)
+let ann_vp = ref false (* Disable variable permissions in default, turn on in para5*)
 
 let allow_ptr = ref false (*true -> enable pointer translation*)
 

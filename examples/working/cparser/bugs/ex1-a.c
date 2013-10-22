@@ -9,10 +9,18 @@ ll<> == self=null
 
  */
 
+// requires x::ll<>
+// ensures  x::ll<>;
+
+/*@
+HeapPred H(node__star a).
+HeapPred G(node__star a).
+*/
 void foo(struct node* x)
 /*@
- requires x::ll<>
- ensures  x::ll<>;
+ infer [H,G]
+ requires H(x)
+ ensures  G(x);
 */
  {
    if (x) {
