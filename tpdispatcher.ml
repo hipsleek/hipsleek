@@ -1642,8 +1642,21 @@ let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
 
 let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
   let f = cnv_ptr_to_int f in
-  tp_is_sat_no_cache f sat_no
-  
+  let flag = tp_is_sat_no_cache f sat_no in 
+  if !Globals.allow_inf && !Globals.allow_inf_qe
+  then  
+    let exists_inf f = 
+      let alist  = Infinity.quantifier_elim f in
+       let rec aux al = match al with
+         | [] -> false
+         | x::xs -> let f = tp_is_sat_no_cache f sat_no in
+                    (*let _ = print_endline ("Ante :"^(Cprinter.string_of_pure_formula x)) in*)
+                    if f then true else aux xs
+       in aux alist in
+    let forall_lst = Infinity.get_inst_forall f in 
+    let forall_lst = f::forall_lst in 
+    let f = List.exists (fun c -> exists_inf c) forall_lst in f
+  else flag 
 
 let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) = 
   Gen.Profiling.do_1 "tp_is_sat_no_cache" (tp_is_sat_no_cache f) sat_no
@@ -2359,14 +2372,19 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
   let ante = cnv_ptr_to_int ante in
   let conseq = cnv_ptr_to_int_weak conseq in
   let flag = tp_imply_no_cache ante conseq imp_no timeout process in
-  if !Globals.allow_inf && not(flag) && !Globals.allow_inf_qe
-  then let alist  = Infinity.quantifier_elim ante in
+  if !Globals.allow_inf && !Globals.allow_inf_qe
+  then
+    let exists_inf f = 
+      let alist  = Infinity.quantifier_elim f in
        let rec aux al = match al with
          | [] -> false
          | x::xs -> let f = tp_imply_no_cache x conseq imp_no timeout process in
                     (*let _ = print_endline ("Ante :"^(Cprinter.string_of_pure_formula x)) in*)
                     if f then true else aux xs
-       in aux alist
+       in aux alist in
+    let forall_lst = Infinity.get_inst_forall ante in 
+    let forall_lst = ante::forall_lst in
+    let f = List.for_all (fun c -> exists_inf c) forall_lst in f
   else flag 
 
 (* let tp_imply_no_cache ante conseq imp_no timeout process = *)

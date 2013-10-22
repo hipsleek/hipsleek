@@ -1383,7 +1383,52 @@ let gen_instantiations (svl: CP.spec_var list) (fl: CP.formula list) : CP.formul
 Debug.no_1 "gen_instants" (pr_list string_of_pure_formula) (pr_list string_of_pure_formula)
 (fun _ -> gen_instantiations svl fl) fl
 
+let rec elim_forall (f: CP.formula) : CP.formula = 
+  let helper qid qf = 
+    let inner_f = elim_forall qf in 
+    let ins_lst = gen_instantiations [qid] [] in
+    let l = List.map (fun pf -> arith_simplify 199 (mkAnd pf inner_f no_pos)) ins_lst in
+    conj_of_list l no_pos in
+    match f with
+      | CP.BForm (b,fl) -> f
+      | CP.And (pf1,pf2,pos) -> 
+            let pf1 = elim_forall pf1 in
+            let pf2 = elim_forall pf2 in
+            CP.And(pf1,pf2,pos) 
+      | CP.AndList pflst -> f
+      | CP.Or (pf1,pf2,fl,pos) -> 
+            let pf1 = elim_forall pf1 in
+            let pf2 = elim_forall pf2 in
+            CP.Or(pf1,pf2,fl,pos) 
+      | CP.Not (nf,fl,pos) -> 
+            let nf = elim_forall nf
+            in CP.Not(nf,fl,pos)
+      | CP.Forall (qid, qf,fl,pos) -> 
+            let insf = helper qid qf in 
+            CP.And(f,insf,pos)
+      | CP.Exists (qid, qf,fl,pos) -> 
+            let qf = elim_forall qf
+            in CP.Exists(qid,qf,fl,pos)
+
+let elim_forall (f: CP.formula) : CP.formula = 
+Debug.no_1 "elim_forall_inf" string_of_pure_formula string_of_pure_formula elim_forall f
+
+let get_inst_forall (f:CP.formula): CP.formula list = 
+  let vars,f,_,_ = CP.split_forall_quantifiers f in
+  let ins_lst = gen_instantiations vars [] in
+  List.map (fun pf -> arith_simplify 198 (mkAnd pf f no_pos)) ins_lst 
+
+let get_inst_forall (f:CP.formula): CP.formula list = 
+Debug.no_1 "elim_inf_forall" string_of_pure_formula (pr_list string_of_pure_formula)
+get_inst_forall f
+
 let quantifier_elim (f: CP.formula): CP.formula list = 
+  (*let f = elim_forall f in *)
+  (*let _ = print_endline("f: "^(string_of_pure_formula f)) in*)
   let vars = List.filter (fun c -> not(is_inf_sv c)) (CP.fv f) in
   let ins_lst = gen_instantiations vars [] in
-  List.map (fun pf -> arith_simplify 200  (mkAnd pf f no_pos)) ins_lst 
+  List.map (fun pf -> arith_simplify 200 (mkAnd pf f no_pos)) ins_lst 
+
+let quantifier_elim (f: CP.formula): CP.formula list = 
+Debug.no_1 "elim_inf_exists" string_of_pure_formula (pr_list string_of_pure_formula)
+quantifier_elim f
