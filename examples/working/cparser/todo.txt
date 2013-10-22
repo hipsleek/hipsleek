@@ -7,6 +7,17 @@ list all examples/features supported
 
 parser: to support HeapPred H(node a).
 
+/*@
+HeapPred H(struct node* a).
+HeapPred G(struct node* a).
+*/
+/*
+ infer [H,G]
+ requires H(x)
+ ensures  G(x);
+*/
+
+
 ==================================================================
 
 

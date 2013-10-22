@@ -6205,7 +6205,7 @@ and doDecl (isglobal: bool) : A.definition -> chunk = function
           Parser.parse_c_program_spec fname hspec base_loc
         with _ -> 
           let error_loc = ("line " ^ string_of_int (loc.Cabs.start_pos.lineno)) in
-          raise (HipSpecsError ("Program specs erro: " ^ error_loc))
+          raise (HipSpecsError ("Program specs error: " ^ error_loc))
       ) in
       cabsPushGlobal (GHipProgSpec (progspec, !currentLoc));
       empty

@@ -2,15 +2,22 @@
 struct node {
   int val;
   struct node* next;
-};
-
+} _node;
 /*@
-HeapPred H(node a).
-HeapPred G(node a).
+ll<> == self=null
+  or self::node^<_,p>*p::ll<>;
+
+ */
+
+void foo(struct node* x)
+/*@
+ requires x::ll<>
+ ensures  x::ll<>;
 */
+ {
+   if (x) {
+     foo(x->next);
+   }
+   return;
+ }
 
-
-  /* void main() */
-  /* { */
-  /*   return; */
-  /* } */
