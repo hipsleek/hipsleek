@@ -3296,7 +3296,7 @@ and doExp (asconst: bool)   (* This expression is used as a constant *)
         with Not_found -> begin
           if (n = "NULL") then (
             (* TRUNG: consider NULL as a built-in variable and pass through *)
-            let vi = {vname = "NULL";
+            let vi = {vname = "null";
                       vtype = TPtr (TVoid [], []);
                       vattr = [];
                       vstorage = NoStorage;
