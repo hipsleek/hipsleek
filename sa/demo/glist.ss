@@ -12,6 +12,9 @@ data GList { int key;
 lseg<p> == self=p
   or self::GList<_,_,n> * n::lseg<p> & self!=null;
 
+dlseg<x,y> == self=y & x=null
+  or self::GList<_,x,n> * n::dlseg<self,y> & self!=null;
+
 /**
  * g_list_alloc:
  * @Returns: a pointer to the newly-allocated #GList element.
@@ -310,8 +313,8 @@ HeapPred H2_concat(GList a).
 HeapPred G_concat(GList a).
 GList
 g_list_concat (GList list1, GList list2)
-  infer [H1_concat,H2_concat, G_concat]
-  requires H1_concat(list1)*H2_concat(list2)
+  infer [H1_concat, H2_concat, G_concat]
+  requires H1_concat(list1)* H2_concat(list2)
   ensures G_concat(res);
 {
   GList tmp_list;
@@ -319,11 +322,15 @@ g_list_concat (GList list1, GList list2)
   if (list2 !=null)
     {
       tmp_list = g_list_last (list1);
-      if (tmp_list!=null)
+      //dprint;
+      if (tmp_list!=null){
 	tmp_list.next = list2;
+        dprint;
+      }
       else
 	list1 = list2;
-      list2.prev = tmp_list;
+      //dprint;
+       list2.prev = tmp_list;
     }
   
   return list1;
@@ -629,11 +636,19 @@ HeapPred H_last(GList a).
 HeapPred G_last(GList a).
 
 GList
- g_list_last (GList list)
+ g_list_last2 (GList list)
  case { list=null -> ensures res=null;
    list!=null ->
      requires list::lseg<l> * l::GList<a,b,null>
   ensures list::lseg<res> * res::GList<a,b,null>;
+}
+
+GList
+ g_list_last (GList list)
+ case { list=null -> ensures res=null;
+   list!=null ->
+     requires list::dlseg<p,l> * l::GList<a,x2,null>
+     ensures list::dlseg<p,res> * res::GList<a,x2,null>;
 }
 
 GList
