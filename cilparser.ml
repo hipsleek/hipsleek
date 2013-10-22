@@ -533,8 +533,10 @@ and translate_typ (t: Cil.typ) pos : Globals.typ =
 and translate_var (vinfo: Cil.varinfo) (lopt: Cil.location option) : Iast.exp =
   let pos = match lopt with None -> no_pos | Some l -> translate_location l in
   let name = vinfo.Cil.vname in
-  let newexp = Iast.mkVar name pos in
-  newexp
+  if (String.compare name "null" = 0) then
+    (Iast.Null pos)
+  else 
+    (Iast.mkVar name pos)
 
 
 and translate_var_decl (vinfo: Cil.varinfo) : Iast.exp =
