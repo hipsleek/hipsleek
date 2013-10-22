@@ -212,7 +212,23 @@ and unify_type_modify (modify_flag:bool) (k1 : spec_var_kind) (k2 : spec_var_kin
       | Int, Float -> (tl,Some Float) (*LDK: support floating point*)
       | Float, Int -> (tl,Some Float) (*LDK*)
       | Tree_sh, Tree_sh -> (tl,Some Tree_sh)
-      | t1, t2  -> 
+      | Named n1, Named n2 when (String.compare n1 "memLoc" = 0) -> (
+          let re = Str.regexp "__star$" in
+          try
+            let _ = Str.search_forward re n2 0 in
+            (tl, Some (Named n2))
+          with Not_found -> report_error no_pos ("UNIFICATION ERROR : at location "
+            ^" types " ^ n1 ^" and "^ n2 ^" are inconsistent")
+        )
+      | Named n1, Named n2 when (String.compare n2 "memLoc" = 0) -> (
+          let re = Str.regexp "__star$" in
+          try
+            let _ = Str.search_forward re n1 0 in
+            (tl, Some (Named n1))
+          with Not_found -> report_error no_pos ("UNIFICATION ERROR : at location "
+            ^" types " ^ n1 ^" and "^ n2 ^" are inconsistent")
+        )
+      | t1, t2  -> (
           if sub_type t1 t2 then (tlist, Some k2)  (* found t1, but expecting t2 *)
           else if sub_type t2 t1 then (tlist,Some k1)
           else 
@@ -234,6 +250,7 @@ and unify_type_modify (modify_flag:bool) (k1 : spec_var_kind) (k2 : spec_var_kin
                   | _,(n_tl,_) -> (n_tl,None))
               | _,_ -> (tl,None)
             end
+        )
   in unify k1 k2 tlist
 
 (* k2 is expected type *)

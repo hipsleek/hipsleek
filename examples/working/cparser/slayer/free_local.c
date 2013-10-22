@@ -22,5 +22,7 @@ void free(int* p) __attribute__ ((noreturn))
 
 void main() {
   int x;
-  free(&x);
+  int *y = malloc(1);
+  free(y);
+  //free(&x);
 }
