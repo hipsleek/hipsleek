@@ -1017,7 +1017,7 @@ let string_of_program_separate_prelude p iprims= (* "\n" ^ (string_of_data_decl_
   (string_of_proc_decl_list (helper_chop p.prog_proc_decls (List.length iprims.prog_proc_decls))) ^ "\n"
 ;;                                                                                                                         
 
-
+Iast.print_param_list := string_of_param_list;;
 Iformula.print_one_formula := string_of_one_formula;;
 Iformula.print_h_formula :=string_of_h_formula;;
 Iformula.print_formula :=string_of_formula;;

@@ -342,7 +342,8 @@ and mkEFalse flow pos = EBase {
 
 and mkEFalseF () = mkEFalse false_flow no_pos			
 and mkETrueF () = mkETrue n_flow no_pos			
-and mkETrueTrueF () = mkETrueTrue n_flow n_flow no_pos			
+and mkETrueTrueF () = mkETrueTrue n_flow n_flow no_pos
+
 (*and mkEOr (f1:struc_formula) (f2:struc_formula) pos :struc_formula= 
 	if isEConstTrue f1 || isEConstTrue f2 then mkETrue top_flow pos
   else if isEConstFalse f1 then f2

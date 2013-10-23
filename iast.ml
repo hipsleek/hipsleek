@@ -515,6 +515,7 @@ let print_h_formula = ref (fun (x:F.h_formula) -> "Uninitialised printer")
 let print_view_decl = ref (fun (x:view_decl) -> "Uninitialised printer")
 let print_data_decl = ref (fun (x:data_decl) -> "Uninitialised printer")
 let print_exp = ref (fun (x:exp) -> "Uninitialised printer")
+let print_param_list = ref (fun (x: param list) -> "Uninitialised printer")
 
 
 let find_empty_static_specs iprog = 
@@ -723,9 +724,7 @@ and mkSpecTrue pos = Iformula.mkETrue pos
 			}];
 		srequires_pos = pos
 		}]	*)
-		
-    
-    
+
 and mkHoPred  n m mh tv ta fa s i=
       {   hopred_name = n;
           hopred_mode = m;
@@ -735,15 +734,44 @@ and mkHoPred  n m mh tv ta fa s i=
           hopred_fct_args = fa;
           hopred_shape    = s;
           hopred_invariant = i}
-	
+
+let genESpec_x args ret=
+  let _ = Debug.info_hprint (add_str "Long: generate a spec for inference" pr_id) "main procedure" no_pos in
+  (*step*)
+  (*step1: generate one HeapPred for args and one HeapPred for ret*)
+  (* see SAU.add_raw_hp_rel
+    hp_decl = { hp_name : ident; Globals.hp_default_prefix_name
+    rel_vars : ident list;
+    rel_labels : branch_label list;
+    hp_typed_inst_vars : (typ * ident * hp_arg_kind) list;
+    hp_is_pre: bool;
+    hp_formula : Iformula.formula ;
+    }
+  *)
+(* try_case_inference: bool *)
+  (*step2: add those into iproc.prog_hp_decls? How?*)
+  (*step3: generate Iformula.struc_infer_formula*)
+
+  (*for temporal input, should subst by the new generated spec*)
+  F.mkETrueTrueF () 
+
+let genESpec args ret=
+  let pr1 = !print_param_list in
+  let pr2 = string_of_typ in
+  Debug.no_2 "genESpec" pr1 pr2 !F.print_struc_formula
+      (fun _ _ -> genESpec_x args ret) args ret
+
 let mkProc sfile id flgs n dd c ot ags r ss ds pos bd =
   (* Debug.info_hprint (add_str "static spec" !print_struc_formula) ss pos; *)
   let ss = match ss with 
     | F.EList [] -> 
-          (* Debug.info_pprint "EList" pos; *)
-          F.mkETrueTrueF () 
-    | _ -> ss 
-          in
+          let _ = Debug.info_hprint (add_str "Long: generate a spec for inference" pr_id) "start" no_pos in
+          genESpec ags r
+          (* F.mkETrueTrueF ()  *)
+    | _ ->
+          (* let _ = Debug.info_hprint (add_str "Long: ex2-a" !F.print_struc_formula) ss no_pos in *)
+          ss
+  in
   { proc_name = id;
   proc_source =sfile;
   proc_flags = flgs;
