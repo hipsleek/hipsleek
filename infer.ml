@@ -992,7 +992,7 @@ let rec infer_pure_m_x unk_heaps estate lhs_rels lhs_xpure_orig lhs_xpure0
           (* else *)
           simplify new_p iv
         in
-        let _ = DD.tinfo_hprint (add_str "new_p: " !CP.print_formula) new_p pos in
+        let _ = DD.ninfo_hprint (add_str "new_p: " !CP.print_formula) new_p pos in
         let _ = DD.tinfo_hprint (add_str "new_p_ass: " !CP.print_formula) new_p_ass pos in
         (* abstract common terms from disj into conjunctive form *)
         if (CP.isConstTrue new_p || CP.isConstFalse new_p) then 
@@ -1138,14 +1138,18 @@ let rec infer_pure_m_x unk_heaps estate lhs_rels lhs_xpure_orig lhs_xpure0
                           else
                             let pf1 = (CP.mkAnd lhs_xpure (CP.conj_of_list (ps@rs) pos) pos) in
                             let pf2 = TP.simplify_with_pairwise 2 pf1 in
-                            let pf = MCP.mix_of_pure pf2 in
-                            (* let _ = DD.info_hprint (add_str "pf1" !CP.print_formula) pf1 pos in *)
+                            (* let pf = MCP.mix_of_pure pf2 in *)
+                            let _ = DD.info_hprint (add_str "pf1" !CP.print_formula) pf1 pos in
+                            let _ = DD.info_hprint (add_str "lhs_wo_heap" !CP.print_formula) ( lhs_wo_heap) pos in
                             (* let pf2 = TP.simplify_raw pf1 in *)
                             (* let pf = (MCP.mix_of_pure pf2) in *)
                             (* let _ = DD.info_hprint (add_str "pf2(simplify_raw)" !CP.print_formula) pf2 pos in  *)
                             let new_estate = {estate with es_formula = 
                                     (match estate.es_formula with
-                                      | Base b -> CF.mkBase_simp b.formula_base_heap pf
+                                      | Base b ->
+                                            let ptrs = CF.h_fv b.formula_base_heap in
+                                            let p = CP.filter_var (MCP.pure_of_mix b.formula_base_pure) ptrs in
+                                            CF.mkBase_simp b.formula_base_heap (MCP.mix_of_pure (CP.mkAnd pf2 p (CP.pos_of_formula pf2)))
                                       | _ -> report_error pos "infer_pure_m: Not supported")
                             } 
                             in

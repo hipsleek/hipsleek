@@ -980,6 +980,7 @@ and check_scall_fork prog ctx e0 (post_start_label:formula_label) ret_t mn lock 
     let to_vars = actual_spec_vars @ (List.map CP.to_primed actual_spec_vars) in
     (* Termination: Cache the subst for output pretty printing *)
     (* Assume: fork is not a recursive call*)
+    (* let _ = print_endline (("\n ### renamed_spec: ") ^ (Cprinter.string_of_struc_formula renamed_spec)) in *)
     let renamed_spec = CF.subst_struc st1 renamed_spec in
     let renamed_spec = CF.subst_struc_avoid_capture fr_vars to_vars renamed_spec in
     let st2 = List.map (fun v -> (CP.to_unprimed v, CP.to_primed v)) actual_spec_vars in
@@ -1007,7 +1008,7 @@ and check_scall_fork prog ctx e0 (post_start_label:formula_label) ret_t mn lock 
 
 	let _ = if !print_proof && should_output_html then Prooftracer.pop_div () in
     let _ = PTracer.log_proof prf in
-    (* let _ = print_endline (("\n ### fork: after res ctx: ") ^ (Cprinter.string_of_list_failesc_context rs)) in *)
+    (* let _ = print_endline (("\n ###  after res ctx: ") ^ (Cprinter.string_of_list_failesc_context rs)) in *)
     if (CF.isSuccessListFailescCtx sctx) && (CF.isFailListFailescCtx rs) then
       if (!Globals.web_compile_flag) then
         Debug.print_info "procedure call" ("\nProving precondition in forked method " ^ proc.proc_name ^ " has failed \n") pos
