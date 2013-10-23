@@ -29,11 +29,16 @@ Failed States:
 Procedure foo$node__star result FAIL.(1)
 
 ==================================================================
-# ex2-b.ss
+# ex2-b.ss: DONE
 
-  generate inferred specs for empty specs (see ex2-a.ss)
-
+  - generate inferred specs for empty specs (see ex2-a.ss)
+  - ref
+  - NI/I
 ==================================================================
+# ex2-?.ss:
+generate inferred specs for empty specs
+  - ref
+  - NI/I
 ==================================================================
 ==================================================================
 ==================================================================

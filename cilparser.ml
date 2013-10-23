@@ -1168,7 +1168,7 @@ and translate_fundec (fundec: Cil.fundec) (lopt: Cil.location option) : Iast.pro
     Iast.proc_mingled_name = mingled_name;
     Iast.proc_data_decl = None;
     Iast.proc_flags = [] ;
-		Iast.proc_hp_decls = [];
+    Iast.proc_hp_decls = [];
     Iast.proc_constructor = false;
     Iast.proc_args = funargs;
     Iast.proc_source = ""; (* WN : need to change *)

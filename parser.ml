@@ -2252,7 +2252,9 @@ hprogn:
         | Axm adef -> axiom_defs := adef :: !axiom_defs (* An Hoa *)
         | Global_var glvdef -> global_var_defs := glvdef :: !global_var_defs
         | Logical_var lvdef -> logical_var_defs := lvdef :: !logical_var_defs
-        | Proc pdef -> proc_defs := pdef :: !proc_defs 
+        | Proc pdef ->
+              let _ = List.iter (fun n_hp_decl -> hp_defs # push n_hp_decl) pdef.Iast.proc_hp_decls in
+              proc_defs := pdef :: !proc_defs 
         | Coercion_list cdef -> coercion_defs := cdef :: !coercion_defs in
     let _ = List.map choose t in
     let obj_def = { data_name = "Object";
