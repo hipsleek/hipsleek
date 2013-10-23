@@ -1425,9 +1425,11 @@ get_inst_forall f
 let quantifier_elim (f: CP.formula): CP.formula list = 
   (*let f = elim_forall f in *)
   (*let _ = print_endline("f: "^(string_of_pure_formula f)) in*)
-  let vars = List.filter (fun c -> not(is_inf_sv c)) (CP.fv f) in
+  (*let vars = List.filter (fun c -> not(is_inf_sv c)) (CP.fv f) in*)
+  let vars,f = CP.split_ex_quantifiers f in
   let ins_lst = gen_instantiations vars [] in
-  List.map (fun pf -> arith_simplify 200 (mkAnd pf f no_pos)) ins_lst 
+  let ls = List.map (fun pf -> arith_simplify 200 (mkAnd pf f no_pos)) ins_lst 
+  in f::ls
 
 let quantifier_elim (f: CP.formula): CP.formula list = 
 Debug.no_1 "elim_inf_exists" string_of_pure_formula (pr_list string_of_pure_formula)

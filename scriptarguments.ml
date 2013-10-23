@@ -236,7 +236,12 @@ let common_arguments = [
   ("--dis-imm-inv", Arg.Clear Globals.allow_imm_inv,"disable the additionof of immutability invariant for implication");
   ("--dis-inf", Arg.Clear Globals.allow_inf,"disable support for infinity ");
   ("--en-inf", Arg.Set Globals.allow_inf,"enable support for infinity ");
-  ("--en-inf-qe", Arg.Set Globals.allow_inf_qe,"enable support for quantifier elimination in PAinfinity ");
+  ("--en-inf-qe", Arg.Unit( fun _ ->
+	Globals.allow_inf_qe := true;
+	Globals.elim_exists_flag := false;
+	Globals.simplify_imply := false;
+	Globals.filtering_flag := false;),
+	"enable support for quantifier elimination in PAinfinity ");
   ("--dsd", Arg.Set Globals.deep_split_disjuncts,"enable deep splitting of disjunctions");
   ("--ioc", Arg.Set Globals.check_integer_overflow,"Enable Integer Overflow Checker");
   ("--no-coercion", Arg.Clear Globals.use_coercion,
