@@ -184,6 +184,7 @@ param_loc : loc }
 and proc_decl = { proc_name : ident;
 mutable proc_mingled_name : ident;
 mutable proc_data_decl : data_decl option; (* the class containing the method *)
+mutable proc_hp_decls : hp_decl list; (* add hp decl list for proc *)
 proc_flags: (ident*ident*(flags option)) list;
 proc_source : ident;
 proc_constructor : bool;
@@ -735,10 +736,39 @@ and mkHoPred  n m mh tv ta fa s i=
           hopred_shape    = s;
           hopred_invariant = i}
 
-let genESpec_x args ret=
+let rec get_typed_pre_hp args =
+	match args with
+	| [] -> []
+	| arg :: args -> (arg.param_type, arg.param_name, Globals.I) :: get_typed_pre_hp args
+
+let get_typed_post_hp args ret =
+	match ret with
+	| Globals.Void -> get_typed_pre_hp args
+	| typ -> get_typed_pre_hp args @ [(typ, res_name, Globals.I)]
+
+let genESpec_x args ret pos=
   let _ = Debug.info_hprint (add_str "Long: generate a spec for inference" pr_id) "main procedure" no_pos in
   (*step*)
   (*step1: generate one HeapPred for args and one HeapPred for ret*)
+	let hp_pre_decl = {
+			hp_name = Globals.hp_default_prefix_name ^ (string_of_int (Globals.fresh_int()));
+			hp_typed_inst_vars = List.map (fun arg -> (arg.param_type, arg.param_name, Globals.I))
+				(*get_typed_pre_hp*) args;
+			hp_is_pre = true;
+			hp_formula = F.mkBase F.HEmp (P.mkTrue pos) top_flow [] pos;
+	}
+	in
+	let hp_post_decl = {
+		    hp_name = Globals.hppost_default_prefix_name ^ (string_of_int (Globals.fresh_int()));
+				hp_typed_inst_vars = (List.map (fun arg -> (arg.param_type, arg.param_name, Globals.I))
+					(*get_typed_post_hp*) args)@
+						(match ret with
+							| Globals.Void -> []
+							| _ -> [(ret, res_name, Globals.I)]
+						);
+		    hp_is_pre = false;
+		    hp_formula = F.mkBase F.HEmp (P.mkTrue pos) top_flow [] pos;} in
+				
   (* see SAU.add_raw_hp_rel
     hp_decl = { hp_name : ident; Globals.hp_default_prefix_name
     rel_vars : ident list;
@@ -753,29 +783,37 @@ let genESpec_x args ret=
   (*step3: generate Iformula.struc_infer_formula*)
 
   (*for temporal input, should subst by the new generated spec*)
-  F.mkETrueTrueF () 
-
-let genESpec args ret=
+  (F.EInfer {
+		F.formula_inf_post = true;
+	  F.formula_inf_xpost = None;
+		F.formula_inf_transpec = None;
+		F.formula_inf_vars = (hp_pre_decl.hp_name, Globals.Unprimed) :: (hp_post_decl.hp_name, Globals.Unprimed) :: [];
+		F.formula_inf_continuation = F.EList [] (*not sure*);
+		F.formula_inf_pos = pos;
+		}	, [hp_pre_decl;hp_post_decl])
+	
+let genESpec args ret pos=
   let pr1 = !print_param_list in
   let pr2 = string_of_typ in
-  Debug.no_2 "genESpec" pr1 pr2 !F.print_struc_formula
-      (fun _ _ -> genESpec_x args ret) args ret
+  Debug.no_2 "genESpec" pr1 pr2 (pr_pair !F.print_struc_formula pr_none)
+      (fun _ _ -> genESpec_x args ret pos) args ret
 
 let mkProc sfile id flgs n dd c ot ags r ss ds pos bd =
   (* Debug.info_hprint (add_str "static spec" !print_struc_formula) ss pos; *)
-  let ss = match ss with 
+  let ss, n_hp_dcls = match ss with 
     | F.EList [] -> 
           let _ = Debug.info_hprint (add_str "Long: generate a spec for inference" pr_id) "start" no_pos in
-          genESpec ags r
-          (* F.mkETrueTrueF ()  *)
+             genESpec ags r pos
+		        (* F.mkETrueTrueF ()  *)
     | _ ->
           (* let _ = Debug.info_hprint (add_str "Long: ex2-a" !F.print_struc_formula) ss no_pos in *)
-          ss
+          ss,[]
   in
   { proc_name = id;
   proc_source =sfile;
   proc_flags = flgs;
-      proc_mingled_name = n; 
+		proc_hp_decls = n_hp_dcls;
+		  proc_mingled_name = n; 
       proc_data_decl = dd;
       proc_constructor = c;
       proc_exceptions = ot;
@@ -2339,6 +2377,7 @@ let add_bar_inits prog =
 			  proc_flags = [];
 			  proc_mingled_name = "";
 			  proc_data_decl = None ;
+				proc_hp_decls = [];
 			  proc_constructor = false;
 			  proc_args = {param_type =barrierT; param_name = "b"; param_mod = RefMod;param_loc=no_pos}::
 				(List.map (fun (t,n)-> {param_type =t; param_name = n; param_mod = NoMod;param_loc=no_pos})

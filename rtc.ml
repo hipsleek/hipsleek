@@ -224,6 +224,7 @@ and compile_pre (prog : C.prog_decl) (proc : C.proc_decl) (pre : CF.formula) jav
       { I.proc_name = "traverse";
       I.proc_source = "source_file";
 	  I.proc_flags = [];
+		I.proc_hp_decls = [];
       I.proc_mingled_name = "";
       I.proc_data_decl = None;
       I.proc_constructor = false;
@@ -300,6 +301,7 @@ and compile_post (prog : C.prog_decl) (proc : C.proc_decl) (post : CF.formula) (
       { I.proc_name = "traverse";
       I.proc_source = "source_file";
 	  I.proc_flags = [];
+		I.proc_hp_decls = [];
       I.proc_mingled_name = "";
       I.proc_data_decl = None;
       I.proc_constructor = false;
