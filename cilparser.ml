@@ -1163,13 +1163,13 @@ and translate_fundec (fundec: Cil.fundec) (lopt: Cil.location option) : Iast.pro
         Some (Iast.mkBlock body Iast.NoJumpLabel [] pos)
   ) in
   let filename = pos.start_pos.Lexing.pos_fname in
-	let hp_decls = [] in
+	let hp_decls = Iast.genESpec funargs return_typ pos in
   let newproc : Iast.proc_decl = {
     Iast.proc_name = name;
     Iast.proc_mingled_name = mingled_name;
     Iast.proc_data_decl = None;
     Iast.proc_flags = [] ;
-    Iast.proc_hp_decls = hp_decls;
+    Iast.proc_hp_decls = [];
     Iast.proc_constructor = false;
     Iast.proc_args = funargs;
     Iast.proc_source = ""; (* WN : need to change *)
