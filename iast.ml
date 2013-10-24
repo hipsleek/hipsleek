@@ -746,7 +746,7 @@ let genESpec_x args ret pos=
       hp_formula = F.mkBase F.HEmp (P.mkTrue pos) top_flow [] pos;
   }
   in
-  let _ = Debug.info_hprint (add_str "generate HP for Pre" !print_hp_decl) hp_pre_decl no_pos in
+  let _ = Debug.ninfo_hprint (add_str "generate HP for Pre" !print_hp_decl) hp_pre_decl no_pos in
   let hp_post_decl = {
       hp_name = Globals.hppost_default_prefix_name ^ (string_of_int (Globals.fresh_int()));
       hp_typed_inst_vars = (List.fold_left (fun r arg ->
@@ -764,11 +764,11 @@ let genESpec_x args ret pos=
       hp_is_pre = false;
       hp_formula = F.mkBase F.HEmp (P.mkTrue pos) top_flow [] pos;}
   in
-  let _ = Debug.info_hprint (add_str "generate HP for Post" !print_hp_decl) hp_post_decl no_pos in
+  let _ = Debug.ninfo_hprint (add_str "generate HP for Post" !print_hp_decl) hp_post_decl no_pos in
   let pre_eargs = List.map (fun p -> P.Var ((p.param_name, Unprimed),pos)) args in
   (*todo: care ref args*)
   let post_eargs0 = List.fold_left (fun r p ->
-      let _ = Debug.info_hprint (add_str "Long" pr_id) "handle ref params here" no_pos in
+      let _ = Debug.ninfo_hprint (add_str "Long" pr_id) "handle ref params here" no_pos in
       let up_arg = P.Var ((p.param_name, Unprimed),pos) in
       let hp_args =
         if p.param_mod = RefMod then [up_arg; (P.Var ((p.param_name, Primed),pos))]
@@ -780,7 +780,8 @@ let genESpec_x args ret pos=
     | Void -> post_eargs0
     | _ -> post_eargs0@[P.Var ((res_name, Unprimed),pos)]
   in
-  let ipost_simpl = (F.formula_of_heap_with_flow (F.HRel (hp_post_decl.hp_name, pre_eargs, pos)) n_flow pos) in
+  let _ = Debug.ninfo_hprint (add_str "post_eargs" (pr_list !Ipure.print_formula_exp)) post_eargs no_pos in
+  let ipost_simpl = (F.formula_of_heap_with_flow (F.HRel (hp_post_decl.hp_name, post_eargs, pos)) n_flow pos) in
   let ipost = F.mkEAssume ipost_simpl ( F.mkEBase [] [] [] ipost_simpl None pos) (fresh_formula_label "") None in
   let ipre = F.mkEBase [] [] [] (F.formula_of_heap_with_flow (F.HRel (hp_pre_decl.hp_name, pre_eargs, pos)) n_flow pos) (Some ipost) pos in
   (* generate Iformula.struc_infer_formula*)
