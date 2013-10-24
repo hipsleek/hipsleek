@@ -5,6 +5,11 @@ struct node {
 };
 
 /*@
+pred_prim memLoc<heap:bool,size:int>
+  inv size>0;
+*/
+
+/*@
 ll<> == self=null
   or self::node^<_,p>*p::ll<>;
 */
