@@ -139,9 +139,16 @@ and lex_info = {
     lex_loc : loc; (* location of LexVar *)
 }
 
+and rankrel = {
+  rank_id: spec_var;
+  rank_args: spec_var list;
+}
+
 and p_formula =
   | XPure of xpure_view
   | LexVar of lex_info
+  (* TermInf: Relation for ranking variables *)
+  | RankRel of rankrel
   | BConst of (bool * loc)
   | BVar of (spec_var * loc)
   | Lt of (exp * exp * loc)
@@ -1048,6 +1055,7 @@ and bfv (bf : b_formula) =
     | VarPerm (t,ls,_) -> ls
     | LexVar l_info ->
           List.concat (List.map afv (l_info.lex_exp @ l_info.lex_tmp))
+    | RankRel rrel -> rrel.rank_id :: rrel.rank_args 
 
 and combine_avars (a1 : exp) (a2 : exp) : spec_var list =
   let fv1 = afv a1 in
@@ -1447,6 +1455,8 @@ and is_float_type (t : typ) = match t with
 
 and is_float_var (sv : spec_var) : bool = is_float_type (type_of_spec_var sv)
 
+and is_int_var (sv : spec_var) : bool = is_int_type (type_of_spec_var sv)
+
 and is_list_var (sv : spec_var) : bool = is_list_type (type_of_spec_var sv)
 
 and is_float_exp exp = 
@@ -1635,6 +1645,7 @@ and partition_by_const eql =
 and is_b_form_arith (b: b_formula) :bool = let (pf,_) = b in
 match pf with
   | BConst _  | BVar _ | SubAnn _ | LexVar _ | XPure _ -> true
+  | RankRel _ -> false
   | Lt (e1,e2,_) | Lte (e1,e2,_)  | Gt (e1,e2,_) | Gte (e1,e2,_) | Eq (e1,e2,_) 
   | Neq (e1,e2,_) -> (is_exp_arith e1)&&(is_exp_arith e2)
   | EqMax (e1,e2,e3,_) | EqMin (e1,e2,e3,_) -> (is_exp_arith e1)&&(is_exp_arith e2) && (is_exp_arith e3)
@@ -1763,6 +1774,11 @@ and mkLexVar t_ann m i pos =
       lex_tmp = i;
       lex_loc = pos;
   }
+
+and mkRankRel view_rank_id data_rank_args =
+  RankRel {
+    rank_id = view_rank_id;
+    rank_args = data_rank_args; }
 
 and mkPure bf = BForm ((bf,None), None)
 
@@ -2610,6 +2626,7 @@ and pos_of_b_formula (b: b_formula) =
   let (p, _) = b in
   match p with
     | LexVar l_info -> l_info.lex_loc
+    | RankRel _ -> no_pos
     | SubAnn (_, _, p) -> p
     | BConst (_, p) -> p
     | XPure x -> x.xpure_view_pos
@@ -2660,6 +2677,7 @@ and list_pos_of_formula f rs: loc list=
 
 and subst_pos_pformula p pf= match pf with
   | LexVar l_info -> LexVar {l_info with lex_loc=p}
+  | RankRel _ -> pf
   | SubAnn (e1, e2, _) -> SubAnn (e1, e2, p)
   | BConst (b,_) -> BConst (b,p)
   | XPure x -> XPure {x with xpure_view_pos = p}
@@ -2967,7 +2985,11 @@ and b_apply_subs_x sst bf =
     | LexVar t_info -> 
         LexVar { t_info with
 				  lex_exp = e_apply_subs_list sst t_info.lex_exp;
-					lex_tmp = e_apply_subs_list sst t_info.lex_tmp; } 
+					lex_tmp = e_apply_subs_list sst t_info.lex_tmp; }
+    | RankRel rrel -> 
+        RankRel {
+          rank_id = subs_one sst rrel.rank_id;
+          rank_args = List.map (subs_one sst) rrel.rank_args; }
   in
   (* Slicing: Add the inferred linking variables into sl field *)
   (* We also restore the prior inferred information            *)
@@ -3201,7 +3223,8 @@ and b_apply_par_term (sst : (spec_var * exp) list) bf =
     | LexVar t_info -> 
           LexVar { t_info with 
 	      lex_exp = a_apply_par_term_list sst t_info.lex_exp;
-	      lex_tmp = a_apply_par_term_list sst t_info.lex_tmp; } 
+	      lex_tmp = a_apply_par_term_list sst t_info.lex_tmp; }
+    | RankRel _ -> pf
   in (npf,il)
 
 and subs_one_term sst v orig = List.fold_left (fun old  -> fun  (fr,t) -> if (eq_spec_var fr v) then t else old) orig sst 
@@ -3311,7 +3334,8 @@ and b_apply_one_term ((fr, t) : (spec_var * exp)) bf =
     | LexVar t_info -> 
           LexVar { t_info with
 	      lex_exp = List.map (a_apply_one_term (fr, t)) t_info.lex_exp; 
-	      lex_tmp = List.map (a_apply_one_term (fr, t)) t_info.lex_tmp; } 
+	      lex_tmp = List.map (a_apply_one_term (fr, t)) t_info.lex_tmp; }
+    | RankRel _ -> pf
   in (npf,il)
 
 and a_apply_one_term ((fr, t) : (spec_var * exp)) e = match e with
@@ -4563,6 +4587,7 @@ and b_apply_one_exp (fr, t) bf =
       LexVar { t_info with
 			  lex_exp = e_apply_one_list_exp (fr, t) t_info.lex_exp; 
 				lex_tmp = e_apply_one_list_exp (fr, t) t_info.lex_tmp; }
+  | RankRel _ -> pf
   in (npf,il)
 
 and e_apply_one_exp (fr, t) e = match e with
@@ -5306,6 +5331,7 @@ and b_form_simplify_x (b:b_formula) :b_formula =
   let npf = match pf with
     |  BConst _ 
     |  SubAnn _ | LexVar _ | XPure _
+    |  RankRel _
     |  BVar _ -> pf
     |  Lt (e1, e2, l) ->
            let lh, rh = do_all e1 e2 l in
@@ -5714,6 +5740,7 @@ let foldr_b_formula (e:b_formula) (arg:'a) f f_args f_comb
               (LexVar { t_info with 
 							  lex_exp = n_lex_exp; lex_tmp = n_lex_tmp;  
 							}, f_comb rs)
+      | RankRel _ -> (pf,f_comb [])
 		in ((npf, nannot), f_comb [opt1; opt2])
   in (helper2 arg e)
 
@@ -5810,6 +5837,7 @@ let transform_b_formula f (e:b_formula) :b_formula =
 		  let nle = List.map (transform_exp f_exp) t_info.lex_exp in
 		  let nlt = List.map (transform_exp f_exp) t_info.lex_tmp in
 		  LexVar { t_info with lex_exp = nle; lex_tmp = nlt; }
+      | RankRel _ -> pf
 	  in (npf,il)
 
 (*
@@ -6159,13 +6187,14 @@ let norm_bform_a (bf:b_formula) : b_formula =
         | EqMin _ |  BagSub _ | BagMin _ 
         | BagMax _ | ListAllN _ | ListPerm _ | SubAnn _ -> pf
         | VarPerm _ -> pf
-	    | RelForm (id,exs,l) -> 
+	      | RelForm (id,exs,l) -> 
               let exs = List.map norm_exp exs in
               RelForm (id,exs,l)
- 	    | LexVar t_info -> 
+ 	      | LexVar t_info -> 
               let nle = List.map norm_exp t_info.lex_exp in
               let nlt = List.map norm_exp t_info.lex_tmp in
               LexVar { t_info with lex_exp = nle; lex_tmp = nlt; }
+        | RankRel _ -> pf
    in (npf, il)
 
 let norm_exp b =
@@ -7136,6 +7165,7 @@ let norm_bform_b (bf:b_formula) : b_formula =
 				lex_tmp = List.map norm_exp t_info.lex_tmp; }
     | SubAnn _
     | VarPerm _
+    | RankRel _
     | XPure _ | BConst _ | BVar _ | EqMax _ 
     | EqMin _ |  BagSub _ | BagMin _ 
     | BagMax _ | ListAllN _ | ListPerm _ -> pf
@@ -10253,6 +10283,7 @@ let level_vars_b_formula bf =
 	| ListPerm _
 	| RelForm _
 	| LexVar _
+  | RankRel _
 	| BConst _
 	| BVar _ 
 	| BagMin _ 
@@ -10776,6 +10807,7 @@ and contain_level_b_formula bf =
 	| ListPerm _
 	| RelForm _
 	| LexVar _
+  | RankRel _
 	| BConst _
 	| BVar _ 
 	| BagMin _ 

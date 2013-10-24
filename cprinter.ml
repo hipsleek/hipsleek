@@ -812,6 +812,11 @@ let rec pr_b_formula (e:P.b_formula) =
       (* ;if ls2!=[] then *)
       (*   pr_set pr_formula_exp ls2 *)
       (* else () *)
+    | P.RankRel rrel ->
+        fmt_string (string_of_spec_var rrel.CP.rank_id); 
+        fmt_string " = RR("; 
+        fmt_string (string_of_spec_var_list rrel.CP.rank_args); 
+        fmt_string ")"
     | P.BConst (b,l) -> fmt_bool b 
     | P.XPure v ->  fmt_string (string_of_xpure_view v)
     | P.BVar (x, l) -> fmt_string (string_of_spec_var x)
@@ -1113,8 +1118,8 @@ let rec pr_h_formula h =
 	  fmt_close();
     | ViewNode ({h_formula_view_node = sv; 
       h_formula_view_name = c; 
-	  h_formula_view_derv = dr;
-	  h_formula_view_imm = imm;
+	    h_formula_view_derv = dr;
+	    h_formula_view_imm = imm;
       h_formula_view_perm = perm; (*LDK*)
       h_formula_view_arguments = svs; 
       h_formula_view_origins = origs;
@@ -1123,7 +1128,8 @@ let rec pr_h_formula h =
       h_formula_view_label = pid;
       h_formula_view_remaining_branches = ann;
       h_formula_view_pruning_conditions = pcond;
-	  h_formula_view_unfold_num = ufn;
+	    h_formula_view_unfold_num = ufn;
+      h_formula_view_rank = rvar;
       h_formula_view_pos =pos}) ->
           let perm_str = string_of_cperm perm in
           fmt_open_hbox ();
@@ -1137,7 +1143,8 @@ let rec pr_h_formula h =
               (* pr_formula_label_opt pid;  *)
               pr_spec_var sv; 
               fmt_string "::"; (* to distinguish pred from data *)
-              pr_angle (c^perm_str) pr_spec_var svs;
+              pr_angle (c^perm_str) pr_spec_var 
+                (svs @ (match rvar with Some rv -> [rv] | _ -> []));
 	      pr_imm imm;
 	      pr_derv dr;
               (* For example, #O[lem_29][Derv] means origins=[lem_29], and the heap node is derived*)
@@ -1707,11 +1714,12 @@ let rec pr_formula e =
   let f_b e =  pr_bracket formula_wo_paren pr_formula e in
   match e with
     | Or ({formula_or_f1 = f1; formula_or_f2 = f2; formula_or_pos = pos}) ->
+        fmt_string "Or ";
 	      let arg1 = bin_op_to_list op_f_or_short formula_assoc_op f1 in
           let arg2 = bin_op_to_list op_f_or_short formula_assoc_op f2 in
           let args = arg1@arg2 in
 	      pr_list_vbox_wrap "or " f_b args
-    | Base e -> pr_formula_base e
+    | Base e -> fmt_string "Base "; pr_formula_base e
     | Exists ({formula_exists_qvars = svs;
 	  formula_exists_heap = h;
 	  formula_exists_pure = p;
@@ -1720,6 +1728,7 @@ let rec pr_formula e =
 	  formula_exists_and = a;
       formula_exists_label = lbl;
 	  formula_exists_pos = pos}) ->
+      fmt_string "Exists ";
           (match lbl with | None -> () | Some l -> fmt_string ("{"^(string_of_int (fst l))^"}->"));
           fmt_string "(exists "; pr_list_of_spec_var svs; fmt_string ": ";
           pr_h_formula h; 
@@ -2931,7 +2940,9 @@ let pr_view_decl v =
     | View_PRIM -> "_prim "
     | View_EXTN -> "_extn " in
   wrap_box ("B",0) (fun ()-> pr_angle  ("view"^s^v.view_name) pr_typed_spec_var_lbl 
-      (List.combine v.view_labels v.view_vars); fmt_string "= ") ();
+      ((List.combine v.view_labels v.view_vars)@
+      (if !en_term_inf then [(Label_only.Lab_LAnn.unlabelled, Terminf.view_rank_sv v.view_name)] else [])); 
+      fmt_string "= ") ();
   fmt_cut (); wrap_box ("B",0) pr_struc_formula v.view_formula; 
   pr_vwrap  "cont vars: "  pr_list_of_spec_var v.view_cont_vars;
   pr_vwrap  "inv: "  pr_mix_formula v.view_user_inv;
@@ -3644,11 +3655,8 @@ let rec html_of_pure_b_formula f = match f with
     | P.Lt (e1, e2, l) -> (html_of_formula_exp e1) ^ html_op_lt ^ (html_of_formula_exp e2)
     | P.Lte (e1, e2, l) -> (html_of_formula_exp e1) ^ html_op_lte ^ (html_of_formula_exp e2)
     | P.SubAnn (e1, e2, l) -> (html_of_formula_exp e1) ^ html_op_subann ^ (html_of_formula_exp e2)
-    | P.LexVar _ -> "LexVar(to be implemented)"
-  (* | P.Lexvar (ls1,ls2, l)        ->  *)
-  (*       let opt = if ls2==[] then "" else *)
-  (*         "{"^(pr_list html_of_formula_exp ls2)^"}" *)
-  (*       in "LexVar["^(pr_list html_of_formula_exp ls1)^"]"^opt *)
+    | P.LexVar _ -> "LexVar (to be implemented)"
+    | P.RankRel _ -> "RankRel (to be implemented)"
     | P.Gt (e1, e2, l) -> (html_of_formula_exp e1) ^ html_op_gt ^ (html_of_formula_exp e2)
     | P.Gte (e1, e2, l) -> (html_of_formula_exp e1) ^ html_op_gte ^ (html_of_formula_exp e2)
     | P.Eq (e1, e2, l) -> (html_of_formula_exp e1) ^ html_op_eq ^ (html_of_formula_exp e2)
@@ -3673,7 +3681,7 @@ let rec html_of_pure_b_formula f = match f with
     | P.ListNotIn (e1, e2, l) ->  (html_of_formula_exp e1) ^ " <Lnotin> " ^ (html_of_formula_exp e2)
     | P.ListAllN (e1, e2, l) ->  (html_of_formula_exp e1) ^ " <allN> " ^ (html_of_formula_exp e2)
     | P.ListPerm (e1, e2, l) -> (html_of_formula_exp e1) ^ " <perm> " ^ (html_of_formula_exp e2)
-	| P.RelForm (r, args, l) -> (html_of_spec_var r) ^ "(" ^ (String.concat "," (List.map html_of_formula_exp args)) ^ ")"
+	  | P.RelForm (r, args, l) -> (html_of_spec_var r) ^ "(" ^ (String.concat "," (List.map html_of_formula_exp args)) ^ ")"
 
 let rec html_of_pure_formula f =
 	match f with
@@ -3763,7 +3771,7 @@ let rec html_of_h_formula h = match h with
 				h_formula_view_label = pid;
 				h_formula_view_remaining_branches = ann;
 				h_formula_view_pruning_conditions = pcond;
-				h_formula_view_pos =pos}) ->
+        h_formula_view_pos =pos}) ->
 			(html_of_spec_var sv) ^ html_mapsto ^ c ^ html_left_angle_bracket ^ (html_of_spec_var_list svs) ^ html_right_angle_bracket
   | HTrue -> "<b>htrue</b>"
   | HFalse -> "<b>hfalse</b>"

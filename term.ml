@@ -584,7 +584,8 @@ let check_term_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
             | Fail TermErr_Must -> Some (Fail TermErr_Must, src_lv, src_il)
             | MayLoop 
             | Fail TermErr_May -> Some (Fail TermErr_May, src_lv, src_il)      
-            | Term -> failwith "unexpected Term in check_term_rhs"
+            | TermC
+            | Term -> failwith "unexpected Term/TermC in check_term_rhs"
           in 
           let n_estate = {estate with 
             es_var_measures = term_measures;
@@ -592,6 +593,9 @@ let check_term_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
             es_term_err = Some (string_of_term_res term_res);
           } in
           (n_estate, lhs_p, rhs_p, None)
+        (* TermInf: Collect constraints for ranking function inference *)
+      | (TermC, TermC)
+      | (TermC, _) -> failwith "TermC has not yet been supported."
       | (Loop, Loop) ->
           let term_measures = Some (MayLoop, [], []) in 
           let n_estate = {estate with es_var_measures = term_measures} in

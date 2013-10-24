@@ -81,6 +81,7 @@ and spass_dfg_of_b_formula (bf : Cpure.b_formula) : (string * string list * stri
 and spass_dfg_of_p_formula (pf : Cpure.p_formula) : (string * string list * string list) =
   match pf with
   | LexVar _        -> illegal_format "SPASS don't support LexVar p_formula"
+  | RankRel _        -> illegal_format "SPASS don't support RankRel p_formula"
   | BConst (c, _)   -> if c then ("true", [], []) else ("false", [], [])
   | BVar (sv, _)    -> (
       let pred = spass_dfg_of_spec_var sv in
@@ -218,6 +219,7 @@ and spass_tptp_of_b_formula (bf : Cpure.b_formula) : string =
 and spass_tptp_of_p_formula (pf : Cpure.p_formula) : string =
   match pf with
   | LexVar _        -> illegal_format "SPASS don't support LexVar p_formula"
+  | RankRel _        -> illegal_format "SPASS don't support RankRel p_formula"
   | BConst (c, _)   -> if c then "$true" else "$false"
   | BVar (sv, _)    -> spass_tptp_of_spec_var sv
   | Lt _            -> illegal_format "SPASS don't support Lt p_formula"
@@ -297,6 +299,7 @@ let rec can_spass_handle_expression (exp: Cpure.exp) : bool =
 and can_spass_handle_p_formula (pf : Cpure.p_formula) : bool =
   match pf with
   | LexVar _             -> false
+  | RankRel _ -> false
   | BConst _             -> true
   | BVar _               -> true
   | Lt _                 -> false

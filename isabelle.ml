@@ -220,6 +220,7 @@ and isabelle_of_b_formula b =
   | CP.SubAnn _ -> failwith ("SubAnn are not supported in Isabelle")
   | CP.VarPerm _ -> failwith ("VarPerm not suported by Isabelle")
   | CP.LexVar _ -> failwith ("Lexvar are not supported in Isabelle")
+  | CP.RankRel _ -> failwith ("RankRel are not supported in Isabelle")
 	| CP.RelForm _ -> failwith ("Relations are not supported in Isabelle") (* An Hoa *)
   
 (* pretty printing for formulas *)

@@ -181,6 +181,8 @@ let rec smt_of_b_formula b =
       illegal_format ("z3.smt_of_b_formula: ListIn ListNotIn ListAllN ListPerm should not appear here.\n")
   | CP.LexVar _ ->
       illegal_format ("z3.smt_of_b_formula: LexVar should not appear here.\n")
+  | CP.RankRel _ ->
+      illegal_format ("z3.smt_of_b_formula: RankRel should not appear here.\n")
   | CP.RelForm (r, args, l) ->
       let smt_args = List.map smt_of_exp args in 
       (* special relation 'update_array' translate to smt primitive store in array theory *)

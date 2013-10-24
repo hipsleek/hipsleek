@@ -28,6 +28,7 @@ module Chk = Checks
 module PRED = Predicate
 module LO = Label_only.LOne
 module LP = CP.Label_Pure
+module TI = Terminf
 
 
 type trans_exp_type =
@@ -790,6 +791,101 @@ let remove_disj_clauses (mf: mix_formula): mix_formula =
   let pr = !print_mix_formula in
   Debug.no_1 "remove_disj_clauses" pr pr remove_disj_clauses mf
 
+(* TermInf: Add rank constraints into view and struc_formula *)
+type rank_type =
+  | VIEW of CP.spec_var
+  | PRE of C.typed_ident list
+  | POST
+
+let rec add_rank_constraint_view (vdef: C.view_decl): C.view_decl =
+  let view_rank_id = TI.view_rank_sv vdef.C.view_name in
+  let view_form = add_rank_constraint_struc_formula vdef.C.view_formula (VIEW view_rank_id) in
+  { vdef with
+    C.view_vars = vdef.C.view_vars;
+    C.view_formula = view_form; }
+
+and add_rank_constraint_struc_formula (f: CF.struc_formula) (rtyp: rank_type): CF.struc_formula =
+  match f with
+  | CF.EList l -> CF.EList (List.map (fun (lbl, sf) ->
+      (lbl, add_rank_constraint_struc_formula sf rtyp)) l)
+  | CF.ECase c -> CF.ECase { c with 
+      CF.formula_case_branches = List.map (fun (cf, sf) -> 
+        (cf, add_rank_constraint_struc_formula sf rtyp)) c.CF.formula_case_branches; }
+  | CF.EBase b -> 
+      let cont = match b.CF.formula_struc_continuation with
+        | None -> None
+        | Some sf -> Some (add_rank_constraint_struc_formula sf rtyp) in
+      let base, ivars = add_rank_constraint_formula b.CF.formula_struc_base rtyp in
+      CF.EBase { b with
+        CF.formula_struc_implicit_inst = b.CF.formula_struc_implicit_inst @ ivars;
+        CF.formula_struc_base = base;
+        CF.formula_struc_continuation = cont; }
+  | CF.EAssume a -> CF.EAssume { a with
+      CF.formula_assume_simpl = fst (add_rank_constraint_formula a.CF.formula_assume_simpl POST);
+      CF.formula_assume_struc = add_rank_constraint_struc_formula a.CF.formula_assume_struc POST; }
+  | CF.EInfer i -> CF.EInfer { i with
+      CF.formula_inf_continuation = add_rank_constraint_struc_formula i.CF.formula_inf_continuation rtyp; }
+
+and add_rank_constraint_formula (f: CF.formula) (rtyp: rank_type): (CF.formula * CP.spec_var list) =
+  let add_rank_constraint_pure hf pf rtyp =
+    let hf, rankrel_vars, rankrel_ivars = CF.collect_rankrel_vars_h_formula hf in
+    match rtyp with
+    | VIEW rankrel_id ->
+        let rankrel_args = if rankrel_vars == [] then 
+          [TI.view_base_sv (CP.name_of_spec_var rankrel_id)] else rankrel_vars in
+        hf,
+        MCP.memoise_add_pure_N pf (Terminf.mkRankConstraint rankrel_id rankrel_args),
+        rankrel_ivars
+    | PRE proc_args -> 
+        (* Add Term[r] for PRE based on the args of proc *)
+        let pf = MCP.memoise_add_pure_N pf (CP.mkPure (CP.mkLexVar Term [] [] no_pos )) in
+        hf, pf, rankrel_ivars
+    | POST -> hf, pf, rankrel_ivars
+  in match f with
+  | CF.Base b -> 
+    begin
+      let heap_base, rankrel_pure_base, rankrel_ivars = add_rank_constraint_pure
+        b.CF.formula_base_heap b.CF.formula_base_pure rtyp in
+      match rtyp with 
+      | POST -> 
+        if rankrel_ivars == [] then 
+          CF.Base { b with 
+            CF.formula_base_heap = heap_base;
+            CF.formula_base_pure = rankrel_pure_base; }, []
+        else
+          CF.Exists {
+            CF.formula_exists_qvars = rankrel_ivars;
+            CF.formula_exists_heap = heap_base;
+            CF.formula_exists_pure = rankrel_pure_base;
+            CF.formula_exists_type = b.CF.formula_base_type;
+            CF.formula_exists_and = b.CF.formula_base_and;
+            CF.formula_exists_flow = b.CF.formula_base_flow;
+            CF.formula_exists_label = b.CF.formula_base_label;
+            CF.formula_exists_pos = b.CF.formula_base_pos; }, []
+
+      | _ -> CF.Base { b with 
+        CF.formula_base_heap = heap_base;
+        CF.formula_base_pure = rankrel_pure_base; }, rankrel_ivars
+    end
+  | _ -> f, []
+
+
+(*
+(* TermInf: Add RankRel into pure part *)
+    let new_p, viewnode_rankrel_vars = if !en_term_inf 
+      then
+        let rankrel_vars, viewnode_rankrel_vars = CF.collect_rankrel_vars_h_formula new_h in
+        if rankrel_vars == [] then (new_p, [])
+        else 
+          (CP.mkAnd new_p (Terminf.mkRankConstraint (Terminf.view_rank_sv "r") rankrel_vars) pos),
+          viewnode_rankrel_vars
+      else (new_p, []) in
+    let rankrel_typ = List.map (fun v -> 
+      (CP.name_of_spec_var v), { sv_info_kind = Int; id = fresh_int () }) viewnode_rankrel_vars in
+    let rankrel_vars = List.map (fun v -> 
+      (CP.name_of_spec_var v), Unprimed) viewnode_rankrel_vars in
+*)
+
 (*transform labels into exceptions, remove the finally clause,
 should also check that 
 *)
@@ -1257,7 +1353,7 @@ and trans_data (prog : I.prog_decl) (ddef : I.data_decl) : C.data_decl =
 (*          self!=null & 3<=n *)
 and compute_view_x_formula (prog : C.prog_decl) (vdef : C.view_decl) (n : int) =
   let foo () =
-    Debug.ho_eff_2 "compute_view_x_formula" [true]
+    Debug.no_eff_2 "compute_view_x_formula" [true]
         (* Cprinter.string_of_program *)
         Cprinter.string_of_view_decl  
         string_of_int 
@@ -1495,8 +1591,8 @@ and trans_view_x (prog : I.prog_decl) ann_typs (vdef : I.view_decl): C.view_decl
   let vtv = vdef.I.view_typed_vars in
   let tlist = List.map (fun (t,c) -> (c,{sv_info_kind=t; id=fresh_int() })) vtv in
   let tlist = ([(self,{ sv_info_kind = (Named data_name);id = fresh_int () })]@tlist) in
-  let (n_tl,cf) = trans_I2C_struc_formula 1 prog true (self :: vdef.I.view_vars) vdef.I.view_formula (ann_typs@tlist) false 
-    true (*check_pre*) in
+  let (n_tl,cf) = trans_I2C_struc_formula 1 prog true (self :: vdef.I.view_vars) vdef.I.view_formula 
+    (ann_typs@tlist) false true (*check_pre*) in
   (* let _ = print_string ("cf: "^(Cprinter.string_of_struc_formula cf)^"\n") in *)
   let inv_lock = vdef.I.view_inv_lock in
   let (n_tl,inv_lock) = 
@@ -1543,7 +1639,7 @@ and trans_view_x (prog : I.prog_decl) ann_typs (vdef : I.view_decl): C.view_decl
     report_error (IF.pos_of_struc_formula view_formula1) "res is not allowed in view definition or invariant"
   else(
       let pos = IF.pos_of_struc_formula view_formula1 in
-      let view_sv_vars = List.map (fun c-> trans_var (c,Unprimed) n_tl pos) vdef.I.view_vars in
+      let view_sv_vars = List.map (fun c -> trans_var (c,Unprimed) n_tl pos) vdef.I.view_vars in
       let self_c_var = Cpure.SpecVar ((Named data_name), self, Unprimed) in
       let null_c_var = Cpure.null_var in 
       let _ =
@@ -1555,7 +1651,7 @@ and trans_view_x (prog : I.prog_decl) ann_typs (vdef : I.view_decl): C.view_decl
         let ffv = Gen.BList.difference_eq (CP.eq_spec_var) vs1 vs2 in
         (* filter out holes (#) *)
         let ffv = List.filter (fun v -> not (CP.is_hole_spec_var v)) ffv in
-	let ffv = List.filter (fun v -> not (CP.is_hprel_typ v)) ffv in
+	      let ffv = List.filter (fun v -> not (CP.is_hprel_typ v)) ffv in
         (* filter out intermediate dereference vars and update them to view vars *)
         
         let ffv = List.filter (fun v ->
@@ -1604,7 +1700,7 @@ SpecVar (_, n, _) -> vdef.I.view_vars <- vdef.I.view_vars @ [n];
       let view_kind = trans_view_kind vdef.I.view_kind in
       let vn = vdef.I.view_name in
       let _ = if view_kind = Cast.View_PRIM then CF.view_prim_lst # push vn  in
-      let cvdef ={
+      let cvdef = {
           C.view_name = vn;
           C.view_pos = vdef.I.view_pos;
           C.view_is_prim = is_prim_v;
@@ -1637,7 +1733,8 @@ SpecVar (_, n, _) -> vdef.I.view_vars <- vdef.I.view_vars @ [n];
           C.view_prune_conditions_baga = [];
           C.view_prune_invariants = []} in
       (Debug.devel_zprint (lazy ("\n" ^ (Cprinter.string_of_view_decl cvdef))) (CF.pos_of_struc_formula cf);
-      cvdef)
+      (* TermInf: Adding ghost variable for ranking function of view *)
+      if !en_term_inf then add_rank_constraint_view cvdef else cvdef)
   )
   )
 and fill_one_base_case prog vd = Debug.no_1 "fill_one_base_case" Cprinter.string_of_view_decl Cprinter.string_of_view_decl (fun vd -> fill_one_base_case_x prog vd) vd
@@ -2345,9 +2442,15 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
       in
       (*=============================*)
       let final_static_specs_list = 
-	if CF.isConstDTrue static_specs_list then 
-	  Cast.mkEAssume_norm proc.I.proc_loc 
-	else static_specs_list in
+        if CF.isConstDTrue static_specs_list then 
+          Cast.mkEAssume_norm proc.I.proc_loc 
+      else static_specs_list in
+      (* TermInf: Add RankRel into Specs *)
+      let final_static_specs_list = 
+        if !en_term_inf then
+          add_rank_constraint_struc_formula final_static_specs_list (PRE args)
+        else final_static_specs_list
+      in
       (** An Hoa : print out final_static_specs_list for inspection **)
       (* let _ = print_endline ("Static spec list : " ^ proc.I.proc_name) in *)
       (* let _ = print_endline (Cprinter.string_of_struc_formula final_static_specs_list) in *)
@@ -4641,7 +4744,7 @@ and trans_I2C_struc_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : id
                             CF.formula_case_pos = b.IF.formula_case_pos} in
         (n_tl,cf)
       )
-    | IF.EBase b-> (
+    | IF.EBase b -> (
         let (n_tl,nc) = (
           match b.IF.formula_struc_continuation with
           | None -> (tl,None)
@@ -4851,7 +4954,7 @@ and trans_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : ident list) 
   let rec helper f0 tl =
     match f0 with
       | IF.Or b-> 
-          let (n_tl,n_f1)= helper b.IF.formula_or_f1 tl in
+          let (n_tl,n_f1) = helper b.IF.formula_or_f1 tl in
           let (n_tl,n_f2) = helper b.IF.formula_or_f2 n_tl in
           (n_tl,CF.mkOr n_f1 n_f2 b.IF.formula_or_pos)
       | IF.Base {
@@ -4859,7 +4962,7 @@ and trans_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : ident list) 
             IF.formula_base_pure = p;
             IF.formula_base_flow = fl;
             IF.formula_base_and = a;
-            IF.formula_base_pos = pos} ->(
+            IF.formula_base_pos = pos} -> (
             let (n_tl,rl) = res_retrieve tl clean_res fl in
             let n_tl = 
               if sep_collect then
@@ -5190,6 +5293,7 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
                                CF.h_formula_view_label = pi;
                                CF.h_formula_view_pruning_conditions = [];
                                CF.h_formula_view_remaining_branches = None;
+                               CF.h_formula_view_rank = None;
                                CF.h_formula_view_pos = pos;} in
                 (new_h, CF.TypeTrue, [], tl)
               )
@@ -7884,6 +7988,7 @@ let rec rev_trans_pf f = match f with
 		IP.xpure_view_remaining_branches = None;
 		IP.xpure_view_pos = b.CP.xpure_view_pos}
   | CP.LexVar _ -> failwith "rev_trans_pure: unexpected lexvar, if you want support for it , implement this case\n"
+  | CP.RankRel _ -> failwith "rev_trans_pure: unexpected RankRel, if you want support for it , implement this case\n"
   | CP.BConst b -> IP.BConst b 
   | CP.BVar (v,p) -> IP.BVar ( rev_trans_spec_var v, p)
   | CP.Lt (e1,e2,p) -> IP.Lt (rev_trans_exp e1, rev_trans_exp e2, p)

@@ -155,7 +155,8 @@ and omega_of_b_formula b =
         ^ a3str ^ " > " ^ a2str ^ " & " ^ a1str ^ " = " ^ a2str ^ "))"
   | VarPerm _ -> illegal_format ("Omega.omega_of_exp: VarPerm constraint")
   | RelForm _ -> illegal_format ("Omega.omega_of_exp: RelForm")
-  | LexVar _ -> illegal_format ("Omega.omega_of_exp: LexVar 3")
+  | LexVar _ -> illegal_format ("Omega.omega_of_exp: LexVar")
+  | RankRel _ -> "0=0" (* illegal_format ("Omega.omega_of_exp: RankRel") *)
   | _ -> illegal_format ("Omega.omega_of_exp: bag or list constraint")
 
 and omega_of_formula_x pr_w pr_s f  =

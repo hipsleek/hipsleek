@@ -215,7 +215,7 @@ h_formula_phase_pos : loc }
 
 and h_formula_data = {  h_formula_data_node : CP.spec_var;
                         h_formula_data_name : ident;
-			h_formula_data_derv : bool;
+			                  h_formula_data_derv : bool;
                         h_formula_data_imm : ann;
                         h_formula_data_param_imm : ann list;
                         h_formula_data_perm : cperm; (* option; *) (*LDK: permission*)
@@ -223,7 +223,7 @@ and h_formula_data = {  h_formula_data_node : CP.spec_var;
                         h_formula_data_origins : ident list;
                         h_formula_data_original : bool;
                         h_formula_data_arguments : CP.spec_var list;
-						h_formula_data_holes : int list; (* An Hoa : list of fields not to be considered for partial structures *) (*store positions*)
+						            h_formula_data_holes : int list; (* An Hoa : list of fields not to be considered for partial structures *) (*store positions*)
                         h_formula_data_label : formula_label option;
                         h_formula_data_remaining_branches :  (formula_label list) option;
                         h_formula_data_pruning_conditions :  (CP.b_formula * formula_label list ) list;
@@ -250,6 +250,8 @@ and h_formula_view = {  h_formula_view_node : CP.spec_var;
                         h_formula_view_remaining_branches :  (formula_label list) option;
                         h_formula_view_pruning_conditions :  (CP.b_formula * formula_label list ) list;
                         h_formula_view_label : formula_label option;
+                        (* TermInf: The rank property of the view *)
+                        h_formula_view_rank: CP.spec_var option;
                         h_formula_view_pos : loc }
 and approx_disj = 
   | ApproxBase of approx_disj_base
@@ -11665,10 +11667,13 @@ let rec norm_struc_with_lexvar is_primitive struc_f  = match struc_f with
       if (has_lexvar_formula ef.formula_struc_base) then struc_f
       else EBase { ef with formula_struc_continuation = map_opt (norm_struc_with_lexvar is_primitive) ef.formula_struc_continuation }
   | EAssume _ ->
-      let lexvar = 
-        if is_primitive then  CP.mkLexVar Term [] [] no_pos
-        else CP.mkLexVar MayLoop [] [] no_pos in 
-      mkEBase_with_cont (CP.mkPure lexvar) (Some struc_f) no_pos
+      if !en_term_inf && not is_primitive then struc_f
+      else
+        let lexvar = 
+          if is_primitive then CP.mkLexVar Term [] [] no_pos 
+          else CP.mkLexVar MayLoop [] [] no_pos 
+        in
+        mkEBase_with_cont (CP.mkPure lexvar) (Some struc_f) no_pos
   | EInfer ef -> EInfer { ef with formula_inf_continuation = norm_struc_with_lexvar is_primitive ef.formula_inf_continuation }
   | EList b -> mkEList_no_flatten (map_l_snd (norm_struc_with_lexvar is_primitive) b)
 
@@ -11838,6 +11843,7 @@ let prepost_of_init_x (var:CP.spec_var) sort (args:CP.spec_var list) (lbl:formul
       h_formula_view_remaining_branches = None;
       h_formula_view_pruning_conditions = [];
       h_formula_view_label = None;
+      h_formula_view_rank = None;
       h_formula_view_pos = pos })
   in
   (****LOCKSET****)
@@ -11923,6 +11929,7 @@ let prepost_of_finalize_x (var:CP.spec_var) sort (args:CP.spec_var list) (lbl:fo
       h_formula_view_remaining_branches = None;
       h_formula_view_pruning_conditions = [];
       h_formula_view_label = None;
+      h_formula_view_rank = None;
       h_formula_view_pos = pos })
   in
   (****LOCKSET****)
@@ -11991,7 +11998,9 @@ let prepost_of_acquire_x (var:CP.spec_var) sort (args:CP.spec_var list) (inv:for
       h_formula_view_remaining_branches = None;
       h_formula_view_pruning_conditions = [];
       h_formula_view_label = None;
+      h_formula_view_rank = None;
       h_formula_view_pos = pos })
+
   in
   (****waitlevel****)
   let waitlevel_var = CP.mkWaitlevelVar Primed in (*waitlevel'*)
@@ -12830,6 +12839,7 @@ let mkViewNode view_node view_name view_args pos = ViewNode
   h_formula_view_remaining_branches = None;
   h_formula_view_pruning_conditions = [];
   h_formula_view_label = None;
+  h_formula_view_rank = None;
   h_formula_view_pos = pos}
 
 let rec take_tl lst n = 
@@ -13516,3 +13526,19 @@ let elim_e_var to_keep (f0 : formula) : formula =
 		let qvars,b = split_quantifiers f0 in
 		push_exists qvars (helper2 b) in
 	helper f0
+
+(* TermInf: Collect data variables of DataNode and 
+ * rank variables of ViewNode to build RankRel *)
+let rec collect_rankrel_vars_h_formula (h: h_formula) : (h_formula * CP.spec_var list * CP.spec_var list) = 
+  match h with 
+  | Star s ->
+      let h1, r1, e1 = collect_rankrel_vars_h_formula s.h_formula_star_h1 in 
+      let h2, r2, e2 = collect_rankrel_vars_h_formula s.h_formula_star_h2 in
+      (Star { s with h_formula_star_h1 = h1; h_formula_star_h2 = h2; },
+      r1 @ r2, e1 @ e2)
+  | DataNode { h_formula_data_arguments = args } ->
+      (h, List.filter (fun sv -> CP.is_int_var sv) args, [])
+  | ViewNode v ->
+      let rank_sv = Terminf.viewnode_rank_sv v.h_formula_view_name in
+      (ViewNode { v with h_formula_view_rank = Some rank_sv; }, [rank_sv], [rank_sv])
+  | _ -> (h, [], [])

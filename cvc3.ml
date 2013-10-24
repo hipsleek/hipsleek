@@ -127,8 +127,9 @@ and cvc3_of_b_formula b =
   | CP.ListAllN _
   | CP.ListPerm _ -> failwith ("Lists are not supported in cvc3")
 	| CP.RelForm _ -> failwith ("Relations are not supported in cvc3") (* An Hoa *)
-    | CP.SubAnn _ -> failwith ("SubAnn not supported in cvc3")
-     | CP.LexVar _ -> failwith ("LexVar not supported in cvc3")
+  | CP.SubAnn _ -> failwith ("SubAnn not supported in cvc3")
+  | CP.LexVar _ -> failwith ("LexVar not supported in cvc3")
+  | CP.RankRel _ -> failwith ("RankRel not supported in cvc3")
   | CP.XPure _  -> Error.report_no_pattern ()
 and cvc3_of_sv_type sv = match sv with
   | CP.SpecVar ((BagT _), _, _) -> "SET"

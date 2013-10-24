@@ -379,6 +379,7 @@ let rec math_of_b_formula b : string =
         ^ "(" ^ se1 ^ " == " ^ se3 ^ " && " ^ se2 ^ " >= " ^ se3 ^ "))")
   | CP.XPure _ -> failwith ("math_of_b_formula: cannot handle XPure formula")
   | CP.LexVar _
+  | CP.RankRel _
   | CP.BagIn _
   | CP.BagNotIn _
   | CP.BagSub _

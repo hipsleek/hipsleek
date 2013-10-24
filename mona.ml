@@ -1051,6 +1051,7 @@ and mona_of_b_formula_x b f vs =
       | CP.ListAllN _
       | CP.ListPerm _ -> failwith ("Lists are not supported in Mona")
       | CP.LexVar _ -> failwith ("LexVar is not supported in Mona")
+      | CP.RankRel _ -> failwith ("RankRel is not supported in Mona")
       | CP.VarPerm _ -> failwith ("VarPerm is not supported in Mona")
       | CP.RelForm _ -> failwith ("Relations are not supported in Mona") (* An Hoa *) 
   in
@@ -1153,6 +1154,7 @@ and print_b_formula b f = match b with
   | CP.ListAllN _
   | CP.ListPerm _ -> failwith ("Lists are not supported in Mona")
   | CP.LexVar _ -> failwith ("LexVar is not supported in Mona")
+  | CP.RankRel _ -> failwith ("RankRel is not supported in Mona")
   | CP.VarPerm _ -> failwith ("VarPerm not suported in Mona")
   | CP.RelForm _ -> failwith ("Arrays are not supported in Mona") (* An Hoa *)
   | CP.XPure _ -> failwith ("XPure are not supported in Mona")

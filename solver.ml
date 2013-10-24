@@ -9167,6 +9167,7 @@ and do_fold_w_ctx_x fold_ctx prog estate conseq ln2 vd resth2 rhs_b is_folding p
       h_formula_view_label = pid;           (*TODO: the other alternative is to use none*)
       h_formula_view_remaining_branches = r_rem_brs;
       h_formula_view_pruning_conditions = r_p_cond;
+      h_formula_view_rank = None;
       h_formula_view_pos = pos2}) in
   (*instantiation before the fold operation,
     for existential vars:

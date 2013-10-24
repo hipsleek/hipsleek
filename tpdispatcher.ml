@@ -684,6 +684,7 @@ let is_array_b_formula (pf,_) = match pf with
     | CP.BagMax _
     | CP.SubAnn _
     | CP.LexVar _
+    | CP.RankRel _
 		-> Some false    
     | CP.Lt (e1,e2,_) 
     | CP.Lte (e1,e2,_) 

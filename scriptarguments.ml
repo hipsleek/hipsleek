@@ -436,6 +436,9 @@ let common_arguments = [
   ("--dis-assert-check", Arg.Set Globals.dis_ass_chk, "turn off the assertion checking");
   ("--dis-log-filter", Arg.Clear Globals.log_filter, "turn off the log initial filtering");
 
+  (* Termination Inference *)
+  ("--en-term-inf", Arg.Set Globals.en_term_inf, "Enable termination inference");
+
   (* Slicing *)
   ("--eps", Arg.Set Globals.en_slc_ps, "Enable slicing with predicate specialization");
   ("--overeps", Arg.Set Globals.override_slc_ps, "Override --eps, for run-fast-tests testing of modular examples");
