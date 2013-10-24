@@ -517,6 +517,7 @@ let print_view_decl = ref (fun (x:view_decl) -> "Uninitialised printer")
 let print_data_decl = ref (fun (x:data_decl) -> "Uninitialised printer")
 let print_exp = ref (fun (x:exp) -> "Uninitialised printer")
 let print_param_list = ref (fun (x: param list) -> "Uninitialised printer")
+let print_hp_decl = ref (fun (x: hp_decl) -> "Uninitialised printer")
 
 
 let find_empty_static_specs iprog = 
@@ -745,6 +746,7 @@ let genESpec_x args ret pos=
       hp_formula = F.mkBase F.HEmp (P.mkTrue pos) top_flow [] pos;
   }
   in
+	let _ = Debug.ninfo_hprint (add_str "generate HP for Pre" !print_hp_decl) hp_pre_decl no_pos in
   let hp_post_decl = {
       hp_name = Globals.hppost_default_prefix_name ^ (string_of_int (Globals.fresh_int()));
       hp_typed_inst_vars = (List.map (fun arg -> (arg.param_type, arg.param_name, Globals.I)) args)@
@@ -755,6 +757,7 @@ let genESpec_x args ret pos=
       hp_is_pre = false;
       hp_formula = F.mkBase F.HEmp (P.mkTrue pos) top_flow [] pos;}
   in
+	let _ = Debug.ninfo_hprint (add_str "generate HP for Post" !print_hp_decl) hp_post_decl no_pos in
   let pre_eargs = List.map (fun p -> P.Var ((p.param_name, Unprimed),pos)) args in
   (*todo: care ref args*)
   let post_eargs0 = List.map (fun p -> P.Var ((p.param_name, Unprimed),pos)) args in
@@ -786,7 +789,7 @@ let mkProc sfile id flgs n dd c ot ags r ss ds pos bd =
   let ss, n_hp_dcls = match ss with 
     | F.EList [] ->
           let ss, hps = genESpec ags r pos in
-          (* let _ = Debug.info_hprint (add_str "ss" !F.print_struc_formula) ss no_pos in *)
+          let _ = Debug.ninfo_hprint (add_str "ss" !F.print_struc_formula) ss no_pos in
           (ss,hps)
 	      (* F.mkETrueTrueF ()  *)
     | _ ->

@@ -36,10 +36,10 @@ Procedure foo$node__star result FAIL.(1)
   - NI/I
 
 ==================================================================
-# ex1-b.c:
+# ex1-b.c: DONE
 
- - print the new generated HeapPred
- - expected result ex1.c
+ - print the new generated HeapPred: DONE
+ - expected result ex1.c: DONE
 
 ==================================================================
 # ex2-?.ss:
