@@ -184,6 +184,7 @@ param_loc : loc }
 and proc_decl = { proc_name : ident;
 mutable proc_mingled_name : ident;
 mutable proc_data_decl : data_decl option; (* the class containing the method *)
+mutable proc_hp_decls : hp_decl list; (* add hp decl list for proc *)
 proc_flags: (ident*ident*(flags option)) list;
 proc_source : ident;
 proc_constructor : bool;
@@ -515,6 +516,8 @@ let print_h_formula = ref (fun (x:F.h_formula) -> "Uninitialised printer")
 let print_view_decl = ref (fun (x:view_decl) -> "Uninitialised printer")
 let print_data_decl = ref (fun (x:data_decl) -> "Uninitialised printer")
 let print_exp = ref (fun (x:exp) -> "Uninitialised printer")
+let print_param_list = ref (fun (x: param list) -> "Uninitialised printer")
+let print_hp_decl = ref (fun (x: hp_decl) -> "Uninitialised printer")
 
 
 let find_empty_static_specs iprog = 
@@ -723,9 +726,7 @@ and mkSpecTrue pos = Iformula.mkETrue pos
 			}];
 		srequires_pos = pos
 		}]	*)
-		
-    
-    
+
 and mkHoPred  n m mh tv ta fa s i=
       {   hopred_name = n;
           hopred_mode = m;
@@ -735,32 +736,84 @@ and mkHoPred  n m mh tv ta fa s i=
           hopred_fct_args = fa;
           hopred_shape    = s;
           hopred_invariant = i}
-	
+
+let genESpec_x args ret pos=
+  (*generate one HeapPred for args and one HeapPred for ret*)
+  let hp_pre_decl = {
+      hp_name = Globals.hp_default_prefix_name ^ (string_of_int (Globals.fresh_int()));
+      hp_typed_inst_vars = List.map (fun arg -> (arg.param_type, arg.param_name, Globals.I)) args;
+      hp_is_pre = true;
+      hp_formula = F.mkBase F.HEmp (P.mkTrue pos) top_flow [] pos;
+  }
+  in
+	let _ = Debug.ninfo_hprint (add_str "generate HP for Pre" !print_hp_decl) hp_pre_decl no_pos in
+  let hp_post_decl = {
+      hp_name = Globals.hppost_default_prefix_name ^ (string_of_int (Globals.fresh_int()));
+      hp_typed_inst_vars = (List.map (fun arg -> (arg.param_type, arg.param_name, Globals.I)) args)@
+	  (match ret with
+	    | Globals.Void -> []
+	    | _ -> [(ret, res_name, Globals.I)]
+	  );
+      hp_is_pre = false;
+      hp_formula = F.mkBase F.HEmp (P.mkTrue pos) top_flow [] pos;}
+  in
+	let _ = Debug.ninfo_hprint (add_str "generate HP for Post" !print_hp_decl) hp_post_decl no_pos in
+  let pre_eargs = List.map (fun p -> P.Var ((p.param_name, Unprimed),pos)) args in
+  (*todo: care ref args*)
+  let post_eargs0 = List.map (fun p -> P.Var ((p.param_name, Unprimed),pos)) args in
+  let post_eargs = match ret with
+    | Void -> post_eargs0
+    | _ -> post_eargs0@[P.Var ((res_name, Unprimed),pos)]
+  in
+  let ipost_simpl = (F.formula_of_heap_with_flow (F.HRel (hp_post_decl.hp_name, pre_eargs, pos)) n_flow pos) in
+  let ipost = F.mkEAssume ipost_simpl ( F.mkEBase [] [] [] ipost_simpl None pos) (fresh_formula_label "") None in
+  let ipre = F.mkEBase [] [] [] (F.formula_of_heap_with_flow (F.HRel (hp_pre_decl.hp_name, pre_eargs, pos)) n_flow pos) (Some ipost) pos in
+  (* generate Iformula.struc_infer_formula*)
+  (F.EInfer {
+      F.formula_inf_post = true;
+      F.formula_inf_xpost = None;
+      F.formula_inf_transpec = None;
+      F.formula_inf_vars = [(hp_pre_decl.hp_name, Globals.Unprimed); (hp_post_decl.hp_name, Globals.Unprimed)];
+      F.formula_inf_continuation = ipre;
+      F.formula_inf_pos = pos;
+  }, [hp_pre_decl;hp_post_decl])
+
+let genESpec args ret pos=
+  let pr1 = !print_param_list in
+  let pr2 = string_of_typ in
+  Debug.no_2 "genESpec" pr1 pr2 (pr_pair !F.print_struc_formula pr_none)
+      (fun _ _ -> genESpec_x args ret pos) args ret
+
 let mkProc sfile id flgs n dd c ot ags r ss ds pos bd =
   (* Debug.info_hprint (add_str "static spec" !print_struc_formula) ss pos; *)
-  let ss = match ss with 
-    | F.EList [] -> 
-          (* Debug.info_pprint "EList" pos; *)
-          F.mkETrueTrueF () 
-    | _ -> ss 
-          in
+  let ss, n_hp_dcls = match ss with 
+    | F.EList [] ->
+          let ss, hps = genESpec ags r pos in
+          let _ = Debug.ninfo_hprint (add_str "ss" !F.print_struc_formula) ss no_pos in
+          (ss,hps)
+	      (* F.mkETrueTrueF ()  *)
+    | _ ->
+          (* let _ = Debug.info_hprint (add_str "Long: ex2-a" !F.print_struc_formula) ss no_pos in *)
+          ss,[]
+  in
   { proc_name = id;
   proc_source =sfile;
   proc_flags = flgs;
-      proc_mingled_name = n; 
-      proc_data_decl = dd;
-      proc_constructor = c;
-      proc_exceptions = ot;
-      proc_args = ags;
-      proc_return = r;
-      (*  proc_important_vars = [];*)
-      proc_static_specs = ss;
-      proc_dynamic_specs = ds;
-      proc_loc = pos;
-      proc_is_main = true;
-      proc_file = !input_file_name;
-      proc_body = bd;
-      proc_test_comps = None}
+  proc_hp_decls = n_hp_dcls;
+  proc_mingled_name = n; 
+  proc_data_decl = dd;
+  proc_constructor = c;
+  proc_exceptions = ot;
+  proc_args = ags;
+  proc_return = r;
+  (*  proc_important_vars = [];*)
+  proc_static_specs = ss;
+  proc_dynamic_specs = ds;
+  proc_loc = pos;
+  proc_is_main = true;
+  proc_file = !input_file_name;
+  proc_body = bd;
+  proc_test_comps = None}
 
 let mkAssert asrtf assmf pid atype pos =
       Assert { exp_assert_asserted_formula = asrtf;
@@ -2311,6 +2364,7 @@ let add_bar_inits prog =
 			  proc_flags = [];
 			  proc_mingled_name = "";
 			  proc_data_decl = None ;
+			  proc_hp_decls = [];
 			  proc_constructor = false;
 			  proc_args = {param_type =barrierT; param_name = "b"; param_mod = RefMod;param_loc=no_pos}::
 				(List.map (fun (t,n)-> {param_type =t; param_name = n; param_mod = NoMod;param_loc=no_pos})

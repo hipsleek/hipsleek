@@ -6797,7 +6797,7 @@ and doStatement (s : A.statement) : chunk =
 and doHipSpecs (hs: (string * Cabs.cabsloc) option) : IF.struc_formula =
   let hspec = (
     match hs with
-    | None -> Iformula.mkETrueTrueF ();
+    | None -> (*Iformula.mkETrueTrueF ();*) Iformula.EList []
     | Some (s, hsloc) ->
         let base_loc = {Parser.line_num = hsloc.A.start_pos.A.lineno;
                         Parser.line_start = hsloc.A.start_pos.A.linestart;

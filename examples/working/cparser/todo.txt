@@ -7,6 +7,8 @@ list all examples/features supported
 
  to handle if(x) === if (x!=NULL)
 
+-------------------------------
+
 Checking procedure foo$node__star... inside unfold_baref
 
 ( [(,0 ); (,1 )]) :ex1-a.c:27: 9: bind: node  x'::node__star<pdata_27_897'>@L cannot be derived from context
@@ -26,9 +28,26 @@ Failed States:
 
 Procedure foo$node__star result FAIL.(1)
 
+==================================================================
+# ex2-b.ss: DONE
 
+  - generate inferred specs for empty specs (see ex2-a.ss)
+  - ref
+  - NI/I
 
+==================================================================
+# ex1-b.c: DONE
 
+ - print the new generated HeapPred: DONE
+ - expected result ex1.c: DONE
+
+==================================================================
+# ex2-?.ss:
+generate inferred specs for empty specs
+  - ref
+  - NI/I
+==================================================================
+==================================================================
 ==================================================================
 
 

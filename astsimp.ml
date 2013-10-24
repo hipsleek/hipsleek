@@ -4000,6 +4000,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
                 I.param_mod = I.RefMod;
                 I.param_loc = pos; }) tvars in
             let w_proc ={
+		I.proc_hp_decls = [];
                 I.proc_name = w_name;
                 I.proc_source = "source_file";
 				I.proc_flags = [];

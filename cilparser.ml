@@ -1163,16 +1163,25 @@ and translate_fundec (fundec: Cil.fundec) (lopt: Cil.location option) : Iast.pro
         Some (Iast.mkBlock body Iast.NoJumpLabel [] pos)
   ) in
   let filename = pos.start_pos.Lexing.pos_fname in
+	let static_specs1, hp_decls = match static_specs with
+	  | Iformula.EList [] ->
+			    let ss, hps = Iast.genESpec funargs return_typ pos in
+					(*let _ = Debug.info_hprint (add_str "ss" !Iformula.print_struc_formula) ss no_pos in *)
+					(ss, hps)
+		| _ ->
+			    static_specs, []
+	in
   let newproc : Iast.proc_decl = {
     Iast.proc_name = name;
     Iast.proc_mingled_name = mingled_name;
     Iast.proc_data_decl = None;
     Iast.proc_flags = [] ;
+    Iast.proc_hp_decls = hp_decls;
     Iast.proc_constructor = false;
     Iast.proc_args = funargs;
     Iast.proc_source = ""; (* WN : need to change *)
     Iast.proc_return = return_typ;
-    Iast.proc_static_specs = static_specs;
+    Iast.proc_static_specs = static_specs1;
     Iast.proc_dynamic_specs = Iformula.mkEFalseF ();
     Iast.proc_exceptions = [];
     Iast.proc_body = funbody;
@@ -1327,7 +1336,7 @@ and translate_file (file: Cil.file) : Iast.prog_decl =
     Iast.prog_proc_decls = !proc_decls;
     Iast.prog_barrier_decls = !barrier_decls;
     Iast.prog_coercion_decls = !coercion_decls;
-    Iast.prog_hp_decls = [];
+    Iast.prog_hp_decls = List.fold_left (fun r proc ->r@proc.Iast.proc_hp_decls) [] !proc_decls;
     Iast.prog_hp_ids = [];
   } in
   let newprog = List.fold_left (fun x y -> merge_iast_prog x y) newprog !aux_progs in
