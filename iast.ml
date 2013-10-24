@@ -746,10 +746,17 @@ let genESpec_x args ret pos=
       hp_formula = F.mkBase F.HEmp (P.mkTrue pos) top_flow [] pos;
   }
   in
-	let _ = Debug.ninfo_hprint (add_str "generate HP for Pre" !print_hp_decl) hp_pre_decl no_pos in
+  let _ = Debug.info_hprint (add_str "generate HP for Pre" !print_hp_decl) hp_pre_decl no_pos in
   let hp_post_decl = {
       hp_name = Globals.hppost_default_prefix_name ^ (string_of_int (Globals.fresh_int()));
-      hp_typed_inst_vars = (List.map (fun arg -> (arg.param_type, arg.param_name, Globals.I)) args)@
+      hp_typed_inst_vars = (List.fold_left (fun r arg ->
+          let hp_arg = (arg.param_type, arg.param_name, Globals.I) in
+          let ref_args = if arg.param_mod = RefMod then
+            [hp_arg;(arg.param_type, arg.param_name ^ (string_of_int (Globals.fresh_int())), Globals.I)]
+          else [hp_arg]
+          in
+          r@ref_args
+      ) [] args)@
 	  (match ret with
 	    | Globals.Void -> []
 	    | _ -> [(ret, res_name, Globals.I)]
@@ -757,10 +764,18 @@ let genESpec_x args ret pos=
       hp_is_pre = false;
       hp_formula = F.mkBase F.HEmp (P.mkTrue pos) top_flow [] pos;}
   in
-	let _ = Debug.ninfo_hprint (add_str "generate HP for Post" !print_hp_decl) hp_post_decl no_pos in
+  let _ = Debug.info_hprint (add_str "generate HP for Post" !print_hp_decl) hp_post_decl no_pos in
   let pre_eargs = List.map (fun p -> P.Var ((p.param_name, Unprimed),pos)) args in
   (*todo: care ref args*)
-  let post_eargs0 = List.map (fun p -> P.Var ((p.param_name, Unprimed),pos)) args in
+  let post_eargs0 = List.fold_left (fun r p ->
+      let _ = Debug.info_hprint (add_str "Long" pr_id) "handle ref params here" no_pos in
+      let up_arg = P.Var ((p.param_name, Unprimed),pos) in
+      let hp_args =
+        if p.param_mod = RefMod then [up_arg; (P.Var ((p.param_name, Primed),pos))]
+        else [up_arg]
+      in
+      r@hp_args
+  ) [] args in
   let post_eargs = match ret with
     | Void -> post_eargs0
     | _ -> post_eargs0@[P.Var ((res_name, Unprimed),pos)]
