@@ -34,6 +34,13 @@ Procedure foo$node__star result FAIL.(1)
   - generate inferred specs for empty specs (see ex2-a.ss)
   - ref
   - NI/I
+
+==================================================================
+# ex1-b.c:
+
+ - print the new generated HeapPred
+ - expected result ex1.c
+
 ==================================================================
 # ex2-?.ss:
 generate inferred specs for empty specs
