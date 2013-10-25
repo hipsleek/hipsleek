@@ -42,11 +42,18 @@ Procedure foo$node__star result FAIL.(1)
  - expected result ex1.c: DONE
 
 ==================================================================
+# ex3-b.ss: DONE
+generate inferred specs for empty specs
+   -ref: DONE
+   - test with cparser: ex3-c.c: DONE
+
+===========
+expected result:
+   ex3-a.ss
+==================================================================
 # ex2-?.ss:
 generate inferred specs for empty specs
-  - ref
   - NI/I
-==================================================================
 ==================================================================
 ==================================================================
 

@@ -746,10 +746,17 @@ let genESpec_x args ret pos=
       hp_formula = F.mkBase F.HEmp (P.mkTrue pos) top_flow [] pos;
   }
   in
-	let _ = Debug.ninfo_hprint (add_str "generate HP for Pre" !print_hp_decl) hp_pre_decl no_pos in
+  let _ = Debug.ninfo_hprint (add_str "generate HP for Pre" !print_hp_decl) hp_pre_decl no_pos in
   let hp_post_decl = {
       hp_name = Globals.hppost_default_prefix_name ^ (string_of_int (Globals.fresh_int()));
-      hp_typed_inst_vars = (List.map (fun arg -> (arg.param_type, arg.param_name, Globals.I)) args)@
+      hp_typed_inst_vars = (List.fold_left (fun r arg ->
+          let hp_arg = (arg.param_type, arg.param_name, Globals.I) in
+          let ref_args = if arg.param_mod = RefMod then
+            [hp_arg;(arg.param_type, arg.param_name ^ (string_of_int (Globals.fresh_int())), Globals.I)]
+          else [hp_arg]
+          in
+          r@ref_args
+      ) [] args)@
 	  (match ret with
 	    | Globals.Void -> []
 	    | _ -> [(ret, res_name, Globals.I)]
@@ -757,15 +764,23 @@ let genESpec_x args ret pos=
       hp_is_pre = false;
       hp_formula = F.mkBase F.HEmp (P.mkTrue pos) top_flow [] pos;}
   in
-	let _ = Debug.ninfo_hprint (add_str "generate HP for Post" !print_hp_decl) hp_post_decl no_pos in
+  let _ = Debug.ninfo_hprint (add_str "generate HP for Post" !print_hp_decl) hp_post_decl no_pos in
   let pre_eargs = List.map (fun p -> P.Var ((p.param_name, Unprimed),pos)) args in
   (*todo: care ref args*)
-  let post_eargs0 = List.map (fun p -> P.Var ((p.param_name, Unprimed),pos)) args in
+  let post_eargs0 = List.fold_left (fun r p ->
+      let up_arg = P.Var ((p.param_name, Unprimed),pos) in
+      let hp_args =
+        if p.param_mod = RefMod then [up_arg; (P.Var ((p.param_name, Primed),pos))]
+        else [up_arg]
+      in
+      r@hp_args
+  ) [] args in
   let post_eargs = match ret with
     | Void -> post_eargs0
     | _ -> post_eargs0@[P.Var ((res_name, Unprimed),pos)]
   in
-  let ipost_simpl = (F.formula_of_heap_with_flow (F.HRel (hp_post_decl.hp_name, pre_eargs, pos)) n_flow pos) in
+  let _ = Debug.ninfo_hprint (add_str "post_eargs" (pr_list !Ipure.print_formula_exp)) post_eargs no_pos in
+  let ipost_simpl = (F.formula_of_heap_with_flow (F.HRel (hp_post_decl.hp_name, post_eargs, pos)) n_flow pos) in
   let ipost = F.mkEAssume ipost_simpl ( F.mkEBase [] [] [] ipost_simpl None pos) (fresh_formula_label "") None in
   let ipre = F.mkEBase [] [] [] (F.formula_of_heap_with_flow (F.HRel (hp_pre_decl.hp_name, pre_eargs, pos)) n_flow pos) (Some ipost) pos in
   (* generate Iformula.struc_infer_formula*)
@@ -784,8 +799,56 @@ let genESpec args ret pos=
   Debug.no_2 "genESpec" pr1 pr2 (pr_pair !F.print_struc_formula pr_none)
       (fun _ _ -> genESpec_x args ret pos) args ret
 
+let rec get_ni_name bd = match bd with
+  (* | ArrayAt of exp_arrayat ??? *)
+  (* | ArrayAlloc of exp_aalloc ??? *)
+  (* | Assert of exp_assert ??? *)
+  | Assign e -> get_ni_name e.exp_assign_lhs
+  | Binary e -> (get_ni_name e.exp_binary_oper1) @ (get_ni_name e.exp_binary_oper2)
+  | Bind e -> [e.exp_bind_bound_var]
+  (* | Block of exp_block ??? *)
+  (* | BoolLit of exp_bool_lit ??? *)
+  (* | Break of exp_break ??? *)
+  (* | Barrier of exp_barrier ??? *)
+  (* | CallRecv of exp_call_recv ??? *)
+  (* | CallNRecv of exp_call_nrecv ??? *)
+  (* | Cast of exp_cast ??? *)
+  | Cond e -> (get_ni_name e.exp_cond_condition) @ (get_ni_name e.exp_cond_then_arm) @ (get_ni_name e.exp_cond_else_arm)
+  (* | ConstDecl of exp_const_decl ??? *)
+  (* | Continue of exp_continue ??? *)
+  (* | Catch of exp_catch ??? *)
+  (* | Debug of exp_debug ??? *)
+  (* | Dprint of exp_dprint ??? *)
+  (* | Empty of loc
+  | FloatLit of exp_float_lit
+  | Finally of exp_finally
+  | IntLit of exp_int_lit
+  | Java of exp_java
+  | Label of ((control_path_id * path_label) * exp)
+  | Member of exp_member
+  | New of exp_new
+  | Null of loc
+  | Raise of exp_raise *)
+  | Return e -> (match e.exp_return_val with
+    | None -> []
+    | Some e -> get_ni_name e)
+  | Seq e -> (get_ni_name e.exp_seq_exp1) @ (get_ni_name e.exp_seq_exp2)
+  (*| This of exp_this
+  | Time of (bool*string*loc)
+  | Try of exp_try*)
+  | Unary e -> get_ni_name e.exp_unary_exp
+  (*| Unfold of exp_unfold*)
+  | Var e -> [e.exp_var_name] (* ??? *)
+  (*| VarDecl of exp_var_decl*)
+  | While e -> (get_ni_name e.exp_while_condition) @ (get_ni_name e.exp_while_body)
+  | _ -> []
+
 let mkProc sfile id flgs n dd c ot ags r ss ds pos bd =
   (* Debug.info_hprint (add_str "static spec" !print_struc_formula) ss pos; *)
+  let ni_name = match bd with
+    | None -> []
+    | Some bd -> get_ni_name bd
+  in
   let ss, n_hp_dcls = match ss with 
     | F.EList [] ->
           let ss, hps = genESpec ags r pos in
@@ -793,7 +856,7 @@ let mkProc sfile id flgs n dd c ot ags r ss ds pos bd =
           (ss,hps)
 	      (* F.mkETrueTrueF ()  *)
     | _ ->
-          (* let _ = Debug.info_hprint (add_str "Long: ex2-a" !F.print_struc_formula) ss no_pos in *)
+          (* let _ = Debug.info_hprint (add_str "ss" !F.print_struc_formula) ss no_pos in *)
           ss,[]
   in
   { proc_name = id;

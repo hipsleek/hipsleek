@@ -5,9 +5,9 @@ data node3{
 	node3 n3;	
 }
 
-skipll3<> == self=null or self::node3<_,n1,n2,n3> * n2::skipll2<> * n3::skipll3<>;
+skipll3<> == self=null or self::node3<_,n1,n2,n3> * n2::skipll2<n3> * n3::skipll3<>;
 
-skipll2<> == self=null or self::node3<_,n1,n2,null> * n2::skipll2<> * n1::lseg<n2>;
+skipll2<q> == self=q or self::node3<_,n1,n2,null> * n2::skipll2<q> * n1::lseg<n2>;
 
 //lseg2<q> == seff=q or self::node3<_,_,n2,null> * n2::lseg2<q>;
 
@@ -27,16 +27,16 @@ bool skip2(node3 l)
 
 bool skip1(node3 l, node3 e)
 //infer[H2] requires H2(l,e) ensures res;
-	requires l::slipll2<>
+	requires l::skipll2<e>
 	ensures res;
 {
 	if (l==e) return true;
-	else return (l!=null) && skip0(l.n1, l.n2) && l.n3 == null && skip1(l.n2, e);
+	else return (l!=e) && skip0(l.n1, l.n2) && l.n3 == null && skip1(l.n2, e);
 }
 
 bool skip0(node3 l, node3 e) 
 //infer[H2] requires H2(l,e) ensures res;
-	requires l::lseg1<>
+	requires l::lseg<e>
 	ensures res;
 {
 	if (l == e) return true;

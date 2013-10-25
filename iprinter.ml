@@ -968,7 +968,8 @@ let string_of_rel_decl_list rdecls =
 
 let string_of_hp_decl hpdecl =
   let name = hpdecl.Iast.hp_name in
-  name
+  let args = String.concat ";" (List.map (fun (_,n,_) -> n) hpdecl.Iast.hp_typed_inst_vars) in
+  name^"("^args^")"
 
 
 (* An Hoa : print axioms *)
