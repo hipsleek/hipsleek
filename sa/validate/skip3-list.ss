@@ -12,7 +12,7 @@ skipll2<> == self=null or self::node3<_,n1,n2,null> * n2::skipll2<> * n1::lseg<n
 //lseg2<q> == seff=q or self::node3<_,_,n2,null> * n2::lseg2<q>;
 
 lseg<q> == self=q or self::node3<_,n1,null,null> * n1::lseg<q>;
-	
+
 HeapPred H1(node3 a).
 HeapPred H2(node3 a,node3@NI b).
 
