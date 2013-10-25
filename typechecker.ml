@@ -789,8 +789,8 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
                             if infer_pre_flag then (
                                 prepost_ctr # inc;
                                 DD.info_pprint ">>>>>> HIP gather infer pre <<<<<<" pos;
-                                DD.info_zprint (lazy (("Inferred Heap :"^(pr_list Cprinter.string_of_h_formula lh)))) pos;
-                                DD.info_zprint (lazy (("Inferred Pure :"^(pr_list Cprinter.string_of_pure_formula lp)))) pos;
+                                DD.info_zprint (lazy (("Inferred Heap: "^(pr_list Cprinter.string_of_h_formula lh)))) pos;
+                                DD.info_zprint (lazy (("Inferred Pure: "^(pr_list Cprinter.string_of_pure_formula lp)))) pos;
                                 (* print_endline ("\nInferred Heap:"^(pr_list Cprinter.string_of_h_formula lh)) ; *)
                                 (* print_endline ("Inferred Pure:"^(pr_list Cprinter.string_of_pure_formula lp)); *)
                                 (*let vars = (List.concat (List.map CF.h_fv lh)) @ (List.concat (List.map CP.fv lp)) in*) 
