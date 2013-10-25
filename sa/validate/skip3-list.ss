@@ -27,7 +27,7 @@ bool skip2(node3 l)
 
 bool skip1(node3 l, node3 e)
 //infer[H2] requires H2(l,e) ensures res;
-	requires l::slipll2<>
+	requires l::skipll2<>
 	ensures res;
 {
 	if (l==e) return true;
@@ -36,7 +36,7 @@ bool skip1(node3 l, node3 e)
 
 bool skip0(node3 l, node3 e) 
 //infer[H2] requires H2(l,e) ensures res;
-	requires l::lseg1<>
+	requires l::lseg<e>
 	ensures res;
 {
 	if (l == e) return true;
