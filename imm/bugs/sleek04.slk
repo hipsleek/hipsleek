@@ -1,0 +1,23 @@
+data node {
+	int val; 
+}.
+
+//1 should fail
+checkentail x::node<_>@v & v=@A |-  x::node<_>@L.
+print residue.
+
+//2  fail
+checkentail x::node<_@v> & v=@A |-  x::node<_@L>.
+print residue.
+
+//3  fail
+checkentail x::node<_@v> & v=@A |-  x::node<_>@L.
+print residue.
+
+//4  fail
+checkentail x::node<_@A> & v=@A |-  x::node<_>@L.
+print residue.
+
+//5  fail
+checkentail x::node<_>@A & v=@A |-  x::node<_>@L.
+print residue.

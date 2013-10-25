@@ -17,6 +17,18 @@ open Label
 type spec_var =
   | SpecVar of (typ * ident * primed)
 
+(* immutability annotations *)
+type ann = ConstAnn of heap_ann | PolyAnn of spec_var |
+        TempAnn of ann | TempRes of (ann * ann) (* | Norm of (ann * ann) *)
+
+(* type view_arg = SVArg of spec_var | AnnArg of ann *)
+
+(* annotation argument type *)
+type annot_arg = ImmAnn of ann
+
+(* initial arg map: view arg or annot arg *)
+type view_arg = SVArg of spec_var | AnnotArg of annot_arg
+
 let compare_sv (SpecVar (t1, id1, pr1)) (SpecVar (t2, id2, pr2))=
   if (t1=t2)&&(pr1=pr2) then compare id1 id2
   else -1
@@ -66,6 +78,10 @@ let is_bool_typ sv = match sv with
 let is_int_typ sv = match sv with
   | SpecVar (Int,_,_) -> true
   | _ -> false
+
+let is_ann_typ sv = match sv with
+  | SpecVar (AnnT,_,_) -> true
+  | _ -> false
   
 let is_tmp_int sv = match sv with
   | SpecVar (Int,str,_) ->  ((String.length str) > 5) && ((String.compare (String.sub str 0 5) "v_int") == 0)
@@ -95,7 +111,7 @@ type xpure_view = {
     xpure_view_remaining_branches :  (formula_label list) option;
     xpure_view_pos : loc;
     (* xpure_view_derv : bool; *)
-    (* xpure_view_imm : ann; *)
+    (* xpure_view_imm: ann; *)
     (* xpure_view_perm : cperm; (\*LDK: permission*\) *)
     (* xpure_view_arguments : CP.spec_var list; *)
     (* xpure_view_modes : mode list; *)
@@ -365,6 +381,8 @@ let to_int_var (sv : spec_var) : spec_var = match sv with
 (* name prefix for int const *)
 let const_prefix = "__CONST_Int_"
 
+let aconst_prefix = "__CONST_Ann_"
+
 let const_prefix_len = String.length(const_prefix)
 
 (* is string a int const, n is prefix length *)
@@ -555,6 +573,16 @@ let eq_spec_var (sv1 : spec_var) (sv2 : spec_var) = match (sv1, sv2) with
 		   We need only to compare names and primedness *)
 	    v1 = v2 & p1 = p2
 
+let eq_ann (a1 :  ann) (a2 : ann) : bool =
+  match a1, a2 with
+    | ConstAnn ha1, ConstAnn ha2 -> ha1 == ha2
+    | PolyAnn sv1, PolyAnn sv2 -> eq_spec_var sv1 sv2
+    | _ -> false
+
+(* andreeac TODOIMM use wrapper below, use emap for spec eq *)
+let eq_ann_list (a1 :  ann list) (a2 : ann list) : bool =
+  List.fold_left (fun acc (a1,a2) -> acc &&(eq_ann a1 a2)) true (List.combine a1 a2)
+
 let rec eq_spec_var_order_list l1 l2=
   match l1,l2 with
     |[],[] -> true
@@ -596,7 +624,6 @@ let eq_xpure_view_x xp1 xp2=
       | Some r1,Some r2 -> check_eq_order_spec_var_list (r1::xp1.xpure_view_arguments) (r2::xp2.xpure_view_arguments)
       | _ -> false
   else false
-
 let eq_xpure_view xp1 xp2=
   let pr1=string_of_xpure_view in
   Debug.no_2 "eq_xpure_view" pr1 pr1 string_of_bool
@@ -1253,6 +1280,12 @@ and is_var_num (e : exp) : bool =
     | Var _ -> true
     | IConst _ -> true
     | FConst _ -> true
+    | _ -> false
+
+and is_var_ann (e : exp) : bool =
+  match e with
+    | Var _ -> true
+    | AConst _ -> true
     | _ -> false
 
 and to_var (e : exp) : spec_var =
@@ -2287,7 +2320,6 @@ and equalFormula_f (eq:spec_var -> spec_var -> bool) (f01:formula)(f02:formula):
       with _ -> false
   else false
 
-
 and equalBFormula_f (eq:spec_var -> spec_var -> bool) (f1:b_formula)(f2:b_formula):bool =
   let (pf1,_) = f1 in
   let (pf2,_) = f2 in
@@ -2776,6 +2808,8 @@ and fresh_spec_var_ann () =
   let name = fresh_old_name old_name in
   let t = AnnT in
   SpecVar (t, name, Unprimed) (* fresh ann var *)
+
+and fresh_spec_vars_ann (svs : spec_var list) = List.map (fun _ -> fresh_spec_var_ann ()) svs
 
 and fresh_spec_var_rel () =
   let old_name = "R_" in
@@ -3969,6 +4003,7 @@ and find_bound_b_formula v f0 =
     | Lte (e1, e2, pos) -> helper e1 e2 true true
     | Gt (e1, e2, pos) -> helper e1 e2 false false
     | Gte (e1, e2, pos) -> helper e1 e2 false true
+    | SubAnn (e1, e2, pos) -> helper e1 e2 true true
     | _ -> (None, None)
 
 (* eliminate exists with the help of c1<=v<=c2 *)
@@ -6296,10 +6331,20 @@ let mk_sp_const (i:int) =
   let n= const_prefix^(string_of_int i)
   in SpecVar ((Int), n , Unprimed) 
 
+let mk_sv_aconst (a:heap_ann) =
+  let ann = aconst_prefix^(string_of_heap_ann a)
+  in SpecVar ((AnnT), ann , Unprimed)
+
 let conv_exp_to_var (e:exp) : (spec_var * loc) option = 
   match e with
     | IConst(i,loc) -> Some (mk_sp_const i,loc)
     | Null loc -> Some (null_var,loc)
+    | _ -> None
+
+let conv_ann_exp_to_var (e:exp) : (spec_var * loc) option = 
+  match e with
+    | AConst(a,loc) -> Some (mk_sv_aconst a,loc)
+    | Var(v,loc)    -> Some (v, loc)
     | _ -> None
 
 (* convert exp to var representation where possible *)
@@ -6602,12 +6647,16 @@ let is_gt eq e1 e2 =
           -> (int_of_heap_ann i1)>(int_of_heap_ann i2)
     | _,_ -> false
 
+(*ann  expressions *)
 let const_ann_lend = AConst (Lend,no_pos)
 let const_ann_imm = AConst (Imm,no_pos)
 let const_ann_mut = AConst (Mutable,no_pos)
 let const_ann_abs = AConst (Accs,no_pos)
-let const_ann_top = const_ann_abs
-let const_ann_bot = const_ann_mut
+let const_ann_top = AConst (imm_top, no_pos)
+let const_ann_bot = AConst (imm_bot, no_pos)
+(*annotations *)
+let imm_ann_top = ConstAnn imm_top
+let imm_ann_bot = ConstAnn imm_bot
 
 let is_diff e1 e2 =
   match e1,e2 with
@@ -7214,7 +7263,6 @@ let filter_disj disj_ps ps=
   let pr1 = pr_list !print_formula in
   Debug.no_2 "filter_disj" pr1 pr1 pr1
       (fun _ _ -> filter_disj_x disj_ps ps) disj_ps ps
-
 let rec extract_xpure p=
 match p with
   | BForm (b,_) ->  extract_xpure_b_form_xpure b
@@ -8569,6 +8617,7 @@ let add_ann_constraints vrs f =
 let add_ann_constraints vrs f =
   let p1 = !print_formula in
   Debug.no_2 "add_ann_constraints" !print_svl p1 p1  add_ann_constraints vrs f
+
 type infer_state = 
   { 
       infer_state_vars : spec_var list; (* [] if no inference *)
@@ -8595,6 +8644,24 @@ let mem_infer_var (v:spec_var) (is:infer_state)
 (* add lhs -> rhs to infer state is *)
 let add_rel_to_infer_state (lhs:formula) (rhs:formula) (is:infer_state) 
       = is.infer_state_rel # push (lhs,rhs)
+
+(* checks if formula is of form var = annotation constant *)
+let is_eq_with_aconst (f:formula) = match f with
+  | BForm (bf,_) ->
+    (match bf with
+    | (Eq (Var (_,_), AConst _, _),_) 
+    | (Eq (AConst _, Var (_,_), _),_) -> true
+    | _ ->  false)
+  | _ ->  false
+
+(* checks if formula is of form var = annotation constant *)
+let get_aconst (f:formula) = match f with
+  | BForm (bf,_) ->
+    (match bf with
+    | (Eq (Var (_,_), AConst (ann,_), _),_) 
+    | (Eq (AConst (ann,_), Var (_,_), _),_) -> Some ann
+    | _ -> None)
+  | _ -> None
 
 let is_eq_const (f:formula) = match f with
   | BForm (bf,_) ->
@@ -8746,7 +8813,6 @@ let get_neq_null_svl (f:formula)=
   let pr1 = !print_formula in
   Debug.no_1 "get_neq_null_svl" pr1 !print_svl
       (fun _ -> get_neq_null_svl_x f) f
-
 let check_dang_or_null_exp_x root (f:formula) = match f with
   | BForm (bf,_) ->
     (match bf with
@@ -8775,6 +8841,8 @@ let check_dang_or_null_exp_x root (f:formula) = match f with
       | _ -> (false,false)
     )
   | _ -> (false,false)
+
+
 
 let check_dang_or_null_exp root (f:formula) =
   let pr1 = pr_pair string_of_bool string_of_bool in
@@ -11431,3 +11499,268 @@ let simpl_equalities_x ante conseq =
 let simpl_equalities ante conseq  = 
 	let pr = !print_formula in
 	Debug.no_2 "simpl_equalities" pr pr (pr_pair pr pr) simpl_equalities_x ante conseq
+
+(* imm utilities *)
+
+let isAccs(a : ann) : bool = 
+  match a with
+    | ConstAnn(Accs) -> true
+    | _ -> false
+
+let isLend(a : ann) : bool = 
+  match a with
+    | ConstAnn(Lend) -> true
+    | _ -> false
+
+and isMutable(a : ann) : bool = 
+  match a with
+    | ConstAnn(Mutable) -> true
+    | _ -> false
+
+and isImm(a : ann) : bool = 
+  match a with
+    | ConstAnn(Imm) -> true
+    | _ -> false
+
+and isPoly(a : ann) : bool = 
+  match a with
+    | PolyAnn v -> true
+    | _ -> false
+
+
+let rec fv_ann (a: ann) = match a with
+  | ConstAnn _ -> []
+  | TempAnn v  -> fv_ann v
+  | TempRes(v,w) -> (fv_ann w)@(fv_ann v)
+  | PolyAnn v  -> [v]
+
+let rec fv_ann_lst (a:ann list) = match a with
+  | [] -> []
+  | h :: t -> (fv_ann h) @ (fv_ann_lst t)
+
+let mkConstAnn i = match i with 
+  | 0 -> ConstAnn Mutable
+  | 1 -> ConstAnn Imm
+  | 2 -> ConstAnn Lend
+  | 3 -> ConstAnn Accs
+  | _ -> report_error no_pos "Const Ann must be less than 3"  
+
+let mkPolyAnn v = PolyAnn v
+
+let mkExpAnn ann pos = 
+  match ann with
+    | TempAnn _ -> IConst(int_of_heap_ann Accs, pos)
+    | TempRes (v,w) -> IConst(int_of_heap_ann Accs, pos)
+    | ConstAnn a -> IConst(int_of_heap_ann a, pos)
+    | PolyAnn v  -> Var(v, pos)
+
+let mkExpAnnSymb ann pos = 
+  match ann with
+    | TempAnn _ -> AConst(Accs, pos)
+    | TempRes _ -> AConst(Accs, pos)
+    | ConstAnn a -> AConst(a, pos)
+    | PolyAnn v  -> Var(v, pos)  
+
+(* dedicated name for imm sv ecoding the constant ann a *)
+let name_for_imm_sv a = (string_of_heap_ann a) ^ ann_var_sufix
+
+(* special spec var denoting ann constant *)
+let mkAnnSVar a =  SpecVar(AnnT, name_for_imm_sv a, Unprimed)
+
+let imm_to_sv ann = 
+  match ann with 
+    | PolyAnn ann  -> Some ann
+    | ConstAnn ann -> Some (mk_sv_aconst ann)
+    | _ -> None 
+
+let imm_to_sv_list ann = 
+  List.fold_left (fun acc a -> match a with
+    | Some ann -> acc@ann 
+    | None     -> acc) [] ann
+ 
+let ann_sv_lst  = (name_for_imm_sv Mutable):: (name_for_imm_sv Imm):: (name_for_imm_sv Lend)::[(name_for_imm_sv Accs)]
+
+let is_ann_const_sv sv = 
+  match sv with
+    | SpecVar(AnnT,a,_) -> List.exists (fun an -> an = a ) ann_sv_lst
+    | _                 -> false
+
+let is_mut_sv sv = 
+  if not (is_ann_typ sv) then false
+  else eq_spec_var sv (mkAnnSVar Mutable)
+
+let is_imm_sv sv = 
+  if not (is_ann_typ sv) then false
+  else eq_spec_var sv (mkAnnSVar Imm)
+
+let is_lend_sv sv = 
+  if not (is_ann_typ sv) then false
+  else eq_spec_var sv (mkAnnSVar Lend)
+
+let is_accs_sv sv = 
+  if not (is_ann_typ sv) then false
+  else eq_spec_var sv (mkAnnSVar Accs)
+
+(* end imm utilities *)
+
+
+(* utilities for allowing annotations as view arguments *)
+let eq_annot_arg a1 a2 =
+  match a1,a2 with
+    | ImmAnn a1, ImmAnn a2 -> eq_ann a1 a2
+
+let eq_view_arg a1 a2 = 
+  match a1, a2 with
+    | SVArg sv1, SVArg sv2     -> eq_spec_var sv1 sv2
+    | AnnotArg a1, AnnotArg a2 -> eq_annot_arg a1 a2
+    | _ -> false
+
+let mkSVArg sv = SVArg sv
+
+let mkImmAnn a = ImmAnn a
+
+let mkAnnotArg a = AnnotArg a
+
+let is_view_var_arg (arg:view_arg): bool =
+  match arg with
+    | SVArg _ -> true
+    | _       -> false
+
+let is_view_annot_arg (arg:view_arg): bool =
+  match arg with
+    | AnnotArg _ -> true
+    | _          -> false
+
+let eq_annot_arg a1 a2 =
+  match a1,a2 with
+    | ImmAnn a1, ImmAnn a2 -> eq_ann a1 a2
+
+let annot_arg_to_imm_ann (arg: annot_arg ): ann list =
+  match arg with
+    | ImmAnn a -> [a]
+          (* continue from here with other type of ann *)
+
+let annot_arg_to_imm_ann_list (arg: annot_arg list): ann list =
+  List.fold_left  (fun acc a -> acc@(annot_arg_to_imm_ann a) ) [] arg
+
+let imm_ann_to_annot_arg (a: ann): annot_arg =  mkImmAnn a
+
+let imm_ann_to_annot_arg_list (anns: ann list): annot_arg list =
+  List.fold_left  (fun acc a -> acc@[imm_ann_to_annot_arg a] ) [] anns
+
+let imm_to_view_arg (ann: heap_ann): view_arg = 
+  mkAnnotArg (imm_ann_to_annot_arg (ConstAnn(ann)))
+
+let imm_ann_to_view_arg (ann: ann): view_arg = 
+  mkAnnotArg (mkImmAnn ann)
+
+let imm_ann_to_view_arg_list (ann: ann list): view_arg list = 
+  List.map (fun a -> mkAnnotArg (mkImmAnn a)) ann
+
+let view_arg_to_imm_ann (arg: view_arg): ann list=
+  match arg with
+    | SVArg _     -> []
+    | AnnotArg a  -> annot_arg_to_imm_ann a
+
+let view_arg_to_imm_ann_list (args: view_arg list): ann list=
+  List.fold_left (fun acc arg -> acc@(view_arg_to_imm_ann arg)) []  args
+
+let view_arg_to_sv (arg:view_arg): spec_var list =
+  match arg with
+    | SVArg sv -> [sv]
+    | _        -> []
+
+let view_arg_to_sv_list (args:view_arg list): spec_var list =
+  List.fold_left (fun acc a -> acc@(view_arg_to_sv a)) [] args
+
+let view_arg_to_annot_arg (arg:view_arg): annot_arg list =
+  match arg with
+    | AnnotArg arg -> [arg]
+    | _            -> []
+
+let view_arg_to_annot_arg_list (args:view_arg list): annot_arg list =
+  List.fold_left (fun acc arg -> acc@(view_arg_to_annot_arg arg)) []  args
+
+let annot_arg_to_view_arg (arg: annot_arg): view_arg =
+  mkAnnotArg arg
+  
+let annot_arg_to_view_arg_list (args: annot_arg list): view_arg list =
+  List.fold_left (fun acc a -> acc@[annot_arg_to_view_arg a]) [] args
+
+let split_view_args (params: (view_arg *'a) list): spec_var list * 'a list * annot_arg list =
+  let view_args,annot_args = List.partition (fun (a,_) -> is_view_var_arg a) params in
+  let view_args, labels = List.split view_args in
+  let view_args  = List.fold_left (fun acc arg -> acc@(view_arg_to_sv arg)) [] view_args in
+  let annot_args, _ = List.split annot_args in
+  let annot_args = List.fold_left (fun acc arg -> acc@(view_arg_to_annot_arg arg)) [] annot_args in
+  view_args,labels,annot_args
+
+let sv_to_annot_arg (sv:spec_var): annot_arg = ImmAnn (mkPolyAnn sv)
+  (* match sv with *)
+  (*   | SpecVar(AnnT_,_) -> ImmAnn (mkPolyAnn sv) *)
+  (*   | _                -> (*continue here if there are more kind of annotations *)*)
+
+let sv_to_view_arg (sv: spec_var): view_arg =
+  match sv with
+    | SpecVar(AnnT, _, _) -> mkAnnotArg (sv_to_annot_arg sv)
+    | _                   -> mkSVArg sv 
+
+let sv_to_view_arg_list (svl: spec_var list): view_arg list =
+  List.map sv_to_view_arg svl
+
+let range a b =
+  let rec aux a b =
+    if a > b then [] else a :: aux (a+1) b  in
+  if a > b then List.rev (aux b a) else aux a b;;
+
+let create_view_arg_list_from_map (map: view_arg list) (hargs: spec_var list) (annot: annot_arg list) = 
+  let hargs = sv_to_view_arg_list hargs in
+  let annot = annot_arg_to_view_arg_list annot in 
+  let lst = range 1 (List.length map) in
+  let lst = List.combine lst map in
+  let lst_sv,lst_ann = List.partition ( fun (_,a) -> is_view_var_arg a) lst in
+  let lst_sv = List.combine lst_sv hargs in
+  let lst_sv = List.map (fun ((no,_),harg) -> (no,harg)) lst_sv in
+  let lst_ann = List.combine lst_ann annot in
+  let lst_ann = List.map (fun ((no,_),ann) -> (no,ann)) lst_ann in
+  let lst = lst_sv@lst_ann in
+  let lst = List.sort (fun (no1,_) (no2,_) -> no1 - no2) lst in
+  let lst = List.map (fun (_,a) -> a) lst in
+  lst
+
+let combine_labels_w_view_arg  lbl view_arg =
+  let no_lst = range 1 (List.length view_arg) in
+  let lst = List.combine no_lst view_arg in
+  let lst_sv,lst_ann = List.partition ( fun (_,a) -> is_view_var_arg a) lst in
+  let lst_sv = List.combine lbl lst_sv in
+  let lst_ann = List.map (fun a -> (LO.unlabelled,a)) lst_ann in
+  let no_view_args = lst_sv@lst_ann in
+  let no_view_args = List.sort (fun (_,(no1,_)) (_,(no2,_)) -> no1 - no2) no_view_args in
+  let view_args_w_lbl = List.map (fun (l,(_,a)) -> (l,a)) no_view_args in
+  view_args_w_lbl
+
+let initialize_positions_for_view_params (va: 'a list) = 
+  let positions = range 1 (List.length va) in
+  let va_pos = List.combine va positions in
+  va_pos
+
+let update_positions_for_view_params (va: 'a list) = 
+  let positions = range 1 (List.length va) in
+  let va_pos = List.combine va positions in
+  va_pos
+
+let update_positions_for_view_params_x (aa: annot_arg list) (pattern_lst: (view_arg * int) list) = 
+  (* let aa_pos = List.map (fun a -> (a,0)) aa in *)
+  let aa_pos = List.map (fun a -> 
+      let a = annot_arg_to_view_arg a in
+      let ff p = if (eq_view_arg (fst p) a) then Some (a,snd p) else None in
+      let found = Gen.BList.list_find ff pattern_lst in
+      match found with
+        | Some p -> p
+        | None   -> (a,0) ) aa in
+  let aa, pos = List.split aa_pos in
+  let aa = view_arg_to_annot_arg_list aa in
+  let aa_pos = List.combine aa pos in
+  aa_pos
+
+(* end utilities for allowing annotations as view arguments *)

@@ -1158,7 +1158,7 @@ and gather_type_info_heap_x prog (h0 : IF.h_formula) tlist =
       ) in
       let n_tl = gather_type_info_perm perm tlist in
       let n_tl = gather_type_info_ann ann n_tl in
-      let n_tl = if (!Globals.allow_field_ann) then gather_type_info_param_ann ann_param n_tl else n_tl in
+      let n_tl = (* if (!Globals.allow_field_ann) then *) gather_type_info_param_ann ann_param n_tl (* else n_tl *) in
       (*Deal with the generic pointer! *)
       if (c = Parser.generic_pointer_type_name) then 
         (* Assumptions:

@@ -57,7 +57,9 @@ res:  [
 
 */
 =============================================================
-# imm/ll-lend-1.ss --field-ann
+# imm/ll-lend-1.ss --field-ann 
+# partially fixed: it detects if there is a @L in the view params, but if
+# @L is build in vdef it does not. To be done
 
 ll<n,a> == self=null & n=0 or
   self::node<_@a,q>*q::ll<n-1,a>
@@ -84,7 +86,8 @@ int length(node p)
 This currently succeeds but is actually
 unsound since we need read permission on p.next
 =============================================================
-# ll-lend-b.slk --field-ann
+!!FIXED!!
+# ll-lend-b.slk --field-ann 
 
 Below should fail.
 
@@ -107,11 +110,61 @@ int length(node p)
   ensures p::ll_ann<n,@A,@L> & res=n;
 // should fail due to @L in post-condition
 =============================================================
+checkentail x::node<_@A>|- x::node<_@L>.
+
+change "Fail.(must) cause: mismatched annotation" with it's actual reason
 =============================================================
+normalize the residue for:
+
+checkentail x::node<_@v> & v=@A|- true.
+<1>x::node<Anon_11@v>@M&0<=v & v=@A&{FLOW,(21,22)=__norm}
+
+====> <1>x::node<Anon_11@A>@M & 0<=v & v=@A & {FLOW,(21,22)=__norm}
 =============================================================
+# ll-lend-c1.ss
+
+ll<n> == self=null & n=0 or
+  self::node<_@A,q@L>*q::ll<n-1>
+  inv n>=0;
+
+int length(node p)
+  requires p::ll<n>
+  ensures p::ll<n> & res=n;
+// should fail due to @L in ll<n> post-condition
 =============================================================
+#sleek0222.slk
+
+residue should eliminate unnecessary exists:
+Entail 1: Valid. 
+
+ <1>(exists flted_30_63,flted_30_62,flted_30_61: x::node<p@[@M, @flted_30_63],q@A>@M&flted_30_62=@M & flted_30_61=@M & 2<n & a_66=p & q=q_67 & exists(flted_30_64:flted_30_62=flted_30_64 & @M<:flted_30_64 & @M<:flted_30_64) & exists(flted_30_63:0<=flted_30_63 & flted_30_61=flted_30_63 & @M<:flted_30_63 & @M<:flted_30_63) & exists(flted_30_65:flted_30_65=n+1)&{FLOW,(21,22)=__norm})[]
+[[ SEARCH ==>  Fold ==>  Match ==>  COND ==>  Match ==> ]]
 =============================================================
+unsoud imm without setting  simpl_memset,
+due to the fact that h_formula_2_mem detects false on ante 
+when encounters * between nodes with disjoint fileds.
+eg:
+x::node<x@M,x@[@v]> * x::node<x@A,x@A> ==> false
+
 =============================================================
+Current restriction (which is not enforced by the parser yet):
+when enable_field_ann is set, all imm ann for data inside 
+view decl, must be parameters of view_decl in the order 
+they are used for view data. ex:
+
+ll<n,a1,a2> = self = null & n=0 or
+               self::node<_@a1,q@a2> * q::ll<n,a1,a2>
+
+
+fix the parameter positions: 
+(i)   add one extra field for I.view_decl: annot * pos
+(ii)  collecting imm info is done in Imm, for CF; must update 
+      the functions so that they use IF.
+(iii) during i2c, use the above field to update  CF.h_formula_view
+     with the appropriate annot_arg * pos
+
+
+
 =============================================================
 =============================================================
 =============================================================

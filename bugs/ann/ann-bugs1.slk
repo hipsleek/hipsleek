@@ -1,0 +1,24 @@
+// bugs after the introduction of some new features
+
+data node {
+	int val; 
+	node next;	
+}.
+
+
+pred cell<v,a> == self::node<v,q>@a * q::node<_,_>
+   inv self!=null.
+
+
+checkentail x::cell<5,@A>|- x::cell<5,@L>.
+print residue.
+
+/*
+checkentail v1=@L & v2=@A|-  v1<:v2.
+print residue.
+*/
+/*checkentail x::node<v,q>@M * q::node<_,_> |- x::node<v,q@M> * q::node<_,_>.
+print residue.*/
+
+
+

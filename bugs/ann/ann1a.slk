@@ -1,0 +1,53 @@
+data node {
+  int val;
+  node next;
+}.
+
+// (1) FAIL
+infer [] y::node<_,_>@I |- [v] y::node<a,b>@v & v=@M.
+//infer [] y::node<_,_>@I |- [v] y::node<a@v,b@v> & v=@M.
+print residue.
+
+// (1) FAIL
+infer [] y::node<_,_>@I |- y::node<a,b>@v & v=@M.
+//infer [] y::node<_,_>@I |- [v] y::node<a@v,b@v> & v=@M.
+print residue.
+
+
+//2
+infer [] y::node<_,_>@A |- (exists v: y::node<a,b>@v & v=@M).
+print residue.
+
+
+//2
+infer [] y::node<_,_>@M |- (exists v: y::node<a,b>@v & v=@M).
+print residue.
+
+/*
+// 3
+infer [] y::node<_,_>@M |- [v] y::node<a,b>@v & v=@I.
+print residue.
+
+//4
+infer [] y::node<_,_>@M |- (exists v: y::node<a,b>@v & v=@I).
+print residue.
+
+
+// 5
+infer [] y::node<_,_>@M |- [v] y::node<a,b>@v & v=@A.
+print residue.
+
+//6
+infer [] y::node<_,_>@L |- (exists v: y::node<a,b>@v & v=@A).
+print residue.
+*/
+
+
+
+
+
+
+
+// (30) FAIL
+/* infer [] y::node<_,_>@I |- [v] y::node<a,b>@v & v<:@M.
+ print residue.*/
