@@ -6,6 +6,11 @@
 **/
 //#include "slayer.h"
 
+/*@
+pred_prim memLoc<heap:bool,size:int>
+  inv size>0;
+*/
+
 int a,b,c;
 
 void* malloc(int size) __attribute__ ((noreturn))
