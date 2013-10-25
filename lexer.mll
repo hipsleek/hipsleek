@@ -400,6 +400,7 @@ rule tokenizer file_name = parse
 	  {
 		if idstr = "_" then
 		  IDENTIFIER ("Anon" ^ fresh_trailer ())
+		  (* IDENTIFIER ("Anon" ^ fresh_trailer ()) *)
 		else if idstr = "java" then begin
       store file_name; JAVA (parse_nested java file_name)
 		end else

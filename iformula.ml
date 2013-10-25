@@ -169,6 +169,7 @@ and h_formula_heap2 = { h_formula_heap2_node : (ident * primed);
                         h_formula_heap2_label : formula_label option;
                         h_formula_heap2_pos : loc }
 
+let mk_absent_ann = ConstAnn Accs
 let print_pure_formula = ref(fun (c:Ipure.formula) -> "printer not initialized")
 (* Interactive command line *)
 let cmd: (string * (bool * struc_formula option * string option)) ref = ref ("", (false, None, None))

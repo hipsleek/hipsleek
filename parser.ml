@@ -264,6 +264,8 @@ type pure_double =
   | Pure_c of P.exp
   | Pure_t of(P.exp * (F.ann option)) (* for data ann: var * ann, where var represents a data field *) 
 
+let mk_purec_absent e = Pure_t(e,Some F.mk_absent_ann)
+
 let string_of_pure_double p =
   match p with
   | Pure_f f -> "Pure_f: " ^ (Iprinter.string_of_pure_formula f)
@@ -1668,8 +1670,9 @@ cexp_w:
   | "una"
     [ `NULL -> Pure_c (P.Null (get_pos_camlp4 _loc 1))
     | `HASH ->
-        let _ = hash_count := !hash_count + 1 in 
-        Pure_c (P.Var (("#" ^ (string_of_int !hash_count),Unprimed),(get_pos_camlp4 _loc 1)))
+        (* let _ = hash_count := !hash_count + 1 in  *)
+        (* Pure_c (P.Var (("#" ^ (string_of_int !hash_count),Unprimed),(get_pos_camlp4 _loc 1))) *)
+        mk_purec_absent (P.Var (("Anon"^fresh_trailer(),Unprimed),(get_pos_camlp4 _loc 1)))
     | `IDENTIFIER id1;`OPAREN; `IDENTIFIER id; `OPAREN; cl = id_list; `CPAREN ; `CPAREN ->
         if hp_names # mem id then Pure_f(P.BForm ((P.mkXPure id cl (get_pos_camlp4 _loc 1), None), None))
         else
