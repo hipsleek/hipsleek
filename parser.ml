@@ -2489,6 +2489,7 @@ spec_branch: [[ pc=pure_constr; `LEFTARROW; sl= spec_list -> (pc,sl)]];
 
 opt_throws: [[ t = OPT throws -> un_option t []]];
 throws: [[ `THROWS; l=cid_list -> List.map fst l]];
+
 flag_arg : [[
 	`IDENTIFIER t -> Flag_str t
 	| `INT_LITER (i,_)-> Flag_int i
