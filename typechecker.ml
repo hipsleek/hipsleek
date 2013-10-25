@@ -3088,7 +3088,7 @@ let check_proc_wrapper_map_net iprog prog  (proc,num) cout_option =
     end else
       raise e
 
-let stk_tmp_checks = new Gen.stack 
+let stk_tmp_checks = new Gen.stack
 
 
 let drop_phase_infer_checks() =

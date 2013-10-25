@@ -6111,7 +6111,7 @@ On the other hand, we could also allow accumulating parameter to be
 split in a similar fashion as your pre.
 
 =====================================================================
-#glist-1.ss
+#glist-1.ss: FIXED
 
 should contain list2'=list2 in the second residue. (case spec)
 ==========================
@@ -6140,9 +6140,55 @@ Successful States:
  ]
 
 =====================================================================
+#g_slist#g_list_append
+
+ (last should lseg + case) still has problem with lseg<null>
+
+=====================================================================
+#g_slist#g_list_insert
+
+!!!  views: [G_ins,H_ins]
+Context of Verification Failure: 1 File "gslist.ss",Line:217,Col:10
+Last Proving Location: 1 File "gslist.ss",Line:254,Col:6
+
+ERROR: at gslist.ss_245:14_245:46
+Message: multiple occurrences of self as heap nodes in one branch are not allowed
+
+ExceptionFailure("multiple occurrences of self as heap nodes in one branch are not allowed")Occurred!
+
+=====================================================================
+#g_slist# g_slist_insert_before
+
+
+!!!  views: [G_insb,H1_insb]
+Context of Verification Failure: 1 File "gslist.ss",Line:292,Col:10
+Last Proving Location: 1 File "gslist.ss",Line:323,Col:10
+
+ERROR: at _0:0_0:0
+Message: UNIFICATION ERROR : at location {(0,0),(0,0)} types GSList and int are inconsistent
+
+ExceptionFailure("UNIFICATION ERROR : at location {(0,0),(0,0)} types GSList and int are inconsistent")Occurred!
+
+=====================================================================
+#g_slist#  g_list_concat
+
+
+!!!  views: [G_concat,H2_concat,H1_concat]
+Context of Verification Failure: 1 File "gslist.ss",Line:350,Col:10
+Last Proving Location: 1 File "gslist.ss",Line:359,Col:8
+
+ERROR: at _0:0_0:0
+Message: UNIFICATION ERROR : at location {(0,0),(0,0)} types GSList and int are inconsistent
+
+ExceptionFailure("UNIFICATION ERROR : at location {(0,0),(0,0)} types GSList and int are inconsistent")Occurred!
+
+=====================================================================
+#g_slist#  
+
 =====================================================================
 
 =====================================================================
+
 # dryad:
 - glib/glist.ss
 - https://git.gnome.org/browse/glib/tree/glib/gslist.c
