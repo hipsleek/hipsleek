@@ -624,27 +624,28 @@ let rec meta_to_formula (mf0 : meta_formula) quant fv_idents (tlist:TI.spec_var_
       (n_tl,r)
   | MetaVar mvar -> begin
       try 
-				let mf = get_var mvar in
-	  			meta_to_formula mf quant fv_idents tlist
+	let mf = get_var mvar in
+	meta_to_formula mf quant fv_idents tlist
       with
-			| Not_found ->
-	    	dummy_exception() ;
-	    	print_string (mvar ^ " is undefined.\n");
-	    	raise SLEEK_Exception
-    	end
+	| Not_found ->
+	  dummy_exception() ;
+	  print_string (mvar ^ " is undefined.\n");
+	  raise SLEEK_Exception
+  end
   | MetaCompose (vs, mf1, mf2) -> begin
-      let (n_tl,cf1) = meta_to_formula mf1 quant fv_idents tlist in
-      let (n_tl,cf2) = meta_to_formula mf2 quant fv_idents n_tl in
-      let svs = List.map (fun v -> TI.get_spec_var_type_list v n_tl no_pos) vs in
-      let res = Cformula.compose_formula cf1 cf2 svs Cformula.Flow_combine no_pos in
-			(n_tl,res)
+    let (n_tl,cf1) = meta_to_formula mf1 quant fv_idents tlist in
+    let (n_tl,cf2) = meta_to_formula mf2 quant fv_idents n_tl in
+    let svs = List.map (fun v -> TI.get_spec_var_type_list v n_tl no_pos) vs in
+    let res = Cformula.compose_formula cf1 cf2 svs Cformula.Flow_combine no_pos in
+    (n_tl,res)
     end
   | MetaEForm _ | MetaEFormCF _ -> report_error no_pos ("cannot have structured formula in antecedent")
 
 let meta_to_formula (mf0 : meta_formula) quant fv_idents (tlist:TI.spec_var_type_list) : (TI.spec_var_type_list*CF.formula) = 
   let pr_meta = string_of_meta_formula in
   let pr_f = Cprinter.string_of_formula in
-  Debug.no_1 "Sleekengine.meta_to_formual" pr_meta pr_none
+  let pr2 (_,f) = pr_f f in
+  Debug.no_1 "Sleekengine.meta_to_formual" pr_meta pr2
              (fun mf -> meta_to_formula mf quant fv_idents tlist) mf0
 
 let rec meta_to_formula_not_rename (mf0 : meta_formula) quant fv_idents (tlist:TI.spec_var_type_list)

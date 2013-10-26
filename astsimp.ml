@@ -2,7 +2,7 @@
 open Globals
 open Wrapper
 open Others
-open Exc.GTable 
+open Exc.GTable
 open Printf
 open Gen.Basic
 open Gen.BList
@@ -4979,8 +4979,9 @@ and trans_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : ident list) 
                 IF.formula_base_flow = fl;
                 IF.formula_base_and = a;
                 IF.formula_base_pos = pos; } in
+	    (* let _ = print_string ("Cform f1: "^(Iprinter.string_of_formula f1) ^"\n" ) in *)
             let (n_tl,ch, newvars) = linearize_formula prog f1 n_tl in
-            (*let _ = print_string ("Cform: "^(Cprinter.string_of_formula ch) ^"\n" ) in*)
+            (* let _ = print_string ("Cform ch: "^(Cprinter.string_of_formula ch) ^"\n" ) in *)
             let qsvars = List.map (fun qv -> trans_var qv n_tl pos) qvars in
             let newvars = List.map (fun qv -> trans_var qv n_tl pos) newvars in
             let ch = CF.push_exists (qsvars @ newvars) ch in
@@ -5003,9 +5004,9 @@ and trans_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : ident list) 
   (*let cf = Mem.compact_nodes_with_same_name_in_formula cf in*)
   (*TO CHECK: temporarily disabled*) 
   (* let cf = CF.merge_partial_heaps cf in (\*ENABLE THIS for partial fields*\) *)
-  (*let _ = print_string ("\nbefore ann: "^ Cprinter.string_of_formula cf) in*)
+  (* let _ = print_string ("\nbefore ann: "^ Cprinter.string_of_formula cf) in *)
   let cf = if (!Globals.allow_field_ann) then add_param_ann_constraints_formula cf else cf in
-  (*let _ = print_string ("\nafter ann: "^ Cprinter.string_of_formula cf) in*)
+  (* let _ = print_string ("\nafter ann: "^ Cprinter.string_of_formula cf) in *)
   (n_tl,cf)
 
 and linearize_formula (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_var_type_list) 
@@ -5159,9 +5160,11 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
             (hf, tf, newvars1 @ newvars2, n_tl)
           )
           else (
+	    (* let _ = print_endline ("geniric_pointer") in *)
             (* An Hoa : Handle field access *)
             (* ASSUMPTIONS detected: exps ARE ALL VARIABLES i.e. I.Var AFTER float_out_exp PRE-PROCESSING! *)
             if (c = Parser.generic_pointer_type_name || String.contains v '.') then (
+	      (* let _ = print_endline ("geniric_pointer then") in *)
               let tokens = Str.split (Str.regexp "\\.") v in
               let field_access_seq = List.filter (fun x -> I.is_not_data_type_identifier prog.I.prog_data_decls x) tokens in
               let field_access_seq = List.tl field_access_seq in (* get rid of the root pointer as well *)
@@ -5205,7 +5208,7 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
               ) in
               (* [Internal] End of function <extend_and_collect_holes> *)
               let hvars, holes = extend_and_collect_holes hvars field_offset num_ptrs in
-              (*TO CHECK: for correctness*)
+	      (*TO CHECK: for correctness*)
               (*LDK: linearize perm permission as a spec var*)
               let permvar = (
                 match perm with
@@ -5225,17 +5228,26 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
                             let v = List.nth permvars 0 in
                             Some (Cpure.Var (v,no_pos)) ))
               in
-              let result_heap =  CF.DataNode {
+	      let ann_param1,_ = List.fold_left (fun (r, n) _ ->
+		let n_ann_param =
+		  if List.mem n holes then
+		    Some (IF.ConstAnn (Accs))
+		  else
+		    (* Some (IF.ConstAnn (Mutable)) *) None
+		in
+		(r@[n_ann_param], n+1)
+	      ) ([], 0) hvars in
+	      let result_heap =  CF.DataNode {
 		  CF.h_formula_data_node = CP.SpecVar (rootptr_type,rootptr,p);
                   CF.h_formula_data_name = rootptr_type_name;
                   CF.h_formula_data_derv = dr;
                   CF.h_formula_data_imm = Immutable.iformula_ann_to_cformula_ann imm;
-                  CF.h_formula_data_param_imm = Immutable.iformula_ann_opt_to_cformula_ann_lst ann_param;
+                  CF.h_formula_data_param_imm = Immutable.iformula_ann_opt_to_cformula_ann_lst ann_param1;
                   CF.h_formula_data_perm = permvar; (*??? TO CHECK: temporarily*)
                   CF.h_formula_data_origins = []; (*??? temporarily*)
                   CF.h_formula_data_original = true; (*??? temporarily*)
                   CF.h_formula_data_arguments = hvars;
-                  CF.h_formula_data_holes = holes;
+                  CF.h_formula_data_holes = (* holes *) [];
                   CF.h_formula_data_label = pi;
                   CF.h_formula_data_remaining_branches = None;
                   CF.h_formula_data_pruning_conditions = [];
@@ -5245,7 +5257,7 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
           (result_heap, CF.TypeTrue, [], tl)
     )
             else (
-              (* Not a field access, proceed with the original code *)
+	      (* Not a field access, proceed with the original code *)
               try (
                 let vdef = I.look_up_view_def_raw 9 prog.I.prog_view_decls c in
                 let labels = fst vdef.I.view_labels in
@@ -5328,7 +5340,7 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
                                     Some (Cpure.Var (v,no_pos)) ))
                 in
                 let holes = collect_holes hvars 0 in
-                let new_h =
+		let new_h =
                   CF.DataNode {CF.h_formula_data_node = new_v;
                                CF.h_formula_data_name = c;
                                CF.h_formula_data_derv = dr;
@@ -6089,7 +6101,7 @@ and case_normalize_renamed_formula_x prog (avail_vars:(ident*primed) list) posib
     | IF.Exists b-> normalize_base b.IF.formula_exists_heap  b.IF.formula_exists_pure b.IF.formula_exists_flow b.IF.formula_exists_and b.IF.formula_exists_qvars b.IF.formula_exists_pos in
   helper f    
 
-(* AN HOA : TODO CHECK *)
+(* AN HOA : TODO CECK *)
 and case_normalize_formula prog (h:(ident*primed) list)(f:IF.formula) (rel0: rel option): IF.formula =
   let pr = Iprinter.string_of_formula in
   Debug.no_1 "case_normalize_formula" pr pr (fun f -> case_normalize_formula_x prog h f rel0) f

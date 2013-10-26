@@ -21,11 +21,11 @@ print residue.
  <1>p::pair<-@M,a@M>@M([0]) * q::pair<b@M,Anon_13@A>@M&{FLOW,(21,22)=__norm}[]
 [[empty]]
 */
-/*
+
 //(1)
 checkentail v::quad<a,_@A,#> |- true.
 print residue.
-*/
+
 /*
 <1>v::quad<a@M,Anon_11@A,Anon_12@A>@M&{FLOW,(21,22)=__norm}[]
 [[empty]]
