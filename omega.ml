@@ -331,7 +331,7 @@ let check_formula f timeout =
 	        omega_call_count := 0;
         end;
       let fnc f = 
-        (*let _ = print_endline "check" in*)
+        (* let _ = print_endline ("check:" ^ f) in *)
         let _ = incr omega_call_count in
         let new_f = Gen.break_lines_1024 f
         (*  if ((String.length f) > 1024) then
@@ -366,8 +366,8 @@ let check_formula f timeout =
       else fnc f
   end
 
-let check_formula f timeout = 
-Gen.Profiling.do_2 "Omega:check_formula" check_formula f timeout 
+let check_formula f timeout =
+Gen.Profiling.do_2 "Omega:check_formula" check_formula f timeout
 
 let check_formula i f timeout =
   Debug.no_2 "Omega:check_formula" (fun x->x) string_of_float string_of_bool

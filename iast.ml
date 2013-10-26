@@ -1227,7 +1227,7 @@ and expand_inline_fields ddefs fls =
 	  let ft = get_field_typ fld in
 	  try
 		let ddef = look_up_data_def_raw ddefs (string_of_typ ft) in
-		let fld_fs = List.map (fun y -> augment_field_with_prefix y (fn ^ ".")) ddef.data_fields in
+		let fld_fs = List.map (fun y -> augment_field_with_prefix y (fn ^ Globals.inline_field_expand)) ddef.data_fields in
 		fld_fs
 	  with
 		| Not_found -> failwith "[expand_inline_fields] type not found!"

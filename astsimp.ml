@@ -4330,7 +4330,7 @@ and compact_field_access_sequence prog root_type field_seq =
    *)
   let fold_function (cfsq,cf,ct) fn = 
     let f = I.get_field_from_typ prog.I.prog_data_decls ct fn in
-    let ncf = cf ^ (if cf = "" then "" else ".") ^ fn in
+    let ncf = cf ^ (if cf = "" then "" else  inline_field_expand) ^ fn in
     let nct = I.get_field_typ f in
     if (I.is_inline_field f) then
       (cfsq,ncf,nct)
@@ -5213,17 +5213,17 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
               ) in
               (* [Internal] End of function <extend_and_collect_holes> *)
               let hvars, holes = extend_and_collect_holes hvars field_offset num_ptrs in
-              let _ = Debug.info_hprint (add_str "c" (pr_id)) c no_pos in
-              let _ = Debug.info_hprint (add_str "rootptr" (pr_id)) rootptr_type_name no_pos in
-              let _ = Debug.info_hprint (add_str "hvars" (pr_list Cprinter.string_of_typed_spec_var)) hvars no_pos in
+              let _ = Debug.ninfo_hprint (add_str "c" (pr_id)) c no_pos in
+              let _ = Debug.ninfo_hprint (add_str "rootptr" (pr_id)) rootptr_type_name no_pos in
+              let _ = Debug.ninfo_hprint (add_str "hvars" (pr_list Cprinter.string_of_typed_spec_var)) hvars no_pos in
               let all_fields = I.look_up_all_fields_cname prog rootptr_type_name in
               let pr1 = pr_list (fun (ti,_,_,_) -> pr_pair string_of_typ pr_id ti) in 
-              let _ = Debug.info_hprint (add_str "all_fields" pr1) all_fields no_pos in
+              let _ = Debug.ninfo_hprint (add_str "all_fields" pr1) all_fields no_pos in
               (* !!! hvars:[a:int,Anon_19:Unknown,Anon_20:Unknown] *)
               (* !!! all_fields:[(int,p1.x),(int,p1.y),(pair,p2)] *)
               let comb = List.combine hvars all_fields in
               let hvars = List.map (fun (CP.SpecVar(_,i,p),((t,_),_,_,_)) -> CP.SpecVar(t,i,p)) comb in
-              let _ = Debug.info_hprint (add_str "hvars" (pr_list Cprinter.string_of_typed_spec_var)) hvars no_pos in
+              let _ = Debug.ninfo_hprint (add_str "hvars" (pr_list Cprinter.string_of_typed_spec_var)) hvars no_pos in
 	      (*TO CHECK: for correctness*)
               (*LDK: linearize perm permission as a spec var*)
               let permvar = (

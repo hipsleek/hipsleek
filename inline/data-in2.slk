@@ -12,7 +12,7 @@ data octuple {
 	inline quadruple q1;
 	inline quadruple q2;
 }.
-
+/*
 //(1)
 checkentail p::pair<_@A,a> * p::pair<b,_@A> |- true.
 print residue.
@@ -25,7 +25,7 @@ print residue.
 checkentail v::octuple<_@A,_@A,_@A,_@A,k,_@A> 
           * v::octuple<_@A,_@A,_@A,_@A,k,_@A>|- true.
 print residue.
-
+*/
 //(4)
 checkentail v::octuple<_@A,_@A,_@A,_@A,_@A,k1> 
           * v::octuple<_@A,_@A,_@A,_@A,k,_@A>|- true.
@@ -33,7 +33,7 @@ print residue.
 // <1>v::octuple<Anon_29@A,Anon_30@A,Anon_31@A,Anon_32@A,k@M,k1@M>@M&{FLOW,(21,22)=__norm}[]
 // ann-1
 
-
+/*
 //(5)
 checkentail v.octuple.q2.p1.x::<a> |- true.
 print residue.
@@ -70,3 +70,4 @@ checkentail v.octuple.q2.p1.y::<5> |- true. */
 
 // The following fails in translation
 //checkentail v.octuple.q2.p1.x::<5> * v::octuple<#,#,#,#,k,#>|- true.
+*/
