@@ -1,3 +1,4 @@
+*******************************************************
 # data-in3.slk --field-ann  (FIXED)
 
 //(1)
@@ -11,7 +12,7 @@ print residue.
 Can we make p::pair<#,a> generate _@A at the parser/astsimpl.ml?
 I start by changing #n --> #
 *******************************************************
-# data-in3b.slk
+# data-in3b.slk (FIXED)
 
 //(2)
 checkentail v.quad.p1.x::<a> |- true.
@@ -34,7 +35,7 @@ to:
 
 
 *******************************************************
-# quad.ss
+# quad.ss   (FIXED)
 
 Why is there a big time-out?
 
@@ -42,6 +43,25 @@ Why is there a big time-out?
 !!! 
  log(bigger)(>4s)(1):(10.,[(SAT:158<1:TIMEOUT:OMEGA CALCULATOR,10.)])
 *******************************************************
+# quad-2.ss  (FIXED by excluding absent vars from fv_h_node)
+
+There is a warning for specs:
+
+!!!WARNING : uninterpreted free variables [Anon_898,Anon_902] in specification.Checking lemmas... DONE.
+
+which was translated from:
+  requires q.x::<a>
+  ensures q.x::<a> & res=a;
+
+static  :EBase exists (Expl)[](Impl)[a](ex)[]q::pair<a@M,_@A>@M&
+        {FLOW,(24,25)=__norm}[]
+          EBase emp&MayLoop[]&{FLOW,(1,27)=__flow}[]
+                  EAssume 
+                    (exists a_32: q::pair<a_32@M,_@A>@M&a=res & a=a_32&
+                    {FLOW,(24,25)=__norm})[]
+
+It should be OK to give @A fields from quantification.
+
 *******************************************************
 *******************************************************
 *******************************************************

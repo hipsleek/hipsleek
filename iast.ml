@@ -138,8 +138,9 @@ enum_fields : (ident * int option) list }
 and param_modifier =
   | NoMod
   | RefMod
-          
-          
+  | CopyMod (* WN : this signify pass-by-copy semantics *)
+    (* TODO : need to be captured in both parser + cast.ml and hip verifier *)
+
 and jump_label_type =
   | NoJumpLabel 
   | JumpLabel of ident

@@ -525,10 +525,10 @@ let string_of_spec_var x =
 
 let string_of_subst stt = pr_list (pr_pair string_of_spec_var string_of_spec_var) stt
 
-let is_absent imm =
-  match imm with
-  | ConstAnn(Accs) -> true
-  | _ -> false
+(* let is_absent imm = *)
+(*   match imm with *)
+(*   | ConstAnn(Accs) -> true *)
+(*   | _ -> false *)
 
 let rec string_of_imm imm = 
   if not !print_ann then ""

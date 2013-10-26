@@ -837,7 +837,9 @@ let string_of_coerc_decl c = (string_of_coerc_type c.coercion_type)^"coerc "^c.c
 (* pretty printing for one parameter *) 
 let string_of_param par = match par.param_mod with 
  | NoMod          -> (string_of_typ par.param_type) ^ " " ^ par.param_name
- | RefMod         -> "ref " ^ (string_of_typ par.param_type) ^ " " ^ par.param_name
+ | RefMod         -> (* "ref " ^  *)(string_of_typ par.param_type) ^ "@R " ^ par.param_name
+ | CopyMod         -> (string_of_typ par.param_type) ^ "@C " ^ par.param_name
+
 ;;
 
 (* pretty printing for a list of parameters *)
