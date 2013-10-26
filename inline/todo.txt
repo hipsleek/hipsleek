@@ -23,6 +23,16 @@ There seems to be a printing problem. Can we fix it
 and try to make this equivalent to:
 checkentail v::quad<a,_@A,#> |- true.
 ==>  <1>v::quad<a@M,Anon_11@A,Anon_12@A>@M&{FLOW,(21,22)=__norm}[]
+
+Need to change from:
+ <1>v::quad<a,-,->@M([1,2])&{FLOW,(21,22)=__norm}[]
+[[empty]]
+
+to:
+==>  <1>v::quad<a@M,Anon_11@A,Anon_12@A>@M&{FLOW,(21,22)=__norm}[]
+
+
+
 *******************************************************
 *******************************************************
 *******************************************************
