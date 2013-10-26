@@ -5202,7 +5202,7 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
                 ) [] temp in
                 let newvs = List.map (fun i ->
                   if (List.mem i holes) then 
-                    CP.SpecVar (UNK,"#2#",Unprimed)
+                    CP.SpecVar (UNK,"Anon"^fresh_trailer(),Unprimed)
                   else List.nth vs (i - offset)
                 ) temp in
                 (newvs,holes) 

@@ -517,8 +517,9 @@ let string_of_spec_var x =
     | P.SpecVar (t, id, p) ->
     	  (* An Hoa : handle printing of holes *)
           let ts = if !print_type then ":"^(string_of_typ t) else "" in
-    	  let real_id = if (id.[0] = '#') then "#" else id
-          in (real_id ^(match p with
+    	  (* let real_id = if (id.[0] = '#') then "#" else id *)
+          (* in  *)
+          (id ^(match p with
             | Primed -> "'"
             | Unprimed -> "" )^ts)
 
@@ -569,7 +570,7 @@ let pr_imm x = fmt_string (string_of_imm x)
 
 let pr_derv x = fmt_string (string_of_derv x)
 
-let string_of_ident x = "#"^x
+let string_of_ident x = x
 
 let pr_ident x = fmt_string (string_of_ident x)
 
