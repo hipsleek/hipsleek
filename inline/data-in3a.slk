@@ -22,8 +22,8 @@ data quad {
 */
 
 //(2)
-//checkentail v.quad.p1.x::<a> |- true.
-//print residue.
+checkentail v.quad.p1.x::<a> |- true.
+print residue.
 
 
 //(2)

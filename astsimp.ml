@@ -4614,10 +4614,10 @@ and trans_var p (tlist: spec_var_type_list) pos =
 (* TODO WN : need to test how type checking handle # vars *)
 and trans_var_x (ve, pe) (tlist: spec_var_type_list) pos =
   (* An Hoa [23/08/2011] Variables with "#" should not be considered.*)
-  (* if (ve.[0] = '#') then  *)
-  (*   CP.SpecVar (UNK,"#",Unprimed) *)
-  if (is_dont_care_var ve) then 
-    CP.SpecVar (UNK,ve,Unprimed)
+  if (ve.[0] = '#') then
+    CP.SpecVar (UNK,"_2_",Unprimed)
+  (* if (is_dont_care_var ve) then  *)
+  (*   CP.SpecVar (UNK,"_",Unprimed) *)
   else (* An Hoa : END *)
     try
       let ve_info = snd(List.find (fun (v,en)->v=ve) tlist)
@@ -4641,9 +4641,10 @@ and trans_var_x (ve, pe) (tlist: spec_var_type_list) pos =
             
 and trans_var_safe (ve, pe) et tlist pos =
   (* An Hoa [23/08/2011] Variables with "#" should not be considered.*)
-  (* if (ve.[0] = '#') then   CP.SpecVar (UNK,"#",Unprimed) *)
-  if (is_dont_care_var ve) then 
-    CP.SpecVar (UNK,ve,Unprimed)
+  if (ve.[0] = '#') 
+     then   CP.SpecVar (UNK,"_3_",Unprimed)
+  (* if (is_dont_care_var ve) then  *)
+  (*   CP.SpecVar (UNK,"_",Unprimed) *)
   else (* An Hoa : END *)
     try
       let ve_info = snd(List.find (fun (v,en)->v=ve) tlist)
@@ -5201,7 +5202,7 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
                 ) [] temp in
                 let newvs = List.map (fun i ->
                   if (List.mem i holes) then 
-                    CP.SpecVar (UNK,"#",Unprimed)
+                    CP.SpecVar (UNK,"#2#",Unprimed)
                   else List.nth vs (i - offset)
                 ) temp in
                 (newvs,holes) 
