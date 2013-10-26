@@ -44,13 +44,15 @@ and data_field_ann =
   | REC
   | F_NO_ANN
 
-and data_decl = { data_name : ident;
-data_fields : (typed_ident * loc * bool * data_field_ann) list; (* An Hoa [20/08/2011] : add a bool to indicate whether a field is an inline field or not. TODO design revision on how to make this more extensible; for instance: use a record instead of a bool to capture additional information on the field?  *)
-data_parent_name : ident;
-data_invs : F.formula list;
-data_pos : loc;
-data_is_template: bool;
-data_methods : proc_decl list }
+and data_decl = { 
+    data_name : ident;
+    data_fields : (typed_ident * loc * bool * data_field_ann) list; 
+    (* An Hoa [20/08/2011] : add a bool to indicate whether a field is an inline field or not. TODO design revision on how to make this more extensible; for instance: use a record instead of a bool to capture additional information on the field?  *)
+    data_parent_name : ident;
+    data_invs : F.formula list;
+    data_pos : loc;
+    data_is_template: bool;
+    data_methods : proc_decl list }
 
 (*
   and global_var_decl = { global_var_decl_type : typ;
@@ -1252,6 +1254,11 @@ and look_up_all_fields_x (prog : prog_decl) (c : data_decl) =
   Find view_data_name. Look at each branch, find the data self points to.
   If there are conflicts, report as errors.
 *)
+
+and look_up_all_fields_cname (prog : prog_decl) (c : ident) = 
+  let ddef = look_up_data_def_raw prog.prog_data_decls c
+  in look_up_all_fields prog ddef
+
 
 and collect_data_view_from_struc (data_names: ident list) (f:F.struc_formula): (ident list) * (ident list) =
   match f with
