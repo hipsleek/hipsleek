@@ -12,23 +12,34 @@ data quad {
 //(1)
 //checkentail p::pair<_@A,a> * q::pair<b,_@A> |- true.
 //print residue.
-
+/*
 //(1)
-//checkentail p::pair<#,a> * q::pair<b,_@A> |- true.
-//print residue.
+checkentail p::pair<#,a> * q::pair<b,_@A> |- true.
+print residue.
+*/
 /*
  <1>p::pair<-@M,a@M>@M([0]) * q::pair<b@M,Anon_13@A>@M&{FLOW,(21,22)=__norm}[]
 [[empty]]
 */
-
+/*
 //(1)
 checkentail v::quad<a,_@A,#> |- true.
 print residue.
+*/
+/*
+<1>v::quad<a@M,Anon_11@A,Anon_12@A>@M&{FLOW,(21,22)=__norm}[]
+[[empty]]
+*/
+
 
 //(2)
 checkentail v.quad.p1.x::<a> |- true.
 print residue.
 
+/*
+<1>v::quad<a,-,->@M([1,2])&{FLOW,(21,22)=__norm}[]
+[[empty]]
+*/
 
 //(2)
 //checkentail v::quad<#,_@A,p> * p::pair<a,b>|- true.
