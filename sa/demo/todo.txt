@@ -6186,6 +6186,10 @@ ExceptionFailure("UNIFICATION ERROR : at location {(0,0),(0,0)} types GSList and
 #g_slist#  
 
 =====================================================================
+#skip3-list
+
+[omega.ml]Timeout when checking sat for 
+10. Restarting Omega after ... 192 invocations Stop Omega... 192 invocations Starting Omega...oc
 
 =====================================================================
 

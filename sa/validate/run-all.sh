@@ -14,6 +14,8 @@ echo "skip0"
 ../../hip skip0.ss -validate o/skip0.cp | grep Validate
 echo "skip2-list"
 ../../hip skip2-list.ss -validate o/skip2-list.cp | grep Validate
+echo "skip3-list"
+#../../hip skip3-list.ss -validate o/skip3-list.cp | grep Validate
 echo "check-sorted"
 ../../hip check-sorted.ss --sa-en-pure-field -validate o/check-sorted.cp | grep Validate
 #echo "sll-insertsort.ss"
