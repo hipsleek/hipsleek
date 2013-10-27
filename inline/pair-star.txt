@@ -1,4 +1,5 @@
-// Translating pair *
+// Two ways for translating pair*
+
 struct pair {
   int x;
   int y;
