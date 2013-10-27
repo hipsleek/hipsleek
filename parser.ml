@@ -2536,14 +2536,16 @@ opt_formal_parameter_list: [[t= LIST0 fixed_parameter SEP `COMMA -> t]];
   
 
 fixed_parameter:
-  [[ pm=OPT ref_t; t=typ; `IDENTIFIER id -> 
+  [[ t=typ; pm=OPT pass_t; `IDENTIFIER id -> 
       { param_mod = un_option pm NoMod;
         param_type = t;
         param_loc = get_pos_camlp4 _loc 3;
         param_name = id }]];
 
-ref_t: [[`REF -> RefMod]];
-  
+
+pass_t: [[`PASS_REF -> RefMod
+       | `PASS_COPY -> CopyMod]];
+
 proc_body: [[t=block-> t]];
 
 (*********** Statements ***************)

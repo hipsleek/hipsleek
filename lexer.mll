@@ -223,7 +223,6 @@ module Make (Token : SleekTokenS)
 	 ("dprint", DPRINT);
 	 ("sleek_compare", CMP);
    ("raise", RAISE);
-	 ("ref", REF);
 ("relation", REL);
 	 ("requires", REQUIRES);
    ("refines", REFINES);
@@ -330,9 +329,10 @@ rule tokenizer file_name = parse
   | "@A" {ACCS}
   | "@D" { DERV }
   | "@M" { MUT }
-  | "@R" { MAT }
   | "@S" { SAT }
   | "@VAL" {VAL}
+  | "@C" {PASS_COPY}
+  | "@R" {PASS_REF}
   | "@REC" {REC}
   | "@NI" {NI}
   | "@pre" { PRE }

@@ -15,6 +15,10 @@ data pair_star {
   pair p;
 }
 
+void dispose()
+  requires true
+  ensures true;
+
 int foo(pair@C q)
   requires q::pair<a,_>
   ensures q::pair<a,_> & res=a;
@@ -29,7 +33,7 @@ int foo(pair@C q)
 {
   return q.x;
 }
-
+/*
 int foo2(pair q)
   requires q::pair<a,_>@L
   ensures res=a;
@@ -70,4 +74,4 @@ int hoo()
   return t;
 }
 
-
+*/
