@@ -21,7 +21,7 @@ void dispose()
 
 int foo(pair@C q)
   requires q::pair<a,_>
-  ensures q::pair<a,_> & res=a;
+  ensures q::pair<a,5> & res=a;
 /*
   // for method declaration
   requires q::pair<a,_>
@@ -31,7 +31,17 @@ int foo(pair@C q)
   ensures  res=a;
 */
 {
+  q.y=5;
   return q.x;
+}
+
+pair foo_test()
+  requires true
+  ensures res::pair<1,6>;
+{
+  pair p=new pair(0,6);
+  p.x=foo(p)+1;
+  return p;
 }
 
 int foo2(pair q)
