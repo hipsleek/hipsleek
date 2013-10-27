@@ -1,0 +1,69 @@
+Say I have the C-program:
+
+struct pair {
+  int x;
+  int y;
+};
+
+int foo(pair *q)
+/*@
+  requires *q::pair<a,b>@L
+  ensures res=b;
+*/
+{
+  return *q.y;
+}
+
+int mn()
+/*@
+  requires true
+  ensures res=3;
+*/
+{
+  pair p;
+  p.y=3;
+  foo(&p)
+}
+
+I am using an &p operator. In my translation, I think
+the most accurate one is actually below:
+
+
+data pair {
+  int x;
+  int y;
+};
+
+
+int foo(pair *q)
+/*@
+  requires *q::pair<a,b>@L
+  ensures res=b;
+*/
+{
+  return *q.y;
+}
+
+int star_foo(pair star_q)
+/*@
+  requires star_q::pair<a,b>@L
+  ensures res=b;
+*/
+{
+  return star_q.y;
+}
+
+int mn()
+/*@
+  requires true
+  ensures res=3;
+*/
+{
+  pair p;
+  p = new pair();
+  p.y=3;
+  foo_star(p)
+}
+
+
+
