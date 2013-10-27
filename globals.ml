@@ -641,7 +641,7 @@ let enable_lemma_rhs_unfold = ref false
 
 let dis_show_diff = ref false
 
-let sa_print_inter = ref false
+let sap = ref true
 
 let tc_drop_unused = ref false
 let simpl_unfold3 = ref false

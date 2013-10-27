@@ -2539,7 +2539,7 @@ let proc_mutual_scc_shape_infer iprog prog scc_procs =
     let rel_defs = if not (!Globals.pred_syn_modular) then Sa2.rel_def_stk
     else Sa3.rel_def_stk
     in
-    if not(rel_defs# is_empty) then
+    if not(rel_defs# is_empty) && !Globals.sap then
       begin
         let defs = List.sort CF.hpdef_cmp (rel_defs # get_stk) in
         print_endline "\n*************************************";
@@ -2677,13 +2677,16 @@ and check_proc iprog (prog : prog_decl) (proc : proc_decl) cout_option (mutual_g
                       let _ = proc.Cast.proc_sel_post_hps <- proc.Cast.proc_sel_post_hps@sel_post_hp_rels in
                       if not(Infer.rel_ass_stk# is_empty) then
                         begin
-                          print_endline "";
-                          print_endline "*************************************";
-                          print_endline "*******relational assumptions (4) ********";
-                          print_endline "*************************************";
+                          if !Globals.sap then begin
+                            print_endline "";
+                            print_endline "*************************************";
+                            print_endline "*******relational assumptions (4) ********";
+                            print_endline "*************************************"
+                        end;
                           let ras = Infer.rel_ass_stk # get_stk in
                           let _ = Infer.scc_rel_ass_stk # push_list ras in
                           let _ = Infer.rel_ass_stk # reset in
+                          if !Globals.sap then begin
                           let ras = List.rev(ras) in
 			  if !Globals.testing_flag then print_endline ("<rstart>"^(string_of_int (List.length ras)));
 			  let pr = pr_list_ln (fun x -> Cprinter.string_of_hprel_short_inst prog x) in
@@ -2694,7 +2697,8 @@ and check_proc iprog (prog : prog_decl) (proc : proc_decl) cout_option (mutual_g
                           print_endline (pr (ras));
                           (* print_endline (pr (hp_lst_assume)); *)
                           (* print_endline (Infer.rel_ass_stk # string_of_reverse); *)
-                          if !Globals.testing_flag then print_endline "<rstop>*************************************" 
+                          if !Globals.testing_flag then print_endline "<rstop>*************************************"
+                          end
                         end;
                       (****************************************************************)
                       (*inference is postponed until all scc procs are analized*)

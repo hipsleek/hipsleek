@@ -205,6 +205,10 @@ let info_pprint (msg:string) (pos:loc) : unit =
 let info_hprint (pr:'a->string) (m:'a) (pos:loc) = 
 	ho_print true (fun x -> " "^(pr x)) m
 
+let info_ihprint (pr:'a->string) (m:'a) (pos:loc) =
+	if !Globals.sap then ho_print true (fun x -> " "^(pr x)) m
+        else ()
+
 let info_zprint m (pos:loc) = 
 	ho_print true (fun x -> Lazy.force x) m
 
