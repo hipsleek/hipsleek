@@ -11643,6 +11643,9 @@ let annot_arg_to_imm_ann (arg: annot_arg ): ann list =
 let annot_arg_to_imm_ann_list (arg: annot_arg list): ann list =
   List.fold_left  (fun acc a -> acc@(annot_arg_to_imm_ann a) ) [] arg
 
+let annot_arg_to_imm_ann_list_no_pos (arg: (annot_arg * int) list): ann list =
+  List.fold_left  (fun acc a -> acc@(annot_arg_to_imm_ann a) ) [] (List.map (fun (x,_) -> x ) arg)
+
 let imm_ann_to_annot_arg (a: ann): annot_arg =  mkImmAnn a
 
 let imm_ann_to_annot_arg_list (anns: ann list): annot_arg list =
@@ -11665,10 +11668,17 @@ let view_arg_to_imm_ann (arg: view_arg): ann list=
 let view_arg_to_imm_ann_list (args: view_arg list): ann list=
   List.fold_left (fun acc arg -> acc@(view_arg_to_imm_ann arg)) []  args
 
+let annot_arg_to_sv (arg: annot_arg): spec_var list =
+  match arg with
+    | ImmAnn a -> fv_ann a
+
+let annot_arg_to_sv_list (args:annot_arg list): spec_var list =
+  List.fold_left (fun acc a -> acc@(annot_arg_to_sv a)) [] args
+
 let view_arg_to_sv (arg:view_arg): spec_var list =
   match arg with
-    | SVArg sv -> [sv]
-    | _        -> []
+    | SVArg sv   -> [sv]
+    | AnnotArg a -> annot_arg_to_sv a
 
 let view_arg_to_sv_list (args:view_arg list): spec_var list =
   List.fold_left (fun acc a -> acc@(view_arg_to_sv a)) [] args
@@ -11708,28 +11718,56 @@ let sv_to_view_arg (sv: spec_var): view_arg =
 let sv_to_view_arg_list (svl: spec_var list): view_arg list =
   List.map sv_to_view_arg svl
 
-let range a b =
-  let rec aux a b =
-    if a > b then [] else a :: aux (a+1) b  in
-  if a > b then List.rev (aux b a) else aux a b;;
-
 let create_view_arg_list_from_map (map: view_arg list) (hargs: spec_var list) (annot: annot_arg list) = 
-  let hargs = sv_to_view_arg_list hargs in
-  let annot = annot_arg_to_view_arg_list annot in 
-  let lst = range 1 (List.length map) in
-  let lst = List.combine lst map in
-  let lst_sv,lst_ann = List.partition ( fun (_,a) -> is_view_var_arg a) lst in
-  let lst_sv = List.combine lst_sv hargs in
-  let lst_sv = List.map (fun ((no,_),harg) -> (no,harg)) lst_sv in
-  let lst_ann = List.combine lst_ann annot in
-  let lst_ann = List.map (fun ((no,_),ann) -> (no,ann)) lst_ann in
-  let lst = lst_sv@lst_ann in
-  let lst = List.sort (fun (no1,_) (no2,_) -> no1 - no2) lst in
-  let lst = List.map (fun (_,a) -> a) lst in
-  lst
+  try
+    let hargs = sv_to_view_arg_list hargs in
+    let annot = annot_arg_to_view_arg_list annot in 
+    let lst = Gen.range 1 (List.length map) in
+    let lst = List.combine lst map in
+    let lst_sv,lst_ann = List.partition ( fun (_,a) -> is_view_var_arg a) lst in
+    let lst_sv = List.combine lst_sv hargs in
+    let lst_sv = List.map (fun ((no,_),harg) -> (no,harg)) lst_sv in
+    let lst_ann = List.combine lst_ann annot in
+    let lst_ann = List.map (fun ((no,_),ann) -> (no,ann)) lst_ann in
+    let lst = lst_sv@lst_ann in
+    let lst = List.sort (fun (no1,_) (no2,_) -> no1 - no2) lst in
+    let lst = List.map (fun (_,a) -> a) lst in
+    lst
+  with Invalid_argument s -> 
+      raise (Invalid_argument (s ^ " at Cpure.create_view_arg_list_from_map") )
+
+let create_view_arg_list_from_pos_map (map: (view_arg*int) list) (hargs: spec_var list) (annot: (annot_arg*int) list) = 
+  try
+    (* update the annotations first *)
+    let _ = Debug.binfo_pprint ("annot: " ^(string_of_int (List.length annot)  )) no_pos in
+    let _ = Debug.binfo_pprint ("annot: " ^(pr_list (string_of_int ) (List.map snd annot))) no_pos in
+    let view_args_pos = List.map (fun (va,p) -> 
+        try 
+          
+          let _ = Debug.binfo_pprint ("p: " ^(string_of_int p)) no_pos in
+          let (a,p) = List.find (fun (_,i) ->           let _ = Debug.binfo_pprint ("i: " ^(string_of_int i)) no_pos in p == i) annot in
+          (annot_arg_to_view_arg a, p)
+        with Not_found -> (va,0)) map in
+    let _ = Debug.binfo_pprint ("view_args_pos: " ^(string_of_int (List.length view_args_pos)  )) no_pos in
+    let temp_pos = Gen.range 1 (List.length view_args_pos) in
+    let view_arg_temp_pos = List.combine view_args_pos temp_pos in
+    let to_be_updated, already_updated = List.partition (fun ((va,p),tp) -> p == 0 ) view_arg_temp_pos in
+    let _ = Debug.binfo_pprint ("to_be_updated: " ^(string_of_int (List.length to_be_updated)  )) no_pos in
+    let _ = Debug.binfo_pprint ("hargs: "^ (string_of_int (List.length  hargs)))  no_pos in
+    let new_update = try  List.map (fun (((va,_),p),sv) -> ((sv_to_view_arg sv,0),p) ) (List.combine to_be_updated hargs) 
+    with Invalid_argument s -> 
+      raise (Invalid_argument (s ^ " at Cpure.create_view_arg_list_from_pos_map 000") )
+    in
+    let full_updated = new_update@already_updated in
+    let updated_in_orig_pos = List.sort (fun (_,p1) (_,p2) -> p1 - p2) full_updated in
+    let updated_in_orig_pos, _ = List.split updated_in_orig_pos in (* get rid of temp pos *)
+    let updated_view_arg,_ = List.split updated_in_orig_pos in (* get rid of orig pos *)
+    updated_view_arg
+  with Invalid_argument s -> 
+      raise (Invalid_argument (s ^ " at Cpure.create_view_arg_list_from_pos_map") )
 
 let combine_labels_w_view_arg  lbl view_arg =
-  let no_lst = range 1 (List.length view_arg) in
+  let no_lst = Gen.range 1 (List.length view_arg) in
   let lst = List.combine no_lst view_arg in
   let lst_sv,lst_ann = List.partition ( fun (_,a) -> is_view_var_arg a) lst in
   let lst_sv = List.combine lbl lst_sv in
@@ -11740,12 +11778,12 @@ let combine_labels_w_view_arg  lbl view_arg =
   view_args_w_lbl
 
 let initialize_positions_for_view_params (va: 'a list) = 
-  let positions = range 1 (List.length va) in
+  let positions = Gen.range 1 (List.length va) in
   let va_pos = List.combine va positions in
   va_pos
 
 let update_positions_for_view_params (va: 'a list) = 
-  let positions = range 1 (List.length va) in
+  let positions = Gen.range 1 (List.length va) in
   let va_pos = List.combine va positions in
   va_pos
 
@@ -11762,5 +11800,20 @@ let update_positions_for_view_params_x (aa: annot_arg list) (pattern_lst: (view_
   let aa = view_arg_to_annot_arg_list aa in
   let aa_pos = List.combine aa pos in
   aa_pos
+
+let update_positions_for_imm_view_params (aa: ann list) (old_lst: (annot_arg * int) list) = 
+  (* let aa_pos = List.map (fun a -> (a,0)) aa in *)
+  try 
+    let lst = List.combine aa old_lst in 
+    let new_annot_args = List.map (fun (a, (aa,p)) -> (imm_ann_to_annot_arg a, p)) lst in new_annot_args
+  with Invalid_argument s -> raise (Invalid_argument (s ^ "Cpure.update_positions_for_imm_view_params"))
+
+let update_positions_for_annot_view_params (aa: annot_arg list) (old_lst: (annot_arg * int) list) = 
+  (* let aa_pos = List.map (fun a -> (a,0)) aa in *)
+  try 
+    let lst = List.combine aa old_lst in 
+    let new_annot_args = List.map (fun (a, (aa,p)) -> (a, p)) lst in new_annot_args
+  with Invalid_argument s -> raise (Invalid_argument (s ^ "Cpure.update_positions_for_imm_view_params"))
+
 
 (* end utilities for allowing annotations as view arguments *)

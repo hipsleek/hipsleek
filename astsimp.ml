@@ -952,7 +952,7 @@ let trans_logical_vars lvars =
 (*HIP*)
 let rec trans_prog (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_decl =
   (* let _ = print_string ("--> input prog4 = \n"^(Iprinter.string_of_program prog4)^"\n") in *)
-  (* print_string "trans_prog\n"; *)
+  print_string "trans_prog\n";
   let _ = (exlist # add_edge "Object" "") in
   let _ = (exlist # add_edge "String" "Object") in
   let _ = (exlist # add_edge raisable_class "Object") in
@@ -1070,9 +1070,10 @@ let rec trans_prog (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_decl
 	  (* let _ =  print_endline " after case normalize" in *)
           (* let _ = I.find_empty_static_specs prog in *)
 	  let tmp_views = order_views prog.I.prog_view_decls in
-          Debug.tinfo_hprint (add_str "trans_prog(views)" pr_v_decls) tmp_views no_pos;
+          Debug.binfo_hprint (add_str "trans_prog(views)" pr_v_decls) tmp_views no_pos;
 	  let _ = Iast.set_check_fixpt prog.I.prog_data_decls tmp_views in
 	  (* let _ = print_string "trans_prog :: going to trans_view \n" in *)
+          let _ = List.map (fun v ->  v.I.view_imm_map <- Immutable.icollect_imm v.I.view_formula v.I.view_vars v.I.view_data_name  prog.I.prog_data_decls )  prog.I.prog_view_decls  in
 	  let cviews = List.map (trans_view prog []) tmp_views in
           let cviews1 =
             if !Globals.pred_elim_useless then
@@ -1446,15 +1447,18 @@ and add_param_ann_constraints_to_pure (h_f: CF.h_formula) (p_f: MCP.mix_formula 
           | None   -> MCP.mkMTrue no_pos 
   in MCP.remove_dupl_conj_mix_formula mix_f
 
-and add_param_ann_constraints_formula (cf: CF.formula): CF.formula =
+(* below is not needed  anymore because of norm: push outer ann to inner *)
+and add_param_ann_constraints_formula_x (cf: CF.formula): CF.formula = 
   match cf with
     | CF.Base f   -> CF.Base { f with
           CF.formula_base_pure = add_param_ann_constraints_to_pure f.CF.formula_base_heap (Some f.CF.formula_base_pure); }
     | CF.Or f     -> CF.Or { f with 
-          CF.formula_or_f1 =  add_param_ann_constraints_formula f.CF.formula_or_f1; 
-          CF.formula_or_f2 =  add_param_ann_constraints_formula f.CF.formula_or_f2; }
+          CF.formula_or_f1 =  add_param_ann_constraints_formula_x f.CF.formula_or_f1; 
+          CF.formula_or_f2 =  add_param_ann_constraints_formula_x f.CF.formula_or_f2; }
     | CF.Exists f -> CF.Exists { f with
           CF.formula_exists_pure = add_param_ann_constraints_to_pure f.CF.formula_exists_heap (Some f.CF.formula_exists_pure); }
+
+and add_param_ann_constraints_formula (cf: CF.formula): CF.formula = cf
 
 (* add data param ann constraints to pure formula. 
    ex1. x::node<val1@A, val2@v, q@I>@I & n = 2 => 
@@ -1605,16 +1609,17 @@ and trans_view_x (prog : I.prog_decl) ann_typs (vdef : I.view_decl): C.view_decl
       let view_kind = trans_view_kind vdef.I.view_kind in
       let vn = vdef.I.view_name in
       let _ = if view_kind = Cast.View_PRIM then CF.view_prim_lst # push vn  in
-      let view_vars_gen = CP.sv_to_view_arg_list view_sv_vars in
-      let view_sv_vars, labels, ann_params = CP.split_view_args (List.combine view_vars_gen (fst vdef.I.view_labels)) in
-      let ann_params, view_vars_gen = Immutable.initialize_positions_for_args ann_params view_vars_gen cf data_name  prog.I.prog_data_decls in
+      (* let view_vars_gen = CP.sv_to_view_arg_list view_sv_vars in *)
+      (* let view_sv_vars, labels, ann_params = CP.split_view_args (List.combine view_vars_gen (fst vdef.I.view_labels)) in *)
+      (* let ann_params, view_vars_gen = Immutable.initialize_positions_for_args ann_params view_vars_gen cf data_name prog.I.prog_data_decls in *)
+      let view_sv, labels, ann_params, view_vars_gen = Immutable.split_sv view_sv_vars vdef in 
       (* let _ = Debug.info_pprint ("!!! Trans_view HERE") no_pos in *)
       let cvdef ={
           C.view_name = vn;
           C.view_pos = vdef.I.view_pos;
           C.view_is_prim = is_prim_v;
           C.view_kind = view_kind;
-          C.view_vars = view_sv_vars;
+          C.view_vars = view_sv;
           C.view_cont_vars = [];
           C.view_uni_vars = [];
           C.view_labels = labels;
@@ -5239,7 +5244,8 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
                 let labels = fst vdef.I.view_labels in
                 let params_orig = match_exp (List.combine exps labels) pos in
                 (* andreeac: TODO insert test check map compatib *)
-                let hvars, labels, annot_params = CP.split_view_args (List.combine params_orig labels) in
+                (* let hvars, labels, annot_params = CP.split_view_args (List.combine params_orig labels) in *)
+                let hvars, labels, annot_params, params_orig = Immutable.split_view_args params_orig vdef in 
                 let c0 =
                   if vdef.I.view_data_name = "" then 
                     (fill_view_param_types vdef;
@@ -5264,9 +5270,6 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
                               let v = List.nth permvars 0 in
                               Some (Cpure.Var (v,no_pos)) ))
                 in
-                (* let annot_params, params_orig = Immutable.initialize_positions_for_args  annot_params params_orig in  *)
-                let params_orig = CP.initialize_positions_for_view_params params_orig in
-                let annot_params = CP.update_positions_for_view_params annot_params in
                 let new_h = CF.ViewNode {
                     CF.h_formula_view_node = new_v;
                     CF.h_formula_view_name = c;
@@ -7910,7 +7913,7 @@ and trans_bdecl prog bd =
   let pr_out c = Cprinter.string_of_barrier_decl c in
   Debug.no_1 "trans_bdecl " pr_in pr_out (trans_bdecl_x prog) bd
       
-and trans_field_layout (iann : IF.ann list) : CP.ann list = List.map Immutable.iformula_ann_to_cformula_ann iann
+and trans_field_layout (iann : IP.ann list) : CP.ann list = List.map Immutable.iformula_ann_to_cformula_ann iann
 
 and trans_mem_formula (imem : IF.mem_formula) (tlist:spec_var_type_list) : CF.mem_perm_formula = 
     let mem_exp = trans_pure_exp imem.IF.mem_formula_exp tlist in 
@@ -8102,7 +8105,7 @@ let rec rev_trans_heap f = match f with
                     b.CF.h_formula_data_name
                     0
                     b.CF.h_formula_data_derv 
-                    (IF.ConstAnn(Mutable))
+                    (IP.ConstAnn(Mutable))
                     true false false None (List.map (fun c-> IP.Var ((rev_trans_spec_var c),no_pos)) b.CF.h_formula_data_arguments) []
                     None b.CF.h_formula_data_pos         
   | CF.ViewNode b ->
@@ -8110,7 +8113,7 @@ let rec rev_trans_heap f = match f with
                     b.CF.h_formula_view_name
                     0
                     b.CF.h_formula_view_derv 
-                    (IF.ConstAnn(Mutable))
+                    (IP.ConstAnn(Mutable))
                     true false false None (List.map (fun c-> IP.Var ((rev_trans_spec_var c),no_pos)) b.CF.h_formula_view_arguments) (List.map (fun _ -> None) b.CF.h_formula_view_arguments)
                     None b.CF.h_formula_view_pos
   | CF.Hole _ -> failwith "holes should not have been here"
@@ -8176,6 +8179,7 @@ let transform_hp_rels_to_iviews (hp_rels:(ident* CF.hp_rel_def) list):(ident*ide
                                          I.view_pos = no_pos;
 		I.view_data_name = "";
 		I.view_vars = vars;
+                I.view_imm_map = [];
 		I.view_labels = List.map (fun _ -> LO.unlabelled) vars, false;
 		I.view_modes = List.map (fun _ -> ModeOut) vars ;
 		I.view_typed_vars =  tvars;
@@ -8366,7 +8370,7 @@ let plugin_inferred_iviews views iprog cprog=
               IF.h_formula_heap_name = id^"_"^pname;
               IF.h_formula_heap_deref = 0;
               IF.h_formula_heap_derv = false;
-              IF.h_formula_heap_imm = IF.ConstAnn(Mutable);
+              IF.h_formula_heap_imm = IP.ConstAnn(Mutable);
               IF.h_formula_heap_imm_param = [];
               IF.h_formula_heap_full = false;
               IF.h_formula_heap_with_inv = false;

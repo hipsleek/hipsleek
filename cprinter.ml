@@ -1186,10 +1186,8 @@ let rec pr_h_formula h =
       h_formula_view_pruning_conditions = pcond;
 	  h_formula_view_unfold_num = ufn;
       h_formula_view_pos =pos}) ->
-          let anns = List.map fst anns in
-          let svs_orig = List.map fst svs_orig in
           let perm_str = string_of_cperm perm in
-          let params = CP.create_view_arg_list_from_map svs_orig svs anns in
+          let params = CP.create_view_arg_list_from_pos_map svs_orig svs anns in
           fmt_open_hbox ();
 	  if (!Globals.texify) then
 	    begin
@@ -1344,10 +1342,8 @@ let rec prtt_pr_h_formula h =
       h_formula_view_remaining_branches = ann;
       h_formula_view_pruning_conditions = pcond;
       h_formula_view_pos =pos}) ->
-        let anns = List.map fst anns in
-        let svs_orig = List.map fst svs_orig in
         let perm_str = string_of_cperm perm in
-        let params = CP.create_view_arg_list_from_map svs_orig svs anns in
+        let params = CP.create_view_arg_list_from_pos_map svs_orig svs anns in
           fmt_open_hbox ();
          (* (if pid==None then fmt_string "N
 N " else fmt_string "SS "); *)
@@ -1473,10 +1469,8 @@ let rec prtt_pr_h_formula_inst prog h =
       h_formula_view_remaining_branches = ann;
       h_formula_view_pruning_conditions = pcond;
       h_formula_view_pos =pos}) ->
-        let anns = List.map fst anns in
-        let svs_orig = List.map fst svs_orig in
         let perm_str = string_of_cperm perm in
-        let params = CP.create_view_arg_list_from_map svs_orig svs anns in
+        let params = CP.create_view_arg_list_from_pos_map svs_orig svs anns in
           fmt_open_hbox ();
 		    if (!Globals.texify) then 
 			  begin
@@ -1599,10 +1593,8 @@ let rec pr_h_formula_for_spec h =
     h_formula_view_remaining_branches = ann;
     h_formula_view_pruning_conditions = pcond;
     h_formula_view_pos =pos}) ->
-    let anns = List.map fst anns in
-    let svs_orig = List.map fst svs_orig in
     let perm_str = string_of_cperm perm in
-    let params = CP.create_view_arg_list_from_map svs_orig svs anns in
+    let params = CP.create_view_arg_list_from_pos_map svs_orig svs anns in
     fmt_open_hbox ();
     (* (if pid==None then fmt_string "NN " else fmt_string "SS "); *)
     (* pr_formula_label_opt pid;  *)
@@ -3863,9 +3855,7 @@ let rec html_of_h_formula h = match h with
 				h_formula_view_pruning_conditions = pcond;
 				h_formula_view_pos =pos}) ->
 	      (* (html_of_spec_var sv) ^ html_mapsto ^ c ^ html_left_angle_bracket ^ (html_of_spec_var_list svs) ^ html_right_angle_bracket *)
-              let anns = List. map fst anns in
-              let svs_orig = List. map fst svs_orig in
-              let params = CP.create_view_arg_list_from_map svs_orig svs anns in
+              let params = CP.create_view_arg_list_from_pos_map svs_orig svs anns in
 	      (html_of_spec_var sv) ^ html_mapsto ^ c ^ html_left_angle_bracket ^ (html_of_view_arg_list params) ^ html_right_angle_bracket
   | HTrue -> "<b>htrue</b>"
   | HFalse -> "<b>hfalse</b>"

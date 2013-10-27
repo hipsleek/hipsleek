@@ -168,11 +168,13 @@ let rec string_of_typed_var_list l = match l with
   | h::t -> (string_of_typed_var h) ^ ";" ^ (string_of_typed_var_list t)
 
 let string_of_imm imm = match imm with
-  | Iformula.ConstAnn(Accs) -> "@A"
-  | Iformula.ConstAnn(Imm) -> "@I"
-  | Iformula.ConstAnn(Lend) -> "@L"
-  | Iformula.ConstAnn(Mutable) -> "@M"
-  | Iformula.PolyAnn(v, _) -> "@" ^ (string_of_var v)
+  | P.ConstAnn(Accs) -> "@A"
+  | P.ConstAnn(Imm) -> "@I"
+  | P.ConstAnn(Lend) -> "@L"
+  | P.ConstAnn(Mutable) -> "@M"
+  | P.PolyAnn(v, _) -> "@" ^ (string_of_var v)
+
+let string_of_imm_lst imm_lst = pr_list string_of_imm imm_lst
 
 let string_of_imm_opt imm = match imm with
   | Some ann -> string_of_imm ann

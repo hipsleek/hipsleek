@@ -488,7 +488,7 @@ let rec get_data_decl_names (ddf : I.data_decl list) : (ident * ((I.typed_ident 
 	| x::xs -> (x.I.data_name, List.map (fun (a1,a2,a3,a4) -> (a1,a2,a3)) x.I.data_fields)::(get_data_decl_names xs)
 	| [] -> []
 
-let check_mem_formula_data_names (ddf : I.data_decl list) (fl : (ident * (IF.ann list))) : bool = 
+let check_mem_formula_data_names (ddf : I.data_decl list) (fl : (ident * (IP.ann list))) : bool = 
 	let data_name_fields = get_data_decl_names ddf in
 	let name = fst fl in
 	if List.mem name (fst (List.split data_name_fields))
@@ -1063,7 +1063,7 @@ let compact_view_nodes (h1: CF.h_formula) (h2: CF.h_formula) (aset:CP.spec_var l
                    (match h1 with 
                      | CF.ViewNode h ->
 			   	         (CF.ViewNode {h with 
-                           CF.h_formula_view_annot_arg = CP.update_positions_for_view_params (CP.imm_ann_to_annot_arg_list new_param_imm);},
+                           CF.h_formula_view_annot_arg = CP.update_positions_for_imm_view_params new_param_imm h.CF.h_formula_view_annot_arg;},
                           CF.HEmp, (CP.mkTrue no_pos))
                      | _ -> (h1, h2,(CP.mkTrue no_pos))
                    )
@@ -2225,7 +2225,7 @@ match sst with
   | a::rest -> e_apply_subs rest (IP.e_apply_one a e) 
 
 let rec infer_mem_from_heap (hf: IF.h_formula) (prog:I.prog_decl) 
-: IP.exp * ((ident * (IF.ann list)) list) * ((ident * (IP.exp list)) list) = 
+: IP.exp * ((ident * (IP.ann list)) list) * ((ident * (IP.exp list)) list) = 
 match hf with
   | IF.Conj ({IF.h_formula_conj_h1 = h1; 
 	IF.h_formula_conj_h2 = h2; 
@@ -2269,8 +2269,8 @@ match hf with
                          | None -> (match exp with
                              | IP.Var((id,p),_)  -> 
                                  if List.length (IP.anon_var (id,p)) == 0 
-                                 then IF.ConstAnn(Mutable) else IF.ConstAnn(Accs)
-                             | _ -> IF.ConstAnn(Mutable))
+                                 then IP.ConstAnn(Mutable) else IP.ConstAnn(Accs)
+                             | _ -> IP.ConstAnn(Mutable))
                      ) args_annl in
                      let fl = c,new_annl in
                      let new_fvs = List.map (fun c ->
@@ -2283,7 +2283,7 @@ match hf with
   | _ ->  IP.Bag([],no_pos),[],[]
 
 let rec infer_mem_from_formula (f: IF.formula) (prog: I.prog_decl) (mexp:IP.exp): 
-IF.formula * (IP.formula list) * ((ident * (IF.ann list)) list) * ((ident * (IP.exp list)) list) = 
+IF.formula * (IP.formula list) * ((ident * (IP.ann list)) list) * ((ident * (IP.exp list)) list) = 
 match f with
   | IF.Base ({IF.formula_base_heap = h;
              IF.formula_base_pure = p;
@@ -2325,7 +2325,7 @@ match f with
       },p1@p2,fl1@fl2,fv1@fv2
 
 let rec infer_mem_from_struc_formula (sf: IF.struc_formula) (prog:I.prog_decl) (mexp:IP.exp) : 
-IF.struc_formula *(IP.formula list) *((ident * (IF.ann list)) list) * ((ident * (IP.exp list)) list)=
+IF.struc_formula *(IP.formula list) *((ident * (IP.ann list)) list) * ((ident * (IP.exp list)) list)=
   match sf with
     (*| IF.EOr ({IF.formula_struc_or_f1 = f1;
                IF.formula_struc_or_f2 = f2;

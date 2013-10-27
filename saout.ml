@@ -101,6 +101,7 @@ List.fold_left (fun acc (rel_cat, hf,_,f_body)->
               I.view_pos = no_pos;
 	      I.view_data_name = data_name;
 	      I.view_vars = vars;
+              I.view_imm_map = [];
 	      I.view_labels = List.map (fun _ -> LO.unlabelled) vars, false;
 	      I.view_modes = List.map (fun _ -> ModeOut) vars ;
 	      I.view_typed_vars =  tvars;
@@ -169,7 +170,7 @@ let hn_trans cprog vnames hn = match hn with
                 IF.h_formula_heap_name = id;
                 IF.h_formula_heap_deref = 0;
                 IF.h_formula_heap_derv = false;
-                IF.h_formula_heap_imm = IF.ConstAnn(Mutable);
+                IF.h_formula_heap_imm = IP.ConstAnn(Mutable);
                 IF.h_formula_heap_imm_param = [];
                 IF.h_formula_heap_full = false;
                 IF.h_formula_heap_with_inv = false;

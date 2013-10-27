@@ -4,6 +4,10 @@ data node {
 }
 
 
+ll<n,a1,a2> == self=null & n=0 or
+  self::node<_@a1,q@a2>*q::ll<n-1,a1,a2>
+  inv n>=0;
+
 int get(node x) 
   requires x::node<v,q>
   ensures  x::node<v,q> & res=v;  
@@ -20,43 +24,32 @@ void sset(node x, int v)
   requires x::node<_,q>
   ensures  x::node<v,q>;
 {
-  dprint;
-  //x::node<annon,q> fires: 
-  //x::node<annon,q> |- x'::node<newv1,newv2> ====> S:  x'::node<newv1,newv2> & x=x'& newv1=v & newv2=q
-  node tmp;
-  tmp = x.next;
-  x.next = null;
-  x.next = tmp;
   x.val = v;
-  //x::node<newvar,q> & newvar = v |- x::node<v,q>
-  dprint;
 }
-
-
-
-
 
 int getA(node x) 
   requires x::node<v@L,_@A>
   ensures  res=v;  
 {
-  dprint;
-  //x::node<v@L,_@A>
   return x.val;
-  //x::node<v@[@L],_@A> * x::node<v@A,_@A> & res=v
-  dprint;
 }
-//emp & res=v
 
 
 void setA(node x, int v)
   requires x::node<_@M,_@A>
   ensures  x::node<v@M,_@A>;
 {
-  //x::node<annon,q> fires: 
-  //x::node<annon,q> |- x'::node<newv1,newv2> ====> S:  x'::node<newv1,newv2> & x=x'& newv1=v & newv2=q
-  dprint;
   x.val = v;
-  dprint;
-  //x::node<newvar,q> & newvar = v |- x::node<v,q>
+}
+
+void non_negative(node z)
+  requires z::ll<n,@M,@L>
+  ensures  z::ll<n,@M,@A>;
+{
+  if (z == null) return;
+  else{
+    int v = getA(z);
+    if (v<0)  setA(z,(0-v));
+  }
+  non_negative(z.next);
 }

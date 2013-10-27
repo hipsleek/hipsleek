@@ -93,7 +93,7 @@ let node2_to_node_x prog (h0 : IF.h_formula_heap2) : IF.h_formula_heap =
   (* match named arguments with formal parameters to generate a list of    *)
   (* position-based arguments. If a parameter does not appear in args,     *)
   (* then it is instantiated to a fresh name.                              *)
-  let rec match_args (params : ident list) args_ann :  (IP.exp * IF.ann option) list =
+  let rec match_args (params : ident list) args_ann :  (IP.exp * IP.ann option) list =
     match params with
       | p :: rest ->
             let tmp1 = match_args rest args_ann in
@@ -1118,8 +1118,8 @@ and gather_type_info_heap_x prog (h0 : IF.h_formula) tlist =
       let ft = cperm_typ () in
       let gather_type_info_ann c tlist = (
         match c with
-        | IF.ConstAnn _ -> tlist
-        | IF.PolyAnn ((i,_),_) -> (*ignore*)(let (n_tl,_) = (gather_type_info_var i tlist AnnT pos ) in n_tl) (*remove ignore*)
+        | IP.ConstAnn _ -> tlist
+        | IP.PolyAnn ((i,_),_) -> (*ignore*)(let (n_tl,_) = (gather_type_info_var i tlist AnnT pos ) in n_tl) (*remove ignore*)
       ) in
       let rec gather_type_info_param_ann lst tl = (
         match lst with

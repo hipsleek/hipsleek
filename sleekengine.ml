@@ -479,6 +479,9 @@ let convert_data_and_pred_to_cast_x () =
   let _ = Iast.set_check_fixpt iprog.I.prog_data_decls tmp_views in
   Debug.tinfo_pprint "after check_fixpt" no_pos;
   iprog.I.prog_view_decls <- tmp_views;
+  (* collect immutable info for splitting view params *)
+  let _ = List.map (fun v ->  v.I.view_imm_map <- Immutable.icollect_imm v.I.view_formula v.I.view_vars v.I.view_data_name iprog.I.prog_data_decls )  iprog.I.prog_view_decls  in
+  let _ = Debug.binfo_hprint (add_str "view_decls:"  (pr_list (pr_list (pr_pair Iprinter.string_of_imm string_of_int))))  (List.map (fun v ->  v.I.view_imm_map) iprog.I.prog_view_decls) no_pos in
   let cviews = List.map (AS.trans_view iprog []) tmp_views in
   Debug.tinfo_pprint "after trans_view" no_pos;
   let cviews =

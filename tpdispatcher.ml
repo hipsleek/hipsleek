@@ -1097,8 +1097,8 @@ let add_imm_inv f1 f2 =
       let vp=Var(v,no_pos) in 
       mkAnd (mkSubAnn const_ann_bot vp) (mkSubAnn vp const_ann_top) no_pos ) vs in
   let f1_inv = join_conjunctions (f1::inv) in
-  let _ = Debug.ninfo_hprint (add_str "Ann Vars" Cprinter.string_of_spec_var_list) vs no_pos in
-  let _ = Debug.ninfo_hprint (add_str "Inv" Cprinter.string_of_pure_formula) f1_inv no_pos in
+  let _ = Debug.tinfo_hprint (add_str "Ann Vars" Cprinter.string_of_spec_var_list) vs no_pos in
+  let _ = Debug.tinfo_hprint (add_str "Inv" Cprinter.string_of_pure_formula) f1_inv no_pos in
   f1_inv
 
 let cnv_ptr_to_int_weak f =

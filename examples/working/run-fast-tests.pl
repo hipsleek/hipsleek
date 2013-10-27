@@ -351,6 +351,14 @@ $output_file = "log";
          "get_next_next", "SUCCESS",
          "get_next", "SUCCESS"
         ]],
+    "imm-field" => [
+        ["imspd.ss",2,"-tp oc --field-ann ","check_pass","SUCCESS","login","SUCCESS"],
+        ["getset.ss",5,"-tp oc --field-ann ","sset","SUCCESS","get","SUCCESS","setA","SUCCESS","getA","SUCCESS","non_negative","SUCCESS"],
+        ["bigint.ss",15,"-tp redlog --field-ann ","clone","SUCCESS","add_one_digit","SUCCESS","add_c","SUCCESS","add","SUCCESS","div_with_remainder","SUCCESS","bigint_of","SUCCESS","compare_int","SUCCESS","is_zero","SUCCESS","compare2","SUCCESS","int_value","SUCCESS","mult_c","SUCCESS","shift_left","SUCCESS","mult","SUCCESS","sub_one_digit","SUCCESS","sub_c","SUCCESS","sub"],
+        ["insertion_simple.ss",1,"-tp oc --field-ann ","insert","SUCCESS"],
+        ["schorr-waite-list.ss",1,"-tp om --field-ann ","lscan","SUCCESS"],
+        ["sll.ss",4,"-tp oc --field-ann ","delete","SUCCESS","get_tail","SUCCESS","insert","SUCCESS","insert2","SUCCESS"]
+    ],
         "mem" => [
         ["dag.ss",2,"-tp om --mem --ramify","mark","SUCCESS","mark2","SUCCESS"],
         ["dag_values.ss",2,"-tp om --mem --ramify","mark","SUCCESS","mark2","SUCCESS"],

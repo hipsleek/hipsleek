@@ -15,12 +15,10 @@ module P = Ipure
 let top_flow = top_flow
 let n_flow = n_flow
 
-type ann = ConstAnn of heap_ann | PolyAnn of ((ident * primed) * loc)
-
-and mem_formula = {	mem_formula_exp : P.exp;
+type mem_formula = {	mem_formula_exp : P.exp;
 			mem_formula_exact : bool;
 			mem_formula_field_values : (ident * (P.exp list)) list;
-			mem_formula_field_layout : (ident * (ann list)) list;
+			mem_formula_field_layout : (ident * (P.ann list)) list;
 			mem_formula_guards : P.formula list; 
 		}
 
@@ -145,8 +143,8 @@ and h_formula_heap = { h_formula_heap_node : (ident * primed);
                        h_formula_heap_name : ident;
                        h_formula_heap_deref : int;
                        h_formula_heap_derv : bool; 
-                       h_formula_heap_imm : ann;
-                       h_formula_heap_imm_param : ann option list;
+                       h_formula_heap_imm : P.ann;
+                       h_formula_heap_imm_param : P.ann option list;
                        h_formula_heap_full : bool;
                        h_formula_heap_with_inv : bool;
                        h_formula_heap_perm : iperm; (*LDK: optional fractional permission*)
@@ -159,8 +157,8 @@ and h_formula_heap2 = { h_formula_heap2_node : (ident * primed);
                         h_formula_heap2_name : ident;
                         h_formula_heap2_deref : int;
                         h_formula_heap2_derv : bool;
-                        h_formula_heap2_imm : ann;
-                        h_formula_heap2_imm_param : ann option list;
+                        h_formula_heap2_imm : P.ann;
+                        h_formula_heap2_imm_param : P.ann option list;
                         h_formula_heap2_full : bool;
                         h_formula_heap2_with_inv : bool;
                         h_formula_heap2_perm : iperm; (*LDK: fractional permission*)
@@ -183,8 +181,8 @@ let print_struc_formula = ref(fun (c:struc_formula) -> "printer not initialized"
 (* 		in Hashtbl.add !linking_exp_list zero 0 *)
 
 let apply_one_imm (fr,t) a = match a with
-  | ConstAnn _ -> a
-  | PolyAnn (sv, pos) -> PolyAnn ((if P.eq_var sv fr then t else sv), pos)
+  | P.ConstAnn _ -> a
+  | P.PolyAnn (sv, pos) -> P.PolyAnn ((if P.eq_var sv fr then t else sv), pos)
 
 let apply_one_opt_imm (fr,t) a = match a with
   | Some annot -> Some (apply_one_imm (fr,t) annot)
@@ -214,7 +212,7 @@ and string_of_spec_var = function
     | Primed   -> "'"
     | Unprimed -> "")
 
-let rec is_param_ann_list_empty (anns:  ann option list) : bool =
+let rec is_param_ann_list_empty (anns:  P.ann option list) : bool =
   match anns with
     | [] -> true
     | (Some _)::t  -> false
@@ -537,15 +535,15 @@ let extract_var_from_id (id,p) =
 		(var,p)
 ;;
 
-let rec ann_opt_to_ann_lst (ann_opt_lst: ann option list) (default_ann: ann): ann list = 
+let rec ann_opt_to_ann_lst (ann_opt_lst: P.ann option list) (default_ann: P.ann): P.ann list = 
   match ann_opt_lst with
     | [] -> []
     | (Some ann0) :: t ->  ann0 :: (ann_opt_to_ann_lst t default_ann)
     | (None) :: t      ->  default_ann :: (ann_opt_to_ann_lst t default_ann) 
 
 let fv_imm ann = match ann with
-  | ConstAnn _ -> []
-  | PolyAnn (id,_) -> [id]
+  | P.ConstAnn _ -> []
+  | P.PolyAnn (id,_) -> [id]
 
 let fv_imm_opt ann = 
   match ann with
@@ -2096,24 +2094,24 @@ and break_struc_formula (f : struc_formula) : P.b_formula list list = match f wi
 	| EInfer bf -> break_struc_formula bf.formula_inf_continuation
 	| EList b-> Gen.fold_l_snd break_struc_formula b
 
-let isAccs(a : ann) : bool = 
+let isAccs(a : P.ann) : bool = 
   match a with
-    | ConstAnn(Accs) -> true
+    | P.ConstAnn(Accs) -> true
     | _ -> false
 
-let isLend(a : ann) : bool = 
+let isLend(a : P.ann) : bool = 
   match a with
-    | ConstAnn(Lend) -> true
+    | P.ConstAnn(Lend) -> true
     | _ -> false
 
-and isMutable(a : ann) : bool = 
+and isMutable(a : P.ann) : bool = 
   match a with
-    | ConstAnn(Mutable) -> true
+    | P.ConstAnn(Mutable) -> true
     | _ -> false
 
-and isImm(a : ann) : bool = 
+and isImm(a : P.ann) : bool = 
   match a with
-    | ConstAnn(Imm) -> true
+    | P.ConstAnn(Imm) -> true
     | _ -> false
 
 let eq_var (sv1 : (ident * primed)) (sv2 : (ident * primed)) = match (sv1, sv2) with

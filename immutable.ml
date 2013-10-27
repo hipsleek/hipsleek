@@ -30,6 +30,17 @@ module I  = Iast
 (*   (fun (a,b,c) -> "RD = " ^ (Cprinter.string_of_h_formula a) ^ "; WR = " ^ (Cprinter.string_of_h_formula b) ^ "; NEXT = " ^ (Cprinter.string_of_h_formula c) ^ "\n")  *)
 (*   split_phase 0 h *)
 
+let isAccs = CP.isAccs 
+let isLend = CP.isLend 
+let isImm = CP.isImm 
+let isMutable = CP.isMutable
+
+let isAccsList (al : CP.ann list) : bool = List.for_all isAccs al
+let isMutList (al : CP.ann list) : bool = List.for_all isMutable al
+
+let isExistsLendList (al : CP.ann list) : bool = List.exists isLend al
+let isExistsMutList (al : CP.ann list) : bool = List.exists isMutable al
+
 let rec remove_true_rd_phase (h : CF.h_formula) : CF.h_formula = 
   match h with
     | CF.Phase ({CF.h_formula_phase_rd = h1;
@@ -61,6 +72,10 @@ let rec split_wr_phase (h : h_formula) : (h_formula * h_formula) =
 		      h_formula_star_h2 = sh2;
 		      h_formula_star_pos = spos}) ->
 		          split_wr_phase (CF.mkStarH (CF.mkStarH h1 sh1 pos ) sh2 pos )
+                (* | Conj _ ->  *)
+                (*       if(!Globals.allow_field_ann) then  *)
+                (*         split_wr_phase h2 *)
+                (*       else *)
 	        | _ -> 
 		  (* if ((is_lend_h_formula h1) && is_lend_h_formula h2) then *)
 		  (*   (, h2) *)
@@ -78,8 +93,14 @@ let rec split_wr_phase (h : h_formula) : (h_formula * h_formula) =
 
             
 let rec consume_heap_h_formula (f : h_formula) : bool =  match f with
-  | DataNode (h1) -> ((CP.isMutable h1.h_formula_data_imm) || (CP.isImm h1.h_formula_data_imm))
-  | ViewNode (h1) -> ((CP.isMutable h1.h_formula_view_imm) || (CP.isImm h1.h_formula_view_imm))
+  | DataNode (h1) -> 
+        if (!Globals.allow_field_ann) then (isExistsMutList h1.h_formula_data_param_imm)
+        else
+          ((CP.isMutable h1.h_formula_data_imm) || (CP.isImm h1.h_formula_data_imm))
+  | ViewNode (h1) -> 
+        if (!Globals.allow_field_ann) then (isExistsMutList (CP.annot_arg_to_imm_ann_list_no_pos h1.h_formula_view_annot_arg))
+        else
+          ((CP.isMutable h1.h_formula_view_imm) || (CP.isImm h1.h_formula_view_imm))
   | Conj({h_formula_conj_h1 = h1;
 	h_formula_conj_h2 = h2;
 	h_formula_conj_pos = pos})
@@ -117,6 +138,16 @@ let rec split_phase_x (h : h_formula) : (h_formula * h_formula * h_formula ) =
     | Star _ ->
 	      let h3, h4 = split_wr_phase h in
 	      (HEmp, h3, h4)
+    (* | Conj({h_formula_conj_h1 = h1; *)
+    (*   h_formula_conj_h2 = h2}) -> *)
+    (*       if !Globals.allow_field_ann then *)
+    (*         let h3, h4 = split_wr_phase h2 in *)
+    (*         (h1, h3, h4) *)
+    (*       else 	       *)
+    (*         if (consume_heap_h_formula h) then *)
+    (*           (HEmp, h, HEmp) *)
+    (*         else *)
+    (*           (h, HEmp, HEmp) *)
     | _ ->
 	      if (consume_heap_h_formula h) then
 	        (HEmp, h, HEmp)
@@ -128,14 +159,6 @@ let split_phase i (h : h_formula) : (h_formula * h_formula * h_formula )=
   let pr2 = pr_triple pr pr pr in
   Debug.no_1_num i "split_phase" pr pr2 split_phase_x h
 
-let isAccs = CP.isAccs 
-let isLend = CP.isLend 
-let isImm = CP.isImm 
-let isMutable = CP.isMutable
-
-let isAccsList (al : CP.ann list) : bool = List.for_all isAccs al
-
-let isExistsLendList (al : CP.ann list) : bool = List.exists isLend al
 
 (* should be the opposite of consumes produces_hole x = not(consumes x); 
    depending on the LHS CP.ann, PolyCP.Ann might consume after a match, but it is considered to
@@ -166,27 +189,27 @@ let maybe_replace_w_empty h =
           (* in new_h *)
     | _ -> h
 
-let ann_opt_to_ann (ann_opt: IF.ann option) (default_ann: IF.ann): IF.ann = 
+let ann_opt_to_ann (ann_opt: Ipure.ann option) (default_ann: Ipure.ann): Ipure.ann = 
   match ann_opt with
     | Some ann0 -> ann0
     | None      -> default_ann
 
-let rec ann_opt_to_ann_lst (ann_opt_lst: IF.ann option list) (default_ann: IF.ann): IF.ann list = 
+let rec ann_opt_to_ann_lst (ann_opt_lst: Ipure.ann option list) (default_ann: Ipure.ann): Ipure.ann list = 
   match ann_opt_lst with
     | [] -> []
     | ann0 :: t -> (ann_opt_to_ann ann0 default_ann) :: (ann_opt_to_ann_lst t default_ann)
 
-let iformula_ann_to_cformula_ann (iann : IF.ann) : CP.ann = 
+let iformula_ann_to_cformula_ann (iann : Ipure.ann) : CP.ann = 
   match iann with
-    | IF.ConstAnn(x) -> CP.ConstAnn(x)
-    | IF.PolyAnn((id,p), l) -> 
+    | Ipure.ConstAnn(x) -> CP.ConstAnn(x)
+    | Ipure.PolyAnn((id,p), l) -> 
           CP.PolyAnn(CP.SpecVar (AnnT, id, p))
 
-let iformula_ann_to_cformula_ann_lst (iann_lst : IF.ann list) : CP.ann list = 
+let iformula_ann_to_cformula_ann_lst (iann_lst : Ipure.ann list) : CP.ann list = 
   List.map iformula_ann_to_cformula_ann iann_lst
 
-let iformula_ann_opt_to_cformula_ann_lst (iann_lst : IF.ann option list) : CP.ann list = 
-  List.map iformula_ann_to_cformula_ann (ann_opt_to_ann_lst iann_lst  (IF.ConstAnn(Mutable)))
+let iformula_ann_opt_to_cformula_ann_lst (iann_lst : Ipure.ann option list) : CP.ann list = 
+  List.map iformula_ann_to_cformula_ann (ann_opt_to_ann_lst iann_lst  (Ipure.ConstAnn(Mutable)))
 
 
 let rec is_lend_h_formula (f : h_formula) : bool =  match f with
@@ -379,7 +402,7 @@ and normalize_h_formula_phase (h : IF.h_formula) (wr_phase : bool) : IF.h_formul
       IF.h_formula_conjconj_h2 = h2;
       IF.h_formula_conjconj_pos = pos
       })               ->
-          if (wr_phase) && (!Globals.allow_mem) then h else
+          if (wr_phase) && ((!Globals.allow_mem) || (!Globals.allow_field_ann)) then h else
             normalize_h_formula_rd_phase h
     | IF.HeapNode2 hf -> 
           (let annv = get_imm h in
@@ -649,7 +672,7 @@ and propagate_imm_h_formula_x (f : h_formula) (imm : CP.ann)  (imm_p: (CP.annot_
 	  (*             | _ -> f1.Cformula.h_formula_view_imm  *)
 	  (*         end *)
           ViewNode({f1 with h_formula_view_imm = new_node_imm;
-              h_formula_view_annot_arg = CP.update_positions_for_view_params new_args_imm;
+              h_formula_view_annot_arg = CP.update_positions_for_annot_view_params new_args_imm f1.h_formula_view_annot_arg;
           })
     | DataNode f1 -> 
           let new_param_imm = List.map (fun a -> replace_imm a imm_p emap) f1.CF.h_formula_data_param_imm in
@@ -1202,7 +1225,7 @@ and restore_tmp_ann_h_formula (f: h_formula) pure0: h_formula =
           let f args = restore_tmp_ann args pure0 in
           let new_pimm = apply_f_to_annot_arg f (List.map fst h.CF.h_formula_view_annot_arg) in 
           CF.ViewNode {h with h_formula_view_imm = List.hd (restore_tmp_ann [h.CF.h_formula_view_imm] pure0);
-              h_formula_view_annot_arg = CP.update_positions_for_view_params new_pimm }
+              h_formula_view_annot_arg = CP.update_positions_for_annot_view_params new_pimm h.CF.h_formula_view_annot_arg}
     | _          -> f
 
 and restore_tmp_ann_formula (f: formula): formula =
@@ -1544,12 +1567,12 @@ let read_write_exp_analysis (ex: C.exp)  (field_ann_lst: (ident * CP.ann) list) 
     
   in helper ex field_ann_lst
 
-let merge_imm_for_view a1l a2l =
+let merge_imm_for_view eq a1l a2l =
   match a1l,a2l with
     | [], []      -> []
     | [], t::_    -> a2l
     | t::_, []    -> a1l
-    | t1::_,t2::_ -> if CP.eq_ann_list a1l a2l then a1l 
+    | t1::_,t2::_ -> if eq a1l a2l then a1l 
       else failwith "Imm: view should preserve the same imm map"
 
 let update_arg_imm_for_view fimm dimm param_ann emap =
@@ -1586,7 +1609,7 @@ let collect_view_imm_from_h_formula f param_ann data_name emap = (* param_ann *)
           -> 
             let a1 = helper h1 param_ann data_name emap in
             let a2 = helper h2 param_ann data_name emap in
-            merge_imm_for_view a1 a2
+            merge_imm_for_view CP.eq_ann_list a1 a2
       | _ -> []
   in  helper f param_ann data_name emap
 
@@ -1597,7 +1620,7 @@ let collect_view_imm_from_formula f param_ann data_name = (* param_ann *)
       | Or ({formula_or_f1 = f1; formula_or_f2 = f2; formula_or_pos = pos}) ->
 	    let a1 = helper f1 param_ann data_name in
 	    let a2 = helper f2 param_ann data_name in
-	    let anns = merge_imm_for_view a1 a2 in
+	    let anns = merge_imm_for_view CP.eq_ann_list a1 a2 in
             anns
       | Base   ({formula_base_heap   = h; formula_base_pure   = p})
       | Exists ({formula_exists_heap = h; formula_exists_pure = p}) ->
@@ -1610,11 +1633,11 @@ let collect_view_imm_from_struc_formula sf param_ann data_name =
   let rec helper sf param_ann data_name = 
     match sf with
       | EBase f   -> collect_view_imm_from_formula (f.formula_struc_base) param_ann data_name
-      | EList l   -> List.fold_left (fun acc l ->  merge_imm_for_view acc l) [] (map_snd_only (fun c->  helper c param_ann data_name) l)
-      | ECase f   -> List.fold_left (fun acc l ->  merge_imm_for_view acc l) [] (map_snd_only (fun c->  helper c param_ann data_name)  f.formula_case_branches)
+      | EList l   -> List.fold_left (fun acc l ->  merge_imm_for_view CP.eq_ann_list acc l) [] (map_snd_only (fun c->  helper c param_ann data_name) l)
+      | ECase f   -> List.fold_left (fun acc l ->  merge_imm_for_view CP.eq_ann_list acc l) [] (map_snd_only (fun c->  helper c param_ann data_name)  f.formula_case_branches)
       | EAssume f ->
             let v_imm_lst = collect_view_imm_from_formula f.formula_assume_simpl param_ann data_name in
-            merge_imm_for_view [] (helper  f.formula_assume_struc param_ann data_name);
+            merge_imm_for_view CP.eq_ann_list [] (helper  f.formula_assume_struc param_ann data_name);
       | EInfer f  -> helper f.formula_inf_continuation param_ann data_name
   in helper sf param_ann data_name 
 
@@ -1622,7 +1645,7 @@ let collect_view_imm_from_case_struc_formula sf param_ann data_name def_ann = (*
   let f_lst = snd (List.split (sf.CF.formula_case_branches)) in
   let final_data_ann = List.fold_left (fun acc f->
       let data_ann = collect_view_imm_from_struc_formula f param_ann data_name in
-      merge_imm_for_view acc data_ann
+      merge_imm_for_view CP.eq_ann_list acc data_ann
   ) [] f_lst in
   final_data_ann
 
@@ -1694,16 +1717,133 @@ let initialize_positions_for_args (aa: CP.annot_arg list) (wa: CP.view_arg list)
 (*       | IF.EInfer f  -> helper f.IF.formula_inf_continuation param_ann data_name *)
 (*   in helper sf param_ann data_name  *)
 
-(* (\* andreeac TODOIMM use wrapper below *\) *)
+(* andreeac TODOIMM use wrapper below *)
 (* let collect_annot_imm_info_in_iformula annot_args f data_name ddefs = *)
 (*   let ddef = I.look_up_data_def_raw ddefs data_name in *)
 (*   let def_ann  = List.map (fun f -> CP.imm_ann_bot ) ddef.I.data_fields in *)
-(*   let ann_final =  *)
+(*   let ann_final = *)
 (*     if not (!Globals.allow_field_ann) then def_ann *)
 (*     else *)
 (*       let ann_params = CP.annot_arg_to_imm_ann_list annot_args in *)
-(*       let ann_params = collect_view_imm_from_struc_formula f ann_params data_name (\* def_ann *\) in *)
+(*       let ann_params = collect_view_imm_from_struc_iformula f ann_params data_name (\* def_ann *\) in *)
 (*       ann_params *)
 (*   in *)
 (*   let annot_args = CP.imm_ann_to_annot_arg_list  ann_final in *)
 (*   annot_args *)
+
+let collect_view_imm_from_h_iformula h  data_name = (* [] *)
+  let rec helper  f data_name =
+    match f with
+      | IF.HeapNode2 {IF.h_formula_heap2_imm_param = pimm; (* IF.h_formula_heap_imm = imm; *) IF.h_formula_heap2_name = name}
+      | IF.HeapNode  {IF. h_formula_heap_imm_param = pimm; (* IF.h_formula_heap_imm = imm; *) IF.h_formula_heap_name = name}->
+            if name = data_name then (ann_opt_to_ann_lst pimm Ipure.imm_ann_bot)
+              (* List.map (fun p -> update_arg_imm_for_view p imm param_ann emap) pimm *)
+            else []
+      | IF.Star {IF.h_formula_star_h1 = h1; IF.h_formula_star_h2 = h2}
+      | IF.Conj {IF.h_formula_conj_h1 = h1; IF.h_formula_conj_h2 = h2}
+      | IF.ConjStar {IF.h_formula_conjstar_h1 = h1; IF.h_formula_conjstar_h2 = h2}
+      | IF.ConjConj {IF.h_formula_conjconj_h1 = h1; IF.h_formula_conjconj_h2 = h2}
+      | IF.Phase    {IF.h_formula_phase_rd = h1; IF.h_formula_phase_rw = h2}
+          ->
+            let a1 = helper h1 data_name in
+            let a2 = helper h2 data_name in
+            merge_imm_for_view Ipure.eq_ann_list a1 a2
+      | _ -> []
+  in  helper h data_name 
+
+let collect_view_imm_from_iformula f data_name = 
+  let rec helper  f data_name =
+    match f with
+      | IF.Or ({IF.formula_or_f1 = f1; IF.formula_or_f2 = f2; IF.formula_or_pos = pos}) ->
+            let a1 = helper f1 data_name in
+            let a2 = helper f2 data_name in
+            let anns = merge_imm_for_view  Ipure.eq_ann_list a1 a2 in
+            anns
+      | IF.Base   ({IF.formula_base_heap   = h; IF.formula_base_pure   = p})
+      | IF.Exists ({IF.formula_exists_heap = h; IF.formula_exists_pure = p}) ->
+            (* let emap = build_eset_of_conj_formula (MCP.pure_of_mix p) in *)
+            let anns = collect_view_imm_from_h_iformula h data_name in
+            anns
+  in helper f data_name
+
+let collect_imm_from_struc_iformula sf data_name =
+  let rec helper sf data_name =
+    match sf with
+      | IF.EBase f   -> collect_view_imm_from_iformula (f.IF.formula_struc_base) data_name
+      | IF.EList l   -> List.fold_left (fun acc l ->  merge_imm_for_view Ipure.eq_ann_list acc l) [] (map_snd_only (fun c->  helper c data_name) l)
+      | IF.ECase f   -> List.fold_left (fun acc l ->  merge_imm_for_view Ipure.eq_ann_list acc l) [] (map_snd_only (fun c->  helper c data_name)  f.IF.formula_case_branches)
+      | IF.EAssume f ->
+            let v_imm_lst = collect_view_imm_from_iformula f.IF.formula_assume_simpl data_name in
+            merge_imm_for_view Ipure.eq_ann_list [] (helper  f.IF.formula_assume_struc data_name);
+      | IF.EInfer f  -> helper f.IF.formula_inf_continuation data_name
+  in helper sf data_name
+
+let add_position_to_imm_ann (a: Ipure.ann) (vp_pos: (ident * int) list) = 
+  let a_pos = 
+    match a with
+      | Ipure.ConstAnn _        -> (a,0)
+      | Ipure.PolyAnn ((v,_),_) -> 
+            let ff p = if (String.compare (fst p) v == 0) then Some (a,snd p) else None in
+            let found = Gen.BList.list_find ff vp_pos in
+            match found with
+              | Some p -> p
+              | None   -> (a,0)
+  in
+  a_pos
+
+let icollect_imm f vparam data_name ddefs =
+  let ddef = I.look_up_data_def_raw ddefs data_name in
+  let def_ann  = List.map (fun f -> (Ipure.imm_ann_bot, 0) ) ddef.I.data_fields in
+  let ann_final =
+    if not (!Globals.allow_field_ann) then def_ann
+    else
+      let ann_params = collect_imm_from_struc_iformula f data_name (* def_ann *) in
+      let vp_pos = CP.initialize_positions_for_view_params vparam in
+      let ann_pos = List.map (fun a ->  add_position_to_imm_ann a vp_pos) ann_params in
+      ann_pos
+  in
+  ann_final
+
+let icollect_imm f vparam data_name ddefs =
+  Debug.no_1 "icollect_imm" Iprinter.string_of_struc_formula (pr_list (pr_pair Iprinter.string_of_imm string_of_int)) (fun _ -> icollect_imm f vparam data_name ddefs) f 
+
+let split_view_args view_args vdef:  CP.spec_var list * 'a list * (CP.annot_arg * int) list * (CP.view_arg * int) list  =
+  (* TODO: normalize the unused ann consts  *)
+  (* retrieve imm_map from I.view_decl *)
+  (* let view_vars_gen = CP.sv_to_view_arg_list sv in *)
+  let view_arg_lbl = (List.combine view_args (fst vdef.I.view_labels)) in
+  let ann_map_pos = vdef.I.view_imm_map in
+  let _ = Debug.binfo_hprint (add_str "imm_map:" (pr_list (pr_pair Iprinter.string_of_imm string_of_int))) ann_map_pos no_pos in
+  (* create list of view_arg*pos  *)
+  let vp_pos = CP.initialize_positions_for_view_params view_arg_lbl in
+  let view_args_pos = List.map (fun ((va,_),pos) -> (va,pos)) vp_pos in
+  let annot_arg, vp_pos = List.partition (fun (vp,pos) -> List.exists (fun (_,p) -> p == pos ) ann_map_pos) vp_pos in
+  let vp_lbl, _ = List.split vp_pos in  (* get rid of positions *)
+  let vp, lbl   = List.split vp_lbl in  (* separate lbl from args *)
+  let svp = CP.view_arg_to_sv_list vp in 
+  let annot_arg_pos = List.map (fun ((a, _), pos) -> (a, pos)) annot_arg in (* get rid of lbl *)
+  let annot_arg,pos = List.split annot_arg_pos in
+  let annot_arg = CP.view_arg_to_imm_ann_list annot_arg in 
+  let annot_arg_pos = List.combine annot_arg pos in
+  (* create a imm list following the imm_map, updated with proper values from the list of params *)
+  let anns_pos = List.map (fun (a, pos) -> 
+      try
+        List.find (fun (_, vpos) -> vpos == pos) annot_arg_pos
+      with Not_found -> (iformula_ann_to_cformula_ann a, pos) )  ann_map_pos in
+  let anns, pos = List.split anns_pos in
+  let annot_arg = CP.imm_ann_to_annot_arg_list anns in
+  let annot_args_pos = List.combine annot_arg pos in
+  svp, lbl, annot_args_pos, view_args_pos
+
+let split_view_args view_args vdef:  CP.spec_var list * 'a list * (CP.annot_arg * int) list * (CP.view_arg * int) list  =
+  let pr = pr_quad  Cprinter.string_of_spec_var_list pr_none (pr_list (pr_pair Cprinter.string_of_annot_arg string_of_int)) (pr_list (pr_pair Cprinter.string_of_view_arg string_of_int)) in 
+  Debug.no_1 "split_view_args" Cprinter.string_of_view_arg_list pr (fun _ -> split_view_args view_args vdef) view_args
+
+let split_sv sv vdef:  CP.spec_var list * 'a list * (CP.annot_arg * int) list * (CP.view_arg * int) list  =
+  (* retrieve imm_map from I.view_decl *)
+  let view_vars_gen = CP.sv_to_view_arg_list sv in
+  split_view_args view_vars_gen vdef
+
+let split_sv sv vdef:  CP.spec_var list * 'a list * (CP.annot_arg * int) list * (CP.view_arg * int) list  =
+  let pr = pr_quad  Cprinter.string_of_spec_var_list pr_none (pr_list (pr_pair Cprinter.string_of_annot_arg string_of_int)) (pr_list (pr_pair Cprinter.string_of_view_arg string_of_int)) in 
+  Debug.no_1 "split_sv" Cprinter.string_of_spec_var_list pr (fun _ -> split_sv sv vdef) sv

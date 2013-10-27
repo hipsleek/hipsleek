@@ -1870,3 +1870,8 @@ let try_finally e f a g =
     (g flag; r)
   with _ as e -> 
     (g flag; raise e)
+
+let range a b =
+  let rec aux a b =
+    if a > b then [] else a :: aux (a+1) b  in
+  if a > b then List.rev (aux b a) else aux a b;;
