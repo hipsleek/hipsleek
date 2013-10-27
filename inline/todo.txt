@@ -63,6 +63,15 @@ static  :EBase exists (Expl)[](Impl)[a](ex)[]q::pair<a@M,_@A>@M&
 It should be OK to give @A fields from quantification.
 
 *******************************************************
+# ll.ss
+
+Starting Omega...oc
+Stop Omega... 0 invocations caught
+(Program not linked with -g, cannot print stack backtrace)
+
+Exception occurred: Invalid_argument("List.combine")
+Error3(s) detected at main 
+
 *******************************************************
 *******************************************************
 *******************************************************

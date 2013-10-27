@@ -1,8 +1,8 @@
+#include <stddef.h>
 // star_fields
-
 struct node {
   int x;
-  node* next;
+  struct node* next;
 };
 
 /*@
@@ -11,34 +11,38 @@ ll<n>== self=null & n=0
   inv n>=0;
 */
 
-int foo(node* q)
+int foo(struct node* q)
 /*@
   requires q::node_star<r>*r::ll<n>
   ensures q::node_star<r>*r::ll<n>;
 */
 {
-  if (*q==0) return 0;
+  if (q) return 0;
   else return 1+foo(q->next);
 }
 
-int foo(node *q)
+int foo2(struct node *q)
 /*@
   requires *q::ll<n>
   ensures *q::ll<n>;
 */
 {
-  if (*q==0) return 0;
-  else return 1+foo(*q.next);
+  struct node* tmp = q;
+  if (tmp) return 0;
+  else return 1+foo2((*q).next);
 }
 
+void main() 
+{
+  int x=1;
+}
+/*
 int star_foo(node star_q)
-/*@
   requires *q::ll<n>
   ensures *q::ll<n>;
-*/
 {
   if (star_q==0) return 0;
   else return 1+star_foo(star_q.next);
 }
-
+*/
 
