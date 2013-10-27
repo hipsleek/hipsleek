@@ -2363,9 +2363,11 @@ and is_absent imm =
   | _ -> false
 
 and remove_absent ann vs =
-  let com_ls = List.combine ann vs in
-  let res_ls = List.filter (fun (a,_) -> not(is_absent a)) com_ls in
-  List.split res_ls
+  if List.length ann = List.length vs then
+    let com_ls = List.combine ann vs in
+    let res_ls = List.filter (fun (a,_) -> not(is_absent a)) com_ls in
+    List.split res_ls
+  else (ann,vs)
 
 and h_fv_node v perm ann param_ann vs =
   let (param_ann,vs) = remove_absent param_ann vs in
