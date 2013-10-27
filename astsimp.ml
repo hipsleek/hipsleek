@@ -1169,7 +1169,11 @@ let rec trans_prog (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_decl
 and add_pre_to_cprog cprog = 
   { cprog with C.new_proc_decls = C.proc_decls_map (fun c -> 
       let ns = add_pre cprog c.C.proc_static_specs in
-      let _ = c.C.proc_stk_of_static_specs # push ns in
+      (*to handle @C. should handle copy on prim types?*)
+      let ns_caller = if c.C.proc_by_copy_params = [] then ns else
+        trans_copy_spec_4caller c.C.proc_by_copy_params ns
+      in
+      let _ = c.C.proc_stk_of_static_specs # push ns_caller in
       c
   ) cprog.C.new_proc_decls; }   
 
@@ -2310,6 +2314,8 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
       let by_names_tmp = List.filter (fun p -> p.I.param_mod = I.RefMod) proc.I.proc_args in
       let new_pt p = trans_type prog p.I.param_type p.I.param_loc in
       let by_names = List.map (fun p -> CP.SpecVar (new_pt p, p.I.param_name, Unprimed)) by_names_tmp in
+      let by_copies = List.map (fun p -> CP.SpecVar (new_pt p, p.I.param_name, Unprimed))
+        (List.filter (fun p -> p.I.param_mod = I.CopyMod) proc.I.proc_args) in
       (******LOCKSET variable>>*********)
       (*only add lockset into ref_vars if it is mentioned in the spec
         This is to avoid adding too many LS in sequential settings*)
@@ -2406,6 +2412,7 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
           C.proc_hpdefs = [];
           C.proc_callee_hpdefs = [];
           C.proc_by_name_params = by_names;
+          C.proc_by_copy_params = by_copies;
           C.proc_body = body;
           C.proc_logical_vars = [];
           C.proc_call_order = 0;
@@ -4677,7 +4684,63 @@ and add_pre_x (prog :C.prog_decl) (f:CF.struc_formula):CF.struc_formula =
 and add_pre prog f =
   let pr = Cprinter.string_of_struc_formula in
   Debug.no_1 "add_pre"  pr pr (add_pre_x prog) f 
-      
+
+and trans_copy_spec_4caller_x copy_params sf=
+  let convert_to_L hf=
+    match hf with
+      | CF.DataNode dn ->
+            (* let _ = Debug.info_hprint (add_str "dn.CF.h_formula_data_node" !CP.print_sv) dn.CF.h_formula_data_node no_pos in *)
+            if CP.mem_svl dn.CF.h_formula_data_node copy_params then
+              CF.DataNode {dn with
+                  CF.h_formula_data_imm = CF.ConstAnn(Lend);
+                  CF.h_formula_data_param_imm = List.map (fun _ -> CF.ConstAnn(Lend)) dn.CF.h_formula_data_param_imm;
+              }
+            else
+              hf
+      | CF.ViewNode dn ->
+            if CP.mem_svl dn.CF.h_formula_view_node copy_params then
+              CF.ViewNode {dn with CF.h_formula_view_imm = CF.ConstAnn(Lend); }
+            else
+              hf
+      | _ -> hf
+  in
+  let drop_heapsC hf=
+    match hf with
+      | CF.DataNode dn ->
+            if CP.mem_svl dn.CF.h_formula_data_node copy_params then
+              CF.HEmp
+            else
+              hf
+      | CF.ViewNode dn ->
+            if CP.mem_svl dn.CF.h_formula_view_node copy_params then
+              CF.HEmp
+            else
+              hf
+      | _ -> hf
+  in
+  let rec helper (f:CF.struc_formula): CF.struc_formula =
+    match f with
+      | CF.ECase b -> CF.ECase{b with CF.formula_case_branches =  List.map (fun (c1,c2)->(c1,(helper c2))) b.CF.formula_case_branches;}
+    | CF.EBase b ->
+          (*@L for @C*)
+          CF.EBase{b with
+              CF.formula_struc_base = CF.formula_trans_heap_node convert_to_L b.CF.formula_struc_base;
+              CF.formula_struc_continuation = map_opt helper b.CF.formula_struc_continuation;}
+    | CF.EAssume b ->
+          (*remove heaps of @C*)
+          CF.EAssume {b with
+            CF.formula_assume_simpl = CF.formula_trans_heap_node drop_heapsC b.CF.formula_assume_simpl ;
+            CF.formula_assume_struc = helper b.CF.formula_assume_struc ;}
+    | CF.EInfer b -> CF.EInfer {b with CF.formula_inf_continuation = helper b.CF.formula_inf_continuation;}
+    | CF.EList b ->
+          CF.EList (map_l_snd helper b)
+     in
+  helper sf
+
+and trans_copy_spec_4caller copy_params sf=
+  let pr = Cprinter.string_of_struc_formula in
+  Debug.no_2 "trans_copy_spec_4caller" !Cpure.print_svl pr pr trans_copy_spec_4caller_x copy_params sf
+
 and trans_I2C_struc_formula i (prog : I.prog_decl) (quantify : bool) (fvars : ident list) (f0 : IF.struc_formula) 
       (tlist:spec_var_type_list) (check_self_sp:bool) (*disallow self in sp*) (check_pre:bool) : (spec_var_type_list*CF.struc_formula) = 
   let prb = string_of_bool in

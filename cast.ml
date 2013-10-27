@@ -152,6 +152,7 @@ and proc_decl = {
     (*set of heap predicate constraints derived from calls in this method*)
     (*due to the bottom up inference they are always just copyed from the proc_hpdefs of called methods*)
     proc_by_name_params : P.spec_var list;
+    proc_by_copy_params: P.spec_var list;
     proc_body : exp option;
     (* Termination: Set of logical variables of the proc's scc group *)
     proc_logical_vars : P.spec_var list;
