@@ -13,20 +13,31 @@ struct pair {
 */
 
 int foo(pair q)
-// pass by value
+// pass by copy
 /*@
-  requires q::pair<a,_>@S
-  ensures q::pair<a,_>@S & res=a;
+  requires q::pair<a,_>
+  ensures q::pair<a,_> & res=a;
 */
 {
   return q.x;
 }
 
-int goo(pair* q)
-// pass by value
+int foo2(pair q)
+// pass by ptr
 /*@
-  requires q::pair*<r>@S * r::pair<a,b>
-  ensures q::pair*<r>@S * r::pair<a,b> & res=a;
+  requires q::pair<a,_>@L
+  ensures res=a;
+*/
+{
+  return q.x;
+}
+
+
+int goo(pair* q)
+// pass by copy
+/*@
+  requires q::pair*<r> * r::pair<a,b>
+  ensures q::pair*<r> * r::pair<a,b> & res=a;
 */
 {
   return q->x;

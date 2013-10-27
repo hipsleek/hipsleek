@@ -30,6 +30,13 @@ int foo(pair@C q)
   return q.x;
 }
 
+int foo2(pair q)
+  requires q::pair<a,_>@L
+  ensures res=a;
+{
+  return q.x;
+}
+
 int goo(pair_star@C q)
   requires q::pair_star<r> * r::pair<a,b>
   ensures q::pair_star<r> * r::pair<a,b> & res=a;
