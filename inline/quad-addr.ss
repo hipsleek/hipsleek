@@ -20,14 +20,20 @@ int star_foo(pair star_q)
   return star_q.y;
 }
 
-int mn()
+void dispose(pair p)
+  requires p::pair<_,_>
+  ensures true;
+
+int main()
   requires true
   ensures res=3;
 {
   pair p;
-  p = new pair(0,0);
+  p = new pair(0,0); // stack allocation
   p.y=3;
-  return star_foo(p);
+  int r=star_foo(p); // *(&p) ==> p
+  dispose(p);
+  return r; 
 }
 
 

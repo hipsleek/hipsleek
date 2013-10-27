@@ -89,5 +89,13 @@ We merely need to apply the following translation:
 
 and avoid the use of node_star
 
+================================
+say I have:
+  node p;
+  p = new node(0,0); // stack allocation
+can we use:
+  foo(&p)
+
+
 
 

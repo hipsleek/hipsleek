@@ -1,0 +1,29 @@
+// addr-of operator
+
+// how come we don't use pass-by-copy here?
+// pass-by-copy only for struct?
+// how about struct*, do we use pass-by-copy?
+int foo(int**q)
+/*@
+  requires *q::int_star<a>
+  ensures *q::int_star<a+1> & res=a+1;
+*/
+{
+  int* r = *q;
+  *r = *r+1;
+  return *r;
+}
+
+int main()
+/*@
+  requires true
+  ensures res=3;
+*/
+{
+  int x;
+  int* r = &x;
+  int t=foo(&r);
+  return t;
+}
+
+

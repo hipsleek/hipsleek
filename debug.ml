@@ -75,6 +75,11 @@ let devel_zprint msg (pos:loc) =
   let flag = !devel_debug_on in
   ho_print flag (fun m -> (prior_msg pos)^(Lazy.force m)) msg
 
+let catch_exc m f x = 
+  try 
+    f x
+  with e -> (print_endline m; flush stdout; raise e)
+
 let dinfo_zprint m p = devel_zprint m p
 let dinfo_hprint pr m p  = devel_hprint pr m p
 let dinfo_pprint m p = devel_pprint m p

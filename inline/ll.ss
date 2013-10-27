@@ -12,22 +12,32 @@ ll<n> == self=null & n=0
    or self::node<_,q>*q::ll<n-1>
    inv n>=0;
 
-/*
 int foo(node_star@C q)
   requires q::node_star<r>*r::ll<n>
   ensures q::node_star<r>*r::ll<n> & res=n;
 {
   if (q.deref==null) return 0;
   else {
-      node_star t = new node_star(q.deref);
-     return 1+foo(t);
+      node_star t = new node_star(q.deref.next);
+      return 1+foo(t);
   }
 }
+/*
+ defn above when using node_star is somewhat unnatural
+ A more accurate one is to use:
+      node_star t = &q.deref.next;
+      return 1+foo(t);
+ However, this may require us to support ptr arithmetic
+ and ability to handle field access.
+      q.deref::node<v,n> 
+      q.deref.node.val::<v>*q.deref.node.next<n>
+
 */
+
 
 int foo2(node star_q)
   requires star_q::ll<n>
-  ensures star_q::ll<n>;
+  ensures star_q::ll<n> & res=n;
 {
   if (star_q==null) return 0;
   else return 1+foo2(star_q.next);

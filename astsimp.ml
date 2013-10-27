@@ -5284,7 +5284,7 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
               let _ = Debug.ninfo_hprint (add_str "all_fields" pr1) all_fields no_pos in
               (* !!! hvars:[a:int,Anon_19:Unknown,Anon_20:Unknown] *)
               (* !!! all_fields:[(int,p1.x),(int,p1.y),(pair,p2)] *)
-              let comb = List.combine hvars all_fields in
+              let comb = Debug.catch_exc "astsimpl: hvars & all_fields" (List.combine hvars) all_fields in
               let hvars = List.map (fun (CP.SpecVar(_,i,p),((t,_),_,_,_)) -> CP.SpecVar(t,i,p)) comb in
               let _ = Debug.ninfo_hprint (add_str "hvars" (pr_list Cprinter.string_of_typed_spec_var)) hvars no_pos in
 	      (*TO CHECK: for correctness*)
