@@ -616,12 +616,14 @@ and spatial_ctx_extract_hrel_on_lhs prog hp e rhs_node aset (lhs_node: Cformula.
       h_formula_view_arguments = vs1;
       h_formula_view_name = c}) -> 
           let args = CP.diff_svl (get_all_sv lhs_node) [hp] in
-          let root, _  = Sautility.find_root prog [hp] args  [] in
-          let root_aset = CP.EMapSV.find_equiv_all root emap in
-          let root_aset = root::root_aset in
-          (* let e = List.fold_left (fun a v-> CP.is_var v then  a@[CP.exp_to_spec_var v] else a) []  e in *)
-          let cmm = coerc_mater_match_with_unk_hp prog (CP.name_of_spec_var hp) c args vs1 aset lhs_node l_f root_aset in 
-          cmm
+           (* let _ = DD.info_zprint (lazy (("  args: " ^ (!CP.print_svl args)))) no_pos in *)
+          if args = [] then [] else
+            let root, _  = Sautility.find_root prog [hp] args  [] in
+            let root_aset = CP.EMapSV.find_equiv_all root emap in
+            let root_aset = root::root_aset in
+            (* let e = List.fold_left (fun a v-> CP.is_var v then  a@[CP.exp_to_spec_var v] else a) []  e in *)
+            let cmm = coerc_mater_match_with_unk_hp prog (CP.name_of_spec_var hp) c args vs1 aset lhs_node l_f root_aset in 
+            cmm
     | _ -> []
 
 and coerc_mater_match_gen l_vname (l_vargs:P.spec_var list) r_aset (lhs_f:Cformula.h_formula) = 

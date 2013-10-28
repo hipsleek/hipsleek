@@ -742,6 +742,9 @@ and mkHoPred  n m mh tv ta fa s i=
 
 let genESpec_x args ret pos=
   (*generate one HeapPred for args and one HeapPred for ret*)
+  if args = [] && ret = Void then
+    F.mkETrueTrueF (),[]
+  else
   let hp_pre_decl = {
       hp_name = Globals.hp_default_prefix_name ^ (string_of_int (Globals.fresh_int()));
       hp_typed_inst_vars = List.map (fun arg -> (arg.param_type, arg.param_name, Globals.I)) args;
@@ -803,42 +806,14 @@ let genESpec args ret pos=
       (fun _ _ -> genESpec_x args ret pos) args ret
 
 let rec get_ni_name bd = match bd with
-  (* | ArrayAt of exp_arrayat ??? *)
-  (* | ArrayAlloc of exp_aalloc ??? *)
-  (* | Assert of exp_assert ??? *)
   | Assign e -> get_ni_name e.exp_assign_lhs
   | Binary e -> (get_ni_name e.exp_binary_oper1) @ (get_ni_name e.exp_binary_oper2)
   | Bind e -> [e.exp_bind_bound_var]
-  (* | Block of exp_block ??? *)
-  (* | BoolLit of exp_bool_lit ??? *)
-  (* | Break of exp_break ??? *)
-  (* | Barrier of exp_barrier ??? *)
-  (* | CallRecv of exp_call_recv ??? *)
-  (* | CallNRecv of exp_call_nrecv ??? *)
-  (* | Cast of exp_cast ??? *)
   | Cond e -> (get_ni_name e.exp_cond_condition) @ (get_ni_name e.exp_cond_then_arm) @ (get_ni_name e.exp_cond_else_arm)
-  (* | ConstDecl of exp_const_decl ??? *)
-  (* | Continue of exp_continue ??? *)
-  (* | Catch of exp_catch ??? *)
-  (* | Debug of exp_debug ??? *)
-  (* | Dprint of exp_dprint ??? *)
-  (* | Empty of loc
-  | FloatLit of exp_float_lit
-  | Finally of exp_finally
-  | IntLit of exp_int_lit
-  | Java of exp_java
-  | Label of ((control_path_id * path_label) * exp)
-  | Member of exp_member
-  | New of exp_new
-  | Null of loc
-  | Raise of exp_raise *)
   | Return e -> (match e.exp_return_val with
     | None -> []
     | Some e -> get_ni_name e)
   | Seq e -> (get_ni_name e.exp_seq_exp1) @ (get_ni_name e.exp_seq_exp2)
-  (*| This of exp_this
-  | Time of (bool*string*loc)
-  | Try of exp_try*)
   | Unary e -> get_ni_name e.exp_unary_exp
   (*| Unfold of exp_unfold*)
   | Var e -> [e.exp_var_name] (* ??? *)
@@ -848,11 +823,11 @@ let rec get_ni_name bd = match bd with
 
 let mkProc sfile id flgs n dd c ot ags r ss ds pos bd =
   (* Debug.info_hprint (add_str "static spec" !print_struc_formula) ss pos; *)
-  let ni_name = match bd with
-    | None -> []
-    | Some bd -> get_ni_name bd
-  in
-  let ss, n_hp_dcls = match ss with 
+  (* let ni_name = match bd with *)
+  (*   | None -> [] *)
+  (*   | Some bd -> get_ni_name bd *)
+  (* in *)
+  let ss, n_hp_dcls = match ss with
     | F.EList [] ->
           let ss, hps = genESpec ags r pos in
           let _ = Debug.ninfo_hprint (add_str "ss" !F.print_struc_formula) ss no_pos in
