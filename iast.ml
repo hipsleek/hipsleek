@@ -2529,3 +2529,13 @@ let lbl_getter prog vn id =
 let eq_coercion c1 c2 = (String.compare c1.coercion_name c2.coercion_name) == 0
 
 let eq_coercion_list = (==)             (* to be modified *)
+
+let annot_args_getter_all prog vn: (P.ann * int) list =
+  try 
+    let vd = look_up_view_def_raw 18 prog.prog_view_decls vn in
+    vd.view_imm_map
+  with 
+    | Not_found -> [] 
+
+let annot_args_getter prog vn =
+  List.filter (fun (_,p) -> (p != 0) ) (annot_args_getter_all prog vn)

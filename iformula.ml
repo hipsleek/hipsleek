@@ -1518,11 +1518,11 @@ let rec rename_bound_var_struc_formula (f:struc_formula):struc_formula = match f
 	| EList b -> EList (Gen.map_l_snd rename_bound_var_struc_formula b)
 	
 
-and float_out_exps_from_heap lbl_getter (f:formula ) :formula = (* float_out_exps_from_heap_x f *)
+and float_out_exps_from_heap lbl_getter annot_getter (f:formula ) :formula = (* float_out_exps_from_heap_x f *)
 let pr = !print_formula in
-Debug.no_1 "float_out_exps_from_heap" pr pr (fun _ -> float_out_exps_from_heap_x lbl_getter f) f
+Debug.no_1 "float_out_exps_from_heap" pr pr (fun _ -> float_out_exps_from_heap_x lbl_getter annot_getter f) f
 
-and float_out_exps_from_heap_x lbl_getter (f:formula )  :formula = 
+and float_out_exps_from_heap_x lbl_getter annot_getter (f:formula ) :formula = 
   let rec float_ann_var l c=
     match c with
       | Ipure.AConst _
@@ -1581,58 +1581,63 @@ and float_out_exps_from_heap_x lbl_getter (f:formula )  :formula =
         (*LDK*)
         let perm = b.h_formula_heap_perm in
         let na_perm, ls_perm = float_out_iperm () perm b.h_formula_heap_pos in
-		let rec prep_one_arg (id,c) = match c with
-                          | Ipure.AConst _
-			  | Ipure.Var _ -> (c,[])
-                          | Ipure.Ann_Exp (e ,_,_) -> prep_one_arg (id, e)
-			  | _ ->
-				let nn = (("flted_"^(string_of_int b.h_formula_heap_pos.start_pos.Lexing.pos_lnum)^(fresh_trailer ())),Unprimed) in
-				let nv = Ipure.Var (nn,b.h_formula_heap_pos) in
-				let npf = 
-				  (* if !Globals.do_slicing then *)
-				  if not !Globals.dis_slc_ann then
-				    try
-				      let lexp = P.find_lexp_exp c !Ipure.linking_exp_list in
-				      (* let _ = Hashtbl.remove !Ipure.linking_exp_list c in *)
-				      Ipure.BForm ((Ipure.Eq (nv,c,b.h_formula_heap_pos), (Some (false, fresh_int(), lexp))), None)
-				    with Not_found -> Ipure.BForm ((Ipure.Eq (nv,c,b.h_formula_heap_pos), None), None)
-                                  else 
-                                    let pf = Ipure.Eq (nv,c,b.h_formula_heap_pos) in
-				    (*if (*not(!Globals.allow_field_ann)*) (true) then Ipure.Eq (nv,c,b.h_formula_heap_pos) else 
-                                      in*)
-                                    let nf = Ipure.BForm ((pf, None), None) in
-                                    match lbl_getter b.h_formula_heap_name id with 
-				      | None -> nf 
-                                      | Some lb -> Ipure.mkAndList [(lb,nf)] 
-                                            (* Slicing: TODO IL for linking exp *)
-                                in
-				(nv,[(nn,npf)]) in
-                let na,ls = List.split (List.map prep_one_arg (Gen.BList.add_index b.h_formula_heap_arguments)) in
-                (HeapNode ({b with h_formula_heap_arguments = na; h_formula_heap_perm = na_perm}),(List.concat (ls_perm ::ls)))
+        let prep_one_arg_helper (id,c) =
+          let nn = (("flted_"^(string_of_int b.h_formula_heap_pos.start_pos.Lexing.pos_lnum)^(fresh_trailer ())),Unprimed) in
+	  let nv = Ipure.Var (nn,b.h_formula_heap_pos) in
+	  let npf = 
+	    (* if !Globals.do_slicing then *)
+	    if not !Globals.dis_slc_ann then
+	      try
+		let lexp = P.find_lexp_exp c !Ipure.linking_exp_list in
+		(* let _ = Hashtbl.remove !Ipure.linking_exp_list c in *)
+		Ipure.BForm ((Ipure.Eq (nv,c,b.h_formula_heap_pos), (Some (false, fresh_int(), lexp))), None)
+	      with Not_found -> Ipure.BForm ((Ipure.Eq (nv,c,b.h_formula_heap_pos), None), None)
+            else 
+              let pf = Ipure.Eq (nv,c,b.h_formula_heap_pos) in
+	      (*if (*not(!Globals.allow_field_ann)*) (true) then Ipure.Eq (nv,c,b.h_formula_heap_pos) else 
+                in*)
+              let nf = Ipure.BForm ((pf, None), None) in
+              match lbl_getter b.h_formula_heap_name id with 
+		| None -> nf 
+                | Some lb -> Ipure.mkAndList [(lb,nf)] 
+                      (* Slicing: TODO IL for linking exp *)
+          in
+	  (nv,[(nn,npf)]) in
+	let rec prep_one_arg (id,c) = match c with
+          | Ipure.AConst _ ->
+                if ( List.exists (fun (a,p) -> (id + 1) == p) (annot_getter b.h_formula_heap_name)) then (c,[])
+                else prep_one_arg_helper (id,c)
+	  | Ipure.Var _ -> (c,[])
+          | Ipure.Ann_Exp (e ,_,_) -> prep_one_arg (id, e)
+	  | _ ->  prep_one_arg_helper (id,c) in
+        let na,ls = List.split (List.map prep_one_arg (Gen.BList.add_index b.h_formula_heap_arguments)) in
+        (HeapNode ({b with h_formula_heap_arguments = na; h_formula_heap_perm = na_perm}),(List.concat (ls_perm ::ls)))
     | HeapNode2 b ->
         (*LDK*)
         let perm = b.h_formula_heap2_perm in
         let na_perm, ls_perm = float_out_iperm () perm b.h_formula_heap2_pos in
+        let prep_one_arg_helper (id,c) =
+	  let nn = (("flted_"^(string_of_int b.h_formula_heap2_pos.start_pos.Lexing.pos_lnum)^(fresh_trailer ())),Unprimed) in
+	  let nv = Ipure.Var (nn,b.h_formula_heap2_pos) in
+	  let npf =
+	    (* if !Globals.do_slicing then *)
+	    if not !Globals.dis_slc_ann then
+	      try
+		let lexp = P.find_lexp_exp c !Ipure.linking_exp_list in
+		(*let _ = Hashtbl.remove !Ipure.linking_exp_list (snd c) in*)
+		Ipure.BForm ((Ipure.Eq (nv, c,b.h_formula_heap2_pos), (Some (false, fresh_int(), lexp))), None)
+	      with Not_found ->
+		  Ipure.BForm ((Ipure.Eq (nv, c,b.h_formula_heap2_pos), None), None)
+	    else Ipure.BForm ((Ipure.Eq (nv, c,b.h_formula_heap2_pos), None), None) in (* Slicing: TODO *)
+	  ((id,nv),[(nn,npf)]) in
         let rec helper (id, c)=
           match c with
-              | Ipure.AConst _
+              | Ipure.AConst _ ->
+                    (* if ( List.exists (fun (a,p) -> (id + 1) == p) (annot_getter b.h_formula_heap2_name)) then *) ((id,c),[])
+                    (* else prep_one_arg_helper (id,c) *)
 	      | Ipure.Var _ -> ((id,c),[])
               | Ipure.Ann_Exp (e ,_,_) -> helper (id, e)
-	      | _ ->
-		    let nn = (("flted_"^(string_of_int b.h_formula_heap2_pos.start_pos.Lexing.pos_lnum)^(fresh_trailer ())),Unprimed) in
-		    let nv = Ipure.Var (nn,b.h_formula_heap2_pos) in
-
-		    let npf =
-		      (* if !Globals.do_slicing then *)
-		      if not !Globals.dis_slc_ann then
-			try
-			  let lexp = P.find_lexp_exp c !Ipure.linking_exp_list in
-			  (*let _ = Hashtbl.remove !Ipure.linking_exp_list (snd c) in*)
-			  Ipure.BForm ((Ipure.Eq (nv, c,b.h_formula_heap2_pos), (Some (false, fresh_int(), lexp))), None)
-			with Not_found ->
-			    Ipure.BForm ((Ipure.Eq (nv, c,b.h_formula_heap2_pos), None), None)
-		      else Ipure.BForm ((Ipure.Eq (nv, c,b.h_formula_heap2_pos), None), None) in (* Slicing: TODO *)
-		    ((id,nv),[(nn,npf)])
+	      | _ -> prep_one_arg_helper (id,c)
         in
         let na,ls = List.split (List.map helper  b.h_formula_heap2_arguments) in
         (HeapNode2 ({b with h_formula_heap2_arguments = na;h_formula_heap2_perm = na_perm}),(List.concat (ls_perm :: ls)))
@@ -1707,27 +1712,27 @@ and float_out_exps_from_heap_x lbl_getter (f:formula )  :formula =
 			formula_exists_pos = b.formula_exists_pos
 		      })	
     | Or b-> Or ({
-		   formula_or_f1 = float_out_exps_from_heap lbl_getter b.formula_or_f1 ;
-		   formula_or_f2 = float_out_exps_from_heap lbl_getter b.formula_or_f2 ;
+		   formula_or_f1 = float_out_exps_from_heap lbl_getter annot_getter b.formula_or_f1 ;
+		   formula_or_f2 = float_out_exps_from_heap lbl_getter annot_getter b.formula_or_f2 ;
 		   formula_or_pos = b.formula_or_pos
 		 })		
   in helper f
        
-and float_out_exps_from_heap_struc lbl_getter (f:struc_formula):struc_formula = match f with
+and float_out_exps_from_heap_struc lbl_getter annot_getter (f:struc_formula):struc_formula = match f with
   | EAssume b ->    
           EAssume {b with
-			formula_assume_simpl = float_out_exps_from_heap lbl_getter b.formula_assume_simpl; 
-			formula_assume_struc = float_out_exps_from_heap_struc lbl_getter b.formula_assume_struc;}
-    | ECase b -> ECase {b with formula_case_branches = Gen.map_l_snd (fun x -> float_out_exps_from_heap_struc lbl_getter x) b.formula_case_branches}
+			formula_assume_simpl = float_out_exps_from_heap lbl_getter annot_getter b.formula_assume_simpl; 
+			formula_assume_struc = float_out_exps_from_heap_struc lbl_getter annot_getter b.formula_assume_struc;}
+    | ECase b -> ECase {b with formula_case_branches = Gen.map_l_snd (fun x -> float_out_exps_from_heap_struc lbl_getter annot_getter x) b.formula_case_branches}
     | EBase b -> EBase {
 				 formula_struc_explicit_inst = b.formula_struc_explicit_inst;
 				 formula_struc_implicit_inst = b.formula_struc_implicit_inst;
 				 formula_struc_exists = b.formula_struc_exists ;
-				 formula_struc_base = float_out_exps_from_heap lbl_getter b.formula_struc_base;
-				 formula_struc_continuation = Gen.map_opt (fun x -> float_out_exps_from_heap_struc lbl_getter x)  b.formula_struc_continuation;
+				 formula_struc_base = float_out_exps_from_heap lbl_getter annot_getter b.formula_struc_base;
+				 formula_struc_continuation = Gen.map_opt (fun x -> float_out_exps_from_heap_struc lbl_getter annot_getter x)  b.formula_struc_continuation;
 				 formula_struc_pos = b.formula_struc_pos}
-    | EInfer b -> EInfer ({b with formula_inf_continuation = float_out_exps_from_heap_struc lbl_getter b.formula_inf_continuation;})
-	| EList b -> EList (Gen.map_l_snd (fun x -> float_out_exps_from_heap_struc lbl_getter x) b )
+    | EInfer b -> EInfer ({b with formula_inf_continuation = float_out_exps_from_heap_struc lbl_getter annot_getter b.formula_inf_continuation;})
+	| EList b -> EList (Gen.map_l_snd (fun x -> float_out_exps_from_heap_struc lbl_getter annot_getter x) b )
 
 and float_out_one_formula_min_max (f :  one_formula) :  one_formula =
   let (nh, nhpf) = float_out_heap_min_max f.formula_heap in
@@ -2211,26 +2216,26 @@ let float_out_thread (f : formula) : formula =
       float_out_thread_x f
 
 
-let rec float_out_thread_struc_formula_x lbl_getter (f:struc_formula) : struc_formula = match f with
+let rec float_out_thread_struc_formula_x lbl_getter annot_getter (f:struc_formula) : struc_formula = match f with
     | EAssume b -> 
 		EAssume {b with 
 			formula_assume_simpl = float_out_thread b.formula_assume_simpl; 
-			formula_assume_struc = float_out_thread_struc_formula_x lbl_getter b.formula_assume_struc ;}
+			formula_assume_struc = float_out_thread_struc_formula_x lbl_getter annot_getter b.formula_assume_struc ;}
     | ECase b -> 
 		ECase {
-			formula_case_branches = List.map (fun (c1,c2)-> (c1,(float_out_exps_from_heap_struc lbl_getter c2 ))) b.formula_case_branches ; 
+			formula_case_branches = List.map (fun (c1,c2)-> (c1,(float_out_exps_from_heap_struc lbl_getter annot_getter c2 ))) b.formula_case_branches ; 
 			formula_case_pos=b.formula_case_pos}
     | EBase b-> EBase {b with
 				 formula_struc_base = float_out_thread b.formula_struc_base;
-				 formula_struc_continuation =  Gen.map_opt (fun x -> float_out_thread_struc_formula_x lbl_getter x ) b.formula_struc_continuation;
+				 formula_struc_continuation =  Gen.map_opt (fun x -> float_out_thread_struc_formula_x lbl_getter annot_getter x ) b.formula_struc_continuation;
 				}
-    | EInfer b -> EInfer ({b with formula_inf_continuation = float_out_thread_struc_formula_x lbl_getter b.formula_inf_continuation ;})
-	| EList b -> EList (Gen.map_l_snd (fun x -> float_out_thread_struc_formula_x lbl_getter x ) b)
+    | EInfer b -> EInfer ({b with formula_inf_continuation = float_out_thread_struc_formula_x lbl_getter annot_getter b.formula_inf_continuation ;})
+	| EList b -> EList (Gen.map_l_snd (fun x -> float_out_thread_struc_formula_x lbl_getter annot_getter x ) b)
 
-let float_out_thread_struc_formula lbl_getter (f:struc_formula): struc_formula = 
+let float_out_thread_struc_formula lbl_getter annot_getter (f:struc_formula): struc_formula = 
   Debug.no_1 "float_out_thread_struc_formula"
       !print_struc_formula !print_struc_formula
-      (fun _ -> float_out_thread_struc_formula_x lbl_getter f) f 
+      (fun _ -> float_out_thread_struc_formula_x lbl_getter annot_getter f) f 
 
 
 let add_pure_formula_to_formula (p:P.formula) (f0 : formula): formula =

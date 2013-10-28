@@ -6110,7 +6110,7 @@ and case_normalize_formula_x prog (h:(ident*primed) list)(f:IF.formula): IF.form
   (* let _ = print_string ("case_normalize_formula :: CHECK POINT 1 ==> f = " ^ Iprinter.string_of_formula f ^ "\n") in *)
   let f = IF.float_out_thread f in
   (* let _ = print_string ("case_normalize_formula :: CHECK POINT 1 ==> f = " ^ Iprinter.string_of_formula f ^ "\n") in *)
-  let f = IF.float_out_exps_from_heap (I.lbl_getter prog) f in (*andreeac - check rel*)
+  let f = IF.float_out_exps_from_heap (I.lbl_getter prog) (I.annot_args_getter prog) f in (*andreeac - check rel*)
   (* let _ = print_string ("case_normalize_formula :: CHECK POINT 1 ==> f = " ^ Iprinter.string_of_formula f ^ "\n") in *)
   let f = IF.float_out_min_max f in
   (* let _ = print_string ("case_normalize_formula :: CHECK POINT 2 ==> f = " ^ Iprinter.string_of_formula f ^ "\n") in *)
@@ -6127,7 +6127,7 @@ and case_normalize_formula_not_rename prog (h:(ident*primed) list)(f:IF.formula)
   (* let _ = print_string ("case_normalize_formula :: CHECK POINT 0 ==> f = " ^ Iprinter.string_of_formula f ^ "\n") in *)
   let f = convert_heap2 prog f in
   let f = IF.float_out_thread f in
-  let f = IF.float_out_exps_from_heap (I.lbl_getter prog) f in
+  let f = IF.float_out_exps_from_heap (I.lbl_getter prog) (I.annot_args_getter prog) f in
   let f = IF.float_out_min_max f in
   let f = IF.rename_bound_vars f in
   (* let f,_,_ = case_normalize_renamed_formula prog h [] f in *)
@@ -6167,9 +6167,9 @@ and case_normalize_struc_formula_x prog (h_vars:(ident*primed) list)(p_vars:(ide
   (* let _ = print_string ("case_normalize_struc_formula :: CHECK POINT 0 ==> f = " ^ Iprinter.string_of_struc_formula f ^ "\n") in *)
   let nf = convert_struc2 prog f in
   (* let _ = print_string ("\ncase_normalize_struc_formula :: CHECK POINT 0.5 ==> f = " ^ Iprinter.string_of_struc_formula nf) in *)
-  let nf = IF.float_out_thread_struc_formula (I.lbl_getter prog) nf  in 
+  let nf = IF.float_out_thread_struc_formula (I.lbl_getter prog) (I.annot_args_getter prog) nf  in 
   (* let _ = print_string ("\ncase_normalize_struc_formula :: CHECK POINT 1 ==> nf = " ^ Iprinter.string_of_struc_formula nf ) in *)
-  let nf = IF.float_out_exps_from_heap_struc (I.lbl_getter prog) nf  in 
+  let nf = IF.float_out_exps_from_heap_struc (I.lbl_getter prog) (I.annot_args_getter prog) nf  in 
   (* let _ = print_string ("\ncase_normalize_struc_formula :: CHECK POINT 2 ==> nf = " ^ Iprinter.string_of_struc_formula nf) in *)
   let nf = IF.float_out_struc_min_max nf in
   (* let _ = print_string ("case_normalize_struc_formula :: CHECK POINT 3 ==> nf = " ^ Iprinter.string_of_struc_formula nf ^ "\n") in *)
@@ -6288,8 +6288,8 @@ and simpl_case_normalize_struc_formula id prog (h_vars:(ident*primed) list)(f:IF
   let pos = IF.pos_of_struc_formula f in
 				
   let nf = convert_struc2 prog f in
-  let nf = IF.float_out_thread_struc_formula (I.lbl_getter prog) nf  in 
-  let nf = IF.float_out_exps_from_heap_struc (I.lbl_getter prog) nf  in 
+  let nf = IF.float_out_thread_struc_formula (I.lbl_getter prog) (I.annot_args_getter prog) nf  in 
+  let nf = IF.float_out_exps_from_heap_struc (I.lbl_getter prog) (I.annot_args_getter prog) nf  in 
   let nf = IF.float_out_struc_min_max nf in
   let nf = IF.rename_bound_var_struc_formula nf in
   

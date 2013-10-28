@@ -1596,6 +1596,11 @@ and get_node_args_orig (h : h_formula) = match h with
   | ViewNode ({h_formula_view_args_orig = c}) -> List.map fst c
   | DataNode _ -> []
   | _ -> failwith ("get_node_args: invalid argument")
+
+and get_node_args_orig_w_pos (h : h_formula) = match h with
+  | ViewNode ({h_formula_view_args_orig = c}) -> c
+  | DataNode _ -> []
+  | _ -> failwith ("get_node_args: invalid argument")
   
 and get_node_label (h : h_formula) = match h with
   | ViewNode ({h_formula_view_label = c}) 
@@ -11906,7 +11911,7 @@ let prepost_of_init_x (var:CP.spec_var) sort (args:CP.spec_var list) (lbl:formul
       h_formula_view_perm = None;
       h_formula_view_arguments = uargs;
       h_formula_view_annot_arg = [];
-      h_formula_view_args_orig = CP.update_positions_for_view_params (CP.sv_to_view_arg_list uargs);
+      h_formula_view_args_orig = CP.initialize_positions_for_view_params (CP.sv_to_view_arg_list uargs);
       h_formula_view_modes = []; (*???*)
       h_formula_view_coercible = false; (*??*)
       h_formula_view_origins = [];
@@ -11993,7 +11998,7 @@ let prepost_of_finalize_x (var:CP.spec_var) sort (args:CP.spec_var list) (lbl:fo
       h_formula_view_perm = None;
       h_formula_view_arguments = uargs;
       h_formula_view_annot_arg = [];
-      h_formula_view_args_orig = CP.update_positions_for_view_params (CP.sv_to_view_arg_list uargs);
+      h_formula_view_args_orig = CP.initialize_positions_for_view_params (CP.sv_to_view_arg_list uargs);
       h_formula_view_modes = []; (*???*)
       h_formula_view_coercible = false; (*??*)
       h_formula_view_origins = [];
@@ -12063,7 +12068,7 @@ let prepost_of_acquire_x (var:CP.spec_var) sort (args:CP.spec_var list) (inv:for
       h_formula_view_perm = Some (Cpure.Var (fresh_perm,no_pos));
       h_formula_view_arguments = uargs;
       h_formula_view_annot_arg = [];
-      h_formula_view_args_orig = CP.update_positions_for_view_params (CP.sv_to_view_arg_list uargs);
+      h_formula_view_args_orig = CP.initialize_positions_for_view_params (CP.sv_to_view_arg_list uargs);
       h_formula_view_modes = []; (*???*)
       h_formula_view_coercible = true; (*??*)
       h_formula_view_origins = [];
@@ -12896,13 +12901,13 @@ let collect_heap_args_list_failesc_context (ctx:list_failesc_context) (sv:CP.spe
          (head_args,head_id)
      with Not_found -> ([],""))
 
-let mkViewNode view_node view_name view_args pos = ViewNode
+let mkViewNode view_node view_name view_args (* view_args_orig *) pos = ViewNode
   { h_formula_view_node = view_node;
   h_formula_view_name = view_name;
   h_formula_view_derv = false;
   h_formula_view_arguments = view_args;
   h_formula_view_annot_arg = [];
-  h_formula_view_args_orig = CP.update_positions_for_view_params (CP.sv_to_view_arg_list view_args);
+  h_formula_view_args_orig = CP.initialize_positions_for_view_params (CP.sv_to_view_arg_list view_args);
   h_formula_view_imm = CP.ConstAnn Mutable;
   h_formula_view_perm = None;
   h_formula_view_modes = [];

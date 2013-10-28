@@ -11782,10 +11782,10 @@ let initialize_positions_for_view_params (va: 'a list) =
   let va_pos = List.combine va positions in
   va_pos
 
-let update_positions_for_view_params (va: 'a list) = 
-  let positions = Gen.range 1 (List.length va) in
-  let va_pos = List.combine va positions in
-  va_pos
+(* let update_positions_for_view_params (va: 'a list) =  *)
+(*   let positions = Gen.range 1 (List.length va) in *)
+(*   let va_pos = List.combine va positions in *)
+(*   va_pos *)
 
 let update_positions_for_view_params_x (aa: annot_arg list) (pattern_lst: (view_arg * int) list) = 
   (* let aa_pos = List.map (fun a -> (a,0)) aa in *)

@@ -132,7 +132,7 @@ int length(node p)
   ensures p::ll<n> & res=n;
 // should fail due to @L in ll<n> post-condition
 =============================================================
-#sleek0222.slk
+#sleek0222.slk - FIXED
 
 residue should eliminate unnecessary exists:
 Entail 1: Valid. 
@@ -147,6 +147,7 @@ eg:
 x::node<x@M,x@[@v]> * x::node<x@A,x@A> ==> false
 
 =============================================================
+FIXED:
 Current restriction (which is not enforced by the parser yet):
 when enable_field_ann is set, all imm ann for data inside 
 view decl, must be parameters of view_decl in the order 
@@ -166,7 +167,22 @@ fix the parameter positions:
 
 
 =============================================================
+FIXED:
+for predicate params: need to check if there are ann params which 
+are not used to annotate data fields inside the view def. Currently this kind
+of scenarios cause problems. 
+
+ex.:
+pred foo<n,a1,a2> = root=null & n=0 or
+     root::node<_@a1,q>*q::foo<n,a1,a2>
+
+calling foo: foo<n1,@M,@L> --> ends up in errors because @L is not used
+
 =============================================================
+allow \& between nodes with disjoint fields
+
+ex: x::ll<v*,@A,@M> & x::ll<w*,@M,@A> (v*=w*)
+
 =============================================================
 =============================================================
 =============================================================

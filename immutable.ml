@@ -1825,7 +1825,7 @@ let split_view_args view_args vdef:  CP.spec_var list * 'a list * (CP.annot_arg 
   let annot_arg,pos = List.split annot_arg_pos in
   let annot_arg = CP.view_arg_to_imm_ann_list annot_arg in 
   let annot_arg_pos = List.combine annot_arg pos in
-  (* create a imm list following the imm_map, updated with proper values from the list of params *)
+  (* create an imm list following the imm_map, updated with proper values from the list of params *)
   let anns_pos = List.map (fun (a, pos) -> 
       try
         List.find (fun (_, vpos) -> vpos == pos) annot_arg_pos

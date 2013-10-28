@@ -10421,7 +10421,7 @@ and do_fold_w_ctx_x fold_ctx prog estate conseq ln2 vd resth2 rhs_b is_folding p
       h_formula_view_perm = perm; (*LDK*)
       h_formula_view_arguments = List.tl new_v2;
       h_formula_view_annot_arg = get_node_annot_args_w_pos ln2;
-      h_formula_view_args_orig = CP.update_positions_for_view_params (get_node_args_orig ln2);
+      h_formula_view_args_orig = get_node_args_orig_w_pos ln2;
       h_formula_view_modes = get_view_modes ln2;
       h_formula_view_coercible = true;
       h_formula_view_lhs_case = false;
