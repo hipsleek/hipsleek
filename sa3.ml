@@ -191,9 +191,25 @@ let subst_cs_x prog post_hps dang_hps link_hps frozen_hps frozen_constrs complex
   (is_changed, new_cs1, unfrozen_hps)
 
 let subst_cs prog post_hps dang_hps link_hps frozen_hps frozen_constrs complex_hps constrs =
+  let (is_changed, new_cs1, unfrozen_hps) as res = subst_cs_x prog post_hps dang_hps link_hps frozen_hps frozen_constrs complex_hps constrs in
+   if !Globals.sap then
+     if not is_changed then DD.binfo_pprint "*** NO NORM DONE ***" no_pos
+      else
+        begin
+          let pr1 = pr_list_num Cprinter.string_of_hprel_short in
+          let s1 = pr1 constrs in
+          let s2 = pr1 new_cs1 in
+          let _ = DD.binfo_hprint (add_str "BEFORE" pr_id) s1 no_pos in
+          let _ = DD.binfo_pprint "=============>>>>" no_pos in
+          let _ = DD.binfo_hprint (add_str "AFTER" pr_id) s2 no_pos in
+          let _ = DD.binfo_end "Syn-Norm-Conseq" in
+          ()
+     end;
+  res
+let subst_cs prog post_hps dang_hps link_hps frozen_hps frozen_constrs complex_hps constrs =
   let pr1 = pr_list_ln Cprinter.string_of_hprel_short in
   Debug.no_2 "subst_cs" pr1 pr1 (pr_triple string_of_bool  pr1 !CP.print_svl)
-      (fun _ _ -> subst_cs_x prog post_hps dang_hps link_hps frozen_hps frozen_constrs complex_hps constrs)
+      (fun _ _ -> subst_cs prog post_hps dang_hps link_hps frozen_hps frozen_constrs complex_hps constrs)
       constrs frozen_constrs
 
 
@@ -1508,10 +1524,26 @@ let partition_constrs_x constrs post_hps0 dang_hps=
   (pre_constrs1,post_constrs, pre_fix_constrs, pre_oblg@pre_oblg_ext, post_oblg_constrs, pre_fix_hps)
 
 let partition_constrs constrs post_hps dang_hps=
+  let (pre_constrs,post_constrs, pre_fix_constrs, pre_oblg, post_oblg_constrs, pre_fix_hps) as res = partition_constrs_x constrs post_hps dang_hps in
+   if !Globals.sap then
+     begin
+       let pr1 = pr_list_num Cprinter.string_of_hprel_short in
+       let _ = DD.binfo_pprint "=============>>>>" no_pos in
+       let _ = DD.binfo_hprint (add_str "AFTER" pr_id) "" no_pos in
+       let _ = DD.binfo_hprint (add_str "pre ass" pr1) pre_constrs no_pos in
+       let _ = DD.binfo_hprint (add_str "pre-oblg" pr1) pre_oblg no_pos in
+       let _ = DD.binfo_hprint (add_str "post ass" pr1) post_constrs no_pos in
+       let _ = DD.binfo_hprint (add_str "post-oblg" pr1) post_oblg_constrs no_pos in
+       let _ = DD.binfo_end "partition_constrs" in
+       ()
+     end;
+  res
+
+let partition_constrs constrs post_hps dang_hps=
   let pr1 = pr_list_ln Cprinter.string_of_hprel_short in
   let pr2 = !CP.print_svl in
   Debug.no_3 "partition_constrs" pr1 pr2 pr2 (pr_hexa pr1 pr1 pr1 pr1 pr1 pr2)
-      (fun _ _ _ -> partition_constrs_x constrs post_hps dang_hps) constrs post_hps dang_hps
+      (fun _ _ _ -> partition_constrs constrs post_hps dang_hps) constrs post_hps dang_hps
 
 (***************************************************************
                      PROCESS INFER ACTION
@@ -1545,7 +1577,7 @@ let infer_split_base prog is=
   else is
 
 let infer_pre_synthesize_x prog proc_name callee_hps is pre_constrs need_preprocess detect_dang=
-  DD.info_ihprint (add_str "  Trivial Assumptions" pr_id) "" no_pos;
+  DD.info_ihprint (add_str "  trivial assumptions" pr_id) "" no_pos;
   let constrs0 = List.map (SAU.weaken_strengthen_special_constr_pre true) pre_constrs in
   let unk_hps1 = (List.map fst is.CF.is_dang_hpargs) in
   let link_hps = (List.map fst is.CF.is_link_hpargs) in
