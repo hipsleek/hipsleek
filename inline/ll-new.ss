@@ -12,6 +12,13 @@ ll<n> == self=null & n=0
    or self::node<_,q>*q::ll<n-1>
    inv n>=0;
 
+/*
+   node* q  ==> node q_ptr
+   q^       ==> q_ptr
+   q        ==> q_ptr
+   q->field ==> q_ptr.field
+   q = ..   ==> q_ptr = ..
+*/
 int foo(node q_ptr)
   requires q_ptr::ll<n>
   ensures q_ptr::ll<n> & res=n;
@@ -28,9 +35,17 @@ void main()
 */
 {
   node q=new node(0,null);
-  int t1 = foo(q);  //*&q ==> q
+  int t1 = foo(q);  //foo(*&q) ==> foo(q)
   node__star qq = new node__star(null);
-  int t2 = foo(qq.deref);//*qq
+  int t2 = foo(qq.deref);//foo(*qq) ==> foo(qq.deref)
 }
+/*
+   mn(e) ==> mn(deref(e))
+
+      deref(&p) ==> p
+      deref(v)  ==> v.deref
+      deref(v.field)  ==> v.(deref(field))
+
+*/
 
 

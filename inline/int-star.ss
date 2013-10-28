@@ -17,11 +17,18 @@ int main()
   requires true
   ensures res=3;
 {
-  // using &x ==> _addr_x   // x ==> _addr_x.deref 
   int_star addr_x = new int_star(0); 
   addr_x.deref = 2;
   int r=foo(addr_x); // &x ==> addr_x
   return r;
 }
+/*
+   if we detect int x, that &x is being used
+   we transform as follows:
+     int x   ==> int__star addr_x = new int__star(0) // stack allocate
+     x = ..  ==> addr_x.deref = ..
+     x       ==> addr_x.deref
+     &x      ==> addr_x
+*/
 
 

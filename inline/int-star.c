@@ -5,8 +5,8 @@
 // how about struct*, do we use pass-by-copy?
 int foo(int* q)
 /*@
-  requires q::int_star<a>
-  ensures q::int_star<a+1> & res=a+1;
+  requires q::int*<a>
+  ensures q::int*<a+1> & res=a+1;
 */
 {
   int r = (*q)+1;

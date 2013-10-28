@@ -73,6 +73,25 @@ Exception occurred: Invalid_argument("List.combine")
 Error3(s) detected at main 
 
 *******************************************************
+# pair3.c
+
+pair3.ss is the hand-translation of pair3.c
+
+pair3.ss works fine.
+
+However, pair3.c has quite a few timeouts:
+
+Procedure main$ SUCCESS.
+Stop Omega... 43 invocations 
+0 false contexts at: ()
+!!! log(small):(0.28,232)
+!!! 
+ log(bigger)(>4s)(1):(10.,[(imply:191<25:TIMEOUT:OMEGA CALCULATOR,10.)])
+
+There seems some problems..
+
+
+
 *******************************************************
 *******************************************************
 *******************************************************

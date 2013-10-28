@@ -19,7 +19,7 @@ int foo(struct node* q)
 {
   struct node* tmp = q;
   if (tmp) return 0;
-  else return 1+foo((*q).next);
+  else return 1+foo(q->next);
 }
 
 void main() 
