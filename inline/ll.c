@@ -11,6 +11,16 @@ ll<n>== self=null & n=0
   inv n>=0;
 */
 
+/*
+ll<n>== self=null & n=0
+  or self::node^<_,q>*q::ll<n-1>
+  inv n>=0;
+
+ll<n>== self=null & n=0
+  or self::node__star<r>*r::node<_,q>*q::ll<n-1>
+  inv n>=0;
+*/
+
 int foo(struct node* q)
 /*@
   requires q::node_star<r>*r::ll<n>
@@ -35,6 +45,8 @@ int foo2(struct node *q)
 void main() 
 {
   int x=1;
+  node* q = malloc(..);
+  foo2(q);
 }
 /*
 int star_foo(node star_q)

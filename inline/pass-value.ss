@@ -25,7 +25,7 @@ int foo(pair@C q)
 /*
   // for method declaration
   requires q::pair<a,_>
-  ensures q::pair<a,_> & res=a;
+  ensures q::pair<a,5> & res=a;
   // for caller
   requires q::pair<a,_>@L
   ensures  res=a;

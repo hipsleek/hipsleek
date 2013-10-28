@@ -1,8 +1,4 @@
 // addr-of operator
-struct pair {
-  int x;
-  int y;
-};
 
 // how come we don't use pass-by-copy here?
 // pass-by-copy only for struct?

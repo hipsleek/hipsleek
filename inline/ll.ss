@@ -12,16 +12,6 @@ ll<n> == self=null & n=0
    or self::node<_,q>*q::ll<n-1>
    inv n>=0;
 
-int foo(node_star@C q)
-  requires q::node_star<r>*r::ll<n>
-  ensures q::node_star<r>*r::ll<n> & res=n;
-{
-  if (q.deref==null) return 0;
-  else {
-      node_star t = new node_star(q.deref.next);
-      return 1+foo(t);
-  }
-}
 /*
  defn above when using node_star is somewhat unnatural
  A more accurate one is to use:
@@ -34,12 +24,23 @@ int foo(node_star@C q)
 
 */
 
-
-int foo2(node star_q)
-  requires star_q::ll<n>
-  ensures star_q::ll<n> & res=n;
+int foo(node_star@C q)
+  requires q::node_star<r>*r::ll<n>
+  ensures q::node_star<r>*r::ll<n> & res=n;
 {
-  if (star_q==null) return 0;
-  else return 1+foo2(star_q.next);
+  if (q.deref==null) return 0;
+  else {
+      node_star t = new node_star(q.deref.next);
+      return 1+foo(t);
+  }
+}
+
+
+int foo2(node val_q)
+  requires val_q::ll<n>
+  ensures val_q::ll<n> & res=n;
+{
+  if (val_q==null) return 0;
+  else return 1+foo2(val_q.next);
 }
 
