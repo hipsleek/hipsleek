@@ -7,11 +7,16 @@ struct node {
 
 /*@
 ll<n>== self=null & n=0
-  or self::node<_,q>*q::ll<n-1>
+  or self::node__star<r>*r::node<_,q>*q::ll<n-1>
   inv n>=0;
 */
 
 /*
+ll<n>== self=null & n=0
+  or self::node<_,q>*q::node__star<r>*r::ll<n-1>
+  inv n>=0;
+
+
 ll<n>== self=null & n=0
   or self::node^<_,q>*q::ll<n-1>
   inv n>=0;
@@ -22,9 +27,9 @@ ll<n>== self=null & n=0
 */
 
 int foo(struct node* q)
-/*@
-  requires q::node_star<r>*r::ll<n>
-  ensures q::node_star<r>*r::ll<n>;
+/*
+  requires q::node__star<r>*r::ll<n>
+  ensures q::node__star<r>*r::ll<n>;
 */
 {
   if (q) return 0;
@@ -32,9 +37,9 @@ int foo(struct node* q)
 }
 
 int foo2(struct node *q)
-/*@
-  requires *q::ll<n>
-  ensures *q::ll<n>;
+/*
+  requires q::ll<n>
+  ensures q::ll<n>;
 */
 {
   struct node* tmp = q;
@@ -43,10 +48,12 @@ int foo2(struct node *q)
 }
 
 void main() 
+/*@
+ requires true
+ ensures true;
+*/
 {
   int x=1;
-  node* q = malloc(..);
-  foo2(q);
 }
 /*
 int star_foo(node star_q)

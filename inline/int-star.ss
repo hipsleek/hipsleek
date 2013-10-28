@@ -17,7 +17,7 @@ int main()
   requires true
   ensures res=3;
 {
-  // using addr_x for &x
+  // using &x ==> _addr_x   // x ==> _addr_x.deref 
   int_star addr_x = new int_star(0); 
   addr_x.deref = 2;
   int r=foo(addr_x); // &x ==> addr_x
