@@ -63,7 +63,7 @@ static  :EBase exists (Expl)[](Impl)[a](ex)[]q::pair<a@M,_@A>@M&
 It should be OK to give @A fields from quantification.
 
 *******************************************************
-# ll.ss
+# ll-new.ss
 
 Starting Omega...oc
 Stop Omega... 0 invocations caught
