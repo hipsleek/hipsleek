@@ -1,3 +1,43 @@
+Given:
+ int foo(int** q)
+  requires q::int^^<a>
+  ensures q::int_star_star<r>*r::int_star<a> & res=0;
+
+If we have translated:
+ int foo(int** q)
+  requires q::int_star_star<r2>*r2::int_star<a>
+  ensures q::int_star_star<r>*r::int_star<a> & res=0;
+
+It would still be incorrect since the r2::int_star<a> 
+memory node would be lost, so we cannot really mix
+the two notation.
+
+Thus when given:
+ int foo(int** q)
+  requires q::int^^<a>
+  ensures q::int^^<a> & res=0;
+
+We should try out best to translate it to:
+  requires q::int_star_star<r>*r::int_star<a>
+  ensures q::int_star_star<r>*r::int_star<a> & res=0;
+
+so as to preserve the link of r::int_star<a>.
+If we had translated it to:
+
+  requires q::int_star_star<r>*r::int_star<a>
+  ensures q::int_star_star<r1>*r1::int_star<a> & res=0;
+
+The link to r::int_star<a> node will still be lost.
+
+
+
+
+
+
+
+
+
+
 short.c --esl
 =======
 
