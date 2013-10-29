@@ -11739,21 +11739,21 @@ let create_view_arg_list_from_map (map: view_arg list) (hargs: spec_var list) (a
 let create_view_arg_list_from_pos_map (map: (view_arg*int) list) (hargs: spec_var list) (annot: (annot_arg*int) list) = 
   try
     (* update the annotations first *)
-    let _ = Debug.binfo_pprint ("annot: " ^(string_of_int (List.length annot)  )) no_pos in
-    let _ = Debug.binfo_pprint ("annot: " ^(pr_list (string_of_int ) (List.map snd annot))) no_pos in
+    let _ = Debug.tinfo_pprint ("annot: " ^(string_of_int (List.length annot)  )) no_pos in
+    let _ = Debug.tinfo_pprint ("annot: " ^(pr_list (string_of_int ) (List.map snd annot))) no_pos in
     let view_args_pos = List.map (fun (va,p) -> 
         try 
           
-          let _ = Debug.binfo_pprint ("p: " ^(string_of_int p)) no_pos in
-          let (a,p) = List.find (fun (_,i) ->           let _ = Debug.binfo_pprint ("i: " ^(string_of_int i)) no_pos in p == i) annot in
+          let _ = Debug.tinfo_pprint ("p: " ^(string_of_int p)) no_pos in
+          let (a,p) = List.find (fun (_,i) ->           let _ = Debug.tinfo_pprint ("i: " ^(string_of_int i)) no_pos in p == i) annot in
           (annot_arg_to_view_arg a, p)
         with Not_found -> (va,0)) map in
-    let _ = Debug.binfo_pprint ("view_args_pos: " ^(string_of_int (List.length view_args_pos)  )) no_pos in
+    let _ = Debug.tinfo_pprint ("view_args_pos: " ^(string_of_int (List.length view_args_pos)  )) no_pos in
     let temp_pos = Gen.range 1 (List.length view_args_pos) in
     let view_arg_temp_pos = List.combine view_args_pos temp_pos in
     let to_be_updated, already_updated = List.partition (fun ((va,p),tp) -> p == 0 ) view_arg_temp_pos in
-    let _ = Debug.binfo_pprint ("to_be_updated: " ^(string_of_int (List.length to_be_updated)  )) no_pos in
-    let _ = Debug.binfo_pprint ("hargs: "^ (string_of_int (List.length  hargs)))  no_pos in
+    let _ = Debug.tinfo_pprint ("to_be_updated: " ^(string_of_int (List.length to_be_updated)  )) no_pos in
+    let _ = Debug.tinfo_pprint ("hargs: "^ (string_of_int (List.length  hargs)))  no_pos in
     let new_update = try  List.map (fun (((va,_),p),sv) -> ((sv_to_view_arg sv,0),p) ) (List.combine to_be_updated hargs) 
     with Invalid_argument s -> 
       raise (Invalid_argument (s ^ " at Cpure.create_view_arg_list_from_pos_map 000") )

@@ -1813,7 +1813,7 @@ let split_view_args view_args vdef:  CP.spec_var list * 'a list * (CP.annot_arg 
   (* let view_vars_gen = CP.sv_to_view_arg_list sv in *)
   let view_arg_lbl = (List.combine view_args (fst vdef.I.view_labels)) in
   let ann_map_pos = vdef.I.view_imm_map in
-  let _ = Debug.binfo_hprint (add_str "imm_map:" (pr_list (pr_pair Iprinter.string_of_imm string_of_int))) ann_map_pos no_pos in
+  let _ = Debug.tinfo_hprint (add_str "imm_map:" (pr_list (pr_pair Iprinter.string_of_imm string_of_int))) ann_map_pos no_pos in
   (* create list of view_arg*pos  *)
   let vp_pos = CP.initialize_positions_for_view_params view_arg_lbl in
   let view_args_pos = List.map (fun ((va,_),pos) -> (va,pos)) vp_pos in

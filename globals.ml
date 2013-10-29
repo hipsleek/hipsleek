@@ -650,7 +650,7 @@ let tc_drop_unused = ref false
 let simpl_unfold3 = ref false
 let simpl_unfold2 = ref false
 let simpl_unfold1 = ref false
-let simpl_memset = ref true
+let simpl_memset = ref false
 
 let print_heap_pred_decl = ref true
 
@@ -762,7 +762,7 @@ let allow_imm_inv = ref true (*imm inv to add of form @M<:v<:@A*)
 
 (*Since this flag is disabled by default if you use this ensure that 
 run-fast-test mem test cases pass *)
-let allow_field_ann = ref true
+let allow_field_ann = ref false
   (* disabled by default as it is unstable and
      other features, such as shape analysis are affected by it *)
 

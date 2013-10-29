@@ -172,6 +172,7 @@ for predicate params: need to check if there are ann params which
 are not used to annotate data fields inside the view def. Currently this kind
 of scenarios cause problems. 
 
+./
 ex.:
 pred foo<n,a1,a2> = root=null & n=0 or
      root::node<_@a1,q>*q::foo<n,a1,a2>
@@ -184,6 +185,9 @@ allow \& between nodes with disjoint fields
 ex: x::ll<v*,@A,@M> & x::ll<w*,@M,@A> (v*=w*)
 
 =============================================================
+field-ann still needs the old  simpl_memset = ref true. The new
+simpl does not consider all the cases. Need to check more on what's 
+missing from the new, simplified h_formula_2_mem
 =============================================================
 =============================================================
 =============================================================
