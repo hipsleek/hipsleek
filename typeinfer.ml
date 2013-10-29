@@ -213,7 +213,7 @@ and unify_type_modify (modify_flag:bool) (k1 : spec_var_kind) (k2 : spec_var_kin
       | Float, Int -> (tl,Some Float) (*LDK*)
       | Tree_sh, Tree_sh -> (tl,Some Tree_sh)
       | Named n1, Named n2 when (String.compare n1 "memLoc" = 0) -> (
-          let re = Str.regexp "__star$" in
+          let re = Str.regexp "_star$" in
           try
             let _ = Str.search_forward re n2 0 in
             (tl, Some (Named n2))
@@ -221,7 +221,7 @@ and unify_type_modify (modify_flag:bool) (k1 : spec_var_kind) (k2 : spec_var_kin
             ^" types " ^ n1 ^" and "^ n2 ^" are inconsistent")
         )
       | Named n1, Named n2 when (String.compare n2 "memLoc" = 0) -> (
-          let re = Str.regexp "__star$" in
+          let re = Str.regexp "_star$" in
           try
             let _ = Str.search_forward re n1 0 in
             (tl, Some (Named n1))
@@ -933,7 +933,7 @@ and try_unify_data_type_args prog c v deref ies tlist pos =
       let base_ddecl = (
         let dname = (
           match c with
-          | "int" | "float" | "void" | "bool" -> c ^ "__star"
+          | "int" | "float" | "void" | "bool" -> c ^ "_star"
           | _ -> c
         ) in
         I.look_up_data_def_raw prog.I.prog_data_decls dname
@@ -941,7 +941,7 @@ and try_unify_data_type_args prog c v deref ies tlist pos =
       let holder_name = (
         let deref_str = ref "" in
         for i = 1 to deref do
-          deref_str := !deref_str ^ "__star";
+          deref_str := !deref_str ^ "_star";
         done;
         c ^ !deref_str
       ) in
@@ -977,7 +977,7 @@ and try_unify_view_type_args prog c vdef v deref ies tlist pos =
       let expect_dname = (
           let s = ref "" in
           for i = 1 to deref do
-            s := !s ^ "__star";
+            s := !s ^ "_star";
           done;
           dname ^ !s
       ) in

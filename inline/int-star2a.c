@@ -1,12 +1,12 @@
-#include<stdio.h>
+//#include<stdio.h>
 // addr-of operator
 // how come we don't use pass-by-copy here?
 // pass-by-copy only for struct?
 // how about struct*, do we use pass-by-copy?
 int foo(int** q)
 /*@
-  requires q^::int*<a>
-  ensures q^::int*<a+1> & res=a+1;
+  requires q::int^^<a>
+  ensures q::int^^<a+1> & res=a+1;
   //  requires q::int__star__star<r>*r::int__star<a>
   //  ensures q::int__star__star<r>*r::int__star<a+1> & res=a+1;
   //  requires q::int__star^<a>

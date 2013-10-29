@@ -689,7 +689,7 @@ let get_heap_id_info (cid: ident * primed) (heap_id : (ident * int * int * Camlp
   let (base_heap_id, ref_level, deref_level, l) = heap_id in
   let s = ref base_heap_id in
   for i = 1 to ref_level do
-    s := !s ^ "__star";
+    s := !s ^ "_star";
   done;
   if (deref_level == 0) then
     (cid, !s, 0)

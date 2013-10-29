@@ -5134,13 +5134,13 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
             | "void" -> (
                 (* dereference to a basic type *)
                 if (deref = 1) then (
-                  let base_heap_id = base_heap_id ^ "__star" in
+                  let base_heap_id = base_heap_id ^ "_star" in
                   let hf = IF.mkHeapNode n base_heap_id 0 dr imm full inv pd perm exps ann_param pi l in
                   (hf, [])
                 )
                 else (
                   let new_vars = ref [] in
-                  let base_heap_id = base_heap_id ^ "__star" in
+                  let base_heap_id = base_heap_id ^ "_star" in
                   let s = ref base_heap_id in
                   let fresh_var = "deref_" ^ (fresh_name ()) in
                   new_vars := !new_vars @ [(fresh_var, Unprimed)];
@@ -5153,11 +5153,11 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
                     let fresh_var = "deref_" ^ (fresh_name ()) in
                     new_vars := !new_vars @ [(fresh_var, Unprimed)];
                     p1 := (fresh_var, Unprimed);
-                    s := !s ^ "__star";
+                    s := !s ^ "_star";
                     let h = IF.mkHeapNode !p1 !s 0 dr imm inv full pd perm [!p2] ann_param None l in
                     heaps := !heaps @ [h];
                   done;
-                  s := !s ^ "__star";
+                  s := !s ^ "_star";
                   let e = IF.P.Var (!p1, l) in
                   let h1 = IF.mkHeapNode n !s 0 dr imm full inv pd perm [e] ann_param None l in
                   let h2 = IF.mkHeapNode p base_heap_id 0 dr imm full inv pd perm exps ann_param pi l in
@@ -5180,11 +5180,11 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
                   let fresh_var = "deref_" ^ (fresh_name ()) in
                   new_vars := !new_vars @ [(fresh_var, Unprimed)];
                   p1 := (fresh_var, Unprimed);
-                  s := !s ^ "__star";
+                  s := !s ^ "_star";
                   let h = IF.mkHeapNode !p1 !s 0 dr imm full inv pd perm [!p2] ann_param None l in
                   heaps := !heaps @ [h];
                 done;
-                s := !s ^ "__star";
+                s := !s ^ "_star";
                 let e = IF.P.Var (!p1, l) in
                 let h1 = IF.mkHeapNode n !s 0 dr imm full inv pd perm [e] ann_param None l in
                 let h2 = IF.mkHeapNode p c 0 dr imm full inv pd perm exps ann_param pi l in

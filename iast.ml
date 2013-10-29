@@ -1274,7 +1274,7 @@ and collect_data_view_from_formula_x (data_names: ident list) (f0 : F.formula) :
         if v = self then (
           let deref_str = ref "" in
           for i = 1 to h.F.h_formula_heap_deref do
-            deref_str := !deref_str ^ "__star"
+            deref_str := !deref_str ^ "_star"
           done;
           let view_data_name = c ^ !deref_str in
           let dl, vl = (
