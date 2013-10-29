@@ -353,7 +353,7 @@ node insert_inline(node x, int a)
 
 
 /* function to delete the smallest element in an avl tree */
-int remove_min(ref node x)
+int remove_min(node@R x)
 	requires x::avl<m,n> & x != null
 	ensures x::avl<m-1, _>;
 {
@@ -384,7 +384,7 @@ int remove_min(ref node x)
 
 
 /* function to delete a node in a an avl tree */
-void delete(ref node x, int a)
+void delete(node@R x, int a)
 
 	requires x::avl<m, n> 
 	ensures x'::avl<m - 1, n1>; // or if m = 0 then the same

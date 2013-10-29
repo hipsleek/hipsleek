@@ -210,10 +210,9 @@ let omega_of_formula_old i f  =
 (*       pr pr_id (fun _ -> omega_of_formula_old f) f *)
 
  let omegacalc = ref ("oc":string)
-(* let omegacalc = ref ("/home/locle/workspace/hg/infer2r2/sleekex/omega_modified/omega_calc/obj/oc":string) *)
 (*let modified_omegacalc = "/usr/local/bin/oc5"*)
 (* TODO: fix oc path *)
-(* let omegacalc = ref ("/home/locle/workspace/default/sleekex/omega_modified/omega_calc/obj/oc": string)*)
+(* let omegacalc = ref ("/home/locle/workspace/hg/cparser-1/sleekex/omega_modified/omega_calc/obj/oc": string) *)
 
 let start_with str prefix =
   (String.length str >= String.length prefix) && (String.sub str 0 (String.length prefix) = prefix) 
@@ -331,7 +330,7 @@ let check_formula f timeout =
 	        omega_call_count := 0;
         end;
       let fnc f = 
-        (*let _ = print_endline "check" in*)
+        (* let _ = print_endline ("check:" ^ f) in *)
         let _ = incr omega_call_count in
         let new_f = Gen.break_lines_1024 f
         (*  if ((String.length f) > 1024) then
@@ -366,8 +365,8 @@ let check_formula f timeout =
       else fnc f
   end
 
-let check_formula f timeout = 
-Gen.Profiling.do_2 "Omega:check_formula" check_formula f timeout 
+let check_formula f timeout =
+Gen.Profiling.do_2 "Omega:check_formula" check_formula f timeout
 
 let check_formula i f timeout =
   Debug.no_2 "Omega:check_formula" (fun x->x) string_of_float string_of_bool

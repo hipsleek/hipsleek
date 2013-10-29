@@ -1,0 +1,28 @@
+Given C-code (pair.c):
+  struct pair p;
+  p.x = 1;
+  struct pair* pp;
+  pp = &p;
+  pp->x = pp->x +1;
+  return pp->x;
+
+Hand-transform (pair.ss):
+  pair addr_p = new pair(0,0); //stack allocate
+  addr_p.x = 1;
+  pair pp;
+  pp = addr_p;
+  pp.x = pp.x +1;
+  return pp.x;
+
+Machine transform (pair.c --pip):
+{ local: pair p,pair__star pp,pair__star address__var__0
+  pair p = new pair(0, 0); // addr_p
+  pair__star pp = new pair__star(null);  //not needed
+  pair__star address__var__0 = new pair__star(null); // not needed
+  {member access p~~>x = 1;
+   member access address__var__0~~>pdata = p; // not needed
+   pp = address__var__0;
+   member access member access pp~~>pdata~~>x = (int)member access member access pp~~>pdata~~>x + 1;
+   (82, ):return member access member access pp~~>pdata~~>x}}
+ }
+

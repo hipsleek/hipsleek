@@ -1,0 +1,111 @@
+*******************************************************
+# data-in3.slk --field-ann  (FIXED)
+
+//(1)
+checkentail p::pair<#,a> * q::pair<b,_@A> |- true.
+print residue.
+/*
+ <1>p::pair<-@M,a@M>@M([0]) * q::pair<b@M,Anon_13@A>@M&{FLOW,(21,22)=__norm}[]
+[[empty]]
+*/
+
+Can we make p::pair<#,a> generate _@A at the parser/astsimpl.ml?
+I start by changing #n --> #
+*******************************************************
+# data-in3b.slk (FIXED)
+
+//(2)
+checkentail v.quad.p1.x::<a> |- true.
+print residue.
+Entail 1: Valid. 
+Fatal error: exception Invalid_argument("List.combine")
+
+There seems to be a printing problem. Can we fix it
+and try to make this equivalent to:
+checkentail v::quad<a,_@A,#> |- true.
+==>  <1>v::quad<a@M,Anon_11@A,Anon_12@A>@M&{FLOW,(21,22)=__norm}[]
+
+Need to change from:
+ <1>v::quad<a,-,->@M([1,2])&{FLOW,(21,22)=__norm}[]
+[[empty]]
+
+to:
+==>  <1>v::quad<a@M,Anon_11@A,Anon_12@A>@M&{FLOW,(21,22)=__norm}[]
+
+
+
+*******************************************************
+# quad.ss   (FIXED)
+
+Why is there a big time-out?
+
+!!! log(small):(0.03,165)
+!!! 
+ log(bigger)(>4s)(1):(10.,[(SAT:158<1:TIMEOUT:OMEGA CALCULATOR,10.)])
+*******************************************************
+# quad-2.ss  (FIXED by excluding absent vars from fv_h_node)
+
+There is a warning for specs:
+
+!!!WARNING : uninterpreted free variables [Anon_898,Anon_902] in specification.Checking lemmas... DONE.
+
+which was translated from:
+  requires q.x::<a>
+  ensures q.x::<a> & res=a;
+
+static  :EBase exists (Expl)[](Impl)[a](ex)[]q::pair<a@M,_@A>@M&
+        {FLOW,(24,25)=__norm}[]
+          EBase emp&MayLoop[]&{FLOW,(1,27)=__flow}[]
+                  EAssume 
+                    (exists a_32: q::pair<a_32@M,_@A>@M&a=res & a=a_32&
+                    {FLOW,(24,25)=__norm})[]
+
+It should be OK to give @A fields from quantification.
+
+*******************************************************
+# ll-new.ss
+
+Starting Omega...oc
+Stop Omega... 0 invocations caught
+(Program not linked with -g, cannot print stack backtrace)
+
+Exception occurred: Invalid_argument("List.combine")
+Error3(s) detected at main 
+
+*******************************************************
+# pair3.c
+
+pair3.ss is the hand-translation of pair3.c
+
+pair3.ss works fine.
+
+However, pair3.c has quite a few timeouts:
+
+Procedure main$ SUCCESS.
+Stop Omega... 43 invocations 
+0 false contexts at: ()
+!!! log(small):(0.28,232)
+!!! 
+ log(bigger)(>4s)(1):(10.,[(imply:191<25:TIMEOUT:OMEGA CALCULATOR,10.)])
+
+There seems some problems..
+
+
+
+*******************************************************
+*******************************************************
+*******************************************************
+*******************************************************
+*******************************************************
+*******************************************************
+*******************************************************
+*******************************************************
+*******************************************************
+*******************************************************
+*******************************************************
+*******************************************************
+*******************************************************
+*******************************************************
+*******************************************************
+*******************************************************
+*******************************************************

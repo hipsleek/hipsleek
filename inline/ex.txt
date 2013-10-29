@@ -1,0 +1,48 @@
+
+For this example,
+
+int hoo(pair *q)
+ requires *q::pair<a,b>
+ ensures *q::pair<a,b>;
+{
+  q = malloc (sizeof(pair));
+}
+
+Since it uses q, I think we need to model it
+more accurately using:
+
+int hoo(pair* q)
+ requires q::pair*<r>*r::pair<a,b>
+ ensures q::pair*<x>*x::pair<_,_> * r::pair<a,b>;
+{
+  q = malloc (sizeof(pair));
+}
+
+This would have translated to;
+
+int hoo(pair_star q)
+ requires q::pair_star<r>*r::pair<a,b>
+ ensures q::pair_star<x>*x::pair<_,_> * r::pair<a,b>;
+{
+  q.deref = new pair();
+}
+
+
+If we had insisted on using *q, we could possibly still use
+the following translation:
+
+int hoo(pair star_q)
+ requires star_q::pair<a,b>
+ ensures star_q::pair<a,b>;
+{
+  pair_star q = new pair_star();
+  q.deref = star_q;
+  q.deref = new pair(); // use q.deref instead of star_q.
+}
+
+However, we won't be able to capture the presence of
+a memory leak from the malloc operation, since this 
+leaked object would have been captured in a local q parameter.
+
+
+

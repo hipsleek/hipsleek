@@ -44,7 +44,7 @@ node insert(node x, int v)
 }
 
 /* insertion sort */
-void insertion_sort(node x, ref node y)
+void insertion_sort(node x, node@R y)
 	requires x::bnd<n1, sm1, bg1> * y::sll<n2, sm2, bg2>
         ensures y'::sll<n1+n2, sm, bg> * x::bnd<n1, sm1, bg1> & sm <= sm2 & bg >= bg2;
 

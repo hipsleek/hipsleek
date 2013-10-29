@@ -546,6 +546,7 @@ let no_pos1 = { Lexing.pos_fname = "";
 
 let res_name = "res"
 let null_name = "null"
+let inline_field_expand = "_"
 
 let sl_error = "separation entailment"
 let logical_error = "logical bug"
@@ -756,11 +757,11 @@ let elim_exists_ff = ref true
 let allow_imm = ref true (*imm will delay checking guard conditions*)
 
 let allow_imm_inv = ref true (*imm inv to add of form @M<:v<:@A*)
-let allow_field_ann = ref false
+let allow_field_ann = ref true
 
 (*Since this flag is disabled by default if you use this ensure that 
 run-fast-test mem test cases pass *)
-let allow_field_ann = ref false 
+(* let allow_field_ann = ref false  *)
   (* disabled by default as it is unstable and
      other features, such as shape analysis are affected by it *)
 

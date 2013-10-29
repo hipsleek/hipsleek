@@ -3,23 +3,44 @@ data pair {
 	int y;
 }.
 
-data quadruple {
+data quad {
 	inline pair p1;
 	pair p2;
 }.
+
+
+//(1)
+//checkentail p::pair<_@A,a> * q::pair<b,_@A> |- true.
+//print residue.
+
+//(1)
+//checkentail p::pair<#,a> * q::pair<b,_@A> |- true.
+//print residue.
+/*
+ <1>p::pair<-@M,a@M>@M([0]) * q::pair<b@M,Anon_13@A>@M&{FLOW,(21,22)=__norm}[]
+[[empty]]
+*/
+
+//(2)
+checkentail v.quad.p1.x::<a> |- true.
+print residue.
+
+
+//(2)
+checkentail v::quad<#,_@A,p> * p::pair<a,b>|- true.
+print residue.
+
+/*
+ <1>v::quad<Anon_12@A,Anon_11@A,p@M>@M * p::pair<a@M,b@M>@M&{FLOW,(21,22)=__norm}[]
+[[empty]]
+*/
+
+/*
 
 data octuple {
 	inline quadruple q1;
 	inline quadruple q2;
 }.
-
-//(1)
-checkentail p::pair<_@A,a> * p::pair<b,_@A> |- true.
-print residue.
-
-//(2)
-checkentail p::pair<#,a> * p::pair<b,_@A> |- true.
-print residue.
 
 //(3)
 checkentail v::octuple<_@A,_@A,_@A,_@A,k,_@A> 
@@ -52,7 +73,7 @@ print residue.
 //(7)
 checkentail p::pair<_@A,a> * q::pair<b,_@A> |- true.
 print residue.
-
+*/
 
 /* checkentail v.quadruple.p1.x::<a> |- true.
 

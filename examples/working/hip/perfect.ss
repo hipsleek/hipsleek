@@ -93,7 +93,7 @@ int height(node2 t)
 /*
 	the full insert method
 */
-void insert(ref node2 t, int a)
+void insert(node2@R t, int a)
 	requires t::perfect<n>
 	ensures t'::perfect<n1> & (n1 = n | n1 = n+1);
 {

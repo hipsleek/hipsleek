@@ -30,6 +30,13 @@ let string_of_cond_path c = pr_list_round string_of_int c
 
 type ann = ConstAnn of heap_ann | PolyAnn of CP.spec_var | TempAnn of ann
 
+let string_of_ann a = match a with
+  | ConstAnn h -> string_of_heap_ann h
+  | PolyAnn v -> "PolyAnn"
+  | TempAnn v -> "TempAnn"
+
+let string_of_ann_list xs = pr_list string_of_ann xs
+
 let view_prim_lst = new Gen.stack_pr pr_id (=) 
 
 type typed_ident = (typ * ident)
@@ -2350,7 +2357,24 @@ and fv (f : formula) : CP.spec_var list = match f with
         let fvars = CP.remove_dups_svl (vars@fvars) in
 	    let res = Gen.BList.difference_eq CP.eq_spec_var fvars qvars in
 		res
+and is_absent imm =
+  match imm with
+  | ConstAnn(Accs) -> true
+  | _ -> false
+
+and remove_absent ann vs =
+  if List.length ann = List.length vs then
+    let com_ls = List.combine ann vs in
+    let res_ls = List.filter (fun (a,_) -> not(is_absent a)) com_ls in
+    List.split res_ls
+  else (ann,vs)
+
 and h_fv_node v perm ann param_ann vs =
+  let (param_ann,vs) = remove_absent param_ann vs in
+  Debug.no_2 "h_fv_node" string_of_ann_list !print_svl !print_svl 
+      (fun _ _ -> h_fv_node_x v perm ann param_ann vs) param_ann vs
+
+and h_fv_node_x v perm ann param_ann vs =
   let pvars = fv_cperm perm in
   let avars = (fv_ann ann) in
   let avars = if (!Globals.allow_field_ann) then avars @ (fv_ann_lst param_ann)  else avars in
@@ -4602,8 +4626,9 @@ let rec heap_trans_heap_node fct f0 =
   let rec helper f=
     match f with
       | HRel b -> fct f
+      | DataNode _ -> fct f
       | ViewNode _ -> fct f
-      | HTrue | HFalse | HEmp | Hole _ | DataNode _ -> f
+      | HTrue | HFalse | HEmp | Hole _-> f
       | Phase b -> Phase {b with h_formula_phase_rd = recf b.h_formula_phase_rd; h_formula_phase_rw = recf b.h_formula_phase_rw}
       | Conj b -> Conj {b with h_formula_conj_h2 = recf b.h_formula_conj_h2; h_formula_conj_h1 = recf b.h_formula_conj_h1}
       | Star b -> Star {b with h_formula_star_h2 = recf b.h_formula_star_h2; h_formula_star_h1 = recf b.h_formula_star_h1}

@@ -1,0 +1,68 @@
+// Two ways for translating pair*
+
+struct pair {
+  int x;
+  int y;
+}
+
+
+Currently, when we specify pair* in C, we were
+using the following coding style.
+
+int foo(pair* q)
+/*@
+  requires q::pair^<a,b>@L
+  ensures res=b;
+  requires q::pair*<r>*pair<a,b>@L
+  ensures res=b;
+*/
+{
+  return q->y;
+}
+
+which gets translated to:
+
+data pair {
+  int x;
+  int y;
+}
+
+data pair_star {
+   pair deref
+}
+
+int foo(pair_star@C q)
+  requires q::pair_star<r>@L*pair<a,b>@L
+  ensures res=b;
+{
+  return q.deref.y;
+}
+
+This causes an indirection to be present in the
+spec. Furthermore, it suggest a pass-by-copy semantics
+where a single pointer is being copied. In case a 
+single pointer is being copied, we can actually use
+pass-by-value (or ptr itself) which would give us
+simpler code. My suggestion is to allow the following
+equivalent C-code.
+
+int star_foo(struct pair *q)
+/*@
+  requires *q::pair<a,b>@L
+  ensures res=b;
+*/
+{
+  return (*q).y;
+}
+
+Expressed in this form, it would suggest a simpler
+translation to:
+
+int star_foo(pair star_q)
+  requires star_q::pair<a,b>@L
+  ensures res=b;
+{
+  return star_q.y;
+}
+
+which avoided the need for indirection.

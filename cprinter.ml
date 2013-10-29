@@ -517,12 +517,18 @@ let string_of_spec_var x =
     | P.SpecVar (t, id, p) ->
     	  (* An Hoa : handle printing of holes *)
           let ts = if !print_type then ":"^(string_of_typ t) else "" in
-    	  let real_id = if (id.[0] = '#') then "#" else id
-          in (real_id ^(match p with
+    	  (* let real_id = if (id.[0] = '#') then "#" else id *)
+          (* in  *)
+          (id ^(match p with
             | Primed -> "'"
             | Unprimed -> "" )^ts)
 
 let string_of_subst stt = pr_list (pr_pair string_of_spec_var string_of_spec_var) stt
+
+(* let is_absent imm = *)
+(*   match imm with *)
+(*   | ConstAnn(Accs) -> true *)
+(*   | _ -> false *)
 
 let rec string_of_imm imm = 
   if not !print_ann then ""
@@ -538,7 +544,17 @@ let string_of_derv dr =
   if not !print_ann then ""
   else if dr then "@D" else ""
 
-let pr_spec_var x = fmt_string (string_of_spec_var x)
+let smart_string_of_spec_var x = 
+  match x with
+    | CP.SpecVar(t,id,p) ->
+          let n=String.length id in
+          if n>=4 then 
+            let s=String.sub id 0 4 in
+            if s="Anon" then "_"
+            else string_of_spec_var x
+          else string_of_spec_var x
+
+let pr_spec_var x = fmt_string (smart_string_of_spec_var x)
 
 let pr_typed_spec_var x = fmt_string (* (string_of_spec_var x) *) (string_of_typed_spec_var x)
 
@@ -1099,8 +1115,11 @@ let rec pr_h_formula h =
               (* pr_formula_label_opt pid; *)
 	      (* An Hoa : Replace the spec-vars at holes with the symbol '-' *)
               pr_spec_var sv; fmt_string "::";
-              (if not(!Globals.allow_field_ann) then pr_angle (c^perm_str) (fun x ->  pr_spec_var x) svs 
-              else pr_angle (c^perm_str) (fun (x,y) ->  pr_spec_var x; pr_imm y) (List.combine svs ann_param) );
+              (if not(!Globals.allow_field_ann) ||(List.length svs != List.length ann_param) then pr_angle (c^perm_str) (fun x ->  pr_spec_var x) svs 
+              else pr_angle (c^perm_str) (fun (x,y) -> 
+                  (* prints absent field as "#" *)
+                  (* if is_absent y then fmt_string "#" *)
+                  (* else  *)(pr_spec_var x; pr_imm y)) (List.combine svs ann_param) );
 	      if (!Globals.allow_imm) then pr_imm imm;
 	      pr_derv dr;
               if (hs!=[]) then (fmt_string "("; fmt_string (pr_list string_of_int hs); fmt_string ")");

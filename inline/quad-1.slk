@@ -1,0 +1,13 @@
+data pair {
+	int x;
+	int y;
+}.
+data quad {
+	inline pair p1;
+	pair p2;
+}.
+
+checkentail q::quad<a@L,b@L,p@L>@M & q=q' 
+ |-  q'::quad<p1_x_13_891'@L,p1_y_13_892'@A,p2_13_893'@A>@M.
+
+print residue.

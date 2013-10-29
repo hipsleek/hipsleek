@@ -2568,6 +2568,18 @@ let generate_constraints prog es rhs lhs_b ass_guard rhs_b1 defined_hps
       | None -> None
       | Some hf -> process_guard hf
   in
+  (*change to @M for field-ann*)
+  let hn_trans_field_mut hn =
+    match hn with
+      | CF.DataNode hn ->
+            CF.DataNode {hn with CF.h_formula_data_param_imm = List.map (fun _ ->
+                CF.ConstAnn Mutable
+            ) hn.CF.h_formula_data_param_imm;
+            CF.h_formula_data_imm = CF.ConstAnn Mutable;}
+      |  CF.ViewNode hv ->
+             CF.ViewNode {hv with h_formula_view_imm = CF.ConstAnn Mutable}
+      | _ -> hn
+  in
   (*****************END INTERNAL********************)
   (* let new_lhs = rhs_b1 in *)
   let new_rhs_b,rvhp_rels,new_post_hps, new_hrels,r_new_hfs =
@@ -2597,10 +2609,10 @@ let generate_constraints prog es rhs lhs_b ass_guard rhs_b1 defined_hps
   let es_cond_path = CF.get_es_cond_path es in
   let defined_hprels = List.map (SAU.generate_hp_ass 0 [](* (closed_hprel_args_def@total_unk_svl) *) es_cond_path) defined_hps in
   (*lookup to check redundant*)
-  let new_lhs = CF.Base new_lhs_b in
-  let new_rhs = CF.Base new_rhs_b in
-  DD.ninfo_hprint (add_str "new_lhs" Cprinter.string_of_formula) new_lhs no_pos;
-  DD.ninfo_hprint (add_str "new_rhs" Cprinter.string_of_formula) new_rhs no_pos;
+  (* let new_lhs = CF.Base new_lhs_b in *)
+  (* let new_rhs = CF.Base new_rhs_b in *)
+  (* DD.ninfo_hprint (add_str "new_lhs" Cprinter.string_of_formula) new_lhs no_pos; *)
+  (* DD.ninfo_hprint (add_str "new_rhs" Cprinter.string_of_formula) new_rhs no_pos; *)
   (* let b,m = if rvhp_rels = [] then (false,[]) else *)
   (*   let ass = if rel_ass_stk # is_empty then [] else *)
   (*     [(rel_ass_stk # top)] *)
@@ -2611,9 +2623,15 @@ let generate_constraints prog es rhs lhs_b ass_guard rhs_b1 defined_hps
   let hp_rels, n_es_heap_opt=
     (* if b && m <> [] then [] else *)
       let knd = CP.RelAssume (CP.remove_dups_svl (lhrs@rhrs@rvhp_rels)) in
-      let lhs = CF.remove_neqNull_svl matched_svl (CF.Base new_lhs_b) in
+      let lhs0,rhs = if !Globals.allow_field_ann then
+        (CF.formula_trans_heap_node hn_trans_field_mut  (CF.Base new_lhs_b),
+        CF.formula_trans_heap_node hn_trans_field_mut  (CF.Base new_rhs_b))
+      else
+        (CF.Base new_lhs_b, CF.Base new_rhs_b)
+      in
+      let lhs =  CF.remove_neqNull_svl matched_svl lhs0 in
       let grd = check_guard ass_guard new_lhs_b new_rhs_b in
-      let rhs = CF.Base new_rhs_b in
+      (* let rhs = CF.Base new_rhs_b in *)
       let hp_rel = CF.mkHprel knd [] [] matched_svl lhs grd rhs es_cond_path in
       [hp_rel], Some (match lhs with
         | CF.Base fb -> fb.CF.formula_base_heap
