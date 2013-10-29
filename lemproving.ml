@@ -205,7 +205,11 @@ let check_coercion_struc coer lhs rhs (cprog: C.prog_decl) =
   let _ = Debug.tinfo_hprint (add_str "LP.glob_vs_rhs" Cprinter.string_of_spec_var_list) glob_vs_rhs pos in
   let _ = Debug.tinfo_hprint (add_str "LP.fv_rhs" Cprinter.string_of_spec_var_list) fv_rhs pos in
   (* let vs_rhs = CF.fv_s rhs in *)
-  let rhs = Solver.unfold_struc_nth 9 (cprog,None) new_rhs (CP.SpecVar (Named "", self, Unprimed)) true 0 pos in
+  let rhs = 
+    if !Globals.enable_lemma_rhs_unfold then
+      Solver.unfold_struc_nth 9 (cprog,None) new_rhs (CP.SpecVar (Named "", self, Unprimed)) true 0 pos 
+    else new_rhs
+  in
   let _ = Debug.tinfo_hprint (add_str "LP.rhs(after unfold)" Cprinter.string_of_struc_formula) rhs pos in
   let lhs = if(coer.C.coercion_case == C.Ramify) then 
     Mem.ramify_unfolded_formula lhs cprog.C.prog_view_decls 

@@ -194,7 +194,7 @@ let pr_term_status_short = function
       fmt_string "(MayTerm ERR: ";
       pr_term_reason_short r;
       (* fmt_string ")" *)
-  | UnsoundLoop -> fmt_string "(ERR: unsound Loop (expecting false ctx))"
+  | UnsoundLoop -> fmt_string "(ERR: unexpected unsound Loop at return)"
   | TermErr r -> 
       fmt_string "(ERR: ";
       pr_term_reason_short r
@@ -336,6 +336,11 @@ let find_lexvar_es (es: entail_state) :
   match es.es_var_measures with
   | None -> raise LexVar_Not_found
   | Some (t_ann, el, il) -> (t_ann, el, il)
+  
+let is_Loop_es (es: entail_state): bool =
+  match es.es_var_measures with
+  | Some (Loop, _, _) -> true
+  | _ -> false
 
 let zero_exp = [CP.mkIConst 0 no_pos]
  
@@ -586,6 +591,10 @@ let check_term_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
             es_var_stack = (string_of_term_res term_res)::estate.es_var_stack;
             es_term_err = Some (string_of_term_res term_res);
           } in
+          (n_estate, lhs_p, rhs_p, None)
+      | (Loop, Loop) ->
+          let term_measures = Some (MayLoop, [], []) in 
+          let n_estate = {estate with es_var_measures = term_measures} in
           (n_estate, lhs_p, rhs_p, None)
       | (Loop, _) ->
           let term_measures = Some (Loop, [], []) in 
@@ -1262,10 +1271,21 @@ let phase_num_infer_whole_scc (prog: Cast.prog_decl) (proc_lst: Cast.proc_decl l
 (* Main function of the termination checker *)
 let term_check_output () =
   if not !Globals.dis_term_msg && (not !Globals.web_compile_flag) && not(term_res_stk # is_empty) then
-    (fmt_string "\nTermination checking result:\n";
-    (if (!Globals.term_verbosity == 0) then pr_term_res_stk (term_res_stk # get_stk)
-    else pr_term_err_stk (term_err_stk # get_stk));
-    fmt_print_newline ())
+  begin
+    fmt_string "\nTermination checking result: ";
+    if (!Globals.term_verbosity == 0) then 
+    begin
+      fmt_string "\n";
+      pr_term_res_stk (term_res_stk # get_stk)
+    end
+    else
+    begin
+      let err_msg = term_err_stk # get_stk in
+      if err_msg = [] then fmt_string "SUCCESS\n"
+      else pr_term_err_stk (term_err_stk # get_stk)
+    end;
+    fmt_print_newline ()
+  end
 
 let rec get_loop_ctx c =
   match c with
@@ -1297,7 +1317,8 @@ let check_loop_safety (prog : Cast.prog_decl) (proc : Cast.proc_decl) (ctx : lis
       Debug.trace_hprint (add_str "res ctx" Cprinter.string_of_list_partial_context_short) ctx pos;
       Debug.devel_hprint (add_str "loop es" (pr_list Cprinter.string_of_entail_state_short)) loop_es pos;
       (* TODO: must check that each entail_state from loop_es implies false *)
-      let unsound_ctx = List.find_all (fun es -> not (isAnyConstFalse es.es_formula)) loop_es in
+      (* let unsound_ctx = List.find_all (fun es -> not (isAnyConstFalse es.es_formula)) loop_es in *)
+      let unsound_ctx = List.find_all (fun es -> is_Loop_es es) loop_es in
       if unsound_ctx == [] then true
       else
         begin
