@@ -26,7 +26,10 @@ let transform_hp_rels_to_iviews iprog cprog (hp_rels:( CF.hp_rel_def) list):((id
 let norm_free_svl f0 args=
   let rec helper f=
     match f with
-      | CF.Base fb -> let fr_svl = CP.diff_svl (List.filter (fun sv -> not (CP.is_hprel_typ sv)) (CF.h_fv fb.CF.formula_base_heap)) args in
+      | CF.Base fb -> let fr_svl = CP.remove_dups_svl (CP.diff_svl (List.filter (fun sv -> not (CP.is_hprel_typ sv))
+            (* (CF.h_fv fb.CF.formula_base_heap) *)
+            (CF.fv f)
+        ) args) in
         if fr_svl = [] then (CF.Base fb),[]
         else
           let _ = Debug.ninfo_hprint (add_str "fr_svl" Cprinter.string_of_spec_var_list) fr_svl no_pos in

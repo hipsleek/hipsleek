@@ -1021,11 +1021,11 @@ let rec infer_pure_m_x unk_heaps estate lhs_rels lhs_xpure_orig lhs_xpure0
                       then (None,None,[])
                       else 
                         begin
-                          DD.ninfo_pprint ">>>>>> infer_pure_m <<<<<<" pos;
+                          DD.info_pprint ">>>>>> infer_pure_m <<<<<<" pos;
                           DD.ninfo_pprint "Adding heap assumption?" pos;
                           DD.ninfo_hprint (add_str "unk_heaps" (pr_list !CF.print_h_formula)) unk_heaps pos;
                           DD.ninfo_hprint (add_str "lhs_xpure" (!CP.print_formula)) lhs_xpure pos;
-                          DD.ninfo_hprint (add_str "rhs_xpure" (!CP.print_formula)) rhs_xpure pos;
+                          DD.info_hprint (add_str "rhs_xpure" (!CP.print_formula)) rhs_xpure pos;
                           let vs = CP.fv rhs_xpure in
                           let choose_unk_h = List.filter (fun h ->
                               let rvs = (CF.h_fv h) in
@@ -1110,7 +1110,9 @@ let rec infer_pure_m_x unk_heaps estate lhs_rels lhs_xpure_orig lhs_xpure0
                                 else
                                   let lhs_xpure_new = CP.drop_rel_formula lhs_xpure in
                                   let tmp = CP.conj_of_list ps pos in
-                                  let tmp = Omega.gist tmp lhs_xpure_new in 
+                                  let _ = DD.ninfo_hprint (add_str "tmp" Cprinter.string_of_pure_formula) tmp no_pos in
+                                  (* let tmp = Omega.gist tmp lhs_xpure_new in  *)
+                                  let tmp = TP.om_gist tmp lhs_xpure_new in 
                                   if CP.subset (CP.fv tmp) vs_lhs 
                                   then CP.list_of_conjs tmp 
                                   else ps
@@ -1139,8 +1141,8 @@ let rec infer_pure_m_x unk_heaps estate lhs_rels lhs_xpure_orig lhs_xpure0
                             let pf1 = (CP.mkAnd lhs_xpure (CP.conj_of_list (ps@rs) pos) pos) in
                             let pf2 = TP.simplify_with_pairwise 2 pf1 in
                             (* let pf = MCP.mix_of_pure pf2 in *)
-                            let _ = DD.info_hprint (add_str "pf1" !CP.print_formula) pf1 pos in
-                            let _ = DD.info_hprint (add_str "lhs_wo_heap" !CP.print_formula) ( lhs_wo_heap) pos in
+                            let _ = DD.ninfo_hprint (add_str "pf2" !CP.print_formula) pf2 pos in
+                            let _ = DD.ninfo_hprint (add_str "lhs_wo_heap" !CP.print_formula) ( lhs_wo_heap) pos in
                             (* let pf2 = TP.simplify_raw pf1 in *)
                             (* let pf = (MCP.mix_of_pure pf2) in *)
                             (* let _ = DD.info_hprint (add_str "pf2(simplify_raw)" !CP.print_formula) pf2 pos in  *)
@@ -1163,7 +1165,7 @@ let rec infer_pure_m_x unk_heaps estate lhs_rels lhs_xpure_orig lhs_xpure0
                             let rel_ass,heap_ass,new_estate =
                               if unk_heaps!=[] then
                                 let _ = DD.ninfo_pprint "WN : to convert unk_heaps to corresponding pure relation using __pure_of_" no_pos in
-                                let _ = DD.tinfo_hprint (add_str "unk_heaps" (pr_list !CF.print_h_formula)) unk_heaps no_pos in
+                                let _ = DD.ninfo_hprint (add_str "unk_heaps" (pr_list !CF.print_h_formula)) unk_heaps no_pos in
                                 (* PURE_RELATION_OF_HEAP_PRED *)
                                 (* WN infer_pure_heap_pred : to implement below *)
                                 (* for rel_ass of heap_pred, convert to hprel form *)
@@ -1173,19 +1175,19 @@ let rec infer_pure_m_x unk_heaps estate lhs_rels lhs_xpure_orig lhs_xpure0
                                 (* let truef = CF.mkTrue (CF.mkNormalFlow()) pos in *)
                                 (*LOC: es_cond_path from estate*)
                                 let es_cond_path = CF.get_es_cond_path new_estate  in
-                                      let rel_ass1,heap_ass,i_hps = List.fold_left ( fun (ls1, ls2, r_hps) (a, p1, p2) ->
-                                          (* let _ = DD.info_hprint (add_str "p1 : " !CP.print_formula) p1 pos in *)
-                                          (* let _ = DD.info_hprint (add_str "p2 : " !CP.print_formula) p2 pos in *)
-                                          let ohf = Predicate.trans_rels p1 in
-                                          match ohf with
-                                            | Some (hp, hf) ->
-                                                  let knd = CP.RelAssume [hp] in
-                                                  let lhs = CF.formula_of_heap hf pos in
-                                                  let rhs = CF.formula_of_pure_P p2 pos in
-                                                  let hp_rel = CF.mkHprel_1 knd lhs None rhs es_cond_path in
-                                                  (ls1, ls2@[hp_rel],r_hps@[hp])
-                                            | None -> (ls1@[(a, p1, p2)], ls2,r_hps)
-                                      ) ([], [], []) rel_ass
+                                let rel_ass1,heap_ass,i_hps = List.fold_left ( fun (ls1, ls2, r_hps) (a, p1, p2) ->
+                                    (* let _ = DD.info_hprint (add_str "p1 : " !CP.print_formula) p1 pos in *)
+                                    let _ = DD.ninfo_hprint (add_str "p2 : " !CP.print_formula) p2 pos in
+                                    let ohf = Predicate.trans_rels p1 in
+                                    match ohf with
+                                      | Some (hp, hf) ->
+                                            let knd = CP.RelAssume [hp] in
+                                            let lhs = CF.formula_of_heap hf pos in
+                                            let rhs = CF.formula_of_pure_P p2 pos in
+                                            let hp_rel = CF.mkHprel_1 knd lhs None rhs es_cond_path in
+                                            (ls1, ls2@[hp_rel],r_hps@[hp])
+                                      | None -> (ls1@[(a, p1, p2)], ls2,r_hps)
+                                ) ([], [], []) rel_ass
                                 in
                                 let _ = Log.current_hprel_ass_stk # push_list heap_ass in
                                 let _ = rel_ass_stk # push_list heap_ass in

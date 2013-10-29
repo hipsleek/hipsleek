@@ -6086,7 +6086,7 @@ interprocedural sa: DONE
     remove unknown preds for further analysis
 
 =====================================================================
-#skip-list.ss:
+#skip2-list.ss: DONE
   - skip2-list: DONE
   - validate
 
@@ -6157,7 +6157,7 @@ Message: multiple occurrences of self as heap nodes in one branch are not allowe
 ExceptionFailure("multiple occurrences of self as heap nodes in one branch are not allowed")Occurred!
 
 =====================================================================
-#g_slist# g_slist_insert_before
+#g_slist# g_slist_insert_before :FIXED
 
 
 !!!  views: [G_insb,H1_insb]
@@ -6170,7 +6170,7 @@ Message: UNIFICATION ERROR : at location {(0,0),(0,0)} types GSList and int are 
 ExceptionFailure("UNIFICATION ERROR : at location {(0,0),(0,0)} types GSList and int are inconsistent")Occurred!
 
 =====================================================================
-#g_slist#  g_list_concat
+#g_slist#  g_list_concat: FIXED
 
 
 !!!  views: [G_concat,H2_concat,H1_concat]
@@ -6186,7 +6186,7 @@ ExceptionFailure("UNIFICATION ERROR : at location {(0,0),(0,0)} types GSList and
 #g_slist#  
 
 =====================================================================
-#skip3-list
+#skip3-list: FIXED
 
 [omega.ml]Timeout when checking sat for 
 10. Restarting Omega after ... 192 invocations Stop Omega... 192 invocations Starting Omega...oc
