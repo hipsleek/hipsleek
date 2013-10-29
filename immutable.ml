@@ -1805,7 +1805,7 @@ let icollect_imm f vparam data_name ddefs =
   ann_final
 
 let icollect_imm f vparam data_name ddefs =
-  Debug.no_1 "icollect_imm" Iprinter.string_of_struc_formula (pr_list (pr_pair Iprinter.string_of_imm string_of_int)) (fun _ -> icollect_imm f vparam data_name ddefs) f 
+  Debug.no_2 "icollect_imm" Iprinter.string_of_struc_formula pr_id (pr_list (pr_pair Iprinter.string_of_imm string_of_int)) (fun _ _ -> icollect_imm f vparam data_name ddefs) f data_name
 
 let split_view_args view_args vdef:  CP.spec_var list * 'a list * (CP.annot_arg * int) list * (CP.view_arg * int) list  =
   (* TODO: normalize the unused ann consts  *)

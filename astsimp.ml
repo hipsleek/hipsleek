@@ -1070,10 +1070,10 @@ let rec trans_prog (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_decl
 	  (* let _ =  print_endline " after case normalize" in *)
           (* let _ = I.find_empty_static_specs prog in *)
 	  let tmp_views = order_views prog.I.prog_view_decls in
-          Debug.binfo_hprint (add_str "trans_prog(views)" pr_v_decls) tmp_views no_pos;
-	  let _ = Iast.set_check_fixpt prog.I.prog_data_decls tmp_views in
+	  (* let _ = Iast.set_check_fixpt prog.I.prog_data_decls tmp_views in *)
 	  (* let _ = print_string "trans_prog :: going to trans_view \n" in *)
           let _ = List.map (fun v ->  v.I.view_imm_map <- Immutable.icollect_imm v.I.view_formula v.I.view_vars v.I.view_data_name  prog.I.prog_data_decls )  prog.I.prog_view_decls  in
+          Debug.tinfo_hprint (add_str "trans_prog 2 (views)" (pr_list Iprinter.string_of_view_decl))  prog.I.prog_view_decls  no_pos;
 	  let cviews = List.map (trans_view prog []) tmp_views in
           let cviews1 =
             if !Globals.pred_elim_useless then
@@ -6920,6 +6920,11 @@ and case_normalize_program_x (prog: Iast.prog_decl):Iast.prog_decl=
   let prog = {prog with Iast.prog_view_decls = tmp_views} in
   let cdata = List.map (case_normalize_data prog) prog.I.prog_data_decls in
   let prog = {prog with Iast.prog_data_decls = cdata} in
+  Debug.tinfo_hprint (add_str "trans_prog 2 (prog views)" (pr_list Iprinter.string_of_view_decl))  prog.I.prog_view_decls  no_pos;
+  Debug.tinfo_hprint (add_str "trans_prog 2 (temp views)" (pr_list Iprinter.string_of_view_decl))  tmp_views  no_pos;
+  (* andreeac: to check if moving Iast.set_check_fixpt at this point (earlier than previously) influences subsequent computions *)
+  let _ = Iast.set_check_fixpt prog.I.prog_data_decls tmp_views in
+  let _ = List.map (fun v ->  v.I.view_imm_map <- Immutable.icollect_imm v.I.view_formula v.I.view_vars v.I.view_data_name  prog.I.prog_data_decls )  prog.I.prog_view_decls  in
   let procs1 = List.map (case_normalize_proc prog) prog.I.prog_proc_decls in
   let prog = {prog with Iast.prog_proc_decls = procs1} in
   let coer1 = List.map (case_normalize_coerc_list prog) prog.Iast.prog_coercion_decls in  

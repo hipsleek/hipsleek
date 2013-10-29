@@ -823,7 +823,8 @@ let string_of_barrier_decl b =
 
 (* pretty printig for view declaration *)
 let string_of_view_decl v = v.view_name ^"[" ^ (String.concat "," v.view_prop_extns) ^ "]<" ^ (concatenate_string_list v.view_vars ",") ^ "> == " ^ 
-                            (string_of_struc_formula v.view_formula) ^ " inv " ^ (string_of_pure_formula v.view_invariant) ^ " inv_lock: " ^ (pr_opt string_of_formula v.view_inv_lock) ^" view_data_name: " ^ v.view_data_name                  (* incomplete *)
+                            (string_of_struc_formula v.view_formula) ^ " inv " ^ (string_of_pure_formula v.view_invariant) ^ " inv_lock: " ^ (pr_opt string_of_formula v.view_inv_lock) ^" view_data_name: " ^ v.view_data_name       
+^" view_imm_map: " ^ (pr_list (pr_pair string_of_imm string_of_int) v.view_imm_map)           (* incomplete *)
 ;;
 
 let string_of_view_vars v_vars = (concatenate_string_list v_vars ",")
