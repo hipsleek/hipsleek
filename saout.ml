@@ -29,6 +29,7 @@ let norm_free_svl f0 args=
       | CF.Base fb -> let fr_svl = CP.diff_svl (List.filter (fun sv -> not (CP.is_hprel_typ sv)) (CF.h_fv fb.CF.formula_base_heap)) args in
         if fr_svl = [] then (CF.Base fb),[]
         else
+          let _ = Debug.ninfo_hprint (add_str "fr_svl" Cprinter.string_of_spec_var_list) fr_svl no_pos in
           (*rename primed quantifiers*)
           let fr_svl1,ss = List.fold_left (fun (r_svl, r_ss) ((CP.SpecVar(t,id,p)) as sv) ->
               if p = Unprimed then
@@ -49,6 +50,7 @@ let norm_free_svl f0 args=
           (nf, tis)
       | CF.Exists _ ->
             let qvars1, base1 = CF.split_quantifiers f in
+            let _ = Debug.ninfo_hprint (add_str "qvars1" Cprinter.string_of_spec_var_list) qvars1 no_pos in
             let base2,tis = helper base1 in
              (CF.add_quantifiers qvars1 base2, tis)
       | CF.Or orf ->
