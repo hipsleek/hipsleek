@@ -24,6 +24,19 @@ Hand-translation pair3.txt
   ppp = addr_pp;
   return ppp.deref.x;
 
+For pair3.c, a longer translation can be obtained by
+changing ppp to addr_ppp, but this is not strictly required
+since we did not use &ppp.
+
+  pair addr_p = new pair(0,0); //stack allocate
+  addr_p.x = 1;
+  pair_star addr_pp = new pair_star(null); // stack allocate
+  addr_pp.deref = addr_p;
+  addr_pp.deref.x = addr_pp.deref.x +1;
+  pair_star_star addr_ppp = new pair_star_star(null);
+  addr_ppp.deref = addr_pp;
+  return addr_ppp.deref.deref.x;
+
 Scheme used:
   pair p ===> pair addr_p = new pair(0,0)
   &p     ===> addr_p
