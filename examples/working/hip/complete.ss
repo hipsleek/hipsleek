@@ -72,7 +72,7 @@ int min_height(node2 t)
 	else return 0;
 }
 
-void insert(ref node2 t, int v)
+void insert(node2@R t, int v)
 	requires t::complete<n, nmin> & nmin < n // there is still place to insert
 	ensures t'::complete<n, nmin1> & (nmin1 = nmin | nmin1 = nmin + 1);  
 	requires t::complete<n, nmin> & nmin = n // there is no empty place -> we need to increase the height

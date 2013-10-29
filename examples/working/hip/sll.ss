@@ -95,7 +95,7 @@ node get_tail(node x)
 }
 
 /* transform a normal singly linked list in a sorted list */
-void insertion_sort(node x, ref node y)
+void insertion_sort(node x, node@R y)
 
 	requires x::ll<n> * y::sll<m1, ys1, yl1>
 	ensures y'::sll<n + m1, _, _> * x::ll<n>;

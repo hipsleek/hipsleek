@@ -206,7 +206,7 @@ node2 insert(node2 x, int a)
 
 /* delete a node from a bst */
 
-int remove_min(ref node2 x)
+int remove_min(node2@R x)
 
 	requires x::bst<s, b> & x != null 
 	ensures x'::bst<s1, b> & s <= res <= s1;
@@ -231,7 +231,7 @@ int remove_min(ref node2 x)
 	}
 }
 
-/*int remove_min1(ref node2 x)
+/*int remove_min1(node2@R x)
 
 	requires x::bst1<S> & x != null 
 	ensures x'::bst1<S1> & forall(b : (b notin S | b >= res)) & S = union(S1, {res});
@@ -258,7 +258,7 @@ int remove_min(ref node2 x)
 
 
 
-void delete(ref node2 x, int a)
+void delete(node2@R x, int a)
 
 	requires x::bst<sm, lg> 
 	ensures x'::bst<s, l> & sm <= s & l <= lg;
@@ -293,7 +293,7 @@ void delete(ref node2 x, int a)
 	}
 }
 
-/*void delete1(ref node2 x, int a)
+/*void delete1(node2@R x, int a)
 	requires x::bst1<S> 
 	ensures x'::bst1<S1> & (a notin S | S = union(S1, {a})) 
 	or (a in S | S = S1);
