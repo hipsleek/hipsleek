@@ -1,3 +1,36 @@
+short.c --esl
+=======
+
+id: 12; caller: []; line: 19; classic: false; kind: BIND; hec_num: 5; evars: []; infer_vars: []; c_heap: emp
+ checkentail r_35'::int_star<v_int_17_965@M>@M * addr_37'::int_star_star<r@M>@M * 
+r::int_star<a@M>@M&v_int_17_965=0 & v_int_17_966=0 & v_null_18_967=null & 
+deref_17_968=v_null_18_967 & addr_36'=r & a=v_int_17_966 & addr_36'!=null & 
+addr_37'!=null&{FLOW,(24,25)=__norm}[]
+ |-  addr_36'::int_star<deref_19_915'@L>@M&{FLOW,(1,27)=__flow}[]. 
+res:  [
+  r::int_star<a@[@M]>@M * r_35'::int_star<v_int_17_965@M>@M * addr_37'::int_star_star<r@M>@M&v_int_17_965=0 & v_int_17_966=0 & v_null_18_967=null & deref_17_968=v_null_18_967 & addr_36'=r & a=v_int_17_966 & addr_36'!=null & addr_37'!=null & a=deref_19_915'&{FLOW,(24,25)=__norm}[]
+  ]
+
+=============================================================
+short2.c --esl
+=======
+
+id: 12; caller: []; line: 20; classic: false; kind: BIND; hec_num: 5; evars: []; infer_vars: []; c_heap: emp
+ checkentail r_33'::int_star<v_int_18_962@M>@M * addr_35'::int_star_star<r_979@M>@M * 
+r_979::int_star<a@M>@M&v_int_18_962=0 & v_int_18_963=0 & 
+v_null_19_964=null & deref_18_965=v_null_19_964 & a=v_int_18_963 & 
+addr_34'!=null & addr_35'!=null&{FLOW,(24,25)=__norm}[]
+ |-  addr_34'::int_star<deref_20_910'@L>@M&{FLOW,(1,27)=__flow}[]. 
+res:  failctx
+         fe_kind: MUST
+         fe_name: separation entailment
+         fe_locs: {
+                   fc_message: infer_heap_node
+                   fc_current_lhs_flow: {FLOW,(24,25)=__norm}}
+
+
+======================================
+
 I did a quick test and both versions (short2.c; short.ss) are verifying.
 The only difference (which you can see in --pcp) is that the former uses
 existential
