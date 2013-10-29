@@ -95,7 +95,7 @@ int count(node x)
 
 
 /* function to delete the node after the head in a circular list */
-void delete(ref node x)
+void delete(node@R x)
 
 	requires x::hd<n> & n > 0
 	ensures x'::hd<n-1>;
