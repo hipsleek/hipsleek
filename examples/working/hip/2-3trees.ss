@@ -51,7 +51,7 @@ void  make_node(node3 tmp1, int a)
 	return;
 }	
 
-node3 insert_left(ref node3 x, int a, int type)
+node3 insert_left(node3@R x, int a, int type)
 	requires x::tree2_3<n> & n > 1
 	ensures	res::tree2_3<n+1> & x' = null & n>1 or
 	        x'::tree2_3<n> & x = x' & res = null & n>1;
@@ -133,7 +133,7 @@ node3 insert_left(ref node3 x, int a, int type)
 }
 
 
-node3 insert_middle(ref node3 x, int a)
+node3 insert_middle(node3@R x, int a)
 	requires x::tree2_3<n> & n > 1
 	ensures	res::tree2_3<n+1> & x' = null & n>1 or
 	x'::tree2_3<n> & x = x' & res = null & n>1;
@@ -191,7 +191,7 @@ node3 insert_middle(ref node3 x, int a)
 	}
 }
 
-node3 insert_right(ref node3 x, int a)
+node3 insert_right(node3@R x, int a)
 	requires x::node3<_, _, l, m, r> * l::tree2_3<n1> * m::tree2_3<n1> * r::tree2_3<n1>  & n1 > 0
 	ensures	res::tree2_3<n1+2> & x' = null & n1>0 or
 	x'::tree2_3<n1+1> & x = x' & res = null & n1>0;
@@ -239,7 +239,7 @@ node3 insert_right(ref node3 x, int a)
 	}
 }
 
-node3 insert(ref node3 x, int a)
+node3 insert(node3@R x, int a)
 	requires x::tree2_3<n> 
 	ensures res::tree2_3<n+1> & x' = null or
 	        x'::tree2_3<n> & x = x' & res = null & x' != null ;
@@ -282,7 +282,7 @@ node3 insert(ref node3 x, int a)
 
 /* NOT WORKING */
 /*
-node3 insert(ref node3 x, int a)
+node3 insert(node3@R x, int a)
 	requires x::tree2_3<n> 
 	ensures x'::tree2_3<0> * res::tree2_3<n+1> & x' = null & res != null or
 	x'::tree2_3<n> * res::tree2_3<0> & x = x' & res = null & x' != null;
