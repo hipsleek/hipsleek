@@ -629,14 +629,27 @@ and translate_constant (c: Cil.constant) (lopt: Cil.location option) : Iast.exp 
 (*     return: field type * location * inline property *)
 and translate_fieldinfo (field: Cil.fieldinfo) (lopt: Cil.location option) 
                         : (Iast.typed_ident * loc * bool * Iast.data_field_ann) =
+  let rec is_struct_pointer (ty: Cil.typ) : bool = (
+    match ty with
+    | Cil.TPtr (Cil.TComp (comp, _), _) -> true
+    | Cil.TPtr (ty, _) -> is_struct_pointer ty
+    | _ -> false
+  ) in
   let pos = match lopt with None -> no_pos | Some l -> translate_location l in
   let name = field.Cil.fname in
-  match field.Cil.ftype with
+  let ftyp = field.Cil.ftype in
+  match ftyp with
   | Cil.TComp (comp, _) ->
       let ty = Globals.Named comp.Cil.cname in
-      ((ty, name), pos, false, Iast.F_NO_ANN)
+      ((ty, name), pos, true, Iast.F_NO_ANN)                     (* struct ~~> inline data *)
+  | Cil.TPtr (ty, _) ->
+      let new_ty = (
+        if (is_struct_pointer ftyp) then translate_typ ty pos    (* pointer goes down 1 level *) 
+        else translate_typ ftyp pos
+      ) in
+      ((new_ty, name), pos, false, Iast.F_NO_ANN)
   | _ ->
-      let ty = translate_typ field.Cil.ftype pos in
+      let ty = translate_typ ftyp pos in
       ((ty, name), pos, false, Iast.F_NO_ANN)
 
 
