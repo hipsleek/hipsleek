@@ -14,6 +14,7 @@ int foo(pair@C q)
 {
   pair_star addr_q = new pair_star(q);
   pair_star p = addr_q;
+  pair_star p1 = addr_q;
   p.deref.x = addr_q.deref.x+1;
   p.deref.x = addr_q.deref.x+addr_q.deref.y ;
   return p.deref.x;

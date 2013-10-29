@@ -12,6 +12,7 @@ int foo(struct pair q)
 */
 {
   struct pair* p = &q;
+  struct pair* p1 = &q;
   p->x = q.x+1;
   p->x = q.x+q.y;
   return p->x;
@@ -27,8 +28,8 @@ int main()
   p.x = 1;
   p.y = 2;
   int t=foo(p);
-  //printf("foo(p) ==> %i\n",t); //4
-  //printf("p.x ==> %i\n",p.x); //1
+  printf("foo(p) ==> %i\n",t); //4
+  printf("p.x ==> %i\n",p.x); //1
   return p.x;
 }
 
