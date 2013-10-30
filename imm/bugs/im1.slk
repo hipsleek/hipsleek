@@ -6,10 +6,8 @@ pred ll<n> == self = null & n = 0
 	inv n >= 0.
 
 
-checkentail (x::ll<n>@L); y::ll<m> * ((t::ll<a>@L); z::ll<m>) & n > 0  
-  |- (x::ll<n>@L); y::ll<m>.
+checkentail (x::ll<n>) |- (x::ll<n>).
 print residue.
-
 
 /*
 

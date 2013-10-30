@@ -602,6 +602,16 @@ and fresh_vars (svs : (ident*primed) list):(ident*primed) list = List.map fresh_
 and eq_var (f: (ident*primed))(t:(ident*primed)):bool = 
   ((String.compare (fst f) (fst t))==0) &&(snd f)==(snd t) 
 
+and eq_ann (a1 :  ann) (a2 : ann) : bool =
+  match a1, a2 with
+    | ConstAnn ha1, ConstAnn ha2 -> ha1 == ha2
+    | PolyAnn (sv1,_), PolyAnn (sv2,_) -> eq_var sv1 sv2
+    | _ -> false
+
+(* andreeac TODOIMM use wrapper below, use emap for spec eq *)
+and eq_ann_list (a1 :  ann list) (a2 : ann list) : bool =
+  List.fold_left (fun acc (a1,a2) -> acc &&(eq_ann a1 a2)) true (List.combine a1 a2)
+
 and subst sst (f : formula) = match sst with
   | s :: rest -> subst rest (apply_one s f)
   | [] -> f 

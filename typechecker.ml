@@ -1542,7 +1542,6 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                     let _ = CF.must_consistent_list_failesc_context "bind 2" unfolded  in
 	            let _ = Debug.devel_zprint (lazy ("bind: unfolded context:\n" ^ (Cprinter.string_of_list_failesc_context unfolded)
                     ^ "\n")) pos in
-	            (*let _ = print_string ("\n(andreeac)bind: unfolded context:\n" ^ (Cprinter.string_of_list_failesc_context unfolded)     ^ "\n") in *)
 	            let unfolded = if(!Globals.allow_field_ann) then
                       let idf = (fun c -> c) in
 		      CF.transform_list_failesc_context (idf,idf,
@@ -1660,7 +1659,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                           (* let f_esc = proc_esc_stack pid in *)
                           (* TODO WN : Does this work for field level access? *)
                           let tmp_res2 = 
-		            if not(CF.isLend imm_node) && not(CF.isAccs imm_node) (* asankhs: Do not change this please&& not(!Globals.allow_field_ann)*) then 
+		            if not(CP.isLend imm_node) && not(CP.isAccs imm_node) (* asankhs: Do not change this please&& not(!Globals.allow_field_ann)*) then 
 		              CF.normalize_max_renaming_list_failesc_context_4_bind pid vheap pos true tmp_res1 
     			          (* for Lend, Accs it should not be added back and 
 								field level annotations should be added back and compacted *)
@@ -1673,6 +1672,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                           let _ = CF.must_consistent_list_failesc_context "bind 6" tmp_res2  in
                           let tmp_res2 = 
                             if(!Globals.allow_field_ann) then
+                              
                               let idf = (fun c -> c) in
 		              CF.transform_list_failesc_context (idf,idf,
 		              (fun es -> CF.Ctx{es with CF.es_formula = Mem.compact_nodes_with_same_name_in_formula es.CF.es_formula;})) 
@@ -1684,6 +1684,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                           let _ = CF.must_consistent_list_failesc_context "bind 7" tmp_res3  in
 		                  let res = if !Globals.elim_exists_ff then elim_exists_failesc_ctx_list tmp_res3 else tmp_res3 in
                           let _ = CF.must_consistent_list_failesc_context "bind 8" res  in
+                          Debug.tinfo_hprint (add_str "bind:tmp_res2" (pr_list Cprinter.string_of_failesc_context)) tmp_res2 no_pos;
                           (* normalize_list_failesc_context_w_lemma prog res *)
                           CF.pop_esc_level_list res pid
                         end
@@ -1910,8 +1911,8 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                 CF.h_formula_data_node = CP.SpecVar (Named c, res_name, Unprimed);
                 CF.h_formula_data_name = c;
 		CF.h_formula_data_derv = false;
-		CF.h_formula_data_imm = CF.ConstAnn(Mutable);
-                CF.h_formula_data_param_imm = List.map (fun _ -> CF.ConstAnn(Mutable)) heap_args; 
+		CF.h_formula_data_imm = CP.ConstAnn(Mutable);
+                CF.h_formula_data_param_imm = List.map (fun _ -> CP.ConstAnn(Mutable)) heap_args; 
                 (* (andreeac) to check: too weak *)	     
 		        CF.h_formula_data_perm = perm;
 			    CF.h_formula_data_origins = [];

@@ -1,0 +1,11 @@
+// bugs after the introduction of some new features
+
+data node {
+	int val; 
+}.
+
+
+//to check below residue
+checkentail x::node<_>@M |-  x::node<_>@A.
+print residue.
+

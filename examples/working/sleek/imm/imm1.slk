@@ -11,7 +11,7 @@ checkentail (x::ll<n>@L); y::ll<m> * ((t::ll<a>@L); z::ll<m>) & n > 0  |- x::ll<
 
 
 checkentail (x::ll<n>@L); y::ll<m> * ((t::ll<a>@L); z::ll<m>) & n > 0  
-  |- (x::ll<n>@L); y::ll<m> * t::ll<a>@L.
+  |- (x::ll<n>@L); y::ll<m> * ((t::ll<a>@L)).
 //print residue.
 // t@I; z
 //2. Valid (but fail, why?)
