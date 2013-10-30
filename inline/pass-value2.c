@@ -8,8 +8,8 @@ struct pair {
 int goo(struct pair* q)
 // pass by value
 /*@
-  requires q::pair*<r> * r::pair<a,b>
-  ensures q::pair*<r> * r::pair<a,b> & res=a;
+  requires q::pair<a,b>
+  ensures q::pair<a,b> & res=a;
 */
 {
   return q->x;

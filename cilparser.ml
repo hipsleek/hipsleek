@@ -473,14 +473,7 @@ and gather_addrof_exp (e: Cil.exp) : unit =
             (* define new pointer var px that will be used to represent x: {x, &x} --> {*px, px} *)
             let addr_vname = "addr_" ^ lv_str in
             let addr_vdecl = (
-              let init_params = (
-                match deref_ty with
-                | Globals.Int -> [(Iast.mkIntLit 0 pos)];
-                | Globals.Bool -> [(Iast.mkBoolLit true pos)];
-                | Globals.Float -> [(Iast.mkFloatLit 0. pos)];
-                | Globals.Named _ -> [(Iast.Null pos)];
-                | _ -> report_error pos ("Unexpected typ 1: " ^ (Globals.string_of_typ deref_ty))
-              ) in
+              let init_params = [(translate_lval lv)] in
               let init_data = Iast.mkNew addr_dname init_params pos in
               Iast.mkVarDecl addr_dtyp [(addr_vname, Some init_data, pos)] pos
             ) in

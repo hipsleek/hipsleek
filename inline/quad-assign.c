@@ -10,13 +10,13 @@ struct quad {
   struct pair* p2;
 };
 
-int foo(quad q)
+int foo(struct quad q)
 /*@
   requires q::quad<a,b,p>@L
   ensures res=a;
 */
 {
-  pair p;
+  struct pair p;
   p = q.p1;
   return p.x;
 }

@@ -32,9 +32,9 @@ int foo3(quad val_q)
 */
 {
   quad__star p = new quad__star(null);
-  p.deref=val_q
+  p.deref=val_q;
   //quad* p=q;
-  return (*q).p1.x;
+  return val_q.p1.x;
 }
 
 void main()

@@ -10,27 +10,27 @@ struct quad {
   struct pair* p2;
 };
 
-int foo(quad* q)
+int foo(struct quad* q)
 /*@
-  requires q::quad_star<r>@L*r::quad<a,b,p>@L
+  requires q::quad<a,b,p>@L
   ensures res=a;
 */
 {
   return q->p1.x;
 }
 
-int foo(quad *q)
+int foo2(struct quad *q)
 /*@
-  requires *q::quad<a,b,p>@L
+  requires q::quad<a,b,p>@L
   ensures res=a;
 */
 {
-  return *q.p1.x;
+  return (*q).p1.x;
 }
 
-foo(q) ==> star_foo(*q)
+//foo(q) ==> star_foo(*q)
 
-int star_foo(quad star_q)
+int star_foo(struct quad star_q)
 /*@
   requires star_q::quad<a,b,p>@L
   ensures res=a;

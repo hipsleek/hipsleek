@@ -21,7 +21,7 @@ int foo(struct pair q)
 int main()
 /*@
   requires true
-  ensures res=2;
+  ensures res=1;
 */
 {
   struct pair p;
