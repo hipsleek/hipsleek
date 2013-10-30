@@ -1,8 +1,9 @@
 int foo(int** q)
 /*@
- requires q::int^^<a>
+ //requires q::int^^<a>
  //ensures q::int^^<a> & res=0;
- ensures q::int_star_star<r>*r::int_star<a> & res=0;
+ requires q::int_star_star<r>*r::int_star<a> 
+ ensures q::int_star_star<r1>*r1::int_star<a> & res=0 & r1=r;
 */
 {
  return 0;
