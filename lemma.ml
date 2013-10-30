@@ -110,12 +110,12 @@ let check_view_subsume iprog cprog view1 view2 need_cont_ana=
   let pos1 = (CF.pos_of_formula v_f1) in
   let pos2 = (CF.pos_of_formula v_f2) in
   let ihf1 = IF.mkHeapNode (self, Unprimed) (view1.C.view_name)
-    0  false  (IF.ConstAnn Mutable) false false false None
+    0  false  (IP.ConstAnn Mutable) false false false None
     (List.map (fun (CP.SpecVar (_,id,p)) -> IP.Var ((id,p), pos1)) view1.C.view_vars) []  None pos1 in
   let chf1 = CF.mkViewNode (CP.SpecVar (Named view1.C.view_name,self, Unprimed)) view1.C.view_name
     view1.C.view_vars no_pos in
   let ihf2 = IF.mkHeapNode (self, Unprimed) (view2.C.view_name)
-    0  false (IF.ConstAnn Mutable) false false false None
+    0  false (IP.ConstAnn Mutable) false false false None
     (List.map (fun (CP.SpecVar (_,id,p)) -> IP.Var ((id,p), pos1)) view2.C.view_vars) [] None pos2 in
   let chf2 = CF.mkViewNode (CP.SpecVar (Named view2.C.view_name,self, Unprimed)) view2.C.view_name
     view2.C.view_vars no_pos in

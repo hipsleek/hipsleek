@@ -499,6 +499,7 @@ let common_arguments = [
 
   (* use classical reasoning in separation logic *)
   ("--classic", Arg.Set Globals.opt_classic, "Use classical reasoning in separation logic");
+  
   ("--dis-split", Arg.Set Globals.use_split_match, "Disable permission splitting lemma (use split match instead)");
   ("--en-lem-rhs-unfold", Arg.Set Globals.enable_lemma_rhs_unfold, "Enable RHS unfold for Lemma Proving");
   ("--dis-lem-rhs-unfold", Arg.Clear Globals.enable_lemma_rhs_unfold, "Disable RHS unfold for Lemma Proving");
@@ -643,8 +644,7 @@ let check_option_consistency () =
   (* end *)
   ;; (*Clean warning*)
   Astsimp.inter_hoa := !inter_hoa;;
-  
-  
+
 Typechecker.save_flags  := fun ()->() ;;
 Typechecker.restore_flags := fun ()-> ();;
 Typechecker.parse_flags := fun (sl:(string*(Globals.flags option)) list)-> 

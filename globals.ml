@@ -35,7 +35,7 @@ type flags =
 	  Flag_str of string
 	| Flag_int of int
 	| Flag_float of float
-	
+
 type bformula_label = int
 and ho_branch_label = string
 (*and branch_label = spec_label	(*formula branches*)*)
@@ -86,7 +86,9 @@ and term_fail =
   | TermErr_May
   | TermErr_Must
 
-and rel = REq | RNeq | RGt | RGte | RLt | RLte | RSubAnn
+(* and rel = REq | RNeq | RGt | RGte | RLt | RLte | RSubAnn *)
+let imm_top = Accs
+let imm_bot = Mutable
 
 type hp_arg_kind=
   | I
@@ -128,6 +130,8 @@ type typ =
   | Bptyp
   (* | FuncT (\* function type *\) *)
   | Pointer of typ (* base type and dimension *)
+
+let ann_var_sufix = "_ann"
 
 let is_program_pointer (name:ident) = 
   let slen = (String.length name) in
@@ -756,11 +760,10 @@ let elim_exists_ff = ref true
 let allow_imm = ref true (*imm will delay checking guard conditions*)
 
 let allow_imm_inv = ref true (*imm inv to add of form @M<:v<:@A*)
-let allow_field_ann = ref false
 
 (*Since this flag is disabled by default if you use this ensure that 
 run-fast-test mem test cases pass *)
-let allow_field_ann = ref false 
+let allow_field_ann = ref false
   (* disabled by default as it is unstable and
      other features, such as shape analysis are affected by it *)
 
@@ -1225,6 +1228,9 @@ let fst3 (x,_,_) = x
 let snd3 (_,x,_) = x
 
 let change_fst3 (_,b,c) a = (a,b,c)
+
+let concat_pair_of_lists l1 l2 =
+  (((fst l1)@(fst l2)), ((snd l1)@(snd l2)))
 
 let path_trace_eq p1 p2 =
   let rec eq pt1 pt2 = match pt1,pt2 with

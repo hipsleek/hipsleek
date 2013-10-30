@@ -49,7 +49,6 @@ print residue.
 
 checkentail l::dll2<p,r,z,n> & rs=l |- (exists z2: 
             l::dll2<p,rs,z2,0> * rs::dll2<z2,r,z,n>).
-print residue.
 
 checkentail l::dll2<p,r,z,n> & rs=l |- [z2] l::dll2<p,rs,z2,0> * rs::dll2<z2,r,z,n>.
 

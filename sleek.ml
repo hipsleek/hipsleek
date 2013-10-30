@@ -239,7 +239,7 @@ let parse_file (parse) (source_file : string) =
 
 
 
-let main () =
+let main () = 
   let _ = Globals.is_sleek_running := true in
   let _ = Printexc.record_backtrace !Globals.trace_failure in
   let iprog = { I.prog_include_decls =[];

@@ -312,11 +312,15 @@ let get_args_h_formula aset (h:h_formula) =
           let root = h.h_formula_data_node in
           let arg = h.h_formula_data_arguments in
           let new_arg = CP.fresh_spec_vars_prefix "inf" arg in
+          (* if (!Globals.allow_field_ann) then  *) (*andreeac (TODO) modify this so that it infers field ann correctly*)
+          (*   Some (root, arg,new_arg, [av], *)
+          (*   DataNode {h with h_formula_data_arguments=new_arg; *)
+          (*     h_formula_data_imm = mkPolyAnn av}) *)
           if (!Globals.allow_imm) then
             Some (root, arg,new_arg, [av],
             DataNode {h with h_formula_data_arguments=new_arg;
-              h_formula_data_imm = mkPolyAnn av;
-              h_formula_data_param_imm = List.map (fun c -> mkConstAnn 0) h.h_formula_data_param_imm })
+              h_formula_data_imm = CP.mkPolyAnn av;
+              h_formula_data_param_imm = List.map (fun c -> CP.mkConstAnn 0) h.h_formula_data_param_imm })
           else
             Some (root, arg,new_arg, [],
             DataNode {h with h_formula_data_arguments=new_arg})
@@ -2660,10 +2664,10 @@ let update_es prog es hds hvs ass_lhs_b rhs rhs_rest r_new_hfs defined_hps lsele
                (* else  *)
                  (* if  not(CF.isLend (hd.CF.h_formula_data_imm)) then (f,h) else *)
                let n_param_imm = if (!Globals.allow_field_ann) then
-                 List.map (fun _ -> CF.ConstAnn Mutable) hd.CF.h_formula_data_param_imm
+                 List.map (fun _ -> CP.ConstAnn Mutable) hd.CF.h_formula_data_param_imm
                else hd.CF.h_formula_data_param_imm
                in
-               let new_h = DataNode {hd with CF.h_formula_data_imm = (CF.ConstAnn(Mutable));
+               let new_h = DataNode {hd with CF.h_formula_data_imm = (CP.ConstAnn(Mutable));
                    CF.h_formula_data_param_imm = n_param_imm} in
                (*generate new hole*)
                let nf, nholes = if Immutable.produces_hole (hd.CF.h_formula_data_imm) then

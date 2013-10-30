@@ -1,0 +1,18 @@
+
+
+data node { int val ; node next }.
+pred ll<n> == self = null & n = 0
+	or self::node<next = r> * r::ll<n-1> 
+	inv n >= 0.
+
+
+checkentail (x::ll<n>@L); y::ll<m> * ((t::ll<a>@L); z::ll<m>) & n > 0  
+  |- (x::ll<n>@L); y::ll<m> * t::ll<a>@L.
+//print residue.
+// t@I; z
+//2. Valid (but fail, why?)
+
+
+
+
+

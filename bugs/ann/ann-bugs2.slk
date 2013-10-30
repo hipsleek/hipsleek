@@ -1,0 +1,58 @@
+// bugs after the introduction of some new features
+
+data node {
+	int val; 
+	node next;	
+}.
+
+/*
+pred ll<n> == self = null & n = 0 
+	or self::node<a, q> * 
+    q::ll<n-1>
+  inv n >= 0.
+*/
+// (8) should Fail ????? why is valid?
+/*checkentail x::node<_, null> * y::ll<_> |- x::ll<m> & m = 2.
+print residue.*/
+
+/*
+checkentail x::node<_, null> * y::ll<1> |- x::ll<m> & m = 2.
+print residue.*/
+/*
+checkentail x::node<_, y> * y::ll<1> |- x::ll<m> & m = 2.
+print residue.
+*/
+
+pred ll<n, v> == self = null & n = 0
+	or self::node<a@v, q> *
+    q::ll<n-1,v>
+  inv n >= 0.
+
+// should Fail ????? why is valid?
+/*checkentail x::node<_, y> * y::ll<_,@M> |- x::ll<m,@M> & m = 2.
+print residue.*/
+
+/*
+w field ann
+Entail (1) : Valid.
+ <1>EXISTS(flted_32_43: x::node<Anon_11@M,y@A>@M[Orig]&y=null & Anon_12=0 & 0<=0 & flted_32_43=@M & Anon_11=a_45 & q_46=y & (Anon_12=0 | y=null) & m=1&{FLOW,(19,20)=__norm})[]
+
+dis-field ann
+Entail (1) : Fail.(may) cause: ((y=null & Anon_12=0) | (y!=null & 1<=Anon_12)) & m=Anon_12+1 |-  m=2. LOCS:[27;26;1;28;32] (may-bug)
+*/
+
+
+checkentail x::node<_, y> * y::ll<_,@M> |- x::node<a@M, q> *
+    q::ll<m-1,@M> & m = 2.
+print residue.
+
+
+/*
+ w field ann
+Entail (1) : Fail.(may) cause:AndR[ (y=null & Anon_12=0) | (0<=@M & 1<=Anon_12 & y!=null) |-  m=2. LOCS:[45;26;1;46];  (y=null & Anon_12=0) | (0<=@M & 1<=Anon_12 & y!=null) |-  (1+Anon_12)<=m. LOCS:[45;26;1;46] (may-bug).]
+
+dis-field ann
+Entail (1) : Fail.(may) cause:AndR[ (y=null & Anon_12=0) | (y!=null & 1<=Anon_12) |-  m=2. LOCS:[45;26;1;46];  (y=null & Anon_12=0) | (y!=null & 1<=Anon_12) |-  m=1+Anon_12. LOCS:[45;26;1;46] (may-bug).]
+*/
+
+
