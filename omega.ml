@@ -741,11 +741,11 @@ let simplify_ops pr_weak pr_strong (pe : formula) : formula =
     let svl,fr_svl = mkSpecVarList 0 svl0 in
     let ss1 = List.combine svl fr_svl in
     let ss2 = List.combine fr_svl svl in
-    let pe =  Cpure.subst ss1  pe0 in
+    let pe1 =  Cpure.subst ss1  pe0 in
     (*let pe = drop_varperm_formula pe in*)
     let v = try 
       (* Debug.info_pprint "here1" no_pos; *)
-      Some (omega_of_formula 8 pr_weak pr_strong pe)
+      Some (omega_of_formula 8 pr_weak pr_strong pe1)
     with | Illegal_Prover_Format s -> 
         (* Debug.info_pprint "here1a" no_pos; *)
         None
@@ -755,7 +755,7 @@ let simplify_ops pr_weak pr_strong (pe : formula) : formula =
       | Some fstr ->
             (* Debug.info_pprint "here2" no_pos;*) 
           omega_subst_lst := [];
-            let vars_list = get_vars_formula pe in
+            let vars_list = get_vars_formula pe1 in
             (*todo: should fix in code of OC: done*)
             (*if not safe then pe else*)
             begin
@@ -783,7 +783,7 @@ let simplify_ops pr_weak pr_strong (pe : formula) : formula =
 	                    let rel = send_and_receive fomega timeo (* (!in_timeout) *) (* 0.0  *)in
                             let _ = is_complex_form := false in
                         (* let _ = print_endline ("after simplification: " ^ (Cpure.string_of_relation rel)) in *)
-	                    Cpure.subst ss2  (match_vars (fv pe) rel)
+	                    Cpure.subst ss2  (match_vars (fv pe1) rel)
 	                  end
 	                with
                       | Procutils.PrvComms.Timeout as exc ->
