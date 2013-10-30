@@ -37,9 +37,10 @@ let string_of_cond_path c = pr_list_round string_of_int c
 
 
 let string_of_ann a = match a with
-  | ConstAnn h -> string_of_heap_ann h
-  | PolyAnn v -> "PolyAnn"
-  | TempAnn v -> "TempAnn"
+  | CP.ConstAnn h -> string_of_heap_ann h
+  | CP.PolyAnn v -> "PolyAnn"
+  | CP.TempAnn v -> "TempAnn"
+  | CP.TempRes _ -> "TempRes"
 
 let string_of_ann_list xs = pr_list string_of_ann xs
 
@@ -2331,7 +2332,7 @@ and fv (f : formula) : CP.spec_var list = match f with
 		res
 and is_absent imm =
   match imm with
-  | ConstAnn(Accs) -> true
+  | CP.ConstAnn(Accs) -> true
   | _ -> false
 
 and remove_absent ann vs =

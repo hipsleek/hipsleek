@@ -2573,11 +2573,11 @@ let generate_constraints prog es rhs lhs_b ass_guard rhs_b1 defined_hps
     match hn with
       | CF.DataNode hn ->
             CF.DataNode {hn with CF.h_formula_data_param_imm = List.map (fun _ ->
-                CF.ConstAnn Mutable
+                CP.ConstAnn Mutable
             ) hn.CF.h_formula_data_param_imm;
-            CF.h_formula_data_imm = CF.ConstAnn Mutable;}
+            CF.h_formula_data_imm = CP.ConstAnn Mutable;}
       |  CF.ViewNode hv ->
-             CF.ViewNode {hv with h_formula_view_imm = CF.ConstAnn Mutable}
+             CF.ViewNode {hv with h_formula_view_imm = CP.ConstAnn Mutable}
       | _ -> hn
   in
   (*****************END INTERNAL********************)

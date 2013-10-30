@@ -1221,8 +1221,7 @@ and process_one_match_x prog estate lhs_h is_normalizing (c:match_res) (rhs_node
                   else true in
                   let a1 = 
                     if is_l_lock then [] else
-                      if (new_orig || vl_self_pts==[]) then 
-                      if ((new_orig || vl_self_pts==[]) && sub_ann) 
+                      if ((new_orig || vl_self_pts==[]) && sub_ann) then 
                       (*then [(1,M_unfold (c,uf_i))] else [] in*)
                         if vl_vdef.view_is_prim then []
                         else [(1,M_unfold (c,uf_i))] 

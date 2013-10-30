@@ -4703,14 +4703,14 @@ and trans_copy_spec_4caller_x copy_params sf=
             (* let _ = Debug.info_hprint (add_str "dn.CF.h_formula_data_node" !CP.print_sv) dn.CF.h_formula_data_node no_pos in *)
             if CP.mem_svl dn.CF.h_formula_data_node copy_params then
               CF.DataNode {dn with
-                  CF.h_formula_data_imm = CF.ConstAnn(Lend);
-                  CF.h_formula_data_param_imm = List.map (fun _ -> CF.ConstAnn(Lend)) dn.CF.h_formula_data_param_imm;
+                  CF.h_formula_data_imm = CP.ConstAnn(Lend);
+                  CF.h_formula_data_param_imm = List.map (fun _ -> CP.ConstAnn(Lend)) dn.CF.h_formula_data_param_imm;
               }
             else
               hf
       | CF.ViewNode dn ->
             if CP.mem_svl dn.CF.h_formula_view_node copy_params then
-              CF.ViewNode {dn with CF.h_formula_view_imm = CF.ConstAnn(Lend); }
+              CF.ViewNode {dn with CF.h_formula_view_imm = CP.ConstAnn(Lend); }
             else
               hf
       | _ -> hf
@@ -5324,7 +5324,7 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
 	      let ann_param1,_ = List.fold_left (fun (r, n) _ ->
 		let n_ann_param =
 		  if List.mem n holes then
-		    Some (IF.ConstAnn (Accs))
+		    Some (Ipure_D.ConstAnn (Accs))
 		  else
 		    (* Some (IF.ConstAnn (Mutable)) *) None
 		in
