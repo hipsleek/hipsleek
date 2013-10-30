@@ -6,8 +6,8 @@ struct node {
 };
 
 /*@
-ll<n>== self=null & n=0
-  or self::node__star<r>*r::node<_,q>*q::ll<n-1>
+ll<n> == self=null & n=0
+  or self::node<_,q>*q::ll<n-1>
   inv n>=0;
 */
 
@@ -28,7 +28,7 @@ void main()
  ensures true;
 */
 {
-  struct node q;
+  struct node q = {1, NULL};
   int t1 = foo(&q);
   struct node* qq;
   int t2 = foo(qq);

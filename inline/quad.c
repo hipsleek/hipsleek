@@ -10,9 +10,9 @@ struct quad {
   struct pair* p2;
 };
 
-int foo(quad *q)
+int foo(struct quad* q)
 /*@
-  requires q^::quad<a,b,p>@L
+  requires q::quad<a,b,p>@L
   ensures res=a;
 */
 {
@@ -20,16 +20,15 @@ int foo(quad *q)
 }
 
 
-int foo3(quad* q)
+int foo3(struct quad* q)
 /*@
-  requires q^::quad<a,b,p>@L
+  requires q::quad<a,b,p>@L
   ensures res=a;
 */
 {
-  quad* q;
-  quad* p=q;
-  /*@ assert p=q */ 
-  /*@ assert &p=&q */ 
+  struct quad* q;
+  struct quad* p=q;
+  /*@ assert p=q; */ 
   return (*q).p1.x;
 }
 
@@ -40,12 +39,12 @@ void main()
   int x=foo(&p);
 }
 
-int foo(quad q)
+int foo4(struct quad q)
 /*@
   requires q::quad<a,b,p>@L
   ensures res=a;
 */
 {
-  return q->p1.x;
+  return q.p1.x;
 }
 

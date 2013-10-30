@@ -6,22 +6,22 @@ struct node {
 };
 
 /*@
-ll<n>== self=null & n=0
-  or self::node__star<r>*r::node<_,q>*q::ll<n-1>
+ll<n> == self=null & n=0
+  or self::node<_,q>*q::ll<n-1>
   inv n>=0;
 */
 
 /*
-ll<n>== self=null & n=0
+ll<n> == self=null & n=0
   or self::node<_,q>*q::node__star<r>*r::ll<n-1>
   inv n>=0;
 
 
-ll<n>== self=null & n=0
+ll<n> == self=null & n=0
   or self::node^<_,q>*q::ll<n-1>
   inv n>=0;
 
-ll<n>== self=null & n=0
+ll<n> == self=null & n=0
   or self::node__star<r>*r::node<_,q>*q::ll<n-1>
   inv n>=0;
 */

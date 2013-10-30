@@ -28,8 +28,8 @@ int main()
   p.x = 1;
   p.y = 2;
   int t=foo(p);
-  printf("foo(p) ==> %i\n",t); //4
-  printf("p.x ==> %i\n",p.x); //1
+  //printf("foo(p) ==> %i\n",t); //4
+  //printf("p.x ==> %i\n",p.x); //1
   return p.x;
 }
 

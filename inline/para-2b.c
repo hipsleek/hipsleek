@@ -8,7 +8,7 @@ struct pair {
 int foo(struct pair q)
 /*@
   requires q::pair<a,b>
-  ensures q::pair<a+1,b> & res=a+1+b;
+  ensures q::pair<a,b> & res=a+1+b;
 */
 {
   struct pair p = q;
@@ -20,7 +20,7 @@ int foo(struct pair q)
 int main()
 /*@
   requires true
-  ensures res=2;
+  ensures res=1;
 */
 {
   struct pair p;
