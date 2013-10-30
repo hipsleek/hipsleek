@@ -4960,7 +4960,7 @@ and need_unfold_rhs prog vn=
         | None -> r
   ) [] vdef.view_un_struc_formula in
   if unk_hps <> [] then
-    let _ = Debug.info_zprint (lazy (("    xxxa " ))) no_pos in
+    let _ = Debug.ninfo_zprint (lazy (("    xxxa " ))) no_pos in
     ([(vn.CF.h_formula_view_name,vdef.C.view_un_struc_formula, vdef.C.view_vars)],unk_hps)
   else
     ([],[])
@@ -6502,7 +6502,7 @@ and heap_entail_conjunct_lhs_x hec_num prog is_folding  (ctx:context) (conseq:CF
                 (* let _ = Debug.info_hprint (add_str "ante (in ctx)" pr) ante no_pos in *)
                 (* let _ = Debug.info_hprint (add_str "conseq" pr) conseq no_pos in *)
                 (* let _ = Debug.info_pprint "Loc : please add suitable must-error message" no_pos  in *)
-                let rec extract_pure f= let (mf,_,_) = xpure prog f in (MCP.pure_of_mix mf)  in
+                let extract_pure f= let (mf,_,_) = xpure prog f in (MCP.pure_of_mix mf)  in
                 let (fc, (contra_list, must_list, may_list)) = ME.check_maymust_failure (extract_pure ante)
                   (extract_pure conseq) in
                 let new_estate = {

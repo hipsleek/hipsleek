@@ -671,13 +671,28 @@ let combine_pdefs_pre_x prog unk_hps link_hps pr_pdefs=
 (*retain depended constraints*)
 
 let combine_pdefs_pre prog unk_hps link_hps pr_pdefs=
+  let (pdefs2,rem_constr,equivs) as res = combine_pdefs_pre_x prog unk_hps link_hps pr_pdefs in
+  if !Globals.sap then
+     begin
+       let pr1 = pr_list_num (fun (pdef, _) -> SAU.string_of_par_def_w_name pdef) in
+       let s1 = pr1 pr_pdefs in
+       let s2 = (pr_list_num SAU.string_of_par_def_w_name) pdefs2 in
+       let _ = DD.binfo_hprint (add_str "BEFORE" pr_id) s1 no_pos in
+       let _ = DD.binfo_pprint "=============>>>>" no_pos in
+       let _ = DD.binfo_hprint (add_str "AFTER" pr_id) s2 no_pos in
+       let _ = DD.binfo_end "Syn-Case" in
+       ()
+     end;
+  res
+
+let combine_pdefs_pre prog unk_hps link_hps pr_pdefs=
   let pr1= pr_list_ln Cprinter.string_of_hprel_short in
   let pr2 = SAU.string_of_par_def_w_name in
   let pr3 (pdef, _) = pr2 pdef in
   let pr4 = pr_list (pr_pair !CP.print_sv !CP.print_sv) in
   Debug.no_3 "combine_pdefs_pre" (pr_list_ln pr3) !CP.print_svl !CP.print_svl
       (pr_triple (pr_list_ln pr2) pr1 pr4)
-      (fun _ _ _ -> combine_pdefs_pre_x prog unk_hps link_hps pr_pdefs)
+      (fun _ _ _ -> combine_pdefs_pre prog unk_hps link_hps pr_pdefs)
       pr_pdefs unk_hps link_hps
 (***************************************************************
                       END PARTIAL DEFS
@@ -1706,9 +1721,10 @@ let infer_post_fix iprog prog proc_name callee_hps is_pre is need_preprocess det
       is post_fix_hps
 
 let infer_post_synthesize_x prog proc_name callee_hps is need_preprocess detect_dang=
+  let constr0a = SAU.remove_dups_constr is.CF.is_constrs in
   let _ = DD.ninfo_hprint (add_str ">>>>>> post-predicates: step post-4: weaken<<<<<<" pr_id) "" no_pos in
   let _ = DD.info_ihprint (add_str "   trivial ass of Post" pr_id) "" no_pos in
-  let constrs0 = List.map (SAU.weaken_strengthen_special_constr_pre false) is.CF.is_constrs in
+  let constrs0 = List.map (SAU.weaken_strengthen_special_constr_pre false) constr0a in
   let dang_hps = List.map fst (is.CF.is_dang_hpargs@is.CF.is_link_hpargs) in
   (* let ss = List.filter (fun (hp1, hp2) -> CP.intersect_svl [hp1;hp2] dang_hps == []) is.CF.is_hp_equivs in *)
   (* let constrs1 = if ss = [] then constrs0 else *)

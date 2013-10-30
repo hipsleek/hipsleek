@@ -6145,7 +6145,7 @@ Successful States:
  (last should lseg + case) still has problem with lseg<null>
 
 =====================================================================
-#g_slist#g_list_insert
+#g_slist#g_list_insert: FIXED
 
 !!!  views: [G_ins,H_ins]
 Context of Verification Failure: 1 File "gslist.ss",Line:217,Col:10
