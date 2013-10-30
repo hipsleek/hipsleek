@@ -2778,7 +2778,7 @@ let infer_collect_hp_rel_x prog (es0:entail_state) rhs0 rhs_rest (rhs_h_matched_
     if CP.intersect ivs (lhrs@rhrs) = [] then
       begin
         (* DD.info_pprint ">>>>>> infer_hp_rel <<<<<<" pos; *)
-        let _ = DD.tinfo_pprint " no hp_rel found" pos in
+        let _ = DD.ninfo_pprint " no hp_rel found" pos in
         constant_checking prog rhs0 lhs_b0 rhs_b0 es0
             (* (false,es) *)
       end
@@ -2855,7 +2855,7 @@ let infer_collect_hp_rel_x prog (es0:entail_state) rhs0 rhs_rest (rhs_h_matched_
           DD.tinfo_hprint (add_str  "  lhs " Cprinter.string_of_formula_base) lhs_b0 pos;
           (* DD.tinfo_hprint (add_str  "  rhs " Cprinter.prtt_string_of_h_formula) rhs0 pos; *)
           DD.tinfo_hprint (add_str  "  rhs_rest " Cprinter.prtt_string_of_h_formula) rhs_rest pos;
-          DD.tinfo_hprint (add_str  "  unmatch " Cprinter.string_of_h_formula) rhs0b pos;
+          DD.info_hprint (add_str  "  unmatch " Cprinter.string_of_h_formula) rhs0b pos;
           DD.tinfo_hprint (add_str  "  classic " string_of_bool) !Globals.do_classic_frame_rule pos
         in
         let post_hps,prog_vars =
@@ -2894,7 +2894,7 @@ let infer_collect_hp_rel_x prog (es0:entail_state) rhs0 rhs_rest (rhs_h_matched_
         (* if (CP.intersect mis_nodes (List.fold_left SAU.close_def v_lhs (leqs@reqs))) = [] then *)
         if (CP.intersect fv_lhs fv_rhs) == [] then
           begin
-            let _ = Debug.tinfo_pprint ">>>>>> mismatch ptr is not a selective variable <<<<<<" pos in
+            let _ = Debug.ninfo_pprint ">>>>>> mismatch ptr is not a selective variable <<<<<<" pos in
             (*bugs/bug-classic-4a.slk: comment the following stuff*)
             let rhs_hps = (List.map fst r_hpargs) in
             if rhs_hps <> [] then
@@ -2950,7 +2950,7 @@ let infer_collect_hp_rel_x prog (es0:entail_state) rhs0 rhs_rest (rhs_h_matched_
             find_undefined_selective_pointers prog lhs_b1 mix_lf1 rhs rhs_rest
                 (rhs_h_matched_set) leqs1 reqs1 pos es.CF.es_infer_hp_unk_map post_hps subst_prog_vars in
           if not is_found_mis then
-            let _ = Debug.tinfo_zprint (lazy (">>>>>> mismatch ptr" ^ (Cprinter.prtt_string_of_h_formula rhs) ^" is not found (or inst) in the lhs <<<<<<")) pos in
+            let _ = Debug.info_zprint (lazy (">>>>>> mismatch ptr" ^ (Cprinter.prtt_string_of_h_formula rhs) ^" is not found (or inst) in the lhs <<<<<<")) pos in
             (false, es, rhs, None)
           else
             (* let rhs_b1 = CF.formula_base_of_heap rhs pos in *)

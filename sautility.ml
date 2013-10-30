@@ -1340,6 +1340,7 @@ let expose_expl_eqs_x emap0 prog_vars vars_grps0=
     let ls_eq_args2 = Gen.BList.remove_dups_eq (Gen.BList.subset_eq CP.eq_spec_var) ls_eq_args1 in
     if ls_eq_args2=[] then (false,[],[])
     else
+      (* let _ = Debug.info_hprint (add_str  "ls_eq_args2 " (pr_list !CP.print_svl)) ls_eq_args2 no_pos in *)
       (*explicit equalities*)
       let expl_eqs, link_svl = List.fold_left (fun (r, keep_svl) ls ->
           let ls1 = List.sort cmp_fn ls in
@@ -1355,12 +1356,14 @@ let expose_expl_eqs_x emap0 prog_vars vars_grps0=
       in
       (*subst for others*)
       let keep_sv =
-        let inters1 = CP.intersect_svl prog_vars ls_eqs in
+        let inters1 = CP.intersect_svl prog_vars link_svl in
         if inters1 <> [] then List.hd inters1 else
-          let inters = CP.intersect_svl all_vars ls_eqs in
-          if inters = [] then List.hd (List.sort cmp_fn ls_eqs)
+          let inters = CP.intersect_svl all_vars link_svl in
+          if inters = [] then List.hd (List.sort cmp_fn link_svl)
           else List.hd inters
       in
+      (* let _ = Debug.info_hprint (add_str  "keep_sv " !CP.print_sv) keep_sv no_pos in *)
+      (* let _ = Debug.info_hprint (add_str  "ls_eqs " !CP.print_svl) ls_eqs no_pos in *)
       let ss2 = List.fold_left (fun ss1 sv ->
           if CP.eq_spec_var keep_sv sv then ss1
           else ss1@[(sv, keep_sv)]
@@ -1433,9 +1436,11 @@ let smart_subst_new_x lhs_b rhs_b hpargs l_emap r_emap r_qemap unk_svl prog_vars
         (List.map snd hpargs)
       in
       let emap0a, ls_eq_args, expl_eqs_ps, eq_sst = expose_expl_eqs emap0 prog_vars vars_grps in
-      let _ = Debug.ninfo_hprint (add_str  "ls_eq_args " (pr_list !CP.print_svl)) ls_eq_args no_pos in
+      (* let _ = Debug.info_hprint (add_str  "ls_eq_args " (pr_list !CP.print_svl)) ls_eq_args no_pos in *)
       let emap1 = CP.EMapSV.merge_eset emap0a r_qemap in
       let ss = build_subst_comm all_args prog_vars emap1 comm_svl in
+      let pr_ss = pr_list (pr_pair !CP.print_sv !CP.print_sv) in
+      (* let _ = Debug.info_hprint (add_str  "ss " (pr_ss)) ss no_pos in *)
       (*LHS*)
       let lhs_b1 = CF.subst_b ss lhs_b in
       let lhs_pure1 = MCP.pure_of_mix lhs_b1.CF.formula_base_pure in
@@ -1448,7 +1453,7 @@ let smart_subst_new_x lhs_b rhs_b hpargs l_emap r_emap r_qemap unk_svl prog_vars
       } in
       (*RHS*)
       let rhs_b1 = CF.subst_b ss rhs_b in
-      let _ = Debug.ninfo_hprint (add_str  "rhs_b1 " Cprinter.prtt_string_of_formula) (CF.Base rhs_b1) no_pos in
+      (* let _ = Debug.info_hprint (add_str  "rhs_b1 " Cprinter.prtt_string_of_formula) (CF.Base rhs_b1) no_pos in *)
       let rhs_b2 = {rhs_b1 with CF.formula_base_pure = MCP.mix_of_pure
               (CP.remove_redundant (MCP.pure_of_mix rhs_b1.CF.formula_base_pure));
           CF.formula_base_heap = CF.trans_heap_hf (h_subst (null_sst@eq_sst) ls_eq_args) rhs_b1.CF.formula_base_heap;

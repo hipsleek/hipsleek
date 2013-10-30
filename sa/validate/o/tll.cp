@@ -12,7 +12,7 @@ ass [H,G][]:{
  // PRE_REC (2;0)
   HP_1038(left_31_1035,t) --> H(left_31_1035,l_47');
  // POST (1;0)
-  HP_1038(left_31_1035,t) * HP_1039(right_31_1036,t) * x::node<left_31_1035,right_31_1036,t>@M&right_31_1036=null &
+  HP_1038(left_31_1035,t) * HP_1039(right_31_1036,t) * res::node<left_31_1035,right_31_1036,t>@M&right_31_1036=null &
    res=x --> G(x,res,t);
  // POST (2;0)
   HP_1040(next_31_1037,t) * x::node<left_31_1035,right_31_1036,next_31_1037>@M * G(right_31_1036,l_1069,t) * G(left_31_1035,res,l_1069)&
@@ -20,10 +20,10 @@ ass [H,G][]:{
  }
 
 hpdefs [H,G][]:{
-  G(x_1098,res_1099,t_1100) <-> HP_1040(next_31_1037,t_1100) *
-     x_1098::node<left_31_1035,right_31_1036,next_31_1037>@M *
+  G(x_1098,res_1099,t_1100) <-> 
+     x_1098::node<left_31_1035,right_31_1036,next_31_1037>@M * HP_1040(next_31_1037,t_1100) *
      G(right_31_1036,l_1069,t_1100) * G(left_31_1035,res_1099,l_1069)&           right_31_1036!=null
-   or HP_1038(left_31_1035,t_1100) * res_1099::node<left_31_1035,right_31_1036,t_1100>@M&res_1099=x_1098 & right_31_1036=null;
+   or HP_1038(left_31_1035,t_1100) * x_1098::node<left_31_1035,right_31_1036,t_1100>@M&res_1099=x_1098 & right_31_1036=null;
 
  H(x_1095,t_1096) <-> H(left_31_1072,l_47') * x_1095::node<left_31_1072,right_31_1073,next_31_1074>@M&right_31_1073!=null
    or x_1095::node<left_31_1035,right_31_1036,next_31_1037>@M * HP_1038(left_31_1035,t_1096) * HP_1040(next_31_1037,t_1096)& right_31_1036=null;
