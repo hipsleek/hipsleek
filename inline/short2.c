@@ -19,6 +19,7 @@ int main()
  int x;
  int* r = &x;
  foo(&r);
+ //@dprint;
  return x;
 }
 

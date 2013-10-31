@@ -7038,7 +7038,8 @@ and case_normalize_program_x (prog: Iast.prog_decl):Iast.prog_decl=
   Debug.tinfo_hprint (add_str "trans_prog 2 (temp views)" (pr_list Iprinter.string_of_view_decl))  tmp_views  no_pos;
   (* andreeac: to check if moving Iast.set_check_fixpt at this point (earlier than previously) influences subsequent computions *)
   let _ = Iast.set_check_fixpt prog.I.prog_data_decls tmp_views in
-  let _ = List.map (fun v ->  v.I.view_imm_map <- Immutable.icollect_imm v.I.view_formula v.I.view_vars v.I.view_data_name  prog.I.prog_data_decls )  prog.I.prog_view_decls  in
+  let _ = List.map (fun v -> (* if v.I.view_kind = I.View_NORM then *)
+    v.I.view_imm_map <- Immutable.icollect_imm v.I.view_formula v.I.view_vars v.I.view_data_name  prog.I.prog_data_decls )  prog.I.prog_view_decls  in
   let procs1 = List.map (case_normalize_proc prog) prog.I.prog_proc_decls in
   let prog = {prog with Iast.prog_proc_decls = procs1} in
   let coer1 = List.map (case_normalize_coerc_list prog) prog.Iast.prog_coercion_decls in  

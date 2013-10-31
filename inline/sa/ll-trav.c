@@ -9,9 +9,9 @@ ll<> == self=null
   or self::node<_,p>*p::ll<>;
 */
 
-/*
-HeapPred H( node__star a).
-HeapPred G( node__star a).
+/*@
+HeapPred H( node a).
+HeapPred G( node a).
 */
 
 //requires x::ll<>
@@ -23,18 +23,29 @@ HeapPred G( node__star a).
 */
 
 void foo(struct node* x)
-/*@
+/*
  requires x::ll<>
  ensures  x::ll<>;
 */
+  /*@
+ infer [H,G]
+  requires H(x)
+ ensures  G(x);
+*/
  {
-   if (x != 0) {
-     foo(x->next);
+   if (!x) {
+     return;
    }
+   else
+     foo(x->next);
    return;
  }
 
 void main()
+/*@
+ requires true
+ ensures  true;
+*/
 {
   return;
 }
