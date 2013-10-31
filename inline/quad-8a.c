@@ -35,5 +35,19 @@ int main()
   int r=foo(&p);
   //printf("p.p1.x = %i\n",p.p2->x); // 4
   //printf("r = %i\n",r); //6
-
+  return r;
 }
+/*
+{local: quad p,pair pp,int r,int tmp
+quad p = new quad(0, 0, null);
+pair pp = new pair(0, 0);
+int r;
+int tmp;
+{member access pp~~>x = 4;
+member access p~~>p2 = pp;
+member access p~~>p1~~>x = 3;
+tmp = (84, ):foo(p);
+r = tmp;
+(86, ):return r}}
+}
+*/

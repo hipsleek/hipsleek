@@ -123,6 +123,25 @@ member access pp~~>x = (int)member access pp~~>x + 1;
 }
 */
 *******************************************************
+# quad-8-weird.c (default allocation and returns)
+
+Currently, no return is translated to:
+  return 0;
+
+Stack and heap allocation is made using:
+  quad p = new quad(0, 0, null);
+
+However, I think C is silent on what values
+these should take. Thus, for safety, we should
+give random values to these system.
+
+I suggest proving a constructor:
+  new quad();
+which will be silent in the values;
+and also adding 
+  int tmp;
+  return tmp;
+
 *******************************************************
 *******************************************************
 *******************************************************
