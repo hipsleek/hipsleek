@@ -60,6 +60,18 @@ void goo(struct node* x)
    return;
  }
 
+void hoo(struct node* x)
+/*
+ requires x::ll<>
+ ensures  x::ll<>;
+*/
+ {
+   if (x) {
+     hoo(x->next);
+   }
+   return;
+ }
+
 
 void main()
 /*@
