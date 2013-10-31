@@ -27,7 +27,7 @@ pair_star qq;
 int t;
 int r;
 pair_star addr_q = new pair_star(null); 
-// addr_q.deref = q;
+// missing assignment::  addr_q.deref = q;
 {qq = addr_q;
 t = member access member access addr_q~~>deref~~>y;
 r = (int)member access member access qq~~>deref~~>y + t;
