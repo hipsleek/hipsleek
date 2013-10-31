@@ -20,6 +20,13 @@ int foo(struct quad* q)
   int r = (*q).p2->x+2;
   return r;
 }
+/*
+{local: int r
+int r;
+{r = (int)member access member access q~~>p2~~>x + 2;
+(76, ):return r}}
+}
+*/
 
 int main()
 /*@
@@ -49,5 +56,7 @@ member access p~~>p1~~>x = 3;
 tmp = (84, ):foo(p);
 r = tmp;
 (86, ):return r}}
+
+// why is there an intermdiate tmp introduced?
 }
 */
