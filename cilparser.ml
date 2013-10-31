@@ -523,7 +523,7 @@ and get_actual_cil_typ (t: Cil.typ) : Cil.typ = (
     match t with
     | Cil.TNamed (tinfo, _) -> get_actual_cil_typ tinfo.Cil.ttype
     | Cil.TComp (cinfo, _) -> (
-        try
+				    try
           let ty = Hashtbl.find tbl_typedef cinfo.Cil.cname in
           get_actual_cil_typ ty
         with _ -> t
