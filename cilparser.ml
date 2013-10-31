@@ -325,8 +325,8 @@ let create_bool_casting_proc (typ: Globals.typ) : Iast.proc_decl =
       match typ with
       | Globals.Named typ_name -> (
           "bool " ^ proc_name ^ "(" ^ typ_name ^ " param)\n" ^
-          "  case { param =  null -> ensures res;\n" ^
-          "         param != null -> ensures !res; }\n"
+          "  case { param =  null -> ensures !res;\n" ^
+          "         param != null -> ensures res; }\n"
         )
       | Globals.Int -> (
           "bool " ^ proc_name ^ "(int param)\n" ^

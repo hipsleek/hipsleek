@@ -12,6 +12,8 @@ ll<> == self=null
 /*@
 HeapPred H( node a).
 HeapPred G( node a).
+HeapPred H1( node a).
+HeapPred G1( node a).
 */
 
 //requires x::ll<>
@@ -40,6 +42,24 @@ void foo(struct node* x)
      foo(x->next);
    return;
  }
+
+void goo(struct node* x)
+/*
+ requires x::ll<>
+ ensures  x::ll<>;
+*/
+  /*@
+ infer [H1,G1]
+  requires H1(x)
+ ensures  G1(x);
+*/
+ {
+   if (x) {
+     goo(x->next);
+   }
+   return;
+ }
+
 
 void main()
 /*@
