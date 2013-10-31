@@ -1,24 +1,9 @@
-// pass-by-value
+#include "../examples/working/cparser/stdhip.h"
 
 struct pair {
   int x;
   int y;
 };
-
-void* malloc(int size) __attribute__ ((noreturn))
-/*@
-  case {
-    size <= 0 -> requires true ensures res = null;
-    size >  0 -> requires true ensures res != null;
-  }
-*/;
-
-/*
- data pair {
-  int x;
-  int y;
- }
-*/
 
 int foo(struct pair q)
 // pass by copy
@@ -62,7 +47,7 @@ int hoo()
   int t=foo(p);
   struct pair* pp;
   pp = malloc(sizeof (struct pair));
-  //int* iiii = malloc(1);
+  int* iiii = malloc(1);
   pp->x =3;
   t=t+goo(pp);
   return t;
