@@ -276,6 +276,10 @@ let string_of_loc (p : loc) =
     (p.start_pos.Lexing.pos_cnum-p.start_pos.Lexing.pos_bol)
 ;;
 
+let is_valid_loc p=
+  (p.start_pos.Lexing.pos_lnum>=0 &&
+   p.start_pos.Lexing.pos_cnum-p.start_pos.Lexing.pos_bol>=0)
+
 let string_of_pos (p : Lexing.position) = 
     Printf.sprintf "(Line:%d,Col:%d)"
     p.Lexing.pos_lnum
@@ -1155,6 +1159,7 @@ let fresh_int () =
   !seq_number
 
 let fresh_ty_var_name (t:typ)(ln:int):string = 
+  let ln = if ln<0 then 0 else ln in
 	("v_"^(string_of_typ_alpha t)^"_"^(string_of_int ln)^"_"^(string_of_int (fresh_int ())))
 
 let fresh_var_name (tn:string)(ln:int):string = 

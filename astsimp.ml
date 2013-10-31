@@ -3673,9 +3673,10 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
                 else
                   Err.report_error { Err.error_loc = proc.I.proc_loc; 
                   Err.error_text = "return statement for procedures with non-void return type need a value" }
-            | Some e -> 
-                let e_pos = Iast.get_exp_pos e in
-                let ce, ct = helper e in
+            | Some e ->
+                  let e_pos = Iast.get_exp_pos e in
+                   (* let  _ = Debug.info_zprint (lazy (((string_of_loc pos) ^ ":e_pos" ))) pos in *)
+                  let ce, ct = helper e in
                   (*
                     139::return v_null_21_541
                     !!! return(iast-e):x
@@ -3703,7 +3704,8 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
                             C.exp_sharp_pos = pos}) in
                         shar
                       else
-                  let fn = (fresh_ty_var_name (ct) e_pos.start_pos.Lexing.pos_lnum) in
+                        let e_pos = if not (is_valid_loc e_pos) then no_pos else e_pos in
+                        let fn = (fresh_ty_var_name (ct) e_pos.start_pos.Lexing.pos_lnum) in
                   let vd = C.VarDecl { 
                       C.exp_var_decl_type = ct;
                       C.exp_var_decl_name = fn;
