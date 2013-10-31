@@ -474,19 +474,7 @@ and gather_addrof_exp (e: Cil.exp) : unit =
             let addr_vname = "addr_" ^ lv_str in
             let addr_vdecl = (
               (* create and temporarily initiate a new object *)
-              let init_params = List.fold_left (
-                fun params field ->
-                  let ((ftyp, _), _, _, _) = field in
-                  let exp = (
-                    match ftyp with
-                    | Globals.Int -> Iast.mkIntLit 0 pos
-                    | Globals.Bool -> Iast.mkBoolLit true pos
-                    | Globals.Float -> Iast.mkFloatLit 0. pos
-                    | Globals.Named _ -> Iast.mkNull no_pos
-                    | _ -> report_error pos ("translate_var_decl: Unexpected typ 1 - " ^ (Globals.string_of_typ ftyp))
-                  ) in
-                  params @ [exp]
-              ) [] addr_ddecl.Iast.data_fields in
+              let init_params = [(translate_lval lv)] in
               let init_data = Iast.mkNew addr_dname init_params pos in
               Iast.mkVarDecl addr_dtyp [(addr_vname, Some init_data, pos)] pos
             ) in
@@ -586,63 +574,58 @@ and translate_var (vinfo: Cil.varinfo) (lopt: Cil.location option) : Iast.exp =
     (Iast.mkVar name pos)
 
 
-and translate_var_decl (vinfo: Cil.varinfo) : Iast.exp list =
+and translate_var_decl (vinfo: Cil.varinfo) : Iast.exp =
   let vname = vinfo.Cil.vname in
-  try
-    let _ = Hashtbl.find tbl_addrof_info vname in
-    []
-  with Not_found -> (
-    let pos = translate_location vinfo.Cil.vdecl in
-    let ty = vinfo.Cil.vtype in
-    let (new_ty, need_init) = (match ty with
-      | Cil.TPtr (ty1, _) when (is_cil_struct_pointer ty) ->
-          (translate_typ ty1 pos, false)                 (* heap allocated data *)
-      | Cil.TComp _ -> (translate_typ ty pos, true)      (* stack allocated data *)
-      | _ -> (translate_typ ty pos, false)
-    ) in
-    let name = vinfo.Cil.vname in
-    let newexp = (
-      match new_ty with
-      | Globals.Int
-      | Globals.Bool
-      | Globals.Float
-      | Globals.Array _
-      | Globals.Named "void_star" -> Iast.mkVarDecl new_ty [(name, None, pos)] pos
-      | Globals.Named typ_name -> (
-          if (need_init) then (
-            let rec generate_init_params (data_type_name : string): Iast.exp list = (
-              let ddecl = (
-                try Hashtbl.find tbl_data_decl (Globals.Named data_type_name)
-                with Not_found -> 
-                  report_error pos ("translate_var_decl: Unknown typ " ^ (Globals.string_of_typ new_ty))
-              ) in
-              let init_params = List.fold_left (fun params field ->
-                let ((ftyp, _), _, inline, _) = field in
-                let init_exps = (
-                  match ftyp with
-                  | Globals.Int -> [(Iast.mkIntLit 0 pos)]
-                  | Globals.Bool -> [(Iast.mkBoolLit true pos)]
-                  | Globals.Float -> [(Iast.mkFloatLit 0. pos)]
-                  | Globals.Named typ_name ->
-                      if (inline) then generate_init_params typ_name      (* expand the inline field *)
-                      else [(Iast.mkNull pos)]
-                  | _ -> report_error pos ("translate_var_decl: Unexpected typ 1 - " ^ (Globals.string_of_typ ftyp))
-                ) in
-                params @ init_exps
-              ) [] ddecl.Iast.data_fields in
-              init_params
+  let pos = translate_location vinfo.Cil.vdecl in
+  let ty = vinfo.Cil.vtype in
+  let (new_ty, need_init) = (match ty with
+    | Cil.TPtr (ty1, _) when (is_cil_struct_pointer ty) ->
+        (translate_typ ty1 pos, false)                 (* heap allocated data *)
+    | Cil.TComp _ -> (translate_typ ty pos, true)      (* stack allocated data *)
+    | _ -> (translate_typ ty pos, false)
+  ) in
+  let name = vinfo.Cil.vname in
+  let newexp = (
+    match new_ty with
+    | Globals.Int
+    | Globals.Bool
+    | Globals.Float
+    | Globals.Array _
+    | Globals.Named "void_star" -> Iast.mkVarDecl new_ty [(name, None, pos)] pos
+    | Globals.Named typ_name -> (
+        if (need_init) then (
+          let rec generate_init_params (data_type_name : string): Iast.exp list = (
+            let ddecl = (
+              try Hashtbl.find tbl_data_decl (Globals.Named data_type_name)
+              with Not_found -> 
+                report_error pos ("translate_var_decl: Unknown typ " ^ (Globals.string_of_typ new_ty))
             ) in
-            (* create and temporarily initiate a new object *)
-            let init_params = generate_init_params typ_name in
-            let init_data = Iast.mkNew typ_name init_params pos in
-            Iast.mkVarDecl new_ty [(name, Some init_data, pos)] pos
-          )
-          else Iast.mkVarDecl new_ty [(name, None, pos)] pos
+            let init_params = List.fold_left (fun params field ->
+              let ((ftyp, _), _, inline, _) = field in
+              let init_exps = (
+                match ftyp with
+                | Globals.Int -> [(Iast.mkIntLit 0 pos)]
+                | Globals.Bool -> [(Iast.mkBoolLit true pos)]
+                | Globals.Float -> [(Iast.mkFloatLit 0. pos)]
+                | Globals.Named typ_name ->
+                    if (inline) then generate_init_params typ_name      (* expand the inline field *)
+                    else [(Iast.mkNull pos)]
+                | _ -> report_error pos ("translate_var_decl: Unexpected typ 1 - " ^ (Globals.string_of_typ ftyp))
+              ) in
+              params @ init_exps
+            ) [] ddecl.Iast.data_fields in
+            init_params
+          ) in
+          (* create and temporarily initiate a new object *)
+          let init_params = generate_init_params typ_name in
+          let init_data = Iast.mkNew typ_name init_params pos in
+          Iast.mkVarDecl new_ty [(name, Some init_data, pos)] pos
         )
-      | _ -> report_error pos ("translate_var_decl: Unexpected typ 2 - " ^ (Globals.string_of_typ new_ty))
-    ) in
-    [newexp]
-  )
+        else Iast.mkVarDecl new_ty [(name, None, pos)] pos
+      )
+    | _ -> report_error pos ("translate_var_decl: Unexpected typ 2 - " ^ (Globals.string_of_typ new_ty))
+  ) in
+  newexp
 
 
 and translate_constant (c: Cil.constant) (lopt: Cil.location option) : Iast.exp =
@@ -1227,7 +1210,7 @@ and translate_fundec (fundec: Cil.fundec) (lopt: Cil.location option) : Iast.pro
     match fundec.Cil.sbody.Cil.bstmts with
     | [] -> None
     | _ ->
-        let slocals = List.concat (List.map translate_var_decl fundec.Cil.slocals) in
+        let slocals = List.map translate_var_decl fundec.Cil.slocals in
         let sbody = translate_block fundec.Cil.sbody in
         let body = merge_iast_exp (slocals @ !aux_local_vardecls @ [sbody]) in
         let pos = translate_location fundec.Cil.sbody.Cil.bloc in
