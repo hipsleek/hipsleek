@@ -1792,20 +1792,23 @@ let add_position_to_imm_ann (a: Ipure.ann) (vp_pos: (ident * int) list) =
   a_pos
 
 let icollect_imm f vparam data_name ddefs =
-  let ddef = I.look_up_data_def_raw ddefs data_name in
-  let def_ann  = List.map (fun f -> (Ipure.imm_ann_bot, 0) ) ddef.I.data_fields in
-  let ann_final =
-    if not (!Globals.allow_field_ann) then def_ann
-    else
-      let ann_params = collect_imm_from_struc_iformula f data_name (* def_ann *) in
-      let vp_pos = CP.initialize_positions_for_view_params vparam in
-      let ann_pos = List.map (fun a ->  add_position_to_imm_ann a vp_pos) ann_params in
-      ann_pos
-  in
-  ann_final
+  try
+    let ddef = I.look_up_data_def_raw ddefs data_name in
+    let def_ann  = List.map (fun f -> (Ipure.imm_ann_bot, 0) ) ddef.I.data_fields in
+    let ann_final =
+      if not (!Globals.allow_field_ann) then def_ann
+      else
+        let ann_params = collect_imm_from_struc_iformula f data_name (* def_ann *) in
+        let vp_pos = CP.initialize_positions_for_view_params vparam in
+        let ann_pos = List.map (fun a ->  add_position_to_imm_ann a vp_pos) ann_params in
+        ann_pos
+    in
+    ann_final
+  with Not_found -> [] (* this is for prim pred *)
 
 let icollect_imm f vparam data_name ddefs =
-  Debug.no_2 "icollect_imm" Iprinter.string_of_struc_formula pr_id (pr_list (pr_pair Iprinter.string_of_imm string_of_int)) (fun _ _ -> icollect_imm f vparam data_name ddefs) f data_name
+  Debug.no_3 "icollect_imm" Iprinter.string_of_struc_formula 
+      (pr_list pr_id) pr_id (pr_list (pr_pair Iprinter.string_of_imm string_of_int)) (fun _ _ _ -> icollect_imm f vparam data_name ddefs) f vparam data_name
 
 let split_view_args view_args vdef:  CP.spec_var list * 'a list * (CP.annot_arg * int) list * (CP.view_arg * int) list  =
   (* TODO: normalize the unused ann consts  *)
