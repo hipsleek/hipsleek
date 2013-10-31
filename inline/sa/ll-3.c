@@ -27,25 +27,6 @@ int foo(struct node* q)
   };
 }
 
-/*
- null --> !res
- !null --> res
-
-
-Below is wrong...
-
-boolean bool_of_node___(node param)[]
-static 
-
-(None,[]): case{ECase:
-         param != null->
-(None,[]): EAssume: 4,:(emp)*(!(res))( FLOW __norm)
-         param = null->
-(None,[]): EAssume: 3,:(emp)*(res)( FLOW __norm)
-}
-*/
-
-
 int main() 
 /*@
  requires true

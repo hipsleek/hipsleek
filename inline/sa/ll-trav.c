@@ -25,11 +25,11 @@ HeapPred G1( node a).
 */
 
 void foo(struct node* x)
-/*
+/*@
  requires x::ll<>
  ensures  x::ll<>;
 */
-  /*@
+  /*
  infer [H,G]
   requires H(x)
  ensures  G(x);
