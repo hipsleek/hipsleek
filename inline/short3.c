@@ -1,23 +1,26 @@
+#include<stdio.h>
 int foo(int** q)
 /*@
  requires q::int_star_star<r>*r::int_star<a>
- ensures q::int_star_star<null>*r::int_star<a> & res=0;
+ ensures q::int_star_star<r>*r::int_star<a> & res=0;
 */
 {
- *q=0;
+ q=0;
  return 0;
 };
 
 int main()
 /*@
  requires true
- ensures true;
+ ensures res=10;
 */
 {
- int x;
+ int x = 10;
  int* r = &x;
  foo(&r);
- return *r;
+ int t = *r;
+ //printf("*r = %d\n", t);
+ return t;
 }
 
 /*
