@@ -62,6 +62,7 @@ int hoo()
   int t=foo(p);
   struct pair* pp;
   pp = malloc(sizeof (struct pair));
+  //int* iiii = malloc(1);
   pp->x =3;
   t=t+goo(pp);
   return t;

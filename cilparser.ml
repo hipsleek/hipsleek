@@ -435,21 +435,21 @@ and gather_addrof_exp (e: Cil.exp) : unit =
   | Cil.AddrOf (lv, l) -> (
       let pos = translate_location l in
       let lv_str = string_of_cil_lval lv in
-      let lv_ty1 = typ_of_cil_lval lv in
-      let lv_ty = (match lv_ty1 with
-        | Cil.TPtr (ty, _) when (is_cil_struct_pointer lv_ty1) -> ty      (* pointer to struct goes down 1 level *)
-        | _ -> lv_ty1
-      ) in
-      match lv_ty1 with
+      let lv_ty = typ_of_cil_lval lv in
+      match lv_ty with
       | Cil.TComp _ -> ()
       | _ -> (
           try
             let _ = Hashtbl.find tbl_addrof_info lv_str in ()
           with Not_found -> (
-            let deref_ty = translate_typ lv_ty pos in
+            let refined_ty = (match lv_ty with
+              | Cil.TPtr (ty, _) when (is_cil_struct_pointer lv_ty) -> ty      (* pointer to struct goes down 1 level *)
+              | _ -> lv_ty
+            ) in
+            let deref_ty = translate_typ refined_ty pos in
             let (addr_dtyp, addr_dname, addr_ddecl) = (
               try 
-                let dtyp = Hashtbl.find tbl_pointer_typ lv_ty in
+                let dtyp = Hashtbl.find tbl_pointer_typ refined_ty in
                 let ddecl = Hashtbl.find tbl_data_decl dtyp in
                 let dname = (
                   match dtyp with
@@ -464,7 +464,7 @@ and gather_addrof_exp (e: Cil.exp) : unit =
                 let dfields = [((ftyp, fname), no_pos, false, Iast.F_NO_ANN)] in
                 let dname = (Globals.string_of_typ ftyp) ^ "_star" in
                 let dtyp = Globals.Named dname in
-                Hashtbl.add tbl_pointer_typ lv_ty dtyp;
+                Hashtbl.add tbl_pointer_typ refined_ty dtyp;
                 let ddecl = Iast.mkDataDecl dname dfields "Object" [] false [] in
                 Hashtbl.add tbl_data_decl dtyp ddecl;
                 (dtyp, dname, ddecl)
@@ -473,7 +473,20 @@ and gather_addrof_exp (e: Cil.exp) : unit =
             (* define new pointer var px that will be used to represent x: {x, &x} --> {*px, px} *)
             let addr_vname = "addr_" ^ lv_str in
             let addr_vdecl = (
-              let init_params = [(translate_lval lv)] in
+              (* create and temporarily initiate a new object *)
+              let init_params = List.fold_left (
+                fun params field ->
+                  let ((ftyp, _), _, _, _) = field in
+                  let exp = (
+                    match ftyp with
+                    | Globals.Int -> Iast.mkIntLit 0 pos
+                    | Globals.Bool -> Iast.mkBoolLit true pos
+                    | Globals.Float -> Iast.mkFloatLit 0. pos
+                    | Globals.Named _ -> Iast.mkNull no_pos
+                    | _ -> report_error pos ("translate_var_decl: Unexpected typ 1 - " ^ (Globals.string_of_typ ftyp))
+                  ) in
+                  params @ [exp]
+              ) [] addr_ddecl.Iast.data_fields in
               let init_data = Iast.mkNew addr_dname init_params pos in
               Iast.mkVarDecl addr_dtyp [(addr_vname, Some init_data, pos)] pos
             ) in
@@ -573,47 +586,59 @@ and translate_var (vinfo: Cil.varinfo) (lopt: Cil.location option) : Iast.exp =
     (Iast.mkVar name pos)
 
 
-and translate_var_decl (vinfo: Cil.varinfo) : Iast.exp =
-  let pos = translate_location vinfo.Cil.vdecl in
-  let ty = vinfo.Cil.vtype in
-  let new_ty = (match ty with
-    | Cil.TPtr (ty1, _) when (is_cil_struct_pointer ty) -> translate_typ ty1 pos
-    | _ -> translate_typ ty pos
-  ) in
-  let name = vinfo.Cil.vname in
-  let newexp = (
-    match new_ty with
-    | Globals.Int
-    | Globals.Bool
-    | Globals.Float
-    | Globals.Array _
-    | Globals.Named "void_star" -> Iast.mkVarDecl new_ty [(name, None, pos)] pos
-    | Globals.Named typ_name -> (
-        (* look for the corresponding data structure *)
-        let data_decl = (
-          try Hashtbl.find tbl_data_decl new_ty
-          with Not_found -> report_error pos ("translate_var_decl: Unknown typ " ^ (Globals.string_of_typ new_ty))
-        ) in
-        (* create and temporarily initiate a new object *)
-        let init_params = List.fold_left (
-          fun params field ->
-            let ((ftyp, _), _, _, _) = field in
-            let exp = (
-              match ftyp with
-              | Globals.Int -> Iast.mkIntLit 0 pos
-              | Globals.Bool -> Iast.mkBoolLit true pos
-              | Globals.Float -> Iast.mkFloatLit 0. pos
-              | Globals.Named _ -> Iast.mkNull no_pos
-              | _ -> report_error pos ("translate_var_decl: Unexpected typ 1 - " ^ (Globals.string_of_typ ftyp))
+and translate_var_decl (vinfo: Cil.varinfo) : Iast.exp list =
+  let vname = vinfo.Cil.vname in
+  try
+    let _ = Hashtbl.find tbl_addrof_info vname in
+    []
+  with Not_found -> (
+    let pos = translate_location vinfo.Cil.vdecl in
+    let ty = vinfo.Cil.vtype in
+    let (new_ty, need_init) = (match ty with
+      | Cil.TPtr (ty1, _) when (is_cil_struct_pointer ty) ->
+          (translate_typ ty1 pos, false)                 (* heap allocated data *)
+      | Cil.TComp _ -> (translate_typ ty pos, true)      (* stack allocated data *)
+      | _ -> (translate_typ ty pos, false)
+    ) in
+    let name = vinfo.Cil.vname in
+    let newexp = (
+      match new_ty with
+      | Globals.Int
+      | Globals.Bool
+      | Globals.Float
+      | Globals.Array _
+      | Globals.Named "void_star" -> Iast.mkVarDecl new_ty [(name, None, pos)] pos
+      | Globals.Named typ_name -> (
+          if (need_init) then (
+            (* look for the corresponding data structure *)
+            let data_decl = (
+              try Hashtbl.find tbl_data_decl new_ty
+              with Not_found -> 
+                report_error pos ("translate_var_decl: Unknown typ " ^ (Globals.string_of_typ new_ty))
             ) in
-            params @ [exp]
-        ) [] data_decl.Iast.data_fields in
-        let init_data = Iast.mkNew typ_name init_params pos in
-        Iast.mkVarDecl new_ty [(name, Some init_data, pos)] pos
-      )
-    | _ -> report_error pos ("translate_var_decl: Unexpected typ 2 - " ^ (Globals.string_of_typ new_ty))
-  ) in
-  newexp
+            (* create and temporarily initiate a new object *)
+            let init_params = List.fold_left (
+              fun params field ->
+                let ((ftyp, _), _, _, _) = field in
+                let exp = (
+                  match ftyp with
+                  | Globals.Int -> Iast.mkIntLit 0 pos
+                  | Globals.Bool -> Iast.mkBoolLit true pos
+                  | Globals.Float -> Iast.mkFloatLit 0. pos
+                  | Globals.Named _ -> Iast.mkNull no_pos
+                  | _ -> report_error pos ("translate_var_decl: Unexpected typ 1 - " ^ (Globals.string_of_typ ftyp))
+                ) in
+                params @ [exp]
+            ) [] data_decl.Iast.data_fields in
+            let init_data = Iast.mkNew typ_name init_params pos in
+            Iast.mkVarDecl new_ty [(name, Some init_data, pos)] pos
+          )
+          else Iast.mkVarDecl new_ty [(name, None, pos)] pos
+        )
+      | _ -> report_error pos ("translate_var_decl: Unexpected typ 2 - " ^ (Globals.string_of_typ new_ty))
+    ) in
+    [newexp]
+  )
 
 
 and translate_constant (c: Cil.constant) (lopt: Cil.location option) : Iast.exp =
@@ -1188,7 +1213,7 @@ and translate_fundec (fundec: Cil.fundec) (lopt: Cil.location option) : Iast.pro
     match fundec.Cil.sbody.Cil.bstmts with
     | [] -> None
     | _ ->
-        let slocals = List.map translate_var_decl fundec.Cil.slocals in
+        let slocals = List.concat (List.map translate_var_decl fundec.Cil.slocals) in
         let sbody = translate_block fundec.Cil.sbody in
         let body = merge_iast_exp (slocals @ !aux_local_vardecls @ [sbody]) in
         let pos = translate_location fundec.Cil.sbody.Cil.bloc in
