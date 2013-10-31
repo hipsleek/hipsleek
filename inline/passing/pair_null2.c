@@ -5,12 +5,12 @@ struct pair {
 
 int foo(struct pair& p)
 /*@
-  requires p::pair*<a,b>
-  ensures p::pair*<null> & res=a+1;
+  requires p::pair<a,b>
+  ensures p=null & res=a+1;
 */
 {
   int r = p.x + 1;
-  p = null;
+  p = NULL;
   return r;
 }
 
@@ -24,5 +24,6 @@ int main()
   p.x = 1;
   p.y = 1;
   foo(p);
-  return p.x + 1;
+  return 1;
 }
+

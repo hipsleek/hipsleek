@@ -4,13 +4,13 @@ pair_star.c: DONE
 pair_star.ss: DONE
 pair_star_star.c: DONE
 pair_star_star.ss: DONE
-pair_copy.c: ???
+pair_copy.c: DONE
 pair_copy.ss: DONE
 inline_copy.c: ???
 inline_copy.ss: DONE
 inline_copy2.c: ???
 inline_copy2.ss: DONE
-pair_null.ss: DONE
+pair_null.ss: ???
 pair_null.c: ???
-pair_null2.ss: DONE
+pair_null2.ss: ???
 pair_null2.c: ???

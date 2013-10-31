@@ -5,7 +5,7 @@ data pair {
 
 int foo(pair@C p)
   requires p::pair<a,b>
-  ensures p::pair<#,#> & res=a+1;
+  ensures p=null & res=a+1;
 {
   int r = p.x + 1;
   p = null;

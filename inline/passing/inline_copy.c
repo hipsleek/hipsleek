@@ -10,8 +10,8 @@ struct quad {
 
 int foo(struct quad q)
 /*@
-  requires q::quad<p,a,b> * p::pair<x,y>
-  ensures q::quad<p,a+1,b> * p::pair<x,y> & res=a+1;
+  requires q::quad<p,a,b>@L
+  ensures q::quad<p,a+1,b> & res=a+1;
 */
 {
   int r = q.p2.x + 1;

@@ -6,7 +6,7 @@ struct pair {
 int foo(struct pair p)
 /*@
   requires p::pair<a,b>
-  ensures p::pair<a+1,b> & res=a+1
+  ensures p::pair<a+1,b> & res=a+1;
 */
 {
   int r = p.x + 1;

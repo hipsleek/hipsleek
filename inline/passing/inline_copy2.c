@@ -10,12 +10,12 @@ struct quad {
 
 int foo(struct quad q)
 /*@
-  requires q::quad<p,a,b> * p::pair*<x,y>
-  ensures q::quad<p,a+1,b> * p::pair*<x,y> & res=a+1;
+  requires q::quad<p,a,b> * p::pair<x,y>
+  ensures q::quad<p,a,b> * p::pair<x+1,y> & res=x+1;
 */
 {
-  int r = q.p2.x + 1;
-  q.p2.x = r;
+  int r = q.p1.x + 1;
+  q.p1.x = r;
   return r;
 }
 

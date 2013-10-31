@@ -6,11 +6,11 @@ struct pair {
 int foo(struct pair* p)
 /*@
   requires p::pair<a,b>
-  ensures p::pair<NULL> & res=a+1;
+  ensures p=null & res=a+1;
 */
 {
   int r = (*p).x + 1;
-  p = null;
+  p = NULL;
   return r;
 }
 
