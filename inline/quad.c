@@ -26,9 +26,7 @@ int foo3(struct quad* q)
   ensures res=a;
 */
 {
-  struct quad* q;
   struct quad* p=q;
-  /*@ assert p=q; */ 
   return (*q).p1.x;
 }
 

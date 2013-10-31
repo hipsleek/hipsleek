@@ -610,26 +610,30 @@ and translate_var_decl (vinfo: Cil.varinfo) : Iast.exp list =
       | Globals.Named "void_star" -> Iast.mkVarDecl new_ty [(name, None, pos)] pos
       | Globals.Named typ_name -> (
           if (need_init) then (
-            (* look for the corresponding data structure *)
-            let data_decl = (
-              try Hashtbl.find tbl_data_decl new_ty
-              with Not_found -> 
-                report_error pos ("translate_var_decl: Unknown typ " ^ (Globals.string_of_typ new_ty))
-            ) in
-            (* create and temporarily initiate a new object *)
-            let init_params = List.fold_left (
-              fun params field ->
-                let ((ftyp, _), _, _, _) = field in
-                let exp = (
+            let rec generate_init_params (data_type_name : string): Iast.exp list = (
+              let ddecl = (
+                try Hashtbl.find tbl_data_decl (Globals.Named data_type_name)
+                with Not_found -> 
+                  report_error pos ("translate_var_decl: Unknown typ " ^ (Globals.string_of_typ new_ty))
+              ) in
+              let init_params = List.fold_left (fun params field ->
+                let ((ftyp, _), _, inline, _) = field in
+                let init_exps = (
                   match ftyp with
-                  | Globals.Int -> Iast.mkIntLit 0 pos
-                  | Globals.Bool -> Iast.mkBoolLit true pos
-                  | Globals.Float -> Iast.mkFloatLit 0. pos
-                  | Globals.Named _ -> Iast.mkNull no_pos
+                  | Globals.Int -> [(Iast.mkIntLit 0 pos)]
+                  | Globals.Bool -> [(Iast.mkBoolLit true pos)]
+                  | Globals.Float -> [(Iast.mkFloatLit 0. pos)]
+                  | Globals.Named typ_name ->
+                      if (inline) then generate_init_params typ_name      (* expand the inline field *)
+                      else [(Iast.mkNull pos)]
                   | _ -> report_error pos ("translate_var_decl: Unexpected typ 1 - " ^ (Globals.string_of_typ ftyp))
                 ) in
-                params @ [exp]
-            ) [] data_decl.Iast.data_fields in
+                params @ init_exps
+              ) [] ddecl.Iast.data_fields in
+              init_params
+            ) in
+            (* create and temporarily initiate a new object *)
+            let init_params = generate_init_params typ_name in
             let init_data = Iast.mkNew typ_name init_params pos in
             Iast.mkVarDecl new_ty [(name, Some init_data, pos)] pos
           )
@@ -725,23 +729,33 @@ and translate_lval (lv: Cil.lval) : Iast.exp =
   with Not_found -> (
     let (lhost, offset, loc) = lv in
     let pos = translate_location loc in
-    let rec create_complex_exp (base : Iast.exp) (offset : Cil.offset) pos : Iast.exp = (
+    let rec create_complex_exp (base : Iast.exp) (offset : Cil.offset) 
+                               (found_fields : string list) pos
+                               : Iast.exp = (
       match offset with
-      | Cil.NoOffset -> base
+      | Cil.NoOffset -> (
+          match found_fields with 
+          | [] -> base
+          | _ -> Iast.mkMember base found_fields None pos
+        )
       | Cil.Field ((field, l1), off, _) ->
           let p = makeLocation (startPos pos) (endPos (translate_location l1)) in
-          let b = Iast.mkMember base [field.Cil.fname] None p in
-          create_complex_exp b off pos
+          create_complex_exp base off (found_fields @ [field.Cil.fname]) pos
       | Cil.Index (e, off, _) ->
           let l1 = loc_of_cil_exp e in
-          let p = makeLocation (startPos pos) (endPos (translate_location l1)) in
-          let b = Iast.mkArrayAt base [(translate_exp e)] p in
-          create_complex_exp b off pos
+          let new_base = (match found_fields with
+            | [] -> Iast.mkArrayAt base [(translate_exp e)] pos
+            | _ ->
+                let p = makeLocation (startPos pos) (endPos (translate_location l1)) in
+                let b = Iast.mkMember base found_fields None p in
+                Iast.mkArrayAt b [(translate_exp e)] p
+          ) in
+          create_complex_exp new_base off [] pos
     ) in
     match lhost with
     | Cil.Var (v, l) ->
         let base = translate_var v (Some l) in
-        let newexp = create_complex_exp base offset pos in
+        let newexp = create_complex_exp base offset [] pos in
         newexp
     | Cil.Mem e ->
         (* access to data in pointer variable *)
@@ -749,12 +763,12 @@ and translate_lval (lv: Cil.lval) : Iast.exp =
         match base_typ with
         | Cil.TPtr (Cil.TComp _, _) ->
             let base = translate_exp e  in
-            create_complex_exp base offset pos
+            create_complex_exp base offset [] pos
         | _ -> (
             let data_base = translate_exp e  in
             let data_fields = ["deref"] in
             let base = Iast.mkMember data_base data_fields None pos in
-            create_complex_exp base offset pos
+            create_complex_exp base offset [] pos
           )
   )
 
