@@ -1114,6 +1114,9 @@ struct
   (* a singleton bag *)
   let singleton_baga (e:ptr) : baga = [e]
 
+  let string_of (b:baga) : string =
+    Basic.pr_list (Elt.string_of) b
+
   let rec is_dupl_baga_eq eq (xs:baga) : bool = 
     match xs with
       | [] -> false
@@ -1125,10 +1128,21 @@ struct
   let is_dupl_baga (xs:baga) : bool = is_dupl_baga_eq eq xs
 
   (* false result denotes contradiction *)
-  let is_sat_baga_eq eq (xs:baga) : bool = not(is_dupl_baga_eq eq xs)
+  let is_sat_baga_eq eq (xs:baga) : bool = 
+    let r= not(is_dupl_baga_eq eq xs) in
+    begin
+      print_endline ("is_sat_baga_eq("^(string_of xs)^")="^(string_of_bool r));
+      r
+    end
 
   (* false result denotes contradiction *)
-  let is_sat_baga (xs:baga) : bool = not(is_dupl_baga xs)
+  let is_sat_baga (xs:baga) : bool = 
+    let r = not(is_dupl_baga xs) in
+    begin
+      print_endline ("is_sat_baga("^(string_of xs)^")="^(string_of_bool r));
+      r
+    end
+
 
   (*
 \    [d1,d2] & [d3,d4] = [d1,d2,d3,d4]
@@ -1170,6 +1184,8 @@ struct
   open BL_EQ
 
   (* let is_dupl_baga _ = true *)
+
+  let string_of xs = Basic.pr_list (Basic.pr_list Elt.string_of) xs
 
   (* an empty difference set *)
   let mkEmpty : dpart = []
@@ -1254,7 +1270,11 @@ struct
 
   (* false result denotes contradiction *)
   let is_sat_dset (xs:dpart) : bool = 
-    not(is_dupl_dset xs)
+    let r = not(is_dupl_dset xs) in
+    begin
+      print_endline ("is_sat_dset("^(string_of xs)^")="^(string_of_bool r));
+      r
+    end
 
   let apply_subs subs x =
     try
