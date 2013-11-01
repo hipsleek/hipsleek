@@ -9,7 +9,7 @@ struct node {
 
 /*@
 ll<n> == self = null & n = 0 
-  or self::node^<_,p> * p::ll<n1> & n = n1 + 1
+  or self::node<_,p> * p::ll<n1> & n = n1 + 1
   inv n >= 0;
 */
 

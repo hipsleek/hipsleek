@@ -3,9 +3,9 @@ data pair {
   int y;
 }
 
-int foo(pair@C p)
+int foo(pair@R p)
   requires p::pair<a,b>
-  ensures p=null & res=a+1;
+  ensures p'=null & res=a+1;
 {
   int r = p.x + 1;
   p = null;
@@ -14,9 +14,9 @@ int foo(pair@C p)
 
 int main()
   requires true
-  ensures res=2;
+  ensures true;
 {
   pair p = new pair(1,1);
   foo(p);
-  return p.x + 1;
+  return 1;
 }
