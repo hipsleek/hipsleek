@@ -69,9 +69,9 @@ global2.c: DONE
 global3.c: DONE
 global4.c: DONE
 global5.c: DONE
-global6.c: ???
-global-ll.c: ???
-global-ll2.c: ???
+global6.c: DONE
+global-ll.c: DONE
+global-ll2.c: DONE
 global-mutual-rec.c: DONE
 heaps.c: ???
 heaps2.c: ???

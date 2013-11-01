@@ -1133,7 +1133,13 @@ and translate_global_var (vinfo: Cil.varinfo) (iinfo: Cil.initinfo)
                          (lopt: Cil.location option)
                          : Iast.exp_var_decl =
   let pos = match lopt with None -> no_pos | Some l -> translate_location l in
-  let ty = translate_typ vinfo.Cil.vtype pos in
+  let ty = vinfo.Cil.vtype in
+  let new_ty = (match ty with
+    | Cil.TPtr (ty1, _) when (is_cil_struct_pointer ty) ->
+        translate_typ ty1 pos                          (* heap allocated data *)
+    | Cil.TComp _ -> translate_typ ty pos              (* stack allocated data *)
+    | _ -> translate_typ ty pos
+  ) in
   let name = vinfo.Cil.vname in
   let decl = (
     match iinfo.Cil.init with
@@ -1142,7 +1148,7 @@ and translate_global_var (vinfo: Cil.varinfo) (iinfo: Cil.initinfo)
         let init_exp = translate_init init lopt in
         [(name, Some init_exp, pos)]
   ) in
-  let vardecl = {Iast.exp_var_decl_type = ty;
+  let vardecl = {Iast.exp_var_decl_type = new_ty;
                  Iast.exp_var_decl_decls = decl;
                  Iast.exp_var_decl_pos = pos} in
   vardecl

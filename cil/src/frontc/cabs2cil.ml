@@ -6781,10 +6781,11 @@ and doStatement (s : A.statement) : chunk =
                                        Iast.exp_assert_assumed_formula = new_assume_f; } in
               Iast.Assert new_exp
           | Iast.Dprint _ -> hspec
+          | Iast.Bind _ -> hspec
           | _ -> 
-            let error_loc = ("line " ^ string_of_int (loc.Cabs.start_pos.lineno)) in
-            raise (HipSpecsError ("Unsupported Hip statement, " ^ error_loc ^ ": " 
-                                  ^ (Iprinter.string_of_exp hspec)))
+              let error_loc = ("line " ^ string_of_int (loc.Cabs.start_pos.lineno)) in
+              raise (HipSpecsError ("Unsupported Hip statement, " ^ error_loc ^ ": " 
+                                    ^ (Iprinter.string_of_exp hspec)))
         ) in
         (* return *)
         s2c (mkStmt (HipStmt (new_hspec, loc'))) loc'
