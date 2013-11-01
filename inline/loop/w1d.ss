@@ -6,17 +6,23 @@
 ll<> == self=null
   or self::node<_,p>*p::ll<>;
 
+void skip()
+ requires true
+  ensures true;
+
 void while_loop(node@R l,int i)
   requires l::ll<>
   ensures l::ll<> & l'=null;
 {
   if (true) {
-    try 
-         if (l==null) throw break_exp;
+    try {
+         if (l==null) raise new __Exc(); // change to __Break
          l = l.next;
          i++;
          while_loop(l,i);
-    catch break : ?
+    } catch (__Exc e) {
+         skip();
+    };
   } 
 }
 
