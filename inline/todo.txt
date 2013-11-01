@@ -178,7 +178,18 @@ r = tmp;
 }
 */
 *******************************************************
-#loop: w3a.c
+# ret1.c
+
+Last Proving Location: 1 File "ret1.c",Line:6,Col:0
+
+ERROR: at ret1.c_6:0_13:1
+Message: return type doesn't match
+
+
+===> expect: OK
+
+*******************************************************
+#loop/w3a.c
 
 Last Proving Location: 1 File "w3a.c",Line:12,Col:6
 
